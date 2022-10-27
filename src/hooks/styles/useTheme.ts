@@ -1,10 +1,17 @@
 import { GlobalScope } from '@/jotai/jotaiScope'
-import { atom, useAtom, useAtomValue, useSetAtom } from 'jotai'
+import { atom, useAtomValue, useSetAtom } from 'jotai'
 import { atomFamily } from 'jotai/utils'
 
 const defaultTheme = {
-  primaryColor: 'rgb(162, 181, 200)',
-  pa: 'asd'
+  primaryColor: '#8590ae',
+  defaultBackgroundColor: '#ffffff',
+  defaultBackGroundColorLightGrey: '#f9fafa',
+  defaultFontColorBlack: '#121212',
+  defaultFontColorGrey: '#636466',
+  defaultFontColorLightGrey: '#0000000f',
+  defaultFontColorRed: '#e0245e',
+  defaultFontColorLightBlue: '#8590ae',
+  defaultButtonHoverBackgroundColor: '#eff0f0'
 }
 
 const themeAtomFamily = atomFamily((key: keyof typeof defaultTheme) => atom(defaultTheme[key]))

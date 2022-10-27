@@ -1,5 +1,5 @@
 import { Noop } from '@/common/types'
-import { RippleButton } from '@/components/custom/rippleButton'
+import { Button } from '@/components/base/button'
 import { FC } from 'react'
 import Content from '../Content'
 import styles from './index.module.less'
@@ -13,12 +13,12 @@ interface FooterProps {
 const Footer: FC<FooterProps> = ({ onBack, onSubmit,submitText = 'Submit',backText = 'Back' }) => {
   return (
     <Content flex alignItems="center" justifyContent="space-between">
-      <RippleButton className={styles.back} onClick={onBack}>
+      <Button className={styles.back} onClick={onBack}>
         {backText}
-      </RippleButton>
-      <RippleButton className={styles.submit} onClick={onSubmit}>
+      </Button>
+      <Button className={styles.submit} onClick={onSubmit}>
         {submitText}
-      </RippleButton>
+      </Button>
     </Content>
   )
 }

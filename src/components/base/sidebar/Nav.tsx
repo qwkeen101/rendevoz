@@ -30,7 +30,7 @@ const Navigation = () => {
       <Modal visible={newItemVisible} onClose={() => setNewItemVisible(false)}>
         <NewItemDialog />
       </Modal>
-      <Modal width={300} height={300} visible={settingVisible} onClose={() => setSettingVisible(false)}>
+      <Modal visible={settingVisible} onClose={() => setSettingVisible(false)}>
         <SettingDialog />
       </Modal>
       <motion.ul className={styles.list} variants={variants}>

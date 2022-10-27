@@ -3,6 +3,8 @@ import NavLinkWithChildren from '../navLink'
 import styles from './index.module.less'
 import classnames from 'classnames'
 import Content from '../Content'
+import { css } from '@emotion/css'
+import { useTheme } from '@/hooks'
 interface CommonItem {
   style?: React.CSSProperties
   className?: string
@@ -24,7 +26,8 @@ interface RouteItem {
 export type BreadcrumbItemProps = CommonItem & (ButtonItem | RouteItem)
 
 const BreadcrumbItem: FC<BreadcrumbItemProps> = ({ type, to, onClick, children, separator = '/', style, className }) => {
-  const clazzName = classnames(className, styles.item)
+  const { primaryColor, defaultFontColorGrey } = useTheme('primaryColor', 'defaultFontColorGrey')
+  const clazzName = classnames(className, styles.item, css({ color: primaryColor, ':hover': { color: defaultFontColorGrey } }))
   let item = null
   switch (type) {
     case 'button':
@@ -44,7 +47,11 @@ const BreadcrumbItem: FC<BreadcrumbItemProps> = ({ type, to, onClick, children, 
   return (
     <Content flex alignItems="center">
       {item}
-      {separator && <span className={styles.separator}>{separator}</span>}
+      {separator && (
+        <span role="separator" className={css({ marginLeft: 4, color: primaryColor })}>
+          {separator}
+        </span>
+      )}
     </Content>
   )
 }

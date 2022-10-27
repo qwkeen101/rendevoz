@@ -16,6 +16,7 @@ interface SelectProps {
   value?: string | string[]
   closeOnSelect?: boolean
   disabled?: boolean
+  deselectable?: boolean
   defaultValue?: string
   children: ReactElement<SelectOptionProps> | ReactElement<SelectOptionProps>[]
   placeholder?: string
@@ -26,7 +27,19 @@ interface SelectProps {
 interface ISelect extends FC<SelectProps> {
   Option: typeof SelectOption
 }
-const Select: ISelect = ({ disabled, multiple, children, closeOnSelect, onSelect, placeholder, style, className, value, defaultValue }) => {
+const Select: ISelect = ({
+  disabled,
+  multiple,
+  children,
+  closeOnSelect,
+  onSelect,
+  placeholder,
+  style,
+  className,
+  value,
+  defaultValue,
+  deselectable
+}) => {
   let d = []
   if (defaultValue) {
     d = [defaultValue]
@@ -73,7 +86,7 @@ const Select: ISelect = ({ disabled, multiple, children, closeOnSelect, onSelect
                 onDelete={() => {
                   setSelected(() => {
                     const newSelected = selected.filter(o => o !== i)
-                    onSelect(newSelected.map(i => menuItems.find(o => o.name === i).value))
+                    onSelect(newSelected)
                     return newSelected
                   })
                 }}
@@ -85,15 +98,16 @@ const Select: ISelect = ({ disabled, multiple, children, closeOnSelect, onSelect
     )
   }
   const renderSingle = () => {
+    const name = menuItems.find(i => i.value === selected[0])?.name
     return (
       <Content flex>
         <span className={styles.placeholder}>
           {placeholder ? (
             <div>
-              {placeholder} : {selected[0]}
+              {placeholder} : {name}
             </div>
           ) : (
-            selected[0]
+            name
           )}
         </span>
       </Content>
@@ -111,27 +125,30 @@ const Select: ISelect = ({ disabled, multiple, children, closeOnSelect, onSelect
           <SelectMenu
             menuItems={menuItems}
             selectedItems={selected}
-            onDeSelect={name => {
+            onDeSelect={value => {
+              if (!deselectable) {
+                return
+              }
               setSelected(() => {
-                const newSelected = selected.filter(o => o !== name)
-                onSelect(newSelected.map(i => menuItems.find(o => o.name === i).value))
+                const newSelected = selected.filter(o => o !== value)
+                onSelect(newSelected)
                 return newSelected
               })
               if (closeOnSelect) {
                 setMenuVisible(false)
               }
             }}
-            onSelect={name => {
+            onSelect={value => {
               if (multiple) {
                 setSelected(() => {
-                  const newSelected = [...selected, name]
-                  onSelect(newSelected.map(i => menuItems.find(o => o.name === i).value))
+                  const newSelected = [...selected, value]
+                  onSelect(newSelected)
                   return newSelected
                 })
               } else {
                 setSelected(() => {
-                  const newSelected = [name]
-                  onSelect(newSelected.map(i => menuItems.find(o => o.name === i).value))
+                  const newSelected = [value]
+                  onSelect(newSelected)
                   return newSelected
                 })
               }
@@ -175,8 +192,8 @@ const SelectMenu: FC<{
     name: string
     value: string
   }[]
-  onSelect: (name: string, value: string) => void
-  onDeSelect: (name: string, value: string) => void
+  onSelect: (value: string) => void
+  onDeSelect: (value: string) => void
   selectedItems: string[]
 }> = ({ menuItems, onDeSelect, onSelect, selectedItems }) => {
   return (
@@ -184,13 +201,13 @@ const SelectMenu: FC<{
       {menuItems.map(item => (
         <Menu.Item
           onClick={() => {
-            if (selectedItems.some(i => i === item.name)) {
-              onDeSelect(item.name, item.value)
+            if (selectedItems.some(i => i === item.value)) {
+              onDeSelect(item.value)
             } else {
-              onSelect(item.name, item.value)
+              onSelect(item.value)
             }
           }}
-          selected={selectedItems.some(i => i === item.name)}
+          selected={selectedItems.some(i => i === item.value)}
           type="button"
         >
           {item.name}

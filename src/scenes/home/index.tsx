@@ -1,6 +1,6 @@
 import Container from '@/components/base/container'
 import DocumentDetails from '@/components/documentDetail'
-import { FC, useCallback, useEffect, useState } from 'react'
+import { FC, useCallback, useState } from 'react'
 import { Route, Routes, useNavigate } from 'react-router-dom'
 import { RecentlyAddCard, RecentlyVisitCard } from './Card'
 import Header from './Header'
@@ -8,20 +8,23 @@ import { AnimatePresence, motion, PanInfo, useDragControls } from 'framer-motion
 import styles from './index.module.less'
 import { Content } from '@/components'
 import { useGlobalLocation } from '@/routes/globalLocation'
+import { css } from '@emotion/css'
+import { useTheme } from '@/hooks'
 
 export const HomePage: FC = () => {
+  const { defaultBackgroundColor } = useTheme('defaultBackgroundColor')
   const location = useGlobalLocation()
-  const homeBackground = location.state && location.state.homeBackground
+  const homeBackground = location?.state && location.state.homeBackground
 
   return (
-    <Container className={styles.home} auto column>
+    <Container className={css({ background: defaultBackgroundColor })} auto column>
       <Header />
       <Content className={styles.body}>
         <RecentlyVisitCard />
         <RecentlyAddCard />
       </Content>
       <AnimatePresence>
-        {homeBackground && (
+        {homeBackground && location && (
           <Routes location={location} key={location.pathname}>
             <Route path="document/details">
               <Route path=":id" element={<AnimatedDocumentDetails />} />

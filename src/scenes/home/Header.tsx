@@ -1,10 +1,12 @@
 import { Content } from '@/components'
 import { getHours } from 'date-fns'
-import styles from './index.module.less'
 import { useTranslation } from 'react-i18next'
+import { useTheme } from '@/hooks'
+import { css } from '@emotion/css'
 
 const Header = () => {
   const { t } = useTranslation()
+  const { defaultFontColorBlack } = useTheme('defaultFontColorBlack')
   const currentHour = getHours(new Date())
   let currentTime
   if (currentHour >= 1 && currentHour < 11) {
@@ -26,8 +28,26 @@ const Header = () => {
     currentTime = 'Midnight'
   }
   return (
-    <Content className={styles.header} flex alignItems="center" justifyContent="space-between">
-      <div className={styles.greeting}>{t('home.greeting', { time: currentTime })}</div>
+    <Content
+      className={css({
+        width: '100%',
+        padding: '16px 20px'
+      })}
+      flex
+      alignItems="center"
+      justifyContent="space-between"
+    >
+      <div
+        className={css({
+          color: defaultFontColorBlack,
+          fontSize: 30,
+          fontFamily: 'Muli,sans-serif',
+          fontWeight: 500,
+          userSelect: 'none'
+        })}
+      >
+        {t('home.greeting', { time: currentTime })}
+      </div>
     </Content>
   )
 }

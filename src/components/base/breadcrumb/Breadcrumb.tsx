@@ -3,6 +3,8 @@ import BreadcrumbItem from './BreadcrumbItem'
 import classNames from 'classnames'
 import styles from './index.module.less'
 import { toArray } from 'lodash'
+import { useTheme } from '@/hooks'
+import { css } from '@emotion/css'
 
 export interface BreadcrumbProps {
   separator?: React.ReactNode
@@ -16,7 +18,8 @@ interface IBreadcrumb extends FC<BreadcrumbProps> {
 }
 
 const Breadcrumb: IBreadcrumb = ({ separator = '/', style, className, children }) => {
-  const clazzName = classNames(styles.breadcrumb, className)
+  const { primaryColor } = useTheme('primaryColor')
+  const clazzName = classNames(styles.breadcrumb, css({ color: primaryColor }), className)
   let crumbs
   if (children) {
     crumbs = Children.toArray(children).map((item, index) => {

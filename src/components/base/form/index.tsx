@@ -1,4 +1,4 @@
-import { RippleButton } from '@/components/custom/rippleButton'
+import { Button } from '@/components/base/button'
 import { Provider } from 'jotai'
 import { createContext, CSSProperties, FC, useState } from 'react'
 import Content from '../Content'
@@ -29,15 +29,15 @@ const InnerForm: FC<FormProps> = ({ children, title, description, onBack, onSubm
         {children}
       </Content>
       <div className={styles.toolbar}>
-        <RippleButton
+        <Button
           className={styles.back}
           onClick={() => {
             onBack?.()
           }}
         >
           Back
-        </RippleButton>
-        <RippleButton
+        </Button>
+        <Button
           className={styles.submit}
           onClick={() => {
             if (canSubmit) {
@@ -47,7 +47,7 @@ const InnerForm: FC<FormProps> = ({ children, title, description, onBack, onSubm
           }}
         >
           Submit
-        </RippleButton>
+        </Button>
       </div>
     </div>
   )

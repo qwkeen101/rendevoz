@@ -5,7 +5,7 @@ import { Content, Image } from '../base'
 import { Icon } from '@/components'
 import styles from './index.module.less'
 import { format, formatDistanceToNow } from 'date-fns'
-import { RippleButton } from '../custom/rippleButton'
+import { Button } from '../base/button'
 import useDocumentStore from '@/stores/document.store'
 import { Noop } from '@/common/types'
 import { FC, useState } from 'react'
@@ -62,8 +62,8 @@ const PdfDetails = ({ pdf, onDelete }: { pdf?: IPdfDocument; onDelete?: Noop }) 
         <span>{pdf?.noteIds?.length || 0}</span>
       </Content>
       <Content flex alignItems="center" justifyContent="space-between" className={styles.buttonWrapper}>
-        <RippleButton onClick={() => navigate(`/pdf/${pdf?.id}`)}>Read</RippleButton>
-        <RippleButton onClick={() => setDeleteDocumentModalVisible(true)}>Delete</RippleButton>
+        <Button onClick={() => navigate(`/pdf/${pdf?.id}`)}>Read</Button>
+        <Button onClick={() => setDeleteDocumentModalVisible(true)}>Delete</Button>
         <Modal visible={deleteDocumentModalVisible} onClose={() => setDeleteDocumentModalVisible(false)}>
           <DeleteDocumentDialog onSubmit={handleDelete} onBack={() => setDeleteDocumentModalVisible(false)} />
         </Modal>
@@ -79,14 +79,14 @@ const NoteDetails = ({ note }: { note: INote }) => {
       {note.createdAt && <div>Created at {format(note.createdAt, 'd MMM yyyy')}</div>}
       {note.updatedAt && <div>Modified at {format(note.updatedAt, 'd MMM yyyy')}</div>}
       <Content flex alignItems="center" justifyContent="space-between" className={styles.buttonWrapper}>
-        <RippleButton
+        <Button
           onClick={() => {
             navigate(`/editor/${note.id}`)
           }}
         >
           Open
-        </RippleButton>
-        <RippleButton onClick={() => {}}>Delete</RippleButton>
+        </Button>
+        <Button onClick={() => {}}>Delete</Button>
       </Content>
     </Content>
   )

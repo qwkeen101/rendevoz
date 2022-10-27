@@ -32,5 +32,14 @@
         "close panel": "关闭面版",
         "keyword": "关键词",
         "use keyword to organize your ideas": "使用关键词来组织思路！"
+    },
+    "settings": {
+        "appearance": "界面",
+        "hotkeys": "热键",
+        "editor": "编辑器",
+        "about": "关于",
+        "files": "文件",
+        "language": "语言",
+        "language description": "选择界面语言（未完全汉化）"
     }
 }

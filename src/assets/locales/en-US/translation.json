@@ -32,5 +32,14 @@
         "close panel": "Close panel",
         "keyword": "Keyword",
         "use keyword to organize your ideas": "Use keywor to organize your ideas!"
+    },
+    "settings": {
+        "appearance": "Appearance",
+        "hotkeys": "Hotkeys",
+        "editor": "Editor",
+        "about": "About",
+        "files": "Files",
+        "language": "Language",
+        "language description": "Choose display language"
     }
 }

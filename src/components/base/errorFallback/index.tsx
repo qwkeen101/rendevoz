@@ -1,10 +1,12 @@
-import { RippleButton } from '@/components/custom/rippleButton'
+import { Button } from '@/components/base/button'
 import { css } from '@emotion/css'
 import Content from '../Content'
 import errorImg from '@/assets/error.png'
 import { ipcInstance } from '@/plugins'
+import { useTheme } from '@/hooks'
 
 const ErrorFallback = ({ error }) => {
+  const { primaryColor, defaultBackGroundColorLightGrey } = useTheme('primaryColor', 'defaultBackGroundColorLightGrey')
   return (
     <Content flex column fullHeight fullWidth centered>
       <img
@@ -18,7 +20,7 @@ const ErrorFallback = ({ error }) => {
       <div
         className={css({
           fontSize: 30,
-          color: '#8590ae',
+          color: primaryColor,
           fontWeight: 500,
           marginBottom: 20
         })}
@@ -36,20 +38,20 @@ const ErrorFallback = ({ error }) => {
       <p
         className={css({
           fontSize: 13,
-          color: 'rgba(0,0,0,0.6)',
+          color: defaultBackGroundColorLightGrey,
           marginBottom: 20
         })}
       >
         This seems to be a bug, you can report to github issues!
       </p>
-      <RippleButton
+      <Button
         className={css({
           padding: '6px 12px'
         })}
         onClick={() => ipcInstance.send('reload')}
       >
         Reload application
-      </RippleButton>
+      </Button>
     </Content>
   )
 }

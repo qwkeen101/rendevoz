@@ -418,6 +418,17 @@ export const EditorV1: FC<EditorProps> = memo(({ onEditorInitialized, onChange, 
           })
         }
       }
+      if (targetElement.type !== 'list-item' && targetElement.level === undefined) {
+        Transforms.setNodes(
+          editor,
+          {
+            level: undefined
+          },
+          {
+            at: currPathRef.current
+          }
+        )
+      }
       const afterMoveParentPath = currParentPathRef.unref()
       currParentPathRef.unref()
       const afterMoveCurrParent = Editor.node(editor, afterMoveParentPath)
@@ -737,12 +748,10 @@ export const EditorV1: FC<EditorProps> = memo(({ onEditorInitialized, onChange, 
     if (!isDragging && !overlayVisible) {
       currentDraggingRef.current = e.currentTarget as HTMLDivElement
       currentDraggingElementPath.current = ReactEditor.findPath(editor, element)
-      const rect = wrapperRef.current?.getBoundingClientRect()
       const targetRect = e.currentTarget.getBoundingClientRect()
-      // const left = element?.type === 'list-item' || element?.level > 0 ? targetRect.x - rect?.x - 15 : targetRect.x - rect?.x
       setDragHandle({
-        left: targetRect.x - rect?.x,
-        top: targetRect.y - rect?.y + wrapperRef.current?.scrollTop,
+        left: targetRect.x,
+        top: targetRect.y,
         targetId: element.id,
         targetHeight: targetRect.height
       })
@@ -758,7 +767,6 @@ export const EditorV1: FC<EditorProps> = memo(({ onEditorInitialized, onChange, 
   })
 
   const changeIndicator = useMemoizedFn((direction: string | null, e?: MouseEvent, id?: number) => {
-    console.log(id, direction)
     if (direction === null) {
       indicatorRef.current = undefined
     } else {

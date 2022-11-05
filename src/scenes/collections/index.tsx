@@ -6,13 +6,13 @@ import { Content } from '@/components'
 const Collections: FC = () => {
   return (
     <Container auto>
-      <Content flex fullHeight fullWidth>
+      <Content flex fullHeight fullWidth justifyContent="center">
         <Collection
           useRoute={false}
           hideDocuments={false}
           hideExtra={false}
           hideNotes={false}
-          style={{ height: 'calc( 100vh - 30px )', padding: '20px 50px' }}
+          style={{ height: 'calc( 100vh - 30px )', padding: '50px 70px', maxWidth: 1300 }}
         />
       </Content>
     </Container>

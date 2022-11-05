@@ -30,7 +30,7 @@ const DragHandle: IDragHandle = ({ left, top, targetHeight, visible, onMouseDown
           onClick={onClick}
           style={{
             cursor: 'grab',
-            position: 'absolute',
+            position: 'fixed',
             top: top,
             left: left,
             height: targetHeight,

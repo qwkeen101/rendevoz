@@ -34,7 +34,7 @@ const Block: FC<React.DetailedHTMLProps<React.HTMLAttributes<HTMLDivElement>, HT
       setSelected(false)
     }, blockRef)
     const handleIndicatorChange = useMemoizedFn((direction: string | null, e?: MouseEvent) => {
-      if (element?.type === 'list-item' || element?.level) {
+      if (direction === 'bottom' && (element?.type === 'list-item' || element?.level)) {
         if (e) {
           const distanceToBlock = getDistanceBetweenPointAndElement(e, blockRef.current)
           if (distanceToBlock.left > 0 && distanceToBlock.left < 20) {

@@ -315,7 +315,7 @@ const Collection: FC<CollectionProps> = ({
             </Content>
           )}
         </Content>
-        <Content flex fullWidth fullHeight justifyContent="center">
+        <Content flex fullWidth fullHeight justifyContent="space-between">
           <ContextMenu
             ref={contextMenuRef}
             enableContextMenu={!hideContextMenu}

@@ -28,7 +28,7 @@ const CollectionItem: FC<CollectionItemProps> = ({ collection, selected, onClick
     getChildrenItems(collection.id).then(items => {
       setChildrenItems(items.filter(i => !!i && !i.deleted))
     })
-  }, [collection.id])
+  }, [collection.id, getChildrenItems])
   return (
     <MenuItem
       id={collection.id}

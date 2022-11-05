@@ -118,20 +118,17 @@ const useCollectionStore = () => {
   }
 
   const getCollectionById = (collectionId: number): Promise<ICollection> => {
+    const collection = get(collectionId, collections)
+    if (collection) return Promise.resolve(collection)
     return new Promise((resolve, reject) => {
-      const collection = get(collectionId, collections)
-      if (collection) {
-        resolve(collection)
-      } else {
-        database.get(collectionId).then(c => {
-          if (c) {
-            resolve(c)
-            setCollections(add(c, collections))
-          } else {
-            reject("Collection don't exist!")
-          }
-        })
-      }
+      database.get(collectionId).then(c => {
+        if (c) {
+          resolve(c)
+          setCollections(add(c, collections))
+        } else {
+          reject("Collection don't exist!")
+        }
+      })
     })
   }
   const findParentCollections = (collection: ICollection) => {
@@ -186,12 +183,26 @@ const useCollectionStore = () => {
   }
   const updateCollection = (newCollection: ICollection) => {
     const originCollection = get(newCollection.id, collections)
-    newCollection = {
+    const updatedCollection = {
       ...originCollection,
       ...newCollection
     }
-    setCollections(update(newCollection, collections))
-    database.put(newCollection)
+    setCollections(update(updatedCollection, collections))
+    database.put(updatedCollection)
+  }
+  const updateCollections = (...newCollections: ICollection[]) => {
+    // keep updated value
+    let originCollections = collections
+    newCollections.forEach(c => {
+      const originCollection = get(c.id, originCollections)
+      const updatedCollection = {
+        ...originCollection,
+        ...c
+      }
+      originCollections = update(updatedCollection, originCollections)
+      database.put(updatedCollection)
+    })
+    setCollections(originCollections)
   }
   const deleteCollection = (collectionId: number) => {
     const collection = get(collectionId, collections)
@@ -219,6 +230,7 @@ const useCollectionStore = () => {
       findSubCollections,
       renameCollection,
       updateCollection,
+      updateCollections,
       deleteCollection
     }),
     [collections, documents]

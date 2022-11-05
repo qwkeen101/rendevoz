@@ -26,6 +26,7 @@ import useCurrentCut from './useCurrentCut'
 import useCurrentCopy from './useCurrentCopy'
 import useCurrentCollectionContextMenuItem from './useCurrentContextMenuItem'
 import Id from '@/utils/id'
+import produce from 'immer'
 
 interface CollectionProps {
   hideDetails?: boolean
@@ -68,7 +69,9 @@ const Collection: FC<CollectionProps> = ({
     renameCollection,
     updateCollection,
     addCollection,
-    deleteCollection
+    updateCollections,
+    deleteCollection,
+    findSubCollections
   } = useCollectionStore()
   const { all: documents, renameDocument } = useDocumentStore()
   const { all: notes, renameNote, deleteNote } = useNoteStore()
@@ -79,39 +82,33 @@ const Collection: FC<CollectionProps> = ({
   const childrenCollections = getChildrenCollections(currentCollection?.id || defaultId)
   const [childrenItems, setChildrenItems] = useState<any[]>([])
   const [renameVisible, toggleRenameVisible] = useToggle(false)
-  const childrenNotes = childrenItems.filter(i => isNote(i)).filter(i => !i.deleted) as INote[]
-  const childrenDocuments = childrenItems.filter(i => isDocument(i)).filter(i => !i.deleted) as IPdfDocument[]
+  const filteredChildrenItems = childrenItems.filter(i => !!i).filter(i => !i.deleted)
+  const childrenNotes = filteredChildrenItems.filter(i => isNote(i)) as INote[]
+  const childrenDocuments = filteredChildrenItems.filter(i => isDocument(i)) as IPdfDocument[]
   const [currentCut, setCurrentCut] = useCurrentCut()
   const [currentCopy, setCurrentCopy] = useCurrentCopy()
   const [currentCollectionContextMenuItem, setCurrentCollectionContextMenuItem] = useCurrentCollectionContextMenuItem()
   const actions = useRef([])
   const bodyRef = useRef<HTMLDivElement>(null)
   const contextMenuRef = useRef()
+
   useEffect(() => {
-    console.log('fetched by all')
-    if (defaultId) {
-      setParentCollections(findParentCollections(one(defaultId)))
-    }
-  }, [all])
-  useEffect(() => {
-    if (actions.current.length === 0) {
-      actions.current.push(currentCollection)
-    }
     onCollectionChange?.(currentCollection)
     if (currentCollection) {
       getChildrenItems(currentCollection.id).then(items => {
-        setChildrenItems(items.filter(i => !!i))
+        console.log(items)
+        setChildrenItems(items)
       })
       setParentCollections(findParentCollections(currentCollection))
     } else if (currentCollection === null) {
       setParentCollections([])
       setChildrenItems([])
     }
-  }, [currentCollection, all])
+  }, [currentCollection, getChildrenItems])
   useEffect(() => {
     if (currentCollection) {
       getChildrenItems(currentCollection.id).then(items => {
-        setChildrenItems(items.filter(i => !!i))
+        setChildrenItems(items)
       })
       setParentCollections(findParentCollections(currentCollection))
     } else if (currentCollection === null) {
@@ -209,14 +206,36 @@ const Collection: FC<CollectionProps> = ({
   }
   const handlePaste = () => {
     const pasteTargetCollection = (currentCollectionContextMenuItem && currentCollectionContextMenuItem.collection) || currentCollection
+    if (!pasteTargetCollection) return
     if (currentCut) {
       if ('collection' in currentCut) {
         const cutCollection = currentCut.collection as ICollection
-        cutCollection.parentId = pasteTargetCollection?.id
-        updateCollection(cutCollection)
+        if (findSubCollections(cutCollection).some(i => i.id === pasteTargetCollection?.id)) {
+          toast.error("Can't paste into sub collection!")
+          return
+        }
+        updateCollection({
+          ...cutCollection,
+          parentId: pasteTargetCollection.id
+        })
         contextMenuRef.current?.closeContextMenu()
       }
       if ('note' in currentCut) {
+        const cutNote = currentCut.note as INote
+        const originCollection = currentCut.originCollection as ICollection
+        const newOriginCollection = produce(originCollection, draft => {
+          draft.items = draft.items?.filter(i => i.id !== cutNote.id)
+        })
+        const newTargetCollection = produce(pasteTargetCollection, draft => {
+          draft.items
+            ? draft.items.push({
+                type: 'note',
+                id: cutNote.id
+              })
+            : (draft.items = [])
+        })
+        updateCollections(newOriginCollection, newTargetCollection)
+        contextMenuRef.current?.closeContextMenu()
       }
       if ('document' in currentCut) {
       }
@@ -225,6 +244,10 @@ const Collection: FC<CollectionProps> = ({
     if (currentCopy) {
       if ('collection' in currentCopy) {
         const copyCollection = currentCopy.collection as ICollection
+        if (findSubCollections(copyCollection).some(i => i.id === pasteTargetCollection?.id)) {
+          toast.error("Can't paste into sub collection!")
+          return
+        }
         // assign new id
         addCollection({
           ...copyCollection,
@@ -335,7 +358,9 @@ const Collection: FC<CollectionProps> = ({
             <div
               ref={bodyRef}
               onContextMenuCapture={e => {
-                if (e.target === e.currentTarget) {
+                console.log(e)
+                if (e.target === e.currentTarget || e.target.parentNode === e.currentTarget) {
+                  console.log('ss')
                   // click on blank space
                   if (!currentCollection) {
                     setCurrentCollectionContextMenuItem({ type: 'root' })
@@ -346,7 +371,7 @@ const Collection: FC<CollectionProps> = ({
               }}
               className={styles.body}
             >
-              {!hideCollections && childrenCollections?.length === 0 && ((hideDocuments && hideNotes) || childrenItems.length === 0) && (
+              {!hideCollections && childrenCollections?.length === 0 && ((hideDocuments && hideNotes) || filteredChildrenItems.length === 0) && (
                 <Content flex centered fullWidth fullHeight style={{ fontWeight: 600 }}>
                   {t('collection.no collection placeholder')}
                 </Content>
@@ -372,7 +397,8 @@ const Collection: FC<CollectionProps> = ({
                     onContextMenu={note => {
                       setCurrentCollectionContextMenuItem({
                         type: 'note',
-                        note
+                        note,
+                        originCollection: currentCollection
                       })
                     }}
                     onClick={note => {

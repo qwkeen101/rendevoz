@@ -1,4 +1,5 @@
 import { Noop } from '@/common/types'
+import useCollectionStore from '@/stores/collection.store'
 import { FC } from 'react'
 import { Icon } from '..'
 import Menu from '../base/menu'
@@ -19,6 +20,7 @@ const CollectionContextMenu: FC<
   const [currentCopy] = useCurrentCopy()
   const [currentCut] = useCurrentCut()
   const [currentCollectionContextMenuItem] = useCurrentCollectionContextMenuItem()
+
   let enablePaste = true
   if (currentCollectionContextMenuItem && currentCollectionContextMenuItem?.type === 'root') {
     enablePaste = false

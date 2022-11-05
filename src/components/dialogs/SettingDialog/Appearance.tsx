@@ -7,7 +7,7 @@ import SettingItem from './Item'
 
 const SupportedLangs = {
   'en-US': 'English',
-  'zh-CN': 'Simplified Chinese'
+  'zh-CN': '简体中文'
 }
 const AppearanceSetting = () => {
   const [lang, setLang] = useLocalStorage('lang', Object.keys(SupportedLangs)[0], { raw: true })

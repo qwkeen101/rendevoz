@@ -14,7 +14,7 @@ const useNoteStore = () => {
   const latestNotes = useLatest(notes)
   const { add, get, orderedData, update } = BaseStore
 
-  const all = orderedData(notes)
+  const all = orderedData(notes).filter(i => !i.deleted)
   const noteDb = useDb('notes')
   const blockDb = useDb('blocks')
   const getAllNotes = () => {
@@ -71,7 +71,6 @@ const useNoteStore = () => {
     return new Promise((resolve, reject) => {
       noteDb.get(noteId).then(note => {
         if (note) {
-          console.log('set')
           setNotes(add(note, notes))
           resolve(note)
         } else {
@@ -133,7 +132,22 @@ const useNoteStore = () => {
       return Promise.all([note, blockDb.bulkGet(note?.allBlockIds || [])])
     })
   }
-
+  const renameNote = (noteId: number, newName: string) => {
+    const targetNote = get(noteId, notes)
+    if (targetNote) {
+      const newNote = { ...targetNote, title: newName }
+      setNotes(update(newNote, notes))
+      noteDb.put(newNote)
+    }
+  }
+  const deleteNote = (noteId: number) => {
+    getNoteById(noteId).then(note => {
+      updateNote({
+        ...note,
+        deleted: true
+      })
+    })
+  }
   return useMemo(
     () => ({
       all,
@@ -146,7 +160,9 @@ const useNoteStore = () => {
       getNoteById,
       getNotesByIds,
       saveNoteAndBlocks,
-      getNoteAndBlocks
+      getNoteAndBlocks,
+      renameNote,
+      deleteNote
     }),
     [notes]
   )

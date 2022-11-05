@@ -17,8 +17,9 @@ const checkIfSpacerNeeded = (element: Node) => {
   }
 }
 const withCustomComponent = (editor: CustomEditor) => {
-  const { deleteBackward, insertText, insertBreak, deleteForward, insertNode, insertFragment, apply, insertSoftBreak } = editor
+  const { deleteBackward, insertText, insertBreak, deleteForward, insertNode, insertFragment, apply } = editor
   editor.insertData = data => {
+    console.log(data)
     const d = data.getData('text/plain')
     const html = data.getData('text/html')
     const parsed = new DOMParser().parseFromString(html, 'text/html')
@@ -29,6 +30,7 @@ const withCustomComponent = (editor: CustomEditor) => {
     editor.insertBreak()
   }
   editor.insertFragment = nodes => {
+    console.log(nodes)
     nodes.forEach(i => (i.id = Id.getId()))
     insertFragment(nodes)
   }
@@ -180,6 +182,12 @@ const withCustomComponent = (editor: CustomEditor) => {
             return
           }
         }
+        if (block.level > 0 && Editor.isStart(editor, selection.anchor, path)) {
+          Transforms.setNodes(editor, {
+            level: block.level - 1 > 0 ? block.level - 1 : undefined
+          })
+          return
+        }
         if (
           !Editor.isEditor(block) &&
           SlateElement.isElement(block) &&
@@ -256,9 +264,19 @@ const withCustomComponent = (editor: CustomEditor) => {
         match: n => Editor.isBlock(editor, n)
       })
       if (match) {
-        const [, path] = match
+        const [block, path] = match
+
         const currentParent = Editor.parent(editor, path)
         if (currentParent) {
+          if (block.type === 'list-item') {
+            Transforms.insertNodes(editor, {
+              id: Id.getId(),
+              type: 'list-item',
+              level: block.level,
+              children: [{ text: '' }]
+            })
+            return
+          }
           Transforms.insertNodes(editor, {
             id: Id.getId(),
             type: 'paragraph',

@@ -38,7 +38,7 @@ const Panel: React.FC<PanelProps> = ({ title, children, style, defaultVisible = 
       </Content>
       <motion.div
         inherit={false}
-        style={{ overflow: 'hidden' }}
+        style={{ overflow: hide ? 'hidden' : 'auto' }}
         initial={hide ? 'hide' : 'open'}
         animate={hide ? 'hide' : 'open'}
         variants={variants}

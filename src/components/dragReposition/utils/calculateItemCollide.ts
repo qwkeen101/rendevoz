@@ -1,4 +1,4 @@
-import { Coordinates } from "./types"
+import { Coordinates } from "../types"
 
 export const calculatePointerCollide = (pointer: Coordinates, objectCoord: Coordinates, tolerance = 0) => {
   if (

@@ -7,13 +7,16 @@ import useEventEmitter from '@/events/useEventEmitter'
 import { EditorEventHandler } from '../../events/editorEvent'
 import { EditorV1 } from './Editor'
 import useNoteStore from '@/stores/note.store'
-import { Content, WithBorder } from '../base'
+import { Content, Footer, WithBorder } from '../base'
 import Id from '@/utils/id'
 import IconWithPopover from '../base/IconWithPopover'
 import toast from 'react-hot-toast'
 import { INote } from '~/typings/data'
 import { useIsomorphicLayoutEffect } from 'react-use'
 import { useTranslation } from 'react-i18next'
+import { useConfirmExit } from '@/hooks/utils/usePrompt'
+import Modal from '../base/modal'
+import { useToggle } from '@/hooks'
 
 const EditorManagerMenuPopover = ({ panel = {} as PanelData, context = {} as DockContext }) => {
   const popoverRef = useRef()
@@ -52,7 +55,9 @@ const EditorManager: FC<EditorManagerProps> = ({ initialNoteId, documentId, onSa
   const firstNoteId = initialNoteId || Id.getId()
   const { t } = useTranslation()
   const { saveNote, getNoteById, updateNote } = useNoteStore()
-
+  const [confirmVisible, toggleConfirmVisible] = useToggle(false)
+  const [canExit, toggleCanExit] = useToggle(false)
+  // useConfirmExit(canExit, toggleConfirmVisible)
   eventHandler.on('foldHeading', data => {
     selectedEditorRef?.current?.foldHeading(data.headingId, data.folded)
   })
@@ -110,11 +115,13 @@ const EditorManager: FC<EditorManagerProps> = ({ initialNoteId, documentId, onSa
     layoutRef.current?.updateTab(targetTab?.id, targetTab)
   })
   eventHandler.on('jumpToBlock', data => {
+    console.log('123123213213213')
     // wtf is this?
     insertOrSwitchTab({
       noteId: data.noteId,
       isNew: false
     }).then(() => {
+      console.log('sdsdasdsadsadsa')
       selectedEditorRef.current?.jumpToBlock(data.blockId)
     })
   })
@@ -266,15 +273,27 @@ const EditorManager: FC<EditorManagerProps> = ({ initialNoteId, documentId, onSa
   }, [])
 
   return (
-    <DockLayout
-      defaultLayout={defaultLayout}
-      ref={layoutRef}
-      dropMode="edge"
-      style={{
-        position: 'absolute',
-        inset: 0
-      }}
-    />
+    <>
+      <DockLayout
+        defaultLayout={defaultLayout}
+        ref={layoutRef}
+        dropMode="edge"
+        style={{
+          position: 'absolute',
+          inset: 0
+        }}
+      />
+      <Modal visible={confirmVisible} onClose={toggleConfirmVisible}>
+        确定要离开吗
+        <Footer
+          onBack={toggleConfirmVisible}
+          onSubmit={() => {
+            toggleCanExit()
+            toggleConfirmVisible()
+          }}
+        />
+      </Modal>
+    </>
   )
 }
 

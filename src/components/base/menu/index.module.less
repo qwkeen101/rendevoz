@@ -25,6 +25,14 @@
     &.selected{
         background-color: @default-btn-hover-bg-color;
     }
+    &.disabled{
+        .icon{
+            color: @default-btn-hover-bg-color;
+        }
+        color: @default-btn-hover-bg-color;
+        background-color: transparent !important;
+        cursor: default;
+    }
 }
 .text{
     overflow: hidden;
@@ -41,7 +49,6 @@
     width: 24px;
     height: 24px;
     color: @default-grey-link-color;
-    margin-right: 8px;
     font-size: 24px;
 }
 .group{

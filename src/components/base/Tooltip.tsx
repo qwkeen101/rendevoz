@@ -14,9 +14,6 @@ const ToolTip: FC<PropsWithChildren<ToolTipProps>> = ({ content, children }, ref
     width: 0,
     height: 0
   })
-  useEffect(() => {
-    return () => console.log('unmkount')
-  }, [open])
   const childRef = useRef<HTMLElement>(null)
   const handleChildRef = useCallback(
     (node: HTMLElement) => {
@@ -37,7 +34,7 @@ const ToolTip: FC<PropsWithChildren<ToolTipProps>> = ({ content, children }, ref
     }
     if (e.type === 'mouseenter') {
       setOpen(true)
-      const rect = e.target.getBoundingClientRect()
+      const rect = e.currentTarget.getBoundingClientRect()
       const { scrollTop, scrollLeft } = document.body
       setBound({ x: rect.left + scrollLeft, y: rect.top + scrollTop, width: rect.width, height: rect.height })
     }
@@ -86,7 +83,7 @@ const ToolTipInner = ({ children, bound }) => (
       lineHeight: 1.2,
       padding: '2px 4px 4px',
       position: 'absolute',
-      zIndex: 1000
+      zIndex: 100000
     }}
   >
     {children}

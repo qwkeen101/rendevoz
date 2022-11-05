@@ -10,6 +10,7 @@ import { Content } from '@/components'
 import { useGlobalLocation } from '@/routes/globalLocation'
 import { css } from '@emotion/css'
 import { useTheme } from '@/hooks'
+import { rende } from '@/common/rende/rende'
 
 export const HomePage: FC = () => {
   const { defaultBackgroundColor } = useTheme('defaultBackgroundColor')

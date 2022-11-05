@@ -1,6 +1,7 @@
 import Id from '@/utils/id'
 import { Transforms } from 'slate'
 import { jsx } from 'slate-hyperscript'
+import { ReactEditor } from 'slate-react'
 import { CustomEditor } from '../types'
 
 const ELEMENT_TAGS = {
@@ -73,11 +74,15 @@ const withHtml = (editor: CustomEditor) => {
 
   editor.insertData = data => {
     const html = data.getData('text/html')
-
+    const slateFragment = data.getData('application/x-slate-fragment')
+    if (slateFragment) {
+      ReactEditor.insertFragmentData(editor, data)
+      return
+    }
     if (html) {
       const parsed = new DOMParser().parseFromString(html, 'text/html')
       const fragment = deserialize(parsed.body)
-      fragment.forEach(i => i.id = Id.getId())
+      fragment.forEach(i => (i.id = Id.getId()))
       Transforms.insertFragment(editor, fragment)
       return
     }

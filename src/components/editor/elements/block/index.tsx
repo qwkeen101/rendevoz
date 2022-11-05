@@ -1,57 +1,65 @@
-import { EditorEventHandler, IndicatorChangeEvent, SelectBlockEvent } from '@/events/editorEvent'
-import useEventEmitter from '@/events/useEventEmitter'
 import { useMemoizedFn, useMergedRef } from '@/hooks'
 import classNames from 'classnames'
-import { FC, memo, useRef, useState, CSSProperties, useEffect, cloneElement, useMemo } from 'react'
-import { RenderElementProps } from 'slate-react'
+import { FC, memo, useRef, useState, CSSProperties, useEffect, cloneElement, MouseEvent } from 'react'
+import { RenderElementProps, useSlate } from 'slate-react'
 import { CustomElement } from '../../customTypes'
 import { motion, AnimatePresence } from 'framer-motion'
 import styles from './index.module.less'
 import useClickOutside from '@/hooks/utils/useClickOutside'
 import { scrollToTarget } from '../../utils/positions/scroll'
+import { ID_TO_ELEMENTS_MAP } from '../../weakMaps'
+import { getDistanceBetweenPointAndElement } from '@/components/dragReposition/utils/position'
+import { Noop } from '@/common/types'
 
 type BlockProps = {
   blockId: number
   type: string
   ratio?: number
   onMouseEnter?: (e: MouseEvent, element: CustomElement) => void
+  onNestedListItem?: (isNested: boolean) => void
   element?: CustomElement
   scrollElement?: HTMLDivElement
 }
 const Block: FC<React.DetailedHTMLProps<React.HTMLAttributes<HTMLDivElement>, HTMLDivElement> & BlockProps & RenderElementProps> = memo(
-  ({ scrollElement, blockId, children, ratio, type, attributes, element, onMouseEnter, ...rest }) => {
+  ({ scrollElement, blockId, children, ratio, type, attributes, element, onMouseEnter, onNestedListItem, ...rest }) => {
     const blockRef = useRef<HTMLDivElement>(null)
     const columnRef = useRef<HTMLDivElement>(null)
+    const editor = useSlate()
+    const map = ID_TO_ELEMENTS_MAP.get(editor)
     const mergedChildrenRef = useMergedRef(blockRef, attributes.ref)
-    const emitter = useEventEmitter()
-    const handler = useMemo(() => new EditorEventHandler(), [])
-
     const [direction, setDirection] = useState<string>()
     const [selected, setSelected] = useState(false)
-
+    const [withLine, setWithLine] = useState<{ width: number } | null>(null)
     useClickOutside(() => {
       setSelected(false)
     }, blockRef)
-    const handleIndicatorChange = useMemoizedFn((data: IndicatorChangeEvent) => {
-      const { direction, id } = data
-      if (id === blockId) {
+    const handleIndicatorChange = useMemoizedFn((direction: string | null, e?: MouseEvent) => {
+      if (element?.type === 'list-item' || element?.level) {
+        if (e) {
+          const distanceToBlock = getDistanceBetweenPointAndElement(e, blockRef.current)
+          if (distanceToBlock.left > 0 && distanceToBlock.left < 20) {
+            setWithLine(null)
+            onNestedListItem?.(false)
+          }
+          if (distanceToBlock.left > 20 && distanceToBlock.right > 0) {
+            setWithLine({ width: 20 })
+            onNestedListItem?.(true)
+          }
+        }
+      }
+      if (direction !== null) {
         setDirection(direction)
       } else {
+        setWithLine(null)
         setDirection(undefined)
       }
     })
-    const handleSelectBlock = useMemoizedFn((data: SelectBlockEvent) => {
-      if (data.blockId === blockId) {
-        setSelected(true)
-        if (scrollElement) {
-          scrollToTarget(blockRef.current, scrollElement)
-          console.log('has scrol')
-        }
-        emitter.removeAck(data.eventId)
+    const handleSelectBlock = useMemoizedFn(() => {
+      setSelected(true)
+      if (scrollElement) {
+        scrollToTarget(blockRef.current, scrollElement)
       }
     })
-    handler.on('indicatorChange', handleIndicatorChange)
-    handler.on('selectBlock', handleSelectBlock)
     const indicatorStyle: CSSProperties = {
       position: 'absolute',
       left: direction === 'left' ? -4 : direction === 'top' || direction === 'bottom' ? 0 : undefined,
@@ -63,18 +71,27 @@ const Block: FC<React.DetailedHTMLProps<React.HTMLAttributes<HTMLDivElement>, HT
       backgroundColor: '#8590ae',
       borderRadius: '3px'
     }
+    if (withLine) {
+      indicatorStyle.left = withLine.width + 2
+    }
+    const withLineStyle: CSSProperties = {
+      position: 'absolute',
+      left: 0,
+      height: 4,
+      bottom: -4,
+      width: withLine?.width - 1,
+      borderRadius: '3px',
+      backgroundColor: '#8590aea8',
+      zIndex: 2
+    }
     useEffect(() => {
-      emitter.addListener('editor', handler)
-      const editorEvents = emitter.getAckEvents().filter(i => i.name === 'editor')
-      editorEvents.forEach(i => {
-        if (i.data.type === 'selectBlock') {
-          handleSelectBlock(i.data.data)
-          if (i.data.data.blockId === blockId) {
-            emitter.removeAck(i.data.eventId)
-          }
-        }
+      map?.set(blockId, {
+        selectBlock: handleSelectBlock,
+        changeIndicator: handleIndicatorChange
       })
-      return () => emitter.removeListener('editor', handler)
+      return () => {
+        map?.delete(blockId)
+      }
     }, [])
     useEffect(() => {
       const width = `calc(( 100% - ${
@@ -85,7 +102,6 @@ const Block: FC<React.DetailedHTMLProps<React.HTMLAttributes<HTMLDivElement>, HT
       }
     }, [ratio])
     const handleMouseEnter = (e: MouseEvent) => {
-      console.log(element)
       onMouseEnter?.(e, element)
     }
     const renderChildren = () => (
@@ -94,6 +110,7 @@ const Block: FC<React.DetailedHTMLProps<React.HTMLAttributes<HTMLDivElement>, HT
         {...attributes}
         ref={mergedChildrenRef}
         onMouseEnter={handleMouseEnter}
+        data-level={element?.level}
         {...rest}
         className={classNames(
           selected && styles.Selected,
@@ -113,6 +130,7 @@ const Block: FC<React.DetailedHTMLProps<React.HTMLAttributes<HTMLDivElement>, HT
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
             >
+              {withLine && <div style={withLineStyle}></div>}
               <div style={indicatorStyle} />
             </motion.div>
           )}

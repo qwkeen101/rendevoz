@@ -13,7 +13,7 @@ export const searchBlock = (entries: [globalThis.Element, { height: number; top:
   }
   while (left <= right) {
     searchCount += 1
-    // prevent dead loop
+    // prevent infinite loop
     if (searchCount > 1000) break
     const rangeDelta = entries[right][1].height + entries[right][1].top - entries[left][1].top
     const indexDelta = right - left

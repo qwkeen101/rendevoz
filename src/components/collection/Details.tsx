@@ -12,18 +12,17 @@ import { FC, useState } from 'react'
 import Modal from '../base/modal'
 import DeleteDocumentDialog from '../dialogs/DeleteDocumentDialog'
 import { isDocument, isNote } from './utils'
+import { useTranslation } from 'react-i18next'
 
 interface DetailsProps {
   onDelete: Noop
 }
 
-const CollectionDetails = ({ collection = {} as ICollection }) => {
-  return <div>{collection?.name}</div>
-}
 const PdfDetails = ({ pdf, onDelete }: { pdf?: IPdfDocument; onDelete?: Noop }) => {
   const navigate = useNavigate()
   const [deleteDocumentModalVisible, setDeleteDocumentModalVisible] = useState(false)
   const { deleteDocumentById } = useDocumentStore()
+  const { t } = useTranslation()
   const handleDelete = () => {
     pdf?.id && deleteDocumentById(pdf.id), onDelete?.(), setDeleteDocumentModalVisible(false)
   }
@@ -50,21 +49,21 @@ const PdfDetails = ({ pdf, onDelete }: { pdf?: IPdfDocument; onDelete?: Noop }) 
         {pdf?.metadata?.author || 'Unknown'}
       </Content>
       <Content flex className={styles.detailsWrapper}>
-        <span>Last viewed</span>
+        <span>{t('collection.last viewed')}</span>
         <span>{pdf?.lastReadAt ? `${formatDistanceToNow(pdf?.lastReadAt || 0, { includeSeconds: false })} before` : 'never viewed'}</span>
       </Content>
       <Content flex className={styles.detailsWrapper}>
-        <span>Read Progress</span>
+        <span>{t('collection.read progress')}</span>
         <span>{Math.floor((pdf?.readProgress || 0) * 100)}%</span>
       </Content>
       <Content flex className={styles.detailsWrapper}>
-        <span>Total Notes</span>
+        <span>{t('collection.total notes')}</span>
         <span>{pdf?.noteIds?.length || 0}</span>
       </Content>
       <Content flex alignItems="center" justifyContent="space-between" className={styles.buttonWrapper}>
-        <Button onClick={() => navigate(`/pdf/${pdf?.id}`)}>Read</Button>
-        <Button onClick={() => setDeleteDocumentModalVisible(true)}>Delete</Button>
-        <Modal visible={deleteDocumentModalVisible} onClose={() => setDeleteDocumentModalVisible(false)}>
+        <Button onClick={() => navigate(`/pdf/${pdf?.id}`)}>{t('collection.open')}</Button>
+        <Button onClick={() => setDeleteDocumentModalVisible(true)}>{t('collection.delete')}</Button>
+        <Modal width={400} height={300} visible={deleteDocumentModalVisible} onClose={() => setDeleteDocumentModalVisible(false)}>
           <DeleteDocumentDialog onSubmit={handleDelete} onBack={() => setDeleteDocumentModalVisible(false)} />
         </Modal>
       </Content>
@@ -73,20 +72,29 @@ const PdfDetails = ({ pdf, onDelete }: { pdf?: IPdfDocument; onDelete?: Noop }) 
 }
 const NoteDetails = ({ note }: { note: INote }) => {
   const navigate = useNavigate()
+  const { t } = useTranslation()
   return (
     <Content flex column>
       <div className={styles.title}>{note.title}</div>
-      {note.createdAt && <div>Created at {format(note.createdAt, 'd MMM yyyy')}</div>}
-      {note.updatedAt && <div>Modified at {format(note.updatedAt, 'd MMM yyyy')}</div>}
+      {note.createdAt && (
+        <div>
+          {t('collection.created at')} {format(note.createdAt, 'd MMM yyyy')}
+        </div>
+      )}
+      {note.updatedAt && (
+        <div>
+          {t('collection.modified at')} {format(note.updatedAt, 'd MMM yyyy')}
+        </div>
+      )}
       <Content flex alignItems="center" justifyContent="space-between" className={styles.buttonWrapper}>
         <Button
           onClick={() => {
             navigate(`/editor/${note.id}`)
           }}
         >
-          Open
+          {t('collection.open')}
         </Button>
-        <Button onClick={() => {}}>Delete</Button>
+        <Button onClick={() => {}}>{t('collection.delete')}</Button>
       </Content>
     </Content>
   )

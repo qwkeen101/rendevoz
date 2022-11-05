@@ -29,16 +29,6 @@ const withShortcut = (editor: CustomEditor) => {
         Transforms.setNodes<SlateElement>(editor, newProperties, {
           match: n => Editor.isBlock(editor, n)
         })
-        if (type === 'list-item') {
-          const list: BulletedListElement = {
-            type: 'bulleted-list',
-            children: []
-          }
-          Transforms.wrapNodes(editor, list, {
-            match: n => !Editor.isEditor(n) && SlateElement.isElement(n) && n.type === 'list-item'
-          })
-        }
-
         return
       }
     }

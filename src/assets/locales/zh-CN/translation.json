@@ -13,6 +13,7 @@
         "setting": "设置"
     },
     "editor": {
+        "placeholder": "请输入",
         "untitled": "未命名",
         "save": "保存",
         "redo": "重做",
@@ -41,5 +42,50 @@
         "files": "文件",
         "language": "语言",
         "language description": "选择界面语言（未完全汉化）"
+    },
+    "form": {
+        "choose file": "选择文件",
+        "upload": "导入",
+        "create collection": "创建收藏夹",
+        "please input collection name": "请输入收藏夹名称!",
+        "under": "下属于",
+        "name": "名称"
+    },
+    "footer":{
+        "back": "返回",
+        "submit": "确认",
+        "choose": "选择"
+    },
+    "collection": {
+        "no collection placeholder": "暂无收藏夹",
+        "collections": "收藏夹",
+        "root": "根目录",
+        "files": "文件",
+        "notes": "笔记",
+        "last update at": "最近更新于",
+        "open": "打开",
+        "delete": "删除",
+        "read progress": "阅读进度",
+        "total notes": "总笔记数",
+        "last viewed": "上次打开",
+        "created at": "创建于",
+        "modified at": "修改于"
+    },
+    "dialog": {
+        "pdf document": "Pdf文档",
+        "import new pdf file": "导入新的Pdf文件",
+        "note": "笔记",
+        "open editor to write new note": "打开编辑器撰写新笔记",
+        "import new document": "导入新文档",
+        "please provide required information": "请提供必要的信息",
+        "name": "名称",
+        "name is required": "请输入必要的名称",
+        "description": "简介",
+        "you must upload one file": "必须导入一个文件",
+        "back": "返回",
+        "submit": "确定",
+        "choose": "选择",
+        "collections": "收藏夹",
+        "new collection": "新建收藏夹"
     }
 }

@@ -38,7 +38,7 @@ const DragHandle: IDragHandle = ({ left, top, targetHeight, visible, onMouseDown
           }}
         >
           <div style={{ position: 'absolute', left: -20, top: '50%', transform: 'translateY(-50%)', width: 18, height: 18 }}>
-            <Icon size={18} name="park-drag" />
+            <Icon size={18} name="park-drag" fill='#8590ae'/>
           </div>
         </motion.div>
       )}

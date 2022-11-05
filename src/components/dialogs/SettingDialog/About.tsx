@@ -1,4 +1,5 @@
 import { Content } from '@/components/base'
+import avatar from '@/assets/avatar.jpg'
 import { css } from '@emotion/css'
 
 const AboutSetting = () => {
@@ -13,7 +14,18 @@ const AboutSetting = () => {
           https://github.com/RealRong/Rendevoz
         </a>
       </p>
-      <p style={{ marginLeft: 'auto', fontWeight: 600 }}>Yours sincerely &nbsp;&nbsp;&nbsp; RealRong 2001 👨‍💻</p>
+      <p style={{ marginLeft: 'auto', marginRight: 30, fontWeight: 600, marginTop: 20, fontSize: 17 }}>
+        <img
+          src={avatar}
+          className={css({
+            borderRadius: 999,
+            width: 50,
+            height: 50,
+            margin: '0px 10px 0px 30px'
+          })}
+        />
+        <span>RealRong 2001</span>
+      </p>
     </Content>
   )
 }

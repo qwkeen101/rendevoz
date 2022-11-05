@@ -4,13 +4,13 @@ import usePdfjs from '@/hooks/utils/usePdfjs'
 import { ipcInstance } from '@/plugins'
 import useDocumentStore from '@/stores/document.store'
 import Id from '@/utils/id'
-import { RenderContent } from '@react-pdf-viewer/core'
-import { FC, memo, useCallback, useMemo, useRef, useState } from 'react'
+import { FC, memo, useRef } from 'react'
 import { ICollection, IPdfDocument } from '~/typings/data'
 import Form from '../../base/form'
 import FormItem from '../../base/form/FormItem'
 import { saveImageLocally } from '@/utils/img'
 import PdfJsUrl from '@/assets/pdf.worker.min.js?url'
+import { useTranslation } from 'react-i18next'
 interface NewDocumentFormProps {
   onBack: () => void
   onSubmit: (pdfDocument: IPdfDocument) => void
@@ -18,6 +18,7 @@ interface NewDocumentFormProps {
 }
 const NewDocumentForm: FC<NewDocumentFormProps> = ({ onBack, onSubmit, collection }) => {
   const { insertDocument } = useDocumentStore()
+  const { t } = useTranslation()
   const fileRef = useRef<File>()
   const pdfDocument = useRef<IPdfDocument>({
     id: Id.getId(),
@@ -26,7 +27,7 @@ const NewDocumentForm: FC<NewDocumentFormProps> = ({ onBack, onSubmit, collectio
   })
   const blobDb = useDb('blobs')
   const pdfjs = usePdfjs()
-  if(pdfjs){
+  if (pdfjs) {
     pdfjs.GlobalWorkerOptions.workerSrc = PdfJsUrl
   }
   const handleExtractMetadataOfPdf = (file: File) => {
@@ -85,26 +86,30 @@ const NewDocumentForm: FC<NewDocumentFormProps> = ({ onBack, onSubmit, collectio
         onSubmit(pdfDocument.current)
       }}
       onBack={onBack}
-      title="Import new document"
-      description="Please provide the required information"
+      title={t('dialog.import new document')}
+      description={t('dialog.please provide required information')}
     >
       <div style={{ fontSize: 16, marginBottom: 20, color: '#8590A6' }}>Collection: {collection.name}</div>
       <FormItem
         type="input"
-        text="Name"
+        text={t('dialog.name')}
+        requireMessage={t('dialog.name is required')}
+        required
         onChange={e => {
           pdfDocument.current.name = e
         }}
       ></FormItem>
       <FormItem
         type="textarea"
-        text="Description"
+        text={t('dialog.description')}
         onChange={e => {
           pdfDocument.current.description = e
         }}
       ></FormItem>
       <FormItem
         type="file"
+        required
+        requireMessage={t('dialog.you must upload one file')}
         onUpload={file => {
           fileRef.current = file
           handleExtractMetadataOfPdf(file)

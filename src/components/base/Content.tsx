@@ -1,7 +1,7 @@
-import { DragEventHandler, FC, forwardRef } from 'react'
+import { DetailedHTMLProps, forwardRef, HTMLAttributes } from 'react'
 import { Property } from 'csstype'
 
-interface ContentProps {
+interface ContentProps extends DetailedHTMLProps<HTMLAttributes<HTMLDivElement>, HTMLDivElement> {
   position?: 'absolute' | 'relative' | 'fixed'
   flex?: boolean
   column?: boolean
@@ -14,17 +14,6 @@ interface ContentProps {
   fullWidth?: boolean
   fullHeight?: boolean
   auto?: boolean
-  style?: React.CSSProperties
-  draggable?: boolean
-  onClick?: React.MouseEventHandler<HTMLDivElement>
-  onMouseDown?: React.MouseEventHandler
-  onMouseEnter?: React.MouseEventHandler
-  onMouseLeave?: React.MouseEventHandler
-  onDragStart?: DragEventHandler
-  onDragEnd?: DragEventHandler
-  onDrag?: DragEventHandler
-  onDragOver?: DragEventHandler
-  onDragEnter?: DragEventHandler
 }
 const Content = forwardRef<HTMLDivElement, ContentProps>(
   (
@@ -42,16 +31,7 @@ const Content = forwardRef<HTMLDivElement, ContentProps>(
       fullWidth,
       fullHeight,
       children,
-      onClick,
-      onMouseEnter,
-      onMouseLeave,
-      onMouseDown,
-      onDragStart,
-      onDragEnter,
-      onDragEnd,
-      onDragOver,
-      onDrag,
-      draggable
+      ...rest
     },
     ref
   ) => {
@@ -68,21 +48,7 @@ const Content = forwardRef<HTMLDivElement, ContentProps>(
       ...style
     }
     return (
-      <div
-        onMouseDown={onMouseDown}
-        onMouseEnter={onMouseEnter}
-        onMouseLeave={onMouseLeave}
-        onDragStart={onDragStart}
-        onDragEnd={onDragEnd}
-        onDragEnter={onDragEnter}
-        onDragOver={onDragOver}
-        onDrag={onDrag}
-        draggable={draggable}
-        onClick={onClick}
-        ref={ref}
-        className={className}
-        style={Style}
-      >
+      <div ref={ref} className={className} style={Style} {...rest}>
         {children}
       </div>
     )

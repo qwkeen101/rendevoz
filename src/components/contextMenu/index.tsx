@@ -1,3 +1,4 @@
+import { Noop } from '@/common/types'
 import { useMousePositionRef } from '@/hooks'
 import { cloneElement, forwardRef, memo, useEffect, useImperativeHandle, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
@@ -12,13 +13,14 @@ interface ContextMenuProps {
   content: React.ReactNode
   children: React.ReactNode
   onContextMenu?: (elementX: number, elementY: number, relativeX: number, relativeY: number) => void
-  closeOnChildrenClick?: boolean
+  onClose?: Noop
+  enableContextMenu?: boolean
 }
 export interface ContextMenuRef {
   closeContextMenu: () => void
 }
 const ContextMenu = forwardRef<ContextMenuRef, ContextMenuProps>(
-  ({ position = ['right', 'left'], children, content, onContextMenu }, ref) => {
+  ({ position = ['right', 'left'], children, content, onContextMenu, onClose, enableContextMenu = true }, ref) => {
     const mousePos = useMousePositionRef()
     const [inContainerMousePos, setInContainerMousePos] = useState<ContextMenuContext>()
     const memoizedPosition = useRef<[number, number]>([0, 0])
@@ -30,6 +32,7 @@ const ContextMenu = forwardRef<ContextMenuRef, ContextMenuProps>(
     }
     const closeContextMenu = () => {
       setContextMenuOpen(false)
+      onClose?.()
     }
     useImperativeHandle(ref, () => ({ closeContextMenu }), [])
     const renderChild = () =>
@@ -38,6 +41,9 @@ const ContextMenu = forwardRef<ContextMenuRef, ContextMenuProps>(
       })
     const renderContent = () => <ContextMenuProvider value={inContainerMousePos}>{content}</ContextMenuProvider>
     const handle = (e: MouseEvent) => {
+      if (!enableContextMenu) {
+        return
+      }
       e.preventDefault()
       e.stopPropagation()
       if (childRef.current) {
@@ -65,6 +71,7 @@ const ContextMenu = forwardRef<ContextMenuRef, ContextMenuProps>(
     })
     useClickAway(contentRef, () => {
       setContextMenuOpen(false)
+      onClose?.()
     })
     return (
       <>
@@ -72,6 +79,7 @@ const ContextMenu = forwardRef<ContextMenuRef, ContextMenuProps>(
           align="start"
           positions={position}
           visible={contextMenuOpen}
+          containerStyle={{ zIndex: '100000' }}
           content={<div ref={contentRef}>{renderContent()}</div>}
         >
           <PosHelper top={memoizedPosition.current?.[1]} left={memoizedPosition.current?.[0]} />

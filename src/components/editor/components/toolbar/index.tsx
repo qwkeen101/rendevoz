@@ -94,6 +94,7 @@ const EditorToolbar: FC<EditorToolbarProps> = ({
         </Select>
         <Toolbar.Item>
           <IconWithPopover
+            disableIntersection
             tooltip={t('editor.font color')}
             placement={['bottom']}
             size={16}

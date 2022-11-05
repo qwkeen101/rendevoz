@@ -84,6 +84,14 @@ const useDocumentStore = () => {
   const getDocumentById = (id: number) => {
     return all.find(i => i.id === id)
   }
+  const renameDocument = (documentId: number, newName: string) => {
+    const targetDocument = get(documentId, documents)
+    if (targetDocument) {
+      const newDocument = { ...targetDocument, name: newName }
+      setDocuments(update(newDocument, documents))
+      database.put(newDocument)
+    }
+  }
   useSWR('/api/all/documents', fetchItems)
   return useMemo(
     () => ({
@@ -97,7 +105,8 @@ const useDocumentStore = () => {
       insertDocument,
       updateDocument,
       getDocumentById,
-      deleteDocumentById
+      deleteDocumentById,
+      renameDocument
     }),
     [documents]
   )

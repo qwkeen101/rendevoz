@@ -1,5 +1,5 @@
 import { Noop } from '@/common/types'
-import { Panel, TabPane, Tabs } from '@/components'
+import { Content, Panel, TabPane, Tabs } from '@/components'
 import { isEditorInitialized } from '@/components/editor/EditorManager'
 import useEventEmitter from '@/events/useEventEmitter'
 import { useDebounceFn } from '@/hooks'
@@ -34,17 +34,21 @@ const SearchResult: FC<{
     }
   }, [queryString])
   return (
-    <Tabs defaultActiveKey="block">
-      <TabPane tab="Blocks" key="block">
-        {_(blocks)
-          .groupBy(i => i?.noteId)
-          .map((v, k) => ({ id: k, blocks: v }))
-          .value()
-          .map(i => (
-            <NoteResultItem onClick={onResultItemClick} id={Number(i.id)} blocks={i.blocks} queryString={queryString} />
-          ))}
-      </TabPane>
-    </Tabs>
+    <Content style={{ height: 'calc( 100% - 55px )', overflow: 'hidden' }}>
+      <Tabs defaultActiveKey="block">
+        <TabPane tab="Blocks" key="block" style={{ overflowY: 'auto' }}>
+          <Content flex column>
+            {_(blocks)
+              .groupBy(i => i?.noteId)
+              .map((v, k) => ({ id: k, blocks: v }))
+              .value()
+              .map(i => (
+                <NoteResultItem onClick={onResultItemClick} id={Number(i.id)} blocks={i.blocks} queryString={queryString} />
+              ))}
+          </Content>
+        </TabPane>
+      </Tabs>
+    </Content>
   )
 }
 const NoteResultItem = ({ id, queryString, blocks, onClick }: { id: number; queryString: string; blocks: any[]; onClick: Noop }) => {
@@ -88,15 +92,20 @@ const BlockResultItem = ({ id, queryString, block, onClick }: { id: number; quer
     if (!isEditorInitialized) {
       nav(`/editor/${block.noteId}`)
     }
-    setTimeout(() => {
-      emitter.emit('editor', {
-        type: 'jumpToBlock',
-        data: {
-          noteId: block.noteId,
-          blockId: block.id
-        }
-      })
-    }, 0)
+    const emit = () => {
+      if (isEditorInitialized) {
+        emitter.emit('editor', {
+          type: 'jumpToBlock',
+          data: {
+            noteId: block.noteId,
+            blockId: block.id
+          }
+        })
+        return
+      }
+      requestIdleCallback(emit)
+    }
+    requestIdleCallback(emit)
   }
   return (
     <div

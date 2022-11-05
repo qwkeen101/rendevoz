@@ -41,6 +41,7 @@ import { Breadcrumb, Content } from '../base'
 import withEmitter from './plugins/withEmitter'
 import withHtml from './plugins/withHtml'
 import { useTranslation } from 'react-i18next'
+import { ID_TO_ELEMENTS_MAP } from './weakMaps'
 
 type DragHandleProps = {
   left: number
@@ -103,12 +104,16 @@ export const EditorV1: FC<EditorProps> = memo(({ onEditorInitialized, onChange, 
   const blockElementsRef = useRef<Map<globalThis.Element, { left: number; top: number; height: number; width: number }>>(new Map())
   const blockElementsArrayRef = useRef([])
   const [dragHandle, setDragHandle] = useState<DragHandleProps>()
-  const indicatorRef = useRef<{ direction?: string; id?: number }>()
+  const indicatorRef = useRef<{ direction?: string; id?: number; isNested?: boolean }>()
   const scrollDirectionRef = useRef<string>()
   const scrollFramerId = useRef<number>()
   const emitter = useEventEmitter()
   const handler = new EditorEventHandler()
   const selectedRef = useSelectedEditorRef()
+  const previousIndicatorRef = useRef<{ direction: string | null; id: number | null }>({
+    direction: null,
+    id: null
+  })
   const { getNoteById, saveNote, findParentNotes, updateNote, saveNoteAndBlocks } = useNoteStore()
   const [note, setNote] = useState<INote | null>(null)
   const [currentDocument] = useCurrentDocument()
@@ -152,6 +157,7 @@ export const EditorV1: FC<EditorProps> = memo(({ onEditorInitialized, onChange, 
     }
     // avoid undo on synced
     editor.history = { redos: [], undos: [] }
+    onEditorInitialized?.()
   })
   const editor = useMemo(() => {
     return withVoid(
@@ -164,6 +170,7 @@ export const EditorV1: FC<EditorProps> = memo(({ onEditorInitialized, onChange, 
       )
     )
   }, [sharedType])
+  const elementsMap = ID_TO_ELEMENTS_MAP.get(editor)
   handler.on('switchTab', data => {
     if (data.tabId === id || data.noteId === noteId) {
       selectedRef.current = {
@@ -177,6 +184,8 @@ export const EditorV1: FC<EditorProps> = memo(({ onEditorInitialized, onChange, 
   })
   useEffect(() => {
     YjsEditor.connect(editor)
+    ID_TO_ELEMENTS_MAP.set(editor, new Map())
+    editor.noteId = noteId
     return () => YjsEditor.disconnect(editor)
   }, [editor])
   useLayoutEffect(() => {
@@ -190,9 +199,6 @@ export const EditorV1: FC<EditorProps> = memo(({ onEditorInitialized, onChange, 
     }
     return () => emitter.removeListener('editor', handler)
   }, [])
-  useEffect(() => {
-    onEditorInitialized?.()
-  }, [])
   const handleResetEditor = (value: Descendant[], title?: string) => {
     if (value) {
       editor.children = value
@@ -200,19 +206,23 @@ export const EditorV1: FC<EditorProps> = memo(({ onEditorInitialized, onChange, 
     }
     setTitle(title)
   }
-  const handleJumpToBlock = (blockId: number) => {
-    emitter.emit(
-      'editor',
-      {
-        type: 'selectBlock',
-        data: {
-          blockId
-        }
-      },
-      true
-    )
-  }
-
+  const handleJumpToBlock = useMemoizedFn((blockId: number) => {
+    const requestSelectBlock = () => {
+      const block = elementsMap?.get(blockId)
+      if (block) {
+        block.selectBlock()
+        return
+      }
+      requestIdleCallback(requestSelectBlock)
+    }
+    requestIdleCallback(requestSelectBlock)
+  })
+  const handleNestedListItem = useMemoizedFn((isNested: boolean) => {
+    indicatorRef.current = {
+      ...indicatorRef.current,
+      isNested
+    }
+  })
   const handleInsertNode = (element: CustomElement) => {
     element.id = Id.getId()
     if (element.type === 'emoji') {
@@ -268,14 +278,21 @@ export const EditorV1: FC<EditorProps> = memo(({ onEditorInitialized, onChange, 
   const handleDragDrop = () => {
     if (indicatorRef.current) {
       setDragHandle(undefined)
-      const { direction, id } = indicatorRef.current
-      let targetPath = Array.from(Node.descendants(editor)).find(i => i[0].id === id)?.[1]
+      const { direction, id, isNested } = indicatorRef.current
+      // get target block path
+      let [targetElement, targetPath] = Array.from(Node.descendants(editor)).find(i => i[0].id === id) || []
       // there are two situations in drag drop
       // 1.drag to insert
       // 2.drag to reorder
       const currPath = currentDraggingElementPath.current
+      const currElement = Editor.node(editor, currPath)
+      if (!currPath || !targetPath || !targetElement) return
+      const currParentPath = Path.parent(currPath)
+      // use pathRef to track path change
+      const currPathRef = Editor.pathRef(editor, currPath)
+      const currParentPathRef = Editor.pathRef(editor, currParentPath)
       // i don't know what is happening here,but it seems to be working...
-      const currParentElement = Editor.node(editor, Path.parent(currPath))
+      const currParentElement = Editor.node(editor, currParentPath)
       if (direction === 'top' || direction === 'bottom') {
         if (
           (Path.isAfter(currPath, targetPath) || !Path.isSibling(currPath, targetPath)) &&
@@ -283,6 +300,22 @@ export const EditorV1: FC<EditorProps> = memo(({ onEditorInitialized, onChange, 
           !Path.equals(currPath, targetPath)
         ) {
           targetPath = Path.next(targetPath)
+        }
+        if (targetElement.type === 'list-item' || targetElement.level) {
+          let nextLevel
+          if (isNested) {
+            nextLevel = targetElement.level + 1 || 1
+          } else {
+            nextLevel = targetElement.level || undefined
+          }
+          Transforms.setNodes(
+            editor,
+            {
+              level: nextLevel,
+              type: currElement[0].type === 'paragraph' ? 'list-item' : currElement[0].type
+            },
+            { at: currPath }
+          )
         }
 
         Transforms.moveNodes(editor, {
@@ -339,7 +372,6 @@ export const EditorV1: FC<EditorProps> = memo(({ onEditorInitialized, onChange, 
           )
           Transforms.removeNodes(editor, { at: currPath })
         } else {
-          const currParentPath = Path.parent(currPath)
           // left or right should insert new column at target path first
           // if there is only one block in the column and currPath = targetPath or targetPath = currPath + 1,do nothing
           const doesColumnOnlyHaveOneChild = Editor.node(editor, currParentPath)[0].children.length === 1
@@ -362,11 +394,9 @@ export const EditorV1: FC<EditorProps> = memo(({ onEditorInitialized, onChange, 
             },
             { at: targetPath }
           )
-          const isMoveForward = Path.isBefore(targetPath, Path.parent(currPath)) || Path.equals(targetPath, Path.parent(currPath))
           const targetColumnListId = Editor.node(editor, Path.parent(targetPath))[0].id
           Transforms.moveNodes(editor, {
-            // wtf is this ???
-            at: isMoveForward ? [currPath[0], currPath[1] + 1, currPath[2]] : currPath,
+            at: currPathRef.current,
             to: [...targetPath, 0]
           })
           // after insert new column,we need to recalculate the widths of all the columns
@@ -388,8 +418,9 @@ export const EditorV1: FC<EditorProps> = memo(({ onEditorInitialized, onChange, 
           })
         }
       }
-
-      const afterMoveCurrParent = Array.from(Node.descendants(editor)).find(i => i[0].id === currParentElement[0].id)
+      const afterMoveParentPath = currParentPathRef.unref()
+      currParentPathRef.unref()
+      const afterMoveCurrParent = Editor.node(editor, afterMoveParentPath)
       const afterMoveCurrParentNode = afterMoveCurrParent[0]
 
       if (!Path.equals(currParentElement[1], []) && Editor.isEmpty(editor, Editor.node(editor, afterMoveCurrParent[1])[0])) {
@@ -504,11 +535,11 @@ export const EditorV1: FC<EditorProps> = memo(({ onEditorInitialized, onChange, 
       const distanceToFirstBlock = getDistanceBetweenPointAndElement(e, firstBlock)
       const distanceToLastBlock = getDistanceBetweenPointAndElement(e, lastBlock)
       if (distanceToFirstBlock.top < 0 && distanceToFirstBlock.left > 0 && distanceToFirstBlock.right > 0) {
-        changeIndicator('top', getElementId(firstBlock))
+        changeIndicator('top', e, getElementId(firstBlock))
         return
       }
       if (distanceToLastBlock.bottom < 0 && distanceToLastBlock.left > 0 && distanceToLastBlock.right > 0) {
-        changeIndicator('bottom', getElementId(lastBlock))
+        changeIndicator('bottom', e, getElementId(lastBlock))
         return
       }
       return
@@ -520,14 +551,13 @@ export const EditorV1: FC<EditorProps> = memo(({ onEditorInitialized, onChange, 
 
     // right now dragging over column list,we do not determine the top / bottom direction of column list
     if (currentBlock?.getAttribute('data-spec-type') === 'columnList') {
-      console.log('yes')
       const columns = currentBlock.querySelectorAll(`[data-spec-type="column"]`)
       // check if dragging over the right blank space
       const lastColumn = Array.from(columns).pop()
       if (lastColumn) {
         const distance = getDistanceBetweenPointAndElement(e, lastColumn)
         if (distance.right < 0) {
-          changeIndicator('right', getElementId(lastColumn))
+          changeIndicator('right', e, getElementId(lastColumn))
           return
         }
       }
@@ -536,7 +566,7 @@ export const EditorV1: FC<EditorProps> = memo(({ onEditorInitialized, onChange, 
       for (const column of columns) {
         const distance = getDistanceBetweenPointAndElement(e, column)
         if (distance.left < 0) {
-          changeIndicator('left', getElementId(column))
+          changeIndicator('left', e, getElementId(column))
           return
         }
         if (distance.left > 0 && distance.right > 0) {
@@ -562,7 +592,7 @@ export const EditorV1: FC<EditorProps> = memo(({ onEditorInitialized, onChange, 
           if (distance.top / height < 0.5) {
             // we are on the top side and current dragging over block is the first one,so we can put the indicator above it
             if (currentDraggingOverBlock === draggingOverColumn.firstElementChild) {
-              changeIndicator('top', currentDraggingOverBlockId)
+              changeIndicator('top', e, currentDraggingOverBlockId)
               return
             } else {
               const previousBlockId = getElementId(currentDraggingOverBlock.previousElementSibling)
@@ -571,42 +601,38 @@ export const EditorV1: FC<EditorProps> = memo(({ onEditorInitialized, onChange, 
                 // do nothing here
                 return
               } else {
-                changeIndicator('bottom', previousBlockId)
+                changeIndicator('bottom', e, previousBlockId)
                 return
                 // we need to put the indicator under the previous block
               }
             }
           } else {
             // now we are dragging over the bottom 50% side
-            if (indicator && indicator.id === currentDraggingOverBlockId && indicator?.direction === 'bottom') {
-              // indicator is in the right position,do nothing here
-              return
-            } else {
-              changeIndicator('bottom', currentDraggingOverBlockId)
-              return
-            }
+            // we can't eagerly return right here because maybe we are dragging over list-item block so change indicator should be trigger for marker/line wrapper check
+            changeIndicator('bottom', e, currentDraggingOverBlockId)
+            return
           }
         } else {
           // now we are dragging over the blank space of the column,always the bottom side
           // so we should set indicator on the bottomest block
           const lastBlock = draggingOverColumn.lastElementChild
           const lastBlockId = getElementId(lastBlock)
-          changeIndicator('bottom', lastBlockId)
+          changeIndicator('bottom', e, lastBlockId)
           return
         }
       } else {
         const distance = getDistanceBetweenPointAndElement(e, currentBlock)
         const { height } = currentBlock.getBoundingClientRect()
         if (distance.top / height > 0.8) {
-          changeIndicator('bottom', currentBlockId)
+          changeIndicator('bottom', e, currentBlockId)
           return
         }
         if (distance.top / height < 0.2) {
           if (currentBlock === wrapperRef.current?.querySelector(`[role="textbox"]`)?.firstElementChild) {
-            changeIndicator('top', currentBlockId)
+            changeIndicator('top', e, currentBlockId)
             return
           } else {
-            changeIndicator('bottom', previousBlockId)
+            changeIndicator('bottom', e, previousBlockId)
             return
           }
         }
@@ -623,32 +649,30 @@ export const EditorV1: FC<EditorProps> = memo(({ onEditorInitialized, onChange, 
         if (getElementId(currentBlock) === getElementId(currentDraggingElement)) {
           return
         }
-        changeIndicator('right', currentBlockId)
+        changeIndicator('right', e, currentBlockId)
         return
       }
       if (distance.left < 0) {
         if (getElementId(currentBlock) === getElementId(currentDraggingElement)) {
           return
         }
-        changeIndicator('left', currentBlockId)
+        if (Number(currentBlock.getAttribute('data-level')) > 0) {
+          return
+        }
+        changeIndicator('left', e, currentBlockId)
         return
       }
       if (distance.top / height < 0.5) {
         if (currentBlock === currentBlock.parentElement?.firstElementChild) {
-          changeIndicator('top', currentBlockId)
+          changeIndicator('top', e, currentBlockId)
           return
         } else {
-          changeIndicator('bottom', previousBlockId)
+          changeIndicator('bottom', e, previousBlockId)
           return
         }
       } else {
-        if (indicator && indicator.direction === 'bottom' && indicator.id === currentBlockId) {
-          return
-          // do nothing here
-        } else {
-          changeIndicator('bottom', currentBlockId)
-          return
-        }
+        changeIndicator('bottom', e, currentBlockId)
+        return
       }
     }
   }, [])
@@ -715,6 +739,7 @@ export const EditorV1: FC<EditorProps> = memo(({ onEditorInitialized, onChange, 
       currentDraggingElementPath.current = ReactEditor.findPath(editor, element)
       const rect = wrapperRef.current?.getBoundingClientRect()
       const targetRect = e.currentTarget.getBoundingClientRect()
+      // const left = element?.type === 'list-item' || element?.level > 0 ? targetRect.x - rect?.x - 15 : targetRect.x - rect?.x
       setDragHandle({
         left: targetRect.x - rect?.x,
         top: targetRect.y - rect?.y + wrapperRef.current?.scrollTop,
@@ -732,27 +757,31 @@ export const EditorV1: FC<EditorProps> = memo(({ onEditorInitialized, onChange, 
     setOutlineVisible(!outlineVisible)
   })
 
-  const changeIndicator = (direction: string | null, id?: number) => {
+  const changeIndicator = useMemoizedFn((direction: string | null, e?: MouseEvent, id?: number) => {
+    console.log(id, direction)
     if (direction === null) {
       indicatorRef.current = undefined
-      emitter.emit('editor', {
-        type: 'indicatorChange',
-        data: {
-          direction: undefined,
-          id: undefined
-        }
-      })
-      return
+    } else {
+      indicatorRef.current = { direction, id }
     }
-    indicatorRef.current = { direction, id }
-    emitter.emit('editor', {
-      type: 'indicatorChange',
-      data: {
+    if (id) {
+      const block = elementsMap?.get(id)
+      block?.changeIndicator(direction, e)
+    }
+    const previousIndicator = previousIndicatorRef.current
+    if (previousIndicator.id === id && previousIndicator.direction === direction) {
+      return
+    } else {
+      if (previousIndicator.id) {
+        const prevBlock = elementsMap?.get(previousIndicator.id)
+        prevBlock?.changeIndicator(null)
+      }
+      previousIndicatorRef.current = {
         direction,
         id
       }
-    })
-  }
+    }
+  })
 
   const { run: debouncedChangeEditorValue } = useDebounceFn(
     value => {
@@ -762,6 +791,7 @@ export const EditorV1: FC<EditorProps> = memo(({ onEditorInitialized, onChange, 
   )
 
   const handleEditorValueChange = useMemoizedFn(value => {
+    console.log(value)
     debouncedChangeEditorValue(value)
   })
 
@@ -887,7 +917,7 @@ export const EditorV1: FC<EditorProps> = memo(({ onEditorInitialized, onChange, 
         marginBottom: 50
       }}
     >
-      <Modal visible={saveNoteVisible} onClose={() => setSaveNoteVisible(false)}>
+      <Modal width={500} height={400} visible={saveNoteVisible} onClose={() => setSaveNoteVisible(false)}>
         <SaveNoteDialog onCancel={() => setSaveNoteVisible(false)} onSubmit={handleSave} />
       </Modal>
       {parentNotes.length > 1 && (
@@ -913,24 +943,6 @@ export const EditorV1: FC<EditorProps> = memo(({ onEditorInitialized, onChange, 
         </Content>
       )}
       <div ref={wrapperRef} className={styles.Wrapper}>
-        {/* <MouseSelection onSelectionChange={() => {}} onSelectionEnd={() => {}} eventsElement={wrapperRef.current} /> */}
-        <DragHandle
-          onMouseDown={handleStartDragging}
-          // onClick={e => {
-          //   setOverlayVisible(!overlayVisible)
-          //   emitter.emit('editor', {
-          //     type: 'toggleOverlay',
-          //     data: {
-          //       top: dragHandle?.top + wrapperRef.current?.getBoundingClientRect()?.top,
-          //       left: dragHandle?.left + wrapperRef.current?.getBoundingClientRect()?.left,
-          //       content: 'dragHandleMenu'
-          //     }
-          //   })
-          //   e.stopPropagation()
-          // }}
-          {...dragHandle}
-          visible={!isDragging && !outlineVisible && !mindmapVisible}
-        />
         <div className={classNames(styles.InnerEditorWrapper, mindmapVisible && styles.MindmapVisible)}>
           <InnerEditor
             scrollElement={wrapperRef.current}
@@ -944,6 +956,7 @@ export const EditorV1: FC<EditorProps> = memo(({ onEditorInitialized, onChange, 
             onDividerDragEnd={handleDividerDragEnd}
             onDividerDragStart={handleDividerDragStart}
             onBlockMouseEnter={handleMouseEnter}
+            onNestedListItem={handleNestedListItem}
             onSave={handleOpenSave}
             onAddSubPage={handleAddSubPage}
             onToggleMindmap={handleToggleMindmap}
@@ -960,6 +973,23 @@ export const EditorV1: FC<EditorProps> = memo(({ onEditorInitialized, onChange, 
           }
         }}
         visible={overlayVisible}
+      />
+      <DragHandle
+        onMouseDown={handleStartDragging}
+        // onClick={e => {
+        //   setOverlayVisible(!overlayVisible)
+        //   emitter.emit('editor', {
+        //     type: 'toggleOverlay',
+        //     data: {
+        //       top: dragHandle?.top + wrapperRef.current?.getBoundingClientRect()?.top,
+        //       left: dragHandle?.left + wrapperRef.current?.getBoundingClientRect()?.left,
+        //       content: 'dragHandleMenu'
+        //     }
+        //   })
+        //   e.stopPropagation()
+        // }}
+        {...dragHandle}
+        visible={!isDragging && !outlineVisible && !mindmapVisible}
       />
       <div style={{ position: 'fixed', inset: 0, zIndex: 999, pointerEvents: 'none' }} role="dragging-layer">
         <div style={{ pointerEvents: 'auto', position: 'relative', zIndex: 0 }}>

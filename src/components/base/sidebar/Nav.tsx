@@ -24,11 +24,11 @@ const Navigation = () => {
   const { t } = useTranslation()
   return (
     <>
-      <Modal visible={searchVisible} onClose={() => setSearchVisible(false)}>
+      <Modal minWidth={600} minHeight={400} visible={searchVisible} onClose={() => setSearchVisible(false)}>
         <SearchDialog onSearchComplete={() => setSearchVisible(false)} />
       </Modal>
       <Modal visible={newItemVisible} onClose={() => setNewItemVisible(false)}>
-        <NewItemDialog />
+        <NewItemDialog onNewDocument={() => setNewItemVisible(false)} onNewNoteClick={() => setNewItemVisible(false)} />
       </Modal>
       <Modal visible={settingVisible} onClose={() => setSettingVisible(false)}>
         <SettingDialog />

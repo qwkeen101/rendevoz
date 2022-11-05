@@ -106,6 +106,20 @@
     h6{
         font-size: 15px;
     }
+    blockquote{
+        margin: 0;
+        padding-inline-start: 19px;
+        color: #646a73;
+        &::before{
+            left: 0;
+            top: 0;
+            bottom: 0;
+            position: absolute;
+            width: 1px;
+            content: '\200b';
+            border-left: 3px solid #8590ae;
+        }
+    }
 }
 .InnerEditorWrapper{
     *{

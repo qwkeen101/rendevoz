@@ -1,9 +1,20 @@
 .toolbar{
     display: flex;
     position: sticky !important;
-    top: 0;
-    background-color: white;
+    top: 5px;
+    margin-left: auto;
+    margin-right: auto;
+    background-color: rgba(255,255,255,0.8);
+    border-radius: 10px;
     z-index: 999;
+    width: fit-content;
+    box-shadow: rgba(100, 100, 111, 0.15) 0px 4px 15px 0px;
+    padding: 4px 10px 4px 4px;
+    height: 40px;
+    backdrop-filter: blur(4px);
+    > div{
+        background-color: transparent;
+    }
 }
 .image{
     background-size: 6000% 6000%;

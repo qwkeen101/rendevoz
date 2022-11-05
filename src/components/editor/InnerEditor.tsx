@@ -23,6 +23,7 @@ import Thought from './elements/thought'
 import styles from './index.module.less'
 import { getCaretGlobalPosition } from './utils/positions/caret'
 import { useTranslation } from 'react-i18next'
+import ListItem from './elements/listItem'
 
 type InnerEditorProps = {
   editor: CustomEditor
@@ -34,6 +35,7 @@ type InnerEditorProps = {
   onToggleMindmap: Noop
   onToggleOutline: Noop
   onBlockMouseEnter: (e: MouseEvent, element: CustomElement) => void
+  onNestedListItem: (isNested: boolean) => void
   onDividerDragStart: Noop
   onDividerDragEnd: (previousColumnWidthRatio: number, previousColumnPath: Path, nextColumnWidthRatio: number, nextColumnPath: Path) => void
   onSave?: (value: any[]) => void
@@ -53,6 +55,7 @@ const InnerEditor: FC<InnerEditorProps> = memo(
     onTitleChange,
     onSave,
     onAddSubPage,
+    onNestedListItem,
     onRendered,
     scrollElement
   }) => {
@@ -67,8 +70,8 @@ const InnerEditor: FC<InnerEditorProps> = memo(
       }
     })
     useEffect(() => {
-      onRendered?.()
-    }, [])
+      console.log('eee')
+    }, [editor.children])
     const handleChange = useMemoizedFn((value: Descendant[]) => {
       onChange?.(value)
       if (getCaretGlobalPosition()) {
@@ -123,6 +126,7 @@ const InnerEditor: FC<InnerEditorProps> = memo(
               id={String(element.id)}
               element={element}
               onMouseEnter={onBlockMouseEnter}
+              onNestedListItem={onNestedListItem}
               attributes={attributes}
               type={element.type}
               scrollElement={scrollElement}
@@ -170,7 +174,19 @@ const InnerEditor: FC<InnerEditorProps> = memo(
       }
       if (isHotkey('tab', e)) {
         e.preventDefault()
-        Transforms.insertText(editor, '\u2003')
+        const currBlock = Editor.above(editor, { match: n => Editor.isBlock(editor, n) })
+        const { selection } = editor
+        if (
+          (currBlock[0].type === 'list-item' || currBlock?.[0].level > 0) &&
+          selection &&
+          Editor.isStart(editor, selection?.anchor, currBlock?.[1])
+        ) {
+          Transforms.setNodes(editor, {
+            level: currBlock[0].level ? (currBlock[0].level > 5 ? 6 : currBlock[0].level + 1) : 1
+          })
+        } else {
+          Transforms.insertText(editor, '\u2003')
+        }
       }
       for (const hotkey in HOTKEYS) {
         if (isHotkey(hotkey, e)) {
@@ -222,7 +238,7 @@ const InnerEditor: FC<InnerEditorProps> = memo(
           </div>
         </Content>
         <Editable
-          onPaste={() => false}
+          suppressContentEditableWarning={true}
           autoFocus
           spellCheck="false"
           onFocus={e => {
@@ -281,9 +297,9 @@ const Element = (props: RenderElementProps) => {
       case 'paragraph':
         return <Paragraph {...props} />
       case 'block-quote':
-        return <blockquote {...attributes}>{children}</blockquote>
+        return <blockquote>{children}</blockquote>
       case 'bulleted-list':
-        return <ul {...attributes}>{children}</ul>
+        return <ul>{children}</ul>
       case 'heading-one':
         return <Heading level={0} {...props} />
       case 'heading-two':
@@ -297,7 +313,7 @@ const Element = (props: RenderElementProps) => {
       case 'heading-six':
         return <Heading level={5} {...props} />
       case 'list-item':
-        return <li {...attributes}>{children}</li>
+        return <ListItem {...props} />
       case 'highlight':
         return <Highlight {...props} />
       case 'spacer':

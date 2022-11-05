@@ -15,11 +15,9 @@ const SearchDialog: FC<SearchDialogProps> = ({ onSearchComplete }) => {
   const [search, setSearch] = useState()
   const [autoCompleteVisible, setAutoCompleteVisible] = useState(false)
   const canAutoCompleteRef = useRef(true)
-  // useEffect(() => {
-  //   getTokens()
-  // }, [])
+
   return (
-    <div style={{ height: 300, width: 500 }}>
+    <div style={{ height: 500, width: 700 }}>
       <Content style={{ height: '55px' }}>
         <Content
           flex

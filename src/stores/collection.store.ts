@@ -15,7 +15,7 @@ const { orderedData } = BaseStore
 
 const collectionsAtom = atom<Map<number, ICollection>>(new Map())
 
-const allAtom = atom(get => orderedData(get(collectionsAtom)))
+const allAtom = atom(get => orderedData(get(collectionsAtom)).filter(i => !i.deleted))
 
 const rootCollectionsAtom = atom(get =>
   orderBy(
@@ -29,7 +29,7 @@ const useCollectionStore = () => {
   const database = useDb('collections')
   const { fetchItemsByIds, getDocumentById, all: documents } = useDocumentStore()
   const { getNoteById } = useNoteStore()
-  const { add, get, update } = BaseStore
+  const { add, get, update, remove } = BaseStore
 
   const all = useAtomValue(allAtom, GlobalScope)
 
@@ -176,6 +176,31 @@ const useCollectionStore = () => {
     setCollections(add(c, collections))
     return c
   }
+  const renameCollection = (collectionId: number, newName: string) => {
+    const targetCollection = get(collectionId, collections)
+    if (targetCollection) {
+      const newCollection = { ...targetCollection, name: newName }
+      setCollections(update(newCollection, collections))
+      database.put(newCollection)
+    }
+  }
+  const updateCollection = (newCollection: ICollection) => {
+    const originCollection = get(newCollection.id, collections)
+    newCollection = {
+      ...originCollection,
+      ...newCollection
+    }
+    setCollections(update(newCollection, collections))
+    database.put(newCollection)
+  }
+  const deleteCollection = (collectionId: number) => {
+    const collection = get(collectionId, collections)
+    collection &&
+      updateCollection({
+        ...collection,
+        deleted: true
+      })
+  }
   useSWR('/api/all/collections', fetchCollections)
   return useMemo(
     () => ({
@@ -191,7 +216,10 @@ const useCollectionStore = () => {
       getChildrenDocuments,
       addItemToCollection,
       getChildrenItems,
-      findSubCollections
+      findSubCollections,
+      renameCollection,
+      updateCollection,
+      deleteCollection
     }),
     [collections, documents]
   )

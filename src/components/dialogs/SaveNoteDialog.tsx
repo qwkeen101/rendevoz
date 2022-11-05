@@ -25,7 +25,7 @@ const SaveNoteDialog: FC<Omit<IDialog, 'onSubmit'> & { onSubmit: (confirm: boole
     onSubmit?.(confirm, collection)
   }
   return (
-    <Content style={{ maxWidth: 400, minWidth: 300, minHeight: 300, position: 'relative' }}>
+    <Content fullHeight fullWidth>
       <SwitchAnimation direction={chooseCollectionVisible}>
         {switchwrapper =>
           chooseCollectionVisible

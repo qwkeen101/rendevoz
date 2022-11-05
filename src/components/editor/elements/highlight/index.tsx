@@ -29,8 +29,7 @@ const Highlight: FC<RenderElementProps> = ({ element, children, attributes }) =>
               initial={{ height: 0, opacity: 0 }}
               animate={{ height: 'auto', opacity: 1 }}
               exit={{ height: 0, opacity: 0 }}
-            >
-            </motion.div>
+            ></motion.div>
           ) : undefined}
         </AnimatePresence>
       </Content>

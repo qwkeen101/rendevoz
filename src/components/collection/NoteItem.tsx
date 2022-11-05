@@ -11,9 +11,10 @@ import { AnimatePresence, motion } from 'framer-motion'
 interface NoteItemProps {
   note: INote
   onClick?: (note: INote) => void
+  onContextMenu?: (note: INote) => void
 }
 
-const NoteItem: FC<NoteItemProps> = ({ note, onClick }) => {
+const NoteItem: FC<NoteItemProps> = ({ note, onClick, onContextMenu }) => {
   const { findSubNotes, all } = useNoteStore()
   const [subNotes, setSubNotes] = useState<INote[]>([])
   const [collapsed, toggleCollapsed] = useToggle(true)
@@ -30,7 +31,16 @@ const NoteItem: FC<NoteItemProps> = ({ note, onClick }) => {
   }
   return (
     <>
-      <Menu.Item id={note?.id} onClick={handleClick} icon={<Icon name="park-notes" />} type="button">
+      <Menu.Item
+        onContextMenu={() => {
+          console.log('zz')
+          onContextMenu?.(note)
+        }}
+        id={note?.id}
+        onClick={handleClick}
+        icon={<Icon name="park-notes" />}
+        type="button"
+      >
         {subNotes?.length > 0 && (
           <div
             style={{ transform: !collapsed ? 'rotate(90deg) translateY(-50%)' : 'translateY(-50%)' }}
@@ -46,7 +56,7 @@ const NoteItem: FC<NoteItemProps> = ({ note, onClick }) => {
           <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }}>
             <Content style={{ paddingLeft: '10px' }}>
               {subNotes?.map(i => (
-                <NoteItem note={i} onClick={onClick} />
+                <NoteItem onContextMenu={onContextMenu} note={i} onClick={onClick} />
               ))}
             </Content>
           </motion.div>

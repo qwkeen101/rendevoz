@@ -1,7 +1,9 @@
+import { AnimatePopover } from '@/components'
 import { PrettyInput } from '@/components/custom/input/pretty'
 import ColorPicker from '@/components/picker/colorPicker'
 import classNames from 'classnames'
 import { FC, ReactNode, useEffect, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import Content from '../Content'
 import WithBorder from '../WithBorder'
 import styles from './index.module.less'
@@ -44,6 +46,7 @@ interface FormItemCommonProps {
 }
 type FormItemProps = FormItemCommonProps & FormItemConditionalProps
 const FormItem: FC<FormItemProps> = ({ onChange, onUpload, text, type, children, required, requireMessage }) => {
+  const { t } = useTranslation()
   const [innerValue, setInnerValue] = useState<File | string>()
   const [color, setColor] = useState<string>()
   const [colorPickerVisible, setColorPickerVisible] = useState(false)
@@ -64,6 +67,8 @@ const FormItem: FC<FormItemProps> = ({ onChange, onUpload, text, type, children,
           const inputHeight = parseInt(window.getComputedStyle(input).height)
           const top = inputMarginTop + inputHeight / 2
           childrenContainer.setAttribute('style', `--top:${top}px`)
+        } else {
+          childrenContainer.setAttribute('style', '--top: 50%')
         }
       }
     }
@@ -97,7 +102,7 @@ const FormItem: FC<FormItemProps> = ({ onChange, onUpload, text, type, children,
         const file = innerValue as File | undefined
         return (
           <div className={styles.file}>
-            {file ? <span className={styles.filename}>Filename: {file.name}</span> : <span>Choose file</span>}
+            {file ? <span className={styles.filename}>Filename: {file.name}</span> : <span>{t('form.choose file')}</span>}
             {file ? (
               <button onClick={e => setInnerValue(undefined)} className={styles.button}>
                 Cancel
@@ -105,7 +110,7 @@ const FormItem: FC<FormItemProps> = ({ onChange, onUpload, text, type, children,
             ) : (
               <>
                 <button className={styles.button} onClick={e => fileUploaderRef.current?.click()}>
-                  Upload
+                  {t('form.upload')}
                 </button>
                 <input
                   ref={fileUploaderRef}
@@ -129,7 +134,7 @@ const FormItem: FC<FormItemProps> = ({ onChange, onUpload, text, type, children,
           <Content flex alignItems="center" justifyContent="space-between">
             <span>{text}</span>
             <AnimatePopover
-              containerStyle={{ zIndex: 999 }}
+              containerStyle={{ zIndex: '999' }}
               padding={10}
               visible={colorPickerVisible}
               content={

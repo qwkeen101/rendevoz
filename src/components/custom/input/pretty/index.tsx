@@ -40,7 +40,7 @@ export const PrettyInput: React.FC<Props> = forwardRef((props, ref) => {
     }
   })
   useEffect(() => {
-    setValue(externalValue)
+    externalValue && setValue(externalValue)
   }, [externalValue])
   return (
     <div
@@ -109,6 +109,7 @@ export const PrettyInput: React.FC<Props> = forwardRef((props, ref) => {
           className={styles.Input}
           ref={inputRef}
           onFocus={() => {
+            console.log(value)
             setSmall(true)
             setFocused(true)
           }}

@@ -2,6 +2,7 @@ import { Button } from '@/components/base/button'
 import { Provider } from 'jotai'
 import { createContext, CSSProperties, FC, useState } from 'react'
 import Content from '../Content'
+import Footer from '../footer'
 import FormItem from './FormItem'
 import styles from './index.module.less'
 import { useCanSubmit } from './useCanSubmit'
@@ -28,27 +29,15 @@ const InnerForm: FC<FormProps> = ({ children, title, description, onBack, onSubm
         {description && <div className={styles.description}>{description}</div>}
         {children}
       </Content>
-      <div className={styles.toolbar}>
-        <Button
-          className={styles.back}
-          onClick={() => {
-            onBack?.()
-          }}
-        >
-          Back
-        </Button>
-        <Button
-          className={styles.submit}
-          onClick={() => {
-            if (canSubmit) {
-              onSubmit?.()
-            }
-            setIsSubmitted(true)
-          }}
-        >
-          Submit
-        </Button>
-      </div>
+      <Footer
+        onBack={onBack}
+        onSubmit={() => {
+          if (canSubmit) {
+            onSubmit?.()
+          }
+          setIsSubmitted(true)
+        }}
+      />
     </div>
   )
 }

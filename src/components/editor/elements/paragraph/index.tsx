@@ -1,12 +1,14 @@
 import { EditorEventHandler } from '@/events/editorEvent'
 import useEventEmitter from '@/events/useEventEmitter'
 import { FC, useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Range } from 'slate'
 import { RenderElementProps, useSelected, useSlate } from 'slate-react'
 import styles from './index.module.less'
 
 const Paragraph: FC<RenderElementProps> = ({ children, element }) => {
   const [hidePlaceHolder, setHidePlaceHolder] = useState(false)
+  const { t } = useTranslation()
   const handler = new EditorEventHandler()
   const emitter = useEventEmitter()
   const selected = useSelected()
@@ -33,6 +35,7 @@ const Paragraph: FC<RenderElementProps> = ({ children, element }) => {
   }, [element])
   return (
     <div
+      data-placeholder={t('editor.placeholder')}
       style={{ fontSize: element.children[0].text === '' ? element.children[0].fontSize : undefined }}
       className={selected && isCollapsed && isEmpty && !hidePlaceHolder ? styles.selectedEmpty : undefined}
     >

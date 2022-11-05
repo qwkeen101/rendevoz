@@ -7,15 +7,18 @@ import MenuItem from '../base/menu/MenuItem'
 import Icon from '../base/Icon'
 import styles from './index.module.less'
 import { isDocument, isNote } from './utils'
+import { useTranslation } from 'react-i18next'
 
 interface CollectionItemProps {
   collection: ICollection
   selected?: boolean
   onClick?: MouseEventHandler
   onDoubleClick?: MouseEventHandler
+  onContextMenu?: MouseEventHandler
 }
 
-const CollectionItem: FC<CollectionItemProps> = ({ collection, selected, onClick, onDoubleClick }) => {
+const CollectionItem: FC<CollectionItemProps> = ({ collection, selected, onClick, onDoubleClick, onContextMenu }) => {
+  const { t } = useTranslation()
   const { getChildrenCollections, getChildrenDocuments, getChildrenItems } = useCollectionStore()
   const childrenCollections = getChildrenCollections(collection.id)
   const [childrenItems, setChildrenItems] = useState([])
@@ -23,7 +26,7 @@ const CollectionItem: FC<CollectionItemProps> = ({ collection, selected, onClick
   const childrenDocuments = childrenItems.filter(i => isDocument(i)) as IPdfDocument[]
   useEffect(() => {
     getChildrenItems(collection.id).then(items => {
-      setChildrenItems(items.filter(i => !!i))
+      setChildrenItems(items.filter(i => !!i && !i.deleted))
     })
   }, [collection.id])
   return (
@@ -31,6 +34,7 @@ const CollectionItem: FC<CollectionItemProps> = ({ collection, selected, onClick
       id={collection.id}
       onClick={onClick}
       onDoubleClick={onDoubleClick}
+      onContextMenu={onContextMenu}
       icon={<Icon name="park-folder-close" />}
       selected={selected}
       type="button"
@@ -38,10 +42,18 @@ const CollectionItem: FC<CollectionItemProps> = ({ collection, selected, onClick
       <Content flex column>
         <span className={styles.collectionItemName}>{collection.name}</span>
         <Content flex gap={10} className={styles.collectionItemDetails}>
-          <span>{childrenCollections?.length} Collections</span>
-          <span>{childrenDocuments?.length} Files</span>
-          <span>{childrenNotes.length} Notes</span>
-          <span>Last updated at {format(collection.updatedAt, 'd MMM y')}</span>
+          <span>
+            {childrenCollections?.length} {t('collection.collections')}
+          </span>
+          <span>
+            {childrenDocuments?.length} {t('collection.files')}
+          </span>
+          <span>
+            {childrenNotes.length} {t('collection.notes')}
+          </span>
+          <span>
+            {t('collection.last update at')} {format(collection.updatedAt, 'd MMM y')}
+          </span>
         </Content>
       </Content>
     </MenuItem>

@@ -18,14 +18,6 @@ const checkIfSpacerNeeded = (element: Node) => {
 }
 const withCustomComponent = (editor: CustomEditor) => {
   const { deleteBackward, insertText, insertBreak, deleteForward, insertNode, insertFragment, apply } = editor
-  editor.insertData = data => {
-    console.log(data)
-    const d = data.getData('text/plain')
-    const html = data.getData('text/html')
-    const parsed = new DOMParser().parseFromString(html, 'text/html')
-    console.log(d, parsed)
-    return
-  }
   editor.insertSoftBreak = () => {
     editor.insertBreak()
   }

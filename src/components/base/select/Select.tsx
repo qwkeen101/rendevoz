@@ -23,6 +23,7 @@ interface SelectProps {
   className?: string
   onSelect: (value: string[]) => void
   style?: CSSProperties
+  menuStyle?: CSSProperties
 }
 interface ISelect extends FC<SelectProps> {
   Option: typeof SelectOption
@@ -35,6 +36,7 @@ const Select: ISelect = ({
   onSelect,
   placeholder,
   style,
+  menuStyle,
   className,
   value,
   defaultValue,
@@ -100,7 +102,7 @@ const Select: ISelect = ({
   const renderSingle = () => {
     const name = menuItems.find(i => i.value === selected[0])?.name
     return (
-      <Content flex>
+      <Content flex centered>
         <span className={styles.placeholder}>
           {placeholder ? (
             <div>
@@ -123,6 +125,7 @@ const Select: ISelect = ({
       content={
         <WithBorder style={{ padding: '8px 0px' }} borderRadius={5}>
           <SelectMenu
+            style={menuStyle}
             menuItems={menuItems}
             selectedItems={selected}
             onDeSelect={value => {
@@ -188,6 +191,7 @@ const Select: ISelect = ({
   )
 }
 const SelectMenu: FC<{
+  style?: CSSProperties
   menuItems: {
     name: string
     value: string
@@ -195,9 +199,9 @@ const SelectMenu: FC<{
   onSelect: (value: string) => void
   onDeSelect: (value: string) => void
   selectedItems: string[]
-}> = ({ menuItems, onDeSelect, onSelect, selectedItems }) => {
+}> = ({ menuItems, onDeSelect, onSelect, selectedItems, style }) => {
   return (
-    <Menu>
+    <Menu style={style}>
       {menuItems.map(item => (
         <Menu.Item
           onClick={() => {

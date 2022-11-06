@@ -75,6 +75,8 @@ const withHtml = (editor: CustomEditor) => {
   editor.insertData = data => {
     const html = data.getData('text/html')
     const slateFragment = data.getData('application/x-slate-fragment')
+    const plainText = data.getData('text/plain')
+    console.log(plainText)
     if (slateFragment) {
       ReactEditor.insertFragmentData(editor, data)
       return
@@ -86,7 +88,6 @@ const withHtml = (editor: CustomEditor) => {
       Transforms.insertFragment(editor, fragment)
       return
     }
-
     insertData(data)
   }
 

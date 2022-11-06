@@ -13,6 +13,7 @@
         "setting": "Settings"
     },
     "editor": {
+        "placeholder": "Input something",
         "untitled": "Untitled",
         "save": "Save",
         "redo": "Redo",
@@ -41,5 +42,50 @@
         "files": "Files",
         "language": "Language",
         "language description": "Choose display language"
+    },
+    "form": {
+        "choose file": "Choose file",
+        "upload": "Upload",
+        "create collection": "Create collection",
+        "please input collection name": "Please input collection name!",
+        "under": "Under",
+        "name": "Name"
+    },
+    "footer":{
+        "back": "Back",
+        "submit": "Submit",
+        "choose": "Choose"
+    },    
+    "collection": {
+        "no collection placeholder": "No collection yet,create one?",
+        "collections": "Collections",
+        "root": "Root",
+        "files": "Files",
+        "notes": "Notes",
+        "last update at": "Last updated at",
+        "open": "Open",
+        "delete": "Delete",
+        "read progress": "Read progress",
+        "total notes": "Total notes",
+        "last viewed": "Last viewed at",
+        "created at": "Crated at",
+        "modified at": "Modified at"
+    },
+    "dialog": {
+        "pdf document": "Pdf document",
+        "import new pdf file": "Import new pdf file",
+        "note": "Note",
+        "open editor to write new note": "Open editor to write new note",
+        "import new document": "Inport new document",
+        "please provide required information": "Please provide required information",
+        "name": "Name",
+        "name is required": "Name is required",
+        "description": "Description",
+        "you must upload one file": "You must upload one file!",
+        "back": "Back",
+        "submit": "Submit",
+        "choose": "Choose",
+        "collections": "Collections",
+        "new collection": "New collection"
     }
 }

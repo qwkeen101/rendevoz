@@ -76,7 +76,8 @@ const EditorToolbar: FC<EditorToolbarProps> = ({
           }
           value={getFontSize()}
           defaultValue="14px"
-          style={{ maxWidth: '50px', margin: '0px 0px 0px 10px' }}
+          menuStyle={{ width: 90, minWidth: 70 }}
+          style={{ width: 80, margin: '0px 0px 0px 10px', padding: '0 8px' }}
           onSelect={value => {
             onChangeFontSize(value[0])
           }}

@@ -1,5 +1,5 @@
 export const getCaretGlobalPosition = () => {
-  if(window.getSelection()?.rangeCount === 0){
+  if (window.getSelection()?.rangeCount === 0) {
     return
   }
   const r = window.getSelection()?.getRangeAt(0)
@@ -13,11 +13,11 @@ export const getCaretGlobalPosition = () => {
     r2.setEnd(node, offset)
     rect = r2.getBoundingClientRect()
     return { left: rect.right + scrollOffset.x, top: rect.bottom + scrollOffset.y }
-  }else{
+  } else {
     r2 = document.createRange()
-    r2.setStart(node,offset)
-    r2.setEnd(node,offset)
+    r2.setStart(node, offset)
+    r2.setEnd(node, offset)
     rect = r2.getBoundingClientRect()
-    return {left: rect.right + scrollOffset.x,top: rect.bottom + scrollOffset.y}
+    return { left: rect.right + scrollOffset.x, top: rect.bottom + scrollOffset.y }
   }
 }

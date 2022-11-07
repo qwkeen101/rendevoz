@@ -1,7 +1,7 @@
 import Icon from '@/components/base/Icon'
 import Menu from '@/components/base/menu'
 import { AnimatePresence, LayoutGroup, motion } from 'framer-motion'
-import { CSSProperties, FC, ReactElement, useEffect, useState } from 'react'
+import { CSSProperties, FC, ReactElement, useEffect, useRef, useState } from 'react'
 import AnimatePopover from '../AnimatePopover'
 import Content from '../Content'
 import SelectOption, { SelectOptionProps } from './SelectOption'
@@ -48,6 +48,7 @@ const Select: ISelect = ({
   if (defaultValue) {
     d = [defaultValue]
   }
+  const containerRef = useRef<HTMLDivElement>(null)
   const [selected, setSelected] = useState<string[]>(d)
   let v = null
   if (value) {
@@ -118,79 +119,83 @@ const Select: ISelect = ({
     )
   }
   return (
-    <AnimatePopover
-      visible={menuVisible}
-      positions={['bottom']}
-      onClickOutside={() => setMenuVisible(false)}
-      padding={10}
-      containerStyle={{ zIndex: '10000' }}
-      content={
-        <WithBorder style={{ padding: '8px 0px' }} borderRadius={5}>
-          <SelectMenu
-            style={menuStyle}
-            menuItems={menuItems}
-            selectedItems={selected}
-            onDeSelect={value => {
-              if (!deselectable) {
-                return
-              }
-              setSelected(() => {
-                const newSelected = selected.filter(o => o !== value)
-                onSelect(newSelected)
-                return newSelected
-              })
-              if (closeOnSelect) {
-                setMenuVisible(false)
-              }
-            }}
-            onSelect={value => {
-              if (multiple) {
+    <div ref={containerRef}>
+      <AnimatePopover
+        visible={menuVisible}
+        positions={['bottom']}
+        onClickOutside={() => setMenuVisible(false)}
+        padding={10}
+        disableNudge
+        containerStyle={{ zIndex: '10000' }}
+        parentElement={containerRef.current}
+        content={
+          <WithBorder style={{ padding: '8px 0px' }} borderRadius={5}>
+            <SelectMenu
+              style={menuStyle}
+              menuItems={menuItems}
+              selectedItems={selected}
+              onDeSelect={value => {
+                if (!deselectable) {
+                  return
+                }
                 setSelected(() => {
-                  const newSelected = [...selected, value]
+                  const newSelected = selected.filter(o => o !== value)
                   onSelect(newSelected)
                   return newSelected
                 })
-              } else {
-                setSelected(() => {
-                  const newSelected = [value]
-                  onSelect(newSelected)
-                  return newSelected
-                })
-              }
-              if (closeOnSelect) {
-                setMenuVisible(false)
-              }
-            }}
-          />
-        </WithBorder>
-      }
-    >
-      <Content
-        onMouseDown={e => e.preventDefault()}
-        style={style}
-        className={classNames(
-          styles.selectContainer,
-          hideUnderlineWhenNotHover ? styles.hideUnderline : undefined,
-          menuVisible ? styles.focused : undefined,
-          disabled ? styles.disabled : undefined,
-          className
-        )}
-        onClick={() => !disabled && setMenuVisible(!menuVisible)}
-        flex
+                if (closeOnSelect) {
+                  setMenuVisible(false)
+                }
+              }}
+              onSelect={value => {
+                if (multiple) {
+                  setSelected(() => {
+                    const newSelected = [...selected, value]
+                    onSelect(newSelected)
+                    return newSelected
+                  })
+                } else {
+                  setSelected(() => {
+                    const newSelected = [value]
+                    onSelect(newSelected)
+                    return newSelected
+                  })
+                }
+                if (closeOnSelect) {
+                  setMenuVisible(false)
+                }
+              }}
+            />
+          </WithBorder>
+        }
       >
-        {disabled ? null : selected.length ? (
-          <Content fullWidth flex justifyContent="space-between">
-            {multiple ? renderMultiple() : renderSingle()}
-            <Icon name="park-down" />
-          </Content>
-        ) : (
-          <Content fullWidth flex justifyContent="space-between">
-            <span className={styles.placeholder}>{placeholder}</span>
-            <Icon name="park-down" />
-          </Content>
-        )}
-      </Content>
-    </AnimatePopover>
+        <Content
+          onMouseDown={e => e.preventDefault()}
+          style={style}
+          className={classNames(
+            styles.selectContainer,
+            hideUnderlineWhenNotHover ? styles.hideUnderline : undefined,
+            menuVisible ? styles.focused : undefined,
+            disabled ? styles.disabled : undefined,
+            className
+          )}
+          onClick={() => !disabled && setMenuVisible(!menuVisible)}
+          flex
+        >
+          {disabled ? null : selected.length ? (
+            <Content fullWidth flex justifyContent="space-between">
+              {multiple ? renderMultiple() : renderSingle()}
+              <Icon name="park-down" />
+            </Content>
+          ) : (
+            <Content fullWidth flex justifyContent="space-between">
+              <span className={styles.placeholder}>{placeholder}</span>
+              <Icon name="park-down" />
+            </Content>
+          )}
+        </Content>
+      </AnimatePopover>
+    </div>
   )
 }
 const SelectMenu: FC<{

@@ -234,15 +234,17 @@ export const EditorV1: FC<EditorProps> = memo(
     })
     const handleInsertEmoji = element => {
       const { selection } = editor
-      const isCollapsed = selection && Range.isCollapsed(selection)
       const ele = {
         type: element.type,
         name: element.name,
-        children: isCollapsed ? element.children : []
+        children: element.children
       }
-      if (isCollapsed) {
-        Transforms.insertNodes(editor, ele)
-      }
+      Transforms.insertNodes(editor, ele, { at: Range.end(selection) })
+      Transforms.move(editor,{
+        edge: 'end',
+        distance: 1,
+        unit: 'word'
+      })
     }
 
     const handleElementPropertyChange = (element: CustomElement) => {

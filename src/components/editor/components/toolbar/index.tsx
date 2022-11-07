@@ -4,17 +4,23 @@ import { Content, Toolbar, WithBorder } from '@/components/base'
 import Select from '@/components/base/select'
 import Menu from '@/components/base/menu'
 import IconWithPopover from '@/components/base/IconWithPopover'
-import { CSSProperties, FC, useRef } from 'react'
-import { Editor } from 'slate'
-import { useSlate } from 'slate-react'
+import { CSSProperties, FC, useEffect, useRef, useState } from 'react'
+import { Editor, Range, Selection, Transforms } from 'slate'
+import { ReactEditor, useSlate } from 'slate-react'
 import styles from './index.module.less'
 import { useTranslation } from 'react-i18next'
 import classNames from 'classnames'
+import { Position } from '@/types'
+import { createPortal } from 'react-dom'
+import { AnimatePresence, motion } from 'framer-motion'
+import { useSetting } from '@/hooks'
+import { restoreSelection, saveSelection } from '../../utils/positions/selection'
 
 interface EditorToolbarProps {
-  position: 'top' | 'bottom' | 'float'
+  selection: Position & { selection: Selection }
   fontSize?: number
   alignment?: string
+  scrollElement?: HTMLElement
   onRedo: Noop
   onUndo: Noop
   onBold: Noop
@@ -29,6 +35,7 @@ interface EditorToolbarProps {
   onAddSubPage?: Noop
   style?: CSSProperties
 }
+const MAX_TOLERANT_DISTANCE = 15
 const EditorToolbar: FC<EditorToolbarProps> = ({
   onRedo,
   onSave,
@@ -42,14 +49,75 @@ const EditorToolbar: FC<EditorToolbarProps> = ({
   onToggleMindmap,
   onToggleEmoji,
   onAddSubPage,
-  position,
+  scrollElement,
   style
 }) => {
   const { t } = useTranslation()
   const editor = useSlate()
   const { selection } = editor
+  const [setting] = useSetting()
+  const position = setting.editor.toolbarPosition
   const currentElement = selection ? Editor.node(editor, selection?.anchor?.path, { depth: 1 }) : null
-  // console.log(currentElement)
+  const toolbarRef = useRef<HTMLElement>(null)
+  const [floatPosition, setFloatPosition] = useState<{
+    top: number
+    left: number
+    direction: string
+  }>()
+  const handleMouseUp = (e: MouseEvent) => {
+    const { selection } = editor
+    const windowSelection = window.getSelection()
+    if (
+      selection &&
+      windowSelection &&
+      windowSelection.toString().length > 0 &&
+      !Range.isCollapsed(selection) &&
+      !toolbarRef.current?.contains(e.target)
+    ) {
+      const anchorPoint = ReactEditor.toDOMPoint(editor, selection.anchor)
+      const focusPoint = ReactEditor.toDOMPoint(editor, selection.focus)
+      const anchorRange = document.createRange()
+      anchorRange.setStart(anchorPoint[0], anchorPoint[1])
+      anchorRange.setEnd(anchorPoint[0], anchorPoint[1])
+      const anchorRect = anchorRange.getBoundingClientRect()
+      const focusRange = document.createRange()
+      focusRange.setStart(focusPoint[0], focusPoint[1])
+      focusRange.setEnd(focusPoint[0], focusPoint[1])
+      const focusRect = focusRange.getBoundingClientRect()
+      let direction = 'top'
+      if (anchorRect.bottom < focusRect.bottom && Math.abs(anchorRect.bottom - focusRect.bottom) > MAX_TOLERANT_DISTANCE) {
+        direction = 'bottom'
+      }
+      setFloatPosition({
+        left: focusRect.left,
+        top: focusRect.top - (direction === 'top' ? 50 : -(focusRect.height + 10)),
+        direction
+      })
+    }
+  }
+  const handleMouseDown = (e: MouseEvent) => {
+    if (!toolbarRef.current?.contains(e.target)) {
+      window.getSelection()?.empty()
+      setFloatPosition(undefined)
+    } else {
+      window.getSelection()?.addRange(ReactEditor.toDOMRange(editor, selection))
+    }
+  }
+  const handleScroll = e => {
+    setFloatPosition(undefined)
+  }
+  useEffect(() => {
+    if (position === 'float') {
+      document.addEventListener('mouseup', handleMouseUp)
+      document.addEventListener('mousedown', handleMouseDown)
+      scrollElement?.addEventListener('scroll', handleScroll)
+      return () => {
+        document.removeEventListener('mouseup', handleMouseUp)
+        document.removeEventListener('mousedown', handleMouseDown)
+        scrollElement?.removeEventListener('scroll', handleScroll)
+      }
+    }
+  })
   const morePopoverRef = useRef()
   const isMarkActive = format => {
     const marks = Editor.marks(editor)
@@ -57,119 +125,124 @@ const EditorToolbar: FC<EditorToolbarProps> = ({
   }
   const getFontSize = () => {
     const marks = Editor.marks(editor)
-    return marks ? (marks['fontSize'] ? marks['fontSize'] : '16px') : '16px'
+    return marks ? (marks['fontSize'] ? marks['fontSize'] : '14px') : '16px'
   }
   const getFontColor = () => {
     const marks = Editor.marks(editor)
     return marks ? marks['fontColor'] : undefined
   }
-  return (
-    <>
-      <Toolbar
-        className={classNames(styles.toolbar, position === 'top' && styles.top, position === 'bottom' && styles.bottom)}
-        style={style}
-        itemClickPreventDefault
-        itemSize={16}
-      >
-        {/* <Toolbar.Item iconName="park-mindmap-list" onClick={onToggleOutline} />
+  const renderToolbar = () => (
+    <Toolbar
+      innerRef={toolbarRef}
+      className={classNames(
+        styles.toolbar,
+        position === 'float' && styles.float,
+        position === 'top' && styles.top,
+        position === 'bottom' && styles.bottom
+      )}
+      style={style}
+      itemClickPreventDefault
+      itemSize={16}
+    >
+      {/* <Toolbar.Item iconName="park-mindmap-list" onClick={onToggleOutline} />
         <Toolbar.Item iconName="park-mindmap-map" onClick={onToggleMindmap} /> */}
-        <Toolbar.Item tooltip={t('editor.save')} iconName="park-save" onClick={onSave} />
-        <Toolbar.Item tooltip={t('editor.undo')} iconName="park-return" onClick={onUndo} />
-        <Toolbar.Item tooltip={t('editor.redo')} iconName="park-go-on" onClick={onRedo} />
-        <Select
-          closeOnSelect
-          hideUnderlineWhenNotHover
-          disabled={
-            currentElement &&
-            ['heading-one', 'heading-two', 'heading-three', 'heading-four', 'heading-five', 'heading-six'].includes(currentElement[0].type)
+      <Toolbar.Item tooltip={t('editor.save')} iconName="park-save" onClick={onSave} />
+      <Toolbar.Item tooltip={t('editor.undo')} iconName="park-return" onClick={onUndo} />
+      <Toolbar.Item tooltip={t('editor.redo')} iconName="park-go-on" onClick={onRedo} />
+      <Select
+        closeOnSelect
+        hideUnderlineWhenNotHover
+        disabled={
+          currentElement &&
+          ['heading-one', 'heading-two', 'heading-three', 'heading-four', 'heading-five', 'heading-six'].includes(currentElement[0].type)
+        }
+        value={getFontSize()}
+        defaultValue="14px"
+        menuStyle={{ width: 90, minWidth: 70 }}
+        style={{ width: 80, margin: '0px 0px 0px 10px', padding: '0 8px' }}
+        onSelect={value => {
+          onChangeFontSize(value[0])
+        }}
+      >
+        <Select.Option value="14px">14px</Select.Option>
+        <Select.Option value="16px">16px</Select.Option>
+        <Select.Option value="20px">20px</Select.Option>
+        <Select.Option value="24px">24px</Select.Option>
+        <Select.Option value="28px">28px</Select.Option>
+        <Select.Option value="32px">32px</Select.Option>
+        <Select.Option value="36px">36px</Select.Option>
+        <Select.Option value="40px">40px</Select.Option>
+        <Select.Option value="50px">50px</Select.Option>
+        <Select.Option value="60px">60px</Select.Option>
+      </Select>
+      <Toolbar.Item>
+        <IconWithPopover
+          disableIntersection
+          tooltip={t('editor.font color')}
+          placement={['bottom']}
+          size={16}
+          name="park-font-size-two"
+          color={getFontColor()}
+          content={
+            <WithBorder>
+              <ColorPicker onPick={onChangeFontColor} />
+            </WithBorder>
           }
-          value={getFontSize()}
-          defaultValue="14px"
-          menuStyle={{ width: 90, minWidth: 70 }}
-          style={{ width: 80, margin: '0px 0px 0px 10px', padding: '0 8px' }}
-          onSelect={value => {
-            onChangeFontSize(value[0])
-          }}
-        >
-          <Select.Option value="14px">14px</Select.Option>
-          <Select.Option value="16px">16px</Select.Option>
-          <Select.Option value="20px">20px</Select.Option>
-          <Select.Option value="24px">24px</Select.Option>
-          <Select.Option value="28px">28px</Select.Option>
-          <Select.Option value="32px">32px</Select.Option>
-          <Select.Option value="36px">36px</Select.Option>
-          <Select.Option value="40px">40px</Select.Option>
-          <Select.Option value="50px">50px</Select.Option>
-          <Select.Option value="60px">60px</Select.Option>
-        </Select>
-        <Toolbar.Item>
-          <IconWithPopover
-            disableIntersection
-            tooltip={t('editor.font color')}
-            placement={['bottom']}
-            size={16}
-            name="park-font-size-two"
-            color={getFontColor()}
-            content={
-              <WithBorder>
-                <ColorPicker onPick={onChangeFontColor} />
-              </WithBorder>
-            }
-          ></IconWithPopover>
-        </Toolbar.Item>
-        <Toolbar.Item tooltip={t('editor.bold')} isActive={isMarkActive('bold')} iconName="park-text-bold" onClick={onBold} />
-        <Toolbar.Item tooltip={t('editor.italic')} isActive={isMarkActive('italic')} iconName="park-text-italic" onClick={onItalic} />
-        <Toolbar.Item
-          tooltip={t('editor.underline')}
-          isActive={isMarkActive('underline')}
-          iconName="park-text-underline"
-          onClick={onUnderline}
-        />
-        <Toolbar.Item>
-          <IconWithPopover
-            innerRef={morePopoverRef}
-            disableIntersection
-            tooltip={t('editor.more')}
-            name="park-more"
-            placement={['bottom']}
-            content={
-              <WithBorder style={{ padding: '8px 0px' }}>
-                <Menu>
-                  <Menu.Group title={t('editor.inline elements')}>
-                    <Menu.Item
-                      type="button"
-                      onClick={e => {
-                        e.stopPropagation()
-                        onToggleEmoji?.()
-                        morePopoverRef.current?.close()
-                      }}
-                    >
-                      <IconWithDescription
-                        title="Emoji"
-                        description={t('editor.use emoji to express your ideas')}
-                        icon="park-message-emoji"
-                      ></IconWithDescription>
-                    </Menu.Item>
-                    {/* <Menu.Item type="button">
+        ></IconWithPopover>
+      </Toolbar.Item>
+      <Toolbar.Item tooltip={t('editor.bold')} isActive={isMarkActive('bold')} iconName="park-text-bold" onClick={onBold} />
+      <Toolbar.Item tooltip={t('editor.italic')} isActive={isMarkActive('italic')} iconName="park-text-italic" onClick={onItalic} />
+      <Toolbar.Item
+        tooltip={t('editor.underline')}
+        isActive={isMarkActive('underline')}
+        iconName="park-text-underline"
+        onClick={onUnderline}
+      />
+      <Toolbar.Item>
+        <IconWithPopover
+          innerRef={morePopoverRef}
+          disableIntersection
+          tooltip={t('editor.more')}
+          name="park-more"
+          placement={['bottom']}
+          content={
+            <WithBorder style={{ padding: '8px 0px' }}>
+              <Menu>
+                <Menu.Group title={t('editor.inline elements')}>
+                  <Menu.Item
+                    type="button"
+                    onClick={e => {
+                      e.stopPropagation()
+                      onToggleEmoji?.()
+                      morePopoverRef.current?.close()
+                    }}
+                  >
+                    <IconWithDescription
+                      title="Emoji"
+                      description={t('editor.use emoji to express your ideas')}
+                      icon="park-message-emoji"
+                    ></IconWithDescription>
+                  </Menu.Item>
+                  {/* <Menu.Item type="button">
                       <IconWithDescription title="Link" description="Link to external pages" icon="park-link-one"></IconWithDescription>
                     </Menu.Item> */}
-                  </Menu.Group>
-                  <Menu.Group title={t('editor.block elements')}>
-                    <Menu.Item
-                      type="button"
-                      onClick={e => {
-                        e.stopPropagation()
-                        onAddSubPage?.()
-                        morePopoverRef.current?.close()
-                      }}
-                    >
-                      <IconWithDescription
-                        title={t('editor.sub page')}
-                        description={t('editor.add sub page')}
-                        icon="park-doc-detail"
-                      ></IconWithDescription>
-                    </Menu.Item>
-                    {/* <Menu.Item
+                </Menu.Group>
+                <Menu.Group title={t('editor.block elements')}>
+                  <Menu.Item
+                    type="button"
+                    onClick={e => {
+                      e.stopPropagation()
+                      onAddSubPage?.()
+                      morePopoverRef.current?.close()
+                    }}
+                  >
+                    <IconWithDescription
+                      title={t('editor.sub page')}
+                      description={t('editor.add sub page')}
+                      icon="park-doc-detail"
+                    ></IconWithDescription>
+                  </Menu.Item>
+                  {/* <Menu.Item
                       type="button"
                       onClick={e => {
                         e.stopPropagation()
@@ -183,17 +256,40 @@ const EditorToolbar: FC<EditorToolbarProps> = ({
                         icon="park-key"
                       ></IconWithDescription>
                     </Menu.Item> */}
-                  </Menu.Group>
-                </Menu>
-              </WithBorder>
-            }
-          ></IconWithPopover>
-        </Toolbar.Item>
-        {/* <Toolbar.Item iconName="park-ordered-list"></Toolbar.Item>
+                </Menu.Group>
+              </Menu>
+            </WithBorder>
+          }
+        ></IconWithPopover>
+      </Toolbar.Item>
+      {/* <Toolbar.Item iconName="park-ordered-list"></Toolbar.Item>
       <Toolbar.Item iconName="park-unordered-list"></Toolbar.Item> */}
-      </Toolbar>
-    </>
+    </Toolbar>
   )
+  const renderFloatToolbar = () =>
+    createPortal(
+      <AnimatePresence>
+        {floatPosition && (
+          <motion.div
+            key="editorTool"
+            initial={{ opacity: 0, y: floatPosition.direction === 'top' ? -20 : 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: floatPosition.direction === 'top' ? -20 : 20 }}
+            style={{
+              position: 'fixed',
+              top: floatPosition.top,
+              left: floatPosition.left,
+              zIndex: 9999
+            }}
+          >
+            {renderToolbar()}
+          </motion.div>
+        )}
+      </AnimatePresence>,
+      document.body,
+      'editorToolbar'
+    )
+  return position === 'float' ? renderFloatToolbar() : renderToolbar()
 }
 
 const IconWithDescription: FC<{

@@ -15,7 +15,7 @@ export interface ToolbarProps {
   itemSize?: number
   itemClickPreventDefault?: boolean
   style?: CSSProperties
-  ref?: Ref<HTMLDivElement>
+  innerRef?: Ref<HTMLDivElement>
 }
 interface IToolbar extends FC<ToolbarProps> {
   Item: typeof ToolbarItem
@@ -30,7 +30,7 @@ const Toolbar: IToolbar = ({
   itemClickPreventDefault = false,
   style,
   itemClassName,
-  ref
+  innerRef
 }) => {
   let tools
 
@@ -51,7 +51,7 @@ const Toolbar: IToolbar = ({
   }
 
   return (
-    <Content ref={ref} style={style} flex centered className={classNames(styles.toolbar, className)} column={direction === 'vertical'}>
+    <Content ref={innerRef} style={style} flex centered className={classNames(styles.toolbar, className)} column={direction === 'vertical'}>
       {tools}
     </Content>
   )

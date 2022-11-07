@@ -1,8 +1,9 @@
 import { Content } from '@/components/base'
 import Select from '@/components/base/select'
+import { useSetting } from '@/hooks'
+import produce from 'immer'
 import { ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useLocalStorage } from 'react-use'
 import SettingItem from './Item'
 
 const SupportedLangs = {
@@ -10,7 +11,7 @@ const SupportedLangs = {
   'zh-CN': '简体中文'
 }
 const AppearanceSetting = () => {
-  const [lang, setLang] = useLocalStorage('lang', Object.keys(SupportedLangs)[0], { raw: true })
+  const [setting, setSetting] = useSetting()
   const { t, i18n } = useTranslation()
   const appearance: { title: string; description: string; children: ReactNode }[] = [
     {
@@ -23,9 +24,13 @@ const AppearanceSetting = () => {
           style={{ width: 200 }}
           onSelect={v => {
             i18n.changeLanguage(v[0])
-            setLang(v[0])
+            setSetting(
+              produce(setting, draft => {
+                draft.appearance.language = v[0]
+              })
+            )
           }}
-          defaultValue={lang}
+          defaultValue={setting.appearance.language}
         >
           {Object.entries(SupportedLangs).map(([key, value]) => (
             <Select.Option value={key}>{value}</Select.Option>

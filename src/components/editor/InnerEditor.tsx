@@ -5,7 +5,7 @@ import { Position } from '@/types'
 import Id from '@/utils/id'
 import isHotkey from 'is-hotkey'
 import { FC, FormEventHandler, memo, useCallback, useEffect, useRef } from 'react'
-import { Descendant, Editor, Path, Range, Transforms, Element as SlateElement, Node } from 'slate'
+import { Descendant, Editor, Path, Range, Transforms, Element as SlateElement, Node, Selection } from 'slate'
 import { ReactEditor, Slate, Editable, RenderElementProps, RenderLeafProps } from 'slate-react'
 import { Content } from '../base'
 import EditorToolbar from './components/toolbar'
@@ -24,6 +24,7 @@ import styles from './index.module.less'
 import { getCaretGlobalPosition } from './utils/positions/caret'
 import { useTranslation } from 'react-i18next'
 import ListItem from './elements/listItem'
+import { getSelectionDirection } from './utils/positions/selection'
 
 type InnerEditorProps = {
   editor: CustomEditor
@@ -64,14 +65,13 @@ const InnerEditor: FC<InnerEditorProps> = memo(
     const renderInnerElement = useCallback((props: RenderElementProps) => <Element {...props} />, [])
     const renderLeaf = useCallback((props: RenderLeafProps) => <Leaf {...props} />, [])
     const caretPositionRef = useRef<Position>()
-    const handleMouseDown = useMemoizedFn(() => {
+
+
+    const handleMouseDown = useMemoizedFn((e: MouseEvent) => {
       if (getCaretGlobalPosition()) {
         caretPositionRef.current = getCaretGlobalPosition()
       }
     })
-    useEffect(() => {
-      console.log('eee')
-    }, [editor.children])
     const handleChange = useMemoizedFn((value: Descendant[]) => {
       onChange?.(value)
       if (getCaretGlobalPosition()) {
@@ -196,9 +196,11 @@ const InnerEditor: FC<InnerEditorProps> = memo(
         }
       }
     })
+
     return (
       <Slate editor={editor} onChange={handleChange} value={defaultValue}>
         <EditorToolbar
+          scrollElement={scrollElement}
           onSave={onSave}
           onToggleMindmap={onToggleMindmap}
           onToggleOutline={onToggleOutline}

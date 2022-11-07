@@ -7,6 +7,7 @@ import { useTranslation } from 'react-i18next'
 import { useLocalStorage } from 'react-use'
 import AboutSetting from './About'
 import AppearanceSetting from './Appearance'
+import EditorSetting from './Editor'
 import SettingSidebarItem from './SidebarItem'
 
 enum Settings {
@@ -28,6 +29,8 @@ const SettingDialog = () => {
         return <AppearanceSetting />
       case 'about':
         return <AboutSetting />
+      case 'editor':
+        return <EditorSetting />
     }
   }
   return (

@@ -9,8 +9,10 @@ import { Editor } from 'slate'
 import { useSlate } from 'slate-react'
 import styles from './index.module.less'
 import { useTranslation } from 'react-i18next'
+import classNames from 'classnames'
 
 interface EditorToolbarProps {
+  position: 'top' | 'bottom' | 'float'
   fontSize?: number
   alignment?: string
   onRedo: Noop
@@ -40,6 +42,7 @@ const EditorToolbar: FC<EditorToolbarProps> = ({
   onToggleMindmap,
   onToggleEmoji,
   onAddSubPage,
+  position,
   style
 }) => {
   const { t } = useTranslation()
@@ -62,7 +65,12 @@ const EditorToolbar: FC<EditorToolbarProps> = ({
   }
   return (
     <>
-      <Toolbar className={styles.toolbar} style={style} itemClickPreventDefault itemSize={16}>
+      <Toolbar
+        className={classNames(styles.toolbar, position === 'top' && styles.top, position === 'bottom' && styles.bottom)}
+        style={style}
+        itemClickPreventDefault
+        itemSize={16}
+      >
         {/* <Toolbar.Item iconName="park-mindmap-list" onClick={onToggleOutline} />
         <Toolbar.Item iconName="park-mindmap-map" onClick={onToggleMindmap} /> */}
         <Toolbar.Item tooltip={t('editor.save')} iconName="park-save" onClick={onSave} />
@@ -70,6 +78,7 @@ const EditorToolbar: FC<EditorToolbarProps> = ({
         <Toolbar.Item tooltip={t('editor.redo')} iconName="park-go-on" onClick={onRedo} />
         <Select
           closeOnSelect
+          hideUnderlineWhenNotHover
           disabled={
             currentElement &&
             ['heading-one', 'heading-two', 'heading-three', 'heading-four', 'heading-five', 'heading-six'].includes(currentElement[0].type)

@@ -94,10 +94,5 @@
     "typescript": "^4.8.4",
     "vite": "^3.1.4",
     "vite-electron-plugin": "^0.4.6"
-  },
-  "debug": {
-    "env": {
-      "VITE_DEV_SERVER_URL": "http://127.0.0.1:7777"
-    }
   }
 }

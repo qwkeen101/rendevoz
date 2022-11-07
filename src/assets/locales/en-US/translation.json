@@ -13,6 +13,8 @@
         "setting": "Settings"
     },
     "editor": {
+        "unsaved notes": "Unsaved notes",
+        "confirm leave": "Are you sure you want to leave this page?",
         "placeholder": "Input something",
         "untitled": "Untitled",
         "save": "Save",

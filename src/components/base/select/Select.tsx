@@ -9,11 +9,12 @@ import styles from './index.module.less'
 import WithBorder from '../WithBorder'
 import classNames from 'classnames'
 import { isArray } from 'lodash'
-import { useUpdateEffect } from '@/hooks'
 
 interface SelectProps {
   multiple?: boolean
   value?: string | string[]
+  // wtf is this?
+  hideUnderlineWhenNotHover?: boolean
   closeOnSelect?: boolean
   disabled?: boolean
   deselectable?: boolean
@@ -40,7 +41,8 @@ const Select: ISelect = ({
   className,
   value,
   defaultValue,
-  deselectable
+  deselectable,
+  hideUnderlineWhenNotHover
 }) => {
   let d = []
   if (defaultValue) {
@@ -168,6 +170,7 @@ const Select: ISelect = ({
         style={style}
         className={classNames(
           styles.selectContainer,
+          hideUnderlineWhenNotHover ? styles.hideUnderline : undefined,
           menuVisible ? styles.focused : undefined,
           disabled ? styles.disabled : undefined,
           className

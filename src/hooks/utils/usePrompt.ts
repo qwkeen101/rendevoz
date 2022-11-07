@@ -15,10 +15,14 @@ export function useConfirmExit(canExit: boolean, onExit?: () => void, when = tru
     const push = navigator.push
 
     navigator.push = (...args: Parameters<typeof push>) => {
-      onExit?.()
-      pushRef.current = {
-        push,
-        args
+      if (!canExit) {
+        onExit?.()
+        pushRef.current = {
+          push,
+          args
+        }
+      } else {
+        push(...args)
       }
     }
 

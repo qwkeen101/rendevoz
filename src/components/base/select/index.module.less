@@ -9,8 +9,11 @@
     border-bottom: @default-border;
     transition: @default-transition;
     height: 34px;
+    &.hideUnderline{
+        border-bottom: 1px solid transparent;
+    }
     &:hover{
-        border-bottom: 1px solid @default-link-color;
+        border-bottom: 1px solid @default-link-color !important;
     }
     &.focused{
         border-bottom: 1px solid @default-link-color;

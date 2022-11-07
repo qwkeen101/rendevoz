@@ -5,7 +5,7 @@ export const useRefCallback = () => {
   // https://stackoverflow.com/a/52334964
   const [ref] = useState(() => ({
     value: 1,
-    callback: (newValue, lastValue) => { console.log(newValue, lastValue) },
+    callback: (newValue: any, lastValue: any) => { console.log(newValue, lastValue) },
     get current () {
       return ref.value
     },

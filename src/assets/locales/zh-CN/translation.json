@@ -13,6 +13,8 @@
         "setting": "设置"
     },
     "editor": {
+        "unsaved notes": "未保存的页面",
+        "confirm leave": "你确定要离开吗?",
         "placeholder": "请输入",
         "untitled": "未命名",
         "save": "保存",

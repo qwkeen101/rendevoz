@@ -1,6 +1,6 @@
 import './dock.less'
 import DockLayout, { DockContext, LayoutData, PanelData, TabData } from '../base/dock'
-import { cloneElement, FC, useCallback, useMemo, useRef } from 'react'
+import { cloneElement, FC, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import EditorManagerMenu from '../menus/EditorManagerMenu'
 import { useSelectedEditorRef } from './hooks/useSelectedEditorRef'
 import useEventEmitter from '@/events/useEventEmitter'
@@ -16,7 +16,10 @@ import { useIsomorphicLayoutEffect } from 'react-use'
 import { useTranslation } from 'react-i18next'
 import { useConfirmExit } from '@/hooks/utils/usePrompt'
 import Modal from '../base/modal'
-import { useToggle } from '@/hooks'
+import { useMemoizedFn, useToggle } from '@/hooks'
+import { css } from '@emotion/css'
+import produce from 'immer'
+import { useForceUpdate } from 'framer-motion'
 
 const EditorManagerMenuPopover = ({ panel = {} as PanelData, context = {} as DockContext }) => {
   const popoverRef = useRef()
@@ -56,8 +59,19 @@ const EditorManager: FC<EditorManagerProps> = ({ initialNoteId, documentId, onSa
   const { t } = useTranslation()
   const { saveNote, getNoteById, updateNote } = useNoteStore()
   const [confirmVisible, toggleConfirmVisible] = useToggle(false)
-  const [canExit, toggleCanExit] = useToggle(false)
-  // useConfirmExit(canExit, toggleConfirmVisible)
+  const [canExit, setCanExit] = useState(false)
+  const [notesMap, setNotesMap] = useState(new Map())
+  const unsavedNotes = Array.from(notesMap.values()).filter(i => i.unsaved)
+  useEffect(() => {
+    console.log(notesMap)
+    if (unsavedNotes.length === 0) {
+      setCanExit(true)
+    } else {
+      setCanExit(false)
+    }
+    console.log(canExit)
+  }, [notesMap])
+  useConfirmExit(canExit, toggleConfirmVisible)
   eventHandler.on('foldHeading', data => {
     selectedEditorRef?.current?.foldHeading(data.headingId, data.folded)
   })
@@ -115,13 +129,11 @@ const EditorManager: FC<EditorManagerProps> = ({ initialNoteId, documentId, onSa
     layoutRef.current?.updateTab(targetTab?.id, targetTab)
   })
   eventHandler.on('jumpToBlock', data => {
-    console.log('123123213213213')
     // wtf is this?
     insertOrSwitchTab({
       noteId: data.noteId,
       isNew: false
     }).then(() => {
-      console.log('sdsdasdsadsadsa')
       selectedEditorRef.current?.jumpToBlock(data.blockId)
     })
   })
@@ -210,6 +222,52 @@ const EditorManager: FC<EditorManagerProps> = ({ initialNoteId, documentId, onSa
       }
     }
   }
+  const handleTitleChange = useMemoizedFn((title: string, id: string, noteId: number) => {
+    const oldTab = layoutRef.current?.find(id) as TabData
+    const newTitle = title === 'Untitled' || !title ? t('editor.untitled') : title
+    const newTab = {
+      ...oldTab,
+      title: cloneElement(oldTab.title, {}, newTitle)
+    }
+    layoutRef.current?.updateTab(id, newTab)
+    setNotesMap(
+      produce(notesMap, draft => {
+        draft.set(noteId, {
+          ...draft.get(noteId),
+          title: newTitle
+        })
+      })
+    )
+  })
+  const handleNoteSave = useMemoizedFn((noteId: number) => {
+    setNotesMap(
+      produce(notesMap, draft => {
+        draft.set(noteId, {
+          ...draft.get(noteId),
+          unsaved: false
+        })
+      })
+    )
+  })
+  const handleTabClose = useMemoizedFn((tab: TabData) => {
+    setNotesMap(
+      produce(notesMap, draft => {
+        draft.delete(tab.noteId)
+      })
+    )
+  })
+  const handleInitialized = useMemoizedFn((id: string, noteId: number, title?: string, isSaved?: boolean) => {
+    setNotesMap(
+      produce(notesMap, draft => {
+        draft.set(noteId, {
+          noteId,
+          id,
+          title: title === 'Untitled' || !title ? t('editor.untitled') : title,
+          unsaved: !isSaved
+        })
+      })
+    )
+  })
   const defaultEditor = useCallback(
     ({
       id,
@@ -238,7 +296,18 @@ const EditorManager: FC<EditorManagerProps> = ({ initialNoteId, documentId, onSa
         title: <div>{title === 'Untitled' || !title ? t('editor.untitled') : title}</div>,
         content: (
           <div key={id} style={{ display: 'flex', height: '100%', paddingBottom: 30 }}>
-            <EditorV1 key={id} onEditorInitialized={onInitialized} id={id} noteId={noteId} initialValue={content} />
+            <EditorV1
+              key={id}
+              onTitleChange={title => handleTitleChange(title, id, noteId)}
+              onEditorInitialized={isSaved => {
+                onInitialized?.()
+                handleInitialized(id, noteId, title, isSaved)
+              }}
+              onSave={() => handleNoteSave(noteId)}
+              id={id}
+              noteId={noteId}
+              initialValue={content}
+            />
           </div>
         ),
         noteId,
@@ -247,21 +316,25 @@ const EditorManager: FC<EditorManagerProps> = ({ initialNoteId, documentId, onSa
     },
     []
   )
-  const defaultLayout: LayoutData = {
-    global: {
-      globalPanelExtra: (panel, context) => <EditorManagerMenuPopover panel={panel} context={context} />,
-      disableFloat: true,
-      disableSinglePanelMove: true
-    },
-    dockbox: {
-      mode: 'horizontal',
-      children: [
-        {
-          tabs: [defaultEditor({ id: '1', noteId: firstNoteId, title: t('editor.untitled') })]
-        }
-      ]
-    }
-  }
+  const defaultLayout: LayoutData = useMemo(
+    () => ({
+      global: {
+        globalPanelExtra: (panel, context) => <EditorManagerMenuPopover panel={panel} context={context} />,
+        disableFloat: true,
+        disableSinglePanelMove: true,
+        onTabClose: handleTabClose
+      },
+      dockbox: {
+        mode: 'horizontal',
+        children: [
+          {
+            tabs: [defaultEditor({ id: '1', noteId: firstNoteId, title: t('editor.untitled') })]
+          }
+        ]
+      }
+    }),
+    []
+  )
 
   useIsomorphicLayoutEffect(() => {
     isEditorInitialized = true
@@ -283,15 +356,57 @@ const EditorManager: FC<EditorManagerProps> = ({ initialNoteId, documentId, onSa
           inset: 0
         }}
       />
-      <Modal visible={confirmVisible} onClose={toggleConfirmVisible}>
-        确定要离开吗
-        <Footer
-          onBack={toggleConfirmVisible}
-          onSubmit={() => {
-            toggleCanExit()
-            toggleConfirmVisible()
-          }}
-        />
+      <Modal width={400} minHeight={300} visible={confirmVisible} onClose={toggleConfirmVisible}>
+        <Content flex column justifyContent="space-between" style={{ minHeight: 'inherit' }}>
+          <Content flex column>
+            <div
+              className={css({
+                fontSize: 20,
+                fontWeight: 600,
+                marginBottom: 20
+              })}
+            >
+              {t('editor.unsaved notes')}
+            </div>
+            <Content
+              flex
+              column
+              className={css({
+                marginBottom: 50,
+                paddingLeft: 20
+              })}
+            >
+              <ol>
+                {unsavedNotes.map(i => (
+                  <li
+                    className={css({
+                      fontSize: 16,
+                      fontWeight: 600
+                    })}
+                  >
+                    {i.title}
+                  </li>
+                ))}
+              </ol>
+            </Content>
+            <div
+              className={css({
+                fontSize: 15,
+                fontWeight: 600,
+                marginBottom: 30
+              })}
+            >
+              {t('editor.confirm leave')}
+            </div>
+          </Content>
+          <Footer
+            onBack={toggleConfirmVisible}
+            onSubmit={() => {
+              setCanExit(true)
+              toggleConfirmVisible()
+            }}
+          />
+        </Content>
       </Modal>
     </>
   )

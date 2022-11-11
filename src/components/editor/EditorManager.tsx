@@ -16,7 +16,7 @@ import { useIsomorphicLayoutEffect } from 'react-use'
 import { useTranslation } from 'react-i18next'
 import { useConfirmExit } from '@/hooks/utils/usePrompt'
 import Modal from '../base/modal'
-import { useMemoizedFn, useToggle } from '@/hooks'
+import { useMemoizedFn, useSetting, useToggle } from '@/hooks'
 import { css } from '@emotion/css'
 import produce from 'immer'
 import { useForceUpdate } from 'framer-motion'
@@ -48,9 +48,10 @@ interface EditorManagerProps {
   initialNoteId?: number
   documentId?: number
   onSave?: number
+  titleMarginTop?: number
 }
 export let isEditorInitialized = false
-const EditorManager: FC<EditorManagerProps> = ({ initialNoteId, documentId, onSave }) => {
+const EditorManager: FC<EditorManagerProps> = ({ initialNoteId, documentId, onSave, titleMarginTop = 0 }) => {
   const selectedEditorRef = useSelectedEditorRef()
   const eventEmitter = useEventEmitter()
   const layoutRef = useRef<DockLayout>()
@@ -62,16 +63,15 @@ const EditorManager: FC<EditorManagerProps> = ({ initialNoteId, documentId, onSa
   const [canExit, setCanExit] = useState(false)
   const [notesMap, setNotesMap] = useState(new Map())
   const unsavedNotes = Array.from(notesMap.values()).filter(i => i.unsaved)
+  const [setting] = useSetting()
   useEffect(() => {
-    console.log(notesMap)
     if (unsavedNotes.length === 0) {
       setCanExit(true)
     } else {
       setCanExit(false)
     }
-    console.log(canExit)
   }, [notesMap])
-  useConfirmExit(canExit, toggleConfirmVisible)
+  useConfirmExit(setting.editor.confirmExit ? canExit : true, toggleConfirmVisible)
   eventHandler.on('foldHeading', data => {
     selectedEditorRef?.current?.foldHeading(data.headingId, data.folded)
   })
@@ -298,6 +298,7 @@ const EditorManager: FC<EditorManagerProps> = ({ initialNoteId, documentId, onSa
           <div key={id} style={{ display: 'flex', height: '100%', paddingBottom: 30 }}>
             <EditorV1
               key={id}
+              titleMarginTop={titleMarginTop}
               onTitleChange={title => handleTitleChange(title, id, noteId)}
               onEditorInitialized={isSaved => {
                 onInitialized?.()

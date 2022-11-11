@@ -5,7 +5,7 @@ import Select from '@/components/base/select'
 import Menu from '@/components/base/menu'
 import IconWithPopover from '@/components/base/IconWithPopover'
 import { CSSProperties, FC, useEffect, useRef, useState } from 'react'
-import { Editor, Range, Selection, Transforms } from 'slate'
+import { Editor, Range, Selection } from 'slate'
 import { ReactEditor, useSlate } from 'slate-react'
 import styles from './index.module.less'
 import { useTranslation } from 'react-i18next'
@@ -14,7 +14,6 @@ import { Position } from '@/types'
 import { createPortal } from 'react-dom'
 import { AnimatePresence, motion } from 'framer-motion'
 import { useSetting } from '@/hooks'
-import { restoreSelection, saveSelection } from '../../utils/positions/selection'
 
 interface EditorToolbarProps {
   selection: Position & { selection: Selection }
@@ -34,6 +33,7 @@ interface EditorToolbarProps {
   onToggleEmoji: Noop
   onAddSubPage?: Noop
   style?: CSSProperties
+  isSaved?: boolean
 }
 const MAX_TOLERANT_DISTANCE = 15
 const EditorToolbar: FC<EditorToolbarProps> = ({
@@ -50,7 +50,8 @@ const EditorToolbar: FC<EditorToolbarProps> = ({
   onToggleEmoji,
   onAddSubPage,
   scrollElement,
-  style
+  style,
+  isSaved
 }) => {
   const { t } = useTranslation()
   const editor = useSlate()
@@ -146,10 +147,11 @@ const EditorToolbar: FC<EditorToolbarProps> = ({
     >
       {/* <Toolbar.Item iconName="park-mindmap-list" onClick={onToggleOutline} />
         <Toolbar.Item iconName="park-mindmap-map" onClick={onToggleMindmap} /> */}
-      <Toolbar.Item tooltip={t('editor.save')} iconName="park-save" onClick={onSave} />
+      {!isSaved && <Toolbar.Item tooltip={t('editor.save')} iconName="park-save" onClick={onSave} />}
       <Toolbar.Item tooltip={t('editor.undo')} iconName="park-return" onClick={onUndo} />
       <Toolbar.Item tooltip={t('editor.redo')} iconName="park-go-on" onClick={onRedo} />
       <Select
+        menuPosition={position === 'top' ? 'bottom' : position === 'bottom' ? 'top' : 'bottom'}
         closeOnSelect
         hideUnderlineWhenNotHover
         disabled={
@@ -179,7 +181,7 @@ const EditorToolbar: FC<EditorToolbarProps> = ({
         <IconWithPopover
           disableIntersection
           tooltip={t('editor.font color')}
-          placement={['bottom']}
+          placement={position === 'bottom' ? ['top'] : ['bottom']}
           size={16}
           name="park-font-size-two"
           color={getFontColor()}
@@ -204,7 +206,7 @@ const EditorToolbar: FC<EditorToolbarProps> = ({
           disableIntersection
           tooltip={t('editor.more')}
           name="park-more"
-          placement={['bottom']}
+          placement={position === 'bottom' ? ['top'] : ['bottom']}
           content={
             <WithBorder style={{ padding: '8px 0px' }}>
               <Menu>

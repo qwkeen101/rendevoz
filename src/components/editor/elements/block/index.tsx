@@ -7,9 +7,11 @@ import { motion, AnimatePresence } from 'framer-motion'
 import styles from './index.module.less'
 import useClickOutside from '@/hooks/utils/useClickOutside'
 import { scrollToTarget } from '../../utils/positions/scroll'
-import { ID_TO_ELEMENTS_MAP } from '../../weakMaps'
+import { SELECT_AREA_MAP, ID_TO_ELEMENTS_MAP, SELECTED_BLOCKS_MAP } from '../../weakMaps'
 import { getDistanceBetweenPointAndElement } from '@/components/dragReposition/utils/position'
-import { Noop } from '@/common/types'
+import useIsSelecting from '../../hooks/useIsSelecting'
+import { getDistanceBetweenElementAndScrollableElement } from '@/components/dragReposition/utils/scroll'
+import { isRectsCollision } from '../../utils/positions/collision'
 
 type BlockProps = {
   blockId: number
@@ -30,10 +32,44 @@ const Block: FC<React.DetailedHTMLProps<React.HTMLAttributes<HTMLDivElement>, HT
     const [direction, setDirection] = useState<string>()
     const [selected, setSelected] = useState(false)
     const [withLine, setWithLine] = useState<{ width: number } | null>(null)
+    const [isSelecting] = useIsSelecting()
+    const distanceToScrollElementRef = useRef<{ left: number; top: number; right: number; bottom: number }>()
+
+    const handleCollisionSelectBlock = useMemoizedFn(() => {
+      const selectArea = SELECT_AREA_MAP.get(editor)
+      if (isRectsCollision(selectArea, distanceToScrollElementRef.current)) {
+        setSelected(true)
+      } else {
+        setSelected(false)
+      }
+    })
+    useEffect(() => {
+      if (isSelecting) {
+        const block = blockRef.current
+        if (block && scrollElement) {
+          distanceToScrollElementRef.current = getDistanceBetweenElementAndScrollableElement(block, scrollElement)
+        }
+      }
+    }, [isSelecting])
+    useEffect(() => {
+      if (selected) {
+        const selectedBlocksMap = SELECTED_BLOCKS_MAP.get(editor)
+        selectedBlocksMap?.set(blockId, blockRef.current)
+        return () => {
+          selectedBlocksMap?.delete(blockId)
+        }
+      }
+    }, [selected])
     useClickOutside(() => {
-      setSelected(false)
+      if (!isSelecting) {
+        setSelected(false)
+      }
     }, blockRef)
     const handleIndicatorChange = useMemoizedFn((direction: string | null, e?: MouseEvent) => {
+      console.log(element, direction)
+      if (selected) {
+        return false
+      }
       if (direction === 'bottom' && (element?.type === 'list-item' || element?.level)) {
         if (e) {
           const distanceToBlock = getDistanceBetweenPointAndElement(e, blockRef.current)
@@ -53,6 +89,7 @@ const Block: FC<React.DetailedHTMLProps<React.HTMLAttributes<HTMLDivElement>, HT
         setWithLine(null)
         setDirection(undefined)
       }
+      return true
     })
     const handleSelectBlock = useMemoizedFn(() => {
       setSelected(true)
@@ -87,12 +124,14 @@ const Block: FC<React.DetailedHTMLProps<React.HTMLAttributes<HTMLDivElement>, HT
     useEffect(() => {
       map?.set(blockId, {
         selectBlock: handleSelectBlock,
-        changeIndicator: handleIndicatorChange
+        collisionSelectBlock: handleCollisionSelectBlock,
+        changeIndicator: handleIndicatorChange,
+        getElement: () => element
       })
       return () => {
         map?.delete(blockId)
       }
-    }, [])
+    })
     useEffect(() => {
       const width = `calc(( 100% - ${
         46 * ((columnRef.current?.parentElement?.querySelectorAll("[data-type='column']").length || 2) - 1)
@@ -113,13 +152,24 @@ const Block: FC<React.DetailedHTMLProps<React.HTMLAttributes<HTMLDivElement>, HT
         data-level={element?.level}
         {...rest}
         className={classNames(
-          selected && styles.Selected,
           type === 'columnList' && styles.ColumnListBlock,
           type === 'column' && styles.ColumnBlock,
           type.startsWith('heading') && styles.HeadingBlock,
           type !== 'column' && type !== 'columnList' && !type.startsWith('heading') && styles.ParagraphBlock
         )}
       >
+        <AnimatePresence>
+          {selected && (
+            <motion.div
+              transition={{ duration: 0.2 }}
+              key="selected"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className={styles.Selected}
+            ></motion.div>
+          )}
+        </AnimatePresence>
         {children}
         <AnimatePresence>
           {direction && (

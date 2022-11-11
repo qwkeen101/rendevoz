@@ -85,6 +85,17 @@
     background-color: rgba(55, 53, 47, 0.16);
     border-radius: 999px;
 }
+.titleWrapper{
+    max-width: 100%;
+    min-width: 0;
+    width: 900px;
+    margin-bottom: 10px;
+}
+.editorWrapper{
+    max-width: 100%;
+    min-width: 0;
+    width: 900px
+}
 .Editor{
     .iosStyleScrollBar;
     h1,h2,h3,h4,h5,h6{
@@ -127,6 +138,11 @@
 }
 .InnerEditorWrapper{
     min-height: 100%;
+    max-width: 100%;
+    width: fit-content;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
     *{
         ::selection{
             background: rgba(133, 144, 166,0.3);
@@ -150,7 +166,9 @@
     padding-left: 20px;
     padding-right: 20px;
     position: relative;
-    .iosStyleScrollBar;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
 }
 .title{
     cursor: text;

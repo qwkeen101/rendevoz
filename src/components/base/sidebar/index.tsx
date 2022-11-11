@@ -5,7 +5,9 @@ import { Rnd } from 'react-rnd'
 import { delay } from 'lodash'
 import useSidebarWidth from '@/hooks/components/useSidebarWidth'
 import Icon from '@/components/base/Icon'
-
+import logo from '@/assets/rendeLogo.png'
+import Content from '../Content'
+import { useSetting } from '@/hooks'
 export const Sidebar: FC = () => {
   const navRef = useRef<HTMLElement>(null)
   const rndRef = useRef<Rnd>(null)
@@ -14,6 +16,7 @@ export const Sidebar: FC = () => {
   const [widthTransition, setWidthTransition] = useState(false)
   const [isResizing, setIsResizing] = useState(false)
   const [, setSidebarWidth] = useSidebarWidth()
+  const [setting] = useSetting()
   return (
     <div
       tabIndex={-1}
@@ -84,6 +87,12 @@ export const Sidebar: FC = () => {
           ref={navRef}
           onClick={() => setHovered(false)}
         >
+          {setting.appearance.logo && (
+            <Content flex gap={10} style={{ top: 10, padding: 41 }}>
+              <img style={{ width: 30, height: 30 }} src={logo}></img>
+              <div style={{ fontWeight: 700, fontSize: 16, color: '#8590ae', fontFamily: 'sans-serif' }}>Rendevoz</div>
+            </Content>
+          )}
           <Navigation></Navigation>
         </nav>
         <div className={styles.hide}>

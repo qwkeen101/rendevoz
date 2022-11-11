@@ -1,5 +1,6 @@
 import { Content } from '@/components/base'
 import Select from '@/components/base/select'
+import Switch from '@/components/base/Switch'
 import { useSetting } from '@/hooks'
 import produce from 'immer'
 import { ReactNode } from 'react'
@@ -22,6 +23,7 @@ const AppearanceSetting = () => {
           closeOnSelect
           deselectable={false}
           style={{ width: 200 }}
+          menuStyle={{ width: 200 }}
           onSelect={v => {
             i18n.changeLanguage(v[0])
             setSetting(
@@ -36,6 +38,22 @@ const AppearanceSetting = () => {
             <Select.Option value={key}>{value}</Select.Option>
           ))}
         </Select>
+      )
+    },
+    {
+      title: 'Logo',
+      description: 'Show or hide logo',
+      children: (
+        <Switch
+          onChange={v => {
+            setSetting(
+              produce(setting, draft => {
+                draft.appearance.logo = v
+              })
+            )
+          }}
+          defaultValue={setting.appearance.logo}
+        />
       )
     }
   ]

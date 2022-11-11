@@ -6,8 +6,12 @@
     position: relative;
 }
 .Selected{
+    position: absolute;
+    inset: 0;
     background: #8590ae2d;
     border-radius: 4px;
+    user-select: none;
+    pointer-events: none;
 }
 .ParagraphBlock{
     width: 100%;
@@ -15,6 +19,9 @@
     position: relative;
     word-break: break-all;
     padding: 3px 2px;
+    margin-top: 2px;
+    margin-bottom: 2px;
+    transition: background 0.3s ease;
     &[data-level='1']{
         margin-left: 20px;
     }

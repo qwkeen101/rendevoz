@@ -2,9 +2,8 @@ import { Noop } from '@/common/types'
 import useEventEmitter from '@/events/useEventEmitter'
 import { useMemoizedFn } from '@/hooks'
 import { Position } from '@/types'
-import Id from '@/utils/id'
 import isHotkey from 'is-hotkey'
-import { FC, FormEventHandler, memo, useCallback, useEffect, useRef } from 'react'
+import { FC, FormEventHandler, memo, useCallback, useRef } from 'react'
 import { Descendant, Editor, Path, Range, Transforms, Element as SlateElement, Node, Selection } from 'slate'
 import { ReactEditor, Slate, Editable, RenderElementProps, RenderLeafProps } from 'slate-react'
 import { Content } from '../base'
@@ -24,10 +23,12 @@ import styles from './index.module.less'
 import { getCaretGlobalPosition } from './utils/positions/caret'
 import { useTranslation } from 'react-i18next'
 import ListItem from './elements/listItem'
-import { getSelectionDirection } from './utils/positions/selection'
+import { INote } from '~/typings/data'
 
 type InnerEditorProps = {
+  titleMarginTop?: number
   editor: CustomEditor
+  note: INote
   defaultValue: Descendant[]
   scrollElement?: HTMLDivElement
   onRendered?: () => void
@@ -57,7 +58,8 @@ const InnerEditor: FC<InnerEditorProps> = memo(
     onSave,
     onAddSubPage,
     onNestedListItem,
-    onRendered,
+    titleMarginTop,
+    note,
     scrollElement
   }) => {
     const emitter = useEventEmitter()
@@ -65,7 +67,6 @@ const InnerEditor: FC<InnerEditorProps> = memo(
     const renderInnerElement = useCallback((props: RenderElementProps) => <Element {...props} />, [])
     const renderLeaf = useCallback((props: RenderLeafProps) => <Leaf {...props} />, [])
     const caretPositionRef = useRef<Position>()
-
 
     const handleMouseDown = useMemoizedFn((e: MouseEvent) => {
       if (getCaretGlobalPosition()) {
@@ -121,6 +122,7 @@ const InnerEditor: FC<InnerEditorProps> = memo(
           return (
             <Block
               data-type="block"
+              data-spec-type="common-block"
               blockId={element.id}
               key={element.id}
               id={String(element.id)}
@@ -200,6 +202,7 @@ const InnerEditor: FC<InnerEditorProps> = memo(
     return (
       <Slate editor={editor} onChange={handleChange} value={defaultValue}>
         <EditorToolbar
+          isSaved={!!note}
           scrollElement={scrollElement}
           onSave={onSave}
           onToggleMindmap={onToggleMindmap}
@@ -224,7 +227,7 @@ const InnerEditor: FC<InnerEditorProps> = memo(
           }}
           onAddSubPage={onAddSubPage}
         />
-        <Content flex centered style={{ width: '100%', marginBottom: 10 }}>
+        <Content className={styles.titleWrapper} style={{ marginTop: titleMarginTop }} flex centered>
           <div
             onInput={onTitleChange}
             spellCheck="false"
@@ -254,6 +257,7 @@ const InnerEditor: FC<InnerEditorProps> = memo(
           renderLeaf={renderLeaf}
           onKeyDown={handleKeydown}
           onMouseDown={handleMouseDown}
+          className={styles.editorWrapper}
         ></Editable>
       </Slate>
     )

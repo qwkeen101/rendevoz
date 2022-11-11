@@ -21,3 +21,18 @@ export const getDistanceBetweenPointAndScrollableElement = (point: { x: number; 
     top: point.y + element.scrollTop - rect.top
   }
 }
+
+export const getDistanceBetweenElementAndScrollableElement = (element: HTMLElement | DOMRect, scrollElement: HTMLElement) => {
+  const eleRect = 'getBoundingClientRect' in element ? (element as HTMLElement).getBoundingClientRect() : (element as DOMRect)
+  const scrollEleRect = scrollElement?.getBoundingClientRect()
+  if (eleRect && scrollElement && scrollEleRect) {
+    return {
+      x: eleRect.x + scrollElement.scrollLeft - scrollEleRect.left,
+      y: eleRect.y + scrollElement.scrollTop - scrollEleRect.top,
+      left: eleRect.x + scrollElement.scrollLeft - scrollEleRect.left,
+      top: eleRect.y + scrollElement.scrollTop - scrollEleRect.top,
+      right: eleRect.x + scrollElement.scrollLeft - scrollEleRect.left + eleRect.width,
+      bottom: eleRect.y + scrollElement.scrollTop - scrollEleRect.top + eleRect.height
+    }
+  }
+}

@@ -25,6 +25,7 @@ interface SelectProps {
   onSelect: (value: string[]) => void
   style?: CSSProperties
   menuStyle?: CSSProperties
+  menuPosition?: 'top' | 'bottom'
 }
 interface ISelect extends FC<SelectProps> {
   Option: typeof SelectOption
@@ -42,7 +43,8 @@ const Select: ISelect = ({
   value,
   defaultValue,
   deselectable,
-  hideUnderlineWhenNotHover
+  hideUnderlineWhenNotHover,
+  menuPosition = 'bottom'
 }) => {
   let d = []
   if (defaultValue) {
@@ -122,7 +124,7 @@ const Select: ISelect = ({
     <div ref={containerRef}>
       <AnimatePopover
         visible={menuVisible}
-        positions={['bottom']}
+        positions={[menuPosition]}
         onClickOutside={() => setMenuVisible(false)}
         padding={10}
         disableNudge

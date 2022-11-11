@@ -4,13 +4,31 @@ import { useDebounceFn, useMemoizedFn, useRafFn, useUnMount } from '@/hooks'
 import Id from '@/utils/id'
 import classNames from 'classnames'
 import { FC, FormEvent, memo, MouseEvent, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
-import { createEditor, Editor, Transforms, Descendant, Node, Path, Element as SlateElement, Range, Point, Element, BaseEditor } from 'slate'
+import {
+  createEditor,
+  Editor,
+  Transforms,
+  Descendant,
+  Node,
+  Path,
+  Element as SlateElement,
+  Range,
+  Point,
+  Element,
+  BaseEditor,
+  PathRef
+} from 'slate'
 import { withHistory } from 'slate-history'
 import { withReact, ReactEditor } from 'slate-react'
 import { searchBlock } from '../dragReposition/utils/algorithm'
 import { getElementId } from '../dragReposition/utils/element'
 import { getDistanceBetweenPointAndElement } from '../dragReposition/utils/position'
-import { getDistanceBetweenPointAndScrollableElement, isScrollable, isFullyScrolled } from '../dragReposition/utils/scroll'
+import {
+  getDistanceBetweenPointAndScrollableElement,
+  isScrollable,
+  isFullyScrolled,
+  getDistanceBetweenElementAndScrollableElement
+} from '../dragReposition/utils/scroll'
 import { CustomElement } from './customTypes'
 import { useSelectedEditorRef } from './hooks/useSelectedEditorRef'
 import InnerEditor from './InnerEditor'
@@ -38,8 +56,15 @@ import { Breadcrumb, Content } from '../base'
 import withEmitter from './plugins/withEmitter'
 import withHtml from './plugins/withHtml'
 import { useTranslation } from 'react-i18next'
-import { ID_TO_ELEMENTS_MAP } from './weakMaps'
+import { SELECT_AREA_MAP, ID_TO_ELEMENTS_MAP, SELECTED_BLOCKS_MAP } from './weakMaps'
 import { Noop } from '@/common/types'
+import useIsSelecting from './hooks/useIsSelecting'
+import ScrollManager from './ScrollManager'
+import { Position } from '@/types'
+import _ from 'lodash'
+import rebuildDragSelect from './utils/rebuildDragSelect'
+import moveSingleElement from './utils/moveSingleElement'
+import moveMultiElements from './utils/moveMultiElements'
 
 type DragHandleProps = {
   left: number
@@ -56,6 +81,7 @@ const initial = [
 ]
 
 export interface EditorProps {
+  titleMarginTop?: number
   onEditorInitialized?: (isSaved: boolean) => void
   onChange?: (e: Descendant[]) => void
   onClick?: () => void
@@ -76,7 +102,7 @@ export interface IEditorRef {
 }
 
 export const EditorV1: FC<EditorProps> = memo(
-  ({ onEditorInitialized, onChange, onClick, onSave, initialValue, onTitleChange, id, noteId }) => {
+  ({ onEditorInitialized, onChange, onClick, onSave, initialValue, onTitleChange, id, noteId,titleMarginTop }) => {
     useUnMount(() => {
       doc.destroy()
       if (note === null) {
@@ -98,12 +124,14 @@ export const EditorV1: FC<EditorProps> = memo(
     const [parentNotes, setParentNotes] = useState<INote[]>([])
     const [editorValue, setEditorValue] = useState(initial)
     const [title, setTitle] = useState()
+    const [isSelecting, setIsSelecting] = useIsSelecting()
+    const scrollManager = useMemo(() => new ScrollManager(), [])
     const titleRef = useRef<string>()
-    const wrapperRef = useRef<HTMLDivElement>()
+    const wrapperRef = useRef<HTMLDivElement>(null)
     const currentDraggingRef = useRef<HTMLDivElement>()
     const draggingLayerRef = useRef<HTMLDivElement>()
     const blockElementsRef = useRef<Map<globalThis.Element, { left: number; top: number; height: number; width: number }>>(new Map())
-    const blockElementsArrayRef = useRef([])
+    const blockElementsArrayRef = useRef<HTMLElement[]>([])
     const [dragHandle, setDragHandle] = useState<DragHandleProps>()
     const indicatorRef = useRef<{ direction?: string; id?: number; isNested?: boolean }>()
     const scrollDirectionRef = useRef<string>()
@@ -120,6 +148,181 @@ export const EditorV1: FC<EditorProps> = memo(
     const [currentDocument] = useCurrentDocument()
     const { updateDocument } = useDocumentStore()
     const { addItemToCollection } = useCollectionStore()
+    useEffect(() => {
+      const wrapper = wrapperRef.current
+      if (wrapper) {
+        wrapper.addEventListener('mousedown', handleStartSelecting)
+        return () => {
+          wrapper.removeEventListener('mousedown', handleStartSelecting)
+        }
+      }
+    })
+    const handleStartSelecting = (e: MouseEvent) => {
+      // click on blank wrapper space, start selecting
+      if (e.target === e.currentTarget) {
+        document.body.style.cursor = 'default'
+        setIsSelecting(true)
+        const wrapper = wrapperRef.current
+        if (!wrapper) return
+        blockElementsArrayRef.current = []
+        blockElementsRef.current.clear()
+        Array.from(wrapper.querySelector(`[role="textbox"]`)?.querySelectorAll('[data-spec-type="common-block"]') || []).forEach(i => {
+          const { left, top, width, height } = i.getBoundingClientRect()
+          const distance = getDistanceBetweenPointAndScrollableElement({ x: left, y: top }, wrapper)
+          blockElementsArrayRef.current.push(i)
+          blockElementsRef.current.set(i, {
+            left: distance.left,
+            top: distance.top,
+            width,
+            height
+          })
+        })
+        const distanceToScrollElement = getDistanceBetweenElementAndScrollableElement(
+          {
+            left: e.clientX,
+            top: e.clientY,
+            x: e.clientX,
+            y: e.clientY,
+            right: e.clientX,
+            bottom: e.clientY,
+            width: 0,
+            height: 0
+          },
+          wrapper
+        )
+        if (distanceToScrollElement) {
+          SELECT_AREA_MAP.set(editor, {
+            startPoint: { ...distanceToScrollElement },
+            endPoint: { ...distanceToScrollElement },
+            ...distanceToScrollElement
+          })
+        }
+      }
+    }
+    useEffect(() => {
+      if (isSelecting) {
+        document.addEventListener('mousemove', handleSelecting2)
+        document.addEventListener('mouseup', handleEndSelecting)
+        document.addEventListener('click', handleEndSelecting, true)
+        return () => {
+          document.removeEventListener('mousemove', handleSelecting2)
+          document.removeEventListener('mouseup', handleEndSelecting)
+          // document.removeEventListener('click', handleEndSelecting)
+        }
+      }
+    }, [isSelecting])
+    const handleSelecting = useMemoizedFn((e: MouseEvent) => {
+      const wrapper = wrapperRef.current
+      if (!wrapper) {
+        return
+      }
+      e.preventDefault()
+      if (isScrollable(wrapper)) {
+        const distance = getDistanceBetweenPointAndElement(e, wrapper)
+        if (distance.top < 100 && distance.top > 0 && isFullyScrolled(wrapper) !== 'top') {
+          if (!scrollDirectionRef.current) {
+            startScroll('top')
+          }
+        } else if (distance.bottom < 100 && distance.bottom > 0 && isFullyScrolled(wrapper) !== 'bottom') {
+          if (!scrollDirectionRef.current) {
+            startScroll('bottom')
+          }
+        } else {
+          endScroll()
+        }
+      }
+      const prevRect = SELECT_AREA_MAP.get(editor)
+      if (!prevRect) return
+
+      const startPoint = prevRect.startPoint as Required<Position>
+      const endPoint = getDistanceBetweenPointAndScrollableElement(
+        {
+          x: e.clientX,
+          y: e.clientY
+        },
+        wrapper
+      )
+      const currRect = {
+        startPoint,
+        endPoint,
+        left: Math.min(startPoint.left, endPoint.left),
+        top: Math.min(startPoint.top, endPoint.top),
+        right: Math.min(startPoint.left, endPoint.left) + Math.abs(endPoint.left - startPoint.left),
+        bottom: Math.min(startPoint.top, endPoint.top) + Math.abs(endPoint.top - startPoint.top)
+      }
+      SELECT_AREA_MAP.set(editor, currRect)
+      emitter.emit('editor', {
+        type: 'toggleOverlay',
+        data: {
+          content: 'selectArea'
+        }
+      })
+      // start search selected blocks
+      const firstBlock = blockElementsArrayRef.current[0]
+      const lastBlock = blockElementsArrayRef.current[blockElementsArrayRef.current.length - 1]
+      const firstBlockRect = blockElementsRef.current.get(firstBlock)
+      const lastBlockRect = blockElementsRef.current.get(lastBlock)
+      const blocksMap = ID_TO_ELEMENTS_MAP.get(editor)
+      if (!firstBlockRect || !lastBlockRect) return
+      if (currRect.bottom < firstBlockRect.top) {
+        const prevSelectedBlocks = SELECTED_BLOCKS_MAP.get(editor)
+        if (prevSelectedBlocks) {
+          Array.from(prevSelectedBlocks.values()).forEach(i => {
+            const id = getElementId(i)
+            blocksMap?.get(id)?.collisionSelectBlock()
+          })
+        }
+        return
+      }
+      if (currRect.top > lastBlockRect.top + lastBlockRect.height) return
+      const blockEntriesArray = Array.from(blockElementsRef.current.entries())
+      const topBlock = searchBlock(blockEntriesArray, currRect.top)
+      const bottomBlock = searchBlock(blockEntriesArray, currRect.bottom)
+      const topIdx = topBlock === -1 ? 0 : blockElementsArrayRef.current.findIndex(i => i === topBlock)
+      let finalBottomBlock = bottomBlock
+      if (bottomBlock !== -1) {
+        finalBottomBlock = _.findLast(blockEntriesArray, i => {
+          return i[1].top === blockElementsRef.current.get(bottomBlock)?.top ? true : false
+        })?.[0]
+      }
+
+      const bottomIdx =
+        finalBottomBlock === -1
+          ? blockElementsArrayRef.current.length
+          : blockElementsArrayRef.current.findIndex(i => i === finalBottomBlock) + 1
+      const blocks = blockElementsArrayRef.current.slice(topIdx, bottomIdx)
+      const prevSelectedBlocks = SELECTED_BLOCKS_MAP.get(editor)
+      if (prevSelectedBlocks) {
+        Array.from(prevSelectedBlocks.values())
+          .filter(i => !blocks.some(o => o === i))
+          .forEach(i => {
+            const id = getElementId(i)
+            blocksMap?.get(id)?.collisionSelectBlock()
+          })
+      }
+
+      blocks.forEach(i => {
+        const id = getElementId(i)
+        blocksMap?.get(id)?.collisionSelectBlock()
+      })
+    })
+
+    const handleEndSelecting = useMemoizedFn((e: MouseEvent) => {
+      if (e.type === 'click') {
+        e.stopPropagation()
+        document.removeEventListener('click', handleEndSelecting, true)
+        return
+      }
+      SELECT_AREA_MAP.delete(editor)
+      document.body.style.cursor = 'auto'
+      emitter.emit('editor', {
+        type: 'toggleOverlay',
+        data: {
+          content: 'selectArea'
+        }
+      })
+      setIsSelecting(false)
+    })
     useEffect(() => {
       if (noteId) {
         getNoteById(noteId).then(
@@ -178,6 +381,7 @@ export const EditorV1: FC<EditorProps> = memo(
     useEffect(() => {
       YjsEditor.connect(editor)
       ID_TO_ELEMENTS_MAP.set(editor, new Map())
+      SELECTED_BLOCKS_MAP.set(editor, new Map())
       editor.noteId = noteId
       return () => YjsEditor.disconnect(editor)
     }, [editor])
@@ -240,7 +444,7 @@ export const EditorV1: FC<EditorProps> = memo(
         children: element.children
       }
       Transforms.insertNodes(editor, ele, { at: Range.end(selection) })
-      Transforms.move(editor,{
+      Transforms.move(editor, {
         edge: 'end',
         distance: 1,
         unit: 'word'
@@ -270,189 +474,33 @@ export const EditorV1: FC<EditorProps> = memo(
       }
     }
 
-    const handleDragDrop = () => {
+    const handleDragDrop = useMemoizedFn(() => {
       if (indicatorRef.current) {
         setDragHandle(undefined)
-        const { direction, id, isNested } = indicatorRef.current
-        // get target block path
-        let [targetElement, targetPath] = Array.from(Node.descendants(editor)).find(i => i[0].id === id) || []
-        // there are two situations in drag drop
-        // 1.drag to insert
-        // 2.drag to reorder
+        const { direction, isNested, id } = indicatorRef.current
+        const selectedBlocksMap = SELECTED_BLOCKS_MAP.get(editor)
+        const [targetElement, targetPath] = Array.from(Node.descendants(editor)).find(i => i[0].id === id) || []
+
+        if (selectedBlocksMap && selectedBlocksMap.size > 0) {
+          const selectedBlocks = Array.from(selectedBlocksMap.values())
+          const selectedElements = selectedBlocks.map(i => elementsMap?.get(getElementId(i))?.getElement()).filter(i => !!i)
+          if (selectedElements.length === 1) {
+            const currPath = ReactEditor.findPath(editor, selectedElements[0])
+            moveSingleElement(editor, currPath, targetElement, targetPath, direction, isNested)
+            return
+          }
+          moveMultiElements(editor, selectedElements, targetElement, targetPath, direction, isNested)
+          return
+        }
         const currPath = currentDraggingElementPath.current
-        const currElement = Editor.node(editor, currPath)
-        if (!currPath || !targetPath || !targetElement) return
-        const currParentPath = Path.parent(currPath)
-        // use pathRef to track path change
-        const currPathRef = Editor.pathRef(editor, currPath)
-        const currParentPathRef = Editor.pathRef(editor, currParentPath)
-        // i don't know what is happening here,but it seems to be working...
-        const currParentElement = Editor.node(editor, currParentPath)
-        if (direction === 'top' || direction === 'bottom') {
-          if (
-            (Path.isAfter(currPath, targetPath) || !Path.isSibling(currPath, targetPath)) &&
-            direction === 'bottom' &&
-            !Path.equals(currPath, targetPath)
-          ) {
-            targetPath = Path.next(targetPath)
-          }
-          if (targetElement.type === 'list-item' || targetElement.level) {
-            let nextLevel
-            if (isNested) {
-              nextLevel = targetElement.level + 1 || 1
-            } else {
-              nextLevel = targetElement.level || undefined
-            }
-            Transforms.setNodes(
-              editor,
-              {
-                level: nextLevel,
-                type: currElement[0].type === 'paragraph' ? 'list-item' : currElement[0].type
-              },
-              { at: currPath }
-            )
-          }
-
-          Transforms.moveNodes(editor, {
-            at: currPath,
-            to: targetPath
-          })
-        }
-        if (direction === 'left' || direction === 'right') {
-          const targetNode = Editor.node(editor, targetPath)
-          const currNode = Editor.node(editor, currPath)
-          if (targetNode[0].type !== 'column') {
-            // we are dropping on normal block
-            // first we need to create a column list at target path
-            Transforms.removeNodes(editor, { at: targetPath })
-            Transforms.insertNodes(
-              editor,
-              {
-                type: 'columnList',
-                id: Id.getId(),
-                children:
-                  direction === 'left'
-                    ? [
-                        {
-                          type: 'column',
-                          id: Id.getId(),
-                          ratio: 0.5,
-                          children: [currNode[0]]
-                        },
-                        {
-                          type: 'column',
-                          id: Id.getId(),
-                          ratio: 0.5,
-                          children: [targetNode[0]]
-                        }
-                      ]
-                    : [
-                        {
-                          type: 'column',
-                          id: Id.getId(),
-                          ratio: 0.5,
-                          children: [targetNode[0]]
-                        },
-                        {
-                          type: 'column',
-                          id: Id.getId(),
-                          ratio: 0.5,
-                          children: [currNode[0]]
-                        }
-                      ]
-              },
-              {
-                at: targetPath
-              }
-            )
-            Transforms.removeNodes(editor, { at: currPath })
-          } else {
-            // left or right should insert new column at target path first
-            // if there is only one block in the column and currPath = targetPath or targetPath = currPath + 1,do nothing
-            const doesColumnOnlyHaveOneChild = Editor.node(editor, currParentPath)[0].children.length === 1
-            if (
-              doesColumnOnlyHaveOneChild &&
-              (Path.equals(targetPath, currParentPath) ||
-                (Path.equals(Path.hasPrevious(targetPath) ? Path.previous(targetPath) : targetPath, currParentPath) &&
-                  direction !== 'right'))
-            ) {
-              return
-            }
-            if (direction === 'right') {
-              targetPath = Path.next(targetPath)
-            }
-            Transforms.insertNodes(
-              editor,
-              {
-                type: 'column',
-                id: Id.getId(),
-                children: []
-              },
-              { at: targetPath }
-            )
-            const targetColumnListId = Editor.node(editor, Path.parent(targetPath))[0].id
-            Transforms.moveNodes(editor, {
-              at: currPathRef.current,
-              to: [...targetPath, 0]
-            })
-            // after insert new column,we need to recalculate the widths of all the columns
-            // origin column blocks width ratio should * (1 - 1/n),new column width ratio = 1/n
-            const targetColumnListPath = [editor.children.findIndex(i => i.id === targetColumnListId)]
-            const targetColumnList = Editor.node(editor, targetColumnListPath)[0]
-            const columnsLength = targetColumnList.children.length
-            targetColumnList.children.forEach((i, idx) => {
-              const columnPath = [...targetColumnListPath, idx]
-              Transforms.setNodes(
-                editor,
-                {
-                  ratio: i.ratio ? i.ratio * (1 - 1 / columnsLength) : 1 / columnsLength
-                },
-                {
-                  at: columnPath
-                }
-              )
-            })
-          }
-        }
-        if (targetElement.type !== 'list-item' && targetElement.level === undefined) {
-          Transforms.setNodes(
-            editor,
-            {
-              level: undefined
-            },
-            {
-              at: currPathRef.current
-            }
-          )
-        }
-        const afterMoveParentPath = currParentPathRef.unref()
-        currParentPathRef.unref()
-        const afterMoveCurrParent = Editor.node(editor, afterMoveParentPath)
-        const afterMoveCurrParentNode = afterMoveCurrParent[0]
-
-        if (!Path.equals(currParentElement[1], []) && Editor.isEmpty(editor, Editor.node(editor, afterMoveCurrParent[1])[0])) {
-          if (afterMoveCurrParentNode.type === 'column') {
-            const currColumnListNode = Editor.node(editor, Path.parent(afterMoveCurrParent[1]))
-            if (currColumnListNode[0].children.length === 2) {
-              const siblingColumnNode = Array.from(currColumnListNode[0].children).find(
-                i => i.id !== afterMoveCurrParentNode.id
-              ) as Descendant
-              const items = Array.from(siblingColumnNode.children || [])
-                .filter(i => i.type && i.type !== 'column')
-                .map(i => i)
-              Transforms.removeNodes(editor, { at: currColumnListNode[1] })
-              Transforms.insertNodes(editor, items, { at: currColumnListNode[1] })
-              return
-            }
-          }
-          Transforms.removeNodes(editor, { at: afterMoveCurrParent[1] })
-        }
+        moveSingleElement(editor, currPath, targetElement, targetPath, direction, isNested)
       }
-    }
+    })
 
     const handleStartDragging = () => {
       setIsDragging(true)
       blockElementsArrayRef.current = []
+      blockElementsRef.current.clear()
       document.body.style.cursor = 'grabbing'
       const wrapper = wrapperRef.current
       if (!wrapper) {
@@ -500,7 +548,7 @@ export const EditorV1: FC<EditorProps> = memo(
       scrollDirectionRef.current = undefined
     }
 
-    const handleDragging = useCallback((e: MouseEvent) => {
+    const handleDragging = useMemoizedFn((e: MouseEvent) => {
       const draggingLayer = draggingLayerRef.current
       const wrapper = wrapperRef.current
       const currentDraggingElement = currentDraggingRef.current
@@ -510,12 +558,17 @@ export const EditorV1: FC<EditorProps> = memo(
       }
 
       if (!draggingLayer.hasChildNodes()) {
-        const cloned = currentDraggingElement.cloneNode(true)
-        const rect = currentDraggingElement.getBoundingClientRect()
-        draggingLayer.style.opacity = '0.5'
-        draggingLayer.style.width = `${rect?.width}px`
-        draggingLayer.style.height = `${rect?.height}px`
-        draggingLayer.appendChild(cloned)
+        const selectedBlocksSet = SELECTED_BLOCKS_MAP.get(editor)
+        if (selectedBlocksSet && selectedBlocksSet.size > 0) {
+          draggingLayer.appendChild(rebuildDragSelect(editor, e))
+        } else {
+          const cloned = currentDraggingElement.cloneNode(true)
+          const rect = currentDraggingElement.getBoundingClientRect()
+          draggingLayer.style.opacity = '0.5'
+          draggingLayer.style.width = `${rect?.width}px`
+          draggingLayer.style.height = `${rect?.height}px`
+          draggingLayer.appendChild(cloned)
+        }
       }
       draggingLayer.firstElementChild &&
         ((draggingLayer.firstElementChild as HTMLElement).style.transform = `translate3d(${e.clientX}px,${e.clientY}px,0)`)
@@ -682,10 +735,19 @@ export const EditorV1: FC<EditorProps> = memo(
           return
         }
       }
-    }, [])
+    })
 
     const throttledHandleDragging = useRafFn(handleDragging)
+    const throttledHandleSelecting = useRafFn(handleSelecting)
 
+    const handleSelecting2 = useMemoizedFn((e: MouseEvent) => {
+      try {
+        e.preventDefault()
+        throttledHandleSelecting(e)
+      } catch (e) {
+        console.error(e)
+      }
+    })
     const handleDragging2 = useMemoizedFn((e: MouseEvent) => {
       try {
         throttledHandleDragging(e)
@@ -770,7 +832,9 @@ export const EditorV1: FC<EditorProps> = memo(
       }
       if (id) {
         const block = elementsMap?.get(id)
-        block?.changeIndicator(direction, e)
+        if (!block?.changeIndicator(direction, e)) {
+          indicatorRef.current = undefined
+        }
       }
       const previousIndicator = previousIndicatorRef.current
       if (previousIndicator.id === id && previousIndicator.direction === direction) {
@@ -938,8 +1002,10 @@ export const EditorV1: FC<EditorProps> = memo(
           </Content>
         )}
         <div ref={wrapperRef} className={styles.Wrapper}>
-          <div className={classNames(styles.InnerEditorWrapper, mindmapVisible && styles.MindmapVisible)}>
+          <div role="inner-editor" className={classNames(styles.InnerEditorWrapper, mindmapVisible && styles.MindmapVisible)}>
             <InnerEditor
+            titleMarginTop={titleMarginTop}
+              note={note}
               scrollElement={wrapperRef.current}
               title={title}
               noteId={noteId}
@@ -968,24 +1034,11 @@ export const EditorV1: FC<EditorProps> = memo(
             }
           }}
           visible={overlayVisible}
+          editor={editor}
+          scrollElement={wrapperRef.current}
         />
-        <DragHandle
-          onMouseDown={handleStartDragging}
-          // onClick={e => {
-          //   setOverlayVisible(!overlayVisible)
-          //   emitter.emit('editor', {
-          //     type: 'toggleOverlay',
-          //     data: {
-          //       top: dragHandle?.top + wrapperRef.current?.getBoundingClientRect()?.top,
-          //       left: dragHandle?.left + wrapperRef.current?.getBoundingClientRect()?.left,
-          //       content: 'dragHandleMenu'
-          //     }
-          //   })
-          //   e.stopPropagation()
-          // }}
-          {...dragHandle}
-          visible={!isDragging && !outlineVisible && !mindmapVisible}
-        />
+        <div></div>
+        <DragHandle onMouseDown={handleStartDragging} {...dragHandle} visible={!isDragging && !outlineVisible && !mindmapVisible} />
         <div style={{ position: 'fixed', inset: 0, zIndex: 999, pointerEvents: 'none' }} role="dragging-layer">
           <div style={{ pointerEvents: 'auto', position: 'relative', zIndex: 0 }}>
             {isDragging && <div style={{ position: 'absolute', top: 0, left: 0 }} ref={draggingLayerRef}></div>}

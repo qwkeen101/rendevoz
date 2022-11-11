@@ -4,17 +4,21 @@ import { atom, useAtom } from 'jotai'
 interface Setting {
   appearance: {
     language: string
+    logo: boolean
   }
   editor: {
-    toolbarPosition: 'float' | 'top' | 'bottom'
+    toolbarPosition: 'float' | 'top' | 'bottom',
+    confirmExit: boolean
   }
 }
 const defaultSetting: Setting = {
   appearance: {
-    language: 'en-US'
+    language: 'en-US',
+    logo: true
   },
   editor: {
-    toolbarPosition: 'top'
+    toolbarPosition: 'float',
+    confirmExit: true
   }
 }
 const localSetting = localStorage.getItem('setting')

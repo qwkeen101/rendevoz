@@ -5,7 +5,6 @@
 <img alt="license" src="https://img.shields.io/badge/License-AGPL%20v3-orange.svg"/>
 <img alt="star" src="https://img.shields.io/github/stars/RealRong/Rendevoz?style=social"/>
 <img alt="commit" src="https://img.shields.io/github/commit-activity/w/RealRong/Rendevoz"/>
-<img alt="contribute" src="https://img.shields.io/badge/contributes-welcome-%238590ae"/>
 </p>
 
 # Online Editor demo

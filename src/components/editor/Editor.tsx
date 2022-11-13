@@ -3,32 +3,14 @@ import useEventEmitter from '@/events/useEventEmitter'
 import { useDebounceFn, useMemoizedFn, useRafFn, useUnMount } from '@/hooks'
 import Id from '@/utils/id'
 import classNames from 'classnames'
-import { FC, FormEvent, memo, MouseEvent, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
-import {
-  createEditor,
-  Editor,
-  Transforms,
-  Descendant,
-  Node,
-  Path,
-  Element as SlateElement,
-  Range,
-  Point,
-  Element,
-  BaseEditor,
-  PathRef
-} from 'slate'
+import { FC, FormEvent, memo, MouseEvent, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { createEditor, Editor, Transforms, Descendant, Node, Path, Range } from 'slate'
 import { withHistory } from 'slate-history'
 import { withReact, ReactEditor } from 'slate-react'
 import { searchBlock } from '../dragReposition/utils/algorithm'
 import { getElementId } from '../dragReposition/utils/element'
 import { getDistanceBetweenPointAndElement } from '../dragReposition/utils/position'
-import {
-  getDistanceBetweenPointAndScrollableElement,
-  isScrollable,
-  isFullyScrolled,
-  getDistanceBetweenElementAndScrollableElement
-} from '../dragReposition/utils/scroll'
+import { getDistanceBetweenPointAndScrollableElement, getDistanceBetweenElementAndScrollableElement } from './utils/scroll'
 import { CustomElement } from './customTypes'
 import { useSelectedEditorRef } from './hooks/useSelectedEditorRef'
 import InnerEditor from './InnerEditor'
@@ -65,6 +47,7 @@ import _ from 'lodash'
 import rebuildDragSelect from './utils/rebuildDragSelect'
 import moveSingleElement from './utils/moveSingleElement'
 import moveMultiElements from './utils/moveMultiElements'
+import DragManager from './DragManager'
 
 type DragHandleProps = {
   left: number
@@ -102,7 +85,7 @@ export interface IEditorRef {
 }
 
 export const EditorV1: FC<EditorProps> = memo(
-  ({ onEditorInitialized, onChange, onClick, onSave, initialValue, onTitleChange, id, noteId,titleMarginTop }) => {
+  ({ onEditorInitialized, onChange, onClick, onSave, initialValue, onTitleChange, id, noteId, titleMarginTop }) => {
     useUnMount(() => {
       doc.destroy()
       if (note === null) {
@@ -126,34 +109,29 @@ export const EditorV1: FC<EditorProps> = memo(
     const [title, setTitle] = useState()
     const [isSelecting, setIsSelecting] = useIsSelecting()
     const scrollManager = useMemo(() => new ScrollManager(), [])
+    const dragManager = useMemo(() => new DragManager(), [])
     const titleRef = useRef<string>()
-    const wrapperRef = useRef<HTMLDivElement>(null)
-    const currentDraggingRef = useRef<HTMLDivElement>()
+    const scrollElementRef = useRef<HTMLDivElement>(null)
     const draggingLayerRef = useRef<HTMLDivElement>()
     const blockElementsRef = useRef<Map<globalThis.Element, { left: number; top: number; height: number; width: number }>>(new Map())
     const blockElementsArrayRef = useRef<HTMLElement[]>([])
     const [dragHandle, setDragHandle] = useState<DragHandleProps>()
-    const indicatorRef = useRef<{ direction?: string; id?: number; isNested?: boolean }>()
-    const scrollDirectionRef = useRef<string>()
-    const scrollFramerId = useRef<number>()
     const emitter = useEventEmitter()
     const handler = new EditorEventHandler()
     const selectedRef = useSelectedEditorRef()
-    const previousIndicatorRef = useRef<{ direction: string | null; id: number | null }>({
-      direction: null,
-      id: null
-    })
     const { getNoteById, saveNote, findParentNotes, updateNote, saveNoteAndBlocks } = useNoteStore()
     const [note, setNote] = useState<INote | null>(null)
     const [currentDocument] = useCurrentDocument()
     const { updateDocument } = useDocumentStore()
     const { addItemToCollection } = useCollectionStore()
     useEffect(() => {
-      const wrapper = wrapperRef.current
-      if (wrapper) {
-        wrapper.addEventListener('mousedown', handleStartSelecting)
+      const scrollElement = scrollElementRef.current
+      if (scrollElement) {
+        scrollManager.registerScrollElement(scrollElement)
+        dragManager.registerScrollElement(scrollElement)
+        scrollElement.addEventListener('mousedown', handleStartSelecting)
         return () => {
-          wrapper.removeEventListener('mousedown', handleStartSelecting)
+          scrollElement.removeEventListener('mousedown', handleStartSelecting)
         }
       }
     })
@@ -162,21 +140,23 @@ export const EditorV1: FC<EditorProps> = memo(
       if (e.target === e.currentTarget) {
         document.body.style.cursor = 'default'
         setIsSelecting(true)
-        const wrapper = wrapperRef.current
-        if (!wrapper) return
+        const scrollElement = scrollElementRef.current
+        if (!scrollElement) return
         blockElementsArrayRef.current = []
         blockElementsRef.current.clear()
-        Array.from(wrapper.querySelector(`[role="textbox"]`)?.querySelectorAll('[data-spec-type="common-block"]') || []).forEach(i => {
-          const { left, top, width, height } = i.getBoundingClientRect()
-          const distance = getDistanceBetweenPointAndScrollableElement({ x: left, y: top }, wrapper)
-          blockElementsArrayRef.current.push(i)
-          blockElementsRef.current.set(i, {
-            left: distance.left,
-            top: distance.top,
-            width,
-            height
-          })
-        })
+        Array.from(scrollElement.querySelector(`[role="textbox"]`)?.querySelectorAll('[data-spec-type="common-block"]') || []).forEach(
+          i => {
+            const { left, top, width, height } = i.getBoundingClientRect()
+            const distance = getDistanceBetweenPointAndScrollableElement({ x: left, y: top }, scrollElement)
+            blockElementsArrayRef.current.push(i)
+            blockElementsRef.current.set(i, {
+              left: distance.left,
+              top: distance.top,
+              width,
+              height
+            })
+          }
+        )
         const distanceToScrollElement = getDistanceBetweenElementAndScrollableElement(
           {
             left: e.clientX,
@@ -188,7 +168,7 @@ export const EditorV1: FC<EditorProps> = memo(
             width: 0,
             height: 0
           },
-          wrapper
+          scrollElement
         )
         if (distanceToScrollElement) {
           SELECT_AREA_MAP.set(editor, {
@@ -212,24 +192,13 @@ export const EditorV1: FC<EditorProps> = memo(
       }
     }, [isSelecting])
     const handleSelecting = useMemoizedFn((e: MouseEvent) => {
-      const wrapper = wrapperRef.current
-      if (!wrapper) {
+      const scrollElement = scrollElementRef.current
+      if (!scrollElement) {
         return
       }
       e.preventDefault()
-      if (isScrollable(wrapper)) {
-        const distance = getDistanceBetweenPointAndElement(e, wrapper)
-        if (distance.top < 100 && distance.top > 0 && isFullyScrolled(wrapper) !== 'top') {
-          if (!scrollDirectionRef.current) {
-            startScroll('top')
-          }
-        } else if (distance.bottom < 100 && distance.bottom > 0 && isFullyScrolled(wrapper) !== 'bottom') {
-          if (!scrollDirectionRef.current) {
-            startScroll('bottom')
-          }
-        } else {
-          endScroll()
-        }
+      if (scrollManager.canScroll()) {
+        scrollManager.startScroll(e)
       }
       const prevRect = SELECT_AREA_MAP.get(editor)
       if (!prevRect) return
@@ -240,7 +209,7 @@ export const EditorV1: FC<EditorProps> = memo(
           x: e.clientX,
           y: e.clientY
         },
-        wrapper
+        scrollElement
       )
       const currRect = {
         startPoint,
@@ -382,9 +351,15 @@ export const EditorV1: FC<EditorProps> = memo(
       YjsEditor.connect(editor)
       ID_TO_ELEMENTS_MAP.set(editor, new Map())
       SELECTED_BLOCKS_MAP.set(editor, new Map())
+      dragManager.registerEditor(editor)
       editor.noteId = noteId
       return () => YjsEditor.disconnect(editor)
     }, [editor])
+    useEffect(() => {
+      if (isDragging) {
+        draggingLayerRef.current && dragManager.registerDragLayer(draggingLayerRef.current)
+      }
+    }, [isDragging])
     useLayoutEffect(() => {
       emitter.addListener('editor', handler)
       selectedRef.current = {
@@ -415,10 +390,7 @@ export const EditorV1: FC<EditorProps> = memo(
       requestIdleCallback(requestSelectBlock)
     })
     const handleNestedListItem = useMemoizedFn((isNested: boolean) => {
-      indicatorRef.current = {
-        ...indicatorRef.current,
-        isNested
-      }
+      dragManager.shouldNested(isNested)
     })
     const handleInsertNode = (element: CustomElement) => {
       element.id = Id.getId()
@@ -475,266 +447,24 @@ export const EditorV1: FC<EditorProps> = memo(
     }
 
     const handleDragDrop = useMemoizedFn(() => {
-      if (indicatorRef.current) {
+      if (dragManager.drop()) {
         setDragHandle(undefined)
-        const { direction, isNested, id } = indicatorRef.current
-        const selectedBlocksMap = SELECTED_BLOCKS_MAP.get(editor)
-        const [targetElement, targetPath] = Array.from(Node.descendants(editor)).find(i => i[0].id === id) || []
-
-        if (selectedBlocksMap && selectedBlocksMap.size > 0) {
-          const selectedBlocks = Array.from(selectedBlocksMap.values())
-          const selectedElements = selectedBlocks.map(i => elementsMap?.get(getElementId(i))?.getElement()).filter(i => !!i)
-          if (selectedElements.length === 1) {
-            const currPath = ReactEditor.findPath(editor, selectedElements[0])
-            moveSingleElement(editor, currPath, targetElement, targetPath, direction, isNested)
-            return
-          }
-          moveMultiElements(editor, selectedElements, targetElement, targetPath, direction, isNested)
-          return
-        }
-        const currPath = currentDraggingElementPath.current
-        moveSingleElement(editor, currPath, targetElement, targetPath, direction, isNested)
       }
     })
 
     const handleStartDragging = () => {
       setIsDragging(true)
-      blockElementsArrayRef.current = []
-      blockElementsRef.current.clear()
-      document.body.style.cursor = 'grabbing'
-      const wrapper = wrapperRef.current
-      if (!wrapper) {
-        return
-      }
-      // save all outest blocks rect for horizontally select which is currently dragging over
-      Array.from(wrapper.querySelector(`[role="textbox"]`)?.children || [])
-        .filter(i => i.getAttribute('data-type') === 'block')
-        .forEach(i => {
-          const { left, top, width, height } = i.getBoundingClientRect()
-          const distance = getDistanceBetweenPointAndScrollableElement({ x: left, y: top }, wrapper)
-          blockElementsArrayRef.current.push(i)
-          blockElementsRef.current.set(i, {
-            left: distance.left,
-            top: distance.top,
-            width,
-            height
-          })
-        })
+      dragManager.prepareDragging()
       document.addEventListener('mousemove', handleDragging2)
       document.addEventListener('mouseup', handleEndDragging)
     }
 
-    const startScroll = (direction: string) => {
-      scrollDirectionRef.current = direction
-      scroll()
-    }
-
-    const scroll = () => {
-      if (scrollDirectionRef.current && wrapperRef.current) {
-        const step = wrapperRef.current.scrollHeight / 500
-        const direction = scrollDirectionRef.current
-        if (direction === 'top') {
-          wrapperRef.current.scrollTop = wrapperRef.current.scrollTop - step
-        } else {
-          wrapperRef.current.scrollTop = wrapperRef.current.scrollTop + step
-        }
-        cancelAnimationFrame(scrollFramerId.current)
-        scrollFramerId.current = requestAnimationFrame(scroll)
-      }
-    }
-
-    const endScroll = () => {
-      cancelAnimationFrame(scrollFramerId.current)
-      scrollDirectionRef.current = undefined
-    }
-
     const handleDragging = useMemoizedFn((e: MouseEvent) => {
-      const draggingLayer = draggingLayerRef.current
-      const wrapper = wrapperRef.current
-      const currentDraggingElement = currentDraggingRef.current
-      const indicator = indicatorRef.current
-      if (!draggingLayer || !wrapper || !currentDraggingElement || !blockElementsRef.current.size) {
-        return
+      if (scrollManager.canScroll()) {
+        scrollManager.startScroll(e)
       }
-
-      if (!draggingLayer.hasChildNodes()) {
-        const selectedBlocksSet = SELECTED_BLOCKS_MAP.get(editor)
-        if (selectedBlocksSet && selectedBlocksSet.size > 0) {
-          draggingLayer.appendChild(rebuildDragSelect(editor, e))
-        } else {
-          const cloned = currentDraggingElement.cloneNode(true)
-          const rect = currentDraggingElement.getBoundingClientRect()
-          draggingLayer.style.opacity = '0.5'
-          draggingLayer.style.width = `${rect?.width}px`
-          draggingLayer.style.height = `${rect?.height}px`
-          draggingLayer.appendChild(cloned)
-        }
-      }
-      draggingLayer.firstElementChild &&
-        ((draggingLayer.firstElementChild as HTMLElement).style.transform = `translate3d(${e.clientX}px,${e.clientY}px,0)`)
-      if (isScrollable(wrapper)) {
-        const distance = getDistanceBetweenPointAndElement(e, wrapper)
-        if (distance.top < 100 && distance.top > 0 && isFullyScrolled(wrapper) !== 'top') {
-          if (!scrollDirectionRef.current) {
-            startScroll('top')
-          }
-        } else if (distance.bottom < 100 && distance.bottom > 0 && isFullyScrolled(wrapper) !== 'bottom') {
-          if (!scrollDirectionRef.current) {
-            startScroll('bottom')
-          }
-        } else {
-          endScroll()
-        }
-      }
-      const distanceToWrapper = getDistanceBetweenPointAndScrollableElement({ x: e.clientX, y: e.clientY }, wrapper)
-      const currentBlock = searchBlock(Array.from(blockElementsRef.current.entries()), distanceToWrapper.top)
-      if (currentBlock === -1) {
-        // right now we need to check if dragging over the toppest / bottomest
-        const firstBlock = blockElementsArrayRef.current[0]
-        const lastBlock = blockElementsArrayRef.current[blockElementsArrayRef.current.length - 1]
-        const distanceToFirstBlock = getDistanceBetweenPointAndElement(e, firstBlock)
-        const distanceToLastBlock = getDistanceBetweenPointAndElement(e, lastBlock)
-        if (distanceToFirstBlock.top < 0 && distanceToFirstBlock.left > 0 && distanceToFirstBlock.right > 0) {
-          changeIndicator('top', e, getElementId(firstBlock))
-          return
-        }
-        if (distanceToLastBlock.bottom < 0 && distanceToLastBlock.left > 0 && distanceToLastBlock.right > 0) {
-          changeIndicator('bottom', e, getElementId(lastBlock))
-          return
-        }
-        return
-      }
-      const currentBlockId = getElementId(currentBlock)
-      const previousBlock = currentBlock?.previousElementSibling
-      const previousBlockId = getElementId(previousBlock)
-      let draggingOverColumn = null
-
-      // right now dragging over column list,we do not determine the top / bottom direction of column list
-      if (currentBlock?.getAttribute('data-spec-type') === 'columnList') {
-        const columns = currentBlock.querySelectorAll(`[data-spec-type="column"]`)
-        // check if dragging over the right blank space
-        const lastColumn = Array.from(columns).pop()
-        if (lastColumn) {
-          const distance = getDistanceBetweenPointAndElement(e, lastColumn)
-          if (distance.right < 0) {
-            changeIndicator('right', e, getElementId(lastColumn))
-            return
-          }
-        }
-
-        // else check if dragging between the columns or in the columns
-        for (const column of columns) {
-          const distance = getDistanceBetweenPointAndElement(e, column)
-          if (distance.left < 0) {
-            changeIndicator('left', e, getElementId(column))
-            return
-          }
-          if (distance.left > 0 && distance.right > 0) {
-            if (distance.top > 0 && (distance.top < currentBlock.getBoundingClientRect().height * 0.8 || distance.bottom > 0)) {
-              draggingOverColumn = column
-            }
-            break
-          }
-        }
-        if (draggingOverColumn) {
-          const currentDraggingOverBlock = Array.from(draggingOverColumn.children).find(i => {
-            const distance = getDistanceBetweenPointAndElement(e, i)
-            if (distance.top > 0 && distance.bottom > 0) {
-              return i
-            }
-          })
-          // we have the dragging over block,means we are not dragging over the blank space
-          if (currentDraggingOverBlock) {
-            // next we need to determine the mouse pos on top 50% side or bottom 50% side
-            const distance = getDistanceBetweenPointAndElement(e, currentDraggingOverBlock)
-            const { height } = currentDraggingOverBlock.getBoundingClientRect()
-            const currentDraggingOverBlockId = getElementId(currentDraggingOverBlock)
-            if (distance.top / height < 0.5) {
-              // we are on the top side and current dragging over block is the first one,so we can put the indicator above it
-              if (currentDraggingOverBlock === draggingOverColumn.firstElementChild) {
-                changeIndicator('top', e, currentDraggingOverBlockId)
-                return
-              } else {
-                const previousBlockId = getElementId(currentDraggingOverBlock.previousElementSibling)
-                // if current dragging over block is not the first child,we need to check if the indicator is under the previous block
-                if (indicator && indicator.direction === 'bottom' && indicator.id === previousBlockId) {
-                  // do nothing here
-                  return
-                } else {
-                  changeIndicator('bottom', e, previousBlockId)
-                  return
-                  // we need to put the indicator under the previous block
-                }
-              }
-            } else {
-              // now we are dragging over the bottom 50% side
-              // we can't eagerly return right here because maybe we are dragging over list-item block so change indicator should be trigger for marker/line wrapper check
-              changeIndicator('bottom', e, currentDraggingOverBlockId)
-              return
-            }
-          } else {
-            // now we are dragging over the blank space of the column,always the bottom side
-            // so we should set indicator on the bottomest block
-            const lastBlock = draggingOverColumn.lastElementChild
-            const lastBlockId = getElementId(lastBlock)
-            changeIndicator('bottom', e, lastBlockId)
-            return
-          }
-        } else {
-          const distance = getDistanceBetweenPointAndElement(e, currentBlock)
-          const { height } = currentBlock.getBoundingClientRect()
-          if (distance.top / height > 0.8) {
-            changeIndicator('bottom', e, currentBlockId)
-            return
-          }
-          if (distance.top / height < 0.2) {
-            if (currentBlock === wrapperRef.current?.querySelector(`[role="textbox"]`)?.firstElementChild) {
-              changeIndicator('top', e, currentBlockId)
-              return
-            } else {
-              changeIndicator('bottom', e, previousBlockId)
-              return
-            }
-          }
-        }
-      } else {
-        // right now dragging over normal block,direction can be top / right / bottom / left
-        // eslint-disable-next-line no-unsafe-optional-chaining
-        const distance = getDistanceBetweenPointAndElement(e, currentBlock)
-        const { height } = currentBlock.getBoundingClientRect()
-        // right direction and left direction are more important on noraml block
-        // bottom 50% -> direction is bottom of current block      top 50% -> direction is bottom of previous block,if there is no previous block,direction is top of current block
-        if (distance.right < 0) {
-          // direction is right
-          if (getElementId(currentBlock) === getElementId(currentDraggingElement)) {
-            return
-          }
-          changeIndicator('right', e, currentBlockId)
-          return
-        }
-        if (distance.left < 0) {
-          if (getElementId(currentBlock) === getElementId(currentDraggingElement)) {
-            return
-          }
-          if (Number(currentBlock.getAttribute('data-level')) > 0) {
-            return
-          }
-          changeIndicator('left', e, currentBlockId)
-          return
-        }
-        if (distance.top / height < 0.5) {
-          if (currentBlock === currentBlock.parentElement?.firstElementChild) {
-            changeIndicator('top', e, currentBlockId)
-            return
-          } else {
-            changeIndicator('bottom', e, previousBlockId)
-            return
-          }
-        } else {
-          changeIndicator('bottom', e, currentBlockId)
-          return
-        }
-      }
+      const indicator = dragManager.drag(e)
+      indicator && dragManager.changeIndicator(indicator, e)
     })
 
     const throttledHandleDragging = useRafFn(handleDragging)
@@ -750,27 +480,22 @@ export const EditorV1: FC<EditorProps> = memo(
     })
     const handleDragging2 = useMemoizedFn((e: MouseEvent) => {
       try {
+        e.preventDefault()
         throttledHandleDragging(e)
       } catch (e) {
         console.log(e)
       }
-      e.preventDefault()
     })
 
     const handleEndDragging = useMemoizedFn(() => {
-      document.body.style.cursor = 'auto'
       document.removeEventListener('mousemove', handleDragging2)
       document.removeEventListener('mouseup', handleEndDragging)
-      blockElementsRef.current.clear()
-      currentDraggingRef.current = undefined
       try {
         handleDragDrop()
       } catch (e) {
         console.log(e)
       }
       setIsDragging(false)
-      changeIndicator(null)
-      endScroll()
     })
 
     const handleDividerDragEnd = useMemoizedFn(
@@ -804,8 +529,7 @@ export const EditorV1: FC<EditorProps> = memo(
 
     const handleMouseEnter = useMemoizedFn((e: MouseEvent, element) => {
       if (!isDragging && !overlayVisible) {
-        currentDraggingRef.current = e.currentTarget as HTMLDivElement
-        currentDraggingElementPath.current = ReactEditor.findPath(editor, element)
+        dragManager.registerDragElement(e.currentTarget as HTMLElement, ReactEditor.findPath(editor, element))
         const targetRect = e.currentTarget.getBoundingClientRect()
         setDragHandle({
           left: targetRect.x,
@@ -822,33 +546,6 @@ export const EditorV1: FC<EditorProps> = memo(
 
     const handleToggleOutline = useMemoizedFn(() => {
       setOutlineVisible(!outlineVisible)
-    })
-
-    const changeIndicator = useMemoizedFn((direction: string | null, e?: MouseEvent, id?: number) => {
-      if (direction === null) {
-        indicatorRef.current = undefined
-      } else {
-        indicatorRef.current = { direction, id }
-      }
-      if (id) {
-        const block = elementsMap?.get(id)
-        if (!block?.changeIndicator(direction, e)) {
-          indicatorRef.current = undefined
-        }
-      }
-      const previousIndicator = previousIndicatorRef.current
-      if (previousIndicator.id === id && previousIndicator.direction === direction) {
-        return
-      } else {
-        if (previousIndicator.id) {
-          const prevBlock = elementsMap?.get(previousIndicator.id)
-          prevBlock?.changeIndicator(null)
-        }
-        previousIndicatorRef.current = {
-          direction,
-          id
-        }
-      }
     })
 
     const { run: debouncedChangeEditorValue } = useDebounceFn(
@@ -1001,12 +698,12 @@ export const EditorV1: FC<EditorProps> = memo(
             </Breadcrumb>
           </Content>
         )}
-        <div ref={wrapperRef} className={styles.Wrapper}>
+        <div ref={scrollElementRef} className={styles.Wrapper}>
           <div role="inner-editor" className={classNames(styles.InnerEditorWrapper, mindmapVisible && styles.MindmapVisible)}>
             <InnerEditor
-            titleMarginTop={titleMarginTop}
+              titleMarginTop={titleMarginTop}
               note={note}
-              scrollElement={wrapperRef.current}
+              scrollElement={scrollElementRef.current}
               title={title}
               noteId={noteId}
               onTitleChange={handleTitleChange}
@@ -1035,7 +732,7 @@ export const EditorV1: FC<EditorProps> = memo(
           }}
           visible={overlayVisible}
           editor={editor}
-          scrollElement={wrapperRef.current}
+          scrollElement={scrollElementRef.current}
         />
         <div></div>
         <DragHandle onMouseDown={handleStartDragging} {...dragHandle} visible={!isDragging && !outlineVisible && !mindmapVisible} />

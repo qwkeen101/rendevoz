@@ -9,7 +9,7 @@ export const isFullyScrolled = (element: HTMLElement) => {
   if (element.scrollTop === 0) {
     return 'top'
   }
-  if (Math.floor(element.scrollTop + element.offsetHeight) >= element.scrollHeight) {
+  if (Math.abs(Math.floor(element.scrollTop + element.offsetHeight) - element.scrollHeight) < 10) {
     return 'bottom'
   }
   return false

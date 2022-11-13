@@ -10,7 +10,7 @@ import { scrollToTarget } from '../../utils/positions/scroll'
 import { SELECT_AREA_MAP, ID_TO_ELEMENTS_MAP, SELECTED_BLOCKS_MAP } from '../../weakMaps'
 import { getDistanceBetweenPointAndElement } from '@/components/dragReposition/utils/position'
 import useIsSelecting from '../../hooks/useIsSelecting'
-import { getDistanceBetweenElementAndScrollableElement } from '@/components/dragReposition/utils/scroll'
+import { getDistanceBetweenElementAndScrollableElement } from '@/components/editor/utils/scroll'
 import { isRectsCollision } from '../../utils/positions/collision'
 
 type BlockProps = {
@@ -66,7 +66,6 @@ const Block: FC<React.DetailedHTMLProps<React.HTMLAttributes<HTMLDivElement>, HT
       }
     }, blockRef)
     const handleIndicatorChange = useMemoizedFn((direction: string | null, e?: MouseEvent) => {
-      console.log(element, direction)
       if (selected) {
         return false
       }

@@ -8,6 +8,10 @@
 <img alt="contribute" src="https://img.shields.io/badge/contributes-welcome-%238590ae"/>
 </p>
 
+# Online Editor demo
+
+https://rendevoz.github.io/Reditor/
+
 # Introduction
 
 Rendevoz is an open-source knowledge management application which aims to help people have better learning experience.

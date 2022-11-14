@@ -79,7 +79,7 @@ const ContextMenu = forwardRef<ContextMenuRef, ContextMenuProps>(
           align="start"
           positions={position}
           visible={contextMenuOpen}
-          containerStyle={{ zIndex: '100000' }}
+          containerStyle={{ zIndex: '1000' }}
           content={<div ref={contentRef}>{renderContent()}</div>}
         >
           <PosHelper top={memoizedPosition.current?.[1]} left={memoizedPosition.current?.[0]} />

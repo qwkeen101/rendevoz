@@ -62,7 +62,7 @@ const useNoteStore = () => {
         noteDb.put(n)
       })
   }
-  const getNoteById = (noteId: number): Promise<INote> => {
+  const getNoteById = (noteId: number): Promise<INote | undefined> => {
     const notes = latestNotes.current
     const note = get(noteId, notes)
     if (note) {
@@ -74,7 +74,7 @@ const useNoteStore = () => {
           setNotes(add(note, notes))
           resolve(note)
         } else {
-          reject('Where is the note? It is lost!')
+          resolve(undefined)
         }
       })
     })

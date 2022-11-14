@@ -98,7 +98,6 @@ export const EditorV1: FC<EditorProps> = memo(
       }
     })
     const { t } = useTranslation()
-    const currentDraggingElementPath = useRef<Path>()
     const [isDragging, setIsDragging] = useIsDragging()
     const [outlineVisible, setOutlineVisible] = useState(false)
     const [mindmapVisible, setMindmapVisible] = useState(false)

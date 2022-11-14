@@ -107,6 +107,7 @@ const withCustomComponent = (editor: CustomEditor) => {
     }
   }
   editor.insertText = (text: string) => {
+    console.log('zz')
     const { selection } = editor
     if (selection && Range.isCollapsed(selection)) {
       if (text) {

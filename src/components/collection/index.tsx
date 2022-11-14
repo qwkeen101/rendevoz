@@ -1,7 +1,7 @@
 import { useToggle } from '@/hooks'
 import useCurrentCollection from '@/hooks/components/useCurrentCollection'
 import useCollectionStore from '@/stores/collection.store'
-import { CSSProperties, FC, useEffect, useRef, useState } from 'react'
+import { CSSProperties, FC, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ICollection, INote, IPdfDocument } from '~/typings/data'
 import { Breadcrumb, Content, WithBorder } from '../base'
@@ -61,8 +61,6 @@ const Collection: FC<CollectionProps> = ({
   const { t } = useTranslation()
   const navigate = useNavigate()
   const {
-    all,
-    one,
     findParentCollections,
     getChildrenCollections,
     getChildrenItems,
@@ -73,7 +71,7 @@ const Collection: FC<CollectionProps> = ({
     deleteCollection,
     findSubCollections
   } = useCollectionStore()
-  const { all: documents, renameDocument } = useDocumentStore()
+  const { all: documents, renameDocument, deleteDocumentById } = useDocumentStore()
   const { all: notes, renameNote, deleteNote } = useNoteStore()
   const [newCollectionVisible, toggleNewCollectionVisible] = useToggle(false)
   const [currentSelect, setCurrentSelect] = useState<ICollection | IPdfDocument>()
@@ -92,7 +90,7 @@ const Collection: FC<CollectionProps> = ({
   const bodyRef = useRef<HTMLDivElement>(null)
   const contextMenuRef = useRef()
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     onCollectionChange?.(currentCollection)
     if (currentCollection) {
       getChildrenItems(currentCollection.id).then(items => {
@@ -149,6 +147,11 @@ const Collection: FC<CollectionProps> = ({
           renameNote(id, newName)
           break
         }
+        case 'document': {
+          const { id } = currentCollectionContextMenuItem.document
+          renameDocument(id, newName)
+          break
+        }
       }
       toast.success('Successfully renamed !')
       toggleRenameVisible()
@@ -172,6 +175,11 @@ const Collection: FC<CollectionProps> = ({
           navigate(`/editor/${n.id}`)
           break
         }
+        case 'document': {
+          const d = currentCollectionContextMenuItem.document
+          navigate(`/pdf/${d.id}`)
+          break
+        }
       }
       contextMenuRef.current?.closeContextMenu()
     }
@@ -189,6 +197,8 @@ const Collection: FC<CollectionProps> = ({
           break
         }
         case 'document': {
+          deleteDocumentById(currentCollectionContextMenuItem.document.id)
+          break
         }
       }
       contextMenuRef.current?.closeContextMenu()
@@ -238,6 +248,20 @@ const Collection: FC<CollectionProps> = ({
         contextMenuRef.current?.closeContextMenu()
       }
       if ('document' in currentCut) {
+        const { originCollection, document: cutDocument } = currentCut as { document: IPdfDocument; originCollection: ICollection }
+        const newOriginCollection = produce(originCollection, draft => {
+          draft.items = draft.items?.filter(i => i.id !== cutDocument.id)
+        })
+        const newTargetCollection = produce(pasteTargetCollection, draft => {
+          draft.items
+            ? draft.items.push({
+                type: 'document',
+                id: cutDocument.id
+              })
+            : (draft.items = [])
+        })
+        updateCollections(newOriginCollection, newTargetCollection)
+        contextMenuRef.current?.closeContextMenu()
       }
       setCurrentCut(null)
     }
@@ -371,11 +395,13 @@ const Collection: FC<CollectionProps> = ({
               }}
               className={styles.body}
             >
-              {!hideCollections && childrenCollections?.length === 0 && ((hideDocuments && hideNotes) || filteredChildrenItems.length === 0) && (
-                <Content flex centered fullWidth fullHeight style={{ fontWeight: 600 }}>
-                  {t('collection.no collection placeholder')}
-                </Content>
-              )}
+              {!hideCollections &&
+                childrenCollections?.length === 0 &&
+                ((hideDocuments && hideNotes) || filteredChildrenItems.length === 0) && (
+                  <Content flex centered fullWidth fullHeight style={{ fontWeight: 600 }}>
+                    {t('collection.no collection placeholder')}
+                  </Content>
+                )}
               {!hideCollections &&
                 childrenCollections?.map(i => (
                   <CollectionItem
@@ -412,6 +438,13 @@ const Collection: FC<CollectionProps> = ({
                     onClick={() => {
                       console.log(i)
                       setCurrentSelect(i)
+                    }}
+                    onContextMenu={() => {
+                      setCurrentCollectionContextMenuItem({
+                        type: 'document',
+                        document: i,
+                        originCollection: currentCollection
+                      })
                     }}
                     document={i}
                   />

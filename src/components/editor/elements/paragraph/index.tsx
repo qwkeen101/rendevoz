@@ -2,14 +2,16 @@ import { EditorEventHandler } from '@/events/editorEvent'
 import useEventEmitter from '@/events/useEventEmitter'
 import { FC, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Range } from 'slate'
-import { RenderElementProps, useSelected, useSlate } from 'slate-react'
+import { useUpdate } from 'react-use'
+import { Editor, Element, Range } from 'slate'
+import { ReactEditor, RenderElementProps, useSelected, useSlate } from 'slate-react'
 import styles from './index.module.less'
 
 const Paragraph: FC<RenderElementProps> = ({ children, element }) => {
-  const [hidePlaceHolder, setHidePlaceHolder] = useState(false)
+  const editor = useSlate()
   const { t } = useTranslation()
   const handler = new EditorEventHandler()
+  const forceUpdate = useUpdate()
   const emitter = useEventEmitter()
   const selected = useSelected()
   const selection = useSlate().selection
@@ -17,12 +19,20 @@ const Paragraph: FC<RenderElementProps> = ({ children, element }) => {
   if (selection !== null) {
     isCollapsed = Range.isCollapsed(selection)
   }
-  handler.on('compositionStart', () => setHidePlaceHolder(true))
-  handler.on('compositionEnd', () => setHidePlaceHolder(false))
+
+  const hidePlaceHolder = ReactEditor.isComposing(editor)
+
+  const handleComposition = () => {
+    if (Editor.isEmpty(editor, element)) {
+      forceUpdate()
+    }
+  }
   useEffect(() => {
     emitter.addListener('editor', handler)
+    document.addEventListener('compositionupdate', handleComposition)
     return () => {
       emitter.removeListener('editor', handler)
+      document.removeEventListener('compositionupdate', handleComposition)
     }
   }, [])
   const isEmpty = element.children[0].text === '' && element.children.length === 1

@@ -1,3 +1,4 @@
+import { Noop } from '@/common/types'
 import { FC } from 'react'
 import { IPdfDocument } from '~/typings/data'
 import Icon from '../base/Icon'
@@ -6,10 +7,11 @@ import MenuItem from '../base/menu/MenuItem'
 interface DocumentItemProps {
   document: IPdfDocument
   onClick: () => void
+  onContextMenu: Noop
 }
-const DocumentItem: FC<DocumentItemProps> = ({ document, onClick }) => {
+const DocumentItem: FC<DocumentItemProps> = ({ document, onClick, onContextMenu }) => {
   return (
-    <MenuItem id={document?.id} onClick={onClick} icon={<Icon name="park-file-pdf-one" />} type="button">
+    <MenuItem id={document?.id} onClick={onClick} onContextMenu={onContextMenu} icon={<Icon name="park-file-pdf-one" />} type="button">
       {document?.name || document?.metadata?.title}
     </MenuItem>
   )

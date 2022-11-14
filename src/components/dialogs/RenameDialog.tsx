@@ -7,7 +7,10 @@ const RenameDialog: FC<{ onRename: (newName: string) => void; onBack: Noop }> = 
   const [name, setName] = useState('')
   return (
     <Content flex column justifyContent="space-between" fullHeight>
-      <PrettyInput displayText="New name" onChange={e => setName(e.target.value)} />
+      <Content flex column style={{ height: 300 }}>
+        <div style={{ fontWeight: 600, fontSize: 20 }}>Rename file</div>
+        <PrettyInput displayText="New name" onChange={e => setName(e.target.value)} />
+      </Content>
       <Footer onBack={onBack} onSubmit={() => onRename(name)} />
     </Content>
   )

@@ -124,6 +124,7 @@ const useCollectionStore = () => {
       database.get(collectionId).then(c => {
         if (c) {
           resolve(c)
+          console.log('333')
           setCollections(add(c, collections))
         } else {
           reject("Collection don't exist!")

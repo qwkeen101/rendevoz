@@ -24,6 +24,7 @@ import { getCaretGlobalPosition } from './utils/positions/caret'
 import { useTranslation } from 'react-i18next'
 import ListItem from './elements/listItem'
 import { INote } from '~/typings/data'
+import { Positions } from './utils/positions'
 
 type InnerEditorProps = {
   titleMarginTop?: number
@@ -251,7 +252,12 @@ const InnerEditor: FC<InnerEditorProps> = memo(
               caretPositionRef.current = getCaretGlobalPosition()
             }
           }}
-          onCompositionStart={() => emitter.emit('editor', { type: 'compositionStart' })}
+          onCompositionStart={() => {
+            emitter.emit('editor', { type: 'compositionStart' })
+            if (Positions.isEndSpacer(editor) || Positions.isStartSpacer(editor)) {
+              editor.insertBreak()
+            }
+          }}
           onCompositionEnd={() => emitter.emit('editor', { type: 'compositionEnd' })}
           renderElement={renderElement}
           renderLeaf={renderLeaf}

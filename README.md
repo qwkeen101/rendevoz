@@ -6,6 +6,11 @@
 <img alt="star" src="https://img.shields.io/github/stars/RealRong/Rendevoz?style=social"/>
 <img alt="commit" src="https://img.shields.io/github/commit-activity/w/RealRong/Rendevoz"/>
 </p>
+<p align="center">
+<a href="https://rendevoz.com">Website</a>
+<span>&nbsp;</span>
+<a href="https://twitter.com/RealRong2001">Developer Twitter</a>
+</p>
 
 # Online Editor demo
 
@@ -17,13 +22,12 @@ Rendevoz is an open-source knowledge management application which aims to help p
 
 ### User Installation
 
-Right now Rendevoz is not totally ready for use, so there is no installable package yet.  
-But you can clone this repo and run it locally to have a preview!  
-**Notice: This is not a stable version so your data may lost and developer won't be responsible for that!**
+Right now Rendevoz is in alpha test,you can download the latest release and install (Windows only now).  
+**Notice: This is not a stable version so your may lose your data!**
 
 #### How to run locally?
 
-git clone -> npm install -> npm run dev
+git clone this repo -> npm install -> npm run dev
 
 ### Contact me
 

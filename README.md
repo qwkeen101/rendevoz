@@ -6,6 +6,11 @@
 <img alt="star" src="https://img.shields.io/github/stars/RealRong/Rendevoz?style=social"/>
 <img alt="commit" src="https://img.shields.io/github/commit-activity/w/RealRong/Rendevoz"/>
 </p>
+<p align="center">
+<a href="https://rendevoz.com">Website</a>
+<span>&nbsp;</span>
+<a href="https://twitter.com/RealRong2001">Developer Twitter</a>
+</p>
 
 # Online Editor demo
 

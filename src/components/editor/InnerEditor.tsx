@@ -25,6 +25,7 @@ import { useTranslation } from 'react-i18next'
 import ListItem from './elements/listItem'
 import { INote } from '~/typings/data'
 import { Positions } from './utils/positions'
+import MetaObject from './elements/meta'
 
 type InnerEditorProps = {
   titleMarginTop?: number
@@ -119,7 +120,7 @@ const InnerEditor: FC<InnerEditorProps> = memo(
             </>
           )
         }
-        if (element.type !== 'spacer' && element.type !== 'highlight' && element.type !== 'emoji') {
+        if (element.type !== 'spacer' && element.type !== 'highlight' && element.type !== 'emoji' && element.type !== 'metaObject') {
           return (
             <Block
               data-type="block"
@@ -150,11 +151,10 @@ const InnerEditor: FC<InnerEditorProps> = memo(
         if (isHotkey('left', e)) {
           e.preventDefault()
           const path = selection.anchor.path
-          console.log()
           let distance = 1
           if (
             Path.hasPrevious(path) &&
-            Editor.node(editor, Path.previous(path))[0].type === 'emoji' &&
+            ['emoji', 'metaObject'].includes(Editor.node(editor, Path.previous(path))[0].type) &&
             Editor.isEdge(editor, selection.anchor, selection.anchor.path)
           )
             distance = 2
@@ -167,7 +167,7 @@ const InnerEditor: FC<InnerEditorProps> = memo(
           let distance = 1
           if (
             Editor.hasPath(editor, Path.next(path)) &&
-            Editor.node(editor, Path.next(path))[0]?.type === 'emoji' &&
+            ['emoji', 'metaObject'].includes(Editor.node(editor, Path.next(path))[0].type) &&
             Editor.isEdge(editor, selection.anchor, selection.anchor.path)
           )
             distance = 2
@@ -324,6 +324,8 @@ const Element = (props: RenderElementProps) => {
         return <Heading level={4} {...props} />
       case 'heading-six':
         return <Heading level={5} {...props} />
+      case 'metaObject':
+        return <MetaObject {...props} />
       case 'list-item':
         return <ListItem {...props} />
       case 'highlight':

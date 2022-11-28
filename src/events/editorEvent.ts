@@ -26,6 +26,7 @@ export interface ToggleOverlayEvent {
   top?: number
   left?: number
   content?: string
+  noteId?: number
 }
 export interface TabDataChangeEvent {
   id: string

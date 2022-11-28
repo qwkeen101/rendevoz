@@ -7,7 +7,7 @@ import { CustomEditor } from '../types'
 const withShortcut = (editor: CustomEditor) => {
   const { insertText } = editor
   editor.insertText = (text: string) => {
-    const { selection } = editor
+    const { selection, emitter } = editor
     if (text === ' ' && selection && Range.isCollapsed(selection)) {
       const { anchor } = selection
       const block = Editor.above(editor, {
@@ -20,6 +20,16 @@ const withShortcut = (editor: CustomEditor) => {
       const type = SHORTCUTS[beforeText]
 
       if (type) {
+        if (type === 'meta-object') {
+          emitter?.emit('editor', {
+            type: 'toggleOverlay',
+            data: {
+              content: 'metaObject'
+            }
+          })
+          insertText(text)
+          return
+        }
         Transforms.select(editor, range)
         Transforms.delete(editor)
         const newProperties: Partial<SlateElement> = {

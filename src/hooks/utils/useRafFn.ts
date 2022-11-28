@@ -1,5 +1,5 @@
-import { useRef } from "react"
-import useLatest from "./useLatest"
+import { useRef } from 'react'
+import useLatest from './useLatest'
 
 const useRafFn = (fn: (...args) => void) => {
   const fnRef = useLatest(fn)

@@ -1,5 +1,7 @@
+import Id from '@/utils/id'
 import produce from 'immer'
 import { orderBy } from 'lodash'
+import { IBase } from '~/typings/data'
 
 type PartialWithId<T> = Partial<T> & { id: number }
 
@@ -36,6 +38,14 @@ const BaseStore = {
   },
   orderedData<T>(data: Map<number, T>): T[] {
     return orderBy(Array.from(data.values()), 'createdAt', 'desc')
+  },
+  initBaseObject<T extends Partial<IBase>>(obj: T): PartialWithId<T> {
+    return {
+      ...obj,
+      id: Id.getId(),
+      updatedAt: Date.now(),
+      createdAt: Date.now()
+    }
   }
 }
 

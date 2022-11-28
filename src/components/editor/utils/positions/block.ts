@@ -30,12 +30,9 @@ export const BlockPosition: IBlockPosition = {
   },
   isInsideCommonBlock: editor => {
     const { selection } = editor
-    console.log(selection)
     if (selection && Range.isCollapsed(selection)) {
       const node = Editor.node(editor, selection?.anchor?.path, { depth: 1 })
-      console.log(node)
       if (node) {
-        console.log(true)
         return true
       }
     }

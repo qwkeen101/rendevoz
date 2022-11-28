@@ -209,6 +209,7 @@ const EditorManager: FC<EditorManagerProps> = ({ initialNoteId, documentId, onSa
         return new Promise(resolve => {
           const editor = defaultEditor({
             id,
+            noteId,
             onInitialized: () => resolve(null)
           })
           layout.dockMove(editor, panelId, 'middle')

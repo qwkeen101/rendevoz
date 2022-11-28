@@ -1,4 +1,3 @@
-import { Descendant } from 'slate'
 import { ElementWithId, EmptyText } from './baseTypes'
 
 export interface IOuterElement extends ElementWithId {
@@ -27,4 +26,8 @@ export interface SubPageElement extends IOuterElement {
   type: 'subPage'
   iconName?: string
 }
-export type OuterElement = ThoughtElement | HighlighElement | SubPageElement
+
+export interface MetaObjectElement extends IOuterElement {
+  type: 'metaObject'
+}
+export type OuterElement = ThoughtElement | HighlighElement | SubPageElement | MetaObjectElement

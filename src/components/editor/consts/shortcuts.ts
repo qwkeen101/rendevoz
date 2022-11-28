@@ -8,7 +8,8 @@ const SHORTCUTS = {
   '###': 'heading-three',
   '####': 'heading-four',
   '#####': 'heading-five',
-  '######': 'heading-six'
+  '######': 'heading-six',
+  $: 'meta-object'
 }
 
 export default SHORTCUTS

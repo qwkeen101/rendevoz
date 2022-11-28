@@ -1,28 +1,55 @@
 import { Noop } from '@/common/types'
 import { AnimatePopover, WithBorder } from '@/components'
+import MetaDetailsCard from '@/components/editor/elements/meta/MetaDetailsCard'
 import useEventEmitter from '@/events/useEventEmitter'
 import { useMemoizedFn } from '@/hooks'
+import useMetaStore from '@/stores/meta.store'
 import { PrimitiveAtom, useAtom } from 'jotai'
 import { FC, forwardRef, memo, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useClickAway } from 'react-use'
-import { IHighlightLabel } from '~/typings/data'
+import { IHighlightLabel, MetaKnowledgeObject } from '~/typings/data'
 import LabelToolbar from '../toolbar/LabelToolbar'
 
 interface HighlightLabelProps {
   highlightAtom: PrimitiveAtom<IHighlightLabel>
   onDelete: Noop
 }
-const layout = ['colorPicker', 'contentInput', 'addToEditorButton', 'separator', 'searcher', 'translator', 'separator', 'delete']
+const layout = [
+  'colorPicker',
+  'contentInput',
+  'metaObject',
+  'addToEditorButton',
+  'separator',
+  'searcher',
+  'translator',
+  'separator',
+  'delete'
+]
 
 const HighlightLabel: FC<HighlightLabelProps> = ({ highlightAtom, onDelete }) => {
   const [highlight, setHighlight] = useAtom(highlightAtom)
   const [popoverVisible, setPopoverVisible] = useState(false)
+  const [metaCardVisible, setMetaCardVisible] = useState(false)
+  const [metaObject, setMetaObject] = useState<MetaKnowledgeObject>()
+
+  const { addMetaObject, getMetaKnowObjectByKeyword } = useMetaStore()
+
+  useEffect(() => {
+    if (highlight) {
+      const trimedKeyword = highlight.selectedText?.trim()
+      if (trimedKeyword) {
+        setMetaObject(getMetaKnowObjectByKeyword(trimedKeyword))
+      }
+    }
+  }, [highlight, getMetaKnowObjectByKeyword])
   const highlightRef = useRef(null)
+  const metaRef = useRef<HTMLDivElement>(null)
   const toolbarRef = useRef<HTMLDivElement>(null)
   const emitter = useEventEmitter()
   useClickAway(highlightRef, e => {
-    if (!toolbarRef.current?.contains(e.target)) {
+    if (!toolbarRef.current?.contains(e.target) && !metaRef.current?.contains(e.target)) {
       setPopoverVisible(false)
+      setMetaCardVisible(false)
     }
   })
 
@@ -42,7 +69,18 @@ const HighlightLabel: FC<HighlightLabelProps> = ({ highlightAtom, onDelete }) =>
       }
     })
   })
-
+  const handleMetaObject = () => {
+    if (metaObject === undefined) {
+      addMetaObject({
+        keyword: highlight.selectedText?.trim()
+      }).then(obj => {
+        setMetaObject(obj)
+      })
+    } else {
+      console.log(metaObject)
+      setMetaCardVisible(true)
+    }
+  }
   return (
     <AnimatePopover
       padding={10}
@@ -50,16 +88,23 @@ const HighlightLabel: FC<HighlightLabelProps> = ({ highlightAtom, onDelete }) =>
       visible={popoverVisible}
       positions={['top']}
       content={
-        <WithBorder ref={toolbarRef} key={highlight.id}>
-          <LabelToolbar
-            layout={layout}
-            key={highlight.id}
-            onColorChange={handleColorChange}
-            onDelete={onDelete}
-            selectedText={highlight.selectedText}
-            onAddToEditor={handleAddToEditor}
-          />
-        </WithBorder>
+        metaCardVisible ? (
+          <WithBorder ref={metaRef}>
+            <MetaDetailsCard obj={metaObject} />
+          </WithBorder>
+        ) : (
+          <WithBorder ref={toolbarRef} key={highlight.id}>
+            <LabelToolbar
+              layout={layout}
+              key={highlight.id}
+              onColorChange={handleColorChange}
+              onMetaObject={handleMetaObject}
+              onDelete={onDelete}
+              selectedText={highlight.selectedText}
+              onAddToEditor={handleAddToEditor}
+            />
+          </WithBorder>
+        )
       }
     >
       <Highlights

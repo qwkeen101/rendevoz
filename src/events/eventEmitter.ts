@@ -2,6 +2,7 @@ import { EditorEvent } from '@/events/editorEvent'
 import Id from '@/utils/id'
 import { atom } from 'jotai'
 import EventHandler from './eventHandler'
+import { GraphEvent } from './graphEvent'
 import { PdfEvent } from './pdfEvent'
 
 export interface Event<T, K extends keyof T> {
@@ -11,6 +12,7 @@ export interface Event<T, K extends keyof T> {
 export interface EventMap {
   editor: EditorEvent
   pdf: PdfEvent
+  graph: GraphEvent
 }
 export default class EventEmitter {
   private listeners: { [name: string]: Array<EventHandler<unknown>> } = {}

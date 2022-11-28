@@ -16,7 +16,7 @@ import { useSelectedEditorRef } from './hooks/useSelectedEditorRef'
 import InnerEditor from './InnerEditor'
 import withVoid from './plugins/withVoid'
 import styles from './index.module.less'
-import DragHandle from './components/dragHandle'
+import BlockHandle from './components/blockHandle'
 import EditorOverlay from './components/overlay'
 import useIsDragging from './hooks/useIsDragging'
 import { serializeEditor } from './utils/database/serialize'
@@ -30,7 +30,7 @@ import Modal from '../base/modal'
 import SaveNoteDialog from '../dialogs/SaveNoteDialog'
 import toast from 'react-hot-toast'
 import produce from 'immer'
-import { ICollection, INote } from '~/typings/data'
+import { ICollection, INote, MetaNoteObject } from '~/typings/data'
 import useCollectionStore from '@/stores/collection.store'
 import withShortcuts from './plugins/withShortcuts'
 import withCustomComponent from './plugins/withCustomComponent'
@@ -48,6 +48,7 @@ import rebuildDragSelect from './utils/rebuildDragSelect'
 import moveSingleElement from './utils/moveSingleElement'
 import moveMultiElements from './utils/moveMultiElements'
 import DragManager from './DragManager'
+import useMetaStore from '@/stores/meta.store'
 
 type DragHandleProps = {
   left: number
@@ -123,6 +124,7 @@ export const EditorV1: FC<EditorProps> = memo(
     const [currentDocument] = useCurrentDocument()
     const { updateDocument } = useDocumentStore()
     const { addItemToCollection } = useCollectionStore()
+    const { addMetaObject, updateMetaObject, addMetaLink } = useMetaStore()
     useEffect(() => {
       const scrollElement = scrollElementRef.current
       if (scrollElement) {
@@ -611,8 +613,14 @@ export const EditorV1: FC<EditorProps> = memo(
         },
         collection.id
       )
+
       const flattened = []
       const title = titleRef.current
+      addMetaObject({
+        type: 'note',
+        noteId,
+        title
+      } as MetaNoteObject)
       serializeEditor(editor, editor, flattened)
       saveNote({
         id: noteId,
@@ -659,7 +667,29 @@ export const EditorV1: FC<EditorProps> = memo(
         })
       }
     })
-
+    const handleAddMetaObject = useMemoizedFn(() => {
+      Editor.insertBreak(editor)
+      Editor.insertText(editor, '$ ')
+      setTimeout(() => {
+        emitter.emit('editor', {
+          type: 'toggleOverlay',
+          data: {
+            content: 'metaObject',
+            noteId: noteId
+          }
+        })
+      }, 100)
+    })
+    const handleBlockHandleMenu = (e: MouseEvent) => {
+      emitter.emit('editor', {
+        type: 'toggleOverlay',
+        data: {
+          left: e.clientX,
+          top: e.clientY,
+          content: 'blockHandleMenu'
+        }
+      })
+    }
     return (
       <div
         className={styles.Editor}
@@ -732,9 +762,14 @@ export const EditorV1: FC<EditorProps> = memo(
           visible={overlayVisible}
           editor={editor}
           scrollElement={scrollElementRef.current}
+          onAddMetaObject={handleAddMetaObject}
         />
-        <div></div>
-        <DragHandle onMouseDown={handleStartDragging} {...dragHandle} visible={!isDragging && !outlineVisible && !mindmapVisible} />
+        <BlockHandle
+          onAddClick={handleBlockHandleMenu}
+          onDragClick={handleStartDragging}
+          {...dragHandle}
+          visible={!isDragging && !outlineVisible && !mindmapVisible}
+        />
         <div style={{ position: 'fixed', inset: 0, zIndex: 999, pointerEvents: 'none' }} role="dragging-layer">
           <div style={{ pointerEvents: 'auto', position: 'relative', zIndex: 0 }}>
             {isDragging && <div style={{ position: 'absolute', top: 0, left: 0 }} ref={draggingLayerRef}></div>}

@@ -14,6 +14,7 @@ import { Position } from '@/types'
 import { createPortal } from 'react-dom'
 import { AnimatePresence, motion } from 'framer-motion'
 import { useSetting } from '@/hooks'
+import EditorElementsMenu from '@/components/menus/EditorElementsMenu'
 
 interface EditorToolbarProps {
   selection: Position & { selection: Selection }
@@ -209,57 +210,16 @@ const EditorToolbar: FC<EditorToolbarProps> = ({
           placement={position === 'bottom' ? ['top'] : ['bottom']}
           content={
             <WithBorder style={{ padding: '8px 0px' }}>
-              <Menu>
-                <Menu.Group title={t('editor.inline elements')}>
-                  <Menu.Item
-                    type="button"
-                    onClick={e => {
-                      e.stopPropagation()
-                      onToggleEmoji?.()
-                      morePopoverRef.current?.close()
-                    }}
-                  >
-                    <IconWithDescription
-                      title="Emoji"
-                      description={t('editor.use emoji to express your ideas')}
-                      icon="park-message-emoji"
-                    ></IconWithDescription>
-                  </Menu.Item>
-                  {/* <Menu.Item type="button">
-                      <IconWithDescription title="Link" description="Link to external pages" icon="park-link-one"></IconWithDescription>
-                    </Menu.Item> */}
-                </Menu.Group>
-                <Menu.Group title={t('editor.block elements')}>
-                  <Menu.Item
-                    type="button"
-                    onClick={e => {
-                      e.stopPropagation()
-                      onAddSubPage?.()
-                      morePopoverRef.current?.close()
-                    }}
-                  >
-                    <IconWithDescription
-                      title={t('editor.sub page')}
-                      description={t('editor.add sub page')}
-                      icon="park-doc-detail"
-                    ></IconWithDescription>
-                  </Menu.Item>
-                  {/* <Menu.Item
-                      type="button"
-                      onClick={e => {
-                        e.stopPropagation()
-
-                        morePopoverRef.current?.close()
-                      }}
-                    >
-                      <IconWithDescription
-                        title={t('editor.keyword')}
-                        description={t('editor.use keyword to organize your ideas')}
-                        icon="park-key"
-                      ></IconWithDescription>
-                    </Menu.Item> */}
-                </Menu.Group>
-              </Menu>
+              <EditorElementsMenu
+                onToggleEmoji={() => {
+                  onToggleEmoji?.()
+                  morePopoverRef.current.close()
+                }}
+                onAddSubPage={() => {
+                  onAddSubPage?.()
+                  morePopoverRef.current.close()
+                }}
+              />
             </WithBorder>
           }
         ></IconWithPopover>

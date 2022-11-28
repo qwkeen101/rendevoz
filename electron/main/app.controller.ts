@@ -5,6 +5,9 @@ import { IpcInvoke } from './transport'
 import fs from 'fs'
 import path from 'path'
 
+const DEFAULT_USER_DATA_PATH =
+  process.env.APPDATA || (process.platform == 'darwin' ? process.env.HOME + '/Library/Preferences' : process.env.HOME + '/.local/share')
+
 @Controller()
 export class AppController {
   constructor(private readonly appService: AppService, @Inject('WEB_CONTENTS') private readonly webContents: WebContents) {}
@@ -43,10 +46,11 @@ export class AppController {
   }
   @IpcInvoke('copyPdf')
   public async copyPdfFile(originPath: string, originName: string) {
-    if (!fs.existsSync('./files')) {
-      fs.mkdirSync('./files', {})
+    const filePath = path.join(DEFAULT_USER_DATA_PATH, 'rendevoz', 'files')
+    if (!fs.existsSync(filePath)) {
+      fs.mkdirSync(filePath, {})
     }
-    const newPath = `./files/${originName}`
+    const newPath = path.join(filePath, originName)
     if (!fs.existsSync(newPath)) {
       return new Promise(resolve => {
         fs.copyFile(originPath, newPath, () => {
@@ -59,13 +63,14 @@ export class AppController {
   }
   @IpcInvoke('saveImage')
   public async saveImage(imgName: string, imgData: string) {
-    if (!fs.existsSync('./imgs')) {
-      fs.mkdirSync('./imgs', {})
+    const imgPath = path.join(DEFAULT_USER_DATA_PATH, 'rendevoz', 'imgs')
+    if (!fs.existsSync(imgPath)) {
+      fs.mkdirSync(imgPath, {})
     }
-    const newPath = `./imgs/${imgName}.png`
+    const newPath = path.join(imgPath, `${imgName}.png`)
     const absolutePath = path.resolve(newPath)
     const protocolPath = 'rendefile://' + absolutePath
-    const data = imgData.replace(/^data:image\/png;base64,/, '')
+    const data = imgData.split(',').pop()
     const buf = Buffer.from(data, 'base64')
     if (!fs.existsSync(newPath)) {
       return new Promise(resolve => {

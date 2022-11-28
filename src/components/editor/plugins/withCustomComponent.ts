@@ -52,7 +52,7 @@ const withCustomComponent = (editor: CustomEditor) => {
         finalInsertPath = nextRowPath
       }
       if (finalInsertPath) {
-        const placeHolderParagraph: ParagraphElement = {
+        const placeHolderParagraph = {
           type: 'paragraph',
           id: Id.getId(),
           children: [{ text: '' }]
@@ -76,6 +76,7 @@ const withCustomComponent = (editor: CustomEditor) => {
         if (children.length === placeHolderPath[0]) {
           Transforms.insertNodes(editor, placeHolderParagraph, { at: placeHolderPath })
         }
+        console.log('cenasd')
         return
       }
     }
@@ -107,7 +108,6 @@ const withCustomComponent = (editor: CustomEditor) => {
     }
   }
   editor.insertText = (text: string) => {
-    console.log('zz')
     const { selection } = editor
     if (selection && Range.isCollapsed(selection)) {
       if (text) {

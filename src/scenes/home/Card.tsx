@@ -114,6 +114,8 @@ const RecentlyReadCardItemV2 = ({ document }: { document: IPdfDocument }) => {
                 <Icon size={40} fill="#8590aea8" name="park-pic" />
               </div>
             }
+            width="100%"
+            ratio={1.33}
             draggable={false}
             className={styles.coverV2}
             src={document.metadata?.coverUrl || 'https://picsum.photos/200/300'}

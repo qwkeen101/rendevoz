@@ -263,6 +263,7 @@ class DragManager {
       this.blockElementsMap.clear()
       this.dragElement = null
       this.dragElementPath = null
+      this.indicator = null
       const selectedBlocksMap = SELECTED_BLOCKS_MAP.get(this.editor)
       const [targetElement, targetPath] = Array.from(Node.descendants(this.editor)).find(i => i[0].id === id) || []
 

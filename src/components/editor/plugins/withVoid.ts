@@ -10,6 +10,8 @@ const withVoid = (editor: CustomEditor) => {
         return true
       case 'emoji':
         return true
+      case 'metaObject':
+        return true
       case 'image':
         return true
       case 'thought':
@@ -20,7 +22,7 @@ const withVoid = (editor: CustomEditor) => {
         return false
     }
   }
-  editor.isInline = element => ['emoji'].includes(element.type) || isInline(element)
+  editor.isInline = element => ['emoji', 'metaObject'].includes(element.type) || isInline(element)
   editor.isVoid = element => {
     return checkIfVoidComponents(element) ? true : isVoid(element)
   }

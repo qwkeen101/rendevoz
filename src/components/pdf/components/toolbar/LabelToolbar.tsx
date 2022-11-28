@@ -26,6 +26,7 @@ type LabelToolbarProps = {
   onMovableChange?: Noop
   onIconChange?: (icon: string) => void
   onColorChange?: (color: string) => void
+  onMetaObject?: Noop
   onAddToEditor?: Noop
   onDelete?: Noop
   onContentChange?: (value: string) => void
@@ -53,6 +54,7 @@ const LabelToolbar: FC<LabelToolbarProps> = ({
   onContentChange,
   onDelete,
   onDirectionChange,
+  onMetaObject,
   selectedText,
   content,
   color,
@@ -63,7 +65,7 @@ const LabelToolbar: FC<LabelToolbarProps> = ({
     <Toolbar.Item key="colorPicker">
       <IconWithPopover
         disableNudge
-        name="park-platte"
+        name="park-background-color"
         color={color}
         content={
           <WithBorder>
@@ -86,7 +88,7 @@ const LabelToolbar: FC<LabelToolbarProps> = ({
       />
     </Toolbar.Item>
   )
-
+  const MetaObjectItem = <Toolbar.Item key="metaObject" iconName="park-share-one" onClick={onMetaObject}></Toolbar.Item>
   const ContentInputItem = (
     <Toolbar.Item key="contentInput">
       <IconWithPopover
@@ -174,6 +176,8 @@ const LabelToolbar: FC<LabelToolbarProps> = ({
           return DeleteItem
         case 'direction':
           return DirectionItem
+        case 'metaObject':
+          return MetaObjectItem
       }
     })
   }

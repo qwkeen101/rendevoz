@@ -7,7 +7,7 @@ const defaultTheme = {
   defaultBackgroundColor: '#ffffff',
   defaultBackGroundColorLightGrey: '#f9fafa',
   defaultFontColorBlack: '#121212',
-  defaultFontColorGrey: '#636466',
+  defaultFontColorGrey: '#37352f80',
   defaultFontColorLightGrey: '#0000000f',
   defaultFontColorRed: '#e0245e',
   defaultFontColorLightBlue: '#8590ae',

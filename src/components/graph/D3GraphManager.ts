@@ -50,17 +50,15 @@ class D3GraphManager {
   public registerNodes = (nodes: GraphNode[]) => {
     if (this.originNodes) {
       nodes.forEach(n => {
-        this.N.push(n.id)
-        this.originNodes?.push(n)
+        // this.N.push(n.id)
+        this.originNodes?.push({ id: n.id })
       })
       this.updateLayout()
     } else {
-      const N = d3.map(nodes, n => n.id).map(intern)
-      const _nodes = d3.map(nodes, (_, i) => ({ id: N[i] }))
-      this.N = N
-      console.log(N, _nodes)
-      this.originNodes = _nodes
+      // in originNodes we just need id, no other properties.
+      this.originNodes = nodes.map(n => n.id)
     }
+    console.log(this.originNodes)
     const clonedNodes = structuredClone(this.originNodes)
     return clonedNodes
   }
@@ -126,7 +124,7 @@ class D3GraphManager {
     this.simulateForceLayout()
   }
   public startAddEdge = (sourceNode: SVGGElement) => {
-    const bounding = sourceNode.querySelector('image').getBoundingClientRect()
+    const bounding = (sourceNode.querySelector('image') || sourceNode.querySelector('circle') || sourceNode.querySelector('foreignObject')).getBoundingClientRect()
     const viewportBounding = document.getElementById('viewport')?.getBoundingClientRect()
     this.linkStartPoint = {
       x: Number(String((bounding.x + 20 - viewportBounding?.x) / (this.transform?.k || 1))),
@@ -152,7 +150,7 @@ class D3GraphManager {
           'link',
           d3
             .forceLink(this.originEdges)
-            .id(({ index: i }) => this.N[i])
+            .id(d => d.id)
             .distance(200)
         )
         .restart()
@@ -162,7 +160,7 @@ class D3GraphManager {
       const forceNode = d3.forceManyBody()
       const forceLink = d3
         .forceLink(this.originEdges)
-        .id(({ index: i }) => this.N[i])
+        .id(d => d.id)
         .distance(200)
       this.d3Simulation = d3
         .forceSimulation(this.originNodes)

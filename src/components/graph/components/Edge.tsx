@@ -116,11 +116,23 @@ const Edge: FC<EdgeProps> = memo(({ edge }) => {
       }
     })
   }
+  const edgeClickHandler: MouseEventHandler = e => {
+    const edgeBounding = edgeRef.current!.getBoundingClientRect()
+    emitter.emit('graph', {
+      type: 'toggleEdgeAttributeCard',
+      data: {
+        edge,
+        clientX: edgeBounding.x + edgeBounding.width / 2,
+        clientY: edgeBounding.y + edgeBounding.height / 2 + 20
+      }
+    })
+  }
   return (
     <g
       onMouseEnter={edgeMouseEnterHandler}
       onMouseLeave={edgeMouseLeaveHandler}
       onContextMenu={edgeContextMenuHandler}
+      onClick={edgeClickHandler}
       pointerEvents="auto"
       cursor="pointer"
     >
@@ -134,33 +146,35 @@ const Edge: FC<EdgeProps> = memo(({ edge }) => {
         markerEnd={`url(#${getMarkerId('end', edge.highlight || highlight ? MarkerColor.EMPHASIS : MarkerColor.NORMAL)})`}
         d={d}
       ></motion.path>
-      <g ref={labelRef} transform={`translate(${centerX + 5 * offsetLabelRatio},${centerY + 20 * offsetLabelRatio})`}>
-        <motion.rect
-          fill="white"
-          width={40}
-          height={20}
-          initial={{ opacity: 1 }}
-          animate={{ opacity: edge.opacity }}
-          rx={2}
-          ry={2}
-        ></motion.rect>
-        <motion.text
-          fontSize={15}
-          fontWeight={600}
-          fontStyle="italic"
-          dy="0.1em"
-          dx="-0.2em"
-          fill={edge.highlight || highlight ? MarkerColor.EMPHASIS : MarkerColor.NORMAL}
-          textAnchor="middle"
-          dominantBaseline="middle"
-          initial={{ opacity: 1 }}
-          animate={{ opacity: edge.opacity }}
-          x={20}
-          y={10}
-        >
-          {n}
-        </motion.text>
-      </g>
+      {edge.label && (
+        <g ref={labelRef} transform={`translate(${centerX + 5 * offsetLabelRatio},${centerY + 20 * offsetLabelRatio})`}>
+          <motion.rect
+            fill="white"
+            width={40}
+            height={20}
+            initial={{ opacity: 1 }}
+            animate={{ opacity: edge.opacity }}
+            rx={2}
+            ry={2}
+          ></motion.rect>
+          <motion.text
+            fontSize={15}
+            fontWeight={600}
+            fontStyle="italic"
+            dy="0.1em"
+            dx="-0.2em"
+            fill={edge.highlight || highlight ? MarkerColor.EMPHASIS : MarkerColor.NORMAL}
+            textAnchor="middle"
+            dominantBaseline="middle"
+            initial={{ opacity: 1 }}
+            animate={{ opacity: edge.opacity }}
+            x={20}
+            y={10}
+          >
+            {edge.label}
+          </motion.text>
+        </g>
+      )}
     </g>
   )
 })

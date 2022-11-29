@@ -7,6 +7,7 @@ import D3GraphManager from '../../D3GraphManager'
 import useGraph from '../../hooks/useGraph'
 import { motion } from 'framer-motion'
 import { NodeMouseEventHandler } from '../NodeContainer'
+import IconNode from './IconNode'
 
 interface NodeProps {
   node: GraphNode
@@ -47,7 +48,7 @@ const Node: FC<NodeProps> = memo(({ node, onMouseEnter, onMouseLeave, onContextM
     const n = graph?.originNodes?.find(i => i.id === node.id)
     function dragstarted(event) {
       if (graph?.isAddingEdge) return
-      if (!event.active) simulation?.alphaTarget(0.3).restart()
+      if (!event.active) simulation?.alphaTarget(0.1).restart()
       event.subject.fx = n.x
       event.subject.fy = n.y
     }
@@ -81,7 +82,8 @@ const Node: FC<NodeProps> = memo(({ node, onMouseEnter, onMouseLeave, onContextM
       animate={{ opacity: node.opacity }}
       transform={`translate(${node.x},${node.y})`}
     >
-      <ImageNode node={node} />
+      <IconNode node={node} />
+      {/* <ImageNode node={node} /> */}
     </motion.g>
   )
 })

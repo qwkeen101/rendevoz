@@ -1,24 +1,27 @@
 import useDb from '@/hooks/stores/useDb'
 import { GlobalScope } from '@/jotai/jotaiScope'
 import { PartialWithId } from '@/types'
-import Id from '@/utils/id'
 import fuzzysort from 'fuzzysort'
 import produce from 'immer'
-import { atom, useAtom } from 'jotai'
+import { atom, useAtom, useAtomValue } from 'jotai'
 import { useMemo } from 'react'
-import { MetaComment, MetaKnowledgeObject, MetaLink, MetaObject } from '~/typings/data'
+import { MetaComment, MetaLink, MetaObject } from '~/typings/data'
 import BaseStore from './base.store'
 
 const metaObjectsAtom = atom<Map<number, MetaObject>>(new Map())
 const metaLinksAtom = atom<Map<number, MetaLink>>(new Map())
+const { orderedData } = BaseStore
+const allMetaObjectsAtom = atom(get => orderedData(get(metaObjectsAtom)))
+const allMetaLinksAtom = atom(get => orderedData(get(metaLinksAtom)))
 const useMetaStore = () => {
   const [metaObjects, setMetaObjects] = useAtom(metaObjectsAtom, GlobalScope)
   const [metaLinks, setMetaLinks] = useAtom(metaLinksAtom, GlobalScope)
-  const { add, get, orderedData, update, bulkAdd, initBaseObject } = BaseStore
+  const allMetaObjects = useAtomValue(allMetaObjectsAtom, GlobalScope)
+  const allMetaLinks = useAtomValue(allMetaLinksAtom, GlobalScope)
+  const { add, get, update, bulkAdd, initBaseObject } = BaseStore
   const metaObjectDb = useDb('metaObjects')
   const metaCommentDb = useDb('metaComments')
   const metaLinkDb = useDb('metaLinks')
-  const all = orderedData(metaObjects)
 
   const getAllMetaObjects = () => {
     metaObjectDb.toArray().then(data => {
@@ -44,13 +47,13 @@ const useMetaStore = () => {
     })
   }
   const getMetaKnowObjectByKeyword = (keyword: string) => {
-    return all.find(i => i.keyword === keyword)
+    return allMetaObjects.find(i => i.keyword === keyword)
   }
 
   const addMetaObject = (metaObject: Partial<MetaObject>) => {
     const initedMetaObject = initBaseObject(metaObject) as MetaObject
     setMetaObjects(add(initedMetaObject, metaObjects))
-    if (!all.find(i => i.keyword === initedMetaObject.keyword)) {
+    if (!allMetaObjects.find(i => i.keyword === initedMetaObject.keyword)) {
       metaObjectDb.put(initedMetaObject)
     }
     return Promise.resolve(initedMetaObject)
@@ -103,7 +106,7 @@ const useMetaStore = () => {
   const searchMetaObject = (query: string) => {
     const results = fuzzysort.go(
       query,
-      all.filter(i => !!i.keyword),
+      allMetaObjects.filter(i => !!i.keyword),
       { key: 'keyword' }
     )
     return results
@@ -121,7 +124,9 @@ const useMetaStore = () => {
       searchMetaObject,
       deleteMetaComment,
       addMetaLink,
-      getAllMetaLinks
+      getAllMetaLinks,
+      allMetaObjects,
+      allMetaLinks
     }),
     [metaObjects]
   )

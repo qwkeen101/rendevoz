@@ -4,7 +4,9 @@ import useEventEmitter from '@/events/useEventEmitter'
 import { useMemoizedFn } from '@/hooks'
 import { FC, ReactNode, useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { AnimatePopover, Content, WithBorder } from '../base'
+import { AnimatePopover, Content, WithBorder } from '../../../base'
+import { GraphEdge } from '../../types/edge'
+import EdgeAttributeCard from './EdgeAttributeCard'
 
 interface GraphOverlayProps {
   onAddLink: Noop
@@ -20,6 +22,12 @@ const GraphOverlay: FC<GraphOverlayProps> = ({ onAddLink, onDeleteNode }) => {
   }>({
     visible: false
   })
+  const [edgeCardDetails, setEdgeCardDetails] = useState<{
+    x?: number
+    y?: number
+    visible: boolean
+    edge: GraphEdge
+  }>({ visible: false })
   useEffect(() => {
     emitter.addListener('graph', handler)
     return () => {
@@ -34,6 +42,15 @@ const GraphOverlay: FC<GraphOverlayProps> = ({ onAddLink, onDeleteNode }) => {
       y: data.clientY,
       type: data.componentType,
       visible: true
+    })
+  })
+  handler.on('toggleEdgeAttributeCard', data => {
+    console.log(data)
+    setEdgeCardDetails({
+      x: data.clientX,
+      y: data.clientY,
+      visible: true,
+      edge: data.edge
     })
   })
   const renderContextMenu = () => {
@@ -75,7 +92,13 @@ const GraphOverlay: FC<GraphOverlayProps> = ({ onAddLink, onDeleteNode }) => {
     }
     return <div></div>
   }
-
+  const renderEdgeCard = () => {
+    return (
+      <Content flex column>
+        <EdgeAttributeCard currentEdge={edgeCardDetails.edge}/>
+      </Content>
+    )
+  }
   return (
     <Portal>
       <AnimatePopover
@@ -87,6 +110,17 @@ const GraphOverlay: FC<GraphOverlayProps> = ({ onAddLink, onDeleteNode }) => {
         content={<WithBorder style={{ pointerEvents: 'auto' }}>{renderContextMenu()}</WithBorder>}
       >
         <div style={{ left: contextMenuDetails.x, top: contextMenuDetails.y, position: 'absolute' }}></div>
+      </AnimatePopover>
+      <AnimatePopover
+        positions={['bottom']}
+        padding={10}
+        onClickOutside={() => {
+          setEdgeCardDetails({ ...edgeCardDetails, visible: false })
+        }}
+        visible={edgeCardDetails.visible}
+        content={<WithBorder style={{ pointerEvents: 'auto' }}>{renderEdgeCard()}</WithBorder>}
+      >
+        <div style={{ left: edgeCardDetails.x, top: edgeCardDetails.y, position: 'absolute' }}></div>
       </AnimatePopover>
     </Portal>
   )

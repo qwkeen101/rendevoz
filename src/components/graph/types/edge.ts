@@ -7,5 +7,6 @@ export interface GraphEdge {
   sourceId: number
   targetId: number
   opacity?: number
+  label?: string
   highlight?: boolean
 }

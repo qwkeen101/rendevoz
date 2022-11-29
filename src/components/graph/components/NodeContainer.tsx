@@ -20,6 +20,7 @@ const svgContainerClassName = css({
   width: '100%',
   height: '100%',
   overflow: 'visible',
+  pointerEvents: 'none'
 })
 const NodeContainer: FC<NodeContainerProps> = memo(() => {
   const [nodes, setNodes] = useNodes()
@@ -146,6 +147,7 @@ const NodeContainer: FC<NodeContainerProps> = memo(() => {
     if (graph) {
       graph.contextMenuNode = node
     }
+    console.log(node)
     graph?.startAddEdge(e.currentTarget)
     emitter.emit('graph', {
       type: 'toggleContextMenu',

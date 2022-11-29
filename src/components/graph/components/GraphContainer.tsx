@@ -7,7 +7,7 @@ import D3GraphManager from '../D3GraphManager'
 import useEdges from '../hooks/useEdges'
 import useGraph, { graphAtom } from '../hooks/useGraph'
 import useNodes from '../hooks/useNodes'
-import GraphOverlay from '../Overlay'
+import GraphOverlay from './overlay/Overlay'
 import { GraphEdge } from '../types/edge'
 import { GraphNode } from '../types/node'
 import EdgeContainer from './EdgeContainer'
@@ -17,7 +17,7 @@ interface GraphContainerProps {
   edges: GraphEdge[]
   nodes: GraphNode[]
 }
-const GraphInner: FC<GraphContainerProps> = ({ edges: unnormalizedEdges, nodes: unnormalizedNodes }) => {
+const GraphInner: FC<GraphContainerProps> = ({ edges, nodes }) => {
   const graph = useGraph()
   const containerRef = useRef<HTMLDivElement>(null)
   const viewportRef = useRef<HTMLDivElement>(null)
@@ -29,15 +29,17 @@ const GraphInner: FC<GraphContainerProps> = ({ edges: unnormalizedEdges, nodes: 
   }
   useEffect(() => {
     if (containerRef.current && viewportRef.current && graph) {
-      setEdges(graph.registerEdges(unnormalizedEdges))
-      setNodes(graph.registerNodes(unnormalizedNodes))
+      graph.registerEdges(edges)
+      graph.registerNodes(nodes)
+      setEdges(edges)
+      setNodes(nodes)
       setTimeout(() => {
         graph.registerContainer(containerRef.current)
         graph.registerHandler('zoom', zoomHandler)
         graph.updateLayout()
       }, 0)
     }
-  }, [])
+  }, [edges, nodes])
   return (
     <div id="aaa" style={{ width: 1000, height: 600, position: 'relative' }} ref={containerRef}>
       <div

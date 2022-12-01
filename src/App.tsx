@@ -25,6 +25,7 @@ import { Toaster } from 'react-hot-toast'
 import TitleBar from './components/titlebar'
 import Initializer from './Initializer'
 import './global.less'
+import GlobalGraph from './components/graph/GlobalGraph'
 
 const App = () => {
   return (
@@ -32,6 +33,7 @@ const App = () => {
       <Toaster />
       <Initializer />
       <TitleBar />
+      <GlobalGraph />
       <Router>
         <Routes />
       </Router>

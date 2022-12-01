@@ -37,7 +37,7 @@ const EditorOverlay: FC<OverlayProps> = ({ visible, onVisiblityChange, editor, s
   const [content, setContent] = useState<'blockHandleMenu' | 'emojiPicker' | 'metaObject'>()
   const [selectArea, setSelectArea] = useState<EditorSelectArea>()
   const [metaQuery, setMetaQuery] = useState('')
-  const { addMetaObject, addMetaLink } = useMetaStore()
+  const { addMetaObject, addMetaLink,getMetaObjectByNoteId } = useMetaStore()
   const emitter = useEventEmitter()
   const noteIdRef = useRef<number>()
   const handler = new EditorEventHandler()
@@ -160,12 +160,13 @@ const EditorOverlay: FC<OverlayProps> = ({ visible, onVisiblityChange, editor, s
   const addLink = (knowledgeId: number) => {
     const noteId = editor.noteId
     if (noteId) {
+      const noteMetaObjectId = getMetaObjectByNoteId(noteId)?.id
       const link: Partial<MetaLink> = {
         id: Id.getId(),
         targetId: knowledgeId,
-        targetType: 'knowlege',
+        targetType: 'knowledge',
         sourceType: 'note',
-        sourceId: noteId,
+        sourceId: noteMetaObjectId,
         label: 'from'
       }
       addMetaLink(link)

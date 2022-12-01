@@ -1,8 +1,7 @@
 import { Noop } from '@/common/types'
 import { ColorPicker, IconPicker, Toolbar, WithBorder } from '@/components'
 import { PrettyInput } from '@/components/custom/input/pretty'
-import useWhyDidYouUpdate from '@/hooks/utils/useWhyUpdate'
-import { FC, memo, useEffect } from 'react'
+import { FC, memo } from 'react'
 import IconWithPopover from '../../../base/IconWithPopover'
 import { TextSelectionSearch, TextSelectionTranslate } from './TextSelectionToolbar'
 

@@ -31,6 +31,7 @@ const NodeContainer: FC<NodeContainerProps> = memo(() => {
     graph?.registerHandler('change', changeHandler)
   }, [])
   const changeHandler = useMemoizedFn((_nodes: GraphNode[]) => {
+    console.log(_nodes)
     if (nodes) {
       setNodes(
         produce(nodes, draft => {

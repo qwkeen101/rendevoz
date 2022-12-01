@@ -82,7 +82,7 @@ const Node: FC<NodeProps> = memo(({ node, onMouseEnter, onMouseLeave, onContextM
       animate={{ opacity: node.opacity }}
       transform={`translate(${node.x},${node.y})`}
     >
-      <IconNode node={node} />
+      {node.type === 'document' || node.type === 'note' ? <IconNode node={node} /> : <ImageNode node={node} />}
       {/* <ImageNode node={node} /> */}
     </motion.g>
   )

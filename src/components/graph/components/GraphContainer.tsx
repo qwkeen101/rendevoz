@@ -14,8 +14,8 @@ import EdgeContainer from './EdgeContainer'
 import NodeContainer from './NodeContainer'
 
 interface GraphContainerProps {
-  edges: GraphEdge[]
-  nodes: GraphNode[]
+  edges?: GraphEdge[]
+  nodes?: GraphNode[]
 }
 const GraphInner: FC<GraphContainerProps> = ({ edges, nodes }) => {
   const graph = useGraph()
@@ -28,7 +28,8 @@ const GraphInner: FC<GraphContainerProps> = ({ edges, nodes }) => {
     setTransform(transform)
   }
   useEffect(() => {
-    if (containerRef.current && viewportRef.current && graph) {
+    if (containerRef.current && viewportRef.current && graph && nodes && edges) {
+      console.log('ssss')
       graph.registerEdges(edges)
       graph.registerNodes(nodes)
       setEdges(edges)
@@ -41,7 +42,7 @@ const GraphInner: FC<GraphContainerProps> = ({ edges, nodes }) => {
     }
   }, [edges, nodes])
   return (
-    <div id="aaa" style={{ width: 1000, height: 600, position: 'relative' }} ref={containerRef}>
+    <div style={{ width: '100%', height: '100%', position: 'relative' }} ref={containerRef}>
       <div
         className={css({
           transformOrigin: '0 0',

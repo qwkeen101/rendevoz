@@ -17,6 +17,7 @@ export interface EventMap {
 export default class EventEmitter {
   private listeners: { [name: string]: Array<EventHandler<unknown>> } = {}
   private ackEvents: { name: string; data: any }[] = []
+
   public addListener<K extends keyof EventMap>(name: K, handler: EventHandler<unknown>) {
     if (!this.listeners[name]) {
       this.listeners[name] = []

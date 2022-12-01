@@ -4,10 +4,12 @@ import MetaDetailsCard from '@/components/editor/elements/meta/MetaDetailsCard'
 import useEventEmitter from '@/events/useEventEmitter'
 import { useMemoizedFn } from '@/hooks'
 import useMetaStore from '@/stores/meta.store'
+import Id from '@/utils/id'
 import { PrimitiveAtom, useAtom } from 'jotai'
 import { FC, forwardRef, memo, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useClickAway } from 'react-use'
-import { IHighlightLabel, MetaKnowledgeObject } from '~/typings/data'
+import { IHighlightLabel, MetaKnowledgeObject, MetaLink } from '~/typings/data'
+import usePdfInfo from '../../hooks/usePdfInfo'
 import LabelToolbar from '../toolbar/LabelToolbar'
 
 interface HighlightLabelProps {
@@ -31,8 +33,8 @@ const HighlightLabel: FC<HighlightLabelProps> = ({ highlightAtom, onDelete }) =>
   const [popoverVisible, setPopoverVisible] = useState(false)
   const [metaCardVisible, setMetaCardVisible] = useState(false)
   const [metaObject, setMetaObject] = useState<MetaKnowledgeObject>()
-
-  const { addMetaObject, getMetaKnowObjectByKeyword } = useMetaStore()
+  const [pdfInfo] = usePdfInfo()
+  const { addMetaObject, getMetaKnowObjectByKeyword, addMetaLink } = useMetaStore()
 
   useEffect(() => {
     if (highlight) {
@@ -74,10 +76,19 @@ const HighlightLabel: FC<HighlightLabelProps> = ({ highlightAtom, onDelete }) =>
       addMetaObject({
         keyword: highlight.selectedText?.trim()
       }).then(obj => {
+        if (pdfInfo) {
+          const metaLink: Partial<MetaLink> = {
+            sourceId: pdfInfo.id,
+            sourceType: 'document',
+            targetId: obj.id,
+            targetType: 'knowledge',
+            label: 'from'
+          }
+          addMetaLink(metaLink)
+        }
         setMetaObject(obj)
       })
     } else {
-      console.log(metaObject)
       setMetaCardVisible(true)
     }
   }

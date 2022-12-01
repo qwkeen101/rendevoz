@@ -45,6 +45,14 @@ const MetaDetailsCard = ({ obj, onNoteClick }: { obj?: MetaKnowledgeObject; onNo
       }
     })
   }
+  const handleOpenGraph = () => {
+    emitter.emit('graph', {
+      type: 'toggleGlobalGraph',
+      data: {
+        centerNode: { id: obj?.id }
+      }
+    })
+  }
   return (
     <Content
       flex
@@ -151,6 +159,24 @@ const MetaDetailsCard = ({ obj, onNoteClick }: { obj?: MetaKnowledgeObject; onNo
                 >
                   <Icon name="park-notes" />
                   <span>Add Note</span>
+                </Content>
+                <Content
+                  gap={4}
+                  flex
+                  centered
+                  onClick={handleOpenGraph}
+                  className={css({
+                    cursor: 'pointer',
+                    borderRadius: 4,
+                    transition: 'inherit',
+                    padding: 4,
+                    ':hover': {
+                      background: 'rgba(0,0,0,0.06)'
+                    }
+                  })}
+                >
+                  <Icon name="park-relational-graph" />
+                  <span>Open graph</span>
                 </Content>
               </motion.div>
             ) : (

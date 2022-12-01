@@ -2,16 +2,14 @@ import * as d3 from 'd3'
 import { GraphNode } from './types/node'
 import { GraphEdge } from './types/edge'
 import { getIntersectedPointsOfLineAndCircle } from './utils/getIntersectPoints'
-import { curveBasis, curveBumpY } from 'd3'
+import { curveBasis } from 'd3'
 import { getMarkerId } from './utils/getMarkerId'
 import { MarkerColor } from './consts/markerColors'
 
-type D3SVGPathSelection = d3.Selection<SVGPathElement, unknown, HTMLElement, any> | undefined
 const NODE_DISTANCE = 100
 
 class D3GraphManager {
   private container: d3.Selection<HTMLElement, unknown, null, any> | null = null
-  private drawLineSelection: D3SVGPathSelection | null = null
   private transform = null
   public d3Simulation: d3.Simulation<d3.SimulationNodeDatum, undefined> | null = null
   public isDragging = false
@@ -19,7 +17,6 @@ class D3GraphManager {
   public currentHoverNode: GraphNode | null = null
   public originNodes: any[] | null = null
   public originEdges: any[] | null = null
-  private N: any | null = null
   private linkStartPoint = null
 
   public isAddingEdge = false
@@ -46,7 +43,14 @@ class D3GraphManager {
     this.container?.call(zoom)
     this.container?.on('mousemove', this.globalMousemoveHandler)
   }
-
+  public clear = () => {
+    this.originEdges = null
+    this.originNodes = null
+    this.d3Simulation = null
+    // this.ID_TO_EDGE_ELEMENT_MAP.clear()
+    // this.ID_TO_NODE_ELEMENT_MAP.clear()
+    // this.ID_TO_EDGE_LABEL_ELEMENT_MAP.clear()
+  }
   public registerNodes = (nodes: GraphNode[]) => {
     if (this.originNodes) {
       nodes.forEach(n => {
@@ -56,9 +60,8 @@ class D3GraphManager {
       this.updateLayout()
     } else {
       // in originNodes we just need id, no other properties.
-      this.originNodes = nodes.map(n => n.id)
+      this.originNodes = nodes.map(n => ({ id: n.id }))
     }
-    console.log(this.originNodes)
     const clonedNodes = structuredClone(this.originNodes)
     return clonedNodes
   }
@@ -124,7 +127,11 @@ class D3GraphManager {
     this.simulateForceLayout()
   }
   public startAddEdge = (sourceNode: SVGGElement) => {
-    const bounding = (sourceNode.querySelector('image') || sourceNode.querySelector('circle') || sourceNode.querySelector('foreignObject')).getBoundingClientRect()
+    const bounding = (
+      sourceNode.querySelector('image') ||
+      sourceNode.querySelector('circle') ||
+      sourceNode.querySelector('foreignObject')
+    ).getBoundingClientRect()
     const viewportBounding = document.getElementById('viewport')?.getBoundingClientRect()
     this.linkStartPoint = {
       x: Number(String((bounding.x + 20 - viewportBounding?.x) / (this.transform?.k || 1))),
@@ -143,6 +150,7 @@ class D3GraphManager {
       })
   }
   private simulateForceLayout = () => {
+    if (!this.originNodes || this.originNodes.length === 0) return
     if (this.d3Simulation) {
       this.d3Simulation
         .nodes(this.originNodes)

@@ -10,7 +10,6 @@ import { Content } from '@/components'
 import { useGlobalLocation } from '@/routes/globalLocation'
 import { css } from '@emotion/css'
 import { useTheme } from '@/hooks'
-import { rende } from '@/common/rende/rende'
 import { GraphTest } from '@/components/graph'
 
 export const HomePage: FC = () => {
@@ -21,11 +20,10 @@ export const HomePage: FC = () => {
   return (
     <Container className={css({ background: defaultBackgroundColor })} auto column>
       <Header />
-      <GraphTest/>
-      {/* <Content className={styles.body}>
+      <Content className={styles.body}>
         <RecentlyVisitCard />
         <RecentlyAddCard />
-      </Content> */}
+      </Content>
       <AnimatePresence>
         {homeBackground && location && (
           <Routes location={location} key={location.pathname}>

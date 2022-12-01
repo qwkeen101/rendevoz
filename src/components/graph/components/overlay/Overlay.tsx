@@ -105,6 +105,7 @@ const GraphOverlay: FC<GraphOverlayProps> = ({ onAddLink, onDeleteNode }) => {
         positions={['right']}
         align="start"
         padding={10}
+        containerStyle={{zIndex: '10000'}}
         onClickOutside={() => setContextMenuDetails({ ...contextMenuDetails, visible: false })}
         visible={contextMenuDetails.visible}
         content={<WithBorder style={{ pointerEvents: 'auto' }}>{renderContextMenu()}</WithBorder>}

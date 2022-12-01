@@ -88,9 +88,8 @@ export const Sidebar: FC = () => {
           onClick={() => setHovered(false)}
         >
           {setting.appearance.logo && (
-            <Content flex gap={10} style={{ top: 10, padding: 41 }}>
-              <img style={{ width: 30, height: 30 }} src={logo}></img>
-              <div style={{ fontWeight: 700, fontSize: 16, color: '#8590ae', fontFamily: 'sans-serif' }}>Rendevoz</div>
+            <Content flex style={{ top: 30, padding: 36 }}>
+              <img style={{ width: '100%', height: 'auto' }} src={logo}></img>
             </Content>
           )}
           <Navigation></Navigation>

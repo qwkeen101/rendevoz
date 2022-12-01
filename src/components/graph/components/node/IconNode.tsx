@@ -17,7 +17,7 @@ const IconNode = ({ node }: { node: GraphNode }) => {
             boxShadow: ' rgba(149, 157, 165, 0.2) 0px 8px 24px'
           }}
         >
-          <Icon fill="#393E46" size={30} name="park-file-pdf-one" />
+          <Icon fill="#393E46" size={30} name={node.type === 'note' ? 'park-notes' : 'park-file-pdf-one'} />
         </div>
       </foreignObject>
       <motion.text

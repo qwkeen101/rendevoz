@@ -49,11 +49,14 @@ const useMetaStore = () => {
   const getMetaKnowObjectByKeyword = (keyword: string) => {
     return allMetaObjects.find(i => i.keyword === keyword)
   }
-
+  const getMetaObjectByNoteId = (noteId: number) => {
+    return allMetaObjects.find(i => i.noteId === noteId)
+  }
   const addMetaObject = (metaObject: Partial<MetaObject>) => {
     const initedMetaObject = initBaseObject(metaObject) as MetaObject
     setMetaObjects(add(initedMetaObject, metaObjects))
-    if (!allMetaObjects.find(i => i.keyword === initedMetaObject.keyword)) {
+    console.log(metaObject)
+    if (!allMetaObjects.some(i => i.keyword && i.keyword === initedMetaObject.keyword)) {
       metaObjectDb.put(initedMetaObject)
     }
     return Promise.resolve(initedMetaObject)
@@ -69,7 +72,11 @@ const useMetaStore = () => {
   }
   const addMetaLink = (metaLink: Partial<MetaLink>) => {
     const initedMetaLink = initBaseObject(metaLink) as MetaLink
-    metaLinkDb.put(initedMetaLink)
+    const existed = allMetaLinks.some(i => i.sourceId === metaLink.sourceId && i.targetId === metaLink.targetId)
+    if (!existed) {
+      metaLinkDb.put(initedMetaLink)
+    }
+    setMetaLinks(add(initedMetaLink, metaLinks))
   }
   const addMetaComment = (objId: number, metaComment: Partial<MetaComment>) => {
     const initedMetaComment = initBaseObject(metaComment)
@@ -125,10 +132,11 @@ const useMetaStore = () => {
       deleteMetaComment,
       addMetaLink,
       getAllMetaLinks,
+      getMetaObjectByNoteId,
       allMetaObjects,
       allMetaLinks
     }),
-    [metaObjects]
+    [metaObjects, metaLinks]
   )
 }
 

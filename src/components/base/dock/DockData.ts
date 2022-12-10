@@ -277,19 +277,6 @@ export interface LayoutData extends LayoutBase {
    * float box,
    * Children must be PanelData, child box is not allowed
    */
-  floatbox?: BoxData
-
-  /**
-   * window box,
-   * Children must be PanelData, child box is not allowed
-   */
-  windowbox?: BoxData
-
-  /**
-   * The maximized panel,
-   * only one child allowed, child must be PanelData
-   */
-  maxbox?: BoxData
 
   /** @ignore
    * keep the last loaded layout to prevent unnecessary reloading

@@ -1,7 +1,7 @@
 import { Toolbar, Content, WithBorder, ReadMore, ColorPicker } from '@/components'
 import { TextSelectEvent } from '@/events/pdfEvent'
 import { googleTranslate } from '@/utils/translate/googleTranslate'
-import { FC } from 'react'
+import { FC, useState } from 'react'
 import { Link } from 'react-router-dom'
 import useSWRImmutable from 'swr/immutable'
 import IconWithPopover from '../../../base/IconWithPopover'
@@ -161,11 +161,12 @@ export const TextSelectionSearch: FC<{ searchInput?: string }> = ({ searchInput 
   )
 }
 export const TextSelectionTranslate: FC<{ translateInput?: string }> = ({ translateInput }) => {
+  // const [targetLang,setTargetLang] = useState('')
   const normalizedInput = translateInput?.replace(/\n/g, '')
   const fetcher = () => {
     if (normalizedInput) {
       const base = 'https://translate.googleapis.com/translate_a/single'
-      const url = `${base}?client=gtx&sl=en&tl=zh&dt=t&q=${encodeURI(normalizedInput)}`
+      const url = `${base}?client=gtx&sl=auto&tl=zh&dt=t&q=${encodeURI(normalizedInput)}`
       return fetch(url).then(data => data.json())
       // return googleTranslate(normalizedInput, 'en', 'zh-CN')
     }

@@ -1,4 +1,5 @@
 import EventEmitter from '@/events/eventEmitter'
+import { YHistoryEditor, YjsEditor } from '@slate-yjs/core'
 import { BaseEditor } from 'slate'
 import { HistoryEditor } from 'slate-history'
 import { ReactEditor } from 'slate-react'
@@ -8,8 +9,12 @@ import { OuterElement } from './outerElementTypes'
 
 export type CustomEditor = BaseEditor &
   ReactEditor &
+  YjsEditor &
+  YHistoryEditor &
   HistoryEditor & {
     emitter?: EventEmitter
+    id?: string
+    noteId?: number
   }
 
 export type CustomElement = CommonElement | OuterElement

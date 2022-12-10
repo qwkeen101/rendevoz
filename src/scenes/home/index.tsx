@@ -1,28 +1,27 @@
 import Container from '@/components/base/container'
 import DocumentDetails from '@/components/documentDetail'
-import { FC, useCallback, useState } from 'react'
+import { FC, useCallback, useEffect, useState } from 'react'
 import { Route, Routes, useNavigate } from 'react-router-dom'
 import { RecentlyAddCard, RecentlyVisitCard } from './Card'
-import Header from './Header'
 import { AnimatePresence, motion, PanInfo, useDragControls } from 'framer-motion'
 import styles from './index.module.less'
 import { Content } from '@/components'
 import { useGlobalLocation } from '@/routes/globalLocation'
 import { css } from '@emotion/css'
 import { useTheme } from '@/hooks'
-import { GraphTest } from '@/components/graph'
+import useNoteStore from '@/stores/note.store'
+import NoteItem from './NoteItem'
 
 export const HomePage: FC = () => {
   const { defaultBackgroundColor } = useTheme('defaultBackgroundColor')
   const location = useGlobalLocation()
   const homeBackground = location?.state && location.state.homeBackground
-
   return (
-    <Container className={css({ background: defaultBackgroundColor })} auto column>
-      <Header />
+    <Container className={css({ background: defaultBackgroundColor, userSelect: 'none' })} auto column>
+      {/* <Header /> */}
       <Content className={styles.body}>
-        <RecentlyVisitCard />
-        <RecentlyAddCard />
+        <DocumentCard />
+        <NoteCard />
       </Content>
       <AnimatePresence>
         {homeBackground && location && (
@@ -37,6 +36,86 @@ export const HomePage: FC = () => {
   )
 }
 
+const DocumentCard = () => {
+  const [sortMode, setSortMode] = useState<'recently read' | 'recently add'>('recently read')
+  return (
+    <Content flex column>
+      <Content
+        flex
+        gap={20}
+        alignItems="baseline"
+        className={css({
+          marginBottom: 20
+        })}
+      >
+        <div
+          className={css({
+            fontSize: 24,
+            fontWeight: 600
+          })}
+        >
+          Books
+        </div>
+        <div
+          onClick={() => setSortMode('recently read')}
+          className={css({
+            cursor: 'pointer',
+            transition: 'all 0.2s ease',
+            padding: '2px 6px',
+            borderRadius: 4,
+            fontSize: 12,
+            ':hover': {
+              background: 'rgba(0,0,0,0.07)'
+            }
+          })}
+        >
+          Recently Read
+        </div>
+        <div
+          onClick={() => setSortMode('recently add')}
+          className={css({
+            cursor: 'pointer',
+            transition: 'all 0.2s ease',
+            padding: '2px 6px',
+            borderRadius: 4,
+            fontSize: 12,
+            ':hover': {
+              background: 'rgba(0,0,0,0.07)'
+            }
+          })}
+        >
+          Recently Add
+        </div>
+      </Content>
+      <div style={{minHeight: 120}}>{sortMode === 'recently read' ? <RecentlyVisitCard /> : <RecentlyAddCard />}</div>
+    </Content>
+  )
+}
+const NoteCard = () => {
+  const { all } = useNoteStore()
+  return (
+    <Content
+      flex
+      column
+      className={css({
+        marginTop: 30
+      })}
+    >
+      <div
+        className={css({
+          fontSize: 24,
+          fontWeight: 600,
+          marginBottom: 15
+        })}
+      >
+        Notes
+      </div>
+      {all.slice(0, 20).map(i => (
+        <NoteItem note={i} />
+      ))}
+    </Content>
+  )
+}
 const AnimatedDocumentDetails = () => {
   const [draggable, setDraggable] = useState(true)
   const navigate = useNavigate()

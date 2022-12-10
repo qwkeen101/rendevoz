@@ -3,7 +3,7 @@ import { DockContext, DockContextType, DropDirection, PanelData, TabData, TabGro
 import * as DragManager from './dragdrop/DragManager'
 import { DragDropDiv } from './dragdrop/DragDropDiv'
 import { DockTabBar } from './DockTabBar'
-import DockTabPane from './DockTabPane'
+import { DockTabPane } from './DockTabPane'
 import { getFloatPanelSize } from './Algorithm'
 import { TabNavListProps, Tabs } from '../tabs'
 import styles from './index.module.less'
@@ -161,7 +161,7 @@ export class TabCache {
     )
 
     return (
-      <DockTabPane parent={parent} key={id} cacheId={id} cached={cached} tab={tab} forceRender>
+      <DockTabPane parent={parent} key={id} cacheId={id} cached={true} tab={tab} forceRender>
         {content}
       </DockTabPane>
     )
@@ -256,6 +256,7 @@ export class DockTabs extends React.PureComponent<Props, any> {
   }
 
   render(): React.ReactNode {
+    console.log('render tabs')
     const { group, tabs, activeId } = this.props.panelData
     const tabGroup = this.context.getGroup(group)
     let { animated } = tabGroup

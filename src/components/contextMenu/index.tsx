@@ -1,6 +1,6 @@
 import { Noop } from '@/common/types'
 import { useMousePositionRef } from '@/hooks'
-import { cloneElement, forwardRef, memo, useEffect, useImperativeHandle, useRef, useState } from 'react'
+import { cloneElement, forwardRef, memo, ReactNode, useEffect, useImperativeHandle, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useClickAway } from 'react-use'
 import AnimatePopover from '../base/AnimatePopover'
@@ -92,8 +92,9 @@ const ContextMenu = forwardRef<ContextMenuRef, ContextMenuProps>(
 interface PosHelperProps {
   top?: number
   left?: number
+  children?: ReactNode
 }
-export const PosHelper = forwardRef<HTMLDivElement, PosHelperProps>(({ top, left }, ref) => {
+export const PosHelper = forwardRef<HTMLDivElement, PosHelperProps>(({ top, left, children }, ref) => {
   return createPortal(
     <div
       ref={ref}
@@ -102,7 +103,9 @@ export const PosHelper = forwardRef<HTMLDivElement, PosHelperProps>(({ top, left
         top: top,
         left: left
       }}
-    ></div>,
+    >
+      {children}
+    </div>,
     document.body
   )
 })

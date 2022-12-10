@@ -325,8 +325,8 @@ const TextLayer: FC<TextLayerProps> = ({ page, scale, rotation, width, height, p
     const optimizedRects = optimizeRects(rects)
     selectedTextRef.current = ''
     optimizedRects.forEach(rect => {
-      const text = (rect.text as string).trim()
-      selectedTextRef.current += text
+      const text = rect.text as string
+      selectedTextRef.current += text + ' '
     })
     optimizedRects.forEach(rect => {
       paint(rect, DEFAULT_HIGHLIGHT_COLOR)

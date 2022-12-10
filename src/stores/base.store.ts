@@ -26,6 +26,13 @@ const BaseStore = {
       items.forEach(i => draft.set(i.id, i))
     })
   },
+  buldRemove(ids: number[], data: Map<number,any>){
+    return produce(data, draft => {
+      ids.forEach(i => {
+        draft.delete(i)
+      })
+    })
+  },
   remove(id: number, data: Map<number, any>) {
     return produce(data, draft => {
       draft.delete(id)

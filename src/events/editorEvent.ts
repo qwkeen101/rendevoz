@@ -1,6 +1,7 @@
 import { Noop } from '@/common/types'
 import { TabData } from '@/components/base/dock'
 import { CustomElement } from '@/components/editor/customTypes'
+import { Descendant, Operation } from 'slate'
 import { Event } from './eventEmitter'
 import EventHandler from './eventHandler'
 
@@ -55,6 +56,16 @@ export type JumpToBlockEvent = {
 export interface SelectBlockEvent {
   blockId: number
 }
+export interface ValueChangeEvent {
+  noteId: number
+  value: Descendant[]
+}
+
+export interface OperationAppliedEvent {
+  noteId: number
+  id: string
+  operation: Operation
+}
 export interface EditorEventMap {
   insertNode: InsertNodeEvent
   foldHeading: FoldHeadingEvent
@@ -74,6 +85,8 @@ export interface EditorEventMap {
   tabDataChange: TabDataChangeEvent
   deleteSubPage: DeleteSubPageEvent
   deletePanel: DeletePanelEvent
+  valueChange: ValueChangeEvent
+  operationApplied: OperationAppliedEvent
 }
 export type EditorEvent = Event<EditorEventMap, keyof EditorEventMap>
 export class EditorEventHandler extends EventHandler<EditorEventMap> {}

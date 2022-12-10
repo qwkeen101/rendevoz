@@ -13,6 +13,7 @@ interface MetaKnowledgeObject extends MetaObject {
 }
 interface MetaDocumentObject extends MetaObject {
   type: 'document'
+  title: string
   documentId: number
 }
 interface MetaNoteObject extends MetaObject {

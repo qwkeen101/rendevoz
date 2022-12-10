@@ -36,17 +36,15 @@ export const RecentlyVisitCard = memo(() => {
   const count = Math.floor(width / 300)
   const { t } = useTranslation()
   return (
-    <Card title={t('home.recently visit')}>
-      <Content
-        ref={ref}
-        style={{
-          gridTemplateColumns: `repeat(${count},minmax(0,1fr))`
-        }}
-        className={styles.cardList}
-      >
-        {Array.from(Array(count).keys()).map((i, idx) => recentlyRead[idx] && <RecentlyReadCardItemV2 document={recentlyRead[idx]} />)}
-      </Content>
-    </Card>
+    <Content
+      ref={ref}
+      style={{
+        gridTemplateColumns: `repeat(${count},minmax(0,1fr))`
+      }}
+      className={styles.cardList}
+    >
+      {Array.from(Array(count * 2).keys()).map((i, idx) => recentlyRead[idx] && <RecentlyReadCardItemV2 document={recentlyRead[idx]} />)}
+    </Content>
   )
 })
 
@@ -167,18 +165,16 @@ export const RecentlyAddCard = memo(() => {
   const count = Math.floor(width / 300)
   const { t } = useTranslation()
   return (
-    <Card title={t('home.recently add')}>
-      <Content
-        ref={ref}
-        style={{
-          gridTemplateColumns: `repeat(${count},minmax(0,1fr))`
-        }}
-        className={styles.cardList}
-      >
-        {Array.from(Array(count).keys()).map(
-          (i, idx) => recentlyCreated[idx] && <RecentlyReadCardItemV2 document={recentlyCreated[idx]} />
-        )}
-      </Content>
-    </Card>
+    <Content
+      ref={ref}
+      style={{
+        gridTemplateColumns: `repeat(${count},minmax(0,1fr))`
+      }}
+      className={styles.cardList}
+    >
+      {Array.from(Array(count * 2).keys()).map(
+        (i, idx) => recentlyCreated[idx] && <RecentlyReadCardItemV2 document={recentlyCreated[idx]} />
+      )}
+    </Content>
   )
 })

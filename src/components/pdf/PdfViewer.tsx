@@ -83,7 +83,9 @@ export const PdfViewer: FC<PdfViewerProps> = ({ fileUrl, document }) => {
   const documentRef = useRef<PDFDocumentProxy>()
   // context event emitter
   const emitter = useEventEmitter()
-
+  useEffect(() => {
+    console.log(document?.name)
+  })
   const handleOpenMenu = useCallback(e => {
     e.preventDefault()
     setContextMenuVisible(true)

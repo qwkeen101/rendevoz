@@ -2,6 +2,7 @@ import { GraphEventHandler, ToggleGlobalGraphEvent } from '@/events/graphEvent'
 import useEventEmitter from '@/events/useEventEmitter'
 import { useMemoizedFn } from '@/hooks'
 import useMetaStore from '@/stores/meta.store'
+import { AnimatePresence, motion } from 'framer-motion'
 import { useEffect, useState } from 'react'
 import { MetaObject } from '~/typings/data'
 import GraphContainer from './components/GraphContainer'
@@ -23,12 +24,14 @@ const GlobalGraph = () => {
       const nodeIds = new Set<number>()
       nodeIds.add(centerNode.id)
       console.log(allMetaLinks)
+      const edgeIds = new Set<number>()
       const edges = allMetaLinks.filter(
         i => (i.sourceId === centerNode.id || i.targetId === centerNode.id) && i.sourceId !== undefined && i.targetId !== undefined
       )
       edges.forEach(edge => {
         nodeIds.add(edge.sourceId)
         nodeIds.add(edge.targetId)
+        edgeIds.add(edge.id)
       })
       const nodes = (
         Array.from(nodeIds.values())
@@ -37,10 +40,26 @@ const GlobalGraph = () => {
       ).map(i => ({
         id: i.id,
         label: i.keyword || i.title,
-        coverImgSrc: i.coverImgSrc
+        coverImgSrc: i.coverImgSrc,
+        type: i.type,
+        isCenter: i.id === centerNode.id
       })) as GraphNode[]
-      console.log(nodes, edges)
-      setCurrentEdges(edges)
+      nodes.forEach(n => {
+        const sourceEdges = allMetaLinks.filter(l => l.sourceId === n.id)
+        const targetEdges = allMetaLinks.filter(l => l.targetId === n.id)
+        sourceEdges.forEach(i => {
+          if (nodes.some(o => o.id === i.targetId)) {
+            edgeIds.add(i.id)
+          }
+        })
+        targetEdges.forEach(i => {
+          if (nodes.some(o => o.id === i.sourceId)) {
+            edgeIds.add(i.id)
+          }
+        })
+      })
+      const allEdges = allMetaLinks.filter(l => edgeIds.has(l.id))
+      setCurrentEdges(allEdges)
       setCurrentNodes(nodes)
     }
   })

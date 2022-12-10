@@ -5,7 +5,7 @@ import { GraphNode } from '../../types/node'
 const IconNode = ({ node }: { node: GraphNode }) => {
   return (
     <>
-      <foreignObject clipPath={`url(#circleClip)`} width={40} height={40}>
+      <motion.foreignObject initial={{ scale: 1 }} animate={{ scale: node.scale }} clipPath={`url(#circleClip)`} width={40} height={40}>
         <div
           style={{
             background: '#F3EFE0',
@@ -19,7 +19,7 @@ const IconNode = ({ node }: { node: GraphNode }) => {
         >
           <Icon fill="#393E46" size={30} name={node.type === 'note' ? 'park-notes' : 'park-file-pdf-one'} />
         </div>
-      </foreignObject>
+      </motion.foreignObject>
       <motion.text
         initial={{ x: 20, y: 55 }}
         animate={{ y: 55 * (node.scale ? (node.scale === 1 ? 1 : node.scale * 0.9) : 1) }}

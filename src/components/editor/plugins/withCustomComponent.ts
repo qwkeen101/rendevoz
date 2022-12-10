@@ -1,5 +1,6 @@
 import Id from '@/utils/id'
 import { Transforms, Editor, Point, Range, Path, Element as SlateElement, Node } from 'slate'
+import { ReactEditor } from 'slate-react'
 import { CustomEditor } from '../types'
 import { ParagraphElement } from '../types/commonElementTypes'
 import { Positions } from '../utils/positions'
@@ -29,7 +30,7 @@ const withCustomComponent = (editor: CustomEditor) => {
   editor.insertNode = node => {
     const { fontSize } = editor
     node.id = Id.getId()
-    node.children[0].fontSize = fontSize
+    // node.children[0].fontSize = fontSize
     let nextPath = null
     // check if insert inside hole or spacer
     if (Positions.isStartSpacer(editor) || Positions.isEndSpacer(editor) || Positions.outermostBlock(editor)?.[0]?.type === 'hole') {
@@ -71,12 +72,13 @@ const withCustomComponent = (editor: CustomEditor) => {
           Transforms.insertNodes(editor, node, { at: finalInsertPath })
         }
         Transforms.select(editor, Editor.end(editor, finalInsertPath))
+        ReactEditor.focus(editor)
         const placeHolderPath = Path.next(finalInsertPath)
         const { children } = editor
         if (children.length === placeHolderPath[0]) {
+          console.log('add placeholder')
           Transforms.insertNodes(editor, placeHolderParagraph, { at: placeHolderPath })
         }
-        console.log('cenasd')
         return
       }
     }
@@ -283,9 +285,18 @@ const withCustomComponent = (editor: CustomEditor) => {
     insertBreak()
   }
   editor.apply = op => {
-    console.log(op)
     const { emitter } = editor
     if (emitter) {
+      if (op.type !== 'set_selection' && editor.initialized) {
+        emitter.emit('editor', {
+          type: 'operationApplied',
+          data: {
+            noteId: editor.noteId,
+            id: editor.id,
+            operation: op
+          }
+        })
+      }
       if (op.type === 'remove_node' && op.node.type === 'subPage') {
         emitter.emit('editor', {
           type: 'deleteSubPage',

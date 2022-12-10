@@ -80,7 +80,7 @@
     display: grid !important;
     gap: 24px;
     // overflow-y: hidden;
-    grid-auto-rows: 0;
+    // grid-auto-rows: 0;
     grid-template-rows: 1fr;
     grid-template-columns: repeat(4,minmax(0,1fr));
     > div{
@@ -332,6 +332,10 @@
 }
 .descV2{
     font-size: 13px;
+    word-break: break-all;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 .progressTrack{
     align-self: flex-end;

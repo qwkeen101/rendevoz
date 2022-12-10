@@ -12,6 +12,8 @@ import { GraphEdge } from '../types/edge'
 import { GraphNode } from '../types/node'
 import EdgeContainer from './EdgeContainer'
 import NodeContainer from './NodeContainer'
+import useMetaStore from '@/stores/meta.store'
+import { MetaObject } from '~/typings/data'
 
 interface GraphContainerProps {
   edges?: GraphEdge[]
@@ -21,15 +23,16 @@ const GraphInner: FC<GraphContainerProps> = ({ edges, nodes }) => {
   const graph = useGraph()
   const containerRef = useRef<HTMLDivElement>(null)
   const viewportRef = useRef<HTMLDivElement>(null)
-  const [, setEdges] = useEdges()
-  const [, setNodes] = useNodes()
+  const { allMetaLinks, allMetaObjects } = useMetaStore()
+  const [_thisEdges, setEdges] = useEdges()
+  const [_thisNodes, setNodes] = useNodes()
   const [transform, setTransform] = useState({ x: 0, y: 0, k: 1 })
   const zoomHandler = (transform: any) => {
     setTransform(transform)
   }
   useEffect(() => {
     if (containerRef.current && viewportRef.current && graph && nodes && edges) {
-      console.log('ssss')
+      graph.clear()
       graph.registerEdges(edges)
       graph.registerNodes(nodes)
       setEdges(edges)
@@ -37,7 +40,7 @@ const GraphInner: FC<GraphContainerProps> = ({ edges, nodes }) => {
       setTimeout(() => {
         graph.registerContainer(containerRef.current)
         graph.registerHandler('zoom', zoomHandler)
-        graph.updateLayout()
+        graph.updateLayout(true, true)
       }, 0)
     }
   }, [edges, nodes])
@@ -56,13 +59,51 @@ const GraphInner: FC<GraphContainerProps> = ({ edges, nodes }) => {
         id="viewport"
         ref={viewportRef}
       >
-        <svg style={{ position: 'absolute', inset: 0, pointerEvents: 'none', width: '100%', height: '100%',overflow: 'visible' }}>
+        <svg style={{ position: 'absolute', inset: 0, pointerEvents: 'none', width: '100%', height: '100%', overflow: 'visible' }}>
           <path id="addLinkLine"></path>
         </svg>
         <EdgeContainer />
         <NodeContainer />
       </div>
       <GraphOverlay
+        onShowMore={() => {
+          const selectedNode = graph?.contextMenuNode
+          if (selectedNode && _thisEdges && _thisNodes) {
+            const relatedEdges = allMetaLinks
+              .filter(
+                l =>
+                  (l.sourceId === selectedNode.id || l.targetId === selectedNode.id) && l.sourceId !== undefined && l.targetId !== undefined
+              )
+              .filter(i => !_thisEdges.some(e => e.id === i.id))
+            const relatedNodeIds = new Set()
+            relatedEdges.forEach(e => {
+              relatedNodeIds.add(e.sourceId)
+              relatedNodeIds.add(e.targetId)
+            })
+            _thisNodes.forEach(n => {
+              // delete existed nodes
+              relatedNodeIds.delete(n.id)
+            })
+            const relatedNodes = (
+              Array.from(relatedNodeIds)
+                .map(id => allMetaObjects.find(o => o.id === id))
+                .filter(i => i !== undefined) as MetaObject[]
+            ).map(i => ({
+              id: i.id,
+              label: i.keyword || i.title,
+              coverImgSrc: i.coverImgSrc,
+              type: i.type
+            })) as GraphNode[]
+            if (relatedNodes.length === 0 && relatedEdges.length === 0) return
+            setNodes([..._thisNodes, ...relatedNodes])
+            setEdges([..._thisEdges, ...relatedEdges])
+            relatedNodes.length !== 0 && graph.registerNodes(relatedNodes)
+            relatedEdges.length !== 0 && graph.registerEdges(relatedEdges)
+            setTimeout(() => {
+              graph.updateLayout(true)
+            }, 0)
+          }
+        }}
         onAddLink={() => {
           graph && (graph.isAddingEdge = true)
         }}

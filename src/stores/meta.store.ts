@@ -18,7 +18,7 @@ const useMetaStore = () => {
   const [metaLinks, setMetaLinks] = useAtom(metaLinksAtom, GlobalScope)
   const allMetaObjects = useAtomValue(allMetaObjectsAtom, GlobalScope)
   const allMetaLinks = useAtomValue(allMetaLinksAtom, GlobalScope)
-  const { add, get, update, bulkAdd, initBaseObject } = BaseStore
+  const { add, get, update, remove, buldRemove, bulkAdd, initBaseObject } = BaseStore
   const metaObjectDb = useDb('metaObjects')
   const metaCommentDb = useDb('metaComments')
   const metaLinkDb = useDb('metaLinks')
@@ -48,6 +48,9 @@ const useMetaStore = () => {
   }
   const getMetaKnowObjectByKeyword = (keyword: string) => {
     return allMetaObjects.find(i => i.keyword === keyword)
+  }
+  const getMetaObjectByDocumentId = (documentId: number) => {
+    return allMetaObjects.find(i => i.documentId === documentId)
   }
   const getMetaObjectByNoteId = (noteId: number) => {
     return allMetaObjects.find(i => i.noteId === noteId)
@@ -90,11 +93,27 @@ const useMetaStore = () => {
       metaObjectDb.put(newObj)
     })
   }
+  const updateMetaLink = (metaLink: Partial<MetaLink>) => {
+    if (!metaLink.id) return
+    const originMetaLink = metaLinks.get(metaLink.id)
+    if (!originMetaLink) return
+    const newMetaLink = Object.assign({}, originMetaLink, metaLink)
+    setMetaLinks(update(newMetaLink, metaLinks))
+    console.log(newMetaLink)
+    metaLinkDb.put(newMetaLink)
+  }
   const updateMetaComment = (metaComment: PartialWithId<MetaComment>) => {
     return metaCommentDb.get(metaComment.id).then(obj => {
       const newObj = Object.assign({}, obj, metaComment)
       metaCommentDb.put(newObj)
     })
+  }
+  const deleteMetaObject = (metaobjectId: number) => {
+    setMetaObjects(remove(metaobjectId, metaObjects))
+    metaObjectDb.delete(metaobjectId)
+    const relatedLinkIds = allMetaLinks.filter(l => l.sourceId === metaobjectId || l.targetId === metaobjectId).map(l => l.id)
+    setMetaLinks(buldRemove(relatedLinkIds, metaLinks))
+    metaLinkDb.bulkDelete(relatedLinkIds)
   }
   const deleteMetaComment = (objId: number, metaCommentId: number) => {
     getMetaObjectById(objId).then(originObj => {
@@ -134,7 +153,10 @@ const useMetaStore = () => {
       getAllMetaLinks,
       getMetaObjectByNoteId,
       allMetaObjects,
-      allMetaLinks
+      allMetaLinks,
+      updateMetaLink,
+      deleteMetaObject,
+      getMetaObjectByDocumentId
     }),
     [metaObjects, metaLinks]
   )

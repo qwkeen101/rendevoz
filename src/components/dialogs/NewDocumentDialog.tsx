@@ -1,5 +1,6 @@
 import { Noop } from '@/common/types'
 import useCollectionStore from '@/stores/collection.store'
+import useMetaStore from '@/stores/meta.store'
 import { useState } from 'react'
 import toast from 'react-hot-toast'
 import { ICollection } from '~/typings/data'
@@ -10,6 +11,7 @@ import ChooseCollectionDialog from './ChooseCollectionDialog'
 const NewDocumentDialog = ({ onSubmit, onBack }: { onSubmit?: Noop; onBack?: Noop }) => {
   const [chosenCollection, setChosenCollection] = useState<ICollection>()
   const { addItemToCollection } = useCollectionStore()
+  const { addMetaObject } = useMetaStore()
   return (
     <SwitchAnimation direction={!!chosenCollection}>
       {switchWrapper =>
@@ -27,6 +29,11 @@ const NewDocumentDialog = ({ onSubmit, onBack }: { onSubmit?: Noop; onBack?: Noo
                   ).then(
                     () => {
                       onSubmit?.()
+                      addMetaObject({
+                        type: 'document',
+                        documentId: doc.id,
+                        title: doc.metadata?.title || doc.name
+                      })
                       toast.success('Successfully add document !')
                     },
                     reject => {

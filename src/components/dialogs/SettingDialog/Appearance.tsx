@@ -15,31 +15,31 @@ const AppearanceSetting = () => {
   const [setting, setSetting] = useSetting()
   const { t, i18n } = useTranslation()
   const appearance: { title: string; description: string; children: ReactNode }[] = [
-    {
-      title: t('settings.language'),
-      description: t('settings.language description'),
-      children: (
-        <Select
-          closeOnSelect
-          deselectable={false}
-          style={{ width: 200 }}
-          menuStyle={{ width: 200 }}
-          onSelect={v => {
-            i18n.changeLanguage(v[0])
-            setSetting(
-              produce(setting, draft => {
-                draft.appearance.language = v[0]
-              })
-            )
-          }}
-          defaultValue={setting.appearance.language}
-        >
-          {Object.entries(SupportedLangs).map(([key, value]) => (
-            <Select.Option value={key}>{value}</Select.Option>
-          ))}
-        </Select>
-      )
-    },
+    // {
+    //   title: t('settings.language'),
+    //   description: t('settings.language description'),
+    //   children: (
+    //     <Select
+    //       closeOnSelect
+    //       deselectable={false}
+    //       style={{ width: 200 }}
+    //       menuStyle={{ width: 200 }}
+    //       onSelect={v => {
+    //         i18n.changeLanguage(v[0])
+    //         setSetting(
+    //           produce(setting, draft => {
+    //             draft.appearance.language = v[0]
+    //           })
+    //         )
+    //       }}
+    //       defaultValue={setting.appearance.language}
+    //     >
+    //       {Object.entries(SupportedLangs).map(([key, value]) => (
+    //         <Select.Option value={key}>{value}</Select.Option>
+    //       ))}
+    //     </Select>
+    //   )
+    // },
     {
       title: 'Logo',
       description: 'Show or hide logo',

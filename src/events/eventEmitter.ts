@@ -3,6 +3,7 @@ import Id from '@/utils/id'
 import { atom } from 'jotai'
 import EventHandler from './eventHandler'
 import { GraphEvent } from './graphEvent'
+import { LayoutEvent } from './layoutEvent'
 import { PdfEvent } from './pdfEvent'
 
 export interface Event<T, K extends keyof T> {
@@ -13,6 +14,7 @@ export interface EventMap {
   editor: EditorEvent
   pdf: PdfEvent
   graph: GraphEvent
+  layout: LayoutEvent
 }
 export default class EventEmitter {
   private listeners: { [name: string]: Array<EventHandler<unknown>> } = {}
@@ -27,7 +29,8 @@ export default class EventEmitter {
   }
 
   public removeListener<K extends keyof EventMap>(name: K, handler: EventHandler<unknown>) {
-    this.listeners[name] = this.listeners[name]?.filter(h => h !== handler)
+    const idx = this.listeners[name].findIndex(h => Object.is(handler, h))
+    idx > -1 && this.listeners[name].splice(idx, 1)
   }
 
   public removeAllListeners<K extends keyof EventMap>(name: K) {

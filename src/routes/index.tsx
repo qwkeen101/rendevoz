@@ -12,6 +12,7 @@ import TransitionRoute from './TransitionRoute'
 import { AnimatePresence } from 'framer-motion'
 import PdfPage from '@/scenes/pdf'
 import { GlobalLocationContextProvider } from './globalLocation'
+import Graph from '@/scenes/graph'
 const Routes = () => {
   const location = useLocation()
   const homeBackground = location.state && location.state.homeBackground
@@ -79,6 +80,14 @@ const Routes = () => {
                     }
                   />
                 </Route>
+                <Route
+                  path="graph"
+                  element={
+                    <TransitionRoute>
+                      <Graph />
+                    </TransitionRoute>
+                  }
+                ></Route>
                 <Route path="collections">
                   <Route
                     index

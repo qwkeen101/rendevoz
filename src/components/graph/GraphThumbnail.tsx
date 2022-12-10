@@ -3,13 +3,27 @@ import { css } from '@emotion/css'
 import { MouseEventHandler, ReactNode, useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { Content, Icon } from '..'
-
+import { motion } from 'framer-motion'
+import { GraphEventHandler } from '@/events/graphEvent'
+import useEventEmitter from '@/events/useEventEmitter'
 const GraphThumbnail = ({ children, onClose }: { children: ReactNode; onClose: Noop }) => {
   const [small, setSmall] = useState(false)
   const containerRef = useRef<HTMLDivElement>(null)
   const tempPosRef = useRef({ x: 0, y: 0 })
   const transPosRef = useRef({ x: 0, y: 0 })
+  const eventHandler = new GraphEventHandler()
+  const emitter = useEventEmitter()
+  const handleToggleGraph = () => {
+    setSmall(false)
+  }
+  eventHandler.on('toggleGlobalGraph', handleToggleGraph)
 
+  useEffect(() => {
+    emitter.addListener('graph', eventHandler)
+    return () => {
+      emitter.removeListener('graph', eventHandler)
+    }
+  }, [])
   const mouseDownHandler: MouseEventHandler = e => {
     if (e.target === e.currentTarget) {
       tempPosRef.current = {
@@ -75,9 +89,11 @@ const GraphThumbnail = ({ children, onClose }: { children: ReactNode; onClose: N
     }
   }, [small])
   return createPortal(
-    <div
+    <motion.div
       onClick={containerClickHandler}
       role="graph-thumbnail-container"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
       style={{
         position: 'fixed',
         top: 0,
@@ -98,8 +114,6 @@ const GraphThumbnail = ({ children, onClose }: { children: ReactNode; onClose: N
           position: 'relative',
           width: small ? 300 : '80%',
           height: small ? 200 : '80%',
-          right: small ? 100 : undefined,
-          top: small ? 100 : undefined,
           background: 'white',
           transition: 'width 0.3s ease,height 0.3s ease',
           pointerEvents: 'auto',
@@ -168,12 +182,56 @@ const GraphThumbnail = ({ children, onClose }: { children: ReactNode; onClose: N
             </Content>
           </div>
         )}
-        {!small && <div></div>}
+        {!small && (
+          <div
+            className={css({
+              position: 'absolute',
+              top: 0,
+              width: '100%',
+              display: 'flex',
+              alignItems: 'center',
+              padding: '4px 6px',
+              justifyContent: 'flex-end',
+              zIndex: 5,
+              pointerEvents: 'none',
+              gap: 10
+            })}
+          >
+            <div
+              className={css({
+                pointerEvents: 'auto',
+                padding: 6,
+                borderRadius: 999,
+                transition: 'all 0.2s ease',
+                color: 'rgba(0,0,0,0.6)',
+                ':hover': {
+                  background: 'rgba(0,0,0,0.07)'
+                }
+              })}
+            >
+              <Icon cursor="pointer" name="park-off-screen" onClick={() => setSmall(true)} />
+            </div>
+            <div
+              className={css({
+                pointerEvents: 'auto',
+                padding: 6,
+                borderRadius: 999,
+                transition: 'all 0.2s ease',
+                color: 'rgba(0,0,0,0.6)',
+                ':hover': {
+                  background: 'rgba(0,0,0,0.07)'
+                }
+              })}
+            >
+              <Icon cursor="pointer" name="park-close" onClick={onClose} />
+            </div>
+          </div>
+        )}
         <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', overflow: small ? 'hidden' : 'visible' }}>
           {children}
         </div>
       </div>
-    </div>,
+    </motion.div>,
     document.body,
     'graph-thumbnail'
   )

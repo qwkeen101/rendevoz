@@ -25,6 +25,12 @@ export interface BlockQuoteElement {
   align?: string
   children: Descendant[]
 }
+
+export interface ToDoElement {
+  type: 'to-do'
+  children: Descendant[]
+  checked: boolean
+}
 export interface EmojiElement {
   type: 'emoji'
   name: string
@@ -139,3 +145,4 @@ export type CommonElement =
   | HeadingTwoElement
   | HeadingThreeElement
   | EmojiElement
+  | ToDoElement

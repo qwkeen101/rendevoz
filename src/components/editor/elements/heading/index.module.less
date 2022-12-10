@@ -26,4 +26,15 @@
             opacity: 1;
         }
     }
+    &.empty{
+        &::before{
+            content: attr(placeholder);
+            color: #bbbfc4;
+            position: absolute;
+            cursor: text;
+            top: auto;
+            left: 2px;
+            font-weight: 700;
+        }
+    }
 }

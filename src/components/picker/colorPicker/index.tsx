@@ -2,10 +2,12 @@ import { FC, memo } from 'react'
 import * as material from 'material-colors'
 import { Content } from '../../base'
 import styles from './index.module.less'
+import { css } from '@emotion/css'
 
 interface ColorPickerProps {
   colors?: string[][]
   onPick: (color: string) => void
+  backDefault?: boolean
 }
 const Colors: string[][] = [
   [material.red['900'], material.red['700'], material.red['500'], material.red['300'], material.red['100']],
@@ -45,7 +47,7 @@ const Colors: string[][] = [
   [material.brown['900'], material.brown['700'], material.brown['500'], material.brown['300'], material.brown['100']],
   [material.blueGrey['900'], material.blueGrey['700'], material.blueGrey['500'], material.blueGrey['300'], material.blueGrey['100']]
 ]
-const ColorPicker: FC<ColorPickerProps> = ({ onPick, colors = Colors }) => {
+const ColorPicker: FC<ColorPickerProps> = ({ onPick, colors = Colors, backDefault = false }) => {
   const renderItem = (color: string) => {
     return (
       <span
@@ -72,6 +74,28 @@ const ColorPicker: FC<ColorPickerProps> = ({ onPick, colors = Colors }) => {
       <Content className={styles.colors} flex>
         {colors.map(g => renderColorGroup(g))}
       </Content>
+      {backDefault && (
+        <div
+          onClick={() => onPick(null)}
+          className={css({
+            width: '100%',
+            padding: '2px',
+            borderRadius: 4,
+            border: '1px solid #8590ae',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            cursor: 'pointer',
+            transition: 'all 0.2s ease',
+            marginTop: 10,
+            ':hover': {
+              background: 'rgba(0,0,0,0.07)'
+            }
+          })}
+        >
+          Back to default
+        </div>
+      )}
     </Content>
   )
 }

@@ -4,7 +4,7 @@ import { useMemoizedFn } from '@/hooks'
 import { Position } from '@/types'
 import isHotkey from 'is-hotkey'
 import { FC, FormEventHandler, memo, useCallback, useRef } from 'react'
-import { Descendant, Editor, Path, Range, Transforms, Element as SlateElement, Node, Selection } from 'slate'
+import { Descendant, Editor, Path, Range, Transforms, Element as SlateElement, Node, Selection, Text } from 'slate'
 import { ReactEditor, Slate, Editable, RenderElementProps, RenderLeafProps } from 'slate-react'
 import { Content } from '../base'
 import EditorToolbar from './components/toolbar'
@@ -26,6 +26,12 @@ import ListItem from './elements/listItem'
 import { INote } from '~/typings/data'
 import { Positions } from './utils/positions'
 import MetaObject from './elements/meta'
+import { css } from '@emotion/css'
+import Image from './elements/image'
+import ToDo from './elements/todo'
+import Id from '@/utils/id'
+import useMetaStore from '@/stores/meta.store'
+import { CustomTransforms } from './utils/transform'
 
 type InnerEditorProps = {
   titleMarginTop?: number
@@ -53,12 +59,9 @@ const InnerEditor: FC<InnerEditorProps> = memo(
     onBlockMouseEnter,
     onDividerDragStart,
     onDividerDragEnd,
-    onToggleMindmap,
-    onToggleOutline,
     onChange,
     onTitleChange,
     onSave,
-    onAddSubPage,
     onNestedListItem,
     titleMarginTop,
     note,
@@ -69,7 +72,7 @@ const InnerEditor: FC<InnerEditorProps> = memo(
     const renderInnerElement = useCallback((props: RenderElementProps) => <Element {...props} />, [])
     const renderLeaf = useCallback((props: RenderLeafProps) => <Leaf {...props} />, [])
     const caretPositionRef = useRef<Position>()
-
+    const { addMetaObject, addMetaLink, getMetaObjectByNoteId } = useMetaStore()
     const handleMouseDown = useMemoizedFn((e: MouseEvent) => {
       if (getCaretGlobalPosition()) {
         caretPositionRef.current = getCaretGlobalPosition()
@@ -120,7 +123,13 @@ const InnerEditor: FC<InnerEditorProps> = memo(
             </>
           )
         }
-        if (element.type !== 'spacer' && element.type !== 'highlight' && element.type !== 'emoji' && element.type !== 'metaObject') {
+        if (
+          element.type !== 'spacer' &&
+          element.type !== 'highlight' &&
+          element.type !== 'emoji' &&
+          element.type !== 'metaObject' &&
+          element.type !== 'link'
+        ) {
           return (
             <Block
               data-type="block"
@@ -199,34 +208,75 @@ const InnerEditor: FC<InnerEditorProps> = memo(
         }
       }
     })
-
+    const handleMetaObject = useMemoizedFn(() => {
+      const { selection } = editor
+      if (selection) {
+        if (Range.isExpanded(selection)) {
+          const selectedText = Editor.string(editor, selection)
+          const [start, end] = Range.edges(selection)
+          const startPoint = Editor.pointRef(editor, start)
+          Transforms.splitNodes(editor, {
+            match: Text.isText
+          })
+          addMetaObject({
+            keyword: selectedText
+          }).then(obj => {
+            const noteMeta = getMetaObjectByNoteId(editor.noteId)
+            addMetaLink({
+              sourceId: noteMeta?.id,
+              sourceType: 'note',
+              targetId: obj.id,
+              targetType: 'knowledge'
+            })
+            Transforms.insertNodes(
+              editor,
+              {
+                type: 'metaObject',
+                id: Id.getId(),
+                originId: obj.id,
+                children: [
+                  {
+                    text: ''
+                  }
+                ]
+              },
+              {
+                at: startPoint.unref()
+              }
+            )
+          })
+        }
+      }
+    })
     return (
       <Slate editor={editor} onChange={handleChange} value={defaultValue}>
         <EditorToolbar
-          isSaved={!!note}
           scrollElement={scrollElement}
-          onSave={onSave}
-          onToggleMindmap={onToggleMindmap}
-          onToggleOutline={onToggleOutline}
+          onMetaObject={handleMetaObject}
           onChangeFontSize={fontSize => changeFontSize(editor, fontSize)}
           onChangeFontColor={color => Editor.addMark(editor, 'fontColor', color)}
+          onChangeBackgroundColor={color => Editor.addMark(editor, 'backgroundColor', color)}
           onRedo={() => editor.redo()}
           onUndo={() => editor.undo()}
           onBold={() => {
             toggleMark(editor, 'bold')
           }}
+          onLink={() => {
+            const selectedText = CustomTransforms.getSelectedText(editor)
+            if (selectedText) {
+              CustomTransforms.replaceSelectedNode(editor, {
+                type: 'link',
+                url: 'https://www.baidu.com',
+                children: [
+                  {
+                    text: selectedText
+                  }
+                ]
+              })
+            }
+          }}
           onItalic={() => toggleMark(editor, 'italic')}
           onUnderline={() => toggleMark(editor, 'underline')}
-          onToggleEmoji={() => {
-            emitter.emit('editor', {
-              type: 'toggleOverlay',
-              data: {
-                ...caretPositionRef.current,
-                content: 'emojiPicker'
-              }
-            })
-          }}
-          onAddSubPage={onAddSubPage}
         />
         <Content className={styles.titleWrapper} style={{ marginTop: titleMarginTop }} flex centered>
           <div
@@ -243,6 +293,35 @@ const InnerEditor: FC<InnerEditorProps> = memo(
             {title}
           </div>
         </Content>
+        {!note && (
+          <Content
+            flex
+            alignItems="center"
+            className={css({
+              color: 'rgba(55,53,47,0.5)',
+              width: '100%',
+              padding: 4,
+              userSelect: 'none'
+            })}
+          >
+            <div>Status: Unsaved</div>
+            <div
+              onClick={onSave}
+              className={css({
+                padding: 2,
+                borderRadius: 6,
+                marginLeft: 10,
+                cursor: 'pointer',
+                transition: 'all 0.2s ease',
+                ':hover': {
+                  background: 'rgba(0,0,0,0.07)'
+                }
+              })}
+            >
+              Save
+            </div>
+          </Content>
+        )}
         <Editable
           suppressContentEditableWarning={true}
           autoFocus
@@ -312,6 +391,22 @@ const Element = (props: RenderElementProps) => {
         return <blockquote>{children}</blockquote>
       case 'bulleted-list':
         return <ul>{children}</ul>
+      case 'link':
+        return (
+          <span {...attributes} style={{ display: 'inline' }}>
+            <a
+              target="_blank"
+              onClick={() => {
+                if (navigator.userAgent.indexOf('Electron') >= 0) {
+                  window.open('https://www.baidu.com')
+                }
+              }}
+              href={element.url}
+            >
+              {children}
+            </a>
+          </span>
+        )
       case 'heading-one':
         return <Heading level={0} {...props} />
       case 'heading-two':
@@ -326,6 +421,10 @@ const Element = (props: RenderElementProps) => {
         return <Heading level={5} {...props} />
       case 'metaObject':
         return <MetaObject {...props} />
+      case 'image':
+        return <Image {...props} />
+      case 'to-do':
+        return <ToDo {...props} />
       case 'list-item':
         return <ListItem {...props} />
       case 'highlight':
@@ -365,7 +464,11 @@ const Leaf = (props: RenderLeafProps) => {
   }
 
   return (
-    <span className={styles.leaf} style={{ fontSize: leaf.fontSize || '1em', color: leaf?.fontColor }} {...attributes}>
+    <span
+      className={styles.leaf}
+      style={{ fontSize: leaf.fontSize || '1em', color: leaf?.fontColor, backgroundColor: leaf.backgroundColor }}
+      {...attributes}
+    >
       {children}
     </span>
   )

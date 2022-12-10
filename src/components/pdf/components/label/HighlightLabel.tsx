@@ -34,7 +34,7 @@ const HighlightLabel: FC<HighlightLabelProps> = ({ highlightAtom, onDelete }) =>
   const [metaCardVisible, setMetaCardVisible] = useState(false)
   const [metaObject, setMetaObject] = useState<MetaKnowledgeObject>()
   const [pdfInfo] = usePdfInfo()
-  const { addMetaObject, getMetaKnowObjectByKeyword, addMetaLink } = useMetaStore()
+  const { addMetaObject, getMetaKnowObjectByKeyword, addMetaLink, getMetaObjectByDocumentId } = useMetaStore()
 
   useEffect(() => {
     if (highlight) {
@@ -77,14 +77,33 @@ const HighlightLabel: FC<HighlightLabelProps> = ({ highlightAtom, onDelete }) =>
         keyword: highlight.selectedText?.trim()
       }).then(obj => {
         if (pdfInfo) {
-          const metaLink: Partial<MetaLink> = {
-            sourceId: pdfInfo.id,
-            sourceType: 'document',
-            targetId: obj.id,
-            targetType: 'knowledge',
-            label: 'from'
+          const documentMetaObject = getMetaObjectByDocumentId(pdfInfo.id)
+          if (!documentMetaObject) {
+            addMetaObject({
+              type: 'document',
+              documentId: pdfInfo.id,
+              title: pdfInfo.metadata?.title || pdfInfo.name
+            }).then(docObj => {
+              const metaLink: Partial<MetaLink> = {
+                sourceId: docObj.id,
+                sourceType: 'document',
+                targetId: obj.id,
+                targetType: 'knowledge',
+                label: 'from'
+              }
+              addMetaLink(metaLink)
+              return
+            })
+          } else {
+            const metaLink: Partial<MetaLink> = {
+              sourceId: documentMetaObject.id,
+              sourceType: 'document',
+              targetId: obj.id,
+              targetType: 'knowledge',
+              label: 'from'
+            }
+            addMetaLink(metaLink)
           }
-          addMetaLink(metaLink)
         }
         setMetaObject(obj)
       })

@@ -25,7 +25,7 @@ function clearObjectCache() {
   _watchObjectChange = new WeakMap()
 }
 
-function clone<T>(value: T, extra?: any): T {
+export function clone<T>(value: T, extra?: any): T {
   const newValue: any = { ...value, ...extra }
   if (Array.isArray(newValue.tabs)) {
     newValue.tabs = newValue.tabs.concat()

@@ -1,5 +1,5 @@
 import { FC } from 'react'
-import Layout from '../layout'
+import Layout from '../../layout'
 import { Sidebar } from '../sidebar'
 
 interface Props {

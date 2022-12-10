@@ -20,7 +20,7 @@ const TitleBar = () => {
     }
   }, [])
   return (
-    <Content fullWidth flex alignItems="center" justifyContent="flex-end" gap={10} className={styles.titleBar}>
+    <Content flex alignItems="center" position="absolute" justifyContent="flex-end" gap={10} className={styles.titleBar}>
       <Icon
         className={styles.icon}
         name="park-minus"

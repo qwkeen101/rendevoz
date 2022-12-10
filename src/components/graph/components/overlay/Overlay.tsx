@@ -11,8 +11,9 @@ import EdgeAttributeCard from './EdgeAttributeCard'
 interface GraphOverlayProps {
   onAddLink: Noop
   onDeleteNode: Noop
+  onShowMore: Noop
 }
-const GraphOverlay: FC<GraphOverlayProps> = ({ onAddLink, onDeleteNode }) => {
+const GraphOverlay: FC<GraphOverlayProps> = ({ onAddLink, onDeleteNode, onShowMore }) => {
   const emitter = useEventEmitter()
   const [contextMenuDetails, setContextMenuDetails] = useState<{
     x?: number
@@ -79,7 +80,7 @@ const GraphOverlay: FC<GraphOverlayProps> = ({ onAddLink, onDeleteNode }) => {
           >
             Delete node
           </div>
-          <div>123213213213213</div>
+          <div onClick={onShowMore}>Show more related nodes and edges</div>
         </Content>
       )
     }
@@ -95,7 +96,7 @@ const GraphOverlay: FC<GraphOverlayProps> = ({ onAddLink, onDeleteNode }) => {
   const renderEdgeCard = () => {
     return (
       <Content flex column>
-        <EdgeAttributeCard currentEdge={edgeCardDetails.edge}/>
+        <EdgeAttributeCard currentEdge={edgeCardDetails.edge} />
       </Content>
     )
   }
@@ -105,7 +106,7 @@ const GraphOverlay: FC<GraphOverlayProps> = ({ onAddLink, onDeleteNode }) => {
         positions={['right']}
         align="start"
         padding={10}
-        containerStyle={{zIndex: '10000'}}
+        containerStyle={{ zIndex: '10000' }}
         onClickOutside={() => setContextMenuDetails({ ...contextMenuDetails, visible: false })}
         visible={contextMenuDetails.visible}
         content={<WithBorder style={{ pointerEvents: 'auto' }}>{renderContextMenu()}</WithBorder>}
@@ -115,6 +116,7 @@ const GraphOverlay: FC<GraphOverlayProps> = ({ onAddLink, onDeleteNode }) => {
       <AnimatePopover
         positions={['bottom']}
         padding={10}
+        containerStyle={{ zIndex: '10000' }}
         onClickOutside={() => {
           setEdgeCardDetails({ ...edgeCardDetails, visible: false })
         }}

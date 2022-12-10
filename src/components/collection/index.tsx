@@ -129,9 +129,9 @@ const Collection: FC<CollectionProps> = ({
       const { id } = c
       setCurrentCollection(c)
       actions.current.push(c)
-      if (useRoute) {
-        navigate(`/collections/${id}`)
-      }
+      // if (useRoute) {
+      //   navigate(`/collections/${id}`)
+      // }
     }
   }
   const handleRename = (newName: string) => {
@@ -165,9 +165,9 @@ const Collection: FC<CollectionProps> = ({
           const c = currentCollectionContextMenuItem.collection
           const { id } = c
           setCurrentCollection(c)
-          if (useRoute) {
-            navigate(`/collections/${id}`)
-          }
+          // if (useRoute) {
+          //   navigate(`/collections/${id}`)
+          // }
           break
         }
         case 'note': {

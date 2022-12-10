@@ -1,9 +1,11 @@
 import useEventEmitter from '@/events/useEventEmitter'
 import { useMemoizedFn } from '@/hooks'
+import useMetaStore from '@/stores/meta.store'
 import Id from '@/utils/id'
 import { css } from '@emotion/css'
 import produce from 'immer'
 import { FC, memo, MouseEvent, MouseEventHandler, useEffect, useLayoutEffect, useMemo, useRef } from 'react'
+import { MetaLink } from '~/typings/data'
 import useEdges from '../hooks/useEdges'
 import useGraph from '../hooks/useGraph'
 import useNodes from '../hooks/useNodes'
@@ -25,6 +27,7 @@ const svgContainerClassName = css({
 const NodeContainer: FC<NodeContainerProps> = memo(() => {
   const [nodes, setNodes] = useNodes()
   const [edges, setEdges] = useEdges()
+  const { addMetaLink } = useMetaStore()
   const emitter = useEventEmitter()
   const graph = useGraph()
   useEffect(() => {
@@ -57,7 +60,7 @@ const NodeContainer: FC<NodeContainerProps> = memo(() => {
   })
   const nodeMouseEnterHandler: NodeMouseEventHandler = useMemoizedFn((e, node) => {
     if (nodes && edges && graph) {
-      if(graph.isDragging) return
+      if (graph.isDragging) return
       const contextMenuNode = graph.contextMenuNode
       const isAddingEdge = graph.isAddingEdge
       graph.currentHoverNode = node
@@ -97,7 +100,7 @@ const NodeContainer: FC<NodeContainerProps> = memo(() => {
   })
   const nodeMouseLeaveHandler: NodeMouseEventHandler = useMemoizedFn((e, node) => {
     if (nodes && edges && graph) {
-      if(graph.isDragging) return
+      if (graph.isDragging) return
       const { sourceToTargetNodes, targetToSourceNodes, sourceToTargetEdges, targetToSourceEdges } = graph.getRelatedNodesAndEdges(node)
       setEdges(
         produce(edges, draft => {
@@ -137,6 +140,21 @@ const NodeContainer: FC<NodeContainerProps> = memo(() => {
         const endNode = node
         if (startNode && endNode) {
           const newEdge = { sourceId: startNode.id, targetId: endNode.id, id: Id.getId() }
+          if (newEdge.sourceId === newEdge.targetId) {
+            graph.endAddEdge()
+            return
+          }
+          if (edges?.some(e => e.sourceId === newEdge.sourceId && e.targetId === newEdge.targetId)) {
+            graph.endAddEdge()
+            return
+          }
+          const metaLink: Partial<MetaLink> = {
+            sourceId: newEdge.sourceId,
+            targetId: newEdge.targetId,
+            targetType: node.type,
+            sourceType: startNode.type
+          }
+          addMetaLink(metaLink)
           graph.registerNewAddedEdge(newEdge)
           graph.registerEdges([newEdge])
           graph.endAddEdge()
@@ -159,13 +177,9 @@ const NodeContainer: FC<NodeContainerProps> = memo(() => {
       }
     })
   })
-  const svgClickHandler: MouseEventHandler = useMemoizedFn(e => {
-    if (e.currentTarget === e.target) {
-      graph && graph.endAddEdge()
-    }
-  })
+
   return (
-    <svg onClick={svgClickHandler} className={svgContainerClassName} width={600} height={600} viewBox="-300 -300 600 600">
+    <svg className={svgContainerClassName} width={600} height={600} viewBox="-300 -300 600 600">
       <defs>
         <clipPath id="circleClip">
           <circle r={20} cx={20} cy={20}></circle>

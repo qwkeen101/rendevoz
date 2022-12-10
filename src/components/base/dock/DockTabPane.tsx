@@ -1,14 +1,16 @@
-import React from 'react'
-import ReactDOM from 'react-dom'
-import classNames from 'classnames'
+import React, { createContext, CSSProperties, FC, memo, ReactNode, useContext, useEffect, useLayoutEffect, useMemo, useRef } from 'react'
 import { DockContext, DockContextType, PanelData, TabPaneCache } from './DockData'
-import { TabPaneProps } from 'rc-tabs'
 import { motion } from 'framer-motion'
+import useUpdateIsomorphicLayoutEffect from '@/hooks/utils/useUpdateIsomorphicLayoutEffect'
 
-interface DockTabPaneProps extends TabPaneProps {
+interface DockTabPaneProps {
   cacheId?: string
   cached: boolean
   parent?: PanelData
+  active?: boolean
+  style?: CSSProperties
+  className?: string
+  children?: ReactNode
 }
 const variants = {
   hidden: {
@@ -19,103 +21,73 @@ const variants = {
     opacity: 1
   }
 }
-export default class DockTabPane extends React.PureComponent<DockTabPaneProps, any> {
-  static contextType = DockContextType
-
-  context!: DockContext
-
-  _ref: HTMLDivElement
-  getRef = (r: HTMLDivElement) => {
-    this._ref = r
-  }
-
-  updateCache() {
-    const { cached, children, cacheId } = this.props
-    if (this._cache) {
-      if (!cached || cacheId !== this._cache.id) {
-        this.context.removeTabCache(this._cache.id, this)
-        this._cache = null
+export const DockTabPaneContext = createContext<{
+  context: DockContext
+  currentTabId: string
+} | null>(null)
+export const DockTabPane: FC<DockTabPaneProps> = memo(({ cached, cacheId, parent, children, style, active }) => {
+  const context = useContext(DockContextType)
+  const ref = useRef<HTMLDivElement>(null)
+  const cacheRef = useRef<TabPaneCache | null>(null)
+  const symbol = useMemo(() => Symbol(), [])
+  const updateCache = () => {
+    const cache = cacheRef.current
+    if (cache) {
+      if (!cached || cacheId !== cache.id) {
+        context.removeTabCache(cache.id, symbol)
+        cacheRef.current = null
       }
     }
-    if (cached && this._ref) {
-      this._cache = this.context.getTabCache(cacheId, this)
-      if (!this._ref.contains(this._cache.div)) {
-        this._ref.appendChild(this._cache.div)
+    if (cached && ref.current && cacheId) {
+      cacheRef.current = context.getTabCache(cacheId, symbol)
+      if (!ref.current.contains(cacheRef.current.div)) {
+        ref.current.replaceChildren(cacheRef.current.div)
       }
-      this.context.updateTabCache(this._cache.id, children)
+      context.updateTabCache(cacheId, children)
     }
   }
-
-  visited: boolean
-
-  _cache: TabPaneCache
-
-  handleClick = () => {
-    const layout = this.context.getLayout()
-    this.context.setLayout({
+  const handleClick = () => {
+    const layout = context.getLayout()
+    context.setLayout({
       ...layout,
       global: {
         ...layout.global,
-        currentFocusedPanelId: this.props.parent?.id
+        currentFocusedPanelId: parent?.id
       }
     })
   }
-  render() {
-    const { cacheId, cached, prefixCls, forceRender, className, style, id, active, animated, destroyInactiveTabPane, tabKey, children } =
-      this.props
-    if (active) {
-      this.visited = true
-    } else if (destroyInactiveTabPane) {
-      this.visited = false
+  // useUpdateIsomorphicLayoutEffect(() => {
+  //   updateCache()
+  // })
+  useEffect(() => {
+    console.log('update tabpane')
+    return () => {
+      if (cacheRef.current && cacheId) {
+        context.removeTabCache(cacheId, symbol)
+      }
     }
-    const mergedStyle: React.CSSProperties = {
-      position: 'relative',
-      width: '100%',
-      height: 'calc( 100% - 42px )'
-    }
-
-    // when cached == undefined, it will still cache the children inside tabs component, but not across whole dock layout
-    // when cached == false, children are destroyed when not active
-    const isRender = cached === false ? active : this.visited
-
-    let renderChildren: React.ReactNode = null
-    if (cached) {
-      renderChildren = null
-    } else if (isRender || forceRender) {
-      renderChildren = children
-    }
-    const getRef = cached ? this.getRef : null
-    return (
+  }, [])
+  const mergedStyle: React.CSSProperties = {
+    ...style,
+    position: 'relative',
+    width: '100%',
+    height: 'calc( 100% - 42px )'
+  }
+  return (
+    <DockTabPaneContext.Provider value={{context, currentTabId: cacheId}}>
       <motion.div
-        ref={getRef}
+        ref={ref}
         id={cacheId}
+        onClick={handleClick}
         initial={{ opacity: 0 }}
         animate={active ? 'visible' : 'hidden'}
         variants={variants}
         transition={{ duration: 0.5, type: 'tween' }}
-        role="tabpanel"
-        aria-labelledby={id && `${id}-tab-${tabKey}`}
-        aria-hidden={!active}
-        style={{ ...mergedStyle, ...style }}
+        role="tabpane"
+        style={mergedStyle}
       >
-        {(active || this.visited || forceRender) && renderChildren}
+        {children}
       </motion.div>
-    )
-  }
-
-  componentDidMount(): void {
-    this.updateCache()
-    this._ref.addEventListener('click', this.handleClick)
-  }
-
-  componentDidUpdate(prevProps: Readonly<DockTabPaneProps>, prevState: Readonly<any>, snapshot?: any): void {
-    this.updateCache()
-  }
-
-  componentWillUnmount(): void {
-    this._ref.removeEventListener('click', this.handleClick)
-    if (this._cache) {
-      this.context.removeTabCache(this._cache.id, this)
-    }
-  }
-}
+    </DockTabPaneContext.Provider>
+  )
+})

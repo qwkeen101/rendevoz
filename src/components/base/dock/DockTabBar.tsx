@@ -1,4 +1,4 @@
-import React, { memo, useEffect, useRef, useState } from 'react'
+import React, { memo, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { DragDropDiv } from './dragdrop/DragDropDiv'
 import * as DragManager from './dragdrop/DragManager'
 import { DockContextType, PanelData } from './DockData'
@@ -27,9 +27,23 @@ export const DockTabBar = memo((props: DockTabBarProps) => {
 
   const navs = TabNavList.navs
   const currentMoveTabId = useRef<string>()
-
+  const [isTopRight, setIsTopRight] = useState(false)
+  useLayoutEffect(() => {
+    const bar = ref.current
+    console.log('sss')
+    const bounding = bar?.getBoundingClientRect()
+    if (bounding) {
+      const { top, left, width, right } = bounding
+      const windowWidth = window.innerWidth
+      if (Math.abs(right - windowWidth) < 10 && top < 10) {
+        setIsTopRight(true)
+      } else {
+        setIsTopRight(false)
+      }
+    }
+  })
   return (
-    <DragDropDiv role="tablist" className="dock-bar" getRef={getRef} tabIndex={-1}>
+    <DragDropDiv role="tablist" className={classNames('dock-bar', isTopRight && 'top-right')} getRef={getRef} tabIndex={-1}>
       <Reorder.Group
         onReorder={r => {
           const currIndex = r.findIndex(i => i.key === currentMoveTabId.current)
@@ -66,11 +80,11 @@ const TabItem = memo(({ onClick, isSelected, item, onDragStart }) => {
   return (
     <Reorder.Item
       key={item.key}
-      initial={{ opacity: 0, background: 'white' }}
+      initial={{ opacity: 0 }}
       animate={{
         opacity: 1,
         transition: { duration: 0.2 },
-        color: isSelected ? 'rgba(0,0,0,1)' : 'rgba(0,0,0,0.4)',
+        color: isSelected ? 'rgba(0,0,0,1)' : 'rgba(0,0,0,0.4)'
       }}
       onDragStart={onDragStart}
       exit={{ opacity: 0, transition: { duration: 0.3 } }}
@@ -83,8 +97,7 @@ const TabItem = memo(({ onClick, isSelected, item, onDragStart }) => {
       id={item.key}
       className={classNames(styles.tab, isSelected && styles.active)}
     >
-      {isSelected && <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className={styles.pointer}></motion.div>}
-      <motion.div layout= "position" className={styles.tabContent}>
+      <motion.div layout="position" className={styles.tabContent}>
         {item.tab}
       </motion.div>
     </Reorder.Item>

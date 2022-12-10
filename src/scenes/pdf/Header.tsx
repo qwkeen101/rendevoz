@@ -18,15 +18,6 @@ const PdfPageHeader = () => {
         <div className={styles.author}>{pdfInfo?.metadata?.author || 'Unknown'}</div>
       </Content>
       <Content flex alignItems="center" style={{ gap: 20 }}>
-        {/* <Icon
-          className={styles.star}
-          size={20}
-          cursor="pointer"
-          name="park-star"
-          theme={pdfInfo?.starred ? 'filled' : 'outline'}
-          onClick={() => setPdfInfo({ ...pdfInfo, starred: !pdfInfo?.starred })}
-          fill={pdfInfo?.starred ? 'rgb(246, 192, 80)' : undefined}
-        /> */}
         <IconWithPopover
           name="park-more"
           size={20}

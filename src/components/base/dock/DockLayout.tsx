@@ -20,12 +20,10 @@ import {
   TabPaneCache
 } from './DockData'
 import { DockBox } from './DockBox'
-import { FloatBox } from './FloatBox'
 import { DockPanel } from './DockPanel'
 import * as Algorithm from './Algorithm'
 import * as Serializer from './Serializer'
 import * as DragManager from './dragdrop/DragManager'
-import { MaxBox } from './MaxBox'
 
 export interface LayoutProps {
   /**
@@ -44,7 +42,7 @@ export interface LayoutProps {
    * set layout only when you want to use DockLayout as a fully controlled react component
    * when using controlled layout, [[LayoutProps.onChange]] must be set to enable any layout change
    */
-  layout?: LayoutBase
+  layout?: LayoutData
 
   /**
    * Tab Groups, defines additional configuration for different groups
@@ -350,14 +348,14 @@ export class DockLayout extends DockPortalManager implements DockContext {
     let preparedLayout: LayoutData
     if (defaultLayout) {
       preparedLayout = this.prepareInitData(props.defaultLayout)
-    } else if (!loadTab) {
-      throw new Error('DockLayout.loadTab and DockLayout.defaultLayout should not both be undefined.')
+    } else if (!layout) {
+      throw new Error('DockLayout.layout and DockLayout.defaultLayout should not both be undefined.')
     }
 
     if (layout) {
       // controlled layout
       this.state = {
-        layout: DockLayout.loadLayoutData(layout, props),
+        layout,
         dropRect: null
       }
     } else {
@@ -551,11 +549,11 @@ export class DockLayout extends DockPortalManager implements DockContext {
    */
   changeLayout(layoutData: LayoutData, currentTabId: string, direction: DropDirection, silent = false) {
     const { layout, onLayoutChange } = this.props
-    let savedLayout: LayoutBase
+    // let savedLayout: LayoutBase
     if (onLayoutChange) {
-      savedLayout = Serializer.saveLayoutData(layoutData, this.props.saveTab, this.props.afterPanelSaved)
-      layoutData.loadedFrom = savedLayout
-      onLayoutChange(savedLayout, currentTabId, direction)
+      // savedLayout = Serializer.saveLayoutData(layoutData, this.props.saveTab, this.props.afterPanelSaved)
+      // layoutData.loadedFrom = savedLayout
+      onLayoutChange(layoutData, currentTabId, direction)
       if (layout) {
         // if layout prop is defined, we need to force an update to make sure it's either updated or reverted back
         this.forceUpdate()
@@ -594,12 +592,10 @@ export class DockLayout extends DockPortalManager implements DockContext {
   }
 
   /** @ignore */
-  static loadLayoutData(savedLayout: LayoutBase, props: LayoutProps, width = 0, height = 0): LayoutData {
+  static loadLayoutData(layout: LayoutData, props: LayoutProps, width = 0, height = 0): LayoutData {
     const { defaultLayout, loadTab, afterPanelLoaded, groups } = props
-    let layout = Serializer.loadLayoutData(savedLayout, defaultLayout, loadTab, afterPanelLoaded)
-    layout = Algorithm.fixFloatPanelPos(layout, width, height)
+    // let layout = Serializer.loadLayoutData(savedLayout, defaultLayout, loadTab, afterPanelLoaded)
     layout = Algorithm.fixLayoutData(layout, groups)
-    layout.loadedFrom = savedLayout
     return layout
   }
 

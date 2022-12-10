@@ -3,7 +3,8 @@ import useEventEmitter from '@/events/useEventEmitter'
 import Id from '@/utils/id'
 import classNames from 'classnames'
 import { cloneElement, FC, useState } from 'react'
-import { RenderElementProps } from 'slate-react'
+import { Editor, Node } from 'slate'
+import { RenderElementProps, useSlate } from 'slate-react'
 import { HeadingElement, HeadingOneElement, HeadingThreeElement, HeadingTwoElement } from '../../customTypes'
 import { ElementBuilder } from '../elementBuilder'
 import styles from './index.module.less'
@@ -17,6 +18,8 @@ export const Heading: FC<RenderElementProps & HeadingProps> = ({ element, childr
   const { dest } = element as HeadingElement
   const emitter = useEventEmitter()
   const [folded, setFolded] = useState(false)
+  const editor = useSlate()
+  const isEmpty = Editor.isEmpty(editor, element)
   const action = () => {
     const clazzName = classNames(styles.extra, folded && styles.folded)
     return (
@@ -64,6 +67,10 @@ export const Heading: FC<RenderElementProps & HeadingProps> = ({ element, childr
         return <h2></h2>
       case 2:
         return <h3></h3>
+      case 3:
+        return <h4></h4>
+      case 4:
+        return <h5></h5>
       default:
         return <h1></h1>
     }
@@ -72,7 +79,9 @@ export const Heading: FC<RenderElementProps & HeadingProps> = ({ element, childr
     heading(),
     {
       id: element.id,
-      className: styles.heading,
+      className: classNames(styles.heading, isEmpty && styles.empty),
+      placeholder: `H${level + 1}`,
+      contentEditable: true
     },
     // action(),
     children,

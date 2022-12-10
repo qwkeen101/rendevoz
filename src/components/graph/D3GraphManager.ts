@@ -6,8 +6,6 @@ import { curveBasis } from 'd3'
 import { getMarkerId } from './utils/getMarkerId'
 import { MarkerColor } from './consts/markerColors'
 
-const NODE_DISTANCE = 100
-
 class D3GraphManager {
   private container: d3.Selection<HTMLElement, unknown, null, any> | null = null
   private transform = null
@@ -39,9 +37,10 @@ class D3GraphManager {
   // outer container
   public registerContainer = (container: HTMLElement) => {
     this.container = d3.select(container)
-    const zoom = d3.zoom().scaleExtent([0.5, 5]).on('zoom', this.zoomed)
+    const zoom = d3.zoom().scaleExtent([0.1, 5]).on('zoom', this.zoomed)
     this.container?.call(zoom)
     this.container?.on('mousemove', this.globalMousemoveHandler)
+    this.container.selectChild('#viewport').on('click', this.globalClickHandler)
   }
   public clear = () => {
     this.originEdges = null
@@ -123,8 +122,8 @@ class D3GraphManager {
   public registerNewAddedEdge = (edge: GraphEdge | null) => {
     this.newAddedEdge = edge
   }
-  public updateLayout = () => {
-    this.simulateForceLayout()
+  public updateLayout = (reheat?: boolean, reinitialize?: boolean) => {
+    this.simulateForceLayout(reheat, reinitialize)
   }
   public startAddEdge = (sourceNode: SVGGElement) => {
     const bounding = (
@@ -149,9 +148,9 @@ class D3GraphManager {
         d3.select('#addLinkLine').attr('d', null).attr('opacity', 1)
       })
   }
-  private simulateForceLayout = () => {
+  private simulateForceLayout = (reheat?: boolean, reinitialize?: boolean) => {
     if (!this.originNodes || this.originNodes.length === 0) return
-    if (this.d3Simulation) {
+    if (this.d3Simulation && !reinitialize) {
       this.d3Simulation
         .nodes(this.originNodes)
         .force(
@@ -161,6 +160,12 @@ class D3GraphManager {
             .id(d => d.id)
             .distance(200)
         )
+        .force(
+          'collision',
+          d3.forceCollide().radius(() => 100)
+        )
+        .alpha(reheat ? 0.8 : 0)
+        .alphaTarget(0)
         .restart()
       return
     }
@@ -175,6 +180,10 @@ class D3GraphManager {
         .force('link', forceLink)
         .force('charge', forceNode)
         .force('center', d3.forceCenter())
+        .force(
+          'collision',
+          d3.forceCollide().radius(() => 100)
+        )
         .on('tick', this.ticked)
         .on('end', () => {
           const clonedNodes = structuredClone(this.originNodes)
@@ -238,7 +247,13 @@ class D3GraphManager {
       // this.drawLineSelection?.attr('d', path.toString()).attr('stroke', 'black').attr('fill', 'none').attr('stroke-width', 1)
     }
   }
-
+  private globalClickHandler = (e: MouseEvent) => {
+    if (e.target === e.currentTarget) {
+      if (this.isAddingEdge) {
+        this.endAddEdge()
+      }
+    }
+  }
   public getRelatedNodesAndEdges = (sourceNode: GraphNode) => {
     const sourceToTargetEdges = this.originEdges?.filter(i => i.source.id === sourceNode.id) || []
     const targetToSourceEdges = this.originEdges?.filter(i => i.target.id === sourceNode.id) || []
@@ -252,34 +267,27 @@ class D3GraphManager {
     const targetCircleCenterY = targetY + CIRCLE_RADIUS
     const sourceCircleCenterX = sourceX + CIRCLE_RADIUS
     const sourceCircleCenterY = sourceY + CIRCLE_RADIUS
-    const intersectedPoints = getIntersectedPointsOfLineAndCircle(
-      { x: sourceCircleCenterX, y: sourceCircleCenterY },
-      { x: targetCircleCenterX, y: targetCircleCenterY },
-      { x: targetCircleCenterX, y: targetCircleCenterY },
-      CIRCLE_RADIUS
+    const distance = Math.sqrt(
+      Math.pow(targetCircleCenterX - sourceCircleCenterX, 2) + Math.pow(targetCircleCenterY - sourceCircleCenterY, 2)
     )
-    intersectedPoints.sort((a, b) => {
-      const dxA = Math.abs(a.x - sourceX)
-      const dyA = Math.abs(a.y - sourceY)
-      const dxB = Math.abs(b.x - sourceX)
-      const dyB = Math.abs(b.y - sourceY)
-      const distanceA = Math.sqrt(Math.pow(dxA, 2) + Math.pow(dyA, 2))
-      const distanceB = Math.sqrt(Math.pow(dxB, 2) + Math.pow(dyB, 2))
-      return distanceA - distanceB
-    })
-    const finalTargetX = intersectedPoints[0]?.x || targetCircleCenterX
-    const finalTargetY = intersectedPoints[0]?.y || targetCircleCenterY
+    const ratio = (CIRCLE_RADIUS + 10) / distance
+    const dx = (targetCircleCenterX - sourceCircleCenterX) * ratio
+    const dy = (targetCircleCenterY - sourceCircleCenterY) * ratio
     const curve = d3.line().curve(curveBasis)
     let offset = 30
     // check out whether double direction link
     if (this.originEdges) {
       const oppositeEdge = this.originEdges.find(i => i.source?.id === edge.targetId && i.target?.id === edge.sourceId)
-      if (oppositeEdge) console.log(oppositeEdge)
       if (oppositeEdge && oppositeEdge.source?.id > edge.sourceId) offset = -30
     }
+    const finalSourceX = sourceCircleCenterX + dx
+    const finalSourceY = sourceCircleCenterY + dy
+    const finalTargetX = targetCircleCenterX - dx
+    const finalTargetY = targetCircleCenterY - dy
+
     const points = [
-      [sourceCircleCenterX, sourceCircleCenterY],
-      [(sourceCircleCenterX + finalTargetX) / 2, (sourceCircleCenterY + finalTargetY) / 2 + offset],
+      [finalSourceX, finalSourceY],
+      [(finalSourceX + finalTargetX) / 2, (finalSourceY + finalTargetY) / 2 + offset],
       [finalTargetX, finalTargetY]
     ]
     return curve(points)

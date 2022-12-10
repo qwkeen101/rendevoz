@@ -8,4 +8,5 @@ export interface GraphNode {
   scale?: number
   opacity?: number
   coverImgSrc?: string
+  isCenter?: boolean
 }

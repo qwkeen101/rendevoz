@@ -10,14 +10,17 @@ import { useDebounceFn, useMemoizedFn, useRafFn } from '@/hooks'
 import useThrottleFn from '@/hooks/utils/useThrottleFn'
 import useMetaStore from '@/stores/meta.store'
 import Id from '@/utils/id'
+import { saveImageLocally } from '@/utils/img'
 import { css } from '@emotion/css'
 import fuzzysort from 'fuzzysort'
-import { FC, useEffect, useRef, useState } from 'react'
+import { ChangeEvent, ChangeEventHandler, FC, useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { Editor, Node, Range, Transforms } from 'slate'
 import { ReactEditor } from 'slate-react'
 import { MetaKnowledgeObject, MetaLink } from '~/typings/data'
+import { BasicElements, BlockElements, InlineElements, MediaElements } from '../../consts/elements'
 import { CustomEditor } from '../../customTypes'
+import { Positions } from '../../utils/positions'
 import { scrollToTarget } from '../../utils/positions/scroll'
 import { EditorSelectArea, SELECT_AREA_MAP } from '../../weakMaps'
 
@@ -37,8 +40,9 @@ const EditorOverlay: FC<OverlayProps> = ({ visible, onVisiblityChange, editor, s
   const [content, setContent] = useState<'blockHandleMenu' | 'emojiPicker' | 'metaObject'>()
   const [selectArea, setSelectArea] = useState<EditorSelectArea>()
   const [metaQuery, setMetaQuery] = useState('')
-  const { addMetaObject, addMetaLink,getMetaObjectByNoteId } = useMetaStore()
+  const { addMetaObject, addMetaLink, getMetaObjectByNoteId } = useMetaStore()
   const emitter = useEventEmitter()
+  const fileUploaderRef = useRef<HTMLLabelElement>()
   const noteIdRef = useRef<number>()
   const handler = new EditorEventHandler()
   const metaObjectRef = useRef<Node | null>(null)
@@ -76,7 +80,6 @@ const EditorOverlay: FC<OverlayProps> = ({ visible, onVisiblityChange, editor, s
           left: rect.left
         })
         window.getSelection()?.addRange(domRange)
-        console.log(editor.selection)
         setContent('metaObject')
         document.addEventListener('keyup', handleMetaObjectKeywordChange)
         document.addEventListener('keydown', handleMetaObjectKeywordChange)
@@ -107,28 +110,39 @@ const EditorOverlay: FC<OverlayProps> = ({ visible, onVisiblityChange, editor, s
       e.stopPropagation()
       const { selection } = editor
       if (!selection || !Range.isCollapsed(selection)) return
-      Transforms.removeNodes(editor)
+      const parentBlock = Positions.parentBlock(editor)
+      if (!parentBlock) return
       const metaId = Id.getId()
-      Transforms.insertNodes(editor, {
-        type: 'paragraph',
-        id: Id.getId(),
-        children: [
-          {
-            type: 'metaObject',
-            id: metaId,
-            children: [{ text: keyword }]
-          }
-        ]
-      })
+      const paraId = Id.getId()
+      Transforms.removeNodes(editor, { at: parentBlock[1] })
+      Transforms.insertNodes(
+        editor,
+        {
+          type: 'paragraph',
+          id: paraId,
+          children: [
+            {
+              type: 'metaObject',
+              id: metaId,
+              children: [{ text: keyword }]
+            }
+          ]
+        },
+        { at: parentBlock[1] }
+      )
+      Transforms.select(editor, Editor.end(editor, parentBlock[1]))
       addMetaObject({
-        keyword
+        keyword,
+        type: 'knowledge'
       }).then(obj => {
-        const node = Editor.above(editor, {
-          match: n => Editor.isVoid(editor, n) && n.id === metaId
-        })
         addLink(obj.id)
+        const node = Editor.above(editor, {
+          match: n => n.type === 'paragraph' && n.id === paraId
+        })
         if (!node) return
-        Transforms.setNodes(editor, { originId: obj.id }, { at: node[1], voids: true })
+        // retrieve meta object path
+        const idx = node[0].children.findIndex(i => i.id === metaId)
+        Transforms.setNodes(editor, { originId: obj.id }, { at: [...node[1], idx], voids: true })
       })
       onVisiblityChange(false)
       document.removeEventListener('keyup', handleMetaObjectKeywordChange)
@@ -142,20 +156,85 @@ const EditorOverlay: FC<OverlayProps> = ({ visible, onVisiblityChange, editor, s
     onVisiblityChange(false)
     document.removeEventListener('keyup', handleMetaObjectKeywordChange)
     document.removeEventListener('keydown', handleMetaObjectKeywordChange)
-    Transforms.removeNodes(editor)
-    Transforms.insertNodes(editor, {
-      type: 'paragraph',
-      id: Id.getId(),
-      children: [
-        {
-          type: 'metaObject',
-          id: Id.getId(),
-          originId: obj.id,
-          children: [{ text: obj.keyword }]
-        }
-      ]
-    })
+    const parentBlock = Positions.parentBlock(editor)
+    if (!parentBlock) return
+    Transforms.removeNodes(editor, { at: parentBlock[1] })
+    Transforms.insertNodes(
+      editor,
+      {
+        type: 'paragraph',
+        id: Id.getId(),
+        children: [
+          {
+            type: 'metaObject',
+            id: Id.getId(),
+            originId: obj.id,
+            children: [{ text: obj.keyword }]
+          }
+        ]
+      },
+      { at: parentBlock[1] }
+    )
+    Transforms.select(editor, Editor.end(editor, parentBlock[1]))
     addLink(obj.id)
+  }
+  const handleAddElement = (elementName: string) => {
+    onVisiblityChange(false)
+    if (Object.values(BasicElements).some(i => i === elementName) || Object.values(BlockElements).some(i => i === elementName)) {
+      emitter.emit('editor', {
+        type: 'insertNode',
+        data: {
+          element: {
+            type: elementName,
+            children: [
+              {
+                text: ''
+              }
+            ]
+          }
+        }
+      })
+      return
+    }
+    if (Object.values(InlineElements).some(i => i === elementName)) {
+      switch (elementName) {
+        case InlineElements.MetaObject: {
+          const { selection } = editor
+          if (!selection) return
+          Editor.insertNode(editor, {
+            type: 'paragraph',
+            children: [{ text: '$ ' }]
+          })
+          setTimeout(() => {
+            emitter.emit('editor', { type: 'toggleOverlay', data: { content: 'metaObject' } })
+            ReactEditor.focus(editor)
+          }, 50)
+        }
+      }
+    }
+    if (Object.values(MediaElements).some(i => i === elementName)) {
+      fileUploaderRef.current?.click()
+    }
+  }
+  const handleUploadFile: ChangeEventHandler<HTMLInputElement> = e => {
+    const file = e.target.files?.[0]
+    if (file) {
+      if (file.type.startsWith('image')) {
+        saveImageLocally(Id.getStrId(), file).then(data => {
+          console.log(data)
+          emitter.emit('editor', {
+            type: 'insertNode',
+            data: {
+              element: {
+                type: 'image',
+                url: data.data,
+                children: [{ text: '' }]
+              }
+            }
+          })
+        })
+      }
+    }
   }
   const addLink = (knowledgeId: number) => {
     const noteId = editor.noteId
@@ -223,7 +302,7 @@ const EditorOverlay: FC<OverlayProps> = ({ visible, onVisiblityChange, editor, s
         <>
           {content === 'blockHandleMenu' && (
             <WithBorder>
-              <EditorElementsMenu onAddMetaObject={onAddMetaObject} />
+              <EditorElementsMenu onAddElement={handleAddElement} />
             </WithBorder>
           )}
           {content === 'emojiPicker' && (
@@ -252,7 +331,10 @@ const EditorOverlay: FC<OverlayProps> = ({ visible, onVisiblityChange, editor, s
         </>
       }
     >
-      <PosHelper {...position}></PosHelper>
+      <PosHelper {...position}>
+        <input type="file" name="file" id="file" style={{ display: 'none' }} onChange={handleUploadFile} />
+        <label ref={fileUploaderRef} htmlFor="file" />
+      </PosHelper>
     </AnimatePopover>
   )
 }
@@ -271,6 +353,8 @@ const MetaQueryCard = ({ query, onMetaObjectClick }: { query: string; onMetaObje
   const { run: debouncedSearch } = useDebounceFn(handleSearch, { wait: 100 })
   const handleKeyDown = useMemoizedFn((e: KeyboardEvent) => {
     if (e.key === 'Enter') {
+      e.preventDefault()
+      e.stopPropagation()
       selectedIdx >= 0 && onMetaObjectClick(metaObjects[selectedIdx])
     }
     if (e.key === 'ArrowUp') {

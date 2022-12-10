@@ -142,9 +142,9 @@ const Sidebar = () => {
             }
           >
             <TabPane tab="Editor" key="1">
-              <div style={{ height: `100%`, position: 'relative', marginBottom: '20px' }}>
+              {/* <div style={{ height: `100%`, position: 'relative', marginBottom: '20px' }}>
                 <EditorManager />
-              </div>
+              </div> */}
             </TabPane>
             <TabPane tab="Note" key="2">
               <NoteInfo />

@@ -4,9 +4,10 @@ import { AnimatePresence, motion } from 'framer-motion'
 
 interface ToolTipProps {
   content: string | ReactNode
+  position?: 'top' | 'bottom'
 }
 
-const ToolTip: FC<PropsWithChildren<ToolTipProps>> = ({ content, children }, ref) => {
+const ToolTip: FC<PropsWithChildren<ToolTipProps>> = ({ content, children, position = 'bottom' }, ref) => {
   const [open, setOpen] = useState(false)
   const [bound, setBound] = useState({
     x: 0,
@@ -36,7 +37,11 @@ const ToolTip: FC<PropsWithChildren<ToolTipProps>> = ({ content, children }, ref
       setOpen(true)
       const rect = e.currentTarget.getBoundingClientRect()
       const { scrollTop, scrollLeft } = document.body
-      setBound({ x: rect.left + scrollLeft, y: rect.top + scrollTop, width: rect.width, height: rect.height })
+      const bound = { x: rect.left + scrollLeft, y: rect.top + scrollTop, width: rect.width, height: rect.height }
+      if (position === 'top') {
+        bound.y = rect.top + scrollTop - rect.height - 40
+      }
+      setBound(bound)
     }
     if (e.type === 'mouseleave') {
       setOpen(false)

@@ -1,5 +1,5 @@
 import Spinner from '@/components/base/Spinner'
-import { useDebounceFn, useUpdateEffect } from '@/hooks'
+import { useDebounceFn, usePrevious, useUpdateEffect } from '@/hooks'
 import useThrottleFn from '@/hooks/utils/useThrottleFn'
 import { PDFDocumentProxy } from 'pdfjs-dist'
 import { FC, ReactElement, useRef, useState } from 'react'
@@ -21,6 +21,7 @@ const LayoutWrapper: FC<LayoutWrapperProps> = ({ defaultScale = 1, doc, children
   const layoutWrapperRef = useRef<HTMLDivElement>(null)
   const [ref, { width }] = useMeasure()
   const flooredWidth = Math.floor(width)
+  const previousWidth = usePrevious(flooredWidth)
   const [pageSize, setPageSize] = useState<PageSize>({ height: 0, width: 0, scale: defaultScale })
   const viewportRef = useRef<{ width: number; height: number }>({ width: 0, height: 0 })
   const parentEleRef = useRef<HTMLElement>()
@@ -84,9 +85,11 @@ const LayoutWrapper: FC<LayoutWrapperProps> = ({ defaultScale = 1, doc, children
       initializedRef.current = true
       return
     }
-    if (initializedRef.current) {
-      setIsResizing(true)
-      debouncedResize()
+    if (flooredWidth !== 0 && previousWidth !== 0) {
+      if (initializedRef.current) {
+        setIsResizing(true)
+        debouncedResize()
+      }
     }
   }, [flooredWidth])
 

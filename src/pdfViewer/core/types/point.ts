@@ -1,8 +1,6 @@
-export interface Point{
-    x: number
-    y: number
+export interface Point {
+  x: number
+  y: number
 }
 
-export interface DistanceTolerance{
-    
-}
+export interface DistanceTolerance {}

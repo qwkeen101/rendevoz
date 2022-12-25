@@ -43,7 +43,9 @@ export const RecentlyVisitCard = memo(() => {
       }}
       className={styles.cardList}
     >
-      {Array.from(Array(count * 2).keys()).map((i, idx) => recentlyRead[idx] && <RecentlyReadCardItemV2 document={recentlyRead[idx]} />)}
+      {Array.from(Array(count * 2).keys()).map(
+        (i, idx) => recentlyRead[idx] && <RecentlyReadCardItemV2 key={recentlyRead[idx].id} document={recentlyRead[idx]} />
+      )}
     </Content>
   )
 })
@@ -173,7 +175,7 @@ export const RecentlyAddCard = memo(() => {
       className={styles.cardList}
     >
       {Array.from(Array(count * 2).keys()).map(
-        (i, idx) => recentlyCreated[idx] && <RecentlyReadCardItemV2 document={recentlyCreated[idx]} />
+        (i, idx) => recentlyCreated[idx] && <RecentlyReadCardItemV2 key={recentlyCreated[idx].id} document={recentlyCreated[idx]} />
       )}
     </Content>
   )

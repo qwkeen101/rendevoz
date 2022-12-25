@@ -14,7 +14,10 @@ interface DockTabPaneProps {
 }
 const variants = {
   hidden: {
-    display: 'none',
+    visibility: 'hidden',
+    pointerEvents: 'none',
+    zIndex: -1,
+    position: 'absolute',
     opacity: 0
   },
   visible: {
@@ -22,7 +25,6 @@ const variants = {
   }
 }
 export const DockTabPaneContext = createContext<{
-  context: DockContext
   currentTabId: string
 } | null>(null)
 export const DockTabPane: FC<DockTabPaneProps> = memo(({ cached, cacheId, parent, children, style, active }) => {
@@ -30,6 +32,15 @@ export const DockTabPane: FC<DockTabPaneProps> = memo(({ cached, cacheId, parent
   const ref = useRef<HTMLDivElement>(null)
   const cacheRef = useRef<TabPaneCache | null>(null)
   const symbol = useMemo(() => Symbol(), [])
+  const recursivelyScrollTop = (root: HTMLElement) => {
+    const rootScrollTop = root.scrollTop
+    if (rootScrollTop) {
+      console.log(rootScrollTop, root)
+      cacheRef.current?.scrollPreserver.set(root, rootScrollTop)
+      return
+    }
+    root.childNodes.forEach(n => recursivelyScrollTop(n))
+  }
   const updateCache = () => {
     const cache = cacheRef.current
     if (cache) {
@@ -40,12 +51,22 @@ export const DockTabPane: FC<DockTabPaneProps> = memo(({ cached, cacheId, parent
     }
     if (cached && ref.current && cacheId) {
       cacheRef.current = context.getTabCache(cacheId, symbol)
+      Array.from(cacheRef.current.scrollPreserver.entries()).forEach(([k, v]) => {
+        k.scrollTop === 0 && (k.scrollTop = v)
+      })
+
+      recursivelyScrollTop(cacheRef.current.div)
       if (!ref.current.contains(cacheRef.current.div)) {
-        ref.current.replaceChildren(cacheRef.current.div)
+        console.log('replace')
+        ref.current.appendChild(cacheRef.current.div)
+        Array.from(cacheRef.current.scrollPreserver.entries()).forEach(([k, v]) => {
+          k.scrollTop === 0 && (k.scrollTop = v)
+        })
       }
       context.updateTabCache(cacheId, children)
     }
   }
+
   const handleClick = () => {
     const layout = context.getLayout()
     context.setLayout({
@@ -56,17 +77,27 @@ export const DockTabPane: FC<DockTabPaneProps> = memo(({ cached, cacheId, parent
       }
     })
   }
-  // useUpdateIsomorphicLayoutEffect(() => {
-  //   updateCache()
-  // })
-  useEffect(() => {
-    console.log('update tabpane')
+  useLayoutEffect(() => {
+    console.log('update cahce' + cacheId)
+    updateCache()
+  })
+  useLayoutEffect(() => {
+    console.log('mount pane')
     return () => {
-      if (cacheRef.current && cacheId) {
-        context.removeTabCache(cacheId, symbol)
+      console.log('unmount pane')
+      if (cacheRef.current) {
+        recursivelyScrollTop(cacheRef.current.div)
+        context.removeTabCache(cacheRef.current.id, symbol)
       }
     }
   }, [])
+
+  let renderChildren: ReactNode = null
+  if (cached) {
+    renderChildren = null
+  } else {
+    renderChildren = children
+  }
   const mergedStyle: React.CSSProperties = {
     ...style,
     position: 'relative',
@@ -74,20 +105,18 @@ export const DockTabPane: FC<DockTabPaneProps> = memo(({ cached, cacheId, parent
     height: 'calc( 100% - 42px )'
   }
   return (
-    <DockTabPaneContext.Provider value={{context, currentTabId: cacheId}}>
-      <motion.div
-        ref={ref}
-        id={cacheId}
-        onClick={handleClick}
-        initial={{ opacity: 0 }}
-        animate={active ? 'visible' : 'hidden'}
-        variants={variants}
-        transition={{ duration: 0.5, type: 'tween' }}
-        role="tabpane"
-        style={mergedStyle}
-      >
-        {children}
-      </motion.div>
-    </DockTabPaneContext.Provider>
+    <motion.div
+      ref={ref}
+      id={cacheId}
+      onClick={handleClick}
+      initial={{ opacity: 0 }}
+      animate={active ? 'visible' : 'hidden'}
+      variants={variants}
+      transition={{ duration: 0.5, type: 'tween' }}
+      role="tabpane"
+      style={mergedStyle}
+    >
+      {renderChildren}
+    </motion.div>
   )
 })

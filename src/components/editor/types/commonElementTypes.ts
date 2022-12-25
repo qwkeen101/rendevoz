@@ -1,9 +1,8 @@
 import { Descendant } from 'slate'
 import { CustomText, ElementWithId, EmptyText } from './baseTypes'
 
-export interface HeadingElement {
+export interface HeadingElement extends ElementWithId {
   dest?: string | any[]
-  id: number
   align?: string
   children: Descendant[]
 }
@@ -18,6 +17,18 @@ export interface HeadingTwoElement extends HeadingElement {
 
 export interface HeadingThreeElement extends HeadingElement {
   type: 'heading-three'
+}
+
+export interface HeadingFourElement extends HeadingElement {
+  type: 'heading-four'
+}
+
+export interface HeadingFiveElement extends HeadingElement {
+  type: 'heading-five'
+}
+
+export interface HeadingSixElement extends HeadingElement {
+  type: 'heading-six'
 }
 
 export interface BlockQuoteElement {
@@ -61,6 +72,8 @@ export interface LinebreakElement {
 export interface ImageElement {
   type: 'image'
   url: string
+  width?: number
+  align?: 'left' | 'center' | 'right'
   children: EmptyText[]
 }
 
@@ -144,5 +157,9 @@ export type CommonElement =
   | HeadingOneElement
   | HeadingTwoElement
   | HeadingThreeElement
+  | HeadingFourElement
+  | HeadingFiveElement
+  | HeadingSixElement
   | EmojiElement
   | ToDoElement
+  | ParagraphElement

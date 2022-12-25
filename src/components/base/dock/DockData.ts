@@ -261,6 +261,8 @@ export interface TabPaneCache {
   div: HTMLDivElement
   owner: any
   portal?: React.ReactPortal
+  children?: React.ReactNode
+  scrollPreserver: Map<HTMLElement, number>
 }
 
 export interface LayoutData extends LayoutBase {

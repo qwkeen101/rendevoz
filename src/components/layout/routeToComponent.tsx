@@ -6,9 +6,11 @@ import Id from '@/utils/id'
 import { ReactNode } from 'react'
 import { Content } from '../base'
 import Collection from '../collection'
+import IFrame from '../iframe'
+import KnowledgeDatabase from '../knowledgeDatabase'
 import TabTitle from './TabTitle'
 
-const routeToComponent = (route: string): ReactNode | undefined => {
+const routeToComponent = (route: string, search?: string): ReactNode | undefined => {
   if (route.startsWith('/editor')) {
     const noteId = route.split('/')[2]
     const id = Id.getStrId()
@@ -22,6 +24,14 @@ const routeToComponent = (route: string): ReactNode | undefined => {
       return <PdfPage pdfId={Number(id)} />
     }
   }
+  if (route.startsWith('/database')) {
+    return (
+      <>
+        <TabTitle title="Knowledge Database" />
+        <KnowledgeDatabase />
+      </>
+    )
+  }
   if (route.startsWith('/graph')) {
     return (
       <>
@@ -34,9 +44,18 @@ const routeToComponent = (route: string): ReactNode | undefined => {
     return (
       <>
         <TabTitle title="Collection" />
-        <Content fullHeight fullWidth flex centered style={{padding: '25px 40px'}}>
+        <Content fullHeight fullWidth flex centered style={{ padding: '25px 40px' }}>
           <Collection />
         </Content>
+      </>
+    )
+  }
+  if (route.startsWith('/iframe')) {
+    const url = route.substring(8) + search
+    return (
+      <>
+        <TabTitle title="frame" />
+        <IFrame src={url} />
       </>
     )
   }

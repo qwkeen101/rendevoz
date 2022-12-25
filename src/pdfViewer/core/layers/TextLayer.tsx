@@ -1,17 +1,16 @@
-import { FC, memo, useRef } from 'react'
-import { fabric } from 'fabric-pure-browser'
+import { FC, memo, RefObject, useEffect, useRef } from 'react'
 import { useIsomorphicLayoutEffect } from 'react-use'
-import { IEvent } from 'fabric/fabric-impl'
 import { TextContent, TextStyle } from 'pdfjs-dist/types/src/display/api'
 import PdfJs from '../types/pdfJsApi'
 import { PageViewport, PDFPageProxy } from 'pdfjs-dist'
 import { getNearestDistanceBetweenPointAndRect, getTextRect, getWordRect, isInBounds, isInRect } from '../utils/text'
 import { useMousePositionWithRef } from '@/hooks/utils/useMousePositionRef'
 import { Point } from '../types/point'
-import useEventEmitter from '@/events/useEventEmitter'
-import { PdfEventHandler } from '@/events/pdfEvent'
 import { TextContentBound, TextItem, TextRect } from '../types/text'
 import isHotkey from 'is-hotkey'
+import { useMemoizedFn } from '@/hooks'
+import { PageFunctionRef } from '../types'
+import useSelectingText from '../hooks/useIsSelectingText'
 interface TextLayerProps {
   page: PDFPageProxy
   pageIndex: number
@@ -20,37 +19,33 @@ interface TextLayerProps {
   width: number
   height: number
   viewport: PageViewport
+  pageFunctionRef: RefObject<PageFunctionRef>
 }
 
 const DEFAULT_DISTANCE_TOLERANCE = 6
 const DEFAULT_HIGHLIGHT_COLOR = '#8590AE'
-const TextLayer: FC<TextLayerProps> = ({ page, scale, rotation, width, height, pageIndex, viewport }) => {
+const TextLayer: FC<TextLayerProps> = ({ page, scale, rotation, width, height, pageIndex, viewport, pageFunctionRef }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null)
-  const fabricRef = useRef<fabric.Canvas>()
   const renderTaskRef = useRef<TextLayerRenderTask>()
   const tempTextCanvasCtx = document.createElement('canvas').getContext('2d', { alpha: false })
   const textContentBounds = useRef<TextContentBound[]>([])
   const rectsRef = useRef<fabric.Rect[]>([])
-  const containerRef = useRef<HTMLDivElement>(null)
   const mousePos = useRef<Point | null>(null)
   const mousePosRef = useMousePositionWithRef(canvasRef)
   const selectedTextRef = useRef('')
-  const emitter = useEventEmitter()
+  const [globalSelectingText, setGlobalSelectingText] = useSelectingText()
   const distanceToleranceAfterScale = Math.min(16, DEFAULT_DISTANCE_TOLERANCE * scale)
-  const handler = new PdfEventHandler()
 
-  handler.on('cancelTextSelect', () => emptyTextLayer())
-  const keyboardHandler = (e: KeyboardEvent) => {
-    if (
-      isHotkey('mod+c', e) &&
-      (window.getSelection()?.toString() == '' || window.getSelection() === null) &&
-      selectedTextRef.current !== ''
-    ) {
-      navigator.clipboard.writeText(selectedTextRef.current)
+  const keyboardHandler = useMemoizedFn((e: KeyboardEvent) => {
+    const selectedText = Object.values(globalSelectingText.selectedTexts).join(' ')
+    if (isHotkey('mod+c', e) && selectedText !== '') {
+      navigator.clipboard.writeText(selectedText)
     }
-  }
-  const mouseEventHandler = (e: IEvent<Event>) => {
-    const type = e.e.type as 'mousedown' | 'mouseup' | 'mousemove' | 'dblclick'
+  })
+  const mouseEventHandler = useMemoizedFn((e: MouseEvent) => {
+    const canvas = canvasRef.current
+    if (!canvas) return
+    const type = e.type as 'mousedown' | 'mouseup' | 'mousemove' | 'dblclick' | 'mouseenter' | 'mouseleave'
     if (type === 'mousedown') {
       mousePos.current = null
     }
@@ -64,15 +59,9 @@ const TextLayer: FC<TextLayerProps> = ({ page, scale, rotation, width, height, p
         }
       }
       if (rectsRef.current.length != 0) {
-        emitter.emit('pdf', {
-          type: 'textSelect',
-          data: {
-            pageIndex,
-            isCancel: true
-          }
-        })
+        pageFunctionRef.current?.onTextSelectEnd?.()
       }
-      emptyTextLayer()
+      setGlobalSelectingText({ ...globalSelectingText, emptyAll: globalSelectingText.emptyAll + 1 })
     }
     if (type === 'dblclick') {
       if (isInTextBound({ x: elX, y: elY }, distanceToleranceAfterScale)) {
@@ -81,25 +70,20 @@ const TextLayer: FC<TextLayerProps> = ({ page, scale, rotation, width, height, p
           y: elY
         }
         chooseWord(mousePos.current, distanceToleranceAfterScale)
-        emitter.emit('pdf', {
-          type: 'textSelect',
-          data: {
-            pageIndex,
-            selectedText: selectedTextRef.current,
-            isCancel: false,
-            rects: rectsRef.current.map(rect => {
-              return {
-                left: rect.left,
-                top: rect.top,
-                percentageLeft: rect.left / width,
-                percentageTop: rect.top / height,
-                width: rect.width,
-                height: rect.height,
-                percentageHeight: rect.height / height,
-                percentageWidth: rect.width / width
-              }
-            })
-          }
+        pageFunctionRef.current?.onTextSelected?.({
+          selectedText: selectedTextRef.current,
+          rects: rectsRef.current.map(rect => {
+            return {
+              left: rect.left,
+              top: rect.top,
+              percentageLeft: rect.left / width,
+              percentageTop: rect.top / height,
+              width: rect.width,
+              height: rect.height,
+              percentageHeight: rect.height / height,
+              percentageWidth: rect.width / width
+            }
+          })
         })
         mousePos.current = null
       }
@@ -107,84 +91,139 @@ const TextLayer: FC<TextLayerProps> = ({ page, scale, rotation, width, height, p
     if (type === 'mousemove' || type === 'mouseup') {
       if (!mousePos.current || type === 'mouseup') {
         if (isInTextBound({ x: elX, y: elY }, 6)) {
-          fabricRef.current?.setCursor('text')
+          canvas.style.cursor = 'text'
         } else {
-          fabricRef.current?.setCursor('default')
+          canvas.style.cursor = 'default'
         }
       }
       if (type === 'mousemove' && mousePos.current) {
         selectText(mousePos.current, { x: mousePosRef.current.elX, y: mousePosRef.current.elY }, distanceToleranceAfterScale)
+        if (!globalSelectingText.isSelecting) {
+          setGlobalSelectingText({
+            ...globalSelectingText,
+            startPage: pageIndex,
+            endPage: pageIndex,
+            isSelecting: true,
+            startPagePoint: mousePos.current,
+            selectedTexts: {}
+          })
+        }
       }
       if (type === 'mouseup' && mousePos.current && rectsRef.current.length !== 0) {
-        emitter.emit('pdf', {
-          type: 'textSelect',
-          data: {
-            pageIndex,
-            selectedText: selectedTextRef.current,
-            isCancel: false,
-            rects: rectsRef.current.map(rect => {
-              return {
-                left: rect.left,
-                top: rect.top,
-                percentageLeft: rect.left / width,
-                percentageTop: rect.top / height,
-                width: rect.width,
-                height: rect.height,
-                percentageHeight: rect.height / height,
-                percentageWidth: rect.width / width
-              }
-            })
-          }
+        const selectedText = Object.values(globalSelectingText.selectedTexts).join(' ')
+        pageFunctionRef.current?.onTextSelected?.({
+          selectedText,
+          rects: rectsRef.current.map(rect => {
+            return {
+              left: rect.left,
+              top: rect.top,
+              percentageLeft: rect.left / width,
+              percentageTop: rect.top / height,
+              width: rect.width,
+              height: rect.height,
+              percentageHeight: rect.height / height,
+              percentageWidth: rect.width / width
+            }
+          })
+        })
+        setGlobalSelectingText({
+          ...globalSelectingText,
+          isSelecting: false,
+          emptyAll: globalSelectingText.emptyAll
         })
       }
       if (type === 'mouseup') {
         mousePos.current = null
       }
     }
-  }
-  const emptyTextLayer = () => {
-    const fabric = fabricRef.current
-    if (!fabric) {
-      return
-    }
-    rectsRef.current = []
-    fabric.clear()
-  }
+    if (type === 'mouseleave' && mousePos.current) {
+      const { elX, elY, elH, elW } = mousePosRef.current
+      // leave from bottom
 
-  useIsomorphicLayoutEffect(() => {
-    emitter.addListener('pdf', handler)
-    const container = containerRef.current
-    if (!container) {
-      return
+      if (Math.abs(elH - elY) < 10) {
+        if (globalSelectingText.startPage === pageIndex) {
+          selectText(mousePos.current, { x: width, y: height }, distanceToleranceAfterScale)
+        }
+        if(globalSelectingText.startPage! > pageIndex){
+          emptyTextLayer()
+        }
+      }
+      // leave from top
+      if (Math.abs(elY) < 10) {
+        if (globalSelectingText.startPage === pageIndex) {
+          selectText(mousePos.current, { x: 0, y: 0 }, distanceToleranceAfterScale)
+        }
+        if (globalSelectingText.startPage! < pageIndex) {
+          emptyTextLayer()
+        }
+      }
     }
+  })
+  useEffect(() => {
+    emptyTextLayer()
+  }, [globalSelectingText.emptyAll])
+  useEffect(() => {
+    if (globalSelectingText.isSelecting) {
+      // cross page select
+      if (globalSelectingText.startPage !== undefined && globalSelectingText.startPage !== pageIndex) {
+        // from top to bottom
+        if (globalSelectingText.startPage < pageIndex) {
+          mousePos.current = {
+            x: 0,
+            y: 0
+          }
+        }
+        // from bottom to top
+        if (globalSelectingText.startPage > pageIndex) {
+          mousePos.current = {
+            x: width,
+            y: height
+          }
+        }
+      }
+    } else {
+      mousePos.current = null
+    }
+  }, [globalSelectingText.isSelecting])
+  const emptyTextLayer = () => {
+    const canvas = canvasRef.current
+    if (!canvas) return
+    canvas.getContext('2d')?.clearRect(0, 0, canvas.width, canvas.height)
+    rectsRef.current = []
+  }
+  pageFunctionRef.current && (pageFunctionRef.current.clearTextLayer = emptyTextLayer)
+  useIsomorphicLayoutEffect(() => {
     renderTaskRef.current = new TextLayerRenderTask(viewport)
     page.getTextContent().then(content => {
       emptyTextLayer()
-      textContentBounds.current = renderTaskRef.current.render(content)
-      if (!fabricRef.current) {
-        fabricRef.current = new fabric.Canvas(canvasRef.current, {
-          width,
-          height,
-          selection: false,
-          moveCursor: 'text',
-          hoverCursor: 'text'
-        })
+      const canvas = canvasRef.current
+      if (canvas) {
+        canvas.addEventListener('mousedown', mouseEventHandler)
+        canvas.addEventListener('mousemove', mouseEventHandler)
+        canvas.addEventListener('mouseup', mouseEventHandler)
+        canvas.addEventListener('dblclick', mouseEventHandler)
+        canvas.addEventListener('mouseleave', mouseEventHandler)
+        canvas.addEventListener('mouseenter', mouseEventHandler)
+        canvas.width = width
+        canvas.height = height
       }
-      fabricRef.current.on('mouse:down', mouseEventHandler)
-      fabricRef.current.on('mouse:move', mouseEventHandler)
-      fabricRef.current.on('mouse:up', mouseEventHandler)
-      fabricRef.current.on('mouse:dblclick', mouseEventHandler)
+      textContentBounds.current = renderTaskRef.current!.render(content)
       document.addEventListener('keydown', keyboardHandler)
     })
     return () => {
-      // when use fabric.dispose it throws error, why?
-      // so i have to clear & removeListeners
       emptyTextLayer()
-      fabricRef.current?.clear()
-      fabricRef.current?.removeListeners()
-      fabricRef.current = null
+      const canvas = canvasRef.current
+      if (canvas) {
+        canvas.removeEventListener('mousedown', mouseEventHandler)
+        canvas.removeEventListener('mousemove', mouseEventHandler)
+        canvas.removeEventListener('mouseup', mouseEventHandler)
+        canvas.removeEventListener('dblclick', mouseEventHandler)
+        canvas.removeEventListener('mouseleave', mouseEventHandler)
+        canvas.removeEventListener('mouseenter', mouseEventHandler)
+        canvas.width = 0
+        canvas.height = 0
+      }
       document.removeEventListener('keydown', keyboardHandler)
-      emitter.removeListener('pdf', handler)
     }
   }, [viewport])
 
@@ -201,7 +240,9 @@ const TextLayer: FC<TextLayerProps> = ({ page, scale, rotation, width, height, p
     let startIndex = -1
     let distance = Infinity
     startPoint.x === 0 && startPoint.y === 0 && (startIndex = 0)
+
     const length = textContentBounds.current.length
+    startPoint.x === width && startPoint.y === height && (startIndex = length)
     const indexes = {
       // tolerance index
       insideBoundIndex: -1,
@@ -229,8 +270,10 @@ const TextLayer: FC<TextLayerProps> = ({ page, scale, rotation, width, height, p
         }
       }
     }
-    const endIndex =
+    let endIndex =
       indexes.insideIndex >= 0 ? indexes.insideIndex : indexes.insideBoundIndex >= 0 ? indexes.insideBoundIndex : indexes.possibleIndex
+    endPoint.x === 0 && endPoint.y === 0 && (endIndex = 0)
+    endPoint.x === width && endPoint.y === height && (endIndex = length)
     startIndex >= 0 &&
       endIndex >= 0 &&
       (startIndex <= endIndex
@@ -240,29 +283,30 @@ const TextLayer: FC<TextLayerProps> = ({ page, scale, rotation, width, height, p
   const paint = (coordinate: { x: any; y: any; width: any; height: any; offset: any }, color: string) => {
     const { x, y, width, height, offset } = coordinate
     let rect
+    const canvas = canvasRef.current
+    const ctx = canvas?.getContext('2d')
+    if (!canvas || !ctx) return
+    ctx.fillStyle = color
+    ctx.globalAlpha = 0.5
     if (offset && offset.angle) {
-      rect = new fabric.Rect({
+      ctx.fillRect(x + offset.dx, y + offset.dy, width, height)
+      rect = {
         left: x + offset.dx,
         top: y + offset.dy,
-        width: width,
-        height: height,
-        fill: color,
-        opacity: 0.5,
-        backgroundColor: color
-      })
+        width,
+        height
+      }
     } else {
-      rect = new fabric.Rect({
+      ctx.fillRect(x, y, width, height)
+      canvas.getContext('2d')
+      rect = {
         left: x,
         top: y,
-        width: width,
-        height: height,
-        fill: color,
-        opacity: 0.5,
-        backgroundColor: color
-      })
+        width,
+        height
+      }
     }
     rectsRef.current.push(rect)
-    fabricRef.current?.add(rect)
   }
   const optimizeRects = (rects: TextRect[]) => {
     const optimized: any[] = []
@@ -279,7 +323,7 @@ const TextLayer: FC<TextLayerProps> = ({ page, scale, rotation, width, height, p
     return optimized
   }
   const chooseWord = (point: Point, distanceTolerance: number) => {
-    if (!textContentBounds.current.length || point.x < 0 || point.y < 0 || !fabricRef.current) return
+    if (!textContentBounds.current.length || point.x < 0 || point.y < 0 || !canvasRef.current) return
     let targetIndex = -1,
       distance = Infinity
     for (let i = 0; i < textContentBounds.current.length; i += 1) {
@@ -304,7 +348,7 @@ const TextLayer: FC<TextLayerProps> = ({ page, scale, rotation, width, height, p
       DEFAULT_HIGHLIGHT_COLOR
     )
   }
-  const paintRects = (bounds: TextContentBound[], p1: Point, p2: Point) => {
+  const paintRects = useMemoizedFn((bounds: TextContentBound[], p1: Point, p2: Point) => {
     if (!bounds.length) return
     emptyTextLayer()
     const isEnd = (point: Point) => {
@@ -328,23 +372,12 @@ const TextLayer: FC<TextLayerProps> = ({ page, scale, rotation, width, height, p
       const text = rect.text as string
       selectedTextRef.current += text + ' '
     })
+    globalSelectingText.selectedTexts[pageIndex] = selectedTextRef.current
     optimizedRects.forEach(rect => {
       paint(rect, DEFAULT_HIGHLIGHT_COLOR)
     })
-  }
-  return (
-    <div
-      key={scale}
-      style={{
-        position: 'absolute',
-        top: 0,
-        left: 0
-      }}
-      ref={containerRef}
-    >
-      <canvas ref={canvasRef} />
-    </div>
-  )
+  })
+  return <canvas ref={canvasRef} style={{ position: 'absolute' }} role="text-layer" />
 }
 class TextLayerRenderTask {
   private viewport

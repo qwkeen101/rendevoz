@@ -133,7 +133,8 @@ const Layout: FC<LayoutProps> = ({
       <div style={{ height: `${estimateSize() * numPages}px`, width: '100%', position: 'relative' }}>
         {virtualizer.getVirtualItems().map(item => (
           <div
-            ref={item.measureElement}
+            data-index={item.index}
+            ref={virtualizer.measureElement}
             style={{
               position: 'absolute',
               top: 0,

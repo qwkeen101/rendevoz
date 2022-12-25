@@ -48,7 +48,7 @@
     "form": {
         "choose file": "Choose file",
         "upload": "Upload",
-        "create collection": "Create collection",
+        "create collection": "Create new collection",
         "please input collection name": "Please input collection name!",
         "under": "Under",
         "name": "Name"
@@ -56,7 +56,9 @@
     "footer":{
         "back": "Back",
         "submit": "Submit",
-        "choose": "Choose"
+        "choose": "Choose",
+        "create": "Create",
+        "cancel": "Cancel"
     },    
     "collection": {
         "no collection placeholder": "No collection yet,create one?",

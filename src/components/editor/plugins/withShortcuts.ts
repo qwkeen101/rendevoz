@@ -1,13 +1,12 @@
 import Id from '@/utils/id'
 import { Editor, Range, Element as SlateElement, Transforms } from 'slate'
 import SHORTCUTS from '../consts/shortcuts'
-import { BulletedListElement } from '../customTypes'
 import { CustomEditor } from '../types'
 
 const withShortcut = (editor: CustomEditor) => {
-  const { insertText } = editor
+  const { insertText, handler } = editor
   editor.insertText = (text: string) => {
-    const { selection, emitter } = editor
+    const { selection } = editor
     if (text === ' ' && selection && Range.isCollapsed(selection)) {
       const { anchor } = selection
       const block = Editor.above(editor, {
@@ -21,12 +20,8 @@ const withShortcut = (editor: CustomEditor) => {
 
       if (type) {
         if (type === 'meta-object') {
-          emitter?.emit('editor', {
-            type: 'toggleOverlay',
-            data: {
-              content: 'metaObject'
-            }
-          })
+          console.log('type ==asd sda')
+          handler?.({ type: 'addMetaObject' })
           insertText(text)
           return
         }

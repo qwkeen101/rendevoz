@@ -3,15 +3,20 @@ import { IBase } from './base'
 // sourceType: note / metaObject / pdf document
 interface MetaObject extends IBase {
   type: string
+  name?: string
+  description?: string
 }
-interface MetaKnowledgeObject extends MetaObject {
+interface MetaWithNote {
+  noteId: number
+}
+interface MetaKnowledgeObject extends MetaObject, MetaWithNote {
   type: 'knowledge'
   coverImgSrc?: string
   keyword: string
   noteIds?: number[]
   commentIds?: number[]
 }
-interface MetaDocumentObject extends MetaObject {
+interface MetaDocumentObject extends MetaObject, MetaWithNote {
   type: 'document'
   title: string
   documentId: number

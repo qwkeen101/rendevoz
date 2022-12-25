@@ -21,6 +21,8 @@ const NewCollectionForm: FC<NewCollectionFormProps> = ({ parentCollection, onAdd
   const { primaryColor } = useTheme('primaryColor')
   return (
     <Form
+      submitText="create"
+      backText="cancel"
       style={{ height: '100%' }}
       title={t('form.create collection')}
       onSubmit={() => {

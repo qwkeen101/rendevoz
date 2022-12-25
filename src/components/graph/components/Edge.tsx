@@ -1,14 +1,13 @@
-import { FC, memo, MouseEventHandler, useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { FC, memo, MouseEventHandler, useLayoutEffect, useRef, useState } from 'react'
 import { GraphEdge } from '../types/edge'
 import { line, curveBasis } from 'd3-shape'
-import { getIntersectedPointsOfLineAndCircle } from '../utils/getIntersectPoints'
 import { getMarkerId } from '../utils/getMarkerId'
 import { MarkerColor } from '../consts/markerColors'
 import useGraph from '../hooks/useGraph'
 import { motion } from 'framer-motion'
 import { select } from 'd3'
-import { name } from 'react-lorem-ipsum'
 import useEventEmitter from '@/events/useEventEmitter'
+import { usePrevious } from '@/hooks'
 interface EdgeProps {
   edge: GraphEdge
 }
@@ -24,35 +23,51 @@ const Edge: FC<EdgeProps> = memo(({ edge }) => {
   const labelRef = useRef<SVGGElement>(null)
   const graph = useGraph()
   const originEdges = graph?.originEdges
+  const oppositeEdge = graph?.oppositeEdgesMap.get(edge.id)
+
   const [highlight, setHighlight] = useState(false)
-  const [n] = useState(name())
+  const [d, setD] = useState<string>()
+  const previousEdge = usePrevious(edge)
   const emitter = useEventEmitter()
 
   useLayoutEffect(() => {
+    const isNewlyAdded = edge.id === graph?.newAddedEdge?.id
+    if (
+      !(
+        edge.source?.x === previousEdge?.source?.x &&
+        edge.source?.y === previousEdge?.source?.y &&
+        edge.target?.x === previousEdge?.target?.x &&
+        edge.target?.y === previousEdge?.target?.y
+      )
+    ) {
+      setD(drawEdge())
+    }
     if (edgeRef.current) {
       graph?.registerEdgeElement(edge.id, edgeRef.current)
-      if (edge.id === graph?.newAddedEdge?.id) {
-        const path = select(edgeRef.current)
-        const length = path.node()?.getTotalLength()
-        path
-          .attr('stroke-dasharray', length + ' ' + length)
-          .attr('stroke-dashoffset', length)
-          .transition()
-          .duration(500)
-          .attr('stroke-dashoffset', 0)
-          .on('end', () => {
-            path.attr('stroke-dasharray', null)
-          })
-        const text = select(labelRef.current).selectChild('text')
-        text.attr('opacity', 0).transition().duration(500).attr('opacity', 1)
-        graph.registerNewAddedEdge(null)
+      if (isNewlyAdded) {
+        setTimeout(() => {
+          const path = select(edgeRef.current)
+          const length = path.node()?.getTotalLength()
+          path
+            .attr('stroke-dasharray', length + ' ' + length)
+            .attr('stroke-dashoffset', length)
+            .transition()
+            .duration(500)
+            .attr('stroke-dashoffset', 0)
+            .on('end', () => {
+              path.attr('stroke-dasharray', null)
+            })
+          const text = select(labelRef.current).selectChild('text')
+          text.attr('opacity', 0).transition().duration(500).attr('opacity', 1)
+          graph.registerNewAddedEdge(null)
+        }, 0)
       }
     }
     if (labelRef.current) {
       graph?.registerLabelElement(edge.id, labelRef.current)
     }
   }, [edge])
-  const oppositeEdge = originEdges?.find(i => i.source?.id === edge.targetId && i.target?.id === edge.sourceId)
+
   let offsetLabelRatio = 1
   if (oppositeEdge) {
     if (oppositeEdge.source?.id > edge.sourceId) {
@@ -77,7 +92,6 @@ const Edge: FC<EdgeProps> = memo(({ edge }) => {
     let offset = 30
     // check out whether double direction link
     if (originEdges) {
-      const oppositeEdge = originEdges.find(i => i.source?.id === edge.targetId && i.target?.id === edge.sourceId)
       if (oppositeEdge && oppositeEdge.source?.id > edge.sourceId) offset = -30
     }
     const finalSourceX = sourceCircleCenterX + dx
@@ -90,43 +104,9 @@ const Edge: FC<EdgeProps> = memo(({ edge }) => {
       [(finalSourceX + finalTargetX) / 2, (finalSourceY + finalTargetY) / 2 + offset],
       [finalTargetX, finalTargetY]
     ]
-    // const targetCircleCenterX = targetX + CIRCLE_RADIUS
-    // const targetCircleCenterY = targetY + CIRCLE_RADIUS
-    // const sourceCircleCenterX = sourceX + CIRCLE_RADIUS
-    // const sourceCircleCenterY = sourceY + CIRCLE_RADIUS
-    // const intersectedPoints = getIntersectedPointsOfLineAndCircle(
-    //   { x: sourceCircleCenterX, y: sourceCircleCenterY },
-    //   { x: targetCircleCenterX, y: targetCircleCenterY },
-    //   { x: targetCircleCenterX, y: targetCircleCenterY },
-    //   CIRCLE_RADIUS
-    // )
-    // intersectedPoints.sort((a, b) => {
-    //   const dxA = Math.abs(a.x - sourceX)
-    //   const dyA = Math.abs(a.y - sourceY)
-    //   const dxB = Math.abs(b.x - sourceX)
-    //   const dyB = Math.abs(b.y - sourceY)
-    //   const distanceA = Math.sqrt(Math.pow(dxA, 2) + Math.pow(dyA, 2))
-    //   const distanceB = Math.sqrt(Math.pow(dxB, 2) + Math.pow(dyB, 2))
-    //   return distanceA - distanceB
-    // })
-    // const finalTargetX = intersectedPoints[0]?.x || targetCircleCenterX
-    // const finalTargetY = intersectedPoints[0]?.y || targetCircleCenterY
-    // const curve = line().curve(curveBasis)
-    // let offset = 30
-    // // check out whether double direction link
-    // if (originEdges) {
-    //   const oppositeEdge = originEdges.find(i => i.source?.id === edge.targetId && i.target?.id === edge.sourceId)
-    //   if (oppositeEdge && oppositeEdge.source?.id > edge.sourceId) offset = -30
-    // }
-    // const points = [
-    //   [sourceCircleCenterX, sourceCircleCenterY],
-    //   [(sourceCircleCenterX + finalTargetX) / 2, (sourceCircleCenterY + finalTargetY) / 2 + offset],
-    //   [finalTargetX, finalTargetY]
-    // ]
     return curve(points)
   }
 
-  const d = drawEdge()
   const [centerX, centerY] = [(sourceX + targetX) / 2, (sourceY + targetY) / 2]
   const edgeMouseEnterHandler = () => {
     setHighlight(true)

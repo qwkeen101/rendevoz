@@ -21,7 +21,7 @@ const Routes = () => {
     <GlobalLocationContextProvider value={location}>
       <AuthenticatedLayout>
         <ErrorBoundary FallbackComponent={ErrorFallback}>
-          <Suspense fallback={<div>loading ...</div>}>
+          {/* <Suspense fallback={<div>loading ...</div>}>
             <AnimatePresence exitBeforeEnter>
               <RouterRoutes key={homeBackground?.pathname || location.pathname} location={homeBackground || location}>
                 <Route
@@ -108,7 +108,7 @@ const Routes = () => {
                 </Route>
               </RouterRoutes>
             </AnimatePresence>
-          </Suspense>
+          </Suspense> */}
         </ErrorBoundary>
       </AuthenticatedLayout>
     </GlobalLocationContextProvider>

@@ -1,18 +1,38 @@
 import useDb from '@/hooks/stores/useDb'
 import { GlobalScope } from '@/jotai/jotaiScope'
 import { PartialWithId } from '@/types'
+import Id from '@/utils/id'
 import fuzzysort from 'fuzzysort'
 import produce from 'immer'
 import { atom, useAtom, useAtomValue } from 'jotai'
 import { useMemo } from 'react'
 import { MetaComment, MetaLink, MetaObject } from '~/typings/data'
 import BaseStore from './base.store'
+import useNoteStore from './note.store'
 
 const metaObjectsAtom = atom<Map<number, MetaObject>>(new Map())
 const metaLinksAtom = atom<Map<number, MetaLink>>(new Map())
 const { orderedData } = BaseStore
 const allMetaObjectsAtom = atom(get => orderedData(get(metaObjectsAtom)))
+export const undeletedMetaObjectsAtom = atom(get => get(allMetaObjectsAtom).filter(i => !i.deleted))
+
 const allMetaLinksAtom = atom(get => orderedData(get(metaLinksAtom)))
+
+export const undeletedMetaLinksAtom = atom(get => get(allMetaLinksAtom).filter(i => !i.deleted))
+
+export const relatedMetaObjectsMapAtom = atom<Map<number, Set<number>>>(get => {
+  const allMetaObjects = get(allMetaObjectsAtom)
+  const allMetaLinks = get(allMetaLinksAtom)
+  const map = new Map<number, Set<number>>()
+  allMetaObjects.forEach(i => map.set(i.id, new Set()))
+  allMetaLinks.forEach(l => {
+    const source = l.sourceId
+    const target = l.targetId
+    map.get(source)?.add(target)
+    map.get(target)?.add(source)
+  })
+  return map
+})
 const useMetaStore = () => {
   const [metaObjects, setMetaObjects] = useAtom(metaObjectsAtom, GlobalScope)
   const [metaLinks, setMetaLinks] = useAtom(metaLinksAtom, GlobalScope)
@@ -22,6 +42,8 @@ const useMetaStore = () => {
   const metaObjectDb = useDb('metaObjects')
   const metaCommentDb = useDb('metaComments')
   const metaLinkDb = useDb('metaLinks')
+
+  const { addNote } = useNoteStore()
 
   const getAllMetaObjects = () => {
     metaObjectDb.toArray().then(data => {
@@ -57,11 +79,22 @@ const useMetaStore = () => {
   }
   const addMetaObject = (metaObject: Partial<MetaObject>) => {
     const initedMetaObject = initBaseObject(metaObject) as MetaObject
-    setMetaObjects(add(initedMetaObject, metaObjects))
-    console.log(metaObject)
-    if (!allMetaObjects.some(i => i.keyword && i.keyword === initedMetaObject.keyword)) {
-      metaObjectDb.put(initedMetaObject)
+    if (!initedMetaObject.name) {
+      initedMetaObject.name = initedMetaObject.keyword || initedMetaObject.title || 'Unknown name'
     }
+
+    if (!allMetaObjects.some(i => i.keyword && i.keyword === initedMetaObject.keyword)) {
+      if (initedMetaObject.type !== 'note') {
+        const noteId = Id.getId()
+        initedMetaObject.noteId = noteId
+        addNote({
+          id: noteId,
+          metaId: initedMetaObject.id
+        })
+      }
+            metaObjectDb.put(initedMetaObject)
+    }
+    setMetaObjects(add(initedMetaObject, metaObjects))
     return Promise.resolve(initedMetaObject)
   }
   const updateMetaObject = (metaObject: Partial<MetaObject>) => {

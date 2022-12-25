@@ -2,7 +2,7 @@ import { Content } from '@/components/base'
 import Icon from '@/components/base/Icon'
 import getEmoji, { Emoji } from '@/utils/emoji'
 import classNames from 'classnames'
-import { FC, useEffect, useState, useTransition } from 'react'
+import { FC, useEffect, useLayoutEffect, useState, useTransition } from 'react'
 import styles from './index.module.less'
 import categoriesJson from '@/assets/categories.json?raw'
 
@@ -22,7 +22,7 @@ const categories = JSON.parse(categoriesJson)
 const EmojiPicker: FC<{ onPick?: (name: string) => void }> = ({ onPick }) => {
   const [currentCategory, setCurrentCategory] = useState<keyof ICategories>('Emotion')
   const [currentEmojis, setCurrentEmojis] = useState<[]>()
-  useEffect(() => {
+  useLayoutEffect(() => {
     setCurrentEmojis(undefined)
     if (categories) {
       const shortNames = Object.values(categories?.[currentCategory]).flat(1)
@@ -37,7 +37,7 @@ const EmojiPicker: FC<{ onPick?: (name: string) => void }> = ({ onPick }) => {
         {currentEmojis ? (
           <div className={styles.emojisContainer} style={{ display: 'flex', flexFlow: 'wrap', padding: 4 }}>
             {currentEmojis?.map(i => (
-              <Content onClick={() => onPick?.(i.name)} flex centered className={styles.emojiContainer}>
+              <Content key={i.name} onClick={() => onPick?.(i.name)} flex centered className={styles.emojiContainer}>
                 <img
                   src="data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw=="
                   style={{
@@ -65,6 +65,7 @@ const EmojiPicker: FC<{ onPick?: (name: string) => void }> = ({ onPick }) => {
             <Content
               flex
               centered
+              key={i}
               className={classNames(styles.category, i === currentCategory && styles.selected)}
               onClick={() => {
                 setCurrentCategory(i)

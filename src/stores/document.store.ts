@@ -11,6 +11,14 @@ import BaseStore from './base.store'
 
 export const documentsAtom = atom<Map<number, IPdfDocument>>(new Map())
 
+const { orderedData } = BaseStore
+
+export const allDocumentsAtom = atom(get => orderedData(get(documentsAtom)))
+
+export const undeletedDocumentsAtom = atom(get => get(allDocumentsAtom).filter(i => !i.deleted))
+
+export const pinnedDocumentsAtom = atom(get => get(undeletedDocumentsAtom).filter(i => i.pinned))
+
 const useDocumentStore = () => {
   const [documents, setDocuments] = useAtom(documentsAtom, GlobalScope)
   const database = useDb('documents')

@@ -80,7 +80,6 @@ const LayoutWrapper: FC<LayoutWrapperProps> = ({ defaultScale = 1, doc, children
   }
   const { run: debouncedResize } = useDebounceFn(handleResize, { wait: 500 })
   useUpdateEffect(() => {
-    console.log(flooredWidth)
     if (!initializedRef.current) {
       initializedRef.current = true
       return

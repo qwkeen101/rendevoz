@@ -4,6 +4,7 @@ export enum AnnotationType {
 }
 
 export interface IAnnotation {
+  parentId: any
   annotationFlags: number
   annotationType: AnnotationType
   rect: number[]

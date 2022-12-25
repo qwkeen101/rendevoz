@@ -111,7 +111,7 @@ const NoteCard = () => {
         Notes
       </div>
       {all.slice(0, 20).map(i => (
-        <NoteItem note={i} />
+        <NoteItem key={i.id} note={i} />
       ))}
     </Content>
   )

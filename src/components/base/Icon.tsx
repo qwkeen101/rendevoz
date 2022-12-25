@@ -7,6 +7,7 @@ import CustomIcon from '../custom/icons/CustomIcon'
 export interface IconProps {
   name: string
   theme?: 'outline' | 'filled' | 'two-tone' | 'multi-color'
+  strokeWidth?: number
   size?: number
   cursor?: Property.Cursor
   className?: string
@@ -18,7 +19,7 @@ export interface IconProps {
   onClick?: React.MouseEventHandler
 }
 const Icon = forwardRef<HTMLDivElement, IconProps>(
-  ({ name, size, fill, theme, className, cursor, color, onClick, containerClassName, containerStyle, ...rest }, ref) => {
+  ({ name, size, strokeWidth, fill, theme, className, cursor, color, onClick, containerClassName, containerStyle, ...rest }, ref) => {
     const style: React.CSSProperties = {
       cursor: cursor,
       userSelect: 'none',
@@ -32,6 +33,7 @@ const Icon = forwardRef<HTMLDivElement, IconProps>(
             fill={fill}
             {...rest}
             style={style}
+            strokeWidth={strokeWidth}
             className={className}
             type={name.slice(5)}
             theme={theme}

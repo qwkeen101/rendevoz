@@ -22,7 +22,10 @@ export const getDistanceBetweenPointAndScrollableElement = (point: { x: number; 
   }
 }
 
-export const getDistanceBetweenElementAndScrollableElement = (element: HTMLElement | DOMRect, scrollElement: HTMLElement) => {
+export const getDistanceBetweenElementAndScrollableElement = (
+  element: HTMLElement | Omit<DOMRect, 'toJSON'>,
+  scrollElement: HTMLElement
+) => {
   const eleRect = 'getBoundingClientRect' in element ? (element as HTMLElement).getBoundingClientRect() : (element as DOMRect)
   const scrollEleRect = scrollElement?.getBoundingClientRect()
   if (eleRect && scrollElement && scrollEleRect) {

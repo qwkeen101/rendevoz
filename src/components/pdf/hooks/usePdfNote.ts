@@ -1,6 +1,7 @@
 // A React context for sharing the Pdf note object
 
 import { CustomLabel, ILabel, PdfNoteData } from '@/../typings/data'
+import { PdfScope } from '@/jotai/jotaiScope'
 import { atom, PrimitiveAtom, useAtom, useAtomValue, useSetAtom } from 'jotai'
 import { focusAtom } from 'jotai/optics'
 import { splitAtom } from 'jotai/utils'
@@ -28,19 +29,17 @@ export const PdfLabelsAtoms = splitAtom(
   item => item.id
 )
 
-export const usePdfNote = () => useAtom(PdfNoteAtom)
-
-
+export const usePdfNote = () => useAtom(PdfNoteAtom, PdfScope)
 
 export const usePdfLabels = (
   pageIndex: number,
   type: string
 ): [PrimitiveAtom<CustomLabel>[], (update: SplitAtomAction<CustomLabel>) => void] => {
-  const dispatch = useSetAtom(PdfLabelsAtoms)
+  const dispatch = useSetAtom(PdfLabelsAtoms, PdfScope)
   const labelAtomsAtom = useMemo(
     () => atom(get => get(PdfLabelsAtoms).filter(i => get(i).type === type && get(i).page === pageIndex)),
     [pageIndex]
   )
-  const atoms = useAtomValue(labelAtomsAtom)
+  const atoms = useAtomValue(labelAtomsAtom, PdfScope)
   return [atoms, dispatch]
 }

@@ -1,60 +1,69 @@
-import { EditorEventHandler } from '@/events/editorEvent'
 import useEventEmitter from '@/events/useEventEmitter'
-import { useDebounceFn, useMemoizedFn, useRafFn, useUnMount } from '@/hooks'
+import { useMemoizedFn, useUnMount } from '@/hooks'
 import Id from '@/utils/id'
 import classNames from 'classnames'
-import { FC, FormEvent, memo, MouseEvent, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import {
+  FC,
+  FormEvent,
+  memo,
+  MouseEvent,
+  MouseEventHandler,
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState
+} from 'react'
 import { createEditor, Editor, Transforms, Descendant, Path, Range } from 'slate'
 import { withHistory } from 'slate-history'
-import { withReact, ReactEditor } from 'slate-react'
-import { searchBlock } from '../dragReposition/utils/algorithm'
-import { getElementId } from '../dragReposition/utils/element'
-import { getDistanceBetweenPointAndScrollableElement, getDistanceBetweenElementAndScrollableElement } from './utils/scroll'
-import { CustomElement } from './customTypes'
+import { withReact, ReactEditor } from './slate-react'
+import { CustomElement } from './types'
 import { useSelectedEditorRef } from './hooks/useSelectedEditorRef'
 import InnerEditor from './InnerEditor'
 import withVoid from './plugins/withVoid'
 import styles from './index.module.less'
 import BlockHandle from './components/blockHandle'
-import EditorOverlay from './components/overlay'
-import useIsDragging from './hooks/useIsDragging'
+import useIsDragging, { useIsDraggingDivider } from './hooks/useIsDragging'
 import { serializeEditor } from './utils/database/serialize'
 import useNoteStore from '@/stores/note.store'
 import useCurrentDocument from '../../hooks/components/useCurrentDocument'
 import useDocumentStore from '@/stores/document.store'
-import { withYjs, withYHistory, slateNodesToInsertDelta, YjsEditor } from '@slate-yjs/core'
+import { withYjs, slateNodesToInsertDelta, YjsEditor } from './yjs'
 import * as Y from 'yjs'
 import { IndexeddbPersistence } from 'y-indexeddb'
 import Modal from '../base/modal'
 import SaveNoteDialog from '../dialogs/SaveNoteDialog'
 import toast from 'react-hot-toast'
 import produce from 'immer'
-import { ICollection, INote, MetaNoteObject } from '~/typings/data'
+import { ICollection, INote, MetaNoteObject, MetaObject } from '~/typings/data'
 import useCollectionStore from '@/stores/collection.store'
 import withShortcuts from './plugins/withShortcuts'
 import withCustomComponent from './plugins/withCustomComponent'
-import { Breadcrumb, Content } from '../base'
+import { Breadcrumb, Content, Icon, Image } from '../base'
 import withEmitter from './plugins/withEmitter'
 import withHtml from './plugins/withHtml'
 import { useTranslation } from 'react-i18next'
-import { SELECT_AREA_MAP, ID_TO_ELEMENTS_MAP, SELECTED_BLOCKS_MAP } from './weakMaps'
+import { ID_TO_ELEMENTS_MAP, SELECTED_BLOCKS_MAP } from './weakMaps'
 import { Noop } from '@/common/types'
-import useIsSelecting from './hooks/useIsSelecting'
 import ScrollManager from './ScrollManager'
-import { Position } from '@/types'
 import _ from 'lodash'
-import DragManager from './DragManager'
 import useMetaStore from '@/stores/meta.store'
 import TabTitle from '../layout/TabTitle'
-import useLatest from '@/hooks/utils/useLatest'
-import { useEffectOnce } from '@/hooks/utils/useEffectOnce'
 import useLocalSyncValue from './hooks/useSyncValue'
+import useEditorDrag from './hooks/useEditorDrag'
+import { useGlobalIsDragging } from '../globalDragOverlay'
+import useEditorOverlay from './components/overlay/useEditorOverlay'
+import { css } from '@emotion/css'
+import withHandler from './plugins/withHandler'
+import useEditorSelect from './hooks/useEditorSelect'
 
 type DragHandleProps = {
-  left: number
-  top: number
-  targetHeight: number
-  targetId: number
+  left?: number
+  top?: number
+  targetHeight?: number
+  targetId?: number
+  visible?: boolean
 }
 const initial = [
   {
@@ -97,194 +106,43 @@ export const EditorV1: FC<EditorProps> = memo(({ onEditorInitialized, onSave, on
   })
   const { t } = useTranslation()
   const [isDragging, setIsDragging] = useIsDragging()
+  const [isDraggingDivider, setIsDraggingDivider] = useIsDraggingDivider()
+  const [globalIsDragging] = useGlobalIsDragging()
   const [outlineVisible, setOutlineVisible] = useState(false)
   const [mindmapVisible, setMindmapVisible] = useState(false)
   const [overlayVisible, setOverlayVisible] = useState(false)
   const [saveNoteVisible, setSaveNoteVisible] = useState(false)
   const [parentNotes, setParentNotes] = useState<INote[]>([])
   const [title, setTitle] = useState<string>()
-  const [isSelecting, setIsSelecting] = useIsSelecting()
   const scrollManager = useMemo(() => new ScrollManager(), [])
-  const dragManager = useMemo(() => new DragManager(), [])
   const titleRef = useRef<string>()
   const scrollElementRef = useRef<HTMLDivElement>(null)
-  const draggingLayerRef = useRef<HTMLDivElement>()
-  const blockElementsRef = useRef<Map<globalThis.Element, { left: number; top: number; height: number; width: number }>>(new Map())
-  const blockElementsArrayRef = useRef<HTMLElement[]>([])
   const [dragHandle, setDragHandle] = useState<DragHandleProps>()
   const emitter = useEventEmitter()
-  // const handler = useMemo(() => new EditorEventHandler(), [])
   const selectedRef = useSelectedEditorRef()
   const { getNoteById, saveNote, findParentNotes, updateNote, saveNoteAndBlocks } = useNoteStore()
   const [note, setNote] = useState<INote | null>(null)
+  const [metaObject, setMetaObject] = useState<MetaObject | null>(null)
   const [currentDocument] = useCurrentDocument()
   const { updateDocument } = useDocumentStore()
   const { addItemToCollection } = useCollectionStore()
-  const { addMetaObject } = useMetaStore()
+  const { addMetaObject, getMetaObjectById } = useMetaStore()
+
   useEffect(() => {
+    const keyDownHandler = (e: KeyboardEvent) => {
+      if (dragHandle?.visible) {
+        setDragHandle({ ...dragHandle, visible: false })
+      }
+    }
+    document.addEventListener('keydown', keyDownHandler)
     const scrollElement = scrollElementRef.current
     if (scrollElement) {
       scrollManager.registerScrollElement(scrollElement)
       dragManager.registerScrollElement(scrollElement)
-      scrollElement.addEventListener('mousedown', handleStartSelecting)
-      return () => {
-        scrollElement.removeEventListener('mousedown', handleStartSelecting)
-      }
     }
-  })
-  const handleStartSelecting = (e: MouseEvent) => {
-    // click on blank wrapper space, start selecting
-    if (e.target === e.currentTarget) {
-      document.body.style.cursor = 'default'
-      setIsSelecting(true)
-      const scrollElement = scrollElementRef.current
-      if (!scrollElement) return
-      blockElementsArrayRef.current = []
-      blockElementsRef.current.clear()
-      Array.from(scrollElement.querySelector(`[role="textbox"]`)?.querySelectorAll('[data-spec-type="common-block"]') || []).forEach(i => {
-        const { left, top, width, height } = i.getBoundingClientRect()
-        const distance = getDistanceBetweenPointAndScrollableElement({ x: left, y: top }, scrollElement)
-        blockElementsArrayRef.current.push(i)
-        blockElementsRef.current.set(i, {
-          left: distance.left,
-          top: distance.top,
-          width,
-          height
-        })
-      })
-      const distanceToScrollElement = getDistanceBetweenElementAndScrollableElement(
-        {
-          left: e.clientX,
-          top: e.clientY,
-          x: e.clientX,
-          y: e.clientY,
-          right: e.clientX,
-          bottom: e.clientY,
-          width: 0,
-          height: 0
-        },
-        scrollElement
-      )
-      if (distanceToScrollElement) {
-        SELECT_AREA_MAP.set(editor, {
-          startPoint: { ...distanceToScrollElement },
-          endPoint: { ...distanceToScrollElement },
-          ...distanceToScrollElement
-        })
-      }
+    return () => {
+      document.removeEventListener('keydown', keyDownHandler)
     }
-  }
-  useEffect(() => {
-    if (isSelecting) {
-      document.addEventListener('mousemove', handleSelecting2)
-      document.addEventListener('mouseup', handleEndSelecting)
-      document.addEventListener('click', handleEndSelecting, true)
-      return () => {
-        document.removeEventListener('mousemove', handleSelecting2)
-        document.removeEventListener('mouseup', handleEndSelecting)
-        // document.removeEventListener('click', handleEndSelecting)
-      }
-    }
-  }, [isSelecting])
-  const handleSelecting = useMemoizedFn((e: MouseEvent) => {
-    const scrollElement = scrollElementRef.current
-    if (!scrollElement) {
-      return
-    }
-    e.preventDefault()
-    if (scrollManager.canScroll()) {
-      scrollManager.startScroll(e)
-    }
-    const prevRect = SELECT_AREA_MAP.get(editor)
-    if (!prevRect) return
-
-    const startPoint = prevRect.startPoint as Required<Position>
-    const endPoint = getDistanceBetweenPointAndScrollableElement(
-      {
-        x: e.clientX,
-        y: e.clientY
-      },
-      scrollElement
-    )
-    const currRect = {
-      startPoint,
-      endPoint,
-      left: Math.min(startPoint.left, endPoint.left),
-      top: Math.min(startPoint.top, endPoint.top),
-      right: Math.min(startPoint.left, endPoint.left) + Math.abs(endPoint.left - startPoint.left),
-      bottom: Math.min(startPoint.top, endPoint.top) + Math.abs(endPoint.top - startPoint.top)
-    }
-    SELECT_AREA_MAP.set(editor, currRect)
-    emitter.emit('editor', {
-      type: 'toggleOverlay',
-      data: {
-        content: 'selectArea'
-      }
-    })
-    // start search selected blocks
-    const firstBlock = blockElementsArrayRef.current[0]
-    const lastBlock = blockElementsArrayRef.current[blockElementsArrayRef.current.length - 1]
-    const firstBlockRect = blockElementsRef.current.get(firstBlock)
-    const lastBlockRect = blockElementsRef.current.get(lastBlock)
-    const blocksMap = ID_TO_ELEMENTS_MAP.get(editor)
-    if (!firstBlockRect || !lastBlockRect) return
-    if (currRect.bottom < firstBlockRect.top) {
-      const prevSelectedBlocks = SELECTED_BLOCKS_MAP.get(editor)
-      if (prevSelectedBlocks) {
-        Array.from(prevSelectedBlocks.values()).forEach(i => {
-          const id = getElementId(i)
-          blocksMap?.get(id)?.collisionSelectBlock()
-        })
-      }
-      return
-    }
-    if (currRect.top > lastBlockRect.top + lastBlockRect.height) return
-    const blockEntriesArray = Array.from(blockElementsRef.current.entries())
-    const topBlock = searchBlock(blockEntriesArray, currRect.top)
-    const bottomBlock = searchBlock(blockEntriesArray, currRect.bottom)
-    const topIdx = topBlock === -1 ? 0 : blockElementsArrayRef.current.findIndex(i => i === topBlock)
-    let finalBottomBlock = bottomBlock
-    if (bottomBlock !== -1) {
-      finalBottomBlock = _.findLast(blockEntriesArray, i => {
-        return i[1].top === blockElementsRef.current.get(bottomBlock)?.top ? true : false
-      })?.[0]
-    }
-
-    const bottomIdx =
-      finalBottomBlock === -1
-        ? blockElementsArrayRef.current.length
-        : blockElementsArrayRef.current.findIndex(i => i === finalBottomBlock) + 1
-    const blocks = blockElementsArrayRef.current.slice(topIdx, bottomIdx)
-    const prevSelectedBlocks = SELECTED_BLOCKS_MAP.get(editor)
-    if (prevSelectedBlocks) {
-      Array.from(prevSelectedBlocks.values())
-        .filter(i => !blocks.some(o => o === i))
-        .forEach(i => {
-          const id = getElementId(i)
-          blocksMap?.get(id)?.collisionSelectBlock()
-        })
-    }
-
-    blocks.forEach(i => {
-      const id = getElementId(i)
-      blocksMap?.get(id)?.collisionSelectBlock()
-    })
-  })
-
-  const handleEndSelecting = useMemoizedFn((e: MouseEvent) => {
-    if (e.type === 'click') {
-      e.stopPropagation()
-      document.removeEventListener('click', handleEndSelecting, true)
-    }
-    SELECT_AREA_MAP.delete(editor)
-    document.body.style.cursor = 'auto'
-    emitter.emit('editor', {
-      type: 'toggleOverlay',
-      data: {
-        content: 'selectArea'
-      }
-    })
-    setIsSelecting(false)
   })
   useEffect(() => {
     if (noteId) {
@@ -303,6 +161,14 @@ export const EditorV1: FC<EditorProps> = memo(({ onEditorInitialized, onSave, on
       )
     }
   }, [noteId])
+  useEffect(() => {
+    if (note?.metaId) {
+      getMetaObjectById(note.metaId).then(obj => {
+        setMetaObject(obj)
+        console.log(obj)
+      })
+    }
+  }, [getMetaObjectById, note])
   useEffect(() => {
     findParentNotes(noteId).then(path => {
       setParentNotes(path)
@@ -333,20 +199,28 @@ export const EditorV1: FC<EditorProps> = memo(({ onEditorInitialized, onSave, on
       onEditorInitialized?.(!!note)
     })
   )
-
+  const handler = (e: { type: string; data: any }) => {
+    if (e.type === 'addMetaObject') {
+      overlayManager.setContent('metaQuery')
+      overlayManager.open()
+    }
+  }
   const editor = useMemo(() => {
     return withVoid(
       withHtml(
         withCustomComponent(
           withShortcuts(
-            withEmitter(withHistory(withReact(withYHistory(withYjs(createEditor(), sharedType, { autoConnect: false })))), emitter)
+            withHandler(withEmitter(withHistory(withReact(withYjs(createEditor(), sharedType, { autoConnect: false }))), emitter), handler)
           )
         )
       )
     )
   }, [sharedType])
   useLocalSyncValue(editor)
+  const dragManager = useEditorDrag(editor, scrollElementRef.current)
   const elementsMap = ID_TO_ELEMENTS_MAP.get(editor)
+  const { renderOverlay, overlayManager } = useEditorOverlay(editor, scrollElementRef.current)
+  useEditorSelect(editor, overlayManager, scrollElementRef.current)
   useEffect(() => {
     YjsEditor.connect(editor)
     ID_TO_ELEMENTS_MAP.set(editor, new Map())
@@ -362,11 +236,6 @@ export const EditorV1: FC<EditorProps> = memo(({ onEditorInitialized, onSave, on
       }
     }
   }, [editor])
-  useEffect(() => {
-    if (isDragging) {
-      draggingLayerRef.current && dragManager.registerDragLayer(draggingLayerRef.current)
-    }
-  }, [isDragging])
 
   useLayoutEffect(() => {
     selectedRef.current = {
@@ -453,62 +322,10 @@ export const EditorV1: FC<EditorProps> = memo(({ onEditorInitialized, onSave, on
     }
   }
 
-  const handleDragDrop = useMemoizedFn(() => {
-    if (dragManager.drop()) {
-      setDragHandle(undefined)
-    }
-  })
-
-  const handleStartDragging = () => {
-    setIsDragging(true)
-    dragManager.prepareDragging()
-    document.addEventListener('mousemove', handleDragging2)
-    document.addEventListener('mouseup', handleEndDragging)
-  }
-
-  const handleDragging = useMemoizedFn((e: MouseEvent) => {
-    if (scrollManager.canScroll()) {
-      scrollManager.startScroll(e)
-    }
-    const indicator = dragManager.drag(e)
-    indicator && dragManager.changeIndicator(indicator, e)
-  })
-
-  const throttledHandleDragging = useRafFn(handleDragging)
-  const throttledHandleSelecting = useRafFn(handleSelecting)
-
-  const handleSelecting2 = useMemoizedFn((e: MouseEvent) => {
-    try {
-      e.preventDefault()
-      throttledHandleSelecting(e)
-    } catch (e) {
-      console.error(e)
-    }
-  })
-  const handleDragging2 = useMemoizedFn((e: MouseEvent) => {
-    try {
-      e.preventDefault()
-      throttledHandleDragging(e)
-    } catch (e) {
-      console.log(e)
-    }
-  })
-
-  const handleEndDragging = useMemoizedFn(() => {
-    document.removeEventListener('mousemove', handleDragging2)
-    document.removeEventListener('mouseup', handleEndDragging)
-    try {
-      handleDragDrop()
-    } catch (e) {
-      console.log(e)
-    }
-    setIsDragging(false)
-  })
-
   const handleDividerDragEnd = useMemoizedFn(
     (previousColumnWidthRatio: number, previousColumnPath: Path, nextColumnWidthRatio: number, nextColumnPath: Path) => {
       setDragHandle(undefined)
-      setIsDragging(false)
+      setIsDraggingDivider(false)
       Transforms.setNodes(
         editor,
         {
@@ -531,24 +348,25 @@ export const EditorV1: FC<EditorProps> = memo(({ onEditorInitialized, onSave, on
   )
 
   const handleDividerDragStart = useMemoizedFn(() => {
-    setIsDragging(true)
+    setIsDraggingDivider(true)
+    // setIsDragging(true)
   })
 
-  const handleMouseEnter = useMemoizedFn((e: MouseEvent, element) => {
-    if (!isDragging && !overlayVisible) {
+  const handleBlockMouseMove = useMemoizedFn((e: MouseEvent, element) => {
+    if (!isDragging && !overlayVisible && !globalIsDragging) {
+      editor.currentEnterElement = element
       dragManager.registerDragElement(e.currentTarget as HTMLElement, ReactEditor.findPath(editor, element))
-      const targetRect = e.currentTarget.getBoundingClientRect()
-      setDragHandle({
-        left: targetRect.x,
-        top: targetRect.y,
-        targetId: element.id,
-        targetHeight: targetRect.height
-      })
+      if (dragHandle?.targetId !== element.id || dragHandle?.visible === false) {
+        const targetRect = e.currentTarget.getBoundingClientRect()
+        setDragHandle({
+          left: targetRect.x,
+          top: targetRect.y,
+          targetId: element.id,
+          targetHeight: targetRect.height,
+          visible: true
+        })
+      }
     }
-  })
-
-  const handleToggleMindmap = useMemoizedFn(() => {
-    setMindmapVisible(!mindmapVisible)
   })
 
   const handleToggleOutline = useMemoizedFn(() => {
@@ -664,28 +482,18 @@ export const EditorV1: FC<EditorProps> = memo(({ onEditorInitialized, onSave, on
       })
     }
   })
-  const handleAddMetaObject = useMemoizedFn(() => {
-    Editor.insertBreak(editor)
-    Editor.insertText(editor, '$ ')
-    setTimeout(() => {
-      emitter.emit('editor', {
-        type: 'toggleOverlay',
-        data: {
-          content: 'metaObject',
-          noteId: noteId
-        }
-      })
-    }, 100)
-  })
+
   const handleBlockHandleMenu = (e: MouseEvent) => {
-    emitter.emit('editor', {
-      type: 'toggleOverlay',
-      data: {
-        left: e.clientX,
-        top: e.clientY,
-        content: 'blockHandleMenu'
-      }
+    editor.currentAddClickElement = editor.currentEnterElement
+    overlayManager.setContent('blockHandleMenu')
+    overlayManager.setPosition({
+      left: e.clientX,
+      top: e.clientY
     })
+    overlayManager.open()
+  }
+  const handleMenuClick = (e: MouseEvent) => {
+    overlayManager.setContent('blockDetailsMenu')
   }
   return (
     <div
@@ -698,7 +506,7 @@ export const EditorV1: FC<EditorProps> = memo(({ onEditorInitialized, onSave, on
         height: '100%'
       }}
     >
-      <TabTitle title={title} />
+      <TabTitle title={title || metaObject?.name || 'Unknown note'} />
       <Modal width={500} height={400} visible={saveNoteVisible} onClose={() => setSaveNoteVisible(false)}>
         <SaveNoteDialog onCancel={() => setSaveNoteVisible(false)} onSubmit={handleSave} />
       </Modal>
@@ -725,9 +533,77 @@ export const EditorV1: FC<EditorProps> = memo(({ onEditorInitialized, onSave, on
         </Content>
       )}
       <div ref={scrollElementRef} className={styles.Wrapper}>
+        {metaObject?.coverImgSrc && (
+          <Image
+            className={css({
+              width: '100% !important',
+              height: 300,
+              overflow: 'hidden',
+              marginBottom: -50,
+              flexShrink: 0,
+              '> div': {
+                ':first-child': {
+                  transform: 'translateY(-30%)'
+                }
+              }
+            })}
+            src={metaObject.coverImgSrc}
+          />
+        )}
         <div role="inner-editor" className={classNames(styles.InnerEditorWrapper, mindmapVisible && styles.MindmapVisible)}>
+          <Content className={styles.titleWrapper} flex column gap={20}>
+            <Content
+              gap={10}
+              className={css({
+                '> div': {
+                  color: 'rgba(55,53,47,0.5)',
+                  padding: '2px 6px',
+                  borderRadius: 4,
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease',
+                  ':hover': {
+                    background: 'rgba(0,0,0,0.07)'
+                  }
+                }
+              })}
+              flex
+              alignItems="flex-end"
+            >
+              {metaObject?.coverImgSrc && (
+                <Image
+                  className={css({
+                    opacity: '1 !important'
+                  })}
+                  src={metaObject.coverImgSrc}
+                />
+              )}
+              {!metaObject && (
+                <Content flex gap={6}>
+                  <Icon name="park-smiling-face" />
+                  <span>Add icon</span>
+                </Content>
+              )}
+              <Content flex gap={6}>
+                <Icon name="park-add-picture" />
+                <span>Add cover</span>
+              </Content>
+            </Content>
+            <div
+              onInput={onTitleChange}
+              spellCheck="false"
+              className={styles.title}
+              placeholder={t('editor.untitled')}
+              suppressContentEditableWarning={true}
+              contentEditable={metaObject === null}
+              style={{
+                maxWidth: '100%',
+                width: '100%'
+              }}
+            >
+              {metaObject?.name || title}
+            </div>
+          </Content>
           <InnerEditor
-            titleMarginTop={titleMarginTop}
             note={note}
             scrollElement={scrollElementRef.current}
             title={title}
@@ -739,39 +615,29 @@ export const EditorV1: FC<EditorProps> = memo(({ onEditorInitialized, onSave, on
             onChange={handleEditorValueChange}
             onDividerDragEnd={handleDividerDragEnd}
             onDividerDragStart={handleDividerDragStart}
-            onBlockMouseEnter={handleMouseEnter}
+            onBlockMouseMove={handleBlockMouseMove}
+            onBlockMouseLeave={useMemoizedFn((e, element) => {
+              setDragHandle({ ...dragHandle, visible: false })
+            })}
             onNestedListItem={handleNestedListItem}
             onSave={handleOpenSave}
             onAddSubPage={handleAddSubPage}
-            onToggleMindmap={handleToggleMindmap}
             onToggleOutline={handleToggleOutline}
             isDragging={isDragging}
           />
         </div>
       </div>
-      <EditorOverlay
-        onVisiblityChange={visibility => {
-          setOverlayVisible(visibility)
-          if (overlayVisible) {
-            setDragHandle(undefined)
-          }
-        }}
-        visible={overlayVisible}
-        editor={editor}
-        scrollElement={scrollElementRef.current}
-        onAddMetaObject={handleAddMetaObject}
-      />
+      {renderOverlay()}
       <BlockHandle
         onAddClick={handleBlockHandleMenu}
-        onDragClick={handleStartDragging}
+        onDragClick={useCallback(() => {
+          console.log('clsda')
+          setIsDragging(true)
+        }, [])}
+        onMenuClick={handleMenuClick}
         {...dragHandle}
-        visible={!isDragging && !outlineVisible && !mindmapVisible}
+        visible={!isDragging && !outlineVisible && !mindmapVisible && dragHandle?.visible}
       />
-      <div style={{ position: 'fixed', inset: 0, zIndex: 999, pointerEvents: 'none' }} role="dragging-layer">
-        <div style={{ pointerEvents: 'auto', position: 'relative', zIndex: 0 }}>
-          {isDragging && <div style={{ position: 'absolute', top: 0, left: 0 }} ref={draggingLayerRef}></div>}
-        </div>
-      </div>
     </div>
   )
 })

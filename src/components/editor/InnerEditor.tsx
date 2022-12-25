@@ -1,90 +1,64 @@
 import { Noop } from '@/common/types'
-import useEventEmitter from '@/events/useEventEmitter'
 import { useMemoizedFn } from '@/hooks'
-import { Position } from '@/types'
 import isHotkey from 'is-hotkey'
-import { FC, FormEventHandler, memo, useCallback, useRef } from 'react'
-import { Descendant, Editor, Path, Range, Transforms, Element as SlateElement, Node, Selection, Text } from 'slate'
-import { ReactEditor, Slate, Editable, RenderElementProps, RenderLeafProps } from 'slate-react'
-import { Content } from '../base'
+import { FC, KeyboardEventHandler, memo, useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { Descendant, Editor, Path, Range, Transforms, Element as SlateElement, Text } from 'slate'
+import { ReactEditor, Slate, RenderElementProps, RenderLeafProps, Editable } from './slate-react'
+// import { Editable } from './slate-react'
 import EditorToolbar from './components/toolbar'
 import HOTKEYS from './consts/hotkeys'
-import { CustomEditor, CustomElement } from './customTypes'
+import { CustomEditor, CustomElement } from './types'
 import Divider from './Divider'
-import Block from './elements/block'
 import Emoji from './elements/Emoji'
-import { Heading } from './elements/heading'
-import Highlight from './elements/highlight'
-import Paragraph from './elements/paragraph'
+import { BookHighlight, Block, Heading, Paragraph } from './elements'
 import { Spacer } from './elements/Spacer'
 import SubPage from './elements/subPage'
 import Thought from './elements/thought'
 import styles from './index.module.less'
-import { getCaretGlobalPosition } from './utils/positions/caret'
-import { useTranslation } from 'react-i18next'
 import ListItem from './elements/listItem'
-import { INote } from '~/typings/data'
 import { Positions } from './utils/positions'
 import MetaObject from './elements/meta'
-import { css } from '@emotion/css'
 import Image from './elements/image'
 import ToDo from './elements/todo'
 import Id from '@/utils/id'
 import useMetaStore from '@/stores/meta.store'
 import { CustomTransforms } from './utils/transform'
+import { InlineElements } from './consts/elements'
 
 type InnerEditorProps = {
-  titleMarginTop?: number
   editor: CustomEditor
-  note: INote
   defaultValue: Descendant[]
-  scrollElement?: HTMLDivElement
-  onRendered?: () => void
+  scrollElement?: HTMLDivElement | null
   onChange?: (value: Descendant[]) => void
-  onTitleChange?: FormEventHandler<HTMLDivElement>
-  onToggleMindmap: Noop
-  onToggleOutline: Noop
   onBlockMouseEnter: (e: MouseEvent, element: CustomElement) => void
+  onBlockMouseLeave: (e: MouseEvent, element: CustomElement) => void
+  onBlockMouseMove?: (e: MouseEvent, element: CustomElement) => void
   onNestedListItem: (isNested: boolean) => void
   onDividerDragStart: Noop
   onDividerDragEnd: (previousColumnWidthRatio: number, previousColumnPath: Path, nextColumnWidthRatio: number, nextColumnPath: Path) => void
-  onSave?: (value: any[]) => void
-  onAddSubPage?: () => void
 }
 const InnerEditor: FC<InnerEditorProps> = memo(
   ({
     editor,
     defaultValue,
-    title,
     onBlockMouseEnter,
+    onBlockMouseLeave,
+    onBlockMouseMove,
     onDividerDragStart,
     onDividerDragEnd,
     onChange,
-    onTitleChange,
-    onSave,
     onNestedListItem,
-    titleMarginTop,
-    note,
     scrollElement
   }) => {
-    const emitter = useEventEmitter()
-    const { t } = useTranslation()
     const renderInnerElement = useCallback((props: RenderElementProps) => <Element {...props} />, [])
     const renderLeaf = useCallback((props: RenderLeafProps) => <Leaf {...props} />, [])
-    const caretPositionRef = useRef<Position>()
+
     const { addMetaObject, addMetaLink, getMetaObjectByNoteId } = useMetaStore()
-    const handleMouseDown = useMemoizedFn((e: MouseEvent) => {
-      if (getCaretGlobalPosition()) {
-        caretPositionRef.current = getCaretGlobalPosition()
-      }
-    })
+
     const handleChange = useMemoizedFn((value: Descendant[]) => {
       onChange?.(value)
-      if (getCaretGlobalPosition()) {
-        caretPositionRef.current = getCaretGlobalPosition()
-      }
     })
-
+    const inlineKeys = Object.values(InlineElements)
     const renderElement = useCallback(
       ({ children, element, attributes }: RenderElementProps) => {
         if (element.type === 'columnList') {
@@ -96,6 +70,7 @@ const InnerEditor: FC<InnerEditorProps> = memo(
               data-spec-type="columnList"
               id={String(element.id)}
               type="columnList"
+              element={element}
               attributes={attributes}
               scrollElement={scrollElement}
             >
@@ -114,6 +89,7 @@ const InnerEditor: FC<InnerEditorProps> = memo(
                 blockId={element.id}
                 ratio={element.ratio}
                 data-spec-type="column"
+                element={element}
                 type="column"
                 attributes={attributes}
                 scrollElement={scrollElement}
@@ -123,13 +99,7 @@ const InnerEditor: FC<InnerEditorProps> = memo(
             </>
           )
         }
-        if (
-          element.type !== 'spacer' &&
-          element.type !== 'highlight' &&
-          element.type !== 'emoji' &&
-          element.type !== 'metaObject' &&
-          element.type !== 'link'
-        ) {
+        if (!inlineKeys.includes(element.type)) {
           return (
             <Block
               data-type="block"
@@ -139,6 +109,8 @@ const InnerEditor: FC<InnerEditorProps> = memo(
               id={String(element.id)}
               element={element}
               onMouseEnter={onBlockMouseEnter}
+              onMouseLeave={onBlockMouseLeave}
+              onMouseMove={onBlockMouseMove}
               onNestedListItem={onNestedListItem}
               attributes={attributes}
               type={element.type}
@@ -153,8 +125,7 @@ const InnerEditor: FC<InnerEditorProps> = memo(
       },
       [scrollElement]
     )
-
-    const handleKeydown = useMemoizedFn((e: KeyboardEvent) => {
+    const handleKeydown: KeyboardEventHandler<HTMLDivElement> = useMemoizedFn(e => {
       const { selection } = editor
       if (selection && Range.isCollapsed(selection)) {
         if (isHotkey('left', e)) {
@@ -188,6 +159,7 @@ const InnerEditor: FC<InnerEditorProps> = memo(
         e.preventDefault()
         const currBlock = Editor.above(editor, { match: n => Editor.isBlock(editor, n) })
         const { selection } = editor
+        if (!currBlock) return
         if (
           (currBlock[0].type === 'list-item' || currBlock?.[0].level > 0) &&
           selection &&
@@ -219,7 +191,8 @@ const InnerEditor: FC<InnerEditorProps> = memo(
             match: Text.isText
           })
           addMetaObject({
-            keyword: selectedText
+            keyword: selectedText,
+            type: 'knowledge'
           }).then(obj => {
             const noteMeta = getMetaObjectByNoteId(editor.noteId)
             addMetaLink({
@@ -278,90 +251,37 @@ const InnerEditor: FC<InnerEditorProps> = memo(
           onItalic={() => toggleMark(editor, 'italic')}
           onUnderline={() => toggleMark(editor, 'underline')}
         />
-        <Content className={styles.titleWrapper} style={{ marginTop: titleMarginTop }} flex centered>
-          <div
-            onInput={onTitleChange}
-            spellCheck="false"
-            className={styles.title}
-            placeholder={t('editor.untitled')}
-            contentEditable={true}
-            style={{
-              maxWidth: '100%',
-              width: '100%'
-            }}
-          >
-            {title}
-          </div>
-        </Content>
-        {!note && (
-          <Content
-            flex
-            alignItems="center"
-            className={css({
-              color: 'rgba(55,53,47,0.5)',
-              width: '100%',
-              padding: 4,
-              userSelect: 'none'
-            })}
-          >
-            <div>Status: Unsaved</div>
-            <div
-              onClick={onSave}
-              className={css({
-                padding: 2,
-                borderRadius: 6,
-                marginLeft: 10,
-                cursor: 'pointer',
-                transition: 'all 0.2s ease',
-                ':hover': {
-                  background: 'rgba(0,0,0,0.07)'
-                }
-              })}
-            >
-              Save
-            </div>
-          </Content>
-        )}
         <Editable
           suppressContentEditableWarning={true}
-          autoFocus
           spellCheck="false"
-          onFocus={e => {
-            if (getCaretGlobalPosition()) {
-              caretPositionRef.current = getCaretGlobalPosition()
-            }
-          }}
           onCompositionStart={() => {
-            emitter.emit('editor', { type: 'compositionStart' })
             if (Positions.isEndSpacer(editor) || Positions.isStartSpacer(editor)) {
               editor.insertBreak()
             }
           }}
-          onCompositionEnd={() => emitter.emit('editor', { type: 'compositionEnd' })}
           renderElement={renderElement}
           renderLeaf={renderLeaf}
           onKeyDown={handleKeydown}
-          onMouseDown={handleMouseDown}
           className={styles.editorWrapper}
+          scrollElement={scrollElement}
         ></Editable>
       </Slate>
     )
   }
 )
-const toggleMark = (editor, format) => {
-  const isActive = isMarkActive(editor, format)
+const toggleMark = (editor: CustomEditor, mark: string) => {
+  const isActive = isMarkActive(editor, mark)
   if (isActive) {
-    Editor.removeMark(editor, format)
+    Editor.removeMark(editor, mark)
   } else {
-    Editor.addMark(editor, format, true)
+    Editor.addMark(editor, mark, true)
   }
 }
 
-const changeFontSize = (editor, fontSize: number) => {
+const changeFontSize = (editor: CustomEditor, fontSize: number) => {
   editor.fontSize = fontSize
-  const { selection } = editor
   Editor.addMark(editor, 'fontSize', fontSize)
-  Array.from(Editor.nodes(editor, { at: selection, mode: 'lowest' }))
+  Array.from(Editor.nodes(editor, { mode: 'lowest' }))
     .filter(i => i[0].type === 'emoji')
     .map(i => i[1])
     .forEach(i => {
@@ -377,9 +297,9 @@ const changeFontSize = (editor, fontSize: number) => {
     })
 }
 
-const isMarkActive = (editor, format) => {
+const isMarkActive = (editor: CustomEditor, mark: string) => {
   const marks = Editor.marks(editor)
-  return marks ? marks[format] === true : false
+  return marks ? marks[mark] === true : false
 }
 const Element = (props: RenderElementProps) => {
   const { element, attributes, children } = props
@@ -391,6 +311,8 @@ const Element = (props: RenderElementProps) => {
         return <blockquote>{children}</blockquote>
       case 'bulleted-list':
         return <ul>{children}</ul>
+      case 'book-highlight':
+        return <BookHighlight {...props} />
       case 'link':
         return (
           <span {...attributes} style={{ display: 'inline' }}>
@@ -427,8 +349,6 @@ const Element = (props: RenderElementProps) => {
         return <ToDo {...props} />
       case 'list-item':
         return <ListItem {...props} />
-      case 'highlight':
-        return <Highlight {...props} />
       case 'spacer':
         return <Spacer {...props} />
       case 'hole':

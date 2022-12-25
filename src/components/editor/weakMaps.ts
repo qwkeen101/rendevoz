@@ -1,5 +1,6 @@
 import { Noop } from '@/common/types'
 import { Position } from '@/types'
+import { VirtualItem } from '@tanstack/react-virtual'
 import { Element } from 'slate'
 import { CustomEditor } from './types'
 
@@ -8,6 +9,7 @@ export interface ElementFunctions {
   changeIndicator: (direction: string | null, e?: MouseEvent) => boolean
   collisionSelectBlock: Noop
   getElement: () => Element
+  renderable: (virtualItems: VirtualItem[]) => void
 }
 export const ID_TO_ELEMENTS_MAP = new WeakMap<CustomEditor, Map<number, ElementFunctions>>()
 

@@ -1,4 +1,3 @@
-
 const SIZING_STYLE = [
   'borderBottomWidth',
   'borderLeftWidth',
@@ -22,40 +21,34 @@ const SIZING_STYLE = [
   'textRendering',
   'textTransform',
   'width',
-  'wordBreak',
-] as const;
+  'wordBreak'
+] as const
 
-type SizingProps = Extract<
-  typeof SIZING_STYLE[number],
-  keyof CSSStyleDeclaration
->;
+type SizingProps = Extract<typeof SIZING_STYLE[number], keyof CSSStyleDeclaration>
 
-type SizingStyle = Pick<CSSStyleDeclaration, SizingProps>;
+type SizingStyle = Pick<CSSStyleDeclaration, SizingProps>
 
 export type SizingData = {
-  sizingStyle: SizingStyle;
-  paddingSize: number;
-  borderSize: number;
-};
+  sizingStyle: SizingStyle
+  paddingSize: number
+  borderSize: number
+}
 
-const isIE =
-  typeof document !== 'undefined'
-    ? !!(document.documentElement as any).currentStyle
-    : false;
+const isIE = typeof document !== 'undefined' ? !!(document.documentElement as any).currentStyle : false
 
 const getSizingData = (node: HTMLElement): SizingData | null => {
-  const style = window.getComputedStyle(node);
+  const style = window.getComputedStyle(node)
 
   if (style === null) {
-    return null;
+    return null
   }
 
-  const sizingStyle = pick((SIZING_STYLE as unknown) as SizingProps[], style);
-  const { boxSizing } = sizingStyle;
+  const sizingStyle = pick(SIZING_STYLE as unknown as SizingProps[], style)
+  const { boxSizing } = sizingStyle
 
   // probably node is detached from DOM, can't read computed dimensions
   if (boxSizing === '') {
-    return null;
+    return null
   }
 
   // IE (Edge has already correct behaviour) returns content width as computed width
@@ -67,31 +60,24 @@ const getSizingData = (node: HTMLElement): SizingData | null => {
       parseFloat(sizingStyle.borderLeftWidth!) +
       parseFloat(sizingStyle.paddingRight!) +
       parseFloat(sizingStyle.paddingLeft!) +
-      'px';
+      'px'
   }
 
-  const paddingSize =
-    parseFloat(sizingStyle.paddingBottom!) +
-    parseFloat(sizingStyle.paddingTop!);
+  const paddingSize = parseFloat(sizingStyle.paddingBottom!) + parseFloat(sizingStyle.paddingTop!)
 
-  const borderSize =
-    parseFloat(sizingStyle.borderBottomWidth!) +
-    parseFloat(sizingStyle.borderTopWidth!);
+  const borderSize = parseFloat(sizingStyle.borderBottomWidth!) + parseFloat(sizingStyle.borderTopWidth!)
 
   return {
     sizingStyle,
     paddingSize,
-    borderSize,
-  };
-};
-export const noop = () => {};
+    borderSize
+  }
+}
+export const noop = () => {}
 
-export const pick = <Obj extends { [key: string]: any }, Key extends keyof Obj>(
-  props: Key[],
-  obj: Obj,
-): Pick<Obj, Key> =>
+export const pick = <Obj extends { [key: string]: any }, Key extends keyof Obj>(props: Key[], obj: Obj): Pick<Obj, Key> =>
   props.reduce((acc, prop) => {
-    acc[prop] = obj[prop];
-    return acc;
-  }, {} as Pick<Obj, Key>);
-export default getSizingData;
+    acc[prop] = obj[prop]
+    return acc
+  }, {} as Pick<Obj, Key>)
+export default getSizingData

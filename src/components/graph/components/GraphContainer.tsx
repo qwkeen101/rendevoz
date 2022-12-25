@@ -14,6 +14,7 @@ import EdgeContainer from './EdgeContainer'
 import NodeContainer from './NodeContainer'
 import useMetaStore from '@/stores/meta.store'
 import { MetaObject } from '~/typings/data'
+import { useUnMount } from '@/hooks'
 
 interface GraphContainerProps {
   edges?: GraphEdge[]

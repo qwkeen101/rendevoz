@@ -15,11 +15,12 @@ export interface ThoughtElement extends IOuterElement {
   children: EmptyText[]
 }
 
-export interface HighlighElement extends IOuterElement {
-  type: 'highlight'
+export interface BookHighlightElement extends IOuterElement {
+  type: 'book-highlight'
   selectedText: string
-  title: string
-  content: string
+  documentId?: number
+  page?: number
+  title?: string
   children: EmptyText[]
 }
 export interface SubPageElement extends IOuterElement {
@@ -30,4 +31,4 @@ export interface SubPageElement extends IOuterElement {
 export interface MetaObjectElement extends IOuterElement {
   type: 'metaObject'
 }
-export type OuterElement = ThoughtElement | HighlighElement | SubPageElement | MetaObjectElement
+export type OuterElement = ThoughtElement | BookHighlightElement | SubPageElement | MetaObjectElement

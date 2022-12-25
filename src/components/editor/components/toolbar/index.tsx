@@ -5,7 +5,7 @@ import Select from '@/components/base/select'
 import IconWithPopover from '@/components/base/IconWithPopover'
 import { CSSProperties, FC, useEffect, useRef, useState } from 'react'
 import { Editor, Range, Selection } from 'slate'
-import { ReactEditor, useSlate } from 'slate-react'
+import { ReactEditor, useSlate } from '../../slate-react'
 import styles from './index.module.less'
 import { useTranslation } from 'react-i18next'
 import classNames from 'classnames'
@@ -15,10 +15,9 @@ import { AnimatePresence, motion } from 'framer-motion'
 import { useSetting } from '@/hooks'
 
 interface EditorToolbarProps {
-  selection: Position & { selection: Selection }
   fontSize?: number
   alignment?: string
-  scrollElement?: HTMLElement
+  scrollElement?: HTMLElement | null
   onRedo: Noop
   onUndo: Noop
   onBold: Noop

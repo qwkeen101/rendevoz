@@ -10,6 +10,7 @@ import { IAnnotation } from './types/annotation'
 import { ScrollMode } from './types/layout'
 import PdfJs from './types/pdfJsApi'
 import PdfJsUrl from '@/assets/pdf.worker.min.js?url'
+
 interface ViewerProps {
   fileUrl: string | Uint8Array
   initialPage?: number

@@ -6,7 +6,7 @@ const withVoid = (editor: CustomEditor) => {
         return true
       case 'spacer':
         return false
-      case 'highlight':
+      case 'book-highlight':
         return true
       case 'emoji':
         return true

@@ -229,7 +229,7 @@ export const getTextRect = (bound: TextContentBound, ctx: CanvasRenderingContext
     const startPointCoord = getCoordAfterTrans(startPoint, offset.trans),
       endPointCoord = getCoordAfterTrans(endPoint, offset.trans),
       [realStart, realEnd] = startPointCoord.x >= endPointCoord.x ? [endPoint, startPoint] : [startPoint, endPoint],
-      startTextBound = getTargetTextBound(bound, realStart, false, viewport, ctx),
+      startTextBound = getTargetTextBound(bound, realStart, true, viewport, ctx),
       endTextBound = getTargetTextBound(bound, realEnd, undefined, viewport, ctx),
       targetText = str.substring(startTextBound.text.length, endTextBound.text.length)
     return trans

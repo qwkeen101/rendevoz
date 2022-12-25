@@ -1,7 +1,7 @@
 import { PageViewport, PDFDocumentProxy, PDFPageProxy } from 'pdfjs-dist'
 import { FC, memo, MutableRefObject, ReactElement, useRef, useState } from 'react'
 import { useIntersection, useIsomorphicLayoutEffect } from 'react-use'
-import { RenderPageProps } from '../types'
+import { PageFunctionRef, RenderPageProps } from '../types'
 import { getPage } from '../utils/pages'
 import CanvasLayer from './CanvasLayer'
 import TextLayer from './TextLayer'
@@ -29,6 +29,7 @@ interface PageDetails {
 const PageLayer: FC<PageLayerProps> = ({ doc, height, scale, width, pageIndex, renderPage, renderAnnotation, scrollElement }) => {
   const [pageDetails, setPageDetails] = useState<PageDetails>({ page: null, viewport: null })
   const pageRef = useRef<HTMLDivElement>(null)
+  const pageFunctionRef = useRef<PageFunctionRef>({})
   const observer = useIntersection(pageRef, {
     root: scrollElement?.current,
     rootMargin: '200px 0px 200px 0px',
@@ -92,6 +93,7 @@ const PageLayer: FC<PageLayerProps> = ({ doc, height, scale, width, pageIndex, r
                   width={width}
                   height={height}
                   viewport={pageDetails.viewport}
+                  pageFunctionRef={pageFunctionRef}
                 />
               ),
               annotationLayer: (
@@ -105,7 +107,8 @@ const PageLayer: FC<PageLayerProps> = ({ doc, height, scale, width, pageIndex, r
                 />
               ),
               pageIndex: pageIndex,
-              pageSize: { width, height, scale }
+              pageSize: { width, height, scale },
+              pageFunctionRef
             })}
           </div>
           {!observer?.isIntersecting && <Spinner size={50} />}

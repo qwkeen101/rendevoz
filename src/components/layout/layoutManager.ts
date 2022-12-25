@@ -25,6 +25,7 @@ class LayoutManager {
     }
   }
   public updateTab = (tab: Partial<TabData>) => {
+    console.log(tab)
     if (!tab.id || !this.layout) return
     const targetTab = Algorithm.find(this.layout, tab.id) as TabData
     const targetPanel = targetTab.parent

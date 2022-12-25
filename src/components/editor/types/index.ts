@@ -1,6 +1,7 @@
+import { Noop } from '@/common/types'
 import EventEmitter from '@/events/eventEmitter'
 import { YHistoryEditor, YjsEditor } from '@slate-yjs/core'
-import { BaseEditor } from 'slate'
+import { BaseEditor, Element } from 'slate'
 import { HistoryEditor } from 'slate-history'
 import { ReactEditor } from 'slate-react'
 import { CustomText, EmptyText } from './baseTypes'
@@ -15,6 +16,13 @@ export type CustomEditor = BaseEditor &
     emitter?: EventEmitter
     id?: string
     noteId?: number
+  } & {
+    currentEnterElement?: Element
+    currentAddClickElement?: Element
+  } & {
+    fontSize?: number
+  } & {
+    handler?: (e: { data?: any; type: string }) => void
   }
 
 export type CustomElement = CommonElement | OuterElement
@@ -22,7 +30,7 @@ export type CustomElement = CommonElement | OuterElement
 declare module 'slate' {
   interface CustomTypes {
     Editor: CustomEditor
-    Element: CustomElement & { hide: boolean; id: number }
+    Element: CustomElement & { hide?: boolean; id: number }
     Text: CustomText | EmptyText
   }
 }

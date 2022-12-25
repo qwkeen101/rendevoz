@@ -26,7 +26,7 @@ export interface IHighlightLabel extends ILabel {
   rects?: TextSelectRect[]
 }
 export interface IThoughtLabel extends IDroppableLabel {
-  // noteId - noteDestinations[]
   position?: 'left' | 'top' | 'right' | 'bottom'
-  targetNotesDesitinations: Map<number, EditorDestination[]>
+  originFrom?: 'pdf' | 'editor' | 'meta'
+  originId?: number
 }

@@ -1,5 +1,3 @@
-import { MouseEvent } from "react"
-
 export const getDistanceBetweenPointAndElement = (e: MouseEvent, element: Element) => {
   const { clientX: pointX, clientY: pointY } = e
   const rect = element.getBoundingClientRect()

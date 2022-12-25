@@ -1,13 +1,27 @@
-import { Children, cloneElement, FC, forwardRef, PropsWithChildren, ReactNode, useCallback, useEffect, useRef, useState } from 'react'
+import {
+  Children,
+  cloneElement,
+  createElement,
+  CSSProperties,
+  FC,
+  forwardRef,
+  PropsWithChildren,
+  ReactNode,
+  useCallback,
+  useEffect,
+  useRef,
+  useState
+} from 'react'
 import { createPortal } from 'react-dom'
 import { AnimatePresence, motion } from 'framer-motion'
 
 interface ToolTipProps {
   content: string | ReactNode
   position?: 'top' | 'bottom'
+  style?: CSSProperties
 }
 
-const ToolTip: FC<PropsWithChildren<ToolTipProps>> = ({ content, children, position = 'bottom' }, ref) => {
+const ToolTip: FC<PropsWithChildren<ToolTipProps>> = ({ content, children, position = 'bottom', style }, ref) => {
   const [open, setOpen] = useState(false)
   const [bound, setBound] = useState({
     x: 0,
@@ -38,6 +52,7 @@ const ToolTip: FC<PropsWithChildren<ToolTipProps>> = ({ content, children, posit
       const rect = e.currentTarget.getBoundingClientRect()
       const { scrollTop, scrollLeft } = document.body
       const bound = { x: rect.left + scrollLeft, y: rect.top + scrollTop, width: rect.width, height: rect.height }
+
       if (position === 'top') {
         bound.y = rect.top + scrollTop - rect.height - 40
       }
@@ -68,11 +83,11 @@ const ToolTip: FC<PropsWithChildren<ToolTipProps>> = ({ content, children, posit
   return (
     <>
       {renderChild()}
-      <AnimatePresence>{open && content && <ToolTipPopover bound={bound} children={content} />}</AnimatePresence>
+      <AnimatePresence>{open && content && <ToolTipPopover bound={bound} children={content} style={style} />}</AnimatePresence>
     </>
   )
 }
-const ToolTipInner = ({ children, bound }) => (
+const ToolTipInner = ({ children, bound, style }) => (
   <motion.div
     initial={{ opacity: 0 }}
     animate={{ opacity: 1 }}
@@ -88,13 +103,19 @@ const ToolTipInner = ({ children, bound }) => (
       lineHeight: 1.2,
       padding: '2px 4px 4px',
       position: 'absolute',
-      zIndex: 100000
+      zIndex: 100000,
+      ...style
     }}
   >
     {children}
   </motion.div>
 )
-const ToolTipPopover = ({ children, bound }) => {
-  return createPortal(<ToolTipInner bound={bound}>{children}</ToolTipInner>, document.body)
+const ToolTipPopover = ({ children, bound, style }) => {
+  return createPortal(
+    <ToolTipInner style={style} bound={bound}>
+      {children}
+    </ToolTipInner>,
+    document.body
+  )
 }
 export default forwardRef(ToolTip)

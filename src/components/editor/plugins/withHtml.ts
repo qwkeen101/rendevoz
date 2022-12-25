@@ -79,6 +79,7 @@ const withHtml = (editor: CustomEditor) => {
     console.log(plainText)
     if (slateFragment) {
       ReactEditor.insertFragmentData(editor, data)
+      Transforms.deselect(editor)
       return
     }
     if (html) {
@@ -86,6 +87,7 @@ const withHtml = (editor: CustomEditor) => {
       const fragment = deserialize(parsed.body)
       fragment.forEach(i => (i.id = Id.getId()))
       Transforms.insertFragment(editor, fragment)
+      Transforms.deselect(editor)
       return
     }
     insertData(data)

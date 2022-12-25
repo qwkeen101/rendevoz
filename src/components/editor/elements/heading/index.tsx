@@ -4,7 +4,7 @@ import Id from '@/utils/id'
 import classNames from 'classnames'
 import { cloneElement, FC, useState } from 'react'
 import { Editor, Node } from 'slate'
-import { RenderElementProps, useSlate } from 'slate-react'
+import { RenderElementProps, useSlate } from '../../slate-react'
 import { HeadingElement, HeadingOneElement, HeadingThreeElement, HeadingTwoElement } from '../../customTypes'
 import { ElementBuilder } from '../elementBuilder'
 import styles from './index.module.less'
@@ -14,7 +14,7 @@ export interface HeadingProps {
   title?: string
   dest?: string
 }
-export const Heading: FC<RenderElementProps & HeadingProps> = ({ element, children, level }) => {
+const Heading: FC<RenderElementProps & HeadingProps> = ({ element, children, level }) => {
   const { dest } = element as HeadingElement
   const emitter = useEventEmitter()
   const [folded, setFolded] = useState(false)
@@ -79,6 +79,7 @@ export const Heading: FC<RenderElementProps & HeadingProps> = ({ element, childr
     heading(),
     {
       id: element.id,
+      suppressContentEditableWarning: true,
       className: classNames(styles.heading, isEmpty && styles.empty),
       placeholder: `H${level + 1}`,
       contentEditable: true
@@ -120,3 +121,5 @@ export const HeadingElementBuilder: ElementBuilder<HeadingOneElement | HeadingTw
     }
   }
 }
+
+export default Heading

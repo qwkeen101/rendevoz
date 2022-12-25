@@ -1,28 +1,24 @@
-import useLatest from '@/hooks/utils/useLatest';
-import * as React from 'react';
+import useLatest from '@/hooks/utils/useLatest'
+import * as React from 'react'
 
 export const useWindowResizeListener = (listener: (event: UIEvent) => any) => {
-  const latestListener = useLatest(listener);
+  const latestListener = useLatest(listener)
 
   React.useLayoutEffect(() => {
-    const handler: typeof listener = (event) => {
-      latestListener.current(event);
-    };
+    const handler: typeof listener = event => {
+      latestListener.current(event)
+    }
 
-    window.addEventListener('resize', handler);
+    window.addEventListener('resize', handler)
 
     return () => {
-      window.removeEventListener('resize', handler);
-    };
-  }, []);
-};
+      window.removeEventListener('resize', handler)
+    }
+  }, [])
+}
 
 // basically Exclude<React.ClassAttributes<T>["ref"], string>
-type UserRef<T> =
-  | ((instance: T | null) => void)
-  | React.RefObject<T>
-  | null
-  | undefined
+type UserRef<T> = ((instance: T | null) => void) | React.RefObject<T> | null | undefined
 
 type Writable<T> = { -readonly [P in keyof T]: T[P] }
 
@@ -35,10 +31,7 @@ const updateRef = <T>(ref: NonNullable<UserRef<T>>, value: T | null) => {
   ;(ref as Writable<typeof ref>).current = value
 }
 
-const useComposedRef = <T extends HTMLElement>(
-  libRef: React.MutableRefObject<T | null>,
-  userRef: UserRef<T>,
-) => {
+const useComposedRef = <T extends HTMLElement>(libRef: React.MutableRefObject<T | null>, userRef: UserRef<T>) => {
   const prevUserRef = React.useRef<UserRef<T>>()
 
   return React.useCallback(
@@ -57,7 +50,7 @@ const useComposedRef = <T extends HTMLElement>(
 
       updateRef(userRef, instance)
     },
-    [userRef],
+    [userRef]
   )
 }
 

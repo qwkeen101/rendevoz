@@ -1,7 +1,6 @@
 import Id from '@/utils/id'
 import { Descendant, Editor, Path, Transforms } from 'slate'
 import { CustomEditor } from '../types'
-import { hasSelectedBlocks } from '../weakMaps'
 
 const moveSingleElement = (
   editor: CustomEditor,

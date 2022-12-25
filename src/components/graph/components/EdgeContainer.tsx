@@ -1,4 +1,4 @@
-import { useMemoizedFn } from '@/hooks'
+import { useMemoizedFn, usePrevious } from '@/hooks'
 import { css } from '@emotion/css'
 import produce from 'immer'
 import { FC, memo, useEffect, useLayoutEffect } from 'react'
@@ -22,11 +22,23 @@ const svgContainerClassName = css({
 const EdgeContainer: FC<EdgeContainerProps> = () => {
   const graph = useGraph()
   const [edges, setEdges] = useEdges()
+  const previousEdges = usePrevious(edges)
+
   useEffect(() => {
     graph?.registerHandler('change', changeHandler)
   }, [])
   const changeHandler = useMemoizedFn((_, _edges: GraphEdge[]) => {
-    if (edges) {
+    if (edges && graph) {
+      const oppoMap = new Map()
+      graph.originEdges?.forEach(e => {
+        const oppositeEdge = graph.originEdges?.find(i => i.targetId === e.sourceId && i.sourceId === e.targetId)
+        if (oppositeEdge) {
+          oppoMap.set(e.id, oppositeEdge)
+          oppoMap.set(oppositeEdge.id, e)
+        }
+      })
+      graph.oppositeEdgesMap = oppoMap
+
       setEdges(
         produce(edges, draft => {
           _edges.forEach(e => {

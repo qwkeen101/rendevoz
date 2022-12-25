@@ -1,24 +1,29 @@
-import { GraphEventHandler, ToggleGlobalGraphEvent } from '@/events/graphEvent'
-import useEventEmitter from '@/events/useEventEmitter'
 import { useMemoizedFn } from '@/hooks'
 import useMetaStore from '@/stores/meta.store'
-import { AnimatePresence, motion } from 'framer-motion'
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { MetaObject } from '~/typings/data'
 import GraphContainer from './components/GraphContainer'
 import GraphThumbnail from './GraphThumbnail'
 import { GraphEdge } from './types/edge'
 import { GraphNode } from './types/node'
 
+export let GlobalGraphInstance:
+  | {
+      open: (centerNode: Partial<MetaObject>) => void
+      close: VoidFunction
+    }
+  | undefined = undefined
 const GlobalGraph = () => {
   const { allMetaLinks, allMetaObjects } = useMetaStore()
   const [currentNodes, setCurrentNodes] = useState<GraphNode[]>()
   const [currentEdges, setCurrentEdges] = useState<GraphEdge[]>()
   const [visible, setVisible] = useState(false)
-  const eventHandler = new GraphEventHandler()
-  const emitter = useEventEmitter()
-  const handleToggleGraph = useMemoizedFn((data: ToggleGlobalGraphEvent) => {
-    const { centerNode } = data
+
+  GlobalGraphInstance = {
+    open: center => handleToggleGraph(center),
+    close: () => setVisible(false)
+  }
+  const handleToggleGraph = useMemoizedFn((centerNode: Partial<MetaObject>) => {
     if (centerNode.id) {
       setVisible(true)
       const nodeIds = new Set<number>()
@@ -63,13 +68,7 @@ const GlobalGraph = () => {
       setCurrentNodes(nodes)
     }
   })
-  eventHandler.on('toggleGlobalGraph', handleToggleGraph)
-  useEffect(() => {
-    emitter.addListener('graph', eventHandler)
-    return () => {
-      emitter.removeListener('graph', eventHandler)
-    }
-  }, [])
+
   return (
     <>
       {visible && (

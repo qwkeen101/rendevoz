@@ -1,14 +1,15 @@
-import { Icon, ReadMore, WithBorder } from '@/components'
-import AnimatePopover from '@/components/base/AnimatePopover'
-import { PdfEventHandler } from '@/events/pdfEvent'
-import useEventEmitter from '@/events/useEventEmitter'
-import { useToggle } from '@/hooks'
-import { CSSProperties, FC, memo, RefObject, useLayoutEffect, useRef, useState } from 'react'
-import { Rnd } from 'react-rnd'
+import { Content, Icon } from '@/components'
+import { useTheme, useToggle } from '@/hooks'
+import { FC, memo, RefObject, useEffect, useRef, useState } from 'react'
 import { IThoughtLabel } from '~/typings/data'
-import LabelToolbar from '../toolbar/LabelToolbar'
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion, AnimatePresence, useDragControls } from 'framer-motion'
 import { PrimitiveAtom, useAtom } from 'jotai'
+import { css } from '@emotion/css'
+import { PdfScope } from '@/jotai/jotaiScope'
+import useDocumentStore from '@/stores/document.store'
+import useNoteStore from '@/stores/note.store'
+import useMetaStore from '@/stores/meta.store'
+import ClassName from '@/styles/classNames'
 interface ThoughtLabelProps {
   thoughtAtom: PrimitiveAtom<IThoughtLabel>
   onDelete: () => void
@@ -17,221 +18,187 @@ interface ThoughtLabelProps {
 
 const positions = ['top', 'right', 'bottom', 'left']
 const ThoughtLabel: FC<ThoughtLabelProps> = ({ thoughtAtom, onDelete, dragBoundRef }) => {
-  const [thought, setThought] = useAtom(thoughtAtom)
+  const [thought, setThought] = useAtom(thoughtAtom, PdfScope)
   const { id, color, icon, content, rect } = thought
-  const ref = useRef<HTMLDivElement>(null)
-  const divRef = useRef(null)
-  const [toolbarVisible, setToolbarVisible] = useState(false)
-  const [movable, toggleMovable] = useToggle(false)
-  const [position, setPosition] = useState()
+  const [movable, toggleMovable] = useToggle(true)
+  const [isOpen, toggleOpen] = useToggle(false)
   const isDragging = useRef(false)
-  const emitter = useEventEmitter()
-  const handler = new PdfEventHandler()
-  handler.on('addThought', data => {
-    const thoughtId = data.id
-    if (Object.is(id, thoughtId)) {
-      setToolbarVisible(true)
+  const { defaultFontColorGrey, defaultFontColorBlack } = useTheme('defaultFontColorGrey', 'defaultFontColorBlack')
+  const longContentRef = useRef<HTMLDivElement>(null)
+  const heightRef = useRef(0)
+  const dragControls = useDragControls()
+  const { getDocumentById } = useDocumentStore()
+  const { getNoteById } = useNoteStore()
+  const { getMetaObjectById } = useMetaStore()
+  const [title, setTitle] = useState<string>()
+  useEffect(() => {
+    if (thought.originId) {
+      if (thought.originFrom === 'editor') {
+        setTitle('A note')
+      }
+      if (thought.originFrom === 'pdf') {
+        setTitle(getDocumentById(thought.originId)?.metadata?.title || getDocumentById(thought.originId)?.name)
+      }
+      if (thought.originFrom === 'meta') {
+        getMetaObjectById(thought.originId).then(obj => {
+          setTitle(obj?.keyword)
+          setThought({ ...thought, content: obj?.description })
+        })
+      }
     }
-  })
-  useLayoutEffect(() => {
-    emitter.addListener('pdf', handler)
-    return () => emitter.removeListener('pdf', handler)
-  }, [])
-  const renderIcon = () => {
+  }, [thought.id])
+  const renderOpenableContent = () => {
     return (
-      <div
-        ref={divRef}
-        style={{
-          position: 'absolute',
-          transform: 'translate(-50%,-50%)',
-          pointerEvents: 'auto'
+      <motion.div
+        onClick={() => {
+          if (!isDragging.current) {
+            toggleOpen()
+          }
         }}
+        className={css({
+          display: 'flex',
+          overflow: 'hidden',
+          pointerEvents: 'auto',
+          borderRadius: 15,
+          flexDirection: 'column',
+          background: 'rgba(255,255,255,0.8)',
+          boxShadow: '0 4px 30px rgba(0, 0, 0, 0.1)',
+          backdropFilter: 'blur(5px)',
+          padding: '6px',
+          width: 300
+        })}
       >
-        <AnimatePresence>
-          {!toolbarVisible && (
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-              {renderContent()}
-            </motion.div>
-          )}
-        </AnimatePresence>
-        <Icon
-          style={{ color: color }}
-          cursor="pointer"
-          onClick={() => {
-            isDragging.current === false && setToolbarVisible(!toolbarVisible)
+        <Content
+          flex
+          alignItems="center"
+          justifyContent="space-between"
+          onPointerDown={e => {
+            dragControls.start(e)
           }}
-          name={icon || 'park-info'}
-        />
-      </div>
-    )
-  }
-  const renderToobar = () => {
-    return (
-      <WithBorder borderRadius={5}>
-        <LabelToolbar
-          onDelete={onDelete}
-          movable={movable}
-          content={content}
-          onDirectionChange={() => {
-            const currentPosition = thought.position
-            let nextPosition = 'right'
-            if (currentPosition) {
-              const idx = positions.findIndex(i => i === currentPosition)
-              idx === positions.length - 1 ? (nextPosition = positions[0]) : (nextPosition = positions[idx + 1])
+          className={css({
+            color: defaultFontColorGrey,
+            cursor: 'grab',
+            userSelect: 'none'
+          })}
+        >
+          <span
+            className={css({
+              whiteSpace: 'nowrap',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis'
+            })}
+          >
+            <span>
+              {thought.originFrom === 'editor' && '📝'}
+              {thought.originFrom === 'pdf' && '📚'}
+              {thought.originFrom === 'meta' && '💡'}
+            </span>
+            <span style={{ fontSize: '0.8rem', marginLeft: 5 }}>{title}</span>
+          </span>
+          <motion.div
+            onClick={e => {
+              e.stopPropagation()
+            }}
+          >
+            <Icon
+              size={16}
+              name="park-more"
+              className={css({
+                transition: 'all 0.2s ease',
+                cursor: 'pointer',
+                padding: 3,
+                marginTop: 5,
+                marginRight: 5,
+                marginLeft: 5,
+                borderRadius: 999,
+                top: 3,
+                ':hover': {
+                  background: 'rgba(0,0,0,0.07)'
+                }
+              })}
+            />
+          </motion.div>
+        </Content>
+        <motion.div
+          onClick={e => {
+            if (!window.getSelection()?.isCollapsed) {
+              e.stopPropagation()
+              console.log(e)
             }
-            setThought({
-              ...thought,
-              position: nextPosition
-            })
           }}
-          onContentChange={value => {
-            setThought({ ...thought, content: value })
-            emitter.emit('editor', {
-              type: 'outerElementPropertyChange',
-              data: {
-                element: {
-                  originId: id,
-                  title: value
-                }
-              }
-            })
-          }}
-          onMovableChange={() => toggleMovable()}
-          onIconChange={i => setThought({ ...thought, icon: i })}
-          color={color}
-          onColorChange={c => setThought({ ...thought, color: c })}
-          onAddToEditor={() => {
-            emitter.emit('editor', {
-              type: 'insertNode',
-              data: {
-                element: {
-                  type: 'thought',
-                  originId: id,
-                  title: thought.content || 'No title thought',
-                  content: '',
-                  children: [
-                    {
-                      text: ''
-                    }
-                  ]
-                }
-              }
-            })
-          }}
-        />
-      </WithBorder>
-    )
-  }
-  const getPosition = (): CSSProperties => {
-    switch (thought.position) {
-      default:
-      case 'top':
-        return {
-          transform: 'translateX(-50%) translateY(-100%)',
-          top: '-10px',
-          left: '50%'
-        }
-      case 'bottom':
-        return {
-          transform: 'translateX(-50%) translateY(100%)',
-          bottom: '-10px',
-          left: '50%'
-        }
-      case 'left':
-        return {
-          transform: 'translateX(-100%) translateY(-50%)',
-          left: '-10px',
-          top: '50%'
-        }
-      case 'right':
-        return {
-          transform: 'translateX(100%) translateY(-50%)',
-          right: '-10px',
-          top: '50%'
-        }
-    }
-  }
-  const renderContent = () => {
-    const positionDetails = getPosition()
-    return (
-      <WithBorder
-        borderRadius={5}
-        style={{
-          maxWidth: '300px',
-          width: 'max-content',
-          position: 'absolute',
-          padding: '4px 6px',
-          ...positionDetails
-        }}
-      >
-        <ReadMore style={{ color: thought.color }} textLength={100}>
-          {(content && content !== '' && content) || 'No thought yet'}
-        </ReadMore>
-      </WithBorder>
-    )
-  }
-  const renderPopover = () => {
-    return (
-      <AnimatePopover
-        padding={10}
-        reposition={false}
-        boundaryElement={document.body}
-        onClickOutside={() => setToolbarVisible(false)}
-        visible={toolbarVisible}
-        positions={['top']}
-        content={renderToobar()}
-      >
-        {renderIcon()}
-      </AnimatePopover>
+          className={css({
+            color: defaultFontColorBlack,
+            overflow: 'hidden',
+            wordBreak: 'break-all',
+            textOverflow: 'ellipsis',
+            position: 'relative',
+            cursor: 'pointer'
+          })}
+        >
+          <AnimatePresence>
+            {isOpen ? (
+              <motion.div
+                key="long"
+                ref={longContentRef}
+                style={{ minHeight: 50 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, position: 'absolute' }}
+                initial={{ opacity: 0, height: 50 }}
+                onAnimationComplete={() => {
+                  heightRef.current = longContentRef.current!.getBoundingClientRect().height
+                }}
+              >
+                {thought.content}
+              </motion.div>
+            ) : (
+              <motion.div
+                key="short"
+                initial={{ opacity: 0, height: heightRef.current }}
+                animate={{ opacity: 1, height: 50 }}
+                exit={{ opacity: 0, position: 'absolute' }}
+                className={ClassName.ellipsisFont(2)}
+              >
+                {thought.content?.slice(0, 100)}
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </motion.div>
+      </motion.div>
     )
   }
 
   return (
     <motion.div
-      initial={{ left: `${rect[0]}%`, top: `${rect[1]}%` }}
+      initial={{ top: `${rect[0] * 100}%`, left: `${rect[1] * 100}%` }}
       drag={movable}
-      style={{ position: 'absolute' }}
+      style={{ position: 'absolute', pointerEvents: 'auto', zIndex: 100 }}
       dragConstraints={dragBoundRef}
+      dragControls={dragControls}
       dragMomentum={false}
       dragElastic={0}
-      onDragStart={e => (isDragging.current = true)}
+      dragListener={false}
+      onDragStart={e => {
+        isDragging.current = true
+      }}
       onDragEnd={(e, info) => {
         setTimeout(() => {
           isDragging.current = false
+          console.log(thought)
         }, 100)
         const { point } = info
         const bound = dragBoundRef.current?.getBoundingClientRect()
-        const relX = point.x - bound?.x
-        const relY = point.y - bound?.y
-        setThought({
-          ...thought,
-          rect: [(relX / bound.width) * 100, (relY / bound.height) * 100]
-        })
+        if (bound) {
+          const relX = point.x - bound?.x
+          const relY = point.y - bound?.y
+          setThought({
+            ...thought,
+            rect: [relY / bound.height, relX / bound.width]
+          })
+        }
       }}
     >
-      {renderPopover()}
+      {renderOpenableContent()}
     </motion.div>
-    // <Rnd
-    //   bounds="parent"
-    //   ref={ref}
-    //   enableResizing={false}
-    //   disableDragging={!movable}
-    //   position={position}
-    //   onDragStop={() => {
-    //     setTimeout(() => {
-    //       isDragging.current = false
-    //     }, 100)
-    //   }}
-    //   onDrag={(e, data) => {
-    //     e.stopPropagation()
-    //     if (!isDragging.current) {
-    //       isDragging.current = true
-    //     }
-    //     setPosition({ x: data.x, y: data.y })
-    //   }}
-    // >
-    //   {renderPopover()}
-    // </Rnd>
   )
 }
 

@@ -1,6 +1,6 @@
 import { FC } from 'react'
 import Layout from '../../layout'
-import { Sidebar } from '../sidebar'
+import { Sidebar } from '../../layout/sidebar'
 
 interface Props {
   children?: React.ReactNode

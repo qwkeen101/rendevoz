@@ -256,7 +256,6 @@ export class DockTabs extends React.PureComponent<Props, any> {
   }
 
   render(): React.ReactNode {
-    console.log('render tabs')
     const { group, tabs, activeId } = this.props.panelData
     const tabGroup = this.context.getGroup(group)
     let { animated } = tabGroup

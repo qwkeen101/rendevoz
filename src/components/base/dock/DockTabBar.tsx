@@ -30,7 +30,6 @@ export const DockTabBar = memo((props: DockTabBarProps) => {
   const [isTopRight, setIsTopRight] = useState(false)
   useLayoutEffect(() => {
     const bar = ref.current
-    console.log('sss')
     const bounding = bar?.getBoundingClientRect()
     if (bounding) {
       const { top, left, width, right } = bounding

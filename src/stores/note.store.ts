@@ -8,7 +8,16 @@ import { useMemo } from 'react'
 import { INote } from '~/typings/data'
 import BaseStore from './base.store'
 
+const { orderedData } = BaseStore
+
 const notesAtom = atom(new Map<number, INote>())
+
+const allNotesAtom = atom(get => orderedData(get(notesAtom)))
+
+const undeletedNotesAtom = atom(get => get(allNotesAtom).filter(i => !i.deleted))
+
+export const pinnedNotesAtom = atom(get => get(undeletedNotesAtom).filter(i => i.pinned))
+
 const useNoteStore = () => {
   const [notes, setNotes] = useAtom(notesAtom, GlobalScope)
   const latestNotes = useLatest(notes)
@@ -20,7 +29,7 @@ const useNoteStore = () => {
   const getAllNotes = () => {
     return noteDb.toArray().then(data => setNotes(new Map(data.map(i => [i.id, i]))))
   }
-  const addNote = (note: INote) => {
+  const addNote = (note: Partial<INote>) => {
     const newNote: INote = {
       ...note,
       createdAt: Date.now(),
@@ -124,8 +133,8 @@ const useNoteStore = () => {
         plainText: i.plain
       }
     }))
-    const importIntoSearch = bulkImportIntoSearchDb(searchItems)
-    return Promise.all([saveBlocks, saveNoteItem, importIntoSearch])
+    // const importIntoSearch = bulkImportIntoSearchDb(searchItems)
+    return Promise.all([saveBlocks, saveNoteItem])
   }
   const getNoteAndBlocks = (noteId: number) => {
     return noteDb.get(noteId).then(note => {

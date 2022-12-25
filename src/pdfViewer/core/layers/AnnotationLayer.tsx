@@ -21,9 +21,7 @@ const AnnotationLayer: FC<AnnotationLayerProps> = ({ page, width, height, scale,
     })
   }, [])
   const clonedViewport = useMemo(() => viewport.clone({ dontFlip: true }), [viewport])
-  useEffect(() => {
-    console.log('viewport change')
-  },[viewport])
+
   return (
     <div
       style={{
@@ -33,11 +31,12 @@ const AnnotationLayer: FC<AnnotationLayerProps> = ({ page, width, height, scale,
         position: 'relative',
         pointerEvents: 'none'
       }}
+      role="annotation-layer"
     >
       {annotations
         ?.filter(i => !i?.parentId)
-        .map(i => (
-          <Annotation {...i} page={page} viewport={clonedViewport} renderAnnotation={renderAnnotation}/>
+        .map((i, idx) => (
+          <Annotation key={idx} {...i} page={page} viewport={clonedViewport} renderAnnotation={renderAnnotation}/>
         ))}
     </div>
   )

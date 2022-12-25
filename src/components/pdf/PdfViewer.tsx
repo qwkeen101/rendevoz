@@ -25,6 +25,7 @@ import useLabelStore from '@/stores/label.store'
 import useLatest from '@/hooks/utils/useLatest'
 import produce from 'immer'
 import useCurrentDocument from '@/hooks/components/useCurrentDocument'
+import usePdfDrag from './hooks/usePdfDrag'
 
 // todo: canvas change render text & background color
 // CanvasRenderingContext2D.prototype.fillText = (function () {
@@ -65,7 +66,7 @@ interface PdfViewerProps {
 export const PdfViewer: FC<PdfViewerProps> = ({ fileUrl, document }) => {
   const [pdfInfo, setPdfInfo] = usePdfInfo()
   const [pdfNote, setPdfNote] = usePdfNote()
-  const [,setCurrentDocument] = useCurrentDocument()
+  const [, setCurrentDocument] = useCurrentDocument()
   const latestPdfInfo = useLatest(pdfInfo)
   const latestPdfNote = useLatest(pdfNote)
   const latestDocument = useLatest(document)
@@ -73,16 +74,16 @@ export const PdfViewer: FC<PdfViewerProps> = ({ fileUrl, document }) => {
   const [textLayerVisible, setTextLayerVisible] = useState(true)
   const [contextMenuVisible, setContextMenuVisible] = useState(false)
   const pdfViewRef = useRef<LayoutFunctions>(null)
-  const [editorVisible, setEditorVisible] = useEditorVisible()
-  const [translateVisible, setTranslateVisible] = useState(false)
   const { updateDocument } = useDocumentStore()
   const { getLabelsByDocumentId, bulkInsertLabel } = useLabelStore()
   // ref to store pdf viewer instance
-  const viewerBoxRef = useRef<HTMLDivElement>(null)
+  const viewboxRef = useRef<HTMLDivElement>(null)
   // ref to store pdf document
   const documentRef = useRef<PDFDocumentProxy>()
   // context event emitter
   const emitter = useEventEmitter()
+
+  usePdfDrag(viewboxRef.current)
   useEffect(() => {
     console.log(document?.name)
   })
@@ -119,31 +120,13 @@ export const PdfViewer: FC<PdfViewerProps> = ({ fileUrl, document }) => {
     }
   }, [document?.id])
   useEffect(() => {
-    viewerBoxRef.current?.addEventListener('contextmenu', handleOpenMenu)
+    viewboxRef.current?.addEventListener('contextmenu', handleOpenMenu)
     return () => {
-      viewerBoxRef.current?.removeEventListener('contextmenu', handleOpenMenu)
+      viewboxRef.current?.removeEventListener('contextmenu', handleOpenMenu)
     }
   })
 
   const eventHandler = new PdfEventHandler()
-  eventHandler.on('textSelect', data => {
-    console.log(data.selectedText)
-    // setPdfHighlights({
-    //   type: 'insert',
-    //   value: {
-    //     page: data.pageIndex,
-    //     selectedText: data.selectedText,
-    //     id: Id.getId(),
-    //     rects: data.rects?.map(r => ({
-    //       percentageTop: r.percentageTop,
-    //       percentageHeight: r.percentageHeight,
-    //       percentageLeft: r.percentageLeft,
-    //       percentageWidth: r.percentageWidth
-    //     }))
-    //   }
-    // })
-    // console.log(data)
-  })
   eventHandler.on('jumpToDest', data => {
     if (typeof data.dest === 'string') {
       documentRef.current?.getDestination(data.dest).then(dest => {
@@ -166,18 +149,7 @@ export const PdfViewer: FC<PdfViewerProps> = ({ fileUrl, document }) => {
   })
 
   const renderPage = useCallback(
-    (props: RenderPageProps) => (
-      <PdfPage
-        key={props.pageIndex}
-        {...props}
-        enableCrop
-        textLayerVisible={textLayerVisible}
-        // onCanvasLayerDragEnd={e => {}}
-        // onCanvasLayerDrag={e => {}}
-        // onCanvasLayerClick={e => {}}
-        // onTextSelectionClick={e => {}}
-      />
-    ),
+    (props: RenderPageProps) => <PdfPage key={props.pageIndex} {...props} enableCrop textLayerVisible={textLayerVisible} />,
     []
   )
   const handleRangeChange = useMemoizedFn((range?: Range) => {
@@ -186,32 +158,8 @@ export const PdfViewer: FC<PdfViewerProps> = ({ fileUrl, document }) => {
       setPdfInfo({ ...pdfInfo, readProgress: progress, lastReadPage: range.startIndex })
     }
   })
-  const ToolbarElement = () => {
-    return (
-      <Toolbar
-        onOpenEditorClick={() => {
-          setEditorVisible(!editorVisible)
-        }}
-        onZoomInClick={() => {}}
-        onZoomOutClick={() => {}}
-        onOpenTranslateClick={() => {
-          setTranslateVisible(!translateVisible)
-        }}
-        onExtractOutline={() => {
-          documentRef.current?.getOutline().then(outlines => {
-            outlines.forEach(outline => traverseOutline(outline, 0))
-          })
-        }}
-      />
-    )
-  }
+
   function traverseOutline(outline: PdfJs.Outline, depth: number) {
-    emitter.emit('editor', {
-      type: 'insertNode',
-      data: {
-        element: HeadingElementBuilder.build({ level: depth, title: outline.title, dest: outline.dest })
-      }
-    })
     if (outline.items.length > 0) {
       outline.items.forEach(o => traverseOutline(o, depth + 1))
     }
@@ -242,7 +190,7 @@ export const PdfViewer: FC<PdfViewerProps> = ({ fileUrl, document }) => {
         }}
         className={styles.flexColumnWrapper}
       >
-        <div className={styles.viewerBox}>
+        <div ref={viewboxRef} className={styles.viewerBox}>
           {fileUrl && (
             <Viewer
               onDocumentLoaded={doc => (documentRef.current = doc)}

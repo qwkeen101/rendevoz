@@ -1,9 +1,9 @@
 import { useMemoizedFn } from '@/hooks'
 import classNames from 'classnames'
 import { PanInfo, motion, animate } from 'framer-motion'
-import { FC, useRef, useState } from 'react'
+import { FC, memo, useRef, useState } from 'react'
 import { Path } from 'slate'
-import useIsDragging from './hooks/useIsDragging'
+import useIsDragging, { useIsDraggingDivider } from './hooks/useIsDragging'
 import styles from './index.module.less'
 
 type DividerProps = {
@@ -11,8 +11,9 @@ type DividerProps = {
   onDragEnd: (previousColumnWidthRatio: number, previousColumnPath: Path, nextColumnWidthRatio: number, nextColumnPath: Path) => void
   currentPath: Path
 }
-const Divider: FC<DividerProps> = ({ onDragEnd, onDragStart, currentPath }) => {
+const Divider: FC<DividerProps> = memo(({ onDragEnd, onDragStart, currentPath }) => {
   const [isDragging] = useIsDragging()
+  const [isDraggingDivider] = useIsDraggingDivider()
   const dividerRef = useRef<HTMLDivElement>(null)
   const widthRef = useRef(null)
   const [isDraggingHandle, setIsDraggingHandle] = useState(false)
@@ -21,6 +22,7 @@ const Divider: FC<DividerProps> = ({ onDragEnd, onDragStart, currentPath }) => {
   const prevNextColumnAnim = useRef()
   const handleDragStart = (e: MouseEvent) => {
     if (isDragging) return
+    if (isDraggingDivider) return
     setIsDraggingHandle(true)
     onDragStart?.()
     const divider = dividerRef.current
@@ -60,8 +62,8 @@ const Divider: FC<DividerProps> = ({ onDragEnd, onDragStart, currentPath }) => {
   }
   const handleDragEnd = useMemoizedFn((e: MouseEvent) => {
     widthRef.current = undefined
-    prevNextColumnAnim.current.stop()
-    prevPrevColumnAnim.current.stop()
+    prevNextColumnAnim.current?.stop()
+    prevPrevColumnAnim.current?.stop()
     setIsDraggingHandle(false)
     const divider = dividerRef.current
     if (divider) {
@@ -104,5 +106,5 @@ const Divider: FC<DividerProps> = ({ onDragEnd, onDragStart, currentPath }) => {
       </motion.div>
     </>
   )
-}
+})
 export default Divider

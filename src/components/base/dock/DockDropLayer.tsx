@@ -56,6 +56,7 @@ export class DockDropSquare extends React.PureComponent<DockDropSquareProps, Doc
       for (let i = 0; i < depth; ++i) {
         target = target.parent
       }
+      console.log('drop')
       this.context.dockMove(source, target, direction)
     }
   }

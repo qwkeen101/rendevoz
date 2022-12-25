@@ -26,17 +26,19 @@ import TitleBar from './components/titlebar'
 import Initializer from './Initializer'
 import './global.less'
 import GlobalGraph from './components/graph/GlobalGraph'
+import GlobalDragOverlay from './components/globalDragOverlay'
 
 const App = () => {
   return (
     <JotaiProvider scope={GlobalScope}>
       <Toaster />
       <Initializer />
-      <TitleBar />
       <GlobalGraph />
       <Router>
+        <TitleBar />
         <Routes />
       </Router>
+      <GlobalDragOverlay />
     </JotaiProvider>
   )
 }

@@ -124,12 +124,12 @@ class DockPortalManager extends React.PureComponent<LayoutProps, LayoutState> {
   }
 
   /** @ignore */
-  getTabCache(id: string, owner: any): TabPaneCache {
+  getTabCache(id: string, owner: any): TabPaneCache | undefined {
     let cache = this._caches.get(id)
     if (!cache) {
       const div = document.createElement('div')
       div.className = 'dock-pane-cache'
-      cache = { div, id, owner }
+      cache = { div, id, owner, scrollPreserver: new Map() }
       this._caches.set(id, cache)
     } else {
       cache.owner = owner

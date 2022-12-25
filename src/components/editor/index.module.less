@@ -89,12 +89,34 @@
     max-width: 100%;
     min-width: 0;
     width: 900px;
+    margin-top: 20px;
     margin-bottom: 10px;
+    > div{
+        &:first-child{
+            > div{
+                transition: opacity 0.2s ease;
+                opacity: 0;
+            }
+        }
+    }
+    &:hover{
+        > div{
+            &:first-child{
+                > div{
+                    opacity: 1;
+                }
+            }
+        }
+    }
 }
 .editorWrapper{
     max-width: 100%;
     min-width: 0;
-    width: 900px
+    width: 900px;
+    position: relative;
+    outline: none;
+    white-space: pre-wrap;
+    word-wrap: break-word;
 }
 .Editor{
     .iosStyleScrollBar;
@@ -137,11 +159,12 @@
     }
 }
 .InnerEditorWrapper{
-    min-height: 100%;
     max-width: 100%;
     width: fit-content;
     display: flex;
     flex-direction: column;
+    padding-left: 50px;
+    padding-right: 20px;
     align-items: center;
     *{
         ::selection{
@@ -163,8 +186,6 @@
     width: 100%;
     overflow-x: hidden;
     overflow-y: auto;
-    padding-left: 20px;
-    padding-right: 20px;
     position: relative;
     display: flex;
     flex-direction: column;

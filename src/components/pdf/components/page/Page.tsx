@@ -40,37 +40,27 @@ const PdfPage: React.FC<PdfPageProps> = ({
   canvasLayer,
   annotationLayer,
   onCanvasLayerClick,
-  onTextSelectionClick
+  onTextSelectionClick,
+  pageFunctionRef
 }) => {
   const thisRef = useRef<HTMLDivElement>(null)
   const boxRef = useRef<Box>()
   const labelContainerRef = useRef<HTMLDivElement>(null)
-  const contextMenuRef = useRef<ContextMenuRef>(null)
-  const pdfLabels = useAtomValue(PdfLabelsAtoms)
   const [cleanMode] = useCleanMode()
-  const [pdfNote] = usePdfNote()
   const [thoughts, dispatchThoughts] = usePdfLabels(pageIndex, 'thought')
   const [highlights, dispatchHighlights] = usePdfLabels(pageIndex, 'highlight')
-  const [popoverVisible, setPopoverVisible] = useState(false)
   const [textSelectionToolbarVisible, setTextSelectionToolbarVisible] = useState(false)
-  const intersection = useIntersection(thisRef, { root: null, rootMargin: '1px', threshold: 0 })
-  const emitter = useEventEmitter()
-  const handler = new PdfEventHandler()
+  const intersection = useIntersection(labelContainerRef, { root: null, rootMargin: '1px', threshold: 0 })
   const [textSelect, setTextSelect] = useState<TextSelectEvent>()
-  useIsomorphicLayoutEffect(() => {
-    emitter.addListener('pdf', handler)
-    return () => emitter.removeListener('pdf', handler)
-  }, [])
-  handler.on('textSelect', data => {
-    if (data.pageIndex === pageIndex) {
-      if (data.isCancel) {
-        setTextSelectionToolbarVisible(false)
-      } else {
-        setTextSelect(data)
-        setTextSelectionToolbarVisible(true)
-      }
+  if (pageFunctionRef.current) {
+    pageFunctionRef.current.onTextSelected = e => {
+      setTextSelect(e)
+      setTextSelectionToolbarVisible(true)
     }
-  })
+    pageFunctionRef.current.onTextSelectEnd = () => {
+      setTextSelectionToolbarVisible(false)
+    }
+  }
 
   const handleSelectionChange = useCallback((box: Box) => {
     onCanvasLayerDrag(box)
@@ -104,61 +94,11 @@ const PdfPage: React.FC<PdfPageProps> = ({
 
   return (
     <>
-      {thisRef.current && (
+      {/* {thisRef.current && (
         <DragSelection onSelectionEnd={handleSelectionEnd} onSelectionChange={handleSelectionChange} eventsElement={thisRef.current} />
-      )}
-      <div
-        style={{ position: 'absolute', width: '100%', height: '100%' }}
-        ref={thisRef}
-        onClick={e => {
-          onCanvasLayerClick(e)
-        }}
-      >
-        {canvasLayer}
-      </div>
-      {textLayerVisible && (
-        <ContextMenu
-          ref={contextMenuRef}
-          content={
-            <WithBorder borderRadius={5} style={{ backgroundColor: 'white' }}>
-              <PdfContextMenu
-                onAddThought={mousePos => {
-                  const id = Id.getId()
-                  console.log(pdfLabels.length)
-                  dispatchThoughts({
-                    type: 'insert',
-                    value: {
-                      id: id,
-                      type: 'thought',
-                      page: pageIndex,
-                      rect: [mousePos.relX * 100, mousePos.relY * 100],
-                      targetNotesDesitinations: new Map(),
-                      content: '',
-                      createTime: useTime(),
-                      modifyTime: useTime()
-                    }
-                  })
-                  setTimeout(() => {
-                    emitter.emit('pdf', { type: 'addThought', data: { id: id } })
-                  }, 0)
-                }}
-                onShouldCloseContextMenu={() => contextMenuRef.current?.closeContextMenu()}
-              />
-            </WithBorder>
-          }
-        >
-          <div
-            style={{ position: 'absolute', width: '100%', height: '100%' }}
-            onClick={() => {
-              if (popoverVisible) {
-                setPopoverVisible(false)
-              }
-            }}
-          >
-            {textLayer}
-          </div>
-        </ContextMenu>
-      )}
+      )} */}
+      {canvasLayer}
+      {textLayer}
       {annotationLayer}
       <div
         style={{
@@ -170,49 +110,41 @@ const PdfPage: React.FC<PdfPageProps> = ({
           zIndex: 999,
           pointerEvents: 'none'
         }}
+        ref={labelContainerRef}
+        role="custom-element-layer"
       >
-        <div
-          style={{
-            width: '100%',
-            height: '100%',
-            position: 'relative',
-            pointerEvents: 'none'
-          }}
-          ref={labelContainerRef}
-        >
-          {intersection?.isIntersecting && !cleanMode && (
-            <>
-              {thoughts?.map(i => (
-                <ThoughtLabel
-                  key={`${i.toString()}`}
-                  thoughtAtom={i}
-                  dragBoundRef={labelContainerRef}
-                  onDelete={() => {
-                    dispatchThoughts({ type: 'remove', atom: i })
-                  }}
-                />
-              ))}
-              {highlights.map(i => (
-                <HighlightLabel key={`${i}`} highlightAtom={i} onDelete={() => dispatchHighlights({ type: 'remove', atom: i })} />
-              ))}
-            </>
-          )}
-        </div>
+        {intersection?.isIntersecting && !cleanMode && (
+          <>
+            {thoughts?.map(i => (
+              <ThoughtLabel
+                key={`${i.toString()}`}
+                thoughtAtom={i}
+                dragBoundRef={labelContainerRef}
+                onDelete={() => {
+                  dispatchThoughts({ type: 'remove', atom: i })
+                }}
+              />
+            ))}
+            {highlights.map(i => (
+              <HighlightLabel key={`${i}`} highlightAtom={i} onDelete={() => dispatchHighlights({ type: 'remove', atom: i })} />
+            ))}
+          </>
+        )}
       </div>
       <AnimatePopover
         padding={10}
         visible={textSelectionToolbarVisible}
-        containerStyle={{ zIndex: 9999 }}
+        containerStyle={{ zIndex: '9999' }}
         content={
           <WithBorder>
             <TextSelectionToolbar
               onHighlight={color => {
                 setTextSelectionToolbarVisible(false)
-                emitter.emit('pdf', { type: 'cancelTextSelect' })
+                pageFunctionRef.current?.clearTextLayer?.()
                 dispatchHighlights({
                   type: 'insert',
                   value: {
-                    page: textSelect?.pageIndex,
+                    page: pageIndex,
                     selectedText: textSelect?.selectedText,
                     type: 'highlight',
                     id: Id.getId(),

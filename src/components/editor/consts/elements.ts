@@ -10,6 +10,7 @@ export const BasicElements = {
 
 export const InlineElements = {
   MetaObject: 'metaObject',
+  Emoji: 'emoji',
   Link: 'link'
 }
 export const BlockElements = {
@@ -19,4 +20,8 @@ export const MediaElements = {
   Image: 'image',
   Video: 'video',
   Audio: 'audio'
+}
+
+export const OuterElements = {
+  BookHighlight: 'book-highlight'
 }

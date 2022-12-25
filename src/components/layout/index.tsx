@@ -6,6 +6,7 @@ import { Helmet } from 'react-helmet'
 import { useLocation } from 'react-router-dom'
 import Container from '../base/container'
 import DockLayout, { LayoutData } from '../base/dock'
+import { DockTabPaneContext } from '../base/dock/DockTabPane'
 import LayoutManager from './layoutManager'
 import routeToComponent from './routeToComponent'
 
@@ -29,17 +30,20 @@ const initialLayout: LayoutData = {
     ]
   }
 }
-export const LayoutContext = createContext<LayoutManager | null>(null)
-const Layout: FC<LayoutProps> = ({ sidebar, children }) => {
+export let GlobalLayout: LayoutManager | null = null
+const Layout: FC<LayoutProps> = ({ sidebar }) => {
   const [sidebarWidth] = useSidebarWidth()
   const [layout, setLayout] = useState(initialLayout)
   const location = useLocation()
   const layoutManager = useMemo(() => new LayoutManager(), [])
   const emitter = useEventEmitter()
+  GlobalLayout = layoutManager
+
   useEffect(() => {
     layoutManager.registerEmitter(emitter)
     layoutManager.registerLayout(initialLayout)
     layoutManager.onLayoutChange(layout => {
+      console.log(layout)
       setLayout(layout)
     })
   }, [])
@@ -48,14 +52,16 @@ const Layout: FC<LayoutProps> = ({ sidebar, children }) => {
     layoutManager.registerLayout(layout)
   }
   useEffect(() => {
-    const component = routeToComponent(location.pathname)
+    const component = routeToComponent(location.pathname, location.search)
     if (component) {
       const id = Id.getStrId()
       const newLayout = layoutManager.registerNewTab({
         content: (
-          <div style={{ width: '100%', height: '100%', overflow: 'hidden' }} key={id}>
-            {component}
-          </div>
+          <DockTabPaneContext.Provider value={{ currentTabId: id }}>
+            <div style={{ width: '100%', height: '100%', overflow: 'hidden' }} key={id}>
+              {component}
+            </div>
+          </DockTabPaneContext.Provider>
         ),
         title: location.pathname,
         id
@@ -64,7 +70,7 @@ const Layout: FC<LayoutProps> = ({ sidebar, children }) => {
     }
   }, [location])
   return (
-    <Container auto column style={{ maxHeight: 'calc( 100vh - 30px )', minHeight: 'calc( 100vh - 30px )', overflowY: 'scroll' }}>
+    <Container auto column style={{ height: '100vh', overflowY: 'auto' }}>
       <Helmet>
         <title>Rendevoz</title>
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -73,17 +79,15 @@ const Layout: FC<LayoutProps> = ({ sidebar, children }) => {
         {sidebar}
         <Container style={{ marginLeft: sidebarWidth, transition: 'margin-left 0.3s ease-out' }} auto>
           {layout && (
-            <LayoutContext.Provider value={layoutManager}>
-              <DockLayout
-                style={{
-                  position: 'absolute',
-                  inset: 0
-                }}
-                dropMode="edge"
-                onLayoutChange={handleLayoutChange}
-                layout={layout}
-              ></DockLayout>
-            </LayoutContext.Provider>
+            <DockLayout
+              style={{
+                position: 'absolute',
+                inset: 0
+              }}
+              dropMode="edge"
+              onLayoutChange={handleLayoutChange}
+              layout={layout}
+            ></DockLayout>
           )}
         </Container>
       </Container>

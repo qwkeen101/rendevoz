@@ -1,7 +1,6 @@
 import * as d3 from 'd3'
 import { GraphNode } from './types/node'
 import { GraphEdge } from './types/edge'
-import { getIntersectedPointsOfLineAndCircle } from './utils/getIntersectPoints'
 import { curveBasis } from 'd3'
 import { getMarkerId } from './utils/getMarkerId'
 import { MarkerColor } from './consts/markerColors'
@@ -15,8 +14,11 @@ class D3GraphManager {
   public currentHoverNode: GraphNode | null = null
   public originNodes: any[] | null = null
   public originEdges: any[] | null = null
+  private nodesMap: Map<number, GraphNode> | null = null
+  private edgesMap: Map<number, GraphEdge> | null = null
   private linkStartPoint = null
-
+  // edge to edge map
+  public oppositeEdgesMap = new Map<number, GraphEdge>()
   public isAddingEdge = false
   public newAddedEdge: GraphEdge | null = null
   private changeHandlerSet: Set<(nodes: GraphNode[], edges: GraphEdge[]) => void> = new Set()
@@ -25,6 +27,7 @@ class D3GraphManager {
   private ID_TO_NODE_ELEMENT_MAP = new Map<number, SVGElement>()
   private ID_TO_EDGE_ELEMENT_MAP = new Map<number, SVGElement>()
   private ID_TO_EDGE_LABEL_ELEMENT_MAP = new Map<number, SVGElement>()
+
   public registerHandler = (name: string, handler: any) => {
     if (name === 'change') {
       this.changeHandlerSet.add(handler)
@@ -98,7 +101,6 @@ class D3GraphManager {
         this.originEdges = this.originEdges?.filter(
           e => !(sourceToTargetEdges.some(i => i.id === e.id) || targetToSourceEdges.some(i => i.id === e.id))
         )
-        this.N = d3.map(this.originNodes, n => n.id).map(intern)
         const clonedNodes = structuredClone(this.originNodes)
         const clonedEdges = structuredClone(this.originEdges)
         this.changeHandlerSet.forEach(handler => handler(clonedNodes, clonedEdges))
@@ -123,33 +125,10 @@ class D3GraphManager {
     this.newAddedEdge = edge
   }
   public updateLayout = (reheat?: boolean, reinitialize?: boolean) => {
-    this.simulateForceLayout(reheat, reinitialize)
+    this.simulateLayout(reheat, reinitialize)
   }
-  public startAddEdge = (sourceNode: SVGGElement) => {
-    const bounding = (
-      sourceNode.querySelector('image') ||
-      sourceNode.querySelector('circle') ||
-      sourceNode.querySelector('foreignObject')
-    ).getBoundingClientRect()
-    const viewportBounding = document.getElementById('viewport')?.getBoundingClientRect()
-    this.linkStartPoint = {
-      x: Number(String((bounding.x + 20 - viewportBounding?.x) / (this.transform?.k || 1))),
-      y: Number(String((bounding.y + 20 - viewportBounding?.y) / (this.transform?.k || 1)))
-    }
-  }
-  public endAddEdge = () => {
-    this.isAddingEdge = false
-    d3.select('#addLinkLine')
-      .attr('opacity', 1)
-      .transition()
-      .duration(200)
-      .attr('opacity', 0)
-      .on('end', () => {
-        d3.select('#addLinkLine').attr('d', null).attr('opacity', 1)
-      })
-  }
-  private simulateForceLayout = (reheat?: boolean, reinitialize?: boolean) => {
-    if (!this.originNodes || this.originNodes.length === 0) return
+  private simulateLayout = (reheat?: boolean, reinitialize?: boolean) => {
+    if (this.originNodes?.length === 0 || !this.originNodes) return
     if (this.d3Simulation && !reinitialize) {
       this.d3Simulation
         .nodes(this.originNodes)
@@ -190,35 +169,43 @@ class D3GraphManager {
           const clonedEdges = structuredClone(this.originEdges)
           this.changeHandlerSet.forEach(handler => handler?.(clonedNodes, clonedEdges))
         })
-    } else {
-      console.error('No edges or nodes prepared!')
     }
+  }
+
+  public startAddEdge = (sourceNode: SVGGElement) => {
+    const bounding = (
+      sourceNode.querySelector('image') ||
+      sourceNode.querySelector('circle') ||
+      sourceNode.querySelector('foreignObject')
+    ).getBoundingClientRect()
+    const viewportBounding = document.getElementById('viewport')?.getBoundingClientRect()
+    this.linkStartPoint = {
+      x: Number(String((bounding.x + 20 - viewportBounding?.x) / (this.transform?.k || 1))),
+      y: Number(String((bounding.y + 20 - viewportBounding?.y) / (this.transform?.k || 1)))
+    }
+  }
+  public endAddEdge = () => {
+    this.isAddingEdge = false
+    d3.select('#addLinkLine')
+      .attr('opacity', 1)
+      .transition()
+      .duration(200)
+      .attr('opacity', 0)
+      .on('end', () => {
+        d3.select('#addLinkLine').attr('d', null).attr('opacity', 1)
+      })
   }
 
   private ticked = () => {
     if (this.originEdges && this.originNodes) {
       this.originEdges.forEach(edge => {
         const path = this.drawEdge(edge, edge.source.x, edge.source.y, edge.target.x, edge.target.y)
-        this.ID_TO_EDGE_ELEMENT_MAP.has(edge.id) && d3.select(this.ID_TO_EDGE_ELEMENT_MAP.get(edge.id)!).attr('d', path)
-        const oppositeEdge = this.originEdges?.find(i => i.source?.id === edge.targetId && i.target?.id === edge.sourceId)
-        let offsetLabelRatio = 1
-        if (oppositeEdge) {
-          if (oppositeEdge.source?.id > edge.sourceId) {
-            offsetLabelRatio = -1.5
-          } else {
-            offsetLabelRatio = 2.5
-          }
-        }
-
+        this.ID_TO_EDGE_ELEMENT_MAP.get(edge.id)?.setAttribute('d', path)
         const [centerX, centerY] = [(edge.source.x + edge.target.x) / 2, (edge.source.y + edge.target.y) / 2]
-        this.ID_TO_EDGE_LABEL_ELEMENT_MAP.has(edge.id) &&
-          d3
-            .select(this.ID_TO_EDGE_LABEL_ELEMENT_MAP.get(edge.id)!)
-            .attr('transform', `translate(${centerX + 5 * offsetLabelRatio},${centerY + 20 * offsetLabelRatio})`)
+        this.ID_TO_EDGE_LABEL_ELEMENT_MAP.get(edge.id)?.setAttribute('transform', `translate(${centerX + 5},${centerY + 20})`)
       })
       this.originNodes.forEach(node => {
-        this.ID_TO_NODE_ELEMENT_MAP.has(node.id) &&
-          d3.select(this.ID_TO_NODE_ELEMENT_MAP.get(node.id)!).attr('transform', `translate(${node.x},${node.y})`)
+        this.ID_TO_NODE_ELEMENT_MAP.get(node.id)?.setAttribute('transform', `translate(${node.x},${node.y})`)
       })
     }
   }
@@ -244,7 +231,6 @@ class D3GraphManager {
         .attr('fill', 'none')
         .attr('stroke-width', 2)
         .attr('marker-end', `url(#${getMarkerId('end', MarkerColor.EMPHASIS)})`)
-      // this.drawLineSelection?.attr('d', path.toString()).attr('stroke', 'black').attr('fill', 'none').attr('stroke-width', 1)
     }
   }
   private globalClickHandler = (e: MouseEvent) => {
@@ -274,17 +260,16 @@ class D3GraphManager {
     const dx = (targetCircleCenterX - sourceCircleCenterX) * ratio
     const dy = (targetCircleCenterY - sourceCircleCenterY) * ratio
     const curve = d3.line().curve(curveBasis)
-    let offset = 30
+
     // check out whether double direction link
-    if (this.originEdges) {
-      const oppositeEdge = this.originEdges.find(i => i.source?.id === edge.targetId && i.target?.id === edge.sourceId)
-      if (oppositeEdge && oppositeEdge.source?.id > edge.sourceId) offset = -30
-    }
     const finalSourceX = sourceCircleCenterX + dx
     const finalSourceY = sourceCircleCenterY + dy
     const finalTargetX = targetCircleCenterX - dx
     const finalTargetY = targetCircleCenterY - dy
 
+    const oppositeEdge = this.oppositeEdgesMap.get(edge.id)
+    let offset = 30
+    if (oppositeEdge && oppositeEdge.source?.id > edge.sourceId) offset = -30
     const points = [
       [finalSourceX, finalSourceY],
       [(finalSourceX + finalTargetX) / 2, (finalSourceY + finalTargetY) / 2 + offset],
@@ -292,9 +277,6 @@ class D3GraphManager {
     ]
     return curve(points)
   }
-}
-function intern(value) {
-  return value !== null && typeof value === 'object' ? value.valueOf() : value
 }
 
 export default D3GraphManager

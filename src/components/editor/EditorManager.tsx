@@ -19,7 +19,6 @@ import Modal from '../base/modal'
 import { useMemoizedFn, useSetting, useToggle } from '@/hooks'
 import { css } from '@emotion/css'
 import produce from 'immer'
-import { useForceUpdate } from 'framer-motion'
 
 const EditorManagerMenuPopover = ({ panel = {} as PanelData, context = {} as DockContext }) => {
   const popoverRef = useRef()

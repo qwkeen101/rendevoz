@@ -15,11 +15,13 @@ interface FormProps {
   onBack?: () => void
   onSubmit?: () => void
   style?: CSSProperties
+  submitText?: string
+  backText?: string
 }
 interface IForm extends FC<FormProps> {
   Item: typeof FormItem
 }
-const InnerForm: FC<FormProps> = ({ children, title, description, onBack, onSubmit, style }) => {
+const InnerForm: FC<FormProps> = ({ children, title, description, onBack, onSubmit, style, backText, submitText }) => {
   const [, setIsSubmitted] = useIsSubmitted()
   const [canSubmit] = useCanSubmit()
   return (
@@ -30,6 +32,8 @@ const InnerForm: FC<FormProps> = ({ children, title, description, onBack, onSubm
         {children}
       </Content>
       <Footer
+        backText={backText}
+        submitText={submitText}
         onBack={onBack}
         onSubmit={() => {
           if (canSubmit) {

@@ -15,7 +15,7 @@ interface CanvasLayerProps {
 }
 
 const CanvasLayer: FC<CanvasLayerProps> = ({ page, width, height, viewport }) => {
-  const canvasRef = useRef<HTMLCanvasElement>()
+  const canvasRef = useRef<HTMLCanvasElement>(null)
   const renderTaskRef = useRef<RenderTask>()
   const renderCanvas = (canvasEle?: HTMLCanvasElement) => {
     if (canvasEle) {
@@ -58,17 +58,6 @@ const CanvasLayer: FC<CanvasLayerProps> = ({ page, width, height, viewport }) =>
     const canvasEle = canvasRef.current
     renderCanvas(canvasEle)
   }, [viewport])
-  return (
-    <div
-      style={{
-        height,
-        width,
-        overflow: 'hidden',
-        background: 'white'
-      }}
-    >
-      <canvas ref={canvasRef} />
-    </div>
-  )
+  return <canvas ref={canvasRef} style={{ position: 'absolute' }} role="canvas-layer" />
 }
 export default memo(CanvasLayer)

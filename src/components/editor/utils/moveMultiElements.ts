@@ -1,6 +1,6 @@
 import Id from '@/utils/id'
 import { Descendant, Editor, Element, Path, PathRef, Transforms } from 'slate'
-import { ReactEditor } from 'slate-react'
+import { ReactEditor } from '../slate-react'
 import { CustomEditor } from '../types'
 import moveSingleElement from './moveSingleElement'
 

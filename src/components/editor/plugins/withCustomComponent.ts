@@ -144,6 +144,10 @@ const withCustomComponent = (editor: CustomEditor) => {
         const currentPrevious = Editor.previous(editor, { at: path })
         if (currentPrevious && Point.equals(selection.anchor, start)) {
           const [block, previousPath] = currentPrevious
+          if (Editor.isVoid(editor, block)) {
+            Transforms.removeNodes(editor, { at: path })
+            return
+          }
           if (block.type === 'hole') {
             Transforms.removeNodes(editor, { at: path })
             Transforms.select(editor, Editor.end(editor, previousPath))

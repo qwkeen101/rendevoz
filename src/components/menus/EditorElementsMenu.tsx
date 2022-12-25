@@ -53,6 +53,11 @@ const inline: Element[] = [
     name: InlineElements.MetaObject,
     tooltip: 'Meta object'
   },
+  {
+    icon: 'park-emotion-happy',
+    name: InlineElements.Emoji,
+    tooltip: 'Emoji'
+  }
   // {
   //   icon: 'park-link',
   //   name: InlineElements.Link,
@@ -104,20 +109,20 @@ const EditorElementsMenu = (props: { onAddElement: (blockName: string) => void }
         })}
       >
         {basic.map(b => (
-          <IconItem onClick={() => onAddElement(b.name)} {...b} />
+          <IconItem key={b.name} onClick={() => onAddElement(b.name)} {...b} />
         ))}
       </Content>
       <Title>Inline</Title>
       {inline.map(i => (
-        <Item onClick={() => onAddElement(i.name)} {...i} />
+        <Item key={i.name} onClick={() => onAddElement(i.name)} {...i} />
       ))}
       <Title>Block</Title>
       {block.map(i => (
-        <Item onClick={() => onAddElement(i.name)} {...i} />
+        <Item key={i.name} onClick={() => onAddElement(i.name)} {...i} />
       ))}
       <Title>Media</Title>
       {media.map(i => (
-        <Item onClick={() => onAddElement(i.name)} {...i} />
+        <Item key={i.name} onClick={() => onAddElement(i.name)} {...i} />
       ))}
     </Content>
   )

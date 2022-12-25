@@ -2,7 +2,7 @@ import { Content, Icon } from '@/components/base'
 import { css } from '@emotion/css'
 import { MouseEventHandler } from 'react'
 import { Transforms } from 'slate'
-import { ReactEditor, RenderElementProps, useSlate } from 'slate-react'
+import { ReactEditor, RenderElementProps, useSlate } from '../../slate-react'
 import { ToDoElement } from '../../types/commonElementTypes'
 
 const ToDo = ({ element, children, attributes }: RenderElementProps) => {

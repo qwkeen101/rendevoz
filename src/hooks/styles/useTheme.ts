@@ -11,7 +11,8 @@ const defaultTheme = {
   defaultFontColorLightGrey: '#0000000f',
   defaultFontColorRed: '#e0245e',
   defaultFontColorLightBlue: '#8590ae',
-  defaultButtonHoverBackgroundColor: '#eff0f0'
+  defaultButtonHoverBackgroundColor: '#eff0f0',
+  defaultBorderColorCream: '#eeeae2'
 }
 
 const themeAtomFamily = atomFamily((key: keyof typeof defaultTheme) => atom(defaultTheme[key]))

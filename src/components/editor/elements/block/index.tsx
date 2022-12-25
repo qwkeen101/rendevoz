@@ -1,11 +1,22 @@
-import { useMemoizedFn, useMergedRef } from '@/hooks'
+import { useMemoizedFn, useMergedRef, useUpdateEffect } from '@/hooks'
 import classNames from 'classnames'
-import { FC, memo, useRef, useState, CSSProperties, useEffect, cloneElement, MouseEvent } from 'react'
-import { RenderElementProps, useSlate } from 'slate-react'
+import {
+  FC,
+  memo,
+  useRef,
+  useState,
+  CSSProperties,
+  useEffect,
+  cloneElement,
+  MouseEvent,
+  useCallback,
+  RefObject,
+  useLayoutEffect
+} from 'react'
+import { RenderElementProps, useSlate, useSlateStatic } from '../../slate-react'
 import { CustomElement } from '../../customTypes'
 import { motion, AnimatePresence } from 'framer-motion'
 import styles from './index.module.less'
-import useClickOutside from '@/hooks/utils/useClickOutside'
 import { scrollToTarget } from '../../utils/positions/scroll'
 import { SELECT_AREA_MAP, ID_TO_ELEMENTS_MAP, SELECTED_BLOCKS_MAP } from '../../weakMaps'
 import { getDistanceBetweenPointAndElement } from '@/components/dragReposition/utils/position'
@@ -18,15 +29,32 @@ type BlockProps = {
   type: string
   ratio?: number
   onMouseEnter?: (e: MouseEvent, element: CustomElement) => void
+  onMouseLeave?: (e: MouseEvent, element: CustomElement) => void
+  onMouseMove?: (e: MouseEvent, element: CustomElement) => void
   onNestedListItem?: (isNested: boolean) => void
   element?: CustomElement
   scrollElement?: HTMLDivElement
+  measureElementRef?: RefObject
 }
 const Block: FC<React.DetailedHTMLProps<React.HTMLAttributes<HTMLDivElement>, HTMLDivElement> & BlockProps & RenderElementProps> = memo(
-  ({ scrollElement, blockId, children, ratio, type, attributes, element, onMouseEnter, onNestedListItem, ...rest }) => {
+  ({
+    scrollElement,
+    blockId,
+    children,
+    ratio,
+    type,
+    attributes,
+    element,
+    onMouseEnter,
+    onMouseLeave,
+    onMouseMove,
+    onNestedListItem,
+    ...rest
+  }) => {
     const blockRef = useRef<HTMLDivElement>(null)
     const columnRef = useRef<HTMLDivElement>(null)
-    const editor = useSlate()
+    const editor = useSlateStatic()
+    const idx = editor.children.findIndex(i => i === element)
     const map = ID_TO_ELEMENTS_MAP.get(editor)
     const mergedChildrenRef = useMergedRef(blockRef, attributes.ref)
     const [direction, setDirection] = useState<string>()
@@ -43,15 +71,30 @@ const Block: FC<React.DetailedHTMLProps<React.HTMLAttributes<HTMLDivElement>, HT
         setSelected(false)
       }
     })
+    const handleGlobalClick = useMemoizedFn(e => {
+      if (!isSelecting && selected) {
+        console.log(e)
+        if (!blockRef.current?.contains(e.target)) {
+          setSelected(false)
+        }
+      }
+    })
     useEffect(() => {
+      document.addEventListener('click', handleGlobalClick)
+      return () => {
+        document.removeEventListener('click', handleGlobalClick)
+      }
+    }, [])
+
+    useLayoutEffect(() => {
       if (isSelecting) {
         const block = blockRef.current
         if (block && scrollElement) {
           distanceToScrollElementRef.current = getDistanceBetweenElementAndScrollableElement(block, scrollElement)
         }
       }
-    }, [isSelecting])
-    useEffect(() => {
+    })
+    useUpdateEffect(() => {
       if (selected) {
         const selectedBlocksMap = SELECTED_BLOCKS_MAP.get(editor)
         selectedBlocksMap?.set(blockId, blockRef.current)
@@ -60,11 +103,7 @@ const Block: FC<React.DetailedHTMLProps<React.HTMLAttributes<HTMLDivElement>, HT
         }
       }
     }, [selected])
-    useClickOutside(() => {
-      if (!isSelecting) {
-        setSelected(false)
-      }
-    }, blockRef)
+
     const handleIndicatorChange = useMemoizedFn((direction: string | null, e?: MouseEvent) => {
       if (selected) {
         return false
@@ -105,7 +144,8 @@ const Block: FC<React.DetailedHTMLProps<React.HTMLAttributes<HTMLDivElement>, HT
       width: direction === 'right' || direction === 'left' ? 4 : undefined,
       height: direction === 'top' || direction === 'bottom' ? 4 : undefined,
       backgroundColor: '#8590ae',
-      borderRadius: '3px'
+      borderRadius: '3px',
+      opacity: 0.8
     }
     if (withLine) {
       indicatorStyle.left = withLine.width + 2
@@ -117,7 +157,8 @@ const Block: FC<React.DetailedHTMLProps<React.HTMLAttributes<HTMLDivElement>, HT
       bottom: -4,
       width: withLine?.width - 1,
       borderRadius: '3px',
-      backgroundColor: '#8590aea8',
+      backgroundColor: '#8590ae',
+      opacity: 0.4,
       zIndex: 2
     }
     useEffect(() => {
@@ -139,36 +180,28 @@ const Block: FC<React.DetailedHTMLProps<React.HTMLAttributes<HTMLDivElement>, HT
         columnRef.current.style.width = width
       }
     }, [ratio])
-    const handleMouseEnter = (e: MouseEvent) => {
-      onMouseEnter?.(e, element)
-    }
+    const handleMouseEnter = useCallback(e => onMouseEnter?.(e, element), [onMouseEnter, element])
+    const handleMouseLeave = useCallback(e => onMouseLeave?.(e, element), [onMouseLeave, element])
+    const handleMouseMove = useCallback(e => onMouseMove?.(e, element), [onMouseMove, element])
     const renderChildren = () => (
       <div
         key={blockId}
         {...attributes}
         ref={mergedChildrenRef}
         onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
+        onMouseMove={handleMouseMove}
+        suppressContentEditableWarning
         data-level={element?.level}
-        {...rest}
+        data-index={idx}
         className={classNames(
           type === 'columnList' && styles.ColumnListBlock,
           type === 'column' && styles.ColumnBlock,
           type.startsWith('heading') && styles.HeadingBlock,
           type !== 'column' && type !== 'columnList' && !type.startsWith('heading') && styles.ParagraphBlock
         )}
+        {...rest}
       >
-        <AnimatePresence>
-          {selected && (
-            <motion.div
-              transition={{ duration: 0.2 }}
-              key="selected"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className={styles.Selected}
-            ></motion.div>
-          )}
-        </AnimatePresence>
         {children}
         <AnimatePresence>
           {direction && (
@@ -183,9 +216,20 @@ const Block: FC<React.DetailedHTMLProps<React.HTMLAttributes<HTMLDivElement>, HT
               <div style={indicatorStyle} />
             </motion.div>
           )}
+          {selected && (
+            <motion.div
+              transition={{ duration: 0.2 }}
+              key="selected"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className={styles.Selected}
+            ></motion.div>
+          )}
         </AnimatePresence>
       </div>
     )
+
     return type === 'column'
       ? cloneElement(
           <div></div>,

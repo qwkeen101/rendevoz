@@ -1,9 +1,12 @@
 import { join } from 'path'
 import { Module } from '@nestjs/common'
-import { BrowserWindow, app, shell, protocol,session } from 'electron'
+import { BrowserWindow, app, shell, protocol, session, BrowserView } from 'electron'
 import axios from 'axios'
 import { fileURLToPath } from 'url'
-const HttpsProxyAgent = require('https-proxy-agent')
+import HttpsProxyAgent from 'https-proxy-agent'
+import installExtension, { REACT_DEVELOPER_TOOLS } from 'electron-devtools-installer'
+import path from 'path'
+import os from 'os'
 
 process.env.ELECTRON_DISABLE_SECURITY_WARNINGS = 'true'
 process.env.DIST_ELECTRON = join(__dirname, '../..')
@@ -33,12 +36,14 @@ process.env.PUBLIC = app.isPackaged ? process.env.DIST : join(process.env.DIST_E
             })
           }
         }
-
+        app.commandLine.appendSwitch('disable-site-isolation-trials')
         await app.whenReady()
+
         protocol.registerFileProtocol('rendefile', (req, callback) => {
           const filePath = fileURLToPath('file://' + req.url.slice('rendefile://'.length))
           callback(filePath)
         })
+
         app.on('web-contents-created', (createEvent, contents) => {
           contents.on('new-window', newEvent => {
             console.log("Blocked by 'new-window'")
@@ -51,7 +56,8 @@ process.env.PUBLIC = app.isPackaged ? process.env.DIST : join(process.env.DIST_E
           })
 
           contents.setWindowOpenHandler(({ url }) => {
-            shell.openExternal(url)
+            // shell.openExternal(url)
+            win.webContents.send('newPage', url)
             return { action: 'allow' }
           })
         })
@@ -62,7 +68,8 @@ process.env.PUBLIC = app.isPackaged ? process.env.DIST : join(process.env.DIST_E
             nodeIntegration: false,
             contextIsolation: true,
             preload,
-            devTools: true
+            devTools: true,
+            webSecurity: false
           },
           autoHideMenuBar: true,
           titleBarStyle: 'hidden'
@@ -73,6 +80,22 @@ process.env.PUBLIC = app.isPackaged ? process.env.DIST : join(process.env.DIST_E
         })
         win.on('unmaximize', () => {
           win.webContents.send('winUnmaximized')
+        })
+        const reactDevToolsPath = path.join(
+          os.homedir(),
+          'AppData/Local/Google/Chrome/User Data/Default/Extensions/fmkadmapgofadopljbjfkapdkoienihi/4.27.1_12'
+        )
+        win.webContents.once('dom-ready', () => {
+          session.defaultSession.loadExtension(reactDevToolsPath)
+        })
+        win.webContents.session.webRequest.onHeadersReceived({ urls: ['*://*/*'] }, (d, c) => {
+          if (d.responseHeaders['X-Frame-Options']) {
+            delete d.responseHeaders['X-Frame-Options']
+          } else if (d.responseHeaders['x-frame-options']) {
+            delete d.responseHeaders['x-frame-options']
+          }
+          delete d.responseHeaders['Content-Security-Policy']
+          c({ cancel: false, responseHeaders: d.responseHeaders })
         })
         const wsession = win.webContents.session
 

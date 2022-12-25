@@ -15,11 +15,13 @@ const { orderedData } = BaseStore
 
 const collectionsAtom = atom<Map<number, ICollection>>(new Map())
 
-const allAtom = atom(get => orderedData(get(collectionsAtom)).filter(i => !i.deleted))
+const undeletedCollectionsAtom = atom(get => orderedData(get(collectionsAtom)).filter(i => !i.deleted))
+
+export const pinnedCollectionsAtom = atom(get => get(undeletedCollectionsAtom).filter(i => i.pinned))
 
 const rootCollectionsAtom = atom(get =>
   orderBy(
-    get(allAtom).filter(i => i.parentId === 0),
+    get(undeletedCollectionsAtom).filter(i => i.parentId === 0),
     'updatedAt',
     'desc'
   )
@@ -31,7 +33,7 @@ const useCollectionStore = () => {
   const { getNoteById } = useNoteStore()
   const { add, get, update, remove } = BaseStore
 
-  const all = useAtomValue(allAtom, GlobalScope)
+  const all = useAtomValue(undeletedCollectionsAtom, GlobalScope)
 
   const rootCollections = useAtomValue(rootCollectionsAtom, GlobalScope)
 

@@ -10,10 +10,11 @@ import useDocumentStore from './document.store'
 import BaseStore from './base.store'
 import produce from 'immer'
 import useNoteStore from './note.store'
+import { useMemoizedFn } from '@/hooks'
 
 const { orderedData } = BaseStore
 
-const collectionsAtom = atom<Map<number, ICollection>>(new Map())
+export const collectionsAtom = atom<Map<number, ICollection>>(new Map())
 
 const undeletedCollectionsAtom = atom(get => orderedData(get(collectionsAtom)).filter(i => !i.deleted))
 
@@ -30,7 +31,7 @@ const useCollectionStore = () => {
   const [collections, setCollections] = useAtom(collectionsAtom, GlobalScope)
   const database = useDb('collections')
   const { fetchItemsByIds, getDocumentById, all: documents } = useDocumentStore()
-  const { getNoteById } = useNoteStore()
+  const { getNoteById, all: notes } = useNoteStore()
   const { add, get, update, remove } = BaseStore
 
   const all = useAtomValue(undeletedCollectionsAtom, GlobalScope)
@@ -103,7 +104,7 @@ const useCollectionStore = () => {
     database.put(collection, collectionId)
   }
 
-  const addItemToCollection = (item: ICollectionItem, collectionId: number) => {
+  const addItemToCollection = useMemoizedFn((item: ICollectionItem, collectionId: number) => {
     return getCollectionById(collectionId).then(
       collection => {
         const newCollection = produce(collection, draft => {
@@ -117,8 +118,53 @@ const useCollectionStore = () => {
         console.error("Can't add item to collection,error: ", reject)
       }
     )
-  }
+  })
+  const moveItemBetweenCollections = async (item: ICollectionItem, sourceCollectionId: number, targetCollectionId: number) => {
+    const sourceIsRoot = sourceCollectionId === 1
+    const targetIsRoot = targetCollectionId === 1
+    if (sourceCollectionId === targetCollectionId) return
+    if (sourceIsRoot) {
+      updateCollection({
+        id: item.id,
+        parentId: targetCollectionId
+      })
+      const targetCollection = await getCollectionById(targetCollectionId)
+      const newTarget = produce(targetCollection, draft => {
+        draft.items = draft.items || []
+        draft.items.push(item)
+      })
+      setCollections(update(newTarget, collections))
+      database.put(newTarget)
+    } else {
+      console.log(sourceCollectionId, item, targetCollectionId)
+      const sourceCollection = await getCollectionById(sourceCollectionId)
+      const newSource = produce(sourceCollection, draft => {
+        draft.items = draft.items || []
+        draft.items = draft.items.filter(i => i.id !== item.id)
+      })
+      if (targetIsRoot) {
+        if (item.type === 'collection') {
+          console.log(item)
+          const movingCollection = await getCollectionById(item.id)
+          const newMovingCollection = produce(movingCollection, draft => {
+            draft.parentId = 0
+          })
+          setCollections(update(newSource, update(newMovingCollection, collections)))
+          database.bulkPut([newSource, newMovingCollection])
+          return
+        }
+      }
 
+      const targetCollection = await getCollectionById(targetCollectionId)
+      const newTarget = produce(targetCollection, draft => {
+        draft.items = draft.items || []
+        draft.items.push(item)
+      })
+
+      setCollections(update(newSource, update(newTarget, collections)))
+      database.bulkPut([newSource, newTarget])
+    }
+  }
   const getCollectionById = (collectionId: number): Promise<ICollection> => {
     const collection = get(collectionId, collections)
     if (collection) return Promise.resolve(collection)
@@ -126,7 +172,6 @@ const useCollectionStore = () => {
       database.get(collectionId).then(c => {
         if (c) {
           resolve(c)
-          console.log('333')
           setCollections(add(c, collections))
         } else {
           reject("Collection don't exist!")
@@ -169,8 +214,8 @@ const useCollectionStore = () => {
       id: collection?.id || Id.getId(),
       createdAt: Date.now(),
       updatedAt: Date.now(),
-      parentId: collection?.parentId || 0,
-      documents: collection?.documents || []
+      items: [],
+      parentId: collection?.parentId || 0
     }
     database.put(c)
     setCollections(add(c, collections))
@@ -184,7 +229,8 @@ const useCollectionStore = () => {
       database.put(newCollection)
     }
   }
-  const updateCollection = (newCollection: ICollection) => {
+  const updateCollection = (newCollection: Partial<ICollection>) => {
+    if (!newCollection.id) return
     const originCollection = get(newCollection.id, collections)
     const updatedCollection = {
       ...originCollection,
@@ -234,9 +280,10 @@ const useCollectionStore = () => {
       renameCollection,
       updateCollection,
       updateCollections,
-      deleteCollection
+      deleteCollection,
+      moveItemBetweenCollections
     }),
-    [collections, documents]
+    [collections, documents, notes, getNoteById]
   )
 }
 

@@ -1,6 +1,9 @@
 export interface ElementWithId {
   id: number
 }
+export interface CardElement {
+  cardType: 'wide' | 'slim' | 'line' | 'embedded'
+}
 export interface EmptyText {
   text: string
 }

@@ -1,20 +1,17 @@
-import { Content, WithBorder, Panel, Icon } from '@/components'
+import { Content, Panel, Icon } from '@/components'
 import { PrettyInput } from '@/components/custom/input/pretty'
 import useEventEmitter from '@/events/useEventEmitter'
-import { usePrevious, useToggle } from '@/hooks'
+import { useToggle } from '@/hooks'
 import classNames from 'classnames'
 import produce from 'immer'
 import { FC, useCallback, useState } from 'react'
-import { RenderElementProps, useSelected } from 'slate-react'
-import { ThoughtElement } from '../../customTypes'
+import { RenderElementProps } from 'slate-react'
+import { ThoughtElement } from '../../types/outerElementTypes'
 import styles from './index.module.less'
 
-interface ThoughtProps {}
-const Thought: FC<ThoughtProps & RenderElementProps> = ({ children, element, attributes }) => {
+const Thought: FC<RenderElementProps> = ({ children, element, attributes }) => {
   const emitter = useEventEmitter()
-  const selected = useSelected()
   const thoughtElement = element as ThoughtElement
-  selected && console.log(thoughtElement.id)
   const handleContentChange = useCallback((value: string) => {
     const newElement = produce(thoughtElement, d => {
       d.content = value

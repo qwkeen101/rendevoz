@@ -5,3 +5,7 @@ export const maximizeWindow = () => {
 export const minimizeWindow = () => {
   ipcInstance.send('minimizeWindow')
 }
+
+export const getSourceId = () => {
+  return ipcInstance.send('sourceId')
+}

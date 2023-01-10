@@ -27,6 +27,10 @@ export class AppController {
   public async minimizeWindow() {
     BrowserWindow.getFocusedWindow()?.minimize()
   }
+  @IpcInvoke('sourceId')
+  public getSourceId() {
+    return BrowserWindow.getFocusedWindow().getMediaSourceId()
+  }
   @IpcInvoke('msg')
   public async handleSendMsg(msg: string): Promise<string> {
     this.webContents.send('reply-msg', 'this is msg from webContents.send')

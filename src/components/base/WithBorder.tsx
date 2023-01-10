@@ -1,6 +1,6 @@
-import { CSSProperties, FC, forwardRef, MouseEventHandler, PropsWithChildren } from 'react'
+import { CSSProperties, DetailedHTMLProps, FC, forwardRef, HTMLAttributes, MouseEventHandler, PropsWithChildren } from 'react'
 
-interface WithBorderProps {
+interface WithBorderProps extends DetailedHTMLProps<HTMLAttributes<HTMLDivElement>, HTMLDivElement>{
   boxShadowBorder?: boolean
   solidBorder?: boolean
   borderRadius?: number
@@ -15,13 +15,15 @@ const WithBorder: FC<PropsWithChildren<WithBorderProps>> = (
   ref
 ) => {
   const DefaultBorder: CSSProperties = {
-    boxShadow: boxShadowBorder ? 'rgba(0, 0, 0, 0.16) 0px 1px 4px' : undefined,
+    boxShadow: boxShadowBorder
+      ? 'rgba(0, 0, 0, 0.24) 0px 3px 8px'
+      : undefined,
     border: solidBorder ? '1px solid grey' : undefined,
     borderRadius: borderRadius,
     backgroundColor: 'white',
     ...style
   }
-  const handleClick = (e) => {
+  const handleClick = e => {
     // e.stopPropagation()
     onClick?.(e)
   }

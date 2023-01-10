@@ -108,7 +108,8 @@ const useEditorOverlay = (editor: CustomEditor, scrollElement?: HTMLDivElement |
 
   return {
     renderOverlay,
-    overlayManager
+    overlayManager,
+    popoverVisible
   }
 }
 

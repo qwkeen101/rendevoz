@@ -1,10 +1,9 @@
 import { Noop } from '@/common/types'
 import { useMemoizedFn } from '@/hooks'
 import isHotkey from 'is-hotkey'
-import { FC, KeyboardEventHandler, memo, useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { FC, KeyboardEventHandler, memo, useCallback } from 'react'
 import { Descendant, Editor, Path, Range, Transforms, Element as SlateElement, Text } from 'slate'
 import { ReactEditor, Slate, RenderElementProps, RenderLeafProps, Editable } from './slate-react'
-// import { Editable } from './slate-react'
 import EditorToolbar from './components/toolbar'
 import HOTKEYS from './consts/hotkeys'
 import { CustomEditor, CustomElement } from './types'
@@ -24,6 +23,10 @@ import Id from '@/utils/id'
 import useMetaStore from '@/stores/meta.store'
 import { CustomTransforms } from './utils/transform'
 import { InlineElements } from './consts/elements'
+import Media from './elements/media'
+import { KEY } from '@/consts/key'
+import { ID_TO_ELEMENTS_MAP, SELECTED_BLOCKS_MAP, SELECTED_ID_TO_ELEMENTS_SET } from './weakMaps'
+import moveMultiElements from './utils/moveMultiElements'
 
 type InnerEditorProps = {
   editor: CustomEditor
@@ -34,8 +37,7 @@ type InnerEditorProps = {
   onBlockMouseLeave: (e: MouseEvent, element: CustomElement) => void
   onBlockMouseMove?: (e: MouseEvent, element: CustomElement) => void
   onNestedListItem: (isNested: boolean) => void
-  onDividerDragStart: Noop
-  onDividerDragEnd: (previousColumnWidthRatio: number, previousColumnPath: Path, nextColumnWidthRatio: number, nextColumnPath: Path) => void
+  readonly?: boolean
 }
 const InnerEditor: FC<InnerEditorProps> = memo(
   ({
@@ -44,11 +46,10 @@ const InnerEditor: FC<InnerEditorProps> = memo(
     onBlockMouseEnter,
     onBlockMouseLeave,
     onBlockMouseMove,
-    onDividerDragStart,
-    onDividerDragEnd,
     onChange,
     onNestedListItem,
-    scrollElement
+    scrollElement,
+    readonly
   }) => {
     const renderInnerElement = useCallback((props: RenderElementProps) => <Element {...props} />, [])
     const renderLeaf = useCallback((props: RenderLeafProps) => <Leaf {...props} />, [])
@@ -81,7 +82,7 @@ const InnerEditor: FC<InnerEditorProps> = memo(
         if (element.type === 'column') {
           return (
             <>
-              <Divider onDragStart={onDividerDragStart} onDragEnd={onDividerDragEnd} currentPath={ReactEditor.findPath(editor, element)} />
+              <Divider currentPath={ReactEditor.findPath(editor, element)} />
               <Block
                 data-type="column"
                 id={String(element.id)}
@@ -134,7 +135,7 @@ const InnerEditor: FC<InnerEditorProps> = memo(
           let distance = 1
           if (
             Path.hasPrevious(path) &&
-            ['emoji', 'metaObject'].includes(Editor.node(editor, Path.previous(path))[0].type) &&
+            ['emoji'].includes(Editor.node(editor, Path.previous(path))[0].type) &&
             Editor.isEdge(editor, selection.anchor, selection.anchor.path)
           )
             distance = 2
@@ -147,7 +148,7 @@ const InnerEditor: FC<InnerEditorProps> = memo(
           let distance = 1
           if (
             Editor.hasPath(editor, Path.next(path)) &&
-            ['emoji', 'metaObject'].includes(Editor.node(editor, Path.next(path))[0].type) &&
+            ['emoji'].includes(Editor.node(editor, Path.next(path))[0].type) &&
             Editor.isEdge(editor, selection.anchor, selection.anchor.path)
           )
             distance = 2
@@ -170,6 +171,33 @@ const InnerEditor: FC<InnerEditorProps> = memo(
           })
         } else {
           Transforms.insertText(editor, '\u2003')
+        }
+      }
+      if (isHotkey(KEY.Backspace, e) || isHotkey(KEY.Delete, e)) {
+        const selected = SELECTED_BLOCKS_MAP.get(editor)
+        if (selected && selected.size > 0) {
+          e.preventDefault()
+          const ids = Array.from(selected.keys())
+          const elements: CustomElement[] = []
+          console.log(ids)
+          const eles = ID_TO_ELEMENTS_MAP.get(editor)
+          ids.forEach(id => {
+            const ele = eles?.get(id)
+            if (ele) {
+              elements.push(ele.getElement())
+            }
+          })
+          moveMultiElements(editor, elements, editor.children[editor.children.length - 1], [editor.children.length - 1], 'bottom', false)
+          Transforms.removeNodes(editor, {
+            at: {
+              anchor: {
+                path: [editor.children.length - elements.length],
+                offset: 0
+              },
+              focus: Editor.end(editor, [])
+            }
+          })
+          Transforms.deselect(editor)
         }
       }
       for (const hotkey in HOTKEYS) {
@@ -227,8 +255,20 @@ const InnerEditor: FC<InnerEditorProps> = memo(
           scrollElement={scrollElement}
           onMetaObject={handleMetaObject}
           onChangeFontSize={fontSize => changeFontSize(editor, fontSize)}
-          onChangeFontColor={color => Editor.addMark(editor, 'fontColor', color)}
-          onChangeBackgroundColor={color => Editor.addMark(editor, 'backgroundColor', color)}
+          onChangeFontColor={color => {
+            if (color === '#000000') {
+              Editor.removeMark(editor, 'fontColor')
+            } else {
+              Editor.addMark(editor, 'fontColor', color)
+            }
+          }}
+          onChangeBackgroundColor={color => {
+            if (color === '#ffffff') {
+              Editor.removeMark(editor, 'backgroundColor')
+            } else {
+              Editor.addMark(editor, 'backgroundColor', color)
+            }
+          }}
           onRedo={() => editor.redo()}
           onUndo={() => editor.undo()}
           onBold={() => {
@@ -252,12 +292,30 @@ const InnerEditor: FC<InnerEditorProps> = memo(
           onUnderline={() => toggleMark(editor, 'underline')}
         />
         <Editable
+          readOnly={readonly}
           suppressContentEditableWarning={true}
           spellCheck="false"
           onCompositionStart={() => {
             if (Positions.isEndSpacer(editor) || Positions.isStartSpacer(editor)) {
               editor.insertBreak()
             }
+          }}
+          onCopy={() => {
+            editor.currentCopyElement = undefined
+            return false
+          }}
+          onPaste={e => {
+            const copyElement = editor.currentCopyElement
+            if (copyElement) {
+              const newEle = {
+                ...copyElement,
+                id: Id.getId()
+              }
+              Transforms.insertNodes(editor, newEle)
+              e.preventDefault()
+              return true
+            }
+            return false
           }}
           renderElement={renderElement}
           renderLeaf={renderLeaf}
@@ -349,6 +407,9 @@ const Element = (props: RenderElementProps) => {
         return <ToDo {...props} />
       case 'list-item':
         return <ListItem {...props} />
+      case 'pdf':
+      case 'note':
+        return <Media {...props} />
       case 'spacer':
         return <Spacer {...props} />
       case 'hole':

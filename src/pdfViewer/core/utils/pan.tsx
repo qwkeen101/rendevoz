@@ -27,13 +27,13 @@ const PanHelper = ({ containerEle, enablePan }: { containerEle?: HTMLElement; en
       x: e.clientX,
       y: e.clientY
     }
-    document.addEventListener('mousemove', handleMouseMove)
-    document.addEventListener('mouseup', handleMouseUp)
+    document.addEventListener('pointermove', handleMouseMove)
+    document.addEventListener('pointerup', handleMouseUp)
   })
 
   const handleMouseUp = useMemoizedFn((e: MouseEvent) => {
-    document.removeEventListener('mousemove', handleMouseMove)
-    document.removeEventListener('mouseup', handleMouseUp)
+    document.removeEventListener('pointermove', handleMouseMove)
+    document.removeEventListener('pointerup', handleMouseUp)
   })
   useEffect(() => {
     if (!containerEle) {
@@ -41,11 +41,11 @@ const PanHelper = ({ containerEle, enablePan }: { containerEle?: HTMLElement; en
     }
 
     if (enablePan) {
-      containerEle.addEventListener('mousedown', handleMouseDown)
+      containerEle.addEventListener('pointerdown', handleMouseDown)
     }
 
     return () => {
-      containerEle.removeEventListener('mousedown', handleMouseDown)
+      containerEle.removeEventListener('pointerdown', handleMouseDown)
     }
   }, [enablePan])
 

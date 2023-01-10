@@ -16,4 +16,15 @@ export const gridLayout = ({
     gridTemplateColumns: `repeat(auto-fill,minmax(${itemMinWidth}), 1fr)`
   })
 
-export const flexLayout = () => {}
+export const flexLayout = (alignItems = 'center', justifyContent = 'center', column = false) =>
+  css({
+    display: 'flex',
+    alignItems,
+    justifyContent,
+    flexDirection: column ? 'column' : 'row'
+  })
+
+export const childrenAllFlex = (alignItems = 'center', justifyContent = 'center', column = false) =>
+  css({
+    '> *': flexLayout(alignItems, justifyContent, column)
+  })

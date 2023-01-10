@@ -8,7 +8,7 @@
 .Selected{
     position: absolute;
     inset: 0;
-    background: #8590ae2d;
+    background: #8590ae2d !important;
     border-radius: 4px;
     user-select: none;
     pointer-events: none;
@@ -22,7 +22,42 @@
     padding: 3px 2px;
     margin-top: 2px;
     margin-bottom: 2px;
-    transition: background 0.3s ease;
+    border-radius: 4px;
+    transition: background 0.3s ease, color 0.3s ease;
+    background: var(--block-bg);
+    white-space: pre-wrap;
+    * span, textarea, a{
+        background: var(--linear-font);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: var(--text-fill);
+    }
+}
+.SlimCardBlock{
+    background: unset;
+    width: min(100%, 21rem);
+    border-radius: 8px;
+    > div{
+        margin: -1px -2px;
+        background: var(--block-bg);
+        transition: background 0.3s ease;
+    }
+}
+.WideCardBlock{
+    border-radius: 8px;
+    background: unset;
+    > div{
+        margin: -1px -2px;
+        background: var(--block-bg);
+        transition: background 0.3s ease;
+    }
+}
+.LineCardBlock{
+    background: unset;
+    > div{
+        margin: -1px -2px;
+        background: var(--block-bg);
+        transition: background 0.3s ease;
+    }
 }
 .HeadingBlock{
     width: 100%;

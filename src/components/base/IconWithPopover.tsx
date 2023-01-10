@@ -1,6 +1,6 @@
 import { AnimatePopover, Content, Icon } from '@/components'
 import Tooltip from '@/components/base/Tooltip'
-import { FC, useRef, useState, useEffect, MutableRefObject, useImperativeHandle, forwardRef } from 'react'
+import { FC, useRef, useState, useEffect, MutableRefObject, useImperativeHandle, forwardRef, CSSProperties } from 'react'
 
 interface Props {
   disableNudge?: boolean
@@ -18,15 +18,20 @@ interface Props {
   parentElement?: HTMLElement
   padding?: number
   boundaryInset?: number
+  style?: CSSProperties
+  align?: string
+  className?: string
 }
 const IconWithPopover: FC<Props> = (
   {
     name,
     content,
     color,
+    align,
     size = 18,
     defaultOpen = false,
     placement = ['top', 'right'],
+    className,
     zIndex,
     innerRef,
     padding = 20,
@@ -35,7 +40,8 @@ const IconWithPopover: FC<Props> = (
     tooltip,
     boundaryInset = 40,
     disableCloseOutside,
-    disableIntersection
+    disableIntersection,
+    style
   },
   ref
 ) => {
@@ -53,18 +59,21 @@ const IconWithPopover: FC<Props> = (
   return (
     <Content ref={containerRef}>
       <AnimatePopover
+        align={align}
         padding={padding}
         onClickOutside={e => {
+          console.log(e)
           if (e.path.some(i => i.getAttribute?.('role') === 'modal')) {
             return
           }
           if (!disableCloseOutside) {
-            setVisible(false)
+            setTimeout(() => {
+              if (!e.defaultPrevented) setVisible(false)
+            }, 0)
           }
         }}
-        containerClassName={'zxcasd'}
         containerStyle={{ zIndex: zIndex?.toString() }}
-        parentElement={containerRef.current}
+        parentElement={parentElement || containerRef.current}
         boundaryElement={document.body}
         boundaryInset={boundaryInset}
         visible={visible}
@@ -75,9 +84,10 @@ const IconWithPopover: FC<Props> = (
       >
         <Tooltip content={tooltip}>
           <Icon
-            style={{ color }}
+            style={{ color, ...style }}
             cursor="pointer"
             size={size}
+            className={className}
             onClick={e => {
               setVisible(!visible)
             }}

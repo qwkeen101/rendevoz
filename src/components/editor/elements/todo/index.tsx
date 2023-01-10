@@ -25,7 +25,7 @@ const ToDo = ({ element, children, attributes }: RenderElementProps) => {
       <Content
         flex
         centered
-        onMouseDown={toggleChecked}
+        onPointerDown={toggleChecked}
         className={css({
           borderRadius: 3,
           border: '1px solid rgba(0,0,0,0.5)',

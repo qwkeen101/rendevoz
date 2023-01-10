@@ -19,9 +19,10 @@ interface ToolTipProps {
   content: string | ReactNode
   position?: 'top' | 'bottom'
   style?: CSSProperties
+  delay?: number
 }
 
-const ToolTip: FC<PropsWithChildren<ToolTipProps>> = ({ content, children, position = 'bottom', style }, ref) => {
+const ToolTip: FC<PropsWithChildren<ToolTipProps>> = ({ content, children, position = 'bottom', style, delay = 300 }, ref) => {
   const [open, setOpen] = useState(false)
   const [bound, setBound] = useState({
     x: 0,
@@ -30,6 +31,7 @@ const ToolTip: FC<PropsWithChildren<ToolTipProps>> = ({ content, children, posit
     height: 0
   })
   const childRef = useRef<HTMLElement>(null)
+  const isInRef = useRef(false)
   const handleChildRef = useCallback(
     (node: HTMLElement) => {
       childRef.current = node
@@ -45,10 +47,20 @@ const ToolTip: FC<PropsWithChildren<ToolTipProps>> = ({ content, children, posit
   )
   const handleMouseEvent = (e: MouseEvent) => {
     if (e.type === 'click') {
+      isInRef.current = false
       setOpen(false)
     }
     if (e.type === 'mouseenter') {
-      setOpen(true)
+      isInRef.current = true
+      if (delay) {
+        setTimeout(() => {
+          if (isInRef.current) {
+            setOpen(true)
+          }
+        }, delay)
+      } else {
+        setOpen(true)
+      }
       const rect = e.currentTarget.getBoundingClientRect()
       const { scrollTop, scrollLeft } = document.body
       const bound = { x: rect.left + scrollLeft, y: rect.top + scrollTop, width: rect.width, height: rect.height }
@@ -59,6 +71,7 @@ const ToolTip: FC<PropsWithChildren<ToolTipProps>> = ({ content, children, posit
       setBound(bound)
     }
     if (e.type === 'mouseleave') {
+      isInRef.current = false
       setOpen(false)
     }
   }

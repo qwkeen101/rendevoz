@@ -2,7 +2,7 @@ import { Content, Icon, Image } from '@/components'
 import { useTheme } from '@/hooks'
 import useDocumentStore from '@/stores/document.store'
 import { css } from '@emotion/css'
-import { FC, useLayoutEffect, useRef, useState } from 'react'
+import { cloneElement, createElement, FC, useLayoutEffect, useState } from 'react'
 import { ReactEditor, RenderElementProps, useSlate } from '../../slate-react'
 import { IPdfDocument } from '~/typings/data'
 import { BookHighlightElement } from '../../types/outerElementTypes'
@@ -10,81 +10,100 @@ import AutosizeTextarea from '@/components/custom/input/autosizeTextarea'
 import { Transforms } from 'slate'
 import { AnimatePresence, motion } from 'framer-motion'
 import { useGlobalIsDragging } from '@/components/globalDragOverlay'
-import { useMeasure } from 'react-use'
+import ClassName from '@/styles/classNames'
+import WideCard from '../cards/WideCard'
+import SlimCard from '../cards/SlimCard'
+import { CardElement } from '../../types/baseTypes'
+import NoteCard from '../cards/NoteCard'
+import { useNavigate } from 'react-router-dom'
 
 const BookHighlight: FC<RenderElementProps> = ({ element, children }) => {
   const [showNav, setShowNav] = useState(false)
   const [globalDragging] = useGlobalIsDragging()
   const highlightElement = element as BookHighlightElement
-  const imageContainerRef = useRef<HTMLDivElement>(null)
+  const cardType = (element as CardElement).cardType || 'wide'
   const editor = useSlate()
   const [document, setDocument] = useState<IPdfDocument>()
-  const [ref, { height }] = useMeasure()
-  const [containerRef, { width }] = useMeasure()
-  const { defaultFontColorBlack, defaultFontColorGrey, defaultBorderColorCream } = useTheme(
-    'defaultFontColorBlack',
-    'defaultFontColorGrey',
-    'defaultBorderColorCream'
-  )
+  const navigate = useNavigate()
+  const { defaultFontColorGrey } = useTheme('defaultFontColorGrey')
   const { getDocumentById } = useDocumentStore()
   useLayoutEffect(() => {
     highlightElement.documentId && setDocument(getDocumentById(highlightElement.documentId))
-  }, [highlightElement])
-  useLayoutEffect(() => {
-    const imageContainer = imageContainerRef.current
-    if (imageContainer) {
-      imageContainer.style.height = `${height + 16}px`
-    }
-  }, [height])
-  useLayoutEffect(() => {
-    const imageContainer = imageContainerRef.current
-    if (imageContainer) {
-      if (width < 400) {
-        imageContainer.style.display = 'none'
-      } else {
-        imageContainer.style.display = 'block'
-      }
-    }
-  }, [width])
-  return (
-    <Content
-      ref={containerRef}
-      contentEditable={false}
+  }, [highlightElement, getDocumentById])
+
+  const renderMain = () => (
+    <div
+      style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column' }}
       onMouseEnter={() => setShowNav(true)}
       onMouseLeave={() => setShowNav(false)}
-      flex
-      className={css({
-        border: `1px solid ${defaultBorderColorCream}`,
-        borderRadius: 8,
-        overflow: 'hidden'
-      })}
     >
-      <Content
-        ref={ref}
-        flex
-        column
+      <div className={ClassName.title(undefined, undefined, element.color)}>
+        📚 {document ? document.metadata?.title || document.name : 'Unknown book'}
+      </div>
+      <div className={ClassName.description()}>✍🏻 {document ? document.metadata?.author || 'Unknown author' : 'Unknown author'}</div>
+      <AutosizeTextarea
+        defaultValue={highlightElement.selectedText}
+        onChange={e => {
+          const value = e.target.value
+          Transforms.setNodes(editor, { selectedText: value }, { at: ReactEditor.findPath(editor, highlightElement) })
+        }}
         className={css({
-          padding: '8px 16px',
-          flex: 1,
-          height: 'fit-content'
+          border: 'none',
+          outline: 'none',
+          resize: 'none',
+          fontSize: '0.88rem',
+          overflow: 'hidden',
+          background: 'inherit',
+          wordBreak: 'break-word'
+        })}
+      ></AutosizeTextarea>
+      <Content
+        flex
+        alignItems="center"
+        gap={20}
+        className={css({
+          color: defaultFontColorGrey,
+          fontSize: '0.8rem'
         })}
       >
+        <span>Page: {highlightElement.page}</span>
+        <span>
+          <AnimatePresence>
+            {showNav && !globalDragging && (
+              <motion.div
+                initial={{ opacity: 0, x: -20, background: 'rgba(0,0,0,0)', padding: '0px 4px', borderRadius: 4 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: 20 }}
+                whileHover={{ background: 'rgba(0,0,0,0.07)' }}
+              >
+                <Content flex centered gap={5} style={{ cursor: 'pointer' }}>
+                  <span>Go to target</span>
+                  <Icon style={{ marginTop: 2 }} name="park-arrow-right" />
+                </Content>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </span>
+      </Content>
+    </div>
+  )
+  const renderLineMain = () => (
+    <Content flex auto alignItems="center" justifyContent="space-between" gap={20}>
+      <Content flex column auto>
         <div
-          className={css({
-            fontSize: '1.2rem',
-            fontWeight: 600,
-            color: defaultFontColorBlack
-          })}
+          onClick={() => {
+            navigate(`/pdf/${document?.id}`)
+          }}
+          className={css([
+            ClassName.animatedBorderBottom(-1, 0, 1, element.color),
+            {
+              fontSize: 15,
+              fontWeight: 500,
+              width: 'fit-content'
+            }
+          ])}
         >
-          📚 {document ? document.metadata?.title || document.name : 'Unknown book'}
-        </div>
-        <div
-          className={css({
-            color: defaultFontColorGrey,
-            fontSize: '0.8rem'
-          })}
-        >
-          ✍🏻 {document ? document.metadata?.author || 'Unknown author' : 'Unknown author'}
+          {document?.metadata?.title}
         </div>
         <AutosizeTextarea
           defaultValue={highlightElement.selectedText}
@@ -96,56 +115,27 @@ const BookHighlight: FC<RenderElementProps> = ({ element, children }) => {
             border: 'none',
             outline: 'none',
             resize: 'none',
-            fontSize: '1rem',
-            overflow: 'hidden'
+            fontSize: '0.88rem',
+            overflow: 'hidden',
+            background: 'inherit',
+            wordBreak: 'break-word'
           })}
         ></AutosizeTextarea>
-        <Content
-          flex
-          alignItems="center"
-          gap={20}
-          className={css({
-            color: defaultFontColorGrey,
-            fontSize: 13
-          })}
-        >
-          <span>Page: {highlightElement.page}</span>
-          <span>
-            <AnimatePresence>
-              {showNav && !globalDragging && (
-                <motion.div
-                  initial={{ opacity: 0, x: -20, background: 'rgba(0,0,0,0)', padding: '0px 4px', borderRadius: 4 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: 20 }}
-                  whileHover={{ background: 'rgba(0,0,0,0.07)' }}
-                >
-                  <Content flex centered gap={5} style={{ cursor: 'pointer' }}>
-                    <span>Go to target</span>
-                    <Icon style={{ marginTop: 2 }} name="park-arrow-right" />
-                  </Content>
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </span>
-        </Content>
       </Content>
-
-      <Content ref={imageContainerRef}>
-        <Image
-          ratio={1.33}
-          className={css({
-            minWidth: `140px !important`,
-            height: '100%',
-            '> div': {
-              height: '100%'
-            }
-          })}
-          src={document?.metadata?.coverUrl}
-        />
+      <Content>
+        <div className={ClassName.tag(element.background ? ClassName.TagBackgrounds.transparent : ClassName.TagBackgrounds.grey)}>
+          Book highlight
+        </div>
       </Content>
-
-      {children}
     </Content>
+  )
+  return (
+    <NoteCard
+      main={cardType === 'line' ? renderLineMain() : renderMain()}
+      children={children}
+      pictureUrl={document?.metadata?.coverUrl}
+      element={element}
+    />
   )
 }
 export default BookHighlight

@@ -35,7 +35,6 @@ export const DockTabPane: FC<DockTabPaneProps> = memo(({ cached, cacheId, parent
   const recursivelyScrollTop = (root: HTMLElement) => {
     const rootScrollTop = root.scrollTop
     if (rootScrollTop) {
-      console.log(rootScrollTop, root)
       cacheRef.current?.scrollPreserver.set(root, rootScrollTop)
       return
     }
@@ -57,7 +56,6 @@ export const DockTabPane: FC<DockTabPaneProps> = memo(({ cached, cacheId, parent
 
       recursivelyScrollTop(cacheRef.current.div)
       if (!ref.current.contains(cacheRef.current.div)) {
-        console.log('replace')
         ref.current.appendChild(cacheRef.current.div)
         Array.from(cacheRef.current.scrollPreserver.entries()).forEach(([k, v]) => {
           k.scrollTop === 0 && (k.scrollTop = v)
@@ -78,13 +76,10 @@ export const DockTabPane: FC<DockTabPaneProps> = memo(({ cached, cacheId, parent
     })
   }
   useLayoutEffect(() => {
-    console.log('update cahce' + cacheId)
     updateCache()
   })
   useLayoutEffect(() => {
-    console.log('mount pane')
     return () => {
-      console.log('unmount pane')
       if (cacheRef.current) {
         recursivelyScrollTop(cacheRef.current.div)
         context.removeTabCache(cacheRef.current.id, symbol)
@@ -112,7 +107,7 @@ export const DockTabPane: FC<DockTabPaneProps> = memo(({ cached, cacheId, parent
       initial={{ opacity: 0 }}
       animate={active ? 'visible' : 'hidden'}
       variants={variants}
-      transition={{ duration: 0.5, type: 'tween' }}
+      transition={{ duration: 0.3, type: 'tween' }}
       role="tabpane"
       style={mergedStyle}
     >

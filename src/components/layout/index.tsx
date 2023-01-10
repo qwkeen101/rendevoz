@@ -48,6 +48,7 @@ const Layout: FC<LayoutProps> = ({ sidebar }) => {
     })
   }, [])
   const handleLayoutChange = (layout: LayoutData) => {
+    console.log(layout)
     setLayout(layout)
     layoutManager.registerLayout(layout)
   }

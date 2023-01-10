@@ -1,15 +1,49 @@
 import { ipcInstance, IpcResponse } from '@/plugins'
 
 export const saveImageLocally = (imgName: string, imgData: string | Blob): Promise<IpcResponse<any>> => {
-  let data = imgData
+  const data = imgData
 
   if (imgData instanceof Blob) {
     return new Promise((resolve, reject) => {
       const reader = new FileReader()
-      reader.readAsDataURL(imgData)
+      // reader.readAsDataURL(imgData)
+      // reader.onload = () => {
+      //   data = reader.result as string
+      //   ipcInstance.send('saveImage', imgName, data).then(data => resolve(data))
+      // }
+      reader.readAsArrayBuffer(imgData)
       reader.onload = () => {
-        data = reader.result as string
-        ipcInstance.send('saveImage', imgName, data).then(data => resolve(data))
+        if (reader.result) {
+          const blob = new Blob([reader.result as ArrayBuffer])
+          const blobUrl = window.URL.createObjectURL(blob)
+          const image = new Image()
+          image.src = blobUrl
+          image.onload = () => {
+            const canvas = document.createElement('canvas')
+            let width = image.width
+            let height = image.height
+            const max_height = 1080
+            const max_width = 1920
+            if (width > height) {
+              if (width > max_width) {
+                //height *= max_width / width;
+                height = Math.round((height *= max_width / width))
+                width = max_width
+              }
+            } else {
+              if (height > max_height) {
+                //width *= max_height / height;
+                width = Math.round((width *= max_height / height))
+                height = max_height
+              }
+            }
+            canvas.width = width
+            canvas.height = height
+            canvas.getContext('2d')?.drawImage(image, 0, 0, width, height)
+            const newImageUrl = canvas.toDataURL('image/jpeg', 0.8)
+            ipcInstance.send('saveImage', imgName, newImageUrl).then(data => resolve(data))
+          }
+        }
       }
       reader.onerror = () => {
         reject()

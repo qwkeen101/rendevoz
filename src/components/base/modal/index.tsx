@@ -10,8 +10,8 @@ interface ModalProps {
   minHeight?: number
   maxWidth?: number
   maxHeight?: number
-  width?: number
-  height?: number
+  width?: number | string
+  height?: number | string
   onClose: () => void
   onClick?: MouseEventHandler
   children: React.ReactNode
@@ -25,7 +25,7 @@ const Backdrop = ({ children, onMouseDown }) => {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      onMouseDown={onMouseDown}
+      onPointerDown={onMouseDown}
     >
       {children}
     </motion.div>
@@ -51,7 +51,7 @@ const Modal: FC<ModalProps> = ({ visible, onClose, children, minWidth, minHeight
             exit={{ opacity: 0, y: 50 }}
             style={{ minWidth, minHeight, maxHeight, maxWidth, width, height }}
             className={styles.modal}
-            onMouseDown={e => e.stopPropagation()}
+            onPointerDown={e => e.stopPropagation()}
             onClick={e => {
               e.stopPropagation()
             }}

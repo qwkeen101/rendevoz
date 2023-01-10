@@ -47,11 +47,14 @@
     background: transparent;
 }
 .list{
-    position: absolute;
     overflow: hidden;
-    top: 100px;
+    height: calc(100% - 200px);
+    margin-top: 100px;
+    margin-bottom: 100px;
     width: 100%;
     padding: 0px 10px;
+    display: flex;
+    flex-direction: column;
 }
 .item{
     font-family: Muli,sans-serif;
@@ -67,7 +70,7 @@
     line-height: 16px;
     flex-basis: 150px;
     min-width: 150px;
-    overflow: hidden;
+    // overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
     -webkit-font-smoothing: antialiased;
@@ -88,7 +91,6 @@
 .nav{
     height: 100%;
     width: 100%;
-    overflow: hidden auto;
     background-color: #ffffff;
     box-shadow: 7px 0 15px -8px rgba(0,0,0,0.1);
 }

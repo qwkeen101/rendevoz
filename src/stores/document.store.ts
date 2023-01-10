@@ -63,8 +63,11 @@ const useDocumentStore = () => {
     setDocuments(add(document, documents))
     database.add(document)
   }
-  const updateDocument = (document: IPdfDocument) => {
-    setDocuments(update(document, documents))
+  const updateDocument = (document: Partial<IPdfDocument>) => {
+    if (!document.id) return
+    const originDocument = getDocumentById(document.id)
+    const newDocument = Object.assign({}, originDocument, document)
+    setDocuments(update(newDocument, documents))
     database.put(document, document.id)
   }
   // fake delete

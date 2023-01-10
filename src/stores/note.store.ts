@@ -2,17 +2,20 @@ import { CustomEditor } from '@/components/editor/types'
 import useDb from '@/hooks/stores/useDb'
 import useLatest from '@/hooks/utils/useLatest'
 import { GlobalScope } from '@/jotai/jotaiScope'
-import { bulkDeleteFromSearchDb, bulkImportIntoSearchDb, SearchableItem } from '@/utils/searchIndex'
+import Id from '@/utils/id'
+import { bulkDeleteFromSearchDb, SearchableItem } from '@/utils/searchIndex'
 import { atom, useAtom } from 'jotai'
 import { useMemo } from 'react'
+import { Descendant } from 'slate'
 import { INote } from '~/typings/data'
 import BaseStore from './base.store'
+import { IStore } from './store.type'
 
 const { orderedData } = BaseStore
 
-const notesAtom = atom(new Map<number, INote>())
+export const notesAtom = atom(new Map<number, INote>())
 
-const allNotesAtom = atom(get => orderedData(get(notesAtom)))
+export const allNotesAtom = atom(get => orderedData(get(notesAtom)))
 
 const undeletedNotesAtom = atom(get => get(allNotesAtom).filter(i => !i.deleted))
 
@@ -26,6 +29,62 @@ const useNoteStore = () => {
   const all = orderedData(notes).filter(i => !i.deleted)
   const noteDb = useDb('notes')
   const blockDb = useDb('blocks')
+  const blobDb = useDb('blobs')
+  const store: IStore<INote> = {
+    getAll: () => {
+      return noteDb.toArray().then(data => {
+        if (data) {
+          setNotes(new Map(data.map(i => [i.id, i])))
+          return true
+        } else {
+          return false
+        }
+      })
+    },
+    getOneById: id => {
+      const note = get(id, notes)
+      if (note) return Promise.resolve(note)
+      return new Promise(res => {
+        noteDb.get(id).then(note => {
+          if (note) {
+            setNotes(add(note, notes))
+            res(note)
+          } else {
+            res(undefined)
+          }
+        })
+      })
+    },
+    fetchOneById: id => store.getOneById(id),
+    addOne: n => {
+      const newNote: INote = {
+        ...n,
+        id: Id.getId(),
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+        title: n.title || 'Untitled'
+      }
+      setNotes(add(newNote, notes))
+      return noteDb.put(newNote).then(() => newNote)
+    },
+    updateOne: n => {
+      return store.getOneById(n.id).then(obj => {
+        if (obj) {
+          const newObj = {
+            ...obj,
+            ...n
+          }
+          setNotes(update(newObj, notes))
+          noteDb.put(newObj)
+          return Promise.resolve(newObj)
+        }
+        return Promise.resolve(undefined)
+      })
+    },
+    deleteOneById: id => {
+      return store.updateOne({ id, deleted: true }).then(data => (data ? true : false))
+    }
+  }
   const getAllNotes = () => {
     return noteDb.toArray().then(data => setNotes(new Map(data.map(i => [i.id, i]))))
   }
@@ -112,6 +171,7 @@ const useNoteStore = () => {
     return new Promise(resolve => resolve(all.filter(i => i.parentNoteId === rootNoteId)))
   }
   const saveNoteAndBlocks = (editor: CustomEditor, blocks: []) => {
+    if (!blocks[0]) return
     const saveNoteItem = noteDb
       .get(blocks[0].noteId)
       .then((note: INote) => {
@@ -157,8 +217,30 @@ const useNoteStore = () => {
       })
     })
   }
+  const saveNoteAsBuffer = (value: Descendant[], id?: number) => {
+    const realId = id || Id.getId()
+    console.log(realId)
+    const encoder = new TextEncoder()
+    const arrayBuffer = encoder.encode(JSON.stringify(value))
+    blobDb.put({
+      id: realId,
+      value: arrayBuffer
+    })
+    return realId
+  }
+  const getNoteValue = async (id: number) => {
+    const value = await blobDb.get(id)
+    if (value) {
+      const buffer = value.value as ArrayBuffer
+      const decoder = new TextDecoder()
+      const str = decoder.decode(buffer)
+      const obj = JSON.parse(str)
+      return obj as Descendant[]
+    }
+  }
   return useMemo(
     () => ({
+      ...store,
       all,
       getAllNotes,
       updateNote,
@@ -171,7 +253,9 @@ const useNoteStore = () => {
       saveNoteAndBlocks,
       getNoteAndBlocks,
       renameNote,
-      deleteNote
+      deleteNote,
+      saveNoteAsBuffer,
+      getNoteValue
     }),
     [notes]
   )

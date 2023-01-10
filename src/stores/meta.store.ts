@@ -10,12 +10,12 @@ import { MetaComment, MetaLink, MetaObject } from '~/typings/data'
 import BaseStore from './base.store'
 import useNoteStore from './note.store'
 
-const metaObjectsAtom = atom<Map<number, MetaObject>>(new Map())
+export const metaObjectsAtom = atom<Map<number, MetaObject>>(new Map())
 const metaLinksAtom = atom<Map<number, MetaLink>>(new Map())
 const { orderedData } = BaseStore
-const allMetaObjectsAtom = atom(get => orderedData(get(metaObjectsAtom)))
+export const allMetaObjectsAtom = atom(get => orderedData(get(metaObjectsAtom)))
 export const undeletedMetaObjectsAtom = atom(get => get(allMetaObjectsAtom).filter(i => !i.deleted))
-
+export const pinnedMetaObjectsAtom = atom(get => get(undeletedMetaObjectsAtom).filter(i => i.pinned))
 const allMetaLinksAtom = atom(get => orderedData(get(metaLinksAtom)))
 
 export const undeletedMetaLinksAtom = atom(get => get(allMetaLinksAtom).filter(i => !i.deleted))

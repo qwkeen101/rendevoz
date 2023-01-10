@@ -76,7 +76,7 @@ const withHtml = (editor: CustomEditor) => {
     const html = data.getData('text/html')
     const slateFragment = data.getData('application/x-slate-fragment')
     const plainText = data.getData('text/plain')
-    console.log(plainText)
+    console.log(plainText, slateFragment, data)
     if (slateFragment) {
       ReactEditor.insertFragmentData(editor, data)
       Transforms.deselect(editor)

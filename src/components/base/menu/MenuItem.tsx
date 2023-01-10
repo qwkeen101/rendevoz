@@ -77,7 +77,7 @@ const Item: FC<Omit<MenuItemProps, 'type'>> = ({ icon, children, onClick, onDoub
       id={String(id)}
       className={className}
       onContextMenuCapture={onContextMenu}
-      onMouseDown={e => e.preventDefault()}
+      onPointerDown={e => e.preventDefault()}
       onDoubleClick={onDoubleClick}
       onClick={handleInternalClick}
       style={{ position: 'relative' }}

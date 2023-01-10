@@ -1,26 +1,27 @@
 import { Content } from '@/components/base'
 import { GlobalScope } from '@/jotai/jotaiScope'
-import useCollectionStore, { pinnedCollectionsAtom } from '@/stores/collection.store'
-import useDocumentStore, { pinnedDocumentsAtom } from '@/stores/document.store'
+import { pinnedCollectionsAtom } from '@/stores/collection.store'
+import { pinnedDocumentsAtom } from '@/stores/document.store'
 import { pinnedNotesAtom } from '@/stores/note.store'
-import { useAtom } from 'jotai'
+import { useAtomValue } from 'jotai'
 import { memo } from 'react'
-import SidebarCollection, { SidebarCollectionItem, SidebarDocumentItem } from './SidebarCollection'
+import { SidebarCollectionItem, SidebarDocumentItem, SidebarNoteItem } from './SidebarCollection'
 
 const SidebarPinned = memo(() => {
-  const pinnedDocuments = useAtom(pinnedDocumentsAtom, GlobalScope)
-  const pinnedCollections = useAtom(pinnedCollectionsAtom, GlobalScope)
-  const pinnedNotes = useAtom(pinnedNotesAtom, GlobalScope)
-  const { rootCollections } = useCollectionStore()
-  const { all } = useDocumentStore()
-  console.log(Array(10))
+  const pinnedDocuments = useAtomValue(pinnedDocumentsAtom, GlobalScope)
+  const pinnedCollections = useAtomValue(pinnedCollectionsAtom, GlobalScope)
+  const pinnedNotes = useAtomValue(pinnedNotesAtom, GlobalScope)
+
   return (
     <Content flex column>
-      {rootCollections.map(i => (
-        <SidebarCollectionItem collection={i} />
+      {pinnedCollections.map(i => (
+        <SidebarCollectionItem collectionId={i.id} parentCollectionId={i.parentId || 1}/>
       ))}
-      {all.map(i => (
-        <SidebarDocumentItem document={i}/>
+      {pinnedDocuments.map(i => (
+        <SidebarDocumentItem documentId={i.id} />
+      ))}
+      {pinnedNotes.map(i => (
+        <SidebarNoteItem noteId={i.id} />
       ))}
     </Content>
   )

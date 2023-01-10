@@ -18,17 +18,7 @@ interface HighlightLabelProps {
   highlightAtom: PrimitiveAtom<IHighlightLabel>
   onDelete: Noop
 }
-const layout = [
-  'colorPicker',
-  'contentInput',
-  'metaObject',
-  'addToEditorButton',
-  'separator',
-  'searcher',
-  'translator',
-  'separator',
-  'delete'
-]
+const layout = ['colorPicker', 'metaObject', 'separator', 'searcher', 'translator', 'separator', 'delete']
 
 const HighlightLabel: FC<HighlightLabelProps> = ({ highlightAtom, onDelete }) => {
   const [highlight, setHighlight] = useAtom(highlightAtom, PdfScope)
@@ -135,24 +125,23 @@ const HighlightLabel: FC<HighlightLabelProps> = ({ highlightAtom, onDelete }) =>
       page: highlight.page
     }
     console.log(GlobalDragOverlayInstance)
-    document.addEventListener('mousemove', mouseMoveHandler)
-    document.addEventListener('mouseup', mouseUpHandler)
-
+    document.addEventListener('pointermove', mouseMoveHandler)
+    document.addEventListener('pointerup', mouseUpHandler)
   })
   const mouseMoveHandler = useMemoizedFn(() => {
     GlobalDragOverlayInstance?.startDrag()
   })
   const mouseUpHandler = useMemoizedFn(() => {
     GlobalDragOverlayInstance?.endDrag()
-    document.removeEventListener('mousemove', mouseMoveHandler)
-    document.removeEventListener('mouseup', mouseUpHandler)
+    document.removeEventListener('pointermove', mouseMoveHandler)
+    document.removeEventListener('pointerup', mouseUpHandler)
   })
   useLayoutEffect(() => {
     if (highlightRef.current) {
       const container = highlightRef.current
-      container.addEventListener('mousedown', mouseDownHandler)
+      container.addEventListener('pointerdown', mouseDownHandler)
       return () => {
-        container.removeEventListener('mousedown', mouseDownHandler)
+        container.removeEventListener('pointerdown', mouseDownHandler)
       }
     }
   })

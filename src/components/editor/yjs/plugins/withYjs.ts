@@ -1,10 +1,8 @@
-import { useDebounceFn } from '@/hooks'
 import _ from 'lodash'
 import { BaseEditor, Descendant, Editor, Operation, Point } from 'slate'
 import * as Y from 'yjs'
 import { applyYjsEvents } from '../applyToSlate'
 import { applySlateOp } from '../applyToYjs'
-import { yTextToSlateElement } from '../utils/convert'
 import {
   getStoredPosition,
   getStoredPositions,
@@ -191,14 +189,16 @@ export function withYjs<T extends Editor>(
 
   e.connect = () => {
     if (YjsEditor.connected(e)) {
-      throw new Error('already connected')
+      console.log('already connected')
+      return
     }
 
     e.sharedRoot.observeDeep(handleYEvents)
-    const content = yTextToSlateElement(e.sharedRoot)
-    e.children = content.children
+    // not construct the children by ytext, it's too slow for large document & at risk of OOM
+    // const content = yTextToSlateElement(e.sharedRoot)
+    // e.children = content.children
     CONNECTED.add(e)
-    e.onChange()
+    // e.onChange()
   }
 
   e.disconnect = () => {

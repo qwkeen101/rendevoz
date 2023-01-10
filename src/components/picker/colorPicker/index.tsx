@@ -8,6 +8,9 @@ interface ColorPickerProps {
   colors?: string[][]
   onPick: (color: string) => void
   backDefault?: boolean
+  enableMore?: boolean
+  isFont?: boolean
+  enableDefault?: boolean
 }
 const Colors: string[][] = [
   [material.red['900'], material.red['700'], material.red['500'], material.red['300'], material.red['100']],
@@ -45,9 +48,34 @@ const Colors: string[][] = [
     material.deepOrange['100']
   ],
   [material.brown['900'], material.brown['700'], material.brown['500'], material.brown['300'], material.brown['100']],
-  [material.blueGrey['900'], material.blueGrey['700'], material.blueGrey['500'], material.blueGrey['300'], material.blueGrey['100']]
+  [material.blueGrey['900'], material.blueGrey['700'], material.blueGrey['500'], material.blueGrey['300'], material.blueGrey['100']],
+  [
+    'linear-gradient(to right, #aa4b6b, #6b6b83, #3b8d99)',
+    'linear-gradient(to right, #bdc3c7, #2c3e50)',
+    'linear-gradient(to right, #ee9ca7, #ffdde1)',
+    'linear-gradient(to right, #2193b0, #6dd5ed)'
+  ]
 ]
-const ColorPicker: FC<ColorPickerProps> = ({ onPick, colors = Colors, backDefault = false }) => {
+const ColorPicker: FC<ColorPickerProps> = ({
+  onPick,
+  colors = Colors,
+  backDefault = false,
+  enableMore = false,
+  isFont = false,
+  enableDefault = true
+}) => {
+  const displayColors = enableMore ? colors.map(i => (isFont ? i[2] : i[3])) : colors.flat(1)
+
+  const defaultFontColor = '#000000'
+  const defaultBgColor = '#ffffff'
+  if (enableDefault) {
+    if (isFont) {
+      displayColors.unshift(defaultFontColor)
+    } else {
+      displayColors.unshift(defaultBgColor)
+    }
+  }
+
   const renderItem = (color: string) => {
     return (
       <span
@@ -56,23 +84,70 @@ const ColorPicker: FC<ColorPickerProps> = ({ onPick, colors = Colors, backDefaul
           e.stopPropagation()
           onPick?.(color)
         }}
-        className={styles.colorPickerContainer}
+        className={css({
+          width: 26,
+          height: 26,
+          padding: 2,
+          borderRadius: 3,
+          cursor: 'pointer',
+          ':hover': {
+            boxShadow: 'rgb(15 15 15 / 10%) 0px 0px 1px 1px'
+          }
+        })}
       >
-        <div style={{ backgroundColor: color, width: 18, height: 18, borderRadius: 2 }}></div>
+        <div
+          className={css({
+            width: 22,
+            height: 22,
+            borderRadius: 3,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontSize: 16,
+            fontWeight: 500,
+            position: 'relative'
+            // opacity: 0.8
+          })}
+          style={{
+            background: isFont ? 'white' : color,
+            color: isFont ? color : undefined,
+            boxShadow: 'rgb(15 15 15 / 10%) 0px 0px 0px 1px inset'
+          }}
+        >
+          {isFont && 'A'}
+          {(color === defaultFontColor || color === defaultBgColor) && (
+            <div
+              className={css({
+                background: 'rgba(239,68,68, 0.6)',
+                transform: 'rotate(45deg)',
+                position: 'absolute',
+                transformOrigin: 'center',
+                width: 2,
+                height: '100%',
+                marginLeft: -1,
+                left: '50%'
+              })}
+            ></div>
+          )}
+        </div>
       </span>
     )
   }
-  const renderColorGroup = (colorGroup: string[]) => {
-    return (
-      <Content flex column centered key={colorGroup[0]}>
-        {colorGroup.map(i => renderItem(i))}
-      </Content>
-    )
-  }
+
   return (
-    <Content style={{ padding: 4 }} flex column>
-      <Content className={styles.colors} flex>
-        {colors.map(g => renderColorGroup(g))}
+    <Content flex column>
+      <Content
+        className={css({
+          gridTemplateColumns: 'repeat(auto-fill, minmax(24px, 1fr))',
+          display: 'grid !important',
+          gridTemplateRows: 'auto auto',
+          gridAutoRows: enableMore ? '0px' : undefined,
+          overflow: 'hidden',
+          padding: 1,
+          gap: 4
+        })}
+      >
+        {displayColors.map(i => renderItem(i))}
       </Content>
       {backDefault && (
         <div

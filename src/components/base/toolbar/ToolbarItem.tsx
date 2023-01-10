@@ -69,7 +69,7 @@ const ToolbarItem: FC<ToolbarItemProps> = ({
         marginBottom: direction === 'vertical' ? space : undefined,
         cursor: disabled ? 'not-allowed' : style?.cursor
       },
-      onMouseDown: clickPreventDefault ? e => e.preventDefault() : undefined,
+      onPointerDown: clickPreventDefault ? e => e.preventDefault() : undefined,
       onClick: handleClick
     },
     <Tooltip content={tooltip}>{renderItem()}</Tooltip>

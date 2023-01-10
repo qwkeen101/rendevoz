@@ -1,18 +1,17 @@
 import { Noop } from '@/common/types'
-import { ColorPicker, Icon } from '@/components'
-import { Toolbar, WithBorder } from '@/components/base'
+import { Toolbar } from '@/components/base'
 import Select from '@/components/base/select'
 import IconWithPopover from '@/components/base/IconWithPopover'
 import { CSSProperties, FC, useEffect, useRef, useState } from 'react'
-import { Editor, Range, Selection } from 'slate'
+import { Editor, Range } from 'slate'
 import { ReactEditor, useSlate } from '../../slate-react'
 import styles from './index.module.less'
 import { useTranslation } from 'react-i18next'
 import classNames from 'classnames'
-import { Position } from '@/types'
 import { createPortal } from 'react-dom'
 import { AnimatePresence, motion } from 'framer-motion'
 import { useSetting } from '@/hooks'
+import BlockColorPicker from '../BlockColorPicker'
 
 interface EditorToolbarProps {
   fontSize?: number
@@ -58,9 +57,10 @@ const EditorToolbar: FC<EditorToolbarProps> = ({
     direction: string
   }>()
   const handleMouseUp = (e: MouseEvent) => {
-    const { selection } = editor
+    const { selection,readonly } = editor
     const windowSelection = window.getSelection()
     if (
+      !readonly &&
       selection &&
       windowSelection &&
       windowSelection.toString().length > 0 &&
@@ -82,7 +82,7 @@ const EditorToolbar: FC<EditorToolbarProps> = ({
         direction = 'bottom'
       }
       setFloatPosition({
-        left: focusRect.left,
+        left: focusRect.left + 30,
         top: focusRect.top - (direction === 'top' ? 50 : -(focusRect.height + 10)),
         direction
       })
@@ -101,12 +101,12 @@ const EditorToolbar: FC<EditorToolbarProps> = ({
   }
   useEffect(() => {
     if (position === 'float') {
-      document.addEventListener('mouseup', handleMouseUp)
-      document.addEventListener('mousedown', handleMouseDown)
+      document.addEventListener('pointerup', handleMouseUp)
+      document.addEventListener('pointerdown', handleMouseDown)
       scrollElement?.addEventListener('scroll', handleScroll)
       return () => {
-        document.removeEventListener('mouseup', handleMouseUp)
-        document.removeEventListener('mousedown', handleMouseDown)
+        document.removeEventListener('pointerup', handleMouseUp)
+        document.removeEventListener('pointerdown', handleMouseDown)
         scrollElement?.removeEventListener('scroll', handleScroll)
       }
     }
@@ -176,36 +176,6 @@ const EditorToolbar: FC<EditorToolbarProps> = ({
             <Select.Option value="60px">60px</Select.Option>
           </Select>
         )}
-      <Toolbar.Item>
-        <IconWithPopover
-          disableIntersection
-          tooltip={t('editor.font color')}
-          placement={['top', 'bottom']}
-          size={16}
-          name="park-font-size-two"
-          color={getFontColor()}
-          content={
-            <WithBorder>
-              <ColorPicker onPick={onChangeFontColor} />
-            </WithBorder>
-          }
-        ></IconWithPopover>
-      </Toolbar.Item>
-      <Toolbar.Item>
-        <IconWithPopover
-          disableIntersection
-          tooltip={'Background color'}
-          placement={['top', 'bottom']}
-          size={16}
-          name="park-background-color"
-          color={getBackgroundColor()}
-          content={
-            <WithBorder>
-              <ColorPicker backDefault onPick={onChangeBackgroundColor} />
-            </WithBorder>
-          }
-        ></IconWithPopover>
-      </Toolbar.Item>
       <Toolbar.Item tooltip={t('editor.bold')} isActive={isMarkActive('bold')} iconName="park-text-bold" onClick={onBold} />
       <Toolbar.Item tooltip={t('editor.italic')} isActive={isMarkActive('italic')} iconName="park-text-italic" onClick={onItalic} />
       <Toolbar.Item
@@ -214,6 +184,22 @@ const EditorToolbar: FC<EditorToolbarProps> = ({
         iconName="park-text-underline"
         onClick={onUnderline}
       />
+      <Toolbar.Item>
+        <IconWithPopover
+          placement={['bottom']}
+          align="start"
+          zIndex={9999}
+          size={16}
+          style={{
+            color: getFontColor(),
+            background: getBackgroundColor(),
+            borderRadius: 4,
+            padding: 2
+          }}
+          content={<BlockColorPicker onPickBackgroundColor={onChangeBackgroundColor} onPickFontColor={onChangeFontColor} />}
+          name="park-font-size-two"
+        ></IconWithPopover>
+      </Toolbar.Item>
       <Toolbar.Item tooltip="Turn to Meta object" iconName="park-share-one" onClick={onMetaObject} />
       <Toolbar.Item tooltip="Turn to Link" iconName="park-link" onClick={onLink} />
     </Toolbar>

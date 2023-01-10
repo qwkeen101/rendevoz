@@ -1,28 +1,25 @@
+import { CustomEditor, CustomElement } from '../types'
+
 const withVoid = (editor: CustomEditor) => {
-  const { isVoid,isInline } = editor
+  const { isVoid, isInline } = editor
   const checkIfVoidComponents = (element: CustomElement) => {
     switch (element.type) {
-      case 'textSelectionCard':
-        return true
       case 'spacer':
         return false
       case 'book-highlight':
-        return true
       case 'emoji':
-        return true
       case 'metaObject':
-        return true
+      case 'pdf':
+      case 'note':
       case 'image':
-        return true
       case 'thought':
-        return true
       case 'subPage':
         return true
       default:
         return false
     }
   }
-  editor.isInline = element => ['emoji', 'metaObject', 'link'].includes(element.type) || isInline(element)
+  editor.isInline = element => ['emoji', 'link'].includes(element.type) || isInline(element)
   editor.isVoid = element => {
     return checkIfVoidComponents(element) ? true : isVoid(element)
   }

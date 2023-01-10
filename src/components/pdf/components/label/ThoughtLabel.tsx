@@ -1,4 +1,4 @@
-import { Content, Icon } from '@/components'
+import { AnimatePopover, Content, Icon, IconWithPopover, WithBorder } from '@/components'
 import { useTheme, useToggle } from '@/hooks'
 import { FC, memo, RefObject, useEffect, useRef, useState } from 'react'
 import { IThoughtLabel } from '~/typings/data'
@@ -7,31 +7,41 @@ import { PrimitiveAtom, useAtom } from 'jotai'
 import { css } from '@emotion/css'
 import { PdfScope } from '@/jotai/jotaiScope'
 import useDocumentStore from '@/stores/document.store'
-import useNoteStore from '@/stores/note.store'
 import useMetaStore from '@/stores/meta.store'
 import ClassName from '@/styles/classNames'
+import Modal from '@/components/base/modal'
+import DateFormat from '@/utils/dateFormat'
+import AutosizeTextarea from '@/components/custom/input/autosizeTextarea'
 interface ThoughtLabelProps {
   thoughtAtom: PrimitiveAtom<IThoughtLabel>
   onDelete: () => void
   dragBoundRef: RefObject<HTMLDivElement>
 }
 
-const positions = ['top', 'right', 'bottom', 'left']
 const ThoughtLabel: FC<ThoughtLabelProps> = ({ thoughtAtom, onDelete, dragBoundRef }) => {
   const [thought, setThought] = useAtom(thoughtAtom, PdfScope)
-  const { id, color, icon, content, rect } = thought
+  const { rect } = thought
   const [movable, toggleMovable] = useToggle(true)
   const [isOpen, toggleOpen] = useToggle(false)
   const isDragging = useRef(false)
-  const { defaultFontColorGrey, defaultFontColorBlack } = useTheme('defaultFontColorGrey', 'defaultFontColorBlack')
+  const { defaultFontColorGrey, defaultFontColorBlack, defaultFontColorRed } = useTheme(
+    'defaultFontColorGrey',
+    'defaultFontColorBlack',
+    'defaultFontColorRed'
+  )
   const longContentRef = useRef<HTMLDivElement>(null)
   const heightRef = useRef(0)
   const dragControls = useDragControls()
+  const [imageModalVisible, toggleImageModalVisible] = useToggle(false)
+  const [settingVisible, toggleSettingVisible] = useToggle(false)
   const { getDocumentById } = useDocumentStore()
-  const { getNoteById } = useNoteStore()
   const { getMetaObjectById } = useMetaStore()
   const [title, setTitle] = useState<string>()
   useEffect(() => {
+    if (thought.originFrom === 'image') {
+      setTitle('Image')
+      toggleOpen(true)
+    }
     if (thought.originId) {
       if (thought.originFrom === 'editor') {
         setTitle('A note')
@@ -52,7 +62,9 @@ const ThoughtLabel: FC<ThoughtLabelProps> = ({ thoughtAtom, onDelete, dragBoundR
       <motion.div
         onClick={() => {
           if (!isDragging.current) {
-            toggleOpen()
+            if (thought.originFrom !== 'image') {
+              toggleOpen()
+            }
           }
         }}
         className={css({
@@ -92,38 +104,60 @@ const ThoughtLabel: FC<ThoughtLabelProps> = ({ thoughtAtom, onDelete, dragBoundR
               {thought.originFrom === 'editor' && '📝'}
               {thought.originFrom === 'pdf' && '📚'}
               {thought.originFrom === 'meta' && '💡'}
+              {thought.originFrom === 'image' && '🖼️'}
             </span>
-            <span style={{ fontSize: '0.8rem', marginLeft: 5 }}>{title}</span>
+            <span style={{ fontSize: '0.8rem', marginLeft: 5 }}>{thought.title || title}</span>
           </span>
           <motion.div
             onClick={e => {
               e.stopPropagation()
             }}
           >
-            <Icon
+            <IconWithPopover
+              parentElement={document.body}
+              content={
+                <WithBorder style={{ padding: 6, width: 150 }} onPointerDown={e => e.stopPropagation()}>
+                  {thought.createTime && (
+                    <div className={ClassName.description()} style={{ padding: '2px 7px' }}>
+                      Created at: {DateFormat.format(thought.createTime, DateFormat.Formats.default)}
+                    </div>
+                  )}
+                  <AnimatePopover positions={['right', 'left']} padding={10} visible={settingVisible} content={renderEditThought()}>
+                    <div
+                      onClick={toggleSettingVisible}
+                      className={css([ClassName.flatButton(), ClassName.defaultFont(undefined, 600)])}
+                      style={{ display: 'flex', justifyContent: 'space-between' }}
+                    >
+                      Setting
+                      <Icon name="park-right" />
+                    </div>
+                  </AnimatePopover>
+                  <div
+                    onClick={onDelete}
+                    className={css([ClassName.flatButton(), ClassName.defaultFont(undefined, 600)])}
+                    style={{ color: defaultFontColorRed }}
+                  >
+                    Delete
+                  </div>
+                </WithBorder>
+              }
               size={16}
               name="park-more"
-              className={css({
-                transition: 'all 0.2s ease',
-                cursor: 'pointer',
-                padding: 3,
-                marginTop: 5,
-                marginRight: 5,
-                marginLeft: 5,
-                borderRadius: 999,
-                top: 3,
-                ':hover': {
-                  background: 'rgba(0,0,0,0.07)'
+              className={css([
+                ClassName.circleButton(),
+                {
+                  padding: 3,
+                  marginRight: 5,
+                  marginLeft: 5
                 }
-              })}
-            />
+              ])}
+            ></IconWithPopover>
           </motion.div>
         </Content>
         <motion.div
           onClick={e => {
             if (!window.getSelection()?.isCollapsed) {
               e.stopPropagation()
-              console.log(e)
             }
           }}
           className={css({
@@ -148,7 +182,11 @@ const ThoughtLabel: FC<ThoughtLabelProps> = ({ thoughtAtom, onDelete, dragBoundR
                   heightRef.current = longContentRef.current!.getBoundingClientRect().height
                 }}
               >
-                {thought.content}
+                {thought.originFrom === 'image' ? (
+                  <img style={{ borderRadius: 4 }} onClick={toggleImageModalVisible} src={thought.content} width="100%" />
+                ) : (
+                  thought.content
+                )}
               </motion.div>
             ) : (
               <motion.div
@@ -166,39 +204,78 @@ const ThoughtLabel: FC<ThoughtLabelProps> = ({ thoughtAtom, onDelete, dragBoundR
       </motion.div>
     )
   }
-
-  return (
-    <motion.div
-      initial={{ top: `${rect[0] * 100}%`, left: `${rect[1] * 100}%` }}
-      drag={movable}
-      style={{ position: 'absolute', pointerEvents: 'auto', zIndex: 100 }}
-      dragConstraints={dragBoundRef}
-      dragControls={dragControls}
-      dragMomentum={false}
-      dragElastic={0}
-      dragListener={false}
-      onDragStart={e => {
-        isDragging.current = true
-      }}
-      onDragEnd={(e, info) => {
-        setTimeout(() => {
-          isDragging.current = false
-          console.log(thought)
-        }, 100)
-        const { point } = info
-        const bound = dragBoundRef.current?.getBoundingClientRect()
-        if (bound) {
-          const relX = point.x - bound?.x
-          const relY = point.y - bound?.y
+  const renderEditThought = () => (
+    <WithBorder
+      style={{ padding: 6, width: 240, display: 'flex', flexDirection: 'column', gap: 6 }}
+      onClickCapture={e => e.preventDefault()}
+    >
+      <div className={ClassName.description()}>Title</div>
+      <input
+        placeholder="Title"
+        value={thought.title}
+        style={{ height: 36 }}
+        onChange={e => {
           setThought({
             ...thought,
-            rect: [relY / bound.height, relX / bound.width]
+            title: e.target.value
           })
-        }
-      }}
-    >
-      {renderOpenableContent()}
-    </motion.div>
+        }}
+        className={ClassName.input()}
+      />
+      <div className={ClassName.description()}>Content</div>
+      <AutosizeTextarea
+        value={thought.content}
+        className={ClassName.input()}
+        style={{ resize: 'none', overflow: 'hidden' }}
+        placeholder="Content"
+        onChange={e => {
+          setThought({
+            ...thought,
+            content: e.target.value
+          })
+        }}
+      />
+    </WithBorder>
+  )
+  return (
+    <>
+      <Modal width="80vw" height="80vh" visible={imageModalVisible} onClose={toggleImageModalVisible}>
+        <Content fullHeight fullWidth flex centered style={{ padding: 20, overflowY: 'auto' }}>
+          <img width="auto" style={{ maxWidth: '100%', borderRadius: 8 }} height="auto" src={thought.content} />
+        </Content>
+      </Modal>
+      <motion.div
+        initial={{ top: `${rect[0] * 100}%`, left: `${rect[1] * 100}%` }}
+        drag={movable}
+        style={{ position: 'absolute', pointerEvents: 'auto', zIndex: 100 }}
+        dragConstraints={dragBoundRef}
+        dragControls={dragControls}
+        dragMomentum={false}
+        dragElastic={0}
+        dragListener={false}
+        onDragStart={e => {
+          isDragging.current = true
+        }}
+        onDragEnd={(e, info) => {
+          setTimeout(() => {
+            isDragging.current = false
+            console.log(thought)
+          }, 100)
+          const { point } = info
+          const bound = dragBoundRef.current?.getBoundingClientRect()
+          if (bound) {
+            const relX = point.x - bound?.x
+            const relY = point.y - bound?.y
+            setThought({
+              ...thought,
+              rect: [relY / bound.height, relX / bound.width]
+            })
+          }
+        }}
+      >
+        {renderOpenableContent()}
+      </motion.div>
+    </>
   )
 }
 

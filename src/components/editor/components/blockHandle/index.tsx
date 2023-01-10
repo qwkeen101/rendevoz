@@ -84,11 +84,11 @@ const BlockHandle: IBlockHandle = ({ left, top, targetHeight, visible, onMouseDo
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          onMouseDown={onMouseDown}
-          onMouseEnter={() => {
+          onPointerDown={onMouseDown}
+          onPointerEnter={() => {
             isInside.current = true
           }}
-          onMouseLeave={() => {
+          onPointerLeave={() => {
             isInside.current = false
             if (visible === false) {
               setInnerVisible(false)
@@ -98,12 +98,13 @@ const BlockHandle: IBlockHandle = ({ left, top, targetHeight, visible, onMouseDo
           style={{
             position: 'fixed',
             top: top,
-            left: left,
+            left: left || 0 - 5,
+            width: 5,
             height: targetHeight,
             zIndex: 99
           }}
         >
-          <Tooltip style={{ background: 'rgba(0,0,0,0.8)' }} position="top" content={AddTooltip}>
+          <Tooltip delay={300} style={{ background: 'rgba(0,0,0,0.8)' }} position="top" content={AddTooltip}>
             <div
               onClick={e => {
                 onAddClick?.(e)
@@ -128,13 +129,19 @@ const BlockHandle: IBlockHandle = ({ left, top, targetHeight, visible, onMouseDo
               <Icon size={16} name="park-plus" fill="#8590ae" />
             </div>
           </Tooltip>
-          <Tooltip style={{ background: 'rgba(0,0,0,0.8)', transform: 'translate3d(-50%, 15px ,0)' }} position="top" content={DragTooltip}>
+          <Tooltip
+            delay={300}
+            style={{ background: 'rgba(0,0,0,0.8)', transform: 'translate3d(-50%, 15px ,0)' }}
+            position="top"
+            content={DragTooltip}
+          >
             <div
-              onMouseDown={e => {
+              onPointerDown={e => {
                 onDragClick?.(e)
               }}
-              onMouseUp={e => {
+              onPointerUp={e => {
                 onMenuClick?.(e)
+                setInnerVisible(false)
               }}
               className={css({
                 transition: 'all 0.2s ease',
@@ -142,7 +149,15 @@ const BlockHandle: IBlockHandle = ({ left, top, targetHeight, visible, onMouseDo
                 padding: 2,
                 borderRadius: 4
               })}
-              style={{ position: 'absolute', left: -20, top: '50%', transform: 'translateY(-50%)', width: 20, height: 20, cursor: 'grab' }}
+              style={{
+                position: 'absolute',
+                left: -20,
+                top: '50%',
+                transform: 'translateY(-50%)',
+                width: 20,
+                height: 20,
+                cursor: 'grab'
+              }}
             >
               <Icon size={16} name="park-drag" fill="#8590ae" />
             </div>

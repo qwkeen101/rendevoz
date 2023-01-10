@@ -17,14 +17,21 @@ const useEditorSelect = (editor: CustomEditor, overlayManager: EditorOverlayMana
   const blockElementsMapRef = useRef<Map<any, any>>(new Map())
   const isPressed = useRef(false)
   const [isSelecting, setIsSelecting] = useIsSelecting()
-
+  const readonly = editor.readonly
   const mouseDownHandler = (e: MouseEvent) => {
-    if (e.target === e.currentTarget) {
+    const target = e.target as HTMLElement
+    // target is title or textbox
+    if (target.getAttribute('role') === 'inner-editor') {
+      isPressed.current = true
+    }
+    // target is self
+    if (target === e.currentTarget) {
       isPressed.current = true
     }
   }
 
   const mouseMoveHandler = useMemoizedFn((e: MouseEvent) => {
+    if (readonly) return
     if (!scrollElement) return
     if (isPressed.current) {
       setIsSelecting(true)
@@ -86,11 +93,9 @@ const useEditorSelect = (editor: CustomEditor, overlayManager: EditorOverlayMana
             blocksMap?.get(id)?.collisionSelectBlock()
           })
         }
-        console.log('return 2')
         return
       }
       if (currRect.top > lastBlockRect.top + lastBlockRect.height) {
-        console.log('return 3')
         return
       }
       const blockEntriesArray = Array.from(blockElementsMapRef.current.entries())
@@ -127,6 +132,7 @@ const useEditorSelect = (editor: CustomEditor, overlayManager: EditorOverlayMana
   })
 
   const mouseUpHandler = (e: MouseEvent) => {
+    if (readonly) return
     isPressed.current = false
     if (isSelecting) {
       overlayManager.close()
@@ -141,6 +147,7 @@ const useEditorSelect = (editor: CustomEditor, overlayManager: EditorOverlayMana
   const throttledMoveMove = useRafFn(mouseMoveHandler)
 
   const realMouseMoveHandler = (e: MouseEvent) => {
+    if (readonly) return
     if (isPressed.current) {
       e.preventDefault()
       e.stopPropagation()
@@ -152,6 +159,7 @@ const useEditorSelect = (editor: CustomEditor, overlayManager: EditorOverlayMana
     }
   }
   useLayoutEffect(() => {
+    if (readonly) return
     if (!scrollElement) return
     if (isSelecting) {
       document.body.style.cursor = 'default'
@@ -174,15 +182,16 @@ const useEditorSelect = (editor: CustomEditor, overlayManager: EditorOverlayMana
     })
   }
   useEffect(() => {
+    if (readonly) return
     if (scrollElement) {
       scrollManager.registerScrollElement(scrollElement)
-      scrollElement.addEventListener('mousedown', mouseDownHandler)
-      document.addEventListener('mousemove', realMouseMoveHandler, true)
-      document.addEventListener('mouseup', mouseUpHandler)
+      scrollElement.addEventListener('pointerdown', mouseDownHandler)
+      document.addEventListener('pointermove', realMouseMoveHandler, true)
+      document.addEventListener('pointerup', mouseUpHandler)
       return () => {
-        scrollElement.removeEventListener('mousedown', mouseDownHandler)
-        document.removeEventListener('mousemove', realMouseMoveHandler, true)
-        document.removeEventListener('mouseup', mouseUpHandler)
+        scrollElement.removeEventListener('pointerdown', mouseDownHandler)
+        document.removeEventListener('pointermove', realMouseMoveHandler, true)
+        document.removeEventListener('pointerup', mouseUpHandler)
       }
     }
   })

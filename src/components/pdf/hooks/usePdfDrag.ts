@@ -4,23 +4,11 @@ import { useMemoizedFn } from '@/hooks'
 import Id from '@/utils/id'
 import { useEffect, useState } from 'react'
 import { IThoughtLabel } from '~/typings/data'
-import usePdfInfo from './usePdfInfo'
 import { usePdfNote } from './usePdfNote'
-const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'
 
-function generateString(length) {
-  let result = ' '
-  const charactersLength = characters.length
-  for (let i = 0; i < length; i++) {
-    result += characters.charAt(Math.floor(Math.random() * charactersLength))
-  }
-
-  return result
-}
 const usePdfDrag = (viewbox: HTMLElement | null | undefined) => {
   const [isGlobalDragging] = useGlobalIsDragging()
   const [pdfNote, setPdfNote] = usePdfNote()
-  const [pdfInfo] = usePdfInfo()
   const [isDraggingInside, setIsDraggingInside] = useState(false)
   const mouseEnterHandler = useMemoizedFn((e: MouseEvent) => {
     setIsDraggingInside(true)
@@ -49,7 +37,6 @@ const usePdfDrag = (viewbox: HTMLElement | null | undefined) => {
         }
         const globalDraggingEle = GlobalDragOverlayInstance?.draggingDetails
         GlobalDragOverlayInstance.draggingDetails = undefined
-        console.log(globalDraggingEle)
         if (globalDraggingEle) {
           const label: IThoughtLabel = {
             id: Id.getId(),
@@ -59,7 +46,7 @@ const usePdfDrag = (viewbox: HTMLElement | null | undefined) => {
             type: 'thought'
           }
           switch (globalDraggingEle.type) {
-            case 'editorElement':
+            case 'noteElement':
               label.originFrom = 'editor'
               label.content = globalDraggingEle.content
               label.originId = globalDraggingEle.noteId
@@ -72,6 +59,10 @@ const usePdfDrag = (viewbox: HTMLElement | null | undefined) => {
             case 'metaElement':
               label.originFrom = 'meta'
               label.originId = globalDraggingEle.metaId
+              break
+            case 'image':
+              label.originFrom = 'image'
+              label.content = globalDraggingEle.url
           }
           console.log(label)
           setPdfNote({

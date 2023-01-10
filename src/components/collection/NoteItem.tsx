@@ -15,7 +15,7 @@ interface NoteItemProps {
 }
 
 const NoteItem: FC<NoteItemProps> = ({ note, onClick, onContextMenu }) => {
-  const { findSubNotes, all } = useNoteStore()
+  const { findSubNotes } = useNoteStore()
   const [subNotes, setSubNotes] = useState<INote[]>([])
   const [collapsed, toggleCollapsed] = useToggle(true)
   useEffect(() => {

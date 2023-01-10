@@ -13,7 +13,7 @@ import {
   RefObject,
   useLayoutEffect
 } from 'react'
-import { RenderElementProps, useSlate, useSlateStatic } from '../../slate-react'
+import { ReactEditor, RenderElementProps, useSlate, useSlateStatic } from '../../slate-react'
 import { CustomElement } from '../../customTypes'
 import { motion, AnimatePresence } from 'framer-motion'
 import styles from './index.module.less'
@@ -23,6 +23,10 @@ import { getDistanceBetweenPointAndElement } from '@/components/dragReposition/u
 import useIsSelecting from '../../hooks/useIsSelecting'
 import { getDistanceBetweenElementAndScrollableElement } from '@/components/editor/utils/scroll'
 import { isRectsCollision } from '../../utils/positions/collision'
+import { css } from '@emotion/css'
+import { hexToRgb } from '@/utils/color'
+import { useGlobalIsDragging } from '@/components/globalDragOverlay'
+import { Transforms } from 'slate'
 
 type BlockProps = {
   blockId: number
@@ -33,9 +37,9 @@ type BlockProps = {
   onMouseMove?: (e: MouseEvent, element: CustomElement) => void
   onNestedListItem?: (isNested: boolean) => void
   element?: CustomElement
-  scrollElement?: HTMLDivElement
-  measureElementRef?: RefObject
+  scrollElement?: HTMLDivElement | null
 }
+const CardBlocks = ['pdf', 'book-highlight', 'note']
 const Block: FC<React.DetailedHTMLProps<React.HTMLAttributes<HTMLDivElement>, HTMLDivElement> & BlockProps & RenderElementProps> = memo(
   ({
     scrollElement,
@@ -61,6 +65,7 @@ const Block: FC<React.DetailedHTMLProps<React.HTMLAttributes<HTMLDivElement>, HT
     const [selected, setSelected] = useState(false)
     const [withLine, setWithLine] = useState<{ width: number } | null>(null)
     const [isSelecting] = useIsSelecting()
+    const [isGlobalDragging] = useGlobalIsDragging()
     const distanceToScrollElementRef = useRef<{ left: number; top: number; right: number; bottom: number }>()
 
     const handleCollisionSelectBlock = useMemoizedFn(() => {
@@ -166,7 +171,14 @@ const Block: FC<React.DetailedHTMLProps<React.HTMLAttributes<HTMLDivElement>, HT
         selectBlock: handleSelectBlock,
         collisionSelectBlock: handleCollisionSelectBlock,
         changeIndicator: handleIndicatorChange,
-        getElement: () => element
+        getElement: () => element,
+        removeSelf: () => {
+          const path = ReactEditor.findPath(editor, element)
+          Transforms.removeNodes(editor, {
+            at: path
+          })
+        },
+        getPath: () => ReactEditor.findPath(editor, element)
       })
       return () => {
         map?.delete(blockId)
@@ -183,6 +195,9 @@ const Block: FC<React.DetailedHTMLProps<React.HTMLAttributes<HTMLDivElement>, HT
     const handleMouseEnter = useCallback(e => onMouseEnter?.(e, element), [onMouseEnter, element])
     const handleMouseLeave = useCallback(e => onMouseLeave?.(e, element), [onMouseLeave, element])
     const handleMouseMove = useCallback(e => onMouseMove?.(e, element), [onMouseMove, element])
+    const linearBg = element.background && (element.background as string).startsWith('linear-gradient')
+    const rgbaBg = element.background && hexToRgb(element.background)
+    const linearFont = element.color && (element.color as string).startsWith('linear-gradient')
     const renderChildren = () => (
       <div
         key={blockId}
@@ -194,11 +209,26 @@ const Block: FC<React.DetailedHTMLProps<React.HTMLAttributes<HTMLDivElement>, HT
         suppressContentEditableWarning
         data-level={element?.level}
         data-index={idx}
+        style={{
+          color: element.color || undefined,
+          textAlign: element.align,
+          '--linear-font': linearFont && element.color,
+          '--text-fill': linearFont ? 'transparent': undefined,
+          '--block-bg': linearBg ? element.background : rgbaBg ? `rgba(${rgbaBg.r},${rgbaBg.g},${rgbaBg.b}, 0.8)` : undefined,
+          ...rest.style
+        }}
         className={classNames(
           type === 'columnList' && styles.ColumnListBlock,
           type === 'column' && styles.ColumnBlock,
           type.startsWith('heading') && styles.HeadingBlock,
-          type !== 'column' && type !== 'columnList' && !type.startsWith('heading') && styles.ParagraphBlock
+          element.cardType === 'slim' && styles.SlimCardBlock,
+          element.cardType === 'line' && styles.LineCardBlock,
+          (element.cardType === 'wide' || (CardBlocks.includes(element.type) && element.cardType === undefined)) && styles.WideCardBlock,
+          type !== 'column' && type !== 'columnList' && !type.startsWith('heading') && styles.ParagraphBlock,
+          isGlobalDragging &&
+            css({
+              pointerEvents: 'none'
+            })
         )}
         {...rest}
       >

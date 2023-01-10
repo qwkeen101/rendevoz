@@ -9,7 +9,6 @@ export const BasicElements = {
 }
 
 export const InlineElements = {
-  MetaObject: 'metaObject',
   Emoji: 'emoji',
   Link: 'link'
 }

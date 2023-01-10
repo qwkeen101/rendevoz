@@ -19,18 +19,21 @@ export type CustomEditor = BaseEditor &
   } & {
     currentEnterElement?: Element
     currentAddClickElement?: Element
+    currentCopyElement?: Element
   } & {
     fontSize?: number
   } & {
     handler?: (e: { data?: any; type: string }) => void
+    initialized?: boolean
+    readonly?: boolean
   }
 
-export type CustomElement = CommonElement | OuterElement
+export type CustomElement = (CommonElement | OuterElement) & { hide?: boolean; id: number; color?: string; background?: string }
 
 declare module 'slate' {
   interface CustomTypes {
     Editor: CustomEditor
-    Element: CustomElement & { hide?: boolean; id: number }
+    Element: CustomElement
     Text: CustomText | EmptyText
   }
 }

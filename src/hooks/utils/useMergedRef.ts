@@ -14,7 +14,7 @@ export function mergeRefs<T = any>(...refs: Ref<T>[]) {
   }
 }
 
-const useMergedRef = (...refs: MutableRefObject<any>[]) => {
+const useMergedRef = (...refs: (MutableRefObject<any> | undefined)[]) => {
   return (node: any | null) => {
     refs.forEach(ref => {
       if (typeof ref === 'function') {

@@ -1,3 +1,4 @@
+import { useMemoizedFn } from '@/hooks'
 import { GlobalScope } from '@/jotai/jotaiScope'
 import { css } from '@emotion/css'
 import { atom, useAtom } from 'jotai'
@@ -6,11 +7,12 @@ import { createPortal } from 'react-dom'
 
 type AvaliableGlobalDraggingElements =
   | {
-      type: 'editorElement'
+      type: 'noteElement'
       blockId: number
       content: string
       noteId: number
     }
+  // something inside pdf, not pdf itself
   | {
       type: 'pdfElement'
       pdfId: number
@@ -21,6 +23,23 @@ type AvaliableGlobalDraggingElements =
       type: 'metaElement'
       metaId: number
     }
+  // pdf itself
+  | {
+      type: 'pdf'
+      pdfId: number
+    }
+  | {
+      type: 'collection'
+      collectionId: number
+    }
+  | {
+      type: 'note'
+      noteId: number
+    }
+  | {
+      type: 'image'
+      url: string
+    }
 interface IGlobalDragOverlay {
   addDragElements: (nodes: HTMLElement | HTMLElement[]) => void
   startDrag: () => void
@@ -29,46 +48,43 @@ interface IGlobalDragOverlay {
   removeAllDragElement: () => void
   draggingDetails?: Partial<AvaliableGlobalDraggingElements>
 }
-export let GlobalDragOverlayInstance: IGlobalDragOverlay | undefined = undefined
+export const GlobalDragOverlayInstance: Partial<IGlobalDragOverlay> = {}
 const globalIsDraggingAtom = atom(false)
 export const useGlobalIsDragging = () => useAtom(globalIsDraggingAtom, GlobalScope)
 const GlobalDragOverlay = memo(() => {
   const [dragElements, setDragElements] = useState<HTMLElement[]>([])
   const [isDragging, setIsDragging] = useGlobalIsDragging()
   const dragContainerRef = useRef<HTMLDivElement>(null)
-  const dragHandler = useCallback(
-    (e: MouseEvent) => {
-      e.preventDefault()
-      if (e.type === 'mouseup') {
-        console.log('up')
-        setDragElements([])
-        setIsDragging(false)
-        return
-      }
-      const dragContainer = dragContainerRef.current
-      if (!dragContainer) return
-      const { clientX, clientY } = e
-      dragContainer.style.transform = `translateX(${clientX}px) translateY(${clientY}px)`
-      dragContainer.style.display = 'block'
-    },
-    [dragContainerRef]
-  )
+  const dragHandler = useMemoizedFn((e: MouseEvent) => {
+    if (e.type === 'pointerup') {
+      console.log(e)
+      setDragElements([])
+      setTimeout(() => setIsDragging(false), 0)
+      return
+    }
+    e.preventDefault()
+    const dragContainer = dragContainerRef.current
+    if (!dragContainer) return
+    const { clientX, clientY } = e
+    dragContainer.style.transform = `translateX(${clientX}px) translateY(${clientY}px)`
+    dragContainer.style.display = 'block'
+  })
 
   useEffect(() => {
     const dragContainer = dragContainerRef.current
     if (!dragContainer) return
-    document.addEventListener('mouseup', dragHandler)
+    document.addEventListener('pointerup', dragHandler, true)
     if (isDragging) {
       document.body.style.cursor = 'grabbing'
-      document.addEventListener('mousemove', dragHandler)
+      document.addEventListener('pointermove', dragHandler, true)
     } else {
       document.body.style.cursor = 'auto'
-      document.removeEventListener('mousemove', dragHandler)
+      document.removeEventListener('pointermove', dragHandler, true)
       dragContainer.style.display = 'none'
-      setDragElements([])
+      // GlobalDragOverlayInstance.draggingDetails = undefined
     }
     return () => {
-      document.removeEventListener('mouseup', dragHandler)
+      document.removeEventListener('pointerup', dragHandler, true)
     }
   }, [isDragging])
   useEffect(() => {
@@ -80,14 +96,12 @@ const GlobalDragOverlay = memo(() => {
       dragContainerRef.current?.replaceChildren(...dragElements)
     }
   }, [dragElements])
-  GlobalDragOverlayInstance = {
-    ...GlobalDragOverlayInstance,
+  Object.assign(GlobalDragOverlayInstance, {
     addDragElements: nodes => {
       if (!Array.isArray(nodes)) {
         nodes = [nodes]
       }
       if (!isDragging) {
-        console.log('asdasda')
         setDragElements([...dragElements, ...nodes])
       }
     },
@@ -103,12 +117,13 @@ const GlobalDragOverlay = memo(() => {
       })
     },
     startDrag: () => {
+      console.log('start')
       setIsDragging(true)
     },
     endDrag: () => {
       setIsDragging(false)
     }
-  }
+  } as Partial<IGlobalDragOverlay>)
   return createPortal(
     <div
       className={css({

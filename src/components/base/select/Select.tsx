@@ -172,7 +172,7 @@ const Select: ISelect = ({
         }
       >
         <Content
-          onMouseDown={e => e.preventDefault()}
+          onPointerDown={e => e.preventDefault()}
           style={style}
           className={classNames(
             styles.selectContainer,

@@ -27,6 +27,6 @@ export interface IHighlightLabel extends ILabel {
 }
 export interface IThoughtLabel extends IDroppableLabel {
   position?: 'left' | 'top' | 'right' | 'bottom'
-  originFrom?: 'pdf' | 'editor' | 'meta'
+  originFrom?: 'pdf' | 'editor' | 'meta' | 'image'
   originId?: number
 }

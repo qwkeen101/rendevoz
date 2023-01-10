@@ -10,6 +10,6 @@ export interface ICollection extends IBase {
 }
 
 export interface ICollectionItem {
-  type?: 'note' | 'document',
+  type?: 'note' | 'document' | 'collection'
   id?: number
 }

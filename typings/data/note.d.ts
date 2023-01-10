@@ -1,14 +1,15 @@
 import { IBase } from './base'
 
 export interface INote extends IBase {
-  allBlockIds: number[]
-  subBlockIds: number[]
+  allBlockIds?: number[]
+  subBlockIds?: number[]
   icon?: string
   coverImgSrc?: string
   parentNoteId?: number
   title: string
   metaId?: number
   coverPosition?: number
+  contentId: number
 }
 
 export interface NoteBlock {

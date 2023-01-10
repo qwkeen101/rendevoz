@@ -1,4 +1,5 @@
 import { Toolbar, Content, WithBorder, ReadMore, ColorPicker } from '@/components'
+import BlockColorPicker from '@/components/editor/components/BlockColorPicker'
 import { TextSelectEvent } from '@/events/pdfEvent'
 import { googleTranslate } from '@/utils/translate/googleTranslate'
 import { FC, useState } from 'react'
@@ -40,14 +41,10 @@ const TextSelectionToolbar: FC<TextSelectionToolbarProps> = ({ textSelect, onHig
       </Toolbar.Item>
       <Toolbar.Item>
         <IconWithPopover
-          name="park-high-light"
+          name="park-background-color"
           placement={['top', 'bottom', 'right']}
           zIndex={10000}
-          content={
-            <WithBorder>
-              <ColorPicker onPick={color => onHighlight?.(color)} />
-            </WithBorder>
-          }
+          content={<BlockColorPicker bgBackDefault={false} showFont={false} onPickBackgroundColor={onHighlight} />}
         />
       </Toolbar.Item>
     </Toolbar>

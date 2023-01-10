@@ -18,7 +18,8 @@ class LayoutManager {
     if (this.layout) {
       const currentFocusedPanelId = this.layout.global.currentFocusedPanelId
       if (currentFocusedPanelId) {
-        const currentPanel = Algorithm.find(this.layout, currentFocusedPanelId) as PanelData
+        const currentPanel = (Algorithm.find(this.layout, currentFocusedPanelId) || this.layout.dockbox.children[0]) as PanelData
+        console.log(currentPanel)
         this.layout = Algorithm.addTabToPanel(this.layout, tab, currentPanel)
         return this.layout
       }

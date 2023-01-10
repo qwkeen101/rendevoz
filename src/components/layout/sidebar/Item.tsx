@@ -1,10 +1,9 @@
 import * as React from 'react'
 import { motion } from 'framer-motion'
 import styles from './index.module.less'
-import { NavLink } from 'react-router-dom'
 import NavLinkWithChildren from '../../base/navLink'
-import { useTheme } from '@/hooks'
 import { css } from '@emotion/css'
+import ClassName from '@/styles/classNames'
 
 const variants = {
   open: {
@@ -23,24 +22,68 @@ const variants = {
   }
 }
 
-export const MenuItem = ({ children, to, onClick }: { children: React.ReactNode; to?: string; onClick?: React.MouseEventHandler }) => {
-  const { defaultFontColorBlack } = useTheme('defaultFontColorBlack')
-  return to ? (
-    <NavLinkWithChildren to={to}>
-      {match => (
-        <motion.li
-          className={`${styles.item} ${css({
+export const MenuItem = React.forwardRef(
+  (
+    {
+      children,
+      to,
+      onClick,
+      style,
+      className
+    }: { className?: string; children: React.ReactNode; to?: string; onClick?: React.MouseEventHandler; style?: React.CSSProperties },
+    ref: React.ForwardedRef<HTMLLIElement>
+  ) => {
+    return to ? (
+      <NavLinkWithChildren to={to}>
+        {match => (
+          <motion.li
+            ref={ref}
+            // className={`${styles.item} ${css({
+            //   color: '#5f6065',
+            //   position: 'relative'
+            // })}`}
+            className={css([
+              className,
+              ClassName.ellipsisFont(1),
+              ClassName.defaultFont(),
+              ClassName.flatButton(),
+              ClassName.flexLayout('center', 'flex-start'),
+              {
+                minWidth: 150,
+                cursor: 'pointer',
+                userSelect: 'none',
+                color: '#5f6065'
+              }
+            ])}
+            variants={variants}
+            style={style}
+          >
+            {children}
+          </motion.li>
+        )}
+      </NavLinkWithChildren>
+    ) : (
+      <motion.li
+        style={style}
+        ref={ref}
+        onClick={onClick}
+        className={css([
+          className,
+          ClassName.ellipsisFont(1),
+          ClassName.defaultFont(),
+          ClassName.flatButton(),
+          ClassName.flexLayout('center', 'flex-start'),
+          {
+            minWidth: 150,
+            cursor: 'pointer',
+            userSelect: 'none',
             color: '#5f6065'
-          })}`}
-          variants={variants}
-        >
-          {children}
-        </motion.li>
-      )}
-    </NavLinkWithChildren>
-  ) : (
-    <motion.li onClick={onClick} className={styles.item} variants={variants}>
-      {children}
-    </motion.li>
-  )
-}
+          }
+        ])}
+        variants={variants}
+      >
+        {children}
+      </motion.li>
+    )
+  }
+)

@@ -97,17 +97,22 @@ const DatabaseCard: FC<{
   }
 
   const renderPopover = () => (
-    <Content flex column style={{ padding: 6, fontWeight: 500, width: 180 }}>
-      <div
-        className={ClassName.flatButton()}
-        onClick={() => {
-          setShowEdit(true)
+    <Content
+      flex
+      column
+      style={{ padding: 6, fontWeight: 500, width: 180 }}
+      onClick={e => {
+        if (e.target !== e.currentTarget) {
           setShowPopover(false)
-        }}
-      >
+        }
+      }}
+    >
+      <div className={ClassName.flatButton()} onClick={() => setShowEdit(true)}>
         Edit
       </div>
-      <div className={ClassName.flatButton()}>Pin</div>
+      <div className={ClassName.flatButton()} onClick={() => updateMetaObject({ id: metaObject.id, pinned: !metaObject.pinned })}>
+        {metaObject.pinned ? 'Unpin' : 'Pin'}
+      </div>
       <div className={ClassName.flatButton()} onClick={() => GlobalGraphInstance?.open(metaObject)}>
         Graph
       </div>
@@ -149,7 +154,7 @@ const DatabaseCard: FC<{
       opacity: 1,
       x: 0,
       transition: {
-        delay: index / 10
+        delay: index ? index / 10 : 0
       }
     }
   }

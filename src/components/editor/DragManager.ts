@@ -248,16 +248,23 @@ class DragManager {
   changeIndicator = (indicator: Indicator, e: MouseEvent) => {
     const { direction, id } = indicator
     if (direction === null) {
+      console.log(indicator)
       const id = this.indicator?.id
-      console.log(this.indicator)
-      id && this.elementsMap?.get(id)?.changeIndicator(null)
+      if (id && this.editor) {
+        const block = ID_TO_ELEMENTS_MAP.get(this.editor)?.get(id)
+        console.log(block)
+        block?.changeIndicator(null)
+      }
+
+      // id && this.editor && ID_TO_ELEMENTS_MAP.get(this.editor)?.get(id)?.changeIndicator(null)
+      // console.log('change to null')
       this.indicator = null
       return
     } else {
       this.indicator = { direction, id }
     }
-    if (id) {
-      const block = this.elementsMap?.get(id)
+    if (id && this.editor) {
+      const block = ID_TO_ELEMENTS_MAP.get(this.editor)?.get(id)
       if (!block?.changeIndicator(direction, e)) {
         this.indicator = null
       }
@@ -265,8 +272,8 @@ class DragManager {
     if (this.prevIndicator && this.prevIndicator.id === id && this.prevIndicator.direction === direction) {
       return
     } else {
-      if (this.prevIndicator?.id) {
-        const prevBlock = this.elementsMap?.get(this.prevIndicator.id)
+      if (this.prevIndicator?.id && this.editor) {
+        const prevBlock = ID_TO_ELEMENTS_MAP.get(this.editor)?.get(this.prevIndicator.id)
         prevBlock?.changeIndicator(null)
       }
       this.prevIndicator = {
@@ -293,7 +300,7 @@ class DragManager {
         const [targetElement, targetPath] = Array.from(Node.descendants(this.editor)).find(i => i[0].id === id) || []
         GlobalDragOverlayInstance?.endDrag()
         DragManager.globalDraggingEditor = null
-        this.elementsMap?.get(id)?.changeIndicator(null)
+        ID_TO_ELEMENTS_MAP.get(this.editor)?.get(id)?.changeIndicator(null)
         this.blockElementsArray = []
         this.blockElementsMap.clear()
         this.dragElement = null
@@ -315,8 +322,8 @@ class DragManager {
         return true
       } else {
         GlobalDragOverlayInstance?.endDrag()
-
-        this.elementsMap?.get(id)?.changeIndicator(null)
+        ID_TO_ELEMENTS_MAP.get(this.editor)?.get(id)?.changeIndicator(null)
+        // this.elementsMap?.get(id)?.changeIndicator(null)
         this.blockElementsArray = []
         this.blockElementsMap.clear()
         this.dragElement = null
@@ -335,40 +342,74 @@ class DragManager {
           }
         } else {
           console.log('drop from other components not editor!')
-          if (GlobalDragOverlayInstance.draggingDetails) {
-            const globalDraggingEle = GlobalDragOverlayInstance.draggingDetails
-            GlobalDragOverlayInstance.draggingDetails = undefined
-            console.log(globalDraggingEle)
-            let ele: Partial<CustomElement> = {}
-            switch (globalDraggingEle.type) {
-              case 'pdfElement': {
-                ele = {
-                  type: 'book-highlight',
-                  selectedText: globalDraggingEle.content,
-                  page: globalDraggingEle.page,
-                  documentId: globalDraggingEle.pdfId,
-                  children: [{ text: '' }]
+          if (GlobalDragOverlayInstance) {
+            if (GlobalDragOverlayInstance.draggingDetails) {
+              const globalDraggingEle = GlobalDragOverlayInstance.draggingDetails
+              GlobalDragOverlayInstance.draggingDetails = undefined
+              console.log(globalDraggingEle)
+              let ele: Partial<CustomElement> = {}
+              switch (globalDraggingEle.type) {
+                case 'pdfElement': {
+                  ele = {
+                    type: 'book-highlight',
+                    selectedText: globalDraggingEle.content,
+                    page: globalDraggingEle.page,
+                    documentId: globalDraggingEle.pdfId,
+                    children: [{ text: '' }]
+                  }
+                  break
                 }
-                break
-              }
-              case 'metaElement': {
-                ele = {
-                  type: 'paragraph',
-                  children: [
-                    {
+                case 'metaElement': {
+                  globalDraggingEle.metaId &&
+                    // (ele = {
+                    //   type: 'paragraph',
+                    //   children: [
+                    //     {
+                    //       type: 'metaObject',
+                    //       originId: globalDraggingEle.metaId,
+                    //       children: [{ text: '' }]
+                    //     }
+                    //   ]
+                    // })
+                    (ele = {
                       type: 'metaObject',
                       originId: globalDraggingEle.metaId,
                       children: [{ text: '' }]
-                    }
-                  ]
+                    })
+                  break
+                }
+                case 'pdf': {
+                  ele = {
+                    type: 'pdf',
+                    pdfId: globalDraggingEle.pdfId,
+                    children: [{ text: '' }]
+                  }
+                  break
+                }
+                case 'image': {
+                  ele = {
+                    type: 'image',
+                    url: globalDraggingEle.url,
+                    children: [{ text: '' }]
+                  }
+                  break
+                }
+                case 'note': {
+                  ele = {
+                    type: 'note',
+                    noteId: globalDraggingEle.noteId,
+                    children: [{ text: '' }]
+                  }
                 }
               }
+              ele.id = Id.getId()
+              if (ele.type !== undefined) {
+                const end = this.editor.children.length
+                Transforms.insertNodes(this.editor, ele, { at: [end] })
+                const [targetElement, targetPath] = Array.from(Node.descendants(this.editor)).find(i => i[0].id === id) || []
+                moveSingleElement(this.editor, [end], targetElement, targetPath, direction, isNested)
+              }
             }
-            ele.id = Id.getId()
-            const end = this.editor.children.length
-            Transforms.insertNodes(this.editor, ele, { at: [end] })
-            const [targetElement, targetPath] = Array.from(Node.descendants(this.editor)).find(i => i[0].id === id) || []
-            moveSingleElement(this.editor, [end], targetElement, targetPath, direction, isNested)
           }
         }
         DragManager.globalDraggingEditor = null

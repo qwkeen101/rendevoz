@@ -125,7 +125,7 @@ const GraphThumbnail = ({ children, onClose }: { children: ReactNode; onClose: N
       >
         {small && (
           <div
-            onMouseDown={mouseDownHandler}
+            onPointerDown={mouseDownHandler}
             className={css({
               position: 'absolute',
               top: 0,

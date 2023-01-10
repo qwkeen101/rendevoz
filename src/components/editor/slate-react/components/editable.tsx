@@ -100,7 +100,7 @@ export type EditableProps = {
   renderPlaceholder?: (props: RenderPlaceholderProps) => JSX.Element
   scrollSelectionIntoView?: (editor: ReactEditor, domRange: DOMRange) => void
   as?: React.ElementType
-  scrollElement?: HTMLElement
+  scrollElement?: HTMLElement | null
 } & React.TextareaHTMLAttributes<HTMLDivElement>
 
 /**
@@ -141,7 +141,8 @@ export const Editable = (props: EditableProps) => {
     count: editor.children.length,
     estimateSize: () => 30,
     getScrollElement: () => scrollElement || document.body,
-    overscan: 20
+    overscan: 20,
+    paddingEnd: 300
   })
 
   // Keep track of some state for the event handler logic.

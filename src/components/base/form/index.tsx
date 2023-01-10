@@ -1,6 +1,8 @@
 import { Button } from '@/components/base/button'
+import { KEY } from '@/consts/key'
+import isHotkey from 'is-hotkey'
 import { Provider } from 'jotai'
-import { createContext, CSSProperties, FC, useState } from 'react'
+import { createContext, CSSProperties, FC, useEffect, useState } from 'react'
 import Content from '../Content'
 import Footer from '../footer'
 import FormItem from './FormItem'
@@ -24,6 +26,20 @@ interface IForm extends FC<FormProps> {
 const InnerForm: FC<FormProps> = ({ children, title, description, onBack, onSubmit, style, backText, submitText }) => {
   const [, setIsSubmitted] = useIsSubmitted()
   const [canSubmit] = useCanSubmit()
+  useEffect(() => {
+    const keydownHandler = (e: KeyboardEvent) => {
+      if (isHotkey(KEY.Enter, e)) {
+        if (canSubmit) {
+          onSubmit?.()
+        }
+        setIsSubmitted(true)
+      }
+    }
+    document.addEventListener('keydown', keydownHandler)
+    return () => {
+      document.removeEventListener('keydown', keydownHandler)
+    }
+  })
   return (
     <div className={styles.form} style={style}>
       <Content flex column>

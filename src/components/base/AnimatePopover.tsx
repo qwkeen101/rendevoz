@@ -1,15 +1,17 @@
-import { FC, memo, PropsWithChildren, useEffect, useRef, useState } from 'react'
+import { FC, memo, PropsWithChildren, RefObject, useEffect, useRef, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { Popover, PopoverProps } from 'react-tiny-popover'
 import useUnmount from '@/hooks/utils/useUnmount'
 import _ from 'lodash'
 import { useIntersection } from 'react-use'
+import { useMergedRef } from '@/hooks'
 interface AnimatePopoverProps extends Omit<PopoverProps, 'content' | 'isOpen'> {
   animate?: boolean
   visible: boolean
   content: React.ReactNode
   disableNudge?: boolean
   disableIntersection?: boolean
+  innerRef?: RefObject<HTMLElement>
 }
 
 const AnimatePopover: FC<PropsWithChildren<AnimatePopoverProps>> = ({
@@ -20,6 +22,7 @@ const AnimatePopover: FC<PropsWithChildren<AnimatePopoverProps>> = ({
   disableIntersection,
   reposition = false,
   disableNudge = false,
+  innerRef,
   ...rest
 }) => {
   const [isOpen, setIsOpen] = useState(false)
@@ -32,6 +35,7 @@ const AnimatePopover: FC<PropsWithChildren<AnimatePopoverProps>> = ({
 
   const popoverRef = useRef(null)
   const nudgedRef = useRef()
+  const mergedRef = useMergedRef(intersectionRef, innerRef)
   useUnmount(() => {
     setIsOpen(false)
     nudgedRef.current = undefined
@@ -52,7 +56,7 @@ const AnimatePopover: FC<PropsWithChildren<AnimatePopoverProps>> = ({
         {...rest}
         reposition={reposition}
         isOpen={isOpen}
-        ref={intersectionRef}
+        ref={mergedRef}
         content={({ nudgedLeft, nudgedTop }) => {
           if ((!nudgedRef.current || _.isEqual(nudgedRef.current, { left: 0, top: 0 })) && !disableNudge) {
             nudgedRef.current = {

@@ -27,6 +27,7 @@ import Initializer from './Initializer'
 import './global.less'
 import GlobalGraph from './components/graph/GlobalGraph'
 import GlobalDragOverlay from './components/globalDragOverlay'
+import GlobalScreenShot from './components/globalScreenShot'
 
 const App = () => {
   return (
@@ -34,6 +35,7 @@ const App = () => {
       <Toaster />
       <Initializer />
       <GlobalGraph />
+      <GlobalScreenShot />
       <Router>
         <TitleBar />
         <Routes />

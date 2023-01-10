@@ -1,30 +1,33 @@
 import { useMemoizedFn } from '@/hooks'
 import classNames from 'classnames'
-import { PanInfo, motion, animate } from 'framer-motion'
+import { PanInfo, motion, animate, AnimationPlaybackControls } from 'framer-motion'
 import { FC, memo, useRef, useState } from 'react'
+import { Transforms } from 'slate'
 import { Path } from 'slate'
 import useIsDragging, { useIsDraggingDivider } from './hooks/useIsDragging'
 import styles from './index.module.less'
+import { ReactEditor, useSlate } from './slate-react'
 
 type DividerProps = {
-  onDragStart: () => void
-  onDragEnd: (previousColumnWidthRatio: number, previousColumnPath: Path, nextColumnWidthRatio: number, nextColumnPath: Path) => void
   currentPath: Path
 }
-const Divider: FC<DividerProps> = memo(({ onDragEnd, onDragStart, currentPath }) => {
+const Divider: FC<DividerProps> = memo(({ currentPath }) => {
   const [isDragging] = useIsDragging()
-  const [isDraggingDivider] = useIsDraggingDivider()
+  const editor = useSlate()
   const dividerRef = useRef<HTMLDivElement>(null)
-  const widthRef = useRef(null)
+  const widthRef = useRef<{
+    previousColumnWidth?: number
+    nextColumnWidth?: number
+  }>()
   const [isDraggingHandle, setIsDraggingHandle] = useState(false)
-  const [isMouseOnDivider,setIsMouseOnDivider] = useState(true)
-  const prevPrevColumnAnim = useRef()
-  const prevNextColumnAnim = useRef()
+  const [isMouseOnDivider, setIsMouseOnDivider] = useState(true)
+  const prevPrevColumnAnim = useRef<AnimationPlaybackControls>()
+  const prevNextColumnAnim = useRef<AnimationPlaybackControls>()
   const handleDragStart = (e: MouseEvent) => {
     if (isDragging) return
-    if (isDraggingDivider) return
+    if (isDraggingHandle) return
+    ReactEditor.deselect(editor)
     setIsDraggingHandle(true)
-    onDragStart?.()
     const divider = dividerRef.current
     if (divider) {
       const previousColumn = divider.previousElementSibling
@@ -69,7 +72,7 @@ const Divider: FC<DividerProps> = memo(({ onDragEnd, onDragStart, currentPath })
     if (divider) {
       if (!divider.contains(e.target)) {
         setIsMouseOnDivider(false)
-      }else{
+      } else {
         setIsMouseOnDivider(true)
       }
       const previousColumn = divider.previousElementSibling as HTMLElement
@@ -81,7 +84,9 @@ const Divider: FC<DividerProps> = memo(({ onDragEnd, onDragStart, currentPath })
       }, 0)
       const previousColumnWidthRatio = previousColumnWidth / allColumnsWidth
       const nextColumnWidthRatio = nextColumnWidth / allColumnsWidth
-      onDragEnd(previousColumnWidthRatio, Path.previous(currentPath), nextColumnWidthRatio, currentPath)
+      const prevPath = Path.previous(currentPath)
+      Transforms.setNodes(editor, { ratio: nextColumnWidthRatio }, { at: currentPath })
+      Transforms.setNodes(editor, { ratio: previousColumnWidthRatio }, { at: prevPath })
     }
   })
   return (

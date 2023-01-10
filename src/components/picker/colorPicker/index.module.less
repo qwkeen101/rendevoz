@@ -2,7 +2,9 @@
 .colors{
     max-width: 240px;
     overflow-y: hidden;
-    overflow-x: scroll;
+    overflow-x: auto;
+    display: grid !important;
+    grid-template-columns: repeat(auto-fill, minmax(24px,1fr));
     padding: 4px 0;
     .slimIosStyleScrollBar;
 }

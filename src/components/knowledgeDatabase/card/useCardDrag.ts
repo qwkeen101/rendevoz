@@ -34,12 +34,12 @@ const useCardDrag = (metaObject: MetaObject, draggableElement?: HTMLElement | nu
   }
   const showElementMouseHandler = (e: MouseEvent) => {
     if (isGlobalDragging) {
-      if (e.type === 'mouseenter') {
+      if (e.type === 'pointerenter') {
         if (GlobalDragOverlayInstance?.draggingDetails?.metaId !== metaObject.id) {
           setIsCardDraggingInside(true)
         }
       }
-      if (e.type === 'mouseleave') {
+      if (e.type === 'pointerleave') {
         setIsCardDraggingInside(false)
       }
     }
@@ -66,17 +66,17 @@ const useCardDrag = (metaObject: MetaObject, draggableElement?: HTMLElement | nu
 
   useEffect(() => {
     if (draggableElement) {
-      draggableElement?.addEventListener('mousedown', mouseDownHandler)
-      draggableElement?.addEventListener('mousemove', mouseMoveHandler)
-      showElement?.addEventListener('mouseenter', showElementMouseHandler)
-      showElement?.addEventListener('mouseleave', showElementMouseHandler)
-      document.addEventListener('mouseup', mouseUpHandler)
+      draggableElement?.addEventListener('pointerdown', mouseDownHandler)
+      draggableElement?.addEventListener('pointermove', mouseMoveHandler)
+      showElement?.addEventListener('pointerenter', showElementMouseHandler)
+      showElement?.addEventListener('pointerleave', showElementMouseHandler)
+      document.addEventListener('pointerup', mouseUpHandler)
       return () => {
-        draggableElement?.removeEventListener('mousedown', mouseDownHandler)
-        draggableElement?.removeEventListener('mousemove', mouseMoveHandler)
-        showElement?.removeEventListener('mouseenter', showElementMouseHandler)
-        showElement?.removeEventListener('mouseleave', showElementMouseHandler)
-        document.removeEventListener('mouseup', mouseUpHandler)
+        draggableElement?.removeEventListener('pointerdown', mouseDownHandler)
+        draggableElement?.removeEventListener('pointermove', mouseMoveHandler)
+        showElement?.removeEventListener('pointerenter', showElementMouseHandler)
+        showElement?.removeEventListener('pointerleave', showElementMouseHandler)
+        document.removeEventListener('pointerup', mouseUpHandler)
       }
     }
   })

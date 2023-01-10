@@ -1,5 +1,5 @@
 import { Descendant } from 'slate'
-import { CustomText, ElementWithId, EmptyText } from './baseTypes'
+import { CardElement, CustomText, ElementWithId, EmptyText } from './baseTypes'
 
 export interface HeadingElement extends ElementWithId {
   dest?: string | any[]
@@ -30,7 +30,21 @@ export interface HeadingFiveElement extends HeadingElement {
 export interface HeadingSixElement extends HeadingElement {
   type: 'heading-six'
 }
-
+export interface MediaElement {
+  type: 'media'
+  mediaType: 'audio' | 'video' | 'pdf'
+  children: EmptyText[]
+}
+export interface PdfElement extends CardElement {
+  type: 'pdf'
+  pdfId: number
+  children: EmptyText[]
+}
+export interface NoteElement extends CardElement{
+  type: 'note'
+  noteId: number
+  children: EmptyText[]
+}
 export interface BlockQuoteElement {
   type: 'block-quote'
   align?: string
@@ -77,7 +91,7 @@ export interface ImageElement {
   children: EmptyText[]
 }
 
-export interface LinkElement {
+export interface LinkElement extends CardElement {
   type: 'link'
   url: string
   children: Descendant[]
@@ -137,6 +151,15 @@ export interface VideoElement {
   children: EmptyText[]
 }
 
+export interface ColumnElement {
+  type: 'column'
+  ratio: number
+  children: Descendant[]
+}
+export interface ColumnListElement {
+  type: 'columnList'
+  children: Descendant[]
+}
 export type CommonElement =
   | BlockQuoteElement
   | BulletedListElement
@@ -163,3 +186,7 @@ export type CommonElement =
   | EmojiElement
   | ToDoElement
   | ParagraphElement
+  | PdfElement
+  | NoteElement
+  | ColumnElement
+  | ColumnListElement

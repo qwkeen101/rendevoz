@@ -6,13 +6,13 @@ export interface IOuterElement extends ElementWithId {
    * For example: The id highlight has in pdf note
    */
   originId: number
+  children: EmptyText[]
 }
 
 export interface ThoughtElement extends IOuterElement {
   type: 'thought'
   title: string
   content: string
-  children: EmptyText[]
 }
 
 export interface BookHighlightElement extends IOuterElement {
@@ -21,7 +21,6 @@ export interface BookHighlightElement extends IOuterElement {
   documentId?: number
   page?: number
   title?: string
-  children: EmptyText[]
 }
 export interface SubPageElement extends IOuterElement {
   type: 'subPage'

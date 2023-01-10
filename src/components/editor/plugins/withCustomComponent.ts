@@ -20,7 +20,7 @@ const checkIfSpacerNeeded = (element: Node) => {
 const withCustomComponent = (editor: CustomEditor) => {
   const { deleteBackward, insertText, insertBreak, deleteForward, insertNode, insertFragment, apply } = editor
   editor.insertSoftBreak = () => {
-    editor.insertBreak()
+    editor.insertText('\n')
   }
   editor.insertFragment = nodes => {
     console.log(nodes)

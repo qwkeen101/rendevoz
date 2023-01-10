@@ -1,6 +1,6 @@
 import { join } from 'path'
 import { Module } from '@nestjs/common'
-import { BrowserWindow, app, shell, protocol, session, BrowserView } from 'electron'
+import { BrowserWindow, app, shell, protocol, session, BrowserView, globalShortcut } from 'electron'
 import axios from 'axios'
 import { fileURLToPath } from 'url'
 import HttpsProxyAgent from 'https-proxy-agent'
@@ -38,7 +38,6 @@ process.env.PUBLIC = app.isPackaged ? process.env.DIST : join(process.env.DIST_E
         }
         app.commandLine.appendSwitch('disable-site-isolation-trials')
         await app.whenReady()
-
         protocol.registerFileProtocol('rendefile', (req, callback) => {
           const filePath = fileURLToPath('file://' + req.url.slice('rendefile://'.length))
           callback(filePath)
@@ -62,8 +61,8 @@ process.env.PUBLIC = app.isPackaged ? process.env.DIST : join(process.env.DIST_E
           })
         })
         const win = new BrowserWindow({
-          width: 1000,
-          height: 800,
+          width: 1600,
+          height: 900,
           webPreferences: {
             nodeIntegration: false,
             contextIsolation: true,

@@ -1,6 +1,7 @@
 import { Noop } from '@/common/types'
 import { ColorPicker, IconPicker, Toolbar, WithBorder } from '@/components'
 import { PrettyInput } from '@/components/custom/input/pretty'
+import BlockColorPicker from '@/components/editor/components/BlockColorPicker'
 import { FC, memo } from 'react'
 import IconWithPopover from '../../../base/IconWithPopover'
 import { TextSelectionSearch, TextSelectionTranslate } from './TextSelectionToolbar'
@@ -66,11 +67,7 @@ const LabelToolbar: FC<LabelToolbarProps> = ({
         disableNudge
         name="park-background-color"
         color={color}
-        content={
-          <WithBorder>
-            <ColorPicker onPick={onColorChange} />
-          </WithBorder>
-        }
+        content={<BlockColorPicker bgBackDefault={false} showFont={false} onPickBackgroundColor={onColorChange} />}
       ></IconWithPopover>
     </Toolbar.Item>
   )

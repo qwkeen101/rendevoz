@@ -38,10 +38,6 @@ export const MenuItem = React.forwardRef(
         {match => (
           <motion.li
             ref={ref}
-            // className={`${styles.item} ${css({
-            //   color: '#5f6065',
-            //   position: 'relative'
-            // })}`}
             className={css([
               className,
               ClassName.ellipsisFont(1),

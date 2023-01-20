@@ -49,7 +49,7 @@ const BaseStore = {
   initBaseObject<T extends Partial<IBase>>(obj: T): PartialWithId<T> {
     return {
       ...obj,
-      id: Id.getId(),
+      id: obj.id || Id.getId(),
       updatedAt: Date.now(),
       createdAt: Date.now()
     }

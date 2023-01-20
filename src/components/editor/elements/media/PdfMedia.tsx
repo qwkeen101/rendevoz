@@ -61,7 +61,7 @@ const PdfMedia = ({ element, children }: Omit<RenderElementProps, 'attributes'>)
           }
         ])}
       >
-        {document?.metadata?.title}
+        {document?.metadata?.title || document?.name}
       </Content>
       <Content>
         <div className={ClassName.tag(element.background ? ClassName.TagBackgrounds.transparent : ClassName.TagBackgrounds.grey)}>Book</div>

@@ -10,14 +10,13 @@ const WideCard: FC<{
   slateChildren?: ReactNode
   borderColor?: 'grey' | 'cream'
 }> = ({ borderColor = 'cream', main, slateChildren, pictureUrl }) => {
-  const border = useCardBorder(borderColor)
   return (
     <Content
       contentEditable={false}
       flex
       className={css({
-        border: `1px solid ${border}`,
-        borderRadius: 8,
+        boxShadow: 'rgba(0, 0, 0, 0.05) 0px 6px 24px 0px, rgba(0, 0, 0, 0.08) 0px 0px 0px 1px',
+        borderRadius: 6,
         overflow: 'hidden'
       })}
     >

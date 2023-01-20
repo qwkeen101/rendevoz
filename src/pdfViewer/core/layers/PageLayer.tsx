@@ -81,6 +81,7 @@ const PageLayer: FC<PageLayerProps> = ({ doc, height, scale, width, pageIndex, r
             }}
           >
             {pageRenderer({
+              pageElement: pageRef.current,
               canvasLayer: (
                 <CanvasLayer page={pageDetails.page} scale={scale} width={width} height={height} viewport={pageDetails.viewport} />
               ),

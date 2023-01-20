@@ -1,4 +1,4 @@
-import { FC, memo, MouseEventHandler, useEffect, useRef, MouseEvent } from 'react'
+import { FC, memo, MouseEventHandler, useEffect, useRef, MouseEvent, useMemo } from 'react'
 import { GraphNode } from '../../types/node'
 import ImageNode from './ImageNode'
 import { select } from 'd3-selection'
@@ -8,6 +8,11 @@ import useGraph from '../../hooks/useGraph'
 import { motion } from 'framer-motion'
 import { NodeMouseEventHandler } from '../NodeContainer'
 import IconNode from './IconNode'
+import { notesAtom } from '@/stores/note.store'
+import { atom, useAtomValue } from 'jotai'
+import { GlobalScope } from '@/jotai/jotaiScope'
+import { documentsAtom } from '@/stores/document.store'
+import { INote, IPdfDocument } from '~/typings/data'
 
 interface NodeProps {
   node: GraphNode
@@ -17,9 +22,41 @@ interface NodeProps {
   onContextMenu?: NodeMouseEventHandler
   onMouseDown?: NodeMouseEventHandler
 }
+
+export const TypeToNodeRadius = {
+  pdf: 60,
+  pdfElement: 20,
+  note: 40,
+  normal: 20
+}
 const Node: FC<NodeProps> = memo(({ node, onMouseEnter, onMouseLeave, onContextMenu, onClick }) => {
   const nodeRef = useRef<SVGGElement>(null)
   const graph = useGraph()
+  const { type, objectId } = node
+  const nodeObjectAtom = useMemo(() => {
+    if (objectId) {
+      if (type === 'note') {
+        return atom(get => get(notesAtom).get(objectId))
+      }
+      if (type === 'pdf') {
+        return atom(get => get(documentsAtom).get(objectId))
+      }
+    }
+    return atom(null)
+  }, [node.objectId])
+  const object = useAtomValue(nodeObjectAtom, GlobalScope)
+  const renderNode = () => {
+    if (node.type === 'note') {
+      return <IconNode node={node} label={(object as INote)?.title} />
+    }
+    if (node.type === 'pdfElement') {
+      return <IconNode node={node} />
+    }
+    if (node.type === 'pdf') {
+      return <ImageNode label={(object as IPdfDocument)?.name} imageUrl={(object as IPdfDocument).metadata?.coverUrl} node={node} />
+    }
+    return <ImageNode node={node} />
+  }
   useEffect(() => {
     if (nodeRef.current) {
       graph?.registerNodeElement(node.id, nodeRef.current)
@@ -82,8 +119,7 @@ const Node: FC<NodeProps> = memo(({ node, onMouseEnter, onMouseLeave, onContextM
       animate={{ opacity: node.opacity }}
       transform={`translate(${node.x},${node.y})`}
     >
-      {node.type === 'document' || node.type === 'note' ? <IconNode node={node} /> : <ImageNode node={node} />}
-      {/* <ImageNode node={node} /> */}
+      {renderNode()}
     </motion.g>
   )
 })

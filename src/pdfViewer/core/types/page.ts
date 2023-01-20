@@ -30,6 +30,7 @@ export interface RenderPageProps {
   canvasLayer: ReactElement
   textLayer: ReactElement
   annotationLayer: ReactElement
+  pageElement: HTMLElement | null
   pageIndex: number
   pageSize: PageSize
   pageFunctionRef: RefObject<PageFunctionRef>

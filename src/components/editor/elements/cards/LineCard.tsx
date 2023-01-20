@@ -4,6 +4,9 @@ import { css } from '@emotion/css'
 import { ReactNode, FC } from 'react'
 import { CustomElement } from '../../types'
 
+const IconClassName = css({
+  color: 'rgba(var(--font-bg, 55 53 47 / 85%)) !important'
+})
 const LineCard: FC<{
   element?: CustomElement
   type?: 'note' | 'pdf'
@@ -18,8 +21,9 @@ const LineCard: FC<{
       className={ClassName.flatButton(undefined, undefined, element?.background)}
       gap={10}
     >
-      {type === 'note' && <Icon name="park-notes" size={20} />}
-      {type === 'pdf' && <Icon name="park-book" size={20} />}
+      {type === 'note' && <Icon className={IconClassName} name="park-notes" size={20} />}
+      {type === 'pdf' && <Icon className={IconClassName} name="park-book" size={20} />}
+      {type === 'meta' && <Icon className={IconClassName} name="park-share-one" size={20}/>}
       {main}
       {slateChildren}
     </Content>

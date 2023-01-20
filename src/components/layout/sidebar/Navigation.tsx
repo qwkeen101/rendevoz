@@ -12,9 +12,8 @@ import SidebarCollection from './SidebarCollection'
 import Content from '../../base/Content'
 import { useTheme } from '@/hooks'
 import { css } from '@emotion/css'
-import NewCollectionForm from '@/components/form/NewCollectionForm'
 import SidebarPinned from './SidebarPinned'
-import GlobalPocket from '@/components/globalPocket'
+import GlobalPocket from '@/components/GlobalPocket'
 import SidebarPocket from './SidebarPocket'
 import SidebarDatabase from './SidebarDatabase'
 
@@ -26,7 +25,7 @@ const variants = {
     transition: { staggerChildren: 0.05, staggerDirection: -1 }
   }
 }
-const Navigation = () => {
+const Navigation = ({ hovered }: { hovered: boolean }) => {
   const [searchVisible, setSearchVisible] = useState(false)
   const [newItemVisible, setNewItemVisible] = useState(false)
   const [settingVisible, setSettingVisible] = useState(false)
@@ -44,14 +43,24 @@ const Navigation = () => {
       <Modal visible={settingVisible} onClose={() => setSettingVisible(false)}>
         <SettingDialog />
       </Modal>
-      <motion.ul className={styles.list} variants={variants}>
+      <motion.ul
+        className={styles.list}
+        style={
+          hovered
+            ? {
+                margin: 0
+              }
+            : undefined
+        }
+        variants={variants}
+      >
         <MenuItem to="/home">
           <Icon name="park-home" style={{ marginRight: 10 }} size={16} />
           {t('sidebar.home')}
         </MenuItem>
         <SidebarDatabase />
         <GlobalPocket>{urls => <SidebarPocket urls={urls} />}</GlobalPocket>
-        <Content flex alignItems="center" style={{ padding: '0px 4px' }}>
+        <Content flex alignItems="center" style={{ padding: '0px 4px 0px 4px', marginTop: 20 }}>
           <div
             className={css({
               fontWeight: 600,
@@ -64,7 +73,7 @@ const Navigation = () => {
           </div>
         </Content>
         <SidebarPinned />
-        <Content flex column style={{ overflow: 'hidden', padding: 4, margin: -4 }}>
+        <Content flex column style={{ overflow: 'hidden', padding: 4, margin: -4, marginTop: 10 }}>
           <SidebarCollection />
         </Content>
       </motion.ul>

@@ -1,10 +1,10 @@
 import Id from '@/utils/id'
 import { MouseEvent } from 'react'
-import { Editor, Element, Node, Path, Transforms } from 'slate'
+import { Editor, Node, Path, Transforms } from 'slate'
 import { ReactEditor } from 'slate-react'
 import { getElementId } from '../dragReposition/utils/element'
 import { getDistanceBetweenPointAndElement } from '../dragReposition/utils/position'
-import { GlobalDragOverlayInstance } from '../globalDragOverlay'
+import { AvaliableGlobalDraggingElements, GlobalDragOverlayInstance } from '../GlobalDragOverlay'
 import { CustomEditor, CustomElement } from './types'
 import { searchBlock } from './utils/algorithm'
 import moveMultiElements from './utils/moveMultiElements'
@@ -34,6 +34,7 @@ class DragManager {
   private elementsMap: Map<number, ElementFunctions> | null = null
   static dragElementsAdded = false
   public isDraggingFromOtherEditor = false
+  public onDrop?: (draggingEle: Partial<AvaliableGlobalDraggingElements>) => void
   registerDragElement = (dragElement: HTMLElement, dragElementPath: Path) => {
     this.dragElement = dragElement
     this.dragElementPath = dragElementPath
@@ -82,7 +83,7 @@ class DragManager {
     if (!DragManager.dragElementsAdded) {
       const selectedBlocksSet = SELECTED_BLOCKS_MAP.get(this.editor)
       if (selectedBlocksSet && selectedBlocksSet.size > 0) {
-        GlobalDragOverlayInstance?.addDragElements(rebuildDragSelect(this.editor, e) || document.createElement('div'))
+        GlobalDragOverlayInstance.addDragElements?.(rebuildDragSelect(this.editor, e) || document.createElement('div'))
       } else {
         if (this.dragElement) {
           const cloned = this.dragElement.cloneNode(true)
@@ -91,10 +92,10 @@ class DragManager {
           wrapper.style.width = `${rect.width}px`
           wrapper.style.height = `${rect.height}px`
           wrapper.appendChild(cloned)
-          GlobalDragOverlayInstance?.addDragElements(wrapper)
+          GlobalDragOverlayInstance.addDragElements?.(wrapper)
         }
       }
-      GlobalDragOverlayInstance?.startDrag()
+      GlobalDragOverlayInstance.startDrag?.()
     }
 
     DragManager.dragElementsAdded = true
@@ -248,16 +249,11 @@ class DragManager {
   changeIndicator = (indicator: Indicator, e: MouseEvent) => {
     const { direction, id } = indicator
     if (direction === null) {
-      console.log(indicator)
       const id = this.indicator?.id
       if (id && this.editor) {
         const block = ID_TO_ELEMENTS_MAP.get(this.editor)?.get(id)
-        console.log(block)
         block?.changeIndicator(null)
       }
-
-      // id && this.editor && ID_TO_ELEMENTS_MAP.get(this.editor)?.get(id)?.changeIndicator(null)
-      // console.log('change to null')
       this.indicator = null
       return
     } else {
@@ -282,6 +278,17 @@ class DragManager {
       }
     }
   }
+  private clearState = () => {
+    this.blockElementsArray = []
+    this.blockElementsMap.clear()
+    this.dragElement = null
+    this.dragElementPath = null
+    this.indicator = null
+    DragManager.globalDraggingEditor = null
+  }
+  private getSelectedElements = (): CustomElement[] | undefined => {
+    return undefined
+  }
   drop = (): boolean => {
     if (this.indicator && this.editor) {
       DragManager.dragElementsAdded = false
@@ -290,22 +297,15 @@ class DragManager {
       const sameEditor = DragManager.globalDraggingEditor?.id === this.editor.id
       document.body.style.cursor = 'auto'
       if (isDraggingInSameNoteIdEditor) {
-        if (sameEditor) {
-        } else {
+        if (!sameEditor) {
           this.dragElement = DragManager.globalDragElement
           this.dragElementPath = DragManager.globalDragElementPath
         }
         const currPath = this.dragElementPath
         const selectedBlocksMap = SELECTED_BLOCKS_MAP.get(this.editor)
         const [targetElement, targetPath] = Array.from(Node.descendants(this.editor)).find(i => i[0].id === id) || []
-        GlobalDragOverlayInstance?.endDrag()
-        DragManager.globalDraggingEditor = null
+        this.clearState()
         ID_TO_ELEMENTS_MAP.get(this.editor)?.get(id)?.changeIndicator(null)
-        this.blockElementsArray = []
-        this.blockElementsMap.clear()
-        this.dragElement = null
-        this.dragElementPath = null
-        this.indicator = null
         if (selectedBlocksMap && selectedBlocksMap.size > 0) {
           const selectedBlocks = Array.from(selectedBlocksMap.values())
           const selectedElements = selectedBlocks.map(i => this.elementsMap?.get(getElementId(i))?.getElement()).filter(i => !!i)
@@ -321,7 +321,6 @@ class DragManager {
         moveSingleElement(this.editor, currPath, targetElement, targetPath, direction, isNested)
         return true
       } else {
-        GlobalDragOverlayInstance?.endDrag()
         ID_TO_ELEMENTS_MAP.get(this.editor)?.get(id)?.changeIndicator(null)
         // this.elementsMap?.get(id)?.changeIndicator(null)
         this.blockElementsArray = []
@@ -333,6 +332,7 @@ class DragManager {
         if (DragManager.globalDraggingEditor && DragManager.globalDragElementPath) {
           const originElement = Editor.node(DragManager.globalDraggingEditor, DragManager.globalDragElementPath)
           if (originElement) {
+            GlobalDragOverlayInstance.draggingDetails && this.onDrop?.(GlobalDragOverlayInstance.draggingDetails)
             const node = structuredClone(originElement[0])
             node.id = Id.getId()
             const end = this.editor.children.length
@@ -345,8 +345,8 @@ class DragManager {
           if (GlobalDragOverlayInstance) {
             if (GlobalDragOverlayInstance.draggingDetails) {
               const globalDraggingEle = GlobalDragOverlayInstance.draggingDetails
+              this.onDrop?.(globalDraggingEle)
               GlobalDragOverlayInstance.draggingDetails = undefined
-              console.log(globalDraggingEle)
               let ele: Partial<CustomElement> = {}
               switch (globalDraggingEle.type) {
                 case 'pdfElement': {
@@ -361,16 +361,6 @@ class DragManager {
                 }
                 case 'metaElement': {
                   globalDraggingEle.metaId &&
-                    // (ele = {
-                    //   type: 'paragraph',
-                    //   children: [
-                    //     {
-                    //       type: 'metaObject',
-                    //       originId: globalDraggingEle.metaId,
-                    //       children: [{ text: '' }]
-                    //     }
-                    //   ]
-                    // })
                     (ele = {
                       type: 'metaObject',
                       originId: globalDraggingEle.metaId,
@@ -413,7 +403,6 @@ class DragManager {
           }
         }
         DragManager.globalDraggingEditor = null
-        console.log('not same')
       }
     }
     return false

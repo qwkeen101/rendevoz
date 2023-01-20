@@ -1,4 +1,6 @@
 import { Content, Icon } from '@/components'
+import ClassName from '@/styles/classNames'
+import DateFormat from '@/utils/dateFormat'
 import { css } from '@emotion/css'
 import { useNavigate } from 'react-router-dom'
 import { INote } from '~/typings/data'
@@ -8,31 +10,22 @@ const NoteItem = ({ note }: { note: INote }) => {
   return (
     <Content
       flex
+      column
       onClick={() => {
         navigate(`/editor/${note.id}`)
       }}
-      alignItems="center"
-      gap={15}
       className={css({
         cursor: 'pointer',
-        padding: '6px 16px',
-        transition: 'all 0.2s ease',
-        borderBottom: '1px solid rgba(0,0,0,0.06)',
+        padding: '12px 18px',
+        transition: 'all 0.3s ease-out',
+        borderBottom: '1px solid rgba(222,222,222,0.5)',
         ':hover': {
-          background: 'rgba(0,0,0,0.07)',
-          borderBottom: '1px solid transparent'
+          boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)'
         }
       })}
     >
-      <Icon fill="#8590ae" size={18} theme="filled" name="park-notes" />
-      <div
-        className={css({
-          fontSize: 15,
-          fontWeight: 600
-        })}
-      >
-        {note.title || 'Untitled'}
-      </div>
+      <div className={css([ClassName.title('16px'), ClassName.ellipsisFont(1)])}>{note.title || 'Untitled'}</div>
+      <div className={ClassName.description('11px')}>{DateFormat.formatDistanceToNowStrict(note.createdAt)} ago</div>
     </Content>
   )
 }

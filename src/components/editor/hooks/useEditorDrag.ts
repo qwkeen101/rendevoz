@@ -1,47 +1,37 @@
-import { GlobalDragOverlayInstance, useGlobalIsDragging } from '@/components/globalDragOverlay'
+import { GlobalDragOverlayInstance, useGlobalIsDragging } from '@/components/GlobalDragOverlay'
+import useEventEmitter from '@/events/useEventEmitter'
 import { useMemoizedFn, useRafFn } from '@/hooks'
-import { useEffect, useMemo, useState } from 'react'
-import { Node } from 'slate'
+import { useEffect, useMemo, useRef } from 'react'
 import DragManager from '../DragManager'
 import ScrollManager from '../ScrollManager'
-import { CustomEditor } from '../types'
+import { CustomEditor, CustomElement } from '../types'
+import { ID_TO_ELEMENTS_MAP, SELECTED_BLOCKS_MAP } from '../weakMaps'
 import useIsDragging from './useIsDragging'
 
 const useEditorDrag = (editor: CustomEditor, scrollElement?: HTMLElement | null) => {
-  const [isDragging, setIsDragging] = useIsDragging()
+  const [isDraggingInsideEditor, setIsDragging] = useIsDragging()
   const [globalIsDragging] = useGlobalIsDragging()
+  const emitter = useEventEmitter()
   const readonly = editor.readonly
+  const draggingRef = useRef(false)
   // default is false
-  const [isDraggingInsideCurrentEditor, setIsDraggingInsideCurrentEditor] = useState(false)
   const dragManager = useMemo(() => new DragManager(), [])
   const scrollManager = useMemo(() => new ScrollManager(), [])
-
-  // previous not dragging inside this editor but now dragging inside, we need to set is dragging to true
-  useEffect(() => {
-    if (readonly) return
-    if (isDraggingInsideCurrentEditor === true) {
-      // right now we are dragging from outside to inside
-      setIsDragging(true)
-    }
-    // leaving this editor
-    if (isDraggingInsideCurrentEditor === false) {
-      setIsDragging(false)
-    }
-  }, [isDraggingInsideCurrentEditor])
-  // when global is dragging is true, detect whether dragging inside this editor
-  const crossTabDragDetector = useMemoizedFn((e: MouseEvent) => {
-    if (readonly) return
-    if (e.type === 'mouseleave') {
-      setIsDraggingInsideCurrentEditor(false)
-    }
-    if (e.type === 'mouseenter') {
-      setIsDraggingInsideCurrentEditor(true)
-    }
-  })
+  dragManager.onDrop = e => {
+    emitter.emit('global', {
+      type: 'dragDrop',
+      data: {
+        dropOn: 'editor',
+        dragElement: e,
+        noteId: editor.noteId,
+        note: editor.note
+      }
+    })
+  }
   const mouseMoveHandler = useMemoizedFn((e: MouseEvent) => {
     if (readonly) return
+    if (!draggingRef.current) return
     e.preventDefault()
-    if (!isDragging) return
     if (scrollManager.isScrolling()) {
       scrollManager.endScroll()
     }
@@ -57,7 +47,6 @@ const useEditorDrag = (editor: CustomEditor, scrollElement?: HTMLElement | null)
     dragManager.drop()
     scrollManager.endScroll()
     setIsDragging(false)
-    setIsDraggingInsideCurrentEditor(false)
   })
   const throttledMouseMove = useRafFn(mouseMoveHandler)
   const realMouseMoveHandler = (e: MouseEvent) => {
@@ -71,47 +60,71 @@ const useEditorDrag = (editor: CustomEditor, scrollElement?: HTMLElement | null)
     if (scrollElement) {
       dragManager.registerScrollElement(scrollElement)
       scrollManager.registerScrollElement(scrollElement)
+      scrollElement.addEventListener('pointerleave', pointerLeaveAndEnterHandler)
+      scrollElement.addEventListener('pointerenter', pointerLeaveAndEnterHandler)
+      return () => {
+        scrollElement.removeEventListener('pointerleave', pointerLeaveAndEnterHandler)
+        scrollElement.removeEventListener('pointerenter', pointerLeaveAndEnterHandler)
+      }
+    }
+  })
+  const pointerLeaveAndEnterHandler = useMemoizedFn((e: PointerEvent) => {
+    if (e.type === 'pointerleave') {
+      setIsDragging(false)
+      draggingRef.current = false
+    }
+    if (e.type === 'pointerenter') {
+      if (globalIsDragging) {
+        setIsDragging(true)
+      }
     }
   })
   useEffect(() => {
     if (readonly) return
-    if (isDragging) {
-      setIsDraggingInsideCurrentEditor(true)
+    if (isDraggingInsideEditor) {
+      draggingRef.current = true
       dragManager.prepareDragging()
-      if (GlobalDragOverlayInstance && GlobalDragOverlayInstance.draggingDetails === undefined) {
-        GlobalDragOverlayInstance.draggingDetails = {
-          type: 'noteElement',
-          noteId: editor.noteId,
-          content: Node.string(editor.currentEnterElement),
-          blockId: editor.currentEnterElement?.id
-        }
-      }
       document.addEventListener('mousemove', realMouseMoveHandler)
       document.addEventListener('mouseup', mouseUpHandler)
+
+      if (GlobalDragOverlayInstance.draggingDetails === undefined) {
+        const selected = SELECTED_BLOCKS_MAP.get(editor)
+        GlobalDragOverlayInstance.draggingDetails = {
+          type: 'noteElement',
+          element: editor.currentEnterElement,
+          noteId: editor.noteId,
+          blockId: editor.currentEnterElement?.id
+        }
+        if (selected && selected.size > 0) {
+          const keys = selected.keys()
+          const eleMap = ID_TO_ELEMENTS_MAP.get(editor)
+          const elements = Array.from(keys)
+            .map(key => eleMap?.get(key)?.getElement())
+            .filter(i => i !== undefined) as CustomElement[]
+          GlobalDragOverlayInstance.draggingDetails.elements = elements
+        }
+      }
       return () => {
         document.removeEventListener('mouseup', mouseUpHandler)
         document.removeEventListener('mousemove', realMouseMoveHandler)
       }
     } else {
+      draggingRef.current = false
       dragManager.changeIndicator({ direction: null }, null)
     }
-  }, [isDragging])
+  }, [isDraggingInsideEditor])
 
   // listen to global dragging state change
   useEffect(() => {
+    console.log(globalIsDragging)
     if (readonly) return
     if (globalIsDragging) {
-      if (isDragging) {
+      if (isDraggingInsideEditor) {
         DragManager.globalDraggingEditor = editor
-      }
-      scrollElement?.addEventListener('mouseenter', crossTabDragDetector)
-      scrollElement?.addEventListener('mouseleave', crossTabDragDetector)
-      return () => {
-        scrollElement?.removeEventListener('mouseenter', crossTabDragDetector)
-        scrollElement?.removeEventListener('mouseleave', crossTabDragDetector)
       }
     } else {
       DragManager.dragElementsAdded = false
+      setIsDragging(false)
     }
   }, [globalIsDragging])
   return dragManager

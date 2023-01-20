@@ -1,7 +1,17 @@
 import getDirection from 'direction'
 import debounce from 'lodash/debounce'
 import throttle from 'lodash/throttle'
-import React, { RefObject, useCallback, useEffect, useMemo, useReducer, useRef, useState } from 'react'
+import React, {
+  MutableRefObject,
+  RefObject,
+  useCallback,
+  useEffect,
+  useImperativeHandle,
+  useMemo,
+  useReducer,
+  useRef,
+  useState
+} from 'react'
 import scrollIntoView from 'scroll-into-view-if-needed'
 import { Editor, Element, Node, NodeEntry, Path, Range, Text, Transforms } from 'slate'
 import { ReactEditor } from '../plugin/react-editor'
@@ -47,13 +57,14 @@ import { RestoreDOM } from './restore-dom/restore-dom'
 import { useAndroidInputManager } from '../hooks/android-input-manager/use-android-input-manager'
 import { useTrackUserInput } from '../hooks/use-track-user-input'
 import { useVirtualizer } from '@tanstack/react-virtual'
+import { useMemoizedFn } from '@/hooks'
 
 type DeferredOperation = () => void
 
 const Children = (props: Parameters<typeof useVirtualChildren>[0]) => <>{useVirtualChildren(props)}</>
 
 // The number of Editable components currently mounted.
-let mountedCount = 0
+const mountedCount = 0
 
 /**
  * `RenderElementProps` are passed to the `renderElement` handler.
@@ -100,7 +111,10 @@ export type EditableProps = {
   renderPlaceholder?: (props: RenderPlaceholderProps) => JSX.Element
   scrollSelectionIntoView?: (editor: ReactEditor, domRange: DOMRange) => void
   as?: React.ElementType
-  scrollElement?: HTMLElement | null
+  scrollElementRef?: RefObject<HTMLElement | null>
+  innerRef?: MutableRefObject<{
+    scrollTo: (idx: number) => void
+  }>
 } & React.TextareaHTMLAttributes<HTMLDivElement>
 
 /**
@@ -120,7 +134,8 @@ export const Editable = (props: EditableProps) => {
     scrollSelectionIntoView = defaultScrollSelectionIntoView,
     style = {},
     as: Component = 'div',
-    scrollElement,
+    scrollElementRef: scrollElement,
+    innerRef,
     ...attributes
   } = props
   const editor = useSlate()
@@ -140,10 +155,24 @@ export const Editable = (props: EditableProps) => {
   const virtualizer = useVirtualizer({
     count: editor.children.length,
     estimateSize: () => 30,
-    getScrollElement: () => scrollElement || document.body,
+    getScrollElement: () => scrollElement?.current || document.body,
     overscan: 20,
-    paddingEnd: 300
+    paddingEnd: readOnly ? 0 : 300,
+    scrollPaddingEnd: 400
   })
+
+  const scrollTo = useMemoizedFn(idx => {
+    requestIdleCallback(() => {
+      if (scrollElement?.current) {
+        virtualizer.scrollToIndex(idx, { behavior: 'auto', align: 'end' })
+      } else {
+        scrollTo(idx)
+      }
+    })
+  })
+  useImperativeHandle(innerRef, () => ({
+    scrollTo: scrollTo
+  }))
 
   // Keep track of some state for the event handler logic.
   const state = useMemo(

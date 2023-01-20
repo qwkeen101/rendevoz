@@ -1,21 +1,20 @@
-import { Content, Icon, Image } from '@/components'
+import { Content, Icon } from '@/components'
 import { useTheme } from '@/hooks'
-import useDocumentStore from '@/stores/document.store'
+import { documentsAtom } from '@/stores/document.store'
 import { css } from '@emotion/css'
-import { cloneElement, createElement, FC, useLayoutEffect, useState } from 'react'
+import { FC, useMemo, useState } from 'react'
 import { ReactEditor, RenderElementProps, useSlate } from '../../slate-react'
-import { IPdfDocument } from '~/typings/data'
 import { BookHighlightElement } from '../../types/outerElementTypes'
 import AutosizeTextarea from '@/components/custom/input/autosizeTextarea'
 import { Transforms } from 'slate'
 import { AnimatePresence, motion } from 'framer-motion'
-import { useGlobalIsDragging } from '@/components/globalDragOverlay'
+import { useGlobalIsDragging } from '@/components/GlobalDragOverlay'
 import ClassName from '@/styles/classNames'
-import WideCard from '../cards/WideCard'
-import SlimCard from '../cards/SlimCard'
 import { CardElement } from '../../types/baseTypes'
 import NoteCard from '../cards/NoteCard'
 import { useNavigate } from 'react-router-dom'
+import { atom, useAtomValue } from 'jotai'
+import { GlobalScope } from '@/jotai/jotaiScope'
 
 const BookHighlight: FC<RenderElementProps> = ({ element, children }) => {
   const [showNav, setShowNav] = useState(false)
@@ -23,13 +22,15 @@ const BookHighlight: FC<RenderElementProps> = ({ element, children }) => {
   const highlightElement = element as BookHighlightElement
   const cardType = (element as CardElement).cardType || 'wide'
   const editor = useSlate()
-  const [document, setDocument] = useState<IPdfDocument>()
+
   const navigate = useNavigate()
   const { defaultFontColorGrey } = useTheme('defaultFontColorGrey')
-  const { getDocumentById } = useDocumentStore()
-  useLayoutEffect(() => {
-    highlightElement.documentId && setDocument(getDocumentById(highlightElement.documentId))
-  }, [highlightElement, getDocumentById])
+  const documentId = highlightElement.documentId
+  const documentAtom = useMemo(
+    () => (documentId ? atom(get => get(documentsAtom).get(documentId)) : atom(null)),
+    [highlightElement.documentId]
+  )
+  const document = useAtomValue(documentAtom, GlobalScope)
 
   const renderMain = () => (
     <div
@@ -37,9 +38,7 @@ const BookHighlight: FC<RenderElementProps> = ({ element, children }) => {
       onMouseEnter={() => setShowNav(true)}
       onMouseLeave={() => setShowNav(false)}
     >
-      <div className={ClassName.title(undefined, undefined, element.color)}>
-        📚 {document ? document.metadata?.title || document.name : 'Unknown book'}
-      </div>
+      <div className={ClassName.title(undefined, undefined, element.color)}>📚 {document ? document.name : 'Unknown book'}</div>
       <div className={ClassName.description()}>✍🏻 {document ? document.metadata?.author || 'Unknown author' : 'Unknown author'}</div>
       <AutosizeTextarea
         defaultValue={highlightElement.selectedText}
@@ -103,7 +102,7 @@ const BookHighlight: FC<RenderElementProps> = ({ element, children }) => {
             }
           ])}
         >
-          {document?.metadata?.title}
+          {document?.name}
         </div>
         <AutosizeTextarea
           defaultValue={highlightElement.selectedText}

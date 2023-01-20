@@ -7,7 +7,7 @@ import { slateNodesToInsertDelta, YjsEditor } from '../yjs'
 import Id from '@/utils/id'
 import { GlobalProviderMap } from '../Editor'
 import { useMemoizedFn } from '@/hooks'
-
+import { serializeEditor } from '../utils/database/serialize'
 const initial = [
   {
     id: Id.getId(),
@@ -17,7 +17,7 @@ const initial = [
 ]
 const EditorInstanceMap = new Map<number, Set<CustomEditor>>()
 const useStoreValue = (note: INote, editor: CustomEditor, provider, doc, sharedType) => {
-  const { saveNoteAsBuffer, getNoteValue, updateNote } = useNoteStore()
+  const { saveNoteAsBuffer, getNoteValue, updateNote, saveBlocks } = useNoteStore()
   const contentRef = useRef<Descendant[]>()
   const noteId = note?.id
   const contentId = note?.contentId
@@ -48,12 +48,15 @@ const useStoreValue = (note: INote, editor: CustomEditor, provider, doc, sharedT
             sharedType.applyDelta(slateNodesToInsertDelta(initial))
           }
         }
-        // YjsEditor.connect(editor)
       })
     }
     return () => {
       window.removeEventListener('beforeunload', cleanUp)
       const contentId = saveNoteAsBuffer(editor.children, note?.contentId)
+      const result = []
+      serializeEditor(editor, editor, result)
+      result.forEach(i => (i.noteId = noteId))
+      saveBlocks(result)
       doc.destroy()
       if (note?.contentId !== contentId) {
         updateNote({

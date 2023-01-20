@@ -1,4 +1,4 @@
-import { GlobalDragOverlayInstance, useGlobalIsDragging } from '@/components/globalDragOverlay'
+import { GlobalDragOverlayInstance, useGlobalIsDragging } from '@/components/GlobalDragOverlay'
 import { useMemoizedFn } from '@/hooks'
 import useMetaStore from '@/stores/meta.store'
 import { useEffect, useRef, useState } from 'react'
@@ -9,13 +9,13 @@ const useCardDrag = (metaObject: MetaObject, draggableElement?: HTMLElement | nu
   const [isGlobalDragging] = useGlobalIsDragging()
   const [isCardDraggingInside, setIsCardDraggingInside] = useState(false)
   const isPressed = useRef(false)
-  const { addMetaLink } = useMetaStore()
+  const { addMetaLink, updateMetaObject } = useMetaStore()
   const mouseDownHandler = (e: MouseEvent) => {
     const cloned = showElement?.cloneNode(true) as HTMLElement
     cloned.style.width = `${showElement?.clientWidth}px`
     cloned.style.height = `${showElement?.clientHeight}px`
     if (cloned && GlobalDragOverlayInstance) {
-      GlobalDragOverlayInstance.addDragElements(cloned)
+      GlobalDragOverlayInstance.addDragElements?.(cloned)
       GlobalDragOverlayInstance.draggingDetails = {
         type: 'metaElement',
         metaId: metaObject.id
@@ -26,7 +26,7 @@ const useCardDrag = (metaObject: MetaObject, draggableElement?: HTMLElement | nu
 
   const mouseMoveHandler = useMemoizedFn((e: MouseEvent) => {
     if (isPressed.current) {
-      GlobalDragOverlayInstance?.startDrag()
+      GlobalDragOverlayInstance.startDrag?.()
     }
   })
   const mouseUpHandler = () => {
@@ -58,6 +58,12 @@ const useCardDrag = (metaObject: MetaObject, draggableElement?: HTMLElement | nu
             targetType: 'knowledge'
           })
           toast.success('Link added!')
+        }
+        if (draggingEle && draggingEle.type === 'image') {
+          updateMetaObject({
+            id: metaObject.id,
+            coverImgSrc: draggingEle.url
+          })
         }
         setIsCardDraggingInside(false)
       }

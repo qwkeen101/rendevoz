@@ -26,7 +26,7 @@ import TitleBar from './components/titlebar'
 import Initializer from './Initializer'
 import './global.less'
 import GlobalGraph from './components/graph/GlobalGraph'
-import GlobalDragOverlay from './components/globalDragOverlay'
+import GlobalDragOverlay from './components/GlobalDragOverlay'
 import GlobalScreenShot from './components/globalScreenShot'
 
 const App = () => {

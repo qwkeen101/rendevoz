@@ -8,6 +8,7 @@ import Icon from '@/components/base/Icon'
 import logo from '@/assets/rendeLogo.png'
 import Content from '../../base/Content'
 import { useSetting } from '@/hooks'
+import { css } from '@emotion/css'
 export const Sidebar: FC = () => {
   const navRef = useRef<HTMLElement>(null)
   const rndRef = useRef<Rnd>(null)
@@ -85,14 +86,21 @@ export const Sidebar: FC = () => {
           }}
           className={styles.nav}
           ref={navRef}
-          onClick={() => setHovered(false)}
+          style={
+            collapsed
+              ? {
+                  minHeight: '55vh',
+                  height: 'fit-content',
+                  padding: '20px 0px',
+                  position: 'absolute',
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  boxShadow: 'rgba(0, 0, 0, 0.35) 0px 5px 15px'
+                }
+              : undefined
+          }
         >
-          {setting.appearance.logo && (
-            <Content flex style={{ top: 30, padding: 36 }}>
-              <img style={{ width: '100%', height: 'auto' }} src={logo}></img>
-            </Content>
-          )}
-          <Navigation></Navigation>
+          <Navigation hovered={collapsed}></Navigation>
         </nav>
         <div className={styles.hide}>
           <Icon

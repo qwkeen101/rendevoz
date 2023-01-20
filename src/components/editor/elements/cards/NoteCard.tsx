@@ -22,7 +22,7 @@ const NoteCard = ({
   element: CustomElement & { cardType?: string }
 }) => {
   let card
-  const cardType = element?.cardType || 'wide'
+  const cardType = element?.cardType || 'line'
   switch (cardType) {
     case 'slim':
       card = <SlimCard />
@@ -37,7 +37,7 @@ const NoteCard = ({
       card = <EmbeddedCard />
       break
     default:
-      card = <WideCard />
+      card = <LineCard />
   }
   return cloneElement(card, {
     slateChildren: children,

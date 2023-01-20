@@ -1,7 +1,7 @@
 import { AnimatePresence, motion } from 'framer-motion'
 import { cloneElement, ReactElement, useEffect, useRef, useState } from 'react'
-import { AnimatePopover, Image, WithBorder } from '../base'
-import { GlobalDragOverlayInstance } from '../globalDragOverlay'
+import { AnimatePopover, Image, WithBorder } from './base'
+import { GlobalDragOverlayInstance } from './GlobalDragOverlay'
 
 type PocketObject = {
   type: 'image'
@@ -108,6 +108,7 @@ const GlobalPocket = ({ children }: { children: (urls: PocketObject[]) => ReactE
                 onDrag={e => {
                   e.preventDefault()
                 }}
+                draggable
                 ratio={0.66}
                 width="100%"
                 src={objects[currentViewIdx]?.url}

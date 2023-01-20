@@ -15,13 +15,13 @@ const SidebarPinned = memo(() => {
   return (
     <Content flex column>
       {pinnedCollections.map(i => (
-        <SidebarCollectionItem collectionId={i.id} parentCollectionId={i.parentId || 1}/>
+        <SidebarCollectionItem key={i.id} collectionId={i.id} parentCollectionId={i.parentId || 1}/>
       ))}
       {pinnedDocuments.map(i => (
-        <SidebarDocumentItem documentId={i.id} />
+        <SidebarDocumentItem key={i.id} documentId={i.id} />
       ))}
       {pinnedNotes.map(i => (
-        <SidebarNoteItem noteId={i.id} />
+        <SidebarNoteItem key={i.id} noteId={i.id} />
       ))}
     </Content>
   )

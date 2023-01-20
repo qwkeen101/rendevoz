@@ -9,4 +9,5 @@ export interface GraphNode {
   opacity?: number
   coverImgSrc?: string
   isCenter?: boolean
+  objectId?: number
 }

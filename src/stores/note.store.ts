@@ -3,8 +3,7 @@ import useDb from '@/hooks/stores/useDb'
 import useLatest from '@/hooks/utils/useLatest'
 import { GlobalScope } from '@/jotai/jotaiScope'
 import Id from '@/utils/id'
-import { bulkDeleteFromSearchDb, SearchableItem } from '@/utils/searchIndex'
-import { atom, useAtom } from 'jotai'
+import { atom, useAtom, useAtomValue } from 'jotai'
 import { useMemo } from 'react'
 import { Descendant } from 'slate'
 import { INote } from '~/typings/data'
@@ -15,9 +14,9 @@ const { orderedData } = BaseStore
 
 export const notesAtom = atom(new Map<number, INote>())
 
-export const allNotesAtom = atom(get => orderedData(get(notesAtom)))
+export const allNotesAtom = atom(get => orderedData(get(notesAtom)).filter(i => !i.metaId))
 
-const undeletedNotesAtom = atom(get => get(allNotesAtom).filter(i => !i.deleted))
+export const undeletedNotesAtom = atom(get => get(allNotesAtom).filter(i => !i.deleted))
 
 export const pinnedNotesAtom = atom(get => get(undeletedNotesAtom).filter(i => i.pinned))
 
@@ -26,7 +25,7 @@ const useNoteStore = () => {
   const latestNotes = useLatest(notes)
   const { add, get, orderedData, update } = BaseStore
 
-  const all = orderedData(notes).filter(i => !i.deleted)
+  const all = useAtomValue(undeletedNotesAtom, GlobalScope)
   const noteDb = useDb('notes')
   const blockDb = useDb('blocks')
   const blobDb = useDb('blobs')
@@ -167,34 +166,40 @@ const useNoteStore = () => {
     }
     return buildParentPath(rootNoteId, parentPath).then(() => parentPath)
   }
+  const getBlockById = (id: number) => {
+    return blockDb.get(id)
+  }
   const findSubNotes = (rootNoteId: number): Promise<INote[]> => {
     return new Promise(resolve => resolve(all.filter(i => i.parentNoteId === rootNoteId)))
   }
+  const saveBlocks = (blocks: Descendant[]) => {
+    return blockDb.bulkPut(blocks)
+  }
   const saveNoteAndBlocks = (editor: CustomEditor, blocks: []) => {
     if (!blocks[0]) return
-    const saveNoteItem = noteDb
-      .get(blocks[0].noteId)
-      .then((note: INote) => {
-        note.subBlockIds = editor.children.map(i => i.id)
-        const newBlockIds = blocks.map(i => i.id)
-        const deletedBlockIds = note.allBlockIds.filter(i => !newBlockIds.includes(i))
-        note.allBlockIds = newBlockIds
-        note.updatedAt = Date.now()
-        blockDb.bulkDelete(deletedBlockIds)
-        bulkDeleteFromSearchDb(deletedBlockIds)
-        return note
-      })
-      .then(note => noteDb.put(note))
+    // const saveNoteItem = noteDb
+    //   .get(blocks[0].noteId)
+    //   .then((note: INote) => {
+    //     note.subBlockIds = editor.children.map(i => i.id)
+    //     const newBlockIds = blocks.map(i => i.id)
+    //     const deletedBlockIds = note.allBlockIds.filter(i => !newBlockIds.includes(i))
+    //     note.allBlockIds = newBlockIds
+    //     note.updatedAt = Date.now()
+    //     blockDb.bulkDelete(deletedBlockIds)
+    //     bulkDeleteFromSearchDb(deletedBlockIds)
+    //     return note
+    //   })
+      // .then(note => noteDb.put(note))
     const saveBlocks = blockDb.bulkPut(blocks)
-    const searchItems: SearchableItem[] = blocks.map(i => ({
-      itemId: i.id,
-      itemType: 'block',
-      fields: {
-        plainText: i.plain
-      }
-    }))
+    // const searchItems: SearchableItem[] = blocks.map(i => ({
+    //   itemId: i.id,
+    //   itemType: 'block',
+    //   fields: {
+    //     plainText: i.plain
+    //   }
+    // }))
     // const importIntoSearch = bulkImportIntoSearchDb(searchItems)
-    return Promise.all([saveBlocks, saveNoteItem])
+    return Promise.all([saveBlocks])
   }
   const getNoteAndBlocks = (noteId: number) => {
     return noteDb.get(noteId).then(note => {
@@ -255,7 +260,9 @@ const useNoteStore = () => {
       renameNote,
       deleteNote,
       saveNoteAsBuffer,
-      getNoteValue
+      getNoteValue,
+      saveBlocks,
+      getBlockById
     }),
     [notes]
   )

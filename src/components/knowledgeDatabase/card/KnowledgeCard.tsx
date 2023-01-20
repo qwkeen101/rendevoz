@@ -1,14 +1,17 @@
 import { Content } from '@/components/base'
 import { useTheme } from '@/hooks'
 import { css } from '@emotion/css'
-import { MetaKnowledgeObject } from '~/typings/data'
+import { MetaKnowledgeObject, MetaObject } from '~/typings/data'
 import { TitleClassName, TitleWrapperClassName } from './DatabaseCard'
 import { memo } from 'react'
 import ClassName from '@/styles/classNames'
-import { GlobalLayout } from '@/components/layout'
 import { useNavigate } from 'react-router-dom'
-const MetaKnowledgeCard = memo(({ m }: { m: MetaKnowledgeObject }) => {
+import useNoteStore from '@/stores/note.store'
+import useEventEmitter from '@/events/useEventEmitter'
+const MetaKnowledgeCard = memo(({ m }: { m: MetaObject }) => {
   const { defaultFontColorGrey } = useTheme('defaultFontColorGrey')
+  const { getBlockById } = useNoteStore()
+  const emitter = useEventEmitter()
   const navigate = useNavigate()
   return (
     <Content flex column>
@@ -16,16 +19,42 @@ const MetaKnowledgeCard = memo(({ m }: { m: MetaKnowledgeObject }) => {
         <div
           className={TitleClassName}
           onClick={() => {
-            navigate(`/editor/${m.noteId}`)
+            if (m.type === 'noteElement') {
+              m.objectId &&
+                getBlockById(m.objectId).then(block => {
+                  if (block) {
+                    navigate(`/editor/${block.noteId}`)
+                    emitter.emit(
+                      'editor',
+                      {
+                        type: 'jumpToBlock',
+                        data: {
+                          blockId: block.id,
+                          noteId: block.noteId
+                        }
+                      },
+                      true
+                    )
+                  }
+                })
+              return
+            }
+            if (m.type === 'normal') {
+              navigate(`/editor/${m.objectId}`)
+            }
+            if (m.type === 'note') {
+              navigate(`/editor/${m.objectId}`)
+            }
           }}
         >
-          {m.name || m.keyword}
+          {m.name}
         </div>
         <div
           className={css([
             {
               color: defaultFontColorGrey,
-              fontSize: 13
+              fontSize: 13,
+              marginTop: 6
             },
             ClassName.ellipsisFont(6)
           ])}

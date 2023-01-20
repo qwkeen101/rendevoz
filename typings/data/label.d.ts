@@ -4,7 +4,7 @@ import { EditorDestination } from './note'
 export interface ILabel {
   id?: number
   title?: string
-  content?: string
+  content?: string | any
   documentId?: number
   background?: string
   type?: string
@@ -29,4 +29,7 @@ export interface IThoughtLabel extends IDroppableLabel {
   position?: 'left' | 'top' | 'right' | 'bottom'
   originFrom?: 'pdf' | 'editor' | 'meta' | 'image'
   originId?: number
+  minimized?: boolean
+    // [width, height]
+  size?: number[]
 }

@@ -5,7 +5,7 @@ import html2canvas from 'html2canvas'
 import { PdfLabelsAtoms, usePdfLabels, usePdfNote } from '../../hooks/usePdfNote'
 import ContextMenu, { ContextMenuRef } from '@/components/contextMenu'
 import PdfContextMenu from '@/components/menus/PdfContextMenu'
-import ThoughtLabel from '../label/ThoughtLabel'
+import ThoughtLabel from '../label/Label'
 import { WithBorder } from '@/components'
 import { useIntersection, useIsomorphicLayoutEffect } from 'react-use'
 import { RenderPageProps } from '@/pdfViewer/core/types'
@@ -38,6 +38,7 @@ const PdfPage: React.FC<PdfPageProps> = ({
   pageIndex,
   textLayer,
   canvasLayer,
+  pageElement,
   annotationLayer,
   onCanvasLayerClick,
   onTextSelectionClick,
@@ -94,9 +95,6 @@ const PdfPage: React.FC<PdfPageProps> = ({
 
   return (
     <>
-      {/* {thisRef.current && (
-        <DragSelection onSelectionEnd={handleSelectionEnd} onSelectionChange={handleSelectionChange} eventsElement={thisRef.current} />
-      )} */}
       {canvasLayer}
       {textLayer}
       {annotationLayer}
@@ -119,7 +117,7 @@ const PdfPage: React.FC<PdfPageProps> = ({
               <ThoughtLabel
                 key={`${i.toString()}`}
                 thoughtAtom={i}
-                dragBoundRef={labelContainerRef}
+                dragBoundRef={pageElement}
                 onDelete={() => {
                   dispatchThoughts({ type: 'remove', atom: i })
                 }}

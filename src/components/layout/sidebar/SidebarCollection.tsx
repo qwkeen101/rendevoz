@@ -1,7 +1,7 @@
 import { AnimatePopover } from '@/components/base'
 import Modal from '@/components/base/modal'
 import NewCollectionForm from '@/components/form/NewCollectionForm'
-import { GlobalDragOverlayInstance, useGlobalIsDragging } from '@/components/globalDragOverlay'
+import { GlobalDragOverlayInstance, useGlobalIsDragging } from '@/components/GlobalDragOverlay'
 import { useMemoizedFn, useToggle } from '@/hooks'
 import { GlobalScope } from '@/jotai/jotaiScope'
 import useCollectionStore, { collectionsAtom } from '@/stores/collection.store'
@@ -263,8 +263,7 @@ export const SidebarDocumentItem = ({ documentId, parentCollectionId }: { docume
         cursor: 'pointer',
         transition: 'all 0.2s ease',
         borderRadius: 4,
-        padding: 2,
-        paddingLeft: 14,
+        padding: '2px 8px',
         ':hover': {
           background: 'rgba(0,0,0,0.07)'
         }
@@ -322,8 +321,7 @@ export const SidebarNoteItem = ({ noteId, parentCollectionId }: { noteId: number
         cursor: 'pointer',
         transition: 'all 0.2s ease',
         borderRadius: 4,
-        padding: 2,
-        paddingLeft: 14,
+        padding: '2px 8px',
         ':hover': {
           background: 'rgba(0,0,0,0.07)'
         }

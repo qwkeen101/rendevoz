@@ -14,14 +14,13 @@ class CanvasManager {
   private isPressed = false
   public isErasing = false
   private lastLine?: CustomLine
-  drawLineStart = (x: number, y: number) => {
-  }
+  drawLineStart = (x: number, y: number) => {}
   drawLine = throttle((x: number, y: number) => {
     this.lastLine?.appendPoint(x, y)
   }, 16)
   pointerDownHandler: KonvaEventListener<Stage, PointerEvent> = e => {
     this.isPressed = true
-    const pos = this.stage?.getPointerPosition()
+    const pos = getRelativePointerPosition(this.stage)
     const customLine = new CustomLine(pos?.x, pos?.y, this.isErasing ? 'erase' : 'paint')
     this.layer?.add(customLine)
     this.lastLine = customLine
@@ -40,12 +39,34 @@ class CanvasManager {
   }
   pointerMoveHandler: KonvaEventListener<Stage, PointerEvent> = e => {
     if (this.isPressed) {
-      const pos = this.stage?.getPointerPosition()
+      const pos = getRelativePointerPosition(this.stage)
       this.drawLine(pos?.x, pos?.y)
     }
   }
   pointerUpHandler: KonvaEventListener<Stage, PointerEvent> = e => {
     this.isPressed = false
+  }
+  scaleHandler: KonvaEventListener<Stage, WheelEvent> = e => {
+    e.evt.preventDefault()
+    if (this.stage) {
+      const stage = this.stage
+      const oldScale = stage.scaleX()
+      const pointer = stage.getPointerPosition()
+      if (pointer) {
+        const mousePointTo = {
+          x: (pointer.x - stage.x()) / oldScale,
+          y: (pointer.y - stage.y()) / oldScale
+        }
+        const direction = e.evt.deltaY < 0 ? 1 : -1
+        const newScale = direction > 0 ? oldScale * 1.05 : oldScale / 1.05
+        stage.scale({ x: newScale, y: newScale })
+        const newPos = {
+          x: pointer.x - mousePointTo.x * newScale,
+          y: pointer.y - mousePointTo.y * newScale
+        }
+        stage.position(newPos)
+      }
+    }
   }
   public initialize = (container: HTMLDivElement) => {
     const stage = new Konva.Stage({
@@ -53,9 +74,10 @@ class CanvasManager {
       width: window.innerWidth,
       height: window.innerHeight
     })
-    stage?.on('pointerdown', this.pointerDownHandler)
-    stage?.on('pointermove', this.pointerMoveHandler)
-    stage?.on('pointerup', this.pointerUpHandler)
+    stage.on('pointerdown', this.pointerDownHandler)
+    stage.on('pointermove', this.pointerMoveHandler)
+    stage.on('pointerup', this.pointerUpHandler)
+    stage.on('wheel', this.scaleHandler)
     this.stage = stage
     const layer = new Konva.Layer()
     this.layer = layer
@@ -82,5 +104,16 @@ class CanvasManager {
     this.stage?.destroy()
   }
 }
+function getRelativePointerPosition(node) {
+  // the function will return pointer position relative to the passed node
+  const transform = node.getAbsoluteTransform().copy()
+  // to detect relative position we need to invert transform
+  transform.invert()
 
+  // get pointer (say mouse or touch) position
+  const pos = node.getStage().getPointerPosition()
+
+  // now we find relative point
+  return transform.point(pos)
+}
 export default CanvasManager

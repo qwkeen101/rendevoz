@@ -13,61 +13,47 @@ class CustomLine extends Konva.Shape {
       stroke: 'red',
       lineCap: 'round',
       lineJoin: 'round',
-      draggable: mode === 'paint' ? true : false,
+      perfectDrawEnabled: false,
+      listening: false,
+      // draggable: mode === 'paint' ? true : false,
       strokeWidth: 5,
-      globalCompositeOperation: mode === 'paint' ? 'source-over' : 'destination-out',
-      hitFunc: (ctx, shape) => {
-        ctx.beginPath()
-        ctx.moveTo(this.realBegin.x, this.realBegin.y)
-        const length = this.drawPoints.length
-        let n = 0
-        if (length > 1) {
-          while (n < length) {
-            // const sp = this.drawPoints[n - 1]
-            // if (sp) {
-            //   ctx.moveTo(sp.x, sp.y)
-            // }
-            const cp = this.drawPoints[n]
-            n++
-            const ep = this.drawPoints[n]
-            n++
-            ctx.quadraticCurveTo(cp.x, cp.y, ep.x, ep.y)
-          }
-        }
-        ctx.fillStrokeShape(shape)
-      },
+      // globalCompositeOperation: mode === 'paint' ? 'source-over' : 'destination-out',
+      globalCompositeOperation: 'source-over',
+      shadowForStrokeEnabled: false,
+      hitStrokeWidth: 0,
       sceneFunc: (ctx, shape) => {
-        ctx.beginPath()
         ctx.lineCap = 'round'
         ctx.lineJoin = 'round'
-        ctx.moveTo(this.realBegin.x, this.realBegin.y)
+        if (!this.realBegin) return
         const length = this.drawPoints.length
         let n = 0
         if (length > 1) {
           while (n < length) {
+            const pathInner = new Path2D()
+            const pathOuter = new Path2D()
             const sp = this.drawPoints[n - 1]
             if (sp) {
-              ctx.moveTo(sp.x, sp.y)
+              pathInner.moveTo(sp.x, sp.y)
+              pathOuter.moveTo(sp.x, sp.y)
             }
             const cp = this.drawPoints[n]
             n++
             const ep = this.drawPoints[n]
             n++
-            ctx.strokeStyle = 'black'
-            let ratio
-            if (n < length / 2) {
-              ratio = n / length
-            } else {
-              ratio = (length - n) / length
-            }
-            ctx.lineWidth = 50 * ratio
-            ctx.quadraticCurveTo(cp.x, cp.y, ep.x, ep.y)
-            ctx.stroke()
-            ctx.beginPath()
+            ctx.strokeStyle = 'red'
+            ctx.lineWidth = 13
+            pathOuter.quadraticCurveTo(cp.x, cp.y, ep.x, ep.y)
+            ctx.globalCompositeOperation = 'destination-over'
+            ctx.stroke(pathOuter)
+            pathOuter.closePath()
+            ctx.globalCompositeOperation = 'source-over'
+            ctx.strokeStyle = 'white'
+            ctx.lineWidth = 11
+            pathInner.quadraticCurveTo(cp.x, cp.y, ep.x, ep.y)
+            ctx.stroke(pathInner)
+            pathInner.closePath()
           }
         }
-        // ctx.stroke()
-        // ctx.strokeShape(shape)
       }
     })
     this.begin = {

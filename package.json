@@ -7,9 +7,15 @@
   "author": "RealRong 2001",
   "license": "AGPL3",
   "main": "dist-electron/electron/main/index.js",
+  "debug": {
+    "env": {
+      "VITE_DEV_SERVER_URL": "http://127.0.0.1:7777/"
+    }
+  },
   "scripts": {
     "dev": "vite",
-    "build": "vite build && electron-builder"
+    // "build": "vite build && electron-builder --universal"
+    "build": "vite build"
   },
   "engines": {
     "node": "^14.18.0 || >=16.0.0"
@@ -22,7 +28,7 @@
     "@nestjs/microservices": "^8.4.5",
     "@nestjs/platform-express": "^8.4.5",
     "@slate-yjs/core": "^0.2.8",
-    "@tanstack/react-virtual": "^3.0.0-beta.30",
+    "@tanstack/react-virtual": "^3.0.0-beta.36",
     "asar": "^3.2.0",
     "axios": "^0.25.0",
     "babel-plugin-import": "^1.13.5",
@@ -44,6 +50,7 @@
     "lodash": "^4.17.21",
     "material-colors": "^1.2.6",
     "optics-ts": "^2.3.0",
+    "panzoom": "^9.4.3",
     "pdfjs-dist": "^2.15.349",
     "pica": "^9.0.1",
     "react-error-boundary": "^3.1.4",

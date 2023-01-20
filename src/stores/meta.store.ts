@@ -6,6 +6,7 @@ import fuzzysort from 'fuzzysort'
 import produce from 'immer'
 import { atom, useAtom, useAtomValue } from 'jotai'
 import { useMemo } from 'react'
+import { useLatest } from 'react-use'
 import { MetaComment, MetaLink, MetaObject } from '~/typings/data'
 import BaseStore from './base.store'
 import useNoteStore from './note.store'
@@ -42,7 +43,8 @@ const useMetaStore = () => {
   const metaObjectDb = useDb('metaObjects')
   const metaCommentDb = useDb('metaComments')
   const metaLinkDb = useDb('metaLinks')
-
+  const latestObjects = useLatest(metaObjects)
+  const latestLinks = useLatest(metaLinks)
   const { addNote } = useNoteStore()
 
   const getAllMetaObjects = () => {
@@ -69,32 +71,31 @@ const useMetaStore = () => {
     })
   }
   const getMetaKnowObjectByKeyword = (keyword: string) => {
-    return allMetaObjects.find(i => i.keyword === keyword)
+    return allMetaObjects.find(i => i.name === keyword)
   }
   const getMetaObjectByDocumentId = (documentId: number) => {
-    return allMetaObjects.find(i => i.documentId === documentId)
+    return allMetaObjects.find(i => i.type === 'pdf' && i.objectId === documentId)
   }
   const getMetaObjectByNoteId = (noteId: number) => {
-    return allMetaObjects.find(i => i.noteId === noteId)
+    return allMetaObjects.find(i => i.type === 'note' && i.objectId === noteId)
   }
   const addMetaObject = (metaObject: Partial<MetaObject>) => {
     const initedMetaObject = initBaseObject(metaObject) as MetaObject
     if (!initedMetaObject.name) {
-      initedMetaObject.name = initedMetaObject.keyword || initedMetaObject.title || 'Unknown name'
+      initedMetaObject.name = 'Unknown name'
     }
 
-    if (!allMetaObjects.some(i => i.keyword && i.keyword === initedMetaObject.keyword)) {
-      if (initedMetaObject.type !== 'note') {
-        const noteId = Id.getId()
-        initedMetaObject.noteId = noteId
-        addNote({
-          id: noteId,
-          metaId: initedMetaObject.id
-        })
-      }
-            metaObjectDb.put(initedMetaObject)
+    if (initedMetaObject.type === 'normal') {
+      const noteId = Id.getId()
+      initedMetaObject.objectId = noteId
+      addNote({
+        id: noteId,
+        metaId: initedMetaObject.id
+      })
     }
-    setMetaObjects(add(initedMetaObject, metaObjects))
+    metaObjectDb.put(initedMetaObject)
+    const latest = latestObjects.current
+    setMetaObjects(add(initedMetaObject, latest))
     return Promise.resolve(initedMetaObject)
   }
   const updateMetaObject = (metaObject: Partial<MetaObject>) => {
@@ -112,7 +113,8 @@ const useMetaStore = () => {
     if (!existed) {
       metaLinkDb.put(initedMetaLink)
     }
-    setMetaLinks(add(initedMetaLink, metaLinks))
+    const latest = latestLinks.current
+    setMetaLinks(add(initedMetaLink, latest))
   }
   const addMetaComment = (objId: number, metaComment: Partial<MetaComment>) => {
     const initedMetaComment = initBaseObject(metaComment)
@@ -159,6 +161,10 @@ const useMetaStore = () => {
       metaCommentDb.delete(metaCommentId)
     })
   }
+  const deleteMetaLink = (id: number) => {
+    setMetaLinks(remove(id, metaLinks))
+    metaLinkDb.delete(id)
+  }
   const getMetaCommentsByIds = (ids: number[]) => {
     return metaCommentDb.bulkGet(ids)
   }
@@ -189,7 +195,8 @@ const useMetaStore = () => {
       allMetaLinks,
       updateMetaLink,
       deleteMetaObject,
-      getMetaObjectByDocumentId
+      getMetaObjectByDocumentId,
+      deleteMetaLink
     }),
     [metaObjects, metaLinks]
   )

@@ -15,11 +15,23 @@ import { GlobalGraphInstance } from '@/components/graph/GlobalGraph'
 import Modal from '@/components/base/modal'
 import useCardDrag from './useCardDrag'
 import EditMetaObjectForm from '@/components/form/EditMetaObjectForm'
+import { AvaliableGlobalDraggingElements, GlobalDragOverlayInstance } from '@/components/GlobalDragOverlay'
+import MetaNoteCard from './NoteCard'
+import MetaDocumentCard from './DocumentCard'
 
 const isKnowledge = (m: MetaObject): m is MetaKnowledgeObject => m.type === 'knowledge'
 const isDoc = (m: MetaObject): m is MetaDocumentObject => m.type === 'document'
 const isNote = (m: MetaObject): m is MetaNoteObject => m.type === 'note'
-
+type DisplayTypes = Pick<AvaliableGlobalDraggingElements, 'type'>['type']
+export const typeToTypeRecord: Record<DisplayTypes, string> = {
+  pdfElement: 'Pdf label',
+  noteElement: 'Note block',
+  note: 'Note',
+  pdf: 'Pdf',
+  image: 'Image',
+  metaElement: 'Meta Object',
+  normal: 'Object'
+}
 const DatabaseCard: FC<{
   index?: number
   metaObject: MetaObject
@@ -30,12 +42,16 @@ const DatabaseCard: FC<{
     'defaultFontColorRed'
   )
   const [related] = useAtom(relatedMetaObjectsMapAtom, GlobalScope)
-  const relatedNumber = related.get(metaObject.id)?.size
-  const showImage = !!metaObject.coverImgSrc
+  const set = related.get(metaObject.id)
+  set?.delete(metaObject.id)
+  const relatedNumber = set?.size
   const [showIcon, setShowIcon] = useState(false)
   const [showPopover, setShowPopover] = useState(false)
   const [showEdit, setShowEdit] = useState(false)
   const containerRef = useRef<HTMLDivElement>(null)
+  const cover = metaObject.coverImgSrc
+  const [innerCover, setInnerCover] = useState(cover)
+  const showImage = !!cover || !!innerCover
   const { updateMetaObject, deleteMetaObject } = useMetaStore()
 
   const { isCardDraggingInside } = useCardDrag(
@@ -44,16 +60,17 @@ const DatabaseCard: FC<{
     containerRef.current
   )
   const renderCardContent = () => {
-    if (isKnowledge(metaObject)) {
-      return <MetaKnowledgeCard m={metaObject} />
+    // if (isKnowledge(metaObject)) {
+    switch (metaObject.type) {
+      case 'note':
+        return <MetaNoteCard m={metaObject} />
+      case 'pdf':
+        return <MetaDocumentCard onCoverChange={url => setInnerCover(url)} m={metaObject} />
+      default:
+        return <MetaKnowledgeCard m={metaObject} />
     }
-    // if (isDoc(metaObject)) {
-    //   return <MetaDocumentCard m={metaObject} />
-    // }
-    // if (isNote(metaObject)) {
-    //   return <MetaNoteCard m={metaObject} />
-    // }
   }
+
   const renderToolbar = () => {
     return (
       <Content
@@ -66,11 +83,8 @@ const DatabaseCard: FC<{
         })}
       >
         <Content flex gap={6} alignItems="baseline">
-          <span className={css({ fontSize: 24, fontWeight: 650, color: defaultFontColorBlack })}>{relatedNumber}</span>
+          <span className={css({ fontSize: 24, fontWeight: 650, color: defaultFontColorBlack })}>{relatedNumber || 0}</span>
           <span className={css({ fontSize: 11, fontWeight: 500, color: defaultFontColorGrey })}>Related Objects</span>
-          <span className={css({ fontSize: 11, fontWeight: 500, color: defaultFontColorGrey })}>
-            {DateFormat.format(metaObject.createdAt, DateFormat.Formats.default)}
-          </span>
         </Content>
         <AnimatePopover
           visible={showPopover}
@@ -207,7 +221,7 @@ const DatabaseCard: FC<{
                 fontWeight: 600
               })}
             >
-              Drop to add Link
+              {GlobalDragOverlayInstance.draggingDetails?.type === 'image' ? 'Drop to change cover' : 'Drop to add Link'}
             </motion.div>
           )}
         </AnimatePresence>
@@ -219,10 +233,28 @@ const DatabaseCard: FC<{
               // flexBasis: 150,
               overflow: 'hidden'
             })}
-            src={metaObject.coverImgSrc}
+            src={innerCover || cover}
           />
         )}
         <div className={css({ background: 'white', padding: '16px', borderRadius: 16, marginTop: showImage ? -16 : 0, zIndex: 1 })}>
+          <div
+            style={{
+              fontWeight: 600,
+              fontSize: 11,
+              marginBottom: 10,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              color: '#8590ae',
+              textTransform: 'uppercase'
+            }}
+          >
+            <span>{typeToTypeRecord[metaObject.type] || 'OBJECT'}</span>
+            <span style={{ display: 'flex', gap: 5, fontSize: 10, alignItems: 'center', lineHeight: 1 }}>
+              <Icon size={13} name="park-time" />
+              {DateFormat.formatDistanceToNowStrict(metaObject.createdAt)} Ago
+            </span>
+          </div>
           {renderCardContent()}
         </div>
         <div className={css({ background: 'white', padding: '0 16px 8px', marginTop: 'auto' })}>{renderToolbar()}</div>

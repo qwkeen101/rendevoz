@@ -1,5 +1,5 @@
 import { getDistanceBetweenPointAndElement } from '@/components/dragReposition/utils/position'
-import { GlobalDragOverlayInstance, useGlobalIsDragging } from '@/components/globalDragOverlay'
+import { GlobalDragOverlayInstance, useGlobalIsDragging } from '@/components/GlobalDragOverlay'
 import { useMemoizedFn } from '@/hooks'
 import Id from '@/utils/id'
 import { useEffect, useState } from 'react'
@@ -48,7 +48,7 @@ const usePdfDrag = (viewbox: HTMLElement | null | undefined) => {
           switch (globalDraggingEle.type) {
             case 'noteElement':
               label.originFrom = 'editor'
-              label.content = globalDraggingEle.content
+              label.content = globalDraggingEle.elements || globalDraggingEle.element
               label.originId = globalDraggingEle.noteId
               break
             case 'pdfElement':

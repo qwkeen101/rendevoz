@@ -1,8 +1,8 @@
 import { Noop } from '@/common/types'
 import { useMemoizedFn } from '@/hooks'
 import isHotkey from 'is-hotkey'
-import { FC, KeyboardEventHandler, memo, useCallback } from 'react'
-import { Descendant, Editor, Path, Range, Transforms, Element as SlateElement, Text } from 'slate'
+import { FC, KeyboardEventHandler, memo, RefObject, useCallback, useEffect, useRef } from 'react'
+import { Descendant, Editor, Path, Range, Transforms, Element as SlateElement, Text, Node, NodeEntry } from 'slate'
 import { ReactEditor, Slate, RenderElementProps, RenderLeafProps, Editable } from './slate-react'
 import EditorToolbar from './components/toolbar'
 import HOTKEYS from './consts/hotkeys'
@@ -27,11 +27,13 @@ import Media from './elements/media'
 import { KEY } from '@/consts/key'
 import { ID_TO_ELEMENTS_MAP, SELECTED_BLOCKS_MAP, SELECTED_ID_TO_ELEMENTS_SET } from './weakMaps'
 import moveMultiElements from './utils/moveMultiElements'
+import useEventEmitter from '@/events/useEventEmitter'
+import { EditorEventHandler } from '@/events/editorEvent'
 
 type InnerEditorProps = {
   editor: CustomEditor
   defaultValue: Descendant[]
-  scrollElement?: HTMLDivElement | null
+  scrollElementRef?: RefObject<HTMLDivElement | null>
   onChange?: (value: Descendant[]) => void
   onBlockMouseEnter: (e: MouseEvent, element: CustomElement) => void
   onBlockMouseLeave: (e: MouseEvent, element: CustomElement) => void
@@ -48,12 +50,53 @@ const InnerEditor: FC<InnerEditorProps> = memo(
     onBlockMouseMove,
     onChange,
     onNestedListItem,
-    scrollElement,
+    scrollElementRef,
     readonly
   }) => {
+    const scrollElement = scrollElementRef?.current
     const renderInnerElement = useCallback((props: RenderElementProps) => <Element {...props} />, [])
     const renderLeaf = useCallback((props: RenderLeafProps) => <Leaf {...props} />, [])
+    const editableRef = useRef<{ scrollTo: (idx: number) => void }>()
+    const emitter = useEventEmitter()
+    const editorEventHandler = new EditorEventHandler()
+    editorEventHandler.on('jumpToBlock', data => {
+      if (data.noteId === editor.noteId) {
+        emitter.removeInterval()
+        let entry: NodeEntry | undefined = undefined
+        for (const e of Node.descendants(editor)) {
+          if (e[0].id === data.blockId) {
+            entry = e
+            break
+          }
+        }
+        console.log(entry)
+        if (entry) {
+          const idx = entry[1][0]
+          if (idx !== undefined) {
+            editableRef.current?.scrollTo(idx)
 
+            const selectBlock = () => {
+              requestIdleCallback(() => {
+                const elementsMap = ID_TO_ELEMENTS_MAP.get(editor)
+                const ele = elementsMap?.get(data.blockId)
+                if (ele) {
+                  ele.selectBlock()
+                } else {
+                  selectBlock()
+                }
+              })
+            }
+            selectBlock()
+          }
+        }
+      }
+    })
+    useEffect(() => {
+      emitter.addListener('editor', editorEventHandler)
+      return () => {
+        emitter.removeListener('editor', editorEventHandler)
+      }
+    }, [])
     const { addMetaObject, addMetaLink, getMetaObjectByNoteId } = useMetaStore()
 
     const handleChange = useMemoizedFn((value: Descendant[]) => {
@@ -292,6 +335,7 @@ const InnerEditor: FC<InnerEditorProps> = memo(
           onUnderline={() => toggleMark(editor, 'underline')}
         />
         <Editable
+          innerRef={editableRef}
           readOnly={readonly}
           suppressContentEditableWarning={true}
           spellCheck="false"
@@ -321,7 +365,10 @@ const InnerEditor: FC<InnerEditorProps> = memo(
           renderLeaf={renderLeaf}
           onKeyDown={handleKeydown}
           className={styles.editorWrapper}
-          scrollElement={scrollElement}
+          scrollElementRef={scrollElementRef}
+          style={{
+            paddingBottom: readonly ? 0 : undefined
+          }}
         ></Editable>
       </Slate>
     )
@@ -359,7 +406,7 @@ const isMarkActive = (editor: CustomEditor, mark: string) => {
   const marks = Editor.marks(editor)
   return marks ? marks[mark] === true : false
 }
-const Element = (props: RenderElementProps) => {
+export const Element = (props: RenderElementProps) => {
   const { element, attributes, children } = props
   if (!element.hide) {
     switch (element.type) {
@@ -426,7 +473,7 @@ const Element = (props: RenderElementProps) => {
   }
 }
 
-const Leaf = (props: RenderLeafProps) => {
+export const Leaf = (props: RenderLeafProps) => {
   let { leaf, attributes, children } = props
   if (leaf.bold) {
     children = <strong>{children}</strong>
@@ -447,7 +494,11 @@ const Leaf = (props: RenderLeafProps) => {
   return (
     <span
       className={styles.leaf}
-      style={{ fontSize: leaf.fontSize || '1em', color: leaf?.fontColor, backgroundColor: leaf.backgroundColor }}
+      style={{
+        fontSize: leaf.fontSize || '1em',
+        '--block-font-color': leaf.fontColor,
+        background: leaf.backgroundColor,
+      }}
       {...attributes}
     >
       {children}

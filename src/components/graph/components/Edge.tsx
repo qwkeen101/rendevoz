@@ -1,35 +1,41 @@
-import { FC, memo, MouseEventHandler, useLayoutEffect, useRef, useState } from 'react'
+import { FC, memo, MouseEventHandler, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { GraphEdge } from '../types/edge'
-import { line, curveBasis } from 'd3-shape'
+import { line } from 'd3-shape'
 import { getMarkerId } from '../utils/getMarkerId'
 import { MarkerColor } from '../consts/markerColors'
 import useGraph from '../hooks/useGraph'
 import { motion } from 'framer-motion'
 import { select } from 'd3'
-import useEventEmitter from '@/events/useEventEmitter'
 import { usePrevious } from '@/hooks'
+import { TypeToNodeRadius } from './node/Node'
 interface EdgeProps {
   edge: GraphEdge
 }
-
-const CIRCLE_RADIUS = 20
 
 const Edge: FC<EdgeProps> = memo(({ edge }) => {
   const sourceX = edge.source?.x || 0
   const sourceY = edge.source?.y || 0
   const targetX = edge.target?.x || 0
   const targetY = edge.target?.y || 0
+
   const edgeRef = useRef<SVGPathElement>(null)
   const labelRef = useRef<SVGGElement>(null)
   const graph = useGraph()
+  const targetNode = graph?.nodesMap?.get(edge.targetId)
+  const sourceNode = graph?.nodesMap?.get(edge.sourceId)
   const originEdges = graph?.originEdges
   const oppositeEdge = graph?.oppositeEdgesMap.get(edge.id)
-
+  const [finalPosition, setFinalPosition] = useState<{
+    targetx: number
+    targety: number
+    sourcex: number
+    sourcey: number
+  }>()
+  const [rect, setRect] = useState({ width: 0, height: 0 })
   const [highlight, setHighlight] = useState(false)
   const [d, setD] = useState<string>()
   const previousEdge = usePrevious(edge)
-  const emitter = useEventEmitter()
-
+  const textRef = useRef<SVGTextElement>(null)
   useLayoutEffect(() => {
     const isNewlyAdded = edge.id === graph?.newAddedEdge?.id
     if (
@@ -67,73 +73,96 @@ const Edge: FC<EdgeProps> = memo(({ edge }) => {
       graph?.registerLabelElement(edge.id, labelRef.current)
     }
   }, [edge])
-
-  let offsetLabelRatio = 1
-  if (oppositeEdge) {
-    if (oppositeEdge.source?.id > edge.sourceId) {
-      offsetLabelRatio = -1.5
-    } else {
-      offsetLabelRatio = 2.5
+  useEffect(() => {
+    if (textRef.current) {
+      const textBound = textRef.current?.getBoundingClientRect()
+      textBound && setRect({ width: textBound?.width, height: textBound?.height })
     }
-  }
+  }, [d, edge.label])
+
   const drawEdge = (): string => {
-    const CIRCLE_RADIUS = 20
-    const targetCircleCenterX = targetX + CIRCLE_RADIUS
-    const targetCircleCenterY = targetY + CIRCLE_RADIUS
-    const sourceCircleCenterX = sourceX + CIRCLE_RADIUS
-    const sourceCircleCenterY = sourceY + CIRCLE_RADIUS
+    const TARGET_CIRCLE_RADIUS = TypeToNodeRadius[targetNode?.type || 'normal']
+    const SOURCE_CIRCLE_RADIUS = TypeToNodeRadius[sourceNode?.type || 'normal']
+    const getYOffset = (type?: string) => {
+      if (type === 'note') {
+        return 8
+      }
+      return 0
+    }
+    const targetCircleCenterX = targetX + TARGET_CIRCLE_RADIUS
+    const targetCircleCenterY = targetY + TARGET_CIRCLE_RADIUS + getYOffset(targetNode?.type)
+    const sourceCircleCenterX = sourceX + SOURCE_CIRCLE_RADIUS
+    const sourceCircleCenterY = sourceY + SOURCE_CIRCLE_RADIUS + getYOffset(sourceNode?.type)
+
     const distance = Math.sqrt(
       Math.pow(targetCircleCenterX - sourceCircleCenterX, 2) + Math.pow(targetCircleCenterY - sourceCircleCenterY, 2)
     )
-    const ratio = (CIRCLE_RADIUS + 10) / distance
-    const dx = (targetCircleCenterX - sourceCircleCenterX) * ratio
-    const dy = (targetCircleCenterY - sourceCircleCenterY) * ratio
-    const curve = line().curve(curveBasis)
-    let offset = 30
-    // check out whether double direction link
-    if (originEdges) {
-      if (oppositeEdge && oppositeEdge.source?.id > edge.sourceId) offset = -30
-    }
-    const finalSourceX = sourceCircleCenterX + dx
-    const finalSourceY = sourceCircleCenterY + dy
-    const finalTargetX = targetCircleCenterX - dx
-    const finalTargetY = targetCircleCenterY - dy
+    const sourceRatioOffset = sourceNode?.type === 'note' ? 30 : 10
+    const targetRatioOffset = targetNode?.type === 'note' ? 30 : 10
+    const sourceRatio = (SOURCE_CIRCLE_RADIUS + sourceRatioOffset) / distance
+    const targetRatio = (TARGET_CIRCLE_RADIUS + targetRatioOffset) / distance
+    const horizontalDistance = targetCircleCenterX - sourceCircleCenterX
+    const veritcalDistance = targetCircleCenterY - sourceCircleCenterY
+    const sourceDx = horizontalDistance * sourceRatio
+    const sourceDy = veritcalDistance * sourceRatio
+    const targetDx = horizontalDistance * targetRatio
+    const targetDy = veritcalDistance * targetRatio
 
+    const curve = line()
+    // let offset = 30
+    // // check out whether double direction link
+    let offsetX = 0
+    let offsetY = 0
+    if (originEdges) {
+      if (oppositeEdge) {
+        // 直线的倾斜角
+        const alpha = Math.atan2(targetCircleCenterY - sourceCircleCenterY, targetCircleCenterX - sourceCircleCenterX)
+        offsetX = 8 * Math.sin(alpha)
+        offsetY = 16 * Math.cos(alpha)
+      }
+    }
+    const finalSourceX = sourceCircleCenterX + sourceDx
+    const finalSourceY = sourceCircleCenterY + sourceDy
+    const finalTargetX = targetCircleCenterX - targetDx
+    const finalTargetY = targetCircleCenterY - targetDy
+    setFinalPosition({
+      sourcex: finalSourceX + offsetX,
+      sourcey: finalSourceY - offsetY,
+      targetx: finalTargetX + offsetX,
+      targety: finalTargetY - offsetY
+    })
     const points = [
-      [finalSourceX, finalSourceY],
-      [(finalSourceX + finalTargetX) / 2, (finalSourceY + finalTargetY) / 2 + offset],
-      [finalTargetX, finalTargetY]
+      [finalSourceX + offsetX, finalSourceY - offsetY],
+      [finalTargetX + offsetX, finalTargetY - offsetY]
     ]
     return curve(points)
   }
 
-  const [centerX, centerY] = [(sourceX + targetX) / 2, (sourceY + targetY) / 2]
   const edgeMouseEnterHandler = () => {
     setHighlight(true)
   }
   const edgeMouseLeaveHandler = () => {
     setHighlight(false)
   }
-  const edgeContextMenuHandler: MouseEventHandler = e => {
-    emitter.emit('graph', {
-      type: 'toggleContextMenu',
-      data: {
-        componentType: 'edge',
-        clientX: e.clientX,
-        clientY: e.clientY
-      }
-    })
-  }
+  const edgeContextMenuHandler: MouseEventHandler = e => {}
   const edgeClickHandler: MouseEventHandler = e => {
-    const edgeBounding = edgeRef.current!.getBoundingClientRect()
-    emitter.emit('graph', {
-      type: 'toggleEdgeAttributeCard',
-      data: {
-        edge,
-        clientX: edgeBounding.x + edgeBounding.width / 2,
-        clientY: edgeBounding.y + edgeBounding.height / 2 + 20
-      }
-    })
+    e.stopPropagation()
+    e.preventDefault()
+    const manager = graph?.overlayManager
+    if (manager) {
+      manager.setOverlayState(s => {
+        console.log(s, edge)
+        return {
+          visible: s.object?.id === edge.id ? !s.visible : true,
+          content: 'edgeToolbar',
+          position: {
+            left: e.clientX,
+            top: e.clientY - 10
+          },
+          object: edge
+        }
+      })
+    }
   }
   return (
     <g
@@ -150,18 +179,31 @@ const Edge: FC<EdgeProps> = memo(({ edge }) => {
         fill="transparent"
         cursor="pointer"
         initial={{ opacity: 1 }}
-        animate={{ opacity: edge.opacity, stroke: edge.highlight || highlight ? MarkerColor.EMPHASIS : MarkerColor.NORMAL }}
-        markerEnd={`url(#${getMarkerId('end', edge.highlight || highlight ? MarkerColor.EMPHASIS : MarkerColor.NORMAL)})`}
+        animate={{
+          opacity: edge.opacity,
+          stroke: edge.highlight || highlight ? edge.color || MarkerColor.EMPHASIS : edge.color || MarkerColor.NORMAL
+        }}
+        markerEnd={`url(#${getMarkerId(
+          'end',
+          edge.highlight || highlight ? edge.color || MarkerColor.EMPHASIS : edge.color || MarkerColor.NORMAL
+        )})`}
         d={d}
       ></motion.path>
-      {edge.label && (
-        <g ref={labelRef} transform={`translate(${centerX + 5 * offsetLabelRatio},${centerY + 20 * offsetLabelRatio})`}>
+      {edge.label && finalPosition && (
+        <g
+          ref={labelRef}
+          transform={`translate(${(finalPosition.sourcex + finalPosition.targetx) / 2 - rect.width / 2},${
+            (finalPosition.sourcey + finalPosition.targety) / 2 - rect.height / 2
+          })`}
+        >
           <motion.rect
             fill="white"
-            width={40}
-            height={20}
+            width={rect.width + 5}
+            height={rect.height}
             initial={{ opacity: 1 }}
             animate={{ opacity: edge.opacity }}
+            // x={-rect.width / 2}
+            x={-5}
             rx={2}
             ry={2}
           ></motion.rect>
@@ -171,13 +213,15 @@ const Edge: FC<EdgeProps> = memo(({ edge }) => {
             fontStyle="italic"
             dy="0.1em"
             dx="-0.2em"
-            fill={edge.highlight || highlight ? MarkerColor.EMPHASIS : MarkerColor.NORMAL}
+            fill={edge.highlight || highlight ? edge.color || MarkerColor.EMPHASIS : edge.color || MarkerColor.NORMAL}
             textAnchor="middle"
             dominantBaseline="middle"
             initial={{ opacity: 1 }}
             animate={{ opacity: edge.opacity }}
-            x={20}
-            y={10}
+            x={rect.width / 2}
+            // y={10}
+            y={rect.height / 2}
+            ref={textRef}
           >
             {edge.label}
           </motion.text>

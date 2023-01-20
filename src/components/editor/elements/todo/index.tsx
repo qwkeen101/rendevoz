@@ -9,6 +9,7 @@ const ToDo = ({ element, children, attributes }: RenderElementProps) => {
   const editor = useSlate()
   const ele = element as ToDoElement
   const toggleChecked: MouseEventHandler = e => {
+    if (editor.readonly) return
     e.preventDefault()
     e.stopPropagation()
     const path = ReactEditor.findPath(editor, ele)
@@ -21,7 +22,7 @@ const ToDo = ({ element, children, attributes }: RenderElementProps) => {
     )
   }
   return (
-    <Content flex alignItems="center" gap={10}>
+    <Content flex alignItems="center" gap={10} contentEditable={false}>
       <Content
         flex
         centered
@@ -44,8 +45,10 @@ const ToDo = ({ element, children, attributes }: RenderElementProps) => {
         className={css({
           flex: 1,
           textDecoration: ele.checked ? 'line-through 0.05em' : undefined,
-          opacity: ele.checked ? 0.8 : undefined
+          opacity: ele.checked ? 0.8 : undefined,
+          outline: 'none'
         })}
+        contentEditable={true}
       >
         {children}
       </div>

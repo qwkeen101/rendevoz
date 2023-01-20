@@ -20,6 +20,7 @@ const EditorBlockDetails = ({ editor, manager }: { editor: CustomEditor; manager
   const containerRef = useRef<HTMLDivElement>(null)
   let showCard = false
   const showCardElements = ['pdf', 'book-highlight', 'note', 'metaObject']
+  const embedded = ['note', 'metaObject']
   if (currentEle) {
     if (showCardElements.includes(currentEle.type)) {
       showCard = true
@@ -38,10 +39,11 @@ const EditorBlockDetails = ({ editor, manager }: { editor: CustomEditor; manager
       name: 'Borderless card',
       onClick: () => Transforms.setNodes(editor, { cardType: 'line' }, { at: currentElePath })
     },
-    currentEle?.type === 'metaObject' && {
-      name: 'Embedded card',
-      onClick: () => Transforms.setNodes(editor, { cardType: 'embedded' }, { at: currentElePath })
-    }
+    currentEle?.type &&
+      embedded.includes(currentEle.type) && editor.noteId !== currentEle?.noteId && {
+        name: 'Embedded card',
+        onClick: () => Transforms.setNodes(editor, { cardType: 'embedded' }, { at: currentElePath })
+      }
   ]
   return (
     <WithBorder ref={containerRef} style={{ padding: 3, minWidth: 220, userSelect: 'none', color: '#5f6065' }}>
@@ -67,7 +69,7 @@ const EditorBlockDetails = ({ editor, manager }: { editor: CustomEditor; manager
             >
               {cardEdit.map(c =>
                 cloneElement(
-                  <Content key={c.name}/>,
+                  <Content key={c.name} />,
                   {
                     onClick: c.onClick,
                     className: ClassName.flatButton()

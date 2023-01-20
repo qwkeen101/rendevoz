@@ -5,6 +5,7 @@ export const input = () =>
     padding: '12px 16px',
     width: '100%',
     outline: 'none',
+    position: 'relative',
     fontSize: 13,
     fontWeight: 500,
     letterSpacing: '-0.04px',

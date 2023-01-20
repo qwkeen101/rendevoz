@@ -1,10 +1,12 @@
 import useEventEmitter from '@/events/useEventEmitter'
 import { useMemoizedFn } from '@/hooks'
-import useMetaStore from '@/stores/meta.store'
+import { GlobalScope } from '@/jotai/jotaiScope'
+import useMetaStore, { relatedMetaObjectsMapAtom } from '@/stores/meta.store'
 import Id from '@/utils/id'
 import { css } from '@emotion/css'
 import produce from 'immer'
-import { FC, memo, MouseEvent, MouseEventHandler, useEffect, useLayoutEffect, useMemo, useRef } from 'react'
+import { useAtomValue } from 'jotai'
+import { FC, memo, MouseEvent, useEffect } from 'react'
 import { MetaLink } from '~/typings/data'
 import useEdges from '../hooks/useEdges'
 import useGraph from '../hooks/useGraph'
@@ -14,7 +16,6 @@ import Node from './node/Node'
 
 export type NodeMouseEventHandler = (e: MouseEvent, node: GraphNode) => void
 
-interface NodeContainerProps {}
 const svgContainerClassName = css({
   position: 'absolute',
   left: 0,
@@ -24,17 +25,17 @@ const svgContainerClassName = css({
   overflow: 'visible',
   pointerEvents: 'none'
 })
-const NodeContainer: FC<NodeContainerProps> = memo(() => {
+const NodeContainer = memo(() => {
   const [nodes, setNodes] = useNodes()
   const [edges, setEdges] = useEdges()
   const { addMetaLink } = useMetaStore()
+  const relatedObjectsMap = useAtomValue(relatedMetaObjectsMapAtom, GlobalScope)
   const emitter = useEventEmitter()
   const graph = useGraph()
   useEffect(() => {
     graph?.registerHandler('change', changeHandler)
   }, [])
   const changeHandler = useMemoizedFn((_nodes: GraphNode[]) => {
-    console.log(_nodes)
     if (nodes) {
       setNodes(
         produce(nodes, draft => {
@@ -64,36 +65,27 @@ const NodeContainer: FC<NodeContainerProps> = memo(() => {
       const contextMenuNode = graph.contextMenuNode
       const isAddingEdge = graph.isAddingEdge
       graph.currentHoverNode = node
-      const { sourceToTargetNodes, targetToSourceNodes, sourceToTargetEdges, targetToSourceEdges } = graph.getRelatedNodesAndEdges(node)
+      const relatedNodeIds = relatedObjectsMap.get(node.id)?.add(node.id)
       setEdges(
         produce(edges, draft => {
-          const invisibleIdx: number[] = []
-          const highlightIdx: number[] = []
           edges?.forEach((e, idx) => {
-            if (sourceToTargetEdges?.some(o => o.id === e.id) || targetToSourceEdges?.some(o => o.id === e.id)) {
-              highlightIdx.push(idx)
+            if (relatedNodeIds?.has(e.sourceId) && relatedNodeIds.has(e.targetId)) {
+              draft[idx].highlight = true
             } else {
-              invisibleIdx.push(idx)
+              draft[idx].opacity = 0
             }
           })
-          invisibleIdx.forEach(i => (draft[i].opacity = 0))
-          highlightIdx.forEach(i => (draft[i].highlight = true))
         })
       )
       setNodes(
         produce(nodes, draft => {
           const idx = nodes?.findIndex(n => n === node)
-          const invisibleIdx: number[] = []
           nodes.forEach((n, idx) => {
-            if (!(sourceToTargetNodes.some(i => i.id === n.id) || targetToSourceNodes.some(i => i.id === n.id))) {
-              if (isAddingEdge && n.id === contextMenuNode?.id) return
-              if (n.id !== node.id) {
-                invisibleIdx.push(idx)
-              }
+            if (!relatedNodeIds?.has(n.id)) {
+              draft[idx].opacity = 0.04
             }
           })
           draft[idx].scale = 1.2
-          invisibleIdx.forEach(i => (draft[i].opacity = 0.04))
         })
       )
     }
@@ -101,33 +93,20 @@ const NodeContainer: FC<NodeContainerProps> = memo(() => {
   const nodeMouseLeaveHandler: NodeMouseEventHandler = useMemoizedFn((e, node) => {
     if (nodes && edges && graph) {
       if (graph.isDragging) return
-      const { sourceToTargetNodes, targetToSourceNodes, sourceToTargetEdges, targetToSourceEdges } = graph.getRelatedNodesAndEdges(node)
       setEdges(
         produce(edges, draft => {
-          const invisibleIdx: number[] = []
-          const highlightIdx: number[] = []
-          edges?.forEach((e, idx) => {
-            if (sourceToTargetEdges?.some(o => o.id === e.id) || targetToSourceEdges?.some(o => o.id === e.id)) {
-              highlightIdx.push(idx)
-            } else {
-              invisibleIdx.push(idx)
-            }
+          draft.forEach(i => {
+            i.highlight = false
+            i.opacity = 1
           })
-          invisibleIdx.forEach(i => (draft[i].opacity = 1))
-          highlightIdx.forEach(i => (draft[i].highlight = false))
         })
       )
       setNodes(
         produce(nodes, draft => {
-          const idx = nodes?.findIndex(n => n === node)
-          const invisibleIdx: number[] = []
-          nodes.forEach((n, idx) => {
-            if (!(sourceToTargetNodes.some(i => i.id === n.id) || targetToSourceNodes.some(i => i.id === n.id))) {
-              invisibleIdx.push(idx)
-            }
+          draft.forEach(i => {
+            i.scale = 1
+            i.opacity = 1
           })
-          draft[idx].scale = 1
-          invisibleIdx.forEach(i => (draft[i].opacity = 1))
         })
       )
     }
@@ -183,6 +162,9 @@ const NodeContainer: FC<NodeContainerProps> = memo(() => {
       <defs>
         <clipPath id="circleClip">
           <circle r={20} cx={20} cy={20}></circle>
+        </clipPath>
+        <clipPath id="roundRectClip">
+          <rect width={20} height={20} rx={5}></rect>
         </clipPath>
       </defs>
       {nodes?.map(node => (

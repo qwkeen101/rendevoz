@@ -84,9 +84,7 @@ export const PdfViewer: FC<PdfViewerProps> = ({ fileUrl, document }) => {
   const emitter = useEventEmitter()
 
   usePdfDrag(viewboxRef.current)
-  useEffect(() => {
-    console.log(document?.name)
-  })
+
   const handleOpenMenu = useCallback(e => {
     e.preventDefault()
     setContextMenuVisible(true)

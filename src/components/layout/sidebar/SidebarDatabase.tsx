@@ -1,16 +1,15 @@
-import { AnimatePopover, Icon, Tooltip } from '@/components'
+import { AnimatePopover, Icon } from '@/components'
 import Modal from '@/components/base/modal'
 import EditMetaObjectForm from '@/components/form/EditMetaObjectForm'
-import { GlobalDragOverlayInstance, useGlobalIsDragging } from '@/components/globalDragOverlay'
+import { GlobalDragOverlayInstance, useGlobalIsDragging } from '@/components/GlobalDragOverlay'
+import useEventEmitter from '@/events/useEventEmitter'
 import { useMemoizedFn } from '@/hooks'
 import { GlobalScope } from '@/jotai/jotaiScope'
 import useMetaStore, { undeletedMetaObjectsAtom } from '@/stores/meta.store'
 import ClassName from '@/styles/classNames'
 import { css } from '@emotion/css'
-import { AnimatePresence, motion } from 'framer-motion'
 import { useAtomValue } from 'jotai'
 import { memo, useEffect, useRef, useState } from 'react'
-import { createPortal } from 'react-dom'
 import { MetaObject } from '~/typings/data'
 import { MenuItem } from './Item'
 
@@ -19,6 +18,7 @@ const SidebarDatabase = memo(() => {
   const [globalIsDragging] = useGlobalIsDragging()
   const [tempMetaObject, setTempMetaObject] = useState<Partial<MetaObject>>()
   const itemRef = useRef<HTMLLIElement>(null)
+  const emitter = useEventEmitter()
   const [draggingHovered, setDraggingHovered] = useState({
     droppable: false,
     visible: false
@@ -28,7 +28,6 @@ const SidebarDatabase = memo(() => {
       let droppable = false
       const draggingEle = GlobalDragOverlayInstance.draggingDetails
       if (draggingEle) {
-        console.log(draggingEle)
         switch (draggingEle.type) {
           case 'noteElement':
           case 'pdfElement':
@@ -52,20 +51,18 @@ const SidebarDatabase = memo(() => {
     if (e.type === 'pointerup') {
       const draggingEle = GlobalDragOverlayInstance.draggingDetails
       if (draggingEle && draggingHovered.droppable) {
-        setNewMetaVisible(true)
-        switch (draggingEle.type) {
-          case 'noteElement': {
-            setTempMetaObject({
-              name: draggingEle.content
-            })
+        emitter.emit('global', {
+          type: 'dragDrop',
+          data: {
+            dragElement: draggingEle,
+            dropOn: 'database'
           }
-        }
+        })
       }
     }
   })
   useEffect(() => {
     if (globalIsDragging) {
-      console.log(itemRef)
       itemRef.current?.addEventListener('pointerenter', pointerHandler)
       itemRef.current?.addEventListener('pointerup', pointerHandler)
       itemRef.current?.addEventListener('pointerleave', pointerHandler)
@@ -86,7 +83,7 @@ const SidebarDatabase = memo(() => {
           metaObject={tempMetaObject}
           title="Create meta object"
           onUpdate={newMeta => {
-            newMeta.type = 'knowledge'
+            newMeta.type = 'normal'
             addMetaObject(newMeta)
             setNewMetaVisible(false)
           }}

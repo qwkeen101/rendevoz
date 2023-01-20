@@ -12,7 +12,7 @@ interface ColorPickerProps {
   isFont?: boolean
   enableDefault?: boolean
 }
-const Colors: string[][] = [
+export const Colors: string[][] = [
   [material.red['900'], material.red['700'], material.red['500'], material.red['300'], material.red['100']],
   [material.pink['900'], material.pink['700'], material.pink['500'], material.pink['300'], material.pink['100']],
   [material.purple['900'], material.purple['700'], material.purple['500'], material.purple['300'], material.purple['100']],
@@ -50,10 +50,24 @@ const Colors: string[][] = [
   [material.brown['900'], material.brown['700'], material.brown['500'], material.brown['300'], material.brown['100']],
   [material.blueGrey['900'], material.blueGrey['700'], material.blueGrey['500'], material.blueGrey['300'], material.blueGrey['100']],
   [
-    'linear-gradient(to right, #aa4b6b, #6b6b83, #3b8d99)',
-    'linear-gradient(to right, #bdc3c7, #2c3e50)',
-    'linear-gradient(to right, #ee9ca7, #ffdde1)',
-    'linear-gradient(to right, #2193b0, #6dd5ed)'
+    'linear-gradient(to left, #aa4b6b, #6b6b83, #3b8d99)',
+    'linear-gradient(to left, #c6ffdd, #fbd786, #f7797d)',
+    'linear-gradient(to left, #0f2027, #203a43, #2c5364)',
+    'linear-gradient(to left, #7f7fd5, #86a8e7, #91eae4)',
+    'linear-gradient(to left, #12c2e9, #c471ed, #f64f59)',
+    'linear-gradient(to left, #03001e, #7303c0, #ec38bc, #fdeff9)',
+    'linear-gradient(to left, #b92b27, #1565c0)',
+    'linear-gradient(to left, #373b44, #4286f4)',
+    'linear-gradient(to right, #8e2de2, #4a00e0)',
+    'linear-gradient(to left, #1f4037, #99f2c8)',
+    'linear-gradient(to left, #654ea3, #eaafc8)',
+    'linear-gradient(to left, #bdc3c7, #2c3e50)',
+    'linear-gradient(to left, #ee9ca7, #ffdde1)',
+    'linear-gradient(to left, #2193b0, #6dd5ed)',
+    'linear-gradient(to left, #005aa7, #fffde4)',
+    'linear-gradient(to right, #fffbd5, #b20a2c)',
+    'linear-gradient(to left, #ffafbd, #ffc3a0)',
+    'linear-gradient(to left, #dbe6f6, #c5796d)'
   ]
 ]
 const ColorPicker: FC<ColorPickerProps> = ({

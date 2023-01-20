@@ -4,6 +4,8 @@ import { GraphEdge } from './types/edge'
 import { curveBasis } from 'd3'
 import { getMarkerId } from './utils/getMarkerId'
 import { MarkerColor } from './consts/markerColors'
+import { GraphOverlayManager } from './components/overlay/useGraphOverlay'
+import { TypeToNodeRadius } from './components/node/Node'
 
 class D3GraphManager {
   private container: d3.Selection<HTMLElement, unknown, null, any> | null = null
@@ -14,7 +16,7 @@ class D3GraphManager {
   public currentHoverNode: GraphNode | null = null
   public originNodes: any[] | null = null
   public originEdges: any[] | null = null
-  private nodesMap: Map<number, GraphNode> | null = null
+  public nodesMap: Map<number, GraphNode> | null = null
   private edgesMap: Map<number, GraphEdge> | null = null
   private linkStartPoint = null
   // edge to edge map
@@ -23,11 +25,20 @@ class D3GraphManager {
   public newAddedEdge: GraphEdge | null = null
   private changeHandlerSet: Set<(nodes: GraphNode[], edges: GraphEdge[]) => void> = new Set()
   private zoomHandlerSet: Set<(transform: any) => void> = new Set()
-
+  public overlayManager?: GraphOverlayManager
   private ID_TO_NODE_ELEMENT_MAP = new Map<number, SVGElement>()
   private ID_TO_EDGE_ELEMENT_MAP = new Map<number, SVGElement>()
   private ID_TO_EDGE_LABEL_ELEMENT_MAP = new Map<number, SVGElement>()
-
+  private getRadius = (type: string) => {
+    console.log(type)
+    switch (type) {
+      case 'note':
+      case 'pdf':
+        return 200
+      default:
+        return 100
+    }
+  }
   public registerHandler = (name: string, handler: any) => {
     if (name === 'change') {
       this.changeHandlerSet.add(handler)
@@ -41,7 +52,7 @@ class D3GraphManager {
   public registerContainer = (container: HTMLElement) => {
     this.container = d3.select(container)
     const zoom = d3.zoom().scaleExtent([0.1, 5]).on('zoom', this.zoomed)
-    this.container?.call(zoom)
+    this.container?.call(zoom).on('dblclick.zoom', null)
     this.container?.on('mousemove', this.globalMousemoveHandler)
     this.container.selectChild('#viewport').on('click', this.globalClickHandler)
   }
@@ -57,13 +68,14 @@ class D3GraphManager {
     if (this.originNodes) {
       nodes.forEach(n => {
         // this.N.push(n.id)
-        this.originNodes?.push({ id: n.id })
+        this.originNodes?.push({ id: n.id, type: n.type })
       })
       this.updateLayout()
     } else {
       // in originNodes we just need id, no other properties.
-      this.originNodes = nodes.map(n => ({ id: n.id }))
+      this.originNodes = nodes.map(n => ({ id: n.id, type: n.type }))
     }
+    this.nodesMap = new Map(this.originNodes.map(n => [n.id, n]))
     const clonedNodes = structuredClone(this.originNodes)
     return clonedNodes
   }
@@ -137,14 +149,15 @@ class D3GraphManager {
           d3
             .forceLink(this.originEdges)
             .id(d => d.id)
-            .distance(200)
+            .distance(300)
         )
         .force(
           'collision',
-          d3.forceCollide().radius(() => 100)
+          d3.forceCollide().radius(n => this.getRadius(n.type))
         )
         .alpha(reheat ? 0.8 : 0)
         .alphaTarget(0)
+        .on('tick', this.ticked)
         .restart()
       return
     }
@@ -153,7 +166,7 @@ class D3GraphManager {
       const forceLink = d3
         .forceLink(this.originEdges)
         .id(d => d.id)
-        .distance(200)
+        .distance(300)
       this.d3Simulation = d3
         .forceSimulation(this.originNodes)
         .force('link', forceLink)
@@ -161,12 +174,15 @@ class D3GraphManager {
         .force('center', d3.forceCenter())
         .force(
           'collision',
-          d3.forceCollide().radius(() => 100)
+          d3.forceCollide().radius(n => this.getRadius(n.type))
         )
+        // .stop()
+        .tick(300)
         .on('tick', this.ticked)
         .on('end', () => {
           const clonedNodes = structuredClone(this.originNodes)
           const clonedEdges = structuredClone(this.originEdges)
+          this.ID_TO_EDGE_LABEL_ELEMENT_MAP.forEach(i => i.removeAttribute('opacity'))
           this.changeHandlerSet.forEach(handler => handler?.(clonedNodes, clonedEdges))
         })
     }
@@ -201,8 +217,7 @@ class D3GraphManager {
       this.originEdges.forEach(edge => {
         const path = this.drawEdge(edge, edge.source.x, edge.source.y, edge.target.x, edge.target.y)
         this.ID_TO_EDGE_ELEMENT_MAP.get(edge.id)?.setAttribute('d', path)
-        const [centerX, centerY] = [(edge.source.x + edge.target.x) / 2, (edge.source.y + edge.target.y) / 2]
-        this.ID_TO_EDGE_LABEL_ELEMENT_MAP.get(edge.id)?.setAttribute('transform', `translate(${centerX + 5},${centerY + 20})`)
+        this.ID_TO_EDGE_LABEL_ELEMENT_MAP.get(edge.id)?.setAttribute('opacity', '0')
       })
       this.originNodes.forEach(node => {
         this.ID_TO_NODE_ELEMENT_MAP.get(node.id)?.setAttribute('transform', `translate(${node.x},${node.y})`)
@@ -248,31 +263,26 @@ class D3GraphManager {
     return { sourceToTargetEdges, targetToSourceNodes, targetToSourceEdges, sourceToTargetNodes }
   }
   private drawEdge = (edge, sourceX, sourceY, targetX, targetY) => {
-    const CIRCLE_RADIUS = 20
-    const targetCircleCenterX = targetX + CIRCLE_RADIUS
-    const targetCircleCenterY = targetY + CIRCLE_RADIUS
-    const sourceCircleCenterX = sourceX + CIRCLE_RADIUS
-    const sourceCircleCenterY = sourceY + CIRCLE_RADIUS
-    const distance = Math.sqrt(
-      Math.pow(targetCircleCenterX - sourceCircleCenterX, 2) + Math.pow(targetCircleCenterY - sourceCircleCenterY, 2)
-    )
-    const ratio = (CIRCLE_RADIUS + 10) / distance
-    const dx = (targetCircleCenterX - sourceCircleCenterX) * ratio
-    const dy = (targetCircleCenterY - sourceCircleCenterY) * ratio
-    const curve = d3.line().curve(curveBasis)
+    const targetNode = this.nodesMap?.get(edge.targetId)
+    const sourceNode = this.nodesMap?.get(edge.sourceId)
+
+    const getRadius = (type?: string) => {
+      return TypeToNodeRadius[type || 'normal']
+    }
+    const targetCircleCenterX = targetX + getRadius(targetNode?.type)
+    const targetCircleCenterY = targetY + getRadius(targetNode?.type)
+    const sourceCircleCenterX = sourceX + getRadius(sourceNode?.type)
+    const sourceCircleCenterY = sourceY + getRadius(sourceNode?.type)
+    const curve = d3.line()
 
     // check out whether double direction link
-    const finalSourceX = sourceCircleCenterX + dx
-    const finalSourceY = sourceCircleCenterY + dy
-    const finalTargetX = targetCircleCenterX - dx
-    const finalTargetY = targetCircleCenterY - dy
+    const finalSourceX = sourceCircleCenterX
+    const finalSourceY = sourceCircleCenterY
+    const finalTargetX = targetCircleCenterX
+    const finalTargetY = targetCircleCenterY
 
-    const oppositeEdge = this.oppositeEdgesMap.get(edge.id)
-    let offset = 30
-    if (oppositeEdge && oppositeEdge.source?.id > edge.sourceId) offset = -30
     const points = [
       [finalSourceX, finalSourceY],
-      [(finalSourceX + finalTargetX) / 2, (finalSourceY + finalTargetY) / 2 + offset],
       [finalTargetX, finalTargetY]
     ]
     return curve(points)

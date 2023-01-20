@@ -27,7 +27,7 @@ const routeToComponent = (route: string, search?: string): ReactNode | undefined
   if (route.startsWith('/database')) {
     return (
       <>
-        <TabTitle title="Knowledge Database" />
+        <TabTitle title="Database" />
         <KnowledgeDatabase />
       </>
     )

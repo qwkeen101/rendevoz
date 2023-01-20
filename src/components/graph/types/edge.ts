@@ -9,4 +9,5 @@ export interface GraphEdge {
   opacity?: number
   label?: string
   highlight?: boolean
+  color?: string
 }

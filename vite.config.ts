@@ -38,7 +38,7 @@ export default defineConfig({
   ],
   server: {
     host: '127.0.0.1',
-    port: 11111
+    port: 7777
   },
   clearScreen: false
 })

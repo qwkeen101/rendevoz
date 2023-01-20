@@ -7,9 +7,9 @@ import { useEffect, useRef } from 'react'
 import { useUpdate } from 'react-use'
 import { MetaObject } from '~/typings/data'
 import { Content, Icon, Image } from '../base'
+import BorderInput from '../base/BorderInput'
 import { Button } from '../base/button'
 import useFileUpload from '../base/useFileUpload'
-import AutosizeTextarea from '../custom/input/autosizeTextarea'
 
 const EditMetaObjectForm = ({
   metaObject,
@@ -20,11 +20,11 @@ const EditMetaObjectForm = ({
   onUpdate: (newMeta: MetaObject) => void
   title: string
 }) => {
-  const innerMeta = useRef(metaObject || {})
+  const innerMeta = useRef(structuredClone(metaObject) || {})
   const { defaultFontColorGrey } = useTheme('defaultFontColorGrey')
   const forceRender = useUpdate()
   useEffect(() => {
-    innerMeta.current = metaObject || {}
+    innerMeta.current = structuredClone(metaObject) || {}
   }, [metaObject])
   const { renderUploader, upload, removeFile } = useFileUpload(file => {
     saveImageLocally(Id.getStrId(), file).then(data => {
@@ -46,23 +46,21 @@ const EditMetaObjectForm = ({
         >
           {title}
         </div>
-        <input
+        <BorderInput
           placeholder="Name"
           style={{ height: '40px' }}
-          onChange={e => {
-            innerMeta.current.name = e.target.value
+          onChange={value => {
+            innerMeta.current.name = value
           }}
           defaultValue={metaObject?.name}
-          className={ClassName.input()}
-        ></input>
-        <AutosizeTextarea
-          placeholder="Discription..."
-          minRows={2}
+        ></BorderInput>
+        <BorderInput
+          textarea
+          placeholder="Discription"
           style={{ resize: 'none', overflow: 'hidden' }}
-          className={ClassName.input()}
           defaultValue={metaObject?.description}
-          onChange={e => {
-            innerMeta.current.description = e.target.value
+          onChange={value => {
+            innerMeta.current.description = value
           }}
         />
         <Content

@@ -21,32 +21,30 @@ const KnowledgeDatabase = () => {
 
   const { run: debouncedSetSearch } = useDebounceFn(setSearch, { wait: 200 })
 
-  const km = undeletedMetaObjects.filter(i => i.type === 'knowledge')
-
-  const [displayObjects, setDisplayObjects] = useState<MetaObject[]>(km)
+  const [displayObjects, setDisplayObjects] = useState<MetaObject[]>(undeletedMetaObjects)
 
   const [showPin, toggleShowPin] = useToggle(true)
 
   const [showAll, toggleShowAll] = useToggle(true)
   useEffect(() => {
     if (!search) {
-      setDisplayObjects(km)
+      setDisplayObjects(undeletedMetaObjects)
     } else {
-      const results = fuzzysort.go(search, km, { key: 'name' })
+      const results = fuzzysort.go(search, undeletedMetaObjects, { key: 'name' })
       setDisplayObjects(results.map(i => i.obj))
     }
   }, [undeletedMetaObjects])
   useEffect(() => {
     setIsLoading(true)
     if (search) {
-      const results = fuzzysort.go(search, km, { key: 'name' })
+      const results = fuzzysort.go(search, undeletedMetaObjects, { key: 'name' })
       setDisplayObjects(results.map(i => i.obj))
     } else {
-      setDisplayObjects(km)
+      setDisplayObjects(undeletedMetaObjects)
     }
     setTimeout(() => setIsLoading(false), 200)
   }, [search])
-  const dm = undeletedMetaObjects.filter(i => i.type === 'document')
+
   return (
     <Content flex column gap={16} className={css({ padding: 30, overflow: 'scroll', height: '100%' })}>
       <input

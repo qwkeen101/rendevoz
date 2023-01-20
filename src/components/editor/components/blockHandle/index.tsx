@@ -1,6 +1,6 @@
 import { Noop } from '@/common/types'
 import { Icon, Tooltip } from '@/components'
-import { useGlobalIsDragging } from '@/components/globalDragOverlay'
+import { useGlobalIsDragging } from '@/components/GlobalDragOverlay'
 import { css } from '@emotion/css'
 import { AnimatePresence, motion } from 'framer-motion'
 import { FC, memo, MouseEventHandler, useEffect, useLayoutEffect, useRef, useState } from 'react'

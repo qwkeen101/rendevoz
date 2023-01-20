@@ -11,10 +11,9 @@ import { takeScreenshotCanvas } from './screenshot'
 import produce from 'immer'
 import Id from '@/utils/id'
 import ScreenShotCanvas from './ScreenShotCanvas'
-import { GlobalPocketInstance } from '../globalPocket'
+import { GlobalPocketInstance } from '../GlobalPocket'
 import { saveImageLocally } from '@/utils/img'
-import { toast } from 'react-hot-toast'
-
+import panzoom, { PanZoom } from 'panzoom'
 const GlobalScreenShot = () => {
   const [screenShotLayerVisible, setScreenShotLayerVisible] = useState(false)
   const [selectionBoxState, setSelectionBoxState] = useState<
@@ -41,6 +40,7 @@ const GlobalScreenShot = () => {
   const selectionBoxRef = useRef<HTMLDivElement>(null)
   const toolbarRef = useRef<HTMLDivElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
+  const panzoomRef = useRef<PanZoom>()
   const screenshotCanvasRef = useRef<HTMLCanvasElement>()
   const isPressed = useRef(false)
   const framerId = useRef(0)
@@ -490,11 +490,25 @@ const GlobalScreenShot = () => {
   }, [selectionBoxState?.stable])
   useEffect(() => {
     if (screenShotLayerVisible) {
+      const root = document.getElementById('root')
+      if (root) {
+        document.body.style.overflow = 'hidden'
+        const instance = panzoom(root, {
+          beforeMouseDown: e => {
+            return true
+          },
+          zoomSpeed: 0.05
+        })
+        panzoomRef.current = instance
+      }
       document.addEventListener('pointerup', pointerHandler, true)
       document.addEventListener('pointerdown', pointerHandler, true)
       document.addEventListener('pointermove', pointerHandler, true)
       document.body.classList.add('screenshot')
       return () => {
+        document.getElementById('root')!.style.transform = 'none'
+        document.body.style.overflow = 'auto'
+        panzoomRef.current?.dispose()
         document.removeEventListener('pointerup', pointerHandler, true)
         document.removeEventListener('pointermove', pointerHandler, true)
         document.removeEventListener('pointerdown', pointerHandler, true)
@@ -507,13 +521,9 @@ const GlobalScreenShot = () => {
   useEffect(() => {
     const keydownHandler = (e: KeyboardEvent) => {
       if (isHotkey('mod+p', e)) {
-        takeScreenshotCanvas().then(canvas => {
-          screenshotCanvasRef.current = canvas as HTMLCanvasElement
-          setScreenShotLayerVisible(state => !state)
-        })
+        setScreenShotLayerVisible(state => !state)
       }
       if (isHotkey('escape', e)) {
-        const galleryRect = GlobalPocketInstance?.getRect()
         setScreenShotLayerVisible(false)
         setSelectionBoxState({ visible: false })
       }
@@ -524,6 +534,14 @@ const GlobalScreenShot = () => {
     }
   })
   const getImageBlob = useMemoizedFn(async () => {
+    const className = css({
+      '> *': {
+        display: 'none'
+      }
+    })
+    selectionBoxRef.current!.classList.add(className)
+    const canvas = (await takeScreenshotCanvas()) as HTMLCanvasElement
+    selectionBoxRef.current!.classList.remove(className)
     const rect = selectionBoxState?.rect
     const dpr = window.devicePixelRatio
     if (rect) {
@@ -531,9 +549,9 @@ const GlobalScreenShot = () => {
       newCanvas.height = rect.height * dpr
       newCanvas.width = rect.width * dpr
       const ctx = newCanvas.getContext('2d')
-      if (ctx && screenshotCanvasRef.current) {
+      if (ctx && canvas) {
         ctx.drawImage(
-          screenshotCanvasRef.current,
+          canvas,
           rect.left * dpr,
           rect.top * dpr,
           rect.width * dpr,

@@ -1,4 +1,4 @@
-import { GlobalDragOverlayInstance, useGlobalIsDragging } from '@/components/globalDragOverlay'
+import { GlobalDragOverlayInstance, useGlobalIsDragging } from '@/components/GlobalDragOverlay'
 import { useMemoizedFn } from '@/hooks'
 import useCollectionStore from '@/stores/collection.store'
 import { useEffect, useRef, useState } from 'react'

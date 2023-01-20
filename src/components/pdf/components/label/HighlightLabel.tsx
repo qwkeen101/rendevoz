@@ -1,7 +1,7 @@
 import { Noop } from '@/common/types'
 import { AnimatePopover, WithBorder } from '@/components'
 import MetaDetailsCard from '@/components/editor/elements/meta/MetaDetailsCard'
-import { GlobalDragOverlayInstance } from '@/components/globalDragOverlay'
+import { GlobalDragOverlayInstance } from '@/components/GlobalDragOverlay'
 import useEventEmitter from '@/events/useEventEmitter'
 import { useMemoizedFn, useMergedRef } from '@/hooks'
 import { PdfScope } from '@/jotai/jotaiScope'

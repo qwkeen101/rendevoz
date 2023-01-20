@@ -37,7 +37,7 @@ import useMetaStore, { metaObjectsAtom } from '@/stores/meta.store'
 import TabTitle from '../layout/TabTitle'
 import useLocalSyncValue from './hooks/useSyncValue'
 import useEditorDrag from './hooks/useEditorDrag'
-import { useGlobalIsDragging } from '../globalDragOverlay'
+import { useGlobalIsDragging } from '../GlobalDragOverlay'
 import useEditorOverlay from './components/overlay/useEditorOverlay'
 import { css } from '@emotion/css'
 import withHandler from './plugins/withHandler'
@@ -48,6 +48,9 @@ import { GlobalScope } from '@/jotai/jotaiScope'
 import useStoreValue from './hooks/useStoreValue'
 import isHotkey from 'is-hotkey'
 import { KEY } from '@/consts/key'
+import classNames from 'classnames'
+import { useNavigate } from 'react-router-dom'
+import { useUpdate } from 'react-use'
 
 type DragHandleProps = {
   left?: number
@@ -70,6 +73,7 @@ export interface EditorProps {
   initialValue?: Descendant[]
   id: string
   noteId: number
+  focusBlockId?: number
   readonly?: boolean
   embedded?: boolean
 }
@@ -81,11 +85,11 @@ export interface IEditorRef {
   jumpToBlock: (blockId: number) => void
 }
 export const GlobalProviderMap = new Map()
-export const EditorV1: FC<EditorProps> = memo(({ id, noteId, readonly, embedded }) => {
+export const EditorV1: FC<EditorProps> = memo(({ id, noteId, readonly, embedded, focusBlockId }) => {
   const { t } = useTranslation()
   const [isDragging, setIsDragging] = useIsDragging()
   const [globalIsDragging] = useGlobalIsDragging()
-
+  const navigate = useNavigate()
   const titleRef = useRef<HTMLDivElement>(null)
   const scrollElementRef = useRef<HTMLDivElement>(null)
   const [dragHandle, setDragHandle] = useState<DragHandleProps>()
@@ -95,6 +99,7 @@ export const EditorV1: FC<EditorProps> = memo(({ id, noteId, readonly, embedded 
   const metaAtom = useMemo(() => atom(get => (note?.metaId ? get(metaObjectsAtom).get(note.metaId) : null)), [note?.metaId])
   const metaObject = useAtomValue(metaAtom, GlobalScope)
   const { fetchOneById: fetchNoteById, updateOne: updateNote } = useNoteStore()
+  const forceUpdate = useUpdate()
   useEffect(() => {
     const keyDownHandler = (e: KeyboardEvent) => {
       if (dragHandle?.visible) {
@@ -185,6 +190,7 @@ export const EditorV1: FC<EditorProps> = memo(({ id, noteId, readonly, embedded 
     SELECTED_BLOCKS_MAP.set(editor, new Map())
     editor.id = id
     editor.noteId = noteId
+    // forceUpdate()
     return () => {
       // disconnect
       if (YjsEditor.connected(editor)) {
@@ -192,7 +198,9 @@ export const EditorV1: FC<EditorProps> = memo(({ id, noteId, readonly, embedded 
       }
     }
   }, [editor])
-
+  useEffect(() => {
+    editor.note = note
+  }, [note])
   useEffect(() => {
     if (readonly || embedded) {
       editor.readonly = true
@@ -242,7 +250,7 @@ export const EditorV1: FC<EditorProps> = memo(({ id, noteId, readonly, embedded 
   }
   return (
     <div className={styles.editor}>
-      <TabTitle title={note?.title || metaObject?.name || 'Untitled'} />
+      <TabTitle disable={readonly} title={note?.title || metaObject?.name || 'Untitled'} />
       <div ref={scrollElementRef} className={styles.scrollWrapper}>
         {metaObject?.coverImgSrc && (
           <Image
@@ -293,7 +301,7 @@ export const EditorV1: FC<EditorProps> = memo(({ id, noteId, readonly, embedded 
                     src={metaObject.coverImgSrc}
                   />
                 )}
-                {!metaObject && (
+                {/* {!metaObject && (
                   <Content flex gap={6}>
                     <Icon name="park-smiling-face" />
                     <span>Add icon</span>
@@ -302,7 +310,7 @@ export const EditorV1: FC<EditorProps> = memo(({ id, noteId, readonly, embedded 
                 <Content flex gap={6}>
                   <Icon name="park-add-picture" />
                   <span>Add cover</span>
-                </Content>
+                </Content> */}
               </Content>
             )}
             <div
@@ -325,15 +333,21 @@ export const EditorV1: FC<EditorProps> = memo(({ id, noteId, readonly, embedded 
                 }
               }}
               spellCheck="false"
-              className={styles.title}
+              className={classNames(styles.title, readonly && ClassName.animatedBorderBottom(0, 0, 1))}
               placeholder={t('editor.untitled')}
               suppressContentEditableWarning={true}
               contentEditable={metaObject === null}
               style={{
                 maxWidth: '100%',
-                width: '100%'
+                width: readonly ? 'fit-content' : '100%',
+                cursor: readonly ? 'pointer' : 'text'
               }}
               ref={titleRef}
+              onClick={() => {
+                if (readonly) {
+                  navigate(`/editor/${noteId}`)
+                }
+              }}
             />
             {metaObject?.description && (
               <div style={{ paddingLeft: 4, marginTop: -4, whiteSpace: 'pre-wrap' }} className={ClassName.description()}>
@@ -343,7 +357,7 @@ export const EditorV1: FC<EditorProps> = memo(({ id, noteId, readonly, embedded 
           </Content>
           <InnerEditor
             readonly={readonly || embedded}
-            scrollElement={scrollElementRef.current}
+            scrollElementRef={scrollElementRef}
             editor={editor}
             defaultValue={initial}
             onBlockMouseMove={handleBlockMouseMove}
@@ -359,7 +373,7 @@ export const EditorV1: FC<EditorProps> = memo(({ id, noteId, readonly, embedded 
         onAddClick={handleBlockHandleMenu}
         onDragClick={useCallback(() => {
           setIsDragging(true)
-        }, [])}
+        }, [setIsDragging])}
         onMenuClick={handleMenuClick}
         {...dragHandle}
         visible={!!(!isDragging && dragHandle?.visible && !popoverVisible && !readonly)}

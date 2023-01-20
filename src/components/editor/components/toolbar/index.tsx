@@ -57,7 +57,7 @@ const EditorToolbar: FC<EditorToolbarProps> = ({
     direction: string
   }>()
   const handleMouseUp = (e: MouseEvent) => {
-    const { selection,readonly } = editor
+    const { selection, readonly } = editor
     const windowSelection = window.getSelection()
     if (
       !readonly &&
@@ -67,6 +67,10 @@ const EditorToolbar: FC<EditorToolbarProps> = ({
       !Range.isCollapsed(selection) &&
       !toolbarRef.current?.contains(e.target)
     ) {
+      const targetNode = Editor.node(editor, selection)
+      if (Editor.isVoid(editor, targetNode)) {
+        return
+      }
       const anchorPoint = ReactEditor.toDOMPoint(editor, selection.anchor)
       const focusPoint = ReactEditor.toDOMPoint(editor, selection.focus)
       const anchorRange = document.createRange()

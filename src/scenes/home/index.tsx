@@ -11,6 +11,7 @@ import { css } from '@emotion/css'
 import { useTheme } from '@/hooks'
 import useNoteStore from '@/stores/note.store'
 import NoteItem from './NoteItem'
+import HomeBrief from './Brief'
 
 export const HomePage: FC = () => {
   const { defaultBackgroundColor } = useTheme('defaultBackgroundColor')
@@ -18,8 +19,8 @@ export const HomePage: FC = () => {
   const homeBackground = location?.state && location.state.homeBackground
   return (
     <Container className={css({ background: defaultBackgroundColor, userSelect: 'none' })} auto column>
-      {/* <Header /> */}
       <Content className={styles.body}>
+        <HomeBrief />
         <DocumentCard />
         <NoteCard />
       </Content>
@@ -87,16 +88,14 @@ const DocumentCard = () => {
           Recently Add
         </div>
       </Content>
-      <div style={{minHeight: 120}}>{sortMode === 'recently read' ? <RecentlyVisitCard /> : <RecentlyAddCard />}</div>
+      <div style={{ minHeight: 120 }}>{sortMode === 'recently read' ? <RecentlyVisitCard /> : <RecentlyAddCard />}</div>
     </Content>
   )
 }
 const NoteCard = () => {
   const { all } = useNoteStore()
   return (
-    <Content
-      flex
-      column
+    <div
       className={css({
         marginTop: 30
       })}
@@ -110,10 +109,19 @@ const NoteCard = () => {
       >
         Notes
       </div>
-      {all.slice(0, 20).map(i => (
-        <NoteItem key={i.id} note={i} />
-      ))}
-    </Content>
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fill,minmax(200px, 1fr))',
+          rowGap: 24,
+          columnGap: 32
+        }}
+      >
+        {all.slice(0, 20).map(i => (
+          <NoteItem key={i.id} note={i} />
+        ))}
+      </div>
+    </div>
   )
 }
 const AnimatedDocumentDetails = () => {

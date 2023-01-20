@@ -131,7 +131,7 @@ const useCollectionStore = () => {
       const targetCollection = await getCollectionById(targetCollectionId)
       const newTarget = produce(targetCollection, draft => {
         draft.items = draft.items || []
-        draft.items.push(item)
+        !draft.items.some(i => i.id === item.id) && draft.items.push(item)
       })
       setCollections(update(newTarget, collections))
       database.put(newTarget)
@@ -158,7 +158,7 @@ const useCollectionStore = () => {
       const targetCollection = await getCollectionById(targetCollectionId)
       const newTarget = produce(targetCollection, draft => {
         draft.items = draft.items || []
-        draft.items.push(item)
+        !draft.items.some(i => i.id === item.id) && draft.items.push(item)
       })
 
       setCollections(update(newSource, update(newTarget, collections)))

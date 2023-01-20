@@ -96,7 +96,8 @@ function findInPanel(panel: PanelData, id: string, filter: Filter): PanelData | 
 }
 
 function findInBox(box: BoxData, id: string, filter: Filter): PanelData | TabData | BoxData {
-  let result: PanelData | TabData | BoxData
+  let result: PanelData | TabData | BoxData = undefined
+  if(!box) return result
   if (filter | Filter.Box && box.id === id ) {
     return box
   }

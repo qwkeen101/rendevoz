@@ -1,0 +1,75 @@
+import ClassName from '@/styles/classNames'
+import { AnimatePresence, motion } from 'framer-motion'
+import { CSSProperties, useState } from 'react'
+import AutosizeTextarea from '../custom/input/autosizeTextarea'
+
+const BorderInput = ({
+  value,
+  onChange,
+  placeholder,
+  style,
+  defaultValue,
+  textarea
+}: {
+  value?: string
+  onChange?: (v: string) => void
+  placeholder?: string
+  style?: CSSProperties
+  defaultValue?: string
+  textarea?: boolean
+}) => {
+  const [innerValue, setValue] = useState(value || defaultValue || '')
+  const showText = innerValue && innerValue !== ''
+
+  return (
+    <div style={{ position: 'relative' }}>
+      <AnimatePresence>
+        {showText && placeholder && (
+          <motion.div
+            initial={{ opacity: 0, x: 0, y: 0 }}
+            animate={{ opacity: 1, x: -6, y: -20, zIndex: 1 }}
+            exit={{ opacity: 0, x: 0, y: 0 }}
+            style={{
+              position: 'absolute',
+              left: 16,
+              top: 10,
+              fontSize: 13,
+              color: 'rgba(31,34,37,0.9)',
+              fontWeight: 500,
+              padding: '0px 3px',
+              backdropFilter: 'blur(5px)'
+            }}
+          >
+            {placeholder}
+          </motion.div>
+        )}
+      </AnimatePresence>
+      {textarea ? (
+        <AutosizeTextarea
+          placeholder="Discription..."
+          minRows={2}
+          style={{ resize: 'none', overflow: 'hidden' }}
+          className={ClassName.input()}
+          defaultValue={defaultValue}
+          onChange={e => {
+            onChange?.(e.target.value)
+            setValue(e.target.value)
+          }}
+        />
+      ) : (
+        <input
+          style={style}
+          defaultValue={defaultValue}
+          placeholder={placeholder}
+          onChange={e => {
+            onChange?.(e.target.value)
+            setValue(e.target.value)
+          }}
+          className={ClassName.input()}
+        ></input>
+      )}
+    </div>
+  )
+}
+
+export default BorderInput

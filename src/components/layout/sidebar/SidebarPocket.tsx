@@ -1,5 +1,5 @@
 import { Icon } from '@/components'
-import { useGlobalIsDragging } from '@/components/globalDragOverlay'
+import { useGlobalIsDragging } from '@/components/GlobalDragOverlay'
 import { useMemoizedFn, useMergedRef } from '@/hooks'
 import { AnimatePresence, motion } from 'framer-motion'
 import { forwardRef, useState, useEffect, useRef } from 'react'

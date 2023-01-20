@@ -1,24 +1,24 @@
 import { Content, Image } from '@/components/base'
 import { css } from '@emotion/css'
 import { FC, ReactNode } from 'react'
-import useCardBorder from './useBorder'
+import { CustomElement } from '../../types'
 
 const SlimCard: FC<{
   pictureUrl?: string
   main?: ReactNode
   slateChildren?: ReactNode
   borderColor?: 'grey' | 'cream'
-}> = ({ pictureUrl, main, slateChildren, borderColor = 'cream' }) => {
-  const border = useCardBorder(borderColor)
-
+  element?: CustomElement
+}> = ({ pictureUrl, main, slateChildren, element }) => {
+  const linearBg = element && element.background && element.background.startsWith('linear')
   return (
     <Content
       contentEditable={false}
       flex
       className={css({
         pointerEvents: 'auto',
-        border: `1px solid ${border}`,
-        borderRadius: 8,
+        boxShadow: 'rgba(0, 0, 0, 0.05) 0px 6px 24px 0px, rgba(0, 0, 0, 0.08) 0px 0px 0px 1px',
+        borderRadius: 6,
         overflow: 'hidden',
         maxWidth: '100%',
         width: '100%',
@@ -35,6 +35,17 @@ const SlimCard: FC<{
           className={css({
             height: '200px',
             overflow: 'hidden',
+            position: 'relative',
+            ':after': {
+              position: 'absolute',
+              inset: linearBg ? '-0.625em' : 0,
+              filter: linearBg ? 'blur(0.5em)' : undefined,
+              content: "''",
+              transform: linearBg ? 'translateY(85%)' : undefined,
+              backgroundImage: linearBg
+                ? 'var(--block-linear-bg)'
+                : 'linear-gradient(transparent 80%, rgba(var(--block-rgb-bg, 255 255 255)) 100%)'
+            },
             '> div': {
               height: '100%'
             }

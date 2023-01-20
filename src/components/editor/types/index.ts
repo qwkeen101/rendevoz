@@ -4,6 +4,7 @@ import { YHistoryEditor, YjsEditor } from '@slate-yjs/core'
 import { BaseEditor, Element } from 'slate'
 import { HistoryEditor } from 'slate-history'
 import { ReactEditor } from 'slate-react'
+import { INote } from '~/typings/data'
 import { CustomText, EmptyText } from './baseTypes'
 import { CommonElement } from './commonElementTypes'
 import { OuterElement } from './outerElementTypes'
@@ -16,6 +17,7 @@ export type CustomEditor = BaseEditor &
     emitter?: EventEmitter
     id?: string
     noteId?: number
+    note?: INote
   } & {
     currentEnterElement?: Element
     currentAddClickElement?: Element
@@ -28,7 +30,14 @@ export type CustomEditor = BaseEditor &
     readonly?: boolean
   }
 
-export type CustomElement = (CommonElement | OuterElement) & { hide?: boolean; id: number; color?: string; background?: string }
+export type CustomElement = (CommonElement | OuterElement) & {
+  hide?: boolean
+  id: number
+  color?: string
+  background?: string
+  align?: string
+  cardType?: string
+}
 
 declare module 'slate' {
   interface CustomTypes {

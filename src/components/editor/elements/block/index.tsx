@@ -14,7 +14,7 @@ import {
   useLayoutEffect
 } from 'react'
 import { ReactEditor, RenderElementProps, useSlate, useSlateStatic } from '../../slate-react'
-import { CustomElement } from '../../customTypes'
+import { CustomElement } from '../../types/index'
 import { motion, AnimatePresence } from 'framer-motion'
 import styles from './index.module.less'
 import { scrollToTarget } from '../../utils/positions/scroll'
@@ -25,7 +25,7 @@ import { getDistanceBetweenElementAndScrollableElement } from '@/components/edit
 import { isRectsCollision } from '../../utils/positions/collision'
 import { css } from '@emotion/css'
 import { hexToRgb } from '@/utils/color'
-import { useGlobalIsDragging } from '@/components/globalDragOverlay'
+import { useGlobalIsDragging } from '@/components/GlobalDragOverlay'
 import { Transforms } from 'slate'
 
 type BlockProps = {
@@ -78,7 +78,6 @@ const Block: FC<React.DetailedHTMLProps<React.HTMLAttributes<HTMLDivElement>, HT
     })
     const handleGlobalClick = useMemoizedFn(e => {
       if (!isSelecting && selected) {
-        console.log(e)
         if (!blockRef.current?.contains(e.target)) {
           setSelected(false)
         }
@@ -113,6 +112,7 @@ const Block: FC<React.DetailedHTMLProps<React.HTMLAttributes<HTMLDivElement>, HT
       if (selected) {
         return false
       }
+
       if (direction === 'bottom' && (element?.type === 'list-item' || element?.level)) {
         if (e) {
           const distanceToBlock = getDistanceBetweenPointAndElement(e, blockRef.current)
@@ -126,7 +126,7 @@ const Block: FC<React.DetailedHTMLProps<React.HTMLAttributes<HTMLDivElement>, HT
           }
         }
       }
-      if (direction !== null) {
+      if (direction !== null && direction !== undefined) {
         setDirection(direction)
       } else {
         setWithLine(null)
@@ -195,9 +195,10 @@ const Block: FC<React.DetailedHTMLProps<React.HTMLAttributes<HTMLDivElement>, HT
     const handleMouseEnter = useCallback(e => onMouseEnter?.(e, element), [onMouseEnter, element])
     const handleMouseLeave = useCallback(e => onMouseLeave?.(e, element), [onMouseLeave, element])
     const handleMouseMove = useCallback(e => onMouseMove?.(e, element), [onMouseMove, element])
-    const linearBg = element.background && (element.background as string).startsWith('linear-gradient')
-    const rgbaBg = element.background && hexToRgb(element.background)
-    const linearFont = element.color && (element.color as string).startsWith('linear-gradient')
+    const { background, color, align, cardType } = element
+    const linearBg = background && (background as string).startsWith('linear-gradient')
+    const rgbaBg = background && hexToRgb(background)
+    const linearFont = color && (color as string).startsWith('linear-gradient')
     const renderChildren = () => (
       <div
         key={blockId}
@@ -210,20 +211,23 @@ const Block: FC<React.DetailedHTMLProps<React.HTMLAttributes<HTMLDivElement>, HT
         data-level={element?.level}
         data-index={idx}
         style={{
-          color: element.color || undefined,
-          textAlign: element.align,
-          '--linear-font': linearFont && element.color,
-          '--text-fill': linearFont ? 'transparent': undefined,
-          '--block-bg': linearBg ? element.background : rgbaBg ? `rgba(${rgbaBg.r},${rgbaBg.g},${rgbaBg.b}, 0.8)` : undefined,
+          textAlign: align,
+          '--block-linear-font': linearFont ? color : undefined,
+          '--text-fill': linearFont ? 'transparent' : undefined,
+          '--block-rgb-bg': !linearBg && rgbaBg ? `${rgbaBg.r},${rgbaBg.g},${rgbaBg.b}` : undefined,
+          '--block-linear-bg': linearBg ? background : undefined,
+          '--block-font-color': color,
+          color: 'var(--block-font-color)',
           ...rest.style
         }}
         className={classNames(
+          styles.BlockCommon,
           type === 'columnList' && styles.ColumnListBlock,
           type === 'column' && styles.ColumnBlock,
           type.startsWith('heading') && styles.HeadingBlock,
-          element.cardType === 'slim' && styles.SlimCardBlock,
-          element.cardType === 'line' && styles.LineCardBlock,
-          (element.cardType === 'wide' || (CardBlocks.includes(element.type) && element.cardType === undefined)) && styles.WideCardBlock,
+          cardType === 'slim' && styles.SlimCardBlock,
+          cardType === 'line' && styles.LineCardBlock,
+          (cardType === 'wide' || (CardBlocks.includes(type) && cardType === undefined)) && styles.WideCardBlock,
           type !== 'column' && type !== 'columnList' && !type.startsWith('heading') && styles.ParagraphBlock,
           isGlobalDragging &&
             css({

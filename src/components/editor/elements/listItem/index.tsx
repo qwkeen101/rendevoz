@@ -16,7 +16,7 @@ const ListItem = ({ children, element, attributes }: RenderElementProps) => {
         className={classNames(
           styles.marker,
           css({
-            color: primaryColor
+            color: `var(--block-font-color, ${primaryColor})`
           })
         )}
       ></div>

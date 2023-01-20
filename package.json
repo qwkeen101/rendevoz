@@ -14,7 +14,6 @@
   },
   "scripts": {
     "dev": "vite",
-    // "build": "vite build && electron-builder --universal"
     "build": "vite build"
   },
   "engines": {

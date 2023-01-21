@@ -80,13 +80,13 @@ process.env.PUBLIC = app.isPackaged ? process.env.DIST : join(process.env.DIST_E
         win.on('unmaximize', () => {
           win.webContents.send('winUnmaximized')
         })
-        const reactDevToolsPath = path.join(
-          os.homedir(),
-          'AppData/Local/Google/Chrome/User Data/Default/Extensions/fmkadmapgofadopljbjfkapdkoienihi/4.27.1_12'
-        )
-        win.webContents.once('dom-ready', () => {
-          session.defaultSession.loadExtension(reactDevToolsPath)
-        })
+        // const reactDevToolsPath = path.join(
+        //   os.homedir(),
+        //   'AppData/Local/Google/Chrome/User Data/Default/Extensions/fmkadmapgofadopljbjfkapdkoienihi/4.27.1_12'
+        // )
+        // win.webContents.once('dom-ready', () => {
+        //   session.defaultSession.loadExtension(reactDevToolsPath)
+        // })
         win.webContents.session.webRequest.onHeadersReceived({ urls: ['*://*/*'] }, (d, c) => {
           if (d.responseHeaders['X-Frame-Options']) {
             delete d.responseHeaders['X-Frame-Options']

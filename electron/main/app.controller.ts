@@ -50,6 +50,7 @@ export class AppController {
   }
   @IpcInvoke('copyPdf')
   public async copyPdfFile(originPath: string, originName: string) {
+    this.checkIfRendevozGenerated()
     const filePath = path.join(DEFAULT_USER_DATA_PATH, 'rendevoz', 'files')
     if (!fs.existsSync(filePath)) {
       fs.mkdirSync(filePath, {})
@@ -67,6 +68,7 @@ export class AppController {
   }
   @IpcInvoke('saveImage')
   public async saveImage(imgName: string, imgData: string) {
+    this.checkIfRendevozGenerated()
     const imgPath = path.join(DEFAULT_USER_DATA_PATH, 'rendevoz', 'imgs')
     if (!fs.existsSync(imgPath)) {
       fs.mkdirSync(imgPath, {})
@@ -84,6 +86,12 @@ export class AppController {
       })
     } else {
       return protocolPath
+    }
+  }
+  private checkIfRendevozGenerated = () => {
+    const rendevozPath = path.join(DEFAULT_USER_DATA_PATH, 'rendevoz')
+    if (!fs.existsSync(rendevozPath)) {
+      fs.mkdirSync(rendevozPath, {})
     }
   }
 }

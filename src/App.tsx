@@ -30,6 +30,28 @@ import GlobalDragOverlay from './components/GlobalDragOverlay'
 import GlobalScreenShot from './components/globalScreenShot'
 
 const App = () => {
+  function getOS() {
+    const userAgent = window.navigator.userAgent.toLowerCase(),
+      macosPlatforms = /(macintosh|macintel|macppc|mac68k|macos)/i,
+      windowsPlatforms = /(win32|win64|windows|wince)/i,
+      iosPlatforms = /(iphone|ipad|ipod)/i
+    let os = null
+
+    if (macosPlatforms.test(userAgent)) {
+      os = 'macos'
+    } else if (iosPlatforms.test(userAgent)) {
+      os = 'ios'
+    } else if (windowsPlatforms.test(userAgent)) {
+      os = 'windows'
+    } else if (/android/.test(userAgent)) {
+      os = 'android'
+    } else if (!os && /linux/.test(userAgent)) {
+      os = 'linux'
+    }
+
+    return os
+  }
+  const os = getOS()
   return (
     <JotaiProvider scope={GlobalScope}>
       <Toaster />
@@ -37,7 +59,7 @@ const App = () => {
       <GlobalGraph />
       <GlobalScreenShot />
       <Router>
-        <TitleBar />
+        {os !== 'macos' && <TitleBar />}
         <Routes />
       </Router>
       <GlobalDragOverlay />

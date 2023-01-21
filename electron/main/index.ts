@@ -1,6 +1,5 @@
-import { app, BrowserWindow, shell } from 'electron'
+import { app} from 'electron'
 import { release } from 'os'
-import { join } from 'path'
 import { NestFactory } from '@nestjs/core'
 import { MicroserviceOptions } from '@nestjs/microservices'
 import { AppModule } from './app.module'

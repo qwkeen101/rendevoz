@@ -14,7 +14,7 @@
   },
   "scripts": {
     "dev": "vite",
-    "build": "vite build"
+    "build": "vite build && electron-builder"
   },
   "engines": {
     "node": "^14.18.0 || >=16.0.0"
@@ -45,6 +45,7 @@
     "immer": "^9.0.15",
     "is-hotkey": "^0.2.0",
     "jotai": "^1.8.4",
+    "jotai-optics": "^0.2.0",
     "konva": "^8.3.14",
     "lodash": "^4.17.21",
     "material-colors": "^1.2.6",

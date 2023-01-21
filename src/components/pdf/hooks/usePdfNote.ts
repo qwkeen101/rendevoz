@@ -3,7 +3,7 @@
 import { CustomLabel, ILabel, PdfNoteData } from '@/../typings/data'
 import { PdfScope } from '@/jotai/jotaiScope'
 import { atom, PrimitiveAtom, useAtom, useAtomValue, useSetAtom } from 'jotai'
-import { focusAtom } from 'jotai/optics'
+import { focusAtom } from 'jotai-optics'
 import { splitAtom } from 'jotai/utils'
 import { useMemo } from 'react'
 

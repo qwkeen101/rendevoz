@@ -78,7 +78,7 @@ const ColorPicker: FC<ColorPickerProps> = ({
   isFont = false,
   enableDefault = true
 }) => {
-  const displayColors = enableMore ? colors.map(i => (isFont ? i[2] : i[3])) : colors.flat(1)
+  const displayColors = enableMore ? colors.map(i => (isFont ? i[2] : i[4])) : colors.flat(1)
 
   const defaultFontColor = '#000000'
   const defaultBgColor = '#ffffff'

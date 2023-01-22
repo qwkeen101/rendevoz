@@ -1,5 +1,5 @@
 import { AnimatePopover, Content, Icon, IconWithPopover, Image, WithBorder } from '@/components/base'
-import Modal from '@/components/base/modal'
+import Modal from '@/components/base/Modal'
 import EditMetaObjectForm from '@/components/form/EditMetaObjectForm'
 import { GlobalGraphInstance } from '@/components/graph/GlobalGraph'
 import { typeToTypeRecord } from '@/components/knowledgeDatabase/card/DatabaseCard'

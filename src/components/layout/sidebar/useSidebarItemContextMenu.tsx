@@ -1,8 +1,8 @@
 import { AnimatePopover, Content, Icon, WithBorder } from '@/components/base'
-import Modal from '@/components/base/modal'
+import Modal from '@/components/base/Modal'
 import NewDocumentDialog from '@/components/dialogs/NewDocumentDialog'
 import NewCollectionForm from '@/components/form/NewCollectionForm'
-import NewDocumentForm from '@/components/form/newDocumentForm'
+import NewDocumentForm from '@/components/form/NewDocumentForm'
 import { KEY } from '@/consts/key'
 import useCollectionStore from '@/stores/collection.store'
 import useNoteStore from '@/stores/note.store'
@@ -42,9 +42,12 @@ const useSidebarItemContextMenu = (
   >({
     contextMenuVisible: false
   })
-  const [formState, setFormState] = useState<Partial<{ newCollectionVisible: boolean; newPdfVisible: boolean }>>({
+  const [formState, setFormState] = useState<
+    Partial<{ newCollectionVisible: boolean; newPdfVisible: boolean; editCollectionVisible: boolean }>
+  >({
     newCollectionVisible: false,
-    newPdfVisible: false
+    newPdfVisible: false,
+    editCollectionVisible: false
   })
   const contextMenuHandler = (e: MouseEvent) => {
     const currentTarget = e.currentTarget as HTMLElement
@@ -204,14 +207,16 @@ const useSidebarItemContextMenu = (
               className={ClassName.flatButton()}
               onClick={e => {
                 e.stopPropagation()
+                setFormState({
+                  editCollectionVisible: true
+                })
                 setContextMenuState({
                   ...contextMenuState,
-                  renameVisible: true,
                   contextMenuVisible: false
                 })
               }}
             >
-              Rename
+              Edit
             </div>
             <div className={ClassName.flatButton()} onClick={onPin}>
               {pinned ? 'Unpin' : 'Pin'}
@@ -225,84 +230,99 @@ const useSidebarItemContextMenu = (
     </AnimatePresence>,
     document.body
   )
-  const renamePortal = createPortal(
-    <AnimatePresence>
-      {contextMenuState.renameVisible && (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          style={{ position: 'fixed', left: 0, top: 0, width: '100%', height: '100%', zIndex: 99999 }}
-          onContextMenu={e => {
-            e.preventDefault()
-            e.stopPropagation()
-            if (e.target === e.currentTarget) {
-              setContextMenuState({ ...contextMenuState, renameVisible: false })
-            }
-          }}
-          onClick={e => {
-            e.preventDefault()
-            e.stopPropagation()
-          }}
-          onPointerDown={e => {
-            if (e.target === e.currentTarget) {
-              setContextMenuState({ ...contextMenuState, renameVisible: false })
-            }
-          }}
-        >
-          <WithBorder
-            className={ClassName.defaultFont(13, 600)}
-            style={{
-              padding: 4,
-              width: 300,
-              background: 'rgba(255,255,255,0.7)',
-              backdropFilter: 'saturate(1.5) blur(32px)',
-              position: 'absolute',
-              left: contextMenuState.targetElementLeft! + 14,
-              top: contextMenuState.targetElementTop! + contextMenuState.targetElementHeight! + 5,
-              display: 'flex',
-              alignItems: 'center',
-              gap: 6
-            }}
-          >
-            <input
-              autoFocus
-              defaultValue={name}
-              spellCheck={false}
-              placeholder="Rename your file"
-              onChange={e => {
-                nameRef.current = e.target.value
-              }}
-              onKeyDown={e => {
-                if (e.key === KEY.Enter) {
-                  nameRef.current && onRename?.(nameRef.current)
-                  setContextMenuState({
-                    ...contextMenuState,
-                    renameVisible: false
-                  })
-                }
-              }}
-              className={css([ClassName.input(), { height: 28 }])}
-            />
-            <div
-              onClick={() => {
-                nameRef.current && onRename?.(nameRef.current || 'Untitled')
-                setContextMenuState({ ...contextMenuState, renameVisible: false })
-              }}
-              className={ClassName.flatButton()}
-            >
-              Update
-            </div>
-          </WithBorder>
-        </motion.div>
-      )}
-    </AnimatePresence>,
-    document.body
-  )
+  // const renamePortal = createPortal(
+  //   <AnimatePresence>
+  //     {contextMenuState.renameVisible && (
+  //       <motion.div
+  //         initial={{ opacity: 0 }}
+  //         animate={{ opacity: 1 }}
+  //         exit={{ opacity: 0 }}
+  //         style={{ position: 'fixed', left: 0, top: 0, width: '100%', height: '100%', zIndex: 99999 }}
+  //         onContextMenu={e => {
+  //           e.preventDefault()
+  //           e.stopPropagation()
+  //           if (e.target === e.currentTarget) {
+  //             setContextMenuState({ ...contextMenuState, renameVisible: false })
+  //           }
+  //         }}
+  //         onClick={e => {
+  //           e.preventDefault()
+  //           e.stopPropagation()
+  //         }}
+  //         onPointerDown={e => {
+  //           if (e.target === e.currentTarget) {
+  //             setContextMenuState({ ...contextMenuState, renameVisible: false })
+  //           }
+  //         }}
+  //       >
+  //         <WithBorder
+  //           className={ClassName.defaultFont(13, 600)}
+  //           style={{
+  //             padding: 4,
+  //             width: 300,
+  //             background: 'rgba(255,255,255,0.7)',
+  //             backdropFilter: 'saturate(1.5) blur(32px)',
+  //             position: 'absolute',
+  //             left: contextMenuState.targetElementLeft! + 14,
+  //             top: contextMenuState.targetElementTop! + contextMenuState.targetElementHeight! + 5,
+  //             display: 'flex',
+  //             alignItems: 'center',
+  //             gap: 6
+  //           }}
+  //         >
+  //           <input
+  //             autoFocus
+  //             defaultValue={name}
+  //             spellCheck={false}
+  //             placeholder="Rename your file"
+  //             onChange={e => {
+  //               nameRef.current = e.target.value
+  //             }}
+  //             onKeyDown={e => {
+  //               if (e.key === KEY.Enter) {
+  //                 nameRef.current && onRename?.(nameRef.current)
+  //                 setContextMenuState({
+  //                   ...contextMenuState,
+  //                   renameVisible: false
+  //                 })
+  //               }
+  //             }}
+  //             className={css([ClassName.input(), { height: 28 }])}
+  //           />
+  //           <div
+  //             onClick={() => {
+  //               nameRef.current && onRename?.(nameRef.current || 'Untitled')
+  //               setContextMenuState({ ...contextMenuState, renameVisible: false })
+  //             }}
+  //             className={ClassName.flatButton()}
+  //           >
+  //             Update
+  //           </div>
+  //         </WithBorder>
+  //       </motion.div>
+  //     )}
+  //   </AnimatePresence>,
+  //   document.body
+  // )
   const formPortal = createPortal(
     <>
       <Modal
+        visible={!!formState.editCollectionVisible}
+        noStyle
+        onClose={() => {
+          setFormState({ editCollectionVisible: false })
+        }}
+      >
+        <NewCollectionForm
+          isEditing
+          currentCollection={item}
+          onAddCollection={() => setFormState({ editCollectionVisible: false })}
+          onBack={() => setFormState({ editCollectionVisible: false })}
+        />
+      </Modal>
+      <Modal
         visible={!!formState.newCollectionVisible}
+        noStyle
         onClose={() => {
           setFormState({ newCollectionVisible: false })
         }}
@@ -314,6 +334,7 @@ const useSidebarItemContextMenu = (
         />
       </Modal>
       <Modal
+        width={300}
         visible={!!formState.newPdfVisible}
         onClose={() => {
           setFormState({ newPdfVisible: false })
@@ -332,7 +353,7 @@ const useSidebarItemContextMenu = (
     document.body
   )
   return {
-    contextMenuPortal: [portal, renamePortal, formPortal]
+    contextMenuPortal: [portal, formPortal]
   }
 }
 

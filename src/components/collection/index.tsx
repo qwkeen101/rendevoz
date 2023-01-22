@@ -5,7 +5,7 @@ import { CSSProperties, FC, useEffect, useLayoutEffect, useRef, useState } from 
 import { useNavigate } from 'react-router-dom'
 import { ICollection, INote, IPdfDocument } from '~/typings/data'
 import { Breadcrumb, Content, WithBorder } from '../base'
-import Modal from '../base/modal'
+import Modal from '../base/Modal'
 import NewCollectionForm from '../form/NewCollectionForm'
 import Icon from '../base/Icon'
 import CollectionItem from './CollectionItem'

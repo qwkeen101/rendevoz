@@ -5,7 +5,7 @@ import { useState } from 'react'
 import toast from 'react-hot-toast'
 import { ICollection } from '~/typings/data'
 import SwitchAnimation from '../base/animation/SwitchAnimation'
-import NewDocumentForm from '../form/newDocumentForm'
+import NewDocumentForm from '../form/NewDocumentForm'
 import ChooseCollectionDialog from './ChooseCollectionDialog'
 
 const NewDocumentDialog = ({ onSubmit, onBack }: { onSubmit?: Noop; onBack?: Noop }) => {

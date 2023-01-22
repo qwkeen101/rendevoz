@@ -47,7 +47,7 @@ export const Sidebar: FC = () => {
               setWidthTransition(false)
             }, 200)
             rndRef.current?.updateSize({ width: 20, height: '100vh' })
-            setSidebarWidth(20)
+            setSidebarWidth(10)
             setCollapsed(true)
           }
         }}
@@ -61,7 +61,7 @@ export const Sidebar: FC = () => {
           if (ele.clientWidth <= 200) {
             if (ele.clientWidth === 20) {
               rndRef.current?.updateSize({ width: 240, height: '100vh' })
-              setSidebarWidth(20)
+              setSidebarWidth(10)
             } else {
               setWidthTransition(true)
               delay(() => {
@@ -90,12 +90,15 @@ export const Sidebar: FC = () => {
             collapsed
               ? {
                   minHeight: '55vh',
-                  height: 'fit-content',
+                  maxHeight: '80vh',
                   padding: '20px 0px',
                   position: 'absolute',
+                  display: 'flex',
+                  flexDirection: 'column',
                   top: '50%',
                   transform: 'translateY(-50%)',
-                  boxShadow: 'rgba(0, 0, 0, 0.35) 0px 5px 15px'
+                  boxShadow: 'rgba(0, 0, 0, 0.35) 0px 5px 15px',
+                  overflow: 'hidden'
                 }
               : undefined
           }
@@ -116,7 +119,7 @@ export const Sidebar: FC = () => {
               } else {
                 setHovered(false)
                 setCollapsed(true)
-                setSidebarWidth(20)
+                setSidebarWidth(10)
               }
             }}
             className={styles.toggleOpen}

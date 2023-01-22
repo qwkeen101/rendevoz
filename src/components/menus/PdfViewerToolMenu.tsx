@@ -50,12 +50,12 @@ const PdfViewerToolMenu = ({
           <span>Clean mode</span>
         </Content>
       </Menu.Item>
-      <Menu.Item type="button" onClick={onSearch}>
+      {/* <Menu.Item type="button" onClick={onSearch}>
         <Content flex alignItems="center" gap={10}>
           <Icon name="park-search"></Icon>
           <span>Search</span>
         </Content>
-      </Menu.Item>
+      </Menu.Item> */}
     </Menu>
   )
 }

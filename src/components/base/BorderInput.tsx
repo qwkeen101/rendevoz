@@ -27,17 +27,17 @@ const BorderInput = ({
         {showText && placeholder && (
           <motion.div
             initial={{ opacity: 0, x: 0, y: 0 }}
-            animate={{ opacity: 1, x: -6, y: -20, zIndex: 1 }}
+            animate={{ opacity: 1, x: -6, y: -16, zIndex: 1 }}
             exit={{ opacity: 0, x: 0, y: 0 }}
             style={{
               position: 'absolute',
               left: 16,
               top: 10,
-              fontSize: 13,
+              fontSize: 12,
               color: 'rgba(31,34,37,0.9)',
-              fontWeight: 500,
-              padding: '0px 3px',
-              backdropFilter: 'blur(5px)'
+              fontWeight: 600,
+              fontFamily: 'Muli',
+              lineHeight: 1
             }}
           >
             {placeholder}

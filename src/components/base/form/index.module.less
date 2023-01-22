@@ -1,34 +1,10 @@
 @import "../../../styles/common.module.less";
 
-.form{
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-}
 .title{
-    font-size: 18px;
+    font-size: 14px;
     font-weight: 600;
     margin-bottom: 12px;
     color: @font-light-black-color;
-}
-.itemContainer{
-    margin-bottom: 20px;
-}
-.childrenContainer{
-    position: relative;
-    &.required{
-        &::before{
-            position: absolute;
-            top: var(--top);
-            transform: translateY(-50%);
-            left: -20px;
-            margin-right: 4px;
-            color: red;
-            font-size: 14px;
-            content: '*';
-            line-height: 1;
-        }
-    }
 }
 
 .description{

@@ -1,5 +1,5 @@
 import { Content } from '@/components'
-import Modal from '@/components/base/modal'
+import Modal from '@/components/base/Modal'
 import { useToggle } from '@/hooks'
 import { useEffect } from 'react'
 import { InnerLabelProps } from './Label'

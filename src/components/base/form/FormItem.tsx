@@ -1,9 +1,9 @@
 import { AnimatePopover } from '@/components'
-import { PrettyInput } from '@/components/custom/input/pretty'
 import ColorPicker from '@/components/picker/colorPicker'
 import classNames from 'classnames'
 import { FC, ReactNode, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import BorderInput from '../BorderInput'
 import Content from '../Content'
 import WithBorder from '../WithBorder'
 import styles from './index.module.less'
@@ -17,6 +17,7 @@ type FormItemConditionalProps =
       type: 'input' | 'textarea'
       onUpload?: never
       children?: never
+      value?: string
     }
   | {
       type: 'file'
@@ -24,6 +25,7 @@ type FormItemConditionalProps =
       text?: never
       onUpload: (file: File) => void
       children?: never
+      value?: string
     }
   | {
       type: 'colorPicker'
@@ -31,6 +33,7 @@ type FormItemConditionalProps =
       text?: string
       onUpload?: never
       children?: never
+      value?: string
     }
   | {
       type: 'component'
@@ -38,6 +41,7 @@ type FormItemConditionalProps =
       text?: string
       onUpload?: never
       children: ReactNode
+      value?: string
     }
 interface FormItemCommonProps {
   type: 'input' | 'textarea' | 'file' | 'colorPicker' | 'component'
@@ -45,34 +49,15 @@ interface FormItemCommonProps {
   required?: boolean
 }
 type FormItemProps = FormItemCommonProps & FormItemConditionalProps
-const FormItem: FC<FormItemProps> = ({ onChange, onUpload, text, type, children, required, requireMessage }) => {
+const FormItem: FC<FormItemProps> = ({ onChange, onUpload, text, type, children, required, requireMessage, value }) => {
   const { t } = useTranslation()
   const [innerValue, setInnerValue] = useState<File | string>()
   const [color, setColor] = useState<string>()
   const [colorPickerVisible, setColorPickerVisible] = useState(false)
-  const [isSubmitted] = useIsSubmitted()
   const [, setCanSubmit] = useCanSubmit()
   const fileUploaderRef = useRef<HTMLInputElement>(null)
   const isEmpty = innerValue === '' || innerValue === undefined || innerValue === null
-  const childrenContainerClassName = classNames(styles.childrenContainer, required && isSubmitted && isEmpty ? styles.required : undefined)
-  const childrenContainerRef = useRef<HTMLDivElement>(null)
-  useEffect(() => {
-    const childrenContainer = childrenContainerRef.current
-    if (childrenContainer) {
-      const child = childrenContainer.firstElementChild
-      if (child) {
-        if (type === 'input') {
-          const input = child.querySelector('input')
-          const inputMarginTop = parseInt(window.getComputedStyle(input).marginTop)
-          const inputHeight = parseInt(window.getComputedStyle(input).height)
-          const top = inputMarginTop + inputHeight / 2
-          childrenContainer.setAttribute('style', `--top:${top}px`)
-        } else {
-          childrenContainer.setAttribute('style', '--top: 50%')
-        }
-      }
-    }
-  }, [])
+
   useEffect(() => {
     if (type === 'component') {
       return
@@ -88,21 +73,23 @@ const FormItem: FC<FormItemProps> = ({ onChange, onUpload, text, type, children,
       case 'input':
       case 'textarea':
         return (
-          <PrettyInput
-            className={styles.input}
+          <BorderInput
+            value={value}
+            defaultValue={value}
             textarea={type === 'textarea'}
-            displayText={text}
+            style={{ height: 40 }}
+            placeholder={text}
             onChange={e => {
-              onChange?.(e.target.value)
-              setInnerValue(e.target.value)
+              onChange?.(e)
+              setInnerValue(e)
             }}
-          ></PrettyInput>
+          ></BorderInput>
         )
       case 'file': {
         const file = innerValue as File | undefined
         return (
           <div className={styles.file}>
-            {file ? <span className={styles.filename}>Filename: {file.name}</span> : <span>{t('form.choose file')}</span>}
+            {file ? <span>Filename: {file.name}</span> : <span>Upload File</span>}
             {file ? (
               <button onClick={e => setInnerValue(undefined)} className={styles.button}>
                 Cancel
@@ -165,32 +152,12 @@ const FormItem: FC<FormItemProps> = ({ onChange, onUpload, text, type, children,
         )
       case 'component':
         return children
+      default:
+        return null
     }
   }
 
-  const requireMessageRenderer = () => {
-    return (
-      <div
-        style={{
-          opacity: required && isSubmitted && isEmpty ? 1 : 0,
-          userSelect: 'none',
-          transition: 'opacity 0.2s ease',
-          height: 18,
-          color: 'red'
-        }}
-      >
-        {requireMessage || ''}
-      </div>
-    )
-  }
-  return (
-    <Content className={styles.itemContainer} flex column>
-      <div ref={childrenContainerRef} className={childrenContainerClassName}>
-        {childrenRenderer()}
-      </div>
-      {requireMessageRenderer()}
-    </Content>
-  )
+  return childrenRenderer()
 }
 
 export default FormItem

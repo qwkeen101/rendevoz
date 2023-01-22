@@ -18,7 +18,7 @@ interface HighlightLabelProps {
   highlightAtom: PrimitiveAtom<IHighlightLabel>
   onDelete: Noop
 }
-const layout = ['colorPicker', 'metaObject', 'separator', 'searcher', 'translator', 'separator', 'delete']
+const layout = ['colorPicker', 'separator', 'searcher', 'translator', 'separator', 'delete']
 
 const HighlightLabel: FC<HighlightLabelProps> = ({ highlightAtom, onDelete }) => {
   const [highlight, setHighlight] = useAtom(highlightAtom, PdfScope)
@@ -258,8 +258,8 @@ const Highlights = forwardRef((props, ref) => {
             left: `${rect.percentageLeft * 100}%`,
             width: `${rect.percentageWidth * 100}%`,
             height: `${rect.percentageHeight * 100}%`,
-            backgroundColor: highlight.color,
-            opacity: 0.3
+            background: highlight.color,
+            opacity: 0.4
           }}
         ></div>
       ))}

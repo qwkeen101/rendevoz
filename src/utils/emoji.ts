@@ -13,7 +13,7 @@ export type Emoji = {
   sort_order: number
 }
 
-let emojiMap = new Map<string, Emoji>((JSON.parse(emojiJson)).map(i => [i.short_name, i]))
+const emojiMap = new Map<string, Emoji>(JSON.parse(emojiJson).map(i => [i.short_name, i]))
 const getEmoji = async (name: string) => {
   const emoji = emojiMap.get(name)
   if (emoji) {

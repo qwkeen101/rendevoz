@@ -3,7 +3,7 @@ import NewItemDialog from '@/components/dialogs/NewItemDialog'
 import SearchDialog from '@/components/dialogs/SearchDialog/SearchDialog'
 import { motion } from 'framer-motion'
 import { useState } from 'react'
-import Modal from '../../base/modal'
+import Modal from '../../base/Modal'
 import styles from './index.module.less'
 import { MenuItem } from './Item'
 import { useTranslation } from 'react-i18next'
@@ -59,7 +59,7 @@ const Navigation = ({ hovered }: { hovered: boolean }) => {
           {t('sidebar.home')}
         </MenuItem>
         <SidebarDatabase />
-        <GlobalPocket>{urls => <SidebarPocket urls={urls} />}</GlobalPocket>
+        {/* <GlobalPocket>{urls => <SidebarPocket urls={urls} />}</GlobalPocket> */}
         <Content flex alignItems="center" style={{ padding: '0px 4px 0px 4px', marginTop: 20 }}>
           <div
             className={css({

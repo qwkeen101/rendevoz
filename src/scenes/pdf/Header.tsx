@@ -23,15 +23,17 @@ const PdfPageHeader = () => {
           size={20}
           placement={['left']}
           zIndex={100000}
+          disableIntersection
           content={
-            <WithBorder>
-              <PdfViewerToolMenu
+            <WithBorder style={{padding: 4}}>
+              {/* <PdfViewerToolMenu
                 onZoomOut={() => emitter.emit('pdf', { type: 'zoomOut' })}
                 onZoomIn={() => emitter.emit('pdf', { type: 'zoomIn' })}
                 onPan={() => emitter.emit('pdf', { type: 'togglePan' })}
                 onAutoFit={() => emitter.emit('pdf', { type: 'autoFit' })}
                 onClean={() => setCleanMode(!cleanMode)}
-              />
+              /> */}
+              Sorry, Toolbar has vital bugs waiting to be fixed!
             </WithBorder>
           }
         />

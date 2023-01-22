@@ -19,7 +19,7 @@ type ICategories = {
   Flags: ICategory
 }
 const categories = JSON.parse(categoriesJson)
-const EmojiPicker: FC<{ onPick?: (name: string) => void }> = ({ onPick }) => {
+const EmojiPicker: FC<{ onPick?: (name: string) => void; width?: number | string }> = ({ onPick, width }) => {
   const [currentCategory, setCurrentCategory] = useState<keyof ICategories>('Emotion')
   const [currentEmojis, setCurrentEmojis] = useState<[]>()
   useLayoutEffect(() => {
@@ -35,7 +35,7 @@ const EmojiPicker: FC<{ onPick?: (name: string) => void }> = ({ onPick }) => {
     <Content flex column>
       <Content>
         {currentEmojis ? (
-          <div className={styles.emojisContainer} style={{ display: 'flex', flexFlow: 'wrap', padding: 4 }}>
+          <div className={styles.emojisContainer} style={{ display: 'flex', flexFlow: 'wrap', padding: 4, width }}>
             {currentEmojis?.map(i => (
               <Content key={i.name} onClick={() => onPick?.(i.name)} flex centered className={styles.emojiContainer}>
                 <img
@@ -59,7 +59,7 @@ const EmojiPicker: FC<{ onPick?: (name: string) => void }> = ({ onPick }) => {
           </Content>
         )}
       </Content>
-      <Content flex className={styles.categories}>
+      <Content flex className={styles.categories} style={{ width: width }}>
         {categories &&
           Object.keys(categories).map(i => (
             <Content

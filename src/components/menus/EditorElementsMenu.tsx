@@ -49,11 +49,6 @@ const basic: Element[] = [
 ]
 const inline: Element[] = [
   {
-    icon: 'park-share-one',
-    name: InlineElements.MetaObject,
-    tooltip: 'Meta object'
-  },
-  {
     icon: 'park-emotion-happy',
     name: InlineElements.Emoji,
     tooltip: 'Emoji'

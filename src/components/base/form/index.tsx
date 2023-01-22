@@ -1,5 +1,7 @@
 import { Button } from '@/components/base/button'
 import { KEY } from '@/consts/key'
+import ClassName from '@/styles/classNames'
+import { css } from '@emotion/css'
 import isHotkey from 'is-hotkey'
 import { Provider } from 'jotai'
 import { createContext, CSSProperties, FC, useEffect, useState } from 'react'
@@ -41,9 +43,21 @@ const InnerForm: FC<FormProps> = ({ children, title, description, onBack, onSubm
     }
   })
   return (
-    <div className={styles.form} style={style}>
-      <Content flex column>
-        <div className={styles.title}>{title}</div>
+    <div
+      className={css({
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 16
+      })}
+      style={style}
+    >
+      <Content flex column gap={16}>
+        <div
+          className={ClassName.title('14px')}
+          style={{ paddingBottom: 8, textTransform: 'capitalize', borderBottom: '1px solid rgba(31,34,37,0.06)' }}
+        >
+          {title}
+        </div>
         {description && <div className={styles.description}>{description}</div>}
         {children}
       </Content>
@@ -52,9 +66,7 @@ const InnerForm: FC<FormProps> = ({ children, title, description, onBack, onSubm
         submitText={submitText}
         onBack={onBack}
         onSubmit={() => {
-          if (canSubmit) {
-            onSubmit?.()
-          }
+          onSubmit?.()
           setIsSubmitted(true)
         }}
       />

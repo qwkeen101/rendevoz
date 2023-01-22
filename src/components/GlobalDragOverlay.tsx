@@ -10,7 +10,7 @@ import { memo, useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { Node } from 'slate'
 import { MetaLink, MetaObject } from '~/typings/data'
-import Modal from './base/modal'
+import Modal from './base/Modal'
 import { CustomElement } from './editor/types'
 import EditMetaObjectForm from './form/EditMetaObjectForm'
 

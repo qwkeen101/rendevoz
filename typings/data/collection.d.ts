@@ -7,6 +7,8 @@ export interface ICollection extends IBase {
   notes?: number[]
   items?: ICollectionItem[]
   parentId?: number | 0
+  color?: string
+  icon?: string
 }
 
 export interface ICollectionItem {

@@ -28,6 +28,7 @@ import './global.less'
 import GlobalGraph from './components/graph/GlobalGraph'
 import GlobalDragOverlay from './components/GlobalDragOverlay'
 import GlobalScreenShot from './components/globalScreenShot'
+import Zindexes from './consts/zindex'
 
 const App = () => {
   function getOS() {
@@ -54,7 +55,7 @@ const App = () => {
   const os = getOS()
   return (
     <JotaiProvider scope={GlobalScope}>
-      <Toaster />
+      <Toaster containerStyle={{ zIndex: Zindexes.Tooltip }} />
       <Initializer />
       <GlobalGraph />
       <GlobalScreenShot />

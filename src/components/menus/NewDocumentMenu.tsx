@@ -1,5 +1,5 @@
 import Icon from '@/components/base/Icon'
-import Modal from '@/components/base/modal'
+import Modal from '@/components/base/Modal'
 import { useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import Menu from '../base/menu'

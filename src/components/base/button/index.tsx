@@ -1,4 +1,4 @@
-import { FC, MouseEventHandler, ReactNode, useEffect, useState } from 'react'
+import { CSSProperties, FC, MouseEventHandler, ReactNode, useEffect, useState } from 'react'
 import styles from './index.module.less'
 
 interface ButtonProps {
@@ -6,8 +6,9 @@ interface ButtonProps {
   onClick?: MouseEventHandler
   className?: string
   tabIndex?: number
+  style?: CSSProperties
 }
-export const Button: FC<ButtonProps> = ({ children, onClick, className, tabIndex }) => {
+export const Button: FC<ButtonProps> = ({ children, onClick, className, tabIndex, style }) => {
   const [coords, setCoords] = useState({ x: -1, y: -1 })
   const [isRippling, setIsRippling] = useState(false)
 
@@ -27,6 +28,7 @@ export const Button: FC<ButtonProps> = ({ children, onClick, className, tabIndex
       type="button"
       tabIndex={tabIndex}
       className={`${styles.RippleButton} ${className}`}
+      style={style}
       onClick={e => {
         const rect = e.currentTarget.getBoundingClientRect()
         setCoords({ x: e.clientX - rect.left, y: e.clientY - rect.top })

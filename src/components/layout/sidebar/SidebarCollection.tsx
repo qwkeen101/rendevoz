@@ -1,5 +1,5 @@
 import { AnimatePopover } from '@/components/base'
-import Modal from '@/components/base/modal'
+import Modal from '@/components/base/Modal'
 import NewCollectionForm from '@/components/form/NewCollectionForm'
 import { GlobalDragOverlayInstance, useGlobalIsDragging } from '@/components/GlobalDragOverlay'
 import { useMemoizedFn, useToggle } from '@/hooks'
@@ -8,10 +8,11 @@ import useCollectionStore, { collectionsAtom } from '@/stores/collection.store'
 import useDocumentStore, { documentsAtom } from '@/stores/document.store'
 import useNoteStore, { notesAtom } from '@/stores/note.store'
 import ClassName from '@/styles/classNames'
+import getEmoji from '@/utils/emoji'
 import { css } from '@emotion/css'
 import { motion } from 'framer-motion'
 import { atom, useAtomValue } from 'jotai'
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { memo, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ICollectionItem } from '~/typings/data'
 import Content from '../../base/Content'
@@ -68,7 +69,7 @@ const SidebarCollection = () => {
   }, [globalIsDragging])
   return (
     <>
-      <Modal minWidth={300} minHeight={200} visible={newCollectionVisible} onClose={() => setNewCollectionVisible(false)}>
+      <Modal noStyle visible={newCollectionVisible} onClose={() => setNewCollectionVisible(false)}>
         <NewCollectionForm onAddCollection={() => setNewCollectionVisible(false)} onBack={() => setNewCollectionVisible(false)} />
       </Modal>
       <AnimatePopover
@@ -109,12 +110,14 @@ const SidebarCollection = () => {
     </>
   )
 }
-
-export const SidebarCollectionItem = ({ collectionId, parentCollectionId }: { collectionId: number; parentCollectionId?: number }) => {
+const linearToSvg = (linear: string) => {
+  return linear.match(/rgba\([^()]*\)|#\w+/g)
+}
+export const SidebarCollectionItem = memo(({ collectionId, parentCollectionId }: { collectionId: number; parentCollectionId?: number }) => {
   const { updateCollection, deleteCollection } = useCollectionStore()
   const collectionAtom = useMemo(() => atom(get => get(collectionsAtom).get(collectionId)), [collectionId])
   const collection = useAtomValue(collectionAtom, GlobalScope)
-
+  const [emoji, setEmoji] = useState<any>()
   const items = collection?.items
   const childrenCollections = items?.filter(i => i.type === 'collection' && i.id) as Required<ICollectionItem>[]
   const childrenNotes = items?.filter(i => i.type === 'note' && i.id) as Required<ICollectionItem>[]
@@ -127,13 +130,18 @@ export const SidebarCollectionItem = ({ collectionId, parentCollectionId }: { co
     {
       pinned: collection?.pinned,
       name: collection?.name,
-      onRename: name => collection && updateCollection({ id: collection.id, name }),
       onPin: () => collection && updateCollection({ id: collection.id, pinned: !collection.pinned }),
       onDelete: () => collection && deleteCollection(collection.id)
     },
     collection
   )
+  useEffect(() => {
+    collection?.icon && getEmoji(collection.icon).then(data => setEmoji(data))
+  }, [collection?.icon])
 
+  const linearFontColor = collection?.color?.startsWith('linear')
+  const linearId = collection?.color
+  const linearColors = linearFontColor && linearId && linearToSvg(linearId)
   if (!collection || collection.deleted) return null
   return (
     <Content
@@ -196,14 +204,39 @@ export const SidebarCollectionItem = ({ collectionId, parentCollectionId }: { co
             theme="filled"
             name="park-right-one"
           />
-          <Content flex gap={10} style={{ overflow: 'hidden' }}>
-            <Icon name="park-folder-close" />
+          <Content flex alignItems="center" gap={10} style={{ overflow: 'hidden' }}>
+            {emoji ? (
+              <img
+                src="data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw=="
+                style={{
+                  width: '1em',
+                  height: '1em',
+                  backgroundImage: `url(${emoji?.imageSrc})`,
+                  backgroundPositionX: `${(emoji?.x * 100) / 60}%`,
+                  backgroundPositionY: `${(emoji?.y * 100) / 60}%`,
+                  backgroundRepeat: 'no-repeat',
+                  backgroundSize: '6100% 6100%',
+                  verticalAlign: '-0.1em',
+                  marginRight: 2
+                }}
+              />
+            ) : (
+              <>
+                <Icon fill={linearColors ? linearColors[(linearColors.length / 2) | 0] : collection.color} name="park-folder-close" />
+              </>
+            )}
             <div
-              className={css({
-                whiteSpace: 'nowrap',
-                overflow: 'hidden',
-                textOverflow: 'ellipsis'
-              })}
+              style={{
+                color: collection.color,
+                backgroundImage: linearFontColor ? collection.color : undefined
+              }}
+              className={css([
+                ClassName.ellipsisFont(1),
+                linearFontColor && {
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent'
+                }
+              ])}
             >
               {collection.name}
             </div>
@@ -235,7 +268,7 @@ export const SidebarCollectionItem = ({ collectionId, parentCollectionId }: { co
       </motion.div>
     </Content>
   )
-}
+})
 
 export const SidebarDocumentItem = ({ documentId, parentCollectionId }: { documentId: number; parentCollectionId?: number }) => {
   const navigate = useNavigate()

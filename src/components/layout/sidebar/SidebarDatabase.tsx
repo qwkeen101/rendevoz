@@ -1,5 +1,5 @@
 import { AnimatePopover, Icon } from '@/components'
-import Modal from '@/components/base/modal'
+import Modal from '@/components/base/Modal'
 import EditMetaObjectForm from '@/components/form/EditMetaObjectForm'
 import { GlobalDragOverlayInstance, useGlobalIsDragging } from '@/components/GlobalDragOverlay'
 import useEventEmitter from '@/events/useEventEmitter'

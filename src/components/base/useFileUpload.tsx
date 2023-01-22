@@ -1,7 +1,7 @@
 import Id from '@/utils/id'
 import { useRef } from 'react'
 
-const useFileUpload = (onUpload?: (file: File) => void) => {
+const useFileUpload = (onUpload?: (file: File) => void, accept?: string) => {
   const id = Id.getStrId()
   const labelRef = useRef<HTMLLabelElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
@@ -20,6 +20,7 @@ const useFileUpload = (onUpload?: (file: File) => void) => {
           id={id}
           name={id}
           ref={inputRef}
+          accept={accept}
           onChange={e => {
             const file = e.target.files?.[0]
             if (file) {

@@ -1,8 +1,9 @@
-import { FC, MouseEvent, MouseEventHandler, ReactNode, useEffect, useRef, useState } from 'react'
-import { Modal as ModalFC } from 'antd'
-import styles from './index.module.less'
+import { FC, MouseEventHandler, useEffect } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import ReactDOM from 'react-dom'
+import { css } from '@emotion/css'
+import Zindexes from '@/consts/zindex'
+import ClassName from '@/styles/classNames'
 
 interface ModalProps {
   visible: boolean
@@ -16,12 +17,25 @@ interface ModalProps {
   onClick?: MouseEventHandler
   children: React.ReactNode
   parentElement?: HTMLElement | null
+  noStyle?: boolean
 }
 const Backdrop = ({ children, onMouseDown }) => {
   return (
     <motion.div
       role="backdrop"
-      className={styles.backdrop}
+      className={css([
+        {
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          height: '100vh',
+          width: '100vw',
+          overflow: 'hidden',
+          zIndex: Zindexes.ModalBackdrop,
+          background: 'rgba(0,0,0,0.2)'
+        },
+        ClassName.flexLayout('center', 'center')
+      ])}
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
@@ -31,7 +45,19 @@ const Backdrop = ({ children, onMouseDown }) => {
     </motion.div>
   )
 }
-const Modal: FC<ModalProps> = ({ visible, onClose, children, minWidth, minHeight, maxHeight, maxWidth, width, height, parentElement }) => {
+const Modal: FC<ModalProps> = ({
+  visible,
+  onClose,
+  children,
+  minWidth,
+  minHeight,
+  maxHeight,
+  maxWidth,
+  width,
+  height,
+  parentElement,
+  noStyle
+}) => {
   useEffect(() => {
     if (visible) {
       document.body.style.overflow = 'hidden'
@@ -49,8 +75,11 @@ const Modal: FC<ModalProps> = ({ visible, onClose, children, minWidth, minHeight
             initial={{ opacity: 0, y: 50 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 50 }}
-            style={{ minWidth, minHeight, maxHeight, maxWidth, width, height }}
-            className={styles.modal}
+            style={{ minWidth, minHeight, maxHeight, maxWidth, width, height, zIndex: Zindexes.Modal, margin: 'auto' }}
+            className={css([
+              !noStyle && { padding: '16px 24px', borderRadius: '6px', boxShadow: '0 10px 24px rgba(0, 0, 0, 0.18)', overflow: 'hidden' },
+              !noStyle && ClassName.Background.blurBackground
+            ])}
             onPointerDown={e => e.stopPropagation()}
             onClick={e => {
               e.stopPropagation()

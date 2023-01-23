@@ -102,10 +102,8 @@ const RecentlyReadCardItem = ({ document }: { document: IPdfDocument }) => {
   )
 }
 const RecentlyReadCardItemV2 = ({ document }: { document: IPdfDocument }) => {
-  const location = useLocation()
   return (
     <Content flex className={styles.itemWrapperV2}>
-      <FullSizeLink style={{ zIndex: 3 }} to={`/document/details/${document.id}`} state={{ homeBackground: location }} />
       <div style={{ minHeight: 80, minWidth: 90 }}>
         <Content fullWidth fullHeight flex centered className={styles.coverWrapperV2}>
           <Image

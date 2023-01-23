@@ -193,7 +193,7 @@ const MetaObject: FC<RenderElementProps> = memo(({ children, element }) => {
   return (
     <NoteCard
       pictureUrl={metaObject?.coverImgSrc}
-      main={metaEle?.cardType === 'line' ? renderLineMain() : renderMain()}
+      main={metaEle?.cardType === 'line' || metaEle?.cardType === undefined ? renderLineMain() : renderMain()}
       element={{ ...element, noteId: metaObject?.noteId }}
       children={children}
       type="meta"

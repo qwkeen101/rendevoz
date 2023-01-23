@@ -7,42 +7,50 @@ import { AnimatePresence } from 'framer-motion'
 import fuzzysort from 'fuzzysort'
 import { useAtomValue } from 'jotai'
 import { useEffect, useState } from 'react'
+import { Flipped, Flipper } from 'react-flip-toolkit'
 import { MetaObject } from '~/typings/data'
-import { Content } from '../base'
+import { Content, Icon } from '../base'
 import DatabaseCard from './card/DatabaseCard'
 
 const KnowledgeDatabase = () => {
   const undeletedMetaObjects = useAtomValue(undeletedMetaObjectsAtom, GlobalScope)
   const pinnedMetaObjects = useAtomValue(pinnedMetaObjectsAtom, GlobalScope)
-
+  const [paginateState, setPaginateState] = useState<{
+    itemPerPage: number
+    currentPage: number
+  }>({
+    itemPerPage: 20,
+    currentPage: 0
+  })
   const [search, setSearch] = useState('')
-
-  const [isLoading, setIsLoading] = useState(false)
 
   const { run: debouncedSetSearch } = useDebounceFn(setSearch, { wait: 200 })
 
-  const [displayObjects, setDisplayObjects] = useState<MetaObject[]>(undeletedMetaObjects)
+  const { currentPage, itemPerPage } = paginateState
+  const paginateObjects = undeletedMetaObjects.slice(currentPage * itemPerPage, (currentPage + 1) * itemPerPage)
+
+  const [displayObjects, setDisplayObjects] = useState<MetaObject[]>(paginateObjects)
 
   const [showPin, toggleShowPin] = useToggle(true)
 
   const [showAll, toggleShowAll] = useToggle(true)
+
+  const hasNextPage = undeletedMetaObjects.length > (currentPage + 1) * itemPerPage
   useEffect(() => {
     if (!search) {
-      setDisplayObjects(undeletedMetaObjects)
+      setDisplayObjects(paginateObjects)
     } else {
       const results = fuzzysort.go(search, undeletedMetaObjects, { key: 'name' })
-      setDisplayObjects(results.map(i => i.obj))
+      setDisplayObjects(results.map(i => i.obj).slice(currentPage * itemPerPage, (currentPage + 1) * itemPerPage))
     }
-  }, [undeletedMetaObjects])
+  }, [undeletedMetaObjects, paginateState])
   useEffect(() => {
-    setIsLoading(true)
     if (search) {
       const results = fuzzysort.go(search, undeletedMetaObjects, { key: 'name' })
       setDisplayObjects(results.map(i => i.obj))
     } else {
-      setDisplayObjects(undeletedMetaObjects)
+      setDisplayObjects(paginateObjects)
     }
-    setTimeout(() => setIsLoading(false), 200)
   }, [search])
 
   return (
@@ -76,25 +84,58 @@ const KnowledgeDatabase = () => {
           </Content>
         </>
       )}
-      <div onClick={toggleShowAll} className={css([ClassName.description(), ClassName.flatButton(4, '3px 6px'), { width: 'fit-content' }])}>
-        All
-      </div>
-      <Content
-        className={css({
-          display: `${showAll ? 'grid' : 'none'} !important`,
-          gridGap: 35,
-          gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))',
-          transition: 'all 0.2s ease'
-        })}
-      >
-        {!isLoading && (
-          <AnimatePresence>
-            {displayObjects.map((i, idx) => (
-              <DatabaseCard key={i.id} index={idx} metaObject={i} />
-            ))}
-          </AnimatePresence>
-        )}
+      <Content flex alignItems="center" justifyContent="space-between">
+        <div onClick={toggleShowAll} className={css([ClassName.description(), ClassName.flatButton(4, '3px 6px')])}>
+          All
+        </div>
+        <Content className={ClassName.description()} flex alignItems="center" gap={20}>
+          <div>Current Page : {currentPage + 1}</div>
+          <Icon
+            className={ClassName.circleButton()}
+            size={20}
+            name="park-left"
+            style={{ cursor: currentPage === 0 ? 'not-allowed' : 'pointer' }}
+            onClick={() => {
+              if (currentPage > 0) {
+                setPaginateState({
+                  ...paginateState,
+                  currentPage: paginateState.currentPage - 1
+                })
+              }
+            }}
+          />
+          <Icon
+            className={ClassName.circleButton()}
+            size={20}
+            name="park-right"
+            onClick={() => {
+              if (hasNextPage) {
+                setPaginateState({
+                  ...paginateState,
+                  currentPage: paginateState.currentPage + 1
+                })
+              }
+            }}
+            style={{ cursor: hasNextPage ? 'pointer' : 'not-allowed' }}
+          />
+        </Content>
       </Content>
+      <Flipper spring="stiff" flipKey={`${displayObjects[displayObjects.length - 1]?.id}_${displayObjects.length}`}>
+        <div
+          className={css({
+            display: `${showAll ? 'grid' : 'none'}`,
+            gridGap: 35,
+            gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))',
+            transition: 'all 0.2s ease',
+            width: '100%',
+            gridAutoFlow: 'dense'
+          })}
+        >
+          {displayObjects.map((i, idx) => (
+            <DatabaseCard key={i.id} index={idx} metaObject={i} />
+          ))}
+        </div>
+      </Flipper>
     </Content>
   )
 }

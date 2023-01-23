@@ -79,15 +79,6 @@ const NewDocumentForm: FC<NewDocumentFormProps> = ({ onBack, onSubmit, collectio
                 coverUrl: data.data
               }
             })
-            const id = Id.getId()
-            blobDb.add({
-              id: id,
-              data
-            })
-            pdfDocument.current.metadata = {
-              ...pdfDocument.current.metadata,
-              coverBlobId: id
-            }
           })
         })
       })

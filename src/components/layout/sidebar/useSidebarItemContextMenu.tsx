@@ -4,6 +4,7 @@ import NewDocumentDialog from '@/components/dialogs/NewDocumentDialog'
 import NewCollectionForm from '@/components/form/NewCollectionForm'
 import NewDocumentForm from '@/components/form/NewDocumentForm'
 import { KEY } from '@/consts/key'
+import Zindexes from '@/consts/zindex'
 import useCollectionStore from '@/stores/collection.store'
 import useNoteStore from '@/stores/note.store'
 import ClassName from '@/styles/classNames'
@@ -84,7 +85,7 @@ const useSidebarItemContextMenu = (
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          style={{ position: 'fixed', left: 0, top: 0, width: '100%', height: '100%', zIndex: 99999 }}
+          style={{ position: 'fixed', left: 0, top: 0, width: '100%', height: '100%', zIndex: Zindexes.SidebarContextMenuOverlay }}
           onContextMenu={e => {
             e.preventDefault()
             e.stopPropagation()
@@ -121,7 +122,7 @@ const useSidebarItemContextMenu = (
           >
             {item?.items && (
               <AnimatePopover
-                containerStyle={{ zIndex: '100001' }}
+                containerStyle={{ zIndex: String(Zindexes.PopupMenu) }}
                 positions={['right']}
                 align="start"
                 visible={!!contextMenuState.createVisible}

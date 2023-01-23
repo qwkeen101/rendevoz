@@ -24,7 +24,7 @@ export const HomePage: FC = () => {
         <DocumentCard />
         <NoteCard />
       </Content>
-      <AnimatePresence>
+      {/* <AnimatePresence>
         {homeBackground && location && (
           <Routes location={location} key={location.pathname}>
             <Route path="document/details">
@@ -32,7 +32,7 @@ export const HomePage: FC = () => {
             </Route>
           </Routes>
         )}
-      </AnimatePresence>
+      </AnimatePresence> */}
     </Container>
   )
 }

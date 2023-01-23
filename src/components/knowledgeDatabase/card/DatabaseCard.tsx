@@ -1,4 +1,4 @@
-import { FC, useRef, useState } from 'react'
+import { FC, memo, useRef, useState } from 'react'
 import { MetaDocumentObject, MetaKnowledgeObject, MetaNoteObject, MetaObject } from '~/typings/data'
 import { AnimatePresence, motion } from 'framer-motion'
 import { css } from '@emotion/css'
@@ -18,6 +18,7 @@ import EditMetaObjectForm from '@/components/form/EditMetaObjectForm'
 import { AvaliableGlobalDraggingElements, GlobalDragOverlayInstance } from '@/components/GlobalDragOverlay'
 import MetaNoteCard from './NoteCard'
 import MetaDocumentCard from './DocumentCard'
+import { Flipped, spring } from 'react-flip-toolkit'
 
 const isKnowledge = (m: MetaObject): m is MetaKnowledgeObject => m.type === 'knowledge'
 const isDoc = (m: MetaObject): m is MetaDocumentObject => m.type === 'document'
@@ -172,18 +173,36 @@ const DatabaseCard: FC<{
       }
     }
   }
+  const onElementAppear = (el, index) =>
+    spring({
+      onUpdate: val => {
+        el.style.opacity = val
+      },
+      delay: index * 50
+    })
+  const onExit = (el, index, removeElement) => {
+    console.log(index)
+    spring({
+      config: { overshootClamping: true },
+      onUpdate: val => {
+        el.style.transform = `scaleX(${1 - val})`
+      },
+      delay: index * 50,
+      onComplete: removeElement
+    })
+
+    return () => {
+      el.style.opacity = ''
+      removeElement()
+    }
+  }
   return (
-    <>
-      {renderEdit()}
-      <motion.div
-        initial="hidden"
-        animate="show"
-        exit="hidden"
-        variants={variants}
+    <Flipped onAppear={onElementAppear} onExit={onExit} flipId={metaObject.id} key={metaObject.id}>
+      <div
         ref={containerRef}
-        // transition={{ delay: index/10 }}
-        onHoverStart={() => setShowIcon(true)}
-        onHoverEnd={() => setShowIcon(false)}
+        onPointerEnter={() => setShowIcon(true)}
+        onPointerLeave={() => setShowIcon(false)}
+        style={{ gridRowEnd: showImage ? 'span 2' : undefined }}
         className={css({
           minHeight: 150,
           cursor: 'pointer',
@@ -193,38 +212,45 @@ const DatabaseCard: FC<{
           flexDirection: 'column',
           position: 'relative',
           overflow: 'hidden',
-          transition: 'all 0.3s cubic-bezier(0.2, 0.91, 0.85, 0.96) 0s, background-color 0.3s ease 0s',
+          transition: 'box-shadow 0.3s cubic-bezier(0.2, 0.91, 0.85, 0.96) 0s, background-color 0.3s ease 0s',
           boxShadow: 'rgba(100, 100, 111, 0.2) 0px 7px 29px 0px',
+          willChange: 'transform',
           ':hover': {
             boxShadow: 'rgba(100, 100, 111, 0.35) 0px 7px 29px 0px'
           }
         })}
       >
-        <AnimatePresence>
-          {isCardDraggingInside && (
-            <motion.div
-              initial={{ backdropFilter: 'blur(0px)', opacity: 0 }}
-              animate={{ backdropFilter: 'blur(4px)', opacity: 1 }}
-              exit={{ backdropFilter: 'blur(0px)', opacity: 0 }}
-              className={css({
-                position: 'absolute',
-                left: 0,
-                top: 0,
-                width: '100%',
-                height: '100%',
-                zIndex: 999,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                color: defaultFontColorBlack,
-                fontSize: 18,
-                fontWeight: 600
-              })}
-            >
-              {GlobalDragOverlayInstance.draggingDetails?.type === 'image' ? 'Drop to change cover' : 'Drop to add Link'}
-            </motion.div>
-          )}
-        </AnimatePresence>
+        {renderEdit()}
+        <motion.div
+          style={{
+            pointerEvents: isCardDraggingInside ? 'auto' : 'none'
+          }}
+          initial={{ backgroundColor: 'rgba(255,255,255,0)' }}
+          animate={{
+            backgroundColor: isCardDraggingInside ? 'rgba(255,255,255,0.6)' : 'rgba(255,255,255,0)',
+            backdropFilter: isCardDraggingInside ? 'blur(4px)' : 'blur(0px)'
+          }}
+          transition={{ duration: 0.3 }}
+          className={css({
+            position: 'absolute',
+            left: 0,
+            top: 0,
+            width: '100%',
+            height: '100%',
+            zIndex: 999,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            color: defaultFontColorBlack,
+            fontSize: 18,
+            fontWeight: 600
+          })}
+        >
+          <div style={{ opacity: isCardDraggingInside ? 1 : 0, transition: 'opacity 0.3s ease' }}>
+            {GlobalDragOverlayInstance.draggingDetails?.type === 'image' ? 'Drop to change cover' : 'Drop to add Link'}
+          </div>
+        </motion.div>
+
         {showImage && (
           <Image
             className={css({
@@ -258,8 +284,8 @@ const DatabaseCard: FC<{
           {renderCardContent()}
         </div>
         <div className={css({ background: 'white', padding: '0 16px 8px', marginTop: 'auto' })}>{renderToolbar()}</div>
-      </motion.div>
-    </>
+      </div>
+    </Flipped>
   )
 }
 
@@ -275,4 +301,4 @@ export const TitleClassName = classNames(
 export const TitleWrapperClassName = css({
   // padding: '8px 12px 0px'
 })
-export default DatabaseCard
+export default memo(DatabaseCard)

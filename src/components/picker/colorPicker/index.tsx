@@ -1,4 +1,4 @@
-import { FC, memo } from 'react'
+import { CSSProperties, FC, memo } from 'react'
 import * as material from 'material-colors'
 import { Content } from '../../base'
 import styles from './index.module.less'
@@ -91,6 +91,13 @@ const ColorPicker: FC<ColorPickerProps> = ({
   }
 
   const renderItem = (color: string) => {
+    const isLinearFont = isFont && color.startsWith('linear')
+    const linearFont: CSSProperties = isLinearFont
+      ? {
+          WebkitBackgroundClip: 'text',
+          WebkitTextFillColor: 'transparent'
+        }
+      : {}
     return (
       <span
         key={color}
@@ -123,9 +130,10 @@ const ColorPicker: FC<ColorPickerProps> = ({
             // opacity: 0.8
           })}
           style={{
-            background: isFont ? 'white' : color,
+            background: isLinearFont ? color : isFont ? 'white' : color,
             color: isFont ? color : undefined,
-            boxShadow: 'rgb(15 15 15 / 10%) 0px 0px 0px 1px inset'
+            boxShadow: 'rgb(15 15 15 / 10%) 0px 0px 0px 1px inset',
+            ...linearFont
           }}
         >
           {isFont && 'A'}

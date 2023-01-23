@@ -2,6 +2,7 @@ import { AnimatePopover } from '@/components/base'
 import Modal from '@/components/base/Modal'
 import NewCollectionForm from '@/components/form/NewCollectionForm'
 import { GlobalDragOverlayInstance, useGlobalIsDragging } from '@/components/GlobalDragOverlay'
+import Zindexes from '@/consts/zindex'
 import { useMemoizedFn, useToggle } from '@/hooks'
 import { GlobalScope } from '@/jotai/jotaiScope'
 import useCollectionStore, { collectionsAtom } from '@/stores/collection.store'
@@ -76,7 +77,7 @@ const SidebarCollection = () => {
         visible={dropVisible}
         positions={['top']}
         padding={10}
-        containerStyle={{ zIndex: '10000' }}
+        containerStyle={{ zIndex: String(Zindexes.PopupMenu) }}
         content={
           <div style={{ color: 'white', background: 'rgba(0,0,0,0.8)', padding: '2px 4px', borderRadius: 4, fontSize: 12 }}>
             Drop to move collection to outside

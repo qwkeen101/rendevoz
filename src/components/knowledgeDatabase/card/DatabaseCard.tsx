@@ -1,6 +1,5 @@
 import { FC, memo, useRef, useState } from 'react'
-import { MetaDocumentObject, MetaKnowledgeObject, MetaNoteObject, MetaObject } from '~/typings/data'
-import { AnimatePresence, motion } from 'framer-motion'
+import { motion } from 'framer-motion'
 import { css } from '@emotion/css'
 import { useTheme } from '@/hooks'
 import MetaKnowledgeCard from './KnowledgeCard'
@@ -8,9 +7,8 @@ import classNames from 'classnames'
 import ClassName from '@/styles/classNames'
 import { AnimatePopover, Content, Icon, Image, WithBorder } from '@/components'
 import DateFormat from '@/utils/dateFormat'
-import { useAtom } from 'jotai'
+import { useAtom } from 'jotai/react'
 import useMetaStore, { relatedMetaObjectsMapAtom } from '@/stores/meta.store'
-import { GlobalScope } from '@/jotai/jotaiScope'
 import { GlobalGraphInstance } from '@/components/graph/GlobalGraph'
 import Modal from '@/components/base/Modal'
 import useCardDrag from './useCardDrag'
@@ -19,10 +17,9 @@ import { AvaliableGlobalDraggingElements, GlobalDragOverlayInstance } from '@/co
 import MetaNoteCard from './NoteCard'
 import MetaDocumentCard from './DocumentCard'
 import { Flipped, spring } from 'react-flip-toolkit'
+import { globalStore } from '@/stores/stores'
+import { MetaObject } from '~/typings/data'
 
-const isKnowledge = (m: MetaObject): m is MetaKnowledgeObject => m.type === 'knowledge'
-const isDoc = (m: MetaObject): m is MetaDocumentObject => m.type === 'document'
-const isNote = (m: MetaObject): m is MetaNoteObject => m.type === 'note'
 type DisplayTypes = Pick<AvaliableGlobalDraggingElements, 'type'>['type']
 export const typeToTypeRecord: Record<DisplayTypes, string> = {
   pdfElement: 'Pdf label',
@@ -42,7 +39,7 @@ const DatabaseCard: FC<{
     'defaultFontColorGrey',
     'defaultFontColorRed'
   )
-  const [related] = useAtom(relatedMetaObjectsMapAtom, GlobalScope)
+  const [related] = useAtom(relatedMetaObjectsMapAtom, { store: globalStore })
   const set = related.get(metaObject.id)
   set?.delete(metaObject.id)
   const relatedNumber = set?.size
@@ -160,19 +157,7 @@ const DatabaseCard: FC<{
       />
     </Modal>
   )
-  const variants = {
-    hidden: {
-      opacity: 0,
-      x: -30
-    },
-    show: {
-      opacity: 1,
-      x: 0,
-      transition: {
-        delay: index ? index / 10 : 0
-      }
-    }
-  }
+
   const onElementAppear = (el, index) =>
     spring({
       onUpdate: val => {

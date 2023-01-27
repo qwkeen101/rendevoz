@@ -97,7 +97,7 @@ const InnerEditor: FC<InnerEditorProps> = memo(
         emitter.removeListener('editor', editorEventHandler)
       }
     }, [])
-    const { addMetaObject, addMetaLink, getMetaObjectByNoteId } = useMetaStore()
+    const { addMetaObject, addMetaLink, getMetaObjectByObjectId } = useMetaStore()
 
     const handleChange = useMemoizedFn((value: Descendant[]) => {
       onChange?.(value)
@@ -116,7 +116,7 @@ const InnerEditor: FC<InnerEditorProps> = memo(
               type="columnList"
               element={element}
               attributes={attributes}
-              scrollElement={scrollElement}
+              scrollElementRef={scrollElementRef}
             >
               {children}
             </Block>
@@ -136,7 +136,7 @@ const InnerEditor: FC<InnerEditorProps> = memo(
                 element={element}
                 type="column"
                 attributes={attributes}
-                scrollElement={scrollElement}
+                scrollElementRef={scrollElementRef}
               >
                 {children}
               </Block>
@@ -158,7 +158,7 @@ const InnerEditor: FC<InnerEditorProps> = memo(
               onNestedListItem={onNestedListItem}
               attributes={attributes}
               type={element.type}
-              scrollElement={scrollElement}
+              scrollElementRef={scrollElementRef}
             >
               {renderInnerElement({ children, element, attributes })}
             </Block>
@@ -263,9 +263,9 @@ const InnerEditor: FC<InnerEditorProps> = memo(
           })
           addMetaObject({
             keyword: selectedText,
-            type: 'knowledge'
+            type: 'normal'
           }).then(obj => {
-            const noteMeta = getMetaObjectByNoteId(editor.noteId)
+            const noteMeta = getMetaObjectByObjectId(editor.noteId)
             addMetaLink({
               sourceId: noteMeta?.id,
               sourceType: 'note',

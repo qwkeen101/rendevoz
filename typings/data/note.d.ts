@@ -4,6 +4,7 @@ export interface INote extends IBase {
   allBlockIds?: number[]
   subBlockIds?: number[]
   icon?: string
+  color?: string
   coverImgSrc?: string
   parentNoteId?: number
   title: string

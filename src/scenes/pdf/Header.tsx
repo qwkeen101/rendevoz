@@ -1,16 +1,15 @@
-import { Content, Icon, WithBorder } from '@/components'
+import { Content } from '@/components'
 import usePdfInfo from '@/components/pdf/hooks/usePdfInfo'
 import styles from './index.module.less'
 import { motion } from 'framer-motion'
-import IconWithPopover from '@/components/base/IconWithPopover'
-import PdfViewerToolMenu from '@/components/menus/PdfViewerToolMenu'
-import useEventEmitter from '@/events/useEventEmitter'
 import useCleanMode from '@/components/pdf/hooks/useCleanMode'
+import useViewer from './useViewer'
 
 const PdfPageHeader = () => {
   const [pdfInfo, setPdfInfo] = usePdfInfo()
   const [cleanMode, setCleanMode] = useCleanMode()
-  const emitter = useEventEmitter()
+  const viewer = useViewer().current
+
   return (
     <Content className={styles.header} flex alignItems="center" justifyContent="space-between">
       <Content flex column>
@@ -18,25 +17,7 @@ const PdfPageHeader = () => {
         <div className={styles.author}>{pdfInfo?.metadata?.author || 'Unknown'}</div>
       </Content>
       <Content flex alignItems="center" style={{ gap: 20 }}>
-        <IconWithPopover
-          name="park-more"
-          size={20}
-          placement={['left']}
-          zIndex={100000}
-          disableIntersection
-          content={
-            <WithBorder style={{padding: 4}}>
-              {/* <PdfViewerToolMenu
-                onZoomOut={() => emitter.emit('pdf', { type: 'zoomOut' })}
-                onZoomIn={() => emitter.emit('pdf', { type: 'zoomIn' })}
-                onPan={() => emitter.emit('pdf', { type: 'togglePan' })}
-                onAutoFit={() => emitter.emit('pdf', { type: 'autoFit' })}
-                onClean={() => setCleanMode(!cleanMode)}
-              /> */}
-              Sorry, Toolbar has vital bugs waiting to be fixed!
-            </WithBorder>
-          }
-        />
+
       </Content>
       <div className={styles.progressTrack}>
         <motion.div

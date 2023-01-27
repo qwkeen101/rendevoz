@@ -1,45 +1,62 @@
 import useDb from '@/hooks/stores/useDb'
-import { atom, useAtom } from 'jotai'
+import { atom } from 'jotai/vanilla'
 import { useMemo } from 'react'
+import toast from 'react-hot-toast'
 import { ILabel } from '~/typings/data'
-import BaseStore from './base.store'
+import BaseStore, { initializeLocalStore } from './base.store'
+import { IStore } from './store.type'
 
-const labelAtom = atom(new Map<number, ILabel>())
+const { orderedData } = BaseStore
 
+export const labelsAtom = atom<Map<number, ILabel>>(new Map<number, ILabel>())
+
+export const allLabelsAtom = atom(get => orderedData(get(labelsAtom)))
+export const documentIdToLabelsMapAtom = atom(get => {
+  const map = new Map<number, Set<number>>()
+  const allLabels = get(allLabelsAtom)
+  allLabels.forEach(i => {
+    if (i.documentId && i.id) {
+      const set = map.get(i.documentId)
+      if (set) {
+        set.add(i.id)
+      } else {
+        const set = new Set<number>()
+        set.add(i.id)
+        map.set(i.documentId, set)
+      }
+    }
+  })
+  return map
+})
 const useLabelStore = () => {
-  const [labels, setLabels] = useAtom(labelAtom)
-  const db = useDb('labels')
-  const { bulkAdd } = BaseStore
-  const getLabelsByDocumentId = (documentId: number) => {
-    const targetLabels = Array.from(labels.values()).filter(i => i.documentId === documentId)
-    if (targetLabels.length) {
-      return targetLabels
-    } else {
-      return db
-        .where('documentId')
-        .equals(documentId)
-        .toArray()
-        .then(data => {
-          setLabels(bulkAdd(data, labels))
-        })
-        .then(() => Array.from(labels.values()).filter(i => i.documentId === documentId))
-    }
+  const database = useDb('labels')
+  const store = initializeLocalStore<ILabel>(labelsAtom, database)
+  const localStore: Pick<IStore<ILabel>, 'addOne' | 'deleteOneById' | 'getAll' | 'getOneById' | 'updateOne'> = {
+    addOne: store.addOne((obj, silent) => {
+      !silent && toast.success('Label successfully added!')
+    }),
+    updateOne: store.updateOne((obj, silent) => {
+      !silent && toast.success('Label successfully updated!')
+    }),
+    deleteOneById: store.deleteOneById(silent => {
+      !silent && toast.success('Label successfully deleted!')
+    }),
+    getAll: store.getAll(),
+    getOneById: store.getOneById()
   }
-  const insertLabel = (label: ILabel) => {}
+  const realStore = {
+    addLabel: localStore.addOne,
+    deleteLabel: localStore.deleteOneById,
+    updateLabel: localStore.updateOne,
+    getAllLabels: localStore.getAll,
+    getLabelById: localStore.getOneById
+  }
 
-  const bulkInsertLabel = (ls: ILabel[]) => {
-    if (ls?.length) {
-      db.bulkPut(ls)
-      setLabels(bulkAdd(ls, labels))
-    }
-  }
   return useMemo(
     () => ({
-      getLabelsByDocumentId,
-      insertLabel,
-      bulkInsertLabel
+      ...realStore
     }),
-    [labels]
+    []
   )
 }
 

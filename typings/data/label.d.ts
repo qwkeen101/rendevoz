@@ -1,7 +1,8 @@
 import { TextSelectRect } from '@/events/pdfEvent'
+import { IBase } from './base'
 import { EditorDestination } from './note'
 
-export interface ILabel {
+export interface ILabel extends IBase {
   id?: number
   title?: string
   content?: string | any
@@ -9,8 +10,7 @@ export interface ILabel {
   background?: string
   type?: string
   color?: string
-  createTime?: number
-  modifyTime?: number
+  page?: number
 }
 export interface IDroppableLabel extends ILabel {
   page?: number

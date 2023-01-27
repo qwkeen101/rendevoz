@@ -2,5 +2,5 @@ import { GlobalScope } from '@/jotai/jotaiScope'
 import { eventEmitter } from '@/events/eventEmitter'
 import { useAtomValue } from 'jotai'
 
-const useEventEmitter = () => useAtomValue(eventEmitter, GlobalScope)
+const useEventEmitter = (scope: symbol = GlobalScope) => useAtomValue(eventEmitter, scope)
 export default useEventEmitter

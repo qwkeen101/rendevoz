@@ -15,20 +15,19 @@
  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { Provider as JotaiProvider } from 'jotai'
+import { Provider as JotaiProvider } from 'jotai/react'
 import { BrowserRouter as Router } from 'react-router-dom'
 import Routes from './routes'
-import { GlobalScope } from './jotai/jotaiScope'
 import '@icon-park/react/styles/index.less'
 import './common.less'
-import { Toaster } from 'react-hot-toast'
 import TitleBar from './components/titlebar'
 import Initializer from './Initializer'
 import './global.less'
 import GlobalGraph from './components/graph/GlobalGraph'
 import GlobalDragOverlay from './components/GlobalDragOverlay'
 import GlobalScreenShot from './components/globalScreenShot'
-import Zindexes from './consts/zindex'
+import Notification from './components/NotificationCenter'
+import { globalStore } from './stores/stores'
 
 const App = () => {
   function getOS() {
@@ -53,9 +52,11 @@ const App = () => {
     return os
   }
   const os = getOS()
+
   return (
-    <JotaiProvider scope={GlobalScope}>
-      <Toaster containerStyle={{ zIndex: Zindexes.Tooltip }} />
+    <JotaiProvider store={globalStore}>
+      <Notification />
+      {/* <Toaster containerStyle={{ zIndex: Zindexes.Tooltip }} /> */}
       <Initializer />
       <GlobalGraph />
       <GlobalScreenShot />

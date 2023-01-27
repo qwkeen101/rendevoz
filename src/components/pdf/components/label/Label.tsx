@@ -1,11 +1,9 @@
-import { AnimatePopover, Content, Icon, IconWithPopover, WithBorder } from '@/components'
-import { useTheme, useToggle } from '@/hooks'
-import { cloneElement, FC, memo, RefObject, useCallback, useRef, useState } from 'react'
-import { IThoughtLabel } from '~/typings/data'
+import { Content, Icon, IconWithPopover, WithBorder } from '@/components'
+import { useTheme } from '@/hooks'
+import { cloneElement, FC, memo, RefObject, useCallback, useMemo, useRef, useState } from 'react'
 import { motion, useDragControls } from 'framer-motion'
-import { PrimitiveAtom, useAtom } from 'jotai'
+import { useAtomValue } from 'jotai/react'
 import { css } from '@emotion/css'
-import { PdfScope } from '@/jotai/jotaiScope'
 import ClassName from '@/styles/classNames'
 import DateFormat from '@/utils/dateFormat'
 import AutosizeTextarea from '@/components/custom/input/autosizeTextarea'
@@ -14,9 +12,12 @@ import StringLabel from './StringLabel'
 import ImageLabel from './ImageLabel'
 import NoteLabel from './NoteLabel'
 import { Descendant } from 'slate'
+import { atom } from 'jotai/vanilla'
+import useLabelStore, { labelsAtom } from '@/stores/label.store'
+import { globalStore } from '@/stores/stores'
+import { IThoughtLabel } from '~/typings/data'
 interface ThoughtLabelProps {
-  thoughtAtom: PrimitiveAtom<IThoughtLabel>
-  onDelete: () => void
+  labelId: number
   dragBoundRef: RefObject<HTMLDivElement>
 }
 export interface InnerLabelProps {
@@ -26,16 +27,18 @@ export interface InnerLabelProps {
   noteValue?: Descendant[]
   onTitleChange?: (title: string) => void
 }
-const ThoughtLabel: FC<ThoughtLabelProps> = ({ thoughtAtom, onDelete, dragBoundRef }) => {
-  const [thought, setThought] = useAtom(thoughtAtom, PdfScope)
+const ThoughtLabel: FC<ThoughtLabelProps> = ({ labelId, dragBoundRef }) => {
+  const thoughtLabelAtom = useMemo(() => atom(get => get(labelsAtom).get(labelId)), [labelId])
+  const thought = useAtomValue(thoughtLabelAtom, { store: globalStore }) as IThoughtLabel | undefined
+  const { updateLabel, deleteLabel } = useLabelStore()
   const { rect, size } = thought
   const isDragging = useRef(false)
   const { defaultFontColorGrey, defaultFontColorRed } = useTheme('defaultFontColorGrey', 'defaultFontColorRed')
   const dragControls = useDragControls()
-  const [settingVisible, toggleSettingVisible] = useToggle(false)
   const [title, setTitle] = useState<string>()
 
   const renderContent = () => {
+    if (!thought) return null
     switch (thought.originFrom) {
       case 'editor':
         return <NoteLabel noteValue={thought.content} noteId={thought.originId} />
@@ -63,7 +66,7 @@ const ThoughtLabel: FC<ThoughtLabelProps> = ({ thoughtAtom, onDelete, dragBoundR
         }}
         onResizeStop={(e, dir, ele, s) => {
           const bound = ele.getBoundingClientRect()
-          setThought({ ...thought, size: [bound.width, bound.height] })
+          updateLabel({ id: labelId, size: [bound.width, bound.height] })
         }}
         disableDragging
         className={css({
@@ -114,7 +117,7 @@ const ThoughtLabel: FC<ThoughtLabelProps> = ({ thoughtAtom, onDelete, dragBoundR
             })}
           >
             <Icon
-              onClick={() => setThought({ ...thought, minimized: !thought.minimized })}
+              onClick={() => updateLabel({ id: labelId, minimized: !thought.minimized })}
               name={thought.minimized ? 'park-full-screen-two' : 'park-off-screen-two'}
             />
             <IconWithPopover
@@ -126,7 +129,7 @@ const ThoughtLabel: FC<ThoughtLabelProps> = ({ thoughtAtom, onDelete, dragBoundR
                       Created at: {DateFormat.format(thought.createTime, DateFormat.Formats.default)}
                     </div>
                   )}
-                  <AnimatePopover positions={['right', 'left']} padding={10} visible={settingVisible} content={renderEditThought()}>
+                  {/* <AnimatePopover positions={['right', 'left']} padding={10} visible={settingVisible} content={renderEditThought()}>
                     <div
                       onClick={toggleSettingVisible}
                       className={css([ClassName.flatButton(), ClassName.defaultFont(undefined, 600)])}
@@ -135,9 +138,9 @@ const ThoughtLabel: FC<ThoughtLabelProps> = ({ thoughtAtom, onDelete, dragBoundR
                       Setting
                       <Icon name="park-right" />
                     </div>
-                  </AnimatePopover>
+                  </AnimatePopover> */}
                   <div
-                    onClick={onDelete}
+                    onClick={() => deleteLabel(labelId)}
                     className={css([ClassName.flatButton(), ClassName.defaultFont(undefined, 600)])}
                     style={{ color: defaultFontColorRed }}
                   >
@@ -195,6 +198,7 @@ const ThoughtLabel: FC<ThoughtLabelProps> = ({ thoughtAtom, onDelete, dragBoundR
       />
     </WithBorder>
   )
+  if (!thought) return null
   return (
     <motion.div
       initial={{ top: `${rect[0] * 100}%`, left: `${rect[1] * 100}%` }}
@@ -217,8 +221,8 @@ const ThoughtLabel: FC<ThoughtLabelProps> = ({ thoughtAtom, onDelete, dragBoundR
         if (bound) {
           const relX = point.x - bound?.x
           const relY = point.y - bound?.y
-          setThought({
-            ...thought,
+          updateLabel({
+            id: labelId,
             rect: [relY / bound.height, relX / bound.width]
           })
         }

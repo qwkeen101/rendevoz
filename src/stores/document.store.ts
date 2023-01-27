@@ -1,13 +1,10 @@
-import { GlobalScope } from '@/jotai/jotaiScope'
-import { DefaultPaginationLimit } from '@/consts/pagination'
 import useDb from '@/hooks/stores/useDb'
-import { PaginationParams } from '@/types'
-import { atom, useAtom } from 'jotai'
-import { orderBy } from 'lodash'
+import { atom } from 'jotai/vanilla'
 import { useMemo } from 'react'
-import useSWR from 'swr'
+import toast from 'react-hot-toast'
 import { IPdfDocument } from '~/typings/data'
-import BaseStore from './base.store'
+import BaseStore, { initializeLocalStore } from './base.store'
+import { IStore } from './store.type'
 
 export const documentsAtom = atom<Map<number, IPdfDocument>>(new Map())
 
@@ -20,106 +17,35 @@ export const undeletedDocumentsAtom = atom(get => get(allDocumentsAtom).filter(i
 export const pinnedDocumentsAtom = atom(get => get(undeletedDocumentsAtom).filter(i => i.pinned))
 
 const useDocumentStore = () => {
-  const [documents, setDocuments] = useAtom(documentsAtom, GlobalScope)
   const database = useDb('documents')
-  const { orderedData, add, get, bulkAdd, update, remove } = BaseStore
 
-  const all: IPdfDocument[] = orderedData(documents).filter(i => !i.deletedAt)
+  const store = initializeLocalStore(documentsAtom, database)
 
-  const fetchItems = async ({ limit = DefaultPaginationLimit, offset = 0 }: PaginationParams): Promise<IPdfDocument[] | undefined> => {
-    const count = await database.count()
-    if (count === documents.size) {
-      return orderedData(documents).slice(offset, limit + offset)
-    }
-    try {
-      const res: IPdfDocument[] = await database.toArray()
-      const newMap = new Map(res.map(i => [i.id, i]))
-      setDocuments(newMap)
-      return res.slice(offset, offset + limit)
-    } catch (e) {
-      console.log(e)
-    }
+  const localStore: Pick<IStore<IPdfDocument>, 'addOne' | 'deleteOneById' | 'getAll' | 'getOneById' | 'updateOne'> = {
+    addOne: store.addOne((obj, silent) => {
+      !silent && toast.success('Document successfully added!')
+    }),
+    updateOne: store.updateOne((obj, silent) => {
+      !silent && toast.success('Document successfully updated!')
+    }),
+    deleteOneById: store.deleteOneById(silent => {
+      !silent && toast.success('Document successfully deleted!')
+    }),
+    getAll: store.getAll(),
+    getOneById: store.getOneById()
   }
-  const fetchItemsByIds = async (ids: number[]) => {
-    const toBeFetchedIds = ids.filter(id => !documents.has(id))
-    try {
-      const items = await database.where('id').anyOf(toBeFetchedIds).toArray()
-      setDocuments(bulkAdd(items, documents))
-      return orderBy(
-        all.filter(i => ids.includes(i.id)),
-        'createdAt',
-        'desc'
-      )
-    } catch (err) {
-      console.error(err)
-    }
+  const realStore = {
+    getDocumentById: localStore.getOneById,
+    addDocument: localStore.addOne,
+    deleteDocument: localStore.deleteOneById,
+    getAllDocuments: localStore.getAll,
+    updateDocument: localStore.updateOne
   }
-  const insertDocument = (document: IPdfDocument) => {
-    document = {
-      ...document,
-      createdAt: Date.now(),
-      updatedAt: Date.now()
-    }
-    setDocuments(add(document, documents))
-    database.add(document)
-  }
-  const updateDocument = (document: Partial<IPdfDocument>) => {
-    if (!document.id) return
-    const originDocument = getDocumentById(document.id)
-    const newDocument = Object.assign({}, originDocument, document)
-    setDocuments(update(newDocument, documents))
-    database.put(document, document.id)
-  }
-  // fake delete
-  const deleteDocumentById = (documentId: number) => {
-    const document = get(documentId, documents)
-    const newDoc: IPdfDocument = {
-      ...document,
-      deleted: true,
-      deletedAt: Date.now()
-    }
-    setDocuments(update(newDoc, documents))
-    database.put(newDoc, document?.id)
-  }
-  const recentlyRead = orderBy(
-    all.filter(i => i.lastReadAt),
-    'lastReadAt',
-    'desc'
-  )
-  const mostNotes = orderBy(
-    all.filter(i => i.totalNoteNumber),
-    'totalNoteNumber',
-    'desc'
-  )
-  const recentlyCreated = orderBy(all, 'createdAt', 'desc')
-  const getDocumentById = (id: number) => {
-    return all.find(i => i.id === id)
-  }
-  const renameDocument = (documentId: number, newName: string) => {
-    const targetDocument = get(documentId, documents)
-    if (targetDocument) {
-      const newDocument = { ...targetDocument, name: newName }
-      setDocuments(update(newDocument, documents))
-      database.put(newDocument)
-    }
-  }
-  useSWR('/api/all/documents', fetchItems)
   return useMemo(
     () => ({
-      documents: documents,
-      all,
-      fetchItems,
-      fetchItemsByIds,
-      recentlyRead,
-      recentlyCreated,
-      mostNotes,
-      insertDocument,
-      updateDocument,
-      getDocumentById,
-      deleteDocumentById,
-      renameDocument
+      ...realStore
     }),
-    [documents]
+    []
   )
 }
 export default useDocumentStore

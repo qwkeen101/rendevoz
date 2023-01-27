@@ -36,6 +36,7 @@ const Backdrop = ({ children, onMouseDown }) => {
         },
         ClassName.flexLayout('center', 'center')
       ])}
+      onClick={e => e.stopPropagation()}
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}

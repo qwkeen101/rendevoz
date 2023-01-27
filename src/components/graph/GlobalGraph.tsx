@@ -1,7 +1,7 @@
 import { useMemoizedFn } from '@/hooks'
-import { GlobalScope } from '@/jotai/jotaiScope'
-import useMetaStore, { metaObjectsAtom, relatedMetaObjectsMapAtom } from '@/stores/meta.store'
-import { useAtomValue } from 'jotai'
+import { metaObjectsAtom, relatedMetaObjectsMapAtom, undeletedMetaLinksAtom } from '@/stores/meta.store'
+import { globalStore } from '@/stores/stores'
+import { useAtomValue } from 'jotai/react'
 import { useState } from 'react'
 import { MetaObject } from '~/typings/data'
 import GraphContainer from './components/GraphContainer'
@@ -16,9 +16,9 @@ export let GlobalGraphInstance:
     }
   | undefined = undefined
 const GlobalGraph = () => {
-  const { allMetaLinks } = useMetaStore()
-  const metaObjectsMap = useAtomValue(metaObjectsAtom, GlobalScope)
-  const relatedObjectsMap = useAtomValue(relatedMetaObjectsMapAtom, GlobalScope)
+  const allMetaLinks = useAtomValue(undeletedMetaLinksAtom, { store: globalStore })
+  const metaObjectsMap = useAtomValue(metaObjectsAtom, { store: globalStore })
+  const relatedObjectsMap = useAtomValue(relatedMetaObjectsMapAtom, { store: globalStore })
   const [currentNodes, setCurrentNodes] = useState<GraphNode[]>()
   const [currentEdges, setCurrentEdges] = useState<GraphEdge[]>()
   const [visible, setVisible] = useState(false)

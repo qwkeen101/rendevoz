@@ -10,6 +10,9 @@ import ColorPicker from '../picker/colorPicker'
 import ClassName from '@/styles/classNames'
 import EmojiPicker from '../picker/emojiPicker'
 import getEmoji from '@/utils/emoji'
+import FormIconPicker from './FormIconPicker'
+import FormColorPicker from './FormColorPicker'
+import { FlipCardEnter, FlipCardExit } from '@/common/animation/flip'
 interface NewCollectionFormProps {
   parentCollection?: ICollection | null
   currentCollection?: ICollection
@@ -18,7 +21,11 @@ interface NewCollectionFormProps {
   onBack?: Noop
 }
 const NewCollectionForm: FC<NewCollectionFormProps> = ({ parentCollection, onAddCollection, onBack, currentCollection, isEditing }) => {
-  const [collection, setCollection] = useState<Partial<ICollection>>({ parentId: parentCollection?.id, ...currentCollection })
+  const [collection, setCollection] = useState<Partial<ICollection>>({
+    parentId: parentCollection?.id || 0,
+    items: [],
+    ...currentCollection
+  })
   const [formState, setFormState] = useState<
     Partial<{
       mainVisible: boolean
@@ -35,7 +42,6 @@ const NewCollectionForm: FC<NewCollectionFormProps> = ({ parentCollection, onAdd
     collection.icon &&
       getEmoji(collection.icon).then(data => {
         setEmoji(data)
-        console.log(data)
       })
   }, [collection.icon])
   const renderForm = () => {
@@ -47,17 +53,17 @@ const NewCollectionForm: FC<NewCollectionFormProps> = ({ parentCollection, onAdd
         title={isEditing ? 'Edit Collection' : 'Create New Collection'}
         onSubmit={() => {
           if (isEditing) {
-            updateCollection(collection)
+            collection.id && updateCollection(collection)
             onAddCollection?.()
             return
           }
           const c = addCollection(collection)
           if (parentCollection) {
-            setTimeout(() => {
+            setTimeout(async () => {
               addItemToCollection(
                 {
                   type: 'collection',
-                  id: c.id
+                  id: (await c).id
                 },
                 parentCollection.id
               )
@@ -130,28 +136,7 @@ const NewCollectionForm: FC<NewCollectionFormProps> = ({ parentCollection, onAdd
       </Form>
     )
   }
-  const onAppear = el => {
-    spring({
-      values: {
-        opacity: [0.5, 1]
-      },
-      onUpdate: val => {
-        el.style.opacity = val.opacity
-      }
-    })
-  }
-  const onExit = (el, idx, remove) => {
-    el.style.pointerEvents = 'none'
-    spring({
-      values: {
-        opacity: [0.3, 0]
-      },
-      onUpdate: val => {
-        el.style.opacity = val.opacity
-      },
-      onComplete: remove
-    })
-  }
+
   return (
     <Flipper
       spring={{ stiffness: 1600, damping: 100 }}
@@ -174,56 +159,32 @@ const NewCollectionForm: FC<NewCollectionFormProps> = ({ parentCollection, onAdd
           }}
         >
           {formState.mainVisible && (
-            <Flipped key="form" flipId="form" onAppear={onAppear} onExit={onExit}>
+            <Flipped key="form" flipId="form" onAppear={FlipCardEnter} onExit={FlipCardExit}>
               <div style={{ width: 400 }}>{renderForm()}</div>
             </Flipped>
           )}
 
           {formState.colorPickerVisible && (
-            <Flipped key="ss" flipId="ss" onAppear={onAppear} onExit={onExit}>
-              <div style={{ width: 400 }}>
-                <div
-                  style={{ marginBottom: 10, display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}
-                  className={ClassName.description()}
-                >
-                  Choose Collection Color
-                  <Icon name="park-close" onClick={() => setFormState({ mainVisible: true })} className={ClassName.circleButton()} />
-                </div>
-                <ColorPicker
-                  onPick={e => {
-                    setCollection({ ...collection, color: e })
-                    setFormState({ mainVisible: true, colorPickerVisible: false })
-                  }}
-                />
-              </div>
+            <Flipped key="ss" flipId="ss" onAppear={FlipCardEnter} onExit={FlipCardExit}>
+              <FormColorPicker
+                onClose={() => setFormState({ mainVisible: true })}
+                onPick={e => {
+                  setCollection({ ...collection, color: e })
+                  setFormState({ mainVisible: true, colorPickerVisible: false })
+                }}
+              />
             </Flipped>
           )}
 
           {formState.iconPickerVisible && (
-            <Flipped key="hgfh" flipId="gffg" onAppear={onAppear} onExit={onExit}>
-              <div style={{ width: 550 }}>
-                <div
-                  style={{
-                    marginBottom: 16,
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'baseline',
-                    marginLeft: 8,
-                    marginRight: -4
-                  }}
-                  className={ClassName.description()}
-                >
-                  Choose Collection Icon
-                  <Icon name="park-close" onClick={() => setFormState({ mainVisible: true })} className={ClassName.circleButton()} />
-                </div>
-                <EmojiPicker
-                  width="100%"
-                  onPick={e => {
-                    setCollection({ ...collection, icon: e })
-                    setFormState({ mainVisible: true, iconPickerVisible: false })
-                  }}
-                />
-              </div>
+            <Flipped key="hgfh" flipId="gffg" onAppear={FlipCardEnter} onExit={FlipCardExit}>
+              <FormIconPicker
+                onPick={e => {
+                  setCollection({ ...collection, icon: e })
+                  setFormState({ mainVisible: true, iconPickerVisible: false })
+                }}
+                onClose={() => setFormState({ mainVisible: true })}
+              />
             </Flipped>
           )}
         </div>

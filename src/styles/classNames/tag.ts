@@ -7,14 +7,14 @@ export const TagBackgrounds = {
   grey: 'rgba(0,0,0,0.07)',
   transparent: 'rgba(255,255,255,0.6)'
 }
-export const tag = (background = TagBackgrounds.transparent, color = 'rgb(120,53,15)', backdropFilter?: string) =>
+export const tag = (background = TagBackgrounds.transparent, color = 'rgb(120,53,15)', backdropFilter?: string, fontSize = '10px') =>
   css([
     {
       background,
       color,
       padding: '2px 6px',
       borderRadius: '4px',
-      fontSize: '10px',
+      fontSize,
       backdropFilter
     },
     ClassName.ellipsisFont(1)

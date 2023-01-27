@@ -1,5 +1,5 @@
 import { Noop } from '@/common/types'
-import { ColorPicker, IconPicker, Toolbar, WithBorder } from '@/components'
+import { IconPicker, Toolbar, WithBorder } from '@/components'
 import { PrettyInput } from '@/components/custom/input/pretty'
 import BlockColorPicker from '@/components/editor/components/BlockColorPicker'
 import { FC, memo } from 'react'

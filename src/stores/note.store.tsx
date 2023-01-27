@@ -1,14 +1,16 @@
 import { CustomEditor } from '@/components/editor/types'
 import useDb from '@/hooks/stores/useDb'
-import useLatest from '@/hooks/utils/useLatest'
-import { GlobalScope } from '@/jotai/jotaiScope'
 import Id from '@/utils/id'
-import { atom, useAtom, useAtomValue } from 'jotai'
+import { atom } from 'jotai/vanilla'
 import { useMemo } from 'react'
+import { toast } from 'react-hot-toast'
 import { Descendant } from 'slate'
 import { INote } from '~/typings/data'
 import BaseStore from './base.store'
 import { IStore } from './store.type'
+import { globalStore } from './stores'
+import { Notification } from '@/components'
+import ClassName from '@/styles/classNames'
 
 const { orderedData } = BaseStore
 
@@ -21,81 +23,73 @@ export const undeletedNotesAtom = atom(get => get(allNotesAtom).filter(i => !i.d
 export const pinnedNotesAtom = atom(get => get(undeletedNotesAtom).filter(i => i.pinned))
 
 const useNoteStore = () => {
-  const [notes, setNotes] = useAtom(notesAtom, GlobalScope)
-  const latestNotes = useLatest(notes)
-  const { add, get, orderedData, update } = BaseStore
+  const { add, get, update, bulkAdd, dispatch, initBaseObject } = BaseStore
 
-  const all = useAtomValue(undeletedNotesAtom, GlobalScope)
   const noteDb = useDb('notes')
   const blockDb = useDb('blocks')
   const blobDb = useDb('blobs')
-  const store: IStore<INote> = {
-    getAll: () => {
-      return noteDb.toArray().then(data => {
-        if (data) {
-          setNotes(new Map(data.map(i => [i.id, i])))
-          return true
-        } else {
-          return false
-        }
-      })
+
+  const localStore: IStore<INote> = {
+    getAll: async () => {
+      const array = await noteDb.toArray()
+      globalStore.set(notesAtom, bulkAdd(array, globalStore.get(notesAtom)))
+      return true
     },
     getOneById: id => {
-      const note = get(id, notes)
-      if (note) return Promise.resolve(note)
       return new Promise(res => {
-        noteDb.get(id).then(note => {
-          if (note) {
-            setNotes(add(note, notes))
-            res(note)
-          } else {
-            res(undefined)
+        res(globalStore.get(notesAtom).get(id))
+      })
+    },
+    fetchOneById: id => localStore.getOneById(id),
+    addOne: (n, silent) => {
+      return new Promise(res => {
+        const note = initBaseObject(n)
+        note.title = note.title || 'Untitled'
+        dispatch({
+          type: 'add',
+          data: note,
+          database: noteDb,
+          atom: notesAtom,
+          onSuccess: obj => {
+            !silent &&
+              toast.success(
+                <Notification
+                  title="Note successfully added!"
+                  content={<div className={ClassName.description()}>Title: {obj.title}</div>}
+                />
+              )
+            res(obj)
           }
         })
       })
     },
-    fetchOneById: id => store.getOneById(id),
-    addOne: n => {
-      const newNote: INote = {
-        ...n,
-        id: Id.getId(),
-        createdAt: Date.now(),
-        updatedAt: Date.now(),
-        title: n.title || 'Untitled'
-      }
-      setNotes(add(newNote, notes))
-      return noteDb.put(newNote).then(() => newNote)
-    },
-    updateOne: n => {
-      return store.getOneById(n.id).then(obj => {
-        if (obj) {
-          const newObj = {
-            ...obj,
-            ...n
+    updateOne: (n, silent) => {
+      return new Promise(res => {
+        dispatch({
+          type: 'update',
+          data: n,
+          database: noteDb,
+          atom: notesAtom,
+          onSuccess: obj => {
+            !silent && toast.success(<Notification title="Note successfully updated!" />)
+            res(obj)
           }
-          setNotes(update(newObj, notes))
-          noteDb.put(newObj)
-          return Promise.resolve(newObj)
-        }
-        return Promise.resolve(undefined)
+        })
       })
     },
-    deleteOneById: id => {
-      return store.updateOne({ id, deleted: true }).then(data => (data ? true : false))
+    deleteOneById: (id, silent) => {
+      return localStore.updateOne({ id, deleted: true }, silent).then(data => (data ? true : false))
     }
   }
-  const getAllNotes = () => {
-    return noteDb.toArray().then(data => setNotes(new Map(data.map(i => [i.id, i]))))
+  const realStore = {
+    getAllNotes: localStore.getAll,
+    addNote: localStore.addOne,
+    deleteNote: localStore.deleteOneById,
+    updateNote: localStore.updateOne,
+    fetchNoteById: localStore.fetchOneById,
+    getNoteById: localStore.getOneById
   }
-  const addNote = (note: Partial<INote>) => {
-    const newNote: INote = {
-      ...note,
-      createdAt: Date.now(),
-      updatedAt: Date.now()
-    }
-    setNotes(add(newNote, notes))
-    return noteDb.put(newNote)
-  }
+
   const saveNote = (note: Partial<INote>) => {
     if (note.id) {
       return noteDb
@@ -117,18 +111,7 @@ const useNoteStore = () => {
         })
     }
   }
-  const updateNote = (note: Partial<INote>) => {
-    return getNoteById(note.id)
-      .then(n => ({
-        ...n,
-        ...note,
-        updatedAt: Date.now()
-      }))
-      .then(n => {
-        setNotes(update(n, notes))
-        noteDb.put(n)
-      })
-  }
+
   const getNoteById = (noteId: number): Promise<INote | undefined> => {
     const notes = latestNotes.current
     const note = get(noteId, notes)
@@ -189,7 +172,7 @@ const useNoteStore = () => {
     //     bulkDeleteFromSearchDb(deletedBlockIds)
     //     return note
     //   })
-      // .then(note => noteDb.put(note))
+    // .then(note => noteDb.put(note))
     const saveBlocks = blockDb.bulkPut(blocks)
     // const searchItems: SearchableItem[] = blocks.map(i => ({
     //   itemId: i.id,
@@ -214,17 +197,9 @@ const useNoteStore = () => {
       noteDb.put(newNote)
     }
   }
-  const deleteNote = (noteId: number) => {
-    getNoteById(noteId).then(note => {
-      updateNote({
-        ...note,
-        deleted: true
-      })
-    })
-  }
+
   const saveNoteAsBuffer = (value: Descendant[], id?: number) => {
     const realId = id || Id.getId()
-    console.log(realId)
     const encoder = new TextEncoder()
     const arrayBuffer = encoder.encode(JSON.stringify(value))
     blobDb.put({
@@ -245,26 +220,20 @@ const useNoteStore = () => {
   }
   return useMemo(
     () => ({
-      ...store,
-      all,
-      getAllNotes,
-      updateNote,
       findParentNotes,
       findSubNotes,
-      addNote,
       saveNote,
-      getNoteById,
       getNotesByIds,
       saveNoteAndBlocks,
       getNoteAndBlocks,
       renameNote,
-      deleteNote,
       saveNoteAsBuffer,
       getNoteValue,
       saveBlocks,
-      getBlockById
+      getBlockById,
+      ...realStore
     }),
-    [notes]
+    []
   )
 }
 

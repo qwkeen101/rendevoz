@@ -1,5 +1,4 @@
 import { Noop } from '@/common/types'
-import useCollectionStore from '@/stores/collection.store'
 import { FC } from 'react'
 import { Icon } from '..'
 import Menu from '../base/menu'

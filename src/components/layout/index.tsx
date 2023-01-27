@@ -1,7 +1,8 @@
 import useEventEmitter from '@/events/useEventEmitter'
 import useSidebarWidth from '@/hooks/components/useSidebarWidth'
+import { LayoutFunctions } from '@/pdfViewer/core/layouts/Layout'
 import Id from '@/utils/id'
-import { createContext, FC, useEffect, useMemo, useState } from 'react'
+import { createContext, FC, RefObject, useEffect, useMemo, useState } from 'react'
 import { Helmet } from 'react-helmet'
 import { useLocation } from 'react-router-dom'
 import Container from '../base/container'
@@ -30,6 +31,17 @@ const initialLayout: LayoutData = {
     ]
   }
 }
+
+export type PdfInstance = {
+  pdfId: number
+  createdAt: number
+  viewerRef: RefObject<LayoutFunctions>
+}
+
+export class GlobalInstances {
+  static pdfInstances: PdfInstance[] = []
+}
+
 export let GlobalLayout: LayoutManager | null = null
 const Layout: FC<LayoutProps> = ({ sidebar }) => {
   const [sidebarWidth] = useSidebarWidth()

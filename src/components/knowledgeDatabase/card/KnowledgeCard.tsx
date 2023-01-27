@@ -1,16 +1,18 @@
 import { Content } from '@/components/base'
 import { useTheme } from '@/hooks'
 import { css } from '@emotion/css'
-import { MetaKnowledgeObject, MetaObject } from '~/typings/data'
+import { MetaObject } from '~/typings/data'
 import { TitleClassName, TitleWrapperClassName } from './DatabaseCard'
 import { memo } from 'react'
 import ClassName from '@/styles/classNames'
 import { useNavigate } from 'react-router-dom'
 import useNoteStore from '@/stores/note.store'
 import useEventEmitter from '@/events/useEventEmitter'
+
 const MetaKnowledgeCard = memo(({ m }: { m: MetaObject }) => {
   const { defaultFontColorGrey } = useTheme('defaultFontColorGrey')
   const { getBlockById } = useNoteStore()
+
   const emitter = useEventEmitter()
   const navigate = useNavigate()
   return (

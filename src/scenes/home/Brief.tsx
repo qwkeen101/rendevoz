@@ -1,11 +1,11 @@
 import { Content, Icon } from '@/components'
-import { GlobalScope } from '@/jotai/jotaiScope'
 import { undeletedDocumentsAtom } from '@/stores/document.store'
 import { undeletedMetaLinksAtom, undeletedMetaObjectsAtom } from '@/stores/meta.store'
 import { undeletedNotesAtom } from '@/stores/note.store'
+import { globalStore } from '@/stores/stores'
 import ClassName from '@/styles/classNames'
 import { css } from '@emotion/css'
-import { useAtomValue } from 'jotai'
+import { useAtomValue } from 'jotai/react'
 import { ReactNode } from 'react'
 
 const NumberClazz = css({
@@ -14,10 +14,10 @@ const NumberClazz = css({
   fontFamily: 'sans-serif'
 })
 const HomeBrief = () => {
-  const documents = useAtomValue(undeletedDocumentsAtom, GlobalScope)
-  const metaObjects = useAtomValue(undeletedMetaObjectsAtom, GlobalScope)
-  const notes = useAtomValue(undeletedNotesAtom, GlobalScope)
-  const metaLinks = useAtomValue(undeletedMetaLinksAtom, GlobalScope)
+  const documents = useAtomValue(undeletedDocumentsAtom, { store: globalStore })
+  const metaObjects = useAtomValue(undeletedMetaObjectsAtom, { store: globalStore })
+  const notes = useAtomValue(undeletedNotesAtom, { store: globalStore })
+  const metaLinks = useAtomValue(undeletedMetaLinksAtom, { store: globalStore })
   return (
     <div
       style={{
@@ -41,10 +41,7 @@ const Card = ({ title, icon, content }: { title: string; icon: string; content: 
     <Content
       style={{
         padding: '12px 48px 12px 0px',
-        // background: 'rgba(238, 238, 238, 0.7)',
-        // boxShadow: 'rgba(100, 100, 111, 0.2) 0px 0px 16px 1px',
         borderRight: '1px solid rgba(222,222,222,0.4)',
-        // borderRadius: 16,
         maxWidth: 300,
         minWidth: 200
       }}

@@ -1,16 +1,18 @@
-import { AnimatePopover, Content, Icon, IconWithPopover, Image, WithBorder } from '@/components/base'
+import { Content, Icon, IconWithPopover, WithBorder } from '@/components/base'
 import Modal from '@/components/base/Modal'
 import EditMetaObjectForm from '@/components/form/EditMetaObjectForm'
 import { GlobalGraphInstance } from '@/components/graph/GlobalGraph'
 import { typeToTypeRecord } from '@/components/knowledgeDatabase/card/DatabaseCard'
-import { useTheme, useToggle } from '@/hooks'
+import { useToggle } from '@/hooks'
 import { GlobalScope } from '@/jotai/jotaiScope'
 import useMetaStore, { metaObjectsAtom, relatedMetaObjectsMapAtom } from '@/stores/meta.store'
 import { notesAtom } from '@/stores/note.store'
+import { globalStore } from '@/stores/stores'
 import ClassName from '@/styles/classNames'
 import { css } from '@emotion/css'
 import { AnimatePresence, motion } from 'framer-motion'
-import { atom, useAtomValue } from 'jotai'
+import { useAtomValue } from 'jotai/react'
+import { atom } from 'jotai/vanilla'
 import { FC, memo, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { RenderElementProps } from 'slate-react'
@@ -25,8 +27,8 @@ const MetaObject: FC<RenderElementProps> = memo(({ children, element }) => {
   const editor = useSlate()
   const { updateMetaObject } = useMetaStore()
   const metaAtom = useMemo(() => (originId ? atom(get => get(metaObjectsAtom).get(originId)) : atom(null)), [originId])
-  const metaObject = useAtomValue(metaAtom, GlobalScope)
-  const related = useAtomValue(relatedMetaObjectsMapAtom, GlobalScope)
+  const metaObject = useAtomValue(metaAtom, { store: globalStore })
+  const related = useAtomValue(relatedMetaObjectsMapAtom, { store: globalStore })
   const relatedSet = metaObject?.id ? related.get(metaObject.id) : null
   const relatedObjectsAtom = useMemo(
     () =>
@@ -41,7 +43,7 @@ const MetaObject: FC<RenderElementProps> = memo(({ children, element }) => {
         : atom(null),
     [relatedSet]
   )
-  const relatedObjects = useAtomValue(relatedObjectsAtom, GlobalScope)
+  const relatedObjects = useAtomValue(relatedObjectsAtom, { store: globalStore })
 
   const hasDescription = metaObject?.description
   const alsoMentionedSize = relatedObjects?.filter(i => (i.type === 'note' || i.type === 'pdf') && i.objectId !== editor.noteId).length
@@ -175,7 +177,7 @@ const MetaObject: FC<RenderElementProps> = memo(({ children, element }) => {
       gap={20}
     >
       <div style={{ fontWeight: 600 }} className={ClassName.animatedBorderBottom(undefined, undefined, 1)}>
-        {metaObject?.name}
+        {metaObject?.name || 'Deleted object'}
       </div>
       <Content flex gap={6}>
         <div className={ClassName.tag(element.background ? ClassName.TagBackgrounds.transparent : ClassName.TagBackgrounds.grey)}>
@@ -215,5 +217,4 @@ const RelatedNote = ({ noteId }: { noteId?: number }) => {
   )
 }
 
-const RelatedObject = () => {}
 export default MetaObject

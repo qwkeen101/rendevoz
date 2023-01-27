@@ -22,6 +22,7 @@ export default class EventEmitter {
   private listeners: { [name: string]: Array<EventHandler<unknown>> } = {}
   private ackEvents: { name: string; data: any }[] = []
   private intervalEventId?: NodeJS.Timer
+  private intervalTimes = 0
   public addListener<K extends keyof EventMap>(name: K, handler: EventHandler<unknown>) {
     if (!this.listeners[name]) {
       this.listeners[name] = []
@@ -49,9 +50,14 @@ export default class EventEmitter {
     })
     if (interval) {
       this.intervalEventId = setInterval(() => {
+        console.log('interval')
         this.listeners[name]?.forEach(handler => {
           handler.handle(data)
         })
+        this.intervalTimes += 1
+        if (this.intervalTimes > 100) {
+          this.removeInterval()
+        }
       }, 100)
     }
   }

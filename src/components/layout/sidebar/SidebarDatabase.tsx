@@ -4,11 +4,11 @@ import EditMetaObjectForm from '@/components/form/EditMetaObjectForm'
 import { GlobalDragOverlayInstance, useGlobalIsDragging } from '@/components/GlobalDragOverlay'
 import useEventEmitter from '@/events/useEventEmitter'
 import { useMemoizedFn } from '@/hooks'
-import { GlobalScope } from '@/jotai/jotaiScope'
 import useMetaStore, { undeletedMetaObjectsAtom } from '@/stores/meta.store'
+import { globalStore } from '@/stores/stores'
 import ClassName from '@/styles/classNames'
 import { css } from '@emotion/css'
-import { useAtomValue } from 'jotai'
+import { useAtomValue } from 'jotai/react'
 import { memo, useEffect, useRef, useState } from 'react'
 import { MetaObject } from '~/typings/data'
 import { MenuItem } from './Item'
@@ -74,7 +74,7 @@ const SidebarDatabase = memo(() => {
     }
   }, [globalIsDragging])
   const { addMetaObject } = useMetaStore()
-  const undeletedMetaObjects = useAtomValue(undeletedMetaObjectsAtom, GlobalScope)
+  const undeletedMetaObjects = useAtomValue(undeletedMetaObjectsAtom, { store: globalStore })
 
   return (
     <>

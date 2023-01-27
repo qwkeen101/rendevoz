@@ -1,28 +1,24 @@
-import { Content, Image } from '@/components/base'
-import { useTheme } from '@/hooks'
-import useDocumentStore from '@/stores/document.store'
+import { Content } from '@/components/base'
+import { documentsAtom } from '@/stores/document.store'
+import { globalStore } from '@/stores/stores'
 import ClassName from '@/styles/classNames'
 import DateFormat from '@/utils/dateFormat'
 import { css } from '@emotion/css'
-import { useEffect, useState } from 'react'
+import { useAtomValue } from 'jotai/react'
+import { atom } from 'jotai/vanilla'
+import { useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { RenderElementProps } from 'slate-react'
-import { IPdfDocument } from '~/typings/data'
 import { PdfElement } from '../../types/commonElementTypes'
 import NoteCard from '../cards/NoteCard'
 
 const PdfMedia = ({ element, children }: Omit<RenderElementProps, 'attributes'>) => {
   const ele = element as PdfElement
 
-  const [document, setDocument] = useState<IPdfDocument>()
-  const { getDocumentById } = useDocumentStore()
+  const documentAtom = useMemo(() => atom(get => get(documentsAtom).get(ele.pdfId)), [ele.pdfId])
+  const document = useAtomValue(documentAtom, { store: globalStore })
+
   const navigate = useNavigate()
-
-  useEffect(() => {
-    const pdf = getDocumentById(ele.pdfId)
-    setDocument(pdf)
-  }, [getDocumentById])
-
   const renderMain = () => (
     <Content flex column gap={5}>
       <div

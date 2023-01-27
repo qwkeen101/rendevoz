@@ -19,7 +19,7 @@ interface CollectionItemProps {
 
 const CollectionItem: FC<CollectionItemProps> = ({ collection, selected, onClick, onDoubleClick, onContextMenu }) => {
   const { t } = useTranslation()
-  const { getChildrenCollections, getChildrenDocuments, getChildrenItems } = useCollectionStore()
+  const { getChildrenCollections, getChildrenItems } = useCollectionStore()
   const childrenCollections = getChildrenCollections(collection.id)
   const [childrenItems, setChildrenItems] = useState([])
   const childrenNotes = childrenItems.filter(i => isNote(i)) as INote[]

@@ -24,16 +24,20 @@ const moveMultiElements = (
     const currPath = tempPathRefMap.get(curr)?.current
     return Path.compare(prevPath, currPath)
   })
+
   // bottom or top move won't destory path ref,use move single element is okay
   if (direction === 'bottom' || direction === 'top') {
+
     let nextTargetPath = targetPath,
       nextTargetElement = targetElement
     if (direction === 'top') {
       currElements.reverse()
     }
+
     let nested = isNested
     currElements.forEach(i => {
       const currPathRef = tempPathRefMap.get(i)
+
       if (!currPathRef) return
       const currPath = currPathRef.current
       if (!currPath) {
@@ -41,7 +45,7 @@ const moveMultiElements = (
         return
       }
       // multi select only handle nested once
-      moveSingleElement(editor, currPath, nextTargetElement, nextTargetPath, direction, isNested)
+      moveSingleElement(editor, currPath, nextTargetElement, nextTargetPath, direction, nested)
       nested = false
       nextTargetPath = currPathRef.unref() as Path
       nextTargetElement = i

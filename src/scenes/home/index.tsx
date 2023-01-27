@@ -1,17 +1,20 @@
 import Container from '@/components/base/container'
 import DocumentDetails from '@/components/documentDetail'
-import { FC, useCallback, useEffect, useState } from 'react'
-import { Route, Routes, useNavigate } from 'react-router-dom'
+import { FC, useCallback, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { RecentlyAddCard, RecentlyVisitCard } from './Card'
-import { AnimatePresence, motion, PanInfo, useDragControls } from 'framer-motion'
+import { motion, PanInfo, useDragControls } from 'framer-motion'
 import styles from './index.module.less'
 import { Content } from '@/components'
 import { useGlobalLocation } from '@/routes/globalLocation'
 import { css } from '@emotion/css'
 import { useTheme } from '@/hooks'
-import useNoteStore from '@/stores/note.store'
+import { undeletedNotesAtom } from '@/stores/note.store'
 import NoteItem from './NoteItem'
 import HomeBrief from './Brief'
+import { useAtomValue } from 'jotai/react'
+import { globalStore } from '@/stores/stores'
+import { useMeasure } from 'react-use'
 
 export const HomePage: FC = () => {
   const { defaultBackgroundColor } = useTheme('defaultBackgroundColor')
@@ -39,6 +42,7 @@ export const HomePage: FC = () => {
 
 const DocumentCard = () => {
   const [sortMode, setSortMode] = useState<'recently read' | 'recently add'>('recently read')
+  const [ref, { width }] = useMeasure()
   return (
     <Content flex column>
       <Content
@@ -88,12 +92,14 @@ const DocumentCard = () => {
           Recently Add
         </div>
       </Content>
-      <div style={{ minHeight: 120 }}>{sortMode === 'recently read' ? <RecentlyVisitCard /> : <RecentlyAddCard />}</div>
+      <div ref={ref} style={{ minHeight: 120 }}>
+        {sortMode === 'recently read' ? <RecentlyVisitCard width={width} /> : <RecentlyAddCard width={width} />}
+      </div>
     </Content>
   )
 }
 const NoteCard = () => {
-  const { all } = useNoteStore()
+  const undeletedNotes = useAtomValue(undeletedNotesAtom, { store: globalStore })
   return (
     <div
       className={css({
@@ -117,7 +123,7 @@ const NoteCard = () => {
           columnGap: 32
         }}
       >
-        {all.slice(0, 20).map(i => (
+        {undeletedNotes.slice(0, 20).map(i => (
           <NoteItem key={i.id} note={i} />
         ))}
       </div>

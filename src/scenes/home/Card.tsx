@@ -1,15 +1,14 @@
 import { Content, Icon, Image } from '@/components'
-import useDb from '@/hooks/stores/useDb'
-import useDocumentStore from '@/stores/document.store'
-import { FC, memo, ReactNode, useEffect, useState } from 'react'
+import useDocumentStore, { undeletedDocumentsAtom } from '@/stores/document.store'
+import { FC, memo, ReactNode, useMemo } from 'react'
 import { IPdfDocument } from '~/typings/data'
 import styles from './index.module.less'
-import { format } from 'date-fns'
-import { AnimatePresence, motion } from 'framer-motion'
 import { useMeasure } from 'react-use'
 import FullSizeLink from '@/components/base/FullSizeLink'
-import { useLocation } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
+import { useAtomValue } from 'jotai/react'
+import { globalStore } from '@/stores/stores'
+import { orderBy } from 'lodash'
 interface CardProps {
   title: string
   children: ReactNode
@@ -30,14 +29,21 @@ const Card: FC<CardProps> = ({ title, children }) => {
 
 export default Card
 
-export const RecentlyVisitCard = memo(() => {
-  const { recentlyRead } = useDocumentStore()
-  const [ref, { width }] = useMeasure()
+export const RecentlyVisitCard = memo(({ width }: { width: number }) => {
+  const undeletedDocuments = useAtomValue(undeletedDocumentsAtom, { store: globalStore })
+  const recentlyRead = useMemo(
+    () =>
+      orderBy(
+        undeletedDocuments.filter(i => i.lastReadAt),
+        'lastReadAt',
+        'desc'
+      ),
+    [undeletedDocuments]
+  )
+  console.log(recentlyRead)
   const count = Math.floor(width / 300)
-  const { t } = useTranslation()
   return (
-    <Content
-      ref={ref}
+    <div
       style={{
         gridTemplateColumns: `repeat(${count},minmax(0,1fr))`
       }}
@@ -46,61 +52,10 @@ export const RecentlyVisitCard = memo(() => {
       {Array.from(Array(count * 2).keys()).map(
         (i, idx) => recentlyRead[idx] && <RecentlyReadCardItemV2 key={recentlyRead[idx].id} document={recentlyRead[idx]} />
       )}
-    </Content>
+    </div>
   )
 })
 
-const RecentlyReadCardItem = ({ document }: { document: IPdfDocument }) => {
-  const location = useLocation()
-  const [imgSrc, setImgSrc] = useState('')
-  const [isHover, setIsHover] = useState(false)
-  const db = useDb('blobs')
-  const lastReadTime = format(document.lastReadAt, 'Y/M/d')
-
-  useEffect(() => {
-    const coverId = document.metadata?.coverBlobId
-    if (coverId) {
-      db.get(coverId).then(data => setImgSrc(data.data))
-    }
-  }, [])
-  return (
-    <motion.div onHoverStart={() => setIsHover(true)} onHoverEnd={() => setIsHover(false)} className={styles.itemWrapper}>
-      <motion.div className={styles.coverWrapper}>
-        <img className={styles.cover} src={imgSrc} />
-        <motion.div
-          data-isHover={isHover}
-          animate={isHover ? { backdropFilter: 'blur(10px)' } : undefined}
-          transition={{ type: 'keyframes', duration: 0.3 }}
-          className={styles.description}
-        >
-          <motion.div layoutDependency={isHover} layout="position" transition={spring}>
-            {/* <div className={styles.docTitle}>{document.metadata?.title || document.name}</div>
-            <div className={styles.readTime}>Last read at {lastReadTime}</div> */}
-          </motion.div>
-          <AnimatePresence exitBeforeEnter>
-            {isHover && (
-              <motion.div variants={details} initial="hidden" animate="visible" exit="hidden">
-                <Content flex column>
-                  <Content flex alignItems="center" className={styles.tags}>
-                    <Icon size={12} style={{ marginRight: 10 }} name="park-tag-one" />
-                    <span>Math</span>
-                    <span>Physics</span>
-                  </Content>
-                  <Content flex alignItems="center" className={styles.tap}>
-                    <Icon size={12} style={{ marginRight: 6 }} name="park-right" />
-                    <span>Tap to see more</span>
-                  </Content>
-                </Content>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </motion.div>
-      </motion.div>
-      <div className={styles.docTitle}>{document.metadata?.title || document.name}</div>
-      <FullSizeLink onClick={() => setIsHover(false)} to={`/document/details/${document.id}`} state={{ homeBackground: location }} />
-    </motion.div>
-  )
-}
 const RecentlyReadCardItemV2 = ({ document }: { document: IPdfDocument }) => {
   return (
     <Content flex className={styles.itemWrapperV2}>
@@ -136,37 +91,13 @@ const RecentlyReadCardItemV2 = ({ document }: { document: IPdfDocument }) => {
     </Content>
   )
 }
-const spring = {
-  duration: 0.4,
-  stiffness: 200,
-  damping: 30
-}
-const details = {
-  hidden: {
-    opacity: 0,
-    height: 0,
-    transition: {
-      duration: 0.4
-    }
-  },
-  visible: {
-    opacity: 1,
-    height: '100%',
-    transition: {
-      delay: 0.4,
-      duration: 0.4
-    }
-  }
-}
 
-export const RecentlyAddCard = memo(() => {
-  const { recentlyCreated } = useDocumentStore()
-  const [ref, { width }] = useMeasure()
+export const RecentlyAddCard = memo(({ width }: { width: number }) => {
+  const undeletedDocuments = useAtomValue(undeletedDocumentsAtom, { store: globalStore })
+  const recentlyCreated = useMemo(() => orderBy(undeletedDocuments, 'createdAt', 'desc'), [undeletedDocuments])
   const count = Math.floor(width / 300)
-  const { t } = useTranslation()
   return (
-    <Content
-      ref={ref}
+    <div
       style={{
         gridTemplateColumns: `repeat(${count},minmax(0,1fr))`
       }}
@@ -175,6 +106,6 @@ export const RecentlyAddCard = memo(() => {
       {Array.from(Array(count * 2).keys()).map(
         (i, idx) => recentlyCreated[idx] && <RecentlyReadCardItemV2 key={recentlyCreated[idx].id} document={recentlyCreated[idx]} />
       )}
-    </Content>
+    </div>
   )
 })

@@ -1,55 +1,52 @@
 import { Box, SelectionBox } from '@/components/dragSelector'
-import React, { useCallback, useRef, useState } from 'react'
-import DragSelection from './mouseSelection'
+import React, { useCallback, useMemo, useRef, useState } from 'react'
 import html2canvas from 'html2canvas'
-import { PdfLabelsAtoms, usePdfLabels, usePdfNote } from '../../hooks/usePdfNote'
-import ContextMenu, { ContextMenuRef } from '@/components/contextMenu'
-import PdfContextMenu from '@/components/menus/PdfContextMenu'
+import { usePdfLabels } from '../../hooks/usePdfNote'
 import ThoughtLabel from '../label/Label'
 import { WithBorder } from '@/components'
-import { useIntersection, useIsomorphicLayoutEffect } from 'react-use'
+import { useIntersection } from 'react-use'
 import { RenderPageProps } from '@/pdfViewer/core/types'
-import styles from './index.module.less'
 import { AnimatePopover } from '@/components'
-import { PdfEventHandler, TextSelectEvent } from '@/events/pdfEvent'
-import useEventEmitter from '@/events/useEventEmitter'
+import { TextSelectEvent } from '@/events/pdfEvent'
 import TextSelectionToolbar from '../toolbar/TextSelectionToolbar'
 import Id from '@/utils/id'
 import HighlightLabel from '../label/HighlightLabel'
 import { useTime } from '@/hooks'
-import { useAtomValue } from 'jotai'
 import useCleanMode from '../../hooks/useCleanMode'
-import PdfViewerToolMenu from '@/components/menus/PdfViewerToolMenu'
+import { useAtomValue } from 'jotai/react'
+import useLabelStore, { documentIdToLabelsMapAtom, labelsAtom } from '@/stores/label.store'
+import { globalStore } from '@/stores/stores'
+import { atom } from 'jotai/vanilla'
+import { IHighlightLabel, ILabel } from '~/typings/data'
 
 interface PdfPageProps extends RenderPageProps {
-  onCanvasLayerClick?: (e: React.MouseEvent) => void
-  onCanvasLayerDrag?: (e: SelectionBox) => void
-  onCanvasLayerDragEnd?: (e: string | undefined) => void
-  onTextSelectionClick?: (e: ITextSelectionLabel) => void
-  enableCrop?: boolean
-  textLayerVisible?: boolean
+  pdfId: number
 }
 
 const PdfPage: React.FC<PdfPageProps> = ({
-  enableCrop,
-  textLayerVisible,
-  onCanvasLayerDrag,
-  onCanvasLayerDragEnd,
   pageIndex,
   textLayer,
   canvasLayer,
   pageElement,
   annotationLayer,
-  onCanvasLayerClick,
-  onTextSelectionClick,
-  pageFunctionRef
+  pageFunctionRef,
+  pageSize,
+  pdfId
 }) => {
-  const thisRef = useRef<HTMLDivElement>(null)
-  const boxRef = useRef<Box>()
   const labelContainerRef = useRef<HTMLDivElement>(null)
   const [cleanMode] = useCleanMode()
-  const [thoughts, dispatchThoughts] = usePdfLabels(pageIndex, 'thought')
-  const [highlights, dispatchHighlights] = usePdfLabels(pageIndex, 'highlight')
+  const allLabelsMap = useAtomValue(documentIdToLabelsMapAtom, { store: globalStore }).get(pdfId)
+  const allLabels = useAtomValue(labelsAtom, { store: globalStore })
+  const { addLabel } = useLabelStore()
+  const labels = useMemo(
+    () =>
+      allLabelsMap &&
+      (Array.from(allLabelsMap)
+        .map(i => allLabels.get(i))
+        .filter(i => i !== undefined && i.page === pageIndex) as ILabel[]),
+    [allLabels]
+  )
+
   const [textSelectionToolbarVisible, setTextSelectionToolbarVisible] = useState(false)
   const intersection = useIntersection(labelContainerRef, { root: null, rootMargin: '1px', threshold: 0 })
   const [textSelect, setTextSelect] = useState<TextSelectEvent>()
@@ -62,37 +59,6 @@ const PdfPage: React.FC<PdfPageProps> = ({
       setTextSelectionToolbarVisible(false)
     }
   }
-
-  const handleSelectionChange = useCallback((box: Box) => {
-    onCanvasLayerDrag(box)
-    boxRef.current = box
-    console.log(box)
-  }, [])
-  const handleSelectionEnd = useCallback(() => {
-    if (thisRef.current && enableCrop) {
-      html2canvas(thisRef.current).then(canvas => {
-        const newCanvas = document.createElement('canvas')
-        newCanvas.height = thisRef.current.clientHeight
-        newCanvas.width = thisRef.current.clientWidth
-        const newCanvasContext = newCanvas.getContext('2d')
-        newCanvasContext?.drawImage(canvas, 0, 0, canvas.width, canvas.height, 0, 0, newCanvas.width, newCanvas.height)
-        const croppedCanvas = document.createElement('canvas')
-        const croppedCanvasContext = croppedCanvas.getContext('2d')
-        const { left, top, height, width } = boxRef.current
-        croppedCanvas.width = width
-        croppedCanvas.height = height
-        if (croppedCanvasContext) {
-          croppedCanvasContext.drawImage(newCanvas, left, top, width, height, 0, 0, width, height)
-        }
-        if (croppedCanvas) {
-          const url = croppedCanvas.toDataURL()
-          onCanvasLayerDragEnd(url)
-        }
-      })
-    }
-    onCanvasLayerDragEnd(undefined)
-  }, [enableCrop])
-
   return (
     <>
       {canvasLayer}
@@ -111,23 +77,17 @@ const PdfPage: React.FC<PdfPageProps> = ({
         ref={labelContainerRef}
         role="custom-element-layer"
       >
-        {intersection?.isIntersecting && !cleanMode && (
-          <>
-            {thoughts?.map(i => (
-              <ThoughtLabel
-                key={`${i.toString()}`}
-                thoughtAtom={i}
-                dragBoundRef={pageElement}
-                onDelete={() => {
-                  dispatchThoughts({ type: 'remove', atom: i })
-                }}
-              />
-            ))}
-            {highlights.map(i => (
-              <HighlightLabel key={`${i}`} highlightAtom={i} onDelete={() => dispatchHighlights({ type: 'remove', atom: i })} />
-            ))}
-          </>
-        )}
+        {intersection?.isIntersecting &&
+          !cleanMode &&
+          labels?.map(
+            i =>
+              i.id && (
+                <>
+                  {i.type === 'highlight' && <HighlightLabel labelId={i.id} key={i.id} pageSize={pageSize} />}
+                  {i.type === 'thought' && <ThoughtLabel dragBoundRef={labelContainerRef} labelId={i.id} key={i.id} />}
+                </>
+              )
+          )}
       </div>
       <AnimatePopover
         padding={10}
@@ -139,24 +99,19 @@ const PdfPage: React.FC<PdfPageProps> = ({
               onHighlight={color => {
                 setTextSelectionToolbarVisible(false)
                 pageFunctionRef.current?.clearTextLayer?.()
-                dispatchHighlights({
-                  type: 'insert',
-                  value: {
-                    page: pageIndex,
-                    selectedText: textSelect?.selectedText,
-                    type: 'highlight',
-                    id: Id.getId(),
-                    color,
-                    createTime: useTime(),
-                    modifyTime: useTime(),
-                    rects: textSelect?.rects?.map(r => ({
-                      percentageTop: r.percentageTop,
-                      percentageHeight: r.percentageHeight,
-                      percentageLeft: r.percentageLeft,
-                      percentageWidth: r.percentageWidth
-                    }))
-                  }
-                })
+                addLabel({
+                  page: pageIndex,
+                  selectedText: textSelect?.selectedText,
+                  type: 'highlight',
+                  color,
+                  documentId: pdfId,
+                  rects: textSelect?.rects?.map(r => ({
+                    percentageTop: r.percentageTop,
+                    percentageHeight: r.percentageHeight,
+                    percentageLeft: r.percentageLeft,
+                    percentageWidth: r.percentageWidth
+                  }))
+                } as IHighlightLabel)
               }}
               textSelect={textSelect}
             />

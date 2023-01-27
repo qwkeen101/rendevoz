@@ -2,7 +2,6 @@ import { GlobalDragOverlayInstance, useGlobalIsDragging } from '@/components/Glo
 import { useMemoizedFn } from '@/hooks'
 import useMetaStore from '@/stores/meta.store'
 import { useEffect, useRef, useState } from 'react'
-import { toast } from 'react-hot-toast'
 import { MetaObject } from '~/typings/data'
 
 const useCardDrag = (metaObject: MetaObject, draggableElement?: HTMLElement | null, showElement?: HTMLElement | null) => {
@@ -57,7 +56,6 @@ const useCardDrag = (metaObject: MetaObject, draggableElement?: HTMLElement | nu
             targetId: metaObject.id,
             targetType: 'knowledge'
           })
-          toast.success('Link added!')
         }
         if (draggingEle && draggingEle.type === 'image') {
           updateMetaObject({

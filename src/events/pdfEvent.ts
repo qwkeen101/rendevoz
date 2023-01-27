@@ -31,7 +31,10 @@ export interface TextSelectEvent {
   rects?: TextSelectRect[]
   isCancel: boolean
 }
-
+export interface HighlightTextEvent {
+  str: string
+  page: number
+}
 export interface PdfEventMap {
   jumpToHighlight: JumpToHighlightEvent
   jumpToDest: JumpToDestEvent
@@ -44,7 +47,9 @@ export interface PdfEventMap {
   zoomOut: Noop
   autoFit: Noop
   togglePan: Noop
+  highlightText: HighlightTextEvent
 }
+
 export type PdfEvent = Event<PdfEventMap, keyof PdfEventMap>
 
 export class PdfEventHandler extends EventHandler<PdfEventMap> {}

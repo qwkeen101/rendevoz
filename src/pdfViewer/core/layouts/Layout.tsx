@@ -9,6 +9,11 @@ import { IAnnotation } from '../types/annotation'
 import { Noop } from '@/common/types'
 import { decreaseLevel, increaseLevel } from '../utils/zoom'
 import PanHelper from '../utils/pan'
+import fuzzysort from 'fuzzysort'
+import { TextItem } from '../types/text'
+import Id from '@/utils/id'
+import useEventEmitter from '@/events/useEventEmitter'
+import { PdfViewInnerScope } from '../Provider'
 
 interface LayoutProps {
   doc: PDFDocumentProxy
@@ -23,11 +28,34 @@ interface LayoutProps {
 }
 export interface LayoutFunctions {
   jumpToPage: (pageIndex: number) => void
-  search: (word: string) => void
+  search: (word: string) => Fuzzysort.KeyResults<{
+    id: number
+    str: string
+    page: number
+    prepared: Fuzzysort.Prepared
+  }>
   zoomIn: Noop
   zoomOut: Noop
   autoFit: Noop
   togglePan: Noop
+  highlightText: (str: string, pageIndex: number) => void
+  jumpToDest: (dest: string | any[]) => void
+  jumpToOffset: (offset: number) => void
+  scrollBy: (offset: number) => void
+  getOutline: () => Promise<
+    {
+      title: string
+      bold: boolean
+      italic: boolean
+      color: Uint8ClampedArray
+      dest: string | any[] | null
+      url: string | null
+      unsafeUrl: string | undefined
+      newWindow: boolean | undefined
+      count: number | undefined
+      items: any[]
+    }[]
+  >
 }
 const PAGE_SPACING = 10
 const Layout: FC<LayoutProps> = ({
@@ -48,11 +76,31 @@ const Layout: FC<LayoutProps> = ({
   const [rotation, setRotation] = useState(0)
   const [scale, setScale] = useState(pageSize.scale)
   const [enablePan, setEnablePan] = useState(false)
-
+  const textRef = useRef<
+    {
+      id: number
+      str: string
+      page: number
+      prepared: Fuzzysort.Prepared
+    }[]
+  >([])
   const scaleRef = useRef(pageSize.scale)
   const currentRangeRef = useRef<Range>()
-  useImperativeHandle(innerRef, () => ({ jumpToPage, zoomIn, zoomOut, autoFit, togglePan }))
+  useImperativeHandle(innerRef, () => ({
+    jumpToPage,
+    zoomIn,
+    zoomOut,
+    autoFit,
+    togglePan,
+    getOutline,
+    jumpToDest,
+    search,
+    highlightText,
+    jumpToOffset,
+    scrollBy
+  }))
   const { height, width } = pageSize
+  const innerEmitter = useEventEmitter(PdfViewInnerScope)
   const rect =
     Math.abs(rotation) % 180 === 0
       ? {
@@ -102,17 +150,39 @@ const Layout: FC<LayoutProps> = ({
       scrollLeft: scrollLeft * (scale / previousScale)
     }
     virtualizer.measure()
-    virtualizer.scrollToOffset(newOffset.scrollTop, { smoothScroll: false })
+    virtualizer.scrollToOffset(newOffset.scrollTop, { behavior: 'auto' })
   }, [scale])
   const jumpToPage = (pageIndex: number) => {
     if (pageIndex >= 0 && pageIndex < numPages) {
-      const currentStartIndex = currentRangeRef.current?.startIndex || 0
-      let smoothScroll = true
-      if (Math.abs(pageIndex - currentStartIndex) > 5) {
-        smoothScroll = false
-      }
-      virtualizer.scrollToIndex(pageIndex, { align: 'start', smoothScroll })
+      console.log(pageIndex)
+      virtualizer.scrollToIndex(pageIndex, { align: 'start', behavior: 'auto' })
     }
+  }
+  const jumpToDest = async (dest: string | any[]) => {
+    let realDest
+    if (typeof dest === 'string') {
+      realDest = await doc.getDestination(dest)
+    } else {
+      realDest = dest
+    }
+    if (!Array.isArray(realDest)) return
+    const destRef = realDest[0]
+    let pageNum = undefined
+    if (typeof destRef === 'object' && destRef !== null) {
+      pageNum = await doc.getPageIndex(destRef)
+    }
+    if (Number.isInteger(destRef)) {
+      pageNum = destRef + 1
+    }
+    if (pageNum !== undefined) {
+      jumpToPage(pageNum)
+    }
+  }
+  const jumpToOffset = (offset: number) => {
+    virtualizer.scrollToOffset(offset, { behavior: 'auto' })
+  }
+  const scrollBy = (offset: number) => {
+    virtualizer.scrollBy(offset)
   }
   const zoomIn = () => {
     const nextScale = increaseLevel(scale)
@@ -120,6 +190,7 @@ const Layout: FC<LayoutProps> = ({
   }
   const zoomOut = () => {
     const nextScale = decreaseLevel(scale)
+    console.log(nextScale)
     setScale(nextScale)
   }
   const autoFit = () => {
@@ -127,6 +198,27 @@ const Layout: FC<LayoutProps> = ({
   }
   const togglePan = () => {
     setEnablePan(!enablePan)
+  }
+  const getOutline = async () => {
+    const outline = await doc.getOutline()
+    return outline
+  }
+  const search = (s: string) => {
+    const result = fuzzysort.go(s, textRef.current, { key: 'prepared', limit: 50 })
+    return result
+  }
+  const highlightText = (str: string, pageIndex: number) => {
+    innerEmitter.emit(
+      'pdf',
+      {
+        type: 'highlightText',
+        data: {
+          page: pageIndex,
+          str
+        }
+      },
+      true
+    )
   }
   const renderViewer = () => {
     return (
@@ -174,7 +266,29 @@ const Layout: FC<LayoutProps> = ({
   )
   useEffect(() => {
     if (initialPage) {
-      virtualizer.scrollToIndex(initialPage, { align: 'start', smoothScroll: false })
+      virtualizer.scrollToIndex(initialPage, { align: 'start', behavior: 'auto' })
+    }
+    if (textRef.current.length === 0) {
+      const map = textRef.current
+      for (let i = 1; i < doc.numPages; i++) {
+        requestIdleCallback(() => {
+          doc.getPage(i).then(page => {
+            page.getTextContent().then(text => {
+              const hasStrTexts = text.items.filter(i => (i as TextItem).str) as TextItem[]
+              hasStrTexts.forEach(t => {
+                const str = t.str
+                const id = Id.getId()
+                map.push({
+                  id,
+                  str,
+                  page: i - 1,
+                  prepared: fuzzysort.prepare(str)
+                })
+              })
+            })
+          })
+        })
+      }
     }
     const pages = pagesRef.current
     if (pages) {

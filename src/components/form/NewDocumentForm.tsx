@@ -1,4 +1,3 @@
-import useDb from '@/hooks/stores/useDb'
 import useTime from '@/hooks/utils/useTime'
 import usePdfjs from '@/hooks/utils/usePdfjs'
 import { ipcInstance } from '@/plugins'
@@ -36,7 +35,7 @@ const NewDocumentForm: FC<NewDocumentFormProps> = ({ onBack, onSubmit, collectio
       toast.error('Not Allowed File')
     }
   }, 'application/pdf')
-  const { insertDocument } = useDocumentStore()
+  const { addDocument } = useDocumentStore()
   const { t } = useTranslation()
   const fileRef = useRef<File>()
   const forceRender = useUpdate()
@@ -46,7 +45,7 @@ const NewDocumentForm: FC<NewDocumentFormProps> = ({ onBack, onSubmit, collectio
     createdAt: useTime(),
     name: 'Untitled Document'
   })
-  const blobDb = useDb('blobs')
+
   const pdfjs = usePdfjs()
   const handleExtractMetadataOfPdf = (file: File) => {
     file.arrayBuffer().then(buffer => {
@@ -87,7 +86,7 @@ const NewDocumentForm: FC<NewDocumentFormProps> = ({ onBack, onSubmit, collectio
   const handleInsertDocument = async () => {
     const result = await ipcInstance.send('copyPdf', fileRef.current?.path, fileRef.current?.name)
     pdfDocument.current.fileUrl = result.data
-    insertDocument(pdfDocument.current)
+    addDocument(pdfDocument.current)
   }
   const renderUploadFile = () => {
     return (

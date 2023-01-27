@@ -1,7 +1,7 @@
 import { GlobalDragOverlayInstance, useGlobalIsDragging } from '@/components/GlobalDragOverlay'
 import { useMemoizedFn } from '@/hooks'
 import useCollectionStore from '@/stores/collection.store'
-import { useEffect, useRef, useState } from 'react'
+import { RefObject, useEffect, useRef, useState } from 'react'
 import { ICollection, ICollectionItem, INote, IPdfDocument } from '~/typings/data'
 
 export let sidebarDraggingItem = null
@@ -9,7 +9,7 @@ export let sidebarDraggingParentCollectionId = null
 const useSidebarItemDrag = (
   item: any,
   type: 'document' | 'collection' | 'note',
-  draggableElement?: HTMLElement | null,
+  draggableElementRef?: RefObject<HTMLElement>,
   parentCollectionId?: number
 ) => {
   const [isDragging] = useGlobalIsDragging()
@@ -25,9 +25,9 @@ const useSidebarItemDrag = (
       setIsPressed(true)
       sidebarDraggingItem = item
       sidebarDraggingParentCollectionId = parentCollectionId
-      const cloned = draggableElement?.cloneNode(true) as HTMLElement
-      cloned.style.width = `${draggableElement?.clientWidth}px`
-      cloned.style.height = `${draggableElement?.clientHeight}px`
+      const cloned = draggableElementRef?.current?.cloneNode(true) as HTMLElement
+      cloned.style.width = `${draggableElementRef?.current?.clientWidth}px`
+      cloned.style.height = `${draggableElementRef?.current?.clientHeight}px`
       GlobalDragOverlayInstance.addDragElements?.(cloned)
     }
     if (e.type === 'pointermove') {
@@ -142,18 +142,18 @@ const useSidebarItemDrag = (
     }
   })
   useEffect(() => {
-    draggableElement?.addEventListener('pointerdown', mouseHandler)
-    draggableElement?.addEventListener('pointermove', mouseHandler)
-    draggableElement?.addEventListener('pointerleave', mouseHandler)
-    draggableElement?.addEventListener('pointerenter', mouseHandler)
-    draggableElement?.addEventListener('pointerup', selfPointerUpHandler)
+    draggableElementRef?.current?.addEventListener('pointerdown', mouseHandler)
+    draggableElementRef?.current?.addEventListener('pointermove', mouseHandler)
+    draggableElementRef?.current?.addEventListener('pointerleave', mouseHandler)
+    draggableElementRef?.current?.addEventListener('pointerenter', mouseHandler)
+    draggableElementRef?.current?.addEventListener('pointerup', selfPointerUpHandler)
     document.addEventListener('pointerup', mouseHandler)
     return () => {
-      draggableElement?.removeEventListener('pointerdown', mouseHandler)
-      draggableElement?.removeEventListener('pointermove', mouseHandler)
-      draggableElement?.removeEventListener('pointerleave', mouseHandler)
-      draggableElement?.removeEventListener('pointerenter', mouseHandler)
-      draggableElement?.removeEventListener('pointerup', selfPointerUpHandler)
+      draggableElementRef?.current?.removeEventListener('pointerdown', mouseHandler)
+      draggableElementRef?.current?.removeEventListener('pointermove', mouseHandler)
+      draggableElementRef?.current?.removeEventListener('pointerleave', mouseHandler)
+      draggableElementRef?.current?.removeEventListener('pointerenter', mouseHandler)
+      draggableElementRef?.current?.removeEventListener('pointerup', selfPointerUpHandler)
       document.removeEventListener('pointerup', mouseHandler)
     }
   })

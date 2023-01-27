@@ -37,12 +37,12 @@ type BlockProps = {
   onMouseMove?: (e: MouseEvent, element: CustomElement) => void
   onNestedListItem?: (isNested: boolean) => void
   element?: CustomElement
-  scrollElement?: HTMLDivElement | null
+  scrollElementRef?: RefObject<HTMLElement>
 }
 const CardBlocks = ['pdf', 'book-highlight', 'note']
 const Block: FC<React.DetailedHTMLProps<React.HTMLAttributes<HTMLDivElement>, HTMLDivElement> & BlockProps & RenderElementProps> = memo(
   ({
-    scrollElement,
+    scrollElementRef,
     blockId,
     children,
     ratio,
@@ -93,8 +93,9 @@ const Block: FC<React.DetailedHTMLProps<React.HTMLAttributes<HTMLDivElement>, HT
     useLayoutEffect(() => {
       if (isSelecting) {
         const block = blockRef.current
-        if (block && scrollElement) {
-          distanceToScrollElementRef.current = getDistanceBetweenElementAndScrollableElement(block, scrollElement)
+        if (block && scrollElementRef?.current) {
+          distanceToScrollElementRef.current = getDistanceBetweenElementAndScrollableElement(block, scrollElementRef.current)
+          console.log(distanceToScrollElementRef.current)
         }
       }
     })
@@ -136,8 +137,8 @@ const Block: FC<React.DetailedHTMLProps<React.HTMLAttributes<HTMLDivElement>, HT
     })
     const handleSelectBlock = useMemoizedFn(() => {
       setSelected(true)
-      if (scrollElement) {
-        scrollToTarget(blockRef.current, scrollElement)
+      if (scrollElementRef?.current) {
+        scrollToTarget(blockRef.current, scrollElementRef.current)
       }
     })
     const indicatorStyle: CSSProperties = {
@@ -216,7 +217,7 @@ const Block: FC<React.DetailedHTMLProps<React.HTMLAttributes<HTMLDivElement>, HT
           '--text-fill': linearFont ? 'transparent' : undefined,
           '--block-rgb-bg': !linearBg && rgbaBg ? `${rgbaBg.r},${rgbaBg.g},${rgbaBg.b}` : undefined,
           '--block-linear-bg': linearBg ? background : undefined,
-          '--block-font-color': color,
+          '--block-font-color': linearFont ? undefined : color,
           color: 'var(--block-font-color)',
           ...rest.style
         }}

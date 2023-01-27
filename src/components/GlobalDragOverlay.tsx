@@ -69,7 +69,7 @@ const GlobalDragOverlay = memo(() => {
   const [isDragging, setIsDragging] = useGlobalIsDragging()
   const dropHandler = useMemo(() => new GlobalEventHandler(), [])
   const [metaObject, setMetaObject] = useState<MetaObject & { noteId?: number }>()
-  const { addMetaLink, addMetaObject, getMetaObjectByNoteId, getMetaObjectByDocumentId, getMetaObjectById } = useMetaStore()
+  const { addMetaLink, addMetaObject, getMetaObjectById, getMetaObjectByObjectId } = useMetaStore()
   useEffect(() => {
     emitter.addListener('global', dropHandler)
     return () => {
@@ -85,6 +85,7 @@ const GlobalDragOverlay = memo(() => {
         id: Id.getId(),
         type: 'normal'
       }
+      let alreadyHasMeta = false
       switch (dragElement?.type) {
         case 'image': {
           normalizedMetaObject.type = 'image'
@@ -93,6 +94,12 @@ const GlobalDragOverlay = memo(() => {
           break
         }
         case 'pdfElement': {
+          console.log(dragElement)
+          const labelAlreadyHasMeta = getMetaObjectByObjectId(dragElement.labelId)
+          if (labelAlreadyHasMeta) {
+            alreadyHasMeta = true
+            normalizedMetaObject.id = labelAlreadyHasMeta.id
+          }
           normalizedMetaObject.type = 'pdfElement'
           normalizedMetaObject.objectId = dragElement.labelId
           normalizedMetaObject.name = dragElement.content.slice(0, 50) || 'Unnamed object'
@@ -103,12 +110,12 @@ const GlobalDragOverlay = memo(() => {
           normalizedMetaObject.description = dragElement.content
           normalizedMetaObject.pdfId = dragElement.pdfId
           const pdfMeta =
-            (await getMetaObjectByDocumentId(dragElement.pdfId)) || (await addMetaObject({ type: 'pdf', objectId: dragElement.pdfId }))
+            (await getMetaObjectByObjectId(dragElement.pdfId)) || (await addMetaObject({ type: 'pdf', objectId: dragElement.pdfId }))
           const metaLink: MetaLink = {
             sourceId: pdfMeta.id,
-            targetId: normalizedMetaObject.id
+            targetId: labelAlreadyHasMeta?.id || normalizedMetaObject.id
           }
-          setTimeout(() => addMetaLink(metaLink), 100)
+          addMetaLink(metaLink)
           break
         }
         case 'noteElement': {
@@ -139,7 +146,7 @@ const GlobalDragOverlay = memo(() => {
           const { id: noteId, metaId } = note
           const noteMeta = metaId
             ? await getMetaObjectById(metaId)
-            : (await getMetaObjectByNoteId(noteId)) ||
+            : (await getMetaObjectByObjectId(noteId)) ||
               (await addMetaObject({
                 objectId: noteId,
                 type: 'note'
@@ -147,10 +154,11 @@ const GlobalDragOverlay = memo(() => {
 
           if (!noteMeta) break
           const forbidAddNewMetaObjectTypes = ['collection', 'metaElement']
-          const shouldAdd = dragElement?.type && !forbidAddNewMetaObjectTypes.includes(dragElement.type)
-          setTimeout(() => {
-            shouldAdd && addMetaObject(normalizedMetaObject)
-          }, 100)
+
+          const shouldAdd = dragElement?.type && !forbidAddNewMetaObjectTypes.includes(dragElement.type) && !alreadyHasMeta
+
+          shouldAdd && addMetaObject(normalizedMetaObject)
+
           const metaLink: Partial<MetaLink> = {
             sourceId: normalizedMetaObject.id!,
             targetId: noteMeta.id
@@ -244,7 +252,7 @@ const GlobalDragOverlay = memo(() => {
             addMetaObject(obj)
             if (obj.type === 'noteElement' && noteId) {
               const noteMeta =
-                (await getMetaObjectByNoteId(noteId)) ||
+                (await getMetaObjectByObjectId(noteId)) ||
                 (await addMetaObject({
                   objectId: noteId,
                   type: 'note'
@@ -257,7 +265,7 @@ const GlobalDragOverlay = memo(() => {
               addMetaLink(metaLink)
             }
             if (obj.type === 'pdfElement' && pdfId) {
-              const pdfMeta = (await getMetaObjectByDocumentId(pdfId)) || (await addMetaObject({ objectId: pdfId, type: 'pdf' }))
+              const pdfMeta = (await getMetaObjectByObjectId(pdfId)) || (await addMetaObject({ objectId: pdfId, type: 'pdf' }))
               const metaLink: Partial<MetaLink> = {
                 sourceId: obj.id,
                 targetId: pdfMeta.id

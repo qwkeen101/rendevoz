@@ -32,6 +32,7 @@ const ToolTip: FC<PropsWithChildren<ToolTipProps>> = ({ content, children, posit
   })
   const childRef = useRef<HTMLElement>(null)
   const isInRef = useRef(false)
+  const isKeyDownRef = useRef(false)
   const handleChildRef = useCallback(
     (node: HTMLElement) => {
       childRef.current = node
@@ -46,15 +47,15 @@ const ToolTip: FC<PropsWithChildren<ToolTipProps>> = ({ content, children, posit
     [ref]
   )
   const handleMouseEvent = (e: MouseEvent) => {
-    if (e.type === 'click') {
-      isInRef.current = false
+    if (e.type === 'mousedown') {
+      isKeyDownRef.current = true
       setOpen(false)
     }
     if (e.type === 'mouseenter') {
       isInRef.current = true
       if (delay) {
         setTimeout(() => {
-          if (isInRef.current) {
+          if (isInRef.current && !isKeyDownRef.current) {
             setOpen(true)
           }
         }, delay)
@@ -72,18 +73,19 @@ const ToolTip: FC<PropsWithChildren<ToolTipProps>> = ({ content, children, posit
     }
     if (e.type === 'mouseleave') {
       isInRef.current = false
+      isKeyDownRef.current = false
       setOpen(false)
     }
   }
   useEffect(() => {
     const child = childRef.current
     if (child) {
-      child.addEventListener('click', handleMouseEvent)
+      child.addEventListener('mousedown', handleMouseEvent)
       child.addEventListener('mouseenter', handleMouseEvent)
       child.addEventListener('mouseleave', handleMouseEvent)
     }
     return () => {
-      child?.addEventListener('click', handleMouseEvent)
+      child?.removeEventListener('mousedown', handleMouseEvent)
       child?.removeEventListener('mouseenter', handleMouseEvent)
       child?.removeEventListener('mouseleave', handleMouseEvent)
     }

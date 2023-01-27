@@ -8,10 +8,12 @@ import { motion } from 'framer-motion'
 import { NodeMouseEventHandler } from '../NodeContainer'
 import IconNode from './IconNode'
 import { notesAtom } from '@/stores/note.store'
-import { atom, useAtomValue } from 'jotai'
+import { atom } from 'jotai/vanilla'
+import { useAtomValue } from 'jotai/react'
 import { GlobalScope } from '@/jotai/jotaiScope'
 import { documentsAtom } from '@/stores/document.store'
 import { INote, IPdfDocument } from '~/typings/data'
+import { globalStore } from '@/stores/stores'
 
 interface NodeProps {
   node: GraphNode
@@ -43,7 +45,7 @@ const Node: FC<NodeProps> = memo(({ node, onMouseEnter, onMouseLeave, onContextM
     }
     return atom(null)
   }, [node.objectId])
-  const object = useAtomValue(nodeObjectAtom, GlobalScope)
+  const object = useAtomValue(nodeObjectAtom, { store: globalStore })
   const renderNode = () => {
     if (node.type === 'note') {
       return <IconNode node={node} label={(object as INote)?.title} />
@@ -52,7 +54,7 @@ const Node: FC<NodeProps> = memo(({ node, onMouseEnter, onMouseLeave, onContextM
       return <IconNode node={node} />
     }
     if (node.type === 'pdf') {
-      return <ImageNode label={(object as IPdfDocument)?.name} imageUrl={(object as IPdfDocument).metadata?.coverUrl} node={node} />
+      return <ImageNode label={(object as IPdfDocument)?.name} imageUrl={(object as IPdfDocument)?.metadata?.coverUrl} node={node} />
     }
     return <ImageNode node={node} />
   }

@@ -1,12 +1,12 @@
 import useEventEmitter from '@/events/useEventEmitter'
 import { useMemoizedFn } from '@/hooks'
-import { GlobalScope } from '@/jotai/jotaiScope'
 import useMetaStore, { relatedMetaObjectsMapAtom } from '@/stores/meta.store'
+import { globalStore } from '@/stores/stores'
 import Id from '@/utils/id'
 import { css } from '@emotion/css'
 import produce from 'immer'
-import { useAtomValue } from 'jotai'
-import { FC, memo, MouseEvent, useEffect } from 'react'
+import { useAtomValue } from 'jotai/react'
+import { memo, MouseEvent, useEffect } from 'react'
 import { MetaLink } from '~/typings/data'
 import useEdges from '../hooks/useEdges'
 import useGraph from '../hooks/useGraph'
@@ -29,7 +29,7 @@ const NodeContainer = memo(() => {
   const [nodes, setNodes] = useNodes()
   const [edges, setEdges] = useEdges()
   const { addMetaLink } = useMetaStore()
-  const relatedObjectsMap = useAtomValue(relatedMetaObjectsMapAtom, GlobalScope)
+  const relatedObjectsMap = useAtomValue(relatedMetaObjectsMapAtom, { store: globalStore })
   const emitter = useEventEmitter()
   const graph = useGraph()
   useEffect(() => {

@@ -1,10 +1,89 @@
 import Id from '@/utils/id'
+import { Table } from 'dexie'
 import produce from 'immer'
+import { PrimitiveAtom } from 'jotai/vanilla'
+import { Atom } from 'jotai/vanilla'
+import _ from 'lodash'
 import { orderBy } from 'lodash'
 import { IBase } from '~/typings/data'
+import { IStore } from './store.type'
+import { globalStore } from './stores'
 
 type PartialWithId<T> = Partial<T> & { id: number }
 
+const ATOM_QUEUE_MAP = new Map<Atom<any>, StoreDispatchEvent<any>[]>()
+type StoreDispatchEvent<T> = {
+  atom: PrimitiveAtom<Map<number, T>>
+  data: PartialWithId<T>
+  database: Table
+  onFail?: () => void
+} & (
+  | {
+      type: 'add'
+      onSuccess?: (o: T, silent?: boolean) => void
+    }
+  | {
+      type: 'update'
+      onSuccess?: (o: T, silent?: boolean) => void
+    }
+  | {
+      type: 'remove'
+      onSuccess?: (silent?: boolean) => void
+    }
+)
+
+const handleQueue = () => {
+  const DB_ACTION_MAP = new Map<Table, any[]>()
+  Array.from(ATOM_QUEUE_MAP.entries()).forEach(([k, v]) => {
+    const atomValue = globalStore.get(k)
+    const newAtom = produce(atomValue, draft => {
+      v.forEach(i => {
+        const { type, data, database, onSuccess, onFail } = i
+        if (!DB_ACTION_MAP.has(database)) {
+          DB_ACTION_MAP.set(database, [])
+        }
+        const dbActionArr = DB_ACTION_MAP.get(database)!
+        switch (type) {
+          case 'add':
+            draft.set(data.id, data)
+            dbActionArr.push(i)
+            setTimeout(() => onSuccess?.(data))
+            break
+          case 'update': {
+            if (!draft.has(data.id)) {
+              onFail?.()
+              break
+            }
+            const origin = draft.get(data.id)
+            const newObj = Object.assign({}, origin, data)
+            if (_.isEqual(origin, newObj)) break
+            draft.set(data.id, newObj)
+            dbActionArr.push({
+              ...i,
+              data: newObj
+            })
+            setTimeout(() => onSuccess?.(newObj))
+            break
+          }
+          case 'remove':
+            draft.delete(data.id)
+            dbActionArr.push(i)
+            setTimeout(() => onSuccess?.())
+            break
+        }
+      })
+    })
+    globalStore.set(k, newAtom)
+  })
+  ATOM_QUEUE_MAP.clear()
+  Array.from(DB_ACTION_MAP.entries()).forEach(([k, v]) => {
+    const putActionData = v.filter(i => i.type === 'add' || i.type === 'update').map(i => i.data)
+    const removeActionData = v.filter(i => i.type === 'remove').map(i => i.data.id)
+    putActionData.length > 0 && k.bulkPut(putActionData)
+    removeActionData.length > 0 && k.bulkDelete(removeActionData)
+  })
+  DB_ACTION_MAP.clear()
+}
 const BaseStore = {
   clear(data: Map<number, any>) {
     return produce(data, draft => {
@@ -26,12 +105,39 @@ const BaseStore = {
       items.forEach(i => draft.set(i.id, i))
     })
   },
-  buldRemove(ids: number[], data: Map<number,any>){
+  buldRemove(ids: number[], data: Map<number, any>) {
     return produce(data, draft => {
       ids.forEach(i => {
         draft.delete(i)
       })
     })
+  },
+  dispatch<T>({ type, atom, data, database, onSuccess, onFail }: StoreDispatchEvent<T>) {
+    if (!ATOM_QUEUE_MAP.has(atom)) {
+      ATOM_QUEUE_MAP.set(atom, [])
+      const queue = ATOM_QUEUE_MAP.get(atom)
+      queue?.push({
+        type,
+        atom,
+        data,
+        database,
+        onSuccess,
+        onFail
+      })
+      Promise.resolve().then(() => {
+        handleQueue()
+      })
+    } else {
+      const queue = ATOM_QUEUE_MAP.get(atom)
+      queue?.push({
+        type,
+        atom,
+        data,
+        database,
+        onSuccess,
+        onFail
+      })
+    }
   },
   remove(id: number, data: Map<number, any>) {
     return produce(data, draft => {
@@ -54,6 +160,84 @@ const BaseStore = {
       createdAt: Date.now()
     }
   }
+}
+type WrapFunctionWithSuccessAndFail<T> = {
+  [K in keyof T]: (onSuccess?: (...args: any) => void, onFail?: (silent: boolean) => void) => T[K]
+}
+type ILocalStore<T> = {
+  addOne: (onSuccess?: (obj: T, silent: boolean) => void, onFail?: (silent: boolean) => void) => IStore<T>['addOne']
+  deleteOneById: (onSuccess?: (silent: boolean) => void, onFail?: (silent: boolean) => void) => IStore<T>['deleteOneById']
+  getAll: () => IStore<T>['getAll']
+  getOneById: () => IStore<T>['getOneById']
+  updateOne: (onSuccess?: (obj: T, silent: boolean) => void, onFail?: (silent: boolean) => void) => IStore<T>['updateOne']
+}
+export function initializeLocalStore<T>(atom: PrimitiveAtom<Map<number, T>>, database: Table) {
+  const { dispatch, initBaseObject, bulkAdd } = BaseStore
+  const store: ILocalStore<T> = {
+    addOne:
+      (onSuccess, onFail) =>
+      (obj, silent = false) => {
+        return new Promise(res => {
+          const initedObj = initBaseObject(obj)
+          dispatch<T>({
+            type: 'add',
+            data: initedObj,
+            database,
+            atom,
+            onSuccess: o => {
+              res(o)
+              onSuccess?.(o, silent)
+            },
+            onFail: () => onFail?.(silent)
+          })
+        })
+      },
+    deleteOneById:
+      (onSuccess, onFail) =>
+      (id, silent = false) => {
+        return new Promise(res => {
+          dispatch({
+            type: 'remove',
+            data: { id },
+            database,
+            atom,
+            onSuccess: () => {
+              res(true)
+              onSuccess?.(silent)
+            },
+            onFail: () => onFail?.(silent)
+          })
+        })
+      },
+    getAll: () => async () => {
+      const arr = await database.toArray()
+      globalStore.set(atom, bulkAdd(arr, globalStore.get(atom)))
+      return true
+    },
+    getOneById: () => id => {
+      return new Promise(res => {
+        res(globalStore.get(atom).get(id))
+      })
+    },
+    updateOne:
+      (onSuccess, onFail) =>
+      (obj, silent = false) => {
+        return new Promise(res => {
+          dispatch({
+            type: 'update',
+            data: obj,
+            atom,
+            database,
+            onSuccess: obj => {
+              res(obj)
+              onSuccess?.(obj, silent)
+            },
+            onFail: () => onFail?.(silent)
+          })
+        })
+      }
+  }
+  return store as ILocalStore<T>
 }
 
 export default BaseStore

@@ -1,4 +1,4 @@
-import { FC, memo, RefObject, useEffect, useRef } from 'react'
+import { FC, memo, RefObject, useEffect, useMemo, useRef } from 'react'
 import { useIsomorphicLayoutEffect } from 'react-use'
 import { TextContent, TextStyle } from 'pdfjs-dist/types/src/display/api'
 import PdfJs from '../types/pdfJsApi'
@@ -11,6 +11,10 @@ import isHotkey from 'is-hotkey'
 import { useMemoizedFn } from '@/hooks'
 import { PageFunctionRef } from '../types'
 import useSelectingText from '../hooks/useIsSelectingText'
+import useEventEmitter from '@/events/useEventEmitter'
+import { PdfViewInnerScope } from '../Provider'
+import { PdfEventHandler } from '@/events/pdfEvent'
+import useViewer from '@/scenes/pdf/useViewer'
 interface TextLayerProps {
   page: PDFPageProxy
   pageIndex: number
@@ -35,7 +39,29 @@ const TextLayer: FC<TextLayerProps> = ({ page, scale, rotation, width, height, p
   const selectedTextRef = useRef('')
   const [globalSelectingText, setGlobalSelectingText] = useSelectingText()
   const distanceToleranceAfterScale = Math.min(16, DEFAULT_DISTANCE_TOLERANCE * scale)
-
+  const innerEmitter = useEventEmitter(PdfViewInnerScope)
+  const handler = useMemo(() => new PdfEventHandler(), [])
+  const viewer = useViewer()
+  handler.on('highlightText', data => {
+    if (data.page === pageIndex) {
+      const item = textContentBounds.current.find(i => i.str === data.str)
+      emptyTextLayer()
+      if (item) {
+        innerEmitter.removeInterval()
+        viewer.current?.scrollBy(item.offset.top - 300)
+        paint(
+          {
+            x: item.offset.left,
+            y: item.offset.top,
+            width: item.offset.size[0],
+            height: item.offset.size[1],
+            offset: item.offset.trans
+          },
+          DEFAULT_HIGHLIGHT_COLOR
+        )
+      }
+    }
+  })
   const keyboardHandler = useMemoizedFn((e: KeyboardEvent) => {
     const selectedText = Object.values(globalSelectingText.selectedTexts).join(' ')
     if (isHotkey('mod+c', e) && selectedText !== '') {
@@ -144,7 +170,7 @@ const TextLayer: FC<TextLayerProps> = ({ page, scale, rotation, width, height, p
         if (globalSelectingText.startPage === pageIndex) {
           selectText(mousePos.current, { x: width, y: height }, distanceToleranceAfterScale)
         }
-        if(globalSelectingText.startPage! > pageIndex){
+        if (globalSelectingText.startPage! > pageIndex) {
           emptyTextLayer()
         }
       }
@@ -194,6 +220,7 @@ const TextLayer: FC<TextLayerProps> = ({ page, scale, rotation, width, height, p
   pageFunctionRef.current && (pageFunctionRef.current.clearTextLayer = emptyTextLayer)
   useIsomorphicLayoutEffect(() => {
     renderTaskRef.current = new TextLayerRenderTask(viewport)
+    innerEmitter.addListener('pdf', handler)
     page.getTextContent().then(content => {
       emptyTextLayer()
       const canvas = canvasRef.current
@@ -212,6 +239,7 @@ const TextLayer: FC<TextLayerProps> = ({ page, scale, rotation, width, height, p
     })
     return () => {
       emptyTextLayer()
+      innerEmitter.removeListener('pdf', handler)
       const canvas = canvasRef.current
       if (canvas) {
         canvas.removeEventListener('mousedown', mouseEventHandler)

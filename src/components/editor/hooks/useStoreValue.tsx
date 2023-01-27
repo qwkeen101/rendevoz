@@ -6,8 +6,12 @@ import { Descendant } from 'slate'
 import { slateNodesToInsertDelta, YjsEditor } from '../yjs'
 import Id from '@/utils/id'
 import { GlobalProviderMap } from '../Editor'
-import { useMemoizedFn } from '@/hooks'
+import { useDebounceFn, useMemoizedFn } from '@/hooks'
 import { serializeEditor } from '../utils/database/serialize'
+import { toast } from 'react-hot-toast'
+import { Notification } from '@/components'
+import useEventEmitter from '@/events/useEventEmitter'
+import { EditorEventHandler } from '@/events/editorEvent'
 const initial = [
   {
     id: Id.getId(),
@@ -21,8 +25,26 @@ const useStoreValue = (note: INote, editor: CustomEditor, provider, doc, sharedT
   const contentRef = useRef<Descendant[]>()
   const noteId = note?.id
   const contentId = note?.contentId
+  const emitter = useEventEmitter()
 
+  const handler = new EditorEventHandler()
+  const debounceSaveE = useMemoizedFn(data => {
+    if (data.noteId === noteId) {
+      debouncedSave()
+    }
+  })
+  handler.on('operationApplied', debounceSaveE)
+  const { run: debouncedSave } = useDebounceFn(
+    () => {
+      if (editor === EditorInstanceMap.get(noteId)?.values().next().value) {
+        saveNoteAsBuffer(editor.children, note.contentId)
+        toast.success(<Notification title={`📝 ${note.title}`} content="Note is saved." />)
+      }
+    },
+    { wait: 10000 }
+  )
   useEffect(() => {
+    emitter.addListener('editor', handler)
     const cleanUp = () => {
       saveNoteAsBuffer(editor.children, note.contentId)
     }
@@ -51,6 +73,7 @@ const useStoreValue = (note: INote, editor: CustomEditor, provider, doc, sharedT
       })
     }
     return () => {
+      emitter.removeListener('editor', handler)
       window.removeEventListener('beforeunload', cleanUp)
       const contentId = saveNoteAsBuffer(editor.children, note?.contentId)
       const result = []

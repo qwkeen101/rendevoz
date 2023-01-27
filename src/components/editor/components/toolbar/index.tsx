@@ -204,8 +204,6 @@ const EditorToolbar: FC<EditorToolbarProps> = ({
           name="park-font-size-two"
         ></IconWithPopover>
       </Toolbar.Item>
-      <Toolbar.Item tooltip="Turn to Meta object" iconName="park-share-one" onClick={onMetaObject} />
-      <Toolbar.Item tooltip="Turn to Link" iconName="park-link" onClick={onLink} />
     </Toolbar>
   )
   const renderFloatToolbar = () =>

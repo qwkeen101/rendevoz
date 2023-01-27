@@ -1,8 +1,8 @@
 import useEventEmitter from '@/events/useEventEmitter'
-import { useMemoizedFn, useUnMount } from '@/hooks'
+import { useDebounceFn, useMemoizedFn } from '@/hooks'
 import Id from '@/utils/id'
 import { FC, FormEvent, memo, MouseEventHandler, useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { createEditor, Transforms, Descendant, Range } from 'slate'
+import { createEditor, Transforms, Descendant } from 'slate'
 import { withHistory } from 'slate-history'
 import { withReact, ReactEditor } from './slate-react'
 import { CustomElement } from './types'
@@ -11,29 +11,19 @@ import withVoid from './plugins/withVoid'
 import styles from './index.module.less'
 import BlockHandle from './components/blockHandle'
 import useIsDragging from './hooks/useIsDragging'
-import { serializeEditor } from './utils/database/serialize'
 import useNoteStore, { notesAtom } from '@/stores/note.store'
-import useCurrentDocument from '../../hooks/components/useCurrentDocument'
-import useDocumentStore from '@/stores/document.store'
 import { withYjs, YjsEditor } from './yjs'
 import * as Y from 'yjs'
 import { IndexeddbPersistence } from 'y-indexeddb'
-import Modal from '../base/Modal'
-import SaveNoteDialog from '../dialogs/SaveNoteDialog'
-import toast from 'react-hot-toast'
-import produce from 'immer'
-import { ICollection, INote, MetaNoteObject } from '~/typings/data'
-import useCollectionStore from '@/stores/collection.store'
 import withShortcuts from './plugins/withShortcuts'
 import withCustomComponent from './plugins/withCustomComponent'
-import { Content, Icon, Image } from '../base'
+import { Content, Image } from '../base'
 import withEmitter from './plugins/withEmitter'
 import withHtml from './plugins/withHtml'
 import { useTranslation } from 'react-i18next'
 import { ID_TO_ELEMENTS_MAP, SELECTED_BLOCKS_MAP } from './weakMaps'
-import { Noop } from '@/common/types'
 import _ from 'lodash'
-import useMetaStore, { metaObjectsAtom } from '@/stores/meta.store'
+import { metaObjectsAtom } from '@/stores/meta.store'
 import TabTitle from '../layout/TabTitle'
 import useLocalSyncValue from './hooks/useSyncValue'
 import useEditorDrag from './hooks/useEditorDrag'
@@ -43,14 +33,15 @@ import { css } from '@emotion/css'
 import withHandler from './plugins/withHandler'
 import useEditorSelect from './hooks/useEditorSelect'
 import ClassName from '@/styles/classNames'
-import { atom, useAtomValue } from 'jotai'
+import { atom } from 'jotai/vanilla'
+import { useAtomValue } from 'jotai/react'
 import { GlobalScope } from '@/jotai/jotaiScope'
 import useStoreValue from './hooks/useStoreValue'
 import isHotkey from 'is-hotkey'
 import { KEY } from '@/consts/key'
 import classNames from 'classnames'
 import { useNavigate } from 'react-router-dom'
-import { useUpdate } from 'react-use'
+import { globalStore } from '@/stores/stores'
 
 type DragHandleProps = {
   left?: number
@@ -95,11 +86,10 @@ export const EditorV1: FC<EditorProps> = memo(({ id, noteId, readonly, embedded,
   const [dragHandle, setDragHandle] = useState<DragHandleProps>()
   const emitter = useEventEmitter()
   const noteAtom = useMemo(() => atom(get => get(notesAtom).get(noteId)), [noteId])
-  const note = useAtomValue(noteAtom, GlobalScope)
+  const note = useAtomValue(noteAtom, { store: globalStore })
   const metaAtom = useMemo(() => atom(get => (note?.metaId ? get(metaObjectsAtom).get(note.metaId) : null)), [note?.metaId])
-  const metaObject = useAtomValue(metaAtom, GlobalScope)
-  const { fetchOneById: fetchNoteById, updateOne: updateNote } = useNoteStore()
-  const forceUpdate = useUpdate()
+  const metaObject = useAtomValue(metaAtom, { store: globalStore })
+  const { fetchNoteById, updateNote } = useNoteStore()
   useEffect(() => {
     const keyDownHandler = (e: KeyboardEvent) => {
       if (dragHandle?.visible) {
@@ -248,6 +238,16 @@ export const EditorV1: FC<EditorProps> = memo(({ id, noteId, readonly, embedded,
     })
     overlayManager.open()
   }
+  const { run: debouncedUpdateNote } = useDebounceFn(
+    (e: FormEvent<HTMLDivElement>) => {
+      note &&
+        updateNote({
+          id: note?.id,
+          title: e.target.textContent || 'Untitled'
+        })
+    },
+    { wait: 500 }
+  )
   return (
     <div className={styles.editor}>
       <TabTitle disable={readonly} title={note?.title || metaObject?.name || 'Untitled'} />
@@ -314,13 +314,7 @@ export const EditorV1: FC<EditorProps> = memo(({ id, noteId, readonly, embedded,
               </Content>
             )}
             <div
-              onInput={useMemoizedFn((e: FormEvent<HTMLDivElement>) => {
-                note &&
-                  updateNote({
-                    id: note?.id,
-                    title: e.currentTarget.textContent || 'Untitled'
-                  })
-              })}
+              onInput={debouncedUpdateNote}
               onBlur={() => {
                 if (titleRef.current?.textContent === '') {
                   titleRef.current && (titleRef.current.textContent = 'Untitled')

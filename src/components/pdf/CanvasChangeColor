@@ -1,0 +1,32 @@
+// todo: canvas change render text & background color
+// CanvasRenderingContext2D.prototype.fillText = (function () {
+//   const original = CanvasRenderingContext2D.prototype.fillText
+//   return function () {
+//     const orig = this['fillStyle']
+//     this['fillStyle'] = 'red'
+//     const res = original.apply(this, arguments)
+//     this['fillStyle'] = orig
+//     // return res
+//   }
+// })()
+// CanvasRenderingContext2D.prototype.fillRect = (function () {
+//   const original = CanvasRenderingContext2D.prototype.fillRect
+//   return function () {
+//     const orig = this['fillStyle']
+//     this['fillStyle'] = 'rgb(255, 230, 230)'
+//     const res = original.apply(this, arguments)
+//     this['fillStyle'] = orig
+//     // return res
+//   }
+// })()
+// CanvasRenderingContext2D.prototype.fill = (function () {
+//   const original = CanvasRenderingContext2D.prototype.fill
+//   return function () {
+//     const orig = this['fillStyle']
+//     this['fillStyle'] = 'red'
+//     const res = original.apply(this, arguments)
+//     this['fillStyle'] = orig
+//     // do something else
+//     return res
+//   }
+// })()

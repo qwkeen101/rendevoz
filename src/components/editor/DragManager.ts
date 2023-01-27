@@ -308,12 +308,15 @@ class DragManager {
         ID_TO_ELEMENTS_MAP.get(this.editor)?.get(id)?.changeIndicator(null)
         if (selectedBlocksMap && selectedBlocksMap.size > 0) {
           const selectedBlocks = Array.from(selectedBlocksMap.values())
-          const selectedElements = selectedBlocks.map(i => this.elementsMap?.get(getElementId(i))?.getElement()).filter(i => !!i)
+          const selectedElements = selectedBlocks
+            .map(i => ID_TO_ELEMENTS_MAP.get(this.editor)?.get(getElementId(i))?.getElement())
+            .filter(i => !!i)
           if (selectedElements.length === 1) {
             const currPath = ReactEditor.findPath(this.editor, selectedElements[0])
             moveSingleElement(this.editor, currPath, targetElement, targetPath, direction, isNested)
             return true
           }
+          console.log('move multiple elements!', selectedElements, selectedBlocks)
           moveMultiElements(this.editor, selectedElements, targetElement, targetPath, direction, isNested)
           return true
         }
@@ -355,6 +358,7 @@ class DragManager {
                     selectedText: globalDraggingEle.content,
                     page: globalDraggingEle.page,
                     documentId: globalDraggingEle.pdfId,
+                    originId: globalDraggingEle.labelId,
                     children: [{ text: '' }]
                   }
                   break

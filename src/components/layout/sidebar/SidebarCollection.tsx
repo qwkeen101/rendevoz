@@ -1,18 +1,22 @@
 import { AnimatePopover } from '@/components/base'
 import Modal from '@/components/base/Modal'
+import EditDocumentForm from '@/components/form/EditDocumentForm'
+import EditNoteForm from '@/components/form/EditNoteForm'
 import NewCollectionForm from '@/components/form/NewCollectionForm'
 import { GlobalDragOverlayInstance, useGlobalIsDragging } from '@/components/GlobalDragOverlay'
 import Zindexes from '@/consts/zindex'
 import { useMemoizedFn, useToggle } from '@/hooks'
 import { GlobalScope } from '@/jotai/jotaiScope'
-import useCollectionStore, { collectionsAtom } from '@/stores/collection.store'
+import useCollectionStore, { collectionsAtom, rootCollectionsAtom } from '@/stores/collection.store'
 import useDocumentStore, { documentsAtom } from '@/stores/document.store'
 import useNoteStore, { notesAtom } from '@/stores/note.store'
+import { globalStore } from '@/stores/stores'
 import ClassName from '@/styles/classNames'
 import getEmoji from '@/utils/emoji'
 import { css } from '@emotion/css'
-import { motion } from 'framer-motion'
-import { atom, useAtomValue } from 'jotai'
+import { AnimatePresence, motion } from 'framer-motion'
+import { useAtomValue } from 'jotai/react'
+import { atom } from 'jotai/vanilla'
 import { memo, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ICollectionItem } from '~/typings/data'
@@ -22,7 +26,7 @@ import useSidebarItemContextMenu from './useSidebarItemContextMenu'
 import useSidebarItemDrag, { sidebarDraggingItem, sidebarDraggingParentCollectionId } from './useSidebarItemDrag'
 
 const SidebarCollection = () => {
-  const { rootCollections } = useCollectionStore()
+  const rootCollections = useAtomValue(rootCollectionsAtom, { store: globalStore })
   const [newCollectionVisible, setNewCollectionVisible] = useState(false)
   const [globalIsDragging] = useGlobalIsDragging()
   const containerRef = useRef<HTMLDivElement>(null)
@@ -117,32 +121,28 @@ const linearToSvg = (linear: string) => {
 export const SidebarCollectionItem = memo(({ collectionId, parentCollectionId }: { collectionId: number; parentCollectionId?: number }) => {
   const { updateCollection, deleteCollection } = useCollectionStore()
   const collectionAtom = useMemo(() => atom(get => get(collectionsAtom).get(collectionId)), [collectionId])
-  const collection = useAtomValue(collectionAtom, GlobalScope)
-  const [emoji, setEmoji] = useState<any>()
+  const collection = useAtomValue(collectionAtom, { store: globalStore })
+
   const items = collection?.items
   const childrenCollections = items?.filter(i => i.type === 'collection' && i.id) as Required<ICollectionItem>[]
   const childrenNotes = items?.filter(i => i.type === 'note' && i.id) as Required<ICollectionItem>[]
   const childrenDocuments = items?.filter(i => i.type === 'document' && i.id) as Required<ICollectionItem>[]
   const [hideChildren, toggleHideChildren] = useToggle(true)
+  const [editModalVisible, toggleEditModalVisible] = useToggle(false)
   const ref = useRef<HTMLDivElement>(null)
-  const { droppable, hovered } = useSidebarItemDrag(collection, 'collection', ref.current, parentCollectionId)
+  const { droppable, hovered } = useSidebarItemDrag(collection, 'collection', ref, parentCollectionId)
   const { contextMenuPortal } = useSidebarItemContextMenu(
-    ref.current,
+    ref,
     {
       pinned: collection?.pinned,
       name: collection?.name,
       onPin: () => collection && updateCollection({ id: collection.id, pinned: !collection.pinned }),
-      onDelete: () => collection && deleteCollection(collection.id)
+      onDelete: () => collection && deleteCollection(collection.id),
+      onEdit: toggleEditModalVisible
     },
     collection
   )
-  useEffect(() => {
-    collection?.icon && getEmoji(collection.icon).then(data => setEmoji(data))
-  }, [collection?.icon])
 
-  const linearFontColor = collection?.color?.startsWith('linear')
-  const linearId = collection?.color
-  const linearColors = linearFontColor && linearId && linearToSvg(linearId)
   if (!collection || collection.deleted) return null
   return (
     <Content
@@ -153,6 +153,14 @@ export const SidebarCollectionItem = memo(({ collectionId, parentCollectionId }:
         userSelect: 'none'
       })}
     >
+      <Modal noStyle visible={editModalVisible} onClose={toggleEditModalVisible}>
+        <NewCollectionForm
+          isEditing
+          currentCollection={collection}
+          onAddCollection={toggleEditModalVisible}
+          onBack={toggleEditModalVisible}
+        />
+      </Modal>
       {contextMenuPortal}
       <AnimatePopover
         visible={hovered}
@@ -205,68 +213,37 @@ export const SidebarCollectionItem = memo(({ collectionId, parentCollectionId }:
             theme="filled"
             name="park-right-one"
           />
-          <Content flex alignItems="center" gap={10} style={{ overflow: 'hidden' }}>
-            {emoji ? (
-              <img
-                src="data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw=="
-                style={{
-                  width: '1em',
-                  height: '1em',
-                  backgroundImage: `url(${emoji?.imageSrc})`,
-                  backgroundPositionX: `${(emoji?.x * 100) / 60}%`,
-                  backgroundPositionY: `${(emoji?.y * 100) / 60}%`,
-                  backgroundRepeat: 'no-repeat',
-                  backgroundSize: '6100% 6100%',
-                  verticalAlign: '-0.1em',
-                  marginRight: 2
-                }}
-              />
-            ) : (
-              <>
-                <Icon fill={linearColors ? linearColors[(linearColors.length / 2) | 0] : collection.color} name="park-folder-close" />
-              </>
-            )}
-            <div
-              style={{
-                color: collection.color,
-                backgroundImage: linearFontColor ? collection.color : undefined
-              }}
-              className={css([
-                ClassName.ellipsisFont(1),
-                linearFontColor && {
-                  WebkitBackgroundClip: 'text',
-                  WebkitTextFillColor: 'transparent'
-                }
-              ])}
-            >
-              {collection.name}
-            </div>
-          </Content>
+          {collection && <IconNameItem name={collection.name} color={collection.color} icon={collection.icon || 'park-folder-close'} />}
         </Content>
       </AnimatePopover>
-      <motion.div
-        initial={{ opacity: 0, height: 0 }}
-        animate={{
-          opacity: hideChildren ? 0 : 1,
-          height: hideChildren ? 0 : 'auto'
-        }}
-        className={css({
-          paddingLeft: 15,
-          display: 'flex',
-          flexDirection: 'column',
-          overflow: 'hidden'
-        })}
-      >
-        {childrenCollections?.map(i => (
-          <SidebarCollectionItem key={i.id} collectionId={i.id} parentCollectionId={collection.id} />
-        ))}
-        {childrenDocuments?.map(i => (
-          <SidebarDocumentItem key={i.id} documentId={i.id} parentCollectionId={collection.id} />
-        ))}
-        {childrenNotes?.map(i => (
-          <SidebarNoteItem key={i.id} noteId={i.id} parentCollectionId={collection.id} />
-        ))}
-      </motion.div>
+      <AnimatePresence>
+        {!hideChildren && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{
+              opacity: 1,
+              height: 'auto'
+            }}
+            exit={{ opacity: 0, height: 0 }}
+            className={css({
+              paddingLeft: 15,
+              display: 'flex',
+              flexDirection: 'column',
+              overflow: 'hidden'
+            })}
+          >
+            {childrenCollections?.map(i => (
+              <SidebarCollectionItem key={i.id} collectionId={i.id} parentCollectionId={collection.id} />
+            ))}
+            {childrenDocuments?.map(i => (
+              <SidebarDocumentItem key={i.id} documentId={i.id} parentCollectionId={collection.id} />
+            ))}
+            {childrenNotes?.map(i => (
+              <SidebarNoteItem key={i.id} noteId={i.id} parentCollectionId={collection.id} />
+            ))}
+          </motion.div>
+        )}
+      </AnimatePresence>
     </Content>
   )
 })
@@ -274,17 +251,17 @@ export const SidebarCollectionItem = memo(({ collectionId, parentCollectionId }:
 export const SidebarDocumentItem = ({ documentId, parentCollectionId }: { documentId: number; parentCollectionId?: number }) => {
   const navigate = useNavigate()
   const documentAtom = useMemo(() => atom(get => get(documentsAtom).get(documentId)), [documentId])
-  const document = useAtomValue(documentAtom, GlobalScope) || {}
+  const document = useAtomValue(documentAtom, { store: globalStore }) || {}
   const ref = useRef<HTMLDivElement>(null)
-
-  useSidebarItemDrag(document, 'document', ref.current, parentCollectionId)
-  const { updateDocument, deleteDocumentById } = useDocumentStore()
-  const { contextMenuPortal } = useSidebarItemContextMenu(ref.current, {
+  const [editModalVisible, toggleEditModalVisible] = useToggle(false)
+  useSidebarItemDrag(document, 'document', ref, parentCollectionId)
+  const { updateDocument, deleteDocument } = useDocumentStore()
+  const { contextMenuPortal } = useSidebarItemContextMenu(ref, {
     pinned: document.pinned,
     name: document.name,
-    onRename: name => updateDocument({ id: document.id, name }),
+    onEdit: toggleEditModalVisible,
     onPin: () => updateDocument({ id: document.id, pinned: !document.pinned }),
-    onDelete: () => deleteDocumentById(document.id)
+    onDelete: () => deleteDocument(document.id)
   })
   if (!document || document.deleted) return null
   return (
@@ -304,6 +281,17 @@ export const SidebarDocumentItem = ({ documentId, parentCollectionId }: { docume
       })}
     >
       {contextMenuPortal}
+      <Modal visible={editModalVisible} onClose={toggleEditModalVisible}>
+        <EditDocumentForm
+          onBack={toggleEditModalVisible}
+          initialObject={document}
+          onSubmit={obj => {
+            console.log(obj)
+            updateDocument(obj)
+            toggleEditModalVisible()
+          }}
+        />
+      </Modal>
       <Icon name="park-file-pdf" />
       <div
         className={css({
@@ -322,19 +310,14 @@ export const SidebarNoteItem = ({ noteId, parentCollectionId }: { noteId: number
   const navigate = useNavigate()
   const ref = useRef<HTMLDivElement>(null)
   const noteAtom = useMemo(() => atom(get => get(notesAtom).get(noteId)), [noteId])
-  const note = useAtomValue(noteAtom, GlobalScope)
-  useSidebarItemDrag(note, 'note', ref.current, parentCollectionId)
+  const note = useAtomValue(noteAtom, { store: globalStore })
+  const [editModalVisible, toggleEditModalVisible] = useToggle(false)
+  useSidebarItemDrag(note, 'note', ref, parentCollectionId)
   const { updateNote, deleteNote } = useNoteStore()
-  const { contextMenuPortal } = useSidebarItemContextMenu(ref.current, {
+  const { contextMenuPortal } = useSidebarItemContextMenu(ref, {
     pinned: note?.pinned,
     name: note?.title,
-    onRename: name => {
-      note &&
-        updateNote({
-          id: note.id,
-          title: name
-        })
-    },
+    onEdit: toggleEditModalVisible,
     onPin: () => {
       note &&
         updateNote({
@@ -361,18 +344,69 @@ export const SidebarNoteItem = ({ noteId, parentCollectionId }: { noteId: number
         }
       })}
     >
+      <Modal visible={editModalVisible} onClose={toggleEditModalVisible} noStyle>
+        <EditNoteForm
+          onBack={toggleEditModalVisible}
+          initialObject={note}
+          onSubmit={n => {
+            n.id && updateNote(n)
+            toggleEditModalVisible()
+          }}
+        />
+      </Modal>
       {contextMenuPortal}
-      <Icon name="park-notes" />
-      <div
-        className={css({
-          whiteSpace: 'nowrap',
-          overflow: 'hidden',
-          textOverflow: 'ellipsis'
-        })}
-      >
-        {note.title}
-      </div>
+      <IconNameItem icon={note.icon || 'park-notes'} name={note.title} color={note.color} />
     </Content>
   )
 }
+
+const IconNameItem = memo(({ name, icon, color }: { name?: string; icon?: string; color?: string }) => {
+  const isPark = icon?.startsWith('park')
+  const [emoji, setEmoji] = useState<any>()
+  const linearFontColor = color?.startsWith('linear')
+  const linearColors = color && linearFontColor && linearToSvg(color)
+  useEffect(() => {
+    if (!isPark) {
+      icon && getEmoji(icon).then(data => setEmoji(data))
+    }
+  }, [isPark, icon])
+  return (
+    <Content flex alignItems="center" gap={10} style={{ overflow: 'hidden' }}>
+      {emoji ? (
+        <img
+          src="data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw=="
+          style={{
+            width: '1em',
+            height: '1em',
+            backgroundImage: `url(${emoji?.imageSrc})`,
+            backgroundPositionX: `${(emoji?.x * 100) / 60}%`,
+            backgroundPositionY: `${(emoji?.y * 100) / 60}%`,
+            backgroundRepeat: 'no-repeat',
+            backgroundSize: '6100% 6100%',
+            verticalAlign: '-0.1em',
+            marginRight: 2
+          }}
+        />
+      ) : (
+        <>{icon && <Icon fill={linearColors ? linearColors[(linearColors.length / 2) | 0] : color} name={icon} />}</>
+      )}
+      <div
+        style={{
+          color: color,
+          backgroundImage: linearFontColor ? color : undefined
+        }}
+        className={css([
+          ClassName.ellipsisFont(1),
+          linearFontColor && {
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent'
+          }
+        ])}
+      >
+        {name}
+      </div>
+    </Content>
+  )
+})
+
 export default SidebarCollection

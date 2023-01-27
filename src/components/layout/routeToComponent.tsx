@@ -1,5 +1,4 @@
 import EditorPage from '@/scenes/editor'
-import Graph from '@/scenes/graph'
 import { HomePage } from '@/scenes/home'
 import PdfPage from '@/scenes/pdf'
 import Id from '@/utils/id'
@@ -29,14 +28,6 @@ const routeToComponent = (route: string, search?: string): ReactNode | undefined
       <>
         <TabTitle title="Database" />
         <KnowledgeDatabase />
-      </>
-    )
-  }
-  if (route.startsWith('/graph')) {
-    return (
-      <>
-        <TabTitle title="Graph" />
-        <Graph />
       </>
     )
   }

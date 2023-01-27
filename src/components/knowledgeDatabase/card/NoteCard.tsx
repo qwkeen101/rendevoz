@@ -1,9 +1,11 @@
 import { Content } from '@/components'
 import { GlobalScope } from '@/jotai/jotaiScope'
 import { notesAtom } from '@/stores/note.store'
+import { globalStore } from '@/stores/stores'
 import ClassName from '@/styles/classNames'
 import { css } from '@emotion/css'
-import { atom, useAtomValue } from 'jotai'
+import { useAtomValue } from 'jotai/react'
+import { atom } from 'jotai/vanilla'
 import { memo, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { MetaObject } from '~/typings/data'
@@ -12,7 +14,7 @@ import { TitleClassName, TitleWrapperClassName } from './DatabaseCard'
 const MetaNoteCard = memo(({ m }: { m: MetaObject }) => {
   const noteId = m.objectId
   const noteAtom = useMemo(() => (noteId ? atom(get => get(notesAtom).get(noteId)) : atom(null)), [noteId])
-  const note = useAtomValue(noteAtom, GlobalScope)
+  const note = useAtomValue(noteAtom, { store: globalStore })
   const navigate = useNavigate()
   return (
     <Content flex column>

@@ -1,113 +1,46 @@
-import { Noop } from '@/common/types'
 import { AnimatePopover, WithBorder } from '@/components'
-import MetaDetailsCard from '@/components/editor/elements/meta/MetaDetailsCard'
 import { GlobalDragOverlayInstance } from '@/components/GlobalDragOverlay'
-import useEventEmitter from '@/events/useEventEmitter'
 import { useMemoizedFn, useMergedRef } from '@/hooks'
-import { PdfScope } from '@/jotai/jotaiScope'
-import useMetaStore from '@/stores/meta.store'
+import useLabelStore, { labelsAtom } from '@/stores/label.store'
+import { globalStore } from '@/stores/stores'
 import { css } from '@emotion/css'
-import { PrimitiveAtom, useAtom } from 'jotai'
-import { FC, forwardRef, memo, useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { useAtomValue } from 'jotai/react'
+import { atom } from 'jotai/vanilla'
+import { FC, forwardRef, memo, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { useClickAway } from 'react-use'
-import { IHighlightLabel, MetaKnowledgeObject, MetaLink } from '~/typings/data'
+import { IHighlightLabel } from '~/typings/data'
 import usePdfInfo from '../../hooks/usePdfInfo'
 import LabelToolbar from '../toolbar/LabelToolbar'
 
 interface HighlightLabelProps {
-  highlightAtom: PrimitiveAtom<IHighlightLabel>
-  onDelete: Noop
+  labelId: number
+  pageSize: any
 }
 const layout = ['colorPicker', 'separator', 'searcher', 'translator', 'separator', 'delete']
 
-const HighlightLabel: FC<HighlightLabelProps> = ({ highlightAtom, onDelete }) => {
-  const [highlight, setHighlight] = useAtom(highlightAtom, PdfScope)
+const HighlightLabel: FC<HighlightLabelProps> = ({ labelId, pageSize }) => {
+  const highlightAtom = useMemo(() => atom(get => get(labelsAtom).get(labelId)), [labelId])
+  const highlight = useAtomValue(highlightAtom, { store: globalStore }) as IHighlightLabel | undefined
+  const { updateLabel, deleteLabel } = useLabelStore()
   const [popoverVisible, setPopoverVisible] = useState(false)
-  const [metaCardVisible, setMetaCardVisible] = useState(false)
-  const [metaObject, setMetaObject] = useState<MetaKnowledgeObject>()
   const [pdfInfo] = usePdfInfo()
 
-  const { addMetaObject, getMetaKnowObjectByKeyword, addMetaLink, getMetaObjectByDocumentId } = useMetaStore()
-
-  useEffect(() => {
-    if (highlight) {
-      const trimedKeyword = highlight.selectedText?.trim()
-      if (trimedKeyword) {
-        setMetaObject(getMetaKnowObjectByKeyword(trimedKeyword))
-      }
-    }
-  }, [highlight, getMetaKnowObjectByKeyword])
   const highlightRef = useRef<HTMLDivElement>(null)
   const metaRef = useRef<HTMLDivElement>(null)
   const toolbarRef = useRef<HTMLDivElement>(null)
-  const emitter = useEventEmitter()
   useClickAway(highlightRef, e => {
     if (!toolbarRef.current?.contains(e.target) && !metaRef.current?.contains(e.target)) {
       setPopoverVisible(false)
-      setMetaCardVisible(false)
     }
   })
 
   const handleColorChange = (color: string) => {
-    setHighlight({ ...highlight, color })
+    updateLabel({ id: labelId, color })
   }
 
-  const handleAddToEditor = useMemoizedFn(() => {
-    emitter.emit('editor', {
-      type: 'insertNode',
-      data: {
-        element: {
-          type: 'highlight',
-          originId: highlight.id,
-          selectedText: highlight.selectedText,
-          children: [{ text: '' }]
-        }
-      }
-    })
-  })
-  const handleMetaObject = () => {
-    if (metaObject === undefined) {
-      addMetaObject({
-        keyword: highlight.selectedText?.trim()
-      }).then(obj => {
-        if (pdfInfo) {
-          const documentMetaObject = getMetaObjectByDocumentId(pdfInfo.id)
-          if (!documentMetaObject) {
-            addMetaObject({
-              type: 'document',
-              documentId: pdfInfo.id,
-              title: pdfInfo.metadata?.title || pdfInfo.name
-            }).then(docObj => {
-              const metaLink: Partial<MetaLink> = {
-                sourceId: docObj.id,
-                sourceType: 'document',
-                targetId: obj.id,
-                targetType: 'knowledge',
-                label: 'from'
-              }
-              addMetaLink(metaLink)
-              return
-            })
-          } else {
-            const metaLink: Partial<MetaLink> = {
-              sourceId: documentMetaObject.id,
-              sourceType: 'document',
-              targetId: obj.id,
-              targetType: 'knowledge',
-              label: 'from'
-            }
-            addMetaLink(metaLink)
-          }
-        }
-        setMetaObject(obj)
-      })
-    } else {
-      setMetaCardVisible(true)
-    }
-  }
   const mouseDownHandler = useMemoizedFn(() => {
     const ele = document.createElement('div')
-    highlight.selectedText && (ele.textContent = highlight.selectedText)
+    highlight?.selectedText && (ele.textContent = highlight.selectedText)
     const className = css({
       minWidth: 200,
       maxWidth: 300,
@@ -122,17 +55,16 @@ const HighlightLabel: FC<HighlightLabelProps> = ({ highlightAtom, onDelete }) =>
       type: 'pdfElement',
       pdfId: pdfInfo?.id,
       content: highlight.selectedText,
-      page: highlight.page
+      page: highlight.page,
+      labelId: highlight.id
     }
-    console.log(GlobalDragOverlayInstance)
     document.addEventListener('pointermove', mouseMoveHandler)
     document.addEventListener('pointerup', mouseUpHandler)
   })
   const mouseMoveHandler = useMemoizedFn(() => {
-    GlobalDragOverlayInstance?.startDrag()
+    GlobalDragOverlayInstance.startDrag?.()
   })
   const mouseUpHandler = useMemoizedFn(() => {
-    GlobalDragOverlayInstance?.endDrag()
     document.removeEventListener('pointermove', mouseMoveHandler)
     document.removeEventListener('pointerup', mouseUpHandler)
   })
@@ -145,6 +77,7 @@ const HighlightLabel: FC<HighlightLabelProps> = ({ highlightAtom, onDelete }) =>
       }
     }
   })
+  if (!highlight) return null
   return (
     <AnimatePopover
       padding={10}
@@ -152,27 +85,20 @@ const HighlightLabel: FC<HighlightLabelProps> = ({ highlightAtom, onDelete }) =>
       visible={popoverVisible}
       positions={['top']}
       content={
-        metaCardVisible ? (
-          <WithBorder ref={metaRef}>
-            <MetaDetailsCard obj={metaObject} />
-          </WithBorder>
-        ) : (
-          <WithBorder ref={toolbarRef} key={highlight.id}>
-            <LabelToolbar
-              layout={layout}
-              key={highlight.id}
-              onColorChange={handleColorChange}
-              onMetaObject={handleMetaObject}
-              onDelete={onDelete}
-              selectedText={highlight.selectedText}
-              onAddToEditor={handleAddToEditor}
-            />
-          </WithBorder>
-        )
+        <WithBorder ref={toolbarRef} key={highlight.id}>
+          <LabelToolbar
+            layout={layout}
+            key={highlight.id}
+            onColorChange={handleColorChange}
+            onDelete={() => deleteLabel(labelId)}
+            selectedText={highlight.selectedText}
+          />
+        </WithBorder>
       }
     >
       <Highlights
         highlight={highlight}
+        pageSize={pageSize}
         highlightRef={highlightRef}
         onClick={() => {
           setPopoverVisible(true)
@@ -183,12 +109,13 @@ const HighlightLabel: FC<HighlightLabelProps> = ({ highlightAtom, onDelete }) =>
   )
 }
 const Highlights = forwardRef((props, ref) => {
-  const { highlight, onClick, highlightRef } = props
+  const { highlight, onClick, highlightRef, pageSize } = props
   const innerRef = useRef<HTMLDivElement>(null)
   const mergedRef = useMergedRef(highlightRef, innerRef, ref)
-  useLayoutEffect(() => {
+  useEffect(() => {
     const container = innerRef.current
-    if (container) {
+    const parentContainer = container?.parentElement
+    if (container && parentContainer) {
       let containerRect = {
         top: 0,
         left: 0,
@@ -197,15 +124,17 @@ const Highlights = forwardRef((props, ref) => {
         right: 0,
         bottom: 0
       }
+      const parentContainerBound = parentContainer.getBoundingClientRect()
       container.childNodes.forEach((node, idx) => {
+        const rect = highlight.rects[idx]
         const n = node as HTMLElement
-        const computed = window.getComputedStyle(n)
-        const ct = parseInt(computed.top)
-        const cl = parseInt(computed.left)
-        const w = parseInt(computed.width)
-        const h = parseInt(computed.height)
+        const ct = rect.percentageTop * parentContainerBound.height
+        const cl = rect.percentageLeft * parentContainerBound.width
+        const w = rect.percentageWidth * parentContainerBound.width
+        const h = rect.percentageHeight * parentContainerBound.height
         const bottom = ct + h
         const right = cl + w
+
         if (idx === 0) {
           containerRect = {
             top: ct,
@@ -219,14 +148,14 @@ const Highlights = forwardRef((props, ref) => {
           containerRect.right = Math.max(containerRect.right, right)
           containerRect.bottom = Math.max(containerRect.bottom, bottom)
         }
-        n.style.width = computed.width
-        n.style.height = computed.height
+        n.style.width = `${w}px`
+        n.style.height = `${h}px`
       })
-      container.childNodes.forEach(node => {
+      container.childNodes.forEach((node, idx) => {
         const n = node as HTMLElement
-        const computed = window.getComputedStyle(n)
-        const ct = parseInt(computed.top)
-        const cl = parseInt(computed.left)
+        const rect = highlight.rects[idx]
+        const ct = rect.percentageTop * parentContainerBound.height
+        const cl = rect.percentageLeft * parentContainerBound.width
         n.style.left = `${cl - containerRect.left}px`
         n.style.top = `${ct - containerRect.top}px`
       })
@@ -238,10 +167,9 @@ const Highlights = forwardRef((props, ref) => {
       container.style.top = `${containerRect.top}px`
       container.style.position = 'absolute'
     }
-  }, [])
+  }, [pageSize])
   return (
     <div
-      key={highlight.id}
       style={{
         pointerEvents: 'none'
       }}
@@ -254,10 +182,6 @@ const Highlights = forwardRef((props, ref) => {
           style={{
             position: 'absolute',
             pointerEvents: 'auto',
-            top: `${rect.percentageTop * 100}%`,
-            left: `${rect.percentageLeft * 100}%`,
-            width: `${rect.percentageWidth * 100}%`,
-            height: `${rect.percentageHeight * 100}%`,
             background: highlight.color,
             opacity: 0.4
           }}

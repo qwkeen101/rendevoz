@@ -5,10 +5,9 @@ import { Rnd } from 'react-rnd'
 import { delay } from 'lodash'
 import useSidebarWidth from '@/hooks/components/useSidebarWidth'
 import Icon from '@/components/base/Icon'
-import logo from '@/assets/rendeLogo.png'
-import Content from '../../base/Content'
 import { useSetting } from '@/hooks'
-import { css } from '@emotion/css'
+import { GlobalInstances } from '..'
+
 export const Sidebar: FC = () => {
   const navRef = useRef<HTMLElement>(null)
   const rndRef = useRef<Rnd>(null)
@@ -20,6 +19,7 @@ export const Sidebar: FC = () => {
   const [setting] = useSetting()
   return (
     <div
+      onClick={() => console.log(GlobalInstances.pdfInstances)}
       tabIndex={-1}
       onMouseLeave={() => {
         if (!isResizing) setHovered(false)

@@ -49,7 +49,7 @@ const PanHelper = ({ containerEle, enablePan }: { containerEle?: HTMLElement; en
     }
   }, [enablePan])
 
-  return enablePan ? <div style={{ zIndex: 9999, position: 'absolute', inset: 0, cursor: 'grab' }}></div> : null
+  return enablePan ? <div style={{ zIndex: 1, position: 'absolute', inset: 0, cursor: 'grab' }}></div> : null
 }
 
 export default PanHelper

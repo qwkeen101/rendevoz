@@ -34,9 +34,9 @@ class D3GraphManager {
     switch (type) {
       case 'note':
       case 'pdf':
-        return 200
+        return 300
       default:
-        return 100
+        return 150
     }
   }
   public registerHandler = (name: string, handler: any) => {
@@ -213,6 +213,7 @@ class D3GraphManager {
   }
 
   private ticked = () => {
+    this.d3Simulation?.tick(5)
     if (this.originEdges && this.originNodes) {
       this.originEdges.forEach(edge => {
         const path = this.drawEdge(edge, edge.source.x, edge.source.y, edge.target.x, edge.target.y)

@@ -1,20 +1,20 @@
 import { useDebounceFn, useToggle } from '@/hooks'
-import { GlobalScope } from '@/jotai/jotaiScope'
 import { pinnedMetaObjectsAtom, undeletedMetaObjectsAtom } from '@/stores/meta.store'
+import { globalStore } from '@/stores/stores'
 import ClassName from '@/styles/classNames'
 import { css } from '@emotion/css'
 import { AnimatePresence } from 'framer-motion'
 import fuzzysort from 'fuzzysort'
-import { useAtomValue } from 'jotai'
+import { useAtomValue } from 'jotai/react'
 import { useEffect, useState } from 'react'
-import { Flipped, Flipper } from 'react-flip-toolkit'
+import { Flipper } from 'react-flip-toolkit'
 import { MetaObject } from '~/typings/data'
 import { Content, Icon } from '../base'
 import DatabaseCard from './card/DatabaseCard'
 
 const KnowledgeDatabase = () => {
-  const undeletedMetaObjects = useAtomValue(undeletedMetaObjectsAtom, GlobalScope)
-  const pinnedMetaObjects = useAtomValue(pinnedMetaObjectsAtom, GlobalScope)
+  const undeletedMetaObjects = useAtomValue(undeletedMetaObjectsAtom, { store: globalStore })
+  const pinnedMetaObjects = useAtomValue(pinnedMetaObjectsAtom, { store: globalStore })
   const [paginateState, setPaginateState] = useState<{
     itemPerPage: number
     currentPage: number

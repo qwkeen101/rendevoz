@@ -251,17 +251,17 @@ export const SidebarCollectionItem = memo(({ collectionId, parentCollectionId }:
 export const SidebarDocumentItem = ({ documentId, parentCollectionId }: { documentId: number; parentCollectionId?: number }) => {
   const navigate = useNavigate()
   const documentAtom = useMemo(() => atom(get => get(documentsAtom).get(documentId)), [documentId])
-  const document = useAtomValue(documentAtom, { store: globalStore }) || {}
+  const document = useAtomValue(documentAtom, { store: globalStore })
   const ref = useRef<HTMLDivElement>(null)
   const [editModalVisible, toggleEditModalVisible] = useToggle(false)
   useSidebarItemDrag(document, 'document', ref, parentCollectionId)
   const { updateDocument, deleteDocument } = useDocumentStore()
   const { contextMenuPortal } = useSidebarItemContextMenu(ref, {
-    pinned: document.pinned,
-    name: document.name,
+    pinned: document?.pinned,
+    name: document?.name,
     onEdit: toggleEditModalVisible,
-    onPin: () => updateDocument({ id: document.id, pinned: !document.pinned }),
-    onDelete: () => deleteDocument(document.id)
+    onPin: () => updateDocument({ id: document?.id, pinned: !document?.pinned }),
+    onDelete: () => deleteDocument(document?.id)
   })
   if (!document || document.deleted) return null
   return (

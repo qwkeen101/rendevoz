@@ -2,7 +2,7 @@
   "name": "rendevoz",
   "productName": "Rendevoz",
   "private": true,
-  "version": "0.1.0",
+  "version": "0.1.1",
   "author": "RealRong 2001",
   "main": "dist-electron/electron/main/index.js",
   "debug": {

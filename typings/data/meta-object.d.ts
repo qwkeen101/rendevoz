@@ -7,6 +7,7 @@ interface MetaObject extends IBase {
   description?: string
   coverImgSrc?: string
   objectId?: number
+  tags?: string[]
 }
 interface MetaWithNote {
   noteId: number

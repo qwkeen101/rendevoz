@@ -3,26 +3,30 @@ import { useTheme } from '@/hooks'
 import { css } from '@emotion/css'
 import { FC, ReactNode } from 'react'
 
-const SettingItem: FC<{
-  children: ReactNode
+type SettingItem = {
+  children?: ReactNode
   title: string
   description?: string
-}> = ({ children, title, description }) => {
+  column?: boolean
+}
+const SettingItem: FC<SettingItem> = ({ children, title, description, column = false }) => {
   const { defaultFontColorBlack, defaultFontColorGrey } = useTheme('defaultFontColorBlack', 'defaultFontColorGrey')
   return (
     <Content
       flex
-      alignItems="center"
-      justifyContent="space-between"
-      gap={30}
+      column={column}
+      alignItems={!column ? 'center' : undefined}
+      justifyContent={!column ? 'space-between' : undefined}
+      gap={column ? 6 : 30}
       className={css({
+        userSelect: 'none',
         padding: '10px 0px',
         ':not(:last-child)': {
           borderBottom: '1px solid rgba(0,0,0,0.05)'
         }
       })}
     >
-      <Content flex column>
+      <div>
         <div
           className={css({
             color: defaultFontColorBlack,
@@ -33,8 +37,8 @@ const SettingItem: FC<{
           {title}
         </div>
         {description && <div className={css({ color: defaultFontColorGrey, fontSize: 13 })}>{description}</div>}
-      </Content>
-      <Content flex centered>
+      </div>
+      <Content flex centered={!column}>
         {children}
       </Content>
     </Content>

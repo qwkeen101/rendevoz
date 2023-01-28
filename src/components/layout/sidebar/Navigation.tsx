@@ -7,7 +7,6 @@ import Modal from '../../base/Modal'
 import styles from './index.module.less'
 import { MenuItem } from './Item'
 import { useTranslation } from 'react-i18next'
-import SettingDialog from '@/components/dialogs/SettingDialog'
 import SidebarCollection from './SidebarCollection'
 import Content from '../../base/Content'
 import { useTheme } from '@/hooks'
@@ -16,6 +15,7 @@ import SidebarPinned from './SidebarPinned'
 import GlobalPocket from '@/components/GlobalPocket'
 import SidebarPocket from './SidebarPocket'
 import SidebarDatabase from './SidebarDatabase'
+import SidebarSetting from './SidebarSetting'
 
 const variants = {
   open: {
@@ -28,8 +28,6 @@ const variants = {
 const Navigation = ({ hovered }: { hovered: boolean }) => {
   const [searchVisible, setSearchVisible] = useState(false)
   const [newItemVisible, setNewItemVisible] = useState(false)
-  const [settingVisible, setSettingVisible] = useState(false)
-
   const { defaultFontColorGrey } = useTheme('defaultFontColorGrey', 'defaultFontColorBlack')
   const { t } = useTranslation()
   return (
@@ -39,9 +37,6 @@ const Navigation = ({ hovered }: { hovered: boolean }) => {
       </Modal>
       <Modal visible={newItemVisible} onClose={() => setNewItemVisible(false)}>
         <NewItemDialog onNewDocument={() => setNewItemVisible(false)} onNewNoteClick={() => setNewItemVisible(false)} />
-      </Modal>
-      <Modal visible={settingVisible} onClose={() => setSettingVisible(false)}>
-        <SettingDialog />
       </Modal>
       <motion.ul
         className={styles.list}
@@ -59,6 +54,7 @@ const Navigation = ({ hovered }: { hovered: boolean }) => {
           {t('sidebar.home')}
         </MenuItem>
         <SidebarDatabase />
+        <SidebarSetting />
         {/* <GlobalPocket>{urls => <SidebarPocket urls={urls} />}</GlobalPocket> */}
         <Content flex alignItems="center" style={{ padding: '0px 4px 0px 4px', marginTop: 20 }}>
           <div

@@ -19,7 +19,7 @@ const Footer: FC<FooterProps> = ({ onBack, onSubmit, submitText = 'submit', back
         {t(`footer.${backText}`)}
       </Button>
       <Button className={styles.submit} onClick={onSubmit}>
-        {t(`footer.${submitText}`)}
+        {t(`footer.${submitText}`) }
       </Button>
     </Content>
   )

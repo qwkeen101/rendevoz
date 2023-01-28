@@ -58,7 +58,8 @@
         "submit": "Submit",
         "choose": "Choose",
         "create": "Create",
-        "cancel": "Cancel"
+        "cancel": "Cancel",
+        "understand": "Understand"
     },    
     "collection": {
         "no collection placeholder": "No collection yet,create one?",

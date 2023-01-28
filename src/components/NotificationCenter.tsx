@@ -69,6 +69,7 @@ const Notification = () => {
             >
               <>
                 {toast.type === 'success' && <Icon fill={'#82CD47'} theme="filled" size={20} name="park-correct" />}
+                {toast.type === 'error' && <Icon fill={'#F55050'} theme="filled" size={20} name="park-error" />}
                 <div style={{ display: 'flex', flex: 1, fontFamily: 'Muli', whiteSpace: 'nowrap' }}>{toast.message}</div>
               </>
             </motion.div>

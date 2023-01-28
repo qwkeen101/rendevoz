@@ -17,6 +17,9 @@ export default defineConfig({
       }
     }
   },
+  define: {
+    APP_VERSION: JSON.stringify(process.env.npm_package_version)
+  },
   resolve: {
     alias: {
       '@': path.join(__dirname, 'src'),

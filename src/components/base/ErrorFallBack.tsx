@@ -1,6 +1,6 @@
 import { Button } from '@/components/base/button'
 import { css } from '@emotion/css'
-import Content from '../Content'
+import Content from './Content'
 import errorImg from '@/assets/error.png'
 import { ipcInstance } from '@/plugins'
 import { useTheme } from '@/hooks'

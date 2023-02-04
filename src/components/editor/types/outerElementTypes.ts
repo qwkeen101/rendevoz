@@ -21,6 +21,7 @@ export interface BookHighlightElement extends IOuterElement {
   documentId?: number
   page?: number
   title?: string
+  collapsed?: boolean
 }
 export interface SubPageElement extends IOuterElement {
   type: 'subPage'

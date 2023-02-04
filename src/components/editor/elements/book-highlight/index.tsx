@@ -1,5 +1,5 @@
 import { Content, Icon } from '@/components'
-import { useTheme, useToggle } from '@/hooks'
+import { useTheme } from '@/hooks'
 import { documentsAtom } from '@/stores/document.store'
 import { css } from '@emotion/css'
 import { FC, useMemo, useState } from 'react'
@@ -8,7 +8,7 @@ import { BookHighlightElement } from '../../types/outerElementTypes'
 import AutosizeTextarea from '@/components/custom/input/autosizeTextarea'
 import { Transforms } from 'slate'
 import { AnimatePresence, motion } from 'framer-motion'
-import { useGlobalIsDragging } from '@/components/GlobalDragOverlay'
+import { useGlobalIsDragging } from '@/components/globalDragOverlay/GlobalDragOverlay'
 import ClassName from '@/styles/classNames'
 import { CardElement } from '../../types/baseTypes'
 import NoteCard from '../cards/NoteCard'
@@ -23,8 +23,8 @@ import { toast } from 'react-hot-toast'
 const BookHighlight: FC<RenderElementProps> = ({ element, children }) => {
   const [showNav, setShowNav] = useState(false)
   const [globalDragging] = useGlobalIsDragging()
-  const [showContent, toggleShowContent] = useToggle(false)
   const highlightElement = element as BookHighlightElement
+  const { collapsed } = highlightElement
   const cardType = (element as CardElement).cardType
   const editor = useSlate()
   const labelId = highlightElement.originId
@@ -52,7 +52,6 @@ const BookHighlight: FC<RenderElementProps> = ({ element, children }) => {
       toast.error('Page not found!')
       return
     }
-    console.log(GlobalInstances.pdfInstances, documentId)
     if (GlobalInstances.pdfInstances.filter(i => i.pdfId === documentId).length === 0) {
       navigate(`/pdf/${documentId}`)
     }
@@ -74,7 +73,17 @@ const BookHighlight: FC<RenderElementProps> = ({ element, children }) => {
     }
     goToPage()
   }
-
+  const toggleCollapse = () => {
+    Transforms.setNodes(
+      editor,
+      {
+        collapsed: !collapsed
+      },
+      {
+        at: ReactEditor.findPath(editor, element)
+      }
+    )
+  }
   const renderMain = () => (
     <div
       style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column' }}
@@ -86,19 +95,19 @@ const BookHighlight: FC<RenderElementProps> = ({ element, children }) => {
           <Icon
             style={{
               opacity: showNav ? 1 : 0,
-              transform: showContent ? 'rotate(90deg)' : undefined,
+              transform: !collapsed ? 'rotate(90deg)' : undefined,
               transition: 'all 0.3s ease'
             }}
             size={14}
             name="park-right-one"
-            theme='filled'
-            onClick={toggleShowContent}
+            theme="filled"
+            onClick={toggleCollapse}
           />
           📚 <span>{document ? document.name : 'Unknown book'}</span>
         </div>
       </div>
       <div className={ClassName.description()}>✍🏻 {document ? document.metadata?.author || 'Unknown author' : 'Unknown author'}</div>
-      {showContent ? (
+      {!collapsed ? (
         <AutosizeTextarea
           defaultValue={highlightElement.selectedText}
           onChange={e => {
@@ -166,13 +175,13 @@ const BookHighlight: FC<RenderElementProps> = ({ element, children }) => {
           <Icon
             style={{
               opacity: showNav ? 1 : 0,
-              transform: showContent ? 'rotate(90deg)' : undefined,
+              transform: !collapsed ? 'rotate(90deg)' : undefined,
               transition: 'all 0.3s ease'
             }}
             size={14}
             name="park-right-one"
-            theme='filled'
-            onClick={toggleShowContent}
+            theme="filled"
+            onClick={toggleCollapse}
           />
           <span
             onClick={handleJumpToTarget}
@@ -181,7 +190,7 @@ const BookHighlight: FC<RenderElementProps> = ({ element, children }) => {
             {document ? document.name : 'Unknown book'}
           </span>
         </div>
-        {showContent ? (
+        {!collapsed ? (
           <AutosizeTextarea
             defaultValue={highlightElement.selectedText}
             onChange={e => {
@@ -195,7 +204,8 @@ const BookHighlight: FC<RenderElementProps> = ({ element, children }) => {
               fontSize: '0.88rem',
               overflow: 'hidden',
               background: 'inherit',
-              wordBreak: 'break-word'
+              wordBreak: 'break-word',
+              padding: 0
             })}
           ></AutosizeTextarea>
         ) : (
@@ -210,6 +220,7 @@ const BookHighlight: FC<RenderElementProps> = ({ element, children }) => {
       </div>
     </Content>
   )
+
   return (
     <NoteCard
       main={cardType === 'line' || !cardType ? renderLineMain() : renderMain()}

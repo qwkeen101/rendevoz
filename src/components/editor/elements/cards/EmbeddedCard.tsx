@@ -1,11 +1,15 @@
 import Id from '@/utils/id'
-import { ReactNode, useRef, useState } from 'react'
+import { ReactNode, useMemo, useRef, useState } from 'react'
 import { EditorV1 } from '../../Editor'
 import { motion } from 'framer-motion'
 import { css } from '@emotion/css'
 import { useSlate } from '../../slate-react'
 import ClassName from '@/styles/classNames'
 import { CustomElement } from '../../types'
+import { metaObjectsAtom } from '@/stores/meta.store'
+import { globalStore } from '@/stores/stores'
+import { atom } from 'jotai/vanilla'
+import { useAtomValue } from 'jotai/react'
 
 const EmbeddedCard = ({ element, type, slateChildren }: { element: CustomElement; slateChildren?: ReactNode; type: 'pdf' | 'note' }) => {
   const [editorId] = useState(Id.getStrId())
@@ -17,6 +21,10 @@ const EmbeddedCard = ({ element, type, slateChildren }: { element: CustomElement
     width: '100%',
     height: 600
   })
+  const { originId } = element
+  const metaAtom = useMemo(() => (originId ? atom(get => get(metaObjectsAtom).get(originId)) : atom(null)), [originId])
+  const metaObject = useAtomValue(metaAtom, { store: globalStore })
+  const realNoteId = metaObject?.objectId || element.noteId
   const ref = useRef<HTMLDivElement>(null)
   if (!element) return null
   if (editor.readonly) {
@@ -131,14 +139,13 @@ const EmbeddedCard = ({ element, type, slateChildren }: { element: CustomElement
             }}
           ></motion.div>
         </div>
-        {element.noteId && <EditorV1 id={editorId} readonly noteId={element.noteId} />}
+        {realNoteId && <EditorV1 id={editorId} readonly noteId={realNoteId} />}
         {slateChildren}
       </div>
     )
   }
 
-  if (type === 'note') return renderEditor()
-  return null
+  return renderEditor()
 }
 
 export default EmbeddedCard

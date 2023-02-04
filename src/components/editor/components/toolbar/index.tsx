@@ -10,7 +10,6 @@ import { useTranslation } from 'react-i18next'
 import classNames from 'classnames'
 import { createPortal } from 'react-dom'
 import { AnimatePresence, motion } from 'framer-motion'
-import { useSetting } from '@/hooks'
 import BlockColorPicker from '../BlockColorPicker'
 
 interface EditorToolbarProps {
@@ -39,18 +38,15 @@ const EditorToolbar: FC<EditorToolbarProps> = ({
   onChangeFontSize,
   onChangeFontColor,
   onChangeBackgroundColor,
-  onLink,
-  onMetaObject,
   scrollElement,
   style
 }) => {
   const { t } = useTranslation()
   const editor = useSlate()
   const { selection } = editor
-  const [setting] = useSetting()
-  const position = setting.editor.toolbarPosition
   const currentElement = selection ? Editor.node(editor, selection?.anchor?.path, { depth: 1 }) : null
   const toolbarRef = useRef<HTMLElement>(null)
+  const position = 'float'
   const [floatPosition, setFloatPosition] = useState<{
     top: number
     left: number
@@ -167,18 +163,45 @@ const EditorToolbar: FC<EditorToolbarProps> = ({
             onSelect={value => {
               onChangeFontSize(value[0])
             }}
-          >
-            <Select.Option value="14px">14px</Select.Option>
-            <Select.Option value="16px">16px</Select.Option>
-            <Select.Option value="20px">20px</Select.Option>
-            <Select.Option value="24px">24px</Select.Option>
-            <Select.Option value="28px">28px</Select.Option>
-            <Select.Option value="32px">32px</Select.Option>
-            <Select.Option value="36px">36px</Select.Option>
-            <Select.Option value="40px">40px</Select.Option>
-            <Select.Option value="50px">50px</Select.Option>
-            <Select.Option value="60px">60px</Select.Option>
-          </Select>
+            options={[
+              {
+                value: '14px',
+                children: '14px'
+              },
+              {
+                value: '16px',
+                children: '16px'
+              },
+              {
+                value: '20px',
+                children: '20px'
+              },
+              {
+                value: '24px',
+                children: '24px'
+              },
+              {
+                value: '28px',
+                children: '28px'
+              },
+              {
+                value: '32px',
+                children: '32px'
+              },
+              {
+                value: '36px',
+                children: '36px'
+              },
+              {
+                value: '40px',
+                children: '40px'
+              },
+              {
+                value: '50px',
+                children: '50px'
+              }
+            ]}
+          ></Select>
         )}
       <Toolbar.Item tooltip={t('editor.bold')} isActive={isMarkActive('bold')} iconName="park-text-bold" onClick={onBold} />
       <Toolbar.Item tooltip={t('editor.italic')} isActive={isMarkActive('italic')} iconName="park-text-italic" onClick={onItalic} />

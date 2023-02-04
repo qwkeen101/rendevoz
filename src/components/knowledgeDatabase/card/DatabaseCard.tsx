@@ -5,23 +5,25 @@ import { useTheme } from '@/hooks'
 import MetaKnowledgeCard from './KnowledgeCard'
 import classNames from 'classnames'
 import ClassName from '@/styles/classNames'
-import { AnimatePopover, Content, Icon, Image, WithBorder } from '@/components'
+import { AnimatePopover, Content, Icon, Image, Tooltip, WithBorder } from '@/components'
 import DateFormat from '@/utils/dateFormat'
 import { useAtom } from 'jotai/react'
 import useMetaStore, { relatedMetaObjectsMapAtom } from '@/stores/meta.store'
 import { GlobalGraphInstance } from '@/components/graph/GlobalGraph'
 import Modal from '@/components/base/Modal'
 import useCardDrag from './useCardDrag'
-import EditMetaObjectForm from '@/components/form/EditMetaObjectForm'
-import { AvaliableGlobalDraggingElements, GlobalDragOverlayInstance } from '@/components/GlobalDragOverlay'
+import EditMetaObjectForm, { Tag } from '@/components/form/EditMetaObjectForm'
+import { AvaliableGlobalDraggingElements, GlobalDragOverlayInstance } from '@/components/globalDragOverlay/GlobalDragOverlay'
 import MetaNoteCard from './NoteCard'
 import MetaDocumentCard from './DocumentCard'
 import { Flipped, spring } from 'react-flip-toolkit'
 import { globalStore } from '@/stores/stores'
 import { MetaObject } from '~/typings/data'
+import { MetaDatabaseCardProps } from './types'
+import MetaObjectCard from './ObjectCard'
 
 type DisplayTypes = Pick<AvaliableGlobalDraggingElements, 'type'>['type']
-export const typeToTypeRecord: Record<DisplayTypes, string> = {
+export const typeToTypeRecord: Record<DisplayTypes | 'normal', string> = {
   pdfElement: 'Pdf label',
   noteElement: 'Note block',
   note: 'Note',
@@ -51,21 +53,18 @@ const DatabaseCard: FC<{
   const [innerCover, setInnerCover] = useState(cover)
   const showImage = !!cover || !!innerCover
   const { updateMetaObject, deleteMetaObject } = useMetaStore()
-
-  const { isCardDraggingInside } = useCardDrag(
-    metaObject,
-    containerRef.current?.getElementsByClassName(TitleClassName).item(0),
-    containerRef.current
-  )
+  const iconRef = useRef<HTMLDivElement>(null)
+  const { isCardDraggingInside } = useCardDrag(metaObject, iconRef, containerRef.current)
   const renderCardContent = () => {
-    // if (isKnowledge(metaObject)) {
     switch (metaObject.type) {
       case 'note':
-        return <MetaNoteCard m={metaObject} />
+        return <MetaNoteCard metaObject={metaObject} renderTitleAndDescription={renderTitleAndDescription} />
       case 'pdf':
-        return <MetaDocumentCard onCoverChange={url => setInnerCover(url)} m={metaObject} />
+        return <MetaDocumentCard metaObject={metaObject} renderTitleAndDescription={renderTitleAndDescription} />
+      case 'normal':
+        return <MetaObjectCard metaObject={metaObject} renderTitleAndDescription={renderTitleAndDescription} />
       default:
-        return <MetaKnowledgeCard m={metaObject} />
+        return <MetaKnowledgeCard metaObject={metaObject} renderTitleAndDescription={renderTitleAndDescription} />
     }
   }
 
@@ -84,8 +83,10 @@ const DatabaseCard: FC<{
           <span className={css({ fontSize: 24, fontWeight: 650, color: defaultFontColorBlack })}>{relatedNumber || 0}</span>
           <span className={css({ fontSize: 11, fontWeight: 500, color: defaultFontColorGrey })}>Related Objects</span>
         </Content>
+
         <AnimatePopover
           visible={showPopover}
+          innerRef={iconRef}
           onClickOutside={() => setShowPopover(false)}
           positions={['bottom']}
           align="start"
@@ -94,15 +95,24 @@ const DatabaseCard: FC<{
           disableIntersection
           containerStyle={{ zIndex: '9999' }}
         >
-          <Icon
-            onClick={() => setShowPopover(!showPopover)}
-            size={18}
-            name="park-more"
-            className={ClassName.circleButton(3)}
-            style={{
-              opacity: showIcon || showPopover ? 1 : 0
-            }}
-          />
+          <Tooltip
+            content={
+              <Content flex column alignItems="center" style={{ textTransform: 'capitalize', fontSize: 12, fontFamily: 'Muli' }}>
+                <div>Click to open menu</div>
+                <div>Drag to move object</div>
+              </Content>
+            }
+          >
+            <Icon
+              onClick={() => setShowPopover(!showPopover)}
+              size={18}
+              name="park-drag"
+              className={ClassName.circleButton(3)}
+              style={{
+                opacity: showIcon || showPopover ? 1 : 0
+              }}
+            />
+          </Tooltip>
         </AnimatePopover>
       </Content>
     )
@@ -146,10 +156,12 @@ const DatabaseCard: FC<{
   )
 
   const renderEdit = () => (
-    <Modal visible={showEdit} onClose={() => setShowEdit(false)} width={320}>
+    <Modal visible={showEdit} onClose={() => setShowEdit(false)} noStyle>
       <EditMetaObjectForm
-        title="Edit"
-        metaObject={structuredClone(metaObject)}
+        title="Edit Object"
+        submitText="submit"
+        onClose={() => setShowEdit(false)}
+        metaObject={metaObject}
         onUpdate={newMeta => {
           setShowEdit(false)
           updateMetaObject(newMeta)
@@ -157,7 +169,18 @@ const DatabaseCard: FC<{
       />
     </Modal>
   )
-
+  const renderTitleAndDescription: MetaDatabaseCardProps['renderTitleAndDescription'] = ({ title, description, onTitleClick }) => {
+    return (
+      <Content flex column>
+        <Content className={TitleWrapperClassName}>
+          <div className={TitleClassName} onClick={onTitleClick}>
+            {title}
+          </div>
+          <div className={css([ClassName.description(), ClassName.ellipsisFont(6)])}>{description}</div>
+        </Content>
+      </Content>
+    )
+  }
   const onElementAppear = (el, index) =>
     spring({
       onUpdate: val => {
@@ -166,7 +189,6 @@ const DatabaseCard: FC<{
       delay: index * 50
     })
   const onExit = (el, index, removeElement) => {
-    console.log(index)
     spring({
       config: { overshootClamping: true },
       onUpdate: val => {
@@ -247,7 +269,15 @@ const DatabaseCard: FC<{
             src={innerCover || cover}
           />
         )}
-        <div className={css({ background: 'white', padding: '16px', borderRadius: 16, marginTop: showImage ? -16 : 0, zIndex: 1 })}>
+        <div
+          className={css({
+            background: 'white',
+            padding: '16px',
+            borderRadius: 16,
+            marginTop: showImage ? -16 : 0,
+            zIndex: 1
+          })}
+        >
           <div
             style={{
               fontWeight: 600,
@@ -266,7 +296,14 @@ const DatabaseCard: FC<{
               {DateFormat.formatDistanceToNowStrict(metaObject.createdAt)} Ago
             </span>
           </div>
-          {renderCardContent()}
+          {metaObject.tags && metaObject.tags.length > 0 && (
+            <Content flex gap={4} style={{ flexWrap: 'wrap', marginBottom: 4 }}>
+              {metaObject.tags?.map(i => (
+                <Tag small hideSize hideDelete tag={i} key={i} />
+              ))}
+            </Content>
+          )}
+          <div style={{ minHeight: 80 }}>{renderCardContent()}</div>
         </div>
         <div className={css({ background: 'white', padding: '0 16px 8px', marginTop: 'auto' })}>{renderToolbar()}</div>
       </div>

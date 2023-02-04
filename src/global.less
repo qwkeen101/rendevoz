@@ -7,10 +7,39 @@ input::-ms-clear,
 input::-ms-reveal {
   display: none;
 }
+@font-face{
+  font-family: Muli;
+  src: url('/Muli.ttf');
+}
 *,
 *::before,
 *::after {
   box-sizing: border-box;
+}
+* {
+  &::-webkit-scrollbar{
+        width: 6px;
+        border-radius: 6px;
+    }
+  &::-webkit-scrollbar-track{
+        border-radius: 6px;
+        background-color: transparent;
+    }
+    &::-webkit-scrollbar-thumb{
+        cursor: pointer;
+        background: lightgray;
+        border-radius: 6px;
+        // box-shadow: rgba(255, 255, 255, 0.3) 0 0 0 1px;
+    }
+    &::-webkit-scrollbar:horizontal{
+        height: 5px;
+        background-color: transparent;
+    }
+    &::-webkit-scrollbar-thumb:horizontal{
+        cursor: pointer;
+        background: lightgray;
+        border-radius: 6px;
+    }
 }
 html {
   font-family: sans-serif;
@@ -85,6 +114,7 @@ textarea {
 ol,
 ul,
 dl {
+  list-style: none;
   margin-top: 0;
   margin-bottom: 1em;
 }
@@ -293,10 +323,6 @@ template {
 mark {
   padding: 0.2em;
   background-color: #feffe6;
-}
-::selection {
-  color: #fff;
-  background: #1890ff;
 }
 .clearfix::before {
   display: table;

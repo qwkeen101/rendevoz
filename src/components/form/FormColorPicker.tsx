@@ -2,7 +2,15 @@ import ClassName from '@/styles/classNames'
 import { Icon } from '..'
 import ColorPicker from '../picker/colorPicker'
 
-const FormColorPicker = ({ onPick, onClose }: { onPick: (e: string) => void; onClose: VoidFunction }) => {
+const FormColorPicker = ({
+  onPick,
+  onClose,
+  disableLinear
+}: {
+  onPick: (e: string) => void
+  onClose: VoidFunction
+  disableLinear?: boolean
+}) => {
   return (
     <div style={{ width: 400 }}>
       <div
@@ -12,7 +20,7 @@ const FormColorPicker = ({ onPick, onClose }: { onPick: (e: string) => void; onC
         Choose Collection Color
         <Icon name="park-close" onClick={onClose} className={ClassName.circleButton()} />
       </div>
-      <ColorPicker onPick={onPick} />
+      <ColorPicker disableLinear={disableLinear} onPick={onPick} />
     </div>
   )
 }

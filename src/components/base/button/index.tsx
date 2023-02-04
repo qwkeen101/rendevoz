@@ -1,3 +1,5 @@
+import { css } from '@emotion/css'
+import classNames from 'classnames'
 import { CSSProperties, FC, MouseEventHandler, ReactNode, useEffect, useState } from 'react'
 import styles from './index.module.less'
 
@@ -27,7 +29,23 @@ export const Button: FC<ButtonProps> = ({ children, onClick, className, tabIndex
     <button
       type="button"
       tabIndex={tabIndex}
-      className={`${styles.RippleButton} ${className}`}
+      className={classNames(
+        css({
+          position: 'relative',
+          boxShadow: '0 0 0.5rem rgba(0, 0, 0, 0.3)',
+          outline: 'none',
+          overflow: 'hidden',
+          color: '#fff',
+          background: '#8590ae',
+          border: 'none',
+          borderRadius: 4,
+          cursor: 'pointer',
+          ':focus': {
+            boxShadow: '0 0 1rem rgba(0,0,0,0.3)'
+          }
+        }),
+        className
+      )}
       style={style}
       onClick={e => {
         const rect = e.currentTarget.getBoundingClientRect()

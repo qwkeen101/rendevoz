@@ -53,12 +53,12 @@ const GlobalGraph = () => {
         coverImgSrc: i.coverImgSrc,
         type: i.type,
         isCenter: i.id === centerNode.id,
-        objectId: i.objectId
+        objectId: i.objectId,
+        tags: i.tags
       })) as GraphNode[]
       const existedNodeIds = new Set()
       nodes.forEach(n => existedNodeIds.add(n.id))
       const edges = allMetaLinks.filter(i => existedNodeIds.has(i.sourceId) && existedNodeIds.has(i.targetId))
-      console.log(nodeIds, nodes)
       setCurrentEdges(edges)
       setCurrentNodes(nodes)
     }

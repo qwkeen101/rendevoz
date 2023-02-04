@@ -1,36 +1,19 @@
-import { Content } from '@/components'
-import { GlobalScope } from '@/jotai/jotaiScope'
-import { notesAtom } from '@/stores/note.store'
-import { globalStore } from '@/stores/stores'
-import ClassName from '@/styles/classNames'
-import { css } from '@emotion/css'
-import { useAtomValue } from 'jotai/react'
-import { atom } from 'jotai/vanilla'
-import { memo, useMemo } from 'react'
+import { useMetaTargetObject } from '@/stores/meta.store'
+import { FC, memo } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { MetaObject } from '~/typings/data'
-import { TitleClassName, TitleWrapperClassName } from './DatabaseCard'
+import { INote } from '~/typings/data'
+import { MetaDatabaseCardProps } from './types'
 
-const MetaNoteCard = memo(({ m }: { m: MetaObject }) => {
-  const noteId = m.objectId
-  const noteAtom = useMemo(() => (noteId ? atom(get => get(notesAtom).get(noteId)) : atom(null)), [noteId])
-  const note = useAtomValue(noteAtom, { store: globalStore })
+const MetaNoteCard: FC<MetaDatabaseCardProps> = memo(({ metaObject, renderTitleAndDescription }) => {
+  const result = useMetaTargetObject(metaObject.id)
+  const note = result?.targetObject as INote | undefined
   const navigate = useNavigate()
-  return (
-    <Content flex column>
-      <Content className={TitleWrapperClassName}>
-        <div
-          className={TitleClassName}
-          onClick={() => {
-            navigate(`/editor/${noteId}`)
-          }}
-        >
-          {note?.title || m.name}
-        </div>
-        <div className={css([ClassName.description(), ClassName.ellipsisFont(6)])}>{m.description}</div>
-      </Content>
-    </Content>
-  )
+  if (!note) return null
+  return renderTitleAndDescription({
+    title: metaObject.name,
+    description: metaObject.description,
+    onTitleClick: () => navigate(`/editor/${note.id}`)
+  })
 })
 
 export default MetaNoteCard

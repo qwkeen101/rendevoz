@@ -1,4 +1,5 @@
 import ClassName from '@/styles/classNames'
+import { css } from '@emotion/css'
 import { AnimatePresence, motion } from 'framer-motion'
 import { CSSProperties, useState } from 'react'
 import AutosizeTextarea from '../custom/input/autosizeTextarea'
@@ -9,7 +10,8 @@ const BorderInput = ({
   placeholder,
   style,
   defaultValue,
-  textarea
+  textarea,
+  disable
 }: {
   value?: string
   onChange?: (v: string) => void
@@ -17,6 +19,7 @@ const BorderInput = ({
   style?: CSSProperties
   defaultValue?: string
   textarea?: boolean
+  disable?: boolean
 }) => {
   const [innerValue, setValue] = useState(value || defaultValue || '')
   const showText = innerValue && innerValue !== ''
@@ -29,7 +32,7 @@ const BorderInput = ({
             initial={{ opacity: 0, x: 0, y: 0 }}
             animate={{ opacity: 1, x: -6, y: -16, zIndex: 1 }}
             exit={{ opacity: 0, x: 0, y: 0 }}
-            style={{
+            className={css({
               position: 'absolute',
               left: 16,
               top: 10,
@@ -38,7 +41,7 @@ const BorderInput = ({
               fontWeight: 600,
               fontFamily: 'Muli',
               lineHeight: 1
-            }}
+            })}
           >
             {placeholder}
           </motion.div>
@@ -51,6 +54,7 @@ const BorderInput = ({
           style={{ resize: 'none', overflow: 'hidden' }}
           className={ClassName.input()}
           defaultValue={defaultValue}
+          disabled={disable}
           onChange={e => {
             onChange?.(e.target.value)
             setValue(e.target.value)
@@ -65,6 +69,7 @@ const BorderInput = ({
             onChange?.(e.target.value)
             setValue(e.target.value)
           }}
+          disabled={disable}
           className={ClassName.input()}
         ></input>
       )}

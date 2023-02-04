@@ -1,10 +1,14 @@
+import { useSetting } from '@/components/globalSetting/Main'
+import { GlobalInstances } from '@/components/layout'
 import useDb from '@/hooks/stores/useDb'
 import { atom } from 'jotai/vanilla'
 import { useMemo } from 'react'
 import toast from 'react-hot-toast'
+import { Navigate } from 'react-router-dom'
 import { ILabel } from '~/typings/data'
 import BaseStore, { initializeLocalStore } from './base.store'
 import { IStore } from './store.type'
+import { globalStore } from './stores'
 
 const { orderedData } = BaseStore
 
@@ -28,18 +32,54 @@ export const documentIdToLabelsMapAtom = atom(get => {
   })
   return map
 })
+export const jumpToTargetLabel = (labelId: number, navigate) => {
+  const label = globalStore.get(labelsAtom).get(labelId)
+  if (!label) {
+    toast.error("Target label doesn't exist!")
+    return
+  }
+  const page = label.page
+  const documentId = label.documentId
+  if (page === undefined) {
+    navigate(`/pdf/${label.documentId}`)
+    toast.error('Page not found!')
+    return
+  }
+  if (GlobalInstances.pdfInstances.filter(i => i.pdfId === documentId).length === 0) {
+    navigate(`/pdf/${documentId}`)
+  }
+  const goToPage = () => {
+    if (GlobalInstances.pdfInstances.filter(i => i.pdfId === documentId).length > 0) {
+      GlobalInstances.pdfInstances
+        .filter(i => i.pdfId === documentId)
+        .forEach(i => {
+          console.log(i.pdfId)
+          if (i.viewerRef.current) {
+            i.viewerRef.current.jumpToPage(page)
+          } else {
+            requestIdleCallback(goToPage)
+          }
+        })
+    } else {
+      requestIdleCallback(goToPage)
+    }
+  }
+  goToPage()
+}
 const useLabelStore = () => {
   const database = useDb('labels')
   const store = initializeLocalStore<ILabel>(labelsAtom, database)
+  const [setting] = useSetting()
+  const shouldToast = setting.notification.enabled && setting.notification.label
   const localStore: Pick<IStore<ILabel>, 'addOne' | 'deleteOneById' | 'getAll' | 'getOneById' | 'updateOne'> = {
     addOne: store.addOne((obj, silent) => {
-      !silent && toast.success('Label successfully added!')
+      !silent && shouldToast && toast.success('Label successfully added!')
     }),
     updateOne: store.updateOne((obj, silent) => {
-      !silent && toast.success('Label successfully updated!')
+      !silent && shouldToast && toast.success('Label successfully updated!')
     }),
     deleteOneById: store.deleteOneById(silent => {
-      !silent && toast.success('Label successfully deleted!')
+      !silent && shouldToast && toast.success('Label successfully deleted!')
     }),
     getAll: store.getAll(),
     getOneById: store.getOneById()

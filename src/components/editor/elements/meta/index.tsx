@@ -1,10 +1,9 @@
-import { Content, Icon, IconWithPopover, WithBorder } from '@/components/base'
-import Modal from '@/components/base/Modal'
-import EditMetaObjectForm from '@/components/form/EditMetaObjectForm'
+import { Content, Icon, IconWithPopover, Image, WithBorder } from '@/components/base'
+import { Tag } from '@/components/form/EditMetaObjectForm'
 import { GlobalGraphInstance } from '@/components/graph/GlobalGraph'
 import { typeToTypeRecord } from '@/components/knowledgeDatabase/card/DatabaseCard'
 import { useToggle } from '@/hooks'
-import { GlobalScope } from '@/jotai/jotaiScope'
+import { jumpToTargetLabel } from '@/stores/label.store'
 import useMetaStore, { metaObjectsAtom, relatedMetaObjectsMapAtom } from '@/stores/meta.store'
 import { notesAtom } from '@/stores/note.store'
 import { globalStore } from '@/stores/stores'
@@ -44,13 +43,28 @@ const MetaObject: FC<RenderElementProps> = memo(({ children, element }) => {
     [relatedSet]
   )
   const relatedObjects = useAtomValue(relatedObjectsAtom, { store: globalStore })
-
+  const navigate = useNavigate()
   const hasDescription = metaObject?.description
   const alsoMentionedSize = relatedObjects?.filter(i => (i.type === 'note' || i.type === 'pdf') && i.objectId !== editor.noteId).length
   const relatedObjectsSize = relatedObjects?.filter(i => i.type === 'normal' || i.type === 'noteElement' || i.type === 'pdfElement').length
   const [showRelated, toggleShowRelated] = useToggle(false)
   const [showRelatedObjects, toggleShowRelatedObjects] = useToggle(false)
   const [editMetaVisible, toggleEditMetaVisible] = useToggle(false)
+
+  const handleNavigate = () => {
+    if (metaObject?.type === 'note') {
+      navigate(`/editor/${metaObject?.objectId}`)
+    }
+    if (metaObject?.type === 'pdf') {
+      navigate(`/pdf/${metaObject?.objectId}`)
+    }
+    if (metaObject?.type === 'normal') {
+      navigate(`/editor/${metaObject?.objectId}`)
+    }
+    if (metaObject?.type === 'pdfElement' && metaObject.objectId) {
+      jumpToTargetLabel(metaObject?.objectId, navigate)
+    }
+  }
   const renderMain = () => (
     <Content
       className={css([
@@ -89,10 +103,6 @@ const MetaObject: FC<RenderElementProps> = memo(({ children, element }) => {
                   >
                     <Icon name="park-relational-graph" />
                     Graph
-                  </Content>
-                  <Content className={ClassName.flatButton()} flex gap={15} onClick={toggleEditMetaVisible}>
-                    <Icon name="park-edit" />
-                    Edit
                   </Content>
                 </Content>
               </WithBorder>
@@ -154,32 +164,44 @@ const MetaObject: FC<RenderElementProps> = memo(({ children, element }) => {
           )}
         </AnimatePresence>
       </Content>
-      <Modal width={300} visible={!!metaObject && editMetaVisible} onClose={toggleEditMetaVisible}>
-        <EditMetaObjectForm
-          title="Edit object"
-          metaObject={metaObject!}
-          onUpdate={obj => {
-            updateMetaObject(obj)
-            toggleEditMetaVisible(false)
-          }}
-        />
-      </Modal>
     </Content>
   )
   const renderLineMain = () => (
-    <Content
-      onClick={() => metaObject && GlobalGraphInstance?.open(metaObject)}
-      contentEditable={false}
-      flex
-      auto
-      alignItems="center"
-      justifyContent="space-between"
-      gap={20}
-    >
-      <div style={{ fontWeight: 600 }} className={ClassName.animatedBorderBottom(undefined, undefined, 1)}>
-        {metaObject?.name || 'Deleted object'}
+    <Content contentEditable={false} flex auto alignItems="center" gap={20}>
+      {metaObject?.coverImgSrc && (
+        <Image
+          src={metaObject.coverImgSrc}
+          width="40px"
+          style={{
+            borderRadius: 7
+          }}
+        />
+      )}
+      <Content flex column>
+        {metaObject?.tags && (
+          <Content flex gap={4}>
+            {metaObject.tags.map(t => (
+              <Tag hideSize tag={t} small key={t}/>
+            ))}
+          </Content>
+        )}
+        <div
+          onClick={handleNavigate}
+          style={{ fontWeight: 600, width: 'fit-content' }}
+          className={ClassName.animatedBorderBottom(undefined, undefined, 1)}
+        >
+          {metaObject?.name || 'Deleted object'}
+        </div>
+      </Content>
+      <div
+        style={{
+          marginLeft: 'auto'
+        }}
+        className={ClassName.tag(element.background ? ClassName.TagBackgrounds.transparent : ClassName.TagBackgrounds.grey)}
+      >
+        {typeToTypeRecord[metaObject?.type || 'normal']}
       </div>
-      <Content flex gap={6}>
+      {/* <Content flex gap={6}>
         <div className={ClassName.tag(element.background ? ClassName.TagBackgrounds.transparent : ClassName.TagBackgrounds.grey)}>
           Mentioned : {alsoMentionedSize || 0}
         </div>
@@ -189,7 +211,7 @@ const MetaObject: FC<RenderElementProps> = memo(({ children, element }) => {
         <div className={ClassName.tag(element.background ? ClassName.TagBackgrounds.transparent : ClassName.TagBackgrounds.grey)}>
           Object
         </div>
-      </Content>
+      </Content> */}
     </Content>
   )
   return (
@@ -198,14 +220,13 @@ const MetaObject: FC<RenderElementProps> = memo(({ children, element }) => {
       main={metaEle?.cardType === 'line' || metaEle?.cardType === undefined ? renderLineMain() : renderMain()}
       element={{ ...element, noteId: metaObject?.noteId }}
       children={children}
-      type="meta"
     />
   )
 })
 
 const RelatedNote = ({ noteId }: { noteId?: number }) => {
   const noteAtom = useMemo(() => (noteId ? atom(get => get(notesAtom).get(noteId)) : atom(null)), [noteId])
-  const note = useAtomValue(noteAtom, GlobalScope)
+  const note = useAtomValue(noteAtom, { store: globalStore })
   const navigate = useNavigate()
   return (
     <Content flex gap={6}>

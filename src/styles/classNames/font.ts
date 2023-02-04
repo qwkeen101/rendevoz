@@ -41,7 +41,7 @@ export const animatedBorderBottom = (bottom = 0, left = 0, height = 1, backgroun
       width: 0,
       height,
       borderRadius: 4,
-      background,
+      borderBottom: `1px solid ${background}`,
       transition: 'width 0.5s'
     },
     ':hover': {

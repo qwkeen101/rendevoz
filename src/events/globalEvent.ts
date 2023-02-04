@@ -1,4 +1,4 @@
-import { AvaliableGlobalDraggingElements } from '@/components/GlobalDragOverlay'
+import { AvaliableGlobalDraggingElements } from '@/components/globalDragOverlay/GlobalDragOverlay'
 import { Position } from '@/types'
 import { INote } from '~/typings/data'
 import { Event } from './eventEmitter'

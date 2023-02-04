@@ -1,3 +1,5 @@
+import { useSetting } from '@/components/globalSetting/Main'
+import { useMemoizedFn } from '@/hooks'
 import useDb from '@/hooks/stores/useDb'
 import { atom } from 'jotai/vanilla'
 import { useMemo } from 'react'
@@ -18,28 +20,28 @@ export const pinnedDocumentsAtom = atom(get => get(undeletedDocumentsAtom).filte
 
 const useDocumentStore = () => {
   const database = useDb('documents')
-
+  const [setting] = useSetting()
   const store = initializeLocalStore(documentsAtom, database)
-
+  const shouldToast = setting.notification.enabled && setting.notification.pdf
   const localStore: Pick<IStore<IPdfDocument>, 'addOne' | 'deleteOneById' | 'getAll' | 'getOneById' | 'updateOne'> = {
     addOne: store.addOne((obj, silent) => {
-      !silent && toast.success('Document successfully added!')
+      !silent && shouldToast && toast.success('Document successfully added!')
     }),
     updateOne: store.updateOne((obj, silent) => {
-      !silent && toast.success('Document successfully updated!')
+      !silent && shouldToast && toast.success('Document successfully updated!')
     }),
     deleteOneById: store.deleteOneById(silent => {
-      !silent && toast.success('Document successfully deleted!')
+      !silent && shouldToast && toast.success('Document successfully deleted!')
     }),
     getAll: store.getAll(),
     getOneById: store.getOneById()
   }
   const realStore = {
-    getDocumentById: localStore.getOneById,
-    addDocument: localStore.addOne,
-    deleteDocument: localStore.deleteOneById,
-    getAllDocuments: localStore.getAll,
-    updateDocument: localStore.updateOne
+    getDocumentById: useMemoizedFn(localStore.getOneById),
+    addDocument: useMemoizedFn(localStore.addOne),
+    deleteDocument: useMemoizedFn(localStore.deleteOneById),
+    getAllDocuments: useMemoizedFn(localStore.getAll),
+    updateDocument: useMemoizedFn(localStore.updateOne)
   }
   return useMemo(
     () => ({

@@ -10,6 +10,7 @@ import { useMemoizedFn } from '@/hooks'
 import { IStore } from './store.type'
 import { toast } from 'react-hot-toast'
 import { globalStore } from './stores'
+import { useSetting } from '@/components/globalSetting/Main'
 
 const { orderedData } = BaseStore
 
@@ -29,29 +30,29 @@ export const rootCollectionsAtom = atom(get =>
 const useCollectionStore = () => {
   const database = useDb('collections')
   const { get, update } = BaseStore
-
+  const [setting] = useSetting()
   const all = useAtomValue(undeletedCollectionsAtom, GlobalScope)
-
+  const shouldToast = setting.notification.enabled && setting.notification.collection
   const store = initializeLocalStore<ICollection>(collectionsAtom, database)
   const localStore: Pick<IStore<ICollection>, 'addOne' | 'deleteOneById' | 'getAll' | 'getOneById' | 'updateOne'> = {
     addOne: store.addOne((obj, silent) => {
-      !silent && toast.success('Collection successfully added!')
+      !silent && shouldToast && toast.success('Collection successfully added!')
     }),
     updateOne: store.updateOne((obj, silent) => {
-      !silent && toast.success('Collection successfully updated!')
+      !silent && shouldToast && toast.success('Collection successfully updated!')
     }),
     deleteOneById: store.deleteOneById(silent => {
-      !silent && toast.success('Collection successfully deleted!')
+      !silent && shouldToast && toast.success('Collection successfully deleted!')
     }),
     getAll: store.getAll(),
     getOneById: store.getOneById()
   }
   const realStore = {
-    addCollection: localStore.addOne,
-    deleteCollection: localStore.deleteOneById,
-    updateCollection: localStore.updateOne,
-    getAllCollections: localStore.getAll,
-    getCollectionById: localStore.getOneById
+    addCollection: useMemoizedFn(localStore.addOne),
+    deleteCollection: useMemoizedFn(localStore.deleteOneById),
+    updateCollection: useMemoizedFn(localStore.updateOne),
+    getAllCollections: useMemoizedFn(localStore.getAll),
+    getCollectionById: useMemoizedFn(localStore.getOneById)
   }
   const getChildrenCollections = (rootId?: number) => {
     return orderBy(

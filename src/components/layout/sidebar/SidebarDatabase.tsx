@@ -1,7 +1,7 @@
 import { AnimatePopover, Icon } from '@/components'
 import Modal from '@/components/base/Modal'
 import EditMetaObjectForm from '@/components/form/EditMetaObjectForm'
-import { GlobalDragOverlayInstance, useGlobalIsDragging } from '@/components/GlobalDragOverlay'
+import { GlobalDragOverlayInstance, useGlobalIsDragging } from '@/components/globalDragOverlay/GlobalDragOverlay'
 import useEventEmitter from '@/events/useEventEmitter'
 import { useMemoizedFn } from '@/hooks'
 import useMetaStore, { undeletedMetaObjectsAtom } from '@/stores/meta.store'
@@ -78,10 +78,9 @@ const SidebarDatabase = memo(() => {
 
   return (
     <>
-      <Modal visible={newMetaVisible} onClose={() => setNewMetaVisible(false)} width={300}>
+      <Modal visible={newMetaVisible} onClose={() => setNewMetaVisible(false)} noStyle>
         <EditMetaObjectForm
           metaObject={tempMetaObject}
-          title="Create meta object"
           onUpdate={newMeta => {
             newMeta.type = 'normal'
             addMetaObject(newMeta)

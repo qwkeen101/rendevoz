@@ -6,5 +6,6 @@ export const KEY = {
   Control: 'Control',
   Alt: 'Alt',
   Pause: 'Pause',
-  Delete: 'Delete'
+  Delete: 'Delete',
+  Escape: 'Escape'
 }

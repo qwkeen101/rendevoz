@@ -1,15 +1,12 @@
-import { useMemoizedFn, usePrevious } from '@/hooks'
+import { usePrevious } from '@/hooks'
 import { css } from '@emotion/css'
-import produce from 'immer'
-import { FC, memo, useEffect, useLayoutEffect } from 'react'
+import { memo, useEffect } from 'react'
 import { MarkerColor } from '../consts/markerColors'
 import useEdges from '../hooks/useEdges'
 import useGraph from '../hooks/useGraph'
-import { GraphEdge } from '../types/edge'
 import { getMarkerId } from '../utils/getMarkerId'
 import Edge from './Edge'
 
-interface EdgeContainerProps {}
 const svgContainerClassName = css({
   position: 'absolute',
   left: 0,
@@ -19,52 +16,32 @@ const svgContainerClassName = css({
   overflow: 'visible',
   pointerEvents: 'none'
 })
-const EdgeContainer: FC<EdgeContainerProps> = () => {
+const EdgeContainer = () => {
   const graph = useGraph()
-  const [edges, setEdges] = useEdges()
+  const [edges] = useEdges()
+
   const previousEdges = usePrevious(edges)
 
   useEffect(() => {
-    graph?.registerHandler('change', changeHandler)
-  }, [])
-  const changeHandler = useMemoizedFn((_, _edges: GraphEdge[]) => {
-    if (edges && graph) {
-      const oppoMap = new Map()
-      graph.originEdges?.forEach(e => {
-        const oppositeEdge = graph.originEdges?.find(i => i.targetId === e.sourceId && i.sourceId === e.targetId)
-        if (oppositeEdge) {
-          oppoMap.set(e.id, oppositeEdge)
-          oppoMap.set(oppositeEdge.id, e)
-        }
-      })
-      graph.oppositeEdgesMap = oppoMap
-
-      setEdges(
-        produce(edges, draft => {
-          _edges.forEach(e => {
-            const idx = edges?.findIndex(o => o.id === e.id)
-            if (idx > -1) {
-              draft[idx] = Object.assign({}, edges[idx], e)
-            } else {
-              draft.push(e)
-            }
-          })
-          if (_edges.length < edges.length) {
-            edges.forEach(n => {
-              if (!_edges.some(o => o.id === n.id)) {
-                const idx = draft.findIndex(o => o.id === n.id)
-                idx !== -1 && draft.splice(idx, 1)
-              }
-            })
+    if (previousEdges && edges && graph) {
+      if (previousEdges?.length !== edges?.length) {
+        const oppoMap = new Map()
+        graph.originEdges?.forEach(e => {
+          const oppositeEdge = graph.originEdges?.find(i => i.targetId === e.sourceId && i.sourceId === e.targetId)
+          if (oppositeEdge) {
+            oppoMap.set(e.id, oppositeEdge)
+            oppoMap.set(oppositeEdge.id, e)
           }
         })
-      )
+        graph.oppositeEdgesMap = oppoMap
+      }
     }
-  })
+  }, [edges])
+
   return (
     <svg viewBox="-300 -300 600 600" className={svgContainerClassName}>
       <defs>
-        {Object.values(MarkerColor).map(color => (
+        {(Object.values(MarkerColor) as string[]).map(color => (
           <marker
             refX={0}
             refY={0}
@@ -87,10 +64,12 @@ const EdgeContainer: FC<EdgeContainerProps> = () => {
           </marker>
         ))}
       </defs>
-      {edges?.map(edge => (
-        <Edge edge={edge} key={`${edge.sourceId}_${edge.targetId}`} />
-      ))}
+      {edges
+        ?.filter(i => !i.hidden)
+        ?.map(edge => (
+          <Edge edge={edge} key={`${edge.id}`} />
+        ))}
     </svg>
   )
 }
-export default EdgeContainer
+export default memo(EdgeContainer)

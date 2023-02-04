@@ -2,6 +2,7 @@ import { Content, Image } from '@/components/base'
 import { useTheme } from '@/hooks'
 import { css } from '@emotion/css'
 import { FC, ReactNode } from 'react'
+import { CustomElement } from '../../types'
 import useCardBorder from './useBorder'
 
 const WideCard: FC<{
@@ -9,13 +10,16 @@ const WideCard: FC<{
   main?: ReactNode
   slateChildren?: ReactNode
   borderColor?: 'grey' | 'cream'
-}> = ({ borderColor = 'cream', main, slateChildren, pictureUrl }) => {
+  element?: CustomElement
+}> = ({ borderColor = 'cream', main, slateChildren, pictureUrl, element }) => {
   return (
     <Content
       contentEditable={false}
       flex
+      style={{
+        boxShadow: element?.background ? undefined : 'rgba(0, 0, 0, 0.05) 0px 6px 24px 0px, rgba(0, 0, 0, 0.08) 0px 0px 0px 1px'
+      }}
       className={css({
-        boxShadow: 'rgba(0, 0, 0, 0.05) 0px 6px 24px 0px, rgba(0, 0, 0, 0.08) 0px 0px 0px 1px',
         borderRadius: 6,
         overflow: 'hidden'
       })}

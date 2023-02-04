@@ -337,6 +337,7 @@ const InnerEditor: FC<InnerEditorProps> = memo(
         <Editable
           innerRef={editableRef}
           readOnly={readonly}
+          scrollSelectionIntoView={() => {}}
           suppressContentEditableWarning={true}
           spellCheck="false"
           onCompositionStart={() => {

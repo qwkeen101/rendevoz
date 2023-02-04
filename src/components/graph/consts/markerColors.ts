@@ -1,6 +1,6 @@
 import { Colors } from '@/components/picker/colorPicker'
 
-const ColorPickerColors = Colors.map(i => i[3])
+const ColorPickerColors = Colors.map(i => i[4])
 
 export const MarkerColor = {
   EMPHASIS: '#7743DB',

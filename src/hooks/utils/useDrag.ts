@@ -1,4 +1,4 @@
-import { GlobalDragOverlayInstance } from '@/components/GlobalDragOverlay'
+import { GlobalDragOverlayInstance } from '@/components/globalDragOverlay/GlobalDragOverlay'
 import { MouseEventHandler, useEffect } from 'react'
 import useMemoizedFn from './useMemoizedFn'
 

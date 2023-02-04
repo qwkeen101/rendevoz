@@ -1,6 +1,6 @@
 import { AnimatePopover, Content, Icon } from '@/components'
 import Tooltip from '@/components/base/Tooltip'
-import { FC, useRef, useState, useEffect, MutableRefObject, useImperativeHandle, forwardRef, CSSProperties } from 'react'
+import { FC, useRef, useState, useEffect, MutableRefObject, useImperativeHandle, forwardRef, CSSProperties, MouseEventHandler } from 'react'
 
 interface Props {
   disableNudge?: boolean
@@ -21,6 +21,7 @@ interface Props {
   style?: CSSProperties
   align?: string
   className?: string
+  onClick?: MouseEventHandler
 }
 const IconWithPopover: FC<Props> = (
   {
@@ -41,7 +42,8 @@ const IconWithPopover: FC<Props> = (
     boundaryInset = 40,
     disableCloseOutside,
     disableIntersection,
-    style
+    style,
+    onClick
   },
   ref
 ) => {
@@ -90,6 +92,7 @@ const IconWithPopover: FC<Props> = (
             className={className}
             onClick={e => {
               setVisible(!visible)
+              onClick?.(e)
             }}
             name={name}
           />

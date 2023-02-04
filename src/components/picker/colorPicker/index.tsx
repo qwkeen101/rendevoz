@@ -11,6 +11,7 @@ interface ColorPickerProps {
   enableMore?: boolean
   isFont?: boolean
   enableDefault?: boolean
+  disableLinear?: boolean
 }
 export const Colors: string[][] = [
   [material.red['900'], material.red['700'], material.red['500'], material.red['300'], material.red['100']],
@@ -70,18 +71,21 @@ export const Colors: string[][] = [
     'linear-gradient(to left, #dbe6f6, #c5796d)'
   ]
 ]
+export const defaultFontColor = '#000000'
+export const defaultBgColor = '#ffffff'
 const ColorPicker: FC<ColorPickerProps> = ({
   onPick,
   colors = Colors,
   backDefault = false,
   enableMore = false,
   isFont = false,
-  enableDefault = true
+  enableDefault = true,
+  disableLinear
 }) => {
-  const displayColors = enableMore ? colors.map(i => (isFont ? i[2] : i[4])) : colors.flat(1)
-
-  const defaultFontColor = '#000000'
-  const defaultBgColor = '#ffffff'
+  let displayColors = enableMore ? colors.map(i => (isFont ? i[2] : i[4])) : colors.flat(1)
+  if (disableLinear) {
+    displayColors = displayColors.filter(i => !i.startsWith('linear'))
+  }
   if (enableDefault) {
     if (isFont) {
       displayColors.unshift(defaultFontColor)
@@ -171,28 +175,6 @@ const ColorPicker: FC<ColorPickerProps> = ({
       >
         {displayColors.map(i => renderItem(i))}
       </Content>
-      {backDefault && (
-        <div
-          onClick={() => onPick(null)}
-          className={css({
-            width: '100%',
-            padding: '2px',
-            borderRadius: 4,
-            border: '1px solid #8590ae',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            cursor: 'pointer',
-            transition: 'all 0.2s ease',
-            marginTop: 10,
-            ':hover': {
-              background: 'rgba(0,0,0,0.07)'
-            }
-          })}
-        >
-          Back to default
-        </div>
-      )}
     </Content>
   )
 }

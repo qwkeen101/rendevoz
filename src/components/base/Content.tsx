@@ -1,5 +1,7 @@
 import { DetailedHTMLProps, forwardRef, HTMLAttributes } from 'react'
 import { Property } from 'csstype'
+import { css } from '@emotion/css'
+import classNames from 'classnames'
 
 interface ContentProps extends DetailedHTMLProps<HTMLAttributes<HTMLDivElement>, HTMLDivElement> {
   position?: 'absolute' | 'relative' | 'fixed'
@@ -35,20 +37,26 @@ const Content = forwardRef<HTMLDivElement, ContentProps>(
     },
     ref
   ) => {
-    const Style: React.CSSProperties = {
-      position: position,
-      display: flex ? 'flex' : 'block',
-      flexDirection: flex && column ? 'column' : 'row',
-      justifyContent: centered ? 'center' : justifyContent,
-      alignItems: centered ? 'center' : alignItems,
-      flex: auto ? 'auto' : undefined,
-      width: fullWidth ? '100%' : undefined,
-      height: fullHeight ? '100%' : undefined,
-      gap,
-      ...style
-    }
     return (
-      <div ref={ref} className={className} style={Style} {...rest}>
+      <div
+        ref={ref}
+        className={classNames(
+          css({
+            position: position,
+            display: flex ? 'flex' : 'block',
+            flexDirection: flex && column ? 'column' : 'row',
+            justifyContent: centered ? 'center' : justifyContent,
+            alignItems: centered ? 'center' : alignItems,
+            flex: auto ? 'auto' : undefined,
+            width: fullWidth ? '100%' : undefined,
+            height: fullHeight ? '100%' : undefined,
+            gap
+          }),
+          className
+        )}
+        style={style}
+        {...rest}
+      >
         {children}
       </div>
     )

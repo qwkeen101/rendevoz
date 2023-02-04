@@ -11,7 +11,7 @@ import { saveImageLocally } from '@/utils/img'
 import { useTranslation } from 'react-i18next'
 import ClassName from '@/styles/classNames'
 import { useToggle } from '@/hooks'
-import { Content, Icon } from '../base'
+import { Content, FileUploader, Icon } from '../base'
 import { Button } from '../base/button'
 import useFileUpload from '../base/useFileUpload'
 import { toast } from 'react-hot-toast'
@@ -25,16 +25,7 @@ interface NewDocumentFormProps {
 }
 const NewDocumentForm: FC<NewDocumentFormProps> = ({ onBack, onSubmit, collection }) => {
   const [isFileUploaded, toggleFileUploaded] = useToggle(false)
-  const [dragHighlight, toggleDragHighlight] = useToggle(false)
-  const { renderUploader, upload } = useFileUpload(file => {
-    if (file && file.type === 'application/pdf') {
-      fileRef.current = file
-      handleExtractMetadataOfPdf(file)
-      toggleFileUploaded(true)
-    } else {
-      toast.error('Not Allowed File')
-    }
-  }, 'application/pdf')
+
   const { addDocument } = useDocumentStore()
   const { t } = useTranslation()
   const fileRef = useRef<File>()
@@ -92,23 +83,9 @@ const NewDocumentForm: FC<NewDocumentFormProps> = ({ onBack, onSubmit, collectio
     return (
       <div>
         <div className={ClassName.title()}>Upload Document</div>
-        <Content
-          flex
-          column
-          centered
-          gap={14}
-          onDragEnter={e => {
-            e.preventDefault()
-          }}
-          onDragOver={e => {
-            e.preventDefault()
-            toggleDragHighlight(true)
-          }}
-          onDrop={e => {
-            e.preventDefault()
-            const data = e.dataTransfer
-            const files = data.files
-            const file = files[0]
+        <FileUploader
+          accept="application/pdf"
+          onFileUploaded={file => {
             if (file && file.type === 'application/pdf') {
               fileRef.current = file
               handleExtractMetadataOfPdf(file)
@@ -116,28 +93,8 @@ const NewDocumentForm: FC<NewDocumentFormProps> = ({ onBack, onSubmit, collectio
             } else {
               toast.error('Not Allowed File')
             }
-            toggleDragHighlight(false)
           }}
-          onDragLeave={e => {
-            e.preventDefault()
-            e.currentTarget === e.target && toggleDragHighlight(false)
-          }}
-          style={{
-            marginTop: 12,
-            border: '1px solid rgba(31, 34, 37, 0.06)',
-            padding: 18,
-            borderRadius: 8,
-            borderColor: dragHighlight ? '#8590ae' : 'rgba(31, 34, 37, 0.06)',
-            transition: 'all 0.3s ease'
-          }}
-        >
-          {renderUploader()}
-          <Icon name="park-file-addition-one" size={36} fill={'rgba(31, 34, 37, 0.6)'} />
-          <div className={ClassName.description()}>Select one file or drag here</div>
-          <Button onClick={upload} style={{ padding: '6px 16px' }}>
-            Select one file
-          </Button>
-        </Content>
+        />
       </div>
     )
   }

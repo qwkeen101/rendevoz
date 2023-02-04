@@ -1,6 +1,6 @@
+import { css } from '@emotion/css'
 import classNames from 'classnames'
 import { FC } from 'react'
-import styles from './index.module.less'
 
 interface ContainerProps {
   className?: string
@@ -12,10 +12,21 @@ interface ContainerProps {
   style?: React.CSSProperties
 }
 
-const Container: FC<ContainerProps> = ({ column, auto, children, levelCenter, verticalCenter, style,className }) => {
+const Container: FC<ContainerProps> = ({ column, auto, children, levelCenter, verticalCenter, style, className }) => {
   return (
     <div
-      className={classNames(styles.container, className)}
+      className={classNames(
+        css({
+          background: 'white',
+          position: 'relative',
+          width: '100%',
+          height: '100%',
+          display: 'flex',
+          flexGrow: 1,
+          flexBasis: 'auto'
+        }),
+        className
+      )}
       style={{
         ...style,
         flexDirection: column ? 'column' : 'row',

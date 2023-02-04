@@ -28,7 +28,7 @@ const EdgeAttributeCard = ({ currentEdge }: { currentEdge?: GraphEdge }) => {
       label: edge.label
     })
   }
-  const { run: debouncedUpdateEdge } = useDebounceFn(updateEdge, { wait: 200 })
+  const { run: debouncedUpdateEdge } = useDebounceFn(updateEdge, { wait: 1000 })
   return (
     <Toolbar>
       <Toolbar.Item>

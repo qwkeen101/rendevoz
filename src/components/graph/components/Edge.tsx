@@ -6,24 +6,18 @@ import { MarkerColor } from '../consts/markerColors'
 import useGraph from '../hooks/useGraph'
 import { motion } from 'framer-motion'
 import { select } from 'd3'
-import { usePrevious } from '@/hooks'
+import { useMemoizedFn, usePrevious } from '@/hooks'
 import { TypeToNodeRadius } from './node/Node'
+import { NodeFakeHiddenOpacity } from '../consts/opacity'
 interface EdgeProps {
   edge: GraphEdge
 }
 
 const Edge: FC<EdgeProps> = memo(({ edge }) => {
-  const sourceX = edge.source?.x || 0
-  const sourceY = edge.source?.y || 0
-  const targetX = edge.target?.x || 0
-  const targetY = edge.target?.y || 0
-
   const edgeRef = useRef<SVGPathElement>(null)
   const labelRef = useRef<SVGGElement>(null)
   const graph = useGraph()
-  const targetNode = graph?.nodesMap?.get(edge.targetId)
-  const sourceNode = graph?.nodesMap?.get(edge.sourceId)
-  const originEdges = graph?.originEdges
+
   const oppositeEdge = graph?.oppositeEdgesMap.get(edge.id)
   const [finalPosition, setFinalPosition] = useState<{
     targetx: number
@@ -34,20 +28,10 @@ const Edge: FC<EdgeProps> = memo(({ edge }) => {
   const [rect, setRect] = useState({ width: 0, height: 0 })
   const [highlight, setHighlight] = useState(false)
   const [d, setD] = useState<string>()
-  const previousEdge = usePrevious(edge)
+
   const textRef = useRef<SVGTextElement>(null)
   useLayoutEffect(() => {
     const isNewlyAdded = edge.id === graph?.newAddedEdge?.id
-    if (
-      !(
-        edge.source?.x === previousEdge?.source?.x &&
-        edge.source?.y === previousEdge?.source?.y &&
-        edge.target?.x === previousEdge?.target?.x &&
-        edge.target?.y === previousEdge?.target?.y
-      )
-    ) {
-      setD(drawEdge())
-    }
     if (edgeRef.current) {
       graph?.registerEdgeElement(edge.id, edgeRef.current)
       if (isNewlyAdded) {
@@ -80,7 +64,14 @@ const Edge: FC<EdgeProps> = memo(({ edge }) => {
     }
   }, [d, edge.label])
 
-  const drawEdge = (): string => {
+  const drawEdge = useMemoizedFn((): string => {
+    const targetNode = graph?.nodesMap?.get(edge.targetId)
+    const targetX = targetNode?.x
+    const targetY = targetNode?.y
+    const sourceNode = graph?.nodesMap?.get(edge.sourceId)
+    const sourceX = sourceNode?.x
+    const sourceY = sourceNode?.y
+    console.log('drawing edge')
     const TARGET_CIRCLE_RADIUS = TypeToNodeRadius[targetNode?.type || 'normal']
     const SOURCE_CIRCLE_RADIUS = TypeToNodeRadius[sourceNode?.type || 'normal']
     const getYOffset = (type?: string) => {
@@ -113,14 +104,14 @@ const Edge: FC<EdgeProps> = memo(({ edge }) => {
     // // check out whether double direction link
     let offsetX = 0
     let offsetY = 0
-    if (originEdges) {
-      if (oppositeEdge) {
-        // 直线的倾斜角
-        const alpha = Math.atan2(targetCircleCenterY - sourceCircleCenterY, targetCircleCenterX - sourceCircleCenterX)
-        offsetX = 8 * Math.sin(alpha)
-        offsetY = 16 * Math.cos(alpha)
-      }
+
+    if (oppositeEdge) {
+      // 直线的倾斜角
+      const alpha = Math.atan2(targetCircleCenterY - sourceCircleCenterY, targetCircleCenterX - sourceCircleCenterX)
+      offsetX = 8 * Math.sin(alpha)
+      offsetY = 16 * Math.cos(alpha)
     }
+
     const finalSourceX = sourceCircleCenterX + sourceDx
     const finalSourceY = sourceCircleCenterY + sourceDy
     const finalTargetX = targetCircleCenterX - targetDx
@@ -135,11 +126,17 @@ const Edge: FC<EdgeProps> = memo(({ edge }) => {
       [finalSourceX + offsetX, finalSourceY - offsetY],
       [finalTargetX + offsetX, finalTargetY - offsetY]
     ]
-    return curve(points)
-  }
-
+    const result = curve(points)
+    setD(result)
+    return result
+  })
+  useEffect(() => {
+    graph?.ID_TO_EDGE_FUNCTION_MAP.set(edge.id, {
+      drawEdge
+    })
+  })
   const edgeMouseEnterHandler = () => {
-    setHighlight(true)
+    if (edge.opacity !== NodeFakeHiddenOpacity) setHighlight(true)
   }
   const edgeMouseLeaveHandler = () => {
     setHighlight(false)
@@ -202,7 +199,6 @@ const Edge: FC<EdgeProps> = memo(({ edge }) => {
             height={rect.height}
             initial={{ opacity: 1 }}
             animate={{ opacity: edge.opacity }}
-            // x={-rect.width / 2}
             x={-5}
             rx={2}
             ry={2}

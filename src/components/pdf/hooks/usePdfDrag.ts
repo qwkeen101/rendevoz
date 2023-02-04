@@ -1,5 +1,5 @@
 import { getDistanceBetweenPointAndElement } from '@/components/dragReposition/utils/position'
-import { GlobalDragOverlayInstance, useGlobalIsDragging } from '@/components/GlobalDragOverlay'
+import { GlobalDragOverlayInstance, useGlobalIsDragging } from '@/components/globalDragOverlay/GlobalDragOverlay'
 import { useMemoizedFn } from '@/hooks'
 import Id from '@/utils/id'
 import { useEffect, useState } from 'react'

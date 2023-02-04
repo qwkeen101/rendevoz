@@ -10,7 +10,7 @@ import styles from './index.module.less'
 import { useCanSubmit } from './useCanSubmit'
 import { useIsSubmitted } from './useIsSubmitted'
 
-type FormItemConditionalProps =
+type FormItemConditionalProps = { disable?: boolean } & (
   | {
       onChange?: (value: string) => void
       text: string
@@ -43,13 +43,14 @@ type FormItemConditionalProps =
       children: ReactNode
       value?: string
     }
+)
 interface FormItemCommonProps {
   type: 'input' | 'textarea' | 'file' | 'colorPicker' | 'component'
   requireMessage?: string
   required?: boolean
 }
 type FormItemProps = FormItemCommonProps & FormItemConditionalProps
-const FormItem: FC<FormItemProps> = ({ onChange, onUpload, text, type, children, required, requireMessage, value }) => {
+const FormItem: FC<FormItemProps> = ({ onChange, onUpload, text, type, children, required, requireMessage, value, disable }) => {
   const { t } = useTranslation()
   const [innerValue, setInnerValue] = useState<File | string>()
   const [color, setColor] = useState<string>()
@@ -79,6 +80,7 @@ const FormItem: FC<FormItemProps> = ({ onChange, onUpload, text, type, children,
             textarea={type === 'textarea'}
             style={{ height: 40 }}
             placeholder={text}
+            disable={disable}
             onChange={e => {
               onChange?.(e)
               setInnerValue(e)

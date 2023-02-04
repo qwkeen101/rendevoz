@@ -3,14 +3,18 @@ import useDb from '@/hooks/stores/useDb'
 import ClassName from '@/styles/classNames'
 import Id from '@/utils/id'
 import { atom } from 'jotai/vanilla'
-import { useMemo } from 'react'
+import { useEffect, useMemo } from 'react'
 import { toast } from 'react-hot-toast'
-import { MetaComment, MetaLink, MetaObject } from '~/typings/data'
+import { INote, IPdfDocument, MetaComment, MetaLink, MetaObject } from '~/typings/data'
 import BaseStore from './base.store'
-import useNoteStore from './note.store'
+import useNoteStore, { notesAtom } from './note.store'
 import { globalStore } from './stores'
 import { typeToTypeRecord } from '@/components/knowledgeDatabase/card/DatabaseCard'
 import { IStore } from './store.type'
+import { useSetting } from '@/components/globalSetting/Main'
+import { documentsAtom } from './document.store'
+import { labelsAtom } from './label.store'
+import { useAtomValue } from 'jotai/react'
 
 export const metaObjectsAtom = atom<Map<number, MetaObject>>(new Map())
 
@@ -53,11 +57,83 @@ export const ObjectIdToMetaObjectMapAtom = atom<Map<number, MetaObject>>(get => 
   return otmMap
 })
 
+export const TagToMetaObjectIdsMapAtom = atom<Map<string, Set<number>>>(get => {
+  const map = new Map<string, Set<number>>()
+  get(undeletedMetaObjectsAtom).forEach(i => {
+    i.tags?.forEach(tag => {
+      if (map.has(tag)) {
+        map.get(tag)?.add(i.id)
+      } else {
+        const set = new Set<number>()
+        set.add(i.id)
+        map.set(tag, set)
+      }
+    })
+  })
+  return map
+})
+
+export const useMetaTargetObject = (metaObjectId: number) => {
+  const metaObject = useAtomValue(metaObjectsAtom, { store: globalStore }).get(metaObjectId)
+  const { updateMetaObject } = useMetaStore()
+  if (!metaObject) return
+  switch (metaObject.type) {
+    case 'normal':
+    case 'image':
+      return {
+        metaObject
+      }
+  }
+  const { objectId } = metaObject
+  if (!objectId)
+    return {
+      metaObject
+    }
+  const targetObjectAtom = useMemo(() => {
+    switch (metaObject.type) {
+      case 'note':
+        return atom(get => get(notesAtom).get(objectId))
+      case 'pdf':
+        return atom(get => get(documentsAtom).get(objectId))
+      case 'pdfElement':
+        return atom(get => get(labelsAtom).get(objectId))
+      default:
+        return atom(null)
+    }
+  }, [objectId])
+  const object = useAtomValue(targetObjectAtom, { store: globalStore })
+  useEffect(() => {
+    if (object) {
+      switch (metaObject.type) {
+        case 'note': {
+          const { title } = object as INote
+          if (metaObject.name !== title) {
+            updateMetaObject({ id: metaObjectId, name: title })
+          }
+          break
+        }
+        case 'pdf': {
+          const { name } = object as IPdfDocument
+          if (metaObject.name !== name) {
+            updateMetaObject({ id: metaObjectId, name })
+          }
+          break
+        }
+      }
+    }
+  }, [object])
+  return {
+    metaObject,
+    targetObject: object
+  }
+}
 const useMetaStore = () => {
   const { get, bulkAdd, initBaseObject, dispatch } = BaseStore
   const metaObjectDb = useDb('metaObjects')
   const metaLinkDb = useDb('metaLinks')
-
+  const [setting] = useSetting()
+  const shouldToastObject = setting.notification.enabled && setting.notification.object
+  const shouldToastLink = setting.notification.enabled && setting.notification.link
   const { addNote } = useNoteStore()
 
   const localObjectStore: Pick<IStore<MetaObject>, 'addOne' | 'updateOne' | 'deleteOneById' | 'getAll'> = {
@@ -70,12 +146,13 @@ const useMetaStore = () => {
           database: metaObjectDb,
           atom: metaObjectsAtom,
           onSuccess: obj => {
-            toast.success(
-              <Notification
-                title="Object successfully updated!"
-                content={<div className={ClassName.description()}>Object Name: {obj.name}</div>}
-              />
-            )
+            shouldToastObject &&
+              toast.success(
+                <Notification
+                  title="Object successfully updated!"
+                  content={<div className={ClassName.description()}>Object Name: {obj.name}</div>}
+                />
+              )
             res(obj)
           }
         })
@@ -105,17 +182,18 @@ const useMetaStore = () => {
           data: initedMetaObject,
           database: metaObjectDb,
           onSuccess: obj => {
-            toast.success(
-              <Notification
-                title="Object successfully added!"
-                content={
-                  <div className={ClassName.description()}>
-                    <div>Name: {initedMetaObject.name}</div>
-                    <div style={{ textTransform: 'capitalize' }}>Type: {typeToTypeRecord[initedMetaObject.type || 'normal']}</div>
-                  </div>
-                }
-              />
-            )
+            shouldToastObject &&
+              toast.success(
+                <Notification
+                  title="Object successfully added!"
+                  content={
+                    <div className={ClassName.description()}>
+                      <div>Name: {initedMetaObject.name}</div>
+                      <div style={{ textTransform: 'capitalize' }}>Type: {typeToTypeRecord[initedMetaObject.type || 'normal']}</div>
+                    </div>
+                  }
+                />
+              )
             res(obj)
           }
         })
@@ -130,7 +208,10 @@ const useMetaStore = () => {
           },
           database: metaObjectDb,
           atom: metaObjectsAtom,
-          onSuccess: () => res(true),
+          onSuccess: () => {
+            shouldToastObject && toast.success('Object successfully deleted!')
+            res(true)
+          },
           onFail: () => res(false)
         })
         const allMetaLinks = globalStore.get(undeletedMetaLinksAtom)
@@ -156,6 +237,7 @@ const useMetaStore = () => {
     addOne: link => {
       return new Promise(res => {
         const initedMetaLink = initBaseObject(link) as MetaLink
+        if (initedMetaLink.sourceId === initedMetaLink.targetId) return
         const allMetaLinks = globalStore.get(allMetaLinksAtom)
         const existed = allMetaLinks.some(i => i.sourceId === initedMetaLink.sourceId && i.targetId === initedMetaLink.targetId)
         if (!existed) {
@@ -169,27 +251,28 @@ const useMetaStore = () => {
               const sourceObject = atomMap.get(obj.sourceId)
               const targetObject = atomMap.get(obj.targetId)
               res(obj)
-              toast.success(
-                <Notification
-                  title="Link successfully added!"
-                  content={
-                    <div style={{ textTransform: 'capitalize' }} className={ClassName.description()}>
-                      <Content flex alignItems="center" gap={16}>
-                        Source type:
-                        <span className={ClassName.tag('transparent', undefined, undefined, '12px')}>
-                          {typeToTypeRecord[sourceObject?.type || 'normal']}
-                        </span>
-                      </Content>
-                      <Content flex alignItems="center" gap={16}>
-                        Target type:
-                        <span className={ClassName.tag('transparent', undefined, undefined, '12px')}>
-                          {typeToTypeRecord[targetObject?.type || 'normal']}
-                        </span>
-                      </Content>
-                    </div>
-                  }
-                />
-              )
+              shouldToastLink &&
+                toast.success(
+                  <Notification
+                    title="Link successfully added!"
+                    content={
+                      <div style={{ textTransform: 'capitalize' }} className={ClassName.description()}>
+                        <Content flex alignItems="center" gap={16}>
+                          Source type:
+                          <span className={ClassName.tag('transparent', undefined, undefined, '12px')}>
+                            {typeToTypeRecord[sourceObject?.type || 'normal']}
+                          </span>
+                        </Content>
+                        <Content flex alignItems="center" gap={16}>
+                          Target type:
+                          <span className={ClassName.tag('transparent', undefined, undefined, '12px')}>
+                            {typeToTypeRecord[targetObject?.type || 'normal']}
+                          </span>
+                        </Content>
+                      </div>
+                    }
+                  />
+                )
             }
           })
         }
@@ -204,7 +287,7 @@ const useMetaStore = () => {
           database: metaLinkDb,
           atom: metaLinksAtom,
           onSuccess: obj => {
-            toast.success('Link successfully updated!')
+            shouldToastLink && toast.success('Link successfully updated!')
             res(obj)
           }
         })
@@ -220,7 +303,7 @@ const useMetaStore = () => {
           database: metaLinkDb,
           atom: metaLinksAtom,
           onSuccess: () => {
-            toast.success('Link successfully deleted!')
+            shouldToastLink && toast.success('Link successfully deleted!')
             res(true)
           }
         })
@@ -260,46 +343,12 @@ const useMetaStore = () => {
   const getMetaObjectByObjectId = (objId: number) => {
     return globalStore.get(ObjectIdToMetaObjectMapAtom).get(objId)
   }
-  // const addMetaComment = (objId: number, metaComment: Partial<MetaComment>) => {
-  //   const initedMetaComment = initBaseObject(metaComment)
-  //   metaCommentDb.put(initedMetaComment)
-  //   getMetaObjectById(objId).then(originObj => {
-  //     if (!originObj) return
-  //     const newObj = produce(originObj, draft => {
-  //       draft.commentIds = draft.commentIds ? [...draft.commentIds, initedMetaComment.id] : [initedMetaComment.id]
-  //     })
-  //     setMetaObjects(update(newObj, metaObjects))
-  //     metaObjectDb.put(newObj)
-  //   })
-  // }
-  // const updateMetaComment = (metaComment: PartialWithId<MetaComment>) => {
-  //   return metaCommentDb.get(metaComment.id).then(obj => {
-  //     const newObj = Object.assign({}, obj, metaComment)
-  //     metaCommentDb.put(newObj)
-  //   })
-  // }
-  // const deleteMetaComment = (objId: number, metaCommentId: number) => {
-  //   getMetaObjectById(objId).then(originObj => {
-  //     if (!originObj) return
-  //     const newObj = produce(originObj, draft => {
-  //       draft.commentIds = draft.commentIds?.filter(i => i !== metaCommentId)
-  //     })
-  //     metaObjectDb.put(newObj)
-  //     setMetaObjects(update(newObj, metaObjects))
-  //     metaCommentDb.delete(metaCommentId)
-  //   })
-  // }
-  // const getMetaCommentsByIds = (ids: number[]) => {
-  //   return metaCommentDb.bulkGet(ids)
-  // }
-  return useMemo(
-    () => ({
-      getMetaObjectById,
-      getMetaObjectByObjectId,
-      ...realStore
-    }),
-    []
-  )
+
+  return {
+    getMetaObjectById,
+    getMetaObjectByObjectId,
+    ...realStore
+  }
 }
 
 export default useMetaStore

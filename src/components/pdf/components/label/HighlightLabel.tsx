@@ -1,5 +1,5 @@
 import { AnimatePopover, WithBorder } from '@/components'
-import { GlobalDragOverlayInstance } from '@/components/GlobalDragOverlay'
+import { GlobalDragOverlayInstance } from '@/components/globalDragOverlay/GlobalDragOverlay'
 import { useMemoizedFn, useMergedRef } from '@/hooks'
 import useLabelStore, { labelsAtom } from '@/stores/label.store'
 import { globalStore } from '@/stores/stores'

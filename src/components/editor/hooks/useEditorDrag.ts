@@ -1,7 +1,8 @@
-import { GlobalDragOverlayInstance, useGlobalIsDragging } from '@/components/GlobalDragOverlay'
+import { GlobalDragOverlayInstance, useGlobalIsDragging } from '@/components/globalDragOverlay/GlobalDragOverlay'
 import useEventEmitter from '@/events/useEventEmitter'
 import { useMemoizedFn, useRafFn } from '@/hooks'
 import { useEffect, useMemo, useRef } from 'react'
+import useDragIndicator from '../components/useDragIndicator'
 import DragManager from '../DragManager'
 import ScrollManager from '../ScrollManager'
 import { CustomEditor, CustomElement } from '../types'
@@ -17,6 +18,7 @@ const useEditorDrag = (editor: CustomEditor, scrollElement?: HTMLElement | null)
   // default is false
   const dragManager = useMemo(() => new DragManager(), [])
   const scrollManager = useMemo(() => new ScrollManager(), [])
+  const { renderIndicator, indicatorManager } = useDragIndicator()
   dragManager.onDrop = e => {
     emitter.emit('global', {
       type: 'dragDrop',
@@ -40,13 +42,23 @@ const useEditorDrag = (editor: CustomEditor, scrollElement?: HTMLElement | null)
       dragManager.prepareDragging()
     }
     const indicator = dragManager.drag(e)
-    indicator && dragManager.changeIndicator(indicator, e)
+
+    if (indicator) {
+      dragManager.changeIndicator(indicator)
+      if (indicator.direction) {
+        const indicatorPosition = ID_TO_ELEMENTS_MAP.get(editor)?.get(indicator.id)?.getIndicatorPosition(indicator.direction)
+        if (indicatorPosition) {
+          indicatorManager.setIndicatorState({ ...indicatorPosition, visible: true, nested: indicator.isNested })
+        }
+      }
+    }
   })
   const mouseUpHandler = useMemoizedFn((e: MouseEvent) => {
     if (readonly) return
     dragManager.drop()
     scrollManager.endScroll()
     setIsDragging(false)
+    indicatorManager.setIndicatorState(s => ({ ...s, visible: false }))
   })
   const throttledMouseMove = useRafFn(mouseMoveHandler)
   const realMouseMoveHandler = (e: MouseEvent) => {
@@ -110,7 +122,7 @@ const useEditorDrag = (editor: CustomEditor, scrollElement?: HTMLElement | null)
       }
     } else {
       draggingRef.current = false
-      dragManager.changeIndicator({ direction: null }, null)
+      indicatorManager.setIndicatorState(s => ({ ...s, visible: false }))
     }
   }, [isDraggingInsideEditor])
 
@@ -127,7 +139,7 @@ const useEditorDrag = (editor: CustomEditor, scrollElement?: HTMLElement | null)
       setIsDragging(false)
     }
   }, [globalIsDragging])
-  return dragManager
+  return { dragManager, renderIndicator }
 }
 
 export default useEditorDrag

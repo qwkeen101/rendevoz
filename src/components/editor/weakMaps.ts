@@ -6,12 +6,14 @@ import { CustomEditor } from './types'
 
 export interface ElementFunctions {
   selectBlock: Noop
-  changeIndicator: (direction: string | null, e?: MouseEvent) => boolean
   collisionSelectBlock: Noop
   getElement: () => Element
-  renderable: (virtualItems: VirtualItem[]) => void
   removeSelf: Noop
   getPath: () => Path
+  getClientBound: () => DOMRect | undefined
+  getIndicatorPosition: (
+    direction: 'top' | 'bottom' | 'left' | 'right'
+  ) => { left: number; top: number; width: number; height: number } | undefined
 }
 export const ID_TO_ELEMENTS_MAP = new WeakMap<CustomEditor, Map<number, ElementFunctions>>()
 

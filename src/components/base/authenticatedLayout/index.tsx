@@ -5,8 +5,8 @@ import { Sidebar } from '../../layout/sidebar'
 interface Props {
   children?: React.ReactNode
 }
-const AuthenticatedLayout: FC<Props> = ({ children }) => {
-  return <Layout sidebar={<Sidebar />}>{children}</Layout>
+const AuthenticatedLayout: FC<Props> = () => {
+  return <Layout sidebar={<Sidebar />} />
 }
 
 export default AuthenticatedLayout

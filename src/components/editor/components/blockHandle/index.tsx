@@ -1,6 +1,6 @@
 import { Noop } from '@/common/types'
 import { Icon, Tooltip } from '@/components'
-import { useGlobalIsDragging } from '@/components/GlobalDragOverlay'
+import { useGlobalIsDragging } from '@/components/globalDragOverlay/GlobalDragOverlay'
 import { css } from '@emotion/css'
 import { AnimatePresence, motion } from 'framer-motion'
 import { FC, memo, MouseEventHandler, useEffect, useLayoutEffect, useRef, useState } from 'react'
@@ -25,7 +25,9 @@ type IBlockHandle = FC<
 const BlockHandle: IBlockHandle = ({ left, top, targetHeight, visible, onMouseDown, onClick, onAddClick, onDragClick, onMenuClick }) => {
   const [innerVisible, setInnerVisible] = useState(false)
   const [globalDragging] = useGlobalIsDragging()
-
+  const hasMouseSelection = () => {
+    return !window.getSelection()?.isCollapsed
+  }
   useLayoutEffect(() => {
     if (globalDragging) {
       setInnerVisible(false)
@@ -78,7 +80,7 @@ const BlockHandle: IBlockHandle = ({ left, top, targetHeight, visible, onMouseDo
   )
   return (
     <AnimatePresence>
-      {targetHeight && innerVisible && (
+      {targetHeight && innerVisible && !hasMouseSelection() && (
         <motion.div
           key={top}
           initial={{ opacity: 0 }}

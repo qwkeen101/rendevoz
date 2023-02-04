@@ -15,9 +15,11 @@ const SlimCard: FC<{
     <Content
       contentEditable={false}
       flex
+      style={{
+        boxShadow: element?.background ? undefined : 'rgba(0, 0, 0, 0.05) 0px 6px 24px 0px, rgba(0, 0, 0, 0.08) 0px 0px 0px 1px'
+      }}
       className={css({
         pointerEvents: 'auto',
-        boxShadow: 'rgba(0, 0, 0, 0.05) 0px 6px 24px 0px, rgba(0, 0, 0, 0.08) 0px 0px 0px 1px',
         borderRadius: 6,
         overflow: 'hidden',
         maxWidth: '100%',

@@ -1,20 +1,3 @@
-/*
- Copyright (C) 2022 RealRong 2001
-
- This program is free software: you can redistribute it and/or modify
- it under the terms of the GNU Affero General Public License as
- published by the Free Software Foundation, either version 3 of the
- License, or (at your option) any later version.
-
- This program is distributed in the hope that it will be useful,
- but WITHOUT ANY WARRANTY; without even the implied warranty of
- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- GNU Affero General Public License for more details.
-
- You should have received a copy of the GNU Affero General Public License
- along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
-
 import { Provider as JotaiProvider } from 'jotai/react'
 import { BrowserRouter as Router } from 'react-router-dom'
 import Routes from './routes'
@@ -24,11 +7,13 @@ import TitleBar from './components/titlebar'
 import Initializer from './Initializer'
 import './global.less'
 import GlobalGraph from './components/graph/GlobalGraph'
-import GlobalDragOverlay from './components/GlobalDragOverlay'
+import GlobalDragOverlay from './components/globalDragOverlay/GlobalDragOverlay'
 import GlobalScreenShot from './components/globalScreenShot'
 import Notification from './components/NotificationCenter'
 import { globalStore } from './stores/stores'
-
+import PdfJsUrl from '@/assets/pdf.worker.min.js?url'
+import PdfJs from './pdfViewer/core/types/pdfJsApi'
+PdfJs.GlobalWorkerOptions.workerSrc = PdfJsUrl
 const App = () => {
   function getOS() {
     const userAgent = window.navigator.userAgent.toLowerCase(),

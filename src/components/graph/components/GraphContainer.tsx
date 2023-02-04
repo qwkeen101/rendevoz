@@ -11,6 +11,10 @@ import { GraphEdge } from '../types/edge'
 import { GraphNode } from '../types/node'
 import EdgeContainer from './EdgeContainer'
 import NodeContainer from './NodeContainer'
+import GraphSettingPanel from './setting'
+import { useAtomValue } from 'jotai/react'
+import { globalGraphMinimizedAtom } from '../GraphThumbnail'
+import { globalStore } from '@/stores/stores'
 
 interface GraphContainerProps {
   edges?: GraphEdge[]
@@ -25,6 +29,7 @@ const GraphInner: FC<GraphContainerProps> = ({ edges, nodes }) => {
   const { graphOverlayManager, renderPortal } = useGraphOverlay()
   graph && (graph.overlayManager = graphOverlayManager)
   const [transform, setTransform] = useState({ x: 0, y: 0, k: 1 })
+  const isMinimized = useAtomValue(globalGraphMinimizedAtom, { store: globalStore })
   const zoomHandler = (transform: any) => {
     setTransform(transform)
   }
@@ -40,8 +45,14 @@ const GraphInner: FC<GraphContainerProps> = ({ edges, nodes }) => {
         graph.registerHandler('zoom', zoomHandler)
         graph.updateLayout(true, true)
       }, 0)
+      console.log('asdsa')
     }
   }, [edges, nodes])
+  useEffect(() => {
+    if (graph) {
+      graph.setNodes = setNodes
+    }
+  })
   return (
     <div style={{ width: '100%', height: '100%', position: 'relative' }} ref={containerRef}>
       <div
@@ -63,6 +74,17 @@ const GraphInner: FC<GraphContainerProps> = ({ edges, nodes }) => {
         <EdgeContainer />
         <NodeContainer />
       </div>
+      {!isMinimized && (
+        <div
+          style={{
+            position: 'absolute',
+            top: '20%',
+            right: 20
+          }}
+        >
+          <GraphSettingPanel />
+        </div>
+      )}
       {renderPortal()}
     </div>
   )

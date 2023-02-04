@@ -1,10 +1,8 @@
 import { Content } from '@/components/base'
-import Select from '@/components/base/select'
 import Switch from '@/components/base/Switch'
 import { useSetting } from '@/hooks'
 import produce from 'immer'
 import { ReactNode } from 'react'
-import { useLocalStorage } from 'react-use'
 import SettingItem from './Item'
 
 const EditorSetting = () => {
@@ -34,22 +32,6 @@ const EditorSetting = () => {
     //     </Select>
     //   )
     // },
-    {
-      title: 'Unsaved notes reminder',
-      description: 'Toggle unsaved notes reminder when leaving editor page',
-      children: (
-        <Switch
-          defaultValue={setting.editor.confirmExit}
-          onChange={v =>
-            setSetting(
-              produce(setting, draft => {
-                draft.editor.confirmExit = v
-              })
-            )
-          }
-        />
-      )
-    }
   ]
   return (
     <Content flex column>

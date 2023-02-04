@@ -1,15 +1,17 @@
 import { Content, Icon } from '@/components/base'
-import Select from '@/components/base/select'
-import { useTheme } from '@/hooks'
+import { globalStore } from '@/stores/stores'
 import ClassName from '@/styles/classNames'
 import { css } from '@emotion/css'
-import { FC, MouseEventHandler, useState } from 'react'
+import { useAtom, useAtomValue } from 'jotai/react'
+import { atom } from 'jotai/vanilla'
+import { atomWithStorage } from 'jotai/vanilla/utils'
+import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useLocalStorage } from 'react-use'
 import AboutSetting from './About'
 import AppearanceSetting from './Appearance'
 import EditorSetting from './Editor'
 import GeneralSetting from './General'
+import NotificationSetting from './Notification'
 import SettingSidebarItem from './SidebarItem'
 
 enum Settings {
@@ -23,11 +25,32 @@ enum Settings {
   // 'about'
 }
 
-const AllSettings = {
-  pdf: {},
-  notification: {}
+type Setting = {
+  notification: {
+    enabled: boolean
+    pdf: boolean
+    label: boolean
+    collection: boolean
+    editor: boolean
+    object: boolean
+    link: boolean
+  }
 }
-const SettingDialog = ({onClose}: {onClose: VoidFunction}) => {
+export const SettingAtom = atomWithStorage<Setting>('setting', {
+  notification: {
+    enabled: true,
+    pdf: true,
+    label: true,
+    collection: true,
+    editor: true,
+    object: true,
+    link: true
+  }
+})
+
+export const useSetting = () => useAtom(SettingAtom, { store: globalStore })
+
+const SettingDialog = ({ onClose }: { onClose: VoidFunction }) => {
   const { t, i18n } = useTranslation()
   const [currentSettingPanel, setCurrentSettingPanel] = useState<keyof typeof Settings>('general')
   const renderContent = () => {
@@ -40,6 +63,8 @@ const SettingDialog = ({onClose}: {onClose: VoidFunction}) => {
         return <EditorSetting />
       case 'general':
         return <GeneralSetting />
+      case 'notification':
+        return <NotificationSetting />
     }
   }
   return (
@@ -50,6 +75,7 @@ const SettingDialog = ({onClose}: {onClose: VoidFunction}) => {
         width: 1100,
         maxWidth: 'calc(100vw - 100px)',
         height: '50vh',
+        minHeight: 600,
         maxHeight: 'calc(100vh - 100px)',
         fontFamily: 'Muli',
         padding: 12,

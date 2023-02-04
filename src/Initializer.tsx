@@ -4,6 +4,7 @@ import useDocumentStore from './stores/document.store'
 import useLabelStore from './stores/label.store'
 import useMetaStore from './stores/meta.store'
 import useNoteStore from './stores/note.store'
+import useTagStore from './stores/tag.store'
 
 const Initializer = () => {
   const { getAllNotes } = useNoteStore()
@@ -11,7 +12,9 @@ const Initializer = () => {
   const { getAllDocuments } = useDocumentStore()
   const { getAllCollections } = useCollectionStore()
   const { getAllLabels } = useLabelStore()
+  const { getAllTags } = useTagStore()
   useEffect(() => {
+    getAllTags()
     getAllNotes()
     getAllMetaLinks()
     getAllMetaObjects()

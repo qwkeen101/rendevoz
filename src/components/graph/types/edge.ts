@@ -10,4 +10,5 @@ export interface GraphEdge {
   label?: string
   highlight?: boolean
   color?: string
+  hidden?: boolean
 }

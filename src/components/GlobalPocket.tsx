@@ -1,7 +1,7 @@
 import { AnimatePresence, motion } from 'framer-motion'
 import { cloneElement, ReactElement, useEffect, useRef, useState } from 'react'
 import { AnimatePopover, Image, WithBorder } from './base'
-import { GlobalDragOverlayInstance } from './GlobalDragOverlay'
+import { GlobalDragOverlayInstance } from './globalDragOverlay/GlobalDragOverlay'
 
 type PocketObject = {
   type: 'image'

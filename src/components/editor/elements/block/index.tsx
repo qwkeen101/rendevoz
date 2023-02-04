@@ -25,7 +25,7 @@ import { getDistanceBetweenElementAndScrollableElement } from '@/components/edit
 import { isRectsCollision } from '../../utils/positions/collision'
 import { css } from '@emotion/css'
 import { hexToRgb } from '@/utils/color'
-import { useGlobalIsDragging } from '@/components/GlobalDragOverlay'
+import { useGlobalIsDragging } from '@/components/globalDragOverlay/GlobalDragOverlay'
 import { Transforms } from 'slate'
 
 type BlockProps = {
@@ -35,35 +35,19 @@ type BlockProps = {
   onMouseEnter?: (e: MouseEvent, element: CustomElement) => void
   onMouseLeave?: (e: MouseEvent, element: CustomElement) => void
   onMouseMove?: (e: MouseEvent, element: CustomElement) => void
-  onNestedListItem?: (isNested: boolean) => void
   element?: CustomElement
   scrollElementRef?: RefObject<HTMLElement>
 }
 const CardBlocks = ['pdf', 'book-highlight', 'note']
 const Block: FC<React.DetailedHTMLProps<React.HTMLAttributes<HTMLDivElement>, HTMLDivElement> & BlockProps & RenderElementProps> = memo(
-  ({
-    scrollElementRef,
-    blockId,
-    children,
-    ratio,
-    type,
-    attributes,
-    element,
-    onMouseEnter,
-    onMouseLeave,
-    onMouseMove,
-    onNestedListItem,
-    ...rest
-  }) => {
+  ({ scrollElementRef, blockId, children, ratio, type, attributes, element, onMouseEnter, onMouseLeave, onMouseMove, ...rest }) => {
     const blockRef = useRef<HTMLDivElement>(null)
     const columnRef = useRef<HTMLDivElement>(null)
     const editor = useSlateStatic()
     const idx = editor.children.findIndex(i => i === element)
     const map = ID_TO_ELEMENTS_MAP.get(editor)
     const mergedChildrenRef = useMergedRef(blockRef, attributes.ref)
-    const [direction, setDirection] = useState<string>()
     const [selected, setSelected] = useState(false)
-    const [withLine, setWithLine] = useState<{ width: number } | null>(null)
     const [isSelecting] = useIsSelecting()
     const [isGlobalDragging] = useGlobalIsDragging()
     const distanceToScrollElementRef = useRef<{ left: number; top: number; right: number; bottom: number }>()
@@ -109,70 +93,65 @@ const Block: FC<React.DetailedHTMLProps<React.HTMLAttributes<HTMLDivElement>, HT
       }
     }, [selected])
 
-    const handleIndicatorChange = useMemoizedFn((direction: string | null, e?: MouseEvent) => {
-      if (selected) {
-        return false
-      }
-
-      if (direction === 'bottom' && (element?.type === 'list-item' || element?.level)) {
-        if (e) {
-          const distanceToBlock = getDistanceBetweenPointAndElement(e, blockRef.current)
-          if (distanceToBlock.left > 0 && distanceToBlock.left < 20) {
-            setWithLine(null)
-            onNestedListItem?.(false)
-          }
-          if (distanceToBlock.left > 20 && distanceToBlock.right > 0) {
-            setWithLine({ width: 20 })
-            onNestedListItem?.(true)
-          }
+    const getIndicatorPosition = (
+      direction: 'top' | 'left' | 'bottom' | 'right'
+    ):
+      | {
+          left: number
+          top: number
+          width: number
+          height: number
+        }
+      | undefined => {
+      const blockBound = blockRef.current?.getBoundingClientRect()
+      if (blockBound) {
+        const { left: bleft, top: btop, width: bwidth, height: bheight } = blockBound
+        switch (direction) {
+          case 'top':
+            return {
+              left: bleft,
+              top: btop - 4,
+              width: bwidth,
+              height: 4
+            }
+          case 'bottom':
+            return {
+              left: bleft,
+              top: btop + bheight,
+              height: 4,
+              width: bwidth
+            }
+          case 'left':
+            return {
+              width: 4,
+              height: bheight,
+              left: bleft - 4,
+              top: btop
+            }
+          case 'right':
+            return {
+              width: 4,
+              height: bheight,
+              left: bleft + bwidth,
+              top: btop
+            }
         }
       }
-      if (direction !== null && direction !== undefined) {
-        setDirection(direction)
-      } else {
-        setWithLine(null)
-        setDirection(undefined)
-      }
-      return true
-    })
+    }
     const handleSelectBlock = useMemoizedFn(() => {
       setSelected(true)
       if (scrollElementRef?.current) {
         scrollToTarget(blockRef.current, scrollElementRef.current)
       }
     })
-    const indicatorStyle: CSSProperties = {
-      position: 'absolute',
-      left: direction === 'left' ? -4 : direction === 'top' || direction === 'bottom' ? 0 : undefined,
-      top: direction === 'top' ? -4 : direction === 'left' || direction === 'right' ? 0 : undefined,
-      bottom: direction === 'bottom' ? -4 : direction === 'left' || direction === 'right' ? 0 : undefined,
-      right: direction === 'right' ? -4 : direction === 'top' || direction === 'bottom' ? 0 : undefined,
-      width: direction === 'right' || direction === 'left' ? 4 : undefined,
-      height: direction === 'top' || direction === 'bottom' ? 4 : undefined,
-      backgroundColor: '#8590ae',
-      borderRadius: '3px',
-      opacity: 0.8
-    }
-    if (withLine) {
-      indicatorStyle.left = withLine.width + 2
-    }
-    const withLineStyle: CSSProperties = {
-      position: 'absolute',
-      left: 0,
-      height: 4,
-      bottom: -4,
-      width: withLine?.width - 1,
-      borderRadius: '3px',
-      backgroundColor: '#8590ae',
-      opacity: 0.4,
-      zIndex: 2
-    }
+
     useEffect(() => {
       map?.set(blockId, {
         selectBlock: handleSelectBlock,
         collisionSelectBlock: handleCollisionSelectBlock,
-        changeIndicator: handleIndicatorChange,
         getElement: () => element,
+        getIndicatorPosition,
+        getClientBound: () => blockRef.current?.getBoundingClientRect(),
         removeSelf: () => {
           const path = ReactEditor.findPath(editor, element)
           Transforms.removeNodes(editor, {
@@ -239,18 +218,6 @@ const Block: FC<React.DetailedHTMLProps<React.HTMLAttributes<HTMLDivElement>, HT
       >
         {children}
         <AnimatePresence>
-          {direction && (
-            <motion.div
-              transition={{ duration: 0.15 }}
-              key={direction}
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-            >
-              {withLine && <div style={withLineStyle}></div>}
-              <div style={indicatorStyle} />
-            </motion.div>
-          )}
           {selected && (
             <motion.div
               transition={{ duration: 0.2 }}

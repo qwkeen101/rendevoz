@@ -4,7 +4,7 @@ import { Editor, Node, Path, Transforms } from 'slate'
 import { ReactEditor } from 'slate-react'
 import { getElementId } from '../dragReposition/utils/element'
 import { getDistanceBetweenPointAndElement } from '../dragReposition/utils/position'
-import { AvaliableGlobalDraggingElements, GlobalDragOverlayInstance } from '../GlobalDragOverlay'
+import { AvaliableGlobalDraggingElements, GlobalDragOverlayInstance } from '../globalDragOverlay/GlobalDragOverlay'
 import { CustomEditor, CustomElement } from './types'
 import { searchBlock } from './utils/algorithm'
 import moveMultiElements from './utils/moveMultiElements'
@@ -14,8 +14,8 @@ import { getDistanceBetweenPointAndScrollableElement } from './utils/scroll'
 import { ElementFunctions, ID_TO_ELEMENTS_MAP, SELECTED_BLOCKS_MAP } from './weakMaps'
 
 type Indicator = {
-  direction: string
-  id: number
+  direction: 'top' | 'left' | 'bottom' | 'right'
+  id?: number
   isNested?: boolean
 }
 class DragManager {
@@ -71,7 +71,7 @@ class DragManager {
       })
   }
 
-  drag = (e: MouseEvent): Indicator | undefined => {
+  drag = (e: PointerEvent): Indicator | undefined => {
     if (
       !this.scrollElement ||
       (!this.dragElement && !DragManager.globalDragElement && !GlobalDragOverlayInstance?.draggingDetails) ||
@@ -99,10 +99,30 @@ class DragManager {
     }
 
     DragManager.dragElementsAdded = true
-    const dragResult = (direction: string, id?: number) => {
+    const dragResult = (direction: 'top' | 'left' | 'right' | 'bottom', id?: number, e: PointerEvent): Indicator => {
+      let shouldNested = false
+      if (this.editor && id) {
+        const targetElement = ID_TO_ELEMENTS_MAP.get(this.editor)?.get(id)
+        if (targetElement) {
+          if (direction === 'bottom' && targetElement.getElement().type === 'list-item') {
+            const targetBound = targetElement.getClientBound()
+            const mousePos = {
+              x: e.clientX,
+              y: e.clientY
+            }
+            if (targetBound) {
+              const { left, width } = targetBound
+              if (mousePos.x - left > 24) {
+                shouldNested = true
+              }
+            }
+          }
+        }
+      }
       return {
         direction,
-        id
+        id,
+        isNested: shouldNested
       }
     }
     const distanceToScrollElement = getDistanceBetweenPointAndScrollableElement({ x: e.clientX, y: e.clientY }, this.scrollElement)
@@ -114,10 +134,10 @@ class DragManager {
       const distanceToFirstBlock = getDistanceBetweenPointAndElement(e, firstBlock)
       const distanceToLastBlock = getDistanceBetweenPointAndElement(e, lastBlock)
       if (distanceToFirstBlock.top < 0 && distanceToFirstBlock.left > 0 && distanceToFirstBlock.right > 0) {
-        return dragResult('top', getElementId(firstBlock))
+        return dragResult('top', getElementId(firstBlock), e)
       }
       if (distanceToLastBlock.bottom < 0 && distanceToLastBlock.left > 0 && distanceToLastBlock.right > 0) {
-        return dragResult('bottom', getElementId(lastBlock))
+        return dragResult('bottom', getElementId(lastBlock), e)
       }
       return
     }
@@ -134,7 +154,7 @@ class DragManager {
       if (lastColumn) {
         const distance = getDistanceBetweenPointAndElement(e, lastColumn)
         if (distance.right < 0) {
-          return dragResult('right', getElementId(lastColumn))
+          return dragResult('right', getElementId(lastColumn), e)
         }
       }
 
@@ -142,7 +162,7 @@ class DragManager {
       for (const column of columns) {
         const distance = getDistanceBetweenPointAndElement(e, column)
         if (distance.left < 0) {
-          return dragResult('left', getElementId(column))
+          return dragResult('left', getElementId(column), e)
         }
         if (distance.left > 0 && distance.right > 0) {
           if (distance.top > 0 && (distance.top < currentBlock.getBoundingClientRect().height * 0.8 || distance.bottom > 0)) {
@@ -167,7 +187,7 @@ class DragManager {
           if (distance.top / height < 0.5) {
             // we are on the top side and current dragging over block is the first one,so we can put the indicator above it
             if (currentDraggingOverBlock === draggingOverColumn.firstElementChild) {
-              return dragResult('top', currentDraggingOverBlockId)
+              return dragResult('top', currentDraggingOverBlockId, e)
             } else {
               const previousBlockId = getElementId(currentDraggingOverBlock.previousElementSibling)
               // if current dragging over block is not the first child,we need to check if the indicator is under the previous block
@@ -175,33 +195,33 @@ class DragManager {
                 // do nothing here
                 return
               } else {
-                return dragResult('bottom', previousBlockId)
+                return dragResult('bottom', previousBlockId, e)
                 // we need to put the indicator under the previous block
               }
             }
           } else {
             // now we are dragging over the bottom 50% side
             // we can't eagerly return right here because maybe we are dragging over list-item block so change indicator should be trigger for marker/line wrapper check
-            return dragResult('bottom', currentDraggingOverBlockId)
+            return dragResult('bottom', currentDraggingOverBlockId, e)
           }
         } else {
           // now we are dragging over the blank space of the column,always the bottom side
           // so we should set indicator on the bottomest block
           const lastBlock = draggingOverColumn.lastElementChild
           const lastBlockId = getElementId(lastBlock)
-          return dragResult('bottom', lastBlockId)
+          return dragResult('bottom', lastBlockId, e)
         }
       } else {
         const distance = getDistanceBetweenPointAndElement(e, currentBlock)
         const { height } = currentBlock.getBoundingClientRect()
         if (distance.top / height > 0.8) {
-          return dragResult('bottom', currentBlockId)
+          return dragResult('bottom', currentBlockId, e)
         }
         if (distance.top / height < 0.2) {
           if (currentBlock === this.scrollElement.querySelector(`[role="textbox"]`)?.firstElementChild) {
-            return dragResult('top', currentBlockId)
+            return dragResult('top', currentBlockId, e)
           } else {
-            return dragResult('bottom', previousBlockId)
+            return dragResult('bottom', previousBlockId, e)
           }
         }
       }
@@ -217,7 +237,7 @@ class DragManager {
         if (getElementId(currentBlock) === getElementId(this.dragElement)) {
           return
         }
-        return dragResult('right', currentBlockId)
+        return dragResult('right', currentBlockId, e)
       }
       if (distance.left < 0) {
         if (getElementId(currentBlock) === getElementId(this.dragElement)) {
@@ -226,57 +246,22 @@ class DragManager {
         if (Number(currentBlock.getAttribute('data-level')) > 0) {
           return
         }
-        return dragResult('left', currentBlockId)
+        return dragResult('left', currentBlockId, e)
       }
       if (distance.top / height < 0.5) {
         if (currentBlock === currentBlock.parentElement?.firstElementChild) {
-          return dragResult('top', currentBlockId)
+          return dragResult('top', currentBlockId, e)
         } else {
-          return dragResult('bottom', previousBlockId)
+          return dragResult('bottom', previousBlockId, e)
         }
       } else {
-        return dragResult('bottom', currentBlockId)
+        return dragResult('bottom', currentBlockId, e)
       }
     }
   }
-  shouldNested = (isNested: boolean) => {
-    this.indicator &&
-      (this.indicator = {
-        ...this.indicator,
-        isNested
-      })
-  }
-  changeIndicator = (indicator: Indicator, e: MouseEvent) => {
-    const { direction, id } = indicator
-    if (direction === null) {
-      const id = this.indicator?.id
-      if (id && this.editor) {
-        const block = ID_TO_ELEMENTS_MAP.get(this.editor)?.get(id)
-        block?.changeIndicator(null)
-      }
-      this.indicator = null
-      return
-    } else {
-      this.indicator = { direction, id }
-    }
-    if (id && this.editor) {
-      const block = ID_TO_ELEMENTS_MAP.get(this.editor)?.get(id)
-      if (!block?.changeIndicator(direction, e)) {
-        this.indicator = null
-      }
-    }
-    if (this.prevIndicator && this.prevIndicator.id === id && this.prevIndicator.direction === direction) {
-      return
-    } else {
-      if (this.prevIndicator?.id && this.editor) {
-        const prevBlock = ID_TO_ELEMENTS_MAP.get(this.editor)?.get(this.prevIndicator.id)
-        prevBlock?.changeIndicator(null)
-      }
-      this.prevIndicator = {
-        direction,
-        id
-      }
-    }
+
+  changeIndicator = (indicator: Indicator) => {
+    this.indicator = indicator
   }
   private clearState = () => {
     this.blockElementsArray = []
@@ -286,9 +271,7 @@ class DragManager {
     this.indicator = null
     DragManager.globalDraggingEditor = null
   }
-  private getSelectedElements = (): CustomElement[] | undefined => {
-    return undefined
-  }
+
   drop = (): boolean => {
     if (this.indicator && this.editor) {
       DragManager.dragElementsAdded = false
@@ -305,7 +288,6 @@ class DragManager {
         const selectedBlocksMap = SELECTED_BLOCKS_MAP.get(this.editor)
         const [targetElement, targetPath] = Array.from(Node.descendants(this.editor)).find(i => i[0].id === id) || []
         this.clearState()
-        ID_TO_ELEMENTS_MAP.get(this.editor)?.get(id)?.changeIndicator(null)
         if (selectedBlocksMap && selectedBlocksMap.size > 0) {
           const selectedBlocks = Array.from(selectedBlocksMap.values())
           const selectedElements = selectedBlocks
@@ -324,7 +306,6 @@ class DragManager {
         moveSingleElement(this.editor, currPath, targetElement, targetPath, direction, isNested)
         return true
       } else {
-        ID_TO_ELEMENTS_MAP.get(this.editor)?.get(id)?.changeIndicator(null)
         // this.elementsMap?.get(id)?.changeIndicator(null)
         this.blockElementsArray = []
         this.blockElementsMap.clear()

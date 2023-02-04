@@ -7,7 +7,9 @@ export interface GraphNode {
   y?: number
   scale?: number
   opacity?: number
+  hidden?: boolean
   coverImgSrc?: string
   isCenter?: boolean
   objectId?: number
+  tags?: string[]
 }

@@ -27,7 +27,7 @@ import { metaObjectsAtom } from '@/stores/meta.store'
 import TabTitle from '../layout/TabTitle'
 import useLocalSyncValue from './hooks/useSyncValue'
 import useEditorDrag from './hooks/useEditorDrag'
-import { useGlobalIsDragging } from '../GlobalDragOverlay'
+import { useGlobalIsDragging } from '../globalDragOverlay/GlobalDragOverlay'
 import useEditorOverlay from './components/overlay/useEditorOverlay'
 import { css } from '@emotion/css'
 import withHandler from './plugins/withHandler'
@@ -35,13 +35,13 @@ import useEditorSelect from './hooks/useEditorSelect'
 import ClassName from '@/styles/classNames'
 import { atom } from 'jotai/vanilla'
 import { useAtomValue } from 'jotai/react'
-import { GlobalScope } from '@/jotai/jotaiScope'
 import useStoreValue from './hooks/useStoreValue'
 import isHotkey from 'is-hotkey'
 import { KEY } from '@/consts/key'
 import classNames from 'classnames'
 import { useNavigate } from 'react-router-dom'
 import { globalStore } from '@/stores/stores'
+import useDragIndicator from './components/useDragIndicator'
 
 type DragHandleProps = {
   left?: number
@@ -111,7 +111,6 @@ export const EditorV1: FC<EditorProps> = memo(({ id, noteId, readonly, embedded,
             at: [editor.children.length]
           }
         )
-        // Transforms.select(editor, [editor.children.length])
       }
     }
     document.addEventListener('keydown', keyDownHandler)
@@ -171,7 +170,7 @@ export const EditorV1: FC<EditorProps> = memo(({ id, noteId, readonly, embedded,
 
   useLocalSyncValue(editor)
   useStoreValue(note, editor, provider, doc, sharedType)
-  const dragManager = useEditorDrag(editor, scrollElementRef.current)
+  const { dragManager, renderIndicator } = useEditorDrag(editor, scrollElementRef.current)
   const { renderOverlay, overlayManager, popoverVisible } = useEditorOverlay(editor, scrollElementRef.current)
   useEditorSelect(editor, overlayManager, scrollElementRef.current)
 
@@ -180,7 +179,6 @@ export const EditorV1: FC<EditorProps> = memo(({ id, noteId, readonly, embedded,
     SELECTED_BLOCKS_MAP.set(editor, new Map())
     editor.id = id
     editor.noteId = noteId
-    // forceUpdate()
     return () => {
       // disconnect
       if (YjsEditor.connected(editor)) {
@@ -188,17 +186,14 @@ export const EditorV1: FC<EditorProps> = memo(({ id, noteId, readonly, embedded,
       }
     }
   }, [editor])
-  useEffect(() => {
+  useMemo(() => {
     editor.note = note
   }, [note])
-  useEffect(() => {
+  useMemo(() => {
     if (readonly || embedded) {
       editor.readonly = true
     }
   }, [editor, readonly, embedded])
-  const handleNestedListItem = useMemoizedFn((isNested: boolean) => {
-    dragManager.shouldNested(isNested)
-  })
 
   const handleBlockMouseMove = useMemoizedFn((e: MouseEvent, element: CustomElement) => {
     if (!isDragging && !globalIsDragging) {
@@ -358,11 +353,11 @@ export const EditorV1: FC<EditorProps> = memo(({ id, noteId, readonly, embedded,
             onBlockMouseLeave={useMemoizedFn((e, element) => {
               setDragHandle({ ...dragHandle, visible: false })
             })}
-            onNestedListItem={handleNestedListItem}
           />
         </div>
       </div>
       {renderOverlay()}
+      {renderIndicator}
       <BlockHandle
         onAddClick={handleBlockHandleMenu}
         onDragClick={useCallback(() => {

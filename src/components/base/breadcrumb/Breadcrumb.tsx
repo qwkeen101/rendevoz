@@ -2,7 +2,6 @@ import { Children, cloneElement, FC } from 'react'
 import BreadcrumbItem from './BreadcrumbItem'
 import classNames from 'classnames'
 import styles from './index.module.less'
-import { toArray } from 'lodash'
 import { useTheme } from '@/hooks'
 import { css } from '@emotion/css'
 

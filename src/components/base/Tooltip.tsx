@@ -20,9 +20,10 @@ interface ToolTipProps {
   position?: 'top' | 'bottom'
   style?: CSSProperties
   delay?: number
+  disable?: boolean
 }
 
-const ToolTip: FC<PropsWithChildren<ToolTipProps>> = ({ content, children, position = 'bottom', style, delay = 300 }, ref) => {
+const ToolTip: FC<PropsWithChildren<ToolTipProps>> = ({ content, children, position = 'bottom', style, delay = 300, disable }, ref) => {
   const [open, setOpen] = useState(false)
   const [bound, setBound] = useState({
     x: 0,
@@ -98,7 +99,7 @@ const ToolTip: FC<PropsWithChildren<ToolTipProps>> = ({ content, children, posit
   return (
     <>
       {renderChild()}
-      <AnimatePresence>{open && content && <ToolTipPopover bound={bound} children={content} style={style} />}</AnimatePresence>
+      <AnimatePresence>{open && !disable && content && <ToolTipPopover bound={bound} children={content} style={style} />}</AnimatePresence>
     </>
   )
 }

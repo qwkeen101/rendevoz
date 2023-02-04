@@ -11,6 +11,7 @@ import { MetaLink } from '~/typings/data'
 import useEdges from '../hooks/useEdges'
 import useGraph from '../hooks/useGraph'
 import useNodes from '../hooks/useNodes'
+import useTags from '../hooks/useTags'
 import { GraphNode } from '../types/node'
 import Node from './node/Node'
 
@@ -25,47 +26,24 @@ const svgContainerClassName = css({
   overflow: 'visible',
   pointerEvents: 'none'
 })
+export const NodeFakeHiddenOpacity = 0.1
+export const NodeFullVisibleOpacity = 1
 const NodeContainer = memo(() => {
   const [nodes, setNodes] = useNodes()
   const [edges, setEdges] = useEdges()
+  const [selectedTags] = useTags()
   const { addMetaLink } = useMetaStore()
   const relatedObjectsMap = useAtomValue(relatedMetaObjectsMapAtom, { store: globalStore })
   const emitter = useEventEmitter()
   const graph = useGraph()
-  useEffect(() => {
-    graph?.registerHandler('change', changeHandler)
-  }, [])
-  const changeHandler = useMemoizedFn((_nodes: GraphNode[]) => {
-    if (nodes) {
-      setNodes(
-        produce(nodes, draft => {
-          _nodes.forEach(n => {
-            const idx = nodes.findIndex(i => i.id === n.id)
-            if (idx > -1) {
-              draft[idx] = Object.assign({}, nodes[idx], n)
-            } else {
-              draft.push(n)
-            }
-          })
-          if (_nodes.length < nodes.length) {
-            nodes.forEach(n => {
-              if (!_nodes.some(o => o.id === n.id)) {
-                const idx = draft.findIndex(o => o.id === n.id)
-                idx !== -1 && draft.splice(idx, 1)
-              }
-            })
-          }
-        })
-      )
-    }
-  })
+
   const nodeMouseEnterHandler: NodeMouseEventHandler = useMemoizedFn((e, node) => {
     if (nodes && edges && graph) {
       if (graph.isDragging) return
-      const contextMenuNode = graph.contextMenuNode
-      const isAddingEdge = graph.isAddingEdge
+      if (selectedTags.length > 0) return
       graph.currentHoverNode = node
-      const relatedNodeIds = relatedObjectsMap.get(node.id)?.add(node.id)
+      const relatedNodeIds = relatedObjectsMap.get(node.id)
+      relatedNodeIds?.add(node.id)
       setEdges(
         produce(edges, draft => {
           edges?.forEach((e, idx) => {
@@ -88,11 +66,13 @@ const NodeContainer = memo(() => {
           draft[idx].scale = 1.2
         })
       )
+      relatedNodeIds?.delete(node.id)
     }
   })
   const nodeMouseLeaveHandler: NodeMouseEventHandler = useMemoizedFn((e, node) => {
     if (nodes && edges && graph) {
       if (graph.isDragging) return
+      if (selectedTags.length > 0) return
       setEdges(
         produce(edges, draft => {
           draft.forEach(i => {
@@ -145,7 +125,6 @@ const NodeContainer = memo(() => {
     if (graph) {
       graph.contextMenuNode = node
     }
-    console.log(node)
     graph?.startAddEdge(e.currentTarget)
     emitter.emit('graph', {
       type: 'toggleContextMenu',
@@ -167,16 +146,18 @@ const NodeContainer = memo(() => {
           <rect width={20} height={20} rx={5}></rect>
         </clipPath>
       </defs>
-      {nodes?.map(node => (
-        <Node
-          onContextMenu={nodeContextMenuHandler}
-          onMouseEnter={nodeMouseEnterHandler}
-          onMouseLeave={nodeMouseLeaveHandler}
-          onClick={nodeClickHandler}
-          node={node}
-          key={`${node.id}`}
-        />
-      ))}
+      {nodes
+        ?.filter(i => !i.hidden)
+        ?.map(node => (
+          <Node
+            onContextMenu={nodeContextMenuHandler}
+            onMouseEnter={nodeMouseEnterHandler}
+            onMouseLeave={nodeMouseLeaveHandler}
+            onClick={nodeClickHandler}
+            node={node}
+            key={`${node.id}`}
+          />
+        ))}
     </svg>
   )
 })

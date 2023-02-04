@@ -1,10 +1,10 @@
-import { GlobalDragOverlayInstance, useGlobalIsDragging } from '@/components/GlobalDragOverlay'
+import { GlobalDragOverlayInstance, useGlobalIsDragging } from '@/components/globalDragOverlay/GlobalDragOverlay'
 import { useMemoizedFn } from '@/hooks'
 import useMetaStore from '@/stores/meta.store'
-import { useEffect, useRef, useState } from 'react'
+import { RefObject, useEffect, useRef, useState } from 'react'
 import { MetaObject } from '~/typings/data'
 
-const useCardDrag = (metaObject: MetaObject, draggableElement?: HTMLElement | null, showElement?: HTMLElement | null) => {
+const useCardDrag = (metaObject: MetaObject, draggableElementRef?: RefObject<HTMLElement>, showElement?: HTMLElement | null) => {
   const [isGlobalDragging] = useGlobalIsDragging()
   const [isCardDraggingInside, setIsCardDraggingInside] = useState(false)
   const isPressed = useRef(false)
@@ -69,6 +69,7 @@ const useCardDrag = (metaObject: MetaObject, draggableElement?: HTMLElement | nu
   }, [isGlobalDragging])
 
   useEffect(() => {
+    const draggableElement = draggableElementRef?.current
     if (draggableElement) {
       draggableElement?.addEventListener('pointerdown', mouseDownHandler)
       draggableElement?.addEventListener('pointermove', mouseMoveHandler)

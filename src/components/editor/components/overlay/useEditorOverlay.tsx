@@ -51,7 +51,6 @@ const useEditorOverlay = (editor: CustomEditor, scrollElement?: HTMLDivElement |
         return <EditorOverlayElements editor={editor} manager={overlayManager} />
       case 'blockDetailsMenu':
         return <EditorBlockDetails editor={editor} manager={overlayManager} />
-
     }
   }
   const renderAnimatedOverlay = () => {
@@ -80,7 +79,7 @@ const useEditorOverlay = (editor: CustomEditor, scrollElement?: HTMLDivElement |
       case 'emojiPicker':
         return 'start'
       default:
-        return 'center'
+        return 'start'
     }
   }
 

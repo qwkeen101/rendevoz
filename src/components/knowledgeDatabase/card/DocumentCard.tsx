@@ -1,44 +1,33 @@
-import { Content } from '@/components/base'
-import { GlobalScope } from '@/jotai/jotaiScope'
-import { documentsAtom } from '@/stores/document.store'
-import ClassName from '@/styles/classNames'
-import { css } from '@emotion/css'
-import { atom } from 'jotai/vanilla'
-import { useAtomValue } from 'jotai/react'
-import { useEffect, useMemo } from 'react'
+import { FC, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { MetaObject } from '~/typings/data'
-import { TitleWrapperClassName, TitleClassName } from './DatabaseCard'
-import { globalStore } from '@/stores/stores'
+import { IPdfDocument } from '~/typings/data'
+import useMetaStore, { useMetaTargetObject } from '@/stores/meta.store'
+import { MetaDatabaseCardProps } from './types'
 
-const MetaDocumentCard = ({ m, onCoverChange }: { m: MetaObject; onCoverChange?: (url: string) => void }) => {
-  const docId = m.objectId
-  const documentAtom = useMemo(() => (docId ? atom(get => get(documentsAtom).get(docId)) : atom(null)), [docId])
-  const document = useAtomValue(documentAtom, { store: globalStore })
+const MetaDocumentCard: FC<MetaDatabaseCardProps> = ({ metaObject, renderTitleAndDescription }) => {
+  const result = useMetaTargetObject(metaObject.id)
+  const document = result?.targetObject as IPdfDocument | undefined
+  const { updateMetaObject } = useMetaStore()
   useEffect(() => {
-    document?.metadata?.coverUrl && onCoverChange?.(document?.metadata?.coverUrl)
-  }, [document?.metadata?.coverUrl])
+    if (document) {
+      if (document.metadata?.coverUrl !== metaObject.coverImgSrc) {
+        updateMetaObject(
+          {
+            id: metaObject.id,
+            coverImgSrc: document.metadata?.coverUrl
+          },
+          true
+        )
+      }
+    }
+  }, [document])
   const navigate = useNavigate()
-  return (
-    <Content flex column>
-      <Content className={TitleWrapperClassName}>
-        <div
-          className={TitleClassName}
-          onClick={() => {
-            navigate(`/pdf/${docId}`)
-          }}
-        >
-          {document?.name || m.name}
-        </div>
-        {document?.metadata?.author && (
-          <div style={{ marginBottom: 10 }} className={css([ClassName.description(), ClassName.ellipsisFont(1)])}>
-            {document?.metadata?.author}
-          </div>
-        )}
-        <div className={css([ClassName.description(), ClassName.ellipsisFont(6)])}>{m.description}</div>
-      </Content>
-    </Content>
-  )
+  if (!document) return null
+  return renderTitleAndDescription({
+    title: metaObject.name,
+    description: metaObject.description,
+    onTitleClick: () => navigate(`/pdf/${document.id}`)
+  })
 }
 
 export default MetaDocumentCard

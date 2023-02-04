@@ -11,6 +11,8 @@ import { IStore } from './store.type'
 import { globalStore } from './stores'
 import { Notification } from '@/components'
 import ClassName from '@/styles/classNames'
+import { useSetting } from '@/components/globalSetting/Main'
+import { useMemoizedFn } from '@/hooks'
 
 const { orderedData } = BaseStore
 
@@ -24,7 +26,8 @@ export const pinnedNotesAtom = atom(get => get(undeletedNotesAtom).filter(i => i
 
 const useNoteStore = () => {
   const { add, get, update, bulkAdd, dispatch, initBaseObject } = BaseStore
-
+  const [setting] = useSetting()
+  const shouldToast = setting.notification.enabled && setting.notification.editor
   const noteDb = useDb('notes')
   const blockDb = useDb('blocks')
   const blobDb = useDb('blobs')
@@ -51,7 +54,7 @@ const useNoteStore = () => {
           database: noteDb,
           atom: notesAtom,
           onSuccess: obj => {
-            !silent &&
+            !silent && shouldToast &&
               toast.success(
                 <Notification
                   title="Note successfully added!"
@@ -71,7 +74,7 @@ const useNoteStore = () => {
           database: noteDb,
           atom: notesAtom,
           onSuccess: obj => {
-            !silent && toast.success(<Notification title="Note successfully updated!" />)
+            !silent && shouldToast && toast.success(<Notification title="Note successfully updated!" />)
             res(obj)
           }
         })
@@ -83,9 +86,9 @@ const useNoteStore = () => {
   }
   const realStore = {
     getAllNotes: localStore.getAll,
-    addNote: localStore.addOne,
-    deleteNote: localStore.deleteOneById,
-    updateNote: localStore.updateOne,
+    addNote: useMemoizedFn(localStore.addOne),
+    deleteNote: useMemoizedFn(localStore.deleteOneById),
+    updateNote: useMemoizedFn(localStore.updateOne),
     fetchNoteById: localStore.fetchOneById,
     getNoteById: localStore.getOneById
   }
@@ -112,23 +115,6 @@ const useNoteStore = () => {
     }
   }
 
-  const getNoteById = (noteId: number): Promise<INote | undefined> => {
-    const notes = latestNotes.current
-    const note = get(noteId, notes)
-    if (note) {
-      return Promise.resolve(note)
-    }
-    return new Promise((resolve, reject) => {
-      noteDb.get(noteId).then(note => {
-        if (note) {
-          setNotes(add(note, notes))
-          resolve(note)
-        } else {
-          resolve(undefined)
-        }
-      })
-    })
-  }
   const getNotesByIds = (noteIds: number[]) => {
     return noteDb.bulkGet(noteIds)
   }
@@ -189,14 +175,6 @@ const useNoteStore = () => {
       return Promise.all([note, blockDb.bulkGet(note?.allBlockIds || [])])
     })
   }
-  const renameNote = (noteId: number, newName: string) => {
-    const targetNote = get(noteId, notes)
-    if (targetNote) {
-      const newNote = { ...targetNote, title: newName }
-      setNotes(update(newNote, notes))
-      noteDb.put(newNote)
-    }
-  }
 
   const saveNoteAsBuffer = (value: Descendant[], id?: number) => {
     const realId = id || Id.getId()
@@ -226,7 +204,6 @@ const useNoteStore = () => {
       getNotesByIds,
       saveNoteAndBlocks,
       getNoteAndBlocks,
-      renameNote,
       saveNoteAsBuffer,
       getNoteValue,
       saveBlocks,

@@ -6,8 +6,12 @@ import { Content, Icon } from '..'
 import { motion } from 'framer-motion'
 import { GraphEventHandler } from '@/events/graphEvent'
 import useEventEmitter from '@/events/useEventEmitter'
-const GraphThumbnail = ({ children, onClose }: { children: ReactNode; onClose: Noop }) => {
-  const [small, setSmall] = useState(false)
+import { atom } from 'jotai/vanilla'
+import { useAtom } from 'jotai/react'
+import { globalStore } from '@/stores/stores'
+export const globalGraphMinimizedAtom = atom(false)
+const GraphThumbnail = ({ children, onClose }: { children: ReactNode; onClose: VoidFunction }) => {
+  const [small, setSmall] = useAtom(globalGraphMinimizedAtom, { store: globalStore })
   const containerRef = useRef<HTMLDivElement>(null)
   const tempPosRef = useRef({ x: 0, y: 0 })
   const transPosRef = useRef({ x: 0, y: 0 })

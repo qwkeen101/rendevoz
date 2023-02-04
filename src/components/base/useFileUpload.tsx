@@ -28,7 +28,7 @@ const useFileUpload = (onUpload?: (file: File) => void, accept?: string) => {
             }
           }}
         />
-        <label htmlFor={id} ref={labelRef}></label>
+        <label htmlFor={id} ref={labelRef} style={{display: 'none'}}></label>
       </>
     )
   }

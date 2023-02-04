@@ -2,11 +2,13 @@ import { GraphNode } from '../../types/node'
 import { motion } from 'framer-motion'
 import { MarkerColor } from '../../consts/markerColors'
 import { TypeToNodeRadius } from './Node'
+import { useMemo } from 'react'
 
 const ImageNode = ({ node, imageUrl, label }: { node: GraphNode; imageUrl?: string; label?: string }) => {
+  const realImageUrl = imageUrl || node.coverImgSrc
   const realLabel = label || node.label
   const radius = TypeToNodeRadius[node.type || 'normal']
-  const d = radius * 2
+  const d = useMemo(() => radius * 2, [radius])
   const imageSize = () => {
     switch (node.type) {
       case 'pdf':
@@ -21,10 +23,12 @@ const ImageNode = ({ node, imageUrl, label }: { node: GraphNode; imageUrl?: stri
         }
     }
   }
-  const imgSize = imageSize()
+  const shouldHaveBorderRadius = node.type === 'normal'
+  const shouldHaveBoxShadow = node.type === 'pdf'
+  const imgSize = useMemo(() => imageSize(), [node.type])
   return (
     <>
-      {node.coverImgSrc || imageUrl ? (
+      {realImageUrl ? (
         <motion.foreignObject
           style={{ transformOrigin: `${radius}px ${radius}px` }}
           width={d}
@@ -37,8 +41,10 @@ const ImageNode = ({ node, imageUrl, label }: { node: GraphNode; imageUrl?: stri
               width={imgSize.width}
               height={imgSize.height}
               style={{
-                boxShadow: 'rgba(0, 0, 0, 0.35) 0px 5px 16px',
-                margin: 'auto'
+                boxShadow: shouldHaveBoxShadow ? 'rgba(0, 0, 0, 0.35) 0px 5px 16px' : undefined,
+                margin: 'auto',
+                borderRadius: shouldHaveBorderRadius ? '8px' : undefined,
+                objectFit: 'cover'
               }}
               src={imageUrl || node.coverImgSrc}
             />

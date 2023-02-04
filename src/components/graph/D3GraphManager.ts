@@ -6,6 +6,8 @@ import { getMarkerId } from './utils/getMarkerId'
 import { MarkerColor } from './consts/markerColors'
 import { GraphOverlayManager } from './components/overlay/useGraphOverlay'
 import { TypeToNodeRadius } from './components/node/Node'
+import { SetStateAction } from 'react'
+import produce from 'immer'
 
 class D3GraphManager {
   private container: d3.Selection<HTMLElement, unknown, null, any> | null = null
@@ -14,10 +16,11 @@ class D3GraphManager {
   public isDragging = false
   public contextMenuNode: GraphNode | null = null
   public currentHoverNode: GraphNode | null = null
-  public originNodes: any[] | null = null
-  public originEdges: any[] | null = null
+  public originNodes: GraphNode[] | null = null
+  public originEdges: GraphEdge[] | null = null
   public nodesMap: Map<number, GraphNode> | null = null
-  private edgesMap: Map<number, GraphEdge> | null = null
+  public edgesMap: Map<number, GraphEdge> | null = null
+  public setNodes?: (update: SetStateAction<GraphNode[] | null>) => void
   private linkStartPoint = null
   // edge to edge map
   public oppositeEdgesMap = new Map<number, GraphEdge>()
@@ -29,8 +32,13 @@ class D3GraphManager {
   private ID_TO_NODE_ELEMENT_MAP = new Map<number, SVGElement>()
   private ID_TO_EDGE_ELEMENT_MAP = new Map<number, SVGElement>()
   private ID_TO_EDGE_LABEL_ELEMENT_MAP = new Map<number, SVGElement>()
+  public ID_TO_EDGE_FUNCTION_MAP = new Map<
+    number,
+    {
+      drawEdge: VoidFunction
+    }
+  >()
   private getRadius = (type: string) => {
-    console.log(type)
     switch (type) {
       case 'note':
       case 'pdf':
@@ -60,49 +68,19 @@ class D3GraphManager {
     this.originEdges = null
     this.originNodes = null
     this.d3Simulation = null
-    // this.ID_TO_EDGE_ELEMENT_MAP.clear()
-    // this.ID_TO_NODE_ELEMENT_MAP.clear()
-    // this.ID_TO_EDGE_LABEL_ELEMENT_MAP.clear()
   }
   public registerNodes = (nodes: GraphNode[]) => {
-    if (this.originNodes) {
-      nodes.forEach(n => {
-        // this.N.push(n.id)
-        this.originNodes?.push({ id: n.id, type: n.type })
-      })
-      this.updateLayout()
-    } else {
-      // in originNodes we just need id, no other properties.
-      this.originNodes = nodes.map(n => ({ id: n.id, type: n.type }))
-    }
-    this.nodesMap = new Map(this.originNodes.map(n => [n.id, n]))
-    const clonedNodes = structuredClone(this.originNodes)
-    return clonedNodes
+    this.originNodes = structuredClone(nodes)
+    this.nodesMap = new Map(this.originNodes!.map(n => [n.id, n]))
   }
 
   public registerEdges = (edges: GraphEdge[]) => {
-    if (this.originEdges) {
-      edges.forEach(e => {
-        this.originEdges?.push({
-          source: e.sourceId,
-          sourceId: e.sourceId,
-          target: e.targetId,
-          targetId: e.targetId,
-          id: e.id
-        })
-      })
-      this.updateLayout()
-    } else {
-      this.originEdges = d3.map(edges, e => ({
-        source: e.sourceId,
-        sourceId: e.sourceId,
-        target: e.targetId,
-        targetId: e.targetId,
-        id: e.id
-      }))
-    }
-    const clonedEdges = structuredClone(this.originEdges)
-    return clonedEdges
+    this.originEdges = structuredClone(edges)
+    this.originEdges?.forEach(i => {
+      i.source = i.sourceId
+      i.target = i.targetId
+    })
+    this.edgesMap = new Map(this.originEdges?.map(e => [e.id, e]))
   }
   public deleteNodes = (nodes: GraphNode[]) => {
     if (this.originNodes) {
@@ -121,7 +99,6 @@ class D3GraphManager {
       // this.updateLayout()
     }
   }
-  public deleteEdges = (edges: GraphEdge[]) => {}
 
   public registerEdgeElement = (edgeId: number, edgeElement: SVGElement) => {
     this.ID_TO_EDGE_ELEMENT_MAP.set(edgeId, edgeElement)
@@ -141,13 +118,14 @@ class D3GraphManager {
   }
   private simulateLayout = (reheat?: boolean, reinitialize?: boolean) => {
     if (this.originNodes?.length === 0 || !this.originNodes) return
+
     if (this.d3Simulation && !reinitialize) {
       this.d3Simulation
-        .nodes(this.originNodes)
+        .nodes(this.originNodes.filter(i => !i.hidden))
         .force(
           'link',
           d3
-            .forceLink(this.originEdges)
+            .forceLink(this.originEdges?.filter(i => !i.hidden))
             .id(d => d.id)
             .distance(300)
         )
@@ -155,7 +133,7 @@ class D3GraphManager {
           'collision',
           d3.forceCollide().radius(n => this.getRadius(n.type))
         )
-        .alpha(reheat ? 0.8 : 0)
+        .alpha(reheat ? 1 : 0)
         .alphaTarget(0)
         .on('tick', this.ticked)
         .restart()
@@ -167,6 +145,7 @@ class D3GraphManager {
         .forceLink(this.originEdges)
         .id(d => d.id)
         .distance(300)
+
       this.d3Simulation = d3
         .forceSimulation(this.originNodes)
         .force('link', forceLink)
@@ -180,10 +159,17 @@ class D3GraphManager {
         .tick(300)
         .on('tick', this.ticked)
         .on('end', () => {
-          const clonedNodes = structuredClone(this.originNodes)
-          const clonedEdges = structuredClone(this.originEdges)
           this.ID_TO_EDGE_LABEL_ELEMENT_MAP.forEach(i => i.removeAttribute('opacity'))
-          this.changeHandlerSet.forEach(handler => handler?.(clonedNodes, clonedEdges))
+          this.ID_TO_EDGE_FUNCTION_MAP.forEach(i => i.drawEdge())
+          this.setNodes?.(nodes =>
+            produce(nodes, draft => {
+              draft?.forEach(n => {
+                const thisNode = this.nodesMap?.get(n.id)
+                n.x = thisNode?.x
+                n.y = thisNode?.y
+              })
+            })
+          )
         })
     }
   }

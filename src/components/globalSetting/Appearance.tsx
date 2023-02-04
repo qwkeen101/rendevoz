@@ -1,5 +1,4 @@
 import { Content } from '@/components/base'
-import Select from '@/components/base/select'
 import Switch from '@/components/base/Switch'
 import { useSetting } from '@/hooks'
 import produce from 'immer'

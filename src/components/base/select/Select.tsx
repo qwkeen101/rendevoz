@@ -9,6 +9,8 @@ import styles from './index.module.less'
 import WithBorder from '../WithBorder'
 import classNames from 'classnames'
 import { isArray } from 'lodash'
+import ClassName from '@/styles/classNames'
+import { css } from '@emotion/css'
 
 interface SelectProps {
   multiple?: boolean
@@ -19,13 +21,13 @@ interface SelectProps {
   disabled?: boolean
   deselectable?: boolean
   defaultValue?: string
-  children: ReactElement<SelectOptionProps> | ReactElement<SelectOptionProps>[]
   placeholder?: string
   className?: string
   onSelect: (value: string[]) => void
   style?: CSSProperties
   menuStyle?: CSSProperties
   menuPosition?: 'top' | 'bottom'
+  options: SelectOptionProps[]
 }
 interface ISelect extends FC<SelectProps> {
   Option: typeof SelectOption
@@ -33,7 +35,6 @@ interface ISelect extends FC<SelectProps> {
 const Select: ISelect = ({
   disabled,
   multiple,
-  children,
   closeOnSelect,
   onSelect,
   placeholder,
@@ -44,7 +45,8 @@ const Select: ISelect = ({
   defaultValue,
   deselectable,
   hideUnderlineWhenNotHover,
-  menuPosition = 'bottom'
+  menuPosition = 'bottom',
+  options
 }) => {
   let d = []
   if (defaultValue) {
@@ -61,13 +63,9 @@ const Select: ISelect = ({
     }
   }
   const [menuVisible, setMenuVisible] = useState(false)
-  let options = children
-  if (!Array.isArray(children)) {
-    options = [children]
-  }
-  const menuItems = options.map(o => ({
-    name: o.props.children,
-    value: o.props.value
+  const menuItems = options?.map(o => ({
+    name: o.children,
+    value: o.value
   }))
 
   useEffect(() => {
@@ -131,7 +129,7 @@ const Select: ISelect = ({
         containerStyle={{ zIndex: '10000' }}
         parentElement={containerRef.current}
         content={
-          <WithBorder style={{ padding: '8px 0px' }} borderRadius={5}>
+          <WithBorder borderRadius={5}>
             <SelectMenu
               style={menuStyle}
               menuItems={menuItems}
@@ -202,7 +200,7 @@ const Select: ISelect = ({
 }
 const SelectMenu: FC<{
   style?: CSSProperties
-  menuItems: {
+  menuItems?: {
     name: string
     value: string
   }[]
@@ -211,23 +209,33 @@ const SelectMenu: FC<{
   selectedItems: string[]
 }> = ({ menuItems, onDeSelect, onSelect, selectedItems, style }) => {
   return (
-    <Menu style={style}>
-      {menuItems.map(item => (
-        <Menu.Item
+    <div
+      style={style}
+      className={css({
+        padding: 8,
+        minWidth: 180,
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 4
+      })}
+    >
+      {menuItems?.map(item => (
+        <div
+          className={ClassName.flatButton()}
+          style={{ background: selectedItems.some(i => i === item.value) ? 'rgba(31, 34, 37, 0.1)' : undefined }}
           onClick={() => {
             if (selectedItems.some(i => i === item.value)) {
               onDeSelect(item.value)
+              console.log('deselect')
             } else {
               onSelect(item.value)
             }
           }}
-          selected={selectedItems.some(i => i === item.value)}
-          type="button"
         >
           {item.name}
-        </Menu.Item>
+        </div>
       ))}
-    </Menu>
+    </div>
   )
 }
 const Tag: FC<{

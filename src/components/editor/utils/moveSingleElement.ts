@@ -1,17 +1,12 @@
 import Id from '@/utils/id'
 import { Descendant, Editor, Path, Transforms } from 'slate'
-import { CustomEditor } from '../types'
+import { CustomEditor, CustomElement } from '../types'
 
-const moveSingleElement = (
-  editor: CustomEditor,
-  currPath: Path,
-  targetElement: Descendant,
-  targetPath: Path,
-  direction: string,
-  isNested: boolean
-) => {
+const moveSingleElement = (editor: CustomEditor, currPath: Path, targetPath: Path, direction: string, isNested?: boolean) => {
+  if (!currPath) return
   const currElement = Editor.node(editor, currPath)
-  if (!currPath || !targetPath || !targetElement) return
+  if (!targetPath) return
+  const targetElement = Editor.node(editor, targetPath)[0] as CustomElement
   const currParentPath = Path.parent(currPath)
   // use pathRef to track path change
   const currPathRef = Editor.pathRef(editor, currPath)
@@ -27,7 +22,7 @@ const moveSingleElement = (
     }
     if (targetElement.type === 'list-item' || targetElement.level) {
       let nextLevel
-      if (isNested) {
+      if (isNested && targetElement.level !== undefined) {
         nextLevel = targetElement.level + 1 || 1
       } else {
         nextLevel = targetElement.level || undefined

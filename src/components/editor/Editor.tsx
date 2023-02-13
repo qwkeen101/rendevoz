@@ -198,7 +198,7 @@ export const EditorV1: FC<EditorProps> = memo(({ id, noteId, readonly, embedded,
   const handleBlockMouseMove = useMemoizedFn((e: MouseEvent, element: CustomElement) => {
     if (!isDragging && !globalIsDragging) {
       editor.currentEnterElement = element
-      dragManager.registerDragElement(e.currentTarget as HTMLElement, ReactEditor.findPath(editor, element))
+      dragManager.registerDragHtmlElement(e.currentTarget as HTMLElement, ReactEditor.findPath(editor, element))
       if (dragHandle?.targetId !== element.id || dragHandle?.visible === false) {
         const targetRect = (e.currentTarget as HTMLElement).getBoundingClientRect()
         setDragHandle({
@@ -245,7 +245,7 @@ export const EditorV1: FC<EditorProps> = memo(({ id, noteId, readonly, embedded,
   )
   return (
     <div className={styles.editor}>
-      <TabTitle disable={readonly} title={note?.title || metaObject?.name || 'Untitled'} />
+      <TabTitle disable={readonly} title={metaObject?.name || note?.title || 'Untitled'} />
       <div ref={scrollElementRef} className={styles.scrollWrapper}>
         {metaObject?.coverImgSrc && (
           <Image

@@ -1,4 +1,3 @@
-import { Noop } from '@/common/types'
 import { useMemoizedFn } from '@/hooks'
 import isHotkey from 'is-hotkey'
 import { FC, KeyboardEventHandler, memo, RefObject, useCallback, useEffect, useRef } from 'react'
@@ -25,10 +24,12 @@ import { CustomTransforms } from './utils/transform'
 import { InlineElements } from './consts/elements'
 import Media from './elements/media'
 import { KEY } from '@/consts/key'
-import { ID_TO_ELEMENTS_MAP, SELECTED_BLOCKS_MAP, SELECTED_ID_TO_ELEMENTS_SET } from './weakMaps'
+import { ID_TO_ELEMENTS_MAP, ID_TO_PATH_MAP, SELECTED_BLOCKS_MAP, SELECTED_ID_TO_ELEMENTS_SET } from './weakMaps'
 import moveMultiElements from './utils/moveMultiElements'
 import useEventEmitter from '@/events/useEventEmitter'
 import { EditorEventHandler } from '@/events/editorEvent'
+import { EditableProps } from './slate-react/components/editable'
+import { css } from '@emotion/css'
 
 type InnerEditorProps = {
   editor: CustomEditor
@@ -56,9 +57,10 @@ const InnerEditor: FC<InnerEditorProps> = memo(
     const scrollElement = scrollElementRef?.current
     const renderInnerElement = useCallback((props: RenderElementProps) => <Element {...props} />, [])
     const renderLeaf = useCallback((props: RenderLeafProps) => <Leaf {...props} />, [])
-    const editableRef = useRef<{ scrollTo: (idx: number) => void }>()
+    const editableRef = useRef<EditableProps['innerRef']>()
     const emitter = useEventEmitter()
     const editorEventHandler = new EditorEventHandler()
+    const previousValue = useRef<Descendant[]>()
     editorEventHandler.on('jumpToBlock', data => {
       if (data.noteId === editor.noteId) {
         emitter.removeInterval()
@@ -98,13 +100,25 @@ const InnerEditor: FC<InnerEditorProps> = memo(
       }
     }, [])
     const { addMetaObject, addMetaLink, getMetaObjectByObjectId } = useMetaStore()
-
+    editor.innerRef = editableRef
     const handleChange = useMemoizedFn((value: Descendant[]) => {
       onChange?.(value)
+      const prevValue = previousValue.current
+      previousValue.current = value
+      if (prevValue !== value) {
+        if (editor.operations.some(i => Path.operationCanTransformPath(i)) || ID_TO_PATH_MAP.get(editor) === undefined) {
+          const map = ID_TO_PATH_MAP.get(editor) || new Map<number, Path>()
+          ID_TO_PATH_MAP.set(editor, map)
+          for (const [node, path] of Node.elements(editor, { pass: n => !('id' in n[0]) })) {
+            map.set(node.id, path)
+          }
+        }
+      }
     })
     const inlineKeys = Object.values(InlineElements)
     const renderElement = useCallback(
       ({ children, element, attributes }: RenderElementProps) => {
+        if (element.hide === true) return null
         if (element.type === 'columnList') {
           return (
             <Block
@@ -220,17 +234,24 @@ const InnerEditor: FC<InnerEditorProps> = memo(
         const selected = SELECTED_BLOCKS_MAP.get(editor)
         if (selected && selected.size > 0) {
           e.preventDefault()
+          if (selected.size === ID_TO_PATH_MAP.get(editor)?.size) {
+            Transforms.removeNodes(editor, {
+              at: Editor.range(editor, [0], [editor.children.length - 1])
+            })
+            SELECTED_BLOCKS_MAP.set(editor, new Map())
+            return
+          }
           const ids = Array.from(selected.keys())
-          const elements: CustomElement[] = []
-          console.log(ids)
+          const elements: [CustomElement, Path][] = []
           const eles = ID_TO_ELEMENTS_MAP.get(editor)
           ids.forEach(id => {
             const ele = eles?.get(id)
             if (ele) {
-              elements.push(ele.getElement())
+              elements.push([ele.getElement(), ID_TO_PATH_MAP.get(editor)?.get(id)])
+              selected.delete(id)
             }
           })
-          moveMultiElements(editor, elements, editor.children[editor.children.length - 1], [editor.children.length - 1], 'bottom', false)
+          moveMultiElements(editor, elements, [editor.children.length - 1], 'bottom', false)
           Transforms.removeNodes(editor, {
             at: {
               anchor: {
@@ -241,6 +262,32 @@ const InnerEditor: FC<InnerEditorProps> = memo(
             }
           })
           Transforms.deselect(editor)
+        }
+      }
+      if (isHotkey('mod+a', e)) {
+        e.preventDefault()
+        const selectedBlocksMap = SELECTED_BLOCKS_MAP.get(editor)
+        ID_TO_PATH_MAP.get(editor)?.forEach((v, k) => {
+          selectedBlocksMap?.set(k, null)
+        })
+        ID_TO_ELEMENTS_MAP.get(editor)?.forEach(i => {
+          i.selectBlock()
+        })
+      }
+      if (isHotkey('mod+c', e)) {
+        const selected = SELECTED_BLOCKS_MAP.get(editor)
+        if (selected && selected.size > 0) {
+          e.preventDefault()
+          const idToPath = ID_TO_PATH_MAP.get(editor)
+          const elements = Array.from(selected.keys())
+            .map(id => {
+              const path = idToPath?.get(id)
+              if (!path) return
+              const node = Editor.node(editor, path)[0]
+              return node
+            })
+            .filter(i => i !== undefined) as CustomElement[]
+          editor.currentCopyElements = elements
         }
       }
       for (const hotkey in HOTKEYS) {
@@ -337,7 +384,7 @@ const InnerEditor: FC<InnerEditorProps> = memo(
         <Editable
           innerRef={editableRef}
           readOnly={readonly}
-          scrollSelectionIntoView={() => {}}
+          // scrollSelectionIntoView={() => {}}
           suppressContentEditableWarning={true}
           spellCheck="false"
           onCompositionStart={() => {
@@ -347,16 +394,28 @@ const InnerEditor: FC<InnerEditorProps> = memo(
           }}
           onCopy={() => {
             editor.currentCopyElement = undefined
+            editor.currentCopyElements = undefined
+            // return true
             return false
           }}
           onPaste={e => {
             const copyElement = editor.currentCopyElement
+            const copyElements = editor.currentCopyElements
             if (copyElement) {
               const newEle = {
                 ...copyElement,
                 id: Id.getId()
               }
               Transforms.insertNodes(editor, newEle)
+              e.preventDefault()
+              return true
+            }
+            if (copyElements) {
+              const newEles = copyElements.map(i => ({
+                ...i,
+                id: Id.getId()
+              }))
+              Transforms.insertNodes(editor, newEles)
               e.preventDefault()
               return true
             }
@@ -407,6 +466,11 @@ const isMarkActive = (editor: CustomEditor, mark: string) => {
   const marks = Editor.marks(editor)
   return marks ? marks[mark] === true : false
 }
+const dividerClassName = css({
+  width: '100%',
+  height: '1px',
+  borderBottom: '1px solid rgba(55,53,47,0.16)'
+})
 export const Element = (props: RenderElementProps) => {
   const { element, attributes, children } = props
   if (!element.hide) {
@@ -435,18 +499,19 @@ export const Element = (props: RenderElementProps) => {
             </a>
           </span>
         )
+      case 'divider':
+        return (
+          <div contentEditable={false} className={dividerClassName}>
+            {children}
+          </div>
+        )
       case 'heading-one':
-        return <Heading level={0} {...props} />
       case 'heading-two':
-        return <Heading level={1} {...props} />
       case 'heading-three':
-        return <Heading level={2} {...props} />
       case 'heading-four':
-        return <Heading level={3} {...props} />
       case 'heading-five':
-        return <Heading level={4} {...props} />
       case 'heading-six':
-        return <Heading level={5} {...props} />
+        return <Heading {...props} />
       case 'metaObject':
         return <MetaObject {...props} />
       case 'image':
@@ -458,10 +523,6 @@ export const Element = (props: RenderElementProps) => {
       case 'pdf':
       case 'note':
         return <Media {...props} />
-      case 'spacer':
-        return <Spacer {...props} />
-      case 'hole':
-        return <div className={styles.hole}>{children}</div>
       case 'thought':
         return <Thought {...props}>{children}</Thought>
       case 'emoji':
@@ -498,7 +559,7 @@ export const Leaf = (props: RenderLeafProps) => {
       style={{
         fontSize: leaf.fontSize || '1em',
         '--block-font-color': leaf.fontColor,
-        background: leaf.backgroundColor,
+        background: leaf.backgroundColor
       }}
       {...attributes}
     >

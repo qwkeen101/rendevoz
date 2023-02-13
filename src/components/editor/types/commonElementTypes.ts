@@ -2,9 +2,8 @@ import { Descendant } from 'slate'
 import { CardElement, CustomText, ElementWithId, EmptyText } from './baseTypes'
 
 export interface HeadingElement extends ElementWithId {
-  dest?: string | any[]
-  align?: string
   children: Descendant[]
+  folded?: boolean
 }
 
 export interface HeadingOneElement extends HeadingElement {
@@ -59,6 +58,11 @@ export interface ToDoElement {
 export interface EmojiElement {
   type: 'emoji'
   name: string
+  children: EmptyText[]
+}
+
+export interface DividerElement {
+  type: 'divider'
   children: EmptyText[]
 }
 export interface BulletedListElement {
@@ -190,3 +194,4 @@ export type CommonElement =
   | NoteElement
   | ColumnElement
   | ColumnListElement
+  | DividerElement

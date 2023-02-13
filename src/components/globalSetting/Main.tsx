@@ -5,6 +5,7 @@ import { css } from '@emotion/css'
 import { useAtom, useAtomValue } from 'jotai/react'
 import { atom } from 'jotai/vanilla'
 import { atomWithStorage } from 'jotai/vanilla/utils'
+import _ from 'lodash'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import AboutSetting from './About'
@@ -12,20 +13,23 @@ import AppearanceSetting from './Appearance'
 import EditorSetting from './Editor'
 import GeneralSetting from './General'
 import NotificationSetting from './Notification'
+import ShortCutSetting from './ShortCut'
 import SettingSidebarItem from './SidebarItem'
 
 enum Settings {
   'general',
   // 'hotkeys',
   // 'files',
-  'object',
-  'editor',
-  'pdf',
-  'notification'
+  // 'object',
+  // 'editor',
+  // 'pdf',
+  'notification',
+  'shortcuts'
   // 'about'
 }
 
-type Setting = {
+type Setting = INotificationSetting & IShortCutSetting
+type INotificationSetting = {
   notification: {
     enabled: boolean
     pdf: boolean
@@ -36,7 +40,23 @@ type Setting = {
     link: boolean
   }
 }
-export const SettingAtom = atomWithStorage<Setting>('setting', {
+type ShortCut = {
+  ctrlKey: boolean
+  shiftKey: boolean
+  altKey: boolean
+  key?: string
+}
+export type IShortCutSetting = {
+  shortcut: Partial<{
+    openObjectPanel: ShortCut | null
+    openScreenShot: ShortCut | null
+    quickCreateObject: ShortCut | null
+  }>
+}
+
+const localSetting = JSON.parse(localStorage.getItem('setting'))
+localStorage.removeItem('setting')
+const defaultSetting: Setting = {
   notification: {
     enabled: true,
     pdf: true,
@@ -45,8 +65,13 @@ export const SettingAtom = atomWithStorage<Setting>('setting', {
     editor: true,
     object: true,
     link: true
+  },
+  shortcut: {
   }
-})
+}
+_.merge(defaultSetting, localSetting)
+localStorage.setItem('setting', JSON.stringify(defaultSetting))
+export const SettingAtom = atomWithStorage<Setting>('setting', defaultSetting)
 
 export const useSetting = () => useAtom(SettingAtom, { store: globalStore })
 
@@ -65,6 +90,8 @@ const SettingDialog = ({ onClose }: { onClose: VoidFunction }) => {
         return <GeneralSetting />
       case 'notification':
         return <NotificationSetting />
+      case 'shortcuts':
+        return <ShortCutSetting />
     }
   }
   return (

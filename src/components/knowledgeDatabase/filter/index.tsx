@@ -1,115 +1,32 @@
 import { AnimatePopover, CheckBox, Content, Icon, WithBorder } from '@/components/base'
-import Select from '@/components/base/select'
 import TimePicker from '@/components/base/TimePicker'
 import { Tag } from '@/components/form/EditMetaObjectForm'
-import { AvaliableGlobalDraggingElements } from '@/components/globalDragOverlay/GlobalDragOverlay'
+import Zindexes from '@/consts/zindex'
 import { useToggle } from '@/hooks'
-import { TagToMetaObjectIdsMapAtom, undeletedMetaObjectsAtom } from '@/stores/meta.store'
+import { TagToMetaObjectIdsMapAtom } from '@/stores/meta.store'
 import { globalStore } from '@/stores/stores'
 import ClassName from '@/styles/classNames'
 import DateFormat from '@/utils/dateFormat'
 import Id from '@/utils/id'
 import { css } from '@emotion/css'
-import { Interval, isWithinInterval, subDays, subMonths, subYears } from 'date-fns'
+import { subDays, subMonths, subYears } from 'date-fns'
 import produce from 'immer'
 import { useAtom, useAtomValue, useStore } from 'jotai/react'
-import { atom } from 'jotai/vanilla'
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { MetaObject } from '~/typings/data'
 import { typeToTypeRecord } from '../card/DatabaseCard'
-
-const FilterSelectedTagsAtom = atom<Set<string>>(new Set<string>())
-const FilterDateIntervalsAtom = atom<Partial<Interval>>({})
-const FilterTypesAtom = atom<Set<MetaObject['type']>>(new Set<MetaObject['type']>())
+import { FilterDateIntervalsAtom, FilterSelectedTagsAtom, FilterTypesAtom } from './useObjectFilter'
 
 type FilterType = 'tag' | 'type' | 'createdAt' | 'relatedObjectsSize' | 'addOne'
-const intersectionOfMultipleSets = (...sets: Set<any>[]) => {
-  const res = new Set()
-  if (sets.length) {
-    sets.sort((a, b) => a.size - b.size)
-    const smallest = sets.shift()
-    for (const val of smallest) {
-      if (sets.every(s => s.has(val))) {
-        res.add(val)
-      }
-    }
-  }
-  return res
-}
-const DatabaseFilter = ({ onChange }) => {
+
+const DatabaseFilter = () => {
   const [filters, setFilters] = useState<
     {
       id: number
       filterType: FilterType
     }[]
   >([])
-  const databaseStore = useStore()
-  const filterTags = useAtomValue(FilterSelectedTagsAtom, { store: databaseStore })
-  const filterCreateTimeInterval = useAtomValue(FilterDateIntervalsAtom, { store: databaseStore })
-  const filterTypes = useAtomValue(FilterTypesAtom, { store: databaseStore })
-  const tagToMetaObjectsMap = useAtomValue(TagToMetaObjectIdsMapAtom, { store: globalStore })
-  const undeletedMetaObjects = useAtomValue(undeletedMetaObjectsAtom, { store: globalStore })
   const [chooseFilterVisible, toggleChooseFilterVisible] = useToggle(false)
-  const filterMap = useMemo(() => {
-    const map = new Map<string, Set<number>>()
-    map.set('tag', new Set())
-    map.set('type', new Set())
-    map.set('createdAt', new Set())
-    return map
-  }, [])
-  useEffect(() => {
-    filterMap.get('type')?.clear()
-    const objIdSet = filterMap.get('type')!
-    undeletedMetaObjects.forEach(obj => {
-      if (filterTypes.has(obj.type)) {
-        objIdSet.add(obj.id)
-      }
-    })
-    triggerOnChange()
-  }, [filterTypes])
-  useEffect(() => {
-    filterMap.get('tag')?.clear()
-    filterTags.forEach(tag => {
-      const objIdSet = tagToMetaObjectsMap.get(tag)
-      if (objIdSet) {
-        objIdSet.forEach(i => {
-          filterMap.get('tag')?.add(i)
-        })
-      }
-    })
-    triggerOnChange()
-  }, [filterTags])
-  useEffect(() => {
-    const interval = structuredClone(filterCreateTimeInterval) as Interval
-    if (interval.end === undefined) {
-      interval.end = new Date()
-    }
-    if (interval.start === undefined) {
-      interval.start = new Date(0)
-    }
-    if (interval.end < interval.start) return
-    filterMap.get('createdAt')?.clear()
-    const filteredIds = undeletedMetaObjects.filter(i => isWithinInterval(i.createdAt, interval)).map(i => i.id)
-    filterMap.set('createdAt', new Set(filteredIds))
-    triggerOnChange()
-  }, [filterCreateTimeInterval])
-  const triggerOnChange = () => {
-    const a = Array.from(filterMap.values())
-    const sizeLargerThanZeroSets = a.filter(i => i.size > 0)
-    if (sizeLargerThanZeroSets.length === 1 && filters.length === 1) {
-      onChange?.(Array.from(sizeLargerThanZeroSets[0]), filters)
-      return
-    }
-    const availableIntersectionSets: Set<any>[] = []
-    filterMap.forEach((v, k) => {
-      if (filters.some(i => i.filterType === k)) {
-        availableIntersectionSets.push(v)
-      }
-    })
-    const intersection = intersectionOfMultipleSets(...availableIntersectionSets) as Set<number>
-    console.log(intersection)
-    onChange?.(Array.from(intersection), filters)
-  }
   const addFilter = (type: FilterType) => {
     setFilters([...filters, { id: Id.getId(), filterType: type }])
     toggleChooseFilterVisible(false)
@@ -133,6 +50,7 @@ const DatabaseFilter = ({ onChange }) => {
           visible={chooseFilterVisible}
           positions={['bottom']}
           onClickOutside={toggleChooseFilterVisible}
+          containerStyle={{ zIndex: String(Zindexes.Tooltip) }}
           content={
             <WithBorder style={{ padding: 6, width: 200, fontFamily: 'Muli' }}>
               <div style={{ marginLeft: 10 }} className={ClassName.description()}>
@@ -224,7 +142,7 @@ const TypeFilter = ({ onClose }: { onClose: VoidFunction }) => {
         column
         className={css([
           {
-            width: 700,
+            minWidth: 250,
             padding: 12,
             borderRadius: 8,
             boxShadow: 'rgba(100, 100, 111, 0.2) 0px 7px 29px 0px',
@@ -251,6 +169,7 @@ const TypeFilter = ({ onClose }: { onClose: VoidFunction }) => {
       visible={popoverVisible}
       onClickOutside={togglePopoverVisible}
       content={renderPopover()}
+      containerStyle={{ zIndex: String(Zindexes.Tooltip) }}
     >
       <Content
         flex
@@ -316,7 +235,7 @@ const TagFilter = ({ onClose }: { onClose: VoidFunction }) => {
       <Content
         className={css([
           {
-            width: 700,
+            minWidth: 250,
             padding: 12,
             borderRadius: 8,
             boxShadow: 'rgba(100, 100, 111, 0.2) 0px 7px 29px 0px',
@@ -345,6 +264,7 @@ const TagFilter = ({ onClose }: { onClose: VoidFunction }) => {
       positions={['bottom']}
       content={renderPopover()}
       visible={popoverVisible}
+      containerStyle={{ zIndex: String(Zindexes.Tooltip) }}
     >
       <Content
         flex
@@ -492,6 +412,7 @@ const CreateTimeFilter = ({ onClose }: { onClose: VoidFunction }) => {
       content={renderContent()}
       positions={['bottom']}
       align="start"
+      containerStyle={{ zIndex: String(Zindexes.Tooltip) }}
     >
       <Content
         alignItems="center"

@@ -114,6 +114,7 @@ export type EditableProps = {
   scrollElementRef?: RefObject<HTMLElement | null>
   innerRef?: MutableRefObject<{
     scrollTo: (idx: number) => void
+    measure: VoidFunction
   }>
 } & React.TextareaHTMLAttributes<HTMLDivElement>
 
@@ -154,7 +155,7 @@ export const Editable = (props: EditableProps) => {
 
   const virtualizer = useVirtualizer({
     count: editor.children.length,
-    estimateSize: () => 30,
+    estimateSize: idx => (editor.children[idx].hide === true ? 0 : 30),
     getScrollElement: () => scrollElement?.current || document.body,
     overscan: 20,
     paddingEnd: readOnly ? 0 : 300,
@@ -171,7 +172,8 @@ export const Editable = (props: EditableProps) => {
     })
   })
   useImperativeHandle(innerRef, () => ({
-    scrollTo: scrollTo
+    scrollTo: scrollTo,
+    measure: virtualizer.measure
   }))
 
   // Keep track of some state for the event handler logic.
@@ -1032,9 +1034,11 @@ export const Editable = (props: EditableProps) => {
             )}
             onCopy={useCallback(
               (event: React.ClipboardEvent<HTMLDivElement>) => {
+                console.log('right here')
                 if (ReactEditor.hasSelectableTarget(editor, event.target) && !isEventHandled(event, attributes.onCopy)) {
                   event.preventDefault()
                   ReactEditor.setFragmentData(editor, event.clipboardData, 'copy')
+                  console.log('copyed', event)
                 }
               },
               [attributes.onCopy]

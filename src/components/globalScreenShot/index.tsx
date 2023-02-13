@@ -1,6 +1,6 @@
 import { useMemoizedFn, useToggle } from '@/hooks'
 import { Position } from '@/types'
-import isHotkey from 'is-hotkey'
+import isHotkey, { compareHotkey } from 'is-hotkey'
 import { CSSProperties, useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { motion, PanInfo, useAnimationControls } from 'framer-motion'
@@ -14,6 +14,7 @@ import ScreenShotCanvas from './ScreenShotCanvas'
 import { GlobalPocketInstance } from '../GlobalPocket'
 import { saveImageLocally } from '@/utils/img'
 import panzoom, { PanZoom } from 'panzoom'
+import getSetting from '../globalSetting/getSetting'
 const GlobalScreenShot = () => {
   const [screenShotLayerVisible, setScreenShotLayerVisible] = useState(false)
   const [selectionBoxState, setSelectionBoxState] = useState<
@@ -41,7 +42,6 @@ const GlobalScreenShot = () => {
   const toolbarRef = useRef<HTMLDivElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const panzoomRef = useRef<PanZoom>()
-  const screenshotCanvasRef = useRef<HTMLCanvasElement>()
   const isPressed = useRef(false)
   const framerId = useRef(0)
   const controls = useAnimationControls()
@@ -520,7 +520,8 @@ const GlobalScreenShot = () => {
   }, [screenShotLayerVisible])
   useEffect(() => {
     const keydownHandler = (e: KeyboardEvent) => {
-      if (isHotkey('mod+p', e)) {
+      const openScreenShotKey = getSetting().shortcut.openScreenShot
+      if (openScreenShotKey && compareHotkey(openScreenShotKey, e)) {
         setScreenShotLayerVisible(state => !state)
       }
       if (isHotkey('escape', e)) {
@@ -738,9 +739,9 @@ const GlobalScreenShot = () => {
               userSelect: 'none'
             }}
           >
-            <Icon name="park-erase" onClick={toggleErase} />
-            <Icon name="park-pencil" onClick={toggleDrawing} />
-            <Icon name="park-save" onClick={closeAndSaveToGallery} />
+            {/* <Icon name="park-erase" onClick={toggleErase} />
+            <Icon name="park-pencil" onClick={toggleDrawing} /> */}
+            {/* <Icon name="park-save" onClick={closeAndSaveToGallery} /> */}
             <Icon
               name="park-download"
               onClick={() => {

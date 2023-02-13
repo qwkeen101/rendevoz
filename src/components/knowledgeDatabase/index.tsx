@@ -5,7 +5,7 @@ import ClassName from '@/styles/classNames'
 import { css } from '@emotion/css'
 import { AnimatePresence } from 'framer-motion'
 import fuzzysort from 'fuzzysort'
-import { Provider, useAtomValue } from 'jotai/react'
+import { Provider, useAtom, useAtomValue } from 'jotai/react'
 import { createStore } from 'jotai/vanilla'
 import { useEffect, useMemo, useState } from 'react'
 import { Flipper } from 'react-flip-toolkit'
@@ -13,6 +13,7 @@ import { MetaObject } from '~/typings/data'
 import { Content, Icon } from '../base'
 import DatabaseCard from './card/DatabaseCard'
 import DatabaseFilter from './filter'
+import useObjectFilter, { FilterNameSearchAtom } from './filter/useObjectFilter'
 
 const KnowledgeDatabase = () => {
   const undeletedMetaObjects = useAtomValue(undeletedMetaObjectsAtom, { store: globalStore })
@@ -26,36 +27,24 @@ const KnowledgeDatabase = () => {
   })
 
   const DatabaseStore = useMemo(() => createStore(), [])
-  const [search, setSearch] = useState('')
-
-  const { run: debouncedSetSearch } = useDebounceFn(setSearch, { wait: 200 })
+  const [searchName, setSearchName] = useAtom(FilterNameSearchAtom, { store: DatabaseStore })
+  useObjectFilter(ids => {
+    const shouldDisplay = undeletedMetaObjects.filter(i => ids.has(i.id))
+    setDisplayObjects(shouldDisplay)
+  }, DatabaseStore)
+  const { run: debouncedSetSearch } = useDebounceFn(setSearchName, { wait: 200 })
 
   const { currentPage, itemPerPage } = paginateState
-  const paginateObjects = undeletedMetaObjects.slice(currentPage * itemPerPage, (currentPage + 1) * itemPerPage)
 
-  const [displayObjects, setDisplayObjects] = useState<MetaObject[]>(paginateObjects)
+  const [displayObjects, setDisplayObjects] = useState<MetaObject[]>(undeletedMetaObjects)
 
   const [showPin, toggleShowPin] = useToggle(true)
 
   const [showAll, toggleShowAll] = useToggle(true)
-  const allMetaObjects = useAtomValue(metaObjectsAtom, { store: globalStore })
-  const hasNextPage = undeletedMetaObjects.length > (currentPage + 1) * itemPerPage
-  useEffect(() => {
-    if (!search) {
-      setDisplayObjects(paginateObjects)
-    } else {
-      const results = fuzzysort.go(search, undeletedMetaObjects, { key: 'name' })
-      setDisplayObjects(results.map(i => i.obj).slice(currentPage * itemPerPage, (currentPage + 1) * itemPerPage))
-    }
-  }, [undeletedMetaObjects, paginateState])
-  useEffect(() => {
-    if (search) {
-      const results = fuzzysort.go(search, undeletedMetaObjects, { key: 'name' })
-      setDisplayObjects(results.map(i => i.obj))
-    } else {
-      setDisplayObjects(paginateObjects)
-    }
-  }, [search])
+
+  const paginateObjects = displayObjects.slice(currentPage * itemPerPage, (currentPage + 1) * itemPerPage)
+
+  const hasNextPage = displayObjects.length > (currentPage + 1) * itemPerPage
 
   return (
     <Provider store={DatabaseStore}>
@@ -65,15 +54,7 @@ const KnowledgeDatabase = () => {
           onChange={e => debouncedSetSearch(e.target.value)}
           className={css([ClassName.input(), { borderRadius: 999 }])}
         />
-        <DatabaseFilter
-          onChange={(filteredResult, filters) => {
-            if (filters.length > 0) {
-              setDisplayObjects(filteredResult.map(id => allMetaObjects.get(id)).filter(i => !i.deleted))
-            } else {
-              setDisplayObjects(paginateObjects)
-            }
-          }}
-        />
+        <DatabaseFilter />
         {pinnedMetaObjects.length > 0 && (
           <>
             <div
@@ -145,7 +126,7 @@ const KnowledgeDatabase = () => {
               gridAutoFlow: 'dense'
             })}
           >
-            {displayObjects.map((i, idx) => (
+            {paginateObjects.map((i, idx) => (
               <DatabaseCard key={i.id} index={idx} metaObject={i} />
             ))}
           </div>

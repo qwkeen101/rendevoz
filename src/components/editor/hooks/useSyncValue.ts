@@ -15,11 +15,13 @@ const useLocalSyncValue = (editor: CustomEditor) => {
       console.log(data)
       const { operation } = data
       Transforms.transform(editor, operation)
+      editor.operations.push(operation)
       debouncedChange()
     }
   })
   const changeEditor = () => {
     editor.onChange()
+    editor.operations = []
   }
   const { run: debouncedChange } = useDebounceFn(changeEditor, { wait: 15 })
   useEffect(() => {

@@ -3,12 +3,12 @@ import { ReactEditor } from '@/components/editor/slate-react'
 import { CustomEditor } from '@/components/editor/types'
 import moveSingleElement from '@/components/editor/utils/moveSingleElement'
 import ClassName from '@/styles/classNames'
-import { css } from '@emotion/css'
-import { cloneElement, useRef, useState } from 'react'
-import { Transforms } from 'slate'
+import { useRef, useState } from 'react'
+import { Editor, Transforms } from 'slate'
 import { EditorOverlayManager } from '../useEditorOverlay'
 import BlockColorPicker from '../../BlockColorPicker'
-import { useTheme } from '@/hooks'
+import { useUpdate } from 'react-use'
+import { useToggle } from '@/hooks'
 
 const EditorBlockDetails = ({ editor, manager }: { editor: CustomEditor; manager: EditorOverlayManager }) => {
   const [cardViewVisible, setCardViewVisible] = useState(false)
@@ -40,14 +40,22 @@ const EditorBlockDetails = ({ editor, manager }: { editor: CustomEditor; manager
       onClick: () => Transforms.setNodes(editor, { cardType: 'line' }, { at: currentElePath })
     },
     currentEle?.type &&
-      embedded.includes(currentEle.type) && editor.noteId !== currentEle?.noteId && {
+      embedded.includes(currentEle.type) &&
+      editor.noteId !== currentEle?.noteId && {
         name: 'Embedded card',
         onClick: () => Transforms.setNodes(editor, { cardType: 'embedded' }, { at: currentElePath })
       }
   ]
+  let showExpandOrCollapse = false
+
+  if (currentEle?.type === 'metaObject') {
+    showExpandOrCollapse = true
+  }
+  const canExpand = currentEle?.collapsed === true
+  const [expand, toggleExpand] = useToggle(canExpand)
   return (
     <WithBorder ref={containerRef} style={{ padding: 3, minWidth: 220, userSelect: 'none', color: '#5f6065' }}>
-      {showCard && (
+      {/* {showCard && (
         <AnimatePopover
           containerStyle={{ zIndex: '10000' }}
           positions={['right']}
@@ -94,7 +102,7 @@ const EditorBlockDetails = ({ editor, manager }: { editor: CustomEditor; manager
             <Icon name="park-right" />
           </Content>
         </AnimatePopover>
-      )}
+      )} */}
       <AnimatePopover
         containerStyle={{ zIndex: '10000' }}
         positions={['right']}
@@ -204,6 +212,30 @@ const EditorBlockDetails = ({ editor, manager }: { editor: CustomEditor; manager
           <Icon name="park-right" />
         </Content>
       </AnimatePopover>
+      {showExpandOrCollapse && (
+        <Content
+          flex
+          gap={10}
+          alignItems="center"
+          className={ClassName.flatButton()}
+          onClick={() => {
+            toggleExpand()
+            const node = Editor.node(editor, currentElePath)[0]
+            Transforms.setNodes(
+              editor,
+              {
+                collapsed: !node?.collapsed
+              },
+              {
+                at: currentElePath
+              }
+            )
+          }}
+        >
+          <Icon name={expand ? 'park-expand-down-one' : 'park-fold-up-one'} size={18} />
+          {expand ? 'Expand' : 'Fold Up'}
+        </Content>
+      )}
       <Content
         flex
         gap={10}
@@ -225,7 +257,7 @@ const EditorBlockDetails = ({ editor, manager }: { editor: CustomEditor; manager
         alignItems="center"
         className={ClassName.flatButton()}
         onClick={() => {
-          moveSingleElement(editor, currentElePath, editor.children[0], [0], 'top', false)
+          moveSingleElement(editor, currentElePath, [0], 'top', false)
           Transforms.removeNodes(editor, { at: [0] })
           manager.close()
         }}

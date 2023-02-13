@@ -4,6 +4,7 @@ import { css } from '@emotion/css'
 import { atom, useAtom } from 'jotai'
 import { memo, useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
+import { Path } from 'slate'
 import { CustomElement } from '../editor/types'
 import useOverlayDrop from './useOverlayDrop'
 
@@ -12,9 +13,11 @@ export type AvaliableGlobalDraggingElements =
       type: 'noteElement'
       blockId: number
       element: CustomElement
+      path: Path
       elements: CustomElement[]
       content: string
       noteId: number
+      editorId: string
     }
   // something inside pdf, not pdf itself
   | {

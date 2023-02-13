@@ -10,7 +10,9 @@ const BlockColorPicker = ({
   showBg = true,
   showFont = true,
   fontBackDefault = true,
-  bgBackDefault = true
+  bgBackDefault = true,
+  showMoreBg,
+  showMoreFont
 }: {
   onPickFontColor: PickColorFunc
   onPickBackgroundColor: PickColorFunc
@@ -18,6 +20,8 @@ const BlockColorPicker = ({
   showFont?: boolean
   fontBackDefault?: boolean
   bgBackDefault?: boolean
+  showMoreBg?: boolean
+  showMoreFont?: boolean
 }) => {
   const [showMoreColor, toggleShowMoreFontColor] = useToggle(false)
   const [showMoreBackground, toggleShowMoreBackground] = useToggle(false)
@@ -41,18 +45,20 @@ const BlockColorPicker = ({
               {showMoreColor ? 'Show less' : 'Show more'}
             </span>
           </Content>
-          <ColorPicker enableDefault={fontBackDefault} isFont enableMore={!showMoreColor} onPick={onPickFontColor} />
+          <ColorPicker enableDefault={fontBackDefault} isFont enableMore={!showMoreColor && !showMoreFont} onPick={onPickFontColor} />
         </>
       )}
       {showBg && (
         <>
           <Content flex alignItems="center" justifyContent="space-between" className={ClassName.description()}>
             <span>Background color</span>
-            <span onClick={toggleShowMoreBackground} className={ClassName.flatButton(3, '0px 3px')}>
+            {showMoreBg && (
+              <span onClick={toggleShowMoreBackground} className={ClassName.flatButton(3, '0px 3px')}>
               {showMoreBackground ? 'Show less' : 'Show more'}
             </span>
+            )}
           </Content>
-          <ColorPicker enableDefault={bgBackDefault} enableMore={!showMoreBackground} onPick={onPickBackgroundColor} />
+          <ColorPicker enableDefault={bgBackDefault} enableMore={!showMoreBackground && !showMoreBg} onPick={onPickBackgroundColor} />
         </>
       )}
     </WithBorder>

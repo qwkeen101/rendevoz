@@ -1,25 +1,12 @@
 import { useMemoizedFn, useMergedRef, useUpdateEffect } from '@/hooks'
 import classNames from 'classnames'
-import {
-  FC,
-  memo,
-  useRef,
-  useState,
-  CSSProperties,
-  useEffect,
-  cloneElement,
-  MouseEvent,
-  useCallback,
-  RefObject,
-  useLayoutEffect
-} from 'react'
-import { ReactEditor, RenderElementProps, useSlate, useSlateStatic } from '../../slate-react'
+import { FC, memo, useRef, useState, useEffect, cloneElement, MouseEvent, useCallback, RefObject, useLayoutEffect } from 'react'
+import { ReactEditor, RenderElementProps, useSlateStatic } from '../../slate-react'
 import { CustomElement } from '../../types/index'
 import { motion, AnimatePresence } from 'framer-motion'
 import styles from './index.module.less'
 import { scrollToTarget } from '../../utils/positions/scroll'
 import { SELECT_AREA_MAP, ID_TO_ELEMENTS_MAP, SELECTED_BLOCKS_MAP } from '../../weakMaps'
-import { getDistanceBetweenPointAndElement } from '@/components/dragReposition/utils/position'
 import useIsSelecting from '../../hooks/useIsSelecting'
 import { getDistanceBetweenElementAndScrollableElement } from '@/components/editor/utils/scroll'
 import { isRectsCollision } from '../../utils/positions/collision'
@@ -38,7 +25,9 @@ type BlockProps = {
   element?: CustomElement
   scrollElementRef?: RefObject<HTMLElement>
 }
+
 const CardBlocks = ['pdf', 'book-highlight', 'note']
+
 const Block: FC<React.DetailedHTMLProps<React.HTMLAttributes<HTMLDivElement>, HTMLDivElement> & BlockProps & RenderElementProps> = memo(
   ({ scrollElementRef, blockId, children, ratio, type, attributes, element, onMouseEnter, onMouseLeave, onMouseMove, ...rest }) => {
     const blockRef = useRef<HTMLDivElement>(null)
@@ -54,12 +43,14 @@ const Block: FC<React.DetailedHTMLProps<React.HTMLAttributes<HTMLDivElement>, HT
 
     const handleCollisionSelectBlock = useMemoizedFn(() => {
       const selectArea = SELECT_AREA_MAP.get(editor)
+      if (!selectArea || !distanceToScrollElementRef.current) return
       if (isRectsCollision(selectArea, distanceToScrollElementRef.current)) {
         setSelected(true)
       } else {
         setSelected(false)
       }
     })
+
     const handleGlobalClick = useMemoizedFn(e => {
       if (!isSelecting && selected) {
         if (!blockRef.current?.contains(e.target)) {
@@ -67,8 +58,13 @@ const Block: FC<React.DetailedHTMLProps<React.HTMLAttributes<HTMLDivElement>, HT
         }
       }
     })
-    useEffect(() => {
+
+    useLayoutEffect(() => {
       document.addEventListener('click', handleGlobalClick)
+      const selectedBlocksMap = SELECTED_BLOCKS_MAP.get(editor)
+      if (selectedBlocksMap?.has(blockId)) {
+        setSelected(true)
+      }
       return () => {
         document.removeEventListener('click', handleGlobalClick)
       }
@@ -79,17 +75,16 @@ const Block: FC<React.DetailedHTMLProps<React.HTMLAttributes<HTMLDivElement>, HT
         const block = blockRef.current
         if (block && scrollElementRef?.current) {
           distanceToScrollElementRef.current = getDistanceBetweenElementAndScrollableElement(block, scrollElementRef.current)
-          console.log(distanceToScrollElementRef.current)
         }
       }
     })
+
     useUpdateEffect(() => {
+      const selectedBlocksMap = SELECTED_BLOCKS_MAP.get(editor)
       if (selected) {
-        const selectedBlocksMap = SELECTED_BLOCKS_MAP.get(editor)
         selectedBlocksMap?.set(blockId, blockRef.current)
-        return () => {
-          selectedBlocksMap?.delete(blockId)
-        }
+      } else {
+        selectedBlocksMap?.delete(blockId)
       }
     }, [selected])
 
@@ -138,7 +133,8 @@ const Block: FC<React.DetailedHTMLProps<React.HTMLAttributes<HTMLDivElement>, HT
         }
       }
     }
-    const handleSelectBlock = useMemoizedFn(() => {
+
+    const selectBlock = useMemoizedFn(() => {
       setSelected(true)
       if (scrollElementRef?.current) {
         scrollToTarget(blockRef.current, scrollElementRef.current)
@@ -147,7 +143,7 @@ const Block: FC<React.DetailedHTMLProps<React.HTMLAttributes<HTMLDivElement>, HT
 
     useEffect(() => {
       map?.set(blockId, {
-        selectBlock: handleSelectBlock,
+        selectBlock,
         collisionSelectBlock: handleCollisionSelectBlock,
         getElement: () => element,
         getIndicatorPosition,

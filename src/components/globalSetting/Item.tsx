@@ -8,8 +8,9 @@ type SettingItem = {
   title: string
   description?: string
   column?: boolean
+  titleSize?: number
 }
-const SettingItem: FC<SettingItem> = ({ children, title, description, column = false }) => {
+const SettingItem: FC<SettingItem> = ({ children, title, description, column = false, titleSize = 18 }) => {
   const { defaultFontColorBlack, defaultFontColorGrey } = useTheme('defaultFontColorBlack', 'defaultFontColorGrey')
   return (
     <Content
@@ -31,7 +32,7 @@ const SettingItem: FC<SettingItem> = ({ children, title, description, column = f
           className={css({
             color: defaultFontColorBlack,
             fontWeight: 600,
-            fontSize: 18
+            fontSize: titleSize
           })}
         >
           {title}

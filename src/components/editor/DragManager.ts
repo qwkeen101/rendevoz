@@ -1,3 +1,4 @@
+import EventEmitter from '@/events/eventEmitter'
 import Id from '@/utils/id'
 import { MouseEvent } from 'react'
 import { Editor, Node, Path, Transforms } from 'slate'
@@ -11,13 +12,22 @@ import moveMultiElements from './utils/moveMultiElements'
 import moveSingleElement from './utils/moveSingleElement'
 import rebuildDragSelect from './utils/rebuildDragSelect'
 import { getDistanceBetweenPointAndScrollableElement } from './utils/scroll'
-import { ElementFunctions, ID_TO_ELEMENTS_MAP, SELECTED_BLOCKS_MAP } from './weakMaps'
+import { ElementFunctions, ID_TO_ELEMENTS_MAP, ID_TO_PATH_MAP, SELECTED_BLOCKS_MAP } from './weakMaps'
 
 type Indicator = {
   direction: 'top' | 'left' | 'bottom' | 'right'
   id?: number
   isNested?: boolean
 }
+type DropResult = {
+  targetNodeId: number
+  direction: Indicator['direction']
+  isNested: Indicator['isNested']
+  shouldAddElements?: CustomElement[]
+  shouldRemoveElements?: CustomElement[]
+  objectId?: number
+}
+// in manager we do not change real state of editor, we just process and return result for further processing.
 class DragManager {
   static globalDragElement: HTMLElement | null = null
   static globalDragElementPath: Path | null = null
@@ -26,24 +36,23 @@ class DragManager {
   private blockElementsArray: HTMLElement[] = []
   private blockElementsMap = new Map<HTMLElement, any>()
   private scrollElement: HTMLElement | null = null
-  public dragElement: HTMLElement | null = null
+  public dragHtmlElement: HTMLElement | null = null
   private dragElementPath: Path | null = null
   private editor: CustomEditor | null = null
   private indicator: Indicator | null = null
-  private prevIndicator: Indicator | null = null
-  private elementsMap: Map<number, ElementFunctions> | null = null
+
   static dragElementsAdded = false
   public isDraggingFromOtherEditor = false
-  public onDrop?: (draggingEle: Partial<AvaliableGlobalDraggingElements>) => void
-  registerDragElement = (dragElement: HTMLElement, dragElementPath: Path) => {
-    this.dragElement = dragElement
+  public eventEmitter?: EventEmitter
+  public onDrop?: (result: DropResult) => void
+  registerDragHtmlElement = (dragElement: HTMLElement, dragElementPath: Path) => {
+    this.dragHtmlElement = dragElement
     this.dragElementPath = dragElementPath
     DragManager.globalDragElement = dragElement
     DragManager.globalDragElementPath = dragElementPath
   }
   registerEditor = (editor: CustomEditor) => {
     this.editor = editor
-    this.elementsMap = ID_TO_ELEMENTS_MAP.get(editor) || null
   }
   registerScrollElement = (scrollElement: HTMLElement) => {
     this.scrollElement = scrollElement
@@ -74,7 +83,7 @@ class DragManager {
   drag = (e: PointerEvent): Indicator | undefined => {
     if (
       !this.scrollElement ||
-      (!this.dragElement && !DragManager.globalDragElement && !GlobalDragOverlayInstance?.draggingDetails) ||
+      (!this.dragHtmlElement && !GlobalDragOverlayInstance?.draggingDetails) ||
       !this.editor ||
       this.blockElementsArray.length === 0
     ) {
@@ -85,9 +94,9 @@ class DragManager {
       if (selectedBlocksSet && selectedBlocksSet.size > 0) {
         GlobalDragOverlayInstance.addDragElements?.(rebuildDragSelect(this.editor, e) || document.createElement('div'))
       } else {
-        if (this.dragElement) {
-          const cloned = this.dragElement.cloneNode(true)
-          const rect = this.dragElement.getBoundingClientRect()
+        if (this.dragHtmlElement) {
+          const cloned = this.dragHtmlElement.cloneNode(true)
+          const rect = this.dragHtmlElement.getBoundingClientRect()
           const wrapper = document.createElement('div')
           wrapper.style.width = `${rect.width}px`
           wrapper.style.height = `${rect.height}px`
@@ -234,13 +243,13 @@ class DragManager {
       // bottom 50% -> direction is bottom of current block      top 50% -> direction is bottom of previous block,if there is no previous block,direction is top of current block
       if (distance.right < 0) {
         // direction is right
-        if (getElementId(currentBlock) === getElementId(this.dragElement)) {
+        if (getElementId(currentBlock) === getElementId(this.dragHtmlElement)) {
           return
         }
         return dragResult('right', currentBlockId, e)
       }
       if (distance.left < 0) {
-        if (getElementId(currentBlock) === getElementId(this.dragElement)) {
+        if (getElementId(currentBlock) === getElementId(this.dragHtmlElement)) {
           return
         }
         if (Number(currentBlock.getAttribute('data-level')) > 0) {
@@ -266,131 +275,167 @@ class DragManager {
   private clearState = () => {
     this.blockElementsArray = []
     this.blockElementsMap.clear()
-    this.dragElement = null
+    this.dragHtmlElement = null
     this.dragElementPath = null
     this.indicator = null
     DragManager.globalDraggingEditor = null
   }
 
-  drop = (): boolean => {
+  drop = () => {
     if (this.indicator && this.editor) {
-      DragManager.dragElementsAdded = false
+      // first get indicator
       const { direction, isNested, id } = this.indicator
-      const isDraggingInSameNoteIdEditor = DragManager.globalDraggingEditor?.noteId === this.editor.noteId
-      const sameEditor = DragManager.globalDraggingEditor?.id === this.editor.id
+      if (!id) return
+      const draggingEle = GlobalDragOverlayInstance.draggingDetails
+      if (!draggingEle) return
+      // this means not dragging something outside editor, such as pdf / pdf element / meta element, etc. And is dragging things of the same note.
+      const isDraggingInSameNoteIdEditor = draggingEle?.type === 'noteElement' && draggingEle.noteId === this.editor.noteId
+      // reset cursor
       document.body.style.cursor = 'auto'
-      if (isDraggingInSameNoteIdEditor) {
-        if (!sameEditor) {
-          this.dragElement = DragManager.globalDragElement
-          this.dragElementPath = DragManager.globalDragElementPath
-        }
-        const currPath = this.dragElementPath
-        const selectedBlocksMap = SELECTED_BLOCKS_MAP.get(this.editor)
-        const [targetElement, targetPath] = Array.from(Node.descendants(this.editor)).find(i => i[0].id === id) || []
-        this.clearState()
-        if (selectedBlocksMap && selectedBlocksMap.size > 0) {
-          const selectedBlocks = Array.from(selectedBlocksMap.values())
-          const selectedElements = selectedBlocks
-            .map(i => ID_TO_ELEMENTS_MAP.get(this.editor)?.get(getElementId(i))?.getElement())
-            .filter(i => !!i)
-          if (selectedElements.length === 1) {
-            const currPath = ReactEditor.findPath(this.editor, selectedElements[0])
-            moveSingleElement(this.editor, currPath, targetElement, targetPath, direction, isNested)
-            return true
-          }
-          console.log('move multiple elements!', selectedElements, selectedBlocks)
-          moveMultiElements(this.editor, selectedElements, targetElement, targetPath, direction, isNested)
-          return true
-        }
-
-        moveSingleElement(this.editor, currPath, targetElement, targetPath, direction, isNested)
-        return true
-      } else {
-        // this.elementsMap?.get(id)?.changeIndicator(null)
-        this.blockElementsArray = []
-        this.blockElementsMap.clear()
-        this.dragElement = null
-        this.dragElementPath = null
-        this.indicator = null
-        // we are dragging something from other components
-        if (DragManager.globalDraggingEditor && DragManager.globalDragElementPath) {
-          const originElement = Editor.node(DragManager.globalDraggingEditor, DragManager.globalDragElementPath)
-          if (originElement) {
-            GlobalDragOverlayInstance.draggingDetails && this.onDrop?.(GlobalDragOverlayInstance.draggingDetails)
-            const node = structuredClone(originElement[0])
-            node.id = Id.getId()
-            const end = this.editor.children.length
-            Transforms.insertNodes(this.editor, node, { at: [end] })
-            const [targetElement, targetPath] = Array.from(Node.descendants(this.editor)).find(i => i[0].id === id) || []
-            moveSingleElement(this.editor, [end], targetElement, targetPath, direction, isNested)
+      const isDraggingNoteElement = draggingEle?.type === 'noteElement'
+      // we need to process this differently
+      if (isDraggingNoteElement) {
+        if (!draggingEle.element && !draggingEle.elements) return
+        const isMultipleDrag = draggingEle.elements !== undefined
+        if (isMultipleDrag) {
+          // if in same note, we just need to change the positions of the selected blocks
+          if (isDraggingInSameNoteIdEditor) {
+            this.onDrop?.({
+              targetNodeId: id,
+              isNested,
+              direction,
+              shouldAddElements: draggingEle.elements!,
+              shouldRemoveElements: draggingEle.elements!
+            })
+          } else {
+            this.onDrop?.({
+              targetNodeId: id,
+              isNested,
+              direction,
+              shouldAddElements: draggingEle.elements!.map(e => ({ ...e, id: Id.getId() }))
+            })
           }
         } else {
-          console.log('drop from other components not editor!')
-          if (GlobalDragOverlayInstance) {
-            if (GlobalDragOverlayInstance.draggingDetails) {
-              const globalDraggingEle = GlobalDragOverlayInstance.draggingDetails
-              this.onDrop?.(globalDraggingEle)
-              GlobalDragOverlayInstance.draggingDetails = undefined
-              let ele: Partial<CustomElement> = {}
-              switch (globalDraggingEle.type) {
-                case 'pdfElement': {
-                  ele = {
-                    type: 'book-highlight',
-                    selectedText: globalDraggingEle.content,
-                    page: globalDraggingEle.page,
-                    documentId: globalDraggingEle.pdfId,
-                    originId: globalDraggingEle.labelId,
-                    children: [{ text: '' }]
-                  }
-                  break
+          if (!draggingEle.element) return
+          if (isDraggingInSameNoteIdEditor) {
+            this.onDrop?.({
+              targetNodeId: id,
+              direction,
+              isNested,
+              shouldAddElements: [draggingEle.element],
+              shouldRemoveElements: [draggingEle.element]
+            })
+          } else {
+            this.onDrop?.({
+              targetNodeId: id,
+              direction,
+              isNested,
+              shouldAddElements: [
+                {
+                  ...draggingEle.element,
+                  id: Id.getId()
                 }
-                case 'metaElement': {
-                  globalDraggingEle.metaId &&
-                    (ele = {
-                      type: 'metaObject',
-                      originId: globalDraggingEle.metaId,
-                      children: [{ text: '' }]
-                    })
-                  break
-                }
-                case 'pdf': {
-                  ele = {
-                    type: 'pdf',
-                    pdfId: globalDraggingEle.pdfId,
-                    children: [{ text: '' }]
-                  }
-                  break
-                }
-                case 'image': {
-                  ele = {
-                    type: 'image',
-                    url: globalDraggingEle.url,
-                    children: [{ text: '' }]
-                  }
-                  break
-                }
-                case 'note': {
-                  ele = {
-                    type: 'note',
-                    noteId: globalDraggingEle.noteId,
-                    children: [{ text: '' }]
-                  }
-                }
-              }
-              ele.id = Id.getId()
-              if (ele.type !== undefined) {
-                const end = this.editor.children.length
-                Transforms.insertNodes(this.editor, ele, { at: [end] })
-                const [targetElement, targetPath] = Array.from(Node.descendants(this.editor)).find(i => i[0].id === id) || []
-                moveSingleElement(this.editor, [end], targetElement, targetPath, direction, isNested)
-              }
-            }
+              ]
+            })
           }
         }
-        DragManager.globalDraggingEditor = null
+      }
+      // we are not dragging note elements, maybe something eles
+      else {
+        let ele = {
+          id: Id.getId(),
+          children: [{ text: '' }]
+        }
+        let needFurtherProcess:
+          | boolean
+          | {
+              objectId: number
+            } = false
+        switch (draggingEle.type) {
+          // need further process: add meta object
+          case 'pdfElement': {
+            draggingEle.labelId &&
+              (needFurtherProcess = {
+                objectId: draggingEle.labelId
+              })
+            break
+          }
+          case 'metaElement': {
+            draggingEle.metaId &&
+              (ele = {
+                ...ele,
+                type: 'metaObject',
+                originId: draggingEle.metaId,
+                children: [{ text: '' }]
+              })
+            break
+          }
+          // need further process: add meta object
+          case 'pdf': {
+            draggingEle.pdfId &&
+              (needFurtherProcess = {
+                objectId: draggingEle.pdfId
+              })
+            // ele = {
+            //   type: 'pdf',
+            //   pdfId: draggingEle.pdfId,
+            //   children: [{ text: '' }]
+            // }
+            break
+          }
+          case 'image': {
+            ele = {
+              ...ele,
+              type: 'image',
+              url: draggingEle.url,
+              children: [{ text: '' }]
+            }
+            break
+          }
+          // need further process: add meta object
+          case 'note': {
+            draggingEle.noteId &&
+              (needFurtherProcess = {
+                objectId: draggingEle.noteId
+              })
+            // ele = {
+            //   type: 'note',
+            //   noteId: draggingEle.noteId,
+            //   children: [{ text: '' }]
+            // }
+          }
+        }
+        if (typeof needFurtherProcess === 'object') {
+          this.onDrop?.({
+            targetNodeId: id,
+            direction,
+            isNested,
+            objectId: needFurtherProcess.objectId
+          })
+        } else {
+          this.onDrop?.({
+            targetNodeId: id,
+            direction,
+            isNested,
+            shouldAddElements: [ele]
+          })
+        }
       }
     }
-    return false
+  }
+
+  public insertNodeAtTargetPlace = (
+    node: Partial<CustomElement>,
+    targetNodeId: number,
+    direction: Indicator['direction'],
+    nested: Indicator['isNested']
+  ) => {
+    if (!this.editor) return
+    const end = this.editor.children.length
+    Transforms.insertNodes(this.editor, node, { at: [end] })
+    const targetPath = ID_TO_PATH_MAP.get(this.editor)?.get(targetNodeId)
+    if (!targetPath) return
+    moveSingleElement(this.editor, [end], targetPath, direction, nested)
   }
 }
 

@@ -1,78 +1,101 @@
 import Icon from '@/components/base/Icon'
-import useEventEmitter from '@/events/useEventEmitter'
-import Id from '@/utils/id'
+import { useMemoizedFn } from '@/hooks'
+import { css } from '@emotion/css'
 import classNames from 'classnames'
-import { cloneElement, FC, useState } from 'react'
-import { Editor, Node } from 'slate'
-import { RenderElementProps, useSlate } from '../../slate-react'
-import { HeadingElement, HeadingOneElement, HeadingThreeElement, HeadingTwoElement } from '../../customTypes'
-import { ElementBuilder } from '../elementBuilder'
+import { cloneElement, FC } from 'react'
+import { Point, Range } from 'slate'
+import { Editor, Path, Transforms } from 'slate'
+import { ReactEditor, RenderElementProps, useSlate } from '../../slate-react'
+import { HeadingElement } from '../../types/commonElementTypes'
 import styles from './index.module.less'
 
-export interface HeadingProps {
-  level: 0 | 1 | 2 | 3 | 4 | 5
-  title?: string
-  dest?: string
-}
-const Heading: FC<RenderElementProps & HeadingProps> = ({ element, children, level }) => {
-  const { dest } = element as HeadingElement
-  const emitter = useEventEmitter()
-  const [folded, setFolded] = useState(false)
+const Heading: FC<RenderElementProps> = ({ element, children }) => {
+  const { type } = element
+  const { folded } = element as HeadingElement
   const editor = useSlate()
-  const isEmpty = Editor.isEmpty(editor, element)
   const action = () => {
-    const clazzName = classNames(styles.extra, folded && styles.folded)
     return (
-      <span className={clazzName} contentEditable={false}>
+      <span contentEditable={false}>
         <div
-          onClick={() => {
-            setFolded(!folded)
-            emitter.emit('editor', {
-              type: 'foldHeading',
-              data: {
-                headingId: element.id,
+          onClick={useMemoizedFn(() => {
+            let currentPath = ReactEditor.findPath(editor, element)
+            const parentEle = Editor.node(editor, Path.parent(currentPath))[0]
+            let currIdx = parentEle.children.findIndex(i => i === element) + 1
+            while (parentEle.children[currIdx] && !parentEle.children[currIdx].type.startsWith('heading')) {
+              currentPath = Path.next(currentPath)
+              editor.apply({
+                type: 'set_node',
+                path: currentPath,
+                properties: {
+                  hide: folded 
+                },
+                newProperties: {
+                  hide: !folded
+                }
+              })
+              currIdx += 1
+            }
+            Transforms.setNodes(
+              editor,
+              {
                 folded: !folded
-              }
+              },
+              { at: ReactEditor.findPath(editor, element) }
+            )
+            setTimeout(() => {
+              editor.innerRef?.current.measure()
             })
-          }}
+          })}
         >
-          {folded ? <Icon theme="filled" name="park-down-one" /> : <Icon theme="filled" name="park-right-one" />}
+          <Icon
+            theme="filled"
+            name="park-right-one"
+            size={20}
+            style={{
+              cursor: 'pointer',
+              transform: !folded ? 'rotate(90deg)' : undefined,
+              transition: 'transform 0.3s ease'
+            }}
+          />
         </div>
       </span>
     )
   }
-  const link = () => {
-    if (dest) {
-      return (
-        <Icon
-          cursor="pointer"
-          onClick={() => {
-            emitter.emit('pdf', {
-              type: 'jumpToDest',
-              data: {
-                dest: dest
-              }
-            })
-          }}
-          name="park-link"
-        />
-      )
-    }
-  }
+
   const heading = () => {
-    switch (level) {
-      case 0:
+    switch (type) {
+      case 'heading-one':
         return <h1></h1>
-      case 1:
+      case 'heading-two':
         return <h2></h2>
-      case 2:
+      case 'heading-three':
         return <h3></h3>
-      case 3:
+      case 'heading-four':
         return <h4></h4>
-      case 4:
+      case 'heading-five':
         return <h5></h5>
+      case 'heading-six':
+        return <h6></h6>
       default:
         return <h1></h1>
+    }
+  }
+  const getLevel = () => {
+    switch (type) {
+      case 'heading-one':
+        return 1
+      case 'heading-two':
+        return 2
+      case 'heading-three':
+        return 3
+      case 'heading-four':
+        return 4
+      case 'heading-five':
+        return 5
+      case 'heading-six':
+        return 6
+      default:
+        return 1
     }
   }
   return cloneElement(
@@ -80,46 +103,17 @@ const Heading: FC<RenderElementProps & HeadingProps> = ({ element, children, lev
     {
       id: element.id,
       suppressContentEditableWarning: true,
-      className: classNames(styles.heading, isEmpty && styles.empty),
-      placeholder: `H${level + 1}`,
+      className: css({
+        display: 'flex',
+        alignItems: 'center',
+        gap: 10
+      }),
+      placeholder: `H${getLevel()}`,
       contentEditable: true
     },
-    // action(),
-    children,
-    link()
+    action(),
+    children
   )
-}
-
-export const HeadingElementBuilder: ElementBuilder<HeadingOneElement | HeadingTwoElement | HeadingThreeElement> = {
-  build: (heading: HeadingProps) => {
-    let type: string
-    switch (heading.level) {
-      case 0:
-        type = 'heading-one'
-        break
-      case 1:
-        type = 'heading-two'
-        break
-      case 2:
-        type = 'heading-three'
-        break
-      case 3:
-        type = 'heading-four'
-        break
-      case 4:
-        type = 'heading-five'
-        break
-      case 5:
-        type = 'heading-six'
-        break
-    }
-    return {
-      type: type,
-      id: Id.getId(),
-      dest: heading.dest,
-      children: [{ text: heading.title }]
-    }
-  }
 }
 
 export default Heading

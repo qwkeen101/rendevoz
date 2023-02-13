@@ -110,12 +110,12 @@ export const PdfViewer: FC<PdfViewerProps> = ({ fileUrl, document, innerRef }) =
   }, [])
   return (
     <div ref={viewboxRef} className={styles.viewerBox}>
-      {fileUrl && (
+      {document?.fileUrl && (
         <Viewer
           onDocumentLoaded={doc => (documentRef.current = doc)}
           layoutClassName={styles.viewerLayout}
           innerRef={mergedRef}
-          fileUrl={fileUrl}
+          fileUrl={document.fileUrl}
           renderPage={renderPage}
           renderAnnotation={renderAnnotation}
           onRangeChange={handleRangeChange}

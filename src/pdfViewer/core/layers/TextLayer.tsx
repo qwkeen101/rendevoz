@@ -64,7 +64,8 @@ const TextLayer: FC<TextLayerProps> = ({ page, scale, rotation, width, height, p
   })
   const keyboardHandler = useMemoizedFn((e: KeyboardEvent) => {
     const selectedText = Object.values(globalSelectingText.selectedTexts).join(' ')
-    if (isHotkey('mod+c', e) && selectedText !== '') {
+    if (isHotkey('mod+c', e) && selectedText !== '' && window.getSelection()?.isCollapsed) {
+      console.log('asdsadadadasdasdasda')
       navigator.clipboard.writeText(selectedText)
     }
   })
@@ -221,6 +222,12 @@ const TextLayer: FC<TextLayerProps> = ({ page, scale, rotation, width, height, p
   useIsomorphicLayoutEffect(() => {
     renderTaskRef.current = new TextLayerRenderTask(viewport)
     innerEmitter.addListener('pdf', handler)
+    const globalMouseUpHandler = () => {
+      setTimeout(() => {
+        mousePos.current = null
+      })
+    }
+
     page.getTextContent().then(content => {
       emptyTextLayer()
       const canvas = canvasRef.current
@@ -231,6 +238,7 @@ const TextLayer: FC<TextLayerProps> = ({ page, scale, rotation, width, height, p
         canvas.addEventListener('dblclick', mouseEventHandler)
         canvas.addEventListener('mouseleave', mouseEventHandler)
         canvas.addEventListener('mouseenter', mouseEventHandler)
+        document.addEventListener('pointerup', globalMouseUpHandler)
         canvas.width = width
         canvas.height = height
       }
@@ -238,6 +246,7 @@ const TextLayer: FC<TextLayerProps> = ({ page, scale, rotation, width, height, p
       document.addEventListener('keydown', keyboardHandler)
     })
     return () => {
+      document.removeEventListener('pointerup', globalMouseUpHandler)
       emptyTextLayer()
       innerEmitter.removeListener('pdf', handler)
       const canvas = canvasRef.current

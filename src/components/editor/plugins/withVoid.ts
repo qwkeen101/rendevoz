@@ -13,6 +13,7 @@ const withVoid = (editor: CustomEditor) => {
       case 'note':
       case 'image':
       case 'thought':
+      case 'divider':
       case 'subPage':
         return true
       default:

@@ -7,8 +7,8 @@ import classNames from 'classnames'
 import ClassName from '@/styles/classNames'
 import { AnimatePopover, Content, Icon, Image, Tooltip, WithBorder } from '@/components'
 import DateFormat from '@/utils/dateFormat'
-import { useAtom } from 'jotai/react'
-import useMetaStore, { relatedMetaObjectsMapAtom } from '@/stores/meta.store'
+import { useAtom, useAtomValue } from 'jotai/react'
+import useMetaStore, { metaObjectsAtom, relatedMetaObjectsMapAtom } from '@/stores/meta.store'
 import { GlobalGraphInstance } from '@/components/graph/GlobalGraph'
 import Modal from '@/components/base/Modal'
 import useCardDrag from './useCardDrag'
@@ -21,6 +21,7 @@ import { globalStore } from '@/stores/stores'
 import { MetaObject } from '~/typings/data'
 import { MetaDatabaseCardProps } from './types'
 import MetaObjectCard from './ObjectCard'
+import { GlobalBidirectionTreeInstance } from '@/components/bidirectionTree/GlobalBidirectionTree'
 
 type DisplayTypes = Pick<AvaliableGlobalDraggingElements, 'type'>['type']
 export const typeToTypeRecord: Record<DisplayTypes | 'normal', string> = {
@@ -137,6 +138,9 @@ const DatabaseCard: FC<{
       </div>
       <div className={ClassName.flatButton()} onClick={() => GlobalGraphInstance?.open(metaObject)}>
         Graph
+      </div>
+      <div className={ClassName.flatButton()} onClick={() => GlobalBidirectionTreeInstance.open?.(metaObject.id)}>
+        WhiteBoard
       </div>
       <div
         onClick={() => deleteMetaObject(metaObject.id)}
@@ -311,6 +315,81 @@ const DatabaseCard: FC<{
   )
 }
 
+export const ObjectActionPopover: FC<
+  Partial<{
+    onClose: VoidFunction
+    onEdit: VoidFunction
+    onPin: VoidFunction
+    onGraph: VoidFunction
+    onWhiteboard: VoidFunction
+    onDelete: VoidFunction
+  }> & { metaObjectId: number }
+> = ({ onClose, onEdit, onPin, onGraph, onWhiteboard, onDelete, metaObjectId }) => {
+  const { defaultFontColorRed } = useTheme('defaultFontColorRed')
+  const { updateMetaObject, deleteMetaObject } = useMetaStore()
+  const metaObject = useAtomValue(metaObjectsAtom, { store: globalStore }).get(metaObjectId)
+  if (!metaObject) return null
+  return (
+    <Content flex column style={{ padding: 6, fontWeight: 500, width: 180 }}>
+      <div
+        className={ClassName.flatButton()}
+        onClick={() => {
+          onClose?.()
+          onEdit?.()
+        }}
+      >
+        Edit
+      </div>
+      <div
+        className={ClassName.flatButton()}
+        onClick={() => {
+          updateMetaObject({ id: metaObject.id, pinned: !metaObject.pinned })
+          onPin?.()
+          onClose?.()
+        }}
+      >
+        {metaObject.pinned ? 'Unpin' : 'Pin'}
+      </div>
+      <div
+        className={ClassName.flatButton()}
+        onClick={() => {
+          GlobalGraphInstance?.open(metaObject)
+          onGraph?.()
+          onClose?.()
+        }}
+      >
+        Graph
+      </div>
+      <div
+        className={ClassName.flatButton()}
+        onClick={() => {
+          GlobalBidirectionTreeInstance.open?.(metaObject.id)
+          onWhiteboard?.()
+          onClose?.()
+        }}
+      >
+        Whiteboard
+      </div>
+      <div
+        onClick={() => {
+          deleteMetaObject(metaObject.id)
+          onDelete?.()
+        }}
+        className={classNames(
+          ClassName.flatButton(),
+          css({
+            color: defaultFontColorRed,
+            ':hover': {
+              background: 'rgba(237,49,61,0.09)'
+            }
+          })
+        )}
+      >
+        Delete
+      </div>
+    </Content>
+  )
+}
 export const TitleClassName = classNames(
   css({
     fontWeight: 700,

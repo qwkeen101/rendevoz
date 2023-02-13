@@ -3,7 +3,8 @@ import { Tag } from '@/components/form/EditMetaObjectForm'
 import { GlobalGraphInstance } from '@/components/graph/GlobalGraph'
 import { typeToTypeRecord } from '@/components/knowledgeDatabase/card/DatabaseCard'
 import { useToggle } from '@/hooks'
-import { jumpToTargetLabel } from '@/stores/label.store'
+import { documentsAtom } from '@/stores/document.store'
+import { jumpToTargetLabel, labelsAtom } from '@/stores/label.store'
 import useMetaStore, { metaObjectsAtom, relatedMetaObjectsMapAtom } from '@/stores/meta.store'
 import { notesAtom } from '@/stores/note.store'
 import { globalStore } from '@/stores/stores'
@@ -21,10 +22,10 @@ import { MetaObjectElement } from '../../types/outerElementTypes'
 import NoteCard from '../cards/NoteCard'
 
 const MetaObject: FC<RenderElementProps> = memo(({ children, element }) => {
+  const { collapsed } = element
   const metaEle = element as MetaObjectElement
   const { originId } = metaEle
   const editor = useSlate()
-  const { updateMetaObject } = useMetaStore()
   const metaAtom = useMemo(() => (originId ? atom(get => get(metaObjectsAtom).get(originId)) : atom(null)), [originId])
   const metaObject = useAtomValue(metaAtom, { store: globalStore })
   const related = useAtomValue(relatedMetaObjectsMapAtom, { store: globalStore })
@@ -51,7 +52,22 @@ const MetaObject: FC<RenderElementProps> = memo(({ children, element }) => {
   const [showRelatedObjects, toggleShowRelatedObjects] = useToggle(false)
   const [editMetaVisible, toggleEditMetaVisible] = useToggle(false)
 
+  const targetDocumentAtom = useMemo(() => {
+    if (metaObject?.type === 'pdfElement' && metaObject.objectId) {
+      return atom(get => {
+        const label = get(labelsAtom).get(metaObject.objectId)
+        if (label) {
+          return get(documentsAtom).get(label.documentId)
+        }
+      })
+    } else {
+      return atom(null)
+    }
+  }, [metaObject?.type])
+
+  const targetDocument = useAtomValue(targetDocumentAtom, { store: globalStore })
   const handleNavigate = () => {
+    console.log(metaObject)
     if (metaObject?.type === 'note') {
       navigate(`/editor/${metaObject?.objectId}`)
     }
@@ -178,40 +194,51 @@ const MetaObject: FC<RenderElementProps> = memo(({ children, element }) => {
         />
       )}
       <Content flex column>
-        {metaObject?.tags && (
-          <Content flex gap={4}>
-            {metaObject.tags.map(t => (
-              <Tag hideSize tag={t} small key={t}/>
-            ))}
-          </Content>
-        )}
+        <Content
+          flex
+          gap={4}
+          className={css({
+            '> *': {
+              fontSize: '10px !important'
+            },
+            flexWrap: 'wrap',
+            marginBottom: 2
+          })}
+        >
+          <div
+            style={{
+              textTransform: 'capitalize',
+              background: element.background ? 'rgba(255,255,255,0.4)' : 'rgba(220,227,232)',
+              color: 'rgba(82,102,116)',
+              borderRadius: 4,
+              padding: '0px 6px',
+              fontFamily: 'Muli'
+            }}
+          >
+            {typeToTypeRecord[metaObject?.type || 'normal']}
+          </div>
+          {metaObject?.tags?.map(t => (
+            <Tag hideSize tag={t} small key={t} />
+          ))}
+        </Content>
         <div
           onClick={handleNavigate}
-          style={{ fontWeight: 600, width: 'fit-content' }}
+          style={{ fontWeight: 600, width: 'fit-content', fontSize: 16 }}
           className={ClassName.animatedBorderBottom(undefined, undefined, 1)}
         >
           {metaObject?.name || 'Deleted object'}
         </div>
+        {targetDocument && <div className={ClassName.description('11px')}>From Book: {targetDocument.name}</div>}
+        {!collapsed && metaObject?.description && (
+          <div
+            style={{
+              fontSize: 13
+            }}
+          >
+            {metaObject?.description}
+          </div>
+        )}
       </Content>
-      <div
-        style={{
-          marginLeft: 'auto'
-        }}
-        className={ClassName.tag(element.background ? ClassName.TagBackgrounds.transparent : ClassName.TagBackgrounds.grey)}
-      >
-        {typeToTypeRecord[metaObject?.type || 'normal']}
-      </div>
-      {/* <Content flex gap={6}>
-        <div className={ClassName.tag(element.background ? ClassName.TagBackgrounds.transparent : ClassName.TagBackgrounds.grey)}>
-          Mentioned : {alsoMentionedSize || 0}
-        </div>
-        <div className={ClassName.tag(element.background ? ClassName.TagBackgrounds.transparent : ClassName.TagBackgrounds.grey)}>
-          Related : {relatedObjectsSize || 0}
-        </div>
-        <div className={ClassName.tag(element.background ? ClassName.TagBackgrounds.transparent : ClassName.TagBackgrounds.grey)}>
-          Object
-        </div>
-      </Content> */}
     </Content>
   )
   return (

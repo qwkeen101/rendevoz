@@ -310,7 +310,6 @@ const withCustomComponent = (editor: CustomEditor) => {
         })
       }
     }
-
     apply(op)
   }
   return editor

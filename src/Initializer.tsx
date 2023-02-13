@@ -28,9 +28,9 @@ const Initializer = () => {
     Yours 👋,
     🧙🏻‍♂️ RealRong 2001 from 🇨🇳.
     `)
-    // console.log = (function (origin) {
-    //   return function () {}
-    // })(console.log)
+    console.log = (function (origin) {
+      return function () {}
+    })(console.log)
   }, [])
   return null
 }

@@ -30,7 +30,9 @@ export const TypeToNodeRadius = {
   pdf: 60,
   pdfElement: 20,
   note: 40,
-  normal: 20
+  normal: 20,
+  noteElement: 20,
+  image: 40
 }
 const Node: FC<NodeProps> = memo(({ node, onMouseEnter, onMouseLeave, onContextMenu, onClick }) => {
   const nodeRef = useRef<SVGGElement>(null)
@@ -67,6 +69,9 @@ const Node: FC<NodeProps> = memo(({ node, onMouseEnter, onMouseLeave, onContextM
     }
     if (node.type === 'pdf') {
       return <ImageNode label={(object as IPdfDocument)?.name} imageUrl={(object as IPdfDocument)?.metadata?.coverUrl} node={node} />
+    }
+    if (node.type === 'noteElement') {
+      return <IconNode node={node} />
     }
     return <ImageNode node={node} />
   }

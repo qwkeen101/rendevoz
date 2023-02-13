@@ -13,6 +13,9 @@ import Notification from './components/NotificationCenter'
 import { globalStore } from './stores/stores'
 import PdfJsUrl from '@/assets/pdf.worker.min.js?url'
 import PdfJs from './pdfViewer/core/types/pdfJsApi'
+import GlobalObjectPanel from './components/GlobalObjectPanel'
+import GlobalBidirectionTree from './components/bidirectionTree/GlobalBidirectionTree'
+import GlobalCreateObject from './components/GlobalCreateObject'
 PdfJs.GlobalWorkerOptions.workerSrc = PdfJsUrl
 const App = () => {
   function getOS() {
@@ -45,7 +48,10 @@ const App = () => {
       <Initializer />
       <GlobalGraph />
       <GlobalScreenShot />
+      <GlobalObjectPanel />
+      <GlobalCreateObject />
       <Router>
+        <GlobalBidirectionTree />
         {os !== 'macos' && <TitleBar />}
         <Routes />
       </Router>

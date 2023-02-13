@@ -43,7 +43,7 @@ const PdfPage: FC<{
           <Provider scope={PdfScope}>
             <Content flex column fullHeight fullWidth>
               <PdfPageHeader />
-              <Content flex centered>
+              <Content flex centered fullHeight>
                 <PdfFloatBar />
                 <PdfViewer innerRef={innerRef} fileUrl={fileUrl} document={document} />
               </Content>

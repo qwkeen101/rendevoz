@@ -1,42 +1,37 @@
 import Id from '@/utils/id'
-import { Descendant, Editor, Element, Path, PathRef, Transforms } from 'slate'
-import { ReactEditor } from '../slate-react'
-import { CustomEditor } from '../types'
+import { Editor, Element, NodeEntry, Path, PathRef, Transforms } from 'slate'
+import { CustomEditor, CustomElement } from '../types'
 import moveSingleElement from './moveSingleElement'
 
 const moveMultiElements = (
   editor: CustomEditor,
-  currElements: Element[],
-  targetElement: Descendant,
+  currNodes: NodeEntry<CustomElement>[],
   targetPath: Path,
   direction: string,
   isNested: boolean
 ) => {
   const tempPathRefMap = new Map<Element, PathRef>()
   // before moving, track all paths
-  currElements.forEach(ele => {
-    const path = ReactEditor.findPath(editor, ele)
+  currNodes.forEach(([element, path]) => {
     const pathRef = Editor.pathRef(editor, path)
-    tempPathRefMap.set(ele, pathRef)
+    tempPathRefMap.set(element, pathRef)
   })
-  currElements.sort((prev, curr) => {
-    const prevPath = tempPathRefMap.get(prev)?.current
-    const currPath = tempPathRefMap.get(curr)?.current
+  currNodes.sort((prev, curr) => {
+    const prevPath = tempPathRefMap.get(prev[0])?.current
+    const currPath = tempPathRefMap.get(curr[0])?.current
     return Path.compare(prevPath, currPath)
   })
 
   // bottom or top move won't destory path ref,use move single element is okay
   if (direction === 'bottom' || direction === 'top') {
-
-    let nextTargetPath = targetPath,
-      nextTargetElement = targetElement
+    let nextTargetPath = targetPath
     if (direction === 'top') {
-      currElements.reverse()
+      currNodes.reverse()
     }
 
     let nested = isNested
-    currElements.forEach(i => {
-      const currPathRef = tempPathRefMap.get(i)
+    currNodes.forEach(([ele]) => {
+      const currPathRef = tempPathRefMap.get(ele)
 
       if (!currPathRef) return
       const currPath = currPathRef.current
@@ -45,10 +40,9 @@ const moveMultiElements = (
         return
       }
       // multi select only handle nested once
-      moveSingleElement(editor, currPath, nextTargetElement, nextTargetPath, direction, nested)
+      moveSingleElement(editor, currPath, nextTargetPath, direction, nested)
       nested = false
       nextTargetPath = currPathRef.unref() as Path
-      nextTargetElement = i
     })
   }
   if (direction === 'left' || direction === 'right') {
@@ -69,7 +63,7 @@ const moveMultiElements = (
                     type: 'column',
                     id: Id.getId(),
                     ratio: 0.5,
-                    children: [...currElements]
+                    children: [...currNodes.map(i => i[0])]
                   },
                   {
                     type: 'column',
@@ -89,7 +83,7 @@ const moveMultiElements = (
                     type: 'column',
                     id: Id.getId(),
                     ratio: 0.5,
-                    children: [...currElements]
+                    children: [...currNodes.map(i => i[0])]
                   }
                 ]
         },
@@ -97,15 +91,15 @@ const moveMultiElements = (
           at: targetPath
         }
       )
-      currElements.forEach(i => {
-        const path = tempPathRefMap.get(i)?.current
+      currNodes.forEach(([ele]) => {
+        const path = tempPathRefMap.get(ele)?.current
         path && Transforms.removeNodes(editor, { at: path })
       })
     } else {
       let doesAllSelectedBlocksAreColumnAllChildren = true
-      const tempParentColumnPath = Path.parent(tempPathRefMap.get(currElements[0])?.current)
-      currElements.forEach(i => {
-        const path = tempPathRefMap.get(i)?.current
+      const tempParentColumnPath = Path.parent(tempPathRefMap.get(currNodes[0][0])?.current)
+      currNodes.forEach(([ele]) => {
+        const path = tempPathRefMap.get(ele)?.current
         if (path) {
           const parent = Path.parent(path)
           if (!Path.equals(parent, tempParentColumnPath)) {
@@ -136,8 +130,8 @@ const moveMultiElements = (
       )
       const targetColumnListId = Editor.node(editor, Path.parent(targetPath))[0].id
       let count = 0
-      currElements.forEach(i => {
-        const currPathRef = tempPathRefMap.get(i)
+      currNodes.forEach(([ele]) => {
+        const currPathRef = tempPathRefMap.get(ele)
         if (!currPathRef) return
         if (currPathRef.current === null) {
           currPathRef.unref()

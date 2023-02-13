@@ -2,7 +2,7 @@ import { KEY } from '@/consts/key'
 import Zindexes from '@/consts/zindex'
 import { useToggle } from '@/hooks'
 import { documentsAtom } from '@/stores/document.store'
-import { metaObjectsAtom, TagToMetaObjectIdsMapAtom, useMetaTargetObject } from '@/stores/meta.store'
+import useMetaStore, { metaObjectsAtom, TagToMetaObjectIdsMapAtom, useMetaTargetObject } from '@/stores/meta.store'
 import { notesAtom } from '@/stores/note.store'
 import { globalStore } from '@/stores/stores'
 import useTagStore, { TagsAtom, TagToTagAtom } from '@/stores/tag.store'
@@ -22,6 +22,7 @@ import { ITag, MetaLink, MetaObject } from '~/typings/data'
 import { AnimatePopover, Content, FileUploader, Form, Icon, IconWithPopover, Image, Tooltip, WithBorder } from '../base'
 import useFileUpload from '../base/useFileUpload'
 import BlockColorPicker from '../editor/components/BlockColorPicker'
+import { GlobalGraphInstance } from '../graph/GlobalGraph'
 import { typeToTypeRecord } from '../knowledgeDatabase/card/DatabaseCard'
 import { defaultBgColor } from '../picker/colorPicker'
 
@@ -31,7 +32,8 @@ const EditMetaObjectForm = ({
   title,
   onClose,
   links,
-  submitText
+  submitText,
+  isCreating = false
 }: {
   metaObject?: PartialWithId<MetaObject>
   onUpdate: (newMeta: MetaObject) => void
@@ -39,6 +41,7 @@ const EditMetaObjectForm = ({
   title: string
   links?: Partial<MetaLink>[]
   submitText?: string
+  isCreating?: boolean
 }) => {
   const [innerMeta, setInnerMeta] = useState<MetaObject>({ id: Id.getId(), tags: [], ...metaObject })
   const [formState, setFormState] = useState<
@@ -50,13 +53,10 @@ const EditMetaObjectForm = ({
   >({
     mainVisible: true
   })
-  const result = useMetaTargetObject(innerMeta.id)
-  const targetObject = result?.targetObject
   const [innerLinks, setInnerLinks] = useState<Partial<MetaLink>[]>(links || [])
   const mainFlipId = useMemo(() => Id.getStrId(), [])
-
-  const TagToMetaObjectIdsMap = useAtomValue(TagToMetaObjectIdsMapAtom, { store: globalStore })
-  const existedTags = useMemo(() => Array.from(TagToMetaObjectIdsMap.keys()), [TagToMetaObjectIdsMap])
+  const { addMetaLink, deleteMetaLink, addMetaObject, deleteMetaObject } = useMetaStore()
+  const shouldPreviewGraph = !(!links || links.length === 0)
   const { renderUploader, upload } = useFileUpload(file => {
     saveImageLocally(Id.getStrId(), file).then(data => {
       console.log(data)
@@ -144,23 +144,38 @@ const EditMetaObjectForm = ({
       linkedObjects={linkObjects}
     />
   )
-
+  useEffect(() => {
+    if (shouldPreviewGraph) {
+      links?.forEach(l => {
+        l.id = Id.getId()
+        addMetaLink(l, true)
+      })
+      console.log(links, innerMeta)
+      const isMetaAlreadyExist = globalStore.get(metaObjectsAtom).has(innerMeta.id)
+      !isMetaAlreadyExist && addMetaObject({ ...innerMeta, temp: true }, true)
+      return () => {
+        !isMetaAlreadyExist && deleteMetaObject(innerMeta.id, true)
+      }
+    }
+  }, [])
   const renderForm = () => (
     <Form
       onSubmit={() => {
         onUpdate?.(innerMeta)
       }}
-      onBack={onClose}
+      onBack={() => {
+        onClose?.()
+      }}
       submitText={submitText || 'create'}
       title={title || 'Create Object'}
-      style={{ width: 400 }}
+      style={{ width: '100%', minWidth: 300 }}
     >
       {renderUploader()}
       <Form.Item
-        disable={targetObject !== undefined}
         text="Name"
+        disable={['note', 'pdf'].includes(innerMeta.type) && !isCreating}
         type="input"
-        value={targetObject?.title || targetObject?.name || innerMeta.name}
+        value={innerMeta.name}
         onChange={e => setInnerMeta({ ...innerMeta, name: e })}
       />
       <Form.Item
@@ -210,18 +225,20 @@ const EditMetaObjectForm = ({
             fontFamily: 'Muli'
           }}
         >
-          <Content
-            onClick={() => setFormState({ tagVisible: true })}
-            flex
-            alignItems="center"
-            justifyContent="space-between"
-            className={ClassName.flatButton()}
-          >
-            <Content gap={8} flex>
-              <Icon name="park-share-one" />
-              <span>Preview Graph</span>
+          {shouldPreviewGraph && (
+            <Content
+              onClick={() => GlobalGraphInstance?.open(innerMeta)}
+              flex
+              alignItems="center"
+              justifyContent="space-between"
+              className={ClassName.flatButton()}
+            >
+              <Content gap={8} flex>
+                <Icon name="park-share-one" />
+                <span>Preview Graph</span>
+              </Content>
             </Content>
-          </Content>
+          )}
 
           <Content
             alignItems="center"
@@ -526,9 +543,9 @@ const TagPicker = ({
           {metaObject?.tags?.length === 0 && <span style={{ marginTop: -2, marginRight: 6 }}>Add One Tag</span>}
         </div>
       </Content>
-      <div style={{ margin: '20px 0px 10px' }} className={ClassName.description()}>
+      {/* <div style={{ margin: '20px 0px 10px' }} className={ClassName.description()}>
         RELATED OBJECTS TAGS
-      </div>
+      </div> */}
       <Content flex>
         {Array.from(relatedTagsSet).map(i => (
           <div>

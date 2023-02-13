@@ -1,6 +1,6 @@
 import { Icon } from '@/components'
 import { motion } from 'framer-motion'
-import { MarkerColor } from '../../consts/markerColors'
+import { MarkerColor } from '../../../svg/markerColors'
 import { GraphNode } from '../../types/node'
 import { TypeToNodeRadius } from './Node'
 
@@ -11,6 +11,8 @@ const IconNode = ({ node, label }: { node: GraphNode; label?: string }) => {
         return 'park-notes'
       case 'pdfElement':
         return 'park-align-text-left'
+      case 'noteElement':
+        return 'park-text-style-one'
       default:
         return 'park-notes'
     }

@@ -2,7 +2,7 @@ import { FC, memo, MouseEventHandler, useEffect, useLayoutEffect, useRef, useSta
 import { GraphEdge } from '../types/edge'
 import { line } from 'd3-shape'
 import { getMarkerId } from '../utils/getMarkerId'
-import { MarkerColor } from '../consts/markerColors'
+import { MarkerColor } from '../../svg/markerColors'
 import useGraph from '../hooks/useGraph'
 import { motion } from 'framer-motion'
 import { select } from 'd3'
@@ -58,6 +58,9 @@ const Edge: FC<EdgeProps> = memo(({ edge }) => {
     }
   }, [edge])
   useEffect(() => {
+    if (!d) {
+      drawEdge()
+    }
     if (textRef.current) {
       const textBound = textRef.current?.getBoundingClientRect()
       textBound && setRect({ width: textBound?.width, height: textBound?.height })

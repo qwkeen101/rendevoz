@@ -5,6 +5,7 @@ import { BaseEditor, Element } from 'slate'
 import { HistoryEditor } from 'slate-history'
 import { ReactEditor } from 'slate-react'
 import { INote } from '~/typings/data'
+import { EditableProps } from '../slate-react/components/editable'
 import { CustomText, EmptyText } from './baseTypes'
 import { CommonElement } from './commonElementTypes'
 import { OuterElement } from './outerElementTypes'
@@ -22,12 +23,14 @@ export type CustomEditor = BaseEditor &
     currentEnterElement?: Element
     currentAddClickElement?: Element
     currentCopyElement?: Element
+    currentCopyElements?: Element[]
   } & {
     fontSize?: number
   } & {
     handler?: (e: { data?: any; type: string }) => void
     initialized?: boolean
     readonly?: boolean
+    innerRef?: EditableProps['innerRef']
   }
 
 export type CustomElement = (CommonElement | OuterElement) & {
@@ -37,6 +40,8 @@ export type CustomElement = (CommonElement | OuterElement) & {
   background?: string
   align?: string
   cardType?: string
+  collapsed?: boolean
+  level?: number
 }
 
 declare module 'slate' {

@@ -8,6 +8,7 @@ interface MetaObject extends IBase {
   coverImgSrc?: string
   objectId?: number
   tags?: string[]
+  temp?: boolean
 }
 interface MetaWithNote {
   noteId: number
@@ -38,4 +39,5 @@ interface MetaLink extends IBase {
   targetId: number
   targetType: string
   label: string
+  color?: string
 }

@@ -18,6 +18,10 @@ export interface EventMap {
   layout: LayoutEvent
   global: GlobalEvent
 }
+export interface EventCallback {
+  onSuccess?: VoidFunction
+  onFail?: VoidFunction
+}
 export default class EventEmitter {
   private listeners: { [name: string]: Array<EventHandler<unknown>> } = {}
   private ackEvents: { name: string; data: any }[] = []
@@ -60,6 +64,13 @@ export default class EventEmitter {
         }
       }, 100)
     }
+  }
+  public emitWithCallback<K extends keyof EventMap>(name: K, data?: EventMap[K]) {
+    return new Promise((res, rej) => {
+      this.listeners[name]?.forEach(handler => {
+        handler.handle(data, res, rej)
+      })
+    })
   }
 
   public getAckEvents() {

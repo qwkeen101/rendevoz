@@ -23,8 +23,14 @@ type DropOn =
       dropOn: 'pdf'
       pdfId: number
     }
+
+type DropOnEditorFurtherProcessEvent = {
+  objectId: number
+  noteId: number
+}
 export interface GlobalEventMap {
   dragDrop: Partial<DragDropEvent>
+  dropOnEditorFurtherProcess: DropOnEditorFurtherProcessEvent
 }
 export type GlobalEvent = Event<GlobalEventMap, keyof GlobalEventMap>
 

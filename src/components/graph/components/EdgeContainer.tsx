@@ -1,7 +1,7 @@
 import { usePrevious } from '@/hooks'
 import { css } from '@emotion/css'
 import { memo, useEffect } from 'react'
-import { MarkerColor } from '../consts/markerColors'
+import { MarkerColor } from '../../svg/markerColors'
 import useEdges from '../hooks/useEdges'
 import useGraph from '../hooks/useGraph'
 import { getMarkerId } from '../utils/getMarkerId'

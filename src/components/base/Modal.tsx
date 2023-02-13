@@ -1,4 +1,4 @@
-import { FC, MouseEventHandler, useEffect } from 'react'
+import { CSSProperties, FC, MouseEventHandler, useEffect } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import ReactDOM from 'react-dom'
 import { css } from '@emotion/css'
@@ -18,6 +18,7 @@ interface ModalProps {
   children: React.ReactNode
   parentElement?: HTMLElement | null
   noStyle?: boolean
+  style?: CSSProperties
 }
 const Backdrop = ({ children, onMouseDown }) => {
   return (
@@ -57,7 +58,8 @@ const Modal: FC<ModalProps> = ({
   width,
   height,
   parentElement,
-  noStyle
+  noStyle,
+  style
 }) => {
   useEffect(() => {
     if (visible) {
@@ -76,7 +78,7 @@ const Modal: FC<ModalProps> = ({
             initial={{ opacity: 0, y: 50 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 50 }}
-            style={{ minWidth, minHeight, maxHeight, maxWidth, width, height, zIndex: Zindexes.Modal, margin: 'auto' }}
+            style={{ minWidth, minHeight, maxHeight, maxWidth, width, height, zIndex: Zindexes.Modal, margin: 'auto', ...style }}
             className={css([
               !noStyle && { padding: '16px 24px', borderRadius: '6px', boxShadow: '0 10px 24px rgba(0, 0, 0, 0.18)', overflow: 'hidden' },
               !noStyle && ClassName.Background.blurBackground

@@ -1,6 +1,6 @@
 import { GraphNode } from '../../types/node'
 import { motion } from 'framer-motion'
-import { MarkerColor } from '../../consts/markerColors'
+import { MarkerColor } from '../../../svg/markerColors'
 import { TypeToNodeRadius } from './Node'
 import { useMemo } from 'react'
 

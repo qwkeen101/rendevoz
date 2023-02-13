@@ -3,7 +3,7 @@ import { GraphNode } from './types/node'
 import { GraphEdge } from './types/edge'
 import { curveBasis } from 'd3'
 import { getMarkerId } from './utils/getMarkerId'
-import { MarkerColor } from './consts/markerColors'
+import { MarkerColor } from '../svg/markerColors'
 import { GraphOverlayManager } from './components/overlay/useGraphOverlay'
 import { TypeToNodeRadius } from './components/node/Node'
 import { SetStateAction } from 'react'
@@ -199,7 +199,7 @@ class D3GraphManager {
   }
 
   private ticked = () => {
-    this.d3Simulation?.tick(5)
+    this.d3Simulation?.tick(2)
     if (this.originEdges && this.originNodes) {
       this.originEdges.forEach(edge => {
         const path = this.drawEdge(edge, edge.source.x, edge.source.y, edge.target.x, edge.target.y)

@@ -5,26 +5,26 @@ import Id from '@/utils/id'
 import { atom } from 'jotai/vanilla'
 import { useEffect, useMemo } from 'react'
 import { toast } from 'react-hot-toast'
-import { INote, IPdfDocument, MetaComment, MetaLink, MetaObject } from '~/typings/data'
-import BaseStore from './base.store'
+import { INote, IPdfDocument, MetaLink, MetaObject } from '~/typings/data'
+import BaseStore, { initializeLocalStore } from './base.store'
 import useNoteStore, { notesAtom } from './note.store'
 import { globalStore } from './stores'
 import { typeToTypeRecord } from '@/components/knowledgeDatabase/card/DatabaseCard'
 import { IStore } from './store.type'
-import { useSetting } from '@/components/globalSetting/Main'
 import { documentsAtom } from './document.store'
 import { labelsAtom } from './label.store'
 import { useAtomValue } from 'jotai/react'
+import getSetting from '@/components/globalSetting/getSetting'
 
 export const metaObjectsAtom = atom<Map<number, MetaObject>>(new Map())
 
-const metaLinksAtom = atom<Map<number, MetaLink>>(new Map())
+export const metaLinksAtom = atom<Map<number, MetaLink>>(new Map())
 
 const { orderedData } = BaseStore
 
 export const allMetaObjectsAtom = atom(get => orderedData(get(metaObjectsAtom)))
 
-export const undeletedMetaObjectsAtom = atom(get => get(allMetaObjectsAtom).filter(i => !i.deleted))
+export const undeletedMetaObjectsAtom = atom(get => get(allMetaObjectsAtom).filter(i => !i.deleted && !i.temp))
 
 export const pinnedMetaObjectsAtom = atom(get => get(undeletedMetaObjectsAtom).filter(i => i.pinned))
 
@@ -76,20 +76,10 @@ export const TagToMetaObjectIdsMapAtom = atom<Map<string, Set<number>>>(get => {
 export const useMetaTargetObject = (metaObjectId: number) => {
   const metaObject = useAtomValue(metaObjectsAtom, { store: globalStore }).get(metaObjectId)
   const { updateMetaObject } = useMetaStore()
-  if (!metaObject) return
-  switch (metaObject.type) {
-    case 'normal':
-    case 'image':
-      return {
-        metaObject
-      }
-  }
-  const { objectId } = metaObject
-  if (!objectId)
-    return {
-      metaObject
-    }
+
+  const { objectId } = metaObject || {}
   const targetObjectAtom = useMemo(() => {
+    if (!objectId) return atom(null)
     switch (metaObject.type) {
       case 'note':
         return atom(get => get(notesAtom).get(objectId))
@@ -122,200 +112,129 @@ export const useMetaTargetObject = (metaObjectId: number) => {
       }
     }
   }, [object])
+  if (!metaObject) return
+  switch (metaObject.type) {
+    case 'normal':
+    case 'image':
+      return {
+        metaObject
+      }
+  }
+
+  if (!objectId)
+    return {
+      metaObject
+    }
   return {
     metaObject,
     targetObject: object
   }
 }
 const useMetaStore = () => {
-  const { get, bulkAdd, initBaseObject, dispatch } = BaseStore
+  const { get, initBaseObject, dispatch } = BaseStore
   const metaObjectDb = useDb('metaObjects')
   const metaLinkDb = useDb('metaLinks')
-  const [setting] = useSetting()
-  const shouldToastObject = setting.notification.enabled && setting.notification.object
-  const shouldToastLink = setting.notification.enabled && setting.notification.link
+
   const { addNote } = useNoteStore()
-
+  const initializeObjectStore = initializeLocalStore(metaObjectsAtom, metaObjectDb)
+  const shouldToastObject = (silent?: boolean) => {
+    const setting = getSetting()
+    return !silent && setting.notification.enabled && setting.notification.object
+  }
   const localObjectStore: Pick<IStore<MetaObject>, 'addOne' | 'updateOne' | 'deleteOneById' | 'getAll'> = {
-    updateOne: obj => {
-      if (!obj.id) return Promise.resolve(undefined)
-      return new Promise(res => {
-        dispatch({
-          type: 'update',
-          data: obj,
-          database: metaObjectDb,
-          atom: metaObjectsAtom,
-          onSuccess: obj => {
-            shouldToastObject &&
-              toast.success(
-                <Notification
-                  title="Object successfully updated!"
-                  content={<div className={ClassName.description()}>Object Name: {obj.name}</div>}
-                />
-              )
-            res(obj)
-          }
-        })
-      })
-    },
-    addOne: obj => {
-      return new Promise(res => {
-        const initedMetaObject = initBaseObject(obj) as MetaObject
-        if (!initedMetaObject.name) {
-          initedMetaObject.name = 'Unknown name'
-        }
-
-        if (initedMetaObject.type === 'normal') {
-          const noteId = Id.getId()
-          initedMetaObject.objectId = noteId
-          addNote(
-            {
-              id: noteId,
-              metaId: initedMetaObject.id
-            },
-            true
+    updateOne: (one, silent) => {
+      return initializeObjectStore.updateOne(() => {
+        shouldToastObject(silent) &&
+          toast.success(
+            <Notification
+              title="Object successfully updated!"
+              content={<div className={ClassName.description()}>Object Name: {obj.name}</div>}
+            />
           )
-        }
-        dispatch({
-          type: 'add',
-          atom: metaObjectsAtom,
-          data: initedMetaObject,
-          database: metaObjectDb,
-          onSuccess: obj => {
-            shouldToastObject &&
-              toast.success(
-                <Notification
-                  title="Object successfully added!"
-                  content={
-                    <div className={ClassName.description()}>
-                      <div>Name: {initedMetaObject.name}</div>
-                      <div style={{ textTransform: 'capitalize' }}>Type: {typeToTypeRecord[initedMetaObject.type || 'normal']}</div>
-                    </div>
-                  }
-                />
-              )
-            res(obj)
-          }
-        })
-      })
+      })(one, silent)
     },
-    deleteOneById: id => {
-      return new Promise(res => {
-        dispatch({
-          type: 'remove',
-          data: {
-            id
+    addOne: (one, silent) => {
+      const initedMetaObject = initBaseObject(one)
+      if (!initedMetaObject.name) {
+        initedMetaObject.name = 'Unknown name'
+      }
+      initedMetaObject.type = initedMetaObject.type || 'normal'
+      if (initedMetaObject.type === 'normal') {
+        const noteId = Id.getId()
+        initedMetaObject.objectId = noteId
+        addNote(
+          {
+            id: noteId,
+            metaId: initedMetaObject.id
           },
-          database: metaObjectDb,
-          atom: metaObjectsAtom,
-          onSuccess: () => {
-            shouldToastObject && toast.success('Object successfully deleted!')
-            res(true)
-          },
-          onFail: () => res(false)
-        })
-        const allMetaLinks = globalStore.get(undeletedMetaLinksAtom)
-        const relatedLink = allMetaLinks.filter(l => l.sourceId === id || l.targetId === id)
-        relatedLink.forEach(i =>
-          dispatch({
-            type: 'remove',
-            data: { id: i.id },
-            database: metaLinkDb,
-            atom: metaLinksAtom
-          })
+          true
         )
-      })
+      }
+      return initializeObjectStore.addOne(() => {
+        shouldToastObject(silent) &&
+          toast.success(
+            <Notification
+              title="Object successfully added!"
+              content={
+                <div className={ClassName.description()}>
+                  <div>Name: {initedMetaObject.name}</div>
+                  <div style={{ textTransform: 'capitalize' }}>Type: {typeToTypeRecord[initedMetaObject.type || 'normal']}</div>
+                </div>
+              }
+            />
+          )
+      })(initedMetaObject, silent)
     },
-    getAll: async () => {
-      const array = await metaObjectDb.toArray()
-      globalStore.set(metaObjectsAtom, bulkAdd(array, globalStore.get(metaObjectsAtom)))
-      return true
-    }
-  }
-
-  const localLinkStore: Pick<IStore<MetaLink>, 'addOne' | 'updateOne' | 'deleteOneById' | 'getAll'> = {
-    addOne: link => {
-      return new Promise(res => {
-        const initedMetaLink = initBaseObject(link) as MetaLink
-        if (initedMetaLink.sourceId === initedMetaLink.targetId) return
-        const allMetaLinks = globalStore.get(allMetaLinksAtom)
-        const existed = allMetaLinks.some(i => i.sourceId === initedMetaLink.sourceId && i.targetId === initedMetaLink.targetId)
-        if (!existed) {
-          dispatch({
-            type: 'add',
-            data: initedMetaLink,
-            database: metaLinkDb,
-            atom: metaLinksAtom,
-            onSuccess: obj => {
-              const atomMap = globalStore.get(metaObjectsAtom)
-              const sourceObject = atomMap.get(obj.sourceId)
-              const targetObject = atomMap.get(obj.targetId)
-              res(obj)
-              shouldToastLink &&
-                toast.success(
-                  <Notification
-                    title="Link successfully added!"
-                    content={
-                      <div style={{ textTransform: 'capitalize' }} className={ClassName.description()}>
-                        <Content flex alignItems="center" gap={16}>
-                          Source type:
-                          <span className={ClassName.tag('transparent', undefined, undefined, '12px')}>
-                            {typeToTypeRecord[sourceObject?.type || 'normal']}
-                          </span>
-                        </Content>
-                        <Content flex alignItems="center" gap={16}>
-                          Target type:
-                          <span className={ClassName.tag('transparent', undefined, undefined, '12px')}>
-                            {typeToTypeRecord[targetObject?.type || 'normal']}
-                          </span>
-                        </Content>
-                      </div>
-                    }
-                  />
-                )
-            }
-          })
-        }
-      })
-    },
-    updateOne: link => {
-      return new Promise(res => {
-        if (!link.id) return
-        dispatch({
-          type: 'update',
-          data: link,
-          database: metaLinkDb,
-          atom: metaLinksAtom,
-          onSuccess: obj => {
-            shouldToastLink && toast.success('Link successfully updated!')
-            res(obj)
-          }
-        })
-      })
-    },
-    deleteOneById: id => {
-      return new Promise(res => {
+    deleteOneById: (id, silent) => {
+      const allMetaLinks = globalStore.get(undeletedMetaLinksAtom)
+      const relatedLink = allMetaLinks.filter(l => l.sourceId === id || l.targetId === id)
+      relatedLink.forEach(i =>
         dispatch({
           type: 'remove',
-          data: {
-            id
-          },
+          data: { id: i.id },
           database: metaLinkDb,
-          atom: metaLinksAtom,
-          onSuccess: () => {
-            shouldToastLink && toast.success('Link successfully deleted!')
-            res(true)
-          }
+          atom: metaLinksAtom
         })
-      })
+      )
+      return initializeObjectStore.deleteOneById(() => {
+        shouldToastObject(silent) && toast.success('Object successfully deleted!')
+      })(id, silent)
     },
-    getAll: async () => {
-      const array = await metaLinkDb.toArray()
-      globalStore.set(metaLinksAtom, bulkAdd(array, globalStore.get(metaLinksAtom)))
-      return true
-    }
+    getAll: initializeObjectStore.getAll()
   }
 
+  const initializedLinkStore = initializeLocalStore(metaLinksAtom, metaLinkDb)
+
+  const shouldToastLink = (silent?: boolean) => {
+    const setting = getSetting()
+    return !silent && setting.notification.enabled && setting.notification.link
+  }
+  const localLinkStore: Pick<IStore<MetaLink>, 'addOne' | 'updateOne' | 'deleteOneById' | 'getAll'> = {
+    addOne: (one, silent) => {
+      if (one.sourceId === one.targetId) return Promise.reject()
+      const allMetaLinks = globalStore.get(allMetaLinksAtom)
+      const existed = allMetaLinks.find(i => i.sourceId === one.sourceId && i.targetId === one.targetId)
+      if (existed) {
+        console.log('ggg')
+        shouldToastLink(silent) && toast.success('Link to be added already exists!')
+        return Promise.resolve(existed)
+      }
+      return initializedLinkStore.addOne(() => {
+        shouldToastLink(silent) && toast.success('Link successfully added!')
+      })(one, silent)
+    },
+    getAll: initializedLinkStore.getAll(),
+    deleteOneById: (one, silent) => {
+      return initializedLinkStore.deleteOneById(() => {
+        shouldToastLink(silent) && toast.success('Link successfully deleted!')
+      })(one, silent)
+    },
+    updateOne: (one, silent) => {
+      return initializedLinkStore.updateOne(() => {
+        shouldToastLink(silent) && toast.success('Link successfully updated!')
+      })(one, silent)
+    }
+  }
   const realStore = {
     addMetaObject: localObjectStore.addOne,
     updateMetaObject: localObjectStore.updateOne,

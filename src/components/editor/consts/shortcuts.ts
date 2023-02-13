@@ -9,6 +9,7 @@ const SHORTCUTS = {
   '####': 'heading-four',
   '#####': 'heading-five',
   '######': 'heading-six',
+  '---': 'divider',
   $: 'meta-object'
 }
 

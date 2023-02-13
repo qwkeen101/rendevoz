@@ -9,6 +9,7 @@ import useEventEmitter from '@/events/useEventEmitter'
 import { atom } from 'jotai/vanilla'
 import { useAtom } from 'jotai/react'
 import { globalStore } from '@/stores/stores'
+import Zindexes from '@/consts/zindex'
 export const globalGraphMinimizedAtom = atom(false)
 const GraphThumbnail = ({ children, onClose }: { children: ReactNode; onClose: VoidFunction }) => {
   const [small, setSmall] = useAtom(globalGraphMinimizedAtom, { store: globalStore })
@@ -104,7 +105,7 @@ const GraphThumbnail = ({ children, onClose }: { children: ReactNode; onClose: V
         left: 0,
         width: '100%',
         height: '100%',
-        zIndex: 9999,
+        zIndex: Zindexes.Tooltip,
         pointerEvents: small ? 'none' : 'auto',
         background: !small ? 'rgba(0,0,0,0.6)' : 'rgba(0,0,0,0)',
         display: 'flex',

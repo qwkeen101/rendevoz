@@ -19,3 +19,12 @@ export const tag = (background = TagBackgrounds.transparent, color = 'rgb(120,53
     },
     ClassName.ellipsisFont(1)
   ])
+
+export const objectTag = css({
+  textTransform: 'capitalize',
+  color: 'rgb(82,102,116)',
+  background: 'rgb(220,227,232)',
+  borderRadius: 4,
+  padding: '0px 6px',
+  fontFamily: 'Muli'
+})

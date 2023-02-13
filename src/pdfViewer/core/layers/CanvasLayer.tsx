@@ -56,7 +56,9 @@ const CanvasLayer: FC<CanvasLayerProps> = ({ page, width, height, viewport }) =>
   // maybe some canvas libraies can do the resize / zoom without rerendering?
   useUpdateIsomorphicLayoutEffect(() => {
     const canvasEle = canvasRef.current
-    renderCanvas(canvasEle)
+    if (canvasEle) {
+      renderCanvas(canvasEle)
+    }
   }, [viewport])
   return <canvas ref={canvasRef} style={{ position: 'absolute' }} role="canvas-layer" />
 }

@@ -5,7 +5,6 @@ import { Rnd } from 'react-rnd'
 import { delay } from 'lodash'
 import useSidebarWidth from '@/hooks/components/useSidebarWidth'
 import Icon from '@/components/base/Icon'
-import { useSetting } from '@/hooks'
 import { GlobalInstances } from '..'
 
 export const Sidebar: FC = () => {
@@ -16,7 +15,6 @@ export const Sidebar: FC = () => {
   const [widthTransition, setWidthTransition] = useState(false)
   const [isResizing, setIsResizing] = useState(false)
   const [, setSidebarWidth] = useSidebarWidth()
-  const [setting] = useSetting()
   return (
     <div
       onClick={() => console.log(GlobalInstances.pdfInstances)}

@@ -8,7 +8,6 @@ import Content from '../Content'
 import WithBorder from '../WithBorder'
 import styles from './index.module.less'
 import { useCanSubmit } from './useCanSubmit'
-import { useIsSubmitted } from './useIsSubmitted'
 
 type FormItemConditionalProps = { disable?: boolean } & (
   | {
@@ -18,6 +17,10 @@ type FormItemConditionalProps = { disable?: boolean } & (
       onUpload?: never
       children?: never
       value?: string
+      maxRows?: number
+      maxLength?: number
+      minRows?: number
+      minLength?: number
     }
   | {
       type: 'file'
@@ -50,7 +53,7 @@ interface FormItemCommonProps {
   required?: boolean
 }
 type FormItemProps = FormItemCommonProps & FormItemConditionalProps
-const FormItem: FC<FormItemProps> = ({ onChange, onUpload, text, type, children, required, requireMessage, value, disable }) => {
+const FormItem: FC<FormItemProps> = ({ onChange, onUpload, text, type, children, required, requireMessage, value, disable, ...rest }) => {
   const { t } = useTranslation()
   const [innerValue, setInnerValue] = useState<File | string>()
   const [color, setColor] = useState<string>()
@@ -71,14 +74,13 @@ const FormItem: FC<FormItemProps> = ({ onChange, onUpload, text, type, children,
   }, [innerValue])
   const childrenRenderer = () => {
     switch (type) {
-      case 'input':
-      case 'textarea':
+      case 'input': {
         return (
           <BorderInput
             value={value}
             defaultValue={value}
-            textarea={type === 'textarea'}
             style={{ height: 40 }}
+            textarea={false}
             placeholder={text}
             disable={disable}
             onChange={e => {
@@ -87,6 +89,28 @@ const FormItem: FC<FormItemProps> = ({ onChange, onUpload, text, type, children,
             }}
           ></BorderInput>
         )
+      }
+      case 'textarea': {
+        const { maxRows, maxLength, minRows = 2 } = rest
+        return (
+          <BorderInput
+            value={value}
+            defaultValue={value}
+            textarea={true}
+            style={{ height: 40 }}
+            placeholder={text}
+            disable={disable}
+            maxRows={maxRows}
+            maxLength={maxLength}
+            minRows={minRows}
+            onChange={e => {
+              onChange?.(e)
+              setInnerValue(e)
+            }}
+          ></BorderInput>
+        )
+      }
+
       case 'file': {
         const file = innerValue as File | undefined
         return (

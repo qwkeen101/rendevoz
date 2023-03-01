@@ -1,10 +1,9 @@
 import { Noop } from '@/common/types'
 import { Content, Panel, TabPane, Tabs } from '@/components'
-import { isEditorInitialized } from '@/components/editor/EditorManager'
-import useEventEmitter from '@/events/useEventEmitter'
+import useScopedEventEmitter from '@/events/useEventEmitter'
 import { useDebounceFn } from '@/hooks'
 import useBlockStore from '@/stores/block.store'
-import useNoteStore from '@/stores/note.store'
+import createNoteStore from '@/stores/note.store'
 import { tokenize, search as searchIndex } from '@/utils/searchIndex'
 import { css } from '@emotion/css'
 import _ from 'lodash'
@@ -52,7 +51,7 @@ const SearchResult: FC<{
   )
 }
 const NoteResultItem = ({ id, queryString, blocks, onClick }: { id: number; queryString: string; blocks: any[]; onClick: Noop }) => {
-  const { getNoteById } = useNoteStore()
+  const { getNoteById } = createNoteStore()
   const [note, setNote] = useState()
   useEffect(() => {
     getNoteById(id).then(n => setNote(n))
@@ -78,7 +77,7 @@ const NoteResultItem = ({ id, queryString, blocks, onClick }: { id: number; quer
   )
 }
 const BlockResultItem = ({ id, queryString, block, onClick }: { id: number; queryString: string; block: any; onClick: Noop }) => {
-  const emitter = useEventEmitter()
+  const emitter = useScopedEventEmitter()
   const nav = useNavigate()
   const highlightedText = queryString.split(' ').reduce((prev, curr) => {
     if (curr) {

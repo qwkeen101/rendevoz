@@ -1,8 +1,8 @@
 import { Content, Icon, Panel } from '@/components/base'
 import { setNode } from '@/components/editor/yjs/applyToYjs/node/setNode'
 import { Tag } from '@/components/form/EditMetaObjectForm'
-import { relatedMetaObjectsMapAtom, TagToMetaObjectIdsMapAtom } from '@/stores/meta.store'
-import { globalStore } from '@/stores/stores'
+import { relatedMetaObjectsMapAtom, tagToMetaObjectIdsMapAtom } from '@/stores/meta.store'
+import { globalStore } from '@/stores'
 import ClassName from '@/styles/classNames'
 import produce from 'immer'
 import { useAtomValue } from 'jotai/react'
@@ -23,7 +23,7 @@ const GraphFilter = () => {
     nodes?.forEach(i => i.tags?.forEach(tag => set.add(tag)))
     return Array.from(set)
   }, [nodes])
-  const tagToMetaObjectsMap = useAtomValue(TagToMetaObjectIdsMapAtom, { store: globalStore })
+  const tagToMetaObjectsMap = useAtomValue(tagToMetaObjectIdsMapAtom, { store: globalStore })
   const [selectedTags, setSelectedTags] = useTags()
   const toggleNodeVisibility = (nodeId: number) => {
     if (!nodes) return

@@ -1,29 +1,12 @@
 import { Icon } from '@/components'
-import useEventEmitter from '@/events/useEventEmitter'
+import useScopedEventEmitter from '@/events/useEventEmitter'
 import { css } from '@emotion/css'
 import { INote } from '~/typings/data'
-import { isEditorInitialized } from '../../EditorManager'
 
 const MetaNoteItem = ({ note, onClick }: { note: INote; onClick?: React.MouseEventHandler }) => {
-  const emitter = useEventEmitter()
-  const handleNoteClick = e => {
-    onClick?.(e)
-    setTimeout(() => {
-      if (isEditorInitialized) {
-        emitter.emit('editor', {
-          type: 'insertTab',
-          data: {
-            noteId: note.id,
-            isNew: false,
-            autoFocus: true
-          }
-        })
-      }
-    }, 300)
-  }
+  const emitter = useScopedEventEmitter()
   return (
     <div
-      onClick={handleNoteClick}
       className={css({
         marginLeft: -4,
         padding: '4px 4px 4px 10px',

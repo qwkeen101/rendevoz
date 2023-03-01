@@ -1,28 +1,30 @@
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+//@ts-nocheck
 import { Content } from '@/components/base'
-import { GlobalScope } from '@/jotai/jotaiScope'
+import { useGlobalAtomValue } from '@/jotai/jotaiScope'
 import { pinnedCollectionsAtom } from '@/stores/collection.store'
 import { pinnedDocumentsAtom } from '@/stores/document.store'
 import { pinnedNotesAtom } from '@/stores/note.store'
-import { globalStore } from '@/stores/stores'
-import { useAtomValue } from 'jotai/react'
 import { memo } from 'react'
-import { SidebarCollectionItem, SidebarDocumentItem, SidebarNoteItem } from './SidebarCollection'
+import SidebarCollectionItem from './items/SidebarCollectionItem'
+import SidebarDocumentItem from './items/SidebarDocumentItem'
+import SidebarNoteItem from './items/SidebarNoteItem'
 
 const SidebarPinned = memo(() => {
-  const pinnedDocuments = useAtomValue(pinnedDocumentsAtom, { store: globalStore })
-  const pinnedCollections = useAtomValue(pinnedCollectionsAtom, { store: globalStore })
-  const pinnedNotes = useAtomValue(pinnedNotesAtom, { store: globalStore })
+  const pinnedDocuments = useGlobalAtomValue(pinnedDocumentsAtom)
+  const pinnedCollections = useGlobalAtomValue(pinnedCollectionsAtom)
+  const pinnedNotes = useGlobalAtomValue(pinnedNotesAtom)
 
   return (
     <Content flex column>
       {pinnedCollections.map(i => (
-        <SidebarCollectionItem key={i.id} collectionId={i.id} parentCollectionId={i.parentId || 1} />
+        <SidebarCollectionItem draggable={false} key={i.id} id={i.id} />
       ))}
       {pinnedDocuments.map(i => (
-        <SidebarDocumentItem key={i.id} documentId={i.id} />
+        <SidebarDocumentItem draggable={false} key={i.id} id={i.id} />
       ))}
       {pinnedNotes.map(i => (
-        <SidebarNoteItem key={i.id} noteId={i.id} />
+        <SidebarNoteItem draggable={false} key={i.id} id={i.id} />
       ))}
     </Content>
   )

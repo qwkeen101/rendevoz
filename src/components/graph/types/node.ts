@@ -1,7 +1,9 @@
+import { MetaObject } from '~/typings/data'
+
 export interface GraphNode {
   id: number
   label?: string
-  type?: string
+  type?: MetaObject['type']
   index?: number
   x?: number
   y?: number

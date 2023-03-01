@@ -1,12 +1,12 @@
-import useEventEmitter from '@/events/useEventEmitter'
+import { useGlobalEventEmitter } from '@/events/useEventEmitter'
 import { useMemoizedFn } from '@/hooks'
-import useMetaStore, { relatedMetaObjectsMapAtom } from '@/stores/meta.store'
-import { globalStore } from '@/stores/stores'
+import  { relatedMetaObjectsMapAtom } from '@/stores/meta.store'
+import { globalStore, metaStore } from '@/stores'
 import Id from '@/utils/id'
 import { css } from '@emotion/css'
 import produce from 'immer'
 import { useAtomValue } from 'jotai/react'
-import { memo, MouseEvent, useEffect } from 'react'
+import { memo, MouseEvent } from 'react'
 import { MetaLink } from '~/typings/data'
 import useEdges from '../hooks/useEdges'
 import useGraph from '../hooks/useGraph'
@@ -32,9 +32,9 @@ const NodeContainer = memo(() => {
   const [nodes, setNodes] = useNodes()
   const [edges, setEdges] = useEdges()
   const [selectedTags] = useTags()
-  const { addMetaLink } = useMetaStore()
+  const { addMetaLink } = metaStore
   const relatedObjectsMap = useAtomValue(relatedMetaObjectsMapAtom, { store: globalStore })
-  const emitter = useEventEmitter()
+  const emitter = useGlobalEventEmitter()
   const graph = useGraph()
 
   const nodeMouseEnterHandler: NodeMouseEventHandler = useMemoizedFn((e, node) => {
@@ -137,7 +137,7 @@ const NodeContainer = memo(() => {
   })
 
   return (
-    <svg className={svgContainerClassName} width={600} height={600} viewBox="-300 -300 600 600">
+    <svg className={svgContainerClassName}>
       <defs>
         <clipPath id="circleClip">
           <circle r={20} cx={20} cy={20}></circle>

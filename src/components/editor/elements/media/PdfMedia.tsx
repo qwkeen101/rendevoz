@@ -1,6 +1,6 @@
 import { Content } from '@/components/base'
 import { documentsAtom } from '@/stores/document.store'
-import { globalStore } from '@/stores/stores'
+import { globalStore } from '@/stores'
 import ClassName from '@/styles/classNames'
 import DateFormat from '@/utils/dateFormat'
 import { css } from '@emotion/css'

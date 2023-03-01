@@ -12,16 +12,20 @@ const BlockColorPicker = ({
   fontBackDefault = true,
   bgBackDefault = true,
   showMoreBg,
-  showMoreFont
+  showMoreFont,
+  showMoreBgOption,
+  showMoreFontOption
 }: {
-  onPickFontColor: PickColorFunc
-  onPickBackgroundColor: PickColorFunc
+  onPickFontColor?: PickColorFunc
+  onPickBackgroundColor?: PickColorFunc
   showBg?: boolean
   showFont?: boolean
   fontBackDefault?: boolean
   bgBackDefault?: boolean
   showMoreBg?: boolean
   showMoreFont?: boolean
+  showMoreFontOption?: boolean
+  showMoreBgOption?: boolean
 }) => {
   const [showMoreColor, toggleShowMoreFontColor] = useToggle(false)
   const [showMoreBackground, toggleShowMoreBackground] = useToggle(false)
@@ -41,9 +45,11 @@ const BlockColorPicker = ({
         <>
           <Content flex alignItems="center" justifyContent="space-between" className={ClassName.description()}>
             <span>Font color</span>
-            <span onClick={toggleShowMoreFontColor} className={ClassName.flatButton(3, '0px 3px')}>
-              {showMoreColor ? 'Show less' : 'Show more'}
-            </span>
+            {showMoreFontOption && (
+              <span onClick={toggleShowMoreFontColor} className={ClassName.flatButton(3, '0px 3px')}>
+                {showMoreColor ? 'Show less' : 'Show more'}
+              </span>
+            )}
           </Content>
           <ColorPicker enableDefault={fontBackDefault} isFont enableMore={!showMoreColor && !showMoreFont} onPick={onPickFontColor} />
         </>
@@ -52,10 +58,10 @@ const BlockColorPicker = ({
         <>
           <Content flex alignItems="center" justifyContent="space-between" className={ClassName.description()}>
             <span>Background color</span>
-            {showMoreBg && (
+            {showMoreBgOption && (
               <span onClick={toggleShowMoreBackground} className={ClassName.flatButton(3, '0px 3px')}>
-              {showMoreBackground ? 'Show less' : 'Show more'}
-            </span>
+                {showMoreBackground ? 'Show less' : 'Show more'}
+              </span>
             )}
           </Content>
           <ColorPicker enableDefault={bgBackDefault} enableMore={!showMoreBackground && !showMoreBg} onPick={onPickBackgroundColor} />

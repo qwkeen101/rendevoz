@@ -1,4 +1,4 @@
-import { globalStore } from '@/stores/stores'
+import { globalStore } from '@/stores'
 import { TagToTagAtom } from '@/stores/tag.store'
 import ClassName from '@/styles/classNames'
 import Id from '@/utils/id'

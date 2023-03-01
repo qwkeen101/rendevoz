@@ -2,7 +2,7 @@ import { Content, Icon } from '@/components'
 import { KEY } from '@/consts/key'
 import { useTheme } from '@/hooks'
 import useClickOutside from '@/hooks/utils/useClickOutside'
-import useMetaStore from '@/stores/meta.store'
+import createMetaStore from '@/stores/meta.store'
 import { css } from '@emotion/css'
 import { formatDistanceToNow } from 'date-fns'
 import { useState, useRef, useEffect } from 'react'
@@ -13,7 +13,7 @@ const MetaCommentItem = ({ comment, obj }: { comment?: MetaComment; obj?: MetaKn
   const [isEditing, setIsEditing] = useState(false)
   const [isModifying, setIsModifying] = useState(false)
   const [content, setContent] = useState(comment?.content)
-  const { addMetaComment, updateMetaComment, deleteMetaComment } = useMetaStore()
+  const { addMetaComment, updateMetaComment, deleteMetaComment } = createMetaStore()
   const [toolbarVisible, setToolbarVisible] = useState(false)
   useEffect(() => {
     setContent(comment?.content)

@@ -12,8 +12,8 @@ import PanHelper from '../utils/pan'
 import fuzzysort from 'fuzzysort'
 import { TextItem } from '../types/text'
 import Id from '@/utils/id'
-import useEventEmitter from '@/events/useEventEmitter'
-import { PdfViewInnerScope } from '../Provider'
+import useScopedEventEmitter from '@/events/useEventEmitter'
+import usePdfViewer from '../hooks/useViewer'
 
 interface LayoutProps {
   doc: PDFDocumentProxy
@@ -25,6 +25,7 @@ interface LayoutProps {
   onRangeChange?: (range?: Range) => void
   innerRef: any
   className?: string
+  transformScale?: number
 }
 export interface LayoutFunctions {
   jumpToPage: (pageIndex: number) => void
@@ -67,7 +68,8 @@ const Layout: FC<LayoutProps> = ({
   renderAnnotation,
   innerRef,
   className,
-  onRangeChange
+  onRangeChange,
+  transformScale
 }) => {
   const { numPages } = doc
   const [scrollMode] = useScrollMode()
@@ -76,6 +78,7 @@ const Layout: FC<LayoutProps> = ({
   const [rotation, setRotation] = useState(0)
   const [scale, setScale] = useState(pageSize.scale)
   const [enablePan, setEnablePan] = useState(false)
+  const viewer = usePdfViewer()
   const textRef = useRef<
     {
       id: number
@@ -86,6 +89,7 @@ const Layout: FC<LayoutProps> = ({
   >([])
   const scaleRef = useRef(pageSize.scale)
   const currentRangeRef = useRef<Range>()
+
   useImperativeHandle(innerRef, () => ({
     jumpToPage,
     zoomIn,
@@ -100,7 +104,7 @@ const Layout: FC<LayoutProps> = ({
     scrollBy
   }))
   const { height, width } = pageSize
-  const innerEmitter = useEventEmitter(PdfViewInnerScope)
+  const innerEmitter = useScopedEventEmitter()
   const rect =
     Math.abs(rotation) % 180 === 0
       ? {
@@ -240,6 +244,7 @@ const Layout: FC<LayoutProps> = ({
             data-page-index={item.index}
           >
             <PageLayer
+              transformScale={transformScale}
               scrollElement={pagesRef}
               renderPage={renderPage}
               doc={doc}
@@ -298,6 +303,23 @@ const Layout: FC<LayoutProps> = ({
       pages?.removeEventListener('scroll', handleScroll)
     }
   }, [doc])
+
+  if (viewer) {
+    Object.assign(viewer, {
+      jumpToPage,
+      zoomIn,
+      zoomOut,
+      autoFit,
+      togglePan,
+      getOutline,
+      jumpToDest,
+      search,
+      highlightText,
+      jumpToOffset,
+      scrollBy
+    })
+  }
+
   return (
     <div className={className} ref={pagesRef} style={{ height: '100%', width: '100%', overflow: 'auto' }}>
       <PanHelper enablePan={enablePan} containerEle={pagesRef.current} />

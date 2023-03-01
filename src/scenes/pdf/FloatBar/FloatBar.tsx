@@ -11,8 +11,9 @@ import PdfInfo from './Info'
 import PdfOutline from './Outline'
 import PdfSearch from './Search'
 import PdfLabels from './Label'
+import { IPdfDocument } from '~/typings/data'
 
-const PdfFloatBar = () => {
+const PdfFloatBar = ({ document }: { document?: IPdfDocument }) => {
   const viewer = useViewer()
   const id = useMemo(() => Id.getStrId(), [])
   const container = useRef(null)
@@ -74,9 +75,9 @@ const PdfFloatBar = () => {
       case 'search':
         return <PdfSearch flipId={id} />
       case 'info':
-        return <PdfInfo flipId={id} />
+        return <PdfInfo flipId={id} document={document} />
       case 'label':
-        return <PdfLabels flipId={id} />
+        return <PdfLabels flipId={id} document={document} />
     }
   }
 
@@ -93,7 +94,7 @@ const PdfFloatBar = () => {
         <div ref={container}>
           <AnimatePopover
             parentElement={container.current}
-            boundaryElement={document.body}
+            boundaryElement={window.document.body}
             disableIntersection
             padding={10}
             align="start"

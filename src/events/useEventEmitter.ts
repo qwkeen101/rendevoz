@@ -1,6 +1,8 @@
-import { GlobalScope } from '@/jotai/jotaiScope'
 import { eventEmitter } from '@/events/eventEmitter'
 import { useAtomValue } from 'jotai'
+import { globalStore } from '@/stores'
+const useScopedEventEmitter = () => useAtomValue(eventEmitter)
 
-const useEventEmitter = (scope: symbol = GlobalScope) => useAtomValue(eventEmitter, scope)
-export default useEventEmitter
+export const useGlobalEventEmitter = () => useAtomValue(eventEmitter, { store: globalStore })
+
+export default useScopedEventEmitter

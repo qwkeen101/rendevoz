@@ -2,17 +2,9 @@ import ClassName from '@/styles/classNames'
 import { css } from '@emotion/css'
 import { AnimatePresence, motion } from 'framer-motion'
 import { CSSProperties, useState } from 'react'
-import AutosizeTextarea from '../custom/input/autosizeTextarea'
+import AutosizeTextarea, { TextareaAutosizeProps } from '../custom/input/autosizeTextarea'
 
-const BorderInput = ({
-  value,
-  onChange,
-  placeholder,
-  style,
-  defaultValue,
-  textarea,
-  disable
-}: {
+type BorderInputProps = {
   value?: string
   onChange?: (v: string) => void
   placeholder?: string
@@ -20,7 +12,16 @@ const BorderInput = ({
   defaultValue?: string
   textarea?: boolean
   disable?: boolean
-}) => {
+} & (
+  | ({
+      textarea: true
+    } & TextareaAutosizeProps)
+  | {
+      textarea: false
+    }
+)
+
+const BorderInput = ({ value, onChange, placeholder, style, defaultValue, textarea, disable, ...rest }: BorderInputProps) => {
   const [innerValue, setValue] = useState(value || defaultValue || '')
   const showText = innerValue && innerValue !== ''
 
@@ -51,7 +52,8 @@ const BorderInput = ({
         <AutosizeTextarea
           placeholder="Discription..."
           minRows={2}
-          style={{ resize: 'none', overflow: 'hidden' }}
+          {...rest}
+          style={{ resize: 'none'}}
           className={ClassName.input()}
           defaultValue={defaultValue}
           disabled={disable}

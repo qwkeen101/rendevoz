@@ -13,8 +13,8 @@ export const ellipsisFont = (line: number) =>
 export const defaultFont = (fontSize = 13, fontWeight = 400) =>
   css({
     fontFamily: 'Muli, sans-serif',
-    '-webkit-font-smoothing': 'antialiased',
-    'font-variant-numeric': 'lining-nums',
+    WebkitFontSmoothing: 'antialiased',
+    fontVariantNumeric: 'lining-nums',
     fontFeatureSettings: 'lnum',
     letterSpacing: '-0.04px',
     fontWeight,

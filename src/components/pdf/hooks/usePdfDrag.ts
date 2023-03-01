@@ -4,11 +4,9 @@ import { useMemoizedFn } from '@/hooks'
 import Id from '@/utils/id'
 import { useEffect, useState } from 'react'
 import { IThoughtLabel } from '~/typings/data'
-import { usePdfNote } from './usePdfNote'
 
 const usePdfDrag = (viewbox: HTMLElement | null | undefined) => {
   const [isGlobalDragging] = useGlobalIsDragging()
-  const [pdfNote, setPdfNote] = usePdfNote()
   const [isDraggingInside, setIsDraggingInside] = useState(false)
   const mouseEnterHandler = useMemoizedFn((e: MouseEvent) => {
     setIsDraggingInside(true)
@@ -64,10 +62,6 @@ const usePdfDrag = (viewbox: HTMLElement | null | undefined) => {
               label.originFrom = 'image'
               label.content = globalDraggingEle.url
           }
-          console.log(label)
-          setPdfNote({
-            labels: [...pdfNote.labels, label]
-          })
         }
       }
     }

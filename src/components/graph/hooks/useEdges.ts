@@ -1,8 +1,12 @@
-import { GraphScope } from '@/jotai/jotaiScope'
-import { atom, useAtom } from 'jotai'
+import { atom, useAtom, useSetAtom } from 'jotai'
 import { GraphEdge } from '../types/edge'
 
 const edgesAtom = atom<GraphEdge[] | null>(null)
 
-const useEdges = () => useAtom(edgesAtom, GraphScope)
+export const oppositeEdgesMapAtom = atom<Map<number, number>>(new Map())
+
+export const useSetOppsiteEdgesMap = () => useSetAtom(oppositeEdgesMapAtom)
+
+const useEdges = () => useAtom(edgesAtom)
+
 export default useEdges

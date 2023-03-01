@@ -26,9 +26,7 @@ const EmojiPicker: FC<{ onPick?: (name: string) => void; width?: number | string
     setCurrentEmojis(undefined)
     if (categories) {
       const shortNames = Object.values(categories?.[currentCategory]).flat(1)
-      Promise.all(shortNames.map(i => getEmoji(i))).then(data => {
-        setCurrentEmojis(data)
-      })
+      setCurrentEmojis(shortNames.map(i => getEmoji(i)))
     }
   }, [currentCategory, categories])
   return (

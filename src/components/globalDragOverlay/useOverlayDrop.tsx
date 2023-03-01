@@ -1,8 +1,8 @@
-import { GlobalEventHandler } from '@/events/globalEvent'
-import useEventEmitter from '@/events/useEventEmitter'
-import { useMemoizedFn, useToggle } from '@/hooks'
-import useMetaStore, { ObjectIdToMetaObjectMapAtom } from '@/stores/meta.store'
-import { globalStore } from '@/stores/stores'
+import { DropOn, GlobalEventHandler } from '@/events/globalEvent'
+import { useGlobalEventEmitter } from '@/events/useEventEmitter'
+import { useToggle } from '@/hooks'
+import { indexedMetaLinksAtom } from '@/stores/meta.store'
+import { globalStore, metaStore } from '@/stores'
 import { PartialWithId } from '@/types'
 import Id from '@/utils/id'
 import { useEffect, useMemo, useRef, useState } from 'react'
@@ -12,47 +12,144 @@ import { Node } from 'slate'
 import { MetaLink, MetaObject } from '~/typings/data'
 import Modal from '../base/Modal'
 import EditMetaObjectForm from '../form/EditMetaObjectForm'
+import getSetting from '../globalSetting/getSetting'
+import { intersectionOfMultipleSets } from '../database/filter/useObjectFilter'
 import { AvaliableGlobalDraggingElements, GlobalDragOverlayInstance } from './GlobalDragOverlay'
 
 const useOverlayDrop = () => {
-  const emitter = useEventEmitter()
+  const emitter = useGlobalEventEmitter()
   const dropHandler = useMemo(() => new GlobalEventHandler(), [])
-  const { addMetaLink, addMetaObject, getMetaObjectById, getMetaObjectByObjectId, deleteMetaLink } = useMetaStore()
+  const { addMetaLink, addMetaObject, getMetaObjectById, getMetaObjectByObjectId, deleteMetaLink, deleteMetaObject, updateMetaObject } =
+    metaStore
   const [metaObject, setMetaObject] = useState<MetaObject & { noteId?: number }>()
   const [pendingLinks, setPendingLinks] = useState<Partial<MetaLink>[]>([])
   const [editMetaVisible, toggleEditMetaVisible] = useToggle(false)
   const promiseRef = useRef<{
-    res: any
-    rej: any
+    res: (value: unknown) => void | undefined
+    rej: (value: unknown) => void | undefined
   }>()
-  dropHandler.on(
-    'dragDrop',
-    useMemoizedFn(async data => {
-      const { dragElement, dropOn } = data
-      if (!dragElement?.type) return
-      GlobalDragOverlayInstance.draggingDetails = undefined
-      const normalizedMetaObject: PartialWithId<MetaObject & { noteId: number }> = {
-        id: Id.getId(),
-        type: 'normal'
+
+  dropHandler.on('globalDropNeedFurtherProcess', async (data, res, rej) => {
+    if (data.draggingElement) {
+      const { dropOn } = data
+      const { normalizedMetaObject, shouldOpenEditMetaModal, alreadyHasMeta, preLinks } = await normalizeDraggingEleToMetaObject(
+        data.draggingElement
+      )
+      let postLink: PartialWithId<MetaLink> | undefined
+      if (dropOn && normalizedMetaObject) {
+        postLink = await getDropOnPostLinks(dropOn, normalizedMetaObject)
       }
-      const links = pendingLinks
-      let alreadyHasMeta = false
-      let shouldOpenEditMetaModal = true
-      // here we deal with the dragging element
-      switch (dragElement?.type) {
-        case 'image': {
-          normalizedMetaObject.type = 'image'
-          normalizedMetaObject.name = `Unnamed image ${Id.getId()}`
-          normalizedMetaObject.coverImgSrc = dragElement.url
-          break
-        }
-        case 'pdfElement': {
-          const maybeExistedLabelMeta = getMetaObjectByObjectId(dragElement.labelId)
-          if (maybeExistedLabelMeta) {
-            alreadyHasMeta = true
-            shouldOpenEditMetaModal = false
-            normalizedMetaObject.id = maybeExistedLabelMeta.id
+      const allPendingLinks = [...preLinks, postLink].filter(i => i !== undefined && i.sourceId && i.targetId) as PartialWithId<MetaLink>[]
+
+      if (shouldOpenEditMetaModal === false && alreadyHasMeta) {
+        res?.(normalizedMetaObject)
+        allPendingLinks.forEach(i => addMetaLink(i))
+        return
+      }
+      promiseRef.current = {
+        res,
+        rej
+      }
+      allPendingLinks.forEach(i => addMetaLink(i, true))
+      setPendingLinks(allPendingLinks)
+      setMetaObject(normalizedMetaObject)
+      addMetaObject(normalizedMetaObject, true)
+      toggleEditMetaVisible(true)
+    }
+  })
+  const getDropOnPostLinks = async (dropOn: DropOn, metaObject: MetaObject) => {
+    const link: PartialWithId<MetaLink> = {
+      id: Id.getId(),
+      sourceId: metaObject.id
+    }
+    switch (dropOn.dropOn) {
+      case 'database': {
+        break
+      }
+      case 'editor': {
+        const noteMeta =
+          (await getMetaObjectByObjectId(dropOn.noteId)) || (await addMetaObject({ id: Id.getId(), objectId: dropOn.noteId, type: 'note' }, true))
+        link.targetId = noteMeta.id
+        break
+      }
+      case 'pdf': {
+        const pdfMeta =
+          (await getMetaObjectByObjectId(dropOn.pdfId)) || (await addMetaObject({ id: Id.getId(), objectId: dropOn.pdfId, type: 'pdf' }, true))
+        link.targetId = pdfMeta.id
+        break
+      }
+      case 'whiteboard': {
+        const whiteboardMeta =
+          (await getMetaObjectByObjectId(dropOn.whiteboardId)) || (await addMetaObject({ id: Id.getId(), objectId: dropOn.whiteboardId, type: 'whiteboard' }, true))
+        link.targetId = whiteboardMeta.id
+        break
+      }
+    }
+    if (link.sourceId && link.targetId) {
+      return link
+    }
+  }
+  const normalizeDraggingEleToMetaObject = async (
+    dragElement: AvaliableGlobalDraggingElements
+  ): Promise<{
+    normalizedMetaObject: MetaObject
+    alreadyHasMeta: boolean
+    shouldOpenEditMetaModal: boolean
+    preLinks: PartialWithId<MetaLink>[]
+  }> => {
+    const normalizedLinks: PartialWithId<MetaLink>[] = []
+    const normalizedMetaObject: PartialWithId<MetaObject & { noteId: number }> = {
+      id: Id.getId(),
+      type: 'normal'
+    }
+    let alreadyHasMeta = false
+    let shouldOpenEditMetaModal = true
+    switch (dragElement?.type) {
+      case 'image': {
+        normalizedMetaObject.type = 'image'
+        normalizedMetaObject.name = `Unnamed image ${Id.getId()}`
+        normalizedMetaObject.coverImgSrc = dragElement.url
+        break
+      }
+      case 'pdf': {
+        const pdfMeta =
+          (await getMetaObjectByObjectId(dragElement.pdfId)) || (await addMetaObject({ type: 'pdf', objectId: dragElement.pdfId }, true))
+        Object.assign(normalizedMetaObject, pdfMeta)
+        alreadyHasMeta = true
+        shouldOpenEditMetaModal = false
+        break
+      }
+      case 'note': {
+        const noteMeta =
+          (await getMetaObjectByObjectId(dragElement.noteId)) || (await addMetaObject({ type: 'note', objectId: dragElement.noteId }, true))
+        Object.assign(normalizedMetaObject, noteMeta)
+        alreadyHasMeta = true
+        shouldOpenEditMetaModal = false
+        break
+      }
+      case 'pdfElement': {
+        const labelMeta = getMetaObjectByObjectId(dragElement.labelId)
+        const pdfMeta =
+          (await getMetaObjectByObjectId(dragElement.pdfId)) || (await addMetaObject({ type: 'pdf', objectId: dragElement.pdfId }, true))
+        if (labelMeta) {
+          alreadyHasMeta = true
+          shouldOpenEditMetaModal = false
+          const linkIndex = globalStore.get(indexedMetaLinksAtom)
+          if (linkIndex) {
+            const sourceToLinks = linkIndex.sourceIdToLinkIdsMap.get(pdfMeta.id)
+            const targetToLinks = linkIndex.targetIdToLinkIdMap.get(labelMeta.id)
+            if (sourceToLinks && targetToLinks) {
+              const size = intersectionOfMultipleSets(sourceToLinks, targetToLinks).size
+              if (size === 0) {
+                addMetaLink({
+                  sourceId: pdfMeta.id,
+                  targetId: labelMeta.id
+                })
+              }
+            }
           }
+          Object.assign(normalizedMetaObject, labelMeta)
+        } else {
           normalizedMetaObject.type = 'pdfElement'
           normalizedMetaObject.objectId = dragElement.labelId
           normalizedMetaObject.name = dragElement.content.slice(0, 50) || 'Unnamed object'
@@ -61,26 +158,53 @@ const useOverlayDrop = () => {
             normalizedMetaObject.name = normalizedMetaObject.name.concat('...')
           }
           normalizedMetaObject.description = dragElement.content
-          normalizedMetaObject.pdfId = dragElement.pdfId
-          const pdfMeta =
-            (await getMetaObjectByObjectId(dragElement.pdfId)) || (await addMetaObject({ type: 'pdf', objectId: dragElement.pdfId }))
-          const metaLink: Partial<MetaLink> = {
+          const metaLink: PartialWithId<MetaLink> = {
             sourceId: pdfMeta.id,
-            targetId: maybeExistedLabelMeta?.id || normalizedMetaObject.id
+            targetId: normalizedMetaObject.id,
+            id: Id.getId()
           }
-          links.push(metaLink)
-          break
+          normalizedLinks.push(metaLink)
         }
-        case 'noteElement': {
+
+        break
+      }
+      case 'noteElement': {
+        if (dragElement.metaId) {
+          const meta = await getMetaObjectById(dragElement.metaId)
+          if (meta) {
+            Object.assign(normalizedMetaObject, meta)
+            shouldOpenEditMetaModal = false
+            alreadyHasMeta = true
+            break
+          }
+        }
+        const noteMeta =
+          (await getMetaObjectByObjectId(dragElement.noteId)) || (await addMetaObject({ type: 'note', objectId: dragElement.noteId }, true))
+        const noteBlockMeta = getMetaObjectByObjectId(dragElement.blockId)
+        if (noteBlockMeta) {
+          alreadyHasMeta = true
+          shouldOpenEditMetaModal = false
+          const linkIndex = globalStore.get(indexedMetaLinksAtom)
+          if (linkIndex) {
+            const sourceToLinks = linkIndex.sourceIdToLinkIdsMap.get(noteMeta.id)
+            const targetToLinks = linkIndex.targetIdToLinkIdMap.get(noteBlockMeta.id)
+            if (sourceToLinks && targetToLinks) {
+              const size = intersectionOfMultipleSets(sourceToLinks, targetToLinks).size
+              if (size === 0) {
+                addMetaLink({
+                  sourceId: noteMeta.id,
+                  targetId: noteBlockMeta.id
+                })
+              }
+            }
+          }
+          Object.assign(normalizedMetaObject, noteBlockMeta)
+        } else {
           normalizedMetaObject.type = 'noteElement'
           normalizedMetaObject.objectId = dragElement.blockId
-          const maybeExistedLabelMeta = getMetaObjectByObjectId(dragElement.blockId)
-          if (maybeExistedLabelMeta) {
-            alreadyHasMeta = true
-            shouldOpenEditMetaModal = false
-            normalizedMetaObject.id = maybeExistedLabelMeta.id
-          }
-          const content = dragElement.elements ? dragElement.elements.map(n => Node.string(n)).join(' ') : Node.string(dragElement.element)
+          const content = dragElement.elements
+            ? dragElement.elements.map(n => Node.string(n)).join('\r\n')
+            : Node.string(dragElement.element)
           normalizedMetaObject.name = content?.slice(0, 50) || 'Unnamed object'
           const shouldConcat = dragElement.content?.length > 50
           if (shouldConcat) {
@@ -88,166 +212,40 @@ const useOverlayDrop = () => {
           }
           normalizedMetaObject.description = content
           normalizedMetaObject.noteId = dragElement.noteId
-          const noteMeta =
-            (await getMetaObjectByObjectId(dragElement.noteId)) || (await addMetaObject({ type: 'note', objectId: dragElement.noteId }))
-          const metaLink: Partial<MetaLink> = {
+          const metaLink: PartialWithId<MetaLink> = {
             sourceId: noteMeta.id,
-            targetId: normalizedMetaObject.id
+            targetId: normalizedMetaObject.id,
+            id: Id.getId()
           }
-          links.push(metaLink)
-          break
+          normalizedLinks.push(metaLink)
         }
-        case 'metaElement': {
-          normalizedMetaObject.id = dragElement.metaId
-          // we already have the meta object, so we don't need to create a new one
-          shouldOpenEditMetaModal = false
-          alreadyHasMeta = true
-        }
-      }
-      setMetaObject(normalizedMetaObject)
-      // here we deal with the drop process
-      switch (dropOn) {
-        case 'database': {
-          // no more link is needed
-          setPendingLinks([...links])
-          if (alreadyHasMeta) {
-            toast.error('Object Already Exists!')
-            break
-          }
-          break
-        }
-        case 'editor': {
-          const { note } = data
-          if (!note) break
-          const { id: noteId } = note
-          const noteMeta =
-            (await getMetaObjectByObjectId(noteId)) ||
-            (await addMetaObject({
-              objectId: noteId,
-              type: 'note',
-              name: note.title
-            }))
-          if (!noteMeta) break
-          const canNotAddIntoNoteTypes = ['collection']
-          if (canNotAddIntoNoteTypes.includes(dragElement?.type)) {
-            toast.error('Collection Can Not Be Added Into Note!')
-            break
-          }
 
-          const metaLink: Partial<MetaLink> = {
-            sourceId: normalizedMetaObject.id,
-            targetId: noteMeta.id
-          }
-          links.push(metaLink)
-          if (dragElement.type === 'noteElement' && dragElement.noteId === note.id) {
-            shouldOpenEditMetaModal = false
-            links.length = 0
-          }
-          setPendingLinks([...links])
-          break
-        }
-        case 'pdf':
-          return
-      }
-      if (shouldOpenEditMetaModal) {
-        toggleEditMetaVisible(true)
-      } else {
-        links.forEach(i => {
-          addMetaLink(i)
-        })
-        setPendingLinks([])
-      }
-    })
-  )
-  dropHandler.on('dropOnEditorFurtherProcess', async (data, res, rej) => {
-    if (GlobalDragOverlayInstance.draggingDetails) {
-      const normalizedMetaObject = await normalizeDraggingEleToMetaObject(GlobalDragOverlayInstance.draggingDetails)
-      promiseRef.current = {
-        res,
-        rej
-      }
-      setMetaObject(normalizedMetaObject)
-      pendingLinks.push({
-        sourceId: normalizedMetaObject.id,
-        targetId: globalStore.get(ObjectIdToMetaObjectMapAtom).get(data.noteId)?.id
-      })
-      toggleEditMetaVisible(true)
-    }
-  })
-
-  const normalizeDraggingEleToMetaObject = async (dragElement: AvaliableGlobalDraggingElements): Promise<MetaObject> => {
-    const normalizedMetaObject: PartialWithId<MetaObject & { noteId: number }> = {
-      id: Id.getId(),
-      type: 'normal'
-    }
-    let alreadyHasMeta = false
-    let shouldOpenEditMetaModal = true
-    const links = pendingLinks
-    switch (dragElement?.type) {
-      case 'image': {
-        normalizedMetaObject.type = 'image'
-        normalizedMetaObject.name = `Unnamed image ${Id.getId()}`
-        normalizedMetaObject.coverImgSrc = dragElement.url
-        break
-      }
-      case 'pdfElement': {
-        const maybeExistedLabelMeta = getMetaObjectByObjectId(dragElement.labelId)
-        if (maybeExistedLabelMeta) {
-          alreadyHasMeta = true
-          shouldOpenEditMetaModal = false
-          normalizedMetaObject.id = maybeExistedLabelMeta.id
-        }
-        normalizedMetaObject.type = 'pdfElement'
-        normalizedMetaObject.objectId = dragElement.labelId
-        normalizedMetaObject.name = dragElement.content.slice(0, 50) || 'Unnamed object'
-        const shouldConcat = dragElement.content.length > 50
-        if (shouldConcat) {
-          normalizedMetaObject.name = normalizedMetaObject.name.concat('...')
-        }
-        normalizedMetaObject.description = dragElement.content
-        const pdfMeta =
-          (await getMetaObjectByObjectId(dragElement.pdfId)) || (await addMetaObject({ type: 'pdf', objectId: dragElement.pdfId }))
-        const metaLink: Partial<MetaLink> = {
-          sourceId: pdfMeta.id,
-          targetId: maybeExistedLabelMeta?.id || normalizedMetaObject.id
-        }
-        links.push(metaLink)
-        break
-      }
-      case 'noteElement': {
-        normalizedMetaObject.type = 'noteElement'
-        normalizedMetaObject.objectId = dragElement.blockId
-        const maybeExistedLabelMeta = getMetaObjectByObjectId(dragElement.blockId)
-        if (maybeExistedLabelMeta) {
-          alreadyHasMeta = true
-          shouldOpenEditMetaModal = false
-          normalizedMetaObject.id = maybeExistedLabelMeta.id
-        }
-        const content = dragElement.elements ? dragElement.elements.map(n => Node.string(n)).join(' ') : Node.string(dragElement.element)
-        normalizedMetaObject.name = content?.slice(0, 50) || 'Unnamed object'
-        const shouldConcat = dragElement.content.length > 50
-        if (shouldConcat) {
-          normalizedMetaObject.name = normalizedMetaObject.name!.concat('...')
-        }
-        normalizedMetaObject.description = content
-        normalizedMetaObject.noteId = dragElement.noteId
-        const noteMeta =
-          (await getMetaObjectByObjectId(dragElement.noteId)) || (await addMetaObject({ type: 'note', objectId: dragElement.noteId }))
-        const metaLink: Partial<MetaLink> = {
-          sourceId: noteMeta.id,
-          targetId: normalizedMetaObject.id
-        }
-        links.push(metaLink)
         break
       }
       case 'metaElement': {
-        normalizedMetaObject.id = dragElement.metaId
+        const metaObject = await getMetaObjectById(dragElement.metaId)
+        metaObject && Object.assign(normalizedMetaObject, metaObject)
         // we already have the meta object, so we don't need to create a new one
         shouldOpenEditMetaModal = false
         alreadyHasMeta = true
+        break
+      }
+      case 'whiteboard': {
+        const whiteboardMeta =
+          (await getMetaObjectByObjectId(dragElement.whiteboardId)) ||
+          (await addMetaObject({ type: 'whiteboard', objectId: dragElement.whiteboardId }, true))
+        Object.assign(normalizedMetaObject, whiteboardMeta)
+        alreadyHasMeta = true
+        shouldOpenEditMetaModal = false
+        break
       }
     }
-    return normalizedMetaObject
+    return {
+      normalizedMetaObject,
+      shouldOpenEditMetaModal,
+      alreadyHasMeta,
+      preLinks: normalizedLinks
+    }
   }
   const renderMetaForm = () => {
     return (
@@ -257,34 +255,32 @@ const useOverlayDrop = () => {
           toggleEditMetaVisible(false)
           const promise = promiseRef.current
           pendingLinks?.forEach(l => {
-            l.id && deleteMetaLink(l.id, true)
+            l.id && deleteMetaLink(l.id, true, true)
           })
-          setPendingLinks([])
+          metaObject?.id && deleteMetaObject(metaObject?.id, true, true)
           if (promise) {
-            promise.rej(null)
+            promise.rej?.(null)
           }
           promiseRef.current = undefined
         }}
-        links={pendingLinks}
+        shouldPreviewGraph={pendingLinks.length > 0}
         metaObject={metaObject}
         onUpdate={async obj => {
           // give a new id to prevent hooks order change of get meta target obj
-          const newMetaObj = await addMetaObject({ ...obj, id: Id.getId() })
-          pendingLinks.forEach(link => {
-            if (link.sourceId === obj.id) {
-              link.sourceId = newMetaObj.id
+          if (metaObject) {
+            const newMetaObj = Object.assign(metaObject, obj)
+            updateMetaObject(newMetaObj, true)
+            console.log(newMetaObj)
+            const setting = getSetting()
+            if (setting.notification.enabled && setting.notification.object) {
+              toast.success('Successfully add object!')
             }
-            if (link.targetId === obj.id) {
-              link.targetId = newMetaObj.id
+            const promise = promiseRef.current
+            if (promise) {
+              promise.res?.(newMetaObj)
             }
-            addMetaLink(link)
-          })
-          setPendingLinks([])
-          toggleEditMetaVisible(false)
-          const promise = promiseRef.current
-          if (promise) {
-            promise.res(newMetaObj)
           }
+          toggleEditMetaVisible(false)
           promiseRef.current = undefined
         }}
       />

@@ -127,6 +127,7 @@ const LabelToolbar: FC<LabelToolbarProps> = ({
     <Toolbar.Item key="translate">
       <IconWithPopover
         name="park-translate"
+        zIndex={999}
         content={
           <WithBorder style={{ padding: 20 }}>
             <TextSelectionTranslate translateInput={selectedText} />

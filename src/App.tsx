@@ -10,12 +10,14 @@ import GlobalGraph from './components/graph/GlobalGraph'
 import GlobalDragOverlay from './components/globalDragOverlay/GlobalDragOverlay'
 import GlobalScreenShot from './components/globalScreenShot'
 import Notification from './components/NotificationCenter'
-import { globalStore } from './stores/stores'
+import { globalStore } from './stores'
 import PdfJsUrl from '@/assets/pdf.worker.min.js?url'
 import PdfJs from './pdfViewer/core/types/pdfJsApi'
 import GlobalObjectPanel from './components/GlobalObjectPanel'
-import GlobalBidirectionTree from './components/bidirectionTree/GlobalBidirectionTree'
+import GlobalBidirectionTree from './components/whiteboard/GlobalBidirectionTree'
 import GlobalCreateObject from './components/GlobalCreateObject'
+import '@/components/editor/dock.less'
+import SvgMarker from './components/svg/Marker'
 PdfJs.GlobalWorkerOptions.workerSrc = PdfJsUrl
 const App = () => {
   function getOS() {
@@ -51,11 +53,14 @@ const App = () => {
       <GlobalObjectPanel />
       <GlobalCreateObject />
       <Router>
-        <GlobalBidirectionTree />
+        {/* <GlobalBidirectionTree /> */}
         {os !== 'macos' && <TitleBar />}
         <Routes />
       </Router>
       <GlobalDragOverlay />
+      <svg style={{ position: 'absolute', width: 0, height: 0, overflow: 'hidden' }}>
+        <SvgMarker />
+      </svg>
     </JotaiProvider>
   )
 }

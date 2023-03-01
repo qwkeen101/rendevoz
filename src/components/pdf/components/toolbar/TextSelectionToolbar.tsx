@@ -1,6 +1,7 @@
 import { Toolbar, Content, WithBorder, ReadMore, ColorPicker } from '@/components'
 import BlockColorPicker from '@/components/editor/components/BlockColorPicker'
 import { TextSelectEvent } from '@/events/pdfEvent'
+import ClassName from '@/styles/classNames'
 import { googleTranslate } from '@/utils/translate/googleTranslate'
 import { FC, useState } from 'react'
 import { Link } from 'react-router-dom'
@@ -170,32 +171,34 @@ export const TextSelectionTranslate: FC<{ translateInput?: string }> = ({ transl
   }
   const { data, error } = useSWRImmutable(`/api/translate/${normalizedInput}`, fetcher)
   // const result = data[0]?.map(i => i?.[0]).join()
-  console.log(data)
   let result = ''
   if (data) {
     result = (data[0].map(n => n[0]) as string[]).join('')
-    console.log(result)
   }
   return (
-    <Content flex column style={{ maxHeight: 600, overflow: 'auto', minWidth: 400, maxWidth: 800 }}>
-      <Content className={styles.subtitle} flex alignItems="center" justifyContent="flex-start">
-        Provided By Google Translate
+    <Content flex gap={15} style={{ maxHeight: 600, overflow: 'auto', minWidth: 600, maxWidth: 800, color: 'black' }}>
+      <Content flex column style={{ flex: '1 0 40%' }}>
+        <Content className={ClassName.description('13px')} flex alignItems="center" justifyContent="flex-start">
+          Original Text
+        </Content>
+        <Content flex>
+          <div style={{ fontSize: 12 }}>{translateInput}</div>
+        </Content>
       </Content>
-      <Content flex>
-        <div className={styles.longText}>{translateInput}</div>
-      </Content>
-      <Content flex className={styles.translateDivider}>
-        TranslateResult
-      </Content>
-      <Content flex>
-        {data ? (
-          // <div className={styles.extract}>{data.data.trans.paragraphs[0]}</div>
-          <div className={styles.extract}>{result}</div>
-        ) : error ? (
-          <div>Some errors happened</div>
-        ) : (
-          <div>loading</div>
-        )}
+      <Content flex column>
+        <Content flex className={ClassName.description('13px')}>
+          Translate Result
+        </Content>
+        <Content flex>
+          {data ? (
+            // <div className={styles.extract}>{data.data.trans.paragraphs[0]}</div>
+            <div>{result}</div>
+          ) : error ? (
+            <div>Some errors happened</div>
+          ) : (
+            <div>loading</div>
+          )}
+        </Content>
       </Content>
     </Content>
   )

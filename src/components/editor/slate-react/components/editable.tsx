@@ -56,7 +56,7 @@ import {
 import { RestoreDOM } from './restore-dom/restore-dom'
 import { useAndroidInputManager } from '../hooks/android-input-manager/use-android-input-manager'
 import { useTrackUserInput } from '../hooks/use-track-user-input'
-import { useVirtualizer } from '@tanstack/react-virtual'
+import { measureElement, useVirtualizer } from '@tanstack/react-virtual'
 import { useMemoizedFn } from '@/hooks'
 
 type DeferredOperation = () => void
@@ -159,7 +159,21 @@ export const Editable = (props: EditableProps) => {
     getScrollElement: () => scrollElement?.current || document.body,
     overscan: 20,
     paddingEnd: readOnly ? 0 : 300,
-    scrollPaddingEnd: 400
+    scrollPaddingEnd: 400,
+    measureElement: (ele, entry, instance) => {
+      const getSize = () => ele.getBoundingClientRect().height
+      const item = instance.measurementsCache[instance.indexFromElement(ele)]
+      if (entry) {
+        if (entry.contentRect.height === 0 && entry.contentRect.width === 0) {
+          return item ? item.size : 0
+        } else {
+          if (entry.contentRect.height !== item.size) {
+            return entry.contentRect.height
+          }
+        }
+      }
+      return item ? item.size : getSize()
+    }
   })
 
   const scrollTo = useMemoizedFn(idx => {

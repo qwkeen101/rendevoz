@@ -45,10 +45,8 @@ const useGraphOverlay = () => {
           visible={!!overlayState.visible}
           content={<WithBorder>{renderContent()}</WithBorder>}
           onClickOutside={e => {
-            console.log('click outside', e)
             setTimeout(() => {
               if (!e.defaultPrevented) {
-                console.log('set valsse')
                 setOverlayState({ ...overlayState, visible: false })
               }
             }, 50)

@@ -26,7 +26,7 @@ const useMousePosition = () => {
     []
   )
 
-  useEventListener('mousemove', updateMousePositionRef)
+  useEventListener('pointermove', updateMousePositionRef)
 
   return mousePosition
 }
@@ -48,8 +48,8 @@ export const useMousePositionWithRef = (ref: RefObject<Element>) => {
         const { left, top, width: elW, height: elH } = ref.current.getBoundingClientRect()
         const posX = left + window.pageXOffset
         const posY = top + window.pageYOffset
-        const elX = event.pageX - posX
-        const elY = event.pageY - posY
+        const elX = event.clientX - left
+        const elY = event.clientY - top
 
         state.current = {
           docX: event.pageX,

@@ -1,16 +1,14 @@
-import { GlobalScope } from '@/jotai/jotaiScope'
 import useDb from '@/hooks/stores/useDb'
-import { atom, useAtomValue } from 'jotai'
+import { atom } from 'jotai'
 import { orderBy } from 'lodash'
-import { useMemo } from 'react'
 import { ICollection, ICollectionItem } from '~/typings/data'
 import BaseStore, { initializeLocalStore } from './base.store'
 import produce from 'immer'
-import { useMemoizedFn } from '@/hooks'
 import { IStore } from './store.type'
 import { toast } from 'react-hot-toast'
-import { globalStore } from './stores'
-import { useSetting } from '@/components/globalSetting/Main'
+import { globalStore } from '.'
+import getSetting from '@/components/globalSetting/getSetting'
+import useWhiteboardStore from './whiteboard.store'
 
 const { orderedData } = BaseStore
 
@@ -29,46 +27,108 @@ export const rootCollectionsAtom = atom(get =>
 )
 const useCollectionStore = () => {
   const database = useDb('collections')
-  const { get, update } = BaseStore
-  const [setting] = useSetting()
-  const all = useAtomValue(undeletedCollectionsAtom, GlobalScope)
-  const shouldToast = setting.notification.enabled && setting.notification.collection
+  const { getWhiteboardById, updateWhiteboard } = useWhiteboardStore()
+  const shouldToast = (silent?: boolean) => {
+    const setting = getSetting()
+    if (setting.notification.enabled && setting.notification.collection && !silent) {
+      return true
+    } else {
+      return false
+    }
+  }
   const store = initializeLocalStore<ICollection>(collectionsAtom, database)
   const localStore: Pick<IStore<ICollection>, 'addOne' | 'deleteOneById' | 'getAll' | 'getOneById' | 'updateOne'> = {
     addOne: store.addOne((obj, silent) => {
-      !silent && shouldToast && toast.success('Collection successfully added!')
+      !silent && shouldToast(silent) && toast.success('Collection successfully added!')
     }),
     updateOne: store.updateOne((obj, silent) => {
-      !silent && shouldToast && toast.success('Collection successfully updated!')
+      !silent && shouldToast(silent) && toast.success('Collection successfully updated!')
     }),
     deleteOneById: store.deleteOneById(silent => {
-      !silent && shouldToast && toast.success('Collection successfully deleted!')
+      !silent && shouldToast(silent) && toast.success('Collection successfully deleted!')
     }),
     getAll: store.getAll(),
     getOneById: store.getOneById()
   }
   const realStore = {
-    addCollection: useMemoizedFn(localStore.addOne),
-    deleteCollection: useMemoizedFn(localStore.deleteOneById),
-    updateCollection: useMemoizedFn(localStore.updateOne),
-    getAllCollections: useMemoizedFn(localStore.getAll),
-    getCollectionById: useMemoizedFn(localStore.getOneById)
-  }
-  const getChildrenCollections = (rootId?: number) => {
-    return orderBy(
-      all.filter(i => i.parentId === (rootId || 0)),
-      'updatedAt',
-      'desc'
-    )
+    addCollection: localStore.addOne,
+    deleteCollection: localStore.deleteOneById,
+    updateCollection: localStore.updateOne,
+    getAllCollections: localStore.getAll,
+    getCollectionById: localStore.getOneById
   }
 
-  const addItemToCollection = useMemoizedFn((item: ICollectionItem, collectionId: number) => {
+  const addItemToCollection = (item: ICollectionItem, collectionId: number) => {
     const origin = structuredClone(globalStore.get(collectionsAtom).get(collectionId)) as ICollection
     origin.items = origin.items || []
     origin.items.push(item)
     realStore.updateCollection(origin, true)
-  })
+  }
 
+  const moveItems = async (options: {
+    sourceFromId: number
+    sourceFromType: 'whiteboard' | 'collection'
+    sourceIsRoot: boolean
+    targetToId: number
+    targetToType: 'whiteboard' | 'collection'
+    targetIsRoot: boolean
+    item: ICollectionItem
+  }) => {
+    const { sourceFromId, sourceFromType, sourceIsRoot, targetIsRoot, targetToId, targetToType, item } = options
+    const { id: itemId, type: itemType } = item
+    if (!itemId || !itemType || sourceFromId === targetToId || (sourceIsRoot && targetIsRoot)) return
+    if (targetToType === 'whiteboard') {
+      toast.error('You can not move items into whiteboard!')
+      return
+    }
+    // move source level collection to somewhere else
+    let target
+    if (targetToType === 'collection') {
+      if (!targetIsRoot) {
+        target = (await realStore.getCollectionById(targetToId)) as ICollection
+        const newTarget = produce(target, draft => {
+          draft.items = draft.items || []
+          !draft.items.some(i => i.id === item.id) && draft.items.push(item)
+        })
+        realStore.updateCollection(newTarget)
+      }
+      if (itemType === 'collection') {
+        const movingCollection = await realStore.getCollectionById(itemId)
+        if (!movingCollection) return
+        const newMovingCollection = produce(movingCollection, draft => {
+          draft.parentId = targetIsRoot ? 0 : targetToId
+        })
+        realStore.updateCollection(newMovingCollection)
+      }
+    }
+
+    if (sourceIsRoot && itemType === 'collection' && targetToType === 'collection') {
+      realStore.updateCollection(
+        {
+          id: itemId,
+          parentId: targetToId
+        },
+        true
+      )
+      return
+    }
+    if (sourceFromType === 'collection') {
+      const sourceCollection = await getCollectionById(sourceFromId)
+      if (!sourceCollection) return
+      const newSource = produce(sourceCollection, draft => {
+        draft.items = draft.items?.filter(i => i.id !== itemId)
+      })
+      realStore.updateCollection(newSource, true)
+    }
+    if (sourceFromType === 'whiteboard') {
+      const sourceWhiteboard = await getWhiteboardById(sourceFromId)
+      if (!sourceWhiteboard) return
+      const newSourceWhiteboard = produce(sourceWhiteboard, draft => {
+        draft.items = draft.items?.filter(i => i.id !== item.id)
+      })
+      updateWhiteboard(newSourceWhiteboard, true)
+    }
+  }
   const moveItemBetweenCollections = async (item: ICollectionItem, sourceCollectionId: number, targetCollectionId: number) => {
     const sourceIsRoot = sourceCollectionId === 1
     const targetIsRoot = targetCollectionId === 1
@@ -114,6 +174,7 @@ const useCollectionStore = () => {
       realStore.updateCollection(newTarget)
     }
   }
+
   const getCollectionById = (collectionId: number): Promise<ICollection> => {
     const collection = globalStore.get(collectionsAtom).get(collectionId)
     if (collection) return Promise.resolve(collection)
@@ -128,7 +189,9 @@ const useCollectionStore = () => {
       })
     })
   }
-  const findParentCollections = (collection: ICollection) => {
+  const findParentCollections = async (collectionId: number) => {
+    const collection = await realStore.getCollectionById(collectionId)
+    if (!collection) return
     let innerCollection = collection
     const parentCollectionsList = [collection]
     while (innerCollection?.parentId !== 0) {
@@ -142,58 +205,16 @@ const useCollectionStore = () => {
     }
     return parentCollectionsList
   }
-  const findSubCollections = (collection: ICollection) => {
-    const subCollectionsList = []
-    const find = (collection: ICollection, list: any[]) => {
-      all
-        .filter(i => i.parentId === collection.id)
-        .map(i => {
-          if (list) {
-            list.push(i)
-            find(i, list)
-          }
-        })
-    }
-    find(collection, subCollectionsList)
-    return subCollectionsList
-  }
 
-  const renameCollection = (collectionId: number, newName: string) => {
-    const targetCollection = get(collectionId, collections)
-    if (targetCollection) {
-      const newCollection = { ...targetCollection, name: newName }
-      setCollections(update(newCollection, collections))
-      database.put(newCollection)
-    }
+  return {
+    findParentCollections,
+    addItemToCollection,
+    moveItemBetweenCollections,
+    moveItems,
+    ...realStore
   }
-  const updateCollections = (...newCollections: ICollection[]) => {
-    // keep updated value
-    let originCollections = collections
-    newCollections.forEach(c => {
-      const originCollection = get(c.id, originCollections)
-      const updatedCollection = {
-        ...originCollection,
-        ...c
-      }
-      originCollections = update(updatedCollection, originCollections)
-      database.put(updatedCollection)
-    })
-    setCollections(originCollections)
-  }
-  return useMemo(
-    () => ({
-      all,
-      findParentCollections,
-      getChildrenCollections,
-      addItemToCollection,
-      findSubCollections,
-      renameCollection,
-      updateCollections,
-      moveItemBetweenCollections,
-      ...realStore
-    }),
-    []
-  )
 }
+
+export const collectionStore = useCollectionStore()
 
 export default useCollectionStore

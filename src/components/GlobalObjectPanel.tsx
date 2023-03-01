@@ -1,14 +1,11 @@
 import Zindexes from '@/consts/zindex'
 import { useMemoizedFn, useMergedRef, useToggle } from '@/hooks'
-import useMetaStore, { metaObjectsAtom, undeletedMetaObjectsAtom, useMetaTargetObject } from '@/stores/meta.store'
-import { globalStore } from '@/stores/stores'
+import { undeletedMetaObjectsAtom } from '@/stores/meta.store'
+import { globalStore, metaStore } from '@/stores'
 import ClassName from '@/styles/classNames'
 import { Position } from '@/types'
 import { css } from '@emotion/css'
 import { useVirtualizer } from '@tanstack/react-virtual'
-import fuzzysort from 'fuzzysort'
-import produce from 'immer'
-import isHotkey, { compareHotkey } from 'is-hotkey'
 import { useAtom, useAtomValue } from 'jotai/react'
 import { forwardRef, memo, useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
@@ -19,9 +16,11 @@ import Modal from './base/Modal'
 import EditMetaObjectForm, { Tag } from './form/EditMetaObjectForm'
 import { GlobalDragOverlayInstance, useGlobalIsDragging } from './globalDragOverlay/GlobalDragOverlay'
 import { useSetting } from './globalSetting/Main'
-import { ObjectActionPopover, typeToTypeRecord } from './knowledgeDatabase/card/DatabaseCard'
-import DatabaseFilter from './knowledgeDatabase/filter'
-import useObjectFilter, { FilterNameSearchAtom } from './knowledgeDatabase/filter/useObjectFilter'
+import { ObjectActionPopover, TypeToTypeName } from './database/card/DatabaseCard'
+import DatabaseFilter from './database/filter'
+import useObjectFilter, { FilterNameSearchAtom } from './database/filter/useObjectFilter'
+import { compareHotkey } from 'is-hotkey'
+import { useNavigate } from 'react-router-dom'
 
 const GlobalObjectPanel = () => {
   const [search, setSearch] = useAtom(FilterNameSearchAtom)
@@ -98,7 +97,7 @@ const GlobalObjectPanel = () => {
         width: '100%',
         height: '100%',
         overflow: 'hidden',
-        zIndex: Zindexes.Tooltip,
+        zIndex: Zindexes.CreateObjectPanel,
         pointerEvents: 'none'
       }}
     >
@@ -287,8 +286,8 @@ const SimpleObject = memo(
       const isPressed = useRef(false)
       const [popoverVisible, togglePopoverVisible] = useToggle(false)
       const [editVisible, toggleEditVisible] = useToggle(false)
-      useMetaTargetObject(metaObject.id)
-      const { updateMetaObject } = useMetaStore()
+      // const navigate = useNavigate()
+      const { updateMetaObject } = metaStore
       const handleDragStart = () => {
         const container = containerRef.current
         if (container) {
@@ -312,6 +311,13 @@ const SimpleObject = memo(
       const handleDragEnd = () => {
         isPressed.current = false
       }
+      // const handleTitleClick = () => {
+      //   switch (metaObject.type) {
+      //     case 'pdf': {
+      //       navigate(`/pdf/${metaObject.objectId}`)
+      //     }
+      //   }
+      // }
       const iconRef = useRef<HTMLDivElement>(null)
 
       useEffect(() => {
@@ -341,7 +347,7 @@ const SimpleObject = memo(
             visible={popoverVisible}
             innerRef={iconRef}
             padding={10}
-            containerStyle={{ zIndex: String(Zindexes.Tooltip) }}
+            containerStyle={{ zIndex: String(Zindexes.ToolBar) }}
             onClickOutside={togglePopoverVisible}
             content={
               <WithBorder>
@@ -378,7 +384,7 @@ const SimpleObject = memo(
                 }
               })}
             >
-              <div className={ClassName.objectTag}>{typeToTypeRecord[type || 'normal']}</div>
+              <div className={ClassName.objectTag}>{TypeToTypeName[type || 'normal']}</div>
               {tags?.map(i => (
                 <Tag small hideDetails hideSize tag={i} />
               ))}

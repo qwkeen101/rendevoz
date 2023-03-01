@@ -9,7 +9,6 @@ import { CustomEditor, CustomElement } from './types'
 import Divider from './Divider'
 import Emoji from './elements/Emoji'
 import { BookHighlight, Block, Heading, Paragraph } from './elements'
-import { Spacer } from './elements/Spacer'
 import SubPage from './elements/subPage'
 import Thought from './elements/thought'
 import styles from './index.module.less'
@@ -19,17 +18,17 @@ import MetaObject from './elements/meta'
 import Image from './elements/image'
 import ToDo from './elements/todo'
 import Id from '@/utils/id'
-import useMetaStore from '@/stores/meta.store'
 import { CustomTransforms } from './utils/transform'
 import { InlineElements } from './consts/elements'
 import Media from './elements/media'
 import { KEY } from '@/consts/key'
 import { ID_TO_ELEMENTS_MAP, ID_TO_PATH_MAP, SELECTED_BLOCKS_MAP, SELECTED_ID_TO_ELEMENTS_SET } from './weakMaps'
 import moveMultiElements from './utils/moveMultiElements'
-import useEventEmitter from '@/events/useEventEmitter'
+import useScopedEventEmitter, { useGlobalEventEmitter } from '@/events/useEventEmitter'
 import { EditorEventHandler } from '@/events/editorEvent'
 import { EditableProps } from './slate-react/components/editable'
 import { css } from '@emotion/css'
+import { metaStore } from '@/stores'
 
 type InnerEditorProps = {
   editor: CustomEditor
@@ -39,26 +38,16 @@ type InnerEditorProps = {
   onBlockMouseEnter: (e: MouseEvent, element: CustomElement) => void
   onBlockMouseLeave: (e: MouseEvent, element: CustomElement) => void
   onBlockMouseMove?: (e: MouseEvent, element: CustomElement) => void
-  onNestedListItem: (isNested: boolean) => void
   readonly?: boolean
 }
 const InnerEditor: FC<InnerEditorProps> = memo(
-  ({
-    editor,
-    defaultValue,
-    onBlockMouseEnter,
-    onBlockMouseLeave,
-    onBlockMouseMove,
-    onChange,
-    onNestedListItem,
-    scrollElementRef,
-    readonly
-  }) => {
+  ({ editor, defaultValue, onBlockMouseEnter, onBlockMouseLeave, onBlockMouseMove, onChange, scrollElementRef, readonly }) => {
     const scrollElement = scrollElementRef?.current
     const renderInnerElement = useCallback((props: RenderElementProps) => <Element {...props} />, [])
     const renderLeaf = useCallback((props: RenderLeafProps) => <Leaf {...props} />, [])
     const editableRef = useRef<EditableProps['innerRef']>()
-    const emitter = useEventEmitter()
+    const emitter = useGlobalEventEmitter()
+    const scopedEmitter = useScopedEventEmitter()
     const editorEventHandler = new EditorEventHandler()
     const previousValue = useRef<Descendant[]>()
     editorEventHandler.on('jumpToBlock', data => {
@@ -71,7 +60,6 @@ const InnerEditor: FC<InnerEditorProps> = memo(
             break
           }
         }
-        console.log(entry)
         if (entry) {
           const idx = entry[1][0]
           if (idx !== undefined) {
@@ -99,7 +87,7 @@ const InnerEditor: FC<InnerEditorProps> = memo(
         emitter.removeListener('editor', editorEventHandler)
       }
     }, [])
-    const { addMetaObject, addMetaLink, getMetaObjectByObjectId } = useMetaStore()
+    const { addMetaObject, addMetaLink, getMetaObjectByObjectId } = metaStore
     editor.innerRef = editableRef
     const handleChange = useMemoizedFn((value: Descendant[]) => {
       onChange?.(value)
@@ -169,7 +157,6 @@ const InnerEditor: FC<InnerEditorProps> = memo(
               onMouseEnter={onBlockMouseEnter}
               onMouseLeave={onBlockMouseLeave}
               onMouseMove={onBlockMouseMove}
-              onNestedListItem={onNestedListItem}
               attributes={attributes}
               type={element.type}
               scrollElementRef={scrollElementRef}
@@ -388,9 +375,10 @@ const InnerEditor: FC<InnerEditorProps> = memo(
           suppressContentEditableWarning={true}
           spellCheck="false"
           onCompositionStart={() => {
-            if (Positions.isEndSpacer(editor) || Positions.isStartSpacer(editor)) {
-              editor.insertBreak()
-            }
+            scopedEmitter.emit('editor', { type: 'compositionStart' })
+          }}
+          onCompositionEnd={() => {
+            scopedEmitter.emit('editor', { type: 'compositionEnd' })
           }}
           onCopy={() => {
             editor.currentCopyElement = undefined
@@ -490,7 +478,7 @@ export const Element = (props: RenderElementProps) => {
               target="_blank"
               onClick={() => {
                 if (navigator.userAgent.indexOf('Electron') >= 0) {
-                  window.open('https://www.baidu.com')
+                  window.open(element.url)
                 }
               }}
               href={element.url}

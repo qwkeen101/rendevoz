@@ -1,24 +1,19 @@
 import { Content } from '@/components'
-import { EditorV1 } from '@/components/editor/Editor'
-import { EditorScope } from '@/jotai/jotaiScope'
-import { Provider } from 'jotai'
-import { FC, useEffect } from 'react'
+import { Editor } from '@/components/editor/Editor'
+import { CustomEditor } from '@/components/editor/types'
+import TabTitle from '@/components/layout/TabTitle'
+import { FC, useState } from 'react'
 
 const EditorPage: FC<{
   noteId: number
   id: string
-}> = ({ noteId, id }) => {
-  useEffect(() => {
-    console.log('mount editor')
-    return () => {
-      console.log('unmount editor')
-    }
-  }, [])
+  onEditorInitialized?: (editor: CustomEditor) => void
+}> = ({ noteId, id, onEditorInitialized }) => {
+  const [title, setTitle] = useState('Untitled')
   return (
     <Content fullHeight fullWidth flex centered>
-      <Provider scope={EditorScope}>
-        <EditorV1 id={id} noteId={noteId} />
-      </Provider>
+      <TabTitle title={title} />
+      <Editor id={id} noteId={noteId} onTitleChange={e => setTitle(e)} onEditorInitialized={onEditorInitialized} />
     </Content>
   )
 }

@@ -1,13 +1,7 @@
 import { RefObject, useEffect, useState } from 'react'
 import { useIsomorphicLayoutEffect } from './use-isomorphic-layout-effect'
-import { isDOMElement } from '../utils/dom'
-import { ReactEditor } from '../plugin/react-editor'
 
-export function useMutationObserver(
-  node: RefObject<HTMLElement>,
-  callback: MutationCallback,
-  options: MutationObserverInit
-) {
+export function useMutationObserver(node: RefObject<HTMLElement>, callback: MutationCallback, options: MutationObserverInit) {
   const [mutationObserver] = useState(() => new MutationObserver(callback))
 
   useIsomorphicLayoutEffect(() => {

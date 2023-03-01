@@ -13,10 +13,13 @@ const IconNode = ({ node, label }: { node: GraphNode; label?: string }) => {
         return 'park-align-text-left'
       case 'noteElement':
         return 'park-text-style-one'
+      case 'whiteboard':
+        return 'park-new-computer'
       default:
-        return 'park-notes'
+        return 'park-bookmark-one'
     }
   }
+
   const radius = TypeToNodeRadius[node.type || 'normal']
   const d = radius * 2
   return (
@@ -30,8 +33,7 @@ const IconNode = ({ node, label }: { node: GraphNode; label?: string }) => {
             display: 'flex',
             alignItems: 'center',
             borderRadius: 10,
-            justifyContent: 'center',
-            boxShadow: ' rgba(149, 157, 165, 0.2) 0px 8px 24px'
+            justifyContent: 'center'
           }}
         >
           <Icon fill="#393E46" size={d - 20} name={getIcon()} />

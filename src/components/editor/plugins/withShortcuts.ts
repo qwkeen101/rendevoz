@@ -20,7 +20,6 @@ const withShortcut = (editor: CustomEditor) => {
 
       if (type) {
         if (type === 'meta-object') {
-          console.log('type ==asd sda')
           handler?.({ type: 'addMetaObject' })
           insertText(text)
           return
@@ -33,6 +32,11 @@ const withShortcut = (editor: CustomEditor) => {
         }
         Transforms.setNodes<SlateElement>(editor, newProperties, {
           match: n => Editor.isBlock(editor, n)
+        })
+        const end = Editor.end(editor, path)
+        console.log(end)
+        setTimeout(() => {
+          Transforms.select(editor, end)
         })
         return
       }

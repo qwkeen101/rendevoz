@@ -1,4 +1,4 @@
-import { FC, memo, MouseEventHandler, useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { FC, memo, MouseEventHandler, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { GraphEdge } from '../types/edge'
 import { line } from 'd3-shape'
 import { getMarkerId } from '../utils/getMarkerId'
@@ -9,6 +9,9 @@ import { select } from 'd3'
 import { useMemoizedFn, usePrevious } from '@/hooks'
 import { TypeToNodeRadius } from './node/Node'
 import { NodeFakeHiddenOpacity } from '../consts/opacity'
+import { selectAtom } from 'jotai/utils'
+import { oppositeEdgesMapAtom } from '../hooks/useEdges'
+import { useAtomValue, useStore } from 'jotai'
 interface EdgeProps {
   edge: GraphEdge
 }
@@ -18,7 +21,8 @@ const Edge: FC<EdgeProps> = memo(({ edge }) => {
   const labelRef = useRef<SVGGElement>(null)
   const graph = useGraph()
 
-  const oppositeEdge = graph?.oppositeEdgesMap.get(edge.id)
+  const store = useStore()
+
   const [finalPosition, setFinalPosition] = useState<{
     targetx: number
     targety: number
@@ -58,14 +62,11 @@ const Edge: FC<EdgeProps> = memo(({ edge }) => {
     }
   }, [edge])
   useEffect(() => {
-    if (!d) {
-      drawEdge()
-    }
-    if (textRef.current) {
+    if (textRef.current && graph) {
       const textBound = textRef.current?.getBoundingClientRect()
-      textBound && setRect({ width: textBound?.width, height: textBound?.height })
+      textBound && setRect({ width: textBound?.width / graph.transformScale, height: textBound?.height / graph.transformScale })
     }
-  }, [d, edge.label])
+  }, [edge.label, finalPosition])
 
   const drawEdge = useMemoizedFn((): string => {
     const targetNode = graph?.nodesMap?.get(edge.targetId)
@@ -74,7 +75,7 @@ const Edge: FC<EdgeProps> = memo(({ edge }) => {
     const sourceNode = graph?.nodesMap?.get(edge.sourceId)
     const sourceX = sourceNode?.x
     const sourceY = sourceNode?.y
-    console.log('drawing edge')
+
     const TARGET_CIRCLE_RADIUS = TypeToNodeRadius[targetNode?.type || 'normal']
     const SOURCE_CIRCLE_RADIUS = TypeToNodeRadius[sourceNode?.type || 'normal']
     const getYOffset = (type?: string) => {
@@ -107,8 +108,7 @@ const Edge: FC<EdgeProps> = memo(({ edge }) => {
     // // check out whether double direction link
     let offsetX = 0
     let offsetY = 0
-
-    if (oppositeEdge) {
+    if (store.get(oppositeEdgesMapAtom).has(edge.id)) {
       // 直线的倾斜角
       const alpha = Math.atan2(targetCircleCenterY - sourceCircleCenterY, targetCircleCenterX - sourceCircleCenterX)
       offsetX = 8 * Math.sin(alpha)
@@ -203,8 +203,10 @@ const Edge: FC<EdgeProps> = memo(({ edge }) => {
             initial={{ opacity: 1 }}
             animate={{ opacity: edge.opacity }}
             x={-5}
-            rx={2}
-            ry={2}
+            ry={3}
+            stroke={edge.highlight || highlight ? edge.color || MarkerColor.EMPHASIS : edge.color || MarkerColor.NORMAL}
+            rx={3}
+            strokeWidth={2}
           ></motion.rect>
           <motion.text
             fontSize={15}

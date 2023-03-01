@@ -1,6 +1,6 @@
 import { Content, Panel, Icon } from '@/components'
 import { PrettyInput } from '@/components/custom/input/pretty'
-import useEventEmitter from '@/events/useEventEmitter'
+import useScopedEventEmitter from '@/events/useEventEmitter'
 import { useToggle } from '@/hooks'
 import classNames from 'classnames'
 import produce from 'immer'
@@ -10,7 +10,7 @@ import { ThoughtElement } from '../../types/outerElementTypes'
 import styles from './index.module.less'
 
 const Thought: FC<RenderElementProps> = ({ children, element, attributes }) => {
-  const emitter = useEventEmitter()
+  const emitter = useScopedEventEmitter()
   const thoughtElement = element as ThoughtElement
   const handleContentChange = useCallback((value: string) => {
     const newElement = produce(thoughtElement, d => {

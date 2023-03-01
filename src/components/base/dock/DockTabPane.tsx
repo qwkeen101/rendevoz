@@ -14,11 +14,12 @@ interface DockTabPaneProps {
 }
 const variants = {
   hidden: {
-    visibility: 'hidden',
-    pointerEvents: 'none',
-    zIndex: -1,
-    position: 'absolute',
-    opacity: 0
+    // visibility: 'hidden',
+    // pointerEvents: 'none',
+    // zIndex: -1,
+    // position: 'absolute',
+    opacity: 0,
+    display: 'none'
   },
   visible: {
     opacity: 1

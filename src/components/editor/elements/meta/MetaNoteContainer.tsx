@@ -1,11 +1,11 @@
 import { Content } from '@/components/base'
-import useNoteStore from '@/stores/note.store'
+import createNoteStore from '@/stores/note.store'
 import { useState, useEffect } from 'react'
 import { MetaKnowledgeObject, INote } from '~/typings/data'
 import MetaNoteItem from './MetaNoteItem'
 
 const MetaNoteContainer = ({ obj, onNoteClick }: { obj?: MetaKnowledgeObject; onNoteClick?: React.MouseEventHandler }) => {
-  const { getNotesByIds } = useNoteStore()
+  const { getNotesByIds } = createNoteStore()
   const [notes, setNotes] = useState<INote[]>([])
   useEffect(() => {
     getNotesByIds(obj?.noteIds || []).then(data => {

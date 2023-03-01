@@ -14,6 +14,8 @@ export interface IPdfDocument extends IBase {
   deletedAt?: number
   starred?: boolean
   fileUrl?: string
+  color?: string
+  icon?: string
 }
 export type CustomLabel = IHighlightLabel | IThoughtLabel
 export interface PdfNoteData {

@@ -8,6 +8,7 @@ import { GraphOverlayManager } from './components/overlay/useGraphOverlay'
 import { TypeToNodeRadius } from './components/node/Node'
 import { SetStateAction } from 'react'
 import produce from 'immer'
+import createPanZoom, { PanZoom } from 'panzoom'
 
 class D3GraphManager {
   private container: d3.Selection<HTMLElement, unknown, null, any> | null = null
@@ -22,6 +23,9 @@ class D3GraphManager {
   public edgesMap: Map<number, GraphEdge> | null = null
   public setNodes?: (update: SetStateAction<GraphNode[] | null>) => void
   private linkStartPoint = null
+  public zoom?: d3.ZoomBehavior<Element, unknown>
+  public panzoom?: PanZoom
+  public centerNodeId?: number
   // edge to edge map
   public oppositeEdgesMap = new Map<number, GraphEdge>()
   public isAddingEdge = false
@@ -29,6 +33,7 @@ class D3GraphManager {
   private changeHandlerSet: Set<(nodes: GraphNode[], edges: GraphEdge[]) => void> = new Set()
   private zoomHandlerSet: Set<(transform: any) => void> = new Set()
   public overlayManager?: GraphOverlayManager
+  public transformScale = 1
   private ID_TO_NODE_ELEMENT_MAP = new Map<number, SVGElement>()
   private ID_TO_EDGE_ELEMENT_MAP = new Map<number, SVGElement>()
   private ID_TO_EDGE_LABEL_ELEMENT_MAP = new Map<number, SVGElement>()
@@ -59,8 +64,19 @@ class D3GraphManager {
   // outer container
   public registerContainer = (container: HTMLElement) => {
     this.container = d3.select(container)
-    const zoom = d3.zoom().scaleExtent([0.1, 5]).on('zoom', this.zoomed)
-    this.container?.call(zoom).on('dblclick.zoom', null)
+    const panzoom = createPanZoom(container, {
+      maxZoom: 5,
+      minZoom: 0.1,
+      smoothScroll: false
+    })
+    this.panzoom = panzoom
+    this.panzoom.on('zoom', e => {
+      const transform =  this.panzoom?.getTransform()
+      this.transformScale = transform?.scale
+    })
+    // const zoom = d3.zoom().scaleExtent([0.1, 5]).on('zoom', this.zoomed)
+    // this.zoom = zoom
+    // this.container?.call(zoom).on('dblclick.zoom', null)
     this.container?.on('mousemove', this.globalMousemoveHandler)
     this.container.selectChild('#viewport').on('click', this.globalClickHandler)
   }
@@ -116,6 +132,7 @@ class D3GraphManager {
   public updateLayout = (reheat?: boolean, reinitialize?: boolean) => {
     this.simulateLayout(reheat, reinitialize)
   }
+  public moved = false
   private simulateLayout = (reheat?: boolean, reinitialize?: boolean) => {
     if (this.originNodes?.length === 0 || !this.originNodes) return
 
@@ -159,8 +176,17 @@ class D3GraphManager {
         .tick(300)
         .on('tick', this.ticked)
         .on('end', () => {
-          this.ID_TO_EDGE_LABEL_ELEMENT_MAP.forEach(i => i.removeAttribute('opacity'))
-          this.ID_TO_EDGE_FUNCTION_MAP.forEach(i => i.drawEdge())
+          setTimeout(() => {
+            this.ID_TO_EDGE_FUNCTION_MAP.forEach(i => i.drawEdge())
+            this.ID_TO_EDGE_LABEL_ELEMENT_MAP.forEach(i => i.removeAttribute('opacity'))
+          }, 50)
+          if (this.centerNodeId && !this.moved) {
+            const node = this.nodesMap?.get(this.centerNodeId)
+            const bound = this.container?.node()?.getBoundingClientRect()
+            node && this.panzoom?.moveTo(-node.x + bound?.width / 2, -node.y + bound?.height / 2)
+            this.moved = true
+          }
+
           this.setNodes?.(nodes =>
             produce(nodes, draft => {
               draft?.forEach(n => {

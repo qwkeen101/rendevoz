@@ -1,5 +1,4 @@
 import { atom, useAtom } from 'jotai'
-import { PdfViewInnerScope } from '../Provider'
 import { Point } from '../types'
 
 const isSelectingTextAtom = atom<{
@@ -17,6 +16,6 @@ const isSelectingTextAtom = atom<{
   emptyAll: 0
 })
 
-const useSelectingText = () => useAtom(isSelectingTextAtom, PdfViewInnerScope)
+const useSelectingText = () => useAtom(isSelectingTextAtom)
 
 export default useSelectingText

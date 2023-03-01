@@ -1,18 +1,15 @@
 import EventEmitter from '@/events/eventEmitter'
 import Id from '@/utils/id'
-import { MouseEvent } from 'react'
-import { Editor, Node, Path, Transforms } from 'slate'
-import { ReactEditor } from 'slate-react'
+import { Path, Transforms } from 'slate'
 import { getElementId } from '../dragReposition/utils/element'
 import { getDistanceBetweenPointAndElement } from '../dragReposition/utils/position'
-import { AvaliableGlobalDraggingElements, GlobalDragOverlayInstance } from '../globalDragOverlay/GlobalDragOverlay'
+import { GlobalDragOverlayInstance } from '../globalDragOverlay/GlobalDragOverlay'
 import { CustomEditor, CustomElement } from './types'
 import { searchBlock } from './utils/algorithm'
-import moveMultiElements from './utils/moveMultiElements'
 import moveSingleElement from './utils/moveSingleElement'
 import rebuildDragSelect from './utils/rebuildDragSelect'
 import { getDistanceBetweenPointAndScrollableElement } from './utils/scroll'
-import { ElementFunctions, ID_TO_ELEMENTS_MAP, ID_TO_PATH_MAP, SELECTED_BLOCKS_MAP } from './weakMaps'
+import { ID_TO_ELEMENTS_MAP, ID_TO_PATH_MAP, SELECTED_BLOCKS_MAP } from './weakMaps'
 
 type Indicator = {
   direction: 'top' | 'left' | 'bottom' | 'right'
@@ -362,11 +359,8 @@ class DragManager {
           }
           case 'metaElement': {
             draggingEle.metaId &&
-              (ele = {
-                ...ele,
-                type: 'metaObject',
-                originId: draggingEle.metaId,
-                children: [{ text: '' }]
+              (needFurtherProcess = {
+                objectId: draggingEle.metaId
               })
             break
           }

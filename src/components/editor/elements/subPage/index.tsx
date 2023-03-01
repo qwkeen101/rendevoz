@@ -1,7 +1,6 @@
 import { Content } from '@/components/base'
 import Icon from '@/components/base/Icon'
-import useEventEmitter from '@/events/useEventEmitter'
-import useNoteStore from '@/stores/note.store'
+import createNoteStore from '@/stores/note.store'
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { RenderElementProps } from 'slate-react'
@@ -11,7 +10,7 @@ import styles from './index.module.less'
 
 const SubPage = ({ children, attributes, element }: RenderElementProps) => {
   const ele = element as SubPageElement
-  const { getNoteById } = useNoteStore()
+  const { getNoteById } = createNoteStore()
   const [subPageNote, setSubPageNote] = useState<INote>()
   const navigate = useNavigate()
   useEffect(() => {

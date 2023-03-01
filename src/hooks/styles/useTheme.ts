@@ -1,5 +1,5 @@
-import { GlobalScope } from '@/jotai/jotaiScope'
-import { atom, useAtomValue, useSetAtom } from 'jotai'
+import { useGlobalAtomValue, useGlobalSetAtom } from '@/jotai/jotaiScope'
+import { atom } from 'jotai'
 import { atomFamily } from 'jotai/utils'
 
 const defaultTheme = {
@@ -24,7 +24,7 @@ type RemoveArrayRepeats<T extends readonly any[]> = {
 export function useTheme<T extends Theme[]>(...themes: RemoveArrayRepeats<T> & T) {
   const theme: Partial<typeof defaultTheme> = {}
   themes.map(key => {
-    const value = useAtomValue(themeAtomFamily(key), GlobalScope)
+    const value = useGlobalAtomValue(themeAtomFamily(key))
     theme[key] = value
   })
   return theme
@@ -32,5 +32,5 @@ export function useTheme<T extends Theme[]>(...themes: RemoveArrayRepeats<T> & T
 
 export const useSetTheme = (name: keyof typeof defaultTheme) => {
   const atom = themeAtomFamily(name)
-  return useSetAtom(atom, GlobalScope)
+  return useGlobalSetAtom(atom)
 }

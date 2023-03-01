@@ -6,11 +6,6 @@ export const saveImageLocally = (imgName: string, imgData: string | Blob): Promi
   if (imgData instanceof Blob) {
     return new Promise((resolve, reject) => {
       const reader = new FileReader()
-      // reader.readAsDataURL(imgData)
-      // reader.onload = () => {
-      //   data = reader.result as string
-      //   ipcInstance.send('saveImage', imgName, data).then(data => resolve(data))
-      // }
       reader.readAsArrayBuffer(imgData)
       reader.onload = () => {
         if (reader.result) {

@@ -149,6 +149,14 @@
     h6{
         font-size: 15px;
     }
+    a{
+        --block-font-color: #3b49dfcc;
+        transition: color 0.2s ease;
+        &:hover{
+            --block-font-color: #6200ee;
+            text-decoration: underline;
+        }
+    }
     blockquote{
         margin: 0;
         padding-inline-start: 19px;
@@ -192,7 +200,7 @@
     height: 100%;
     width: 100%;
     overflow-x: hidden;
-    overflow-y: auto;
+    overflow-y: overlay;
     position: relative;
     display: flex;
     flex-direction: column;

@@ -1,9 +1,9 @@
 import { Content, Icon, Image } from '@/components'
 import { DATE_FORMAT } from '@/consts/format'
 import { KEY } from '@/consts/key'
-import useEventEmitter from '@/events/useEventEmitter'
+import useScopedEventEmitter from '@/events/useEventEmitter'
 import { useTheme } from '@/hooks'
-import useMetaStore from '@/stores/meta.store'
+import createMetaStore from '@/stores/meta.store'
 import Id from '@/utils/id'
 import { saveImageLocally } from '@/utils/img'
 import { css } from '@emotion/css'
@@ -28,8 +28,8 @@ const MetaDetailsCard = ({
 }) => {
   const [toolbarVisible, setToolbarVisible] = useState(false)
   const [addCommentVisible, toggleAddCommentVisible] = useToggle(false)
-  const { updateMetaObject, deleteMetaObject } = useMetaStore()
-  const emitter = useEventEmitter()
+  const { updateMetaObject, deleteMetaObject } = createMetaStore()
+  const emitter = useScopedEventEmitter()
   const { defaultFontColorGrey } = useTheme('defaultFontColorGrey')
   const titleRef = useRef<HTMLDivElement>(null)
   const handleUploadCover: ChangeEventHandler<HTMLInputElement> = e => {

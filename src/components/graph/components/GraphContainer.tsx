@@ -1,6 +1,6 @@
 import { GraphScope } from '@/jotai/jotaiScope'
 import { css } from '@emotion/css'
-import { Provider } from 'jotai'
+import { createStore, Provider } from 'jotai'
 import { FC, useEffect, useMemo, useRef, useState } from 'react'
 import D3GraphManager from '../D3GraphManager'
 import useEdges from '../hooks/useEdges'
@@ -14,27 +14,26 @@ import NodeContainer from './NodeContainer'
 import GraphSettingPanel from './setting'
 import { useAtomValue } from 'jotai/react'
 import { globalGraphMinimizedAtom } from '../GraphThumbnail'
-import { globalStore } from '@/stores/stores'
+import { globalStore } from '@/stores'
 
 interface GraphContainerProps {
   edges?: GraphEdge[]
   nodes?: GraphNode[]
+  centerNodeId?: number
 }
 const GraphInner: FC<GraphContainerProps> = ({ edges, nodes }) => {
   const graph = useGraph()
   const containerRef = useRef<HTMLDivElement>(null)
-  const viewportRef = useRef<HTMLDivElement>(null)
+
   const [, setEdges] = useEdges()
   const [, setNodes] = useNodes()
   const { graphOverlayManager, renderPortal } = useGraphOverlay()
   graph && (graph.overlayManager = graphOverlayManager)
-  const [transform, setTransform] = useState({ x: 0, y: 0, k: 1 })
+
   const isMinimized = useAtomValue(globalGraphMinimizedAtom, { store: globalStore })
-  const zoomHandler = (transform: any) => {
-    setTransform(transform)
-  }
+
   useEffect(() => {
-    if (containerRef.current && viewportRef.current && graph && nodes && edges) {
+    if (containerRef.current && graph && nodes && edges) {
       graph.clear()
       graph.registerEdges(edges)
       graph.registerNodes(nodes)
@@ -42,7 +41,6 @@ const GraphInner: FC<GraphContainerProps> = ({ edges, nodes }) => {
       setNodes(nodes)
       setTimeout(() => {
         graph.registerContainer(containerRef.current)
-        graph.registerHandler('zoom', zoomHandler)
         graph.updateLayout(true, true)
       }, 0)
       console.log('asdsa')
@@ -54,19 +52,17 @@ const GraphInner: FC<GraphContainerProps> = ({ edges, nodes }) => {
     }
   })
   return (
-    <div style={{ width: '100%', height: '100%', position: 'relative' }} ref={containerRef}>
+    <div style={{ width: '100%', height: '100%', position: 'relative' }}>
       <div
         className={css({
-          transformOrigin: '0 0',
           position: 'absolute',
           top: 0,
           left: 0,
           width: '100%',
-          height: '100%',
-          transform: `translate(${transform?.x}px,${transform?.y}px) scale(${transform?.k})`
+          height: '100%'
         })}
         id="viewport"
-        ref={viewportRef}
+        ref={containerRef}
       >
         <svg style={{ position: 'absolute', inset: 0, pointerEvents: 'none', width: '100%', height: '100%', overflow: 'visible' }}>
           <path id="addLinkLine"></path>
@@ -89,10 +85,18 @@ const GraphInner: FC<GraphContainerProps> = ({ edges, nodes }) => {
     </div>
   )
 }
-const GraphContainer: FC<GraphContainerProps> = ({ edges, nodes }) => {
+const GraphContainer: FC<GraphContainerProps> = ({ edges, nodes, centerNodeId }) => {
   const graphManager = useMemo(() => new D3GraphManager(), [])
+  const store = useMemo(() => {
+    const store = createStore()
+    store.set(graphAtom, graphManager)
+    return store
+  }, [])
+  useMemo(() => {
+    graphManager.centerNodeId = centerNodeId
+  },[centerNodeId])
   return (
-    <Provider scope={GraphScope} initialValues={[[graphAtom, graphManager]]}>
+    <Provider store={store}>
       <GraphInner edges={edges} nodes={nodes} />
     </Provider>
   )

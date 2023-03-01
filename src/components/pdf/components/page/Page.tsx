@@ -10,17 +10,19 @@ import HighlightLabel from '../label/HighlightLabel'
 import useCleanMode from '../../hooks/useCleanMode'
 import { useAtomValue } from 'jotai/react'
 import useLabelStore, { documentIdToLabelsMapAtom, labelsAtom } from '@/stores/label.store'
-import { globalStore } from '@/stores/stores'
+import { globalStore } from '@/stores'
 import { IHighlightLabel, ILabel } from '~/typings/data'
 
 interface PdfPageProps extends RenderPageProps {
   pdfId: number
+  transformScale?: number
 }
 
 const PdfPage: React.FC<PdfPageProps> = ({
   pageIndex,
   textLayer,
   canvasLayer,
+  transformScale,
   pageElement,
   annotationLayer,
   pageFunctionRef,
@@ -37,7 +39,7 @@ const PdfPage: React.FC<PdfPageProps> = ({
       allLabelsMap &&
       (Array.from(allLabelsMap)
         .map(i => allLabels.get(i))
-        .filter(i => i !== undefined && i.page === pageIndex) as ILabel[]),
+        .filter(i => i !== undefined && i.page === pageIndex && !i.deleted) as ILabel[]),
     [allLabels]
   )
 
@@ -77,7 +79,7 @@ const PdfPage: React.FC<PdfPageProps> = ({
             i =>
               i.id && (
                 <>
-                  {i.type === 'highlight' && <HighlightLabel labelId={i.id} key={i.id} pageSize={pageSize} />}
+                  {i.type === 'highlight' && <HighlightLabel documentId={pdfId} labelId={i.id} key={i.id} pageSize={pageSize} />}
                   {i.type === 'thought' && <ThoughtLabel dragBoundRef={labelContainerRef} labelId={i.id} key={i.id} />}
                 </>
               )

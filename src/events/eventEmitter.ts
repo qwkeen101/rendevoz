@@ -6,6 +6,7 @@ import { GlobalEvent } from './globalEvent'
 import { GraphEvent } from './graphEvent'
 import { LayoutEvent } from './layoutEvent'
 import { PdfEvent } from './pdfEvent'
+import { WhiteboardEvent } from './whiteboardEvent'
 
 export interface Event<T, K extends keyof T> {
   readonly type: K
@@ -17,6 +18,7 @@ export interface EventMap {
   graph: GraphEvent
   layout: LayoutEvent
   global: GlobalEvent
+  whiteboard: WhiteboardEvent
 }
 export interface EventCallback {
   onSuccess?: VoidFunction

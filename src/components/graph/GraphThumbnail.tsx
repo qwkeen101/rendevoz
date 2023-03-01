@@ -1,15 +1,15 @@
-import { Noop } from '@/common/types'
 import { css } from '@emotion/css'
 import { MouseEventHandler, ReactNode, useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { Content, Icon } from '..'
 import { motion } from 'framer-motion'
 import { GraphEventHandler } from '@/events/graphEvent'
-import useEventEmitter from '@/events/useEventEmitter'
+import { useGlobalEventEmitter } from '@/events/useEventEmitter'
 import { atom } from 'jotai/vanilla'
 import { useAtom } from 'jotai/react'
-import { globalStore } from '@/stores/stores'
+import { globalStore } from '@/stores'
 import Zindexes from '@/consts/zindex'
+import ClassName from '@/styles/classNames'
 export const globalGraphMinimizedAtom = atom(false)
 const GraphThumbnail = ({ children, onClose }: { children: ReactNode; onClose: VoidFunction }) => {
   const [small, setSmall] = useAtom(globalGraphMinimizedAtom, { store: globalStore })
@@ -17,7 +17,7 @@ const GraphThumbnail = ({ children, onClose }: { children: ReactNode; onClose: V
   const tempPosRef = useRef({ x: 0, y: 0 })
   const transPosRef = useRef({ x: 0, y: 0 })
   const eventHandler = new GraphEventHandler()
-  const emitter = useEventEmitter()
+  const emitter = useGlobalEventEmitter()
   const handleToggleGraph = () => {
     setSmall(false)
   }
@@ -105,9 +105,9 @@ const GraphThumbnail = ({ children, onClose }: { children: ReactNode; onClose: V
         left: 0,
         width: '100%',
         height: '100%',
-        zIndex: Zindexes.Tooltip,
+        zIndex: Zindexes.ModalBackdrop,
         pointerEvents: small ? 'none' : 'auto',
-        background: !small ? 'rgba(0,0,0,0.6)' : 'rgba(0,0,0,0)',
+        background: !small ? 'rgba(0,0,0,0.2)' : 'rgba(0,0,0,0)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center'
@@ -115,11 +115,11 @@ const GraphThumbnail = ({ children, onClose }: { children: ReactNode; onClose: V
     >
       <div
         ref={containerRef}
+        className={ClassName.Background.blurBackground}
         style={{
           position: 'relative',
-          width: small ? 300 : '80%',
-          height: small ? 200 : '80%',
-          background: 'white',
+          width: small ? 300 : '90%',
+          height: small ? 200 : '90%',
           transition: 'width 0.3s ease,height 0.3s ease',
           pointerEvents: 'auto',
           borderRadius: 6,

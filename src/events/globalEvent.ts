@@ -10,28 +10,43 @@ type DragDropEvent = {
   dragElement: AvaliableGlobalDraggingElements
   dragFrom: 'editor' | 'pdf' | 'database'
 } & DropOn
-type DropOn =
+export type DropOn =
   | {
       dropOn: 'database'
     }
   | {
       dropOn: 'editor'
-      note: INote
       noteId: number
     }
   | {
       dropOn: 'pdf'
       pdfId: number
     }
+  | {
+      dropOn: 'whiteboard'
+      whiteboardId: number
+    }
 
-type DropOnEditorFurtherProcessEvent = {
-  objectId: number
-  noteId: number
+type GlobalDropNeedFurtherProcessEvent = {
+  dropOn: DropOn
+  draggingElement: AvaliableGlobalDraggingElements
+}
+type GlobalDragPointerUpEvent = {
+  event: PointerEvent
+  draggingElement: AvaliableGlobalDraggingElements
+}
+type GlobalDragPointerMoveEvent = {
+  event: PointerEvent
+  draggingElement: AvaliableGlobalDraggingElements
 }
 export interface GlobalEventMap {
-  dragDrop: Partial<DragDropEvent>
-  dropOnEditorFurtherProcess: DropOnEditorFurtherProcessEvent
+  globalDropNeedAddLink: Partial<DragDropEvent>
+  globalDropNeedFurtherProcess: GlobalDropNeedFurtherProcessEvent
+  globalDragPointerUp: GlobalDragPointerUpEvent
+  globalDragPointerMove: GlobalDragPointerMoveEvent
+  globalNeedAddMetaObject: VoidFunction
 }
+
 export type GlobalEvent = Event<GlobalEventMap, keyof GlobalEventMap>
 
 export class GlobalEventHandler extends EventHandler<GlobalEventMap> {}

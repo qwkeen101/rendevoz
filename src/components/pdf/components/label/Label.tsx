@@ -14,7 +14,7 @@ import NoteLabel from './NoteLabel'
 import { Descendant } from 'slate'
 import { atom } from 'jotai/vanilla'
 import useLabelStore, { labelsAtom } from '@/stores/label.store'
-import { globalStore } from '@/stores/stores'
+import { globalStore } from '@/stores'
 import { IThoughtLabel } from '~/typings/data'
 interface ThoughtLabelProps {
   labelId: number

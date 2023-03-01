@@ -1,4 +1,4 @@
-import useEventEmitter from '@/events/useEventEmitter'
+import { useGlobalEventEmitter } from '@/events/useEventEmitter'
 import useSidebarWidth from '@/hooks/components/useSidebarWidth'
 import { LayoutFunctions } from '@/pdfViewer/core/layouts/Layout'
 import Id from '@/utils/id'
@@ -48,11 +48,9 @@ const Layout: FC<LayoutProps> = ({ sidebar }) => {
   const [layout, setLayout] = useState(initialLayout)
   const location = useLocation()
   const layoutManager = useMemo(() => new LayoutManager(), [])
-  const emitter = useEventEmitter()
   GlobalLayout = layoutManager
 
   useEffect(() => {
-    layoutManager.registerEmitter(emitter)
     layoutManager.registerLayout(initialLayout)
     layoutManager.onLayoutChange(layout => {
       setLayout(layout)
@@ -66,7 +64,7 @@ const Layout: FC<LayoutProps> = ({ sidebar }) => {
     const component = routeToComponent(location.pathname, location.search)
     if (component) {
       const id = Id.getStrId()
-      const newLayout = layoutManager.registerNewTab({
+      layoutManager.registerNewTab({
         content: (
           <DockTabPaneContext.Provider value={{ currentTabId: id }}>
             <div style={{ width: '100%', height: '100%', overflow: 'hidden' }} key={id}>
@@ -77,7 +75,6 @@ const Layout: FC<LayoutProps> = ({ sidebar }) => {
         title: location.pathname,
         id
       })
-      newLayout && setLayout(newLayout)
     }
   }, [location])
   return (

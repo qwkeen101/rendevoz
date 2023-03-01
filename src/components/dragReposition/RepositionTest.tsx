@@ -19,7 +19,7 @@ import { getElementId } from './utils/element'
 import { searchBlock } from './utils/algorithm'
 import useWhyDidYouUpdate from '@/hooks/utils/useWhyUpdate'
 import { CustomElement } from '../editor/types'
-import useEventEmitter from '@/events/useEventEmitter'
+import useScopedEventEmitter from '@/events/useEventEmitter'
 import { EditorEventHandler, IndicatorChangeEvent } from '@/events/editorEvent'
 import { Noop } from '@/common/types'
 
@@ -47,7 +47,7 @@ export const TestEditor = () => {
   const indicatorRef = useRef<{ direction?: string; id?: number }>()
   const scrollDirectionRef = useRef<string>()
   const scrollFramerId = useRef<number>()
-  const emitter = useEventEmitter()
+  const emitter = useScopedEventEmitter()
 
   const handleDragDrop = () => {
     if (indicatorRef.current) {
@@ -646,7 +646,7 @@ const Block: FC<React.DetailedHTMLProps<React.HTMLAttributes<HTMLDivElement>, HT
     const ref = useRef<HTMLDivElement>(null)
     const mergedRef = mergeRefs(ref, attributes.ref)
     const columnRef = useRef<HTMLDivElement>(null)
-    const emitter = useEventEmitter()
+    const emitter = useScopedEventEmitter()
     const handler = new EditorEventHandler()
     const [direction, setDirection] = useState<string>()
     const handleIndicatorChange = useMemoizedFn((data: IndicatorChangeEvent) => {

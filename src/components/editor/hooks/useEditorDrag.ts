@@ -1,10 +1,7 @@
 import { GlobalDragOverlayInstance, useGlobalIsDragging } from '@/components/globalDragOverlay/GlobalDragOverlay'
-import useEventEmitter from '@/events/useEventEmitter'
+import { useGlobalEventEmitter } from '@/events/useEventEmitter'
 import { useMemoizedFn, useRafFn } from '@/hooks'
-import { ObjectIdToMetaObjectMapAtom } from '@/stores/meta.store'
-import { globalStore } from '@/stores/stores'
 import Id from '@/utils/id'
-import { useAtomValue } from 'jotai/react'
 import { useEffect, useMemo, useRef } from 'react'
 import { toast } from 'react-hot-toast'
 import { Editor, Path, Transforms } from 'slate'
@@ -24,13 +21,13 @@ import useIsDragging from './useIsDragging'
 const useEditorDrag = (editor: CustomEditor, scrollElement?: HTMLElement | null) => {
   const [isDraggingInsideEditor, setIsDragging] = useIsDragging()
   const [globalIsDragging] = useGlobalIsDragging()
-  const emitter = useEventEmitter()
+  const emitter = useGlobalEventEmitter()
   const readonly = editor.readonly
   const draggingRef = useRef(false)
   // default is false
   const dragManager = useMemo(() => new DragManager(), [])
   const scrollManager = useMemo(() => new ScrollManager(), [])
-  const objectIdToMetaMap = useAtomValue(ObjectIdToMetaObjectMapAtom, { store: globalStore })
+
   const { renderIndicator, indicatorManager } = useDragIndicator()
   dragManager.onDrop = ({ direction, isNested, objectId, targetNodeId, shouldAddElements, shouldRemoveElements }) => {
     let targetPath = ID_TO_PATH_MAP.get(editor)?.get(targetNodeId)
@@ -68,72 +65,42 @@ const useEditorDrag = (editor: CustomEditor, scrollElement?: HTMLElement | null)
             }
           })
           .filter(i => i !== undefined)
-        console.log(entries)
         const currTargetPath = ID_TO_PATH_MAP.get(editor)?.get(targetNodeId)
         if (currTargetPath && entries) {
           moveMultiElements(editor, entries, currTargetPath, 'bottom', false)
         }
-        console.log(currTargetPath)
       })
     }
     // if we have objectId, it means need further process
-    if (objectId) {
-      if (objectIdToMetaMap.has(objectId)) {
-        const targetMetaObject = objectIdToMetaMap.get(objectId)!
-        const editorNode: MetaObjectElement = {
-          id: Id.getId(),
-          type: 'metaObject',
-          originId: targetMetaObject.id,
-          children: [{ text: '' }]
-        }
-        dragManager.insertNodeAtTargetPlace(editorNode, targetNodeId, direction, isNested)
-        emitter.emit('global', {
-          type: 'dragDrop',
+    if (objectId && editor.noteId) {
+      emitter
+        .emitWithCallback('global', {
+          type: 'globalDropNeedFurtherProcess',
           data: {
-            dropOn: 'editor',
-            dragElement: GlobalDragOverlayInstance.draggingDetails,
-            noteId: editor.noteId,
-            note: editor.note
+            dropOn: {
+              dropOn: 'editor',
+              noteId: editor.noteId
+            },
+            draggingElement: GlobalDragOverlayInstance.draggingDetails
           }
         })
-        return
-      } else {
-        emitter
-          .emitWithCallback('global', {
-            type: 'dropOnEditorFurtherProcess',
-            data: {
-              objectId,
-              noteId: editor.noteId
+        .then(
+          obj => {
+            const metaObj = obj as MetaObject
+            const editorNode: MetaObjectElement = {
+              id: Id.getId(),
+              type: 'metaObject',
+              originId: metaObj.id,
+              children: [{ text: '' }]
             }
-          })
-          .then(
-            obj => {
-              const metaObj = obj as MetaObject
-              const editorNode: MetaObjectElement = {
-                id: Id.getId(),
-                type: 'metaObject',
-                originId: metaObj.id,
-                children: [{ text: '' }]
-              }
-              console.log(metaObj)
-              dragManager.insertNodeAtTargetPlace(editorNode, targetNodeId, direction, isNested)
-            },
-            () => {
-              toast.error('Object creation was cancelled!')
-            }
-          )
-      }
+            dragManager.insertNodeAtTargetPlace(editorNode, targetNodeId, direction, isNested)
+          },
+          () => {
+            toast.error('Object creation was cancelled!')
+          }
+        )
       return
     }
-    emitter.emit('global', {
-      type: 'dragDrop',
-      data: {
-        dropOn: 'editor',
-        dragElement: GlobalDragOverlayInstance.draggingDetails,
-        noteId: editor.noteId,
-        note: editor.note
-      }
-    })
     // this means we are dragging multiple blocks
     if (shouldAddElements && shouldRemoveElements && shouldAddElements === shouldRemoveElements) {
       const pathMap = ID_TO_PATH_MAP.get(editor)
@@ -238,6 +205,9 @@ const useEditorDrag = (editor: CustomEditor, scrollElement?: HTMLElement | null)
           blockId: editor.currentEnterElement?.id,
           editorId: editor.id,
           path: ReactEditor.findPath(editor, editor.currentEnterElement)
+        }
+        if (editor.currentEnterElement?.type === 'metaObject' && !(selected && selected.size > 0)) {
+          GlobalDragOverlayInstance.draggingDetails.metaId = editor.currentEnterElement.originId
         }
         if (selected && selected.size > 0) {
           const keys = selected.keys()

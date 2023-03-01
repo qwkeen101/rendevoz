@@ -8,7 +8,7 @@ const ImageNode = ({ node, imageUrl, label }: { node: GraphNode; imageUrl?: stri
   const realImageUrl = imageUrl || node.coverImgSrc
   const realLabel = label || node.label
   const radius = TypeToNodeRadius[node.type || 'normal']
-  const d = useMemo(() => radius * 2, [radius])
+  const d = radius * 2
   const imageSize = () => {
     switch (node.type) {
       case 'pdf':

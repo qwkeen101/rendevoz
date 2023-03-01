@@ -1,13 +1,13 @@
 import Id from '@/utils/id'
 import { ReactNode, useMemo, useRef, useState } from 'react'
-import { EditorV1 } from '../../Editor'
+import { Editor, EditorV1 } from '../../Editor'
 import { motion } from 'framer-motion'
 import { css } from '@emotion/css'
 import { useSlate } from '../../slate-react'
 import ClassName from '@/styles/classNames'
 import { CustomElement } from '../../types'
 import { metaObjectsAtom } from '@/stores/meta.store'
-import { globalStore } from '@/stores/stores'
+import { globalStore } from '@/stores'
 import { atom } from 'jotai/vanilla'
 import { useAtomValue } from 'jotai/react'
 
@@ -139,7 +139,7 @@ const EmbeddedCard = ({ element, type, slateChildren }: { element: CustomElement
             }}
           ></motion.div>
         </div>
-        {realNoteId && <EditorV1 id={editorId} readonly noteId={realNoteId} />}
+        {realNoteId && <Editor id={editorId} readonly noteId={realNoteId} />}
         {slateChildren}
       </div>
     )

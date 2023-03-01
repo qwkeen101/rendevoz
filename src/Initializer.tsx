@@ -1,18 +1,18 @@
 import { useEffect } from 'react'
 import useCollectionStore from './stores/collection.store'
-import useDocumentStore from './stores/document.store'
 import useLabelStore from './stores/label.store'
-import useMetaStore from './stores/meta.store'
-import useNoteStore from './stores/note.store'
-import useTagStore from './stores/tag.store'
+import { documentStore, metaStore, noteStore } from './stores'
+import { tagStore } from './stores/tag.store'
+import useWhiteboardStore from './stores/whiteboard.store'
 
 const Initializer = () => {
-  const { getAllNotes } = useNoteStore()
-  const { getAllMetaObjects, getAllMetaLinks } = useMetaStore()
-  const { getAllDocuments } = useDocumentStore()
+  const { getAllNotes } = noteStore
+  const { getAllMetaObjects, getAllMetaLinks } = metaStore
+  const { getAllDocuments } = documentStore
   const { getAllCollections } = useCollectionStore()
   const { getAllLabels } = useLabelStore()
-  const { getAllTags } = useTagStore()
+  const { getAllTags } = tagStore
+  const { getAllWhiteboard } = useWhiteboardStore()
   useEffect(() => {
     getAllTags()
     getAllNotes()
@@ -21,6 +21,7 @@ const Initializer = () => {
     getAllCollections()
     getAllDocuments()
     getAllLabels()
+    getAllWhiteboard()
     console.log(`
     Welcome to use Rendevoz to BOOST your work efficency 💪🏻!
     This is a 🆓 software in beta test. Feel free to use!
@@ -28,9 +29,9 @@ const Initializer = () => {
     Yours 👋,
     🧙🏻‍♂️ RealRong 2001 from 🇨🇳.
     `)
-    console.log = (function (origin) {
-      return function () {}
-    })(console.log)
+    // console.log = (function (origin) {
+    //   return function () {}
+    // })(console.log)
   }, [])
   return null
 }

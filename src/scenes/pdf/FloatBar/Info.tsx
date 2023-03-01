@@ -1,29 +1,29 @@
 import { Content, Icon } from '@/components'
 import { GlobalGraphInstance } from '@/components/graph/GlobalGraph'
 import usePdfInfo from '@/components/pdf/hooks/usePdfInfo'
-import useMetaStore, { metaObjectsAtom, relatedMetaObjectsMapAtom } from '@/stores/meta.store'
-import { globalStore } from '@/stores/stores'
+import createMetaStore, { metaObjectsAtom, relatedMetaObjectsMapAtom } from '@/stores/meta.store'
+import { globalStore, metaStore } from '@/stores'
 import ClassName from '@/styles/classNames'
 import DateFormat from '@/utils/dateFormat'
 import { formatDuration, intervalToDuration } from 'date-fns'
 import { atom } from 'jotai/vanilla'
 import { useAtomValue } from 'jotai/react'
-import { useMemo } from 'react'
+import { memo, useMemo } from 'react'
 import { Flipped } from 'react-flip-toolkit'
+import { IPdfDocument } from '~/typings/data'
 
-const PdfInfo = ({ flipId }: { flipId: string }) => {
-  const [pdfInfo] = usePdfInfo()
-  const duration = intervalToDuration({ start: 0, end: (pdfInfo?.totalReadTime || 1000) * 1000 })
-  const { getMetaObjectByObjectId } = useMetaStore()
+const PdfInfo = ({ flipId, document }: { flipId: string; document?: IPdfDocument }) => {
+  const duration = intervalToDuration({ start: 0, end: (document?.totalReadTime || 1000) * 1000 })
+  const { getMetaObjectByObjectId } = metaStore
   const pdfMetaAtom = useMemo(() => {
-    if (pdfInfo?.id) {
-      const metaObject = getMetaObjectByObjectId(pdfInfo.id)
+    if (document?.id) {
+      const metaObject = getMetaObjectByObjectId(document.id)
       if (metaObject) {
         return atom(get => get(metaObjectsAtom).get(metaObject?.id))
       }
     }
     return atom(null)
-  }, [pdfInfo?.id])
+  }, [document?.id])
   const pdfMeta = useAtomValue(pdfMetaAtom, { store: globalStore })
   const related = useAtomValue(relatedMetaObjectsMapAtom, { store: globalStore })
   pdfMeta?.id && related.get(pdfMeta?.id)?.delete(pdfMeta?.id)
@@ -39,22 +39,22 @@ const PdfInfo = ({ flipId }: { flipId: string }) => {
         </div>
         <Content flex>
           <div style={{ flex: '0 0 100px' }}>Title:</div>
-          <div>{pdfInfo?.metadata?.title || 'Untitled'}</div>
+          <div>{document?.metadata?.title || 'Untitled'}</div>
         </Content>
         <Content flex>
           <div style={{ flex: '0 0 100px' }}>Author:</div>
-          <div>{pdfInfo?.metadata?.author || 'Unknown'}</div>
+          <div>{document?.metadata?.author || 'Unknown'}</div>
         </Content>
-        {pdfInfo?.createdAt && (
+        {document?.createdAt && (
           <Content flex>
             <div style={{ flex: '0 0 100px' }}>Created:</div>
-            <div>{DateFormat.format(pdfInfo?.createdAt, DateFormat.Formats.withMinute)}</div>
+            <div>{DateFormat.format(document?.createdAt, DateFormat.Formats.withMinute)}</div>
           </Content>
         )}
-        {pdfInfo?.lastReadAt && (
+        {document?.lastReadAt && (
           <Content flex>
             <div style={{ flex: '0 0 100px' }}>Last viewed:</div>
-            <div>{DateFormat.format(pdfInfo?.lastReadAt, DateFormat.Formats.withMinute)}</div>
+            <div>{DateFormat.format(document?.lastReadAt, DateFormat.Formats.withMinute)}</div>
           </Content>
         )}
         <Content flex>
@@ -88,4 +88,4 @@ const PdfInfo = ({ flipId }: { flipId: string }) => {
   )
 }
 
-export default PdfInfo
+export default memo(PdfInfo)

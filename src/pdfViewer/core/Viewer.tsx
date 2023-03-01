@@ -1,15 +1,17 @@
 import { Range } from '@tanstack/react-virtual'
 import { PDFDocumentProxy } from 'pdfjs-dist'
-import { FC, ReactElement } from 'react'
+import { FC, ReactElement, useEffect, useMemo } from 'react'
 import Layout from './layouts/Layout'
 import LayoutWrapper from './layouts/LayoutWrapper'
 import Loader from './Loader'
-import PdfProvider from './Provider'
 import { RenderPageProps } from './types'
 import { IAnnotation } from './types/annotation'
 import { ScrollMode } from './types/layout'
 import PdfJs from './types/pdfJsApi'
 import PdfJsUrl from '@/assets/pdf.worker.min.js?url'
+import { createStore, Provider } from 'jotai'
+import { IPdfViewer } from './types/pdfViewer'
+import { PdfViewerAtom } from './hooks/useViewer'
 
 interface ViewerProps {
   fileUrl: string | Uint8Array
@@ -21,6 +23,8 @@ interface ViewerProps {
   innerRef: any
   onDocumentLoaded?: (doc: PDFDocumentProxy) => void
   onRangeChange?: (range: Range) => void
+  transformScale?: number
+  viewer: IPdfViewer
 }
 
 const Viewer: FC<ViewerProps> = ({
@@ -32,16 +36,26 @@ const Viewer: FC<ViewerProps> = ({
   innerRef,
   layoutClassName,
   onDocumentLoaded,
-  onRangeChange
+  onRangeChange,
+  transformScale,
+  viewer
 }) => {
   PdfJs.GlobalWorkerOptions.workerSrc = PdfJsUrl
+
+  const store = useMemo(() => {
+    const store = createStore()
+    store.set(PdfViewerAtom, viewer)
+    return store
+  }, [])
+
   return (
-    <PdfProvider>
+    <Provider store={store}>
       <Loader onDocumentLoaded={onDocumentLoaded} file={fileUrl}>
         {doc => (
           <LayoutWrapper doc={doc}>
             {pageSize => (
               <Layout
+                transformScale={transformScale}
                 className={layoutClassName}
                 renderPage={renderPage}
                 innerRef={innerRef}
@@ -55,7 +69,7 @@ const Viewer: FC<ViewerProps> = ({
           </LayoutWrapper>
         )}
       </Loader>
-    </PdfProvider>
+    </Provider>
   )
 }
 

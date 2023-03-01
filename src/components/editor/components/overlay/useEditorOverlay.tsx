@@ -1,6 +1,5 @@
 import { Noop } from '@/common/types'
-import { AnimatePopover, WithBorder } from '@/components/base'
-import EmojiPicker from '@/components/picker/emojiPicker'
+import { AnimatePopover } from '@/components/base'
 import { Position } from '@/types'
 import { useCallback, useState } from 'react'
 import { CustomEditor } from '../../types'

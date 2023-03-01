@@ -1,7 +1,7 @@
 import { WithBorder } from '@/components/base'
 import { BasicElements, BlockElements, InlineElements, MediaElements } from '@/components/editor/consts/elements'
 import { CustomEditor } from '@/components/editor/types'
-import EditorElementsMenu from '@/components/menus/EditorElementsMenu'
+import EditorElementsMenu from '@/components/menu/EditorElementsMenu'
 import Id from '@/utils/id'
 import { saveImageLocally } from '@/utils/img'
 import { ChangeEventHandler, useRef } from 'react'

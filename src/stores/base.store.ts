@@ -7,7 +7,7 @@ import _ from 'lodash'
 import { orderBy } from 'lodash'
 import { IBase } from '~/typings/data'
 import { IStore } from './store.type'
-import { globalStore } from './stores'
+import { globalStore } from '.'
 
 type PartialWithId<T> = Partial<T> & { id: number }
 
@@ -28,6 +28,10 @@ type StoreDispatchEvent<T> = {
     }
   | {
       type: 'remove'
+      onSuccess?: (silent?: boolean) => void
+    }
+  | {
+      type: 'forceRemove'
       onSuccess?: (silent?: boolean) => void
     }
 )
@@ -65,24 +69,54 @@ const handleQueue = () => {
             setTimeout(() => onSuccess?.(newObj))
             break
           }
-          case 'remove':
+          case 'forceRemove': {
             draft.delete(data.id)
-            dbActionArr.push(i)
+            dbActionArr.push({
+              ...i
+            })
             setTimeout(() => onSuccess?.())
             break
+          }
+          case 'remove': {
+            const origin = atomValue.get(data.id)
+            const newObj = Object.assign({}, origin, { deleted: true })
+            draft.set(data.id, newObj)
+            dbActionArr.push({
+              ...i,
+              data: newObj
+            })
+            setTimeout(() => onSuccess?.())
+            break
+          }
         }
       })
     })
     globalStore.set(k, newAtom)
+    ATOM_QUEUE_MAP.delete(k)
   })
-  ATOM_QUEUE_MAP.clear()
+
   Array.from(DB_ACTION_MAP.entries()).forEach(([k, v]) => {
-    const putActionData = v.filter(i => i.type === 'add' || i.type === 'update').map(i => i.data)
-    const removeActionData = v.filter(i => i.type === 'remove').map(i => i.data.id)
+    // const putActionData = v.filter(i => i.type === 'add' || i.type === 'update').map(i => i.data)
+    // const removeActionData = v.filter(i => i.type === 'remove').map(i => i.data.id)
+    const forceRemoveActionData = v.filter(i => i.type === 'forceRemove').map(i => i.data.id)
+    const putActionData = v
+      .filter(i => i.type === 'add' || i.type === 'update' || i.type === 'remove')
+      .map(i => {
+        const newData: Record<string, unknown> = {}
+        Object.entries(i.data).map(([k, v]) => {
+          if (v instanceof Map) {
+            newData[k] = Array.from(v.values())
+          } else {
+            newData[k] = v
+          }
+        })
+        return newData
+      })
     putActionData.length > 0 && k.bulkPut(putActionData)
-    removeActionData.length > 0 && k.bulkDelete(removeActionData)
+    forceRemoveActionData.length > 0 && k.bulkDelete(forceRemoveActionData)
+    DB_ACTION_MAP.delete(k)
+    // removeActionData.length > 0 && k.bulkDelete(removeActionData)
   })
-  DB_ACTION_MAP.clear()
 }
 const BaseStore = {
   clear(data: Map<number, any>) {
@@ -152,6 +186,9 @@ const BaseStore = {
   orderedData<T>(data: Map<number, T>): T[] {
     return orderBy(Array.from(data.values()), 'createdAt', 'desc')
   },
+  orderedArray<T extends IBase>(data: T[]): T[] {
+    return data.sort((a, b) => b.createdAt - a.createdAt)
+  },
   initBaseObject<T extends Partial<IBase>>(obj: T): PartialWithId<T> {
     return {
       ...obj,
@@ -161,9 +198,7 @@ const BaseStore = {
     }
   }
 }
-type WrapFunctionWithSuccessAndFail<T> = {
-  [K in keyof T]: (onSuccess?: (...args: any) => void, onFail?: (silent: boolean) => void) => T[K]
-}
+
 type ILocalStore<T> = {
   addOne: (onSuccess?: (obj: T, silent: boolean) => void, onFail?: (silent: boolean) => void) => IStore<T>['addOne']
   deleteOneById: (onSuccess?: (silent: boolean) => void, onFail?: (silent: boolean) => void) => IStore<T>['deleteOneById']
@@ -194,10 +229,10 @@ export function initializeLocalStore<T>(atom: PrimitiveAtom<Map<number, T>>, dat
       },
     deleteOneById:
       (onSuccess, onFail) =>
-      (id, silent = false) => {
+      (id, silent = false, force = false) => {
         return new Promise(res => {
           dispatch({
-            type: 'remove',
+            type: force ? 'forceRemove' : 'remove',
             data: { id },
             database,
             atom,

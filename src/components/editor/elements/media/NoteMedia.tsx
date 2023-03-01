@@ -1,5 +1,5 @@
 import { Content, Image } from '@/components/base'
-import useNoteStore from '@/stores/note.store'
+import createNoteStore from '@/stores/note.store'
 import ClassName from '@/styles/classNames'
 import { css } from '@emotion/css'
 import { useEffect, useState } from 'react'
@@ -12,7 +12,7 @@ import NoteCard from '../cards/NoteCard'
 const NoteMedia = ({ element, children }: Omit<RenderElementProps, 'attributes'>) => {
   const ele = element as NoteElement
   const [note, setNote] = useState<INote>()
-  const { getNoteById } = useNoteStore()
+  const { getNoteById } = createNoteStore()
   const navigate = useNavigate()
   useEffect(() => {
     getNoteById(ele.noteId).then(n => {

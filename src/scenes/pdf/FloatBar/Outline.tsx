@@ -1,17 +1,16 @@
 import { Content, Icon } from '@/components'
 import { useToggle } from '@/hooks'
-import { PdfScope } from '@/jotai/jotaiScope'
 import { LayoutFunctions } from '@/pdfViewer/core/layouts/Layout'
 import ClassName from '@/styles/classNames'
 import { css } from '@emotion/css'
 import { atom, useAtom } from 'jotai'
-import { memo, useEffect, useState } from 'react'
+import { memo, useEffect } from 'react'
 import { Flipped } from 'react-flip-toolkit'
 import useViewer from '../useViewer'
 type Outline = Awaited<ReturnType<LayoutFunctions['getOutline']>>
 const outlineAtom = atom<Outline | null>(null)
 const PdfOutline = ({ flipId }: { flipId: string }) => {
-  const [outline, setOutline] = useAtom(outlineAtom, PdfScope)
+  const [outline, setOutline] = useAtom(outlineAtom)
   const viewer = useViewer()
 
   useEffect(() => {

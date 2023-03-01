@@ -1,16 +1,16 @@
-import useNoteStore from '@/stores/note.store'
+import createNoteStore from '@/stores/note.store'
 import { useEffect, useRef } from 'react'
 import { INote } from '~/typings/data'
 import { CustomEditor } from '../types'
 import { Descendant } from 'slate'
-import { slateNodesToInsertDelta, YjsEditor } from '../yjs'
+import { slateNodesToInsertDelta } from '../yjs'
 import Id from '@/utils/id'
 import { GlobalProviderMap } from '../Editor'
 import { useDebounceFn, useMemoizedFn } from '@/hooks'
 import { serializeEditor } from '../utils/database/serialize'
 import { toast } from 'react-hot-toast'
 import { Notification } from '@/components'
-import useEventEmitter from '@/events/useEventEmitter'
+import { useGlobalEventEmitter } from '@/events/useEventEmitter'
 import { EditorEventHandler } from '@/events/editorEvent'
 const initial = [
   {
@@ -20,12 +20,19 @@ const initial = [
   }
 ]
 const EditorInstanceMap = new Map<number, Set<CustomEditor>>()
-const useStoreValue = (note: INote, editor: CustomEditor, provider, doc, sharedType) => {
-  const { saveNoteAsBuffer, getNoteValue, updateNote, saveBlocks } = useNoteStore()
+const useStoreValue = (
+  note: INote,
+  editor: CustomEditor,
+  provider,
+  doc,
+  sharedType,
+  onContentRendered?: (editor: CustomEditor) => void
+) => {
+  const { saveNoteAsBuffer, getNoteValue, updateNote, saveBlocks } = createNoteStore()
   const contentRef = useRef<Descendant[]>()
   const noteId = note?.id
   const contentId = note?.contentId
-  const emitter = useEventEmitter()
+  const emitter = useGlobalEventEmitter()
 
   const handler = new EditorEventHandler()
   const debounceSaveE = useMemoizedFn(data => {
@@ -54,6 +61,7 @@ const useStoreValue = (note: INote, editor: CustomEditor, provider, doc, sharedT
       const first = editorSet.values().next()
       editor.children = first.value.children
       editor.onChange()
+      setTimeout(() => onContentRendered?.(editor))
       editor.history = { redos: [], undos: [] }
       editor.initialized = true
     } else if (contentId) {
@@ -61,6 +69,7 @@ const useStoreValue = (note: INote, editor: CustomEditor, provider, doc, sharedT
         contentRef.current = v
         editor.children = v || initial
         editor.onChange()
+        setTimeout(() => onContentRendered?.(editor))
         editor.history = { redos: [], undos: [] }
         editor.initialized = true
         if (sharedType._length === 0) {

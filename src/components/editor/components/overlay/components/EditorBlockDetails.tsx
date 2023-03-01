@@ -173,6 +173,8 @@ const EditorBlockDetails = ({ editor, manager }: { editor: CustomEditor; manager
         onClickOutside={() => setStyleVisible(false)}
         content={
           <BlockColorPicker
+            showMoreFontOption
+            showMoreBgOption
             onPickFontColor={c => {
               Transforms.setNodes(
                 editor,

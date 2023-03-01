@@ -59,7 +59,8 @@
         "choose": "Choose",
         "create": "Create",
         "cancel": "Cancel",
-        "understand": "Understand"
+        "understand": "Understand",
+        "update": "Update"
     },    
     "collection": {
         "no collection placeholder": "No collection yet,create one?",

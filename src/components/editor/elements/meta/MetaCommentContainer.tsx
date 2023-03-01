@@ -1,11 +1,11 @@
 import { Content } from '@/components/base'
-import useMetaStore from '@/stores/meta.store'
+import createMetaStore from '@/stores/meta.store'
 import { useState, useEffect } from 'react'
 import { MetaKnowledgeObject, MetaComment } from '~/typings/data'
 import MetaCommentItem from './MetaCommentItem'
 
 const MetaCommentContainer = ({ obj }: { obj?: MetaKnowledgeObject }) => {
-  const { getMetaCommentsByIds } = useMetaStore()
+  const { getMetaCommentsByIds } = createMetaStore()
   const [comments, setComments] = useState<MetaComment[]>([])
   useEffect(() => {
     getMetaCommentsByIds(obj?.commentIds || []).then(data => {

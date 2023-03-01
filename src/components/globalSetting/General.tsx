@@ -1,10 +1,9 @@
 import { useToggle } from '@/hooks'
 import useLatest from '@/hooks/utils/useLatest'
 import useCollectionStore from '@/stores/collection.store'
-import useDocumentStore from '@/stores/document.store'
+import createDocumentStore from '@/stores/document.store'
 import useLabelStore from '@/stores/label.store'
-import useMetaStore from '@/stores/meta.store'
-import useNoteStore from '@/stores/note.store'
+import { metaStore, noteStore } from '@/stores'
 import ClassName from '@/styles/classNames'
 import { exportRendevozDb, importRendevozDb } from '@/utils/db'
 import { useEffect, useRef } from 'react'
@@ -20,9 +19,9 @@ const GeneralSetting = () => {
   const [alertVisible, toggleAlertVisible] = useToggle(false)
   const latestIsExporting = useLatest(isExporting)
   const hasExporting = useRef(false)
-  const { getAllNotes } = useNoteStore()
-  const { getAllMetaObjects, getAllMetaLinks } = useMetaStore()
-  const { getAllDocuments } = useDocumentStore()
+  const { getAllNotes } = noteStore
+  const { getAllMetaObjects, getAllMetaLinks } = metaStore
+  const { getAllDocuments } = createDocumentStore()
   const { getAllCollections } = useCollectionStore()
   const { getAllLabels } = useLabelStore()
   const handleImportData = async (file?: File) => {

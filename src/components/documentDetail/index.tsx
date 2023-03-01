@@ -1,4 +1,4 @@
-import useDocumentStore from '@/stores/document.store'
+import createDocumentStore from '@/stores/document.store'
 import { useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { IPdfDocument } from '~/typings/data'
@@ -9,7 +9,7 @@ import Overview from './overview'
 const DocumentDetails = () => {
   const { id } = useParams()
   const [document, setDocument] = useState<IPdfDocument>()
-  const { getDocumentById } = useDocumentStore()
+  const { getDocumentById } = createDocumentStore()
   useEffect(() => {
     const Id = parseInt(id)
     const d = getDocumentById(Id)

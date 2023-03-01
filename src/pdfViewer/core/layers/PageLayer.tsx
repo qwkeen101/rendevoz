@@ -20,13 +20,24 @@ interface PageLayerProps {
   renderPage?: (props: RenderPageProps) => ReactElement
   renderAnnotation?: (annotation: IAnnotation) => ReactElement
   scrollElement?: MutableRefObject<HTMLDivElement>
+  transformScale?: number
 }
 interface PageDetails {
   page: PDFPageProxy | null
   viewport: PageViewport | null
 }
 // todo: impl page rotation
-const PageLayer: FC<PageLayerProps> = ({ doc, height, scale, width, pageIndex, renderPage, renderAnnotation, scrollElement }) => {
+const PageLayer: FC<PageLayerProps> = ({
+  doc,
+  height,
+  scale,
+  width,
+  pageIndex,
+  renderPage,
+  renderAnnotation,
+  scrollElement,
+  transformScale
+}) => {
   const [pageDetails, setPageDetails] = useState<PageDetails>({ page: null, viewport: null })
   const pageRef = useRef<HTMLDivElement>(null)
   const pageFunctionRef = useRef<PageFunctionRef>({})
@@ -83,7 +94,14 @@ const PageLayer: FC<PageLayerProps> = ({ doc, height, scale, width, pageIndex, r
             {pageRenderer({
               pageElement: pageRef.current,
               canvasLayer: (
-                <CanvasLayer page={pageDetails.page} scale={scale} width={width} height={height} viewport={pageDetails.viewport} />
+                <CanvasLayer
+                  transformScale={transformScale}
+                  page={pageDetails.page}
+                  scale={scale}
+                  width={width}
+                  height={height}
+                  viewport={pageDetails.viewport}
+                />
               ),
               textLayer: (
                 <TextLayer
@@ -95,6 +113,7 @@ const PageLayer: FC<PageLayerProps> = ({ doc, height, scale, width, pageIndex, r
                   height={height}
                   viewport={pageDetails.viewport}
                   pageFunctionRef={pageFunctionRef}
+                  transformScale={transformScale}
                 />
               ),
               annotationLayer: (

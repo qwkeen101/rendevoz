@@ -1,7 +1,7 @@
 import { Content, Icon, Tooltip } from '@/components'
 import usePdfInfo from '@/components/pdf/hooks/usePdfInfo'
 import useLabelStore, { documentIdToLabelsMapAtom, labelsAtom } from '@/stores/label.store'
-import { globalStore } from '@/stores/stores'
+import { globalStore } from '@/stores'
 import ClassName from '@/styles/classNames'
 import DateFormat from '@/utils/dateFormat'
 import { css } from '@emotion/css'
@@ -10,16 +10,15 @@ import { atom } from 'jotai/vanilla'
 import { memo, useMemo } from 'react'
 import { Flipped } from 'react-flip-toolkit'
 import { toast } from 'react-hot-toast'
-import { IHighlightLabel, ILabel } from '~/typings/data'
+import { IHighlightLabel, ILabel, IPdfDocument } from '~/typings/data'
 import useViewer from '../useViewer'
 
-const PdfLabels = ({ flipId }: { flipId: string }) => {
-  const [pdfInfo] = usePdfInfo()
+const PdfLabels = ({ flipId, document }: { flipId: string; document?: IPdfDocument }) => {
   const innerLabelsAtom = useMemo(
     () =>
-      pdfInfo?.id
+      document?.id
         ? atom(get => {
-            const labelIds = get(documentIdToLabelsMapAtom).get(pdfInfo?.id)
+            const labelIds = get(documentIdToLabelsMapAtom).get(document?.id)
             const labels: ILabel[] = []
             labelIds?.forEach(i => {
               const l = get(labelsAtom).get(i)
@@ -28,7 +27,7 @@ const PdfLabels = ({ flipId }: { flipId: string }) => {
             return labels
           })
         : atom(null),
-    [pdfInfo?.id]
+    [document?.id]
   )
   const labels = useAtomValue(innerLabelsAtom, { store: globalStore })
   const highlight = labels?.filter(i => i.type === 'highlight') as IHighlightLabel[]

@@ -2,10 +2,10 @@ import { KEY } from '@/consts/key'
 import Zindexes from '@/consts/zindex'
 import { useToggle } from '@/hooks'
 import { documentsAtom } from '@/stores/document.store'
-import useMetaStore, { metaObjectsAtom, TagToMetaObjectIdsMapAtom, useMetaTargetObject } from '@/stores/meta.store'
+import createMetaStore, { metaObjectsAtom, tagToMetaObjectIdsMapAtom, useMetaTargetObject } from '@/stores/meta.store'
 import { notesAtom } from '@/stores/note.store'
-import { globalStore } from '@/stores/stores'
-import useTagStore, { TagsAtom, TagToTagAtom } from '@/stores/tag.store'
+import { globalStore, metaStore } from '@/stores'
+import createTagStore, { TagsAtom, TagToTagAtom } from '@/stores/tag.store'
 import ClassName from '@/styles/classNames'
 import { PartialWithId } from '@/types'
 import { hexToRgb } from '@/utils/color'
@@ -23,7 +23,7 @@ import { AnimatePopover, Content, FileUploader, Form, Icon, IconWithPopover, Ima
 import useFileUpload from '../base/useFileUpload'
 import BlockColorPicker from '../editor/components/BlockColorPicker'
 import { GlobalGraphInstance } from '../graph/GlobalGraph'
-import { typeToTypeRecord } from '../knowledgeDatabase/card/DatabaseCard'
+import { TypeToTypeName } from '../database/card/DatabaseCard'
 import { defaultBgColor } from '../picker/colorPicker'
 
 const EditMetaObjectForm = ({
@@ -31,19 +31,19 @@ const EditMetaObjectForm = ({
   onUpdate,
   title,
   onClose,
-  links,
   submitText,
-  isCreating = false
+  isCreating = false,
+  shouldPreviewGraph = false
 }: {
   metaObject?: PartialWithId<MetaObject>
   onUpdate: (newMeta: MetaObject) => void
   onClose: VoidFunction
   title: string
-  links?: Partial<MetaLink>[]
   submitText?: string
   isCreating?: boolean
+  shouldPreviewGraph?: boolean
 }) => {
-  const [innerMeta, setInnerMeta] = useState<MetaObject>({ id: Id.getId(), tags: [], ...metaObject })
+  const [innerMeta, setInnerMeta] = useState<PartialWithId<MetaObject>>(metaObject || { id: Id.getId() })
   const [formState, setFormState] = useState<
     Partial<{
       coverVisible: boolean
@@ -53,10 +53,7 @@ const EditMetaObjectForm = ({
   >({
     mainVisible: true
   })
-  const [innerLinks, setInnerLinks] = useState<Partial<MetaLink>[]>(links || [])
   const mainFlipId = useMemo(() => Id.getStrId(), [])
-  const { addMetaLink, deleteMetaLink, addMetaObject, deleteMetaObject } = useMetaStore()
-  const shouldPreviewGraph = !(!links || links.length === 0)
   const { renderUploader, upload } = useFileUpload(file => {
     saveImageLocally(Id.getStrId(), file).then(data => {
       console.log(data)
@@ -66,23 +63,6 @@ const EditMetaObjectForm = ({
   useEffect(() => {
     metaObject && setInnerMeta(structuredClone(metaObject))
   }, [metaObject])
-
-  const linkObjectAtoms = useMemo(
-    () =>
-      atom(get => {
-        const objects = get(metaObjectsAtom)
-        return links?.map(l => ({
-          ...l,
-          sourceObject:
-            l.sourceId !== undefined ? objects.get(l.sourceId) || (l.sourceId === innerMeta.id ? innerMeta : undefined) : undefined,
-          targetObject:
-            l.targetId !== undefined ? objects.get(l.targetId) || (l.targetId === innerMeta.id ? innerMeta : undefined) : undefined
-        }))
-      }),
-    [links]
-  )
-
-  const linkObjects = useAtomValue(linkObjectAtoms, { store: globalStore })
 
   const renderCoverUploader = () => {
     return (
@@ -141,23 +121,9 @@ const EditMetaObjectForm = ({
       }}
       onClose={() => setFormState({ mainVisible: true })}
       metaObject={innerMeta}
-      linkedObjects={linkObjects}
     />
   )
-  useEffect(() => {
-    if (shouldPreviewGraph) {
-      links?.forEach(l => {
-        l.id = Id.getId()
-        addMetaLink(l, true)
-      })
-      console.log(links, innerMeta)
-      const isMetaAlreadyExist = globalStore.get(metaObjectsAtom).has(innerMeta.id)
-      !isMetaAlreadyExist && addMetaObject({ ...innerMeta, temp: true }, true)
-      return () => {
-        !isMetaAlreadyExist && deleteMetaObject(innerMeta.id, true)
-      }
-    }
-  }, [])
+
   const renderForm = () => (
     <Form
       onSubmit={() => {
@@ -173,7 +139,7 @@ const EditMetaObjectForm = ({
       {renderUploader()}
       <Form.Item
         text="Name"
-        disable={['note', 'pdf'].includes(innerMeta.type) && !isCreating}
+        disable={['note', 'pdf', 'whiteboard'].includes(innerMeta.type) && !isCreating}
         type="input"
         value={innerMeta.name}
         onChange={e => setInnerMeta({ ...innerMeta, name: e })}
@@ -181,6 +147,7 @@ const EditMetaObjectForm = ({
       <Form.Item
         text="Description"
         type="textarea"
+        maxRows={10}
         value={innerMeta.description}
         onChange={e => setInnerMeta({ ...innerMeta, description: e })}
       />
@@ -325,43 +292,32 @@ const EditMetaObjectForm = ({
 
 const TagPicker = ({
   metaObject,
-  linkedObjects,
   onClose,
   onPick,
   onDelete
 }: {
   metaObject?: PartialWithId<MetaObject>
-  linkedObjects?: any[]
   onClose?: VoidFunction
   onPick?: (tag: string) => void
   onDelete?: (tag: string) => void
 }) => {
-  const { addTag } = useTagStore()
+  const { addTag } = createTagStore()
   const [addTagVisible, toggleAddTagVisible] = useToggle(false)
   const [newAddTag, setNewAddTag] = useState<ITag>()
-  const TagToMetaObjectIdsMap = useAtomValue(TagToMetaObjectIdsMapAtom, { store: globalStore })
+  const TagToMetaObjectIdsMap = useAtomValue(tagToMetaObjectIdsMapAtom, { store: globalStore })
   const allTags = useAtomValue(TagsAtom, { store: globalStore })
   const allTagNames = useMemo(() => Array.from(allTags.values()).map(i => i.name), [allTags])
   const [searchTags, setSearchTags] = useState<ITag[]>([])
-  const relatedTagsSet = useMemo(() => {
-    const set = new Set<string>()
-    linkedObjects?.forEach(i => {
-      i.sourceObject?.tags?.forEach(o => set.add(o))
-      i.targetObject?.tags?.forEach(o => set.add(o))
-    })
-    return set
-  }, [linkedObjects])
 
   const mostUsedTags = useMemo(() => {
     const tags: { tag: string; size: number }[] = []
-    Array.from(TagToMetaObjectIdsMap.entries()).forEach(([k, v]) => {
+    Array.from(TagToMetaObjectIdsMap?.entries()).forEach(([k, v]) => {
       tags.push({
         tag: k,
         size: v.size
       })
     })
     tags.sort((a, b) => b.size - a.size)
-    console.log(TagToMetaObjectIdsMap)
     const newTags = tags.slice(0, 20)
     return newTags
   }, [TagToMetaObjectIdsMap])
@@ -377,7 +333,7 @@ const TagPicker = ({
     return allTagNames.some(i => i === newAddTag?.name)
   }, [newAddTag?.name])
   return (
-    <div style={{ width: 400 }}>
+    <div style={{ width: 300 }}>
       <Icon
         name="park-close"
         containerStyle={{ position: 'absolute', top: 10, right: 10, color: 'rgba(31,34,39,0.6)' }}
@@ -543,17 +499,6 @@ const TagPicker = ({
           {metaObject?.tags?.length === 0 && <span style={{ marginTop: -2, marginRight: 6 }}>Add One Tag</span>}
         </div>
       </Content>
-      {/* <div style={{ margin: '20px 0px 10px' }} className={ClassName.description()}>
-        RELATED OBJECTS TAGS
-      </div> */}
-      <Content flex>
-        {Array.from(relatedTagsSet).map(i => (
-          <div>
-            {i}
-            {TagToMetaObjectIdsMap.get(i)?.size}
-          </div>
-        ))}
-      </Content>
       <div style={{ margin: '20px 0px 10px' }} className={ClassName.description()}>
         MOST USED TAGS
       </div>
@@ -596,7 +541,7 @@ export const Tag = ({
   onClick?: MouseEventHandler
   onAdd?: VoidFunction
 }) => {
-  const TagToMetaObjectMap = useMemo(() => atom(get => get(TagToMetaObjectIdsMapAtom)), [])
+  const TagToMetaObjectMap = useMemo(() => atom(get => get(tagToMetaObjectIdsMapAtom)), [])
   const tagMap = useAtomValue(TagToMetaObjectMap, { store: globalStore })
   const tagToObjectsSet = tagMap.get(tag)
   const tagToObjectArray = tagToObjectsSet && Array.from(tagToObjectsSet)
@@ -683,7 +628,7 @@ const TagTargetObject = ({ id }: { id: number }) => {
   if (!result) return null
   const { metaObject, targetObject } = result
   const name = targetObject?.title || targetObject?.name || metaObject.name
-  const type = typeToTypeRecord[metaObject.type]
+  const type = TypeToTypeName[metaObject.type]
   return (
     <Content style={{ fontSize: 13 }} gap={10} flex justifyContent="space-between">
       <div>{name}</div>
@@ -691,53 +636,5 @@ const TagTargetObject = ({ id }: { id: number }) => {
     </Content>
   )
 }
-const LinkItem = ({ link: l, innerMeta }: { link: Partial<MetaLink>; innerMeta: Partial<MetaObject> }) => {
-  return (
-    <Content flex alignItems="center" justifyContent="space-between" className={ClassName.description()}>
-      <Content flex gap={8}>
-        {l.sourceId === innerMeta.id ? (
-          <div className={ClassName.tag('rgba(31,34,39,0.06)')}>Self</div>
-        ) : (
-          <PathObject metaObject={l.sourceObject} />
-        )}
-        <Icon name="park-arrow-right" />
-        {l.targetId === innerMeta.id ? (
-          <div className={ClassName.tag('rgba(31,34,39,0.06)')}>Self</div>
-        ) : (
-          <PathObject metaObject={l.targetObject} />
-        )}
-      </Content>
-      <Content flex gap={5}>
-        <Icon className={ClassName.circleButton()} name="park-delete" />
-      </Content>
-    </Content>
-  )
-}
-const PathObject = ({ metaObject }: { metaObject?: MetaObject }) => {
-  const objId = metaObject?.objectId
-  const type = metaObject?.type
-  const objectAtom = useMemo(
-    () =>
-      objId
-        ? atom(get => {
-            switch (type) {
-              case 'pdf':
-                return get(documentsAtom).get(objId)
-              case 'note':
-                return get(notesAtom).get(objId)
-              default:
-                return atom(null)
-            }
-          })
-        : atom(null),
-    [objId]
-  )
-  const obj = useAtomValue(objectAtom, { store: globalStore })
 
-  return (
-    <span style={{ maxWidth: '40%', display: 'flex', alignItems: 'center' }}>
-      {type && <span className={ClassName.tag('rgba(31,34,39,0.06)')}>{typeToTypeRecord[type || 'normal']}</span>}
-    </span>
-  )
-}
 export default memo(EditMetaObjectForm)

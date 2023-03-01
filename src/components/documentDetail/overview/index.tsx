@@ -1,4 +1,4 @@
-import useNoteStore from '@/stores/note.store'
+import createNoteStore from '@/stores/note.store'
 import Id from '@/utils/id'
 import classNames from 'classnames'
 import { format } from 'date-fns'
@@ -14,7 +14,7 @@ import styles from './index.module.less'
 const Overview = ({ document }: { document?: IPdfDocument }) => {
   const noteId = 1
   const [notes, setNotes] = useState()
-  const { getNotesByIds } = useNoteStore()
+  const { getNotesByIds } = createNoteStore()
   useEffect(() => {
     if (document) {
       console.log(document)

@@ -66,6 +66,7 @@ export class AppController {
       return newPath
     }
   }
+
   @IpcInvoke('saveImage')
   public async saveImage(imgName: string, imgData: string) {
     this.checkIfRendevozGenerated()
@@ -88,10 +89,38 @@ export class AppController {
       return protocolPath
     }
   }
+
+  @IpcInvoke('saveFile')
+  public async saveFile(filePath: string, fileName: string) {
+    this.checkIfRendevozGenerated()
+    const rendevozFilePath = path.join(DEFAULT_USER_DATA_PATH, 'rendevoz', 'files')
+    if (!fs.existsSync(filePath)) {
+      fs.mkdirSync(filePath, {})
+    }
+    const newPath = path.join(rendevozFilePath, fileName)
+    const absolutePath = path.resolve(newPath)
+    const protocolPath = 'rendefile://' + absolutePath
+    if (!fs.existsSync(newPath)) {
+      return new Promise(resolve => {
+        fs.copyFile(filePath, newPath, () => {
+          resolve(protocolPath)
+        })
+      })
+    } else {
+      return protocolPath
+    }
+  }
   private checkIfRendevozGenerated = () => {
     const rendevozPath = path.join(DEFAULT_USER_DATA_PATH, 'rendevoz')
     if (!fs.existsSync(rendevozPath)) {
       fs.mkdirSync(rendevozPath, {})
     }
+  }
+  private getRendevozFilePath = () => {
+    const rendevozPath = path.join(DEFAULT_USER_DATA_PATH, 'rendevoz')
+    if (!fs.existsSync(rendevozPath)) {
+      fs.mkdirSync(rendevozPath, {})
+    }
+    return rendevozPath
   }
 }

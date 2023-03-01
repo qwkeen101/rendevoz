@@ -13,7 +13,7 @@ import { undeletedNotesAtom } from '@/stores/note.store'
 import NoteItem from './NoteItem'
 import HomeBrief from './Brief'
 import { useAtomValue } from 'jotai/react'
-import { globalStore } from '@/stores/stores'
+import { globalStore } from '@/stores'
 import { useMeasure } from 'react-use'
 
 export const HomePage: FC = () => {

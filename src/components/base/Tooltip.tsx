@@ -1,19 +1,6 @@
-import {
-  Children,
-  cloneElement,
-  createElement,
-  CSSProperties,
-  FC,
-  forwardRef,
-  PropsWithChildren,
-  ReactNode,
-  useCallback,
-  useEffect,
-  useRef,
-  useState
-} from 'react'
-import { createPortal } from 'react-dom'
-import { AnimatePresence, motion } from 'framer-motion'
+import { CSSProperties, FC, forwardRef, PropsWithChildren, ReactNode, useEffect, useRef, useState } from 'react'
+import { AnimatePopover } from '..'
+import { useMergedRef } from '@/hooks'
 
 interface ToolTipProps {
   content: string | ReactNode
@@ -25,34 +12,16 @@ interface ToolTipProps {
 
 const ToolTip: FC<PropsWithChildren<ToolTipProps>> = ({ content, children, position = 'bottom', style, delay = 300, disable }, ref) => {
   const [open, setOpen] = useState(false)
-  const [bound, setBound] = useState({
-    x: 0,
-    y: 0,
-    width: 0,
-    height: 0
-  })
   const childRef = useRef<HTMLElement>(null)
+  const mergedRef = useMergedRef(childRef, ref)
   const isInRef = useRef(false)
   const isKeyDownRef = useRef(false)
-  const handleChildRef = useCallback(
-    (node: HTMLElement) => {
-      childRef.current = node
-      if (ref != null) {
-        if (typeof ref === 'object') {
-          ref.current = node
-        } else if (typeof ref === 'function') {
-          ref(node)
-        }
-      }
-    },
-    [ref]
-  )
   const handleMouseEvent = (e: MouseEvent) => {
-    if (e.type === 'mousedown') {
+    if (e.type === 'pointerdown') {
       isKeyDownRef.current = true
       setOpen(false)
     }
-    if (e.type === 'mouseenter') {
+    if (e.type === 'pointerenter') {
       isInRef.current = true
       if (delay) {
         setTimeout(() => {
@@ -63,16 +32,8 @@ const ToolTip: FC<PropsWithChildren<ToolTipProps>> = ({ content, children, posit
       } else {
         setOpen(true)
       }
-      const rect = e.currentTarget.getBoundingClientRect()
-      const { scrollTop, scrollLeft } = document.body
-      const bound = { x: rect.left + scrollLeft, y: rect.top + scrollTop, width: rect.width, height: rect.height }
-
-      if (position === 'top') {
-        bound.y = rect.top + scrollTop - rect.height - 40
-      }
-      setBound(bound)
     }
-    if (e.type === 'mouseleave') {
+    if (e.type === 'pointerleave') {
       isInRef.current = false
       isKeyDownRef.current = false
       setOpen(false)
@@ -81,57 +42,50 @@ const ToolTip: FC<PropsWithChildren<ToolTipProps>> = ({ content, children, posit
   useEffect(() => {
     const child = childRef.current
     if (child) {
-      child.addEventListener('mousedown', handleMouseEvent)
-      child.addEventListener('mouseenter', handleMouseEvent)
-      child.addEventListener('mouseleave', handleMouseEvent)
+      child.addEventListener('pointerdown', handleMouseEvent)
+      child.addEventListener('pointerenter', handleMouseEvent)
+      child.addEventListener('pointerleave', handleMouseEvent)
     }
     return () => {
-      child?.removeEventListener('mousedown', handleMouseEvent)
-      child?.removeEventListener('mouseenter', handleMouseEvent)
-      child?.removeEventListener('mouseleave', handleMouseEvent)
+      child?.removeEventListener('pointerdown', handleMouseEvent)
+      child?.removeEventListener('pointerenter', handleMouseEvent)
+      child?.removeEventListener('pointerleave', handleMouseEvent)
     }
   }, [childRef])
-  const renderChild = () =>
-    cloneElement(children as JSX.Element, {
-      ref: handleChildRef
-    })
-
+  const renderChildren = () => {
+    if (typeof children === 'string') {
+      return <span>{children}</span>
+    }
+    if (typeof children === 'object') {
+      return children
+    }
+    return <div></div>
+  }
+  const renderContent = () => {
+    return (
+      <div
+        style={{
+          pointerEvents: 'none',
+          background: 'rgba(0,0,0,0.6)',
+          color: 'white',
+          borderRadius: 4,
+          lineHeight: 1.2,
+          padding: '2px 4px 4px'
+        }}
+      >
+        {content}
+      </div>
+    )
+  }
   return (
     <>
-      {renderChild()}
-      <AnimatePresence>{open && !disable && content && <ToolTipPopover bound={bound} children={content} style={style} />}</AnimatePresence>
+      {children && (
+        <AnimatePopover padding={10} content={renderContent()} positions={[position]} innerRef={mergedRef} visible={content && open}>
+          {renderChildren()}
+        </AnimatePopover>
+      )}
     </>
   )
 }
-const ToolTipInner = ({ children, bound, style }) => (
-  <motion.div
-    initial={{ opacity: 0 }}
-    animate={{ opacity: 1 }}
-    exit={{ opacity: 0 }}
-    style={{
-      left: bound.x + bound.width / 2,
-      top: bound.y,
-      pointerEvents: 'none',
-      transform: `translate3d(-50%,${bound.height + 10}px,0)`,
-      background: 'rgba(0,0,0,0.6)',
-      color: 'white',
-      borderRadius: 4,
-      lineHeight: 1.2,
-      padding: '2px 4px 4px',
-      position: 'absolute',
-      zIndex: 100000,
-      ...style
-    }}
-  >
-    {children}
-  </motion.div>
-)
-const ToolTipPopover = ({ children, bound, style }) => {
-  return createPortal(
-    <ToolTipInner style={style} bound={bound}>
-      {children}
-    </ToolTipInner>,
-    document.body
-  )
-}
+
 export default forwardRef(ToolTip)

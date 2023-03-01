@@ -61,7 +61,7 @@ const NotificationSetting = () => {
           }
           visible={customizeVisible}
           onClickOutside={toggleCustomizeVisible}
-          containerStyle={{ zIndex: String(Zindexes.Tooltip) }}
+          containerStyle={{ zIndex: String(Zindexes.Notification) }}
         >
           <Content onClick={toggleCustomizeVisible} className={ClassName.flatButton()} flex gap={4}>
             <span>Customize</span>

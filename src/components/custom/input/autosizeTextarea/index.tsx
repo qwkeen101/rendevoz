@@ -56,6 +56,14 @@ const TextareaAutosize: React.ForwardRefRenderFunction<HTMLTextAreaElement, Text
       node.style.setProperty('height', `${height}px`, 'important')
       onHeightChange(height, { rowHeight })
     }
+    if (maxRows) {
+      const rows = height / rowHeight
+      if (rows >= maxRows) {
+        libRef.current?.style.setProperty('overflow', 'auto')
+      } else {
+        libRef.current?.style.setProperty('overflow', 'hidden')
+      }
+    }
   }
 
   const handleChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {

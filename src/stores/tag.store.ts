@@ -1,6 +1,5 @@
 import useDb from '@/hooks/stores/useDb'
 import { atom } from 'jotai/vanilla'
-import { useMemo } from 'react'
 import { ITag } from '~/typings/data'
 import { initializeLocalStore } from './base.store'
 import { IStore } from './store.type'
@@ -14,7 +13,7 @@ export const TagToTagAtom = atom<Map<string, ITag>>(get => {
   })
   return map
 })
-const useTagStore = () => {
+const createTagStore = () => {
   const database = useDb('tags')
   const store = initializeLocalStore(TagsAtom, database)
   const localStore: Pick<IStore<ITag>, 'addOne' | 'deleteOneById' | 'getAll' | 'getOneById' | 'updateOne'> = {
@@ -32,12 +31,11 @@ const useTagStore = () => {
     updateTag: localStore.updateOne
   }
 
-  return useMemo(
-    () => ({
-      ...realStore
-    }),
-    []
-  )
+  return {
+    ...realStore
+  }
 }
 
-export default useTagStore
+export const tagStore = createTagStore()
+
+export default createTagStore

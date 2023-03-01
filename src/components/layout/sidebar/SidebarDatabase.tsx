@@ -2,27 +2,27 @@ import { AnimatePopover, Icon } from '@/components'
 import Modal from '@/components/base/Modal'
 import EditMetaObjectForm from '@/components/form/EditMetaObjectForm'
 import { GlobalDragOverlayInstance, useGlobalIsDragging } from '@/components/globalDragOverlay/GlobalDragOverlay'
-import useEventEmitter from '@/events/useEventEmitter'
+import { useGlobalEventEmitter } from '@/events/useEventEmitter'
 import { useMemoizedFn } from '@/hooks'
-import useMetaStore, { undeletedMetaObjectsAtom } from '@/stores/meta.store'
-import { globalStore } from '@/stores/stores'
+import { undeletedMetaObjectsAtom } from '@/stores/meta.store'
+import { globalStore } from '@/stores'
 import ClassName from '@/styles/classNames'
 import { css } from '@emotion/css'
 import { useAtomValue } from 'jotai/react'
 import { memo, useEffect, useRef, useState } from 'react'
-import { MetaObject } from '~/typings/data'
+import { useNavigate } from 'react-router-dom'
 import { MenuItem } from './Item'
 
 const SidebarDatabase = memo(() => {
   const [newMetaVisible, setNewMetaVisible] = useState(false)
   const [globalIsDragging] = useGlobalIsDragging()
-  const [tempMetaObject, setTempMetaObject] = useState<Partial<MetaObject>>()
   const itemRef = useRef<HTMLLIElement>(null)
-  const emitter = useEventEmitter()
+  const emitter = useGlobalEventEmitter()
   const [draggingHovered, setDraggingHovered] = useState({
     droppable: false,
     visible: false
   })
+  const navigate = useNavigate()
   const pointerHandler = useMemoizedFn((e: PointerEvent) => {
     if (e.type === 'pointerenter') {
       let droppable = false
@@ -52,10 +52,10 @@ const SidebarDatabase = memo(() => {
       const draggingEle = GlobalDragOverlayInstance.draggingDetails
       if (draggingEle && draggingHovered.droppable) {
         emitter.emit('global', {
-          type: 'dragDrop',
+          type: 'globalDropNeedFurtherProcess',
           data: {
-            dragElement: draggingEle,
-            dropOn: 'database'
+            dropOn: 'database',
+            draggingElement: draggingEle
           }
         })
       }
@@ -73,21 +73,10 @@ const SidebarDatabase = memo(() => {
       }
     }
   }, [globalIsDragging])
-  const { addMetaObject } = useMetaStore()
   const undeletedMetaObjects = useAtomValue(undeletedMetaObjectsAtom, { store: globalStore })
 
   return (
     <>
-      <Modal visible={newMetaVisible} onClose={() => setNewMetaVisible(false)} noStyle>
-        <EditMetaObjectForm
-          metaObject={tempMetaObject}
-          onUpdate={newMeta => {
-            newMeta.type = 'normal'
-            addMetaObject(newMeta)
-            setNewMetaVisible(false)
-          }}
-        />
-      </Modal>
       <AnimatePopover
         innerRef={itemRef}
         visible={draggingHovered.visible}
@@ -110,7 +99,7 @@ const SidebarDatabase = memo(() => {
         }
       >
         <MenuItem
-          to="/database"
+          onClick={() => navigate('/database')}
           className={css([draggingHovered.visible ? ClassName.Drag.droppableItemHovered(draggingHovered.droppable) : undefined])}
           style={{
             background: draggingHovered.visible ? 'white' : undefined,
@@ -127,7 +116,7 @@ const SidebarDatabase = memo(() => {
               e.stopPropagation()
               setNewMetaVisible(true)
             }}
-            containerClassName={css([ClassName.circleButton(2, 4)])}
+            className={ClassName.circleButton(2, 4)}
           />
         </MenuItem>
       </AnimatePopover>

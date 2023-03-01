@@ -1,8 +1,13 @@
+import { intersectionOfMultipleSets } from '@/components/database/filter/useObjectFilter'
 import { usePrevious } from '@/hooks'
+import { indexedMetaLinksAtom } from '@/stores/meta.store'
+import { globalStore } from '@/stores'
 import { css } from '@emotion/css'
-import { memo, useEffect } from 'react'
+import produce from 'immer'
+import { selectAtom } from 'jotai/utils'
+import { memo, useEffect, useMemo } from 'react'
 import { MarkerColor } from '../../svg/markerColors'
-import useEdges from '../hooks/useEdges'
+import useEdges, { useSetOppsiteEdgesMap } from '../hooks/useEdges'
 import useGraph from '../hooks/useGraph'
 import { getMarkerId } from '../utils/getMarkerId'
 import Edge from './Edge'
@@ -17,53 +22,40 @@ const svgContainerClassName = css({
   pointerEvents: 'none'
 })
 const EdgeContainer = () => {
-  const graph = useGraph()
   const [edges] = useEdges()
-
+  const setOppositeEdgesMap = useSetOppsiteEdgesMap()
+  const sourceIdToLinkIdsMapAtom = useMemo(() => selectAtom(indexedMetaLinksAtom, i => i?.sourceIdToLinkIdsMap), [])
+  const targetIdToLinkIdsMapAtom = useMemo(() => selectAtom(indexedMetaLinksAtom, i => i?.targetIdToLinkIdMap), [])
   const previousEdges = usePrevious(edges)
 
   useEffect(() => {
-    if (previousEdges && edges && graph) {
-      if (previousEdges?.length !== edges?.length) {
-        const oppoMap = new Map()
-        graph.originEdges?.forEach(e => {
-          const oppositeEdge = graph.originEdges?.find(i => i.targetId === e.sourceId && i.sourceId === e.targetId)
-          if (oppositeEdge) {
-            oppoMap.set(e.id, oppositeEdge)
-            oppoMap.set(oppositeEdge.id, e)
-          }
+    if (edges && edges?.length !== previousEdges?.length && edges?.length > 0) {
+      const sourceIdToLinkIdsMap = globalStore.get(sourceIdToLinkIdsMapAtom)
+      const targetIdToLinkIdsMap = globalStore.get(targetIdToLinkIdsMapAtom)
+      setOppositeEdgesMap(map => {
+        const newMap = produce(map, draft => {
+          edges?.forEach(edge => {
+            const { sourceId, targetId } = edge
+            // find another link which sourceId === targetId && targetId === sourceId
+            const oppositeSourceToLinkSet = targetIdToLinkIdsMap?.get(sourceId)
+            const oppositeTargetToLinkSet = sourceIdToLinkIdsMap?.get(targetId)
+            if (oppositeSourceToLinkSet && oppositeTargetToLinkSet) {
+              const intersected = intersectionOfMultipleSets(oppositeSourceToLinkSet, oppositeTargetToLinkSet) as Set<number>
+              if (intersected.size === 1) {
+                const [first] = intersected
+                draft.set(edge.id, first)
+              }
+            }
+          })
         })
-        graph.oppositeEdgesMap = oppoMap
-      }
+        console.log(newMap)
+        return newMap
+      })
     }
   }, [edges])
 
   return (
-    <svg viewBox="-300 -300 600 600" className={svgContainerClassName}>
-      <defs>
-        {(Object.values(MarkerColor) as string[]).map(color => (
-          <marker
-            refX={0}
-            refY={0}
-            markerUnits="strokeWidth"
-            viewBox="-10,-10,20,20"
-            orient="auto"
-            key={color}
-            id={getMarkerId('end', color)}
-            markerWidth={12.5}
-            markerHeight={12.5}
-          >
-            <polyline
-              stroke={color}
-              fill={color}
-              strokeWidth={1}
-              points="-5,-4 0,0 -5,4 -5,-4"
-              strokeLinejoin="round"
-              strokeLinecap="round"
-            ></polyline>
-          </marker>
-        ))}
-      </defs>
+    <svg className={svgContainerClassName}>
       {edges
         ?.filter(i => !i.hidden)
         ?.map(edge => (

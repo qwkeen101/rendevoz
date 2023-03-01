@@ -1,32 +1,39 @@
 import { AnimatePopover, Content, Icon, WithBorder } from '@/components/base'
 import Modal from '@/components/base/Modal'
-import NewDocumentDialog from '@/components/dialogs/NewDocumentDialog'
-import NewCollectionForm from '@/components/form/NewCollectionForm'
-import NewDocumentForm from '@/components/form/NewDocumentForm'
-import { KEY } from '@/consts/key'
+import CollectionForm from '@/components/form/CollectionForm'
+import CreateDocumentForm from '@/components/form/CreateDocumentForm'
 import Zindexes from '@/consts/zindex'
-import useCollectionStore from '@/stores/collection.store'
-import useNoteStore from '@/stores/note.store'
+import useWhiteboardStore from '@/stores/whiteboard.store'
 import ClassName from '@/styles/classNames'
 import { Position } from '@/types'
 import Id from '@/utils/id'
 import { css } from '@emotion/css'
+import { collectionStore, noteStore } from '@/stores'
 import { AnimatePresence, motion } from 'framer-motion'
-import { RefObject, useEffect, useRef, useState } from 'react'
+import { RefObject, useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useNavigate } from 'react-router-dom'
-import { ICollection, INote, IPdfDocument } from '~/typings/data'
 
 const useSidebarItemContextMenu = (
-  contextMenuElementRef?: RefObject<HTMLElement>,
+  contextMenuElementRef: RefObject<HTMLElement>,
+  item: {
+    type: 'collection' | 'note' | 'pdf' | 'whiteboard'
+    id: number
+  },
   {
     onPin,
     onDelete,
     onEdit,
-    pinned,
-    name
-  }: { onPin?: VoidFunction; onDelete?: VoidFunction; onEdit?: VoidFunction; pinned?: boolean; name?: string } = {},
-  item?: ICollection | IPdfDocument | INote
+    onAddNewSubItem,
+    pinned
+  }: {
+    onPin?: VoidFunction
+    onDelete?: VoidFunction
+    onEdit?: VoidFunction
+    pinned?: boolean
+    name?: string
+    onAddNewSubItem?: VoidFunction
+  } = {}
 ) => {
   const [contextMenuState, setContextMenuState] = useState<
     Partial<
@@ -51,7 +58,6 @@ const useSidebarItemContextMenu = (
     editCollectionVisible: false
   })
   const contextMenuHandler = (e: MouseEvent) => {
-    console.log(e)
     const currentTarget = e.currentTarget as HTMLElement
     const rect = currentTarget.getBoundingClientRect()
     setContextMenuState({
@@ -65,14 +71,10 @@ const useSidebarItemContextMenu = (
       targetElementRight: rect.right
     })
   }
-  const nameRef = useRef(name)
-  useEffect(() => {
-    nameRef.current = name
-  }, [name])
-
   const navigate = useNavigate()
-  const { addNote } = useNoteStore()
-  const { addItemToCollection } = useCollectionStore()
+  const { addNote } = noteStore
+  const { addItemToCollection, addCollection } = collectionStore
+  const { addWhiteboard } = useWhiteboardStore()
   useEffect(() => {
     contextMenuElementRef?.current?.addEventListener('contextmenu', contextMenuHandler)
     return () => {
@@ -107,21 +109,27 @@ const useSidebarItemContextMenu = (
             style={{
               padding: 3,
               width: 150,
-              background: 'rgba(255,255,255,0.7)',
-              backdropFilter: 'saturate(1.5) blur(8px)',
               position: 'absolute',
+              background: 'white',
               ...contextMenuState
             }}
             onClick={e => {
               if (e.target !== e.currentTarget) {
+                e.stopPropagation()
                 setContextMenuState({
                   ...contextMenuState,
-                  contextMenuVisible: false
+                  createVisible: false
+                })
+                setTimeout(() => {
+                  setContextMenuState(s => ({
+                    ...s,
+                    contextMenuVisible: false
+                  }))
                 })
               }
             }}
           >
-            {item?.items && (
+            {item?.type === 'collection' && (
               <AnimatePopover
                 containerStyle={{ zIndex: String(Zindexes.PopupMenu) }}
                 positions={['right']}
@@ -129,7 +137,7 @@ const useSidebarItemContextMenu = (
                 visible={!!contextMenuState.createVisible}
                 content={
                   <WithBorder
-                    style={{ width: 150, padding: 3, background: 'rgba(255,255,255,0.7)', backdropFilter: 'saturate(1.5) blur(8px)' }}
+                    style={{ width: 150, padding: 3, background: 'white' }}
                     className={css([
                       ClassName.defaultFont(13, 600),
                       ClassName.childrenAllFlex(undefined, 'flex-start'),
@@ -170,6 +178,7 @@ const useSidebarItemContextMenu = (
                           title: 'Untitled'
                         })
                         navigate(`/editor/${id}`)
+                        onAddNewSubItem?.()
                       }}
                     >
                       <Icon name="park-notes" />
@@ -184,6 +193,30 @@ const useSidebarItemContextMenu = (
                     >
                       <Icon name="park-file-pdf" />
                       Pdf
+                    </div>
+                    <div
+                      onClick={() => {
+                        const whiteboardId = Id.getId()
+                        addItemToCollection(
+                          {
+                            id: whiteboardId,
+                            type: 'whiteboard'
+                          },
+                          item.id
+                        )
+                        addWhiteboard({
+                          id: whiteboardId,
+                          name: 'Unnamed Whiteboard',
+                          edges: new Map(),
+                          nodes: new Map(),
+                          items: []
+                        })
+                        navigate(`/whiteboard/${whiteboardId}`)
+                        onAddNewSubItem?.()
+                      }}
+                    >
+                      <Icon name="park-new-computer" />
+                      Whiteboard
                     </div>
                   </WithBorder>
                 }
@@ -239,9 +272,24 @@ const useSidebarItemContextMenu = (
           setFormState({ newCollectionVisible: false })
         }}
       >
-        <NewCollectionForm
-          parentCollection={item}
-          onAddCollection={() => setFormState({ newCollectionVisible: false })}
+        <CollectionForm
+          onSubmit={collection => {
+            setFormState({ newCollectionVisible: false })
+            const newCollection = {
+              ...collection,
+              parentId: item?.id,
+              id: Id.getId()
+            }
+            addItemToCollection(
+              {
+                type: 'collection',
+                id: newCollection.id
+              },
+              item?.id
+            )
+            addCollection(newCollection)
+            onAddNewSubItem?.()
+          }}
           onBack={() => setFormState({ newCollectionVisible: false })}
         />
       </Modal>
@@ -252,12 +300,13 @@ const useSidebarItemContextMenu = (
           setFormState({ newPdfVisible: false })
         }}
       >
-        <NewDocumentForm
+        <CreateDocumentForm
           collection={item}
           onBack={() => setFormState({ newPdfVisible: false })}
           onSubmit={doc => {
             setFormState({ newPdfVisible: false })
             addItemToCollection({ id: doc.id, type: 'document' }, item?.id)
+            onAddNewSubItem?.()
           }}
         />
       </Modal>

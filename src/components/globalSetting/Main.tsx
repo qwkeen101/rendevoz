@@ -1,5 +1,5 @@
 import { Content, Icon } from '@/components/base'
-import { globalStore } from '@/stores/stores'
+import { globalStore } from '@/stores'
 import ClassName from '@/styles/classNames'
 import { css } from '@emotion/css'
 import { useAtom, useAtomValue } from 'jotai/react'

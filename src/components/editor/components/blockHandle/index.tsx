@@ -4,6 +4,7 @@ import { useGlobalIsDragging } from '@/components/globalDragOverlay/GlobalDragOv
 import { css } from '@emotion/css'
 import { AnimatePresence, motion } from 'framer-motion'
 import { FC, memo, MouseEventHandler, useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 
 type BlockHandleProps = {
   left?: number
@@ -78,96 +79,99 @@ const BlockHandle: IBlockHandle = ({ left, top, targetHeight, visible, onMouseDo
       </div>
     </div>
   )
-  return (
-    <AnimatePresence>
-      {targetHeight && innerVisible && !hasMouseSelection() && (
-        <motion.div
-          key={top}
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          onPointerDown={onMouseDown}
-          onPointerEnter={() => {
-            isInside.current = true
-          }}
-          onPointerLeave={() => {
-            isInside.current = false
-            if (visible === false) {
-              setInnerVisible(false)
-            }
-          }}
-          onClick={onClick}
-          style={{
-            position: 'fixed',
-            top: top,
-            left: left || 0 - 5,
-            width: 5,
-            height: targetHeight,
-            zIndex: 99
-          }}
-        >
-          <Tooltip delay={300} style={{ background: 'rgba(0,0,0,0.8)' }} position="top" content={AddTooltip}>
-            <div
-              onClick={e => {
-                onAddClick?.(e)
+  const renderHandle = () => {
+    return (
+      <AnimatePresence>
+        {targetHeight && innerVisible && !hasMouseSelection() && (
+          <motion.div
+            key={top}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onPointerDown={onMouseDown}
+            onPointerEnter={() => {
+              isInside.current = true
+            }}
+            onPointerLeave={() => {
+              isInside.current = false
+              if (visible === false) {
                 setInnerVisible(false)
-              }}
-              className={css({
-                transition: 'all 0.2s ease',
-                ':hover': { background: 'rgba(0,0,0,0.06)' },
-                padding: 2,
-                borderRadius: 4
-              })}
-              style={{
-                position: 'absolute',
-                left: -40,
-                top: '50%',
-                transform: 'translateY(-50%)',
-                width: 20,
-                height: 20,
-                cursor: 'pointer'
-              }}
-            >
-              <Icon size={16} name="park-plus" fill="#8590ae" />
-            </div>
-          </Tooltip>
-          <Tooltip
-            delay={300}
-            style={{ background: 'rgba(0,0,0,0.8)', transform: 'translate3d(-50%, 15px ,0)' }}
-            position="top"
-            content={DragTooltip}
+              }
+            }}
+            onClick={onClick}
+            style={{
+              position: 'fixed',
+              top: top,
+              left: left || 0 - 5,
+              width: 5,
+              height: targetHeight,
+              zIndex: 99
+            }}
           >
-            <div
-              onPointerDown={e => {
-                onDragClick?.(e)
-              }}
-              onPointerUp={e => {
-                onMenuClick?.(e)
-                setInnerVisible(false)
-              }}
-              className={css({
-                transition: 'all 0.2s ease',
-                ':hover': { background: 'rgba(0,0,0,0.06)' },
-                padding: 2,
-                borderRadius: 4
-              })}
-              style={{
-                position: 'absolute',
-                left: -20,
-                top: '50%',
-                transform: 'translateY(-50%)',
-                width: 20,
-                height: 20,
-                cursor: 'grab'
-              }}
+            <Tooltip delay={300} style={{ background: 'rgba(0,0,0,0.8)' }} position="top" content={AddTooltip}>
+              <div
+                onClick={e => {
+                  onAddClick?.(e)
+                  setInnerVisible(false)
+                }}
+                className={css({
+                  transition: 'all 0.2s ease',
+                  ':hover': { background: 'rgba(0,0,0,0.06)' },
+                  padding: 2,
+                  borderRadius: 4
+                })}
+                style={{
+                  position: 'absolute',
+                  left: -40,
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  width: 20,
+                  height: 20,
+                  cursor: 'pointer'
+                }}
+              >
+                <Icon size={16} name="park-plus" fill="#8590ae" />
+              </div>
+            </Tooltip>
+            <Tooltip
+              delay={300}
+              style={{ background: 'rgba(0,0,0,0.8)', transform: 'translate3d(-50%, 15px ,0)' }}
+              position="top"
+              content={DragTooltip}
             >
-              <Icon size={16} name="park-drag" fill="#8590ae" />
-            </div>
-          </Tooltip>
-        </motion.div>
-      )}
-    </AnimatePresence>
-  )
+              <div
+                onPointerDown={e => {
+                  onDragClick?.(e)
+                }}
+                onPointerUp={e => {
+                  onMenuClick?.(e)
+                  setInnerVisible(false)
+                }}
+                className={css({
+                  transition: 'all 0.2s ease',
+                  ':hover': { background: 'rgba(0,0,0,0.06)' },
+                  padding: 2,
+                  borderRadius: 4
+                })}
+                style={{
+                  position: 'absolute',
+                  left: -20,
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  width: 20,
+                  height: 20,
+                  cursor: 'grab'
+                }}
+              >
+                <Icon size={16} name="park-drag" fill="#8590ae" />
+              </div>
+            </Tooltip>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    )
+  }
+  return createPortal(renderHandle(), document.body)
 }
 
 export default memo(BlockHandle)

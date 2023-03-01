@@ -1,7 +1,4 @@
 import { Content } from '@/components/base'
-import Switch from '@/components/base/Switch'
-import { useSetting } from '@/hooks'
-import produce from 'immer'
 import { ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import SettingItem from './Item'
@@ -11,7 +8,6 @@ const SupportedLangs = {
   'zh-CN': '简体中文'
 }
 const AppearanceSetting = () => {
-  const [setting, setSetting] = useSetting()
   const { t, i18n } = useTranslation()
   const appearance: { title: string; description: string; children: ReactNode }[] = [
     // {
@@ -39,22 +35,6 @@ const AppearanceSetting = () => {
     //     </Select>
     //   )
     // },
-    {
-      title: 'Logo',
-      description: 'Show or hide logo',
-      children: (
-        <Switch
-          onChange={v => {
-            setSetting(
-              produce(setting, draft => {
-                draft.appearance.logo = v
-              })
-            )
-          }}
-          defaultValue={setting.appearance.logo}
-        />
-      )
-    }
   ]
   return (
     <Content flex column>

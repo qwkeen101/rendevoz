@@ -42,22 +42,25 @@ process.env.PUBLIC = app.isPackaged ? process.env.DIST : join(process.env.DIST_E
           const filePath = fileURLToPath('file://' + req.url.slice('rendefile://'.length))
           callback(filePath)
         })
-
+        let contentTemp = null
+        const newWindowListener = e => {
+          e.preventDefault()
+          contentTemp?.removeListener('new-window', newWindowListener)
+        }
         app.on('web-contents-created', (createEvent, contents) => {
-          contents.on('new-window', newEvent => {
-            console.log("Blocked by 'new-window'")
-            newEvent.preventDefault()
-          })
+          contents.addListener('new-window', newWindowListener)
+          contentTemp = contents
 
           contents.on('will-navigate', newEvent => {
-            console.log("Blocked by 'will-navigate'")
-            newEvent.preventDefault()
+            // console.log("Blocked by 'will-navigate'")
+            // newEvent.preventDefault()
           })
 
           contents.setWindowOpenHandler(({ url }) => {
-            // shell.openExternal(url)
-            win.webContents.send('newPage', url)
-            return { action: 'allow' }
+            console.log(url)
+            shell.openExternal(url)
+            // win.webContents.send('newPage', url)
+            return { action: 'deny' }
           })
         })
         const win = new BrowserWindow({
@@ -68,7 +71,8 @@ process.env.PUBLIC = app.isPackaged ? process.env.DIST : join(process.env.DIST_E
             contextIsolation: true,
             preload,
             devTools: true,
-            webSecurity: false
+            webSecurity: false,
+            webviewTag: true
           },
           autoHideMenuBar: true,
           titleBarStyle: 'hidden'

@@ -8,7 +8,8 @@ import { Navigate } from 'react-router-dom'
 import { ILabel } from '~/typings/data'
 import BaseStore, { initializeLocalStore } from './base.store'
 import { IStore } from './store.type'
-import { globalStore } from './stores'
+import { globalStore } from '.'
+import getSetting from '@/components/globalSetting/getSetting'
 
 const { orderedData } = BaseStore
 
@@ -69,17 +70,22 @@ export const jumpToTargetLabel = (labelId: number, navigate) => {
 const useLabelStore = () => {
   const database = useDb('labels')
   const store = initializeLocalStore<ILabel>(labelsAtom, database)
-  const [setting] = useSetting()
-  const shouldToast = setting.notification.enabled && setting.notification.label
+  const shouldToast = (silent?: boolean) => {
+    const setting = getSetting()
+    if (setting.notification.enabled && setting.notification.label && !silent) {
+      return true
+    }
+    return false
+  }
   const localStore: Pick<IStore<ILabel>, 'addOne' | 'deleteOneById' | 'getAll' | 'getOneById' | 'updateOne'> = {
     addOne: store.addOne((obj, silent) => {
-      !silent && shouldToast && toast.success('Label successfully added!')
+      !silent && shouldToast(silent) && toast.success('Label successfully added!')
     }),
     updateOne: store.updateOne((obj, silent) => {
-      !silent && shouldToast && toast.success('Label successfully updated!')
+      !silent && shouldToast(silent) && toast.success('Label successfully updated!')
     }),
     deleteOneById: store.deleteOneById(silent => {
-      !silent && shouldToast && toast.success('Label successfully deleted!')
+      !silent && shouldToast(silent) && toast.success('Label successfully deleted!')
     }),
     getAll: store.getAll(),
     getOneById: store.getOneById()
@@ -92,12 +98,10 @@ const useLabelStore = () => {
     getLabelById: localStore.getOneById
   }
 
-  return useMemo(
-    () => ({
-      ...realStore
-    }),
-    []
-  )
+  return {
+    ...realStore
+  }
 }
+export const labelStore = useLabelStore()
 
 export default useLabelStore

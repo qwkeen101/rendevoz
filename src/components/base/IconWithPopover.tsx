@@ -1,5 +1,6 @@
 import { AnimatePopover, Content, Icon } from '@/components'
 import Tooltip from '@/components/base/Tooltip'
+import { useMergedRef } from '@/hooks'
 import { FC, useRef, useState, useEffect, MutableRefObject, useImperativeHandle, forwardRef, CSSProperties, MouseEventHandler } from 'react'
 
 interface Props {
@@ -22,6 +23,7 @@ interface Props {
   align?: string
   className?: string
   onClick?: MouseEventHandler
+  tooltipPosition?: 'top' | 'bottom'
 }
 const IconWithPopover: FC<Props> = (
   {
@@ -43,11 +45,13 @@ const IconWithPopover: FC<Props> = (
     disableCloseOutside,
     disableIntersection,
     style,
-    onClick
+    onClick,
+    tooltipPosition = 'top'
   },
   ref
 ) => {
   const containerRef = useRef(null)
+  const mergedRef = useMergedRef(ref, containerRef)
   const [visible, setVisible] = useState(false)
   const close = () => {
     setVisible(false)
@@ -59,7 +63,7 @@ const IconWithPopover: FC<Props> = (
     }
   }, [])
   return (
-    <Content ref={containerRef}>
+    <Content ref={mergedRef}>
       <AnimatePopover
         align={align}
         padding={padding}
@@ -84,7 +88,7 @@ const IconWithPopover: FC<Props> = (
         disableNudge={disableNudge}
         disableIntersection={disableIntersection}
       >
-        <Tooltip content={tooltip}>
+        <Tooltip content={tooltip} position={tooltipPosition}>
           <Icon
             style={{ color, ...style }}
             cursor="pointer"

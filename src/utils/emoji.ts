@@ -14,7 +14,7 @@ export type Emoji = {
 }
 
 const emojiMap = new Map<string, Emoji>(JSON.parse(emojiJson).map(i => [i.short_name, i]))
-const getEmoji = async (name: string) => {
+const getEmoji = (name: string) => {
   const emoji = emojiMap.get(name)
   if (emoji) {
     return {

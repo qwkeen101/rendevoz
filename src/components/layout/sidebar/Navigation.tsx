@@ -1,5 +1,4 @@
 import Icon from '@/components/base/Icon'
-import NewItemDialog from '@/components/dialogs/NewItemDialog'
 import SearchDialog from '@/components/dialogs/SearchDialog/SearchDialog'
 import { motion } from 'framer-motion'
 import { useState } from 'react'
@@ -12,8 +11,6 @@ import Content from '../../base/Content'
 import { useTheme } from '@/hooks'
 import { css } from '@emotion/css'
 import SidebarPinned from './SidebarPinned'
-import GlobalPocket from '@/components/GlobalPocket'
-import SidebarPocket from './SidebarPocket'
 import SidebarDatabase from './SidebarDatabase'
 import SidebarSetting from './SidebarSetting'
 
@@ -27,16 +24,12 @@ const variants = {
 }
 const Navigation = ({ hovered }: { hovered: boolean }) => {
   const [searchVisible, setSearchVisible] = useState(false)
-  const [newItemVisible, setNewItemVisible] = useState(false)
   const { defaultFontColorGrey } = useTheme('defaultFontColorGrey', 'defaultFontColorBlack')
   const { t } = useTranslation()
   return (
     <>
       <Modal minWidth={600} minHeight={400} visible={searchVisible} onClose={() => setSearchVisible(false)}>
         <SearchDialog onSearchComplete={() => setSearchVisible(false)} />
-      </Modal>
-      <Modal visible={newItemVisible} onClose={() => setNewItemVisible(false)}>
-        <NewItemDialog onNewDocument={() => setNewItemVisible(false)} onNewNoteClick={() => setNewItemVisible(false)} />
       </Modal>
       <motion.ul
         className={styles.list}

@@ -1,51 +1,38 @@
 import Container from '@/components/base/container'
 import { PdfViewer } from '@/components/pdf/PdfViewer'
-import useCurrentViewingPdf from '@/hooks/components/useCurrentViewingPdf'
-import { ipcInstance } from '@/plugins'
 import { documentsAtom } from '@/stores/document.store'
-import { FC, memo, useMemo, useRef, useState } from 'react'
+import { FC, memo, useMemo, useRef } from 'react'
 import PdfPageHeader from './Header'
 import { Content } from '@/components'
 import { Provider } from 'jotai'
-import { atom } from 'jotai/vanilla'
-import { useAtomValue } from 'jotai/react'
-import { PdfScope } from '@/jotai/jotaiScope'
-import { useIsomorphicLayoutEffect } from 'react-use'
+import { createStore } from 'jotai/vanilla'
 import TabTitle from '@/components/layout/TabTitle'
 import PdfFloatBar from './FloatBar/FloatBar'
-import { globalStore } from '@/stores/stores'
 import { ViewerContext } from './useViewer'
+import { selectAtom } from 'jotai/utils'
+import { useGlobalAtomValue } from '@/jotai/jotaiScope'
+import { IPdfViewer } from '@/pdfViewer/core/types/pdfViewer'
 
 const PdfPage: FC<{
   pdfId: number
-}> = memo(({ pdfId }) => {
-  const [, setCurrentViewingPdf] = useCurrentViewingPdf()
-  const [fileUrl, setFileUrl] = useState()
-  const documentAtom = useMemo(() => atom(get => get(documentsAtom).get(pdfId)), [pdfId])
-  const document = useAtomValue(documentAtom, { store: globalStore })
+  onViewerInitialized?: (viewer: IPdfViewer) => void
+}> = memo(({ pdfId, onViewerInitialized }) => {
+  const documentAtom = useMemo(() => selectAtom(documentsAtom, d => d.get(pdfId)), [pdfId])
+  const document = useGlobalAtomValue(documentAtom)
   const innerRef = useRef(null)
-  useIsomorphicLayoutEffect(() => {
-    if (!fileUrl) {
-      const fileUrl = globalStore.get(documentsAtom).get(pdfId)?.fileUrl
-      ipcInstance.send('readPdf', fileUrl).then(res => {
-        setFileUrl(res.data)
-      })
-      setCurrentViewingPdf(document)
-    }
-  }, [document])
+  const store = useMemo(() => createStore(), [])
 
   return (
     <>
       <TabTitle title={document?.metadata?.title || document?.name || 'Unknown book'} />
-
       <Container auto>
         <ViewerContext.Provider value={innerRef}>
-          <Provider scope={PdfScope}>
+          <Provider store={store}>
             <Content flex column fullHeight fullWidth>
-              <PdfPageHeader />
+              <PdfPageHeader document={document} />
               <Content flex centered fullHeight>
-                <PdfFloatBar />
-                <PdfViewer innerRef={innerRef} fileUrl={fileUrl} document={document} />
+                <PdfFloatBar document={document}/>
+                <PdfViewer innerRef={innerRef} documentId={pdfId} onViewerInitialized={onViewerInitialized} />
               </Content>
             </Content>
           </Provider>

@@ -1,4 +1,3 @@
-import { PdfScope } from '@/jotai/jotaiScope'
 import ClassName from '@/styles/classNames'
 import fuzzysort from 'fuzzysort'
 import { atom, useAtom } from 'jotai'
@@ -19,8 +18,8 @@ const searchAtom = atom<{
 const searchStrAtom = atom<string>('')
 const PdfSearch = ({ flipId }: { flipId: string }) => {
   const viewer = useViewer()
-  const [searchStr, setSearchStr] = useAtom(searchStrAtom, PdfScope)
-  const [result, setResult] = useAtom(searchAtom, PdfScope)
+  const [searchStr, setSearchStr] = useAtom(searchStrAtom)
+  const [result, setResult] = useAtom(searchAtom)
   return (
     <Flipped inverseFlipId={flipId}>
       <div style={{ width: 400, maxHeight: 500, display: 'flex', flexDirection: 'column', gap: 6 }}>

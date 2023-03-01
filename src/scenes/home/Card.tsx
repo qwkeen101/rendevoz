@@ -1,5 +1,5 @@
 import { Content, Icon, Image } from '@/components'
-import useDocumentStore, { undeletedDocumentsAtom } from '@/stores/document.store'
+import createDocumentStore, { undeletedDocumentsAtom } from '@/stores/document.store'
 import { FC, memo, ReactNode, useMemo } from 'react'
 import { IPdfDocument } from '~/typings/data'
 import styles from './index.module.less'
@@ -7,7 +7,7 @@ import { useMeasure } from 'react-use'
 import FullSizeLink from '@/components/base/FullSizeLink'
 import { useTranslation } from 'react-i18next'
 import { useAtomValue } from 'jotai/react'
-import { globalStore } from '@/stores/stores'
+import { globalStore } from '@/stores'
 import { orderBy } from 'lodash'
 interface CardProps {
   title: string

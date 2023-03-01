@@ -1,13 +1,13 @@
 import { Content, Icon, IconWithPopover, Image, WithBorder } from '@/components/base'
 import { Tag } from '@/components/form/EditMetaObjectForm'
 import { GlobalGraphInstance } from '@/components/graph/GlobalGraph'
-import { typeToTypeRecord } from '@/components/knowledgeDatabase/card/DatabaseCard'
+import { TypeToTypeName } from '@/components/database/card/DatabaseCard'
 import { useToggle } from '@/hooks'
 import { documentsAtom } from '@/stores/document.store'
 import { jumpToTargetLabel, labelsAtom } from '@/stores/label.store'
-import useMetaStore, { metaObjectsAtom, relatedMetaObjectsMapAtom } from '@/stores/meta.store'
+import { metaObjectsAtom, relatedMetaObjectsMapAtom } from '@/stores/meta.store'
 import { notesAtom } from '@/stores/note.store'
-import { globalStore } from '@/stores/stores'
+import { globalStore } from '@/stores'
 import ClassName from '@/styles/classNames'
 import { css } from '@emotion/css'
 import { AnimatePresence, motion } from 'framer-motion'
@@ -100,7 +100,7 @@ const MetaObject: FC<RenderElementProps> = memo(({ children, element }) => {
       <Content flex column>
         <Content flex justifyContent="space-between" alignItems="center">
           <div className={ClassName.tag(ClassName.TagBackgrounds.grey)} style={{ textTransform: 'uppercase' }}>
-            {typeToTypeRecord[metaObject?.type || 'normal']}
+            {TypeToTypeName[metaObject?.type || 'normal']}
           </div>
           <IconWithPopover
             style={{ marginLeft: 10 }}
@@ -215,7 +215,7 @@ const MetaObject: FC<RenderElementProps> = memo(({ children, element }) => {
               fontFamily: 'Muli'
             }}
           >
-            {typeToTypeRecord[metaObject?.type || 'normal']}
+            {TypeToTypeName[metaObject?.type || 'normal']}
           </div>
           {metaObject?.tags?.map(t => (
             <Tag hideSize tag={t} small key={t} />

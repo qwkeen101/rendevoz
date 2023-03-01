@@ -12,9 +12,10 @@ interface CanvasLayerProps {
   height: number
   viewport: PageViewport
   scale?: number
+  transformScale?: number
 }
 
-const CanvasLayer: FC<CanvasLayerProps> = ({ page, width, height, viewport }) => {
+const CanvasLayer: FC<CanvasLayerProps> = ({ page, width, height, viewport, transformScale = 1 }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const renderTaskRef = useRef<RenderTask>()
   const renderCanvas = (canvasEle?: HTMLCanvasElement) => {
@@ -23,7 +24,8 @@ const CanvasLayer: FC<CanvasLayerProps> = ({ page, width, height, viewport }) =>
       const maxScale = Math.sqrt(MAX_CANVAS_SIZE / (height * width))
       const shouldRescale = outputScale > maxScale
       shouldRescale ? (canvasEle.style.transform = 'scale(1, 1)') : canvasEle?.style.removeProperty('transform')
-      const finalScale = Math.min(maxScale, outputScale)
+      const finalScale = Math.min(maxScale, outputScale) * transformScale
+      console.log(transformScale, finalScale, maxScale, outputScale)
       const ctx = canvasEle.getContext('2d', { alpha: false })
       canvasEle.style.height = `${height}px`
       canvasEle.style.width = `${width}px`

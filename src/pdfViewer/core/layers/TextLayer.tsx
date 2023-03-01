@@ -11,7 +11,7 @@ import isHotkey from 'is-hotkey'
 import { useMemoizedFn } from '@/hooks'
 import { PageFunctionRef } from '../types'
 import useSelectingText from '../hooks/useIsSelectingText'
-import useEventEmitter from '@/events/useEventEmitter'
+import useScopedEventEmitter from '@/events/useEventEmitter'
 import { PdfViewInnerScope } from '../Provider'
 import { PdfEventHandler } from '@/events/pdfEvent'
 import useViewer from '@/scenes/pdf/useViewer'
@@ -24,11 +24,22 @@ interface TextLayerProps {
   height: number
   viewport: PageViewport
   pageFunctionRef: RefObject<PageFunctionRef>
+  transformScale?: number
 }
 
 const DEFAULT_DISTANCE_TOLERANCE = 6
 const DEFAULT_HIGHLIGHT_COLOR = '#8590AE'
-const TextLayer: FC<TextLayerProps> = ({ page, scale, rotation, width, height, pageIndex, viewport, pageFunctionRef }) => {
+const TextLayer: FC<TextLayerProps> = ({
+  page,
+  scale,
+  rotation,
+  width,
+  height,
+  pageIndex,
+  viewport,
+  pageFunctionRef,
+  transformScale = 1
+}) => {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const renderTaskRef = useRef<TextLayerRenderTask>()
   const tempTextCanvasCtx = document.createElement('canvas').getContext('2d', { alpha: false })
@@ -39,7 +50,7 @@ const TextLayer: FC<TextLayerProps> = ({ page, scale, rotation, width, height, p
   const selectedTextRef = useRef('')
   const [globalSelectingText, setGlobalSelectingText] = useSelectingText()
   const distanceToleranceAfterScale = Math.min(16, DEFAULT_DISTANCE_TOLERANCE * scale)
-  const innerEmitter = useEventEmitter(PdfViewInnerScope)
+  const innerEmitter = useScopedEventEmitter()
   const handler = useMemo(() => new PdfEventHandler(), [])
   const viewer = useViewer()
   handler.on('highlightText', data => {
@@ -76,7 +87,9 @@ const TextLayer: FC<TextLayerProps> = ({ page, scale, rotation, width, height, p
     if (type === 'mousedown') {
       mousePos.current = null
     }
-    const { elX, elY } = mousePosRef.current
+    const { elX: unTrX, elY: unTrY } = mousePosRef.current
+    const elX = unTrX / transformScale
+    const elY = unTrY / transformScale
 
     if (type === 'mousedown') {
       if (isInTextBound({ x: elX, y: elY }, distanceToleranceAfterScale)) {
@@ -124,7 +137,11 @@ const TextLayer: FC<TextLayerProps> = ({ page, scale, rotation, width, height, p
         }
       }
       if (type === 'mousemove' && mousePos.current) {
-        selectText(mousePos.current, { x: mousePosRef.current.elX, y: mousePosRef.current.elY }, distanceToleranceAfterScale)
+        selectText(
+          mousePos.current,
+          { x: mousePosRef.current.elX / transformScale, y: mousePosRef.current.elY / transformScale },
+          distanceToleranceAfterScale
+        )
         if (!globalSelectingText.isSelecting) {
           setGlobalSelectingText({
             ...globalSelectingText,
@@ -141,6 +158,7 @@ const TextLayer: FC<TextLayerProps> = ({ page, scale, rotation, width, height, p
         pageFunctionRef.current?.onTextSelected?.({
           selectedText,
           rects: rectsRef.current.map(rect => {
+            console.log(rect)
             return {
               left: rect.left,
               top: rect.top,
@@ -153,6 +171,7 @@ const TextLayer: FC<TextLayerProps> = ({ page, scale, rotation, width, height, p
             }
           })
         })
+        console.log(width, height)
         setGlobalSelectingText({
           ...globalSelectingText,
           isSelecting: false,

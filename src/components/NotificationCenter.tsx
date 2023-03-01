@@ -16,7 +16,7 @@ const Notification = () => {
         position: 'fixed',
         top: 60,
         right: 60,
-        zIndex: Zindexes.Tooltip
+        zIndex: Zindexes.Notification
       }}
       onPointerEnter={startPause}
       onPointerLeave={endPause}

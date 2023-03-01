@@ -1,6 +1,6 @@
 import { useMemoizedFn } from '@/hooks'
 import { metaObjectsAtom, relatedMetaObjectsMapAtom, undeletedMetaLinksAtom } from '@/stores/meta.store'
-import { globalStore } from '@/stores/stores'
+import { globalStore } from '@/stores'
 import { useAtomValue } from 'jotai/react'
 import { useState } from 'react'
 import { MetaObject } from '~/typings/data'
@@ -16,13 +16,11 @@ export let GlobalGraphInstance:
     }
   | undefined = undefined
 const GlobalGraph = () => {
-  const allMetaLinks = useAtomValue(undeletedMetaLinksAtom, { store: globalStore })
-  const metaObjectsMap = useAtomValue(metaObjectsAtom, { store: globalStore })
   const relatedObjectsMap = useAtomValue(relatedMetaObjectsMapAtom, { store: globalStore })
   const [currentNodes, setCurrentNodes] = useState<GraphNode[]>()
   const [currentEdges, setCurrentEdges] = useState<GraphEdge[]>()
   const [visible, setVisible] = useState(false)
-
+  const [centerNodeId,setCenterNodeId] = useState<number>()
   GlobalGraphInstance = {
     open: center => handleToggleGraph(center),
     close: () => setVisible(false)
@@ -38,7 +36,10 @@ const GlobalGraph = () => {
     centerNodeRelatedSet?.forEach(n => traverseGetRelatedNodeIds(n, noteIds))
   }
   const handleToggleGraph = useMemoizedFn((centerNode: Partial<MetaObject>) => {
+    const metaObjectsMap = globalStore.get(metaObjectsAtom)
+    const allMetaLinks = globalStore.get(undeletedMetaLinksAtom)
     if (centerNode.id) {
+      setCenterNodeId(centerNode.id)
       setVisible(true)
       const nodeIds = new Set<number>()
       traverseGetRelatedNodeIds(centerNode.id, nodeIds)
@@ -61,6 +62,7 @@ const GlobalGraph = () => {
       const edges = allMetaLinks.filter(i => existedNodeIds.has(i.sourceId) && existedNodeIds.has(i.targetId))
       setCurrentEdges(edges)
       setCurrentNodes(nodes)
+      console.log(nodes, edges)
     }
   })
 
@@ -68,7 +70,7 @@ const GlobalGraph = () => {
     <>
       {visible && (
         <GraphThumbnail onClose={() => setVisible(false)}>
-          <GraphContainer edges={currentEdges} nodes={currentNodes} />
+          <GraphContainer centerNodeId={centerNodeId} edges={currentEdges} nodes={currentNodes} />
         </GraphThumbnail>
       )}
     </>

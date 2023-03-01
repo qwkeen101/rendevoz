@@ -13,7 +13,7 @@ import { isRectsCollision } from '../../utils/positions/collision'
 import { css } from '@emotion/css'
 import { hexToRgb } from '@/utils/color'
 import { useGlobalIsDragging } from '@/components/globalDragOverlay/GlobalDragOverlay'
-import { Transforms } from 'slate'
+import { Range, Transforms } from 'slate'
 
 type BlockProps = {
   blockId: number
@@ -67,6 +67,10 @@ const Block: FC<React.DetailedHTMLProps<React.HTMLAttributes<HTMLDivElement>, HT
       }
       return () => {
         document.removeEventListener('click', handleGlobalClick)
+        if (editor.selection && Range.includes(editor.selection, ReactEditor.findPath(editor, element))) {
+          ReactEditor.deselect(editor)
+          // ReactEditor.blur(editor)
+        }
       }
     }, [])
 

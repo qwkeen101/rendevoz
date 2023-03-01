@@ -3,7 +3,7 @@ import { CustomEditor } from '@/components/editor/types'
 import { Positions } from '@/components/editor/utils/positions'
 import { KEY } from '@/consts/key'
 import { useDebounceFn, useMemoizedFn } from '@/hooks'
-import useMetaStore from '@/stores/meta.store'
+import createMetaStore from '@/stores/meta.store'
 import Id from '@/utils/id'
 import { css } from '@emotion/css'
 import { useState, useRef, useEffect, useLayoutEffect } from 'react'
@@ -14,7 +14,7 @@ import { EditorOverlayManager } from '../useEditorOverlay'
 
 const EditorMetaQuery = ({ editor, manager }: { editor: CustomEditor; manager: EditorOverlayManager }) => {
   const [query, setQuery] = useState<string>('')
-  const { addMetaObject, addMetaLink, getMetaObjectByNoteId } = useMetaStore()
+  const { addMetaObject, addMetaLink, getMetaObjectByNoteId } = createMetaStore()
   const targetNodeRef = useRef<HTMLElement>()
   useLayoutEffect(() => {
     const { selection } = editor
@@ -149,7 +149,7 @@ const EditorMetaQuery = ({ editor, manager }: { editor: CustomEditor; manager: E
   )
 }
 const MetaQueryCard = ({ query, onMetaObjectClick }: { query: string; onMetaObjectClick: (obj: MetaKnowledgeObject) => void }) => {
-  const { searchMetaObject } = useMetaStore()
+  const { searchMetaObject } = createMetaStore()
   const [metaObjects, setMetaObjects] = useState<MetaKnowledgeObject[]>([])
   const [selectedIdx, setSelectedIdx] = useState(-1)
   const objectsContainerRef = useRef<HTMLDivElement>(null)

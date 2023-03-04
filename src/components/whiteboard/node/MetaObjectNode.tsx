@@ -16,7 +16,7 @@ import { useSetWhiteboardNodes } from '../hooks'
 import produce from 'immer'
 import PdfNode from './PdfNode'
 import NoteNode from './NoteNode'
-import { metaStore } from '@/stores'
+import { MetaStore } from '@/stores'
 
 const imageClassName = css({
   borderTopLeftRadius: 16,
@@ -33,7 +33,7 @@ const MetaObjectNode: FC<InnerNodeProps> = ({ node: n, setPopoverElements, setNo
   const { metaObjectId } = node
   const metaObjectAtom = useMemo(() => (metaObjectId ? selectAtom(metaObjectsAtom, m => m.get(metaObjectId)) : atom(null)), [metaObjectId])
   const metaObject = useGlobalAtomValue(metaObjectAtom)
-  const { updateMetaObject } = metaStore
+  const { updateMetaObject } = MetaStore
   const updateNodes = useSetWhiteboardNodes()
   const [editMetaVisible, toggleEditMetaVisible] = useToggle(false)
 

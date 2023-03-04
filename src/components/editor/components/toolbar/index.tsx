@@ -128,18 +128,7 @@ const EditorToolbar: FC<EditorToolbarProps> = ({
     return marks ? marks['backgroundColor'] : undefined
   }
   const renderToolbar = () => (
-    <Toolbar
-      innerRef={toolbarRef}
-      className={classNames(
-        styles.toolbar,
-        position === 'float' && styles.float,
-        position === 'top' && styles.top,
-        position === 'bottom' && styles.bottom
-      )}
-      style={style}
-      itemClickPreventDefault
-      itemSize={16}
-    >
+    <Toolbar innerRef={toolbarRef} className={classNames(styles.toolbar, styles.float)} style={style} itemClickPreventDefault itemSize={16}>
       <Toolbar.Item tooltip={t('editor.undo')} iconName="park-return" onClick={onUndo} />
       <Toolbar.Item tooltip={t('editor.redo')} iconName="park-go-on" onClick={onRedo} />
       {currentElement &&
@@ -147,7 +136,7 @@ const EditorToolbar: FC<EditorToolbarProps> = ({
           currentElement[0].type
         ) && (
           <Select
-            menuPosition={position === 'top' ? 'bottom' : position === 'bottom' ? 'top' : 'bottom'}
+            menuPosition="bottom"
             closeOnSelect
             hideUnderlineWhenNotHover
             disabled={

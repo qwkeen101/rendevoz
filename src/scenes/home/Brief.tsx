@@ -7,6 +7,7 @@ import ClassName from '@/styles/classNames'
 import { css } from '@emotion/css'
 import { useAtomValue } from 'jotai/react'
 import { ReactNode } from 'react'
+import { useTranslation } from 'react-i18next'
 
 const NumberClazz = css({
   fontSize: 22,
@@ -18,6 +19,7 @@ const HomeBrief = () => {
   const metaObjects = useAtomValue(undeletedMetaObjectsAtom, { store: globalStore })
   const notes = useAtomValue(undeletedNotesAtom, { store: globalStore })
   const metaLinks = useAtomValue(undeletedMetaLinksAtom, { store: globalStore })
+  const { t } = useTranslation()
   return (
     <div
       style={{
@@ -28,10 +30,10 @@ const HomeBrief = () => {
         columnGap: '48px'
       }}
     >
-      <Card title="Notes" content={<span className={NumberClazz}>{notes.length}</span>} icon="park-notes" />
-      <Card title="Books" content={<span className={NumberClazz}>{documents.length}</span>} icon="park-book" />
-      <Card title="Objects" content={<span className={NumberClazz}>{metaObjects.length}</span>} icon="park-share-one" />
-      <Card title="Links" content={<span className={NumberClazz}>{metaLinks.length}</span>} icon="park-link-one" />
+      <Card title={t('home.notes')} content={<span className={NumberClazz}>{notes.length}</span>} icon="park-notes" />
+      <Card title={t('home.books')} content={<span className={NumberClazz}>{documents.length}</span>} icon="park-book" />
+      <Card title={t('home.objects')} content={<span className={NumberClazz}>{metaObjects.length}</span>} icon="park-share-one" />
+      <Card title={t('home.links')} content={<span className={NumberClazz}>{metaLinks.length}</span>} icon="park-link-one" />
     </div>
   )
 }

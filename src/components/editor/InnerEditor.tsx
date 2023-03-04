@@ -28,7 +28,7 @@ import useScopedEventEmitter, { useGlobalEventEmitter } from '@/events/useEventE
 import { EditorEventHandler } from '@/events/editorEvent'
 import { EditableProps } from './slate-react/components/editable'
 import { css } from '@emotion/css'
-import { metaStore } from '@/stores'
+import { MetaStore } from '@/stores'
 
 type InnerEditorProps = {
   editor: CustomEditor
@@ -87,7 +87,7 @@ const InnerEditor: FC<InnerEditorProps> = memo(
         emitter.removeListener('editor', editorEventHandler)
       }
     }, [])
-    const { addMetaObject, addMetaLink, getMetaObjectByObjectId } = metaStore
+    const { addMetaObject, addMetaLink, getMetaObjectByObjectId } = MetaStore
     editor.innerRef = editableRef
     const handleChange = useMemoizedFn((value: Descendant[]) => {
       onChange?.(value)

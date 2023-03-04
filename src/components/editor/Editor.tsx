@@ -9,16 +9,15 @@ import { CustomEditor, CustomElement } from './types'
 import InnerEditor from './InnerEditor'
 import withVoid from './plugins/withVoid'
 import styles from './index.module.less'
-import BlockHandle from './components/blockHandle'
+import BlockHandle from './components/BlockHandle'
 import useIsDragging from './hooks/useIsDragging'
 import { notesAtom } from '@/stores/note.store'
-import { noteStore } from '@/stores'
+import { NoteStore } from '@/stores'
 import { withYjs, YjsEditor } from './yjs'
 import * as Y from 'yjs'
 import { IndexeddbPersistence } from 'y-indexeddb'
 import withShortcuts from './plugins/withShortcuts'
 import withCustomComponent from './plugins/withCustomComponent'
-import { Image } from '../base'
 import withEmitter from './plugins/withEmitter'
 import withHtml from './plugins/withHtml'
 import { ID_TO_ELEMENTS_MAP, SELECTED_BLOCKS_MAP } from './weakMaps'
@@ -97,7 +96,7 @@ export const EditorV1: FC<EditorProps> = memo(
     const note = useAtomValue(noteAtom, { store: globalStore })
     const metaAtom = useMemo(() => (note?.metaId ? selectAtom(metaObjectsAtom, m => m.get(note?.metaId!)) : atom(null)), [note?.metaId])
     const metaObject = useAtomValue(metaAtom, { store: globalStore })
-    const { fetchNoteById } = noteStore
+    const { fetchNoteById } = NoteStore
     useEffect(() => {
       const keyDownHandler = () => {
         setDragHandle(h => (h?.visible ? { ...h, visible: false } : h))

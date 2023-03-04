@@ -24,7 +24,7 @@ process.env.PUBLIC = app.isPackaged ? process.env.DIST : join(process.env.DIST_E
         app.on('window-all-closed', () => {
           if (process.platform !== 'darwin') app.quit()
         })
-
+        app.setAsDefaultProtocolClient('rendevoz')
         if (isDev) {
           if (process.platform === 'win32') {
             process.on('message', data => {
@@ -42,15 +42,7 @@ process.env.PUBLIC = app.isPackaged ? process.env.DIST : join(process.env.DIST_E
           const filePath = fileURLToPath('file://' + req.url.slice('rendefile://'.length))
           callback(filePath)
         })
-        let contentTemp = null
-        const newWindowListener = e => {
-          e.preventDefault()
-          contentTemp?.removeListener('new-window', newWindowListener)
-        }
         app.on('web-contents-created', (createEvent, contents) => {
-          contents.addListener('new-window', newWindowListener)
-          contentTemp = contents
-
           contents.on('will-navigate', newEvent => {
             // console.log("Blocked by 'will-navigate'")
             // newEvent.preventDefault()
@@ -58,6 +50,9 @@ process.env.PUBLIC = app.isPackaged ? process.env.DIST : join(process.env.DIST_E
 
           contents.setWindowOpenHandler(({ url }) => {
             console.log(url)
+            if (url.startsWith('https://rendevoz.firebaseapp.com/')) {
+              return { action: 'allow' }
+            }
             shell.openExternal(url)
             // win.webContents.send('newPage', url)
             return { action: 'deny' }

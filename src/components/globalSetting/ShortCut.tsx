@@ -4,34 +4,36 @@ import produce from 'immer'
 import isHotkey from 'is-hotkey'
 import _ from 'lodash'
 import { memo, useEffect, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Content, Icon } from '../base'
 import SettingItem from './Item'
 import { IShortCutSetting, useSetting } from './Main'
 
 const shortCutNameToTitle: Record<keyof IShortCutSetting['shortcut'], string> = {
-  openObjectPanel: 'Open Quick Object Panel',
-  quickCreateObject: 'Open Create Object Form',
-  openScreenShot: 'Open Screen Shot'
+  openObjectPanel: 'open quick object panel',
+  quickCreateObject: 'open create object form',
+  openScreenShot: 'open screen shot'
 }
 const ShortCutSetting = () => {
+  const { t } = useTranslation()
   const globalItems: SettingItem[] = [
     {
-      title: shortCutNameToTitle['openObjectPanel'],
+      title: t(`settings.${shortCutNameToTitle['openObjectPanel']}`),
       children: <ShortCutItem shortCutName="openObjectPanel" />
     },
     {
-      title: shortCutNameToTitle['quickCreateObject'],
+      title: t(`settings.${shortCutNameToTitle['quickCreateObject']}`),
       children: <ShortCutItem shortCutName="quickCreateObject" />
     },
     {
-      title: shortCutNameToTitle['openScreenShot'],
+      title: t(`settings.${shortCutNameToTitle['openScreenShot']}`),
       children: <ShortCutItem shortCutName="openScreenShot" />
     }
   ]
 
   return (
     <>
-      <div className={ClassName.title('18px')}>Global ShortCuts</div>
+      <div className={ClassName.title('18px')}>{t('settings.global shortcuts')}</div>
       {globalItems.map(i => (
         <SettingItem titleSize={14} key={i.title} {...i} />
       ))}
@@ -120,7 +122,6 @@ const ShortCutItem = memo(({ shortCutName }: { shortCutName: keyof IShortCutSett
     }
   }, [shortCut, setting])
   const renderKey = () => {
-    console.log(shortCut)
     if (!shortCut) return 'Not Set'
     const { ctrlKey, altKey, shiftKey, key } = shortCut
     return `${ctrlKey ? 'Ctrl + ' : ''}${altKey ? 'Alt + ' : ''}${shiftKey ? 'Shift + ' : ''}${

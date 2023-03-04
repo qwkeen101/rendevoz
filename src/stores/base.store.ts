@@ -8,6 +8,8 @@ import { orderBy } from 'lodash'
 import { IBase } from '~/typings/data'
 import { IStore } from './store.type'
 import { globalStore } from '.'
+import { getUser } from '@/services/login.service'
+import { toast } from 'react-hot-toast'
 
 type PartialWithId<T> = Partial<T> & { id: number }
 
@@ -213,6 +215,15 @@ export function initializeLocalStore<T>(atom: PrimitiveAtom<Map<number, T>>, dat
       (onSuccess, onFail) =>
       (obj, silent = false) => {
         return new Promise(res => {
+          const user = getUser()
+          if (!user?.isPremium) {
+            toast.error('You can only add items after upgrading to premium!')
+            return
+          }
+          if (user.disabled) {
+            toast.error('Your account has been disabled! Please contact us if you want to recover!')
+            return
+          }
           const initedObj = initBaseObject(obj)
           dispatch<T>({
             type: 'add',

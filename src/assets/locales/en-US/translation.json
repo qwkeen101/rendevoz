@@ -1,16 +1,32 @@
 {
     "home":{
-        "greeting": "Good {{time}}, welcome back",
-        "recently visit": "Recently visit",
-        "recently add": "Recently add"
+        "recently read": "Recently Read",
+        "recently add": "Recently Add",
+        "notes": "Notes",
+        "books": "Books",
+        "objects": "Objects",
+        "links": "Links",
+        "ago": "{{time}} ago"
     },
     "sidebar":{
         "home": "Home",
         "editor": "Editor",
         "collections": "Collections",
+        "pinned": "Pinned",
+        "database": "Database",
         "search": "Search",
         "new": "New",
-        "setting": "Settings"
+        "setting": "Settings",
+        "create": "Create",
+        "edit": "Edit",
+        "pin": "Pin",
+        "delete": "Delete",
+        "subcollection": "Subcollection",
+        "note": "Note",
+        "pdf": "Pdf",
+        "whiteboard": "Whiteboard",
+        "create new collection": "Create New Collection",
+        "unpin": "Unpin"
     },
     "editor": {
         "unsaved notes": "Unsaved notes",
@@ -34,7 +50,26 @@
         "open note in collections": "Open note in collections",
         "close panel": "Close panel",
         "meta object": "Meta object",
-        "use meta objects to organize your knowledge": "Use meta objects to organize your knowledge!"
+        "use meta objects to organize your knowledge": "Use meta objects to organize your knowledge!",
+        "drag": "Drag",
+        "click": "Click",
+        "to move block": "To Move Block",
+        "to open menu": "To Open Menu",
+        "to add a block below": "To Add A Block Below",
+        "text alignment": "Text Alignment",
+        "align left": "Align Left",
+        "align center": "Align Center",
+        "align right": "Align Right",
+        "color": "Color",
+        "copy": "Copy",
+        "delete": "Delete",
+        "show more": "Show More",
+        "show less": "Show Less",
+        "background color": "Background Color",
+        "basic": "Basic",
+        "inline": "Inline",
+        "media": "Media",
+        "image": "Image"
     },
     "settings": {
         "appearance": "Appearance",
@@ -43,7 +78,22 @@
         "about": "About",
         "files": "Files",
         "language": "Language",
-        "language description": "Choose display language"
+        "language description": "Choose display language",
+        "general": "General",
+        "notification": "Notification",
+        "shortcuts": "Shortcuts",
+        "current version": "Current Version",
+        "export/import data": "Export / Import Data",
+        "export": "Export",
+        "import": "Import",
+        "enable all notifications": "Enable All Notifications",
+        "enable or disable all notifications": "Enable or disable all notifications",
+        "customize displayed notifications": "Customize Displayed Notifications",
+        "choose which notification should be displayed": "Choose which notification should be displayed",
+        "global shortcuts": "Global Shortcuts",
+        "open quick object panel": "Open Quick Object Panel",
+        "open create object form": "Open Create Object Form",
+        "open screen shot": "Open Screen Shot"
     },
     "form": {
         "choose file": "Choose file",

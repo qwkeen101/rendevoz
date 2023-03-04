@@ -1,10 +1,12 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { IPdfDocument } from '~/typings/data'
 import { IForm } from './types'
 import useFlipForm from './useFlipForm'
 
 const DocumentForm = ({ onBack, onSubmit, initialObject }: IForm<IPdfDocument>) => {
   const [document, setDocument] = useState({ ...initialObject })
+  const { t } = useTranslation()
   const { renderForm } = useFlipForm({
     layout: [
       {
@@ -30,7 +32,7 @@ const DocumentForm = ({ onBack, onSubmit, initialObject }: IForm<IPdfDocument>) 
     ],
     onBack,
     onSubmit: () => onSubmit?.(document),
-    formTitle: 'Update Document Details',
+    formTitle: t('form.update item details', { item: t('general.document') }),
     submitText: 'update'
   })
 

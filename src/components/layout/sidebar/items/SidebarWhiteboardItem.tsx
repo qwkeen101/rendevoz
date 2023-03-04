@@ -14,7 +14,7 @@ import useSidebarItemDrag from '../useSidebarItemDrag'
 import SidebarDocumentItem from './SidebarDocumentItem'
 import SidebarNoteItem from './SidebarNoteItem'
 import { ISidebarItem } from './type'
-import { whiteboardStore } from '@/stores'
+import { WhiteboardStore } from '@/stores'
 import useSidebarItemContextMenu from '../useSidebarItemContextMenu'
 
 const SidebarWhiteboardItem: FC<ISidebarItem> = memo(({ id, parentId, parentType, draggable = true }) => {
@@ -28,7 +28,7 @@ const SidebarWhiteboardItem: FC<ISidebarItem> = memo(({ id, parentId, parentType
     // const videoItems = items?.filter(i => i.id && i.type === 'video') as ICollectionItem[]
     return { noteItems, documentItems }
   }, [items])
-  const { updateWhiteboard, deleteWhiteboard } = whiteboardStore
+  const { updateWhiteboard, deleteWhiteboard } = WhiteboardStore
   const [showChildrenItems, toggleShowChildrenItems] = useToggle(false)
   const ref = useRef<HTMLDivElement>(null)
   const [editModalVisible, toggleEditModalVisible] = useToggle(false)
@@ -100,7 +100,12 @@ const SidebarWhiteboardItem: FC<ISidebarItem> = memo(({ id, parentId, parentType
           theme="filled"
           name="park-right-one"
         />
-        {whiteboard && <IconNameItem onClick={() => navigate(`/whiteboard/${id}`)} name={whiteboard.name} icon={'park-new-computer'} />}
+        <IconNameItem
+          onClick={() => navigate(`/whiteboard/${id}`)}
+          name={whiteboard?.name || 'Unnamed Whiteboard'}
+          color={whiteboard?.color}
+          icon={whiteboard?.icon || 'park-new-computer'}
+        />
       </Content>
       {contextMenuPortal}
       <AnimatePresence>

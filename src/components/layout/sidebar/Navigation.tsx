@@ -13,6 +13,7 @@ import { css } from '@emotion/css'
 import SidebarPinned from './SidebarPinned'
 import SidebarDatabase from './SidebarDatabase'
 import SidebarSetting from './SidebarSetting'
+import SidebarUser from './SidebarUser'
 
 const variants = {
   open: {
@@ -42,6 +43,7 @@ const Navigation = ({ hovered }: { hovered: boolean }) => {
         }
         variants={variants}
       >
+        <SidebarUser />
         <MenuItem to="/home">
           <Icon name="park-home" style={{ marginRight: 10 }} size={16} />
           {t('sidebar.home')}
@@ -58,7 +60,7 @@ const Navigation = ({ hovered }: { hovered: boolean }) => {
               color: defaultFontColorGrey
             })}
           >
-            Pinned
+            {t('sidebar.pinned')}
           </div>
         </Content>
         <SidebarPinned />

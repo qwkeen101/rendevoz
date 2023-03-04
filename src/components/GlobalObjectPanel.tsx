@@ -1,7 +1,7 @@
 import Zindexes from '@/consts/zindex'
 import { useMemoizedFn, useMergedRef, useToggle } from '@/hooks'
 import { undeletedMetaObjectsAtom } from '@/stores/meta.store'
-import { globalStore, metaStore } from '@/stores'
+import { globalStore, MetaStore } from '@/stores'
 import ClassName from '@/styles/classNames'
 import { Position } from '@/types'
 import { css } from '@emotion/css'
@@ -287,7 +287,7 @@ const SimpleObject = memo(
       const [popoverVisible, togglePopoverVisible] = useToggle(false)
       const [editVisible, toggleEditVisible] = useToggle(false)
       // const navigate = useNavigate()
-      const { updateMetaObject } = metaStore
+      const { updateMetaObject } = MetaStore
       const handleDragStart = () => {
         const container = containerRef.current
         if (container) {

@@ -1,10 +1,12 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { IWhiteboard } from '~/typings/data'
 import { IForm } from './types'
 import useFlipForm from './useFlipForm'
 
 const WhiteboardForm = ({ onBack, onSubmit, initialObject }: IForm<IWhiteboard>) => {
   const [whiteboard, setWhiteboard] = useState({ ...initialObject })
+  const { t } = useTranslation()
   const { renderForm } = useFlipForm({
     layout: [
       {
@@ -30,7 +32,7 @@ const WhiteboardForm = ({ onBack, onSubmit, initialObject }: IForm<IWhiteboard>)
     ],
     onBack,
     onSubmit: () => onSubmit?.(whiteboard),
-    formTitle: 'Update Whiteboard Details',
+    formTitle: t('form.update item details', { item: t('general.whiteboard') }),
     submitText: 'update'
   })
 

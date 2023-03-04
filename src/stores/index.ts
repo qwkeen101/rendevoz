@@ -33,12 +33,12 @@ export const findChangedProperties = (prev: object, curr: object) => {
   return Array.from(changedProps.entries()).map(([k, v]) => ({ ...v, propName: k }))
 }
 
-export { noteStore } from './note.store'
-export { documentStore } from './document.store'
-export { metaStore } from './meta.store'
+export { noteStore as NoteStore } from './note.store'
+export { documentStore as DocumentStore } from './document.store'
+export { metaStore as MetaStore } from './meta.store'
 export { tagStore } from './tag.store'
-export { collectionStore } from './collection.store'
-export { whiteboardStore } from './whiteboard.store'
+export { collectionStore as CollectionStore } from './collection.store'
+export { whiteboardStore as WhiteboardStore } from './whiteboard.store'
 export { labelStore as LabelStore } from './label.store'
 
 window.addEventListener('DOMContentLoaded', () => {

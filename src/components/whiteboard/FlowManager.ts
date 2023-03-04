@@ -1,5 +1,5 @@
-import { globalStore } from '@/stores'
-import useWhiteboardStore, { whiteboardsAtom } from '@/stores/whiteboard.store'
+import { globalStore, WhiteboardStore } from '@/stores'
+import { whiteboardsAtom } from '@/stores/whiteboard.store'
 import { Position } from '@/types'
 import produce from 'immer'
 import { PanZoom } from 'panzoom'
@@ -7,7 +7,6 @@ import { IWhiteboardNode } from '~/typings/data'
 import { Box, Point } from '../dragSelector'
 
 class FlowManager {
-  private whiteboardStore = useWhiteboardStore()
 
   public whiteboardId?: number
 
@@ -44,7 +43,7 @@ class FlowManager {
 
   public updateNodePosition = (nodeId: number, newPos: Position) => {}
 
-  public selectable = true
+  public selectable = false
 
   public selectStartPoint?: Point
 
@@ -74,7 +73,7 @@ class FlowManager {
               height: box.height
             })
           })
-          this.whiteboardStore.updateWhiteboard(newWhiteboard, true)
+          WhiteboardStore.updateWhiteboard(newWhiteboard, true)
         }
       }
     }

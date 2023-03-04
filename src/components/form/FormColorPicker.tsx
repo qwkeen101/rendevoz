@@ -1,4 +1,5 @@
 import ClassName from '@/styles/classNames'
+import { useTranslation } from 'react-i18next'
 import { Icon } from '..'
 import ColorPicker from '../picker/colorPicker'
 
@@ -11,13 +12,14 @@ const FormColorPicker = ({
   onClose: VoidFunction
   disableLinear?: boolean
 }) => {
+  const { t } = useTranslation()
   return (
     <div style={{ width: 400 }}>
       <div
-        style={{ marginBottom: 10, display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}
+        style={{ marginBottom: 10, display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', textTransform: 'capitalize' }}
         className={ClassName.description()}
       >
-        Choose Collection Color
+        {`${t('general.choose')} ${t('general.color')}`}
         <Icon name="park-close" onClick={onClose} className={ClassName.circleButton()} />
       </div>
       <ColorPicker disableLinear={disableLinear} onPick={onPick} />

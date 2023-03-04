@@ -1,11 +1,11 @@
-import { AnimatePopover } from '@/components/base'
+import { AnimatePopover, Tooltip } from '@/components/base'
 import Modal from '@/components/base/Modal'
 import CollectionForm from '@/components/form/CollectionForm'
 import { GlobalDragOverlayInstance, useGlobalIsDragging } from '@/components/globalDragOverlay/GlobalDragOverlay'
 import Zindexes from '@/consts/zindex'
 import { useMemoizedFn } from '@/hooks'
 import useCollectionStore, { rootCollectionsAtom } from '@/stores/collection.store'
-import { globalStore, collectionStore } from '@/stores'
+import { globalStore, CollectionStore } from '@/stores'
 import ClassName from '@/styles/classNames'
 import getEmoji from '@/utils/emoji'
 import { css } from '@emotion/css'
@@ -15,6 +15,7 @@ import Content from '../../base/Content'
 import Icon from '../../base/Icon'
 import SidebarCollectionItem from './items/SidebarCollectionItem'
 import { sidebarDraggingState } from './useSidebarItemDrag'
+import { useTranslation } from 'react-i18next'
 
 const SidebarCollection = () => {
   const rootCollections = useAtomValue(rootCollectionsAtom, { store: globalStore })
@@ -23,6 +24,7 @@ const SidebarCollection = () => {
   const containerRef = useRef<HTMLDivElement>(null)
   const [dropVisible, toggleDropVisible] = useState(false)
   const { moveItems } = useCollectionStore()
+  const { t } = useTranslation()
   const pointerHandler = useMemoizedFn((e: PointerEvent) => {
     if (e.type === 'pointerleave') {
       toggleDropVisible(false)
@@ -66,7 +68,7 @@ const SidebarCollection = () => {
       }
     }
   }, [globalIsDragging])
-  const { addCollection } = collectionStore
+  const { addCollection } = CollectionStore
   return (
     <>
       <Modal noStyle visible={newCollectionVisible} onClose={() => setNewCollectionVisible(false)}>
@@ -97,15 +99,17 @@ const SidebarCollection = () => {
           className={css([ClassName.description(), dropVisible && ClassName.Drag.droppableItemHovered(true)])}
           style={{ padding: '0px 4px', transition: 'all 0.3s ease' }}
         >
-          <div>Collections</div>
-          <Icon
-            name="park-plus"
-            size={14}
-            onClick={() => {
-              setNewCollectionVisible(true)
-            }}
-            className={ClassName.circleButton(2, 4)}
-          />
+          <div>{t('sidebar.collections')}</div>
+          <Tooltip position="top" content={t('sidebar.create new collection')}>
+            <Icon
+              name="park-plus"
+              size={14}
+              onClick={() => {
+                setNewCollectionVisible(true)
+              }}
+              className={ClassName.circleButton(2, 4)}
+            />
+          </Tooltip>
         </Content>
       </AnimatePopover>
       <Content flex column style={{ overflowY: 'auto', padding: '0px 2px' }}>

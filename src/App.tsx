@@ -1,4 +1,3 @@
-import { Provider as JotaiProvider } from 'jotai/react'
 import { BrowserRouter as Router } from 'react-router-dom'
 import Routes from './routes'
 import '@icon-park/react/styles/index.less'
@@ -10,14 +9,14 @@ import GlobalGraph from './components/graph/GlobalGraph'
 import GlobalDragOverlay from './components/globalDragOverlay/GlobalDragOverlay'
 import GlobalScreenShot from './components/globalScreenShot'
 import Notification from './components/NotificationCenter'
-import { globalStore } from './stores'
 import PdfJsUrl from '@/assets/pdf.worker.min.js?url'
 import PdfJs from './pdfViewer/core/types/pdfJsApi'
 import GlobalObjectPanel from './components/GlobalObjectPanel'
-import GlobalBidirectionTree from './components/whiteboard/GlobalBidirectionTree'
 import GlobalCreateObject from './components/GlobalCreateObject'
 import '@/components/editor/dock.less'
 import SvgMarker from './components/svg/Marker'
+import Login from './components/login'
+import { useUser } from './services/login.service'
 PdfJs.GlobalWorkerOptions.workerSrc = PdfJsUrl
 const App = () => {
   function getOS() {
@@ -42,26 +41,30 @@ const App = () => {
     return os
   }
   const os = getOS()
-
+  const [user] = useUser()
   return (
-    <JotaiProvider store={globalStore}>
+    <>
       <Notification />
-      {/* <Toaster containerStyle={{ zIndex: Zindexes.Tooltip }} /> */}
-      <Initializer />
-      <GlobalGraph />
-      <GlobalScreenShot />
-      <GlobalObjectPanel />
-      <GlobalCreateObject />
-      <Router>
-        {/* <GlobalBidirectionTree /> */}
-        {os !== 'macos' && <TitleBar />}
-        <Routes />
-      </Router>
-      <GlobalDragOverlay />
-      <svg style={{ position: 'absolute', width: 0, height: 0, overflow: 'hidden' }}>
-        <SvgMarker />
-      </svg>
-    </JotaiProvider>
+      {user ? (
+        <>
+          <Initializer />
+          <GlobalGraph />
+          <GlobalScreenShot />
+          <GlobalObjectPanel />
+          <GlobalCreateObject />
+          <Router>
+            {os !== 'macos' && <TitleBar />}
+            <Routes />
+          </Router>
+          <GlobalDragOverlay />
+          <svg style={{ position: 'absolute', width: 0, height: 0, overflow: 'hidden' }}>
+            <SvgMarker />
+          </svg>
+        </>
+      ) : (
+        <Login />
+      )}
+    </>
   )
 }
 

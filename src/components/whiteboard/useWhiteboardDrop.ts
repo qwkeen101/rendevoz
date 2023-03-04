@@ -3,7 +3,7 @@ import { useGlobalEventEmitter } from '@/events/useEventEmitter'
 import { useMemoizedFn } from '@/hooks'
 import { initializePdfDocument } from '@/stores/document.store'
 import { notesAtom } from '@/stores/note.store'
-import { globalStore, noteStore, documentStore } from '@/stores'
+import { globalStore, NoteStore, DocumentStore } from '@/stores'
 import { saveFileLocally } from '@/utils/file'
 import Id from '@/utils/id'
 import produce from 'immer'
@@ -23,8 +23,8 @@ const useWhiteboardDrop = () => {
   const flow = useFlow()
   const setNodes = useSetWhiteboardNodes()
   const [isDraggingInside, setDraggingInside] = useState(false)
-  const { addNote } = noteStore
-  const { addDocument } = documentStore
+  const { addNote } = NoteStore
+  const { addDocument } = DocumentStore
   const setItems = useSetWhiteboardItems()
   handler.on('globalDragPointerUp', async data => {
     const { draggingElement, event } = data

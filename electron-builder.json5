@@ -11,6 +11,12 @@
     "dist-electron",
     "dist"
   ],
+  protocols: {
+    name: "rendevoz",
+    schemes: [
+      "rendevoz"
+    ]
+  },
   win: {
     target: [
       {

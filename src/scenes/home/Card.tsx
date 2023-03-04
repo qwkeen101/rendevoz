@@ -1,11 +1,9 @@
 import { Content, Icon, Image } from '@/components'
-import createDocumentStore, { undeletedDocumentsAtom } from '@/stores/document.store'
+import { undeletedDocumentsAtom } from '@/stores/document.store'
 import { FC, memo, ReactNode, useMemo } from 'react'
 import { IPdfDocument } from '~/typings/data'
 import styles from './index.module.less'
-import { useMeasure } from 'react-use'
 import FullSizeLink from '@/components/base/FullSizeLink'
-import { useTranslation } from 'react-i18next'
 import { useAtomValue } from 'jotai/react'
 import { globalStore } from '@/stores'
 import { orderBy } from 'lodash'
@@ -40,7 +38,6 @@ export const RecentlyVisitCard = memo(({ width }: { width: number }) => {
       ),
     [undeletedDocuments]
   )
-  console.log(recentlyRead)
   const count = Math.floor(width / 300)
   return (
     <div

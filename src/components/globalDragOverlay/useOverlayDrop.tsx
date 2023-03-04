@@ -2,7 +2,7 @@ import { DropOn, GlobalEventHandler } from '@/events/globalEvent'
 import { useGlobalEventEmitter } from '@/events/useEventEmitter'
 import { useToggle } from '@/hooks'
 import { indexedMetaLinksAtom } from '@/stores/meta.store'
-import { globalStore, metaStore } from '@/stores'
+import { globalStore, MetaStore } from '@/stores'
 import { PartialWithId } from '@/types'
 import Id from '@/utils/id'
 import { useEffect, useMemo, useRef, useState } from 'react'
@@ -20,7 +20,7 @@ const useOverlayDrop = () => {
   const emitter = useGlobalEventEmitter()
   const dropHandler = useMemo(() => new GlobalEventHandler(), [])
   const { addMetaLink, addMetaObject, getMetaObjectById, getMetaObjectByObjectId, deleteMetaLink, deleteMetaObject, updateMetaObject } =
-    metaStore
+    MetaStore
   const [metaObject, setMetaObject] = useState<MetaObject & { noteId?: number }>()
   const [pendingLinks, setPendingLinks] = useState<Partial<MetaLink>[]>([])
   const [editMetaVisible, toggleEditMetaVisible] = useToggle(false)

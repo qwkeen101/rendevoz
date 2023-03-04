@@ -94,7 +94,7 @@ const EditorElementsMenu = (props: { onAddElement: (blockName: string) => void }
         padding: '12px 16px'
       })}
     >
-      <Title>Basic</Title>
+      <Title>{t('editor.basic')}</Title>
       <Content
         className={css({
           gap: 10,
@@ -107,15 +107,15 @@ const EditorElementsMenu = (props: { onAddElement: (blockName: string) => void }
           <IconItem key={b.name} onClick={() => onAddElement(b.name)} {...b} />
         ))}
       </Content>
-      <Title>Inline</Title>
+      <Title>{t('editor.inline')}</Title>
       {inline.map(i => (
         <Item key={i.name} onClick={() => onAddElement(i.name)} {...i} />
       ))}
-      <Title>Block</Title>
+      <Title>{t('editor.block')}</Title>
       {block.map(i => (
         <Item key={i.name} onClick={() => onAddElement(i.name)} {...i} />
       ))}
-      <Title>Media</Title>
+      <Title>{t('editor.media')}</Title>
       {media.map(i => (
         <Item key={i.name} onClick={() => onAddElement(i.name)} {...i} />
       ))}
@@ -182,6 +182,7 @@ const Item = ({
   iconColor?: string
   onClick?: MouseEventHandler
 }) => {
+  const { t } = useTranslation()
   return (
     <Content
       onClick={onClick}
@@ -198,7 +199,7 @@ const Item = ({
       gap={10}
     >
       <Icon name={icon} />
-      <span>{tooltip}</span>
+      <span>{t(`editor.${name}`)}</span>
     </Content>
   )
 }

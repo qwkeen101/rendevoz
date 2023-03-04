@@ -1,7 +1,7 @@
 import { useGlobalEventEmitter } from '@/events/useEventEmitter'
 import { useMemoizedFn } from '@/hooks'
 import  { relatedMetaObjectsMapAtom } from '@/stores/meta.store'
-import { globalStore, metaStore } from '@/stores'
+import { globalStore, MetaStore } from '@/stores'
 import Id from '@/utils/id'
 import { css } from '@emotion/css'
 import produce from 'immer'
@@ -32,7 +32,7 @@ const NodeContainer = memo(() => {
   const [nodes, setNodes] = useNodes()
   const [edges, setEdges] = useEdges()
   const [selectedTags] = useTags()
-  const { addMetaLink } = metaStore
+  const { addMetaLink } = MetaStore
   const relatedObjectsMap = useAtomValue(relatedMetaObjectsMapAtom, { store: globalStore })
   const emitter = useGlobalEventEmitter()
   const graph = useGraph()

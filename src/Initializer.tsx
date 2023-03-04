@@ -1,27 +1,36 @@
 import { useEffect } from 'react'
 import useCollectionStore from './stores/collection.store'
 import useLabelStore from './stores/label.store'
-import { documentStore, metaStore, noteStore } from './stores'
+import { DocumentStore, MetaStore, NoteStore } from './stores'
 import { tagStore } from './stores/tag.store'
 import useWhiteboardStore from './stores/whiteboard.store'
+import { atom } from 'jotai'
+import { useGlobalSetAtom } from './jotai/jotaiScope'
+
+export const initializedAtom = atom(false)
 
 const Initializer = () => {
-  const { getAllNotes } = noteStore
-  const { getAllMetaObjects, getAllMetaLinks } = metaStore
-  const { getAllDocuments } = documentStore
+  const { getAllNotes } = NoteStore
+  const { getAllMetaObjects, getAllMetaLinks } = MetaStore
+  const { getAllDocuments } = DocumentStore
   const { getAllCollections } = useCollectionStore()
   const { getAllLabels } = useLabelStore()
   const { getAllTags } = tagStore
   const { getAllWhiteboard } = useWhiteboardStore()
+  const setIntialized = useGlobalSetAtom(initializedAtom)
   useEffect(() => {
-    getAllTags()
-    getAllNotes()
-    getAllMetaLinks()
-    getAllMetaObjects()
-    getAllCollections()
-    getAllDocuments()
-    getAllLabels()
-    getAllWhiteboard()
+    Promise.all([
+      getAllTags(),
+      getAllNotes(),
+      getAllMetaLinks(),
+      getAllMetaObjects(),
+      getAllCollections(),
+      getAllDocuments(),
+      getAllLabels(),
+      getAllWhiteboard()
+    ]).then(() => {
+      setIntialized(true)
+    })
     console.log(`
     Welcome to use Rendevoz to BOOST your work efficency 💪🏻!
     This is a 🆓 software in beta test. Feel free to use!

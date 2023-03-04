@@ -8,11 +8,12 @@ import ClassName from '@/styles/classNames'
 import { Position } from '@/types'
 import Id from '@/utils/id'
 import { css } from '@emotion/css'
-import { collectionStore, noteStore } from '@/stores'
+import { CollectionStore, NoteStore } from '@/stores'
 import { AnimatePresence, motion } from 'framer-motion'
 import { RefObject, useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 
 const useSidebarItemContextMenu = (
   contextMenuElementRef: RefObject<HTMLElement>,
@@ -57,6 +58,7 @@ const useSidebarItemContextMenu = (
     newPdfVisible: false,
     editCollectionVisible: false
   })
+  const { t } = useTranslation()
   const contextMenuHandler = (e: MouseEvent) => {
     const currentTarget = e.currentTarget as HTMLElement
     const rect = currentTarget.getBoundingClientRect()
@@ -72,15 +74,15 @@ const useSidebarItemContextMenu = (
     })
   }
   const navigate = useNavigate()
-  const { addNote } = noteStore
-  const { addItemToCollection, addCollection } = collectionStore
+  const { addNote } = NoteStore
+  const { addItemToCollection, addCollection } = CollectionStore
   const { addWhiteboard } = useWhiteboardStore()
   useEffect(() => {
     contextMenuElementRef?.current?.addEventListener('contextmenu', contextMenuHandler)
     return () => {
       contextMenuElementRef?.current?.removeEventListener('contextmenu', contextMenuHandler)
     }
-  })
+  }, [])
   const portal = createPortal(
     <AnimatePresence>
       {contextMenuState.contextMenuVisible && (
@@ -159,30 +161,33 @@ const useSidebarItemContextMenu = (
                       }}
                     >
                       <Icon name="park-folder-close" />
-                      Subcollection
+                      {t('general.subcollection')}
                     </div>
                     <div
                       onClick={() => {
                         const id = Id.getId()
                         const contentId = Id.getId()
-                        addItemToCollection(
-                          {
-                            id,
-                            type: 'note'
-                          },
-                          item.id
-                        )
+
                         addNote({
                           id,
                           contentId,
                           title: 'Untitled'
+                        }).then(() => {
+                          addItemToCollection(
+                            {
+                              id,
+                              type: 'note'
+                            },
+                            item.id
+                          )
+                          navigate(`/editor/${id}`)
                         })
-                        navigate(`/editor/${id}`)
+
                         onAddNewSubItem?.()
                       }}
                     >
                       <Icon name="park-notes" />
-                      Note
+                      {t('general.note')}
                     </div>
                     <div
                       onClick={() => {
@@ -192,31 +197,34 @@ const useSidebarItemContextMenu = (
                       }}
                     >
                       <Icon name="park-file-pdf" />
-                      Pdf
+                      {t('general.pdf')}
                     </div>
                     <div
                       onClick={() => {
                         const whiteboardId = Id.getId()
-                        addItemToCollection(
-                          {
-                            id: whiteboardId,
-                            type: 'whiteboard'
-                          },
-                          item.id
-                        )
+
                         addWhiteboard({
                           id: whiteboardId,
                           name: 'Unnamed Whiteboard',
                           edges: new Map(),
                           nodes: new Map(),
                           items: []
+                        }).then(() => {
+                          addItemToCollection(
+                            {
+                              id: whiteboardId,
+                              type: 'whiteboard'
+                            },
+                            item.id
+                          )
+                          navigate(`/whiteboard/${whiteboardId}`)
                         })
-                        navigate(`/whiteboard/${whiteboardId}`)
+
                         onAddNewSubItem?.()
                       }}
                     >
                       <Icon name="park-new-computer" />
-                      Whiteboard
+                      {t('general.whiteboard')}
                     </div>
                   </WithBorder>
                 }
@@ -233,7 +241,7 @@ const useSidebarItemContextMenu = (
                   }}
                   className={ClassName.flatButton()}
                 >
-                  Create
+                  {t('general.create')}
                   <Icon name="park-right" />
                 </Content>
               </AnimatePopover>
@@ -249,13 +257,13 @@ const useSidebarItemContextMenu = (
                 })
               }}
             >
-              Edit
+              {t('general.edit')}
             </div>
             <div className={ClassName.flatButton()} onClick={onPin}>
-              {pinned ? 'Unpin' : 'Pin'}
+              {pinned ? t('general.unpin') : t('general.pin')}
             </div>
             <div className={ClassName.flatButton()} onClick={onDelete}>
-              Delete
+              {t('general.delete')}
             </div>
           </WithBorder>
         </motion.div>

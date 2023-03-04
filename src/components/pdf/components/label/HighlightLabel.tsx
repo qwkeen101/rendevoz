@@ -182,7 +182,9 @@ const Highlights = forwardRef((props, ref) => {
       container.style.left = `${containerRect.left}px`
       container.style.top = `${containerRect.top}px`
       container.style.position = 'absolute'
-      if (viewer?.currentFocusLabelId === labelId && highlightRef.current) {
+      console.log(viewer, viewer?.currentFocusLabelId, labelId, container, viewer?.currentFocusLabelId === labelId)
+      if (viewer?.currentFocusLabelId === labelId) {
+        console.log('equals')
         viewer!.currentFocusLabelId = undefined
         const bound = container.getBoundingClientRect()
         const centerOfScreenHeight = window.innerHeight / 2

@@ -3,9 +3,12 @@ import ClassName from '@/styles/classNames'
 import getEmoji from '@/utils/emoji'
 import Id from '@/utils/id'
 import { css } from '@emotion/css'
-import { CSSProperties, useMemo, useState } from 'react'
+import { capitalize } from 'lodash'
+import { CSSProperties, Fragment, useMemo, useState } from 'react'
 import { Flipped, Flipper } from 'react-flip-toolkit'
+import { useTranslation } from 'react-i18next'
 import { Content, Form, Icon } from '..'
+import { defaultBgColor } from '../picker/colorPicker'
 import { Tag } from './EditMetaObjectForm'
 import FormColorPicker from './FormColorPicker'
 import FormIconPicker from './FormIconPicker'
@@ -40,7 +43,7 @@ export type FlipFormLayoutItem =
   | {
       type: 'colorPicker'
       color?: string
-      onChange?: (color: string) => void
+      onChange?: (color: string | undefined) => void
     }
   | {
       type: 'tagDisplayer'
@@ -86,6 +89,7 @@ const useFlipForm = (options: useFlipFormOptions) => {
   const tagPickerFlipId = useMemo(() => Id.getStrId(), [])
   const colorPickerFlipId = useMemo(() => Id.getStrId(), [])
   const iconPickerFlipId = useMemo(() => Id.getStrId(), [])
+  const { t } = useTranslation()
   const flattenedLayout = useMemo(
     () =>
       layout.reduce((prev, curr) => {
@@ -103,9 +107,9 @@ const useFlipForm = (options: useFlipFormOptions) => {
   const renderMainItem = (i: FlipFormLayoutItem) => {
     switch (i.type) {
       case 'nameInput':
-        return <Form.Item text="Name" disable={i.disabled} type="input" value={i.value} onChange={i.onChange} />
+        return <Form.Item text={capitalize(t('general.name'))} disable={i.disabled} type="input" value={i.value} onChange={i.onChange} />
       case 'descriptionInput':
-        return <Form.Item text="Description" type="textarea" maxRows={10} value={i.value} onChange={i.onChange} />
+        return <Form.Item text={capitalize(t('general.description'))} type="textarea" maxRows={10} value={i.value} onChange={i.onChange} />
       case 'tagPicker':
         return (
           <Content
@@ -117,7 +121,7 @@ const useFlipForm = (options: useFlipFormOptions) => {
           >
             <Content gap={8} flex>
               <Icon name="park-tag-one" />
-              <span>Tags</span>
+              <span>{t('general.tags')}</span>
             </Content>
             <Icon name="park-right" />
           </Content>
@@ -125,7 +129,11 @@ const useFlipForm = (options: useFlipFormOptions) => {
       case 'group':
         return (
           <Form.Item type="component">
-            <div className={groupClassName}>{(Array.isArray(i.children) ? i.children : [i.children]).map(i => renderMainItem(i))}</div>
+            <div className={groupClassName}>
+              {(Array.isArray(i.children) ? i.children : [i.children]).map((i, idx) => (
+                <Fragment key={idx}>{renderMainItem(i)}</Fragment>
+              ))}
+            </div>
           </Form.Item>
         )
       case 'iconPicker': {
@@ -136,7 +144,7 @@ const useFlipForm = (options: useFlipFormOptions) => {
             style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
             onClick={() => setFormInnerState({ iconPickerVisible: true })}
           >
-            Icon
+            {t('general.icon')}
             {emoji ? (
               <Content flex centered style={{ width: 20, height: 20 }}>
                 <img
@@ -182,7 +190,7 @@ const useFlipForm = (options: useFlipFormOptions) => {
                   fontSize: 12
                 }}
               >
-                Tags
+                {t('general.tags')}
               </div>
               <Content flex gap={4} style={{ flexWrap: 'wrap' }}>
                 {i.tags.map(i => (
@@ -201,7 +209,7 @@ const useFlipForm = (options: useFlipFormOptions) => {
             style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
             onClick={() => setFormInnerState({ colorPickerVisible: true })}
           >
-            Color
+            {t('general.color')}
             {i?.color ? <div style={{ width: 20, height: 20, borderRadius: 4, background: i.color }}></div> : <Icon name="park-right" />}
           </div>
         )
@@ -215,7 +223,9 @@ const useFlipForm = (options: useFlipFormOptions) => {
       title={formTitle || 'Untitled Form'}
       style={{ minWidth: 320, ...containerStyle }}
     >
-      {layout.map(i => renderMainItem(i))}
+      {layout.map((i, idx) => (
+        <Fragment key={idx}>{renderMainItem(i)}</Fragment>
+      ))}
     </Form>
   )
 
@@ -263,7 +273,11 @@ const useFlipForm = (options: useFlipFormOptions) => {
           <FormColorPicker
             onClose={() => setFormInnerState({ mainVisible: true })}
             onPick={v => {
-              colorPickerItem.onChange?.(v)
+              if (v === defaultBgColor) {
+                colorPickerItem.onChange?.(undefined)
+              } else {
+                colorPickerItem.onChange?.(v)
+              }
               setFormInnerState({ mainVisible: true })
             }}
           />

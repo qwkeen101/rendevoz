@@ -1,10 +1,12 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { INote } from '~/typings/data'
 import { IForm } from './types'
 import useFlipForm from './useFlipForm'
 
 const NoteForm = ({ onBack, onSubmit, initialObject }: IForm<INote>) => {
   const [note, setNote] = useState({ ...initialObject })
+  const { t } = useTranslation()
   const { renderForm } = useFlipForm({
     layout: [
       {
@@ -30,7 +32,7 @@ const NoteForm = ({ onBack, onSubmit, initialObject }: IForm<INote>) => {
     ],
     onBack,
     onSubmit: () => onSubmit?.(note),
-    formTitle: 'Update Note Details',
+    formTitle: t('form.update item details', { item: t('general.note') }),
     submitText: 'update'
   })
 

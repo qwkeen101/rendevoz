@@ -16,7 +16,7 @@ import { GlobalDragOverlayInstance } from '@/components/globalDragOverlay/Global
 import MetaNoteCard from './NoteCard'
 import MetaDocumentCard from './DocumentCard'
 import { Flipped, spring } from 'react-flip-toolkit'
-import { globalStore, metaStore } from '@/stores'
+import { globalStore, MetaStore } from '@/stores'
 import { MetaObject } from '~/typings/data'
 import { MetaDatabaseCardProps } from './types'
 import MetaObjectCard from './ObjectCard'
@@ -55,7 +55,7 @@ const DatabaseCard: FC<{
   const cover = metaObject.coverImgSrc
   const [innerCover, setInnerCover] = useState(cover)
   const showImage = !!cover || !!innerCover
-  const { updateMetaObject, deleteMetaObject } = metaStore
+  const { updateMetaObject, deleteMetaObject } = MetaStore
   const iconRef = useRef<HTMLDivElement>(null)
   const { isCardDraggingInside } = useCardDrag(metaObject, iconRef, containerRef.current)
 
@@ -329,7 +329,7 @@ export const ObjectActionPopover: FC<
   }> & { metaObjectId: number }
 > = ({ onClose, onEdit, onPin, onGraph, onWhiteboard, onDelete, metaObjectId }) => {
   const { defaultFontColorRed } = useTheme('defaultFontColorRed')
-  const { updateMetaObject, deleteMetaObject } = metaStore
+  const { updateMetaObject, deleteMetaObject } = MetaStore
   const metaObjectAtom = useMemo(() => selectAtom(metaObjectsAtom, m => m.get(metaObjectId)), [metaObjectId])
   const metaObject = useGlobalAtomValue(metaObjectAtom)
   if (!metaObject) return null

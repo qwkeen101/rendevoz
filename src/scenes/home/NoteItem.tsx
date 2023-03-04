@@ -1,18 +1,19 @@
-import { Content, Icon } from '@/components'
+import Actions from '@/actions'
+import { Content } from '@/components'
 import ClassName from '@/styles/classNames'
 import DateFormat from '@/utils/dateFormat'
 import { css } from '@emotion/css'
-import { useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { INote } from '~/typings/data'
 
 const NoteItem = ({ note }: { note: INote }) => {
-  const navigate = useNavigate()
+  const { t } = useTranslation()
   return (
     <Content
       flex
       column
       onClick={() => {
-        navigate(`/editor/${note.id}`)
+        Actions.openEditor(note.id)
       }}
       className={css({
         cursor: 'pointer',
@@ -24,8 +25,8 @@ const NoteItem = ({ note }: { note: INote }) => {
         }
       })}
     >
-      <div className={css([ClassName.title('16px'), ClassName.ellipsisFont(1)])}>{note.title || 'Untitled'}</div>
-      <div className={ClassName.description('11px')}>{DateFormat.formatDistanceToNowStrict(note.createdAt)} ago</div>
+      <div className={css([ClassName.title('16px'), ClassName.ellipsisFont(1)])}>{note.title || t('editor.untitled')}</div>
+      <div className={ClassName.description('11px')}>{t('home.ago', { time: DateFormat.formatDistanceToNowStrict(note.createdAt) })}</div>
     </Content>
   )
 }

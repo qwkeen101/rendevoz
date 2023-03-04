@@ -1,5 +1,5 @@
 import createMetaStore, { metaLinksAtom } from '@/stores/meta.store'
-import { globalStore, metaStore } from '@/stores'
+import { globalStore, MetaStore } from '@/stores'
 import { useAtomValue } from 'jotai/react'
 import { FC, memo, useEffect, useRef, useState, MouseEventHandler, useLayoutEffect, useMemo } from 'react'
 import { IWhiteboardEdge } from '../../../typings/data/whiteboard'
@@ -42,7 +42,7 @@ const TreeEdge: FC<{
 
   const edgeRef = useRef<SVGPathElement>(null)
 
-  const { updateMetaLink } = metaStore
+  const { updateMetaLink } = MetaStore
 
   const setEdges = useSetWhiteboardEdges()
 

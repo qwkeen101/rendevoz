@@ -1,7 +1,7 @@
 import { GlobalDragOverlayInstance, useGlobalIsDragging } from '@/components/globalDragOverlay/GlobalDragOverlay'
 import { useMemoizedFn } from '@/hooks'
 import createMetaStore from '@/stores/meta.store'
-import { metaStore } from '@/stores'
+import { MetaStore } from '@/stores'
 import { RefObject, useEffect, useRef, useState } from 'react'
 import { MetaObject } from '~/typings/data'
 
@@ -9,7 +9,7 @@ const useCardDrag = (metaObject: MetaObject, draggableElementRef?: RefObject<HTM
   const [isGlobalDragging] = useGlobalIsDragging()
   const [isCardDraggingInside, setIsCardDraggingInside] = useState(false)
   const isPressed = useRef(false)
-  const { addMetaLink, updateMetaObject } = metaStore
+  const { addMetaLink, updateMetaObject } = MetaStore
   const mouseDownHandler = (e: MouseEvent) => {
     const cloned = showElement?.cloneNode(true) as HTMLElement
     cloned.style.width = `${showElement?.clientWidth}px`

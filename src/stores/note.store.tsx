@@ -4,9 +4,9 @@ import { atom } from 'jotai'
 import { toast } from 'react-hot-toast'
 import { Descendant } from 'slate'
 import { INote } from '~/typings/data'
-import BaseStore from './base.store'
+import BaseStore, { initializeLocalStore } from './base.store'
 import { IStore } from './store.type'
-import { globalStore, metaStore } from '.'
+import { MetaStore } from '.'
 import { Notification } from '@/components'
 import ClassName from '@/styles/classNames'
 import getSetting from '@/components/globalSetting/getSetting'
@@ -22,7 +22,7 @@ export const undeletedNotesAtom = atom(get => get(allNotesAtom).filter(i => !i.d
 export const pinnedNotesAtom = atom(get => get(undeletedNotesAtom).filter(i => i.pinned))
 
 const createNoteStore = () => {
-  const { bulkAdd, dispatch, initBaseObject } = BaseStore
+  const { initBaseObject } = BaseStore
 
   const shouldToast = (silent?: boolean) => {
     const setting = getSetting()
@@ -35,69 +35,40 @@ const createNoteStore = () => {
   const noteDb = useDb('notes')
   const blockDb = useDb('blocks')
   const blobDb = useDb('blobs')
+  const initalizedLocalStore = initializeLocalStore(notesAtom, noteDb)
 
   const localStore: IStore<INote> = {
-    getAll: async () => {
-      const array = await noteDb.toArray()
-      globalStore.set(notesAtom, bulkAdd(array, globalStore.get(notesAtom)))
-      return true
-    },
-    getOneById: id => {
-      return new Promise(res => {
-        res(globalStore.get(notesAtom).get(id))
-      })
-    },
+    getAll: initalizedLocalStore.getAll(),
+    getOneById: initalizedLocalStore.getOneById(),
     fetchOneById: id => localStore.getOneById(id),
     addOne: (n, silent) => {
-      return new Promise(res => {
-        const note = initBaseObject(n)
-        note.title = note.title || 'Untitled'
-        note.contentId = Id.getId()
-        dispatch({
-          type: 'add',
-          data: note,
-          database: noteDb,
-          atom: notesAtom,
-          onSuccess: async obj => {
-            if (!obj.metaId) {
-              await metaStore.addMetaObject(
-                {
-                  id: Id.getId(),
-                  type: 'note',
-                  objectId: obj.id
-                },
-                true
-              )
-            }
-            !silent &&
-              shouldToast(silent) &&
-              toast.success(
-                <Notification
-                  title="Note successfully added!"
-                  content={<div className={ClassName.description()}>Title: {obj.title}</div>}
-                />
-              )
-            res(obj)
-          }
-        })
-      })
+      const note = initBaseObject(n)
+      note.title = note.title || 'Untitled'
+      note.contentId = Id.getId()
+      return initalizedLocalStore.addOne(async obj => {
+        if (!obj.metaId) {
+          await MetaStore.addMetaObject(
+            {
+              id: Id.getId(),
+              type: 'note',
+              objectId: obj.id
+            },
+            true
+          )
+        }
+        shouldToast(silent) &&
+          toast.success(
+            <Notification title="Note successfully added!" content={<div className={ClassName.description()}>Title: {obj.title}</div>} />
+          )
+      })(n, silent)
     },
     updateOne: (n, silent) => {
-      return new Promise(res => {
-        dispatch({
-          type: 'update',
-          data: n,
-          database: noteDb,
-          atom: notesAtom,
-          onSuccess: obj => {
-            !silent && shouldToast(silent) && toast.success(<Notification title="Note successfully updated!" />)
-            res(obj)
-          }
-        })
-      })
+      return initalizedLocalStore.updateOne(() => {
+        shouldToast(silent) && toast.success(<Notification title="Note successfully updated!" />)
+      })(n, silent)
     },
     deleteOneById: (id, silent) => {
-      return localStore.updateOne({ id, deleted: true }, silent).then(data => (data ? true : false))
+      return initalizedLocalStore.deleteOneById()(id, silent)
     }
   }
   const realStore = {

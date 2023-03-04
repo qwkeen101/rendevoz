@@ -1,6 +1,7 @@
 import { CSSProperties, FC, forwardRef, PropsWithChildren, ReactNode, useEffect, useRef, useState } from 'react'
 import { AnimatePopover } from '..'
 import { useMergedRef } from '@/hooks'
+import Zindexes from '@/consts/zindex'
 
 interface ToolTipProps {
   content: string | ReactNode
@@ -10,7 +11,7 @@ interface ToolTipProps {
   disable?: boolean
 }
 
-const ToolTip: FC<PropsWithChildren<ToolTipProps>> = ({ content, children, position = 'bottom', style, delay = 300, disable }, ref) => {
+const ToolTip: FC<PropsWithChildren<ToolTipProps>> = ({ content, children, position = 'top', style, delay = 300, disable }, ref) => {
   const [open, setOpen] = useState(false)
   const childRef = useRef<HTMLElement>(null)
   const mergedRef = useMergedRef(childRef, ref)
@@ -80,7 +81,14 @@ const ToolTip: FC<PropsWithChildren<ToolTipProps>> = ({ content, children, posit
   return (
     <>
       {children && (
-        <AnimatePopover padding={10} content={renderContent()} positions={[position]} innerRef={mergedRef} visible={content && open}>
+        <AnimatePopover
+          containerStyle={{ zIndex: String(Zindexes.Tooltip) }}
+          padding={10}
+          content={renderContent()}
+          positions={[position]}
+          innerRef={mergedRef}
+          visible={content && open}
+        >
           {renderChildren()}
         </AnimatePopover>
       )}

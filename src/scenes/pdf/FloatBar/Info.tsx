@@ -2,7 +2,7 @@ import { Content, Icon } from '@/components'
 import { GlobalGraphInstance } from '@/components/graph/GlobalGraph'
 import usePdfInfo from '@/components/pdf/hooks/usePdfInfo'
 import createMetaStore, { metaObjectsAtom, relatedMetaObjectsMapAtom } from '@/stores/meta.store'
-import { globalStore, metaStore } from '@/stores'
+import { globalStore, MetaStore } from '@/stores'
 import ClassName from '@/styles/classNames'
 import DateFormat from '@/utils/dateFormat'
 import { formatDuration, intervalToDuration } from 'date-fns'
@@ -14,7 +14,7 @@ import { IPdfDocument } from '~/typings/data'
 
 const PdfInfo = ({ flipId, document }: { flipId: string; document?: IPdfDocument }) => {
   const duration = intervalToDuration({ start: 0, end: (document?.totalReadTime || 1000) * 1000 })
-  const { getMetaObjectByObjectId } = metaStore
+  const { getMetaObjectByObjectId } = MetaStore
   const pdfMetaAtom = useMemo(() => {
     if (document?.id) {
       const metaObject = getMetaObjectByObjectId(document.id)

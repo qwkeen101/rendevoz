@@ -12,9 +12,10 @@ import { useAtomValue } from 'jotai/react'
 import { memo, useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { MenuItem } from './Item'
+import { useTranslation } from 'react-i18next'
 
 const SidebarDatabase = memo(() => {
-  const [newMetaVisible, setNewMetaVisible] = useState(false)
+  const { t } = useTranslation()
   const [globalIsDragging] = useGlobalIsDragging()
   const itemRef = useRef<HTMLLIElement>(null)
   const emitter = useGlobalEventEmitter()
@@ -108,16 +109,8 @@ const SidebarDatabase = memo(() => {
           }}
         >
           <Icon name="park-data" style={{ marginRight: 10 }} size={16} />
-          Database
-          <div style={{ marginLeft: 'auto', marginRight: 10, fontSize: 12 }}>{undeletedMetaObjects.length}</div>
-          <Icon
-            name="park-plus"
-            onClick={e => {
-              e.stopPropagation()
-              setNewMetaVisible(true)
-            }}
-            className={ClassName.circleButton(2, 4)}
-          />
+          {t('sidebar.database')}
+          <div style={{ marginLeft: 'auto', fontSize: 12 }}>{undeletedMetaObjects.length}</div>
         </MenuItem>
       </AnimatePopover>
     </>

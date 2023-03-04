@@ -97,7 +97,7 @@ const useEditorOverlay = (editor: CustomEditor, scrollElement?: HTMLDivElement |
       padding={20}
       disableNudge={overlayContent === 'emojiPicker'}
       boundaryElement={document.body}
-      boundaryInset={80}
+      boundaryInset={60}
       content={renderAnimatedOverlay()}
     >
       <PosHelper {...popoverPosition} />

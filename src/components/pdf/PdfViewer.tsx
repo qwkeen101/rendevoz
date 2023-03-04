@@ -52,7 +52,7 @@ export const PdfViewer: FC<PdfViewerProps> = memo(({ documentId, innerRef, trans
       if (Object.keys(viewer).length > 0) {
         onViewerInitialized?.(viewer)
       } else {
-        requestIdleCallback(checkViewerInitialize)
+        requestAnimationFrame(checkViewerInitialize)
       }
     }
     checkViewerInitialize()

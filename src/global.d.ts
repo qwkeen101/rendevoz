@@ -1,5 +1,5 @@
-
-export { }
+export {}
+import 'i18next'
 
 declare global {
   interface Window {
@@ -7,5 +7,10 @@ declare global {
     fs: typeof import('fs')
     ipcRenderer: import('electron').IpcRenderer
     removeLoading: () => void
+  }
+}
+declare module 'i18next' {
+  interface CustomTypeOptions {
+    returnNull: false
   }
 }

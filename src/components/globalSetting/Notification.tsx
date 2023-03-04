@@ -1,7 +1,9 @@
 import Zindexes from '@/consts/zindex'
 import { useToggle } from '@/hooks'
 import ClassName from '@/styles/classNames'
+import { css } from '@emotion/css'
 import produce from 'immer'
+import { useTranslation } from 'react-i18next'
 import { AnimatePopover, Content, Icon, Switch, WithBorder } from '../base'
 import SettingItem from './Item'
 import { useSetting } from './Main'
@@ -9,7 +11,7 @@ import { useSetting } from './Main'
 const NotificationSetting = () => {
   const [customizeVisible, toggleCustomizeVisible] = useToggle(false)
   const [setting, setSetting] = useSetting()
-
+  const { t } = useTranslation()
   const { notification } = setting
   const toggleCustomize = (key: keyof typeof notification, value: boolean) => {
     setSetting(
@@ -20,43 +22,57 @@ const NotificationSetting = () => {
   }
   const items: SettingItem[] = [
     {
-      title: 'Toggle All Notifications',
-      description: 'Enable or disable all notifications',
+      title: t('settings.enable all notifications'),
+      description: t('settings.enable or disable all notifications'),
       children: <Switch defaultValue={notification.enabled} onChange={v => toggleCustomize('enabled', v)} />
     },
     {
-      title: 'Customize Displayed Notifications',
-      description: 'Choose which notification should be displayed',
+      title: t('settings.customize displayed notifications'),
+      description: t('settings.choose which notification should be displayed'),
       children: (
         <AnimatePopover
           positions={['bottom']}
           padding={10}
           content={
-            <WithBorder borderRadius={8} style={{ width: 300, padding: 12, fontSize: 16, fontWeight: 600, fontFamily: 'Muli' }}>
-              <Content className={ClassName.flatButton()} alignItems="center" flex justifyContent="space-between">
-                Object
+            <WithBorder
+              borderRadius={8}
+              className={css({
+                '> div': css([
+                  ClassName.flatButton(),
+                  {
+                    alignItems: 'center',
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    textTransform: 'capitalize'
+                  }
+                ])
+              })}
+              style={{ width: 300, padding: 12, fontSize: 16, fontWeight: 600, fontFamily: 'Muli' }}
+            >
+              <div>
+                {t('general.object')}
                 <Switch onChange={v => toggleCustomize('object', v)} defaultValue={notification.object} />
-              </Content>
-              <Content className={ClassName.flatButton()} alignItems="center" flex justifyContent="space-between">
-                Link
+              </div>
+              <div>
+                {t('general.link')}
                 <Switch onChange={v => toggleCustomize('link', v)} defaultValue={notification.link} />
-              </Content>
-              <Content className={ClassName.flatButton()} alignItems="center" flex justifyContent="space-between">
-                PDF
+              </div>
+              <div>
+                {t('general.pdf')}
                 <Switch onChange={v => toggleCustomize('pdf', v)} defaultValue={notification.pdf} />
-              </Content>
-              <Content className={ClassName.flatButton()} alignItems="center" flex justifyContent="space-between">
-                Editor
+              </div>
+              <div>
+                {t('general.note')}
                 <Switch onChange={v => toggleCustomize('editor', v)} defaultValue={notification.editor} />
-              </Content>
-              <Content className={ClassName.flatButton()} alignItems="center" flex justifyContent="space-between">
-                Label
+              </div>
+              <div>
+                {t('general.label')}
                 <Switch onChange={v => toggleCustomize('label', v)} defaultValue={notification.label} />
-              </Content>
-              <Content className={ClassName.flatButton()} alignItems="center" flex justifyContent="space-between">
-                Collection
+              </div>
+              <div>
+                {t('general.collection')}
                 <Switch onChange={v => toggleCustomize('collection', v)} defaultValue={notification.collection} />
-              </Content>
+              </div>
             </WithBorder>
           }
           visible={customizeVisible}
@@ -64,7 +80,7 @@ const NotificationSetting = () => {
           containerStyle={{ zIndex: String(Zindexes.Notification) }}
         >
           <Content onClick={toggleCustomizeVisible} className={ClassName.flatButton()} flex gap={4}>
-            <span>Customize</span>
+            <span>{t('general.customize')}</span>
             <Icon name="park-down" />
           </Content>
         </AnimatePopover>
@@ -73,8 +89,8 @@ const NotificationSetting = () => {
   ]
   return (
     <>
-      {items.map(i => (
-        <SettingItem {...i} />
+      {items.map((i, idx) => (
+        <SettingItem key={idx} {...i} />
       ))}
     </>
   )

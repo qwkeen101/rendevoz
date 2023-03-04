@@ -15,11 +15,10 @@ import HomeBrief from './Brief'
 import { useAtomValue } from 'jotai/react'
 import { globalStore } from '@/stores'
 import { useMeasure } from 'react-use'
+import { useTranslation } from 'react-i18next'
 
 export const HomePage: FC = () => {
   const { defaultBackgroundColor } = useTheme('defaultBackgroundColor')
-  const location = useGlobalLocation()
-  const homeBackground = location?.state && location.state.homeBackground
   return (
     <Container className={css({ background: defaultBackgroundColor, userSelect: 'none' })} auto column>
       <Content className={styles.body}>
@@ -27,15 +26,6 @@ export const HomePage: FC = () => {
         <DocumentCard />
         <NoteCard />
       </Content>
-      {/* <AnimatePresence>
-        {homeBackground && location && (
-          <Routes location={location} key={location.pathname}>
-            <Route path="document/details">
-              <Route path=":id" element={<AnimatedDocumentDetails />} />
-            </Route>
-          </Routes>
-        )}
-      </AnimatePresence> */}
     </Container>
   )
 }
@@ -43,6 +33,7 @@ export const HomePage: FC = () => {
 const DocumentCard = () => {
   const [sortMode, setSortMode] = useState<'recently read' | 'recently add'>('recently read')
   const [ref, { width }] = useMeasure()
+  const { t } = useTranslation()
   return (
     <Content flex column>
       <Content
@@ -59,7 +50,7 @@ const DocumentCard = () => {
             fontWeight: 600
           })}
         >
-          Books
+          {t('home.books')}
         </div>
         <div
           onClick={() => setSortMode('recently read')}
@@ -74,7 +65,7 @@ const DocumentCard = () => {
             }
           })}
         >
-          Recently Read
+          {t('home.recently read')}
         </div>
         <div
           onClick={() => setSortMode('recently add')}
@@ -89,7 +80,7 @@ const DocumentCard = () => {
             }
           })}
         >
-          Recently Add
+          {t('home.recently add')}
         </div>
       </Content>
       <div ref={ref} style={{ minHeight: 120 }}>
@@ -100,6 +91,7 @@ const DocumentCard = () => {
 }
 const NoteCard = () => {
   const undeletedNotes = useAtomValue(undeletedNotesAtom, { store: globalStore })
+  const { t } = useTranslation()
   return (
     <div
       className={css({
@@ -113,7 +105,7 @@ const NoteCard = () => {
           marginBottom: 15
         })}
       >
-        Notes
+        {t('home.notes')}
       </div>
       <div
         style={{
@@ -128,62 +120,5 @@ const NoteCard = () => {
         ))}
       </div>
     </div>
-  )
-}
-const AnimatedDocumentDetails = () => {
-  const [draggable, setDraggable] = useState(true)
-  const navigate = useNavigate()
-  const dragControls = useDragControls()
-  function startDrag(event) {
-    dragControls.start(event)
-    document.addEventListener('mousemove', dragHandler)
-  }
-  const dragHandler = useCallback(e => {
-    e.preventDefault()
-  }, [])
-  const handleDrag = (event: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
-    event.preventDefault()
-    const windowHeight = window.innerHeight
-    const distance = windowHeight - info.point.y
-    if (distance / windowHeight < 0.1 && draggable) {
-      setDraggable(false)
-      navigate('/home')
-      document.removeEventListener('mousemove', dragHandler)
-    }
-  }
-  const handleDragEnd = () => {
-    document.removeEventListener('mousemove', dragHandler)
-  }
-  return (
-    <motion.div className={styles.documentDetailsContainer}>
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        transition={{ duration: 0.4 }}
-        className={styles.documentDetailsOverlay}
-        onClick={() => navigate('/home')}
-      ></motion.div>
-      <motion.div
-        initial={{ y: '100%' }}
-        className={styles.documentDetailsContent}
-        animate={{ y: 0 }}
-        exit={{ y: '100%' }}
-        transition={{ duration: 0.4, stiffness: 200, damping: 30 }}
-        drag={draggable ? 'y' : false}
-        dragControls={dragControls}
-        dragConstraints={{ top: 0 }}
-        dragElastic={0}
-        dragListener={false}
-        dragMomentum={false}
-        onDrag={handleDrag}
-        onDragEnd={handleDragEnd}
-      >
-        <div onPointerDown={startDrag} className={styles.documentDetailsDragHandleContainer}>
-          <div className={styles.documentDetailsDragHandle}></div>
-        </div>
-        <DocumentDetails />
-      </motion.div>
-    </motion.div>
   )
 }

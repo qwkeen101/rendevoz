@@ -3,7 +3,7 @@ import useLatest from '@/hooks/utils/useLatest'
 import useCollectionStore from '@/stores/collection.store'
 import createDocumentStore from '@/stores/document.store'
 import useLabelStore from '@/stores/label.store'
-import { metaStore, noteStore } from '@/stores'
+import { CollectionStore, LabelStore, MetaStore, NoteStore } from '@/stores'
 import ClassName from '@/styles/classNames'
 import { exportRendevozDb, importRendevozDb } from '@/utils/db'
 import { useEffect, useRef } from 'react'
@@ -12,6 +12,7 @@ import { Content, Form, Icon } from '../base'
 import Modal from '../base/Modal'
 import useFileUpload from '../base/useFileUpload'
 import SettingItem from './Item'
+import { useTranslation } from 'react-i18next'
 
 const GeneralSetting = () => {
   const [isExporting, toggleIsExporting] = useToggle(false)
@@ -19,11 +20,12 @@ const GeneralSetting = () => {
   const [alertVisible, toggleAlertVisible] = useToggle(false)
   const latestIsExporting = useLatest(isExporting)
   const hasExporting = useRef(false)
-  const { getAllNotes } = noteStore
-  const { getAllMetaObjects, getAllMetaLinks } = metaStore
+  const { getAllNotes } = NoteStore
+  const { getAllMetaObjects, getAllMetaLinks } = MetaStore
   const { getAllDocuments } = createDocumentStore()
-  const { getAllCollections } = useCollectionStore()
-  const { getAllLabels } = useLabelStore()
+  const { getAllCollections } = CollectionStore
+  const { getAllLabels } = LabelStore
+  const { t } = useTranslation()
   const handleImportData = async (file?: File) => {
     toggleIsImporting(true)
     try {
@@ -74,11 +76,11 @@ const GeneralSetting = () => {
 
   const items: SettingItem[] = [
     {
-      title: 'Current Version',
-      description: `Alpha ${APP_VERSION || 'Unknown'} (For test)`
+      title: t('settings.current version'),
+      description: `Beta ${APP_VERSION || 'Unknown'}`
     },
     {
-      title: 'Export / Import Database Data',
+      title: t('settings.export/import data'),
       description: 'Pdfs and images can not be exported / imported.',
       column: true,
       children: (
@@ -117,7 +119,7 @@ const GeneralSetting = () => {
               ) : (
                 <>
                   <Icon name="park-efferent-three" />
-                  Export
+                  {t('settings.export')}
                 </>
               )}
             </Content>
@@ -139,7 +141,7 @@ const GeneralSetting = () => {
               ) : (
                 <>
                   <Icon name="park-afferent-three" />
-                  Import
+                  {t('settings.import')}
                 </>
               )}
             </Content>
@@ -151,8 +153,8 @@ const GeneralSetting = () => {
 
   return (
     <>
-      {items.map(i => (
-        <SettingItem {...i} />
+      {items.map((i, idx) => (
+        <SettingItem key={idx} {...i} />
       ))}
     </>
   )

@@ -2,7 +2,7 @@ import { ColorPicker, WithBorder } from '@/components'
 import { IconWithPopover, Toolbar } from '@/components/base'
 import BorderInput from '@/components/base/BorderInput'
 import { useDebounceFn, useMemoizedFn } from '@/hooks'
-import { metaStore } from '@/stores'
+import { MetaStore } from '@/stores'
 import ClassName from '@/styles/classNames'
 import produce from 'immer'
 import { useMemo } from 'react'
@@ -11,7 +11,7 @@ import { GraphEdge } from '../../types/edge'
 
 const EdgeAttributeCard = ({ currentEdge }: { currentEdge?: GraphEdge }) => {
   const [edges, setEdges] = useEdges()
-  const { updateMetaLink, deleteMetaLink } = metaStore
+  const { updateMetaLink, deleteMetaLink } = MetaStore
   const originEdgeIdx = useMemo(() => edges?.findIndex(i => i.id === currentEdge?.id), [edges, currentEdge?.id])
   const updateEdge = useMemoizedFn((edge: Partial<GraphEdge>) => {
     if (originEdgeIdx !== undefined && edges) {

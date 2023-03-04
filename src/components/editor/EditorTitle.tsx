@@ -1,6 +1,6 @@
 import { KEY } from '@/consts/key'
 import { useDebounceFn } from '@/hooks'
-import { noteStore } from '@/stores'
+import { NoteStore } from '@/stores'
 import ClassName from '@/styles/classNames'
 import { css } from '@emotion/css'
 import isHotkey from 'is-hotkey'
@@ -52,7 +52,7 @@ const EditorTitle: FC<EditorTitleProps> = ({
   titleContainerStyle,
   titleStyle
 }) => {
-  const { updateNote } = noteStore
+  const { updateNote } = NoteStore
   const { run: debouncedUpdateNote } = useDebounceFn(updateNote, { wait: 200 })
   const { t } = useTranslation()
   const titleRef = useRef<HTMLDivElement>(null)
@@ -73,12 +73,12 @@ const EditorTitle: FC<EditorTitleProps> = ({
           noteId &&
             debouncedUpdateNote({
               id: noteId,
-              title: text || 'Untitled'
+              title: text || t('general.untitled')
             })
         }}
         onBlur={() => {
           if (titleRef.current?.textContent === '') {
-            titleRef.current && (titleRef.current.textContent = 'Untitled')
+            titleRef.current && (titleRef.current.textContent = t('general.untitled'))
           }
         }}
         onKeyDown={e => {

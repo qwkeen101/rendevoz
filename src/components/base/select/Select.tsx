@@ -221,12 +221,12 @@ const SelectMenu: FC<{
     >
       {menuItems?.map(item => (
         <div
+          key={item.value}
           className={ClassName.flatButton()}
           style={{ background: selectedItems.some(i => i === item.value) ? 'rgba(31, 34, 37, 0.1)' : undefined }}
           onClick={() => {
             if (selectedItems.some(i => i === item.value)) {
               onDeSelect(item.value)
-              console.log('deselect')
             } else {
               onSelect(item.value)
             }

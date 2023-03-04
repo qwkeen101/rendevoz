@@ -420,6 +420,7 @@ const WrapperNode = ({ node }: { node: IWhiteboardNode }) => {
         isResizingRef.current = true
         rafUpdateEdge()
       }}
+      resizeHandleWrapperStyle={{ pointerEvents: 'auto' }}
       onResizeStop={(e, dir, ele, delta, pos) => {
         const bound = ele.getBoundingClientRect()
         setTimeout(() => {

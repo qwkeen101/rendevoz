@@ -1,5 +1,5 @@
-import useCollectionStore from '@/stores/collection.store'
 import { FC, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { ICollection } from '~/typings/data'
 import { IForm } from './types'
 import useFlipForm from './useFlipForm'
@@ -9,6 +9,7 @@ const CollectionForm: FC<IForm<ICollection>> = ({ onSubmit, onBack, initialObjec
     ...initialObject
   })
   const isEditingExistedCollection = initialObject !== undefined
+  const { t } = useTranslation()
   const { renderForm } = useFlipForm({
     layout: [
       {
@@ -34,7 +35,9 @@ const CollectionForm: FC<IForm<ICollection>> = ({ onSubmit, onBack, initialObjec
     ],
     onBack,
     onSubmit: () => onSubmit?.(collection),
-    formTitle: isEditingExistedCollection ? 'Update Collection Details' : 'Create New Collection',
+    formTitle: isEditingExistedCollection
+      ? t('form.update item details', { item: t('general.collection') })
+      : t('form.create new item', { item: t('general.collection') }),
     submitText: isEditingExistedCollection ? 'update' : 'create'
   })
 

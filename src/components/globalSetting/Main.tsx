@@ -18,14 +18,8 @@ import SettingSidebarItem from './SidebarItem'
 
 enum Settings {
   'general',
-  // 'hotkeys',
-  // 'files',
-  // 'object',
-  // 'editor',
-  // 'pdf',
   'notification',
   'shortcuts'
-  // 'about'
 }
 
 type Setting = INotificationSetting & IShortCutSetting
@@ -66,8 +60,7 @@ const defaultSetting: Setting = {
     object: true,
     link: true
   },
-  shortcut: {
-  }
+  shortcut: {}
 }
 _.merge(defaultSetting, localSetting)
 localStorage.setItem('setting', JSON.stringify(defaultSetting))
@@ -80,12 +73,6 @@ const SettingDialog = ({ onClose }: { onClose: VoidFunction }) => {
   const [currentSettingPanel, setCurrentSettingPanel] = useState<keyof typeof Settings>('general')
   const renderContent = () => {
     switch (currentSettingPanel) {
-      case 'appearance':
-        return <AppearanceSetting />
-      case 'about':
-        return <AboutSetting />
-      case 'editor':
-        return <EditorSetting />
       case 'general':
         return <GeneralSetting />
       case 'notification':
@@ -123,7 +110,7 @@ const SettingDialog = ({ onClose }: { onClose: VoidFunction }) => {
           .filter(i => isNaN(Number(i)))
           .map(i => (
             <SettingSidebarItem onClick={() => setCurrentSettingPanel(i)} key={i} isSelected={i === currentSettingPanel}>
-              <div style={{ textTransform: 'capitalize' }}>{i}</div>
+              <div style={{ textTransform: 'capitalize' }}>{t(`settings.${i}`)}</div>
             </SettingSidebarItem>
           ))}
       </Content>

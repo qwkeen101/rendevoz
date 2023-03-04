@@ -3,7 +3,7 @@ import { initReactI18next } from 'react-i18next'
 import zhCN from '@/assets/locales/zh-CN/translation.json'
 import enUS from '@/assets/locales/en-US/translation.json'
 
-const initI18n = (defaultLang = 'en-US') => {
+const initI18n = (defaultLang = 'zh-CN') => {
   i18n.use(initReactI18next).init({
     resources: {
       'en-US': {
@@ -19,6 +19,7 @@ const initI18n = (defaultLang = 'en-US') => {
     react: {
       useSuspense: false
     },
+    returnNull: false,
     lng: defaultLang,
     fallbackLng: defaultLang
   })

@@ -7,14 +7,14 @@ import { useRef, useState } from 'react'
 import { Editor, Transforms } from 'slate'
 import { EditorOverlayManager } from '../useEditorOverlay'
 import BlockColorPicker from '../../BlockColorPicker'
-import { useUpdate } from 'react-use'
 import { useToggle } from '@/hooks'
+import { useTranslation } from 'react-i18next'
 
 const EditorBlockDetails = ({ editor, manager }: { editor: CustomEditor; manager: EditorOverlayManager }) => {
   const [cardViewVisible, setCardViewVisible] = useState(false)
   const [styleVisible, setStyleVisible] = useState(false)
   const [formatVisible, setFormatVisible] = useState(false)
-
+  const { t } = useTranslation()
   const currentEle = editor.currentAddClickElement
   const currentElePath = ReactEditor.findPath(editor, currentEle)
   const containerRef = useRef<HTMLDivElement>(null)
@@ -127,7 +127,7 @@ const EditorBlockDetails = ({ editor, manager }: { editor: CustomEditor; manager
               }}
               className={ClassName.flatButton()}
             >
-              Align left
+              {t('editor.align left')}
             </div>
             <div
               onClick={() => {
@@ -135,7 +135,7 @@ const EditorBlockDetails = ({ editor, manager }: { editor: CustomEditor; manager
               }}
               className={ClassName.flatButton()}
             >
-              Align center
+              {t('editor.align center')}
             </div>
             <div
               onClick={() => {
@@ -143,7 +143,7 @@ const EditorBlockDetails = ({ editor, manager }: { editor: CustomEditor; manager
               }}
               className={ClassName.flatButton()}
             >
-              Align right
+              {t('editor.align right')}
             </div>
           </WithBorder>
         }
@@ -157,7 +157,7 @@ const EditorBlockDetails = ({ editor, manager }: { editor: CustomEditor; manager
         >
           <Content flex centered gap={10}>
             <Icon name="park-align-text-left" size={18} />
-            Text alignment
+            {t('editor.text alignment')}
           </Content>
           <Icon name="park-right" />
         </Content>
@@ -209,7 +209,7 @@ const EditorBlockDetails = ({ editor, manager }: { editor: CustomEditor; manager
         >
           <Content flex centered gap={10}>
             <Icon name="park-platte" size={18} />
-            Color
+            {t('general.color')}
           </Content>
           <Icon name="park-right" />
         </Content>
@@ -251,7 +251,7 @@ const EditorBlockDetails = ({ editor, manager }: { editor: CustomEditor; manager
         }}
       >
         <Icon name="park-copy" size={18} />
-        Copy
+        {t('general.copy')}
       </Content>
       <Content
         flex
@@ -265,7 +265,7 @@ const EditorBlockDetails = ({ editor, manager }: { editor: CustomEditor; manager
         }}
       >
         <Icon name="park-delete" size={18} />
-        Delete
+        {t('general.delete')}
       </Content>
     </WithBorder>
   )

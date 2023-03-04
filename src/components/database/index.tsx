@@ -49,7 +49,7 @@ const KnowledgeDatabase = () => {
     <Provider store={DatabaseStore}>
       <Content flex column gap={16} className={css({ padding: 30, overflow: 'scroll', height: '100%' })}>
         <input
-          placeholder="Search for meta object"
+          placeholder="Search For Object"
           onChange={e => debouncedSetSearch(e.target.value)}
           className={css([ClassName.input(), { borderRadius: 999 }])}
         />

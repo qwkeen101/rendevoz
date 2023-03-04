@@ -8,7 +8,7 @@ import { toast } from 'react-hot-toast'
 import { INote, IPdfDocument, IWhiteboard, MetaLink, MetaObject } from '~/typings/data'
 import BaseStore, { initializeLocalStore } from './base.store'
 import { notesAtom } from './note.store'
-import { globalStore, noteStore } from '.'
+import { globalStore, NoteStore, MetaStore } from '.'
 import { TypeToTypeName } from '@/components/database/card/DatabaseCard'
 import { IStore } from './store.type'
 import { documentsAtom } from './document.store'
@@ -182,13 +182,13 @@ export const handleSyncObjectName = () => {
           const atom = selectAtom(notesAtom, n => n.get(objId))
           const note = globalStore.get(atom)
           if (note && note.title !== targetMetaObject.name) {
-            metaStore.updateMetaObject({ id: targetMetaObject.id, name: note.title }, true)
+            MetaStore.updateMetaObject({ id: targetMetaObject.id, name: note.title }, true)
           }
           const unsub = globalStore.sub(atom, () => {
             const v = globalStore.get(atom)
             const m = globalStore.get(metaObjectsAtom).get(metaId)
             if (v && m && v.title !== m?.name) {
-              metaStore.updateMetaObject({ id: metaId, name: v.title }, true)
+              MetaStore.updateMetaObject({ id: metaId, name: v.title }, true)
             }
           })
           subArr.push(unsub)
@@ -198,13 +198,13 @@ export const handleSyncObjectName = () => {
           const atom = selectAtom(documentsAtom, n => n.get(objId))
           const document = globalStore.get(atom)
           if (document && (document.name !== targetMetaObject.name || document.metadata?.coverUrl !== targetMetaObject.coverImgSrc)) {
-            metaStore.updateMetaObject({ id: targetMetaObject.id, name: document.name, coverImgSrc: document.metadata?.coverUrl }, true)
+            MetaStore.updateMetaObject({ id: targetMetaObject.id, name: document.name, coverImgSrc: document.metadata?.coverUrl }, true)
           }
           const unsub = globalStore.sub(atom, () => {
             const v = globalStore.get(atom)
             const m = globalStore.get(metaObjectsAtom).get(metaId)
             if (v && m && (v.name !== m?.name || v.metadata?.coverUrl !== m.coverImgSrc)) {
-              metaStore.updateMetaObject({ id: metaId, name: v.name, coverImgSrc: v.metadata?.coverUrl }, true)
+              MetaStore.updateMetaObject({ id: metaId, name: v.name, coverImgSrc: v.metadata?.coverUrl }, true)
             }
           })
           subArr.push(unsub)
@@ -214,13 +214,13 @@ export const handleSyncObjectName = () => {
           const atom = selectAtom(whiteboardsAtom, n => n.get(objId))
           const whiteboard = globalStore.get(atom)
           if (whiteboard && whiteboard.name !== targetMetaObject.name) {
-            metaStore.updateMetaObject({ id: targetMetaObject.id, name: whiteboard.name }, true)
+            MetaStore.updateMetaObject({ id: targetMetaObject.id, name: whiteboard.name }, true)
           }
           const unsub = globalStore.sub(atom, () => {
             const v = globalStore.get(atom)
             const m = globalStore.get(metaObjectsAtom).get(metaId)
             if (v && m && v.name !== m?.name) {
-              metaStore.updateMetaObject({ id: metaId, name: v.name }, true)
+              MetaStore.updateMetaObject({ id: metaId, name: v.name }, true)
             }
           })
           subArr.push(unsub)
@@ -248,7 +248,7 @@ export const tagToMetaObjectIdsMapAtom = atom(get => get(indexedMetaObjectsAtom)
 
 export const useMetaTargetObject = (metaObjectId: number) => {
   const metaObject = globalStore.get(metaObjectsAtom).get(metaObjectId)
-  const { updateMetaObject } = metaStore
+  const { updateMetaObject } = MetaStore
   const { objectId } = metaObject || {}
   const targetAtom = useMemo(() => {
     if (objectId) {
@@ -377,7 +377,7 @@ const createMetaStore = () => {
       if (initedMetaObject.type === 'normal') {
         const noteId = Id.getId()
         initedMetaObject.objectId = noteId
-        noteStore.addNote(
+        NoteStore.addNote(
           {
             id: noteId,
             metaId: initedMetaObject.id

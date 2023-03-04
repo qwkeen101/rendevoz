@@ -1,5 +1,5 @@
 import Zindexes from '@/consts/zindex'
-import { metaStore } from '@/stores'
+import { MetaStore } from '@/stores'
 import { Position } from '@/types'
 import { compareHotkey } from 'is-hotkey'
 import { useEffect, useRef, useState } from 'react'
@@ -36,7 +36,7 @@ const GlobalCreateObject = () => {
     res: (v: any) => void
     rej: (v: any) => void
   }>()
-  const { addMetaObject } = metaStore
+  const { addMetaObject } = MetaStore
   Object.assign(GlobalCreateObjectInstance, {
     create: obj => {
       return new Promise((res, rej) => {

@@ -5,6 +5,7 @@ import { css } from '@emotion/css'
 import { AnimatePresence, motion } from 'framer-motion'
 import { FC, memo, MouseEventHandler, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
+import { useTranslation } from 'react-i18next'
 
 type BlockHandleProps = {
   left?: number
@@ -26,6 +27,7 @@ type IBlockHandle = FC<
 const BlockHandle: IBlockHandle = ({ left, top, targetHeight, visible, onMouseDown, onClick, onAddClick, onDragClick, onMenuClick }) => {
   const [innerVisible, setInnerVisible] = useState(false)
   const [globalDragging] = useGlobalIsDragging()
+  const { t } = useTranslation()
   const hasMouseSelection = () => {
     return !window.getSelection()?.isCollapsed
   }
@@ -55,8 +57,8 @@ const BlockHandle: IBlockHandle = ({ left, top, targetHeight, visible, onMouseDo
         fontWeight: 600
       })}
     >
-      <span style={{ color: 'white' }}>Click </span>
-      <span style={{ color: 'grey' }}>to add a block below</span>
+      <span style={{ color: 'white' }}>{t('editor.click')} </span>
+      <span style={{ color: 'rgba(255,255,255,0.5)' }}>{t('editor.to add a block below')}</span>
     </div>
   )
   const DragTooltip = (
@@ -70,12 +72,12 @@ const BlockHandle: IBlockHandle = ({ left, top, targetHeight, visible, onMouseDo
       })}
     >
       <div>
-        <span style={{ color: 'white' }}>Drag </span>
-        <span style={{ color: 'grey' }}>to move</span>
+        <span style={{ color: 'white' }}>{t('editor.drag')} </span>
+        <span style={{ color: 'rgba(255,255,255,0.5)' }}>{t('editor.to move block')}</span>
       </div>
       <div>
-        <span style={{ color: 'white' }}>Click </span>
-        <span style={{ color: 'grey' }}>to open menu</span>
+        <span style={{ color: 'white' }}>{t('editor.click')} </span>
+        <span style={{ color: 'rgba(255,255,255,0.5)' }}>{t('editor.to open menu')}</span>
       </div>
     </div>
   )

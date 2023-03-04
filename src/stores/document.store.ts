@@ -10,7 +10,7 @@ import { IPdfDocument } from '~/typings/data'
 import BaseStore, { initializeLocalStore } from './base.store'
 
 import { IStore } from './store.type'
-import { metaStore } from '.'
+import { MetaStore } from '.'
 
 export const documentsAtom = atom<Map<number, IPdfDocument>>(new Map())
 
@@ -76,7 +76,7 @@ const createDocumentStore = () => {
   }
   const localStore: Pick<IStore<IPdfDocument>, 'addOne' | 'deleteOneById' | 'getAll' | 'getOneById' | 'updateOne'> = {
     addOne: store.addOne((obj, silent) => {
-      metaStore.addMetaObject(
+      MetaStore.addMetaObject(
         {
           id: Id.getId(),
           objectId: obj.id,

@@ -119,7 +119,7 @@ const useFlipForm = (options: useFlipFormOptions) => {
             className={ClassName.flatButton()}
             onClick={() => setFormInnerState({ tagPickerVisible: true })}
           >
-            <Content gap={8} flex>
+            <Content gap={8} flex style={{ textTransform: 'capitalize' }}>
               <Icon name="park-tag-one" />
               <span>{t('general.tags')}</span>
             </Content>
@@ -141,7 +141,7 @@ const useFlipForm = (options: useFlipFormOptions) => {
         return (
           <div
             className={ClassName.flatButton()}
-            style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
+            style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', textTransform: 'capitalize' }}
             onClick={() => setFormInnerState({ iconPickerVisible: true })}
           >
             {t('general.icon')}
@@ -187,7 +187,8 @@ const useFlipForm = (options: useFlipFormOptions) => {
                   left: 10,
                   fontWeight: 600,
                   fontFamily: 'Muli',
-                  fontSize: 12
+                  fontSize: 12,
+                  textTransform: 'capitalize'
                 }}
               >
                 {t('general.tags')}
@@ -206,7 +207,7 @@ const useFlipForm = (options: useFlipFormOptions) => {
         return (
           <div
             className={ClassName.flatButton()}
-            style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
+            style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', textTransform: 'capitalize' }}
             onClick={() => setFormInnerState({ colorPickerVisible: true })}
           >
             {t('general.color')}

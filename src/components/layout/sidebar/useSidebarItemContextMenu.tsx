@@ -113,6 +113,7 @@ const useSidebarItemContextMenu = (
               width: 150,
               position: 'absolute',
               background: 'white',
+              textTransform: 'capitalize',
               ...contextMenuState
             }}
             onClick={e => {
@@ -139,7 +140,7 @@ const useSidebarItemContextMenu = (
                 visible={!!contextMenuState.createVisible}
                 content={
                   <WithBorder
-                    style={{ width: 150, padding: 3, background: 'white' }}
+                    style={{ width: 150, padding: 3, background: 'white', textTransform: 'capitalize' }}
                     className={css([
                       ClassName.defaultFont(13, 600),
                       ClassName.childrenAllFlex(undefined, 'flex-start'),

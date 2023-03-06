@@ -15,6 +15,8 @@ import { Content, WithBorder } from '../base'
 import BlockColorPicker from '../editor/components/BlockColorPicker'
 import { defaultBgColor } from '../picker/colorPicker'
 import { Tag } from './EditMetaObjectForm'
+import { useTranslation } from 'react-i18next'
+import { css } from '@emotion/css'
 
 const FormTagPicker = ({
   onClose,
@@ -34,7 +36,7 @@ const FormTagPicker = ({
   const allTags = useAtomValue(TagsAtom, { store: globalStore })
   const allTagNames = useMemo(() => Array.from(allTags.values()).map(i => i.name), [allTags])
   const [searchTags, setSearchTags] = useState<ITag[]>([])
-
+  const { t } = useTranslation()
   const mostUsedTags = useMemo(() => {
     const tags: { tag: string; size: number }[] = []
     Array.from(TagToMetaObjectIdsMap?.entries()).forEach(([k, v]) => {
@@ -60,15 +62,15 @@ const FormTagPicker = ({
   }, [newAddTag?.name])
 
   return (
-    <div style={{ width: 300, ...style }}>
+    <div style={{ width: 300, ...style }} className={css({ '.div': { textTransform: 'capitalize' } })}>
       <Icon
         name="park-close"
         containerStyle={{ position: 'absolute', top: 10, right: 10, color: 'rgba(31,34,39,0.6)' }}
         className={ClassName.circleButton()}
         onClick={onClose}
       />
-      <div className={ClassName.title('15px')}>Select Tags</div>
-      <div className={ClassName.description()}>You can select multiple tags.</div>
+      <div className={ClassName.title('15px')}>{t('form.select tags')}</div>
+      <div className={ClassName.description()}>{t('form.you can select multiple tags"', { tags: t('general.tags') })}</div>
       <Content flex gap={8} alignItems="center" style={{ padding: '10px 0', flexWrap: 'wrap' }}>
         {tags?.map(i => (
           <Tag key={i} hideSize onDelete={() => onChange?.(tags.filter(i => i !== i))} tag={i} />
@@ -96,7 +98,7 @@ const FormTagPicker = ({
                       style={{ fontSize: 13 }}
                       className={ClassName.flatButton()}
                     >
-                      Create Tag
+                      {`${t('general.create')} ${t('general.tag')}`}
                       <span
                         style={{
                           color: newAddTag?.color ? 'white' : 'rgb(82,102,116)',
@@ -228,8 +230,8 @@ const FormTagPicker = ({
           {tags?.length === 0 && <span style={{ marginTop: -2, marginRight: 6 }}>Add One Tag</span>}
         </div>
       </Content>
-      <div style={{ margin: '20px 0px 10px' }} className={ClassName.description()}>
-        MOST USED TAGS
+      <div style={{ margin: '20px 0px 10px', textTransform: 'uppercase' }} className={ClassName.description()}>
+        {t('form.most used tags', { tags: t('general.tags')})}
       </div>
       <Content flex alignItems="center" gap={8} style={{ flexWrap: 'wrap' }}>
         {mostUsedTags?.map(i => (

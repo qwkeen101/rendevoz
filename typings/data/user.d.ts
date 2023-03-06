@@ -16,4 +16,6 @@ export interface IUser {
   premiumStartDate?: number
   premiumEndDate?: number
   jwtToken?: any
+  idToken?: string
+  refreshToken?: string
 }

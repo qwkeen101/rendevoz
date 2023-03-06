@@ -21,8 +21,13 @@ enum Settings {
   'notification',
   'shortcuts'
 }
-
-type Setting = INotificationSetting & IShortCutSetting
+type AvaliableLanguages = 'en-US' | 'zh-CN'
+type Setting = INotificationSetting &
+  IShortCutSetting & {
+    general: {
+      language: AvaliableLanguages
+    }
+  }
 type INotificationSetting = {
   notification: {
     enabled: boolean
@@ -60,7 +65,10 @@ const defaultSetting: Setting = {
     object: true,
     link: true
   },
-  shortcut: {}
+  shortcut: {},
+  general: {
+    language: 'en-US'
+  }
 }
 _.merge(defaultSetting, localSetting)
 localStorage.setItem('setting', JSON.stringify(defaultSetting))

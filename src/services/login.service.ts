@@ -14,7 +14,10 @@ type VerifyUserOptions =
       type: 'uid'
       uid: string
     }
-const userAtom = atom<IUser | null>(null)
+const userAtom = atom<IUser | null>({
+  displayName: 'Admin',
+  isPremium: true
+})
 
 export const useUser = () => useGlobalAtom(userAtom)
 export const getUser = () => {
@@ -47,15 +50,24 @@ const createLoginService = () => {
       }
     }
   }
+  // if success return jwtToken
   const login = (email: string, password: string) => {
-    return request(remoteInterface + '/login', { data: { email, password }, method: 'post' })
+    return request<{ token: string }>(remoteInterface + '/login', { data: { email, password }, method: 'post' })
+  }
+  const getUserDetails = (email: string, token: string) => {
+    return request<IUser>(remoteInterface + '/userDetails', { params: { email }, headers: { 'x-token': token } })
+  }
+
+  const updateUserDetails = (user: Partial<IUser>) => {
+
   }
   return {
     sendVerifyEmail,
     verifyCode,
     verifyUser,
     checkEmailExist,
-    login
+    login,
+    getUserDetails
   }
 }
 

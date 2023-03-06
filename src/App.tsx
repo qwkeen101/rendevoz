@@ -15,8 +15,11 @@ import GlobalObjectPanel from './components/GlobalObjectPanel'
 import GlobalCreateObject from './components/GlobalCreateObject'
 import '@/components/editor/dock.less'
 import SvgMarker from './components/svg/Marker'
-import Login from './components/login'
+import Login from './components/Login'
 import { useUser } from './services/login.service'
+import { useSetting } from './components/globalSetting/Main'
+import { useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 PdfJs.GlobalWorkerOptions.workerSrc = PdfJsUrl
 const App = () => {
   function getOS() {
@@ -42,6 +45,13 @@ const App = () => {
   }
   const os = getOS()
   const [user] = useUser()
+  const [setting] = useSetting()
+  const { i18n } = useTranslation()
+  useEffect(() => {
+    if (setting.general.language) {
+      i18n.changeLanguage(setting.general.language)
+    }
+  }, [setting.general.language])
   return (
     <>
       <Notification />

@@ -95,8 +95,8 @@
         "editor": "Editor",
         "about": "About",
         "files": "Files",
-        "language": "Language",
-        "language description": "Choose display language",
+        "language": "语言",
+        "choose display language": "选择界面语言",
         "general": "通用",
         "notification": "通知",
         "shortcuts": "快捷键",
@@ -120,7 +120,10 @@
         "under": "Under",
         "name": "Name",
         "create new item": "创建新{{item}}",
-        "update item details": "修改{{item}}资料"
+        "update item details": "修改{{item}}资料",
+        "most used tags": "最常使用{{tags}}",
+        "you can select multiple tags": "你可以选择多个{{tags}}",
+        "select tags": "选择{{tags}}"
     },
     "footer":{
         "back": "返回",

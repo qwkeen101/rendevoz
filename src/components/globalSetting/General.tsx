@@ -1,8 +1,6 @@
 import { useToggle } from '@/hooks'
 import useLatest from '@/hooks/utils/useLatest'
-import useCollectionStore from '@/stores/collection.store'
 import createDocumentStore from '@/stores/document.store'
-import useLabelStore from '@/stores/label.store'
 import { CollectionStore, LabelStore, MetaStore, NoteStore } from '@/stores'
 import ClassName from '@/styles/classNames'
 import { exportRendevozDb, importRendevozDb } from '@/utils/db'
@@ -13,7 +11,21 @@ import Modal from '../base/Modal'
 import useFileUpload from '../base/useFileUpload'
 import SettingItem from './Item'
 import { useTranslation } from 'react-i18next'
+import { useSetting } from './Main'
+import Select from '../base/select'
+import { SelectOptionProps } from '../base/select/SelectOption'
+import produce from 'immer'
 
+const languageOptions: SelectOptionProps[] = [
+  {
+    value: 'zh-CN',
+    children: '简体中文'
+  },
+  {
+    value: 'en-US',
+    children: 'English'
+  }
+]
 const GeneralSetting = () => {
   const [isExporting, toggleIsExporting] = useToggle(false)
   const [isImporting, toggleIsImporting] = useToggle(false)
@@ -26,6 +38,7 @@ const GeneralSetting = () => {
   const { getAllCollections } = CollectionStore
   const { getAllLabels } = LabelStore
   const { t } = useTranslation()
+  const [setting, setSetting] = useSetting()
   const handleImportData = async (file?: File) => {
     toggleIsImporting(true)
     try {
@@ -147,6 +160,24 @@ const GeneralSetting = () => {
             </Content>
           </Content>
         </>
+      )
+    },
+    {
+      title: t('settings.language'),
+      description: t('settings.choose display language'),
+      children: (
+        <Select
+          closeOnSelect
+          options={languageOptions}
+          value={setting.general.language}
+          onSelect={v => {
+            setSetting(
+              produce(setting, draft => {
+                draft.general.language = v[0] as typeof setting.general.language
+              })
+            )
+          }}
+        ></Select>
       )
     }
   ]

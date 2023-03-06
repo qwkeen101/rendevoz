@@ -1,4 +1,30 @@
-{
+{    
+    "general": {
+        "note": "note",
+        "document": "document",
+        "whiteboard": "whiteboard",
+        "link": "link",
+        "object": "object",
+        "name": "name",
+        "description": "description",
+        "delete": "delete",
+        "collection": "collection",
+        "pin": "pin",
+        "unpin": "unpin",
+        "edit": "edit",
+        "create": "create",
+        "pdf": "pdf",
+        "subcollection": "subcollection",
+        "icon": "icon",
+        "color": "color",
+        "tag": "tag",
+        "tags": "tags",
+        "choose": "choose",
+        "label": "label",
+        "customize": "customize",
+        "untitled": "untitled",
+        "copy": "copy"
+    },
     "home":{
         "recently read": "Recently Read",
         "recently add": "Recently Add",
@@ -78,7 +104,7 @@
         "about": "About",
         "files": "Files",
         "language": "Language",
-        "language description": "Choose display language",
+        "choose display language": "Choose display language",
         "general": "General",
         "notification": "Notification",
         "shortcuts": "Shortcuts",
@@ -98,10 +124,14 @@
     "form": {
         "choose file": "Choose file",
         "upload": "Upload",
-        "create collection": "Create new collection",
         "please input collection name": "Please input collection name!",
         "under": "Under",
-        "name": "Name"
+        "name": "Name",
+        "create new item": "Create New {{item}}",
+        "update item details": "Update {{item}} Details",
+        "most used tags": "Most Used {{tags}}",
+        "you can select multiple tags": "You Can Select Multiple {{tags}}",
+        "select tags": "Select {{tags}}"
     },
     "footer":{
         "back": "Back",

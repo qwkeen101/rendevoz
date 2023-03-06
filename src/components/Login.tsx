@@ -1,19 +1,17 @@
-import { useRef, useState } from 'react'
-import { Content, Icon, Modal } from '../base'
-import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, createUserWithEmailAndPassword } from 'firebase/auth'
+import { useState } from 'react'
+import { Content, Icon } from './base'
+import { getAuth, GoogleAuthProvider, signInWithPopup } from 'firebase/auth'
 import { css } from '@emotion/css'
 import googleLogo from '@/assets/google_logo.png'
 import { toast } from 'react-hot-toast'
 import { useToggle } from '@/hooks'
-import BorderInput from '../base/BorderInput'
 import LoginService, { useUser } from '@/services/login.service'
-import { Button } from '../base/button'
 import ClassName from '@/styles/classNames'
 import { IUser } from '~/typings/data'
 
 const provider = new GoogleAuthProvider()
 
-const loginInputClassName = css({
+export const loginInputClassName = css({
   border: 'none',
   borderBottom: '1px solid rgba(33,34,39,0.1)',
   outline: 'none',
@@ -35,7 +33,7 @@ const loginTextClassName = css({
   fontSize: 30,
   marginBottom: 20
 })
-const indicatorClassName = css({
+export const indicatorClassName = css({
   fontSize: 13,
   fontWeight: 500
 })
@@ -77,12 +75,13 @@ const Login = () => {
     validatingEmail?: boolean
     verifingCode?: boolean
     logining?: boolean
+    gettingUserDetails?: boolean
   }>()
   const [previewPassword, togglePreviewPassword] = useToggle(false)
   const [code, setCode] = useState<string>()
   const [isFirstLogin, setIsFirstLogin] = useState(false)
 
-  const [globalUser, setGlobalUser] = useUser()
+  const [, setGlobalUser] = useUser()
   const handleLogin = () => {
     setLoadingState({ logining: true })
     if (user.password) {
@@ -92,13 +91,16 @@ const Login = () => {
       } else {
         LoginService.login(user.email, user.password)
           .then(data => {
-            setGlobalUser(data.data)
-            setLoadingState({})
-            if (isFirstLogin) {
-              toast.success('Welcome To Rendevoz!')
-            } else {
-              toast.success('Welcome Back!')
-            }
+            setLoadingState({ gettingUserDetails: true })
+            LoginService.getUserDetails(user.email, data.data.token)
+              .then(user => {
+                setGlobalUser(user.data)
+                toast.success('Welcome to Rendevoz!')
+              })
+              .catch(e => toast.error('Failed to get user details!'))
+              .finally(() => {
+                setLoadingState({})
+              })
           })
           .catch(e => {
             toast.error('Failed to login!')
@@ -213,8 +215,8 @@ const Login = () => {
               style={{ border: '1px solid rgba(31,34,39,0.1)' }}
               onClick={handleLogin}
             >
-              {loadingState?.logining && <Icon name="park-loading-one" size={20} spin />}
-              {isFirstLogin ? 'Sign up' : 'Login'}
+              {(loadingState?.logining || loadingState?.gettingUserDetails) && <Icon name="park-loading-one" size={20} spin />}
+              {loadingState?.gettingUserDetails ? 'Getting User Details' : isFirstLogin ? 'Sign up' : 'Login'}
             </Content>
           </>
         ) : (

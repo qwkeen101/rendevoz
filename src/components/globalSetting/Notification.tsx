@@ -37,6 +37,7 @@ const NotificationSetting = () => {
             <WithBorder
               borderRadius={8}
               className={css({
+                textTransform: 'capitalize',
                 '> div': css([
                   ClassName.flatButton(),
                   {
@@ -79,7 +80,7 @@ const NotificationSetting = () => {
           onClickOutside={toggleCustomizeVisible}
           containerStyle={{ zIndex: String(Zindexes.Notification) }}
         >
-          <Content onClick={toggleCustomizeVisible} className={ClassName.flatButton()} flex gap={4}>
+          <Content onClick={toggleCustomizeVisible} style={{ textTransform: 'capitalize' }} className={ClassName.flatButton()} flex gap={4}>
             <span>{t('general.customize')}</span>
             <Icon name="park-down" />
           </Content>

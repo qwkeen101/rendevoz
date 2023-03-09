@@ -1,6 +1,4 @@
 import { AnimatePopover, Icon } from '@/components'
-import Modal from '@/components/base/Modal'
-import EditMetaObjectForm from '@/components/form/EditMetaObjectForm'
 import { GlobalDragOverlayInstance, useGlobalIsDragging } from '@/components/globalDragOverlay/GlobalDragOverlay'
 import { useGlobalEventEmitter } from '@/events/useEventEmitter'
 import { useMemoizedFn } from '@/hooks'
@@ -10,9 +8,9 @@ import ClassName from '@/styles/classNames'
 import { css } from '@emotion/css'
 import { useAtomValue } from 'jotai/react'
 import { memo, useEffect, useRef, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
 import { MenuItem } from './Item'
 import { useTranslation } from 'react-i18next'
+import Actions from '@/Actions'
 
 const SidebarDatabase = memo(() => {
   const { t } = useTranslation()
@@ -23,7 +21,6 @@ const SidebarDatabase = memo(() => {
     droppable: false,
     visible: false
   })
-  const navigate = useNavigate()
   const pointerHandler = useMemoizedFn((e: PointerEvent) => {
     if (e.type === 'pointerenter') {
       let droppable = false
@@ -100,7 +97,7 @@ const SidebarDatabase = memo(() => {
         }
       >
         <MenuItem
-          onClick={() => navigate('/database')}
+          onClick={Actions.openDatabase}
           className={css([draggingHovered.visible ? ClassName.Drag.droppableItemHovered(draggingHovered.droppable) : undefined])}
           style={{
             background: draggingHovered.visible ? 'white' : undefined,

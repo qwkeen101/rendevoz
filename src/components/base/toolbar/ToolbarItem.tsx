@@ -30,10 +30,8 @@ const ToolbarItem: FC<ToolbarItemProps> = ({
   style,
   title,
   iconName,
-  space,
   clickPreventDefault = false,
   isActive = false,
-  direction,
   tooltip,
   disabled
 }) => {
@@ -65,8 +63,6 @@ const ToolbarItem: FC<ToolbarItemProps> = ({
       style: {
         ...style,
         color: primaryColor,
-        marginLeft: direction === 'horizontal' ? space : undefined,
-        marginBottom: direction === 'vertical' ? space : undefined,
         cursor: disabled ? 'not-allowed' : style?.cursor
       },
       onPointerDown: clickPreventDefault ? e => e.preventDefault() : undefined,

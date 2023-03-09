@@ -1,5 +1,3 @@
-import { BrowserRouter as Router } from 'react-router-dom'
-import Routes from './routes'
 import '@icon-park/react/styles/index.less'
 import './common.less'
 import TitleBar from './components/titlebar'
@@ -20,6 +18,9 @@ import { useUser } from './services/login.service'
 import { useSetting } from './components/globalSetting/Main'
 import { useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
+import { ErrorBoundary } from 'react-error-boundary'
+import ErrorFallback from './components/base/ErrorFallBack'
+import AuthenticatedLayout from './components/base/authenticatedLayout'
 PdfJs.GlobalWorkerOptions.workerSrc = PdfJsUrl
 const App = () => {
   function getOS() {
@@ -53,7 +54,8 @@ const App = () => {
     }
   }, [setting.general.language])
   return (
-    <>
+    <ErrorBoundary FallbackComponent={ErrorFallback}>
+      {os !== 'macos' && <TitleBar />}
       <Notification />
       {user ? (
         <>
@@ -62,10 +64,7 @@ const App = () => {
           <GlobalScreenShot />
           <GlobalObjectPanel />
           <GlobalCreateObject />
-          <Router>
-            {os !== 'macos' && <TitleBar />}
-            <Routes />
-          </Router>
+          <AuthenticatedLayout />
           <GlobalDragOverlay />
           <svg style={{ position: 'absolute', width: 0, height: 0, overflow: 'hidden' }}>
             <SvgMarker />
@@ -74,7 +73,7 @@ const App = () => {
       ) : (
         <Login />
       )}
-    </>
+    </ErrorBoundary>
   )
 }
 

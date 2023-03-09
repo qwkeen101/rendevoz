@@ -11,29 +11,31 @@ import { metaObjectsAtom, relatedMetaObjectsMapAtom } from '@/stores/meta.store'
 import { GlobalGraphInstance } from '@/components/graph/GlobalGraph'
 import Modal from '@/components/base/Modal'
 import useCardDrag from './useCardDrag'
-import EditMetaObjectForm, { Tag } from '@/components/form/EditMetaObjectForm'
+import { Tag } from '@/components/form/EditMetaObjectForm'
 import { GlobalDragOverlayInstance } from '@/components/globalDragOverlay/GlobalDragOverlay'
 import MetaNoteCard from './NoteCard'
 import MetaDocumentCard from './DocumentCard'
 import { Flipped, spring } from 'react-flip-toolkit'
-import { globalStore, MetaStore } from '@/stores'
+import { MetaStore } from '@/stores'
 import { MetaObject } from '~/typings/data'
 import { MetaDatabaseCardProps } from './types'
 import MetaObjectCard from './ObjectCard'
-import { GlobalBidirectionTreeInstance } from '@/components/whiteboard/GlobalBidirectionTree'
 import { selectAtom } from 'jotai/utils'
 import { useGlobalAtomValue } from '@/jotai/jotaiScope'
+import ObjectForm from '@/components/form/ObjectForm'
+import { PartialWithId } from '@/types'
+import { useTranslation } from 'react-i18next'
 
 export const TypeToTypeName: Record<MetaObject['type'], string> = {
-  pdfElement: 'Pdf label',
-  noteElement: 'Note block',
-  note: 'Note',
-  pdf: 'Pdf',
-  image: 'Image',
-  normal: 'Object',
-  whiteboard: 'Whiteboard',
-  video: 'Video',
-  audio: 'Audio'
+  pdfElement: 'pdf label',
+  noteElement: 'note block',
+  note: 'note',
+  pdf: 'pdf',
+  image: 'image',
+  normal: 'object',
+  whiteboard: 'whiteboard',
+  video: 'video',
+  audio: 'audio'
 }
 const DatabaseCard: FC<{
   index?: number
@@ -58,6 +60,8 @@ const DatabaseCard: FC<{
   const { updateMetaObject, deleteMetaObject } = MetaStore
   const iconRef = useRef<HTMLDivElement>(null)
   const { isCardDraggingInside } = useCardDrag(metaObject, iconRef, containerRef.current)
+  
+  const { t } = useTranslation()
 
   const renderCardContent = () => {
     switch (metaObject.type) {
@@ -123,55 +127,17 @@ const DatabaseCard: FC<{
   }
 
   const renderPopover = () => (
-    <Content
-      flex
-      column
-      style={{ padding: 6, fontWeight: 500, width: 180 }}
-      onClick={e => {
-        if (e.target !== e.currentTarget) {
-          setShowPopover(false)
-        }
-      }}
-    >
-      <div className={ClassName.flatButton()} onClick={() => setShowEdit(true)}>
-        Edit
-      </div>
-      <div className={ClassName.flatButton()} onClick={() => updateMetaObject({ id: metaObject.id, pinned: !metaObject.pinned })}>
-        {metaObject.pinned ? 'Unpin' : 'Pin'}
-      </div>
-      <div className={ClassName.flatButton()} onClick={() => GlobalGraphInstance?.open(metaObject)}>
-        Graph
-      </div>
-      <div className={ClassName.flatButton()} onClick={() => GlobalBidirectionTreeInstance.open?.(metaObject.id)}>
-        WhiteBoard
-      </div>
-      <div
-        onClick={() => deleteMetaObject(metaObject.id)}
-        className={classNames(
-          ClassName.flatButton(),
-          css({
-            color: defaultFontColorRed,
-            ':hover': {
-              background: 'rgba(237,49,61,0.09)'
-            }
-          })
-        )}
-      >
-        Delete
-      </div>
-    </Content>
+    <ObjectActionPopover metaObjectId={metaObject.id} onClose={() => setShowPopover(false)} onEdit={() => setShowEdit(true)} />
   )
 
   const renderEdit = () => (
     <Modal visible={showEdit} onClose={() => setShowEdit(false)} noStyle>
-      <EditMetaObjectForm
-        title="Edit Object"
-        submitText="submit"
-        onClose={() => setShowEdit(false)}
-        metaObject={metaObject}
-        onUpdate={newMeta => {
+      <ObjectForm
+        onBack={() => setShowEdit(false)}
+        initialObject={metaObject}
+        onSubmit={newMeta => {
           setShowEdit(false)
-          updateMetaObject(newMeta)
+          updateMetaObject(newMeta as PartialWithId<MetaObject>)
         }}
       />
     </Modal>
@@ -297,7 +263,7 @@ const DatabaseCard: FC<{
               textTransform: 'uppercase'
             }}
           >
-            <span>{TypeToTypeName[metaObject.type] || 'OBJECT'}</span>
+            <span>{t(`general.${TypeToTypeName[metaObject.type] || 'object'}`)}</span>
             <span style={{ display: 'flex', gap: 5, fontSize: 10, alignItems: 'center', lineHeight: 1 }}>
               <Icon size={13} name="park-time" />
               {DateFormat.formatDistanceToNowStrict(metaObject.createdAt)} Ago
@@ -324,17 +290,26 @@ export const ObjectActionPopover: FC<
     onEdit: VoidFunction
     onPin: VoidFunction
     onGraph: VoidFunction
-    onWhiteboard: VoidFunction
     onDelete: VoidFunction
   }> & { metaObjectId: number }
-> = ({ onClose, onEdit, onPin, onGraph, onWhiteboard, onDelete, metaObjectId }) => {
+> = ({ onClose, onEdit, onPin, onGraph, onDelete, metaObjectId }) => {
   const { defaultFontColorRed } = useTheme('defaultFontColorRed')
   const { updateMetaObject, deleteMetaObject } = MetaStore
+  const { t } = useTranslation()
   const metaObjectAtom = useMemo(() => selectAtom(metaObjectsAtom, m => m.get(metaObjectId)), [metaObjectId])
   const metaObject = useGlobalAtomValue(metaObjectAtom)
   if (!metaObject) return null
   return (
-    <Content flex column style={{ padding: 6, fontWeight: 500, width: 180 }}>
+    <Content
+      flex
+      column
+      style={{ padding: 6, fontWeight: 500, width: 180 }}
+      className={css({
+        ' > div': {
+          textTransform: 'capitalize'
+        }
+      })}
+    >
       <div
         className={ClassName.flatButton()}
         onClick={() => {
@@ -342,7 +317,7 @@ export const ObjectActionPopover: FC<
           onEdit?.()
         }}
       >
-        Edit
+        {t('general.edit')}
       </div>
       <div
         className={ClassName.flatButton()}
@@ -352,7 +327,7 @@ export const ObjectActionPopover: FC<
           onClose?.()
         }}
       >
-        {metaObject.pinned ? 'Unpin' : 'Pin'}
+        {metaObject.pinned ? t('general.unpin') : t('general.pin')}
       </div>
       <div
         className={ClassName.flatButton()}
@@ -362,17 +337,7 @@ export const ObjectActionPopover: FC<
           onClose?.()
         }}
       >
-        Graph
-      </div>
-      <div
-        className={ClassName.flatButton()}
-        onClick={() => {
-          GlobalBidirectionTreeInstance.open?.(metaObject.id)
-          onWhiteboard?.()
-          onClose?.()
-        }}
-      >
-        Whiteboard
+        {t('general.graph')}
       </div>
       <div
         onClick={() => {
@@ -389,7 +354,7 @@ export const ObjectActionPopover: FC<
           })
         )}
       >
-        Delete
+        {t('general.delete')}
       </div>
     </Content>
   )

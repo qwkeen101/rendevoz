@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Content, Icon } from './base'
+import { Content, Icon, IconWithPopover, WithBorder } from './base'
 import { getAuth, GoogleAuthProvider, signInWithPopup } from 'firebase/auth'
 import { css } from '@emotion/css'
 import googleLogo from '@/assets/google_logo.png'
@@ -8,6 +8,9 @@ import { useToggle } from '@/hooks'
 import LoginService, { useUser } from '@/services/login.service'
 import ClassName from '@/styles/classNames'
 import { IUser } from '~/typings/data'
+import { useTranslation } from 'react-i18next'
+import { useSetting } from './globalSetting/Main'
+import produce from 'immer'
 
 const provider = new GoogleAuthProvider()
 
@@ -20,7 +23,8 @@ export const loginInputClassName = css({
   transition: 'all 0.2s ease',
   '::placeholder': {
     color: 'rgba(0,0,0,0.3)',
-    transition: 'all 0.2s ease'
+    transition: 'all 0.2s ease',
+    textTransform: 'capitalize'
   },
   ':focus': {
     '::placeholder': {
@@ -35,7 +39,8 @@ const loginTextClassName = css({
 })
 export const indicatorClassName = css({
   fontSize: 13,
-  fontWeight: 500
+  fontWeight: 500,
+  textTransform: 'capitalize'
 })
 const textDividerClassName = css({
   display: 'flex',
@@ -80,13 +85,14 @@ const Login = () => {
   const [previewPassword, togglePreviewPassword] = useToggle(false)
   const [code, setCode] = useState<string>()
   const [isFirstLogin, setIsFirstLogin] = useState(false)
-
+  const [setting, setSetting] = useSetting()
   const [, setGlobalUser] = useUser()
+  const { t } = useTranslation()
   const handleLogin = () => {
     setLoadingState({ logining: true })
     if (user.password) {
       if (user.password.length < 6) {
-        toast.error('Password length must be greater than 6 digits!')
+        toast.error(`${t('login.password length must be greater than 6 digits')}!`)
         setLoadingState({})
       } else {
         LoginService.login(user.email, user.password)
@@ -95,20 +101,20 @@ const Login = () => {
             LoginService.getUserDetails(user.email, data.data.token)
               .then(user => {
                 setGlobalUser(user.data)
-                toast.success('Welcome to Rendevoz!')
+                toast.success(`${t('login.welcome to rendevoz')}!`)
               })
-              .catch(e => toast.error('Failed to get user details!'))
+              .catch(e => toast.error(`${t('login.failed to get user details')}!`))
               .finally(() => {
                 setLoadingState({})
               })
           })
           .catch(e => {
-            toast.error('Failed to login!')
+            toast.error(`${t('login.failed to login')}!`)
             setLoadingState({})
           })
       }
     } else {
-      toast.error('Please input password!')
+      toast.error(`${t('login.please input your password')}!`)
       setLoadingState({})
     }
   }
@@ -126,11 +132,11 @@ const Login = () => {
             LoginService.sendVerifyEmail(user.email)
               .then(() => {
                 setLoadingState({})
-                toast.success('Verification code has been sent to your account. Please Check it!')
+                toast.success(t('login.verification code has been sent to your account, please check it'))
                 toggleCodeVisible(true)
               })
               .catch(e => {
-                toast.error('Failed to send email!')
+                toast.error(`${t('login.failed to send email')}!`)
                 setLoadingState({})
               })
           }
@@ -140,7 +146,7 @@ const Login = () => {
         })
     } else {
       setLoadingState({ validatingEmail: false })
-      toast.error('Invalid Email!')
+      toast.error(`${t('login.invalid email')}!`)
     }
   }
   const handleVerifyCode = () => {
@@ -180,24 +186,60 @@ const Login = () => {
   }
   return (
     <Content fullHeight fullWidth flex alignItems="center" justifyContent="center" style={{ fontFamily: 'Muli' }}>
+      <div style={{ position: 'absolute', right: 30, bottom: 30 }}>
+        <IconWithPopover
+          name="park-translate"
+          padding={10}
+          content={
+            <WithBorder style={{ padding: 10 }}>
+              <div
+                onClick={() => {
+                  setSetting(
+                    produce(setting, draft => {
+                      draft.general.language = 'en-US'
+                    })
+                  )
+                }}
+                className={ClassName.flatButton()}
+              >
+                English
+              </div>
+              <div
+                onClick={() => {
+                  setSetting(
+                    produce(setting, draft => {
+                      draft.general.language = 'zh-CN'
+                    })
+                  )
+                }}
+                className={ClassName.flatButton()}
+              >
+                简体中文
+              </div>
+            </WithBorder>
+          }
+          placement={['top']}
+        ></IconWithPopover>
+      </div>
+
       <Content flex column gap={20} style={{ width: 400 }}>
-        <div className={loginTextClassName}>Log in</div>
+        <div className={loginTextClassName}>{t('login.login')}</div>
         <div>
-          <div className={indicatorClassName}>Email</div>
+          <div className={indicatorClassName}>{t('general.email address')}</div>
           <input
             className={loginInputClassName}
-            placeholder="Please Input Your Email"
+            placeholder={t('login.please input your email address')}
             onChange={e => setUser({ ...user, email: e.target.value })}
           ></input>
         </div>
         {emailVerified ? (
           <>
             <div style={{ position: 'relative' }}>
-              <div className={indicatorClassName}>Password</div>
+              <div className={indicatorClassName}>{t('general.password')}</div>
               <input
                 type={previewPassword ? 'text' : 'password'}
                 className={loginInputClassName}
-                placeholder="Please Input Your Password"
+                placeholder={t('login.please input your password')}
                 onChange={e => setUser({ ...user, password: e.target.value })}
               ></input>
               <Icon
@@ -212,11 +254,11 @@ const Login = () => {
               gap={10}
               justifyContent="center"
               className={ClassName.flatButton()}
-              style={{ border: '1px solid rgba(31,34,39,0.1)' }}
+              style={{ border: '1px solid rgba(31,34,39,0.1)', textTransform: 'capitalize' }}
               onClick={handleLogin}
             >
               {(loadingState?.logining || loadingState?.gettingUserDetails) && <Icon name="park-loading-one" size={20} spin />}
-              {loadingState?.gettingUserDetails ? 'Getting User Details' : isFirstLogin ? 'Sign up' : 'Login'}
+              {loadingState?.gettingUserDetails ? t('login.retrieving user details') : isFirstLogin ? t('login.sign up') : t('login.login')}
             </Content>
           </>
         ) : (
@@ -226,7 +268,7 @@ const Login = () => {
                 flex
                 gap={10}
                 alignItems="center"
-                style={{ border: '1px solid rgba(31,34,39,0.1)' }}
+                style={{ border: '1px solid rgba(31,34,39,0.1)', textTransform: 'capitalize' }}
                 className={ClassName.flatButton()}
                 onClick={handleCheckEmailExist}
                 justifyContent="center"
@@ -234,17 +276,17 @@ const Login = () => {
                 {loadingState?.validatingEmail ? (
                   <>
                     <Icon size={20} spin name="park-loading-one" />
-                    Validating Email...
+                    {t('login.validating email')}...
                   </>
                 ) : loadingState?.isSendingVerificationCode ? (
                   <>
                     <Icon size={20} spin name="park-loading-one" />
-                    Sending Verification Code...
+                    {t('login.sending verification code')}...
                   </>
                 ) : (
                   <>
                     <Icon size={20} name="park-mail" />
-                    Continue with Email
+                    {t('login.continue with email')}
                   </>
                 )}
               </Content>
@@ -252,8 +294,12 @@ const Login = () => {
             {codeVisible && (
               <>
                 <div>
-                  <div className={indicatorClassName}>Verification Code</div>
-                  <input className={loginInputClassName} placeholder="code" onChange={e => setCode(e.target.value)}></input>
+                  <div className={indicatorClassName}>{t('login.verification code')}</div>
+                  <input
+                    className={loginInputClassName}
+                    placeholder={t('login.please input code')}
+                    onChange={e => setCode(e.target.value)}
+                  ></input>
                 </div>
                 <Content
                   flex
@@ -267,12 +313,12 @@ const Login = () => {
                   {loadingState?.verifingCode ? (
                     <>
                       <Icon size={20} spin name="park-loading-one" />
-                      Verifing Code
+                      {t('login.verifing code')}
                     </>
                   ) : (
                     <>
                       <Icon size={18} name="park-protect" />
-                      Verify Code
+                      {t('login.verify code')}
                     </>
                   )}
                 </Content>
@@ -280,7 +326,7 @@ const Login = () => {
             )}
           </>
         )}
-        <div className={textDividerClassName}>OR</div>
+        {/* <div className={textDividerClassName}>OR</div>
 
         <Content
           className={ClassName.flatButton()}
@@ -293,7 +339,7 @@ const Login = () => {
         >
           <img width={20} height={20} src={googleLogo} />
           <span>Continue with Google</span>
-        </Content>
+        </Content> */}
       </Content>
     </Content>
   )

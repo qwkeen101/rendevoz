@@ -12,8 +12,8 @@ import { CollectionStore, NoteStore } from '@/stores'
 import { AnimatePresence, motion } from 'framer-motion'
 import { RefObject, useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
+import Actions from '@/Actions'
 
 const useSidebarItemContextMenu = (
   contextMenuElementRef: RefObject<HTMLElement>,
@@ -73,7 +73,6 @@ const useSidebarItemContextMenu = (
       targetElementRight: rect.right
     })
   }
-  const navigate = useNavigate()
   const { addNote } = NoteStore
   const { addItemToCollection, addCollection } = CollectionStore
   const { addWhiteboard } = useWhiteboardStore()
@@ -181,7 +180,7 @@ const useSidebarItemContextMenu = (
                             },
                             item.id
                           )
-                          navigate(`/editor/${id}`)
+                          Actions.openEditor(id)
                         })
 
                         onAddNewSubItem?.()
@@ -218,7 +217,7 @@ const useSidebarItemContextMenu = (
                             },
                             item.id
                           )
-                          navigate(`/whiteboard/${whiteboardId}`)
+                          Actions.openWhiteboard(whiteboardId)
                         })
 
                         onAddNewSubItem?.()

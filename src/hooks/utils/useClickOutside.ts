@@ -1,10 +1,16 @@
 import { MutableRefObject, useEffect } from 'react'
 
-const useClickOutside = (callback: () => void, ref: MutableRefObject<unknown> | MutableRefObject<unknown>[]) => {
+const useClickOutside = (
+  callback: (e: MouseEvent) => void,
+  ref: MutableRefObject<unknown> | MutableRefObject<unknown>[],
+  shouldHandle = true
+) => {
   const targets = Array.isArray(ref) ? ref : [ref]
   const handleClick = e => {
-    if (targets.some(i => i.current && !i.current.contains(e.target))) {
-      callback()
+    if (shouldHandle) {
+      if (targets.some(i => i.current && !i.current.contains(e.target))) {
+        callback(e)
+      }
     }
   }
   useEffect(() => {

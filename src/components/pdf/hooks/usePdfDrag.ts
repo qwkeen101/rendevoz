@@ -1,13 +1,18 @@
 import { getDistanceBetweenPointAndElement } from '@/components/dragReposition/utils/position'
 import { GlobalDragOverlayInstance, useGlobalIsDragging } from '@/components/globalDragOverlay/GlobalDragOverlay'
+import { GlobalEventHandler } from '@/events/globalEvent'
+import { useGlobalEventEmitter } from '@/events/useEventEmitter'
 import { useMemoizedFn } from '@/hooks'
+import { LabelStore } from '@/stores'
 import Id from '@/utils/id'
 import { useEffect, useState } from 'react'
-import { IThoughtLabel } from '~/typings/data'
+import { ILabel, IObjectLabel, IShapeLabel, IThoughtLabel, MetaObject } from '~/typings/data'
 
-const usePdfDrag = (viewbox: HTMLElement | null | undefined) => {
+const usePdfDrag = (viewbox: HTMLElement | null | undefined, pdfId: number) => {
   const [isGlobalDragging] = useGlobalIsDragging()
   const [isDraggingInside, setIsDraggingInside] = useState(false)
+  const globalEmitter = useGlobalEventEmitter()
+  const { addLabel } = LabelStore
   const mouseEnterHandler = useMemoizedFn((e: MouseEvent) => {
     setIsDraggingInside(true)
   })
@@ -18,9 +23,9 @@ const usePdfDrag = (viewbox: HTMLElement | null | undefined) => {
   const mouseMoveHandler = useMemoizedFn((e: MouseEvent) => {
     !isDraggingInside && setIsDraggingInside(true)
   })
-  const mouseUpHandler = useMemoizedFn((e: MouseEvent) => {
+  const mouseUpHandler = useMemoizedFn((e: PointerEvent) => {
     let target = e.target
-    if (target instanceof HTMLElement) {
+    if (target instanceof HTMLElement && viewbox?.contains(target)) {
       while (!target.hasAttribute('data-page-index') && target.parentElement && target !== e.currentTarget) {
         target = target.parentElement as HTMLElement
       }
@@ -36,31 +41,39 @@ const usePdfDrag = (viewbox: HTMLElement | null | undefined) => {
         const globalDraggingEle = GlobalDragOverlayInstance?.draggingDetails
         GlobalDragOverlayInstance.draggingDetails = undefined
         if (globalDraggingEle) {
-          const label: IThoughtLabel = {
+          const label: Partial<ILabel> = {
             id: Id.getId(),
             page,
-            rect: [ratioDistance.top, ratioDistance.left],
-            position: 'right',
-            type: 'thought'
+            documentId: pdfId,
+            rect: [ratioDistance.top, ratioDistance.left]
           }
-          switch (globalDraggingEle.type) {
-            case 'noteElement':
-              label.originFrom = 'editor'
-              label.content = globalDraggingEle.elements || globalDraggingEle.element
-              label.originId = globalDraggingEle.noteId
-              break
-            case 'pdfElement':
-              label.content = globalDraggingEle.content
-              label.originFrom = 'pdf'
-              label.originId = globalDraggingEle.pdfId
-              break
-            case 'metaElement':
-              label.originFrom = 'meta'
-              label.originId = globalDraggingEle.metaId
-              break
-            case 'image':
-              label.originFrom = 'image'
-              label.content = globalDraggingEle.url
+          if (globalDraggingEle.type === 'pendingPdfElement') {
+            label.type = globalDraggingEle.labelType
+            switch (globalDraggingEle.labelType) {
+              case 'shape': {
+                Object.assign(label, {
+                  shape: globalDraggingEle.shapeType
+                } as IShapeLabel)
+              }
+            }
+            addLabel(label)
+          } else {
+            globalEmitter
+              .emitWithCallback('global', {
+                type: 'globalDropNeedFurtherProcess',
+                data: {
+                  dropOn: {
+                    dropOn: 'pdf',
+                    pdfId: pdfId
+                  },
+                  draggingElement: globalDraggingEle
+                }
+              })
+              .then((obj: MetaObject) => {
+                label.type = 'object'
+                Object.assign(label, { metaObjectId: obj.id } as IObjectLabel)
+                addLabel(label)
+              })
           }
         }
       }
@@ -81,15 +94,15 @@ const usePdfDrag = (viewbox: HTMLElement | null | undefined) => {
     }
   }, [isGlobalDragging])
   useEffect(() => {
-    if (isDraggingInside) {
-      viewbox?.addEventListener('mousemove', mouseMoveHandler)
-      viewbox?.addEventListener('mouseup', mouseUpHandler)
-      return () => {
-        viewbox?.removeEventListener('mousemove', mouseMoveHandler)
-        viewbox?.removeEventListener('mouseup', mouseUpHandler)
-      }
+    const globalHandler = new GlobalEventHandler()
+    globalHandler.on('globalDragPointerUp', ({ event }) => {
+      mouseUpHandler(event)
+    })
+    globalEmitter.addListener('global', globalHandler)
+    return () => {
+      globalEmitter.removeListener('global', globalHandler)
     }
-  }, [isDraggingInside])
+  }, [])
   return {
     isDraggingInside
   }

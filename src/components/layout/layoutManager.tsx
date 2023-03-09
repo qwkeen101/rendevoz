@@ -6,6 +6,9 @@ import Id from '@/utils/id'
 import PdfPage from '@/scenes/pdf'
 import { DockTabPaneContext } from '../base/dock/DockTabPane'
 import { IPdfViewer } from '@/pdfViewer/core/types/pdfViewer'
+import { HomePage } from '@/scenes/home'
+import DatabasePage from '@/scenes/DatabasePage'
+import WhiteboardPage from '@/scenes/WhiteboardPage'
 
 type AddTabOptions =
   | {
@@ -35,6 +38,12 @@ const initializePage = (options: AddTabOptions) => {
       return <EditorPage id={Id.getStrId()} noteId={options.noteId} onEditorInitialized={options.onEditorInitalized} />
     case 'pdf':
       return <PdfPage pdfId={options.pdfId} onViewerInitialized={options.onViewerInitialized} />
+    case 'home':
+      return <HomePage />
+    case 'database':
+      return <DatabasePage />
+    case 'whiteboard':
+      return <WhiteboardPage whiteboardId={options.whiteboardId} />
   }
 }
 
@@ -49,6 +58,7 @@ class LayoutManager {
     if (this.layout) {
       const currentFocusedPanelId = this.layout.global.currentFocusedPanelId
       if (currentFocusedPanelId) {
+        console.log(currentFocusedPanelId, this.layout)
         const currentPanel = (Algorithm.find(this.layout, currentFocusedPanelId) || this.layout.dockbox.children[0]) as PanelData
         this.layout = Algorithm.addTabToPanel(this.layout, tab, currentPanel)
         this.changeHandler?.(this.layout)

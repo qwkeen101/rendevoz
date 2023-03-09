@@ -8,13 +8,14 @@ import { toast } from 'react-hot-toast'
 import { INote, IPdfDocument, IWhiteboard, MetaLink, MetaObject } from '~/typings/data'
 import BaseStore, { initializeLocalStore } from './base.store'
 import { notesAtom } from './note.store'
-import { globalStore, NoteStore, MetaStore } from '.'
+import { globalStore, NoteStore, MetaStore, DocumentStore, WhiteboardStore } from '.'
 import { TypeToTypeName } from '@/components/database/card/DatabaseCard'
 import { IStore } from './store.type'
 import { documentsAtom } from './document.store'
 import getSetting from '@/components/globalSetting/getSetting'
 import { selectAtom } from 'jotai/utils'
 import { whiteboardsAtom } from './whiteboard.store'
+import { createDraft, finishDraft } from 'immer'
 
 export const metaObjectsAtom = atom<Map<number, MetaObject>>(new Map())
 
@@ -35,8 +36,11 @@ export const handleMetaObjectsChange = () => {
   // need shallow copy to rerender components
   const objectIdToMetaObjectMap: Map<number, number> = new Map(prevIndex?.objectIdToMetaObjectMap)
   const tagToMetaObjectIdsMap: Map<string, Set<number>> = new Map(prevIndex?.tagToMetaObjectIdsMap)
+  const typeToMetaObjectIdsMap: Map<string, Set<number>> = new Map(prevIndex?.typeToMetaObjectIdsMap)
+  const idSet = new Set(prevMetaObjects?.keys())
   newMetaObjects.forEach((v, k) => {
     const oldValue = prevMetaObjects?.get(k)
+    idSet.delete(k)
     if (oldValue === v) {
       return
     }
@@ -44,6 +48,7 @@ export const handleMetaObjectsChange = () => {
       undeletedMetaObjectsSet.delete(oldValue)
       pinnedMetaObjectsSet.delete(oldValue)
       deletedMetaObjectsSet.delete(oldValue)
+      typeToMetaObjectIdsMap.get(oldValue.type)?.delete(oldValue.id)
       // if (oldValue.objectId) {
       //   if (objectIdToMetaObjectMap.get(oldValue.objectId) === oldValue.id) {
       //     objectIdToMetaObjectMap.delete(oldValue.objectId)
@@ -60,6 +65,11 @@ export const handleMetaObjectsChange = () => {
         deletedMetaObjectsSet.add(v)
       }
       return
+    }
+    if (typeToMetaObjectIdsMap.has(v.type)) {
+      typeToMetaObjectIdsMap.get(v.type)?.add(k)
+    } else {
+      typeToMetaObjectIdsMap.set(v.type, new Set([k]))
     }
     undeletedMetaObjectsSet.add(v)
     if (v.pinned) {
@@ -80,24 +90,45 @@ export const handleMetaObjectsChange = () => {
       })
     }
   })
+  // left is force deleted objects
+
+  idSet?.forEach(id => {
+    const v = prevMetaObjects?.get(id)!
+    undeletedMetaObjectsSet.delete(v)
+    pinnedMetaObjectsSet.delete(v)
+    v.objectId && objectIdToMetaObjectMap.delete(v.objectId)
+    typeToMetaObjectIdsMap.get(v.type)?.delete(id)
+    v.tags?.forEach(tag => {
+      if (tagToMetaObjectIdsMap.has(tag)) {
+        tagToMetaObjectIdsMap.get(tag)?.add(v.id)
+      } else {
+        const set = new Set<number>()
+        set.add(v.id)
+        tagToMetaObjectIdsMap.set(tag, set)
+      }
+    })
+  })
   const shouldReturnObjectIdToMetaObjectMap =
     prevIndex?.objectIdToMetaObjectMap.size === objectIdToMetaObjectMap.size ? prevIndex.objectIdToMetaObjectMap : objectIdToMetaObjectMap
+
   globalStore.set(indexedMetaObjectsAtom, {
     undeletedMetaObjectsSet,
     pinnedMetaObjectsSet,
     deletedMetaObjectsSet,
     objectIdToMetaObjectMap: shouldReturnObjectIdToMetaObjectMap,
     tagToMetaObjectIdsMap,
-    oldMetaObjects: newMetaObjects
+    oldMetaObjects: newMetaObjects,
+    typeToMetaObjectIdsMap
   })
 }
 
-const indexedMetaObjectsAtom = atom<{
+export const indexedMetaObjectsAtom = atom<{
   undeletedMetaObjectsSet: Set<MetaObject>
   pinnedMetaObjectsSet: Set<MetaObject>
   deletedMetaObjectsSet: Set<MetaObject>
   objectIdToMetaObjectMap: Map<number, number>
   tagToMetaObjectIdsMap: Map<string, Set<number>>
+  typeToMetaObjectIdsMap: Map<string, Set<number>>
   oldMetaObjects: Map<number, MetaObject>
 } | null>(null)
 
@@ -107,7 +138,7 @@ export const handleMetaLinksChange = () => {
   const sourceIdToLinkIdsMap = new Map(prevIndex?.sourceIdToLinkIdsMap)
   const targetIdToLinkIdMap = new Map(prevIndex?.targetIdToLinkIdMap)
   const newMetaLinks = globalStore.get(metaLinksAtom)
-  const relatedIdsMap = new Map(prevIndex?.relatedIdsMap)
+  const relatedIdsMapDraft = createDraft(prevIndex?.relatedIdsMap || new Map<number, Set<number>>())
 
   const oldLinks = prevIndex?.oldLinks
   newMetaLinks.forEach((link, id) => {
@@ -124,20 +155,20 @@ export const handleMetaLinksChange = () => {
     if (link.deleted) {
       sourceIdToLinkIdsMap.get(sourceId)?.delete(id)
       targetIdToLinkIdMap.get(targetId)?.delete(id)
-      relatedIdsMap.get(sourceId)?.delete(targetId)
-      relatedIdsMap.get(targetId)?.delete(sourceId)
+      relatedIdsMapDraft.get(sourceId)?.delete(targetId)
+      relatedIdsMapDraft.get(targetId)?.delete(sourceId)
       return
     }
     undeletedLinksSet.add(link)
-    if (relatedIdsMap.has(sourceId)) {
-      relatedIdsMap.get(sourceId)?.add(targetId)
+    if (relatedIdsMapDraft.has(sourceId)) {
+      relatedIdsMapDraft.get(sourceId)?.add(targetId)
     } else {
-      relatedIdsMap.set(sourceId, new Set([targetId]))
+      relatedIdsMapDraft.set(sourceId, new Set([targetId]))
     }
-    if (relatedIdsMap.has(targetId)) {
-      relatedIdsMap.get(targetId)?.add(sourceId)
+    if (relatedIdsMapDraft.has(targetId)) {
+      relatedIdsMapDraft.get(targetId)?.add(sourceId)
     } else {
-      relatedIdsMap.set(targetId, new Set([sourceId]))
+      relatedIdsMapDraft.set(targetId, new Set([sourceId]))
     }
     if (sourceIdToLinkIdsMap.has(sourceId)) {
       sourceIdToLinkIdsMap.get(sourceId)?.add(id)
@@ -154,7 +185,7 @@ export const handleMetaLinksChange = () => {
     undeletedLinksSet,
     sourceIdToLinkIdsMap,
     targetIdToLinkIdMap,
-    relatedIdsMap,
+    relatedIdsMap: finishDraft(relatedIdsMapDraft),
     oldLinks: newMetaLinks
   })
 }
@@ -240,105 +271,11 @@ const allMetaLinksAtom = atom(get => orderedData(get(metaLinksAtom)))
 
 export const undeletedMetaLinksAtom = atom(get => orderedArray(Array.from(get(indexedMetaLinksAtom)?.undeletedLinksSet || [])))
 
-export const relatedMetaObjectsMapAtom = atom(get => get(indexedMetaLinksAtom)?.relatedIdsMap || new Map())
+export const relatedMetaObjectsMapAtom = atom(get => get(indexedMetaLinksAtom)?.relatedIdsMap || new Map<number, Set<number>>())
 
 export const objectIdToMetaObjectIdMapAtom = atom(get => get(indexedMetaObjectsAtom)?.objectIdToMetaObjectMap)
 
 export const tagToMetaObjectIdsMapAtom = atom(get => get(indexedMetaObjectsAtom)?.tagToMetaObjectIdsMap)
-
-export const useMetaTargetObject = (metaObjectId: number) => {
-  const metaObject = globalStore.get(metaObjectsAtom).get(metaObjectId)
-  const { updateMetaObject } = MetaStore
-  const { objectId } = metaObject || {}
-  const targetAtom = useMemo(() => {
-    if (objectId) {
-      switch (metaObject?.type) {
-        case 'note':
-          return selectAtom(notesAtom, n => n.get(objectId))
-        case 'pdf':
-          return selectAtom(documentsAtom, n => n.get(objectId))
-        case 'whiteboard':
-          return selectAtom(whiteboardsAtom, n => n.get(objectId))
-      }
-    }
-    return null
-  }, [objectId])
-  useEffect(() => {
-    if (targetAtom) {
-      const object = globalStore.get(targetAtom as any)
-      if (object) {
-        switch (metaObject?.type) {
-          case 'note': {
-            const { title } = object as INote
-            if (metaObject.name !== title) {
-              updateMetaObject({ id: metaObjectId, name: title }, true)
-            }
-            break
-          }
-          case 'pdf': {
-            const { name, metadata } = object as IPdfDocument
-            if (metaObject.name !== name || metaObject.coverImgSrc !== metadata?.coverUrl) {
-              updateMetaObject({ id: metaObjectId, name, coverImgSrc: metadata?.coverUrl }, true)
-            }
-            break
-          }
-          case 'whiteboard': {
-            const { name } = object as IWhiteboard
-            if (metaObject.name !== name) {
-              updateMetaObject({ id: metaObjectId, name }, true)
-            }
-          }
-        }
-      }
-      const unsub = globalStore.sub(targetAtom, () => {
-        const metaObject = globalStore.get(metaObjectsAtom).get(metaObjectId)
-        const object = globalStore.get(targetAtom as any)
-        switch (metaObject?.type) {
-          case 'note': {
-            const { title } = object as INote
-            if (metaObject.name !== title) {
-              updateMetaObject({ id: metaObjectId, name: title }, true)
-            }
-            break
-          }
-          case 'pdf': {
-            const { name, metadata } = object as IPdfDocument
-            if (metaObject.name !== name || metaObject.coverImgSrc !== metadata?.coverUrl) {
-              updateMetaObject({ id: metaObjectId, name, coverImgSrc: metadata?.coverUrl }, true)
-            }
-            break
-          }
-          case 'whiteboard': {
-            const { name } = object as IWhiteboard
-            if (metaObject.name !== name) {
-              updateMetaObject({ id: metaObjectId, name }, true)
-            }
-          }
-        }
-      })
-      return () => {
-        unsub()
-      }
-    }
-  }, [targetAtom])
-  if (!metaObject) return
-  switch (metaObject.type) {
-    case 'normal':
-    case 'image':
-      return {
-        metaObject
-      }
-  }
-
-  if (!objectId)
-    return {
-      metaObject
-    }
-  return {
-    metaObject,
-    targetObject: targetAtom ? globalStore.get(targetAtom) : null
-  }
-}
 
 const createMetaStore = () => {
   const { get, initBaseObject, dispatch } = BaseStore
@@ -352,7 +289,23 @@ const createMetaStore = () => {
   }
   const localObjectStore: Pick<IStore<MetaObject>, 'addOne' | 'updateOne' | 'deleteOneById' | 'getAll'> = {
     updateOne: (one, silent) => {
-      return initializeObjectStore.updateOne(() => {
+      return initializeObjectStore.updateOne(obj => {
+        if (obj.objectId && one.name) {
+          switch (obj.type) {
+            case 'pdf': {
+              DocumentStore.updateDocument({ id: obj.objectId, name: obj.name }, true)
+              break
+            }
+            case 'note': {
+              NoteStore.updateNote({ id: obj.objectId, title: obj.name }, true)
+              break
+            }
+            case 'whiteboard': {
+              WhiteboardStore.updateWhiteboard({ id: obj.objectId, name: obj.name }, true)
+              break
+            }
+          }
+        }
         shouldToastObject(silent) &&
           toast.success(
             <Notification

@@ -1,5 +1,5 @@
 import { toArray } from 'lodash'
-import { cloneElement, CSSProperties, FC, ReactNode, Ref } from 'react'
+import React, { Children, cloneElement, CSSProperties, FC, ReactNode, Ref } from 'react'
 import Content from '../Content'
 import ToolbarItem from './ToolbarItem'
 import ToolbarSeparator from './ToolbarSeparator'
@@ -35,23 +35,34 @@ const Toolbar: IToolbar = ({
   let tools
 
   if (children) {
-    tools = toArray(children).map((element, index) => {
+    tools = Children.toArray(children).map((element, index) => {
       if (!element) {
         return element
       }
-      return cloneElement(element, {
-        key: index,
-        direction: direction,
-        space: itemSpace,
-        size: itemSize,
-        clickPreventDefault: itemClickPreventDefault,
-        className: itemClassName
-      })
+      if (React.isValidElement(element)) {
+        return cloneElement(element, {
+          key: index,
+          direction: direction,
+          space: itemSpace,
+          size: itemSize,
+          clickPreventDefault: itemClickPreventDefault,
+          className: itemClassName
+        })
+      }
+      return element
     })
   }
 
   return (
-    <Content ref={innerRef} style={style} flex centered className={classNames(styles.toolbar, className)} column={direction === 'vertical'}>
+    <Content
+      ref={innerRef}
+      style={style}
+      gap={4}
+      flex
+      centered
+      className={classNames(styles.toolbar, className)}
+      column={direction === 'vertical'}
+    >
       {tools}
     </Content>
   )

@@ -1,7 +1,6 @@
-import React, { createContext, CSSProperties, FC, memo, ReactNode, useContext, useEffect, useLayoutEffect, useMemo, useRef } from 'react'
-import { DockContext, DockContextType, PanelData, TabPaneCache } from './DockData'
+import React, { createContext, CSSProperties, FC, memo, ReactNode, useContext, useLayoutEffect, useMemo, useRef } from 'react'
+import { DockContextType, PanelData, TabPaneCache } from './DockData'
 import { motion } from 'framer-motion'
-import useUpdateIsomorphicLayoutEffect from '@/hooks/utils/useUpdateIsomorphicLayoutEffect'
 
 interface DockTabPaneProps {
   cacheId?: string
@@ -66,16 +65,6 @@ export const DockTabPane: FC<DockTabPaneProps> = memo(({ cached, cacheId, parent
     }
   }
 
-  const handleClick = () => {
-    const layout = context.getLayout()
-    context.setLayout({
-      ...layout,
-      global: {
-        ...layout.global,
-        currentFocusedPanelId: parent?.id
-      }
-    })
-  }
   useLayoutEffect(() => {
     updateCache()
   })
@@ -104,7 +93,6 @@ export const DockTabPane: FC<DockTabPaneProps> = memo(({ cached, cacheId, parent
     <motion.div
       ref={ref}
       id={cacheId}
-      onClick={handleClick}
       initial={{ opacity: 0 }}
       animate={active ? 'visible' : 'hidden'}
       variants={variants}

@@ -469,8 +469,6 @@ export const Element = (props: RenderElementProps) => {
         return <blockquote>{children}</blockquote>
       case 'bulleted-list':
         return <ul>{children}</ul>
-      case 'book-highlight':
-        return <BookHighlight {...props} />
       case 'link':
         return (
           <span {...attributes} style={{ display: 'inline' }}>
@@ -515,8 +513,6 @@ export const Element = (props: RenderElementProps) => {
         return <Thought {...props}>{children}</Thought>
       case 'emoji':
         return <Emoji {...props} />
-      case 'subPage':
-        return <SubPage {...props} />
       default:
         return <Paragraph {...props} />
     }

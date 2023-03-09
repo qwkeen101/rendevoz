@@ -1,4 +1,5 @@
 import { GlobalDragOverlayInstance, useGlobalIsDragging } from '@/components/globalDragOverlay/GlobalDragOverlay'
+import { GlobalEventHandler } from '@/events/globalEvent'
 import { useGlobalEventEmitter } from '@/events/useEventEmitter'
 import { useMemoizedFn, useRafFn } from '@/hooks'
 import Id from '@/utils/id'
@@ -23,11 +24,11 @@ const useEditorDrag = (editor: CustomEditor, scrollElement?: HTMLElement | null)
   const [globalIsDragging] = useGlobalIsDragging()
   const emitter = useGlobalEventEmitter()
   const readonly = editor.readonly
-  const draggingRef = useRef(false)
   // default is false
   const dragManager = useMemo(() => new DragManager(), [])
   const scrollManager = useMemo(() => new ScrollManager(), [])
 
+  const preventLastMouseMoveRef = useRef(false)
   const { renderIndicator, indicatorManager } = useDragIndicator()
   dragManager.onDrop = ({ direction, isNested, objectId, targetNodeId, shouldAddElements, shouldRemoveElements }) => {
     let targetPath = ID_TO_PATH_MAP.get(editor)?.get(targetNodeId)
@@ -129,7 +130,6 @@ const useEditorDrag = (editor: CustomEditor, scrollElement?: HTMLElement | null)
   dragManager.eventEmitter = emitter
   const mouseMoveHandler = useMemoizedFn((e: MouseEvent) => {
     if (readonly) return
-    if (!draggingRef.current) return
     e.preventDefault()
     if (scrollManager.isScrolling()) {
       scrollManager.endScroll()
@@ -139,24 +139,18 @@ const useEditorDrag = (editor: CustomEditor, scrollElement?: HTMLElement | null)
       dragManager.prepareDragging()
     }
     const indicator = dragManager.drag(e)
-
     if (indicator) {
       dragManager.changeIndicator(indicator)
       if (indicator.direction) {
         const indicatorPosition = ID_TO_ELEMENTS_MAP.get(editor)?.get(indicator.id)?.getIndicatorPosition(indicator.direction)
-        if (indicatorPosition) {
+
+        if (indicatorPosition && !preventLastMouseMoveRef.current) {
           indicatorManager.setIndicatorState({ ...indicatorPosition, visible: true, nested: indicator.isNested })
         }
       }
     }
   })
-  const mouseUpHandler = useMemoizedFn((e: MouseEvent) => {
-    if (readonly) return
-    dragManager.drop()
-    scrollManager.endScroll()
-    setIsDragging(false)
-    indicatorManager.setIndicatorState(s => ({ ...s, visible: false }))
-  })
+
   const throttledMouseMove = useRafFn(mouseMoveHandler)
   const realMouseMoveHandler = (e: MouseEvent) => {
     e.preventDefault()
@@ -180,7 +174,6 @@ const useEditorDrag = (editor: CustomEditor, scrollElement?: HTMLElement | null)
   const pointerLeaveAndEnterHandler = useMemoizedFn((e: PointerEvent) => {
     if (e.type === 'pointerleave') {
       setIsDragging(false)
-      draggingRef.current = false
     }
     if (e.type === 'pointerenter') {
       if (globalIsDragging) {
@@ -191,11 +184,9 @@ const useEditorDrag = (editor: CustomEditor, scrollElement?: HTMLElement | null)
   useEffect(() => {
     if (readonly) return
     if (isDraggingInsideEditor) {
-      draggingRef.current = true
       dragManager.prepareDragging()
-      document.addEventListener('mousemove', realMouseMoveHandler)
-      document.addEventListener('mouseup', mouseUpHandler)
-
+      console.log('true set')
+      GlobalDragOverlayInstance.startDrag?.()
       if (GlobalDragOverlayInstance.draggingDetails === undefined) {
         const selected = SELECTED_BLOCKS_MAP.get(editor)
         GlobalDragOverlayInstance.draggingDetails = {
@@ -232,29 +223,46 @@ const useEditorDrag = (editor: CustomEditor, scrollElement?: HTMLElement | null)
           console.log(GlobalDragOverlayInstance.draggingDetails)
         }
       }
-      return () => {
-        document.removeEventListener('mouseup', mouseUpHandler)
-        document.removeEventListener('mousemove', realMouseMoveHandler)
-      }
     } else {
-      draggingRef.current = false
       indicatorManager.setIndicatorState(s => ({ ...s, visible: false }))
     }
   }, [isDraggingInsideEditor])
 
   // listen to global dragging state change
   useEffect(() => {
-    console.log(globalIsDragging)
     if (readonly) return
     if (globalIsDragging) {
+      preventLastMouseMoveRef.current = false
+      scrollElement?.addEventListener('mousemove', realMouseMoveHandler)
       if (isDraggingInsideEditor) {
         DragManager.globalDraggingEditor = editor
+      }
+      return () => {
+        scrollElement?.removeEventListener('mousemove', realMouseMoveHandler)
       }
     } else {
       DragManager.dragElementsAdded = false
       setIsDragging(false)
     }
   }, [globalIsDragging])
+
+  useEffect(() => {
+    const globalEventHandler = new GlobalEventHandler()
+    globalEventHandler.on('globalDragPointerUp', ({ event }) => {
+      preventLastMouseMoveRef.current = true
+      if (scrollElement?.contains(event.target as HTMLElement)) {
+        dragManager.drop()
+      }
+      scrollElement?.removeEventListener('mousemove', realMouseMoveHandler)
+      scrollManager.endScroll()
+      setIsDragging(false)
+      indicatorManager.setIndicatorState(s => ({ ...s, visible: false }))
+    })
+    emitter.addListener('global', globalEventHandler)
+    return () => {
+      emitter.removeListener('global', globalEventHandler)
+    }
+  })
   return { dragManager, renderIndicator }
 }
 

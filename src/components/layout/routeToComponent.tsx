@@ -5,7 +5,7 @@ import WhiteboardPage from '@/scenes/WhiteboardPage'
 import Id from '@/utils/id'
 import { ReactNode } from 'react'
 import IFrame from '../iframe'
-import KnowledgeDatabase from '../database'
+import Database from '../database'
 import TabTitle from './TabTitle'
 
 const routeToComponent = (route: string, search?: string): ReactNode | undefined => {
@@ -32,7 +32,7 @@ const routeToComponent = (route: string, search?: string): ReactNode | undefined
     return (
       <>
         <TabTitle title="Database" />
-        <KnowledgeDatabase />
+        <Database />
       </>
     )
   }

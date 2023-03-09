@@ -2,15 +2,15 @@ import { AnimatePopover, Content, Icon, Image, Modal, Tooltip, WithBorder } from
 import UpgradePlan from '@/components/UpgradePlan'
 import Zindexes from '@/consts/zindex'
 import { useToggle } from '@/hooks'
-import { useUser } from '@/services/login.service'
+import LoginService, { useUser } from '@/services/login.service'
 import ClassName from '@/styles/classNames'
 import DateFormat from '@/utils/dateFormat'
 import { css } from '@emotion/css'
 import { memo, useState } from 'react'
-import avatarPlaceholder from '@/assets/avatar-placeholder.png'
 import useFileUpload from '@/components/base/useFileUpload'
 import { IUser } from '~/typings/data'
 import { indicatorClassName, loginInputClassName } from '@/components/Login'
+import { toast } from 'react-hot-toast'
 
 const SidebarUser = memo(() => {
   const [user] = useUser()
@@ -117,9 +117,13 @@ const UserPopover = ({ onUpgradePlan, onUpdateUser }: { onUpgradePlan: VoidFunct
     </WithBorder>
   )
 }
+
 const UpdateUser = () => {
-  const [user] = useUser()
-  const [innerUser, setInnerUser] = useState<IUser>(user)
+  const [user, setUser] = useUser()
+  const [innerUser, setInnerUser] = useState<IUser>({
+    displayName: user?.displayName,
+    photoURL: user?.photoURL
+  })
   const [formState, setFormState] = useState<{
     mainVisible?: boolean
     emailVisible?: boolean
@@ -127,24 +131,32 @@ const UpdateUser = () => {
   }>({
     mainVisible: true
   })
-  const handleConfirm = () => {}
+  const handleConfirm = () => {
+    LoginService.updateUserDetails(innerUser)
+      .then(us => {
+        setUser(u => ({ ...u, ...us.data }))
+        toast.success('Successfully update user details!')
+      })
+      .catch(e => toast.error('Failed to update user details!'))
+  }
   const handleChangeEmail = () => {}
 
   const handleChangePassword = () => {}
+
   const { renderUploader, upload } = useFileUpload(file => {
     setInnerUser({ ...innerUser, photoURL: file.path })
   }, 'image/*')
   if (!user) return null
   const renderMain = () => (
     <>
-      <div onClick={upload} style={{ display: 'flex', justifyContent: 'center', width: '100%', position: 'relative', cursor: 'pointer' }}>
+      {/* <div onClick={upload} style={{ display: 'flex', justifyContent: 'center', width: '100%', position: 'relative', cursor: 'pointer' }}>
         {renderUploader()}
         <Image src={innerUser.photoURL || avatarPlaceholder} width={80} style={{ borderRadius: 999 }} />
         <Icon
           style={{ position: 'absolute', top: 50, right: -5, background: 'rgba(255,255,255,0.8)', borderRadius: 999, padding: 4 }}
           name="park-edit-two"
         />
-      </div>
+      </div> */}
       <div>
         <div style={{ fontSize: 12 }} className={indicatorClassName}>
           Name
@@ -155,6 +167,7 @@ const UpdateUser = () => {
           }}
           className={loginInputClassName}
           value={innerUser.displayName}
+          onChange={e => setInnerUser({ ...innerUser, displayName: e.target.value })}
           placeholder="Input your name"
         />
       </div>
@@ -164,6 +177,7 @@ const UpdateUser = () => {
         flex
         alignItems="center"
         justifyContent="center"
+        onClick={handleConfirm}
       >
         Confirm
       </Content>
@@ -221,4 +235,5 @@ const UpdateUser = () => {
     </Content>
   )
 }
+
 export default SidebarUser

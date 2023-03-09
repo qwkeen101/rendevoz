@@ -1,23 +1,18 @@
 import { ipcInstance } from '@/plugins'
 import { maximizeWindow, minimizeWindow } from '@/utils/window'
 import { useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
 import { Content } from '../base'
 import Icon from '../base/Icon'
 import styles from './index.module.less'
 
 const TitleBar = () => {
   const [isFullScreen, setIsFullScreen] = useState(false)
-  const navigate = useNavigate()
   useEffect(() => {
     ipcInstance.on('winUnmaximized', () => {
       setIsFullScreen(false)
     })
     ipcInstance.on('winMaximized', () => {
       setIsFullScreen(true)
-    })
-    ipcInstance.on('newPage', url => {
-      navigate(`/iframe/${url}`)
     })
     return () => {
       ipcInstance.off('winMaximized')

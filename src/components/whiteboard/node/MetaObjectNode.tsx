@@ -1,5 +1,5 @@
 import Modal from '@/components/base/Modal'
-import EditMetaObjectForm, { Tag } from '@/components/form/EditMetaObjectForm'
+import { Tag } from '@/components/form/EditMetaObjectForm'
 import { metaObjectsAtom } from '@/stores/meta.store'
 import { useMemoizedFn, useToggle, useUpdateEffect } from '@/hooks'
 import { IWhiteboardNode } from '~/typings/data'
@@ -17,6 +17,7 @@ import produce from 'immer'
 import PdfNode from './PdfNode'
 import NoteNode from './NoteNode'
 import { MetaStore } from '@/stores'
+import ObjectForm from '@/components/form/ObjectForm'
 
 const imageClassName = css({
   borderTopLeftRadius: 16,
@@ -157,14 +158,13 @@ const MetaObjectNode: FC<InnerNodeProps> = ({ node: n, setPopoverElements, setNo
           setNodeState?.(s => ({ ...s, popoverVisible: true, focused: true }))
         }}
       >
-        <EditMetaObjectForm
-          title="Edit Object"
-          onClose={() => {
+        <ObjectForm
+          onBack={() => {
             toggleEditMetaVisible(false)
             setNodeState?.(s => ({ ...s, popoverVisible: true, focused: true }))
           }}
-          metaObject={metaObject}
-          onUpdate={obj => {
+          initialObject={metaObject}
+          onSubmit={obj => {
             updateMetaObject(obj)
             toggleEditMetaVisible(false)
             setNodeState?.(s => ({ ...s, popoverVisible: true, focused: true }))
@@ -216,7 +216,7 @@ const MetaObjectNode: FC<InnerNodeProps> = ({ node: n, setPopoverElements, setNo
                 {TypeToTypeName[metaObject?.type || 'normal']}
               </div>
               {metaObject?.tags?.map(tag => (
-                <Tag key={tag} tag={tag} small hideSize hideDetails />
+                <Tag key={tag} tag={tag} small hideSize />
               ))}
             </Content>
             <div className={ClassName.title('18px')}>{metaObject?.name}</div>

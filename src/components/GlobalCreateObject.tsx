@@ -1,12 +1,13 @@
 import Zindexes from '@/consts/zindex'
 import { MetaStore } from '@/stores'
+import ClassName from '@/styles/classNames'
 import { Position } from '@/types'
 import { compareHotkey } from 'is-hotkey'
 import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { Rnd } from 'react-rnd'
 import { MetaObject } from '~/typings/data'
-import EditMetaObjectForm from './form/EditMetaObjectForm'
+import ObjectForm from './form/ObjectForm'
 import getSetting from './globalSetting/getSetting'
 
 const GlobalCreateObjectInstance: Partial<{
@@ -104,6 +105,7 @@ const GlobalCreateObject = () => {
               }
             })
           }}
+          dragHandleClassName={ClassName.title('14px')}
           onDragStop={(e, data) => {
             setPanelState({
               ...panelState,
@@ -114,9 +116,8 @@ const GlobalCreateObject = () => {
             })
           }}
         >
-          <EditMetaObjectForm
-            metaObject={innerMeta}
-            onClose={() => {
+          <ObjectForm
+            onBack={() => {
               setPanelState(s => ({ ...s, visible: false }))
               const promise = promiseRef.current
               promiseRef.current = undefined
@@ -124,7 +125,7 @@ const GlobalCreateObject = () => {
                 promise.rej(null)
               }
             }}
-            onUpdate={obj => {
+            onSubmit={obj => {
               const promise = promiseRef.current
               promiseRef.current = undefined
               if (promise) {
@@ -133,7 +134,6 @@ const GlobalCreateObject = () => {
               setPanelState(s => ({ ...s, visible: false }))
               addMetaObject(obj)
             }}
-            title="Create Object"
           />
         </Rnd>
       </div>

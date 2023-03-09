@@ -75,7 +75,7 @@ const SidebarCollection = () => {
         <CollectionForm
           onSubmit={collection => {
             setNewCollectionVisible(false)
-            addCollection(collection)
+            addCollection({ ...collection, parentId: 0 })
           }}
           onBack={() => setNewCollectionVisible(false)}
         />

@@ -6,6 +6,7 @@ import { tagStore } from './stores/tag.store'
 import useWhiteboardStore from './stores/whiteboard.store'
 import { atom } from 'jotai'
 import { useGlobalSetAtom } from './jotai/jotaiScope'
+import Actions from './Actions'
 
 export const initializedAtom = atom(false)
 

@@ -1,20 +1,19 @@
-import { Modal, Icon, Content } from '@/components'
+import { Modal, Content } from '@/components'
 import DocumentForm from '@/components/form/DocumentForm'
 import createDocumentStore, { documentsAtom } from '@/stores/document.store'
 import { globalStore } from '@/stores'
 import { css } from '@emotion/css'
 import { useAtomValue } from 'jotai'
 import { FC, useMemo, useRef } from 'react'
-import { useNavigate } from 'react-router-dom'
 import { useToggle } from '@/hooks'
 import useSidebarItemContextMenu from '../useSidebarItemContextMenu'
 import useSidebarItemDrag from '../useSidebarItemDrag'
 import { ISidebarItem } from './type'
 import { selectAtom } from 'jotai/utils'
 import { IconNameItem } from '../SidebarCollection'
+import Actions from '@/Actions'
 
 const SidebarDocumentItem: FC<ISidebarItem> = ({ id, parentId, parentType, draggable = true }) => {
-  const navigate = useNavigate()
   const documentAtom = useMemo(() => selectAtom(documentsAtom, d => d.get(id)), [id])
   const document = useAtomValue(documentAtom, { store: globalStore })
   const ref = useRef<HTMLDivElement>(null)
@@ -46,7 +45,7 @@ const SidebarDocumentItem: FC<ISidebarItem> = ({ id, parentId, parentType, dragg
       flex
       gap={10}
       ref={ref}
-      onClick={() => navigate(`/pdf/${document.id}`)}
+      onClick={() => Actions.openPdf(id)}
       className={css({
         cursor: 'pointer',
         transition: 'all 0.2s ease',

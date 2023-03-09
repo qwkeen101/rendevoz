@@ -364,17 +364,11 @@ class DragManager {
               })
             break
           }
-          // need further process: add meta object
           case 'pdf': {
             draggingEle.pdfId &&
               (needFurtherProcess = {
                 objectId: draggingEle.pdfId
               })
-            // ele = {
-            //   type: 'pdf',
-            //   pdfId: draggingEle.pdfId,
-            //   children: [{ text: '' }]
-            // }
             break
           }
           case 'image': {
@@ -386,17 +380,18 @@ class DragManager {
             }
             break
           }
-          // need further process: add meta object
           case 'note': {
             draggingEle.noteId &&
               (needFurtherProcess = {
                 objectId: draggingEle.noteId
               })
-            // ele = {
-            //   type: 'note',
-            //   noteId: draggingEle.noteId,
-            //   children: [{ text: '' }]
-            // }
+            break
+          }
+          case 'whiteboard': {
+            draggingEle.whiteboardId &&
+              (needFurtherProcess = {
+                objectId: draggingEle.whiteboardId
+              })
           }
         }
         if (typeof needFurtherProcess === 'object') {

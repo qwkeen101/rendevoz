@@ -10,6 +10,7 @@ import { Path } from 'slate'
 import { CustomElement } from '../editor/types'
 import useOverlayDrop from './useOverlayDrop'
 import { globalStore } from '@/stores'
+import { ILabel, IShapeLabel } from '~/typings/data'
 
 export type AvaliableGlobalDraggingElements =
   | {
@@ -28,8 +29,8 @@ export type AvaliableGlobalDraggingElements =
       type: 'pdfElement'
       labelId: number
       pdfId: number
-      content: string
-      page: number
+      content?: string
+      page?: number
     }
   | {
       type: 'metaElement'
@@ -56,6 +57,13 @@ export type AvaliableGlobalDraggingElements =
       type: 'whiteboard'
       whiteboardId: number
     }
+  | ({
+      type: 'pendingPdfElement'
+      labelType: ILabel['type']
+    } & {
+      labelType: 'shape'
+      shapeType: IShapeLabel['shape']
+    })
 interface IGlobalDragOverlay {
   addDragElements: (nodes: HTMLElement | HTMLElement[] | ReactElement | ReactElement[]) => void
   startDrag: () => void
@@ -98,7 +106,7 @@ const GlobalDragOverlay = memo(() => {
     const dragContainer = dragContainerRef.current
     if (!dragContainer) return
     const { clientX, clientY } = e
-    dragContainer.style.transform = `translateX(${clientX}px) translateY(${clientY}px)`
+    dragContainer.style.transform = `translateX(${clientX + 4}px) translateY(${clientY + 4}px)`
     dragContainer.style.display = 'block'
   })
 
@@ -122,25 +130,27 @@ const GlobalDragOverlay = memo(() => {
     }
   }, [isDragging])
   useEffect(() => {
+    console.log(dragElements)
     if (dragElements.length === 0) {
       while (dragContainerRef.current?.firstChild) {
         dragContainerRef.current.removeChild(dragContainerRef.current.firstChild)
       }
     } else {
       dragElements.forEach(ele => {
-        if (!React.isValidElement(ele)) {
-          dragContainerRef.current?.replaceChildren(ele)
+        if (ele instanceof HTMLElement) {
+          dragContainerRef.current?.appendChild(ele)
         }
       })
     }
   }, [dragElements])
   Object.assign(GlobalDragOverlayInstance, {
     addDragElements: nodes => {
-      if (!Array.isArray(nodes)) {
-        nodes = [nodes]
+      let newNodes = nodes
+      if (!Array.isArray(newNodes)) {
+        newNodes = [nodes] as any[]
       }
       if (!isDragging) {
-        setDragElements([...dragElements, ...nodes])
+        setDragElements([...dragElements, ...newNodes])
       }
     },
     removeAllDragElement: () => {

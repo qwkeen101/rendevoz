@@ -21,7 +21,7 @@ import { css } from '@emotion/css'
 const FormTagPicker = ({
   onClose,
   style,
-  tags,
+  tags = [],
   onChange
 }: {
   onClose?: VoidFunction
@@ -62,18 +62,18 @@ const FormTagPicker = ({
   }, [newAddTag?.name])
 
   return (
-    <div style={{ width: 300, ...style }} className={css({ '.div': { textTransform: 'capitalize' } })}>
+    <div style={{ width: 300, ...style }} className={css({ '> div': { textTransform: 'capitalize' } })}>
       <Icon
         name="park-close"
         containerStyle={{ position: 'absolute', top: 10, right: 10, color: 'rgba(31,34,39,0.6)' }}
         className={ClassName.circleButton()}
         onClick={onClose}
       />
-      <div className={ClassName.title('15px')}>{t('form.select tags')}</div>
-      <div className={ClassName.description()}>{t('form.you can select multiple tags"', { tags: t('general.tags') })}</div>
+      <div className={ClassName.title('15px')}>{t('form.select tags', { tags: t('general.tags') })}</div>
+      <div className={ClassName.description()}>{t('form.you can select multiple tags', { tags: t('general.tags') })}</div>
       <Content flex gap={8} alignItems="center" style={{ padding: '10px 0', flexWrap: 'wrap' }}>
         {tags?.map(i => (
-          <Tag key={i} hideSize onDelete={() => onChange?.(tags.filter(i => i !== i))} tag={i} />
+          <Tag key={i} hideSize onDelete={() => onChange?.(tags.filter(o => o !== i))} tag={i} />
         ))}
         {addTagVisible && (
           <AnimatePopover
@@ -231,7 +231,7 @@ const FormTagPicker = ({
         </div>
       </Content>
       <div style={{ margin: '20px 0px 10px', textTransform: 'uppercase' }} className={ClassName.description()}>
-        {t('form.most used tags', { tags: t('general.tags')})}
+        {t('form.most used tags', { tags: t('general.tags') })}
       </div>
       <Content flex alignItems="center" gap={8} style={{ flexWrap: 'wrap' }}>
         {mostUsedTags?.map(i => (
@@ -239,7 +239,7 @@ const FormTagPicker = ({
             key={i.tag}
             cursor="pointer"
             onAdd={() => {
-              onPick?.(i.tag)
+              onChange?.([...tags, i.tag])
             }}
             hideDelete
             tag={i.tag}

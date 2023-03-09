@@ -4,7 +4,7 @@ import { globalStore } from '@/stores'
 import ClassName from '@/styles/classNames'
 import { css } from '@emotion/css'
 import { AnimatePresence } from 'framer-motion'
-import { Provider, useAtom, useAtomValue } from 'jotai/react'
+import { Provider, useAtom, useAtomValue, useSetAtom } from 'jotai/react'
 import { createStore } from 'jotai/vanilla'
 import { useMemo, useState } from 'react'
 import { Flipper } from 'react-flip-toolkit'
@@ -14,7 +14,7 @@ import DatabaseCard from './card/DatabaseCard'
 import DatabaseFilter from './filter'
 import useObjectFilter, { FilterNameSearchAtom } from './filter/useObjectFilter'
 
-const KnowledgeDatabase = () => {
+const Database = () => {
   const undeletedMetaObjects = useAtomValue(undeletedMetaObjectsAtom, { store: globalStore })
   const pinnedMetaObjects = useAtomValue(pinnedMetaObjectsAtom, { store: globalStore })
   const [paginateState, setPaginateState] = useState<{
@@ -26,12 +26,12 @@ const KnowledgeDatabase = () => {
   })
 
   const DatabaseStore = useMemo(() => createStore(), [])
-  const [searchName, setSearchName] = useAtom(FilterNameSearchAtom, { store: DatabaseStore })
+  const setSearch = useSetAtom(FilterNameSearchAtom, { store: DatabaseStore })
   useObjectFilter(ids => {
     const shouldDisplay = undeletedMetaObjects.filter(i => ids.has(i.id))
     setDisplayObjects(shouldDisplay)
   }, DatabaseStore)
-  const { run: debouncedSetSearch } = useDebounceFn(setSearchName, { wait: 200 })
+  const { run: debouncedSetSearch } = useDebounceFn(setSearch, { wait: 200 })
 
   const { currentPage, itemPerPage } = paginateState
 
@@ -135,4 +135,4 @@ const KnowledgeDatabase = () => {
   )
 }
 
-export default KnowledgeDatabase
+export default Database

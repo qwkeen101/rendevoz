@@ -245,7 +245,19 @@ export class DockLayout extends DockPortalManager implements DockContext {
         currentTabId = (source as PanelData).activeId
       } else {
         // when source is tab
-        currentTabId = (source as TabData).id
+        const s = source as TabData
+        const parentPanel = s.parent as PanelData
+        const newParentPanel = Algorithm.find(layout, parentPanel.id) as PanelData
+        const isActive = parentPanel.activeId === s.id
+        if (isActive && newParentPanel) {
+          const idx = parentPanel.tabs.findIndex(i => i === s)
+          const isLast = idx === parentPanel.tabs.length - 1
+          const nextIdx = idx
+          const nextActiveId = isLast ? newParentPanel.tabs[newParentPanel.tabs.length - 1]?.id || null : newParentPanel.tabs[nextIdx].id
+          newParentPanel.activeId = nextActiveId
+          console.log(newParentPanel)
+          currentTabId = nextActiveId
+        }
       }
       this.changeLayout(layout, currentTabId, direction)
     }
@@ -458,7 +470,7 @@ export class DockLayout extends DockPortalManager implements DockContext {
     // clear tempLayout
     this.tempLayout = null
 
-    let { style, maximizeTo } = this.props
+    const { style, maximizeTo } = this.props
     const { layout, dropRect } = this.state
     let dropRectStyle: CSSProperties
     if (dropRect) {
@@ -467,7 +479,7 @@ export class DockLayout extends DockPortalManager implements DockContext {
       if (direction === 'float') {
         dropRectStyle.transition = 'none'
       }
-      if(direction === 'after-tab' || direction === 'before-tab'){
+      if (direction === 'after-tab' || direction === 'before-tab') {
         dropRectStyle.background = '#8590aea8'
         dropRectStyle.boxShadow = 'none'
         dropRectStyle.opacity = 1

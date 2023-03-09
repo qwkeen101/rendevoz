@@ -12,6 +12,7 @@ import { defaultBgColor } from '../picker/colorPicker'
 import { Tag } from './EditMetaObjectForm'
 import FormColorPicker from './FormColorPicker'
 import FormIconPicker from './FormIconPicker'
+import FormImagePicker from './FormImagePicker'
 import FormTagPicker from './FormTagPicker'
 
 type useFlipFormOptions = {
@@ -57,13 +58,17 @@ export type FlipFormLayoutItem =
   | {
       type: 'imagePicker'
       imageUrl?: string
-      onChange: (url: string) => void
+      onChange: (url: string | undefined) => void
     }
   | {
       type: 'group'
-      children: FlipFormLayoutItem[] | FlipFormLayoutItem
+      children: FlipFormLayoutItem[] | FlipFormLayoutItem | undefined
     }
-
+  | {
+      type: 'previewGraph'
+      onClick?: React.MouseEventHandler
+    }
+  | undefined
 interface FormInnerState {
   mainVisible: boolean
   tagPickerVisible: boolean
@@ -93,6 +98,7 @@ const useFlipForm = (options: useFlipFormOptions) => {
   const flattenedLayout = useMemo(
     () =>
       layout.reduce((prev, curr) => {
+        if (!curr) return prev
         if (!('children' in curr)) {
           prev.push(curr)
         } else {
@@ -100,11 +106,12 @@ const useFlipForm = (options: useFlipFormOptions) => {
           items.forEach(i => prev.push(i))
         }
         return prev
-      }, [] as FlipFormLayoutItem[]),
+      }, [] as Required<FlipFormLayoutItem[]>),
     [layout]
   )
 
   const renderMainItem = (i: FlipFormLayoutItem) => {
+    if (!i) return
     switch (i.type) {
       case 'nameInput':
         return <Form.Item text={capitalize(t('general.name'))} disable={i.disabled} type="input" value={i.value} onChange={i.onChange} />
@@ -130,9 +137,9 @@ const useFlipForm = (options: useFlipFormOptions) => {
         return (
           <Form.Item type="component">
             <div className={groupClassName}>
-              {(Array.isArray(i.children) ? i.children : [i.children]).map((i, idx) => (
-                <Fragment key={idx}>{renderMainItem(i)}</Fragment>
-              ))}
+              {(Array.isArray(i.children) ? i.children : [i.children]).map(
+                (i, idx) => i && <Fragment key={idx}>{renderMainItem(i)}</Fragment>
+              )}
             </div>
           </Form.Item>
         )
@@ -214,6 +221,22 @@ const useFlipForm = (options: useFlipFormOptions) => {
             {i?.color ? <div style={{ width: 20, height: 20, borderRadius: 4, background: i.color }}></div> : <Icon name="park-right" />}
           </div>
         )
+      case 'imagePicker':
+        return <FormImagePicker imageUrl={i.imageUrl} onChange={i.onChange} />
+      case 'previewGraph':
+        return (
+          <div
+            className={ClassName.flatButton()}
+            style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', textTransform: 'capitalize' }}
+            onClick={i.onClick}
+          >
+            <Content gap={8} flex>
+              <Icon name="park-share-one" />
+              <span> {t('form.preview graph', { graph: t('general.graph') })}</span>
+            </Content>
+            <Icon name="park-right" />
+          </div>
+        )
     }
   }
   const renderMain = () => (
@@ -231,15 +254,15 @@ const useFlipForm = (options: useFlipFormOptions) => {
   )
 
   const renderTagPicker = () => {
-    const tagLayoutItem = flattenedLayout.find(i => i.type === 'tagPicker') as (FlipFormLayoutItem & { type: 'tagPicker' }) | undefined
+    const tagLayoutItem = flattenedLayout.find(i => i && i.type === 'tagPicker') as (FlipFormLayoutItem & { type: 'tagPicker' }) | undefined
     if (tagLayoutItem) {
       return (
         <Flipped flipId={tagPickerFlipId} onAppear={FlipCardEnter} onExit={FlipCardExit}>
           <FormTagPicker
             tags={tagLayoutItem.tags}
             onChange={v => {
-              tagLayoutItem.onChange?.(v)
-              setFormInnerState({ mainVisible: true })
+              const set = new Set([...v])
+              tagLayoutItem.onChange(Array.from(set))
             }}
             onClose={() => setFormInnerState({ mainVisible: true })}
           />

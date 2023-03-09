@@ -12,6 +12,8 @@ import { useAtomValue } from 'jotai/react'
 import useLabelStore, { documentIdToLabelsMapAtom, labelsAtom } from '@/stores/label.store'
 import { globalStore } from '@/stores'
 import { IHighlightLabel, ILabel } from '~/typings/data'
+import ShapeLabel from '../label/ShapeLabel'
+import ObjectLabel from '../label/ObjectLabel'
 
 interface PdfPageProps extends RenderPageProps {
   pdfId: number
@@ -81,6 +83,8 @@ const PdfPage: React.FC<PdfPageProps> = ({
                 <>
                   {i.type === 'highlight' && <HighlightLabel documentId={pdfId} labelId={i.id} key={i.id} pageSize={pageSize} />}
                   {i.type === 'thought' && <ThoughtLabel dragBoundRef={labelContainerRef} labelId={i.id} key={i.id} />}
+                  {i.type === 'shape' && <ShapeLabel documentId={pdfId} labelId={i.id} key={i.id} pageSize={pageSize} />}
+                  {i.type === 'object' && <ObjectLabel labelId={i.id} key={i.id} documentId={pdfId} pageSize={pageSize} />}
                 </>
               )
           )}

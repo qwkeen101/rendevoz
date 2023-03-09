@@ -3,10 +3,10 @@ import { undeletedDocumentsAtom } from '@/stores/document.store'
 import { FC, memo, ReactNode, useMemo } from 'react'
 import { IPdfDocument } from '~/typings/data'
 import styles from './index.module.less'
-import FullSizeLink from '@/components/base/FullSizeLink'
 import { useAtomValue } from 'jotai/react'
 import { globalStore } from '@/stores'
 import { orderBy } from 'lodash'
+import Actions from '@/Actions'
 interface CardProps {
   title: string
   children: ReactNode
@@ -80,9 +80,14 @@ const RecentlyReadCardItemV2 = ({ document }: { document: IPdfDocument }) => {
             <div className={styles.progressThumb} style={{ width: `${(document.readProgress || 0) * 100}%` }}></div>
           </div>
         </Content>
-        <Content className={styles.iconWrapper} flex alignItems="flex-end" style={{ marginLeft: 10 }}>
+        <Content
+          className={styles.iconWrapper}
+          onClick={() => Actions.openPdf(document.id)}
+          flex
+          alignItems="flex-end"
+          style={{ marginLeft: 10 }}
+        >
           <Icon name="park-right" size={24} style={{ padding: 8, borderRadius: 999, background: '#8590ae', color: 'white' }} />
-          <FullSizeLink to={`/pdf/${document?.id}`} />
         </Content>
       </Content>
     </Content>

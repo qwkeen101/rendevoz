@@ -2,6 +2,7 @@ import { useGlobalAtom } from '@/jotai/jotaiScope'
 import { globalStore } from '@/stores'
 import { request } from '@/utils/request'
 import { atom } from 'jotai'
+import { toast } from 'react-hot-toast'
 import { IUser } from '~/typings/data'
 
 const remoteInterface = 'https://api.rendevoz.com'
@@ -14,7 +15,7 @@ type VerifyUserOptions =
       type: 'uid'
       uid: string
     }
-const userAtom = atom<IUser | null>({
+export const userAtom = atom<IUser | null>({
   displayName: 'Admin',
   isPremium: true
 })
@@ -59,7 +60,47 @@ const createLoginService = () => {
   }
 
   const updateUserDetails = (user: Partial<IUser>) => {
+    return request<IUser>(remoteInterface + '/updateUser', {
+      headers: {
+        'x-auth-token': getUser()?.idToken || ''
+      },
+      data: {
+        user
+      },
+      method: 'POST'
+    })
+  }
 
+  const refreshToken = (): Promise<{
+    idToken: string
+    refreshToken: string
+  }> => {
+    return new Promise((res, rej) => {
+      const user = getUser()
+      if (user) {
+        const { refreshToken } = user
+        if (refreshToken) {
+          request(remoteInterface + '/refreshToken', { data: { refreshToken }, method: 'POST' })
+            .then(data => {
+              if (data.data) {
+                const { id_token, refresh_token } = data.data
+                res({
+                  idToken: id_token,
+                  refreshToken: refresh_token
+                })
+              } else {
+                rej()
+              }
+            })
+            .catch(e => rej(e))
+          return
+        } else {
+          rej()
+        }
+      } else {
+        rej()
+      }
+    })
   }
   return {
     sendVerifyEmail,
@@ -67,7 +108,9 @@ const createLoginService = () => {
     verifyUser,
     checkEmailExist,
     login,
-    getUserDetails
+    getUserDetails,
+    refreshToken,
+    updateUserDetails
   }
 }
 

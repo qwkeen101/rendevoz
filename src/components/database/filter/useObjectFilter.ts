@@ -1,4 +1,4 @@
-import { tagToMetaObjectIdsMapAtom, undeletedMetaObjectsAtom } from '@/stores/meta.store'
+import { relatedMetaObjectsMapAtom, tagToMetaObjectIdsMapAtom, undeletedMetaObjectsAtom } from '@/stores/meta.store'
 import { globalStore } from '@/stores'
 import { isWithinInterval } from 'date-fns'
 import fuzzysort from 'fuzzysort'
@@ -6,16 +6,29 @@ import { useAtomValue } from 'jotai/react'
 import { atom } from 'jotai/vanilla'
 import { useEffect, useMemo } from 'react'
 import { MetaObject } from '~/typings/data'
+import { FilterType } from '.'
 
 export const FilterNameSearchAtom = atom<string>('')
-export const FilterSelectedTagsAtom = atom<Set<string>>(new Set<string>())
+export const FilterSelectedTagsAtom = atom<Map<number, Set<string>>>(new Map())
 export const FilterDateIntervalsAtom = atom<Partial<Interval>>({})
 export const FilterTypesAtom = atom<Set<MetaObject['type']>>(new Set<MetaObject['type']>())
+export const CurrentFocusFilterAtom = atom<
+  | {
+      id: number
+      type: FilterType
+    }
+  | undefined
+>(undefined)
+// 并集和交集结合
+export const FilterRelatedIdsAtom = atom<Map<number, Set<number>>>(new Map())
+
+export const RealFilterRelatedIdsAtom = atom<Map<number, Set<number>>>(new Map())
 const useObjectFilter = (onChange: (ids: Set<number>) => void, store?: any) => {
   const nameFilter = useAtomValue(FilterNameSearchAtom, { store })
   const tagFilter = useAtomValue(FilterSelectedTagsAtom, { store })
   const createDateFilter = useAtomValue(FilterDateIntervalsAtom, { store })
   const typeFilter = useAtomValue(FilterTypesAtom, { store })
+  const realFilterRelatedIds = useAtomValue(RealFilterRelatedIdsAtom, { store })
   const undeletedMetaObjects = useAtomValue(undeletedMetaObjectsAtom, { store: globalStore })
   const tagToMetaObjectIdsMap = useAtomValue(tagToMetaObjectIdsMapAtom, { store: globalStore })
   const filterMap = useMemo(() => {
@@ -39,16 +52,21 @@ const useObjectFilter = (onChange: (ids: Set<number>) => void, store?: any) => {
       triggerChange()
       return
     }
-    const idSet = new Set<number>()
-    tagFilter.forEach(tag => {
-      const objIdSet = tagToMetaObjectIdsMap.get(tag)
-      if (objIdSet) {
-        objIdSet.forEach(i => {
-          idSet.add(i)
-        })
-      }
+    const idSetArr: Set<number>[] = []
+    tagFilter.forEach(tags => {
+      const idSet = new Set<number>()
+      tags.forEach(tag => {
+        const objIdSet = tagToMetaObjectIdsMap?.get(tag)
+        if (objIdSet) {
+          objIdSet.forEach(i => {
+            idSet.add(i)
+          })
+        }
+      })
+      idSetArr.push(idSet)
     })
-    filterMap.set('tag', idSet)
+
+    filterMap.set('tag', intersectionOfMultipleSets(...idSetArr) as Set<number>)
     triggerChange()
   }, [tagFilter])
   useEffect(() => {
@@ -84,6 +102,26 @@ const useObjectFilter = (onChange: (ids: Set<number>) => void, store?: any) => {
     filterMap.set('type', idSet)
     triggerChange()
   }, [typeFilter])
+  useEffect(() => {
+    if (realFilterRelatedIds.size === 0) {
+      filterMap.delete('related')
+      triggerChange()
+      return
+    }
+    const relatedIdMap = globalStore.get(relatedMetaObjectsMapAtom)
+    const a = Array.from(realFilterRelatedIds.values()).map(ids => {
+      const currentSetRelatedIds = new Set<number>()
+      ids.forEach(id => {
+        relatedIdMap.get(id)?.forEach(i => currentSetRelatedIds.add(i))
+        currentSetRelatedIds.add(id)
+      })
+      return currentSetRelatedIds
+    })
+    const intersection = intersectionOfMultipleSets(...a)
+    console.log(intersection)
+    filterMap.set('related', intersection)
+    triggerChange()
+  }, [realFilterRelatedIds])
   useEffect(() => {
     triggerChange()
   }, [undeletedMetaObjects])

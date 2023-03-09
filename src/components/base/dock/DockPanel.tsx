@@ -80,8 +80,8 @@ export class DockPanel extends React.PureComponent<Props, State> {
   _movingH: number
   _movingCorner: string
 
-  onPanelClicked = (e: React.MouseEvent) => {
-    const target = e.nativeEvent.target
+  onPanelClicked = (e: PointerEvent) => {
+    const target = e.target
     const layout = this.context.getLayout()
     const newLayout: LayoutData = {
       ...layout,
@@ -91,6 +91,7 @@ export class DockPanel extends React.PureComponent<Props, State> {
       }
     }
     this.context.setLayout(newLayout)
+    this.context.onSilentChange()
     if (!this._ref.contains(this._ref.ownerDocument.activeElement) && target instanceof Node && this._ref.contains(target)) {
       ;(this._ref.querySelector('.dock-bar') as HTMLElement).focus()
     }
@@ -152,14 +153,7 @@ export class DockPanel extends React.PureComponent<Props, State> {
     }
 
     return (
-      <DragDropDiv
-        getRef={this.getRef}
-        className={cls}
-        style={style}
-        data-dockid={id}
-        onDragOverT={this.onDragOver}
-        onClick={this.onPanelClicked}
-      >
+      <DragDropDiv getRef={this.getRef} className={cls} style={style} data-dockid={id} onDragOverT={this.onDragOver}>
         <DockTabs panelData={panelData} />
         {droppingLayer}
       </DragDropDiv>
@@ -167,8 +161,11 @@ export class DockPanel extends React.PureComponent<Props, State> {
   }
 
   _unmounted = false
-
+  componentDidMount() {
+    this._ref.addEventListener('pointerup', this.onPanelClicked)
+  }
   componentWillUnmount(): void {
+    this._ref.removeEventListener('pointerup', this.onPanelClicked)
     if (DockPanel._droppingPanel === this) {
       DockPanel.droppingPanel = null
     }

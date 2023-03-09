@@ -1,26 +1,33 @@
 import Zindexes from '@/consts/zindex'
 import { useMemoizedFn, useMergedRef, useToggle } from '@/hooks'
-import { undeletedMetaObjectsAtom } from '@/stores/meta.store'
+import { relatedMetaObjectsMapAtom, undeletedMetaObjectsAtom } from '@/stores/meta.store'
 import { globalStore, MetaStore } from '@/stores'
 import ClassName from '@/styles/classNames'
 import { Position } from '@/types'
 import { css } from '@emotion/css'
 import { useVirtualizer } from '@tanstack/react-virtual'
-import { useAtom, useAtomValue } from 'jotai/react'
-import { forwardRef, memo, useEffect, useRef, useState } from 'react'
+import { useAtom, useAtomValue, useStore } from 'jotai/react'
+import { forwardRef, memo, useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { Rnd } from 'react-rnd'
 import { MetaObject } from '~/typings/data'
-import { AnimatePopover, Content, Icon, Image, WithBorder } from './base'
+import { AnimatePopover, CheckBox, Content, Icon, Image, WithBorder } from './base'
 import Modal from './base/Modal'
-import EditMetaObjectForm, { Tag } from './form/EditMetaObjectForm'
+import { Tag } from './form/EditMetaObjectForm'
 import { GlobalDragOverlayInstance, useGlobalIsDragging } from './globalDragOverlay/GlobalDragOverlay'
 import { useSetting } from './globalSetting/Main'
 import { ObjectActionPopover, TypeToTypeName } from './database/card/DatabaseCard'
 import DatabaseFilter from './database/filter'
-import useObjectFilter, { FilterNameSearchAtom } from './database/filter/useObjectFilter'
+import useObjectFilter, { CurrentFocusFilterAtom, FilterNameSearchAtom, FilterRelatedIdsAtom } from './database/filter/useObjectFilter'
 import { compareHotkey } from 'is-hotkey'
-import { useNavigate } from 'react-router-dom'
+import ObjectForm from './form/ObjectForm'
+import { selectAtom } from 'jotai/utils'
+import { useGlobalAtomValue } from '@/jotai/jotaiScope'
+import produce from 'immer'
+import { atom } from 'jotai'
+import { useTranslation } from 'react-i18next'
+import Actions from '@/Actions'
+import useRenderObject from './database/useRenderObject'
 
 const GlobalObjectPanel = () => {
   const [search, setSearch] = useAtom(FilterNameSearchAtom)
@@ -33,14 +40,15 @@ const GlobalObjectPanel = () => {
   >({
     visible: false,
     position: {
-      left: 300,
-      top: 300
+      left: Math.min(window.innerWidth * 0.2, 200),
+      top: Math.min(window.innerHeight * 0.1, 100)
     },
     size: {
-      width: Math.min(window.innerWidth * 0.2, 400),
-      height: Math.min(window.innerHeight * 0.4, 500)
+      width: Math.min(window.innerWidth * 0.4, 400),
+      height: Math.min(window.innerHeight * 0.8, 500)
     }
   })
+  const { t } = useTranslation()
   const [showBoxShadow, toggleShowBoxShadow] = useToggle(false)
   const undeleteObjects = useAtomValue(undeletedMetaObjectsAtom, { store: globalStore })
   const [setting] = useSetting()
@@ -174,7 +182,7 @@ const GlobalObjectPanel = () => {
               }}
               className="global-drag-panel"
             >
-              <div className={ClassName.title('14px')}>Objects Panel</div>
+              <div className={ClassName.title('14px')}>{t('dialog.object panel', { object: t('general.object') })}</div>
               <Icon
                 name="park-close"
                 className={ClassName.circleButton()}
@@ -197,7 +205,7 @@ const GlobalObjectPanel = () => {
             >
               <Icon name="park-search" />
               <input
-                placeholder="Search For Object"
+                placeholder={t('dialog.search for object', { object: t('general.object') })}
                 value={search}
                 onChange={e => setSearch(e.target.value)}
                 className={css({
@@ -280,16 +288,43 @@ const SimpleObject = memo(
       },
       ref
     ) => {
-      const { coverImgSrc, name, description, tags, type } = metaObject
       const containerRef = useRef<HTMLDivElement>(null)
       const mergedRef = useMergedRef(containerRef, ref)
       const isPressed = useRef(false)
+      const { renderWhole } = useRenderObject({
+        metaObjectId: metaObject.id
+      })
       const [popoverVisible, togglePopoverVisible] = useToggle(false)
       const [editVisible, toggleEditVisible] = useToggle(false)
-      // const navigate = useNavigate()
+      const [showCheckBox, toggleShowCheckBox] = useToggle(false)
       const { updateMetaObject } = MetaStore
+      const firstDragTimeRef = useRef<number>(0)
+      const currentFocusFilter = useAtomValue(CurrentFocusFilterAtom)
+      const [checked, toggleChecked] = useToggle(false)
+      const currentRelatedIdsAtom = useMemo(() => {
+        if (currentFocusFilter) {
+          if (currentFocusFilter.id && currentFocusFilter.type === 'related') {
+            const idsAtom = selectAtom(FilterRelatedIdsAtom, f => f.get(currentFocusFilter.id))
+            return idsAtom
+          }
+        }
+        return atom(null)
+      }, [currentFocusFilter?.id])
+      const currentRelatedIds = useAtomValue(currentRelatedIdsAtom)
+      useEffect(() => {
+        if (currentFocusFilter) {
+          if (currentFocusFilter.type === 'related') {
+            toggleShowCheckBox(true)
+          }
+        } else {
+          toggleShowCheckBox(false)
+        }
+      }, [currentFocusFilter])
+      const store = useStore()
+
       const handleDragStart = () => {
         const container = containerRef.current
+        firstDragTimeRef.current = Date.now()
         if (container) {
           const cloned = container.cloneNode(true) as HTMLElement
           const bound = container.getBoundingClientRect()
@@ -305,93 +340,116 @@ const SimpleObject = memo(
       }
       const handleDrag = () => {
         if (isPressed.current) {
-          GlobalDragOverlayInstance.startDrag?.()
+          const now = Date.now()
+          // add a delay to prevent uncarefully drag
+          if (now - firstDragTimeRef.current > 100) {
+            GlobalDragOverlayInstance.startDrag?.()
+          }
         }
       }
       const handleDragEnd = () => {
         isPressed.current = false
       }
-      // const handleTitleClick = () => {
-      //   switch (metaObject.type) {
-      //     case 'pdf': {
-      //       navigate(`/pdf/${metaObject.objectId}`)
-      //     }
-      //   }
-      // }
       const iconRef = useRef<HTMLDivElement>(null)
 
       useEffect(() => {
         iconRef.current?.addEventListener('pointerdown', handleDragStart)
-        iconRef.current?.addEventListener('pointermove', handleDrag)
+        document.addEventListener('pointermove', handleDrag)
         document.addEventListener('pointerup', handleDragEnd)
         return () => {
           iconRef.current?.removeEventListener('pointerdown', handleDragStart)
-          iconRef.current?.removeEventListener('pointermove', handleDrag)
+          document.removeEventListener('pointermove', handleDrag)
           document.removeEventListener('pointerup', handleDragEnd)
         }
       })
+
+      const handleClickCheckBox = (checked: boolean) => {
+        console.log(checked)
+        toggleChecked(checked)
+        if (currentFocusFilter?.id) {
+          if (checked) {
+            store.set(
+              FilterRelatedIdsAtom,
+              produce(store.get(FilterRelatedIdsAtom), draft => {
+                if (draft.has(currentFocusFilter.id)) {
+                  draft.get(currentFocusFilter.id)?.add(metaObject.id)
+                } else {
+                  draft.set(currentFocusFilter.id, new Set([metaObject.id]))
+                }
+              })
+            )
+          } else {
+            store.set(
+              FilterRelatedIdsAtom,
+              produce(store.get(FilterRelatedIdsAtom), draft => {
+                draft.get(currentFocusFilter.id)?.delete(metaObject.id)
+              })
+            )
+          }
+        }
+      }
       return (
         <Content flex ref={mergedRef} alignItems="center" gap={10}>
           <Modal noStyle visible={editVisible} onClose={toggleEditVisible}>
-            <EditMetaObjectForm
-              title="Edit Object"
-              metaObject={metaObject}
-              onUpdate={obj => {
+            <ObjectForm
+              initialObject={metaObject}
+              onSubmit={obj => {
                 toggleEditVisible()
                 updateMetaObject(obj)
               }}
-              onClose={toggleEditVisible}
+              onBack={toggleEditVisible}
             />
           </Modal>
-          <AnimatePopover
-            visible={popoverVisible}
-            innerRef={iconRef}
-            padding={10}
-            containerStyle={{ zIndex: String(Zindexes.ToolBar) }}
-            onClickOutside={togglePopoverVisible}
-            content={
-              <WithBorder>
-                <ObjectActionPopover onEdit={toggleEditVisible} onClose={togglePopoverVisible} metaObjectId={metaObject.id} />
-              </WithBorder>
-            }
-            align="start"
-            positions={['left', 'right']}
-          >
-            <Icon
-              size={18}
-              fill="rgba(31,34,39,0.2)"
-              onClick={togglePopoverVisible}
-              name="park-drag"
-              className={css([
-                ClassName.circleButton(),
-                {
-                  color: 'rgba(31,34,39,0.2)',
-                  ':hover': {
-                    color: 'rgba(31,34,39,0.7)'
-                  }
-                }
-              ])}
+          {showCheckBox ? (
+            <CheckBox
+              style={{ flexShrink: 0, margin: '0px 4px' }}
+              checked={currentRelatedIds?.has(metaObject.id)}
+              onChange={handleClickCheckBox}
             />
-          </AnimatePopover>
-          {coverImgSrc && <Image src={coverImgSrc} width={50} style={{ borderRadius: 6 }} />}
-          <Content flex column gap={2}>
-            <Content
-              flex
-              gap={4}
-              className={css({
-                '> *': {
-                  fontSize: '10px !important'
-                }
-              })}
+          ) : (
+            <AnimatePopover
+              visible={popoverVisible}
+              innerRef={iconRef}
+              padding={10}
+              containerStyle={{ zIndex: String(Zindexes.ToolBar) }}
+              onClickOutside={togglePopoverVisible}
+              content={
+                <WithBorder>
+                  <ObjectActionPopover onEdit={toggleEditVisible} onClose={togglePopoverVisible} metaObjectId={metaObject.id} />
+                </WithBorder>
+              }
+              align="start"
+              positions={['left', 'right']}
             >
-              <div className={ClassName.objectTag}>{TypeToTypeName[type || 'normal']}</div>
-              {tags?.map(i => (
-                <Tag small hideDetails hideSize tag={i} />
-              ))}
-            </Content>
-            <div className={ClassName.title('14px')}>{name}</div>
-            <div className={css([ClassName.ellipsisFont(2), ClassName.description('12px')])}>{description}</div>
-          </Content>
+              <Icon
+                size={18}
+                fill="rgba(31,34,39,0.2)"
+                onClick={togglePopoverVisible}
+                name="park-drag"
+                className={css([
+                  ClassName.circleButton(),
+                  {
+                    color: 'rgba(31,34,39,0.2)',
+                    ':hover': {
+                      color: 'rgba(31,34,39,0.7)'
+                    }
+                  }
+                ])}
+              />
+            </AnimatePopover>
+          )}
+          {renderWhole({
+            titleOptions: {
+              style: {
+                fontSize: 14
+              }
+            },
+            descriptionOptions: {
+              style: {
+                fontSize: 12
+              }
+            }
+          })}
         </Content>
       )
     }

@@ -23,6 +23,7 @@ const AnimatePopover: FC<PropsWithChildren<AnimatePopoverProps>> = ({
   reposition = false,
   disableNudge = false,
   innerRef,
+  onClickOutside,
   ...rest
 }) => {
   const [isOpen, setIsOpen] = useState(false)
@@ -50,10 +51,18 @@ const AnimatePopover: FC<PropsWithChildren<AnimatePopoverProps>> = ({
       nudgedRef.current = undefined
     }
   }, [visible])
+  const handleClickOutside = (e: MouseEvent) => {
+    console.log(e)
+    if (e.path?.some(i => i instanceof HTMLElement && i.getAttribute('data-disable-close-popover') === 'true')) {
+      return
+    }
+    onClickOutside?.(e)
+  }
   if (animate) {
     return (
       <Popover
         {...rest}
+        onClickOutside={handleClickOutside}
         reposition={reposition}
         isOpen={isOpen}
         ref={mergedRef}

@@ -21,6 +21,7 @@ export interface IconProps {
   onPointerDown?: React.PointerEventHandler
   onPointerMove?: React.PointerEventHandler
   onPointerUp?: React.PointerEventHandler
+  draggable?: boolean
 }
 const Icon = forwardRef<HTMLDivElement, IconProps>(
   ({ name, size, strokeWidth, fill, spin, theme, className, cursor, color, onClick, containerClassName, containerStyle, ...rest }, ref) => {

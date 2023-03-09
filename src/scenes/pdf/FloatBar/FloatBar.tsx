@@ -12,6 +12,7 @@ import PdfOutline from './Outline'
 import PdfSearch from './Search'
 import PdfLabels from './Label'
 import { IPdfDocument } from '~/typings/data'
+import PdfShape, { PdfShapes } from './Shape'
 
 const PdfFloatBar = ({ document }: { document?: IPdfDocument }) => {
   const viewer = useViewer()
@@ -21,7 +22,7 @@ const PdfFloatBar = ({ document }: { document?: IPdfDocument }) => {
   const [popState, setPopState] = useState<
     Partial<{
       visible: boolean
-      content: 'action' | 'outline' | 'search' | 'info' | 'label'
+      content: 'action' | 'outline' | 'search' | 'info' | 'label' | 'shape'
     }>
   >({ visible: false, content: 'action' })
   const [isPan, togglePan] = useToggle(false)
@@ -78,10 +79,12 @@ const PdfFloatBar = ({ document }: { document?: IPdfDocument }) => {
         return <PdfInfo flipId={id} document={document} />
       case 'label':
         return <PdfLabels flipId={id} document={document} />
+      case 'shape':
+        return <PdfShape flipId={id} />
     }
   }
 
-  const togglePop = (content: 'action' | 'outline' | 'search' | 'info' | 'label') => {
+  const togglePop = (content: typeof popState.content) => {
     const shouldToggle = content === popState.content
     setPopState({
       visible: shouldToggle ? !popState.visible : true,
@@ -174,6 +177,13 @@ const PdfFloatBar = ({ document }: { document?: IPdfDocument }) => {
                   fill={popState.visible ? (content === 'label' ? undefined : '#DDDDDD') : undefined}
                   onClick={() => togglePop('label')}
                   name="park-label"
+                />
+              </Tooltip>
+              <Tooltip content="Shapes" position="top">
+                <Icon
+                  fill={popState.visible ? (content === 'shape' ? undefined : '#DDDDDD') : undefined}
+                  onClick={() => togglePop('shape')}
+                  name="park-graphic-design"
                 />
               </Tooltip>
             </Content>

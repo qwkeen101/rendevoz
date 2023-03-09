@@ -4,7 +4,7 @@ import Id from './id'
 
 type RequestMethod = <T = any>(url: string, options: AxiosRequestConfig<any>) => Promise<AxiosResponse<T>>
 
-const request: RequestMethod = (url: any, options: any) => {
+const request: RequestMethod = (url, options) => {
   return axiosClient({
     ...options,
     url: url,

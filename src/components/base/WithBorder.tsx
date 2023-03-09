@@ -8,10 +8,22 @@ interface WithBorderProps extends DetailedHTMLProps<HTMLAttributes<HTMLDivElemen
   className?: string
   onClick?: MouseEventHandler
   contentEditable?: boolean
+  disableClosePopover?: boolean
 }
 
 const WithBorder: FC<PropsWithChildren<WithBorderProps>> = (
-  { borderRadius = 5, boxShadowBorder = true, solidBorder = false, children, style, onClick, className, contentEditable, ...rest },
+  {
+    borderRadius = 5,
+    boxShadowBorder = true,
+    solidBorder = false,
+    disableClosePopover = false,
+    children,
+    style,
+    onClick,
+    className,
+    contentEditable,
+    ...rest
+  },
   ref
 ) => {
   const DefaultBorder: CSSProperties = {
@@ -26,7 +38,15 @@ const WithBorder: FC<PropsWithChildren<WithBorderProps>> = (
     onClick?.(e)
   }
   return (
-    <div ref={ref} {...rest} onClick={handleClick} contentEditable={contentEditable} className={className} style={DefaultBorder}>
+    <div
+      data-disable-close-popover={disableClosePopover}
+      ref={ref}
+      {...rest}
+      onClick={handleClick}
+      contentEditable={contentEditable}
+      className={className}
+      style={DefaultBorder}
+    >
       {children}
     </div>
   )

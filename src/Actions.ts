@@ -3,13 +3,11 @@ import { CustomEditor } from './components/editor/types'
 import { ID_TO_PATH_MAP, SELECTED_BLOCKS_MAP } from './components/editor/weakMaps'
 import { GlobalLayout } from './components/layout'
 import { IPdfViewer } from './pdfViewer/core/types/pdfViewer'
-import { globalStore, LabelStore } from './stores'
+import { DocumentStore, globalStore, LabelStore, NoteStore, WhiteboardStore } from './stores'
 import useBlockStore from './stores/block.store'
 import { metaObjectsAtom } from './stores/meta.store'
-import { notesAtom } from './stores/note.store'
-import Id from './utils/id'
 
-const navigateToTargetObject = (metaObjectId: number) => {
+const navigateToTargetObject = async (metaObjectId: number) => {
   const metaObject = globalStore.get(metaObjectsAtom).get(metaObjectId)
   if (!metaObject) {
     toast.error('Target Object Not Exist!')
@@ -23,27 +21,74 @@ const navigateToTargetObject = (metaObjectId: number) => {
   let hasTarget = true
   switch (metaObject.type) {
     case 'note': {
-      const note = globalStore.get(notesAtom).get(objectId)
+      const note = await NoteStore.getNoteById(objectId)
       if (!note) {
         hasTarget = false
       }
       break
     }
     case 'noteElement': {
+      const block = await NoteStore.getBlockById(objectId)
+      if (!block) {
+        hasTarget = false
+        break
+      }
+      const note = await NoteStore.getNoteById(block.noteId)
+      if (!note) {
+        hasTarget = false
+      }
       break
     }
     case 'pdf': {
+      const pdf = await DocumentStore.getDocumentById(objectId)
+      if (!pdf) {
+        hasTarget = false
+      }
       break
     }
     case 'pdfElement': {
+      const label = await LabelStore.getLabelById(objectId)
+      if (!label || !label.documentId) {
+        hasTarget = false
+        break
+      }
+      const pdf = await DocumentStore.getDocumentById(label.documentId)
+      if (!pdf) {
+        hasTarget = false
+      }
       break
     }
     case 'whiteboard': {
+      const whiteboard = await WhiteboardStore.getWhiteboardById(objectId)
+      if (!whiteboard) {
+        hasTarget = false
+      }
       break
     }
     case 'normal': {
+      const note = await NoteStore.getNoteById(objectId)
+      if (!note) {
+        hasTarget = false
+      }
       break
     }
+  }
+  if (hasTarget === false) {
+    toast.error('Target Item Not Exist!')
+    return
+  }
+  switch (metaObject.type) {
+    case 'noteElement':
+      return goToNoteBlock(objectId)
+    case 'note':
+    case 'normal':
+      return openEditor(objectId)
+    case 'pdf':
+      return openPdf(objectId)
+    case 'pdfElement':
+      return goToPdfLabel(objectId)
+    case 'whiteboard':
+      return openWhiteboard(objectId)
   }
 }
 
@@ -91,11 +136,40 @@ const goToPdfLabel = async (labelId: number) => {
     }
   }
 }
+const openHome = () => {
+  return new Promise(res => {
+    GlobalLayout?.addTab({
+      type: 'home'
+    })
+    res(null)
+  })
+}
+const openDatabase = () => {
+  return new Promise(res => {
+    GlobalLayout?.addTab({
+      type: 'database'
+    })
+    res(null)
+  })
+}
+const openWhiteboard = (whiteboardId: number) => {
+  return new Promise(res => {
+    GlobalLayout?.addTab({
+      type: 'whiteboard',
+      whiteboardId
+    })
+    res(null)
+  })
+}
 const Actions = {
   openEditor,
   goToNoteBlock,
   openPdf,
-  goToPdfLabel
+  goToPdfLabel,
+  openHome,
+  openDatabase,
+  openWhiteboard,
+  navigateToTargetObject
 }
 
 export default Actions

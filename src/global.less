@@ -13,8 +13,13 @@ input::-ms-reveal {
 }
 *,
 *::before,
-*::after {
+*::after,
+*::placeholder {
   box-sizing: border-box;
+  text-transform: capitalize;
+}
+input {
+  text-transform: none;
 }
 * {
   &::-webkit-scrollbar{

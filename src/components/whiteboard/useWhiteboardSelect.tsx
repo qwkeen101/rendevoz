@@ -1,23 +1,28 @@
 import { useMemoizedFn, useRafFn } from '@/hooks'
+import ClassName from '@/styles/classNames'
 import Id from '@/utils/id'
 import produce from 'immer'
 import { MutableRefObject, useEffect, useRef, useState } from 'react'
 import { DraggableData, Rnd } from 'react-rnd'
 import { IWhiteboardNode } from '~/typings/data/whiteboard'
-import { AnimatePopover } from '..'
+import { AnimatePopover, Icon, IconWithPopover, Tooltip, WithBorder } from '..'
 import { Box } from '../dragSelector'
 import { calculateSelectionBox } from '../dragSelector/utils/boxes'
 import { useFlow, useSetWhiteboardNodes, useWhiteboardSelectState } from './hooks'
+import { alignNodes, idToBoxMap } from './positionUtils'
 import { isPointerOnContainer, transformXY } from './utils'
 
 const useWhiteboardSelect = (containerRef: MutableRefObject<HTMLElement | null>) => {
   const [selectState, setSelectState] = useWhiteboardSelectState()
   const [multiSelectedBox, setMultiSelectedBox] = useState<Box>()
+
   const selectedOffsetRef = useRef(new Map())
   const selectBoxRef = useRef<HTMLDivElement>(null)
+  const selectedNodeIdsRef = useRef(new Set<number>())
   const flow = useFlow()
   const setNodes = useSetWhiteboardNodes()
   const multiSelectBoxRef = useRef<HTMLDivElement>()
+  const idToBoxMapRef = useRef<idToBoxMap>(new Map())
   const pointerHandler = useMemoizedFn((e: PointerEvent) => {
     if (multiSelectedBox) {
       if (e.type === 'pointerdown' && !multiSelectBoxRef.current?.contains(e.target as HTMLElement)) {
@@ -29,7 +34,7 @@ const useWhiteboardSelect = (containerRef: MutableRefObject<HTMLElement | null>)
       if (e.type === 'pointerdown') {
         // only allows pointer on container to select
         if (!isPointerOnContainer(e)) return
-        console.log('pointerdown')
+        idToBoxMapRef.current.clear()
         flow.isSelecting = true
         const transformedXY = transformXY(containerRef.current.getBoundingClientRect(), e.clientX, e.clientY, flow.containerTransformScale)
         transformedXY &&
@@ -40,7 +45,17 @@ const useWhiteboardSelect = (containerRef: MutableRefObject<HTMLElement | null>)
       }
       if (e.type === 'pointerup') {
         flow.isSelecting = false
-
+        flow.selectedNodeIds.forEach(id => {
+          const node = flow.ID_TO_NODE_ELEMENT_MAP.get(id)?.getNode()
+          if (node && node.width && node.height) {
+            idToBoxMapRef.current.set(id, {
+              width: node.width,
+              height: node.height,
+              left: node.x,
+              top: node.y
+            })
+          }
+        })
         setSelectState({
           isSelecting: false
         })
@@ -56,6 +71,7 @@ const useWhiteboardSelect = (containerRef: MutableRefObject<HTMLElement | null>)
   const rafSelect = useRafFn((e: PointerEvent) => {
     const containerBound = containerRef.current?.getBoundingClientRect()
     if (!containerBound) return
+    selectedNodeIdsRef.current.clear()
     const transformedXY = transformXY(containerBound, e.clientX, e.clientY, flow.containerTransformScale)
     if (transformedXY) {
       flow.selectEndPoint = {
@@ -84,6 +100,7 @@ const useWhiteboardSelect = (containerRef: MutableRefObject<HTMLElement | null>)
             minY = Math.min(minY, box.top)
             maxX = Math.max(maxX, box.left + box.width)
             maxY = Math.max(maxY, box.top + box.height)
+            selectedNodeIdsRef.current.add(id)
           })
           const width = maxX - minX + 20
           const height = maxY - minY + 20
@@ -157,6 +174,12 @@ const useWhiteboardSelect = (containerRef: MutableRefObject<HTMLElement | null>)
             x: data.x + offset.left,
             y: data.y + offset.top
           }
+          idToBoxMapRef.current.set(id, {
+            left: newNode.x,
+            top: newNode.y,
+            width: newNode.width!,
+            height: newNode.height!
+          })
           draft.set(id, newNode)
         })
       })
@@ -164,7 +187,6 @@ const useWhiteboardSelect = (containerRef: MutableRefObject<HTMLElement | null>)
   }
   const updateMultiStyle = (data: DraggableData) => {
     const map = selectedOffsetRef.current
-
     flow.selectedNodeIds.forEach(id => {
       const nodeEle = flow.ID_TO_NODE_ELEMENT_MAP.get(id)?.element
       if (nodeEle) {
@@ -175,75 +197,166 @@ const useWhiteboardSelect = (containerRef: MutableRefObject<HTMLElement | null>)
     })
   }
   const rafUpdateMultiStyle = useRafFn(updateMultiStyle)
+
+  const handleAlignNodes = (alignment: Parameters<typeof alignNodes>[0]) => {
+    const idToBoxMap = alignNodes(alignment, idToBoxMapRef.current)
+    setNodes(nodes =>
+      produce(nodes, draft => {
+        idToBoxMap.forEach((box, id) => {
+          const origin = nodes.get(id)!
+          draft.set(id, {
+            ...origin,
+            width: box.width,
+            height: box.height,
+            x: box.left,
+            y: box.top
+          })
+        })
+      })
+    )
+  }
   const renderMultiSelectBox = () => {
     if (multiSelectedBox) {
       const { left, top, width, height } = multiSelectedBox
       return (
-        <Rnd
-          ref={node => {
-            multiSelectBoxRef.current = node?.getSelfElement()
-          }}
-          enableResizing={false}
-          size={{ width, height }}
-          position={{ x: left, y: top }}
-          onDragStart={() => {
-            flow.isMovingMultiSelectBox = true
-          }}
-          onMouseUp={e => {
-            e.stopPropagation()
-          }}
-          onDrag={(e, data) => rafUpdateMultiStyle(data)}
-          onDragStop={(e, data) => {
-            flow.isMovingMultiSelectBox = false
-            updateMulti(data)
-            setMultiSelectedBox(b => ({
-              ...b,
-              left: data.x,
-              top: data.y
-            }))
-          }}
-          style={{
-            background: 'rgba(0,0,0,0.1)',
-            outline: '1px solid #8590ae',
-            zIndex: 11,
-            borderRadius: 8
-          }}
-          scale={flow.containerTransformScale}
-        >
+        <>
           <AnimatePopover
             positions={['top', 'bottom']}
+            padding={10}
             content={
-              <div
-                onClick={() => {
-                  setNodes(nodes =>
-                    produce(nodes, draft => {
-                      const groupNodeId = Id.getId()
-                      draft.set(groupNodeId, {
-                        id: groupNodeId,
-                        type: 'group',
-                        x: left,
-                        y: top,
-                        width,
-                        height,
-                        name: 'Unnamed Group'
-                      })
-                    })
-                  )
-                }}
-              >
-                group
-              </div>
+              <WithBorder style={{ display: 'flex', gap: 4, padding: 4 }} onPointerUp={e => e.stopPropagation()}>
+                <Tooltip content="Delete">
+                  <Icon
+                    className={ClassName.circleButton(undefined, 4)}
+                    onClick={() => {
+                      setNodes(nodes =>
+                        produce(nodes, draft => {
+                          selectedNodeIdsRef.current.forEach(id => {
+                            draft.delete(id)
+                          })
+                        })
+                      )
+                      setMultiSelectedBox(undefined)
+                    }}
+                    name="park-delete"
+                  />
+                </Tooltip>
+                <Tooltip content="Group">
+                  <Icon
+                    className={ClassName.circleButton(undefined, 4)}
+                    onClick={() => {
+                      setMultiSelectedBox(undefined)
+                      setNodes(nodes =>
+                        produce(nodes, draft => {
+                          const groupNodeId = Id.getId()
+                          draft.set(groupNodeId, {
+                            id: groupNodeId,
+                            type: 'group',
+                            x: left,
+                            y: top,
+                            width,
+                            height,
+                            name: 'Unnamed Group'
+                          })
+                        })
+                      )
+                    }}
+                    name="park-group"
+                  />
+                </Tooltip>
+                <Tooltip content="Align">
+                  <IconWithPopover
+                    name="park-left-alignment"
+                    content={
+                      <WithBorder style={{ padding: '4px', width: 200 }}>
+                        <div onClick={() => handleAlignNodes('left')} className={ClassName.flatButton()}>
+                          Align Left
+                        </div>
+                        <div onClick={() => handleAlignNodes('right')} className={ClassName.flatButton()}>
+                          Align Right
+                        </div>
+                        <div onClick={() => handleAlignNodes('top')} className={ClassName.flatButton()}>
+                          Align Top
+                        </div>
+                        <div onClick={() => handleAlignNodes('bottom')} className={ClassName.flatButton()}>
+                          Align Bottom
+                        </div>
+                        <div
+                          className={ClassName.flatButton()}
+                          onClick={() => {
+                            setNodes(nodes =>
+                              produce(nodes, draft => {
+                                idToBoxMapRef.current.forEach((box, id) => {
+                                  const origin = nodes.get(id)!
+                                  draft.set(id, {
+                                    ...origin,
+                                    width: box.width,
+                                    height: box.height,
+                                    x: box.left,
+                                    y: box.top
+                                  })
+                                })
+                              })
+                            )
+                          }}
+                        >
+                          Cancel Align
+                        </div>
+                      </WithBorder>
+                    }
+                  ></IconWithPopover>
+                </Tooltip>
+              </WithBorder>
             }
-            visible={true}
+            visible={multiSelectedBox && !selectState.isSelecting}
           >
             <div
               style={{
-                width: '100%',
-                height: '100%'
+                position: 'absolute',
+                left,
+                top,
+                width,
+                height
               }}
             ></div>
           </AnimatePopover>
-        </Rnd>
+          <Rnd
+            ref={node => {
+              multiSelectBoxRef.current = node?.getSelfElement()
+            }}
+            enableResizing={false}
+            size={{ width, height }}
+            position={{ x: left, y: top }}
+            onMouseUp={e => {
+              e.stopPropagation()
+            }}
+            onDragStart={() => {
+              idToBoxMapRef.current.clear()
+            }}
+            onDrag={(e, data) => {
+              flow.isMovingMultiSelectBox = true
+              rafUpdateMultiStyle(data)
+            }}
+            onDragStop={(e, data) => {
+              if (flow.isMovingMultiSelectBox) {
+                updateMulti(data)
+                setMultiSelectedBox(b => ({
+                  ...b,
+                  left: data.x,
+                  top: data.y
+                }))
+              }
+              flow.isMovingMultiSelectBox = false
+            }}
+            style={{
+              background: 'rgba(0,0,0,0.1)',
+              outline: '1px solid #8590ae',
+              zIndex: 11,
+              borderRadius: 8
+            }}
+            scale={flow.containerTransformScale}
+          ></Rnd>
+        </>
       )
     }
   }

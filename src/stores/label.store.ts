@@ -30,40 +30,7 @@ export const documentIdToLabelsMapAtom = atom(get => {
   })
   return map
 })
-export const jumpToTargetLabel = (labelId: number, navigate) => {
-  const label = globalStore.get(labelsAtom).get(labelId)
-  if (!label) {
-    toast.error("Target label doesn't exist!")
-    return
-  }
-  const page = label.page
-  const documentId = label.documentId
-  if (page === undefined) {
-    navigate(`/pdf/${label.documentId}`)
-    toast.error('Page not found!')
-    return
-  }
-  if (GlobalInstances.pdfInstances.filter(i => i.pdfId === documentId).length === 0) {
-    navigate(`/pdf/${documentId}`)
-  }
-  const goToPage = () => {
-    if (GlobalInstances.pdfInstances.filter(i => i.pdfId === documentId).length > 0) {
-      GlobalInstances.pdfInstances
-        .filter(i => i.pdfId === documentId)
-        .forEach(i => {
-          console.log(i.pdfId)
-          if (i.viewerRef.current) {
-            i.viewerRef.current.jumpToPage(page)
-          } else {
-            requestIdleCallback(goToPage)
-          }
-        })
-    } else {
-      requestIdleCallback(goToPage)
-    }
-  }
-  goToPage()
-}
+
 const useLabelStore = () => {
   const database = useDb('labels')
   const store = initializeLocalStore<ILabel>(labelsAtom, database)

@@ -1,7 +1,5 @@
 import * as React from 'react'
 import { motion } from 'framer-motion'
-import styles from './index.module.less'
-import NavLinkWithChildren from '../../base/navLink'
 import { css } from '@emotion/css'
 import ClassName from '@/styles/classNames'
 
@@ -26,39 +24,13 @@ export const MenuItem = React.forwardRef(
   (
     {
       children,
-      to,
       onClick,
       style,
       className
     }: { className?: string; children: React.ReactNode; to?: string; onClick?: React.MouseEventHandler; style?: React.CSSProperties },
     ref: React.ForwardedRef<HTMLLIElement>
   ) => {
-    return to ? (
-      <NavLinkWithChildren to={to}>
-        {match => (
-          <motion.li
-            ref={ref}
-            className={css([
-              className,
-              ClassName.ellipsisFont(1),
-              ClassName.defaultFont(),
-              ClassName.flatButton(),
-              ClassName.flexLayout('center', 'flex-start'),
-              {
-                minWidth: 150,
-                cursor: 'pointer',
-                userSelect: 'none',
-                color: '#5f6065'
-              }
-            ])}
-            variants={variants}
-            style={style}
-          >
-            {children}
-          </motion.li>
-        )}
-      </NavLinkWithChildren>
-    ) : (
+    return (
       <motion.li
         style={style}
         ref={ref}

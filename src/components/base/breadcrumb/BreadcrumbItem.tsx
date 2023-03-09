@@ -1,5 +1,4 @@
 import { FC } from 'react'
-import NavLinkWithChildren from '../navLink'
 import styles from './index.module.less'
 import classnames from 'classnames'
 import Content from '../Content'
@@ -16,16 +15,10 @@ interface ButtonItem {
   children: React.ReactNode
   onClick: () => void
 }
-interface RouteItem {
-  type: 'route'
-  onClick?: never
-  to: string
-  children: (match: boolean) => React.ReactNode
-}
 
-export type BreadcrumbItemProps = CommonItem & (ButtonItem | RouteItem)
+export type BreadcrumbItemProps = CommonItem & ButtonItem
 
-const BreadcrumbItem: FC<BreadcrumbItemProps> = ({ type, to, onClick, children, separator = '/', style, className }) => {
+const BreadcrumbItem: FC<BreadcrumbItemProps> = ({ type, onClick, children, separator = '/', style, className }) => {
   const { primaryColor, defaultFontColorGrey } = useTheme('primaryColor', 'defaultFontColorGrey')
   const clazzName = classnames(className, styles.item, css({ color: primaryColor, ':hover': { color: defaultFontColorGrey } }))
   let item = null
@@ -36,9 +29,6 @@ const BreadcrumbItem: FC<BreadcrumbItemProps> = ({ type, to, onClick, children, 
           {children}
         </span>
       )
-      break
-    case 'route':
-      item = <NavLinkWithChildren to={to}>{match => <>{children(match)}</>}</NavLinkWithChildren>
       break
     default:
       break

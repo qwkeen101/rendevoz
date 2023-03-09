@@ -5,16 +5,15 @@ import { globalStore } from '@/stores'
 import { css } from '@emotion/css'
 import { useAtomValue } from 'jotai'
 import { useRef, useMemo, FC } from 'react'
-import { useNavigate } from 'react-router-dom'
 import { useToggle } from '@/hooks'
 import { IconNameItem } from '../SidebarCollection'
 import useSidebarItemContextMenu from '../useSidebarItemContextMenu'
 import useSidebarItemDrag from '../useSidebarItemDrag'
 import { ISidebarItem } from './type'
 import { selectAtom } from 'jotai/utils'
+import Actions from '@/Actions'
 
 const SidebarNoteItem: FC<ISidebarItem> = ({ id, parentId, parentType, draggable = true }) => {
-  const navigate = useNavigate()
   const ref = useRef<HTMLDivElement>(null)
   const noteAtom = useMemo(() => selectAtom(notesAtom, n => n.get(id)), [id])
   const note = useAtomValue(noteAtom, { store: globalStore })
@@ -52,7 +51,7 @@ const SidebarNoteItem: FC<ISidebarItem> = ({ id, parentId, parentType, draggable
       flex
       gap={10}
       ref={ref}
-      onClick={() => navigate(`/editor/${id}`)}
+      onClick={() => Actions.openEditor(id)}
       className={css({
         cursor: 'pointer',
         transition: 'all 0.2s ease',

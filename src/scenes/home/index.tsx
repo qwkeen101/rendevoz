@@ -1,12 +1,8 @@
-import Container from '@/components/base/container'
-import DocumentDetails from '@/components/documentDetail'
-import { FC, useCallback, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { Container } from '@/components'
+import { FC, useState } from 'react'
 import { RecentlyAddCard, RecentlyVisitCard } from './Card'
-import { motion, PanInfo, useDragControls } from 'framer-motion'
 import styles from './index.module.less'
 import { Content } from '@/components'
-import { useGlobalLocation } from '@/routes/globalLocation'
 import { css } from '@emotion/css'
 import { useTheme } from '@/hooks'
 import { undeletedNotesAtom } from '@/stores/note.store'
@@ -16,11 +12,14 @@ import { useAtomValue } from 'jotai/react'
 import { globalStore } from '@/stores'
 import { useMeasure } from 'react-use'
 import { useTranslation } from 'react-i18next'
+import TabTitle from '@/components/layout/TabTitle'
 
 export const HomePage: FC = () => {
   const { defaultBackgroundColor } = useTheme('defaultBackgroundColor')
+  const { t } = useTranslation()
   return (
     <Container className={css({ background: defaultBackgroundColor, userSelect: 'none' })} auto column>
+      <TabTitle title={t('general.home')} />
       <Content className={styles.body}>
         <HomeBrief />
         <DocumentCard />

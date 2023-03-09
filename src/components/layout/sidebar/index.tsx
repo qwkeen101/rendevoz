@@ -32,6 +32,7 @@ export const Sidebar: FC = () => {
         position={{ x: 0, y: 0 }}
         className={styles.rnd}
         disableDragging
+        style={{ pointerEvents: collapsed ? 'none' : 'auto' }}
         enableResizing={{ right: hovered || !collapsed }}
         maxWidth={380}
         onResizeStart={() => {
@@ -96,7 +97,8 @@ export const Sidebar: FC = () => {
                   top: '50%',
                   transform: 'translateY(-50%)',
                   boxShadow: 'rgba(0, 0, 0, 0.35) 0px 5px 15px',
-                  overflow: 'hidden'
+                  overflow: 'hidden',
+                  pointerEvents: 'auto'
                 }
               : undefined
           }

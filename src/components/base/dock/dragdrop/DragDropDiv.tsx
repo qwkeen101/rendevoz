@@ -62,9 +62,10 @@ export class DragDropDiv extends React.PureComponent<DragDropDivProps, any> {
   baseY2: number
   baseDis: number
   baseAng: number
-
+  pointerDownTime = 0
   onPointerDown = (e: React.MouseEvent | React.TouchEvent) => {
     const nativeTarget = e.nativeEvent.target as HTMLElement
+    this.pointerDownTime = Date.now()
     if (
       nativeTarget instanceof HTMLInputElement ||
       nativeTarget instanceof HTMLTextAreaElement ||
@@ -158,7 +159,13 @@ export class DragDropDiv extends React.PureComponent<DragDropDivProps, any> {
     return true
   }
 
+  checkCanMove = () => {
+    const now = Date.now()
+    if (now - this.pointerDownTime > 100) return true
+    return false
+  }
   onMouseMove = (e: MouseEvent) => {
+    if (!this.checkCanMove()) return
     const { onDragMoveT } = this.props
     if (this.waitingMove) {
       if (DragManager.isDragging()) {
@@ -179,6 +186,7 @@ export class DragDropDiv extends React.PureComponent<DragDropDivProps, any> {
   }
 
   onTouchMove = (e: TouchEvent) => {
+    if (!this.checkCanMove()) return
     const { onDragMoveT } = this.props
     if (this.waitingMove) {
       if (DragManager.isDragging()) {

@@ -11,10 +11,10 @@ import { toast } from 'react-hot-toast'
 import { Node } from 'slate'
 import { MetaLink, MetaObject } from '~/typings/data'
 import Modal from '../base/Modal'
-import EditMetaObjectForm from '../form/EditMetaObjectForm'
 import getSetting from '../globalSetting/getSetting'
 import { intersectionOfMultipleSets } from '../database/filter/useObjectFilter'
-import { AvaliableGlobalDraggingElements, GlobalDragOverlayInstance } from './GlobalDragOverlay'
+import { AvaliableGlobalDraggingElements } from './GlobalDragOverlay'
+import ObjectForm from '../form/ObjectForm'
 
 const useOverlayDrop = () => {
   const emitter = useGlobalEventEmitter()
@@ -41,7 +41,7 @@ const useOverlayDrop = () => {
       }
       const allPendingLinks = [...preLinks, postLink].filter(i => i !== undefined && i.sourceId && i.targetId) as PartialWithId<MetaLink>[]
 
-      if (shouldOpenEditMetaModal === false && alreadyHasMeta) {
+      if (shouldOpenEditMetaModal === false || alreadyHasMeta) {
         res?.(normalizedMetaObject)
         allPendingLinks.forEach(i => addMetaLink(i))
         return
@@ -152,8 +152,8 @@ const useOverlayDrop = () => {
         } else {
           normalizedMetaObject.type = 'pdfElement'
           normalizedMetaObject.objectId = dragElement.labelId
-          normalizedMetaObject.name = dragElement.content.slice(0, 50) || 'Unnamed object'
-          const shouldConcat = dragElement.content.length > 50
+          normalizedMetaObject.name = dragElement.content?.slice(0, 50) || 'Unnamed Label'
+          const shouldConcat =  dragElement.content && dragElement.content?.length > 50
           if (shouldConcat) {
             normalizedMetaObject.name = normalizedMetaObject.name.concat('...')
           }
@@ -249,14 +249,14 @@ const useOverlayDrop = () => {
   }
   const renderMetaForm = () => {
     return (
-      <EditMetaObjectForm
-        isCreating
-        onClose={() => {
+      <ObjectForm
+        onBack={() => {
           toggleEditMetaVisible(false)
           const promise = promiseRef.current
           pendingLinks?.forEach(l => {
             l.id && deleteMetaLink(l.id, true, true)
           })
+          console.log(metaObject)
           metaObject?.id && deleteMetaObject(metaObject?.id, true, true)
           if (promise) {
             promise.rej?.(null)
@@ -264,8 +264,8 @@ const useOverlayDrop = () => {
           promiseRef.current = undefined
         }}
         shouldPreviewGraph={pendingLinks.length > 0}
-        metaObject={metaObject}
-        onUpdate={async obj => {
+        initialObject={metaObject}
+        onSubmit={async obj => {
           // give a new id to prevent hooks order change of get meta target obj
           if (metaObject) {
             const newMetaObj = Object.assign(metaObject, obj)

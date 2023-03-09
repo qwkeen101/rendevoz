@@ -7,10 +7,10 @@ import { css } from '@emotion/css'
 import { useAtomValue } from 'jotai/react'
 import { atom } from 'jotai/vanilla'
 import { useMemo } from 'react'
-import { useNavigate } from 'react-router-dom'
 import { RenderElementProps } from 'slate-react'
 import { PdfElement } from '../../types/commonElementTypes'
 import NoteCard from '../cards/NoteCard'
+import Actions from '@/Actions'
 
 const PdfMedia = ({ element, children }: Omit<RenderElementProps, 'attributes'>) => {
   const ele = element as PdfElement
@@ -18,13 +18,10 @@ const PdfMedia = ({ element, children }: Omit<RenderElementProps, 'attributes'>)
   const documentAtom = useMemo(() => atom(get => get(documentsAtom).get(ele.pdfId)), [ele.pdfId])
   const document = useAtomValue(documentAtom, { store: globalStore })
 
-  const navigate = useNavigate()
   const renderMain = () => (
     <Content flex column gap={5}>
       <div
-        onClick={() => {
-          navigate(`/pdf/${document?.id}`)
-        }}
+        onClick={() => document?.id && Actions.openPdf(document?.id)}
         className={css([
           ClassName.title(),
           ClassName.animatedBorderBottom(-2, 0, 1, 'rgba(0,0,0,0.4)'),
@@ -46,9 +43,7 @@ const PdfMedia = ({ element, children }: Omit<RenderElementProps, 'attributes'>)
   const renderLineMain = () => (
     <Content flex auto alignItems="center" justifyContent="space-between" gap={20}>
       <Content
-        onClick={() => {
-          navigate(`/pdf/${document?.id}`)
-        }}
+        onClick={() => document?.id && Actions.openPdf(document?.id)}
         className={css([
           ClassName.animatedBorderBottom(-1, 0, 1, element.color),
           {

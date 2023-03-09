@@ -4,7 +4,7 @@ import { useMergedRef } from '@/hooks'
 import Zindexes from '@/consts/zindex'
 
 interface ToolTipProps {
-  content: string | ReactNode
+  content?: string | ReactNode
   position?: 'top' | 'bottom'
   style?: CSSProperties
   delay?: number
@@ -87,7 +87,7 @@ const ToolTip: FC<PropsWithChildren<ToolTipProps>> = ({ content, children, posit
           content={renderContent()}
           positions={[position]}
           innerRef={mergedRef}
-          visible={content && open}
+          visible={content && open && !disable}
         >
           {renderChildren()}
         </AnimatePopover>

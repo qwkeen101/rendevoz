@@ -39,7 +39,7 @@ export const PdfViewer: FC<PdfViewerProps> = memo(({ documentId, innerRef, trans
   const documentRef = useRef<PDFDocumentProxy>()
   // context event emitter
 
-  usePdfDrag(viewboxRef.current)
+  usePdfDrag(viewboxRef.current, documentId)
   const viewer = useMemo(() => {
     const viewer = createPdfViewer()
     const currTime = Date.now()

@@ -1,5 +1,7 @@
 {
     "general": {
+        "home": "主页",
+        "database": "数据库",
         "note": "笔记",
         "document": "文档",
         "whiteboard": "白板",
@@ -13,7 +15,7 @@
         "unpin": "取消收藏",
         "edit": "修改",
         "create": "创建",
-        "pdf": "Pdf",
+        "pdf": "PDF",
         "subcollection": "子文件夹",
         "icon": "图标",
         "color": "颜色",
@@ -23,15 +25,59 @@
         "label": "标记",
         "customize": "自定义",
         "untitled": "未命名",
-        "copy": "复制"
+        "copy": "复制",
+        "graph": "节点图",
+        "image": "图片",
+        "add": "添加",
+        "pdf label": "PDF标签",
+        "note block": "笔记块",
+        "video": "视频",
+        "audio": "音频",
+        "filter": "筛选",
+        "one": "一个",
+        "create time": "创建时间",
+        "type": "类型",
+        "related objects": "相关实体",
+        "related": "相关",
+        "email": "邮件",
+        "password": "密码",
+        "email address": "邮箱地址"
+    },
+    "dock": {
+        "close": "关闭标签页",
+        "close other tabs": "关闭其他标签页",
+        "close right side tabs": "关闭右侧标签页"
+    },
+    "login": {
+        "login": "登录",
+        "please input your email address": "请输入邮箱地址",
+        "please input your password": "请输入密码",
+        "continue with email": "通过邮箱继续",
+        "validating email": "验证邮箱地址中",
+        "sending verification code":"发送验证代码中",
+        "verify code": "验证代码",
+        "verification code": "验证码",
+        "please input code": "请输入验证码",
+        "password length must be greater than 6 digits": "密码长度必须大于6位",
+        "welcome to rendevoz": "欢迎来到Rendevoz",
+        "failed to get user details": "获取用户信息失败",
+        "failed to login": "登录失败",
+        "verification code has been sent to your account, please check it": "验证码已经发送到您的邮箱，请查收",
+        "failed to send email": "发送邮件失败",
+        "invalid Email": "无效的邮箱地址",
+        "failed to verify code": "验证代码失败",
+        "email address not exist": "邮箱地址不存在",
+        "retrieving user details": "获取用户资料中",
+        "sign up": "注册",
+        "verifing code": "验证代码中"
     },
     "home":{
         "recently read": "最近阅读",
         "recently add": "最近添加",
         "notes": "笔记",
         "books": "书籍",
-        "objects": "对象",
-        "links": "连接",
+        "objects": "实体",
+        "links": "链接",
         "ago": "{{time}} 前"
     },
     "sidebar":{
@@ -51,8 +97,8 @@
         "note": "笔记",
         "pdf": "Pdf",
         "whiteboard": "白板",
-        "unpin": "取消收藏",
-        "create new collection": "创建新的文件夹"
+        "create new collection": "创建新的文件夹",
+        "unpin": "取消收藏"
     },
     "editor": {
         "placeholder": "Input something",
@@ -123,7 +169,8 @@
         "update item details": "修改{{item}}资料",
         "most used tags": "最常使用{{tags}}",
         "you can select multiple tags": "你可以选择多个{{tags}}",
-        "select tags": "选择{{tags}}"
+        "select tags": "选择{{tags}}",
+        "preview graph": "预览{{graph}}"
     },
     "footer":{
         "back": "返回",
@@ -164,6 +211,9 @@
         "submit": "Submit",
         "choose": "Choose",
         "collections": "Collections",
-        "new collection": "New collection"
+        "new collection": "New collection",
+        "object panel": "{{object}}面板",
+        "search for object": "搜索{{object}}",
+        "choose one filter": "{{choose}}{{one}}{{filter}}"
     }
 }

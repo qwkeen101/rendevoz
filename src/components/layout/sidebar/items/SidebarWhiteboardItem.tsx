@@ -7,7 +7,6 @@ import { AnimatePresence, motion } from 'framer-motion'
 import { useAtomValue } from 'jotai'
 import { selectAtom } from 'jotai/utils'
 import { FC, memo, useMemo, useRef } from 'react'
-import { useNavigate } from 'react-router-dom'
 import { ICollectionItem } from '~/typings/data'
 import { IconNameItem } from '../SidebarCollection'
 import useSidebarItemDrag from '../useSidebarItemDrag'
@@ -16,9 +15,9 @@ import SidebarNoteItem from './SidebarNoteItem'
 import { ISidebarItem } from './type'
 import { WhiteboardStore } from '@/stores'
 import useSidebarItemContextMenu from '../useSidebarItemContextMenu'
+import Actions from '@/Actions'
 
 const SidebarWhiteboardItem: FC<ISidebarItem> = memo(({ id, parentId, parentType, draggable = true }) => {
-  const navigate = useNavigate()
   const thisWhiteboardAtom = useMemo(() => selectAtom(whiteboardsAtom, w => w.get(id)), [id])
   const whiteboard = useAtomValue(thisWhiteboardAtom)
   const items = whiteboard?.items
@@ -58,6 +57,7 @@ const SidebarWhiteboardItem: FC<ISidebarItem> = memo(({ id, parentId, parentType
       onDelete: () => whiteboard && deleteWhiteboard(id)
     }
   )
+  if (!whiteboard || whiteboard.deleted) return null
   return (
     <>
       <Modal visible={editModalVisible} onClose={toggleEditModalVisible} noStyle>
@@ -101,7 +101,7 @@ const SidebarWhiteboardItem: FC<ISidebarItem> = memo(({ id, parentId, parentType
           name="park-right-one"
         />
         <IconNameItem
-          onClick={() => navigate(`/whiteboard/${id}`)}
+          onClick={() => Actions.openWhiteboard(id)}
           name={whiteboard?.name || 'Unnamed Whiteboard'}
           color={whiteboard?.color}
           icon={whiteboard?.icon || 'park-new-computer'}

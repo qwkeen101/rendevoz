@@ -3,7 +3,7 @@ import TimePicker from '@/components/base/TimePicker'
 import { Tag } from '@/components/form/EditMetaObjectForm'
 import Zindexes from '@/consts/zindex'
 import { useToggle } from '@/hooks'
-import { tagToMetaObjectIdsMapAtom } from '@/stores/meta.store'
+import { indexedMetaObjectsAtom, metaObjectsAtom, tagToMetaObjectIdsMapAtom } from '@/stores/meta.store'
 import { globalStore } from '@/stores'
 import ClassName from '@/styles/classNames'
 import DateFormat from '@/utils/dateFormat'
@@ -11,103 +11,160 @@ import Id from '@/utils/id'
 import { css } from '@emotion/css'
 import { subDays, subMonths, subYears } from 'date-fns'
 import produce from 'immer'
-import { useAtom, useAtomValue, useStore } from 'jotai/react'
-import { useMemo, useState } from 'react'
+import { useAtom, useAtomValue, useSetAtom, useStore } from 'jotai/react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { MetaObject } from '~/typings/data'
 import { TypeToTypeName } from '../card/DatabaseCard'
-import { FilterDateIntervalsAtom, FilterSelectedTagsAtom, FilterTypesAtom } from './useObjectFilter'
+import {
+  CurrentFocusFilterAtom,
+  FilterDateIntervalsAtom,
+  FilterRelatedIdsAtom,
+  FilterSelectedTagsAtom as FilterSelectedTagsMapAtom,
+  FilterTypesAtom,
+  RealFilterRelatedIdsAtom
+} from './useObjectFilter'
+import { selectAtom } from 'jotai/utils'
+import { useTranslation } from 'react-i18next'
+import { useGlobalAtomValue } from '@/jotai/jotaiScope'
+import { atom } from 'jotai'
 
-type FilterType = 'tag' | 'type' | 'createdAt' | 'relatedObjectsSize' | 'addOne'
+export type FilterType = 'tag' | 'type' | 'createdAt' | 'relatedObjectsSize' | 'addOne' | 'related'
 
+const filterContainerClassName = (focused: boolean) =>
+  css({
+    border: focused ? '1px solid #8590ae' : '1px solid rgba(0,0,0,0.1)',
+    transition: 'all 0.3s ease',
+    cursor: 'pointer',
+    borderRadius: 999,
+    padding: '4px 8px'
+  })
+const FiltersAtom = atom<
+  {
+    id: number
+    filterType: FilterType
+    initialOpen: boolean
+  }[]
+>([])
 const DatabaseFilter = () => {
-  const [filters, setFilters] = useState<
-    {
-      id: number
-      filterType: FilterType
-    }[]
-  >([])
+  const [filters, setFilters] = useAtom(FiltersAtom)
   const [chooseFilterVisible, toggleChooseFilterVisible] = useToggle(false)
+  const setCurrentFocusFilter = useSetAtom(CurrentFocusFilterAtom)
+  const { t } = useTranslation()
   const addFilter = (type: FilterType) => {
-    setFilters([...filters, { id: Id.getId(), filterType: type }])
+    const id = Id.getId()
+    setFilters([...filters, { id, filterType: type, initialOpen: true }])
     toggleChooseFilterVisible(false)
+    if (type === 'related') {
+      setCurrentFocusFilter({
+        id: id,
+        type: 'related'
+      })
+    }
   }
   return (
     <Content flex gap={10} style={{ flexWrap: 'wrap', alignItems: 'stretch' }}>
       {filters.map(i => (
         <Filter
+          id={i.id}
           onClose={() => {
             const idx = filters.findIndex(o => o === i)
             filters.splice(idx, 1)
             setFilters([...filters])
           }}
+          initialOpen={i.initialOpen}
           filterType={i.filterType}
           key={i.id}
         ></Filter>
       ))}
-      {filters.length !== 3 && (
-        <AnimatePopover
-          align="start"
-          visible={chooseFilterVisible}
-          positions={['bottom']}
-          onClickOutside={toggleChooseFilterVisible}
-          containerStyle={{ zIndex: String(Zindexes.ToolBar) }}
-          content={
-            <WithBorder style={{ padding: 6, width: 200, fontFamily: 'Muli' }}>
-              <div style={{ marginLeft: 10 }} className={ClassName.description()}>
-                Choose One Filter
-              </div>
-              {!filters.some(i => i.filterType === 'createdAt') && (
-                <Content flex gap={6} className={ClassName.flatButton()} onClick={() => addFilter('createdAt')}>
-                  <Icon name="park-time" />
-                  Create Time
-                </Content>
-              )}
-              {!filters.some(i => i.filterType === 'tag') && (
-                <Content flex gap={6} className={ClassName.flatButton()} onClick={() => addFilter('tag')}>
-                  <Icon name="park-tag-one" />
-                  Tags
-                </Content>
-              )}
-              {!filters.some(i => i.filterType === 'type') && (
-                <Content flex gap={6} className={ClassName.flatButton()} onClick={() => addFilter('type')}>
-                  <Icon name="park-info" />
-                  Type
-                </Content>
-              )}
-            </WithBorder>
-          }
+      <AnimatePopover
+        align="start"
+        visible={chooseFilterVisible}
+        positions={['bottom']}
+        onClickOutside={toggleChooseFilterVisible}
+        containerStyle={{ zIndex: String(Zindexes.ToolBar) }}
+        content={
+          <WithBorder style={{ padding: 6, width: 200, fontFamily: 'Muli' }} className={css({ '> div': { textTransform: 'capitalize' } })}>
+            <div style={{ marginLeft: 10 }} className={ClassName.description()}>
+              {t('dialog.choose one filter', { choose: t('general.choose'), one: t('general.one'), filter: t('general.filter') })}
+            </div>
+            {!filters.some(i => i.filterType === 'createdAt') && (
+              <Content flex gap={6} className={ClassName.flatButton()} onClick={() => addFilter('createdAt')}>
+                <Icon name="park-time" />
+                {t('general.create time')}
+              </Content>
+            )}
+            <Content flex gap={6} className={ClassName.flatButton()} onClick={() => addFilter('tag')}>
+              <Icon name="park-tag-one" />
+              {t('general.tags')}
+            </Content>
+            {!filters.some(i => i.filterType === 'type') && (
+              <Content flex gap={6} className={ClassName.flatButton()} onClick={() => addFilter('type')}>
+                <Icon name="park-info" />
+                {t('general.type')}
+              </Content>
+            )}
+            <Content flex gap={6} className={ClassName.flatButton()} onClick={() => addFilter('related')}>
+              <Icon name="park-share-one" />
+              {t('general.related objects')}
+            </Content>
+          </WithBorder>
+        }
+      >
+        <Content
+          flex
+          gap={6}
+          alignItems="center"
+          className={ClassName.flatButton()}
+          style={{
+            borderRadius: 999,
+            padding: '4px 12px',
+            border: '1px solid rgba(0,0,0,0.1)',
+            fontFamily: 'Muli',
+            textTransform: 'capitalize'
+          }}
+          onClick={toggleChooseFilterVisible}
         >
-          <Content
-            flex
-            gap={6}
-            alignItems="center"
-            className={ClassName.flatButton()}
-            style={{
-              borderRadius: 999,
-              padding: '4px 12px',
-              border: '1px solid rgba(0,0,0,0.1)',
-              fontFamily: 'Muli'
-            }}
-            onClick={toggleChooseFilterVisible}
-          >
-            Add Filter
-            <Icon name="park-plus" />
-          </Content>
-        </AnimatePopover>
-      )}
+          {`${t('general.add')} ${t('general.filter')}`}
+          <Icon name="park-plus" />
+        </Content>
+      </AnimatePopover>
     </Content>
   )
 }
 
-const Filter = ({ filterType, onClose }: { filterType: FilterType; onClose: VoidFunction }) => {
+const Filter = ({
+  filterType,
+  onClose,
+  id,
+  initialOpen
+}: {
+  filterType: FilterType
+  onClose: VoidFunction
+  id: number
+  initialOpen: boolean
+}) => {
+  const setFilters = useSetAtom(FiltersAtom)
+  useEffect(() => {
+    return () => {
+      setFilters(filters => {
+        const idx = filters.findIndex(i => i.id === id)
+        if (filters[idx]) {
+          filters[idx].initialOpen = false
+        }
+        return [...filters]
+      })
+    }
+  }, [])
   const renderContent = () => {
     switch (filterType) {
       case 'tag':
-        return <TagFilter onClose={onClose} />
+        return <TagFilter filterId={id} onClose={onClose} initialOpen={initialOpen} />
       case 'createdAt':
-        return <CreateTimeFilter onClose={onClose} />
+        return <CreateTimeFilter onClose={onClose} initialOpen={initialOpen} />
       case 'type':
-        return <TypeFilter onClose={onClose} />
+        return <TypeFilter onClose={onClose} initialOpen={initialOpen} />
+      case 'related':
+        return <RelatedObjectsFilter filterId={id} onClose={onClose} />
       default:
         return null
     }
@@ -115,11 +172,13 @@ const Filter = ({ filterType, onClose }: { filterType: FilterType; onClose: Void
 
   return renderContent()
 }
-const TypeFilter = ({ onClose }: { onClose: VoidFunction }) => {
+const TypeFilter = ({ onClose, initialOpen }: { onClose: VoidFunction; initialOpen: boolean }) => {
   const databaseStore = useStore()
   const [filterTypes, setFilterTypes] = useAtom(FilterTypesAtom, { store: databaseStore })
-  const [popoverVisible, togglePopoverVisible] = useToggle(true)
-  const types: MetaObject['type'][] = ['image', 'normal', 'note', 'noteElement', 'pdf', 'pdfElement']
+  const typeToMetaObjectIdsMap = useGlobalAtomValue(indexedMetaObjectsAtom)?.typeToMetaObjectIdsMap
+  const [popoverVisible, togglePopoverVisible] = useToggle(initialOpen)
+  const { t } = useTranslation()
+  const types: MetaObject['type'][] = ['image', 'normal', 'note', 'noteElement', 'pdf', 'pdfElement', 'whiteboard']
   const toggleType = (type: typeof types[number]) => {
     if (filterTypes.has(type)) {
       setFilterTypes(
@@ -155,7 +214,10 @@ const TypeFilter = ({ onClose }: { onClose: VoidFunction }) => {
         {types.map(type => (
           <Content flex className={ClassName.flatButton()} gap={6} onClick={() => toggleType(type)}>
             <CheckBox checked={filterTypes.has(type)} />
-            <div>{TypeToTypeName[type]}</div>
+            <Content auto flex justifyContent="space-between">
+              <div>{t(`general.${TypeToTypeName[type]}`)}</div>
+              <div>{typeToMetaObjectIdsMap?.get(type)?.size}</div>
+            </Content>
           </Content>
         ))}
       </Content>
@@ -176,26 +238,23 @@ const TypeFilter = ({ onClose }: { onClose: VoidFunction }) => {
         alignItems="center"
         gap={5}
         onClick={togglePopoverVisible}
+        className={filterContainerClassName(popoverVisible)}
         style={{
-          borderRadius: 999,
-          padding: '4px 8px',
-          border: '1px solid rgba(0,0,0,0.1)',
           fontFamily: 'Muli',
           textTransform: 'capitalize'
         }}
       >
         <Icon name="park-info" />
-        {Array.from(filterTypes).map((i, idx) => (
-          <>
-            {idx !== 0 && <div style={{ height: '90%', margin: 'auto', borderRight: '1px solid rgba(0,0,0,0.1)' }}></div>}
-            <div
-              style={{
-                fontSize: 13
-              }}
-            >
-              {TypeToTypeName[i]}
-            </div>
-          </>
+        {Array.from(filterTypes).map(i => (
+          <div
+            style={{
+              fontSize: 13,
+              textTransform: 'capitalize'
+            }}
+            className={ClassName.objectTag}
+          >
+            {t(`general.${TypeToTypeName[i]}`)}
+          </div>
         ))}
         <Icon
           className={ClassName.circleButton()}
@@ -209,23 +268,27 @@ const TypeFilter = ({ onClose }: { onClose: VoidFunction }) => {
     </AnimatePopover>
   )
 }
-const TagFilter = ({ onClose }: { onClose: VoidFunction }) => {
+const TagFilter = ({ onClose, filterId, initialOpen }: { onClose: VoidFunction; filterId: number; initialOpen: boolean }) => {
   const tagToMetaObjectsMap = useAtomValue(tagToMetaObjectIdsMapAtom, { store: globalStore })
-  const allTags = useMemo(() => Array.from(tagToMetaObjectsMap.keys()), [tagToMetaObjectsMap])
+  const allTags = useMemo(() => Array.from(tagToMetaObjectsMap?.keys() || []), [tagToMetaObjectsMap])
   const databaseStore = useStore()
-  const [filterSelectedTags, setFilterSeletedTags] = useAtom(FilterSelectedTagsAtom, { store: databaseStore })
-  const [popoverVisible, togglePopoverVisible] = useToggle(true)
+  const [filterSelectedTagsMap, setFilterSeletedTagsMap] = useAtom(FilterSelectedTagsMapAtom, { store: databaseStore })
+  const [popoverVisible, togglePopoverVisible] = useToggle(initialOpen)
   const toggleTag = (tag: string) => {
-    if (filterSelectedTags.has(tag)) {
-      setFilterSeletedTags(
-        produce(filterSelectedTags, draft => {
-          draft.delete(tag)
+    if (filterSelectedTagsMap.get(filterId)?.has(tag)) {
+      setFilterSeletedTagsMap(
+        produce(filterSelectedTagsMap, draft => {
+          draft.get(filterId)?.delete(tag)
         })
       )
     } else {
-      setFilterSeletedTags(
-        produce(filterSelectedTags, draft => {
-          draft.add(tag)
+      setFilterSeletedTagsMap(
+        produce(filterSelectedTagsMap, draft => {
+          if (filterSelectedTagsMap.has(filterId)) {
+            draft.get(filterId)?.add(tag)
+          } else {
+            draft.set(filterId, new Set([tag]))
+          }
         })
       )
     }
@@ -249,8 +312,8 @@ const TagFilter = ({ onClose }: { onClose: VoidFunction }) => {
       >
         {allTags.map(i => (
           <Content flex alignItems="center" gap={10} className={ClassName.flatButton()} onClick={() => toggleTag(i)}>
-            <CheckBox checked={filterSelectedTags.has(i)} />
-            <Tag tag={i} hideDelete onClick={e => e.stopPropagation()} hideAdd key={i} />
+            <CheckBox checked={filterSelectedTagsMap.get(filterId)?.has(i)} />
+            <Tag tag={i} hideDelete hideAdd key={i} />
           </Content>
         ))}
       </Content>
@@ -266,25 +329,20 @@ const TagFilter = ({ onClose }: { onClose: VoidFunction }) => {
       visible={popoverVisible}
       containerStyle={{ zIndex: String(Zindexes.ToolBar) }}
     >
-      <Content
-        flex
-        gap={5}
-        onClick={togglePopoverVisible}
-        style={{
-          borderRadius: 999,
-          padding: '4px 8px',
-          border: '1px solid rgba(0,0,0,0.1)'
-        }}
-      >
+      <Content flex gap={5} onClick={togglePopoverVisible} className={filterContainerClassName(popoverVisible)}>
         <Icon name="park-tag-one" />
-        {Array.from(filterSelectedTags).map(i => (
-          <Tag key={i} tag={i} small hideAdd hideDetails hideDelete hideSize />
+        {Array.from(filterSelectedTagsMap.get(filterId) || []).map(i => (
+          <Tag key={i} tag={i} small hideAdd hideDelete hideSize />
         ))}
         <Icon
           className={ClassName.circleButton()}
           name="park-close"
           onClick={() => {
-            setFilterSeletedTags(new Set<string>())
+            setFilterSeletedTagsMap(
+              produce(filterSelectedTagsMap, draft => {
+                draft.delete(filterId)
+              })
+            )
             onClose()
           }}
         />
@@ -293,10 +351,10 @@ const TagFilter = ({ onClose }: { onClose: VoidFunction }) => {
   )
 }
 
-const CreateTimeFilter = ({ onClose }: { onClose: VoidFunction }) => {
+const CreateTimeFilter = ({ onClose, initialOpen }: { onClose: VoidFunction; initialOpen: boolean }) => {
   const databaseStore = useStore()
   const [filterInterval, setFilterInterval] = useAtom(FilterDateIntervalsAtom, { store: databaseStore })
-  const [popoverVisible, togglePopoverVisible] = useToggle(true)
+  const [popoverVisible, togglePopoverVisible] = useToggle(initialOpen)
 
   const renderContent = () => {
     return (
@@ -414,17 +472,7 @@ const CreateTimeFilter = ({ onClose }: { onClose: VoidFunction }) => {
       align="start"
       containerStyle={{ zIndex: String(Zindexes.ToolBar) }}
     >
-      <Content
-        alignItems="center"
-        gap={4}
-        flex
-        onClick={togglePopoverVisible}
-        style={{
-          borderRadius: 999,
-          padding: '4px 8px',
-          border: '1px solid rgba(0,0,0,0.1)'
-        }}
-      >
+      <Content alignItems="center" gap={4} flex onClick={togglePopoverVisible} className={filterContainerClassName(popoverVisible)}>
         <Icon name="park-time" size={16} fill="grey" />
         <Content flex gap={6} style={{ fontSize: 12, fontWeight: 600, fontFamily: 'Muli' }}>
           <div>{filterInterval.start && DateFormat.format(filterInterval.start, DateFormat.Formats.default)}</div>
@@ -441,6 +489,82 @@ const CreateTimeFilter = ({ onClose }: { onClose: VoidFunction }) => {
         />
       </Content>
     </AnimatePopover>
+  )
+}
+
+const RelatedObjectsFilter = ({ filterId, onClose }: { filterId: number; onClose: VoidFunction }) => {
+  const setCurrentFocusFilter = useSetAtom(CurrentFocusFilterAtom)
+  const currentSelectIdsAtom = useMemo(() => selectAtom(FilterRelatedIdsAtom, f => f.get(filterId)), [filterId])
+  const currentSelectIds = useAtomValue(currentSelectIdsAtom)
+  const containerRef = useRef<HTMLDivElement>(null)
+  const currentFocusFilter = useAtomValue(CurrentFocusFilterAtom)
+  const focused = filterId === currentFocusFilter?.id
+  const setRealRelatedIds = useSetAtom(RealFilterRelatedIdsAtom)
+
+  const currentSelectObjects = useMemo(() => {
+    if (currentSelectIds) {
+      const allObjects = globalStore.get(metaObjectsAtom)
+      const selectedObjects = Array.from(currentSelectIds).map(id => allObjects.get(id))
+      return selectedObjects
+    } else {
+      return []
+    }
+  }, [currentSelectIds]) as MetaObject[]
+
+  return (
+    <Content
+      ref={containerRef}
+      role="data-database-filter"
+      flex
+      alignItems="center"
+      gap={4}
+      className={filterContainerClassName(focused)}
+      onClick={() => setCurrentFocusFilter({ id: filterId, type: 'related' })}
+    >
+      <Icon name="park-share-one" />
+      <Content flex alignItems="center" gap={4} style={{ flexWrap: 'wrap' }}>
+        {currentSelectObjects.map(i => (
+          <div key={i.id} className={css([ClassName.ellipsisFont(1), ClassName.objectTag])} style={{ fontSize: 12, maxWidth: '100px' }}>
+            {i.name}
+          </div>
+        ))}
+        {focused && (
+          <Icon
+            className={ClassName.circleButton(4)}
+            name="park-check"
+            onClick={e => {
+              e.stopPropagation()
+              if (focused) {
+                setCurrentFocusFilter(undefined)
+              }
+              if (currentSelectIds) {
+                setRealRelatedIds(m =>
+                  produce(m, draft => {
+                    draft.set(filterId, currentSelectIds)
+                  })
+                )
+              }
+            }}
+          />
+        )}
+        <Icon
+          className={ClassName.circleButton(4)}
+          name="park-close"
+          onClick={e => {
+            e.stopPropagation()
+            if (focused) {
+              setCurrentFocusFilter(undefined)
+            }
+            setRealRelatedIds(m =>
+              produce(m, draft => {
+                draft.delete(filterId)
+              })
+            )
+            onClose?.()
+          }}
+        />
+      </Content>
+    </Content>
   )
 }
 export default DatabaseFilter

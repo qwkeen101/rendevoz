@@ -1,12 +1,10 @@
 import { join } from 'path'
 import { Module } from '@nestjs/common'
-import { BrowserWindow, app, shell, protocol, session, BrowserView, globalShortcut } from 'electron'
+import { BrowserWindow, app, shell, protocol } from 'electron'
 import axios from 'axios'
 import { fileURLToPath } from 'url'
 import HttpsProxyAgent from 'https-proxy-agent'
-import installExtension, { REACT_DEVELOPER_TOOLS } from 'electron-devtools-installer'
-import path from 'path'
-import os from 'os'
+import { autoUpdater } from 'electron-updater'
 
 process.env.ELECTRON_DISABLE_SECURITY_WARNINGS = 'true'
 process.env.DIST_ELECTRON = join(__dirname, '../..')
@@ -21,8 +19,17 @@ process.env.PUBLIC = app.isPackaged ? process.env.DIST : join(process.env.DIST_E
         const preload = join(__dirname, '../../preload/index.js')
         const url = process.env.VITE_DEV_SERVER_URL
         const indexHtml = join(process.env.DIST, 'index.html')
+        // autoUpdater.forceDevUpdateConfig = true
+        autoUpdater.on('checking-for-update', () => {})
+        autoUpdater.on('update-available', info => {
+          console.log(info)
+        })
         app.on('window-all-closed', () => {
           if (process.platform !== 'darwin') app.quit()
+        })
+        app.on('ready', () => {
+          autoUpdater.checkForUpdatesAndNotify()
+          // REDACTED
         })
         app.setAsDefaultProtocolClient('rendevoz')
         if (isDev) {

@@ -1,6 +1,5 @@
-import NavLinkWithChildren from '@/components/base/navLink'
 import classNames from 'classnames'
-import { FC, MouseEvent, MouseEventHandler, useState } from 'react'
+import { FC, MouseEvent, MouseEventHandler } from 'react'
 import Content from '../Content'
 import styles from './index.module.less'
 
@@ -9,8 +8,7 @@ interface MenuItemProps {
   onDoubleClick?: MouseEventHandler
   onContextMenu?: MouseEventHandler
   icon?: React.ReactNode
-  to?: string
-  type: 'route' | 'button' | 'link' | 'separator'
+  type: 'button' | 'link' | 'separator'
   children: React.ReactNode
   selected?: boolean
   id?: number | string
@@ -20,7 +18,6 @@ interface MenuItemProps {
 const MenuItem: FC<MenuItemProps> = ({
   type,
   icon,
-  to,
   onClick,
   onDoubleClick,
   onContextMenu,
@@ -32,21 +29,6 @@ const MenuItem: FC<MenuItemProps> = ({
 }) => {
   return (
     <>
-      {type === 'route' && to && (
-        <NavLinkWithChildren to={to}>
-          {match => (
-            <Item
-              gap={gap}
-              disabled={disabled}
-              id={id}
-              children={children}
-              icon={icon}
-              onDoubleClick={onDoubleClick}
-              onContextMenu={onContextMenu}
-            />
-          )}
-        </NavLinkWithChildren>
-      )}
       {type === 'button' && (
         <Item
           gap={gap}

@@ -1,8 +1,9 @@
 import { Noop } from '@/common/types'
+import { PartialWithId } from '@/types'
 
 export interface IForm<T> {
   onBack?: Noop
-  onSubmit?: (obj: Partial<T>) => void
+  onSubmit?: (obj: PartialWithId<T>) => void
   initialObject?: Partial<T>
 }
 

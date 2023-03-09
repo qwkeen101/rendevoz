@@ -1,6 +1,6 @@
 import { FC, memo } from 'react'
 import { MetaDatabaseCardProps } from './types'
-import Actions from '@/actions'
+import Actions from '@/Actions'
 
 const MetaKnowledgeCard: FC<MetaDatabaseCardProps> = memo(({ metaObject, renderTitleAndDescription }) => {
   return renderTitleAndDescription({

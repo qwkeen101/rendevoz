@@ -1,13 +1,18 @@
-import React, { memo, useEffect, useLayoutEffect, useRef, useState } from 'react'
+import React, { memo, useContext, useLayoutEffect, useRef, useState } from 'react'
 import { DragDropDiv } from './dragdrop/DragDropDiv'
-import * as DragManager from './dragdrop/DragManager'
-import { DockContextType, PanelData } from './DockData'
+import { DockContextType, PanelData, TabData } from './DockData'
 import styles from './index.module.less'
 
 import './bar.less'
 import { Reorder, motion, AnimatePresence } from 'framer-motion'
 import { TabNavListProps } from '../tabs'
 import classNames from 'classnames'
+import AnimatePopover from '../AnimatePopover'
+import { useToggle } from '@/hooks'
+import WithBorder from '../WithBorder'
+import ClassName from '@/styles/classNames'
+import { useTranslation } from 'react-i18next'
+import { replacePanel } from './Algorithm'
 
 interface DockTabBarProps {
   TabNavList: TabNavListProps
@@ -76,29 +81,86 @@ export const DockTabBar = memo((props: DockTabBarProps) => {
 })
 
 const TabItem = memo(({ onClick, isSelected, item, onDragStart }) => {
+  const [contextMenuVisible, toggleContextMenuVisible] = useToggle(false)
+  const { t } = useTranslation()
+  const dockContext = useContext(DockContextType)
+  const renderTabContextMenu = () => (
+    <WithBorder style={{ padding: 4, display: 'flex', flexDirection: 'column', gap: 4 }}>
+      <div
+        className={ClassName.flatButton()}
+        onClick={e => {
+          const tabData = dockContext.find(item.key) as TabData
+          dockContext.dockMove(tabData, null, 'remove')
+          dockContext.getGlobal().onTabClose?.(tabData)
+          toggleContextMenuVisible()
+        }}
+      >
+        {t('dock.close')}
+      </div>
+      <div
+        className={ClassName.flatButton()}
+        onClick={e => {
+          const tabData = dockContext.find(item.key) as TabData
+          const parentPanel = tabData.parent as PanelData
+          const newPanel = { ...parentPanel, tabs: [tabData] } as PanelData
+          const newLayout = replacePanel(dockContext.getLayout(), parentPanel, newPanel)
+          dockContext.setLayout(newLayout)
+          dockContext.onSilentChange()
+          toggleContextMenuVisible()
+        }}
+      >
+        {t('dock.close other tabs')}
+      </div>
+      <div
+        className={ClassName.flatButton()}
+        onClick={e => {
+          const tabData = dockContext.find(item.key) as TabData
+          const parentPanel = tabData.parent as PanelData
+          const idx = parentPanel.tabs.findIndex(i => i === tabData)
+          const leftTabs = parentPanel.tabs.slice(0, idx + 1)
+          const newPanel = { ...parentPanel, tabs: [...leftTabs], activeId: tabData.id } as PanelData
+          const newLayout = replacePanel(dockContext.getLayout(), parentPanel, newPanel)
+          dockContext.setLayout(newLayout)
+          dockContext.onSilentChange()
+          toggleContextMenuVisible()
+        }}
+      >
+        {t('dock.close right side tabs')}
+      </div>
+    </WithBorder>
+  )
   return (
-    <Reorder.Item
-      key={item.key}
-      initial={{ opacity: 0 }}
-      animate={{
-        opacity: 1,
-        transition: { duration: 0.2 },
-        color: isSelected ? 'rgba(0,0,0,1)' : 'rgba(0,0,0,0.4)'
-      }}
-      onDragStart={onDragStart}
-      exit={{ opacity: 0, transition: { duration: 0.3 } }}
-      onClick={onClick}
-      value={item}
-      drag={true}
-      whileDrag={{ opacity: 0, transition: { duration: 0 } }}
-      aria-label="tab-reorder-item"
-      as="div"
-      id={item.key}
-      className={classNames(styles.tab, isSelected && styles.active)}
+    <AnimatePopover
+      positions={['bottom']}
+      content={renderTabContextMenu()}
+      onClickOutside={toggleContextMenuVisible}
+      padding={10}
+      visible={contextMenuVisible}
     >
-      <motion.div layout="position" className={styles.tabContent}>
-        {item.tab}
-      </motion.div>
-    </Reorder.Item>
+      <Reorder.Item
+        onContextMenu={toggleContextMenuVisible}
+        key={item.key}
+        initial={{ opacity: 0 }}
+        animate={{
+          opacity: 1,
+          transition: { duration: 0.2 },
+          color: isSelected ? 'rgba(0,0,0,1)' : 'rgba(0,0,0,0.4)'
+        }}
+        onDragStart={onDragStart}
+        exit={{ opacity: 0, transition: { duration: 0.3 } }}
+        onClick={onClick}
+        value={item}
+        drag={true}
+        whileDrag={{ opacity: 0, transition: { duration: 0 } }}
+        aria-label="tab-reorder-item"
+        as="div"
+        id={item.key}
+        className={classNames(styles.tab, isSelected && styles.active)}
+      >
+        <motion.div layout="position" className={styles.tabContent}>
+          {item.tab}
+        </motion.div>
+      </Reorder.Item>
+    </AnimatePopover>
   )
 })

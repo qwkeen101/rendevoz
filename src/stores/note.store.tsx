@@ -3,7 +3,7 @@ import Id from '@/utils/id'
 import { atom } from 'jotai'
 import { toast } from 'react-hot-toast'
 import { Descendant } from 'slate'
-import { INote } from '~/typings/data'
+import { INote, NoteBlock } from '~/typings/data'
 import BaseStore, { initializeLocalStore } from './base.store'
 import { IStore } from './store.type'
 import { MetaStore } from '.'
@@ -84,7 +84,7 @@ const createNoteStore = () => {
     return noteDb.bulkGet(noteIds)
   }
 
-  const getBlockById = (id: number) => {
+  const getBlockById = (id: number): Promise<NoteBlock | undefined> => {
     return blockDb.get(id)
   }
 

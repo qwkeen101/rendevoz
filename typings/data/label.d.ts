@@ -1,18 +1,27 @@
 import { TextSelectRect } from '@/events/pdfEvent'
+import { PdfShapes } from '@/scenes/pdf/FloatBar/Shape'
+import { Rect } from '@/types'
 import { IBase } from './base'
 import { EditorDestination } from './note'
 
-export interface ILabel extends IBase {
+export type ILabel = IBase & {
   id?: number
   title?: string
   content?: string | any
   documentId?: number
   background?: string
-  type?: string
+  type?: 'highlight' | 'shape' | 'thought' | 'object'
   color?: string
   page?: number
-}
-export interface IDroppableLabel extends ILabel {
+} & (
+    | ({
+        type: 'shape'
+      } & IShapeLabel)
+    | ({ type: 'thought' } & IThoughtLabel)
+    | ({ type: 'highlight' } & IHighlightLabel)
+    | ({ type: 'object' } & IObjectLabel)
+  )
+export interface IDroppableLabel {
   page?: number
   rect?: number[]
   mode?: 'icon' | 'picture'
@@ -20,16 +29,26 @@ export interface IDroppableLabel extends ILabel {
   pictrue?: string
 }
 
-export interface IHighlightLabel extends ILabel {
+export type IObjectLabel = {
+  // [top,left,width,height]
+  rect?: number[]
+  metaObjectId: number
+}
+export interface IHighlightLabel {
+  type: 'shape'
   selectedText?: string
-  page?: number
   rects?: TextSelectRect[]
 }
-export interface IThoughtLabel extends IDroppableLabel {
+export interface IShapeLabel {
+  // [top,left,width,height]
+  rect: number[]
+  shape: 'diamond' | 'rectangle' | 'round' | 'square' | 'triangle'
+}
+export interface IThoughtLabel {
   position?: 'left' | 'top' | 'right' | 'bottom'
   originFrom?: 'pdf' | 'editor' | 'meta' | 'image'
   originId?: number
   minimized?: boolean
-    // [width, height]
+  // [width, height]
   size?: number[]
 }

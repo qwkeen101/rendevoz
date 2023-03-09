@@ -14,6 +14,7 @@ import SidebarPinned from './SidebarPinned'
 import SidebarDatabase from './SidebarDatabase'
 import SidebarSetting from './SidebarSetting'
 import SidebarUser from './SidebarUser'
+import Actions from '@/Actions'
 
 const variants = {
   open: {
@@ -44,7 +45,7 @@ const Navigation = ({ hovered }: { hovered: boolean }) => {
         variants={variants}
       >
         <SidebarUser />
-        <MenuItem to="/home">
+        <MenuItem onClick={Actions.openHome}>
           <Icon name="park-home" style={{ marginRight: 10 }} size={16} />
           {t('sidebar.home')}
         </MenuItem>

@@ -25,6 +25,7 @@
     ],
     artifactName: "Rendevoz-Windows-Setup.${ext}",
   },
+  extends: null,
   nsis: {
     oneClick: false,
     perMachine: false,

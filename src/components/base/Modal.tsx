@@ -4,6 +4,8 @@ import ReactDOM from 'react-dom'
 import { css } from '@emotion/css'
 import Zindexes from '@/consts/zindex'
 import ClassName from '@/styles/classNames'
+import isHotkey from 'is-hotkey'
+import { KEY } from '@/consts/key'
 
 interface ModalProps {
   visible: boolean
@@ -61,6 +63,18 @@ const Modal: FC<ModalProps> = ({
   noStyle,
   style
 }) => {
+  useEffect(() => {
+    const keyDownHandler = (e: KeyboardEvent) => {
+      if (isHotkey(KEY.Escape, e)) {
+        onClose?.()
+      }
+    }
+    document.addEventListener('keydown', keyDownHandler)
+    return () => {
+      document.removeEventListener('keydown', keyDownHandler)
+    }
+  }, [onClose])
+
   useEffect(() => {
     if (visible) {
       document.body.style.overflow = 'hidden'

@@ -79,8 +79,8 @@ const PdfFloatBar = ({ document }: { document?: IPdfDocument }) => {
         return <PdfInfo flipId={id} document={document} />
       case 'label':
         return <PdfLabels flipId={id} document={document} />
-      case 'shape':
-        return <PdfShape flipId={id} />
+      // case 'shape':
+      //   return <PdfShape flipId={id} />
     }
   }
 
@@ -179,13 +179,13 @@ const PdfFloatBar = ({ document }: { document?: IPdfDocument }) => {
                   name="park-label"
                 />
               </Tooltip>
-              <Tooltip content="Shapes" position="top">
+              {/* <Tooltip content="Shapes" position="top">
                 <Icon
                   fill={popState.visible ? (content === 'shape' ? undefined : '#DDDDDD') : undefined}
                   onClick={() => togglePop('shape')}
                   name="park-graphic-design"
                 />
-              </Tooltip>
+              </Tooltip> */}
             </Content>
           </AnimatePopover>
         </div>

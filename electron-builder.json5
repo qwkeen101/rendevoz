@@ -4,8 +4,7 @@
   copyright: "Copyright © 2022 RealRong",
   asar: true,
   directories: {
-    output: "release/${version}",
-    buildResources: "electron/resources",
+    output: "release/${version}"
   },
   publish: {
       provider: "github",
@@ -17,12 +16,6 @@
     "dist-electron",
     "dist"
   ],
-  protocols: {
-    name: "rendevoz",
-    schemes: [
-      "rendevoz"
-    ]
-  },
   win: {
     target: [
       {

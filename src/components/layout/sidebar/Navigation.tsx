@@ -15,6 +15,7 @@ import SidebarDatabase from './SidebarDatabase'
 import SidebarSetting from './SidebarSetting'
 import SidebarUser from './SidebarUser'
 import Actions from '@/Actions'
+import ClassName from '@/styles/classNames'
 
 const variants = {
   open: {
@@ -53,16 +54,7 @@ const Navigation = ({ hovered }: { hovered: boolean }) => {
         <SidebarSetting />
         {/* <GlobalPocket>{urls => <SidebarPocket urls={urls} />}</GlobalPocket> */}
         <Content flex alignItems="center" style={{ padding: '0px 4px 0px 4px', marginTop: 20 }}>
-          <div
-            className={css({
-              fontWeight: 600,
-              fontSize: 13,
-              userSelect: 'none',
-              color: defaultFontColorGrey
-            })}
-          >
-            {t('sidebar.pinned')}
-          </div>
+          <div className={ClassName.description()}>{t('sidebar.pinned')}</div>
         </Content>
         <SidebarPinned />
         <Content flex column style={{ overflow: 'hidden', padding: 4, margin: -4, marginTop: 10 }}>

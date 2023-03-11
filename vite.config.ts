@@ -4,7 +4,6 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import electron from 'vite-electron-plugin'
 import { customStart } from 'vite-electron-plugin/plugin'
-import pkg from './package.json'
 
 rmSync(path.join(__dirname, 'dist-electron'), { recursive: true, force: true })
 

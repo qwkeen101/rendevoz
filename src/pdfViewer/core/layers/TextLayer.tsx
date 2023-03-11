@@ -15,6 +15,7 @@ import useScopedEventEmitter from '@/events/useEventEmitter'
 import { PdfViewInnerScope } from '../Provider'
 import { PdfEventHandler } from '@/events/pdfEvent'
 import useViewer from '@/scenes/pdf/useViewer'
+import { Rect } from '@/types'
 interface TextLayerProps {
   page: PDFPageProxy
   pageIndex: number
@@ -44,7 +45,7 @@ const TextLayer: FC<TextLayerProps> = ({
   const renderTaskRef = useRef<TextLayerRenderTask>()
   const tempTextCanvasCtx = document.createElement('canvas').getContext('2d', { alpha: false })
   const textContentBounds = useRef<TextContentBound[]>([])
-  const rectsRef = useRef<fabric.Rect[]>([])
+  const rectsRef = useRef<Rect[]>([])
   const mousePos = useRef<Point | null>(null)
   const mousePosRef = useMousePositionWithRef(canvasRef)
   const selectedTextRef = useRef('')

@@ -7,6 +7,12 @@
     output: "release/${version}",
     buildResources: "electron/resources",
   },
+  publish: {
+      provider: "github",
+      repo: "Rendevoz_public_repo",
+      owner: "RealRong",
+      releaseType: "release"
+  },
   files: [
     "dist-electron",
     "dist"

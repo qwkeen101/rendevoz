@@ -17,14 +17,6 @@
   "engines": {
     "node": "^14.18.0 || >=16.0.0"
   },
-  "build":{
-    "publish":{
-      "provider": "github",
-      "repo": "Rendevoz_public_repo",
-      "owner": "RealRong",
-      "releaseType": "release"
-    }
-  },
   "dependencies": {
     "@emotion/css": "^11.9.0",
     "@icon-park/react": "^1.4.2",

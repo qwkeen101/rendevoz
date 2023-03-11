@@ -36,5 +36,6 @@ jobs:
         with:
           repository: ${{ secrets.owner }}/Rendevoz_public_repo
           token: REDACTED
-
+        env:
+          GITHUB_TOKEN: REDACTED
       # REDACTED

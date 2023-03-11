@@ -14,15 +14,6 @@
     "dev": "vite",
     "build": "vite build"
   },
-  "build": {
-    "publish": [
-      {
-        "provider": "github",
-        "owner": "RealRong",
-        "repo": "Rendevoz_public_repo"
-      }
-    ]
-  },
   "engines": {
     "node": "^14.18.0 || >=16.0.0"
   },

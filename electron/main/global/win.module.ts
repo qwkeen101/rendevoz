@@ -19,6 +19,11 @@ process.env.PUBLIC = app.isPackaged ? process.env.DIST : join(process.env.DIST_E
         const preload = join(__dirname, '../../preload/index.js')
         const url = process.env.VITE_DEV_SERVER_URL
         const indexHtml = join(process.env.DIST, 'index.html')
+        autoUpdater.setFeedURL({
+          provider: 'github',
+          repo: 'Rendevoz_public_repo',
+          owner: 'RealRong'
+        })
         autoUpdater.forceDevUpdateConfig = true
         autoUpdater.on('update-not-available', info => {
           console.log(info)

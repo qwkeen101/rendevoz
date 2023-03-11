@@ -182,15 +182,14 @@ const Highlights = forwardRef((props, ref) => {
       container.style.left = `${containerRect.left}px`
       container.style.top = `${containerRect.top}px`
       container.style.position = 'absolute'
-      console.log(viewer, viewer?.currentFocusLabelId, labelId, container, viewer?.currentFocusLabelId === labelId)
       if (viewer?.currentFocusLabelId === labelId) {
         console.log('equals')
-        viewer!.currentFocusLabelId = undefined
-        const bound = container.getBoundingClientRect()
-        const centerOfScreenHeight = window.innerHeight / 2
-        const heightOffset = bound.top - centerOfScreenHeight
-        viewer?.scrollBy?.(heightOffset)
-        setFocused(true)
+        setTimeout(() => {
+          viewer!.currentFocusLabelId = undefined
+          const centerOfScreenHeight = window.innerHeight / 2
+          viewer?.scrollBy?.(containerRect.top - centerOfScreenHeight)
+          setFocused(true)
+        })
       }
     }
   }, [pageSize.width, pageSize.height, pageSize.scale])
@@ -198,7 +197,7 @@ const Highlights = forwardRef((props, ref) => {
     const color = tinycolor(highlight.color || '#8590ae')
     const darkenColor = color.darken(20).toString('rgb')
     return darkenColor
-  },[highlight.color])
+  }, [highlight.color])
   return (
     <div
       style={{

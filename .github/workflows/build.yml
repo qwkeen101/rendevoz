@@ -34,7 +34,7 @@ jobs:
         uses: softprops/action-gh-release@v0.1.15
         if: startsWith(github.ref, 'refs/tags/v')
         with:
-          repository: ${{ secrets.owner }}/Rendevoz_public_repo
+          repository: RealRong/Rendevoz_public_repo
           token: REDACTED
         env:
           GITHUB_TOKEN: REDACTED

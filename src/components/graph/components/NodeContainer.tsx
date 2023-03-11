@@ -42,7 +42,7 @@ const NodeContainer = memo(() => {
       if (graph.isDragging) return
       if (selectedTags.length > 0) return
       graph.currentHoverNode = node
-      const relatedNodeIds = relatedObjectsMap.get(node.id)
+      const relatedNodeIds = structuredClone(relatedObjectsMap.get(node.id))
       relatedNodeIds?.add(node.id)
       setEdges(
         produce(edges, draft => {

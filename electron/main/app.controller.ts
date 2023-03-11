@@ -4,6 +4,7 @@ import { AppService } from './app.service'
 import { IpcInvoke } from './transport'
 import fs from 'fs'
 import path from 'path'
+import { autoUpdater } from 'electron-updater'
 
 const DEFAULT_USER_DATA_PATH =
   process.env.APPDATA || (process.platform == 'darwin' ? process.env.HOME + '/Library/Preferences' : process.env.HOME + '/.local/share')
@@ -109,6 +110,17 @@ export class AppController {
     } else {
       return protocolPath
     }
+  }
+
+  @IpcInvoke('getUpdateDetails')
+  public async getUpdateDetails() {
+    const result = await autoUpdater.checkForUpdates()
+    return result.updateInfo
+  }
+  @IpcInvoke('updateAndInstall')
+  public async updateAndInstall() {
+    const result = await autoUpdater.downloadUpdate()
+    return result
   }
   private checkIfRendevozGenerated = () => {
     const rendevozPath = path.join(DEFAULT_USER_DATA_PATH, 'rendevoz')

@@ -48,7 +48,7 @@ const UpgradePlan = () => {
           <span>¥128.00</span>
         </div>
       </Content>
-      <Content
+      {/* <Content
         flex
         gap={10}
         justifyContent="space-around"
@@ -60,8 +60,11 @@ const UpgradePlan = () => {
         <div>隐私政策</div>
         <div>退款政策</div>
         <div>服务条款</div>
-      </Content>
-      <div className={ClassName.description()} style={{marginTop: 30}}>由苏州高凰信息科技发展有限公司为您提供服务</div>
+      </Content> */}
+      <div className={ClassName.description()} style={{ marginTop: 30 }}>
+        {/* 由苏州高凰信息科技发展有限公司为您提供服务 */}
+        升级详情请联系电邮：rendevoz@rendevoz.com
+      </div>
     </Content>
   )
 }

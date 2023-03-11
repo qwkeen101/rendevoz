@@ -17,7 +17,8 @@ type VerifyUserOptions =
     }
 export const userAtom = atom<IUser | null>({
   displayName: 'Admin',
-  isPremium: true
+  isPremium: true,
+  premiumEndDate: Date.now() + 1000000000
 })
 
 export const useUser = () => useGlobalAtom(userAtom)

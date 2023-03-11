@@ -12,6 +12,7 @@ import { toast } from 'react-hot-toast'
 import { Notification } from '@/components'
 import { useGlobalEventEmitter } from '@/events/useEventEmitter'
 import { EditorEventHandler } from '@/events/editorEvent'
+import getSetting from '@/components/globalSetting/getSetting'
 const initial = [
   {
     id: Id.getId(),
@@ -45,7 +46,10 @@ const useStoreValue = (
     () => {
       if (editor === EditorInstanceMap.get(noteId)?.values().next().value) {
         saveNoteAsBuffer(editor.children, note.contentId)
-        toast.success(<Notification title={`📝 ${note.title}`} content="Note is saved." />)
+        const setting = getSetting()
+        if (setting.notification.enabled && setting.notification.editor) {
+          toast.success(<Notification title={`📝 ${note.title}`} content="Note is saved." />)
+        }
       }
     },
     { wait: 10000 }

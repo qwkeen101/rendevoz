@@ -19,10 +19,15 @@ process.env.PUBLIC = app.isPackaged ? process.env.DIST : join(process.env.DIST_E
         const preload = join(__dirname, '../../preload/index.js')
         const url = process.env.VITE_DEV_SERVER_URL
         const indexHtml = join(process.env.DIST, 'index.html')
-        // autoUpdater.forceDevUpdateConfig = true
-        autoUpdater.on('checking-for-update', () => {})
+        autoUpdater.forceDevUpdateConfig = true
+        autoUpdater.on('update-not-available', info => {
+          console.log(info)
+        })
         autoUpdater.on('update-available', info => {
           console.log(info)
+        })
+        autoUpdater.on('update-downloaded', () => {
+          autoUpdater.quitAndInstall()
         })
         app.on('window-all-closed', () => {
           if (process.platform !== 'darwin') app.quit()

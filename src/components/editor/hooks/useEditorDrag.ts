@@ -3,7 +3,7 @@ import { GlobalEventHandler } from '@/events/globalEvent'
 import { useGlobalEventEmitter } from '@/events/useEventEmitter'
 import { useMemoizedFn, useRafFn } from '@/hooks'
 import Id from '@/utils/id'
-import { useEffect, useMemo, useRef } from 'react'
+import { useCallback, useEffect, useMemo, useRef } from 'react'
 import { toast } from 'react-hot-toast'
 import { Editor, Path, Transforms } from 'slate'
 import { MetaObject } from '~/typings/data'
@@ -16,6 +16,7 @@ import { HeadingElement } from '../types/commonElementTypes'
 import { MetaObjectElement } from '../types/outerElementTypes'
 import moveMultiElements from '../utils/moveMultiElements'
 import moveSingleElement from '../utils/moveSingleElement'
+import rebuildDragSelect from '../utils/rebuildDragSelect'
 import { ID_TO_ELEMENTS_MAP, ID_TO_PATH_MAP, SELECTED_BLOCKS_MAP } from '../weakMaps'
 import useIsDragging from './useIsDragging'
 
@@ -130,6 +131,9 @@ const useEditorDrag = (editor: CustomEditor, scrollElement?: HTMLElement | null)
   dragManager.eventEmitter = emitter
   const mouseMoveHandler = useMemoizedFn((e: MouseEvent) => {
     if (readonly) return
+    if (!isDraggingInsideEditor) {
+      setIsDragging(true)
+    }
     e.preventDefault()
     if (scrollManager.isScrolling()) {
       scrollManager.endScroll()
@@ -152,10 +156,10 @@ const useEditorDrag = (editor: CustomEditor, scrollElement?: HTMLElement | null)
   })
 
   const throttledMouseMove = useRafFn(mouseMoveHandler)
-  const realMouseMoveHandler = (e: MouseEvent) => {
+  const realMouseMoveHandler = useCallback((e: MouseEvent) => {
     e.preventDefault()
     throttledMouseMove(e)
-  }
+  }, [])
   useEffect(() => {
     dragManager.registerEditor(editor)
   }, [editor])
@@ -185,8 +189,7 @@ const useEditorDrag = (editor: CustomEditor, scrollElement?: HTMLElement | null)
     if (readonly) return
     if (isDraggingInsideEditor) {
       dragManager.prepareDragging()
-      console.log('true set')
-      GlobalDragOverlayInstance.startDrag?.()
+
       if (GlobalDragOverlayInstance.draggingDetails === undefined) {
         const selected = SELECTED_BLOCKS_MAP.get(editor)
         GlobalDragOverlayInstance.draggingDetails = {
@@ -253,7 +256,6 @@ const useEditorDrag = (editor: CustomEditor, scrollElement?: HTMLElement | null)
       if (scrollElement?.contains(event.target as HTMLElement)) {
         dragManager.drop()
       }
-      scrollElement?.removeEventListener('mousemove', realMouseMoveHandler)
       scrollManager.endScroll()
       setIsDragging(false)
       indicatorManager.setIndicatorState(s => ({ ...s, visible: false }))
@@ -262,7 +264,7 @@ const useEditorDrag = (editor: CustomEditor, scrollElement?: HTMLElement | null)
     return () => {
       emitter.removeListener('global', globalEventHandler)
     }
-  })
+  }, [scrollElement])
   return { dragManager, renderIndicator }
 }
 

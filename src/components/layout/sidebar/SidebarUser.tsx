@@ -17,6 +17,7 @@ const SidebarUser = memo(() => {
   const [popoverVisible, togglePopoverVisible] = useToggle(false)
   const [updateUserVisible, toggleUpdateUserVisible] = useToggle(false)
   const [upgradePlanVisible, toggleUpgradPlanVisible] = useToggle(false)
+  const isPremium = user?.premiumEndDate && user?.premiumEndDate > Date.now()
   return (
     <>
       <Modal visible={upgradePlanVisible} onClose={toggleUpgradPlanVisible}>
@@ -57,11 +58,9 @@ const SidebarUser = memo(() => {
           >
             {user?.displayName || 'Unnamed User'}
           </div>
-          {user?.isPremium && (
-            <Tooltip content="You are premium user">
-              <Icon theme="filled" fill="rgb(255,215,0)" name="park-vip" />
-            </Tooltip>
-          )}
+          <Tooltip content={isPremium ? 'You are premium user' : 'You are not premium user'}>
+            <Icon theme="filled" fill={isPremium ? 'rgb(255,215,0)' : 'rgb(218,223,225)'} name="park-vip" />
+          </Tooltip>
         </Content>
       </AnimatePopover>
     </>
@@ -70,37 +69,39 @@ const SidebarUser = memo(() => {
 
 const UserPopover = ({ onUpgradePlan, onUpdateUser }: { onUpgradePlan: VoidFunction; onUpdateUser: VoidFunction }) => {
   const [user, setUser] = useUser()
+  const isPremium = user?.premiumEndDate && user?.premiumEndDate > Date.now()
   return (
-    <WithBorder style={{ padding: 12, display: 'flex', flexDirection: 'column', fontFamily: 'Muli' }}>
+    <WithBorder style={{ padding: 12, display: 'flex', flexDirection: 'column', fontFamily: 'Muli', minWidth: 220 }}>
       <div style={{ padding: '0 8px' }} className={ClassName.description()}>
         Email: {user?.email || 'Unknown Email'}
       </div>
       <div style={{ padding: '0 8px' }} className={ClassName.description()}>
         Uid: {user?.uid || 'Unknown Uid'}
       </div>
-      <Content flex alignItems="center" gap={8} style={{ padding: '12px 8px 0px' }}>
-        {user?.photoURL && <Image width={25} src={user.photoURL} className={css({ borderRadius: 4 })} />}
-        <div
-          className={css({
-            fontWeight: 600,
-            fontFamily: 'Muli'
-          })}
-        >
-          {user?.displayName || 'Unnamed User'}
-        </div>
-        {user?.isPremium && (
-          <Tooltip content="You are premium user">
-            <Icon theme="filled" fill="rgb(255,215,0)" name="park-vip" />
+      <Content style={{ padding: '12px 8px 12px' }} flex column gap={6}>
+        <Content flex alignItems="center" gap={8} >
+          {user?.photoURL && <Image width={25} src={user.photoURL} className={css({ borderRadius: 4 })} />}
+          <div
+            className={css({
+              fontWeight: 600,
+              fontFamily: 'Muli'
+            })}
+          >
+            {user?.displayName || 'Unnamed User'}
+          </div>
+          <Tooltip content={isPremium ? 'You are premium user' : 'You are not premium user'}>
+            <Icon theme="filled" fill={isPremium ? 'rgb(255,215,0)' : 'rgb(218,223,225)'} name="park-vip" />
           </Tooltip>
+        </Content>
+        {user?.premiumStartDate && user.premiumEndDate && (
+          <div className={ClassName.description('12px')}>
+            Premium: {DateFormat.format(user?.premiumStartDate, DateFormat.Formats.default)} -{' '}
+            {DateFormat.format(user?.premiumEndDate, DateFormat.Formats.default)}
+          </div>
         )}
       </Content>
-      {user?.premiumStartDate && user.premiumEndDate && (
-        <div style={{ padding: '3px 8px' }} className={ClassName.description('12px')}>
-          Premium: {DateFormat.format(user?.premiumStartDate, DateFormat.Formats.default)} -{' '}
-          {DateFormat.format(user?.premiumEndDate, DateFormat.Formats.default)}
-        </div>
-      )}
-      {!user?.isPremium && (
+
+      {!isPremium && (
         <Content flex gap={10} className={ClassName.flatButton()} onClick={onUpgradePlan}>
           <Icon size={16} name="park-arrow-circle-up" />
           Upgrade Plan

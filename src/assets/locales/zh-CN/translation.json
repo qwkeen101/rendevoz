@@ -157,7 +157,9 @@
         "global shortcuts": "全局快捷键",
         "open quick object panel": "打开快捷对象面板",
         "open create object form": "打开创建对象面板",
-        "open screen shot": "打开屏幕截图"
+        "open screen shot": "打开屏幕截图",
+        "latest version": "最新版本",
+        "download and install": "下载并安装"
     },
     "form": {
         "choose file": "Choose file",

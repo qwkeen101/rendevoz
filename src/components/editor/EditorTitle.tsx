@@ -18,7 +18,7 @@ interface EditorTitleProps {
   titleStyle?: CSSProperties
   editable?: boolean
 }
-const titleWrapperClassName = css({
+export const editorTitleWrapperClassName = css({
   maxWidth: '100%',
   minWidth: 0,
   width: 870,
@@ -26,7 +26,7 @@ const titleWrapperClassName = css({
   padding: '40px 10px 30px 50px'
 })
 
-const titleClassName = css({
+export const titleClassName = css({
   cursor: 'text',
   wordBreak: 'break-word',
   padding: '0px 4px',
@@ -64,7 +64,7 @@ const EditorTitle: FC<EditorTitleProps> = ({
     }
   }, [title])
   return (
-    <Content className={titleWrapperClassName} flex column gap={10} style={titleContainerStyle}>
+    <Content className={editorTitleWrapperClassName} flex column gap={10} style={titleContainerStyle}>
       <div
         style={titleStyle}
         ref={titleRef}

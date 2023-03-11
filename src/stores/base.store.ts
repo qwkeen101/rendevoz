@@ -216,7 +216,7 @@ export function initializeLocalStore<T>(atom: PrimitiveAtom<Map<number, T>>, dat
       (obj, silent = false) => {
         return new Promise(res => {
           const user = getUser()
-          if (!user?.isPremium) {
+          if (!user || !user.premiumEndDate || user.premiumEndDate < Date.now()) {
             toast.error('You can only add items after upgrading to premium!')
             return
           }

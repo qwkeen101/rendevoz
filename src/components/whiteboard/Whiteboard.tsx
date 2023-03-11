@@ -16,8 +16,9 @@ import { globalStore } from '@/stores'
 import FlowManager from './FlowManager'
 import { IWhiteboard } from '~/typings/data'
 import WhiteboardMiniMap from './minimap/WhiteboardMinimap'
+import { Content } from '../base'
 
-const WhiteboardInner = memo(({ id }: { id: number }) => {
+const WhiteboardInner = memo(({ id, enableMiniMap = true }: { id: number; enableMiniMap?: boolean }) => {
   const containerRef = useRef<HTMLDivElement>(null)
   const flow = useFlow()
   const panzoomRef = useRef<PanZoom>()
@@ -101,7 +102,7 @@ const WhiteboardInner = memo(({ id }: { id: number }) => {
   useWhiteboardAutoPan()
   useWhiteboardDrop()
   return (
-    <>
+    <Content fullHeight fullWidth role="data-container" tabIndex={undefined}>
       <div
         ref={containerRef}
         role="data-container"
@@ -125,46 +126,58 @@ const WhiteboardInner = memo(({ id }: { id: number }) => {
       >
         <WhiteboardSetting />
       </div>
-      <div
-        style={{
-          position: 'absolute',
-          right: 15,
-          bottom: 15
-        }}
-      >
-        <WhiteboardMiniMap />
-      </div>
-    </>
+      {enableMiniMap && (
+        <div
+          style={{
+            position: 'absolute',
+            right: 15,
+            bottom: 15
+          }}
+        >
+          <WhiteboardMiniMap />
+        </div>
+      )}
+    </Content>
   )
 })
 
-const Whiteboard = memo(({ whiteboardId, onTabTitleChange }: { whiteboardId: number; onTabTitleChange?: (s?: string) => void }) => {
-  const previousWhiteboard = useRef<IWhiteboard>()
-  const store = useMemo(() => {
-    const store = createStore()
-    const whiteboard = globalStore.get(whiteboardsAtom).get(whiteboardId)
-    previousWhiteboard.current = whiteboard
-    store.set(WhiteboardAtom, whiteboard)
-    const flowManager = new FlowManager()
-    flowManager.whiteboardId = whiteboardId
-    store.set(FlowAtom, flowManager)
-    onTabTitleChange?.(whiteboard?.name)
-    return store
-  }, [])
-  useEffect(() => {
-    const unsub = globalStore.sub(whiteboardsAtom, () => {
+const Whiteboard = memo(
+  ({
+    whiteboardId,
+    onTabTitleChange,
+    enableMiniMap
+  }: {
+    whiteboardId: number
+    onTabTitleChange?: (s?: string) => void
+    enableMiniMap?: boolean
+  }) => {
+    const previousWhiteboard = useRef<IWhiteboard>()
+    const store = useMemo(() => {
+      const store = createStore()
       const whiteboard = globalStore.get(whiteboardsAtom).get(whiteboardId)
-      const prev = previousWhiteboard.current
       previousWhiteboard.current = whiteboard
-      if (prev && prev !== whiteboard) {
-        store.set(WhiteboardAtom, whiteboard)
-        if (prev.name !== whiteboard?.name) {
-          onTabTitleChange?.(whiteboard?.name)
+      store.set(WhiteboardAtom, whiteboard)
+      const flowManager = new FlowManager()
+      flowManager.whiteboardId = whiteboardId
+      store.set(FlowAtom, flowManager)
+      onTabTitleChange?.(whiteboard?.name)
+      return store
+    }, [])
+    useEffect(() => {
+      const unsub = globalStore.sub(whiteboardsAtom, () => {
+        const whiteboard = globalStore.get(whiteboardsAtom).get(whiteboardId)
+        const prev = previousWhiteboard.current
+        previousWhiteboard.current = whiteboard
+        if (prev && prev !== whiteboard) {
+          store.set(WhiteboardAtom, whiteboard)
+          if (prev.name !== whiteboard?.name) {
+            onTabTitleChange?.(whiteboard?.name)
+          }
         }
-      }
-    })
-    return unsub
-  }, [])
-  return <Provider store={store}>{whiteboardId && <WhiteboardInner id={whiteboardId} />}</Provider>
-})
+      })
+      return unsub
+    }, [])
+    return <Provider store={store}>{whiteboardId && <WhiteboardInner id={whiteboardId} enableMiniMap={enableMiniMap} />}</Provider>
+  }
+)
 export default Whiteboard

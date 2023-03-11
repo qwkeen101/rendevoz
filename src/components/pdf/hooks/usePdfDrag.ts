@@ -25,7 +25,7 @@ const usePdfDrag = (viewbox: HTMLElement | null | undefined, pdfId: number) => {
   })
   const mouseUpHandler = useMemoizedFn((e: PointerEvent) => {
     let target = e.target
-    if (target instanceof HTMLElement && viewbox?.contains(target)) {
+    if (target instanceof HTMLElement && viewbox?.contains(target) && target.getAttribute('role') === 'text-layer') {
       while (!target.hasAttribute('data-page-index') && target.parentElement && target !== e.currentTarget) {
         target = target.parentElement as HTMLElement
       }

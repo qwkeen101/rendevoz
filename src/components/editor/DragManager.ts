@@ -78,33 +78,10 @@ class DragManager {
   }
 
   drag = (e: PointerEvent): Indicator | undefined => {
-    if (
-      !this.scrollElement ||
-      (!this.dragHtmlElement && !GlobalDragOverlayInstance?.draggingDetails) ||
-      !this.editor ||
-      this.blockElementsArray.length === 0
-    ) {
+    if (!this.scrollElement || !GlobalDragOverlayInstance?.draggingDetails || !this.editor || this.blockElementsArray.length === 0) {
       return
     }
-    if (!DragManager.dragElementsAdded) {
-      const selectedBlocksSet = SELECTED_BLOCKS_MAP.get(this.editor)
-      if (selectedBlocksSet && selectedBlocksSet.size > 0) {
-        GlobalDragOverlayInstance.addDragElements?.(rebuildDragSelect(this.editor, e) || document.createElement('div'))
-      } else {
-        if (this.dragHtmlElement) {
-          const cloned = this.dragHtmlElement.cloneNode(true)
-          const rect = this.dragHtmlElement.getBoundingClientRect()
-          const wrapper = document.createElement('div')
-          wrapper.style.width = `${rect.width}px`
-          wrapper.style.height = `${rect.height}px`
-          wrapper.appendChild(cloned)
-          GlobalDragOverlayInstance.addDragElements?.(wrapper)
-        }
-      }
-      GlobalDragOverlayInstance.startDrag?.()
-    }
 
-    DragManager.dragElementsAdded = true
     const dragResult = (direction: 'top' | 'left' | 'right' | 'bottom', id?: number, e: PointerEvent): Indicator => {
       let shouldNested = false
       if (this.editor && id) {

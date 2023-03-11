@@ -25,7 +25,7 @@ import _ from 'lodash'
 import { metaObjectsAtom } from '@/stores/meta.store'
 import useLocalSyncValue from './hooks/useSyncValue'
 import useEditorDrag from './hooks/useEditorDrag'
-import { useGlobalIsDragging } from '../globalDragOverlay/GlobalDragOverlay'
+import { GlobalDragOverlayInstance, useGlobalIsDragging } from '../globalDragOverlay/GlobalDragOverlay'
 import useEditorOverlay from './components/overlay/useEditorOverlay'
 import withHandler from './plugins/withHandler'
 import useEditorSelect from './hooks/useEditorSelect'
@@ -35,6 +35,7 @@ import useStoreValue from './hooks/useStoreValue'
 import { globalStore } from '@/stores'
 import EditorTitle from './EditorTitle'
 import { selectAtom } from 'jotai/utils'
+import rebuildDragSelect from './utils/rebuildDragSelect'
 
 type DragHandleProps = {
   left?: number
@@ -88,7 +89,7 @@ export const EditorV1: FC<EditorProps> = memo(
     onEditorInitialized
   }) => {
     const [isDragging, setIsDragging] = useIsDragging()
-    const [globalIsDragging] = useGlobalIsDragging()
+    const [globalIsDragging, setGlobalIsDragging] = useGlobalIsDragging()
     const scrollElementRef = useRef<HTMLDivElement>(null)
     const [dragHandle, setDragHandle] = useState<DragHandleProps>()
     const emitter = useGlobalEventEmitter()
@@ -204,6 +205,7 @@ export const EditorV1: FC<EditorProps> = memo(
     const handleBlockMouseMove = useMemoizedFn((e: MouseEvent, element: CustomElement) => {
       if (!isDragging && !globalIsDragging) {
         editor.currentEnterElement = element
+        editor.currentDragElement = e.currentTarget as HTMLElement
         dragManager.registerDragHtmlElement(e.currentTarget as HTMLElement, ReactEditor.findPath(editor, element))
         if (dragHandle?.targetId !== element.id || dragHandle?.visible === false) {
           const targetRect = (e.currentTarget as HTMLElement).getBoundingClientRect()
@@ -295,9 +297,27 @@ export const EditorV1: FC<EditorProps> = memo(
         {renderIndicator}
         <BlockHandle
           onAddClick={handleBlockHandleMenu}
-          onDragClick={useCallback(() => {
-            setIsDragging(true)
-          }, [setIsDragging])}
+          onDragClick={useCallback(
+            e => {
+              const selectedBlocksSet = SELECTED_BLOCKS_MAP.get(editor)
+              if (selectedBlocksSet && selectedBlocksSet.size > 0) {
+                GlobalDragOverlayInstance.addDragElements?.(rebuildDragSelect(editor, e) || document.createElement('div'))
+              } else {
+                const dragHTMLElement = editor.currentDragElement
+                if (dragHTMLElement) {
+                  const cloned = dragHTMLElement.cloneNode(true)
+                  const rect = dragHTMLElement.getBoundingClientRect()
+                  const wrapper = document.createElement('div')
+                  wrapper.style.width = `${rect.width}px`
+                  wrapper.style.height = `${rect.height}px`
+                  wrapper.appendChild(cloned)
+                  GlobalDragOverlayInstance.addDragElements?.(wrapper)
+                }
+              }
+              GlobalDragOverlayInstance.startDrag?.()
+            },
+            [setIsDragging]
+          )}
           onMenuClick={handleMenuClick}
           {...dragHandle}
           visible={!!(!isDragging && dragHandle?.visible && !popoverVisible && !readonly)}

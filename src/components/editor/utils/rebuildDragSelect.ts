@@ -1,7 +1,7 @@
 import { CustomEditor } from '../types'
 import { SELECTED_BLOCKS_MAP } from '../weakMaps'
 
-const rebuildDragSelect = (editor: CustomEditor,e: MouseEvent) => {
+const rebuildDragSelect = (editor: CustomEditor, e: MouseEvent) => {
   const selectedBlocksMap = SELECTED_BLOCKS_MAP.get(editor)
   if (selectedBlocksMap) {
     if (selectedBlocksMap.size > 0) {

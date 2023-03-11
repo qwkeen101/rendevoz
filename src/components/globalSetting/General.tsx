@@ -15,6 +15,9 @@ import { useSetting } from './Main'
 import Select from '../base/select'
 import { SelectOptionProps } from '../base/select/SelectOption'
 import produce from 'immer'
+import { useGlobalAtomValue } from '@/jotai/jotaiScope'
+import { updateInfoAtom } from '@/Initializer'
+import { ipcInstance } from '@/plugins'
 
 const languageOptions: SelectOptionProps[] = [
   {
@@ -30,6 +33,7 @@ const GeneralSetting = () => {
   const [isExporting, toggleIsExporting] = useToggle(false)
   const [isImporting, toggleIsImporting] = useToggle(false)
   const [alertVisible, toggleAlertVisible] = useToggle(false)
+  const updateInfo = useGlobalAtomValue(updateInfoAtom)
   const latestIsExporting = useLatest(isExporting)
   const hasExporting = useRef(false)
   const { getAllNotes } = NoteStore
@@ -91,6 +95,25 @@ const GeneralSetting = () => {
     {
       title: t('settings.current version'),
       description: `Beta ${APP_VERSION || 'Unknown'}`
+    },
+    {
+      title: t('settings.latest version'),
+      description: `Beta ${updateInfo?.version || 'Unknown'}`,
+      children: (
+        <div
+          onClick={() => {
+            ipcInstance.send('updateAndInstall').then(data => {
+              toast.success('Successfully Downloaded!')
+            })
+          }}
+          style={{
+            border: '1px solid rgba(31, 34, 39, 0.06)'
+          }}
+          className={ClassName.flatButton()}
+        >
+          {t('settings.download and install')}
+        </div>
+      )
     },
     {
       title: t('settings.export/import data'),

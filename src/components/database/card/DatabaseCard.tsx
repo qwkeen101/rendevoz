@@ -48,7 +48,6 @@ const DatabaseCard: FC<{
   )
   const relatedAtom = useMemo(() => selectAtom(relatedMetaObjectsMapAtom, r => r.get(metaObject.id)), [metaObject.id])
   const set = useGlobalAtomValue(relatedAtom)
-  set?.delete(metaObject.id)
   const relatedNumber = set?.size
   const [showIcon, setShowIcon] = useState(false)
   const [showPopover, setShowPopover] = useState(false)

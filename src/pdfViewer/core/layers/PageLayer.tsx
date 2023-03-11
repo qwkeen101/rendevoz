@@ -1,5 +1,5 @@
 import { PageViewport, PDFDocumentProxy, PDFPageProxy } from 'pdfjs-dist'
-import { FC, memo, MutableRefObject, ReactElement, useRef, useState } from 'react'
+import { FC, memo, MutableRefObject, ReactElement, useEffect, useRef, useState } from 'react'
 import { useIntersection, useIsomorphicLayoutEffect } from 'react-use'
 import { PageFunctionRef, RenderPageProps } from '../types'
 import { getPage } from '../utils/pages'

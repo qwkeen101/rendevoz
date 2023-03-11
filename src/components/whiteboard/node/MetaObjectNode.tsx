@@ -1,43 +1,27 @@
 import Modal from '@/components/base/Modal'
-import { Tag } from '@/components/form/EditMetaObjectForm'
 import { metaObjectsAtom } from '@/stores/meta.store'
 import { useMemoizedFn, useToggle, useUpdateEffect } from '@/hooks'
 import { IWhiteboardNode } from '~/typings/data'
-import { Content, Icon, Image, Tooltip } from '@/components/base'
-import { TypeToTypeName } from '@/components/database/card/DatabaseCard'
+import { Content, Icon, Tooltip } from '@/components/base'
 import ClassName from '@/styles/classNames'
-import { css } from '@emotion/css'
-import { FC, memo, useEffect, useMemo } from 'react'
+import { FC, memo, useEffect } from 'react'
 import { InnerNodeProps } from './WrapperNode'
-import { selectAtom } from 'jotai/utils'
-import { atom } from 'jotai'
-import { useGlobalAtomValue } from '@/jotai/jotaiScope'
 import { useSetWhiteboardNodes } from '../hooks'
 import produce from 'immer'
 import PdfNode from './PdfNode'
 import NoteNode from './NoteNode'
 import { MetaStore } from '@/stores'
 import ObjectForm from '@/components/form/ObjectForm'
+import useRenderObject from '@/components/database/useRenderObject'
 
-const imageClassName = css({
-  borderTopLeftRadius: 16,
-  borderTopRightRadius: 16,
-  position: 'absolute',
-  top: 0,
-  marginBottom: -16,
-  overflow: 'hidden',
-  height: '100%'
-})
 const MetaObjectNode: FC<InnerNodeProps> = ({ node: n, setPopoverElements, setNodeState, onNameChange }) => {
   const node = n as IWhiteboardNode & { type: 'metaObject' }
   const { expanded } = node
   const { metaObjectId } = node
-  const metaObjectAtom = useMemo(() => (metaObjectId ? selectAtom(metaObjectsAtom, m => m.get(metaObjectId)) : atom(null)), [metaObjectId])
-  const metaObject = useGlobalAtomValue(metaObjectAtom)
   const { updateMetaObject } = MetaStore
   const updateNodes = useSetWhiteboardNodes()
   const [editMetaVisible, toggleEditMetaVisible] = useToggle(false)
-
+  const { renderWhole, metaObject } = useRenderObject({ metaObjectId: metaObjectId! })
   const toggleExpanded = useMemoizedFn(() => {
     updateNodes(nodes =>
       produce(nodes, draft => {
@@ -171,61 +155,17 @@ const MetaObjectNode: FC<InnerNodeProps> = ({ node: n, setPopoverElements, setNo
           }}
         />
       </Modal>
-      {expanded ? (
-        renderExpanded()
-      ) : (
-        <>
-          {metaObject?.coverImgSrc && <Image src={metaObject.coverImgSrc} width="100%" className={imageClassName} />}
-          <Content
-            flex
-            column
-            gap={3}
-            style={{
-              padding: 16,
-              borderRadius: 16,
+      {expanded
+        ? renderExpanded()
+        : renderWhole({
+            containerStyle: {
+              padding: '12px 20px 10px',
               minWidth: '100%',
               width: 'auto',
               maxWidth: '400px',
-              height: '100%',
-              marginTop: metaObject?.coverImgSrc ? 150 : undefined,
-              background: 'white'
-            }}
-          >
-            <Content
-              flex
-              gap={4}
-              style={{ flexWrap: 'wrap' }}
-              className={css({
-                '> *': {
-                  fontSize: '11px !important'
-                }
-              })}
-            >
-              <div
-                style={{
-                  background: 'rgb(220,227,232)',
-                  color: 'rgb(82,102,116)',
-                  borderRadius: '4px',
-                  padding: '0px 6px 0px 6px',
-                  fontFamily: 'Muli',
-                  width: 'fit-content',
-                  whiteSpace: 'nowrap',
-                  textTransform: 'capitalize'
-                }}
-              >
-                {TypeToTypeName[metaObject?.type || 'normal']}
-              </div>
-              {metaObject?.tags?.map(tag => (
-                <Tag key={tag} tag={tag} small hideSize />
-              ))}
-            </Content>
-            <div className={ClassName.title('18px')}>{metaObject?.name}</div>
-            <div className={ClassName.description('14px')} style={{ whiteSpace: 'pre-wrap', overflow: 'auto' }}>
-              {metaObject?.description}
-            </div>
-          </Content>
-        </>
-      )}
+              height: '100%'
+            }
+          })}
     </>
   )
 }

@@ -1,15 +1,20 @@
 import { useEffect } from 'react'
 import useCollectionStore from './stores/collection.store'
 import useLabelStore from './stores/label.store'
-import { DocumentStore, MetaStore, NoteStore } from './stores'
+import { DocumentStore, globalStore, MetaStore, NoteStore } from './stores'
 import { tagStore } from './stores/tag.store'
 import useWhiteboardStore from './stores/whiteboard.store'
 import { atom } from 'jotai'
 import { useGlobalSetAtom } from './jotai/jotaiScope'
-import Actions from './Actions'
+import { ipcInstance } from './plugins'
 
 export const initializedAtom = atom(false)
-
+export const updateInfoAtom = atom<
+  | {
+      version: string
+    }
+  | undefined
+>(undefined)
 const Initializer = () => {
   const { getAllNotes } = NoteStore
   const { getAllMetaObjects, getAllMetaLinks } = MetaStore
@@ -31,6 +36,11 @@ const Initializer = () => {
       getAllWhiteboard()
     ]).then(() => {
       setIntialized(true)
+    })
+    ipcInstance.send('getUpdateDetails').then(res => {
+      globalStore.set(updateInfoAtom, {
+        version: res.data.version
+      })
     })
     console.log(`
     Welcome to use Rendevoz to BOOST your work efficency 💪🏻!

@@ -1,17 +1,20 @@
 import Actions from '@/Actions'
 import { useGlobalAtomValue } from '@/jotai/jotaiScope'
-import { globalStore, LabelStore } from '@/stores'
-import { documentsAtom } from '@/stores/document.store'
-import { metaObjectsAtom, relatedMetaObjectsMapAtom } from '@/stores/meta.store'
+import { globalStore, LabelStore, NoteStore } from '@/stores'
+import { metaObjectsAtom, objectIdToMetaObjectIdMapAtom, relatedMetaObjectsMapAtom } from '@/stores/meta.store'
 import ClassName from '@/styles/classNames'
+import Id from '@/utils/id'
 import { css } from '@emotion/css'
 import { Atom, atom } from 'jotai'
 import { selectAtom } from 'jotai/utils'
 import { CSSProperties, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { IPdfDocument } from '~/typings/data'
+import { MetaObject } from '~/typings/data'
 import { Content, Image } from '../base'
+import { Editor } from '../editor/Editor'
 import { Tag } from '../form/EditMetaObjectForm'
+import { PdfViewer } from '../pdf/PdfViewer'
+import Whiteboard from '../whiteboard/Whiteboard'
 import { TypeToTypeName } from './card/DatabaseCard'
 
 const useRenderObject = (options: { metaObjectId: number }) => {
@@ -24,21 +27,36 @@ const useRenderObject = (options: { metaObjectId: number }) => {
       relatedSetAtom
     }
   }, [metaObjectId])
-  const [documentAtom, setDocumentAtom] = useState<Atom<IPdfDocument | undefined>>(atom(() => undefined))
+  const [fromAtom, setFromAtom] = useState<Atom<MetaObject | undefined>>(atom(() => undefined))
   const metaObject = useGlobalAtomValue(metaObjectAtom)
   const relatedSet = useGlobalAtomValue(relatedSetAtom)
-  console.log(relatedSet)
-  const document = useGlobalAtomValue(documentAtom)
+  const from = useGlobalAtomValue(fromAtom)
+  const fromString = metaObject?.type === 'pdfElement' ? 'From Book' : metaObject?.type === 'noteElement' ? 'From Note' : undefined
+  const uniqueId = useMemo(() => Id.getStrId(), [])
   useEffect(() => {
-    if (metaObject?.type === 'pdfElement' && metaObject.objectId) {
-      LabelStore.getLabelById(metaObject.objectId).then(label => {
-        console.log(label)
-        if (label) {
-          setDocumentAtom(selectAtom(documentsAtom, d => d.get(label.documentId!)))
-        }
-      })
+    if (metaObject?.objectId) {
+      if (metaObject?.type === 'pdfElement') {
+        LabelStore.getLabelById(metaObject.objectId).then(label => {
+          if (label) {
+            const documentObject = globalStore.get(objectIdToMetaObjectIdMapAtom)?.get(label.documentId!)
+            if (documentObject) {
+              setFromAtom(selectAtom(metaObjectsAtom, d => d.get(documentObject)))
+            }
+          }
+        })
+      }
+      if (metaObject.type === 'noteElement') {
+        NoteStore.getBlockById(metaObject.objectId).then(block => {
+          if (block) {
+            const noteObject = globalStore.get(objectIdToMetaObjectIdMapAtom)?.get(block.noteId)
+            if (noteObject) {
+              setFromAtom(selectAtom(metaObjectsAtom, n => n.get(noteObject)))
+            }
+          }
+        })
+      }
     }
-  }, [metaObject])
+  }, [metaObject?.objectId])
   const { t } = useTranslation()
   const renderTags = ({
     gap = 4,
@@ -73,7 +91,7 @@ const useRenderObject = (options: { metaObjectId: number }) => {
           </div>
         )}
         {metaObject?.tags?.map(i => (
-          <Tag key={i} tag={i} hideAdd hideDelete hideSize />
+          <Tag key={i} tag={i} hideAdd hideDelete hideSize small />
         ))}
       </Content>
     )
@@ -85,23 +103,10 @@ const useRenderObject = (options: { metaObjectId: number }) => {
       {
         position: 'relative',
         width: 'fit-content',
-        '::after': {
-          content: "''",
-          position: 'absolute',
-          bottom: 0,
-          left: 0,
-          width: '100%',
-          // boxShadow: '0 0.1em 0.1em -0.1em var(--block-bg-color, black)',
-          borderBottom: '1px solid var(--block-bg-color, black)',
-          opacity: 0,
-          transform: 'translateY(-100%)',
-          transition: 'all 0.3s ease'
-        },
+        textDecoration: 'underline 1px rgba(0,0,0,0)',
+        transition: 'text-decoration-color 0.3s ease',
         ':hover': {
-          '::after': {
-            transform: 'translateY(0px)',
-            opacity: 1
-          }
+          textDecorationColor: 'rgba(0,0,0,0.8)'
         },
         cursor: 'pointer'
       }
@@ -113,12 +118,14 @@ const useRenderObject = (options: { metaObjectId: number }) => {
     onTitleClick?: React.MouseEventHandler
     style?: CSSProperties
   }) => {
-    return document ? (
+    return fromString && from ? (
       <div>
         <div onClick={onTitleClick} style={style} className={titleClassName}>
           {metaObject?.name}
         </div>
-        <div className={ClassName.description('10px', undefined, '#37352f80')}>From Book: {document.metadata?.title || document.name}</div>
+        <div className={ClassName.description('11px', undefined, '#37352f80')}>
+          {fromString}: {from.name}
+        </div>
       </div>
     ) : (
       <div onClick={onTitleClick} style={style} className={titleClassName}>
@@ -165,6 +172,7 @@ const useRenderObject = (options: { metaObjectId: number }) => {
             flexShrink: 0,
             ...style
           }}
+          className={css({ margin: 'auto' })}
           src={metaObject.coverImgSrc}
           width={width}
           height={height}
@@ -193,7 +201,7 @@ const useRenderObject = (options: { metaObjectId: number }) => {
     descriptionOptions?: Parameters<typeof renderDescription>[0]
   }) => {
     return metaObject?.coverImgSrc ? (
-      <Content flex alignItems="center" gap={10} className={containerClassName} style={containerStyle}>
+      <Content flex alignItems="stretch" gap={10} className={containerClassName} style={containerStyle}>
         {renderImage(imageOptions)}
         <Content onClick={containerOnClick} flex column gap={gap}>
           {renderTags(tagsOptions)}
@@ -209,11 +217,28 @@ const useRenderObject = (options: { metaObjectId: number }) => {
       </Content>
     )
   }
+  const renderExpand = ({ editorTitleStyle = { padding: '20px 10px 10px 50px' } }: { editorTitleStyle?: CSSProperties }) => {
+    if (!metaObject || !metaObject.objectId) return null
+    const { objectId } = metaObject
+    switch (metaObject?.type) {
+      case 'pdf':
+        return <PdfViewer documentId={objectId} />
+      case 'note':
+        return <Editor titleStyle={editorTitleStyle} id={uniqueId} noteId={objectId} />
+      case 'normal':
+        return <Editor titleStyle={editorTitleStyle} id={uniqueId} noteId={objectId} />
+      case 'whiteboard':
+        return <Whiteboard enableMiniMap={false} whiteboardId={objectId} />
+    }
+    return null
+  }
   return {
     renderTitle,
     renderTags,
     renderDescription,
-    renderWhole
+    renderWhole,
+    metaObject,
+    renderExpand
   }
 }
 

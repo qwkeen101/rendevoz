@@ -1,36 +1,13 @@
-import { Content, Icon, IconWithPopover, Image, WithBorder } from '@/components/base'
-import { Tag } from '@/components/form/EditMetaObjectForm'
-import { GlobalGraphInstance } from '@/components/graph/GlobalGraph'
-import { TypeToTypeName } from '@/components/database/card/DatabaseCard'
-import { useToggle } from '@/hooks'
-import { documentsAtom } from '@/stores/document.store'
-import { labelsAtom } from '@/stores/label.store'
-import { metaObjectsAtom, relatedMetaObjectsMapAtom } from '@/stores/meta.store'
-import { notesAtom } from '@/stores/note.store'
-import { globalStore } from '@/stores'
-import ClassName from '@/styles/classNames'
-import { css } from '@emotion/css'
-import { AnimatePresence, motion } from 'framer-motion'
-import { useAtomValue } from 'jotai/react'
-import { atom } from 'jotai/vanilla'
-import { FC, memo, useMemo } from 'react'
+import { FC, memo } from 'react'
 import { RenderElementProps } from 'slate-react'
-import { MetaObject as MetaObjectType } from '~/typings/data'
-import { useSlate } from '../../slate-react'
 import { MetaObjectElement } from '../../types/outerElementTypes'
 import NoteCard from '../cards/NoteCard'
-import Actions from '@/Actions'
 import useRenderObject from '@/components/database/useRenderObject'
 
 const MetaObject: FC<RenderElementProps> = memo(({ children, element }) => {
-  const { collapsed } = element
   const metaEle = element as MetaObjectElement
   const { originId } = metaEle
-  const editor = useSlate()
-  const metaAtom = useMemo(() => (originId ? atom(get => get(metaObjectsAtom).get(originId)) : atom(null)), [originId])
-  const metaObject = useAtomValue(metaAtom, { store: globalStore })
-
-  const { renderWhole } = useRenderObject({
+  const { renderWhole, metaObject } = useRenderObject({
     metaObjectId: originId
   })
   const renderMain = () => (

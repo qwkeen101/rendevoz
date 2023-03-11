@@ -8,7 +8,7 @@ import ClassName from '@/styles/classNames'
 import { css } from '@emotion/css'
 import { Rnd } from 'react-rnd'
 import Zindexes from '@/consts/zindex'
-import { getNodeData, getRelativeHandlePosition, isPointerOnContainer } from '../utils'
+import { getNodeData, getRelativeHandlePosition } from '../utils'
 import { AnimatePresence, motion } from 'framer-motion'
 import { Box, boxesIntersect } from '../../dragSelector'
 import MetaObjectNode from './MetaObjectNode'
@@ -24,10 +24,11 @@ import { useUpdate } from 'react-use'
 import useGroupDrag from './useGroupDrag'
 import isHotkey from 'is-hotkey'
 import { KEY } from '@/consts/key'
+import { ID_TO_ELEMENTS_MAP } from '@/components/editor/weakMaps'
 
 const nodeClassName = css({
   boxShadow: 'rgba(0, 0, 0, 0.24) 0px 3px 8px',
-  borderRadius: 16,
+  borderRadius: 6,
   fontFamily: 'Muli',
   background: 'white',
   overflow: 'visible',
@@ -77,6 +78,7 @@ const WrapperNode = ({ node }: { node: IWhiteboardNode }) => {
   const [addingEdgeState, setAddingEdgeState] = useAddingEdges()
   const isDraggingRef = useRef(false)
   const isResizingRef = useRef(false)
+  const innerNodeIdsRef = useRef(new Set<number>())
   const [nodeState, setNodeState] = useState<NodeInnerState>({
     popoverVisible: false,
     expanded: false,
@@ -235,12 +237,29 @@ const WrapperNode = ({ node }: { node: IWhiteboardNode }) => {
       getNode: () => node
     })
   }
-
+  const getInGroupNodes = () => {
+    if (innerNodeIdsRef.current.size > 0) return
+    if (type === 'group' && width && height) {
+      flow.ID_TO_NODE_ELEMENT_MAP.forEach((node, id) => {
+        if (
+          node.boxIntersect({
+            width,
+            height,
+            left: x,
+            top: y
+          })
+        ) {
+          innerNodeIdsRef.current.add(id)
+        }
+      })
+    }
+  }
   useEffect(() => {
     const container = containerRef.current
     if (addingEdgeState.isAdding && container) {
       const pointerHandler = (e: PointerEvent) => {
         if (e.type === 'pointerenter') {
+          getInGroupNodes()
           setAddingEdgeState(s => ({
             ...s,
             targetNodeId: id
@@ -259,6 +278,15 @@ const WrapperNode = ({ node }: { node: IWhiteboardNode }) => {
         }
       }
       const pointerMoveHandler = (e: PointerEvent) => {
+        getInGroupNodes()
+        if (innerNodeIdsRef.current.has(addingEdgeState.sourceNodeId)){
+          setAddingEdgeState(s => ({
+            ...s,
+            targetNodeId: undefined,
+            targetPosition: undefined
+          }))
+          return
+        }
         const containerBound = container.getBoundingClientRect()
         const position = getRelativeHandlePosition(
           {
@@ -286,6 +314,8 @@ const WrapperNode = ({ node }: { node: IWhiteboardNode }) => {
         document.removeEventListener('pointerup', pointerHandler)
         container.removeEventListener('pointermove', pointerMoveHandler)
       }
+    } else {
+      innerNodeIdsRef.current.clear()
     }
   }, [addingEdgeState.isAdding])
 
@@ -553,7 +583,7 @@ const WrapperNode = ({ node }: { node: IWhiteboardNode }) => {
             maxHeight: '100%',
             overflowY: 'overlay',
             overflowX: 'hidden',
-            borderRadius: 16
+            borderRadius: 6
           }}
           onWheelCapture={e => {
             e.stopPropagation()

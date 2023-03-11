@@ -24,7 +24,7 @@
         arch: ["x64"],
       },
     ],
-    artifactName: "${productName}-Windows-${version}-Setup.${ext}",
+    artifactName: "Rendevoz-Windows-Setup.${ext}",
   },
   nsis: {
     oneClick: false,
@@ -34,7 +34,7 @@
   },
   mac: {
     target: ["dmg"],
-    artifactName: "${productName}-Mac-${version}-Installer.${ext}",
+    artifactName: "Rendevoz-MacOS-Setup.${ext}",
   },
   linux: {
     icon: "electron/resources/iconset",

@@ -24,6 +24,7 @@ export type CustomEditor = BaseEditor &
     currentAddClickElement?: Element
     currentCopyElement?: Element
     currentCopyElements?: Element[]
+    currentDragElement?: HTMLElement
   } & {
     fontSize?: number
   } & {

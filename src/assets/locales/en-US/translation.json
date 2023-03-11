@@ -157,7 +157,9 @@
         "global shortcuts": "Global Shortcuts",
         "open quick object panel": "Open Quick Object Panel",
         "open create object form": "Open Create Object Form",
-        "open screen shot": "Open Screen Shot"
+        "open screen shot": "Open Screen Shot",
+        "latest version": "latest version",
+        "download and install": "download and install"
     },
     "form": {
         "choose file": "Choose file",

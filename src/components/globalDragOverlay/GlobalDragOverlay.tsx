@@ -146,9 +146,11 @@ const GlobalDragOverlay = memo(() => {
   Object.assign(GlobalDragOverlayInstance, {
     addDragElements: nodes => {
       let newNodes = nodes
+
       if (!Array.isArray(newNodes)) {
         newNodes = [nodes] as any[]
       }
+      console.log(newNodes)
       if (!isDragging) {
         setDragElements([...dragElements, ...newNodes])
       }

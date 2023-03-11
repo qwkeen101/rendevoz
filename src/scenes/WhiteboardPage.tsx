@@ -6,10 +6,10 @@ import { memo, useState } from 'react'
 const WhiteboardPage = ({ whiteboardId }: { whiteboardId: number }) => {
   const [title, setTitle] = useState('Unnamed Whiteboard')
   return (
-    <Content fullHeight fullWidth role="data-container">
+    <>
       <TabTitle title={title} />
       <Whiteboard whiteboardId={whiteboardId} onTabTitleChange={s => s && setTitle(s)} />
-    </Content>
+    </>
   )
 }
 

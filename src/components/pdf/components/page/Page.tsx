@@ -1,4 +1,4 @@
-import React, { useMemo, useRef, useState } from 'react'
+import React, { Fragment, useEffect, useMemo, useRef, useState } from 'react'
 import ThoughtLabel from '../label/Label'
 import { WithBorder } from '@/components'
 import { useIntersection } from 'react-use'
@@ -75,17 +75,16 @@ const PdfPage: React.FC<PdfPageProps> = ({
         ref={labelContainerRef}
         role="custom-element-layer"
       >
-        {intersection?.isIntersecting &&
-          !cleanMode &&
+        {!cleanMode &&
           labels?.map(
             i =>
               i.id && (
-                <>
+                <Fragment key={i.id}>
                   {i.type === 'highlight' && <HighlightLabel documentId={pdfId} labelId={i.id} key={i.id} pageSize={pageSize} />}
                   {i.type === 'thought' && <ThoughtLabel dragBoundRef={labelContainerRef} labelId={i.id} key={i.id} />}
                   {i.type === 'shape' && <ShapeLabel documentId={pdfId} labelId={i.id} key={i.id} pageSize={pageSize} />}
                   {i.type === 'object' && <ObjectLabel labelId={i.id} key={i.id} documentId={pdfId} pageSize={pageSize} />}
-                </>
+                </Fragment>
               )
           )}
       </div>

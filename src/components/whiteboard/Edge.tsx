@@ -10,43 +10,39 @@ import { getMarkerId } from '../graph/utils/getMarkerId'
 import { MarkerColor } from '../svg/markerColors'
 import { motion } from 'framer-motion'
 import { Position } from '@/types'
-import { AnimatePopover, Icon, IconWithPopover, WithBorder } from '..'
+import { AnimatePopover, Icon, IconWithPopover, Tooltip, WithBorder } from '..'
 import Zindexes from '@/consts/zindex'
 import BorderInput from '../base/BorderInput'
-import { useDebounceFn } from '@/hooks'
+import { useDebounceFn, useToggle } from '@/hooks'
 import BlockColorPicker from '../editor/components/BlockColorPicker'
 import { defaultBgColor } from '../picker/colorPicker'
 import { MetaLink } from '~/typings/data'
 import ClassName from '@/styles/classNames'
 import produce from 'immer'
 import { createPortal } from 'react-dom'
-import { getSvgFilter } from '../svg/Filter'
 import { hexToRgb } from '@/utils/color'
+import AutosizeTextarea from '../custom/input/autosizeTextarea'
+import useClickOutside from '@/hooks/utils/useClickOutside'
+import { highlightElementText } from '@/utils/text'
+
 const TreeEdge: FC<{
   edge: IWhiteboardEdge
 }> = memo(({ edge }) => {
   const { id, sourceId, targetId, targetPosition = 'left', sourcePosition = 'right', metaLinkId } = edge
-  const link = useAtomValue(metaLinksAtom, { store: globalStore }).get(metaLinkId || 0)
-  const [innerLink, setInnerLink] = useState<Partial<MetaLink>>()
-  useEffect(() => {
-    link && setInnerLink(link)
-  }, [link])
+  const [innerLink, setInnerLink] = useState<Partial<IWhiteboardEdge>>(edge)
+  const [isEditingLabel, toggleIsEditingLabel] = useToggle(false)
 
-  const labelRef = useRef<SVGTextElement>(null)
+  const labelRef = useRef<HTMLDivElement>(null)
   const labelContainerRef = useRef<SVGGElement>(null)
-  const [labelSize, setLabelSize] = useState<{
-    width: number
-    height: number
-  }>()
+
   const flow = useFlow()
 
   const edgeRef = useRef<SVGPathElement>(null)
 
-  const { updateMetaLink } = MetaStore
-
   const setEdges = useSetWhiteboardEdges()
 
   const pathRef = useRef<string>()
+
   const [popoverState, setPopoverState] = useState<
     Partial<{
       visible: boolean
@@ -105,22 +101,41 @@ const TreeEdge: FC<{
       }
     }))
   }
-  const { run: debouncedUpdate } = useDebounceFn(updateMetaLink, { wait: 1000 })
-  const rgb = useMemo(() => hexToRgb(innerLink?.color || MarkerColor.NORMAL), [innerLink?.color])
-  useLayoutEffect(() => {
-    if (innerLink?.label && flow && labelRef.current) {
-      const bound = labelRef.current?.getBoundingClientRect()
-      const realWidth = bound.width / flow.containerTransformScale
-      const realHeight = bound.height / flow.containerTransformScale
-      setLabelSize({
-        width: realWidth,
-        height: realHeight
-      })
-      drawPath()
-    }
-  }, [innerLink?.label])
 
+  const rgb = useMemo(() => hexToRgb(innerLink?.color || MarkerColor.NORMAL), [innerLink?.color])
+  useEffect(() => {
+    if(labelRef.current){
+      labelRef.current.textContent = edge.label || ''
+    }
+  },[edge?.label])
+  useEffect(() => {
+    if(isEditingLabel){
+      const keydownHandler = (e: KeyboardEvent) => {
+        e.stopPropagation()
+      }
+      document.addEventListener('keydown', keydownHandler, true)
+      drawPath()
+      labelRef.current?.focus()
+      return () => {
+        document.removeEventListener('keydown', keydownHandler, true)
+      }
+    }else{
+      updateEdge({label: innerLink.label})
+    }
+  },[isEditingLabel])
   const [isIn, setIsIn] = useState(false)
+  useClickOutside(() => {
+    toggleIsEditingLabel(false)
+  }, labelContainerRef, isEditingLabel)
+
+  const updateEdge = (edge: Partial<IWhiteboardEdge>) => {
+    setEdges(_edges => produce(_edges, draft => {
+      const origin = _edges.get(id)
+      if(origin){
+        draft.set(id, {...origin, ...edge})
+      }
+    }))
+  }
   return (
     <>
       {createPortal(
@@ -133,30 +148,14 @@ const TreeEdge: FC<{
           reposition={false}
           content={
             <WithBorder style={{ display: 'flex', gap: 6, padding: '2px 6px' }}>
-              <IconWithPopover
-                tooltip="Change Edge Label"
-                tooltipPosition="top"
+              <Tooltip content="Change Edge Label">
+                <Icon
                 className={ClassName.circleButton(undefined, 4)}
                 size={18}
-                padding={10}
-                content={
-                  <BorderInput
-                    style={{ height: 40, minWidth: 200, maxWidth: 400, background: 'white' }}
-                    onChange={v => {
-                      debouncedUpdate({
-                        id,
-                        label: v
-                      })
-                      setInnerLink({
-                        ...innerLink,
-                        label: v
-                      })
-                    }}
-                    defaultValue={innerLink?.label}
-                  />
-                }
                 name="park-edit"
-              ></IconWithPopover>
+                onClick={() => setTimeout(toggleIsEditingLabel)}
+              ></Icon>
+              </Tooltip>
               <IconWithPopover
                 padding={10}
                 tooltip="Change Edge Color"
@@ -171,10 +170,7 @@ const TreeEdge: FC<{
                         ...innerLink,
                         color: c === defaultBgColor ? undefined : c
                       })
-                      debouncedUpdate({
-                        id,
-                        color: c === defaultBgColor ? undefined : c
-                      })
+                      updateEdge({color: c === defaultBgColor ? undefined : c})
                     }}
                     showMoreBg={false}
                     showBg
@@ -240,35 +236,28 @@ const TreeEdge: FC<{
             strokeWidth: isIn ? 'calc(4 * var(--zoom-level)' : 'calc(2 * var(--zoom-level))'
           }}
         ></motion.path>
-        {innerLink?.label && (
-          <g ref={labelContainerRef}>
-            {labelSize && (
-              <rect
-                fill="rgba(255,255,255)"
-                width={labelSize?.width + 10}
-                height={labelSize?.height + 6}
-                x={-(labelSize?.width + 10) / 2}
-                y={-(labelSize?.height + 6) / 2}
-                stroke={innerLink.color || MarkerColor.NORMAL}
-                rx={3}
-                strokeWidth={2}
-              ></rect>
-            )}
-            <text
-              style={{
-                userSelect: 'none',
-                fontSize: '16px'
-              }}
-              fontFamily="Muli"
-              fontWeight={600}
-              ref={labelRef}
-              fill={innerLink.color || MarkerColor.NORMAL}
-              x={-(labelSize?.width || 0) / 2}
-              y={(labelSize?.height || 0) / 4}
-            >
-              {innerLink.label}
-            </text>
-          </g>
+        {(innerLink?.label || isEditingLabel || edge.label) && (
+          <foreignObject ref={labelContainerRef} width={1} height={1} style={{overflow: 'visible'}}>
+          <div onClick={e => e.stopPropagation()} style={{width: 'max-content', height: 'fit-content', pointerEvents: 'none'}}>
+            <div ref={labelRef} contentEditable={true} spellCheck="false" style={{
+            transform: 'translateX(-50%) translateY(-50%)',
+            outline: 'none',
+            borderRadius: 4,
+            padding: 'calc(6px * var(--zoom-level)',
+            maxWidth: 'calc(16em * var(--zoom-level)',
+            fontSize: 'calc(16px * var(--zoom-level)',
+            boxShadow: `0 0 0 calc(4px * var(--zoom-level)) ${innerLink?.color || MarkerColor.NORMAL}`,
+            lineHeight: 1.3,
+            background: 'white',
+            whiteSpace: 'pre-wrap',
+            pointerEvents: 'auto',
+            fontWeight: 600,
+            cursor: 'text'
+          }} onClick={() => setTimeout(() => toggleIsEditingLabel(true))} onInput={e => {
+            setInnerLink({...innerLink, label: e.currentTarget.innerText || ''})
+          }}></div>
+          </div>
+        </foreignObject>
         )}
       </g>
     </>

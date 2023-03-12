@@ -8,6 +8,8 @@ export type IWhiteboardEdge = {
   sourcePosition?: EdgePosition
   targetPosition?: EdgePosition
   metaLinkId?: number
+  label?: string
+  color?: string
 }
 
 export type EdgePosition = 'top' | 'right' | 'left' | 'bottom'

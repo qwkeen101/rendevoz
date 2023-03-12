@@ -71,8 +71,10 @@ const validateEmail = (email?: string) => {
 const Login = () => {
   const [user, setUser] = useState<{
     email: string
-    password: string
-  }>({})
+    password?: string
+  }>({
+    email: localStorage.getItem('email') || ''
+  })
   const [emailVerified, setEmailVerified] = useState(false)
   const [codeVisible, toggleCodeVisible] = useState(false)
   const [loadingState, setLoadingState] = useState<{
@@ -97,6 +99,7 @@ const Login = () => {
       } else {
         LoginService.login(user.email, user.password)
           .then(data => {
+            localStorage.setItem('email', user.email)
             setLoadingState({ gettingUserDetails: true })
             LoginService.getUserDetails(user.email, data.data.token)
               .then(user => {
@@ -227,6 +230,7 @@ const Login = () => {
         <div>
           <div className={indicatorClassName}>{t('general.email address')}</div>
           <input
+            value={user.email}
             className={loginInputClassName}
             placeholder={t('login.please input your email address')}
             onChange={e => setUser({ ...user, email: e.target.value })}

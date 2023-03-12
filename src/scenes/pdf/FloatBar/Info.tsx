@@ -26,7 +26,6 @@ const PdfInfo = ({ flipId, document }: { flipId: string; document?: IPdfDocument
   }, [document?.id])
   const pdfMeta = useAtomValue(pdfMetaAtom, { store: globalStore })
   const related = useAtomValue(relatedMetaObjectsMapAtom, { store: globalStore })
-  pdfMeta?.id && related.get(pdfMeta?.id)?.delete(pdfMeta?.id)
   const relatedSize = pdfMeta?.id ? related.get(pdfMeta?.id)?.size : 0
   return (
     <Flipped inverseFlipId={flipId}>

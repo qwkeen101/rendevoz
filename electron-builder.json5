@@ -4,7 +4,8 @@
   copyright: "Copyright © 2022 RealRong",
   asar: true,
   directories: {
-    output: "release/${version}"
+    output: "release/${version}",
+    buildResources: "electron/resources",
   },
   publish: {
       provider: "github",
@@ -16,6 +17,12 @@
     "dist-electron",
     "dist"
   ],
+  protocols: {
+    name: "rendevoz",
+    schemes: [
+      "rendevoz"
+    ]
+  },
   win: {
     target: [
       {
@@ -25,7 +32,6 @@
     ],
     artifactName: "Rendevoz-Windows-Setup.${ext}",
   },
-  extends: null,
   nsis: {
     oneClick: false,
     perMachine: false,

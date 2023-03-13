@@ -1,6 +1,6 @@
 import { join } from 'path'
 import { Module } from '@nestjs/common'
-import { BrowserWindow, app, shell, protocol } from 'electron'
+import { BrowserWindow, app, shell, protocol, ipcRenderer } from 'electron'
 import axios from 'axios'
 import { fileURLToPath } from 'url'
 import HttpsProxyAgent from 'https-proxy-agent'
@@ -20,8 +20,8 @@ process.env.PUBLIC = app.isPackaged ? process.env.DIST : join(process.env.DIST_E
         const url = process.env.VITE_DEV_SERVER_URL
         const indexHtml = join(process.env.DIST, 'index.html')
         autoUpdater.autoDownload = false
-        autoUpdater.autoInstallOnAppQuit = true
-        autoUpdater.autoRunAppAfterInstall = true
+        autoUpdater.autoInstallOnAppQuit = false
+        autoUpdater.autoRunAppAfterInstall = false
         // autoUpdater.setFeedURL({
         //   provider: 'github',
         //   repo: 'RendevozPublic',
@@ -39,7 +39,10 @@ process.env.PUBLIC = app.isPackaged ? process.env.DIST : join(process.env.DIST_E
           console.log(info)
         })
         autoUpdater.on('update-downloaded', () => {
-          autoUpdater.quitAndInstall()
+          ipcRenderer.send('update downloaded')
+          setTimeout(() => {
+            autoUpdater.quitAndInstall()
+          }, 6000)
         })
         app.on('window-all-closed', () => {
           if (process.platform !== 'darwin') app.quit()

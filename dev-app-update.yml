@@ -1,3 +1,2 @@
-owner: RealRong
-repo: RendevozPublic
-provider: github
+provider: 'generic'
+url: 'https://rendevoz.com/download'

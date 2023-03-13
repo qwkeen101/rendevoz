@@ -18,6 +18,7 @@ import produce from 'immer'
 import { useGlobalAtomValue } from '@/jotai/jotaiScope'
 import { updateInfoAtom } from '@/Initializer'
 import { ipcInstance } from '@/plugins'
+import semver from 'semver'
 
 const languageOptions: SelectOptionProps[] = [
   {
@@ -71,7 +72,7 @@ const GeneralSetting = () => {
 
   const checkCanUpdate = () => {
     if (APP_VERSION && updateInfo?.version) {
-      if (Number(APP_VERSION) < Number(updateInfo.version)) {
+      if (semver.gt(updateInfo.version, APP_VERSION)) {
         return true
       }
     }
@@ -106,10 +107,11 @@ const GeneralSetting = () => {
     },
     {
       title: t('settings.latest version'),
-      description: `Beta ${updateInfo?.version || 'Unknown'} ${!checkCanUpdate() ? '(Latest)' : undefined}`,
+      description: `Beta ${updateInfo?.version || 'Unknown'} ${!checkCanUpdate() ? '(Latest)' : ''}`,
       children: checkCanUpdate() && (
         <div
           onClick={() => {
+            toast.success('Begin Download Update, Update will be installed after quit.')
             ipcInstance
               .send('updateAndInstall')
               .then(data => {

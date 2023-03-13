@@ -1,3 +1,5 @@
+import { toast } from "react-hot-toast"
+
 const { ipcRenderer } = window
 
 export interface IpcResponse<T> {
@@ -31,6 +33,9 @@ export const ipcInstance: IpcInstance = {
   }
 }
 
+ipcInstance.on('update downloaded', () => {
+  toast.success('Update Downloaded! Application will quit after 5 seconds!')
+})
 export function useIpc() {
   return ipcInstance
 }

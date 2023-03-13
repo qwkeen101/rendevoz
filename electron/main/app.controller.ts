@@ -119,8 +119,12 @@ export class AppController {
   }
   @IpcInvoke('updateAndInstall')
   public async updateAndInstall() {
-    const result = await autoUpdater.downloadUpdate()
-    return result
+    try {
+      const result = await autoUpdater.downloadUpdate()
+      return result
+    } catch (e) {
+      autoUpdater.quitAndInstall()
+    }
   }
   private checkIfRendevozGenerated = () => {
     const rendevozPath = path.join(DEFAULT_USER_DATA_PATH, 'rendevoz')

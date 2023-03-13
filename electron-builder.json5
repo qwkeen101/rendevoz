@@ -10,7 +10,7 @@
   publish: {
       provider: "github",
       repo: "RendevozPublic",
-      owner: "RealRong",
+      owner: "Rendevoz",
       releaseType: "release"
   },
   files: [

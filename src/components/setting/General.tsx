@@ -69,6 +69,14 @@ const GeneralSetting = () => {
   }
   const { renderUploader, upload } = useFileUpload(file => handleImportData(file))
 
+  const checkCanUpdate = () => {
+    if (APP_VERSION && updateInfo?.version) {
+      if (Number(APP_VERSION) < Number(updateInfo.version)) {
+        return true
+      }
+    }
+    return false
+  }
   useEffect(() => {
     if (isExporting) {
       const hasex = hasExporting.current
@@ -98,13 +106,18 @@ const GeneralSetting = () => {
     },
     {
       title: t('settings.latest version'),
-      description: `Beta ${updateInfo?.version || 'Unknown'}`,
-      children: (
+      description: `Beta ${updateInfo?.version || 'Unknown'} ${!checkCanUpdate() ? '(Latest)' : undefined}`,
+      children: checkCanUpdate() && (
         <div
           onClick={() => {
-            ipcInstance.send('updateAndInstall').then(data => {
-              toast.success('Successfully Downloaded!')
-            })
+            ipcInstance
+              .send('updateAndInstall')
+              .then(data => {
+                toast.success('Successfully Downloaded!')
+              })
+              .catch(e => {
+                toast.error('Failed to download.')
+              })
           }}
           style={{
             border: '1px solid rgba(31, 34, 39, 0.06)'

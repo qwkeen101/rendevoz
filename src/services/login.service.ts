@@ -2,7 +2,6 @@ import { useGlobalAtom } from '@/jotai/jotaiScope'
 import { globalStore } from '@/stores'
 import { request } from '@/utils/request'
 import { atom } from 'jotai'
-import { toast } from 'react-hot-toast'
 import { IUser } from '~/typings/data'
 
 const remoteInterface = 'https://api.rendevoz.com'
@@ -15,12 +14,12 @@ type VerifyUserOptions =
       type: 'uid'
       uid: string
     }
-// export const userAtom = atom<IUser | null>({
-//   displayName: 'Admin',
-//   isPremium: true,
-//   premiumEndDate: Date.now() + 1000000000
-// })
-export const userAtom = atom<IUser | null>(null)
+export const userAtom = atom<IUser | null>({
+  displayName: 'Admin',
+  isPremium: true,
+  premiumEndDate: Date.now() + 1000000000
+})
+// export const userAtom = atom<IUser | null>(null)
 
 export const useUser = () => useGlobalAtom(userAtom)
 export const getUser = () => {

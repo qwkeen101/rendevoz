@@ -9,7 +9,7 @@ import LoginService, { useUser } from '@/services/login.service'
 import ClassName from '@/styles/classNames'
 import { IUser } from '~/typings/data'
 import { useTranslation } from 'react-i18next'
-import { useSetting } from './globalSetting/Main'
+import { useSetting } from './setting/Main'
 import produce from 'immer'
 
 const provider = new GoogleAuthProvider()

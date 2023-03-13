@@ -7,7 +7,7 @@ import produce from 'immer'
 import { IStore } from './store.type'
 import { toast } from 'react-hot-toast'
 import { globalStore } from '.'
-import getSetting from '@/components/globalSetting/getSetting'
+import getSetting from '@/components/setting/getSetting'
 import useWhiteboardStore from './whiteboard.store'
 
 const { orderedData } = BaseStore

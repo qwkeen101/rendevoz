@@ -6,7 +6,7 @@ import { ILabel } from '~/typings/data'
 import BaseStore, { initializeLocalStore } from './base.store'
 import { IStore } from './store.type'
 import { globalStore } from '.'
-import getSetting from '@/components/globalSetting/getSetting'
+import getSetting from '@/components/setting/getSetting'
 
 const { orderedData } = BaseStore
 

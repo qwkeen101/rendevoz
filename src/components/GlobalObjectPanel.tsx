@@ -15,7 +15,7 @@ import { AnimatePopover, CheckBox, Content, Icon, Image, WithBorder } from './ba
 import Modal from './base/Modal'
 import { Tag } from './form/EditMetaObjectForm'
 import { GlobalDragOverlayInstance, useGlobalIsDragging } from './globalDragOverlay/GlobalDragOverlay'
-import { useSetting } from './globalSetting/Main'
+import { useSetting } from './setting/Main'
 import { ObjectActionPopover, TypeToTypeName } from './database/card/DatabaseCard'
 import DatabaseFilter from './database/filter'
 import useObjectFilter, { CurrentFocusFilterAtom, FilterNameSearchAtom, FilterRelatedIdsAtom } from './database/filter/useObjectFilter'

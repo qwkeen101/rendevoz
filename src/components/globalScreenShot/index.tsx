@@ -14,7 +14,7 @@ import ScreenShotCanvas from './ScreenShotCanvas'
 import { GlobalPocketInstance } from '../GlobalPocket'
 import { saveImageLocally } from '@/utils/img'
 import panzoom, { PanZoom } from 'panzoom'
-import getSetting from '../globalSetting/getSetting'
+import getSetting from '../setting/getSetting'
 const GlobalScreenShot = () => {
   const [screenShotLayerVisible, setScreenShotLayerVisible] = useState(false)
   const [selectionBoxState, setSelectionBoxState] = useState<

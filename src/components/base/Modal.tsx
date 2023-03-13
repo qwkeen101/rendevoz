@@ -65,7 +65,7 @@ const Modal: FC<ModalProps> = ({
 }) => {
   useEffect(() => {
     const keyDownHandler = (e: KeyboardEvent) => {
-      if (isHotkey(KEY.Escape, e)) {
+      if (isHotkey(KEY.Escape, e) && visible) {
         onClose?.()
       }
     }
@@ -73,7 +73,7 @@ const Modal: FC<ModalProps> = ({
     return () => {
       document.removeEventListener('keydown', keyDownHandler)
     }
-  }, [onClose])
+  }, [onClose, visible])
 
   useEffect(() => {
     if (visible) {

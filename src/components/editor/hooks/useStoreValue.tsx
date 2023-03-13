@@ -12,7 +12,7 @@ import { toast } from 'react-hot-toast'
 import { Notification } from '@/components'
 import { useGlobalEventEmitter } from '@/events/useEventEmitter'
 import { EditorEventHandler } from '@/events/editorEvent'
-import getSetting from '@/components/globalSetting/getSetting'
+import getSetting from '@/components/setting/getSetting'
 const initial = [
   {
     id: Id.getId(),

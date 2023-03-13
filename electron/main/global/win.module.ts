@@ -19,10 +19,17 @@ process.env.PUBLIC = app.isPackaged ? process.env.DIST : join(process.env.DIST_E
         const preload = join(__dirname, '../../preload/index.js')
         const url = process.env.VITE_DEV_SERVER_URL
         const indexHtml = join(process.env.DIST, 'index.html')
+        autoUpdater.autoDownload = false
+        autoUpdater.autoInstallOnAppQuit = true
+        autoUpdater.autoRunAppAfterInstall = true
+        // autoUpdater.setFeedURL({
+        //   provider: 'github',
+        //   repo: 'RendevozPublic',
+        //   owner: 'RealRong'
+        // })
         autoUpdater.setFeedURL({
-          provider: 'github',
-          repo: 'Rendevoz_public_repo',
-          owner: 'RealRong'
+          provider: 'generic',
+          url: 'https://rendevoz.com/download'
         })
         autoUpdater.forceDevUpdateConfig = true
         autoUpdater.on('update-not-available', info => {
@@ -36,10 +43,6 @@ process.env.PUBLIC = app.isPackaged ? process.env.DIST : join(process.env.DIST_E
         })
         app.on('window-all-closed', () => {
           if (process.platform !== 'darwin') app.quit()
-        })
-        app.on('ready', () => {
-          autoUpdater.checkForUpdatesAndNotify()
-          // REDACTED
         })
         app.setAsDefaultProtocolClient('rendevoz')
         if (isDev) {

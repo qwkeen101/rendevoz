@@ -12,7 +12,7 @@ import { globalStore, NoteStore, MetaStore, DocumentStore, WhiteboardStore } fro
 import { TypeToTypeName } from '@/components/database/card/DatabaseCard'
 import { IStore } from './store.type'
 import { documentsAtom } from './document.store'
-import getSetting from '@/components/globalSetting/getSetting'
+import getSetting from '@/components/setting/getSetting'
 import { selectAtom } from 'jotai/utils'
 import { whiteboardsAtom } from './whiteboard.store'
 import { createDraft, finishDraft } from 'immer'

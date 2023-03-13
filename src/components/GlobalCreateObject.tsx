@@ -8,7 +8,7 @@ import { createPortal } from 'react-dom'
 import { Rnd } from 'react-rnd'
 import { MetaObject } from '~/typings/data'
 import ObjectForm from './form/ObjectForm'
-import getSetting from './globalSetting/getSetting'
+import getSetting from './setting/getSetting'
 
 const GlobalCreateObjectInstance: Partial<{
   create: (preObject?: Partial<MetaObject>) => Promise<MetaObject>

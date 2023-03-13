@@ -9,7 +9,7 @@ import { IStore } from './store.type'
 import { MetaStore } from '.'
 import { Notification } from '@/components'
 import ClassName from '@/styles/classNames'
-import getSetting from '@/components/globalSetting/getSetting'
+import getSetting from '@/components/setting/getSetting'
 
 const { orderedData } = BaseStore
 

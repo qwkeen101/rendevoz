@@ -1,4 +1,4 @@
-import getSetting from '@/components/globalSetting/getSetting'
+import getSetting from '@/components/setting/getSetting'
 import useDb from '@/hooks/stores/useDb'
 import PdfJs from '@/pdfViewer/core/types/pdfJsApi'
 import { saveFileLocally } from '@/utils/file'

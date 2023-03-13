@@ -12,7 +12,8 @@
   },
   "scripts": {
     "dev": "vite",
-    "build": "vite build"
+    "build": "vite build",
+    "publish": "vite build && electron-builder"
   },
   "engines": {
     "node": "^14.18.0 || >=16.0.0"

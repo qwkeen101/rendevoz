@@ -12,6 +12,7 @@ interface AnimatePopoverProps extends Omit<PopoverProps, 'content' | 'isOpen'> {
   disableNudge?: boolean
   disableIntersection?: boolean
   innerRef?: RefObject<HTMLElement>
+  parentElement?: HTMLElement | null
 }
 
 const AnimatePopover: FC<PropsWithChildren<AnimatePopoverProps>> = ({
@@ -22,6 +23,7 @@ const AnimatePopover: FC<PropsWithChildren<AnimatePopoverProps>> = ({
   disableIntersection,
   reposition = false,
   disableNudge = false,
+  parentElement = document.body,
   innerRef,
   onClickOutside,
   ...rest
@@ -58,10 +60,12 @@ const AnimatePopover: FC<PropsWithChildren<AnimatePopoverProps>> = ({
     }
     onClickOutside?.(e)
   }
+  const realParent = parentElement === null || parentElement === undefined ? document.body : parentElement
   if (animate) {
     return (
       <Popover
         {...rest}
+        parentElement={realParent}
         onClickOutside={handleClickOutside}
         reposition={reposition}
         isOpen={isOpen}
@@ -100,7 +104,14 @@ const AnimatePopover: FC<PropsWithChildren<AnimatePopoverProps>> = ({
     )
   }
   return (
-    <Popover ref={popoverRef} isOpen={visible} content={content} boundaryInset={rest.boundaryInset} reposition={false}>
+    <Popover
+      ref={popoverRef}
+      isOpen={visible}
+      content={content}
+      boundaryInset={rest.boundaryInset}
+      parentElement={realParent}
+      reposition={false}
+    >
       {children}
     </Popover>
   )

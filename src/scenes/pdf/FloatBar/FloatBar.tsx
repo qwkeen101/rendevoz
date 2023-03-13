@@ -96,7 +96,7 @@ const PdfFloatBar = ({ document }: { document?: IPdfDocument }) => {
       <Flipper spring="noWobble" flipKey={`${popState.content}_${popState.visible}`}>
         <div ref={container}>
           <AnimatePopover
-            parentElement={container.current}
+            parentElement={container.current || window.document.body}
             boundaryElement={window.document.body}
             disableIntersection
             padding={10}

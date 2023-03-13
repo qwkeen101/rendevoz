@@ -108,7 +108,7 @@ const EditorBlockDetails = ({ editor, manager }: { editor: CustomEditor; manager
         positions={['right']}
         align="start"
         visible={formatVisible}
-        parentElement={containerRef.current}
+        parentElement={containerRef.current || document.body}
         disableIntersection
         disableNudge
         onClickOutside={() => setFormatVisible(false)}
@@ -167,7 +167,7 @@ const EditorBlockDetails = ({ editor, manager }: { editor: CustomEditor; manager
         positions={['bottom']}
         align="end"
         visible={styleVisible}
-        parentElement={containerRef.current}
+        parentElement={containerRef.current || document.body}
         disableIntersection
         disableNudge
         onClickOutside={() => setStyleVisible(false)}

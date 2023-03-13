@@ -49,9 +49,11 @@ const Initializer = () => {
     Yours 👋,
     🧙🏻‍♂️ RealRong 2001 from 🇨🇳.
     `)
-    // console.log = (function (origin) {
-    //   return function () {}
-    // })(console.log)
+    if (import.meta.env.PROD) {
+      console.log = (function (origin) {
+        return function () {}
+      })(console.log)
+    }
   }, [])
   return null
 }

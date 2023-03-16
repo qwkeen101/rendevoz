@@ -12,6 +12,8 @@ import { Flipped } from 'react-flip-toolkit'
 import { toast } from 'react-hot-toast'
 import { IHighlightLabel, ILabel, IPdfDocument } from '~/typings/data'
 import useViewer from '../useViewer'
+import usePdfViewer from '@/pdfViewer/core/hooks/useViewer'
+import { ID_TO_LABEL_MAP } from '@/components/pdf/weakMaps'
 
 const PdfLabels = ({ flipId, document }: { flipId: string; document?: IPdfDocument }) => {
   const innerLabelsAtom = useMemo(
@@ -31,7 +33,7 @@ const PdfLabels = ({ flipId, document }: { flipId: string; document?: IPdfDocume
   )
   const labels = useAtomValue(innerLabelsAtom, { store: globalStore })
   const highlight = labels?.filter(i => i.type === 'highlight') as IHighlightLabel[]
-  const viewer = useViewer()
+  const viewer = usePdfViewer()
   const { deleteLabel } = useLabelStore()
   return (
     <Flipped inverseFlipId={flipId}>
@@ -71,7 +73,18 @@ const PdfLabels = ({ flipId, document }: { flipId: string; document?: IPdfDocume
                       <Icon
                         name="park-right"
                         onClick={() => {
-                          i.page !== undefined && viewer.current?.jumpToPage(i.page)
+                          if (viewer) {
+                            viewer?.jumpToLabel?.(i.id)
+                            if (ID_TO_LABEL_MAP.get(viewer)?.has(i.id)) {
+                              ID_TO_LABEL_MAP.get(viewer)?.get(i.id)?.focus()
+                            } else {
+                              viewer.onLabelRendered = l => {
+                                if (l === i.id) {
+                                  ID_TO_LABEL_MAP.get(viewer)?.get(i.id)?.focus()
+                                }
+                              }
+                            }
+                          }
                         }}
                       />
                     </Tooltip>

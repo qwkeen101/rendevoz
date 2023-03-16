@@ -2,15 +2,11 @@ import { Content, Icon } from '@/components/base'
 import { globalStore } from '@/stores'
 import ClassName from '@/styles/classNames'
 import { css } from '@emotion/css'
-import { useAtom, useAtomValue } from 'jotai/react'
-import { atom } from 'jotai/vanilla'
+import { useAtom } from 'jotai/react'
 import { atomWithStorage } from 'jotai/vanilla/utils'
 import _ from 'lodash'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import AboutSetting from './About'
-import AppearanceSetting from './Appearance'
-import EditorSetting from './Editor'
 import GeneralSetting from './General'
 import NotificationSetting from './Notification'
 import ShortCutSetting from './ShortCut'
@@ -26,6 +22,7 @@ type Setting = INotificationSetting &
   IShortCutSetting & {
     general: {
       language: AvaliableLanguages
+      openNewTab: 'always open new tab' | 'open existing tab'
     }
   }
 type INotificationSetting = {
@@ -67,7 +64,8 @@ const defaultSetting: Setting = {
   },
   shortcut: {},
   general: {
-    language: 'en-US'
+    language: 'en-US',
+    openNewTab: 'always open new tab'
   }
 }
 _.merge(defaultSetting, localSetting)

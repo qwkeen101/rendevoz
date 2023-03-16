@@ -1,26 +1,32 @@
-import { css } from '@emotion/css'
-import { MouseEventHandler, ReactNode, useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { ReactNode, ReactPortal, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { Content, Icon } from '..'
-import { motion } from 'framer-motion'
+import { Content, Icon, Modal } from '..'
 import { GraphEventHandler } from '@/events/graphEvent'
 import { useGlobalEventEmitter } from '@/events/useEventEmitter'
 import { atom } from 'jotai/vanilla'
 import { useAtom } from 'jotai/react'
 import { globalStore } from '@/stores'
-import Zindexes from '@/consts/zindex'
 import ClassName from '@/styles/classNames'
+import { GlobalGraphInstance } from './GlobalGraph'
+import { useUpdate } from 'react-use'
+import { css } from '@emotion/css'
 export const globalGraphMinimizedAtom = atom(false)
 const GraphThumbnail = ({ children, onClose }: { children: ReactNode; onClose: VoidFunction }) => {
   const [small, setSmall] = useAtom(globalGraphMinimizedAtom, { store: globalStore })
   const containerRef = useRef<HTMLDivElement>(null)
-  const tempPosRef = useRef({ x: 0, y: 0 })
-  const transPosRef = useRef({ x: 0, y: 0 })
   const eventHandler = new GraphEventHandler()
   const emitter = useGlobalEventEmitter()
+  const cachedChildrenRef = useRef<HTMLDivElement>()
+  const [topLevelChildren, setTopLevelChildren] = useState<ReactPortal>()
   const handleToggleGraph = () => {
     setSmall(false)
   }
+
+  Object.assign(GlobalGraphInstance, {
+    minimize: () => setSmall(true),
+    maximize: () => setSmall(false)
+  } as Partial<typeof GlobalGraphInstance>)
+
   eventHandler.on('toggleGlobalGraph', handleToggleGraph)
 
   useEffect(() => {
@@ -29,214 +35,111 @@ const GraphThumbnail = ({ children, onClose }: { children: ReactNode; onClose: V
       emitter.removeListener('graph', eventHandler)
     }
   }, [])
-  const mouseDownHandler: MouseEventHandler = e => {
-    if (e.target === e.currentTarget) {
-      tempPosRef.current = {
-        x: e.clientX,
-        y: e.clientY
-      }
-      document.addEventListener('mousemove', mouseMoveHandler)
-      document.addEventListener('mouseup', mouseUpHandler)
-    }
-  }
-  const mouseMoveHandler = useCallback(
-    (e: MouseEvent) => {
-      e.preventDefault()
-      e.stopPropagation()
-      const { clientX, clientY } = e
-      const tempPos = tempPosRef.current
-      const container = containerRef.current
-      const transPos = transPosRef.current
-      if (container && tempPos) {
-        const dx = clientX - tempPos.x
-        const dy = clientY - tempPos.y
-        const tx = transPos.x + dx
-        const ty = transPos.y + dy
-        container.style.transform = `translateX(${tx}px) translateY(${ty}px)`
-      }
-    },
-    [containerRef]
-  )
-  const mouseUpHandler = useCallback((e: MouseEvent) => {
-    const { clientX, clientY } = e
-    const tempPos = tempPosRef.current
-    const transPos = transPosRef.current
-    transPosRef.current = {
-      x: clientX - tempPos.x + transPos.x,
-      y: clientY - tempPos.y + transPos.y
-    }
-    document.removeEventListener('mousemove', mouseMoveHandler)
-    document.removeEventListener('mouseup', mouseUpHandler)
-  }, [])
-  const containerClickHandler: MouseEventHandler = e => {
-    if (e.currentTarget === e.target) {
-      setSmall(true)
-    }
-  }
   useLayoutEffect(() => {
-    if (small) {
-      if (containerRef.current) {
-        const container = containerRef.current
-        const transPos = transPosRef.current
-        container.style.transform = `translateX(${transPos.x}px) translateY(${transPos.y}px)`
-        const viewport = document.getElementById('viewport')
-        if (viewport) {
-          //reset viewport transform
-          viewport.style.transform = `none`
-        }
+    cachedChildrenRef.current = undefined
+  }, [children])
+
+  useLayoutEffect(() => {
+    if (cachedChildrenRef.current) {
+      if (!small) {
+        containerRef.current?.appendChild(cachedChildrenRef.current)
       }
     } else {
-      const viewport = document.getElementById('viewport')
-      if (viewport) {
-        //reset viewport transform
-        viewport.removeAttribute('style')
+      const div = document.createElement('div')
+      div.style.width = '100%'
+      div.style.height = '100%'
+      const portal = createPortal(children, div, 'cached-graph')
+      setTopLevelChildren(portal)
+      cachedChildrenRef.current = div
+      if (!small) {
+        containerRef.current?.appendChild(cachedChildrenRef.current)
       }
     }
   }, [small])
+
   return createPortal(
-    <motion.div
-      onClick={containerClickHandler}
-      role="graph-thumbnail-container"
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      style={{
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        width: '100%',
-        height: '100%',
-        zIndex: Zindexes.ModalBackdrop,
-        pointerEvents: small ? 'none' : 'auto',
-        background: !small ? 'rgba(0,0,0,0.2)' : 'rgba(0,0,0,0)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center'
-      }}
-    >
-      <div
-        ref={containerRef}
-        className={ClassName.Background.blurBackground}
-        style={{
-          position: 'relative',
-          width: small ? 300 : '90%',
-          height: small ? 200 : '90%',
-          transition: 'width 0.3s ease,height 0.3s ease',
-          pointerEvents: 'auto',
-          borderRadius: 6,
-          boxShadow: 'rgba(100, 100, 111, 0.2) 0px 7px 29px 0px',
-          transform: small ? '' : undefined,
-          overflow: 'hidden'
-        }}
-      >
-        {small && (
-          <div
-            onPointerDown={mouseDownHandler}
+    <>
+      {topLevelChildren}
+      {small && (
+        <Content
+          position="absolute"
+          flex
+          justifyContent="space-between"
+          alignItems="center"
+          gap={40}
+          className={ClassName.Background.pseudoBlubBackground}
+          style={{
+            bottom: 30,
+            right: 30,
+            borderRadius: 999,
+            padding: '6px 16px',
+            boxShadow: 'rgba(100, 100, 111, 0.2) 0px 7px 29px 0px',
+            fontFamily: 'Muli',
+            fontWeight: 600
+          }}
+        >
+          <Content
+            flex
+            gap={8}
+            onClick={() => setSmall(false)}
             className={css({
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              width: '100%',
-              height: '100%',
-              zIndex: 5,
-              opacity: 0,
-              borderRadius: 6,
-              cursor: 'grab',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
+              position: 'relative',
+              width: 'fit-content',
+              textDecoration: 'underline 1px rgba(0,0,0,0)',
+              transition: 'text-decoration-color 0.3s ease',
               ':hover': {
-                opacity: 1,
-                background: 'rgba(0,0,0,0.7)'
+                textDecorationColor: 'rgba(0,0,0,0.8)'
               },
-              transition: 'all 0.3s ease'
+              cursor: 'pointer'
             })}
           >
-            <div
-              className={css({
-                position: 'absolute',
-                top: 4,
-                right: 4,
-                padding: 6,
-                borderRadius: 999,
-                transition: 'all 0.2s ease',
-                color: 'white',
-                ':hover': {
-                  background: 'rgba(255,255,255,0.07)'
-                }
-              })}
-            >
-              <Icon cursor="pointer" name="park-close" onClick={onClose} />
-            </div>
+            <Icon name="park-full-screen-one" />
+            Full Screen Graph
+          </Content>
+          <Icon
+            className={ClassName.circleButton()}
+            name="park-close"
+            onClick={() => {
+              GlobalGraphInstance.close?.()
+              setSmall(false)
+            }}
+          />
+        </Content>
+      )}
+      <Modal visible={!small} onClose={() => setSmall(true)} noStyle>
+        <div
+          style={{
+            position: 'relative',
+            width: '90vw',
+            height: '90vh',
+            pointerEvents: 'auto',
+            borderRadius: 6,
+            boxShadow: 'rgba(100, 100, 111, 0.2) 0px 7px 29px 0px',
+            overflow: 'hidden'
+          }}
+        >
+          {!small && (
             <Content
+              position="absolute"
               flex
               gap={10}
-              className={css({
-                color: 'white',
-                transition: 'all 0.3s ease',
-                borderRadius: 999,
-                padding: '5px 8px',
-                cursor: 'pointer',
-                ':hover': {
-                  background: 'rgba(255,255,255,0.2)'
-                }
-              })}
-              onClick={() => setSmall(false)}
+              style={{
+                top: 10,
+                right: 15,
+                zIndex: 10
+              }}
             >
-              <Icon cursor="pointer" name="park-stretching" />
-              <span>Back to full screen mode</span>
+              <Icon className={ClassName.circleButton()} fill="rgba(0,0,0,0.3)" name="park-close" onClick={onClose} />
             </Content>
-          </div>
-        )}
-        {!small && (
+          )}
           <div
-            className={css({
-              position: 'absolute',
-              top: 0,
-              width: '100%',
-              display: 'flex',
-              alignItems: 'center',
-              padding: '4px 6px',
-              justifyContent: 'flex-end',
-              zIndex: 5,
-              pointerEvents: 'none',
-              gap: 10
-            })}
-          >
-            <div
-              className={css({
-                pointerEvents: 'auto',
-                padding: 6,
-                borderRadius: 999,
-                transition: 'all 0.2s ease',
-                color: 'rgba(0,0,0,0.6)',
-                ':hover': {
-                  background: 'rgba(0,0,0,0.07)'
-                }
-              })}
-            >
-              <Icon cursor="pointer" name="park-off-screen" onClick={() => setSmall(true)} />
-            </div>
-            <div
-              className={css({
-                pointerEvents: 'auto',
-                padding: 6,
-                borderRadius: 999,
-                transition: 'all 0.2s ease',
-                color: 'rgba(0,0,0,0.6)',
-                ':hover': {
-                  background: 'rgba(0,0,0,0.07)'
-                }
-              })}
-            >
-              <Icon cursor="pointer" name="park-close" onClick={onClose} />
-            </div>
-          </div>
-        )}
-        <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', overflow: small ? 'hidden' : 'visible' }}>
-          {children}
+            className={ClassName.Background.blurBackground}
+            style={{ position: 'absolute', top: '0px', left: '0px', width: '100%', height: '100%', zIndex: -1 }}
+          ></div>
+          <Content fullHeight fullWidth ref={containerRef}></Content>
         </div>
-      </div>
-    </motion.div>,
+      </Modal>
+    </>,
     document.body,
     'graph-thumbnail'
   )

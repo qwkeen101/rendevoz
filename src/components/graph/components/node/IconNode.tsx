@@ -48,41 +48,6 @@ const IconNode = ({ node, label }: { node: GraphNode; label?: string }) => {
       >
         {label || node.label}
       </motion.text>
-      {node.isCenter && (
-        <motion.circle
-          style={{ transformOrigin: `${radius}px ${radius}px` }}
-          fill="none"
-          stroke={MarkerColor.EMPHASIS}
-          strokeWidth="2"
-          initial={{ scale: 1 }}
-          animate={{ scale: node.scale }}
-          cx={radius}
-          cy={radius}
-          r={radius}
-        >
-          <animate
-            attributeName="r"
-            repeatCount="indefinite"
-            dur="1s"
-            // values="20;50"
-            values={`${radius}; ${d + 10}`}
-            keyTimes="0;1"
-            keySplines="0 0.2 0.8 1"
-            calcMode="spline"
-            begin="0s"
-          ></animate>
-          <animate
-            attributeName="opacity"
-            repeatCount="indefinite"
-            dur="1s"
-            values="0.8;0"
-            keyTimes="0;1"
-            keySplines="0 0.2 0.8 1"
-            calcMode="spline"
-            begin="0s"
-          ></animate>
-        </motion.circle>
-      )}
     </>
   )
 }

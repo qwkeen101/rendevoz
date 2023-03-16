@@ -9,6 +9,8 @@ import { IPdfViewer } from '@/pdfViewer/core/types/pdfViewer'
 import { HomePage } from '@/scenes/home'
 import DatabasePage from '@/scenes/DatabasePage'
 import WhiteboardPage from '@/scenes/WhiteboardPage'
+import { LayoutIdToTabMap, LayoutTab } from '.'
+import getSetting from '../setting/getSetting'
 
 type AddTabOptions =
   | {
@@ -54,6 +56,8 @@ class LayoutManager {
   public registerLayout = (layout: LayoutData) => {
     this.layout = layout
   }
+  public makeTabActive?: (tabId: string) => void
+  public hasTargetTab?: (tab: Partial<LayoutTab>) => string | undefined
   public registerNewTab = (tab: TabData) => {
     if (this.layout) {
       const currentFocusedPanelId = this.layout.global.currentFocusedPanelId
@@ -69,9 +73,99 @@ class LayoutManager {
 
   public addTab = (options: AddTabOptions) => {
     if (this.layout) {
+      const setting = getSetting()
+      if (setting.general.openNewTab === 'open existing tab') {
+        let objectId: number | undefined = undefined
+        switch (options.type) {
+          case 'database':
+          case 'home': {
+            const tabId = this.hasTargetTab?.({ type: options.type })
+            if (tabId) {
+              this.makeTabActive?.(tabId)
+              return
+            }
+            break
+          }
+          case 'note':
+            objectId = options.noteId
+            break
+          case 'pdf':
+            objectId = options.pdfId
+            break
+          case 'whiteboard':
+            objectId = options.whiteboardId
+        }
+        if (objectId) {
+          const tabId = this.hasTargetTab?.({ type: options.type, objectId: objectId })
+          if (tabId) {
+            const layoutTab: LayoutTab | undefined = LayoutIdToTabMap.get(tabId)
+            if (layoutTab) {
+              switch (options.type) {
+                case 'note': {
+                  const editor = (layoutTab as LayoutTab & { type: 'note' }).editor
+                  editor && options.onEditorInitalized(editor)
+                  break
+                }
+                case 'pdf': {
+                  const viewer = (layoutTab as LayoutTab & { type: 'pdf'}).viewer
+                  viewer && options.onViewerInitialized(viewer)
+                  break
+                }
+              }
+            }
+            this.makeTabActive?.(tabId)
+            return
+          }
+        }
+      }
+      let tab: LayoutTab | undefined = undefined
+      switch (options.type) {
+        case 'note': {
+          tab = {
+            type: 'note',
+            objectId: options.noteId
+          }
+          const originFunction = options.onEditorInitalized
+          options.onEditorInitalized = editor => {
+            ;(tab as LayoutTab & { type: 'note' }).editor = editor
+            originFunction(editor)
+          }
+          break
+        }
+        case 'pdf': {
+          tab = {
+            type: 'pdf',
+            objectId: options.pdfId
+          }
+          const originFunction = options.onViewerInitialized
+          options.onViewerInitialized = v => {
+            ;(tab as LayoutTab & { type: 'pdf' }).viewer = v
+            originFunction(v)
+          }
+          break
+        }
+        case 'home':
+          tab = {
+            type: 'home'
+          }
+          break
+        case 'database':
+          tab = {
+            type: 'database'
+          }
+          break
+        case 'whiteboard':
+          tab = {
+            type: 'whiteboard',
+            objectId: options.whiteboardId
+          }
+      }
       const tabContent = initializePage(options)
       if (tabContent) {
         const id = Id.getStrId()
+        if (tab) {
+          LayoutIdToTabMap.set(id, tab)
+        }
         this?.registerNewTab({
           content: <DockTabPaneContext.Provider value={{ currentTabId: id }}>{tabContent}</DockTabPaneContext.Provider>,
           id,

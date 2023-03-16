@@ -12,7 +12,7 @@ import { css } from '@emotion/css'
 import { subDays, subMonths, subYears } from 'date-fns'
 import produce from 'immer'
 import { useAtom, useAtomValue, useSetAtom, useStore } from 'jotai/react'
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef } from 'react'
 import { MetaObject } from '~/typings/data'
 import { TypeToTypeName } from '../card/DatabaseCard'
 import {
@@ -21,7 +21,9 @@ import {
   FilterRelatedIdsAtom,
   FilterSelectedTagsAtom as FilterSelectedTagsMapAtom,
   FilterTypesAtom,
-  RealFilterRelatedIdsAtom
+  intersectionOfMultipleSets,
+  RealFilterRelatedIdsAtom,
+  ShouldFilterIdsAtom
 } from './useObjectFilter'
 import { selectAtom } from 'jotai/utils'
 import { useTranslation } from 'react-i18next'
@@ -173,9 +175,9 @@ const Filter = ({
   return renderContent()
 }
 const TypeFilter = ({ onClose, initialOpen }: { onClose: VoidFunction; initialOpen: boolean }) => {
-  const databaseStore = useStore()
-  const [filterTypes, setFilterTypes] = useAtom(FilterTypesAtom, { store: databaseStore })
+  const [filterTypes, setFilterTypes] = useAtom(FilterTypesAtom)
   const typeToMetaObjectIdsMap = useGlobalAtomValue(indexedMetaObjectsAtom)?.typeToMetaObjectIdsMap
+  const shouldFilterIdSet = useAtomValue(ShouldFilterIdsAtom)
   const [popoverVisible, togglePopoverVisible] = useToggle(initialOpen)
   const { t } = useTranslation()
   const types: MetaObject['type'][] = ['image', 'normal', 'note', 'noteElement', 'pdf', 'pdfElement', 'whiteboard']
@@ -216,7 +218,11 @@ const TypeFilter = ({ onClose, initialOpen }: { onClose: VoidFunction; initialOp
             <CheckBox checked={filterTypes.has(type)} />
             <Content auto flex justifyContent="space-between">
               <div>{t(`general.${TypeToTypeName[type]}`)}</div>
-              <div>{typeToMetaObjectIdsMap?.get(type)?.size}</div>
+              <div>
+                {shouldFilterIdSet && typeToMetaObjectIdsMap?.has(type)
+                  ? intersectionOfMultipleSets(typeToMetaObjectIdsMap.get(type)!, shouldFilterIdSet).size
+                  : typeToMetaObjectIdsMap?.get(type)?.size}
+              </div>
             </Content>
           </Content>
         ))}
@@ -270,9 +276,21 @@ const TypeFilter = ({ onClose, initialOpen }: { onClose: VoidFunction; initialOp
 }
 const TagFilter = ({ onClose, filterId, initialOpen }: { onClose: VoidFunction; filterId: number; initialOpen: boolean }) => {
   const tagToMetaObjectsMap = useAtomValue(tagToMetaObjectIdsMapAtom, { store: globalStore })
-  const allTags = useMemo(() => Array.from(tagToMetaObjectsMap?.keys() || []), [tagToMetaObjectsMap])
-  const databaseStore = useStore()
-  const [filterSelectedTagsMap, setFilterSeletedTagsMap] = useAtom(FilterSelectedTagsMapAtom, { store: databaseStore })
+  const shouldFilterIdSet = useAtomValue(ShouldFilterIdsAtom)
+  const allTags = useMemo(() => {
+    if (shouldFilterIdSet && tagToMetaObjectsMap) {
+      return Array.from(tagToMetaObjectsMap.entries())
+        .map(([tag, objectIds]) => {
+          if (intersectionOfMultipleSets(objectIds, shouldFilterIdSet).size > 0) {
+            return tag
+          }
+        })
+        .filter(i => i) as string[]
+    } else {
+      return Array.from(tagToMetaObjectsMap?.keys() || [])
+    }
+  }, [tagToMetaObjectsMap, shouldFilterIdSet])
+  const [filterSelectedTagsMap, setFilterSeletedTagsMap] = useAtom(FilterSelectedTagsMapAtom)
   const [popoverVisible, togglePopoverVisible] = useToggle(initialOpen)
   const toggleTag = (tag: string) => {
     if (filterSelectedTagsMap.get(filterId)?.has(tag)) {

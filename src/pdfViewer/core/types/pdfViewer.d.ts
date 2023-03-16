@@ -14,6 +14,7 @@ export type IPdfViewer = Partial<{
   highlightText: (str: string, pageIndex: number) => void
   jumpToDest: (dest: string | any[]) => void
   jumpToOffset: (offset: number) => void
+  jumpToLabel: (labelId: number) => Promise<void>
   scrollBy: (offset: number) => void
   getOutline: () => Promise<
     {
@@ -29,4 +30,5 @@ export type IPdfViewer = Partial<{
       items: any[]
     }[]
   >
+  onLabelRendered?: (labelId: number) => void
 }>

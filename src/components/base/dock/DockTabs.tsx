@@ -8,6 +8,9 @@ import { getFloatPanelSize } from './Algorithm'
 import { TabNavListProps, Tabs } from '../tabs'
 import styles from './index.module.less'
 import Icon from '@/components/base/Icon'
+import { LayoutIdToTabMap } from '@/components/layout'
+import ClassName from '@/styles/classNames'
+import classNames from 'classnames'
 
 function findParentPanel(element: HTMLElement) {
   for (let i = 0; i < 10; ++i) {
@@ -52,6 +55,7 @@ export class TabCache {
 
   onCloseClick = (e: React.MouseEvent) => {
     this.context.dockMove(this.data, null, 'remove')
+    LayoutIdToTabMap.delete(this.data.id)
     this.context.getGlobal().onTabClose?.(this.data)
     e.stopPropagation()
   }
@@ -126,7 +130,6 @@ export class TabCache {
   }
 
   getDropDirection(e: DragManager.DragState): DropDirection {
-    console.log('get direction')
     const rect = this._hitAreaRef.getBoundingClientRect()
     const midx = rect.left + rect.width * 0.5
     return e.clientX > midx ? 'after-tab' : 'before-tab'
@@ -154,7 +157,12 @@ export class TabCache {
       >
         <div className={styles.title}>{title}</div>
         <div className={styles.closeButtonWrapper}>
-          <Icon className={styles.closeButton} size={12} onClick={this.onCloseClick} name="park-close" />
+          <Icon
+            className={classNames(styles.closeButton, ClassName.circleButton(3))}
+            size={12}
+            onClick={this.onCloseClick}
+            name="park-close"
+          />
         </div>
         <div className="dock-tab-hit-area" ref={this.getHitAreaRef} />
       </DragDropDiv>

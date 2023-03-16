@@ -1,10 +1,12 @@
 import Actions from '@/Actions'
 import useSidebarWidth from '@/hooks/components/useSidebarWidth'
 import { LayoutFunctions } from '@/pdfViewer/core/layouts/Layout'
-import { FC, RefObject, useEffect, useMemo, useState } from 'react'
+import { IPdfViewer } from '@/pdfViewer/core/types/pdfViewer'
+import { FC, RefObject, useEffect, useMemo, useRef, useState } from 'react'
 import { Helmet } from 'react-helmet'
 import { Container } from '../base'
-import DockLayout, { LayoutData } from '../base/dock'
+import DockLayout, { LayoutData, TabData } from '../base/dock'
+import { CustomEditor } from '../editor/types'
 import LayoutManager from './LayoutManager'
 
 interface LayoutProps {
@@ -37,12 +39,50 @@ export type PdfInstance = {
 export class GlobalInstances {
   static pdfInstances: PdfInstance[] = []
 }
-
+export type LayoutTab =
+  | {
+      type: 'pdf'
+      objectId: number
+      viewer?: IPdfViewer
+    }
+  | {
+      type: 'note'
+      objectId: number
+      editor?: CustomEditor
+    }
+  | {
+      type: 'home'
+    }
+  | {
+      type: 'database'
+    }
+  | {
+      type: 'whiteboard'
+      objectId: number
+    }
+export const LayoutIdToTabMap = new Map<string, LayoutTab>()
 export let GlobalLayout: LayoutManager | null = null
 const Layout: FC<LayoutProps> = ({ sidebar }) => {
   const [sidebarWidth] = useSidebarWidth()
   const [layout, setLayout] = useState(initialLayout)
   const layoutManager = useMemo(() => new LayoutManager(), [])
+  const layoutRef = useRef<DockLayout>()
+  layoutManager.makeTabActive = id => layoutRef.current?.updateTab(id, null, true)
+  layoutManager.hasTargetTab = tab => {
+    const target = Array.from(LayoutIdToTabMap.entries()).find(([k, v]) => {
+      if (tab.type === v.type) {
+        if ('objectId' in v && 'objectId' in tab) {
+          if (v.objectId === tab.objectId) {
+            return k
+          }
+          return
+        }
+        return k
+      }
+    })
+
+    return target?.[0]
+  }
   GlobalLayout = layoutManager
 
   useEffect(() => {
@@ -68,6 +108,7 @@ const Layout: FC<LayoutProps> = ({ sidebar }) => {
         <Container style={{ marginLeft: sidebarWidth, transition: 'margin-left 0.3s ease-out' }} auto>
           {layout && (
             <DockLayout
+              ref={layoutRef}
               style={{
                 position: 'absolute',
                 inset: 0

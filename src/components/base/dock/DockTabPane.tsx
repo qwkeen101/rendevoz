@@ -27,7 +27,7 @@ const variants = {
 export const DockTabPaneContext = createContext<{
   currentTabId: string
 } | null>(null)
-export const DockTabPane: FC<DockTabPaneProps> = memo(({ cached, cacheId, parent, children, style, active }) => {
+export const DockTabPane: FC<DockTabPaneProps> = memo(({ cached, cacheId, children, style, active }) => {
   const context = useContext(DockContextType)
   const ref = useRef<HTMLDivElement>(null)
   const cacheRef = useRef<TabPaneCache | null>(null)

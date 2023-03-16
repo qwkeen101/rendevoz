@@ -8,23 +8,30 @@ import GraphContainer from './components/GraphContainer'
 import GraphThumbnail from './GraphThumbnail'
 import { GraphEdge } from './types/edge'
 import { GraphNode } from './types/node'
+import { GlobalObjectPanelInstance } from '../GlobalObjectPanel'
 
-export let GlobalGraphInstance:
-  | {
-      open: (centerNode: Partial<MetaObject>) => void
-      close: VoidFunction
-    }
-  | undefined = undefined
+export const GlobalGraphInstance: {
+  open?: (centerNode: Partial<MetaObject>) => void
+  close?: VoidFunction
+  minimize?: VoidFunction
+  maximize?: VoidFunction
+} = {}
+
 const GlobalGraph = () => {
   const relatedObjectsMap = useAtomValue(relatedMetaObjectsMapAtom, { store: globalStore })
   const [currentNodes, setCurrentNodes] = useState<GraphNode[]>()
   const [currentEdges, setCurrentEdges] = useState<GraphEdge[]>()
   const [visible, setVisible] = useState(false)
-  const [centerNodeId,setCenterNodeId] = useState<number>()
-  GlobalGraphInstance = {
-    open: center => handleToggleGraph(center),
+
+  Object.assign(GlobalGraphInstance, {
+    open: center => {
+      handleToggleGraph(center)
+      GlobalGraphInstance.maximize?.()
+      GlobalObjectPanelInstance.close?.()
+    },
     close: () => setVisible(false)
-  }
+  } as Partial<typeof GlobalGraphInstance>)
+
   const traverseGetRelatedNodeIds = (centerNodeId: number, noteIds: Set<number>) => {
     noteIds.add(centerNodeId)
     const centerNodeRelatedSet = structuredClone(relatedObjectsMap.get(centerNodeId))
@@ -39,7 +46,6 @@ const GlobalGraph = () => {
     const metaObjectsMap = globalStore.get(metaObjectsAtom)
     const allMetaLinks = globalStore.get(undeletedMetaLinksAtom)
     if (centerNode.id) {
-      setCenterNodeId(centerNode.id)
       setVisible(true)
       const nodeIds = new Set<number>()
       traverseGetRelatedNodeIds(centerNode.id, nodeIds)
@@ -62,7 +68,6 @@ const GlobalGraph = () => {
       const edges = allMetaLinks.filter(i => existedNodeIds.has(i.sourceId) && existedNodeIds.has(i.targetId))
       setCurrentEdges(edges)
       setCurrentNodes(nodes)
-      console.log(nodes, edges)
     }
   })
 
@@ -70,7 +75,7 @@ const GlobalGraph = () => {
     <>
       {visible && (
         <GraphThumbnail onClose={() => setVisible(false)}>
-          <GraphContainer centerNodeId={centerNodeId} edges={currentEdges} nodes={currentNodes} />
+          <GraphContainer edges={currentEdges} nodes={currentNodes} />
         </GraphThumbnail>
       )}
     </>

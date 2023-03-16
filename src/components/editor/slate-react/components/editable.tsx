@@ -179,7 +179,7 @@ export const Editable = (props: EditableProps) => {
   const scrollTo = useMemoizedFn(idx => {
     requestIdleCallback(() => {
       if (scrollElement?.current) {
-        virtualizer.scrollToIndex(idx, { behavior: 'auto', align: 'end' })
+        virtualizer.scrollToIndex(idx, { behavior: 'auto' })
       } else {
         scrollTo(idx)
       }

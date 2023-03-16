@@ -1,4 +1,3 @@
-import { GraphScope } from '@/jotai/jotaiScope'
 import { atom, useAtomValue } from 'jotai'
 import D3GraphManager from '../D3GraphManager'
 

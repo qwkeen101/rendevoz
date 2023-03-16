@@ -19,6 +19,7 @@ import { useGlobalAtomValue } from '@/jotai/jotaiScope'
 import { updateInfoAtom } from '@/Initializer'
 import { ipcInstance } from '@/plugins'
 import semver from 'semver'
+import { t } from 'i18next'
 
 const languageOptions: SelectOptionProps[] = [
   {
@@ -44,6 +45,16 @@ const GeneralSetting = () => {
   const { getAllLabels } = LabelStore
   const { t } = useTranslation()
   const [setting, setSetting] = useSetting()
+  const newTabOptions: SelectOptionProps[] = [
+    {
+      value: 'always open new tab',
+      children: t('settings.always open new tab')
+    },
+    {
+      value: 'open existing tab',
+      children: t('settings.open existing tab')
+    }
+  ]
   const handleImportData = async (file?: File) => {
     toggleIsImporting(true)
     try {
@@ -212,6 +223,24 @@ const GeneralSetting = () => {
             setSetting(
               produce(setting, draft => {
                 draft.general.language = v[0] as typeof setting.general.language
+              })
+            )
+          }}
+        ></Select>
+      )
+    },
+    {
+      title: t('settings.open new tab'),
+      description: t('settings.choose open new tab action'),
+      children: (
+        <Select
+          closeOnSelect
+          options={newTabOptions}
+          value={setting.general.openNewTab}
+          onSelect={v => {
+            setSetting(
+              produce(setting, draft => {
+                draft.general.openNewTab = v[0] as typeof setting.general.openNewTab
               })
             )
           }}

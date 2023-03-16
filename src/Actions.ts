@@ -1,7 +1,9 @@
 import { toast } from 'react-hot-toast'
 import { CustomEditor } from './components/editor/types'
-import { ID_TO_PATH_MAP, SELECTED_BLOCKS_MAP } from './components/editor/weakMaps'
-import { GlobalLayout } from './components/layout'
+import { ID_TO_ELEMENTS_MAP, ID_TO_PATH_MAP, SELECTED_BLOCKS_MAP } from './components/editor/weakMaps'
+import { GlobalLayout, LayoutIdToTabMap, LayoutTab } from './components/layout'
+import { ID_TO_LABEL_MAP } from './components/pdf/weakMaps'
+import getSetting from './components/setting/getSetting'
 import { IPdfViewer } from './pdfViewer/core/types/pdfViewer'
 import { DocumentStore, globalStore, LabelStore, NoteStore, WhiteboardStore } from './stores'
 import useBlockStore from './stores/block.store'
@@ -109,6 +111,7 @@ const goToNoteBlock = async (blockId: number) => {
     const editor = await openEditor(block.noteId)
     const path = ID_TO_PATH_MAP.get(editor)?.get(blockId)
     SELECTED_BLOCKS_MAP.get(editor)?.set(blockId, null)
+    ID_TO_ELEMENTS_MAP.get(editor)?.get(blockId)?.selectBlock()
     if (path) {
       editor.innerRef?.current.scrollTo(path[0])
     }
@@ -131,8 +134,18 @@ const goToPdfLabel = async (labelId: number) => {
     const pdfId = label.documentId
     if (pdfId) {
       const viewer = await openPdf(pdfId)
-      viewer.currentFocusLabelId = labelId
-      label.page && viewer.jumpToPage?.(label.page)
+      setTimeout(() => {
+        viewer.jumpToLabel?.(labelId)
+      }, 100)
+      if (ID_TO_LABEL_MAP.get(viewer)?.has(labelId)) {
+        ID_TO_LABEL_MAP.get(viewer)?.get(labelId)?.focus()
+      } else {
+        viewer.onLabelRendered = l => {
+          if (l === labelId) {
+            ID_TO_LABEL_MAP.get(viewer)?.get(labelId)?.focus()
+          }
+        }
+      }
     }
   }
 }

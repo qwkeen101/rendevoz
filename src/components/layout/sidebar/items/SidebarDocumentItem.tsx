@@ -35,10 +35,11 @@ const SidebarDocumentItem: FC<ISidebarItem> = ({ id, parentId, parentType, dragg
     {
       pinned: document?.pinned,
       onEdit: toggleEditModalVisible,
-      onPin: () => updateDocument({ id, pinned: !document?.pinned }),
-      onDelete: () => deleteDocument(id)
+      onPin: () => document && updateDocument({ id, pinned: !document?.pinned }),
+      onDelete: () => document && deleteDocument(id)
     }
   )
+
   if (!document || document.deleted) return null
   return (
     <Content

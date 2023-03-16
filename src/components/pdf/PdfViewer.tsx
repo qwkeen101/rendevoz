@@ -17,6 +17,9 @@ import { useGlobalAtomValue } from '@/jotai/jotaiScope'
 import { selectAtom } from 'jotai/utils'
 import createPdfViewer from '@/pdfViewer/core/createPdfViewer'
 import { IPdfViewer } from '@/pdfViewer/core/types/pdfViewer'
+import { ID_TO_LABEL_MAP } from './weakMaps'
+import { useStore } from 'jotai'
+import { PdfViewerAtom } from '@/pdfViewer/core/hooks/useViewer'
 
 interface PdfViewerProps {
   documentId: number
@@ -30,6 +33,7 @@ export const PdfViewer: FC<PdfViewerProps> = memo(({ documentId, innerRef, trans
   const [, setPdfId] = usePdfId()
   const viewerRef = useRef<LayoutFunctions>()
   const mergedRef = useMergedRef(viewerRef, innerRef)
+  const store = useStore()
   const [contextMenuVisible, setContextMenuVisible] = useState(false)
 
   const { updateDocument } = createDocumentStore()
@@ -42,6 +46,8 @@ export const PdfViewer: FC<PdfViewerProps> = memo(({ documentId, innerRef, trans
   usePdfDrag(viewboxRef.current, documentId)
   const viewer = useMemo(() => {
     const viewer = createPdfViewer()
+    store.set(PdfViewerAtom, viewer)
+    ID_TO_LABEL_MAP.set(viewer, new Map())
     const currTime = Date.now()
     const checkViewerInitialize = () => {
       const checkTime = Date.now()
@@ -96,12 +102,15 @@ export const PdfViewer: FC<PdfViewerProps> = memo(({ documentId, innerRef, trans
   const handleRangeChange = useMemoizedFn((range?: Range) => {
     if (range) {
       const progress = range?.progress || 0
-      updateDocument({
-        id: documentId,
-        readProgress: progress,
-        lastReadPage: range.startIndex,
-        lastReadAt: Date.now()
-      })
+      updateDocument(
+        {
+          id: documentId,
+          readProgress: progress,
+          lastReadPage: range.startIndex,
+          lastReadAt: Date.now()
+        },
+        true
+      )
     }
   })
 

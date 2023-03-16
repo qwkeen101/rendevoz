@@ -28,17 +28,21 @@ const useWhiteboardDrop = () => {
   const setItems = useSetWhiteboardItems()
   handler.on('globalDragPointerUp', async data => {
     const { draggingElement, event } = data
-    console.log(draggingElement, event)
     if (flow.parentContainerEle?.contains(event.target as HTMLElement)) {
       if (!isPointerOnContainer(event)) return
       let expanded = false
       if (draggingElement.type === 'note') {
         expanded = true
         if (!globalStore.get(notesAtom).has(draggingElement.noteId)) {
-          await addNote({
-            id: draggingElement.noteId,
-            title: 'Untitled'
-          })
+          // prevent add meta object
+          await addNote(
+            {
+              id: draggingElement.noteId,
+              title: 'Untitled'
+            },
+            false,
+            true
+          )
           // todo: can we sync?
           setTimeout(() => {
             setItems(items =>

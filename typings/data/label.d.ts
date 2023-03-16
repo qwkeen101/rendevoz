@@ -10,17 +10,9 @@ export type ILabel = IBase & {
   content?: string | any
   documentId?: number
   background?: string
-  type?: 'highlight' | 'shape' | 'thought' | 'object'
   color?: string
   page?: number
-} & (
-    | ({
-        type: 'shape'
-      } & IShapeLabel)
-    | ({ type: 'thought' } & IThoughtLabel)
-    | ({ type: 'highlight' } & IHighlightLabel)
-    | ({ type: 'object' } & IObjectLabel)
-  )
+} & (IShapeLabel | IThoughtLabel | IHighlightLabel | IObjectLabel)
 export interface IDroppableLabel {
   page?: number
   rect?: number[]
@@ -30,21 +22,24 @@ export interface IDroppableLabel {
 }
 
 export type IObjectLabel = {
+  type: 'object'
   // [top,left,width,height]
   rect?: number[]
   metaObjectId: number
 }
 export interface IHighlightLabel {
-  type: 'shape'
+  type: 'highlight'
   selectedText?: string
   rects?: TextSelectRect[]
 }
 export interface IShapeLabel {
+  type: 'shape'
   // [top,left,width,height]
   rect: number[]
   shape: 'diamond' | 'rectangle' | 'round' | 'square' | 'triangle'
 }
 export interface IThoughtLabel {
+  type: 'thought'
   position?: 'left' | 'top' | 'right' | 'bottom'
   originFrom?: 'pdf' | 'editor' | 'meta' | 'image'
   originId?: number

@@ -11,7 +11,7 @@ import produce from 'immer'
 import createPanZoom, { PanZoom } from 'panzoom'
 
 class D3GraphManager {
-  private container: d3.Selection<HTMLElement, unknown, null, any> | null = null
+  public container: d3.Selection<HTMLElement, unknown, null, any> | null = null
   private transform = null
   public d3Simulation: d3.Simulation<d3.SimulationNodeDatum, undefined> | null = null
   public isDragging = false
@@ -43,6 +43,9 @@ class D3GraphManager {
       drawEdge: VoidFunction
     }
   >()
+
+  public pinnedNodesIdsSet = new Set<number>()
+
   private getRadius = (type: string) => {
     switch (type) {
       case 'note':
@@ -71,7 +74,7 @@ class D3GraphManager {
     })
     this.panzoom = panzoom
     this.panzoom.on('zoom', e => {
-      const transform =  this.panzoom?.getTransform()
+      const transform = this.panzoom?.getTransform()
       this.transformScale = transform?.scale
     })
     // const zoom = d3.zoom().scaleExtent([0.1, 5]).on('zoom', this.zoomed)
@@ -180,8 +183,8 @@ class D3GraphManager {
             this.ID_TO_EDGE_FUNCTION_MAP.forEach(i => i.drawEdge())
             this.ID_TO_EDGE_LABEL_ELEMENT_MAP.forEach(i => i.removeAttribute('opacity'))
           }, 50)
-          if (this.centerNodeId && !this.moved) {
-            const node = this.nodesMap?.get(this.centerNodeId)
+          if (!this.moved) {
+            const node = Array.from(this.nodesMap?.values() || []).find(i => i.isCenter)
             const bound = this.container?.node()?.getBoundingClientRect()
             node && this.panzoom?.moveTo(-node.x + bound?.width / 2, -node.y + bound?.height / 2)
             this.moved = true

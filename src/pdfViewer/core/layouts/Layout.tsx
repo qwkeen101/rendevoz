@@ -14,6 +14,7 @@ import { TextItem } from '../types/text'
 import Id from '@/utils/id'
 import useScopedEventEmitter from '@/events/useEventEmitter'
 import usePdfViewer from '../hooks/useViewer'
+import { LabelStore } from '@/stores'
 
 interface LayoutProps {
   doc: PDFDocumentProxy
@@ -158,8 +159,19 @@ const Layout: FC<LayoutProps> = ({
   }, [scale])
   const jumpToPage = (pageIndex: number) => {
     if (pageIndex >= 0 && pageIndex < numPages) {
-      console.log(pageIndex)
       virtualizer.scrollToIndex(pageIndex, { align: 'start', behavior: 'auto' })
+    }
+  }
+  const jumpToLabel = async (labelId: number) => {
+    const label = await LabelStore.getLabelById(labelId)
+    if (label && label.page !== undefined && ('rect' in label || 'rects' in label)) {
+      const pageOffset = virtualizer.getOffsetForIndex(label.page, 'start')
+      const labelPercentTop = 'rect' in label ? label.rect?.[1] : 'rects' in label ? label.rects?.[0].percentageTop : undefined
+      if (labelPercentTop !== undefined) {
+        const realOffset = pageOffset[0] + labelPercentTop * pageSize.height * pageSize.scale
+        console.log(realOffset, pageOffset, labelPercentTop, pageSize)
+        virtualizer.scrollToOffset(realOffset, { align: 'center' })
+      }
     }
   }
   const jumpToDest = async (dest: string | any[]) => {
@@ -316,7 +328,8 @@ const Layout: FC<LayoutProps> = ({
       search,
       highlightText,
       jumpToOffset,
-      scrollBy
+      scrollBy,
+      jumpToLabel
     })
   }
 

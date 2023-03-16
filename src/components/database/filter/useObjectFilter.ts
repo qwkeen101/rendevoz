@@ -1,8 +1,8 @@
-import { relatedMetaObjectsMapAtom, tagToMetaObjectIdsMapAtom, undeletedMetaObjectsAtom } from '@/stores/meta.store'
+import { metaObjectsAtom, relatedMetaObjectsMapAtom, tagToMetaObjectIdsMapAtom, undeletedMetaObjectsAtom } from '@/stores/meta.store'
 import { globalStore } from '@/stores'
 import { isWithinInterval } from 'date-fns'
 import fuzzysort from 'fuzzysort'
-import { useAtomValue } from 'jotai/react'
+import { useAtomValue, useStore } from 'jotai/react'
 import { atom } from 'jotai/vanilla'
 import { useEffect, useMemo } from 'react'
 import { MetaObject } from '~/typings/data'
@@ -22,14 +22,35 @@ export const CurrentFocusFilterAtom = atom<
 // 并集和交集结合
 export const FilterRelatedIdsAtom = atom<Map<number, Set<number>>>(new Map())
 
+export const ShouldFilterIdsAtom = atom<Set<number> | undefined>(undefined)
+
 export const RealFilterRelatedIdsAtom = atom<Map<number, Set<number>>>(new Map())
-const useObjectFilter = (onChange: (ids: Set<number>) => void, store?: any) => {
+
+const useObjectFilter = (onChange: (ids: Set<number>) => void, store?: any, shouldFilterIdSet?: Set<number>) => {
   const nameFilter = useAtomValue(FilterNameSearchAtom, { store })
   const tagFilter = useAtomValue(FilterSelectedTagsAtom, { store })
   const createDateFilter = useAtomValue(FilterDateIntervalsAtom, { store })
   const typeFilter = useAtomValue(FilterTypesAtom, { store })
   const realFilterRelatedIds = useAtomValue(RealFilterRelatedIdsAtom, { store })
-  const undeletedMetaObjects = useAtomValue(undeletedMetaObjectsAtom, { store: globalStore })
+  const scopedStore = useStore()
+  const shouldFilterObjectsAtom = useMemo(() => {
+    const realStore = (store || scopedStore) as typeof scopedStore
+    if (shouldFilterIdSet) {
+      realStore.set(ShouldFilterIdsAtom, shouldFilterIdSet)
+      return atom(get => {
+        const allObjects: MetaObject[] = []
+        const metaObjects = get(metaObjectsAtom)
+        shouldFilterIdSet.forEach(id => {
+          const obj = metaObjects.get(id)
+          obj && allObjects.push(obj)
+        })
+        return allObjects
+      })
+    } else {
+      return undeletedMetaObjectsAtom
+    }
+  }, [shouldFilterIdSet])
+  const shouldFilterObjects = useAtomValue(shouldFilterObjectsAtom, { store: globalStore })
   const tagToMetaObjectIdsMap = useAtomValue(tagToMetaObjectIdsMapAtom, { store: globalStore })
   const filterMap = useMemo(() => {
     const map = new Map<string, Set<number>>()
@@ -41,7 +62,7 @@ const useObjectFilter = (onChange: (ids: Set<number>) => void, store?: any) => {
       triggerChange()
       return
     }
-    const result = fuzzysort.go(nameFilter, undeletedMetaObjects, { keys: ['name', 'description'] })
+    const result = fuzzysort.go(nameFilter, shouldFilterObjects, { keys: ['name', 'description'] })
     const filteredIdSet = new Set(Array.from(result.values()).map(i => i.obj.id))
     filterMap.set('name', filteredIdSet)
     triggerChange()
@@ -83,7 +104,7 @@ const useObjectFilter = (onChange: (ids: Set<number>) => void, store?: any) => {
       interval.start = new Date(0)
     }
     if (interval.end < interval.start) return
-    const filteredIds = undeletedMetaObjects.filter(i => isWithinInterval(i.createdAt, interval)).map(i => i.id)
+    const filteredIds = shouldFilterObjects.filter(i => isWithinInterval(i.createdAt, interval)).map(i => i.id)
     filterMap.set('createdAt', new Set(filteredIds))
     triggerChange()
   }, [createDateFilter])
@@ -94,7 +115,7 @@ const useObjectFilter = (onChange: (ids: Set<number>) => void, store?: any) => {
       return
     }
     const idSet = new Set<number>()
-    undeletedMetaObjects.forEach(obj => {
+    shouldFilterObjects.forEach(obj => {
       if (typeFilter.has(obj.type)) {
         idSet.add(obj.id)
       }
@@ -117,18 +138,17 @@ const useObjectFilter = (onChange: (ids: Set<number>) => void, store?: any) => {
       })
       return currentSetRelatedIds
     })
-    const intersection = intersectionOfMultipleSets(...a)
-    console.log(intersection)
+    const intersection = intersectionOfMultipleSets(...a) as Set<number>
     filterMap.set('related', intersection)
     triggerChange()
   }, [realFilterRelatedIds])
   useEffect(() => {
     triggerChange()
-  }, [undeletedMetaObjects])
+  }, [shouldFilterObjects])
   const triggerChange = () => {
     const sets = Array.from(filterMap.values())
     if (sets.length === 0) {
-      onChange(new Set(undeletedMetaObjects.map(i => i.id)))
+      onChange(new Set(shouldFilterObjects.map(i => i.id)))
       return
     }
     const result = intersectionOfMultipleSets(...sets) as Set<number>

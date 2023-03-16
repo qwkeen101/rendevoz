@@ -11,6 +11,10 @@ import useTags from '../../hooks/useTags'
 import { Tag } from '@/components/form/EditMetaObjectForm'
 import { Content } from '@/components/base'
 import { MetaObject } from '~/typings/data'
+import { useToggle } from '@/hooks'
+import { MarkerColor } from '@/components/svg/markerColors'
+import { useAtomValue } from 'jotai'
+import { FilterSelectedTagsAtom } from '@/components/database/filter/useObjectFilter'
 
 interface NodeProps {
   node: GraphNode
@@ -33,18 +37,30 @@ export const TypeToNodeRadius: Record<MetaObject['type'], number> = {
 const Node: FC<NodeProps> = memo(({ node, onMouseEnter, onMouseLeave, onContextMenu, onClick }) => {
   const nodeRef = useRef<SVGGElement>(null)
   const graph = useGraph()
-  const [tags] = useTags()
+  const filterTags = useAtomValue(FilterSelectedTagsAtom)
 
   const thisNodeShowTags = useMemo(() => {
+    if (node.opacity !== 1) {
+      return []
+    }
     const nodeTags = node.tags || []
-    const showTags = nodeTags?.filter(i => tags.some(o => o === i))
+    const allSelectedTags = new Set<string>(
+      Array.from(filterTags.values())
+        .map(i => [...i])
+        .flat(1)
+    )
+
+    const showTags = nodeTags?.filter(i => allSelectedTags.has(i))
     return showTags
-  }, [tags])
+  }, [filterTags, node.opacity])
 
   const radius = TypeToNodeRadius[node.type || 'normal']
   const d = radius * 2
   const originNode = graph?.nodesMap?.get(node.id)
   const renderNode = () => {
+    if (node.coverImgSrc) {
+      return <ImageNode node={node} />
+    }
     switch (node.type) {
       case 'note':
       case 'whiteboard':
@@ -55,7 +71,7 @@ const Node: FC<NodeProps> = memo(({ node, onMouseEnter, onMouseLeave, onContextM
       case 'image':
         return <ImageNode node={node} />
       default:
-        return <IconNode node={node}/>
+        return <IconNode node={node} />
     }
   }
   useEffect(() => {
@@ -131,8 +147,8 @@ const Node: FC<NodeProps> = memo(({ node, onMouseEnter, onMouseLeave, onContextM
   return (
     <motion.g
       onContextMenu={handleContextMenu}
-      onMouseEnter={handleMouseEnter}
       onClick={handleClick}
+      onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
       cursor="pointer"
       pointerEvents="auto"
@@ -143,6 +159,24 @@ const Node: FC<NodeProps> = memo(({ node, onMouseEnter, onMouseLeave, onContextM
     >
       {renderNode()}
       {renderTags()}
+      {node.isCenter && (
+        <motion.circle
+          style={{ transformOrigin: `${radius}px ${radius}px` }}
+          fill="none"
+          stroke={MarkerColor.EMPHASIS}
+          pointerEvents="none"
+          strokeWidth="2"
+          initial={{ scale: node.scale || 1, opacity: 0, r: radius + 10 }}
+          animate={{ scale: node.scale, opacity: 0.8, r: radius + 20 }}
+          transition={{
+            repeat: Infinity,
+            duration: 1,
+            repeatType: 'reverse'
+          }}
+          cx={radius}
+          cy={radius}
+        ></motion.circle>
+      )}
     </motion.g>
   )
 })

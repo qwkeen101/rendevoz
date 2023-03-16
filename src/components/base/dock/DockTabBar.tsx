@@ -13,6 +13,7 @@ import WithBorder from '../WithBorder'
 import ClassName from '@/styles/classNames'
 import { useTranslation } from 'react-i18next'
 import { replacePanel } from './Algorithm'
+import { LayoutIdToTabMap } from '@/components/layout'
 
 interface DockTabBarProps {
   TabNavList: TabNavListProps
@@ -91,6 +92,7 @@ const TabItem = memo(({ onClick, isSelected, item, onDragStart }) => {
         onClick={e => {
           const tabData = dockContext.find(item.key) as TabData
           dockContext.dockMove(tabData, null, 'remove')
+          LayoutIdToTabMap.delete(tabData.id)
           dockContext.getGlobal().onTabClose?.(tabData)
           toggleContextMenuVisible()
         }}
@@ -102,6 +104,10 @@ const TabItem = memo(({ onClick, isSelected, item, onDragStart }) => {
         onClick={e => {
           const tabData = dockContext.find(item.key) as TabData
           const parentPanel = tabData.parent as PanelData
+          parentPanel.tabs
+            .filter(i => i !== tabData)
+            .map(i => i.id)
+            .forEach(id => id && LayoutIdToTabMap.delete(id))
           const newPanel = { ...parentPanel, tabs: [tabData] } as PanelData
           const newLayout = replacePanel(dockContext.getLayout(), parentPanel, newPanel)
           dockContext.setLayout(newLayout)
@@ -118,6 +124,8 @@ const TabItem = memo(({ onClick, isSelected, item, onDragStart }) => {
           const parentPanel = tabData.parent as PanelData
           const idx = parentPanel.tabs.findIndex(i => i === tabData)
           const leftTabs = parentPanel.tabs.slice(0, idx + 1)
+          const rightTabs = parentPanel.tabs.slice(idx + 1, -1)
+          rightTabs.forEach(tab => tab.id && LayoutIdToTabMap.delete(tab.id))
           const newPanel = { ...parentPanel, tabs: [...leftTabs], activeId: tabData.id } as PanelData
           const newLayout = replacePanel(dockContext.getLayout(), parentPanel, newPanel)
           dockContext.setLayout(newLayout)

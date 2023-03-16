@@ -255,7 +255,6 @@ export class DockLayout extends DockPortalManager implements DockContext {
           const nextIdx = idx
           const nextActiveId = isLast ? newParentPanel.tabs[newParentPanel.tabs.length - 1]?.id || null : newParentPanel.tabs[nextIdx].id
           newParentPanel.activeId = nextActiveId
-          console.log(newParentPanel)
           currentTabId = nextActiveId
         }
       }
@@ -278,7 +277,7 @@ export class DockLayout extends DockPortalManager implements DockContext {
   }
 
   /** @inheritDoc */
-  updateTab(id: string, newTab: TabData, makeActive = true): boolean {
+  updateTab(id: string, newTab: TabData | null, makeActive = true): boolean {
     const tab = this.find(id, Algorithm.Filter.AnyTab) as TabData
     if (tab) {
       let panelData = tab.parent

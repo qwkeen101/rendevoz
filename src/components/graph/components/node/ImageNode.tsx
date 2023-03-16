@@ -23,7 +23,6 @@ const ImageNode = ({ node, imageUrl, label }: { node: GraphNode; imageUrl?: stri
         }
     }
   }
-  const shouldHaveBorderRadius = node.type === 'normal'
   const shouldHaveBoxShadow = node.type === 'pdf'
   const imgSize = useMemo(() => imageSize(), [node.type])
   return (
@@ -43,7 +42,7 @@ const ImageNode = ({ node, imageUrl, label }: { node: GraphNode; imageUrl?: stri
               style={{
                 boxShadow: shouldHaveBoxShadow ? 'rgba(0, 0, 0, 0.35) 0px 5px 16px' : undefined,
                 margin: 'auto',
-                borderRadius: shouldHaveBorderRadius ? '8px' : undefined,
+                borderRadius: '8px',
                 objectFit: 'cover'
               }}
               src={imageUrl || node.coverImgSrc}

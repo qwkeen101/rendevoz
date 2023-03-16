@@ -1,8 +1,8 @@
-import { AnimatePopover, Content, Icon } from '@/components/base'
+import { AnimatePopover, Content, Icon, Tooltip } from '@/components/base'
 import Zindexes from '@/consts/zindex'
 import ClassName from '@/styles/classNames'
 import { useState } from 'react'
-import GraphFilter from './Filter'
+import GraphFilter from '../GraphFilter'
 import GraphOverview from './Overview'
 
 const GraphSettingPanel = () => {
@@ -42,17 +42,26 @@ const GraphSettingPanel = () => {
           style={{
             border: '1px solid rgba(31,34,39,0.08)',
             borderRadius: 6,
-            padding: 12
+            position: 'relative'
           }}
-          className={ClassName.Background.blurBackground}
         >
           {renderPopover()}
         </div>
       }
     >
-      <Content flex column gap={8} style={{ fontSize: 16 }}>
-        <Icon name="park-info" className={ClassName.circleButton()} onClick={() => togglePanel('info')} />
-        <Icon name="park-filter" className={ClassName.circleButton()} onClick={() => togglePanel('filter')} />
+      <Content
+        flex
+        column
+        gap={8}
+        style={{ fontSize: 16, padding: '10px 6px', borderRadius: 8, overflow: 'hidden' }}
+        className={ClassName.Background.pseudoBlubBackground}
+      >
+        <Tooltip content="Graph Info">
+          <Icon name="park-info" className={ClassName.circleButton()} onClick={() => togglePanel('info')} />
+        </Tooltip>
+        <Tooltip content="Graph Filter">
+          <Icon name="park-filter" className={ClassName.circleButton()} onClick={() => togglePanel('filter')} />
+        </Tooltip>
       </Content>
     </AnimatePopover>
   )

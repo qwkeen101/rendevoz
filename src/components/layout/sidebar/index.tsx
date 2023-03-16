@@ -5,7 +5,7 @@ import { Rnd } from 'react-rnd'
 import { delay } from 'lodash'
 import useSidebarWidth from '@/hooks/components/useSidebarWidth'
 import Icon from '@/components/base/Icon'
-import { GlobalInstances } from '..'
+import { GlobalInstances, LayoutIdToTabMap } from '..'
 
 export const Sidebar: FC = () => {
   const navRef = useRef<HTMLElement>(null)
@@ -17,7 +17,7 @@ export const Sidebar: FC = () => {
   const [, setSidebarWidth] = useSidebarWidth()
   return (
     <div
-      onClick={() => console.log(GlobalInstances.pdfInstances)}
+      onClick={() => console.log(LayoutIdToTabMap)}
       tabIndex={-1}
       onMouseLeave={() => {
         if (!isResizing) setHovered(false)

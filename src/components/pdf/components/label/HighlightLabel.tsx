@@ -9,12 +9,13 @@ import { useAtomValue } from 'jotai/react'
 import { atom } from 'jotai/vanilla'
 import { FC, forwardRef, memo, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { useClickAway } from 'react-use'
-import { IHighlightLabel } from '~/typings/data'
+import { IHighlightLabel, ILabel } from '~/typings/data'
 import LabelToolbar from '../toolbar/LabelToolbar'
 import usePdfViewer from '@/pdfViewer/core/hooks/useViewer'
-import scrollIntoView from 'scroll-into-view-if-needed'
 import useClickOutside from '@/hooks/utils/useClickOutside'
 import tinycolor from 'tinycolor2'
+import { ID_TO_LABEL_MAP } from '../../weakMaps'
+import { Rect } from '@/types'
 
 interface HighlightLabelProps {
   labelId: number
@@ -26,7 +27,7 @@ const layout = ['colorPicker', 'separator', 'searcher', 'translator', 'separator
 const HighlightLabel: FC<HighlightLabelProps> = memo(
   ({ labelId, pageSize, documentId }) => {
     const highlightAtom = useMemo(() => atom(get => get(labelsAtom).get(labelId)), [labelId])
-    const highlight = useAtomValue(highlightAtom, { store: globalStore }) as IHighlightLabel | undefined
+    const highlight = useAtomValue(highlightAtom, { store: globalStore }) as (ILabel & { type: 'highlight' }) | undefined
     const { updateLabel, deleteLabel } = useLabelStore()
     const [popoverVisible, setPopoverVisible] = useState(false)
     const highlightRef = useRef<HTMLDivElement>(null)
@@ -83,6 +84,7 @@ const HighlightLabel: FC<HighlightLabelProps> = memo(
       }
     })
     if (!highlight) return null
+    highlight.rects
     return (
       <AnimatePopover
         padding={10}
@@ -129,7 +131,9 @@ const Highlights = forwardRef((props, ref) => {
   const mergedRef = useMergedRef(highlightRef, innerRef, ref)
   const viewer = usePdfViewer()
   const [focused, setFocused] = useState(false)
-  useClickOutside(() => setFocused(false), highlightRef)
+  useClickOutside(() => setFocused(false), highlightRef, focused)
+  const containerRectRef = useRef<Rect>()
+
   useEffect(() => {
     const container = innerRef.current
     if (container) {
@@ -182,17 +186,24 @@ const Highlights = forwardRef((props, ref) => {
       container.style.left = `${containerRect.left}px`
       container.style.top = `${containerRect.top}px`
       container.style.position = 'absolute'
-      if (viewer?.currentFocusLabelId === labelId) {
-        console.log('equals')
-        setTimeout(() => {
-          viewer!.currentFocusLabelId = undefined
-          const centerOfScreenHeight = window.innerHeight / 2
-          viewer?.scrollBy?.(containerRect.top - centerOfScreenHeight)
-          setFocused(true)
-        })
-      }
+      containerRectRef.current = containerRect
     }
   }, [pageSize.width, pageSize.height, pageSize.scale])
+  useEffect(() => {
+    if (viewer) {
+      ID_TO_LABEL_MAP.get(viewer)?.set(labelId, {
+        focus: () => {
+          setTimeout(() => {
+            setFocused(true)
+          })
+        }
+      })
+      viewer.onLabelRendered?.(labelId)
+      return () => {
+        ID_TO_LABEL_MAP.get(viewer)?.delete(labelId)
+      }
+    }
+  }, [])
   const darkenColor = useMemo(() => {
     const color = tinycolor(highlight.color || '#8590ae')
     const darkenColor = color.darken(20).toString('rgb')

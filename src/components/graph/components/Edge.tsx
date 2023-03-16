@@ -6,12 +6,11 @@ import { MarkerColor } from '../../svg/markerColors'
 import useGraph from '../hooks/useGraph'
 import { motion } from 'framer-motion'
 import { select } from 'd3'
-import { useMemoizedFn, usePrevious } from '@/hooks'
+import { useMemoizedFn } from '@/hooks'
 import { TypeToNodeRadius } from './node/Node'
 import { NodeFakeHiddenOpacity } from '../consts/opacity'
-import { selectAtom } from 'jotai/utils'
 import { oppositeEdgesMapAtom } from '../hooks/useEdges'
-import { useAtomValue, useStore } from 'jotai'
+import { useStore } from 'jotai'
 interface EdgeProps {
   edge: GraphEdge
 }
@@ -34,6 +33,7 @@ const Edge: FC<EdgeProps> = memo(({ edge }) => {
   const [d, setD] = useState<string>()
 
   const textRef = useRef<SVGTextElement>(null)
+
   useLayoutEffect(() => {
     const isNewlyAdded = edge.id === graph?.newAddedEdge?.id
     if (edgeRef.current) {
@@ -61,6 +61,7 @@ const Edge: FC<EdgeProps> = memo(({ edge }) => {
       graph?.registerLabelElement(edge.id, labelRef.current)
     }
   }, [edge])
+
   useEffect(() => {
     if (textRef.current && graph) {
       const textBound = textRef.current?.getBoundingClientRect()
@@ -133,11 +134,11 @@ const Edge: FC<EdgeProps> = memo(({ edge }) => {
     setD(result)
     return result
   })
-  useEffect(() => {
-    graph?.ID_TO_EDGE_FUNCTION_MAP.set(edge.id, {
-      drawEdge
-    })
+
+  graph?.ID_TO_EDGE_FUNCTION_MAP.set(edge.id, {
+    drawEdge
   })
+
   const edgeMouseEnterHandler = () => {
     if (edge.opacity !== NodeFakeHiddenOpacity) setHighlight(true)
   }
@@ -170,7 +171,7 @@ const Edge: FC<EdgeProps> = memo(({ edge }) => {
       onMouseLeave={edgeMouseLeaveHandler}
       onContextMenu={edgeContextMenuHandler}
       onClick={edgeClickHandler}
-      pointerEvents="auto"
+      pointerEvents={edge.opacity === 0 ? 'none' : 'auto'}
       cursor="pointer"
     >
       <motion.path

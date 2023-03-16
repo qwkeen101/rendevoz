@@ -37,16 +37,18 @@ const createNoteStore = () => {
   const blobDb = useDb('blobs')
   const initalizedLocalStore = initializeLocalStore(notesAtom, noteDb)
 
-  const localStore: IStore<INote> = {
+  const localStore: Omit<IStore<INote>, 'addOne'> & {
+    addOne: (n: Partial<INote>, silent?: boolean, preventAddMeta?: boolean) => Promise<INote>
+  } = {
     getAll: initalizedLocalStore.getAll(),
     getOneById: initalizedLocalStore.getOneById(),
     fetchOneById: id => localStore.getOneById(id),
-    addOne: (n, silent) => {
+    addOne: (n, silent, preventAddMeta) => {
       const note = initBaseObject(n)
       note.title = note.title || 'Untitled'
       note.contentId = Id.getId()
       return initalizedLocalStore.addOne(async obj => {
-        if (!obj.metaId) {
+        if (!obj.metaId && !preventAddMeta) {
           await MetaStore.addMetaObject(
             {
               id: Id.getId(),

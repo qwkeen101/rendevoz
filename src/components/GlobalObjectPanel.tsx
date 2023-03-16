@@ -1,34 +1,36 @@
 import Zindexes from '@/consts/zindex'
 import { useMemoizedFn, useMergedRef, useToggle } from '@/hooks'
-import { relatedMetaObjectsMapAtom, undeletedMetaObjectsAtom } from '@/stores/meta.store'
+import { undeletedMetaObjectsAtom } from '@/stores/meta.store'
 import { globalStore, MetaStore } from '@/stores'
 import ClassName from '@/styles/classNames'
 import { Position } from '@/types'
 import { css } from '@emotion/css'
 import { useVirtualizer } from '@tanstack/react-virtual'
 import { useAtom, useAtomValue, useStore } from 'jotai/react'
-import { forwardRef, memo, useEffect, useMemo, useRef, useState } from 'react'
+import { forwardRef, memo, ReactElement, useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { Rnd } from 'react-rnd'
 import { MetaObject } from '~/typings/data'
-import { AnimatePopover, CheckBox, Content, Icon, Image, WithBorder } from './base'
+import { AnimatePopover, CheckBox, Content, Icon, WithBorder } from './base'
 import Modal from './base/Modal'
-import { Tag } from './form/EditMetaObjectForm'
 import { GlobalDragOverlayInstance, useGlobalIsDragging } from './globalDragOverlay/GlobalDragOverlay'
 import { useSetting } from './setting/Main'
-import { ObjectActionPopover, TypeToTypeName } from './database/card/DatabaseCard'
+import { ObjectActionPopover } from './database/card/DatabaseCard'
 import DatabaseFilter from './database/filter'
 import useObjectFilter, { CurrentFocusFilterAtom, FilterNameSearchAtom, FilterRelatedIdsAtom } from './database/filter/useObjectFilter'
 import { compareHotkey } from 'is-hotkey'
 import ObjectForm from './form/ObjectForm'
 import { selectAtom } from 'jotai/utils'
-import { useGlobalAtomValue } from '@/jotai/jotaiScope'
 import produce from 'immer'
 import { atom } from 'jotai'
 import { useTranslation } from 'react-i18next'
-import Actions from '@/Actions'
 import useRenderObject from './database/useRenderObject'
+import Actions from '@/Actions'
 
+export const GlobalObjectPanelInstance: {
+  open?: VoidFunction
+  close?: VoidFunction
+} = {}
 const GlobalObjectPanel = () => {
   const [search, setSearch] = useAtom(FilterNameSearchAtom)
   const [panelState, setPanelState] = useState<
@@ -48,6 +50,10 @@ const GlobalObjectPanel = () => {
       height: Math.min(window.innerHeight * 0.8, 500)
     }
   })
+  Object.assign(GlobalObjectPanelInstance, {
+    open: () => setPanelState(s => ({ ...s, visible: true })),
+    close: () => setPanelState(s => ({ ...s, visible: false }))
+  } as typeof GlobalObjectPanelInstance)
   const { t } = useTranslation()
   const [showBoxShadow, toggleShowBoxShadow] = useToggle(false)
   const undeleteObjects = useAtomValue(undeletedMetaObjectsAtom, { store: globalStore })
@@ -94,7 +100,7 @@ const GlobalObjectPanel = () => {
     return () => {
       container?.removeEventListener('scroll', containerScrollHandler)
     }
-  })
+  }, [])
   const items = virtualizer.getVirtualItems()
   return createPortal(
     <div
@@ -264,7 +270,7 @@ const GlobalObjectPanel = () => {
                       padding: '10px 0px'
                     })}
                   >
-                    <SimpleObject metaObject={shouldDisplayObjects[row.index]} />
+                    <SimpleObject metaObjectId={shouldDisplayObjects[row.index].id} />
                   </div>
                 ))}
               </div>
@@ -278,21 +284,35 @@ const GlobalObjectPanel = () => {
   )
 }
 
-const SimpleObject = memo(
+export const SimpleObject = memo(
   forwardRef(
     (
       {
-        metaObject
+        metaObjectId,
+        iconName = 'park-drag',
+        iconPopover,
+        iconColor = 'rgba(31,34,39,0.2)',
+        heavyIconColor = 'rgba(31,34,39,0.7)',
+        descriptionClassName = ClassName.description(),
+        onNavigate,
+        draggable = true
       }: {
-        metaObject: MetaObject
+        metaObjectId: number
+        iconName?: string
+        iconColor?: string
+        heavyIconColor?: string
+        iconPopover?: ReactElement
+        descriptionClassName?: string
+        onNavigate?: VoidFunction
+        draggable?: boolean
       },
       ref
     ) => {
       const containerRef = useRef<HTMLDivElement>(null)
       const mergedRef = useMergedRef(containerRef, ref)
       const isPressed = useRef(false)
-      const { renderWhole } = useRenderObject({
-        metaObjectId: metaObject.id
+      const { renderWhole, metaObject } = useRenderObject({
+        metaObjectId: metaObjectId
       })
       const [popoverVisible, togglePopoverVisible] = useToggle(false)
       const [editVisible, toggleEditVisible] = useToggle(false)
@@ -300,7 +320,6 @@ const SimpleObject = memo(
       const { updateMetaObject } = MetaStore
       const firstDragTimeRef = useRef<number>(0)
       const currentFocusFilter = useAtomValue(CurrentFocusFilterAtom)
-      const [checked, toggleChecked] = useToggle(false)
       const currentRelatedIdsAtom = useMemo(() => {
         if (currentFocusFilter) {
           if (currentFocusFilter.id && currentFocusFilter.type === 'related') {
@@ -333,7 +352,7 @@ const SimpleObject = memo(
           GlobalDragOverlayInstance.addDragElements?.(cloned)
           GlobalDragOverlayInstance.draggingDetails = {
             type: 'metaElement',
-            metaId: metaObject.id
+            metaId: metaObjectId
           }
           isPressed.current = true
         }
@@ -353,28 +372,28 @@ const SimpleObject = memo(
       const iconRef = useRef<HTMLDivElement>(null)
 
       useEffect(() => {
-        iconRef.current?.addEventListener('pointerdown', handleDragStart)
-        document.addEventListener('pointermove', handleDrag)
-        document.addEventListener('pointerup', handleDragEnd)
-        return () => {
-          iconRef.current?.removeEventListener('pointerdown', handleDragStart)
-          document.removeEventListener('pointermove', handleDrag)
-          document.removeEventListener('pointerup', handleDragEnd)
+        if (draggable) {
+          iconRef.current?.addEventListener('pointerdown', handleDragStart)
+          document.addEventListener('pointermove', handleDrag)
+          document.addEventListener('pointerup', handleDragEnd)
+          return () => {
+            iconRef.current?.removeEventListener('pointerdown', handleDragStart)
+            document.removeEventListener('pointermove', handleDrag)
+            document.removeEventListener('pointerup', handleDragEnd)
+          }
         }
       })
 
       const handleClickCheckBox = (checked: boolean) => {
-        console.log(checked)
-        toggleChecked(checked)
         if (currentFocusFilter?.id) {
           if (checked) {
             store.set(
               FilterRelatedIdsAtom,
               produce(store.get(FilterRelatedIdsAtom), draft => {
                 if (draft.has(currentFocusFilter.id)) {
-                  draft.get(currentFocusFilter.id)?.add(metaObject.id)
+                  draft.get(currentFocusFilter.id)?.add(metaObjectId)
                 } else {
-                  draft.set(currentFocusFilter.id, new Set([metaObject.id]))
+                  draft.set(currentFocusFilter.id, new Set([metaObjectId]))
                 }
               })
             )
@@ -382,7 +401,7 @@ const SimpleObject = memo(
             store.set(
               FilterRelatedIdsAtom,
               produce(store.get(FilterRelatedIdsAtom), draft => {
-                draft.get(currentFocusFilter.id)?.delete(metaObject.id)
+                draft.get(currentFocusFilter.id)?.delete(metaObjectId)
               })
             )
           }
@@ -403,7 +422,7 @@ const SimpleObject = memo(
           {showCheckBox ? (
             <CheckBox
               style={{ flexShrink: 0, margin: '0px 4px' }}
-              checked={currentRelatedIds?.has(metaObject.id)}
+              checked={currentRelatedIds?.has(metaObjectId)}
               onChange={handleClickCheckBox}
             />
           ) : (
@@ -415,7 +434,9 @@ const SimpleObject = memo(
               onClickOutside={togglePopoverVisible}
               content={
                 <WithBorder>
-                  <ObjectActionPopover onEdit={toggleEditVisible} onClose={togglePopoverVisible} metaObjectId={metaObject.id} />
+                  {iconPopover || (
+                    <ObjectActionPopover onEdit={toggleEditVisible} onClose={togglePopoverVisible} metaObjectId={metaObjectId} />
+                  )}
                 </WithBorder>
               }
               align="start"
@@ -423,15 +444,15 @@ const SimpleObject = memo(
             >
               <Icon
                 size={18}
-                fill="rgba(31,34,39,0.2)"
+                fill={iconColor}
                 onClick={togglePopoverVisible}
-                name="park-drag"
+                name={iconName}
                 className={css([
                   ClassName.circleButton(),
                   {
-                    color: 'rgba(31,34,39,0.2)',
+                    color: iconColor,
                     ':hover': {
-                      color: 'rgba(31,34,39,0.7)'
+                      color: heavyIconColor
                     }
                   }
                 ])}
@@ -442,12 +463,17 @@ const SimpleObject = memo(
             titleOptions: {
               style: {
                 fontSize: 14
+              },
+              onTitleClick: () => {
+                Actions.navigateToTargetObject(metaObjectId)
+                onNavigate?.()
               }
             },
             descriptionOptions: {
               style: {
                 fontSize: 12
-              }
+              },
+              descriptionClassName
             }
           })}
         </Content>

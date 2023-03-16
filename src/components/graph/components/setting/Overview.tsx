@@ -3,10 +3,10 @@ import { Tag } from '@/components/form/EditMetaObjectForm'
 import ClassName from '@/styles/classNames'
 import { useMemo } from 'react'
 import useEdges from '../../hooks/useEdges'
-import useNodes from '../../hooks/useNodes'
+import useGraphNodes from '../../hooks/useGraphNodes'
 
 const GraphOverview = () => {
-  const [nodes] = useNodes()
+  const [nodes] = useGraphNodes()
   const [links] = useEdges()
   const allTags = useMemo(() => {
     const set = new Set<string>()

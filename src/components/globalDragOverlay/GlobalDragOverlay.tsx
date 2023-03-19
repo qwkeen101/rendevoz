@@ -70,6 +70,8 @@ interface IGlobalDragOverlay {
   endDrag: () => void
   removeDragElements: (nodes: HTMLElement | HTMLElement[]) => void
   removeAllDragElement: () => void
+  getDraggingDetails: () => Partial<AvaliableGlobalDraggingElements>
+  setDraggingDetails: (draggingDetails: Partial<AvaliableGlobalDraggingElements>) => void
   draggingDetails?: Partial<AvaliableGlobalDraggingElements>
 }
 const disableUserSelectClassName = css({
@@ -89,6 +91,7 @@ const GlobalDragOverlay = memo(() => {
   const dragHandler = useMemoizedFn((e: PointerEvent) => {
     if (e.type === 'pointerup') {
       setDragElements([])
+      console.log(isDragging, GlobalDragOverlayInstance.draggingDetails)
       isDragging &&
         GlobalDragOverlayInstance.draggingDetails &&
         emitter.emit('global', {
@@ -173,7 +176,9 @@ const GlobalDragOverlay = memo(() => {
     },
     endDrag: () => {
       setIsDragging(false)
-    }
+    },
+    setDraggingDetails: d => (GlobalDragOverlayInstance.draggingDetails = d),
+    getDraggingDetails: () => GlobalDragOverlayInstance.draggingDetails
   } as Partial<IGlobalDragOverlay>)
   return createPortal(
     <>

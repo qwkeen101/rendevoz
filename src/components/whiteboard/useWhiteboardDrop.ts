@@ -28,8 +28,10 @@ const useWhiteboardDrop = () => {
   const setItems = useSetWhiteboardItems()
   handler.on('globalDragPointerUp', async data => {
     const { draggingElement, event } = data
+    console.log(draggingElement, event)
     if (flow.parentContainerEle?.contains(event.target as HTMLElement)) {
       if (!isPointerOnContainer(event)) return
+      console.log('get here')
       let expanded = false
       if (draggingElement.type === 'note') {
         expanded = true

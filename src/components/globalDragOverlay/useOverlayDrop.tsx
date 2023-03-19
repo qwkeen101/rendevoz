@@ -62,25 +62,33 @@ const useOverlayDrop = () => {
       id: Id.getId(),
       sourceId: metaObject.id
     }
+    const { enableAll, enableDropOnEditorLink, enableDropOnPDFLink, enableDropOnWhiteboardLink } = getSetting().objectAndLink
+    if (!enableAll) return
     switch (dropOn.dropOn) {
       case 'database': {
         break
       }
       case 'editor': {
+        if (!enableDropOnEditorLink) break
         const noteMeta =
-          (await getMetaObjectByObjectId(dropOn.noteId)) || (await addMetaObject({ id: Id.getId(), objectId: dropOn.noteId, type: 'note' }, true))
+          (await getMetaObjectByObjectId(dropOn.noteId)) ||
+          (await addMetaObject({ id: Id.getId(), objectId: dropOn.noteId, type: 'note' }, true))
         link.targetId = noteMeta.id
         break
       }
       case 'pdf': {
+        if (!enableDropOnPDFLink) break
         const pdfMeta =
-          (await getMetaObjectByObjectId(dropOn.pdfId)) || (await addMetaObject({ id: Id.getId(), objectId: dropOn.pdfId, type: 'pdf' }, true))
+          (await getMetaObjectByObjectId(dropOn.pdfId)) ||
+          (await addMetaObject({ id: Id.getId(), objectId: dropOn.pdfId, type: 'pdf' }, true))
         link.targetId = pdfMeta.id
         break
       }
       case 'whiteboard': {
+        if (!enableDropOnWhiteboardLink) break
         const whiteboardMeta =
-          (await getMetaObjectByObjectId(dropOn.whiteboardId)) || (await addMetaObject({ id: Id.getId(), objectId: dropOn.whiteboardId, type: 'whiteboard' }, true))
+          (await getMetaObjectByObjectId(dropOn.whiteboardId)) ||
+          (await addMetaObject({ id: Id.getId(), objectId: dropOn.whiteboardId, type: 'whiteboard' }, true))
         link.targetId = whiteboardMeta.id
         break
       }
@@ -97,6 +105,7 @@ const useOverlayDrop = () => {
     shouldOpenEditMetaModal: boolean
     preLinks: PartialWithId<MetaLink>[]
   }> => {
+    const { enableDragFromEditorLink, enableDragFromPDFLink, enableAll } = getSetting().objectAndLink
     const normalizedLinks: PartialWithId<MetaLink>[] = []
     const normalizedMetaObject: PartialWithId<MetaObject & { noteId: number }> = {
       id: Id.getId(),
@@ -134,17 +143,19 @@ const useOverlayDrop = () => {
         if (labelMeta) {
           alreadyHasMeta = true
           shouldOpenEditMetaModal = false
-          const linkIndex = globalStore.get(indexedMetaLinksAtom)
-          if (linkIndex) {
-            const sourceToLinks = linkIndex.sourceIdToLinkIdsMap.get(pdfMeta.id)
-            const targetToLinks = linkIndex.targetIdToLinkIdMap.get(labelMeta.id)
-            if (sourceToLinks && targetToLinks) {
-              const size = intersectionOfMultipleSets(sourceToLinks, targetToLinks).size
-              if (size === 0) {
-                addMetaLink({
-                  sourceId: pdfMeta.id,
-                  targetId: labelMeta.id
-                })
+          if (enableDragFromPDFLink && enableAll) {
+            const linkIndex = globalStore.get(indexedMetaLinksAtom)
+            if (linkIndex) {
+              const sourceToLinks = linkIndex.sourceIdToLinkIdsMap.get(pdfMeta.id)
+              const targetToLinks = linkIndex.targetIdToLinkIdMap.get(labelMeta.id)
+              if (sourceToLinks && targetToLinks) {
+                const size = intersectionOfMultipleSets(sourceToLinks, targetToLinks).size
+                if (size === 0) {
+                  addMetaLink({
+                    sourceId: pdfMeta.id,
+                    targetId: labelMeta.id
+                  })
+                }
               }
             }
           }
@@ -153,17 +164,19 @@ const useOverlayDrop = () => {
           normalizedMetaObject.type = 'pdfElement'
           normalizedMetaObject.objectId = dragElement.labelId
           normalizedMetaObject.name = dragElement.content?.slice(0, 50) || 'Unnamed Label'
-          const shouldConcat =  dragElement.content && dragElement.content?.length > 50
+          const shouldConcat = dragElement.content && dragElement.content?.length > 50
           if (shouldConcat) {
             normalizedMetaObject.name = normalizedMetaObject.name.concat('...')
           }
           normalizedMetaObject.description = dragElement.content
-          const metaLink: PartialWithId<MetaLink> = {
-            sourceId: pdfMeta.id,
-            targetId: normalizedMetaObject.id,
-            id: Id.getId()
+          if (enableDragFromPDFLink && enableAll) {
+            const metaLink: PartialWithId<MetaLink> = {
+              sourceId: pdfMeta.id,
+              targetId: normalizedMetaObject.id,
+              id: Id.getId()
+            }
+            normalizedLinks.push(metaLink)
           }
-          normalizedLinks.push(metaLink)
         }
 
         break
@@ -184,17 +197,19 @@ const useOverlayDrop = () => {
         if (noteBlockMeta) {
           alreadyHasMeta = true
           shouldOpenEditMetaModal = false
-          const linkIndex = globalStore.get(indexedMetaLinksAtom)
-          if (linkIndex) {
-            const sourceToLinks = linkIndex.sourceIdToLinkIdsMap.get(noteMeta.id)
-            const targetToLinks = linkIndex.targetIdToLinkIdMap.get(noteBlockMeta.id)
-            if (sourceToLinks && targetToLinks) {
-              const size = intersectionOfMultipleSets(sourceToLinks, targetToLinks).size
-              if (size === 0) {
-                addMetaLink({
-                  sourceId: noteMeta.id,
-                  targetId: noteBlockMeta.id
-                })
+          if (enableDragFromEditorLink && enableAll) {
+            const linkIndex = globalStore.get(indexedMetaLinksAtom)
+            if (linkIndex) {
+              const sourceToLinks = linkIndex.sourceIdToLinkIdsMap.get(noteMeta.id)
+              const targetToLinks = linkIndex.targetIdToLinkIdMap.get(noteBlockMeta.id)
+              if (sourceToLinks && targetToLinks) {
+                const size = intersectionOfMultipleSets(sourceToLinks, targetToLinks).size
+                if (size === 0) {
+                  addMetaLink({
+                    sourceId: noteMeta.id,
+                    targetId: noteBlockMeta.id
+                  })
+                }
               }
             }
           }
@@ -212,12 +227,14 @@ const useOverlayDrop = () => {
           }
           normalizedMetaObject.description = content
           normalizedMetaObject.noteId = dragElement.noteId
-          const metaLink: PartialWithId<MetaLink> = {
-            sourceId: noteMeta.id,
-            targetId: normalizedMetaObject.id,
-            id: Id.getId()
+          if (enableDragFromEditorLink && enableAll) {
+            const metaLink: PartialWithId<MetaLink> = {
+              sourceId: noteMeta.id,
+              targetId: normalizedMetaObject.id,
+              id: Id.getId()
+            }
+            normalizedLinks.push(metaLink)
           }
-          normalizedLinks.push(metaLink)
         }
 
         break

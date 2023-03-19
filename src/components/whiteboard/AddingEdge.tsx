@@ -5,9 +5,12 @@ import produce from 'immer'
 import { useEffect, useState } from 'react'
 import { getMarkerId } from '../graph/utils/getMarkerId'
 import { MarkerColor } from '../svg/markerColors'
-import { useAddingEdges, useFlow, useSetWhiteboardEdges } from './hooks'
+import { useAddingEdges, useFlow, useSetWhiteboardEdges, WhiteboardAtom } from './hooks'
 import { EdgePosition } from '../../../typings/data/whiteboard'
 import { getBezierPath, getHandlePosition, getNodeData, transformXY } from './utils'
+import { useStore } from 'jotai'
+import getSetting from '../setting/getSetting'
+import { MetaStore } from '@/stores'
 
 const getTargetPosition = (
   sourcePosition: {
@@ -31,6 +34,7 @@ const AddingEdge = () => {
   const [addingEdgeState] = useAddingEdges()
   const [path, setPath] = useState<string>()
   const setEdges = useSetWhiteboardEdges()
+  const store = useStore()
   const flow = useFlow()
   const pointerMoveHandler = useMemoizedFn((e: PointerEvent) => {
     const { clientX, clientY } = e
@@ -100,6 +104,17 @@ const AddingEdge = () => {
           console.log(draft)
         })
       })
+      const whiteboard = store.get(WhiteboardAtom)
+      const sourceNode = whiteboard?.nodes?.get(addingEdgeState.sourceNodeId)
+      const targetNode = whiteboard?.nodes?.get(addingEdgeState.targetNodeId)
+      if (sourceNode && targetNode && getSetting().whiteboard.enableAddLinkBetweenObjectsWhenConnect) {
+        if (sourceNode.type === 'metaObject' && targetNode.type === 'metaObject') {
+          MetaStore.addMetaLink({
+            sourceId: sourceNode.metaObjectId,
+            targetId: targetNode.metaObjectId
+          })
+        }
+      }
     }
   })
   useEffect(() => {

@@ -163,7 +163,19 @@
         "open create object form": "Open Create Object Form",
         "open screen shot": "Open Screen Shot",
         "latest version": "latest version",
-        "download and install": "download and install"
+        "download and install": "download and install",
+        "object and link": "object & link",
+        "link settings": "link settings",
+        "enable auto add link": "enable auto add link",
+        "enable drag from pdf add link": "enable add link when drag object from pdf",
+        "enable drag from editor add link": "enable add link when drag object from editor",
+        "enable drop on pdf add link": "enable add link when drop object on pdf",
+        "enable drop on editor add link": "enable add link when drop object on editor",
+        "enable drop on whiteboard add link": "enable add link when drop object on whiteboard",
+        "components": "components",
+        "whiteboard settings": "whiteboard settings",
+        "enable whiteboard minimap": "enable minimap",
+        "enable add link between objects when connect": "enable auto add link between objects when connect"
     },
     "form": {
         "choose file": "Choose file",

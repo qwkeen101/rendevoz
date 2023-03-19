@@ -17,6 +17,7 @@ import FlowManager from './FlowManager'
 import { IWhiteboard } from '~/typings/data'
 import WhiteboardMiniMap from './minimap/WhiteboardMinimap'
 import { Content } from '../base'
+import { useSetting } from '../setting/Main'
 
 const WhiteboardInner = memo(({ id, enableMiniMap = true }: { id: number; enableMiniMap?: boolean }) => {
   const containerRef = useRef<HTMLDivElement>(null)
@@ -27,6 +28,7 @@ const WhiteboardInner = memo(({ id, enableMiniMap = true }: { id: number; enable
   const scopedEmitter = useScopedEventEmitter()
   const { updateWhiteboard } = useWhiteboardStore()
   const whiteboard = useAtomValue(WhiteboardAtom)
+  const [setting] = useSetting()
   useLayoutEffect(() => {
     if (flow && containerRef.current) {
       emitter.addListener('global', handler)
@@ -126,7 +128,7 @@ const WhiteboardInner = memo(({ id, enableMiniMap = true }: { id: number; enable
       >
         <WhiteboardSetting />
       </div>
-      {enableMiniMap && (
+      {enableMiniMap && setting.whiteboard.enableMinimap && (
         <div
           style={{
             position: 'absolute',

@@ -7,7 +7,7 @@ import Id from '@/utils/id'
 import { css } from '@emotion/css'
 import { Atom, atom } from 'jotai'
 import { selectAtom } from 'jotai/utils'
-import { CSSProperties, useEffect, useMemo, useState } from 'react'
+import { CSSProperties, useEffect, useLayoutEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { MetaObject } from '~/typings/data'
 import { Content, Image } from '../base'
@@ -33,7 +33,7 @@ const useRenderObject = (options: { metaObjectId: number }) => {
   const from = useGlobalAtomValue(fromAtom)
   const fromString = metaObject?.type === 'pdfElement' ? 'From Book' : metaObject?.type === 'noteElement' ? 'From Note' : undefined
   const uniqueId = useMemo(() => Id.getStrId(), [])
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (metaObject?.objectId) {
       if (metaObject?.type === 'pdfElement') {
         LabelStore.getLabelById(metaObject.objectId).then(label => {
@@ -61,11 +61,17 @@ const useRenderObject = (options: { metaObjectId: number }) => {
   const renderTags = ({
     gap = 4,
     flexWrap = 'wrap',
-    containerStyle
+    containerStyle,
+    containerClassName = css({
+      '> *': {
+        fontSize: '10px !important'
+      }
+    })
   }: {
     gap?: number
     flexWrap?: CSSProperties['flexWrap']
     containerStyle?: CSSProperties
+    containerClassName?: string
   }) => {
     return (
       <Content
@@ -76,11 +82,7 @@ const useRenderObject = (options: { metaObjectId: number }) => {
           fontFamily: 'Muli',
           ...containerStyle
         }}
-        className={css({
-          '> *': {
-            fontSize: '10px !important'
-          }
-        })}
+        className={containerClassName}
       >
         <div style={{ textTransform: 'capitalize' }} className={ClassName.objectTag}>
           {t(`general.${TypeToTypeName[metaObject?.type || 'normal']}`)}
@@ -112,18 +114,20 @@ const useRenderObject = (options: { metaObjectId: number }) => {
       }
     ]),
     onTitleClick = () => Actions.navigateToTargetObject(metaObjectId),
-    style
+    style,
+    fromStyle
   }: {
     titleClassName?: string
     onTitleClick?: React.MouseEventHandler
     style?: CSSProperties
+    fromStyle?: CSSProperties
   }) => {
     return fromString && from ? (
       <div>
         <div onClick={onTitleClick} style={style} className={titleClassName}>
           {metaObject?.name}
         </div>
-        <div className={ClassName.description('11px', undefined, '#37352f80')}>
+        <div className={ClassName.description('11px', undefined, '#37352f80')} style={fromStyle}>
           {fromString}: {from.name}
         </div>
       </div>

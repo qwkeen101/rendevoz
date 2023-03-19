@@ -59,7 +59,6 @@ class FlowManager {
         const target = entry.target
         const nodeId = Number(target.getAttribute('data-node-id'))
         if (this.ID_TO_NODE_ELEMENT_MAP.get(nodeId)?.sizeAlreadyDefined()){
-          console.log('early exit')
           return
         }
         const whiteboard = globalStore.get(whiteboardsAtom).get(this.whiteboardId)

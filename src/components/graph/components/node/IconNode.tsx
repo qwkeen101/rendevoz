@@ -44,7 +44,7 @@ const IconNode = ({ node, label }: { node: GraphNode; label?: string }) => {
         animate={{ y: (d + 15) * (node.scale ? (node.scale === 1 ? 1 : node.scale * 0.9) : 1) }}
         textAnchor="middle"
         fontWeight={600}
-        fontSize={12}
+        fontSize="calc(var(--zoom-level) * 12px)"
       >
         {label || node.label}
       </motion.text>

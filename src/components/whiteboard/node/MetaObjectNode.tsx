@@ -1,8 +1,7 @@
 import Modal from '@/components/base/Modal'
-import { metaObjectsAtom } from '@/stores/meta.store'
 import { useMemoizedFn, useToggle, useUpdateEffect } from '@/hooks'
 import { IWhiteboardNode } from '~/typings/data'
-import { Content, Icon, Tooltip } from '@/components/base'
+import { Icon, Tooltip } from '@/components/base'
 import ClassName from '@/styles/classNames'
 import { FC, memo, useEffect } from 'react'
 import { InnerNodeProps } from './WrapperNode'
@@ -13,6 +12,7 @@ import NoteNode from './NoteNode'
 import { MetaStore } from '@/stores'
 import ObjectForm from '@/components/form/ObjectForm'
 import useRenderObject from '@/components/database/useRenderObject'
+import { css } from '@emotion/css'
 
 const MetaObjectNode: FC<InnerNodeProps> = ({ node: n, setPopoverElements, setNodeState, onNameChange }) => {
   const node = n as IWhiteboardNode & { type: 'metaObject' }
@@ -22,6 +22,7 @@ const MetaObjectNode: FC<InnerNodeProps> = ({ node: n, setPopoverElements, setNo
   const updateNodes = useSetWhiteboardNodes()
   const [editMetaVisible, toggleEditMetaVisible] = useToggle(false)
   const { renderWhole, metaObject } = useRenderObject({ metaObjectId: metaObjectId! })
+  const hasSize = node.width && node.height
   const toggleExpanded = useMemoizedFn(() => {
     updateNodes(nodes =>
       produce(nodes, draft => {
@@ -91,7 +92,6 @@ const MetaObjectNode: FC<InnerNodeProps> = ({ node: n, setPopoverElements, setNo
     }
   }, [metaObject?.type])
   useUpdateEffect(() => {
-    console.log('sadad', expanded)
     if (expanded !== undefined) {
       updateNodes(nodes =>
         produce(nodes, draft => {
@@ -163,7 +163,28 @@ const MetaObjectNode: FC<InnerNodeProps> = ({ node: n, setPopoverElements, setNo
               minWidth: '100%',
               width: 'auto',
               maxWidth: '400px',
-              height: '100%'
+              height: 'auto',
+              minHeight: '100%',
+              overflowY: 'overlay',
+              containerType: hasSize ? 'size' : 'normal'
+            },
+            titleOptions: {
+              style: {
+                fontSize: hasSize ? 'max(4cqmax, 16px)' : undefined
+              },
+              fromStyle: {
+                fontSize: hasSize ? 'max(2cqmax,11px)' : undefined
+              }
+            },
+            descriptionOptions: {
+              style: {
+                fontSize: hasSize ? 'max(14px,3cqmax)' : undefined
+              }
+            },
+            tagsOptions: {
+              containerClassName: hasSize
+                ? css({ '> *': { fontSize: 'max(10px, 2cqmax) !important' }, gap: 'max(1cqmax, 4px) !important' })
+                : undefined
             }
           })}
     </>

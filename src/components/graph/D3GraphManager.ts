@@ -67,6 +67,7 @@ class D3GraphManager {
   // outer container
   public registerContainer = (container: HTMLElement) => {
     this.container = d3.select(container)
+    container.style.setProperty('--zoom-level', '1')
     const panzoom = createPanZoom(container, {
       maxZoom: 5,
       minZoom: 0.1,
@@ -74,8 +75,10 @@ class D3GraphManager {
     })
     this.panzoom = panzoom
     this.panzoom.on('zoom', e => {
-      const transform = this.panzoom?.getTransform()
+      const transform = this.panzoom?.getTransform()!
       this.transformScale = transform?.scale
+      const zoomMultipler = Math.sqrt(1 / transform?.scale)
+      this.container?.node()?.style.setProperty('--zoom-level', String(zoomMultipler))
     })
     // const zoom = d3.zoom().scaleExtent([0.1, 5]).on('zoom', this.zoomed)
     // this.zoom = zoom

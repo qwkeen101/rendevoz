@@ -39,7 +39,7 @@ const FormTagPicker = ({
   const { t } = useTranslation()
   const mostUsedTags = useMemo(() => {
     const tags: { tag: string; size: number }[] = []
-    Array.from(TagToMetaObjectIdsMap?.entries()).forEach(([k, v]) => {
+    Array.from(TagToMetaObjectIdsMap?.entries() || []).forEach(([k, v]) => {
       tags.push({
         tag: k,
         size: v.size

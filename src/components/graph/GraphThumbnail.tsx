@@ -67,7 +67,7 @@ const GraphThumbnail = ({ children, onClose }: { children: ReactNode; onClose: V
           justifyContent="space-between"
           alignItems="center"
           gap={40}
-          className={ClassName.Background.pseudoBlubBackground}
+          className={ClassName.Background.blurBackground}
           style={{
             bottom: 30,
             right: 30,

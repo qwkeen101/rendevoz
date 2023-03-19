@@ -104,12 +104,12 @@ const TreeEdge: FC<{
 
   const rgb = useMemo(() => hexToRgb(innerLink?.color || MarkerColor.NORMAL), [innerLink?.color])
   useEffect(() => {
-    if(labelRef.current){
+    if (labelRef.current) {
       labelRef.current.textContent = edge.label || ''
     }
-  },[edge?.label])
+  }, [edge?.label])
   useEffect(() => {
-    if(isEditingLabel){
+    if (isEditingLabel) {
       const keydownHandler = (e: KeyboardEvent) => {
         e.stopPropagation()
       }
@@ -119,22 +119,28 @@ const TreeEdge: FC<{
       return () => {
         document.removeEventListener('keydown', keydownHandler, true)
       }
-    }else{
-      updateEdge({label: innerLink.label})
+    } else {
+      updateEdge({ label: innerLink.label })
     }
-  },[isEditingLabel])
+  }, [isEditingLabel])
   const [isIn, setIsIn] = useState(false)
-  useClickOutside(() => {
-    toggleIsEditingLabel(false)
-  }, labelContainerRef, isEditingLabel)
+  useClickOutside(
+    () => {
+      toggleIsEditingLabel(false)
+    },
+    labelContainerRef,
+    isEditingLabel
+  )
 
   const updateEdge = (edge: Partial<IWhiteboardEdge>) => {
-    setEdges(_edges => produce(_edges, draft => {
-      const origin = _edges.get(id)
-      if(origin){
-        draft.set(id, {...origin, ...edge})
-      }
-    }))
+    setEdges(_edges =>
+      produce(_edges, draft => {
+        const origin = _edges.get(id)
+        if (origin) {
+          draft.set(id, { ...origin, ...edge })
+        }
+      })
+    )
   }
   return (
     <>
@@ -150,11 +156,11 @@ const TreeEdge: FC<{
             <WithBorder style={{ display: 'flex', gap: 6, padding: '2px 6px' }}>
               <Tooltip content="Change Edge Label">
                 <Icon
-                className={ClassName.circleButton(undefined, 4)}
-                size={18}
-                name="park-edit"
-                onClick={() => setTimeout(toggleIsEditingLabel)}
-              ></Icon>
+                  className={ClassName.circleButton(undefined, 4)}
+                  size={18}
+                  name="park-edit"
+                  onClick={() => setTimeout(toggleIsEditingLabel)}
+                ></Icon>
               </Tooltip>
               <IconWithPopover
                 padding={10}
@@ -170,7 +176,7 @@ const TreeEdge: FC<{
                         ...innerLink,
                         color: c === defaultBgColor ? undefined : c
                       })
-                      updateEdge({color: c === defaultBgColor ? undefined : c})
+                      updateEdge({ color: c === defaultBgColor ? undefined : c })
                     }}
                     showMoreBg={false}
                     showBg
@@ -208,16 +214,16 @@ const TreeEdge: FC<{
         document.body
       )}
       <g
-        onPointerEnter={() => setIsIn(true)}
-        onPointerLeave={() => setIsIn(false)}
+        onClick={clickHandler}
         style={{
-          pointerEvents: 'auto',
+          pointerEvents: 'none',
           cursor: 'pointer'
         }}
-        onClick={clickHandler}
       >
         {isIn && (
           <motion.path
+            pointerEvents="auto"
+            onPointerLeave={() => setIsIn(false)}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             stroke={`rgba(${rgb?.r},${rgb?.g},${rgb?.b},0.2)`}
@@ -227,6 +233,8 @@ const TreeEdge: FC<{
           />
         )}
         <motion.path
+          onPointerEnter={() => setIsIn(true)}
+          pointerEvents="auto"
           ref={edgeRef}
           fill="none"
           markerEnd={`url(#${getMarkerId('end', innerLink?.color || MarkerColor.NORMAL)})`}
@@ -237,27 +245,40 @@ const TreeEdge: FC<{
           }}
         ></motion.path>
         {(innerLink?.label || isEditingLabel || edge.label) && (
-          <foreignObject ref={labelContainerRef} width={1} height={1} style={{overflow: 'visible'}}>
-          <div onClick={e => e.stopPropagation()} style={{width: 'max-content', height: 'fit-content', pointerEvents: 'none'}}>
-            <div ref={labelRef} contentEditable={true} spellCheck="false" style={{
-            transform: 'translateX(-50%) translateY(-50%)',
-            outline: 'none',
-            borderRadius: 4,
-            padding: 'calc(6px * var(--zoom-level)',
-            maxWidth: 'calc(16em * var(--zoom-level)',
-            fontSize: 'calc(16px * var(--zoom-level)',
-            boxShadow: `0 0 0 calc(4px * var(--zoom-level)) ${innerLink?.color || MarkerColor.NORMAL}`,
-            lineHeight: 1.3,
-            background: 'white',
-            whiteSpace: 'pre-wrap',
-            pointerEvents: 'auto',
-            fontWeight: 600,
-            cursor: 'text'
-          }} onClick={() => setTimeout(() => toggleIsEditingLabel(true))} onInput={e => {
-            setInnerLink({...innerLink, label: e.currentTarget.innerText || ''})
-          }}></div>
-          </div>
-        </foreignObject>
+          <foreignObject
+            ref={labelContainerRef}
+            width={1}
+            height={1}
+            style={{ overflow: 'visible', pointerEvents: 'auto' }}
+            onPointerLeave={() => setIsIn(false)}
+          >
+            <div onClick={e => e.stopPropagation()} style={{ width: 'max-content', height: 'fit-content', pointerEvents: 'none' }}>
+              <div
+                ref={labelRef}
+                contentEditable={true}
+                spellCheck="false"
+                style={{
+                  transform: 'translateX(-50%) translateY(-50%)',
+                  outline: 'none',
+                  borderRadius: 4,
+                  padding: 'calc(6px * var(--zoom-level)',
+                  maxWidth: 'calc(16em * var(--zoom-level)',
+                  fontSize: 'calc(16px * var(--zoom-level)',
+                  boxShadow: `0 0 0 calc(4px * var(--zoom-level)) ${innerLink?.color || MarkerColor.NORMAL}`,
+                  lineHeight: 1.3,
+                  background: 'white',
+                  whiteSpace: 'pre-wrap',
+                  pointerEvents: 'auto',
+                  fontWeight: 600,
+                  cursor: 'text'
+                }}
+                onClick={() => setTimeout(() => toggleIsEditingLabel(true))}
+                onInput={e => {
+                  setInnerLink({ ...innerLink, label: e.currentTarget.innerText || '' })
+                }}
+              ></div>
+            </div>
+          </foreignObject>
         )}
       </g>
     </>

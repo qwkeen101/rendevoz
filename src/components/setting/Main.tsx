@@ -7,15 +7,19 @@ import { atomWithStorage } from 'jotai/vanilla/utils'
 import _ from 'lodash'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import ComponentSetting from './Component'
 import GeneralSetting from './General'
 import NotificationSetting from './Notification'
+import ObjectsAndLinksSetting from './ObjectsAndLinks'
 import ShortCutSetting from './ShortCut'
 import SettingSidebarItem from './SidebarItem'
 
 enum Settings {
   'general',
   'notification',
-  'shortcuts'
+  'shortcuts',
+  'object and link',
+  'components'
 }
 type AvaliableLanguages = 'en-US' | 'zh-CN'
 type Setting = INotificationSetting &
@@ -24,7 +28,7 @@ type Setting = INotificationSetting &
       language: AvaliableLanguages
       openNewTab: 'always open new tab' | 'open existing tab'
     }
-  }
+  } & IObjectsAndLinkSetting & IComponentSetting
 type INotificationSetting = {
   notification: {
     enabled: boolean
@@ -49,7 +53,22 @@ export type IShortCutSetting = {
     quickCreateObject: ShortCut | null
   }>
 }
-
+export type IObjectsAndLinkSetting = {
+  objectAndLink: {
+    enableAll: boolean
+    enableDropOnPDFLink: boolean
+    enableDropOnWhiteboardLink: boolean
+    enableDropOnEditorLink: boolean
+    enableDragFromPDFLink: boolean
+    enableDragFromEditorLink: boolean
+  }
+}
+export type IComponentSetting = {
+  whiteboard: {
+    enableMinimap: boolean
+    enableAddLinkBetweenObjectsWhenConnect: boolean
+  }
+}
 const localSetting = JSON.parse(localStorage.getItem('setting'))
 localStorage.removeItem('setting')
 const defaultSetting: Setting = {
@@ -65,7 +84,19 @@ const defaultSetting: Setting = {
   shortcut: {},
   general: {
     language: 'en-US',
-    openNewTab: 'always open new tab'
+    openNewTab: 'open existing tab'
+  },
+  objectAndLink: {
+    enableAll: true,
+    enableDropOnEditorLink: true,
+    enableDropOnPDFLink: true,
+    enableDropOnWhiteboardLink: true,
+    enableDragFromEditorLink: true,
+    enableDragFromPDFLink: true
+  },
+  whiteboard: {
+    enableMinimap: true,
+    enableAddLinkBetweenObjectsWhenConnect: false
   }
 }
 _.merge(defaultSetting, localSetting)
@@ -85,6 +116,10 @@ const SettingDialog = ({ onClose }: { onClose: VoidFunction }) => {
         return <NotificationSetting />
       case 'shortcuts':
         return <ShortCutSetting />
+      case 'object and link':
+        return <ObjectsAndLinksSetting />
+      case 'components':
+        return <ComponentSetting />
     }
   }
   return (

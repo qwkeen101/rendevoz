@@ -60,41 +60,6 @@ const ImageNode = ({ node, imageUrl, label }: { node: GraphNode; imageUrl?: stri
             cy={radius}
             r={radius}
           ></motion.circle>
-          {node.isCenter && (
-            <motion.circle
-              style={{ transformOrigin: `${radius}px ${radius}px` }}
-              fill="none"
-              stroke={MarkerColor.EMPHASIS}
-              strokeWidth="2"
-              initial={{ scale: 1 }}
-              animate={{ scale: node.scale }}
-              cx={radius}
-              cy={radius}
-              r={radius}
-            >
-              <animate
-                attributeName="r"
-                repeatCount="indefinite"
-                dur="1s"
-                // values="20;50"
-                values={`${radius}; ${d + 10}`}
-                keyTimes="0;1"
-                keySplines="0 0.2 0.8 1"
-                calcMode="spline"
-                begin="0s"
-              ></animate>
-              <animate
-                attributeName="opacity"
-                repeatCount="indefinite"
-                dur="1s"
-                values="0.8;0"
-                keyTimes="0;1"
-                keySplines="0 0.2 0.8 1"
-                calcMode="spline"
-                begin="0s"
-              ></animate>
-            </motion.circle>
-          )}
         </g>
       )}
       <motion.text
@@ -102,7 +67,7 @@ const ImageNode = ({ node, imageUrl, label }: { node: GraphNode; imageUrl?: stri
         animate={{ y: d * (node.scale ? (node.scale === 1 ? 1 : node.scale * 0.9) : 1) }}
         textAnchor="middle"
         fontWeight={600}
-        fontSize={12}
+        fontSize="calc(var(--zoom-level) * 12px)"
       >
         {realLabel?.match(/.{1,40}/g)?.map(i => (
           <tspan x={0} dy="1.2em">

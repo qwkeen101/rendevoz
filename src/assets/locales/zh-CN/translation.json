@@ -163,7 +163,19 @@
         "open create object form": "打开创建对象面板",
         "open screen shot": "打开屏幕截图",
         "latest version": "最新版本",
-        "download and install": "下载并安装"
+        "download and install": "下载并安装",
+        "object and link": "实体与链接",
+        "link settings": "链接设置",
+        "enable auto add link": "允许自动添加链接",
+        "enable drag from pdf add link": "允许为从PDF中拖拽出的实体自动添加链接",
+        "enable drag from editor add link": "允许为从笔记中拖拽出的实体自动添加链接",
+        "enable drop on pdf add link": "允许拖拽到PDF中时自动添加链接",
+        "enable drop on editor add link": "允许拖拽到笔记中时自动添加链接",
+        "enable drop on whiteboard add link": "允许拖拽到白板中时自动添加链接",
+        "components": "组件",
+        "whiteboard settings": "白板设置",
+        "enable whiteboard minimap": "开启缩略图",
+        "enable add link between objects when connect": "允许在相连时自动为实体添加链接"
     },
     "form": {
         "choose file": "Choose file",

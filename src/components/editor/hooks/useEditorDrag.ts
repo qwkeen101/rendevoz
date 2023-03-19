@@ -1,4 +1,4 @@
-import { GlobalDragOverlayInstance, useGlobalIsDragging } from '@/components/globalDragOverlay/GlobalDragOverlay'
+import { AvaliableGlobalDraggingElements, GlobalDragOverlayInstance, useGlobalIsDragging } from '@/components/globalDragOverlay/GlobalDragOverlay'
 import { GlobalEventHandler } from '@/events/globalEvent'
 import { useGlobalEventEmitter } from '@/events/useEventEmitter'
 import { useMemoizedFn, useRafFn } from '@/hooks'
@@ -16,9 +16,45 @@ import { HeadingElement } from '../types/commonElementTypes'
 import { MetaObjectElement } from '../types/outerElementTypes'
 import moveMultiElements from '../utils/moveMultiElements'
 import moveSingleElement from '../utils/moveSingleElement'
-import rebuildDragSelect from '../utils/rebuildDragSelect'
 import { ID_TO_ELEMENTS_MAP, ID_TO_PATH_MAP, SELECTED_BLOCKS_MAP } from '../weakMaps'
 import useIsDragging from './useIsDragging'
+
+export const normalizeEditorDragBlocksToGlobalDraggingDetails = (editor: CustomEditor) => {
+  let normalizedGlobalDraggingDetails: Partial<AvaliableGlobalDraggingElements> = {}
+  const selected = SELECTED_BLOCKS_MAP.get(editor)
+  normalizedGlobalDraggingDetails = {
+    type: 'noteElement',
+    element: editor.currentEnterElement,
+    noteId: editor.noteId,
+    blockId: editor.currentEnterElement?.id,
+    editorId: editor.id,
+    path: ReactEditor.findPath(editor, editor.currentEnterElement)
+  }
+  if (editor.currentEnterElement?.type === 'metaObject' && !(selected && selected.size > 0)) {
+    normalizedGlobalDraggingDetails.metaId = editor.currentEnterElement.originId
+  }
+  if (selected && selected.size > 0) {
+    const keys = selected.keys()
+    const eleMap = ID_TO_ELEMENTS_MAP.get(editor)
+    const elements = Array.from(keys)
+      .map(key => eleMap?.get(key)?.getElement())
+      .filter(i => i !== undefined) as CustomElement[]
+    normalizedGlobalDraggingDetails.elements = elements
+  }
+  // right now we need to get elements hided by this heading and move together
+  if (normalizedGlobalDraggingDetails.element?.type.startsWith('heading')) {
+    const headingEle = editor.currentEnterElement
+    const parentEle = Editor.node(editor, Path.parent(ID_TO_PATH_MAP.get(editor)?.get(headingEle?.id)))[0] as CustomElement
+    let headingEleIdx = parentEle.children.findIndex(i => i === headingEle) + 1
+    const elements = [headingEle]
+    while (parentEle.children[headingEleIdx] && parentEle.children[headingEleIdx].hide === true) {
+      elements.push(parentEle.children[headingEleIdx])
+      headingEleIdx += 1
+    }
+    normalizedGlobalDraggingDetails.elements = elements.filter(i => i !== undefined) as CustomElement[]
+  }
+  return normalizedGlobalDraggingDetails
+}
 
 const useEditorDrag = (editor: CustomEditor, scrollElement?: HTMLElement | null) => {
   const [isDraggingInsideEditor, setIsDragging] = useIsDragging()
@@ -200,6 +236,7 @@ const useEditorDrag = (editor: CustomEditor, scrollElement?: HTMLElement | null)
           editorId: editor.id,
           path: ReactEditor.findPath(editor, editor.currentEnterElement)
         }
+        console.log(GlobalDragOverlayInstance.draggingDetails)
         if (editor.currentEnterElement?.type === 'metaObject' && !(selected && selected.size > 0)) {
           GlobalDragOverlayInstance.draggingDetails.metaId = editor.currentEnterElement.originId
         }

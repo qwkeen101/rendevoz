@@ -323,7 +323,7 @@ const useFlipForm = (options: useFlipFormOptions) => {
       >
         <Flipped flipId={mainFlipId}>
           <div
-            className={ClassName.Background.blurBackground}
+            className={ClassName.Background.pseudoBlubBackground}
             style={{
               padding: '16px 24px',
               borderRadius: 8,

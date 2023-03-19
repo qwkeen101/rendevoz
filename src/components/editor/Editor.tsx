@@ -24,7 +24,7 @@ import { ID_TO_ELEMENTS_MAP, SELECTED_BLOCKS_MAP } from './weakMaps'
 import _ from 'lodash'
 import { metaObjectsAtom } from '@/stores/meta.store'
 import useLocalSyncValue from './hooks/useSyncValue'
-import useEditorDrag from './hooks/useEditorDrag'
+import useEditorDrag, { normalizeEditorDragBlocksToGlobalDraggingDetails } from './hooks/useEditorDrag'
 import { GlobalDragOverlayInstance, useGlobalIsDragging } from '../globalDragOverlay/GlobalDragOverlay'
 import useEditorOverlay from './components/overlay/useEditorOverlay'
 import withHandler from './plugins/withHandler'
@@ -314,6 +314,7 @@ export const EditorV1: FC<EditorProps> = memo(
                   GlobalDragOverlayInstance.addDragElements?.(wrapper)
                 }
               }
+              GlobalDragOverlayInstance.setDraggingDetails?.(normalizeEditorDragBlocksToGlobalDraggingDetails(editor))
               GlobalDragOverlayInstance.startDrag?.()
             },
             [setIsDragging]

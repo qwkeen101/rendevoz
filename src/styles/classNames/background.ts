@@ -7,6 +7,7 @@ export const blurBackground = css({
 
 export const pseudoBlubBackground = css({
   overflow: 'hidden',
+  position: 'relative',
   '::before': {
     position: 'absolute',
     pointerEvents: 'none',
@@ -15,7 +16,8 @@ export const pseudoBlubBackground = css({
     width: '100%',
     height: '100%',
     content: '""',
-    background: 'linear-gradient(116deg, rgba(250,250,250,0.9), rgba(244,244,244,0.9))',
+    zIndex: -1,
+    background: 'linear-gradient(116deg, rgba(250,250,250,0.85), rgba(244,244,244,0.85))',
     backdropFilter: 'saturate(1.5) blur(32px)'
   }
 })

@@ -372,7 +372,9 @@ const WrapperNode = ({ node }: { node: IWhiteboardNode }) => {
   useLayoutEffect(() => {
     const container = containerRef.current
     if (container) {
-      flow.resizeObserver.observe(container)
+      setTimeout(() => {
+        flow.resizeObserver.observe(container)
+      }, 100)
       return () => {
         flow.resizeObserver.unobserve(container)
       }

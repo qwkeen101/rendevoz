@@ -56,9 +56,9 @@ const GraphSettingPanel = () => {
         style={{ fontSize: 16, padding: '10px 6px', borderRadius: 8, overflow: 'hidden' }}
         className={ClassName.Background.pseudoBlubBackground}
       >
-        <Tooltip content="Graph Info">
+        {/* <Tooltip content="Graph Info">
           <Icon name="park-info" className={ClassName.circleButton()} onClick={() => togglePanel('info')} />
-        </Tooltip>
+        </Tooltip> */}
         <Tooltip content="Graph Filter">
           <Icon name="park-filter" className={ClassName.circleButton()} onClick={() => togglePanel('filter')} />
         </Tooltip>

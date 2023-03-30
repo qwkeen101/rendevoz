@@ -37,9 +37,10 @@ const Image: FC<ImgHTMLAttributes<HTMLImageElement> & { placeHolderSize?: number
           className={css({
             position: 'absolute',
             inset: 0,
-            width: '100%',
-            height: '100%',
+            width: '100% !important',
+            height: '100% !important',
             objectFit: 'cover',
+            margin: '0px !important',
             borderRadius: 'inherit'
           })}
           {...rest}

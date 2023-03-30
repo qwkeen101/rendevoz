@@ -1,16 +1,15 @@
-import Container from '@/components/base/container'
-import { PdfViewer } from '@/components/pdf/PdfViewer'
+import { PdfViewer } from '@/core'
 import { documentsAtom } from '@/stores/document.store'
-import { FC, memo, useMemo, useRef } from 'react'
+import { FC, memo, useMemo } from 'react'
 import PdfPageHeader from './Header'
-import { Content } from '@/components'
+import { Content, Container } from '@/components'
 import { Provider } from 'jotai'
 import { createStore } from 'jotai/vanilla'
 import TabTitle from '@/components/layout/TabTitle'
 import PdfFloatBar from './FloatBar/FloatBar'
 import { selectAtom } from 'jotai/utils'
-import { useGlobalAtomValue } from '@/jotai/jotaiScope'
-import { IPdfViewer } from '@/pdfViewer/core/types/pdfViewer'
+import { useGlobalAtomValue } from '@/hooks/jotai'
+import { IPdfViewer } from '~/typings'
 
 const PdfPage: FC<{
   pdfId: number

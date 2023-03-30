@@ -1,4 +1,4 @@
-import { useGlobalAtom } from '@/jotai/jotaiScope'
+import { useGlobalAtom } from '@/hooks/jotai'
 import { globalStore } from '@/stores'
 import { request } from '@/utils/request'
 import { atom } from 'jotai'

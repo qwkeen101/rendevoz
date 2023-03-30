@@ -6,6 +6,6 @@ import { GlobalModule } from './global/global.module'
 @Module({
   imports: [GlobalModule],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [AppService]
 })
-export class AppModule { }
+export class AppModule {}

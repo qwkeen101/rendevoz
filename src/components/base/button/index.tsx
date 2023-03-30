@@ -1,6 +1,7 @@
 import { css } from '@emotion/css'
 import classNames from 'classnames'
 import { CSSProperties, FC, MouseEventHandler, ReactNode, useEffect, useState } from 'react'
+import IconButton from './IconButton'
 import styles from './index.module.less'
 
 interface ButtonProps {
@@ -10,7 +11,10 @@ interface ButtonProps {
   tabIndex?: number
   style?: CSSProperties
 }
-export const Button: FC<ButtonProps> = ({ children, onClick, className, tabIndex, style }) => {
+interface IButton extends FC<ButtonProps>{
+  IconButton: typeof IconButton
+}
+export const Button: IButton = ({ children, onClick, className, tabIndex, style }) => {
   const [coords, setCoords] = useState({ x: -1, y: -1 })
   const [isRippling, setIsRippling] = useState(false)
 
@@ -68,3 +72,5 @@ export const Button: FC<ButtonProps> = ({ children, onClick, className, tabIndex
     </button>
   )
 }
+
+Button.IconButton = IconButton

@@ -11,7 +11,7 @@ import useSidebarItemDrag from '../useSidebarItemDrag'
 import { ISidebarItem } from './type'
 import { selectAtom } from 'jotai/utils'
 import { IconNameItem } from '../SidebarCollection'
-import Actions from '@/Actions'
+import Actions from '@/core/Actions'
 
 const SidebarDocumentItem: FC<ISidebarItem> = ({ id, parentId, parentType, draggable = true }) => {
   const documentAtom = useMemo(() => selectAtom(documentsAtom, d => d.get(id)), [id])

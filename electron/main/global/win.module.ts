@@ -5,11 +5,11 @@ import axios from 'axios'
 import { fileURLToPath } from 'url'
 import HttpsProxyAgent from 'https-proxy-agent'
 import { autoUpdater } from 'electron-updater'
-
+import {execFile} from 'child_process'
 process.env.ELECTRON_DISABLE_SECURITY_WARNINGS = 'true'
 process.env.DIST_ELECTRON = join(__dirname, '../..')
 process.env.DIST = join(process.env.DIST_ELECTRON, '../../dist')
-process.env.PUBLIC = app.isPackaged ? process.env.DIST : join(process.env.DIST_ELECTRON, '../public')
+process.env.PUBLIC = app.isPackaged ? process.env.DIST : join(process.env.DIST_ELECTRON, '../../public')
 
 @Module({
   providers: [
@@ -19,14 +19,12 @@ process.env.PUBLIC = app.isPackaged ? process.env.DIST : join(process.env.DIST_E
         const preload = join(__dirname, '../../preload/index.js')
         const url = process.env.VITE_DEV_SERVER_URL
         const indexHtml = join(process.env.DIST, 'index.html')
+        // const exec = join(process.env.PUBLIC, 'execute.exe')
+
         autoUpdater.autoDownload = false
         autoUpdater.autoInstallOnAppQuit = false
         autoUpdater.autoRunAppAfterInstall = false
-        // autoUpdater.setFeedURL({
-        //   provider: 'github',
-        //   repo: 'RendevozPublic',
-        //   owner: 'RealRong'
-        // })
+
         autoUpdater.setFeedURL({
           provider: 'generic',
           url: 'https://rendevoz.com/download'

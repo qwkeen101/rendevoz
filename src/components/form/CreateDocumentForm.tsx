@@ -4,7 +4,7 @@ import { ipcInstance } from '@/plugins'
 import createDocumentStore from '@/stores/document.store'
 import Id from '@/utils/id'
 import { FC, memo, useRef } from 'react'
-import { ICollection, IPdfDocument } from '~/typings/data'
+import { IPdfDocument } from '~/typings/data'
 import Form from '../base/form'
 import FormItem from '../base/form/FormItem'
 import { saveImageLocally } from '@/utils/img'
@@ -15,16 +15,16 @@ import { FileUploader } from '../base'
 import { toast } from 'react-hot-toast'
 import SwitchAnimation from '../base/animation/SwitchAnimation'
 import { useUpdate } from 'react-use'
+import { DocumentStore } from '@/stores'
 
 interface NewDocumentFormProps {
   onBack: () => void
   onSubmit: (pdfDocument: IPdfDocument) => void
-  collection: ICollection
 }
-const CreateDocumentForm: FC<NewDocumentFormProps> = ({ onBack, onSubmit, collection }) => {
+const CreateDocumentForm: FC<NewDocumentFormProps> = ({ onBack, onSubmit }) => {
   const [isFileUploaded, toggleFileUploaded] = useToggle(false)
 
-  const { addDocument } = createDocumentStore()
+  const { addDocument } = DocumentStore
   const { t } = useTranslation()
   const fileRef = useRef<File>()
   const forceRender = useUpdate()
@@ -108,7 +108,6 @@ const CreateDocumentForm: FC<NewDocumentFormProps> = ({ onBack, onSubmit, collec
         submitText="create"
       >
         <div className={ClassName.description()}>
-          <div className={ClassName.ellipsisFont(1)}>Collection: {collection.name}</div>
           <div className={ClassName.ellipsisFont(4)}>File: {fileRef.current?.name || 'Unknown file'}</div>
           <div className={ClassName.ellipsisFont(2)}>Title: {pdfDocument.current.metadata?.title || 'Unknown'}</div>
           <div className={ClassName.ellipsisFont(1)}>Author: {pdfDocument.current.metadata?.author || 'Unknown'}</div>

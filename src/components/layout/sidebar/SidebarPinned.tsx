@@ -1,7 +1,7 @@
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 //@ts-nocheck
 import { Content } from '@/components/base'
-import { useGlobalAtomValue } from '@/jotai/jotaiScope'
+import { useGlobalAtomValue } from '@/hooks/jotai'
 import { pinnedCollectionsAtom } from '@/stores/collection.store'
 import { pinnedDocumentsAtom } from '@/stores/document.store'
 import { pinnedNotesAtom } from '@/stores/note.store'

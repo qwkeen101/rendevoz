@@ -8,12 +8,12 @@ import ClassName from '@/styles/classNames'
 import { Position } from '@/types'
 import Id from '@/utils/id'
 import { css } from '@emotion/css'
-import { CollectionStore, NoteStore } from '@/stores'
+import { CollectionStore, NoteStore, WhiteboardStore } from '@/stores'
 import { AnimatePresence, motion } from 'framer-motion'
 import { RefObject, useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useTranslation } from 'react-i18next'
-import Actions from '@/Actions'
+import Actions from '@/core/Actions'
 
 const useSidebarItemContextMenu = (
   contextMenuElementRef: RefObject<HTMLElement>,
@@ -75,7 +75,7 @@ const useSidebarItemContextMenu = (
   }
   const { addNote } = NoteStore
   const { addItemToCollection, addCollection } = CollectionStore
-  const { addWhiteboard } = useWhiteboardStore()
+  const { addWhiteboard } = WhiteboardStore
   useEffect(() => {
     contextMenuElementRef?.current?.addEventListener('contextmenu', contextMenuHandler)
     return () => {

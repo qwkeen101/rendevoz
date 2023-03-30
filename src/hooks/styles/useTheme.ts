@@ -1,4 +1,4 @@
-import { useGlobalAtomValue, useGlobalSetAtom } from '@/jotai/jotaiScope'
+import { useGlobalAtomValue, useGlobalSetAtom } from '@/hooks/jotai'
 import { atom } from 'jotai'
 import { atomFamily } from 'jotai/utils'
 

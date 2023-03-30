@@ -1,5 +1,4 @@
 import { Content, Icon, Tooltip } from '@/components'
-import usePdfInfo from '@/components/pdf/hooks/usePdfInfo'
 import useLabelStore, { documentIdToLabelsMapAtom, labelsAtom } from '@/stores/label.store'
 import { globalStore } from '@/stores'
 import ClassName from '@/styles/classNames'
@@ -11,9 +10,8 @@ import { memo, useMemo } from 'react'
 import { Flipped } from 'react-flip-toolkit'
 import { toast } from 'react-hot-toast'
 import { IHighlightLabel, ILabel, IPdfDocument } from '~/typings/data'
-import useViewer from '../useViewer'
-import usePdfViewer from '@/pdfViewer/core/hooks/useViewer'
-import { ID_TO_LABEL_MAP } from '@/components/pdf/weakMaps'
+import { usePdfViewer, ID_TO_LABEL_MAP } from '@/core'
+
 
 const PdfLabels = ({ flipId, document }: { flipId: string; document?: IPdfDocument }) => {
   const innerLabelsAtom = useMemo(

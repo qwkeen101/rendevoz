@@ -1,4 +1,4 @@
-import React, { MouseEventHandler } from 'react'
+import React, { MouseEventHandler, ReactNode } from 'react'
 import { Filter } from './Algorithm'
 
 export interface TabGroup {
@@ -198,6 +198,8 @@ export interface TabData extends TabBase, DockDataBase {
   cacheContext?: React.Context<any>
 
   noteId?: number
+
+  icon?: ReactNode
 }
 
 interface PanelLock {

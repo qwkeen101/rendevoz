@@ -1,6 +1,5 @@
-import { Content } from '@/components'
 import TabTitle from '@/components/layout/TabTitle'
-import Whiteboard from '@/components/whiteboard/Whiteboard'
+import { Whiteboard } from '@/core'
 import { memo, useState } from 'react'
 
 const WhiteboardPage = ({ whiteboardId }: { whiteboardId: number }) => {

@@ -1,10 +1,13 @@
 import Id from '@/utils/id'
 import { FC, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { MetaObject } from '~/typings/data'
-import { GlobalGraphInstance } from '../graph/GlobalGraph'
+import {  MetaObject } from '~/typings'
+import { GlobalGraphInstance } from '@/core'
 import { IForm } from './types'
 import useFlipForm from './useFlipForm'
+import { ObjectStore } from '@/stores'
+import { ObjectFamily } from '@/stores/object.store'
+import { useGlobalAtomValue } from '@/hooks'
 
 const ObjectForm: FC<
   IForm<MetaObject> & {
@@ -13,8 +16,28 @@ const ObjectForm: FC<
 > = ({ onBack, onSubmit, initialObject, shouldPreviewGraph }) => {
   const [object, setObject] = useState({ id: Id.getId(), ...initialObject })
   const { t } = useTranslation()
+  const objectAtom =
+    initialObject?.type && initialObject.objectId && ['webpage', 'audio', 'video'].includes(initialObject.type)
+      ? ObjectStore(initialObject.type as keyof ObjectFamily).createAtom(initialObject.objectId)
+      : undefined
+  const targetObject = objectAtom && useGlobalAtomValue(objectAtom)
+
   const { renderForm } = useFlipForm({
     layout: [
+      initialObject?.type
+        ? {
+            type: 'custom',
+            children: <div>type: {initialObject.type}</div>
+          }
+        : undefined,
+      targetObject && 'url' in targetObject
+        ? {
+            type: 'input',
+            text: 'URL',
+            value: targetObject.url,
+            onChange: v => ObjectStore(targetObject.specType).updateOne({ id: targetObject.id, url: v }, { silent: true })
+          }
+        : undefined,
       {
         type: 'nameInput',
         value: object.name,
@@ -35,7 +58,7 @@ const ObjectForm: FC<
           shouldPreviewGraph
             ? {
                 type: 'previewGraph',
-                onClick: () => GlobalGraphInstance?.open(object)
+                onClick: () => GlobalGraphInstance?.open?.(object)
               }
             : undefined,
           {

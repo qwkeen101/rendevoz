@@ -40,6 +40,7 @@ export { tagStore } from './tag.store'
 export { collectionStore as CollectionStore } from './collection.store'
 export { whiteboardStore as WhiteboardStore } from './whiteboard.store'
 export { labelStore as LabelStore } from './label.store'
+export { objectStore as ObjectStore } from './object.store'
 
 window.addEventListener('DOMContentLoaded', () => {
   globalStore.sub(metaObjectsAtom, debounce(handleMetaObjectsChange, 1000))

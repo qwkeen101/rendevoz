@@ -4,12 +4,12 @@ import getEmoji from '@/utils/emoji'
 import Id from '@/utils/id'
 import { css } from '@emotion/css'
 import { capitalize } from 'lodash'
-import { CSSProperties, Fragment, useMemo, useState } from 'react'
+import { CSSProperties, Fragment, ReactNode, useMemo, useState } from 'react'
 import { Flipped, Flipper } from 'react-flip-toolkit'
 import { useTranslation } from 'react-i18next'
 import { Content, Form, Icon } from '..'
 import { defaultBgColor } from '../picker/colorPicker'
-import { Tag } from './EditMetaObjectForm'
+import { ObjectTag } from '@/core'
 import FormColorPicker from './FormColorPicker'
 import FormIconPicker from './FormIconPicker'
 import FormImagePicker from './FormImagePicker'
@@ -30,6 +30,13 @@ export type FlipFormLayoutItem =
       disabled?: boolean
       onChange: (v: string) => void
       value?: string
+    }
+  | {
+      type: 'input'
+      disabled?: boolean
+      onChange?: (v: string) => void
+      value?: string
+      text?: string
     }
   | {
       type: 'descriptionInput'
@@ -67,6 +74,10 @@ export type FlipFormLayoutItem =
   | {
       type: 'previewGraph'
       onClick?: React.MouseEventHandler
+    }
+  | {
+      type: 'custom'
+      children: ReactNode
     }
   | undefined
 interface FormInnerState {
@@ -113,6 +124,8 @@ const useFlipForm = (options: useFlipFormOptions) => {
   const renderMainItem = (i: FlipFormLayoutItem) => {
     if (!i) return
     switch (i.type) {
+      case 'input':
+        return <Form.Item text={capitalize(i.text)} disable={i.disabled} type="input" value={i.value} onChange={i.onChange} />
       case 'nameInput':
         return <Form.Item text={capitalize(t('general.name'))} disable={i.disabled} type="input" value={i.value} onChange={i.onChange} />
       case 'descriptionInput':
@@ -202,7 +215,7 @@ const useFlipForm = (options: useFlipFormOptions) => {
               </div>
               <Content flex gap={4} style={{ flexWrap: 'wrap' }}>
                 {i.tags.map(i => (
-                  <Tag key={i} hideSize small tag={i} />
+                  <ObjectTag key={i} hideSize small tag={i} />
                 ))}
               </Content>
             </div>
@@ -237,6 +250,8 @@ const useFlipForm = (options: useFlipFormOptions) => {
             <Icon name="park-right" />
           </div>
         )
+      case 'custom':
+        return i.children
     }
   }
   const renderMain = () => (

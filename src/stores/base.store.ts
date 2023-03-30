@@ -6,7 +6,7 @@ import { Atom } from 'jotai/vanilla'
 import _ from 'lodash'
 import { orderBy } from 'lodash'
 import { IBase } from '~/typings/data'
-import { IStore } from './store.type'
+import { IStoreDeprecated } from './store.type'
 import { globalStore } from '.'
 import { getUser } from '@/services/login.service'
 import { toast } from 'react-hot-toast'
@@ -202,11 +202,11 @@ const BaseStore = {
 }
 
 type ILocalStore<T> = {
-  addOne: (onSuccess?: (obj: T, silent: boolean) => void, onFail?: (silent: boolean) => void) => IStore<T>['addOne']
-  deleteOneById: (onSuccess?: (silent: boolean) => void, onFail?: (silent: boolean) => void) => IStore<T>['deleteOneById']
-  getAll: () => IStore<T>['getAll']
-  getOneById: () => IStore<T>['getOneById']
-  updateOne: (onSuccess?: (obj: T, silent: boolean) => void, onFail?: (silent: boolean) => void) => IStore<T>['updateOne']
+  addOne: (onSuccess?: (obj: T, silent: boolean) => void, onFail?: (silent: boolean) => void) => IStoreDeprecated<T>['addOne']
+  deleteOneById: (onSuccess?: (silent: boolean) => void, onFail?: (silent: boolean) => void) => IStoreDeprecated<T>['deleteOneById']
+  getAll: () => IStoreDeprecated<T>['getAll']
+  getOneById: () => IStoreDeprecated<T>['getOneById']
+  updateOne: (onSuccess?: (obj: T, silent: boolean) => void, onFail?: (silent: boolean) => void) => IStoreDeprecated<T>['updateOne']
 }
 export function initializeLocalStore<T>(atom: PrimitiveAtom<Map<number, T>>, database: Table) {
   const { dispatch, initBaseObject, bulkAdd } = BaseStore
@@ -262,7 +262,15 @@ export function initializeLocalStore<T>(atom: PrimitiveAtom<Map<number, T>>, dat
     },
     getOneById: () => id => {
       return new Promise(res => {
-        res(globalStore.get(atom).get(id))
+        const atomOne = globalStore.get(atom).get(id)
+        if (atomOne) {
+          res(atomOne)
+        } else {
+          database.get(id).then(one => {
+            globalStore.set(atom, BaseStore.add(one, globalStore.get(atom)))
+            res(one)
+          })
+        }
       })
     },
     updateOne:

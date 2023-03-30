@@ -1,6 +1,6 @@
-import getSetting from '@/components/setting/getSetting'
+import getSetting from '@/core/setting/getSetting'
 import useDb from '@/hooks/stores/useDb'
-import PdfJs from '@/pdfViewer/core/types/pdfJsApi'
+import PdfJs from '@/consts/pdfJs'
 import { saveFileLocally } from '@/utils/file'
 import Id from '@/utils/id'
 import { saveImageLocally } from '@/utils/img'
@@ -9,7 +9,7 @@ import toast from 'react-hot-toast'
 import { IPdfDocument } from '~/typings/data'
 import BaseStore, { initializeLocalStore } from './base.store'
 
-import { IStore } from './store.type'
+import { IStoreDeprecated } from './store.type'
 import { MetaStore } from '.'
 
 export const documentsAtom = atom<Map<number, IPdfDocument>>(new Map())
@@ -74,7 +74,7 @@ const createDocumentStore = () => {
     }
     return false
   }
-  const localStore: Pick<IStore<IPdfDocument>, 'addOne' | 'deleteOneById' | 'getAll' | 'getOneById' | 'updateOne'> = {
+  const localStore: Pick<IStoreDeprecated<IPdfDocument>, 'addOne' | 'deleteOneById' | 'getAll' | 'getOneById' | 'updateOne'> = {
     addOne: store.addOne((obj, silent) => {
       MetaStore.addMetaObject(
         {

@@ -1,5 +1,8 @@
-import { MarkerColor } from './markerColors'
-import { getMarkerId } from '../graph/utils/getMarkerId'
+import { MarkerColor } from '@/consts'
+
+function getMarkerId(direction: 'end' | 'start', color: string) {
+  return `${direction}-arrow-${color}`
+}
 
 const SvgMarker = () => {
   return (

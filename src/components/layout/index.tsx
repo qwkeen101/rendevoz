@@ -1,12 +1,10 @@
-import Actions from '@/Actions'
+import Actions from '@/core/Actions'
 import useSidebarWidth from '@/hooks/components/useSidebarWidth'
-import { LayoutFunctions } from '@/pdfViewer/core/layouts/Layout'
-import { IPdfViewer } from '@/pdfViewer/core/types/pdfViewer'
-import { FC, RefObject, useEffect, useMemo, useRef, useState } from 'react'
+import { IPdfViewer, CustomEditor, WebpageInstance } from '~/typings'
+import { FC, useEffect, useMemo, useRef, useState } from 'react'
 import { Helmet } from 'react-helmet'
 import { Container } from '../base'
-import DockLayout, { LayoutData, TabData } from '../base/dock'
-import { CustomEditor } from '../editor/types'
+import DockLayout, { LayoutData } from '../base/dock'
 import LayoutManager from './LayoutManager'
 
 interface LayoutProps {
@@ -30,15 +28,6 @@ const initialLayout: LayoutData = {
   }
 }
 
-export type PdfInstance = {
-  pdfId: number
-  createdAt: number
-  viewerRef: RefObject<LayoutFunctions>
-}
-
-export class GlobalInstances {
-  static pdfInstances: PdfInstance[] = []
-}
 export type LayoutTab =
   | {
       type: 'pdf'
@@ -59,6 +48,11 @@ export type LayoutTab =
   | {
       type: 'whiteboard'
       objectId: number
+    }
+  | {
+      type: 'webpage'
+      objectId: number
+      instance?: WebpageInstance
     }
 export const LayoutIdToTabMap = new Map<string, LayoutTab>()
 export let GlobalLayout: LayoutManager | null = null

@@ -5,9 +5,9 @@ import useUnmount from '@/hooks/utils/useUnmount'
 import _ from 'lodash'
 import { useIntersection } from 'react-use'
 import { useMergedRef } from '@/hooks'
-interface AnimatePopoverProps extends Omit<PopoverProps, 'content' | 'isOpen'> {
+export interface AnimatePopoverProps extends Omit<PopoverProps, 'content' | 'isOpen'> {
   animate?: boolean
-  visible: boolean
+  visible?: boolean
   content: React.ReactNode
   disableNudge?: boolean
   disableIntersection?: boolean
@@ -29,7 +29,8 @@ const AnimatePopover: FC<PropsWithChildren<AnimatePopoverProps>> = ({
   ...rest
 }) => {
   const [isOpen, setIsOpen] = useState(false)
-  const intersectionRef = useRef(null)
+  const [innerVisible, setInnerVisible] = useState(false)
+  const intersectionRef = useRef<HTMLElement>(null)
   const intersection = useIntersection(intersectionRef, {
     root: null,
     rootMargin: '0px',
@@ -39,6 +40,14 @@ const AnimatePopover: FC<PropsWithChildren<AnimatePopoverProps>> = ({
   const popoverRef = useRef(null)
   const nudgedRef = useRef()
   const mergedRef = useMergedRef(intersectionRef, innerRef)
+  useEffect(() => {
+    if (visible === undefined) {
+      intersectionRef?.current?.addEventListener('click', () => {
+        setIsOpen(true)
+        setInnerVisible(true)
+      })
+    }
+  }, [])
   useUnmount(() => {
     setIsOpen(false)
     nudgedRef.current = undefined
@@ -47,18 +56,23 @@ const AnimatePopover: FC<PropsWithChildren<AnimatePopoverProps>> = ({
     // if open
     if (visible) {
       setIsOpen(true)
+      setInnerVisible(true)
     }
     // if close
     if (!visible) {
       nudgedRef.current = undefined
+      setInnerVisible(false)
     }
   }, [visible])
+
   const handleClickOutside = (e: MouseEvent) => {
-    console.log(e)
     if (e.path?.some(i => i instanceof HTMLElement && i.getAttribute('data-disable-close-popover') === 'true')) {
       return
     }
     onClickOutside?.(e)
+    if (visible === undefined) {
+      setInnerVisible(false)
+    }
   }
   const realParent = parentElement === null || parentElement === undefined ? document.body : parentElement
   if (animate) {
@@ -89,7 +103,7 @@ const AnimatePopover: FC<PropsWithChildren<AnimatePopoverProps>> = ({
               }}
             >
               <AnimatePresence onExitComplete={() => setIsOpen(false)}>
-                {visible && (
+                {innerVisible && (
                   <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
                     {content}
                   </motion.div>

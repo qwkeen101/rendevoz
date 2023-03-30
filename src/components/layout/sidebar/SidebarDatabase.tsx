@@ -1,16 +1,18 @@
-import { AnimatePopover, Icon } from '@/components'
-import { GlobalDragOverlayInstance, useGlobalIsDragging } from '@/components/globalDragOverlay/GlobalDragOverlay'
+import { AnimatePopover, Button, Icon, Modal, WithBorder } from '@/components'
+import { GlobalDragOverlayInstance, useGlobalIsDragging } from '@/core'
 import { useGlobalEventEmitter } from '@/events/useEventEmitter'
-import { useMemoizedFn } from '@/hooks'
+import { useMemoizedFn, useToggle } from '@/hooks'
 import { undeletedMetaObjectsAtom } from '@/stores/meta.store'
-import { globalStore } from '@/stores'
+import { globalStore, NoteStore, ObjectStore } from '@/stores'
 import ClassName from '@/styles/classNames'
 import { css } from '@emotion/css'
 import { useAtomValue } from 'jotai/react'
 import { memo, useEffect, useRef, useState } from 'react'
 import { MenuItem } from './Item'
 import { useTranslation } from 'react-i18next'
-import Actions from '@/Actions'
+import Actions from '@/core/Actions'
+import CreateDocumentForm from '@/components/form/CreateDocumentForm'
+import Id from '@/utils/id'
 
 const SidebarDatabase = memo(() => {
   const { t } = useTranslation()
@@ -21,7 +23,21 @@ const SidebarDatabase = memo(() => {
     droppable: false,
     visible: false
   })
+  const [contextMenuPopVisible, toggleContextMenuPopVisible] = useToggle(false)
+  const [formState, setFormState] = useState<{
+    docV: boolean
+  }>()
+  const dragHandler = useMemoizedFn((e: DragEvent) => {
+    if (e.type === 'dragover') {
+      e.preventDefault()
+    }
+    if (e.type === 'drop') {
+      console.log(e)
+    }
+  })
+
   const pointerHandler = useMemoizedFn((e: PointerEvent) => {
+    if (!globalIsDragging) return
     if (e.type === 'pointerenter') {
       let droppable = false
       const draggingEle = GlobalDragOverlayInstance.draggingDetails
@@ -59,41 +75,99 @@ const SidebarDatabase = memo(() => {
       }
     }
   })
+  const contextMenuHandler = () => {
+    toggleContextMenuPopVisible(true)
+  }
   useEffect(() => {
-    if (globalIsDragging) {
-      itemRef.current?.addEventListener('pointerenter', pointerHandler)
-      itemRef.current?.addEventListener('pointerup', pointerHandler)
-      itemRef.current?.addEventListener('pointerleave', pointerHandler)
+    const databaseContainer = itemRef.current
+    if (databaseContainer) {
+      databaseContainer.addEventListener('pointerenter', pointerHandler)
+      databaseContainer.addEventListener('pointerup', pointerHandler)
+      databaseContainer.addEventListener('pointerleave', pointerHandler)
+      databaseContainer.addEventListener('drop', dragHandler)
+      databaseContainer.addEventListener('dragover', dragHandler)
+      databaseContainer.addEventListener('contextmenu', contextMenuHandler)
       return () => {
-        itemRef.current?.removeEventListener('pointerenter', pointerHandler)
-        itemRef.current?.removeEventListener('pointerup', pointerHandler)
-        itemRef.current?.removeEventListener('pointerleave', pointerHandler)
+        databaseContainer.removeEventListener('pointerenter', pointerHandler)
+        databaseContainer.removeEventListener('pointerup', pointerHandler)
+        databaseContainer.removeEventListener('pointerleave', pointerHandler)
+        databaseContainer.removeEventListener('drop', dragHandler)
+        databaseContainer.removeEventListener('dragover', dragHandler)
+        databaseContainer.removeEventListener('contextmenu', contextMenuHandler)
       }
     }
-  }, [globalIsDragging])
+  }, [])
   const undeletedMetaObjects = useAtomValue(undeletedMetaObjectsAtom, { store: globalStore })
 
   return (
     <>
+      <Modal visible={!!formState?.docV} onClose={() => setFormState(undefined)}>
+        {formState?.docV && (
+          <CreateDocumentForm
+            onBack={() => setFormState(undefined)}
+            onSubmit={doc => {
+              setFormState(undefined)
+            }}
+          />
+        )}
+      </Modal>
       <AnimatePopover
         innerRef={itemRef}
-        visible={draggingHovered.visible}
+        visible={draggingHovered.visible || contextMenuPopVisible}
+        onClickOutside={() => {
+          if (contextMenuPopVisible) {
+            toggleContextMenuPopVisible(false)
+          }
+        }}
         positions={['top']}
         containerStyle={{ zIndex: '10000' }}
         padding={10}
         content={
-          <div
-            style={{
-              pointerEvents: 'none',
-              background: 'rgba(0,0,0,0.8)',
-              color: 'white',
-              padding: '2px 6px',
-              borderRadius: 4,
-              fontSize: 12
-            }}
-          >
-            {draggingHovered.droppable ? 'Drop to add object into database' : "Can't drop this type of object"}
-          </div>
+          contextMenuPopVisible ? (
+            <WithBorder onClick={toggleContextMenuPopVisible}>
+              <Button.IconButton
+                icon="park-file-pdf"
+                text={t('general.pdf')}
+                onClick={() => {
+                  setFormState({ docV: true })
+                }}
+              />
+              <Button.IconButton
+                icon="park-web-page"
+                text={t('general.webpage')}
+                onClick={() => {
+                  ObjectStore('webpage').addOne({
+                    title: 'Unknown webpage'
+                  })
+                }}
+              />
+              <Button.IconButton
+                icon="park-notes"
+                text={t('general.note')}
+                onClick={() => {
+                  NoteStore.addNote({
+                    contentId: Id.getId(),
+                    title: 'Untitled'
+                  }).then(n => {
+                    Actions.openEditor(n.id)
+                  })
+                }}
+              />
+            </WithBorder>
+          ) : (
+            <div
+              style={{
+                pointerEvents: 'none',
+                background: 'rgba(0,0,0,0.8)',
+                color: 'white',
+                padding: '2px 6px',
+                borderRadius: 4,
+                fontSize: 12
+              }}
+            >
+              {draggingHovered.droppable ? 'Drop to add object into database' : "Can't drop this type of object"}
+            </div>
+          )
         }
       >
         <MenuItem

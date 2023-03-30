@@ -1,25 +1,8 @@
-import { EditorEvent } from '@/events/editorEvent'
 import Id from '@/utils/id'
 import { atom } from 'jotai'
 import EventHandler from './eventHandler'
-import { GlobalEvent } from './globalEvent'
-import { GraphEvent } from './graphEvent'
-import { LayoutEvent } from './layoutEvent'
-import { PdfEvent } from './pdfEvent'
-import { WhiteboardEvent } from './whiteboardEvent'
+import { EventMap } from '~/typings'
 
-export interface Event<T, K extends keyof T> {
-  readonly type: K
-  readonly data?: T[K]
-}
-export interface EventMap {
-  editor: EditorEvent
-  pdf: PdfEvent
-  graph: GraphEvent
-  layout: LayoutEvent
-  global: GlobalEvent
-  whiteboard: WhiteboardEvent
-}
 export interface EventCallback {
   onSuccess?: VoidFunction
   onFail?: VoidFunction
@@ -56,7 +39,6 @@ export default class EventEmitter {
     })
     if (interval) {
       this.intervalEventId = setInterval(() => {
-        console.log('interval')
         this.listeners[name]?.forEach(handler => {
           handler.handle(data)
         })

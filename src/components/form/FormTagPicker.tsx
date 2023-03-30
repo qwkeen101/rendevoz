@@ -12,11 +12,11 @@ import { useState, useMemo, useEffect, CSSProperties } from 'react'
 import { ITag } from '~/typings/data'
 import { Icon, AnimatePopover, IconWithPopover } from '..'
 import { Content, WithBorder } from '../base'
-import BlockColorPicker from '../editor/components/BlockColorPicker'
+import BlockColorPicker from '@/core/editor/components/BlockColorPicker'
 import { defaultBgColor } from '../picker/colorPicker'
-import { Tag } from './EditMetaObjectForm'
 import { useTranslation } from 'react-i18next'
 import { css } from '@emotion/css'
+import { ObjectTag } from '@/core'
 
 const FormTagPicker = ({
   onClose,
@@ -73,7 +73,7 @@ const FormTagPicker = ({
       <div className={ClassName.description()}>{t('form.you can select multiple tags', { tags: t('general.tags') })}</div>
       <Content flex gap={8} alignItems="center" style={{ padding: '10px 0', flexWrap: 'wrap' }}>
         {tags?.map(i => (
-          <Tag key={i} hideSize onDelete={() => onChange?.(tags.filter(o => o !== i))} tag={i} />
+          <ObjectTag key={i} hideSize onDelete={() => onChange?.(tags.filter(o => o !== i))} tag={i} />
         ))}
         {addTagVisible && (
           <AnimatePopover
@@ -156,7 +156,7 @@ const FormTagPicker = ({
                           }}
                           className={ClassName.flatButton(undefined, undefined, 'rgba(31,34,39,0.1)')}
                         >
-                          <Tag small hideSize key={i.name} tag={i.name} />
+                          <ObjectTag small hideSize key={i.name} tag={i.name} />
                         </div>
                       ))}
                     </Content>
@@ -235,7 +235,7 @@ const FormTagPicker = ({
       </div>
       <Content flex alignItems="center" gap={8} style={{ flexWrap: 'wrap' }}>
         {mostUsedTags?.map(i => (
-          <Tag
+          <ObjectTag
             key={i.tag}
             cursor="pointer"
             onAdd={() => {

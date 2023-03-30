@@ -1,4 +1,4 @@
-import Actions from '@/Actions'
+import Actions from '@/core/Actions'
 import { Content } from '@/components'
 import ClassName from '@/styles/classNames'
 import DateFormat from '@/utils/dateFormat'

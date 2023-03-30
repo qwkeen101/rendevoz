@@ -1,7 +1,7 @@
 import { AnimatePopover, Tooltip } from '@/components/base'
 import Modal from '@/components/base/Modal'
 import CollectionForm from '@/components/form/CollectionForm'
-import { GlobalDragOverlayInstance, useGlobalIsDragging } from '@/components/globalDragOverlay/GlobalDragOverlay'
+import { GlobalDragOverlayInstance, useGlobalIsDragging } from '@/core'
 import Zindexes from '@/consts/zindex'
 import { useMemoizedFn } from '@/hooks'
 import useCollectionStore, { rootCollectionsAtom } from '@/stores/collection.store'

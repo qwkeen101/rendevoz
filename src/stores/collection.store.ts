@@ -4,10 +4,10 @@ import { orderBy } from 'lodash'
 import { ICollection, ICollectionItem } from '~/typings/data'
 import BaseStore, { initializeLocalStore } from './base.store'
 import produce from 'immer'
-import { IStore } from './store.type'
+import { IStoreDeprecated } from './store.type'
 import { toast } from 'react-hot-toast'
 import { globalStore } from '.'
-import getSetting from '@/components/setting/getSetting'
+import getSetting from '@/core/setting/getSetting'
 import useWhiteboardStore from './whiteboard.store'
 
 const { orderedData } = BaseStore
@@ -37,7 +37,7 @@ const useCollectionStore = () => {
     }
   }
   const store = initializeLocalStore<ICollection>(collectionsAtom, database)
-  const localStore: Pick<IStore<ICollection>, 'addOne' | 'deleteOneById' | 'getAll' | 'getOneById' | 'updateOne'> = {
+  const localStore: Pick<IStoreDeprecated<ICollection>, 'addOne' | 'deleteOneById' | 'getAll' | 'getOneById' | 'updateOne'> = {
     addOne: store.addOne((obj, silent) => {
       !silent && shouldToast(silent) && toast.success('Collection successfully added!')
     }),

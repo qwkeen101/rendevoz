@@ -11,6 +11,7 @@ import Icon from '@/components/base/Icon'
 import { LayoutIdToTabMap } from '@/components/layout'
 import ClassName from '@/styles/classNames'
 import classNames from 'classnames'
+import { css } from '@emotion/css'
 
 function findParentPanel(element: HTMLElement) {
   for (let i = 0; i < 10; ++i) {
@@ -136,7 +137,7 @@ export class TabCache {
   }
 
   render(): React.ReactElement {
-    let { id, title, group, onTabClick, content, closable, cached, parent } = this.data
+    let { id, title, group, onTabClick, content, closable, cached, parent, icon } = this.data
     const { onDragStart, onDragOver, onDrop, onDragLeave } = this
 
     if (typeof content === 'function') {
@@ -154,7 +155,13 @@ export class TabCache {
         onClick={onTabClick}
         key={`${id}_tab`}
         id={`${id}_tab`}
+        className={css({
+          display: 'flex',
+          gap: 10,
+          alignItems: 'center'
+        })}
       >
+        {icon && <div style={{ flexShrink: 0 }}>{icon}</div>}
         <div className={styles.title}>{title}</div>
         <div className={styles.closeButtonWrapper}>
           <Icon

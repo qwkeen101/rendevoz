@@ -5,15 +5,18 @@ import { toast } from 'react-hot-toast'
 import { Descendant } from 'slate'
 import { INote, NoteBlock } from '~/typings/data'
 import BaseStore, { initializeLocalStore } from './base.store'
-import { IStore } from './store.type'
+import { IStoreDeprecated } from './store.type'
 import { MetaStore } from '.'
 import { Notification } from '@/components'
 import ClassName from '@/styles/classNames'
-import getSetting from '@/components/setting/getSetting'
+import getSetting from '@/core/setting/getSetting'
+import { ObjectFamilyAtom } from './object.store'
 
 const { orderedData } = BaseStore
 
 export const notesAtom = atom(new Map<number, INote>())
+
+export const noteObjectsAtom = ObjectFamilyAtom('note')
 
 export const allNotesAtom = atom(get => orderedData(get(notesAtom)).filter(i => !i.metaId))
 
@@ -37,7 +40,7 @@ const createNoteStore = () => {
   const blobDb = useDb('blobs')
   const initalizedLocalStore = initializeLocalStore(notesAtom, noteDb)
 
-  const localStore: Omit<IStore<INote>, 'addOne'> & {
+  const localStore: Omit<IStoreDeprecated<INote>, 'addOne'> & {
     addOne: (n: Partial<INote>, silent?: boolean, preventAddMeta?: boolean) => Promise<INote>
   } = {
     getAll: initalizedLocalStore.getAll(),

@@ -1,3 +1,6 @@
+import { useMemo } from 'react'
+import { EditorEventMap, GlobalEventMap, PdfEventMap } from '~/typings'
+
 class EventHandler<T> {
   private readonly handlerMap = new Map()
 
@@ -10,6 +13,27 @@ class EventHandler<T> {
       handler(event.data, res, rej)
     }
   }
+}
+
+type TypeToEventMap = {
+  editor: EditorEventMap
+  global: GlobalEventMap
+  pdf: PdfEventMap
+}
+export const useEventHandler = <T extends keyof TypeToEventMap>(type: T): EventHandler<TypeToEventMap[T]> => {
+  const eventHandler = useMemo(() => {
+    switch (type) {
+      case 'editor':
+        return new EventHandler<EditorEventMap>()
+      case 'global':
+        return new EventHandler<GlobalEventMap>()
+      case 'pdf':
+        return new EventHandler<PdfEventMap>()
+      default:
+        return new EventHandler<any>()
+    }
+  }, [])
+  return eventHandler
 }
 
 export default EventHandler

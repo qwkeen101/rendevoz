@@ -1,6 +1,6 @@
 import { Icon } from '@/components'
 import Modal from '@/components/base/Modal'
-import SettingDialog from '@/components/setting/Main'
+import SettingDialog from '@/core/setting'
 import { useToggle } from '@/hooks'
 import { useTranslation } from 'react-i18next'
 import { MenuItem } from './Item'

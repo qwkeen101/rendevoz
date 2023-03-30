@@ -14,8 +14,9 @@ import SidebarPinned from './SidebarPinned'
 import SidebarDatabase from './SidebarDatabase'
 import SidebarSetting from './SidebarSetting'
 import SidebarUser from './SidebarUser'
-import Actions from '@/Actions'
+import Actions from '@/core/Actions'
 import ClassName from '@/styles/classNames'
+import { globalStore, ObjectStore } from '@/stores'
 
 const variants = {
   open: {
@@ -44,6 +45,8 @@ const Navigation = ({ hovered }: { hovered: boolean }) => {
             : undefined
         }
         variants={variants}
+        onClick={() => {
+        }}
       >
         <SidebarUser />
         <MenuItem onClick={Actions.openHome}>

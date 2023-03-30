@@ -3,25 +3,24 @@ import './common.less'
 import TitleBar from './components/titlebar'
 import Initializer from './Initializer'
 import './global.less'
-import GlobalGraph from './components/graph/GlobalGraph'
-import GlobalDragOverlay from './components/globalDragOverlay/GlobalDragOverlay'
-import GlobalScreenShot from './components/globalScreenShot'
+import { GlobalDragOverlay } from '@/core'
 import Notification from './components/NotificationCenter'
-import PdfJsUrl from '@/assets/pdf.worker.min.js?url'
-import PdfJs from './pdfViewer/core/types/pdfJsApi'
-import GlobalObjectPanel from './components/GlobalObjectPanel'
-import GlobalCreateObject from './components/GlobalCreateObject'
-import '@/components/editor/dock.less'
+import { GlobalObjectPanel, GlobalCreateObject, GlobalScreenShot, GlobalGraph } from '@/core'
+import '@/core/editor/dock.less'
 import SvgMarker from './components/svg/Marker'
 import Login from './components/Login'
 import { useUser } from './services/login.service'
-import { useSetting } from './components/setting/Main'
+import { useSetting } from './core/setting'
 import { useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ErrorBoundary } from 'react-error-boundary'
 import ErrorFallback from './components/base/ErrorFallBack'
 import AuthenticatedLayout from './components/base/authenticatedLayout'
+import '@/assets/pdf.worker.min.js'
+import PdfJsUrl from '@/assets/pdf.worker.min.js?url'
+const PdfJs = window['pdfjs-dist/build/pdf']
 PdfJs.GlobalWorkerOptions.workerSrc = PdfJsUrl
+
 const App = () => {
   function getOS() {
     const userAgent = window.navigator.userAgent.toLowerCase(),

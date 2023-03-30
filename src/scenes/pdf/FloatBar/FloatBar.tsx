@@ -1,5 +1,4 @@
 import { AnimatePopover, Content, Icon, Tooltip, WithBorder } from '@/components'
-import useCleanMode from '@/components/pdf/hooks/useCleanMode'
 import { useToggle } from '@/hooks'
 import ClassName from '@/styles/classNames'
 import Id from '@/utils/id'
@@ -12,13 +11,10 @@ import PdfOutline from './Outline'
 import PdfSearch from './Search'
 import PdfLabels from './Label'
 import { IPdfDocument } from '~/typings/data'
-import PdfShape, { PdfShapes } from './Shape'
-
 const PdfFloatBar = ({ document }: { document?: IPdfDocument }) => {
   const viewer = useViewer()
   const id = useMemo(() => Id.getStrId(), [])
   const container = useRef(null)
-  const [cleanMode, setCleanMode] = useCleanMode()
   const [popState, setPopState] = useState<
     Partial<{
       visible: boolean
@@ -57,7 +53,7 @@ const PdfFloatBar = ({ document }: { document?: IPdfDocument }) => {
                 <Icon name="park-hand-drag" />
                 {isPan ? 'Disable hand drag' : 'Hand drag'}
               </Content>
-              <Content
+              {/* <Content
                 flex
                 gap={10}
                 className={ClassName.flatButton()}
@@ -67,7 +63,7 @@ const PdfFloatBar = ({ document }: { document?: IPdfDocument }) => {
               >
                 <Icon name="park-book-open" />
                 {cleanMode ? 'Close clean mode' : 'Clean mode'}
-              </Content>
+              </Content> */}
             </div>
           </Flipped>
         )

@@ -1,5 +1,5 @@
-import { Content } from '@/components'
-import Database from '@/components/database'
+import { Content, Icon } from '@/components'
+import { Database } from '@/core'
 import TabTitle from '@/components/layout/TabTitle'
 import { memo } from 'react'
 import { useTranslation } from 'react-i18next'

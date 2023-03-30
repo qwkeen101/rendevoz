@@ -3,16 +3,15 @@ import useDb from '@/hooks/stores/useDb'
 import ClassName from '@/styles/classNames'
 import Id from '@/utils/id'
 import { atom } from 'jotai/vanilla'
-import { useEffect, useMemo } from 'react'
 import { toast } from 'react-hot-toast'
-import { INote, IPdfDocument, IWhiteboard, MetaLink, MetaObject } from '~/typings/data'
+import { MetaLink, MetaObject } from '~/typings/data'
 import BaseStore, { initializeLocalStore } from './base.store'
 import { notesAtom } from './note.store'
-import { globalStore, NoteStore, MetaStore, DocumentStore, WhiteboardStore } from '.'
-import { TypeToTypeName } from '@/components/database/card/DatabaseCard'
-import { IStore } from './store.type'
+import { globalStore, NoteStore, MetaStore, DocumentStore, WhiteboardStore, ObjectStore } from '.'
+import { TypeToTypeName } from '@/core'
+import { IStoreDeprecated } from './store.type'
 import { documentsAtom } from './document.store'
-import getSetting from '@/components/setting/getSetting'
+import getSetting from '@/core/setting/getSetting'
 import { selectAtom } from 'jotai/utils'
 import { whiteboardsAtom } from './whiteboard.store'
 import { createDraft, finishDraft } from 'immer'
@@ -200,7 +199,6 @@ export const indexedMetaLinksAtom = atom<{
 
 let subArr: VoidFunction[] = []
 export const handleSyncObjectName = () => {
-  console.log('trigger sync name')
   subArr.forEach(i => i())
   subArr = []
   const objectIdToMetaObjectMap = globalStore.get(objectIdToMetaObjectIdMapAtom)
@@ -287,7 +285,7 @@ const createMetaStore = () => {
     const setting = getSetting()
     return !silent && setting.notification.enabled && setting.notification.object
   }
-  const localObjectStore: Pick<IStore<MetaObject>, 'addOne' | 'updateOne' | 'deleteOneById' | 'getAll'> = {
+  const localObjectStore: Pick<IStoreDeprecated<MetaObject>, 'addOne' | 'updateOne' | 'deleteOneById' | 'getAll'> = {
     updateOne: (one, silent) => {
       return initializeObjectStore.updateOne(obj => {
         if (obj.objectId && one.name) {
@@ -377,7 +375,8 @@ const createMetaStore = () => {
     const setting = getSetting()
     return !silent && setting.notification.enabled && setting.notification.link
   }
-  const localLinkStore: Pick<IStore<MetaLink>, 'addOne' | 'updateOne' | 'deleteOneById' | 'getAll'> = {
+
+  const localLinkStore: Pick<IStoreDeprecated<MetaLink>, 'addOne' | 'updateOne' | 'deleteOneById' | 'getAll'> = {
     addOne: (one, silent) => {
       if (one.sourceId === one.targetId) return Promise.reject()
       const allMetaLinks = globalStore.get(allMetaLinksAtom)

@@ -6,7 +6,7 @@ import styles from './index.module.less'
 import { useAtomValue } from 'jotai/react'
 import { globalStore } from '@/stores'
 import { orderBy } from 'lodash'
-import Actions from '@/Actions'
+import Actions from '@/core/Actions'
 interface CardProps {
   title: string
   children: ReactNode

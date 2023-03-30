@@ -7,8 +7,7 @@ export class ElectronIpcTransport extends Server implements CustomTransportStrat
 
   async onMessage(messageChannel: string, ...args: any[]): Promise<any> {
     const handler: MessageHandler | undefined = this.messageHandlers.get(messageChannel)
-    if (!handler)
-      return this.logger.warn(`No handlers for message ${messageChannel}`)
+    if (!handler) return this.logger.warn(`No handlers for message ${messageChannel}`)
 
     try {
       this.logger.debug(`Process message ${messageChannel}`)
@@ -16,19 +15,17 @@ export class ElectronIpcTransport extends Server implements CustomTransportStrat
       const result = await handler(args)
 
       return {
-        data: result,
+        data: result
       }
-    }
-    catch (error) {
+    } catch (error) {
       this.logger.error(error)
       return {
-        error,
+        error
       }
     }
   }
 
-  close(): any {
-  }
+  close(): any {}
 
   listen(callback: () => void): any {
     ipcMessageDispatcher.on('ipc-message', this.onMessage.bind(this))

@@ -2,7 +2,7 @@ import useDb from '@/hooks/stores/useDb'
 import { atom } from 'jotai'
 import { IWhiteboard } from '~/typings/data'
 import BaseStore, { initializeLocalStore } from './base.store'
-import { IStore } from './store.type'
+import { IStoreDeprecated } from './store.type'
 import { globalStore } from '.'
 
 export const whiteboardsAtom = atom(new Map<number, IWhiteboard>())
@@ -10,7 +10,7 @@ const { bulkAdd } = BaseStore
 const useWhiteboardStore = () => {
   const whiteboardDb = useDb('whiteboards')
   const localWhiteboardStore = initializeLocalStore(whiteboardsAtom, whiteboardDb)
-  const realWhiteboardStore: Pick<IStore<IWhiteboard>, 'addOne' | 'updateOne' | 'deleteOneById' | 'getAll' | 'getOneById'> = {
+  const realWhiteboardStore: Pick<IStoreDeprecated<IWhiteboard>, 'addOne' | 'updateOne' | 'deleteOneById' | 'getAll' | 'getOneById'> = {
     addOne: localWhiteboardStore.addOne(),
     updateOne: localWhiteboardStore.updateOne(),
     deleteOneById: localWhiteboardStore.deleteOneById(),

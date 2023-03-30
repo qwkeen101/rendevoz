@@ -5,7 +5,7 @@ import { DocumentStore, globalStore, MetaStore, NoteStore } from './stores'
 import { tagStore } from './stores/tag.store'
 import useWhiteboardStore from './stores/whiteboard.store'
 import { atom } from 'jotai'
-import { useGlobalSetAtom } from './jotai/jotaiScope'
+import { useGlobalSetAtom } from './hooks/jotai'
 import { ipcInstance } from './plugins'
 
 export const initializedAtom = atom(false)

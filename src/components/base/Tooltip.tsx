@@ -23,6 +23,7 @@ const ToolTip: FC<PropsWithChildren<ToolTipProps>> = ({ content, children, posit
       setOpen(false)
     }
     if (e.type === 'pointerenter') {
+      if (e.target !== e.currentTarget) return
       isInRef.current = true
       if (delay) {
         setTimeout(() => {
@@ -42,7 +43,7 @@ const ToolTip: FC<PropsWithChildren<ToolTipProps>> = ({ content, children, posit
   }
   useEffect(() => {
     const child = childRef.current
-    if (child) {
+    if (child && content) {
       child.addEventListener('pointerdown', handleMouseEvent)
       child.addEventListener('pointerenter', handleMouseEvent)
       child.addEventListener('pointerleave', handleMouseEvent)
@@ -52,7 +53,7 @@ const ToolTip: FC<PropsWithChildren<ToolTipProps>> = ({ content, children, posit
       child?.removeEventListener('pointerenter', handleMouseEvent)
       child?.removeEventListener('pointerleave', handleMouseEvent)
     }
-  }, [childRef])
+  }, [childRef, content])
   const renderChildren = () => {
     if (typeof children === 'string') {
       return <span>{children}</span>
@@ -85,9 +86,11 @@ const ToolTip: FC<PropsWithChildren<ToolTipProps>> = ({ content, children, posit
           containerStyle={{ zIndex: String(Zindexes.Tooltip) }}
           padding={10}
           content={renderContent()}
+          boundaryElement={document.body}
+          boundaryInset={20}
           positions={[position]}
           innerRef={mergedRef}
-          visible={content && open && !disable}
+          visible={!!content && open && !disable}
         >
           {renderChildren()}
         </AnimatePopover>

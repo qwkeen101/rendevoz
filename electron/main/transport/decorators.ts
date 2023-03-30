@@ -12,8 +12,8 @@ function GetParamsFromMessageChannel() {
       const newArgs = [
         ...payload,
         {
-          evt: ipcMainEventObject,
-        },
+          evt: ipcMainEventObject
+        }
       ]
       return method.apply(this, newArgs)
     }
@@ -25,9 +25,5 @@ export function IpcInvoke(messageChannel: string) {
   ipcMain.handle(messageChannel, (...args) => ipcMessageDispatcher.emit(messageChannel, ...args))
 
   // Do not modify the order!
-  return applyDecorators(
-    GetParamsFromMessageChannel(),
-    MessagePattern(messageChannel),
-    UseFilters(new AllExceptionsFilter()),
-  )
+  return applyDecorators(GetParamsFromMessageChannel(), MessagePattern(messageChannel), UseFilters(new AllExceptionsFilter()))
 }

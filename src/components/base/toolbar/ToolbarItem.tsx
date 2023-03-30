@@ -66,6 +66,7 @@ const ToolbarItem: FC<ToolbarItemProps> = ({
         cursor: disabled ? 'not-allowed' : style?.cursor
       },
       onPointerDown: clickPreventDefault ? e => e.preventDefault() : undefined,
+      onPointerUp: clickPreventDefault ? e => e.preventDefault() : undefined,
       onClick: handleClick
     },
     <Tooltip content={tooltip}>{renderItem()}</Tooltip>

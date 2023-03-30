@@ -1,4 +1,4 @@
-import { DetailedHTMLProps, forwardRef, HTMLAttributes } from 'react'
+import { DetailedHTMLProps, forwardRef, HTMLAttributes, memo } from 'react'
 import { Property } from 'csstype'
 import { css } from '@emotion/css'
 import classNames from 'classnames'
@@ -49,12 +49,14 @@ const Content = forwardRef<HTMLDivElement, ContentProps>(
             alignItems: centered ? 'center' : alignItems,
             flex: auto ? 'auto' : undefined,
             width: fullWidth ? '100%' : undefined,
-            height: fullHeight ? '100%' : undefined,
-            gap
+            height: fullHeight ? '100%' : undefined
           }),
           className
         )}
-        style={style}
+        style={{
+          ...style,
+          gap
+        }}
         {...rest}
       >
         {children}
@@ -63,4 +65,4 @@ const Content = forwardRef<HTMLDivElement, ContentProps>(
   }
 )
 
-export default Content
+export default memo(Content)

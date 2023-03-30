@@ -1,16 +1,16 @@
 import { LayoutData, PanelData, TabData } from '../base/dock'
 import * as Algorithm from '@/components/base/dock/Algorithm'
-import { CustomEditor } from '../editor/types'
 import EditorPage from '@/scenes/editor'
 import Id from '@/utils/id'
 import PdfPage from '@/scenes/pdf'
 import { DockTabPaneContext } from '../base/dock/DockTabPane'
-import { IPdfViewer } from '@/pdfViewer/core/types/pdfViewer'
+import { IPdfViewer, CustomEditor, WebpageInstance } from '~/typings'
 import { HomePage } from '@/scenes/home'
 import DatabasePage from '@/scenes/DatabasePage'
 import WhiteboardPage from '@/scenes/WhiteboardPage'
 import { LayoutIdToTabMap, LayoutTab } from '.'
-import getSetting from '../setting/getSetting'
+import getSetting from '../../core/setting/getSetting'
+import WebpagePage from '@/core/webpage/Webpage'
 
 type AddTabOptions =
   | {
@@ -33,6 +33,12 @@ type AddTabOptions =
   | {
       type: 'database'
     }
+  | {
+      type: 'webpage'
+      webpageId: number
+      onWebpageInitialized?: (instance: WebpageInstance) => void
+      onWebpageChange?: (newWebpageDetails: { webpageId: number }) => void
+    }
 
 const initializePage = (options: AddTabOptions) => {
   switch (options.type) {
@@ -46,6 +52,14 @@ const initializePage = (options: AddTabOptions) => {
       return <DatabasePage />
     case 'whiteboard':
       return <WhiteboardPage whiteboardId={options.whiteboardId} />
+    case 'webpage':
+      return (
+        <WebpagePage
+          initialWebpageId={options.webpageId}
+          onWebpageInitialized={options.onWebpageInitialized}
+          onWebpageChange={options.onWebpageChange}
+        />
+      )
   }
 }
 
@@ -94,6 +108,9 @@ class LayoutManager {
             break
           case 'whiteboard':
             objectId = options.whiteboardId
+            break
+          case 'webpage':
+            objectId = options.webpageId
         }
         if (objectId) {
           const tabId = this.hasTargetTab?.({ type: options.type, objectId: objectId })
@@ -107,8 +124,13 @@ class LayoutManager {
                   break
                 }
                 case 'pdf': {
-                  const viewer = (layoutTab as LayoutTab & { type: 'pdf'}).viewer
+                  const viewer = (layoutTab as LayoutTab & { type: 'pdf' }).viewer
                   viewer && options.onViewerInitialized(viewer)
+                  break
+                }
+                case 'webpage': {
+                  const instance = (layoutTab as LayoutTab & { type: 'webpage' }).instance
+                  instance && options.onWebpageInitialized?.(instance)
                   break
                 }
               }
@@ -159,6 +181,23 @@ class LayoutManager {
             type: 'whiteboard',
             objectId: options.whiteboardId
           }
+          break
+        case 'webpage': {
+          tab = {
+            type: 'webpage',
+            objectId: options.webpageId
+          }
+          const originFunction = options.onWebpageInitialized
+          const originChangeFunction = options.onWebpageChange
+          options.onWebpageInitialized = i => {
+            ;(tab as LayoutTab & { type: 'webpage' }).instance = i
+            originFunction?.(i)
+          }
+          options.onWebpageChange = details => {
+            ;(tab as LayoutTab & { type: 'webpage' }).objectId = details.webpageId
+            originChangeFunction?.(details)
+          }
+        }
       }
       const tabContent = initializePage(options)
       if (tabContent) {

@@ -11,7 +11,7 @@ import useSidebarItemContextMenu from '../useSidebarItemContextMenu'
 import useSidebarItemDrag from '../useSidebarItemDrag'
 import { ISidebarItem } from './type'
 import { selectAtom } from 'jotai/utils'
-import Actions from '@/Actions'
+import Actions from '@/core/Actions'
 
 const SidebarNoteItem: FC<ISidebarItem> = ({ id, parentId, parentType, draggable = true }) => {
   const ref = useRef<HTMLDivElement>(null)

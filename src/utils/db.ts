@@ -2,7 +2,7 @@ import Dexie from 'dexie'
 import { importDB, exportDB, importInto, peakImportFile } from 'dexie-export-import'
 
 export const db = new Dexie('rendevozDb')
-db.version(11).stores({
+db.version(12).stores({
   textselection: 'id,documentId',
   documents: 'id',
   notes: 'id',
@@ -14,7 +14,8 @@ db.version(11).stores({
   metaLinks: 'id,keyword',
   metaComments: 'id',
   tags: 'id',
-  whiteboards: 'id'
+  whiteboards: 'id',
+  objects: 'id,specType'
 })
 
 export const exportRendevozDb = async () => {
@@ -26,7 +27,7 @@ export const importRendevozDb = async (blob?: Blob) => {
   if (!blob) return false
   const importMeta = await peakImportFile(blob)
 
-  if (importMeta.formatName !== 'dexie' || importMeta.data.databaseName !== 'rendevozDb' || importMeta.data.databaseVersion !== 10) {
+  if (importMeta.formatName !== 'dexie' || importMeta.data.databaseName !== 'rendevozDb' || importMeta.data.databaseVersion !== 12) {
     return false
   }
   await importInto(db, blob, { overwriteValues: true })

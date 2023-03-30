@@ -1,9 +1,10 @@
-import { app} from 'electron'
+import { app } from 'electron'
 import { release } from 'os'
 import { NestFactory } from '@nestjs/core'
 import { MicroserviceOptions } from '@nestjs/microservices'
 import { AppModule } from './app.module'
 import { ElectronIpcTransport } from './transport'
+import { LocalModule } from './local.module'
 
 async function bootstrap() {
   try {

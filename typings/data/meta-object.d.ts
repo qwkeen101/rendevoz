@@ -2,12 +2,31 @@ import { IBase } from './base'
 
 // sourceType: note / metaObject / pdf document
 interface MetaObject extends IBase {
-  type: 'note' | 'pdf' | 'noteElement' | 'pdfElement' | 'normal' | 'image' | 'whiteboard' | 'video' | 'audio'
+  type:
+    | 'note'
+    | 'pdf'
+    | 'noteElement'
+    | 'pdfElement'
+    | 'normal'
+    | 'image'
+    | 'whiteboard'
+    | 'video'
+    | 'audio'
+    | 'webpage'
+    | 'noteLabel'
+    | 'webpageLabel'
   name?: string
   description?: string
   coverImgSrc?: string
   objectId?: number
+  objectUrl?: string
   tags?: string[]
+  from?: {
+    icon?: string
+    metaId?: number
+    type?: MetaObject['type']
+    name?: string
+  }
   temp?: boolean
 }
 interface MetaWithNote {

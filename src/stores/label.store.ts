@@ -4,9 +4,9 @@ import { atom } from 'jotai/vanilla'
 import toast from 'react-hot-toast'
 import { ILabel } from '~/typings/data'
 import BaseStore, { initializeLocalStore } from './base.store'
-import { IStore } from './store.type'
+import { IStoreDeprecated } from './store.type'
 import { globalStore } from '.'
-import getSetting from '@/components/setting/getSetting'
+import getSetting from '@/core/setting/getSetting'
 
 const { orderedData } = BaseStore
 
@@ -41,7 +41,7 @@ const useLabelStore = () => {
     }
     return false
   }
-  const localStore: Pick<IStore<ILabel>, 'addOne' | 'deleteOneById' | 'getAll' | 'getOneById' | 'updateOne'> = {
+  const localStore: Pick<IStoreDeprecated<ILabel>, 'addOne' | 'deleteOneById' | 'getAll' | 'getOneById' | 'updateOne'> = {
     addOne: store.addOne((obj, silent) => {
       !silent && shouldToast(silent) && toast.success('Label successfully added!')
     }),

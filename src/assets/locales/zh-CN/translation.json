@@ -29,7 +29,7 @@
         "graph": "节点图",
         "image": "图片",
         "add": "添加",
-        "pdf label": "PDF标签",
+        "pdf label": "PDF标注",
         "note block": "笔记块",
         "video": "视频",
         "audio": "音频",
@@ -41,7 +41,9 @@
         "related": "相关",
         "email": "邮件",
         "password": "密码",
-        "email address": "邮箱地址"
+        "email address": "邮箱地址",
+        "webpage": "网页",
+        "webpage label": "网页标注"
     },
     "dock": {
         "close": "关闭标签页",

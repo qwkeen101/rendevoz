@@ -15,7 +15,7 @@ import SidebarNoteItem from './SidebarNoteItem'
 import { ISidebarItem } from './type'
 import { WhiteboardStore } from '@/stores'
 import useSidebarItemContextMenu from '../useSidebarItemContextMenu'
-import Actions from '@/Actions'
+import Actions from '@/core/Actions'
 
 const SidebarWhiteboardItem: FC<ISidebarItem> = memo(({ id, parentId, parentType, draggable = true }) => {
   const thisWhiteboardAtom = useMemo(() => selectAtom(whiteboardsAtom, w => w.get(id)), [id])

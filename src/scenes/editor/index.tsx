@@ -1,6 +1,6 @@
 import { Content } from '@/components'
-import { Editor } from '@/components/editor/Editor'
-import { CustomEditor } from '@/components/editor/types'
+import { Editor } from '@/core'
+import { CustomEditor } from '~/typings'
 import TabTitle from '@/components/layout/TabTitle'
 import { FC, useState } from 'react'
 

@@ -12,6 +12,6 @@ export interface ICollection extends IBase {
 }
 
 export interface ICollectionItem {
-  type?: 'note' | 'document' | 'collection' | 'whiteboard' | 'image' | 'video' | 'audio'
+  type?: 'note' | 'document' | 'collection' | 'whiteboard' | 'image' | 'video' | 'audio' | 'meta'
   id?: number
 }

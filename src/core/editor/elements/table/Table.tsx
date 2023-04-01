@@ -320,6 +320,7 @@ const Table = ({ element, children, attributes }: RenderElementProps) => {
             width: tableEle.columns?.reduce((prev, curr) => {
               return prev + (curr.width || 150)
             }, 0),
+            minWidth: readOnly ? '100%' : undefined,
             margin: readOnly ? 'auto' : undefined
           }}
         >

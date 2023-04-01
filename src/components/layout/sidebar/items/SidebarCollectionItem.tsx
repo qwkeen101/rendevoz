@@ -17,6 +17,7 @@ import SidebarWhiteboardItem from './SidebarWhiteboardItem'
 import { ISidebarItem } from './type'
 import SidebarDocumentItem from './SidebarDocumentItem'
 import SidebarNoteItem from './SidebarNoteItem'
+import SidebarObjectItem from './SidebarObjectItem'
 
 const SidebarCollectionItem: FC<ISidebarItem> = memo(({ id, parentId, parentType, draggable = true }) => {
   const { updateCollection, deleteCollection } = useCollectionStore()
@@ -27,16 +28,18 @@ const SidebarCollectionItem: FC<ISidebarItem> = memo(({ id, parentId, parentType
 
   const items = collection?.items
 
-  const { childrenCollections, childrenDocuments, childrenNotes, childrenWhiteboards } = useMemo(() => {
+  const { childrenCollections, childrenDocuments, childrenNotes, childrenWhiteboards, childrenMetas } = useMemo(() => {
     const childrenCollections = items?.filter(i => i.type === 'collection' && i.id) as Required<ICollectionItem>[]
     const childrenNotes = items?.filter(i => i.type === 'note' && i.id) as Required<ICollectionItem>[]
     const childrenDocuments = items?.filter(i => i.type === 'document' && i.id) as Required<ICollectionItem>[]
     const childrenWhiteboards = items?.filter(i => i.type === 'whiteboard' && i.id) as Required<ICollectionItem>[]
+    const childrenMetas = items?.filter(i => i.type === 'meta' && i.id) as Required<ICollectionItem>[]
     return {
       childrenCollections,
       childrenNotes,
       childrenDocuments,
-      childrenWhiteboards
+      childrenWhiteboards,
+      childrenMetas
     }
   }, [items])
 
@@ -183,6 +186,9 @@ const SidebarCollectionItem: FC<ISidebarItem> = memo(({ id, parentId, parentType
             ))}
             {childrenWhiteboards.map(i => (
               <SidebarWhiteboardItem key={i.id} id={i.id} parentId={id} parentType="collection" />
+            ))}
+            {childrenMetas.map(i => (
+              <SidebarObjectItem key={i.id} id={i.id} parentId={id} parentType="collection" />
             ))}
           </motion.div>
         )}

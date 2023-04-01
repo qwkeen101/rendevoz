@@ -3,9 +3,9 @@ import { CustomEditor, WebpageInstance } from '~/typings'
 import { ID_TO_ELEMENTS_MAP, ID_TO_PATH_MAP, SELECTED_BLOCKS_MAP, ID_TO_LABEL_MAP } from '@/core'
 import { GlobalLayout } from '../components/layout'
 import { IPdfViewer } from '~/typings'
-import { DocumentStore, globalStore, LabelStore, NoteStore, ObjectStore, WhiteboardStore } from '../stores'
+import { DocumentStore, globalStore, LabelStore, MetaStore, NoteStore, ObjectStore, WhiteboardStore } from '../stores'
 import useBlockStore from '../stores/block.store'
-import { metaObjectsAtom } from '../stores/meta.store'
+import { metaObjectsAtom, objectIdToMetaObjectIdMapAtom } from '../stores/meta.store'
 
 const navigateToTargetObject = async (metaObjectId: number) => {
   const metaObject = globalStore.get(metaObjectsAtom).get(metaObjectId)
@@ -91,6 +91,7 @@ const navigateToTargetObject = async (metaObjectId: number) => {
     toast.error('Target Item Not Exist!')
     return
   }
+  updateViewAt(objectId)
   switch (metaObject.type) {
     case 'noteElement':
       return goToNoteBlock(objectId)
@@ -117,6 +118,7 @@ const openEditor = (noteId: number): Promise<CustomEditor> => {
       noteId,
       onEditorInitalized: editor => res(editor)
     })
+    updateViewAt(noteId)
   })
 }
 
@@ -143,6 +145,7 @@ const goToNoteBlock = async (blockId: number) => {
   const { getBlockById } = useBlockStore()
   const block = await getBlockById(blockId)
   if (block) {
+    updateViewAt(blockId)
     const editor = await openEditor(block.noteId)
     const path = ID_TO_PATH_MAP.get(editor)?.get(blockId)
     SELECTED_BLOCKS_MAP.get(editor)?.set(blockId, null)
@@ -160,12 +163,14 @@ const openPdf = (pdfId: number): Promise<IPdfViewer> => {
       pdfId,
       onViewerInitialized: viewer => res(viewer)
     })
+    updateViewAt(pdfId)
   })
 }
 const goToPdfLabel = async (labelId: number) => {
   const { getLabelById } = LabelStore
   const label = await getLabelById(labelId)
   if (label) {
+    updateViewAt(labelId)
     const pdfId = label.documentId
     if (pdfId) {
       const viewer = await openPdf(pdfId)
@@ -207,7 +212,14 @@ const openWhiteboard = (whiteboardId: number) => {
       whiteboardId
     })
     res(null)
+    updateViewAt(whiteboardId)
   })
+}
+const updateViewAt = (objectId: number) => {
+  const metaId = globalStore.get(objectIdToMetaObjectIdMapAtom)?.get(objectId)
+  if (metaId) {
+    MetaStore.updateMetaObject({ id: metaId, viewAt: Date.now() }, true)
+  }
 }
 const Actions = {
   openEditor,

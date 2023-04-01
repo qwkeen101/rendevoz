@@ -156,6 +156,11 @@ const createWebpageStore = () => {
         o.url = ''
       }
     },
+    beforeUpdateProcess: o => {
+      if (!o.url?.startsWith('http://') && !o.url?.startsWith('https://') && o.url?.length) {
+        o.url = 'https://' + o.url
+      }
+    },
     afterAddProcess: {
       onSuccess: async (obj, opts) => {
         if (opts?.showAddModal) {
@@ -175,7 +180,7 @@ const createWebpageStore = () => {
               }
             }
           })
-        } else {
+        } else if (!opts?.preventAddMeta) {
           MetaStore.addMetaObject({
             objectId: obj.id,
             type: 'webpage',

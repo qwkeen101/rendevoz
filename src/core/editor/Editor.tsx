@@ -239,8 +239,8 @@ export const EditorV1: FC<EditorProps> = memo(
     }
     const handleBlockMouseMove = useMemoizedFn((e: MouseEvent, element: CustomElement) => {
       if (!isDragging && !globalIsDragging) {
-        e.stopPropagation()
         if (element.type === 'table' && !(e.target as HTMLElement).hasAttribute('data-table-slot')) return
+        e.stopPropagation()
         editor.currentEnterElement = element
         editor.currentDragElement = e.currentTarget as HTMLElement
         dragManager.registerDragHtmlElement(e.currentTarget as HTMLElement)

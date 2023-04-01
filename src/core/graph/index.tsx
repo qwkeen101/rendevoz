@@ -56,7 +56,7 @@ export const GlobalGraph = () => {
       ).map(i => ({
         id: i.id,
         label: i.name,
-        coverImgSrc: i.coverImgSrc,
+        coverImgSrc: i.coverImgSrc || (i.from?.icon ? (i.from?.icon?.startsWith('park') ? undefined : i.from?.icon) : undefined),
         type: i.type,
         isCenter: i.id === centerNode.id,
         objectId: i.objectId,

@@ -14,12 +14,12 @@ const RowMenu = ({
   const { t } = useTranslation()
   const buttons: Parameters<typeof IconButton>[0][] = [
     {
-      icon: 'park-left',
+      icon: 'park-down',
       onClick: () => on('insertBelow'),
       text: t('editor.insert row below')
     },
     {
-      icon: 'park-right',
+      icon: 'park-up',
       onClick: () => on('insertAbove'),
       text: t('editor.insert row above')
     },
@@ -36,7 +36,7 @@ const RowMenu = ({
     }
   ]
   return (
-    <WithBorder>
+    <WithBorder style={{ padding: 4, width: 200 }}>
       {showHeader && (
         <Content flex gap={4} justifyContent="space-between" onClick={() => on('headerRow')} className={ClassName.flatButton()}>
           <div>{t('editor.header row')}</div>

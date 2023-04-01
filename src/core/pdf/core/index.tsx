@@ -7,8 +7,6 @@ import Loader from './Loader'
 import { RenderPageProps } from './types'
 import { IAnnotation } from '~/typings'
 import { ScrollMode } from './types/layout'
-import PdfJs from './types/pdfJsApi'
-import PdfJsUrl from '@/assets/pdf.worker.min.js?url'
 import { createStore, Provider } from 'jotai'
 import { IPdfViewer } from './types/pdfViewer'
 import { PdfViewerAtom } from './hooks/useViewer'
@@ -40,7 +38,6 @@ export const Viewer: FC<ViewerProps> = ({
   transformScale,
   viewer
 }) => {
-  PdfJs.GlobalWorkerOptions.workerSrc = PdfJsUrl
 
   const store = useMemo(() => {
     const store = createStore()

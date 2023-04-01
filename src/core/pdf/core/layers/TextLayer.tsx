@@ -1,7 +1,6 @@
 import { FC, memo, RefObject, useEffect, useMemo, useRef } from 'react'
 import { useIsomorphicLayoutEffect } from 'react-use'
 import { TextContent, TextStyle } from 'pdfjs-dist/types/src/display/api'
-import PdfJs from '../types/pdfJsApi'
 import { PageViewport, PDFPageProxy } from 'pdfjs-dist'
 import { getNearestDistanceBetweenPointAndRect, getTextRect, getWordRect, isInBounds, isInRect } from '../utils/text'
 import { useMousePositionWithRef } from '@/hooks/utils/useMousePositionRef'
@@ -15,6 +14,7 @@ import useScopedEventEmitter from '@/events/useEventEmitter'
 import useViewer from '@/scenes/pdf/useViewer'
 import { Rect } from '@/types'
 import { useEventHandler } from '@/events'
+import usePdfjs from '@/hooks/utils/usePdfjs'
 interface TextLayerProps {
   page: PDFPageProxy
   pageIndex: number
@@ -76,7 +76,6 @@ const TextLayer: FC<TextLayerProps> = ({
   const keyboardHandler = useMemoizedFn((e: KeyboardEvent) => {
     const selectedText = Object.values(globalSelectingText.selectedTexts).join(' ')
     if (isHotkey('mod+c', e) && selectedText !== '' && window.getSelection()?.isCollapsed) {
-      console.log('asdsadadadasdasdasda')
       navigator.clipboard.writeText(selectedText)
     }
   })
@@ -158,7 +157,6 @@ const TextLayer: FC<TextLayerProps> = ({
         pageFunctionRef.current?.onTextSelected?.({
           selectedText,
           rects: rectsRef.current.map(rect => {
-            console.log(rect)
             return {
               left: rect.left,
               top: rect.top,
@@ -171,7 +169,6 @@ const TextLayer: FC<TextLayerProps> = ({
             }
           })
         })
-        console.log(width, height)
         setGlobalSelectingText({
           ...globalSelectingText,
           isSelecting: false,
@@ -469,7 +466,7 @@ type styleType = {
   [x: string]: TextStyle
 }
 function getTextBound(viewport: PageViewport, textItem: TextItem, ctx: CanvasRenderingContext2D, styles: styleType) {
-  const textItemTransform = PdfJs.Util.transform(viewport.transform, textItem.transform)
+  const textItemTransform = usePdfjs().Util.transform(viewport.transform, textItem.transform)
   let angle = Math.atan2(textItemTransform[1], textItemTransform[0])
   const style = styles[textItem.fontName]
   if (style.vertical) {
@@ -491,7 +488,7 @@ function getTextBound(viewport: PageViewport, textItem: TextItem, ctx: CanvasRen
     let trans, bound
     angle !== 0
       ? ((trans = [angleCos, angleSin, -angleSin, angleCos, left, top]),
-        (bound = PdfJs.Util.getAxialAlignedBoundingBox([0, 0, afterScaleWidth, height], trans)))
+        (bound = usePdfjs().Util.getAxialAlignedBoundingBox([0, 0, afterScaleWidth, height], trans)))
       : (bound = [left, top, left + afterScaleWidth, top + height])
     return {
       offset: {

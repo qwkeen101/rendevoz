@@ -20,7 +20,8 @@ import {
   FilterRelatedIdsAtom,
   useObjectFilter,
   DatabaseFilter,
-  ObjectActionPopover
+  ObjectActionPopover,
+  FiltersAtom
 } from '@/core'
 import { useSetting } from '@/core/setting'
 import { compareHotkey } from 'is-hotkey'
@@ -317,7 +318,7 @@ export const SimpleObject = memo(
       const mergedRef = useMergedRef(containerRef, ref)
       const isPressed = useRef(false)
       const { renderWhole, metaObject } = useRenderObject({
-        metaObjectId: metaObjectId,
+        metaObjectId: metaObjectId
       })
       const [popoverVisible, togglePopoverVisible] = useToggle(false)
       const [editVisible, toggleEditVisible] = useToggle(false)
@@ -325,6 +326,7 @@ export const SimpleObject = memo(
       const { updateMetaObject } = MetaStore
       const firstDragTimeRef = useRef<number>(0)
       const currentFocusFilter = useAtomValue(CurrentFocusFilterAtom)
+      const filters = useAtomValue(FiltersAtom)
       const currentRelatedIdsAtom = useMemo(() => {
         if (currentFocusFilter) {
           if (currentFocusFilter.id && currentFocusFilter.type === 'related') {
@@ -472,6 +474,10 @@ export const SimpleObject = memo(
               containerStyle: {
                 margin: 0
               }
+            },
+            tagsOptions: {
+              showCreatedAt: filters.some(i => i.filterType === 'createdAt'),
+              showViewAt: filters.some(i => i.filterType === 'viewAt')
             },
             titleOptions: {
               style: {

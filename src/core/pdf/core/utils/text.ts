@@ -1,6 +1,6 @@
+import usePdfjs from '@/hooks/utils/usePdfjs'
 import { PageViewport } from 'pdfjs-dist'
 import { Point } from '../types'
-import pdfJs from '../types/pdfJsApi'
 import { TextContentBound, TextContentOffset, TextContentTrans } from '../types/text'
 
 export const getCoordAfterTrans = (point: Point, trans: TextContentTrans) => {
@@ -12,7 +12,7 @@ export const getCoordAfterTrans = (point: Point, trans: TextContentTrans) => {
   }
 }
 export const getCharPoint = (viewport, transform) => {
-  const trans = pdfJs.Util.transform(viewport.transform, transform)
+  const trans = usePdfjs().Util.transform(viewport.transform, transform)
   return {
     x: trans[4],
     y: trans[5]

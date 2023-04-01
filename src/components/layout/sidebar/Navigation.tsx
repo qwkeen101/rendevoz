@@ -16,7 +16,7 @@ import SidebarSetting from './SidebarSetting'
 import SidebarUser from './SidebarUser'
 import Actions from '@/core/Actions'
 import ClassName from '@/styles/classNames'
-import { globalStore, ObjectStore } from '@/stores'
+import { globalStore, MetaStore, ObjectStore } from '@/stores'
 
 const variants = {
   open: {
@@ -28,7 +28,6 @@ const variants = {
 }
 const Navigation = ({ hovered }: { hovered: boolean }) => {
   const [searchVisible, setSearchVisible] = useState(false)
-  const { defaultFontColorGrey } = useTheme('defaultFontColorGrey', 'defaultFontColorBlack')
   const { t } = useTranslation()
   return (
     <>

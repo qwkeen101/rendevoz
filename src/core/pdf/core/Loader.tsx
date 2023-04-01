@@ -1,8 +1,8 @@
 import Spinner from '@/components/base/Spinner'
+import usePdfjs from '@/hooks/utils/usePdfjs'
 import { PDFDocumentProxy } from 'pdfjs-dist'
 import { FC, useEffect, useRef, useState } from 'react'
-import PdfJs from './types/pdfJsApi'
-import PdfJsUrl from '@/assets/pdf.worker.min.js?url'
+
 interface LoaderProps {
   file: string | Uint8Array
   children: (doc: PDFDocumentProxy) => React.ReactElement
@@ -19,8 +19,7 @@ const Loader: FC<LoaderProps> = ({ file, children, onDocumentLoaded }) => {
   useEffect(() => {
     docRef.current = null
     const params = Object.assign('string' === typeof file ? { url: file } : { data: file })
-    PdfJs.GlobalWorkerOptions.workerSrc = PdfJsUrl
-    const loadingTask = PdfJs.getDocument(params)
+    const loadingTask = usePdfjs().getDocument(params)
     loadingTask.promise.then(doc => {
       docRef.current = doc
       onDocumentLoaded?.(doc)

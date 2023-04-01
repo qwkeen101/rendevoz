@@ -16,12 +16,12 @@ import { useTranslation } from 'react-i18next'
 import { ErrorBoundary } from 'react-error-boundary'
 import ErrorFallback from './components/base/ErrorFallBack'
 import AuthenticatedLayout from './components/base/authenticatedLayout'
-import '@/assets/pdf.worker.min.js'
+import '@/assets/pdf.min.js'
 import PdfJsUrl from '@/assets/pdf.worker.min.js?url'
-const PdfJs = window['pdfjs-dist/build/pdf']
-PdfJs.GlobalWorkerOptions.workerSrc = PdfJsUrl
 
 const App = () => {
+  const PdfJs = window['pdfjs-dist/build/pdf']
+  PdfJs.GlobalWorkerOptions.workerSrc = PdfJsUrl
   function getOS() {
     const userAgent = window.navigator.userAgent.toLowerCase(),
       macosPlatforms = /(macintosh|macintel|macppc|mac68k|macos)/i,

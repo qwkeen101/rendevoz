@@ -36,7 +36,7 @@ const ColumnMenu = ({
     }
   ]
   return (
-    <WithBorder>
+    <WithBorder style={{ padding: 4, width: 200 }}>
       {showHeader && (
         <Content flex gap={4} justifyContent="space-between" onClick={() => on('headerColumn')} className={ClassName.flatButton()}>
           <div>{t('editor.header column')}</div>

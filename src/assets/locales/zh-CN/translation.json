@@ -43,7 +43,10 @@
         "password": "密码",
         "email address": "邮箱地址",
         "webpage": "网页",
-        "webpage label": "网页标注"
+        "webpage label": "网页标注",
+        "ago": "{{time}}前",
+        "view time": "浏览时间",
+        "url": "网址"
     },
     "dock": {
         "close": "关闭标签页",
@@ -80,7 +83,7 @@
         "books": "书籍",
         "objects": "实体",
         "links": "链接",
-        "ago": "{{time}} 前"
+        "ago": "{{time}}前"
     },
     "sidebar":{
         "home": "主页",
@@ -135,7 +138,17 @@
         "image": "图片",
         "block": "块",
         "to-do": "待办",
-        "emoji": "表情"
+        "emoji": "表情",
+        "default font": "默认",
+        "table": "表格",
+        "header row": "标题行",
+        "header column": "标题列",
+        "insert row below": "在下方插入行",
+        "insert row above": "在上方插入行",
+        "clear row content": "清除行内容",
+        "insert column left": "在左侧插入列",
+        "insert column right": "在右侧插入列",
+        "clear column content": "清除列内容"
     },
     "settings": {
         "appearance": "Appearance",

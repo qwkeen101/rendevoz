@@ -21,6 +21,7 @@ import {
   FilterRelatedIdsAtom,
   FilterSelectedTagsAtom as FilterSelectedTagsMapAtom,
   FilterTypesAtom,
+  FilterViewDateIntervalAtom,
   intersectionOfMultipleSets,
   RealFilterRelatedIdsAtom,
   ShouldFilterIdsAtom
@@ -30,7 +31,7 @@ import { useTranslation } from 'react-i18next'
 import { useGlobalAtomValue } from '@/hooks/jotai'
 import { atom } from 'jotai'
 
-export type FilterType = 'tag' | 'type' | 'createdAt' | 'relatedObjectsSize' | 'addOne' | 'related'
+export type FilterType = 'tag' | 'type' | 'createdAt' | 'relatedObjectsSize' | 'addOne' | 'related' | 'viewAt'
 
 const filterContainerClassName = (focused: boolean) =>
   css({
@@ -40,7 +41,7 @@ const filterContainerClassName = (focused: boolean) =>
     borderRadius: 999,
     padding: '4px 8px'
   })
-const FiltersAtom = atom<
+export const FiltersAtom = atom<
   {
     id: number
     filterType: FilterType
@@ -93,6 +94,12 @@ export const DatabaseFilter = () => {
               <Content flex gap={6} className={ClassName.flatButton()} onClick={() => addFilter('createdAt')}>
                 <Icon name="park-time" />
                 {t('general.create time')}
+              </Content>
+            )}
+            {!filters.some(i => i.filterType === 'viewAt') && (
+              <Content flex gap={6} className={ClassName.flatButton()} onClick={() => addFilter('viewAt')}>
+                <Icon name="park-preview-open" />
+                {t('general.view time')}
               </Content>
             )}
             <Content flex gap={6} className={ClassName.flatButton()} onClick={() => addFilter('tag')}>
@@ -167,6 +174,8 @@ const Filter = ({
         return <TypeFilter onClose={onClose} initialOpen={initialOpen} />
       case 'related':
         return <RelatedObjectsFilter filterId={id} onClose={onClose} />
+      case 'viewAt':
+        return <ViewTimeFilter onClose={onClose} initialOpen={initialOpen} />
       default:
         return null
     }
@@ -519,7 +528,146 @@ const CreateTimeFilter = ({ onClose, initialOpen }: { onClose: VoidFunction; ini
     </AnimatePopover>
   )
 }
+const ViewTimeFilter = ({ onClose, initialOpen }: { onClose: VoidFunction; initialOpen: boolean }) => {
+  const databaseStore = useStore()
+  const [filterInterval, setFilterInterval] = useAtom(FilterViewDateIntervalAtom, { store: databaseStore })
+  const [popoverVisible, togglePopoverVisible] = useToggle(initialOpen)
 
+  const renderContent = () => {
+    return (
+      <Content
+        flex
+        gap={20}
+        className={css([
+          {
+            width: 700,
+            padding: 12,
+            borderRadius: 8,
+            boxShadow: 'rgba(100, 100, 111, 0.2) 0px 7px 29px 0px'
+          },
+          ClassName.Background.blurBackground
+        ])}
+      >
+        <Content
+          flex
+          column
+          style={{
+            flexShrink: 0,
+            justifyContent: 'space-evenly',
+            fontFamily: 'Muli',
+            borderRight: '1px solid rgba(222,222,222, 0.8)',
+            paddingRight: 10,
+            fontSize: 13
+          }}
+        >
+          <div style={{ paddingLeft: 8, fontWeight: 600 }}>Presets</div>
+          <div
+            className={ClassName.flatButton()}
+            onClick={() => {
+              setFilterInterval({
+                start: subDays(new Date(), 3),
+                end: new Date()
+              })
+            }}
+          >
+            Last 3 Days
+          </div>
+          <div
+            className={ClassName.flatButton()}
+            onClick={() => {
+              setFilterInterval({
+                start: subDays(new Date(), 7),
+                end: new Date()
+              })
+            }}
+          >
+            Last Week
+          </div>
+          <div
+            className={ClassName.flatButton()}
+            onClick={() => {
+              setFilterInterval({
+                start: subMonths(new Date(), 1),
+                end: new Date()
+              })
+            }}
+          >
+            Last Month
+          </div>
+          <div
+            className={ClassName.flatButton()}
+            onClick={() => {
+              setFilterInterval({
+                start: subYears(new Date(), 1),
+                end: new Date()
+              })
+            }}
+          >
+            Last Year
+          </div>
+        </Content>
+        <Content>
+          <div className={ClassName.description()}>
+            From {filterInterval.start && DateFormat.format(filterInterval.start, DateFormat.Formats.default)}
+          </div>
+          <TimePicker
+            maxDate={filterInterval.end || new Date()}
+            value={filterInterval.start as Date | undefined}
+            onChange={v =>
+              setFilterInterval({
+                ...filterInterval,
+                start: v
+              })
+            }
+          />
+        </Content>
+        <Content>
+          <div className={ClassName.description()}>
+            To {filterInterval.end && DateFormat.format(filterInterval.end, DateFormat.Formats.default)}
+          </div>
+          <TimePicker
+            maxDate={new Date()}
+            minDate={filterInterval.start as Date | undefined}
+            value={filterInterval.end as Date | undefined}
+            onChange={v =>
+              setFilterInterval({
+                ...filterInterval,
+                end: v
+              })
+            }
+          />
+        </Content>
+      </Content>
+    )
+  }
+  return (
+    <AnimatePopover
+      onClickOutside={togglePopoverVisible}
+      visible={popoverVisible}
+      content={renderContent()}
+      positions={['bottom']}
+      align="start"
+      containerStyle={{ zIndex: String(Zindexes.ToolBar) }}
+    >
+      <Content alignItems="center" gap={4} flex onClick={togglePopoverVisible} className={filterContainerClassName(popoverVisible)}>
+        <Icon name="park-preview-open" size={16} fill="grey" />
+        <Content flex gap={6} style={{ fontSize: 12, fontWeight: 600, fontFamily: 'Muli' }}>
+          <div>{filterInterval.start && DateFormat.format(filterInterval.start, DateFormat.Formats.default)}</div>
+          <div>{'-'}</div>
+          <div>{filterInterval.end && DateFormat.format(filterInterval.end, DateFormat.Formats.default)}</div>
+        </Content>
+        <Icon
+          name="park-close"
+          className={ClassName.circleButton()}
+          onClick={() => {
+            onClose()
+            setFilterInterval({})
+          }}
+        />
+      </Content>
+    </AnimatePopover>
+  )
+}
 const RelatedObjectsFilter = ({ filterId, onClose }: { filterId: number; onClose: VoidFunction }) => {
   const setCurrentFocusFilter = useSetAtom(CurrentFocusFilterAtom)
   const currentSelectIdsAtom = useMemo(() => selectAtom(FilterRelatedIdsAtom, f => f.get(filterId)), [filterId])

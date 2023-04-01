@@ -36,7 +36,10 @@ type GlobalDragPointerMoveEvent = {
   draggingElement: GlobalDraggingDetails
 }
 type GlobalNeedAddMetaObjectEvent = {
-  currentObject: Partial<MetaObject> 
+  currentObject: Partial<MetaObject>
+}
+type GlobalNeedEditMetaObjectEvent = {
+  metaObjectId: number
 }
 export interface GlobalEventMap {
   globalDropNeedAddLink: Partial<DragDropEvent>
@@ -44,6 +47,7 @@ export interface GlobalEventMap {
   globalDragPointerUp: GlobalDragPointerUpEvent
   globalDragPointerMove: GlobalDragPointerMoveEvent
   globalNeedAddMetaObject: GlobalNeedAddMetaObjectEvent
+  globalNeedEditMetaObject: GlobalNeedEditMetaObjectEvent
 }
 
 export type GlobalEvent = Event<GlobalEventMap, keyof GlobalEventMap>

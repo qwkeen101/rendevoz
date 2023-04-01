@@ -1,4 +1,4 @@
-import { AnimatePopover, Content, Icon, WithBorder } from '@/components/base'
+import { AnimatePopover, Button, Content, Icon, WithBorder } from '@/components'
 import Modal from '@/components/base/Modal'
 import CollectionForm from '@/components/form/CollectionForm'
 import CreateDocumentForm from '@/components/form/CreateDocumentForm'
@@ -8,17 +8,19 @@ import ClassName from '@/styles/classNames'
 import { Position } from '@/types'
 import Id from '@/utils/id'
 import { css } from '@emotion/css'
-import { CollectionStore, NoteStore, WhiteboardStore } from '@/stores'
+import { CollectionStore, NoteStore, ObjectStore, WhiteboardStore } from '@/stores'
 import { AnimatePresence, motion } from 'framer-motion'
 import { RefObject, useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useTranslation } from 'react-i18next'
 import Actions from '@/core/Actions'
+import { GlobalEventEmitter } from '@/events'
+import { MetaObject } from '~/typings'
 
 const useSidebarItemContextMenu = (
   contextMenuElementRef: RefObject<HTMLElement>,
   item: {
-    type: 'collection' | 'note' | 'pdf' | 'whiteboard'
+    type: 'collection' | 'note' | 'pdf' | 'whiteboard' | 'meta'
     id: number
   },
   {
@@ -153,17 +155,17 @@ const useSidebarItemContextMenu = (
                       }
                     ])}
                   >
-                    <div
+                    <Button.IconButton
                       onClick={() => {
                         setFormState({
                           newCollectionVisible: true
                         })
                       }}
-                    >
-                      <Icon name="park-folder-close" />
-                      {t('general.subcollection')}
-                    </div>
-                    <div
+                      text={t('general.subcollection')}
+                      icon="park-folder-close"
+                    />
+
+                    <Button.IconButton
                       onClick={() => {
                         const id = Id.getId()
                         const contentId = Id.getId()
@@ -185,24 +187,23 @@ const useSidebarItemContextMenu = (
 
                         onAddNewSubItem?.()
                       }}
-                    >
-                      <Icon name="park-notes" />
-                      {t('general.note')}
-                    </div>
-                    <div
+                      text={t('general.note')}
+                      icon="park-notes"
+                    />
+
+                    <Button.IconButton
                       onClick={() => {
                         setFormState({
                           newPdfVisible: true
                         })
                       }}
-                    >
-                      <Icon name="park-file-pdf" />
-                      {t('general.pdf')}
-                    </div>
-                    <div
+                      text={t('general.pdf')}
+                      icon="park-file-pdf"
+                    />
+
+                    <Button.IconButton
                       onClick={() => {
                         const whiteboardId = Id.getId()
-
                         addWhiteboard({
                           id: whiteboardId,
                           name: 'Unnamed Whiteboard',
@@ -222,16 +223,57 @@ const useSidebarItemContextMenu = (
 
                         onAddNewSubItem?.()
                       }}
-                    >
-                      <Icon name="park-new-computer" />
-                      {t('general.whiteboard')}
-                    </div>
+                      text={t('general.whiteboard')}
+                      icon="park-new-computer"
+                    />
+                    <Button.IconButton
+                      icon="park-web-page"
+                      text={t('general.webpage')}
+                      onClick={e => {
+                        e.stopPropagation()
+                        setContextMenuState({
+                          ...contextMenuState,
+                          createVisible: false,
+                          contextMenuVisible: false
+                        })
+                        ObjectStore('webpage')
+                          .addOne({}, { silent: true, preventAddMeta: true })
+                          .then(obj => {
+                            GlobalEventEmitter()
+                              .emitWithCallback('global', {
+                                type: 'globalNeedAddMetaObject',
+                                data: {
+                                  currentObject: {
+                                    type: 'webpage',
+                                    objectId: obj.id
+                                  }
+                                }
+                              })
+                              .then(meta => {
+                                addItemToCollection(
+                                  {
+                                    id: (meta as MetaObject).id,
+                                    type: 'meta'
+                                  },
+                                  item.id
+                                )
+                                Actions.navigateToTargetObject(meta.id)
+                                onAddNewSubItem?.()
+                              })
+                              .catch(() => {
+                                ObjectStore('webpage').deleteOneById(obj.id, { force: true, silent: true })
+                              })
+                          })
+                      }}
+                    />
                   </WithBorder>
                 }
               >
-                <Content
-                  flex
-                  justifyContent="space-between"
+                <Button.IconButton
+                  icon="park-right"
+                  text={t('general.create')}
+                  reverse
+                  spaceBetween
                   onClick={e => {
                     e.stopPropagation()
                     setContextMenuState({
@@ -239,15 +281,12 @@ const useSidebarItemContextMenu = (
                       createVisible: !contextMenuState.createVisible
                     })
                   }}
-                  className={ClassName.flatButton()}
-                >
-                  {t('general.create')}
-                  <Icon name="park-right" />
-                </Content>
+                />
               </AnimatePopover>
             )}
-            <div
-              className={ClassName.flatButton()}
+            <Button.IconButton
+              text={t('general.edit')}
+              icon="park-edit"
               onClick={e => {
                 e.stopPropagation()
                 onEdit?.()
@@ -256,15 +295,9 @@ const useSidebarItemContextMenu = (
                   contextMenuVisible: false
                 })
               }}
-            >
-              {t('general.edit')}
-            </div>
-            <div className={ClassName.flatButton()} onClick={onPin}>
-              {pinned ? t('general.unpin') : t('general.pin')}
-            </div>
-            <div className={ClassName.flatButton()} onClick={onDelete}>
-              {t('general.delete')}
-            </div>
+            />
+            <Button.IconButton text={pinned ? t('general.unpin') : t('general.pin')} icon="park-pin" onClick={onPin} />
+            <Button.IconButton text={t('general.delete')} icon="park-delete" dangerous onClick={onDelete} />
           </WithBorder>
         </motion.div>
       )}

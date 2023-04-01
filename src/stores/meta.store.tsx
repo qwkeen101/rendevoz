@@ -15,6 +15,7 @@ import getSetting from '@/core/setting/getSetting'
 import { selectAtom } from 'jotai/utils'
 import { whiteboardsAtom } from './whiteboard.store'
 import { createDraft, finishDraft } from 'immer'
+import { debounce } from 'lodash'
 
 export const metaObjectsAtom = atom<Map<number, MetaObject>>(new Map())
 
@@ -121,6 +122,27 @@ export const handleMetaObjectsChange = () => {
   })
 }
 
+const debounceSetUndeleted = debounce(() => {
+  console.log('set deleted')
+  const prevIndex = globalStore.get(indexedMetaObjectsAtom)
+  if (prevIndex) {
+    console.log('setted')
+    globalStore.set(indexedMetaObjectsAtom, {
+      ...prevIndex,
+      undeletedMetaObjectsSet: new Set(prevIndex?.undeletedMetaObjectsSet)
+    })
+  }
+}, 50)
+
+export const handleMetaObjectDelete = (id: number) => {
+  const prevMetaObjects = globalStore.get(indexedMetaObjectsAtom)?.oldMetaObjects
+  const metaObject = prevMetaObjects?.get(id)
+  const undeleted = globalStore.get(indexedMetaObjectsAtom)?.undeletedMetaObjectsSet
+  if (metaObject) {
+    undeleted?.delete(metaObject)
+    debounceSetUndeleted()
+  }
+}
 export const indexedMetaObjectsAtom = atom<{
   undeletedMetaObjectsSet: Set<MetaObject>
   pinnedMetaObjectsSet: Set<MetaObject>
@@ -145,7 +167,6 @@ export const handleMetaLinksChange = () => {
     const oldLink = oldLinks?.get(id)
     // early quit
     if (oldLink === link) {
-      console.log('link equals')
       return
     }
     if (oldLink) {
@@ -364,6 +385,7 @@ const createMetaStore = () => {
       )
       return initializeObjectStore.deleteOneById(() => {
         shouldToastObject(silent) && toast.success('Object successfully deleted!')
+        handleMetaObjectDelete(id)
       })(id, silent, force)
     },
     getAll: initializeObjectStore.getAll()

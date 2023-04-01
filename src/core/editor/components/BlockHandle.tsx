@@ -6,6 +6,7 @@ import { AnimatePresence, motion } from 'framer-motion'
 import { FC, memo, MouseEventHandler, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useTranslation } from 'react-i18next'
+import useReadOnlyEditor from '../hooks/useReadOnly'
 
 type BlockHandleProps = {
   left?: number
@@ -27,6 +28,7 @@ type IBlockHandle = FC<
 const BlockHandle: IBlockHandle = ({ left, top, targetHeight, visible, onMouseDown, onClick, onAddClick, onDragClick, onMenuClick }) => {
   const [innerVisible, setInnerVisible] = useState(false)
   const [globalDragging] = useGlobalIsDragging()
+  const isReadOnly = useReadOnlyEditor()
   const { t } = useTranslation()
   const hasMouseSelection = () => {
     return !window.getSelection()?.isCollapsed
@@ -84,7 +86,7 @@ const BlockHandle: IBlockHandle = ({ left, top, targetHeight, visible, onMouseDo
   const renderHandle = () => {
     return (
       <AnimatePresence>
-        {targetHeight && innerVisible && !hasMouseSelection() && (
+        {targetHeight && innerVisible && !hasMouseSelection() && !isReadOnly && (
           <motion.div
             key={top}
             initial={{ opacity: 0 }}

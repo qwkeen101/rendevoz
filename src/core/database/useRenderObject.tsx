@@ -15,6 +15,7 @@ import { Editor } from '../editor/Editor'
 import { PdfViewer } from '../pdf/PdfViewer'
 import { TypeToTypeName } from './card/DatabaseCard'
 import { ObjectTag, Whiteboard } from '@/core'
+import DateFormat from '@/utils/dateFormat'
 
 const useRenderObject = (options: { metaObjectId: number }) => {
   const { metaObjectId } = options
@@ -61,6 +62,9 @@ const useRenderObject = (options: { metaObjectId: number }) => {
     gap = 4,
     flexWrap = 'wrap',
     containerStyle,
+    showCreatedAt,
+    showUpdatedAt,
+    showViewAt,
     containerClassName = css({
       '> *': {
         fontSize: '10px !important'
@@ -71,6 +75,10 @@ const useRenderObject = (options: { metaObjectId: number }) => {
     flexWrap?: CSSProperties['flexWrap']
     containerStyle?: CSSProperties
     containerClassName?: string
+    showUpdatedAt?: boolean
+    showCreatedAt?: boolean
+    showViewAt?: boolean
+    maxTagsToShow?: number
   }) => {
     return (
       <Content
@@ -86,6 +94,25 @@ const useRenderObject = (options: { metaObjectId: number }) => {
         <div style={{ textTransform: 'capitalize' }} className={ClassName.objectTag}>
           {t(`general.${TypeToTypeName[metaObject?.type || 'normal']}`)}
         </div>
+        {showCreatedAt && metaObject?.createdAt && (
+          <Content flex gap={4} style={{ textTransform: 'capitalize' }} className={ClassName.objectTag}>
+            <Icon name="park-add-one" />
+            {t('general.ago', { time: DateFormat.formatDistanceToNowStrict(metaObject?.createdAt) })}
+          </Content>
+        )}
+        {showViewAt && metaObject?.viewAt && (
+          <Content flex gap={4} style={{ textTransform: 'capitalize' }} className={ClassName.objectTag}>
+            <Icon name="park-preview-open" />
+            {t('general.ago', { time: DateFormat.formatDistanceToNowStrict(metaObject?.viewAt) })}
+          </Content>
+        )}
+        {showUpdatedAt && metaObject?.updatedAt && (
+          <Content flex gap={4} style={{ textTransform: 'capitalize' }} className={ClassName.objectTag}>
+            <Icon name="park-edit" />
+
+            {t('general.ago', { time: DateFormat.formatDistanceToNowStrict(metaObject?.updatedAt) })}
+          </Content>
+        )}
         {relatedSet && relatedSet?.size > 0 && (
           <div style={{ textTransform: 'capitalize' }} className={ClassName.objectTag}>
             {relatedSet.size} {t('general.related')}
@@ -185,7 +212,8 @@ const useRenderObject = (options: { metaObjectId: number }) => {
     }
   }
   const renderWhole = ({
-    gap = 3,
+    columnGap = 3,
+    rowGap = 10,
     titleOptions = {},
     descriptionOptions = {},
     tagsOptions = {},
@@ -198,7 +226,8 @@ const useRenderObject = (options: { metaObjectId: number }) => {
       renderFrom: false
     }
   }: {
-    gap?: number
+    columnGap?: number
+    rowGap?: number
     containerClassName?: string
     containerStyle?: CSSProperties
     containerOnClick?: React.MouseEventHandler
@@ -216,9 +245,9 @@ const useRenderObject = (options: { metaObjectId: number }) => {
     }
   }) => {
     return metaObject?.coverImgSrc ? (
-      <Content flex alignItems="stretch" gap={10} className={containerClassName} style={containerStyle}>
+      <Content flex alignItems="stretch" gap={rowGap} className={containerClassName} style={containerStyle}>
         {renderImage(imageOptions)}
-        <Content onClick={containerOnClick} flex column gap={gap}>
+        <Content onClick={containerOnClick} flex column gap={columnGap}>
           {renderOptions?.renderTags !== false && renderTags(tagsOptions)}
           {renderOptions?.renderTitle !== false && renderTitle(titleOptions)}
           {renderOptions?.renderDescription !== false && renderDescription(descriptionOptions)}
@@ -226,7 +255,7 @@ const useRenderObject = (options: { metaObjectId: number }) => {
         </Content>
       </Content>
     ) : (
-      <Content onClick={containerOnClick} flex column gap={gap} className={containerClassName} style={containerStyle}>
+      <Content onClick={containerOnClick} flex column gap={columnGap} className={containerClassName} style={containerStyle}>
         {renderOptions?.renderTags !== false && renderTags(tagsOptions)}
         {renderOptions?.renderTitle !== false && renderTitle(titleOptions)}
         {renderOptions?.renderDescription !== false && renderDescription(descriptionOptions)}
@@ -269,6 +298,7 @@ const useRenderObject = (options: { metaObjectId: number }) => {
     }
     return null
   }
+
   return {
     renderTitle,
     renderTags,

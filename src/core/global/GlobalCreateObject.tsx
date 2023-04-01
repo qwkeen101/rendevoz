@@ -38,13 +38,31 @@ const GlobalCreateObject = () => {
   const [modalVisible, toggleModalVisible] = useToggle(false)
   const globalEventEmitter = useGlobalEventEmitter()
   const handler = useEventHandler('global')
-  handler.on('globalNeedAddMetaObject', ({ currentObject }) => {
+  const currentModeRef = useRef<'add' | 'edit'>()
+  handler.on('globalNeedAddMetaObject', ({ currentObject }, res, rej) => {
+    promiseRef.current = {
+      res: res || promiseRef.current?.res,
+      rej: rej || promiseRef.current?.rej
+    }
     setInnerMeta({ ...currentObject })
     toggleModalVisible(true)
+    currentModeRef.current = 'add'
+  })
+  handler.on('globalNeedEditMetaObject', async ({ metaObjectId }, res, rej) => {
+    promiseRef.current = {
+      res: res || promiseRef.current?.res,
+      rej: rej || promiseRef.current?.rej
+    }
+    const metaObject = await MetaStore.getMetaObjectById(metaObjectId)
+    if (metaObject) {
+      setInnerMeta({ ...metaObject })
+      toggleModalVisible(true)
+      currentModeRef.current = 'edit'
+    }
   })
   const promiseRef = useRef<{
-    res: (v: any) => void
-    rej: (v: any) => void
+    res?: (v: any) => void
+    rej?: (v: any) => void
   }>()
   const { addMetaObject } = MetaStore
   Object.assign(GlobalCreateObjectInstance, {
@@ -79,9 +97,25 @@ const GlobalCreateObject = () => {
       <Modal noStyle visible={modalVisible} onClose={toggleModalVisible}>
         <ObjectForm
           initialObject={innerMeta}
+          onBack={() => {
+            toggleModalVisible(false)
+            promiseRef.current?.rej?.(null)
+            promiseRef.current = undefined
+          }}
           onSubmit={obj => {
             console.log(obj)
-            MetaStore.addMetaObject(obj)
+            if (currentModeRef.current === 'add') {
+              MetaStore.addMetaObject(obj).then(obj => {
+                promiseRef.current?.res?.(obj)
+                promiseRef.current = undefined
+              })
+            }
+            if (currentModeRef.current === 'edit') {
+              MetaStore.updateMetaObject({ ...obj }).then(obj => {
+                promiseRef.current?.res?.(obj)
+                promiseRef.current = undefined
+              })
+            }
             toggleModalVisible(false)
           }}
         />
@@ -145,14 +179,14 @@ const GlobalCreateObject = () => {
                 const promise = promiseRef.current
                 promiseRef.current = undefined
                 if (promise) {
-                  promise.rej(null)
+                  promise.rej?.(null)
                 }
               }}
               onSubmit={obj => {
                 const promise = promiseRef.current
                 promiseRef.current = undefined
                 if (promise) {
-                  promise.res(obj)
+                  promise.res?.(obj)
                 }
                 setPanelState(s => ({ ...s, visible: false }))
                 addMetaObject(obj)

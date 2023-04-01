@@ -2,7 +2,7 @@ import { DropOn, GlobalEventHandler } from '@/events/globalEvent'
 import { useGlobalEventEmitter } from '@/events/useEventEmitter'
 import { useToggle } from '@/hooks'
 import { indexedMetaLinksAtom } from '@/stores/meta.store'
-import { globalStore, MetaStore } from '@/stores'
+import { globalStore, MetaStore, NoteStore } from '@/stores'
 import { PartialWithId } from '@/types'
 import Id from '@/utils/id'
 import { useEffect, useMemo, useRef, useState } from 'react'
@@ -67,9 +67,18 @@ const useOverlayDrop = () => {
       }
       case 'editor': {
         if (!enableDropOnEditorLink) break
+        const note = await NoteStore.getNoteById(dropOn.noteId)
+        if (note?.metaId) {
+          const noteTargetMeta = await getMetaObjectById(note.metaId)
+          if (noteTargetMeta) {
+            link.targetId = noteTargetMeta?.id
+          }
+          break
+        }
         const noteMeta =
           (await getMetaObjectByObjectId(dropOn.noteId)) ||
           (await addMetaObject({ id: Id.getId(), objectId: dropOn.noteId, type: 'note' }, true))
+
         link.targetId = noteMeta.id
         break
       }

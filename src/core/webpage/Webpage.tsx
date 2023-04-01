@@ -1,4 +1,4 @@
-import { Content, Icon, Image } from '@/components'
+import { Content, Icon, Image, Tooltip } from '@/components'
 import { NoteStore, ObjectStore } from '@/stores'
 import { objectIdToMetaObjectIdMapAtom } from '@/stores/meta.store'
 import Id from '@/utils/id'
@@ -12,9 +12,11 @@ import WebpageNavigation from './WebpageNavigation'
 import readibility from '@mozilla/readability'
 import { deserializeHtmlNode, normalize } from '../editor/plugins/deserializeHtml'
 import TabTitle from '@/components/layout/TabTitle'
-import { useGlobalAtomValue, useMemoizedFn } from '@/hooks'
+import { useGlobalAtomValue, useMemoizedFn, useToggle } from '@/hooks'
 import { ReactEditor } from '../editor'
 import { DraggingElement, GlobalDragOverlayInstance } from '../global'
+import { EditorTitleClassName } from '../editor/EditorTitle'
+import ClassName from '@/styles/classNames'
 
 const WebpagePage = ({
   initialWebpageId,
@@ -82,7 +84,13 @@ const WebpagePage = ({
     ObjectStore('webpage')
       .getOneById(initialWebpageId)
       .then(webpage => {
-        setWebpageState(s => ({ ...s, initialUrl: webpage?.url, currentWebpage: webpage, navigationUrl: webpage?.url }))
+        setWebpageState(s => ({
+          ...s,
+          initialUrl: webpage?.url,
+          currentWebpage: webpage,
+          navigationUrl: webpage?.url,
+          showReaderMode: !!webpage?.readerMode
+        }))
       })
   }, [])
 
@@ -129,7 +137,7 @@ const WebpagePage = ({
           NoteStore.addNote(
             {
               contentId,
-              metaId: 1
+              metaId: objectIdToMeta?.get(currentWebpage.id)
             },
             true,
             true
@@ -195,17 +203,56 @@ const WebpagePage = ({
         ObjectStore('webpage')
           .getOneById(currentWebpage.id)
           .then(obj => {
-            setWebpageState(s => ({
-              ...s,
-              currentWebpage: {
-                ...currentWebpage,
-                noteId: obj?.id
-              }
-            }))
+            if (currentWebpage.tempNoteValue && !obj?.noteId) {
+              const contentId = NoteStore.saveNoteAsBuffer(currentWebpage.tempNoteValue)
+              NoteStore.addNote(
+                {
+                  contentId,
+                  metaId: objectIdToMeta.get(currentWebpage.id)
+                },
+                true,
+                true
+              ).then(note => {
+                ObjectStore('webpage')
+                  .updateOne({
+                    id: currentWebpage?.id,
+                    noteId: note.id
+                  })
+                  .then(obj => {
+                    setWebpageState(s => ({
+                      ...s,
+                      currentWebpage: {
+                        ...currentWebpage,
+                        noteId: obj?.noteId
+                      }
+                    }))
+                  })
+              })
+            }
           })
       }
     }
   }, [objectIdToMeta])
+  useEffect(() => {
+    if (currentWebpage?.id) {
+      ObjectStore('webpage')
+        .getOneById(currentWebpage.id)
+        .then(webpage => {
+          if (webpage) {
+            ObjectStore('webpage').updateOne(
+              {
+                id: webpage.id,
+                readerMode: showReaderMode
+              },
+              {
+                silent: true
+              }
+            )
+          }
+        })
+    }
+  }, [showReaderMode])
+  const realLoaded = loaded || !initialUrl || initialUrl.length === 0
   const contentClickHandler: React.MouseEventHandler = useMemoizedFn(e => {
     const targetLink = (e.target as HTMLElement).closest('a')
     if (!targetLink) return
@@ -221,12 +268,14 @@ const WebpagePage = ({
       window.open(url, '_blank')
     }
   })
+  const url = currentWebpage?.url ? new URL(currentWebpage?.url) : navigationUrl ? new URL(navigationUrl) : undefined
+  const [editorReaderMode, toggleEditorReaderMode] = useToggle(true)
   return (
     <Content flex column fullHeight fullWidth>
       <TabTitle
         title={title || 'Webpage'}
         icon={
-          !loaded ? (
+          !realLoaded ? (
             <Icon size={16} name="park-loading-four" spin containerStyle={{ padding: 1 }} />
           ) : faviconUrl ? (
             <Image src={faviconUrl} width={18} />
@@ -267,28 +316,17 @@ const WebpagePage = ({
               break
             case 'saveAsMetaObject': {
               if (currentWebpage?.tempNoteValue) {
-                const contentId = NoteStore.saveNoteAsBuffer(currentWebpage.tempNoteValue)
-                NoteStore.addNote(
+                ObjectStore('webpage').addOne(
                   {
-                    contentId,
-                    metaId: 1
+                    url: navigationUrl,
+                    title,
+                    favicon: faviconUrl,
+                    id: currentWebpage?.id
                   },
-                  true,
-                  true
-                ).then(note => {
-                  ObjectStore('webpage').addOne(
-                    {
-                      url: navigationUrl,
-                      title,
-                      favicon: faviconUrl,
-                      id: currentWebpage?.id,
-                      noteId: note.id
-                    },
-                    {
-                      showAddModal: true
-                    }
-                  )
-                })
+                  {
+                    showAddModal: true
+                  }
+                )
                 return
               }
               ObjectStore('webpage').addOne(
@@ -306,8 +344,12 @@ const WebpagePage = ({
             }
             case 'loadUrl': {
               const { url } = event
-              setWebpageState(s => ({ ...s, navigationUrl: url }))
-              coreRef.current?.navigateTo(url)
+              if (initialUrl && initialUrl.length) {
+                setWebpageState(s => ({ ...s, navigationUrl: url }))
+                coreRef.current?.navigateTo(url)
+              } else {
+                setWebpageState(s => ({ ...s, initialUrl: url }))
+              }
             }
           }
         }}
@@ -341,45 +383,112 @@ const WebpagePage = ({
         }}
       >
         {(currentWebpage?.noteId || currentWebpage?.tempNoteValue) && (
-          <WebpageEditor
-            key={currentWebpage.noteId}
-            id={editorId}
-            initialValue={currentWebpage.tempNoteValue}
-            noteId={currentWebpage.noteId}
-            onLinkClick={contentClickHandler}
-            onEditorInstanceInitialized={i => {
-              if (currentWebpage.id === initialWebpageId) {
-                initializedFunctionRef.current?.(i)
-                initializedFunctionRef.current = undefined
+          <>
+            <div
+              style={{
+                position: 'absolute',
+                top: 0,
+                right: 0,
+                padding: '14px 0 10px',
+                margin: '3px 16px 0px 0px',
+                zIndex: 10
+              }}
+            >
+              <Content
+                flex
+                alignItems="center"
+                style={{
+                  borderRadius: 999,
+                  background: 'rgba(0,0,0,0.06)',
+                  overflow: 'hidden',
+                  color: '#616c77',
+                  fontSize: 24
+                }}
+              >
+                <Tooltip position="bottom" content={editorReaderMode ? 'Editor Mode' : 'Reader Mode'}>
+                  <Icon
+                    className={ClassName.circleButton(undefined, 0)}
+                    name={editorReaderMode ? 'park-editor' : 'park-book-open'}
+                    onClick={toggleEditorReaderMode}
+                  />
+                </Tooltip>
+              </Content>
+            </div>
+            <WebpageEditor
+              key={currentWebpage.noteId}
+              id={editorId}
+              initialValue={currentWebpage.tempNoteValue}
+              noteId={currentWebpage.noteId}
+              onLinkClick={contentClickHandler}
+              readonly={editorReaderMode}
+              onEditorInstanceInitialized={i => {
+                if (currentWebpage.id === initialWebpageId) {
+                  initializedFunctionRef.current?.(i)
+                  initializedFunctionRef.current = undefined
+                }
+              }}
+              onHighlightDrag={(highlightId, editor) => {
+                const editorNode = ReactEditor.toDOMNode(editor, editor)
+                const highlightTextContent = Array.from(editorNode.querySelectorAll(`[data-highlight="${highlightId}"]`)).reduce(
+                  (prev, curr) => {
+                    return prev + curr.textContent
+                  },
+                  ''
+                )
+                GlobalDragOverlayInstance.draggingDetails = {
+                  type: 'webpage label',
+                  highlightId,
+                  noteId: currentWebpage.noteId,
+                  textContent: highlightTextContent,
+                  webpageId: currentWebpage.id
+                }
+                GlobalDragOverlayInstance.addDragElements?.(<DraggingElement text="Drop to add webpage label" />)
+                GlobalDragOverlayInstance.startDrag?.()
+              }}
+              // title={webpageState.title || clippedDetails?.excerpt || 'Untitled Webpage'}
+              title={
+                <Content
+                  flex
+                  column
+                  style={{
+                    maxWidth: 'calc(100% - 100px)',
+                    width: 800,
+                    padding: '20px 0px',
+                    margin: 'auto'
+                  }}
+                >
+                  {(faviconUrl || url) && (
+                    <Content flex alignItems="center" className={ClassName.description()} gap={10} style={{ marginBottom: 12 }}>
+                      {faviconUrl && <Image src={faviconUrl} width={16} />}
+                      {url && (
+                        <div className={ClassName.description('12px')} style={{ textTransform: 'uppercase' }}>
+                          {url.host}
+                        </div>
+                      )}
+                    </Content>
+                  )}
+                  <div
+                    className={EditorTitleClassName}
+                    style={{ padding: 0 }}
+                    onClick={() => {
+                      // console.log(Outliner.headingListToTree(initialValue))
+                      // toggleReadonly(!readonly)
+                    }}
+                  >
+                    {title}
+                  </div>
+                  <hr style={{ marginTop: 24 }} />
+                </Content>
               }
-            }}
-            onHighlightDrag={(highlightId, editor) => {
-              const editorNode = ReactEditor.toDOMNode(editor, editor)
-              const highlightTextContent = Array.from(editorNode.querySelectorAll(`[data-highlight="${highlightId}"]`)).reduce(
-                (prev, curr) => {
-                  return prev + curr.textContent
-                },
-                ''
-              )
-              GlobalDragOverlayInstance.draggingDetails = {
-                type: 'webpage label',
-                highlightId,
-                noteId: currentWebpage.noteId,
-                textContent: highlightTextContent,
-                webpageId: currentWebpage.id
-              }
-              GlobalDragOverlayInstance.addDragElements?.(<DraggingElement text="Drop to add webpage label" />)
-              GlobalDragOverlayInstance.startDrag?.()
-            }}
-            title={webpageState.title || clippedDetails?.excerpt || 'Untitled Webpage'}
-            onHighlight={(h, e) => {
-              ObjectStore('webpageLabel').addOne({
-                id: h,
-                highlightId: h,
-                webpageId: currentWebpage.id
-              })
-            }}
-          />
+              onHighlight={(h, e) => {
+                ObjectStore('webpageLabel').addOne({
+                  id: h,
+                  highlightId: h,
+                  webpageId: currentWebpage.id
+                })
+              }}
+            />
+          </>
         )}
       </WebpageCore>
     </Content>

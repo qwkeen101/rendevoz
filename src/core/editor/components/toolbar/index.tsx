@@ -3,7 +3,7 @@ import { Toolbar, WithBorder } from '@/components/base'
 import Select from '@/components/base/select'
 import IconWithPopover from '@/components/base/IconWithPopover'
 import { CSSProperties, FC, useEffect, useRef, useState } from 'react'
-import { Editor, Range, Transforms } from 'slate'
+import { Editor, Node, NodeEntry, Range, Transforms } from 'slate'
 import { ReactEditor, useSlate } from '../../slate-react'
 import styles from './index.module.less'
 import { useTranslation } from 'react-i18next'
@@ -15,6 +15,7 @@ import useReadOnlyEditor from '../../hooks/useReadOnly'
 import { useMemoizedFn } from '@/hooks'
 import Id from '@/utils/id'
 import { TextSelectionTranslate } from '@/core/pdf/components/toolbar/TextSelectionToolbar'
+import { CustomText } from '~/typings/editor/baseTypes'
 
 interface EditorToolbarProps {
   fontSize?: number
@@ -62,11 +63,15 @@ const EditorToolbar: FC<EditorToolbarProps> = ({
   }>()
   const isOnHighlightRef = useRef(false)
   editor.onHighlightClick = id => {
-    const nodes = Array.from(ReactEditor.toDOMNode(editor, editor).querySelectorAll(`[data-highlight="${id}"]`))
-    const startSlateNode = ReactEditor.toSlateNode(editor, nodes[0])
-    const endSlateNode = ReactEditor.toSlateNode(editor, nodes[nodes.length - 1])
-    const startNodePath = ReactEditor.findPath(editor, startSlateNode)
-    const endNodePath = ReactEditor.findPath(editor, endSlateNode)
+    const texts = Node.texts(editor)
+    const nodeEntries: NodeEntry[] = []
+    for (const value of texts) {
+      if ((value[0] as CustomText).highlight && (value[0] as CustomText).highlight === id) nodeEntries.push(value)
+    }
+    const startNodeEntry = nodeEntries[0]
+    const endNodeEntry = nodeEntries[nodeEntries.length - 1]
+    const startNodePath = startNodeEntry[1]
+    const endNodePath = endNodeEntry[1]
     const startNodePoint = Editor.start(editor, startNodePath)
     const endNodePoint = Editor.end(editor, endNodePath)
     const anchorPoint = ReactEditor.toDOMPoint(editor, startNodePoint)
@@ -76,7 +81,6 @@ const EditorToolbar: FC<EditorToolbarProps> = ({
     range.setEnd(focusPoint[0], focusPoint[1])
     const bounding = range.getBoundingClientRect()
     isOnHighlightRef.current = true
-    console.log(startNodePoint, endNodePoint)
     Transforms.setSelection(editor, {
       anchor: startNodePoint,
       focus: endNodePoint
@@ -161,7 +165,7 @@ const EditorToolbar: FC<EditorToolbarProps> = ({
   })
   const isMarkActive = format => {
     const marks = Editor.marks(editor)
-    return marks ? marks[format] === true : false
+    return marks ? format in marks && marks[format] !== undefined : false
   }
   const getFontSize = () => {
     const marks = Editor.marks(editor)
@@ -194,7 +198,7 @@ const EditorToolbar: FC<EditorToolbarProps> = ({
               )
             }
             value={getFontSize()}
-            defaultValue="default"
+            defaultValue={t('editor.default font')}
             menuStyle={{ width: 90, minWidth: 70 }}
             style={{ width: 80, margin: '0px 0px 0px 10px', padding: '0 8px' }}
             onSelect={value => {
@@ -203,7 +207,7 @@ const EditorToolbar: FC<EditorToolbarProps> = ({
             options={[
               {
                 value: 'default',
-                children: 'default'
+                children: t('editor.default font')
               },
               {
                 value: '14px',
@@ -244,7 +248,14 @@ const EditorToolbar: FC<EditorToolbarProps> = ({
             ]}
           ></Select>
         )}
-      <Toolbar.Item tooltip={t('general.highlight')} iconName="park-high-light" onClick={onHighlight} />
+      {isReading && (
+        <Toolbar.Item
+          tooltip={t('general.highlight')}
+          iconName="park-high-light"
+          onClick={onHighlight}
+          isActive={isMarkActive('highlight')}
+        />
+      )}
       <Toolbar.Item tooltip={t('editor.bold')} isActive={isMarkActive('bold')} iconName="park-text-bold" onClick={onBold} />
       <Toolbar.Item tooltip={t('editor.italic')} isActive={isMarkActive('italic')} iconName="park-text-italic" onClick={onItalic} />
       <Toolbar.Item

@@ -11,6 +11,7 @@ import { FilterType } from '.'
 export const FilterNameSearchAtom = atom<string>('')
 export const FilterSelectedTagsAtom = atom<Map<number, Set<string>>>(new Map())
 export const FilterDateIntervalsAtom = atom<Partial<Interval>>({})
+export const FilterViewDateIntervalAtom = atom<Partial<Interval>>({})
 export const FilterTypesAtom = atom<Set<MetaObject['type']>>(new Set<MetaObject['type']>())
 export const CurrentFocusFilterAtom = atom<
   | {
@@ -30,6 +31,7 @@ export const useObjectFilter = (onChange: (ids: Set<number>) => void, store?: an
   const nameFilter = useAtomValue(FilterNameSearchAtom, { store })
   const tagFilter = useAtomValue(FilterSelectedTagsAtom, { store })
   const createDateFilter = useAtomValue(FilterDateIntervalsAtom, { store })
+  const viewDateFilter = useAtomValue(FilterViewDateIntervalAtom, { store })
   const typeFilter = useAtomValue(FilterTypesAtom, { store })
   const realFilterRelatedIds = useAtomValue(RealFilterRelatedIdsAtom, { store })
   const scopedStore = useStore()
@@ -108,6 +110,26 @@ export const useObjectFilter = (onChange: (ids: Set<number>) => void, store?: an
     filterMap.set('createdAt', new Set(filteredIds))
     triggerChange()
   }, [createDateFilter])
+
+  useEffect(() => {
+    if (Object.keys(viewDateFilter).length === 0) {
+      filterMap.delete('viewAt')
+      triggerChange()
+      return
+    }
+    const interval = structuredClone(viewDateFilter) as Interval
+    if (interval.end === undefined) {
+      interval.end = new Date()
+    }
+    if (interval.start === undefined) {
+      interval.start = new Date(0)
+    }
+    if (interval.end < interval.start) return
+    const filteredIds = shouldFilterObjects.filter(i => i.viewAt && isWithinInterval(i.viewAt, interval)).map(i => i.id)
+    filterMap.set('viewAt', new Set(filteredIds))
+    triggerChange()
+  }, [viewDateFilter])
+
   useEffect(() => {
     if (typeFilter.size === 0) {
       filterMap.delete('type')
@@ -168,4 +190,3 @@ export const intersectionOfMultipleSets = (...sets: Set<any>[]) => {
   }
   return res
 }
-

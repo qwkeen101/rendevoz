@@ -45,6 +45,11 @@ const SidebarDatabase = memo(() => {
         switch (draggingEle.type) {
           case 'noteElement':
           case 'pdfElement':
+          case 'webpage label':
+          case 'pdf':
+          case 'note':
+          case 'note label':
+          case 'whiteboard':
           case 'image':
             droppable = true
             break
@@ -113,7 +118,8 @@ const SidebarDatabase = memo(() => {
       </Modal>
       <AnimatePopover
         innerRef={itemRef}
-        visible={draggingHovered.visible || contextMenuPopVisible}
+        // visible={draggingHovered.visible || contextMenuPopVisible}
+        visible={false}
         onClickOutside={() => {
           if (contextMenuPopVisible) {
             toggleContextMenuPopVisible(false)

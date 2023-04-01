@@ -99,6 +99,7 @@ const TableCell = ({
   useEffect(() => {
     if (globalIsDragging) {
       const pointerMoveHandler = (e: PointerEvent) => {
+        console.log(e)
         editor.dragManager?.dragInTableCell(e)
       }
       tdRef.current?.addEventListener('pointermove', pointerMoveHandler)
@@ -169,6 +170,7 @@ const TableCell = ({
       }
     }
   }, [resizing])
+
   const colSpan = table && row ? table?.columns.length / row?.children.length : undefined
   return (
     <td
@@ -177,10 +179,10 @@ const TableCell = ({
       style={{
         position: 'relative',
         fontWeight: isHeader ? 700 : undefined,
-        verticalAlign: 'top',
+        verticalAlign: isHeader ? 'middle' : 'top',
         padding: '7px 9px',
         background: isHeader ? 'rgba(242,243,245)' : undefined,
-        textAlign: colSpan === table?.columns.length ? 'center' : undefined
+        textAlign: colSpan === table?.columns.length || isHeader ? 'center' : undefined
       }}
       onPointerLeave={() => {
         if (table) {

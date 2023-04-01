@@ -614,6 +614,7 @@ export const Leaf = (props: RenderLeafProps) => {
       const pointerHandler = (e: PointerEvent) => {
         e.preventDefault()
         if (e.type === 'pointerdown') {
+          console.log(e)
           pointerDown.current = true
         }
         if (e.type === 'pointerup') {
@@ -621,6 +622,7 @@ export const Leaf = (props: RenderLeafProps) => {
         }
         if (e.type === 'pointermove') {
           if (pointerDown.current) {
+            console.log(e)
             pointerDown.current = false
             editor.onHighlightDrag?.(highlight, editor)
           }
@@ -637,7 +639,7 @@ export const Leaf = (props: RenderLeafProps) => {
         span?.removeEventListener('pointerup', pointerHandler)
       }
     }
-  }, [readOnly])
+  }, [readOnly, leaf.highlight])
 
   if (leaf.sup) {
     children = <sup>{children}</sup>
@@ -660,6 +662,7 @@ export const Leaf = (props: RenderLeafProps) => {
 
   return (
     <span
+      {...attributes}
       ref={mergedRef}
       onClick={() => {
         if (leaf.highlight && readOnly) {
@@ -673,7 +676,6 @@ export const Leaf = (props: RenderLeafProps) => {
         '--block-font-color': leaf.fontColor,
         background: leaf.backgroundColor
       }}
-      {...attributes}
     >
       {children}
     </span>

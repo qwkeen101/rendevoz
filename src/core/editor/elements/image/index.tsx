@@ -119,6 +119,21 @@ const Image = ({ element, children, attributes }: RenderElementProps) => {
                   imageContainerRef.current?.style.setProperty('width', `${newWidth}px`)
                 }
               }}
+              onDragEnd={() => {
+                const currentWidth = parseInt(imageContainerRef.current?.style.width || '0')
+                if (currentWidth) {
+                  const path = ReactEditor.findPath(editor, element)
+                  Transforms.setNodes(
+                    editor,
+                    {
+                      width: currentWidth
+                    },
+                    {
+                      at: path
+                    }
+                  )
+                }
+              }}
             >
               <div
                 style={{
@@ -159,6 +174,21 @@ const Image = ({ element, children, attributes }: RenderElementProps) => {
                   imageContainerRef.current?.style.setProperty('width', `${newWidth}px`)
                 }
               }}
+              onDragEnd={() => {
+                const currentWidth = parseInt(imageContainerRef.current?.style.width || '0')
+                if (currentWidth) {
+                  const path = ReactEditor.findPath(editor, element)
+                  Transforms.setNodes(
+                    editor,
+                    {
+                      width: currentWidth
+                    },
+                    {
+                      at: path
+                    }
+                  )
+                }
+              }}
             >
               {' '}
               <div
@@ -175,6 +205,9 @@ const Image = ({ element, children, attributes }: RenderElementProps) => {
           </>
         )}
         <img
+          style={{
+            width: imageEle.width
+          }}
           className={css({
             objectFit: 'cover',
             borderRadius: 10,

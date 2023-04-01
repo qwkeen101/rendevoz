@@ -222,7 +222,7 @@ const Block: FC<React.DetailedHTMLProps<React.HTMLAttributes<HTMLDivElement>, HT
           type !== 'column' && type !== 'columnList' && !type?.startsWith('heading') && styles.ParagraphBlock,
           isGlobalDragging &&
             css({
-              pointerEvents: 'none'
+              pointerEvents: 'auto'
             })
         )}
         {...rest}

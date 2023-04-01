@@ -1,8 +1,8 @@
 import Id from '@/utils/id'
 import { FC, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import {  MetaObject } from '~/typings'
-import { GlobalGraphInstance } from '@/core'
+import { MetaObject } from '~/typings'
+import { GlobalGraphInstance, TypeToTypeName } from '@/core'
 import { IForm } from './types'
 import useFlipForm from './useFlipForm'
 import { ObjectStore } from '@/stores'
@@ -27,13 +27,21 @@ const ObjectForm: FC<
       initialObject?.type
         ? {
             type: 'custom',
-            children: <div>type: {initialObject.type}</div>
+            children: (
+              <div
+                style={{
+                  fontWeight: 600
+                }}
+              >
+                {t('general.type')}: {t(`general.${TypeToTypeName[initialObject.type]}`)}
+              </div>
+            )
           }
         : undefined,
       targetObject && 'url' in targetObject
         ? {
             type: 'input',
-            text: 'URL',
+            text: t('general.url'),
             value: targetObject.url,
             onChange: v => ObjectStore(targetObject.specType).updateOne({ id: targetObject.id, url: v }, { silent: true })
           }
@@ -76,10 +84,10 @@ const ObjectForm: FC<
     ],
     onBack,
     onSubmit: () => onSubmit?.(object),
-    formTitle: initialObject
+    formTitle: initialObject?.id
       ? t('form.update item details', { item: t('general.object') })
       : t('form.create new item', { item: t('general.object') }),
-    submitText: initialObject ? 'update' : 'create'
+    submitText: initialObject?.id ? 'update' : 'create'
   })
   return renderForm()
 }

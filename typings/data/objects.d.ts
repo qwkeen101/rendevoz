@@ -11,6 +11,7 @@ export interface IWebpage extends IBase {
   favicon?: string
   //clipped note
   noteId?: number
+  readerMode?: boolean
 }
 
 export interface IAudio extends IBase {

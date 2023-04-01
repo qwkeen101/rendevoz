@@ -3,16 +3,16 @@ import { pinnedMetaObjectsAtom, undeletedMetaObjectsAtom } from '@/stores/meta.s
 import { globalStore } from '@/stores'
 import ClassName from '@/styles/classNames'
 import { css } from '@emotion/css'
-import { AnimatePresence } from 'framer-motion'
 import { Provider, useAtomValue, useSetAtom } from 'jotai/react'
 import { createStore } from 'jotai/vanilla'
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Flipper } from 'react-flip-toolkit'
 import { MetaObject } from '~/typings/data'
 import { Content, Icon } from '@/components'
 import { DatabaseCard } from './card/DatabaseCard'
 import { DatabaseFilter } from './filter'
 import { FilterNameSearchAtom, useObjectFilter } from './filter/useObjectFilter'
+import DatabaseListItem from './ListItem'
 
 export const Database = () => {
   const undeletedMetaObjects = useAtomValue(undeletedMetaObjectsAtom, { store: globalStore })
@@ -24,7 +24,11 @@ export const Database = () => {
     itemPerPage: 20,
     currentPage: 0
   })
-
+  const [databaseState, setDatabaseState] = useState<{
+    renderMode: 'detail card' | 'detail list' | 'title list'
+  }>({
+    renderMode: 'detail card'
+  })
   const DatabaseStore = useMemo(() => createStore(), [])
   const setSearch = useSetAtom(FilterNameSearchAtom, { store: DatabaseStore })
   useObjectFilter(ids => {
@@ -37,53 +41,99 @@ export const Database = () => {
 
   const [displayObjects, setDisplayObjects] = useState<MetaObject[]>(undeletedMetaObjects)
 
-  const [showPin, toggleShowPin] = useToggle(true)
-
-  const [showAll, toggleShowAll] = useToggle(true)
-
   const paginateObjects = displayObjects.slice(currentPage * itemPerPage, (currentPage + 1) * itemPerPage)
 
   const hasNextPage = displayObjects.length > (currentPage + 1) * itemPerPage
 
+  const renderItems = () => {
+    switch (databaseState?.renderMode) {
+      case 'detail card':
+        return (
+          <Flipper spring="stiff" flipKey={`${displayObjects[displayObjects.length - 1]?.id}_${displayObjects.length}`}>
+            <div
+              className={css({
+                display: 'grid',
+                gridGap: 35,
+                gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))',
+                transition: 'all 0.2s ease',
+                width: '100%',
+                gridAutoFlow: 'dense'
+              })}
+            >
+              {paginateObjects.map((i, idx) => (
+                <DatabaseCard key={i.id} index={idx} metaObject={i} />
+              ))}
+            </div>
+          </Flipper>
+        )
+      case 'detail list':
+        return (
+          <div
+            className={css({
+              display: 'flex',
+              flexDirection: 'column',
+              transition: 'all 0.2s ease',
+              width: '100%',
+              gap: 16,
+              '> div': {
+                paddingBottom: '8px',
+                ':not(:last-child)': {
+                  borderBottom: '1px solid rgba(0,0,0,0.05)'
+                }
+              }
+            })}
+          >
+            {paginateObjects.map(i => (
+              <DatabaseListItem id={i.id} key={i.id} mode="all" />
+            ))}
+          </div>
+        )
+      case 'title list':
+        return (
+          <div
+            className={css({
+              display: 'flex',
+              flexDirection: 'column',
+              transition: 'all 0.2s ease',
+              width: '100%',
+              gap: 10
+            })}
+          >
+            {paginateObjects.map(i => (
+              <DatabaseListItem id={i.id} key={i.id} mode="title" />
+            ))}
+          </div>
+        )
+    }
+  }
+  const overflowContainerRef = useRef<HTMLDivElement>(null)
+
+  const [showBoxShadow, toggleShowBoxShadow] = useToggle(false)
+
+  useEffect(() => {
+    const scrollHandler = e => {
+      if (overflowContainerRef.current?.scrollTop) {
+        toggleShowBoxShadow(true)
+      } else {
+        toggleShowBoxShadow(false)
+      }
+    }
+    overflowContainerRef.current?.addEventListener('scroll', scrollHandler)
+    return () => {
+      overflowContainerRef.current?.removeEventListener('scroll', scrollHandler)
+    }
+  }, [])
   return (
     <Provider store={DatabaseStore}>
-      <Content flex column gap={16} className={css({ padding: 30, overflow: 'scroll', height: '100%' })}>
+      <Content flex column gap={16} className={css({ padding: 30, height: '100%' })}>
         <input
           placeholder="Search For Object"
           onChange={e => debouncedSetSearch(e.target.value)}
           className={css([ClassName.input(), { borderRadius: 999 }])}
         />
         <DatabaseFilter />
-        {pinnedMetaObjects.length > 0 && (
-          <>
-            <div
-              onClick={toggleShowPin}
-              className={css([ClassName.description(), ClassName.flatButton(4, '3px 6px'), { width: 'fit-content' }])}
-            >
-              Pinned
-            </div>
-            <Content
-              className={css({
-                display: `${showPin ? 'grid' : 'none'} !important`,
-                gridGap: 35,
-                gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))',
-                transition: 'all 0.2s ease'
-              })}
-            >
-              <AnimatePresence>
-                {pinnedMetaObjects.map((i, idx) => (
-                  <DatabaseCard key={i.id} index={idx} metaObject={i} />
-                ))}
-              </AnimatePresence>
-            </Content>
-          </>
-        )}
         <Content flex alignItems="center" justifyContent="space-between">
-          <div onClick={toggleShowAll} className={css([ClassName.description(), ClassName.flatButton(4, '3px 6px')])}>
-            All
-          </div>
           <Content className={ClassName.description()} flex alignItems="center" gap={20}>
-            <div>Current Page : {currentPage + 1}</div>
             <Icon
               className={ClassName.circleButton()}
               size={20}
@@ -114,22 +164,32 @@ export const Database = () => {
             />
           </Content>
         </Content>
-        <Flipper spring="stiff" flipKey={`${displayObjects[displayObjects.length - 1]?.id}_${displayObjects.length}`}>
+        <Content fullHeight style={{ margin: '0px -30px -30px' }}>
           <div
-            className={css({
-              display: `${showAll ? 'grid' : 'none'}`,
-              gridGap: 35,
-              gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))',
-              transition: 'all 0.2s ease',
-              width: '100%',
-              gridAutoFlow: 'dense'
-            })}
+            style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              height: 100,
+              boxShadow: showBoxShadow ? 'rgb(55 53 47 / 9%) 0px 20px 10px -10px inset' : undefined,
+              transition: 'box-shadow 0.3s ease',
+              zIndex: 10,
+              pointerEvents: 'none'
+            }}
+          ></div>
+
+          <Content
+            ref={overflowContainerRef}
+            style={{
+              height: '100%',
+              overflowY: 'auto',
+              padding: '0 30px'
+            }}
           >
-            {paginateObjects.map((i, idx) => (
-              <DatabaseCard key={i.id} index={idx} metaObject={i} />
-            ))}
-          </div>
-        </Flipper>
+            {renderItems()}
+          </Content>
+        </Content>
       </Content>
     </Provider>
   )

@@ -6,7 +6,8 @@ import { Helmet } from 'react-helmet'
 import { Container } from '../base'
 import DockLayout, { LayoutData } from '../base/dock'
 import LayoutManager from './LayoutManager'
-
+import { css } from '@emotion/css'
+import { useSetting } from '@/core'
 interface LayoutProps {
   sidebar?: React.ReactNode
   children?: React.ReactNode
@@ -61,6 +62,7 @@ const Layout: FC<LayoutProps> = ({ sidebar }) => {
   const [layout, setLayout] = useState(initialLayout)
   const layoutManager = useMemo(() => new LayoutManager(), [])
   const layoutRef = useRef<DockLayout>()
+  const [setting] = useSetting()
   layoutManager.makeTabActive = id => layoutRef.current?.updateTab(id, null, true)
   layoutManager.hasTargetTab = tab => {
     const target = Array.from(LayoutIdToTabMap.entries()).find(([k, v]) => {
@@ -91,8 +93,33 @@ const Layout: FC<LayoutProps> = ({ sidebar }) => {
     layoutManager.registerLayout(layout)
     console.log(layout)
   }
+  const resolvedBgUrl = useMemo(() => {
+    if (setting.background.backgroundImage?.startsWith('rendefile')) {
+      return setting.background.backgroundImage.replace('rendefile', 'file').replaceAll('\\', '/')
+    }
+    return setting.background.backgroundImage
+  }, [setting.background.backgroundImage])
   return (
-    <Container auto column style={{ height: '100vh', overflowY: 'auto' }}>
+    <Container
+      auto
+      column
+      className={css({
+        '::before': {
+          content: '""',
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          width: '100%',
+          height: '100%',
+          backgroundImage: `url(${resolvedBgUrl})`,
+          backgroundRepeat: 'no-repeat',
+          backgroundSize: 'cover',
+          opacity: setting.background.backgroundOpacity ?? 0.1,
+          filter: setting.background.backgroundBlur ? `blur(${setting.background.backgroundBlur}px)` : undefined
+        }
+      })}
+      style={{ height: '100vh', overflowY: 'auto' }}
+    >
       <Helmet>
         <title>Rendevoz</title>
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />

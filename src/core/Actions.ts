@@ -3,7 +3,7 @@ import { CustomEditor, WebpageInstance } from '~/typings'
 import { ID_TO_ELEMENTS_MAP, ID_TO_PATH_MAP, SELECTED_BLOCKS_MAP, ID_TO_LABEL_MAP } from '@/core'
 import { GlobalLayout } from '../components/layout'
 import { IPdfViewer } from '~/typings'
-import { DocumentStore, globalStore, LabelStore, MetaStore, NoteStore, ObjectStore, WhiteboardStore } from '../stores'
+import { globalStore, MetaStore, ObjectStore } from '../stores'
 import useBlockStore from '../stores/block.store'
 import { metaObjectsAtom, objectIdToMetaObjectIdMapAtom } from '../stores/meta.store'
 
@@ -20,68 +20,23 @@ const navigateToTargetObject = async (metaObjectId: number) => {
   const { objectId } = metaObject
   let hasTarget = true
   switch (metaObject.type) {
-    case 'note': {
-      const note = await NoteStore.getNoteById(objectId)
-      if (!note) {
-        hasTarget = false
-      }
-      break
-    }
-    case 'noteElement': {
-      const block = await NoteStore.getBlockById(objectId)
-      if (!block) {
-        hasTarget = false
-        break
-      }
-      const note = await NoteStore.getNoteById(block.noteId)
-      if (!note) {
-        hasTarget = false
-      }
-      break
-    }
-    case 'pdf': {
-      const pdf = await DocumentStore.getDocumentById(objectId)
-      if (!pdf) {
-        hasTarget = false
-      }
-      break
-    }
-    case 'pdfElement': {
-      const label = await LabelStore.getLabelById(objectId)
-      if (!label || !label.documentId) {
-        hasTarget = false
-        break
-      }
-      const pdf = await DocumentStore.getDocumentById(label.documentId)
-      if (!pdf) {
-        hasTarget = false
-      }
-      break
-    }
+    case 'note':
+    case 'pdf':
+    case 'webpage':
+    case 'webpageLabel':
+    case 'pdfLabel':
+    case 'noteLabel':
+    case 'noteBlock':
     case 'whiteboard': {
-      const whiteboard = await WhiteboardStore.getWhiteboardById(objectId)
-      if (!whiteboard) {
-        hasTarget = false
-      }
-      break
-    }
-    case 'webpage': {
-      const webpage = await ObjectStore('webpage').getOneById(objectId)
-      if (!webpage) {
+      const one = await ObjectStore(metaObject.type).getOneById(objectId)
+      if (!one) {
         hasTarget = false
       }
       break
     }
     case 'normal': {
-      const note = await NoteStore.getNoteById(objectId)
+      const note = await ObjectStore('note').getOneById(objectId)
       if (!note) {
-        hasTarget = false
-      }
-      break
-    }
-    case 'webpageLabel': {
-      const webpageLabel = await ObjectStore('webpageLabel').getOneById(objectId)
-      if (!webpageLabel) {
         hasTarget = false
       }
       break
@@ -93,14 +48,14 @@ const navigateToTargetObject = async (metaObjectId: number) => {
   }
   updateViewAt(objectId)
   switch (metaObject.type) {
-    case 'noteElement':
+    case 'noteBlock':
       return goToNoteBlock(objectId)
     case 'note':
     case 'normal':
       return openEditor(objectId)
     case 'pdf':
       return openPdf(objectId)
-    case 'pdfElement':
+    case 'pdfLabel':
       return goToPdfLabel(objectId)
     case 'whiteboard':
       return openWhiteboard(objectId)
@@ -142,13 +97,13 @@ const goToWebpageLabel = async (labelId: number) => {
 }
 
 const goToNoteBlock = async (blockId: number) => {
-  const { getBlockById } = useBlockStore()
-  const block = await getBlockById(blockId)
+  const block = await ObjectStore('noteBlock').getOneById(blockId)
   if (block) {
     updateViewAt(blockId)
     const editor = await openEditor(block.noteId)
     const path = ID_TO_PATH_MAP.get(editor)?.get(blockId)
     SELECTED_BLOCKS_MAP.get(editor)?.set(blockId, null)
+    console.log(blockId)
     ID_TO_ELEMENTS_MAP.get(editor)?.get(blockId)?.selectBlock()
     if (path) {
       editor.innerRef?.current.scrollTo(path[0])
@@ -167,8 +122,7 @@ const openPdf = (pdfId: number): Promise<IPdfViewer> => {
   })
 }
 const goToPdfLabel = async (labelId: number) => {
-  const { getLabelById } = LabelStore
-  const label = await getLabelById(labelId)
+  const label = await ObjectStore('pdfLabel').getOneById(labelId)
   if (label) {
     updateViewAt(labelId)
     const pdfId = label.documentId
@@ -230,6 +184,7 @@ const Actions = {
   openDatabase,
   openWhiteboard,
   navigateToTargetObject,
+  openWebpage,
   openWebpageLabel: goToWebpageLabel
 }
 

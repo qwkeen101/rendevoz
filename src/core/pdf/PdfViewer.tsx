@@ -1,22 +1,20 @@
 import { Viewer } from './core'
-import { FC, memo,  useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { FC, memo, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import PdfPage from './components/page/Page'
 import styles from './index.module.less'
 import { RenderPageProps, IAnnotation, IPdfViewer } from '~/typings'
 import { AnnotationType } from './core/types/annotation'
 import { PDFDocumentProxy } from 'pdfjs-dist'
 import { useMemoizedFn, useMergedRef } from '@/hooks'
-import createDocumentStore, { documentsAtom } from '@/stores/document.store'
-import { usePdfId } from './hooks/usePdfInfo'
 import { Range } from '@tanstack/react-virtual'
 import Link from './components/annotation/Link'
 import usePdfDrag from './hooks/usePdfDrag'
 import { useGlobalAtomValue } from '@/hooks/jotai'
-import { selectAtom } from 'jotai/utils'
 import createPdfViewer from './core/createPdfViewer'
 import { ID_TO_LABEL_MAP } from './weakMaps'
 import { useStore } from 'jotai'
 import { PdfViewerAtom } from './core/hooks/useViewer'
+import {  ObjectStore } from '@/stores'
 
 interface PdfViewerProps {
   documentId: number
@@ -24,15 +22,13 @@ interface PdfViewerProps {
   onViewerInitialized?: (viewer: IPdfViewer) => void
 }
 export const PdfViewer: FC<PdfViewerProps> = memo(({ documentId, transformScale, onViewerInitialized }) => {
-  const documentAtom = useMemo(() => selectAtom(documentsAtom, d => d.get(documentId)), [documentId])
+  const documentAtom = ObjectStore('pdf').createAtom(documentId)
   const document = useGlobalAtomValue(documentAtom)
-  const [, setPdfId] = usePdfId()
   const viewerRef = useRef()
   const mergedRef = useMergedRef(viewerRef)
   const store = useStore()
   const [contextMenuVisible, setContextMenuVisible] = useState(false)
 
-  const { updateDocument } = createDocumentStore()
   // ref to store pdf viewer instance
   const viewboxRef = useRef<HTMLDivElement>(null)
   // ref to store pdf document
@@ -65,9 +61,6 @@ export const PdfViewer: FC<PdfViewerProps> = memo(({ documentId, transformScale,
     e.preventDefault()
     setContextMenuVisible(true)
   }, [])
-  useEffect(() => {
-    setPdfId(documentId)
-  }, [documentId])
 
   useEffect(() => {
     viewboxRef.current?.addEventListener('contextmenu', handleOpenMenu)
@@ -83,14 +76,14 @@ export const PdfViewer: FC<PdfViewerProps> = memo(({ documentId, transformScale,
   const handleRangeChange = useMemoizedFn((range?: Range) => {
     if (range) {
       const progress = range?.progress || 0
-      updateDocument(
+      ObjectStore('pdf').updateOne(
         {
           id: documentId,
           readProgress: progress,
           lastReadPage: range.startIndex,
           lastReadAt: Date.now()
         },
-        true
+        { silent: true }
       )
     }
   })

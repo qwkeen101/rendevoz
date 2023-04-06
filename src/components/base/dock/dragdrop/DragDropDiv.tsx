@@ -6,6 +6,7 @@ export type AbstractPointerEvent = MouseEvent | TouchEvent
 
 interface DragDropDivProps extends React.HTMLAttributes<HTMLDivElement> {
   getRef?: (ref: HTMLDivElement) => void
+  disableDrag?: boolean
   onDragStartT?: DragManager.DragHandler
   onDragMoveT?: DragManager.DragHandler
   onDragEndT?: DragManager.DragHandler
@@ -66,6 +67,7 @@ export class DragDropDiv extends React.PureComponent<DragDropDivProps, any> {
   onPointerDown = (e: React.MouseEvent | React.TouchEvent) => {
     const nativeTarget = e.nativeEvent.target as HTMLElement
     this.pointerDownTime = Date.now()
+    if (this.props.disableDrag) return
     if (
       nativeTarget instanceof HTMLInputElement ||
       nativeTarget instanceof HTMLTextAreaElement ||

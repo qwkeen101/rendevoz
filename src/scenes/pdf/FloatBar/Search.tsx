@@ -3,7 +3,7 @@ import fuzzysort from 'fuzzysort'
 import { atom, useAtom } from 'jotai'
 import { memo } from 'react'
 import { Flipped } from 'react-flip-toolkit'
-import useViewer from '../useViewer'
+import { usePdfViewer } from '@/core'
 
 const searchAtom = atom<{
   total: number
@@ -17,7 +17,7 @@ const searchAtom = atom<{
 }>({ total: 0 })
 const searchStrAtom = atom<string>('')
 const PdfSearch = ({ flipId }: { flipId: string }) => {
-  const viewer = useViewer()
+  const viewer = usePdfViewer()
   const [searchStr, setSearchStr] = useAtom(searchStrAtom)
   const [result, setResult] = useAtom(searchAtom)
   return (
@@ -36,7 +36,7 @@ const PdfSearch = ({ flipId }: { flipId: string }) => {
           value={searchStr}
           onChange={e => {
             setSearchStr(e.target.value)
-            const r = viewer.current?.search(e.target.value)
+            const r = viewer?.search?.(e.target.value)
             if (r) {
               setResult({
                 total: r.total,
@@ -57,8 +57,8 @@ const PdfSearch = ({ flipId }: { flipId: string }) => {
               i.highlight && (
                 <div
                   onClick={() => {
-                    viewer.current?.jumpToPage(i.page)
-                    viewer.current?.highlightText(i.str, i.page)
+                    viewer?.jumpToPage?.(i.page)
+                    viewer?.highlightText?.(i.str, i.page)
                   }}
                   className={ClassName.flatButton()}
                   style={{ marginRight: 10 }}

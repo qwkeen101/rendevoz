@@ -1,4 +1,4 @@
-import { AnimatePopover, Content, Icon, WithBorder } from '@/components/base'
+import { AnimatePopover, Button, Content, Icon, WithBorder } from '@/components/base'
 import { ReactEditor } from '@/core'
 import { CustomEditor } from '~/typings'
 import moveSingleElement from '@/core/editor/utils/moveSingleElement'
@@ -9,6 +9,7 @@ import { EditorOverlayManager } from '../useEditorOverlay'
 import BlockColorPicker from '../../BlockColorPicker'
 import { useToggle } from '@/hooks'
 import { useTranslation } from 'react-i18next'
+import Id from '@/utils/id'
 
 const EditorBlockDetails = ({ editor, manager }: { editor: CustomEditor; manager: EditorOverlayManager }) => {
   const [styleVisible, setStyleVisible] = useState(false)
@@ -213,7 +214,31 @@ const EditorBlockDetails = ({ editor, manager }: { editor: CustomEditor; manager
           <Icon name="park-right" />
         </Content>
       </AnimatePopover>
-      {showExpandOrCollapse && (
+      {currentEle?.type === 'metaObject' && (
+        <Button.IconButton
+          text="Make Object Inline"
+          onClick={() => {
+            Transforms.removeNodes(editor, { at: currentElePath })
+            Transforms.insertNodes(
+              editor,
+              {
+                type: 'paragraph',
+                id: Id.getId(),
+                children: [
+                  {
+                    type: 'inline-metaObject',
+                    originId: currentEle.originId,
+                    children: [{ text: '' }],
+                    id: Id.getId()
+                  }
+                ]
+              },
+              { at: currentElePath }
+            )
+          }}
+        />
+      )}
+      {/* {showExpandOrCollapse && (
         <Content
           flex
           gap={10}
@@ -236,7 +261,7 @@ const EditorBlockDetails = ({ editor, manager }: { editor: CustomEditor; manager
           <Icon name={expand ? 'park-expand-down-one' : 'park-fold-up-one'} size={18} />
           {expand ? 'Expand' : 'Fold Up'}
         </Content>
-      )}
+      )} */}
       <Content
         flex
         gap={10}

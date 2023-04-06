@@ -49,13 +49,8 @@ const LabelToolbar: FC<LabelToolbarProps> = ({
   onColorChange,
   onIconChange,
   onMovableChange,
-  onAddToEditor,
-  onContentChange,
   onDelete,
-  onDirectionChange,
-  onMetaObject,
   selectedText,
-  content,
   color,
   movable = false,
   layout = ['colorPicker', 'iconPicker', 'contentInput', 'separator', 'addToEditorButton', 'movableToggle', 'direction', 'delete']
@@ -83,31 +78,6 @@ const LabelToolbar: FC<LabelToolbarProps> = ({
       />
     </Toolbar.Item>
   )
-  const MetaObjectItem = <Toolbar.Item key="metaObject" iconName="park-share-one" onClick={onMetaObject}></Toolbar.Item>
-  const ContentInputItem = (
-    <Toolbar.Item key="contentInput">
-      <IconWithPopover
-        defaultOpen={content === '' || content?.length === 0}
-        name="park-text"
-        disableNudge
-        content={
-          <WithBorder style={{ padding: '6px' }}>
-            <PrettyInput
-              defaultFocused
-              defaultValue={content}
-              textarea
-              displayText="Input your thought"
-              onChange={e => {
-                onContentChange?.(e.target.value)
-              }}
-            />
-          </WithBorder>
-        }
-      />
-    </Toolbar.Item>
-  )
-  const DirectionItem = <Toolbar.Item key="direction" iconName="park-direction" onClick={onDirectionChange}></Toolbar.Item>
-  const AddToEditorButtonItem = <Toolbar.Item key="addToEditor" iconName="park-doc-add" onClick={onAddToEditor} />
 
   const MovableToggleItem = (
     <Toolbar.Item

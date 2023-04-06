@@ -4,10 +4,7 @@ import { ReactEditor } from '../plugin/react-editor'
 import { FocusedContext } from '../hooks/use-focused'
 import { EditorContext } from '../hooks/use-slate-static'
 import { SlateContext, SlateContextValue } from '../hooks/use-slate'
-import {
-  getSelectorContext,
-  SlateSelectorContext,
-} from '../hooks/use-slate-selector'
+import { getSelectorContext, SlateSelectorContext } from '../hooks/use-slate-selector'
 import { EDITOR_TO_ON_CHANGE } from '../utils/weak-maps'
 import { IS_REACT_VERSION_17_OR_ABOVE } from '../utils/environment'
 import { useIsomorphicLayoutEffect } from '../hooks/use-isomorphic-layout-effect'
@@ -28,26 +25,17 @@ export const Slate = (props: {
 
   const [context, setContext] = React.useState<SlateContextValue>(() => {
     if (!Node.isNodeList(value)) {
-      throw new Error(
-        `[Slate] value is invalid! Expected a list of elements but got: ${Scrubber.stringify(
-          value
-        )}`
-      )
+      throw new Error(`[Slate] value is invalid! Expected a list of elements but got: ${Scrubber.stringify(value)}`)
     }
     if (!Editor.isEditor(editor)) {
-      throw new Error(
-        `[Slate] editor is invalid! You passed: ${Scrubber.stringify(editor)}`
-      )
+      throw new Error(`[Slate] editor is invalid! You passed: ${Scrubber.stringify(editor)}`)
     }
     editor.children = value
     Object.assign(editor, rest)
     return { v: 0, editor }
   })
 
-  const {
-    selectorContext,
-    onChange: handleSelectorChange,
-  } = getSelectorContext(editor)
+  const { selectorContext, onChange: handleSelectorChange } = getSelectorContext(editor)
 
   const onContextChange = useCallback(() => {
     if (onChange) {
@@ -56,7 +44,7 @@ export const Slate = (props: {
 
     setContext(prevContext => ({
       v: prevContext.v + 1,
-      editor,
+      editor
     }))
     handleSelectorChange(editor)
   }, [onChange])
@@ -102,9 +90,7 @@ export const Slate = (props: {
     <SlateSelectorContext.Provider value={selectorContext}>
       <SlateContext.Provider value={context}>
         <EditorContext.Provider value={context.editor}>
-          <FocusedContext.Provider value={isFocused}>
-            {children}
-          </FocusedContext.Provider>
+          <FocusedContext.Provider value={isFocused}>{children}</FocusedContext.Provider>
         </EditorContext.Provider>
       </SlateContext.Provider>
     </SlateSelectorContext.Provider>

@@ -1,9 +1,5 @@
 import { useEffect } from 'react'
-import useCollectionStore from './stores/collection.store'
-import useLabelStore from './stores/label.store'
-import { DocumentStore, globalStore, MetaStore, NoteStore } from './stores'
-import { tagStore } from './stores/tag.store'
-import useWhiteboardStore from './stores/whiteboard.store'
+import { CollectionStore, globalStore, MetaStore, ObjectStore } from './stores'
 import { atom } from 'jotai'
 import { useGlobalSetAtom } from './hooks/jotai'
 import { ipcInstance } from './plugins'
@@ -16,24 +12,16 @@ export const updateInfoAtom = atom<
   | undefined
 >(undefined)
 const Initializer = () => {
-  const { getAllNotes } = NoteStore
   const { getAllMetaObjects, getAllMetaLinks } = MetaStore
-  const { getAllDocuments } = DocumentStore
-  const { getAllCollections } = useCollectionStore()
-  const { getAllLabels } = useLabelStore()
-  const { getAllTags } = tagStore
-  const { getAllWhiteboard } = useWhiteboardStore()
+  const { getAllCollections } = CollectionStore
   const setIntialized = useGlobalSetAtom(initializedAtom)
   useEffect(() => {
     Promise.all([
-      getAllTags(),
-      getAllNotes(),
       getAllMetaLinks(),
       getAllMetaObjects(),
       getAllCollections(),
-      getAllDocuments(),
-      getAllLabels(),
-      getAllWhiteboard()
+      ObjectStore('tag').getAll(),
+      ObjectStore('pdfLabel').getAll()
     ]).then(() => {
       setIntialized(true)
     })
@@ -44,10 +32,9 @@ const Initializer = () => {
     })
     console.log(`
     Welcome to use Rendevoz to BOOST your work efficency 💪🏻!
-    This is a 🆓 software in beta test. Feel free to use!
     If you meet any problem or just interested in how I developed this, just contact me 💬!
-    Yours 👋,
-    🧙🏻‍♂️ RealRong 2001 from 🇨🇳.
+    
+    🧙🏻‍♂️ RealRong from 🇨🇳.
     `)
     if (import.meta.env.PROD) {
       console.log = (function (origin) {

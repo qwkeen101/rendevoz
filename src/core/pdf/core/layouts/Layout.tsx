@@ -14,7 +14,7 @@ import { TextItem } from '../types/text'
 import Id from '@/utils/id'
 import useScopedEventEmitter from '@/events/useEventEmitter'
 import usePdfViewer from '../hooks/useViewer'
-import { LabelStore } from '@/stores'
+import { LabelStore, ObjectStore } from '@/stores'
 
 interface LayoutProps {
   doc: PDFDocumentProxy
@@ -163,7 +163,7 @@ const Layout: FC<LayoutProps> = ({
     }
   }
   const jumpToLabel = async (labelId: number) => {
-    const label = await LabelStore.getLabelById(labelId)
+    const label = await ObjectStore('pdfLabel').getOneById(labelId)
     if (label && label.page !== undefined && ('rect' in label || 'rects' in label)) {
       const pageOffset = virtualizer.getOffsetForIndex(label.page, 'start')
       const labelPercentTop = 'rect' in label ? label.rect?.[1] : 'rects' in label ? label.rects?.[0].percentageTop : undefined

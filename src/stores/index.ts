@@ -45,5 +45,4 @@ export { objectStore as ObjectStore } from './object.store'
 window.addEventListener('DOMContentLoaded', () => {
   globalStore.sub(metaObjectsAtom, debounce(handleMetaObjectsChange, 1000))
   globalStore.sub(metaLinksAtom, debounce(handleMetaLinksChange, 1000))
-  globalStore.sub(objectIdToMetaObjectIdMapAtom, debounce(handleSyncObjectName, 1000))
 })

@@ -5,7 +5,7 @@ import { useTheme } from '@/hooks'
 import MetaKnowledgeCard from './KnowledgeCard'
 import classNames from 'classnames'
 import ClassName from '@/styles/classNames'
-import { AnimatePopover, Content, Icon, Image, Tooltip, WithBorder } from '@/components'
+import { AnimatePopover, Button, Content, Icon, Image, Tooltip, WithBorder } from '@/components'
 import DateFormat from '@/utils/dateFormat'
 import { metaObjectsAtom, relatedMetaObjectsMapAtom } from '@/stores/meta.store'
 import Modal from '@/components/base/Modal'
@@ -23,10 +23,10 @@ import { useGlobalAtomValue } from '@/hooks/jotai'
 import ObjectForm from '@/components/form/ObjectForm'
 import { PartialWithId } from '@/types'
 import { useTranslation } from 'react-i18next'
+import { GlobalEventEmitter } from '@/events'
 
 export const TypeToTypeName: Record<MetaObject['type'], string> = {
-  pdfElement: 'pdf label',
-  noteElement: 'note block',
+  pdfLabel: 'pdf label',
   note: 'note',
   pdf: 'pdf',
   image: 'image',
@@ -36,25 +36,24 @@ export const TypeToTypeName: Record<MetaObject['type'], string> = {
   audio: 'audio',
   webpage: 'webpage',
   noteLabel: 'note label',
+  noteBlock: 'note block',
   webpageLabel: 'webpage label'
 }
 export const DatabaseCard: FC<{
   index?: number
   metaObject: MetaObject
-}> = memo(({ index, metaObject }) => {
-  const { defaultFontColorBlack, defaultFontColorGrey, defaultFontColorRed } = useTheme(
-    'defaultFontColorBlack',
-    'defaultFontColorGrey',
-    'defaultFontColorRed'
-  )
-  const relatedAtom = useMemo(() => selectAtom(relatedMetaObjectsMapAtom, r => r.get(metaObject.id)), [metaObject.id])
+}> = memo(({ metaObject: _m }) => {
+  const { defaultFontColorBlack, defaultFontColorGrey } = useTheme('defaultFontColorBlack', 'defaultFontColorGrey')
+  const metaAtom = useMemo(() => selectAtom(metaObjectsAtom, m => m.get(_m.id)), [_m.id])
+  const metaObject = useGlobalAtomValue(metaAtom)
+  const relatedAtom = useMemo(() => selectAtom(relatedMetaObjectsMapAtom, r => r.get(_m.id)), [_m.id])
   const set = useGlobalAtomValue(relatedAtom)
   const relatedNumber = set?.size
   const [showIcon, setShowIcon] = useState(false)
   const [showPopover, setShowPopover] = useState(false)
   const [showEdit, setShowEdit] = useState(false)
   const containerRef = useRef<HTMLDivElement>(null)
-  const cover = metaObject.coverImgSrc
+  const cover = metaObject?.coverImgSrc
   const [innerCover, setInnerCover] = useState(cover)
   const showImage = !!cover || !!innerCover
   const { updateMetaObject } = MetaStore
@@ -64,7 +63,8 @@ export const DatabaseCard: FC<{
   const { t } = useTranslation()
 
   const renderCardContent = () => {
-    switch (metaObject.type) {
+    if (!metaObject) return null
+    switch (metaObject?.type) {
       case 'note':
         return <MetaNoteCard metaObject={metaObject} renderTitleAndDescription={renderTitleAndDescription} />
       case 'pdf':
@@ -126,9 +126,7 @@ export const DatabaseCard: FC<{
     )
   }
 
-  const renderPopover = () => (
-    <ObjectActionPopover metaObjectId={metaObject.id} onClose={() => setShowPopover(false)} onEdit={() => setShowEdit(true)} />
-  )
+  const renderPopover = () => <ObjectActionPopover metaObjectId={_m.id} onClose={() => setShowPopover(false)} />
 
   const renderEdit = () => (
     <Modal visible={showEdit} onClose={() => setShowEdit(false)} noStyle>
@@ -149,7 +147,9 @@ export const DatabaseCard: FC<{
           <div className={TitleClassName} onClick={onTitleClick}>
             {title}
           </div>
-          <div className={css([ClassName.description(), ClassName.ellipsisFont(6)])}>{description}</div>
+          <div style={{ whiteSpace: 'pre-line' }} className={css([ClassName.description(), ClassName.ellipsisFont(6)])}>
+            {description}
+          </div>
         </Content>
       </Content>
     )
@@ -176,18 +176,19 @@ export const DatabaseCard: FC<{
       removeElement()
     }
   }
+  if (!metaObject) return null
   return (
-    <Flipped onAppear={onElementAppear} onExit={onExit} flipId={metaObject.id} key={metaObject.id}>
+    <Flipped onAppear={onElementAppear} onExit={onExit} flipId={_m.id} key={metaObject.id}>
       <div
         ref={containerRef}
         onPointerEnter={() => setShowIcon(true)}
         onPointerLeave={() => setShowIcon(false)}
         style={{ gridRowEnd: showImage ? 'span 2' : undefined }}
         className={css({
+          background: 'white',
           minHeight: 150,
           cursor: 'pointer',
           borderRadius: 16,
-          background: 'white',
           display: 'flex',
           flexDirection: 'column',
           position: 'relative',
@@ -235,7 +236,8 @@ export const DatabaseCard: FC<{
           <Image
             className={css({
               width: '100% !important',
-              height: 150,
+              height: '70%',
+              maxHeight: '300px',
               // flexBasis: 150,
               overflow: 'hidden'
             })}
@@ -244,8 +246,8 @@ export const DatabaseCard: FC<{
         )}
         <div
           className={css({
-            background: 'white',
             padding: '16px',
+            background: 'white',
             borderRadius: 16,
             marginTop: showImage ? -16 : 0,
             zIndex: 1
@@ -278,7 +280,7 @@ export const DatabaseCard: FC<{
           )}
           <div style={{ minHeight: 80 }}>{renderCardContent()}</div>
         </div>
-        <div className={css({ background: 'white', padding: '0 16px 8px', marginTop: 'auto' })}>{renderToolbar()}</div>
+        <div className={css({ padding: '0 16px 8px', marginTop: 'auto' })}>{renderToolbar()}</div>
       </div>
     </Flipped>
   )
@@ -300,62 +302,48 @@ export const ObjectActionPopover: FC<
   const metaObject = useGlobalAtomValue(metaObjectAtom)
   if (!metaObject) return null
   return (
-    <Content
-      flex
-      column
-      style={{ padding: 6, fontWeight: 500, width: 180 }}
-      className={css({
-        ' > div': {
-          textTransform: 'capitalize'
-        }
-      })}
-    >
-      <div
-        className={ClassName.flatButton()}
+    <Content flex column style={{ padding: 6, fontWeight: 500, width: 180 }}>
+      <Button.IconButton
+        text={t('general.edit')}
+        icon="park-edit"
         onClick={() => {
           onClose?.()
+          GlobalEventEmitter().emit('global', {
+            type: 'globalNeedEditMetaObject',
+            data: {
+              metaObjectId
+            }
+          })
           onEdit?.()
         }}
-      >
-        {t('general.edit')}
-      </div>
-      <div
-        className={ClassName.flatButton()}
+      />
+      <Button.IconButton
         onClick={() => {
           updateMetaObject({ id: metaObject.id, pinned: !metaObject.pinned })
           onPin?.()
           onClose?.()
         }}
-      >
-        {metaObject.pinned ? t('general.unpin') : t('general.pin')}
-      </div>
-      <div
-        className={ClassName.flatButton()}
+        icon="park-like"
+        text={metaObject.pinned ? t('general.unpin') : t('general.pin')}
+      />
+      <Button.IconButton
+        text={t('general.graph')}
+        icon="park-share-one"
         onClick={() => {
           GlobalGraphInstance?.open?.(metaObject)
           onGraph?.()
           onClose?.()
         }}
-      >
-        {t('general.graph')}
-      </div>
-      <div
+      />
+      <Button.IconButton
+        text={t('general.delete')}
+        dangerous
         onClick={() => {
           deleteMetaObject(metaObject.id)
           onDelete?.()
         }}
-        className={classNames(
-          ClassName.flatButton(),
-          css({
-            color: defaultFontColorRed,
-            ':hover': {
-              background: 'rgba(237,49,61,0.09)'
-            }
-          })
-        )}
-      >
-        {t('general.delete')}
-      </div>
+        icon="park-delete"
+      />
     </Content>
   )
 }

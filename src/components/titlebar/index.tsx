@@ -24,7 +24,6 @@ const TitleBar = () => {
       <Icon
         className={styles.icon}
         name="park-minus"
-        fill="#8590ae"
         cursor="pointer"
         onClick={() => {
           minimizeWindow()
@@ -34,13 +33,12 @@ const TitleBar = () => {
       <Icon
         className={styles.icon}
         name={isFullScreen ? 'park-off-screen' : 'park-full-screen'}
-        fill="#8590ae"
         cursor="pointer"
         onClick={() => {
           maximizeWindow()
         }}
       />
-      <Icon name="park-close" className={styles.icon} fill="#8590ae" cursor="pointer" onClick={() => window.close()} />
+      <Icon name="park-close" className={styles.icon} cursor="pointer" onClick={() => window.close()} />
     </Content>
   )
 }

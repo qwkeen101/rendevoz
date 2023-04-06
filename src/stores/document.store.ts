@@ -7,20 +7,12 @@ import { saveImageLocally } from '@/utils/img'
 import { atom } from 'jotai/vanilla'
 import toast from 'react-hot-toast'
 import { IPdfDocument } from '~/typings/data'
-import BaseStore, { initializeLocalStore } from './base.store'
+import { initializeLocalStore } from './base.store'
 
 import { IStoreDeprecated } from './store.type'
 import { MetaStore } from '.'
 
 export const documentsAtom = atom<Map<number, IPdfDocument>>(new Map())
-
-const { orderedData } = BaseStore
-
-export const allDocumentsAtom = atom(get => orderedData(get(documentsAtom)))
-
-export const undeletedDocumentsAtom = atom(get => get(allDocumentsAtom).filter(i => !i.deleted))
-
-export const pinnedDocumentsAtom = atom(get => get(undeletedDocumentsAtom).filter(i => i.pinned))
 
 export const initializePdfDocument = async (file: File): Promise<Partial<IPdfDocument> | undefined> => {
   if (file.type === 'application/pdf') {
@@ -105,6 +97,13 @@ const createDocumentStore = () => {
   return {
     ...realStore
   }
+}
+const shouldToast = (silent?: boolean) => {
+  const setting = getSetting()
+  if (setting.notification.enabled && setting.notification.pdf && !silent) {
+    return true
+  }
+  return false
 }
 
 export const documentStore = createDocumentStore()

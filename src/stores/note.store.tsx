@@ -10,19 +10,8 @@ import { MetaStore } from '.'
 import { Notification } from '@/components'
 import ClassName from '@/styles/classNames'
 import getSetting from '@/core/setting/getSetting'
-import { ObjectFamilyAtom } from './object.store'
-
-const { orderedData } = BaseStore
 
 export const notesAtom = atom(new Map<number, INote>())
-
-export const noteObjectsAtom = ObjectFamilyAtom('note')
-
-export const allNotesAtom = atom(get => orderedData(get(notesAtom)).filter(i => !i.metaId))
-
-export const undeletedNotesAtom = atom(get => get(allNotesAtom).filter(i => !i.deleted))
-
-export const pinnedNotesAtom = atom(get => get(undeletedNotesAtom).filter(i => i.pinned))
 
 const createNoteStore = () => {
   const { initBaseObject } = BaseStore

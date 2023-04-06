@@ -1,4 +1,4 @@
-import { CSSProperties, FC, forwardRef, PropsWithChildren, ReactNode, useEffect, useRef, useState } from 'react'
+import { cloneElement, CSSProperties, FC, forwardRef, PropsWithChildren, ReactNode, useEffect, useRef, useState } from 'react'
 import { AnimatePopover } from '..'
 import { useMergedRef } from '@/hooks'
 import Zindexes from '@/consts/zindex'
@@ -9,14 +9,21 @@ interface ToolTipProps {
   style?: CSSProperties
   delay?: number
   disable?: boolean
+  disableDefaultContent?: boolean
+  contentTouchable?: boolean
 }
 
-const ToolTip: FC<PropsWithChildren<ToolTipProps>> = ({ content, children, position = 'top', style, delay = 300, disable }, ref) => {
+const ToolTip: FC<PropsWithChildren<ToolTipProps>> = (
+  { content, children, position = 'top', style, delay = 300, disable, disableDefaultContent, contentTouchable },
+  ref
+) => {
   const [open, setOpen] = useState(false)
   const childRef = useRef<HTMLElement>(null)
+  const contentRef = useRef<HTMLElement>(null)
   const mergedRef = useMergedRef(childRef, ref)
   const isInRef = useRef(false)
   const isKeyDownRef = useRef(false)
+  const isInContentRef = useRef(false)
   const handleMouseEvent = (e: MouseEvent) => {
     if (e.type === 'pointerdown') {
       isKeyDownRef.current = true
@@ -38,7 +45,15 @@ const ToolTip: FC<PropsWithChildren<ToolTipProps>> = ({ content, children, posit
     if (e.type === 'pointerleave') {
       isInRef.current = false
       isKeyDownRef.current = false
-      setOpen(false)
+      if (contentTouchable) {
+        setTimeout(() => {
+          if (!isInContentRef.current) {
+            setOpen(false)
+          }
+        }, 300)
+      } else {
+        setOpen(false)
+      }
     }
   }
   useEffect(() => {
@@ -54,6 +69,7 @@ const ToolTip: FC<PropsWithChildren<ToolTipProps>> = ({ content, children, posit
       child?.removeEventListener('pointerleave', handleMouseEvent)
     }
   }, [childRef, content])
+
   const renderChildren = () => {
     if (typeof children === 'string') {
       return <span>{children}</span>
@@ -64,8 +80,14 @@ const ToolTip: FC<PropsWithChildren<ToolTipProps>> = ({ content, children, posit
     return <div></div>
   }
   const renderContent = () => {
+    if (disableDefaultContent) {
+      return cloneElement(content, {
+        ref: node => (contentRef.current = node)
+      })
+    }
     return (
       <div
+        ref={contentRef}
         style={{
           pointerEvents: 'none',
           background: 'rgba(0,0,0,0.6)',
@@ -79,6 +101,30 @@ const ToolTip: FC<PropsWithChildren<ToolTipProps>> = ({ content, children, posit
       </div>
     )
   }
+  useEffect(() => {
+    if (contentTouchable) {
+      setTimeout(() => {
+        const contentContainer = contentRef.current
+        if (contentContainer) {
+          const pointerHandler = (e: PointerEvent) => {
+            if (e.type === 'pointerenter') {
+              isInContentRef.current = true
+            }
+            if (e.type === 'pointerleave') {
+              isInContentRef.current = false
+              setOpen(false)
+            }
+          }
+          contentContainer.addEventListener('pointerenter', pointerHandler)
+          contentContainer.addEventListener('pointerleave', pointerHandler)
+          return () => {
+            contentContainer.removeEventListener('pointerenter', pointerHandler)
+            contentContainer.removeEventListener('pointerleave', pointerHandler)
+          }
+        }
+      })
+    }
+  }, [contentTouchable, open])
   return (
     <>
       {children && (

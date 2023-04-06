@@ -1,3 +1,4 @@
+import Colors from '@/consts/colors'
 import { css } from '@emotion/css'
 
 export const ellipsisFont = (line: number) =>
@@ -16,16 +17,16 @@ export const defaultFont = (fontSize = 13, fontWeight = 400) =>
     WebkitFontSmoothing: 'antialiased',
     fontVariantNumeric: 'lining-nums',
     fontFeatureSettings: 'lnum',
-    letterSpacing: '-0.04px',
     fontWeight,
-    fontSize
+    fontSize,
+    color: Colors.Font.Primary
   })
 
 export const title = (fontSize = '1.2rem', fontWeight = 600, color?: string) => {
   return css({
     fontSize,
     fontWeight,
-    color: color || '#121212'
+    color
   })
 }
 
@@ -58,7 +59,7 @@ export const description = (fontSize = '0.8rem', fontWeight = 500, color?: strin
   return css({
     fontSize,
     fontWeight,
-    color: color || '#37352f80'
+    color: color || Colors.Font.Description
   })
 }
 

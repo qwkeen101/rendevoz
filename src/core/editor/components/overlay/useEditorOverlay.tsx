@@ -2,7 +2,7 @@ import { Noop } from '@/common/types'
 import { AnimatePopover } from '@/components/base'
 import { Position } from '@/types'
 import { useCallback, useState } from 'react'
-import { CustomEditor } from '../../../../../typings/editor/types'
+import { CustomEditor } from '~/typings'
 import EditorOverlayElements from './components/EditorOverlayElements'
 import { PosHelper } from '@/components/contextMenu'
 import EditorMetaQuery from './components/EditorMetaQuery'
@@ -12,20 +12,25 @@ import { css } from '@emotion/css'
 import EditorEmojiPicker from './components/EditorEmojiPicker'
 import EditorBlockDetails from './components/EditorBlockDetails'
 import EditorSelectArea from './components/EditorSelectArea'
+import { LeftTopPosition } from '~/typings'
+import EditorLinkForm from './components/EditorLinkForm'
 
 const AvalibleOverlayComponents = {
   emojiPicker: 'emojiPicker',
   metaQuery: 'metaQuery',
   blockHandleMenu: 'blockHandleMenu',
   blockDetailsMenu: 'blockDetailsMenu',
-  selectArea: 'selectArea'
+  selectArea: 'selectArea',
+  slashMenu: 'slashMenu',
+  linkForm: 'linkForm'
 }
 type AvalibleOverlayComponents = keyof typeof AvalibleOverlayComponents
 export interface EditorOverlayManager {
   open: Noop
   close: Noop
   setContent: (content: AvalibleOverlayComponents) => void
-  setPosition: (position: Position) => void
+  setPosition: (position: LeftTopPosition) => void
+  getContent: () => keyof typeof AvalibleOverlayComponents | undefined
 }
 const useEditorOverlay = (editor: CustomEditor, scrollElement?: HTMLDivElement | null) => {
   const [popoverVisible, setPopoverVisible] = useState(false)
@@ -35,7 +40,8 @@ const useEditorOverlay = (editor: CustomEditor, scrollElement?: HTMLDivElement |
     open: () => setPopoverVisible(true),
     close: () => setPopoverVisible(false),
     setContent: (content: AvalibleOverlayComponents) => setOverlayContent(content),
-    setPosition: (position: Position) => setPopoverPosition(position)
+    setPosition: (position: Position) => setPopoverPosition(position),
+    getContent: () => overlayContent
   }
 
   const renderOverlayContent = () => {
@@ -47,9 +53,13 @@ const useEditorOverlay = (editor: CustomEditor, scrollElement?: HTMLDivElement |
       case 'emojiPicker':
         return <EditorEmojiPicker editor={editor} manager={overlayManager} />
       case 'blockHandleMenu':
-        return <EditorOverlayElements editor={editor} manager={overlayManager} />
+        return <EditorOverlayElements editor={editor} manager={overlayManager} mode="block" />
       case 'blockDetailsMenu':
         return <EditorBlockDetails editor={editor} manager={overlayManager} />
+      case 'slashMenu':
+        return <EditorOverlayElements editor={editor} manager={overlayManager} mode="slash" />
+      case 'linkForm':
+        return <EditorLinkForm editor={editor} manager={overlayManager} />
     }
   }
   const renderAnimatedOverlay = () => {
@@ -69,6 +79,8 @@ const useEditorOverlay = (editor: CustomEditor, scrollElement?: HTMLDivElement |
         return ['left', 'right']
       case 'emojiPicker':
         return ['bottom']
+      case 'slashMenu':
+        return ['bottom', 'top']
       default:
         return ['bottom']
     }

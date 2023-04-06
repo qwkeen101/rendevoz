@@ -1,11 +1,15 @@
-import { Icon } from '@/components'
-import { useTheme } from '@/hooks'
+import { useEventHandler, useScopedEventEmitter } from '@/events'
+import { useDebounceFn, useTheme } from '@/hooks'
 import { css } from '@emotion/css'
-import classNames from 'classnames'
+import { useEffect, useMemo, useRef } from 'react'
+import { useUpdate } from 'react-use'
+import { Editor, Element, Path } from 'slate'
 import { RenderElementProps } from 'slate-react'
+import { CustomElement } from '~/typings'
+import { ReactEditor, useSlateStatic } from '../../slate-react'
 import styles from './index.module.less'
 
-const ListItem = ({ children, element, attributes }: RenderElementProps) => {
+export const ListItem = ({ children, element }: RenderElementProps) => {
   const { primaryColor } = useTheme('primaryColor')
   return (
     <div className={styles.wrapper}>
@@ -13,12 +17,8 @@ const ListItem = ({ children, element, attributes }: RenderElementProps) => {
         contentEditable={false}
         role="list-item-marker"
         data-level={element.level}
-        className={classNames(
-          styles.marker,
-          css({
-            color: `var(--block-font-color, ${primaryColor})`
-          })
-        )}
+        style={{ color: `var(--block-font-color, ${primaryColor})` }}
+        className={styles.marker}
       ></div>
       <span role="list-item-line-wrapper" className={css({ width: '100%' })}>
         {children}
@@ -27,4 +27,179 @@ const ListItem = ({ children, element, attributes }: RenderElementProps) => {
   )
 }
 
+function getDictionary() {
+  return validateDictionary('ABCDEFGHIJKLMNOPQRSTUVWXYZ')
+
+  function validateDictionary(dictionary) {
+    for (let i = 0; i < dictionary.length; i++) {
+      if (dictionary.indexOf(dictionary[i]) !== dictionary.lastIndexOf(dictionary[i])) {
+        console.log('Error: The dictionary in use has at least one repeating symbol:', dictionary[i])
+        return undefined
+      }
+    }
+    return dictionary
+  }
+}
+function numberToEncodedLetter(number: number): string {
+  //Takes any number and converts it into a base (dictionary length) letter combo. 0 corresponds to an empty string.
+  //It converts any numerical entry into a positive integer.
+  if (isNaN(number)) {
+    return undefined
+  }
+  number = Math.abs(Math.floor(number))
+
+  const dictionary = getDictionary()
+  let index = number % dictionary.length
+  let quotient = number / dictionary.length
+  let result
+
+  if (number <= dictionary.length) {
+    return numToLetter(number)
+  } //Number is within single digit bounds of our encoding letter alphabet
+
+  if (quotient >= 1) {
+    //This number was bigger than our dictionary, recursively perform this function until we're done
+    if (index === 0) {
+      quotient--
+    } //Accounts for the edge case of the last letter in the dictionary string
+    result = numberToEncodedLetter(quotient)
+  }
+
+  if (index === 0) {
+    index = dictionary.length
+  } //Accounts for the edge case of the final letter; avoids getting an empty string
+
+  return result + numToLetter(index)
+
+  function numToLetter(number: number) {
+    //Takes a letter between 0 and max letter length and returns the corresponding letter
+    if (number > dictionary.length || number < 0) {
+      return undefined
+    }
+    if (number === 0) {
+      return ''
+    } else {
+      return dictionary.slice(number - 1, number)
+    }
+  }
+}
+const RomanNumerMap = {
+  M: 1000,
+  CM: 900,
+  D: 500,
+  CD: 400,
+  C: 100,
+  XC: 90,
+  L: 50,
+  XL: 40,
+  X: 10,
+  IX: 9,
+  V: 5,
+  IV: 4,
+  I: 1
+}
+const intToRoman = (num: number) => {
+  let result = ''
+
+  for (const key in RomanNumerMap) {
+    const repeatCounter = Math.floor(num / RomanNumerMap[key])
+
+    if (repeatCounter !== 0) {
+      result += key.repeat(repeatCounter)
+    }
+
+    num %= RomanNumerMap[key]
+
+    if (num === 0) return result
+  }
+
+  return result
+}
+export const OrderListItem = ({ children, element }: RenderElementProps) => {
+  const { primaryColor } = useTheme('primaryColor')
+  const editor = useSlateStatic()
+  const scopedEmitter = useScopedEventEmitter()
+  const handler = useEventHandler('editor')
+
+  useEffect(() => {
+    scopedEmitter.addListener('editor', handler)
+    return () => {
+      scopedEmitter.removeListener('editor', handler)
+    }
+  }, [])
+
+  const path = ReactEditor.findPath(editor, element)
+
+  const { run: debounceUpdate } = useDebounceFn(
+    () => {
+      if (!Path.equals(path, ReactEditor.findPath(editor, element))) {
+        forceUpdate()
+      }
+    },
+    { wait: 50 }
+  )
+
+  const forceUpdate = useUpdate()
+  // const previousPath = Path.previous(path)
+  handler.on('valueChange', () => debounceUpdate())
+
+  const loopGetNumber = () => {
+    if (!Path.hasPrevious(path)) return 1
+    let previousPath = Path.previous(path)
+    let previous = Editor.node(editor, previousPath)
+    let num = 1
+    while (
+      previous &&
+      (previous[0] as CustomElement).type === 'order-list-item' &&
+      (previous[0] as CustomElement).level === element.level
+    ) {
+      num += 1
+      if (!Path.hasPrevious(previousPath)) break
+      previousPath = Path.previous(previous[1])
+      previous = Editor.node(editor, previousPath)
+    }
+    return num
+  }
+
+  const prefix = useMemo(() => {
+    const number = loopGetNumber()
+    if (element.level === 0 || element.level === undefined || element.level % 3 === 0) {
+      return number
+    }
+    if (element.level === 1 || element.level % 3 === 1) {
+      return numberToEncodedLetter(number)
+    }
+    if (element.level === 2 || element.level % 3 === 2) {
+      return intToRoman(number)
+    }
+    return number
+  }, [...path, element.level])
+
+  return (
+    <div className={styles.wrapper}>
+      <div
+        contentEditable={false}
+        data-level={element.level}
+        role="list-item-marker"
+        style={{
+          color: `var(--block-font-color, ${primaryColor})`,
+          whiteSpace: 'nowrap',
+          textTransform: 'lowercase',
+          fontFamily: 'Muli',
+          padding: '0 2px',
+          marginRight: 6,
+          minWidth: 18,
+          fontSize: 16,
+          fontWeight: 500,
+          lineHeight: '22px'
+        }}
+      >
+        {prefix}.{' '}
+      </div>
+      <span role="list-item-line-wrapper" className={css({ width: '100%' })}>
+        {children}
+      </span>
+    </div>
+  )
+}
 export default ListItem

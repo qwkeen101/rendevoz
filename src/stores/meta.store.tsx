@@ -6,22 +6,28 @@ import { atom } from 'jotai/vanilla'
 import { toast } from 'react-hot-toast'
 import { MetaLink, MetaObject } from '~/typings/data'
 import BaseStore, { initializeLocalStore } from './base.store'
-import { notesAtom } from './note.store'
-import { globalStore, NoteStore, MetaStore, DocumentStore, WhiteboardStore, ObjectStore } from '.'
+import { globalStore, ObjectStore } from '.'
 import { TypeToTypeName } from '@/core'
 import { IStoreDeprecated } from './store.type'
-import { documentsAtom } from './document.store'
 import getSetting from '@/core/setting/getSetting'
-import { selectAtom } from 'jotai/utils'
-import { whiteboardsAtom } from './whiteboard.store'
 import { createDraft, finishDraft } from 'immer'
 import { debounce } from 'lodash'
+import { normalizeOldCollections, normalizeOldObjectsToNewObjects } from './oldItemsMove'
 
 export const metaObjectsAtom = atom<Map<number, MetaObject>>(new Map())
 
 export const metaLinksAtom = atom<Map<number, MetaLink>>(new Map())
 
 const { orderedData, orderedArray } = BaseStore
+
+let moved = false
+const triggerMoveOldItems = () => {
+  if (moved === false) {
+    // normalizeOldCollections()
+    // normalizeOldObjectsToNewObjects()
+  }
+  moved = true
+}
 
 export const handleMetaObjectsChange = () => {
   console.log('triggered change')
@@ -120,13 +126,13 @@ export const handleMetaObjectsChange = () => {
     oldMetaObjects: newMetaObjects,
     typeToMetaObjectIdsMap
   })
+
+  triggerMoveOldItems()
 }
 
 const debounceSetUndeleted = debounce(() => {
-  console.log('set deleted')
   const prevIndex = globalStore.get(indexedMetaObjectsAtom)
   if (prevIndex) {
-    console.log('setted')
     globalStore.set(indexedMetaObjectsAtom, {
       ...prevIndex,
       undeletedMetaObjectsSet: new Set(prevIndex?.undeletedMetaObjectsSet)
@@ -218,68 +224,6 @@ export const indexedMetaLinksAtom = atom<{
   undeletedLinksSet: Set<MetaLink>
 } | null>(null)
 
-let subArr: VoidFunction[] = []
-export const handleSyncObjectName = () => {
-  subArr.forEach(i => i())
-  subArr = []
-  const objectIdToMetaObjectMap = globalStore.get(objectIdToMetaObjectIdMapAtom)
-  const metaObjectMap = globalStore.get(metaObjectsAtom)
-  objectIdToMetaObjectMap?.forEach((metaId, objId) => {
-    const targetMetaObject = metaObjectMap.get(metaId)
-    if (targetMetaObject) {
-      switch (targetMetaObject.type) {
-        case 'note': {
-          const atom = selectAtom(notesAtom, n => n.get(objId))
-          const note = globalStore.get(atom)
-          if (note && note.title !== targetMetaObject.name) {
-            MetaStore.updateMetaObject({ id: targetMetaObject.id, name: note.title }, true)
-          }
-          const unsub = globalStore.sub(atom, () => {
-            const v = globalStore.get(atom)
-            const m = globalStore.get(metaObjectsAtom).get(metaId)
-            if (v && m && v.title !== m?.name) {
-              MetaStore.updateMetaObject({ id: metaId, name: v.title }, true)
-            }
-          })
-          subArr.push(unsub)
-          break
-        }
-        case 'pdf': {
-          const atom = selectAtom(documentsAtom, n => n.get(objId))
-          const document = globalStore.get(atom)
-          if (document && (document.name !== targetMetaObject.name || document.metadata?.coverUrl !== targetMetaObject.coverImgSrc)) {
-            MetaStore.updateMetaObject({ id: targetMetaObject.id, name: document.name, coverImgSrc: document.metadata?.coverUrl }, true)
-          }
-          const unsub = globalStore.sub(atom, () => {
-            const v = globalStore.get(atom)
-            const m = globalStore.get(metaObjectsAtom).get(metaId)
-            if (v && m && (v.name !== m?.name || v.metadata?.coverUrl !== m.coverImgSrc)) {
-              MetaStore.updateMetaObject({ id: metaId, name: v.name, coverImgSrc: v.metadata?.coverUrl }, true)
-            }
-          })
-          subArr.push(unsub)
-          break
-        }
-        case 'whiteboard': {
-          const atom = selectAtom(whiteboardsAtom, n => n.get(objId))
-          const whiteboard = globalStore.get(atom)
-          if (whiteboard && whiteboard.name !== targetMetaObject.name) {
-            MetaStore.updateMetaObject({ id: targetMetaObject.id, name: whiteboard.name }, true)
-          }
-          const unsub = globalStore.sub(atom, () => {
-            const v = globalStore.get(atom)
-            const m = globalStore.get(metaObjectsAtom).get(metaId)
-            if (v && m && v.name !== m?.name) {
-              MetaStore.updateMetaObject({ id: metaId, name: v.name }, true)
-            }
-          })
-          subArr.push(unsub)
-          break
-        }
-      }
-    }
-  })
-}
 export const orderedMetaObjectsAtom = atom(get => orderedData(get(metaObjectsAtom)))
 
 export const undeletedMetaObjectsAtom = atom(get => orderedArray(Array.from(get(indexedMetaObjectsAtom)?.undeletedMetaObjectsSet || [])))
@@ -312,15 +256,15 @@ const createMetaStore = () => {
         if (obj.objectId && one.name) {
           switch (obj.type) {
             case 'pdf': {
-              DocumentStore.updateDocument({ id: obj.objectId, name: obj.name }, true)
+              ObjectStore('pdf').updateOne({ id: obj.objectId, name: obj.name }, { silent: true })
               break
             }
             case 'note': {
-              NoteStore.updateNote({ id: obj.objectId, title: obj.name }, true)
+              ObjectStore('note').updateOne({ id: obj.objectId, title: obj.name }, { silent: true })
               break
             }
             case 'whiteboard': {
-              WhiteboardStore.updateWhiteboard({ id: obj.objectId, name: obj.name }, true)
+              ObjectStore('whiteboard').updateOne({ id: obj.objectId, name: obj.name }, { silent: true })
               break
             }
           }
@@ -343,21 +287,51 @@ const createMetaStore = () => {
       }
       const initedMetaObject = initBaseObject(one)
       if (!initedMetaObject.name) {
-        initedMetaObject.name = 'Unknown name'
+        let initedName = 'Unnamed Object'
+        switch (initedMetaObject.type) {
+          case 'note':
+            initedName = 'Untitled Note'
+            break
+          case 'pdf':
+            initedName = 'Unnamed PDF'
+            break
+          case 'whiteboard':
+            initedName = 'Unnamed Whiteboard'
+            break
+          case 'webpage':
+            initedName = 'Unnamed Webpage'
+        }
+        initedMetaObject.name = initedName
       }
       initedMetaObject.type = initedMetaObject.type || 'normal'
       if (initedMetaObject.type === 'normal') {
         const noteId = Id.getId()
         initedMetaObject.objectId = noteId
-        NoteStore.addNote(
+        ObjectStore('note').addOne(
           {
             id: noteId,
             metaId: initedMetaObject.id
           },
-          true
+          { silent: true }
         )
       }
-      return initializeObjectStore.addOne(() => {
+      return initializeObjectStore.addOne(obj => {
+        if (obj.objectId && one.name) {
+          switch (obj.type) {
+            case 'pdf': {
+              ObjectStore('pdf').updateOne({ id: obj.objectId, name: obj.name }, { silent: true })
+              break
+            }
+            case 'note': {
+              ObjectStore('note').updateOne({ id: obj.objectId, title: obj.name }, { silent: true })
+              break
+            }
+            case 'whiteboard': {
+              ObjectStore('whiteboard').updateOne({ id: obj.objectId, name: obj.name }, { silent: true })
+              break
+            }
+          }
+        }
         shouldToastObject(silent) &&
           toast.success(
             <Notification

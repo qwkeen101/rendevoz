@@ -135,8 +135,8 @@ const AddingEdge = () => {
     <g>
       <path
         fill="none"
-        markerEnd={`url(#${getMarkerId('end', MarkerColor.NORMAL)})`}
-        stroke={MarkerColor.NORMAL}
+        markerEnd={`url(#${getMarkerId('end', MarkerColor.LIGHTGREY)})`}
+        stroke={MarkerColor.LIGHTGREY}
         d={path}
         strokeWidth={2}
       ></path>

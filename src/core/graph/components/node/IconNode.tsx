@@ -2,15 +2,16 @@ import { Icon } from '@/components'
 import { motion } from 'framer-motion'
 import { GraphNode } from '../../types/node'
 import { TypeToNodeRadius } from './Node'
+import Colors from '@/consts/colors'
 
 const IconNode = ({ node, label }: { node: GraphNode; label?: string }) => {
   const getIcon = () => {
     switch (node.type) {
       case 'note':
         return 'park-notes'
-      case 'pdfElement':
+      case 'pdfLabel':
         return 'park-align-text-left'
-      case 'noteElement':
+      case 'noteBlock':
         return 'park-text-style-one'
       case 'whiteboard':
         return 'park-new-computer'
@@ -45,6 +46,7 @@ const IconNode = ({ node, label }: { node: GraphNode; label?: string }) => {
         animate={{ y: (d + 15) * (node.scale ? (node.scale === 1 ? 1 : node.scale * 0.9) : 1) }}
         textAnchor="middle"
         fontWeight={600}
+        fill={Colors.Font.Primary}
         fontSize="calc(var(--zoom-level) * 12px)"
       >
         {label || node.label}

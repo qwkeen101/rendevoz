@@ -6,6 +6,8 @@ import { delay } from 'lodash'
 import useSidebarWidth from '@/hooks/components/useSidebarWidth'
 import Icon from '@/components/base/Icon'
 import { GlobalInstances, LayoutIdToTabMap } from '..'
+import classNames from 'classnames'
+import ClassName from '@/styles/classNames'
 
 export const Sidebar: FC = () => {
   const navRef = useRef<HTMLElement>(null)
@@ -83,7 +85,7 @@ export const Sidebar: FC = () => {
             }
             if (!isResizing) setHovered(true)
           }}
-          className={styles.nav}
+          className={classNames(styles.nav, collapsed && ClassName.Background.pseudoBlubBackground)}
           ref={navRef}
           style={
             collapsed

@@ -11,6 +11,7 @@ import classNames from 'classnames'
 import { isArray } from 'lodash'
 import ClassName from '@/styles/classNames'
 import { css } from '@emotion/css'
+import { Button } from '../button'
 
 interface SelectProps {
   multiple?: boolean
@@ -65,7 +66,8 @@ const Select: ISelect = ({
   const [menuVisible, setMenuVisible] = useState(false)
   const menuItems = options?.map(o => ({
     name: o.children,
-    value: o.value
+    value: o.value,
+    icon: o.icon
   }))
 
   useEffect(() => {
@@ -174,21 +176,21 @@ const Select: ISelect = ({
           style={style}
           className={classNames(
             styles.selectContainer,
-            hideUnderlineWhenNotHover ? styles.hideUnderline : undefined,
             menuVisible ? styles.focused : undefined,
             disabled ? styles.disabled : undefined,
-            className
+            className,
+            ClassName.flatButton()
           )}
           onClick={() => !disabled && setMenuVisible(!menuVisible)}
           flex
         >
           {disabled ? null : selected.length ? (
-            <Content fullWidth flex justifyContent="space-between">
+            <Content fullWidth flex justifyContent="space-between" gap={12}>
               {multiple ? renderMultiple() : renderSingle()}
               <Icon name="park-down" />
             </Content>
           ) : (
-            <Content fullWidth flex justifyContent="space-between">
+            <Content fullWidth flex justifyContent="space-between" gap={12}>
               <span className={styles.placeholder}>{placeholder}</span>
               <Icon name="park-down" />
             </Content>
@@ -203,6 +205,7 @@ const SelectMenu: FC<{
   menuItems?: {
     name: string
     value: string
+    icon?: string
   }[]
   onSelect: (value: string) => void
   onDeSelect: (value: string) => void
@@ -220,10 +223,8 @@ const SelectMenu: FC<{
       })}
     >
       {menuItems?.map(item => (
-        <div
-          key={item.value}
-          className={ClassName.flatButton()}
-          style={{ background: selectedItems.some(i => i === item.value) ? 'rgba(31, 34, 37, 0.1)' : undefined }}
+        <Button.IconButton
+          text={item.name}
           onClick={() => {
             if (selectedItems.some(i => i === item.value)) {
               onDeSelect(item.value)
@@ -231,9 +232,10 @@ const SelectMenu: FC<{
               onSelect(item.value)
             }
           }}
-        >
-          {item.name}
-        </div>
+          key={item.value}
+          icon={item.icon}
+          selected={selectedItems.some(i => i === item.value) || undefined}
+        />
       ))}
     </div>
   )

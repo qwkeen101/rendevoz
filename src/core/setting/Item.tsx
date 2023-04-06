@@ -1,7 +1,7 @@
 import { Content } from '@/components/base'
 import { useTheme } from '@/hooks'
 import { css } from '@emotion/css'
-import { FC, ReactNode } from 'react'
+import { CSSProperties, FC, ReactNode } from 'react'
 
 type SettingItem = {
   children?: ReactNode
@@ -9,9 +9,9 @@ type SettingItem = {
   description?: string
   column?: boolean
   titleSize?: number
+  childrenContainerStyle?: CSSProperties
 }
-const SettingItem: FC<SettingItem> = ({ children, title, description, column = false, titleSize = 18 }) => {
-  const { defaultFontColorBlack, defaultFontColorGrey } = useTheme('defaultFontColorBlack', 'defaultFontColorGrey')
+const SettingItem: FC<SettingItem> = ({ children, title, description, column = false, titleSize = 18, childrenContainerStyle }) => {
   return (
     <Content
       flex
@@ -22,6 +22,7 @@ const SettingItem: FC<SettingItem> = ({ children, title, description, column = f
       className={css({
         userSelect: 'none',
         padding: '10px 0px',
+        maxHeight: '100%',
         ':not(:last-child)': {
           borderBottom: '1px solid rgba(0,0,0,0.05)'
         }
@@ -30,16 +31,15 @@ const SettingItem: FC<SettingItem> = ({ children, title, description, column = f
       <div>
         <div
           className={css({
-            color: defaultFontColorBlack,
             fontWeight: 600,
             fontSize: titleSize
           })}
         >
           {title}
         </div>
-        {description && <div className={css({ color: defaultFontColorGrey, fontSize: 13 })}>{description}</div>}
+        {description && <div className={css({ fontSize: 13 })}>{description}</div>}
       </div>
-      <Content flex centered={!column}>
+      <Content flex centered={!column} style={childrenContainerStyle}>
         {children}
       </Content>
     </Content>

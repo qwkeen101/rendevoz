@@ -3,6 +3,7 @@ import classNames from 'classnames'
 import { CSSProperties, FC, MouseEventHandler, ReactNode, useEffect, useState } from 'react'
 import IconButton from './IconButton'
 import styles from './index.module.less'
+import ClassName from '@/styles/classNames'
 
 interface ButtonProps {
   children: ReactNode
@@ -10,11 +11,13 @@ interface ButtonProps {
   className?: string
   tabIndex?: number
   style?: CSSProperties
+  selected?: boolean
+  disabled?: boolean
 }
-interface IButton extends FC<ButtonProps>{
+interface IButton extends FC<ButtonProps> {
   IconButton: typeof IconButton
 }
-export const Button: IButton = ({ children, onClick, className, tabIndex, style }) => {
+export const Button: IButton = ({ children, onClick, className, tabIndex, style, disabled }) => {
   const [coords, setCoords] = useState({ x: -1, y: -1 })
   const [isRippling, setIsRippling] = useState(false)
 
@@ -34,24 +37,27 @@ export const Button: IButton = ({ children, onClick, className, tabIndex, style 
       type="button"
       tabIndex={tabIndex}
       className={classNames(
-        css({
-          position: 'relative',
-          boxShadow: '0 0 0.5rem rgba(0, 0, 0, 0.3)',
-          outline: 'none',
-          overflow: 'hidden',
-          color: '#fff',
-          background: '#8590ae',
-          border: 'none',
-          borderRadius: 4,
-          cursor: 'pointer',
-          ':focus': {
-            boxShadow: '0 0 1rem rgba(0,0,0,0.3)'
-          }
-        }),
+        css([
+          {
+            position: 'relative',
+            boxShadow: '0 0 0.5rem rgba(0, 0, 0, 0.3)',
+            outline: 'none',
+            overflow: 'hidden',
+            color: '#fff',
+            background: 'transparent',
+            border: 'none',
+            cursor: 'pointer',
+            ':focus': {
+              boxShadow: '0 0 1rem rgba(0,0,0,0.3)'
+            }
+          },
+          ClassName.flatButton(4, '4px 12px')
+        ]),
         className
       )}
-      style={style}
+      style={{ ...style, cursor: disabled ? 'not-allowed' : style?.cursor, background: disabled ? '#bbbfc4' : style?.background }}
       onClick={e => {
+        if (disabled) return
         const rect = e.currentTarget.getBoundingClientRect()
         setCoords({ x: e.clientX - rect.left, y: e.clientY - rect.top })
         onClick?.(e)

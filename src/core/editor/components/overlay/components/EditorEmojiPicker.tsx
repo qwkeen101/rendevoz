@@ -1,5 +1,5 @@
 import { WithBorder } from '@/components'
-import { CustomEditor } from '@/components/editor/types'
+import { CustomEditor } from '~/typings'
 import EmojiPicker from '@/components/picker/emojiPicker'
 import { useLayoutEffect } from 'react'
 import { Transforms } from 'slate'

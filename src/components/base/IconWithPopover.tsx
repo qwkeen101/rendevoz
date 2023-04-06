@@ -24,6 +24,7 @@ interface Props {
   className?: string
   onClick?: MouseEventHandler
   tooltipPosition?: 'top' | 'bottom'
+  closeOnContentClick?: boolean
 }
 const IconWithPopover: FC<Props> = (
   {
@@ -46,7 +47,8 @@ const IconWithPopover: FC<Props> = (
     disableIntersection,
     style,
     onClick,
-    tooltipPosition = 'top'
+    tooltipPosition = 'top',
+    closeOnContentClick
   },
   ref
 ) => {
@@ -63,12 +65,18 @@ const IconWithPopover: FC<Props> = (
     }
   }, [])
   return (
-    <Content ref={mergedRef}>
+    <Content
+      ref={mergedRef}
+      onClick={() => {
+        if (closeOnContentClick && visible) {
+          setVisible(false)
+        }
+      }}
+    >
       <AnimatePopover
         align={align}
         padding={padding}
         onClickOutside={e => {
-          console.log(e)
           if (e.path.some(i => i.getAttribute?.('role') === 'modal')) {
             return
           }

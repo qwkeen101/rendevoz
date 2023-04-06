@@ -2,6 +2,7 @@ import { GraphNode } from '../../types/node'
 import { motion } from 'framer-motion'
 import { TypeToNodeRadius } from './Node'
 import { useMemo } from 'react'
+import Colors from '@/consts/colors'
 
 const ImageNode = ({ node, imageUrl, label }: { node: GraphNode; imageUrl?: string; label?: string }) => {
   const realImageUrl = imageUrl || node.coverImgSrc
@@ -66,6 +67,7 @@ const ImageNode = ({ node, imageUrl, label }: { node: GraphNode; imageUrl?: stri
         animate={{ y: d * (node.scale ? (node.scale === 1 ? 1 : node.scale * 0.9) : 1) }}
         textAnchor="middle"
         fontWeight={600}
+        fill={Colors.Font.Primary}
         fontSize="calc(var(--zoom-level) * 12px)"
       >
         {realLabel?.match(/.{1,40}/g)?.map(i => (

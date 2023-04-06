@@ -279,7 +279,7 @@ const WrapperNode = ({ node }: { node: IWhiteboardNode }) => {
       }
       const pointerMoveHandler = (e: PointerEvent) => {
         getInGroupNodes()
-        if (innerNodeIdsRef.current.has(addingEdgeState.sourceNodeId)){
+        if (innerNodeIdsRef.current.has(addingEdgeState.sourceNodeId)) {
           setAddingEdgeState(s => ({
             ...s,
             targetNodeId: undefined,
@@ -380,11 +380,17 @@ const WrapperNode = ({ node }: { node: IWhiteboardNode }) => {
       }
     }
   }, [])
-  const { stringColor, darkenBackground, lightenBackground, stringDefaultColor, lightenDefaultColor, opacityBackground } = useMemo(() => {
-    const defaultColor = tinycolor('#8590ae')
+  useEffect(() => {
+    if (nodeState.focused) {
+      flow.onNodeFocus?.(node)
+    }
+  }, [nodeState.focused])
+
+  const { stringColor, darkenBackground, stringDefaultColor, lightenDefaultColor, opacityBackground } = useMemo(() => {
+    const defaultColor = tinycolor('#c9c9c9')
     const stringDefaultColor = defaultColor.toString('rgb')
-    const lightenDefaultColor = defaultColor.lighten(15).toString('rgb')
-    const color = background ? tinycolor(background) : tinycolor('#8590ae')
+    const lightenDefaultColor = defaultColor.lighten(5).toString('rgb')
+    const color = background ? tinycolor(background) : tinycolor('#c9c9c9')
     const stringColor = color.toString('rgb')
     const darkenBackground = color.darken(20).toString('rgb')
     const lightenBackground = color.lighten(15).toString('rgb')
@@ -573,7 +579,11 @@ const WrapperNode = ({ node }: { node: IWhiteboardNode }) => {
         }}
         padding={20}
         containerStyle={{ zIndex: String(Zindexes.ToolBar) }}
-        content={<WithBorder style={{ display: 'flex', gap: 6, padding: '2px 6px' }}>{renderPopoverElements()}</WithBorder>}
+        content={
+          <WithBorder onClick={e => e.stopPropagation()} style={{ display: 'flex', gap: 6, padding: '2px 6px' }}>
+            {renderPopoverElements()}
+          </WithBorder>
+        }
       >
         <Content
           flex

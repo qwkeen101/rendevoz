@@ -59,6 +59,7 @@ export const GlobalGraph = () => {
         coverImgSrc: i.coverImgSrc || (i.from?.icon ? (i.from?.icon?.startsWith('park') ? undefined : i.from?.icon) : undefined),
         type: i.type,
         isCenter: i.id === centerNode.id,
+        icon: i.icon,
         objectId: i.objectId,
         tags: i.tags
       })) as GraphNode[]

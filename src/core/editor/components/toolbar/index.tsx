@@ -1,4 +1,3 @@
-import { Noop } from '@/common/types'
 import { Toolbar, WithBorder } from '@/components/base'
 import Select from '@/components/base/select'
 import IconWithPopover from '@/components/base/IconWithPopover'
@@ -13,42 +12,34 @@ import { AnimatePresence, motion } from 'framer-motion'
 import BlockColorPicker from '../BlockColorPicker'
 import useReadOnlyEditor from '../../hooks/useReadOnly'
 import { useMemoizedFn } from '@/hooks'
-import Id from '@/utils/id'
 import { TextSelectionTranslate } from '@/core/pdf/components/toolbar/TextSelectionToolbar'
 import { CustomText } from '~/typings/editor/baseTypes'
+import { css } from '@emotion/css'
 
+type EditorToolbarEvents =
+  | {
+      action: 'redo' | 'undo' | 'bold' | 'italic' | 'underline' | 'code' | 'link' | 'highlight'
+    }
+  | {
+      action: 'changeFontSize'
+      fontSize: string
+    }
+  | {
+      action: 'changeFontColor'
+      fontColor: string
+    }
+  | {
+      action: 'changeBackgroundColor'
+      backgroundColor: string
+    }
 interface EditorToolbarProps {
-  fontSize?: number
-  alignment?: string
   scrollElement?: HTMLElement | null
   showToolbar?: boolean
-  onRedo: Noop
-  onUndo: Noop
-  onBold: Noop
-  onItalic: Noop
-  onUnderline: Noop
-  onLink: Noop
-  onHighlight: VoidFunction
-  onChangeFontSize: (fontSize: string) => void
-  onChangeFontColor: (color: string) => void
-  onChangeBackgroundColor: (color: string) => void
+  on: (event: EditorToolbarEvents) => void
   style?: CSSProperties
 }
 const MAX_TOLERANT_DISTANCE = 15
-const EditorToolbar: FC<EditorToolbarProps> = ({
-  onRedo,
-  onUndo,
-  onBold,
-  onItalic,
-  onUnderline,
-  onChangeFontSize,
-  onChangeFontColor,
-  onChangeBackgroundColor,
-  onHighlight,
-  scrollElement,
-  showToolbar,
-  style
-}) => {
+const EditorToolbar: FC<EditorToolbarProps> = ({ scrollElement, showToolbar, style, on }) => {
   const { t } = useTranslation()
   const isReading = useReadOnlyEditor()
   const editor = useSlate()
@@ -167,22 +158,16 @@ const EditorToolbar: FC<EditorToolbarProps> = ({
     const marks = Editor.marks(editor)
     return marks ? format in marks && marks[format] !== undefined : false
   }
-  const getFontSize = () => {
+
+  const getMark = (mark: string) => {
     const marks = Editor.marks(editor)
-    return marks ? (marks['fontSize'] ? marks['fontSize'] : 'default') : 'default'
+    return marks ? marks[mark] : undefined
   }
-  const getFontColor = () => {
-    const marks = Editor.marks(editor)
-    return marks ? marks['fontColor'] : undefined
-  }
-  const getBackgroundColor = () => {
-    const marks = Editor.marks(editor)
-    return marks ? marks['backgroundColor'] : undefined
-  }
+
   const renderToolbar = () => (
     <Toolbar innerRef={toolbarRef} className={classNames(styles.toolbar, styles.float)} style={style} itemClickPreventDefault itemSize={16}>
-      <Toolbar.Item tooltip={t('editor.undo')} iconName="park-return" onClick={onUndo} />
-      <Toolbar.Item tooltip={t('editor.redo')} iconName="park-go-on" onClick={onRedo} />
+      <Toolbar.Item tooltip={t('editor.undo')} iconName="park-return" onClick={() => on({ action: 'undo' })} />
+      <Toolbar.Item tooltip={t('editor.redo')} iconName="park-go-on" onClick={() => on({ action: 'redo' })} />
       {currentElement &&
         !['heading-one', 'heading-two', 'heading-three', 'heading-four', 'heading-five', 'heading-six'].includes(
           currentElement[0].type
@@ -197,13 +182,11 @@ const EditorToolbar: FC<EditorToolbarProps> = ({
                 currentElement[0].type
               )
             }
-            value={getFontSize()}
+            value={getMark('fontSize') || 'default'}
             defaultValue={t('editor.default font')}
             menuStyle={{ width: 90, minWidth: 70 }}
             style={{ width: 80, margin: '0px 0px 0px 10px', padding: '0 8px' }}
-            onSelect={value => {
-              onChangeFontSize(value[0])
-            }}
+            onSelect={value => on({ action: 'changeFontSize', fontSize: value[0] })}
             options={[
               {
                 value: 'default',
@@ -252,17 +235,34 @@ const EditorToolbar: FC<EditorToolbarProps> = ({
         <Toolbar.Item
           tooltip={t('general.highlight')}
           iconName="park-high-light"
-          onClick={onHighlight}
+          onClick={() => on({ action: 'highlight' })}
           isActive={isMarkActive('highlight')}
         />
       )}
-      <Toolbar.Item tooltip={t('editor.bold')} isActive={isMarkActive('bold')} iconName="park-text-bold" onClick={onBold} />
-      <Toolbar.Item tooltip={t('editor.italic')} isActive={isMarkActive('italic')} iconName="park-text-italic" onClick={onItalic} />
+      <Toolbar.Item
+        tooltip={t('editor.bold')}
+        isActive={isMarkActive('bold')}
+        iconName="park-text-bold"
+        onClick={() => on({ action: 'bold' })}
+      />
+      <Toolbar.Item
+        tooltip={t('editor.italic')}
+        isActive={isMarkActive('italic')}
+        iconName="park-text-italic"
+        onClick={() => on({ action: 'italic' })}
+      />
       <Toolbar.Item
         tooltip={t('editor.underline')}
         isActive={isMarkActive('underline')}
         iconName="park-text-underline"
-        onClick={onUnderline}
+        onClick={() => on({ action: 'underline' })}
+      />
+      <Toolbar.Item tooltip={t('editor.link')} iconName="park-link" onClick={() => on({ action: 'link' })} />
+      <Toolbar.Item
+        tooltip={t('editor.code')}
+        isActive={isMarkActive('code')}
+        iconName="park-code"
+        onClick={() => on({ action: 'code' })}
       />
       <Toolbar.Item tooltip={t('editor.font color')}>
         <IconWithPopover
@@ -271,12 +271,17 @@ const EditorToolbar: FC<EditorToolbarProps> = ({
           zIndex={9999}
           size={16}
           style={{
-            color: getFontColor(),
-            background: getBackgroundColor(),
+            color: getMark('fontColor'),
+            background: getMark('backgroundColor'),
             borderRadius: 4,
             padding: 2
           }}
-          content={<BlockColorPicker onPickBackgroundColor={onChangeBackgroundColor} onPickFontColor={onChangeFontColor} />}
+          content={
+            <BlockColorPicker
+              onPickBackgroundColor={f => on({ action: 'changeBackgroundColor', backgroundColor: f })}
+              onPickFontColor={f => on({ action: 'changeFontColor', fontColor: f })}
+            />
+          }
           name="park-font-size-two"
         ></IconWithPopover>
       </Toolbar.Item>
@@ -304,6 +309,7 @@ const EditorToolbar: FC<EditorToolbarProps> = ({
       )}
     </Toolbar>
   )
+
   // only render when have noteid
   const renderFloatToolbar = () =>
     createPortal(
@@ -321,13 +327,26 @@ const EditorToolbar: FC<EditorToolbarProps> = ({
               zIndex: 9999
             }}
           >
-            {renderToolbar()}
+            <WithBorder
+              borderRadius={999}
+              padding="0px 12px"
+              className={css({
+                position: 'sticky',
+                marginLeft: 'auto',
+                marginRight: 'auto',
+                width: 'fit-content',
+                transform: 'translateX(-50%)'
+              })}
+            >
+              {renderToolbar()}
+            </WithBorder>
           </motion.div>
         )}
       </AnimatePresence>,
       document.body,
       'editorToolbar'
     )
+
   return position === 'float' ? renderFloatToolbar() : renderToolbar()
 }
 

@@ -1,14 +1,11 @@
-import { useAtom, useAtomValue, useSetAtom, useStore } from 'jotai/react'
-import { Atom, atom, PrimitiveAtom, SetStateAction } from 'jotai/vanilla'
+import { useAtom, useAtomValue, useSetAtom } from 'jotai/react'
+import { atom, SetStateAction } from 'jotai/vanilla'
 import FlowManager from './FlowManager'
 import { EdgePosition, IWhiteboard, IWhiteboardEdge, IWhiteboardNode } from '../../../typings/data/whiteboard'
-import { Box } from '../dragSelector'
+import { Box } from '~/typings'
 import { selectAtom } from 'jotai/utils'
-import useWhiteboardStore from '@/stores/whiteboard.store'
-import { focusAtom } from 'jotai-optics'
 import { ICollectionItem } from '~/typings/data'
-
-const { updateWhiteboard } = useWhiteboardStore()
+import { ObjectStore } from '@/stores'
 
 const WhiteboardNodesAtom = atom(
   get => {
@@ -19,12 +16,12 @@ const WhiteboardNodesAtom = atom(
     const whiteboard = get(WhiteboardAtom)
     const nextItem = typeof update === 'function' ? update(get(WhiteboardNodesAtom) || new Map()) : update
     if (whiteboard) {
-      updateWhiteboard(
+      ObjectStore('whiteboard').updateOne(
         {
           id: whiteboard.id,
           nodes: nextItem
         },
-        true
+        { silent: true }
       )
     }
   }
@@ -39,12 +36,12 @@ const WhiteboardEdgesAtom = atom(
     const whiteboard = get(WhiteboardAtom)
     const nextItem = typeof update === 'function' ? update(get(WhiteboardEdgesAtom) || new Map()) : update
     if (whiteboard) {
-      updateWhiteboard(
+      ObjectStore('whiteboard').updateOne(
         {
           id: whiteboard.id,
           edges: nextItem
         },
-        true
+        { silent: true }
       )
     }
   }
@@ -59,12 +56,12 @@ const WhiteboardItemsAtom = atom(
     const whiteboard = get(WhiteboardAtom)
     const nextItem = typeof update === 'function' ? update(get(WhiteboardItemsAtom) || []) : update
     if (whiteboard) {
-      updateWhiteboard(
+      ObjectStore('whiteboard').updateOne(
         {
           id: whiteboard.id,
           items: nextItem
         },
-        true
+        { silent: true }
       )
     }
   }
@@ -76,7 +73,6 @@ const WhiteboardSelectNodesAtom = selectAtom(WhiteboardAtom, w => w?.nodes)
 const WhiteboardSelectEdgesAtom = selectAtom(WhiteboardAtom, w => w?.edges)
 
 const WhiteboardSelectItemsAtom = selectAtom(WhiteboardAtom, w => w?.items)
-
 
 const IsAddingEdgeAtom = atom<{
   isAdding: boolean

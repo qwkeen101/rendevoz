@@ -10,7 +10,7 @@ import ClassName from '@/styles/classNames'
 import getEmoji from '@/utils/emoji'
 import { css } from '@emotion/css'
 import { useAtomValue } from 'jotai/react'
-import { memo, useEffect, useMemo, useRef, useState } from 'react'
+import { forwardRef, memo, useEffect, useMemo, useRef, useState } from 'react'
 import Content from '../../base/Content'
 import Icon from '../../base/Icon'
 import SidebarCollectionItem from './items/SidebarCollectionItem'
@@ -39,14 +39,15 @@ const SidebarCollection = () => {
           toggleDropVisible(true)
         }
         if (e.type === 'pointerup') {
-          if (sidebarDraggingState.draggingItemType === 'collection') {
+          if (sidebarDraggingState.current?.draggingItemType === 'collection') {
+            const dragState = sidebarDraggingState.current
             moveItems({
-              sourceFromId: sidebarDraggingState.sourceFromId,
-              sourceFromType: sidebarDraggingState.sourceFromType,
-              sourceIsRoot: sidebarDraggingState.itemIsInRoot,
+              sourceFromId: dragState.sourceFromId,
+              sourceFromType: dragState.sourceFromType,
+              sourceIsRoot: dragState.itemIsInRoot,
               item: {
-                id: sidebarDraggingState.draggingItemId,
-                type: sidebarDraggingState.draggingItemType
+                id: dragState.draggingItemId,
+                type: dragState.draggingItemType
               },
               targetIsRoot: true,
               targetToType: 'collection'
@@ -96,7 +97,7 @@ const SidebarCollection = () => {
           flex
           alignItems="center"
           justifyContent="space-between"
-          className={css([ClassName.description(), dropVisible && ClassName.Drag.droppableItemHovered(true)])}
+          className={dropVisible ? ClassName.Drag.droppableItemHovered(true) : undefined}
           style={{ padding: '0px 4px', transition: 'all 0.3s ease' }}
         >
           <div>{t('sidebar.collections')}</div>
@@ -124,13 +125,13 @@ const linearToSvg = (linear: string) => {
   return linear.match(/rgba\([^()]*\)|#\w+/g)
 }
 export const IconNameItem = memo(
-  ({ name, icon, color, onClick }: { name?: string; icon?: string; color?: string; onClick?: React.MouseEventHandler }) => {
+  forwardRef(({ name, icon, color, onClick }: { name?: string; icon?: string; color?: string; onClick?: React.MouseEventHandler }, ref) => {
     const isPark = icon?.startsWith('park')
     const emoji = useMemo(() => !isPark && icon && getEmoji(icon), [icon])
     const linearFontColor = color?.startsWith('linear')
     const linearColors = color && linearFontColor && linearToSvg(color)
     return (
-      <Content flex alignItems="center" gap={10} style={{ overflow: 'hidden' }} onClick={onClick}>
+      <Content flex alignItems="center" gap={10} style={{ overflow: 'hidden' }} onClick={onClick} ref={ref}>
         {emoji ? (
           <img
             src="data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw=="
@@ -166,6 +167,6 @@ export const IconNameItem = memo(
         </div>
       </Content>
     )
-  }
+  })
 )
 export default SidebarCollection

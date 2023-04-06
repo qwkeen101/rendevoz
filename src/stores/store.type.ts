@@ -1,5 +1,5 @@
 import { PartialWithId } from '@/types'
-import { INote, IWebpage } from '~/typings'
+import { INote, IWebpage, MetaObject } from '~/typings'
 
 export interface IStoreDeprecated<T> {
   fetchOneById: (id: number) => Promise<T | undefined>
@@ -37,6 +37,13 @@ export interface IStore<T> {
             }
           : {})
   ) => Promise<T>
+  addOneWithMeta: (
+    one: Parameters<IStore<T>['addOne']>['0'],
+    options?: Parameters<IStore<T>['addOne']>['1'] & { showMetaModal?: boolean; currentMeta?: Partial<MetaObject> }
+  ) => Promise<{
+    one: T
+    meta: MetaObject
+  }>
   updateOne: (
     one: PartialWithId<T>,
     options?: {

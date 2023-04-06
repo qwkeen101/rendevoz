@@ -1,6 +1,5 @@
 import { Content, Icon, Tooltip } from '@/components'
-import useLabelStore, { documentIdToLabelsMapAtom, labelsAtom } from '@/stores/label.store'
-import { globalStore } from '@/stores'
+import { ObjectStore, globalStore } from '@/stores'
 import ClassName from '@/styles/classNames'
 import DateFormat from '@/utils/dateFormat'
 import { css } from '@emotion/css'
@@ -9,30 +8,22 @@ import { atom } from 'jotai/vanilla'
 import { memo, useMemo } from 'react'
 import { Flipped } from 'react-flip-toolkit'
 import { toast } from 'react-hot-toast'
-import { IHighlightLabel, ILabel, IPdfDocument } from '~/typings/data'
+import { IHighlightLabel, IPdfDocument } from '~/typings/data'
 import { usePdfViewer, ID_TO_LABEL_MAP } from '@/core'
-
+import { selectAtom } from 'jotai/utils'
 
 const PdfLabels = ({ flipId, document }: { flipId: string; document?: IPdfDocument }) => {
-  const innerLabelsAtom = useMemo(
-    () =>
-      document?.id
-        ? atom(get => {
-            const labelIds = get(documentIdToLabelsMapAtom).get(document?.id)
-            const labels: ILabel[] = []
-            labelIds?.forEach(i => {
-              const l = get(labelsAtom).get(i)
-              l && labels.push(l)
-            })
-            return labels
-          })
-        : atom(null),
-    [document?.id]
-  )
+  const store = ObjectStore('pdfLabel')
+  const innerLabelsAtom = useMemo(() => {
+    if (document?.id) {
+      return selectAtom(store.objectMapAtom, m => Array.from(m.values()).filter(i => i.documentId === document.id))
+    } else {
+      return atom(null)
+    }
+  }, [document?.id])
   const labels = useAtomValue(innerLabelsAtom, { store: globalStore })
   const highlight = labels?.filter(i => i.type === 'highlight') as IHighlightLabel[]
   const viewer = usePdfViewer()
-  const { deleteLabel } = useLabelStore()
   return (
     <Flipped inverseFlipId={flipId}>
       <div
@@ -99,7 +90,7 @@ const PdfLabels = ({ flipId, document }: { flipId: string; document?: IPdfDocume
                       <Icon
                         name="park-delete"
                         onClick={() => {
-                          deleteLabel(i.id)
+                          store.deleteOneById(i.id, { force: true })
                         }}
                       />
                     </Tooltip>

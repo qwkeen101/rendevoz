@@ -16,6 +16,8 @@ import produce from 'immer'
 import { createPortal } from 'react-dom'
 import { hexToRgb } from '@/utils/color'
 import useClickOutside from '@/hooks/utils/useClickOutside'
+import { throttle } from 'lodash'
+import Colors from '@/consts/colors'
 
 const TreeEdge: FC<{
   edge: IWhiteboardEdge
@@ -43,6 +45,7 @@ const TreeEdge: FC<{
   >({
     visible: false
   })
+  const underEdgeRef = useRef<SVGPathElement>(null)
 
   const drawPath = () => {
     const container = flow?.containerEle
@@ -134,6 +137,19 @@ const TreeEdge: FC<{
       })
     )
   }
+  useEffect(() => {
+    if (isIn) {
+      const pointerMoveHandler = throttle((e: PointerEvent) => {
+        if (!(e.target instanceof SVGElement && (edgeRef.current?.contains(e.target) || underEdgeRef.current?.contains(e.target)))) {
+          setIsIn(false)
+        }
+      }, 20)
+      document.addEventListener('pointermove', pointerMoveHandler)
+      return () => {
+        document.removeEventListener('pointermove', pointerMoveHandler)
+      }
+    }
+  }, [isIn])
   return (
     <>
       {createPortal(
@@ -214,12 +230,13 @@ const TreeEdge: FC<{
       >
         {isIn && (
           <motion.path
+            ref={underEdgeRef}
             pointerEvents="auto"
-            onPointerLeave={() => setIsIn(false)}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             stroke={`rgba(${rgb?.r},${rgb?.g},${rgb?.b},0.2)`}
             strokeWidth={'calc(16 * var(--zoom-level)'}
+            transition={{ duration: 0.2 }}
             fill="none"
             d={pathRef.current}
           />
@@ -229,21 +246,15 @@ const TreeEdge: FC<{
           pointerEvents="auto"
           ref={edgeRef}
           fill="none"
-          markerEnd={`url(#${getMarkerId('end', innerLink?.color || MarkerColor.NORMAL)})`}
-          stroke={innerLink?.color || MarkerColor.NORMAL}
+          markerEnd={`url(#${getMarkerId('end', innerLink?.color || MarkerColor.LIGHTGREY)})`}
+          stroke={innerLink?.color || MarkerColor.LIGHTGREY}
           strokeWidth={'calc(2 * var(--zoom-level))'}
           animate={{
             strokeWidth: isIn ? 'calc(4 * var(--zoom-level)' : 'calc(2 * var(--zoom-level))'
           }}
         ></motion.path>
         {(innerLink?.label || isEditingLabel || edge.label) && (
-          <foreignObject
-            ref={labelContainerRef}
-            width={1}
-            height={1}
-            style={{ overflow: 'visible', pointerEvents: 'auto' }}
-            onPointerLeave={() => setIsIn(false)}
-          >
+          <foreignObject ref={labelContainerRef} width={1} height={1} style={{ overflow: 'visible', pointerEvents: 'auto' }}>
             <div onClick={e => e.stopPropagation()} style={{ width: 'max-content', height: 'fit-content', pointerEvents: 'none' }}>
               <div
                 ref={labelRef}
@@ -253,12 +264,12 @@ const TreeEdge: FC<{
                   transform: 'translateX(-50%) translateY(-50%)',
                   outline: 'none',
                   borderRadius: 4,
+                  background: Colors.Background.GlobalBackground,
                   padding: 'calc(6px * var(--zoom-level)',
                   maxWidth: 'calc(16em * var(--zoom-level)',
                   fontSize: 'calc(16px * var(--zoom-level)',
-                  boxShadow: `0 0 0 calc(4px * var(--zoom-level)) ${innerLink?.color || MarkerColor.NORMAL}`,
+                  boxShadow: `0 0 0 calc(4px * var(--zoom-level)) ${innerLink?.color || MarkerColor.LIGHTGREY}`,
                   lineHeight: 1.3,
-                  background: 'white',
                   whiteSpace: 'pre-wrap',
                   pointerEvents: 'auto',
                   fontWeight: 600,

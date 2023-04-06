@@ -26,7 +26,7 @@
         "customize": "自定义",
         "untitled": "未命名",
         "copy": "复制",
-        "graph": "节点图",
+        "graph": "关系图",
         "image": "图片",
         "add": "添加",
         "pdf label": "PDF标注",
@@ -46,7 +46,11 @@
         "webpage label": "网页标注",
         "ago": "{{time}}前",
         "view time": "浏览时间",
-        "url": "网址"
+        "url": "网址",
+        "confirm": "确认",
+        "view at": "浏览时间",
+        "create at": "创建时间",
+        "recent view": "最近浏览"
     },
     "dock": {
         "close": "关闭标签页",
@@ -148,10 +152,18 @@
         "clear row content": "清除行内容",
         "insert column left": "在左侧插入列",
         "insert column right": "在右侧插入列",
-        "clear column content": "清除列内容"
+        "clear column content": "清除列内容",
+        "inline metaobject": "行内实体",
+        "paragraph": "正文",
+        "heading-one": "一级标题",
+        "heading-two": "二级标题",
+        "heading-three": "三级标题",
+        "heading-four": "四级标题",
+        "list-item": "无序列表",
+        "block-quote": "引用"
     },
     "settings": {
-        "appearance": "Appearance",
+        "appearance": "外观",
         "hotkeys": "Hotkeys",
         "editor": "Editor",
         "about": "About",
@@ -190,7 +202,10 @@
         "components": "组件",
         "whiteboard settings": "白板设置",
         "enable whiteboard minimap": "开启缩略图",
-        "enable add link between objects when connect": "允许在相连时自动为实体添加链接"
+        "enable add link between objects when connect": "允许在相连时自动为实体添加链接",
+        "background": "背景",
+        "background opacity": "背景透明度",
+        "background blur": "背景模糊度"
     },
     "form": {
         "choose file": "Choose file",
@@ -248,5 +263,16 @@
         "object panel": "{{object}}面板",
         "search for object": "搜索{{object}}",
         "choose one filter": "{{choose}}{{one}}{{filter}}"
+    },
+    "database": {
+        "search for object": "搜索{{object}}",
+        "detail card": "详情卡片",
+        "detail list": "详情列表",
+        "title list": "标题列表",
+        "recent create": "最近创建",
+        "earliest create": "最早创建",
+        "recent view": "最近浏览",
+        "earliest view": "最早浏览",
+        "most related": "最多相关"
     }
 }

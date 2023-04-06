@@ -12,6 +12,7 @@ export interface GraphNode {
   hidden?: boolean
   coverImgSrc?: string
   isCenter?: boolean
+  icon?: string
   objectId?: number
   tags?: string[]
 }

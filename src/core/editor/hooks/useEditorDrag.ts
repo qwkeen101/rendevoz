@@ -21,7 +21,7 @@ export const normalizeEditorDragBlocksToGlobalDraggingDetails = (editor: CustomE
   let normalizedGlobalDraggingDetails: Partial<AvaliableGlobalDraggingElements> = {}
   const selected = SELECTED_BLOCKS_MAP.get(editor)
   normalizedGlobalDraggingDetails = {
-    type: 'noteElement',
+    type: 'noteBlock',
     element: editor.currentEnterElement,
     noteId: editor.noteId,
     blockId: editor.currentEnterElement?.id,
@@ -239,7 +239,7 @@ const useEditorDrag = (editor: CustomEditor, scrollElement?: HTMLElement | null)
       if (GlobalDragOverlayInstance.draggingDetails === undefined) {
         const selected = SELECTED_BLOCKS_MAP.get(editor)
         GlobalDragOverlayInstance.draggingDetails = {
-          type: 'noteElement',
+          type: 'noteBlock',
           element: editor.currentEnterElement,
           noteId: editor.noteId,
           blockId: editor.currentEnterElement?.id,
@@ -282,18 +282,21 @@ const useEditorDrag = (editor: CustomEditor, scrollElement?: HTMLElement | null)
   useEffect(() => {
     if (readonly) return
     if (globalIsDragging) {
+      dragManager.prepareDragging()
       preventLastMouseMoveRef.current = false
       scrollElement?.addEventListener('pointermove', realMouseMoveHandler)
-      ;(scrollElement?.querySelector('[role="textbox"]') as HTMLElement).style.pointerEvents = 'none'
-      if (isDraggingInsideEditor) {
-        DragManager.globalDraggingEditor = editor
+      const textBox = scrollElement?.querySelector('[role="textbox"]') as HTMLElement | undefined
+      if (textBox) {
+        textBox.style.pointerEvents = 'none'
       }
+
       return () => {
         scrollElement?.removeEventListener('pointermove', realMouseMoveHandler)
-        ;(scrollElement?.querySelector('[role="textbox"]') as HTMLElement).style.pointerEvents = 'auto'
+        if (textBox) {
+          textBox.style.pointerEvents = 'auto'
+        }
       }
     } else {
-      DragManager.dragElementsAdded = false
       setIsDragging(false)
     }
   }, [globalIsDragging])

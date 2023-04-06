@@ -13,6 +13,7 @@ const ELEMENT_TAGS = {
   H6: () => ({ type: 'heading-six', id: Id.getId() }),
   IMG: el => ({ type: 'image', url: el.getAttribute('src'), id: Id.getId() }),
   LI: () => ({ type: 'list-item', id: Id.getId() }),
+  OI: () => ({ type: 'order-list-item', id: Id.getId()}),
   OL: () => ({ type: 'numbered-list', id: Id.getId() }),
   P: () => ({ type: 'paragraph', id: Id.getId() }),
   PRE: () => ({ type: 'pre', id: Id.getId() }),

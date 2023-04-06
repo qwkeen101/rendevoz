@@ -1,9 +1,9 @@
-import { AnimatePopover, Button, Icon, Modal, WithBorder } from '@/components'
+import { AnimatePopover, Icon } from '@/components'
 import { GlobalDragOverlayInstance, useGlobalIsDragging } from '@/core'
 import { useGlobalEventEmitter } from '@/events/useEventEmitter'
-import { useMemoizedFn, useToggle } from '@/hooks'
-import { undeletedMetaObjectsAtom } from '@/stores/meta.store'
-import { globalStore, NoteStore, ObjectStore } from '@/stores'
+import { useMemoizedFn } from '@/hooks'
+import { objectIdToMetaObjectIdMapAtom, undeletedMetaObjectsAtom } from '@/stores/meta.store'
+import { globalStore } from '@/stores'
 import ClassName from '@/styles/classNames'
 import { css } from '@emotion/css'
 import { useAtomValue } from 'jotai/react'
@@ -11,8 +11,6 @@ import { memo, useEffect, useRef, useState } from 'react'
 import { MenuItem } from './Item'
 import { useTranslation } from 'react-i18next'
 import Actions from '@/core/Actions'
-import CreateDocumentForm from '@/components/form/CreateDocumentForm'
-import Id from '@/utils/id'
 
 const SidebarDatabase = memo(() => {
   const { t } = useTranslation()
@@ -21,12 +19,10 @@ const SidebarDatabase = memo(() => {
   const emitter = useGlobalEventEmitter()
   const [draggingHovered, setDraggingHovered] = useState({
     droppable: false,
-    visible: false
+    visible: false,
+    alreadyExist: false
   })
-  const [contextMenuPopVisible, toggleContextMenuPopVisible] = useToggle(false)
-  const [formState, setFormState] = useState<{
-    docV: boolean
-  }>()
+
   const dragHandler = useMemoizedFn((e: DragEvent) => {
     if (e.type === 'dragover') {
       e.preventDefault()
@@ -41,30 +37,49 @@ const SidebarDatabase = memo(() => {
     if (e.type === 'pointerenter') {
       let droppable = false
       const draggingEle = GlobalDragOverlayInstance.draggingDetails
+      const objectIdToMetaObjectIdMap = globalStore.get(objectIdToMetaObjectIdMapAtom)
+      let objectId: number | undefined = undefined
+      let alreadyExist = false
       if (draggingEle) {
         switch (draggingEle.type) {
-          case 'noteElement':
-          case 'pdfElement':
+          case 'noteBlock':
+            objectId = draggingEle.blockId
+            break
+          case 'pdfLabel':
+            objectId = draggingEle.labelId
+            break
           case 'webpage label':
+            objectId = draggingEle.highlightId
+            break
           case 'pdf':
+            objectId = draggingEle.pdfId
+            break
           case 'note':
+            objectId = draggingEle.noteId
+            break
           case 'note label':
+            break
           case 'whiteboard':
+            objectId = draggingEle.whiteboardId
+            break
           case 'image':
             droppable = true
             break
           default:
             droppable = false
         }
+        if (objectId !== undefined && !objectIdToMetaObjectIdMap?.has(objectId)) droppable = true
+        if ((objectId && objectIdToMetaObjectIdMap?.has(objectId)) || draggingEle.type === 'metaElement') alreadyExist = true
       }
       setDraggingHovered({
         visible: true,
-        droppable: droppable
+        droppable: droppable,
+        alreadyExist
       })
     } else {
       setDraggingHovered({
-        visible: false,
-        droppable: false
+        ...draggingHovered,
+        visible: false
       })
     }
     if (e.type === 'pointerup') {
@@ -80,9 +95,7 @@ const SidebarDatabase = memo(() => {
       }
     }
   })
-  const contextMenuHandler = () => {
-    toggleContextMenuPopVisible(true)
-  }
+
   useEffect(() => {
     const databaseContainer = itemRef.current
     if (databaseContainer) {
@@ -91,14 +104,12 @@ const SidebarDatabase = memo(() => {
       databaseContainer.addEventListener('pointerleave', pointerHandler)
       databaseContainer.addEventListener('drop', dragHandler)
       databaseContainer.addEventListener('dragover', dragHandler)
-      databaseContainer.addEventListener('contextmenu', contextMenuHandler)
       return () => {
         databaseContainer.removeEventListener('pointerenter', pointerHandler)
         databaseContainer.removeEventListener('pointerup', pointerHandler)
         databaseContainer.removeEventListener('pointerleave', pointerHandler)
         databaseContainer.removeEventListener('drop', dragHandler)
         databaseContainer.removeEventListener('dragover', dragHandler)
-        databaseContainer.removeEventListener('contextmenu', contextMenuHandler)
       }
     }
   }, [])
@@ -106,74 +117,29 @@ const SidebarDatabase = memo(() => {
 
   return (
     <>
-      <Modal visible={!!formState?.docV} onClose={() => setFormState(undefined)}>
-        {formState?.docV && (
-          <CreateDocumentForm
-            onBack={() => setFormState(undefined)}
-            onSubmit={doc => {
-              setFormState(undefined)
-            }}
-          />
-        )}
-      </Modal>
       <AnimatePopover
         innerRef={itemRef}
-        // visible={draggingHovered.visible || contextMenuPopVisible}
-        visible={false}
-        onClickOutside={() => {
-          if (contextMenuPopVisible) {
-            toggleContextMenuPopVisible(false)
-          }
-        }}
+        visible={draggingHovered.visible}
         positions={['top']}
         containerStyle={{ zIndex: '10000' }}
         padding={10}
         content={
-          contextMenuPopVisible ? (
-            <WithBorder onClick={toggleContextMenuPopVisible}>
-              <Button.IconButton
-                icon="park-file-pdf"
-                text={t('general.pdf')}
-                onClick={() => {
-                  setFormState({ docV: true })
-                }}
-              />
-              <Button.IconButton
-                icon="park-web-page"
-                text={t('general.webpage')}
-                onClick={() => {
-                  ObjectStore('webpage').addOne({
-                    title: 'Unknown webpage'
-                  })
-                }}
-              />
-              <Button.IconButton
-                icon="park-notes"
-                text={t('general.note')}
-                onClick={() => {
-                  NoteStore.addNote({
-                    contentId: Id.getId(),
-                    title: 'Untitled'
-                  }).then(n => {
-                    Actions.openEditor(n.id)
-                  })
-                }}
-              />
-            </WithBorder>
-          ) : (
-            <div
-              style={{
-                pointerEvents: 'none',
-                background: 'rgba(0,0,0,0.8)',
-                color: 'white',
-                padding: '2px 6px',
-                borderRadius: 4,
-                fontSize: 12
-              }}
-            >
-              {draggingHovered.droppable ? 'Drop to add object into database' : "Can't drop this type of object"}
-            </div>
-          )
+          <div
+            style={{
+              pointerEvents: 'none',
+              background: 'rgba(0,0,0,0.8)',
+              color: 'white',
+              padding: '2px 6px',
+              borderRadius: 4,
+              fontSize: 12
+            }}
+          >
+            {draggingHovered.alreadyExist
+              ? 'Object Already Exist'
+              : draggingHovered.droppable
+              ? 'Drop to add object into database'
+              : "Can't drop this type of object"}
+          </div>
         }
       >
         <MenuItem

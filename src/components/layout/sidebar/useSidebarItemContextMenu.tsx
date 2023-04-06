@@ -3,7 +3,6 @@ import Modal from '@/components/base/Modal'
 import CollectionForm from '@/components/form/CollectionForm'
 import CreateDocumentForm from '@/components/form/CreateDocumentForm'
 import Zindexes from '@/consts/zindex'
-import useWhiteboardStore from '@/stores/whiteboard.store'
 import ClassName from '@/styles/classNames'
 import { Position } from '@/types'
 import Id from '@/utils/id'
@@ -16,6 +15,7 @@ import { useTranslation } from 'react-i18next'
 import Actions from '@/core/Actions'
 import { GlobalEventEmitter } from '@/events'
 import { MetaObject } from '~/typings'
+import { ObjectFamily } from '@/stores/object.store'
 
 const useSidebarItemContextMenu = (
   contextMenuElementRef: RefObject<HTMLElement>,
@@ -28,11 +28,13 @@ const useSidebarItemContextMenu = (
     onDelete,
     onEdit,
     onAddNewSubItem,
+    onRemoveFromCollection,
     pinned
   }: {
     onPin?: VoidFunction
     onDelete?: VoidFunction
     onEdit?: VoidFunction
+    onRemoveFromCollection?: VoidFunction
     pinned?: boolean
     name?: string
     onAddNewSubItem?: VoidFunction
@@ -75,9 +77,7 @@ const useSidebarItemContextMenu = (
       targetElementRight: rect.right
     })
   }
-  const { addNote } = NoteStore
   const { addItemToCollection, addCollection } = CollectionStore
-  const { addWhiteboard } = WhiteboardStore
   useEffect(() => {
     contextMenuElementRef?.current?.addEventListener('contextmenu', contextMenuHandler)
     return () => {
@@ -108,12 +108,11 @@ const useSidebarItemContextMenu = (
           }}
         >
           <WithBorder
-            className={ClassName.defaultFont(13, 600)}
+            className={css([ClassName.defaultFont(13, 600), ClassName.Background.pseudoBlubBackground])}
             style={{
               padding: 3,
               width: 150,
               position: 'absolute',
-              background: 'white',
               textTransform: 'capitalize',
               ...contextMenuState
             }}
@@ -141,9 +140,10 @@ const useSidebarItemContextMenu = (
                 visible={!!contextMenuState.createVisible}
                 content={
                   <WithBorder
-                    style={{ width: 150, padding: 3, background: 'white', textTransform: 'capitalize' }}
+                    style={{ width: 150, padding: 3, textTransform: 'capitalize' }}
                     className={css([
                       ClassName.defaultFont(13, 600),
+                      ClassName.Background.pseudoBlubBackground,
                       ClassName.childrenAllFlex(undefined, 'flex-start'),
                       {
                         '> *': [
@@ -167,25 +167,14 @@ const useSidebarItemContextMenu = (
 
                     <Button.IconButton
                       onClick={() => {
-                        const id = Id.getId()
-                        const contentId = Id.getId()
-
-                        addNote({
-                          id,
-                          contentId,
-                          title: 'Untitled'
-                        }).then(() => {
-                          addItemToCollection(
-                            {
-                              id,
-                              type: 'note'
-                            },
-                            item.id
-                          )
-                          Actions.openEditor(id)
-                        })
-
-                        onAddNewSubItem?.()
+                        createObjectWithOpenMeta(
+                          'note',
+                          {
+                            contentId: Id.getId(),
+                            title: 'Untitled'
+                          },
+                          'Untitled Note'
+                        )
                       }}
                       text={t('general.note')}
                       icon="park-notes"
@@ -203,25 +192,16 @@ const useSidebarItemContextMenu = (
 
                     <Button.IconButton
                       onClick={() => {
-                        const whiteboardId = Id.getId()
-                        addWhiteboard({
-                          id: whiteboardId,
-                          name: 'Unnamed Whiteboard',
-                          edges: new Map(),
-                          nodes: new Map(),
-                          items: []
-                        }).then(() => {
-                          addItemToCollection(
-                            {
-                              id: whiteboardId,
-                              type: 'whiteboard'
-                            },
-                            item.id
-                          )
-                          Actions.openWhiteboard(whiteboardId)
-                        })
-
-                        onAddNewSubItem?.()
+                        createObjectWithOpenMeta(
+                          'whiteboard',
+                          {
+                            name: 'Unnamed Whiteboard',
+                            edges: new Map(),
+                            nodes: new Map(),
+                            items: []
+                          },
+                          'Unnamed Whiteboard'
+                        )
                       }}
                       text={t('general.whiteboard')}
                       icon="park-new-computer"
@@ -236,34 +216,7 @@ const useSidebarItemContextMenu = (
                           createVisible: false,
                           contextMenuVisible: false
                         })
-                        ObjectStore('webpage')
-                          .addOne({}, { silent: true, preventAddMeta: true })
-                          .then(obj => {
-                            GlobalEventEmitter()
-                              .emitWithCallback('global', {
-                                type: 'globalNeedAddMetaObject',
-                                data: {
-                                  currentObject: {
-                                    type: 'webpage',
-                                    objectId: obj.id
-                                  }
-                                }
-                              })
-                              .then(meta => {
-                                addItemToCollection(
-                                  {
-                                    id: (meta as MetaObject).id,
-                                    type: 'meta'
-                                  },
-                                  item.id
-                                )
-                                Actions.navigateToTargetObject(meta.id)
-                                onAddNewSubItem?.()
-                              })
-                              .catch(() => {
-                                ObjectStore('webpage').deleteOneById(obj.id, { force: true, silent: true })
-                              })
-                          })
+                        createObjectWithOpenMeta('webpage')
                       }}
                     />
                   </WithBorder>
@@ -298,12 +251,51 @@ const useSidebarItemContextMenu = (
             />
             <Button.IconButton text={pinned ? t('general.unpin') : t('general.pin')} icon="park-pin" onClick={onPin} />
             <Button.IconButton text={t('general.delete')} icon="park-delete" dangerous onClick={onDelete} />
+            {item.type !== 'collection' && (
+              <Button.IconButton
+                text={t('general.remove from collection')}
+                icon="park-folder-minus"
+                dangerous
+                onClick={onRemoveFromCollection}
+              />
+            )}
           </WithBorder>
         </motion.div>
       )}
     </AnimatePresence>,
     document.body
   )
+  const createObjectWithOpenMeta = (type: keyof ObjectFamily, object?: Partial<ObjectFamily[typeof type]>, metaName?: string) => {
+    ObjectStore(type)
+      .addOne({ ...object }, { silent: true, preventAddMeta: true })
+      .then(obj => {
+        GlobalEventEmitter()
+          .emitWithCallback('global', {
+            type: 'globalNeedAddMetaObject',
+            data: {
+              currentObject: {
+                type: type,
+                objectId: obj.id,
+                name: metaName
+              }
+            }
+          })
+          .then(meta => {
+            addItemToCollection(
+              {
+                id: (meta as MetaObject).id,
+                type: 'meta'
+              },
+              item.id
+            )
+            Actions.navigateToTargetObject(meta.id)
+            onAddNewSubItem?.()
+          })
+          .catch(() => {
+            ObjectStore(type).deleteOneById(obj.id, { force: true, silent: true })
+          })
+      })
+  }
   const formPortal = createPortal(
     <>
       <Modal
@@ -335,18 +327,18 @@ const useSidebarItemContextMenu = (
         />
       </Modal>
       <Modal
-        width={300}
+        // width={300}
+        noStyle
         visible={!!formState.newPdfVisible}
         onClose={() => {
           setFormState({ newPdfVisible: false })
         }}
       >
         <CreateDocumentForm
-          collection={item}
           onBack={() => setFormState({ newPdfVisible: false })}
-          onSubmit={doc => {
+          onSubmit={meta => {
             setFormState({ newPdfVisible: false })
-            addItemToCollection({ id: doc.id, type: 'document' }, item?.id)
+            addItemToCollection({ id: meta.id, type: 'meta' }, item?.id)
             onAddNewSubItem?.()
           }}
         />

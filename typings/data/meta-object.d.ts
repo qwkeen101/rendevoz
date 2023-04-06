@@ -5,8 +5,7 @@ interface MetaObject extends IBase {
   type:
     | 'note'
     | 'pdf'
-    | 'noteElement'
-    | 'pdfElement'
+    | 'pdfLabel'
     | 'normal'
     | 'image'
     | 'whiteboard'
@@ -14,13 +13,16 @@ interface MetaObject extends IBase {
     | 'audio'
     | 'webpage'
     | 'noteLabel'
+    | 'noteBlock'
     | 'webpageLabel'
   name?: string
   description?: string
   coverImgSrc?: string
   objectId?: number
   objectUrl?: string
-  tags?: string[]
+  tags?: number[]
+  icon?: string
+  color?: string
   from?: {
     icon?: string
     metaId?: number

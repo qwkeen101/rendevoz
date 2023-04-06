@@ -22,7 +22,7 @@ const moveSingleElement = (editor: CustomEditor, currPath: Path, targetPath: Pat
     ) {
       targetPath = Path.next(targetPath)
     }
-    if (targetElement.type === 'list-item' || targetElement.level) {
+    if (targetElement.type === 'list-item' || targetElement.type === 'order-list-item' || targetElement.level) {
       let nextLevel
       if (isNested) {
         nextLevel = targetElement.level ? targetElement.level + 1 : 1
@@ -33,7 +33,7 @@ const moveSingleElement = (editor: CustomEditor, currPath: Path, targetPath: Pat
         editor,
         {
           level: nextLevel,
-          type: currElement[0].type === 'paragraph' ? 'list-item' : currElement[0].type
+          type: currElement[0].type === 'paragraph' ? targetElement.type : currElement[0].type
         },
         { at: currPath }
       )
@@ -138,7 +138,7 @@ const moveSingleElement = (editor: CustomEditor, currPath: Path, targetPath: Pat
       })
     }
   }
-  if (targetElement.type !== 'list-item' && targetElement.level === undefined) {
+  if (targetElement.type !== 'list-item' && targetElement.type !== 'order-list-item' && targetElement.level === undefined) {
     Transforms.setNodes(
       editor,
       {

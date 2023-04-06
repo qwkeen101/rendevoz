@@ -8,16 +8,14 @@ import { AnimatePresence, motion } from 'framer-motion'
 import { useAtomValue } from 'jotai'
 import { selectAtom } from 'jotai/utils'
 import { FC, memo, useMemo, useRef } from 'react'
-import { useToggle } from '@/hooks'
+import { useGlobalAtomValue, useToggle } from '@/hooks'
 import { ICollectionItem } from '~/typings/data'
 import { IconNameItem } from '../SidebarCollection'
 import useSidebarItemContextMenu from '../useSidebarItemContextMenu'
 import useSidebarItemDrag from '../useSidebarItemDrag'
-import SidebarWhiteboardItem from './SidebarWhiteboardItem'
 import { ISidebarItem } from './type'
-import SidebarDocumentItem from './SidebarDocumentItem'
-import SidebarNoteItem from './SidebarNoteItem'
 import SidebarObjectItem from './SidebarObjectItem'
+import { metaObjectsAtom } from '@/stores/meta.store'
 
 const SidebarCollectionItem: FC<ISidebarItem> = memo(({ id, parentId, parentType, draggable = true }) => {
   const { updateCollection, deleteCollection } = useCollectionStore()
@@ -28,21 +26,23 @@ const SidebarCollectionItem: FC<ISidebarItem> = memo(({ id, parentId, parentType
 
   const items = collection?.items
 
-  const { childrenCollections, childrenDocuments, childrenNotes, childrenWhiteboards, childrenMetas } = useMemo(() => {
+  const { childrenCollections, childrenMetas } = useMemo(() => {
     const childrenCollections = items?.filter(i => i.type === 'collection' && i.id) as Required<ICollectionItem>[]
-    const childrenNotes = items?.filter(i => i.type === 'note' && i.id) as Required<ICollectionItem>[]
-    const childrenDocuments = items?.filter(i => i.type === 'document' && i.id) as Required<ICollectionItem>[]
-    const childrenWhiteboards = items?.filter(i => i.type === 'whiteboard' && i.id) as Required<ICollectionItem>[]
     const childrenMetas = items?.filter(i => i.type === 'meta' && i.id) as Required<ICollectionItem>[]
+
     return {
       childrenCollections,
-      childrenNotes,
-      childrenDocuments,
-      childrenWhiteboards,
       childrenMetas
     }
   }, [items])
 
+  const allMetas = useGlobalAtomValue(metaObjectsAtom)
+  const allCollections = useGlobalAtomValue(collectionsAtom)
+
+  const childrenCollectionsSize = childrenCollections.filter(u => !allCollections.get(u.id)?.deleted).length
+  const childrenMetasSize = childrenMetas.filter(i => !allMetas.get(i.id)?.deleted && allMetas.has(i.id)).length
+
+  const childrenLength = childrenCollectionsSize + childrenMetasSize
   const [hideChildren, toggleHideChildren] = useToggle(true)
 
   const [editModalVisible, toggleEditModalVisible] = useToggle(false)
@@ -86,10 +86,9 @@ const SidebarCollectionItem: FC<ISidebarItem> = memo(({ id, parentId, parentType
     <Content
       flex
       column
-      className={css({
-        color: '#5f6065',
+      style={{
         userSelect: 'none'
-      })}
+      }}
     >
       <Modal noStyle visible={editModalVisible} onClose={toggleEditModalVisible}>
         <CollectionForm
@@ -129,6 +128,7 @@ const SidebarCollectionItem: FC<ISidebarItem> = memo(({ id, parentId, parentType
           flex
           onClick={toggleHideChildren}
           alignItems="center"
+          justifyContent="space-between"
           className={css([
             {
               cursor: 'pointer',
@@ -137,6 +137,7 @@ const SidebarCollectionItem: FC<ISidebarItem> = memo(({ id, parentId, parentType
               padding: 2,
               margin: 2,
               paddingLeft: 14,
+              paddingRight: 5,
               ':hover': {
                 background: 'rgba(0,0,0,0.07)'
               }
@@ -144,19 +145,22 @@ const SidebarCollectionItem: FC<ISidebarItem> = memo(({ id, parentId, parentType
             hovered && ClassName.Drag.droppableItemHovered(droppable)
           ])}
         >
-          <Icon
-            className={css({
-              transform: !hideChildren ? 'rotate(90deg)' : undefined,
-              transition: 'all 0.2s ease',
-              transformOrigin: 'center',
-              position: 'absolute',
-              left: -14
-            })}
-            size={12}
-            theme="filled"
-            name="park-right-one"
-          />
-          {collection && <IconNameItem name={collection.name} color={collection.color} icon={collection.icon || 'park-folder-close'} />}
+          <Content flex>
+            <Icon
+              className={css({
+                transform: !hideChildren ? 'rotate(90deg)' : undefined,
+                transition: 'all 0.2s ease',
+                transformOrigin: 'center',
+                position: 'absolute',
+                left: -14
+              })}
+              size={12}
+              theme="filled"
+              name="park-right-one"
+            />
+            {collection && <IconNameItem name={collection.name} color={collection.color} icon={collection.icon || 'park-folder-close'} />}
+          </Content>
+          {childrenLength ? childrenLength : undefined}
         </Content>
       </AnimatePopover>
       <AnimatePresence>
@@ -177,15 +181,6 @@ const SidebarCollectionItem: FC<ISidebarItem> = memo(({ id, parentId, parentType
           >
             {childrenCollections?.map(i => (
               <SidebarCollectionItem key={i.id} id={i.id} parentId={id} parentType="collection" />
-            ))}
-            {childrenDocuments?.map(i => (
-              <SidebarDocumentItem key={i.id} id={i.id} parentId={id} parentType="collection" />
-            ))}
-            {childrenNotes?.map(i => (
-              <SidebarNoteItem key={i.id} id={i.id} parentId={id} parentType="collection" />
-            ))}
-            {childrenWhiteboards.map(i => (
-              <SidebarWhiteboardItem key={i.id} id={i.id} parentId={id} parentType="collection" />
             ))}
             {childrenMetas.map(i => (
               <SidebarObjectItem key={i.id} id={i.id} parentId={id} parentType="collection" />

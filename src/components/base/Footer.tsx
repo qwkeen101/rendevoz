@@ -17,9 +17,7 @@ const Footer: FC<FooterProps> = ({ onBack, onSubmit, submitText = 'submit', back
     <Content flex alignItems="center" justifyContent="space-between">
       <Button
         style={{
-          color: '#64707d',
-          background: 'transparent',
-          padding: '6px 18px 6px 6px',
+          padding: '6px 18px',
           boxShadow: 'none',
           marginRight: 30
         }}
@@ -29,7 +27,6 @@ const Footer: FC<FooterProps> = ({ onBack, onSubmit, submitText = 'submit', back
       </Button>
       <Button
         style={{
-          background: '#8590ae',
           boxShadow: 'none',
           padding: '6px 18px',
           borderRadius: 6

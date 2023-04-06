@@ -1,24 +1,21 @@
 import { AnimatePopover, Content, Toolbar, WithBorder } from '@/components/base'
 import { GlobalGraphInstance, useRenderObject } from '@/core'
 import { useToggle } from '@/hooks'
-import { useGlobalAtomValue } from '@/hooks/jotai'
 import { PageSize } from '~/typings'
-import { globalStore, LabelStore } from '@/stores'
-import { labelsAtom } from '@/stores/label.store'
+import { globalStore, LabelStore, ObjectStore } from '@/stores'
 import { metaObjectsAtom } from '@/stores/meta.store'
-import { selectAtom } from 'jotai/utils'
-import { memo, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { memo, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { Rnd } from 'react-rnd'
 import { IObjectLabel } from '~/typings/data'
 
-const ObjectLabel = ({ labelId, pageSize, documentId }: { labelId: number; pageSize: PageSize; documentId: number }) => {
-  const labelAtom = useMemo(() => selectAtom(labelsAtom, l => l.get(labelId)), [labelId])
-  const label = useGlobalAtomValue(labelAtom) as IObjectLabel
+const ObjectLabel = ({ labelId, pageSize }: { labelId: number; pageSize: PageSize }) => {
+  const label = ObjectStore('pdfLabel').useValue(labelId) as IObjectLabel
   const { renderWhole, renderExpand, metaObject } = useRenderObject({ metaObjectId: label.metaObjectId })
   const [innerPosition, setInnerPosition] = useState<{ x: number; y: number }>()
   const [top, left] = label?.rect || []
   const [popoverVisible, togglePopoverVisible] = useToggle(false)
   const [expanded, toggleExpanded] = useToggle(false)
+  const store = ObjectStore('pdfLabel')
   const rndRef = useRef<Rnd>(null)
   useLayoutEffect(() => {
     const { width, height } = pageSize
@@ -39,12 +36,12 @@ const ObjectLabel = ({ labelId, pageSize, documentId }: { labelId: number; pageS
     <Rnd
       ref={rndRef}
       onDragStop={(e, data) => {
-        LabelStore.updateLabel({ id: labelId, rect: [data.y / pageSize.height, data.x / pageSize.width] })
+        store.updateOne({ id: labelId, rect: [data.y / pageSize.height, data.x / pageSize.width] }, { silent: true })
       }}
       position={innerPosition}
       bounds="parent"
       onResizeStop={(e, dir, ele, delta, pos) => {
-        LabelStore.updateLabel({ id: labelId, rect: [pos.y / pageSize.height, pos.x / pageSize.width] })
+        store.updateOne({ id: labelId, rect: [pos.y / pageSize.height, pos.x / pageSize.width] }, { silent: true })
       }}
       dragHandleClassName={expanded ? 'dragHandle' : undefined}
       enableResizing={expanded}
@@ -66,9 +63,13 @@ const ObjectLabel = ({ labelId, pageSize, documentId }: { labelId: number; pageS
         padding={10}
         disableIntersection
         content={
-          <WithBorder>
+          <WithBorder padding="0px 12px" borderRadius={999}>
             <Toolbar>
-              <Toolbar.Item tooltip="Delete" iconName="park-delete" onClick={() => LabelStore.deleteLabel(labelId)} />
+              <Toolbar.Item
+                tooltip="Delete"
+                iconName="park-delete"
+                onClick={() => ObjectStore('pdfLabel').deleteOneById(labelId, { force: true })}
+              />
               <Toolbar.Item
                 tooltip="Graph"
                 iconName="park-share-one"
@@ -77,11 +78,6 @@ const ObjectLabel = ({ labelId, pageSize, documentId }: { labelId: number; pageS
                   GlobalGraphInstance?.open(globalStore.get(metaObjectsAtom).get(label.metaObjectId)!)
                 }
               />
-              <Toolbar.Item
-                tooltip={expanded ? 'Fold Up' : 'Expand'}
-                iconName={expanded ? 'park-collapse-text-input' : 'park-expand-text-input'}
-                onClick={toggleExpanded}
-              ></Toolbar.Item>
             </Toolbar>
           </WithBorder>
         }
@@ -116,9 +112,16 @@ const ObjectLabel = ({ labelId, pageSize, documentId }: { labelId: number; pageS
           ) : (
             renderWhole({
               titleOptions: {
+                ellipsisLine: 1,
                 style: {
                   fontSize: 14,
                   cursor: 'pointer'
+                }
+              },
+              descriptionOptions: {
+                ellipsisLine: 2,
+                style: {
+                  fontSize: 13
                 }
               },
               containerStyle: {

@@ -44,8 +44,7 @@ export const MenuItem = React.forwardRef(
           {
             minWidth: 150,
             cursor: 'pointer',
-            userSelect: 'none',
-            color: '#5f6065'
+            userSelect: 'none'
           }
         ])}
         variants={variants}

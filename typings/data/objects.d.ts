@@ -30,3 +30,9 @@ export interface IWebpageLabel extends IBase {
   webpageId: number
   highlightId: number
 }
+
+export interface INoteBlock extends IBase {
+  blockId: number
+  noteId: number
+  specType: 'noteBlock'
+}

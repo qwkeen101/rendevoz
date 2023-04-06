@@ -4,6 +4,7 @@ import classNames from 'classnames'
 import { cloneElement, createElement, CSSProperties, FC, MouseEventHandler, ReactNode } from 'react'
 import Tooltip from '../Tooltip'
 import styles from './index.module.less'
+import ClassName from '@/styles/classNames'
 
 interface ToolbarItemProps {
   onClick?: MouseEventHandler
@@ -59,10 +60,9 @@ const ToolbarItem: FC<ToolbarItemProps> = ({
       key: iconName,
       'data-active': isActive,
       'data-disabled': disabled,
-      className: classNames(className, styles.icon),
+      className: classNames(className, ClassName.circleButton(undefined, 4)),
       style: {
         ...style,
-        color: primaryColor,
         cursor: disabled ? 'not-allowed' : style?.cursor
       },
       onPointerDown: clickPreventDefault ? e => e.preventDefault() : undefined,

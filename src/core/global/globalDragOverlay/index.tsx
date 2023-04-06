@@ -6,77 +6,11 @@ import { useAtom } from 'jotai/react'
 import React from 'react'
 import { memo, ReactElement, useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { Path } from 'slate'
-import { CustomElement } from '~/typings'
+import { GlobalDraggingDetails } from '~/typings'
 import useOverlayDrop from './useOverlayDrop'
 import { globalStore } from '@/stores'
-import { ILabel, IShapeLabel } from '~/typings/data'
 
-export type AvaliableGlobalDraggingElements =
-  | {
-      type: 'noteElement'
-      blockId: number
-      element: CustomElement
-      path: Path
-      elements: CustomElement[]
-      content: string
-      noteId: number
-      editorId: string
-      metaId?: number
-    }
-  // something inside pdf, not pdf itself
-  | {
-      type: 'pdfElement'
-      labelId: number
-      pdfId: number
-      content?: string
-      page?: number
-    }
-  | {
-      type: 'metaElement'
-      metaId: number
-    }
-  // pdf itself
-  | {
-      type: 'pdf'
-      pdfId: number
-    }
-  | {
-      type: 'collection'
-      collectionId: number
-    }
-  | {
-      type: 'note'
-      noteId: number
-    }
-  | {
-      type: 'image'
-      url: string
-    }
-  | {
-      type: 'whiteboard'
-      whiteboardId: number
-    }
-  | ({
-      type: 'pendingPdfElement'
-      labelType: ILabel['type']
-    } & {
-      labelType: 'shape'
-      shapeType: IShapeLabel['shape']
-    })
-  | {
-      type: 'webpage label'
-      highlightId: number
-      noteId: number
-      webpageId: number
-      textContent?: string
-    }
-  | {
-      type: 'note label'
-      highlightId: number
-      noteId: number
-      textContent?: string
-    }
+export type AvaliableGlobalDraggingElements = GlobalDraggingDetails
 interface IGlobalDragOverlay {
   addDragElements: (nodes: HTMLElement | HTMLElement[] | ReactElement | ReactElement[]) => void
   startDrag: () => void

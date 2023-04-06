@@ -1,5 +1,5 @@
 import ClassName from '@/styles/classNames'
-import { useTranslation } from 'react-i18next';
+import { useTranslation } from 'react-i18next'
 import { Icon } from '..'
 import EmojiPicker from '../picker/emojiPicker'
 

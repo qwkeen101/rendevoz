@@ -1,3 +1,5 @@
+import ClassName from '@/styles/classNames'
+import classNames from 'classnames'
 import { CSSProperties, DetailedHTMLProps, FC, forwardRef, HTMLAttributes, MouseEventHandler, PropsWithChildren } from 'react'
 
 interface WithBorderProps extends DetailedHTMLProps<HTMLAttributes<HTMLDivElement>, HTMLDivElement> {
@@ -9,28 +11,18 @@ interface WithBorderProps extends DetailedHTMLProps<HTMLAttributes<HTMLDivElemen
   onClick?: MouseEventHandler
   contentEditable?: boolean
   disableClosePopover?: boolean
+  padding?: CSSProperties['padding']
 }
 
 const WithBorder: FC<PropsWithChildren<WithBorderProps>> = (
-  {
-    borderRadius = 5,
-    boxShadowBorder = true,
-    solidBorder = false,
-    disableClosePopover = false,
-    children,
-    style,
-    onClick,
-    className,
-    contentEditable,
-    ...rest
-  },
+  { borderRadius = 5, disableClosePopover = false, children, style, onClick, className, contentEditable, padding, ...rest },
   ref
 ) => {
   const DefaultBorder: CSSProperties = {
-    boxShadow: boxShadowBorder ? 'rgba(0, 0, 0, 0.24) 0px 3px 8px' : undefined,
-    border: solidBorder ? '1px solid grey' : undefined,
+    // boxShadow: boxShadowBorder ? 'rgba(0, 0, 0, 0.24) 0px 3px 8px' : undefined,
+    border: '1px solid rgba(0,0,0,0.1)',
     borderRadius: borderRadius,
-    backgroundColor: 'white',
+    padding,
     ...style
   }
   const handleClick = e => {
@@ -44,7 +36,7 @@ const WithBorder: FC<PropsWithChildren<WithBorderProps>> = (
       {...rest}
       onClick={handleClick}
       contentEditable={contentEditable}
-      className={className}
+      className={classNames(className, ClassName.Background.pseudoBlubBackground)}
       style={DefaultBorder}
     >
       {children}

@@ -110,7 +110,10 @@ export interface ListItemElement {
   type: 'list-item'
   children: Descendant[]
 }
-
+export interface OrderListItemElement {
+  type: 'order-list-item'
+  children: Descendant[]
+}
 export interface MentionElement {
   type: 'mention'
   character: string
@@ -212,3 +215,4 @@ export type CommonElement =
   | PreElement
   | SupElement
   | FigCaptionElement
+  | OrderListItemElement

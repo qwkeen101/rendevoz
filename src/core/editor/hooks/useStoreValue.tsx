@@ -1,4 +1,3 @@
-import createNoteStore from '@/stores/note.store'
 import { useEffect, useRef } from 'react'
 import { INote } from '~/typings/data'
 import { CustomEditor } from '~/typings'
@@ -10,6 +9,7 @@ import { toast } from 'react-hot-toast'
 import { Notification } from '@/components'
 import getSetting from '@/core/setting/getSetting'
 import { useEventHandler, useGlobalEventEmitter } from '@/events'
+import { NoteStore, ObjectStore } from '@/stores'
 const initial = [
   {
     id: Id.getId(),
@@ -19,7 +19,7 @@ const initial = [
 ]
 const EditorInstanceMap = new Map<number, Set<CustomEditor>>()
 const useStoreValue = (note: INote | undefined, editor: CustomEditor, onContentRendered?: (editor: CustomEditor) => void) => {
-  const { saveNoteAsBuffer, getNoteValue, updateNote, saveBlocks } = createNoteStore()
+  const { saveNoteAsBuffer, getNoteValue, saveBlocks } = NoteStore
   const contentRef = useRef<Descendant[]>()
   const noteId = note?.id
   const contentId = note?.contentId
@@ -83,16 +83,19 @@ const useStoreValue = (note: INote | undefined, editor: CustomEditor, onContentR
       emitter.removeListener('editor', handler)
       window.removeEventListener('beforeunload', cleanUp)
       const contentId = saveNoteAsBuffer(editor.children, note?.contentId)
-      const result = []
-      serializeEditor(editor, editor, result)
-      result.forEach(i => (i.noteId = noteId))
-      saveBlocks(result)
+      // const result = []
+      // serializeEditor(editor, editor, result)
+      // result.forEach(i => (i.noteId = noteId))
+      // saveBlocks(result)
       // doc.destroy()
       if (note?.contentId !== contentId) {
-        updateNote({
-          id: noteId,
-          contentId
-        })
+        ObjectStore('note').updateOne(
+          {
+            id: noteId,
+            contentId
+          },
+          { silent: true }
+        )
       }
     }
   }, [contentId])

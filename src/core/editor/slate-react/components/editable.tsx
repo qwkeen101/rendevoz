@@ -159,7 +159,7 @@ export const Editable = (props: EditableProps) => {
     estimateSize: idx => (editor.children[idx].hide === true ? 0 : 30),
     getScrollElement: () => scrollElement?.current || document.body,
     overscan: readOnly ? editor.children.length : 20,
-    paddingEnd: 300,
+    paddingEnd: readOnly ? 0 : 300,
     scrollPaddingEnd: 400,
     measureElement: (ele, entry, instance) => {
       const getSize = () => ele.getBoundingClientRect().height

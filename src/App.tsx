@@ -16,33 +16,35 @@ import { useTranslation } from 'react-i18next'
 import { ErrorBoundary } from 'react-error-boundary'
 import ErrorFallback from './components/base/ErrorFallBack'
 import AuthenticatedLayout from './components/base/authenticatedLayout'
-import '@/assets/pdf.min.js'
+import '@/core/pdf/core/types/pdf.min.js'
 import PdfJsUrl from '@/assets/pdf.worker.min.js?url'
+import ThemeSwitcher from './ThemeSwitcher'
 
+export function getOS() {
+  const userAgent = window.navigator.userAgent.toLowerCase(),
+    macosPlatforms = /(macintosh|macintel|macppc|mac68k|macos)/i,
+    windowsPlatforms = /(win32|win64|windows|wince)/i,
+    iosPlatforms = /(iphone|ipad|ipod)/i
+  let os = null
+
+  if (macosPlatforms.test(userAgent)) {
+    os = 'macos'
+  } else if (iosPlatforms.test(userAgent)) {
+    os = 'ios'
+  } else if (windowsPlatforms.test(userAgent)) {
+    os = 'windows'
+  } else if (/android/.test(userAgent)) {
+    os = 'android'
+  } else if (!os && /linux/.test(userAgent)) {
+    os = 'linux'
+  }
+
+  return os
+}
 const App = () => {
   const PdfJs = window['pdfjs-dist/build/pdf']
   PdfJs.GlobalWorkerOptions.workerSrc = PdfJsUrl
-  function getOS() {
-    const userAgent = window.navigator.userAgent.toLowerCase(),
-      macosPlatforms = /(macintosh|macintel|macppc|mac68k|macos)/i,
-      windowsPlatforms = /(win32|win64|windows|wince)/i,
-      iosPlatforms = /(iphone|ipad|ipod)/i
-    let os = null
 
-    if (macosPlatforms.test(userAgent)) {
-      os = 'macos'
-    } else if (iosPlatforms.test(userAgent)) {
-      os = 'ios'
-    } else if (windowsPlatforms.test(userAgent)) {
-      os = 'windows'
-    } else if (/android/.test(userAgent)) {
-      os = 'android'
-    } else if (!os && /linux/.test(userAgent)) {
-      os = 'linux'
-    }
-
-    return os
-  }
   const os = getOS()
   const [user] = useUser()
   const [setting] = useSetting()
@@ -54,6 +56,7 @@ const App = () => {
   }, [setting.general.language])
   return (
     <ErrorBoundary FallbackComponent={ErrorFallback}>
+      <ThemeSwitcher />
       {os !== 'macos' && <TitleBar />}
       <Notification />
       {user ? (

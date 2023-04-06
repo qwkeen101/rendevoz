@@ -5,14 +5,14 @@ import Id from '@/utils/id'
 import { css } from '@emotion/css'
 import { useMemo, useRef, useState } from 'react'
 import { Flipped, Flipper } from 'react-flip-toolkit'
-import useViewer from '../useViewer'
 import PdfInfo from './Info'
 import PdfOutline from './Outline'
 import PdfSearch from './Search'
 import PdfLabels from './Label'
 import { IPdfDocument } from '~/typings/data'
+import { usePdfViewer } from '@/core'
 const PdfFloatBar = ({ document }: { document?: IPdfDocument }) => {
-  const viewer = useViewer()
+  const viewer = usePdfViewer()
   const id = useMemo(() => Id.getStrId(), [])
   const container = useRef(null)
   const [popState, setPopState] = useState<
@@ -29,15 +29,15 @@ const PdfFloatBar = ({ document }: { document?: IPdfDocument }) => {
         return (
           <Flipped inverseFlipId={id}>
             <div style={{ width: 180, fontFamily: 'Muli' }}>
-              <Content flex gap={10} className={ClassName.flatButton()} onClick={() => viewer.current?.zoomOut()}>
+              <Content flex gap={10} className={ClassName.flatButton()} onClick={() => viewer?.zoomOut?.()}>
                 <Icon name="park-zoom-out" />
                 Zoom out
               </Content>
-              <Content flex gap={10} className={ClassName.flatButton()} onClick={() => viewer.current?.zoomIn()}>
+              <Content flex gap={10} className={ClassName.flatButton()} onClick={() => viewer?.zoomIn?.()}>
                 <Icon name="park-zoom-in" />
                 Zoom in
               </Content>
-              <Content flex gap={10} className={ClassName.flatButton()} onClick={() => viewer.current?.autoFit()}>
+              <Content flex gap={10} className={ClassName.flatButton()} onClick={() => viewer?.autoFit?.()}>
                 <Icon name="park-fullwidth" />
                 Full width
               </Content>
@@ -46,7 +46,7 @@ const PdfFloatBar = ({ document }: { document?: IPdfDocument }) => {
                 gap={10}
                 className={ClassName.flatButton()}
                 onClick={() => {
-                  viewer.current?.togglePan()
+                  viewer?.togglePan?.()
                   togglePan()
                 }}
               >

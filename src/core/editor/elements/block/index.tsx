@@ -5,6 +5,7 @@ import { ReactEditor, RenderElementProps, useSlateStatic } from '../../slate-rea
 import { CustomElement } from '~/typings'
 import { motion, AnimatePresence } from 'framer-motion'
 import styles from './index.module.less'
+import './index.less'
 import { scrollToTarget } from '../../utils/positions/scroll'
 import { SELECT_AREA_MAP, ID_TO_ELEMENTS_MAP, SELECTED_BLOCKS_MAP } from '../../weakMaps'
 import useIsSelecting from '../../hooks/useIsSelecting'
@@ -212,14 +213,15 @@ const Block: FC<React.DetailedHTMLProps<React.HTMLAttributes<HTMLDivElement>, HT
           ...rest.style
         }}
         className={classNames(
-          styles.BlockCommon,
+          'BlockCommon',
           type === 'columnList' && styles.ColumnListBlock,
           type === 'column' && styles.ColumnBlock,
           type?.startsWith('heading') && styles.HeadingBlock,
+          type === 'block-quote' && styles.BlockquoteBlock,
           cardType === 'slim' && styles.SlimCardBlock,
           cardType === 'line' && styles.LineCardBlock,
           (cardType === 'wide' || (CardBlocks.includes(type) && cardType === undefined)) && styles.WideCardBlock,
-          type !== 'column' && type !== 'columnList' && !type?.startsWith('heading') && styles.ParagraphBlock,
+          type !== 'column' && type !== 'columnList' && !type?.startsWith('heading') && 'ParagraphBlock',
           isGlobalDragging &&
             css({
               pointerEvents: 'auto'

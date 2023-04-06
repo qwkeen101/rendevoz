@@ -3,12 +3,13 @@ import { atom } from 'jotai/vanilla'
 import { ITag } from '~/typings/data'
 import { initializeLocalStore } from './base.store'
 import { IStoreDeprecated } from './store.type'
+import { ObjectStore } from '.'
 
 export const TagsAtom = atom<Map<number, ITag>>(new Map())
 
 export const TagToTagAtom = atom<Map<string, ITag>>(get => {
   const map = new Map<string, ITag>()
-  get(TagsAtom).forEach(i => {
+  get(ObjectStore('tag').objectMapAtom).forEach(i => {
     i.name && map.set(i.name, i)
   })
   return map

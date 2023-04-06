@@ -185,6 +185,7 @@ export interface TabData extends TabBase, DockDataBase {
   title: React.ReactChild
   content: React.ReactElement | ((tab: TabData) => React.ReactElement)
   closable?: boolean
+  objectId?: number
   onTabClick?: MouseEventHandler
   /**
    * - when value is true: content will always reuse the react component thus allows the component to keep its internal state
@@ -257,6 +258,7 @@ export interface GlobalData {
   onTabClose?: (tab: TabData) => void
   noteIds?: number[]
   currentFocusedPanelId?: string
+  disableDrag?: boolean
 }
 export interface TabPaneCache {
   id: string

@@ -1,7 +1,7 @@
 import { Provider, useAtomValue } from 'jotai/react'
 import { createStore } from 'jotai/vanilla'
 import createPanZoom, { PanZoom } from 'panzoom'
-import { memo, useEffect, useLayoutEffect, useMemo, useRef } from 'react'
+import { memo, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import TreeEdgeContainer from './EdgeContainer'
 import { FlowAtom, useFlow, WhiteboardAtom } from './hooks'
 import TreeNodeContainer from './NodeContainer'
@@ -11,14 +11,17 @@ import useWhiteboardSelect from './useWhiteboardSelect'
 import useWhiteboardAutoPan from './useWhiteboardAutoPan'
 import WhiteboardSetting from './WhiteboardSetting'
 import useWhiteboardDrop from './useWhiteboardDrop'
-import useWhiteboardStore, { whiteboardsAtom } from '@/stores/whiteboard.store'
-import { globalStore } from '@/stores'
+import useWhiteboardStore from '@/stores/whiteboard.store'
+import { MetaStore, ObjectStore, globalStore } from '@/stores'
 import FlowManager from './FlowManager'
 import { IWhiteboard } from '~/typings/data'
 import WhiteboardMiniMap from './minimap/WhiteboardMinimap'
 import { Content } from '@/components'
 import { useSetting } from '../setting'
+import { useGlobalAtomValue } from '@/hooks'
+import useWhiteboardSidebar from './useWhiteboardSidebar'
 
+type SidebarProps = Parameters<typeof useWhiteboardSidebar>[0]
 const WhiteboardInner = memo(({ id, enableMiniMap = true }: { id: number; enableMiniMap?: boolean }) => {
   const containerRef = useRef<HTMLDivElement>(null)
   const flow = useFlow()
@@ -28,6 +31,7 @@ const WhiteboardInner = memo(({ id, enableMiniMap = true }: { id: number; enable
   const scopedEmitter = useScopedEventEmitter()
   const { updateWhiteboard } = useWhiteboardStore()
   const whiteboard = useAtomValue(WhiteboardAtom)
+  const { addTab, render } = useWhiteboardSidebar()
   const [setting] = useSetting()
   useLayoutEffect(() => {
     if (flow && containerRef.current) {
@@ -83,10 +87,13 @@ const WhiteboardInner = memo(({ id, enableMiniMap = true }: { id: number; enable
       flow.panzoom = panzoom
       return () => {
         const transform = panzoom.getTransform()
-        updateWhiteboard({
-          id,
-          lastViewport: transform
-        })
+        ObjectStore('whiteboard').updateOne(
+          {
+            id,
+            lastViewport: transform
+          },
+          { silent: true }
+        )
         panzoom.dispose()
         emitter.removeListener('global', handler)
       }
@@ -100,6 +107,33 @@ const WhiteboardInner = memo(({ id, enableMiniMap = true }: { id: number; enable
       panzoom?.moveTo(lastViewport.x, lastViewport.y)
     }
   }, [whiteboard?.lastViewport])
+  flow.onNodeFocus = node => {
+    switch (node.type) {
+      case 'metaObject':
+        {
+          const { metaObjectId } = node
+          if (metaObjectId) {
+            MetaStore.getMetaObjectById(metaObjectId).then(async meta => {
+              if (meta) {
+                if (meta.objectId) {
+                  const target = await ObjectStore(meta.type).getOneById(meta.objectId)
+                  if (target) {
+                    switch (target.specType) {
+                      case 'pdf':
+                      case 'note':
+                        addTab(target.specType, meta.objectId)
+                    }
+                  }
+                }
+              }
+            })
+          }
+        }
+        break
+      case 'note':
+        addTab('note', node.noteId)
+    }
+  }
   const { renderSelect } = useWhiteboardSelect(containerRef)
   useWhiteboardAutoPan()
   useWhiteboardDrop()
@@ -119,10 +153,11 @@ const WhiteboardInner = memo(({ id, enableMiniMap = true }: { id: number; enable
         <TreeNodeContainer />
         {renderSelect()}
       </div>
+      <div style={{ position: 'absolute', right: 0, top: 0, bottom: 0 }}>{render()}</div>
       <div
         style={{
           position: 'absolute',
-          right: 15,
+          left: 15,
           top: 15
         }}
       >
@@ -154,9 +189,12 @@ export const Whiteboard = memo(
     enableMiniMap?: boolean
   }) => {
     const previousWhiteboard = useRef<IWhiteboard>()
+    const whiteboardAtom = ObjectStore('whiteboard').createAtom(whiteboardId)
+    const whiteboard = useGlobalAtomValue(whiteboardAtom)
     const store = useMemo(() => {
       const store = createStore()
-      const whiteboard = globalStore.get(whiteboardsAtom).get(whiteboardId)
+      const whiteboard = globalStore.get(whiteboardAtom)
+      console.log(whiteboard)
       previousWhiteboard.current = whiteboard
       store.set(WhiteboardAtom, whiteboard)
       const flowManager = new FlowManager()
@@ -164,11 +202,12 @@ export const Whiteboard = memo(
       store.set(FlowAtom, flowManager)
       onTabTitleChange?.(whiteboard?.name)
       return store
-    }, [])
+    }, [whiteboard?.id])
     useEffect(() => {
-      const unsub = globalStore.sub(whiteboardsAtom, () => {
-        const whiteboard = globalStore.get(whiteboardsAtom).get(whiteboardId)
+      const unsub = globalStore.sub(whiteboardAtom, () => {
+        const whiteboard = globalStore.get(whiteboardAtom)
         const prev = previousWhiteboard.current
+        console.log('sub change')
         previousWhiteboard.current = whiteboard
         if (prev && prev !== whiteboard) {
           store.set(WhiteboardAtom, whiteboard)
@@ -178,7 +217,7 @@ export const Whiteboard = memo(
         }
       })
       return unsub
-    }, [])
+    }, [whiteboard?.id])
     return <Provider store={store}>{whiteboardId && <WhiteboardInner id={whiteboardId} enableMiniMap={enableMiniMap} />}</Provider>
   }
 )

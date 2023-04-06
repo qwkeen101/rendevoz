@@ -1,7 +1,7 @@
 import { css } from '@emotion/css'
-import { MouseEventHandler, ReactNode } from 'react'
+import { FC, MouseEventHandler, ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Content, Icon, Tooltip } from '../../../components/base'
+import { Button, Content, Icon, Tooltip, Menu } from '@/components'
 import { BasicElements, BlockElements, InlineElements, MediaElements } from '../consts/elements'
 
 type Element = {
@@ -9,7 +9,7 @@ type Element = {
   name: string
   tooltip: string
 }
-const basic: Element[] = [
+export const basic: Element[] = [
   {
     icon: 'park-font-size',
     name: BasicElements.Paragraph,
@@ -41,12 +41,17 @@ const basic: Element[] = [
     tooltip: 'Bullet list'
   },
   {
+    icon: 'park-ordered-list',
+    name: BasicElements.OrderedList,
+    tooltip: 'Ordered List'
+  },
+  {
     icon: 'park-quote',
     name: BasicElements.Blockquote,
     tooltip: 'Blockquote'
   }
 ]
-const inline: Element[] = [
+export const inline: Element[] = [
   {
     icon: 'park-emotion-happy',
     name: InlineElements.Emoji,
@@ -58,7 +63,7 @@ const inline: Element[] = [
   //   tooltip: 'Link'
   // }
 ]
-const block: Element[] = [
+export const block: Element[] = [
   {
     icon: 'park-check-correct',
     name: BlockElements.ToDo,
@@ -70,12 +75,12 @@ const block: Element[] = [
     tooltip: 'Table'
   }
 ]
-const media: Element[] = [
+export const media: Element[] = [
   {
     icon: 'park-add-pic',
     name: MediaElements.Image,
     tooltip: 'Image'
-  },
+  }
   // {
   //   icon: 'park-video-file',
   //   name: MediaElements.Video,
@@ -124,6 +129,83 @@ const EditorElementsMenu = (props: { onAddElement: (blockName: string) => void }
         <Item key={i.name} onClick={() => onAddElement(i.name)} {...i} />
       ))}
     </Content>
+  )
+}
+type LayoutItem = Parameters<typeof Menu.NavigationMenu>[0]['layout'][0]
+export const EditorSlashElementsMenu: typeof EditorElementsMenu = ({ onAddElement }) => {
+  const { t } = useTranslation()
+  return (
+    <Menu.NavigationMenu
+      style={{
+        display: 'flex',
+        flexDirection: 'column',
+        padding: 6,
+        maxHeight: 600,
+        overflowY: 'auto',
+        width: 200
+      }}
+      onClick={name => onAddElement(name)}
+      layout={[
+        {
+          type: 'custom',
+          children: <Title>{t('editor.basic')}</Title>
+        },
+        {
+          type: 'item',
+          icon: 'park-share-one',
+          text: t('editor.inline metaobject'),
+          name: 'inline-metaObject'
+        },
+        ...basic.map(
+          b =>
+            ({
+              type: 'item',
+              icon: b.icon,
+              text: t(`editor.${b.name}`),
+              name: b.name
+            } as LayoutItem)
+        ),
+        {
+          type: 'custom',
+          children: <Title>{t('editor.inline')}</Title>
+        },
+        ...inline.map(
+          i =>
+            ({
+              type: 'item',
+              icon: i.icon,
+              text: t(`editor.${i.name}`),
+              name: i.name
+            } as LayoutItem)
+        ),
+        {
+          type: 'custom',
+          children: <Title>{t('editor.block')}</Title>
+        },
+        ...block.map(
+          i =>
+            ({
+              type: 'item',
+              icon: i.icon,
+              text: t(`editor.${i.name}`),
+              name: i.name
+            } as LayoutItem)
+        ),
+        {
+          type: 'custom',
+          children: <Title>{t('editor.media')}</Title>
+        },
+        ...media.map(
+          i =>
+            ({
+              type: 'item',
+              icon: i.icon,
+              text: t(`editor.${i.name}`),
+              name: i.name
+            } as LayoutItem)
+        )
+      ]}
+    />
   )
 }
 const Title = ({ children }: { children: ReactNode }) => {
@@ -187,24 +269,6 @@ const Item = ({
   onClick?: MouseEventHandler
 }) => {
   const { t } = useTranslation()
-  return (
-    <Content
-      onClick={onClick}
-      className={css({
-        borderRadius: 4,
-        padding: 4,
-        transition: 'all 0.2s ease',
-        cursor: 'pointer',
-        ':hover': {
-          background: 'rgba(0,0,0,0.06)'
-        }
-      })}
-      flex
-      gap={10}
-    >
-      <Icon name={icon} />
-      <span>{t(`editor.${name}`)}</span>
-    </Content>
-  )
+  return <Button.IconButton onClick={onClick} text={t(`editor.${name}`)} icon={icon} />
 }
 export default EditorElementsMenu

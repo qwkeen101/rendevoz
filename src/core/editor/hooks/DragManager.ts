@@ -2,7 +2,7 @@ import EventEmitter from '@/events/eventEmitter'
 import Id from '@/utils/id'
 import { Transforms } from 'slate'
 import { getElementId, getDistanceBetweenPointAndElement } from '@/utils'
-import { GlobalDragOverlayInstance } from '@/core'
+import { GlobalDragOverlayInstance, ReactEditor } from '@/core'
 import { CustomEditor, CustomElement } from '~/typings'
 import { searchBlock } from '../utils/algorithm'
 import moveSingleElement from '../utils/moveSingleElement'
@@ -31,8 +31,6 @@ const getElementType = (element: globalThis.Element) => {
 }
 // in manager we do not change real state of editor, we just process and return result for further processing.
 class DragManager {
-  static globalDraggingEditor: CustomEditor | null = null
-
   private blockElementsArray: HTMLElement[] = []
   private blockElementsMap = new Map<HTMLElement, any>()
   private scrollElement: HTMLElement | null = null
@@ -40,7 +38,6 @@ class DragManager {
   private editor: CustomEditor | null = null
   private indicator: Indicator | null = null
 
-  static dragElementsAdded = false
   public isDraggingFromOtherEditor = false
   public eventEmitter?: EventEmitter
   public onDrop?: (result: DropResult) => void
@@ -56,11 +53,14 @@ class DragManager {
   public onIndicatorChange?: (indicator: Indicator) => void
   prepareDragging = () => {
     if (!this.scrollElement || !this.editor) return
+    const editorNode = ReactEditor.toDOMNode(this.editor, this.editor)
+    const firstChild = editorNode.children[0]
+    if (this.blockElementsArray[0] === firstChild) return
     // document.body.style.cursor = 'grabbing'
     this.blockElementsArray = []
     this.blockElementsMap.clear()
     // get all outermost blocks like columnList block, paragraph block
-    Array.from(this.scrollElement.querySelector(`[role="textbox"]`)?.children || [])
+    Array.from(editorNode.children || [])
       .filter(i => i.getAttribute('data-type') === 'block' && i instanceof HTMLElement)
       .forEach(i => {
         if (!this.scrollElement) return
@@ -92,14 +92,15 @@ class DragManager {
     if (this.editor && id) {
       const targetElement = ID_TO_ELEMENTS_MAP.get(this.editor)?.get(id)
       if (targetElement) {
-        if (direction === 'bottom' && targetElement.getElement().type === 'list-item') {
+        const type = targetElement.getElement().type
+        if (direction === 'bottom' && (type === 'list-item' || type === 'order-list-item')) {
           const targetBound = targetElement.getClientBound()
           const mousePos = {
             x: e.clientX,
             y: e.clientY
           }
           if (targetBound) {
-            const { left, width } = targetBound
+            const { left } = targetBound
             if (mousePos.x - left > 24) {
               shouldNested = true
             }
@@ -117,7 +118,6 @@ class DragManager {
     if (!this.scrollElement || !GlobalDragOverlayInstance?.draggingDetails || !this.editor || this.blockElementsArray.length === 0) {
       return
     }
-
     const dragResult = this.dragResult
     const distanceToScrollElement = getDistanceBetweenPointAndScrollableElement({ x: e.clientX, y: e.clientY }, this.scrollElement)
     const currentBlock = searchBlock(Array.from(this.blockElementsMap.entries()), distanceToScrollElement.top)
@@ -303,10 +303,10 @@ class DragManager {
       if (!draggingEle) return
 
       // this means not dragging something outside editor, such as pdf / pdf element / meta element, etc. And is dragging things of the same note.
-      const isDraggingInSameNoteIdEditor = draggingEle?.type === 'noteElement' && draggingEle.noteId === this.editor.noteId
+      const isDraggingInSameNoteIdEditor = draggingEle?.type === 'noteBlock' && draggingEle.noteId === this.editor.noteId
       // reset cursor
       document.body.style.cursor = 'auto'
-      const isDraggingNoteElement = draggingEle?.type === 'noteElement'
+      const isDraggingNoteElement = draggingEle?.type === 'noteBlock'
       // we need to process this differently
       if (isDraggingNoteElement) {
         if (!draggingEle.element && !draggingEle.elements) return
@@ -367,7 +367,7 @@ class DragManager {
             } = false
         switch (draggingEle.type) {
           // need further process: add meta object
-          case 'pdfElement': {
+          case 'pdfLabel': {
             draggingEle.labelId &&
               (needFurtherProcess = {
                 objectId: draggingEle.labelId

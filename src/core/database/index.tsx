@@ -1,5 +1,5 @@
 import { useDebounceFn, useToggle } from '@/hooks'
-import { pinnedMetaObjectsAtom, undeletedMetaObjectsAtom } from '@/stores/meta.store'
+import { relatedMetaObjectsMapAtom, undeletedMetaObjectsAtom } from '@/stores/meta.store'
 import { globalStore } from '@/stores'
 import ClassName from '@/styles/classNames'
 import { css } from '@emotion/css'
@@ -13,10 +13,11 @@ import { DatabaseCard } from './card/DatabaseCard'
 import { DatabaseFilter } from './filter'
 import { FilterNameSearchAtom, useObjectFilter } from './filter/useObjectFilter'
 import DatabaseListItem from './ListItem'
+import Select from '@/components/base/select'
+import { useTranslation } from 'react-i18next'
 
 export const Database = () => {
   const undeletedMetaObjects = useAtomValue(undeletedMetaObjectsAtom, { store: globalStore })
-  const pinnedMetaObjects = useAtomValue(pinnedMetaObjectsAtom, { store: globalStore })
   const [paginateState, setPaginateState] = useState<{
     itemPerPage: number
     currentPage: number
@@ -31,10 +32,59 @@ export const Database = () => {
   })
   const DatabaseStore = useMemo(() => createStore(), [])
   const setSearch = useSetAtom(FilterNameSearchAtom, { store: DatabaseStore })
+
+  const [sortMode, setSortMode] = useState<'new create' | 'old create' | 'new view' | 'old view' | 'most related'>('new create')
+
   useObjectFilter(ids => {
     const shouldDisplay = undeletedMetaObjects.filter(i => ids.has(i.id))
+    const getSortMethod = (): ((a: MetaObject, b: MetaObject) => number) => {
+      switch (sortMode) {
+        case 'old create':
+          return (a, b) => a.createdAt - b.createdAt
+        case 'old view':
+          return (a, b) => (a.viewAt || 0) - (b.viewAt || 0)
+        case 'new create':
+          return (a, b) => b.createdAt - a.createdAt
+        case 'new view':
+          return (a, b) => (b.viewAt || 0) - (a.viewAt || 0)
+        default:
+          return (a, b) => a.createdAt - b.createdAt
+      }
+    }
+    const sort = getSortMethod()
+    shouldDisplay.sort(sort)
     setDisplayObjects(shouldDisplay)
   }, DatabaseStore)
+  useEffect(() => {
+    const relatedMap = globalStore.get(relatedMetaObjectsMapAtom)
+    const getSortMethod = (): ((a: MetaObject, b: MetaObject) => number) => {
+      switch (sortMode) {
+        case 'old create':
+          return (a, b) => a.createdAt - b.createdAt
+        case 'old view':
+          return (a, b) => (a.viewAt || 0) - (b.viewAt || 0)
+        case 'new create':
+          return (a, b) => b.createdAt - a.createdAt
+        case 'new view':
+          return (a, b) => (b.viewAt || 0) - (a.viewAt || 0)
+        case 'most related':
+          return (a, b) => {
+            const aRelated = relatedMap.get(a.id)?.size || 0
+            const bRelated = relatedMap.get(b.id)?.size || 0
+
+            return bRelated - aRelated
+          }
+        default:
+          return (a, b) => a.createdAt - b.createdAt
+      }
+    }
+    const sort = getSortMethod()
+    setDisplayObjects(s => {
+      s.sort(sort)
+      return [...s]
+    })
+  }, [sortMode])
+
   const { run: debouncedSetSearch } = useDebounceFn(setSearch, { wait: 200 })
 
   const { currentPage, itemPerPage } = paginateState
@@ -54,7 +104,7 @@ export const Database = () => {
               className={css({
                 display: 'grid',
                 gridGap: 35,
-                gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))',
+                gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
                 transition: 'all 0.2s ease',
                 width: '100%',
                 gridAutoFlow: 'dense'
@@ -96,7 +146,13 @@ export const Database = () => {
               flexDirection: 'column',
               transition: 'all 0.2s ease',
               width: '100%',
-              gap: 10
+              gap: 16,
+              '> div': {
+                paddingBottom: '8px',
+                ':not(:last-child)': {
+                  borderBottom: '1px solid rgba(0,0,0,0.05)'
+                }
+              }
             })}
           >
             {paginateObjects.map(i => (
@@ -123,16 +179,72 @@ export const Database = () => {
       overflowContainerRef.current?.removeEventListener('scroll', scrollHandler)
     }
   }, [])
+
+  const { t } = useTranslation()
   return (
     <Provider store={DatabaseStore}>
       <Content flex column gap={16} className={css({ padding: 30, height: '100%' })}>
         <input
-          placeholder="Search For Object"
+          placeholder={t('database.search for object', { object: t('general.object') })}
           onChange={e => debouncedSetSearch(e.target.value)}
-          className={css([ClassName.input(), { borderRadius: 999 }])}
+          className={css([ClassName.input(), { borderRadius: 8 }])}
         />
         <DatabaseFilter />
         <Content flex alignItems="center" justifyContent="space-between">
+          <Content className={ClassName.description()} flex alignItems="center" gap={30}>
+            <Select
+              value={databaseState.renderMode}
+              closeOnSelect
+              onSelect={v => {
+                setDatabaseState({
+                  renderMode: v[0] as typeof databaseState['renderMode']
+                })
+              }}
+              options={[
+                {
+                  value: 'detail card',
+                  children: t('database.detail card')
+                },
+                {
+                  value: 'detail list',
+                  children: t('database.detail list')
+                },
+                {
+                  value: 'title list',
+                  children: t('database.title list')
+                }
+              ]}
+            ></Select>
+            <Select
+              value={sortMode}
+              closeOnSelect
+              onSelect={v => {
+                setSortMode(v[0] as typeof sortMode)
+              }}
+              options={[
+                {
+                  value: 'new create',
+                  children: t('database.recent create')
+                },
+                {
+                  value: 'old create',
+                  children: t('database.earliest create')
+                },
+                {
+                  value: 'new view',
+                  children: t('database.recent view')
+                },
+                {
+                  value: 'old view',
+                  children: t('database.earliest view')
+                },
+                {
+                  value: 'most related',
+                  children: t('database.most related')
+                }
+              ]}
+            ></Select>
+          </Content>
           <Content className={ClassName.description()} flex alignItems="center" gap={20}>
             <Icon
               className={ClassName.circleButton()}
@@ -148,6 +260,7 @@ export const Database = () => {
                 }
               }}
             />
+            {`${currentPage + 1} / ${Math.floor(displayObjects.length / itemPerPage) + 1}`}
             <Icon
               className={ClassName.circleButton()}
               size={20}
@@ -164,7 +277,7 @@ export const Database = () => {
             />
           </Content>
         </Content>
-        <Content fullHeight style={{ margin: '0px -30px -30px' }}>
+        <Content style={{ margin: '0px -30px -30px', height: 0, flexGrow: 1 }}>
           <div
             style={{
               position: 'absolute',
@@ -184,7 +297,7 @@ export const Database = () => {
             style={{
               height: '100%',
               overflowY: 'auto',
-              padding: '0 30px'
+              padding: '0 30px 50px'
             }}
           >
             {renderItems()}
@@ -199,3 +312,4 @@ export { default as useRenderObject } from './useRenderObject'
 
 export * from './filter'
 export * from './card/DatabaseCard'
+export * from './useCreateObject'

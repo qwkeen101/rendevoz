@@ -3,7 +3,7 @@ import { GlobalDragOverlayInstance, useGlobalIsDragging } from '@/core'
 import { GlobalEventHandler } from '@/events/globalEvent'
 import { useGlobalEventEmitter } from '@/events/useEventEmitter'
 import { useMemoizedFn } from '@/hooks'
-import { LabelStore } from '@/stores'
+import { ObjectStore } from '@/stores'
 import Id from '@/utils/id'
 import { useEffect, useState } from 'react'
 import { ILabel, IObjectLabel, IShapeLabel, MetaObject } from '~/typings/data'
@@ -12,7 +12,6 @@ const usePdfDrag = (viewbox: HTMLElement | null | undefined, pdfId: number) => {
   const [isGlobalDragging] = useGlobalIsDragging()
   const [isDraggingInside, setIsDraggingInside] = useState(false)
   const globalEmitter = useGlobalEventEmitter()
-  const { addLabel } = LabelStore
   const mouseEnterHandler = useMemoizedFn((e: MouseEvent) => {
     setIsDraggingInside(true)
   })
@@ -56,7 +55,7 @@ const usePdfDrag = (viewbox: HTMLElement | null | undefined, pdfId: number) => {
                 } as IShapeLabel)
               }
             }
-            addLabel(label)
+            ObjectStore('pdfLabel').addOne(label)
           } else {
             globalEmitter
               .emitWithCallback('global', {
@@ -72,7 +71,7 @@ const usePdfDrag = (viewbox: HTMLElement | null | undefined, pdfId: number) => {
               .then((obj: MetaObject) => {
                 label.type = 'object'
                 Object.assign(label, { metaObjectId: obj.id } as IObjectLabel)
-                addLabel(label)
+                ObjectStore('pdfLabel').addOne(label)
               })
           }
         }

@@ -109,23 +109,6 @@ const withCustomComponent = (editor: CustomEditor) => {
     }
   }
   editor.insertText = (text: string) => {
-    const { selection } = editor
-    if (selection && Range.isCollapsed(selection)) {
-      if (text) {
-        if (Positions.isStartSpacer(editor) || Positions.isEndSpacer(editor)) {
-          const wrapper = Positions.outermostBlock(editor)
-          let nextPath
-          if (Positions.isStartSpacer(editor)) {
-            nextPath = wrapper[1]
-          } else {
-            nextPath = Path.next(wrapper[1])
-          }
-          Transforms.insertNodes(editor, { type: 'paragraph', children: [{ text: text }] }, { at: nextPath })
-          Transforms.select(editor, Editor.end(editor, nextPath))
-          return
-        }
-      }
-    }
     insertText(text)
   }
 
@@ -260,6 +243,15 @@ const withCustomComponent = (editor: CustomEditor) => {
             Transforms.insertNodes(editor, {
               id: Id.getId(),
               type: 'list-item',
+              level: block.level,
+              children: [{ text: '' }]
+            })
+            return
+          }
+          if (block.type === 'order-list-item') {
+            Transforms.insertNodes(editor, {
+              id: Id.getId(),
+              type: 'order-list-item',
               level: block.level,
               children: [{ text: '' }]
             })

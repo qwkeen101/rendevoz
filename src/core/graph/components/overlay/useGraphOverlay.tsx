@@ -5,6 +5,8 @@ import { createPortal } from 'react-dom'
 import { AnimatePopover, WithBorder } from '@/components'
 import { GraphEdge } from '../../types/edge'
 import EdgeAttributeCard from './EdgeAttributeCard'
+import NodePopover from './NodePopover'
+import { LeftTopPosition } from '~/typings'
 
 interface GraphOverlayProps {
   onAddLink: Noop
@@ -14,17 +16,20 @@ interface GraphOverlayProps {
 export type GraphOverlayManager = {
   open: VoidFunction
   setContent: (content: 'edgeToolbar') => void
-  setPosition: (position: Position) => void
+  setPosition: (position: LeftTopPosition) => void
   setOverlayState: Dispatch<SetStateAction<OverlayState>>
   close: VoidFunction
 }
 type OverlayState = {
   visible?: boolean
-  position?: Position
-} & {
-  content?: 'edgeToolbar'
-  object?: GraphEdge
-}
+  position?: LeftTopPosition
+} & (
+  | {
+      content?: 'edgeToolbar'
+      object?: GraphEdge
+    }
+  | { content?: 'nodePopover'; nodeId: number; metaId: number }
+)
 const useGraphOverlay = () => {
   const [overlayState, setOverlayState] = useState<OverlayState>({
     visible: false
@@ -33,6 +38,8 @@ const useGraphOverlay = () => {
     switch (overlayState.content) {
       case 'edgeToolbar':
         return <EdgeAttributeCard currentEdge={overlayState.object} />
+      case 'nodePopover':
+        return <NodePopover metaId={overlayState.metaId} />
     }
   }
   const renderPortal = () => {
@@ -42,7 +49,11 @@ const useGraphOverlay = () => {
           align="center"
           containerStyle={{ zIndex: '999999' }}
           visible={!!overlayState.visible}
-          content={<WithBorder>{renderContent()}</WithBorder>}
+          content={
+            <WithBorder padding="6px" style={{ maxWidth: 400 }}>
+              {renderContent()}
+            </WithBorder>
+          }
           onClickOutside={e => {
             setTimeout(() => {
               if (!e.defaultPrevented) {

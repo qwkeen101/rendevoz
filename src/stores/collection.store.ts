@@ -61,6 +61,7 @@ const useCollectionStore = () => {
   const addItemToCollection = (item: ICollectionItem, collectionId: number) => {
     const origin = structuredClone(globalStore.get(collectionsAtom).get(collectionId)) as ICollection
     origin.items = origin.items || []
+    if (origin.items.some(i => i.id === item.id)) return
     origin.items.push(item)
     realStore.updateCollection(origin, true)
   }
@@ -115,10 +116,12 @@ const useCollectionStore = () => {
     if (sourceFromType === 'collection') {
       const sourceCollection = await getCollectionById(sourceFromId)
       if (!sourceCollection) return
+      console.log(itemId, sourceCollection)
       const newSource = produce(sourceCollection, draft => {
         draft.items = draft.items?.filter(i => i.id !== itemId)
       })
       realStore.updateCollection(newSource, true)
+      console.log(newSource)
     }
     if (sourceFromType === 'whiteboard') {
       const sourceWhiteboard = await getWhiteboardById(sourceFromId)

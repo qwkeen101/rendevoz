@@ -3,7 +3,7 @@ import { DockContext, DockContextType, DropDirection, PanelData, TabData, TabGro
 import * as DragManager from './dragdrop/DragManager'
 import { DragDropDiv } from './dragdrop/DragDropDiv'
 import { DockTabBar } from './DockTabBar'
-import { DockTabPane } from './DockTabPane'
+import { DockTabPane, DockTabPaneContext } from './DockTabPane'
 import { getFloatPanelSize } from './Algorithm'
 import { TabNavListProps, Tabs } from '../tabs'
 import styles from './index.module.less'
@@ -66,7 +66,6 @@ export class TabCache {
     const panelElement = findParentPanel(this._ref)
     const tabGroup = this.context.getGroup(this.data.group)
     const [panelWidth, panelHeight] = getFloatPanelSize(panelElement, tabGroup)
-    console.log(this._ref.parentElement)
     e.setData({ tab: this.data, panelSize: [panelWidth, panelHeight] }, this.context.getDockId())
     e.startDrag(this._ref.parentElement, this._ref.parentElement)
   }
@@ -143,8 +142,12 @@ export class TabCache {
     if (typeof content === 'function') {
       content = content(this.data)
     }
+    if (typeof icon === 'string' && icon.startsWith('park')) {
+      icon = <Icon name={icon} />
+    }
     const tab = (
       <DragDropDiv
+        disableDrag={this.context.getLayout().global.disableDrag}
         getRef={this.getRef}
         onDragStartT={onDragStart}
         role="tab"
@@ -177,7 +180,7 @@ export class TabCache {
 
     return (
       <DockTabPane parent={parent} key={id} cacheId={id} cached={true} tab={tab} forceRender>
-        {content}
+        <DockTabPaneContext.Provider value={{ currentTabId: id }}>{content}</DockTabPaneContext.Provider>
       </DockTabPane>
     )
   }

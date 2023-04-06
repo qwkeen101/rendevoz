@@ -3,7 +3,7 @@ import { CustomElement } from '.'
 
 export type GlobalDraggingDetails =
   | {
-      type: 'noteElement'
+      type: 'noteBlock'
       blockId: number
       element: CustomElement
       path: Path
@@ -15,7 +15,7 @@ export type GlobalDraggingDetails =
     }
   // something inside pdf, not pdf itself
   | {
-      type: 'pdfElement'
+      type: 'pdfLabel'
       labelId: number
       pdfId: number
       content?: string
@@ -37,6 +37,8 @@ export type GlobalDraggingDetails =
   | {
       type: 'note'
       noteId: number
+      // for whiteboard card
+      isCard?: boolean
     }
   | {
       type: 'image'

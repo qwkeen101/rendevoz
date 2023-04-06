@@ -1,22 +1,16 @@
 import Icon from '@/components/base/Icon'
-import SearchDialog from '@/components/dialogs/SearchDialog/SearchDialog'
 import { motion } from 'framer-motion'
-import { useState } from 'react'
-import Modal from '../../base/Modal'
 import styles from './index.module.less'
 import { MenuItem } from './Item'
 import { useTranslation } from 'react-i18next'
 import SidebarCollection from './SidebarCollection'
 import Content from '../../base/Content'
-import { useTheme } from '@/hooks'
-import { css } from '@emotion/css'
 import SidebarPinned from './SidebarPinned'
 import SidebarDatabase from './SidebarDatabase'
 import SidebarSetting from './SidebarSetting'
 import SidebarUser from './SidebarUser'
 import Actions from '@/core/Actions'
 import ClassName from '@/styles/classNames'
-import { globalStore, MetaStore, ObjectStore } from '@/stores'
 
 const variants = {
   open: {
@@ -27,13 +21,9 @@ const variants = {
   }
 }
 const Navigation = ({ hovered }: { hovered: boolean }) => {
-  const [searchVisible, setSearchVisible] = useState(false)
   const { t } = useTranslation()
   return (
     <>
-      <Modal minWidth={600} minHeight={400} visible={searchVisible} onClose={() => setSearchVisible(false)}>
-        <SearchDialog onSearchComplete={() => setSearchVisible(false)} />
-      </Modal>
       <motion.ul
         className={styles.list}
         style={
@@ -44,8 +34,7 @@ const Navigation = ({ hovered }: { hovered: boolean }) => {
             : undefined
         }
         variants={variants}
-        onClick={() => {
-        }}
+        onClick={() => {}}
       >
         <SidebarUser />
         <MenuItem onClick={Actions.openHome}>
@@ -56,7 +45,7 @@ const Navigation = ({ hovered }: { hovered: boolean }) => {
         <SidebarSetting />
         {/* <GlobalPocket>{urls => <SidebarPocket urls={urls} />}</GlobalPocket> */}
         <Content flex alignItems="center" style={{ padding: '0px 4px 0px 4px', marginTop: 20 }}>
-          <div className={ClassName.description()}>{t('sidebar.pinned')}</div>
+          {t('sidebar.pinned')}
         </Content>
         <SidebarPinned />
         <Content flex column style={{ overflow: 'hidden', padding: 4, margin: -4, marginTop: 10 }}>

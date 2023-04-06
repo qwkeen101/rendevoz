@@ -1,5 +1,8 @@
-import { CSSProperties, FC, MouseEventHandler, ReactNode } from 'react'
+import { KEY } from '@/consts'
+import isHotkey from 'is-hotkey'
+import { CSSProperties, FC, Fragment, MouseEventHandler, ReactNode, useEffect, useMemo, useRef, useState } from 'react'
 import Content from '../Content'
+import { Button } from '../button'
 import styles from './index.module.less'
 import MenuGroup from './MenuGroup'
 import MenuItem from './MenuItem'
@@ -15,6 +18,7 @@ interface MenuProps {
 interface IMenu extends FC<MenuProps> {
   Item: typeof MenuItem
   Group: typeof MenuGroup
+  NavigationMenu: typeof NavigationMenu
 }
 const Menu: IMenu = ({ title, children, extra, footer, style, onClick }) => {
   return (
@@ -30,6 +34,105 @@ const Menu: IMenu = ({ title, children, extra, footer, style, onClick }) => {
     </div>
   )
 }
+
+type MenuLayoutItem =
+  | { type: 'custom'; children: ReactNode }
+  | { type: 'item'; icon?: string; text?: string; disabled?: boolean; dangerous?: boolean; name: string }
+  | { type: 'separator' }
+interface NavigationMenuProps {
+  layout: MenuLayoutItem[]
+  onClick?: (name: string) => void
+  keyboardNavigation?: boolean
+  style?: CSSProperties
+  className?: string
+}
+export const NavigationMenu: FC<NavigationMenuProps> = ({ layout, keyboardNavigation = true, style, className, onClick }) => {
+  const menuContainerRef = useRef<HTMLDivElement>(null)
+  const layoutCount = layout.length
+
+  const [currentSelect, setCurrentSelect] = useState<number>()
+  useEffect(() => {
+    const keydownHandler = (e: KeyboardEvent) => {
+      let direction: 'up' | 'down' | undefined = undefined
+      if (isHotkey(KEY.ArrowUp, e)) {
+        direction = 'up'
+        e.stopPropagation()
+        e.preventDefault()
+      }
+      if (isHotkey(KEY.ArrowDown, e)) {
+        direction = 'down'
+        e.stopPropagation()
+        e.preventDefault()
+      }
+      if (isHotkey(KEY.Enter, e)) {
+        e.stopPropagation()
+        e.preventDefault()
+        setCurrentSelect(s => {
+          if (s !== undefined) {
+            const i = layout[s]
+            i && i.type === 'item' && onClick?.(i.name)
+          }
+          return s
+        })
+      }
+      const loopUp = (currentIdx: number | undefined): number => {
+        const curr = currentIdx || 0
+        const next = curr - 1 < 0 ? layoutCount - 1 : curr - 1
+        if (layout[next].type === 'item') return next
+        return loopUp(next)
+      }
+      const loopDown = (currentIdx: number | undefined): number => {
+        const curr = currentIdx || 0
+        const next = curr + 1 >= layoutCount ? 0 : curr + 1
+        if (layout[next].type === 'item') return next
+        return loopDown(next)
+      }
+      if (direction) {
+        setCurrentSelect(s => {
+          if (direction === 'up') {
+            return loopUp(s)
+          }
+          if (direction === 'down') {
+            return loopDown(s)
+          }
+        })
+      }
+    }
+    if (keyboardNavigation) {
+      document.addEventListener('keydown', keydownHandler, true)
+      return () => {
+        document.removeEventListener('keydown', keydownHandler, true)
+      }
+    }
+  }, [layoutCount, keyboardNavigation])
+
+  const renderItem = (item: MenuLayoutItem, idx: number) => {
+    switch (item.type) {
+      case 'custom':
+        return item.children
+      case 'item':
+        return (
+          <Button.IconButton
+            selected={currentSelect !== undefined ? idx === currentSelect : undefined}
+            onPointerEnter={() => setCurrentSelect(idx)}
+            icon={item.icon}
+            text={item.text}
+            dangerous={item.dangerous}
+            onClick={() => onClick?.(item.name)}
+          />
+        )
+    }
+  }
+
+  return (
+    <div ref={menuContainerRef} style={style} className={className}>
+      {layout.map((i, idx) => (
+        <Fragment key={idx}>{renderItem(i, idx)}</Fragment>
+      ))}
+    </div>
+  )
+}
 Menu.Item = MenuItem
 Menu.Group = MenuGroup
+Menu.NavigationMenu = NavigationMenu
 export default Menu

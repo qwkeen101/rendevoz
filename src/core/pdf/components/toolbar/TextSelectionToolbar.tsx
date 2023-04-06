@@ -5,6 +5,7 @@ import ClassName from '@/styles/classNames'
 import { FC } from 'react'
 import useSWRImmutable from 'swr/immutable'
 import styles from './index.module.less'
+import Colors from '@/consts/colors'
 
 interface TextSelectionToolbarProps {
   textSelect?: TextSelectEvent
@@ -173,7 +174,7 @@ export const TextSelectionTranslate: FC<{ translateInput?: string }> = ({ transl
     result = (data[0].map(n => n[0]) as string[]).join('')
   }
   return (
-    <Content flex style={{ maxHeight: 600, overflow: 'auto', minWidth: 600, maxWidth: 800, color: 'black' }}>
+    <Content flex style={{ maxHeight: 600, overflow: 'auto', minWidth: 600, maxWidth: 800, color: Colors.Font.Primary }}>
       <Content flex column>
         <Content flex className={ClassName.description('13px')}>
           Translate Result

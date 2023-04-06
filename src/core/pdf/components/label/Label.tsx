@@ -1,8 +1,7 @@
 import { Content, Icon, IconWithPopover, WithBorder } from '@/components'
 import { useTheme } from '@/hooks'
-import { cloneElement, FC, memo, RefObject, useCallback, useMemo, useRef, useState } from 'react'
+import { cloneElement, FC, memo, RefObject, useCallback, useRef, useState } from 'react'
 import { motion, useDragControls } from 'framer-motion'
-import { useAtomValue } from 'jotai/react'
 import { css } from '@emotion/css'
 import ClassName from '@/styles/classNames'
 import DateFormat from '@/utils/dateFormat'
@@ -11,9 +10,7 @@ import { Rnd } from 'react-rnd'
 import StringLabel from './StringLabel'
 import ImageLabel from './ImageLabel'
 import { Descendant } from 'slate'
-import { atom } from 'jotai/vanilla'
-import useLabelStore, { labelsAtom } from '@/stores/label.store'
-import { globalStore } from '@/stores'
+import { ObjectStore } from '@/stores'
 import { IThoughtLabel } from '~/typings/data'
 interface ThoughtLabelProps {
   labelId: number
@@ -27,9 +24,8 @@ export interface InnerLabelProps {
   onTitleChange?: (title: string) => void
 }
 const ThoughtLabel: FC<ThoughtLabelProps> = ({ labelId, dragBoundRef }) => {
-  const thoughtLabelAtom = useMemo(() => atom(get => get(labelsAtom).get(labelId)), [labelId])
-  const thought = useAtomValue(thoughtLabelAtom, { store: globalStore }) as IThoughtLabel | undefined
-  const { updateLabel, deleteLabel } = useLabelStore()
+  const store = ObjectStore('pdfLabel')
+  const thought = store.useValue(labelId) as IThoughtLabel | undefined
   const { rect, size } = thought
   const isDragging = useRef(false)
   const { defaultFontColorGrey, defaultFontColorRed } = useTheme('defaultFontColorGrey', 'defaultFontColorRed')
@@ -63,7 +59,7 @@ const ThoughtLabel: FC<ThoughtLabelProps> = ({ labelId, dragBoundRef }) => {
         }}
         onResizeStop={(e, dir, ele, s) => {
           const bound = ele.getBoundingClientRect()
-          updateLabel({ id: labelId, size: [bound.width, bound.height] })
+          store.updateOne({ id: labelId, size: [bound.width, bound.height] }, { silent: true })
         }}
         disableDragging
         className={css({
@@ -114,7 +110,7 @@ const ThoughtLabel: FC<ThoughtLabelProps> = ({ labelId, dragBoundRef }) => {
             })}
           >
             <Icon
-              onClick={() => updateLabel({ id: labelId, minimized: !thought.minimized })}
+              onClick={() => store.updateOne({ id: labelId, minimized: !thought.minimized }, { silent: true })}
               name={thought.minimized ? 'park-full-screen-two' : 'park-off-screen-two'}
             />
             <IconWithPopover
@@ -137,7 +133,7 @@ const ThoughtLabel: FC<ThoughtLabelProps> = ({ labelId, dragBoundRef }) => {
                     </div>
                   </AnimatePopover> */}
                   <div
-                    onClick={() => deleteLabel(labelId)}
+                    onClick={() => store.deleteOneById(labelId, { force: true })}
                     className={css([ClassName.flatButton(), ClassName.defaultFont(undefined, 600)])}
                     style={{ color: defaultFontColorRed }}
                   >
@@ -218,10 +214,13 @@ const ThoughtLabel: FC<ThoughtLabelProps> = ({ labelId, dragBoundRef }) => {
         if (bound) {
           const relX = point.x - bound?.x
           const relY = point.y - bound?.y
-          updateLabel({
-            id: labelId,
-            rect: [relY / bound.height, relX / bound.width]
-          })
+          store.updateOne(
+            {
+              id: labelId,
+              rect: [relY / bound.height, relX / bound.width]
+            },
+            { silent: true }
+          )
         }
       }}
     >

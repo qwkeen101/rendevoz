@@ -1,17 +1,14 @@
-import React, { Fragment, useEffect, useMemo, useRef, useState } from 'react'
+import React, { Fragment, useMemo, useRef, useState } from 'react'
 import ThoughtLabel from '../label/Label'
 import { WithBorder } from '@/components'
-import { useIntersection } from 'react-use'
-import { RenderPageProps } from '@/pdfViewer/core/types'
+import { RenderPageProps, TextSelectEvent } from '~/typings'
 import { AnimatePopover } from '@/components'
-import { TextSelectEvent } from '@/events/pdfEvent'
 import TextSelectionToolbar from '../toolbar/TextSelectionToolbar'
 import HighlightLabel from '../label/HighlightLabel'
 import useCleanMode from '../../hooks/useCleanMode'
 import { useAtomValue } from 'jotai/react'
-import useLabelStore, { documentIdToLabelsMapAtom, labelsAtom } from '@/stores/label.store'
-import { globalStore } from '@/stores'
-import { IHighlightLabel, ILabel } from '~/typings/data'
+import { ObjectStore, globalStore } from '@/stores'
+import { IHighlightLabel } from '~/typings/data'
 import ShapeLabel from '../label/ShapeLabel'
 import ObjectLabel from '../label/ObjectLabel'
 
@@ -20,33 +17,15 @@ interface PdfPageProps extends RenderPageProps {
   transformScale?: number
 }
 
-const PdfPage: React.FC<PdfPageProps> = ({
-  pageIndex,
-  textLayer,
-  canvasLayer,
-  transformScale,
-  pageElement,
-  annotationLayer,
-  pageFunctionRef,
-  pageSize,
-  pdfId
-}) => {
+const PdfPage: React.FC<PdfPageProps> = ({ pageIndex, textLayer, canvasLayer, annotationLayer, pageFunctionRef, pageSize, pdfId }) => {
   const labelContainerRef = useRef<HTMLDivElement>(null)
   const [cleanMode] = useCleanMode()
-  const allLabelsMap = useAtomValue(documentIdToLabelsMapAtom, { store: globalStore }).get(pdfId)
-  const allLabels = useAtomValue(labelsAtom, { store: globalStore })
-  const { addLabel } = useLabelStore()
-  const labels = useMemo(
-    () =>
-      allLabelsMap &&
-      (Array.from(allLabelsMap)
-        .map(i => allLabels.get(i))
-        .filter(i => i !== undefined && i.page === pageIndex && !i.deleted) as ILabel[]),
-    [allLabels]
-  )
+  const allLabels = useAtomValue(ObjectStore('pdfLabel').objectMapAtom, { store: globalStore })
+  const labels = useMemo(() => {
+    return Array.from(allLabels.values()).filter(i => i.page === pageIndex)
+  }, [allLabels.size])
 
   const [textSelectionToolbarVisible, setTextSelectionToolbarVisible] = useState(false)
-  const intersection = useIntersection(labelContainerRef, { root: null, rootMargin: '1px', threshold: 0 })
   const [textSelect, setTextSelect] = useState<TextSelectEvent>()
   if (pageFunctionRef.current) {
     pageFunctionRef.current.onTextSelected = e => {
@@ -83,7 +62,7 @@ const PdfPage: React.FC<PdfPageProps> = ({
                   {i.type === 'highlight' && <HighlightLabel documentId={pdfId} labelId={i.id} key={i.id} pageSize={pageSize} />}
                   {i.type === 'thought' && <ThoughtLabel dragBoundRef={labelContainerRef} labelId={i.id} key={i.id} />}
                   {i.type === 'shape' && <ShapeLabel documentId={pdfId} labelId={i.id} key={i.id} pageSize={pageSize} />}
-                  {i.type === 'object' && <ObjectLabel labelId={i.id} key={i.id} documentId={pdfId} pageSize={pageSize} />}
+                  {i.type === 'object' && <ObjectLabel labelId={i.id} key={i.id} pageSize={pageSize} />}
                 </Fragment>
               )
           )}
@@ -93,12 +72,12 @@ const PdfPage: React.FC<PdfPageProps> = ({
         visible={textSelectionToolbarVisible}
         containerStyle={{ zIndex: '9999' }}
         content={
-          <WithBorder>
+          <WithBorder borderRadius={999} padding="0px 12px">
             <TextSelectionToolbar
               onHighlight={color => {
                 setTextSelectionToolbarVisible(false)
                 pageFunctionRef.current?.clearTextLayer?.()
-                addLabel({
+                ObjectStore('pdfLabel').addOne({
                   page: pageIndex,
                   selectedText: textSelect?.selectedText,
                   type: 'highlight',

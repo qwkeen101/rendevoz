@@ -1,6 +1,6 @@
 import Id from '@/utils/id'
 import { Table } from 'dexie'
-import produce from 'immer'
+import produce, { createDraft, finishDraft } from 'immer'
 import { PrimitiveAtom } from 'jotai/vanilla'
 import { Atom } from 'jotai/vanilla'
 import _ from 'lodash'
@@ -37,66 +37,69 @@ type StoreDispatchEvent<T> = {
       onSuccess?: (silent?: boolean) => void
     }
 )
-
+const isHandlingQueue = false
 const handleQueue = () => {
+  console.log('handle queue')
+
   const DB_ACTION_MAP = new Map<Table, any[]>()
   Array.from(ATOM_QUEUE_MAP.entries()).forEach(([k, v]) => {
     const atomValue = globalStore.get(k)
-    const newAtom = produce(atomValue, draft => {
-      v.forEach(i => {
-        const { type, data, database, onSuccess, onFail } = i
-        if (!DB_ACTION_MAP.has(database)) {
-          DB_ACTION_MAP.set(database, [])
+    const draft = createDraft(atomValue)
+    v.forEach(i => {
+      const { type, data, database, onSuccess, onFail } = i
+      if (!DB_ACTION_MAP.has(database)) {
+        DB_ACTION_MAP.set(database, [])
+      }
+      const dbActionArr = DB_ACTION_MAP.get(database)!
+      switch (type) {
+        case 'add':
+          draft.set(data.id, data)
+          dbActionArr.push(i)
+          setTimeout(() => onSuccess?.(data))
+          return
+        case 'update': {
+          // first get from atom, if not exist, get from database
+          if (!atomValue.has(data.id)) {
+            onFail?.()
+            return
+          }
+          const origin = atomValue.get(data.id)
+          const newObj = Object.assign({}, origin, data)
+
+          if (_.isEqual(origin, newObj)) break
+          draft.set(data.id, newObj)
+          dbActionArr.push({
+            ...i,
+            data: newObj
+          })
+          setTimeout(() => onSuccess?.(newObj))
+          return
         }
-        const dbActionArr = DB_ACTION_MAP.get(database)!
-        switch (type) {
-          case 'add':
-            draft.set(data.id, data)
-            dbActionArr.push(i)
-            setTimeout(() => onSuccess?.(data))
-            break
-          case 'update': {
-            if (!draft.has(data.id)) {
-              onFail?.()
-              break
-            }
-            const origin = draft.get(data.id)
-            const newObj = Object.assign({}, origin, data)
-            if (_.isEqual(origin, newObj)) break
-            draft.set(data.id, newObj)
-            dbActionArr.push({
-              ...i,
-              data: newObj
-            })
-            setTimeout(() => onSuccess?.(newObj))
-            break
-          }
-          case 'forceRemove': {
-            draft.delete(data.id)
-            dbActionArr.push({
-              ...i
-            })
-            setTimeout(() => onSuccess?.())
-            break
-          }
-          case 'remove': {
-            const origin = atomValue.get(data.id)
-            const newObj = Object.assign({}, origin, { deleted: true })
-            draft.set(data.id, newObj)
-            dbActionArr.push({
-              ...i,
-              data: newObj
-            })
-            setTimeout(() => onSuccess?.())
-            break
-          }
+        case 'forceRemove': {
+          draft.delete(data.id)
+          dbActionArr.push({
+            ...i
+          })
+          setTimeout(() => onSuccess?.())
+          return
         }
-      })
+        case 'remove': {
+          const origin = atomValue.get(data.id)
+          const newObj = Object.assign({}, origin, { deleted: true })
+          draft.set(data.id, newObj)
+          dbActionArr.push({
+            ...i,
+            data: newObj
+          })
+          setTimeout(() => onSuccess?.())
+          return
+        }
+      }
     })
+    const newAtom = finishDraft(draft)
     globalStore.set(k, newAtom)
     ATOM_QUEUE_MAP.delete(k)
   })
-
   Array.from(DB_ACTION_MAP.entries()).forEach(([k, v]) => {
     // const putActionData = v.filter(i => i.type === 'add' || i.type === 'update').map(i => i.data)
     // const removeActionData = v.filter(i => i.type === 'remove').map(i => i.data.id)
@@ -277,17 +280,34 @@ export function initializeLocalStore<T>(atom: PrimitiveAtom<Map<number, T>>, dat
       (onSuccess, onFail) =>
       (obj, silent = false) => {
         return new Promise(res => {
-          dispatch({
-            type: 'update',
-            data: obj,
-            atom,
-            database,
-            onSuccess: obj => {
-              res(obj)
-              onSuccess?.(obj, silent)
-            },
-            onFail: () => onFail?.(silent)
-          })
+          if (globalStore.get(atom).has(obj.id)) {
+            dispatch({
+              type: 'update',
+              data: obj,
+              atom,
+              database,
+              onSuccess: obj => {
+                res(obj)
+                onSuccess?.(obj, silent)
+              },
+              onFail: () => onFail?.(silent)
+            })
+          } else {
+            database.get(obj.id).then(data => {
+              globalStore.set(atom, BaseStore.add(data, globalStore.get(atom)))
+              dispatch({
+                type: 'update',
+                data: obj,
+                atom,
+                database,
+                onSuccess: obj => {
+                  res(obj)
+                  onSuccess?.(obj, silent)
+                },
+                onFail: () => onFail?.(silent)
+              })
+            })
+          }
         })
       }
   }

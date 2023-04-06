@@ -5,7 +5,7 @@ import Id from '@/utils/id'
 import PdfPage from '@/scenes/pdf'
 import { DockTabPaneContext } from '../base/dock/DockTabPane'
 import { IPdfViewer, CustomEditor, WebpageInstance } from '~/typings'
-import { HomePage } from '@/scenes/home'
+import { HomePage } from '@/scenes/HomePage'
 import DatabasePage from '@/scenes/DatabasePage'
 import WhiteboardPage from '@/scenes/WhiteboardPage'
 import { LayoutIdToTabMap, LayoutTab } from '.'
@@ -206,7 +206,7 @@ class LayoutManager {
           LayoutIdToTabMap.set(id, tab)
         }
         this?.registerNewTab({
-          content: <DockTabPaneContext.Provider value={{ currentTabId: id }}>{tabContent}</DockTabPaneContext.Provider>,
+          content: tabContent,
           id,
           title: 'New Tab'
         })

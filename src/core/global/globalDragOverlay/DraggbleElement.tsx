@@ -27,7 +27,6 @@ const DraggableElement = forwardRef<
       }
     }
     if (e.type === 'pointermove') {
-      console.log('start')
       if (isPressed.current && draggable) {
         GlobalDragOverlayInstance.startDrag?.()
       }

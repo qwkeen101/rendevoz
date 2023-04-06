@@ -47,6 +47,7 @@ export type IWhiteboardNode = {
   | {
       type: 'note'
       noteId: number
+      isCard: boolean
     }
   | {
       type: 'pdf'

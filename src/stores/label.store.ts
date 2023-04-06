@@ -1,35 +1,12 @@
-import { GlobalInstances } from '@/components/layout'
 import useDb from '@/hooks/stores/useDb'
 import { atom } from 'jotai/vanilla'
 import toast from 'react-hot-toast'
 import { ILabel } from '~/typings/data'
-import BaseStore, { initializeLocalStore } from './base.store'
+import { initializeLocalStore } from './base.store'
 import { IStoreDeprecated } from './store.type'
-import { globalStore } from '.'
 import getSetting from '@/core/setting/getSetting'
 
-const { orderedData } = BaseStore
-
 export const labelsAtom = atom<Map<number, ILabel>>(new Map<number, ILabel>())
-
-export const allLabelsAtom = atom(get => orderedData(get(labelsAtom)))
-export const documentIdToLabelsMapAtom = atom(get => {
-  const map = new Map<number, Set<number>>()
-  const allLabels = get(allLabelsAtom)
-  allLabels.forEach(i => {
-    if (i.documentId && i.id) {
-      const set = map.get(i.documentId)
-      if (set) {
-        set.add(i.id)
-      } else {
-        const set = new Set<number>()
-        set.add(i.id)
-        map.set(i.documentId, set)
-      }
-    }
-  })
-  return map
-})
 
 const useLabelStore = () => {
   const database = useDb('labels')

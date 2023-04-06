@@ -4,10 +4,9 @@ import { GlobalEventEmitter } from '@/events'
 import { useToggle } from '@/hooks'
 import ClassName from '@/styles/classNames'
 import { css } from '@emotion/css'
-import { useRef } from 'react'
 import { ObjectActionPopover } from './card/DatabaseCard'
-import useCardDrag from './card/useCardDrag'
 import useRenderObject from './useRenderObject'
+import { memo } from 'react'
 
 const DatabaseListItem = ({ id, mode }: { id: number; mode: 'all' | 'title' }) => {
   const { renderWhole, metaObject } = useRenderObject({
@@ -17,7 +16,8 @@ const DatabaseListItem = ({ id, mode }: { id: number; mode: 'all' | 'title' }) =
   const renderOptions: Parameters<typeof renderWhole>[0]['renderOptions'] =
     mode === 'all'
       ? {
-          renderFrom: true
+          renderFrom: true,
+          renderImage: true
         }
       : mode === 'title'
       ? {
@@ -26,11 +26,9 @@ const DatabaseListItem = ({ id, mode }: { id: number; mode: 'all' | 'title' }) =
           renderDescription: false
         }
       : undefined
-  const dragRef = useRef()
-  const contentRef = useRef()
-  const { isCardDraggingInside } = useCardDrag(metaObject, dragRef, contentRef)
+
   return (
-    <Content flex>
+    <Content flex gap={12}>
       <AnimatePopover
         visible={popoverVisible}
         padding={10}
@@ -38,18 +36,7 @@ const DatabaseListItem = ({ id, mode }: { id: number; mode: 'all' | 'title' }) =
         onClickOutside={togglePopoverVisible}
         content={
           <WithBorder>
-            <ObjectActionPopover
-              onEdit={() => {
-                GlobalEventEmitter().emit('global', {
-                  type: 'globalNeedEditMetaObject',
-                  data: {
-                    metaObjectId: id
-                  }
-                })
-              }}
-              onClose={togglePopoverVisible}
-              metaObjectId={id}
-            />
+            <ObjectActionPopover onClose={togglePopoverVisible} metaObjectId={id} />
           </WithBorder>
         }
         align="start"
@@ -67,7 +54,8 @@ const DatabaseListItem = ({ id, mode }: { id: number; mode: 'all' | 'title' }) =
           showViewAt: true
         },
         imageOptions: {
-          width: 64
+          width: mode === 'all' ? 64 : 32,
+          height: mode === 'all' ? 64 : 32
         },
         rowGap: 20
       })}
@@ -75,4 +63,4 @@ const DatabaseListItem = ({ id, mode }: { id: number; mode: 'all' | 'title' }) =
   )
 }
 
-export default DatabaseListItem
+export default memo(DatabaseListItem)

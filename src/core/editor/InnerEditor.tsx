@@ -10,14 +10,12 @@ import Divider from './Divider'
 import Emoji from './elements/Emoji'
 import { Block, Heading, Paragraph } from './elements'
 import styles from './index.module.less'
-import ListItem from './elements/listItem'
+import ListItem, { OrderListItem } from './elements/listItem'
 import MetaObject from './elements/meta'
 import Image from './elements/image'
 import ToDo from './elements/todo'
 import Id from '@/utils/id'
-import { CustomTransforms } from './utils/transform'
 import { InlineElements } from './consts/elements'
-import Media from './elements/media'
 import { KEY } from '@/consts/key'
 import { ID_TO_ELEMENTS_MAP, ID_TO_PATH_MAP, SELECTED_BLOCKS_MAP } from './weakMaps'
 import moveMultiElements from './utils/moveMultiElements'
@@ -30,9 +28,10 @@ import TableRow from './elements/table/Row'
 import ClassName from '@/styles/classNames'
 import classNames from 'classnames'
 import useReadOnlyEditor from './hooks/useReadOnly'
-import { useEventHandler } from '@/events'
-import { DraggingElement, GlobalDragOverlayInstance, makeDragElements } from '../global'
 import { GlobalEventHandler } from '@/events/globalEvent'
+import InlineMetaElement from './elements/meta/InlineMeta'
+import useEditorSlashMenu from './hooks/useEditorSlashMenu'
+import getCursorPosition from './utils/getCursorPosition'
 
 const EditableEditorClassName = css({
   p: {
@@ -56,8 +55,7 @@ const ReadOnlyEditorClassName = css({
     fontSize: '1.15rem',
     marginBottom: '0.5rem',
     marginTop: '0.5rem',
-    lineHeight: 1.8,
-    color: '#28313b'
+    lineHeight: 1.8
   },
   'reach-inline-nav': {
     display: 'none'
@@ -107,6 +105,16 @@ const ReadOnlyEditorClassName = css({
     justifyContent: 'center'
   }
 })
+
+const CompactReadOnlyEditorClassName = css({
+  p: {
+    margin: '0 !important'
+  },
+  '.ParagraphBlock': {
+    margin: 0,
+    padding: 0
+  }
+})
 export type InnerEditorProps = {
   editor: CustomEditor
   defaultValue: Descendant[]
@@ -118,6 +126,8 @@ export type InnerEditorProps = {
   onBlockMouseMove?: (e: MouseEvent, element: CustomElement) => void
   onLinkClick?: (e: MouseEvent) => void
   readonly?: boolean
+  compact?: boolean
+  editorClassName?: string
 }
 const loopThroughTypes = ['tableRow', 'tableCell']
 const InnerEditor: FC<InnerEditorProps> = memo(
@@ -131,7 +141,9 @@ const InnerEditor: FC<InnerEditorProps> = memo(
     onBlockMouseMove,
     onChange,
     scrollElementRef,
-    readonly
+    readonly,
+    compact,
+    editorClassName
   }) => {
     const scrollElement = scrollElementRef?.current
     const renderInnerElement = useCallback(
@@ -142,10 +154,15 @@ const InnerEditor: FC<InnerEditorProps> = memo(
     const editableRef = useRef<EditableProps['innerRef']>()
     const scopedEmitter = useScopedEventEmitter()
     const previousValue = useRef<Descendant[]>()
-
+    const { handleSlashKeyDown } = useEditorSlashMenu(editor)
     editor.innerRef = editableRef
     const handleChange = useMemoizedFn((value: Descendant[]) => {
       onChange?.(value)
+      if (!(editor.operations.length === 1 && editor.operations[0].type === 'set_selection')) {
+        scopedEmitter.emit('editor', {
+          type: 'valueChange'
+        })
+      }
       const prevValue = previousValue.current
       previousValue.current = value
       if (prevValue !== value) {
@@ -160,7 +177,7 @@ const InnerEditor: FC<InnerEditorProps> = memo(
         }
       }
     })
-    const inlineKeys = [...Object.values(InlineElements), 'tableCell', 'tableRow']
+    const inlineKeys = [...Object.values(InlineElements), 'tableCell', 'tableRow', 'inline-metaObject']
     const renderElement = useCallback(
       ({ children, element, attributes }: RenderElementProps) => {
         if (element.hide === true) return null
@@ -229,6 +246,7 @@ const InnerEditor: FC<InnerEditorProps> = memo(
     )
     const handleKeydown: KeyboardEventHandler<HTMLDivElement> = useMemoizedFn(e => {
       const { selection } = editor
+      handleSlashKeyDown(e)
       if (selection && Range.isCollapsed(selection)) {
         if (isHotkey('left', e)) {
           e.preventDefault()
@@ -263,7 +281,7 @@ const InnerEditor: FC<InnerEditorProps> = memo(
         const { selection } = editor
         if (!currBlock) return
         if (
-          (currBlock[0].type === 'list-item' || currBlock?.[0].level > 0) &&
+          (currBlock[0].type === 'list-item' || currBlock[0].type === 'order-list-item' || currBlock?.[0].level > 0) &&
           selection &&
           Editor.isStart(editor, selection?.anchor, currBlock?.[1])
         ) {
@@ -347,52 +365,64 @@ const InnerEditor: FC<InnerEditorProps> = memo(
         <EditorToolbar
           showToolbar={showToolbar}
           scrollElement={scrollElement}
-          onChangeFontSize={fontSize => changeFontSize(editor, fontSize)}
-          onChangeFontColor={color => {
-            if (color === '#000000') {
-              Editor.removeMark(editor, 'fontColor')
-            } else {
-              Editor.addMark(editor, 'fontColor', color)
-            }
-          }}
-          onChangeBackgroundColor={color => {
-            if (color === '#ffffff') {
-              Editor.removeMark(editor, 'backgroundColor')
-            } else {
-              Editor.addMark(editor, 'backgroundColor', color)
-            }
-          }}
-          onRedo={() => editor.redo()}
-          onUndo={() => editor.undo()}
-          onBold={() => {
-            toggleMark(editor, 'bold')
-          }}
-          onHighlight={() => {
-            const highlightId = Id.getId()
-            editor.onHighlight?.(highlightId)
-            const isActive = isMarkActive(editor, 'highlight')
-            if (isActive) {
-              Editor.removeMark(editor, 'highlight')
-            } else {
-              Editor.addMark(editor, 'highlight', highlightId)
-            }
-          }}
-          onLink={() => {
-            const selectedText = CustomTransforms.getSelectedText(editor)
-            if (selectedText) {
-              CustomTransforms.replaceSelectedNode(editor, {
-                type: 'link',
-                url: 'https://www.baidu.com',
-                children: [
-                  {
-                    text: selectedText
+          on={event => {
+            switch (event.action) {
+              case 'bold':
+              case 'code':
+              case 'italic':
+              case 'underline':
+                toggleMark(editor, event.action)
+                break
+              case 'highlight':
+                {
+                  const highlightId = Id.getId()
+                  editor.onHighlight?.(highlightId)
+                  const isActive = isMarkActive(editor, 'highlight')
+                  if (isActive) {
+                    Editor.removeMark(editor, 'highlight')
+                  } else {
+                    Editor.addMark(editor, 'highlight', highlightId)
                   }
-                ]
-              })
+                }
+                break
+              case 'redo':
+                editor.redo()
+                break
+              case 'undo':
+                editor.undo()
+                break
+              case 'changeBackgroundColor':
+                if (event.backgroundColor === '#ffffff') {
+                  Editor.removeMark(editor, 'backgroundColor')
+                } else {
+                  Editor.addMark(editor, 'backgroundColor', event.backgroundColor)
+                }
+                break
+              case 'changeFontColor':
+                if (event.fontColor === '#000000') {
+                  Editor.removeMark(editor, 'fontColor')
+                } else {
+                  Editor.addMark(editor, 'fontColor', event.fontColor)
+                }
+                break
+              case 'changeFontSize':
+                changeFontSize(editor, event.fontSize)
+                break
+              case 'link':
+                {
+                  const cursorPosition = getCursorPosition(editor)
+                  if (cursorPosition) {
+                    editor.overlayManager?.setContent('linkForm')
+                    editor.overlayManager?.open()
+                    editor.overlayManager?.setPosition({
+                      left: cursorPosition.x,
+                      top: cursorPosition.y
+                    })
+                  }
+                }
+                break
             }
           }}
-          onItalic={() => toggleMark(editor, 'italic')}
-          onUnderline={() => toggleMark(editor, 'underline')}
         />
         <Editable
           innerRef={editableRef}
@@ -438,7 +468,12 @@ const InnerEditor: FC<InnerEditorProps> = memo(
           renderElement={renderElement}
           renderLeaf={renderLeaf}
           onKeyDown={handleKeydown}
-          className={classNames(styles.editorWrapper, readonly ? ReadOnlyEditorClassName : EditableEditorClassName)}
+          className={classNames(
+            styles.editorWrapper,
+            readonly ? ReadOnlyEditorClassName : EditableEditorClassName,
+            compact && readonly && CompactReadOnlyEditorClassName,
+            editorClassName
+          )}
           scrollElementRef={scrollElementRef}
           style={{
             paddingBottom: readonly ? 0 : undefined
@@ -503,6 +538,7 @@ const dividerClassName = css({
   height: '1px',
   borderBottom: '1px solid rgba(55,53,47,0.16)'
 })
+
 export const Element = (props: RenderElementProps & { onLinkClick: InnerEditorProps['onLinkClick'] }) => {
   const { element, attributes, children, onLinkClick } = props
   if (!element.hide) {
@@ -513,6 +549,8 @@ export const Element = (props: RenderElementProps & { onLinkClick: InnerEditorPr
         return <blockquote>{children}</blockquote>
       case 'bulleted-list':
         return <ul>{children}</ul>
+      case 'order-list-item':
+        return <OrderListItem {...props} />
       case 'link':
         return (
           <span {...attributes} style={{ display: 'inline' }}>
@@ -567,9 +605,8 @@ export const Element = (props: RenderElementProps & { onLinkClick: InnerEditorPr
         return <ToDo {...props} />
       case 'list-item':
         return <ListItem {...props} />
-      case 'pdf':
-      case 'note':
-        return <Media {...props} />
+      case 'inline-metaObject':
+        return <InlineMetaElement {...props} />
       case 'thought':
         return <Thought {...props}>{children}</Thought>
       case 'emoji':

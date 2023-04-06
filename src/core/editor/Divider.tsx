@@ -4,16 +4,16 @@ import { PanInfo, motion, animate, AnimationPlaybackControls } from 'framer-moti
 import { FC, memo, useRef, useState } from 'react'
 import { Transforms } from 'slate'
 import { Path } from 'slate'
-import useIsDragging, { useIsDraggingDivider } from './hooks/useIsDragging'
+import useIsDragging from './hooks/useIsDragging'
 import styles from './index.module.less'
-import { ReactEditor, useSlate } from './slate-react'
+import { ReactEditor, useSlateStatic } from './slate-react'
 
 type DividerProps = {
   currentPath: Path
 }
 const Divider: FC<DividerProps> = memo(({ currentPath }) => {
   const [isDragging] = useIsDragging()
-  const editor = useSlate()
+  const editor = useSlateStatic()
   const dividerRef = useRef<HTMLDivElement>(null)
   const widthRef = useRef<{
     previousColumnWidth?: number
@@ -90,26 +90,24 @@ const Divider: FC<DividerProps> = memo(({ currentPath }) => {
     }
   })
   return (
-    <>
-      <motion.div
-        drag="x"
-        onDragEnd={handleDragEnd}
-        dragConstraints={{ left: 0, right: 0 }}
-        dragElastic={0}
-        dragMomentum={false}
-        onDragStart={handleDragStart}
-        onDrag={handleDrag}
-        ref={dividerRef}
-        onMouseEnter={() => setIsMouseOnDivider(true)}
-        whileHover={{ opacity: isMouseOnDivider ? 1 : 0, cursor: 'col-resize' }}
-        style={{ opacity: isDraggingHandle ? 1 : undefined, pointerEvents: isDraggingHandle ? 'all' : isDragging ? 'none' : undefined }}
-        contentEditable={false}
-        className={classNames(styles.DividerWrapper)}
-        transition={{ duration: 0.1 }}
-      >
-        <motion.div className={styles.Divider}></motion.div>
-      </motion.div>
-    </>
+    <motion.div
+      drag="x"
+      onDragEnd={handleDragEnd}
+      dragConstraints={{ left: 0, right: 0 }}
+      dragElastic={0}
+      dragMomentum={false}
+      onDragStart={handleDragStart}
+      onDrag={handleDrag}
+      ref={dividerRef}
+      onMouseEnter={() => setIsMouseOnDivider(true)}
+      whileHover={{ opacity: isMouseOnDivider ? 1 : 0, cursor: 'col-resize' }}
+      style={{ opacity: isDraggingHandle ? 1 : undefined, pointerEvents: isDraggingHandle ? 'all' : isDragging ? 'none' : undefined }}
+      contentEditable={false}
+      className={classNames(styles.DividerWrapper)}
+      transition={{ duration: 0.1 }}
+    >
+      <motion.div className={styles.Divider}></motion.div>
+    </motion.div>
   )
 })
 export default Divider

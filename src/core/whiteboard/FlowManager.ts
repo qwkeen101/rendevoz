@@ -1,13 +1,12 @@
-import { globalStore, WhiteboardStore } from '@/stores'
+import { globalStore, ObjectStore, WhiteboardStore } from '@/stores'
 import { whiteboardsAtom } from '@/stores/whiteboard.store'
 import { Position } from '@/types'
 import produce from 'immer'
 import { PanZoom } from 'panzoom'
 import { IWhiteboardNode } from '~/typings/data'
-import { Box, Point } from '../dragSelector'
+import { Box, Point } from '~/typings'
 
 class FlowManager {
-
   public whiteboardId?: number
 
   public ID_TO_NODE_ELEMENT_MAP = new Map<
@@ -58,10 +57,10 @@ class FlowManager {
       for (const entry of entries) {
         const target = entry.target
         const nodeId = Number(target.getAttribute('data-node-id'))
-        if (this.ID_TO_NODE_ELEMENT_MAP.get(nodeId)?.sizeAlreadyDefined()){
+        if (this.ID_TO_NODE_ELEMENT_MAP.get(nodeId)?.sizeAlreadyDefined()) {
           return
         }
-        const whiteboard = globalStore.get(whiteboardsAtom).get(this.whiteboardId)
+        const whiteboard = globalStore.get(ObjectStore('whiteboard').objectMapAtom).get(this.whiteboardId)
         const node = whiteboard?.nodes?.get(nodeId)
         if (node) {
           const box = entry.contentRect
@@ -72,7 +71,8 @@ class FlowManager {
               height: box.height
             })
           })
-          WhiteboardStore.updateWhiteboard(newWhiteboard, true)
+
+          ObjectStore('whiteboard').updateOne(newWhiteboard, { silent: true })
         }
       }
     }
@@ -85,6 +85,8 @@ class FlowManager {
   public isMovingMultiSelectBox = false
 
   public selectedNodeIds = new Set<number>()
+
+  public onNodeFocus?: (n: IWhiteboardNode) => void
 }
 
 export default FlowManager

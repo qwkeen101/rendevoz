@@ -161,7 +161,7 @@ const ShapeLabel = ({ labelId, pageSize, documentId }: { labelId: number; pageSi
       <DraggableElement
         draggable={!labelState.inPdfMovable}
         draggingDetails={{
-          type: 'pdfElement',
+          type: 'pdfLabel',
           labelId,
           pdfId: documentId
         }}

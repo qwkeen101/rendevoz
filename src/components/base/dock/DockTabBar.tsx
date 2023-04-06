@@ -14,6 +14,9 @@ import ClassName from '@/styles/classNames'
 import { useTranslation } from 'react-i18next'
 import { replacePanel } from './Algorithm'
 import { LayoutIdToTabMap } from '@/components/layout'
+import { useSetting } from '@/core'
+import { getOS } from '@/App'
+import Colors from '@/consts/colors'
 
 interface DockTabBarProps {
   TabNavList: TabNavListProps
@@ -38,7 +41,7 @@ export const DockTabBar = memo((props: DockTabBarProps) => {
     const bar = ref.current
     const bounding = bar?.getBoundingClientRect()
     if (bounding) {
-      const { top, left, width, right } = bounding
+      const { top, right } = bounding
       const windowWidth = window.innerWidth
       if (Math.abs(right - windowWidth) < 10 && top < 10) {
         setIsTopRight(true)
@@ -47,8 +50,15 @@ export const DockTabBar = memo((props: DockTabBarProps) => {
       }
     }
   })
+
+  const os = getOS()
   return (
-    <DragDropDiv role="tablist" className={classNames('dock-bar', isTopRight && 'top-right')} getRef={getRef} tabIndex={-1}>
+    <DragDropDiv
+      role="tablist"
+      className={classNames('dock-bar', isTopRight && os !== 'macos' && 'top-right')}
+      getRef={getRef}
+      tabIndex={-1}
+    >
       <Reorder.Group
         onReorder={r => {
           const currIndex = r.findIndex(i => i.key === currentMoveTabId.current)
@@ -85,6 +95,7 @@ const TabItem = memo(({ onClick, isSelected, item, onDragStart }) => {
   const [contextMenuVisible, toggleContextMenuVisible] = useToggle(false)
   const { t } = useTranslation()
   const dockContext = useContext(DockContextType)
+  const [setting] = useSetting()
   const renderTabContextMenu = () => (
     <WithBorder style={{ padding: 4, display: 'flex', flexDirection: 'column', gap: 4 }}>
       <div
@@ -152,7 +163,7 @@ const TabItem = memo(({ onClick, isSelected, item, onDragStart }) => {
         animate={{
           opacity: 1,
           transition: { duration: 0.2 },
-          color: isSelected ? 'rgba(0,0,0,1)' : 'rgba(0,0,0,0.4)'
+          color: isSelected ? Colors.Font.Primary : Colors.Font.Tertiary
         }}
         onDragStart={onDragStart}
         exit={{ opacity: 0, transition: { duration: 0.3 } }}
@@ -163,7 +174,11 @@ const TabItem = memo(({ onClick, isSelected, item, onDragStart }) => {
         aria-label="tab-reorder-item"
         as="div"
         id={item.key}
-        className={classNames(styles.tab, isSelected && styles.active)}
+        className={classNames(
+          styles.tab,
+          isSelected && styles.active,
+          setting.background.backgroundImage && setting.background.backgroundOpacity && styles.hasBg
+        )}
       >
         <motion.div layout="position" className={styles.tabContent}>
           {item.tab}

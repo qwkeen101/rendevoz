@@ -1,7 +1,6 @@
 import { useToggle } from '@/hooks'
 import useLatest from '@/hooks/utils/useLatest'
-import createDocumentStore from '@/stores/document.store'
-import { CollectionStore, LabelStore, MetaStore, NoteStore } from '@/stores'
+import { CollectionStore, MetaStore } from '@/stores'
 import ClassName from '@/styles/classNames'
 import { exportRendevozDb, importRendevozDb } from '@/utils/db'
 import { useEffect, useRef } from 'react'
@@ -38,11 +37,8 @@ const GeneralSetting = () => {
   const updateInfo = useGlobalAtomValue(updateInfoAtom)
   const latestIsExporting = useLatest(isExporting)
   const hasExporting = useRef(false)
-  const { getAllNotes } = NoteStore
   const { getAllMetaObjects, getAllMetaLinks } = MetaStore
-  const { getAllDocuments } = createDocumentStore()
   const { getAllCollections } = CollectionStore
-  const { getAllLabels } = LabelStore
   const { t } = useTranslation()
   const [setting, setSetting] = useSetting()
   const newTabOptions: SelectOptionProps[] = [
@@ -63,12 +59,9 @@ const GeneralSetting = () => {
       if (result) {
         toast.success('Successfully import data!')
         setTimeout(() => {
-          getAllNotes()
           getAllMetaLinks()
           getAllMetaObjects()
           getAllCollections()
-          getAllDocuments()
-          getAllLabels()
         })
       } else {
         toast.error('Fail to import data! (Unaccepted data type)')

@@ -17,7 +17,6 @@ const Container: FC<ContainerProps> = ({ column, auto, children, levelCenter, ve
     <div
       className={classNames(
         css({
-          background: 'white',
           position: 'relative',
           width: '100%',
           height: '100%',

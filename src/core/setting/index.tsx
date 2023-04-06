@@ -7,6 +7,7 @@ import { atomWithStorage } from 'jotai/vanilla/utils'
 import _ from 'lodash'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import AppearanceSetting from './Appearance'
 import ComponentSetting from './Component'
 import GeneralSetting from './General'
 import NotificationSetting from './Notification'
@@ -16,6 +17,7 @@ import SettingSidebarItem from './SidebarItem'
 
 enum Settings {
   'general',
+  'appearance',
   'notification',
   'shortcuts',
   'object and link',
@@ -28,7 +30,9 @@ type Setting = INotificationSetting &
       language: AvaliableLanguages
       openNewTab: 'always open new tab' | 'open existing tab'
     }
-  } & IObjectsAndLinkSetting & IComponentSetting
+  } & IObjectsAndLinkSetting &
+  IComponentSetting &
+  IAppearanceSetting
 type INotificationSetting = {
   notification: {
     enabled: boolean
@@ -45,6 +49,13 @@ type ShortCut = {
   shiftKey: boolean
   altKey: boolean
   key?: string
+}
+export type IAppearanceSetting = {
+  background: {
+    backgroundImage?: string
+    backgroundOpacity?: number
+    backgroundBlur?: number
+  }
 }
 export type IShortCutSetting = {
   shortcut: Partial<{
@@ -97,7 +108,8 @@ const defaultSetting: Setting = {
   whiteboard: {
     enableMinimap: true,
     enableAddLinkBetweenObjectsWhenConnect: false
-  }
+  },
+  background: {}
 }
 _.merge(defaultSetting, localSetting)
 localStorage.setItem('setting', JSON.stringify(defaultSetting))
@@ -120,6 +132,8 @@ const SettingDialog = ({ onClose }: { onClose: VoidFunction }) => {
         return <ObjectsAndLinksSetting />
       case 'components':
         return <ComponentSetting />
+      case 'appearance':
+        return <AppearanceSetting />
     }
   }
   return (
@@ -140,7 +154,6 @@ const SettingDialog = ({ onClose }: { onClose: VoidFunction }) => {
       <Content
         className={css({
           boxShadow: '7px 0 15px -8px rgba(0,0,0,0.1)',
-          height: '100%',
           width: '200px',
           paddingRight: 12
         })}
@@ -160,7 +173,7 @@ const SettingDialog = ({ onClose }: { onClose: VoidFunction }) => {
       </Content>
       <Icon
         name="park-close"
-        containerStyle={{ position: 'absolute', top: 8, right: 8, color: 'rgba(31,34,39,0.35)' }}
+        containerStyle={{ position: 'absolute', top: 8, right: 8 }}
         className={ClassName.circleButton()}
         onClick={onClose}
       />

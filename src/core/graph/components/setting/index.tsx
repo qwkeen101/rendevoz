@@ -46,13 +46,7 @@ const GraphSettingPanel = () => {
         </div>
       }
     >
-      <Content
-        flex
-        column
-        gap={8}
-        style={{ fontSize: 16, padding: '10px 6px', borderRadius: 8, overflow: 'hidden' }}
-        className={ClassName.Background.pseudoBlubBackground}
-      >
+      <Content flex column gap={8} style={{ fontSize: 16, padding: '10px 6px', borderRadius: 8, overflow: 'hidden' }}>
         <Tooltip content="Graph Filter">
           <Icon name="park-filter" className={ClassName.circleButton()} onClick={() => togglePanel('filter')} />
         </Tooltip>

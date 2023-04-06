@@ -1,23 +1,13 @@
 @import "../../../styles/common.module.less";
 .selectContainer{
-    padding: 4px 0px;
+    padding: 4px 8px;
     cursor: pointer;
     max-width: 300px;
     flex-grow: 1;
     flex-shrink: 0;
     overflow: hidden;
-    border-bottom: @default-border;
     transition: @default-transition;
-    height: 34px;
-    &.hideUnderline{
-        border-bottom: 1px solid transparent;
-    }
-    &:hover{
-        border-bottom: 1px solid @default-link-color !important;
-    }
-    &.focused{
-        border-bottom: 1px solid @default-link-color;
-    }
+    height: 30px;
     &.disabled{
         cursor: not-allowed;
         border-bottom: none;

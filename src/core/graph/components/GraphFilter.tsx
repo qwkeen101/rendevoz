@@ -151,7 +151,7 @@ const GraphFilter = () => {
           >
             <Icon name="park-search" />
             <input
-              placeholder={t('dialog.search for object', { object: t('general.object') })}
+              placeholder={t('database.search for object', { object: t('general.object') })}
               value={search}
               onChange={e => setSearch(e.target.value)}
               className={css({
@@ -215,6 +215,8 @@ const GraphFilter = () => {
                     })}
                   >
                     <SimpleObject
+                      renderDescription={false}
+                      renderFrom={false}
                       draggable={false}
                       iconPopover={
                         <>

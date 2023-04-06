@@ -1,20 +1,35 @@
-import Icon from '@/components/base/Icon'
+import { Icon } from '@/components'
 import useScopedEventEmitter from '@/events/useEventEmitter'
-import { useMemoizedFn } from '@/hooks'
-import { css } from '@emotion/css'
-import { cloneElement, FC, useEffect, useState } from 'react'
+import { useToggle } from '@/hooks'
+import { cloneElement, FC, ReactElement, useEffect, useState } from 'react'
 import { Editor, Path, Range, Transforms } from 'slate'
 import { ReactEditor, RenderElementProps, useSlateStatic } from '../../slate-react'
-import { HeadingElement } from '~/typings'
+import { CustomElement, HeadingElement } from '~/typings'
 import { useEventHandler } from '@/events'
 import useReadOnlyEditor from '../../hooks/useReadOnly'
 
+const HeadingToLevel: Partial<Record<CustomElement['type'], number>> = {
+  'heading-one': 1,
+  'heading-two': 2,
+  'heading-three': 3,
+  'heading-four': 4,
+  'heading-five': 5,
+  'heading-six': 6
+}
+const HeadingToElement: Partial<Record<CustomElement['type'], ReactElement>> = {
+  'heading-one': <h1></h1>,
+  'heading-two': <h2></h2>,
+  'heading-three': <h3></h3>,
+  'heading-four': <h4></h4>,
+  'heading-five': <h5></h5>,
+  'heading-six': <h6></h6>
+}
 const Heading: FC<RenderElementProps> = ({ element, children }) => {
-  const { type } = element
   const { folded } = element as HeadingElement
   const editor = useSlateStatic()
   const isEmpty = Editor.isEmpty(editor, element) ? true : false
   const [isComposing, setIsComposing] = useState(false)
+  const [showAction, toggleShowAction] = useToggle(false)
   const isReadOnly = useReadOnlyEditor()
   const emitter = useScopedEventEmitter()
   const handler = useEventHandler('editor')
@@ -36,7 +51,17 @@ const Heading: FC<RenderElementProps> = ({ element, children }) => {
 
   const action = () => {
     return (
-      <span contentEditable={false}>
+      <span
+        contentEditable={false}
+        style={{
+          position: 'absolute',
+          left: -25,
+          opacity: showAction ? 1 : 0,
+          transition: 'opacity 0.2s ease',
+          top: '50%',
+          transform: 'translateY(-50%)'
+        }}
+      >
         <div
           onClick={() => {
             let currentPath = ReactEditor.findPath(editor, element)
@@ -83,58 +108,19 @@ const Heading: FC<RenderElementProps> = ({ element, children }) => {
     )
   }
 
-  const heading = () => {
-    switch (type) {
-      case 'heading-one':
-        return <h1></h1>
-      case 'heading-two':
-        return <h2></h2>
-      case 'heading-three':
-        return <h3></h3>
-      case 'heading-four':
-        return <h4></h4>
-      case 'heading-five':
-        return <h5></h5>
-      case 'heading-six':
-        return <h6></h6>
-      default:
-        return <h1></h1>
-    }
-  }
-  const getLevel = () => {
-    switch (type) {
-      case 'heading-one':
-        return 1
-      case 'heading-two':
-        return 2
-      case 'heading-three':
-        return 3
-      case 'heading-four':
-        return 4
-      case 'heading-five':
-        return 5
-      case 'heading-six':
-        return 6
-      default:
-        return 1
-    }
-  }
   return cloneElement(
-    heading(),
+    HeadingToElement[element.type] || <h1></h1>,
     {
       id: element.id,
       suppressContentEditableWarning: true,
-      className: css({
-        display: 'flex',
-        alignItems: 'center',
-        gap: 10
-      })
+      onPointerEnter: () => toggleShowAction(true),
+      onPointerLeave: () => toggleShowAction(false)
     },
     !isReadOnly && action(),
     children,
     isEmpty && !isComposing && (
-      <div style={{ position: 'absolute', left: 30, pointerEvents: 'none', userSelect: 'none', color: 'rgba(133, 144, 174, 0.4)' }}>
-        H{getLevel()}
+      <div style={{ position: 'absolute', left: 0, top: 0, pointerEvents: 'none', userSelect: 'none', color: 'rgba(133, 144, 174, 0.4)' }}>
+        H{HeadingToLevel[element.type]}
       </div>
     )
   )

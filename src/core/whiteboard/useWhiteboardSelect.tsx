@@ -5,7 +5,7 @@ import produce from 'immer'
 import { MutableRefObject, useEffect, useRef, useState } from 'react'
 import { DraggableData, Rnd } from 'react-rnd'
 import { IWhiteboardNode } from '~/typings/data/whiteboard'
-import { AnimatePopover, Icon, IconWithPopover, Tooltip, WithBorder } from '@/components'
+import { AnimatePopover, Icon, IconWithPopover, Toolbar, Tooltip, WithBorder } from '@/components'
 import { Box } from '~/typings'
 import { calculateSelectionBox } from '@/utils'
 import { useFlow, useSetWhiteboardNodes, useWhiteboardSelectState } from './hooks'
@@ -200,6 +200,7 @@ const useWhiteboardSelect = (containerRef: MutableRefObject<HTMLElement | null>)
 
   const handleAlignNodes = (alignment: Parameters<typeof alignNodes>[0]) => {
     const idToBoxMap = alignNodes(alignment, idToBoxMapRef.current)
+    console.log(idToBoxMap, idToBoxMapRef.current)
     setNodes(nodes =>
       produce(nodes, draft => {
         idToBoxMap.forEach((box, id) => {
@@ -224,10 +225,11 @@ const useWhiteboardSelect = (containerRef: MutableRefObject<HTMLElement | null>)
             positions={['top', 'bottom']}
             padding={10}
             content={
-              <WithBorder style={{ display: 'flex', gap: 4, padding: 4 }} onPointerUp={e => e.stopPropagation()}>
-                <Tooltip content="Delete">
-                  <Icon
-                    className={ClassName.circleButton(undefined, 4)}
+              <WithBorder padding="2px 6px" onPointerUp={e => e.stopPropagation()}>
+                <Toolbar>
+                  <Toolbar.Item
+                    tooltip="Delete"
+                    iconName="park-delete"
                     onClick={() => {
                       setNodes(nodes =>
                         produce(nodes, draft => {
@@ -238,12 +240,10 @@ const useWhiteboardSelect = (containerRef: MutableRefObject<HTMLElement | null>)
                       )
                       setMultiSelectedBox(undefined)
                     }}
-                    name="park-delete"
                   />
-                </Tooltip>
-                <Tooltip content="Group">
-                  <Icon
-                    className={ClassName.circleButton(undefined, 4)}
+                  <Toolbar.Item
+                    tooltip="Group"
+                    iconName="park-group"
                     onClick={() => {
                       setMultiSelectedBox(undefined)
                       setNodes(nodes =>
@@ -261,51 +261,51 @@ const useWhiteboardSelect = (containerRef: MutableRefObject<HTMLElement | null>)
                         })
                       )
                     }}
-                    name="park-group"
                   />
-                </Tooltip>
-                <Tooltip content="Align">
-                  <IconWithPopover
-                    name="park-left-alignment"
-                    content={
-                      <WithBorder style={{ padding: '4px', width: 200 }}>
-                        <div onClick={() => handleAlignNodes('left')} className={ClassName.flatButton()}>
-                          Align Left
-                        </div>
-                        <div onClick={() => handleAlignNodes('right')} className={ClassName.flatButton()}>
-                          Align Right
-                        </div>
-                        <div onClick={() => handleAlignNodes('top')} className={ClassName.flatButton()}>
-                          Align Top
-                        </div>
-                        <div onClick={() => handleAlignNodes('bottom')} className={ClassName.flatButton()}>
-                          Align Bottom
-                        </div>
-                        <div
-                          className={ClassName.flatButton()}
-                          onClick={() => {
-                            setNodes(nodes =>
-                              produce(nodes, draft => {
-                                idToBoxMapRef.current.forEach((box, id) => {
-                                  const origin = nodes.get(id)!
-                                  draft.set(id, {
-                                    ...origin,
-                                    width: box.width,
-                                    height: box.height,
-                                    x: box.left,
-                                    y: box.top
+                  <Toolbar.Item tooltip="Align">
+                    <IconWithPopover
+                      name="park-left-alignment"
+                      size={18}
+                      content={
+                        <WithBorder style={{ padding: '4px', width: 200 }}>
+                          <div onClick={() => handleAlignNodes('left')} className={ClassName.flatButton()}>
+                            Align Left
+                          </div>
+                          <div onClick={() => handleAlignNodes('right')} className={ClassName.flatButton()}>
+                            Align Right
+                          </div>
+                          <div onClick={() => handleAlignNodes('top')} className={ClassName.flatButton()}>
+                            Align Top
+                          </div>
+                          <div onClick={() => handleAlignNodes('bottom')} className={ClassName.flatButton()}>
+                            Align Bottom
+                          </div>
+                          <div
+                            className={ClassName.flatButton()}
+                            onClick={() => {
+                              setNodes(nodes =>
+                                produce(nodes, draft => {
+                                  idToBoxMapRef.current.forEach((box, id) => {
+                                    const origin = nodes.get(id)!
+                                    draft.set(id, {
+                                      ...origin,
+                                      width: box.width,
+                                      height: box.height,
+                                      x: box.left,
+                                      y: box.top
+                                    })
                                   })
                                 })
-                              })
-                            )
-                          }}
-                        >
-                          Cancel Align
-                        </div>
-                      </WithBorder>
-                    }
-                  ></IconWithPopover>
-                </Tooltip>
+                              )
+                            }}
+                          >
+                            Cancel Align
+                          </div>
+                        </WithBorder>
+                      }
+                    ></IconWithPopover>
+                  </Toolbar.Item>
+                </Toolbar>
               </WithBorder>
             }
             visible={multiSelectedBox && !selectState.isSelecting}

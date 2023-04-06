@@ -4,8 +4,6 @@ const withVoid = (editor: CustomEditor) => {
   const { isVoid, isInline } = editor
   const checkIfVoidComponents = (element: CustomElement) => {
     switch (element.type) {
-      case 'spacer':
-        return false
       case 'book-highlight':
       case 'emoji':
       case 'metaObject':
@@ -14,13 +12,14 @@ const withVoid = (editor: CustomEditor) => {
       case 'image':
       case 'thought':
       case 'divider':
+      case 'inline-metaObject':
       case 'subPage':
         return true
       default:
         return false
     }
   }
-  editor.isInline = element => ['emoji', 'link', 'sup'].includes(element.type) || isInline(element)
+  editor.isInline = element => ['emoji', 'link', 'sup', 'inline-metaObject'].includes(element.type) || isInline(element)
   editor.isVoid = element => {
     return checkIfVoidComponents(element) ? true : isVoid(element)
   }

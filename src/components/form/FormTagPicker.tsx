@@ -2,15 +2,15 @@ import { KEY } from '@/consts/key'
 import Zindexes from '@/consts/zindex'
 import { useToggle } from '@/hooks'
 import { tagToMetaObjectIdsMapAtom } from '@/stores/meta.store'
-import { globalStore } from '@/stores'
-import { TagsAtom, tagStore } from '@/stores/tag.store'
+import { ObjectStore, globalStore } from '@/stores'
+import { tagStore } from '@/stores/tag.store'
 import ClassName from '@/styles/classNames'
 import fuzzysort from 'fuzzysort'
 import isHotkey from 'is-hotkey'
 import { useAtomValue } from 'jotai'
 import { useState, useMemo, useEffect, CSSProperties } from 'react'
 import { ITag } from '~/typings/data'
-import { Icon, AnimatePopover, IconWithPopover } from '..'
+import { Icon, AnimatePopover, IconWithPopover, Button } from '..'
 import { Content, WithBorder } from '../base'
 import BlockColorPicker from '@/core/editor/components/BlockColorPicker'
 import { defaultBgColor } from '../picker/colorPicker'
@@ -29,13 +29,13 @@ const FormTagPicker = ({
   onChange?: (tags: string[]) => void
   tags?: string[]
 }) => {
-  const { addTag } = tagStore
   const [addTagVisible, toggleAddTagVisible] = useToggle(false)
   const [newAddTag, setNewAddTag] = useState<ITag>()
   const TagToMetaObjectIdsMap = useAtomValue(tagToMetaObjectIdsMapAtom, { store: globalStore })
-  const allTags = useAtomValue(TagsAtom, { store: globalStore })
-  const allTagNames = useMemo(() => Array.from(allTags.values()).map(i => i.name), [allTags])
+  const allTags = useAtomValue(ObjectStore('tag').objectMapAtom, { store: globalStore })
+  const allTagNames = useMemo(() => Array.from(allTags.values()).map(i => !i.deleted && i.name), [allTags])
   const [searchTags, setSearchTags] = useState<ITag[]>([])
+  const [showTagManager, toggleShowTagManager] = useToggle(false)
   const { t } = useTranslation()
   const mostUsedTags = useMemo(() => {
     const tags: { tag: string; size: number }[] = []
@@ -67,186 +67,227 @@ const FormTagPicker = ({
         name="park-close"
         containerStyle={{ position: 'absolute', top: 10, right: 10, color: 'rgba(31,34,39,0.6)' }}
         className={ClassName.circleButton()}
-        onClick={onClose}
+        onClick={() => {
+          if (showTagManager) {
+            toggleShowTagManager()
+          } else {
+            onClose?.()
+          }
+        }}
       />
-      <div className={ClassName.title('15px')}>{t('form.select tags', { tags: t('general.tags') })}</div>
-      <div className={ClassName.description()}>{t('form.you can select multiple tags', { tags: t('general.tags') })}</div>
-      <Content flex gap={8} alignItems="center" style={{ padding: '10px 0', flexWrap: 'wrap' }}>
-        {tags?.map(i => (
-          <ObjectTag key={i} hideSize onDelete={() => onChange?.(tags.filter(o => o !== i))} tag={i} />
-        ))}
-        {addTagVisible && (
-          <AnimatePopover
-            visible={addTagVisible && !!newAddTag?.name}
-            positions={['bottom']}
-            reposition={false}
-            content={
-              <WithBorder style={{ padding: 6, minWidth: 200 }}>
-                {!alreadyHasTag && (
-                  <Content flex alignItems="center" gap={10}>
-                    <Content
-                      onClick={e => {
+      {showTagManager ? (
+        <TagManager />
+      ) : (
+        <>
+          <div className={ClassName.title('15px')}>{t('form.select tags', { tags: t('general.tags') })}</div>
+          <div className={ClassName.description()}>{t('form.you can select multiple tags', { tags: t('general.tags') })}</div>
+          <Content flex gap={8} alignItems="center" style={{ padding: '10px 0', flexWrap: 'wrap' }}>
+            {tags?.map(i => (
+              <ObjectTag key={i} hideSize onDelete={() => onChange?.(tags.filter(o => o !== i))} tag={i} />
+            ))}
+            {addTagVisible && (
+              <AnimatePopover
+                visible={addTagVisible && !!newAddTag?.name}
+                positions={['bottom']}
+                reposition={false}
+                content={
+                  <WithBorder style={{ padding: 6, minWidth: 200 }}>
+                    {!alreadyHasTag && (
+                      <Content flex alignItems="center" gap={10}>
+                        <Content
+                          onClick={e => {
+                            setSearchTags([])
+                            newAddTag?.name && ObjectStore('tag').addOne(newAddTag)
+                            setNewAddTag(undefined)
+                            toggleAddTagVisible(false)
+                            newAddTag?.name && onChange?.([...tags, newAddTag.name])
+                          }}
+                          flex
+                          alignItems="center"
+                          gap={10}
+                          style={{ fontSize: 13 }}
+                          className={ClassName.flatButton()}
+                        >
+                          {`${t('general.create')} ${t('general.tag')}`}
+                          <span
+                            style={{
+                              color: newAddTag?.color ? 'white' : 'rgb(82,102,116)',
+                              borderRadius: 4,
+                              background: newAddTag?.color || 'rgb(220,227,232)',
+                              padding: '2px 6px'
+                            }}
+                          >
+                            {newAddTag?.name}
+                          </span>
+                        </Content>
+                        <IconWithPopover
+                          onClick={e => {
+                            e.stopPropagation()
+                            e.preventDefault()
+                          }}
+                          content={
+                            <WithBorder>
+                              <BlockColorPicker
+                                showBg
+                                showFont={false}
+                                onPickBackgroundColor={e => {
+                                  if (e === defaultBgColor) {
+                                    setNewAddTag({ ...newAddTag, color: undefined })
+                                  } else {
+                                    setNewAddTag({ ...newAddTag, color: e })
+                                  }
+                                }}
+                              />
+                            </WithBorder>
+                          }
+                          size={14}
+                          name="park-background-color"
+                          zIndex={Zindexes.Tooltip}
+                          disableIntersection
+                          className={ClassName.circleButton()}
+                        />
+                      </Content>
+                    )}
+                    {searchTags.length > 0 && (
+                      <>
+                        {!alreadyHasTag && (
+                          <div style={{ height: 1, width: '100%', background: 'rgb(222,222,222,0.6)', margin: '0 auto' }}></div>
+                        )}
+                        <Content flex column style={{ padding: '8px 0px', maxHeight: 400, overflowY: 'auto' }}>
+                          {searchTags.map(i => (
+                            <div
+                              onClick={() => {
+                                setSearchTags([])
+                                setNewAddTag(undefined)
+                                toggleAddTagVisible(false)
+                                if (i.name) {
+                                  onChange?.([...tags, i.name])
+                                }
+                              }}
+                              className={ClassName.flatButton(undefined, undefined, 'rgba(31,34,39,0.1)')}
+                            >
+                              <ObjectTag small hideSize key={i.name} tag={i.name} />
+                            </div>
+                          ))}
+                        </Content>
+                      </>
+                    )}
+                  </WithBorder>
+                }
+                containerStyle={{ zIndex: String(Zindexes.Tooltip) }}
+              >
+                <div
+                  style={{
+                    position: 'relative',
+                    color: newAddTag?.color ? 'white' : 'rgb(82,102,116)',
+                    display: 'flex',
+                    borderRadius: '999px',
+                    background: newAddTag?.color || 'rgb(220,227,232)',
+                    padding: '3px 10px 3px 10px'
+                  }}
+                >
+                  <input
+                    autoFocus
+                    onKeyDown={e => {
+                      if (isHotkey(KEY.Enter, e)) {
                         setSearchTags([])
-                        newAddTag?.name && addTag(newAddTag)
+                        newAddTag?.name && ObjectStore('tag').addOne(newAddTag)
                         setNewAddTag(undefined)
                         toggleAddTagVisible(false)
                         newAddTag?.name && onChange?.([...tags, newAddTag.name])
-                      }}
-                      flex
-                      alignItems="center"
-                      gap={10}
-                      style={{ fontSize: 13 }}
-                      className={ClassName.flatButton()}
-                    >
-                      {`${t('general.create')} ${t('general.tag')}`}
-                      <span
-                        style={{
-                          color: newAddTag?.color ? 'white' : 'rgb(82,102,116)',
-                          borderRadius: 4,
-                          background: newAddTag?.color || 'rgb(220,227,232)',
-                          padding: '2px 6px'
-                        }}
-                      >
-                        {newAddTag?.name}
-                      </span>
-                    </Content>
-                    <IconWithPopover
-                      onClick={e => {
-                        e.stopPropagation()
-                        e.preventDefault()
-                      }}
-                      content={
-                        <WithBorder>
-                          <BlockColorPicker
-                            showBg
-                            showFont={false}
-                            onPickBackgroundColor={e => {
-                              if (e === defaultBgColor) {
-                                setNewAddTag({ ...newAddTag, color: undefined })
-                              } else {
-                                setNewAddTag({ ...newAddTag, color: e })
-                              }
-                            }}
-                          />
-                        </WithBorder>
                       }
-                      size={14}
-                      name="park-background-color"
-                      zIndex={Zindexes.Tooltip}
-                      disableIntersection
-                      className={ClassName.circleButton()}
-                    />
-                  </Content>
-                )}
-                {searchTags.length > 0 && (
-                  <>
-                    {!alreadyHasTag && (
-                      <div style={{ height: 1, width: '100%', background: 'rgb(222,222,222,0.6)', margin: '0 auto' }}></div>
-                    )}
-                    <Content flex column style={{ padding: '8px 0px', maxHeight: 400, overflowY: 'auto' }}>
-                      {searchTags.map(i => (
-                        <div
-                          onClick={() => {
-                            setSearchTags([])
-                            setNewAddTag(undefined)
-                            toggleAddTagVisible(false)
-                            if (i.name) {
-                              onChange?.([...tags, i.name])
-                            }
-                          }}
-                          className={ClassName.flatButton(undefined, undefined, 'rgba(31,34,39,0.1)')}
-                        >
-                          <ObjectTag small hideSize key={i.name} tag={i.name} />
-                        </div>
-                      ))}
-                    </Content>
-                  </>
-                )}
-              </WithBorder>
-            }
-            containerStyle={{ zIndex: String(Zindexes.Tooltip) }}
-          >
+                      if (isHotkey(KEY.Escape, e)) {
+                        setSearchTags([])
+                        setNewAddTag(undefined)
+                        toggleAddTagVisible(false)
+                      }
+                    }}
+                    style={{
+                      fontFamily: 'Muli',
+                      background: 'transparent',
+                      outline: 'none',
+                      border: 'none'
+                    }}
+                    onChange={e => setNewAddTag({ ...newAddTag, name: e.target.value })}
+                    spellCheck="false"
+                  ></input>
+                  <Icon
+                    onClick={() => {
+                      setSearchTags([])
+                      setNewAddTag(undefined)
+                      toggleAddTagVisible(false)
+                    }}
+                    className={ClassName.circleButton()}
+                    name="park-close"
+                  />
+                </div>
+              </AnimatePopover>
+            )}
             <div
+              onClick={toggleAddTagVisible}
+              className={ClassName.circleButton()}
               style={{
-                position: 'relative',
-                color: newAddTag?.color ? 'white' : 'rgb(82,102,116)',
+                color: 'rgb(82,102,116)',
+                border: '1px solid rgba(82, 102, 116, 0.3)',
                 display: 'flex',
-                borderRadius: '999px',
-                background: newAddTag?.color || 'rgb(220,227,232)',
-                padding: '3px 10px 3px 10px'
+                alignItems: 'center',
+                gap: 4,
+                fontSize: 13,
+                lineHeight: 1
               }}
             >
-              <input
-                autoFocus
-                onKeyDown={e => {
-                  if (isHotkey(KEY.Enter, e)) {
-                    setSearchTags([])
-                    newAddTag?.name && addTag(newAddTag)
-                    setNewAddTag(undefined)
-                    toggleAddTagVisible(false)
-                    newAddTag?.name && onChange?.([...tags, newAddTag.name])
-                  }
-                  if (isHotkey(KEY.Escape, e)) {
-                    setSearchTags([])
-                    setNewAddTag(undefined)
-                    toggleAddTagVisible(false)
-                  }
-                }}
-                style={{
-                  fontFamily: 'Muli',
-                  background: 'transparent',
-                  outline: 'none',
-                  border: 'none'
-                }}
-                onChange={e => setNewAddTag({ ...newAddTag, name: e.target.value })}
-                spellCheck="false"
-              ></input>
-              <Icon
-                onClick={() => {
-                  setSearchTags([])
-                  setNewAddTag(undefined)
-                  toggleAddTagVisible(false)
-                }}
-                className={ClassName.circleButton()}
-                name="park-close"
-              />
+              <Icon name="park-plus" size={14} />
+              {tags?.length === 0 && <span style={{ marginTop: -2, marginRight: 6 }}>Add One Tag</span>}
             </div>
-          </AnimatePopover>
-        )}
-        <div
-          onClick={toggleAddTagVisible}
-          className={ClassName.circleButton()}
-          style={{
-            color: 'rgb(82,102,116)',
-            border: '1px solid rgba(82, 102, 116, 0.3)',
-            display: 'flex',
-            alignItems: 'center',
-            gap: 4,
-            fontSize: 13,
-            lineHeight: 1
-          }}
-        >
-          <Icon name="park-plus" size={14} />
-          {tags?.length === 0 && <span style={{ marginTop: -2, marginRight: 6 }}>Add One Tag</span>}
-        </div>
-      </Content>
-      <div style={{ margin: '20px 0px 10px', textTransform: 'uppercase' }} className={ClassName.description()}>
-        {t('form.most used tags', { tags: t('general.tags') })}
-      </div>
-      <Content flex alignItems="center" gap={8} style={{ flexWrap: 'wrap' }}>
-        {mostUsedTags?.map(i => (
-          <ObjectTag
-            key={i.tag}
-            cursor="pointer"
-            onAdd={() => {
-              onChange?.([...tags, i.tag])
-            }}
-            hideDelete
-            tag={i.tag}
-          />
-        ))}
-      </Content>
+          </Content>
+          <div style={{ margin: '20px 0px 10px', textTransform: 'uppercase' }} className={ClassName.description()}>
+            {t('form.most used tags', { tags: t('general.tags') })}
+          </div>
+          <Content flex alignItems="center" gap={8} style={{ flexWrap: 'wrap' }}>
+            {mostUsedTags?.map(i => (
+              <ObjectTag
+                key={i.tag}
+                cursor="pointer"
+                onAdd={() => {
+                  onChange?.([...tags, i.tag])
+                }}
+                hideDelete
+                tag={i.tag}
+              />
+            ))}
+          </Content>
+          <Button.IconButton reverse spaceBetween icon="park-right" text="管理标签" onClick={toggleShowTagManager}></Button.IconButton>
+        </>
+      )}
     </div>
+  )
+}
+
+const TagManager = () => {
+  const allTags = useAtomValue(ObjectStore('tag').objectMapAtom, { store: globalStore })
+  return (
+    <Content flex column style={{ maxHeight: 500, minWidth: 300, overflowY: 'auto' }} gap={10}>
+      <div className={ClassName.title('15px')} style={{ marginBottom: 10 }}>
+        管理标签
+      </div>
+      {Array.from(allTags.entries()).map(entry => {
+        const tag = entry[1]
+        if (tag.deleted) return null
+        return (
+          <Content flex gap={10}>
+            <ObjectTag
+              style={{ width: '100%' }}
+              tag={tag.name}
+              hideDelete
+              hideAdd
+              showDBRemove
+              showPickColor
+              onDBRemove={() => ObjectStore('tag').deleteOneById(entry[0], { force: true })}
+            />
+          </Content>
+        )
+      })}
+    </Content>
   )
 }
 

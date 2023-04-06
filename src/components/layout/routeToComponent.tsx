@@ -1,5 +1,5 @@
 import EditorPage from '@/scenes/editor'
-import { HomePage } from '@/scenes/home'
+import { HomePage } from '@/scenes/home/Home'
 import PdfPage from '@/scenes/pdf'
 import WhiteboardPage from '@/scenes/WhiteboardPage'
 import Id from '@/utils/id'

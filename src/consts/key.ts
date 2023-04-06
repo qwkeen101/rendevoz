@@ -7,5 +7,8 @@ export const KEY = {
   Alt: 'Alt',
   Pause: 'Pause',
   Delete: 'Delete',
-  Escape: 'Escape'
+  Escape: 'Escape',
+  ArrowUp: 'ArrowUp',
+  ArrowDown: 'ArrowDown',
+  Slash: '/'
 }

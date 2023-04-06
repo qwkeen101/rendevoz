@@ -60,7 +60,7 @@ export type FlipFormLayoutItem =
   | {
       type: 'iconPicker'
       icon?: string
-      onChange: (icon: string) => void
+      onChange: (icon: string | undefined) => void
     }
   | {
       type: 'imagePicker'
@@ -162,9 +162,15 @@ const useFlipForm = (options: useFlipFormOptions) => {
           <div
             className={ClassName.flatButton()}
             style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', textTransform: 'capitalize' }}
-            onClick={() => setFormInnerState({ iconPickerVisible: true })}
+            onClick={() => {
+              if (i.icon) {
+                i.onChange(undefined)
+              } else {
+                setFormInnerState({ iconPickerVisible: true })
+              }
+            }}
           >
-            {t('general.icon')}
+            {i.icon ? `${t('general.delete')} ${t('general.icon')}` : t('general.icon')}
             {emoji ? (
               <Content flex centered style={{ width: 20, height: 20 }}>
                 <img
@@ -287,7 +293,9 @@ const useFlipForm = (options: useFlipFormOptions) => {
   }
 
   const renderIconPicker = () => {
-    const iconPickItem = flattenedLayout.find(i => i.type === 'iconPicker') as (FlipFormLayoutItem & { type: 'iconPicker' }) | undefined
+    const iconPickItem = flattenedLayout.find(i => i && i.type === 'iconPicker') as
+      | (FlipFormLayoutItem & { type: 'iconPicker' })
+      | undefined
     if (iconPickItem) {
       return (
         <Flipped flipId={iconPickerFlipId} onAppear={FlipCardEnter} onExit={FlipCardExit}>
@@ -303,7 +311,7 @@ const useFlipForm = (options: useFlipFormOptions) => {
     }
   }
   const renderColorPicker = () => {
-    const colorPickerItem = flattenedLayout.find(i => i.type === 'colorPicker') as
+    const colorPickerItem = flattenedLayout.find(i => i && i.type === 'colorPicker') as
       | (FlipFormLayoutItem & { type: 'colorPicker' })
       | undefined
     if (colorPickerItem) {

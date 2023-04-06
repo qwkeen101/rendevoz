@@ -9,6 +9,7 @@ import { CustomText, EmptyText } from './baseTypes'
 import { CommonElement } from './commonElements'
 import { OuterElement } from './outerElements'
 import DragManager from '@/core/editor/hooks/DragManager'
+import { EditorOverlayManager } from '@/core/editor/components/overlay/useEditorOverlay'
 
 export type CustomEditor = BaseEditor &
   ReactEditor &
@@ -26,6 +27,7 @@ export type CustomEditor = BaseEditor &
     currentCopyElements?: Element[]
     currentDragElement?: HTMLElement
     dragManager?: DragManager
+    overlayManager?: EditorOverlayManager
   } & {
     fontSize?: number
   } & {

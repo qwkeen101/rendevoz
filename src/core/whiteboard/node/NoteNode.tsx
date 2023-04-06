@@ -3,27 +3,53 @@ import Id from '@/utils/id'
 import { FC, memo, useMemo } from 'react'
 import { IWhiteboardNode } from '~/typings/data'
 import { InnerNodeProps } from './WrapperNode'
+import { css } from '@emotion/css'
 
-const NoteNode: FC<InnerNodeProps> = ({ node: n, setNodeState, setPopoverElements }) => {
+const NoteNode: FC<InnerNodeProps> = ({ node: n, onNameChange }) => {
   const node = n as IWhiteboardNode & { type: 'note' }
   const editorId = useMemo(() => Id.getStrId(), [])
   return (
     <div
       style={{
         minWidth: '100%',
-        width: '35rem',
+        width: '20rem',
+        height: '25rem',
+        minHeight: '100%',
         maxWidth: '100%',
-        overflow: 'hidden'
+        overflow: 'hidden',
+        'container-type': 'size'
       }}
     >
       <Editor
+        onTitleChange={onNameChange}
+        showBlockHandle={false}
         titleContainerStyle={{
-          padding: 'min(30px, 30px * var(--zoom-level)) min(20px, 20px * var(--zoom-level)) 10px min(50px, 50px * var(--zoom-level))'
+          padding: '5% 5% 20px',
+          maxWidth: '100%',
+          width: '100%'
         }}
+        titleStyle={{
+          fontSize: '4cqmax'
+        }}
+        compact
         innerEditorStyle={{
-          paddingRight: 'min(20px, 20px * var(--zoom-level))',
-          paddingLeft: 'min(50px, 50px * var(--zoom-level))'
+          paddingRight: '5%',
+          paddingLeft: '5%',
+          width: '100%'
         }}
+        readonly
+        innerEditorClassName={css({
+          '.ParagraphBlock': {
+            maxWidth: '100%'
+          },
+          '.BlockCommon':{
+            '* span,textarea, a': {
+              fontSize: '3cqmax !important'
+            }
+          },
+          width: '100% !important',
+          fontSize: '3cqmax'
+        })}
         noteId={node.noteId}
         id={editorId}
       />

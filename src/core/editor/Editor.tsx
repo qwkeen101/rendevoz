@@ -11,8 +11,7 @@ import withVoid from './plugins/withVoid'
 import styles from './index.module.less'
 import BlockHandle from './components/BlockHandle'
 import useIsDragging from './hooks/useIsDragging'
-import { notesAtom } from '@/stores/note.store'
-import { NoteStore } from '@/stores'
+import { ObjectStore } from '@/stores'
 import { YjsEditor } from './yjs'
 import withShortcuts from './plugins/withShortcuts'
 import withCustomComponent from './plugins/withCustomComponent'
@@ -71,8 +70,11 @@ export interface EditorProps {
   title?: string | ReactNode
   titleEditable?: boolean
   innerEditorStyle?: CSSProperties
+  innerEditorClassName?: string
   showToolbar?: boolean
   onLinkClick?: InnerEditorProps['onLinkClick']
+  showBlockHandle?: boolean
+  compact?: boolean
 }
 export interface IEditorRef {
   insertNode: (element: CustomElement) => void
@@ -100,18 +102,21 @@ export const EditorV1: FC<EditorProps> = memo(
     titleEditable,
     onHighlightDrag,
     onHighlight,
-    onEditorInstanceInitialized
+    onEditorInstanceInitialized,
+    showBlockHandle = true,
+    compact,
+    innerEditorClassName
   }) => {
     const [isDragging, setIsDragging] = useIsDragging()
     const [globalIsDragging] = useGlobalIsDragging()
     const scrollElementRef = useRef<HTMLDivElement>(null)
     const [dragHandle, setDragHandle] = useState<DragHandleProps>()
     const emitter = useGlobalEventEmitter()
-    const noteAtom = useMemo(() => (noteId ? selectAtom(notesAtom, n => n.get(noteId)) : atom(null)), [noteId])
+    const noteAtom = ObjectStore('note').createAtom(noteId)
     const note = useAtomValue(noteAtom, { store: globalStore })
     const metaAtom = useMemo(() => (note?.metaId ? selectAtom(metaObjectsAtom, m => m.get(note?.metaId!)) : atom(null)), [note?.metaId])
     const metaObject = useAtomValue(metaAtom, { store: globalStore })
-    const { fetchNoteById } = NoteStore
+
     useEffect(() => {
       const keyDownHandler = () => {
         setDragHandle(h => (h?.visible ? { ...h, visible: false } : h))
@@ -141,11 +146,6 @@ export const EditorV1: FC<EditorProps> = memo(
         scrollElementRef.current?.removeEventListener('pointerdown', pointerDownHandler)
       }
     }, [])
-    useEffect(() => {
-      if (noteId) {
-        fetchNoteById(noteId)
-      }
-    }, [noteId])
 
     // const { sharedType, doc, provider } = useMemo(() => {
     //   const doc = new Y.Doc()
@@ -230,6 +230,7 @@ export const EditorV1: FC<EditorProps> = memo(
 
     useEditorSelect(editor, overlayManager, scrollElementRef.current)
 
+    editor.overlayManager = overlayManager
     editor.id = id
     editor.noteId = noteId
     editor.readonly = !!readonly
@@ -246,7 +247,10 @@ export const EditorV1: FC<EditorProps> = memo(
         dragManager.registerDragHtmlElement(e.currentTarget as HTMLElement)
         if (dragHandle?.targetId !== element.id || dragHandle?.visible === false) {
           const targetRect = (e.currentTarget as HTMLElement).getBoundingClientRect()
-          const left = targetRect.x - 5
+          let left = targetRect.x - 5
+          if (element.type.startsWith('heading')) {
+            left -= 20
+          }
           setDragHandle({
             left,
             top: targetRect.y,
@@ -323,6 +327,7 @@ export const EditorV1: FC<EditorProps> = memo(
             style={{ padding: readonly ? '0px 50px' : undefined, '--block-bg': readonly ? 'none' : undefined, ...innerEditorStyle }}
           >
             <InnerEditor
+              compact={compact}
               readonly={readonly}
               showToolbar={showToolbar}
               scrollElementRef={scrollElementRef}
@@ -330,6 +335,7 @@ export const EditorV1: FC<EditorProps> = memo(
               defaultValue={initialValue}
               onBlockMouseMove={handleBlockMouseMove}
               onLinkClick={onLinkClick}
+              editorClassName={innerEditorClassName}
               onBlockMouseLeave={useMemoizedFn((e, element) => {
                 setDragHandle({ ...dragHandle, visible: false })
               })}
@@ -364,7 +370,7 @@ export const EditorV1: FC<EditorProps> = memo(
           )}
           onMenuClick={handleMenuClick}
           {...dragHandle}
-          visible={!!(!isDragging && dragHandle?.visible && !popoverVisible && !readonly)}
+          visible={!!(!isDragging && dragHandle?.visible && !popoverVisible && !readonly && showBlockHandle)}
         />
       </div>
     )

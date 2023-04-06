@@ -31,4 +31,7 @@ export interface SubPageElement extends IOuterElement {
 export interface MetaObjectElement extends IOuterElement {
   type: 'metaObject'
 }
-export type OuterElement = ThoughtElement | BookHighlightElement | SubPageElement | MetaObjectElement
+export interface InlineMetaObjectElement extends IOuterElement {
+  type: 'inline-metaObject'
+}
+export type OuterElement = ThoughtElement | BookHighlightElement | SubPageElement | MetaObjectElement | InlineMetaObjectElement

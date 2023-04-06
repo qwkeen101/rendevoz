@@ -73,11 +73,10 @@ body > .dragging-layer > div:last-child {
   flex-shrink: 0;
   white-space: nowrap;
   outline: none;
-  border-bottom: 1px solid #e0e0e0;
   zoom: 1;
   margin-bottom: 6px;
   &.top-right{
-    padding-right: 120px;
+    padding-right: 108px;
   }
 }
 .dock-ink-bar {
@@ -253,7 +252,6 @@ body > .dragging-layer > div:last-child {
   position: relative;
 }
 .dock-nav-operations {
-  /* display: flex; */
   display: none;
 }
 .dock-nav-more {
@@ -284,26 +282,11 @@ body > .dragging-layer > div:last-child {
   white-space: nowrap;
   transform: translate(0);
   transition: color 0.3s;
-  // color: transparent;
-  // &:hover{
-  //   color: #666666ff;
-  // }
-  // &::-webkit-scrollbar{
-  //   height: 4px;
-  // }
-  // &::-webkit-scrollbar-thumb{
-  //   background-clip: content-box;
-  //   border: 2px solid transparent;
-  //   cursor: pointer;
-  //   border-radius: 6px;
-  //   box-shadow: inset 0 0 0 2px;
-  // }
 }
 .dock-nav-list {
   display: flex;
   position: relative;
   transition: transform 0.3s;
-  // color: black;
 }
 .dock-extra-content {
   display: flex;
@@ -386,8 +369,6 @@ body.dock-dragging iframe {
 .dock-panel {
   box-sizing: border-box;
   position: relative;
-  color: rgba(0, 0, 0, 0.85);
-  background: #fff;
   margin: 0 auto;
   width: 100%;
 }

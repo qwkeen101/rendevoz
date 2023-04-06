@@ -31,7 +31,7 @@ const WebpageNavigation = ({
     setCurrentUrl(displayUrl)
   }, [displayUrl])
   return (
-    <Content flex gap={8} alignItems="center" style={{ fontSize: 18, color: '#8590ae', padding: '6px 16px', paddingTop: '2px' }}>
+    <Content flex gap={8} alignItems="center" style={{ fontSize: 18, padding: '6px 16px', paddingTop: '2px' }}>
       <Icon className={ClassName.circleButton()} name="park-left" onClick={() => on({ action: 'back' })} />
       <Icon className={ClassName.circleButton()} name="park-right" onClick={() => on({ action: 'forward' })} />
       <Icon

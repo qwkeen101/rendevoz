@@ -2,11 +2,8 @@ import { AnimatePopover, WithBorder } from '@/components'
 import { GlobalDragOverlayInstance } from '@/core'
 import { useMemoizedFn, useMergedRef } from '@/hooks'
 import { PageSize } from '~/typings'
-import useLabelStore, { labelsAtom } from '@/stores/label.store'
-import { globalStore } from '@/stores'
+import { ObjectStore } from '@/stores'
 import { css } from '@emotion/css'
-import { useAtomValue } from 'jotai/react'
-import { atom } from 'jotai/vanilla'
 import { FC, forwardRef, memo, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { useClickAway } from 'react-use'
 import { ILabel } from '~/typings/data'
@@ -26,9 +23,7 @@ const layout = ['colorPicker', 'separator', 'searcher', 'translator', 'separator
 
 const HighlightLabel: FC<HighlightLabelProps> = memo(
   ({ labelId, pageSize, documentId }) => {
-    const highlightAtom = useMemo(() => atom(get => get(labelsAtom).get(labelId)), [labelId])
-    const highlight = useAtomValue(highlightAtom, { store: globalStore }) as (ILabel & { type: 'highlight' }) | undefined
-    const { updateLabel, deleteLabel } = useLabelStore()
+    const highlight = ObjectStore('pdfLabel').useValue(labelId) as (ILabel & { type: 'highlight' }) | undefined
     const [popoverVisible, setPopoverVisible] = useState(false)
     const highlightRef = useRef<HTMLDivElement>(null)
     const metaRef = useRef<HTMLDivElement>(null)
@@ -41,7 +36,7 @@ const HighlightLabel: FC<HighlightLabelProps> = memo(
     })
 
     const handleColorChange = (color: string) => {
-      updateLabel({ id: labelId, color })
+      ObjectStore('pdfLabel').updateOne({ id: labelId, color })
     }
 
     const mouseDownHandler = useMemoizedFn(() => {
@@ -58,7 +53,7 @@ const HighlightLabel: FC<HighlightLabelProps> = memo(
       ele.className = className
       GlobalDragOverlayInstance.addDragElements?.(ele)
       GlobalDragOverlayInstance.draggingDetails = {
-        type: 'pdfElement',
+        type: 'pdfLabel',
         pdfId: documentId,
         content: highlight.selectedText,
         page: highlight.page,
@@ -92,12 +87,12 @@ const HighlightLabel: FC<HighlightLabelProps> = memo(
         visible={popoverVisible}
         positions={['top']}
         content={
-          <WithBorder ref={toolbarRef} key={highlight.id}>
+          <WithBorder ref={toolbarRef} key={highlight.id} padding="0px 12px" borderRadius={999}>
             <LabelToolbar
               layout={layout}
               key={highlight.id}
               onColorChange={handleColorChange}
-              onDelete={() => deleteLabel(labelId)}
+              onDelete={() => ObjectStore('pdfLabel').deleteOneById(labelId, { force: true })}
               selectedText={highlight.selectedText}
             />
           </WithBorder>

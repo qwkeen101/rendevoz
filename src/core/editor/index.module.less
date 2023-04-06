@@ -155,26 +155,24 @@
     h6{
         font-size: 15px;
     }
-    a{
-        --block-font-color: #3b49dfcc;
-        transition: color 0.2s ease;
-        &:hover{
-            --block-font-color: #6200ee;
-            text-decoration: underline;
-        }
-    }
     blockquote{
         margin: 0;
-        padding-inline-start: 19px;
         color: #646a73;
+        border-left: 4px solid #8590ae;
+        background: var(--block-rgb-bg,var(--block-linear-bg,#EDEDED));
+        quotes: "\201C""\201D""\2018""\2019";
+        padding: 10px 19px;
+        font-style: italic;
+        font-size: 1.3em;
         &::before{
-            left: 0;
-            top: 0;
-            bottom: 0;
-            position: absolute;
-            width: 1px;
-            content: '\200b';
-            border-left: 3px solid #8590ae;
+            font-family: Muli;
+            font-size: 3.5em;
+            margin-right: 16px;
+            margin-left: -0.2em;
+            vertical-align: -0.4em;
+            line-height: 0.1em;
+            content: open-quote;
+            color: #8590ae;
         }
     }
 }

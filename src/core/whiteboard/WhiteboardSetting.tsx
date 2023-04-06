@@ -1,22 +1,20 @@
 import ClassName from '@/styles/classNames'
 import Id from '@/utils/id'
-import { Icon, Tooltip } from '@/components'
+import { Content, Icon, Tooltip } from '@/components'
 import { GlobalDragOverlayInstance } from '@/core'
 import { useFlow } from './hooks'
 
 const WhiteboardSetting = () => {
   const flow = useFlow()
   return (
-    <div
-      className={ClassName.Background.blurBackground}
+    <Content
+      flex
+      gap={6}
       style={{
-        padding: '4px',
-        boxShadow: 'rgba(0, 0, 0, 0.35) 0px 5px 15px',
+        padding: '4px 12px',
         fontSize: 18,
-        borderRadius: 4,
-        display: 'flex',
-        flexDirection: 'column',
-        gap: 4
+        borderRadius: 999,
+        background: 'rgba(0,0,0,0.08)'
       }}
     >
       <Tooltip content="Select" position="top">
@@ -25,7 +23,7 @@ const WhiteboardSetting = () => {
           onClick={() => {
             flow.selectable = true
           }}
-          name="park-selected"
+          name="park-move-one"
         />
       </Tooltip>
       <Tooltip content="Move" position="top">
@@ -34,7 +32,7 @@ const WhiteboardSetting = () => {
           onClick={() => {
             flow.selectable = false
           }}
-          name="park-move-one"
+          name="park-hand-drag"
         />
       </Tooltip>
       <Tooltip content="Drag To Add Note" position="top">
@@ -52,7 +50,23 @@ const WhiteboardSetting = () => {
           name="park-notes"
         />
       </Tooltip>
-    </div>
+      <Tooltip content="Drag To Add Card" position="top">
+        <Icon
+          onPointerDown={() => {
+            GlobalDragOverlayInstance.draggingDetails = {
+              type: 'note',
+              noteId: Id.getId(),
+              isCard: true
+            }
+            GlobalDragOverlayInstance.addDragElements?.(<DraggingNote />)
+            GlobalDragOverlayInstance.startDrag?.()
+          }}
+          onPointerMove={() => {}}
+          className={ClassName.circleButton(undefined, 4)}
+          name="park-rectangle-one"
+        />
+      </Tooltip>
+    </Content>
   )
 }
 

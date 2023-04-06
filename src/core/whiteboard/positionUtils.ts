@@ -1,4 +1,4 @@
-import { Box } from '../dragSelector'
+import { Box } from '~/typings'
 
 export type idToBoxMap = Map<number, Box>
 export const alignNodes = (
@@ -41,8 +41,10 @@ export const alignRightNodes = (idToBoxMap: idToBoxMap) => {
     if (right > prev) {
       return right
     }
+
     return prev
-  }, Number.MIN_VALUE)
+  }, Number.MIN_SAFE_INTEGER)
+
   idToBoxMap.forEach(i => (i.left = maxX - i.width))
   return idToBoxMap
 }
@@ -55,7 +57,7 @@ export const alignBottomNodes = (idToBoxMap: idToBoxMap) => {
       return bottom
     }
     return prev
-  }, Number.MIN_VALUE)
+  }, Number.MIN_SAFE_INTEGER)
   idToBoxMap.forEach(i => (i.top = maxY - i.height))
   return idToBoxMap
 }

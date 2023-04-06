@@ -8,7 +8,7 @@ const DatabasePage = () => {
   const { t } = useTranslation()
   return (
     <Content fullHeight fullWidth role="data-container">
-      <TabTitle title={t('general.database')} />
+      <TabTitle title={t('general.database')} icon="park-data" />
       <Database />
     </Content>
   )

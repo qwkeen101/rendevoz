@@ -1,62 +1,42 @@
 import Actions from '@/core/Actions'
 import { useGlobalAtomValue } from '@/hooks/jotai'
-import { globalStore, LabelStore, NoteStore } from '@/stores'
-import { metaObjectsAtom, objectIdToMetaObjectIdMapAtom, relatedMetaObjectsMapAtom } from '@/stores/meta.store'
+import { metaObjectsAtom, relatedMetaObjectsMapAtom } from '@/stores/meta.store'
 import ClassName from '@/styles/classNames'
 import Id from '@/utils/id'
 import { css } from '@emotion/css'
-import { Atom, atom } from 'jotai'
 import { selectAtom } from 'jotai/utils'
-import { CSSProperties, useLayoutEffect, useMemo, useState } from 'react'
+import { CSSProperties, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
-import { MetaObject } from '~/typings/data'
 import { Content, Icon, Image } from '@/components'
 import { Editor } from '../editor/Editor'
 import { PdfViewer } from '../pdf/PdfViewer'
 import { TypeToTypeName } from './card/DatabaseCard'
 import { ObjectTag, Whiteboard } from '@/core'
 import DateFormat from '@/utils/dateFormat'
+import getEmoji from '@/utils/emoji'
+import { globalStore } from '@/stores'
+import { atom } from 'jotai'
+import { getIcon } from '@/components/layout/sidebar/items/SidebarObjectItem'
 
 const useRenderObject = (options: { metaObjectId: number }) => {
   const { metaObjectId } = options
-  const { metaObjectAtom, relatedSetAtom } = useMemo(() => {
+  const { metaObjectAtom, relatedSetAtom, fromAtom } = useMemo(() => {
     const metaObjectAtom = selectAtom(metaObjectsAtom, m => m.get(metaObjectId))
     const relatedSetAtom = selectAtom(relatedMetaObjectsMapAtom, m => m.get(metaObjectId))
+    const meta = globalStore.get(metaObjectsAtom).get(metaObjectId)
+    const fromAtom = meta?.from?.metaId ? selectAtom(metaObjectsAtom, m => m.get(meta.from?.metaId)) : atom(null)
     return {
       metaObjectAtom,
+      fromAtom,
       relatedSetAtom
     }
   }, [metaObjectId])
-  const [fromAtom, setFromAtom] = useState<Atom<MetaObject | undefined>>(atom(() => undefined))
+
   const metaObject = useGlobalAtomValue(metaObjectAtom)
   const relatedSet = useGlobalAtomValue(relatedSetAtom)
-  const from = useGlobalAtomValue(fromAtom)
-  const fromString = metaObject?.type === 'pdfElement' ? 'From Book' : metaObject?.type === 'noteElement' ? 'From Note' : undefined
+  const fromMeta = useGlobalAtomValue(fromAtom)
   const uniqueId = useMemo(() => Id.getStrId(), [])
-  useLayoutEffect(() => {
-    if (metaObject?.objectId) {
-      if (metaObject?.type === 'pdfElement') {
-        LabelStore.getLabelById(metaObject.objectId).then(label => {
-          if (label) {
-            const documentObject = globalStore.get(objectIdToMetaObjectIdMapAtom)?.get(label.documentId!)
-            if (documentObject) {
-              setFromAtom(selectAtom(metaObjectsAtom, d => d.get(documentObject)))
-            }
-          }
-        })
-      }
-      if (metaObject.type === 'noteElement') {
-        NoteStore.getBlockById(metaObject.objectId).then(block => {
-          if (block) {
-            const noteObject = globalStore.get(objectIdToMetaObjectIdMapAtom)?.get(block.noteId)
-            if (noteObject) {
-              setFromAtom(selectAtom(metaObjectsAtom, n => n.get(noteObject)))
-            }
-          }
-        })
-      }
-    }
-  }, [metaObject?.objectId])
+
   const { t } = useTranslation()
   const renderTags = ({
     gap = 4,
@@ -126,7 +106,9 @@ const useRenderObject = (options: { metaObjectId: number }) => {
   }
 
   const renderTitle = ({
+    ellipsisLine,
     titleClassName = css([
+      ellipsisLine ? ClassName.ellipsisFont(ellipsisLine) : undefined,
       ClassName.title('16px'),
       {
         position: 'relative',
@@ -140,24 +122,14 @@ const useRenderObject = (options: { metaObjectId: number }) => {
       }
     ]),
     onTitleClick = () => Actions.navigateToTargetObject(metaObjectId),
-    style,
-    fromStyle
+    style
   }: {
     titleClassName?: string
     onTitleClick?: React.MouseEventHandler
     style?: CSSProperties
-    fromStyle?: CSSProperties
+    ellipsisLine?: number
   }) => {
-    return fromString && from ? (
-      <div>
-        <div onClick={onTitleClick} style={style} className={titleClassName}>
-          {metaObject?.name}
-        </div>
-        <div className={ClassName.description('11px', undefined, '#37352f80')} style={fromStyle}>
-          {fromString}: {from.name}
-        </div>
-      </div>
-    ) : (
+    return (
       <div onClick={onTitleClick} style={style} className={titleClassName}>
         {metaObject?.name}
       </div>
@@ -165,11 +137,13 @@ const useRenderObject = (options: { metaObjectId: number }) => {
   }
 
   const renderDescription = ({
-    descriptionClassName = ClassName.description('14px'),
+    ellipsisLine,
+    descriptionClassName = css([ClassName.description('14px'), ellipsisLine ? ClassName.ellipsisFont(ellipsisLine) : undefined]),
     style
   }: {
     descriptionClassName?: string
     style?: CSSProperties
+    ellipsisLine?: number
   }) => {
     if (metaObject?.description) {
       return (
@@ -203,10 +177,30 @@ const useRenderObject = (options: { metaObjectId: number }) => {
             ...style
           }}
           className={css({ margin: 'auto' })}
-          src={metaObject.coverImgSrc}
+          src={metaObject.coverImgSrc || metaObject.from?.icon}
           width={width}
           height={height}
           ratio={ratio}
+        />
+      )
+    }
+    if (metaObject?.icon) {
+      const emoji = getEmoji(metaObject.icon)
+      if (!emoji) return
+      return (
+        <img
+          src="data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw=="
+          style={{
+            width: width / 1.5,
+            height: height / 1.5,
+            backgroundImage: `url(${emoji.imageSrc})`,
+            backgroundPositionX: `${(emoji.x * 100) / 60}%`,
+            backgroundPositionY: `${(emoji.y * 100) / 60}%`,
+            backgroundRepeat: 'no-repeat',
+            backgroundSize: '6100% 6100%',
+            verticalAlign: '-0.1em',
+            margin: 'auto'
+          }}
         />
       )
     }
@@ -223,7 +217,8 @@ const useRenderObject = (options: { metaObjectId: number }) => {
     containerStyle,
     containerOnClick,
     renderOptions = {
-      renderFrom: false
+      renderFrom: false,
+      renderImage: true
     }
   }: {
     columnGap?: number
@@ -244,10 +239,10 @@ const useRenderObject = (options: { metaObjectId: number }) => {
       renderFrom?: boolean
     }
   }) => {
-    return metaObject?.coverImgSrc ? (
+    return (metaObject?.coverImgSrc || metaObject?.icon) && renderOptions.renderImage !== false ? (
       <Content flex alignItems="stretch" gap={rowGap} className={containerClassName} style={containerStyle}>
         {renderImage(imageOptions)}
-        <Content onClick={containerOnClick} flex column gap={columnGap}>
+        <Content onClick={containerOnClick} flex column gap={columnGap} justifyContent="center">
           {renderOptions?.renderTags !== false && renderTags(tagsOptions)}
           {renderOptions?.renderTitle !== false && renderTitle(titleOptions)}
           {renderOptions?.renderDescription !== false && renderDescription(descriptionOptions)}
@@ -278,7 +273,34 @@ const useRenderObject = (options: { metaObjectId: number }) => {
     }
     return null
   }
-  const renderFrom = ({ containerStyle }: { containerStyle: CSSProperties }) => {
+  const renderFrom = ({
+    containerStyle,
+    style,
+    className
+  }: {
+    containerStyle?: CSSProperties
+    style?: CSSProperties
+    className?: string
+  }) => {
+    if (fromMeta) {
+      const icon = getIcon(fromMeta.type)
+      return (
+        <Content flex gap={10} style={{ margin: '2px 0px 2px', ...containerStyle }} alignItems="center">
+          {icon && <Icon size={14} name={icon} />}
+          <div
+            style={{
+              color: '#616c77',
+              fontSize: '0.8rem',
+              textTransform: 'none',
+              ...style
+            }}
+            className={className}
+          >
+            {fromMeta.name}
+          </div>
+        </Content>
+      )
+    }
     if (metaObject?.from) {
       const { icon, name } = metaObject.from
       return (
@@ -288,8 +310,10 @@ const useRenderObject = (options: { metaObjectId: number }) => {
             style={{
               color: '#616c77',
               fontSize: '0.8rem',
-              textTransform: 'none'
+              textTransform: 'none',
+              ...style
             }}
+            className={className}
           >
             {name}
           </div>
@@ -299,6 +323,33 @@ const useRenderObject = (options: { metaObjectId: number }) => {
     return null
   }
 
+  const renderColumnImageWhole = (options?: Parameters<typeof renderWhole>[0]) => {
+    if (!metaObject?.coverImgSrc) return renderWhole(options)
+    return (
+      <Content flex column fullHeight fullWidth>
+        <img
+          className={css({
+            width: '100%',
+            height: '100%',
+            position: 'absolute',
+            objectFit: 'cover',
+            inset: 0
+          })}
+          src={metaObject?.coverImgSrc}
+        />
+        <Content>
+          {renderWhole({
+            ...options,
+            containerClassName: ClassName.Background.pseudoBlubBackground,
+            renderOptions: {
+              ...options?.renderOptions,
+              renderImage: false
+            }
+          })}
+        </Content>
+      </Content>
+    )
+  }
   return {
     renderTitle,
     renderTags,
@@ -306,7 +357,8 @@ const useRenderObject = (options: { metaObjectId: number }) => {
     renderWhole,
     metaObject,
     renderExpand,
-    renderFrom
+    renderFrom,
+    renderColumnImageWhole
   }
 }
 

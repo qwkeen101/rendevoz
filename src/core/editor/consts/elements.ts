@@ -5,13 +5,15 @@ export const BasicElements = {
   H3: 'heading-three',
   H4: 'heading-four',
   BulletedList: 'list-item',
-  Blockquote: 'block-quote'
+  Blockquote: 'block-quote',
+  OrderedList: 'order-list-item'
 }
 
 export const InlineElements = {
   Emoji: 'emoji',
   Link: 'link',
-  Sup: 'sup'
+  Sup: 'sup',
+  InlineMetaObject: 'inline-metaObject'
 }
 export const BlockElements = {
   ToDo: 'to-do',

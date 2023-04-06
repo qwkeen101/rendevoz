@@ -1,8 +1,11 @@
 import Id from '@/utils/id'
 import { Editor, Range, Element as SlateElement, Transforms } from 'slate'
 import SHORTCUTS from '../consts/shortcuts'
-import { CustomEditor } from '../../../../typings/editor/types'
+import { CustomEditor } from '~/typings'
 
+function isNumeric(value: string) {
+  return /^-?\d+$/.test(value)
+}
 const withShortcut = (editor: CustomEditor) => {
   const { insertText, handler } = editor
   editor.insertText = (text: string) => {
@@ -17,7 +20,25 @@ const withShortcut = (editor: CustomEditor) => {
       const range = { anchor, focus: start }
       const beforeText = Editor.string(editor, range)
       const type = SHORTCUTS[beforeText]
-
+      if (beforeText.endsWith('.')) {
+        const removeDotText = beforeText.replace('.', '')
+        if (isNumeric(removeDotText)) {
+          Transforms.select(editor, range)
+          Transforms.delete(editor)
+          const newProperties: Partial<SlateElement> = {
+            type: 'order-list-item',
+            id: Id.getId()
+          }
+          Transforms.setNodes<SlateElement>(editor, newProperties, {
+            match: n => Editor.isBlock(editor, n)
+          })
+          const end = Editor.end(editor, path)
+          setTimeout(() => {
+            Transforms.select(editor, end)
+          })
+          return
+        }
+      }
       if (type) {
         if (type === 'meta-object') {
           handler?.({ type: 'addMetaObject' })

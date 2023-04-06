@@ -2,7 +2,7 @@ import { DropOn, GlobalEventHandler } from '@/events/globalEvent'
 import { useGlobalEventEmitter } from '@/events/useEventEmitter'
 import { useToggle } from '@/hooks'
 import { indexedMetaLinksAtom } from '@/stores/meta.store'
-import { globalStore, MetaStore, NoteStore } from '@/stores'
+import { globalStore, MetaStore, ObjectStore } from '@/stores'
 import { PartialWithId } from '@/types'
 import Id from '@/utils/id'
 import { useEffect, useMemo, useRef, useState } from 'react'
@@ -67,7 +67,7 @@ const useOverlayDrop = () => {
       }
       case 'editor': {
         if (!enableDropOnEditorLink) break
-        const note = await NoteStore.getNoteById(dropOn.noteId)
+        const note = await ObjectStore('note').getOneById(dropOn.noteId)
         if (note?.metaId) {
           const noteTargetMeta = await getMetaObjectById(note.metaId)
           if (noteTargetMeta) {
@@ -142,7 +142,7 @@ const useOverlayDrop = () => {
         shouldOpenEditMetaModal = false
         break
       }
-      case 'pdfElement': {
+      case 'pdfLabel': {
         const labelMeta = getMetaObjectByObjectId(dragElement.labelId)
         const pdfMeta =
           (await getMetaObjectByObjectId(dragElement.pdfId)) || (await addMetaObject({ type: 'pdf', objectId: dragElement.pdfId }, true))
@@ -167,9 +167,12 @@ const useOverlayDrop = () => {
           }
           Object.assign(normalizedMetaObject, labelMeta)
         } else {
-          normalizedMetaObject.type = 'pdfElement'
+          normalizedMetaObject.type = 'pdfLabel'
           normalizedMetaObject.objectId = dragElement.labelId
           normalizedMetaObject.name = dragElement.content?.slice(0, 50) || 'Unnamed Label'
+          normalizedMetaObject.from = {
+            metaId: pdfMeta.id
+          }
           const shouldConcat = dragElement.content && dragElement.content?.length > 50
           if (shouldConcat) {
             normalizedMetaObject.name = normalizedMetaObject.name.concat('...')
@@ -187,7 +190,7 @@ const useOverlayDrop = () => {
 
         break
       }
-      case 'noteElement': {
+      case 'noteBlock': {
         if (dragElement.metaId) {
           const meta = await getMetaObjectById(dragElement.metaId)
           if (meta) {
@@ -207,8 +210,16 @@ const useOverlayDrop = () => {
           }
           Object.assign(normalizedMetaObject, noteBlockMeta)
         } else {
-          normalizedMetaObject.type = 'noteElement'
-          normalizedMetaObject.objectId = dragElement.blockId
+          const block = await ObjectStore('noteBlock').addOne(
+            {
+              blockId: dragElement.blockId,
+              noteId: dragElement.noteId,
+              id: dragElement.blockId
+            },
+            { silent: true }
+          )
+          normalizedMetaObject.type = 'noteBlock'
+          normalizedMetaObject.objectId = block.id
           const content = dragElement.elements
             ? dragElement.elements.map(n => Node.string(n)).join('\r\n')
             : Node.string(dragElement.element)

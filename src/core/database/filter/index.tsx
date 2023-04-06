@@ -38,7 +38,7 @@ const filterContainerClassName = (focused: boolean) =>
     border: focused ? '1px solid #8590ae' : '1px solid rgba(0,0,0,0.1)',
     transition: 'all 0.3s ease',
     cursor: 'pointer',
-    borderRadius: 999,
+    borderRadius: 8,
     padding: '4px 8px'
   })
 export const FiltersAtom = atom<
@@ -125,7 +125,7 @@ export const DatabaseFilter = () => {
           alignItems="center"
           className={ClassName.flatButton()}
           style={{
-            borderRadius: 999,
+            borderRadius: 8,
             padding: '4px 12px',
             border: '1px solid rgba(0,0,0,0.1)',
             fontFamily: 'Muli',
@@ -189,17 +189,7 @@ const TypeFilter = ({ onClose, initialOpen }: { onClose: VoidFunction; initialOp
   const shouldFilterIdSet = useAtomValue(ShouldFilterIdsAtom)
   const [popoverVisible, togglePopoverVisible] = useToggle(initialOpen)
   const { t } = useTranslation()
-  const types: MetaObject['type'][] = [
-    'image',
-    'normal',
-    'note',
-    'noteElement',
-    'pdf',
-    'pdfElement',
-    'whiteboard',
-    'webpage',
-    'webpageLabel'
-  ]
+  const types: MetaObject['type'][] = ['image', 'normal', 'note', 'noteBlock', 'pdf', 'pdfLabel', 'whiteboard', 'webpage', 'webpageLabel']
   const toggleType = (type: typeof types[number]) => {
     if (filterTypes.has(type)) {
       setFilterTypes(

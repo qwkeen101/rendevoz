@@ -7,7 +7,7 @@ import { Position } from '@/types'
 import { css } from '@emotion/css'
 import { useVirtualizer } from '@tanstack/react-virtual'
 import { useAtom, useAtomValue, useStore } from 'jotai/react'
-import { forwardRef, memo, ReactElement, useEffect, useMemo, useRef, useState } from 'react'
+import { forwardRef, memo, ReactElement, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { Rnd } from 'react-rnd'
 import { MetaObject } from '~/typings/data'
@@ -32,9 +32,11 @@ import { atom } from 'jotai'
 import { useTranslation } from 'react-i18next'
 import { useRenderObject } from '@/core'
 import Actions from '@/core/Actions'
+import { GlobalEventEmitter, useEventHandler } from '@/events'
+import { LeftTopPosition } from '~/typings'
 
 export const GlobalObjectPanelInstance: {
-  open?: VoidFunction
+  open?: (position?: LeftTopPosition) => void
   close?: VoidFunction
 } = {}
 export const GlobalObjectPanel = () => {
@@ -57,10 +59,26 @@ export const GlobalObjectPanel = () => {
     }
   })
   Object.assign(GlobalObjectPanelInstance, {
-    open: () => setPanelState(s => ({ ...s, visible: true })),
+    open: (position: LeftTopPosition) => {
+      if (position) {
+        const maxTop = window.innerHeight - panelState.size!.height - 20
+        const maxLeft = window.innerWidth - panelState.size!.width - 20
+        setPanelState(s => ({
+          ...s,
+          position: {
+            top: Math.min(maxTop, position.top),
+            left: Math.min(maxLeft, position.left)
+          },
+          visible: true
+        }))
+      } else {
+        setPanelState(s => ({ ...s, visible: true }))
+      }
+    },
     close: () => setPanelState(s => ({ ...s, visible: false }))
   } as typeof GlobalObjectPanelInstance)
   const { t } = useTranslation()
+  const eventHandler = useEventHandler('global')
   const [showBoxShadow, toggleShowBoxShadow] = useToggle(false)
   const undeleteObjects = useAtomValue(undeletedMetaObjectsAtom, { store: globalStore })
   const [setting] = useSetting()
@@ -68,7 +86,17 @@ export const GlobalObjectPanel = () => {
   const containerRef = useRef<HTMLDivElement>(null)
 
   const [shouldDisplayObjects, setShouldDisplayObjects] = useState<MetaObject[]>(undeleteObjects)
-
+  const [isAddingObject, toggleIsAddingObject] = useToggle(false)
+  const promiseRef = useRef<{
+    res?: any
+    rej?: any
+  }>()
+  useEffect(() => {
+    if (!panelState.visible) {
+      promiseRef.current = undefined
+      toggleIsAddingObject(false)
+    }
+  }, [panelState.visible])
   const virtualizer = useVirtualizer({
     count: shouldDisplayObjects.length,
     estimateSize: () => 100,
@@ -80,15 +108,24 @@ export const GlobalObjectPanel = () => {
     const shouldDisplay = undeleteObjects.filter(i => ids.has(i.id))
     setShouldDisplayObjects(shouldDisplay)
   })
+  eventHandler.on('globalChooseMetaObject', (data, res, rej) => {
+    toggleIsAddingObject(true)
+    promiseRef.current = {
+      res,
+      rej
+    }
+  })
   const keyDownHandler = useMemoizedFn((e: KeyboardEvent) => {
     if (setting.shortcut.openObjectPanel && compareHotkey(setting.shortcut.openObjectPanel, e)) {
       setPanelState(s => ({ ...s, visible: !s.visible }))
     }
   })
   useEffect(() => {
+    GlobalEventEmitter().addListener('global', eventHandler)
     document.addEventListener('keydown', keyDownHandler)
     return () => {
       document.removeEventListener('keydown', keyDownHandler)
+      GlobalEventEmitter().removeListener('global', eventHandler)
     }
   }, [])
   useEffect(() => {
@@ -108,6 +145,12 @@ export const GlobalObjectPanel = () => {
     }
   }, [])
   const items = virtualizer.getVirtualItems()
+  const handleAddObject = useCallback((id: number) => {
+    promiseRef.current?.res(id)
+    promiseRef.current = undefined
+    GlobalObjectPanelInstance.close?.()
+    toggleIsAddingObject(false)
+  }, [])
   return createPortal(
     <div
       style={{
@@ -207,7 +250,7 @@ export const GlobalObjectPanel = () => {
             <Content
               style={{
                 background: 'transparent',
-                borderRadius: 999,
+                borderRadius: 8,
                 border: '1px solid rgba(0,0,0,0.1)',
                 padding: '6px 12px'
               }}
@@ -217,7 +260,7 @@ export const GlobalObjectPanel = () => {
             >
               <Icon name="park-search" />
               <input
-                placeholder={t('dialog.search for object', { object: t('general.object') })}
+                placeholder={t('database.search for object', { object: t('general.object') })}
                 value={search}
                 onChange={e => setSearch(e.target.value)}
                 className={css({
@@ -276,7 +319,11 @@ export const GlobalObjectPanel = () => {
                       padding: '10px 0px'
                     })}
                   >
-                    <SimpleObject metaObjectId={shouldDisplayObjects[row.index].id} />
+                    <SimpleObject
+                      metaObjectId={shouldDisplayObjects[row.index].id}
+                      isAddingObject={isAddingObject}
+                      onAddObject={handleAddObject}
+                    />
                   </div>
                 ))}
               </div>
@@ -299,9 +346,13 @@ export const SimpleObject = memo(
         iconPopover,
         iconColor = 'rgba(31,34,39,0.2)',
         heavyIconColor = 'rgba(31,34,39,0.7)',
-        descriptionClassName = ClassName.description(),
+        descriptionClassName = css([ClassName.description(), ClassName.ellipsisFont(2)]),
         onNavigate,
-        draggable = true
+        draggable = true,
+        renderFrom = true,
+        renderDescription = true,
+        isAddingObject,
+        onAddObject
       }: {
         metaObjectId: number
         iconName?: string
@@ -311,6 +362,10 @@ export const SimpleObject = memo(
         descriptionClassName?: string
         onNavigate?: VoidFunction
         draggable?: boolean
+        renderDescription?: boolean
+        renderFrom?: boolean
+        isAddingObject?: boolean
+        onAddObject?: (id: number) => void
       },
       ref
     ) => {
@@ -432,6 +487,14 @@ export const SimpleObject = memo(
               checked={currentRelatedIds?.has(metaObjectId)}
               onChange={handleClickCheckBox}
             />
+          ) : isAddingObject ? (
+            <Icon
+              onClick={() => onAddObject?.(metaObjectId)}
+              size={18}
+              fill={iconColor}
+              name="park-plus"
+              className={ClassName.circleButton()}
+            ></Icon>
           ) : (
             <AnimatePopover
               visible={popoverVisible}
@@ -440,11 +503,7 @@ export const SimpleObject = memo(
               containerStyle={{ zIndex: String(Zindexes.ToolBar) }}
               onClickOutside={togglePopoverVisible}
               content={
-                <WithBorder>
-                  {iconPopover || (
-                    <ObjectActionPopover onEdit={toggleEditVisible} onClose={togglePopoverVisible} metaObjectId={metaObjectId} />
-                  )}
-                </WithBorder>
+                <WithBorder>{iconPopover || <ObjectActionPopover onClose={togglePopoverVisible} metaObjectId={metaObjectId} />}</WithBorder>
               }
               align="start"
               positions={['left', 'right']}
@@ -468,12 +527,14 @@ export const SimpleObject = memo(
           )}
           {renderWhole({
             renderOptions: {
-              renderFrom: true
+              renderFrom,
+              renderDescription
             },
             fromOptions: {
               containerStyle: {
                 margin: 0
-              }
+              },
+              className: ClassName.ellipsisFont(1)
             },
             tagsOptions: {
               showCreatedAt: filters.some(i => i.filterType === 'createdAt'),
@@ -483,6 +544,7 @@ export const SimpleObject = memo(
               style: {
                 fontSize: 14
               },
+              titleClassName,
               onTitleClick: () => {
                 Actions.navigateToTargetObject(metaObjectId)
                 onNavigate?.()
@@ -500,3 +562,18 @@ export const SimpleObject = memo(
     }
   )
 )
+
+const titleClassName = css([
+  ClassName.ellipsisFont(1),
+  ClassName.title('16px'),
+  {
+    position: 'relative',
+    width: 'fit-content',
+    textDecoration: 'underline 1px rgba(0,0,0,0)',
+    transition: 'text-decoration-color 0.3s ease',
+    ':hover': {
+      textDecorationColor: 'rgba(0,0,0,0.8)'
+    },
+    cursor: 'pointer'
+  }
+])

@@ -75,6 +75,16 @@ const ObjectForm: FC<
             onChange: v => setObject({ ...object, coverImgSrc: v })
           },
           {
+            type: 'colorPicker',
+            color: object.color,
+            onChange: c => setObject({ ...object, color: c })
+          },
+          {
+            type: 'iconPicker',
+            icon: object.icon,
+            onChange: i => setObject({ ...object, icon: i })
+          },
+          {
             type: 'tagPicker',
             tags: object.tags,
             onChange: v => setObject({ ...object, tags: v })

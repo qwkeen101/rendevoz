@@ -1,7 +1,8 @@
+import { useMergedRef } from '@/hooks'
 import ClassName from '@/styles/classNames'
 import { css } from '@emotion/css'
 import classNames from 'classnames'
-import { forwardRef, MouseEventHandler } from 'react'
+import { CSSProperties, forwardRef, MouseEventHandler, useLayoutEffect, useRef } from 'react'
 import { Icon } from '..'
 import Content from '../Content'
 
@@ -18,7 +19,11 @@ const IconButton = forwardRef(
       dangerous,
       className,
       reverse,
-      spaceBetween
+      spaceBetween,
+      tabIndex,
+      selected,
+      onPointerEnter,
+      style
     }: {
       icon?: string
       onClick?: MouseEventHandler
@@ -28,18 +33,42 @@ const IconButton = forwardRef(
       dangerous?: boolean
       reverse?: boolean
       spaceBetween?: boolean
+      tabIndex?: number
+      selected?: boolean
+      style?: CSSProperties
+      onPointerEnter?: React.PointerEventHandler
     },
     ref
   ) => {
+    const innerRef = useRef<HTMLDivElement>(null)
+    const mergedRef = useMergedRef(innerRef, ref)
+    useLayoutEffect(() => {
+      if (selected !== undefined) {
+        if (selected === false) {
+          innerRef.current?.style.setProperty('background', 'none', 'important')
+        }
+      }
+    }, [selected])
     return (
       <Content
         onClick={onClick}
         gap={gap}
         flex
-        ref={ref}
+        ref={mergedRef}
+        tabIndex={tabIndex}
+        onPointerEnter={onPointerEnter}
         style={{
-          flexDirection: reverse ? 'row-reverse' : 'row',
-          justifyContent: spaceBetween ? 'space-between' : undefined
+          flexDirection: reverse && icon ? 'row-reverse' : 'row',
+          justifyContent: spaceBetween ? 'space-between' : undefined,
+          background:
+            selected === true
+              ? dangerous
+                ? 'rgb(253, 138, 138, 0.2)'
+                : 'rgba(31, 34, 37, 0.08)'
+              : selected === false
+              ? 'none'
+              : undefined,
+          ...style
         }}
         className={classNames(
           className,

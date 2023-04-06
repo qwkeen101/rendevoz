@@ -2,6 +2,7 @@ import Zindexes from '@/consts/zindex'
 import { useState } from 'react'
 import { motion } from 'framer-motion'
 import { createPortal } from 'react-dom'
+import Colors from '@/consts/colors'
 
 const useDragIndicator = () => {
   const [indicatorState, setIndicatorState] = useState<
@@ -65,14 +66,20 @@ const useDragIndicator = () => {
                 width: 16,
                 top: 0,
                 height: indicatorState.height,
-                background: '#8590ae',
+                background: Colors.Font.Tertiary,
                 opacity: 0.45,
                 borderRadius: 8
               }}
             ></div>
           )}
           <motion.div
-            style={{ marginLeft: indicatorState?.nested ? 18 : 0, width: '100%', height: '100%', background: '#8590ae', borderRadius: 8 }}
+            style={{
+              marginLeft: indicatorState?.nested ? 18 : 0,
+              width: '100%',
+              height: '100%',
+              background: Colors.Font.Primary,
+              borderRadius: 8
+            }}
           ></motion.div>
         </motion.div>
       </div>

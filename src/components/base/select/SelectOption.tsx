@@ -1,8 +1,9 @@
-import { FC, ReactElement, ReactNode } from 'react'
+import { FC } from 'react'
 
 export interface SelectOptionProps {
   children: string
   value: string
+  icon?: string
 }
 
 const SelectOption: FC<SelectOptionProps> = () => {

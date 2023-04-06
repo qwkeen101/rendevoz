@@ -12,6 +12,8 @@ import { Content } from '@/components/base'
 import { MetaObject } from '~/typings/data'
 import { MarkerColor } from '@/consts'
 import { useAtomValue } from 'jotai'
+import getEmoji from '@/utils/emoji'
+import EmojiNode from './EmojiNode'
 
 interface NodeProps {
   node: GraphNode
@@ -24,14 +26,17 @@ interface NodeProps {
 
 export const TypeToNodeRadius: Record<MetaObject['type'], number> = {
   pdf: 60,
-  pdfElement: 20,
+  pdfLabel: 20,
   note: 40,
   normal: 20,
-  noteElement: 20,
+  noteLabel: 20,
+  noteBlock: 20,
   image: 40,
   whiteboard: 40,
   webpage: 40,
-  webpageLabel: 20
+  webpageLabel: 20,
+  video: 40,
+  audio: 40
 }
 const Node: FC<NodeProps> = memo(({ node, onMouseEnter, onMouseLeave, onContextMenu, onClick }) => {
   const nodeRef = useRef<SVGGElement>(null)
@@ -57,14 +62,18 @@ const Node: FC<NodeProps> = memo(({ node, onMouseEnter, onMouseLeave, onContextM
   const d = radius * 2
   const originNode = graph?.nodesMap?.get(node.id)
   const renderNode = () => {
+    if (node.icon){
+      return <EmojiNode node={node} />
+    }
     if (node.coverImgSrc) {
       return <ImageNode node={node} />
     }
     switch (node.type) {
       case 'note':
       case 'whiteboard':
-      case 'pdfElement':
-      case 'noteElement':
+      case 'pdfLabel':
+      case 'noteLabel':
+      case 'noteBlock':
         return <IconNode node={node} />
       case 'pdf':
       case 'image':
@@ -94,6 +103,18 @@ const Node: FC<NodeProps> = memo(({ node, onMouseEnter, onMouseLeave, onContextM
   }
   const handleClick: MouseEventHandler = e => {
     onClick?.(e, node)
+    e.preventDefault()
+    const rect = e.currentTarget.getBoundingClientRect()
+    graph?.overlayManager?.setOverlayState({
+      position: {
+        left: rect.left + rect.width / 2,
+        top: rect.top - 10
+      },
+      visible: true,
+      content: 'nodePopover',
+      nodeId: node.id,
+      metaId: node.id
+    })
   }
   function drag() {
     const simulation = graph?.d3Simulation

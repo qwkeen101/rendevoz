@@ -134,20 +134,21 @@ const WebpagePage = ({
           const { value, clippedDetails } = result
           setClippedDetails({ ...clippedDetails, originPathname: parsedUrl.href })
           const contentId = NoteStore.saveNoteAsBuffer(value)
-          NoteStore.addNote(
-            {
-              contentId,
-              metaId: objectIdToMeta?.get(currentWebpage.id)
-            },
-            true,
-            true
-          ).then(note => {
-            ObjectStore('webpage')
-              .updateOne({ id: currentWebpage.id, noteId: note.id })
-              .then(obj => {
-                obj && setWebpageState(s => ({ ...s, showReaderMode: true, currentWebpage: obj }))
-              })
-          })
+          ObjectStore('note')
+            .addOne(
+              {
+                contentId,
+                metaId: objectIdToMeta?.get(currentWebpage.id)
+              },
+              { silent: true }
+            )
+            .then(note => {
+              ObjectStore('webpage')
+                .updateOne({ id: currentWebpage.id, noteId: note.id })
+                .then(obj => {
+                  obj && setWebpageState(s => ({ ...s, showReaderMode: true, currentWebpage: obj }))
+                })
+            })
         }
       }
     }
@@ -205,29 +206,24 @@ const WebpagePage = ({
           .then(obj => {
             if (currentWebpage.tempNoteValue && !obj?.noteId) {
               const contentId = NoteStore.saveNoteAsBuffer(currentWebpage.tempNoteValue)
-              NoteStore.addNote(
-                {
-                  contentId,
-                  metaId: objectIdToMeta.get(currentWebpage.id)
-                },
-                true,
-                true
-              ).then(note => {
-                ObjectStore('webpage')
-                  .updateOne({
-                    id: currentWebpage?.id,
-                    noteId: note.id
-                  })
-                  .then(obj => {
-                    setWebpageState(s => ({
-                      ...s,
-                      currentWebpage: {
-                        ...currentWebpage,
-                        noteId: obj?.noteId
-                      }
-                    }))
-                  })
-              })
+              ObjectStore('note')
+                .addOne({ contentId, metaId: objectIdToMeta.get(currentWebpage.id) }, { silent: true })
+                .then(note => {
+                  ObjectStore('webpage')
+                    .updateOne({
+                      id: currentWebpage?.id,
+                      noteId: note.id
+                    })
+                    .then(obj => {
+                      setWebpageState(s => ({
+                        ...s,
+                        currentWebpage: {
+                          ...currentWebpage,
+                          noteId: obj?.noteId
+                        }
+                      }))
+                    })
+                })
             }
           })
       }
@@ -279,7 +275,9 @@ const WebpagePage = ({
             <Icon size={16} name="park-loading-four" spin containerStyle={{ padding: 1 }} />
           ) : faviconUrl ? (
             <Image src={faviconUrl} width={18} />
-          ) : null
+          ) : (
+            'park-web-page'
+          )
         }
       />
       <WebpageNavigation

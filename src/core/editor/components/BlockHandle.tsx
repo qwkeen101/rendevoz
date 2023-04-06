@@ -7,6 +7,7 @@ import { FC, memo, MouseEventHandler, useEffect, useLayoutEffect, useRef, useSta
 import { createPortal } from 'react-dom'
 import { useTranslation } from 'react-i18next'
 import useReadOnlyEditor from '../hooks/useReadOnly'
+import ClassName from '@/styles/classNames'
 
 type BlockHandleProps = {
   left?: number
@@ -118,12 +119,7 @@ const BlockHandle: IBlockHandle = ({ left, top, targetHeight, visible, onMouseDo
                   onAddClick?.(e)
                   setInnerVisible(false)
                 }}
-                className={css({
-                  transition: 'all 0.2s ease',
-                  ':hover': { background: 'rgba(0,0,0,0.06)' },
-                  padding: 2,
-                  borderRadius: 4
-                })}
+                className={ClassName.flatButton(undefined, '2px')}
                 style={{
                   position: 'absolute',
                   left: -40,
@@ -134,7 +130,7 @@ const BlockHandle: IBlockHandle = ({ left, top, targetHeight, visible, onMouseDo
                   cursor: 'pointer'
                 }}
               >
-                <Icon size={16} name="park-plus" fill="#8590ae" />
+                <Icon size={16} name="park-plus" />
               </div>
             </Tooltip>
             <Tooltip
@@ -151,12 +147,7 @@ const BlockHandle: IBlockHandle = ({ left, top, targetHeight, visible, onMouseDo
                   onMenuClick?.(e)
                   setInnerVisible(false)
                 }}
-                className={css({
-                  transition: 'all 0.2s ease',
-                  ':hover': { background: 'rgba(0,0,0,0.06)' },
-                  padding: 2,
-                  borderRadius: 4
-                })}
+                className={ClassName.flatButton(undefined, '2px')}
                 style={{
                   position: 'absolute',
                   left: -20,
@@ -167,7 +158,7 @@ const BlockHandle: IBlockHandle = ({ left, top, targetHeight, visible, onMouseDo
                   cursor: 'grab'
                 }}
               >
-                <Icon size={16} name="park-drag" fill="#8590ae" />
+                <Icon size={16} name="park-drag" />
               </div>
             </Tooltip>
           </motion.div>

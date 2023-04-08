@@ -86,6 +86,7 @@ const HighlightLabel: FC<HighlightLabelProps> = memo(
         boundaryElement={document.body}
         visible={popoverVisible}
         positions={['top']}
+        containerStyle={{ borderRadius: '999px' }}
         content={
           <WithBorder ref={toolbarRef} key={highlight.id} padding="0px 12px" borderRadius={999}>
             <LabelToolbar

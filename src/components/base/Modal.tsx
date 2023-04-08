@@ -6,6 +6,7 @@ import Zindexes from '@/consts/zindex'
 import ClassName from '@/styles/classNames'
 import isHotkey from 'is-hotkey'
 import { KEY } from '@/consts/key'
+import { useSetting } from '@/core'
 
 interface ModalProps {
   visible: boolean
@@ -33,16 +34,14 @@ const Backdrop = ({ children, onMouseDown }) => {
           left: 0,
           height: '100vh',
           width: '100vw',
-          overflow: 'hidden',
-          zIndex: Zindexes.ModalBackdrop,
-          background: 'rgba(0,0,0,0.2)'
+          overflow: 'hidden'
         },
         ClassName.flexLayout('center', 'center')
       ])}
       onClick={e => e.stopPropagation()}
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
+      initial={{ background: 'rgba(0,0,0,0)' }}
+      animate={{ background: 'rgba(0,0,0,0.2)' }}
+      exit={{ background: 'rgba(0,0,0,0)' }}
       onPointerDown={onMouseDown}
     >
       {children}
@@ -86,26 +85,50 @@ const Modal: FC<ModalProps> = ({
   return ReactDOM.createPortal(
     <AnimatePresence>
       {visible && (
-        <Backdrop onMouseDown={onClose}>
+        <div style={{ position: 'fixed', inset: 0, zIndex: Zindexes.ModalBackdrop }}>
           <motion.div
-            role="modal"
-            initial={{ opacity: 0, y: 50 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 50 }}
-            style={{ minWidth, minHeight, maxHeight, maxWidth, width, height, zIndex: Zindexes.Modal, margin: 'auto', ...style }}
-            className={css([
-              !noStyle && { padding: '16px 24px', borderRadius: '6px', boxShadow: '0 10px 24px rgba(0, 0, 0, 0.18)', overflow: 'hidden' },
-              !noStyle && ClassName.Background.blurBackground
-            ])}
-            onPointerDown={e => e.stopPropagation()}
-            onClick={e => {
-              e.stopPropagation()
+            key={2}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            style={{
+              position: 'absolute',
+              inset: 0,
+              backdropFilter: 'blur(4px)'
             }}
-            transition={{ stiffness: 200, damping: 20 }}
-          >
-            {children}
-          </motion.div>
-        </Backdrop>
+            className={ClassName.Background.blurBackground}
+          ></motion.div>
+          <Backdrop onMouseDown={onClose} key={1}>
+            <motion.div
+              initial={{ y: 50, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              exit={{ y: 50, opacity: 0 }}
+              role="modal"
+              className={css([
+                !noStyle && { padding: '16px 24px', borderRadius: '6px', boxShadow: '0 10px 24px rgba(0, 0, 0, 0.18)', overflow: 'hidden' }
+              ])}
+              style={{
+                position: 'relative',
+                minWidth,
+                minHeight,
+                maxHeight,
+                maxWidth,
+                width,
+                height,
+                zIndex: Zindexes.Modal,
+                margin: 'auto',
+                ...style
+              }}
+              onPointerDown={e => e.stopPropagation()}
+              onClick={e => {
+                e.stopPropagation()
+              }}
+              transition={{ stiffness: 200, damping: 20 }}
+            >
+              {children}
+            </motion.div>
+          </Backdrop>
+        </div>
       )}
     </AnimatePresence>,
     parentElement || document.body

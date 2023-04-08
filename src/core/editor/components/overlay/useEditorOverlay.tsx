@@ -4,10 +4,8 @@ import { Position } from '@/types'
 import { useCallback, useState } from 'react'
 import { CustomEditor } from '~/typings'
 import EditorOverlayElements from './components/EditorOverlayElements'
-import { PosHelper } from '@/components/contextMenu'
 import EditorMetaQuery from './components/EditorMetaQuery'
 import { PopoverPosition } from 'react-tiny-popover'
-import { AnimatePresence, motion } from 'framer-motion'
 import { css } from '@emotion/css'
 import EditorEmojiPicker from './components/EditorEmojiPicker'
 import EditorBlockDetails from './components/EditorBlockDetails'
@@ -34,13 +32,13 @@ export interface EditorOverlayManager {
 }
 const useEditorOverlay = (editor: CustomEditor, scrollElement?: HTMLDivElement | null) => {
   const [popoverVisible, setPopoverVisible] = useState(false)
-  const [popoverPosition, setPopoverPosition] = useState<Position>()
+  const [popoverPosition, setPopoverPosition] = useState<LeftTopPosition>()
   const [overlayContent, setOverlayContent] = useState<keyof typeof AvalibleOverlayComponents>()
   const overlayManager: EditorOverlayManager = {
     open: () => setPopoverVisible(true),
     close: () => setPopoverVisible(false),
     setContent: (content: AvalibleOverlayComponents) => setOverlayContent(content),
-    setPosition: (position: Position) => setPopoverPosition(position),
+    setPosition: (position: LeftTopPosition) => setPopoverPosition(position),
     getContent: () => overlayContent
   }
 
@@ -63,13 +61,7 @@ const useEditorOverlay = (editor: CustomEditor, scrollElement?: HTMLDivElement |
     }
   }
   const renderAnimatedOverlay = () => {
-    return (
-      <AnimatePresence>
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} key={overlayContent}>
-          {renderOverlayContent()}
-        </motion.div>
-      </AnimatePresence>
-    )
+    return renderOverlayContent()
   }
   const positions = (): PopoverPosition[] => {
     switch (overlayContent) {
@@ -111,9 +103,11 @@ const useEditorOverlay = (editor: CustomEditor, scrollElement?: HTMLDivElement |
       boundaryElement={document.body}
       boundaryInset={60}
       content={renderAnimatedOverlay()}
-    >
-      <PosHelper {...popoverPosition} />
-    </AnimatePopover>
+      position={{
+        left: popoverPosition?.left,
+        top: popoverPosition?.top
+      }}
+    ></AnimatePopover>
   )
 
   return {

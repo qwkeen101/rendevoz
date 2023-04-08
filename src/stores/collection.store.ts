@@ -6,9 +6,8 @@ import BaseStore, { initializeLocalStore } from './base.store'
 import produce from 'immer'
 import { IStoreDeprecated } from './store.type'
 import { toast } from 'react-hot-toast'
-import { globalStore } from '.'
+import { ObjectStore, globalStore } from '.'
 import getSetting from '@/core/setting/getSetting'
-import useWhiteboardStore from './whiteboard.store'
 
 const { orderedData } = BaseStore
 
@@ -27,7 +26,6 @@ export const rootCollectionsAtom = atom(get =>
 )
 const useCollectionStore = () => {
   const database = useDb('collections')
-  const { getWhiteboardById, updateWhiteboard } = useWhiteboardStore()
   const shouldToast = (silent?: boolean) => {
     const setting = getSetting()
     if (setting.notification.enabled && setting.notification.collection && !silent) {
@@ -124,12 +122,12 @@ const useCollectionStore = () => {
       console.log(newSource)
     }
     if (sourceFromType === 'whiteboard') {
-      const sourceWhiteboard = await getWhiteboardById(sourceFromId)
+      const sourceWhiteboard = await ObjectStore('whiteboard').getOneById(sourceFromId)
       if (!sourceWhiteboard) return
       const newSourceWhiteboard = produce(sourceWhiteboard, draft => {
         draft.items = draft.items?.filter(i => i.id !== item.id)
       })
-      updateWhiteboard(newSourceWhiteboard, true)
+      ObjectStore('whiteboard').updateOne(newSourceWhiteboard, { silent: true })
     }
   }
   const moveItemBetweenCollections = async (item: ICollectionItem, sourceCollectionId: number, targetCollectionId: number) => {

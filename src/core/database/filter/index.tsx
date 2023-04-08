@@ -4,7 +4,7 @@ import { ObjectTag } from '@/core'
 import Zindexes from '@/consts/zindex'
 import { useToggle } from '@/hooks'
 import { indexedMetaObjectsAtom, metaObjectsAtom, tagToMetaObjectIdsMapAtom } from '@/stores/meta.store'
-import { globalStore } from '@/stores'
+import { ObjectStore, globalStore } from '@/stores'
 import ClassName from '@/styles/classNames'
 import DateFormat from '@/utils/dateFormat'
 import Id from '@/utils/id'
@@ -30,12 +30,13 @@ import { selectAtom } from 'jotai/utils'
 import { useTranslation } from 'react-i18next'
 import { useGlobalAtomValue } from '@/hooks/jotai'
 import { atom } from 'jotai'
+import Colors from '@/consts/colors'
 
 export type FilterType = 'tag' | 'type' | 'createdAt' | 'relatedObjectsSize' | 'addOne' | 'related' | 'viewAt'
 
 const filterContainerClassName = (focused: boolean) =>
   css({
-    border: focused ? '1px solid #8590ae' : '1px solid rgba(0,0,0,0.1)',
+    border: focused ? '1px solid #8590ae' : `1px solid ${Colors.Background.Border}`,
     transition: 'all 0.3s ease',
     cursor: 'pointer',
     borderRadius: 8,
@@ -127,7 +128,7 @@ export const DatabaseFilter = () => {
           style={{
             borderRadius: 8,
             padding: '4px 12px',
-            border: '1px solid rgba(0,0,0,0.1)',
+            border: `1px solid ${Colors.Background.Border}`,
             fontFamily: 'Muli',
             textTransform: 'capitalize'
           }}
@@ -294,14 +295,15 @@ const TagFilter = ({ onClose, filterId, initialOpen }: { onClose: VoidFunction; 
             return tag
           }
         })
-        .filter(i => i) as string[]
+        .filter(i => i) as number[]
     } else {
       return Array.from(tagToMetaObjectsMap?.keys() || [])
     }
   }, [tagToMetaObjectsMap, shouldFilterIdSet])
+  const tagAtom = globalStore.get(ObjectStore('tag').objectMapAtom)
   const [filterSelectedTagsMap, setFilterSeletedTagsMap] = useAtom(FilterSelectedTagsMapAtom)
   const [popoverVisible, togglePopoverVisible] = useToggle(initialOpen)
-  const toggleTag = (tag: string) => {
+  const toggleTag = (tag: number) => {
     if (filterSelectedTagsMap.get(filterId)?.has(tag)) {
       setFilterSeletedTagsMap(
         produce(filterSelectedTagsMap, draft => {
@@ -337,12 +339,14 @@ const TagFilter = ({ onClose, filterId, initialOpen }: { onClose: VoidFunction; 
         flex
         column
       >
-        {allTags.map(i => (
-          <Content flex alignItems="center" gap={10} className={ClassName.flatButton()} onClick={() => toggleTag(i)}>
-            <CheckBox checked={filterSelectedTagsMap.get(filterId)?.has(i)} />
-            <ObjectTag tag={i} hideDelete hideAdd key={i} />
-          </Content>
-        ))}
+        {allTags
+          .filter(i => tagAtom.has(i))
+          .map(i => (
+            <Content flex alignItems="center" gap={10} className={ClassName.flatButton()} onClick={() => toggleTag(i)}>
+              <CheckBox checked={filterSelectedTagsMap.get(filterId)?.has(i)} />
+              <ObjectTag tag={i} hideDelete hideAdd key={i} />
+            </Content>
+          ))}
       </Content>
     )
   }
@@ -405,7 +409,7 @@ const CreateTimeFilter = ({ onClose, initialOpen }: { onClose: VoidFunction; ini
             flexShrink: 0,
             justifyContent: 'space-evenly',
             fontFamily: 'Muli',
-            borderRight: '1px solid rgba(222,222,222, 0.8)',
+            borderRight: `1px solid ${Colors.Background.Border}`,
             paddingRight: 10,
             fontSize: 13
           }}
@@ -545,7 +549,7 @@ const ViewTimeFilter = ({ onClose, initialOpen }: { onClose: VoidFunction; initi
             flexShrink: 0,
             justifyContent: 'space-evenly',
             fontFamily: 'Muli',
-            borderRight: '1px solid rgba(222,222,222, 0.8)',
+            borderRight: `1px solid ${Colors.Background.Border}`,
             paddingRight: 10,
             fontSize: 13
           }}

@@ -7,6 +7,7 @@ import { ReactEditor, RenderElementProps, useSlateStatic } from '../../slate-rea
 import { CustomElement, HeadingElement } from '~/typings'
 import { useEventHandler } from '@/events'
 import useReadOnlyEditor from '../../hooks/useReadOnly'
+import Colors from '@/consts/colors'
 
 const HeadingToLevel: Partial<Record<CustomElement['type'], number>> = {
   'heading-one': 1,
@@ -119,7 +120,7 @@ const Heading: FC<RenderElementProps> = ({ element, children }) => {
     !isReadOnly && action(),
     children,
     isEmpty && !isComposing && (
-      <div style={{ position: 'absolute', left: 0, top: 0, pointerEvents: 'none', userSelect: 'none', color: 'rgba(133, 144, 174, 0.4)' }}>
+      <div style={{ position: 'absolute', left: 0, top: 0, pointerEvents: 'none', userSelect: 'none', color: Colors.Font.Tertiary }}>
         H{HeadingToLevel[element.type]}
       </div>
     )

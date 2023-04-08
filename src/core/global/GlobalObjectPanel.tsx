@@ -34,6 +34,7 @@ import { useRenderObject } from '@/core'
 import Actions from '@/core/Actions'
 import { GlobalEventEmitter, useEventHandler } from '@/events'
 import { LeftTopPosition } from '~/typings'
+import Colors from '@/consts/colors'
 
 export const GlobalObjectPanelInstance: {
   open?: (position?: LeftTopPosition) => void
@@ -231,7 +232,7 @@ export const GlobalObjectPanel = () => {
               flex
               justifyContent="space-between"
               style={{
-                borderBottom: '1px solid rgba(0,0,0,0.07)',
+                borderBottom: `1px solid ${Colors.Background.Border}`,
                 cursor: 'grab',
                 padding: '0px 0px 8px'
               }}
@@ -241,7 +242,6 @@ export const GlobalObjectPanel = () => {
               <Icon
                 name="park-close"
                 className={ClassName.circleButton()}
-                fill="rgba(0,0,0,0.3)"
                 onClick={() => {
                   setPanelState({ ...panelState, visible: false })
                 }}
@@ -251,7 +251,7 @@ export const GlobalObjectPanel = () => {
               style={{
                 background: 'transparent',
                 borderRadius: 8,
-                border: '1px solid rgba(0,0,0,0.1)',
+                border: `1px solid ${Colors.Background.Border}`,
                 padding: '6px 12px'
               }}
               flex
@@ -314,7 +314,7 @@ export const GlobalObjectPanel = () => {
                         paddingTop: 0
                       },
                       ':not(:last-child)': {
-                        borderBottom: '1px solid rgba(0,0,0,0.05)'
+                        borderBottom: `1px solid ${Colors.Background.Border}`
                       },
                       padding: '10px 0px'
                     })}
@@ -344,14 +344,14 @@ export const SimpleObject = memo(
         metaObjectId,
         iconName = 'park-drag',
         iconPopover,
-        iconColor = 'rgba(31,34,39,0.2)',
-        heavyIconColor = 'rgba(31,34,39,0.7)',
         descriptionClassName = css([ClassName.description(), ClassName.ellipsisFont(2)]),
         onNavigate,
         draggable = true,
         renderFrom = true,
         renderDescription = true,
         isAddingObject,
+        iconColor = Colors.Font.Secondary,
+        heavyIconColor = Colors.Font.Primary,
         onAddObject
       }: {
         metaObjectId: number
@@ -488,13 +488,7 @@ export const SimpleObject = memo(
               onChange={handleClickCheckBox}
             />
           ) : isAddingObject ? (
-            <Icon
-              onClick={() => onAddObject?.(metaObjectId)}
-              size={18}
-              fill={iconColor}
-              name="park-plus"
-              className={ClassName.circleButton()}
-            ></Icon>
+            <Icon onClick={() => onAddObject?.(metaObjectId)} size={18} name="park-plus" className={ClassName.circleButton()}></Icon>
           ) : (
             <AnimatePopover
               visible={popoverVisible}
@@ -572,7 +566,7 @@ const titleClassName = css([
     textDecoration: 'underline 1px rgba(0,0,0,0)',
     transition: 'text-decoration-color 0.3s ease',
     ':hover': {
-      textDecorationColor: 'rgba(0,0,0,0.8)'
+      textDecorationColor: 'inherit'
     },
     cursor: 'pointer'
   }

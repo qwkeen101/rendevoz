@@ -5,6 +5,7 @@ import toast from 'react-hot-toast'
 import { Content, Icon } from '.'
 import { Button } from './button'
 import useFileUpload from './useFileUpload'
+import Colors from '@/consts/colors'
 
 const FileUploader = ({
   onFileUploaded,
@@ -62,17 +63,17 @@ const FileUploader = ({
           e.currentTarget === e.target && toggleDragHighlight(false)
         }}
         style={{
-          border: '1px solid rgba(31, 34, 37, 0.06)',
+          border: `1px solid ${Colors.Background.Border}`,
           padding: 18,
           borderRadius: 8,
-          borderColor: dragHighlight ? '#8590ae' : 'rgba(31, 34, 37, 0.06)',
+          borderColor: dragHighlight ? '#8590ae' : Colors.Background.Border,
           borderStyle: dashed ? 'dashed' : 'solid',
           transition: 'all 0.3s ease',
           cursor: showButton ? undefined : 'pointer',
           ...style
         }}
       >
-        {typeof icon === 'string' ? <Icon name={icon || 'park-file-addition-one'} size={36} fill={'rgba(31, 34, 37, 0.6)'} /> : icon}
+        {typeof icon === 'string' ? <Icon name={icon || 'park-file-addition-one'} size={36} /> : icon}
         {text !== null && <div className={ClassName.description()}>{text || 'Select one file or drag here'}</div>}
         {showButton && (
           <Button onClick={upload} style={{ padding: '6px 16px' }}>

@@ -48,7 +48,7 @@ const Node: FC<NodeProps> = memo(({ node, onMouseEnter, onMouseLeave, onContextM
       return []
     }
     const nodeTags = node.tags || []
-    const allSelectedTags = new Set<string>(
+    const allSelectedTags = new Set<number>(
       Array.from(filterTags.values())
         .map(i => [...i])
         .flat(1)
@@ -62,7 +62,7 @@ const Node: FC<NodeProps> = memo(({ node, onMouseEnter, onMouseLeave, onContextM
   const d = radius * 2
   const originNode = graph?.nodesMap?.get(node.id)
   const renderNode = () => {
-    if (node.icon){
+    if (node.icon) {
       return <EmojiNode node={node} />
     }
     if (node.coverImgSrc) {

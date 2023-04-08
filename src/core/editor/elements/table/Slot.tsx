@@ -5,13 +5,14 @@ import { css } from '@emotion/css'
 import { memo, useEffect } from 'react'
 import ColumnMenu from './ColumnMenu'
 import RowMenu from './RowMenu'
+import Colors from '@/consts/colors'
 const SlotClassName = css({
-  background: 'rgb(239,240,241)',
+  background: Colors.Background.Secondary,
   transition: 'background 0.2s ease',
   cursor: 'pointer',
   zIndex: 10,
   ':hover': {
-    background: 'rgb(222,224,227)'
+    background: Colors.Background.ButtonHover
   }
 })
 type SlotProps = (

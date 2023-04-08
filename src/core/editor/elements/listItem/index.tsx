@@ -1,25 +1,18 @@
 import { useEventHandler, useScopedEventEmitter } from '@/events'
-import { useDebounceFn, useTheme } from '@/hooks'
+import { useDebounceFn } from '@/hooks'
 import { css } from '@emotion/css'
-import { useEffect, useMemo, useRef } from 'react'
+import { useEffect, useMemo } from 'react'
 import { useUpdate } from 'react-use'
-import { Editor, Element, Path } from 'slate'
+import { Editor, Path } from 'slate'
 import { RenderElementProps } from 'slate-react'
 import { CustomElement } from '~/typings'
 import { ReactEditor, useSlateStatic } from '../../slate-react'
 import styles from './index.module.less'
 
 export const ListItem = ({ children, element }: RenderElementProps) => {
-  const { primaryColor } = useTheme('primaryColor')
   return (
     <div className={styles.wrapper}>
-      <div
-        contentEditable={false}
-        role="list-item-marker"
-        data-level={element.level}
-        style={{ color: `var(--block-font-color, ${primaryColor})` }}
-        className={styles.marker}
-      ></div>
+      <div contentEditable={false} role="list-item-marker" data-level={element.level} className={styles.marker}></div>
       <span role="list-item-line-wrapper" className={css({ width: '100%' })}>
         {children}
       </span>
@@ -116,7 +109,6 @@ const intToRoman = (num: number) => {
   return result
 }
 export const OrderListItem = ({ children, element }: RenderElementProps) => {
-  const { primaryColor } = useTheme('primaryColor')
   const editor = useSlateStatic()
   const scopedEmitter = useScopedEventEmitter()
   const handler = useEventHandler('editor')
@@ -182,7 +174,6 @@ export const OrderListItem = ({ children, element }: RenderElementProps) => {
         data-level={element.level}
         role="list-item-marker"
         style={{
-          color: `var(--block-font-color, ${primaryColor})`,
           whiteSpace: 'nowrap',
           textTransform: 'lowercase',
           fontFamily: 'Muli',

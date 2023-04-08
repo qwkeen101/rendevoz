@@ -130,17 +130,12 @@ const SidebarCollectionItem: FC<ISidebarItem> = memo(({ id, parentId, parentType
           alignItems="center"
           justifyContent="space-between"
           className={css([
+            ClassName.flatButton(),
             {
-              cursor: 'pointer',
-              transition: 'all 0.2s ease',
-              borderRadius: 4,
               padding: 2,
               margin: 2,
               paddingLeft: 14,
-              paddingRight: 5,
-              ':hover': {
-                background: 'rgba(0,0,0,0.07)'
-              }
+              paddingRight: 5
             },
             hovered && ClassName.Drag.droppableItemHovered(droppable)
           ])}
@@ -158,7 +153,13 @@ const SidebarCollectionItem: FC<ISidebarItem> = memo(({ id, parentId, parentType
               theme="filled"
               name="park-right-one"
             />
-            {collection && <IconNameItem name={collection.name} color={collection.color} icon={collection.icon || 'park-folder-close'} />}
+            {collection && (
+              <IconNameItem
+                name={collection.name || 'Unnamed Collection'}
+                color={collection.color}
+                icon={collection.icon || 'park-folder-close'}
+              />
+            )}
           </Content>
           {childrenLength ? childrenLength : undefined}
         </Content>

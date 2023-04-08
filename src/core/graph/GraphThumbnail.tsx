@@ -114,7 +114,7 @@ const GraphThumbnail = ({ children, onClose }: { children: ReactNode; onClose: V
                 zIndex: 10
               }}
             >
-              <Icon className={ClassName.circleButton()} fill="rgba(0,0,0,0.3)" name="park-close" onClick={onClose} />
+              <Icon className={ClassName.circleButton()} name="park-close" onClick={onClose} />
             </Content>
           )}
           <div

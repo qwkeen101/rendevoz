@@ -17,6 +17,7 @@ import { defaultBgColor } from '../picker/colorPicker'
 import { useTranslation } from 'react-i18next'
 import { css } from '@emotion/css'
 import { ObjectTag } from '@/core'
+import Colors from '@/consts/colors'
 
 const FormTagPicker = ({
   onClose,
@@ -26,8 +27,8 @@ const FormTagPicker = ({
 }: {
   onClose?: VoidFunction
   style?: CSSProperties
-  onChange?: (tags: string[]) => void
-  tags?: string[]
+  onChange?: (tags: number[]) => void
+  tags?: number[]
 }) => {
   const [addTagVisible, toggleAddTagVisible] = useToggle(false)
   const [newAddTag, setNewAddTag] = useState<ITag>()
@@ -38,7 +39,7 @@ const FormTagPicker = ({
   const [showTagManager, toggleShowTagManager] = useToggle(false)
   const { t } = useTranslation()
   const mostUsedTags = useMemo(() => {
-    const tags: { tag: string; size: number }[] = []
+    const tags: { tag: number; size: number }[] = []
     Array.from(TagToMetaObjectIdsMap?.entries() || []).forEach(([k, v]) => {
       tags.push({
         tag: k,
@@ -65,7 +66,7 @@ const FormTagPicker = ({
     <div style={{ width: 300, ...style }} className={css({ '> div': { textTransform: 'capitalize' } })}>
       <Icon
         name="park-close"
-        containerStyle={{ position: 'absolute', top: 10, right: 10, color: 'rgba(31,34,39,0.6)' }}
+        containerStyle={{ position: 'absolute', top: 10, right: 10 }}
         className={ClassName.circleButton()}
         onClick={() => {
           if (showTagManager) {
@@ -97,10 +98,15 @@ const FormTagPicker = ({
                         <Content
                           onClick={e => {
                             setSearchTags([])
-                            newAddTag?.name && ObjectStore('tag').addOne(newAddTag)
-                            setNewAddTag(undefined)
-                            toggleAddTagVisible(false)
-                            newAddTag?.name && onChange?.([...tags, newAddTag.name])
+                            if (newAddTag?.name) {
+                              ObjectStore('tag')
+                                .addOne(newAddTag)
+                                .then(tag => {
+                                  setNewAddTag(undefined)
+                                  toggleAddTagVisible(false)
+                                  onChange?.([...tags, tag.id])
+                                })
+                            }
                           }}
                           flex
                           alignItems="center"
@@ -161,12 +167,12 @@ const FormTagPicker = ({
                                 setNewAddTag(undefined)
                                 toggleAddTagVisible(false)
                                 if (i.name) {
-                                  onChange?.([...tags, i.name])
+                                  onChange?.([...tags, i.id])
                                 }
                               }}
                               className={ClassName.flatButton(undefined, undefined, 'rgba(31,34,39,0.1)')}
                             >
-                              <ObjectTag small hideSize key={i.name} tag={i.name} />
+                              <ObjectTag small hideSize key={i.name} tag={i.id} />
                             </div>
                           ))}
                         </Content>
@@ -191,10 +197,15 @@ const FormTagPicker = ({
                     onKeyDown={e => {
                       if (isHotkey(KEY.Enter, e)) {
                         setSearchTags([])
-                        newAddTag?.name && ObjectStore('tag').addOne(newAddTag)
-                        setNewAddTag(undefined)
-                        toggleAddTagVisible(false)
-                        newAddTag?.name && onChange?.([...tags, newAddTag.name])
+                        if (newAddTag?.name) {
+                          ObjectStore('tag')
+                            .addOne(newAddTag)
+                            .then(tag => {
+                              setNewAddTag(undefined)
+                              toggleAddTagVisible(false)
+                              onChange?.([...tags, tag.id])
+                            })
+                        }
                       }
                       if (isHotkey(KEY.Escape, e)) {
                         setSearchTags([])
@@ -227,8 +238,7 @@ const FormTagPicker = ({
               onClick={toggleAddTagVisible}
               className={ClassName.circleButton()}
               style={{
-                color: 'rgb(82,102,116)',
-                border: '1px solid rgba(82, 102, 116, 0.3)',
+                border: `1px solid ${Colors.Background.Border}`,
                 display: 'flex',
                 alignItems: 'center',
                 gap: 4,
@@ -256,7 +266,16 @@ const FormTagPicker = ({
               />
             ))}
           </Content>
-          <Button.IconButton reverse spaceBetween icon="park-right" text="管理标签" onClick={toggleShowTagManager}></Button.IconButton>
+          <Button.IconButton
+            reverse
+            spaceBetween
+            icon="park-right"
+            text="管理标签"
+            style={{
+              marginTop: 10
+            }}
+            onClick={toggleShowTagManager}
+          ></Button.IconButton>
         </>
       )}
     </div>
@@ -277,11 +296,13 @@ const TagManager = () => {
           <Content flex gap={10}>
             <ObjectTag
               style={{ width: '100%' }}
-              tag={tag.name}
+              tag={tag.id}
               hideDelete
               hideAdd
               showDBRemove
               showPickColor
+              showEdit
+              hideSize
               onDBRemove={() => ObjectStore('tag').deleteOneById(entry[0], { force: true })}
             />
           </Content>

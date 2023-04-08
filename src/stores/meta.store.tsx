@@ -20,15 +20,6 @@ export const metaLinksAtom = atom<Map<number, MetaLink>>(new Map())
 
 const { orderedData, orderedArray } = BaseStore
 
-let moved = false
-const triggerMoveOldItems = () => {
-  if (moved === false) {
-    // normalizeOldCollections()
-    // normalizeOldObjectsToNewObjects()
-  }
-  moved = true
-}
-
 export const handleMetaObjectsChange = () => {
   console.log('triggered change')
   const prevIndex = globalStore.get(indexedMetaObjectsAtom)
@@ -41,7 +32,7 @@ export const handleMetaObjectsChange = () => {
   const deletedMetaObjectsSet: Set<MetaObject> = prevIndex?.deletedMetaObjectsSet || new Set()
   // need shallow copy to rerender components
   const objectIdToMetaObjectMap: Map<number, number> = new Map(prevIndex?.objectIdToMetaObjectMap)
-  const tagToMetaObjectIdsMap: Map<string, Set<number>> = new Map(prevIndex?.tagToMetaObjectIdsMap)
+  const tagToMetaObjectIdsMap: Map<number, Set<number>> = new Map(prevIndex?.tagToMetaObjectIdsMap)
   const typeToMetaObjectIdsMap: Map<string, Set<number>> = new Map(prevIndex?.typeToMetaObjectIdsMap)
   const idSet = new Set(prevMetaObjects?.keys())
   newMetaObjects.forEach((v, k) => {
@@ -86,6 +77,7 @@ export const handleMetaObjectsChange = () => {
     }
     if (v.tags) {
       v.tags.forEach(tag => {
+        if (typeof tag !== 'number') return
         if (tagToMetaObjectIdsMap.has(tag)) {
           tagToMetaObjectIdsMap.get(tag)?.add(v.id)
         } else {
@@ -126,8 +118,6 @@ export const handleMetaObjectsChange = () => {
     oldMetaObjects: newMetaObjects,
     typeToMetaObjectIdsMap
   })
-
-  triggerMoveOldItems()
 }
 
 const debounceSetUndeleted = debounce(() => {
@@ -154,7 +144,7 @@ export const indexedMetaObjectsAtom = atom<{
   pinnedMetaObjectsSet: Set<MetaObject>
   deletedMetaObjectsSet: Set<MetaObject>
   objectIdToMetaObjectMap: Map<number, number>
-  tagToMetaObjectIdsMap: Map<string, Set<number>>
+  tagToMetaObjectIdsMap: Map<number, Set<number>>
   typeToMetaObjectIdsMap: Map<string, Set<number>>
   oldMetaObjects: Map<number, MetaObject>
 } | null>(null)

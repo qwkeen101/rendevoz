@@ -13,6 +13,7 @@ import useSidebarItemContextMenu from '../useSidebarItemContextMenu'
 import useSidebarItemDrag from '../useSidebarItemDrag'
 import { ISidebarItem } from './type'
 import { toast } from 'react-hot-toast'
+import ClassName from '@/styles/classNames'
 
 export const getIcon = (type?: MetaObject['type']) => {
   switch (type) {
@@ -82,21 +83,7 @@ const SidebarObjectItem: FC<ISidebarItem> = ({ parentId, parentType, id, draggab
   )
   if (metaObject?.deleted || !metaObject) return null
   return (
-    <Content
-      flex
-      gap={10}
-      ref={ref}
-      onClick={() => Actions.navigateToTargetObject(id)}
-      className={css({
-        cursor: 'pointer',
-        transition: 'all 0.2s ease',
-        borderRadius: 4,
-        padding: '2px 8px',
-        ':hover': {
-          background: 'rgba(0,0,0,0.07)'
-        }
-      })}
-    >
+    <Content flex gap={10} ref={ref} onClick={() => Actions.navigateToTargetObject(id)} className={ClassName.flatButton(4, '2px 8px')}>
       {contextMenuPortal}
       <IconNameItem icon={metaObject?.icon || icon} name={metaObject?.name} color={metaObject?.color} />
     </Content>

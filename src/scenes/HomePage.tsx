@@ -16,6 +16,7 @@ import { IconNameItem } from '@/components/layout/sidebar/SidebarCollection'
 import { getIcon } from '@/components/layout/sidebar/items/SidebarObjectItem'
 import { DraggableElement, ObjectActionPopover, useCreateObject } from '@/core'
 import { Zindexes } from '@/consts'
+import Colors from '@/consts/colors'
 
 export const HomePage: FC = () => {
   const { t } = useTranslation()
@@ -223,7 +224,7 @@ const Recent = () => {
               key={i.id}
               className={css([
                 {
-                  borderTop: '1px solid rgba(31,34,37,0.08)',
+                  borderTop: `1px solid ${Colors.Background.Border}`,
                   userSelect: 'none',
                   td: {
                     padding: '16px 8px'

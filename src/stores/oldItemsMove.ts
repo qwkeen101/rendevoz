@@ -58,7 +58,6 @@ export const normalizeOldCollections = () => {
 
 // migarate all to newdb
 export const normalizeOldObjectsToNewObjects = () => {
-  return
   const noteDb = useDb('notes')
   const pdfDb = useDb('documents')
   const whiteboardDb = useDb('whiteboards')
@@ -66,21 +65,21 @@ export const normalizeOldObjectsToNewObjects = () => {
   const noteBlocksDb = useDb('blocks')
 
   noteDb.toArray().then((data: INote[]) => {
-    data.forEach(i => ObjectStore('note').addOne({ ...i }))
+    Promise.all(data.map(i => ObjectStore('note').addOne({ ...i }))).then(() => noteDb.clear())
   })
   pdfDb.toArray().then((data: IPdfDocument[]) => {
-    data.forEach(i => ObjectStore('pdf').addOne({ ...i }))
+    Promise.all(data.map(i => ObjectStore('pdf').addOne({ ...i }))).then(() => pdfDb.clear())
   })
 
   whiteboardDb.toArray().then((data: IWhiteboard[]) => {
-    data.forEach(i => ObjectStore('whiteboard').addOne({ ...i }))
+    Promise.all(data.map(i => ObjectStore('whiteboard').addOne({ ...i }))).then(() => whiteboardDb.clear())
   })
 
-  // pdfLabelsDb.toArray().then((data: ILabel[]) => {
-  //   data.forEach(i => ObjectStore('note').addOne({ ...i }))
-  // })
+  pdfLabelsDb.toArray().then(data => {
+    Promise.all(data.map(i => ObjectStore('pdfLabel').addOne({ ...i }))).then(() => pdfLabelsDb.clear())
+  })
 
-  // noteBlocksDb.toArray().then(data => {
-  //   data.forEach(i => ObjectStore('note').addOne({ ...i }))
-  // })
+  noteBlocksDb.toArray().then(data => {
+    Promise.all(data.map(i => ObjectStore('noteBlock').addOne({ ...i }))).then(() => noteBlocksDb.clear())
+  })
 }

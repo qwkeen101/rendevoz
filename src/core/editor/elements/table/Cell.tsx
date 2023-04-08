@@ -2,21 +2,19 @@ import useScopedEventEmitter from '@/events/useEventEmitter'
 import { useMemoizedFn, useMergedRef, useToggle } from '@/hooks'
 import { css } from '@emotion/css'
 import produce from 'immer'
-import { useContext, useEffect, useRef } from 'react'
+import { useEffect, useRef } from 'react'
 import { Path, Transforms } from 'slate'
-import { ReactEditor, RenderElementProps, useSlate, useSlateStatic } from '../../slate-react'
+import { ReactEditor, RenderElementProps, useSlate } from '../../slate-react'
 import { NODE_TO_INDEX, NODE_TO_PARENT } from '../../slate-react/utils/weak-maps'
 import { CustomElement, TableCellElement, TableElement, TableRowElement } from '~/typings'
 import { ID_TO_PATH_MAP } from '../../weakMaps'
 import { useEventHandler } from '@/events/eventHandler'
 import { useGlobalIsDragging } from '@/core'
 import ClassName from '@/styles/classNames'
+import Colors from '@/consts/colors'
 const TableCellWrapperClassName = css({
   minHeight: 32,
-  border: '1px solid rgba(133, 144, 174, 0.4)',
-  // borderBottom: '1px solid rgba(133, 144, 174, 0.4)',
-  // minWidth: 240,
-  // maxWidth: 320,
+  border: '1px solid var(--font-primary)',
   position: 'relative'
 })
 const CellResizerWrapperClassName = css({
@@ -55,16 +53,12 @@ const TableCell = ({
   const handler = useEventHandler('editor')
   const tdRef = useRef<HTMLTableCellElement>(null)
   const mergedRef = useMergedRef(attributes.ref, tdRef)
-  handler.on('tableCellOp', ({ colName, rowIndex, type, tableId }) => {
+  handler.on('tableCellOp', ({ colName, type, tableId }) => {
     if (table?.id !== tableId) return
     if (type === 'selectCol') {
       if (colName === element.colName) {
         setTimeout(() => toggleSelected(true))
       }
-    }
-    if (type === 'pointerEnterCell') {
-    }
-    if (type === 'pointerLeaveCell') {
     }
     if (type === 'pointerEnterResizer') {
       if (colName === element.colName) {
@@ -181,7 +175,7 @@ const TableCell = ({
         fontWeight: isHeader ? 700 : undefined,
         verticalAlign: isHeader ? 'middle' : 'top',
         padding: '7px 9px',
-        background: isHeader ? 'rgba(242,243,245)' : undefined,
+        background: isHeader ? Colors.Background.Secondary : undefined,
         textAlign: colSpan === table?.columns.length || isHeader ? 'center' : undefined
       }}
       onPointerLeave={() => {

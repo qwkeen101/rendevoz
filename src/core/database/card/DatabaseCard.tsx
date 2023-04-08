@@ -24,6 +24,7 @@ import ObjectForm from '@/components/form/ObjectForm'
 import { PartialWithId } from '@/types'
 import { useTranslation } from 'react-i18next'
 import { GlobalEventEmitter } from '@/events'
+import Colors from '@/consts/colors'
 
 export const TypeToTypeName: Record<MetaObject['type'], string> = {
   pdfLabel: 'pdf label',
@@ -43,7 +44,6 @@ export const DatabaseCard: FC<{
   index?: number
   metaObject: MetaObject
 }> = memo(({ metaObject: _m }) => {
-  const { defaultFontColorBlack, defaultFontColorGrey } = useTheme('defaultFontColorBlack', 'defaultFontColorGrey')
   const metaAtom = useMemo(() => selectAtom(metaObjectsAtom, m => m.get(_m.id)), [_m.id])
   const metaObject = useGlobalAtomValue(metaAtom)
   const relatedAtom = useMemo(() => selectAtom(relatedMetaObjectsMapAtom, r => r.get(_m.id)), [_m.id])
@@ -83,13 +83,12 @@ export const DatabaseCard: FC<{
         alignItems="center"
         justifyContent="space-between"
         className={css({
-          color: defaultFontColorGrey,
           fontSize: 12
         })}
       >
         <Content flex gap={6} alignItems="baseline">
-          <span className={css({ fontSize: 24, fontWeight: 650, color: defaultFontColorBlack })}>{relatedNumber || 0}</span>
-          <span className={css({ fontSize: 11, fontWeight: 500, color: defaultFontColorGrey })}>Related Objects</span>
+          <span className={css({ fontSize: 24, fontWeight: 650 })}>{relatedNumber || 0}</span>
+          <span className={css({ fontSize: 11, fontWeight: 500 })}>Related Objects</span>
         </Content>
 
         <AnimatePopover
@@ -185,7 +184,6 @@ export const DatabaseCard: FC<{
         onPointerLeave={() => setShowIcon(false)}
         style={{ gridRowEnd: showImage ? 'span 2' : undefined }}
         className={css({
-          background: 'white',
           minHeight: 150,
           cursor: 'pointer',
           borderRadius: 16,
@@ -222,7 +220,6 @@ export const DatabaseCard: FC<{
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            color: defaultFontColorBlack,
             fontSize: 18,
             fontWeight: 600
           })}
@@ -238,7 +235,6 @@ export const DatabaseCard: FC<{
               width: '100% !important',
               height: '70%',
               maxHeight: '300px',
-              // flexBasis: 150,
               overflow: 'hidden'
             })}
             src={innerCover || cover}
@@ -246,13 +242,30 @@ export const DatabaseCard: FC<{
         )}
         <div
           className={css({
+            position: 'relative',
             padding: '16px',
-            background: 'white',
-            borderRadius: 16,
-            marginTop: showImage ? -16 : 0,
+            borderTopLeftRadius: 16,
+            borderTopRightRadius: 16,
+            background: Colors.Background.Linear,
+            marginTop: showImage ? -32 : 0,
             zIndex: 1
           })}
         >
+          {showImage && (
+            <div
+              style={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                width: '100%',
+                zIndex: -1,
+                borderTopLeftRadius: 16,
+                borderTopRightRadius: 16,
+                height: '60%',
+                backdropFilter: 'blur(4px)'
+              }}
+            ></div>
+          )}
           <div
             style={{
               fontWeight: 600,
@@ -261,7 +274,6 @@ export const DatabaseCard: FC<{
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'space-between',
-              color: '#8590ae',
               textTransform: 'uppercase'
             }}
           >
@@ -280,7 +292,18 @@ export const DatabaseCard: FC<{
           )}
           <div style={{ minHeight: 80 }}>{renderCardContent()}</div>
         </div>
-        <div className={css({ padding: '0 16px 8px', marginTop: 'auto' })}>{renderToolbar()}</div>
+        <div
+          className={css({
+            padding: '0 16px 8px',
+            flex: 1,
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'flex-end',
+            background: Colors.Background.Linear
+          })}
+        >
+          {renderToolbar()}
+        </div>
       </div>
     </Flipped>
   )

@@ -1,4 +1,4 @@
-import { AnimatePopover, Button, Content, Icon, WithBorder } from '@/components'
+import { AnimatePopover, Button, WithBorder } from '@/components'
 import Modal from '@/components/base/Modal'
 import CollectionForm from '@/components/form/CollectionForm'
 import CreateDocumentForm from '@/components/form/CreateDocumentForm'
@@ -7,8 +7,7 @@ import ClassName from '@/styles/classNames'
 import { Position } from '@/types'
 import Id from '@/utils/id'
 import { css } from '@emotion/css'
-import { CollectionStore, NoteStore, ObjectStore, WhiteboardStore } from '@/stores'
-import { AnimatePresence, motion } from 'framer-motion'
+import { CollectionStore, ObjectStore } from '@/stores'
 import { RefObject, useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useTranslation } from 'react-i18next'
@@ -85,13 +84,19 @@ const useSidebarItemContextMenu = (
     }
   }, [])
   const portal = createPortal(
-    <AnimatePresence>
-      {contextMenuState.contextMenuVisible && (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          style={{ position: 'fixed', left: 0, top: 0, width: '100%', height: '100%', zIndex: Zindexes.SidebarContextMenuOverlay }}
+    <AnimatePopover
+      visible={contextMenuState.contextMenuVisible}
+      disableNudge
+      disableIntersection
+      positions={['right']}
+      align="start"
+      onClickOutside={() => setContextMenuState(s => ({ ...s, contextMenuVisible: false }))}
+      position={{
+        left: contextMenuState.left,
+        top: contextMenuState.top
+      }}
+      content={
+        <WithBorder
           onContextMenu={e => {
             e.preventDefault()
             e.stopPropagation()
@@ -99,170 +104,158 @@ const useSidebarItemContextMenu = (
               setContextMenuState({ ...contextMenuState, contextMenuVisible: false })
             }
           }}
+          className={css([ClassName.defaultFont(13, 600), ClassName.Background.pseudoBlubBackground])}
+          style={{
+            padding: 3,
+            width: 150,
+            textTransform: 'capitalize'
+          }}
           onClick={e => {
-            e.preventDefault()
-            e.stopPropagation()
-            if (e.target === e.currentTarget) {
-              setContextMenuState({ ...contextMenuState, contextMenuVisible: false })
+            if (e.target !== e.currentTarget) {
+              e.stopPropagation()
+              setContextMenuState({
+                ...contextMenuState,
+                createVisible: false
+              })
+              setTimeout(() => {
+                setContextMenuState(s => ({
+                  ...s,
+                  contextMenuVisible: false
+                }))
+              })
             }
           }}
         >
-          <WithBorder
-            className={css([ClassName.defaultFont(13, 600), ClassName.Background.pseudoBlubBackground])}
-            style={{
-              padding: 3,
-              width: 150,
-              position: 'absolute',
-              textTransform: 'capitalize',
-              ...contextMenuState
-            }}
-            onClick={e => {
-              if (e.target !== e.currentTarget) {
-                e.stopPropagation()
-                setContextMenuState({
-                  ...contextMenuState,
-                  createVisible: false
-                })
-                setTimeout(() => {
-                  setContextMenuState(s => ({
-                    ...s,
-                    contextMenuVisible: false
-                  }))
-                })
+          {item?.type === 'collection' && (
+            <AnimatePopover
+              containerStyle={{ zIndex: String(Zindexes.PopupMenu) }}
+              positions={['right']}
+              align="start"
+              visible={!!contextMenuState.createVisible}
+              content={
+                <WithBorder
+                  style={{ width: 150, padding: 3, textTransform: 'capitalize' }}
+                  className={css([
+                    ClassName.defaultFont(13, 600),
+                    ClassName.Background.pseudoBlubBackground,
+                    ClassName.childrenAllFlex(undefined, 'flex-start'),
+                    {
+                      '> *': [
+                        {
+                          gap: 6
+                        },
+                        ClassName.flatButton()
+                      ]
+                    }
+                  ])}
+                >
+                  <Button.IconButton
+                    onClick={() => {
+                      setFormState({
+                        newCollectionVisible: true
+                      })
+                    }}
+                    text={t('general.subcollection')}
+                    icon="park-folder-close"
+                  />
+
+                  <Button.IconButton
+                    onClick={() => {
+                      createObjectWithOpenMeta(
+                        'note',
+                        {
+                          contentId: Id.getId(),
+                          title: 'Untitled'
+                        },
+                        'Untitled Note'
+                      )
+                    }}
+                    text={t('general.note')}
+                    icon="park-notes"
+                  />
+
+                  <Button.IconButton
+                    onClick={() => {
+                      setFormState({
+                        newPdfVisible: true
+                      })
+                    }}
+                    text={t('general.pdf')}
+                    icon="park-file-pdf"
+                  />
+
+                  <Button.IconButton
+                    onClick={() => {
+                      createObjectWithOpenMeta(
+                        'whiteboard',
+                        {
+                          name: 'Unnamed Whiteboard',
+                          edges: new Map(),
+                          nodes: new Map(),
+                          items: []
+                        },
+                        'Unnamed Whiteboard'
+                      )
+                    }}
+                    text={t('general.whiteboard')}
+                    icon="park-new-computer"
+                  />
+                  <Button.IconButton
+                    icon="park-web-page"
+                    text={t('general.webpage')}
+                    onClick={e => {
+                      e.stopPropagation()
+                      setContextMenuState({
+                        ...contextMenuState,
+                        createVisible: false,
+                        contextMenuVisible: false
+                      })
+                      createObjectWithOpenMeta('webpage')
+                    }}
+                  />
+                </WithBorder>
               }
-            }}
-          >
-            {item?.type === 'collection' && (
-              <AnimatePopover
-                containerStyle={{ zIndex: String(Zindexes.PopupMenu) }}
-                positions={['right']}
-                align="start"
-                visible={!!contextMenuState.createVisible}
-                content={
-                  <WithBorder
-                    style={{ width: 150, padding: 3, textTransform: 'capitalize' }}
-                    className={css([
-                      ClassName.defaultFont(13, 600),
-                      ClassName.Background.pseudoBlubBackground,
-                      ClassName.childrenAllFlex(undefined, 'flex-start'),
-                      {
-                        '> *': [
-                          {
-                            gap: 6
-                          },
-                          ClassName.flatButton()
-                        ]
-                      }
-                    ])}
-                  >
-                    <Button.IconButton
-                      onClick={() => {
-                        setFormState({
-                          newCollectionVisible: true
-                        })
-                      }}
-                      text={t('general.subcollection')}
-                      icon="park-folder-close"
-                    />
-
-                    <Button.IconButton
-                      onClick={() => {
-                        createObjectWithOpenMeta(
-                          'note',
-                          {
-                            contentId: Id.getId(),
-                            title: 'Untitled'
-                          },
-                          'Untitled Note'
-                        )
-                      }}
-                      text={t('general.note')}
-                      icon="park-notes"
-                    />
-
-                    <Button.IconButton
-                      onClick={() => {
-                        setFormState({
-                          newPdfVisible: true
-                        })
-                      }}
-                      text={t('general.pdf')}
-                      icon="park-file-pdf"
-                    />
-
-                    <Button.IconButton
-                      onClick={() => {
-                        createObjectWithOpenMeta(
-                          'whiteboard',
-                          {
-                            name: 'Unnamed Whiteboard',
-                            edges: new Map(),
-                            nodes: new Map(),
-                            items: []
-                          },
-                          'Unnamed Whiteboard'
-                        )
-                      }}
-                      text={t('general.whiteboard')}
-                      icon="park-new-computer"
-                    />
-                    <Button.IconButton
-                      icon="park-web-page"
-                      text={t('general.webpage')}
-                      onClick={e => {
-                        e.stopPropagation()
-                        setContextMenuState({
-                          ...contextMenuState,
-                          createVisible: false,
-                          contextMenuVisible: false
-                        })
-                        createObjectWithOpenMeta('webpage')
-                      }}
-                    />
-                  </WithBorder>
-                }
-              >
-                <Button.IconButton
-                  icon="park-right"
-                  text={t('general.create')}
-                  reverse
-                  spaceBetween
-                  onClick={e => {
-                    e.stopPropagation()
-                    setContextMenuState({
-                      ...contextMenuState,
-                      createVisible: !contextMenuState.createVisible
-                    })
-                  }}
-                />
-              </AnimatePopover>
-            )}
-            <Button.IconButton
-              text={t('general.edit')}
-              icon="park-edit"
-              onClick={e => {
-                e.stopPropagation()
-                onEdit?.()
-                setContextMenuState({
-                  ...contextMenuState,
-                  contextMenuVisible: false
-                })
-              }}
-            />
-            <Button.IconButton text={pinned ? t('general.unpin') : t('general.pin')} icon="park-pin" onClick={onPin} />
-            <Button.IconButton text={t('general.delete')} icon="park-delete" dangerous onClick={onDelete} />
-            {item.type !== 'collection' && (
+            >
               <Button.IconButton
-                text={t('general.remove from collection')}
-                icon="park-folder-minus"
-                dangerous
-                onClick={onRemoveFromCollection}
+                icon="park-right"
+                text={t('general.create')}
+                reverse
+                spaceBetween
+                onClick={e => {
+                  e.stopPropagation()
+                  setContextMenuState({
+                    ...contextMenuState,
+                    createVisible: !contextMenuState.createVisible
+                  })
+                }}
               />
-            )}
-          </WithBorder>
-        </motion.div>
-      )}
-    </AnimatePresence>,
+            </AnimatePopover>
+          )}
+          <Button.IconButton
+            text={t('general.edit')}
+            icon="park-edit"
+            onClick={e => {
+              e.stopPropagation()
+              onEdit?.()
+              setContextMenuState({
+                ...contextMenuState,
+                contextMenuVisible: false
+              })
+            }}
+          />
+          <Button.IconButton text={pinned ? t('general.unpin') : t('general.pin')} icon="park-pin" onClick={onPin} />
+          <Button.IconButton text={t('general.delete')} icon="park-delete" dangerous onClick={onDelete} />
+          {item.type !== 'collection' && (
+            <Button.IconButton
+              text={t('general.remove from collection')}
+              icon="park-folder-minus"
+              dangerous
+              onClick={onRemoveFromCollection}
+            />
+          )}
+        </WithBorder>
+      }
+    ></AnimatePopover>,
     document.body
   )
   const createObjectWithOpenMeta = (type: keyof ObjectFamily, object?: Partial<ObjectFamily[typeof type]>, metaName?: string) => {

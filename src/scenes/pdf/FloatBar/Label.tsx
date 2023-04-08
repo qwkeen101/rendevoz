@@ -96,7 +96,7 @@ const PdfLabels = ({ flipId, document }: { flipId: string; document?: IPdfDocume
                     </Tooltip>
                   </div>
                 </Content>
-                <div className={ClassName.ellipsisFont(3)} style={{ color: 'black', fontSize: 14 }}>
+                <div className={ClassName.ellipsisFont(3)} style={{ fontSize: 14 }}>
                   {i.selectedText}
                 </div>
               </div>

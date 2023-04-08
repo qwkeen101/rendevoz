@@ -14,6 +14,7 @@ import FormColorPicker from './FormColorPicker'
 import FormIconPicker from './FormIconPicker'
 import FormImagePicker from './FormImagePicker'
 import FormTagPicker from './FormTagPicker'
+import Colors from '@/consts/colors'
 
 type useFlipFormOptions = {
   layout: FlipFormLayoutItem[]
@@ -45,7 +46,7 @@ export type FlipFormLayoutItem =
     }
   | {
       type: 'tagPicker'
-      tags?: string[]
+      tags?: number[]
       onChange: (tags: string[]) => void
     }
   | {
@@ -55,7 +56,7 @@ export type FlipFormLayoutItem =
     }
   | {
       type: 'tagDisplayer'
-      tags?: string[]
+      tags?: number[]
     }
   | {
       type: 'iconPicker'
@@ -87,7 +88,7 @@ interface FormInnerState {
   colorPickerVisible: boolean
 }
 const groupClassName = css({
-  boxShadow: 'rgb(31 34 37 / 6%) 0px 0px 0px 1px inset',
+  boxShadow: `${Colors.Background.ButtonHover} 0px 0px 0px 1px inset`,
   borderRadius: 6,
   padding: 8,
   fontSize: 13,
@@ -346,7 +347,7 @@ const useFlipForm = (options: useFlipFormOptions) => {
       >
         <Flipped flipId={mainFlipId}>
           <div
-            className={ClassName.Background.pseudoBlubBackground}
+            className={ClassName.Background.pseudoBlurContrastBackground}
             style={{
               padding: '16px 24px',
               borderRadius: 8,

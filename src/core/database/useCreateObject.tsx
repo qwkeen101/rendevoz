@@ -7,6 +7,7 @@ import { useTranslation } from 'react-i18next'
 import Actions from '../Actions'
 import { AnimatePopoverProps } from '@/components/base/AnimatePopover'
 import { Zindexes } from '@/consts'
+import { GlobalEventEmitter } from '@/events'
 
 export const useCreateObject = (options?: { positions: AnimatePopoverProps['positions'] }) => {
   const [modalState, setModalState] = useState<{
@@ -45,6 +46,20 @@ export const useCreateObject = (options?: { positions: AnimatePopoverProps['posi
           padding={10}
           content={
             <WithBorder padding={6} onClick={() => setPopoverState(undefined)} style={{ width: 140 }}>
+              <Button.IconButton
+                icon="park-share-one"
+                text={t('general.normal object')}
+                onClick={() => {
+                  GlobalEventEmitter().emit('global',{
+                    type: 'globalNeedAddMetaObject',
+                    data: {
+                      currentObject: {
+                        type: 'normal'
+                      }
+                    }
+                  })
+                }}
+              />
               <Button.IconButton
                 icon="park-file-pdf"
                 text={t('general.pdf')}

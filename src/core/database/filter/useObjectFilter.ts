@@ -9,7 +9,7 @@ import { MetaObject } from '~/typings/data'
 import { FilterType } from '.'
 
 export const FilterNameSearchAtom = atom<string>('')
-export const FilterSelectedTagsAtom = atom<Map<number, Set<string>>>(new Map())
+export const FilterSelectedTagsAtom = atom<Map<number, Set<number>>>(new Map())
 export const FilterDateIntervalsAtom = atom<Partial<Interval>>({})
 export const FilterViewDateIntervalAtom = atom<Partial<Interval>>({})
 export const FilterTypesAtom = atom<Set<MetaObject['type']>>(new Set<MetaObject['type']>())

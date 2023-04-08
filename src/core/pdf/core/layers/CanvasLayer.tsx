@@ -3,6 +3,9 @@ import { PageViewport, PDFPageProxy, RenderTask } from 'pdfjs-dist'
 import { FC, memo, useRef } from 'react'
 import { useIsomorphicLayoutEffect } from 'react-use'
 import { resizeCanvas } from '../utils/canvas'
+import { Background, Font } from '@/consts/colors'
+import { useSetting } from '@/core/setting'
+import getSetting from '@/core/setting/getSetting'
 
 const MAX_CANVAS_SIZE = 4096 * 4096
 
@@ -14,6 +17,7 @@ interface CanvasLayerProps {
   scale?: number
   transformScale?: number
 }
+// todo: canvas change render text & background color
 
 const CanvasLayer: FC<CanvasLayerProps> = ({ page, width, height, viewport, transformScale = 1 }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null)
@@ -39,6 +43,42 @@ const CanvasLayer: FC<CanvasLayerProps> = ({ page, width, height, viewport, tran
     }
   }
   useIsomorphicLayoutEffect(() => {
+    const setting = getSetting()
+    const fontPrimary = window.getComputedStyle(document.body).getPropertyValue(Font.Primary)
+    const backgroundSecondary = window.getComputedStyle(document.body).getPropertyValue(Background.Secondary)
+    if (setting.general.darkMode) {
+      CanvasRenderingContext2D.prototype.fillText = (function () {
+        const original = CanvasRenderingContext2D.prototype.fillText
+        return function () {
+          const orig = this['fillStyle']
+          this['fillStyle'] = fontPrimary
+          const res = original.apply(this, arguments)
+          this['fillStyle'] = orig
+          return res
+        }
+      })()
+      CanvasRenderingContext2D.prototype.fillRect = (function () {
+        const original = CanvasRenderingContext2D.prototype.fillRect
+        return function () {
+          const orig = this['fillStyle']
+          this['fillStyle'] = backgroundSecondary
+          const res = original.apply(this, arguments)
+          this['fillStyle'] = orig
+          return res
+        }
+      })()
+      CanvasRenderingContext2D.prototype.fill = (function () {
+        const original = CanvasRenderingContext2D.prototype.fill
+        return function () {
+          const orig = this['fillStyle']
+          this['fillStyle'] = fontPrimary
+          const res = original.apply(this, arguments)
+          this['fillStyle'] = orig
+          // do something else
+          return res
+        }
+      })()
+    }
     const task = renderTaskRef.current
     if (task) {
       task.cancel()

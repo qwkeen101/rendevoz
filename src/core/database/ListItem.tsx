@@ -9,7 +9,7 @@ import useRenderObject from './useRenderObject'
 import { memo } from 'react'
 
 const DatabaseListItem = ({ id, mode }: { id: number; mode: 'all' | 'title' }) => {
-  const { renderWhole, metaObject } = useRenderObject({
+  const { renderWhole } = useRenderObject({
     metaObjectId: id
   })
   const [popoverVisible, togglePopoverVisible] = useToggle(false)
@@ -42,7 +42,7 @@ const DatabaseListItem = ({ id, mode }: { id: number; mode: 'all' | 'title' }) =
         align="start"
         positions={['left', 'right']}
       >
-        <Icon size={18} fill="rgba(31,34,39,0.2)" onClick={togglePopoverVisible} name="park-more" className={ClassName.circleButton()} />
+        <Icon size={18} onClick={togglePopoverVisible} name="park-more" className={ClassName.circleButton()} />
       </AnimatePopover>
       {renderWhole({
         renderOptions,

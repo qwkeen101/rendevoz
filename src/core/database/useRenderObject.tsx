@@ -17,6 +17,7 @@ import getEmoji from '@/utils/emoji'
 import { globalStore } from '@/stores'
 import { atom } from 'jotai'
 import { getIcon } from '@/components/layout/sidebar/items/SidebarObjectItem'
+import Colors from '@/consts/colors'
 
 const useRenderObject = (options: { metaObjectId: number }) => {
   const { metaObjectId } = options
@@ -116,7 +117,7 @@ const useRenderObject = (options: { metaObjectId: number }) => {
         textDecoration: 'underline 1px rgba(0,0,0,0)',
         transition: 'text-decoration-color 0.3s ease',
         ':hover': {
-          textDecorationColor: 'rgba(0,0,0,0.8)'
+          textDecorationColor: 'inherit'
         },
         cursor: 'pointer'
       }
@@ -289,7 +290,7 @@ const useRenderObject = (options: { metaObjectId: number }) => {
           {icon && <Icon size={14} name={icon} />}
           <div
             style={{
-              color: '#616c77',
+              color: Colors.Font.Secondary,
               fontSize: '0.8rem',
               textTransform: 'none',
               ...style
@@ -308,7 +309,7 @@ const useRenderObject = (options: { metaObjectId: number }) => {
           {icon && (icon.startsWith('park') ? <Icon size={14} name={icon} /> : <Image src={icon} width={14} />)}
           <div
             style={{
-              color: '#616c77',
+              color: Colors.Font.Secondary,
               fontSize: '0.8rem',
               textTransform: 'none',
               ...style

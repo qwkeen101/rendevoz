@@ -5,6 +5,7 @@ import classNames from 'classnames'
 import { CSSProperties, forwardRef, MouseEventHandler, useLayoutEffect, useRef } from 'react'
 import { Icon } from '..'
 import Content from '../Content'
+import Colors from '@/consts/colors'
 
 const DangerousButtonClassName = css({
   color: '#FD8A8A'
@@ -64,7 +65,7 @@ const IconButton = forwardRef(
             selected === true
               ? dangerous
                 ? 'rgb(253, 138, 138, 0.2)'
-                : 'rgba(31, 34, 37, 0.08)'
+                : Colors.Background.ButtonHover
               : selected === false
               ? 'none'
               : undefined,

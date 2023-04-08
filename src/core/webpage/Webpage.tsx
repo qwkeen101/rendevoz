@@ -399,7 +399,6 @@ const WebpagePage = ({
                   borderRadius: 999,
                   background: 'rgba(0,0,0,0.06)',
                   overflow: 'hidden',
-                  color: '#616c77',
                   fontSize: 24
                 }}
               >

@@ -2,7 +2,7 @@ import Dexie from 'dexie'
 import { importDB, exportDB, importInto, peakImportFile } from 'dexie-export-import'
 
 export const db = new Dexie('rendevozDb')
-db.version(12).stores({
+db.version(13).stores({
   textselection: 'id,documentId',
   documents: 'id',
   notes: 'id',

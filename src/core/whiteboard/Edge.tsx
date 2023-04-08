@@ -264,7 +264,7 @@ const TreeEdge: FC<{
                   transform: 'translateX(-50%) translateY(-50%)',
                   outline: 'none',
                   borderRadius: 4,
-                  background: Colors.Background.GlobalBackground,
+                  background: Colors.Background.Global,
                   padding: 'calc(6px * var(--zoom-level)',
                   maxWidth: 'calc(16em * var(--zoom-level)',
                   fontSize: 'calc(16px * var(--zoom-level)',

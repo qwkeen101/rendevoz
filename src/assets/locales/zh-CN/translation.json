@@ -50,7 +50,9 @@
         "confirm": "确认",
         "view at": "浏览时间",
         "create at": "创建时间",
-        "recent view": "最近浏览"
+        "recent view": "最近浏览",
+        "remove from collection": "从收藏夹中移除",
+        "normal object": "普通实体"
     },
     "dock": {
         "close": "关闭标签页",
@@ -160,7 +162,9 @@
         "heading-three": "三级标题",
         "heading-four": "四级标题",
         "list-item": "无序列表",
-        "block-quote": "引用"
+        "block-quote": "引用",
+        "order-list-item": "有序列表",
+        "make object inline": "使实体成为行内元素"
     },
     "settings": {
         "appearance": "外观",
@@ -205,7 +209,8 @@
         "enable add link between objects when connect": "允许在相连时自动为实体添加链接",
         "background": "背景",
         "background opacity": "背景透明度",
-        "background blur": "背景模糊度"
+        "background blur": "背景模糊度",
+        "dark mode": "黑暗模式"
     },
     "form": {
         "choose file": "Choose file",

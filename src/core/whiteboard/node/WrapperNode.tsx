@@ -25,6 +25,7 @@ import { useUpdate } from 'react-use'
 import useGroupDrag from './useGroupDrag'
 import isHotkey from 'is-hotkey'
 import { KEY } from '@/consts/key'
+import Colors from '@/consts/colors'
 
 const nodeClassName = css({
   boxShadow: 'rgba(0, 0, 0, 0.24) 0px 3px 8px',
@@ -430,7 +431,9 @@ const WrapperNode = ({ node }: { node: IWhiteboardNode }) => {
         cursor: addingEdgeState.isAdding ? 'pointer' : nodeState.focused || nodeState.locked ? 'auto' : 'grab',
         boxShadow: getNodeBoxShadow(),
         background:
-          type === 'group' ? `rgba(${opacityBackground.r},${opacityBackground.g},${opacityBackground.b},${opacityBackground.a})` : 'white',
+          type === 'group'
+            ? `rgba(${opacityBackground.r},${opacityBackground.g},${opacityBackground.b},${opacityBackground.a})`
+            : Colors.Background.Linear,
         pointerEvents:
           type === 'group'
             ? nodeState.popoverVisible || nodeState.focused || nodeState.locked || nodeState.selected || addingEdgeState.isAdding

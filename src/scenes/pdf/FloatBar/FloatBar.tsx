@@ -11,6 +11,7 @@ import PdfSearch from './Search'
 import PdfLabels from './Label'
 import { IPdfDocument } from '~/typings/data'
 import { usePdfViewer } from '@/core'
+import Colors from '@/consts/colors'
 const PdfFloatBar = ({ document }: { document?: IPdfDocument }) => {
   const viewer = usePdfViewer()
   const id = useMemo(() => Id.getStrId(), [])
@@ -126,6 +127,7 @@ const PdfFloatBar = ({ document }: { document?: IPdfDocument }) => {
               className={css({
                 borderRadius: 6,
                 border: '1px solid rgba(222,222,222)',
+                background: Colors.Background.Linear,
                 padding: 4,
                 opacity: 0.4,
                 fontSize: 20,

@@ -22,7 +22,7 @@ const PdfPage: React.FC<PdfPageProps> = ({ pageIndex, textLayer, canvasLayer, an
   const [cleanMode] = useCleanMode()
   const allLabels = useAtomValue(ObjectStore('pdfLabel').objectMapAtom, { store: globalStore })
   const labels = useMemo(() => {
-    return Array.from(allLabels.values()).filter(i => i.page === pageIndex)
+    return Array.from(allLabels.values()).filter(i => i.page === pageIndex && i.documentId === pdfId)
   }, [allLabels.size])
 
   const [textSelectionToolbarVisible, setTextSelectionToolbarVisible] = useState(false)
@@ -70,7 +70,7 @@ const PdfPage: React.FC<PdfPageProps> = ({ pageIndex, textLayer, canvasLayer, an
       <AnimatePopover
         padding={10}
         visible={textSelectionToolbarVisible}
-        containerStyle={{ zIndex: '9999' }}
+        containerStyle={{ zIndex: '9999', borderRadius: '999px' }}
         content={
           <WithBorder borderRadius={999} padding="0px 12px">
             <TextSelectionToolbar

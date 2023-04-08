@@ -1,5 +1,4 @@
-import { globalStore, ObjectStore, WhiteboardStore } from '@/stores'
-import { whiteboardsAtom } from '@/stores/whiteboard.store'
+import { globalStore, ObjectStore } from '@/stores'
 import { Position } from '@/types'
 import produce from 'immer'
 import { PanZoom } from 'panzoom'

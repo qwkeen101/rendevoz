@@ -11,6 +11,7 @@ import { TypeToNodeRadius } from './node/Node'
 import { NodeFakeHiddenOpacity } from '../consts/opacity'
 import { oppositeEdgesMapAtom } from '../hooks/useEdges'
 import { useStore } from 'jotai'
+import Colors from '@/consts/colors'
 interface EdgeProps {
   edge: GraphEdge
 }
@@ -182,11 +183,11 @@ const Edge: FC<EdgeProps> = memo(({ edge }) => {
         initial={{ opacity: 1 }}
         animate={{
           opacity: edge.opacity,
-          stroke: edge.highlight || highlight ? edge.color || MarkerColor.EMPHASIS : edge.color || MarkerColor.NORMAL
+          stroke: edge.highlight || highlight ? edge.color || MarkerColor.EMPHASIS : edge.color || MarkerColor.LIGHTGREY
         }}
         markerEnd={`url(#${getMarkerId(
           'end',
-          edge.highlight || highlight ? edge.color || MarkerColor.EMPHASIS : edge.color || MarkerColor.NORMAL
+          edge.highlight || highlight ? edge.color || MarkerColor.EMPHASIS : edge.color || MarkerColor.LIGHTGREY
         )})`}
         d={d}
       ></motion.path>
@@ -198,14 +199,14 @@ const Edge: FC<EdgeProps> = memo(({ edge }) => {
           })`}
         >
           <motion.rect
-            fill="white"
+            fill={Colors.Background.Linear}
             width={rect.width + 5}
             height={rect.height}
             initial={{ opacity: 1 }}
             animate={{ opacity: edge.opacity }}
             x={-5}
             ry={3}
-            stroke={edge.highlight || highlight ? edge.color || MarkerColor.EMPHASIS : edge.color || MarkerColor.NORMAL}
+            stroke={edge.highlight || highlight ? edge.color || MarkerColor.EMPHASIS : edge.color || MarkerColor.LIGHTGREY}
             rx={3}
             strokeWidth={2}
           ></motion.rect>
@@ -215,7 +216,7 @@ const Edge: FC<EdgeProps> = memo(({ edge }) => {
             fontStyle="italic"
             dy="0.1em"
             dx="-0.2em"
-            fill={edge.highlight || highlight ? edge.color || MarkerColor.EMPHASIS : edge.color || MarkerColor.NORMAL}
+            fill={edge.highlight || highlight ? edge.color || MarkerColor.EMPHASIS : edge.color || MarkerColor.LIGHTGREY}
             textAnchor="middle"
             dominantBaseline="middle"
             initial={{ opacity: 1 }}

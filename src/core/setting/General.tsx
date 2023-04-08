@@ -5,7 +5,7 @@ import ClassName from '@/styles/classNames'
 import { exportRendevozDb, importRendevozDb } from '@/utils/db'
 import { useEffect, useRef } from 'react'
 import { toast } from 'react-hot-toast'
-import { Content, Form, Icon } from '../../components/base'
+import { Content, Form, Icon, Switch } from '../../components/base'
 import Modal from '../../components/base/Modal'
 import useFileUpload from '../../components/base/useFileUpload'
 import SettingItem from './Item'
@@ -202,6 +202,21 @@ const GeneralSetting = () => {
             </Content>
           </Content>
         </>
+      )
+    },
+    {
+      title: t('settings.dark mode'),
+      children: (
+        <Switch
+          value={setting.general.darkMode}
+          onChange={v =>
+            setSetting(
+              produce(setting, draft => {
+                draft.general.darkMode = !setting.general.darkMode
+              })
+            )
+          }
+        />
       )
     },
     {

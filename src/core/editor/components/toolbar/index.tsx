@@ -15,6 +15,7 @@ import { useMemoizedFn } from '@/hooks'
 import { TextSelectionTranslate } from '@/core/pdf/components/toolbar/TextSelectionToolbar'
 import { CustomText } from '~/typings/editor/baseTypes'
 import { css } from '@emotion/css'
+import ClassName from '@/styles/classNames'
 
 type EditorToolbarEvents =
   | {
@@ -296,7 +297,7 @@ const EditorToolbar: FC<EditorToolbarProps> = ({ scrollElement, showToolbar, sty
               zIndex={9999}
               size={16}
               content={
-                <WithBorder style={{ padding: 8 }}>
+                <WithBorder padding={8}>
                   <TextSelectionTranslate
                     translateInput={editor.selection ? Editor.string(editor, editor.selection) : 'Text Not Selected'}
                   />
@@ -317,9 +318,6 @@ const EditorToolbar: FC<EditorToolbarProps> = ({ scrollElement, showToolbar, sty
         {floatPosition && editor.noteId && (
           <motion.div
             key="editorTool"
-            initial={{ opacity: 0, y: floatPosition.direction === 'top' ? -20 : 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: floatPosition.direction === 'top' ? -20 : 20 }}
             style={{
               position: 'fixed',
               top: floatPosition.top,
@@ -330,6 +328,9 @@ const EditorToolbar: FC<EditorToolbarProps> = ({ scrollElement, showToolbar, sty
             <WithBorder
               borderRadius={999}
               padding="0px 12px"
+              style={{
+                border: 'none'
+              }}
               className={css({
                 position: 'sticky',
                 marginLeft: 'auto',
@@ -338,7 +339,22 @@ const EditorToolbar: FC<EditorToolbarProps> = ({ scrollElement, showToolbar, sty
                 transform: 'translateX(-50%)'
               })}
             >
-              {renderToolbar()}
+              <motion.div
+                key={2}
+                style={{ position: 'absolute', inset: 1, borderRadius: 999 }}
+                initial={{ opacity: 0, y: floatPosition.direction === 'top' ? -20 : 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: floatPosition.direction === 'top' ? -20 : 20 }}
+                className={ClassName.Background.blurBackground}
+              ></motion.div>
+              <motion.div
+                key={3}
+                initial={{ opacity: 0, y: floatPosition.direction === 'top' ? -20 : 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: floatPosition.direction === 'top' ? -20 : 20 }}
+              >
+                {renderToolbar()}
+              </motion.div>
             </WithBorder>
           </motion.div>
         )}

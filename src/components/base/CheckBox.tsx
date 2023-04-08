@@ -3,6 +3,7 @@ import { css } from '@emotion/css'
 import { CSSProperties } from 'react'
 import { Icon } from '..'
 import Content from './Content'
+import Colors from '@/consts/colors'
 
 const iconClassName = css({
   cursor: 'pointer',
@@ -37,7 +38,7 @@ const CheckBox = ({
       flex
       centered
       onClick={() => onChange?.(!checked)}
-      style={{ border: '1px solid rgba(31,34,39,0.15)', borderRadius: 6, width: 20, height: 20, ...style }}
+      style={{ border: `1px solid ${Colors.Background.Border}`, borderRadius: 6, width: 20, height: 20, ...style }}
       className={className}
     >
       <Icon data-checked={checked} className={iconClassName} name="park-check" />

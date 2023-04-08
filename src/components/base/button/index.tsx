@@ -4,6 +4,7 @@ import { CSSProperties, FC, MouseEventHandler, ReactNode, useEffect, useState } 
 import IconButton from './IconButton'
 import styles from './index.module.less'
 import ClassName from '@/styles/classNames'
+import Colors from '@/consts/colors'
 
 interface ButtonProps {
   children: ReactNode
@@ -40,16 +41,11 @@ export const Button: IButton = ({ children, onClick, className, tabIndex, style,
         css([
           {
             position: 'relative',
-            boxShadow: '0 0 0.5rem rgba(0, 0, 0, 0.3)',
             outline: 'none',
             overflow: 'hidden',
-            color: '#fff',
             background: 'transparent',
-            border: 'none',
-            cursor: 'pointer',
-            ':focus': {
-              boxShadow: '0 0 1rem rgba(0,0,0,0.3)'
-            }
+            border: `1px solid ${Colors.Background.Border}`,
+            cursor: 'pointer'
           },
           ClassName.flatButton(4, '4px 12px')
         ]),

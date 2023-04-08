@@ -7,6 +7,7 @@ import { metaObjectsAtom } from '@/stores/meta.store'
 import { memo, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { Rnd } from 'react-rnd'
 import { IObjectLabel } from '~/typings/data'
+import Colors from '@/consts/colors'
 
 const ObjectLabel = ({ labelId, pageSize }: { labelId: number; pageSize: PageSize }) => {
   const label = ObjectStore('pdfLabel').useValue(labelId) as IObjectLabel
@@ -50,7 +51,7 @@ const ObjectLabel = ({ labelId, pageSize }: { labelId: number; pageSize: PageSiz
       style={{
         pointerEvents: 'auto',
         zIndex: 10,
-        background: 'white',
+        background: Colors.Background.Global,
         boxShadow: '0px 0px 0px 2px #dce3e8',
         borderRadius: 4,
         padding: '6px 8px'
@@ -62,6 +63,9 @@ const ObjectLabel = ({ labelId, pageSize }: { labelId: number; pageSize: PageSiz
         positions={['top', 'bottom']}
         padding={10}
         disableIntersection
+        containerStyle={{
+          borderRadius: '999px'
+        }}
         content={
           <WithBorder padding="0px 12px" borderRadius={999}>
             <Toolbar>

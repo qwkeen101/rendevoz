@@ -7,7 +7,7 @@ import { IPdfDocument, MetaObject } from '~/typings/data'
 import { saveImageLocally } from '@/utils/img'
 import ClassName from '@/styles/classNames'
 import { useToggle } from '@/hooks'
-import { FileUploader } from '../base'
+import { Content, FileUploader } from '../base'
 import { toast } from 'react-hot-toast'
 import { ObjectStore } from '@/stores'
 import ObjectForm from './ObjectForm'
@@ -68,7 +68,7 @@ const CreateDocumentForm: FC<NewDocumentFormProps> = ({ onBack, onSubmit }) => {
   }
   const renderUploadFile = () => {
     return (
-      <div className={ClassName.Background.pseudoBlubBackground}>
+      <Content className={ClassName.Background.pseudoBlurContrastBackground} flex column gap={10} style={{ padding: 12, borderRadius: 8 }}>
         <div className={ClassName.title()}>Upload Document</div>
         <FileUploader
           accept="application/pdf"
@@ -82,7 +82,7 @@ const CreateDocumentForm: FC<NewDocumentFormProps> = ({ onBack, onSubmit }) => {
             }
           }}
         />
-      </div>
+      </Content>
     )
   }
   return isFileUploaded ? (

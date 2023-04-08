@@ -15,6 +15,7 @@ import { FilterNameSearchAtom, useObjectFilter } from './filter/useObjectFilter'
 import DatabaseListItem from './ListItem'
 import Select from '@/components/base/select'
 import { useTranslation } from 'react-i18next'
+import Colors from '@/consts/colors'
 
 export const Database = () => {
   const undeletedMetaObjects = useAtomValue(undeletedMetaObjectsAtom, { store: globalStore })
@@ -128,7 +129,7 @@ export const Database = () => {
               '> div': {
                 paddingBottom: '8px',
                 ':not(:last-child)': {
-                  borderBottom: '1px solid rgba(0,0,0,0.05)'
+                  borderBottom: `1px solid ${Colors.Background.Border}`
                 }
               }
             })}

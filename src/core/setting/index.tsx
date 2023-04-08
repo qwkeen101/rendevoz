@@ -24,15 +24,14 @@ enum Settings {
   'components'
 }
 type AvaliableLanguages = 'en-US' | 'zh-CN'
-type Setting = INotificationSetting &
-  IShortCutSetting & {
-    general: {
-      language: AvaliableLanguages
-      openNewTab: 'always open new tab' | 'open existing tab'
-    }
-  } & IObjectsAndLinkSetting &
-  IComponentSetting &
-  IAppearanceSetting
+type Setting = INotificationSetting & IShortCutSetting & IGeneralSetting & IObjectsAndLinkSetting & IComponentSetting & IAppearanceSetting
+type IGeneralSetting = {
+  general: {
+    language: AvaliableLanguages
+    openNewTab: 'always open new tab' | 'open existing tab'
+    darkMode: boolean
+  }
+}
 type INotificationSetting = {
   notification: {
     enabled: boolean
@@ -95,7 +94,8 @@ const defaultSetting: Setting = {
   shortcut: {},
   general: {
     language: 'en-US',
-    openNewTab: 'open existing tab'
+    openNewTab: 'open existing tab',
+    darkMode: false
   },
   objectAndLink: {
     enableAll: true,
@@ -118,7 +118,7 @@ export const SettingAtom = atomWithStorage<Setting>('setting', defaultSetting)
 export const useSetting = () => useAtom(SettingAtom, { store: globalStore })
 
 const SettingDialog = ({ onClose }: { onClose: VoidFunction }) => {
-  const { t, i18n } = useTranslation()
+  const { t } = useTranslation()
   const [currentSettingPanel, setCurrentSettingPanel] = useState<keyof typeof Settings>('general')
   const renderContent = () => {
     switch (currentSettingPanel) {
@@ -139,7 +139,7 @@ const SettingDialog = ({ onClose }: { onClose: VoidFunction }) => {
   return (
     <Content
       flex
-      className={ClassName.Background.blurBackground}
+      className={ClassName.Background.pseudoBlurContrastBackground}
       style={{
         width: 1100,
         maxWidth: 'calc(100vw - 100px)',

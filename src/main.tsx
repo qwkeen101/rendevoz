@@ -8,6 +8,7 @@ import { initializeApp } from 'firebase/app'
 import { getAnalytics } from 'firebase/analytics'
 import { Provider } from 'jotai'
 import { globalStore } from './stores'
+import { normalizeOldObjectsToNewObjects } from './stores/oldItemsMove'
 // TODO: Add SDKs for Firebase products that you want to use
 // https://firebase.google.com/docs/web/setup#available-libraries
 
@@ -23,6 +24,11 @@ const firebaseConfig = {
   measurementId: 'G-FDEBF02FYJ'
 }
 
+const oldMoved = localStorage.getItem('moved')
+if (!oldMoved) {
+  normalizeOldObjectsToNewObjects()
+  localStorage.setItem('moved', 'true')
+}
 // Initialize Firebase
 const app = initializeApp(firebaseConfig)
 const analytics = getAnalytics(app)

@@ -22,10 +22,8 @@ export const tag = (background = TagBackgrounds.transparent, color = 'rgb(120,53
 
 export const objectTag = css({
   textTransform: 'capitalize',
-  // color: 'rgb(82,102,116)',
-  color: '#61666D',
-  // background: 'rgb(220,227,232)',
-  background: 'rgba(0,0,0,0.07)',
+  color: 'var(--font-secondary)',
+  background: 'var(--button-hover-background)',
   borderRadius: 999,
   padding: '0px 8px',
   fontFamily: 'Muli'

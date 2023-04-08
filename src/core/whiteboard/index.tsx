@@ -1,7 +1,7 @@
 import { Provider, useAtomValue } from 'jotai/react'
 import { createStore } from 'jotai/vanilla'
 import createPanZoom, { PanZoom } from 'panzoom'
-import { memo, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { memo, useEffect, useLayoutEffect, useMemo, useRef } from 'react'
 import TreeEdgeContainer from './EdgeContainer'
 import { FlowAtom, useFlow, WhiteboardAtom } from './hooks'
 import TreeNodeContainer from './NodeContainer'
@@ -11,7 +11,6 @@ import useWhiteboardSelect from './useWhiteboardSelect'
 import useWhiteboardAutoPan from './useWhiteboardAutoPan'
 import WhiteboardSetting from './WhiteboardSetting'
 import useWhiteboardDrop from './useWhiteboardDrop'
-import useWhiteboardStore from '@/stores/whiteboard.store'
 import { MetaStore, ObjectStore, globalStore } from '@/stores'
 import FlowManager from './FlowManager'
 import { IWhiteboard } from '~/typings/data'
@@ -21,7 +20,6 @@ import { useSetting } from '../setting'
 import { useGlobalAtomValue } from '@/hooks'
 import useWhiteboardSidebar from './useWhiteboardSidebar'
 
-type SidebarProps = Parameters<typeof useWhiteboardSidebar>[0]
 const WhiteboardInner = memo(({ id, enableMiniMap = true }: { id: number; enableMiniMap?: boolean }) => {
   const containerRef = useRef<HTMLDivElement>(null)
   const flow = useFlow()
@@ -29,7 +27,6 @@ const WhiteboardInner = memo(({ id, enableMiniMap = true }: { id: number; enable
   const emitter = useGlobalEventEmitter()
   const handler = useMemo(() => new GlobalEventHandler(), [])
   const scopedEmitter = useScopedEventEmitter()
-  const { updateWhiteboard } = useWhiteboardStore()
   const whiteboard = useAtomValue(WhiteboardAtom)
   const { addTab, render } = useWhiteboardSidebar()
   const [setting] = useSetting()

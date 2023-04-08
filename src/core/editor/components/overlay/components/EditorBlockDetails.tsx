@@ -54,7 +54,7 @@ const EditorBlockDetails = ({ editor, manager }: { editor: CustomEditor; manager
   const canExpand = currentEle?.collapsed === true
   const [expand, toggleExpand] = useToggle(canExpand)
   return (
-    <WithBorder ref={containerRef} style={{ padding: 3, minWidth: 220, userSelect: 'none', color: '#5f6065' }}>
+    <WithBorder ref={containerRef} style={{ padding: 3, minWidth: 220, userSelect: 'none' }}>
       {/* {showCard && (
         <AnimatePopover
           containerStyle={{ zIndex: '10000' }}
@@ -103,6 +103,31 @@ const EditorBlockDetails = ({ editor, manager }: { editor: CustomEditor; manager
           </Content>
         </AnimatePopover>
       )} */}
+      {currentEle?.type === 'metaObject' && (
+        <Button.IconButton
+          icon="park-text-rotation-none"
+          text={t('editor.make object inline')}
+          onClick={() => {
+            Transforms.removeNodes(editor, { at: currentElePath })
+            Transforms.insertNodes(
+              editor,
+              {
+                type: 'paragraph',
+                id: Id.getId(),
+                children: [
+                  {
+                    type: 'inline-metaObject',
+                    originId: currentEle.originId,
+                    children: [{ text: '' }],
+                    id: Id.getId()
+                  }
+                ]
+              },
+              { at: currentElePath }
+            )
+          }}
+        />
+      )}
       <AnimatePopover
         containerStyle={{ zIndex: '10000' }}
         positions={['right']}
@@ -214,30 +239,6 @@ const EditorBlockDetails = ({ editor, manager }: { editor: CustomEditor; manager
           <Icon name="park-right" />
         </Content>
       </AnimatePopover>
-      {currentEle?.type === 'metaObject' && (
-        <Button.IconButton
-          text="Make Object Inline"
-          onClick={() => {
-            Transforms.removeNodes(editor, { at: currentElePath })
-            Transforms.insertNodes(
-              editor,
-              {
-                type: 'paragraph',
-                id: Id.getId(),
-                children: [
-                  {
-                    type: 'inline-metaObject',
-                    originId: currentEle.originId,
-                    children: [{ text: '' }],
-                    id: Id.getId()
-                  }
-                ]
-              },
-              { at: currentElePath }
-            )
-          }}
-        />
-      )}
       {/* {showExpandOrCollapse && (
         <Content
           flex

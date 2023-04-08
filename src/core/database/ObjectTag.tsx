@@ -1,12 +1,15 @@
 import { useToggle } from '@/hooks'
 import { tagToMetaObjectIdsMapAtom } from '@/stores/meta.store'
 import { ObjectStore, globalStore } from '@/stores'
-import { TagToTagAtom } from '@/stores/tag.store'
 import ClassName from '@/styles/classNames'
 import { useAtomValue } from 'jotai/react'
 import { CSSProperties, MouseEventHandler, useEffect } from 'react'
 import { Content, Icon, IconWithPopover } from '../../components/base'
 import BlockColorPicker from '../editor/components/BlockColorPicker'
+import Colors from '@/consts/colors'
+import { defaultBgColor } from '@/components/picker/colorPicker'
+import isHotkey from 'is-hotkey'
+import { KEY } from '@/consts'
 
 const Tag = ({
   tag,
@@ -21,9 +24,10 @@ const Tag = ({
   onDBRemove,
   showPickColor,
   showDBRemove,
+  showEdit,
   style
 }: {
-  tag: string
+  tag: number
   hideSize?: boolean
   hideDelete?: boolean
   hideAdd?: boolean
@@ -34,23 +38,27 @@ const Tag = ({
   onAdd?: VoidFunction
   parentElement?: HTMLElement
   showDBRemove?: boolean
+  showEdit?: boolean
   onDBRemove?: VoidFunction
   showPickColor?: boolean
   style?: CSSProperties
 }) => {
-  const tagMap = useAtomValue(tagToMetaObjectIdsMapAtom, { store: globalStore })
+  const tagMap = !hideSize ? useAtomValue(tagToMetaObjectIdsMapAtom, { store: globalStore }) : undefined
 
   const tagToObjectsSet = tagMap?.get(tag)
-  const tagObject = ObjectStore('tag').useValue(globalStore.get(TagToTagAtom)?.get(tag)?.id)
+  const tagObject = ObjectStore('tag').useValue(tag)
 
   const size = tagToObjectsSet?.size
   const [pointerInTag, togglePointerInTag] = useToggle(false)
+
+  const [isEditing, toggleIsEditing] = useToggle(false)
 
   useEffect(() => {
     if (tagObject?.deleted) {
       onDelete?.()
     }
   }, [tagObject?.deleted])
+
   if (tagObject?.deleted || !tagObject) return null
   return (
     <Content
@@ -61,10 +69,8 @@ const Tag = ({
       onPointerEnter={() => togglePointerInTag(true)}
       onPointerLeave={() => togglePointerInTag(false)}
       style={{
-        // background: tagObject?.color || 'rgb(220,227,232)',
-        // color: tagObject?.color ? 'white' : 'rgb(82,102,116)',
-        background: tagObject?.color || 'rgba(0,0,0,0.07)',
-        color: tagObject?.color ? 'white' : '#61666D',
+        background: tagObject?.color || Colors.Background.ButtonHover,
+        color: tagObject?.color ? 'white' : Colors.Font.Secondary,
         borderRadius: small ? '4px' : '999px',
         padding: small ? '0px 8px 0px' : '3px 6px 3px 10px',
         fontFamily: 'Muli',
@@ -77,7 +83,25 @@ const Tag = ({
       }}
     >
       <Content flex gap={4}>
-        <span>{tag}</span>
+        {isEditing ? (
+          <input
+            autoFocus
+            defaultValue={tagObject.name}
+            style={{
+              border: 'none',
+              outline: 'none',
+              background: 'transparent'
+            }}
+            onKeyDown={e => {
+              if (isHotkey(KEY.Enter, e)) {
+                ObjectStore('tag').updateOne({ id: tag, name: e.currentTarget.value })
+                toggleIsEditing(false)
+              }
+            }}
+          />
+        ) : (
+          <span style={{ textTransform: 'none' }}>{tagObject.name}</span>
+        )}
         {!hideSize && (
           <Content flex style={{ width: 16, textAlign: 'center' }}>
             {pointerInTag && !hideAdd ? (
@@ -107,8 +131,10 @@ const Tag = ({
             name="park-close"
           />
         )}
+        {showEdit && <Icon name="park-edit" className={ClassName.circleButton(3)} onClick={toggleIsEditing} size={12} />}
         {showPickColor && (
           <IconWithPopover
+            closeOnContentClick
             name="park-platte"
             size={12}
             className={ClassName.circleButton(3)}
@@ -116,7 +142,9 @@ const Tag = ({
               <BlockColorPicker
                 showFont={false}
                 showMoreBgOption={false}
-                onPickBackgroundColor={c => tagObject?.id && ObjectStore('tag').updateOne({ id: tagObject?.id, color: c })}
+                onPickBackgroundColor={c =>
+                  tagObject?.id && ObjectStore('tag').updateOne({ id: tagObject?.id, color: c === defaultBgColor ? undefined : c })
+                }
               />
             }
           />

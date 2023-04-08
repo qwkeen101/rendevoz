@@ -108,7 +108,8 @@ const ReadOnlyEditorClassName = css({
 
 const CompactReadOnlyEditorClassName = css({
   p: {
-    margin: '0 !important'
+    margin: '0 !important',
+    lineHeight: '1.2 !important'
   },
   '.ParagraphBlock': {
     margin: 0,

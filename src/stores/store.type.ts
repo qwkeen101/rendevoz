@@ -6,7 +6,7 @@ export interface IStoreDeprecated<T> {
   getAll: () => Promise<boolean>
   getOneById: (id: number) => Promise<T | undefined>
   deleteOneById: (id: number, silent?: boolean, force?: boolean) => Promise<boolean>
-  addOne: (one: Partial<T>, silent?: boolean) => Promise<T>
+  addOne: (one: Partial<T>, silent?: boolean, overPremium?: boolean) => Promise<T>
   updateOne: (one: Partial<T> & { id: number }, silent?: boolean) => Promise<T | undefined>
 }
 
@@ -26,6 +26,7 @@ export interface IStore<T> {
     options?:
       | {
           silent?: boolean
+          overPremium?: boolean
           preventAddMeta?: boolean
         } & (T extends INote
           ? {

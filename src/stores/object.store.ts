@@ -16,8 +16,7 @@ import {
   IWhiteboard,
   IWhiteboardEdge,
   IWhiteboardNode,
-  MetaObject,
-  NoteBlock
+  MetaObject
 } from '~/typings'
 import { globalStore, MetaStore, ObjectStore } from '.'
 import BaseStore, { initializeLocalStore } from './base.store'
@@ -25,6 +24,9 @@ import { metaObjectsAtom, objectIdToMetaObjectIdMapAtom, tagToMetaObjectIdsMapAt
 import { IStore } from './store.type'
 import { useGlobalAtomValue } from '@/hooks'
 import Id from '@/utils/id'
+import { getSetting, INotificationSetting } from '@/core'
+import { toast } from 'react-hot-toast'
+import { t } from 'i18next'
 
 export type ObjectFamily = {
   webpage: IWebpage
@@ -44,6 +46,7 @@ export const ObjectFamilyAtom = atomFamily((type: keyof ObjectFamily) => atom(ne
 const createObjectStore = <T extends keyof ObjectFamily, V extends ObjectFamily[T], S extends IStore<V>>(
   type: T,
   options?: {
+    toastEnabled?: keyof INotificationSetting['notification']
     beforeAddProcess?: (o: Partial<V>, opts: Parameters<S['addOne']>[1]) => Promise<boolean | void>
     beforeUpdateProcess?: (o: Partial<V>, opts: Parameters<S['updateOne']>[1]) => void
     beforeDeleteProcess?: (id: number, opts: Parameters<S['deleteOneById']>[1]) => Promise<boolean | void>
@@ -69,6 +72,13 @@ const createObjectStore = <T extends keyof ObjectFamily, V extends ObjectFamily[
   createAtom: (id?: number) => Atom<V | undefined>
   useValue: (id?: number) => Awaited<V> | undefined
 } & IStore<V> => {
+  const shouldToast = (silent?: boolean) => {
+    const setting = getSetting()
+    if (!silent && setting.notification.enabled && options?.toastEnabled && setting.notification[options.toastEnabled]) {
+      return true
+    }
+    return false
+  }
   const objectsDb = useDb('objects')
   const objectMapAtom = ObjectFamilyAtom(type) as unknown as PrimitiveAtom<Map<number, V>>
   const initalizedLocalStore = initializeLocalStore(objectMapAtom, objectsDb)
@@ -96,17 +106,19 @@ const createObjectStore = <T extends keyof ObjectFamily, V extends ObjectFamily[
       inited.specType = type
       return initalizedLocalStore.addOne(
         obj => {
+          // if (shouldToast(opts?.silent)) {
+          //   toast.success(t('toast.successfully add', { item: t(`general.${type}`) }))
+          // }
           options?.afterAddProcess?.onSuccess?.(obj, opts)
         },
         () => {
           options?.afterAddProcess?.onFail?.(opts)
         }
-      )(inited, opts?.silent)
+      )(inited, opts?.silent, opts?.overPremium)
     },
     addOneWithMeta: async (n, opts) => {
       // right here we add meta manually
-      opts && (opts.preventAddMeta = true)
-      const obj = await localStore.addOne(n, opts)
+      const obj = await localStore.addOne(n, { ...opts, preventAddMeta: true, silent: true })
       let meta: MetaObject
       if (opts?.showMetaModal) {
         meta = (await GlobalEventEmitter().emitWithCallback('global', {

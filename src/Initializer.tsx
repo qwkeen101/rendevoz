@@ -3,6 +3,7 @@ import { CollectionStore, globalStore, MetaStore, ObjectStore } from './stores'
 import { atom } from 'jotai'
 import { useGlobalSetAtom } from './hooks/jotai'
 import { ipcInstance } from './plugins'
+import { normalizeMetaElementsToLabelAndBlocks } from './stores/oldItemsMove'
 
 export const initializedAtom = atom(false)
 export const updateInfoAtom = atom<
@@ -24,6 +25,7 @@ const Initializer = () => {
       ObjectStore('pdfLabel').getAll()
     ]).then(() => {
       setIntialized(true)
+      normalizeMetaElementsToLabelAndBlocks()
     })
     ipcInstance.send('getUpdateDetails').then(res => {
       globalStore.set(updateInfoAtom, {

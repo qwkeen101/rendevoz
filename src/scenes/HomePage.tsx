@@ -100,7 +100,7 @@ const Recent = () => {
             options={[
               {
                 value: 'all',
-                children: '所有类型',
+                children: t('general.all types'),
                 icon: 'park-all-application'
               },
               ...VisibleTypes.map(type => ({

@@ -3,6 +3,7 @@ import { useToaster } from 'react-hot-toast'
 import { AnimatePresence, motion } from 'framer-motion'
 import { css } from '@emotion/css'
 import { Icon } from '.'
+import Colors from '@/consts/colors'
 
 const Notification = () => {
   const { toasts, handlers } = useToaster({
@@ -59,7 +60,7 @@ const Notification = () => {
                 backdropFilter: 'blur(24px)',
                 backgroundBlendMode: 'overlay',
                 boxShadow: '0 10px 15px rgb(0 0 0 / 20%)',
-                background: 'rgba(238,238,238,0.7)',
+                background: Colors.Background.Linear,
                 display: 'flex',
                 gap: 16,
                 alignItems: 'center'

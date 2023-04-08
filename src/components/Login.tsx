@@ -11,26 +11,18 @@ import { IUser } from '~/typings/data'
 import { useTranslation } from 'react-i18next'
 import { useSetting } from '../core/setting'
 import produce from 'immer'
+import Colors from '@/consts/colors'
 
 const provider = new GoogleAuthProvider()
 
 export const loginInputClassName = css({
   border: 'none',
-  borderBottom: '1px solid rgba(33,34,39,0.1)',
+  borderBottom: `1px solid ${Colors.Background.Border}`,
   outline: 'none',
   padding: '4px 0px',
+  background: 'transparent',
   width: '100%',
-  transition: 'all 0.2s ease',
-  '::placeholder': {
-    color: 'rgba(0,0,0,0.3)',
-    transition: 'all 0.2s ease',
-    textTransform: 'capitalize'
-  },
-  ':focus': {
-    '::placeholder': {
-      color: 'rgba(0,0,0,0.8)'
-    }
-  }
+  transition: 'all 0.2s ease'
 })
 const loginTextClassName = css({
   fontWeight: 600,
@@ -41,24 +33,6 @@ export const indicatorClassName = css({
   fontSize: 13,
   fontWeight: 500,
   textTransform: 'capitalize'
-})
-const textDividerClassName = css({
-  display: 'flex',
-  alignItems: 'center',
-  fontSize: '0.7rem',
-  letterSpacing: '0.1em',
-  width: '100%',
-  '::before,::after': {
-    content: '""',
-    borderBottom: '1px solid silver',
-    flexGrow: 1
-  },
-  '::before': {
-    marginRight: '1rem'
-  },
-  '::after': {
-    marginLeft: '1rem'
-  }
 })
 const validateEmail = (email?: string) => {
   const validRegex = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*$/
@@ -257,8 +231,7 @@ const Login = () => {
               alignItems="center"
               gap={10}
               justifyContent="center"
-              className={ClassName.flatButton()}
-              style={{ border: '1px solid rgba(31,34,39,0.1)', textTransform: 'capitalize' }}
+              className={ClassName.flatButton(undefined, undefined, undefined, true)}
               onClick={handleLogin}
             >
               {(loadingState?.logining || loadingState?.gettingUserDetails) && <Icon name="park-loading-one" size={20} spin />}
@@ -272,8 +245,7 @@ const Login = () => {
                 flex
                 gap={10}
                 alignItems="center"
-                style={{ border: '1px solid rgba(31,34,39,0.1)', textTransform: 'capitalize' }}
-                className={ClassName.flatButton()}
+                className={ClassName.flatButton(undefined, undefined, undefined, true)}
                 onClick={handleCheckEmailExist}
                 justifyContent="center"
               >
@@ -310,8 +282,7 @@ const Login = () => {
                   gap={10}
                   alignItems="center"
                   justifyContent="center"
-                  style={{ border: '1px solid rgba(31,34,39,0.1)' }}
-                  className={ClassName.flatButton()}
+                  className={ClassName.flatButton(undefined, undefined, undefined, true)}
                   onClick={handleVerifyCode}
                 >
                   {loadingState?.verifingCode ? (

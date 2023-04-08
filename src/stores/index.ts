@@ -1,13 +1,6 @@
 import { createStore } from 'jotai/vanilla'
 import { debounce } from 'lodash'
-import {
-  handleMetaLinksChange,
-  handleMetaObjectsChange,
-  handleSyncObjectName,
-  metaLinksAtom,
-  metaObjectsAtom,
-  objectIdToMetaObjectIdMapAtom
-} from './meta.store'
+import { handleMetaLinksChange, handleMetaObjectsChange, metaLinksAtom, metaObjectsAtom } from './meta.store'
 export const globalStore = createStore()
 
 export const findChangedProperties = (prev: object, curr: object) => {

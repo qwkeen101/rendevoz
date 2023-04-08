@@ -12,7 +12,7 @@ export const circleButton = (padding = 5, borderRadius = 999) =>
     }
   })
 
-export const flatButton = (borderRadius = 4, padding = '4px 8px', background = Colors.Background.ButtonHover) => {
+export const flatButton = (borderRadius = 4, padding = '4px 8px', background = Colors.Background.ButtonHover, border = false) => {
   const bgRgba =
     background === Colors.Background.ButtonHover
       ? getComputedStyle(document.body)
@@ -26,6 +26,7 @@ export const flatButton = (borderRadius = 4, padding = '4px 8px', background = C
     padding,
     cursor: 'pointer',
     userSelect: 'none',
+    border: border ? `1px solid ${Colors.Background.Border}` : undefined,
     ':hover': {
       background: `${background} !important`
     },

@@ -14,7 +14,7 @@ import { TextItem } from '../types/text'
 import Id from '@/utils/id'
 import useScopedEventEmitter from '@/events/useEventEmitter'
 import usePdfViewer from '../hooks/useViewer'
-import { LabelStore, ObjectStore } from '@/stores'
+import { ObjectStore } from '@/stores'
 
 interface LayoutProps {
   doc: PDFDocumentProxy

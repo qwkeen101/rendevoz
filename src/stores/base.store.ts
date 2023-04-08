@@ -216,16 +216,18 @@ export function initializeLocalStore<T>(atom: PrimitiveAtom<Map<number, T>>, dat
   const store: ILocalStore<T> = {
     addOne:
       (onSuccess, onFail) =>
-      (obj, silent = false) => {
+      (obj, silent = false, overPremium = false) => {
         return new Promise(res => {
-          const user = getUser()
-          if (!user || !user.premiumEndDate || user.premiumEndDate < Date.now()) {
-            toast.error('You can only add items after upgrading to premium!')
-            return
-          }
-          if (user.disabled) {
-            toast.error('Your account has been disabled! Please contact us if you want to recover!')
-            return
+          if (!overPremium) {
+            const user = getUser()
+            if (!user || !user.premiumEndDate || user.premiumEndDate < Date.now()) {
+              toast.error('You can only add items after upgrading to premium!')
+              return
+            }
+            if (user.disabled) {
+              toast.error('Your account has been disabled! Please contact us if you want to recover!')
+              return
+            }
           }
           const initedObj = initBaseObject(obj)
           dispatch<T>({

@@ -2,7 +2,7 @@ import useDb from '@/hooks/stores/useDb'
 import { ICollectionItem, INote, IPdfDocument, IWhiteboard, MetaObject } from '~/typings'
 import { CollectionStore, globalStore, MetaStore, ObjectStore } from '.'
 import { collectionsAtom } from './collection.store'
-import { objectIdToMetaObjectIdMapAtom } from './meta.store'
+import { metaObjectsAtom, objectIdToMetaObjectIdMapAtom } from './meta.store'
 
 // TODO : pdfElement => pdfLabel, noteElement => noteBlock
 export const normalizeOldCollections = () => {
@@ -65,21 +65,50 @@ export const normalizeOldObjectsToNewObjects = () => {
   const noteBlocksDb = useDb('blocks')
 
   noteDb.toArray().then((data: INote[]) => {
-    Promise.all(data.map(i => ObjectStore('note').addOne({ ...i }))).then(() => noteDb.clear())
+    Promise.all(data.map(i => ObjectStore('note').addOne({ ...i }, { silent: true, overPremium: true }))).then(() => noteDb.clear())
   })
   pdfDb.toArray().then((data: IPdfDocument[]) => {
-    Promise.all(data.map(i => ObjectStore('pdf').addOne({ ...i }))).then(() => pdfDb.clear())
+    Promise.all(data.map(i => ObjectStore('pdf').addOne({ ...i }, { silent: true, overPremium: true }))).then(() => pdfDb.clear())
   })
 
   whiteboardDb.toArray().then((data: IWhiteboard[]) => {
-    Promise.all(data.map(i => ObjectStore('whiteboard').addOne({ ...i }))).then(() => whiteboardDb.clear())
+    Promise.all(data.map(i => ObjectStore('whiteboard').addOne({ ...i }, { silent: true, overPremium: true }))).then(() =>
+      whiteboardDb.clear()
+    )
   })
 
   pdfLabelsDb.toArray().then(data => {
-    Promise.all(data.map(i => ObjectStore('pdfLabel').addOne({ ...i }))).then(() => pdfLabelsDb.clear())
+    Promise.all(data.map(i => ObjectStore('pdfLabel').addOne({ ...i }, { silent: true, overPremium: true }))).then(() =>
+      pdfLabelsDb.clear()
+    )
   })
 
   noteBlocksDb.toArray().then(data => {
-    Promise.all(data.map(i => ObjectStore('noteBlock').addOne({ ...i }))).then(() => noteBlocksDb.clear())
+    Promise.all(data.map(i => ObjectStore('noteBlock').addOne({ ...i }, { silent: true, overPremium: true }))).then(() =>
+      noteBlocksDb.clear()
+    )
+  })
+}
+
+export const normalizeMetaElementsToLabelAndBlocks = () => {
+  Array.from(globalStore.get(metaObjectsAtom).values()).forEach(i => {
+    if (i.type === 'pdfElement') {
+      MetaStore.updateMetaObject(
+        {
+          id: i.id,
+          type: 'pdfLabel'
+        },
+        true
+      )
+    }
+    if (i.type === 'noteElement') {
+      MetaStore.updateMetaObject(
+        {
+          id: i.id,
+          type: 'noteBlock'
+        },
+        true
+      )
+    }
   })
 }

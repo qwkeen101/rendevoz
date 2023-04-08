@@ -41,7 +41,19 @@
         "related": "related",
         "email": "email",
         "password": "password",
-        "email address": "email address"
+        "email address": "email address",        
+        "webpage": "webpage",
+        "webpage label": "webpage label",
+        "ago": "{{time}} ago",
+        "view time": "view time",
+        "url": "url",
+        "confirm": "confirm",
+        "view at": "view at",
+        "create at": "create at",
+        "recent view": "recent view",
+        "remove from collection": "remove from collection",
+        "normal object": "normal object",
+        "all types": "all types"
     },
         "dock": {
         "close": "close",
@@ -133,7 +145,29 @@
         "image": "image",
         "block": "block",
         "to-do": "to-do",
-        "emoji": "emoji"
+        "emoji": "emoji",
+        "default font": "default",
+        "table": "table",
+        "header row": "header row",
+        "header column": "header column",
+        "insert row below": "insert row at below",
+        "insert row above": "insert row at above",
+        "clear row content": "clear row content",
+        "insert column left": "insert column at left",
+        "insert column right": "insert column at right",
+        "clear column content": "clear column content",
+        "inline metaobject": "inline object",
+        "paragraph": "paragraph",
+        "heading-one": "heading one",
+        "heading-two": "heading two",
+        "heading-three": "heading three",
+        "heading-four": "heading four",
+        "list-item": "list item",
+        "block-quote": "blockquote",
+        "order-list-item": "ordered list item",
+        "make object inline": "make object inline",
+        "link": "link",
+        "code": "code"
     },
     "settings": {
         "appearance": "Appearance",
@@ -175,7 +209,11 @@
         "components": "components",
         "whiteboard settings": "whiteboard settings",
         "enable whiteboard minimap": "enable minimap",
-        "enable add link between objects when connect": "enable auto add link between objects when connect"
+        "enable add link between objects when connect": "enable auto add link between objects when connect",
+        "background": "background",
+        "background opacity": "background opacity",
+        "background blur": "background blur",
+        "dark mode": "dark mode"
     },
     "form": {
         "choose file": "Choose file",
@@ -233,5 +271,16 @@
         "object panel": "{{object}} panel",
         "search for object": "search for {{object}}",
         "choose one filter": "{{choose}}{{one}}{{filter}}"
+    },
+    "database": {
+        "search for object": "search for {{object}}",
+        "detail card": "detail card",
+        "detail list": "detail list",
+        "title list": "title list",
+        "recent create": "recently created",
+        "earliest create": "earliest created",
+        "recent view": "recently viewed",
+        "earliest view": "earliest viewed",
+        "most related": "most related"
     }
 }

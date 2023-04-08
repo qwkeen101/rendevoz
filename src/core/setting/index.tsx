@@ -32,7 +32,7 @@ type IGeneralSetting = {
     darkMode: boolean
   }
 }
-type INotificationSetting = {
+export type INotificationSetting = {
   notification: {
     enabled: boolean
     pdf: boolean

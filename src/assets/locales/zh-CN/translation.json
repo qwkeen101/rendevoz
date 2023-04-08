@@ -52,7 +52,8 @@
         "create at": "创建时间",
         "recent view": "最近浏览",
         "remove from collection": "从收藏夹中移除",
-        "normal object": "普通实体"
+        "normal object": "普通实体",
+        "all types": "所有类型"
     },
     "dock": {
         "close": "关闭标签页",
@@ -164,7 +165,9 @@
         "list-item": "无序列表",
         "block-quote": "引用",
         "order-list-item": "有序列表",
-        "make object inline": "使实体成为行内元素"
+        "make object inline": "使实体成为行内元素",
+        "link": "链接",
+        "code": "代码"
     },
     "settings": {
         "appearance": "外观",

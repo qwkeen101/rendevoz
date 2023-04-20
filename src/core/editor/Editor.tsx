@@ -1,40 +1,37 @@
 import { useGlobalEventEmitter } from '@/events/useEventEmitter'
 import { useMemoizedFn } from '@/hooks'
 import Id from '@/utils/id'
-import React, { CSSProperties, FC, memo, MouseEventHandler, ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { createEditor, Transforms, Descendant, Editor as SlateEditor, Node } from 'slate'
+import { CSSProperties, FC, memo, MouseEventHandler, ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { createEditor, Transforms, Descendant } from 'slate'
 import { withHistory } from 'slate-history'
 import { withReact } from './slate-react'
-import { CustomEditor, CustomElement, EditorInstance } from '~/typings'
+import { CustomEditor, CustomElement } from '~/typings'
 import InnerEditor, { InnerEditorProps } from './InnerEditor'
 import withVoid from './plugins/withVoid'
 import styles from './index.module.less'
 import BlockHandle from './components/BlockHandle'
 import useIsDragging from './hooks/useIsDragging'
-import { ObjectStore } from '@/stores'
-import { YjsEditor } from './yjs'
+import { MetaStore, ObjectStore } from '@/stores'
 import withShortcuts from './plugins/withShortcuts'
 import withCustomComponent from './plugins/withCustomComponent'
 import withEmitter from './plugins/withEmitter'
 import withHtml from './plugins/withHtml'
 import { ID_TO_ELEMENTS_MAP, SELECTED_BLOCKS_MAP } from './weakMaps'
 import _ from 'lodash'
-import { metaObjectsAtom } from '@/stores/meta.store'
+import { objectIdToMetaObjectIdMapAtom } from '@/stores/meta.store'
 import useLocalSyncValue from './hooks/useSyncValue'
 import useEditorDrag, { normalizeEditorDragBlocksToGlobalDraggingDetails } from './hooks/useEditorDrag'
 import { GlobalDragOverlayInstance, useGlobalIsDragging } from '@/core'
 import useEditorOverlay from './components/overlay/useEditorOverlay'
 import withHandler from './plugins/withHandler'
 import useEditorSelect from './hooks/useEditorSelect'
-import { atom, createStore } from 'jotai/vanilla'
+import { createStore } from 'jotai/vanilla'
 import { Provider, useAtomValue } from 'jotai/react'
 import useStoreValue from './hooks/useStoreValue'
 import { globalStore } from '@/stores'
 import EditorTitle from './EditorTitle'
-import { selectAtom } from 'jotai/utils'
 import rebuildDragSelect from './utils/rebuildDragSelect'
 import { ReadOnlyEditorAtom } from './hooks/useReadOnly'
-import { CustomText } from '~/typings/editor/baseTypes'
 
 type DragHandleProps = {
   left?: number
@@ -56,9 +53,9 @@ export interface EditorProps {
   onClick?: () => void
   onTitleChange?: (title: string) => void
   onEditorInitialized?: (editor: CustomEditor) => void
-  onEditorInstanceInitialized?: (i: EditorInstance) => void
   onHighlightDrag?: (highlightId: number, editor: CustomEditor) => void
   onHighlight?: (highlightId: number, editor: CustomEditor) => void
+  onHighlightRemove?: (highlightId: number, editor: CustomEditor) => void
   initialValue?: Descendant[]
   id: string
   noteId?: number
@@ -102,9 +99,10 @@ export const EditorV1: FC<EditorProps> = memo(
     titleEditable,
     onHighlightDrag,
     onHighlight,
-    onEditorInstanceInitialized,
+    onHighlightRemove,
     showBlockHandle = true,
     compact,
+    onChange,
     innerEditorClassName
   }) => {
     const [isDragging, setIsDragging] = useIsDragging()
@@ -114,8 +112,8 @@ export const EditorV1: FC<EditorProps> = memo(
     const emitter = useGlobalEventEmitter()
     const noteAtom = ObjectStore('note').createAtom(noteId)
     const note = useAtomValue(noteAtom, { store: globalStore })
-    const metaAtom = useMemo(() => (note?.metaId ? selectAtom(metaObjectsAtom, m => m.get(note?.metaId!)) : atom(null)), [note?.metaId])
-    const metaObject = useAtomValue(metaAtom, { store: globalStore })
+
+    const metaObject = MetaStore.useValue(note?.metaId || (note?.id && globalStore.get(objectIdToMetaObjectIdMapAtom)?.get(note?.id)))
 
     useEffect(() => {
       const keyDownHandler = () => {
@@ -179,50 +177,14 @@ export const EditorV1: FC<EditorProps> = memo(
     }, [])
 
     editor.onHighlight = id => onHighlight?.(id, editor)
-
-    const editorInstance = useMemo(() => {
-      const instance = {
-        editor
-      } as EditorInstance
-      setTimeout(() => onEditorInstanceInitialized?.(instance))
-      return instance
-    }, [])
-
-    editorInstance.goToHighlight = id => {
-      const date = Date.now()
-      const goTo = () => {
-        const iter = Node.texts(editor)
-        for (const value of iter) {
-          if (value && 'highlight' in value[0] && value[0].highlight === id) {
-            console.log(value, id)
-            const [v, path] = value
-            if (path) {
-              console.log(editor.innerRef)
-              editor.innerRef?.current.scrollTo(path[0])
-            }
-            break
-          }
-        }
-      }
-      const loop = () =>
-        requestIdleCallback(() => {
-          const curr = Date.now()
-          // timeout: 1s
-          if (curr - date > 1000) {
-            return
-          }
-          if (editor.contentInitialized) {
-            goTo()
-          } else {
-            loop()
-          }
-        })
-      loop()
-    }
+    editor.onHighlightRemove = id => onHighlightRemove?.(id, editor)
 
     useLocalSyncValue(editor)
 
-    useStoreValue(note, editor, onContentRendered)
+    useStoreValue(note, editor, e => {
+      onContentRendered?.(e)
+      e.onContentRendered?.()
+    })
 
     const { dragManager, renderIndicator } = useEditorDrag(editor, scrollElementRef.current)
 
@@ -287,26 +249,9 @@ export const EditorV1: FC<EditorProps> = memo(
     useEffect(() => {
       onTitleChange?.(metaObject?.name || note?.title || 'Untitled')
     }, [metaObject?.name, note?.title])
+
     return (
       <div className={styles.editor}>
-        {/* {metaObject?.coverImgSrc && (
-          <Image
-            className={css({
-              width: '100% !important',
-              height: !readonly ? 300 : 200,
-              overflow: 'hidden',
-              marginBottom: !readonly ? -50 : 0,
-              flexShrink: 0,
-              '> div': {
-                ':first-child': {
-                  transform: 'translateY(-30%)'
-                }
-              }
-            })}
-            src={metaObject.coverImgSrc}
-          />
-        )} */}
-
         <div ref={scrollElementRef} className={styles.scrollWrapper}>
           {showTitle &&
             (typeof title === 'string' || typeof title === 'undefined' ? (
@@ -317,6 +262,7 @@ export const EditorV1: FC<EditorProps> = memo(
                 description={metaObject?.description}
                 titleEditable={titleEditable !== false && !metaObject}
                 title={title || metaObject?.name || note?.title || 'Untitled'}
+                editor={editor}
               />
             ) : (
               title
@@ -332,6 +278,7 @@ export const EditorV1: FC<EditorProps> = memo(
               showToolbar={showToolbar}
               scrollElementRef={scrollElementRef}
               editor={editor}
+              onChange={onChange}
               defaultValue={initialValue}
               onBlockMouseMove={handleBlockMouseMove}
               onLinkClick={onLinkClick}

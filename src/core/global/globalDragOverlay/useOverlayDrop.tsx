@@ -49,9 +49,10 @@ const useOverlayDrop = () => {
       }
       allPendingLinks.forEach(i => addMetaLink(i, true))
       setPendingLinks(allPendingLinks)
-      setMetaObject(normalizedMetaObject)
-      addMetaObject(normalizedMetaObject, true)
-      toggleEditMetaVisible(true)
+      addMetaObject(normalizedMetaObject, true).then(m => {
+        setMetaObject(m)
+        toggleEditMetaVisible(true)
+      })
     }
   })
   const getDropOnPostLinks = async (dropOn: DropOn, metaObject: MetaObject) => {
@@ -259,6 +260,27 @@ const useOverlayDrop = () => {
         shouldOpenEditMetaModal = false
         break
       }
+      case 'note label': {
+        const noteMeta = await retrieveMetaObjectByObjectId(dragElement.noteId, 'note')
+        const noteLabelMeta = await getMetaObjectByObjectId(dragElement.highlightId)
+        if (noteLabelMeta) {
+          Object.assign(normalizedMetaObject, noteLabelMeta)
+          alreadyHasMeta = true
+          shouldOpenEditMetaModal = false
+          addLinkBetweenTwoMetaObject(noteMeta, noteLabelMeta)
+        } else {
+          const { name, description } = transformTextContentToNameAndDescription(dragElement.textContent)
+          normalizedMetaObject.type = 'noteLabel'
+          normalizedMetaObject.objectId = dragElement.highlightId
+          normalizedMetaObject.name = name || 'Note Label'
+          normalizedMetaObject.description = description
+          normalizedMetaObject.from = {
+            metaId: noteMeta.id
+          }
+          normalizedLinks.push(createLink(noteMeta.id, normalizedMetaObject.id))
+        }
+        break
+      }
       case 'webpage label': {
         const webpageMeta = await retrieveMetaObjectByObjectId(dragElement.webpageId, 'webpage')
         const webpageLabelMeta = await getMetaObjectByObjectId(dragElement.highlightId)
@@ -340,7 +362,7 @@ const useOverlayDrop = () => {
           pendingLinks?.forEach(l => {
             l.id && deleteMetaLink(l.id, true, true)
           })
-          console.log(metaObject)
+
           metaObject?.id && deleteMetaObject(metaObject?.id, true, true)
           if (promise) {
             promise.rej?.(null)
@@ -352,9 +374,9 @@ const useOverlayDrop = () => {
         onSubmit={async obj => {
           // give a new id to prevent hooks order change of get meta target obj
           if (metaObject) {
-            const newMetaObj = Object.assign(metaObject, obj)
+            const newMetaObj = { ...metaObject, ...obj }
             updateMetaObject(newMetaObj, true)
-            console.log(newMetaObj)
+
             const setting = getSetting()
             if (setting.notification.enabled && setting.notification.object) {
               toast.success('Successfully add object!')

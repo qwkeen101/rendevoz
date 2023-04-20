@@ -7,6 +7,9 @@ export const circleButton = (padding = 5, borderRadius = 999) =>
     padding,
     cursor: 'pointer',
     borderRadius,
+    '&[data-active="true"]': {
+      background: `${Colors.Background.ButtonHover} !important`
+    },
     ':hover': {
       background: `${Colors.Background.ButtonHover} !important`
     }
@@ -27,6 +30,9 @@ export const flatButton = (borderRadius = 4, padding = '4px 8px', background = C
     cursor: 'pointer',
     userSelect: 'none',
     border: border ? `1px solid ${Colors.Background.Border}` : undefined,
+    '&[data-active="true"]': {
+      background: `${background} !important`
+    },
     ':hover': {
       background: `${background} !important`
     },

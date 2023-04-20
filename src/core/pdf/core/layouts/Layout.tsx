@@ -15,6 +15,8 @@ import Id from '@/utils/id'
 import useScopedEventEmitter from '@/events/useEventEmitter'
 import usePdfViewer from '../hooks/useViewer'
 import { ObjectStore } from '@/stores'
+import { IPdfViewer } from '~/typings'
+import { PAGE_INDEX_TO_TEXT_LAYER, PDF_TO_DOC } from '../weakMaps'
 
 interface LayoutProps {
   doc: PDFDocumentProxy
@@ -329,8 +331,41 @@ const Layout: FC<LayoutProps> = ({
       highlightText,
       jumpToOffset,
       scrollBy,
-      jumpToLabel
-    })
+      jumpToLabel,
+      getDocument: () => {
+        return new Promise(res => {
+          if (PDF_TO_DOC.has(viewer)) {
+            res(PDF_TO_DOC.get(viewer)!)
+          } else {
+            viewer.onDocumentLoaded = doc => {
+              PDF_TO_DOC.set(viewer, doc)
+              res(doc)
+            }
+          }
+        })
+      },
+      getTextLayerInstance: idx => {
+        return new Promise(res => {
+          if (!PAGE_INDEX_TO_TEXT_LAYER.has(viewer)) {
+            console.log('create new map')
+            PAGE_INDEX_TO_TEXT_LAYER.set(viewer, new Map())
+          }
+
+          const map = PAGE_INDEX_TO_TEXT_LAYER.get(viewer)
+          if (map?.has(idx)) {
+            res(map.get(idx)!)
+          } else {
+            viewer.jumpToPage?.(idx)
+            viewer.onTextLayerRendered = (pageIdx, ins) => {
+              map?.set(pageIdx, ins)
+              if (idx === pageIdx) {
+                res(ins)
+              }
+            }
+          }
+        })
+      }
+    } as IPdfViewer)
   }
 
   return (

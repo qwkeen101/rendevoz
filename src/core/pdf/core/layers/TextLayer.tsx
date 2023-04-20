@@ -11,10 +11,13 @@ import { useMemoizedFn } from '@/hooks'
 import { PageFunctionRef } from '../types'
 import useSelectingText from '../hooks/useIsSelectingText'
 import useScopedEventEmitter from '@/events/useEventEmitter'
-import useViewer from '@/scenes/pdf/useViewer'
 import { Rect } from '@/types'
 import { useEventHandler } from '@/events'
 import usePdfjs from '@/hooks/utils/usePdfjs'
+import { usePdfViewer } from '@/core'
+import { ITextLayerInstance } from '~/typings'
+import { PAGE_INDEX_TO_TEXT_LAYER } from '../weakMaps'
+import { CanvasOriginFillRect } from './CanvasLayer'
 interface TextLayerProps {
   page: PDFPageProxy
   pageIndex: number
@@ -52,14 +55,14 @@ const TextLayer: FC<TextLayerProps> = ({
   const distanceToleranceAfterScale = Math.min(16, DEFAULT_DISTANCE_TOLERANCE * scale)
   const innerEmitter = useScopedEventEmitter()
   const handler = useEventHandler('pdf')
-  const viewer = useViewer()
+  const viewer = usePdfViewer()
   handler.on('highlightText', data => {
     if (data.page === pageIndex) {
       const item = textContentBounds.current.find(i => i.str === data.str)
       emptyTextLayer()
       if (item) {
         innerEmitter.removeInterval()
-        viewer.current?.scrollBy(item.offset.top - 300)
+        viewer?.scrollBy?.(item.offset.top - 300)
         paint(
           {
             x: item.offset.left,
@@ -234,7 +237,9 @@ const TextLayer: FC<TextLayerProps> = ({
     canvas.getContext('2d')?.clearRect(0, 0, canvas.width, canvas.height)
     rectsRef.current = []
   }
+
   pageFunctionRef.current && (pageFunctionRef.current.clearTextLayer = emptyTextLayer)
+
   useIsomorphicLayoutEffect(() => {
     renderTaskRef.current = new TextLayerRenderTask(viewport)
     innerEmitter.addListener('pdf', handler)
@@ -257,6 +262,34 @@ const TextLayer: FC<TextLayerProps> = ({
         document.addEventListener('pointerup', globalMouseUpHandler)
         canvas.width = width
         canvas.height = height
+        const instance = {
+          paint,
+          paintBounds: (bounds, color) => {
+            emptyTextLayer()
+            const rects = bounds.map(i => ({
+              x: i.offset.left,
+              y: i.offset.top,
+              width: i.offset.size[0],
+              height: i.offset.size[1],
+              offset: i.offset.trans
+            })) as TextRect[]
+            const opti = optimizeRects(rects)
+            opti.forEach(i => {
+              paint(i, color || DEFAULT_HIGHLIGHT_COLOR)
+            })
+          },
+          paintItems: (items, color) => {
+            const textBounds = textContentBounds.current
+            const bounds = items
+              .map(i => {
+                return textBounds.find(o => o.str === i.str)
+              })
+              .filter(i => i !== undefined) as TextContentBound[]
+            instance.paintBounds(bounds, color)
+          }
+        } as ITextLayerInstance
+
+        viewer?.onTextLayerRendered?.(pageIndex, instance)
       }
       textContentBounds.current = renderTaskRef.current!.render(content)
       document.addEventListener('keydown', keyboardHandler)
@@ -277,6 +310,9 @@ const TextLayer: FC<TextLayerProps> = ({
         canvas.height = 0
       }
       document.removeEventListener('keydown', keyboardHandler)
+      if (viewer) {
+        PAGE_INDEX_TO_TEXT_LAYER.get(viewer)?.delete(pageIndex)
+      }
     }
   }, [viewport])
 
@@ -334,6 +370,18 @@ const TextLayer: FC<TextLayerProps> = ({
         : paintRects(textContentBounds.current.slice(endIndex, startIndex + 1), endPoint, startPoint))
   }
   const paint = (coordinate: { x: any; y: any; width: any; height: any; offset: any }, color: string) => {
+    CanvasRenderingContext2D.prototype.fillRect = (function () {
+      const original = CanvasOriginFillRect
+      return function () {
+        const orig = this['fillStyle']
+        this['fillStyle'] = color
+        console.log(this)
+        const res = original.apply(this, arguments)
+        this['fillStyle'] = orig
+        return res
+      }
+    })()
+
     const { x, y, width, height, offset } = coordinate
     let rect
     const canvas = canvasRef.current
@@ -430,6 +478,7 @@ const TextLayer: FC<TextLayerProps> = ({
       paint(rect, DEFAULT_HIGHLIGHT_COLOR)
     })
   })
+
   return <canvas ref={canvasRef} style={{ position: 'absolute' }} role="text-layer" />
 }
 class TextLayerRenderTask {

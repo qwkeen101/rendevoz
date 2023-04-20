@@ -2,6 +2,8 @@ import Spinner from '@/components/base/Spinner'
 import usePdfjs from '@/hooks/utils/usePdfjs'
 import { PDFDocumentProxy } from 'pdfjs-dist'
 import { FC, useEffect, useRef, useState } from 'react'
+import usePdfViewer from './hooks/useViewer'
+import { PDF_TO_DOC } from './weakMaps'
 
 interface LoaderProps {
   file: string | Uint8Array
@@ -15,6 +17,7 @@ enum LoadingState {
 }
 const Loader: FC<LoaderProps> = ({ file, children, onDocumentLoaded }) => {
   const docRef = useRef<PDFDocumentProxy | null>(null)
+  const viewer = usePdfViewer()
   const [loadingState, setLoadingState] = useState(LoadingState.Loading)
   useEffect(() => {
     docRef.current = null
@@ -23,6 +26,8 @@ const Loader: FC<LoaderProps> = ({ file, children, onDocumentLoaded }) => {
     loadingTask.promise.then(doc => {
       docRef.current = doc
       onDocumentLoaded?.(doc)
+      PDF_TO_DOC.set(viewer, doc)
+      viewer?.onDocumentLoaded?.(doc)
       setLoadingState(LoadingState.Complete)
     })
     return () => {

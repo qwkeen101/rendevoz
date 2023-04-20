@@ -274,7 +274,19 @@ const EditorOverlayElements = ({
                   id: Id.getId(),
                   children: [{ text: '' }]
                 })
-                console.log(id)
+                GlobalEventEmitter().emit('global',{
+                  type: 'globalDropNeedFurtherProcess',
+                  data: {
+                    draggingElement: {
+                      type: 'metaElement',
+                      metaId: id
+                    },
+                    dropOn: {
+                      dropOn: 'editor',
+                      noteId: editor.noteId
+                    }
+                  }
+                })
               })
           }
           return

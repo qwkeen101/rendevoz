@@ -29,8 +29,7 @@ const ErrorFallback = ({ error }) => {
       </div>
       <p
         className={css({
-          fontSize: 16,
-          color: 'rgba(0,0,0,0.6)'
+          fontSize: 16
         })}
       >
         Error Message: {error.message || 'Unknown error'}
@@ -38,7 +37,6 @@ const ErrorFallback = ({ error }) => {
       <p
         className={css({
           fontSize: 13,
-          color: defaultBackGroundColorLightGrey,
           marginBottom: 20
         })}
       >

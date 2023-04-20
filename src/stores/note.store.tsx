@@ -2,7 +2,7 @@ import useDb from '@/hooks/stores/useDb'
 import Id from '@/utils/id'
 import { atom } from 'jotai'
 import { toast } from 'react-hot-toast'
-import { Descendant } from 'slate'
+import { Descendant, Editor, Node } from 'slate'
 import { INote, NoteBlock } from '~/typings/data'
 import BaseStore, { initializeLocalStore } from './base.store'
 import { IStoreDeprecated } from './store.type'
@@ -10,6 +10,10 @@ import { MetaStore } from '.'
 import { Notification } from '@/components'
 import ClassName from '@/styles/classNames'
 import getSetting from '@/core/setting/getSetting'
+import { SearchStore, SearchableDocument } from './search.store'
+import { CustomEditor } from '~/typings'
+import { serializeEditor } from '@/core/editor/utils/database/serialize'
+import { Element } from 'slate'
 
 export const notesAtom = atom(new Map<number, INote>())
 
@@ -112,6 +116,35 @@ const createNoteStore = () => {
       return obj as Descendant[]
     }
   }
+  const saveNoteAsSearch = async (editor: CustomEditor, noteId: number) => {
+    const currentBlocks = await SearchStore.searchDocument({
+      specType: 'noteBlock',
+      filter: [`targetObjectId=${noteId}`]
+    })
+    const currentSearchableBlocksIdSet = new Set(currentBlocks.map(i => Number(i.doc.id)))
+    const result = editor.children
+      .map(i => {
+        if (Element.isElement(i)) {
+          currentSearchableBlocksIdSet.delete(i.id)
+          const str = Node.string(i).replaceAll('\n', '')
+          if (str.length) {
+            return {
+              content: str,
+              id: i.id,
+              specType: 'noteBlock',
+              targetObjectId: noteId
+            } as SearchableDocument
+          }
+        }
+      })
+      .filter(i => i !== undefined) as SearchableDocument[]
+    // have deleted blocks
+    if (currentSearchableBlocksIdSet.size > 0) {
+      SearchStore.deleteDocuments(Array.from(currentSearchableBlocksIdSet.values()))
+    }
+    SearchStore.addDocuments(result)
+  }
+
   return {
     getNotesByIds,
     getNoteAndBlocks,
@@ -119,6 +152,7 @@ const createNoteStore = () => {
     getNoteValue,
     saveBlocks,
     getBlockById,
+    saveNoteAsSearch,
     ...realStore
   }
 }

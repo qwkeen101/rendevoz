@@ -33,6 +33,7 @@ const Element = (props: {
     innerRef,
     index
   } = props
+
   const editor = useSlateStatic()
   const readOnly = useReadOnly()
   const isInline = editor.isInline(element)
@@ -74,7 +75,7 @@ const Element = (props: {
     ref: any
   } = {
     'data-slate-node': 'element',
-    'data-index': String(index),
+    'data-index': index !== undefined ? String(index) : undefined,
     ref
   }
 

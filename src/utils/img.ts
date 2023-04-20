@@ -1,11 +1,19 @@
 import { ipcInstance, IpcResponse } from '@/plugins'
 
-export const saveImageLocally = (imgName: string, imgData: string | Blob): Promise<IpcResponse<any>> => {
+export const saveImageLocally = (imgName: string, imgData: string | Blob, compress = true): Promise<IpcResponse<any>> => {
   const data = imgData
 
   if (imgData instanceof Blob) {
     return new Promise((resolve, reject) => {
       const reader = new FileReader()
+      if (!compress) {
+        reader.readAsDataURL(imgData)
+        reader.onload = () => {
+          ipcInstance.send('saveImage', imgName, reader.result).then(data => resolve(data))
+        }
+
+        return
+      }
       reader.readAsArrayBuffer(imgData)
       reader.onload = () => {
         if (reader.result) {

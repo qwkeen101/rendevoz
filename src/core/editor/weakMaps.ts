@@ -2,7 +2,7 @@ import { Noop } from '@/common/types'
 import { Position } from '@/types'
 import { VirtualItem } from '@tanstack/react-virtual'
 import { Element, Path } from 'slate'
-import { CustomEditor } from '../../../typings/editor/types'
+import { CustomEditor } from '~/typings'
 
 export interface ElementFunctions {
   selectBlock: Noop
@@ -32,6 +32,8 @@ export const SELECT_AREA_MAP = new WeakMap<CustomEditor, EditorSelectArea>()
 export const SELECTED_BLOCKS_MAP = new WeakMap<CustomEditor, Map<number, HTMLElement | null>>()
 
 export const ID_TO_PATH_MAP = new WeakMap<CustomEditor, Map<number, Path>>()
+
+export const ID_TO_FIRST_LAYER_MAP = new WeakMap<CustomEditor, Map<number, Path>>()
 
 export const hasSelectedBlocks = (editor: CustomEditor) => {
   const selectedBlocksMap = SELECTED_BLOCKS_MAP.get(editor)

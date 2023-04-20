@@ -1,4 +1,4 @@
-import { useMemoizedFn, useMergedRef } from '@/hooks'
+import { useDebounceFn, useMemoizedFn, useMergedRef } from '@/hooks'
 import isHotkey from 'is-hotkey'
 import { FC, KeyboardEventHandler, memo, RefObject, useCallback, useEffect, useRef } from 'react'
 import { Descendant, Editor, Path, Range, Transforms, Element as SlateElement, Node } from 'slate'
@@ -17,7 +17,7 @@ import ToDo from './elements/todo'
 import Id from '@/utils/id'
 import { InlineElements } from './consts/elements'
 import { KEY } from '@/consts/key'
-import { ID_TO_ELEMENTS_MAP, ID_TO_PATH_MAP, SELECTED_BLOCKS_MAP } from './weakMaps'
+import { ID_TO_ELEMENTS_MAP, ID_TO_FIRST_LAYER_MAP, ID_TO_PATH_MAP, SELECTED_BLOCKS_MAP } from './weakMaps'
 import moveMultiElements from './utils/moveMultiElements'
 import useScopedEventEmitter from '@/events/useEventEmitter'
 import { EditableProps } from './slate-react/components/editable'
@@ -55,7 +55,7 @@ const ReadOnlyEditorClassName = css({
     fontSize: '1.15rem',
     marginBottom: '0.5rem',
     marginTop: '0.5rem',
-    lineHeight: 1.8
+    lineHeight: 1.6
   },
   'reach-inline-nav': {
     display: 'none'
@@ -157,26 +157,51 @@ const InnerEditor: FC<InnerEditorProps> = memo(
     const previousValue = useRef<Descendant[]>()
     const { handleSlashKeyDown } = useEditorSlashMenu(editor)
     editor.innerRef = editableRef
+    const { run: debounceIndex } = useDebounceFn(
+      () => {
+        const map = ID_TO_PATH_MAP.get(editor) || new Map<number, Path>()
+
+        ID_TO_PATH_MAP.set(editor, map)
+
+        for (const [node, path] of Node.elements(editor)) {
+          node.id && map.set(node.id, path)
+        }
+      },
+      { wait: 500 }
+    )
     const handleChange = useMemoizedFn((value: Descendant[]) => {
-      onChange?.(value)
+      let shouldChange = false
+      const timeNow = Date.now()
       if (!(editor.operations.length === 1 && editor.operations[0].type === 'set_selection')) {
+        const firstLayerIdSet = new Set<number>()
+        const firstLayerMap = ID_TO_FIRST_LAYER_MAP.get(editor) || new Map<number, Path>()
+        ID_TO_FIRST_LAYER_MAP.set(editor, firstLayerMap)
+
+        // normalize first layer ids to prevent path conflicts
+        editor.children.forEach((i, idx) => {
+          if (firstLayerIdSet.has(i.id)) {
+            Transforms.setNodes(editor, { id: Id.getId() }, { at: [idx] })
+          }
+          firstLayerIdSet.add(i.id)
+          i.id && firstLayerMap.set(i.id, [idx])
+        })
+
         scopedEmitter.emit('editor', {
           type: 'valueChange'
         })
+        shouldChange = true
       }
       const prevValue = previousValue.current
       previousValue.current = value
       if (prevValue !== value) {
         if (editor.operations.some(i => Path.operationCanTransformPath(i)) || ID_TO_PATH_MAP.get(editor) === undefined) {
-          const map = ID_TO_PATH_MAP.get(editor) || new Map<number, Path>()
-          ID_TO_PATH_MAP.set(editor, map)
-          requestIdleCallback(() => {
-            for (const [node, path] of Node.elements(editor)) {
-              node.id && map.set(node.id, path)
-            }
-          })
+          debounceIndex()
         }
       }
+      if (shouldChange) {
+        onChange?.(value)
+      }
+      console.log(Date.now() - timeNow)
     })
     const inlineKeys = [...Object.values(InlineElements), 'tableCell', 'tableRow', 'inline-metaObject']
     const renderElement = useCallback(
@@ -245,6 +270,53 @@ const InnerEditor: FC<InnerEditorProps> = memo(
       },
       [scrollElement]
     )
+    useEffect(() => {
+      const keydownHandler = (e: KeyboardEvent) => {
+        if (isHotkey(KEY.Backspace, e) || isHotkey(KEY.Delete, e)) {
+          const selected = SELECTED_BLOCKS_MAP.get(editor)
+          if (selected && selected.size > 0) {
+            e.preventDefault()
+            e.stopPropagation()
+            if (selected.size === ID_TO_PATH_MAP.get(editor)?.size) {
+              Transforms.removeNodes(editor, {
+                at: Editor.range(editor, [0], [editor.children.length - 1])
+              })
+              SELECTED_BLOCKS_MAP.set(editor, new Map())
+              return
+            }
+            const ids = Array.from(selected.keys())
+            const elements: [CustomElement, Path][] = []
+            const eles = ID_TO_ELEMENTS_MAP.get(editor)
+            ids.forEach(id => {
+              const ele = eles?.get(id)
+              if (ele) {
+                elements.push([ele.getElement(), ID_TO_PATH_MAP.get(editor)?.get(id)])
+                selected.delete(id)
+              }
+            })
+            moveMultiElements(editor, elements, [editor.children.length - 1], 'bottom', false)
+            Transforms.removeNodes(editor, {
+              at: {
+                anchor: {
+                  path: [editor.children.length - elements.length],
+                  offset: 0
+                },
+                focus: Editor.end(editor, [])
+              }
+            })
+            Transforms.deselect(editor)
+          }
+        }
+      }
+      scrollElement?.addEventListener('keydown', keydownHandler, true)
+      return () => {
+        scrollElement?.removeEventListener('keydown', keydownHandler, true)
+      }
+    }, [scrollElement])
+    useEffect(() => {
+      // if only default value, trigger for path index
+      editor.onChange()
+    }, [])
     const handleKeydown: KeyboardEventHandler<HTMLDivElement> = useMemoizedFn(e => {
       const { selection } = editor
       handleSlashKeyDown(e)
@@ -291,40 +363,6 @@ const InnerEditor: FC<InnerEditorProps> = memo(
           })
         } else {
           Transforms.insertText(editor, '\u2003')
-        }
-      }
-      if (isHotkey(KEY.Backspace, e) || isHotkey(KEY.Delete, e)) {
-        const selected = SELECTED_BLOCKS_MAP.get(editor)
-        if (selected && selected.size > 0) {
-          e.preventDefault()
-          if (selected.size === ID_TO_PATH_MAP.get(editor)?.size) {
-            Transforms.removeNodes(editor, {
-              at: Editor.range(editor, [0], [editor.children.length - 1])
-            })
-            SELECTED_BLOCKS_MAP.set(editor, new Map())
-            return
-          }
-          const ids = Array.from(selected.keys())
-          const elements: [CustomElement, Path][] = []
-          const eles = ID_TO_ELEMENTS_MAP.get(editor)
-          ids.forEach(id => {
-            const ele = eles?.get(id)
-            if (ele) {
-              elements.push([ele.getElement(), ID_TO_PATH_MAP.get(editor)?.get(id)])
-              selected.delete(id)
-            }
-          })
-          moveMultiElements(editor, elements, [editor.children.length - 1], 'bottom', false)
-          Transforms.removeNodes(editor, {
-            at: {
-              anchor: {
-                path: [editor.children.length - elements.length],
-                offset: 0
-              },
-              focus: Editor.end(editor, [])
-            }
-          })
-          Transforms.deselect(editor)
         }
       }
       if (isHotkey('mod+a', e)) {
@@ -376,12 +414,14 @@ const InnerEditor: FC<InnerEditorProps> = memo(
                 break
               case 'highlight':
                 {
-                  const highlightId = Id.getId()
-                  editor.onHighlight?.(highlightId)
                   const isActive = isMarkActive(editor, 'highlight')
                   if (isActive) {
+                    const highlightId = Editor.marks(editor)['highlight']
                     Editor.removeMark(editor, 'highlight')
+                    editor.onHighlightRemove?.(Number(highlightId))
                   } else {
+                    const highlightId = Id.getId()
+                    editor.onHighlight?.(highlightId)
                     Editor.addMark(editor, 'highlight', highlightId)
                   }
                 }
@@ -542,79 +582,77 @@ const dividerClassName = css({
 
 export const Element = (props: RenderElementProps & { onLinkClick: InnerEditorProps['onLinkClick'] }) => {
   const { element, attributes, children, onLinkClick } = props
-  if (!element.hide) {
-    switch (element.type) {
-      case 'paragraph':
-        return <Paragraph {...props} />
-      case 'block-quote':
-        return <blockquote>{children}</blockquote>
-      case 'bulleted-list':
-        return <ul>{children}</ul>
-      case 'order-list-item':
-        return <OrderListItem {...props} />
-      case 'link':
-        return (
-          <span {...attributes} style={{ display: 'inline' }}>
-            <a
-              target="_blank"
-              onClick={e => {
-                if (onLinkClick) {
-                  onLinkClick?.(e)
-                  return
-                }
-                if (navigator.userAgent.indexOf('Electron') >= 0) {
-                  window.open(element.url)
-                  e.preventDefault()
-                }
-              }}
-              href={element.url}
-            >
-              {children}
-            </a>
-          </span>
-        )
-      case 'figcaption':
-        return <figcaption>{children}</figcaption>
-      case 'pre':
-        return <pre>{children}</pre>
-      case 'table':
-        return <Table {...props} />
-      case 'tableCell':
-        return <TableCell {...props} />
-      case 'sup':
-        return <sup {...attributes}>{children}</sup>
-      case 'tableRow':
-        return <TableRow {...props} />
-      case 'divider':
-        return (
-          <div contentEditable={false} className={dividerClassName}>
+  switch (element.type) {
+    case 'paragraph':
+      return <Paragraph {...props} />
+    case 'block-quote':
+      return <blockquote>{children}</blockquote>
+    case 'bulleted-list':
+      return <ul>{children}</ul>
+    case 'order-list-item':
+      return <OrderListItem {...props} />
+    case 'link':
+      return (
+        <span {...attributes} style={{ display: 'inline' }}>
+          <a
+            target="_blank"
+            onClick={e => {
+              if (onLinkClick) {
+                onLinkClick?.(e)
+                return
+              }
+              if (navigator.userAgent.indexOf('Electron') >= 0) {
+                window.open(element.url)
+                e.preventDefault()
+              }
+            }}
+            href={element.url}
+          >
             {children}
-          </div>
-        )
-      case 'heading-one':
-      case 'heading-two':
-      case 'heading-three':
-      case 'heading-four':
-      case 'heading-five':
-      case 'heading-six':
-        return <Heading {...props} />
-      case 'metaObject':
-        return <MetaObject {...props} />
-      case 'image':
-        return <Image {...props} />
-      case 'to-do':
-        return <ToDo {...props} />
-      case 'list-item':
-        return <ListItem {...props} />
-      case 'inline-metaObject':
-        return <InlineMetaElement {...props} />
-      case 'thought':
-        return <Thought {...props}>{children}</Thought>
-      case 'emoji':
-        return <Emoji {...props} />
-      default:
-        return <Paragraph {...props} />
-    }
+          </a>
+        </span>
+      )
+    case 'figcaption':
+      return <figcaption>{children}</figcaption>
+    case 'pre':
+      return <pre>{children}</pre>
+    case 'table':
+      return <Table {...props} />
+    case 'tableCell':
+      return <TableCell {...props} />
+    case 'sup':
+      return <sup {...attributes}>{children}</sup>
+    case 'tableRow':
+      return <TableRow {...props} />
+    case 'divider':
+      return (
+        <div contentEditable={false} className={dividerClassName}>
+          {children}
+        </div>
+      )
+    case 'heading-one':
+    case 'heading-two':
+    case 'heading-three':
+    case 'heading-four':
+    case 'heading-five':
+    case 'heading-six':
+      return <Heading {...props} />
+    case 'metaObject':
+      return <MetaObject {...props} />
+    case 'image':
+      return <Image {...props} />
+    case 'to-do':
+      return <ToDo {...props} />
+    case 'list-item':
+      return <ListItem {...props} />
+    case 'inline-metaObject':
+      return <InlineMetaElement {...props} />
+    case 'thought':
+      return <Thought {...props}>{children}</Thought>
+    case 'emoji':
+      return <Emoji {...props} />
+    default:
+      return <Paragraph {...props} />
   }
 }
 
@@ -625,7 +663,7 @@ const TextHighlightClassName = css({
      rgb(247, 219, 106) 2px,
      rgba(247, 219, 106, 0.3) 2px, 
      rgba(247, 219, 106, 0.3) 100%
-   ) !important`,
+   )`,
   backgroundRepeat: 'no-repeat !important',
   backgroundSize: '100% 90% !important',
   backgroundPosition: '0 75% !important',
@@ -634,13 +672,12 @@ const TextHighlightClassName = css({
 })
 export const Leaf = (props: RenderLeafProps) => {
   const editor = useSlateStatic()
-  const readOnly = useReadOnlyEditor()
   const spanRef = useRef<HTMLSpanElement>(null)
   let { leaf, attributes, children } = props
   const mergedRef = useMergedRef(attributes.ref || {}, spanRef)
   useEffect(() => {
     const { highlight } = leaf
-    if (readOnly && highlight) {
+    if (highlight) {
       const span = spanRef.current
       const pointerDown = {
         current: false
@@ -677,7 +714,7 @@ export const Leaf = (props: RenderLeafProps) => {
         span?.removeEventListener('pointerup', pointerHandler)
       }
     }
-  }, [readOnly, leaf.highlight])
+  }, [leaf.highlight])
 
   if (leaf.sup) {
     children = <sup>{children}</sup>
@@ -703,12 +740,12 @@ export const Leaf = (props: RenderLeafProps) => {
       {...attributes}
       ref={mergedRef}
       onClick={() => {
-        if (leaf.highlight && readOnly) {
+        if (leaf.highlight) {
           editor.onHighlightClick?.(leaf.highlight as number)
         }
       }}
-      data-highlight={leaf.highlight && readOnly ? String(leaf.highlight) : undefined}
-      className={classNames(styles.leaf, leaf.highlight && readOnly && TextHighlightClassName)}
+      data-highlight={leaf.highlight ? String(leaf.highlight) : undefined}
+      className={classNames(styles.leaf, leaf.highlight && TextHighlightClassName)}
       style={{
         fontSize: leaf.fontSize || '1em',
         '--block-font-color': leaf.fontColor,

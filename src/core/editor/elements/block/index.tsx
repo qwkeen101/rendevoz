@@ -14,7 +14,7 @@ import { isRectsCollision } from '../../utils/positions/collision'
 import { css } from '@emotion/css'
 import { hexToRgb } from '@/utils/color'
 import { useGlobalIsDragging } from '@/core'
-import { Range, Transforms } from 'slate'
+import { Editor, Range, Transforms } from 'slate'
 import { NODE_TO_PARENT } from '../../slate-react/utils/weak-maps'
 
 type BlockProps = {
@@ -35,7 +35,6 @@ const Block: FC<React.DetailedHTMLProps<React.HTMLAttributes<HTMLDivElement>, HT
     const blockRef = useRef<HTMLDivElement>(null)
     const columnRef = useRef<HTMLDivElement>(null)
     const editor = useSlateStatic()
-    const idx = editor.children.findIndex(i => i === element)
     const map = ID_TO_ELEMENTS_MAP.get(editor)
     const mergedChildrenRef = useMergedRef(blockRef, attributes.ref)
     const [selected, setSelected] = useState(false)
@@ -69,9 +68,13 @@ const Block: FC<React.DetailedHTMLProps<React.HTMLAttributes<HTMLDivElement>, HT
       }
       return () => {
         document.removeEventListener('click', handleGlobalClick)
-        if (editor.selection && Range.includes(editor.selection, ReactEditor.findPath(editor, element))) {
-          ReactEditor.deselect(editor)
-          // ReactEditor.blur(editor)
+        const path = ReactEditor.findPath(editor, element)
+        if (editor.selection && Range.includes(editor.selection, path)) {
+          const currentPathEle = Editor.node(editor, path)
+          // maybe deleted
+          if (currentPathEle[0] === element) {
+            ReactEditor.deselect(editor)
+          }
         }
       }
     }, [])
@@ -142,9 +145,6 @@ const Block: FC<React.DetailedHTMLProps<React.HTMLAttributes<HTMLDivElement>, HT
 
     const selectBlock = useMemoizedFn(() => {
       setSelected(true)
-      if (scrollElementRef?.current) {
-        scrollToTarget(blockRef.current, scrollElementRef.current)
-      }
     })
 
     useEffect(() => {
@@ -199,7 +199,6 @@ const Block: FC<React.DetailedHTMLProps<React.HTMLAttributes<HTMLDivElement>, HT
         onMouseMoveCapture={handleMouseMove}
         suppressContentEditableWarning
         data-level={element?.level}
-        data-index={idx}
         style={{
           textAlign: align,
           '--block-linear-font': linearFont ? color : undefined,
@@ -208,7 +207,7 @@ const Block: FC<React.DetailedHTMLProps<React.HTMLAttributes<HTMLDivElement>, HT
           '--block-linear-bg': linearBg ? background : undefined,
           '--block-font-color': linearFont ? undefined : color,
           color: 'var(--block-font-color)',
-          margin: type === 'table' ? '10px -10px' : undefined,
+          margin: type === 'table' ? '0px -10px' : undefined,
           padding: type === 'table' ? '0px 12px 10px' : undefined,
           ...rest.style
         }}

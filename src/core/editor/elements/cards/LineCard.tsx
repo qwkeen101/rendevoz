@@ -2,7 +2,7 @@ import { Content, Icon } from '@/components/base'
 import ClassName from '@/styles/classNames'
 import { css } from '@emotion/css'
 import { ReactNode, FC } from 'react'
-import { CustomElement } from '../../../../../typings/editor/types'
+import { CustomElement } from '~/typings'
 
 const IconClassName = css({
   color: 'rgba(var(--font-bg, 55 53 47 / 85%)) !important'
@@ -18,6 +18,7 @@ const LineCard: FC<{
       contentEditable={false}
       flex
       alignItems="center"
+      data-meta-id={element.id}
       className={ClassName.flatButton(undefined, undefined, element?.background)}
       gap={10}
     >

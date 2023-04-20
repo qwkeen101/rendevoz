@@ -10,6 +10,8 @@ import { CommonElement } from './commonElements'
 import { OuterElement } from './outerElements'
 import DragManager from '@/core/editor/hooks/DragManager'
 import { EditorOverlayManager } from '@/core/editor/components/overlay/useEditorOverlay'
+import { Virtualizer } from '@tanstack/react-virtual'
+import { ReactElement, ReactNode, RefObject } from 'react'
 
 export type CustomEditor = BaseEditor &
   ReactEditor &
@@ -35,10 +37,16 @@ export type CustomEditor = BaseEditor &
     onHighlightClick?: (highlightId: number) => void
     onHighlightDrag?: (highlightId: number, editor: CustomEditor) => void
     onHighlight?: (highlightId: number) => void
+    onHighlightRemove?: (highlightId: number) => void
+    onContentRendered?: () => void
     initialized?: boolean
     contentInitialized?: boolean
     readonly?: boolean
     innerRef?: EditableProps['innerRef']
+    virtualizer?: Virtualizer
+    renderTitle?: (ref: (node: HTMLElement) => void) => ReactNode
+    goToHighlight?: (highlightId: number) => void
+    titleEle?: HTMLElement | null
   }
 
 export type CustomElement = (CommonElement | OuterElement) & {

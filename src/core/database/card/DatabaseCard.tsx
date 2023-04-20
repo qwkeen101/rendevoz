@@ -1,20 +1,20 @@
 import { FC, memo, useMemo, useRef, useState } from 'react'
 import { motion } from 'framer-motion'
 import { css } from '@emotion/css'
-import { useTheme } from '@/hooks'
+import { useTheme, useToggle } from '@/hooks'
 import MetaKnowledgeCard from './KnowledgeCard'
 import classNames from 'classnames'
 import ClassName from '@/styles/classNames'
 import { AnimatePopover, Button, Content, Icon, Image, Tooltip, WithBorder } from '@/components'
 import DateFormat from '@/utils/dateFormat'
-import { metaObjectsAtom, relatedMetaObjectsMapAtom } from '@/stores/meta.store'
+import { indexedMetaLinksAtom, metaObjectsAtom, relatedMetaObjectsMapAtom } from '@/stores/meta.store'
 import Modal from '@/components/base/Modal'
 import useCardDrag from './useCardDrag'
-import { GlobalDragOverlayInstance, GlobalGraphInstance, ObjectTag } from '@/core'
+import { GlobalDragOverlayInstance, GlobalGraphInstance, ObjectTag, useRenderObject } from '@/core'
 import MetaNoteCard from './NoteCard'
 import MetaDocumentCard from './DocumentCard'
 import { Flipped, spring } from 'react-flip-toolkit'
-import { MetaStore } from '@/stores'
+import { MetaStore, globalStore } from '@/stores'
 import { MetaObject } from '~/typings/data'
 import { MetaDatabaseCardProps } from './types'
 import MetaObjectCard from './ObjectCard'
@@ -25,6 +25,8 @@ import { PartialWithId } from '@/types'
 import { useTranslation } from 'react-i18next'
 import { GlobalEventEmitter } from '@/events'
 import Colors from '@/consts/colors'
+import { metaLinksAtom } from '@/stores/meta.store'
+import { Zindexes } from '@/consts'
 
 export const TypeToTypeName: Record<MetaObject['type'], string> = {
   pdfLabel: 'pdf label',
@@ -316,16 +318,20 @@ export const ObjectActionPopover: FC<
     onPin: VoidFunction
     onGraph: VoidFunction
     onDelete: VoidFunction
+    onJump: VoidFunction
+    visibility: {
+      jumpToVisible?: boolean
+    }
   }> & { metaObjectId: number }
-> = ({ onClose, onEdit, onPin, onGraph, onDelete, metaObjectId }) => {
-  const { defaultFontColorRed } = useTheme('defaultFontColorRed')
+> = ({ onClose, onEdit, onPin, onGraph, onDelete, metaObjectId, visibility, onJump }) => {
   const { updateMetaObject, deleteMetaObject } = MetaStore
   const { t } = useTranslation()
-  const metaObjectAtom = useMemo(() => selectAtom(metaObjectsAtom, m => m.get(metaObjectId)), [metaObjectId])
-  const metaObject = useGlobalAtomValue(metaObjectAtom)
+  const [relatedVisible, toggleRelatedVisible] = useToggle(false)
+  const metaObject = MetaStore.useValue(metaObjectId)
   if (!metaObject) return null
   return (
     <Content flex column style={{ padding: 6, fontWeight: 500, width: 180 }}>
+      {visibility?.jumpToVisible && <Button.IconButton onClick={onJump} text="Focus" icon="park-share-two" />}
       <Button.IconButton
         text={t('general.edit')}
         icon="park-edit"
@@ -358,15 +364,105 @@ export const ObjectActionPopover: FC<
           onClose?.()
         }}
       />
+      <AnimatePopover
+        positions={['right', 'left']}
+        visible={relatedVisible}
+        onClickOutside={toggleRelatedVisible}
+        boundaryInset={20}
+        padding={10}
+        containerStyle={{
+          zIndex: String(Zindexes.Tooltip)
+        }}
+        content={
+          <WithBorder
+            padding={8}
+            style={{
+              minWidth: 200,
+              maxWidth: 400
+            }}
+          >
+            <RelatedPanel metaId={metaObjectId} />
+          </WithBorder>
+        }
+      >
+        <Button.IconButton
+          text={t('general.related')}
+          icon="park-link-one"
+          onClick={e => {
+            toggleRelatedVisible()
+            e.preventDefault()
+            e.stopPropagation()
+          }}
+        ></Button.IconButton>
+      </AnimatePopover>
       <Button.IconButton
         text={t('general.delete')}
         dangerous
         onClick={() => {
-          deleteMetaObject(metaObject.id)
+          deleteMetaObject(metaObject.id, false, true )
           onDelete?.()
         }}
         icon="park-delete"
       />
+    </Content>
+  )
+}
+
+const RelatedPanel = memo(({ metaId }: { metaId: number }) => {
+  const sourceToTarget = useGlobalAtomValue(indexedMetaLinksAtom)?.sourceIdToLinkIdsMap.get(metaId)
+  const targetToSource = useGlobalAtomValue(indexedMetaLinksAtom)?.targetIdToLinkIdMap.get(metaId)
+  const linkStore = globalStore.get(metaLinksAtom)
+  return (
+    <Content
+      flex
+      column
+      className={css({
+        maxHeight: '70vh',
+        overflowY: 'auto',
+        '> div': {
+          ':not(:last-child)': {
+            borderBottom: `1px solid ${Colors.Background.Border}`
+          }
+        }
+      })}
+    >
+      {Array.from(targetToSource?.values() || []).map(i => {
+        const link = linkStore.get(i)
+        if (link) {
+          return <RelatedItem direction="targetToSource" metaId={link.sourceId} />
+        }
+      })}
+      {Array.from(sourceToTarget?.values() || []).map(i => {
+        const link = linkStore.get(i)
+        if (link) {
+          return <RelatedItem direction="sourceToTarget" metaId={link?.targetId} />
+        }
+      })}
+    </Content>
+  )
+})
+
+const RelatedItem = ({ metaId, direction }: { metaId: number; direction: 'sourceToTarget' | 'targetToSource' }) => {
+  const { renderTags, renderTitle } = useRenderObject({ metaObjectId: metaId })
+
+  return (
+    <Content
+      flex
+      gap={16}
+      style={{
+        padding: '6px 0px 2px'
+      }}
+    >
+      <Icon name={direction === 'targetToSource' ? 'park-new-afferent' : 'park-new-efferent'} />
+      <Content flex column>
+        {renderTags({})}
+        {renderTitle({
+          style: {
+            fontSize: 14
+          },
+          ellipsisLine: 1
+        })}
+      </Content>
     </Content>
   )
 }

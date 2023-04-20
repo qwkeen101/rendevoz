@@ -1,7 +1,7 @@
-import { Button, IconWithPopover, WithBorder } from '@/components'
+import { Button, Icon, IconWithPopover, WithBorder } from '@/components'
 import { FC, useMemo, useState } from 'react'
 import { Content } from '@/components'
-import { useGlobalAtomValue, useToggle } from '@/hooks'
+import { useDebounceFn, useGlobalAtomValue, useToggle } from '@/hooks'
 import { useTranslation } from 'react-i18next'
 import TabTitle from '@/components/layout/TabTitle'
 import ClassName from '@/styles/classNames'
@@ -17,22 +17,53 @@ import { getIcon } from '@/components/layout/sidebar/items/SidebarObjectItem'
 import { DraggableElement, ObjectActionPopover, useCreateObject } from '@/core'
 import { Zindexes } from '@/consts'
 import Colors from '@/consts/colors'
+import { Provider, atom, createStore, useAtom, useAtomValue } from 'jotai'
+import fuzzysort from 'fuzzysort'
 
+const HomeSearchAtom = atom<string | undefined>(undefined)
 export const HomePage: FC = () => {
   const { t } = useTranslation()
   const { portal, open } = useCreateObject({
     positions: ['bottom']
   })
+  const store = useMemo(() => createStore(), [])
+  const [search, setSearch] = useAtom(HomeSearchAtom, { store: store })
+  const debounceSetSearch = useDebounceFn(v => setSearch(v), { wait: 500 })
   return (
     <Content flex column fullHeight style={{ margin: '0 auto', width: '100%', maxWidth: 1400, padding: '24px 24px 0px' }}>
       <TabTitle title={t('general.home')} icon="park-home" />
+      <Content
+        flex
+        gap={10}
+        style={{
+          padding: '4px 8px',
+          borderRadius: 10,
+          border: `1px solid ${Colors.Background.Border}`,
+          marginBottom: 20
+        }}
+      >
+        <Icon name="park-search" />
+        <input
+          placeholder={t('general.search')}
+          defaultValue={search}
+          onChange={v => debounceSetSearch.run(v.target.value)}
+          style={{
+            border: 'none',
+            outline: 'none',
+            background: 'transparent',
+            width: '100%'
+          }}
+        />
+      </Content>
       <Content flex alignItems="center" justifyContent="space-between">
         <div className={ClassName.title()}>{t('general.home')}</div>
         <Button.IconButton onClick={e => open(e)} text={t('general.create')} icon="park-down" reverse></Button.IconButton>
       </Content>
       <Content flex column style={{ height: 0, flex: 1 }}>
         <div>{t('general.recent view')}</div>
-        <Recent />
+        <Provider store={store}>
+          <Recent />
+        </Provider>
       </Content>
       {portal}
     </Content>
@@ -46,6 +77,7 @@ const Recent = () => {
   const { t } = useTranslation()
   const [type, setType] = useState<MetaObject['type'] | 'all'>('all')
   const [showResizer, toggleShowResizer] = useToggle(false)
+  const search = useAtomValue(HomeSearchAtom)
   const [sortMode, setSortMode] = useState<'viewDesc' | 'viewAsc' | 'createDesc' | 'createAsc'>('viewDesc')
   const filteredItems = () => {
     switch (type) {
@@ -79,8 +111,12 @@ const Recent = () => {
         )
         break
     }
+    if (search?.length && allItems) {
+      const result = fuzzysort.go(search, allItems, { key: 'name' })
+      return result.map(i => i.obj)
+    }
     return allItems
-  }, [type, all, sortMode])
+  }, [type, all, sortMode, search])
 
   const [showFilter, toggleShowFilter] = useToggle(false)
   return (
@@ -246,7 +282,7 @@ const Recent = () => {
                     metaId: i.id
                   }}
                 >
-                  <IconNameItem icon={i.icon || getIcon(i.type)} name={i.name} color={i.color} />
+                  <IconNameItem icon={i.icon || getIcon(i.type, i)} name={i.name} color={i.color} />
                 </DraggableElement>
               </td>
               <td>{i.viewAt && DateFormat.formatDistanceToNowStrict(i.viewAt)}</td>

@@ -14,6 +14,7 @@ import NotificationSetting from './Notification'
 import ObjectsAndLinksSetting from './ObjectsAndLinks'
 import ShortCutSetting from './ShortCut'
 import SettingSidebarItem from './SidebarItem'
+import AboutSetting from './About'
 
 enum Settings {
   'general',
@@ -21,7 +22,8 @@ enum Settings {
   'notification',
   'shortcuts',
   'object and link',
-  'components'
+  'components',
+  'about'
 }
 type AvaliableLanguages = 'en-US' | 'zh-CN'
 type Setting = INotificationSetting & IShortCutSetting & IGeneralSetting & IObjectsAndLinkSetting & IComponentSetting & IAppearanceSetting
@@ -78,6 +80,9 @@ export type IComponentSetting = {
     enableMinimap: boolean
     enableAddLinkBetweenObjectsWhenConnect: boolean
   }
+  editor: {
+    objectAutoBecomeInline: boolean
+  }
 }
 const localSetting = JSON.parse(localStorage.getItem('setting'))
 localStorage.removeItem('setting')
@@ -109,6 +114,9 @@ const defaultSetting: Setting = {
     enableMinimap: true,
     enableAddLinkBetweenObjectsWhenConnect: false
   },
+  editor: {
+    objectAutoBecomeInline: true
+  },
   background: {}
 }
 _.merge(defaultSetting, localSetting)
@@ -120,6 +128,7 @@ export const useSetting = () => useAtom(SettingAtom, { store: globalStore })
 const SettingDialog = ({ onClose }: { onClose: VoidFunction }) => {
   const { t } = useTranslation()
   const [currentSettingPanel, setCurrentSettingPanel] = useState<keyof typeof Settings>('general')
+  const [setting] = useSetting()
   const renderContent = () => {
     switch (currentSettingPanel) {
       case 'general':
@@ -134,6 +143,11 @@ const SettingDialog = ({ onClose }: { onClose: VoidFunction }) => {
         return <ComponentSetting />
       case 'appearance':
         return <AppearanceSetting />
+      case 'about': {
+        if (setting.general.language === 'zh-CN') {
+          return <AboutSetting />
+        }
+      }
     }
   }
   return (

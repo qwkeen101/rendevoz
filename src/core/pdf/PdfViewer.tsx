@@ -14,7 +14,9 @@ import createPdfViewer from './core/createPdfViewer'
 import { ID_TO_LABEL_MAP } from './weakMaps'
 import { useStore } from 'jotai'
 import { PdfViewerAtom } from './core/hooks/useViewer'
-import {  ObjectStore } from '@/stores'
+import { ObjectStore } from '@/stores'
+import { SearchStore } from '@/stores/search.store'
+import { savePdfAsSearch } from '@/stores/document.store'
 
 interface PdfViewerProps {
   documentId: number
@@ -105,7 +107,16 @@ export const PdfViewer: FC<PdfViewerProps> = memo(({ documentId, transformScale,
       {document?.fileUrl && (
         <Viewer
           viewer={viewer}
-          onDocumentLoaded={doc => (documentRef.current = doc)}
+          onDocumentLoaded={doc => {
+            documentRef.current = doc
+            SearchStore.existTargetObjectDocuments(documentId).then(res => {
+              if (!res) {
+                doc.getData().then(data => {
+                  savePdfAsSearch(data, documentId)
+                })
+              }
+            })
+          }}
           layoutClassName={styles.viewerLayout}
           innerRef={mergedRef}
           fileUrl={document.fileUrl}

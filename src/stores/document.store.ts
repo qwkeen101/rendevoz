@@ -11,6 +11,8 @@ import { initializeLocalStore } from './base.store'
 
 import { IStoreDeprecated } from './store.type'
 import { MetaStore } from '.'
+import usePdfjs from '@/hooks/utils/usePdfjs'
+import { SearchStore, SearchableDocument } from './search.store'
 
 export const documentsAtom = atom<Map<number, IPdfDocument>>(new Map())
 
@@ -53,7 +55,29 @@ export const initializePdfDocument = async (file: File): Promise<Partial<IPdfDoc
     return pdfDocument
   }
 }
-
+export const savePdfAsSearch = async (pdfFile: File | Uint8Array, pdfId: number) => {
+  const PdfJs = usePdfjs()
+  if ((pdfFile instanceof File && pdfFile.type === 'application/pdf') || pdfFile instanceof Uint8Array) {
+    const buffer = await (pdfFile instanceof Uint8Array ? pdfFile : pdfFile.arrayBuffer())
+    const loadingTask = PdfJs.getDocument(new Uint8Array(buffer))
+    const pdf = await loadingTask.promise
+    const allTexts = await Promise.all(
+      Array.from(Array(pdf.numPages).keys()).map(async (i, idx) => {
+        const page = await pdf.getPage(idx + 1)
+        const text = await page.getTextContent()
+        return {
+          pageIndex: idx,
+          specType: 'pdfPage',
+          content: text.items.map(item => item.str).join(' '),
+          targetObjectId: pdfId,
+          id: Id.getId()
+        } as SearchableDocument
+      })
+    )
+    const filtered = allTexts.filter(i => i.content.length)
+    SearchStore.addDocuments(filtered)
+  }
+}
 const createDocumentStore = () => {
   const database = useDb('documents')
 

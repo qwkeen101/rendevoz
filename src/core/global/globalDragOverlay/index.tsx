@@ -6,9 +6,11 @@ import { useAtom } from 'jotai/react'
 import React from 'react'
 import { memo, ReactElement, useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { GlobalDraggingDetails } from '~/typings'
+import { CustomElement, GlobalDraggingDetails } from '~/typings'
 import useOverlayDrop from './useOverlayDrop'
 import { globalStore } from '@/stores'
+import getSetting from '@/core/setting/getSetting'
+import Id from '@/utils/id'
 
 export type AvaliableGlobalDraggingElements = GlobalDraggingDetails
 interface IGlobalDragOverlay {

@@ -8,9 +8,12 @@ const WebpageEditor = ({
   title,
   onLinkClick,
   noteId,
-  onEditorInstanceInitialized,
   onHighlight,
   onHighlightDrag,
+  onHighlightRemove,
+  onEditorInitialized,
+  onChange,
+  showToolbar,
   readonly = true
 }: // readonly = true
 IWebpageEditor) => {
@@ -23,13 +26,15 @@ IWebpageEditor) => {
         maxWidth: 'calc(100% - 100px)'
       }}
       readonly={readonly}
-      showToolbar
+      showToolbar={showToolbar}
       onHighlight={onHighlight}
       onHighlightDrag={onHighlightDrag}
+      onHighlightRemove={onHighlightRemove}
       id={id}
       titleEditable={false}
       initialValue={initialValue}
-      onEditorInstanceInitialized={onEditorInstanceInitialized}
+      onEditorInitialized={onEditorInitialized}
+      onChange={onChange}
       noteId={noteId}
       title={title}
       onLinkClick={onLinkClick}

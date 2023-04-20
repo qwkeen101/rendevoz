@@ -48,8 +48,8 @@ const withShortcut = (editor: CustomEditor) => {
         Transforms.select(editor, range)
         Transforms.delete(editor)
         const newProperties: Partial<SlateElement> = {
-          type,
-          id: Id.getId()
+          type
+          // id: Id.getId()
         }
         Transforms.setNodes<SlateElement>(editor, newProperties, {
           match: n => Editor.isBlock(editor, n)

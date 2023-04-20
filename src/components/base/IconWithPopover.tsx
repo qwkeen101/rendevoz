@@ -86,7 +86,7 @@ const IconWithPopover: FC<Props> = (
             }, 0)
           }
         }}
-        containerStyle={{ zIndex: zIndex?.toString() }}
+        containerStyle={zIndex ? { zIndex: zIndex?.toString() } : undefined}
         parentElement={parentElement || containerRef.current || document.body}
         boundaryElement={document.body}
         boundaryInset={boundaryInset}

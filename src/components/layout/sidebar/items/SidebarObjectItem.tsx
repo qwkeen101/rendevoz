@@ -15,7 +15,13 @@ import { ISidebarItem } from './type'
 import { toast } from 'react-hot-toast'
 import ClassName from '@/styles/classNames'
 
-export const getIcon = (type?: MetaObject['type']) => {
+export const getIcon = (type?: MetaObject['type'], metaObject?: MetaObject) => {
+  if (metaObject?.icon) {
+    return metaObject.icon
+  }
+  if (metaObject?.from?.icon){
+    return metaObject.from.icon
+  }
   switch (type) {
     case 'note':
       return 'park-notes'

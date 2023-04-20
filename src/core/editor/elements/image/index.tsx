@@ -2,17 +2,43 @@ import { css } from '@emotion/css'
 import { ReactEditor, RenderElementProps, useSlateStatic } from '../../slate-react'
 import { ImageElement } from '~/typings'
 import { motion } from 'framer-motion'
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Icon } from '@/components'
 import { Transforms } from 'slate'
 import useReadOnlyEditor from '../../hooks/useReadOnly'
+import { saveImageLocally } from '@/utils/img'
+import Id from '@/utils/id'
 
-const Image = ({ element, children, attributes }: RenderElementProps) => {
+const Image = ({ element, children }: RenderElementProps) => {
   const imageEle = element as ImageElement
   const imageContainerRef = useRef<HTMLDivElement>(null)
   const [maskVisible, setMaskVisible] = useState(false)
   const readOnly = useReadOnlyEditor()
   const editor = useSlateStatic()
+  useEffect(() => {
+    if (imageEle.url.startsWith('http')) {
+      console.log(imageEle.url)
+      fetch(imageEle.url, {
+        method: 'GET',
+        referrer: ''
+      })
+        .then(res => res.blob())
+        .then(blob => {
+          saveImageLocally(Id.getStrId(), blob).then(data => {
+            console.log(data)
+            Transforms.setNodes(
+              editor,
+              {
+                url: data.data
+              },
+              {
+                at: ReactEditor.findPath(editor, imageEle)
+              }
+            )
+          })
+        })
+    }
+  }, [])
   return (
     <div style={{ display: 'flex', justifyContent: imageEle.align || 'center' }}>
       {children}
@@ -214,7 +240,7 @@ const Image = ({ element, children, attributes }: RenderElementProps) => {
             width: '100%'
             // maxWidth: 400
           })}
-          draggable={false}
+          draggable={true}
           src={imageEle.url}
         />
       </div>

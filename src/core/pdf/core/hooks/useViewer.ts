@@ -1,5 +1,5 @@
 import { atom, useAtomValue } from 'jotai'
-import { IPdfViewer } from '../types/pdfViewer'
+import { IPdfViewer } from '~/typings'
 
 export const PdfViewerAtom = atom<IPdfViewer | null>(null)
 

@@ -19,14 +19,14 @@ export const TableContext = createContext<
   | undefined
 >(undefined)
 
-const Table = ({ element, children, attributes }: RenderElementProps) => {
+const Table = ({ element, children }: RenderElementProps) => {
   const tableEle = element as TableElement & CustomElement
   const editor = useSlateStatic()
   const tablePath = ReactEditor.findPath(editor, element)
   const innerTableRef = useRef<HTMLTableSectionElement>(null)
   const selected = editor.selection && tablePath && Range.intersection(Editor.range(editor, tablePath), editor.selection)
 
-  const tableRef = useMergedRef(attributes.ref, innerTableRef)
+  const tableRef = useMergedRef(innerTableRef)
   const readOnly = useReadOnlyEditor()
   const [slotsVisible, toggleSlotsVisible] = useToggle(false)
   const [popoverVisible, togglePopoverVisible] = useToggle(false)
@@ -330,7 +330,7 @@ const Table = ({ element, children, attributes }: RenderElementProps) => {
                 <col key={i.accessor} width={i.width || 150} />
               ))}
             </colgroup>
-            <tbody {...attributes} ref={tableRef} style={{ borderSpacing: '0px' }}>
+            <tbody ref={tableRef} style={{ borderSpacing: '0px' }}>
               {children}
             </tbody>
           </table>

@@ -5,7 +5,8 @@ import axios from 'axios'
 import { fileURLToPath } from 'url'
 import HttpsProxyAgent from 'https-proxy-agent'
 import { autoUpdater } from 'electron-updater'
-import {execFile} from 'child_process'
+import * as child_process from 'child_process'
+import { DEFAULT_USER_DATA_PATH } from '../app.controller'
 process.env.ELECTRON_DISABLE_SECURITY_WARNINGS = 'true'
 process.env.DIST_ELECTRON = join(__dirname, '../..')
 process.env.DIST = join(process.env.DIST_ELECTRON, '../../dist')
@@ -19,8 +20,11 @@ process.env.PUBLIC = app.isPackaged ? process.env.DIST : join(process.env.DIST_E
         const preload = join(__dirname, '../../preload/index.js')
         const url = process.env.VITE_DEV_SERVER_URL
         const indexHtml = join(process.env.DIST, 'index.html')
-        // const exec = join(process.env.PUBLIC, 'execute.exe')
-
+        const windowsSearchEngine = join(process.env.PUBLIC, 'meilisearch-windows.exe')
+        const macSearchEngine = join(process.env.PUBLIC, 'meilisearch-macos')
+        const searchEngineDataPath = join(DEFAULT_USER_DATA_PATH, 'rendevoz', 'data.ms')
+        const searchEngine = process.platform === 'win32' ? windowsSearchEngine : macSearchEngine
+        const search = child_process.execFile(searchEngine, [`--db-path=${searchEngineDataPath}`])
         autoUpdater.autoDownload = false
         autoUpdater.autoInstallOnAppQuit = false
         autoUpdater.autoRunAppAfterInstall = false
@@ -148,6 +152,7 @@ process.env.PUBLIC = app.isPackaged ? process.env.DIST : join(process.env.DIST_E
 
         win.on('closed', () => {
           win.destroy()
+          search.kill()
         })
 
         return win.webContents

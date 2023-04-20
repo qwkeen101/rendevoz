@@ -53,7 +53,9 @@
         "recent view": "recent view",
         "remove from collection": "remove from collection",
         "normal object": "normal object",
-        "all types": "all types"
+        "all types": "all types",
+        "search": "search",
+        "translate": "translate"
     },
         "dock": {
         "close": "close",
@@ -81,7 +83,10 @@
         "email address not exist": "email address not exist",
         "retrieving user details": "retrieving user details",
         "sign up": "sign up",
-        "verifing code": "verifing code"
+        "verifing code": "verifing code",
+        "auto login": "auto login",
+        "remember me": "remember me",
+        "auto logining": "auto logining"
     },
     "home":{
         "recently read": "Recently Read",
@@ -110,7 +115,10 @@
         "pdf": "Pdf",
         "whiteboard": "Whiteboard",
         "create new collection": "Create New Collection",
-        "unpin": "Unpin"
+        "unpin": "Unpin",
+        "log out": "log out",
+        "upgrade plan": "upgrade plan",
+        "update profile": "update profile"
     },
     "editor": {
         "placeholder": "input something",
@@ -213,7 +221,9 @@
         "background": "background",
         "background opacity": "background opacity",
         "background blur": "background blur",
-        "dark mode": "dark mode"
+        "dark mode": "dark mode",
+        "editor settings": "editor settings",
+        "object auto become inline when dragged into editor": "object auto become inline when dragged into editor"
     },
     "form": {
         "choose file": "Choose file",

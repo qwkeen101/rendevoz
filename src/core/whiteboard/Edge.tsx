@@ -18,6 +18,7 @@ import { hexToRgb } from '@/utils/color'
 import useClickOutside from '@/hooks/utils/useClickOutside'
 import { throttle } from 'lodash'
 import Colors from '@/consts/colors'
+import { css } from '@emotion/css'
 
 const TreeEdge: FC<{
   edge: IWhiteboardEdge
@@ -260,22 +261,14 @@ const TreeEdge: FC<{
                 ref={labelRef}
                 contentEditable={true}
                 spellCheck="false"
-                style={{
-                  transform: 'translateX(-50%) translateY(-50%)',
-                  outline: 'none',
-                  borderRadius: 4,
-                  background: Colors.Background.Global,
-                  padding: 'calc(6px * var(--zoom-level)',
-                  maxWidth: 'calc(16em * var(--zoom-level)',
-                  fontSize: 'calc(16px * var(--zoom-level)',
-                  boxShadow: `0 0 0 calc(4px * var(--zoom-level)) ${innerLink?.color || MarkerColor.LIGHTGREY}`,
-                  lineHeight: 1.3,
-                  whiteSpace: 'pre-wrap',
-                  pointerEvents: 'auto',
-                  fontWeight: 600,
-                  cursor: 'text'
-                }}
+                className={EdgeClassName}
                 onClick={() => setTimeout(() => toggleIsEditingLabel(true))}
+                style={{
+                  boxShadow: `0 0 0 calc(4px * var(--zoom-level)) ${innerLink?.color || MarkerColor.LIGHTGREY}`,
+                  maxWidth: '16em',
+                  fontSize: '16px',
+                  padding: '6px'
+                }}
                 onInput={e => {
                   setInnerLink({ ...innerLink, label: e.currentTarget.innerText || '' })
                 }}
@@ -288,4 +281,16 @@ const TreeEdge: FC<{
   )
 })
 
+const EdgeClassName = css({
+  transform: 'translateX(-50%) translateY(-50%)',
+  outline: 'none',
+  borderRadius: 4,
+  lineHeight: 1.3,
+  background: Colors.Background.Secondary,
+  whiteSpace: 'pre-wrap',
+  pointerEvents: 'auto',
+  fontWeight: 600,
+  cursor: 'text',
+  textTransform: 'none'
+})
 export default TreeEdge

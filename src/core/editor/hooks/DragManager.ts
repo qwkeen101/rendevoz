@@ -418,6 +418,11 @@ class DragManager {
               })
             break
           }
+          case 'note label': {
+            draggingEle.highlightId &&               (needFurtherProcess = {
+                objectId: draggingEle.highlightId
+              })
+          }
         }
         if (typeof needFurtherProcess === 'object') {
           this.onDrop?.({

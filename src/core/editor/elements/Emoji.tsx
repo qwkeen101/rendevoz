@@ -1,7 +1,7 @@
 import getEmoji from '@/utils/emoji'
 import { FC, useMemo } from 'react'
 import { RenderElementProps } from 'slate-react'
-import { EmojiElement } from '../../../../typings/editor/types/commonElementTypes'
+import { EmojiElement } from '~/typings'
 
 const Emoji: FC<RenderElementProps> = ({ element, children, attributes }) => {
   const emojiEle = element as EmojiElement

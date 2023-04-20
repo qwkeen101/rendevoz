@@ -4,9 +4,12 @@ import { ObjectStore } from '@/stores'
 import ClassName from '@/styles/classNames'
 import { css } from '@emotion/css'
 import isHotkey from 'is-hotkey'
-import { CSSProperties, FC, memo, useEffect, useRef } from 'react'
+import { CSSProperties, FC, forwardRef, memo, useEffect, useMemo, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Content } from '@/components'
+import { Content, Icon } from '@/components'
+import { ForwardRefComponent } from 'framer-motion'
+import { CustomEditor } from '~/typings'
+import getEmoji from '@/utils/emoji'
 
 interface EditorTitleProps {
   title?: string
@@ -17,6 +20,7 @@ interface EditorTitleProps {
   titleContainerStyle?: CSSProperties
   titleStyle?: CSSProperties
   editable?: boolean
+  editor: CustomEditor
 }
 export const editorTitleWrapperClassName = css({
   maxWidth: '100%',
@@ -43,63 +47,64 @@ export const EditorTitleClassName = css({
     }
   }
 })
-const EditorTitle: FC<EditorTitleProps> = ({
-  title,
-  description,
-  noteId,
-  titleEditable = true,
-  onTitleClick,
-  titleContainerStyle,
-  titleStyle
-}) => {
-  const { run: debouncedUpdateNote } = useDebounceFn(ObjectStore('note').updateOne, { wait: 200 })
-  const { t } = useTranslation()
-  const titleRef = useRef<HTMLDivElement>(null)
-  useEffect(() => {
-    if (titleRef.current) {
-      if (document.activeElement !== titleRef.current) {
-        titleRef.current.textContent = title || ''
+const EditorTitle: ForwardRefComponent<HTMLDivElement, EditorTitleProps> = forwardRef(
+  ({ title, description, noteId, titleEditable = true, onTitleClick, titleContainerStyle, titleStyle, editor }, ref) => {
+    const { run: debouncedUpdateNote } = useDebounceFn(ObjectStore('note').updateOne, { wait: 200 })
+    const { t } = useTranslation()
+    const titleRef = useRef<HTMLDivElement>(null)
+    useEffect(() => {
+      if (titleRef.current) {
+        if (document.activeElement !== titleRef.current) {
+          titleRef.current.textContent = title || ''
+        }
       }
-    }
-  }, [title])
-  return (
-    <Content className={editorTitleWrapperClassName} flex column gap={10} style={titleContainerStyle}>
-      <div
-        style={titleStyle}
-        ref={titleRef}
-        onInput={e => {
-          const text = (e.target as HTMLDivElement).textContent
-          noteId &&
-            debouncedUpdateNote({
-              id: noteId,
-              title: text || t('general.untitled')
-            })
-        }}
-        onBlur={() => {
-          if (titleRef.current?.textContent === '') {
-            titleRef.current && (titleRef.current.textContent = t('general.untitled'))
-          }
-        }}
-        onKeyDown={e => {
-          if (isHotkey(KEY.Enter, e)) {
-            e.preventDefault()
-            e.currentTarget.blur()
-          }
-        }}
-        spellCheck="false"
-        className={EditorTitleClassName}
-        placeholder={t('editor.untitled')}
-        suppressContentEditableWarning={true}
-        contentEditable={titleEditable}
-        onClick={onTitleClick}
-      />
-      {description && (
-        <div style={{ paddingLeft: 4, marginTop: -4, whiteSpace: 'pre-wrap' }} className={ClassName.description()}>
-          {description}
-        </div>
-      )}
-    </Content>
-  )
-}
+    }, [title])
+    return (
+      <Content
+        className={editorTitleWrapperClassName}
+        flex
+        column
+        gap={10}
+        style={titleContainerStyle}
+        ref={node => (editor.titleEle = node)}
+      >
+        <div
+          style={titleStyle}
+          ref={titleRef}
+          onInput={e => {
+            const text = (e.target as HTMLDivElement).textContent
+            noteId &&
+              debouncedUpdateNote({
+                id: noteId,
+                title: text || t('general.untitled')
+              })
+          }}
+          onBlur={() => {
+            if (titleRef.current?.textContent === '') {
+              titleRef.current && (titleRef.current.textContent = t('general.untitled'))
+            }
+          }}
+          onKeyDown={e => {
+            if (isHotkey(KEY.Enter, e)) {
+              e.preventDefault()
+              e.currentTarget.blur()
+            }
+          }}
+          spellCheck="false"
+          className={EditorTitleClassName}
+          placeholder={t('editor.untitled')}
+          suppressContentEditableWarning={true}
+          contentEditable={titleEditable}
+          onClick={onTitleClick}
+        />
+        {description && (
+          <div style={{ paddingLeft: 4, marginTop: -4, whiteSpace: 'pre-wrap' }} className={ClassName.description()}>
+            {description}
+          </div>
+        )}
+      </Content>
+    )
+  }
+)
 
 export default memo(EditorTitle)

@@ -32,10 +32,22 @@ const ComponentSetting = () => {
     }
   ]
 
+  const editorSettingItems: SettingItem[] = [
+    {
+      title: t('settings.object auto become inline when dragged into editor'),
+      children: <Switch value={setting.editor.objectAutoBecomeInline} onChange={() => toggleSetting('editor', 'objectAutoBecomeInline')} />
+    }
+  ]
   return (
     <>
       <div className={ClassName.title('18px')}>{t('settings.whiteboard settings')}</div>
       {whiteboardSettingItems.map(i => (
+        <SettingItem titleSize={14} key={i.title} {...i} />
+      ))}
+      <div className={ClassName.title('18px')} style={{ marginTop: 10 }}>
+        {t('settings.editor settings')}
+      </div>
+      {editorSettingItems.map(i => (
         <SettingItem titleSize={14} key={i.title} {...i} />
       ))}
     </>

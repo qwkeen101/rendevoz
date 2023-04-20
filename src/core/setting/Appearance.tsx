@@ -59,7 +59,7 @@ const AppearanceSetting = () => {
               style={{ width: '100%' }}
               accept="image/*"
               onFileUploaded={file => {
-                saveImageLocally(file.name, file).then(data => {
+                saveImageLocally(file.name, file, false).then(data => {
                   console.log(data)
                   setBg(data.data)
                 })

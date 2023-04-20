@@ -2,7 +2,7 @@ import { Toolbar, WithBorder } from '@/components/base'
 import Select from '@/components/base/select'
 import IconWithPopover from '@/components/base/IconWithPopover'
 import { CSSProperties, FC, useEffect, useRef, useState } from 'react'
-import { Editor, Node, NodeEntry, Range, Transforms } from 'slate'
+import { Editor, Range, Transforms } from 'slate'
 import { ReactEditor, useSlate } from '../../slate-react'
 import styles from './index.module.less'
 import { useTranslation } from 'react-i18next'
@@ -13,7 +13,6 @@ import BlockColorPicker from '../BlockColorPicker'
 import useReadOnlyEditor from '../../hooks/useReadOnly'
 import { useMemoizedFn } from '@/hooks'
 import { TextSelectionTranslate } from '@/core/pdf/components/toolbar/TextSelectionToolbar'
-import { CustomText } from '~/typings/editor/baseTypes'
 import { css } from '@emotion/css'
 import ClassName from '@/styles/classNames'
 
@@ -55,23 +54,24 @@ const EditorToolbar: FC<EditorToolbarProps> = ({ scrollElement, showToolbar, sty
   }>()
   const isOnHighlightRef = useRef(false)
   editor.onHighlightClick = id => {
-    const texts = Node.texts(editor)
-    const nodeEntries: NodeEntry[] = []
-    for (const value of texts) {
-      if ((value[0] as CustomText).highlight && (value[0] as CustomText).highlight === id) nodeEntries.push(value)
-    }
-    const startNodeEntry = nodeEntries[0]
-    const endNodeEntry = nodeEntries[nodeEntries.length - 1]
-    const startNodePath = startNodeEntry[1]
-    const endNodePath = endNodeEntry[1]
+    const editorNode = ReactEditor.toDOMNode(editor, editor)
+    const allHighlights = Array.from(editorNode.querySelectorAll(`[data-highlight='${id}']`))
+    const firstHighlight = allHighlights[0]
+    const lastHighlight = allHighlights[allHighlights.length - 1]
+    const range = document.createRange()
+
+    const startNode = ReactEditor.toSlateNode(editor, firstHighlight)
+    const lastNode = ReactEditor.toSlateNode(editor, lastHighlight)
+    const startNodePath = ReactEditor.findPath(editor, startNode)
+    const endNodePath = ReactEditor.findPath(editor, lastNode)
     const startNodePoint = Editor.start(editor, startNodePath)
     const endNodePoint = Editor.end(editor, endNodePath)
-    const anchorPoint = ReactEditor.toDOMPoint(editor, startNodePoint)
-    const focusPoint = ReactEditor.toDOMPoint(editor, endNodePoint)
-    const range = document.createRange()
-    range.setStart(anchorPoint[0], anchorPoint[1])
-    range.setEnd(focusPoint[0], focusPoint[1])
+    const startNodeDomPoint = ReactEditor.toDOMPoint(editor, startNodePoint)
+    const endNodeDomPoint = ReactEditor.toDOMPoint(editor, endNodePoint)
+    range.setStart(startNodeDomPoint[0], startNodeDomPoint[1])
+    range.setEnd(endNodeDomPoint[0], endNodeDomPoint[1])
     const bounding = range.getBoundingClientRect()
+
     isOnHighlightRef.current = true
     Transforms.setSelection(editor, {
       anchor: startNodePoint,
@@ -142,7 +142,11 @@ const EditorToolbar: FC<EditorToolbarProps> = ({ scrollElement, showToolbar, sty
   useEffect(() => {
     if (floatPosition && editor.selection && !isOnHighlightRef.current) {
       window.getSelection()?.removeAllRanges()
-      window.getSelection()?.addRange(ReactEditor.toDOMRange(editor, editor.selection))
+      try {
+        window.getSelection()?.addRange(ReactEditor.toDOMRange(editor, editor.selection))
+      } catch (e) {
+        console.error(e)
+      }
     }
     if (position === 'float') {
       document.addEventListener('pointerup', handleMouseUp)
@@ -232,14 +236,14 @@ const EditorToolbar: FC<EditorToolbarProps> = ({ scrollElement, showToolbar, sty
             ]}
           ></Select>
         )}
-      {isReading && (
-        <Toolbar.Item
-          tooltip={t('general.highlight')}
-          iconName="park-high-light"
-          onClick={() => on({ action: 'highlight' })}
-          isActive={isMarkActive('highlight')}
-        />
-      )}
+
+      <Toolbar.Item
+        tooltip={t('general.highlight')}
+        iconName="park-high-light"
+        onClick={() => on({ action: 'highlight' })}
+        isActive={isMarkActive('highlight')}
+      />
+
       <Toolbar.Item
         tooltip={t('editor.bold')}
         isActive={isMarkActive('bold')}

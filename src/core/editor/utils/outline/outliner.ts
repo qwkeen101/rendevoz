@@ -1,4 +1,4 @@
-import { Descendant } from 'slate'
+import { Descendant, Node } from 'slate'
 import { CustomElement } from '~/typings'
 const headingType = ['heading-one', 'heading-two', 'heading-three', 'heading-four', 'heading-five']
 
@@ -24,42 +24,43 @@ const Outliner: IOutliner = {
       return headingType.includes(i.type) && i.children[0]?.text !== ''
     })
     const newList = headingList.map(i => {
+      const str = Node.string(i)
       switch (i.type) {
         case 'heading-one':
           return {
             level: 1,
             id: i.id,
-            text: i.children[0].text
+            text: str
           }
         case 'heading-two':
           return {
             level: 2,
             id: i.id,
-            text: i.children[0].text
+            text: str
           }
         case 'heading-three':
           return {
             level: 3,
             id: i.id,
-            text: i.children[0].text
+            text: str
           }
         case 'heading-four':
           return {
             level: 4,
             id: i.id,
-            text: i.children[0].text
+            text: str
           }
         case 'heading-five':
           return {
             level: 5,
             id: i.id,
-            text: i.children[0].text
+            text: str
           }
         case 'heading-six':
           return {
             level: 6,
             id: i.id,
-            text: i.children[0].text
+            text: str
           }
       }
     })

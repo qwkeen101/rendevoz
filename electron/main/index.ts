@@ -11,6 +11,8 @@ async function bootstrap() {
     const nestApp = await NestFactory.createMicroservice<MicroserviceOptions>(AppModule, {
       strategy: new ElectronIpcTransport()
     })
+    const local = await NestFactory.create(LocalModule)
+    local.listen(8888)
     await nestApp.listen()
   } catch (error) {
     console.log(error)

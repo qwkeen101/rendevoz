@@ -33,6 +33,7 @@ const useChildren = (props: {
     const p = path.concat(i)
     const n = node.children[i] as Descendant
     const key = ReactEditor.findKey(editor, n)
+
     const range = Editor.range(editor, p)
     const sel = selection && Range.intersection(range, selection)
     const ds = decorate([n, p])

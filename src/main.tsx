@@ -2,7 +2,7 @@ import { enableMapSet } from 'immer'
 import { createRoot } from 'react-dom/client'
 import App from './App'
 import initI18n from './config/i18n'
-import { initSearchIndex } from './utils/searchIndex'
+
 // Import the functions you need from the SDKs you need
 import { initializeApp } from 'firebase/app'
 import { getAnalytics } from 'firebase/analytics'
@@ -33,7 +33,7 @@ if (!oldMoved) {
 const app = initializeApp(firebaseConfig)
 const analytics = getAnalytics(app)
 enableMapSet()
-// initSearchIndex()
+
 const lang = 'zh-CN'
 initI18n(lang)
 

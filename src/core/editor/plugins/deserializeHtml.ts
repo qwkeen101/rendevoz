@@ -13,7 +13,7 @@ const ELEMENT_TAGS = {
   H6: () => ({ type: 'heading-six', id: Id.getId() }),
   IMG: el => ({ type: 'image', url: el.getAttribute('src'), id: Id.getId() }),
   LI: () => ({ type: 'list-item', id: Id.getId() }),
-  OI: () => ({ type: 'order-list-item', id: Id.getId()}),
+  OI: () => ({ type: 'order-list-item', id: Id.getId() }),
   OL: () => ({ type: 'numbered-list', id: Id.getId() }),
   P: () => ({ type: 'paragraph', id: Id.getId() }),
   PRE: () => ({ type: 'pre', id: Id.getId() }),
@@ -65,7 +65,7 @@ export const deserializeHtmlNode = (node: HTMLElement | ChildNode) => {
   // for span in header TODO: more format
   if (node.nodeName === 'SPAN') {
     if (node.textContent) {
-      return jsx('element', { type: 'paragraph' }, [{ text: node.textContent }])
+      return jsx('text', {}, node.textContent)
     }
     return null
   }
@@ -93,7 +93,10 @@ export const deserializeHtmlNode = (node: HTMLElement | ChildNode) => {
           cell.colName = attrs.columns[cellIdx]?.accessor
         })
       })
-      console.log(children)
+    }
+    if (nodeName === 'TD') {
+      // wrap in a paragraph
+      return jsx('element', attrs, jsx('element', { id: Id.getId(), type: 'paragraph' }, !children.length ? [{ text: '' }] : children))
     }
     return jsx('element', attrs, !children.length ? [{ text: '' }] : children)
   }

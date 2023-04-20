@@ -74,6 +74,7 @@ const BorderInput = ({ value, onChange, placeholder, style, defaultValue, textar
         <input
           style={style}
           defaultValue={defaultValue}
+          value={innerValue}
           placeholder={placeholder}
           onChange={e => {
             onChange?.(e.target.value)

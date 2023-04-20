@@ -147,7 +147,7 @@ export class TabCache {
     }
     const tab = (
       <DragDropDiv
-        disableDrag={this.context.getLayout().global.disableDrag}
+        disableDrag={!!this.context.getLayout().global.disableDrag}
         getRef={this.getRef}
         onDragStartT={onDragStart}
         role="tab"

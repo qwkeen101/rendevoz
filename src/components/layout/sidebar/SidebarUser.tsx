@@ -11,6 +11,7 @@ import useFileUpload from '@/components/base/useFileUpload'
 import { IUser } from '~/typings/data'
 import { indicatorClassName, loginInputClassName } from '@/components/Login'
 import { toast } from 'react-hot-toast'
+import { useTranslation } from 'react-i18next'
 
 const SidebarUser = memo(() => {
   const [user] = useUser()
@@ -20,7 +21,7 @@ const SidebarUser = memo(() => {
   const isPremium = user?.premiumEndDate && user?.premiumEndDate > Date.now()
   return (
     <>
-      <Modal visible={upgradePlanVisible} onClose={toggleUpgradPlanVisible}>
+      <Modal noStyle visible={upgradePlanVisible} onClose={toggleUpgradPlanVisible}>
         <UpgradePlan />
       </Modal>
       <Modal visible={updateUserVisible} onClose={toggleUpdateUserVisible}>
@@ -69,6 +70,7 @@ const SidebarUser = memo(() => {
 
 const UserPopover = ({ onUpgradePlan, onUpdateUser }: { onUpgradePlan: VoidFunction; onUpdateUser: VoidFunction }) => {
   const [user, setUser] = useUser()
+  const { t } = useTranslation()
   const isPremium = user?.premiumEndDate && user?.premiumEndDate > Date.now()
   return (
     <WithBorder style={{ padding: 12, display: 'flex', flexDirection: 'column', fontFamily: 'Muli', minWidth: 220 }}>
@@ -79,7 +81,7 @@ const UserPopover = ({ onUpgradePlan, onUpdateUser }: { onUpgradePlan: VoidFunct
         Uid: {user?.uid || 'Unknown Uid'}
       </div>
       <Content style={{ padding: '12px 8px 12px' }} flex column gap={6}>
-        <Content flex alignItems="center" gap={8} >
+        <Content flex alignItems="center" gap={8}>
           {user?.photoURL && <Image width={25} src={user.photoURL} className={css({ borderRadius: 4 })} />}
           <div
             className={css({
@@ -101,19 +103,17 @@ const UserPopover = ({ onUpgradePlan, onUpdateUser }: { onUpgradePlan: VoidFunct
         )}
       </Content>
 
-      {!isPremium && (
-        <Content flex gap={10} className={ClassName.flatButton()} onClick={onUpgradePlan}>
-          <Icon size={16} name="park-arrow-circle-up" />
-          Upgrade Plan
-        </Content>
-      )}
+      <Content flex gap={10} className={ClassName.flatButton()} onClick={onUpgradePlan}>
+        <Icon size={16} name="park-arrow-circle-up" />
+        {t('sidebar.upgrade plan')}
+      </Content>
       <Content flex gap={10} className={ClassName.flatButton()} onClick={onUpdateUser}>
         <Icon size={16} name="park-me" />
-        Update Profile
+        {t('sidebar.update profile')}
       </Content>
       <Content flex gap={10} className={ClassName.flatButton()} onClick={() => setUser(null)}>
         <Icon size={16} name="park-logout" />
-        Log out
+        {t('sidebar.log out')}
       </Content>
     </WithBorder>
   )

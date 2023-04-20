@@ -1,4 +1,6 @@
 import 'fuzzysort'
+import { PDFDocumentProxy } from 'pdfjs-dist'
+import { ITextLayerInstance } from './layer'
 
 export type IPdfViewer = Partial<{
   currentFocusLabelId: number
@@ -33,4 +35,8 @@ export type IPdfViewer = Partial<{
     }[]
   >
   onLabelRendered?: (labelId: number) => void
+  getTextLayerInstance?: (pageIndex: number) => Promise<ITextLayerInstance>
+  onDocumentLoaded?: (doc: PDFDocumentProxy) => void
+  getDocument?: () => Promise<PDFDocumentProxy>
+  onTextLayerRendered?: (pageIndex: number, instance: ITextLayerInstance) => void
 }>

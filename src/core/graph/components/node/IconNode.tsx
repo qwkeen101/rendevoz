@@ -3,25 +3,27 @@ import { motion } from 'framer-motion'
 import { GraphNode } from '../../types/node'
 import { TypeToNodeRadius } from './Node'
 import Colors from '@/consts/colors'
+import { MarkerColor } from '@/consts'
 
-const IconNode = ({ node, label }: { node: GraphNode; label?: string }) => {
-  const getIcon = () => {
-    switch (node.type) {
-      case 'note':
-        return 'park-notes'
-      case 'pdfLabel':
-        return 'park-align-text-left'
-      case 'noteBlock':
-        return 'park-text-style-one'
-      case 'whiteboard':
-        return 'park-new-computer'
-      case 'webpage':
-        return 'park-web-page'
-      default:
-        return 'park-bookmark-one'
-    }
+const getIcon = (type: string) => {
+  switch (type) {
+    case 'note':
+      return 'park-notes'
+    case 'pdfLabel':
+      return 'park-align-text-left'
+    case 'noteBlock':
+      return 'park-text-style-one'
+    case 'whiteboard':
+      return 'park-new-computer'
+    case 'webpage':
+      return 'park-web-page'
+    case 'pdf':
+      return 'park-file-pdf'
+    default:
+      return 'park-bookmark-one'
   }
-
+}
+const IconNode = ({ node, label }: { node: GraphNode; label?: string }) => {
   const radius = TypeToNodeRadius[node.type || 'normal']
   const d = radius * 2
   return (
@@ -38,19 +40,20 @@ const IconNode = ({ node, label }: { node: GraphNode; label?: string }) => {
             justifyContent: 'center'
           }}
         >
-          {node.type !== 'normal' && <Icon fill="#393E46" size={d - 20} name={getIcon()} />}
+          {node.type !== 'normal' && <Icon fill="#393E46" size={d - 20} name={getIcon(node.type)} />}
         </div>
       </motion.foreignObject>
-      <motion.text
-        initial={{ x: radius, y: d + 5 }}
-        animate={{ y: (d + 15) * (node.scale ? (node.scale === 1 ? 1 : node.scale * 0.9) : 1) }}
+      <text
+        style={{
+          transform: `translateX(${radius}px) translateY(calc(${15}px * var(--zoom-level) + ${d}px))`
+        }}
         textAnchor="middle"
         fontWeight={600}
-        fill={Colors.Font.Primary}
+        fill={node.isCenter ? MarkerColor.EMPHASIS : Colors.Font.Primary}
         fontSize="calc(var(--zoom-level) * 12px)"
       >
         {label || node.label}
-      </motion.text>
+      </text>
     </>
   )
 }

@@ -15,14 +15,12 @@ import React, {
 import scrollIntoView from 'scroll-into-view-if-needed'
 import { Editor, Element, Node, NodeEntry, Path, Range, Text, Transforms } from 'slate'
 import { ReactEditor } from '../plugin/react-editor'
-import useChildren from '../hooks/use-children'
-import useVirtualChildren from '../hooks/use-virtual-children'
 import { DecorateContext } from '../hooks/use-decorate'
 import { useIsomorphicLayoutEffect } from '../hooks/use-isomorphic-layout-effect'
 import { ReadOnlyContext } from '../hooks/use-read-only'
 import { useSlate } from '../hooks/use-slate'
 import { TRIPLE_CLICK } from '../utils/constants'
-import { DOMElement, DOMNode, DOMRange, DOMText, getDefaultView, isDOMElement, isDOMNode, isPlainTextOnlyPaste } from '../utils/dom'
+import { DOMElement,  DOMRange, DOMText, getDefaultView, isDOMElement, isDOMNode, isPlainTextOnlyPaste } from '../utils/dom'
 import {
   CAN_USE_DOM,
   HAS_BEFORE_INPUT_SUPPORT,
@@ -51,21 +49,14 @@ import {
   IS_READ_ONLY,
   MARK_PLACEHOLDER_SYMBOL,
   NODE_TO_ELEMENT,
-  PLACEHOLDER_SYMBOL
 } from '../utils/weak-maps'
 import { RestoreDOM } from './restore-dom/restore-dom'
 import { useAndroidInputManager } from '../hooks/android-input-manager/use-android-input-manager'
 import { useTrackUserInput } from '../hooks/use-track-user-input'
-import { measureElement, useVirtualizer } from '@tanstack/react-virtual'
-import { useMemoizedFn } from '@/hooks'
 import { CustomText } from '~/typings/editor/baseTypes'
+import VirtualChildren from './virtual-children'
 
 type DeferredOperation = () => void
-
-const Children = (props: Parameters<typeof useVirtualChildren>[0]) => <>{useVirtualChildren(props)}</>
-const NotVirtualChildren = (props: Parameters<typeof useChildren>[0]) => <>{useChildren(props)}</>
-// The number of Editable components currently mounted.
-const mountedCount = 0
 
 /**
  * `RenderElementProps` are passed to the `renderElement` handler.
@@ -149,47 +140,18 @@ export const Editable = (props: EditableProps) => {
   const { onUserInput, receivedUserInput } = useTrackUserInput()
 
   const [, forceRender] = useReducer(s => s + 1, 0)
+
+  console.log('rerender editor')
+
   EDITOR_TO_FORCE_RENDER.set(editor, forceRender)
 
   // Update internal state on each render.
   IS_READ_ONLY.set(editor, readOnly)
 
-  const virtualizer = useVirtualizer({
-    count: editor.children.length,
-    estimateSize: idx => (editor.children[idx].hide === true ? 0 : 30),
-    getScrollElement: () => scrollElement?.current || document.body,
-    overscan: readOnly ? editor.children.length : 20,
-    paddingEnd: readOnly ? 0 : 300,
-    scrollPaddingEnd: 400,
-    measureElement: (ele, entry, instance) => {
-      const getSize = () => ele.getBoundingClientRect().height
-      const item = instance.measurementsCache[instance.indexFromElement(ele)]
-      if (entry) {
-        if (entry.contentRect.height === 0 && entry.contentRect.width === 0) {
-          return item ? item.size : 0
-        } else {
-          if (entry.contentRect.height !== item.size) {
-            return entry.contentRect.height
-          }
-        }
-      }
-      return item ? item.size : getSize()
-    }
-  })
-
-  const scrollTo = useMemoizedFn(idx => {
-    requestIdleCallback(() => {
-      if (scrollElement?.current) {
-        virtualizer.scrollToIndex(idx, { behavior: 'auto' })
-      } else {
-        scrollTo(idx)
-      }
-    })
-  })
-  useImperativeHandle(innerRef, () => ({
-    scrollTo: scrollTo,
-    measure: virtualizer.measure
-  }))
+  // useImperativeHandle(innerRef, () => ({
+  //   scrollTo: scrollTo,
+  //   measure: virtualizer.measure
+  // }))
 
   // Keep track of some state for the event handler logic.
   const state = useMemo(
@@ -828,7 +790,7 @@ export const Editable = (props: EditableProps) => {
             suppressContentEditableWarning
             ref={ref}
             style={{
-              height: virtualizer.getTotalSize(),
+              // height: virtualizer.getTotalSize() + firstOffset,
               ...style
             }}
             onBeforeInput={useCallback(
@@ -1093,6 +1055,7 @@ export const Editable = (props: EditableProps) => {
             )}
             onDragOver={useCallback(
               (event: React.DragEvent<HTMLDivElement>) => {
+                console.log(event)
                 if (ReactEditor.hasTarget(editor, event.target) && !isEventHandled(event, attributes.onDragOver)) {
                   // Only when the target is void, call `preventDefault` to signal
                   // that drops are allowed. Editable content is droppable by
@@ -1470,15 +1433,16 @@ export const Editable = (props: EditableProps) => {
               [readOnly, attributes.onPaste]
             )}
           >
-            <div role="virtual-placeholder" style={{ height: virtualizer.getVirtualItems()[0]?.start }}></div>
-            <Children
+            <VirtualChildren
               decorations={decorations}
-              node={editor}
+              children={editor.children}
+              scrollElement={scrollElement}
               renderElement={renderElement}
               renderPlaceholder={renderPlaceholder}
               renderLeaf={renderLeaf}
+              parentElement={ref}
               selection={editor.selection}
-              virtualizer={virtualizer}
+              readOnly={readOnly}
             />
           </Component>
         </RestoreDOM>

@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react'
 import { INote } from '~/typings/data'
 import { CustomEditor } from '~/typings'
-import { Descendant } from 'slate'
+import { Descendant, Transforms } from 'slate'
 import Id from '@/utils/id'
 import { useDebounceFn, useMemoizedFn } from '@/hooks'
 import { serializeEditor } from '../utils/database/serialize'
@@ -18,8 +18,18 @@ const initial = [
   }
 ]
 const EditorInstanceMap = new Map<number, Set<CustomEditor>>()
+
+const normalizeFirstLayer = (editor: CustomEditor) => {
+  const firstLayerIdSet = new Set<number>()
+  editor.children.forEach((i, idx) => {
+    if (firstLayerIdSet.has(i.id)) {
+      editor.children[idx].id = Id.getId()
+    }
+    firstLayerIdSet.add(i.id)
+  })
+}
 const useStoreValue = (note: INote | undefined, editor: CustomEditor, onContentRendered?: (editor: CustomEditor) => void) => {
-  const { saveNoteAsBuffer, getNoteValue, saveBlocks } = NoteStore
+  const { saveNoteAsBuffer, getNoteValue, saveBlocks, saveNoteAsSearch } = NoteStore
   const contentRef = useRef<Descendant[]>()
   const noteId = note?.id
   const contentId = note?.contentId
@@ -37,6 +47,7 @@ const useStoreValue = (note: INote | undefined, editor: CustomEditor, onContentR
       if (!noteId) return
       if (editor === EditorInstanceMap.get(noteId)?.values().next().value) {
         saveNoteAsBuffer(editor.children, note.contentId)
+        saveNoteAsSearch(editor, noteId)
         const setting = getSetting()
         if (setting.notification.enabled && setting.notification.editor) {
           toast.success(<Notification title={`📝 ${note.title}`} content="Note is saved." />)
@@ -46,16 +57,21 @@ const useStoreValue = (note: INote | undefined, editor: CustomEditor, onContentR
     { wait: 10000 }
   )
   useEffect(() => {
-    if (!noteId || !contentId) return
+    if (!noteId || !contentId) {
+      console.log('forbid go on')
+      return
+    }
     emitter.addListener('editor', handler)
     const cleanUp = () => {
       saveNoteAsBuffer(editor.children, note.contentId)
+      saveNoteAsSearch(editor, noteId)
     }
     window.addEventListener('beforeunload', cleanUp)
     const editorSet = EditorInstanceMap.get(noteId)
     if (editorSet && editorSet.size > 0) {
       const first = editorSet.values().next()
       editor.children = first.value.children
+      normalizeFirstLayer(editor)
       editor.onChange()
       editor.contentInitialized = true
       setTimeout(() => onContentRendered?.(editor))
@@ -65,6 +81,7 @@ const useStoreValue = (note: INote | undefined, editor: CustomEditor, onContentR
       getNoteValue(contentId).then(v => {
         contentRef.current = v
         editor.children = v || initial
+        normalizeFirstLayer(editor)
         editor.onChange()
         editor.contentInitialized = true
         setTimeout(() => onContentRendered?.(editor))
@@ -83,6 +100,7 @@ const useStoreValue = (note: INote | undefined, editor: CustomEditor, onContentR
       emitter.removeListener('editor', handler)
       window.removeEventListener('beforeunload', cleanUp)
       const contentId = saveNoteAsBuffer(editor.children, note?.contentId)
+      saveNoteAsSearch(editor, noteId)
       // const result = []
       // serializeEditor(editor, editor, result)
       // result.forEach(i => (i.noteId = noteId))

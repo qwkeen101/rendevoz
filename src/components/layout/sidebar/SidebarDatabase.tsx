@@ -58,6 +58,7 @@ const SidebarDatabase = memo(() => {
             objectId = draggingEle.noteId
             break
           case 'note label':
+            objectId = draggingEle.highlightId
             break
           case 'whiteboard':
             objectId = draggingEle.whiteboardId

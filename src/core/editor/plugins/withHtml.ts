@@ -3,6 +3,7 @@ import { Element, Text, Transforms } from 'slate'
 import { jsx } from 'slate-hyperscript'
 import { ReactEditor } from 'slate-react'
 import { CustomEditor } from '../../../../typings/editor/types'
+import { deserializeHtmlNode, normalize } from './deserializeHtml'
 
 const ELEMENT_TAGS = {
   A: el => ({ type: 'link', url: el.getAttribute('href') }),
@@ -91,9 +92,10 @@ const withHtml = (editor: CustomEditor) => {
     }
     if (html) {
       const parsed = new DOMParser().parseFromString(html, 'text/html')
-      const fragment = deserialize(parsed.body)
-      fragment.forEach(i => (i.id = Id.getId()))
-      Transforms.insertFragment(editor, fragment)
+      const deserialized = deserializeHtmlNode(parsed.body)
+      console.log(deserialized)
+      const normalized = normalize(deserialized)
+      Transforms.insertFragment(editor, normalized)
       Transforms.deselect(editor)
       return
     }

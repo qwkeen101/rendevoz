@@ -16,11 +16,13 @@
 }
 .BlockCommon{
     * span, textarea{
-        color: var(--block-font-color) !important;
-        background: var(--block-linear-font);
-        -webkit-background-clip: text;
-        background-clip: text;
-        -webkit-text-fill-color: var(--text-fill);
+        &:not([data-highlight]){
+            color: var(--block-font-color) !important;
+            background: var(--block-linear-font);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: var(--text-fill);
+        }
         // white-space: normal;
     }
     overflow: hidden;

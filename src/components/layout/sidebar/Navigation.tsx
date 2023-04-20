@@ -10,7 +10,7 @@ import SidebarDatabase from './SidebarDatabase'
 import SidebarSetting from './SidebarSetting'
 import SidebarUser from './SidebarUser'
 import Actions from '@/core/Actions'
-import ClassName from '@/styles/classNames'
+import SidebarSearch from './SidebarSearch'
 
 const variants = {
   open: {
@@ -34,7 +34,6 @@ const Navigation = ({ hovered }: { hovered: boolean }) => {
             : undefined
         }
         variants={variants}
-        onClick={() => {}}
       >
         <SidebarUser />
         <MenuItem onClick={Actions.openHome}>
@@ -42,6 +41,7 @@ const Navigation = ({ hovered }: { hovered: boolean }) => {
           {t('sidebar.home')}
         </MenuItem>
         <SidebarDatabase />
+        <SidebarSearch />
         <SidebarSetting />
         {/* <GlobalPocket>{urls => <SidebarPocket urls={urls} />}</GlobalPocket> */}
         <Content flex alignItems="center" style={{ padding: '0px 4px 0px 4px', marginTop: 20 }}>

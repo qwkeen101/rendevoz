@@ -1,4 +1,4 @@
-import { AnimatePopover, Button, Modal, WithBorder } from '@/components'
+import { AnimatePopover, Button, Content, Icon, Modal, WithBorder } from '@/components'
 import CreateDocumentForm from '@/components/form/CreateDocumentForm'
 import { ObjectStore } from '@/stores'
 import { useState } from 'react'
@@ -8,6 +8,7 @@ import Actions from '../Actions'
 import { AnimatePopoverProps } from '@/components/base/AnimatePopover'
 import { Zindexes } from '@/consts'
 import { GlobalEventEmitter } from '@/events'
+import ClassName from '@/styles/classNames'
 
 export const useCreateObject = (options?: { positions: AnimatePopoverProps['positions'] }) => {
   const [modalState, setModalState] = useState<{
@@ -19,6 +20,7 @@ export const useCreateObject = (options?: { positions: AnimatePopoverProps['posi
     popoverVisible: boolean
     x: number
     y: number
+    isOpenCenter?: boolean
   }>()
 
   const closeModal = () => setModalState(undefined)
@@ -45,12 +47,26 @@ export const useCreateObject = (options?: { positions: AnimatePopoverProps['posi
           visible={!!popoverState?.visible}
           padding={10}
           content={
-            <WithBorder padding={6} onClick={() => setPopoverState(undefined)} style={{ width: 140 }}>
+            <WithBorder padding={6} onClick={() => setPopoverState(undefined)} style={{ width: popoverState.isOpenCenter ? 300 : 140 }}>
+              {popoverState.isOpenCenter && (
+                <Content flex justifyContent="space-between" alignItems="center" style={{ padding: '4px 8px', marginBottom: 16 }}>
+                  <div className={ClassName.title('14px')}>Create One Object</div>
+                  <Icon
+                    name="park-close"
+                    onClick={() => {
+                      setPopoverState({ ...popoverState, visible: false })
+                      setTimeout(() => {
+                        setPopoverState(undefined)
+                      }, 300)
+                    }}
+                  />
+                </Content>
+              )}
               <Button.IconButton
                 icon="park-share-one"
                 text={t('general.normal object')}
                 onClick={() => {
-                  GlobalEventEmitter().emit('global',{
+                  GlobalEventEmitter().emit('global', {
                     type: 'globalNeedAddMetaObject',
                     data: {
                       currentObject: {
@@ -111,6 +127,18 @@ export const useCreateObject = (options?: { positions: AnimatePopoverProps['posi
   )
   return {
     portal,
+    openAtCenter: () => {
+      if (popoverState?.visible || popoverState?.popoverVisible) {
+        return
+      }
+      setPopoverState({
+        visible: true,
+        popoverVisible: true,
+        x: window.innerWidth / 2,
+        y: window.innerHeight / 2,
+        isOpenCenter: true
+      })
+    },
     open: (e: PointerEvent | MouseEvent) => {
       if (popoverState?.visible || popoverState?.popoverVisible) {
         return

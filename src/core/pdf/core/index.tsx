@@ -38,7 +38,6 @@ export const Viewer: FC<ViewerProps> = ({
   transformScale,
   viewer
 }) => {
-
   const store = useMemo(() => {
     const store = createStore()
     store.set(PdfViewerAtom, viewer)

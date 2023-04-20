@@ -5,7 +5,7 @@ import { Transforms } from 'slate'
 import { ReactEditor, RenderElementProps, useSlate } from '../../slate-react'
 import { ToDoElement } from '~/typings'
 
-const ToDo = ({ element, children, attributes }: RenderElementProps) => {
+const ToDo = ({ element, children }: RenderElementProps) => {
   const editor = useSlate()
   const ele = element as ToDoElement
   const toggleChecked: MouseEventHandler = e => {

@@ -13,6 +13,9 @@ import getSetting from '@/core/setting/getSetting'
 import { createDraft, finishDraft } from 'immer'
 import { debounce } from 'lodash'
 import { normalizeOldCollections, normalizeOldObjectsToNewObjects } from './oldItemsMove'
+import { useMemo } from 'react'
+import { selectAtom } from 'jotai/utils'
+import { useGlobalAtomValue } from '@/hooks'
 
 export const metaObjectsAtom = atom<Map<number, MetaObject>>(new Map())
 
@@ -336,7 +339,7 @@ const createMetaStore = () => {
           )
       })(initedMetaObject, silent)
     },
-    deleteOneById: (id, silent, force) => {
+    deleteOneById: (id, silent, force = true) => {
       const allMetaLinks = globalStore.get(undeletedMetaLinksAtom)
       const relatedLink = allMetaLinks.filter(l => l.sourceId === id || l.targetId === id)
       relatedLink.forEach(i =>
@@ -376,7 +379,7 @@ const createMetaStore = () => {
       })(one, silent)
     },
     getAll: initializedLinkStore.getAll(),
-    deleteOneById: (one, silent, force) => {
+    deleteOneById: (one, silent, force = true) => {
       return initializedLinkStore.deleteOneById(() => {
         shouldToastLink(silent) && toast.success('Link successfully deleted!')
       })(one, silent, force)
@@ -418,9 +421,14 @@ const createMetaStore = () => {
     }
   }
 
+  const useValue = (id?: number) => {
+    const ato = useMemo(() => (id ? selectAtom(metaObjectsAtom, m => m.get(id)) : atom(null)), [id])
+    return useGlobalAtomValue(ato)
+  }
   return {
     getMetaObjectById,
     getMetaObjectByObjectId,
+    useValue,
     ...realStore
   }
 }

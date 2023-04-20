@@ -190,7 +190,17 @@ const TypeFilter = ({ onClose, initialOpen }: { onClose: VoidFunction; initialOp
   const shouldFilterIdSet = useAtomValue(ShouldFilterIdsAtom)
   const [popoverVisible, togglePopoverVisible] = useToggle(initialOpen)
   const { t } = useTranslation()
-  const types: MetaObject['type'][] = ['image', 'normal', 'note', 'noteBlock', 'pdf', 'pdfLabel', 'whiteboard', 'webpage', 'webpageLabel']
+  const types: MetaObject['type'][] = [
+    'normal',
+    'note',
+    'noteBlock',
+    'noteLabel',
+    'pdf',
+    'pdfLabel',
+    'whiteboard',
+    'webpage',
+    'webpageLabel'
+  ]
   const toggleType = (type: typeof types[number]) => {
     if (filterTypes.has(type)) {
       setFilterTypes(

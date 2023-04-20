@@ -1,7 +1,8 @@
-import { cloneElement, CSSProperties, FC, memo, MouseEventHandler, ReactElement, ReactNode, useEffect, useState } from 'react'
+import { cloneElement, CSSProperties, FC, memo, MouseEventHandler, ReactElement, ReactNode, useEffect, useMemo, useState } from 'react'
 import Content from '../Content'
 import { AnimatePresence, motion } from 'framer-motion'
 import styles from './index.module.less'
+import Id from '@/utils/id'
 
 export interface TabNavListProps {
   defaultActiveKey: string
@@ -19,6 +20,7 @@ const TabNavList: FC<TabNavListProps> = ({ navs, onTabClick, defaultActiveKey, e
       setSelectedTabKey(defaultActiveKey)
     }
   }, [defaultActiveKey])
+  const uniqueId = useMemo(() => Id.getId(),[])
   return (
     <Content flex alignItems="center" justifyContent="space-between">
       <Content flex alignItems="center">
@@ -33,7 +35,7 @@ const TabNavList: FC<TabNavListProps> = ({ navs, onTabClick, defaultActiveKey, e
           >
             {nav.tab}
             {nav.key === selectedTabKey ? (
-              <motion.div layout="position" className={styles.underline} initial={false} layoutId={navs[0].key} />
+              <motion.div layout="position" className={styles.underline} initial={false} layoutId={`${navs[0].key}_${uniqueId}`} />
             ) : null}
           </div>
         ))}
@@ -49,7 +51,7 @@ interface TabPanesListProps {
 const TabPanesList: FC<TabPanesListProps> = memo(({ activeKey, tabPanes }) => {
   return (
     <Content fullWidth fullHeight style={{ overflow: 'hidden' }}>
-      <AnimatePresence exitBeforeEnter>
+      <AnimatePresence>
         {tabPanes.map(tabPane => (
           <TabPane
             onClick={tabPane.onClick}
@@ -147,7 +149,7 @@ export const TabPane: FC<TabPaneProps> = memo(({ children, onClick, style, activ
       className={styles.tabPane}
       style={mergedStyle}
       onClick={onClick}
-      transition={{ duration: 0.1 }}
+      transition={{ duration: 0 }}
     >
       {children}
     </motion.div>

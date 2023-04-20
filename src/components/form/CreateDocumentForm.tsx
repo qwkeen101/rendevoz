@@ -63,7 +63,7 @@ const CreateDocumentForm: FC<NewDocumentFormProps> = ({ onBack, onSubmit }) => {
     const result = await ipcInstance.send('copyPdf', fileRef.current?.path, fileRef.current?.name)
     pdfDocument.current.fileUrl = result.data
     // addDocument(pdfDocument.current)
-    const { meta } = await ObjectStore('pdf').addOneWithMeta(pdfDocument.current, { currentMeta: obj })
+    const { meta, one } = await ObjectStore('pdf').addOneWithMeta(pdfDocument.current, { currentMeta: obj })
     return meta
   }
   const renderUploadFile = () => {

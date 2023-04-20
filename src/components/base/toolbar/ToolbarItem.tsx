@@ -36,8 +36,6 @@ const ToolbarItem: FC<ToolbarItemProps> = ({
   tooltip,
   disabled
 }) => {
-  const { primaryColor } = useTheme('primaryColor')
-
   const renderItem = () => {
     if (iconName) {
       return <Icon cursor={disabled ? 'inherit' : 'pointer'} className={iconClassName} size={size} name={iconName} />

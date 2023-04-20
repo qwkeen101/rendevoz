@@ -18,7 +18,7 @@ interface CanvasLayerProps {
   transformScale?: number
 }
 // todo: canvas change render text & background color
-
+export const CanvasOriginFillRect = CanvasRenderingContext2D.prototype.fillRect
 const CanvasLayer: FC<CanvasLayerProps> = ({ page, width, height, viewport, transformScale = 1 }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const renderTaskRef = useRef<RenderTask>()
@@ -43,7 +43,7 @@ const CanvasLayer: FC<CanvasLayerProps> = ({ page, width, height, viewport, tran
     }
   }
   useIsomorphicLayoutEffect(() => {
-    const setting = getSetting()
+        const setting = getSetting()
     const fontPrimary = window.getComputedStyle(document.body).getPropertyValue(Font.Primary)
     const backgroundSecondary = window.getComputedStyle(document.body).getPropertyValue(Background.Secondary)
     if (setting.general.darkMode) {
@@ -58,7 +58,7 @@ const CanvasLayer: FC<CanvasLayerProps> = ({ page, width, height, viewport, tran
         }
       })()
       CanvasRenderingContext2D.prototype.fillRect = (function () {
-        const original = CanvasRenderingContext2D.prototype.fillRect
+        const original = CanvasOriginFillRect
         return function () {
           const orig = this['fillStyle']
           this['fillStyle'] = backgroundSecondary
@@ -97,6 +97,42 @@ const CanvasLayer: FC<CanvasLayerProps> = ({ page, width, height, viewport, tran
   // do we need to rerender the whole canvas each time viewport change?
   // maybe some canvas libraies can do the resize / zoom without rerendering?
   useUpdateIsomorphicLayoutEffect(() => {
+        const setting = getSetting()
+    const fontPrimary = window.getComputedStyle(document.body).getPropertyValue(Font.Primary)
+    const backgroundSecondary = window.getComputedStyle(document.body).getPropertyValue(Background.Secondary)
+    if (setting.general.darkMode) {
+      CanvasRenderingContext2D.prototype.fillText = (function () {
+        const original = CanvasRenderingContext2D.prototype.fillText
+        return function () {
+          const orig = this['fillStyle']
+          this['fillStyle'] = fontPrimary
+          const res = original.apply(this, arguments)
+          this['fillStyle'] = orig
+          return res
+        }
+      })()
+      CanvasRenderingContext2D.prototype.fillRect = (function () {
+        const original = CanvasOriginFillRect
+        return function () {
+          const orig = this['fillStyle']
+          this['fillStyle'] = backgroundSecondary
+          const res = original.apply(this, arguments)
+          this['fillStyle'] = orig
+          return res
+        }
+      })()
+      CanvasRenderingContext2D.prototype.fill = (function () {
+        const original = CanvasRenderingContext2D.prototype.fill
+        return function () {
+          const orig = this['fillStyle']
+          this['fillStyle'] = fontPrimary
+          const res = original.apply(this, arguments)
+          this['fillStyle'] = orig
+          // do something else
+          return res
+        }
+      })()
+    }
     const canvasEle = canvasRef.current
     if (canvasEle) {
       renderCanvas(canvasEle)

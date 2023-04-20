@@ -12,8 +12,9 @@ import { Content } from '@/components/base'
 import { MetaObject } from '~/typings/data'
 import { MarkerColor } from '@/consts'
 import { useAtomValue } from 'jotai'
-import getEmoji from '@/utils/emoji'
 import EmojiNode from './EmojiNode'
+import { useGlobalAtomValue } from '@/hooks'
+import { MetaStore } from '@/stores'
 
 interface NodeProps {
   node: GraphNode
@@ -42,7 +43,7 @@ const Node: FC<NodeProps> = memo(({ node, onMouseEnter, onMouseLeave, onContextM
   const nodeRef = useRef<SVGGElement>(null)
   const graph = useGraph()
   const filterTags = useAtomValue(FilterSelectedTagsAtom)
-
+  const meta = MetaStore.useValue(node.id)
   const thisNodeShowTags = useMemo(() => {
     if (node.opacity !== 1) {
       return []
@@ -61,25 +62,33 @@ const Node: FC<NodeProps> = memo(({ node, onMouseEnter, onMouseLeave, onContextM
   const radius = TypeToNodeRadius[node.type || 'normal']
   const d = radius * 2
   const originNode = graph?.nodesMap?.get(node.id)
+  const realNode = useMemo(() => {
+    return {
+      ...node,
+      label: meta?.name,
+      coverImgSrc: meta?.coverImgSrc,
+      icon: meta?.icon
+    } as Partial<GraphNode>
+  }, [meta, node])
   const renderNode = () => {
-    if (node.icon) {
-      return <EmojiNode node={node} />
+    if (!meta) return null
+    if (meta.icon) {
+      return <EmojiNode node={realNode} />
     }
-    if (node.coverImgSrc) {
-      return <ImageNode node={node} />
+    if (meta.coverImgSrc) {
+      return <ImageNode node={realNode} />
     }
-    switch (node.type) {
+    switch (meta.type) {
       case 'note':
       case 'whiteboard':
       case 'pdfLabel':
       case 'noteLabel':
       case 'noteBlock':
-        return <IconNode node={node} />
       case 'pdf':
       case 'image':
-        return <ImageNode node={node} />
+        return <IconNode node={realNode} />
       default:
-        return <IconNode node={node} />
+        return <IconNode node={realNode} />
     }
   }
   useEffect(() => {

@@ -148,7 +148,19 @@ export const IconNameItem = memo(
             }}
           />
         ) : (
-          <>{icon && <Icon fill={linearColors ? linearColors[(linearColors.length / 2) | 0] : color} name={icon} />}</>
+          <>
+            {icon && isPark ? (
+              <Icon fill={linearColors ? linearColors[(linearColors.length / 2) | 0] : color} name={icon} />
+            ) : (
+              <img
+                style={{
+                  height: '1em',
+                  width: '1em'
+                }}
+                src={icon}
+              />
+            )}
+          </>
         )}
         <div
           style={{

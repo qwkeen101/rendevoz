@@ -7,10 +7,10 @@ import { css } from '@emotion/css'
 import { selectAtom } from 'jotai/utils'
 import { CSSProperties, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Content, Icon, Image } from '@/components'
+import { Content, Icon, IconWithPopover, Image } from '@/components'
 import { Editor } from '../editor/Editor'
 import { PdfViewer } from '../pdf/PdfViewer'
-import { TypeToTypeName } from './card/DatabaseCard'
+import { ObjectActionPopover, TypeToTypeName } from './card/DatabaseCard'
 import { ObjectTag, Whiteboard } from '@/core'
 import DateFormat from '@/utils/dateFormat'
 import getEmoji from '@/utils/emoji'
@@ -351,6 +351,22 @@ const useRenderObject = (options: { metaObjectId: number }) => {
       </Content>
     )
   }
+
+  const renderPopover = ({
+    icon = 'park-more',
+    position = 'left',
+    align = 'center',
+    ...rest
+  }: { icon?: string; position?: 'left' | 'top' | 'right' | 'bottom'; align?: 'start' | 'center' | 'end' } & Partial<Parameters<typeof ObjectActionPopover>[0]>) => {
+    return (
+      <IconWithPopover
+        content={<ObjectActionPopover {...rest} metaObjectId={metaObjectId} />}
+        name={icon}
+        align={align}
+        placement={[position]}
+      ></IconWithPopover>
+    )
+  }
   return {
     renderTitle,
     renderTags,
@@ -359,7 +375,8 @@ const useRenderObject = (options: { metaObjectId: number }) => {
     metaObject,
     renderExpand,
     renderFrom,
-    renderColumnImageWhole
+    renderColumnImageWhole,
+    renderPopover
   }
 }
 

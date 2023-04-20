@@ -1,5 +1,8 @@
+import { PDFDocumentProxy, PDFPageProxy } from 'pdfjs-dist'
+
 export type IPdfViewer = Partial<{
   currentFocusLabelId: number
+  getPdfInstance: () => PDFDocumentProxy
   jumpToPage: (pageIndex: number) => void
   search: (word: string) => Fuzzysort.KeyResults<{
     id: number
@@ -31,4 +34,7 @@ export type IPdfViewer = Partial<{
     }[]
   >
   onLabelRendered?: (labelId: number) => void
+  onTextLayerRendered?: (pageIndex: number, layer: {
+    paint
+  }) => void
 }>

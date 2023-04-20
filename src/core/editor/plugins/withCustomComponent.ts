@@ -188,80 +188,40 @@ const withCustomComponent = (editor: CustomEditor) => {
           return
         }
       }
-      const match = Editor.above(editor, {
-        match: n => Editor.isBlock(editor, n)
-      })
-      if (match) {
-        const [, path] = match
-        const end = Editor.end(editor, path)
-        const currentForward = Editor.next(editor, { at: path })
-        if (currentForward && Point.equals(selection.anchor, end)) {
-          const [block, path] = currentForward
-          if (block.type === 'hole') {
-            Transforms.removeNodes(editor, { at: path })
-            return
-          }
-        }
-      }
     }
     deleteForward(...args)
   }
   editor.insertBreak = () => {
     const { selection } = editor
     if (selection && Range.isCollapsed(selection)) {
-      if (Positions.isInsideHole(editor)) {
-        const parentHoleBlock = Positions.parentBlock(editor)
-        if (parentHoleBlock) {
-          let insertBreakPath
-          if (Positions.isEndSpacer(editor)) {
-            insertBreakPath = Path.next(parentHoleBlock[1])
-          } else if (Positions.isStartSpacer(editor)) {
-            insertBreakPath = parentHoleBlock[1]
-          }
-          Transforms.insertNodes(
-            editor,
-            {
-              type: 'paragraph',
-              id: Id.getId(),
-              children: [{ text: '' }]
-            },
-            { at: insertBreakPath }
-          )
-          Transforms.select(editor, insertBreakPath)
-        }
-        return
-      }
       const match = Editor.above(editor, {
         match: n => Editor.isBlock(editor, n)
       })
       if (match) {
         const [block, path] = match
-
+        const leaf = Editor.leaf(editor, selection)[0]
+        const offset = selection.anchor.offset as number
+        if (leaf.text[offset] === '\n') {
+          Transforms.delete(editor, {
+            at: selection,
+            unit: 'character',
+            distance: 1
+          })
+        }
+        if (offset - 1 >= 0 && leaf.text[offset - 1] === '\n') {
+          Transforms.delete(editor, {
+            at: selection,
+            unit: 'character',
+            distance: 1,
+            reverse: true
+          })
+        }
         const currentParent = Editor.parent(editor, path)
         if (currentParent) {
-          if (block.type === 'list-item') {
-            Transforms.insertNodes(editor, {
-              id: Id.getId(),
-              type: 'list-item',
-              level: block.level,
-              children: [{ text: '' }]
-            })
-            return
-          }
-          if (block.type === 'order-list-item') {
-            Transforms.insertNodes(editor, {
-              id: Id.getId(),
-              type: 'order-list-item',
-              level: block.level,
-              children: [{ text: '' }]
-            })
-            return
-          }
-          Transforms.insertNodes(editor, {
-            id: Id.getId(),
-            type: 'paragraph',
-            children: [{ text: '' }]
+          Transforms.splitNodes(editor, {
+            always: true
           })
+          Transforms.setNodes(editor, { id: Id.getId() }, { at: Path.next(path) })
           return
         }
       }

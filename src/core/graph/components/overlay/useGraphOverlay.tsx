@@ -39,7 +39,15 @@ const useGraphOverlay = () => {
       case 'edgeToolbar':
         return <EdgeAttributeCard currentEdge={overlayState.object} />
       case 'nodePopover':
-        return <NodePopover metaId={overlayState.metaId} />
+        return (
+          <NodePopover
+            metaId={overlayState.metaId}
+            nodeId={overlayState.nodeId}
+            onClose={() => {
+              setOverlayState(s => ({ ...s, visible: false }))
+            }}
+          />
+        )
     }
   }
   const renderPortal = () => {

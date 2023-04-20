@@ -1,25 +1,7 @@
 import ReactDOM from 'react-dom'
-import {
-  BaseEditor,
-  Editor,
-  Node,
-  Operation,
-  Path,
-  Point,
-  Range,
-  Transforms,
-} from 'slate'
-import {
-  TextDiff,
-  transformPendingPoint,
-  transformPendingRange,
-  transformTextDiff,
-} from '../utils/diff-text'
-import {
-  getPlainText,
-  getSlateFragmentAttribute,
-  isDOMText,
-} from '../utils/dom'
+import { BaseEditor, Editor, Node, Operation, Path, Point, Range, Transforms } from 'slate'
+import { TextDiff, transformPendingPoint, transformPendingRange, transformTextDiff } from '../utils/diff-text'
+import { getPlainText, getSlateFragmentAttribute, isDOMText } from '../utils/dom'
 import { Key } from '../utils/key'
 import { findCurrentLineRange } from '../utils/lines'
 import {
@@ -32,7 +14,7 @@ import {
   EDITOR_TO_USER_SELECTION,
   NODE_TO_KEY,
   EDITOR_TO_SCHEDULE_FLUSH,
-  EDITOR_TO_PENDING_INSERTION_MARKS,
+  EDITOR_TO_PENDING_INSERTION_MARKS
 } from '../utils/weak-maps'
 import { ReactEditor } from './react-editor'
 /**
@@ -55,10 +37,7 @@ export const withReact = <T extends BaseEditor>(editor: T): T & ReactEditor => {
   e.addMark = (key, value) => {
     EDITOR_TO_SCHEDULE_FLUSH.get(e)?.()
 
-    if (
-      !EDITOR_TO_PENDING_INSERTION_MARKS.get(e) &&
-      EDITOR_TO_PENDING_DIFFS.get(e)?.length
-    ) {
+    if (!EDITOR_TO_PENDING_INSERTION_MARKS.get(e) && EDITOR_TO_PENDING_DIFFS.get(e)?.length) {
       // Ensure the current pending diffs originating from changes before the addMark
       // are applied with the current formatting
       EDITOR_TO_PENDING_INSERTION_MARKS.set(e, null)
@@ -70,10 +49,7 @@ export const withReact = <T extends BaseEditor>(editor: T): T & ReactEditor => {
   }
 
   e.removeMark = key => {
-    if (
-      !EDITOR_TO_PENDING_INSERTION_MARKS.get(e) &&
-      EDITOR_TO_PENDING_DIFFS.get(e)?.length
-    ) {
+    if (!EDITOR_TO_PENDING_INSERTION_MARKS.get(e) && EDITOR_TO_PENDING_DIFFS.get(e)?.length) {
       // Ensure the current pending diffs originating from changes before the addMark
       // are applied with the current formatting
       EDITOR_TO_PENDING_INSERTION_MARKS.set(e, null)
@@ -92,16 +68,12 @@ export const withReact = <T extends BaseEditor>(editor: T): T & ReactEditor => {
     if (e.selection && Range.isCollapsed(e.selection)) {
       const parentBlockEntry = Editor.above(e, {
         match: n => Editor.isBlock(e, n),
-        at: e.selection,
+        at: e.selection
       })
 
       if (parentBlockEntry) {
         const [, parentBlockPath] = parentBlockEntry
-        const parentElementRange = Editor.range(
-          e,
-          parentBlockPath,
-          e.selection.anchor
-        )
+        const parentElementRange = Editor.range(e, parentBlockPath, e.selection.anchor)
 
         const currentLineRange = findCurrentLineRange(e, parentElementRange)
 
@@ -119,19 +91,14 @@ export const withReact = <T extends BaseEditor>(editor: T): T & ReactEditor => {
 
     const pendingDiffs = EDITOR_TO_PENDING_DIFFS.get(e)
     if (pendingDiffs?.length) {
-      const transformed = pendingDiffs
-        .map(textDiff => transformTextDiff(textDiff, op))
-        .filter(Boolean) as TextDiff[]
+      const transformed = pendingDiffs.map(textDiff => transformTextDiff(textDiff, op)).filter(Boolean) as TextDiff[]
 
       EDITOR_TO_PENDING_DIFFS.set(e, transformed)
     }
 
     const pendingSelection = EDITOR_TO_PENDING_SELECTION.get(e)
     if (pendingSelection) {
-      EDITOR_TO_PENDING_SELECTION.set(
-        e,
-        transformPendingRange(e, pendingSelection, op)
-      )
+      EDITOR_TO_PENDING_SELECTION.set(e, transformPendingRange(e, pendingSelection, op))
     }
 
     const pendingAction = EDITOR_TO_PENDING_ACTION.get(e)
@@ -172,10 +139,7 @@ export const withReact = <T extends BaseEditor>(editor: T): T & ReactEditor => {
       }
 
       case 'move_node': {
-        const commonPath = Path.common(
-          Path.parent(op.path),
-          Path.parent(op.newPath)
-        )
+        const commonPath = Path.common(Path.parent(op.path), Path.parent(op.newPath))
         matches.push(...getMatches(e, commonPath))
         break
       }
@@ -238,12 +202,10 @@ export const withReact = <T extends BaseEditor>(editor: T): T & ReactEditor => {
 
     // Remove any zero-width space spans from the cloned DOM so that they don't
     // show up elsewhere when pasted.
-    Array.from(contents.querySelectorAll('[data-slate-zero-width]')).forEach(
-      zw => {
-        const isNewline = zw.getAttribute('data-slate-zero-width') === 'n'
-        zw.textContent = isNewline ? '\n' : ''
-      }
-    )
+    Array.from(contents.querySelectorAll('[data-slate-zero-width]')).forEach(zw => {
+      const isNewline = zw.getAttribute('data-slate-zero-width') === 'n'
+      zw.textContent = isNewline ? '\n' : ''
+    })
 
     // Set a `data-slate-fragment` attribute on a non-empty node, so it shows up
     // in the HTML, and can be used for intra-Slate pasting. If it's a text
@@ -285,9 +247,7 @@ export const withReact = <T extends BaseEditor>(editor: T): T & ReactEditor => {
     /**
      * Checking copied fragment from application/x-slate-fragment or data-slate-fragment
      */
-    const fragment =
-      data.getData('application/x-slate-fragment') ||
-      getSlateFragmentAttribute(data)
+    const fragment = data.getData('application/x-slate-fragment') || getSlateFragmentAttribute(data)
 
     if (fragment) {
       const decoded = decodeURIComponent(window.atob(fragment))

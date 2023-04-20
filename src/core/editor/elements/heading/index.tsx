@@ -64,7 +64,10 @@ const Heading: FC<RenderElementProps> = ({ element, children }) => {
         }}
       >
         <div
-          onClick={() => {
+          onClick={e => {
+            Transforms.deselect(editor)
+            e.stopPropagation()
+            e.preventDefault()
             let currentPath = ReactEditor.findPath(editor, element)
             const parentEle = Editor.node(editor, Path.parent(currentPath))[0]
             let currIdx = parentEle.children.findIndex(i => i === element) + 1
@@ -89,9 +92,6 @@ const Heading: FC<RenderElementProps> = ({ element, children }) => {
               },
               { at: ReactEditor.findPath(editor, element) }
             )
-            setTimeout(() => {
-              editor.innerRef?.current.measure()
-            })
           }}
         >
           <Icon

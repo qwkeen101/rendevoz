@@ -1,10 +1,10 @@
-import { useState } from 'react'
-import { Content, Icon, IconWithPopover, WithBorder } from './base'
+import { useEffect, useState } from 'react'
+import { CheckBox, Content, Icon, IconWithPopover, WithBorder } from './base'
 import { getAuth, GoogleAuthProvider, signInWithPopup } from 'firebase/auth'
 import { css } from '@emotion/css'
 import googleLogo from '@/assets/google_logo.png'
 import { toast } from 'react-hot-toast'
-import { useToggle } from '@/hooks'
+import { useGlobalAtom, useToggle } from '@/hooks'
 import LoginService, { useUser } from '@/services/login.service'
 import ClassName from '@/styles/classNames'
 import { IUser } from '~/typings/data'
@@ -12,9 +12,24 @@ import { useTranslation } from 'react-i18next'
 import { useSetting } from '../core/setting'
 import produce from 'immer'
 import Colors from '@/consts/colors'
+import { atomWithStorage } from 'jotai/utils'
 
 const provider = new GoogleAuthProvider()
 
+localStorage.setItem(
+  'loginState',
+  localStorage.getItem('loginState') ||
+    JSON.stringify({
+      rememberMe: false,
+      autoLogin: false
+    })
+)
+const loginStateAtom = atomWithStorage<{
+  rememberMe?: boolean
+  autoLogin?: boolean
+  password?: string
+}>('loginState', JSON.parse(localStorage.getItem('loginState')!))
+const localLoginState = JSON.parse(localStorage.getItem('loginState')!)
 export const loginInputClassName = css({
   border: 'none',
   borderBottom: `1px solid ${Colors.Background.Border}`,
@@ -42,21 +57,25 @@ const validateEmail = (email?: string) => {
     return false
   }
 }
+let autoLogined = false
 const Login = () => {
+  const [loginState, setLoginState] = useGlobalAtom(loginStateAtom)
+  const [emailVerified, setEmailVerified] = useState(false)
+  const [codeVisible, toggleCodeVisible] = useState(false)
   const [user, setUser] = useState<{
     email: string
     password?: string
   }>({
-    email: localStorage.getItem('email') || ''
+    email: localStorage.getItem('email') || '',
+    password: localLoginState.rememberMe ? localLoginState.password : undefined
   })
-  const [emailVerified, setEmailVerified] = useState(false)
-  const [codeVisible, toggleCodeVisible] = useState(false)
   const [loadingState, setLoadingState] = useState<{
     isSendingVerificationCode?: boolean
     validatingEmail?: boolean
     verifingCode?: boolean
     logining?: boolean
     gettingUserDetails?: boolean
+    autoLogining?: boolean
   }>()
   const [previewPassword, togglePreviewPassword] = useToggle(false)
   const [code, setCode] = useState<string>()
@@ -64,6 +83,18 @@ const Login = () => {
   const [setting, setSetting] = useSetting()
   const [, setGlobalUser] = useUser()
   const { t } = useTranslation()
+
+  useEffect(() => {
+    if (loginState.autoLogin && loginState.password && !autoLogined) {
+      user.password = loginState.password
+      setUser(s => ({ ...s, password: loginState.password }))
+
+      setTimeout(() => {
+        handleLogin()
+        setLoadingState({ autoLogining: true })
+      })
+    }
+  }, [])
   const handleLogin = () => {
     setLoadingState({ logining: true })
     if (user.password) {
@@ -74,6 +105,9 @@ const Login = () => {
         LoginService.login(user.email, user.password)
           .then(data => {
             localStorage.setItem('email', user.email)
+            if (loginState.rememberMe) {
+              setLoginState(s => ({ ...s, password: user.password }))
+            }
             setLoadingState({ gettingUserDetails: true })
             LoginService.getUserDetails(user.email, data.data.token)
               .then(user => {
@@ -82,6 +116,9 @@ const Login = () => {
               })
               .catch(e => toast.error(`${t('login.failed to get user details')}!`))
               .finally(() => {
+                if (loginState.autoLogin) {
+                  autoLogined = true
+                }
                 setLoadingState({})
               })
           })
@@ -217,6 +254,8 @@ const Login = () => {
               <input
                 type={previewPassword ? 'text' : 'password'}
                 className={loginInputClassName}
+                defaultValue={user.password}
+                value={user.password}
                 placeholder={t('login.please input your password')}
                 onChange={e => setUser({ ...user, password: e.target.value })}
               ></input>
@@ -226,6 +265,12 @@ const Login = () => {
                 className={css([{ position: 'absolute', right: 0, bottom: 2 }, ClassName.circleButton()])}
               />
             </div>
+            <Content flex gap={10}>
+              <CheckBox checked={loginState.rememberMe} onChange={v => setLoginState(s => ({ ...s, rememberMe: v }))} />
+              <div>{t('login.remember me')}</div>
+              <CheckBox checked={loginState.autoLogin} onChange={v => setLoginState(s => ({ ...s, autoLogin: v }))} />
+              <div>{t('login.auto login')}</div>
+            </Content>
             <Content
               flex
               alignItems="center"
@@ -249,7 +294,12 @@ const Login = () => {
                 onClick={handleCheckEmailExist}
                 justifyContent="center"
               >
-                {loadingState?.validatingEmail ? (
+                {loadingState?.autoLogining ? (
+                  <>
+                    <Icon size={20} spin name="park-loading-one" />
+                    {t('login.auto logining')}...
+                  </>
+                ) : loadingState?.validatingEmail ? (
                   <>
                     <Icon size={20} spin name="park-loading-one" />
                     {t('login.validating email')}...

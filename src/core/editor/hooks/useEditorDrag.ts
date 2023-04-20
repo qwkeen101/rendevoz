@@ -1,4 +1,4 @@
-import { AvaliableGlobalDraggingElements, GlobalDragOverlayInstance, useGlobalIsDragging } from '@/core'
+import { AvaliableGlobalDraggingElements, GlobalDragOverlayInstance, getSetting, useGlobalIsDragging } from '@/core'
 import { GlobalEventHandler } from '@/events/globalEvent'
 import { useGlobalEventEmitter } from '@/events/useEventEmitter'
 import { useMemoizedFn, useRafFn } from '@/hooks'
@@ -11,7 +11,7 @@ import useDragIndicator from '../components/useDragIndicator'
 import DragManager from './DragManager'
 import ScrollManager from '../ScrollManager'
 import { ReactEditor } from '../slate-react'
-import { CustomEditor, CustomElement, HeadingElement, MetaObjectElement } from '~/typings'
+import { CustomEditor, CustomElement, HeadingElement, MetaObjectElement, ParagraphElement } from '~/typings'
 import moveMultiElements from '../utils/moveMultiElements'
 import moveSingleElement from '../utils/moveSingleElement'
 import { ID_TO_ELEMENTS_MAP, ID_TO_PATH_MAP, SELECTED_BLOCKS_MAP } from '../weakMaps'
@@ -67,7 +67,6 @@ const useEditorDrag = (editor: CustomEditor, scrollElement?: HTMLElement | null)
   const { renderIndicator, indicatorManager } = useDragIndicator()
 
   dragManager.onDrop = ({ direction, isNested, objectId, targetNodeId, shouldAddElements, shouldRemoveElements }) => {
-    console.log(direction, targetNodeId, shouldAddElements, shouldRemoveElements)
     let targetPath = ID_TO_PATH_MAP.get(editor)?.get(targetNodeId)
     if (!targetPath) return
     const targetElement = Editor.node(editor, targetPath)[0] as CustomElement
@@ -125,6 +124,23 @@ const useEditorDrag = (editor: CustomEditor, scrollElement?: HTMLElement | null)
         .then(
           obj => {
             const metaObj = obj as MetaObject
+            const setting = getSetting()
+            if (setting.editor.objectAutoBecomeInline) {
+              const editorNode: CustomElement = {
+                id: Id.getId(),
+                type: 'paragraph',
+                children: [
+                  {
+                    type: 'inline-metaObject',
+                    originId: metaObj.id,
+                    children: [{ text: '' }],
+                    id: Id.getId()
+                  }
+                ]
+              }
+              dragManager.insertNodeAtTargetPlace(editorNode, targetNodeId, direction, isNested)
+              return
+            }
             const editorNode: MetaObjectElement = {
               id: Id.getId(),
               type: 'metaObject',
@@ -175,6 +191,7 @@ const useEditorDrag = (editor: CustomEditor, scrollElement?: HTMLElement | null)
     }
   }
   dragManager.eventEmitter = emitter
+
   const mouseMoveHandler = useMemoizedFn((e: MouseEvent) => {
     if (readonly) return
     if (!isDraggingInsideEditor) {
@@ -188,6 +205,7 @@ const useEditorDrag = (editor: CustomEditor, scrollElement?: HTMLElement | null)
       scrollManager.startScroll(e)
       dragManager.prepareDragging()
     }
+
     const indicator = dragManager.drag(e)
     if (indicator) {
       dragManager.changeIndicator(indicator)

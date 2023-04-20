@@ -1,4 +1,4 @@
-import { Controller, Inject } from '@nestjs/common'
+import { Controller, Get, Inject } from '@nestjs/common'
 import { WebContents, BrowserWindow } from 'electron'
 import { AppService } from './app.service'
 import { IpcInvoke } from './transport'
@@ -6,7 +6,7 @@ import fs from 'fs'
 import path from 'path'
 import { autoUpdater } from 'electron-updater'
 
-const DEFAULT_USER_DATA_PATH =
+export const DEFAULT_USER_DATA_PATH =
   process.env.APPDATA || (process.platform == 'darwin' ? process.env.HOME + '/Library/Preferences' : process.env.HOME + '/.local/share')
 
 @Controller()

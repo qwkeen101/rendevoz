@@ -59,7 +59,7 @@ const createObjectStore = <T extends keyof ObjectFamily, V extends ObjectFamily[
       onSuccess?: (obj: V, silent: boolean) => void
       onFail?: (silent: boolean) => void
     }
-    afterDeleteProcess?: () => void
+    afterDeleteProcess?: (obj: V) => void
     afterGetOneProcess?: {
       onSuccess?: (obj: V, silent: boolean) => void
       onFail?: (silent: boolean) => void
@@ -72,13 +72,6 @@ const createObjectStore = <T extends keyof ObjectFamily, V extends ObjectFamily[
   createAtom: (id?: number) => Atom<V | undefined>
   useValue: (id?: number) => Awaited<V> | undefined
 } & IStore<V> => {
-  const shouldToast = (silent?: boolean) => {
-    const setting = getSetting()
-    if (!silent && setting.notification.enabled && options?.toastEnabled && setting.notification[options.toastEnabled]) {
-      return true
-    }
-    return false
-  }
   const objectsDb = useDb('objects')
   const objectMapAtom = ObjectFamilyAtom(type) as unknown as PrimitiveAtom<Map<number, V>>
   const initalizedLocalStore = initializeLocalStore(objectMapAtom, objectsDb)
@@ -155,13 +148,18 @@ const createObjectStore = <T extends keyof ObjectFamily, V extends ObjectFamily[
       if (result === false) {
         return Promise.reject()
       }
-      return initalizedLocalStore.deleteOneById(() => {
-        const objectIdToMetaObjectIdMap = globalStore.get(objectIdToMetaObjectIdMapAtom)
-        const targetMeta = objectIdToMetaObjectIdMap?.get(id)
-        if (targetMeta) {
-          MetaStore.deleteMetaObject(targetMeta, true, true)
-        }
-      })(id, opts?.silent, opts?.force)
+      const one = await realStore.getOneById(id)
+      if (one) {
+        return initalizedLocalStore.deleteOneById(() => {
+          options?.afterDeleteProcess?.(one)
+          const objectIdToMetaObjectIdMap = globalStore.get(objectIdToMetaObjectIdMapAtom)
+          const targetMeta = objectIdToMetaObjectIdMap?.get(id)
+          if (targetMeta) {
+            MetaStore.deleteMetaObject(targetMeta, true, true)
+          }
+        })(id, opts?.silent, opts?.force)
+      }
+      return Promise.reject()
     }
   }
   const adaptStore = () => {
@@ -178,6 +176,7 @@ const createObjectStore = <T extends keyof ObjectFamily, V extends ObjectFamily[
     fetchOneById: adaptStore().fetchOneById,
     addOneWithMeta: adaptStore().addOneWithMeta
   }
+
   const createAtom = (id?: number) => {
     const memoAtom = useMemo(() => {
       if (!id) return atom(undefined)
@@ -250,6 +249,10 @@ const createNoteStore = () => {
         n.contentId = Id.getId()
       }
     },
+    afterDeleteProcess: obj => {
+      const blobDb = useDb('blobs')
+      blobDb.delete(obj.contentId)
+    },
     afterUpdateProcess: {
       onSuccess: obj => {
         console.log(obj)
@@ -276,34 +279,6 @@ const createWebpageStore = () => {
       if (!o.url?.startsWith('http://') && !o.url?.startsWith('https://') && o.url?.length) {
         o.url = 'https://' + o.url
       }
-    },
-    afterAddProcess: {
-      onSuccess: async (obj, opts) => {
-        if (opts?.showAddModal) {
-          const webpageUrl = new URL(obj.url)
-          GlobalEventEmitter().emit('global', {
-            type: 'globalNeedAddMetaObject',
-            data: {
-              currentObject: {
-                type: 'webpage',
-                objectId: obj.id,
-                name: obj.title,
-                from: {
-                  icon: obj.favicon,
-                  name: webpageUrl.hostname,
-                  type: 'webpage'
-                }
-              }
-            }
-          })
-        } else if (!opts?.preventAddMeta) {
-          MetaStore.addMetaObject({
-            objectId: obj.id,
-            type: 'webpage',
-            name: obj.title || 'Unnamed Webpage'
-          })
-        }
-      }
     }
   })
 }
@@ -329,18 +304,7 @@ const createWhiteboardStore = () => {
   })
 }
 const createNoteLabelStore = () => {
-  return createObjectStore('noteLabel', {
-    beforeAddProcess: o => {},
-    afterAddProcess: {
-      onSuccess: obj => {
-        MetaStore.addMetaObject({
-          objectId: obj.id,
-          type: 'noteLabel',
-          name: ''
-        })
-      }
-    }
-  })
+  return createObjectStore('noteLabel', {})
 }
 const createTagStore = () => {
   return createObjectStore('tag', {
@@ -364,4 +328,5 @@ const createTagStore = () => {
     }
   })
 }
+
 export default createObjectStore

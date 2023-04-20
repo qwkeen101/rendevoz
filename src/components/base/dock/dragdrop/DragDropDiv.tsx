@@ -330,6 +330,7 @@ export class DragDropDiv extends React.PureComponent<DragDropDivProps, any> {
       getRef,
       children,
       className,
+      disableDrag,
       directDragT,
       onDragStartT,
       onDragMoveT,

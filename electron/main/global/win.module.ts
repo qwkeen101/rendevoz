@@ -24,11 +24,11 @@ process.env.PUBLIC = app.isPackaged ? process.env.DIST : join(process.env.DIST_E
         const macSearchEngine = join(process.env.PUBLIC, 'meilisearch-macos')
         const searchEngineDataPath = join(DEFAULT_USER_DATA_PATH, 'rendevoz', 'data.ms')
         const searchEngine = process.platform === 'win32' ? windowsSearchEngine : macSearchEngine
-        const search = child_process.execFile(searchEngine, [`--db-path=${searchEngineDataPath}`])
+        const search = child_process.exec(`${searchEngine} --db-path=${searchEngineDataPath}`)
+        // const search = child_process.execFile(searchEngine, [`--db-path=${searchEngineDataPath}`])
         autoUpdater.autoDownload = false
         autoUpdater.autoInstallOnAppQuit = false
         autoUpdater.autoRunAppAfterInstall = false
-
         autoUpdater.setFeedURL({
           provider: 'generic',
           url: 'https://rendevoz.com/download'

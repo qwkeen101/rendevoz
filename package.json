@@ -2,7 +2,7 @@
   "name": "rendevoz",
   "productName": "Rendevoz",
   "private": true,
-  "version": "0.2.11",
+  "version": "0.2.12",
   "author": "Rendevoz Team",
   "main": "dist-electron/electron/main/index.js",
   "debug": {

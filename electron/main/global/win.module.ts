@@ -20,12 +20,13 @@ process.env.PUBLIC = app.isPackaged ? process.env.DIST : join(process.env.DIST_E
         const preload = join(__dirname, '../../preload/index.js')
         const url = process.env.VITE_DEV_SERVER_URL
         const indexHtml = join(process.env.DIST, 'index.html')
-        const windowsSearchEngine = join(process.env.PUBLIC, 'meilisearch-windows.exe')
-        const macSearchEngine = join(process.env.PUBLIC, 'meilisearch-macos')
+        const windowsSearchEngine = 'meilisearch-windows.exe'
+        const macSearchEngine = './meilisearch-macos'
         const searchEngineDataPath = join(DEFAULT_USER_DATA_PATH, 'rendevoz', 'data.ms')
         const searchEngine = process.platform === 'win32' ? windowsSearchEngine : macSearchEngine
-        const search = child_process.exec(`${searchEngine} --db-path=${searchEngineDataPath}`)
-        // const search = child_process.execFile(searchEngine, [`--db-path=${searchEngineDataPath}`])
+
+        const search = child_process.exec(`cd ${process.env.PUBLIC} && ${searchEngine} --db-path=${searchEngineDataPath}`)
+
         autoUpdater.autoDownload = false
         autoUpdater.autoInstallOnAppQuit = false
         autoUpdater.autoRunAppAfterInstall = false

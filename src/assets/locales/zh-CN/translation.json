@@ -56,7 +56,9 @@
         "all types": "所有类型",
         "note label": "笔记标注",
         "search": "搜索",
-        "translate": "翻译"
+        "translate": "翻译",
+        "outline": "目录",
+        "highlight": "高亮"
     },
     "dock": {
         "close": "关闭标签页",

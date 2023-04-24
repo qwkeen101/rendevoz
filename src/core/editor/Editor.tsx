@@ -260,7 +260,7 @@ export const EditorV1: FC<EditorProps> = memo(
                 titleStyle={titleStyle}
                 noteId={noteId}
                 description={metaObject?.description}
-                titleEditable={titleEditable !== false && !metaObject}
+                titleEditable={titleEditable !== false && (!metaObject || metaObject.type === 'note')}
                 title={title || metaObject?.name || note?.title || 'Untitled'}
                 editor={editor}
               />

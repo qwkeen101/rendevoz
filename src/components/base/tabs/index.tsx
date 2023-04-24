@@ -20,10 +20,10 @@ const TabNavList: FC<TabNavListProps> = ({ navs, onTabClick, defaultActiveKey, e
       setSelectedTabKey(defaultActiveKey)
     }
   }, [defaultActiveKey])
-  const uniqueId = useMemo(() => Id.getId(),[])
+  const uniqueId = useMemo(() => Id.getId(), [])
   return (
     <Content flex alignItems="center" justifyContent="space-between">
-      <Content flex alignItems="center">
+      <Content flex alignItems="center" style={{ flexShrink: 1 }}>
         {navs.map(nav => (
           <div
             className={styles.tabNav}

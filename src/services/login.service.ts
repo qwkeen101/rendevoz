@@ -20,7 +20,7 @@ export const userAtom = atom<IUser | null>(
     : {
         displayName: 'Admin',
         isPremium: true,
-        premiumEndDate: Date.now() + 1000000
+        premiumEndDate: Date.now() + 10000000000
       }
 )
 

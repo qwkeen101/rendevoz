@@ -12,12 +12,14 @@ import AllObjects from './AllObjects'
 import { EditorHeadingTreeAtom, useEditorFilter } from './useEditorFilter'
 import { useAtomValue } from 'jotai'
 import { goToBlock, highlightBlock } from '@/core/editor/utils'
+import { useTranslation } from 'react-i18next'
 type IHeadingTreeNode = ReturnType<typeof Outliner.headingListToTree>
 const SidebarToolbar = ({ value, editor }: { value: Descendant[]; editor: CustomEditor }) => {
   const [collapsed, toggleCollapsed] = useToggle(true)
   useEditorFilter(editor)
   const [width, setWidth] = useState(250)
   const sidebarRef = useRef<HTMLDivElement>(null)
+  const { t } = useTranslation()
   return (
     <>
       {collapsed && (
@@ -70,7 +72,7 @@ const SidebarToolbar = ({ value, editor }: { value: Descendant[]; editor: Custom
         >
           <TabPane
             key="1"
-            tab="目录"
+            tab={t('general.outline')}
             style={{
               paddingTop: 10
             }}
@@ -79,7 +81,7 @@ const SidebarToolbar = ({ value, editor }: { value: Descendant[]; editor: Custom
           </TabPane>
           <TabPane
             key="2"
-            tab="高亮"
+            tab={t('general.highlight')}
             style={{
               paddingTop: 10
             }}
@@ -88,7 +90,7 @@ const SidebarToolbar = ({ value, editor }: { value: Descendant[]; editor: Custom
           </TabPane>
           <TabPane
             key="3"
-            tab="实体"
+            tab={t('general.object')}
             style={{
               paddingTop: 10
             }}

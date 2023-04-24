@@ -52,10 +52,13 @@
         "create at": "create at",
         "recent view": "recent view",
         "remove from collection": "remove from collection",
-        "normal object": "normal object",
+        "normal object": "object",
         "all types": "all types",
         "search": "search",
-        "translate": "translate"
+        "translate": "translate",
+        "outline": "outline",
+        "highlight": "highlight",
+        "note label": "note label"
     },
         "dock": {
         "close": "close",
@@ -280,7 +283,7 @@
         "new collection": "New collection",
         "object panel": "{{object}} panel",
         "search for object": "search for {{object}}",
-        "choose one filter": "{{choose}}{{one}}{{filter}}"
+        "choose one filter": "{{choose}} {{one}} {{filter}}"
     },
     "database": {
         "search for object": "search for {{object}}",

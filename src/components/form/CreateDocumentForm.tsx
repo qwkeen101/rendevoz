@@ -68,7 +68,14 @@ const CreateDocumentForm: FC<NewDocumentFormProps> = ({ onBack, onSubmit }) => {
   }
   const renderUploadFile = () => {
     return (
-      <Content className={ClassName.Background.pseudoBlurContrastBackground} flex column gap={10} style={{ padding: 12, borderRadius: 8 }}>
+      <Content
+        className={ClassName.Background.pseudoBlurContrastBackground}
+        flex
+        column
+        gap={30}
+        justifyContent='center'
+        style={{ padding: 24, borderRadius: 8, width: 300 }}
+      >
         <div className={ClassName.title()}>Upload Document</div>
         <FileUploader
           accept="application/pdf"

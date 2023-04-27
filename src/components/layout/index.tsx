@@ -1,6 +1,5 @@
 import Actions from '@/core/Actions'
 import useSidebarWidth from '@/hooks/components/useSidebarWidth'
-import { IPdfViewer, CustomEditor, WebpageInstance } from '~/typings'
 import { FC, useEffect, useMemo, useRef, useState } from 'react'
 import { Helmet } from 'react-helmet'
 import { Container } from '../base'
@@ -8,6 +7,7 @@ import DockLayout, { LayoutData } from '../base/dock'
 import LayoutManager from './LayoutManager'
 import { css } from '@emotion/css'
 import { useSetting } from '@/core'
+import { LayoutTab } from './types'
 interface LayoutProps {
   sidebar?: React.ReactNode
   children?: React.ReactNode
@@ -29,32 +29,6 @@ const initialLayout: LayoutData = {
   }
 }
 
-export type LayoutTab =
-  | {
-      type: 'pdf'
-      objectId: number
-      viewer?: IPdfViewer
-    }
-  | {
-      type: 'note'
-      objectId: number
-      editor?: CustomEditor
-    }
-  | {
-      type: 'home'
-    }
-  | {
-      type: 'database'
-    }
-  | {
-      type: 'whiteboard'
-      objectId: number
-    }
-  | {
-      type: 'webpage'
-      objectId: number
-      instance?: WebpageInstance
-    }
 export const LayoutIdToTabMap = new Map<string, LayoutTab>()
 export let GlobalLayout: LayoutManager | null = null
 const Layout: FC<LayoutProps> = ({ sidebar }) => {
@@ -131,8 +105,8 @@ const Layout: FC<LayoutProps> = ({ sidebar }) => {
             <DockLayout
               ref={layoutRef}
               style={{
-                position: 'absolute',
-                inset: 0
+                width: '100%',
+                height: '100%'
               }}
               dropMode="edge"
               onLayoutChange={handleLayoutChange}

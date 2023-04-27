@@ -50,7 +50,7 @@ export const useCreateObject = (options?: { positions: AnimatePopoverProps['posi
             <WithBorder padding={6} onClick={() => setPopoverState(undefined)} style={{ width: popoverState.isOpenCenter ? 300 : 140 }}>
               {popoverState.isOpenCenter && (
                 <Content flex justifyContent="space-between" alignItems="center" style={{ padding: '4px 8px', marginBottom: 16 }}>
-                  <div className={ClassName.title('14px')}>Create One Object</div>
+                  <div className={ClassName.title('1rem')}>Create One Object</div>
                   <Icon
                     name="park-close"
                     onClick={() => {

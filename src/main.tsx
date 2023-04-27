@@ -4,34 +4,17 @@ import App from './App'
 import initI18n from './config/i18n'
 
 // Import the functions you need from the SDKs you need
-import { initializeApp } from 'firebase/app'
-import { getAnalytics } from 'firebase/analytics'
 import { Provider } from 'jotai'
 import { globalStore } from './stores'
 import { normalizeOldObjectsToNewObjects } from './stores/oldItemsMove'
-// TODO: Add SDKs for Firebase products that you want to use
-// https://firebase.google.com/docs/web/setup#available-libraries
 
-// Your web app's Firebase configuration
-// For Firebase JS SDK v7.20.0 and later, measurementId is optional
-const firebaseConfig = {
-  apiKey: 'REDACTED',
-  authDomain: 'rendevoz.firebaseapp.com',
-  projectId: 'rendevoz',
-  storageBucket: 'rendevoz.appspot.com',
-  messagingSenderId: '596265005202',
-  appId: '1:596265005202:web:f3e1ebe999d8a6bc76f64b',
-  measurementId: 'G-FDEBF02FYJ'
-}
 
 const oldMoved = localStorage.getItem('moved')
 if (!oldMoved) {
   normalizeOldObjectsToNewObjects()
   localStorage.setItem('moved', 'true')
 }
-// Initialize Firebase
-const app = initializeApp(firebaseConfig)
-const analytics = getAnalytics(app)
+
 enableMapSet()
 
 const lang = 'zh-CN'

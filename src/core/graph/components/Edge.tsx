@@ -12,6 +12,7 @@ import { NodeFakeHiddenOpacity } from '../consts/opacity'
 import { oppositeEdgesMapAtom } from '../hooks/useEdges'
 import { useStore } from 'jotai'
 import Colors from '@/consts/colors'
+import FontSize from '@/consts/font'
 interface EdgeProps {
   edge: GraphEdge
 }
@@ -211,7 +212,7 @@ const Edge: FC<EdgeProps> = memo(({ edge }) => {
             strokeWidth={2}
           ></motion.rect>
           <motion.text
-            fontSize={15}
+            fontSize={FontSize['14px']}
             fontWeight={600}
             fontStyle="italic"
             dy="0.1em"

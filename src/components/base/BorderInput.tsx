@@ -14,7 +14,9 @@ type BorderInputProps = {
   style?: CSSProperties
   defaultValue?: string
   textarea?: boolean
+  autoFocus?: boolean
   disable?: boolean
+  spellCheck?: 'false' | 'true'
 } & (
   | ({
       textarea: true
@@ -24,7 +26,18 @@ type BorderInputProps = {
     }
 )
 
-const BorderInput = ({ value, onChange, placeholder, style, defaultValue, textarea, disable, ...rest }: BorderInputProps) => {
+const BorderInput = ({
+  value,
+  onChange,
+  placeholder,
+  style,
+  defaultValue,
+  textarea,
+  autoFocus,
+  spellCheck,
+  disable,
+  ...rest
+}: BorderInputProps) => {
   const [innerValue, setValue] = useState(value || defaultValue || '')
   const showText = innerValue && innerValue !== ''
 
@@ -40,7 +53,7 @@ const BorderInput = ({ value, onChange, placeholder, style, defaultValue, textar
               position: 'absolute',
               left: 16,
               top: 10,
-              fontSize: 12,
+              fontSize: '0.857rem',
               color: Colors.Font.Secondary,
               fontWeight: 600,
               fontFamily: 'Muli',
@@ -53,13 +66,15 @@ const BorderInput = ({ value, onChange, placeholder, style, defaultValue, textar
       </AnimatePresence>
       {textarea ? (
         <AutosizeTextarea
-          placeholder="Discription..."
+          placeholder={placeholder}
           minRows={2}
+          spellCheck={spellCheck}
           {...rest}
-          style={{ resize: 'none' }}
+          style={{ resize: 'none', ...style }}
           className={ClassName.input()}
           defaultValue={defaultValue}
           disabled={disable}
+          autoFocus={autoFocus}
           onKeyDown={e => {
             if (isHotkey(KEY.Enter, e)) {
               e.stopPropagation()
@@ -74,12 +89,14 @@ const BorderInput = ({ value, onChange, placeholder, style, defaultValue, textar
         <input
           style={style}
           defaultValue={defaultValue}
+          spellCheck={spellCheck}
           value={innerValue}
           placeholder={placeholder}
           onChange={e => {
             onChange?.(e.target.value)
             setValue(e.target.value)
           }}
+          autoFocus={autoFocus}
           onKeyDown={e => {
             if (isHotkey(KEY.Enter, e)) {
               e.stopPropagation()

@@ -1,24 +1,23 @@
-import Zindexes from '@/consts/zindex'
 import { MetaStore } from '@/stores'
-import ClassName from '@/styles/classNames'
 import { Position } from '@/types'
 import { compareHotkey } from 'is-hotkey'
 import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { Rnd } from 'react-rnd'
-import { MetaObject } from '~/typings/data'
+import { MetaLink, MetaObject } from '~/typings/data'
 import ObjectForm from '@/components/form/ObjectForm'
 import getSetting from '@/core/setting/getSetting'
-import { GlobalEventEmitter, useEventHandler, useGlobalEventEmitter } from '@/events'
+import { useEventHandler, useGlobalEventEmitter } from '@/events'
 import { useToggle } from '@/hooks'
 import { Modal } from '@/components'
 import { useCreateObject } from '../database'
+import Id from '@/utils/id'
 
 const GlobalCreateObjectInstance: Partial<{
   create: (preObject?: Partial<MetaObject>) => Promise<MetaObject>
 }> = {}
 const GlobalCreateObject = () => {
   const [innerMeta, setInnerMeta] = useState<Partial<MetaObject>>()
+  const [pendingLinks, setPendingLinks] = useState<MetaLink[]>()
   const [panelState, setPanelState] = useState<
     Partial<{
       visible: boolean
@@ -41,12 +40,30 @@ const GlobalCreateObject = () => {
   const { portal, openAtCenter } = useCreateObject({ positions: ['top'] })
   const handler = useEventHandler('global')
   const currentModeRef = useRef<'add' | 'edit'>()
-  handler.on('globalNeedAddMetaObject', ({ currentObject }, res, rej) => {
+  handler.on('globalNeedAddMetaObject', (data, res, rej) => {
     promiseRef.current = {
       res: res || promiseRef.current?.res,
       rej: rej || promiseRef.current?.rej
     }
-    setInnerMeta({ ...currentObject })
+    if (data) {
+      const { fromMetas, currentObject } = data
+      const shouldAddObject = { id: Id.getId(), ...currentObject }
+      MetaStore.addMetaObject(shouldAddObject, true)
+      setInnerMeta(shouldAddObject)
+      if (fromMetas) {
+        const links = fromMetas.map(
+          i =>
+            ({
+              id: Id.getId(),
+              sourceId: i.id,
+              targetId: shouldAddObject.id
+            } as MetaLink)
+        )
+        links.forEach(i => MetaStore.addMetaLink(i, true))
+        setPendingLinks(links)
+      }
+    }
+
     toggleModalVisible(true)
     currentModeRef.current = 'add'
   })
@@ -94,23 +111,45 @@ const GlobalCreateObject = () => {
       document.removeEventListener('keydown', keyDownHandler)
     }
   }, [])
+  useEffect(() => {
+    if (modalVisible === false) {
+      setInnerMeta(undefined)
+    }
+  }, [modalVisible])
   return createPortal(
     <>
       <Modal noStyle visible={modalVisible} onClose={toggleModalVisible}>
         <ObjectForm
+          shouldPreviewGraph={!!pendingLinks?.length}
           initialObject={innerMeta}
           onBack={() => {
             toggleModalVisible(false)
             promiseRef.current?.rej?.(null)
             promiseRef.current = undefined
+            if (currentModeRef.current === 'add') {
+              innerMeta?.id && MetaStore.deleteMetaObject(innerMeta?.id, true, true)
+              pendingLinks?.forEach(i => {
+                if (i.id) {
+                  MetaStore.deleteMetaLink(i.id, true, true)
+                }
+              })
+            }
+            setPendingLinks(undefined)
           }}
           onSubmit={obj => {
-            console.log(obj)
+            setPendingLinks(undefined)
             if (currentModeRef.current === 'add') {
-              MetaStore.addMetaObject(obj).then(obj => {
-                promiseRef.current?.res?.(obj)
-                promiseRef.current = undefined
-              })
+              if (innerMeta?.id) {
+                MetaStore.updateMetaObject(obj).then(obj => {
+                  promiseRef.current?.res?.(obj)
+                  promiseRef.current = undefined
+                })
+              } else {
+                MetaStore.addMetaObject(obj).then(obj => {
+                  promiseRef.current?.res?.(obj)
+                  promiseRef.current = undefined
+                })
+              }
             }
             if (currentModeRef.current === 'edit') {
               MetaStore.updateMetaObject({ ...obj }).then(obj => {
@@ -118,6 +157,7 @@ const GlobalCreateObject = () => {
                 promiseRef.current = undefined
               })
             }
+            setPendingLinks(undefined)
             toggleModalVisible(false)
           }}
         />

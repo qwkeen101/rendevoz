@@ -3,6 +3,7 @@ import Id from '@/utils/id'
 import { Content, Icon, Tooltip } from '@/components'
 import { GlobalDragOverlayInstance } from '@/core'
 import { useFlow } from './hooks'
+import FontSize from '@/consts/font'
 
 const WhiteboardSetting = () => {
   const flow = useFlow()
@@ -12,7 +13,7 @@ const WhiteboardSetting = () => {
       gap={6}
       style={{
         padding: '4px 12px',
-        fontSize: 18,
+        fontSize: FontSize['18px'],
         borderRadius: 999,
         background: 'rgba(0,0,0,0.08)'
       }}
@@ -79,10 +80,9 @@ const DraggingNote = () => (
       display: 'flex',
       alignItems: 'center',
       padding: 40,
-      fontSize: 16,
+      fontSize: FontSize['16px'],
       color: 'rgba(50,59,74)',
-      boxShadow:
-        'rgba(50, 50, 93, 0.25) 0px 30px 60px -12px, rgba(0, 0, 0, 0.3) 0px 18px 36px -18px'
+      boxShadow: 'rgba(50, 50, 93, 0.25) 0px 30px 60px -12px, rgba(0, 0, 0, 0.3) 0px 18px 36px -18px'
     }}
   >
     Drop to add note...

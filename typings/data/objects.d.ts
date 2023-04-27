@@ -30,7 +30,21 @@ export interface IWebpageLabel extends IBase {
   webpageId: number
   highlightId: number
 }
-
+export interface IImage extends IBase {
+  specType: 'image'
+  imageUrl: string
+  ocrResult?: string
+  from?:
+    | {
+        type: 'pdf'
+        pdfId: number
+        pages?: number[]
+      }
+    | {
+        type: 'note'
+        noteId: number
+      }
+}
 export interface INoteBlock extends IBase {
   blockId: number
   noteId: number

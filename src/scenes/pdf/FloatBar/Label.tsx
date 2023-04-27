@@ -11,6 +11,7 @@ import { toast } from 'react-hot-toast'
 import { IHighlightLabel, IPdfDocument } from '~/typings/data'
 import { usePdfViewer, ID_TO_LABEL_MAP } from '@/core'
 import { selectAtom } from 'jotai/utils'
+import FontSize from '@/consts/font'
 
 const PdfLabels = ({ flipId, document }: { flipId: string; document?: IPdfDocument }) => {
   const store = ObjectStore('pdfLabel')
@@ -96,7 +97,7 @@ const PdfLabels = ({ flipId, document }: { flipId: string; document?: IPdfDocume
                     </Tooltip>
                   </div>
                 </Content>
-                <div className={ClassName.ellipsisFont(3)} style={{ fontSize: 14 }}>
+                <div className={ClassName.ellipsisFont(3)} style={{ fontSize: FontSize['14px'] }}>
                   {i.selectedText}
                 </div>
               </div>

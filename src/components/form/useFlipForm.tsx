@@ -15,6 +15,9 @@ import FormIconPicker from './FormIconPicker'
 import FormImagePicker from './FormImagePicker'
 import FormTagPicker from './FormTagPicker'
 import Colors from '@/consts/colors'
+import { useToggle } from '@/hooks'
+import { MetaObject } from '~/typings'
+import FormFromDisplayer from './FormFromDisplayer'
 
 type useFlipFormOptions = {
   layout: FlipFormLayoutItem[]
@@ -80,6 +83,10 @@ export type FlipFormLayoutItem =
       type: 'custom'
       children: ReactNode
     }
+  | {
+      type: 'fromDisplayer'
+      object: Partial<MetaObject>
+    }
   | undefined
 interface FormInnerState {
   mainVisible: boolean
@@ -87,14 +94,21 @@ interface FormInnerState {
   iconPickerVisible: boolean
   colorPickerVisible: boolean
 }
-const groupClassName = css({
+export const groupClassName = css({
   boxShadow: `${Colors.Background.ButtonHover} 0px 0px 0px 1px inset`,
   borderRadius: 6,
   padding: 8,
-  fontSize: 13,
   background: 'rgba(31,34,37,0.03)',
-  fontWeight: 500,
-  fontFamily: 'Muli'
+  position: 'relative'
+})
+
+export const hoverLabelClassName = css({
+  position: 'absolute',
+  top: -10,
+  left: 10,
+  fontWeight: 600,
+  fontFamily: 'Muli',
+  fontSize: '0.857rem'
 })
 const useFlipForm = (options: useFlipFormOptions) => {
   const { layout, onBack, onSubmit, formTitle, containerStyle, submitText } = options
@@ -106,6 +120,7 @@ const useFlipForm = (options: useFlipFormOptions) => {
   const tagPickerFlipId = useMemo(() => Id.getStrId(), [])
   const colorPickerFlipId = useMemo(() => Id.getStrId(), [])
   const iconPickerFlipId = useMemo(() => Id.getStrId(), [])
+  const [enlarged, toggleEnlarged] = useToggle(false)
   const { t } = useTranslation()
   const flattenedLayout = useMemo(
     () =>
@@ -128,9 +143,29 @@ const useFlipForm = (options: useFlipFormOptions) => {
       case 'input':
         return <Form.Item text={capitalize(i.text)} disable={i.disabled} type="input" value={i.value} onChange={i.onChange} />
       case 'nameInput':
-        return <Form.Item text={capitalize(t('general.name'))} disable={i.disabled} type="input" value={i.value} onChange={i.onChange} />
+        return (
+          <Form.Item
+            autoFocus
+            text={capitalize(t('general.name'))}
+            disable={i.disabled}
+            type="input"
+            style={{ fontSize: enlarged ? '1rem' : undefined }}
+            value={i.value}
+            onChange={i.onChange}
+          />
+        )
       case 'descriptionInput':
-        return <Form.Item text={capitalize(t('general.description'))} type="textarea" maxRows={10} value={i.value} onChange={i.onChange} />
+        return (
+          <Form.Item
+            text={capitalize(t('general.description'))}
+            minRows={enlarged ? 10 : undefined}
+            style={{ fontSize: enlarged ? '1rem' : undefined }}
+            type="textarea"
+            maxRows={enlarged ? 18 : 10}
+            value={i.value}
+            onChange={i.onChange}
+          />
+        )
       case 'tagPicker':
         return (
           <Content
@@ -198,28 +233,8 @@ const useFlipForm = (options: useFlipFormOptions) => {
       case 'tagDisplayer': {
         if (i.tags && i.tags.length > 0) {
           return (
-            <div
-              style={{
-                position: 'relative',
-                boxShadow: 'rgb(31 34 37 / 6%) 0px 0px 0px 1px inset',
-                background: 'rgba(31,34,37,0.03)',
-                padding: '12px 8px',
-                borderRadius: 6
-              }}
-            >
-              <div
-                style={{
-                  position: 'absolute',
-                  top: -10,
-                  left: 10,
-                  fontWeight: 600,
-                  fontFamily: 'Muli',
-                  fontSize: 12,
-                  textTransform: 'capitalize'
-                }}
-              >
-                {t('general.tags')}
-              </div>
+            <div className={groupClassName}>
+              <div className={hoverLabelClassName}>{t('general.tags')}</div>
               <Content flex gap={4} style={{ flexWrap: 'wrap' }}>
                 {i.tags.map(i => (
                   <ObjectTag key={i} hideSize small tag={i} />
@@ -229,6 +244,9 @@ const useFlipForm = (options: useFlipFormOptions) => {
           )
         }
         break
+      }
+      case 'fromDisplayer': {
+        return <FormFromDisplayer initialObject={i.object} />
       }
       case 'colorPicker':
         return (
@@ -267,7 +285,14 @@ const useFlipForm = (options: useFlipFormOptions) => {
       onSubmit={onSubmit}
       onBack={onBack}
       title={formTitle || 'Untitled Form'}
-      style={{ minWidth: 320, ...containerStyle }}
+      extra={
+        <Icon
+          onClick={toggleEnlarged}
+          name={enlarged ? 'park-collapse-text-input' : 'park-expand-text-input'}
+          className={ClassName.circleButton()}
+        />
+      }
+      style={{ minWidth: enlarged ? '80vw' : 320, justifyContent: 'space-between', ...containerStyle }}
     >
       {layout.map((i, idx) => (
         <Fragment key={idx}>{renderMainItem(i)}</Fragment>
@@ -342,7 +367,7 @@ const useFlipForm = (options: useFlipFormOptions) => {
           animateFlippedElements()
           animateEnteringElements()
         }}
-        flipKey={JSON.stringify(formInnerState)}
+        flipKey={`${JSON.stringify(formInnerState)}_${enlarged}`}
         spring={{ stiffness: 1600, damping: 100 }}
       >
         <Flipped flipId={mainFlipId}>

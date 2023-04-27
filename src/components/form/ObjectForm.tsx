@@ -8,6 +8,8 @@ import useFlipForm from './useFlipForm'
 import { ObjectStore } from '@/stores'
 import { ObjectFamily } from '@/stores/object.store'
 import { useGlobalAtomValue } from '@/hooks'
+import OcrService from '@/services/ocr.service'
+import ClassName from '@/styles/classNames'
 
 const ObjectForm: FC<
   IForm<MetaObject> & {
@@ -60,9 +62,34 @@ const ObjectForm: FC<
         type: 'tagDisplayer',
         tags: object.tags
       },
+      initialObject?.type
+        ? {
+            type: 'fromDisplayer',
+            object: initialObject
+          }
+        : undefined,
       {
         type: 'group',
         children: [
+          initialObject?.type === 'image' && initialObject?.coverImgSrc
+            ? {
+                type: 'custom',
+                children: (
+                  <div
+                    className={ClassName.flatButton()}
+                    onClick={async () => {
+                      const fileUrl = initialObject.coverImgSrc?.replace('rendefile', 'file')!
+                      const image = await fetch(fileUrl).then(res => res.blob())
+                      const result = await OcrService.ocrImage(image)
+                      const desc = result?.result.map(i => i.words).join(' ')
+                      setObject(s => ({ ...s, description: desc }))
+                    }}
+                  >
+                    OCR Image
+                  </div>
+                )
+              }
+            : undefined,
           shouldPreviewGraph
             ? {
                 type: 'previewGraph',

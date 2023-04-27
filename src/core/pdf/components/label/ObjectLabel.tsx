@@ -8,6 +8,7 @@ import { memo, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { Rnd } from 'react-rnd'
 import { IObjectLabel } from '~/typings/data'
 import Colors from '@/consts/colors'
+import FontSize from '@/consts/font'
 
 const ObjectLabel = ({ labelId, pageSize }: { labelId: number; pageSize: PageSize }) => {
   const label = ObjectStore('pdfLabel').useValue(labelId) as IObjectLabel
@@ -118,14 +119,14 @@ const ObjectLabel = ({ labelId, pageSize }: { labelId: number; pageSize: PageSiz
               titleOptions: {
                 ellipsisLine: 1,
                 style: {
-                  fontSize: 14,
+                  fontSize: FontSize['14px'],
                   cursor: 'pointer'
                 }
               },
               descriptionOptions: {
                 ellipsisLine: 2,
                 style: {
-                  fontSize: 13
+                  fontSize: FontSize['13px']
                 }
               },
               containerStyle: {

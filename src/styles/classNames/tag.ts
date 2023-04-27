@@ -1,5 +1,6 @@
 import { css } from '@emotion/css'
 import ClassName from '.'
+import FontSize from '@/consts/font'
 
 export const TagBackgrounds = {
   blue: 'rgba(228,239,254,1)',
@@ -7,7 +8,12 @@ export const TagBackgrounds = {
   grey: 'rgba(0,0,0,0.07)',
   transparent: 'rgba(255,255,255,0.6)'
 }
-export const tag = (background = TagBackgrounds.transparent, color = 'rgb(120,53,15)', backdropFilter?: string, fontSize = '10px') =>
+export const tag = (
+  background = TagBackgrounds.transparent,
+  color = 'rgb(120,53,15)',
+  backdropFilter?: string,
+  fontSize = FontSize['11px']
+) =>
   css([
     {
       background,

@@ -1,13 +1,14 @@
-import { FC, useRef, useState } from 'react'
+import { FC, useEffect, useRef, useState } from 'react'
 import styles from './index.module.less'
 import Navigation from './Navigation'
 import { Rnd } from 'react-rnd'
 import { delay } from 'lodash'
 import useSidebarWidth from '@/hooks/components/useSidebarWidth'
 import Icon from '@/components/base/Icon'
-import { GlobalInstances, LayoutIdToTabMap } from '..'
+import { LayoutIdToTabMap } from '..'
 import classNames from 'classnames'
 import ClassName from '@/styles/classNames'
+import { getOS } from '@/App'
 
 export const Sidebar: FC = () => {
   const navRef = useRef<HTMLElement>(null)
@@ -17,15 +18,27 @@ export const Sidebar: FC = () => {
   const [widthTransition, setWidthTransition] = useState(false)
   const [isResizing, setIsResizing] = useState(false)
   const [, setSidebarWidth] = useSidebarWidth()
+  useEffect(() => {
+    const os = getOS()
+    if(os === 'macos' && collapsed){
+      const macosPlaceholder = document.getElementById("macos-placeholder")
+      if(macosPlaceholder){
+        macosPlaceholder.style.setProperty('display', 'block')
+        return () => {
+          macosPlaceholder.style.setProperty('display', 'none')
+        }
+      }
+    }
+  },[collapsed])
   return (
     <div
-      onClick={() => console.log(LayoutIdToTabMap)}
       tabIndex={-1}
       onMouseLeave={() => {
         if (!isResizing) setHovered(false)
       }}
     >
       <Rnd
+        id="global-sidebar"
         data-hovered={hovered}
         data-collapsed={collapsed}
         data-width-transition={widthTransition}
@@ -62,7 +75,7 @@ export const Sidebar: FC = () => {
           if (ele.clientWidth <= 200) {
             if (ele.clientWidth === 20) {
               rndRef.current?.updateSize({ width: 240, height: '100vh' })
-              setSidebarWidth(10)
+              setSidebarWidth(0)
             } else {
               setWidthTransition(true)
               delay(() => {
@@ -121,7 +134,7 @@ export const Sidebar: FC = () => {
               } else {
                 setHovered(false)
                 setCollapsed(true)
-                setSidebarWidth(10)
+                setSidebarWidth(0)
               }
             }}
             className={styles.toggleOpen}

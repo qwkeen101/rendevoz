@@ -25,6 +25,7 @@ interface Props {
   onClick?: MouseEventHandler
   tooltipPosition?: 'top' | 'bottom'
   closeOnContentClick?: boolean
+  contentDraggable?: boolean
 }
 const IconWithPopover: FC<Props> = (
   {
@@ -40,6 +41,7 @@ const IconWithPopover: FC<Props> = (
     innerRef,
     padding = 20,
     parentElement,
+    contentDraggable,
     disableNudge,
     tooltip,
     boundaryInset = 40,
@@ -86,6 +88,7 @@ const IconWithPopover: FC<Props> = (
             }, 0)
           }
         }}
+        contentDraggable={contentDraggable}
         containerStyle={zIndex ? { zIndex: zIndex?.toString() } : undefined}
         parentElement={parentElement || containerRef.current || document.body}
         boundaryElement={document.body}

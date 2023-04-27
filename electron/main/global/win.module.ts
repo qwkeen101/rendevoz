@@ -7,6 +7,7 @@ import HttpsProxyAgent from 'https-proxy-agent'
 import { autoUpdater } from 'electron-updater'
 import * as child_process from 'child_process'
 import { DEFAULT_USER_DATA_PATH } from '../app.controller'
+import fs from 'fs'
 process.env.ELECTRON_DISABLE_SECURITY_WARNINGS = 'true'
 process.env.DIST_ELECTRON = join(__dirname, '../..')
 process.env.DIST = join(process.env.DIST_ELECTRON, '../../dist')
@@ -20,13 +21,13 @@ process.env.PUBLIC = app.isPackaged ? process.env.DIST : join(process.env.DIST_E
         const preload = join(__dirname, '../../preload/index.js')
         const url = process.env.VITE_DEV_SERVER_URL
         const indexHtml = join(process.env.DIST, 'index.html')
-        const windowsSearchEngine = 'meilisearch-windows.exe'
-        const macSearchEngine = './meilisearch-macos'
-        const searchEngineDataPath = join(DEFAULT_USER_DATA_PATH, 'rendevoz', 'data.ms')
+        const windowsSearchEngine = join(process.env.PUBLIC, 'meilisearch-windows.exe')
+        const macSearchEngine = join(process.env.PUBLIC, 'meilisearch-macos')
         const searchEngine = process.platform === 'win32' ? windowsSearchEngine : macSearchEngine
-
-        const search = child_process.exec(`cd ${process.env.PUBLIC} && ${searchEngine} --db-path=${searchEngineDataPath}`)
-
+        const searchEngineDataPath = join(DEFAULT_USER_DATA_PATH, 'rendevoz', 'data.ms')
+        const searcheEngineStartPath = join(DEFAULT_USER_DATA_PATH, 'rendevoz', 'search')
+        fs.copyFileSync(searchEngine, searcheEngineStartPath)
+        fs.chmodSync(searcheEngineStartPath, '744')
         autoUpdater.autoDownload = false
         autoUpdater.autoInstallOnAppQuit = false
         autoUpdater.autoRunAppAfterInstall = false
@@ -96,8 +97,31 @@ process.env.PUBLIC = app.isPackaged ? process.env.DIST : join(process.env.DIST_E
             webviewTag: true
           },
           autoHideMenuBar: true,
-          titleBarStyle: 'hidden'
+          titleBarStyle: 'hidden',
+          trafficLightPosition: {
+            x: 10,
+            y: 8
+          }
         })
+        // const search = child_process.spawn(searcheEngineStartPath, [`--db-path=${searchEngineDataPath}`],{
+        //   shell: true
+        // }
+        // )
+
+        const search = child_process.exec(`cd ${process.env.HOME} && ${searcheEngineStartPath} --db-path=${searchEngineDataPath}`,(err,rr,r)=>{
+          win.webContents.send('search', {
+            err,
+            rr,
+            r
+          })
+        })
+        // const search = child_process.execFile(searcheEngineStartPath, [`--db-path=${searchEngineDataPath}`],(err,rr,r)=>{
+        //   win.webContents.send('search', {
+        //     err,
+        //     rr,
+        //     r
+        //   })
+        // })
 
         win.on('maximize', () => {
           win.webContents.send('winMaximized')
@@ -147,9 +171,6 @@ process.env.PUBLIC = app.isPackaged ? process.env.DIST : join(process.env.DIST_E
           win.loadURL(url)
           // win.webContents.openDevTools()
         }
-        win.webContents.openDevTools()
-        // if (isDev) win.webContents.openDevTools()
-        // else win.removeMenu()
 
         win.on('closed', () => {
           win.destroy()

@@ -19,7 +19,7 @@ const ErrorFallback = ({ error }) => {
       />
       <div
         className={css({
-          fontSize: 30,
+          fontSize: '2rem',
           color: primaryColor,
           fontWeight: 500,
           marginBottom: 20
@@ -29,14 +29,14 @@ const ErrorFallback = ({ error }) => {
       </div>
       <p
         className={css({
-          fontSize: 16
+          fontSize: '1rem'
         })}
       >
         Error Message: {error.message || 'Unknown error'}
       </p>
       <p
         className={css({
-          fontSize: 13,
+          fontSize: '0.928rem',
           marginBottom: 20
         })}
       >

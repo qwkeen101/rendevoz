@@ -19,6 +19,7 @@ import AuthenticatedLayout from './components/base/authenticatedLayout'
 import '@/core/pdf/core/types/pdf.min.js'
 import PdfJsUrl from '@/assets/pdf.worker.min.js?url'
 import ThemeSwitcher from './ThemeSwitcher'
+import GlobalImagePreviewer from './core/global/GlobalImagePreviewer'
 
 export function getOS() {
   const userAgent = window.navigator.userAgent.toLowerCase(),
@@ -68,6 +69,7 @@ const App = () => {
           <GlobalCreateObject />
           <AuthenticatedLayout />
           <GlobalDragOverlay />
+          <GlobalImagePreviewer />
           <svg style={{ position: 'absolute', width: 0, height: 0, overflow: 'hidden' }}>
             <SvgMarker />
           </svg>

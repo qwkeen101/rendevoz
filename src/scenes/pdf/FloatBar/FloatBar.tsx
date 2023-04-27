@@ -12,6 +12,7 @@ import PdfLabels from './Label'
 import { IPdfDocument } from '~/typings/data'
 import { usePdfViewer } from '@/core'
 import Colors from '@/consts/colors'
+import FontSize from '@/consts/font'
 const PdfFloatBar = ({ document }: { document?: IPdfDocument }) => {
   const viewer = usePdfViewer()
   const id = useMemo(() => Id.getStrId(), [])
@@ -130,7 +131,7 @@ const PdfFloatBar = ({ document }: { document?: IPdfDocument }) => {
                 background: Colors.Background.Linear,
                 padding: 4,
                 opacity: 0.4,
-                fontSize: 20,
+                fontSize: FontSize['20px'],
                 zIndex: 10,
                 display: 'flex',
                 flexDirection: 'column',

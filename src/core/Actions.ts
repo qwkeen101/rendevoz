@@ -6,9 +6,8 @@ import { IPdfViewer } from '~/typings'
 import { globalStore, MetaStore, ObjectStore } from '../stores'
 import { metaObjectsAtom, objectIdToMetaObjectIdMapAtom } from '../stores/meta.store'
 import { TextItem } from 'pdfjs-dist/types/src/display/api'
-import usePdfjs from '@/hooks/utils/usePdfjs'
 import { getIndexesOfMatchStr } from '@/utils/str'
-import { goToBlock, waitForEditorContentInitialized } from './editor/utils/blockActions'
+import { goToBlock, selectBlock, waitForEditorContentInitialized } from './editor/utils/blockActions'
 import { goToTextHighlight } from './editor/utils'
 
 const navigateToTargetObject = async (metaObjectId: number) => {
@@ -31,6 +30,7 @@ const navigateToTargetObject = async (metaObjectId: number) => {
     case 'pdfLabel':
     case 'noteLabel':
     case 'noteBlock':
+    case 'image':
     case 'whiteboard': {
       const one = await ObjectStore(metaObject.type).getOneById(objectId)
       if (!one) {
@@ -69,6 +69,8 @@ const navigateToTargetObject = async (metaObjectId: number) => {
       return goToWebpageLabel(objectId)
     case 'noteLabel':
       return goToNoteLabel(objectId)
+    case 'image':
+      return openImage(objectId)
   }
 }
 
@@ -108,7 +110,8 @@ const goToNoteBlock = async (blockId: number) => {
   if (block) {
     updateViewAt(blockId)
     const editor = await openEditor(block.noteId)
-    goToBlock(blockId, editor)
+    await goToBlock(blockId, editor)
+    selectBlock(blockId, editor)
   }
 }
 
@@ -134,6 +137,17 @@ const openPdf = (pdfId: number): Promise<IPdfViewer> => {
       onViewerInitialized: viewer => res(viewer)
     })
     updateViewAt(pdfId)
+  })
+}
+const openImage = (imageId: number) => {
+  return new Promise(res => {
+    console.log('asdsad, image', imageId)
+    GlobalLayout?.addTab({
+      type: 'image',
+      imageId
+    })
+    updateViewAt(imageId)
+    res(null)
   })
 }
 const goToPdfPage = async (page: number, pdfId: number) => {
@@ -333,7 +347,8 @@ const Actions = {
   goToPdfPage,
   goToPdfSearchedText,
   goToPdfSearchPositions,
-  goToNoteLabel
+  goToNoteLabel,
+  openImage
 }
 
 export default Actions

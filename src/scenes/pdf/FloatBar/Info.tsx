@@ -10,6 +10,7 @@ import { useAtomValue } from 'jotai/react'
 import { memo, useMemo } from 'react'
 import { Flipped } from 'react-flip-toolkit'
 import { IPdfDocument } from '~/typings/data'
+import FontSize from '@/consts/font'
 
 const PdfInfo = ({ flipId, document }: { flipId: string; document?: IPdfDocument }) => {
   const duration = intervalToDuration({ start: 0, end: (document?.totalReadTime || 1000) * 1000 })
@@ -28,7 +29,7 @@ const PdfInfo = ({ flipId, document }: { flipId: string; document?: IPdfDocument
   const relatedSize = pdfMeta?.id ? related.get(pdfMeta?.id)?.size : 0
   return (
     <Flipped inverseFlipId={flipId}>
-      <div style={{ width: 300, padding: 7, fontFamily: 'Muli', fontSize: 13 }}>
+      <div style={{ width: 300, padding: 7, fontFamily: 'Muli', fontSize: FontSize['13px'] }}>
         <div style={{ lineHeight: 1 }} className={ClassName.title()}>
           Document Info
         </div>
@@ -73,7 +74,7 @@ const PdfInfo = ({ flipId, document }: { flipId: string; document?: IPdfDocument
         <div className={ClassName.description()} style={{ textTransform: 'uppercase', padding: '12px 0px 8px', fontWeight: 600 }}>
           actions
         </div>
-        <div style={{ margin: '0px -8px', fontSize: 14 }}>
+        <div style={{ margin: '0px -8px', fontSize: FontSize['14px'] }}>
           {pdfMeta && (
             <Content onClick={() => GlobalGraphInstance?.open(pdfMeta)} flex gap={8} className={ClassName.flatButton()}>
               <Icon name="park-share-one" />

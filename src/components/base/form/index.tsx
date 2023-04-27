@@ -20,11 +20,12 @@ interface FormProps {
   style?: CSSProperties
   submitText?: string
   backText?: string
+  extra?: React.ReactNode
 }
 interface IForm extends FC<FormProps> {
   Item: typeof FormItem
 }
-const InnerForm: FC<FormProps> = ({ children, title, description, onBack, onSubmit, style, backText, submitText }) => {
+const InnerForm: FC<FormProps> = ({ children, title, description, onBack, onSubmit, style, backText, submitText, extra }) => {
   const [, setIsSubmitted] = useIsSubmitted()
   const [canSubmit] = useCanSubmit()
   useEffect(() => {
@@ -51,12 +52,14 @@ const InnerForm: FC<FormProps> = ({ children, title, description, onBack, onSubm
       style={style}
     >
       <Content flex column gap={16}>
-        <div
-          className={ClassName.title('14px')}
-          style={{ paddingBottom: 8, textTransform: 'capitalize', borderBottom: '1px solid rgba(31,34,37,0.06)' }}
-        >
-          {title}
-        </div>
+        <Content flex alignItems='center' justifyContent='space-between' style={{ borderBottom: '1px solid rgba(31,34,37,0.06)', paddingBottom: 8 }}>
+          <div
+            className={ClassName.title('14px')}
+          >
+            {title}
+          </div>
+          {extra}
+        </Content>
         {description && <div className={styles.description}>{description}</div>}
         {children}
       </Content>

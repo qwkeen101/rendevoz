@@ -1,3 +1,4 @@
+import FontSize from '@/consts/font'
 import getEmoji from '@/utils/emoji'
 import { FC, useMemo } from 'react'
 import { RenderElementProps } from 'slate-react'
@@ -13,7 +14,7 @@ const Emoji: FC<RenderElementProps> = ({ element, children, attributes }) => {
     </span>
   )
   return (
-    <span {...attributes} style={{ margin: '0 0.1em', fontSize: element?.fontSize ? element.fontSize : '16px' }}>
+    <span {...attributes} style={{ margin: '0 0.1em', fontSize: element?.fontSize ? element.fontSize : FontSize['16px'] }}>
       <InlineChromiumBugfix />
       {emoji && (
         <img

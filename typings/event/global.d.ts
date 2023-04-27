@@ -37,6 +37,7 @@ type GlobalDragPointerMoveEvent = {
 }
 type GlobalNeedAddMetaObjectEvent = {
   currentObject: Partial<MetaObject>
+  fromMetas?: MetaObject[]
 }
 type GlobalNeedEditMetaObjectEvent = {
   metaObjectId: number

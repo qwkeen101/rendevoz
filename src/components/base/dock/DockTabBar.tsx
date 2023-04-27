@@ -37,16 +37,25 @@ export const DockTabBar = memo((props: DockTabBarProps) => {
   const navs = TabNavList.navs
   const currentMoveTabId = useRef<string>()
   const [isTopRight, setIsTopRight] = useState(false)
+  const [isTopLeft, setIsTopLeft] = useState(false)
   useLayoutEffect(() => {
     const bar = ref.current
     const bounding = bar?.getBoundingClientRect()
     if (bounding) {
-      const { top, right } = bounding
+      const { top, right, left } = bounding
       const windowWidth = window.innerWidth
       if (Math.abs(right - windowWidth) < 10 && top < 10) {
         setIsTopRight(true)
       } else {
         setIsTopRight(false)
+      }
+
+      const globalSidebar = document.getElementById("global-sidebar")
+      const sidebarWidth = globalSidebar?.getBoundingClientRect().width || 0
+      if(left - sidebarWidth < 10 && top < 10){
+        setIsTopLeft(true)
+      }else{
+        setIsTopLeft(false)
       }
     }
   })
@@ -59,6 +68,12 @@ export const DockTabBar = memo((props: DockTabBarProps) => {
       getRef={getRef}
       tabIndex={-1}
     >
+      <div style={{
+        display: 'none',
+        width: '80px',
+        height: '100%',
+        background: 'rgba(0,0,0,0.07)'
+      }} id={isTopLeft && os === 'macos' ? 'macos-placeholder' : undefined}></div>
       <Reorder.Group
         onReorder={r => {
           const currIndex = r.findIndex(i => i.key === currentMoveTabId.current)

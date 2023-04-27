@@ -20,6 +20,7 @@ export interface AnimatePopoverProps extends Omit<PopoverProps, 'content' | 'isO
   backdropFilter?: boolean
   position?: Position
   children?: ReactNode
+  contentDraggable?: boolean
 }
 
 const AnimatePopover: FC<PropsWithChildren<AnimatePopoverProps>> = ({
@@ -33,6 +34,7 @@ const AnimatePopover: FC<PropsWithChildren<AnimatePopoverProps>> = ({
   position,
   parentElement = document.body,
   innerRef,
+  contentDraggable,
   containerStyle = {
     borderRadius: '8px',
     zIndex: String(Zindexes.PopupMenu)
@@ -121,7 +123,10 @@ const AnimatePopover: FC<PropsWithChildren<AnimatePopoverProps>> = ({
 
             const { left, top } = nudgedRef.current || { left: undefined, top: undefined }
             return (
-              <div
+              <motion.div
+                drag={contentDraggable}
+                dragElastic={0}
+                dragMomentum={false}
                 style={{
                   position: 'relative',
                   left: left,
@@ -150,7 +155,7 @@ const AnimatePopover: FC<PropsWithChildren<AnimatePopoverProps>> = ({
                     </>
                   )}
                 </AnimatePresence>
-              </div>
+              </motion.div>
             )
           }}
         >
@@ -176,7 +181,10 @@ const AnimatePopover: FC<PropsWithChildren<AnimatePopoverProps>> = ({
 
           const { left, top } = nudgedRef.current || { left: undefined, top: undefined }
           return (
-            <div
+            <motion.div
+              dragElastic={0}
+              dragMomentum={false}
+              drag={contentDraggable}
               style={{
                 position: 'relative',
                 left: left,
@@ -204,7 +212,7 @@ const AnimatePopover: FC<PropsWithChildren<AnimatePopoverProps>> = ({
                   </>
                 )}
               </AnimatePresence>
-            </div>
+            </motion.div>
           )
         }}
       >

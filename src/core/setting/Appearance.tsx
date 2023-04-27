@@ -66,7 +66,7 @@ const AppearanceSetting = () => {
               }}
             />
           </Content>
-          <div className={ClassName.description('14px')}>
+          <div className={ClassName.description('1rem')}>
             {t('settings.background opacity')}: {setting.background.backgroundOpacity || 0}
           </div>
           <Slider
@@ -99,7 +99,7 @@ const AppearanceSetting = () => {
             min={0}
             max={1}
           ></Slider>
-          <div className={ClassName.description('14px')}>
+          <div className={ClassName.description('1rem')}>
             {t('settings.background blur')}: {setting.background.backgroundBlur || 0}
           </div>
           <Slider

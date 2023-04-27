@@ -16,6 +16,7 @@ import useSidebarItemDrag from '../useSidebarItemDrag'
 import { ISidebarItem } from './type'
 import SidebarObjectItem from './SidebarObjectItem'
 import { metaObjectsAtom } from '@/stores/meta.store'
+import FontSize from '@/consts/font'
 
 const SidebarCollectionItem: FC<ISidebarItem> = memo(({ id, parentId, parentType, draggable = true }) => {
   const { updateCollection, deleteCollection } = useCollectionStore()
@@ -110,7 +111,7 @@ const SidebarCollectionItem: FC<ISidebarItem> = memo(({ id, parentId, parentType
         content={
           <div
             style={{
-              fontSize: 12,
+              fontSize: FontSize['12px'],
               background: 'rgba(0,0,0,0.8)',
               color: 'white',
               borderRadius: 4,

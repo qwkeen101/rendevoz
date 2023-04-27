@@ -10,6 +10,7 @@ import Colors from '@/consts/colors'
 import { defaultBgColor } from '@/components/picker/colorPicker'
 import isHotkey from 'is-hotkey'
 import { KEY } from '@/consts'
+import FontSize from '@/consts/font'
 
 const Tag = ({
   tag,
@@ -76,7 +77,7 @@ const Tag = ({
         fontFamily: 'Muli',
         width: 'fit-content',
         justifyContent: 'space-between',
-        fontSize: small ? 12 : 14,
+        fontSize: small ? FontSize['12px'] : FontSize['14px'],
         cursor,
         whiteSpace: 'nowrap',
         ...style

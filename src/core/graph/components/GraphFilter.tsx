@@ -134,7 +134,7 @@ const GraphFilter = () => {
             }}
             className={graphFilterTitleClassName}
           >
-            <div className={ClassName.title('14px')}>Graph Filter</div>
+            <div className={ClassName.title('1rem')}>Graph Filter</div>
             <div className={ClassName.description()}>Total Nodes: {graphVisibleNodesIds.length}</div>
           </div>
           <Content

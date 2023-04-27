@@ -18,6 +18,7 @@ import { globalStore } from '@/stores'
 import { atom } from 'jotai'
 import { getIcon } from '@/components/layout/sidebar/items/SidebarObjectItem'
 import Colors from '@/consts/colors'
+import FromRenderer from './FromRenderer'
 
 const useRenderObject = (options: { metaObjectId: number }) => {
   const { metaObjectId } = options
@@ -48,7 +49,7 @@ const useRenderObject = (options: { metaObjectId: number }) => {
     showViewAt,
     containerClassName = css({
       '> *': {
-        fontSize: '10px !important'
+        fontSize: '11px !important'
       }
     })
   }: {
@@ -107,7 +108,7 @@ const useRenderObject = (options: { metaObjectId: number }) => {
   }
 
   const renderTitle = ({
-    ellipsisLine,
+    ellipsisLine = 2,
     titleClassName = css([
       ellipsisLine ? ClassName.ellipsisFont(ellipsisLine) : undefined,
       ClassName.title('16px'),
@@ -138,8 +139,8 @@ const useRenderObject = (options: { metaObjectId: number }) => {
   }
 
   const renderDescription = ({
-    ellipsisLine,
-    descriptionClassName = css([ClassName.description('14px'), ellipsisLine ? ClassName.ellipsisFont(ellipsisLine) : undefined]),
+    ellipsisLine = 4,
+    descriptionClassName = css([ClassName.description('1rem'), ellipsisLine ? ClassName.ellipsisFont(ellipsisLine) : undefined]),
     style
   }: {
     descriptionClassName?: string
@@ -171,6 +172,7 @@ const useRenderObject = (options: { metaObjectId: number }) => {
     if (metaObject?.coverImgSrc) {
       return (
         <Image
+          preview
           draggable={false}
           style={{
             borderRadius,
@@ -321,7 +323,7 @@ const useRenderObject = (options: { metaObjectId: number }) => {
         </Content>
       )
     }
-    return null
+    return <FromRenderer metaObject={metaObject} />
   }
 
   const renderColumnImageWhole = (options?: Parameters<typeof renderWhole>[0]) => {

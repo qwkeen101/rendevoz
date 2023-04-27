@@ -24,7 +24,7 @@ export const goToBlock = async (blockId: number, editor: CustomEditor) => {
       return
     }
     const outermostBlock = Editor.node(editor, [path[0]])[0]
-    console.log(outermostBlock)
+
     if ((outermostBlock as CustomElement).hide) {
       const { leftIndex, rightIndex } = findNearHidenBlocks(path[0], editor.children as CustomElement[])
       Transforms.setNodes(
@@ -49,7 +49,7 @@ export const goToBlock = async (blockId: number, editor: CustomEditor) => {
       const visibleBlocks = editor.children.filter(i => !(i as CustomElement).hide)
       const blockIndex = visibleBlocks.findIndex(i => (i as CustomElement).id === outermostBlock.id)
       editor.virtualizer.scrollToIndex(blockIndex, { align: 'start' })
-      console.log(blockIndex)
+
       alignBlockAtCenter(outermostBlock.id, editor).then(() => res(null))
     })
   })

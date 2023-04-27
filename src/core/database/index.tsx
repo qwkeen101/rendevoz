@@ -16,7 +16,7 @@ import DatabaseListItem from './ListItem'
 import Select from '@/components/base/select'
 import { useTranslation } from 'react-i18next'
 import Colors from '@/consts/colors'
-
+import Masonry, { ResponsiveMasonry } from 'react-responsive-masonry'
 export const Database = () => {
   const undeletedMetaObjects = useAtomValue(undeletedMetaObjectsAtom, { store: globalStore })
   const [paginateState, setPaginateState] = useState<{
@@ -101,20 +101,13 @@ export const Database = () => {
       case 'detail card':
         return (
           <Flipper spring="stiff" flipKey={`${displayObjects[displayObjects.length - 1]?.id}_${displayObjects.length}`}>
-            <div
-              className={css({
-                display: 'grid',
-                gridGap: 35,
-                gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
-                transition: 'all 0.2s ease',
-                width: '100%',
-                gridAutoFlow: 'dense'
-              })}
-            >
-              {paginateObjects.map((i, idx) => (
-                <DatabaseCard key={i.id} index={idx} metaObject={i} />
-              ))}
-            </div>
+            <ResponsiveMasonry columnsCountBreakPoints={{ 350: 1, 750: 2, 900: 3, 1200: 4, 1500: 5 }}>
+              <Masonry gutter="35px">
+                {paginateObjects.map((i, idx) => (
+                  <DatabaseCard key={i.id} index={idx} metaObject={i} />
+                ))}
+              </Masonry>
+            </ResponsiveMasonry>
           </Flipper>
         )
       case 'detail list':
@@ -198,7 +191,7 @@ export const Database = () => {
               closeOnSelect
               onSelect={v => {
                 setDatabaseState({
-                  renderMode: v[0] as typeof databaseState['renderMode']
+                  renderMode: v[0] as (typeof databaseState)['renderMode']
                 })
               }}
               options={[

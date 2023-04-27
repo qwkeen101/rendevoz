@@ -5,6 +5,7 @@ import { atomFamily, selectAtom } from 'jotai/utils'
 import { useMemo } from 'react'
 import {
   IAudio,
+  IImage,
   ILabel,
   INote,
   INoteBlock,
@@ -39,6 +40,7 @@ export type ObjectFamily = {
   whiteboard: { specType: 'whiteboard' } & IWhiteboard
   pdfLabel: ILabel & { specType: 'pdfLabel' }
   tag: ITag & { specType: 'tag' }
+  image: IImage
 }
 
 export const ObjectFamilyAtom = atomFamily((type: keyof ObjectFamily) => atom(new Map<number, ObjectFamily[keyof ObjectFamily]>()))

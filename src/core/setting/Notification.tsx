@@ -7,6 +7,7 @@ import { useTranslation } from 'react-i18next'
 import { AnimatePopover, Content, Icon, Switch, WithBorder } from '../../components/base'
 import SettingItem from './Item'
 import { useSetting } from '.'
+import FontSize from '@/consts/font'
 
 const NotificationSetting = () => {
   const [customizeVisible, toggleCustomizeVisible] = useToggle(false)
@@ -48,7 +49,7 @@ const NotificationSetting = () => {
                   }
                 ])
               })}
-              style={{ width: 300, padding: 12, fontSize: 16, fontWeight: 600, fontFamily: 'Muli' }}
+              style={{ width: 300, padding: 12, fontSize: FontSize['16px'], fontWeight: 600, fontFamily: 'Muli' }}
             >
               <div>
                 {t('general.object')}

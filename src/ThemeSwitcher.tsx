@@ -10,7 +10,7 @@ const setColor = (key: string, value: string) => {
 const ThemeSwitcher = () => {
   const [setting] = useSetting()
   useMount(() => {
-    document.body.classList.add(ClassName.defaultFont(14, 400))
+    document.body.classList.add(ClassName.defaultFont('1rem', 400))
     setColor('background', Colors.Background.Global)
   })
   useEffect(() => {

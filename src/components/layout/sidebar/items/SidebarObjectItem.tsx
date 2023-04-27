@@ -36,6 +36,8 @@ export const getIcon = (type?: MetaObject['type'], metaObject?: MetaObject) => {
       return 'park-label'
     case 'whiteboard':
       return 'park-new-computer'
+    case 'image':
+      return 'park-image-files'
   }
 }
 const SidebarObjectItem: FC<ISidebarItem> = ({ parentId, parentType, id, draggable = true }) => {

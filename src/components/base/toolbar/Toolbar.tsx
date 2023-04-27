@@ -1,4 +1,3 @@
-import { toArray } from 'lodash'
 import React, { Children, cloneElement, CSSProperties, FC, ReactNode, Ref } from 'react'
 import Content from '../Content'
 import ToolbarItem from './ToolbarItem'

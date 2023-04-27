@@ -1,4 +1,5 @@
 import Colors from '@/consts/colors'
+import FontSize from '@/consts/font'
 import { css } from '@emotion/css'
 
 export const ellipsisFont = (line: number) =>
@@ -11,7 +12,7 @@ export const ellipsisFont = (line: number) =>
     wordBreak: 'break-all'
   })
 
-export const defaultFont = (fontSize = 13, fontWeight = 400) =>
+export const defaultFont = (fontSize = FontSize['14px'], fontWeight = 400) =>
   css({
     fontFamily: 'Muli, sans-serif',
     WebkitFontSmoothing: 'antialiased',
@@ -22,7 +23,7 @@ export const defaultFont = (fontSize = 13, fontWeight = 400) =>
     color: Colors.Font.Primary
   })
 
-export const title = (fontSize = '1.2rem', fontWeight = 600, color?: string) => {
+export const title = (fontSize = FontSize['16px'], fontWeight = 600, color?: string) => {
   return css({
     fontSize,
     fontWeight,
@@ -55,7 +56,7 @@ export const animatedBorderBottom = (bottom = 0, left = 0, height = 1, backgroun
     }
   })
 
-export const description = (fontSize = '0.8rem', fontWeight = 500, color?: string) => {
+export const description = (fontSize = FontSize['13px'], fontWeight = 500, color?: string) => {
   return css({
     fontSize,
     fontWeight,

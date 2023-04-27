@@ -3,42 +3,15 @@ import * as Algorithm from '@/components/base/dock/Algorithm'
 import EditorPage from '@/scenes/editor'
 import Id from '@/utils/id'
 import PdfPage from '@/scenes/pdf'
-import { DockTabPaneContext } from '../base/dock/DockTabPane'
-import { IPdfViewer, CustomEditor, WebpageInstance } from '~/typings'
 import { HomePage } from '@/scenes/HomePage'
 import DatabasePage from '@/scenes/DatabasePage'
 import WhiteboardPage from '@/scenes/WhiteboardPage'
-import { LayoutIdToTabMap, LayoutTab } from '.'
+import { LayoutIdToTabMap } from '.'
 import getSetting from '../../core/setting/getSetting'
 import WebpagePage from '@/core/webpage/Webpage'
-
-type AddTabOptions =
-  | {
-      type: 'pdf'
-      pdfId: number
-      onViewerInitialized: (viewer: IPdfViewer) => void
-    }
-  | {
-      type: 'note'
-      noteId: number
-      onEditorInitalized: (editor: CustomEditor) => void
-    }
-  | {
-      type: 'whiteboard'
-      whiteboardId: number
-    }
-  | {
-      type: 'home'
-    }
-  | {
-      type: 'database'
-    }
-  | {
-      type: 'webpage'
-      webpageId: number
-      onWebpageInitialized?: (instance: WebpageInstance) => void
-      onWebpageChange?: (newWebpageDetails: { webpageId: number }) => void
-    }
+import { AddTabOptions, LayoutTab } from './types'
+import ImagePage from '@/scenes/ImagePage'
+import { getTabObjectId, normalizeAddTabOptionToLayoutTab, tabCallback } from './utils'
 
 const initializePage = (options: AddTabOptions) => {
   switch (options.type) {
@@ -60,6 +33,8 @@ const initializePage = (options: AddTabOptions) => {
           onWebpageChange={options.onWebpageChange}
         />
       )
+    case 'image':
+      return <ImagePage imageId={options.imageId} />
   }
 }
 
@@ -89,117 +64,34 @@ class LayoutManager {
     if (this.layout) {
       const setting = getSetting()
       if (setting.general.openNewTab === 'open existing tab') {
-        let objectId: number | undefined = undefined
-        switch (options.type) {
-          case 'database':
-          case 'home': {
-            const tabId = this.hasTargetTab?.({ type: options.type })
-            if (tabId) {
-              this.makeTabActive?.(tabId)
-              return
-            }
-            break
+        // if tab is home or database, directly open it
+        if (['database', 'home'].includes(options.type)) {
+          const tabId = this.hasTargetTab?.({ type: options.type })
+          if (tabId) {
+            this.makeTabActive?.(tabId)
+            return
           }
-          case 'note':
-            objectId = options.noteId
-            break
-          case 'pdf':
-            objectId = options.pdfId
-            break
-          case 'whiteboard':
-            objectId = options.whiteboardId
-            break
-          case 'webpage':
-            objectId = options.webpageId
         }
+        // if tab has objectId, first get objectId
+        const objectId = getTabObjectId(options)
         if (objectId) {
+          // find if there is existing tab
           const tabId = this.hasTargetTab?.({ type: options.type, objectId: objectId })
+          // if there is existing, callback options
           if (tabId) {
             const layoutTab: LayoutTab | undefined = LayoutIdToTabMap.get(tabId)
             if (layoutTab) {
-              switch (options.type) {
-                case 'note': {
-                  const editor = (layoutTab as LayoutTab & { type: 'note' }).editor
-                  editor && options.onEditorInitalized(editor)
-                  break
-                }
-                case 'pdf': {
-                  const viewer = (layoutTab as LayoutTab & { type: 'pdf' }).viewer
-                  viewer && options.onViewerInitialized(viewer)
-                  break
-                }
-                case 'webpage': {
-                  const instance = (layoutTab as LayoutTab & { type: 'webpage' }).instance
-                  instance && options.onWebpageInitialized?.(instance)
-                  break
-                }
-              }
+              tabCallback(options, layoutTab)
             }
             this.makeTabActive?.(tabId)
             return
           }
         }
       }
-      let tab: LayoutTab | undefined = undefined
-      switch (options.type) {
-        case 'note': {
-          tab = {
-            type: 'note',
-            objectId: options.noteId
-          }
-          const originFunction = options.onEditorInitalized
-          options.onEditorInitalized = editor => {
-            ;(tab as LayoutTab & { type: 'note' }).editor = editor
-            originFunction(editor)
-          }
-          break
-        }
-        case 'pdf': {
-          tab = {
-            type: 'pdf',
-            objectId: options.pdfId
-          }
-          const originFunction = options.onViewerInitialized
-          options.onViewerInitialized = v => {
-            ;(tab as LayoutTab & { type: 'pdf' }).viewer = v
-            originFunction(v)
-          }
-          break
-        }
-        case 'home':
-          tab = {
-            type: 'home'
-          }
-          break
-        case 'database':
-          tab = {
-            type: 'database'
-          }
-          break
-        case 'whiteboard':
-          tab = {
-            type: 'whiteboard',
-            objectId: options.whiteboardId
-          }
-          break
-        case 'webpage': {
-          tab = {
-            type: 'webpage',
-            objectId: options.webpageId
-          }
-          const originFunction = options.onWebpageInitialized
-          const originChangeFunction = options.onWebpageChange
-          options.onWebpageInitialized = i => {
-            ;(tab as LayoutTab & { type: 'webpage' }).instance = i
-            originFunction?.(i)
-          }
-          options.onWebpageChange = details => {
-            ;(tab as LayoutTab & { type: 'webpage' }).objectId = details.webpageId
-            originChangeFunction?.(details)
-          }
-        }
-      }
+      // no existing tab, add new tab, first normalize it
+      const tab = normalizeAddTabOptionToLayoutTab(options)
       const tabContent = initializePage(options)
+      console.log(tab, tabContent)
       if (tabContent) {
         const id = Id.getStrId()
         if (tab) {

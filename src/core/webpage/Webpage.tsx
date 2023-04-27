@@ -19,6 +19,7 @@ import { EditorTitleClassName } from '../editor/EditorTitle'
 import ClassName from '@/styles/classNames'
 import { Provider } from 'jotai'
 import SidebarToolbar from '@/scenes/editor/HoverOutline'
+import FontSize from '@/consts/font'
 const parseHTMLtoSlateDescandants = (
   html: string
 ):
@@ -401,7 +402,7 @@ const WebpagePage = ({
                   borderRadius: 999,
                   background: 'rgba(0,0,0,0.06)',
                   overflow: 'hidden',
-                  fontSize: 18
+                  fontSize: FontSize['18px']
                 }}
               >
                 <Tooltip position="bottom" content={editorReaderMode ? 'Editor Mode' : 'Reader Mode'}>

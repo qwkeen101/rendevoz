@@ -5,7 +5,9 @@ const Zindexes = {
   DragIndicator: 10001,
   Modal: 20000,
   ModalBackdrop: 20001,
-  Notification: 20002,
+  GraphPopup: 20002,
+  Notification: 20003,
+  ImagePreview: 22004,
   Tooltip: 20102,
   CreateObjectPanel: 10100
 }

@@ -111,7 +111,7 @@ const FormTagPicker = ({
                           flex
                           alignItems="center"
                           gap={10}
-                          style={{ fontSize: 13 }}
+                          style={{ fontSize: '1rem' }}
                           className={ClassName.flatButton()}
                         >
                           {`${t('general.create')} ${t('general.tag')}`}
@@ -242,7 +242,7 @@ const FormTagPicker = ({
                 display: 'flex',
                 alignItems: 'center',
                 gap: 4,
-                fontSize: 13,
+                fontSize: '1rem',
                 lineHeight: 1
               }}
             >

@@ -1,6 +1,7 @@
 import React, { createContext, CSSProperties, FC, memo, ReactNode, useContext, useLayoutEffect, useMemo, useRef } from 'react'
 import { DockContextType, PanelData, TabPaneCache } from './DockData'
 import { motion } from 'framer-motion'
+import { LayoutIdToTabMap } from '@/components/layout'
 
 interface DockTabPaneProps {
   cacheId?: string
@@ -91,7 +92,15 @@ export const DockTabPane: FC<DockTabPaneProps> = memo(({ cached, cacheId, childr
   }
   return (
     <motion.div
-      ref={ref}
+      ref={node => {
+        ref.current = node
+        if(cacheId && node){
+          const tab = LayoutIdToTabMap.get(cacheId)
+          if(tab){
+            tab.tabElement = node
+          }
+        }
+      }}
       id={cacheId}
       initial={{ opacity: 0 }}
       animate={active ? 'visible' : 'hidden'}

@@ -8,6 +8,7 @@ import { RenderElementProps } from 'slate-react'
 import { CustomElement } from '~/typings'
 import { ReactEditor, useSlateStatic } from '../../slate-react'
 import styles from './index.module.less'
+import FontSize from '@/consts/font'
 
 export const ListItem = ({ children, element }: RenderElementProps) => {
   return (
@@ -180,7 +181,7 @@ export const OrderListItem = ({ children, element }: RenderElementProps) => {
           padding: '0 2px',
           marginRight: 6,
           minWidth: 18,
-          fontSize: 16,
+          fontSize: FontSize['16px'],
           fontWeight: 500,
           lineHeight: '22px'
         }}

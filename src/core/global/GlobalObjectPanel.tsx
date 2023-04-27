@@ -35,6 +35,7 @@ import Actions from '@/core/Actions'
 import { GlobalEventEmitter, useEventHandler } from '@/events'
 import { LeftTopPosition } from '~/typings'
 import Colors from '@/consts/colors'
+import FontSize from '@/consts/font'
 
 export const GlobalObjectPanelInstance: {
   open?: (position?: LeftTopPosition) => void
@@ -238,7 +239,7 @@ export const GlobalObjectPanel = () => {
               }}
               className="global-drag-panel"
             >
-              <div className={ClassName.title('14px')}>{t('dialog.object panel', { object: t('general.object') })}</div>
+              <div className={ClassName.title('1rem')}>{t('dialog.object panel', { object: t('general.object') })}</div>
               <Icon
                 name="park-close"
                 className={ClassName.circleButton()}
@@ -536,7 +537,7 @@ export const SimpleObject = memo(
             },
             titleOptions: {
               style: {
-                fontSize: 14
+                fontSize: FontSize['14px']
               },
               titleClassName,
               onTitleClick: () => {
@@ -546,7 +547,7 @@ export const SimpleObject = memo(
             },
             descriptionOptions: {
               style: {
-                fontSize: 12
+                fontSize: FontSize['12px']
               },
               descriptionClassName
             }

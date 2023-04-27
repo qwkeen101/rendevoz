@@ -8,6 +8,13 @@ axios.defaults.withCredentials = false
 const fetchClient = () => {
   const instance = axios.create()
   instance.interceptors.request.use(request => {
+    const user = globalStore.get(userAtom)
+    if(user?.idToken){
+      request.headers = {
+        ...request.headers,
+        'x-auth-token': user?.idToken
+      }
+    }
     if (request.headers?.['x-auth-token']) {
       const idToken = request.headers['x-auth-token'] as string
       try {

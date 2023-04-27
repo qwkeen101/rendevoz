@@ -27,6 +27,8 @@ import { GlobalEventEmitter } from '@/events'
 import Colors from '@/consts/colors'
 import { metaLinksAtom } from '@/stores/meta.store'
 import { Zindexes } from '@/consts'
+import FontSize from '@/consts/font'
+import { GlobalImagePreviewerInstance } from '@/core/global/GlobalImagePreviewer'
 
 export const TypeToTypeName: Record<MetaObject['type'], string> = {
   pdfLabel: 'pdf label',
@@ -85,12 +87,12 @@ export const DatabaseCard: FC<{
         alignItems="center"
         justifyContent="space-between"
         className={css({
-          fontSize: 12
+          fontSize: FontSize['12px']
         })}
       >
         <Content flex gap={6} alignItems="baseline">
-          <span className={css({ fontSize: 24, fontWeight: 650 })}>{relatedNumber || 0}</span>
-          <span className={css({ fontSize: 11, fontWeight: 500 })}>Related Objects</span>
+          <span className={css({ fontSize: FontSize['20px'], fontWeight: 650 })}>{relatedNumber || 0}</span>
+          <span className={css({ fontSize: FontSize['11px'], fontWeight: 500 })}>Related Objects</span>
         </Content>
 
         <AnimatePopover
@@ -106,7 +108,12 @@ export const DatabaseCard: FC<{
         >
           <Tooltip
             content={
-              <Content flex column alignItems="center" style={{ textTransform: 'capitalize', fontSize: 12, fontFamily: 'Muli' }}>
+              <Content
+                flex
+                column
+                alignItems="center"
+                style={{ textTransform: 'capitalize', fontSize: FontSize['12px'], fontFamily: 'Muli' }}
+              >
                 <div>Click to open menu</div>
                 <div>Drag to move object</div>
               </Content>
@@ -187,18 +194,11 @@ export const DatabaseCard: FC<{
         style={{ gridRowEnd: showImage ? 'span 2' : undefined }}
         className={css({
           minHeight: 150,
-          cursor: 'pointer',
           borderRadius: 16,
           display: 'flex',
           flexDirection: 'column',
           position: 'relative',
-          overflow: 'hidden',
-          transition: 'box-shadow 0.3s cubic-bezier(0.2, 0.91, 0.85, 0.96) 0s, background-color 0.3s ease 0s',
-          boxShadow: 'rgba(100, 100, 111, 0.2) 0px 7px 29px 0px',
-          willChange: 'transform',
-          ':hover': {
-            boxShadow: 'rgba(100, 100, 111, 0.35) 0px 7px 29px 0px'
-          }
+          willChange: 'transform'
         })}
       >
         {renderEdit()}
@@ -222,7 +222,7 @@ export const DatabaseCard: FC<{
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            fontSize: 18,
+            fontSize: FontSize['18px'],
             fontWeight: 600
           })}
         >
@@ -230,82 +230,84 @@ export const DatabaseCard: FC<{
             {GlobalDragOverlayInstance.draggingDetails?.type === 'image' ? 'Drop to change cover' : 'Drop to add Link'}
           </div>
         </motion.div>
-
-        {showImage && (
-          <Image
-            className={css({
-              width: '100% !important',
-              height: '70%',
-              maxHeight: '300px',
-              overflow: 'hidden'
-            })}
-            src={innerCover || cover}
-          />
-        )}
-        <div
+        <Content
+          flex
+          column
           className={css({
-            position: 'relative',
-            padding: '16px',
-            borderTopLeftRadius: 16,
-            borderTopRightRadius: 16,
-            background: Colors.Background.Linear,
-            marginTop: showImage ? -32 : 0,
-            zIndex: 1
+            transition: 'box-shadow 0.3s cubic-bezier(0.2, 0.91, 0.85, 0.96) 0s, background-color 0.3s ease 0s',
+            boxShadow: 'rgba(100, 100, 111, 0.2) 0px 7px 29px 0px',
+            ':hover': {
+              boxShadow: 'rgba(100, 100, 111, 0.35) 0px 7px 29px 0px'
+            }
           })}
+          style={{
+            height: 'fit-content',
+            overflow: 'hidden',
+            borderRadius: 16,
+            cursor: 'pointer'
+          }}
         >
           {showImage && (
-            <div
-              style={{
-                position: 'absolute',
-                top: 0,
-                left: 0,
-                width: '100%',
-                zIndex: -1,
-                borderTopLeftRadius: 16,
-                borderTopRightRadius: 16,
-                height: '60%',
-                backdropFilter: 'blur(4px)'
-              }}
-            ></div>
+            <img
+              onClick={() => GlobalImagePreviewerInstance.open?.(innerCover || cover)}
+              src={innerCover || cover}
+              style={{ height: '100%', objectFit: 'cover', maxHeight: 500 }}
+            />
           )}
-          <div
-            style={{
-              fontWeight: 600,
-              fontSize: 11,
-              marginBottom: 10,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              textTransform: 'uppercase'
-            }}
+          <Content
+            flex
+            column
+            fullWidth
+            className={css({
+              background: Colors.Background.Linear
+            })}
           >
-            <span>{t(`general.${TypeToTypeName[metaObject.type] || 'object'}`)}</span>
-            <span style={{ display: 'flex', gap: 5, fontSize: 10, alignItems: 'center', lineHeight: 1 }}>
-              <Icon size={13} name="park-time" />
-              {DateFormat.formatDistanceToNowStrict(metaObject.createdAt)} Ago
-            </span>
-          </div>
-          {metaObject.tags && metaObject.tags.length > 0 && (
-            <Content flex gap={4} style={{ flexWrap: 'wrap', marginBottom: 4 }}>
-              {metaObject.tags?.map(i => (
-                <ObjectTag small hideSize hideDelete tag={i} key={i} />
-              ))}
-            </Content>
-          )}
-          <div style={{ minHeight: 80 }}>{renderCardContent()}</div>
-        </div>
-        <div
-          className={css({
-            padding: '0 16px 8px',
-            flex: 1,
-            display: 'flex',
-            flexDirection: 'column',
-            justifyContent: 'flex-end',
-            background: Colors.Background.Linear
-          })}
-        >
-          {renderToolbar()}
-        </div>
+            <div
+              className={css({
+                position: 'relative',
+                padding: '16px',
+                zIndex: 1
+              })}
+            >
+              <div
+                style={{
+                  fontWeight: 600,
+                  fontSize: FontSize['11px'],
+                  marginBottom: 10,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  textTransform: 'uppercase'
+                }}
+              >
+                <span>{t(`general.${TypeToTypeName[metaObject.type] || 'object'}`)}</span>
+                <span style={{ display: 'flex', gap: 5, fontSize: FontSize['10px'], alignItems: 'center', lineHeight: 1 }}>
+                  <Icon size={13} name="park-time" />
+                  {DateFormat.formatDistanceToNowStrict(metaObject.createdAt)} Ago
+                </span>
+              </div>
+              {metaObject.tags && metaObject.tags.length > 0 && (
+                <Content flex gap={4} style={{ flexWrap: 'wrap', marginBottom: 4 }}>
+                  {metaObject.tags?.map(i => (
+                    <ObjectTag small hideSize hideDelete tag={i} key={i} />
+                  ))}
+                </Content>
+              )}
+              <div>{renderCardContent()}</div>
+            </div>
+            <div
+              className={css({
+                padding: '0 16px 8px',
+                flex: 1,
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'flex-end'
+              })}
+            >
+              {renderToolbar()}
+            </div>
+          </Content>
+        </Content>
       </div>
     </Flipped>
   )
@@ -399,7 +401,7 @@ export const ObjectActionPopover: FC<
         text={t('general.delete')}
         dangerous
         onClick={() => {
-          deleteMetaObject(metaObject.id, false, true )
+          deleteMetaObject(metaObject.id, false, true)
           onDelete?.()
         }}
         icon="park-delete"
@@ -458,7 +460,7 @@ const RelatedItem = ({ metaId, direction }: { metaId: number; direction: 'source
         {renderTags({})}
         {renderTitle({
           style: {
-            fontSize: 14
+            fontSize: FontSize['14px']
           },
           ellipsisLine: 1
         })}
@@ -469,7 +471,7 @@ const RelatedItem = ({ metaId, direction }: { metaId: number; direction: 'source
 export const TitleClassName = classNames(
   css({
     fontWeight: 700,
-    fontSize: 20,
+    fontSize: FontSize['18px'],
     lineHeight: '24px',
     userSelect: 'none'
   }),

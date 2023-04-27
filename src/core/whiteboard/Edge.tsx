@@ -19,6 +19,7 @@ import useClickOutside from '@/hooks/utils/useClickOutside'
 import { throttle } from 'lodash'
 import Colors from '@/consts/colors'
 import { css } from '@emotion/css'
+import FontSize from '@/consts/font'
 
 const TreeEdge: FC<{
   edge: IWhiteboardEdge
@@ -266,7 +267,7 @@ const TreeEdge: FC<{
                 style={{
                   boxShadow: `0 0 0 calc(4px * var(--zoom-level)) ${innerLink?.color || MarkerColor.LIGHTGREY}`,
                   maxWidth: '16em',
-                  fontSize: '16px',
+                  fontSize: FontSize['18px'],
                   padding: '6px'
                 }}
                 onInput={e => {

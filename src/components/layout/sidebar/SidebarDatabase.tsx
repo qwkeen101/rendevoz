@@ -132,7 +132,7 @@ const SidebarDatabase = memo(() => {
               color: 'white',
               padding: '2px 6px',
               borderRadius: 4,
-              fontSize: 12
+              fontSize: '0.857rem'
             }}
           >
             {draggingHovered.alreadyExist
@@ -154,7 +154,7 @@ const SidebarDatabase = memo(() => {
         >
           <Icon name="park-data" style={{ marginRight: 10 }} size={16} />
           {t('sidebar.database')}
-          <div style={{ marginLeft: 'auto', fontSize: 12 }}>{undeletedMetaObjects.length}</div>
+          <div style={{ marginLeft: 'auto', fontSize: '0.857rem' }}>{undeletedMetaObjects.length}</div>
         </MenuItem>
       </AnimatePopover>
     </>

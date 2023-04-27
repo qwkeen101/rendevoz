@@ -1,7 +1,7 @@
 import { AnimatePopover } from '@/components'
 import ColorPicker from '@/components/picker/colorPicker'
 import classNames from 'classnames'
-import { FC, ReactNode, useEffect, useRef, useState } from 'react'
+import { CSSProperties, FC, ReactNode, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import BorderInput from '../BorderInput'
 import Content from '../Content'
@@ -21,6 +21,7 @@ type FormItemConditionalProps = { disable?: boolean } & (
       maxLength?: number
       minRows?: number
       minLength?: number
+      autoFocus?: boolean
     }
   | {
       type: 'file'
@@ -51,6 +52,7 @@ interface FormItemCommonProps {
   type: 'input' | 'textarea' | 'file' | 'colorPicker' | 'component'
   requireMessage?: string
   required?: boolean
+  style?: CSSProperties
 }
 type FormItemProps = FormItemCommonProps & FormItemConditionalProps
 const FormItem: FC<FormItemProps> = ({ onChange, onUpload, text, type, children, required, requireMessage, value, disable, ...rest }) => {
@@ -78,8 +80,10 @@ const FormItem: FC<FormItemProps> = ({ onChange, onUpload, text, type, children,
         return (
           <BorderInput
             value={value}
+            autoFocus={rest.autoFocus}
+            spellCheck="false"
             defaultValue={value}
-            style={{ height: 40 }}
+            style={{ height: 40, ...rest.style }}
             textarea={false}
             placeholder={text}
             disable={disable}
@@ -91,16 +95,18 @@ const FormItem: FC<FormItemProps> = ({ onChange, onUpload, text, type, children,
         )
       }
       case 'textarea': {
-        const { maxRows, maxLength, minRows = 2 } = rest
+        const { maxRows, maxLength, minRows = 2, autoFocus } = rest
         return (
           <BorderInput
             value={value}
             defaultValue={value}
             textarea={true}
-            style={{ height: 40 }}
+            style={{ height: 40, ...rest.style }}
             placeholder={text}
             disable={disable}
+            spellCheck="false"
             maxRows={maxRows}
+            autoFocus={autoFocus}
             maxLength={maxLength}
             minRows={minRows}
             onChange={e => {

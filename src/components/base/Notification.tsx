@@ -10,7 +10,7 @@ interface NotificationProps {
 const Notification = ({ title, content }: NotificationProps) => {
   return (
     <Content flex column>
-      <div className={ClassName.title('14px')}>{title}</div>
+      <div className={ClassName.title('1rem')}>{title}</div>
       {typeof content === 'string' ? <div className={ClassName.description()}>{content}</div> : content}
     </Content>
   )

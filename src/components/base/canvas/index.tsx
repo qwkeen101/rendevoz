@@ -1,6 +1,8 @@
 import { Context } from 'konva/lib/Context'
-import { CSSProperties, FC, RefObject, useEffect, useMemo, useRef } from 'react'
+import { CSSProperties, FC, RefObject, useEffect, useLayoutEffect, useMemo, useRef } from 'react'
 import CanvasManager from './CanvasManager'
+import { useStore } from 'jotai'
+import { CanvasManagerAtom } from '@/core/image/ImageDisplayer'
 
 interface CanvasProps {
   width: number
@@ -8,6 +10,7 @@ interface CanvasProps {
   style: CSSProperties
   innerRef: RefObject<any>
   erase?: boolean
+  imageUrl: string
 }
 interface IShape {
   sceneFunc: (ctx: Context, shape) => void
@@ -16,21 +19,34 @@ interface IShape {
 interface CanvasData {
   objects: IShape[]
 }
-const Canvas: FC<CanvasProps> = ({ width, height, style, innerRef, erase = false }) => {
-  const containerRef = useRef<any>()
-  const canvasManager = useMemo(() => new CanvasManager(), [])
+
+const Canvas: FC<CanvasProps> = ({ width, height, style, innerRef, erase = false, imageUrl }) => {
+  const containerRef = useRef<HTMLDivElement>(null)
+  const store = useStore()
+  const canvasManager = useMemo(() => {
+    const manager = new CanvasManager()
+    setTimeout(() => {
+      store.set(CanvasManagerAtom, manager)
+    })
+    return manager
+  }, [])
 
   useEffect(() => {
     const layer = canvasManager.initialize(containerRef.current)
-    innerRef.current = layer.getNativeCanvasElement()
+    innerRef && (innerRef.current = layer.getNativeCanvasElement())
     return () => {
       canvasManager.destory()
     }
   }, [])
   useEffect(() => {
-    canvasManager.isErasing = erase
+    canvasManager.setDrawMode(erase ? 'erase' : 'draw')
   }, [erase])
-  return <div style={{ position: 'absolute', width, height, ...style }} ref={containerRef}></div>
+  useEffect(() => {
+    if (imageUrl) {
+      canvasManager.addImage(imageUrl)
+    }
+  }, [imageUrl])
+  return <div style={{ width, height, ...style }} ref={containerRef}></div>
 }
 
 export default Canvas

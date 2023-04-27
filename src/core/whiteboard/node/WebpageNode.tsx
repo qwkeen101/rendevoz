@@ -8,6 +8,7 @@ import isHotkey from 'is-hotkey'
 import { useEffect, useRef, useState } from 'react'
 import { IWhiteboardNode } from '~/typings/data'
 import { useSetWhiteboardNodes } from '../hooks'
+import FontSize from '@/consts/font'
 
 type History = {
   prev?: History
@@ -73,7 +74,7 @@ const WebpageNode = ({ node }: { node: IWhiteboardNode & { type: 'webpage' } }) 
   }, [])
   return (
     <Content flex column fullHeight fullWidth auto>
-      <Content flex gap={8} alignItems="center" style={{ fontSize: 18, color: '#8590ae', padding: '6px 16px' }}>
+      <Content flex gap={8} alignItems="center" style={{ fontSize: FontSize['18px'], color: '#8590ae', padding: '6px 16px' }}>
         <Icon className={ClassName.circleButton()} name="park-left" onClick={() => handleNavigate('back')} />
         <Icon className={ClassName.circleButton()} name="park-right" onClick={() => handleNavigate('forward')} />
         <Icon className={ClassName.circleButton()} name="park-refresh" onClick={() => ref.current?.reload()} />

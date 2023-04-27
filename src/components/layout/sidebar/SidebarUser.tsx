@@ -12,6 +12,8 @@ import { IUser } from '~/typings/data'
 import { indicatorClassName, loginInputClassName } from '@/components/Login'
 import { toast } from 'react-hot-toast'
 import { useTranslation } from 'react-i18next'
+import { LayoutIdToTabMap } from '..'
+import FontSize from '@/consts/font'
 
 const SidebarUser = memo(() => {
   const [user] = useUser()
@@ -111,7 +113,15 @@ const UserPopover = ({ onUpgradePlan, onUpdateUser }: { onUpgradePlan: VoidFunct
         <Icon size={16} name="park-me" />
         {t('sidebar.update profile')}
       </Content>
-      <Content flex gap={10} className={ClassName.flatButton()} onClick={() => setUser(null)}>
+      <Content
+        flex
+        gap={10}
+        className={ClassName.flatButton()}
+        onClick={() => {
+          setUser(null)
+          LayoutIdToTabMap.clear()
+        }}
+      >
         <Icon size={16} name="park-logout" />
         {t('sidebar.log out')}
       </Content>
@@ -159,7 +169,7 @@ const UpdateUser = () => {
         />
       </div> */}
       <div>
-        <div style={{ fontSize: 12 }} className={indicatorClassName}>
+        <div style={{ fontSize: '0.857rem' }} className={indicatorClassName}>
           Name
         </div>
         <input
@@ -210,11 +220,11 @@ const UpdateUser = () => {
         className={ClassName.circleButton()}
         style={{ position: 'absolute', top: 0, right: 0 }}
       />
-      <div style={{ fontSize: 12 }} className={indicatorClassName}>
+      <div style={{ fontSize: FontSize.Secondary }} className={indicatorClassName}>
         Current Email Address
       </div>
       <div style={{ marginBottom: 20 }}>{user.email}</div>
-      <div style={{ fontSize: 12 }} className={indicatorClassName}>
+      <div style={{ fontSize: FontSize.Secondary }} className={indicatorClassName}>
         New Email Address
       </div>
       <input placeholder="Input your new email address" style={{ background: 'transparent' }} className={loginInputClassName}></input>

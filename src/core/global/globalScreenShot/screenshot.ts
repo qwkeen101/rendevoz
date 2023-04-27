@@ -125,7 +125,7 @@ export async function takeScreenshotCanvas() {
 export function getJpegBlob(canvas) {
   return new Promise((resolve, reject) => {
     // docs: https://developer.mozilla.org/en-US/docs/Web/API/HTMLCanvasElement/toBlob
-    canvas.toBlob(blob => resolve(blob), 'image/jpeg', 0.95)
+    canvas.toBlob(blob => resolve(blob), 'image/jpeg', 1)
   })
 }
 

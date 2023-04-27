@@ -44,6 +44,7 @@ export const saveImageLocally = (imgName: string, imgData: string | Blob, compre
             canvas.height = height
             canvas.getContext('2d')?.drawImage(image, 0, 0, width, height)
             const newImageUrl = canvas.toDataURL('image/jpeg', 0.8)
+
             ipcInstance.send('saveImage', imgName, newImageUrl).then(data => resolve(data))
           }
         }

@@ -10,7 +10,7 @@ import ClassName from '@/styles/classNames'
 import getEmoji from '@/utils/emoji'
 import { css } from '@emotion/css'
 import { useAtomValue } from 'jotai/react'
-import { forwardRef, memo, useEffect, useMemo, useRef, useState } from 'react'
+import { CSSProperties, forwardRef, memo, useEffect, useMemo, useRef, useState } from 'react'
 import Content from '../../base/Content'
 import Icon from '../../base/Icon'
 import SidebarCollectionItem from './items/SidebarCollectionItem'
@@ -87,7 +87,7 @@ const SidebarCollection = () => {
         padding={10}
         containerStyle={{ zIndex: String(Zindexes.PopupMenu) }}
         content={
-          <div style={{ color: 'white', background: 'rgba(0,0,0,0.8)', padding: '2px 4px', borderRadius: 4, fontSize: 12 }}>
+          <div style={{ color: 'white', background: 'rgba(0,0,0,0.8)', padding: '2px 4px', borderRadius: 4, fontSize: '0.857rem' }}>
             Move collection to root
           </div>
         }
@@ -125,60 +125,80 @@ const linearToSvg = (linear: string) => {
   return linear.match(/rgba\([^()]*\)|#\w+/g)
 }
 export const IconNameItem = memo(
-  forwardRef(({ name, icon, color, onClick }: { name?: string; icon?: string; color?: string; onClick?: React.MouseEventHandler }, ref) => {
-    const isPark = icon?.startsWith('park')
-    const emoji = useMemo(() => !isPark && icon && getEmoji(icon), [icon])
-    const linearFontColor = color?.startsWith('linear')
-    const linearColors = color && linearFontColor && linearToSvg(color)
-    return (
-      <Content flex alignItems="center" gap={10} style={{ overflow: 'hidden' }} onClick={onClick} ref={ref}>
-        {emoji ? (
-          <img
-            src="data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw=="
-            style={{
-              width: '1em',
-              height: '1em',
-              backgroundImage: `url(${emoji?.imageSrc})`,
-              backgroundPositionX: `${(emoji?.x * 100) / 60}%`,
-              backgroundPositionY: `${(emoji?.y * 100) / 60}%`,
-              backgroundRepeat: 'no-repeat',
-              backgroundSize: '6100% 6100%',
-              verticalAlign: '-0.1em',
-              marginRight: 2
-            }}
-          />
-        ) : (
-          <>
-            {icon && isPark ? (
-              <Icon fill={linearColors ? linearColors[(linearColors.length / 2) | 0] : color} name={icon} />
-            ) : (
-              <img
-                style={{
-                  height: '1em',
-                  width: '1em'
-                }}
-                src={icon}
-              />
-            )}
-          </>
-        )}
-        <div
-          style={{
-            color: color,
-            backgroundImage: linearFontColor ? color : undefined
-          }}
-          className={css([
-            ClassName.ellipsisFont(1),
-            linearFontColor && {
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent'
-            }
-          ])}
+  forwardRef(
+    (
+      {
+        name,
+        icon,
+        color,
+        onClick,
+        style,
+        className
+      }: { name?: string; icon?: string; color?: string; onClick?: React.MouseEventHandler; style?: CSSProperties; className?: string },
+      ref
+    ) => {
+      const isPark = icon?.startsWith('park')
+      const emoji = useMemo(() => !isPark && icon && getEmoji(icon), [icon])
+      const linearFontColor = color?.startsWith('linear')
+      const linearColors = color && linearFontColor && linearToSvg(color)
+      return (
+        <Content
+          flex
+          alignItems="center"
+          gap={10}
+          style={{ overflow: 'hidden', ...style }}
+          className={className}
+          onClick={onClick}
+          ref={ref}
         >
-          {name}
-        </div>
-      </Content>
-    )
-  })
+          {emoji ? (
+            <img
+              src="data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw=="
+              style={{
+                width: '1em',
+                height: '1em',
+                backgroundImage: `url(${emoji?.imageSrc})`,
+                backgroundPositionX: `${(emoji?.x * 100) / 60}%`,
+                backgroundPositionY: `${(emoji?.y * 100) / 60}%`,
+                backgroundRepeat: 'no-repeat',
+                backgroundSize: '6100% 6100%',
+                verticalAlign: '-0.1em',
+                marginRight: 2
+              }}
+            />
+          ) : (
+            <>
+              {icon && isPark ? (
+                <Icon fill={linearColors ? linearColors[(linearColors.length / 2) | 0] : color} name={icon} />
+              ) : (
+                <img
+                  style={{
+                    height: '1em',
+                    width: '1em'
+                  }}
+                  src={icon}
+                />
+              )}
+            </>
+          )}
+          <div
+            style={{
+              color: color,
+              backgroundImage: linearFontColor ? color : undefined
+            }}
+            className={css([
+              ClassName.ellipsisFont(1),
+              linearFontColor && {
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent'
+              }
+            ])}
+          >
+            {name}
+          </div>
+        </Content>
+      )
+    }
+  )
 )
 export default SidebarCollection

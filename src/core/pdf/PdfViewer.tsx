@@ -103,7 +103,7 @@ export const PdfViewer: FC<PdfViewerProps> = memo(({ documentId, transformScale,
     }
   }, [])
   return (
-    <div ref={viewboxRef} className={styles.viewerBox}>
+    <div ref={viewboxRef} className={styles.viewerBox} role="pdf-viewer">
       {document?.fileUrl && (
         <Viewer
           viewer={viewer}

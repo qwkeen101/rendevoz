@@ -1,5 +1,6 @@
 import { Content, Icon, Tooltip } from '@/components'
 import { KEY } from '@/consts'
+import FontSize from '@/consts/font'
 import ClassName from '@/styles/classNames'
 import { css } from '@emotion/css'
 import isHotkey from 'is-hotkey'
@@ -31,7 +32,7 @@ const WebpageNavigation = ({
     setCurrentUrl(displayUrl)
   }, [displayUrl])
   return (
-    <Content flex gap={8} alignItems="center" style={{ fontSize: 18, padding: '6px 16px', paddingTop: '2px' }}>
+    <Content flex gap={8} alignItems="center" style={{ fontSize: FontSize['18px'], padding: '6px 16px', paddingTop: '2px' }}>
       <Icon className={ClassName.circleButton()} name="park-left" onClick={() => on({ action: 'back' })} />
       <Icon className={ClassName.circleButton()} name="park-right" onClick={() => on({ action: 'forward' })} />
       <Icon

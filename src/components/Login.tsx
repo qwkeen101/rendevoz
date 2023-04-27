@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react'
 import { CheckBox, Content, Icon, IconWithPopover, WithBorder } from './base'
-import { getAuth, GoogleAuthProvider, signInWithPopup } from 'firebase/auth'
 import { css } from '@emotion/css'
 import googleLogo from '@/assets/google_logo.png'
 import { toast } from 'react-hot-toast'
@@ -13,8 +12,6 @@ import { useSetting } from '../core/setting'
 import produce from 'immer'
 import Colors from '@/consts/colors'
 import { atomWithStorage } from 'jotai/utils'
-
-const provider = new GoogleAuthProvider()
 
 localStorage.setItem(
   'loginState',
@@ -41,11 +38,11 @@ export const loginInputClassName = css({
 })
 const loginTextClassName = css({
   fontWeight: 600,
-  fontSize: 30,
+  fontSize: '2rem',
   marginBottom: 20
 })
 export const indicatorClassName = css({
-  fontSize: 13,
+  fontSize: '1rem',
   fontWeight: 500,
   textTransform: 'capitalize'
 })
@@ -186,17 +183,6 @@ const Login = () => {
     } else {
       toast.error('Please Input Code!')
     }
-  }
-  const handleLoginWithGoogle = () => {
-    const auth = getAuth()
-    signInWithPopup(auth, provider)
-      .then(result => {
-        setGlobalUser(result.user as IUser)
-        toast.success('Welcome Back!')
-      })
-      .catch(e => {
-        toast.error('Failed to log in!')
-      })
   }
   return (
     <Content fullHeight fullWidth flex alignItems="center" justifyContent="center" style={{ fontFamily: 'Muli' }}>

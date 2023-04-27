@@ -3,6 +3,7 @@ import { FC, MouseEventHandler, ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Button, Content, Icon, Tooltip, Menu } from '@/components'
 import { BasicElements, BlockElements, InlineElements, MediaElements } from '../consts/elements'
+import FontSize from '@/consts/font'
 
 type Element = {
   icon: string
@@ -213,7 +214,7 @@ const Title = ({ children }: { children: ReactNode }) => {
     <div
       className={css({
         userSelect: 'none',
-        fontSize: 13,
+        fontSize: FontSize['13px'],
         fontWeight: 600,
         marginBottom: 8,
         ':not(:first-child)': {

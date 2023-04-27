@@ -31,6 +31,7 @@ import { useTranslation } from 'react-i18next'
 import { useGlobalAtomValue } from '@/hooks/jotai'
 import { atom } from 'jotai'
 import Colors from '@/consts/colors'
+import FontSize from '@/consts/font'
 
 export type FilterType = 'tag' | 'type' | 'createdAt' | 'relatedObjectsSize' | 'addOne' | 'related' | 'viewAt'
 
@@ -65,6 +66,7 @@ export const DatabaseFilter = () => {
       })
     }
   }
+
   return (
     <Content flex gap={10} style={{ flexWrap: 'wrap', alignItems: 'stretch' }}>
       {filters.map(i => (
@@ -84,7 +86,7 @@ export const DatabaseFilter = () => {
         align="start"
         visible={chooseFilterVisible}
         positions={['bottom']}
-        onClickOutside={toggleChooseFilterVisible}
+        onClickOutside={() => toggleChooseFilterVisible(false)}
         containerStyle={{ zIndex: String(Zindexes.ToolBar) }}
         content={
           <WithBorder style={{ padding: 6, width: 200, fontFamily: 'Muli' }} className={css({ '> div': { textTransform: 'capitalize' } })}>
@@ -201,7 +203,7 @@ const TypeFilter = ({ onClose, initialOpen }: { onClose: VoidFunction; initialOp
     'webpage',
     'webpageLabel'
   ]
-  const toggleType = (type: typeof types[number]) => {
+  const toggleType = (type: (typeof types)[number]) => {
     if (filterTypes.has(type)) {
       setFilterTypes(
         produce(filterTypes, draft => {
@@ -274,7 +276,7 @@ const TypeFilter = ({ onClose, initialOpen }: { onClose: VoidFunction; initialOp
         {Array.from(filterTypes).map(i => (
           <div
             style={{
-              fontSize: 13,
+              fontSize: FontSize['13px'],
               textTransform: 'capitalize'
             }}
             className={ClassName.objectTag}
@@ -421,7 +423,7 @@ const CreateTimeFilter = ({ onClose, initialOpen }: { onClose: VoidFunction; ini
             fontFamily: 'Muli',
             borderRight: `1px solid ${Colors.Background.Border}`,
             paddingRight: 10,
-            fontSize: 13
+            fontSize: FontSize['13px']
           }}
         >
           <div style={{ paddingLeft: 8, fontWeight: 600 }}>Presets</div>
@@ -515,7 +517,7 @@ const CreateTimeFilter = ({ onClose, initialOpen }: { onClose: VoidFunction; ini
     >
       <Content alignItems="center" gap={4} flex onClick={togglePopoverVisible} className={filterContainerClassName(popoverVisible)}>
         <Icon name="park-time" size={16} fill="grey" />
-        <Content flex gap={6} style={{ fontSize: 12, fontWeight: 600, fontFamily: 'Muli' }}>
+        <Content flex gap={6} style={{ fontSize: FontSize['12px'], fontWeight: 600, fontFamily: 'Muli' }}>
           <div>{filterInterval.start && DateFormat.format(filterInterval.start, DateFormat.Formats.default)}</div>
           <div>{'-'}</div>
           <div>{filterInterval.end && DateFormat.format(filterInterval.end, DateFormat.Formats.default)}</div>
@@ -561,7 +563,7 @@ const ViewTimeFilter = ({ onClose, initialOpen }: { onClose: VoidFunction; initi
             fontFamily: 'Muli',
             borderRight: `1px solid ${Colors.Background.Border}`,
             paddingRight: 10,
-            fontSize: 13
+            fontSize: FontSize['13px']
           }}
         >
           <div style={{ paddingLeft: 8, fontWeight: 600 }}>Presets</div>
@@ -655,7 +657,7 @@ const ViewTimeFilter = ({ onClose, initialOpen }: { onClose: VoidFunction; initi
     >
       <Content alignItems="center" gap={4} flex onClick={togglePopoverVisible} className={filterContainerClassName(popoverVisible)}>
         <Icon name="park-preview-open" size={16} fill="grey" />
-        <Content flex gap={6} style={{ fontSize: 12, fontWeight: 600, fontFamily: 'Muli' }}>
+        <Content flex gap={6} style={{ fontSize: FontSize['12px'], fontWeight: 600, fontFamily: 'Muli' }}>
           <div>{filterInterval.start && DateFormat.format(filterInterval.start, DateFormat.Formats.default)}</div>
           <div>{'-'}</div>
           <div>{filterInterval.end && DateFormat.format(filterInterval.end, DateFormat.Formats.default)}</div>
@@ -704,7 +706,11 @@ const RelatedObjectsFilter = ({ filterId, onClose }: { filterId: number; onClose
       <Icon name="park-share-one" />
       <Content flex alignItems="center" gap={4} style={{ flexWrap: 'wrap' }}>
         {currentSelectObjects.map(i => (
-          <div key={i.id} className={css([ClassName.ellipsisFont(1), ClassName.objectTag])} style={{ fontSize: 12, maxWidth: '100px' }}>
+          <div
+            key={i.id}
+            className={css([ClassName.ellipsisFont(1), ClassName.objectTag])}
+            style={{ fontSize: FontSize['12px'], maxWidth: '100px' }}
+          >
             {i.name}
           </div>
         ))}

@@ -176,7 +176,7 @@ export const TextSelectionTranslate: FC<{ translateInput?: string }> = ({ transl
   return (
     <Content flex style={{ maxHeight: 600, overflow: 'auto', minWidth: 600, maxWidth: 800, color: Colors.Font.Primary }}>
       <Content flex column>
-        <Content flex className={ClassName.description('13px')}>
+        <Content flex className={ClassName.description('1rem')}>
           Translate Result
         </Content>
         <Content flex>

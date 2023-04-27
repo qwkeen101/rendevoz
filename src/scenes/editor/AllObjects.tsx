@@ -7,6 +7,7 @@ import { Path } from 'slate'
 import { CustomEditor } from '~/typings'
 import { useMemoizedFn } from '@/hooks'
 import { highlightMeta, goToBlock } from '@/core/editor/utils'
+import FontSize from '@/consts/font'
 
 const AllObjects = ({ editor }: { editor: CustomEditor }) => {
   const allObjects = useAtomValue(EditorObjectsAtom)
@@ -46,7 +47,7 @@ const ObjectItem = memo(({ metaId, onJump }: { metaId: number; onJump: VoidFunct
         {renderTags({})}
         {renderTitle({
           style: {
-            fontSize: 14
+            fontSize: FontSize['14px']
           }
         })}
       </Content>

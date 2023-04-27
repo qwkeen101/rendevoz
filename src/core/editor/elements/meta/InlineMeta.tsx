@@ -12,6 +12,7 @@ import { RenderElementProps } from '../../slate-react'
 import { useTranslation } from 'react-i18next'
 import Colors from '@/consts/colors'
 import tinycolor from 'tinycolor2'
+import FontSize from '@/consts/font'
 
 const clazzName = css([
   {
@@ -50,26 +51,30 @@ const InlineMetaElement: FC<RenderElementProps> = ({ element, children, attribut
       <Tooltip
         contentTouchable
         content={
-          <WithBorder style={{ padding: 10, maxWidth: 400 }}>
+          <WithBorder style={{ padding: 10, maxWidth: 400, overflow: 'hidden' }}>
             {renderWhole({
               rowGap: 20,
               columnGap: 6,
               renderOptions: {
                 renderFrom: true
               },
+              imageOptions: {
+                width: 80,
+                height: 80
+              },
               titleOptions: {
                 style: {
-                  fontSize: 14
+                  fontSize: FontSize['14px']
                 }
               },
               descriptionOptions: {
                 style: {
-                  fontSize: 12
+                  fontSize: FontSize['12px']
                 }
               },
               fromOptions: {
                 style: {
-                  fontSize: 11
+                  fontSize: FontSize['11px']
                 },
                 className: ClassName.ellipsisFont(1)
               }

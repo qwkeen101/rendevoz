@@ -1,0 +1,55 @@
+import { useGlobalAtomValue, useToggle } from '@/hooks'
+import { GlobalScreenShotSelectionBoxState } from '.'
+import { Toolbar, IconWithPopover } from '@/components'
+import { t } from 'i18next'
+import ScreenShotOcr from './ScreenshotOcr'
+
+type ToolbarOnEvent =
+  | {
+      type: 'ocr'
+    }
+  | {
+      type: 'download'
+    }
+  | {
+      type: 'return'
+    }
+  | {
+      type: 'close'
+    }
+  | {
+      type: 'add as object'
+  }
+const ScreenShotToolbar = ({ on }: { on: (event: ToolbarOnEvent) => void }) => {
+  const selectionBoxState = useGlobalAtomValue(GlobalScreenShotSelectionBoxState)
+  const [draggable, toggleDraggble] = useToggle(true)
+  if (!selectionBoxState) return null
+  return (
+    <Toolbar>
+      <Toolbar.Item>
+        <IconWithPopover
+          tooltip={t('general.ocr')}
+          placement={['top']}
+          name="park-scanning"
+          disableNudge
+          disableIntersection
+          boundaryInset={20}
+          contentDraggable={draggable}
+          onClick={() => on({ type: 'ocr' })}
+          content={<ScreenShotOcr draggable={draggable} onToggleDraggable={toggleDraggble} />}
+        ></IconWithPopover>
+      </Toolbar.Item>
+
+      {/* <Icon name="park-erase" onClick={toggleErase} />
+            <Icon name="park-pencil" onClick={toggleDrawing} /> */}
+      {/* <Icon name="park-save" onClick={closeAndSaveToGallery} /> */}
+      {/* <Icon name="park-more" onClick={() => on({ type: 'ocr' })} /> */}
+      <Toolbar.Item iconName="park-plus" tooltip={t('general.add as object')} onClick={() => on({ type: 'add as object' })} />
+      <Toolbar.Item iconName="park-download" tooltip={t('general.download')} onClick={() => on({ type: 'download' })} />
+      <Toolbar.Item iconName="park-return" tooltip={t('general.return')} onClick={() => on({ type: 'return' })} />
+      <Toolbar.Item iconName="park-close" tooltip={t('general.close')} onClick={() => on({ type: 'close' })} />
+    </Toolbar>
+  )
+}
+
+export default ScreenShotToolbar

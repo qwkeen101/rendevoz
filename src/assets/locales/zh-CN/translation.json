@@ -58,7 +58,15 @@
         "search": "搜索",
         "translate": "翻译",
         "outline": "目录",
-        "highlight": "高亮"
+        "highlight": "高亮",
+        "from": "来源于",
+        "page": "页数",
+        "return": "返回",
+        "move": "移动",
+        "ocr": "OCR",
+        "close": "关闭",
+        "download": "下载",
+        "add as object": "添加为实体"
     },
     "dock": {
         "close": "关闭标签页",
@@ -249,7 +257,7 @@
         "cancel": "取消",
         "understand": "了解",
         "update": "更新"
-    },    
+    },
     "collection": {
         "no collection placeholder": "No collection yet,create one?",
         "collections": "Collections",

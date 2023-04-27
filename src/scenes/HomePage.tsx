@@ -299,6 +299,8 @@ const Recent = () => {
                     }
                     name="park-more"
                     closeOnContentClick
+                    disableIntersection
+                    disableNudge
                     className={ClassName.circleButton()}
                   ></IconWithPopover>
                 </Content>

@@ -7,6 +7,7 @@ import ClassName from '@/styles/classNames'
 import isHotkey from 'is-hotkey'
 import { KEY } from '@/consts/key'
 import { useSetting } from '@/core'
+import Icon from './Icon'
 
 interface ModalProps {
   visible: boolean
@@ -22,6 +23,7 @@ interface ModalProps {
   parentElement?: HTMLElement | null
   noStyle?: boolean
   style?: CSSProperties
+  zIndex?: number
 }
 const Backdrop = ({ children, onMouseDown }) => {
   return (
@@ -60,7 +62,8 @@ const Modal: FC<ModalProps> = ({
   height,
   parentElement,
   noStyle,
-  style
+  style,
+  zIndex
 }) => {
   useEffect(() => {
     const keyDownHandler = (e: KeyboardEvent) => {
@@ -85,7 +88,7 @@ const Modal: FC<ModalProps> = ({
   return ReactDOM.createPortal(
     <AnimatePresence>
       {visible && (
-        <div style={{ position: 'fixed', inset: 0, zIndex: Zindexes.ModalBackdrop }}>
+        <div style={{ position: 'fixed', inset: 0, zIndex: zIndex || Zindexes.ModalBackdrop }}>
           <motion.div
             key={2}
             initial={{ opacity: 0 }}
@@ -99,6 +102,24 @@ const Modal: FC<ModalProps> = ({
             className={ClassName.Background.blurBackground}
           ></motion.div>
           <Backdrop onMouseDown={onClose} key={1}>
+            <motion.div
+              key={20}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              style={{
+                position: 'fixed',
+                top: 30,
+                right: 30
+              }}
+              onPointerDown={e => {
+                onClose()
+                e.preventDefault()
+                e.stopPropagation()
+              }}
+            >
+              <Icon name="park-close" className={ClassName.circleButton()} size={18} />
+            </motion.div>
             <motion.div
               initial={{ y: 50, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}

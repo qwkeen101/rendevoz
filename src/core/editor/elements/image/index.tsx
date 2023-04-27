@@ -47,8 +47,11 @@ const Image = ({ element, children }: RenderElementProps) => {
         onMouseEnter={() => setMaskVisible(true)}
         onMouseLeave={() => setMaskVisible(false)}
         contentEditable={false}
+        style={{
+          width: imageEle.width
+        }}
         className={css({
-          width: imageEle.width || '100%',
+          width: '100%',
           height: '100%',
           display: 'flex',
           alignItems: 'center',
@@ -232,13 +235,12 @@ const Image = ({ element, children }: RenderElementProps) => {
         )}
         <img
           style={{
-            width: imageEle.width
+            width: '100%'
           }}
           className={css({
             objectFit: 'cover',
             borderRadius: 10,
             width: '100%'
-            // maxWidth: 400
           })}
           draggable={true}
           src={imageEle.url}

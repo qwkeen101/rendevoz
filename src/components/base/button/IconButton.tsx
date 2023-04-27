@@ -24,7 +24,8 @@ const IconButton = forwardRef(
       tabIndex,
       selected,
       onPointerEnter,
-      style
+      style,
+      disableStyle
     }: {
       icon?: string
       onClick?: MouseEventHandler
@@ -37,6 +38,7 @@ const IconButton = forwardRef(
       tabIndex?: number
       selected?: boolean
       style?: CSSProperties
+      disableStyle?: boolean
       onPointerEnter?: React.PointerEventHandler
     },
     ref

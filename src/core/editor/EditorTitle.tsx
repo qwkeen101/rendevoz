@@ -35,7 +35,7 @@ export const EditorTitleClassName = css({
   wordBreak: 'break-word',
   padding: '0px 4px',
   whiteSpace: 'pre-wrap',
-  fontSize: 28,
+  fontSize: '2rem',
   fontWeight: 700,
   lineHeight: '1.2',
   minHeight: '1em',

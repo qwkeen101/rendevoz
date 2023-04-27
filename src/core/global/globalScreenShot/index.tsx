@@ -1,10 +1,10 @@
-import { useMemoizedFn, useToggle } from '@/hooks'
+import { useGlobalAtom, useMemoizedFn, useToggle } from '@/hooks'
 import { Position } from '@/types'
 import isHotkey, { compareHotkey } from 'is-hotkey'
 import { CSSProperties, useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { motion, PanInfo, useAnimationControls } from 'framer-motion'
-import { Content, Icon, Tooltip } from '@/components'
+import { Content, Icon, Toolbar, Tooltip } from '@/components'
 import { css } from '@emotion/css'
 import ClassName from '@/styles/classNames'
 import { takeScreenshotCanvas } from './screenshot'
@@ -15,10 +15,19 @@ import { GlobalPocketInstance } from '../GlobalPocket'
 import { saveImageLocally } from '@/utils/img'
 import panzoom, { PanZoom } from 'panzoom'
 import getSetting from '@/core/setting/getSetting'
-const GlobalScreenShot = () => {
-  const [screenShotLayerVisible, setScreenShotLayerVisible] = useState(false)
-  const [selectionBoxState, setSelectionBoxState] = useState<
-    Partial<{
+import { GlobalEventEmitter } from '@/events'
+import { normalizeScreenshot } from './normalizeScreenshot'
+import { ObjectStore } from '@/stores'
+import { useTranslation } from 'react-i18next'
+import { atom } from 'jotai'
+import ScreenShotStatus from './ScreenShotStatus'
+import ScreenShotToolbar from './ScreenShotToolbar'
+import OcrService from '@/services/ocr.service'
+import Colors from '@/consts/colors'
+
+export const GlobalScreenShotOcrResult = atom<string | undefined | 'loading'>(undefined)
+export const GlobalScreenShotSelectionBoxState = atom<
+  | Partial<{
       visible: boolean
       startPosition: Required<Position>
       endPosition: Required<Position>
@@ -27,7 +36,12 @@ const GlobalScreenShot = () => {
       isSelecting: boolean
       transition: string
     }>
-  >()
+  | undefined
+>(undefined)
+const GlobalScreenShot = () => {
+  const [ocrResult, setOcrResult] = useGlobalAtom(GlobalScreenShotOcrResult)
+  const [screenShotLayerVisible, setScreenShotLayerVisible] = useState(false)
+  const [selectionBoxState, setSelectionBoxState] = useGlobalAtom(GlobalScreenShotSelectionBoxState)
   const [previewState, setPreviewState] = useState<
     Partial<{
       visible: boolean
@@ -45,6 +59,7 @@ const GlobalScreenShot = () => {
   const isPressed = useRef(false)
   const framerId = useRef(0)
   const controls = useAnimationControls()
+  const { t } = useTranslation()
   const pointerHandler = useMemoizedFn((e: PointerEvent) => {
     if (toolbarRef.current?.contains(e.target)) {
       selectionBoxState?.visible && setSelectionBoxState({ visible: false })
@@ -69,7 +84,7 @@ const GlobalScreenShot = () => {
         return
       }
       if (selectionBoxState?.stable) {
-        if (selectionBoxRef.current?.contains(e.target as HTMLElement)) {
+        if (selectionBoxRef.current?.contains(e.target as HTMLElement) || e.path.some(i => i.getAttribute?.('role') === 'modal')) {
           return
         }
         setScreenShotLayerVisible(false)
@@ -486,6 +501,8 @@ const GlobalScreenShot = () => {
         document?.removeEventListener('pointermove', _pointerHandler)
         document?.removeEventListener('pointerup', _pointerHandler)
       }
+    } else {
+      setOcrResult(undefined)
     }
   }, [selectionBoxState?.stable])
   useEffect(() => {
@@ -516,6 +533,7 @@ const GlobalScreenShot = () => {
       }
     } else {
       setSelectionBoxState({ visible: false })
+      setOcrResult(undefined)
     }
   }, [screenShotLayerVisible])
   useEffect(() => {
@@ -534,10 +552,11 @@ const GlobalScreenShot = () => {
       document.removeEventListener('keydown', keydownHandler)
     }
   })
-  const getImageBlob = useMemoizedFn(async () => {
+  const getImageBlob = useMemoizedFn(async (): Promise<Blob | undefined> => {
     const className = css({
-      '> *': {
-        display: 'none'
+      outline: 'none !important',
+      '*': {
+        display: 'none !important'
       }
     })
     selectionBoxRef.current!.classList.add(className)
@@ -700,61 +719,99 @@ const GlobalScreenShot = () => {
             cursor: selectionBoxState.stable ? 'grab' : 'default'
           }}
         >
-          <Content
-            flex
-            gap={10}
-            className={ClassName.description()}
-            style={{
-              position: 'absolute',
-              left: 0,
-              top: -5,
-              transform: rect.top < 40 ? 'translateY(50%)' : 'translateY(-100%)',
-              background: 'rgba(255,255,255,0.8)',
-              borderRadius: 4,
-              padding: '2px 6px',
-              userSelect: 'none',
-              width: 'max-content'
-            }}
-          >
-            <div>x: {rect.left.toFixed(0)}px</div>
-            <div>y: {rect.top.toFixed(0)}px</div>
-            <div>width: {Math.abs(rect.width).toFixed(0)}px</div>
-            <div>height: {Math.abs(rect.height).toFixed(0)}px</div>
-          </Content>
+          <ScreenShotStatus />
           <Content
             flex
             gap={3}
-            className={css([
-              ClassName.description(),
-              { '> div': [ClassName.circleButton(4, 4), { cursor: 'pointer !important', fontSize: 16 }] }
-            ])}
             style={{
               position: 'absolute',
               right: 0,
-              bottom: -5,
+              bottom: -8,
               transform: Math.abs(window.innerHeight - (rect.top + rect.height)) < 40 ? 'translateY(-50%)' : 'translateY(100%)',
-              background: 'rgba(255,255,255,0.8)',
-              borderRadius: 4,
-              padding: '2px 6px',
-              userSelect: 'none'
+              userSelect: 'none',
+              background: Colors.Background.ButtonHover,
+              padding: '0px 12px',
+              borderRadius: '999px',
+              zIndex: 10
             }}
           >
-            {/* <Icon name="park-erase" onClick={toggleErase} />
-            <Icon name="park-pencil" onClick={toggleDrawing} /> */}
-            {/* <Icon name="park-save" onClick={closeAndSaveToGallery} /> */}
-            <Icon
-              name="park-download"
-              onClick={() => {
-                const a = document.createElement('a')
-                a.download = `Rendevoz-screenshot-${Id.getStrId()}.png`
-                getImageBlob().then(blob => {
-                  a.href = URL.createObjectURL(blob)
-                  a.click()
-                })
+            <ScreenShotToolbar
+              on={async event => {
+                switch (event.type) {
+                  case 'close': {
+                    setScreenShotLayerVisible(false)
+                    break
+                  }
+                  case 'ocr': {
+                    if (selectionBoxState.rect) {
+                      // const { relatedMeta, normalizedImage } = normalizeScreenshot(selectionBoxState.rect)
+                      if (!ocrResult || ocrResult === 'loading') {
+                        setOcrResult('loading')
+                        const blob = await getImageBlob()
+                        const result = await OcrService.ocrImage(blob)
+                        if (result) {
+                          setOcrResult(result.result.map(i => i.words).join(' '))
+                        }
+                      }
+                      // const imgPath = (await saveImageLocally(Id.getStrId(), blob!)).data
+                      // const one = await ObjectStore('image').addOne({
+                      //   ...normalizedImage,
+                      //   imageUrl: imgPath
+                      // })
+                      // GlobalEventEmitter().emit('global', {
+                      //   type: 'globalNeedAddMetaObject',
+                      //   data: {
+                      //     currentObject: {
+                      //       type: 'image',
+                      //       coverImgSrc: imgPath,
+                      //       objectId: one.id
+                      //     },
+                      //     fromMetas: relatedMeta
+                      //   }
+                      // })
+                    }
+                    break
+                  }
+                  case 'add as object': {
+                    if (selectionBoxState.rect) {
+                      const blob = await getImageBlob()
+                      const { relatedMeta, normalizedImage } = normalizeScreenshot(selectionBoxState.rect)
+                      const imgPath = (await saveImageLocally(Id.getStrId(), blob!, false)).data
+                      const one = await ObjectStore('image').addOne({
+                        ...normalizedImage,
+                        imageUrl: imgPath
+                      })
+                      GlobalEventEmitter().emit('global', {
+                        type: 'globalNeedAddMetaObject',
+                        data: {
+                          currentObject: {
+                            type: 'image',
+                            coverImgSrc: imgPath,
+                            objectId: one.id,
+                            description: ocrResult
+                          },
+                          fromMetas: relatedMeta
+                        }
+                      })
+                    }
+                    break
+                  }
+                  case 'download': {
+                    const a = document.createElement('a')
+                    a.download = `Rendevoz-screenshot-${Id.getStrId()}.png`
+                    getImageBlob().then(blob => {
+                      a.href = URL.createObjectURL(blob)
+                      a.click()
+                    })
+                    break
+                  }
+                  case 'return': {
+                    setSelectionBoxState({ visible: false })
+                    break
+                  }
+                }
               }}
             />
-            <Icon name="park-return" onClick={() => setSelectionBoxState({ visible: false })} />
-            <Icon name="park-close" onClick={() => setScreenShotLayerVisible(false)} />
           </Content>
           {selectionBoxLines.map(i => (
             <motion.div

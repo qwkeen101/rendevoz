@@ -79,7 +79,7 @@ const SearchResultItem = ({ group, onNavi }: { group: SearchGroup; onNavi: VoidF
           {!showChildren && group.items.length > 1 && <div className={ClassName.description('12px')}>{group.items.length} Results</div>}
         </Content>
       )}
-      {!showChildren && <div dangerouslySetInnerHTML={{ __html: group.items[0].content }} className={ClassName.description('14px')}></div>}
+      {!showChildren && <div dangerouslySetInnerHTML={{ __html: group.items[0].content }} className={ClassName.description('1rem')}></div>}
       {metaId && showChildren && (
         <ol
           style={{

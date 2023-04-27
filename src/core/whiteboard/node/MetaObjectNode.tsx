@@ -195,20 +195,20 @@ const MetaObjectNode: FC<InnerNodeProps> = ({ node: n, setPopoverElements, setNo
               },
               titleOptions: {
                 style: {
-                  fontSize: hasSize ? 'max(6.5cqmax, 22px)' : undefined,
+                  fontSize: hasSize ? 'max(6.5cqmax, 1.6rem)' : undefined,
                   color: hasImage ? 'white' : undefined
                 }
               },
               descriptionOptions: {
                 style: {
-                  fontSize: hasSize ? 'max(14px,4cqmax)' : undefined,
+                  fontSize: hasSize ? 'max(1rem,4cqmax)' : undefined,
                   color: hasImage ? 'white' : undefined
                 }
               },
               tagsOptions: {
                 containerClassName: hasSize
                   ? css([
-                      { '> *': { fontSize: 'max(10px, 3cqmax) !important' }, gap: 'max(1.5cqmax, 4px) !important' },
+                      { '> *': { fontSize: 'max(0.7rem, 3cqmax) !important' }, gap: 'max(1.5cqmax, 0.3rem) !important' },
                       hasImage
                         ? {
                             '> *': {

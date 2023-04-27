@@ -7,6 +7,7 @@ import { GraphEdge } from '../../types/edge'
 import EdgeAttributeCard from './EdgeAttributeCard'
 import NodePopover from './NodePopover'
 import { LeftTopPosition } from '~/typings'
+import { Zindexes } from '@/consts'
 
 interface GraphOverlayProps {
   onAddLink: Noop
@@ -55,7 +56,7 @@ const useGraphOverlay = () => {
       <Portal>
         <AnimatePopover
           align="center"
-          containerStyle={{ zIndex: '999999' }}
+          containerStyle={{ zIndex: String(Zindexes.GraphPopup) }}
           visible={!!overlayState.visible}
           content={
             <WithBorder padding="6px" style={{ maxWidth: 400 }}>

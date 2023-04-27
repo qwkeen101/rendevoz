@@ -1,4 +1,4 @@
-{    
+{
     "general": {
         "home": "home",
         "database": "database",
@@ -41,7 +41,7 @@
         "related": "related",
         "email": "email",
         "password": "password",
-        "email address": "email address",        
+        "email address": "email address",
         "webpage": "webpage",
         "webpage label": "webpage label",
         "ago": "{{time}} ago",
@@ -58,7 +58,15 @@
         "translate": "translate",
         "outline": "outline",
         "highlight": "highlight",
-        "note label": "note label"
+        "note label": "note label",
+        "from": "from",
+        "page": "page",
+        "return": "return",
+        "move": "move",
+        "ocr": "ocr",
+        "close": "close",
+        "download": "download",
+        "add as object": "add as object"
     },
         "dock": {
         "close": "close",
@@ -249,7 +257,7 @@
         "cancel": "Cancel",
         "understand": "Understand",
         "update": "Update"
-    },    
+    },
     "collection": {
         "no collection placeholder": "No collection yet,create one?",
         "collections": "Collections",

@@ -3,6 +3,7 @@ import { KonvaEventListener } from 'konva/lib/Node'
 import { Stage } from 'konva/lib/Stage'
 import { throttle } from 'lodash'
 import CustomLine from './CustomLine'
+import FreeDrawingManager from './FreeDrawingManager'
 
 class CanvasManager {
   private drawPoint = {
@@ -14,6 +15,71 @@ class CanvasManager {
   private isPressed = false
   public isErasing = false
   private lastLine?: CustomLine
+  public freeDrawingManager = new FreeDrawingManager()
+  public mode: 'draw' | 'move' | 'shape' = 'draw'
+
+  public setMode = (mode: 'draw' | 'move' | 'shape') => {
+    this.mode = mode
+    if (mode === 'move') {
+      this.stage?.draggable(true)
+    } else {
+      this.stage?.draggable(false)
+    }
+  }
+
+  public setDrawMode = (mode: 'erase' | 'draw') => {
+    const freeDrawingCtx = this.freeDrawingManager.drawCanvas?.getContext('2d')
+    if (freeDrawingCtx) {
+      if (mode === 'draw') {
+        this.freeDrawingManager.isDrawing = true
+        freeDrawingCtx.globalCompositeOperation = 'source-over'
+      } else {
+        this.freeDrawingManager.isDrawing = false
+        freeDrawingCtx.globalCompositeOperation = 'destination-out'
+      }
+    }
+  }
+  public setEraserSize = (size: number) => {
+    this.freeDrawingManager.eraserSize = size
+  }
+  public setPencilSize = (size: number) => {
+    this.freeDrawingManager.pencilSize = size
+  }
+  public setPencilColor = (color: string) => {
+    const ctx = this.freeDrawingManager.drawCanvas?.getContext('2d')
+    if (ctx) {
+      ctx.strokeStyle = color
+    }
+  }
+  public addImage = (imageUrl: string) => {
+    if (!this.stage) return
+    const image = new Image()
+    image.src = imageUrl
+    image.onload = () => {
+      const { width, height } = image
+
+      const stageWidth = this.stage?.width()
+      const stageHeight = this.stage?.height()
+      if (!stageHeight || !stageWidth) return
+      const maxWidth = stageWidth * 0.8
+
+      const realWidth = Math.min(maxWidth, width)
+      const widthRatio = realWidth / width
+      const realHeight = height * widthRatio
+      const x = stageWidth / 2 - realWidth / 2
+      const y = stageHeight / 2 - realHeight / 2
+
+      const konvaImage = new Konva.Image({
+        image,
+        x,
+        y,
+        width: realWidth,
+        height: realHeight
+      })
+      this.layer?.add(konvaImage)
+      konvaImage.zIndex(0)
+    }
+  }
   drawLineStart = (x: number, y: number) => {}
   drawLine = throttle((x: number, y: number) => {
     this.lastLine?.appendPoint(x, y)
@@ -21,9 +87,10 @@ class CanvasManager {
   pointerDownHandler: KonvaEventListener<Stage, PointerEvent> = e => {
     this.isPressed = true
     const pos = getRelativePointerPosition(this.stage)
-    const customLine = new CustomLine(pos?.x, pos?.y, this.isErasing ? 'erase' : 'paint')
-    this.layer?.add(customLine)
-    this.lastLine = customLine
+    this.freeDrawingManager.startPaint(pos)
+    // const customLine = new CustomLine(pos?.x, pos?.y, this.isErasing ? 'erase' : 'paint')
+    // this.layer?.add(customLine)
+    // this.lastLine = customLine
   }
   private getPattern = img => {
     const canvas = document.createElement('canvas')
@@ -39,13 +106,18 @@ class CanvasManager {
   }
   pointerMoveHandler: KonvaEventListener<Stage, PointerEvent> = e => {
     if (this.isPressed) {
-      const pos = getRelativePointerPosition(this.stage)
-      this.drawLine(pos?.x, pos?.y)
+      if (this.mode === 'draw') {
+        const pos = getRelativePointerPosition(this.stage)
+        this.freeDrawingManager.paint(pos)
+      }
+      // this.drawLine(pos?.x, pos?.y)
     }
   }
   pointerUpHandler: KonvaEventListener<Stage, PointerEvent> = e => {
     this.isPressed = false
+    this.freeDrawingManager.endPaint()
   }
+
   scaleHandler: KonvaEventListener<Stage, WheelEvent> = e => {
     e.evt.preventDefault()
     if (this.stage) {
@@ -69,10 +141,12 @@ class CanvasManager {
     }
   }
   public initialize = (container: HTMLDivElement) => {
+    const containerBounding = container.getBoundingClientRect()
+
     const stage = new Konva.Stage({
       container: container,
-      width: window.innerWidth,
-      height: window.innerHeight
+      width: containerBounding.width,
+      height: containerBounding.height
     })
     stage.on('pointerdown', this.pointerDownHandler)
     stage.on('pointermove', this.pointerMoveHandler)
@@ -85,16 +159,18 @@ class CanvasManager {
     const canvas = document.createElement('canvas')
     canvas.width = stage.width()
     canvas.height = stage.height()
-    this.offscreenCanvas = canvas
+    this.freeDrawingManager.drawCanvas = canvas
+    this.freeDrawingManager.layer = layer
     const image = new Konva.Image({
       image: canvas,
       x: 0,
       y: 0
     })
     layer.add(image)
+    image.zIndex(0)
     const ctx = canvas.getContext('2d')
     if (ctx) {
-      ctx.strokeStyle = '#df4b26'
+      ctx.strokeStyle = 'black'
       ctx.lineJoin = 'round'
       ctx.lineWidth = 2
     }

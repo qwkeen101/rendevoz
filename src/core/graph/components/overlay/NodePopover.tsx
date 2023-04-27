@@ -7,6 +7,7 @@ import { useAtom } from 'jotai'
 import { GraphPinNodesIdsAtom } from '../../hooks/useGraphFilter'
 import produce from 'immer'
 import { GlobalEventEmitter } from '@/events'
+import FontSize from '@/consts/font'
 
 const NodePopover = ({ metaId, nodeId, onClose }: { metaId: number; nodeId: number; onClose: VoidFunction }) => {
   const { renderWhole } = useRenderObject({ metaObjectId: metaId })
@@ -17,7 +18,7 @@ const NodePopover = ({ metaId, nodeId, onClose }: { metaId: number; nodeId: numb
       {renderWhole({
         titleOptions: {
           style: {
-            fontSize: 14
+            fontSize: FontSize['14px']
           },
           onTitleClick: () => {
             Actions.navigateToTargetObject(metaId)
@@ -27,7 +28,7 @@ const NodePopover = ({ metaId, nodeId, onClose }: { metaId: number; nodeId: numb
         },
         descriptionOptions: {
           style: {
-            fontSize: 13
+            fontSize: FontSize['13px']
           }
         },
         renderOptions: {

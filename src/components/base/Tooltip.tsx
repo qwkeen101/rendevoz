@@ -101,6 +101,7 @@ const ToolTip: FC<PropsWithChildren<ToolTipProps>> = (
       </div>
     )
   }
+
   useEffect(() => {
     if (contentTouchable) {
       setTimeout(() => {
@@ -135,7 +136,10 @@ const ToolTip: FC<PropsWithChildren<ToolTipProps>> = (
           boundaryElement={document.body}
           boundaryInset={20}
           positions={[position]}
+          reposition={false}
+          disableNudge
           innerRef={mergedRef}
+          disableIntersection
           visible={!!content && open && !disable}
         >
           {renderChildren()}

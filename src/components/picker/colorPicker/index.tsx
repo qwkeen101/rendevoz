@@ -3,15 +3,16 @@ import * as material from 'material-colors'
 import { Content } from '../../base'
 import styles from './index.module.less'
 import { css } from '@emotion/css'
+import FontSize from '@/consts/font'
 
 interface ColorPickerProps {
   colors?: string[][]
   onPick: (color: string) => void
-  backDefault?: boolean
   enableMore?: boolean
   isFont?: boolean
   enableDefault?: boolean
   disableLinear?: boolean
+  text?: string
 }
 export const Colors: string[][] = [
   [material.red['900'], material.red['700'], material.red['500'], material.red['300'], material.red['100']],
@@ -76,11 +77,11 @@ export const defaultBgColor = '#ffffff'
 const ColorPicker: FC<ColorPickerProps> = ({
   onPick,
   colors = Colors,
-  backDefault = false,
   enableMore = false,
   isFont = false,
   enableDefault = true,
-  disableLinear
+  disableLinear,
+  text
 }) => {
   let displayColors = enableMore ? colors.map(i => (isFont ? i[2] : i[4])) : colors.flat(1)
   if (disableLinear) {
@@ -128,7 +129,7 @@ const ColorPicker: FC<ColorPickerProps> = ({
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            fontSize: 16,
+            fontSize: FontSize['16px'],
             fontWeight: 500,
             position: 'relative'
             // opacity: 0.8
@@ -162,6 +163,15 @@ const ColorPicker: FC<ColorPickerProps> = ({
 
   return (
     <Content flex column>
+      {text && (
+        <div
+          style={{
+            marginBottom: 10
+          }}
+        >
+          {text}
+        </div>
+      )}
       <Content
         className={css({
           gridTemplateColumns: 'repeat(auto-fill, minmax(24px, 1fr))',

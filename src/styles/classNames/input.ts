@@ -1,4 +1,5 @@
 import Colors from '@/consts/colors'
+import FontSize from '@/consts/font'
 import { css } from '@emotion/css'
 
 export const input = () =>
@@ -7,18 +8,17 @@ export const input = () =>
     width: '100%',
     outline: 'none',
     position: 'relative',
-    fontSize: 13,
+    fontSize: FontSize['14px'],
     fontWeight: 500,
     letterSpacing: '-0.04px',
     borderRadius: 6,
-    border: 'none',
     background: 'transparent',
-    boxShadow: `${Colors.Background.Border} 0px 0px 0px 1px inset`,
+    border: `1px solid ${Colors.Background.Border}`,
     transition: 'all 0.2s ease',
     ':hover': {
       background: `${Colors.Background.Border}`
     },
     ':focus': {
-      boxShadow: 'var(--font-secondary) 0px 0px 0px 1px inset'
+      border: '1px solid var(--font-secondary)'
     }
   })

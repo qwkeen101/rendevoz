@@ -43,11 +43,10 @@ const GraphInner: FC<GraphContainerProps> = ({ edges, nodes }) => {
       }, 0)
     }
   }, [edges, nodes])
-  useEffect(() => {
-    if (graph) {
-      graph.setNodes = setNodes
-    }
-  })
+  if (graph) {
+    graph.setNodes = setNodes
+  }
+
   return (
     <>
       {!isMinimized && (

@@ -1,6 +1,6 @@
-import { Toolbar, Content, WithBorder, IconWithPopover } from '@/components'
+import { Toolbar, Content, IconWithPopover } from '@/components'
 import BlockColorPicker from '@/core/editor/components/BlockColorPicker'
-import { TextSelectEvent } from '@/events/pdfEvent'
+import { TextSelectEvent } from '~/typings/event'
 import ClassName from '@/styles/classNames'
 import { FC } from 'react'
 import useSWRImmutable from 'swr/immutable'
@@ -9,32 +9,32 @@ import Colors from '@/consts/colors'
 
 interface TextSelectionToolbarProps {
   textSelect?: TextSelectEvent
-  onHighlight?: (color: string) => void
+  onTranslate?: (e: React.MouseEvent) => void
+  onHighlight?: (color: string, specType?: 'underline') => void
+  onSearch?: (e: React.MouseEvent) => void
 }
-const TextSelectionToolbar: FC<TextSelectionToolbarProps> = ({ textSelect, onHighlight }) => {
+const TextSelectionToolbar: FC<TextSelectionToolbarProps> = ({ textSelect, onHighlight, onTranslate, onSearch }) => {
   return (
     <Toolbar>
+      <Toolbar.Item
+        iconName="park-copy-one"
+        onClick={e => textSelect?.selectedText && navigator.clipboard.writeText(textSelect?.selectedText)}
+      ></Toolbar.Item>
+      <Toolbar.Item iconName="park-search" onClick={onSearch}></Toolbar.Item>
+      <Toolbar.Item iconName="park-translate" onClick={e => onTranslate?.(e)}></Toolbar.Item>
       <Toolbar.Item>
         <IconWithPopover
-          name="park-search"
-          zIndex={10000}
-          placement={['top', 'bottom', 'right']}
-          content={
-            <WithBorder style={{ padding: 20 }}>
-              <TextSelectionSearch searchInput={textSelect?.selectedText} />
-            </WithBorder>
-          }
-        />
-      </Toolbar.Item>
-      <Toolbar.Item>
-        <IconWithPopover
-          name="park-translate"
+          name="park-text-underline"
           placement={['top', 'bottom', 'right']}
           zIndex={10000}
           content={
-            <WithBorder style={{ padding: 20 }}>
-              <TextSelectionTranslate translateInput={textSelect?.selectedText} />
-            </WithBorder>
+            <BlockColorPicker
+              bgBackDefault={false}
+              showFont={false}
+              onPickBackgroundColor={c => {
+                onHighlight?.(c, 'underline')
+              }}
+            />
           }
         />
       </Toolbar.Item>

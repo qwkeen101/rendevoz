@@ -14,12 +14,13 @@ const withVoid = (editor: CustomEditor) => {
       case 'divider':
       case 'inline-metaObject':
       case 'subPage':
+      case 'math':
         return true
       default:
         return false
     }
   }
-  editor.isInline = element => ['emoji', 'link', 'sup', 'inline-metaObject'].includes(element.type) || isInline(element)
+  editor.isInline = element => ['emoji', 'link', 'sup', 'inline-metaObject', 'math'].includes(element.type) || isInline(element)
   editor.isVoid = element => {
     return checkIfVoidComponents(element) ? true : isVoid(element)
   }

@@ -1,16 +1,9 @@
-import getSetting from '@/core/setting/getSetting'
-import useDb from '@/hooks/stores/useDb'
 import PdfJs from '@/consts/pdfJs'
 import { saveFileLocally } from '@/utils/file'
 import Id from '@/utils/id'
 import { saveImageLocally } from '@/utils/img'
 import { atom } from 'jotai/vanilla'
-import toast from 'react-hot-toast'
 import { IPdfDocument } from '~/typings/data'
-import { initializeLocalStore } from './base.store'
-
-import { IStoreDeprecated } from './store.type'
-import { MetaStore } from '.'
 import usePdfjs from '@/hooks/utils/usePdfjs'
 import { SearchStore, SearchableDocument } from './search.store'
 
@@ -78,58 +71,3 @@ export const savePdfAsSearch = async (pdfFile: File | Uint8Array, pdfId: number)
     SearchStore.addDocuments(filtered)
   }
 }
-const createDocumentStore = () => {
-  const database = useDb('documents')
-
-  const store = initializeLocalStore(documentsAtom, database)
-
-  const shouldToast = (silent?: boolean) => {
-    const setting = getSetting()
-    if (setting.notification.enabled && setting.notification.pdf && !silent) {
-      return true
-    }
-    return false
-  }
-  const localStore: Pick<IStoreDeprecated<IPdfDocument>, 'addOne' | 'deleteOneById' | 'getAll' | 'getOneById' | 'updateOne'> = {
-    addOne: store.addOne((obj, silent) => {
-      MetaStore.addMetaObject(
-        {
-          id: Id.getId(),
-          objectId: obj.id,
-          type: 'pdf'
-        },
-        true
-      )
-      !silent && shouldToast(silent) && toast.success('Document successfully added!')
-    }),
-    updateOne: store.updateOne((obj, silent) => {
-      !silent && shouldToast(silent) && toast.success('Document successfully updated!')
-    }),
-    deleteOneById: store.deleteOneById(silent => {
-      !silent && shouldToast(silent) && toast.success('Document successfully deleted!')
-    }),
-    getAll: store.getAll(),
-    getOneById: store.getOneById()
-  }
-  const realStore = {
-    getDocumentById: localStore.getOneById,
-    addDocument: localStore.addOne,
-    deleteDocument: localStore.deleteOneById,
-    getAllDocuments: localStore.getAll,
-    updateDocument: localStore.updateOne
-  }
-  return {
-    ...realStore
-  }
-}
-const shouldToast = (silent?: boolean) => {
-  const setting = getSetting()
-  if (setting.notification.enabled && setting.notification.pdf && !silent) {
-    return true
-  }
-  return false
-}
-
-export const documentStore = createDocumentStore()
-
-export default createDocumentStore

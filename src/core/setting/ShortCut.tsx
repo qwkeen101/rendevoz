@@ -12,24 +12,16 @@ import { IShortCutSetting, useSetting } from '.'
 const shortCutNameToTitle: Record<keyof IShortCutSetting['shortcut'], string> = {
   openObjectPanel: 'open quick object panel',
   quickCreateObject: 'open create object form',
-  openScreenShot: 'open screen shot'
+  openScreenShot: 'open screen shot',
+  openTranslatePanel: 'open translate panel',
+  openSearchPanel: 'open search panel'
 }
 const ShortCutSetting = () => {
   const { t } = useTranslation()
-  const globalItems: SettingItem[] = [
-    {
-      title: t(`settings.${shortCutNameToTitle['openObjectPanel']}`),
-      children: <ShortCutItem shortCutName="openObjectPanel" />
-    },
-    {
-      title: t(`settings.${shortCutNameToTitle['quickCreateObject']}`),
-      children: <ShortCutItem shortCutName="quickCreateObject" />
-    },
-    {
-      title: t(`settings.${shortCutNameToTitle['openScreenShot']}`),
-      children: <ShortCutItem shortCutName="openScreenShot" />
-    }
-  ]
+  const globalItems: SettingItem[] = Object.entries(shortCutNameToTitle).map(entry => ({
+    title: t(`settings.${entry[1]}`),
+    children: <ShortCutItem shortCutName={entry[0]} />
+  }))
 
   return (
     <>
@@ -73,15 +65,16 @@ const ShortCutItem = memo(({ shortCutName }: { shortCutName: keyof IShortCutSett
         }
         setSetting(s =>
           produce(s, draft => {
-            const { ctrlKey, altKey, shiftKey, key } = e
+            const { ctrlKey, altKey, shiftKey, key, metaKey } = e
             let realKey: string | undefined = key
-            if ([KEY.Alt, KEY.Shift, KEY.Control].includes(key)) {
+            if ([KEY.Alt, KEY.Shift, KEY.Control, KEY.Meta].includes(key)) {
               realKey = undefined
             }
             draft.shortcut[shortCutName] = {
               ctrlKey,
               altKey,
               shiftKey,
+              metaKey,
               key: realKey
             }
           })
@@ -123,8 +116,8 @@ const ShortCutItem = memo(({ shortCutName }: { shortCutName: keyof IShortCutSett
   }, [shortCut, setting])
   const renderKey = () => {
     if (!shortCut) return 'Not Set'
-    const { ctrlKey, altKey, shiftKey, key } = shortCut
-    return `${ctrlKey ? 'Ctrl + ' : ''}${altKey ? 'Alt + ' : ''}${shiftKey ? 'Shift + ' : ''}${
+    const { ctrlKey, altKey, shiftKey, key, metaKey } = shortCut
+    return `${ctrlKey ? 'Ctrl + ' : ''}${metaKey ? 'Meta + ' : ''}${altKey ? 'Alt + ' : ''}${shiftKey ? 'Shift + ' : ''}${
       key ? key?.charAt(0).toUpperCase() + key?.slice(1) : ''
     }`
   }

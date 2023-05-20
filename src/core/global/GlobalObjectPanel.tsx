@@ -7,7 +7,7 @@ import { Position } from '@/types'
 import { css } from '@emotion/css'
 import { useVirtualizer } from '@tanstack/react-virtual'
 import { useAtom, useAtomValue, useStore } from 'jotai/react'
-import { forwardRef, memo, ReactElement, useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import React, { forwardRef, memo, ReactElement, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { Rnd } from 'react-rnd'
 import { MetaObject } from '~/typings/data'
@@ -36,6 +36,7 @@ import { GlobalEventEmitter, useEventHandler } from '@/events'
 import { LeftTopPosition } from '~/typings'
 import Colors from '@/consts/colors'
 import FontSize from '@/consts/font'
+import ResizeAndDrag from '@/components/base/ResizeAndDrag'
 
 export const GlobalObjectPanelInstance: {
   open?: (position?: LeftTopPosition) => void
@@ -162,12 +163,12 @@ export const GlobalObjectPanel = () => {
         width: '100%',
         height: '100%',
         overflow: 'hidden',
-        zIndex: Zindexes.CreateObjectPanel,
+        zIndex: Zindexes.ObjectPanel,
         pointerEvents: 'none'
       }}
     >
       {panelState.visible && (
-        <Rnd
+        <ResizeAndDrag
           style={{
             boxShadow: 'rgba(100, 100, 111, 0.2) 0px 7px 29px 0px',
             display: 'flex',
@@ -239,7 +240,12 @@ export const GlobalObjectPanel = () => {
               }}
               className="global-drag-panel"
             >
-              <div className={ClassName.title('1rem')}>{t('dialog.object panel', { object: t('general.object') })}</div>
+              <div className={ClassName.title('1rem')}>
+                {t('dialog.object panel', { object: t('general.object') })}{' '}
+                <span className={ClassName.description(FontSize['12px'])} style={{ marginLeft: 16 }}>{`${t('general.total objects')}: ${
+                  shouldDisplayObjects.length
+                }`}</span>
+              </div>
               <Icon
                 name="park-close"
                 className={ClassName.circleButton()}
@@ -270,6 +276,7 @@ export const GlobalObjectPanel = () => {
                   background: 'inherit',
                   flexGrow: 1
                 })}
+                autoFocus
               />
             </Content>
             <DatabaseFilter />
@@ -330,7 +337,7 @@ export const GlobalObjectPanel = () => {
               </div>
             </div>
           </div>
-        </Rnd>
+        </ResizeAndDrag>
       )}
     </div>,
     document.body,
@@ -349,15 +356,19 @@ export const SimpleObject = memo(
         onNavigate,
         draggable = true,
         renderFrom = true,
-        renderDescription = true,
+        renderDescription = false,
         isAddingObject,
+        iconTheme,
         iconColor = Colors.Font.Secondary,
         heavyIconColor = Colors.Font.Primary,
-        onAddObject
+        onAddObject,
+        showIcon = false,
+        onIconClick
       }: {
         metaObjectId: number
         iconName?: string
         iconColor?: string
+        iconTheme?: string
         heavyIconColor?: string
         iconPopover?: ReactElement
         descriptionClassName?: string
@@ -367,19 +378,21 @@ export const SimpleObject = memo(
         renderFrom?: boolean
         isAddingObject?: boolean
         onAddObject?: (id: number) => void
+        showIcon?: boolean
+        onIconClick?: (e: React.MouseEvent, togglePopoverVisible: React.SetStateAction<boolean>) => void
       },
       ref
     ) => {
       const containerRef = useRef<HTMLDivElement>(null)
       const mergedRef = useMergedRef(containerRef, ref)
       const isPressed = useRef(false)
-      const { renderWhole, metaObject } = useRenderObject({
+      const { renderWhole } = useRenderObject({
         metaObjectId: metaObjectId
       })
+      const [hovered, setHovered] = useState(false)
+      const [popoverContainerVisible, togglePopoverContainerVisible] = useState(false)
       const [popoverVisible, togglePopoverVisible] = useToggle(false)
-      const [editVisible, toggleEditVisible] = useToggle(false)
       const [showCheckBox, toggleShowCheckBox] = useToggle(false)
-      const { updateMetaObject } = MetaStore
       const firstDragTimeRef = useRef<number>(0)
       const currentFocusFilter = useAtomValue(CurrentFocusFilterAtom)
       const filters = useAtomValue(FiltersAtom)
@@ -470,88 +483,120 @@ export const SimpleObject = memo(
           }
         }
       }
-      return (
-        <Content flex ref={mergedRef} alignItems="center" gap={10}>
-          <Modal noStyle visible={editVisible} onClose={toggleEditVisible}>
-            <ObjectForm
-              initialObject={metaObject}
-              onSubmit={obj => {
-                toggleEditVisible()
-                updateMetaObject(obj)
-              }}
-              onBack={toggleEditVisible}
-            />
-          </Modal>
-          {showCheckBox ? (
-            <CheckBox
-              style={{ flexShrink: 0, margin: '0px 4px' }}
-              checked={currentRelatedIds?.has(metaObjectId)}
-              onChange={handleClickCheckBox}
-            />
-          ) : isAddingObject ? (
-            <Icon onClick={() => onAddObject?.(metaObjectId)} size={18} name="park-plus" className={ClassName.circleButton()}></Icon>
-          ) : (
-            <AnimatePopover
-              visible={popoverVisible}
-              innerRef={iconRef}
-              padding={10}
-              containerStyle={{ zIndex: String(Zindexes.ToolBar) }}
-              onClickOutside={togglePopoverVisible}
-              content={
-                <WithBorder>{iconPopover || <ObjectActionPopover onClose={togglePopoverVisible} metaObjectId={metaObjectId} />}</WithBorder>
-              }
-              align="start"
-              positions={['left', 'right']}
-            >
-              <Icon
-                size={18}
-                fill={iconColor}
-                onClick={togglePopoverVisible}
-                name={iconName}
-                className={css([
-                  ClassName.circleButton(),
-                  {
-                    color: iconColor,
-                    ':hover': {
-                      color: heavyIconColor
-                    }
-                  }
-                ])}
-              />
-            </AnimatePopover>
-          )}
-          {renderWhole({
-            renderOptions: {
-              renderFrom,
-              renderDescription
+
+      useEffect(() => {
+        if (popoverVisible === false) {
+          setTimeout(() => {
+            togglePopoverContainerVisible(false)
+          }, 300)
+        } else {
+          togglePopoverContainerVisible(true)
+        }
+      }, [popoverVisible])
+      const renderOptions = useMemo(
+        () => ({
+          renderOptions: {
+            renderFrom,
+            renderDescription
+          },
+          containerStyle: {
+            width: '100%'
+          },
+          mainContainerStyle: {
+            flex: 1,
+            width: 0
+          },
+          fromOptions: {
+            style: {
+              margin: 0
             },
-            fromOptions: {
-              containerStyle: {
-                margin: 0
-              },
-              className: ClassName.ellipsisFont(1)
+            className: ClassName.ellipsisFont(1)
+          },
+          tagsOptions: {
+            showCreatedAt: filters.some(i => i.filterType === 'createdAt'),
+            showViewAt: filters.some(i => i.filterType === 'viewAt')
+          },
+          titleOptions: {
+            style: {
+              fontSize: FontSize['14px']
             },
-            tagsOptions: {
-              showCreatedAt: filters.some(i => i.filterType === 'createdAt'),
-              showViewAt: filters.some(i => i.filterType === 'viewAt')
-            },
-            titleOptions: {
-              style: {
-                fontSize: FontSize['14px']
-              },
-              titleClassName,
-              onTitleClick: () => {
-                Actions.navigateToTargetObject(metaObjectId)
-                onNavigate?.()
-              }
-            },
-            descriptionOptions: {
-              style: {
-                fontSize: FontSize['12px']
-              },
-              descriptionClassName
+            titleClassName,
+            onTitleClick: () => {
+              Actions.navigateToTargetObject(metaObjectId)
+              onNavigate?.()
             }
-          })}
+          },
+          rowGap: 10,
+          descriptionOptions: {
+            style: {
+              fontSize: FontSize['12px']
+            },
+            descriptionClassName
+          }
+        }),
+        [filters, metaObjectId]
+      )
+      return (
+        <Content
+          onPointerOver={() => setHovered(true)}
+          onPointerLeave={() => setHovered(false)}
+          flex
+          ref={mergedRef}
+          alignItems="center"
+          gap={10}
+        >
+          {renderWhole(renderOptions)}
+          <div
+            style={{
+              marginLeft: 'auto',
+              display: hovered || popoverContainerVisible || popoverVisible || showCheckBox || showIcon ? undefined : 'none',
+              opacity: hovered || popoverVisible || showCheckBox || showIcon ? 1 : 0
+            }}
+          >
+            {showCheckBox ? (
+              <CheckBox
+                style={{ flexShrink: 0, margin: '0px 4px' }}
+                checked={currentRelatedIds?.has(metaObjectId)}
+                onChange={handleClickCheckBox}
+              />
+            ) : isAddingObject ? (
+              <Icon onClick={() => onAddObject?.(metaObjectId)} size={18} name="park-plus" className={ClassName.circleButton()}></Icon>
+            ) : (
+              <AnimatePopover
+                visible={popoverVisible}
+                innerRef={iconRef}
+                padding={10}
+                containerStyle={{ zIndex: String(Zindexes.ToolBar) }}
+                onClickOutside={() => {
+                  togglePopoverVisible(false)
+                }}
+                content={
+                  <WithBorder>
+                    {iconPopover || <ObjectActionPopover onClose={togglePopoverVisible} metaObjectId={metaObjectId} />}
+                  </WithBorder>
+                }
+                align="start"
+                positions={['right', 'left']}
+              >
+                <Icon
+                  size={18}
+                  fill={iconColor}
+                  onClick={e => onIconClick?.(e, togglePopoverVisible) || togglePopoverVisible()}
+                  name={iconName}
+                  theme={iconTheme}
+                  className={css([
+                    ClassName.circleButton(),
+                    {
+                      color: iconColor,
+                      ':hover': {
+                        color: heavyIconColor
+                      }
+                    }
+                  ])}
+                />
+              </AnimatePopover>
+            )}
+          </div>
         </Content>
       )
     }
@@ -560,10 +605,11 @@ export const SimpleObject = memo(
 
 const titleClassName = css([
   ClassName.ellipsisFont(1),
-  ClassName.title('16px'),
+  ClassName.title(FontSize['14px']),
   {
     position: 'relative',
     width: 'fit-content',
+    maxWidth: '100%',
     textDecoration: 'underline 1px rgba(0,0,0,0)',
     transition: 'text-decoration-color 0.3s ease',
     ':hover': {

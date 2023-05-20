@@ -4,7 +4,6 @@ import { line } from 'd3-shape'
 import { getMarkerId } from '../utils/getMarkerId'
 import { MarkerColor } from '@/consts'
 import useGraph from '../hooks/useGraph'
-import { motion } from 'framer-motion'
 import { select } from 'd3'
 import { useMemoizedFn } from '@/hooks'
 import { TypeToNodeRadius } from './node/Node'
@@ -71,32 +70,27 @@ const Edge: FC<EdgeProps> = memo(({ edge }) => {
     }
   }, [edge.label, finalPosition])
 
-  const drawEdge = useMemoizedFn((): string => {
+  const drawEdge = useMemoizedFn(() => {
     const targetNode = graph?.nodesMap?.get(edge.targetId)
     const targetX = targetNode?.x
     const targetY = targetNode?.y
     const sourceNode = graph?.nodesMap?.get(edge.sourceId)
     const sourceX = sourceNode?.x
     const sourceY = sourceNode?.y
-
+    if (!targetNode || !sourceNode) return
     const TARGET_CIRCLE_RADIUS = TypeToNodeRadius[targetNode?.type || 'normal']
     const SOURCE_CIRCLE_RADIUS = TypeToNodeRadius[sourceNode?.type || 'normal']
-    const getYOffset = (type?: string) => {
-      if (type === 'note') {
-        return 8
-      }
-      return 0
-    }
+    const yOffset = 18
     const targetCircleCenterX = targetX + TARGET_CIRCLE_RADIUS
-    const targetCircleCenterY = targetY + TARGET_CIRCLE_RADIUS + getYOffset(targetNode?.type)
+    const targetCircleCenterY = targetY + TARGET_CIRCLE_RADIUS + yOffset
     const sourceCircleCenterX = sourceX + SOURCE_CIRCLE_RADIUS
-    const sourceCircleCenterY = sourceY + SOURCE_CIRCLE_RADIUS + getYOffset(sourceNode?.type)
+    const sourceCircleCenterY = sourceY + SOURCE_CIRCLE_RADIUS + yOffset
 
     const distance = Math.sqrt(
       Math.pow(targetCircleCenterX - sourceCircleCenterX, 2) + Math.pow(targetCircleCenterY - sourceCircleCenterY, 2)
     )
-    const sourceRatioOffset = sourceNode?.type === 'note' ? 30 : 10
-    const targetRatioOffset = targetNode?.type === 'note' ? 30 : 10
+    const sourceRatioOffset = 40
+    const targetRatioOffset = 40
     const sourceRatio = (SOURCE_CIRCLE_RADIUS + sourceRatioOffset) / distance
     const targetRatio = (TARGET_CIRCLE_RADIUS + targetRatioOffset) / distance
     const horizontalDistance = targetCircleCenterX - sourceCircleCenterX
@@ -122,19 +116,19 @@ const Edge: FC<EdgeProps> = memo(({ edge }) => {
     const finalSourceY = sourceCircleCenterY + sourceDy
     const finalTargetX = targetCircleCenterX - targetDx
     const finalTargetY = targetCircleCenterY - targetDy
-    setFinalPosition({
-      sourcex: finalSourceX + offsetX,
-      sourcey: finalSourceY - offsetY,
-      targetx: finalTargetX + offsetX,
-      targety: finalTargetY - offsetY
-    })
     const points = [
-      [finalSourceX + offsetX, finalSourceY - offsetY],
-      [finalTargetX + offsetX, finalTargetY - offsetY]
+      [~~(finalSourceX + offsetX), ~~(finalSourceY - offsetY)],
+      [~~(finalTargetX + offsetX), ~~(finalTargetY - offsetY)]
     ]
+    setFinalPosition({
+      sourcex: points[0][0],
+      sourcey: points[0][1],
+      targetx: points[1][0],
+      targety: points[1][1]
+    })
+
     const result = curve(points)
     setD(result)
-    return result
   })
 
   graph?.ID_TO_EDGE_FUNCTION_MAP.set(edge.id, {
@@ -154,7 +148,6 @@ const Edge: FC<EdgeProps> = memo(({ edge }) => {
     const manager = graph?.overlayManager
     if (manager) {
       manager.setOverlayState(s => {
-        console.log(s, edge)
         return {
           visible: s.object?.id === edge.id ? !s.visible : true,
           content: 'edgeToolbar',
@@ -167,6 +160,7 @@ const Edge: FC<EdgeProps> = memo(({ edge }) => {
       })
     }
   }
+
   return (
     <g
       onMouseEnter={edgeMouseEnterHandler}
@@ -175,23 +169,24 @@ const Edge: FC<EdgeProps> = memo(({ edge }) => {
       onClick={edgeClickHandler}
       pointerEvents={edge.opacity === 0 ? 'none' : 'auto'}
       cursor="pointer"
+      opacity={edge.opacity ?? 1}
+      style={{ transition: 'opacity 0.2s ease', display: edge.opacity === 0 ? 'none' : undefined }}
     >
-      <motion.path
+      <path
         ref={edgeRef}
         strokeWidth={2}
         fill="transparent"
         cursor="pointer"
-        initial={{ opacity: 1 }}
-        animate={{
-          opacity: edge.opacity,
-          stroke: edge.highlight || highlight ? edge.color || MarkerColor.EMPHASIS : edge.color || MarkerColor.LIGHTGREY
+        stroke={edge.highlight || highlight ? edge.color || MarkerColor.EMPHASIS : edge.color || MarkerColor.LIGHTGREY}
+        style={{
+          transition: 'stroke 0.2s ease'
         }}
         markerEnd={`url(#${getMarkerId(
           'end',
           edge.highlight || highlight ? edge.color || MarkerColor.EMPHASIS : edge.color || MarkerColor.LIGHTGREY
         )})`}
         d={d}
-      ></motion.path>
+      ></path>
       {edge.label && finalPosition && (
         <g
           ref={labelRef}
@@ -199,19 +194,17 @@ const Edge: FC<EdgeProps> = memo(({ edge }) => {
             (finalPosition.sourcey + finalPosition.targety) / 2 - rect.height / 2
           })`}
         >
-          <motion.rect
+          <rect
             fill={Colors.Background.Linear}
             width={rect.width + 5}
             height={rect.height}
-            initial={{ opacity: 1 }}
-            animate={{ opacity: edge.opacity }}
             x={-5}
             ry={3}
             stroke={edge.highlight || highlight ? edge.color || MarkerColor.EMPHASIS : edge.color || MarkerColor.LIGHTGREY}
             rx={3}
             strokeWidth={2}
-          ></motion.rect>
-          <motion.text
+          ></rect>
+          <text
             fontSize={FontSize['14px']}
             fontWeight={600}
             fontStyle="italic"
@@ -220,15 +213,12 @@ const Edge: FC<EdgeProps> = memo(({ edge }) => {
             fill={edge.highlight || highlight ? edge.color || MarkerColor.EMPHASIS : edge.color || MarkerColor.LIGHTGREY}
             textAnchor="middle"
             dominantBaseline="middle"
-            initial={{ opacity: 1 }}
-            animate={{ opacity: edge.opacity }}
             x={rect.width / 2}
-            // y={10}
             y={rect.height / 2}
             ref={textRef}
           >
             {edge.label}
-          </motion.text>
+          </text>
         </g>
       )}
     </g>

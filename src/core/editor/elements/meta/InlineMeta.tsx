@@ -1,18 +1,15 @@
-import { Icon, Tooltip, WithBorder } from '@/components'
 import Actions from '@/core/Actions'
-import { TypeToTypeName, useRenderObject } from '@/core/database'
-import { useGlobalAtomValue } from '@/hooks'
-import { metaObjectsAtom } from '@/stores/meta.store'
+import { TypeToTypeName } from '@/core/database'
 import ClassName from '@/styles/classNames'
 import { css } from '@emotion/css'
-import { selectAtom } from 'jotai/utils'
 import { FC, useMemo } from 'react'
 import { InlineMetaObjectElement } from '~/typings/editor/outerElements'
 import { RenderElementProps } from '../../slate-react'
 import { useTranslation } from 'react-i18next'
 import Colors from '@/consts/colors'
 import tinycolor from 'tinycolor2'
-import FontSize from '@/consts/font'
+import HoverObjectDetails from '@/core/database/HoverObjectDetails'
+import { MetaStore } from '@/stores'
 
 const clazzName = css([
   {
@@ -24,10 +21,28 @@ const clazzName = css([
   },
   ClassName.ellipsisFont(2)
 ])
+const nameClassName = css([
+  {
+    textTransform: 'capitalize',
+    pointerEvents: 'none',
+    fontSize: '0.78em',
+    whiteSpace: 'nowrap',
+    lineHeight: 1,
+    padding: '0.2em 0.6em !important',
+    margin: 'auto'
+  },
+  ClassName.objectTag
+])
+const circleClassName = css({
+  borderRadius: '50%',
+  width: '1em',
+  height: '1em',
+  margin: 'auto',
+  flexShrink: 0,
+  padding: 3
+})
 const InlineMetaElement: FC<RenderElementProps> = ({ element, children, attributes }) => {
-  const { metaObject, renderWhole } = useRenderObject({
-    metaObjectId: (element as InlineMetaObjectElement).originId
-  })
+  const metaObject = MetaStore.useValue((element as InlineMetaObjectElement).originId)
   const { t } = useTranslation()
 
   const { circleColor, innerColor } = useMemo(() => {
@@ -48,52 +63,13 @@ const InlineMetaElement: FC<RenderElementProps> = ({ element, children, attribut
   }, [metaObject?.color])
   return (
     <span {...attributes} data-meta-id={element.id} style={{ margin: '0 6px', position: 'relative' }}>
-      <Tooltip
-        contentTouchable
-        content={
-          <WithBorder style={{ padding: 10, maxWidth: 400, overflow: 'hidden' }}>
-            {renderWhole({
-              rowGap: 20,
-              columnGap: 6,
-              renderOptions: {
-                renderFrom: true
-              },
-              imageOptions: {
-                width: 80,
-                height: 80
-              },
-              titleOptions: {
-                style: {
-                  fontSize: FontSize['14px']
-                }
-              },
-              descriptionOptions: {
-                style: {
-                  fontSize: FontSize['12px']
-                }
-              },
-              fromOptions: {
-                style: {
-                  fontSize: FontSize['11px']
-                },
-                className: ClassName.ellipsisFont(1)
-              }
-            })}
-          </WithBorder>
-        }
-        disableDefaultContent
-      >
-        <div style={{ display: 'inline-flex', gap: 6, alignItems: 'baseline' }}>
+      <HoverObjectDetails metaObjectId={(element as InlineMetaObjectElement).originId}>
+        <div style={{ display: 'inline-flex', gap: 6, alignItems: 'baseline', maxWidth: 'calc(100% - 20px)' }}>
           <div
+            className={circleClassName}
             style={{
-              borderRadius: '50%',
-              width: '1em',
-              height: '1em',
               background: innerColor,
-              border: `0.3em solid ${circleColor}`,
-              margin: 'auto',
-              flexShrink: 0,
-              padding: 3
+              border: `0.3em solid ${circleColor}`
             }}
           ></div>
           <span
@@ -108,22 +84,9 @@ const InlineMetaElement: FC<RenderElementProps> = ({ element, children, attribut
           >
             {metaObject?.name || 'Deleted Object'}
           </span>
-          <div
-            style={{
-              textTransform: 'capitalize',
-              pointerEvents: 'none',
-              fontSize: 10,
-              whiteSpace: 'nowrap',
-              lineHeight: 1,
-              padding: '3px 8px',
-              margin: 'auto'
-            }}
-            className={ClassName.objectTag}
-          >
-            {t(`general.${TypeToTypeName[metaObject?.type || 'normal']}`)}
-          </div>
+          <div className={nameClassName}>{t(`general.${TypeToTypeName[metaObject?.type || 'normal']}`)}</div>
         </div>
-      </Tooltip>
+      </HoverObjectDetails>
       {children}
     </span>
   )

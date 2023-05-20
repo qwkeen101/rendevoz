@@ -38,13 +38,13 @@ export const MenuItem = React.forwardRef(
         className={css([
           className,
           ClassName.ellipsisFont(1),
-          ClassName.defaultFont(),
           ClassName.flatButton(),
           ClassName.flexLayout('center', 'flex-start'),
           {
             minWidth: 150,
             cursor: 'pointer',
-            userSelect: 'none'
+            userSelect: 'none',
+            flexShrink: 0
           }
         ])}
         variants={variants}

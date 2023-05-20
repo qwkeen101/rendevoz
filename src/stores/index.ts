@@ -27,12 +27,8 @@ export const findChangedProperties = (prev: object, curr: object) => {
 }
 
 export { noteStore as NoteStore } from './note.store'
-export { documentStore as DocumentStore } from './document.store'
 export { metaStore as MetaStore } from './meta.store'
-export { tagStore } from './tag.store'
 export { collectionStore as CollectionStore } from './collection.store'
-export { whiteboardStore as WhiteboardStore } from './whiteboard.store'
-export { labelStore as LabelStore } from './label.store'
 export { objectStore as ObjectStore } from './object.store'
 
 window.addEventListener('DOMContentLoaded', () => {

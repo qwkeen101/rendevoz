@@ -6,14 +6,6 @@ import initI18n from './config/i18n'
 // Import the functions you need from the SDKs you need
 import { Provider } from 'jotai'
 import { globalStore } from './stores'
-import { normalizeOldObjectsToNewObjects } from './stores/oldItemsMove'
-
-
-const oldMoved = localStorage.getItem('moved')
-if (!oldMoved) {
-  normalizeOldObjectsToNewObjects()
-  localStorage.setItem('moved', 'true')
-}
 
 enableMapSet()
 

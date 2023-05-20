@@ -1,7 +1,8 @@
 import { cloneElement, CSSProperties, FC, forwardRef, PropsWithChildren, ReactNode, useEffect, useRef, useState } from 'react'
 import { AnimatePopover } from '..'
-import { useMergedRef } from '@/hooks'
+import { useMemoizedFn, useMergedRef } from '@/hooks'
 import Zindexes from '@/consts/zindex'
+import { waitFor } from '@/utils/functions'
 
 interface ToolTipProps {
   content?: string | ReactNode
@@ -11,10 +12,25 @@ interface ToolTipProps {
   disable?: boolean
   disableDefaultContent?: boolean
   contentTouchable?: boolean
+  zIndex?: string | number
+  visible?: boolean
+  onVisibleChange?: (v: boolean) => void
 }
 
 const ToolTip: FC<PropsWithChildren<ToolTipProps>> = (
-  { content, children, position = 'top', style, delay = 300, disable, disableDefaultContent, contentTouchable },
+  {
+    content,
+    children,
+    position = 'top',
+    style,
+    delay = 300,
+    disable,
+    disableDefaultContent,
+    contentTouchable,
+    zIndex,
+    visible,
+    onVisibleChange
+  },
   ref
 ) => {
   const [open, setOpen] = useState(false)
@@ -24,9 +40,16 @@ const ToolTip: FC<PropsWithChildren<ToolTipProps>> = (
   const isInRef = useRef(false)
   const isKeyDownRef = useRef(false)
   const isInContentRef = useRef(false)
-  const handleMouseEvent = (e: MouseEvent) => {
+  const handleMouseEvent = useMemoizedFn((e: MouseEvent) => {
+    const pointerUphandler = e => {
+      if (e.type === 'pointerup') {
+        isKeyDownRef.current = false
+        document.removeEventListener('pointerup', pointerUphandler)
+      }
+    }
     if (e.type === 'pointerdown') {
       isKeyDownRef.current = true
+      document.addEventListener('pointerup', pointerUphandler)
       setOpen(false)
     }
     if (e.type === 'pointerenter') {
@@ -44,18 +67,31 @@ const ToolTip: FC<PropsWithChildren<ToolTipProps>> = (
     }
     if (e.type === 'pointerleave') {
       isInRef.current = false
-      isKeyDownRef.current = false
+      if (!open) return
+
       if (contentTouchable) {
         setTimeout(() => {
           if (!isInContentRef.current) {
+            if (e.relatedTarget instanceof HTMLElement && contentRef.current?.contains(e.relatedTarget)) {
+              return
+            }
             setOpen(false)
           }
-        }, 300)
+        }, 500)
       } else {
         setOpen(false)
       }
     }
-  }
+  })
+  useEffect(() => {
+    onVisibleChange?.(open)
+  }, [open])
+
+  useEffect(() => {
+    if (visible !== undefined && open !== visible) {
+      setOpen(visible)
+    }
+  }, [visible])
   useEffect(() => {
     const child = childRef.current
     if (child && content) {
@@ -103,49 +139,56 @@ const ToolTip: FC<PropsWithChildren<ToolTipProps>> = (
   }
 
   useEffect(() => {
-    if (contentTouchable) {
-      setTimeout(() => {
-        const contentContainer = contentRef.current
-        if (contentContainer) {
-          const pointerHandler = (e: PointerEvent) => {
-            if (e.type === 'pointerenter') {
-              isInContentRef.current = true
+    if (contentTouchable && open) {
+      waitFor(
+        () => !!contentRef.current,
+        () => {
+          const contentContainer = contentRef.current
+          if (contentContainer) {
+            const pointerHandler = (e: PointerEvent) => {
+              if (e.type === 'pointerenter') {
+                isInContentRef.current = true
+              }
+              if (e.type === 'pointerleave') {
+                isInContentRef.current = false
+
+                if (!(e.relatedTarget instanceof HTMLElement && childRef.current?.contains(e.relatedTarget))) {
+                  console.log('close here')
+                  setOpen(false)
+                }
+              }
             }
-            if (e.type === 'pointerleave') {
-              isInContentRef.current = false
-              setOpen(false)
+            setTimeout(() => {
+              contentContainer.addEventListener('pointerenter', pointerHandler)
+              contentContainer.addEventListener('pointerleave', pointerHandler)
+            })
+            return () => {
+              contentContainer.removeEventListener('pointerenter', pointerHandler)
+              contentContainer.removeEventListener('pointerleave', pointerHandler)
             }
-          }
-          contentContainer.addEventListener('pointerenter', pointerHandler)
-          contentContainer.addEventListener('pointerleave', pointerHandler)
-          return () => {
-            contentContainer.removeEventListener('pointerenter', pointerHandler)
-            contentContainer.removeEventListener('pointerleave', pointerHandler)
           }
         }
-      })
+      )
     }
   }, [contentTouchable, open])
   return (
-    <>
-      {children && (
-        <AnimatePopover
-          containerStyle={{ zIndex: String(Zindexes.Tooltip) }}
-          padding={10}
-          content={renderContent()}
-          boundaryElement={document.body}
-          boundaryInset={20}
-          positions={[position]}
-          reposition={false}
-          disableNudge
-          innerRef={mergedRef}
-          disableIntersection
-          visible={!!content && open && !disable}
-        >
-          {renderChildren()}
-        </AnimatePopover>
-      )}
-    </>
+    children && (
+      <AnimatePopover
+        containerStyle={{ zIndex: zIndex ? String(zIndex) : String(Zindexes.Tooltip) }}
+        padding={10}
+        content={renderContent()}
+        boundaryElement={document.body}
+        boundaryInset={20}
+        positions={['top', 'bottom', 'left', 'right']}
+        reposition={true}
+        disableNudge
+        innerRef={mergedRef}
+        disableIntersection
+        visible={!!content && open && !disable}
+      >
+        {renderChildren()}
+      </AnimatePopover>
+    )
   )
 }
 

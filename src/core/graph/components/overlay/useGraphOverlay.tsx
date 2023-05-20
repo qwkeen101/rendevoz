@@ -1,6 +1,6 @@
 import { Noop } from '@/common/types'
 import { Position } from '@/types'
-import { Dispatch, ReactNode, SetStateAction, useMemo, useState } from 'react'
+import { Dispatch, ReactNode, SetStateAction, useEffect, useMemo, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { AnimatePopover, WithBorder } from '@/components'
 import { GraphEdge } from '../../types/edge'
@@ -8,6 +8,7 @@ import EdgeAttributeCard from './EdgeAttributeCard'
 import NodePopover from './NodePopover'
 import { LeftTopPosition } from '~/typings'
 import { Zindexes } from '@/consts'
+import PathIndicator from './PathIndicator'
 
 interface GraphOverlayProps {
   onAddLink: Noop
@@ -16,7 +17,7 @@ interface GraphOverlayProps {
 }
 export type GraphOverlayManager = {
   open: VoidFunction
-  setContent: (content: 'edgeToolbar') => void
+  setContent: (content: OverlayState['content']) => void
   setPosition: (position: LeftTopPosition) => void
   setOverlayState: Dispatch<SetStateAction<OverlayState>>
   close: VoidFunction
@@ -30,11 +31,15 @@ type OverlayState = {
       object?: GraphEdge
     }
   | { content?: 'nodePopover'; nodeId: number; metaId: number }
+  | {
+      content?: 'pathIndicator'
+    }
 )
 const useGraphOverlay = () => {
   const [overlayState, setOverlayState] = useState<OverlayState>({
     visible: false
   })
+  const [enableTransition, setEnableTransition] = useState(false)
   const renderContent = () => {
     switch (overlayState.content) {
       case 'edgeToolbar':
@@ -49,6 +54,24 @@ const useGraphOverlay = () => {
             }}
           />
         )
+      case 'pathIndicator':
+        return <PathIndicator />
+    }
+  }
+  useEffect(() => {
+    if (!overlayState.visible) {
+      setEnableTransition(false)
+    } else {
+      setTimeout(() => setEnableTransition(true), 300)
+    }
+  }, [overlayState.position, overlayState.visible])
+
+  const positions = () => {
+    switch (overlayState.content) {
+      case 'pathIndicator':
+        return ['right', 'left']
+      default:
+        return ['top']
     }
   }
   const renderPortal = () => {
@@ -56,10 +79,14 @@ const useGraphOverlay = () => {
       <Portal>
         <AnimatePopover
           align="center"
-          containerStyle={{ zIndex: String(Zindexes.GraphPopup) }}
+          containerStyle={{
+            zIndex: String(Zindexes.GraphPopup),
+            transition: enableTransition ? 'transform 0.2s ease' : undefined
+          }}
+          positions={positions()}
           visible={!!overlayState.visible}
           content={
-            <WithBorder padding="6px" style={{ maxWidth: 400 }}>
+            <WithBorder padding={overlayState.content === 'nodePopover' ? 0 : '6px'} style={{ maxWidth: 400 }}>
               {renderContent()}
             </WithBorder>
           }
@@ -71,7 +98,13 @@ const useGraphOverlay = () => {
             }, 50)
           }}
         >
-          <div style={{ position: 'absolute', left: overlayState.position?.left, top: overlayState.position?.top }}></div>
+          <div
+            style={{
+              position: 'absolute',
+              left: overlayState.position?.left,
+              top: overlayState.position?.top
+            }}
+          ></div>
         </AnimatePopover>
       </Portal>
     )

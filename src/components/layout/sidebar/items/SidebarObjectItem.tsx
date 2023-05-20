@@ -14,12 +14,13 @@ import useSidebarItemDrag from '../useSidebarItemDrag'
 import { ISidebarItem } from './type'
 import { toast } from 'react-hot-toast'
 import ClassName from '@/styles/classNames'
+import FontSize from '@/consts/font'
 
 export const getIcon = (type?: MetaObject['type'], metaObject?: MetaObject) => {
   if (metaObject?.icon) {
     return metaObject.icon
   }
-  if (metaObject?.from?.icon){
+  if (metaObject?.from?.icon) {
     return metaObject.from.icon
   }
   switch (type) {
@@ -38,6 +39,10 @@ export const getIcon = (type?: MetaObject['type'], metaObject?: MetaObject) => {
       return 'park-new-computer'
     case 'image':
       return 'park-image-files'
+    case 'localFile':
+      return 'park-log'
+    default:
+      return 'park-file-question'
   }
 }
 const SidebarObjectItem: FC<ISidebarItem> = ({ parentId, parentType, id, draggable = true }) => {
@@ -93,7 +98,12 @@ const SidebarObjectItem: FC<ISidebarItem> = ({ parentId, parentType, id, draggab
   return (
     <Content flex gap={10} ref={ref} onClick={() => Actions.navigateToTargetObject(id)} className={ClassName.flatButton(4, '2px 8px')}>
       {contextMenuPortal}
-      <IconNameItem icon={metaObject?.icon || icon} name={metaObject?.name} color={metaObject?.color} />
+      <IconNameItem
+        style={{ fontSize: FontSize['12px'] }}
+        icon={metaObject?.icon || icon}
+        name={metaObject?.name}
+        color={metaObject?.color}
+      />
     </Content>
   )
 }

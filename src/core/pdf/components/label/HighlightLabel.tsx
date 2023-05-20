@@ -1,10 +1,9 @@
 import { AnimatePopover, WithBorder } from '@/components'
-import { GlobalDragOverlayInstance } from '@/core'
-import { useMemoizedFn, useMergedRef } from '@/hooks'
+import { DraggableElement, DraggingElement } from '@/core'
+import { useMergedRef } from '@/hooks'
 import { PageSize } from '~/typings'
-import { ObjectStore } from '@/stores'
-import { css } from '@emotion/css'
-import { FC, forwardRef, memo, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { ObjectStore, globalStore } from '@/stores'
+import { CSSProperties, FC, forwardRef, memo, useEffect, useMemo, useRef, useState } from 'react'
 import { useClickAway } from 'react-use'
 import { ILabel } from '~/typings/data'
 import LabelToolbar from '../toolbar/LabelToolbar'
@@ -13,13 +12,17 @@ import useClickOutside from '@/hooks/utils/useClickOutside'
 import tinycolor from 'tinycolor2'
 import { ID_TO_LABEL_MAP } from '../../weakMaps'
 import { Rect } from '@/types'
+import { GlobalTranslateInstance } from '@/core/global/GlobalTranslatePanel'
+import HoverObjectDetails from '@/core/database/HoverObjectDetails'
+import { objectIdToMetaObjectIdMapAtom } from '@/stores/meta.store'
+import { GlobalSearchInstance } from '@/core/global/GlobalSearchPanel'
 
 interface HighlightLabelProps {
   labelId: number
   pageSize: PageSize
   documentId: number
 }
-const layout = ['colorPicker', 'separator', 'searcher', 'translator', 'separator', 'delete']
+const layout = ['copy', 'colorPicker', 'separator', 'searcher', 'translator', 'separator', 'delete']
 
 const HighlightLabel: FC<HighlightLabelProps> = memo(
   ({ labelId, pageSize, documentId }) => {
@@ -29,57 +32,22 @@ const HighlightLabel: FC<HighlightLabelProps> = memo(
     const metaRef = useRef<HTMLDivElement>(null)
     const toolbarRef = useRef<HTMLDivElement>(null)
 
-    useClickAway(highlightRef, e => {
-      if (!toolbarRef.current?.contains(e.target) && !metaRef.current?.contains(e.target)) {
-        setPopoverVisible(false)
-      }
-    })
+    useClickOutside(
+      e => {
+        if (!toolbarRef.current?.contains(e.target) && !metaRef.current?.contains(e.target)) {
+          setPopoverVisible(false)
+        }
+      },
+      highlightRef,
+      popoverVisible
+    )
 
     const handleColorChange = (color: string) => {
       ObjectStore('pdfLabel').updateOne({ id: labelId, color })
     }
 
-    const mouseDownHandler = useMemoizedFn(() => {
-      const ele = document.createElement('div')
-      highlight?.selectedText && (ele.textContent = highlight.selectedText)
-      const className = css({
-        minWidth: 200,
-        maxWidth: 300,
-        borderRadius: 7,
-        background: 'white',
-        border: '1px solid #e0e0e0',
-        padding: '6px 16px'
-      })
-      ele.className = className
-      GlobalDragOverlayInstance.addDragElements?.(ele)
-      GlobalDragOverlayInstance.draggingDetails = {
-        type: 'pdfLabel',
-        pdfId: documentId,
-        content: highlight.selectedText,
-        page: highlight.page,
-        labelId: highlight.id
-      }
-      document.addEventListener('pointermove', mouseMoveHandler)
-      document.addEventListener('pointerup', mouseUpHandler)
-    })
-    const mouseMoveHandler = useMemoizedFn(() => {
-      GlobalDragOverlayInstance.startDrag?.()
-    })
-    const mouseUpHandler = useMemoizedFn(() => {
-      document.removeEventListener('pointermove', mouseMoveHandler)
-      document.removeEventListener('pointerup', mouseUpHandler)
-    })
-    useLayoutEffect(() => {
-      if (highlightRef.current) {
-        const container = highlightRef.current
-        container.addEventListener('pointerdown', mouseDownHandler)
-        return () => {
-          container.removeEventListener('pointerdown', mouseDownHandler)
-        }
-      }
-    })
     if (!highlight) return null
-    highlight.rects
+
     return (
       <AnimatePopover
         padding={10}
@@ -93,22 +61,64 @@ const HighlightLabel: FC<HighlightLabelProps> = memo(
               layout={layout}
               key={highlight.id}
               onColorChange={handleColorChange}
+              onTranslate={e => {
+                highlight.selectedText &&
+                  GlobalTranslateInstance.open?.({
+                    to: 'zh',
+                    query: highlight.selectedText,
+                    e,
+                    source: {
+                      type: 'pdf',
+                      objectId: highlight.documentId,
+                      page: highlight.page,
+                      selectedText: highlight.selectedText
+                    }
+                  })
+              }}
+              onSearch={e => {
+                const pdfMetaId = globalStore.get(objectIdToMetaObjectIdMapAtom)?.get(documentId)
+                if (pdfMetaId) {
+                  GlobalSearchInstance.open?.({
+                    e,
+                    query: highlight?.selectedText,
+                    from: {
+                      pages: [highlight.page],
+                      type: 'pdf',
+                      metaId: pdfMetaId,
+                      selectedText: highlight?.selectedText
+                    }
+                  })
+                }
+              }}
               onDelete={() => ObjectStore('pdfLabel').deleteOneById(labelId, { force: true })}
               selectedText={highlight.selectedText}
             />
           </WithBorder>
         }
       >
-        <Highlights
-          highlight={highlight}
-          pageSize={pageSize}
-          highlightRef={highlightRef}
-          labelId={labelId}
-          onClick={() => {
-            setPopoverVisible(true)
-          }}
-          key={highlight.id}
-        />
+        <HoverObjectDetails objectId={labelId}>
+          <DraggableElement
+            hoverElement={<DraggingElement text="Drop to add pdf label." />}
+            draggingDetails={{
+              type: 'pdfLabel',
+              pdfId: documentId,
+              content: highlight.selectedText,
+              page: highlight.page,
+              labelId: highlight.id
+            }}
+          >
+            <Highlights
+              highlight={highlight}
+              pageSize={pageSize}
+              highlightRef={highlightRef}
+              labelId={labelId}
+              onClick={() => {
+                setPopoverVisible(true)
+              }}
+              key={highlight.id}
+            />
+          </DraggableElement>
+        </HoverObjectDetails>
       </AnimatePopover>
     )
   },
@@ -205,6 +215,17 @@ const Highlights = forwardRef((props, ref) => {
     const darkenColor = color.darken(20).toString('rgb')
     return darkenColor
   }, [highlight.color])
+  const highlightStyle: CSSProperties =
+    highlight.specHighlightType === 'underline'
+      ? {
+          backgroundImage: `linear-gradient(to left, ${highlight.color}, ${highlight.color} 100%)`,
+          backgroundPosition: '0 100%',
+          backgroundSize: '100% 3px',
+          backgroundRepeat: 'repeat-x'
+        }
+      : {
+          background: highlight.color
+        }
   return (
     <div
       style={{
@@ -221,8 +242,8 @@ const Highlights = forwardRef((props, ref) => {
           style={{
             position: 'absolute',
             pointerEvents: 'auto',
-            background: highlight.color,
-            opacity: 0.4
+            opacity: 0.4,
+            ...highlightStyle
           }}
         ></div>
       ))}

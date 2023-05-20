@@ -78,7 +78,7 @@ const LayoutWrapper: FC<LayoutWrapperProps> = ({ defaultScale = 1, doc, children
     }
     setIsResizing(false)
   }
-  const { run: debouncedResize } = useDebounceFn(handleResize, { wait: 500 })
+  const { run: debouncedResize } = useDebounceFn(handleResize, { wait: 100 })
   useUpdateEffect(() => {
     if (!initializedRef.current) {
       initializedRef.current = true
@@ -98,8 +98,7 @@ const LayoutWrapper: FC<LayoutWrapperProps> = ({ defaultScale = 1, doc, children
     </div>
   ) : (
     <div style={{ width: '100%', maxWidth: '100%', height: '100%', overflow: 'hidden' }}>
-      {isResizing && <Spinner size={50} />}
-      <div style={{ width: '100%', height: '100%', display: isResizing ? 'none' : undefined }}>{children(pageSize)}</div>
+      <div style={{ width: '100%', height: '100%' }}>{children(pageSize)}</div>
     </div>
   )
 }

@@ -43,6 +43,7 @@ const Block: FC<React.DetailedHTMLProps<React.HTMLAttributes<HTMLDivElement>, HT
     const distanceToScrollElementRef = useRef<{ left: number; top: number; right: number; bottom: number }>()
 
     const handleCollisionSelectBlock = useMemoizedFn(() => {
+      if (type === 'column' || type === 'columnList') return
       const selectArea = SELECT_AREA_MAP.get(editor)
       if (!selectArea || !distanceToScrollElementRef.current) return
       if (isRectsCollision(selectArea, distanceToScrollElementRef.current)) {

@@ -3,7 +3,7 @@ import { FC, MouseEvent, MouseEventHandler } from 'react'
 import Content from '../Content'
 import styles from './index.module.less'
 
-interface MenuItemProps {
+export interface MenuItemProps {
   onClick?: MouseEventHandler
   onDoubleClick?: MouseEventHandler
   onContextMenu?: MouseEventHandler

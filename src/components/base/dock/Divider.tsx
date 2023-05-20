@@ -1,7 +1,7 @@
 import React from 'react'
-import { AbstractPointerEvent, DragDropDiv } from './dragdrop/DragDropDiv'
+import { DragDropDiv } from './dragdrop/DragDropDiv'
 import { DragState } from './dragdrop/DragManager'
-import { DockContextType } from './DockData'
+import { disableWebviewPointer } from '../ResizeAndDrag'
 
 export interface DividerChild {
   size: number
@@ -86,6 +86,7 @@ export class Divider extends React.PureComponent<DividerProps, any> {
   startDrag = (e: DragState) => {
     this.boxData = new BoxDataCache(this.props.getDividerData(this.props.idx))
     e.startDrag(this.boxData.element, null)
+    document.body.classList.add(disableWebviewPointer)
   }
   dragMove = (e: DragState) => {
     if (e.event.shiftKey || e.event.ctrlKey || e.event.altKey) {
@@ -147,6 +148,7 @@ export class Divider extends React.PureComponent<DividerProps, any> {
   dragEnd = (e: DragState) => {
     const { onDragEnd } = this.props
     this.boxData = null
+    document.body.classList.remove(disableWebviewPointer)
     if (onDragEnd) {
       onDragEnd()
     }

@@ -16,7 +16,6 @@ import { replacePanel } from './Algorithm'
 import { LayoutIdToTabMap } from '@/components/layout'
 import { useSetting } from '@/core'
 import { getOS } from '@/App'
-import Colors from '@/consts/colors'
 
 interface DockTabBarProps {
   TabNavList: TabNavListProps
@@ -38,6 +37,7 @@ export const DockTabBar = memo((props: DockTabBarProps) => {
   const currentMoveTabId = useRef<string>()
   const [isTopRight, setIsTopRight] = useState(false)
   const [isTopLeft, setIsTopLeft] = useState(false)
+
   useLayoutEffect(() => {
     const bar = ref.current
     const bounding = bar?.getBoundingClientRect()
@@ -50,11 +50,12 @@ export const DockTabBar = memo((props: DockTabBarProps) => {
         setIsTopRight(false)
       }
 
-      const globalSidebar = document.getElementById("global-sidebar")
+      const globalSidebar = document.getElementById('global-sidebar')
       const sidebarWidth = globalSidebar?.getBoundingClientRect().width || 0
-      if(left - sidebarWidth < 10 && top < 10){
+
+      if (left - sidebarWidth < 10 && top < 10) {
         setIsTopLeft(true)
-      }else{
+      } else {
         setIsTopLeft(false)
       }
     }
@@ -68,12 +69,15 @@ export const DockTabBar = memo((props: DockTabBarProps) => {
       getRef={getRef}
       tabIndex={-1}
     >
-      <div style={{
-        display: 'none',
-        width: '80px',
-        height: '100%',
-        background: 'rgba(0,0,0,0.07)'
-      }} id={isTopLeft && os === 'macos' ? 'macos-placeholder' : undefined}></div>
+      <div
+        style={{
+          display: 'none',
+          width: '80px',
+          height: '100%',
+          background: 'rgba(0,0,0,0.07)'
+        }}
+        id={isTopLeft && os === 'macos' ? 'macos-placeholder' : undefined}
+      ></div>
       <Reorder.Group
         onReorder={r => {
           const currIndex = r.findIndex(i => i.key === currentMoveTabId.current)
@@ -85,28 +89,26 @@ export const DockTabBar = memo((props: DockTabBarProps) => {
         values={navs}
         axis="x"
       >
-        <AnimatePresence initial={false}>
-          {navs.map(i => (
-            <TabItem
-              item={i}
-              key={i.key}
-              onDragStart={() => {
-                currentMoveTabId.current = i.key
-              }}
-              isSelected={selectedTabKey === i.key}
-              onClick={e => {
-                TabNavList.onTabClick(i.key, e)
-              }}
-            />
-          ))}
-        </AnimatePresence>
+        {navs.map(i => (
+          <TabItem
+            item={i}
+            key={i.key}
+            onDragStart={() => {
+              currentMoveTabId.current = i.key
+            }}
+            isSelected={selectedTabKey === i.key}
+            onClick={e => {
+              TabNavList.onTabClick(i.key, e)
+            }}
+          />
+        ))}
       </Reorder.Group>
       {restProps.extraArea}
     </DragDropDiv>
   )
 })
 
-const TabItem = memo(({ onClick, isSelected, item, onDragStart }) => {
+const TabItem = ({ onClick, isSelected, item, onDragStart }) => {
   const [contextMenuVisible, toggleContextMenuVisible] = useToggle(false)
   const { t } = useTranslation()
   const dockContext = useContext(DockContextType)
@@ -173,15 +175,8 @@ const TabItem = memo(({ onClick, isSelected, item, onDragStart }) => {
     >
       <Reorder.Item
         onContextMenu={toggleContextMenuVisible}
-        key={item.key}
-        initial={{ opacity: 0 }}
-        animate={{
-          opacity: 1,
-          transition: { duration: 0.2 },
-          color: isSelected ? Colors.Font.Primary : Colors.Font.Tertiary
-        }}
         onDragStart={onDragStart}
-        exit={{ opacity: 0, transition: { duration: 0.3 } }}
+        // exit={{ opacity: 0, transition: { duration: 0.3 } }}
         onClick={onClick}
         value={item}
         drag={true}
@@ -195,10 +190,8 @@ const TabItem = memo(({ onClick, isSelected, item, onDragStart }) => {
           setting.background.backgroundImage && setting.background.backgroundOpacity && styles.hasBg
         )}
       >
-        <motion.div layout="position" className={styles.tabContent}>
-          {item.tab}
-        </motion.div>
+        <div className={styles.tabContent}>{item.tab}</div>
       </Reorder.Item>
     </AnimatePopover>
   )
-})
+}

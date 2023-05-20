@@ -29,6 +29,10 @@ export interface HeadingFiveElement extends HeadingElement {
 export interface HeadingSixElement extends HeadingElement {
   type: 'heading-six'
 }
+export interface MathElement {
+  type: 'math'
+  content: string
+}
 export interface MediaElement {
   type: 'media'
   mediaType: 'audio' | 'video' | 'pdf'
@@ -216,3 +220,4 @@ export type CommonElement =
   | SupElement
   | FigCaptionElement
   | OrderListItemElement
+  | MathElement

@@ -6,24 +6,30 @@ import ClassName from '@/styles/classNames'
 import { GlobalImagePreviewerInstance } from '@/core/global/GlobalImagePreviewer'
 
 const Image: FC<
-  ImgHTMLAttributes<HTMLImageElement> & { placeHolderSize?: number; placeHolder?: ReactNode; ratio?: number; preview?: boolean }
-> = ({ placeHolderSize = 20, placeHolder, ratio = 1, width = 100, className, preview, ...rest }) => {
+  ImgHTMLAttributes<HTMLImageElement> & {
+    placeHolderSize?: number
+    placeHolder?: ReactNode
+    ratio?: number
+    preview?: boolean
+    minWidth?: number
+  }
+> = ({ placeHolderSize = 20, placeHolder, ratio = 1, width = 100, className, minWidth, preview, onLoad, ...rest }) => {
   const [loaded, setLoaded] = useState(false)
   return (
     <>
       <div
-        className={classNames(
-          css({
-            width,
-            minWidth: width
-          }),
-          className
-        )}
+        style={{
+          width,
+          minWidth: minWidth || width
+        }}
+        className={className}
       >
         <div
+          style={{
+            paddingBottom: `${ratio * 100}%`
+          }}
           className={css({
             position: 'relative',
-            paddingBottom: `${ratio * 100}%`,
             width: '100%',
             height: 0,
             overflow: 'hidden',
@@ -42,7 +48,10 @@ const Image: FC<
               borderRadius: 'inherit'
             })}
             {...rest}
-            onLoad={() => setLoaded(true)}
+            onLoad={e => {
+              setLoaded(true)
+              onLoad?.(e)
+            }}
             onError={() => setLoaded(false)}
           />
           {preview && (

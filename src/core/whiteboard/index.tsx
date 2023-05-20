@@ -117,6 +117,8 @@ const WhiteboardInner = memo(({ id, enableMiniMap = true }: { id: number; enable
                   if (target) {
                     switch (target.specType) {
                       case 'pdf':
+                      case 'image':
+                      case 'webpage':
                       case 'note':
                         addTab(target.specType, meta.objectId)
                     }
@@ -205,6 +207,7 @@ export const Whiteboard = memo(
         const whiteboard = globalStore.get(whiteboardAtom)
         const prev = previousWhiteboard.current
         console.log('sub change')
+        console.log(whiteboard, prev)
         previousWhiteboard.current = whiteboard
         if (prev && prev !== whiteboard) {
           store.set(WhiteboardAtom, whiteboard)

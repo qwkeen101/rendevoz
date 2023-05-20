@@ -18,3 +18,39 @@ export const calculateSelectionBox = ({ startPoint, endPoint }: { startPoint: Po
 })
 
 export const calculateBoxArea = (box: Box) => box.width * box.height
+
+export const boxContain = (parentBox: Box, childBox: Box) => {
+  if (
+    childBox.left >= parentBox.left &&
+    childBox.top >= parentBox.top &&
+    childBox.left + childBox.width <= parentBox.left + parentBox.width &&
+    childBox.top + childBox.height <= parentBox.top + parentBox.height
+  ) {
+    return true
+  }
+  return false
+}
+
+export const getRelativeBoxSize = (parentBox: Box, childBox: Box) => {
+  const relativeX = childBox.left - parentBox.left
+  const relativeY = childBox.top - parentBox.top
+  const percentageX = relativeX / parentBox.width
+  const percentageY = relativeY / parentBox.height
+  const percentageWidth = childBox.width / parentBox.width
+  const percentageHeight = childBox.height / parentBox.height
+  return {
+    relativeX,
+    relativeY,
+    percentageX,
+    percentageY,
+    percentageWidth,
+    percentageHeight
+  }
+}
+
+export const pointInBox = (point: Point, box: Box) => {
+  if (point.x >= box.left && point.y >= box.top && point.x <= box.left + box.width && point.y <= box.top + box.height) {
+    return true
+  }
+  return false
+}

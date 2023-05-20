@@ -17,7 +17,6 @@ const Image = ({ element, children }: RenderElementProps) => {
   const editor = useSlateStatic()
   useEffect(() => {
     if (imageEle.url.startsWith('http')) {
-      console.log(imageEle.url)
       fetch(imageEle.url, {
         method: 'GET',
         referrer: ''
@@ -25,7 +24,6 @@ const Image = ({ element, children }: RenderElementProps) => {
         .then(res => res.blob())
         .then(blob => {
           saveImageLocally(Id.getStrId(), blob).then(data => {
-            console.log(data)
             Transforms.setNodes(
               editor,
               {

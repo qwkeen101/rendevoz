@@ -18,11 +18,11 @@ const variants = {
     // pointerEvents: 'none',
     // zIndex: -1,
     // position: 'absolute',
-    opacity: 0,
+    // opacity: 0,
     display: 'none'
   },
   visible: {
-    opacity: 1
+    // opacity: 1
   }
 }
 export const DockTabPaneContext = createContext<{
@@ -86,12 +86,16 @@ export const DockTabPane: FC<DockTabPaneProps> = memo(({ cached, cacheId, childr
   }
   const mergedStyle: React.CSSProperties = {
     ...style,
-    position: 'relative',
+    position: active ? 'relative' : 'absolute',
+    top: active ? undefined : 42,
     width: '100%',
-    height: 'calc( 100% - 42px )'
+    height: 'calc( 100% - 42px )',
+    // display: active ? undefined : 'none'
+    contentVisibility: active ? 'visible' : 'hidden',
+    pointerEvents: active ? undefined : 'none'
   }
   return (
-    <motion.div
+    <div
       ref={node => {
         ref.current = node
         if(cacheId && node){
@@ -102,14 +106,14 @@ export const DockTabPane: FC<DockTabPaneProps> = memo(({ cached, cacheId, childr
         }
       }}
       id={cacheId}
-      initial={{ opacity: 0 }}
-      animate={active ? 'visible' : 'hidden'}
-      variants={variants}
-      transition={{ duration: 0.3, type: 'tween' }}
+      // initial={{ opacity: 0 }}
+      // animate={active ? 'visible' : 'hidden'}
+      // variants={variants}
+      // transition={{ duration: 0.3, type: 'tween' }}
       role="tabpane"
       style={mergedStyle}
     >
       {renderChildren}
-    </motion.div>
+    </div>
   )
 })

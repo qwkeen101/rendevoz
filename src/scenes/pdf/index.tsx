@@ -3,13 +3,17 @@ import { FC, memo, useMemo } from 'react'
 import PdfPageHeader from './Header'
 import { Content, Container } from '@/components'
 import { Provider } from 'jotai'
-import { createStore } from 'jotai/vanilla'
+import { atom, createStore } from 'jotai/vanilla'
 import TabTitle from '@/components/layout/TabTitle'
 import PdfFloatBar from './FloatBar/FloatBar'
 import { useGlobalAtomValue } from '@/hooks/jotai'
 import { IPdfViewer } from '~/typings'
 import { ObjectStore } from '@/stores'
+import PdfThumbnail from './Thumbnail'
 
+export const PdfPageStateAtom = atom({
+  thumbnailVisible: false
+})
 const PdfPage: FC<{
   pdfId: number
   onViewerInitialized?: (viewer: IPdfViewer) => void
@@ -27,7 +31,8 @@ const PdfPage: FC<{
         <Provider store={store}>
           <Content flex column fullHeight fullWidth>
             <PdfPageHeader document={document} />
-            <Content flex centered fullHeight>
+            <Content flex centered auto style={{ height: 0 }}>
+              <PdfThumbnail />
               <PdfFloatBar document={document} />
               <PdfViewer documentId={pdfId} onViewerInitialized={onViewerInitialized} />
             </Content>

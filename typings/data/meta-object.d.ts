@@ -1,3 +1,4 @@
+import { Box } from '../common'
 import { IBase } from './base'
 
 // sourceType: note / metaObject / pdf document
@@ -15,6 +16,7 @@ interface MetaObject extends IBase {
     | 'noteLabel'
     | 'noteBlock'
     | 'webpageLabel'
+    | 'localFile'
   name?: string
   description?: string
   coverImgSrc?: string
@@ -29,6 +31,26 @@ interface MetaObject extends IBase {
     type?: MetaObject['type']
     name?: string
   }
+  fromObject?:
+    | {
+        type: 'pdf'
+        metaId: number
+        pages?: number[]
+        rect?: Box
+        selectedText?: string
+      }
+    | {
+        type: 'note'
+        metaId: number
+        blockId?: number
+        selectedText?: string
+      }
+    | {
+        type: 'webpage'
+        metaId: number
+        blockId?: number
+        selectedText?: string
+      }
   temp?: boolean
 }
 interface MetaWithNote {

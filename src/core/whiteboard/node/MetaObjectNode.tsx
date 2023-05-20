@@ -2,7 +2,7 @@ import { useMemoizedFn, useUpdateEffect } from '@/hooks'
 import { IWhiteboardNode } from '~/typings/data'
 import { Content, Icon, Tooltip } from '@/components/base'
 import ClassName from '@/styles/classNames'
-import { FC, memo, useEffect, useRef, useState } from 'react'
+import { FC, memo, useEffect, useMemo, useRef, useState } from 'react'
 import { InnerNodeProps } from './WrapperNode'
 import { useFlow, useSetWhiteboardNodes } from '../hooks'
 import produce from 'immer'
@@ -11,6 +11,7 @@ import NoteNode from './NoteNode'
 import { useRenderObject } from '@/core'
 import { css } from '@emotion/css'
 import { GlobalEventEmitter } from '@/events'
+import FontSize from '@/consts/font'
 
 const MetaObjectNode: FC<InnerNodeProps> = ({ node: n, setPopoverElements, setNodeState, onNameChange }) => {
   const node = n as IWhiteboardNode & { type: 'metaObject' }
@@ -37,16 +38,19 @@ const MetaObjectNode: FC<InnerNodeProps> = ({ node: n, setPopoverElements, setNo
   })
   useEffect(() => {
     if (!wholeContainerRef.current?.firstChild) return
-    if (!n.width || !n.height) return
-    const renderWholeBounding = (wholeContainerRef.current?.firstChild as HTMLElement).getBoundingClientRect()
-    const width = n.width
 
-    const padding = (width / 100) * 10
-    setContentMinHeight(renderWholeBounding.height / flow.containerTransformScale + padding)
+    setTimeout(() => {
+      if (!n.width || !n.height) return
+      const renderWholeBounding = (wholeContainerRef.current?.firstChild as HTMLElement).getBoundingClientRect()
+      const width = n.width
+
+      const padding = (width / 100) * 35
+      setContentMinHeight(renderWholeBounding.height / flow.containerTransformScale + padding)
+    }, 100)
   }, [metaObject, n.width, n.height])
   useEffect(() => {
     if (metaObject?.type) {
-      if (['note', 'pdf'].includes(metaObject.type)) {
+      if (['note', 'pdf', 'image', 'webpage'].includes(metaObject.type)) {
         setPopoverElements?.(eles => {
           return [
             ...eles,
@@ -68,14 +72,28 @@ const MetaObjectNode: FC<InnerNodeProps> = ({ node: n, setPopoverElements, setNo
                 />
               </Tooltip>
             ),
+            metaObject.type === 'note'
+              ? () => (
+                  <Tooltip position="top" content={!getNodeState().expanded ? 'Expand Node' : 'Fold Node'}>
+                    <Icon
+                      size={18}
+                      className={ClassName.circleButton(undefined, 4)}
+                      name={getNodeState().expanded ? 'park-collapse-text-input' : 'park-expand-text-input'}
+                      onClick={() => {
+                        toggleExpanded()
+                      }}
+                    />
+                  </Tooltip>
+                )
+              : () => <></>,
             () => (
-              <Tooltip position="top" content={!getNodeState().expanded ? 'Expand Node' : 'Fold Node'}>
+              <Tooltip position="top" content={'Open In Sidebar'}>
                 <Icon
                   size={18}
                   className={ClassName.circleButton(undefined, 4)}
-                  name={getNodeState().expanded ? 'park-collapse-text-input' : 'park-expand-text-input'}
+                  name={'park-right-bar'}
                   onClick={() => {
-                    toggleExpanded()
+                    flow.onNodeFocus?.(node)
                   }}
                 />
               </Tooltip>
@@ -123,7 +141,7 @@ const MetaObjectNode: FC<InnerNodeProps> = ({ node: n, setPopoverElements, setNo
       )
     }
   }, [expanded])
-  useUpdateEffect(() => {
+  useEffect(() => {
     setTimeout(() => {
       if (metaObject?.name) {
         if (metaObject.name !== node.name) {
@@ -156,6 +174,54 @@ const MetaObjectNode: FC<InnerNodeProps> = ({ node: n, setPopoverElements, setNo
     }
   }
   const hasImage = metaObject?.coverImgSrc !== undefined
+
+  const renderOptions = useMemo(
+    () => ({
+      renderOptions: {
+        renderImage: false,
+        renderFrom: true,
+        renderDescription: !hasImage
+      },
+      titleOptions: {
+        style: {
+          fontSize: hasSize ? `max(4.3cqmax, ${FontSize['15px']})` : undefined,
+          color: hasImage ? 'white' : undefined
+        }
+      },
+      descriptionOptions: {
+        style: {
+          fontSize: hasSize ? `max(${FontSize['14px']},4cqmax)` : undefined,
+          color: hasImage ? 'white' : undefined
+        }
+      },
+      fromOptions: {
+        style: {
+          fontSize: hasSize ? `max(${FontSize['13px']},3.7cqmax)` : undefined,
+          gap: 'max(1.5cqmax, 0.3rem)'
+        },
+        className: ClassName.ellipsisFont(1)
+      },
+      tagsOptions: {
+        containerClassName: hasSize
+          ? css([
+              { '> *': { fontSize: `max(${FontSize['11px']}, 3cqmax) !important` }, gap: 'max(1.5cqmax, 0.3rem) !important' },
+              hasImage
+                ? {
+                    '> *': {
+                      color: 'white',
+                      border: '0.5cqmax solid white',
+                      padding: '0.5cqmax 1cqmax',
+                      borderRadius: '2cqmax',
+                      background: 'transparent'
+                    }
+                  }
+                : undefined
+            ])
+          : undefined
+      }
+    }),
+    [hasSize, hasImage]
+  )
   return (
     <>
       {expanded ? (
@@ -177,7 +243,7 @@ const MetaObjectNode: FC<InnerNodeProps> = ({ node: n, setPopoverElements, setNo
           <div
             ref={wholeContainerRef}
             style={{
-              padding: hasImage ? '5% 5%' : '12px 20px',
+              padding: hasImage ? '30% 5% 5%' : '4%',
               minWidth: '100%',
               width: 'auto',
               maxWidth: '400px',
@@ -188,42 +254,7 @@ const MetaObjectNode: FC<InnerNodeProps> = ({ node: n, setPopoverElements, setNo
               backgroundImage: hasImage ? 'linear-gradient(rgba(0,0,0,0),rgba(0,0,0,0.9))' : undefined
             }}
           >
-            {renderWhole({
-              renderOptions: {
-                renderImage: false,
-                renderFrom: true
-              },
-              titleOptions: {
-                style: {
-                  fontSize: hasSize ? 'max(6.5cqmax, 1.6rem)' : undefined,
-                  color: hasImage ? 'white' : undefined
-                }
-              },
-              descriptionOptions: {
-                style: {
-                  fontSize: hasSize ? 'max(1rem,4cqmax)' : undefined,
-                  color: hasImage ? 'white' : undefined
-                }
-              },
-              tagsOptions: {
-                containerClassName: hasSize
-                  ? css([
-                      { '> *': { fontSize: 'max(0.7rem, 3cqmax) !important' }, gap: 'max(1.5cqmax, 0.3rem) !important' },
-                      hasImage
-                        ? {
-                            '> *': {
-                              color: 'white',
-                              border: '0.5cqmax solid white',
-                              padding: '0.5cqmax 1cqmax',
-                              borderRadius: '2cqmax',
-                              background: 'transparent'
-                            }
-                          }
-                        : undefined
-                    ])
-                  : undefined
-              }
-            })}
+            {renderWhole(renderOptions)}
           </div>
         </Content>
       )}

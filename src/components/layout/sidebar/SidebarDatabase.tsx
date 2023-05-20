@@ -22,13 +22,30 @@ const SidebarDatabase = memo(() => {
     visible: false,
     alreadyExist: false
   })
-
   const dragHandler = useMemoizedFn((e: DragEvent) => {
     if (e.type === 'dragover') {
       e.preventDefault()
+      setDraggingHovered({
+        droppable: true,
+        visible: true,
+        alreadyExist: false
+      })
+    }
+    if (e.type === 'dragleave') {
+      setDraggingHovered(s => ({ ...s, visible: false }))
     }
     if (e.type === 'drop') {
-      console.log(e)
+      setDraggingHovered(s => ({ ...s, visible: false }))
+      e.preventDefault()
+      emitter.emit('global', {
+        type: 'globalDropNeedFurtherProcess',
+        data: {
+          dropOn: {
+            dropOn: 'database'
+          },
+          e
+        }
+      })
     }
   })
 
@@ -105,12 +122,14 @@ const SidebarDatabase = memo(() => {
       databaseContainer.addEventListener('pointerleave', pointerHandler)
       databaseContainer.addEventListener('drop', dragHandler)
       databaseContainer.addEventListener('dragover', dragHandler)
+      databaseContainer.addEventListener('dragleave', dragHandler)
       return () => {
         databaseContainer.removeEventListener('pointerenter', pointerHandler)
         databaseContainer.removeEventListener('pointerup', pointerHandler)
         databaseContainer.removeEventListener('pointerleave', pointerHandler)
         databaseContainer.removeEventListener('drop', dragHandler)
         databaseContainer.removeEventListener('dragover', dragHandler)
+        databaseContainer.removeEventListener('dragleave', dragHandler)
       }
     }
   }, [])

@@ -1,32 +1,47 @@
 import { AnimatePopover, Content, Icon, WithBorder } from '@/components'
 import { Zindexes } from '@/consts'
-import { GlobalEventEmitter } from '@/events'
 import { useToggle } from '@/hooks'
 import ClassName from '@/styles/classNames'
 import { css } from '@emotion/css'
 import { ObjectActionPopover } from './card/DatabaseCard'
 import useRenderObject from './useRenderObject'
-import { memo } from 'react'
+import { memo, useMemo } from 'react'
 
 const DatabaseListItem = ({ id, mode }: { id: number; mode: 'all' | 'title' }) => {
   const { renderWhole } = useRenderObject({
     metaObjectId: id
   })
   const [popoverVisible, togglePopoverVisible] = useToggle(false)
-  const renderOptions: Parameters<typeof renderWhole>[0]['renderOptions'] =
-    mode === 'all'
-      ? {
-          renderFrom: true,
-          renderImage: true
-        }
-      : mode === 'title'
-      ? {
-          renderFrom: false,
-          renderImage: false,
-          renderDescription: false
-        }
-      : undefined
-
+  const renderOptions = useMemo(
+    () => ({
+      renderOptions:
+        mode === 'all'
+          ? {
+              renderFrom: true,
+              renderImage: true
+            }
+          : mode === 'title'
+          ? {
+              renderFrom: false,
+              renderImage: false,
+              renderDescription: false
+            }
+          : { renderFrom: false, renderImage: true },
+      descriptionOptions: {
+        descriptionClassName: css([ClassName.description(), ClassName.ellipsisFont(1)])
+      },
+      tagsOptions: {
+        showCreatedAt: true,
+        showViewAt: true
+      },
+      imageOptions: {
+        width: mode === 'all' ? 64 : 32,
+        height: mode === 'all' ? 64 : 32
+      },
+      rowGap: 20
+    }),
+    [mode]
+  )
   return (
     <Content flex gap={12}>
       <AnimatePopover
@@ -44,21 +59,7 @@ const DatabaseListItem = ({ id, mode }: { id: number; mode: 'all' | 'title' }) =
       >
         <Icon size={18} onClick={togglePopoverVisible} name="park-more" className={ClassName.circleButton()} />
       </AnimatePopover>
-      {renderWhole({
-        renderOptions,
-        descriptionOptions: {
-          descriptionClassName: css([ClassName.description(), ClassName.ellipsisFont(1)])
-        },
-        tagsOptions: {
-          showCreatedAt: true,
-          showViewAt: true
-        },
-        imageOptions: {
-          width: mode === 'all' ? 64 : 32,
-          height: mode === 'all' ? 64 : 32
-        },
-        rowGap: 20
-      })}
+      {renderWhole(renderOptions)}
     </Content>
   )
 }

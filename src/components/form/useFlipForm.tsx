@@ -18,6 +18,7 @@ import Colors from '@/consts/colors'
 import { useToggle } from '@/hooks'
 import { MetaObject } from '~/typings'
 import FormFromDisplayer from './FormFromDisplayer'
+import FormFilePathPicker from './FormFilePathPicker'
 
 type useFlipFormOptions = {
   layout: FlipFormLayoutItem[]
@@ -86,6 +87,12 @@ export type FlipFormLayoutItem =
   | {
       type: 'fromDisplayer'
       object: Partial<MetaObject>
+      onRemove?: VoidFunction
+    }
+  | {
+      type: 'filePathPicker'
+      filePath: string
+      onChange: (filePath: string | undefined, fileName: string | undefined) => void
     }
   | undefined
 interface FormInnerState {
@@ -164,8 +171,11 @@ const useFlipForm = (options: useFlipFormOptions) => {
             maxRows={enlarged ? 18 : 10}
             value={i.value}
             onChange={i.onChange}
+            autoFocus={false}
           />
         )
+      case 'filePathPicker':
+        return <FormFilePathPicker maxWidth={enlarged ? '100%' : 400} filePath={i.filePath} onChange={i.onChange} />
       case 'tagPicker':
         return (
           <Content
@@ -246,7 +256,14 @@ const useFlipForm = (options: useFlipFormOptions) => {
         break
       }
       case 'fromDisplayer': {
-        return <FormFromDisplayer initialObject={i.object} />
+        return (
+          <FormFromDisplayer
+            onRemove={() => {
+              i.onRemove?.()
+            }}
+            initialObject={i.object}
+          />
+        )
       }
       case 'colorPicker':
         return (
@@ -292,7 +309,7 @@ const useFlipForm = (options: useFlipFormOptions) => {
           className={ClassName.circleButton()}
         />
       }
-      style={{ minWidth: enlarged ? '80vw' : 320, justifyContent: 'space-between', ...containerStyle }}
+      style={{ minWidth: enlarged ? '80vw' : 320, maxWidth: enlarged ? '80vw' : 600, justifyContent: 'space-between', ...containerStyle }}
     >
       {layout.map((i, idx) => (
         <Fragment key={idx}>{renderMainItem(i)}</Fragment>
@@ -344,6 +361,7 @@ const useFlipForm = (options: useFlipFormOptions) => {
       return (
         <Flipped flipId={colorPickerFlipId} onAppear={FlipCardEnter} onExit={FlipCardExit}>
           <FormColorPicker
+            disableLinear
             onClose={() => setFormInnerState({ mainVisible: true })}
             onPick={v => {
               if (v === defaultBgColor) {

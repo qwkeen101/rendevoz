@@ -7,11 +7,12 @@ import { globalStore } from '@/stores'
 import ClassName from '@/styles/classNames'
 import { GlobalGraphInstance } from '.'
 import { css } from '@emotion/css'
+import { useTranslation } from 'react-i18next'
 export const globalGraphMinimizedAtom = atom(false)
 const GraphThumbnail = ({ children, onClose }: { children: ReactNode; onClose: VoidFunction }) => {
   const [small, setSmall] = useAtom(globalGraphMinimizedAtom, { store: globalStore })
   const containerRef = useRef<HTMLDivElement>(null)
-
+  const { t } = useTranslation()
   const cachedChildrenRef = useRef<HTMLDivElement>()
   const [topLevelChildren, setTopLevelChildren] = useState<ReactPortal>()
 
@@ -21,7 +22,18 @@ const GraphThumbnail = ({ children, onClose }: { children: ReactNode; onClose: V
   } as Partial<typeof GlobalGraphInstance>)
 
   useLayoutEffect(() => {
+    if (containerRef.current) {
+      containerRef.current.innerHTML = ''
+    }
     cachedChildrenRef.current = undefined
+    const div = document.createElement('div')
+    div.style.width = '100%'
+    div.style.height = '100%'
+
+    const portal = createPortal(children, div, 'cached-graph')
+    setTopLevelChildren(portal)
+    cachedChildrenRef.current = div
+    containerRef.current?.appendChild(div)
   }, [children])
 
   useLayoutEffect(() => {
@@ -79,7 +91,7 @@ const GraphThumbnail = ({ children, onClose }: { children: ReactNode; onClose: V
             })}
           >
             <Icon name="park-full-screen-one" />
-            Full Screen Graph
+            {t('graph.full screen graph')}
           </Content>
           <Icon
             className={ClassName.circleButton()}
@@ -103,20 +115,6 @@ const GraphThumbnail = ({ children, onClose }: { children: ReactNode; onClose: V
             overflow: 'hidden'
           }}
         >
-          {!small && (
-            <Content
-              position="absolute"
-              flex
-              gap={10}
-              style={{
-                top: 10,
-                right: 15,
-                zIndex: 10
-              }}
-            >
-              <Icon className={ClassName.circleButton()} name="park-close" onClick={onClose} />
-            </Content>
-          )}
           <div
             className={ClassName.Background.blurBackground}
             style={{ position: 'absolute', top: '0px', left: '0px', width: '100%', height: '100%', zIndex: -1 }}

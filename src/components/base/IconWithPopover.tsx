@@ -26,6 +26,8 @@ interface Props {
   tooltipPosition?: 'top' | 'bottom'
   closeOnContentClick?: boolean
   contentDraggable?: boolean
+  iconContainerStyle?: CSSProperties
+  containerStyle?: CSSProperties
 }
 const IconWithPopover: FC<Props> = (
   {
@@ -39,6 +41,7 @@ const IconWithPopover: FC<Props> = (
     className,
     zIndex,
     innerRef,
+    containerStyle,
     padding = 20,
     parentElement,
     contentDraggable,
@@ -48,6 +51,7 @@ const IconWithPopover: FC<Props> = (
     disableCloseOutside,
     disableIntersection,
     style,
+    iconContainerStyle,
     onClick,
     tooltipPosition = 'top',
     closeOnContentClick
@@ -69,6 +73,7 @@ const IconWithPopover: FC<Props> = (
   return (
     <Content
       ref={mergedRef}
+      style={containerStyle}
       onClick={() => {
         if (closeOnContentClick && visible) {
           setVisible(false)
@@ -95,6 +100,7 @@ const IconWithPopover: FC<Props> = (
         boundaryInset={boundaryInset}
         visible={visible}
         positions={placement}
+        reposition
         content={content}
         disableNudge={disableNudge}
         disableIntersection={disableIntersection}
@@ -102,6 +108,7 @@ const IconWithPopover: FC<Props> = (
         <Tooltip content={tooltip} position={tooltipPosition}>
           <Icon
             style={{ color, ...style }}
+            containerStyle={iconContainerStyle}
             cursor="pointer"
             size={size}
             className={className}

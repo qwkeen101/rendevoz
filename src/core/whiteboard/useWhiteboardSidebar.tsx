@@ -8,6 +8,8 @@ import Id from '@/utils/id'
 import * as Algorithm from '@/components/base/dock/Algorithm'
 import { useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { Rnd } from 'react-rnd'
+import ImagePage from '@/scenes/ImagePage'
+import WebpagePage from '../webpage/Webpage'
 
 const useWhiteboardSidebar = () => {
   const [collapsed, toggleCollapsed] = useToggle(false)
@@ -37,6 +39,10 @@ const useWhiteboardSidebar = () => {
         return <EditorPage id={id} noteId={objectId} />
       case 'pdf':
         return <PdfPage pdfId={objectId} />
+      case 'image':
+        return <ImagePage imageId={objectId} />
+      case 'webpage':
+        return <WebpagePage initialWebpageId={objectId} />
     }
   }
   useLayoutEffect(() => {
@@ -89,7 +95,7 @@ const useWhiteboardSidebar = () => {
           y: 0,
           x: collapsed ? 0 : layout.dockbox.children[0].tabs.length > 0 ? x : 0
         }}
-        style={{ transition: showTransition ? 'transform 0.2s ease' : undefined, borderLeft: '1px solid rgba(0,0,0,0.08)' }}
+        style={{ borderLeft: '1px solid rgba(0,0,0,0.08)' }}
       >
         {layout.dockbox.children[0].tabs.length > 0 && (
           <div style={{ position: 'absolute', top: 0, bottom: 0, left: -40, display: 'flex', alignItems: 'center' }}>
@@ -98,7 +104,7 @@ const useWhiteboardSidebar = () => {
         )}
         <div className={ClassName.Background.blurBackground} style={{ position: 'absolute', top: 0, left: 0, bottom: 0, right: 0 }}></div>
         <Content
-          onWheelCapture={e => e.stopPropagation()}
+          onWheel={e => e.stopPropagation()}
           onKeyDown={e => {
             e.stopPropagation()
           }}

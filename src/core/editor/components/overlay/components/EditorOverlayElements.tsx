@@ -11,6 +11,8 @@ import { EditorOverlayManager } from '../useEditorOverlay'
 import { GlobalEventEmitter } from '@/events'
 import { GlobalObjectPanelInstance } from '@/core/global'
 import getCursorPosition from '@/core/editor/utils/getCursorPosition'
+import { waitFor } from '@/utils/functions'
+import { ID_TO_ELEMENT_FUNCTION_MAP } from '@/core/editor/weakMaps'
 
 const EditorOverlayElements = ({
   editor,
@@ -274,7 +276,7 @@ const EditorOverlayElements = ({
                   id: Id.getId(),
                   children: [{ text: '' }]
                 })
-                GlobalEventEmitter().emit('global',{
+                GlobalEventEmitter().emit('global', {
                   type: 'globalDropNeedFurtherProcess',
                   data: {
                     draggingElement: {
@@ -292,22 +294,43 @@ const EditorOverlayElements = ({
           return
         }
         case InlineElements.Emoji: {
-          Transforms.insertNodes(
-            editor,
-            {
-              id: Id.getId(),
-              type: BasicElements.Paragraph,
-              children: [{ text: '' }]
-            },
-            {
-              at: addElementPath
-            }
-          )
-          Transforms.setSelection(editor, Editor.range(editor, addElementPath, Editor.end(editor, addElementPath)))
+          // Transforms.insertNodes(
+          //   editor,
+          //   {
+          //     id: Id.getId(),
+          //     type: BasicElements.Paragraph,
+          //     children: [{ text: '' }]
+          //   },
+          //   {
+          //     at: addElementPath
+          //   }
+          // )
+          // Transforms.setSelection(editor, Editor.range(editor, addElementPath, Editor.end(editor, addElementPath)))
           setTimeout(() => {
             manager.setContent('emojiPicker')
             manager.open()
           }, 50)
+          return
+        }
+        case InlineElements.Math: {
+          const mathId = Id.getId()
+          Transforms.insertNodes(editor, {
+            id: mathId,
+            type: 'math',
+            children: [{ text: '' }]
+          })
+          waitFor(
+            () => {
+              const openMath = ID_TO_ELEMENT_FUNCTION_MAP.get(editor)?.get(mathId)?.openMathForm
+              if (openMath) {
+                return true
+              }
+              return false
+            },
+            () => {
+              ID_TO_ELEMENT_FUNCTION_MAP.get(editor)?.get(mathId)?.openMathForm?.()
+            }
+          )
           return
         }
       }

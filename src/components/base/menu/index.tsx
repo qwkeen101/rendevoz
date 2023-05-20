@@ -5,7 +5,7 @@ import Content from '../Content'
 import { Button } from '../button'
 import styles from './index.module.less'
 import MenuGroup from './MenuGroup'
-import MenuItem from './MenuItem'
+import MenuItem, { MenuItemProps } from './MenuItem'
 
 interface MenuProps {
   title?: string
@@ -14,6 +14,7 @@ interface MenuProps {
   children: ReactNode
   style?: CSSProperties
   onClick?: MouseEventHandler
+  layout?: MenuItemProps[]
 }
 interface IMenu extends FC<MenuProps> {
   Item: typeof MenuItem

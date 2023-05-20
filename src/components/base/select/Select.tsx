@@ -1,7 +1,6 @@
 import Icon from '@/components/base/Icon'
-import Menu from '@/components/base/menu'
 import { AnimatePresence, LayoutGroup, motion } from 'framer-motion'
-import { CSSProperties, FC, ReactElement, useEffect, useRef, useState } from 'react'
+import { CSSProperties, FC, useEffect, useRef, useState } from 'react'
 import AnimatePopover from '../AnimatePopover'
 import Content from '../Content'
 import SelectOption, { SelectOptionProps } from './SelectOption'
@@ -16,8 +15,6 @@ import { Button } from '../button'
 interface SelectProps {
   multiple?: boolean
   value?: string | string[]
-  // wtf is this?
-  hideUnderlineWhenNotHover?: boolean
   closeOnSelect?: boolean
   disabled?: boolean
   deselectable?: boolean
@@ -45,7 +42,6 @@ const Select: ISelect = ({
   value,
   defaultValue,
   deselectable,
-  hideUnderlineWhenNotHover,
   menuPosition = 'bottom',
   options
 }) => {
@@ -127,9 +123,11 @@ const Select: ISelect = ({
         positions={[menuPosition]}
         onClickOutside={() => setMenuVisible(false)}
         padding={10}
-        disableNudge
+        disableIntersection
         containerStyle={{ zIndex: '10000' }}
         parentElement={containerRef.current}
+        boundaryElement={document.body}
+        boundaryInset={20}
         content={
           <WithBorder borderRadius={5}>
             <SelectMenu

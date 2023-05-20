@@ -9,6 +9,8 @@ import { TextItem } from 'pdfjs-dist/types/src/display/api'
 import { getIndexesOfMatchStr } from '@/utils/str'
 import { goToBlock, selectBlock, waitForEditorContentInitialized } from './editor/utils/blockActions'
 import { goToTextHighlight } from './editor/utils'
+import { ipcInstance } from '@/plugins'
+import { waitFor } from '@/utils/functions'
 
 const navigateToTargetObject = async (metaObjectId: number) => {
   const metaObject = globalStore.get(metaObjectsAtom).get(metaObjectId)
@@ -71,9 +73,17 @@ const navigateToTargetObject = async (metaObjectId: number) => {
       return goToNoteLabel(objectId)
     case 'image':
       return openImage(objectId)
+    case 'localFile':
+      return openLocalFile(objectId)
   }
 }
 
+const openLocalFile = async (fileId: number) => {
+  const localFile = await ObjectStore('localFile').getOneById(fileId)
+  if (localFile && localFile.fileUrl) {
+    return ipcInstance.send('openLocalFile', localFile.fileUrl)
+  }
+}
 const openEditor = (noteId: number): Promise<CustomEditor> => {
   return new Promise(res => {
     GlobalLayout?.addTab({
@@ -99,9 +109,28 @@ const goToWebpageLabel = async (labelId: number) => {
   const webpageLabel = await ObjectStore('webpageLabel').getOneById(labelId)
   if (webpageLabel) {
     const webpage = await openWebpage(webpageLabel.webpageId)
-    const editor = await webpage.transformToNote()
-    await waitForEditorContentInitialized(editor)
-    goToTextHighlight(webpageLabel.highlightId, editor)
+    // labeled in reader mode
+    if (webpageLabel.highlightId) {
+      const editor = await webpage.transformToNote()
+      await waitForEditorContentInitialized(editor)
+      goToTextHighlight(webpageLabel.highlightId, editor)
+    } else {
+      waitFor(
+        () => {
+          if (webpage.webview?.findInPage) {
+            return true
+          }
+          return false
+        },
+        () => {
+          console.log(webpage.webview, 'ggg')
+          webpageLabel.selectedText && webpage.webview?.findInPage?.(webpageLabel.selectedText)
+        },
+        {
+          timeout: 10000
+        }
+      )
+    }
   }
 }
 
@@ -141,7 +170,6 @@ const openPdf = (pdfId: number): Promise<IPdfViewer> => {
 }
 const openImage = (imageId: number) => {
   return new Promise(res => {
-    console.log('asdsad, image', imageId)
     GlobalLayout?.addTab({
       type: 'image',
       imageId
@@ -239,57 +267,8 @@ const goToPdfSearchedText = async (text: string, pageIndex: number, pdfId: numbe
   const pdf = await openPdf(pdfId)
 
   if (pdf) {
-    const doc = await pdf.getDocument?.()
-    if (doc) {
-      pdf.jumpToPage?.(pageIndex)
-      const page = await doc.getPage(pageIndex + 1)
-      const textContent = await page.getTextContent()
-      const searchableText = textContent.items.map(i => ('str' in i ? i : undefined)).filter(i => i !== undefined) as ({
-        start?: number
-        end?: number
-      } & TextItem)[]
-      const joinedText = searchableText.map(i => i.str).join(' ')
-      searchableText.forEach((v, idx, arr) => {
-        const curr = v
-        const prev = idx > 0 && arr[idx - 1]
-        if (prev && prev.end) {
-          curr.start = prev.end + 1
-          curr.end = curr.start + curr.str.length
-        } else {
-          curr.start = 0
-          curr.end = curr.str.length
-        }
-      })
-      // get all indexes of searched text
-      const indexes = getIndexesOfMatchStr(text, joinedText)
-      const searchTextLength = text.length
-      // get target text item
-      const items = indexes.map(index => {
-        const endIndex = index + searchTextLength - 1
-        const allTextItems: TextItem[] = []
-        let startIdx: number
-        let endIdx: number
-        searchableText.forEach((i, idx) => {
-          if (idx > endIdx) return
-          if (startIdx !== undefined) {
-            allTextItems.push(i)
-          }
-          // get start idx and push first item into arr
-          if (index >= i.start! && index <= i.end!) {
-            startIdx = idx
-            allTextItems.push(i)
-          }
-          // get end idx
-          if (endIndex >= i.start! && endIndex <= i.end!) {
-            endIdx = idx
-          }
-        })
-        return allTextItems
-      })
-      pdf.getTextLayerInstance?.(pageIndex).then(ins => {
-        items.forEach(i => ins.paintItems(i, '#FBF719'))
-      })
-    }
+    pdf.jumpToPage?.(pageIndex)
+    pdf.highlightText?.(text, pageIndex)
   }
 }
 const openHome = () => {

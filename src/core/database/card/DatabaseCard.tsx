@@ -29,6 +29,7 @@ import { metaLinksAtom } from '@/stores/meta.store'
 import { Zindexes } from '@/consts'
 import FontSize from '@/consts/font'
 import { GlobalImagePreviewerInstance } from '@/core/global/GlobalImagePreviewer'
+import FromRenderer from '../FromRenderer'
 
 export const TypeToTypeName: Record<MetaObject['type'], string> = {
   pdfLabel: 'pdf label',
@@ -42,7 +43,8 @@ export const TypeToTypeName: Record<MetaObject['type'], string> = {
   webpage: 'webpage',
   noteLabel: 'note label',
   noteBlock: 'note block',
-  webpageLabel: 'webpage label'
+  webpageLabel: 'webpage label',
+  localFile: 'local file'
 }
 export const DatabaseCard: FC<{
   index?: number
@@ -92,7 +94,7 @@ export const DatabaseCard: FC<{
       >
         <Content flex gap={6} alignItems="baseline">
           <span className={css({ fontSize: FontSize['20px'], fontWeight: 650 })}>{relatedNumber || 0}</span>
-          <span className={css({ fontSize: FontSize['11px'], fontWeight: 500 })}>Related Objects</span>
+          <span className={css({ fontSize: FontSize['11px'], fontWeight: 500 })}>{t('general.related objects')}</span>
         </Content>
 
         <AnimatePopover
@@ -155,9 +157,14 @@ export const DatabaseCard: FC<{
           <div className={TitleClassName} onClick={onTitleClick}>
             {title}
           </div>
-          <div style={{ whiteSpace: 'pre-line' }} className={css([ClassName.description(), ClassName.ellipsisFont(6)])}>
-            {description}
-          </div>
+          {description?.length && (
+            <div
+              style={{ whiteSpace: 'pre-line', marginTop: 8 }}
+              className={css([ClassName.description(FontSize['14px']), ClassName.ellipsisFont(6)])}
+            >
+              {description}
+            </div>
+          )}
         </Content>
       </Content>
     )
@@ -193,7 +200,6 @@ export const DatabaseCard: FC<{
         onPointerLeave={() => setShowIcon(false)}
         style={{ gridRowEnd: showImage ? 'span 2' : undefined }}
         className={css({
-          minHeight: 150,
           borderRadius: 16,
           display: 'flex',
           flexDirection: 'column',
@@ -218,6 +224,7 @@ export const DatabaseCard: FC<{
             top: 0,
             width: '100%',
             height: '100%',
+            borderRadius: 16,
             zIndex: 999,
             display: 'flex',
             alignItems: 'center',
@@ -283,7 +290,7 @@ export const DatabaseCard: FC<{
                 <span>{t(`general.${TypeToTypeName[metaObject.type] || 'object'}`)}</span>
                 <span style={{ display: 'flex', gap: 5, fontSize: FontSize['10px'], alignItems: 'center', lineHeight: 1 }}>
                   <Icon size={13} name="park-time" />
-                  {DateFormat.formatDistanceToNowStrict(metaObject.createdAt)} Ago
+                  {t('general.ago', { time: DateFormat.formatDistanceToNowStrict(metaObject.createdAt) })}
                 </span>
               </div>
               {metaObject.tags && metaObject.tags.length > 0 && (
@@ -294,6 +301,12 @@ export const DatabaseCard: FC<{
                 </Content>
               )}
               <div>{renderCardContent()}</div>
+              <FromRenderer
+                style={{
+                  marginTop: 8
+                }}
+                metaObject={metaObject}
+              />
             </div>
             <div
               className={css({
@@ -321,11 +334,17 @@ export const ObjectActionPopover: FC<
     onGraph: VoidFunction
     onDelete: VoidFunction
     onJump: VoidFunction
+    onGraphPin: VoidFunction
+    onShowRelated: VoidFunction
     visibility: {
       jumpToVisible?: boolean
+      graphPinVisible?: boolean
+      showRelatedVisible?: boolean
+      graphPinned?: boolean
+      relatedNum?: number
     }
   }> & { metaObjectId: number }
-> = ({ onClose, onEdit, onPin, onGraph, onDelete, metaObjectId, visibility, onJump }) => {
+> = ({ onClose, onEdit, onPin, onGraph, onDelete, metaObjectId, visibility, onJump, onGraphPin, onShowRelated }) => {
   const { updateMetaObject, deleteMetaObject } = MetaStore
   const { t } = useTranslation()
   const [relatedVisible, toggleRelatedVisible] = useToggle(false)
@@ -334,6 +353,21 @@ export const ObjectActionPopover: FC<
   return (
     <Content flex column style={{ padding: 6, fontWeight: 500, width: 180 }}>
       {visibility?.jumpToVisible && <Button.IconButton onClick={onJump} text="Focus" icon="park-share-two" />}
+      {visibility?.graphPinVisible && (
+        <Button.IconButton
+          icon="park-pin"
+          text={visibility.graphPinned ? t('graph.unpin') : t('graph.pin on graph')}
+          style={{ color: visibility.graphPinned ? 'color' : undefined }}
+          onClick={onGraphPin}
+        />
+      )}
+      {visibility?.showRelatedVisible && (
+        <Button.IconButton
+          onClick={onShowRelated}
+          text={t(`graph.show more related nodes`, { num: visibility.relatedNum })}
+          icon="park-circle-four"
+        />
+      )}
       <Button.IconButton
         text={t('general.edit')}
         icon="park-edit"
@@ -358,10 +392,19 @@ export const ObjectActionPopover: FC<
         text={metaObject.pinned ? t('general.unpin') : t('general.pin')}
       />
       <Button.IconButton
-        text={t('general.graph')}
-        icon="park-share-one"
+        text={t('general.global graph')}
+        icon="park-circle-four-line"
         onClick={() => {
           GlobalGraphInstance?.open?.(metaObject)
+          onGraph?.()
+          onClose?.()
+        }}
+      />
+      <Button.IconButton
+        text={t('general.partial graph')}
+        icon="park-share-one"
+        onClick={() => {
+          GlobalGraphInstance?.open?.(metaObject, true)
           onGraph?.()
           onClose?.()
         }}
@@ -375,8 +418,11 @@ export const ObjectActionPopover: FC<
         containerStyle={{
           zIndex: String(Zindexes.Tooltip)
         }}
+        reposition
+        boundaryElement={document.body}
         content={
           <WithBorder
+            onClick={e => e.stopPropagation()}
             padding={8}
             style={{
               minWidth: 200,
@@ -414,64 +460,101 @@ const RelatedPanel = memo(({ metaId }: { metaId: number }) => {
   const sourceToTarget = useGlobalAtomValue(indexedMetaLinksAtom)?.sourceIdToLinkIdsMap.get(metaId)
   const targetToSource = useGlobalAtomValue(indexedMetaLinksAtom)?.targetIdToLinkIdMap.get(metaId)
   const linkStore = globalStore.get(metaLinksAtom)
+  const [showIn, toggleShowIn] = useToggle(false)
+  const [showOut, toggleShowOut] = useToggle(false)
+  const { t } = useTranslation()
   return (
     <Content
       flex
       column
+      onClick={e => {
+        e.stopPropagation()
+        e.preventDefault()
+      }}
       className={css({
-        maxHeight: '70vh',
+        maxHeight: '600px',
         overflowY: 'auto',
-        '> div': {
-          ':not(:last-child)': {
-            borderBottom: `1px solid ${Colors.Background.Border}`
-          }
-        }
+        minWidth: 300,
+        maxWidth: 500
       })}
     >
-      {Array.from(targetToSource?.values() || []).map(i => {
-        const link = linkStore.get(i)
-        if (link) {
-          return <RelatedItem direction="targetToSource" metaId={link.sourceId} />
-        }
-      })}
-      {Array.from(sourceToTarget?.values() || []).map(i => {
-        const link = linkStore.get(i)
-        if (link) {
-          return <RelatedItem direction="sourceToTarget" metaId={link?.targetId} />
-        }
-      })}
+      <Content
+        className={css({
+          '> div': {
+            ':not(:last-child)': {
+              borderBottom: `1px solid ${Colors.Background.Border}`
+            }
+          }
+        })}
+      >
+        <Button.IconButton
+          onClick={toggleShowIn}
+          text={`${t('general.inbound links')} ${targetToSource?.size || 0}`}
+          icon={!showIn ? 'park-right' : 'park-down'}
+        />
+        {showIn &&
+          Array.from(targetToSource?.values() || []).map(i => {
+            const link = linkStore.get(i)
+            if (link) {
+              return <RelatedItem key={link.id} metaId={link.sourceId} />
+            }
+          })}
+      </Content>
+      <Content
+        className={css({
+          '> div': {
+            ':not(:last-child)': {
+              borderBottom: `1px solid ${Colors.Background.Border}`
+            }
+          }
+        })}
+      >
+        <Button.IconButton
+          onClick={toggleShowOut}
+          text={`${t('general.outbound links')} ${sourceToTarget?.size || 0}`}
+          icon={!showOut ? 'park-right' : 'park-down'}
+        />
+        {showOut &&
+          Array.from(sourceToTarget?.values() || []).map(i => {
+            const link = linkStore.get(i)
+            if (link) {
+              return <RelatedItem key={link.id} metaId={link?.targetId} />
+            }
+          })}
+      </Content>
     </Content>
   )
 })
 
-const RelatedItem = ({ metaId, direction }: { metaId: number; direction: 'sourceToTarget' | 'targetToSource' }) => {
-  const { renderTags, renderTitle } = useRenderObject({ metaObjectId: metaId })
+const RelatedItem = ({ metaId }: { metaId: number }) => {
+  const { renderWhole } = useRenderObject({ metaObjectId: metaId })
 
   return (
-    <Content
-      flex
-      gap={16}
-      style={{
-        padding: '6px 0px 2px'
-      }}
-    >
-      <Icon name={direction === 'targetToSource' ? 'park-new-afferent' : 'park-new-efferent'} />
-      <Content flex column>
-        {renderTags({})}
-        {renderTitle({
-          style: {
-            fontSize: FontSize['14px']
-          },
+    <div>
+      {renderWhole({
+        renderOptions: {
+          renderDescription: false,
+          renderOption: true
+        },
+        mainContainerStyle: {
+          padding: 10,
+          flex: 1
+        },
+        titleOptions: {
           ellipsisLine: 1
-        })}
-      </Content>
-    </Content>
+        },
+        containerStyle: {
+          width: '100%',
+          flex: 1
+        }
+      })}
+    </div>
   )
 }
 export const TitleClassName = classNames(
   css({
     fontWeight: 700,
-    fontSize: FontSize['18px'],
+    fontSize: FontSize['16px'],
     lineHeight: '24px',
     userSelect: 'none'
   }),

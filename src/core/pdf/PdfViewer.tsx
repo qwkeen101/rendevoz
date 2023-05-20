@@ -49,7 +49,7 @@ export const PdfViewer: FC<PdfViewerProps> = memo(({ documentId, transformScale,
       if (checkTime - currTime > 10000) {
         return
       }
-      if (Object.keys(viewer).length > 0) {
+      if (viewer.jumpToPage) {
         onViewerInitialized?.(viewer)
       } else {
         requestAnimationFrame(checkViewerInitialize)

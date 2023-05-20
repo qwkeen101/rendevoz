@@ -66,9 +66,21 @@
         "ocr": "ocr",
         "close": "close",
         "download": "download",
-        "add as object": "add as object"
+        "add as object": "add as object",
+        "selected text": "selected text",
+        "total objects": "total objects",
+        "local file": "local file",
+        "file path": "file path",
+        "choose one file": "choose one file",
+        "files": "files",
+        "records": "records",
+        "labels": "labels",
+        "global graph": "global graph",
+        "partial graph": "partial graph",
+        "inbound links": "inbound links",
+        "outbound links": "outbound links"
     },
-        "dock": {
+    "dock": {
         "close": "close",
         "close other tabs": "close other tabs",
         "close right side tabs": "close right side tabs"
@@ -186,7 +198,9 @@
         "order-list-item": "ordered list item",
         "make object inline": "make object inline",
         "link": "link",
-        "code": "code"
+        "code": "code",
+        "math": "math formula",
+        "input math formula": "please input formula"
     },
     "settings": {
         "appearance": "Appearance",
@@ -234,7 +248,17 @@
         "background blur": "background blur",
         "dark mode": "dark mode",
         "editor settings": "editor settings",
-        "object auto become inline when dragged into editor": "object auto become inline when dragged into editor"
+        "object auto become inline when dragged into editor": "object auto become inline when dragged into editor",
+        "open translate panel": "open translate panel",
+        "object settings": "object settings",
+        "enable drop auto generate object": "enable auto generate object for dropped item",
+        "default search engine": "default search engine",
+        "google": "google",
+        "google scholar": "google scholar",
+        "wikipedia": "wikipedia",
+        "vocabulary": "vocabulary",
+        "baidu": "baidu",
+        "bing": "bing"
     },
     "form": {
         "choose file": "Choose file",
@@ -303,5 +327,35 @@
         "recent view": "recently viewed",
         "earliest view": "earliest viewed",
         "most related": "most related"
+    },
+    "translate": {
+      "show original": "show original text",
+      "translate panel": "translate panel",
+      "double row layout": "double row",
+      "history": "translate history",
+      "original text": "original",
+      "translated text": "translated",
+      "show this translate result": "show this translate result"
+    },
+    "graph": {
+      "path start node": "path start node",
+      "path end node": "path end node",
+      "choose start node on graph": "choose start node on graph",
+      "choose end node on graph": "choose end node on graph",
+      "total paths": "total paths",
+      "no path found": "no path found",
+      "switch start and end nodes": "switch start and end nodes",
+      "clear paths": "clear paths",
+      "show all paths": "show all paths",
+      "show shortest path": "show shortest path",
+      "max path length": "max path length",
+      "pin on graph": "pin on graph",
+      "unpin": "unpin",
+      "full screen graph": "full screen graph",
+      "show more related nodes": "show {{num}} more related nodes",
+      "found paths from": "found {{num}} paths from",
+      "shortest path length": "shortest path length",
+      "longest path length": "longest path length",
+      "total reverse paths": "total reverse paths"
     }
 }

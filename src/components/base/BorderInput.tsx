@@ -3,9 +3,11 @@ import ClassName from '@/styles/classNames'
 import { css } from '@emotion/css'
 import { AnimatePresence, motion } from 'framer-motion'
 import isHotkey from 'is-hotkey'
-import { CSSProperties, useState } from 'react'
+import { CSSProperties, useEffect, useRef, useState } from 'react'
 import AutosizeTextarea, { TextareaAutosizeProps } from '../custom/input/autosizeTextarea'
 import Colors from '@/consts/colors'
+import { useUpdate } from 'react-use'
+import FontSize from '@/consts/font'
 
 type BorderInputProps = {
   value?: string
@@ -26,6 +28,26 @@ type BorderInputProps = {
     }
 )
 
+const inputClassName = css({
+  padding: '12px 16px',
+  width: '100%',
+  outline: 'none',
+  position: 'relative',
+  fontSize: FontSize['14px'],
+  fontWeight: 500,
+  letterSpacing: '-0.04px',
+  borderRadius: 6,
+  border: 'none',
+  background: 'transparent'
+  // border: `1px solid ${Colors.Background.Border}`,
+  // transition: 'all 0.2s ease',
+  // ':hover': {
+  // background: `${Colors.Background.Border}`
+  // },
+  // ':focus': {
+  // border: '1px solid var(--font-secondary)'
+  // }
+})
 const BorderInput = ({
   value,
   onChange,
@@ -34,34 +56,63 @@ const BorderInput = ({
   defaultValue,
   textarea,
   autoFocus,
-  spellCheck,
+  spellCheck = 'false',
   disable,
   ...rest
 }: BorderInputProps) => {
   const [innerValue, setValue] = useState(value || defaultValue || '')
   const showText = innerValue && innerValue !== ''
-
+  const update = useUpdate()
+  const inputRef = useRef<HTMLElement>(null)
+  const placeholderRef = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    update()
+    setTimeout(() => {
+      if (autoFocus) {
+        inputRef.current?.focus()
+      }
+    })
+  }, [])
+  const translatedPlaceholder = showText && placeholder
   return (
-    <div style={{ position: 'relative' }}>
+    <fieldset
+      className={css({
+        border: `1px solid ${Colors.Background.Border}`,
+        transition: 'all 0.2s ease',
+        ':hover': {
+          background: `${Colors.Background.Border}`
+        },
+        ':focus-within': {
+          border: '1px solid var(--font-secondary)'
+        }
+      })}
+      style={{ position: 'relative', borderRadius: 8 }}
+    >
       <AnimatePresence>
-        {showText && placeholder && (
-          <motion.div
-            initial={{ opacity: 0, x: 0, y: 0 }}
-            animate={{ opacity: 1, x: -6, y: -16, zIndex: 1 }}
-            exit={{ opacity: 0, x: 0, y: 0 }}
+        {translatedPlaceholder && (
+          <motion.legend
+            ref={placeholderRef}
+            initial={{ opacity: 0, x: 6, y: 16 }}
+            animate={{ opacity: 1, x: 0, y: -6, zIndex: 1 }}
+            exit={{ opacity: 0, x: 6, y: 16 }}
             className={css({
-              position: 'absolute',
-              left: 16,
-              top: 10,
+              // position: 'absolute',
+              // left: 16,
+              // top: 10,
+              height: 0,
+              width: 'fit-content',
               fontSize: '0.857rem',
+              marginLeft: 6,
+              marginBottom: 0,
               color: Colors.Font.Secondary,
               fontWeight: 600,
               fontFamily: 'Muli',
-              lineHeight: 1
+              lineHeight: 1,
+              padding: '0px 2px'
             })}
           >
             {placeholder}
-          </motion.div>
+          </motion.legend>
         )}
       </AnimatePresence>
       {textarea ? (
@@ -71,10 +122,12 @@ const BorderInput = ({
           spellCheck={spellCheck}
           {...rest}
           style={{ resize: 'none', ...style }}
-          className={ClassName.input()}
+          className={inputClassName}
           defaultValue={defaultValue}
+          value={value || innerValue}
           disabled={disable}
           autoFocus={autoFocus}
+          ref={inputRef}
           onKeyDown={e => {
             if (isHotkey(KEY.Enter, e)) {
               e.stopPropagation()
@@ -90,7 +143,8 @@ const BorderInput = ({
           style={style}
           defaultValue={defaultValue}
           spellCheck={spellCheck}
-          value={innerValue}
+          ref={inputRef}
+          value={value || innerValue}
           placeholder={placeholder}
           onChange={e => {
             onChange?.(e.target.value)
@@ -103,10 +157,10 @@ const BorderInput = ({
             }
           }}
           disabled={disable}
-          className={ClassName.input()}
+          className={inputClassName}
         ></input>
       )}
-    </div>
+    </fieldset>
   )
 }
 

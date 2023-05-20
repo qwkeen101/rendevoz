@@ -9,14 +9,16 @@ import { IAnnotation } from '../types/annotation'
 import { Noop } from '@/common/types'
 import { decreaseLevel, increaseLevel } from '../utils/zoom'
 import PanHelper from '../utils/pan'
-import fuzzysort from 'fuzzysort'
 import { TextItem } from '../types/text'
 import Id from '@/utils/id'
 import useScopedEventEmitter from '@/events/useEventEmitter'
 import usePdfViewer from '../hooks/useViewer'
 import { ObjectStore } from '@/stores'
 import { IPdfViewer } from '~/typings'
-import { PAGE_INDEX_TO_TEXT_LAYER, PDF_TO_DOC } from '../weakMaps'
+import { getTextContent, PAGE_INDEX_TO_PAGE_FUNCTION, PAGE_INDEX_TO_TEXT_LAYER, PDF_TO_DOC } from '../weakMaps'
+import { waitFor } from '@/utils/functions'
+import { normalizeText } from '../utils/search'
+import { ID_TO_LABEL_MAP } from '../../weakMaps'
 
 interface LayoutProps {
   doc: PDFDocumentProxy
@@ -61,7 +63,7 @@ export interface LayoutFunctions {
     }[]
   >
 }
-const PAGE_SPACING = 10
+export const PAGE_SPACING = 10
 const Layout: FC<LayoutProps> = ({
   doc,
   defaultScale,
@@ -138,7 +140,7 @@ const Layout: FC<LayoutProps> = ({
     rangeExtractor,
     overscan: 2,
     measureElement: () => {
-      return scaleRef.current * pageSize.height + PAGE_SPACING
+      return scale * pageSize.height + PAGE_SPACING
     }
   })
   useUpdateEffect(() => {
@@ -161,18 +163,26 @@ const Layout: FC<LayoutProps> = ({
   }, [scale])
   const jumpToPage = (pageIndex: number) => {
     if (pageIndex >= 0 && pageIndex < numPages) {
-      virtualizer.scrollToIndex(pageIndex, { align: 'start', behavior: 'auto' })
+      const offset = pageIndex * pageSize.height * scale + pageIndex * 10
+      virtualizer.scrollToOffset(offset, { align: 'start', behavior: 'auto' })
     }
   }
   const jumpToLabel = async (labelId: number) => {
     const label = await ObjectStore('pdfLabel').getOneById(labelId)
     if (label && label.page !== undefined && ('rect' in label || 'rects' in label)) {
-      const pageOffset = virtualizer.getOffsetForIndex(label.page, 'start')
       const labelPercentTop = 'rect' in label ? label.rect?.[1] : 'rects' in label ? label.rects?.[0].percentageTop : undefined
       if (labelPercentTop !== undefined) {
-        const realOffset = pageOffset[0] + labelPercentTop * pageSize.height * pageSize.scale
-        console.log(realOffset, pageOffset, labelPercentTop, pageSize)
+        const realOffset = pageSize.height * scale * label.page + labelPercentTop * pageSize.height * scale + PAGE_SPACING * label.page
         virtualizer.scrollToOffset(realOffset, { align: 'center' })
+        if (!viewer) return
+        waitFor(
+          () => {
+            return !!ID_TO_LABEL_MAP.get(viewer)?.has(labelId)
+          },
+          () => {
+            ID_TO_LABEL_MAP.get(viewer)?.get(labelId)?.focus()
+          }
+        )
       }
     }
   }
@@ -222,8 +232,47 @@ const Layout: FC<LayoutProps> = ({
     return outline
   }
   const search = (s: string) => {
-    const result = fuzzysort.go(s, textRef.current, { key: 'prepared', limit: 50 })
-    return result
+    if (textRef.current) {
+      const results: {
+        searchText: string
+        pageIndex: number
+      }[] = []
+      const text = textRef.current
+      const search = normalizeText(s).replace(/[\-\[\]\/\{\}\(\)\*\+\?\.\\\^\$\|]/g, '\\$&')
+
+      text.forEach(i => {
+        const reg = new RegExp(search, 'gi')
+
+        const indexes = ([...i.str.matchAll(reg)].map(i => i.index).filter(i => i !== undefined) as number[]).reduce((prev, curr, idx) => {
+          if (idx === 0) {
+            prev.push(curr)
+          } else {
+            const last = prev[prev.length - 1]
+            if (curr - last > 80 + search.length) {
+              prev.push(curr)
+            }
+          }
+          return prev
+        }, [] as number[])
+        // five results per page
+        indexes.slice(0, 5).forEach(index => {
+          let cropStr = i.str.slice(Math.max(0, index - 80), Math.min(index + search.length + 80, i.str.length)).replace(reg, '<em>$&</em>')
+          const appendBefore = index - 80 > 0
+          const appendAfter = index + search.length + 80 < i.str.length
+          if (appendBefore) {
+            cropStr = '...' + cropStr
+          }
+          if (appendAfter) {
+            cropStr = cropStr + '...'
+          }
+          results.push({
+            searchText: cropStr,
+            pageIndex: i.page
+          })
+        })
+      })
+      return results
+    }
   }
   const highlightText = (str: string, pageIndex: number) => {
     innerEmitter.emit(
@@ -238,41 +287,7 @@ const Layout: FC<LayoutProps> = ({
       true
     )
   }
-  const renderViewer = () => {
-    return (
-      <div style={{ height: `${estimateSize() * numPages}px`, width: '100%', position: 'relative' }}>
-        {virtualizer.getVirtualItems().map(item => (
-          <div
-            data-index={item.index}
-            ref={virtualizer.measureElement}
-            style={{
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              width: '100%',
-              height: `${estimateSize()}px`,
-              transform: `translateY(${item.index * estimateSize()}px)`,
-              paddingBottom: 10
-            }}
-            key={item.index}
-            data-page-index={item.index}
-          >
-            <PageLayer
-              transformScale={transformScale}
-              scrollElement={pagesRef}
-              renderPage={renderPage}
-              doc={doc}
-              height={result.height}
-              pageIndex={item.index}
-              scale={scale}
-              width={result.width}
-              renderAnnotation={renderAnnotation}
-            />
-          </div>
-        ))}
-      </div>
-    )
-  }
+
   const { run: handleScroll } = useDebounceFn(
     e => {
       currentRangeRef.current = {
@@ -281,7 +296,7 @@ const Layout: FC<LayoutProps> = ({
       }
       onRangeChange?.(currentRangeRef.current)
     },
-    { wait: 200 }
+    { wait: 500 }
   )
   useEffect(() => {
     if (initialPage) {
@@ -289,25 +304,35 @@ const Layout: FC<LayoutProps> = ({
     }
     if (textRef.current.length === 0) {
       const map = textRef.current
-      for (let i = 1; i < doc.numPages; i++) {
-        requestIdleCallback(() => {
-          doc.getPage(i).then(page => {
-            page.getTextContent().then(text => {
+      setTimeout(() => {
+        for (let i = 1; i < doc.numPages; i++) {
+          requestIdleCallback(() => {
+            if (!viewer) return
+            getTextContent(viewer, i - 1).then(item => {
+              if (!item) return
+              const text = item.textContent
               const hasStrTexts = text.items.filter(i => (i as TextItem).str) as TextItem[]
-              hasStrTexts.forEach(t => {
-                const str = t.str
-                const id = Id.getId()
-                map.push({
-                  id,
-                  str,
-                  page: i - 1,
-                  prepared: fuzzysort.prepare(str)
+              const str = hasStrTexts
+                .map(i => {
+                  if (i.hasEOL) {
+                    return i.str + ' '
+                  }
+                  return i.str
                 })
+                .join('')
+              const normalized = normalizeText(str)
+
+              const id = Id.getId()
+              map.push({
+                id,
+                str: normalized,
+                page: i - 1,
+                prepared: undefined
               })
             })
           })
-        })
-      }
+        }
+      }, 1000)
     }
     const pages = pagesRef.current
     if (pages) {
@@ -328,10 +353,54 @@ const Layout: FC<LayoutProps> = ({
       getOutline,
       jumpToDest,
       search,
-      highlightText,
+      highlightText: (str, pageIndex) => {
+        return new Promise(res => {
+          waitFor(
+            () => {
+              const pageFunctionRef = PAGE_INDEX_TO_PAGE_FUNCTION.get(viewer)?.get(pageIndex)
+              if (pageFunctionRef?.current.highlightText) {
+                return true
+              }
+              return false
+            },
+            () => {
+              PAGE_INDEX_TO_PAGE_FUNCTION.get(viewer)?.get(pageIndex)?.current.highlightText?.(str)
+              res()
+            }
+          )
+        })
+      },
       jumpToOffset,
       scrollBy,
       jumpToLabel,
+      scrollToOffset: offset => {
+        virtualizer.scrollToOffset(offset, { align: 'center' })
+      },
+      getPageSize: () => ({
+        scale,
+        height: pageSize.height,
+        width: pageSize.width
+      }),
+      highlightArea: (pageIndex, rect) => {
+        return new Promise(res => {
+          waitFor(
+            () => {
+              const pageFunctionRef = PAGE_INDEX_TO_PAGE_FUNCTION.get(viewer)?.get(pageIndex)
+              if (pageFunctionRef?.current.highlightArea) {
+                return true
+              }
+              return false
+            },
+            () => {
+              const pageFunctionRef = PAGE_INDEX_TO_PAGE_FUNCTION.get(viewer)?.get(pageIndex)
+              if (pageFunctionRef) {
+                pageFunctionRef.current.highlightArea?.(rect)
+                res()
+              }
+            }
+          )
+        })
+      },
       getDocument: () => {
         return new Promise(res => {
           if (PDF_TO_DOC.has(viewer)) {
@@ -371,7 +440,38 @@ const Layout: FC<LayoutProps> = ({
   return (
     <div className={className} ref={pagesRef} style={{ height: '100%', width: '100%', overflow: 'auto' }}>
       <PanHelper enablePan={enablePan} containerEle={pagesRef.current} />
-      {renderViewer()}
+      <div style={{ height: virtualizer.getTotalSize(), width: '100%', position: 'relative' }}>
+        {virtualizer.getVirtualItems().map(item => (
+          <div
+            data-index={item.index}
+            ref={virtualizer.measureElement}
+            style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              width: '100%',
+              height: item.size,
+              transform: `translateY(${item.start}px)`,
+              paddingBottom: 10
+            }}
+            key={`${item.index}_page`}
+            data-page-index={item.index}
+          >
+            <PageLayer
+              key={item.index}
+              transformScale={transformScale}
+              scrollElement={pagesRef}
+              renderPage={renderPage}
+              doc={doc}
+              height={result.height}
+              pageIndex={item.index}
+              scale={scale}
+              width={result.width}
+              renderAnnotation={renderAnnotation}
+            />
+          </div>
+        ))}
+      </div>
     </div>
   )
 }

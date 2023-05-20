@@ -1,9 +1,9 @@
 import { Noop } from '@/common/types'
 import { IconPicker, Toolbar, WithBorder, IconWithPopover } from '@/components'
-import { PrettyInput } from '@/components/custom/input/pretty'
 import BlockColorPicker from '@/core/editor/components/BlockColorPicker'
 import { FC, memo } from 'react'
-import { TextSelectionSearch, TextSelectionTranslate } from './TextSelectionToolbar'
+import { TextSelectionSearch } from './TextSelectionToolbar'
+import { IHighlightLabel } from '~/typings'
 
 type Layout =
   | 'colorPicker'
@@ -16,20 +16,23 @@ type Layout =
   | 'searcher'
   | 'delete'
   | 'direction'
+  | 'copy'
 
 type LabelToolbarProps = {
   color?: string
   movable?: boolean
   content?: string
   selectedText?: string
+  specType?: IHighlightLabel['specHighlightType']
+  onTranslate?: React.MouseEventHandler
   onMovableChange?: Noop
   onIconChange?: (icon: string) => void
   onColorChange?: (color: string) => void
-  onMetaObject?: Noop
-  onAddToEditor?: Noop
+  onCopy?: VoidFunction
   onDelete?: Noop
   onContentChange?: (value: string) => void
   onDirectionChange?: Noop
+  onSearch?: React.MouseEventHandler
   layout?: Layout[]
 }
 
@@ -50,7 +53,9 @@ const LabelToolbar: FC<LabelToolbarProps> = ({
   onIconChange,
   onMovableChange,
   onDelete,
+  onTranslate,
   selectedText,
+  onSearch,
   color,
   movable = false,
   layout = ['colorPicker', 'iconPicker', 'contentInput', 'separator', 'addToEditorButton', 'movableToggle', 'direction', 'delete']
@@ -92,31 +97,19 @@ const LabelToolbar: FC<LabelToolbarProps> = ({
 
   const Separator = <Toolbar.Separator key="separator" />
 
-  const TranslatorItem = (
-    <Toolbar.Item key="translate">
-      <IconWithPopover
-        name="park-translate"
-        zIndex={999}
-        content={
-          <WithBorder style={{ padding: 20 }}>
-            <TextSelectionTranslate translateInput={selectedText} />
-          </WithBorder>
-        }
-      />
-    </Toolbar.Item>
-  )
+  const TranslatorItem = <Toolbar.Item key="translate" iconName="park-translate" onClick={onTranslate}></Toolbar.Item>
 
-  const SearcherItem = (
-    <Toolbar.Item key="search">
-      <IconWithPopover
-        name="park-search"
-        content={
-          <WithBorder style={{ padding: 20 }}>
-            <TextSelectionSearch searchInput={selectedText} />
-          </WithBorder>
+  const SearcherItem = <Toolbar.Item key="search" iconName="park-search" onClick={onSearch}></Toolbar.Item>
+  const CopyItem = (
+    <Toolbar.Item
+      key="copy"
+      iconName="park-copy-one"
+      onClick={() => {
+        if (selectedText) {
+          navigator.clipboard.writeText(selectedText)
         }
-      />
-    </Toolbar.Item>
+      }}
+    ></Toolbar.Item>
   )
   const DeleteItem = <Toolbar.Item key="delete" iconName="park-delete" onClick={onDelete}></Toolbar.Item>
   const toolbarRenderer = () => {
@@ -124,10 +117,6 @@ const LabelToolbar: FC<LabelToolbarProps> = ({
       switch (i) {
         case 'colorPicker':
           return ColorPickerItem
-        case 'contentInput':
-          return ContentInputItem
-        case 'addToEditorButton':
-          return AddToEditorButtonItem
         case 'iconPicker':
           return IconPickerItem
         case 'movableToggle':
@@ -140,10 +129,8 @@ const LabelToolbar: FC<LabelToolbarProps> = ({
           return SearcherItem
         case 'delete':
           return DeleteItem
-        case 'direction':
-          return DirectionItem
-        case 'metaObject':
-          return MetaObjectItem
+        case 'copy':
+          return CopyItem
       }
     })
   }

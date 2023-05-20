@@ -10,7 +10,7 @@ import { Rnd } from 'react-rnd'
 import Zindexes from '@/consts/zindex'
 import { getNodeData, getRelativeHandlePosition } from '../utils'
 import { AnimatePresence, motion } from 'framer-motion'
-import { boxesIntersect } from '@/utils'
+import { boxesIntersect, pointInBox } from '@/utils'
 import { Box } from '~/typings'
 import MetaObjectNode from './MetaObjectNode'
 import ImageNode from './ImageNode'
@@ -99,6 +99,7 @@ const WrapperNode = ({ node }: { node: IWhiteboardNode }) => {
           className={ClassName.circleButton(undefined, 4)}
           name="park-delete"
           onClick={() => {
+            console.log('s')
             setNodes(nodes =>
               produce(nodes, draft => {
                 draft.delete(id)
@@ -186,7 +187,7 @@ const WrapperNode = ({ node }: { node: IWhiteboardNode }) => {
   const { handleGroupMove, handleGroupMoveEnd, handleGroupMoveStart } = type === 'group' ? useGroupDrag(node) : {}
   const handleSelectIntersection = () => {
     const nodeData = getNodeData(id, flow)
-    if (nodeData?.transformedXY && flow.selectBox) {
+    if (nodeData?.transformedXY && flow.selectBox && flow.selectStartPoint) {
       const { transformedXY, bound } = nodeData
       const thisBox: Box = {
         width: bound.width / flow.containerTransformScale,
@@ -194,7 +195,7 @@ const WrapperNode = ({ node }: { node: IWhiteboardNode }) => {
         left: transformedXY.x,
         top: transformedXY?.y
       }
-      const intersected = boxesIntersect(thisBox, flow.selectBox)
+      const intersected = type === 'group' && pointInBox(flow.selectStartPoint, thisBox) ? false : boxesIntersect(thisBox, flow.selectBox)
       if (intersected) {
         setNodeState(s => ({
           ...s,
@@ -211,6 +212,7 @@ const WrapperNode = ({ node }: { node: IWhiteboardNode }) => {
       }
     }
   }
+
   const handleNameChange = useMemoizedFn((name: string) => {
     setNodes(nodes =>
       produce(nodes, draft => {
@@ -381,11 +383,6 @@ const WrapperNode = ({ node }: { node: IWhiteboardNode }) => {
       }
     }
   }, [])
-  useEffect(() => {
-    if (nodeState.focused) {
-      flow.onNodeFocus?.(node)
-    }
-  }, [nodeState.focused])
 
   const { stringColor, darkenBackground, stringDefaultColor, lightenDefaultColor, opacityBackground } = useMemo(() => {
     const defaultColor = tinycolor('#c9c9c9')
@@ -436,7 +433,8 @@ const WrapperNode = ({ node }: { node: IWhiteboardNode }) => {
             : Colors.Background.Linear,
         pointerEvents:
           type === 'group'
-            ? nodeState.popoverVisible || nodeState.focused || nodeState.locked || nodeState.selected || addingEdgeState.isAdding
+            ? (nodeState.popoverVisible || nodeState.focused || nodeState.locked || nodeState.selected || addingEdgeState.isAdding) &&
+              (addingEdgeState.sourceNodeId ? !innerNodeIdsRef.current.has(addingEdgeState.sourceNodeId) : true)
               ? 'auto'
               : 'none'
             : 'auto',
@@ -467,6 +465,7 @@ const WrapperNode = ({ node }: { node: IWhiteboardNode }) => {
         setTimeout(() => {
           isResizingRef.current = false
         })
+        console.log('resiz st')
         setNodes(nodes =>
           produce(nodes, draft => {
             const origin = nodes.get(id)
@@ -505,9 +504,11 @@ const WrapperNode = ({ node }: { node: IWhiteboardNode }) => {
         setTimeout(() => {
           isDraggingRef.current = false
         })
+        if (Math.abs(data.x - x) < 1 && Math.abs(data.y - y) < 1) return
         if (type === 'group') {
           handleGroupMoveEnd(data)
         } else {
+          console.log('drag stop')
           setNodes(nodes =>
             produce(nodes, draft => {
               const origin = nodes.get(id)
@@ -634,6 +635,7 @@ const inputClassName = css({
   transition: 'all 0.2s ease',
   letterSpacing: '-0.04px',
   color: 'inherit',
+  background: Colors.Background.Linear,
   outline: 'none',
   border: 'none',
   width: '60%',

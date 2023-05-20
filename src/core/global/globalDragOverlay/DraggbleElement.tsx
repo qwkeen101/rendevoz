@@ -8,14 +8,22 @@ const DraggableElement = forwardRef<
     children: ReactElement
     draggingDetails?: AvaliableGlobalDraggingElements
     draggable?: boolean
+    onDragStart?: VoidFunction
+    hoverElement?: ReactElement
   }
->(({ children, draggingDetails, draggable = true }, externalRef) => {
+>(({ children, draggingDetails, draggable = true, hoverElement, onDragStart }, externalRef) => {
   const isPressed = useRef(false)
   const childRef = useRef<HTMLElement | undefined>()
   const pointerHandler = useMemoizedFn((e: PointerEvent) => {
     if (e.type === 'pointerdown') {
       isPressed.current = true
       const child = childRef.current
+      onDragStart?.()
+      if (hoverElement) {
+        draggingDetails && (GlobalDragOverlayInstance.draggingDetails = draggingDetails)
+        GlobalDragOverlayInstance.addDragElements?.(hoverElement)
+        return
+      }
       if (child) {
         const cloned = child.cloneNode(true) as HTMLElement
         const bound = child.getBoundingClientRect()

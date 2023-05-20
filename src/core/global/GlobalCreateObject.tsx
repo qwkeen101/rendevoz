@@ -116,36 +116,47 @@ const GlobalCreateObject = () => {
       setInnerMeta(undefined)
     }
   }, [modalVisible])
+
+  const handleCancelCreate = () => {
+    toggleModalVisible(false)
+    promiseRef.current?.rej?.(null)
+    promiseRef.current = undefined
+    if (currentModeRef.current === 'add') {
+      innerMeta?.id && MetaStore.deleteMetaObject(innerMeta?.id, true, true)
+      pendingLinks?.forEach(i => {
+        if (i.id) {
+          MetaStore.deleteMetaLink(i.id, true, true)
+        }
+      })
+    }
+    setPendingLinks(undefined)
+  }
   return createPortal(
     <>
-      <Modal noStyle visible={modalVisible} onClose={toggleModalVisible}>
+      <Modal
+        noStyle
+        visible={modalVisible}
+        onClose={() => {
+          toggleModalVisible(false)
+          handleCancelCreate()
+        }}
+      >
         <ObjectForm
           shouldPreviewGraph={!!pendingLinks?.length}
           initialObject={innerMeta}
-          onBack={() => {
-            toggleModalVisible(false)
-            promiseRef.current?.rej?.(null)
-            promiseRef.current = undefined
-            if (currentModeRef.current === 'add') {
-              innerMeta?.id && MetaStore.deleteMetaObject(innerMeta?.id, true, true)
-              pendingLinks?.forEach(i => {
-                if (i.id) {
-                  MetaStore.deleteMetaLink(i.id, true, true)
-                }
-              })
-            }
-            setPendingLinks(undefined)
-          }}
+          onBack={handleCancelCreate}
           onSubmit={obj => {
             setPendingLinks(undefined)
             if (currentModeRef.current === 'add') {
               if (innerMeta?.id) {
                 MetaStore.updateMetaObject(obj).then(obj => {
+                  console.log('res1')
                   promiseRef.current?.res?.(obj)
                   promiseRef.current = undefined
                 })
               } else {
                 MetaStore.addMetaObject(obj).then(obj => {
+                  console.log('res2')
                   promiseRef.current?.res?.(obj)
                   promiseRef.current = undefined
                 })

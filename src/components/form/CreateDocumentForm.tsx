@@ -37,7 +37,7 @@ const CreateDocumentForm: FC<NewDocumentFormProps> = ({ onBack, onSubmit }) => {
     const metadata = await pdf.getMetadata()
     const { Title, Author } = metadata.info
     pdfDocument.current.metadata = {
-      title: Title,
+      title: Title || file.name,
       author: Author
     }
 

@@ -9,40 +9,57 @@ import { LayoutIdToTabMap } from '..'
 import classNames from 'classnames'
 import ClassName from '@/styles/classNames'
 import { getOS } from '@/App'
+import { atom } from 'jotai'
+import { useGlobalAtom } from '@/hooks'
 
+export const SidebarStateAtom = atom<{
+  collapsed: boolean
+  width: number
+  hovered: boolean
+  ref?: Rnd
+}>({
+  collapsed: false,
+  width: 240,
+  hovered: false
+})
+
+export const SidebarCollapseAtom = atom(false)
 export const Sidebar: FC = () => {
   const navRef = useRef<HTMLElement>(null)
   const rndRef = useRef<Rnd>(null)
-  const [collapsed, setCollapsed] = useState(false)
-  const [hovered, setHovered] = useState(false)
+  const [sidebarState, setSidebarState] = useGlobalAtom(SidebarStateAtom)
   const [widthTransition, setWidthTransition] = useState(false)
   const [isResizing, setIsResizing] = useState(false)
-  const [, setSidebarWidth] = useSidebarWidth()
+
+  const { hovered, collapsed } = sidebarState
   useEffect(() => {
     const os = getOS()
-    if(os === 'macos' && collapsed){
-      const macosPlaceholder = document.getElementById("macos-placeholder")
-      if(macosPlaceholder){
+    if (os === 'macos' && collapsed) {
+      const macosPlaceholder = document.getElementById('macos-placeholder')
+      if (macosPlaceholder) {
         macosPlaceholder.style.setProperty('display', 'block')
         return () => {
           macosPlaceholder.style.setProperty('display', 'none')
         }
       }
     }
-  },[collapsed])
+  }, [collapsed])
   return (
     <div
       tabIndex={-1}
       onMouseLeave={() => {
-        if (!isResizing) setHovered(false)
+        if (!isResizing) setSidebarState(s => ({ ...s, hovered: false }))
       }}
     >
       <Rnd
         id="global-sidebar"
-        data-hovered={hovered}
+        data-hovered={sidebarState.hovered}
         data-collapsed={collapsed}
         data-width-transition={widthTransition}
-        ref={rndRef}
+        ref={r => {
+          rndRef.current = r
+          sidebarState.ref = r
+        }}
         default={{ width: 240, height: '100vh', x: 0, y: 0 }}
         position={{ x: 0, y: 0 }}
         className={styles.rnd}
@@ -55,19 +72,21 @@ export const Sidebar: FC = () => {
         }}
         onResize={(e, dir, ele) => {
           if (ele.clientWidth <= 100) {
-            setHovered(false)
             setWidthTransition(true)
             delay(() => {
               setWidthTransition(false)
             }, 200)
             rndRef.current?.updateSize({ width: 20, height: '100vh' })
-            setSidebarWidth(10)
-            setCollapsed(true)
+            setSidebarState({
+              width: 10,
+              collapsed: true,
+              hovered: false
+            })
           }
         }}
         onResizeStop={(e, dir, ele) => {
           if (!collapsed) {
-            setSidebarWidth(ele.clientWidth)
+            setSidebarState(s => ({ ...s, width: ele.clientWidth }))
           }
           delay(() => {
             setIsResizing(false)
@@ -75,14 +94,14 @@ export const Sidebar: FC = () => {
           if (ele.clientWidth <= 200) {
             if (ele.clientWidth === 20) {
               rndRef.current?.updateSize({ width: 240, height: '100vh' })
-              setSidebarWidth(0)
+              setSidebarState(s => ({ ...s, width: 0 }))
             } else {
               setWidthTransition(true)
               delay(() => {
                 setWidthTransition(false)
               }, 200)
               if (!collapsed) {
-                setSidebarWidth(240)
+                setSidebarState(s => ({ ...s, width: 240 }))
               }
               rndRef.current?.updateSize({ width: 240, height: '100vh' })
             }
@@ -96,7 +115,7 @@ export const Sidebar: FC = () => {
             ) {
               return
             }
-            if (!isResizing) setHovered(true)
+            if (!isResizing) setSidebarState(s => ({ ...s, hovered: true }))
           }}
           className={classNames(styles.nav, collapsed && ClassName.Background.pseudoBlubBackground)}
           ref={navRef}
@@ -120,26 +139,6 @@ export const Sidebar: FC = () => {
         >
           <Navigation hovered={collapsed}></Navigation>
         </nav>
-        <div className={styles.hide}>
-          <Icon
-            name={collapsed ? 'park-right' : 'park-left'}
-            size={20}
-            containerStyle={{ left: -5 }}
-            fill="#8590ae"
-            cursor="pointer"
-            onClick={() => {
-              if (collapsed) {
-                setSidebarWidth(rndRef.current?.getSelfElement()?.clientWidth || 240)
-                setCollapsed(false)
-              } else {
-                setHovered(false)
-                setCollapsed(true)
-                setSidebarWidth(0)
-              }
-            }}
-            className={styles.toggleOpen}
-          ></Icon>
-        </div>
       </Rnd>
     </div>
   )

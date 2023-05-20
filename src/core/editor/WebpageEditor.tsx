@@ -11,8 +11,10 @@ const WebpageEditor = ({
   onHighlight,
   onHighlightDrag,
   onHighlightRemove,
+  onTranslate,
   onEditorInitialized,
   onChange,
+  onSearch,
   showToolbar,
   readonly = true
 }: // readonly = true
@@ -30,12 +32,14 @@ IWebpageEditor) => {
       onHighlight={onHighlight}
       onHighlightDrag={onHighlightDrag}
       onHighlightRemove={onHighlightRemove}
+      onTranslate={onTranslate}
       id={id}
       titleEditable={false}
       initialValue={initialValue}
       onEditorInitialized={onEditorInitialized}
       onChange={onChange}
       noteId={noteId}
+      onSearch={onSearch}
       title={title}
       onLinkClick={onLinkClick}
     />

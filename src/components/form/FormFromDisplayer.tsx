@@ -5,8 +5,10 @@ import { useTranslation } from 'react-i18next'
 import { IconNameItem } from '../layout/sidebar/SidebarCollection'
 import { MetaStore, ObjectStore } from '@/stores'
 import { getIcon } from '../layout/sidebar/items/SidebarObjectItem'
+import { Icon } from '../base'
+import ClassName from '@/styles/classNames'
 
-const FormFromDisplayer = ({ initialObject }: { initialObject: Partial<MetaObject> }) => {
+const FormFromDisplayer = ({ initialObject, onRemove }: { initialObject: Partial<MetaObject>; onRemove: VoidFunction }) => {
   const [fromState, setFromState] = useState<{
     name?: string
     icon?: string
@@ -14,71 +16,31 @@ const FormFromDisplayer = ({ initialObject }: { initialObject: Partial<MetaObjec
   const { t } = useTranslation()
   useEffect(() => {
     const setAction = async () => {
-      if (initialObject.type && initialObject.objectId) {
-        switch (initialObject.type) {
-          case 'image': {
-            const one = await ObjectStore(initialObject.type).getOneById(initialObject.objectId)
-            if (one && one.from) {
-              const { from } = one
-              switch (from.type) {
-                case 'pdf': {
-                  const { pdfId, pages } = from
-                  if (pdfId) {
-                    const pdfMeta = MetaStore.getMetaObjectByObjectId(pdfId)
-                    const renderPages = pages && (pages.length > 1 ? `${pages[0] + 1}-${pages.pop()! + 1}` : `${pages[0]}`)
-                    if (pdfMeta) {
-                      setFromState({
-                        name: `${pdfMeta.name}${pages ? ' ' + t('general.page') + ': ' + renderPages : ''}`,
-                        icon: pdfMeta.icon || getIcon('pdf')
-                      })
-                    }
-                  }
-                  break
-                }
-                case 'note': {
-                  const { noteId } = from
-                  const noteMeta = MetaStore.getMetaObjectByObjectId(noteId)
-                  if (noteMeta) {
-                    setFromState({
-                      name: noteMeta.name,
-                      icon: noteMeta.icon || getIcon('note')
-                    })
-                  }
-                  break
-                }
-              }
-            }
+      if (!initialObject.fromObject) {
+        setFromState(undefined)
+      }
+      if (initialObject.fromObject) {
+        const { fromObject: from } = initialObject
+        const fromMeta = await MetaStore.getMetaObjectById(from.metaId)
+        console.log(from.metaId, fromMeta)
+        if (!fromMeta) return
+        switch (from.type) {
+          case 'pdf': {
+            const { pages } = from
+            const renderPages = pages && (pages.length > 1 ? `${pages[0] + 1}-${pages.pop()! + 1}` : `${pages[0] + 1}`)
+            setFromState({
+              name: `${fromMeta.name}${pages ? ' ' + t('general.page') + ': ' + renderPages : ''}`,
+              icon: fromMeta.icon || getIcon('pdf')
+            })
             break
           }
-          case 'noteBlock':
-          case 'noteLabel': {
-            const one = await ObjectStore(initialObject.type).getOneById(initialObject.objectId)
-            if (one) {
-              const { noteId } = one
-              const noteMeta = MetaStore.getMetaObjectByObjectId(noteId)
-              if (noteMeta) {
-                setFromState({
-                  name: noteMeta.name,
-                  icon: noteMeta.icon || getIcon('note')
-                })
-              }
-            }
+          case 'webpage':
+          case 'note': {
+            setFromState({
+              name: fromMeta.name,
+              icon: fromMeta.icon || getIcon(from.type)
+            })
             break
-          }
-          case 'pdfLabel': {
-            const one = await ObjectStore(initialObject.type).getOneById(initialObject.objectId)
-            if (one) {
-              const { documentId } = one
-              if (documentId) {
-                const pdfMeta = MetaStore.getMetaObjectByObjectId(documentId)
-                if (pdfMeta) {
-                  setFromState({
-                    name: `${pdfMeta.name}${one.page !== undefined ? ' ' + t('general.page') + ': ' + (one.page + 1) : ''}`,
-                    icon: pdfMeta.icon || getIcon('pdf')
-                  })
-                }
-              }
-            }
           }
         }
       }
@@ -89,6 +51,17 @@ const FormFromDisplayer = ({ initialObject }: { initialObject: Partial<MetaObjec
   return (
     <div className={groupClassName}>
       <div className={hoverLabelClassName}>{t('general.from')}</div>
+      <Icon
+        name="park-close"
+        className={ClassName.circleButton()}
+        onClick={onRemove}
+        containerStyle={{
+          position: 'absolute',
+          top: -10,
+          right: 10,
+          fontSize: 10
+        }}
+      />
       <div>
         <IconNameItem icon={fromState?.icon} name={fromState?.name} />
       </div>

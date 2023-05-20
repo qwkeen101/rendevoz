@@ -17,6 +17,7 @@ const ImageToolbar = () => {
   if (!canvasManager) return null
   return (
     <Toolbar>
+      <Toolbar.Item iconName="park-more" onClick={() => canvasManager.nodeManager.addText({ x: 300, y: 300 })}></Toolbar.Item>
       <Toolbar.Item
         isActive={mode === 'move'}
         iconName="park-move"

@@ -57,6 +57,11 @@ export const inline: Element[] = [
     icon: 'park-emotion-happy',
     name: InlineElements.Emoji,
     tooltip: 'Emoji'
+  },
+  {
+    icon: 'park-formula',
+    name: InlineElements.Math,
+    tooltip: 'Math'
   }
   // {
   //   icon: 'park-link',

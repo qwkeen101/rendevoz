@@ -33,7 +33,7 @@ export const editorTitleWrapperClassName = css({
 export const EditorTitleClassName = css({
   cursor: 'text',
   wordBreak: 'break-word',
-  padding: '0px 4px',
+  padding: '0px',
   whiteSpace: 'pre-wrap',
   fontSize: '2rem',
   fontWeight: 700,

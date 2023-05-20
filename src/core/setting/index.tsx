@@ -32,6 +32,18 @@ type IGeneralSetting = {
     language: AvaliableLanguages
     openNewTab: 'always open new tab' | 'open existing tab'
     darkMode: boolean
+    defaultSearchEngine:
+      | 'baidu'
+      | 'google'
+      | 'bing'
+      | 'zhihu'
+      | 'google scholar'
+      | 'wikipedia'
+      | 'wiki summary'
+      | 'vocabulary'
+      | 'bing dictionary'
+      | 'youdao dictionary'
+      | 'semantic scholar'
   }
 }
 export type INotificationSetting = {
@@ -50,6 +62,7 @@ type ShortCut = {
   shiftKey: boolean
   altKey: boolean
   key?: string
+  metaKey: boolean
 }
 export type IAppearanceSetting = {
   background: {
@@ -63,6 +76,8 @@ export type IShortCutSetting = {
     openObjectPanel: ShortCut | null
     openScreenShot: ShortCut | null
     quickCreateObject: ShortCut | null
+    openTranslatePanel: ShortCut | null
+    openSearchPanel: ShortCut | null
   }>
 }
 export type IObjectsAndLinkSetting = {
@@ -73,6 +88,7 @@ export type IObjectsAndLinkSetting = {
     enableDropOnEditorLink: boolean
     enableDragFromPDFLink: boolean
     enableDragFromEditorLink: boolean
+    enableDropAutoGenerateObject: boolean
   }
 }
 export type IComponentSetting = {
@@ -100,7 +116,8 @@ const defaultSetting: Setting = {
   general: {
     language: 'en-US',
     openNewTab: 'open existing tab',
-    darkMode: false
+    darkMode: false,
+    defaultSearchEngine: 'google'
   },
   objectAndLink: {
     enableAll: true,
@@ -108,7 +125,8 @@ const defaultSetting: Setting = {
     enableDropOnPDFLink: true,
     enableDropOnWhiteboardLink: true,
     enableDragFromEditorLink: true,
-    enableDragFromPDFLink: true
+    enableDragFromPDFLink: true,
+    enableDropAutoGenerateObject: true
   },
   whiteboard: {
     enableMinimap: true,

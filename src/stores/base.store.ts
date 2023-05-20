@@ -37,7 +37,14 @@ type StoreDispatchEvent<T> = {
       onSuccess?: (silent?: boolean) => void
     }
 )
-const isHandlingQueue = false
+function isRevokedProxy(value) {
+  try {
+    new Proxy(value, value)
+    return false
+  } catch (err) {
+    return Object(value) === value
+  }
+}
 const handleQueue = () => {
   console.log('handle queue')
 
@@ -63,10 +70,10 @@ const handleQueue = () => {
             onFail?.()
             return
           }
-          const origin = atomValue.get(data.id)
+          const origin = draft.get(data.id)
           const newObj = Object.assign({}, origin, data)
-
-          if (_.isEqual(origin, newObj)) break
+          console.log(data, newObj)
+          // if (_.isEqual(origin, newObj)) break
           draft.set(data.id, newObj)
           dbActionArr.push({
             ...i,
@@ -104,19 +111,21 @@ const handleQueue = () => {
     // const putActionData = v.filter(i => i.type === 'add' || i.type === 'update').map(i => i.data)
     // const removeActionData = v.filter(i => i.type === 'remove').map(i => i.data.id)
     const forceRemoveActionData = v.filter(i => i.type === 'forceRemove').map(i => i.data.id)
-    const putActionData = v
-      .filter(i => i.type === 'add' || i.type === 'update' || i.type === 'remove')
-      .map(i => {
-        const newData: Record<string, unknown> = {}
-        Object.entries(i.data).map(([k, v]) => {
-          if (v instanceof Map) {
-            newData[k] = Array.from(v.values())
-          } else {
-            newData[k] = v
-          }
-        })
-        return newData
+    console.log(v)
+    const putActionData = Array.from(
+      new Map(v.filter(i => i.type === 'add' || i.type === 'update' || i.type === 'remove').map(i => [i.data.id, i])).values()
+    ).map(i => {
+      const newData: Record<string, unknown> = {}
+      Object.entries(i.data).map(([k, v]) => {
+        if (v instanceof Map) {
+          newData[k] = Array.from(v.values())
+        } else {
+          newData[k] = v
+        }
       })
+      return newData
+    })
+
     putActionData.length > 0 && k.bulkPut(putActionData)
     forceRemoveActionData.length > 0 && k.bulkDelete(forceRemoveActionData)
     DB_ACTION_MAP.delete(k)
@@ -218,17 +227,6 @@ export function initializeLocalStore<T>(atom: PrimitiveAtom<Map<number, T>>, dat
       (onSuccess, onFail) =>
       (obj, silent = false, overPremium = false) => {
         return new Promise(res => {
-          if (!overPremium) {
-            const user = getUser()
-            if (!user || !user.premiumEndDate || user.premiumEndDate < Date.now()) {
-              toast.error('You can only add items after upgrading to premium!')
-              return
-            }
-            if (user.disabled) {
-              toast.error('Your account has been disabled! Please contact us if you want to recover!')
-              return
-            }
-          }
           const initedObj = initBaseObject(obj)
           dispatch<T>({
             type: 'add',

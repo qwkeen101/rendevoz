@@ -1,7 +1,9 @@
 import { CSSProperties } from 'react'
 
 export interface TextItemChar {
-  transform: any
+  transform: number[]
+  unicode: string
+  char: string
   str: string
 }
 export interface TextItem {

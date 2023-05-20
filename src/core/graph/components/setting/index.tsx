@@ -3,17 +3,18 @@ import Zindexes from '@/consts/zindex'
 import ClassName from '@/styles/classNames'
 import { useState } from 'react'
 import GraphFilter from '../GraphFilter'
+import GraphPathFilter from '../GraphPathFilter'
 
 const GraphSettingPanel = () => {
   const [panelState, setPanelState] = useState<{
     visible?: boolean
-    currentPanel?: 'info' | 'filter'
+    currentPanel?: 'info' | 'filter' | 'path filter'
   }>({
     currentPanel: 'info',
     visible: false
   })
 
-  const togglePanel = (panel: typeof panelState['currentPanel']) => {
+  const togglePanel = (panel: (typeof panelState)['currentPanel']) => {
     setPanelState({
       currentPanel: panel,
       visible: !panelState.visible
@@ -23,12 +24,14 @@ const GraphSettingPanel = () => {
     switch (panelState.currentPanel) {
       case 'filter':
         return <GraphFilter />
+      case 'path filter':
+        return <GraphPathFilter />
     }
   }
   return (
     <AnimatePopover
       containerStyle={{
-        zIndex: String(Zindexes.Tooltip)
+        zIndex: String(Zindexes.GraphPopup)
       }}
       visible={!!panelState.visible}
       padding={10}
@@ -49,6 +52,9 @@ const GraphSettingPanel = () => {
       <Content flex column gap={8} style={{ fontSize: 16, padding: '10px 6px', borderRadius: 8, overflow: 'hidden' }}>
         <Tooltip content="Graph Filter">
           <Icon name="park-filter" className={ClassName.circleButton()} onClick={() => togglePanel('filter')} />
+        </Tooltip>
+        <Tooltip content="Graph Path Finder">
+          <Icon name="park-connection-point-two" className={ClassName.circleButton()} onClick={() => togglePanel('path filter')} />
         </Tooltip>
       </Content>
     </AnimatePopover>

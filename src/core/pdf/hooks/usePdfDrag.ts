@@ -39,6 +39,30 @@ const usePdfDrag = (viewbox: HTMLElement | null | undefined, pdfId: number) => {
         }
         const globalDraggingEle = GlobalDragOverlayInstance?.draggingDetails
         GlobalDragOverlayInstance.draggingDetails = undefined
+        if (e instanceof DragEvent) {
+          const label: Partial<ILabel> = {
+            id: Id.getId(),
+            page,
+            documentId: pdfId,
+            rect: [ratioDistance.top, ratioDistance.left]
+          }
+          globalEmitter
+            .emitWithCallback('global', {
+              type: 'globalDropNeedFurtherProcess',
+              data: {
+                dropOn: {
+                  dropOn: 'pdf',
+                  pdfId: pdfId
+                },
+                e
+              }
+            })
+            .then((obj: MetaObject) => {
+              label.type = 'object'
+              Object.assign(label, { metaObjectId: obj.id } as IObjectLabel)
+              ObjectStore('pdfLabel').addOne(label)
+            })
+        }
         if (globalDraggingEle) {
           const label: Partial<ILabel> = {
             id: Id.getId(),
@@ -78,11 +102,15 @@ const usePdfDrag = (viewbox: HTMLElement | null | undefined, pdfId: number) => {
       }
     }
   })
+  const dropHandler = e => {
+    e.preventDefault()
+  }
   useEffect(() => {
     if (isGlobalDragging) {
       viewbox?.addEventListener('mouseenter', mouseEnterHandler)
       viewbox?.addEventListener('mouseleave', mouseLeaveHandler)
       viewbox?.addEventListener('mousemove', mouseMoveHandler)
+
       return () => {
         viewbox?.removeEventListener('mouseenter', mouseEnterHandler)
         viewbox?.removeEventListener('mouseleave', mouseLeaveHandler)
@@ -93,15 +121,20 @@ const usePdfDrag = (viewbox: HTMLElement | null | undefined, pdfId: number) => {
     }
   }, [isGlobalDragging])
   useEffect(() => {
+    viewbox?.addEventListener('drop', dropHandler, true)
+    viewbox?.addEventListener('dragover', dropHandler, true)
     const globalHandler = new GlobalEventHandler()
     globalHandler.on('globalDragPointerUp', ({ event }) => {
+      console.log(event)
       mouseUpHandler(event)
     })
     globalEmitter.addListener('global', globalHandler)
     return () => {
+      viewbox?.removeEventListener('drop', dropHandler, true)
+      viewbox?.removeEventListener('dragover', dropHandler, true)
       globalEmitter.removeListener('global', globalHandler)
     }
-  }, [])
+  })
   return {
     isDraggingInside
   }

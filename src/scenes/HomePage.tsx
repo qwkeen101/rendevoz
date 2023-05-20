@@ -14,7 +14,7 @@ import { motion } from 'framer-motion'
 import Actions from '@/core/Actions'
 import { IconNameItem } from '@/components/layout/sidebar/SidebarCollection'
 import { getIcon } from '@/components/layout/sidebar/items/SidebarObjectItem'
-import { DraggableElement, ObjectActionPopover, useCreateObject } from '@/core'
+import { DraggableElement, ObjectActionPopover, TypeToTypeName, useCreateObject } from '@/core'
 import { Zindexes } from '@/consts'
 import Colors from '@/consts/colors'
 import { Provider, atom, createStore, useAtom, useAtomValue } from 'jotai'
@@ -70,7 +70,7 @@ export const HomePage: FC = () => {
   )
 }
 
-const VisibleTypes: MetaObject['type'][] = ['note', 'pdf', 'whiteboard', 'webpage']
+const VisibleTypes: MetaObject['type'][] = ['note', 'pdf', 'whiteboard', 'webpage', 'localFile']
 const ColWidthState = { nameWidth: '100%', viewWidth: '200px', createWidth: '200px' }
 const Recent = () => {
   const all = useGlobalAtomValue(undeletedMetaObjectsAtom)
@@ -86,6 +86,7 @@ const Recent = () => {
       case 'note':
       case 'webpage':
       case 'pdf':
+      case 'localFile':
       case 'whiteboard':
         return all.filter(i => i.type === type)
     }
@@ -141,7 +142,7 @@ const Recent = () => {
               },
               ...VisibleTypes.map(type => ({
                 value: type,
-                children: t(`general.${type}`),
+                children: t(`general.${TypeToTypeName[type]}`),
                 icon: getIcon(type)
               }))
             ]}
@@ -256,7 +257,11 @@ const Recent = () => {
         <tbody>
           {items?.slice(0, 50)?.map(i => (
             <tr
-              onClick={() => Actions.navigateToTargetObject(i.id)}
+              onClick={e => {
+                if (!e.defaultPrevented) {
+                  Actions.navigateToTargetObject(i.id)
+                }
+              }}
               key={i.id}
               className={css([
                 {

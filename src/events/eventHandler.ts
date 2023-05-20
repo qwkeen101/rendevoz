@@ -4,7 +4,7 @@ import { EditorEventMap, GlobalEventMap, PdfEventMap } from '~/typings'
 class EventHandler<T> {
   private readonly handlerMap = new Map()
 
-  on<K extends keyof T>(type: K, handler: (data: T[K], res?: (value: any) => void, rej?: (value: any) => void) => void) {
+  on<K extends keyof T>(type: K, handler: (data: T[K], res?: typeof Promise.resolve, rej?: typeof Promise.reject) => void) {
     this.handlerMap.set(type, handler)
   }
   handle(event, res?: (value: any) => void, rej?: (value: any) => void) {

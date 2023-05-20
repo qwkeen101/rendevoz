@@ -51,7 +51,12 @@ const SearchResultItem = ({ group, onNavi }: { group: SearchGroup; onNavi: VoidF
       flex
       column
       gap={5}
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      //@ts-ignore
       className={css({
+        '*': {
+          textTransform: 'none !important'
+        },
         ':not(:last-child)': {
           borderBottom: `1px solid ${Colors.Background.HighContrast}`
         },

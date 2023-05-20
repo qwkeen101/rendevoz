@@ -29,6 +29,7 @@ export type IObjectLabel = {
 }
 export interface IHighlightLabel {
   type: 'highlight'
+  specHighlightType?: 'underline'
   selectedText?: string
   rects?: TextSelectRect[]
 }

@@ -16,6 +16,15 @@ export interface IPdfDocument extends IBase {
   fileUrl?: string
   color?: string
   icon?: string
+  pageAnnotations?: Record<
+    number,
+    {
+      // fetch from remote
+      dataUrl?: string
+      // fetch from blob db
+      dataId?: number
+    }
+  >
 }
 export type CustomLabel = IHighlightLabel | IThoughtLabel
 export interface PdfNoteData {

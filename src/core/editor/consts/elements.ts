@@ -13,7 +13,8 @@ export const InlineElements = {
   Emoji: 'emoji',
   Link: 'link',
   Sup: 'sup',
-  InlineMetaObject: 'inline-metaObject'
+  InlineMetaObject: 'inline-metaObject',
+  Math: 'math'
 }
 export const BlockElements = {
   ToDo: 'to-do',

@@ -39,3 +39,8 @@ export const hasSelectedBlocks = (editor: CustomEditor) => {
   const selectedBlocksMap = SELECTED_BLOCKS_MAP.get(editor)
   return selectedBlocksMap && selectedBlocksMap.size > 0
 }
+
+export interface ElementFunction {
+  openMathForm?: VoidFunction
+}
+export const ID_TO_ELEMENT_FUNCTION_MAP = new WeakMap<CustomEditor, Map<number, ElementFunction>>()

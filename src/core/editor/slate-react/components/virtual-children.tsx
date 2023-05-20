@@ -35,13 +35,14 @@ const VirtualChildren = (props: {
   const visibleChildren = useMemo(() => {
     return children.filter(i => !i.hide)
   }, [children])
-
+  const titleHeight = editor.titleEle?.getBoundingClientRect().height || 0
   const virtualizer = useVirtualizer({
     count: visibleChildren.length,
     estimateSize: idx => 30,
     getScrollElement: () => scrollElement?.current || document.body,
-    overscan: readOnly ? editor.children.length : 10,
+    overscan: readOnly ? editor.children.length : 20,
     paddingEnd: 100,
+    paddingStart: titleHeight,
     measureElement: (ele, entry, instance) => {
       const getSize = () => ele.getBoundingClientRect().height
       const index = instance.indexFromElement(ele)
@@ -65,7 +66,7 @@ const VirtualChildren = (props: {
 
   if (parentElement?.current) {
     const parentEle = parentElement.current
-    parentEle.style.minHeight = `${totalSize}px`
+    parentEle.style.height = `${totalSize}px`
   }
 
   const scrollTo = useMemoizedFn(idx => {
@@ -87,7 +88,7 @@ const VirtualChildren = (props: {
 
   return (
     <>
-      <div role="virtual-placeholder" contentEditable={false} style={{ height: first?.start }}></div>
+      <div role="virtual-placeholder" contentEditable={false} style={{ height: first?.start - titleHeight }}></div>
       {virtualItems.map(row => {
         const { index } = row
         const element = visibleChildren[index]

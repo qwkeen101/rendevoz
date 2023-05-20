@@ -3,10 +3,10 @@ import { motion } from 'framer-motion'
 import { TypeToNodeRadius } from './Node'
 import { useMemo } from 'react'
 import getEmoji from '@/utils/emoji'
+import Colors from '@/consts/colors'
 
 const EmojiNode = ({ node, label }: { node: GraphNode & { icon: string }; label?: string }) => {
   const emoji = useMemo(() => getEmoji(node.icon), [node.icon])
-  const realLabel = label || node.label
   const radius = TypeToNodeRadius[node.type || 'normal']
   const d = radius * 2
 
@@ -37,20 +37,16 @@ const EmojiNode = ({ node, label }: { node: GraphNode & { icon: string }; label?
           )}
         </div>
       </motion.foreignObject>
-
-      <motion.text
-        initial={{ x: radius, y: d }}
-        animate={{ y: d * (node.scale ? (node.scale === 1 ? 1 : node.scale * 0.9) : 1) }}
+      <text
+        transform={`translate(${radius}, ${d})`}
         textAnchor="middle"
         fontWeight={600}
-        fontSize="calc(var(--zoom-level) * 12px)"
+        fontSize="calc(var(--zoom-level) * 16px)"
+        fill={Colors.Font.Primary}
+        dy="1.6em"
       >
-        {realLabel?.match(/.{1,40}/g)?.map(i => (
-          <tspan x={0} dy="1.2em">
-            {i}
-          </tspan>
-        ))}
-      </motion.text>
+        {label || node.label}
+      </text>
     </>
   )
 }

@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from 'react'
 
 const PanHelper = ({ containerEle, enablePan }: { containerEle?: HTMLElement; enablePan?: boolean }) => {
   const initialPositionRef = useRef({ top: 0, left: 0, x: 0, y: 0 })
+
   const handleMouseMove = useMemoizedFn((e: MouseEvent) => {
     if (!containerEle) {
       return
@@ -35,6 +36,12 @@ const PanHelper = ({ containerEle, enablePan }: { containerEle?: HTMLElement; en
     document.removeEventListener('pointermove', handleMouseMove)
     document.removeEventListener('pointerup', handleMouseUp)
   })
+  const handleWheel = useMemoizedFn((e: WheelEvent) => {
+    const { deltaY } = e
+    if (containerEle) {
+      containerEle.scrollTop += deltaY
+    }
+  })
   useEffect(() => {
     if (!containerEle) {
       return
@@ -42,10 +49,12 @@ const PanHelper = ({ containerEle, enablePan }: { containerEle?: HTMLElement; en
 
     if (enablePan) {
       containerEle.addEventListener('pointerdown', handleMouseDown)
+      containerEle.addEventListener('wheel', handleWheel)
     }
 
     return () => {
       containerEle.removeEventListener('pointerdown', handleMouseDown)
+      containerEle.removeEventListener('wheel', handleWheel)
     }
   }, [enablePan])
 

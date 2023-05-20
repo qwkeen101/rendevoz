@@ -1,10 +1,12 @@
-import { Controller, Get, Inject } from '@nestjs/common'
-import { WebContents, BrowserWindow } from 'electron'
+import { Controller, Inject } from '@nestjs/common'
+import { WebContents, BrowserWindow, webContents, shell } from 'electron'
 import { AppService } from './app.service'
 import { IpcInvoke } from './transport'
 import fs from 'fs'
 import path from 'path'
 import { autoUpdater } from 'electron-updater'
+// import { franc } from 'franc'
+// import { iso6393To1 } from './iso-639-to-iso-631'
 
 export const DEFAULT_USER_DATA_PATH =
   process.env.APPDATA || (process.platform == 'darwin' ? process.env.HOME + '/Library/Preferences' : process.env.HOME + '/.local/share')
@@ -15,6 +17,10 @@ export class AppController {
   @IpcInvoke('reload')
   public reload() {
     this.webContents.reload()
+  }
+  @IpcInvoke('ping')
+  public a(){
+    console.log('ping')
   }
   @IpcInvoke('maximizeWindow')
   public async maximizeWindow() {
@@ -32,41 +38,6 @@ export class AppController {
   public getSourceId() {
     return BrowserWindow.getFocusedWindow().getMediaSourceId()
   }
-  @IpcInvoke('msg')
-  public async handleSendMsg(msg: string): Promise<string> {
-    this.webContents.send('reply-msg', 'this is msg from webContents.send')
-    return `The main process received your message: ${msg} at time: ${this.appService.getTime()}`
-  }
-  @IpcInvoke('readPdf')
-  public async pdfFile(fileUrl: string) {
-    return new Promise((resolve, reject) => {
-      fs.readFile(fileUrl, (err, data) => {
-        if (err) {
-          reject(err)
-        } else {
-          resolve(data)
-        }
-      })
-    })
-  }
-  @IpcInvoke('copyPdf')
-  public async copyPdfFile(originPath: string, originName: string) {
-    this.checkIfRendevozGenerated()
-    const filePath = path.join(DEFAULT_USER_DATA_PATH, 'rendevoz', 'files')
-    if (!fs.existsSync(filePath)) {
-      fs.mkdirSync(filePath, {})
-    }
-    const newPath = path.join(filePath, originName)
-    if (!fs.existsSync(newPath)) {
-      return new Promise(resolve => {
-        fs.copyFile(originPath, newPath, () => {
-          resolve(newPath)
-        })
-      })
-    } else {
-      return newPath
-    }
-  }
 
   @IpcInvoke('saveImage')
   public async saveImage(imgName: string, imgData: string) {
@@ -76,8 +47,8 @@ export class AppController {
       fs.mkdirSync(imgPath, {})
     }
     const newPath = path.join(imgPath, `${imgName}.png`)
-    const absolutePath = path.resolve(newPath)
-    const protocolPath = 'rendefile://' + absolutePath
+
+    const protocolPath = 'rendefile://' + '/imgs/' + `${imgName}.png`
     const data = imgData.split(',').pop()
     const buf = Buffer.from(data, 'base64')
     if (!fs.existsSync(newPath)) {
@@ -95,12 +66,9 @@ export class AppController {
   public async saveFile(filePath: string, fileName: string) {
     this.checkIfRendevozGenerated()
     const rendevozFilePath = path.join(DEFAULT_USER_DATA_PATH, 'rendevoz', 'files')
-    if (!fs.existsSync(filePath)) {
-      fs.mkdirSync(filePath, {})
-    }
     const newPath = path.join(rendevozFilePath, fileName)
-    const absolutePath = path.resolve(newPath)
-    const protocolPath = 'rendefile://' + absolutePath
+
+    const protocolPath = 'rendefile://' + '/files/' + fileName
     if (!fs.existsSync(newPath)) {
       return new Promise(resolve => {
         fs.copyFile(filePath, newPath, () => {
@@ -117,6 +85,30 @@ export class AppController {
     const result = await autoUpdater.checkForUpdates()
     return result.updateInfo
   }
+  @IpcInvoke('saveBuffer')
+  public async saveBuffer(buffer: Buffer | ArrayBuffer, fileName: string, filePath?: string) {
+    this.checkIfRendevozGenerated()
+    const rendevozFilePath = path.join(DEFAULT_USER_DATA_PATH, 'rendevoz', 'files')
+    const newPath = filePath?.replace('rendefile://', '').replace('file://', '') || path.join(rendevozFilePath, fileName)
+    const absolutePath = path.resolve(newPath)
+    // const protocolPath = 'rendefile://' + absolutePath
+    const protocolPath = 'rendefile://' + '/files/' + fileName
+    if (!fs.existsSync(newPath)) {
+      return new Promise(resolve => {
+        if (buffer instanceof ArrayBuffer) {
+          fs.writeFile(newPath, Buffer.from(buffer), () => {
+            resolve(protocolPath)
+          })
+        } else {
+          fs.writeFile(newPath, buffer, () => {
+            resolve(protocolPath)
+          })
+        }
+      })
+    } else {
+      return protocolPath
+    }
+  }
   @IpcInvoke('updateAndInstall')
   public async updateAndInstall() {
     try {
@@ -126,17 +118,30 @@ export class AppController {
       autoUpdater.quitAndInstall()
     }
   }
+
   private checkIfRendevozGenerated = () => {
     const rendevozPath = path.join(DEFAULT_USER_DATA_PATH, 'rendevoz')
     if (!fs.existsSync(rendevozPath)) {
       fs.mkdirSync(rendevozPath, {})
     }
   }
-  private getRendevozFilePath = () => {
-    const rendevozPath = path.join(DEFAULT_USER_DATA_PATH, 'rendevoz')
-    if (!fs.existsSync(rendevozPath)) {
-      fs.mkdirSync(rendevozPath, {})
-    }
-    return rendevozPath
+  @IpcInvoke('openLocalFile')
+  public async openLocalFile(filePath: string) {
+    return shell.openPath(filePath)
   }
+
+  @IpcInvoke('captureWebpage')
+  public async captureWebpage(webviewId: number) {
+    const image = await webContents
+      .getAllWebContents()
+      .find(i => i.id === webviewId)
+      .capturePage()
+    return image.toDataURL()
+  }
+
+  // @IpcInvoke('detectLang')
+  // public async detectLang(text: string) {
+  //   const lang = franc(text)
+  //   return iso6393To1[lang]
+  // }
 }

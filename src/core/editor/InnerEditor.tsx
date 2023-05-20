@@ -32,6 +32,9 @@ import { GlobalEventHandler } from '@/events/globalEvent'
 import InlineMetaElement from './elements/meta/InlineMeta'
 import useEditorSlashMenu from './hooks/useEditorSlashMenu'
 import getCursorPosition from './utils/getCursorPosition'
+import HoverObjectDetails from '../database/HoverObjectDetails'
+import { DraggableElement, DraggingElement } from '../global'
+import MathElement from './elements/Math'
 
 const EditableEditorClassName = css({
   p: {
@@ -171,7 +174,6 @@ const InnerEditor: FC<InnerEditorProps> = memo(
     )
     const handleChange = useMemoizedFn((value: Descendant[]) => {
       let shouldChange = false
-      const timeNow = Date.now()
       if (!(editor.operations.length === 1 && editor.operations[0].type === 'set_selection')) {
         const firstLayerIdSet = new Set<number>()
         const firstLayerMap = ID_TO_FIRST_LAYER_MAP.get(editor) || new Map<number, Path>()
@@ -201,9 +203,8 @@ const InnerEditor: FC<InnerEditorProps> = memo(
       if (shouldChange) {
         onChange?.(value)
       }
-      console.log(Date.now() - timeNow)
     })
-    const inlineKeys = [...Object.values(InlineElements), 'tableCell', 'tableRow', 'inline-metaObject']
+    const inlineKeys = [...Object.values(InlineElements), 'tableCell', 'tableRow', 'inline-metaObject', 'math']
     const renderElement = useCallback(
       ({ children, element, attributes }: RenderElementProps) => {
         if (element.hide === true) return null
@@ -308,9 +309,9 @@ const InnerEditor: FC<InnerEditorProps> = memo(
           }
         }
       }
-      scrollElement?.addEventListener('keydown', keydownHandler, true)
+      document?.addEventListener('keydown', keydownHandler, true)
       return () => {
-        scrollElement?.removeEventListener('keydown', keydownHandler, true)
+        document?.removeEventListener('keydown', keydownHandler, true)
       }
     }, [scrollElement])
     useEffect(() => {
@@ -325,12 +326,13 @@ const InnerEditor: FC<InnerEditorProps> = memo(
           e.preventDefault()
           const path = selection.anchor.path
           let distance = 1
-          if (
-            Path.hasPrevious(path) &&
-            ['emoji'].includes(Editor.node(editor, Path.previous(path))[0].type) &&
-            Editor.isEdge(editor, selection.anchor, selection.anchor.path)
-          )
-            distance = 2
+          if (Path.hasPrevious(path) && Editor.isEdge(editor, selection.anchor, selection.anchor.path)) {
+            const prevNode = Editor.node(editor, Path.previous(path))[0]
+            if (['emoji'].includes(prevNode.type) || Editor.isVoid(editor, prevNode)) {
+              distance = 2
+            }
+          }
+
           Transforms.move(editor, { unit: 'offset', reverse: true, distance })
           return
         }
@@ -338,12 +340,12 @@ const InnerEditor: FC<InnerEditorProps> = memo(
           e.preventDefault()
           const path = selection.anchor.path
           let distance = 1
-          if (
-            Editor.hasPath(editor, Path.next(path)) &&
-            ['emoji'].includes(Editor.node(editor, Path.next(path))[0].type) &&
-            Editor.isEdge(editor, selection.anchor, selection.anchor.path)
-          )
-            distance = 2
+          if (Editor.hasPath(editor, Path.next(path)) && Editor.isEdge(editor, selection.anchor, selection.anchor.path)) {
+            const nextNode = Editor.node(editor, Path.next(path))[0]
+            if (['emoji'].includes(nextNode.type) || Editor.isVoid(editor, nextNode)) {
+              distance = 2
+            }
+          }
           Transforms.move(editor, { unit: 'offset', distance })
           return
         }
@@ -591,6 +593,8 @@ export const Element = (props: RenderElementProps & { onLinkClick: InnerEditorPr
       return <ul>{children}</ul>
     case 'order-list-item':
       return <OrderListItem {...props} />
+    case 'math':
+      return <MathElement {...props} />
     case 'link':
       return (
         <span {...attributes} style={{ display: 'inline' }}>
@@ -658,10 +662,10 @@ export const Element = (props: RenderElementProps & { onLinkClick: InnerEditorPr
 
 const TextHighlightClassName = css({
   backgroundImage: `linear-gradient(
-     0deg, 
-     rgb(247, 219, 106) 0%, 
+     0deg,
+     rgb(247, 219, 106) 0%,
      rgb(247, 219, 106) 2px,
-     rgba(247, 219, 106, 0.3) 2px, 
+     rgba(247, 219, 106, 0.3) 2px,
      rgba(247, 219, 106, 0.3) 100%
    )`,
   backgroundRepeat: 'no-repeat !important',
@@ -672,49 +676,7 @@ const TextHighlightClassName = css({
 })
 export const Leaf = (props: RenderLeafProps) => {
   const editor = useSlateStatic()
-  const spanRef = useRef<HTMLSpanElement>(null)
   let { leaf, attributes, children } = props
-  const mergedRef = useMergedRef(attributes.ref || {}, spanRef)
-  useEffect(() => {
-    const { highlight } = leaf
-    if (highlight) {
-      const span = spanRef.current
-      const pointerDown = {
-        current: false
-      }
-      const handler = new GlobalEventHandler()
-      handler.on('globalDragPointerUp', () => {
-        pointerDown.current = false
-      })
-      const pointerHandler = (e: PointerEvent) => {
-        e.preventDefault()
-        if (e.type === 'pointerdown') {
-          console.log(e)
-          pointerDown.current = true
-        }
-        if (e.type === 'pointerup') {
-          pointerDown.current = false
-        }
-        if (e.type === 'pointermove') {
-          if (pointerDown.current) {
-            console.log(e)
-            pointerDown.current = false
-            editor.onHighlightDrag?.(highlight, editor)
-          }
-        }
-      }
-      if (span) {
-        span.addEventListener('pointerdown', pointerHandler)
-        span.addEventListener('pointermove', pointerHandler)
-        span.addEventListener('pointerup', pointerHandler)
-      }
-      return () => {
-        span?.removeEventListener('pointerdown', pointerHandler)
-        span?.removeEventListener('pointermove', pointerHandler)
-        span?.removeEventListener('pointerup', pointerHandler)
-      }
-    }
-  }, [leaf.highlight])
 
   if (leaf.sup) {
     children = <sup>{children}</sup>
@@ -734,11 +696,37 @@ export const Leaf = (props: RenderLeafProps) => {
   if (leaf.underline) {
     children = <u>{children}</u>
   }
-
+  if (leaf.highlight) {
+    return (
+      <HoverObjectDetails ref={attributes.ref || {}} objectId={leaf.highlight}>
+        <DraggableElement
+          onDragStart={() => editor.onHighlightDrag?.(leaf.highlight!, editor)}
+          hoverElement={<DraggingElement text="Drop to add note highlight" />}
+        >
+          <span
+            {...attributes}
+            onClick={() => {
+              if (leaf.highlight) {
+                editor.onHighlightClick?.(leaf.highlight as number)
+              }
+            }}
+            data-highlight={leaf.highlight ? String(leaf.highlight) : undefined}
+            className={classNames(styles.leaf, leaf.highlight && TextHighlightClassName)}
+            style={{
+              fontSize: leaf.fontSize || '1em',
+              '--block-font-color': leaf.fontColor,
+              background: leaf.backgroundColor
+            }}
+          >
+            {children}
+          </span>
+        </DraggableElement>
+      </HoverObjectDetails>
+    )
+  }
   return (
     <span
       {...attributes}
-      ref={mergedRef}
       onClick={() => {
         if (leaf.highlight) {
           editor.onHighlightClick?.(leaf.highlight as number)

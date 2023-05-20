@@ -13,6 +13,7 @@ import { GlobalGraphInstance } from '..'
 import useGraph from '../hooks/useGraph'
 import { GraphPinNodesIdsAtom, GraphVisibleNodesIdsAtom } from '../hooks/useGraphFilter'
 import useGraphNodes, { GraphNodesAtom } from '../hooks/useGraphNodes'
+import { GraphPathFilterAtom } from './GraphPathFilter'
 
 const graphFilterTitleClassName = css({
   cursor: 'grab',
@@ -25,6 +26,7 @@ const GraphFilter = () => {
   const [, setNodes] = useGraphNodes()
   const graphVisibleNodesIds = useAtomValue(GraphVisibleNodesIdsAtom)
   const [pinnedNodesIds, setPinnedNodesIds] = useAtom(GraphPinNodesIdsAtom)
+
   const store = useStore()
   const containerRef = useRef<HTMLDivElement>(null)
   const graph = useGraph()
@@ -103,7 +105,7 @@ const GraphFilter = () => {
   }, [])
   return (
     <Rnd
-      style={{ borderRadius: 6, overflow: 'hidden' }}
+      style={{ borderRadius: 6 }}
       default={{
         x: -175,
         y: 0,

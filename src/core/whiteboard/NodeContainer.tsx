@@ -24,9 +24,7 @@ const TreeNodeContainer = () => {
       })}
       role="data-container"
     >
-      {Array.from(treeNodes.values()).map(i => (
-        <WrapperNode key={i.id} node={i} />
-      ))}
+      {Array.from(treeNodes.values()).map(i => (i.id ? <WrapperNode key={i.id} node={i} /> : null))}
     </div>
   )
 }

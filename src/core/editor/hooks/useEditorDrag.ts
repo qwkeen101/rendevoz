@@ -66,8 +66,9 @@ const useEditorDrag = (editor: CustomEditor, scrollElement?: HTMLElement | null)
   const preventLastMouseMoveRef = useRef(false)
   const { renderIndicator, indicatorManager } = useDragIndicator()
 
-  dragManager.onDrop = ({ direction, isNested, objectId, targetNodeId, shouldAddElements, shouldRemoveElements }) => {
+  dragManager.onDrop = ({ direction, isNested, objectId, targetNodeId, shouldAddElements, shouldRemoveElements, event }) => {
     let targetPath = ID_TO_PATH_MAP.get(editor)?.get(targetNodeId)
+    console.log('s', event)
     if (!targetPath) return
     const targetElement = Editor.node(editor, targetPath)[0] as CustomElement
     if (direction === 'bottom' && targetElement.type.startsWith('heading') && (targetElement as HeadingElement).folded === true) {
@@ -108,8 +109,9 @@ const useEditorDrag = (editor: CustomEditor, scrollElement?: HTMLElement | null)
         }
       })
     }
-    // if we have objectId, it means need further process
-    if (objectId && editor.noteId) {
+    // if we have objectId or drop event, it means need further process
+    if ((objectId || event) && editor.noteId) {
+      console.log(event)
       emitter
         .emitWithCallback('global', {
           type: 'globalDropNeedFurtherProcess',
@@ -118,7 +120,8 @@ const useEditorDrag = (editor: CustomEditor, scrollElement?: HTMLElement | null)
               dropOn: 'editor',
               noteId: editor.noteId
             },
-            draggingElement: GlobalDragOverlayInstance.draggingDetails
+            draggingElement: GlobalDragOverlayInstance.draggingDetails,
+            e: event
           }
         })
         .then(
@@ -207,6 +210,7 @@ const useEditorDrag = (editor: CustomEditor, scrollElement?: HTMLElement | null)
     }
 
     const indicator = dragManager.drag(e)
+
     if (indicator) {
       dragManager.changeIndicator(indicator)
       if (indicator.direction) {
@@ -219,6 +223,10 @@ const useEditorDrag = (editor: CustomEditor, scrollElement?: HTMLElement | null)
     }
   })
 
+  const dropHandler = useMemoizedFn((e: DragEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+  })
   const throttledMouseMove = useRafFn(mouseMoveHandler)
   const realMouseMoveHandler = useCallback((e: MouseEvent) => {
     e.preventDefault()
@@ -233,9 +241,13 @@ const useEditorDrag = (editor: CustomEditor, scrollElement?: HTMLElement | null)
       scrollManager.registerScrollElement(scrollElement)
       scrollElement.addEventListener('pointerleave', pointerLeaveAndEnterHandler)
       scrollElement.addEventListener('pointerenter', pointerLeaveAndEnterHandler)
+      scrollElement.addEventListener('drop', dropHandler, true)
+      scrollElement.addEventListener('dragover', realMouseMoveHandler, true)
       return () => {
         scrollElement.removeEventListener('pointerleave', pointerLeaveAndEnterHandler)
         scrollElement.removeEventListener('pointerenter', pointerLeaveAndEnterHandler)
+        scrollElement.removeEventListener('drag', dropHandler, true)
+        scrollElement.removeEventListener('dragover', realMouseMoveHandler, true)
       }
     }
   })
@@ -324,7 +336,7 @@ const useEditorDrag = (editor: CustomEditor, scrollElement?: HTMLElement | null)
     globalEventHandler.on('globalDragPointerUp', ({ event }) => {
       preventLastMouseMoveRef.current = true
       if (scrollElement?.contains(event.target as HTMLElement)) {
-        dragManager.drop()
+        dragManager.drop(event)
       }
       scrollManager.endScroll()
       setIsDragging(false)

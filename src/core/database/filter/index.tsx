@@ -1,4 +1,4 @@
-import { AnimatePopover, CheckBox, Content, Icon, WithBorder } from '@/components/base'
+import { AnimatePopover, Button, CheckBox, Content, Icon, WithBorder } from '@/components/base'
 import TimePicker from '@/components/base/TimePicker'
 import { ObjectTag } from '@/core'
 import Zindexes from '@/consts/zindex'
@@ -32,6 +32,7 @@ import { useGlobalAtomValue } from '@/hooks/jotai'
 import { atom } from 'jotai'
 import Colors from '@/consts/colors'
 import FontSize from '@/consts/font'
+import { useUpdate } from 'react-use'
 
 export type FilterType = 'tag' | 'type' | 'createdAt' | 'relatedObjectsSize' | 'addOne' | 'related' | 'viewAt'
 
@@ -66,11 +67,12 @@ export const DatabaseFilter = () => {
       })
     }
   }
-
+  const filterContainerRef = useRef<HTMLDivElement>(null)
   return (
-    <Content flex gap={10} style={{ flexWrap: 'wrap', alignItems: 'stretch' }}>
+    <Content flex gap={10} style={{ flexWrap: 'wrap', alignItems: 'stretch' }} ref={filterContainerRef}>
       {filters.map(i => (
         <Filter
+          parentElement={filterContainerRef.current}
           id={i.id}
           onClose={() => {
             const idx = filters.findIndex(o => o === i)
@@ -84,7 +86,10 @@ export const DatabaseFilter = () => {
       ))}
       <AnimatePopover
         align="start"
+        parentElement={filterContainerRef.current}
         visible={chooseFilterVisible}
+        disableIntersection
+        disableNudge
         positions={['bottom']}
         onClickOutside={() => toggleChooseFilterVisible(false)}
         containerStyle={{ zIndex: String(Zindexes.ToolBar) }}
@@ -148,11 +153,13 @@ const Filter = ({
   filterType,
   onClose,
   id,
-  initialOpen
+  initialOpen,
+  parentElement
 }: {
   filterType: FilterType
   onClose: VoidFunction
   id: number
+  parentElement: HTMLElement | null
   initialOpen: boolean
 }) => {
   const setFilters = useSetAtom(FiltersAtom)
@@ -170,15 +177,15 @@ const Filter = ({
   const renderContent = () => {
     switch (filterType) {
       case 'tag':
-        return <TagFilter filterId={id} onClose={onClose} initialOpen={initialOpen} />
+        return <TagFilter parentElement={parentElement} filterId={id} onClose={onClose} initialOpen={initialOpen} />
       case 'createdAt':
-        return <CreateTimeFilter onClose={onClose} initialOpen={initialOpen} />
+        return <CreateTimeFilter parentElement={parentElement} onClose={onClose} initialOpen={initialOpen} />
       case 'type':
-        return <TypeFilter onClose={onClose} initialOpen={initialOpen} />
+        return <TypeFilter parentElement={parentElement} onClose={onClose} initialOpen={initialOpen} />
       case 'related':
         return <RelatedObjectsFilter filterId={id} onClose={onClose} />
       case 'viewAt':
-        return <ViewTimeFilter onClose={onClose} initialOpen={initialOpen} />
+        return <ViewTimeFilter parentElement={parentElement} onClose={onClose} initialOpen={initialOpen} />
       default:
         return null
     }
@@ -186,14 +193,26 @@ const Filter = ({
 
   return renderContent()
 }
-const TypeFilter = ({ onClose, initialOpen }: { onClose: VoidFunction; initialOpen: boolean }) => {
+const TypeFilter = ({
+  onClose,
+  initialOpen,
+  parentElement
+}: {
+  onClose: VoidFunction
+  initialOpen: boolean
+  parentElement: HTMLElement | null
+}) => {
   const [filterTypes, setFilterTypes] = useAtom(FilterTypesAtom)
   const typeToMetaObjectIdsMap = useGlobalAtomValue(indexedMetaObjectsAtom)?.typeToMetaObjectIdsMap
   const shouldFilterIdSet = useAtomValue(ShouldFilterIdsAtom)
   const [popoverVisible, togglePopoverVisible] = useToggle(initialOpen)
   const { t } = useTranslation()
+  const fileTypes = ['image', 'pdf', 'webpage', 'localFile']
+  const recordTypes = ['note', 'whiteboard']
+  const labelTypes = ['noteLabel', 'noteBlock', 'pdfLabel', 'webpageLabel']
   const types: MetaObject['type'][] = [
     'normal',
+    'image',
     'note',
     'noteBlock',
     'noteLabel',
@@ -218,45 +237,124 @@ const TypeFilter = ({ onClose, initialOpen }: { onClose: VoidFunction; initialOp
       )
     }
   }
+  const renderButton = (type: MetaObject['type']) => (
+    <Content flex className={ClassName.flatButton()} gap={6} onClick={() => toggleType(type)}>
+      <CheckBox checked={filterTypes.has(type)} />
+      <Content auto flex justifyContent="space-between">
+        <div>{t(`general.${TypeToTypeName[type]}`)}</div>
+        <div>
+          {shouldFilterIdSet && typeToMetaObjectIdsMap?.has(type)
+            ? intersectionOfMultipleSets(typeToMetaObjectIdsMap.get(type)!, shouldFilterIdSet).size
+            : typeToMetaObjectIdsMap?.get(type)?.size}
+        </div>
+      </Content>
+    </Content>
+  )
+  const popoverRef = useRef(null)
+  const update = useUpdate()
+
   const renderPopover = () => {
     return (
-      <Content
-        flex
-        column
-        className={css([
-          {
-            minWidth: 250,
-            padding: 12,
-            borderRadius: 8,
-            boxShadow: 'rgba(100, 100, 111, 0.2) 0px 7px 29px 0px',
-            fontFamily: 'Muli',
-            textTransform: 'capitalize'
-          },
-          ClassName.Background.blurBackground
-        ])}
+      <WithBorder
+        ref={popoverRef}
+        onClick={() => {
+          update()
+        }}
+        className={css({
+          width: 180,
+          padding: 12,
+          borderRadius: 8,
+          fontFamily: 'Muli',
+          textTransform: 'capitalize',
+          display: 'flex',
+          flexDirection: 'column'
+        })}
       >
-        {types.map(type => (
-          <Content flex className={ClassName.flatButton()} gap={6} onClick={() => toggleType(type)}>
-            <CheckBox checked={filterTypes.has(type)} />
-            <Content auto flex justifyContent="space-between">
-              <div>{t(`general.${TypeToTypeName[type]}`)}</div>
-              <div>
-                {shouldFilterIdSet && typeToMetaObjectIdsMap?.has(type)
-                  ? intersectionOfMultipleSets(typeToMetaObjectIdsMap.get(type)!, shouldFilterIdSet).size
-                  : typeToMetaObjectIdsMap?.get(type)?.size}
-              </div>
-            </Content>
-          </Content>
-        ))}
-      </Content>
+        <AnimatePopover
+          positions={['right', 'left']}
+          reposition
+          parentElement={popoverRef.current?.parentElement}
+          disableIntersection
+          disableNudge
+          align="start"
+          padding={15}
+          content={
+            <WithBorder
+              className={css({
+                minWidth: 200,
+                padding: 12,
+                borderRadius: 8,
+                boxShadow: 'rgba(100, 100, 111, 0.2) 0px 7px 29px 0px',
+                fontFamily: 'Muli',
+                textTransform: 'capitalize'
+              })}
+            >
+              {fileTypes.map(i => renderButton(i))}
+            </WithBorder>
+          }
+        >
+          <Button.IconButton spaceBetween reverse icon="park-right" text={t('general.files')}></Button.IconButton>
+        </AnimatePopover>
+        <AnimatePopover
+          positions={['right', 'left']}
+          reposition
+          disableIntersection
+          disableNudge
+          padding={15}
+          parentElement={popoverRef.current?.parentElement}
+          content={
+            <WithBorder
+              className={css({
+                minWidth: 200,
+                padding: 12,
+                borderRadius: 8,
+                boxShadow: 'rgba(100, 100, 111, 0.2) 0px 7px 29px 0px',
+                fontFamily: 'Muli',
+                textTransform: 'capitalize'
+              })}
+            >
+              {recordTypes.map(i => renderButton(i))}
+            </WithBorder>
+          }
+        >
+          <Button.IconButton spaceBetween reverse icon="park-right" text={t('general.records')}></Button.IconButton>
+        </AnimatePopover>
+        <AnimatePopover
+          positions={['right', 'left']}
+          reposition
+          disableIntersection
+          parentElement={popoverRef.current?.parentElement}
+          disableNudge
+          padding={15}
+          content={
+            <WithBorder
+              className={css({
+                minWidth: 200,
+                padding: 12,
+                borderRadius: 8,
+                boxShadow: 'rgba(100, 100, 111, 0.2) 0px 7px 29px 0px',
+                fontFamily: 'Muli',
+                textTransform: 'capitalize'
+              })}
+            >
+              {labelTypes.map(i => renderButton(i))}
+            </WithBorder>
+          }
+        >
+          <Button.IconButton spaceBetween reverse icon="park-right" text={t('general.labels')}></Button.IconButton>
+        </AnimatePopover>
+      </WithBorder>
     )
   }
 
   return (
     <AnimatePopover
       align="start"
+      disableIntersection
+      disableNudge
       positions={['bottom']}
       visible={popoverVisible}
+      parentElement={parentElement}
       onClickOutside={togglePopoverVisible}
       content={renderPopover()}
       containerStyle={{ zIndex: String(Zindexes.ToolBar) }}
@@ -268,8 +366,7 @@ const TypeFilter = ({ onClose, initialOpen }: { onClose: VoidFunction; initialOp
         onClick={togglePopoverVisible}
         className={filterContainerClassName(popoverVisible)}
         style={{
-          fontFamily: 'Muli',
-          textTransform: 'capitalize'
+          flexWrap: 'wrap'
         }}
       >
         <Icon name="park-info" />
@@ -277,7 +374,7 @@ const TypeFilter = ({ onClose, initialOpen }: { onClose: VoidFunction; initialOp
           <div
             style={{
               fontSize: FontSize['13px'],
-              textTransform: 'capitalize'
+              flexShrink: 0
             }}
             className={ClassName.objectTag}
           >
@@ -296,7 +393,17 @@ const TypeFilter = ({ onClose, initialOpen }: { onClose: VoidFunction; initialOp
     </AnimatePopover>
   )
 }
-const TagFilter = ({ onClose, filterId, initialOpen }: { onClose: VoidFunction; filterId: number; initialOpen: boolean }) => {
+const TagFilter = ({
+  onClose,
+  filterId,
+  initialOpen,
+  parentElement
+}: {
+  onClose: VoidFunction
+  filterId: number
+  initialOpen: boolean
+  parentElement: HTMLElement | null
+}) => {
   const tagToMetaObjectsMap = useAtomValue(tagToMetaObjectIdsMapAtom, { store: globalStore })
   const shouldFilterIdSet = useAtomValue(ShouldFilterIdsAtom)
   const allTags = useMemo(() => {
@@ -370,6 +477,9 @@ const TagFilter = ({ onClose, filterId, initialOpen }: { onClose: VoidFunction; 
       positions={['bottom']}
       content={renderPopover()}
       visible={popoverVisible}
+      disableIntersection
+      disableNudge
+      parentElement={parentElement}
       containerStyle={{ zIndex: String(Zindexes.ToolBar) }}
     >
       <Content flex gap={5} onClick={togglePopoverVisible} className={filterContainerClassName(popoverVisible)}>
@@ -394,7 +504,15 @@ const TagFilter = ({ onClose, filterId, initialOpen }: { onClose: VoidFunction; 
   )
 }
 
-const CreateTimeFilter = ({ onClose, initialOpen }: { onClose: VoidFunction; initialOpen: boolean }) => {
+const CreateTimeFilter = ({
+  onClose,
+  initialOpen,
+  parentElement
+}: {
+  onClose: VoidFunction
+  initialOpen: boolean
+  parentElement: HTMLElement | null
+}) => {
   const databaseStore = useStore()
   const [filterInterval, setFilterInterval] = useAtom(FilterDateIntervalsAtom, { store: databaseStore })
   const [popoverVisible, togglePopoverVisible] = useToggle(initialOpen)
@@ -508,9 +626,12 @@ const CreateTimeFilter = ({ onClose, initialOpen }: { onClose: VoidFunction; ini
   }
   return (
     <AnimatePopover
+      disableIntersection
+      disableNudge
       onClickOutside={togglePopoverVisible}
       visible={popoverVisible}
       content={renderContent()}
+      parentElement={parentElement}
       positions={['bottom']}
       align="start"
       containerStyle={{ zIndex: String(Zindexes.ToolBar) }}
@@ -534,7 +655,15 @@ const CreateTimeFilter = ({ onClose, initialOpen }: { onClose: VoidFunction; ini
     </AnimatePopover>
   )
 }
-const ViewTimeFilter = ({ onClose, initialOpen }: { onClose: VoidFunction; initialOpen: boolean }) => {
+const ViewTimeFilter = ({
+  onClose,
+  initialOpen,
+  parentElement
+}: {
+  onClose: VoidFunction
+  initialOpen: boolean
+  parentElement: HTMLElement | null
+}) => {
   const databaseStore = useStore()
   const [filterInterval, setFilterInterval] = useAtom(FilterViewDateIntervalAtom, { store: databaseStore })
   const [popoverVisible, togglePopoverVisible] = useToggle(initialOpen)
@@ -648,6 +777,9 @@ const ViewTimeFilter = ({ onClose, initialOpen }: { onClose: VoidFunction; initi
   }
   return (
     <AnimatePopover
+      disableIntersection
+      disableNudge
+      parentElement={parentElement}
       onClickOutside={togglePopoverVisible}
       visible={popoverVisible}
       content={renderContent()}

@@ -14,5 +14,4 @@ export interface GraphNode {
   isCenter?: boolean
   icon?: string
   objectId?: number
-  tags?: number[]
 }

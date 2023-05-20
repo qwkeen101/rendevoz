@@ -7,8 +7,11 @@ import { useToggle } from '@/hooks'
 import ClassName from '@/styles/classNames'
 import { Descendant } from 'slate'
 import SidebarToolbar from './HoverOutline'
-import { ObjectStore } from '@/stores'
+import { ObjectStore, globalStore } from '@/stores'
 import { Provider } from 'jotai'
+import { GlobalTranslateInstance } from '@/core/global/GlobalTranslatePanel'
+import { GlobalSearchInstance } from '@/core/global/GlobalSearchPanel'
+import { objectIdToMetaObjectIdMapAtom } from '@/stores/meta.store'
 
 const EditorPage: FC<{
   noteId: number
@@ -53,9 +56,32 @@ const EditorPage: FC<{
           GlobalDragOverlayInstance.addDragElements?.(<DraggingElement text="Drop to add note label" />)
           GlobalDragOverlayInstance.startDrag?.()
         }}
+        onSearch={(text, id, e, editor) => {
+          GlobalSearchInstance.open?.({
+            e,
+            query: text,
+            from: {
+              type: 'note',
+              metaId: globalStore.get(objectIdToMetaObjectIdMapAtom)?.get(editor.noteId),
+              selectedText: text,
+              blockId: id
+            }
+          })
+        }}
         onTitleChange={e => {
           setTitle(e)
           onTitleChange?.(e)
+        }}
+        onTranslate={(text, id, e, editor) => {
+          GlobalTranslateInstance.open?.({
+            e,
+            query: text,
+            source: {
+              type: 'note',
+              objectId: editor.noteId!,
+              blockId: id
+            }
+          })
         }}
         onHighlight={highlightId => {
           ObjectStore('noteLabel').addOne({

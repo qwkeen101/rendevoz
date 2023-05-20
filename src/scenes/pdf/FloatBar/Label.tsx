@@ -1,19 +1,18 @@
-import { Content, Icon, Tooltip } from '@/components'
+import { Content, Icon, TabPane, Tabs, Tooltip } from '@/components'
 import { ObjectStore, globalStore } from '@/stores'
 import ClassName from '@/styles/classNames'
-import DateFormat from '@/utils/dateFormat'
 import { css } from '@emotion/css'
 import { useAtomValue } from 'jotai/react'
 import { atom } from 'jotai/vanilla'
 import { memo, useMemo } from 'react'
-import { Flipped } from 'react-flip-toolkit'
-import { toast } from 'react-hot-toast'
-import { IHighlightLabel, IPdfDocument } from '~/typings/data'
-import { usePdfViewer, ID_TO_LABEL_MAP } from '@/core'
+import { IHighlightLabel, ILabel, IObjectLabel, IPdfDocument } from '~/typings/data'
+import { usePdfViewer, useRenderObject } from '@/core'
 import { selectAtom } from 'jotai/utils'
 import FontSize from '@/consts/font'
+import Colors from '@/consts/colors'
+import { objectStore } from '@/stores/object.store'
 
-const PdfLabels = ({ flipId, document }: { flipId: string; document?: IPdfDocument }) => {
+const PdfLabels = ({ document }: { document?: IPdfDocument }) => {
   const store = ObjectStore('pdfLabel')
   const innerLabelsAtom = useMemo(() => {
     if (document?.id) {
@@ -23,90 +22,168 @@ const PdfLabels = ({ flipId, document }: { flipId: string; document?: IPdfDocume
     }
   }, [document?.id])
   const labels = useAtomValue(innerLabelsAtom, { store: globalStore })
-  const highlight = labels?.filter(i => i.type === 'highlight') as IHighlightLabel[]
-  const viewer = usePdfViewer()
+  const { highlight, meta } = useMemo(() => {
+    const highlight = labels?.filter(i => i.type === 'highlight') as (IHighlightLabel & ILabel)[]
+    const meta = labels?.filter(i => i.type === 'object') as (IObjectLabel & ILabel)[]
+    return {
+      highlight,
+      meta
+    }
+  }, [labels])
+
   return (
-    <Flipped inverseFlipId={flipId}>
-      <div
-        style={{
-          maxHeight: 600,
-          overflowX: 'hidden',
-          overflowY: 'auto'
-        }}
-      >
-        {labels?.length === 0 ? (
-          <div style={{ margin: '0px 8px' }} className={ClassName.title()}>
-            No label in this document.
-          </div>
-        ) : (
-          <div style={{ width: 400 }}>
-            {highlight.map(i => (
-              <div className={ClassName.description()} style={{ padding: 4 }}>
-                <Content flex justifyContent="space-between">
-                  <Content flex alignItems="center">
-                    <span style={{ marginRight: 20 }}>Page: {i.page !== undefined ? i.page + 1 : 'Unknown'}</span>
-                    {i.createdAt && (
-                      <>
-                        <Icon name="park-time" style={{ marginRight: 6 }} />
-                        <span>{DateFormat.format(i.createdAt, DateFormat.Formats.withMinute)}</span>
-                      </>
-                    )}
-                  </Content>
-                  <div
-                    className={css({
-                      display: 'flex',
-                      '> div': ClassName.circleButton(),
-                      gap: 6
-                    })}
-                  >
-                    <Tooltip position="top" content="Jump to">
-                      <Icon
-                        name="park-right"
-                        onClick={() => {
-                          if (viewer) {
-                            viewer?.jumpToLabel?.(i.id)
-                            if (ID_TO_LABEL_MAP.get(viewer)?.has(i.id)) {
-                              ID_TO_LABEL_MAP.get(viewer)?.get(i.id)?.focus()
-                            } else {
-                              viewer.onLabelRendered = l => {
-                                if (l === i.id) {
-                                  ID_TO_LABEL_MAP.get(viewer)?.get(i.id)?.focus()
-                                }
-                              }
-                            }
-                          }
-                        }}
-                      />
-                    </Tooltip>
-                    <Tooltip position="top" content="Copy content">
-                      <Icon
-                        name="park-copy"
-                        onClick={() => {
-                          navigator.clipboard.writeText(i.selectedText || '')
-                          toast.success('Text copied!')
-                        }}
-                      />
-                    </Tooltip>
-                    <Tooltip position="top" content="Delete item">
-                      <Icon
-                        name="park-delete"
-                        onClick={() => {
-                          store.deleteOneById(i.id, { force: true })
-                        }}
-                      />
-                    </Tooltip>
-                  </div>
-                </Content>
-                <div className={ClassName.ellipsisFont(3)} style={{ fontSize: FontSize['14px'] }}>
-                  {i.selectedText}
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-    </Flipped>
+    <div>
+      {labels?.length === 0 ? (
+        <div style={{ margin: '0px 8px' }} className={ClassName.title()}>
+          No label in this document.
+        </div>
+      ) : (
+        <div style={{ width: 400 }}>
+          <Tabs defaultActiveKey="1">
+            <TabPane key="1" tab="Highlights">
+              <Content
+                fullHeight
+                fullWidth
+                style={{
+                  overflowY: 'auto',
+                  maxHeight: 600
+                }}
+              >
+                {highlight.map(i => (
+                  <HighlightLabel label={i} key={i.id} />
+                ))}
+              </Content>
+            </TabPane>
+            <TabPane key="2" tab="Objects">
+              <Content
+                fullHeight
+                fullWidth
+                style={{
+                  overflowY: 'auto',
+                  maxHeight: 600
+                }}
+              >
+                {meta.map(i => (
+                  <MetaLabel label={i} key={i.id} />
+                ))}
+              </Content>
+            </TabPane>
+          </Tabs>
+        </div>
+      )}
+    </div>
   )
 }
 
+const HighlightLabel = ({ label }: { label: IHighlightLabel & ILabel }) => {
+  const viewer = usePdfViewer()
+  const store = ObjectStore('pdfLabel')
+
+  return (
+    <div style={{ padding: 4, borderBottom: `1px solid ${Colors.Background.Border}` }}>
+      <Content flex justifyContent="space-between" className={ClassName.description()}>
+        <Content flex alignItems="center">
+          <span style={{ marginRight: 20 }}>Page: {label.page !== undefined ? label.page + 1 : 'Unknown'}</span>
+        </Content>
+        <div
+          className={css({
+            display: 'flex',
+            '> div': ClassName.circleButton(),
+            gap: 6
+          })}
+        >
+          <Tooltip position="top" content="Jump to">
+            <Icon
+              name="park-right"
+              onClick={() => {
+                if (viewer) {
+                  viewer?.jumpToLabel?.(label.id)
+                }
+              }}
+            />
+          </Tooltip>
+          <Tooltip position="top" content="Copy content">
+            <Icon
+              name="park-copy"
+              onClick={() => {
+                navigator.clipboard.writeText(label.selectedText || '')
+              }}
+            />
+          </Tooltip>
+          <Tooltip position="top" content="Delete item">
+            <Icon
+              name="park-delete"
+              onClick={() => {
+                store.deleteOneById(label.id, { force: true })
+              }}
+            />
+          </Tooltip>
+        </div>
+      </Content>
+      <div className={ClassName.ellipsisFont(3)} style={{ fontSize: FontSize['14px'], textTransform: 'none' }}>
+        {label.selectedText}
+      </div>
+    </div>
+  )
+}
+const MetaLabel = ({ label }: { label: IObjectLabel & ILabel }) => {
+  const metaId = label.metaObjectId
+  const { renderWhole } = useRenderObject({ metaObjectId: metaId })
+  const viewer = usePdfViewer()
+  const store = objectStore('pdfLabel')
+  return (
+    <div style={{ padding: 8, borderBottom: `1px solid ${Colors.Background.Border}`, position: 'relative' }}>
+      <div
+        style={{
+          position: 'absolute',
+          top: 4,
+          right: 0,
+          zIndex: 1
+        }}
+      >
+        <Content flex className={ClassName.description()}>
+          <div
+            className={css({
+              display: 'flex',
+              '> div': ClassName.circleButton(),
+              gap: 6
+            })}
+          >
+            <Tooltip position="top" content="Jump to">
+              <Icon
+                name="park-right"
+                onClick={() => {
+                  if (viewer) {
+                    viewer?.jumpToLabel?.(label.id)
+                  }
+                }}
+              />
+            </Tooltip>
+
+            <Tooltip position="top" content="Delete item">
+              <Icon
+                name="park-delete"
+                onClick={() => {
+                  store.deleteOneById(label.id, { force: true })
+                }}
+              />
+            </Tooltip>
+          </div>
+        </Content>
+      </div>
+      {renderWhole({
+        renderOptions: {
+          renderDescription: false,
+          renderFrom: false,
+          renderImage: true
+        },
+        titleOptions: {
+          style: {
+            fontSize: FontSize['14px']
+          }
+        }
+      })}
+    </div>
+  )
+}
 export default memo(PdfLabels)

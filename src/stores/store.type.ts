@@ -35,7 +35,6 @@ export interface IStore<T> {
             }
           : T extends IWebpage
           ? {
-              showAddModal?: boolean
             }
           : {})
   ) => Promise<T>

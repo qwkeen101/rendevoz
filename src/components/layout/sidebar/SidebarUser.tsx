@@ -1,72 +1,125 @@
-import { AnimatePopover, Content, Icon, Image, Modal, Tooltip, WithBorder } from '@/components/base'
+import { AnimatePopover, Button, Content, Icon, Image, Modal, Tooltip, WithBorder } from '@/components/base'
 import UpgradePlan from '@/components/UpgradePlan'
 import Zindexes from '@/consts/zindex'
-import { useToggle } from '@/hooks'
+import { useGlobalAtom, useGlobalAtomValue, useToggle } from '@/hooks'
 import LoginService, { useUser } from '@/services/login.service'
 import ClassName from '@/styles/classNames'
 import DateFormat from '@/utils/dateFormat'
 import { css } from '@emotion/css'
-import { memo, useState } from 'react'
+import { memo, useEffect, useState } from 'react'
 import useFileUpload from '@/components/base/useFileUpload'
 import { IUser } from '~/typings/data'
-import { indicatorClassName, loginInputClassName } from '@/components/Login'
+import Login, { indicatorClassName, loginInputClassName } from '@/components/Login'
 import { toast } from 'react-hot-toast'
 import { useTranslation } from 'react-i18next'
-import { LayoutIdToTabMap } from '..'
 import FontSize from '@/consts/font'
+import { SidebarCollapseAtom, SidebarStateAtom } from '.'
 
 const SidebarUser = memo(() => {
   const [user] = useUser()
   const [popoverVisible, togglePopoverVisible] = useToggle(false)
   const [updateUserVisible, toggleUpdateUserVisible] = useToggle(false)
   const [upgradePlanVisible, toggleUpgradPlanVisible] = useToggle(false)
+  const [loginVisible, toggleLoginVisible] = useToggle(false)
   const isPremium = user?.premiumEndDate && user?.premiumEndDate > Date.now()
+  const [sidebarState, setSidebarState] = useGlobalAtom(SidebarStateAtom)
+  const { t } = useTranslation()
+  useEffect(() => {
+    if (user && loginVisible) {
+      toggleLoginVisible(false)
+    }
+  }, [user])
   return (
-    <>
-      <Modal noStyle visible={upgradePlanVisible} onClose={toggleUpgradPlanVisible}>
-        <UpgradePlan />
-      </Modal>
-      <Modal visible={updateUserVisible} onClose={toggleUpdateUserVisible}>
-        <UpdateUser />
-      </Modal>
-      <AnimatePopover
-        containerStyle={{
-          zIndex: String(Zindexes.PopupMenu)
+    <Content flex alignItems="center" gap={10} style={{ marginBottom: 16 }}>
+      <Content auto>
+        {user ? (
+          <>
+            <Modal noStyle visible={upgradePlanVisible} onClose={toggleUpgradPlanVisible}>
+              <UpgradePlan />
+            </Modal>
+            <Modal visible={updateUserVisible} onClose={toggleUpdateUserVisible}>
+              <UpdateUser />
+            </Modal>
+            <AnimatePopover
+              containerStyle={{
+                zIndex: String(Zindexes.PopupMenu)
+              }}
+              visible={popoverVisible}
+              onClickOutside={togglePopoverVisible}
+              content={<UserPopover onUpdateUser={toggleUpdateUserVisible} onUpgradePlan={toggleUpgradPlanVisible} />}
+              positions={['bottom']}
+              boundaryElement={document.body}
+              boundaryInset={18}
+              boundaryTolerance={18}
+            >
+              <Content
+                flex
+                onClick={togglePopoverVisible}
+                alignItems="center"
+                gap={8}
+                className={ClassName.flatButton()}
+                style={{ padding: '12px 8px', cursor: 'pointer' }}
+              >
+                {user?.photoURL && <Image width={25} src={user.photoURL} className={css({ borderRadius: 4 })} />}
+                <div
+                  className={css([
+                    {
+                      fontWeight: 600,
+                      fontFamily: 'Muli'
+                    },
+                    ClassName.ellipsisFont(1)
+                  ])}
+                >
+                  {user?.displayName || 'Unnamed User'}
+                </div>
+                <Tooltip content={isPremium ? 'You are premium user' : 'You are not premium user'}>
+                  <Icon theme="filled" fill={isPremium ? 'rgb(255,215,0)' : 'rgb(218,223,225)'} name="park-vip" />
+                </Tooltip>
+              </Content>
+            </AnimatePopover>
+          </>
+        ) : (
+          <>
+            <Button.IconButton
+              onClick={() => toggleLoginVisible(true)}
+              icon="park-user"
+              style={{
+                padding: '12px 10px'
+              }}
+              text={t('login.login')}
+            ></Button.IconButton>
+            <Modal visible={loginVisible} onClose={toggleLoginVisible} noStyle>
+              <div
+                className={ClassName.Background.pseudoBlurContrastBackground}
+                style={{
+                  width: '800px',
+                  height: '600px',
+                  borderRadius: '16px'
+                }}
+              >
+                <Login />
+              </div>
+            </Modal>
+          </>
+        )}
+      </Content>
+      <Icon
+        size={20}
+        className={ClassName.flatButton()}
+        onClick={() => {
+          if (sidebarState.collapsed) {
+            setSidebarState(s => ({ ...s, width: sidebarState.ref?.getSelfElement()?.clientWidth || 240, collapsed: false }))
+          } else {
+            setSidebarState({
+              hovered: false,
+              collapsed: true,
+              width: 0
+            })
+          }
         }}
-        visible={popoverVisible}
-        onClickOutside={togglePopoverVisible}
-        content={<UserPopover onUpdateUser={toggleUpdateUserVisible} onUpgradePlan={toggleUpgradPlanVisible} />}
-        positions={['bottom']}
-        boundaryElement={document.body}
-        boundaryInset={18}
-        boundaryTolerance={18}
-      >
-        <Content
-          flex
-          onClick={togglePopoverVisible}
-          alignItems="center"
-          gap={8}
-          className={ClassName.flatButton(undefined, undefined, 'rgba(31, 34, 37, 0.08)')}
-          style={{ padding: '12px 8px', marginBottom: 16, cursor: 'pointer' }}
-        >
-          {user?.photoURL && <Image width={25} src={user.photoURL} className={css({ borderRadius: 4 })} />}
-          <div
-            className={css([
-              {
-                fontWeight: 600,
-                fontFamily: 'Muli'
-              },
-              ClassName.ellipsisFont(1)
-            ])}
-          >
-            {user?.displayName || 'Unnamed User'}
-          </div>
-          <Tooltip content={isPremium ? 'You are premium user' : 'You are not premium user'}>
-            <Icon theme="filled" fill={isPremium ? 'rgb(255,215,0)' : 'rgb(218,223,225)'} name="park-vip" />
-          </Tooltip>
-        </Content>
-      </AnimatePopover>
-    </>
+        name={sidebarState.collapsed ? 'park-menu-unfold' : 'park-menu-fold'}
+      />
+    </Content>
   )
 })
 
@@ -119,7 +172,6 @@ const UserPopover = ({ onUpgradePlan, onUpdateUser }: { onUpgradePlan: VoidFunct
         className={ClassName.flatButton()}
         onClick={() => {
           setUser(null)
-          LayoutIdToTabMap.clear()
         }}
       >
         <Icon size={16} name="park-logout" />

@@ -17,7 +17,36 @@ db.version(13).stores({
   whiteboards: 'id',
   objects: 'id,specType'
 })
-
+db.version(14).stores({
+  textselection: null,
+  documents: null,
+  notes: null,
+  blocks: null,
+  collections: 'id,parentId',
+  blobs: 'id',
+  labels: null,
+  metaObjects: 'id,keyword',
+  metaLinks: 'id,keyword',
+  metaComments: null,
+  tags: null,
+  whiteboards: null,
+  objects: 'id,specType'
+})
+db.version(15).stores({
+  textselection: null,
+  documents: null,
+  notes: null,
+  blocks: null,
+  collections: 'id,parentId',
+  blobs: 'id',
+  labels: null,
+  metaObjects: 'id,keyword',
+  metaLinks: 'id,keyword',
+  metaComments: null,
+  tags: null,
+  whiteboards: null,
+  objects: 'id,specType'
+})
 export const exportRendevozDb = async () => {
   const blob = (await exportDB(db)) as Blob
   return blob
@@ -27,7 +56,7 @@ export const importRendevozDb = async (blob?: Blob) => {
   if (!blob) return false
   const importMeta = await peakImportFile(blob)
 
-  if (importMeta.formatName !== 'dexie' || importMeta.data.databaseName !== 'rendevozDb' || importMeta.data.databaseVersion !== 12) {
+  if (importMeta.formatName !== 'dexie' || importMeta.data.databaseName !== 'rendevozDb' || importMeta.data.databaseVersion !== 15) {
     return false
   }
   await importInto(db, blob, { overwriteValues: true })

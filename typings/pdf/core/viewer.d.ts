@@ -1,25 +1,34 @@
 import 'fuzzysort'
 import { PDFDocumentProxy } from 'pdfjs-dist'
 import { ITextLayerInstance } from './layer'
+import { Box } from '~/typings/common'
+import { PageSize } from './page'
 
 export type IPdfViewer = Partial<{
   currentFocusLabelId: number
   jumpToPage: (pageIndex: number) => void
-  search: (word: string) => Fuzzysort.KeyResults<{
-    id: number
-    str: string
-    page: number
-    prepared: Fuzzysort.Prepared
-  }>
+  search: (word: string) =>
+    | {
+        searchText: string
+        pageIndex: number
+      }[]
+    | undefined
   zoomIn: VoidFunction
   zoomOut: VoidFunction
   autoFit: VoidFunction
   togglePan: VoidFunction
-  highlightText: (str: string, pageIndex: number) => void
+  highlightText: (str: string, pageIndex: number) => Promise<void>
+  highlightArea: (
+    pageIndex: number,
+    // all percentage
+    rect: Box
+  ) => Promise<void>
   jumpToDest: (dest: string | any[]) => void
   jumpToOffset: (offset: number) => void
   jumpToLabel: (labelId: number) => Promise<void>
   scrollBy: (offset: number) => void
+  scrollToOffset: (offset: number) => void
+  getPageSize: () => PageSize
   getOutline: () => Promise<
     {
       title: string
@@ -37,6 +46,7 @@ export type IPdfViewer = Partial<{
   onLabelRendered?: (labelId: number) => void
   getTextLayerInstance?: (pageIndex: number) => Promise<ITextLayerInstance>
   onDocumentLoaded?: (doc: PDFDocumentProxy) => void
+  onThumbnailRendered?: VoidFunction
   getDocument?: () => Promise<PDFDocumentProxy>
   onTextLayerRendered?: (pageIndex: number, instance: ITextLayerInstance) => void
 }>

@@ -49,7 +49,6 @@ const ToolbarItem: FC<ToolbarItemProps> = ({
     if (clickPreventDefault) {
       e.preventDefault()
     }
-    e.preventDefault()
     onClick?.(e)
   }
   return cloneElement(

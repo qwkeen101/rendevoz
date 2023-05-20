@@ -7,6 +7,7 @@ import {
   IAudio,
   IImage,
   ILabel,
+  ILocalFile,
   INote,
   INoteBlock,
   INoteLabel,
@@ -25,9 +26,7 @@ import { metaObjectsAtom, objectIdToMetaObjectIdMapAtom, tagToMetaObjectIdsMapAt
 import { IStore } from './store.type'
 import { useGlobalAtomValue } from '@/hooks'
 import Id from '@/utils/id'
-import { getSetting, INotificationSetting } from '@/core'
-import { toast } from 'react-hot-toast'
-import { t } from 'i18next'
+import { INotificationSetting } from '@/core'
 
 export type ObjectFamily = {
   webpage: IWebpage
@@ -41,9 +40,10 @@ export type ObjectFamily = {
   pdfLabel: ILabel & { specType: 'pdfLabel' }
   tag: ITag & { specType: 'tag' }
   image: IImage
+  localFile: ILocalFile
 }
 
-export const ObjectFamilyAtom = atomFamily((type: keyof ObjectFamily) => atom(new Map<number, ObjectFamily[keyof ObjectFamily]>()))
+export const ObjectFamilyAtom = atomFamily(() => atom(new Map<number, ObjectFamily[keyof ObjectFamily]>()))
 
 const createObjectStore = <T extends keyof ObjectFamily, V extends ObjectFamily[T], S extends IStore<V>>(
   type: T,
@@ -122,13 +122,15 @@ const createObjectStore = <T extends keyof ObjectFamily, V extends ObjectFamily[
             currentObject: {
               type: obj.specType,
               objectId: obj.id,
-              name: n.name || n.title || 'Unnamed Object'
+              name: n.name || n.title || 'Unnamed Object',
+              ...opts.currentMeta
             }
           }
         })) as MetaObject
       } else {
         meta = await MetaStore.addMetaObject({ type: obj.specType, objectId: obj.id, ...opts?.currentMeta })
       }
+      console.log(meta)
       return {
         one: obj,
         meta

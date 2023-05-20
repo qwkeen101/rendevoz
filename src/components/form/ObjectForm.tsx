@@ -1,7 +1,7 @@
 import Id from '@/utils/id'
 import { FC, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { MetaObject } from '~/typings'
+import { ILocalFile, MetaObject } from '~/typings'
 import { GlobalGraphInstance, TypeToTypeName } from '@/core'
 import { IForm } from './types'
 import useFlipForm from './useFlipForm'
@@ -19,7 +19,7 @@ const ObjectForm: FC<
   const [object, setObject] = useState({ id: Id.getId(), ...initialObject })
   const { t } = useTranslation()
   const objectAtom =
-    initialObject?.type && initialObject.objectId && ['webpage', 'audio', 'video'].includes(initialObject.type)
+    initialObject?.type && initialObject.objectId && ['webpage', 'audio', 'video', 'localFile'].includes(initialObject.type)
       ? ObjectStore(initialObject.type as keyof ObjectFamily).createAtom(initialObject.objectId)
       : undefined
   const targetObject = objectAtom && useGlobalAtomValue(objectAtom)
@@ -62,10 +62,26 @@ const ObjectForm: FC<
         type: 'tagDisplayer',
         tags: object.tags
       },
-      initialObject?.type
+      object?.type
         ? {
             type: 'fromDisplayer',
-            object: initialObject
+            object,
+            onRemove: () => {
+              setObject(s => {
+                delete s.fromObject
+                return { ...s }
+              })
+            }
+          }
+        : undefined,
+      object?.type === 'localFile'
+        ? {
+            type: 'filePathPicker',
+            filePath: (targetObject as ILocalFile)?.fileUrl,
+            onChange: (path, name) => {
+              object.objectId && ObjectStore('localFile').updateOne({ id: object.objectId, fileUrl: path })
+              setObject(o => ({ ...o, name }))
+            }
           }
         : undefined,
       {

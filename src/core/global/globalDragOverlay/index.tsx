@@ -11,6 +11,7 @@ import useOverlayDrop from './useOverlayDrop'
 import { globalStore } from '@/stores'
 import getSetting from '@/core/setting/getSetting'
 import Id from '@/utils/id'
+import useDropObject from '@/core/global/globalDragOverlay/useDropObject'
 
 export type AvaliableGlobalDraggingElements = GlobalDraggingDetails
 interface IGlobalDragOverlay {
@@ -65,11 +66,26 @@ export const GlobalDragOverlay = memo(() => {
     dragContainer.style.transform = `translateX(${clientX + 4}px) translateY(${clientY + 4}px)`
     dragContainer.style.display = 'block'
   })
-
+  const dropHandler = (e: DragEvent) => {
+    GlobalDragOverlayInstance.draggingDetails = undefined
+    setIsDragging(false)
+    e.preventDefault()
+    emitter.emit('global', {
+      type: 'globalDragPointerUp',
+      data: {
+        event: e
+      }
+    })
+  }
+  const dragoverHandler = () => {
+    setIsDragging(true)
+  }
   useEffect(() => {
     const dragContainer = dragContainerRef.current
     if (!dragContainer) return
     document.addEventListener('pointerup', dragHandler, true)
+    document.addEventListener('drop', dropHandler, true)
+    document.addEventListener('dragover', dragoverHandler, true)
     if (isDragging) {
       document.body.style.cursor = 'grabbing'
       document.body.classList.add(disableUserSelectClassName)
@@ -81,7 +97,9 @@ export const GlobalDragOverlay = memo(() => {
       // GlobalDragOverlayInstance.draggingDetails = undefined
     }
     return () => {
+      document.removeEventListener('dragover', dragoverHandler, true)
       document.body.classList.remove(disableUserSelectClassName)
+      document.removeEventListener('drop', dropHandler, true)
       document.removeEventListener('pointerup', dragHandler, true)
     }
   }, [isDragging])

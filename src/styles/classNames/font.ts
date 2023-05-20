@@ -63,7 +63,9 @@ export const description = (fontSize = FontSize['13px'], fontWeight = 500, color
     color: color || Colors.Font.Description
   })
 }
-
+export const disableAllTextTransform = css({
+  
+})
 export const link = () =>
   css({
     cursor: 'pointer'

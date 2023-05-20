@@ -21,6 +21,7 @@ type DropResult = {
   shouldAddElements?: CustomElement[]
   shouldRemoveElements?: CustomElement[]
   objectId?: number
+  event?: DragEvent
 }
 
 const getElementType = (element: globalThis.Element) => {
@@ -294,13 +295,13 @@ class DragManager {
     this.indicator = indicator
   }
 
-  drop = () => {
+  drop = (e?: PointerEvent | DragEvent) => {
     if (this.indicator && this.editor) {
       // first get indicator
       const { direction, isNested, id } = this.indicator
       if (!id) return
       const draggingEle = GlobalDragOverlayInstance.draggingDetails
-      if (!draggingEle) return
+      if (!draggingEle && e !== undefined && !(e instanceof DragEvent)) return
 
       // this means not dragging something outside editor, such as pdf / pdf element / meta element, etc. And is dragging things of the same note.
       const isDraggingInSameNoteIdEditor = draggingEle?.type === 'noteBlock' && draggingEle.noteId === this.editor.noteId
@@ -308,6 +309,7 @@ class DragManager {
       document.body.style.cursor = 'auto'
       const isDraggingNoteElement = draggingEle?.type === 'noteBlock'
       // we need to process this differently
+      console.log('get here 2', isDraggingNoteElement, draggingEle)
       if (isDraggingNoteElement) {
         if (!draggingEle.element && !draggingEle.elements) return
         const isMultipleDrag = draggingEle.elements !== undefined
@@ -356,6 +358,7 @@ class DragManager {
       }
       // we are not dragging note elements, maybe something eles
       else {
+        console.log('get here')
         let ele = {
           id: Id.getId(),
           children: [{ text: '' }]
@@ -365,6 +368,16 @@ class DragManager {
           | {
               objectId: number
             } = false
+        if (e instanceof DragEvent) {
+          this.onDrop?.({
+            targetNodeId: id,
+            direction,
+            isNested,
+            event: e
+          })
+          return
+        }
+        if (!draggingEle) return
         switch (draggingEle.type) {
           // need further process: add meta object
           case 'pdfLabel': {
@@ -419,7 +432,8 @@ class DragManager {
             break
           }
           case 'note label': {
-            draggingEle.highlightId &&               (needFurtherProcess = {
+            draggingEle.highlightId &&
+              (needFurtherProcess = {
                 objectId: draggingEle.highlightId
               })
           }

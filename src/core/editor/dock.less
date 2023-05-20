@@ -33,7 +33,6 @@ body > .dragging-layer > *:first-child {
 body > .dragging-layer > .dragging > *:first-child{
   /* prevent double translucent layers */
     opacity: 0.6 !important;
-    border: 1px solid rgba(0,0,0,0.5);
     border-radius: 4px;
     padding-left: 4px;
 }
@@ -445,11 +444,8 @@ body.dock-dragging iframe {
   box-sizing: border-box;
   flex: 0 0 3px;
   transition: all 0.2s ease;
-  background: rgba(0, 0, 0, 0.07);
-  z-index: 1;
-  &:hover{
-      box-shadow: inset 0 0 0 .2em #e0e0e0,0 0 1em .3em #e0e0e0;
-  }
+  background: rgba(0, 0, 0, 0.1);
+  z-index: 1
 }
 .dock-hbox > .dock-divider {
   cursor: ew-resize;

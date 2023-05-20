@@ -72,7 +72,8 @@ const Tag = ({
       style={{
         background: tagObject?.color || Colors.Background.ButtonHover,
         color: tagObject?.color ? 'white' : Colors.Font.Secondary,
-        borderRadius: small ? '4px' : '999px',
+        // borderRadius: small ? '999px' : '999px',
+        borderRadius: 999,
         padding: small ? '0px 8px 0px' : '3px 6px 3px 10px',
         fontFamily: 'Muli',
         width: 'fit-content',
@@ -120,48 +121,50 @@ const Tag = ({
           </Content>
         )}
       </Content>
-      <Content flex gap={6}>
-        {!small && !hideDelete && (
-          <Icon
-            size={12}
-            onClick={e => {
-              e.stopPropagation()
-              onDelete?.()
-            }}
-            className={ClassName.circleButton(3)}
-            name="park-close"
-          />
-        )}
-        {showEdit && <Icon name="park-edit" className={ClassName.circleButton(3)} onClick={toggleIsEditing} size={12} />}
-        {showPickColor && (
-          <IconWithPopover
-            closeOnContentClick
-            name="park-platte"
-            size={12}
-            className={ClassName.circleButton(3)}
-            content={
-              <BlockColorPicker
-                showFont={false}
-                showMoreBgOption={false}
-                onPickBackgroundColor={c =>
-                  tagObject?.id && ObjectStore('tag').updateOne({ id: tagObject?.id, color: c === defaultBgColor ? undefined : c })
-                }
-              />
-            }
-          />
-        )}
-        {showDBRemove && (
-          <Icon
-            size={12}
-            onClick={e => {
-              e.stopPropagation()
-              onDBRemove?.()
-            }}
-            className={ClassName.circleButton(3)}
-            name="park-delete"
-          />
-        )}
-      </Content>
+      {(showEdit || showDBRemove || showPickColor || (!small && !hideDelete)) && (
+        <Content flex gap={6}>
+          {!small && !hideDelete && (
+            <Icon
+              size={12}
+              onClick={e => {
+                e.stopPropagation()
+                onDelete?.()
+              }}
+              className={ClassName.circleButton(3)}
+              name="park-close"
+            />
+          )}
+          {showEdit && <Icon name="park-edit" className={ClassName.circleButton(3)} onClick={toggleIsEditing} size={12} />}
+          {showPickColor && (
+            <IconWithPopover
+              closeOnContentClick
+              name="park-platte"
+              size={12}
+              className={ClassName.circleButton(3)}
+              content={
+                <BlockColorPicker
+                  showFont={false}
+                  showMoreBgOption={false}
+                  onPickBackgroundColor={c =>
+                    tagObject?.id && ObjectStore('tag').updateOne({ id: tagObject?.id, color: c === defaultBgColor ? undefined : c })
+                  }
+                />
+              }
+            />
+          )}
+          {showDBRemove && (
+            <Icon
+              size={12}
+              onClick={e => {
+                e.stopPropagation()
+                onDBRemove?.()
+              }}
+              className={ClassName.circleButton(3)}
+              name="park-delete"
+            />
+          )}
+        </Content>
+      )}
     </Content>
   )
 }

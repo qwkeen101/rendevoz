@@ -33,8 +33,11 @@ const AnimatePopover: FC<PropsWithChildren<AnimatePopoverProps>> = ({
   disableNudge = false,
   position,
   parentElement = document.body,
+  boundaryElement = document.body,
+  boundaryInset = 40,
   innerRef,
   contentDraggable,
+  clickOutsideCapture = true,
   containerStyle = {
     borderRadius: '8px',
     zIndex: String(Zindexes.PopupMenu)
@@ -95,10 +98,13 @@ const AnimatePopover: FC<PropsWithChildren<AnimatePopoverProps>> = ({
     if (e.path?.some(i => i instanceof HTMLElement && i.getAttribute('data-disable-close-popover') === 'true')) {
       return
     }
-    onClickOutside?.(e)
-    if (visible === undefined) {
-      setInnerVisible(false)
-    }
+    setTimeout(() => {
+      if (e.defaultPrevented) return
+      onClickOutside?.(e)
+      if (visible === undefined) {
+        setInnerVisible(false)
+      }
+    })
   }
   const realParent = parentElement === null || parentElement === undefined ? document.body : parentElement
 
@@ -106,12 +112,15 @@ const AnimatePopover: FC<PropsWithChildren<AnimatePopoverProps>> = ({
     return position ? (
       hasPosHelperPopoverVisible && (
         <Popover
+          clickOutsideCapture={clickOutsideCapture}
           {...rest}
           containerStyle={containerStyle}
           parentElement={realParent}
           onClickOutside={handleClickOutside}
           reposition={reposition}
           isOpen={isOpen}
+          boundaryElement={boundaryElement}
+          boundaryInset={boundaryInset}
           ref={mergedRef}
           content={({ nudgedLeft, nudgedTop }) => {
             if ((!nudgedRef.current || _.isEqual(nudgedRef.current, { left: 0, top: 0 })) && !disableNudge) {
@@ -165,9 +174,12 @@ const AnimatePopover: FC<PropsWithChildren<AnimatePopoverProps>> = ({
     ) : (
       <Popover
         {...rest}
+        boundaryElement={boundaryElement}
+        boundaryInset={boundaryInset}
         containerStyle={{ borderRadius: '8px', ...containerStyle }}
         parentElement={realParent}
         onClickOutside={handleClickOutside}
+        clickOutsideCapture={clickOutsideCapture}
         reposition={reposition}
         isOpen={isOpen}
         ref={mergedRef}

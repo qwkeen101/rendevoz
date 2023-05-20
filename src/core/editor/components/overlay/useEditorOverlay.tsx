@@ -12,6 +12,7 @@ import EditorBlockDetails from './components/EditorBlockDetails'
 import EditorSelectArea from './components/EditorSelectArea'
 import { LeftTopPosition } from '~/typings'
 import EditorLinkForm from './components/EditorLinkForm'
+import { Zindexes } from '@/consts'
 
 const AvalibleOverlayComponents = {
   emojiPicker: 'emojiPicker',
@@ -70,7 +71,7 @@ const useEditorOverlay = (editor: CustomEditor, scrollElement?: HTMLDivElement |
       case 'blockDetailsMenu':
         return ['left', 'right']
       case 'emojiPicker':
-        return ['bottom']
+        return ['bottom', 'top']
       case 'slashMenu':
         return ['bottom', 'top']
       default:
@@ -88,9 +89,7 @@ const useEditorOverlay = (editor: CustomEditor, scrollElement?: HTMLDivElement |
 
   const renderOverlay = () => (
     <AnimatePopover
-      containerClassName={css({
-        zIndex: 9999
-      })}
+      containerStyle={{ zIndex: String(Zindexes.EditorSelectionToolbar) }}
       onClickOutside={useCallback(() => {
         setPopoverVisible(false)
       }, [])}
@@ -99,6 +98,7 @@ const useEditorOverlay = (editor: CustomEditor, scrollElement?: HTMLDivElement |
       visible={popoverVisible}
       disableIntersection
       padding={20}
+      reposition
       disableNudge={overlayContent === 'emojiPicker'}
       boundaryElement={document.body}
       boundaryInset={60}

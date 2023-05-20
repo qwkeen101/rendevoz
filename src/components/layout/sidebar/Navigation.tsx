@@ -11,6 +11,9 @@ import SidebarSetting from './SidebarSetting'
 import SidebarUser from './SidebarUser'
 import Actions from '@/core/Actions'
 import SidebarSearch from './SidebarSearch'
+import classNames from 'classnames'
+import { css } from '@emotion/css'
+import FontSize from '@/consts/font'
 
 const variants = {
   open: {
@@ -25,7 +28,14 @@ const Navigation = ({ hovered }: { hovered: boolean }) => {
   return (
     <>
       <motion.ul
-        className={styles.list}
+        className={classNames(
+          styles.list,
+          css({
+            '*': {
+              fontSize: FontSize['13px']
+            }
+          })
+        )}
         style={
           hovered
             ? {
@@ -44,11 +54,8 @@ const Navigation = ({ hovered }: { hovered: boolean }) => {
         <SidebarSearch />
         <SidebarSetting />
         {/* <GlobalPocket>{urls => <SidebarPocket urls={urls} />}</GlobalPocket> */}
-        <Content flex alignItems="center" style={{ padding: '0px 4px 0px 4px', marginTop: 20 }}>
-          {t('sidebar.pinned')}
-        </Content>
         <SidebarPinned />
-        <Content flex column style={{ overflow: 'hidden', padding: 4, margin: -4, marginTop: 10 }}>
+        <Content flex column style={{ overflow: 'hidden', padding: 4, margin: -4, marginTop: 10, flex: 1 }}>
           <SidebarCollection />
         </Content>
       </motion.ul>

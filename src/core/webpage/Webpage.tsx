@@ -2,9 +2,9 @@ import { Content, Icon, Image, Tooltip } from '@/components'
 import { MetaStore, NoteStore, ObjectStore, globalStore } from '@/stores'
 import { objectIdToMetaObjectIdMapAtom } from '@/stores/meta.store'
 import Id from '@/utils/id'
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { CSSProperties, useEffect, useMemo, useRef, useState } from 'react'
 import { Descendant } from 'slate'
-import { CustomEditor, IWebpage, WebpageInstance } from '~/typings'
+import { CustomEditor, IWebpage, MetaObject, WebpageInstance } from '~/typings'
 import WebpageEditor from '../editor/WebpageEditor'
 import { WebpageInnerRef } from './WebpageCore'
 import { WebpageCore } from './WebpageCore'
@@ -20,6 +20,9 @@ import ClassName from '@/styles/classNames'
 import { Provider } from 'jotai'
 import SidebarToolbar from '@/scenes/editor/HoverOutline'
 import FontSize from '@/consts/font'
+import { GlobalTranslateInstance } from '../global/GlobalTranslatePanel'
+import { captureWebpage, saveImageLocally } from '@/utils/img'
+import { GlobalSearchInstance } from '../global/GlobalSearchPanel'
 const parseHTMLtoSlateDescandants = (
   html: string
 ):
@@ -44,11 +47,21 @@ const parseHTMLtoSlateDescandants = (
 const WebpagePage = ({
   initialWebpageId,
   onWebpageChange,
-  onWebpageInitialized
+  onWebpageInitialized,
+  onTitleChange,
+  initialUrl: externalInitialUrl,
+  navigationStyle,
+  webpageFrom,
+  userAgent
 }: {
-  initialWebpageId: number
+  initialUrl?: string
+  initialWebpageId?: number
+  onTitleChange?: (title: string) => void
   onWebpageChange?: (newWebpageDetails: { webpageId: number }) => void
   onWebpageInitialized?: (instance: WebpageInstance) => void
+  navigationStyle?: CSSProperties
+  webpageFrom?: MetaObject['fromObject']
+  userAgent?: string
 }) => {
   const initializedFunctionRef = useRef<(i: CustomEditor) => void>()
   const [value, setValue] = useState<Descendant[]>()
@@ -89,19 +102,39 @@ const WebpagePage = ({
       }
     })
   }
+  webpageInstance.changeUrl = url => {
+    setWebpageState(s => ({ ...s, navigationUrl: url }))
+    coreRef.current?.navigateTo(url)
+  }
 
   useEffect(() => {
-    ObjectStore('webpage')
-      .getOneById(initialWebpageId)
-      .then(webpage => {
-        setWebpageState(s => ({
-          ...s,
-          initialUrl: webpage?.url,
-          currentWebpage: webpage,
-          navigationUrl: webpage?.url,
-          showReaderMode: !!webpage?.readerMode
-        }))
-      })
+    if (initialWebpageId) {
+      ObjectStore('webpage')
+        .getOneById(initialWebpageId)
+        .then(webpage => {
+          setWebpageState(s => ({
+            ...s,
+            initialUrl: webpage?.url,
+            currentWebpage: webpage,
+            navigationUrl: webpage?.url,
+            showReaderMode: !!webpage?.readerMode
+          }))
+        })
+    } else if (externalInitialUrl) {
+      setWebpageState(s => ({
+        ...s,
+        initialUrl: externalInitialUrl,
+        navigationUrl: externalInitialUrl,
+        currentWebpage: {
+          id: Id.getId(),
+          createdAt: Date.now(),
+          updatedAt: Date.now(),
+          specType: 'webpage',
+          title: webpageState.title || 'Unnamed Webpage'
+        },
+        showReaderMode: false
+      }))
+    }
   }, [])
 
   const saveNote = (value: Descendant[]) => {
@@ -157,13 +190,18 @@ const WebpagePage = ({
 
   const { showReaderMode, loaded, navigationUrl, editorId, currentWebpage, initialUrl, title, faviconUrl } = webpageState
   const coreRef = useRef<WebpageInnerRef>()
-
+  webpageInstance.webview = coreRef.current
   useEffect(() => {
     // delete temp note when url change
     if (currentWebpage?.tempNoteId) {
       ObjectStore('note').deleteOneById(currentWebpage.tempNoteId, { silent: true, force: true })
     }
     if (navigationUrl !== initialUrl && navigationUrl && navigationUrl.length) {
+      const navigationUrlUrl = new URL(navigationUrl)
+      const initialUrlUrl = new URL(initialUrl || '')
+      if (navigationUrlUrl.pathname === initialUrlUrl.pathname) {
+        return
+      }
       setWebpageState(s => ({
         ...s,
         showReaderMode: false,
@@ -172,10 +210,11 @@ const WebpagePage = ({
           specType: 'webpage',
           title: webpageState.title || '',
           createdAt: Date.now(),
-          updatedAt: Date.now()
+          updatedAt: Date.now(),
+          url: navigationUrl
         }
       }))
-    } else if (navigationUrl === initialUrl) {
+    } else if (navigationUrl === initialUrl && initialWebpageId) {
       ObjectStore('webpage')
         .getOneById(initialWebpageId)
         .then(obj => {
@@ -183,6 +222,11 @@ const WebpagePage = ({
         })
     }
   }, [navigationUrl])
+  useEffect(() => {
+    if (title) {
+      onTitleChange?.(title)
+    }
+  }, [title])
 
   useEffect(() => {
     if (currentWebpage) {
@@ -199,7 +243,8 @@ const WebpagePage = ({
         }
       }
       onWebpageChange?.({
-        webpageId: currentWebpage?.id
+        webpageId: currentWebpage.id,
+        ...currentWebpage
       })
     }
   }, [currentWebpage])
@@ -252,15 +297,24 @@ const WebpagePage = ({
           !realLoaded ? (
             <Icon size={16} name="park-loading-four" spin containerStyle={{ padding: 1 }} />
           ) : faviconUrl ? (
-            <Image src={faviconUrl} width={18} />
+            <Image src={faviconUrl} width={16} />
           ) : (
             'park-web-page'
           )
         }
       />
       <WebpageNavigation
-        on={event => {
+        style={navigationStyle}
+        on={async event => {
           switch (event.action) {
+            case 'zoom in': {
+              coreRef.current?.zoomIn()
+              break
+            }
+            case 'zoom out': {
+              coreRef.current?.zoomOut()
+              break
+            }
             case 'stop':
               coreRef.current?.stop()
               break
@@ -291,6 +345,17 @@ const WebpagePage = ({
               setWebpageState(s => ({ ...s, showReaderMode: false }))
               break
             case 'saveAsMetaObject': {
+              let coverImgSrc: string | undefined = undefined
+              if (!showReaderMode) {
+                const webcontentId = await coreRef.current?.getId()
+                if (webcontentId) {
+                  const dataUrl = (await captureWebpage(webcontentId)).data
+                  if (dataUrl) {
+                    coverImgSrc = (await saveImageLocally(Id.getStrId(), dataUrl, false)).data
+                  }
+                }
+              }
+
               if (currentWebpage?.tempNoteId) {
                 ObjectStore('webpage')
                   .addOneWithMeta(
@@ -302,17 +367,15 @@ const WebpagePage = ({
                       noteId: currentWebpage.tempNoteId
                     },
                     {
-                      showMetaModal: true
+                      showMetaModal: true,
+                      currentMeta: {
+                        fromObject: webpageFrom,
+                        coverImgSrc
+                      }
                     }
                   )
                   .then(({ one, meta }) => {
-                    MetaStore.updateMetaObject({
-                      id: meta.id,
-                      from: {
-                        icon: one.favicon,
-                        name: one.url ? new URL(one.url).hostname : undefined
-                      }
-                    })
+                    console.log(one)
                     setWebpageState(s => ({ ...s, currentWebpage: one }))
                     if (one.noteId) {
                       ObjectStore('note').updateOne({ id: one.noteId, metaId: meta.id }, { silent: true })
@@ -320,6 +383,7 @@ const WebpagePage = ({
                   })
                 return
               }
+
               ObjectStore('webpage')
                 .addOneWithMeta(
                   {
@@ -329,17 +393,14 @@ const WebpagePage = ({
                     id: currentWebpage?.id
                   },
                   {
-                    showMetaModal: true
+                    showMetaModal: true,
+                    currentMeta: {
+                      fromObject: webpageFrom,
+                      coverImgSrc
+                    }
                   }
                 )
-                .then(({ one, meta }) => {
-                  MetaStore.updateMetaObject({
-                    id: meta.id,
-                    from: {
-                      icon: one.favicon,
-                      name: one.url ? new URL(one.url).hostname : undefined
-                    }
-                  })
+                .then(({ one }) => {
                   setWebpageState(s => ({ ...s, currentWebpage: one }))
                 })
               break
@@ -363,9 +424,11 @@ const WebpagePage = ({
         }}
       />
       <WebpageCore
+        webpageId={currentWebpage?.id}
         innerRef={coreRef}
         showReaderMode={showReaderMode}
         url={webpageState.initialUrl}
+        userAgent={userAgent}
         onUrlChange={({ url }) => {
           if (url !== navigationUrl) {
             setWebpageState(s => ({ ...s, navigationUrl: url }))
@@ -378,7 +441,8 @@ const WebpagePage = ({
           setWebpageState(s => ({ ...s, loaded: true }))
         }}
         onFaviconUpdated={({ favicons }) => {
-          setWebpageState(s => ({ ...s, faviconUrl: favicons[favicons.length - 1] }))
+          const favicon = favicons[favicons.length - 1]
+          setWebpageState(s => ({ ...s, faviconUrl: favicon }))
         }}
         onTitleChange={({ title }) => {
           setWebpageState(s => ({ ...s, title }))
@@ -425,7 +489,7 @@ const WebpagePage = ({
                 webpageInstance.editor = e
               }}
               onChange={v => setValue(v)}
-              showToolbar={currentWebpage.tempNoteId ? false : currentWebpage.noteId ? true : false}
+              showToolbar={currentWebpage.tempNoteId || currentWebpage.noteId ? (currentWebpage.noteId ? true : false) : false}
               onHighlightDrag={(highlightId, editor) => {
                 const editorNode = ReactEditor.toDOMNode(editor, editor)
                 const highlightTextContent = Array.from(editorNode.querySelectorAll(`[data-highlight="${highlightId}"]`)).reduce(
@@ -443,6 +507,29 @@ const WebpagePage = ({
                 }
                 GlobalDragOverlayInstance.addDragElements?.(<DraggingElement text="Drop to add webpage label" />)
                 GlobalDragOverlayInstance.startDrag?.()
+              }}
+              onTranslate={(text, id, e) => {
+                GlobalTranslateInstance.open?.({
+                  e,
+                  query: text,
+                  source: {
+                    type: 'webpage',
+                    objectId: currentWebpage.id,
+                    blockId: id
+                  }
+                })
+              }}
+              onSearch={(text, id, e, editor) => {
+                GlobalSearchInstance.open?.({
+                  e,
+                  query: text,
+                  from: {
+                    type: 'webpage',
+                    blockId: id,
+                    selectedText: text,
+                    metaId: globalStore.get(objectIdToMetaObjectIdMapAtom)?.get(currentWebpage.id)
+                  }
+                })
               }}
               title={
                 <Content

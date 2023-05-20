@@ -66,7 +66,19 @@
         "ocr": "OCR",
         "close": "关闭",
         "download": "下载",
-        "add as object": "添加为实体"
+        "add as object": "添加为实体",
+        "selected text": "选中的文字",
+        "total objects": "实体数量",
+        "local file": "本地文件",
+        "file path": "文件路径",
+        "choose one file": "选择一个文件",
+        "files": "文件",
+        "records": "记录",
+        "labels": "标注",
+        "global graph": "全局关系图",
+        "partial graph": "局部关系图",
+        "inbound links": "入链",
+        "outbound links": "出链"
     },
     "dock": {
         "close": "关闭标签页",
@@ -186,7 +198,9 @@
         "order-list-item": "有序列表",
         "make object inline": "使实体成为行内元素",
         "link": "链接",
-        "code": "代码"
+        "code": "代码",
+        "math": "数学公式",
+        "input math formula": "请输入公式"
     },
     "settings": {
         "appearance": "外观",
@@ -234,7 +248,17 @@
         "background blur": "背景模糊度",
         "dark mode": "黑暗模式",
         "editor settings": "编辑器设置",
-        "object auto become inline when dragged into editor": "实体在拖入编辑器中后自动转为行内元素"
+        "object auto become inline when dragged into editor": "实体在拖入编辑器中后自动转为行内元素",
+        "open translate panel": "打开翻译面板",
+        "object settings": "实体设置",
+        "enable drop auto generate object": "允许自动生成拖拽出的实体",
+        "default search engine": "默认搜索引擎",
+        "google": "谷歌",
+        "google scholar": "谷歌学术",
+        "wikipedia": "维基百科",
+        "vocabulary": "vocabulary",
+        "baidu": "百度",
+        "bing": "必应"
     },
     "form": {
         "choose file": "Choose file",
@@ -303,5 +327,35 @@
         "recent view": "最近浏览",
         "earliest view": "最早浏览",
         "most related": "最多相关"
+    },
+    "translate": {
+      "show original": "显示原文",
+      "translate panel": "翻译面板",
+      "double row layout": "双行布局",
+      "history": "历史记录",
+      "original text": "原文",
+      "translated text": "译文",
+      "show this translate result": "显示此条翻译结果"
+    },
+    "graph": {
+      "path start node": "路经起始节点",
+      "path end node": "路径最终节点",
+      "choose start node on graph": "在节点图上选择起始节点",
+      "choose end node on graph": "在节点图上选择最终节点",
+      "total paths": "全部路径数",
+      "no path found": "未找到正向路径",
+      "switch start and end nodes": "切换起始与最终节点",
+      "clear paths": "清除路径",
+      "show all paths": "显示全部路径",
+      "show shortest path": "显示最短路径",
+      "max path length": "最长路径长度（经过节点数）",
+      "pin on graph": "在图上固定",
+      "unpin": "取消固定",
+      "full screen graph": "全屏化节点图",
+      "show more related nodes": "显示其他{{num}}个相连实体",
+      "found paths from": "共找到{{num}}条路径来自于",
+      "shortest path length": "最短路径长度",
+      "longest path length": "最长路径长度",
+      "total reverse paths": "全部反向路径数"
     }
 }

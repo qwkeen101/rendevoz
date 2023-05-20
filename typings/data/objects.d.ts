@@ -1,5 +1,6 @@
 // TODO: Migrate all object types to IObject: PDF, PDFLABEL, NOTE, WHITEBOARD....
 
+import { Box } from '../common'
 import { IBase } from './base'
 
 type IObject = IWebpage | IAudio
@@ -28,17 +29,20 @@ export interface INoteLabel extends IBase {
 export interface IWebpageLabel extends IBase {
   specType: 'webpageLabel'
   webpageId: number
-  highlightId: number
+  highlightId?: number
+  selectedText?: string
 }
 export interface IImage extends IBase {
   specType: 'image'
   imageUrl: string
   ocrResult?: string
+  excalidrawUrl?: string
   from?:
     | {
         type: 'pdf'
         pdfId: number
         pages?: number[]
+        rect?: Box
       }
     | {
         type: 'note'
@@ -49,4 +53,10 @@ export interface INoteBlock extends IBase {
   blockId: number
   noteId: number
   specType: 'noteBlock'
+}
+
+export interface ILocalFile extends IBase {
+  specType: 'localFile'
+  fileUrl: string
+  fileName: string
 }

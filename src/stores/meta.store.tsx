@@ -1,21 +1,20 @@
 import { Notification } from '@/components'
 import useDb from '@/hooks/stores/useDb'
-import ClassName from '@/styles/classNames'
 import Id from '@/utils/id'
 import { atom } from 'jotai/vanilla'
 import { toast } from 'react-hot-toast'
 import { MetaLink, MetaObject } from '~/typings/data'
 import BaseStore, { initializeLocalStore } from './base.store'
-import { globalStore, ObjectStore } from '.'
-import { TypeToTypeName } from '@/core'
+import { globalStore, MetaStore, ObjectStore } from '.'
+import { SimpleObject } from '@/core'
 import { IStoreDeprecated } from './store.type'
 import getSetting from '@/core/setting/getSetting'
 import { createDraft, finishDraft } from 'immer'
 import { debounce } from 'lodash'
-import { normalizeOldCollections, normalizeOldObjectsToNewObjects } from './oldItemsMove'
 import { useMemo } from 'react'
 import { selectAtom } from 'jotai/utils'
 import { useGlobalAtomValue } from '@/hooks'
+import { getUser } from '@/services/login.service'
 
 export const metaObjectsAtom = atom<Map<number, MetaObject>>(new Map())
 
@@ -157,6 +156,8 @@ export const handleMetaLinksChange = () => {
   const undeletedLinksSet = prevIndex?.undeletedLinksSet || new Set()
   const sourceIdToLinkIdsMap = new Map(prevIndex?.sourceIdToLinkIdsMap)
   const targetIdToLinkIdMap = new Map(prevIndex?.targetIdToLinkIdMap)
+  const sourceIdToTargetIdsMap = prevIndex?.sourceIdToTargetIdsMap || new Map<number, Set<number>>()
+  const targetIdToSourceIdsMap = prevIndex?.targetIdToSourceIdsMap || new Map<number, Set<number>>()
   const newMetaLinks = globalStore.get(metaLinksAtom)
   const relatedIdsMapDraft = createDraft(prevIndex?.relatedIdsMap || new Map<number, Set<number>>())
 
@@ -174,6 +175,8 @@ export const handleMetaLinksChange = () => {
     if (link.deleted) {
       sourceIdToLinkIdsMap.get(sourceId)?.delete(id)
       targetIdToLinkIdMap.get(targetId)?.delete(id)
+      sourceIdToTargetIdsMap.get(sourceId)?.delete(targetId)
+      targetIdToSourceIdsMap.get(targetId)?.delete(sourceId)
       relatedIdsMapDraft.get(sourceId)?.delete(targetId)
       relatedIdsMapDraft.get(targetId)?.delete(sourceId)
       return
@@ -194,6 +197,16 @@ export const handleMetaLinksChange = () => {
     } else {
       sourceIdToLinkIdsMap.set(sourceId, new Set([id]))
     }
+    if (sourceIdToTargetIdsMap.has(sourceId)) {
+      sourceIdToTargetIdsMap.get(sourceId)?.add(targetId)
+    } else {
+      sourceIdToTargetIdsMap.set(sourceId, new Set([targetId]))
+    }
+    if (targetIdToSourceIdsMap.has(targetId)) {
+      targetIdToSourceIdsMap.get(targetId)?.add(sourceId)
+    } else {
+      targetIdToSourceIdsMap.set(targetId, new Set([sourceId]))
+    }
     if (targetIdToLinkIdMap.has(targetId)) {
       targetIdToLinkIdMap.get(targetId)?.add(id)
     } else {
@@ -205,7 +218,9 @@ export const handleMetaLinksChange = () => {
     sourceIdToLinkIdsMap,
     targetIdToLinkIdMap,
     relatedIdsMap: finishDraft(relatedIdsMapDraft),
-    oldLinks: newMetaLinks
+    oldLinks: newMetaLinks,
+    sourceIdToTargetIdsMap,
+    targetIdToSourceIdsMap
   })
 }
 
@@ -215,6 +230,8 @@ export const indexedMetaLinksAtom = atom<{
   relatedIdsMap: Map<number, Set<number>>
   oldLinks: Map<number, MetaLink>
   undeletedLinksSet: Set<MetaLink>
+  sourceIdToTargetIdsMap: Map<number, Set<number>>
+  targetIdToSourceIdsMap: Map<number, Set<number>>
 } | null>(null)
 
 export const orderedMetaObjectsAtom = atom(get => orderedData(get(metaObjectsAtom)))
@@ -233,6 +250,8 @@ export const objectIdToMetaObjectIdMapAtom = atom(get => get(indexedMetaObjectsA
 
 export const tagToMetaObjectIdsMapAtom = atom(get => get(indexedMetaObjectsAtom)?.tagToMetaObjectIdsMap)
 
+export const MAX_META_NUMBER = 300
+
 const createMetaStore = () => {
   const { get, initBaseObject, dispatch } = BaseStore
   const metaObjectDb = useDb('metaObjects')
@@ -246,6 +265,7 @@ const createMetaStore = () => {
   const localObjectStore: Pick<IStoreDeprecated<MetaObject>, 'addOne' | 'updateOne' | 'deleteOneById' | 'getAll'> = {
     updateOne: (one, silent) => {
       return initializeObjectStore.updateOne(obj => {
+        console.log(obj)
         if (obj.objectId && one.name) {
           switch (obj.type) {
             case 'pdf': {
@@ -263,22 +283,53 @@ const createMetaStore = () => {
           }
         }
         shouldToastObject(silent) &&
-          toast.success(
+          toast.custom(
             <Notification
-              title="Object successfully updated!"
-              content={<div className={ClassName.description()}>Object Name: {one.name}</div>}
+              content={
+                <div style={{ width: 250, overflow: 'hidden' }}>
+                  <SimpleObject
+                    iconName="park-correct"
+                    iconColor="#82CD47"
+                    renderFrom={false}
+                    renderDescription={false}
+                    metaObjectId={obj.id}
+                    iconTheme="filled"
+                    showIcon
+                  />
+                </div>
+              }
             />
           )
       })(one, silent)
     },
     addOne: async (one, silent) => {
+      const user = getUser()
+      const allMetaNum = globalStore.get(undeletedMetaObjectsAtom).length
+      if ((!user || !user.premiumEndDate || user.premiumEndDate < Date.now()) && allMetaNum > MAX_META_NUMBER) {
+        toast.error('Exceeding maximum number of objects limit!')
+        return Promise.reject()
+      }
+      if (user?.disabled) {
+        toast.error('Your account has been disabled!')
+        return Promise.reject()
+      }
+
       if (one.objectId) {
         const checkAlreadyHasMeta = await getMetaObjectByObjectId(one.objectId)
         if (checkAlreadyHasMeta !== undefined) {
           return Promise.resolve(checkAlreadyHasMeta)
         }
       }
+
       const initedMetaObject = initBaseObject(one)
+
+      if (one.fromObject) {
+        const link: Partial<MetaLink> = {
+          sourceId: one.fromObject.metaId,
+          targetId: initedMetaObject.id
+        }
+        MetaStore.addMetaLink(link, true)
+      }
       if (!initedMetaObject.name) {
         let initedName = 'Unnamed Object'
         switch (initedMetaObject.type) {
@@ -326,13 +377,19 @@ const createMetaStore = () => {
           }
         }
         shouldToastObject(silent) &&
-          toast.success(
+          toast.custom(
             <Notification
-              title="Object successfully added!"
               content={
-                <div className={ClassName.description()}>
-                  <div>Name: {initedMetaObject.name}</div>
-                  <div style={{ textTransform: 'capitalize' }}>Type: {TypeToTypeName[initedMetaObject.type || 'normal']}</div>
+                <div style={{ width: 250, overflow: 'hidden' }}>
+                  <SimpleObject
+                    iconName="park-correct"
+                    iconColor="#82CD47"
+                    renderFrom={false}
+                    renderDescription={false}
+                    metaObjectId={obj.id}
+                    showIcon
+                    iconTheme="filled"
+                  />
                 </div>
               }
             />

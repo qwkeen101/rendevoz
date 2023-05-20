@@ -16,6 +16,7 @@ const WhiteboardNodesAtom = atom(
     const whiteboard = get(WhiteboardAtom)
     const nextItem = typeof update === 'function' ? update(get(WhiteboardNodesAtom) || new Map()) : update
     if (whiteboard) {
+      console.log(nextItem)
       ObjectStore('whiteboard').updateOne(
         {
           id: whiteboard.id,

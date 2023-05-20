@@ -24,7 +24,7 @@ const NoteNode: FC<InnerNodeProps> = ({ node: n, onNameChange }) => {
         onTitleChange={onNameChange}
         showBlockHandle={false}
         titleContainerStyle={{
-          padding: '5% 5% 20px',
+          padding: '4% 4% 1%',
           maxWidth: '100%',
           width: '100%'
         }}
@@ -33,8 +33,8 @@ const NoteNode: FC<InnerNodeProps> = ({ node: n, onNameChange }) => {
         }}
         compact
         innerEditorStyle={{
-          paddingRight: '5%',
-          paddingLeft: '5%',
+          paddingRight: '4%',
+          paddingLeft: '4%',
           width: '100%'
         }}
         readonly

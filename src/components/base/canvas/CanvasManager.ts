@@ -4,6 +4,7 @@ import { Stage } from 'konva/lib/Stage'
 import { throttle } from 'lodash'
 import CustomLine from './CustomLine'
 import FreeDrawingManager from './FreeDrawingManager'
+import NodeManager from './NodeManager'
 
 class CanvasManager {
   private drawPoint = {
@@ -17,7 +18,7 @@ class CanvasManager {
   private lastLine?: CustomLine
   public freeDrawingManager = new FreeDrawingManager()
   public mode: 'draw' | 'move' | 'shape' = 'draw'
-
+  public nodeManager = new NodeManager()
   public setMode = (mode: 'draw' | 'move' | 'shape') => {
     this.mode = mode
     if (mode === 'move') {
@@ -169,6 +170,8 @@ class CanvasManager {
     layer.add(image)
     image.zIndex(0)
     const ctx = canvas.getContext('2d')
+    this.nodeManager.stage = stage
+    this.nodeManager.layer = layer
     if (ctx) {
       ctx.strokeStyle = 'black'
       ctx.lineJoin = 'round'

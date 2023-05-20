@@ -110,6 +110,13 @@ export const useCreateObject = (options?: { positions: AnimatePopoverProps['posi
                     })
                 }}
               />
+              <Button.IconButton
+                icon="park-log"
+                text={t('general.local file')}
+                onClick={() => {
+                  ObjectStore('localFile').addOneWithMeta({}, { showMetaModal: true })
+                }}
+              />
             </WithBorder>
           }
           onClickOutside={() => {

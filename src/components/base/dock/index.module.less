@@ -24,7 +24,7 @@
 }
 .tab{
     -webkit-app-region: no-drag;
-    max-width: 200px;
+    max-width: 240px;
     width: 100%;
     display: flex;
     align-items: center;
@@ -39,18 +39,20 @@
     z-index: 1000 !important;
     transition: background 0.1s ease;
     background: rgba(0,0,0,0.07);
+    color: var(--font-tertiary);
     &:hover{
         color: var(--font-primary);
     }
     &.active{
         background: transparent !important;
         z-index: 1001 !important;
+        color: var(--font-primary)
     }
 }
 .title{
-    padding-right: 1.57rem;
+    padding-right: 0.9rem;
     font-family: Muli;
-    font-size: 1rem;
+    font-size: 0.9rem;
     >div{
         text-align: left;
         overflow: hidden;

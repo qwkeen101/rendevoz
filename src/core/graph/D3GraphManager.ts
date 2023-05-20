@@ -11,6 +11,7 @@ import produce from 'immer'
 import createPanZoom, { PanZoom } from 'panzoom'
 
 class D3GraphManager {
+  public isChoosingNode: false | 'start' | 'end' = false
   public container: d3.Selection<HTMLElement, unknown, null, any> | null = null
   private transform = null
   public d3Simulation: d3.Simulation<d3.SimulationNodeDatum, undefined> | null = null
@@ -36,7 +37,7 @@ class D3GraphManager {
   public transformScale = 1
   private ID_TO_NODE_ELEMENT_MAP = new Map<number, SVGElement>()
   private ID_TO_EDGE_ELEMENT_MAP = new Map<number, SVGElement>()
-  private ID_TO_EDGE_LABEL_ELEMENT_MAP = new Map<number, SVGElement>()
+  public ID_TO_EDGE_LABEL_ELEMENT_MAP = new Map<number, SVGElement>()
   public ID_TO_EDGE_FUNCTION_MAP = new Map<
     number,
     {
@@ -46,10 +47,13 @@ class D3GraphManager {
 
   public pinnedNodesIdsSet = new Set<number>()
 
-  private getRadius = (type: string) => {
+  public getRadius = (type: string) => {
     switch (type) {
       case 'note':
       case 'pdf':
+      case 'webpage':
+      case 'localFile':
+      case 'whiteboard':
         return 300
       default:
         return 150
@@ -90,6 +94,7 @@ class D3GraphManager {
     this.originEdges = null
     this.originNodes = null
     this.d3Simulation = null
+    this.moved = false
   }
   public registerNodes = (nodes: GraphNode[]) => {
     this.originNodes = structuredClone(nodes)
@@ -182,6 +187,7 @@ class D3GraphManager {
         .tick(300)
         .on('tick', this.ticked)
         .on('end', () => {
+          this.d3Simulation?.force('center', d3.forceCenter())
           setTimeout(() => {
             this.ID_TO_EDGE_FUNCTION_MAP.forEach(i => i.drawEdge())
             this.ID_TO_EDGE_LABEL_ELEMENT_MAP.forEach(i => i.removeAttribute('opacity'))
@@ -192,13 +198,22 @@ class D3GraphManager {
             node && this.panzoom?.moveTo(-node.x + bound?.width / 2, -node.y + bound?.height / 2)
             this.moved = true
           }
-
+          this.originNodes?.forEach(i => {
+            i.fx = null
+            i.fy = null
+          })
           this.setNodes?.(nodes =>
             produce(nodes, draft => {
               draft?.forEach(n => {
                 const thisNode = this.nodesMap?.get(n.id)
                 n.x = thisNode?.x
                 n.y = thisNode?.y
+                if(n.fx){
+                  n.fx = null
+                }
+                if(n.fy){
+                  n.fy = null
+                }
               })
             })
           )
@@ -230,7 +245,7 @@ class D3GraphManager {
       })
   }
 
-  private ticked = () => {
+  public ticked = () => {
     this.d3Simulation?.tick(2)
     if (this.originEdges && this.originNodes) {
       this.originEdges.forEach(edge => {

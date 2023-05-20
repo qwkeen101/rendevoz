@@ -90,6 +90,7 @@ const useWhiteboardSelect = (containerRef: MutableRefObject<HTMLElement | null>)
         const selectedBoxes = Array.from(flow.ID_TO_NODE_ELEMENT_MAP.entries())
           .map(([k, v]) => [k, v.checkSelectIntersection()])
           .filter(i => i[1]) as [id: number, box: Box][]
+
         if (selectedBoxes.length > 0) {
           let minX = Number.MAX_VALUE,
             minY = Number.MAX_VALUE,

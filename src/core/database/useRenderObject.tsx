@@ -5,7 +5,7 @@ import ClassName from '@/styles/classNames'
 import Id from '@/utils/id'
 import { css } from '@emotion/css'
 import { selectAtom } from 'jotai/utils'
-import { CSSProperties, useMemo } from 'react'
+import { CSSProperties, ReactNode, memo, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Content, Icon, IconWithPopover, Image } from '@/components'
 import { Editor } from '../editor/Editor'
@@ -14,33 +14,26 @@ import { ObjectActionPopover, TypeToTypeName } from './card/DatabaseCard'
 import { ObjectTag, Whiteboard } from '@/core'
 import DateFormat from '@/utils/dateFormat'
 import getEmoji from '@/utils/emoji'
-import { globalStore } from '@/stores'
-import { atom } from 'jotai'
-import { getIcon } from '@/components/layout/sidebar/items/SidebarObjectItem'
-import Colors from '@/consts/colors'
 import FromRenderer from './FromRenderer'
+import WebpageSourceRenderer from './WebpageSourceRenderer'
+import Colors from '@/consts/colors'
+import { TFunction } from 'i18next'
+import { MetaObject, Size } from '~/typings'
+import { GlobalImagePreviewerInstance } from '../global/GlobalImagePreviewer'
 
-const useRenderObject = (options: { metaObjectId: number }) => {
-  const { metaObjectId } = options
-  const { metaObjectAtom, relatedSetAtom, fromAtom } = useMemo(() => {
-    const metaObjectAtom = selectAtom(metaObjectsAtom, m => m.get(metaObjectId))
-    const relatedSetAtom = selectAtom(relatedMetaObjectsMapAtom, m => m.get(metaObjectId))
-    const meta = globalStore.get(metaObjectsAtom).get(metaObjectId)
-    const fromAtom = meta?.from?.metaId ? selectAtom(metaObjectsAtom, m => m.get(meta.from?.metaId)) : atom(null)
-    return {
-      metaObjectAtom,
-      fromAtom,
-      relatedSetAtom
+const clazzName = css([
+  {
+    cursor: 'pointer',
+    fontWeight: 500,
+    textTransform: 'none',
+    ':hover': {
+      textDecoration: 'underline'
     }
-  }, [metaObjectId])
-
-  const metaObject = useGlobalAtomValue(metaObjectAtom)
-  const relatedSet = useGlobalAtomValue(relatedSetAtom)
-  const fromMeta = useGlobalAtomValue(fromAtom)
-  const uniqueId = useMemo(() => Id.getStrId(), [])
-
-  const { t } = useTranslation()
-  const renderTags = ({
+  },
+  ClassName.ellipsisFont(2)
+])
+const _renderTags = (
+  {
     gap = 4,
     flexWrap = 'wrap',
     containerStyle,
@@ -61,53 +54,57 @@ const useRenderObject = (options: { metaObjectId: number }) => {
     showCreatedAt?: boolean
     showViewAt?: boolean
     maxTagsToShow?: number
-  }) => {
-    return (
-      <Content
-        flex
-        gap={gap}
-        style={{
-          flexWrap,
-          fontFamily: 'Muli',
-          ...containerStyle
-        }}
-        className={containerClassName}
-      >
+  },
+  t: TFunction<'translation', undefined, 'translation'>,
+  relatedNum: number,
+  metaObject?: MetaObject
+) => {
+  return (
+    <Content
+      flex
+      gap={gap}
+      style={{
+        flexWrap,
+        fontFamily: 'Muli',
+        ...containerStyle
+      }}
+      className={containerClassName}
+    >
+      <div style={{ textTransform: 'capitalize' }} className={ClassName.objectTag}>
+        {t(`general.${TypeToTypeName[metaObject?.type || 'normal']}`)}
+      </div>
+      {showCreatedAt && metaObject?.createdAt && (
+        <Content flex gap={4} style={{ textTransform: 'capitalize' }} className={ClassName.objectTag}>
+          <Icon name="park-add-one" />
+          {t('general.ago', { time: DateFormat.formatDistanceToNowStrict(metaObject?.createdAt) })}
+        </Content>
+      )}
+      {showViewAt && metaObject?.viewAt && (
+        <Content flex gap={4} style={{ textTransform: 'capitalize' }} className={ClassName.objectTag}>
+          <Icon name="park-preview-open" />
+          {t('general.ago', { time: DateFormat.formatDistanceToNowStrict(metaObject?.viewAt) })}
+        </Content>
+      )}
+      {showUpdatedAt && metaObject?.updatedAt && (
+        <Content flex gap={4} style={{ textTransform: 'capitalize' }} className={ClassName.objectTag}>
+          <Icon name="park-edit" />
+
+          {t('general.ago', { time: DateFormat.formatDistanceToNowStrict(metaObject?.updatedAt) })}
+        </Content>
+      )}
+      {relatedNum > 0 && (
         <div style={{ textTransform: 'capitalize' }} className={ClassName.objectTag}>
-          {t(`general.${TypeToTypeName[metaObject?.type || 'normal']}`)}
+          {relatedNum} {t('general.related')}
         </div>
-        {showCreatedAt && metaObject?.createdAt && (
-          <Content flex gap={4} style={{ textTransform: 'capitalize' }} className={ClassName.objectTag}>
-            <Icon name="park-add-one" />
-            {t('general.ago', { time: DateFormat.formatDistanceToNowStrict(metaObject?.createdAt) })}
-          </Content>
-        )}
-        {showViewAt && metaObject?.viewAt && (
-          <Content flex gap={4} style={{ textTransform: 'capitalize' }} className={ClassName.objectTag}>
-            <Icon name="park-preview-open" />
-            {t('general.ago', { time: DateFormat.formatDistanceToNowStrict(metaObject?.viewAt) })}
-          </Content>
-        )}
-        {showUpdatedAt && metaObject?.updatedAt && (
-          <Content flex gap={4} style={{ textTransform: 'capitalize' }} className={ClassName.objectTag}>
-            <Icon name="park-edit" />
-
-            {t('general.ago', { time: DateFormat.formatDistanceToNowStrict(metaObject?.updatedAt) })}
-          </Content>
-        )}
-        {relatedSet && relatedSet?.size > 0 && (
-          <div style={{ textTransform: 'capitalize' }} className={ClassName.objectTag}>
-            {relatedSet.size} {t('general.related')}
-          </div>
-        )}
-        {metaObject?.tags?.map(i => (
-          <ObjectTag key={i} tag={i} hideAdd hideDelete hideSize small />
-        ))}
-      </Content>
-    )
-  }
-
-  const renderTitle = ({
+      )}
+      {metaObject?.tags?.map(i => (
+        <ObjectTag key={i} tag={i} hideAdd hideDelete hideSize small />
+      ))}
+    </Content>
+  )
+}
+const _renderTitle = (
+  {
     ellipsisLine = 2,
     titleClassName = css([
       ellipsisLine ? ClassName.ellipsisFont(ellipsisLine) : undefined,
@@ -115,6 +112,7 @@ const useRenderObject = (options: { metaObjectId: number }) => {
       {
         position: 'relative',
         width: 'fit-content',
+        maxWidth: '100%',
         textDecoration: 'underline 1px rgba(0,0,0,0)',
         transition: 'text-decoration-color 0.3s ease',
         ':hover': {
@@ -123,22 +121,27 @@ const useRenderObject = (options: { metaObjectId: number }) => {
         cursor: 'pointer'
       }
     ]),
-    onTitleClick = () => Actions.navigateToTargetObject(metaObjectId),
+    onTitleClick,
     style
   }: {
     titleClassName?: string
     onTitleClick?: React.MouseEventHandler
     style?: CSSProperties
     ellipsisLine?: number
-  }) => {
-    return (
-      <div onClick={onTitleClick} style={style} className={titleClassName}>
+  },
+  metaObject?: MetaObject
+) => {
+  return (
+    <>
+      {metaObject?.type === 'webpage' && metaObject.objectId && <WebpageSourceRenderer objectId={metaObject.objectId} />}
+      <div onClick={onTitleClick} style={{ color: metaObject?.color, ...style, textTransform: 'none' }} className={titleClassName}>
         {metaObject?.name}
       </div>
-    )
-  }
-
-  const renderDescription = ({
+    </>
+  )
+}
+const _renderDescription = (
+  {
     ellipsisLine = 4,
     descriptionClassName = css([ClassName.description('1rem'), ellipsisLine ? ClassName.ellipsisFont(ellipsisLine) : undefined]),
     style
@@ -146,121 +149,147 @@ const useRenderObject = (options: { metaObjectId: number }) => {
     descriptionClassName?: string
     style?: CSSProperties
     ellipsisLine?: number
-  }) => {
-    if (metaObject?.description) {
-      return (
-        <div className={descriptionClassName} style={style}>
-          {metaObject?.description}
-        </div>
-      )
-    }
-  }
-
-  const renderImage = ({
-    width = 40,
-    height = 40,
-    ratio = 1,
-    borderRadius = 4,
-    style
-  }: {
-    width?: number
-    height?: number
-    ratio?: number
-    borderRadius?: number
-    style?: CSSProperties
-  }) => {
-    if (metaObject?.coverImgSrc) {
-      return (
-        <Image
-          preview
-          draggable={false}
-          style={{
-            borderRadius,
-            flexShrink: 0,
-            ...style
-          }}
-          className={css({ margin: 'auto' })}
-          src={metaObject.coverImgSrc || metaObject.from?.icon}
-          width={width}
-          height={height}
-          ratio={ratio}
-        />
-      )
-    }
-    if (metaObject?.icon) {
-      const emoji = getEmoji(metaObject.icon)
-      if (!emoji) return
-      return (
-        <img
-          src="data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw=="
-          style={{
-            width: width / 1.5,
-            height: height / 1.5,
-            backgroundImage: `url(${emoji.imageSrc})`,
-            backgroundPositionX: `${(emoji.x * 100) / 60}%`,
-            backgroundPositionY: `${(emoji.y * 100) / 60}%`,
-            backgroundRepeat: 'no-repeat',
-            backgroundSize: '6100% 6100%',
-            verticalAlign: '-0.1em',
-            margin: 'auto'
-          }}
-        />
-      )
-    }
-  }
-  const renderWhole = ({
-    columnGap = 3,
-    rowGap = 10,
-    titleOptions = {},
-    descriptionOptions = {},
-    tagsOptions = {},
-    imageOptions = {},
-    fromOptions = {},
-    containerClassName,
-    containerStyle,
-    containerOnClick,
-    renderOptions = {
-      renderFrom: false,
-      renderImage: true
-    }
-  }: {
-    columnGap?: number
-    rowGap?: number
-    containerClassName?: string
-    containerStyle?: CSSProperties
-    containerOnClick?: React.MouseEventHandler
-    tagsOptions?: Parameters<typeof renderTags>[0]
-    titleOptions?: Parameters<typeof renderTitle>[0]
-    imageOptions?: Parameters<typeof renderImage>[0]
-    fromOptions?: Parameters<typeof renderFrom>[0]
-    descriptionOptions?: Parameters<typeof renderDescription>[0]
-    renderOptions?: {
-      renderImage?: boolean
-      renderTitle?: boolean
-      renderTags?: boolean
-      renderDescription?: boolean
-      renderFrom?: boolean
-    }
-  }) => {
-    return (metaObject?.coverImgSrc || metaObject?.icon) && renderOptions.renderImage !== false ? (
-      <Content flex alignItems="stretch" gap={rowGap} className={containerClassName} style={containerStyle}>
-        {renderImage(imageOptions)}
-        <Content onClick={containerOnClick} flex column gap={columnGap} justifyContent="center">
-          {renderOptions?.renderTags !== false && renderTags(tagsOptions)}
-          {renderOptions?.renderTitle !== false && renderTitle(titleOptions)}
-          {renderOptions?.renderDescription !== false && renderDescription(descriptionOptions)}
-          {renderOptions?.renderFrom !== false && renderFrom(fromOptions)}
-        </Content>
-      </Content>
-    ) : (
-      <Content onClick={containerOnClick} flex column gap={columnGap} className={containerClassName} style={containerStyle}>
-        {renderOptions?.renderTags !== false && renderTags(tagsOptions)}
-        {renderOptions?.renderTitle !== false && renderTitle(titleOptions)}
-        {renderOptions?.renderDescription !== false && renderDescription(descriptionOptions)}
-        {renderOptions?.renderFrom !== false && renderFrom(fromOptions)}
-      </Content>
+  },
+  metaObject?: MetaObject
+) => {
+  if (metaObject?.description) {
+    return (
+      <div className={descriptionClassName} style={{ ...style, textTransform: 'none' }}>
+        {metaObject?.description}
+      </div>
     )
   }
+}
+
+const _renderImage = (
+  {
+    width = 50,
+    height = 50,
+    ratio = 1,
+    borderRadius = 4,
+    style,
+    minWidth,
+    renderMode = 'thumbnail'
+  }: Size & {
+    ratio?: number
+    minWidth?: number
+    borderRadius?: number
+    style?: CSSProperties
+    renderMode?: 'thumbnail' | 'whole'
+  },
+  metaObject?: MetaObject,
+  onSizeChange?: (size: Size) => void
+) => {
+  if (metaObject?.coverImgSrc) {
+    return (
+      <Image
+        preview
+        draggable={false}
+        minWidth={minWidth}
+        style={{
+          borderRadius,
+          flexShrink: 0,
+          ...style
+        }}
+        onLoad={e => {
+          const img = e.currentTarget
+          onSizeChange?.({
+            width: img.naturalWidth,
+            height: img.naturalHeight
+          })
+        }}
+        className={css({ margin: 'auto 0' })}
+        src={metaObject.coverImgSrc}
+        width={width}
+        height={height}
+        ratio={ratio}
+      />
+    )
+  }
+}
+const _renderFrom = (
+  { style, className, onFromClick }: { style?: CSSProperties; className?: string; onFromClick?: () => void },
+  metaObject?: MetaObject
+) => {
+  return <FromRenderer style={style} metaObject={metaObject} onFromClick={onFromClick} />
+}
+
+const _renderOptions = (
+  {
+    iconName = 'park-more',
+    style,
+    customNode
+  }: {
+    customNode?: ReactNode
+    style?: CSSProperties
+    iconName?: string
+  },
+  metaObject?: MetaObject
+) => {
+  return (
+    metaObject && (
+      <IconWithPopover
+        containerStyle={{
+          position: 'absolute',
+          top: 6,
+          right: 10,
+          zIndex: 10,
+          ...style
+        }}
+        closeOnContentClick
+        placement={['right', 'left']}
+        align="start"
+        padding={0}
+        name={iconName}
+        className={ClassName.circleButton(2)}
+        disableIntersection
+        content={customNode || <ObjectActionPopover metaObjectId={metaObject.id} />}
+      ></IconWithPopover>
+    )
+  )
+}
+
+const defaultRenderWholeOptions = {
+  columnGap: 3,
+  rowGap: 10,
+  renderOptions: {
+    renderFrom: false,
+    renderImage: true,
+    renderOption: false
+  }
+}
+
+const useRenderObject = (options: { metaObjectId: number }) => {
+  const { metaObjectId } = options
+  const { metaObjectAtom, relatedSetAtom } = useMemo(() => {
+    const metaObjectAtom = selectAtom(metaObjectsAtom, m => m.get(metaObjectId))
+    const relatedSetAtom = selectAtom(relatedMetaObjectsMapAtom, m => m.get(metaObjectId))
+    return {
+      metaObjectAtom,
+      relatedSetAtom
+    }
+  }, [metaObjectId])
+
+  const metaObject = useGlobalAtomValue(metaObjectAtom)
+  const relatedSet = useGlobalAtomValue(relatedSetAtom)
+
+  const uniqueId = useMemo(() => Id.getStrId(), [])
+
+  const { t } = useTranslation()
+
+  const renderTags = (options: Parameters<typeof _renderTags>[0]) => _renderTags(options, t, relatedSet?.size || 0, metaObject)
+
+  const renderTitle = (options: Parameters<typeof _renderTitle>[0]) =>
+    _renderTitle({ ...options, onTitleClick: options.onTitleClick || (() => Actions.navigateToTargetObject(metaObjectId)) }, metaObject)
+
+  const renderDescription = (options: Parameters<typeof _renderDescription>[0]) => _renderDescription(options, metaObject)
+
+  const renderImage = (options: Parameters<typeof _renderImage>[0]) => _renderImage(options, metaObject)
+
+  const renderWhole = (options: Parameters<typeof WholeRenderer>[0]['options'] = defaultRenderWholeOptions) => (
+    <WholeRenderer options={options} metaObject={metaObject} relatedNum={relatedSet?.size} />
+  )
+
   const renderExpand = ({ editorTitleStyle = { padding: '20px 10px 10px 50px' } }: { editorTitleStyle?: CSSProperties }) => {
     if (!metaObject || !metaObject.objectId) return null
     const { objectId } = metaObject
@@ -276,55 +305,8 @@ const useRenderObject = (options: { metaObjectId: number }) => {
     }
     return null
   }
-  const renderFrom = ({
-    containerStyle,
-    style,
-    className
-  }: {
-    containerStyle?: CSSProperties
-    style?: CSSProperties
-    className?: string
-  }) => {
-    if (fromMeta) {
-      const icon = getIcon(fromMeta.type)
-      return (
-        <Content flex gap={10} style={{ margin: '2px 0px 2px', ...containerStyle }} alignItems="center">
-          {icon && <Icon size={14} name={icon} />}
-          <div
-            style={{
-              color: Colors.Font.Secondary,
-              fontSize: '0.8rem',
-              textTransform: 'none',
-              ...style
-            }}
-            className={className}
-          >
-            {fromMeta.name}
-          </div>
-        </Content>
-      )
-    }
-    if (metaObject?.from) {
-      const { icon, name } = metaObject.from
-      return (
-        <Content flex gap={10} style={{ margin: '2px 0px 2px', ...containerStyle }} alignItems="center">
-          {icon && (icon.startsWith('park') ? <Icon size={14} name={icon} /> : <Image src={icon} width={14} />)}
-          <div
-            style={{
-              color: Colors.Font.Secondary,
-              fontSize: '0.8rem',
-              textTransform: 'none',
-              ...style
-            }}
-            className={className}
-          >
-            {name}
-          </div>
-        </Content>
-      )
-    }
-    return <FromRenderer metaObject={metaObject} />
-  }
+
+  const renderFrom = (options: Parameters<typeof _renderFrom>[0]) => _renderFrom(options, metaObject)
 
   const renderColumnImageWhole = (options?: Parameters<typeof renderWhole>[0]) => {
     if (!metaObject?.coverImgSrc) return renderWhole(options)
@@ -359,7 +341,9 @@ const useRenderObject = (options: { metaObjectId: number }) => {
     position = 'left',
     align = 'center',
     ...rest
-  }: { icon?: string; position?: 'left' | 'top' | 'right' | 'bottom'; align?: 'start' | 'center' | 'end' } & Partial<Parameters<typeof ObjectActionPopover>[0]>) => {
+  }: { icon?: string; position?: 'left' | 'top' | 'right' | 'bottom'; align?: 'start' | 'center' | 'end' } & Partial<
+    Parameters<typeof ObjectActionPopover>[0]
+  >) => {
     return (
       <IconWithPopover
         content={<ObjectActionPopover {...rest} metaObjectId={metaObjectId} />}
@@ -369,6 +353,52 @@ const useRenderObject = (options: { metaObjectId: number }) => {
       ></IconWithPopover>
     )
   }
+
+  const renderInline = ({ containerStyle }: { containerStyle?: CSSProperties }) => {
+    return (
+      <div style={{ display: 'flex', gap: 6, alignItems: 'baseline', ...containerStyle }}>
+        <div
+          style={{
+            borderRadius: '50%',
+            width: '1em',
+            height: '1em',
+            background: Colors.Background.Light,
+            border: `0.3em solid #6d6d6d`,
+            margin: 'auto',
+            flexShrink: 0,
+            padding: 3
+          }}
+        ></div>
+        <span
+          data-meta
+          onClick={() => {
+            metaObject?.id && Actions.navigateToTargetObject(metaObject?.id)
+          }}
+          className={clazzName}
+          style={{
+            color: metaObject?.color
+          }}
+        >
+          {metaObject?.name || 'Deleted Object'}
+        </span>
+        <div
+          style={{
+            textTransform: 'capitalize',
+            pointerEvents: 'none',
+            fontSize: 10,
+            whiteSpace: 'nowrap',
+            lineHeight: 1,
+            padding: '3px 8px',
+            margin: 'auto'
+          }}
+          className={ClassName.objectTag}
+        >
+          {t(`general.${TypeToTypeName[metaObject?.type || 'normal']}`)}
+        </div>
+      </div>
+    )
+  }
+
   return {
     renderTitle,
     renderTags,
@@ -378,8 +408,174 @@ const useRenderObject = (options: { metaObjectId: number }) => {
     renderExpand,
     renderFrom,
     renderColumnImageWhole,
-    renderPopover
+    renderPopover,
+    renderInline
   }
 }
 
+const WholeRenderer = memo(
+  ({
+    options,
+    metaObject,
+    relatedNum = 0
+  }: {
+    options: {
+      columnGap?: number
+      rowGap?: number
+      containerClassName?: string
+      containerStyle?: CSSProperties
+      containerOnClick?: React.MouseEventHandler
+      mainContainerStyle?: CSSProperties
+      tagsOptions?: Parameters<typeof _renderTags>[0]
+      titleOptions?: Parameters<typeof _renderTitle>[0]
+      imageOptions?: Parameters<typeof _renderImage>[0]
+      fromOptions?: Parameters<typeof _renderFrom>[0]
+      optionOptions?: Parameters<typeof _renderOptions>[0]
+      descriptionOptions?: Parameters<typeof _renderDescription>[0]
+      renderOptions: {
+        renderImage?: boolean
+        renderTitle?: boolean
+        renderTags?: boolean
+        renderDescription?: boolean
+        renderFrom?: boolean
+        renderOption?: boolean
+        imageMode?: 'thumbnail' | 'whole'
+      }
+    }
+    metaObject?: MetaObject
+    relatedNum?: number
+  }) => {
+    const {
+      renderOptions,
+      columnGap,
+      rowGap = 10,
+      titleOptions = {},
+      descriptionOptions = {},
+      tagsOptions = {},
+      imageOptions = {},
+      fromOptions = {},
+      optionOptions = {},
+      containerClassName,
+      containerStyle,
+      containerOnClick,
+      mainContainerStyle
+    } = options
+    const { t } = useTranslation()
+    const [imgDisplayFlexMode, setImgDisplayFlexMode] = useState<CSSProperties['flexDirection']>('row')
+    const [imgSize, setImgSize] = useState<{
+      width?: number | string
+      height?: number | string
+      ratio?: number | string
+      minWidth?: number
+    }>(
+      renderOptions.imageMode === 'whole'
+        ? { width: '100%', ratio: 0.5625, minWidth: 320 }
+        : {
+            width: 50,
+            height: 50,
+            ratio: 1
+          }
+    )
+    if (!metaObject || metaObject.deleted) return null
+    return metaObject?.coverImgSrc && renderOptions.renderImage !== false ? (
+      <Content
+        flex
+        alignItems="stretch"
+        gap={rowGap}
+        className={containerClassName}
+        style={{
+          ...containerStyle,
+          flexDirection: imgDisplayFlexMode,
+          padding: renderOptions.imageMode === 'whole' ? 0 : undefined,
+          alignItems: imgDisplayFlexMode === 'row-reverse' && renderOptions.imageMode === 'whole' ? 'stretch' : undefined
+        }}
+      >
+        {_renderImage({ ...imgSize, ...imageOptions, renderMode: renderOptions.imageMode }, metaObject, size => {
+          if (renderOptions.imageMode === 'whole') {
+            setImgDisplayFlexMode('column')
+            // if (size.height > size.width) {
+            //   setImgDisplayFlexMode('row-reverse')
+            //   setImgSize({
+            //     width: 'auto',
+            //     ratio: 1.777,
+            //     minWidth: 180,
+            //     height: 'unset'
+            //   })
+            // } else {
+            //   setImgSize({
+            //     height: 'auto',
+            //     ratio: 0.5625,
+            //     width: '100%',
+            //     minWidth: 320
+            //   })
+            //   setImgDisplayFlexMode('column')
+            // }
+          }
+        })}
+        <Content onClick={containerOnClick} style={mainContainerStyle} flex column gap={columnGap} justifyContent="center">
+          {renderOptions.renderOption && _renderOptions(optionOptions, metaObject)}
+          {renderOptions?.renderTags !== false &&
+            _renderTags(
+              {
+                ...tagsOptions,
+                containerStyle: { ...tagsOptions.containerStyle, paddingRight: renderOptions.renderOption ? '40px' : undefined }
+              },
+              t,
+              relatedNum,
+              metaObject
+            )}
+          {renderOptions?.renderTitle !== false &&
+            _renderTitle(
+              {
+                ...titleOptions,
+                onTitleClick:
+                  titleOptions.onTitleClick ||
+                  (() => {
+                    Actions.navigateToTargetObject(metaObject.id)
+                  })
+              },
+              metaObject
+            )}
+          {renderOptions?.renderDescription !== false && _renderDescription(descriptionOptions, metaObject)}
+          {renderOptions?.renderFrom !== false && _renderFrom(fromOptions, metaObject)}
+        </Content>
+      </Content>
+    ) : (
+      <Content
+        onClick={containerOnClick}
+        flex
+        column
+        gap={columnGap}
+        className={containerClassName}
+        style={{ ...containerStyle, ...mainContainerStyle }}
+      >
+        {renderOptions?.renderOption && _renderOptions(optionOptions, metaObject)}
+        {renderOptions?.renderTags !== false &&
+          _renderTags(
+            {
+              ...tagsOptions,
+              containerStyle: { ...tagsOptions.containerStyle, paddingRight: renderOptions.renderOption ? '40px' : undefined }
+            },
+            t,
+            relatedNum,
+            metaObject
+          )}
+        {renderOptions?.renderTitle !== false &&
+          _renderTitle(
+            {
+              ...titleOptions,
+              onTitleClick:
+                titleOptions.onTitleClick ||
+                (() => {
+                  metaObject && Actions.navigateToTargetObject(metaObject.id)
+                })
+            },
+            metaObject
+          )}
+        {renderOptions?.renderDescription !== false && _renderDescription(descriptionOptions, metaObject)}
+        {renderOptions?.renderFrom !== false && _renderFrom(fromOptions, metaObject)}
+      </Content>
+    )
+  }
+)
 export default useRenderObject

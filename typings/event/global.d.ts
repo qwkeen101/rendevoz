@@ -26,6 +26,7 @@ export type DropOn =
 type GlobalDropNeedFurtherProcessEvent = {
   dropOn: DropOn
   draggingElement: GlobalDraggingDetails
+  e?: DragEvent
 }
 type GlobalDragPointerUpEvent = {
   event: PointerEvent

@@ -1055,7 +1055,6 @@ export const Editable = (props: EditableProps) => {
             )}
             onDragOver={useCallback(
               (event: React.DragEvent<HTMLDivElement>) => {
-                console.log(event)
                 if (ReactEditor.hasTarget(editor, event.target) && !isEventHandled(event, attributes.onDragOver)) {
                   // Only when the target is void, call `preventDefault` to signal
                   // that drops are allowed. Editable content is droppable by

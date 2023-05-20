@@ -232,6 +232,7 @@ export const getTextRect = (bound: TextContentBound, ctx: CanvasRenderingContext
       startTextBound = getTargetTextBound(bound, realStart, true, viewport, ctx),
       endTextBound = getTargetTextBound(bound, realEnd, undefined, viewport, ctx),
       targetText = str.substring(startTextBound.text.length, endTextBound.text.length)
+
     return trans
       ? {
           x: trans[4],

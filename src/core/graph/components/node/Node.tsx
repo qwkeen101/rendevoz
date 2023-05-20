@@ -11,10 +11,12 @@ import { ObjectTag, FilterSelectedTagsAtom } from '@/core'
 import { Content } from '@/components/base'
 import { MetaObject } from '~/typings/data'
 import { MarkerColor } from '@/consts'
-import { useAtomValue } from 'jotai'
+import { useAtomValue, useSetAtom } from 'jotai'
 import EmojiNode from './EmojiNode'
-import { useGlobalAtomValue } from '@/hooks'
 import { MetaStore } from '@/stores'
+import { GraphPathFilterAtom } from '../GraphPathFilter'
+import { GraphPinNodesIdsAtom } from '../../hooks/useGraphFilter'
+import SvgIconRenderer from '../icons/SvgIconRenderer'
 
 interface NodeProps {
   node: GraphNode
@@ -26,29 +28,39 @@ interface NodeProps {
 }
 
 export const TypeToNodeRadius: Record<MetaObject['type'], number> = {
-  pdf: 60,
+  pdf: 50,
   pdfLabel: 20,
-  note: 40,
+  note: 50,
   normal: 20,
   noteLabel: 20,
   noteBlock: 20,
-  image: 40,
-  whiteboard: 40,
-  webpage: 40,
+  image: 50,
+  whiteboard: 50,
+  webpage: 50,
   webpageLabel: 20,
-  video: 40,
-  audio: 40
+  video: 50,
+  audio: 50,
+  localFile: 50
+}
+const sliceLabel = (label?: string) => {
+  if (!label) return
+  if (label.length > 50) {
+    return label.slice(0, 50) + '...'
+  }
+  return label
 }
 const Node: FC<NodeProps> = memo(({ node, onMouseEnter, onMouseLeave, onContextMenu, onClick }) => {
   const nodeRef = useRef<SVGGElement>(null)
   const graph = useGraph()
   const filterTags = useAtomValue(FilterSelectedTagsAtom)
   const meta = MetaStore.useValue(node.id)
+  const setPathFilter = useSetAtom(GraphPathFilterAtom)
+  const pinnedNodes = useAtomValue(GraphPinNodesIdsAtom)
   const thisNodeShowTags = useMemo(() => {
     if (node.opacity !== 1) {
       return []
     }
-    const nodeTags = node.tags || []
+    const nodeTags = meta?.tags || []
     const allSelectedTags = new Set<number>(
       Array.from(filterTags.values())
         .map(i => [...i])
@@ -57,7 +69,7 @@ const Node: FC<NodeProps> = memo(({ node, onMouseEnter, onMouseLeave, onContextM
 
     const showTags = nodeTags?.filter(i => allSelectedTags.has(i))
     return showTags
-  }, [filterTags, node.opacity])
+  }, [filterTags, node.opacity, meta?.tags])
 
   const radius = TypeToNodeRadius[node.type || 'normal']
   const d = radius * 2
@@ -65,7 +77,7 @@ const Node: FC<NodeProps> = memo(({ node, onMouseEnter, onMouseLeave, onContextM
   const realNode = useMemo(() => {
     return {
       ...node,
-      label: meta?.name,
+      label: sliceLabel(meta?.name),
       coverImgSrc: meta?.coverImgSrc,
       icon: meta?.icon
     } as Partial<GraphNode>
@@ -103,16 +115,47 @@ const Node: FC<NodeProps> = memo(({ node, onMouseEnter, onMouseLeave, onContextM
 
   const handleMouseEnter: MouseEventHandler = e => {
     onMouseEnter?.(e, node)
+    if (graph?.isChoosingNode === 'end' && !(e.target instanceof SVGTextElement)) {
+      graph.overlayManager?.setContent('pathIndicator')
+      const nodeBounding = nodeRef.current?.firstElementChild?.getBoundingClientRect()
+      graph.overlayManager?.setPosition({
+        left: nodeBounding?.left + nodeBounding?.width + 10,
+        top: nodeBounding?.top
+      })
+      graph.overlayManager?.open()
+
+      setPathFilter(f => ({ ...f, tempEndNodeId: node.id }))
+    }
   }
   const handleMouseLeave: MouseEventHandler = e => {
     onMouseLeave?.(e, node)
+    if (graph?.isChoosingNode === 'end') {
+      setPathFilter(f => {
+        if (f?.tempEndNodeId === node.id) {
+          graph.overlayManager?.close()
+          return { ...f, tempEndNodeId: undefined }
+        }
+        return f
+      })
+    }
   }
   const handleContextMenu: MouseEventHandler = e => {
     onContextMenu?.(e, node)
   }
   const handleClick: MouseEventHandler = e => {
-    onClick?.(e, node)
     e.preventDefault()
+
+    if (graph?.isChoosingNode === 'start') {
+      setPathFilter(f => ({ ...f, startNodeId: node.id }))
+      graph.isChoosingNode = false
+      return
+    }
+    if (graph?.isChoosingNode === 'end') {
+      setPathFilter(f => ({ ...f, endNodeId: node.id }))
+      graph.isChoosingNode = false
+      return
+    }
+    onClick?.(e, node)
     const rect = e.currentTarget.getBoundingClientRect()
     graph?.overlayManager?.setOverlayState({
       position: {
@@ -174,21 +217,22 @@ const Node: FC<NodeProps> = memo(({ node, onMouseEnter, onMouseLeave, onContextM
     return null
   }
   return (
-    <motion.g
+    <g
       onContextMenu={handleContextMenu}
       onClick={handleClick}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
       cursor="pointer"
-      pointerEvents="auto"
+      pointerEvents={node.opacity ? (node.opacity < 1 ? 'none' : 'auto') : 'auto'}
       ref={nodeRef}
-      initial={{ opacity: node.opacity || 1 }}
-      animate={{ opacity: node.opacity }}
-      transform={node.x && node.y ? `translate(${node?.x},${node?.y})` : undefined}
+      opacity={(node.opacity || 1) < 1 ? 0 : 1}
+      style={{ transition: 'opacity 0.2s ease', userSelect: 'none' }}
+      transform={node.x && node.y ? `translate(${~~node.x},${~~node.y})` : undefined}
     >
       {renderNode()}
       {renderTags()}
-      {node.isCenter && (
+      {pinnedNodes.has(node.id) && <SvgIconRenderer icon="park-pin" fill="#FFFF00" size={30} x={d} y={-25} />}
+      {node.isCenter && (graph?.nodesMap?.size || 0) < 100 && (
         <motion.circle
           style={{ transformOrigin: `${radius}px ${radius}px` }}
           fill="none"
@@ -206,7 +250,7 @@ const Node: FC<NodeProps> = memo(({ node, onMouseEnter, onMouseLeave, onContextM
           cy={radius}
         ></motion.circle>
       )}
-    </motion.g>
+    </g>
   )
 })
 

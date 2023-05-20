@@ -9,10 +9,11 @@ import { Rnd } from 'react-rnd'
 import { IObjectLabel } from '~/typings/data'
 import Colors from '@/consts/colors'
 import FontSize from '@/consts/font'
+import HoverObjectDetails from '@/core/database/HoverObjectDetails'
 
 const ObjectLabel = ({ labelId, pageSize }: { labelId: number; pageSize: PageSize }) => {
   const label = ObjectStore('pdfLabel').useValue(labelId) as IObjectLabel
-  const { renderWhole, renderExpand, metaObject } = useRenderObject({ metaObjectId: label.metaObjectId })
+  const { renderInline, renderExpand, metaObject } = useRenderObject({ metaObjectId: label.metaObjectId })
   const [innerPosition, setInnerPosition] = useState<{ x: number; y: number }>()
   const [top, left] = label?.rect || []
   const [popoverVisible, togglePopoverVisible] = useToggle(false)
@@ -54,8 +55,7 @@ const ObjectLabel = ({ labelId, pageSize }: { labelId: number; pageSize: PageSiz
         zIndex: 10,
         background: Colors.Background.Global,
         boxShadow: '0px 0px 0px 2px #dce3e8',
-        borderRadius: 4,
-        padding: '6px 8px'
+        borderRadius: 4
       }}
     >
       <AnimatePopover
@@ -115,26 +115,15 @@ const ObjectLabel = ({ labelId, pageSize }: { labelId: number; pageSize: PageSiz
               {renderExpand({})}
             </div>
           ) : (
-            renderWhole({
-              titleOptions: {
-                ellipsisLine: 1,
-                style: {
-                  fontSize: FontSize['14px'],
-                  cursor: 'pointer'
+            <HoverObjectDetails metaObjectId={label.metaObjectId}>
+              {renderInline({
+                containerStyle: {
+                  padding: '6px 8px',
+                  maxWidth: pageSize.width * 0.2,
+                  fontSize: FontSize['12px']
                 }
-              },
-              descriptionOptions: {
-                ellipsisLine: 2,
-                style: {
-                  fontSize: FontSize['13px']
-                }
-              },
-              containerStyle: {
-                maxWidth: pageSize.width * 0.2,
-                maxHeight: pageSize.height * 0.3,
-                overflow: 'auto'
-              }
-            })
+              })}
+            </HoverObjectDetails>
           )}
         </Content>
       </AnimatePopover>

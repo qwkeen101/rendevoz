@@ -18,7 +18,7 @@ export const userAtom = atom<IUser | null>(
   import.meta.env.PROD
     ? null
     : {
-        displayName: 'Admin',
+        displayName: 'Administrator',
         isPremium: true,
         premiumEndDate: Date.now() + 10000000000
       }

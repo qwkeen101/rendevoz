@@ -1,15 +1,11 @@
 import { useEffect, useState } from 'react'
-import { CheckBox, Content, Icon, IconWithPopover, WithBorder } from './base'
+import { CheckBox, Content, Icon } from './base'
 import { css } from '@emotion/css'
-import googleLogo from '@/assets/google_logo.png'
 import { toast } from 'react-hot-toast'
 import { useGlobalAtom, useToggle } from '@/hooks'
 import LoginService, { useUser } from '@/services/login.service'
 import ClassName from '@/styles/classNames'
-import { IUser } from '~/typings/data'
 import { useTranslation } from 'react-i18next'
-import { useSetting } from '../core/setting'
-import produce from 'immer'
 import Colors from '@/consts/colors'
 import { atomWithStorage } from 'jotai/utils'
 
@@ -21,7 +17,7 @@ localStorage.setItem(
       autoLogin: false
     })
 )
-const loginStateAtom = atomWithStorage<{
+export const loginStateAtom = atomWithStorage<{
   rememberMe?: boolean
   autoLogin?: boolean
   password?: string
@@ -77,7 +73,7 @@ const Login = () => {
   const [previewPassword, togglePreviewPassword] = useToggle(false)
   const [code, setCode] = useState<string>()
   const [isFirstLogin, setIsFirstLogin] = useState(false)
-  const [setting, setSetting] = useSetting()
+
   const [, setGlobalUser] = useUser()
   const { t } = useTranslation()
 
@@ -186,42 +182,6 @@ const Login = () => {
   }
   return (
     <Content fullHeight fullWidth flex alignItems="center" justifyContent="center" style={{ fontFamily: 'Muli' }}>
-      <div style={{ position: 'absolute', right: 30, bottom: 30 }}>
-        <IconWithPopover
-          name="park-translate"
-          padding={10}
-          content={
-            <WithBorder style={{ padding: 10 }}>
-              <div
-                onClick={() => {
-                  setSetting(
-                    produce(setting, draft => {
-                      draft.general.language = 'en-US'
-                    })
-                  )
-                }}
-                className={ClassName.flatButton()}
-              >
-                English
-              </div>
-              <div
-                onClick={() => {
-                  setSetting(
-                    produce(setting, draft => {
-                      draft.general.language = 'zh-CN'
-                    })
-                  )
-                }}
-                className={ClassName.flatButton()}
-              >
-                简体中文
-              </div>
-            </WithBorder>
-          }
-          placement={['top']}
-        ></IconWithPopover>
-      </div>
-
       <Content flex column gap={20} style={{ width: 400 }}>
         <div className={loginTextClassName}>{t('login.login')}</div>
         <div>

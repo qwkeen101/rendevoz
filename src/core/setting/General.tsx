@@ -254,6 +254,72 @@ const GeneralSetting = () => {
           }}
         ></Select>
       )
+    },
+    {
+      title: t('settings.default search engine'),
+      children: (
+        <Select
+          closeOnSelect
+          value={setting.general.defaultSearchEngine}
+          menuStyle={{
+            maxHeight: 200,
+            overflowY: 'auto'
+          }}
+          onSelect={v => {
+            setSetting(
+              produce(setting, draft => {
+                draft.general.defaultSearchEngine = v[0]
+              })
+            )
+          }}
+          options={[
+            {
+              value: 'google',
+              children: t('settings.google')
+            },
+            {
+              value: 'google scholar',
+              children: t('settings.google scholar')
+            },
+            {
+              value: 'semantic scholar',
+              children: t('settings. semantic scholar')
+            },
+            {
+              value: 'wikipedia',
+              children: t('settings.wikipedia')
+            },
+            {
+              value: 'wiki summary',
+              children: t('settings.wiki summary')
+            },
+            {
+              value: 'vocabulary',
+              children: t('settings.vocabulary')
+            },
+            {
+              value: 'baidu',
+              children: t('settings.baidu')
+            },
+            {
+              value: 'bing',
+              children: t('settings.bing')
+            },
+            {
+              value: 'zhihu',
+              children: t('settings.zhihu')
+            },
+            {
+              value: 'bing dictionary',
+              children: t('settings.bing dictionary')
+            },
+            {
+              value: 'youdao dictionary',
+              children: t('settings.youdao dictionary')
+            }
+          ]}
+        ></Select>
+      )
     }
   ]
 

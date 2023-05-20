@@ -1,4 +1,5 @@
 import { ReactElement, RefObject } from 'react'
+import { Box } from '~/typings/common'
 
 export interface PageSize {
   width: number
@@ -22,9 +23,14 @@ type SelectedTextEvent = {
 
 export interface PageFunctionRef {
   clearTextLayer?: VoidFunction
+  highlightText?: (text: string) => void
   onTextSelected?: (e: SelectedTextEvent) => void
   onTextSelectEnd?: VoidFunction
+  onCanvasRendered?: VoidFunction
+  highlightArea?: (rect: Box) => void
+  clearAllSelect?: VoidFunction
 }
+
 export interface RenderPageProps {
   canvasLayer: ReactElement
   textLayer: ReactElement

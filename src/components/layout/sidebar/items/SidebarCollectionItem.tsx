@@ -156,6 +156,7 @@ const SidebarCollectionItem: FC<ISidebarItem> = memo(({ id, parentId, parentType
             />
             {collection && (
               <IconNameItem
+                style={{ fontSize: FontSize['12px'] }}
                 name={collection.name || 'Unnamed Collection'}
                 color={collection.color}
                 icon={collection.icon || 'park-folder-close'}

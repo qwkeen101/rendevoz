@@ -81,84 +81,55 @@ const useWhiteboardDrop = () => {
     const { clientX, clientY } = e
     const transformedXY = transformXY(flow.containerEle?.getBoundingClientRect(), clientX, clientY, flow.containerTransformScale)
     if (e.dataTransfer?.items) {
-      const result = await Promise.all(
-        Array.from(e.dataTransfer.items).map(async (item, i) => {
-          let whiteboardNode: Partial<IWhiteboardNode> = {}
-          const id = Id.getId()
-          if (item.kind === 'file') {
-            const file = item.getAsFile()
-            if (!file) return
-            const { name, path } = file
-            const res = await saveFileLocally(path, name)
-            console.log(res, item, file)
-            if (file.type.startsWith('image')) {
-              whiteboardNode = {
-                type: 'image',
-                imageUrl: res.data,
-                name
-              }
-            }
-            if (file.type.startsWith('audio')) {
-              whiteboardNode = {
-                type: 'audio',
-                audioUrl: res.data,
-                name
-              }
-            }
-            if (file.type.startsWith('video')) {
-              whiteboardNode = {
-                type: 'video',
-                videoUrl: res.data,
-                name
-              }
-            }
-            if (file.type === 'application/pdf') {
-              const pdf = await initializePdfDocument(file)
-              if (!pdf) return
-              const { meta } = await ObjectStore('pdf').addOneWithMeta(pdf)
-              setTimeout(() => {
-                setItems(items =>
-                  produce(items, draft => {
-                    draft?.push({
-                      type: 'meta',
-                      id: meta.id
-                    })
-                  })
-                )
-              })
-              whiteboardNode = {
-                type: 'metaObject',
-                metaObjectId: meta.id,
-                name
-              }
-            }
+      let whiteboardNode: Partial<IWhiteboardNode> = {}
+      const fileItem = Array.from(e.dataTransfer.items).find(i => i.kind === 'file')
+      if (fileItem) {
+        const file = fileItem.getAsFile()
+        if (!file) return
+        const { name, path } = file
+
+        const res = await saveFileLocally(path, name)
+        if (fileItem.type.startsWith('image')) {
+          whiteboardNode = {
+            type: 'image',
+            imageUrl: res.data,
+            name
           }
-          if (item.kind === 'string') {
-            const type = item.type
-            const itemString = await getAsStringPromise(item)
-            if (type === 'text/uri-list') {
-              whiteboardNode = {
-                type: 'webpage',
-                url: itemString,
-                name: itemString
-              }
-            }
+        }
+        if (fileItem.type.startsWith('audio')) {
+          whiteboardNode = {
+            type: 'audio',
+            audioUrl: res.data,
+            name
           }
-          whiteboardNode.x = transformedXY?.x
-          whiteboardNode.y = transformedXY?.y
-          whiteboardNode.id = id
-          if (whiteboardNode.type) {
-            return whiteboardNode
+        }
+        if (fileItem.type.startsWith('video')) {
+          whiteboardNode = {
+            type: 'video',
+            videoUrl: res.data,
+            name
+          }
+        }
+      } else {
+        const meta = await emitter.emitWithCallback('global', {
+          type: 'globalDropNeedFurtherProcess',
+          data: {
+            dropOn: {
+              dropOn: 'whiteboard',
+              whiteboardId: flow.whiteboardId!
+            },
+            e
           }
         })
-      )
+        insertMetaObjectAtPointer(e, meta.id, false)
+        return
+      }
+      whiteboardNode.x = transformedXY?.x
+      whiteboardNode.y = transformedXY?.y
+      whiteboardNode.id = Id.getId()
       setNodes(nodes =>
         produce(nodes, draft => {
-          result.forEach(i => {
-            if (i?.id) {
-              draft.set(i.id, i)
-            }
-          })
+          draft.set(whiteboardNode.id, whiteboardNode)
         })
       )
     }

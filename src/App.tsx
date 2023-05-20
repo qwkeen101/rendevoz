@@ -8,18 +8,22 @@ import Notification from './components/NotificationCenter'
 import { GlobalObjectPanel, GlobalCreateObject, GlobalScreenShot, GlobalGraph } from '@/core'
 import '@/core/editor/dock.less'
 import SvgMarker from './components/svg/Marker'
-import Login from './components/Login'
-import { useUser } from './services/login.service'
 import { useSetting } from './core/setting'
 import { useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ErrorBoundary } from 'react-error-boundary'
 import ErrorFallback from './components/base/ErrorFallBack'
 import AuthenticatedLayout from './components/base/authenticatedLayout'
-import '@/core/pdf/core/types/pdf.min.js'
-import PdfJsUrl from '@/assets/pdf.worker.min.js?url'
+// import '@/core/pdf/core/types/pdf.min.js'
+import '@/assets/pdf.js'
+import PdfJsUrl from '@/assets/pdf.worker.js?url'
 import ThemeSwitcher from './ThemeSwitcher'
 import GlobalImagePreviewer from './core/global/GlobalImagePreviewer'
+import classNames from 'classnames'
+import { css } from '@emotion/css'
+import GlobalTranslateResult from './core/global/GlobalTranslatePanel'
+import GlobalSearchPanel from './core/global/GlobalSearchPanel'
+import GlobalWebview from './core/global/GlobalWebview'
 
 export function getOS() {
   const userAgent = window.navigator.userAgent.toLowerCase(),
@@ -42,12 +46,13 @@ export function getOS() {
 
   return os
 }
+
 const App = () => {
   const PdfJs = window['pdfjs-dist/build/pdf']
   PdfJs.GlobalWorkerOptions.workerSrc = PdfJsUrl
 
   const os = getOS()
-  const [user] = useUser()
+
   const [setting] = useSetting()
   const { i18n } = useTranslation()
   useEffect(() => {
@@ -57,26 +62,36 @@ const App = () => {
   }, [setting.general.language])
   return (
     <ErrorBoundary FallbackComponent={ErrorFallback}>
+      {/* for unknown queryselector bug */}
+      <div
+        className={classNames(
+          'excalidraw',
+          css({
+            '--color-selection': '#6965db'
+          })
+        )}
+        style={{ display: 'none' }}
+      ></div>
       <ThemeSwitcher />
       {os !== 'macos' && <TitleBar />}
       <Notification />
-      {user ? (
-        <>
-          <Initializer />
-          <GlobalGraph />
-          <GlobalScreenShot />
-          <GlobalObjectPanel />
-          <GlobalCreateObject />
-          <AuthenticatedLayout />
-          <GlobalDragOverlay />
-          <GlobalImagePreviewer />
-          <svg style={{ position: 'absolute', width: 0, height: 0, overflow: 'hidden' }}>
-            <SvgMarker />
-          </svg>
-        </>
-      ) : (
-        <Login />
-      )}
+      <>
+
+        <Initializer />
+        <GlobalGraph />
+        <GlobalScreenShot />
+        <GlobalWebview />
+        <GlobalObjectPanel />
+        <GlobalSearchPanel />
+        <GlobalCreateObject />
+        <GlobalTranslateResult />
+        <AuthenticatedLayout />
+        <GlobalDragOverlay />
+        <GlobalImagePreviewer />
+        <svg style={{ position: 'absolute', width: 0, height: 0, overflow: 'hidden' }}>
+          <SvgMarker />
+        </svg>
+      </>
     </ErrorBoundary>
   )
 }

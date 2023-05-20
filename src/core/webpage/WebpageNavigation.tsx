@@ -1,14 +1,15 @@
-import { Content, Icon, Tooltip } from '@/components'
+import { Button, Content, Icon, IconWithPopover, Tooltip, WithBorder } from '@/components'
 import { KEY } from '@/consts'
+import Colors from '@/consts/colors'
 import FontSize from '@/consts/font'
 import ClassName from '@/styles/classNames'
 import { css } from '@emotion/css'
 import isHotkey from 'is-hotkey'
-import { useEffect, useState } from 'react'
+import { CSSProperties, useEffect, useState } from 'react'
 
 type NavigationEvent =
   | {
-      action: 'back' | 'forward' | 'refresh' | 'stop' | 'showOriginPage' | 'showReaderPage' | 'saveAsMetaObject'
+      action: 'back' | 'forward' | 'refresh' | 'stop' | 'showOriginPage' | 'showReaderPage' | 'saveAsMetaObject' | 'zoom in' | 'zoom out'
     }
   | {
       action: 'loadUrl'
@@ -16,7 +17,8 @@ type NavigationEvent =
     }
 const WebpageNavigation = ({
   on,
-  navigationState
+  navigationState,
+  style
 }: {
   on: (event: NavigationEvent) => void
   navigationState: {
@@ -25,6 +27,7 @@ const WebpageNavigation = ({
     displayUrl?: string
     readerMode?: boolean
   }
+  style?: CSSProperties
 }) => {
   const { loaded, displayUrl, canSave, readerMode } = navigationState
   const [currentUrl, setCurrentUrl] = useState<string>()
@@ -32,7 +35,7 @@ const WebpageNavigation = ({
     setCurrentUrl(displayUrl)
   }, [displayUrl])
   return (
-    <Content flex gap={8} alignItems="center" style={{ fontSize: FontSize['18px'], padding: '6px 16px', paddingTop: '2px' }}>
+    <Content flex gap={8} alignItems="center" style={{ fontSize: FontSize['18px'], padding: '2px 16px 6px', ...style }}>
       <Icon className={ClassName.circleButton()} name="park-left" onClick={() => on({ action: 'back' })} />
       <Icon className={ClassName.circleButton()} name="park-right" onClick={() => on({ action: 'forward' })} />
       <Icon
@@ -56,7 +59,7 @@ const WebpageNavigation = ({
           borderRadius: '999px',
           background: 'rgba(0,0,0,0.06)',
           ':focus-within': {
-            outline: '1px solid #8590ae'
+            outline: `1px solid ${Colors.Font.Tertiary}`
           }
         })}
       >
@@ -87,7 +90,7 @@ const WebpageNavigation = ({
         {canSave && (
           <Tooltip content="Save as object">
             <Icon
-              name="park-save"
+              name="park-add-web"
               containerStyle={{ marginLeft: '20px' }}
               className={ClassName.circleButton()}
               size={16}
@@ -117,6 +120,20 @@ const WebpageNavigation = ({
               />
             </Tooltip>
           ))}
+        {/* {!readerMode && (
+          <IconWithPopover
+            containerStyle={{ marginLeft: '12px' }}
+            className={ClassName.circleButton()}
+            placement={['bottom', 'top']}
+            content={
+              <WithBorder padding={12}>
+                <Button.IconButton text="Zoom In" onClick={() => on({ action: 'zoom in' })} />
+                <Button.IconButton text="Zoom Out" onClick={() => on({ action: 'zoom out' })} />
+              </WithBorder>
+            }
+            name="park-more"
+          ></IconWithPopover>
+        )} */}
       </Content>
     </Content>
   )

@@ -23,7 +23,8 @@ const ObjectsAndLinksSetting = () => {
     enableDropOnPDFLink,
     enableDropOnWhiteboardLink,
     enableDragFromEditorLink,
-    enableDragFromPDFLink
+    enableDragFromPDFLink,
+    enableDropAutoGenerateObject
   } = setting.objectAndLink
   const linkSettingItems: SettingItem[] = [
     {
@@ -51,11 +52,20 @@ const ObjectsAndLinksSetting = () => {
       children: <Switch value={enableAll && enableDropOnWhiteboardLink} onChange={() => toggleSetting('enableDropOnWhiteboardLink')} />
     }
   ]
-
+  const objectSettingItems: SettingItem[] = [
+    {
+      title: t('settings.enable drop auto generate object'),
+      children: <Switch value={enableDropAutoGenerateObject} onChange={() => toggleSetting('enableDropAutoGenerateObject')} />
+    }
+  ]
   return (
     <>
       <div className={ClassName.title('18px')}>{t('settings.link settings')}</div>
       {linkSettingItems.map(i => (
+        <SettingItem titleSize={14} key={i.title} {...i} />
+      ))}
+      <div className={ClassName.title('18px')}>{t('settings.object settings')}</div>
+      {objectSettingItems.map(i => (
         <SettingItem titleSize={14} key={i.title} {...i} />
       ))}
     </>

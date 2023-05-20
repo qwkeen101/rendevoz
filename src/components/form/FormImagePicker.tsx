@@ -1,6 +1,6 @@
 import ClassName from '@/styles/classNames'
-import { saveImageLocally } from '@/utils/img';
-import { useTranslation } from 'react-i18next';
+import { saveImageLocally } from '@/utils/img'
+import { useTranslation } from 'react-i18next'
 import { Content, Icon, Image } from '../base'
 import useFileUpload from '../base/useFileUpload'
 

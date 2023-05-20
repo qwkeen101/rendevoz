@@ -581,7 +581,6 @@ const GlobalScreenShot = () => {
           rect.width * dpr,
           rect.height * dpr
         )
-        ctx.drawImage(canvasRef.current, 0, 0)
         return new Promise(resolve => {
           newCanvas.toBlob(b => resolve(b), 'image/png')
         })
@@ -753,29 +752,13 @@ const GlobalScreenShot = () => {
                           setOcrResult(result.result.map(i => i.words).join(' '))
                         }
                       }
-                      // const imgPath = (await saveImageLocally(Id.getStrId(), blob!)).data
-                      // const one = await ObjectStore('image').addOne({
-                      //   ...normalizedImage,
-                      //   imageUrl: imgPath
-                      // })
-                      // GlobalEventEmitter().emit('global', {
-                      //   type: 'globalNeedAddMetaObject',
-                      //   data: {
-                      //     currentObject: {
-                      //       type: 'image',
-                      //       coverImgSrc: imgPath,
-                      //       objectId: one.id
-                      //     },
-                      //     fromMetas: relatedMeta
-                      //   }
-                      // })
                     }
                     break
                   }
                   case 'add as object': {
                     if (selectionBoxState.rect) {
                       const blob = await getImageBlob()
-                      const { relatedMeta, normalizedImage } = normalizeScreenshot(selectionBoxState.rect)
+                      const { relatedMeta, normalizedImage, normalizedImageMeta } = normalizeScreenshot(selectionBoxState.rect)
                       const imgPath = (await saveImageLocally(Id.getStrId(), blob!, false)).data
                       const one = await ObjectStore('image').addOne({
                         ...normalizedImage,
@@ -788,7 +771,8 @@ const GlobalScreenShot = () => {
                             type: 'image',
                             coverImgSrc: imgPath,
                             objectId: one.id,
-                            description: ocrResult
+                            description: ocrResult,
+                            ...normalizedImageMeta
                           },
                           fromMetas: relatedMeta
                         }

@@ -1,7 +1,7 @@
 import { atom, useAtom, useSetAtom } from 'jotai'
 import { GraphEdge } from '../types/edge'
 
-const edgesAtom = atom<GraphEdge[] | null>(null)
+export const edgesAtom = atom<GraphEdge[] | null>(null)
 
 export const oppositeEdgesMapAtom = atom<Map<number, number>>(new Map())
 

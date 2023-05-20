@@ -8,6 +8,8 @@ import LayoutManager from './LayoutManager'
 import { css } from '@emotion/css'
 import { useSetting } from '@/core'
 import { LayoutTab } from './types'
+import { useGlobalAtomValue } from '@/hooks'
+import { SidebarStateAtom } from './sidebar'
 interface LayoutProps {
   sidebar?: React.ReactNode
   children?: React.ReactNode
@@ -32,7 +34,7 @@ const initialLayout: LayoutData = {
 export const LayoutIdToTabMap = new Map<string, LayoutTab>()
 export let GlobalLayout: LayoutManager | null = null
 const Layout: FC<LayoutProps> = ({ sidebar }) => {
-  const [sidebarWidth] = useSidebarWidth()
+  const sidebarWidth = useGlobalAtomValue(SidebarStateAtom).width
   const [layout, setLayout] = useState(initialLayout)
   const layoutManager = useMemo(() => new LayoutManager(), [])
   const layoutRef = useRef<DockLayout>()
@@ -65,12 +67,11 @@ const Layout: FC<LayoutProps> = ({ sidebar }) => {
   const handleLayoutChange = (layout: LayoutData) => {
     setLayout(layout)
     layoutManager.registerLayout(layout)
-    console.log(layout)
   }
   const resolvedBgUrl = useMemo(() => {
-    if (setting.background.backgroundImage?.startsWith('rendefile')) {
-      return setting.background.backgroundImage.replace('rendefile', 'file').replaceAll('\\', '/')
-    }
+    // if (setting.background.backgroundImage?.startsWith('rendefile')) {
+    //   return setting.background.backgroundImage.replace('rendefile', 'file').replaceAll('\\', '/')
+    // }
     return setting.background.backgroundImage
   }, [setting.background.backgroundImage])
   return (

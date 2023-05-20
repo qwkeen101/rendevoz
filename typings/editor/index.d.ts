@@ -11,7 +11,7 @@ import { OuterElement } from './outerElements'
 import DragManager from '@/core/editor/hooks/DragManager'
 import { EditorOverlayManager } from '@/core/editor/components/overlay/useEditorOverlay'
 import { Virtualizer } from '@tanstack/react-virtual'
-import { ReactElement, ReactNode, RefObject } from 'react'
+import React, { ReactElement, ReactNode, RefObject } from 'react'
 
 export type CustomEditor = BaseEditor &
   ReactEditor &
@@ -38,6 +38,8 @@ export type CustomEditor = BaseEditor &
     onHighlightDrag?: (highlightId: number, editor: CustomEditor) => void
     onHighlight?: (highlightId: number) => void
     onHighlightRemove?: (highlightId: number) => void
+    onTranslate?: (selectedText: string, blockId: number, e: React.MouseEvent) => void
+    onSearch?: (selectedText: string, blockId: number, e: React.MouseEvent) => void
     onContentRendered?: () => void
     initialized?: boolean
     contentInitialized?: boolean

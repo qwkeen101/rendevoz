@@ -2,7 +2,7 @@ import { Toolbar, WithBorder } from '@/components/base'
 import Select from '@/components/base/select'
 import IconWithPopover from '@/components/base/IconWithPopover'
 import { CSSProperties, FC, useEffect, useRef, useState } from 'react'
-import { Editor, Range, Transforms } from 'slate'
+import { Editor, Element, Range, Transforms } from 'slate'
 import { ReactEditor, useSlate } from '../../slate-react'
 import styles from './index.module.less'
 import { useTranslation } from 'react-i18next'
@@ -15,6 +15,8 @@ import { useMemoizedFn } from '@/hooks'
 import { TextSelectionTranslate } from '@/core/pdf/components/toolbar/TextSelectionToolbar'
 import { css } from '@emotion/css'
 import ClassName from '@/styles/classNames'
+import { GlobalTranslateInstance } from '@/core/global/GlobalTranslatePanel'
+import { Zindexes } from '@/consts'
 
 type EditorToolbarEvents =
   | {
@@ -171,8 +173,8 @@ const EditorToolbar: FC<EditorToolbarProps> = ({ scrollElement, showToolbar, sty
 
   const renderToolbar = () => (
     <Toolbar innerRef={toolbarRef} className={classNames(styles.toolbar, styles.float)} style={style} itemClickPreventDefault itemSize={16}>
-      <Toolbar.Item tooltip={t('editor.undo')} iconName="park-return" onClick={() => on({ action: 'undo' })} />
-      <Toolbar.Item tooltip={t('editor.redo')} iconName="park-go-on" onClick={() => on({ action: 'redo' })} />
+      {/* <Toolbar.Item tooltip={t('editor.undo')} iconName="park-return" onClick={() => on({ action: 'undo' })} />
+      <Toolbar.Item tooltip={t('editor.redo')} iconName="park-go-on" onClick={() => on({ action: 'redo' })} /> */}
       {currentElement &&
         !['heading-one', 'heading-two', 'heading-three', 'heading-four', 'heading-five', 'heading-six'].includes(
           currentElement[0].type
@@ -273,7 +275,7 @@ const EditorToolbar: FC<EditorToolbarProps> = ({ scrollElement, showToolbar, sty
         <IconWithPopover
           placement={['bottom']}
           align="start"
-          zIndex={9999}
+          zIndex={Zindexes.EditorSelectionToolbar}
           size={16}
           style={{
             color: getMark('fontColor'),
@@ -290,28 +292,42 @@ const EditorToolbar: FC<EditorToolbarProps> = ({ scrollElement, showToolbar, sty
           name="park-font-size-two"
         ></IconWithPopover>
       </Toolbar.Item>
-      {isReading && (
-        <>
-          <Toolbar.Separator direction="horizontal" />
-          <Toolbar.Item>
-            <IconWithPopover
-              placement={['top']}
-              tooltip={t('general.translate')}
-              align="center"
-              zIndex={9999}
-              size={16}
-              content={
-                <WithBorder padding={8}>
-                  <TextSelectionTranslate
-                    translateInput={editor.selection ? Editor.string(editor, editor.selection) : 'Text Not Selected'}
-                  />
-                </WithBorder>
-              }
-              name="park-translate"
-            ></IconWithPopover>
-          </Toolbar.Item>
-        </>
-      )}
+      <Toolbar.Separator direction="horizontal" />
+      <Toolbar.Item
+        iconName="park-translate"
+        tooltip={t('general.translate')}
+        onClick={e => {
+          if (editor.selection) {
+            const str = Editor.string(editor, editor.selection)
+            if (str) {
+              const block = Editor.above(editor, {
+                match: n => Element.isElement(n) && 'id' in n,
+                at: editor.selection.anchor
+              })?.[0]
+              console.log(block)
+              if (!block?.id) return
+              editor.onTranslate?.(str, block.id as number, e)
+            }
+          }
+        }}
+      />
+      <Toolbar.Item
+        iconName="park-search"
+        tooltip={t('general.search')}
+        onClick={e => {
+          if (editor.selection) {
+            const str = Editor.string(editor, editor.selection)
+            if (str) {
+              const block = Editor.above(editor, {
+                match: n => Element.isElement(n) && 'id' in n,
+                at: editor.selection.anchor
+              })?.[0]
+              if (!block?.id) return
+              editor.onSearch?.(str, block.id as number, e)
+            }
+          }
+        }}
+      />
     </Toolbar>
   )
 
@@ -326,7 +342,7 @@ const EditorToolbar: FC<EditorToolbarProps> = ({ scrollElement, showToolbar, sty
               position: 'fixed',
               top: floatPosition.top,
               left: floatPosition.left,
-              zIndex: 9999
+              zIndex: Zindexes.EditorSelectionToolbar
             }}
           >
             <WithBorder

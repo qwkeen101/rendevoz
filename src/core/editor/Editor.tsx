@@ -1,7 +1,7 @@
 import { useGlobalEventEmitter } from '@/events/useEventEmitter'
 import { useMemoizedFn } from '@/hooks'
 import Id from '@/utils/id'
-import { CSSProperties, FC, memo, MouseEventHandler, ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import React, { CSSProperties, FC, memo, MouseEventHandler, ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { createEditor, Transforms, Descendant } from 'slate'
 import { withHistory } from 'slate-history'
 import { withReact } from './slate-react'
@@ -56,6 +56,8 @@ export interface EditorProps {
   onHighlightDrag?: (highlightId: number, editor: CustomEditor) => void
   onHighlight?: (highlightId: number, editor: CustomEditor) => void
   onHighlightRemove?: (highlightId: number, editor: CustomEditor) => void
+  onTranslate?: (selectedText: string, blockId: number, e: React.MouseEvent, editor: CustomEditor) => void
+  onSearch?: (selectedText: string, blockId: number, e: React.MouseEvent, editor: CustomEditor) => void
   initialValue?: Descendant[]
   id: string
   noteId?: number
@@ -100,9 +102,11 @@ export const EditorV1: FC<EditorProps> = memo(
     onHighlightDrag,
     onHighlight,
     onHighlightRemove,
+    onTranslate,
     showBlockHandle = true,
     compact,
     onChange,
+    onSearch,
     innerEditorClassName
   }) => {
     const [isDragging, setIsDragging] = useIsDragging()
@@ -178,7 +182,8 @@ export const EditorV1: FC<EditorProps> = memo(
 
     editor.onHighlight = id => onHighlight?.(id, editor)
     editor.onHighlightRemove = id => onHighlightRemove?.(id, editor)
-
+    editor.onTranslate = (...args) => onTranslate?.(...args, editor)
+    editor.onSearch = (...args) => onSearch?.(...args, editor)
     useLocalSyncValue(editor)
 
     useStoreValue(note, editor, e => {

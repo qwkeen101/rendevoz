@@ -54,5 +54,21 @@ export const saveImageLocally = (imgName: string, imgData: string | Blob, compre
       }
     })
   }
-  return ipcInstance.send('saveImage', imgName, data)
+  if (typeof imgData === 'string') {
+    return ipcInstance.send('saveImage', imgName, data)
+  }
+  return ipcInstance.send('saveImage', imgName, imgData)
+}
+
+// return dataUrl
+export const captureWebpage = (webviewId: number) => {
+  return ipcInstance.send<string>('captureWebpage', webviewId)
+}
+
+export const imageToDataUrl = (img: HTMLImageElement) => {
+  const canvas = document.createElement('canvas')
+  canvas.width = img.width
+  canvas.height = img.height
+  canvas.getContext('2d')?.drawImage(img, 0, 0, img.width, img.height)
+  return canvas.toDataURL('image/png')
 }

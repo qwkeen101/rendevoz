@@ -101,7 +101,7 @@ export const Database = () => {
       case 'detail card':
         return (
           <Flipper spring="stiff" flipKey={`${displayObjects[displayObjects.length - 1]?.id}_${displayObjects.length}`}>
-            <ResponsiveMasonry columnsCountBreakPoints={{ 350: 1, 750: 2, 900: 3, 1200: 4, 1500: 5 }}>
+            <ResponsiveMasonry columnsCountBreakPoints={{ 360: 1, 800: 2, 1200: 3, 1600: 4 }}>
               <Masonry gutter="35px">
                 {paginateObjects.map((i, idx) => (
                   <DatabaseCard key={i.id} index={idx} metaObject={i} />

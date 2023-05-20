@@ -1,6 +1,7 @@
-import { join } from 'path'
+import { join, resolve } from 'path'
 import { Module } from '@nestjs/common'
-import { BrowserWindow, app, shell, protocol, ipcRenderer } from 'electron'
+import { BrowserWindow, app, shell, protocol, ipcRenderer, webContents } from 'electron'
+import { initialize, enable } from '@electron/remote/main'
 import axios from 'axios'
 import { fileURLToPath } from 'url'
 import HttpsProxyAgent from 'https-proxy-agent'
@@ -8,16 +9,20 @@ import { autoUpdater } from 'electron-updater'
 import * as child_process from 'child_process'
 import { DEFAULT_USER_DATA_PATH } from '../app.controller'
 import fs from 'fs'
+import { Menu } from 'electron'
 process.env.ELECTRON_DISABLE_SECURITY_WARNINGS = 'true'
 process.env.DIST_ELECTRON = join(__dirname, '../..')
 process.env.DIST = join(process.env.DIST_ELECTRON, '../../dist')
 process.env.PUBLIC = app.isPackaged ? process.env.DIST : join(process.env.DIST_ELECTRON, '../../public')
 
+const DEFAULT_FILE_PATH = DEFAULT_USER_DATA_PATH + '/rendevoz'
+const slicedLength = 'rendefile://'.length
 @Module({
   providers: [
     {
       provide: 'WEB_CONTENTS',
       async useFactory(isDev: boolean) {
+        initialize()
         const preload = join(__dirname, '../../preload/index.js')
         const url = process.env.VITE_DEV_SERVER_URL
         const indexHtml = join(process.env.DIST, 'index.html')
@@ -64,17 +69,16 @@ process.env.PUBLIC = app.isPackaged ? process.env.DIST : join(process.env.DIST_E
           }
         }
         app.commandLine.appendSwitch('disable-site-isolation-trials')
+        app.commandLine.appendSwitch('force-gpu-rasterization')
+        app.commandLine.appendSwitch('gpu-rasterization-msaa-sample-count', '0')
+
         await app.whenReady()
         protocol.registerFileProtocol('rendefile', (req, callback) => {
-          const filePath = fileURLToPath('file://' + req.url.slice('rendefile://'.length))
+          const filePath = fileURLToPath('file://' + DEFAULT_FILE_PATH + req.url.replace(DEFAULT_FILE_PATH, '').slice(slicedLength))
           callback(filePath)
         })
-        app.on('web-contents-created', (createEvent, contents) => {
-          contents.on('will-navigate', newEvent => {
-            // console.log("Blocked by 'will-navigate'")
-            // newEvent.preventDefault()
-          })
 
+        app.on('web-contents-created', (createEvent, contents) => {
           contents.setWindowOpenHandler(({ url }) => {
             console.log(url)
             if (url.startsWith('https://rendevoz.firebaseapp.com/')) {
@@ -100,28 +104,30 @@ process.env.PUBLIC = app.isPackaged ? process.env.DIST : join(process.env.DIST_E
           titleBarStyle: 'hidden',
           trafficLightPosition: {
             x: 10,
-            y: 8
+            y: 10
           }
         })
-        // const search = child_process.spawn(searcheEngineStartPath, [`--db-path=${searchEngineDataPath}`],{
-        //   shell: true
-        // }
-        // )
-
-        const search = child_process.exec(`cd ${process.env.HOME} && ${searcheEngineStartPath} --db-path=${searchEngineDataPath}`,(err,rr,r)=>{
-          win.webContents.send('search', {
-            err,
-            rr,
-            r
+        win.webContents.on('will-attach-webview', (e, webPreferences) => {
+          const prePath = process.env.PUBLIC + '/webpre.js'
+          const absolutePath = resolve(prePath)
+          webPreferences.preload = absolutePath
+        })
+        win.webContents.on('did-attach-webview', (_, contents) => {
+          contents.setWindowOpenHandler(details => {
+            contents.loadURL(details.url)
+            return { action: 'deny' }
           })
         })
-        // const search = child_process.execFile(searcheEngineStartPath, [`--db-path=${searchEngineDataPath}`],(err,rr,r)=>{
-        //   win.webContents.send('search', {
-        //     err,
-        //     rr,
-        //     r
-        //   })
-        // })
+        const search = child_process.exec(
+          `cd ${process.env.HOME} && ${searcheEngineStartPath} --db-path=${searchEngineDataPath}`,
+          (err, rr, r) => {
+            win.webContents.send('search', {
+              err,
+              rr,
+              r
+            })
+          }
+        )
 
         win.on('maximize', () => {
           win.webContents.send('winMaximized')
@@ -129,13 +135,7 @@ process.env.PUBLIC = app.isPackaged ? process.env.DIST : join(process.env.DIST_E
         win.on('unmaximize', () => {
           win.webContents.send('winUnmaximized')
         })
-        // const reactDevToolsPath = path.join(
-        //   os.homedir(),
-        //   'AppData/Local/Google/Chrome/User Data/Default/Extensions/fmkadmapgofadopljbjfkapdkoienihi/4.27.1_12'
-        // )
-        // win.webContents.once('dom-ready', () => {
-        //   session.defaultSession.loadExtension(reactDevToolsPath)
-        // })
+
         win.webContents.session.webRequest.onHeadersReceived({ urls: ['*://*/*'] }, (d, c) => {
           if (d.responseHeaders['X-Frame-Options']) {
             delete d.responseHeaders['X-Frame-Options']

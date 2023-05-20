@@ -1,11 +1,7 @@
-import { useGlobalEventEmitter } from '@/events/useEventEmitter'
 import { useMemoizedFn } from '@/hooks'
-import { relatedMetaObjectsMapAtom } from '@/stores/meta.store'
-import { globalStore, MetaStore } from '@/stores'
+import { MetaStore } from '@/stores'
 import Id from '@/utils/id'
 import { css } from '@emotion/css'
-import produce from 'immer'
-import { useAtom, useAtomValue } from 'jotai/react'
 import { memo, MouseEvent } from 'react'
 import { MetaLink } from '~/typings/data'
 import useEdges from '../hooks/useEdges'
@@ -13,7 +9,7 @@ import useGraph from '../hooks/useGraph'
 import useGraphNodes from '../hooks/useGraphNodes'
 import { GraphNode } from '../types/node'
 import Node from './node/Node'
-import useGraphFilter, { GraphPinNodesIdsAtom } from '../hooks/useGraphFilter'
+import useGraphFilter from '../hooks/useGraphFilter'
 
 export type NodeMouseEventHandler = (e: MouseEvent, node: GraphNode) => void
 
@@ -92,6 +88,7 @@ const NodeContainer = memo(() => {
           <rect width={20} height={20} rx={5}></rect>
         </clipPath>
       </defs>
+
       {nodes
         // ?.filter(i => !i.hidden)
         ?.map(node => (

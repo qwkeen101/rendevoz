@@ -3,7 +3,7 @@ import Modal from '@/components/base/Modal'
 import CollectionForm from '@/components/form/CollectionForm'
 import { GlobalDragOverlayInstance, useGlobalIsDragging } from '@/core'
 import Zindexes from '@/consts/zindex'
-import { useMemoizedFn } from '@/hooks'
+import { useMemoizedFn, useToggle } from '@/hooks'
 import useCollectionStore, { rootCollectionsAtom } from '@/stores/collection.store'
 import { globalStore, CollectionStore } from '@/stores'
 import ClassName from '@/styles/classNames'
@@ -23,6 +23,7 @@ const SidebarCollection = () => {
   const [globalIsDragging] = useGlobalIsDragging()
   const containerRef = useRef<HTMLDivElement>(null)
   const [dropVisible, toggleDropVisible] = useState(false)
+  const [collapsed, toggleCollapsed] = useToggle(false)
   const { moveItems } = useCollectionStore()
   const { t } = useTranslation()
   const pointerHandler = useMemoizedFn((e: PointerEvent) => {
@@ -100,7 +101,9 @@ const SidebarCollection = () => {
           className={dropVisible ? ClassName.Drag.droppableItemHovered(true) : undefined}
           style={{ padding: '0px 4px', transition: 'all 0.3s ease' }}
         >
-          <div>{t('sidebar.collections')}</div>
+          <div style={{ cursor: 'pointer' }} onClick={toggleCollapsed}>
+            {t('sidebar.collections')}
+          </div>
           <Tooltip position="top" content={t('sidebar.create new collection')}>
             <Icon
               name="park-plus"
@@ -113,11 +116,13 @@ const SidebarCollection = () => {
           </Tooltip>
         </Content>
       </AnimatePopover>
-      <Content flex column style={{ overflowY: 'auto', padding: '0px 2px' }}>
-        {rootCollections.map(i => (
-          <SidebarCollectionItem key={i.id} id={i.id} parentId={0} parentType="collection" />
-        ))}
-      </Content>
+      {!collapsed && (
+        <Content flex column style={{ overflowY: 'auto', padding: '0px 2px' }}>
+          {rootCollections.map(i => (
+            <SidebarCollectionItem key={i.id} id={i.id} parentId={0} parentType="collection" />
+          ))}
+        </Content>
+      )}
     </>
   )
 }
@@ -184,7 +189,8 @@ export const IconNameItem = memo(
           <div
             style={{
               color: color,
-              backgroundImage: linearFontColor ? color : undefined
+              backgroundImage: linearFontColor ? color : undefined,
+              textTransform: 'none'
             }}
             className={css([
               ClassName.ellipsisFont(1),

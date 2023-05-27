@@ -6,7 +6,7 @@ import { compareHotkey } from 'is-hotkey'
 export const useShortcut = (shortcutName: keyof IShortCutSetting['shortcut'], onTrigger: VoidFunction) => {
   const [setting] = useSetting()
   const shortcutHandler = useMemoizedFn((e: KeyboardEvent) => {
-    if (compareHotkey(setting.shortcut[shortcutName], e)) {
+    if (setting.shortcut[shortcutName] && compareHotkey(setting.shortcut[shortcutName], e)) {
       onTrigger()
     }
   })

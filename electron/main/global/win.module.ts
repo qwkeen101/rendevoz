@@ -1,7 +1,6 @@
 import { join, resolve } from 'path'
 import { Module } from '@nestjs/common'
 import { BrowserWindow, app, shell, protocol, ipcRenderer, webContents } from 'electron'
-import { initialize, enable } from '@electron/remote/main'
 import axios from 'axios'
 import { fileURLToPath } from 'url'
 import HttpsProxyAgent from 'https-proxy-agent'
@@ -22,7 +21,6 @@ const slicedLength = 'rendefile://'.length
     {
       provide: 'WEB_CONTENTS',
       async useFactory(isDev: boolean) {
-        initialize()
         const preload = join(__dirname, '../../preload/index.js')
         const url = process.env.VITE_DEV_SERVER_URL
         const indexHtml = join(process.env.DIST, 'index.html')

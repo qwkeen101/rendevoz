@@ -89,7 +89,7 @@ export const DockTabBar = memo((props: DockTabBarProps) => {
         values={navs}
         axis="x"
       >
-        {navs.map(i => (
+        {navs.map((i, idx) => (
           <TabItem
             item={i}
             key={i.key}
@@ -100,15 +100,15 @@ export const DockTabBar = memo((props: DockTabBarProps) => {
             onClick={e => {
               TabNavList.onTabClick(i.key, e)
             }}
+            isLast={idx === navs.length - 1}
           />
         ))}
-        {restProps.extraArea}
       </Reorder.Group>
     </DragDropDiv>
   )
 })
 
-const TabItem = ({ onClick, isSelected, item, onDragStart }) => {
+const TabItem = ({ onClick, isSelected, item, onDragStart, isLast }) => {
   const [contextMenuVisible, toggleContextMenuVisible] = useToggle(false)
   const { t } = useTranslation()
   const dockContext = useContext(DockContextType)
@@ -200,10 +200,19 @@ const TabItem = ({ onClick, isSelected, item, onDragStart }) => {
         className={classNames(
           styles.tab,
           isSelected && styles.active,
+          isLast && styles.isLast,
           setting.background.backgroundImage && setting.background.backgroundOpacity && styles.hasBg
         )}
+        style={{
+          paddingRight: isLast ? 40 : undefined
+        }}
       >
         <div className={styles.tabContent}>{item.tab}</div>
+        {isLast && (
+          <div style={{ position: 'absolute', right: 0, top: 0, bottom: 0, background: isSelected ? 'rgba(0,0,0,0.12)' : 'transparent'}}>
+            {dockContext.getLayout().global.globalPanelExtra(null, null)}
+          </div>
+        )}
       </Reorder.Item>
     </AnimatePopover>
   )

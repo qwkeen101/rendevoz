@@ -48,7 +48,17 @@ const Layout: FC<LayoutProps> = ({ sidebar }) => {
     global: {
       currentFocusedPanelId: 'panel1',
       globalPanelExtra: () => (
-        <div style={{ height: '100%', background: 'rgba(0,0,0,0.12)', padding: '0px 4px', display: 'flex', alignItems: 'center' }}>
+        <div
+          style={{
+            height: '100%',
+            padding: '0px 4px',
+            display: 'flex',
+            alignItems: 'center',
+            zIndex: 10,
+            pointerEvents: 'auto',
+          }}
+          draggable={false}
+        >
           <Icon
             className={ClassName.circleButton()}
             name="park-plus"

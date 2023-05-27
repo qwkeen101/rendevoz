@@ -127,6 +127,7 @@ const GlobalTranslateResult = () => {
         const result = await TranslateService.translate(query, to, from)
         //u201c u201d “ ”
         const reg = new RegExp('[\u3002\uff1b\uff0c\uff1a\u201c\u201d\u3001\uff1f\u300a\u300b]')
+
         newResult.translatedText = result.result
           .map(i => {
             const trans = i.trans.trim()
@@ -141,10 +142,14 @@ const GlobalTranslateResult = () => {
           .reduce(
             (whole, curr) => {
               const wholelast = whole[whole.length - 1]
+              const doubleQuotesReg = new RegExp(/“.*?”/gm)
               if (wholelast) {
                 const removedWhole = wholelast.trans.replaceAll('\r\n', '').trim()
                 const removedCurr = curr.trans.replaceAll('\r\n', '').trim()
+                const hasDoubleQuote = doubleQuotesReg.test(removedWhole)
+
                 if (
+                  !hasDoubleQuote &&
                   removedWhole.includes('\u201c') &&
                   !removedWhole.endsWith('\u201d') &&
                   !removedWhole.endsWith('\u201c') &&
@@ -153,7 +158,6 @@ const GlobalTranslateResult = () => {
                   wholelast.orig += '' + curr.orig
                   wholelast.trans += '' + removedCurr
                   if (removedCurr.includes('\u201d')) {
-                    console.log(removedCurr)
                     wholelast.trans += '{xxx}\r\n'
                   }
                   return whole

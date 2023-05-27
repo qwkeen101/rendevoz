@@ -28,8 +28,10 @@ const slicedLength = 'rendefile://'.length
         const macSearchEngine = join(process.env.PUBLIC, 'meilisearch-macos')
         const searchEngine = process.platform === 'win32' ? windowsSearchEngine : macSearchEngine
         const searchEngineDataPath = join(DEFAULT_USER_DATA_PATH, 'rendevoz', 'data.ms')
-        const searcheEngineStartPath = join(DEFAULT_USER_DATA_PATH, 'rendevoz', 'search')
-        fs.copyFileSync(searchEngine, searcheEngineStartPath)
+        const searcheEngineStartPath = join(DEFAULT_USER_DATA_PATH, 'rendevoz', process.platform === 'win32' ? 'search.exe' : 'search')
+        if (!fs.existsSync(searcheEngineStartPath)) {
+          fs.copyFileSync(searchEngine, searcheEngineStartPath)
+        }
         fs.chmodSync(searcheEngineStartPath, '744')
         autoUpdater.autoDownload = false
         autoUpdater.autoInstallOnAppQuit = false

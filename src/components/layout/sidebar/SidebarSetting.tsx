@@ -10,7 +10,7 @@ const SidebarSetting = () => {
   const { t } = useTranslation()
   return (
     <>
-      <Modal noStyle visible={modalVisible} onClose={toggleModalVisible}>
+      <Modal showClose noStyle visible={modalVisible} onClose={toggleModalVisible}>
         <SettingDialog onClose={toggleModalVisible} />
       </Modal>
       <MenuItem onClick={toggleModalVisible}>

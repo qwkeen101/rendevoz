@@ -35,6 +35,8 @@ import getCursorPosition from './utils/getCursorPosition'
 import HoverObjectDetails from '../database/HoverObjectDetails'
 import { DraggableElement, DraggingElement } from '../global'
 import MathElement from './elements/Math'
+import Code from './elements/Code'
+import HighlightBlock from './elements/Highlight'
 
 const EditableEditorClassName = css({
   p: {
@@ -628,6 +630,8 @@ export const Element = (props: RenderElementProps & { onLinkClick: InnerEditorPr
       return <sup {...attributes}>{children}</sup>
     case 'tableRow':
       return <TableRow {...props} />
+    case 'code-block':
+      return <Code {...props} />
     case 'divider':
       return (
         <div contentEditable={false} className={dividerClassName}>
@@ -641,6 +645,8 @@ export const Element = (props: RenderElementProps & { onLinkClick: InnerEditorPr
     case 'heading-five':
     case 'heading-six':
       return <Heading {...props} />
+    case 'highlight-block':
+      return <HighlightBlock {...props} />
     case 'metaObject':
       return <MetaObject {...props} />
     case 'image':
@@ -701,7 +707,7 @@ export const Leaf = (props: RenderLeafProps) => {
       <HoverObjectDetails ref={attributes.ref || {}} objectId={leaf.highlight}>
         <DraggableElement
           onDragStart={() => editor.onHighlightDrag?.(leaf.highlight!, editor)}
-          hoverElement={<DraggingElement text="Drop to add note highlight" />}
+          hoverElement={<DraggingElement text="Drop to add note label" />}
         >
           <span
             {...attributes}

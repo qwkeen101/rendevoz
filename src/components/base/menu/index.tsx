@@ -6,6 +6,7 @@ import { Button } from '../button'
 import styles from './index.module.less'
 import MenuGroup from './MenuGroup'
 import MenuItem, { MenuItemProps } from './MenuItem'
+import { scrollToTarget } from '@/core/editor/utils/positions/scroll'
 
 interface MenuProps {
   title?: string
@@ -65,7 +66,7 @@ export const NavigationMenu: FC<NavigationMenuProps> = ({ layout, keyboardNaviga
         e.stopPropagation()
         e.preventDefault()
       }
-      if (isHotkey(KEY.Enter, e)) {
+      if (isHotkey(KEY.Enter, e) && currentSelect !== undefined) {
         e.stopPropagation()
         e.preventDefault()
         setCurrentSelect(s => {
@@ -83,19 +84,27 @@ export const NavigationMenu: FC<NavigationMenuProps> = ({ layout, keyboardNaviga
         return loopUp(next)
       }
       const loopDown = (currentIdx: number | undefined): number => {
-        const curr = currentIdx || 0
+        const curr = currentIdx === undefined ? -1 : currentIdx
         const next = curr + 1 >= layoutCount ? 0 : curr + 1
         if (layout[next].type === 'item') return next
         return loopDown(next)
       }
       if (direction) {
         setCurrentSelect(s => {
+          let next = s
           if (direction === 'up') {
-            return loopUp(s)
+            next = loopUp(s)
           }
           if (direction === 'down') {
-            return loopDown(s)
+            next = loopDown(s)
           }
+          const ele = menuContainerRef.current?.querySelector(`[data-idx='${next}']`)
+          if (ele) {
+            ele.scrollIntoView({
+              block: 'center'
+            })
+          }
+          return next
         })
       }
     }
@@ -105,7 +114,7 @@ export const NavigationMenu: FC<NavigationMenuProps> = ({ layout, keyboardNaviga
         document.removeEventListener('keydown', keydownHandler, true)
       }
     }
-  }, [layoutCount, keyboardNavigation])
+  }, [layoutCount, keyboardNavigation, layout, currentSelect])
 
   const renderItem = (item: MenuLayoutItem, idx: number) => {
     switch (item.type) {
@@ -128,7 +137,9 @@ export const NavigationMenu: FC<NavigationMenuProps> = ({ layout, keyboardNaviga
   return (
     <div ref={menuContainerRef} style={style} className={className}>
       {layout.map((i, idx) => (
-        <Fragment key={idx}>{renderItem(i, idx)}</Fragment>
+        <div data-idx={idx} key={idx}>
+          {renderItem(i, idx)}
+        </div>
       ))}
     </div>
   )

@@ -11,7 +11,7 @@ import { saveImageLocally } from '@/utils/img'
 
 const bgs = import.meta.glob('@/assets/bg/*.svg', { as: 'url', eager: true })
 const AppearanceSetting = () => {
-  const { t, i18n } = useTranslation()
+  const { t } = useTranslation()
   const [setting, setSetting] = useSetting()
   const setBg = (url: string) => {
     setSetting(
@@ -54,12 +54,11 @@ const AppearanceSetting = () => {
               />
             ))}
             <FileUploader
-              text="Upload Image"
               dashed
               style={{ width: '100%' }}
               accept="image/*"
               onFileUploaded={file => {
-                saveImageLocally(file.name, file, false).then(data => {
+                saveImageLocally(file, { compress: false }).then(data => {
                   console.log(data)
                   setBg(data.data)
                 })

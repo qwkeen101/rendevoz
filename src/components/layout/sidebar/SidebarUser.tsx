@@ -30,11 +30,11 @@ const SidebarUser = memo(() => {
     }
   }, [user])
   return (
-    <Content flex alignItems="center" gap={10} style={{ marginBottom: 16 }}>
+    <Content flex alignItems="center" gap={10} style={{ marginBottom: 10 }}>
       <Content auto>
         {user ? (
           <>
-            <Modal noStyle visible={upgradePlanVisible} onClose={toggleUpgradPlanVisible}>
+            <Modal showClose noStyle visible={upgradePlanVisible} onClose={toggleUpgradPlanVisible}>
               <UpgradePlan />
             </Modal>
             <Modal visible={updateUserVisible} onClose={toggleUpdateUserVisible}>
@@ -58,7 +58,7 @@ const SidebarUser = memo(() => {
                 alignItems="center"
                 gap={8}
                 className={ClassName.flatButton()}
-                style={{ padding: '12px 8px', cursor: 'pointer' }}
+                style={{ padding: '8px 8px', cursor: 'pointer' }}
               >
                 {user?.photoURL && <Image width={25} src={user.photoURL} className={css({ borderRadius: 4 })} />}
                 <div
@@ -84,7 +84,7 @@ const SidebarUser = memo(() => {
               onClick={() => toggleLoginVisible(true)}
               icon="park-user"
               style={{
-                padding: '12px 10px'
+                padding: '8px 10px'
               }}
               text={t('login.login')}
             ></Button.IconButton>

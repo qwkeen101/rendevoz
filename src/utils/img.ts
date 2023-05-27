@@ -1,8 +1,17 @@
 import { ipcInstance, IpcResponse } from '@/plugins'
+import { Size, XYPosition } from '~/typings'
 
-export const saveImageLocally = (imgName: string, imgData: string | Blob, compress = true): Promise<IpcResponse<any>> => {
+export const saveImageLocally = (
+  imgData: string | Blob,
+  options: {
+    imgName?: string
+    compress: boolean
+  } = {
+    compress: true
+  }
+): Promise<IpcResponse<any>> => {
   const data = imgData
-
+  const { compress, imgName } = options
   if (imgData instanceof Blob) {
     return new Promise((resolve, reject) => {
       const reader = new FileReader()
@@ -61,8 +70,8 @@ export const saveImageLocally = (imgName: string, imgData: string | Blob, compre
 }
 
 // return dataUrl
-export const captureWebpage = (webviewId: number) => {
-  return ipcInstance.send<string>('captureWebpage', webviewId)
+export const captureWebpage = (webviewId?: number, rect?: XYPosition & Size) => {
+  return ipcInstance.send<string>('captureWebpage', webviewId, rect)
 }
 
 export const imageToDataUrl = (img: HTMLImageElement) => {
@@ -71,4 +80,27 @@ export const imageToDataUrl = (img: HTMLImageElement) => {
   canvas.height = img.height
   canvas.getContext('2d')?.drawImage(img, 0, 0, img.width, img.height)
   return canvas.toDataURL('image/png')
+}
+
+export const fetchRemoteImageAndSaveLocally = async (remoteImageUrl: string): Promise<string> => {
+  const imageBlob = await (
+    await fetch(remoteImageUrl, {
+      method: 'GET',
+      referrer: ''
+    })
+  ).blob()
+  const data = await saveImageLocally(imageBlob, { compress: false })
+  return data.data
+}
+
+export const downloadImg = async (imageUrl: string, imageName?: string) => {
+  const data = await (await fetch(imageUrl, { method: 'GET', referrer: '' })).blob()
+  const url = URL.createObjectURL(data)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = imageName || imageUrl
+  document.body.appendChild(a)
+  a.click()
+  document.body.removeChild(a)
+  URL.revokeObjectURL(url)
 }

@@ -133,6 +133,24 @@ const goToWebpageLabel = async (labelId: number) => {
     }
   }
 }
+const goToWebpageSelectedText = async (webpageId: number, text: string) => {
+  const webpage = await openWebpage(webpageId)
+  console.log(webpage.webview?.getUrl?.())
+  waitFor(
+    () => {
+      if (webpage.webview?.findInPage) {
+        return true
+      }
+      return false
+    },
+    () => {
+      webpage.webview?.findInPage?.(text)
+    },
+    {
+      timeout: 10000
+    }
+  )
+}
 
 const goToNoteBlock = async (blockId: number) => {
   const block = await ObjectStore('noteBlock').getOneById(blockId)
@@ -327,7 +345,8 @@ const Actions = {
   goToPdfSearchedText,
   goToPdfSearchPositions,
   goToNoteLabel,
-  openImage
+  openImage,
+  goToWebpageSelectedText
 }
 
 export default Actions

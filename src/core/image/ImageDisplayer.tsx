@@ -1,6 +1,6 @@
-import { Content } from '@/components'
+import { Button, Content } from '@/components'
 import { ObjectStore } from '@/stores'
-import { forwardRef, useEffect, useRef, useState } from 'react'
+import { forwardRef, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { Provider, atom } from 'jotai'
 import CanvasManager from '@/components/base/canvas/CanvasManager'
 import Colors from '@/consts/colors'
@@ -15,6 +15,9 @@ import { Excalidraw, loadFromBlob } from '@excalidraw/excalidraw'
 import { ExcalidrawInitialDataState } from '@excalidraw/excalidraw/types/types'
 import { renderPageInNormalMode } from '../pdf/core/utils/renderer'
 import { imageToDataUrl } from '@/utils/img'
+import transformUrlToData from './transformUrlToData'
+import saveExcalidraw from './saveExcalidraw'
+import { t } from 'i18next'
 
 const defaultData = {
   appState: {
@@ -50,41 +53,65 @@ const ImageDisplayer = forwardRef<
       y
     }
   }
-  useEffect(() => {
+  const excalidrawRef = useRef<ExcalidrawImperativeAPI>()
+  useLayoutEffect(() => {
     if (image) {
       const action = async () => {
         const imageUrl = image.imageUrl
         const img = new Image()
+        const excalidrawData = image.excalidrawUrl && (await transformUrlToData(image.excalidrawUrl))
         img.src = imageUrl
 
         img.onload = () => {
           const result = imageToDataUrl(img)
           const imageSize = getSizeOfImage(img)
+          const files = excalidrawData
+            ? {
+                ...excalidrawData.files,
+                initial_image: {
+                  mimeType: 'image/png',
+                  dataURL: result,
+                  id: 'initial_image'
+                }
+              }
+            : {
+                initial_image: {
+                  mimeType: 'image/png',
+                  dataURL: result,
+                  id: 'initial_image'
+                }
+              }
+          const imageEle = {
+            type: 'image',
+            fileId: 'initial_image',
+            x: imageSize.x,
+            y: imageSize.y,
+            width: imageSize.width,
+            height: imageSize.height,
+            locked: true,
+            id: 'initial_image'
+          }
+          if (excalidrawData) {
+            excalidrawData.appState
+          }
+          const elements = excalidrawData ? [...excalidrawData.elements] : [imageEle]
           setInitialData({
-            ...defaultData,
-            files: {
-              initial_image: {
-                mimeType: 'image/png',
-                dataURL: result,
-                id: 'initial_image'
-              }
-            },
-            elements: [
-              {
-                type: 'image',
-                fileId: 'initial_image',
-                x: imageSize.x,
-                y: imageSize.y,
-                width: imageSize.width,
-                height: imageSize.height,
-                locked: true,
-                id: 'initial_image'
-              }
-            ]
+            appState: excalidrawData ? excalidrawData.appState : defaultData.appState,
+            files,
+            elements
           })
         }
       }
       action()
+      return () => {
+        const api = excalidrawRef.current
+        if (api) {
+          saveExcalidraw(api, image.excalidrawUrl).then(path => {
+            console.log(path)
+            ObjectStore('image').updateOne({ id: image.id, excalidrawUrl: path })
+          })
+        }
+      }
     }
     if (outerImageUrl) {
       const img = new Image()
@@ -124,7 +151,7 @@ const ImageDisplayer = forwardRef<
     }
     renderPageInNormalMode()
   }, [image, outerImageUrl, initialData])
-  const excalidrawRef = useRef<ExcalidrawImperativeAPI>()
+
   const langToLangCode = () => {
     const lang = setting.general.language
     switch (lang) {
@@ -182,23 +209,12 @@ const ImageDisplayer = forwardRef<
       )}
     >
       <Provider>
-        {/* <div
-          style={{
-            position: 'absolute',
-            top: 30,
-            right: 30,
-            zIndex: 10,
-            padding: '4px 12px',
-            borderRadius: 999,
-            background: Colors.Background.Linear
-          }}
-        >
-          <ImageToolbar />
-        </div> */}
         {excalidrawInitialData && (
           <>
-            <div
+            <Button.IconButton
+              text={t('general.save locally')}
               style={{ position: 'absolute', top: 30, right: 30, zIndex: 20 }}
+              icon="park-download"
               onClick={async () => {
                 const api = excalidrawRef.current
                 if (api) {
@@ -215,12 +231,11 @@ const ImageDisplayer = forwardRef<
                   a.click()
                 }
               }}
-            >
-              Download
-            </div>
+            ></Button.IconButton>
             <Excalidraw
               onPointerDown={(a, s) => {
                 console.log(a, s)
+                console.log(excalidrawRef.current?.getFiles())
               }}
               ref={r =>
                 r?.readyPromise?.then(v => {

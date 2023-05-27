@@ -143,9 +143,7 @@ const Layout: FC<LayoutProps> = ({
       return scale * pageSize.height + PAGE_SPACING
     }
   })
-  useUpdateEffect(() => {
-    setScale(pageSize.scale)
-  }, [pageSize])
+
   useUpdateEffect(() => {
     const previousScale = scaleRef.current
     scaleRef.current = scale
@@ -161,6 +159,7 @@ const Layout: FC<LayoutProps> = ({
     virtualizer.measure()
     virtualizer.scrollToOffset(newOffset.scrollTop, { behavior: 'auto' })
   }, [scale])
+
   const jumpToPage = (pageIndex: number) => {
     if (pageIndex >= 0 && pageIndex < numPages) {
       const offset = pageIndex * pageSize.height * scale + pageIndex * 10

@@ -10,15 +10,20 @@ const DraggableElement = forwardRef<
     draggable?: boolean
     onDragStart?: VoidFunction
     hoverElement?: ReactElement
+    shouldPress?: number
   }
->(({ children, draggingDetails, draggable = true, hoverElement, onDragStart }, externalRef) => {
+>(({ children, draggingDetails, draggable = true, hoverElement, onDragStart, shouldPress = 100 }, externalRef) => {
   const isPressed = useRef(false)
+  const pressStartTime = useRef(0)
   const childRef = useRef<HTMLElement | undefined>()
+  const dragStartTriggered = useRef(false)
   const pointerHandler = useMemoizedFn((e: PointerEvent) => {
     if (e.type === 'pointerdown') {
       isPressed.current = true
+      pressStartTime.current = Date.now()
+      dragStartTriggered.current = false
       const child = childRef.current
-      onDragStart?.()
+
       if (hoverElement) {
         draggingDetails && (GlobalDragOverlayInstance.draggingDetails = draggingDetails)
         GlobalDragOverlayInstance.addDragElements?.(hoverElement)
@@ -35,12 +40,17 @@ const DraggableElement = forwardRef<
       }
     }
     if (e.type === 'pointermove') {
-      if (isPressed.current && draggable) {
+      if (isPressed.current && draggable && Date.now() - pressStartTime.current > shouldPress) {
         GlobalDragOverlayInstance.startDrag?.()
+        if (dragStartTriggered.current === false) {
+          onDragStart?.()
+        }
+        dragStartTriggered.current = true
       }
     }
     if (e.type === 'pointerup') {
       isPressed.current = false
+      dragStartTriggered.current = false
     }
   })
 

@@ -12,7 +12,7 @@ import produce from 'immer'
 import Id from '@/utils/id'
 import ScreenShotCanvas from './ScreenShotCanvas'
 import { GlobalPocketInstance } from '../GlobalPocket'
-import { saveImageLocally } from '@/utils/img'
+import { captureWebpage, saveImageLocally } from '@/utils/img'
 import panzoom, { PanZoom } from 'panzoom'
 import getSetting from '@/core/setting/getSetting'
 import { GlobalEventEmitter } from '@/events'
@@ -24,6 +24,9 @@ import ScreenShotStatus from './ScreenShotStatus'
 import ScreenShotToolbar from './ScreenShotToolbar'
 import OcrService from '@/services/ocr.service'
 import Colors from '@/consts/colors'
+import { selectBlock } from '@/core/editor/utils'
+import { drop } from 'lodash'
+import { delay } from '@/utils/functions'
 
 export const GlobalScreenShotOcrResult = atom<string | undefined | 'loading'>(undefined)
 export const GlobalScreenShotSelectionBoxState = atom<
@@ -68,6 +71,7 @@ const GlobalScreenShot = () => {
     if (canvasRef.current?.contains(e.target)) {
       return
     }
+    if (e.target instanceof HTMLElement && e.target.closest(`[role='global-translate-panel']`)) return
     if (e.type === 'pointerdown') {
       if (toolbarRef.current?.contains(e.target)) {
         return
@@ -510,13 +514,13 @@ const GlobalScreenShot = () => {
       const root = document.getElementById('root')
       if (root) {
         document.body.style.overflow = 'hidden'
-        const instance = panzoom(root, {
-          beforeMouseDown: e => {
-            return true
-          },
-          zoomSpeed: 0.05
-        })
-        panzoomRef.current = instance
+        // const instance = panzoom(root, {
+        //   beforeMouseDown: e => {
+        //     return true
+        //   },
+        //   zoomSpeed: 0.05
+        // })
+        // panzoomRef.current = instance
       }
       document.addEventListener('pointerup', pointerHandler, true)
       document.addEventListener('pointerdown', pointerHandler, true)
@@ -560,45 +564,39 @@ const GlobalScreenShot = () => {
       }
     })
     selectionBoxRef.current!.classList.add(className)
-    const canvas = (await takeScreenshotCanvas()) as HTMLCanvasElement
-    selectionBoxRef.current!.classList.remove(className)
-    const rect = selectionBoxState?.rect
-    const dpr = window.devicePixelRatio
-    if (rect) {
-      const newCanvas = document.createElement('canvas')
-      newCanvas.height = rect.height * dpr
-      newCanvas.width = rect.width * dpr
-      const ctx = newCanvas.getContext('2d')
-      if (ctx && canvas) {
-        ctx.drawImage(
-          canvas,
-          rect.left * dpr,
-          rect.top * dpr,
-          rect.width * dpr,
-          rect.height * dpr,
-          0,
-          0,
-          rect.width * dpr,
-          rect.height * dpr
-        )
-        return new Promise(resolve => {
-          newCanvas.toBlob(b => resolve(b), 'image/png')
-        })
+    const rect = selectionBoxState?.rect!
+    await delay(20)
+    const result = await captureWebpage(undefined, {
+      x: rect.left,
+      y: rect.top,
+      width: rect.width,
+      height: rect.height
+    })
+    const imageDataUrl = result.data!
+    const img = new Image()
+    img.src = imageDataUrl
+    await new Promise(res => {
+      img.onload = () => {
+        res(null)
       }
-    }
-  })
-  const closeAndSaveToGallery = () => {
-    getImageBlob().then((blob: Blob) => {
-      saveImageLocally(Id.getStrId(), blob).then(data => {
-        const url = data.data
-        setScreenShotLayerVisible(false)
-        setPreviewState({
-          src: url,
-          visible: true
-        })
+    })
+    const dpr = window.devicePixelRatio
+    const canvas = document.createElement('canvas')
+    canvas.width = rect.width * dpr
+
+    canvas.height = rect.height * dpr
+    canvas
+      .getContext('2d')
+      ?.drawImage(img, rect.left * dpr, rect.top * dpr, rect.width * dpr, rect.height * dpr, 0, 0, rect.width * dpr, rect.height * dpr)
+    selectionBoxRef.current!.classList.remove(className)
+    const blob = await new Promise(res => {
+      canvas.toBlob(b => {
+        res(b)
       })
     })
-  }
+    return blob
+  })
+
   useEffect(() => {
     if (previewState?.visible) {
       controls.set({
@@ -712,10 +710,10 @@ const GlobalScreenShot = () => {
             transform: `translateX(${rect.width > 0 ? rect.left : rect.left + rect.width}px) translateY(${
               rect.height > 0 ? rect.top : rect.top + rect.height
             }px)`,
-            boxShadow: '0 0 0 9999em rgb(0,0,0,0.7)',
             outline: '1px solid #39f',
             pointerEvents: selectionBoxState.startPosition || selectionBoxState.stable ? 'auto' : 'none',
-            cursor: selectionBoxState.stable ? 'grab' : 'default'
+            cursor: selectionBoxState.stable ? 'grab' : 'default',
+            boxShadow: '0 0 0 9999em rgb(0,0,0,0.7)'
           }}
         >
           <ScreenShotStatus />
@@ -728,10 +726,11 @@ const GlobalScreenShot = () => {
               bottom: -8,
               transform: Math.abs(window.innerHeight - (rect.top + rect.height)) < 40 ? 'translateY(-50%)' : 'translateY(100%)',
               userSelect: 'none',
-              background: Colors.Background.ButtonHover,
+              background: Colors.Background.DarkLinear,
               padding: '0px 12px',
               borderRadius: '999px',
-              zIndex: 10
+              zIndex: 10,
+              color: Colors.Font.White
             }}
           >
             <ScreenShotToolbar
@@ -743,7 +742,6 @@ const GlobalScreenShot = () => {
                   }
                   case 'ocr': {
                     if (selectionBoxState.rect) {
-                      // const { relatedMeta, normalizedImage } = normalizeScreenshot(selectionBoxState.rect)
                       if (!ocrResult || ocrResult === 'loading') {
                         setOcrResult('loading')
                         const blob = await getImageBlob()
@@ -759,7 +757,7 @@ const GlobalScreenShot = () => {
                     if (selectionBoxState.rect) {
                       const blob = await getImageBlob()
                       const { relatedMeta, normalizedImage, normalizedImageMeta } = normalizeScreenshot(selectionBoxState.rect)
-                      const imgPath = (await saveImageLocally(Id.getStrId(), blob!, false)).data
+                      const imgPath = (await saveImageLocally(blob, { compress: false })).data
                       const one = await ObjectStore('image').addOne({
                         ...normalizedImage,
                         imageUrl: imgPath

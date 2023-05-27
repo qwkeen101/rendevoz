@@ -32,6 +32,21 @@ const clazzName = css([
   },
   ClassName.ellipsisFont(2)
 ])
+
+export const DefaultObjectTitleRenderClazzName = css([
+  ClassName.title('16px'),
+  {
+    position: 'relative',
+    width: 'fit-content',
+    maxWidth: '100%',
+    textDecoration: 'underline 1px rgba(0,0,0,0)',
+    transition: 'text-decoration-color 0.3s ease',
+    ':hover': {
+      textDecorationColor: 'inherit'
+    },
+    cursor: 'pointer'
+  }
+])
 const _renderTags = (
   {
     gap = 4,
@@ -106,21 +121,7 @@ const _renderTags = (
 const _renderTitle = (
   {
     ellipsisLine = 2,
-    titleClassName = css([
-      ellipsisLine ? ClassName.ellipsisFont(ellipsisLine) : undefined,
-      ClassName.title('16px'),
-      {
-        position: 'relative',
-        width: 'fit-content',
-        maxWidth: '100%',
-        textDecoration: 'underline 1px rgba(0,0,0,0)',
-        transition: 'text-decoration-color 0.3s ease',
-        ':hover': {
-          textDecorationColor: 'inherit'
-        },
-        cursor: 'pointer'
-      }
-    ]),
+    titleClassName = css([ellipsisLine ? ClassName.ellipsisFont(ellipsisLine) : undefined, DefaultObjectTitleRenderClazzName]),
     onTitleClick,
     style
   }: {
@@ -486,7 +487,7 @@ const WholeRenderer = memo(
         style={{
           ...containerStyle,
           flexDirection: imgDisplayFlexMode,
-          padding: renderOptions.imageMode === 'whole' ? 0 : undefined,
+          padding: renderOptions.imageMode === 'whole' ? 0 : containerStyle?.padding,
           alignItems: imgDisplayFlexMode === 'row-reverse' && renderOptions.imageMode === 'whole' ? 'stretch' : undefined
         }}
       >

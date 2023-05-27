@@ -6,16 +6,24 @@ export const ThemeVars = {
   '--font-silver-second': '#bdc1c6',
   '--font-caption': '#646a73',
   '--font-description': '#898989',
-  '--light-background-color': '#FFFFFF',
-  '--dark-background-color': '#202124',
+  '--light-background-color': '#F9F5F6',
+  '--dark-background-color': '#2c2c2e',
   '--dark-linear-gradient-background': 'linear-gradient(116deg, rgba(5,5,5,0.4), rgba(23,23,23,0.4))',
-  // '--light-linear-gradient-background': 'linear-gradient(116deg, rgba(250,250,250,0.85), rgba(244,244,244,0.85))',
-  '--light-linear-gradient-background': 'linear-gradient(116deg, rgba(250,250,250,0.45), rgba(244,244,244,0.45))',
+  '--light-linear-gradient-background': 'linear-gradient(116deg, rgba(250,250,250,0.85), rgba(244,244,244,0.75))',
+  // '--light-linear-gradient-background': 'linear-gradient(116deg, rgba(250,250,250,0.45), rgba(244,244,244,0.45))',
   //  '--light-linear-gradient-background': 'linear-gradient(116deg, rgba(244,244,244,0.45), rgba(223,223,223,0.45))',
   '--light-button-hover-background': 'rgba(31, 34, 37, 0.08)',
   '--dark-button-hover-background': 'rgba(221,212,224, 0.08)',
-  '--light-background-color-secondary': '#dfdfdf',
-  '--dark-background-color-secondary': '#464646'
+  // '--light-background-color-secondary': '#F8F2F2',
+  '--light-background-color-secondary': '#f0ebeb',
+  '--dark-background-color-secondary': '#3d3d3d',
+  '--light-high-contrast-background': 'rgba(255,255,255,0.5)',
+  '--dark-high-contrast-background': 'rgba(255,255,255,0.1)',
+  '--dark-emphasis': '#FFD95A',
+  '--light-emphasis': '#E8AA42',
+  '--light-highlight-border': '#c4c4c4',
+  '--dark-highlight-border': '#7e7e7e',
+  '--dark-border': 'rgba(160,160,160,0.2)'
 }
 export const Font = {
   White: '--font-white',
@@ -43,12 +51,24 @@ export const Background = {
   ButtonHover: '--button-hover-background',
   Linear: '--linear-background',
   Secondary: '--background-secondary',
+  DarkBorder: '--dark-border',
   Border: '--border-background',
-  HighContrast: '--high-contrast-background'
+  LightHighContrast: '--light-high-contrast-background',
+  DarkHighContrast: '--dark-high-contrast-background',
+  HighContrast: '--high-contrast-background',
+  HighlightBorder: '--highlight-border',
+  LightHighlightBorder: '--light-highlight-border',
+  DarkHighlightBorder: '--dark-highlight-border'
+}
+export const Emphasis = {
+  DarkEmphasis: '--dark-emphasis',
+  LightEmphasis: '--light-emphasis',
+  Emphasis: '--emphasis'
 }
 const Colors = {
   Font: Object.fromEntries(Object.entries(Font).map(i => [i[0], `var(${i[1]})`])) as Record<keyof typeof Font, string>,
-  Background: Object.fromEntries(Object.entries(Background).map(i => [i[0], `var(${i[1]})`])) as Record<keyof typeof Background, string>
+  Background: Object.fromEntries(Object.entries(Background).map(i => [i[0], `var(${i[1]})`])) as Record<keyof typeof Background, string>,
+  Emphasis: Object.fromEntries(Object.entries(Emphasis).map(i => [i[0], `var(${i[1]})`])) as Record<keyof typeof Emphasis, string>
 }
 
 export default Colors

@@ -50,6 +50,16 @@ export const basic: Element[] = [
     icon: 'park-quote',
     name: BasicElements.Blockquote,
     tooltip: 'Blockquote'
+  },
+  {
+    icon: 'park-code-brackets',
+    name: BasicElements.CodeBlock,
+    tooltip: 'Code Block'
+  },
+  {
+    icon: 'park-high-light',
+    name: BasicElements.HighlightBlock,
+    tooltip: 'Highlight Block'
   }
 ]
 export const inline: Element[] = [
@@ -146,7 +156,7 @@ export const EditorSlashElementsMenu: typeof EditorElementsMenu = ({ onAddElemen
         display: 'flex',
         flexDirection: 'column',
         padding: 6,
-        maxHeight: 600,
+        maxHeight: 480,
         overflowY: 'auto',
         width: 200
       }}

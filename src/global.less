@@ -2,7 +2,7 @@ html,
 body {
   width: 100%;
   height: 100%;
-  font-size: 15px;
+  font-size: 16px;
   overflow: hidden;
 }
 input::-ms-clear,
@@ -19,6 +19,7 @@ input::-ms-reveal {
 *{
   box-sizing: border-box;
 }
+
 *:not(input):not(textarea):not([contenteditable]),
 *::before,
 *::after,
@@ -124,10 +125,17 @@ abbr[data-original-title] {
   border-bottom: 0;
   cursor: help;
 }
+
 address {
   margin-bottom: 1em;
   font-style: normal;
   line-height: inherit;
+}
+.disableUserSelect {
+  * {
+    user-select: none !important;
+  }
+  user-select: none !important;
 }
 input[type='text'],
 input[type='password'],

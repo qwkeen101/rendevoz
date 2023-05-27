@@ -9,7 +9,7 @@ import { autoUpdater } from 'electron-updater'
 import * as child_process from 'child_process'
 import { DEFAULT_USER_DATA_PATH } from '../app.controller'
 import fs from 'fs'
-import { Menu } from 'electron'
+
 process.env.ELECTRON_DISABLE_SECURITY_WARNINGS = 'true'
 process.env.DIST_ELECTRON = join(__dirname, '../..')
 process.env.DIST = join(process.env.DIST_ELECTRON, '../../dist')
@@ -72,6 +72,14 @@ const slicedLength = 'rendefile://'.length
         app.commandLine.appendSwitch('force-gpu-rasterization')
         app.commandLine.appendSwitch('gpu-rasterization-msaa-sample-count', '0')
 
+        protocol.registerSchemesAsPrivileged([
+          {
+            scheme: 'rendefile',
+            privileges: {
+              supportFetchAPI: true
+            }
+          }
+        ])
         await app.whenReady()
         protocol.registerFileProtocol('rendefile', (req, callback) => {
           const filePath = fileURLToPath('file://' + DEFAULT_FILE_PATH + req.url.replace(DEFAULT_FILE_PATH, '').slice(slicedLength))
@@ -107,6 +115,7 @@ const slicedLength = 'rendefile://'.length
             y: 10
           }
         })
+
         win.webContents.on('will-attach-webview', (e, webPreferences) => {
           const prePath = process.env.PUBLIC + '/webpre.js'
           const absolutePath = resolve(prePath)

@@ -3,9 +3,6 @@ import styles from './index.module.less'
 import Navigation from './Navigation'
 import { Rnd } from 'react-rnd'
 import { delay } from 'lodash'
-import useSidebarWidth from '@/hooks/components/useSidebarWidth'
-import Icon from '@/components/base/Icon'
-import { LayoutIdToTabMap } from '..'
 import classNames from 'classnames'
 import ClassName from '@/styles/classNames'
 import { getOS } from '@/App'
@@ -48,6 +45,10 @@ export const Sidebar: FC = () => {
     <div
       tabIndex={-1}
       onMouseLeave={() => {
+        if (!isResizing) setSidebarState(s => ({ ...s, hovered: false }))
+      }}
+      onDragLeave={e => {
+        e.preventDefault()
         if (!isResizing) setSidebarState(s => ({ ...s, hovered: false }))
       }}
     >
@@ -115,6 +116,10 @@ export const Sidebar: FC = () => {
             ) {
               return
             }
+            if (!isResizing) setSidebarState(s => ({ ...s, hovered: true }))
+          }}
+          onDragOver={e => {
+            e.preventDefault()
             if (!isResizing) setSidebarState(s => ({ ...s, hovered: true }))
           }}
           className={classNames(styles.nav, collapsed && ClassName.Background.pseudoBlubBackground)}

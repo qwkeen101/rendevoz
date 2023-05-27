@@ -1,11 +1,18 @@
 export const waitFor = (
   condition: () => boolean,
   func: () => void,
-  options = {
+  options: {
+    timeout?: number
+    checkDelay?: number
+    checkTime?: number
+    // check mutiple times and every time should be true, if false, retry
+    checkEnsure?: number
+  } = {
     timeout: 5000
   }
 ) => {
-  const { timeout } = options
+  const { timeout = 5000, checkDelay = 0, checkEnsure = 1 } = options
+  let ensured = 0
   const start = Date.now()
   const loop = () => {
     const curr = Date.now()
@@ -13,10 +20,20 @@ export const waitFor = (
       return
     }
     if (condition()) {
-      func()
-      return
+      ensured += 1
+      if (ensured >= checkEnsure) {
+        func()
+        return
+      }
     } else {
-      console.log('waiting')
+      ensured = 0
+    }
+    console.log('waiting')
+    if (checkDelay) {
+      setTimeout(() => {
+        requestIdleCallback(loop)
+      }, checkDelay)
+    } else {
       requestIdleCallback(loop)
     }
   }

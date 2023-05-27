@@ -80,6 +80,8 @@ const createObjectStore = <T extends keyof ObjectFamily, V extends ObjectFamily[
 
   const localStore: IStore<V> = {
     getAll: async () => {
+      const count = await objectsDb.where('specType').equals(type).count()
+      if (count === globalStore.get(objectMapAtom).size) return true
       const data = await objectsDb.where('specType').equals(type).toArray()
       globalStore.set(objectMapAtom, BaseStore.bulkAdd(data, globalStore.get(objectMapAtom)))
       return true
@@ -286,6 +288,7 @@ const createWebpageStore = () => {
     }
   })
 }
+
 const createWhiteboardStore = () => {
   return createObjectStore('whiteboard', {
     afterGetOneProcess: {
@@ -296,8 +299,8 @@ const createWhiteboardStore = () => {
             BaseStore.update(
               {
                 ...whiteboard,
-                edges: new Map((whiteboard.edges as unknown as IWhiteboardEdge[]).map(e => [e.id, e])),
-                nodes: new Map((whiteboard.nodes as unknown as IWhiteboardNode[]).map(e => [e.id, e]))
+                edges: new Map((whiteboard.edges as unknown as IWhiteboardEdge[])?.map(e => [e.id, e])),
+                nodes: new Map((whiteboard.nodes as unknown as IWhiteboardNode[])?.map(e => [e.id, e]))
               } as IWhiteboard,
               globalStore.get(ObjectStore('whiteboard').objectMapAtom)
             )

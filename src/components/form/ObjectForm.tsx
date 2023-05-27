@@ -10,6 +10,9 @@ import { ObjectFamily } from '@/stores/object.store'
 import { useGlobalAtomValue } from '@/hooks'
 import OcrService from '@/services/ocr.service'
 import ClassName from '@/styles/classNames'
+import { Button } from '../base'
+import { transformTextContentToNameAndDescription } from '@/core/global/globalDragOverlay/utils'
+import { toast } from 'react-hot-toast'
 
 const ObjectForm: FC<
   IForm<MetaObject> & {
@@ -18,6 +21,7 @@ const ObjectForm: FC<
 > = ({ onBack, onSubmit, initialObject, shouldPreviewGraph }) => {
   const [object, setObject] = useState({ id: Id.getId(), ...initialObject })
   const { t } = useTranslation()
+  const [ocrLoading, toggleOcrLoading] = useState(false)
   const objectAtom =
     initialObject?.type && initialObject.objectId && ['webpage', 'audio', 'video', 'localFile'].includes(initialObject.type)
       ? ObjectStore(initialObject.type as keyof ObjectFamily).createAtom(initialObject.objectId)
@@ -91,18 +95,28 @@ const ObjectForm: FC<
             ? {
                 type: 'custom',
                 children: (
-                  <div
+                  <Button.IconButton
+                    spin={ocrLoading}
+                    icon={ocrLoading ? 'park-loading-four' : 'park-text-recognition'}
                     className={ClassName.flatButton()}
+                    text={ocrLoading ? t('general.loading') : t('general.recognize text in image')}
                     onClick={async () => {
-                      const fileUrl = initialObject.coverImgSrc?.replace('rendefile', 'file')!
-                      const image = await fetch(fileUrl).then(res => res.blob())
-                      const result = await OcrService.ocrImage(image)
-                      const desc = result?.result.map(i => i.words).join(' ')
-                      setObject(s => ({ ...s, description: desc }))
+                      if (ocrLoading) return
+                      toggleOcrLoading(true)
+                      try {
+                        const fileUrl = initialObject.coverImgSrc!
+                        const image = await fetch(fileUrl).then(res => res.blob())
+                        const result = await OcrService.ocrImage(image)
+                        const desc = result?.result.map(i => i.words).join(' ')
+                        const { name, description } = transformTextContentToNameAndDescription(desc)
+                        setObject(s => ({ ...s, name, description }))
+                      } catch (e) {
+                        toast.error('Failed to recognize text!')
+                      } finally {
+                        toggleOcrLoading(false)
+                      }
                     }}
-                  >
-                    OCR Image
-                  </div>
+                  ></Button.IconButton>
                 )
               }
             : undefined,
@@ -115,7 +129,8 @@ const ObjectForm: FC<
           {
             type: 'imagePicker',
             imageUrl: object.coverImgSrc,
-            onChange: v => setObject({ ...object, coverImgSrc: v })
+            onChange: v => setObject({ ...object, coverImgSrc: v }),
+            name: object.name || ''
           },
           {
             type: 'colorPicker',

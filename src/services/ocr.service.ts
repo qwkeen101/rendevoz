@@ -2,6 +2,7 @@ import { request } from '@/utils/request'
 import { blob } from 'd3'
 
 const localImageOcrInterface = 'http://localhost:9000/image/ocr'
+const remoteOcrInterface = 'https://api.rendevoz.com/image/ocr'
 const OcrService = {
   ocrImage: (
     image: Blob
@@ -18,7 +19,7 @@ const OcrService = {
       reader.onload = async e => {
         const result = e.target?.result?.toString()
         if (result) {
-          const ocrResult = await request(localImageOcrInterface, {
+          const ocrResult = await request(remoteOcrInterface, {
             data: new URLSearchParams({
               image: result
             }),

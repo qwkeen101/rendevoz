@@ -9,7 +9,9 @@ const WebpageSourceRenderer = ({ objectId }: { objectId: number }) => {
 
   if (webpage) {
     const { favicon, title, url } = webpage
+    if (!url) return null
     const displayUrl = url ? new URL(url).hostname : title
+
     return (
       <IconNameItem
         className={css([

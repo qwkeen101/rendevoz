@@ -4,11 +4,12 @@ import ClassName from '@/styles/classNames'
 import { useState } from 'react'
 import GraphFilter from '../GraphFilter'
 import GraphPathFilter from '../GraphPathFilter'
+import GraphSetting from '../GraphSetting'
 
 const GraphSettingPanel = () => {
   const [panelState, setPanelState] = useState<{
     visible?: boolean
-    currentPanel?: 'info' | 'filter' | 'path filter'
+    currentPanel?: 'info' | 'filter' | 'path filter' | 'setting'
   }>({
     currentPanel: 'info',
     visible: false
@@ -26,6 +27,8 @@ const GraphSettingPanel = () => {
         return <GraphFilter />
       case 'path filter':
         return <GraphPathFilter />
+      case 'setting':
+        return <GraphSetting />
     }
   }
   return (
@@ -55,6 +58,9 @@ const GraphSettingPanel = () => {
         </Tooltip>
         <Tooltip content="Graph Path Finder">
           <Icon name="park-connection-point-two" className={ClassName.circleButton()} onClick={() => togglePanel('path filter')} />
+        </Tooltip>
+        <Tooltip content="Graph Setting">
+          <Icon name="park-setting" className={ClassName.circleButton()} onClick={() => togglePanel('setting')} />
         </Tooltip>
       </Content>
     </AnimatePopover>

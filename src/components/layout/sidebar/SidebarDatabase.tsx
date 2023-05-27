@@ -155,10 +155,10 @@ const SidebarDatabase = memo(() => {
             }}
           >
             {draggingHovered.alreadyExist
-              ? 'Object Already Exist'
+              ? t('database.object already exist')
               : draggingHovered.droppable
-              ? 'Drop to add object into database'
-              : "Can't drop this type of object"}
+              ? t('database.drop to add object into database')
+              : t(`database.can't add this type of object`)}
           </div>
         }
       >

@@ -6,6 +6,7 @@ import { Content, Icon } from '.'
 import { Button } from './button'
 import useFileUpload from './useFileUpload'
 import Colors from '@/consts/colors'
+import { useTranslation } from 'react-i18next'
 
 const FileUploader = ({
   onFileUploaded,
@@ -27,6 +28,7 @@ const FileUploader = ({
   const [dragHighlight, toggleDragHighlight] = useToggle(false)
   const fileRef = useRef<File>()
   const { upload, renderUploader } = useFileUpload(onFileUploaded, accept)
+  const { t } = useTranslation()
   return (
     <>
       <Content
@@ -74,10 +76,10 @@ const FileUploader = ({
         }}
       >
         {typeof icon === 'string' ? <Icon name={icon || 'park-file-addition-one'} size={36} /> : icon}
-        {text !== null && <div className={ClassName.description()}>{text || 'Select one file or drag here'}</div>}
+        {text !== null && <div className={ClassName.description()}>{text || t('general.select one file or drop here')}</div>}
         {showButton && (
           <Button onClick={upload} style={{ padding: '6px 16px' }}>
-            Select one file
+            {t('general.select one file')}
           </Button>
         )}
       </Content>

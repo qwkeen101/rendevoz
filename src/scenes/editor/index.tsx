@@ -53,8 +53,6 @@ const EditorPage: FC<{
             noteId: noteId,
             textContent: highlightTextContent
           }
-          GlobalDragOverlayInstance.addDragElements?.(<DraggingElement text="Drop to add note label" />)
-          GlobalDragOverlayInstance.startDrag?.()
         }}
         onSearch={(text, id, e, editor) => {
           GlobalSearchInstance.open?.({

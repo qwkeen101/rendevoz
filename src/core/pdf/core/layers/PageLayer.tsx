@@ -117,6 +117,7 @@ const PageLayer: FC<PageLayerProps> = ({
           }}
         >
           {pageRenderer({
+            containerRef: pageRef,
             pageElement: pageRef.current,
             canvasLayer: (
               <CanvasLayer

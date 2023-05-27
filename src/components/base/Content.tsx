@@ -9,7 +9,7 @@ interface ContentProps extends DetailedHTMLProps<HTMLAttributes<HTMLDivElement>,
   column?: boolean
   alignItems?: Property.AlignItems
   justifyContent?: Property.JustifyContent
-  gap?: number
+  gap?: number | string
   centered?: boolean
   children?: React.ReactNode
   className?: string

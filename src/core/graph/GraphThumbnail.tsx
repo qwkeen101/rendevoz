@@ -103,7 +103,7 @@ const GraphThumbnail = ({ children, onClose }: { children: ReactNode; onClose: V
           />
         </Content>
       )}
-      <Modal visible={!small} onClose={() => setSmall(true)} noStyle>
+      <Modal showClose visible={!small} onClose={() => setSmall(true)} noStyle>
         <div
           style={{
             position: 'relative',
@@ -114,11 +114,8 @@ const GraphThumbnail = ({ children, onClose }: { children: ReactNode; onClose: V
             boxShadow: 'rgba(100, 100, 111, 0.2) 0px 7px 29px 0px',
             overflow: 'hidden'
           }}
+          className={ClassName.Background.pseudoBlurContrastBackground}
         >
-          <div
-            className={ClassName.Background.blurBackground}
-            style={{ position: 'absolute', top: '0px', left: '0px', width: '100%', height: '100%', zIndex: -1 }}
-          ></div>
           <Content fullHeight fullWidth ref={containerRef}></Content>
         </div>
       </Modal>

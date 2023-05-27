@@ -3,11 +3,11 @@ import { Content, Icon } from './base'
 import { useSetting } from '@/core'
 import Colors from '@/consts/colors'
 
-const FreePlanIncludes = ['最多创建300个实体', '查看实体关系图', '每月最多50次翻译（登录后）', '全文搜索已有笔记，PDF，网页']
+const FreePlanIncludes = ['最多创建300个实体', '查看实体关系图', '每月最多50次翻译', '全文搜索已有笔记，PDF，网页']
 const ProPlanIncludes = [
   '解锁全部本地功能，无限制使用',
-  '无限翻译次数',
-  '每月最多200次图片文字识别（识别后可搜索图片）',
+  '每月可使用多达10000次翻译',
+  '每月最多200次图片文字识别，使图片也可被搜索',
   '10GB文件云存储*',
   '优先客户支持'
 ]

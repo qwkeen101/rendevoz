@@ -125,7 +125,6 @@ const ToolTip: FC<PropsWithChildren<ToolTipProps>> = (
       <div
         ref={contentRef}
         style={{
-          pointerEvents: 'none',
           background: 'rgba(0,0,0,0.6)',
           color: 'white',
           borderRadius: 4,
@@ -151,11 +150,15 @@ const ToolTip: FC<PropsWithChildren<ToolTipProps>> = (
               }
               if (e.type === 'pointerleave') {
                 isInContentRef.current = false
-
-                if (!(e.relatedTarget instanceof HTMLElement && childRef.current?.contains(e.relatedTarget))) {
-                  console.log('close here')
-                  setOpen(false)
-                }
+                setTimeout(() => {
+                  if (
+                    !(e.relatedTarget instanceof HTMLElement && childRef.current?.contains(e.relatedTarget)) &&
+                    isInContentRef.current === false
+                  ) {
+                    console.log('close here')
+                    setOpen(false)
+                  }
+                }, 500)
               }
             }
             setTimeout(() => {
@@ -185,6 +188,7 @@ const ToolTip: FC<PropsWithChildren<ToolTipProps>> = (
         innerRef={mergedRef}
         disableIntersection
         visible={!!content && open && !disable}
+        onVisiblityChange={v => v !== open && setOpen(v)}
       >
         {renderChildren()}
       </AnimatePopover>

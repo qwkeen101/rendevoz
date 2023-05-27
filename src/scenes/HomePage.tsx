@@ -19,6 +19,7 @@ import { Zindexes } from '@/consts'
 import Colors from '@/consts/colors'
 import { Provider, atom, createStore, useAtom, useAtomValue } from 'jotai'
 import fuzzysort from 'fuzzysort'
+import CodeBlock from '@/components/base/CodeBlock'
 
 const HomeSearchAtom = atom<string | undefined>(undefined)
 export const HomePage: FC = () => {
@@ -30,21 +31,21 @@ export const HomePage: FC = () => {
   const [search, setSearch] = useAtom(HomeSearchAtom, { store: store })
   const debounceSetSearch = useDebounceFn(v => setSearch(v), { wait: 500 })
   return (
-    <Content flex column fullHeight style={{ margin: '0 auto', width: '100%', maxWidth: 1400, padding: '24px 24px 0px' }}>
+    <Content flex column fullHeight style={{ margin: '0 auto', width: '100%', maxWidth: 1400, padding: '18px 24px 0px' }}>
       <TabTitle title={t('general.home')} icon="park-home" />
       <Content
         flex
         gap={10}
         style={{
           padding: '4px 8px',
-          borderRadius: 10,
+          borderRadius: 6,
           border: `1px solid ${Colors.Background.Border}`,
-          marginBottom: 20
+          marginBottom: 16
         }}
       >
         <Icon name="park-search" />
         <input
-          placeholder={t('general.search')}
+          placeholder={t('home.search home page objects')}
           defaultValue={search}
           onChange={v => debounceSetSearch.run(v.target.value)}
           style={{
@@ -70,7 +71,7 @@ export const HomePage: FC = () => {
   )
 }
 
-const VisibleTypes: MetaObject['type'][] = ['note', 'pdf', 'whiteboard', 'webpage', 'localFile']
+const VisibleTypes: MetaObject['type'][] = ['note', 'pdf', 'whiteboard', 'webpage', 'localFile', 'image']
 const ColWidthState = { nameWidth: '100%', viewWidth: '200px', createWidth: '200px' }
 const Recent = () => {
   const all = useGlobalAtomValue(undeletedMetaObjectsAtom)
@@ -87,6 +88,7 @@ const Recent = () => {
       case 'webpage':
       case 'pdf':
       case 'localFile':
+      case 'image':
       case 'whiteboard':
         return all.filter(i => i.type === type)
     }
@@ -255,7 +257,7 @@ const Recent = () => {
         </colgroup>
 
         <tbody>
-          {items?.slice(0, 50)?.map(i => (
+          {items?.slice(0, 100)?.map(i => (
             <tr
               onClick={e => {
                 if (!e.defaultPrevented) {
@@ -268,7 +270,7 @@ const Recent = () => {
                   borderTop: `1px solid ${Colors.Background.Border}`,
                   userSelect: 'none',
                   td: {
-                    padding: '16px 8px'
+                    padding: '10px 8px'
                   },
                   ':hover': {
                     borderColor: 'transparent',
@@ -295,7 +297,8 @@ const Recent = () => {
               <td>
                 <Content flex alignItems="center" justifyContent="center" onClick={e => e.stopPropagation()}>
                   <IconWithPopover
-                    placement={['left']}
+                    placement={['right', 'left']}
+                    align="start"
                     zIndex={Zindexes.PopupMenu}
                     content={
                       <WithBorder>

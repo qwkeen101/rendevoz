@@ -117,7 +117,7 @@ const SidebarCollection = () => {
         </Content>
       </AnimatePopover>
       {!collapsed && (
-        <Content flex column style={{ overflowY: 'auto', padding: '0px 2px' }}>
+        <Content flex column style={{ padding: '0px 2px' }}>
           {rootCollections.map(i => (
             <SidebarCollectionItem key={i.id} id={i.id} parentId={0} parentType="collection" />
           ))}
@@ -146,6 +146,7 @@ export const IconNameItem = memo(
       const emoji = useMemo(() => !isPark && icon && getEmoji(icon), [icon])
       const linearFontColor = color?.startsWith('linear')
       const linearColors = color && linearFontColor && linearToSvg(color)
+      const [imgDisplayOk, toggleImgDisplayOk] = useToggle(true)
       return (
         <Content
           flex
@@ -173,17 +174,24 @@ export const IconNameItem = memo(
             />
           ) : (
             <>
-              {icon && isPark ? (
-                <Icon fill={linearColors ? linearColors[(linearColors.length / 2) | 0] : color} name={icon} />
-              ) : (
-                <img
-                  style={{
-                    height: '1em',
-                    width: '1em'
-                  }}
-                  src={icon}
-                />
-              )}
+              {icon &&
+                (isPark ? (
+                  <Icon fill={linearColors ? linearColors[(linearColors.length / 2) | 0] : color} name={icon} />
+                ) : (
+                  <img
+                    style={{
+                      height: '1em',
+                      width: '1em'
+                    }}
+                    onLoad={e => {
+                      e.currentTarget.style.display = 'block'
+                    }}
+                    onError={e => {
+                      e.currentTarget.style.display = 'none'
+                    }}
+                    src={icon}
+                  />
+                ))}
             </>
           )}
           <div

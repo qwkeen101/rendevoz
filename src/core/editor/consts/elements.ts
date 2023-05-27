@@ -6,7 +6,9 @@ export const BasicElements = {
   H4: 'heading-four',
   BulletedList: 'list-item',
   Blockquote: 'block-quote',
-  OrderedList: 'order-list-item'
+  OrderedList: 'order-list-item',
+  CodeBlock: 'code-block',
+  HighlightBlock: 'highlight-block'
 }
 
 export const InlineElements = {

@@ -4,6 +4,7 @@ import { ReactEditor } from 'slate-react'
 import { CustomEditor } from '../../../../typings/editor/types'
 import { ParagraphElement } from '../../../../typings/editor/types/commonElementTypes'
 import { Positions } from '../utils/positions'
+import { CustomElement } from '~/typings'
 
 const checkIfSpacerNeeded = (element: Node) => {
   switch (element.type) {
@@ -199,6 +200,11 @@ const withCustomComponent = (editor: CustomEditor) => {
       })
       if (match) {
         const [block, path] = match
+        const softBlockTypes: CustomElement['type'][] = ['highlight-block', 'block-quote']
+        if (softBlockTypes.includes(block.type)) {
+          editor.insertSoftBreak()
+          return
+        }
         const leaf = Editor.leaf(editor, selection)[0]
         const offset = selection.anchor.offset as number
         if (leaf.text[offset] === '\n') {

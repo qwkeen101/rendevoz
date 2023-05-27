@@ -14,6 +14,7 @@ const withVoid = (editor: CustomEditor) => {
       case 'divider':
       case 'inline-metaObject':
       case 'subPage':
+      case 'code-block':
       case 'math':
         return true
       default:

@@ -51,6 +51,10 @@ interface MetaObject extends IBase {
         blockId?: number
         selectedText?: string
       }
+    | {
+        type: 'whiteboard'
+        metaId: number
+      }
   temp?: boolean
 }
 interface MetaWithNote {

@@ -11,7 +11,7 @@ import React, { forwardRef, memo, ReactElement, useCallback, useEffect, useMemo,
 import { createPortal } from 'react-dom'
 import { Rnd } from 'react-rnd'
 import { MetaObject } from '~/typings/data'
-import { AnimatePopover, CheckBox, Content, Icon, WithBorder, Modal } from '@/components'
+import { AnimatePopover, CheckBox, Content, Icon, WithBorder } from '@/components'
 import {
   GlobalDragOverlayInstance,
   useGlobalIsDragging,

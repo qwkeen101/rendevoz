@@ -5,9 +5,9 @@ import { useTheme, useToggle } from '@/hooks'
 import MetaKnowledgeCard from './KnowledgeCard'
 import classNames from 'classnames'
 import ClassName from '@/styles/classNames'
-import { AnimatePopover, Button, Content, Icon, Image, Tooltip, WithBorder } from '@/components'
+import { AnimatePopover, Button, Content, Icon, Image, Panel, Tooltip, WithBorder } from '@/components'
 import DateFormat from '@/utils/dateFormat'
-import { indexedMetaLinksAtom, metaObjectsAtom, relatedMetaObjectsMapAtom } from '@/stores/meta.store'
+import { indexedMetaLinksAtom, metaObjectsAtom, metaStore, relatedMetaObjectsMapAtom } from '@/stores/meta.store'
 import Modal from '@/components/base/Modal'
 import useCardDrag from './useCardDrag'
 import { GlobalDragOverlayInstance, GlobalGraphInstance, ObjectTag, useRenderObject } from '@/core'
@@ -30,6 +30,7 @@ import { Zindexes } from '@/consts'
 import FontSize from '@/consts/font'
 import { GlobalImagePreviewerInstance } from '@/core/global/GlobalImagePreviewer'
 import FromRenderer from '../FromRenderer'
+import _ from 'lodash'
 
 export const TypeToTypeName: Record<MetaObject['type'], string> = {
   pdfLabel: 'pdf label',
@@ -154,12 +155,12 @@ export const DatabaseCard: FC<{
     return (
       <Content flex column>
         <Content className={TitleWrapperClassName}>
-          <div className={TitleClassName} onClick={onTitleClick}>
+          <div className={TitleClassName} onClick={onTitleClick} style={{ textTransform: 'none' }}>
             {title}
           </div>
           {description?.length && (
             <div
-              style={{ whiteSpace: 'pre-line', marginTop: 8 }}
+              style={{ whiteSpace: 'pre-line', marginTop: 8, textTransform: 'none' }}
               className={css([ClassName.description(FontSize['14px']), ClassName.ellipsisFont(6)])}
             >
               {description}
@@ -257,7 +258,7 @@ export const DatabaseCard: FC<{
           {showImage && (
             <img
               onClick={() => GlobalImagePreviewerInstance.open?.(innerCover || cover)}
-              src={innerCover || cover}
+              src={cover}
               style={{ height: '100%', objectFit: 'cover', maxHeight: 500 }}
             />
           )}
@@ -349,9 +350,10 @@ export const ObjectActionPopover: FC<
   const { t } = useTranslation()
   const [relatedVisible, toggleRelatedVisible] = useToggle(false)
   const metaObject = MetaStore.useValue(metaObjectId)
+  const containerRef = useRef<HTMLDivElement>(null)
   if (!metaObject) return null
   return (
-    <Content flex column style={{ padding: 6, fontWeight: 500, width: 180 }}>
+    <Content flex column style={{ padding: 6, fontWeight: 500, width: 180 }} ref={containerRef} role="object-popover-panel">
       {visibility?.jumpToVisible && <Button.IconButton onClick={onJump} text="Focus" icon="park-share-two" />}
       {visibility?.graphPinVisible && (
         <Button.IconButton
@@ -420,6 +422,7 @@ export const ObjectActionPopover: FC<
         }}
         reposition
         boundaryElement={document.body}
+        parentElement={containerRef.current}
         content={
           <WithBorder
             onClick={e => e.stopPropagation()}
@@ -463,6 +466,21 @@ const RelatedPanel = memo(({ metaId }: { metaId: number }) => {
   const [showIn, toggleShowIn] = useToggle(false)
   const [showOut, toggleShowOut] = useToggle(false)
   const { t } = useTranslation()
+
+  const { sortedInbounds, sortedOutbounds } = useMemo(() => {
+    const inboundLinkIds = Array.from(targetToSource?.values() || [])
+    const outboundLinkIds = Array.from(sourceToTarget?.values() || [])
+    const inboundObjects = inboundLinkIds.map(i => globalStore.get(metaObjectsAtom).get(globalStore.get(metaLinksAtom).get(i)!.sourceId))
+    const outboundObjects = outboundLinkIds.map(i => globalStore.get(metaObjectsAtom).get(globalStore.get(metaLinksAtom).get(i)!.targetId))
+
+    const sortedInbounds = _.groupBy(inboundObjects, b => b?.type)
+    const sortedOutbounds = _.groupBy(outboundObjects, b => b?.type)
+    return {
+      sortedInbounds,
+      sortedOutbounds
+    }
+  }, [metaId])
+  console.log(sortedInbounds, sortedOutbounds)
   return (
     <Content
       flex
@@ -478,54 +496,35 @@ const RelatedPanel = memo(({ metaId }: { metaId: number }) => {
         maxWidth: 500
       })}
     >
-      <Content
-        className={css({
-          '> div': {
-            ':not(:last-child)': {
-              borderBottom: `1px solid ${Colors.Background.Border}`
-            }
-          }
-        })}
-      >
+      <Content>
         <Button.IconButton
           onClick={toggleShowIn}
           text={`${t('general.inbound links')} ${targetToSource?.size || 0}`}
           icon={!showIn ? 'park-right' : 'park-down'}
         />
-        {showIn &&
-          Array.from(targetToSource?.values() || []).map(i => {
-            const link = linkStore.get(i)
-            if (link) {
-              return <RelatedItem key={link.id} metaId={link.sourceId} />
-            }
-          })}
+        {showIn && Object.entries(sortedInbounds).map(i => <RelatedGroup key={i[0]} groupType={i[0]} metaIds={i[1].map(i => i?.id)} />)}
       </Content>
-      <Content
-        className={css({
-          '> div': {
-            ':not(:last-child)': {
-              borderBottom: `1px solid ${Colors.Background.Border}`
-            }
-          }
-        })}
-      >
+      <Content>
         <Button.IconButton
           onClick={toggleShowOut}
           text={`${t('general.outbound links')} ${sourceToTarget?.size || 0}`}
           icon={!showOut ? 'park-right' : 'park-down'}
         />
-        {showOut &&
-          Array.from(sourceToTarget?.values() || []).map(i => {
-            const link = linkStore.get(i)
-            if (link) {
-              return <RelatedItem key={link.id} metaId={link?.targetId} />
-            }
-          })}
+        {showOut && Object.entries(sortedOutbounds).map(i => <RelatedGroup key={i[0]} groupType={i[0]} metaIds={i[1].map(i => i?.id)} />)}
       </Content>
     </Content>
   )
 })
-
+const RelatedGroup = ({ groupType, metaIds }: { groupType: MetaObject['type']; metaIds: number[] }) => {
+  const { t } = useTranslation()
+  return (
+    <Panel style={{ padding: '4px 12px' }} defaultVisible={false} title={`${t(`general.${TypeToTypeName[groupType]}`)} ${metaIds.length}`}>
+      {metaIds.map(i => (
+        <RelatedItem metaId={i} key={i} />
+      ))}
+    </Panel>
+  )
+}
 const RelatedItem = ({ metaId }: { metaId: number }) => {
   const { renderWhole } = useRenderObject({ metaObjectId: metaId })
 
@@ -534,17 +533,21 @@ const RelatedItem = ({ metaId }: { metaId: number }) => {
       {renderWhole({
         renderOptions: {
           renderDescription: false,
-          renderOption: true
+          renderOption: true,
+          renderFrom: false
         },
         mainContainerStyle: {
-          padding: 10,
           flex: 1
         },
         titleOptions: {
-          ellipsisLine: 1
+          ellipsisLine: 1,
+          style: {
+            fontSize: FontSize['14px']
+          }
         },
         containerStyle: {
           width: '100%',
+          padding: '4px 0px',
           flex: 1
         }
       })}
@@ -553,10 +556,10 @@ const RelatedItem = ({ metaId }: { metaId: number }) => {
 }
 export const TitleClassName = classNames(
   css({
-    fontWeight: 700,
-    fontSize: FontSize['16px'],
-    lineHeight: '24px',
-    userSelect: 'none'
+    fontWeight: 600,
+    fontSize: FontSize['15px'],
+    userSelect: 'none',
+    textTransform: 'none'
   }),
   ClassName.ellipsisFont(2)
 )

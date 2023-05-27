@@ -1,6 +1,6 @@
 import { Icon } from '@/components'
 import useScopedEventEmitter from '@/events/useEventEmitter'
-import { useToggle } from '@/hooks'
+import { useDebounceFn, useToggle } from '@/hooks'
 import { cloneElement, FC, ReactElement, useEffect, useState } from 'react'
 import { Editor, Path, Range, Transforms } from 'slate'
 import { ReactEditor, RenderElementProps, useSlateStatic } from '../../slate-react'
@@ -8,6 +8,7 @@ import { CustomElement, HeadingElement } from '~/typings'
 import { useEventHandler } from '@/events'
 import useReadOnlyEditor from '../../hooks/useReadOnly'
 import Colors from '@/consts/colors'
+import FontSize from '@/consts/font'
 
 const HeadingToLevel: Partial<Record<CustomElement['type'], number>> = {
   'heading-one': 1,
@@ -31,10 +32,30 @@ const Heading: FC<RenderElementProps> = ({ element, children }) => {
   const isEmpty = Editor.isEmpty(editor, element) ? true : false
   const [isComposing, setIsComposing] = useState(false)
   const [showAction, toggleShowAction] = useToggle(false)
+  const [containElements, setContainElements] = useState(0)
   const isReadOnly = useReadOnlyEditor()
   const emitter = useScopedEventEmitter()
   const handler = useEventHandler('editor')
+
+  const calculateContainElements = () => {
+    let currentPath = ReactEditor.findPath(editor, element)
+    let containEles = 0
+    const parentEle = Editor.node(editor, Path.parent(currentPath))[0]
+    let currIdx = parentEle.children.findIndex(i => i === element) + 1
+    while (parentEle.children[currIdx] && !parentEle.children[currIdx].type.startsWith('heading')) {
+      currentPath = Path.next(currentPath)
+      currIdx += 1
+      containEles += 1
+    }
+    setContainElements(containEles)
+  }
+
+  const debounceCal = useDebounceFn(calculateContainElements, { wait: 1000 })
+
   useEffect(() => {
+    handler.on('valueChange', () => {
+      debounceCal.run()
+    })
     handler.on('compositionEnd', () => {
       setIsComposing(false)
     })
@@ -44,7 +65,9 @@ const Heading: FC<RenderElementProps> = ({ element, children }) => {
         setIsComposing(true)
       }
     })
+
     emitter.addListener('editor', handler)
+    calculateContainElements()
     return () => {
       emitter.removeListener('editor', handler)
     }
@@ -115,10 +138,32 @@ const Heading: FC<RenderElementProps> = ({ element, children }) => {
       id: element.id,
       suppressContentEditableWarning: true,
       onPointerEnter: () => toggleShowAction(true),
-      onPointerLeave: () => toggleShowAction(false)
+      onPointerLeave: () => toggleShowAction(false),
+      style: {
+        paddingRight: 50
+      }
     },
     !isReadOnly && action(),
     children,
+    containElements > 0 && (
+      <span
+        contentEditable={false}
+        style={{
+          padding: 8,
+          borderRadius: 8,
+          background: Colors.Background.ButtonHover,
+          color: Colors.Font.Description,
+          fontSize: FontSize['15px'],
+          position: 'absolute',
+          right: 0,
+          top: '50%',
+          transform: 'translateY(-50%)',
+          lineHeight: 1
+        }}
+      >
+        {containElements}
+      </span>
+    ),
     isEmpty && !isComposing && (
       <div style={{ position: 'absolute', left: 0, top: 0, pointerEvents: 'none', userSelect: 'none', color: Colors.Font.Tertiary }}>
         H{HeadingToLevel[element.type]}

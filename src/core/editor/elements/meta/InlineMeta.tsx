@@ -10,11 +10,12 @@ import Colors from '@/consts/colors'
 import tinycolor from 'tinycolor2'
 import HoverObjectDetails from '@/core/database/HoverObjectDetails'
 import { MetaStore } from '@/stores'
+import { Content, Image } from '@/components'
 
 const clazzName = css([
   {
     cursor: 'pointer',
-    fontWeight: 500,
+    fontWeight: 600,
     ':hover': {
       textDecoration: 'underline'
     }
@@ -64,27 +65,62 @@ const InlineMetaElement: FC<RenderElementProps> = ({ element, children, attribut
   return (
     <span {...attributes} data-meta-id={element.id} style={{ margin: '0 6px', position: 'relative' }}>
       <HoverObjectDetails metaObjectId={(element as InlineMetaObjectElement).originId}>
-        <div style={{ display: 'inline-flex', gap: 6, alignItems: 'baseline', maxWidth: 'calc(100% - 20px)' }}>
-          <div
-            className={circleClassName}
-            style={{
-              background: innerColor,
-              border: `0.3em solid ${circleColor}`
-            }}
-          ></div>
-          <span
-            className={clazzName}
-            data-meta
-            onClick={() => {
-              metaObject?.id && Actions.navigateToTargetObject(metaObject?.id)
-            }}
-            style={{
-              color: metaObject?.color
-            }}
-          >
-            {metaObject?.name || 'Deleted Object'}
-          </span>
-          <div className={nameClassName}>{t(`general.${TypeToTypeName[metaObject?.type || 'normal']}`)}</div>
+        <div
+          style={{
+            display: 'inline-flex',
+            gap: metaObject?.coverImgSrc ? 12 : 6,
+            alignItems: metaObject?.coverImgSrc ? 'center' : 'baseline',
+            maxWidth: 'calc(100% - 20px)'
+          }}
+        >
+          {metaObject?.coverImgSrc ? (
+            <Image preview src={metaObject.coverImgSrc} width="3.4em" className={css({ borderRadius: 6, marginTop: 6 })} />
+          ) : (
+            <div
+              className={circleClassName}
+              style={{
+                background: innerColor,
+                border: `0.3em solid ${circleColor}`
+              }}
+            ></div>
+          )}
+          {metaObject?.coverImgSrc ? (
+            <Content flex column gap="0.2em" style={{ alignSelf: 'flex-end' }}>
+              <div style={{ width: 'fit-content', margin: 0, fontSize: '0.8em' }} className={nameClassName}>
+                {t(`general.${TypeToTypeName[metaObject?.type || 'normal']}`)}
+              </div>
+              <span
+                className={clazzName}
+                data-meta
+                onClick={() => {
+                  metaObject?.id && Actions.navigateToTargetObject(metaObject?.id)
+                }}
+                style={{
+                  color: metaObject?.color,
+                  lineHeight: 1.2,
+                  marginBottom: '-0.12em'
+                }}
+              >
+                {metaObject?.name || 'Deleted Object'}
+              </span>
+            </Content>
+          ) : (
+            <>
+              <span
+                className={clazzName}
+                data-meta
+                onClick={() => {
+                  metaObject?.id && Actions.navigateToTargetObject(metaObject?.id)
+                }}
+                style={{
+                  color: metaObject?.color
+                }}
+              >
+                {metaObject?.name || 'Deleted Object'}
+              </span>
+              <div className={nameClassName}>{t(`general.${TypeToTypeName[metaObject?.type || 'normal']}`)}</div>
+            </>
+          )}
         </div>
       </HoverObjectDetails>
       {children}

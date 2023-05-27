@@ -34,6 +34,7 @@ const FormFromDisplayer = ({ initialObject, onRemove }: { initialObject: Partial
             })
             break
           }
+          case 'whiteboard':
           case 'webpage':
           case 'note': {
             setFromState({

@@ -11,7 +11,7 @@ const ImageLabel = ({ url, onTitleChange }: InnerLabelProps) => {
   }, [])
   return (
     <>
-      <Modal width="80vw" height="80vh" visible={imageModalVisible} onClose={toggleImageModalVisible}>
+      <Modal showClose width="80vw" height="80vh" visible={imageModalVisible} onClose={toggleImageModalVisible}>
         <Content fullHeight fullWidth flex centered style={{ padding: 20, overflowY: 'auto' }}>
           <img width="auto" style={{ maxWidth: '100%', borderRadius: 8 }} height="auto" src={url} />
         </Content>

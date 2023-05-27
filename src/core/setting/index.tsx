@@ -15,15 +15,18 @@ import ObjectsAndLinksSetting from './ObjectsAndLinks'
 import ShortCutSetting from './ShortCut'
 import SettingSidebarItem from './SidebarItem'
 import AboutSetting from './About'
+import UsageSetting from './Usage'
+import { useUser } from '@/services/login.service'
 
 enum Settings {
   'general',
   'appearance',
-  'notification',
+  'components',
   'shortcuts',
   'object and link',
-  'components',
-  'about'
+  'notification',
+  'resource usage'
+  // 'about'
 }
 type AvaliableLanguages = 'en-US' | 'zh-CN'
 type Setting = INotificationSetting & IShortCutSetting & IGeneralSetting & IObjectsAndLinkSetting & IComponentSetting & IAppearanceSetting
@@ -44,6 +47,7 @@ type IGeneralSetting = {
       | 'bing dictionary'
       | 'youdao dictionary'
       | 'semantic scholar'
+    defaultImageSearchEngine: 'bing' | 'google' | 'pinterest' | 'baidu'
   }
 }
 export type INotificationSetting = {
@@ -99,6 +103,13 @@ export type IComponentSetting = {
   editor: {
     objectAutoBecomeInline: boolean
   }
+  translate: {
+    autoGotoHoverText: boolean
+    showOrigWhenHoverText: boolean
+  }
+  webpage: {
+    enableSearchAutoSuggestion: boolean
+  }
 }
 const localSetting = JSON.parse(localStorage.getItem('setting'))
 localStorage.removeItem('setting')
@@ -117,7 +128,8 @@ const defaultSetting: Setting = {
     language: 'en-US',
     openNewTab: 'open existing tab',
     darkMode: false,
-    defaultSearchEngine: 'google'
+    defaultSearchEngine: 'google',
+    defaultImageSearchEngine: 'bing'
   },
   objectAndLink: {
     enableAll: true,
@@ -135,7 +147,14 @@ const defaultSetting: Setting = {
   editor: {
     objectAutoBecomeInline: true
   },
-  background: {}
+  translate: {
+    autoGotoHoverText: true,
+    showOrigWhenHoverText: true
+  },
+  background: {},
+  webpage: {
+    enableSearchAutoSuggestion: true
+  }
 }
 _.merge(defaultSetting, localSetting)
 localStorage.setItem('setting', JSON.stringify(defaultSetting))
@@ -147,6 +166,7 @@ const SettingDialog = ({ onClose }: { onClose: VoidFunction }) => {
   const { t } = useTranslation()
   const [currentSettingPanel, setCurrentSettingPanel] = useState<keyof typeof Settings>('general')
   const [setting] = useSetting()
+  const [user] = useUser()
   const renderContent = () => {
     switch (currentSettingPanel) {
       case 'general':
@@ -161,6 +181,8 @@ const SettingDialog = ({ onClose }: { onClose: VoidFunction }) => {
         return <ComponentSetting />
       case 'appearance':
         return <AppearanceSetting />
+      case 'resource usage':
+        return user ? <UsageSetting /> : null
       case 'about': {
         if (setting.general.language === 'zh-CN') {
           return <AboutSetting />
@@ -194,6 +216,12 @@ const SettingDialog = ({ onClose }: { onClose: VoidFunction }) => {
       >
         {Object.keys(Settings)
           .filter(i => isNaN(Number(i)))
+          .filter(i => {
+            if (i === 'resource usage' && !user) {
+              return false
+            }
+            return true
+          })
           .map(i => (
             <SettingSidebarItem onClick={() => setCurrentSettingPanel(i)} key={i} isSelected={i === currentSettingPanel}>
               <div style={{ textTransform: 'capitalize' }}>{t(`settings.${i}`)}</div>
@@ -203,12 +231,6 @@ const SettingDialog = ({ onClose }: { onClose: VoidFunction }) => {
       <Content style={{ padding: '0px 30px' }} fullHeight fullWidth>
         {renderContent()}
       </Content>
-      <Icon
-        name="park-close"
-        containerStyle={{ position: 'absolute', top: 8, right: 8 }}
-        className={ClassName.circleButton()}
-        onClick={onClose}
-      />
     </Content>
   )
 }

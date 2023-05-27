@@ -14,7 +14,7 @@ const shortCutNameToTitle: Record<keyof IShortCutSetting['shortcut'], string> = 
   quickCreateObject: 'open create object form',
   openScreenShot: 'open screen shot',
   openTranslatePanel: 'open translate panel',
-  openSearchPanel: 'open search panel'
+  openSearchPanel: 'open web search panel'
 }
 const ShortCutSetting = () => {
   const { t } = useTranslation()

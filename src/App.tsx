@@ -24,6 +24,7 @@ import { css } from '@emotion/css'
 import GlobalTranslateResult from './core/global/GlobalTranslatePanel'
 import GlobalSearchPanel from './core/global/GlobalSearchPanel'
 import GlobalWebview from './core/global/GlobalWebview'
+import 'highlight.js/styles/atom-one-dark.css'
 
 export function getOS() {
   const userAgent = window.navigator.userAgent.toLowerCase(),

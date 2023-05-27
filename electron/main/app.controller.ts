@@ -5,6 +5,7 @@ import { IpcInvoke } from './transport'
 import fs from 'fs'
 import path from 'path'
 import { autoUpdater } from 'electron-updater'
+import { digestBuffer } from './utils'
 // import { franc } from 'franc'
 // import { iso6393To1 } from './iso-639-to-iso-631'
 
@@ -19,7 +20,7 @@ export class AppController {
     this.webContents.reload()
   }
   @IpcInvoke('ping')
-  public a(){
+  public a() {
     console.log('ping')
   }
   @IpcInvoke('maximizeWindow')
@@ -46,11 +47,13 @@ export class AppController {
     if (!fs.existsSync(imgPath)) {
       fs.mkdirSync(imgPath, {})
     }
-    const newPath = path.join(imgPath, `${imgName}.png`)
-
-    const protocolPath = 'rendefile://' + '/imgs/' + `${imgName}.png`
     const data = imgData.split(',').pop()
     const buf = Buffer.from(data, 'base64')
+    const digest = digestBuffer(buf)
+    const newPath = path.join(imgPath, `${digest}.png`)
+
+    const protocolPath = 'rendefile://' + '/imgs/' + `${digest}.png`
+
     if (!fs.existsSync(newPath)) {
       return new Promise(resolve => {
         fs.writeFile(newPath, buf, () => {
@@ -85,30 +88,35 @@ export class AppController {
     const result = await autoUpdater.checkForUpdates()
     return result.updateInfo
   }
+
   @IpcInvoke('saveBuffer')
   public async saveBuffer(buffer: Buffer | ArrayBuffer, fileName: string, filePath?: string) {
     this.checkIfRendevozGenerated()
     const rendevozFilePath = path.join(DEFAULT_USER_DATA_PATH, 'rendevoz', 'files')
-    const newPath = filePath?.replace('rendefile://', '').replace('file://', '') || path.join(rendevozFilePath, fileName)
-    const absolutePath = path.resolve(newPath)
-    // const protocolPath = 'rendefile://' + absolutePath
-    const protocolPath = 'rendefile://' + '/files/' + fileName
-    if (!fs.existsSync(newPath)) {
-      return new Promise(resolve => {
-        if (buffer instanceof ArrayBuffer) {
-          fs.writeFile(newPath, Buffer.from(buffer), () => {
-            resolve(protocolPath)
-          })
-        } else {
-          fs.writeFile(newPath, buffer, () => {
-            resolve(protocolPath)
-          })
-        }
-      })
-    } else {
-      return protocolPath
-    }
+    const finalPathName =
+      filePath
+        ?.replace('rendefile://', '')
+        .replace('file://', '')
+        .replace(rendevozFilePath, '')
+        .replace('/rendevoz', '')
+        .replace('/files/', '') || fileName
+    const newPath = path.join(rendevozFilePath, finalPathName)
+
+    const protocolPath = 'rendefile://' + '/files/' + finalPathName
+
+    return new Promise(resolve => {
+      if (buffer instanceof ArrayBuffer) {
+        fs.writeFile(newPath, Buffer.from(buffer), () => {
+          resolve(protocolPath)
+        })
+      } else {
+        fs.writeFile(newPath, buffer, () => {
+          resolve(protocolPath)
+        })
+      }
+    })
   }
+
   @IpcInvoke('updateAndInstall')
   public async updateAndInstall() {
     try {
@@ -125,23 +133,22 @@ export class AppController {
       fs.mkdirSync(rendevozPath, {})
     }
   }
+
   @IpcInvoke('openLocalFile')
   public async openLocalFile(filePath: string) {
     return shell.openPath(filePath)
   }
 
   @IpcInvoke('captureWebpage')
-  public async captureWebpage(webviewId: number) {
+  public async captureWebpage(webviewId?: number, rect?: Electron.Rectangle) {
+    if (!webviewId) {
+      const image = await BrowserWindow.getFocusedWindow().capturePage()
+      return image.toDataURL()
+    }
     const image = await webContents
       .getAllWebContents()
       .find(i => i.id === webviewId)
       .capturePage()
     return image.toDataURL()
   }
-
-  // @IpcInvoke('detectLang')
-  // public async detectLang(text: string) {
-  //   const lang = franc(text)
-  //   return iso6393To1[lang]
-  // }
 }

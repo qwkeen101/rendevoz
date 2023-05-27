@@ -244,6 +244,7 @@ const TextLayer: FC<TextLayerProps> = ({ scale, rotation, width, height, pageInd
     pageFunctionRef.current.clearAllSelect = () => {
       mousePos.current = null
     }
+    pageFunctionRef.current.getTextLayerCanvas = () => canvasRef.current
   }
 
   const memoizedHighlightText = useMemoizedFn(async text => {

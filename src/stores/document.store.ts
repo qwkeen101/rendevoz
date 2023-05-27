@@ -37,7 +37,7 @@ export const initializePdfDocument = async (file: File): Promise<Partial<IPdfDoc
 
     await renderTask.promise
     const data = canvas.toDataURL('image/png')
-    const result = await Promise.all([saveImageLocally(Id.getStrId(), data), saveFileLocally(file.path, file.name)])
+    const result = await Promise.all([saveImageLocally(data), saveFileLocally(file.path, file.name)])
     const imageResult = result[0]
     pdfDocument.metadata = {
       ...pdfDocument.metadata,

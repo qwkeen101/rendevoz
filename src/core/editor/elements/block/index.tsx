@@ -168,13 +168,16 @@ const Block: FC<React.DetailedHTMLProps<React.HTMLAttributes<HTMLDivElement>, HT
       }
     })
     useEffect(() => {
-      const width = `calc(( 100% - ${
-        46 * ((columnRef.current?.parentElement?.querySelectorAll("[data-type='column']").length || 2) - 1)
-      }px ) * ${ratio?.toFixed(3)})`
-      if (columnRef.current) {
-        columnRef.current.style.width = width
+      if (element.type === 'column') {
+        const width = `calc(( 100% - ${
+          46 * ((columnRef.current?.parentElement?.querySelectorAll("[data-type='column']").length || 2) - 1)
+        }px ) * ${ratio?.toFixed(3)})`
+        if (columnRef.current) {
+          columnRef.current.style.width = width
+        }
       }
     }, [ratio])
+
     const handleMouseEnter = useCallback(e => onMouseEnter?.(e, element), [onMouseEnter, element])
     const handleMouseLeave = useCallback(e => onMouseLeave?.(e, element), [onMouseLeave, element])
     const handleMouseMove = useCallback(
@@ -253,9 +256,10 @@ const Block: FC<React.DetailedHTMLProps<React.HTMLAttributes<HTMLDivElement>, HT
             style: {
               paddingTop: 12,
               paddingBottom: 12,
-              flexGrow: 0,
+              flexGrow: 1,
               flexShrink: 0
-            }
+            },
+            role: 'column'
           },
           renderChildren()
         )

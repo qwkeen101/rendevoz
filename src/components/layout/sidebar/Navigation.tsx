@@ -54,8 +54,12 @@ const Navigation = ({ hovered }: { hovered: boolean }) => {
         <SidebarSearch />
         <SidebarSetting />
         {/* <GlobalPocket>{urls => <SidebarPocket urls={urls} />}</GlobalPocket> */}
-        <SidebarPinned />
-        <Content flex column style={{ overflow: 'hidden', padding: 4, margin: -4, marginTop: 10, flex: 1 }}>
+        <Content
+          flex
+          column
+          style={{ padding: '4px', overflowY: 'auto', overflowX: 'hidden', margin: '-4px -4px 0px', marginTop: 10, flex: 1 }}
+        >
+          <SidebarPinned />
           <SidebarCollection />
         </Content>
       </motion.ul>

@@ -7,10 +7,19 @@ import { useTranslation } from 'react-i18next'
 import Actions from '../Actions'
 import { AnimatePopoverProps } from '@/components/base/AnimatePopover'
 import { Zindexes } from '@/consts'
-import { GlobalEventEmitter } from '@/events'
 import ClassName from '@/styles/classNames'
 
-export const useCreateObject = (options?: { positions: AnimatePopoverProps['positions'] }) => {
+export const useCreateObject = (options?: {
+  positions: AnimatePopoverProps['positions']
+  padding?: number
+  visiblities?: {
+    note?: boolean
+    pdf?: boolean
+    whiteboard?: boolean
+    webpage?: boolean
+    localFile?: boolean
+  }
+}) => {
   const [modalState, setModalState] = useState<{
     createDoc?: boolean
   }>()
@@ -45,7 +54,7 @@ export const useCreateObject = (options?: { positions: AnimatePopoverProps['posi
           boundaryInset={20}
           positions={options?.positions}
           visible={!!popoverState?.visible}
-          padding={10}
+          padding={options?.padding || 10}
           content={
             <WithBorder padding={6} onClick={() => setPopoverState(undefined)} style={{ width: popoverState.isOpenCenter ? 300 : 140 }}>
               {popoverState.isOpenCenter && (
@@ -62,61 +71,73 @@ export const useCreateObject = (options?: { positions: AnimatePopoverProps['posi
                   />
                 </Content>
               )}
-              <Button.IconButton
-                icon="park-share-one"
-                text={t('general.normal object')}
-                onClick={() => {
-                  GlobalEventEmitter().emit('global', {
-                    type: 'globalNeedAddMetaObject',
-                    data: {
-                      currentObject: {
-                        type: 'normal'
-                      }
-                    }
-                  })
-                }}
-              />
-              <Button.IconButton
-                icon="park-file-pdf"
-                text={t('general.pdf')}
-                onClick={() => {
-                  setModalState({ createDoc: true })
-                }}
-              />
-              <Button.IconButton
-                icon="park-web-page"
-                text={t('general.webpage')}
-                onClick={() => {
-                  ObjectStore('webpage')
-                    .addOneWithMeta(
-                      {
-                        title: 'Unknown webpage'
-                      },
-                      { showMetaModal: true }
-                    )
-                    .then(({ one }) => {
-                      Actions.openWebpage(one.id)
-                    })
-                }}
-              />
-              <Button.IconButton
-                icon="park-notes"
-                text={t('general.note')}
-                onClick={() => {
-                  ObjectStore('note')
-                    .addOneWithMeta({ title: 'Untitled' }, { showMetaModal: true })
-                    .then(({ one }) => {
-                      Actions.openEditor(one.id)
-                    })
-                }}
-              />
-              <Button.IconButton
-                icon="park-log"
-                text={t('general.local file')}
-                onClick={() => {
-                  ObjectStore('localFile').addOneWithMeta({}, { showMetaModal: true })
-                }}
-              />
+              {options?.visiblities?.pdf !== false && (
+                <Button.IconButton
+                  icon="park-file-pdf"
+                  text={t('general.pdf')}
+                  onClick={() => {
+                    setModalState({ createDoc: true })
+                  }}
+                />
+              )}
+              {options?.visiblities?.webpage !== false && (
+                <Button.IconButton
+                  icon="park-web-page"
+                  text={t('general.webpage')}
+                  onClick={() => {
+                    ObjectStore('webpage')
+                      .addOneWithMeta(
+                        {
+                          title: 'Unknown webpage'
+                        },
+                        { showMetaModal: true }
+                      )
+                      .then(({ one }) => {
+                        Actions.openWebpage(one.id)
+                      })
+                  }}
+                />
+              )}
+              {options?.visiblities?.whiteboard !== false && (
+                <Button.IconButton
+                  icon="park-new-computer"
+                  text={t('general.whiteboard')}
+                  onClick={() => {
+                    ObjectStore('whiteboard')
+                      .addOneWithMeta(
+                        {
+                          name: 'Unknown whiteboard'
+                        },
+                        { showMetaModal: true }
+                      )
+                      .then(({ one }) => {
+                        Actions.openWhiteboard(one.id)
+                      })
+                  }}
+                />
+              )}
+              {options?.visiblities?.note !== false && (
+                <Button.IconButton
+                  icon="park-notes"
+                  text={t('general.note')}
+                  onClick={() => {
+                    ObjectStore('note')
+                      .addOneWithMeta({ title: 'Untitled' }, { showMetaModal: true })
+                      .then(({ one }) => {
+                        Actions.openEditor(one.id)
+                      })
+                  }}
+                />
+              )}
+              {options?.visiblities?.localFile !== false && (
+                <Button.IconButton
+                  icon="park-log"
+                  text={t('general.local file')}
+                  onClick={() => {
+                    ObjectStore('localFile').addOneWithMeta({}, { showMetaModal: true })
+                  }}
+                />
+              )}
             </WithBorder>
           }
           onClickOutside={() => {
@@ -150,7 +171,7 @@ export const useCreateObject = (options?: { positions: AnimatePopoverProps['posi
       if (popoverState?.visible || popoverState?.popoverVisible) {
         return
       }
-      const target = e.target
+      const target = e.currentTarget
       if (target instanceof HTMLElement) {
         const bounding = target.getBoundingClientRect()
         setPopoverState({

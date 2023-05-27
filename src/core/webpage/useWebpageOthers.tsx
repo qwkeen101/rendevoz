@@ -4,11 +4,14 @@ import { Size, XYPosition } from '~/typings'
 import { IpcWebpageEvent } from './webpageIpcEvent'
 import { AnimatePopover, Button, WithBorder } from '@/components'
 import { useTranslation } from 'react-i18next'
-import { MetaStore } from '@/stores'
+import { MetaStore, ObjectStore } from '@/stores'
 import { ObjectDragState } from '@/core/global/globalDragOverlay/useDropObject'
 import { GlobalTranslateInstance } from '../global/GlobalTranslatePanel'
 import { GlobalSearchInstance } from '../global/GlobalSearchPanel'
 import { Zindexes } from '@/consts'
+import { transformTextContentToNameAndDescription } from '../global/globalDragOverlay/utils'
+import { downloadImg, fetchRemoteImageAndSaveLocally } from '@/utils/img'
+import { getIcon } from '@/components/layout/sidebar/items/SidebarObjectItem'
 
 type WebpageContextMenuData = {
   x: number
@@ -39,16 +42,30 @@ const useWebpageOthers = (
     visible: boolean
     position?: XYPosition
     selectedText?: string
+    hasImage?: boolean
+    currentImageUrl?: string
+    altText?: string
+    linkText?: string
+    linkUrl?: string
   }>({
     visible: false,
     position: { x: 0, y: 0 }
   })
   const { t } = useTranslation()
-  const { visible, position, selectedText } = contextMenuState
+  const { visible, position, selectedText, hasImage, currentImageUrl, altText, linkText, linkUrl } = contextMenuState
   const contextMenuHandler = useMemoizedFn((data: { params: WebpageContextMenuData }) => {
     const { params } = data
-    const { selectionText } = params
-    setContextMenuState(s => ({ ...s, selectedText: selectionText }))
+    const { selectionText, linkText, linkURL } = params
+    console.log(params)
+    setContextMenuState(s => ({
+      ...s,
+      selectedText: selectionText,
+      hasImage: params.hasImageContents,
+      currentImageUrl: params.srcURL,
+      altText: params.altText,
+      linkText,
+      linkUrl: linkURL
+    }))
   })
   const messageHandler = useMemoizedFn(e => {
     if (e.channel === 'event') {
@@ -57,6 +74,12 @@ const useWebpageOthers = (
         case 'click': {
           setContextMenuState(s => ({ ...s, visible: false }))
           webviewRef.current?.stopFindInPage('keepSelection')
+          const clickEvent = new MouseEvent('click', {
+            clientX: event.bodyX,
+            clientY: event.bodyY,
+            // target: webviewRef.current
+          })
+          webviewRef.current?.dispatchEvent(clickEvent)
           break
         }
         case 'contextmenu': {
@@ -95,11 +118,18 @@ const useWebpageOthers = (
               }
             }
           }
+          break
+        }
+        case 'keydown': {
+          const keydownEvent = new KeyboardEvent('keydown', {
+            ...event
+          })
+          document.dispatchEvent(keydownEvent)
         }
       }
     }
   })
-
+  const currentWebpageIsMeta = !!(others.webpageId && MetaStore.getMetaObjectByObjectId(others.webpageId))
   useEffect(() => {
     const webview = webviewRef.current
     if (webview) {
@@ -127,36 +157,60 @@ const useWebpageOthers = (
         containerStyle={{ zIndex: String(Zindexes.SearchPanel + 1) }}
         content={
           <WithBorder
-            style={{ display: 'flex', flexDirection: 'column' }}
+            style={{ display: 'flex', flexDirection: 'column', minWidth: 160 }}
             padding={6}
             onClick={() => setContextMenuState(s => ({ ...s, visible: false }))}
           >
             <Button.IconButton
-              text={t('general.copy')}
+              icon="park-copy"
+              text={hasImage ? t('general.copy image') : t('general.copy')}
               onClick={() => {
-                contextMenuState.selectedText && navigator.clipboard.writeText(contextMenuState.selectedText)
+                if (hasImage) {
+                  if (currentImageUrl) {
+                    const img = document.createElement('img')
+                    img.src = currentImageUrl
+
+                    navigator.clipboard.write([new ClipboardItem({ 'text/html': new Blob([img.outerHTML], { type: 'text/html' }) })])
+                  }
+                } else {
+                  contextMenuState.selectedText && navigator.clipboard.writeText(contextMenuState.selectedText)
+                }
               }}
             />
+            {!hasImage && selectedText && (
+              <Button.IconButton
+                icon="park-translate"
+                text={t('general.translate')}
+                onClick={e => {
+                  selectedText &&
+                    GlobalTranslateInstance.open?.({
+                      e,
+                      query: selectedText,
+                      to: 'zh',
+                      source: others.webpageId
+                        ? {
+                            type: 'webpage',
+                            objectId: others.webpageId
+                          }
+                        : undefined
+                    })
+                }}
+              />
+            )}
+            {hasImage && currentImageUrl && (
+              <Button.IconButton
+                icon="park-save"
+                text={t('general.save locally')}
+                onClick={() => {
+                  downloadImg(currentImageUrl, altText || currentImageUrl)
+                }}
+              ></Button.IconButton>
+            )}
             <Button.IconButton
-              text={t('general.translate')}
-              onClick={e => {
-                selectedText &&
-                  GlobalTranslateInstance.open?.({
-                    e,
-                    query: selectedText,
-                    to: 'zh',
-                    source: others.webpageId
-                      ? {
-                          type: 'webpage',
-                          objectId: others.webpageId
-                        }
-                      : undefined
-                  })
-              }}
-            />
-            <Button.IconButton
+              icon="park-search"
               text={t('general.search')}
               onClick={e => {
+                // image search bing: https://www.bing.com/images/search?view=detailv2&iss=sbi&form=SBIVSP&sbisrc=UrlPaste&q=imgurl:https%3A%2F%2Fpic4.zhimg.com%2F80%2Fv2-ce5a1ab8992b8fe9cdc3e9f1ba8e1eef_720w.webp&idpbck=1&selectedindex=0&id=https%3A%2F%2Fpic4.zhimg.com%2F80%2Fv2-ce5a1ab8992b8fe9cdc3e9f1ba8e1eef_720w.webp&ccid=afigh7De&mediaurl=https%3A%2F%2Fpic4.zhimg.com%2F80%2Fv2-ce5a1ab8992b8fe9cdc3e9f1ba8e1eef_720w.webp&exph=213&expw=554&vt=2&sim=11
                 const meta = others.webpageId && MetaStore.getMetaObjectByObjectId(others.webpageId)
                 // webviewRef.current.findInPage?.(selectedText)
                 selectedText &&
@@ -173,6 +227,133 @@ const useWebpageOthers = (
                   })
               }}
             />
+            {linkUrl && (
+              <Button.IconButton
+                icon={getIcon('webpage')}
+                text={t('general.generate webpage object from selected link')}
+                onClick={async () => {
+                  if (contextMenuState.linkUrl) {
+                    const from = others.webpageId ? MetaStore.getMetaObjectByObjectId(others.webpageId) : undefined
+                    const imagePath = hasImage && currentImageUrl ? await fetchRemoteImageAndSaveLocally(currentImageUrl) : undefined
+                    ObjectStore('webpage').addOneWithMeta(
+                      {
+                        url: linkUrl,
+                        title: linkText || 'Unnamed Webpage'
+                      },
+                      {
+                        currentMeta: {
+                          name: linkText || 'Unnamed Webpage',
+                          coverImgSrc: imagePath,
+                          fromObject: from
+                            ? {
+                                metaId: from.id,
+                                type: 'webpage',
+                                selectedText: linkText || selectedText
+                              }
+                            : undefined
+                        },
+                        showMetaModal: true
+                      }
+                    )
+                  }
+                }}
+              />
+            )}
+            {!hasImage && selectedText && (
+              <Button.IconButton
+                icon={getIcon('note')}
+                text={t('general.generate note object from selected text')}
+                onClick={() => {
+                  if (contextMenuState.selectedText) {
+                    const { name, description } = transformTextContentToNameAndDescription(contextMenuState.selectedText)
+                    const from = others.webpageId ? MetaStore.getMetaObjectByObjectId(others.webpageId) : undefined
+                    ObjectStore('note').addOneWithMeta(
+                      {
+                        title: name
+                      },
+                      {
+                        currentMeta: {
+                          name,
+                          description,
+                          fromObject: from
+                            ? {
+                                metaId: from.id,
+                                type: 'webpage',
+                                selectedText: contextMenuState.selectedText
+                              }
+                            : undefined
+                        },
+                        showMetaModal: true
+                      }
+                    )
+                  }
+                }}
+              />
+            )}
+            {!hasImage && selectedText && currentWebpageIsMeta && (
+              <Button.IconButton
+                icon={getIcon('webpageLabel')}
+                onClick={() => {
+                  if (selectedText) {
+                    const { name, description } = transformTextContentToNameAndDescription(contextMenuState.selectedText)
+                    const from = others.webpageId ? MetaStore.getMetaObjectByObjectId(others.webpageId) : undefined
+                    ObjectStore('webpageLabel').addOneWithMeta(
+                      {
+                        selectedText,
+                        webpageId: others.webpageId
+                      },
+                      {
+                        currentMeta: {
+                          name,
+                          description,
+                          fromObject: from
+                            ? {
+                                metaId: from.id,
+                                type: 'webpage',
+                                selectedText
+                              }
+                            : undefined
+                        },
+                        showMetaModal: true
+                      }
+                    )
+                  }
+                }}
+                text={t('general.generate webpagelabel object from selected text')}
+              />
+            )}
+            {hasImage && (
+              <Button.IconButton
+                text={t('general.generate image object from selected iamge')}
+                icon={getIcon('image')}
+                onClick={() => {
+                  if (currentImageUrl) {
+                    fetchRemoteImageAndSaveLocally(currentImageUrl).then(path => {
+                      const from = others.webpageId ? MetaStore.getMetaObjectByObjectId(others.webpageId) : undefined
+                      ObjectStore('image').addOneWithMeta(
+                        {
+                          imageUrl: path
+                        },
+                        {
+                          currentMeta: {
+                            coverImgSrc: path,
+                            name: altText || currentImageUrl,
+                            fromObject: from
+                              ? {
+                                  type: 'webpage',
+                                  metaId: from.id,
+                                  selectedText: altText
+                                }
+                              : undefined
+                          },
+                          showMetaModal: true
+                        }
+                      )
+                    })
+                  }
+                }}
+              />
+            )}
           </WithBorder>
         }
         reposition

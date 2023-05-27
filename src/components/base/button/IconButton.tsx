@@ -26,7 +26,8 @@ const IconButton = forwardRef(
       selected,
       onPointerEnter,
       style,
-      tooltip
+      tooltip,
+      spin
     }: {
       icon?: string
       onClick?: MouseEventHandler
@@ -40,6 +41,7 @@ const IconButton = forwardRef(
       selected?: boolean
       style?: CSSProperties
       tooltip?: string
+      spin?: boolean
       onPointerEnter?: React.PointerEventHandler
     },
     ref
@@ -80,7 +82,7 @@ const IconButton = forwardRef(
             dangerous && DangerousButtonClassName
           )}
         >
-          {icon && <Icon name={icon} />}
+          {icon && <Icon spin={spin} name={icon} />}
           {text && <div>{text}</div>}
         </Content>
       </Tooltip>

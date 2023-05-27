@@ -6,12 +6,11 @@ import { useAtom } from 'jotai/react'
 import React from 'react'
 import { memo, ReactElement, useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { CustomElement, GlobalDraggingDetails } from '~/typings'
+import { GlobalDraggingDetails } from '~/typings'
 import useOverlayDrop from './useOverlayDrop'
 import { globalStore } from '@/stores'
-import getSetting from '@/core/setting/getSetting'
-import Id from '@/utils/id'
-import useDropObject from '@/core/global/globalDragOverlay/useDropObject'
+import ClassName from '@/styles/classNames'
+
 
 export type AvaliableGlobalDraggingElements = GlobalDraggingDetails
 interface IGlobalDragOverlay {
@@ -60,6 +59,7 @@ export const GlobalDragOverlay = memo(() => {
       return
     }
     e.preventDefault()
+    window.getSelection()?.empty()
     const dragContainer = dragContainerRef.current
     if (!dragContainer) return
     const { clientX, clientY } = e
@@ -88,7 +88,7 @@ export const GlobalDragOverlay = memo(() => {
     document.addEventListener('dragover', dragoverHandler, true)
     if (isDragging) {
       document.body.style.cursor = 'grabbing'
-      document.body.classList.add(disableUserSelectClassName)
+      document.body.classList.add(ClassName.disableUserSelect)
       document.addEventListener('pointermove', dragHandler, true)
     } else {
       document.body.style.cursor = 'auto'
@@ -98,7 +98,7 @@ export const GlobalDragOverlay = memo(() => {
     }
     return () => {
       document.removeEventListener('dragover', dragoverHandler, true)
-      document.body.classList.remove(disableUserSelectClassName)
+      document.body.classList.remove(ClassName.disableUserSelect)
       document.removeEventListener('drop', dropHandler, true)
       document.removeEventListener('pointerup', dragHandler, true)
     }

@@ -1,7 +1,7 @@
 import { Noop } from '@/common/types'
 import { Button } from '@/components/base/button'
 import { css } from '@emotion/css'
-import { FC } from 'react'
+import { CSSProperties, FC } from 'react'
 import { useTranslation } from 'react-i18next'
 import Content from './Content'
 
@@ -10,8 +10,9 @@ interface FooterProps {
   backText?: string
   onSubmit?: Noop
   onBack?: Noop
+  buttonStyle?: CSSProperties
 }
-const Footer: FC<FooterProps> = ({ onBack, onSubmit, submitText = 'submit', backText = 'back' }) => {
+const Footer: FC<FooterProps> = ({ onBack, onSubmit, submitText = 'submit', backText = 'back', buttonStyle }) => {
   const { t } = useTranslation()
   return (
     <Content flex alignItems="center" justifyContent="space-between">
@@ -19,7 +20,8 @@ const Footer: FC<FooterProps> = ({ onBack, onSubmit, submitText = 'submit', back
         style={{
           padding: '6px 18px',
           boxShadow: 'none',
-          marginRight: 30
+          marginRight: 30,
+          ...buttonStyle
         }}
         onClick={onBack}
       >
@@ -29,7 +31,8 @@ const Footer: FC<FooterProps> = ({ onBack, onSubmit, submitText = 'submit', back
         style={{
           boxShadow: 'none',
           padding: '6px 18px',
-          borderRadius: 6
+          borderRadius: 6,
+          ...buttonStyle
         }}
         onClick={onSubmit}
       >

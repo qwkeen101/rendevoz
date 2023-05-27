@@ -1,19 +1,33 @@
 import ClassName from '@/styles/classNames'
 import { saveImageLocally } from '@/utils/img'
 import { useTranslation } from 'react-i18next'
-import { Content, Icon, Image } from '../base'
+import { Content, Icon, Image, Modal } from '../base'
 import useFileUpload from '../base/useFileUpload'
+import { useToggle } from '@/hooks'
+import FormWebImagePicker from './FormWebImagePicker'
+import { css } from '@emotion/css'
 
-const FormImagePicker = ({ imageUrl, onChange }: { imageUrl?: string; onChange?: (v: string | undefined) => void }) => {
+const FormImagePicker = ({ imageUrl, onChange, name }: { imageUrl?: string; onChange?: (v: string | undefined) => void; name: string }) => {
   const { upload, renderUploader } = useFileUpload(file => {
-    saveImageLocally(file.name, file).then(data => {
+    saveImageLocally(file).then(data => {
       onChange?.(data.data)
     })
   }, 'image/*')
   const { t } = useTranslation()
+  const [webImagePickerVisible, toggleWebImagePickerVisible] = useToggle(false)
   return (
     <>
       {renderUploader()}
+      <Modal showClose noStyle visible={webImagePickerVisible} onClose={toggleWebImagePickerVisible}>
+        <FormWebImagePicker
+          name={name}
+          onPick={url => {
+            onChange?.(url)
+            console.log(url)
+            toggleWebImagePickerVisible(false)
+          }}
+        />
+      </Modal>
       <Content
         alignItems="center"
         justifyContent="space-between"
@@ -22,8 +36,6 @@ const FormImagePicker = ({ imageUrl, onChange }: { imageUrl?: string; onChange?:
         onClick={() => {
           if (imageUrl) {
             onChange?.(undefined)
-          } else {
-            upload()
           }
         }}
         className={ClassName.flatButton()}
@@ -37,7 +49,33 @@ const FormImagePicker = ({ imageUrl, onChange }: { imageUrl?: string; onChange?:
           ) : (
             <>
               <Icon name="park-add-pic" />
-              <span>{`${t('general.add')} ${t('general.image')}`}</span>
+              <div
+                className={css({
+                  ':hover': {
+                    textDecoration: 'underline'
+                  }
+                })}
+                onClick={e => {
+                  e.stopPropagation()
+                  upload()
+                }}
+              >
+                {t('general.upload image')}{' '}
+              </div>
+              <span>{t('general.or')} </span>
+              <div
+                className={css({
+                  ':hover': {
+                    textDecoration: 'underline'
+                  }
+                })}
+                onClick={e => {
+                  e.stopPropagation()
+                  toggleWebImagePickerVisible()
+                }}
+              >
+                {t('general.pick image from internet')}
+              </div>
             </>
           )}
         </Content>

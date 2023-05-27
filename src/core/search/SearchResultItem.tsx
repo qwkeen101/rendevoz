@@ -1,7 +1,7 @@
 import { Content, Icon } from '@/components'
-import { ObjectStore, globalStore } from '@/stores'
-import { metaObjectsAtom, objectIdToMetaObjectIdMapAtom } from '@/stores/meta.store'
-import { Fragment, memo, useEffect, useState } from 'react'
+import { globalStore } from '@/stores'
+import { metaObjectsAtom } from '@/stores/meta.store'
+import { Fragment, memo } from 'react'
 import { useRenderObject } from '../database'
 import { GlobalSearchInputAtom, SearchGroup } from './SearchDialog'
 
@@ -11,46 +11,19 @@ import Colors from '@/consts/colors'
 import { css } from '@emotion/css'
 import Actions from '../Actions'
 import { selectBlock } from '../editor/utils/blockActions'
-import { SearchStore } from '@/stores/search.store'
+import { useTranslation } from 'react-i18next'
+import FontSize from '@/consts/font'
+import { DefaultObjectTitleRenderClazzName } from '../database/useRenderObject'
 
 const SearchResultItem = ({ group, onNavi }: { group: SearchGroup; onNavi: VoidFunction }) => {
-  const [metaId, setMetaId] = useState<number>()
+  const metaId = group.metaId
   const [showChildren, toggleShowChildren] = useToggle(false)
-  const objectIdToMetaObjectIdMap = globalStore.get(objectIdToMetaObjectIdMapAtom)
-  useEffect(() => {
-    const setMeta = async () => {
-      let metaExist = false
-      if (group.type === 'note') {
-        const targetNote = await ObjectStore('note').getOneById(Number(group.id))
-        if (targetNote?.metaId) {
-          if (globalStore.get(metaObjectsAtom).has(targetNote.metaId)) {
-            setMetaId(targetNote.metaId)
-            metaExist = true
-          } else {
-            ObjectStore('note').deleteOneById(targetNote.id, { silent: true, force: true })
-          }
-          return
-        }
-      }
-      const metaId = objectIdToMetaObjectIdMap?.get(Number(group.id))
-      if (metaId) {
-        metaExist = true
-      }
-      if (!metaExist) {
-        SearchStore.deleteDocuments(group.items.map(i => i.id))
-      }
-      setMetaId(metaId)
-    }
-    setMeta()
-  }, [])
-  if (!metaId) {
-    return null
-  }
+  const { t } = useTranslation()
+
   return (
     <Content
       flex
       column
-      gap={5}
       // eslint-disable-next-line @typescript-eslint/ban-ts-comment
       //@ts-ignore
       className={css({
@@ -58,33 +31,44 @@ const SearchResultItem = ({ group, onNavi }: { group: SearchGroup; onNavi: VoidF
           textTransform: 'none !important'
         },
         ':not(:last-child)': {
-          borderBottom: `1px solid ${Colors.Background.HighContrast}`
+          borderBottom: `1px solid ${Colors.Background.Border}`
         },
-        padding: '6px 0px'
+        padding: '10px 0px'
       })}
     >
       {metaId && (
         <Content>
-          <Icon
-            containerStyle={{
-              position: 'absolute',
-              left: -30,
-              top: '50%',
-              transform: 'translateY(-50%)'
-            }}
-            style={{
-              transform: showChildren ? 'rotate(90deg)' : undefined,
-              transition: 'transform 0.3s ease'
-            }}
-            className={ClassName.circleButton()}
-            name="park-right"
-            onClick={toggleShowChildren}
-          />
-          <SearchDetails metaId={metaId} onNavi={onNavi} />
-          {!showChildren && group.items.length > 1 && <div className={ClassName.description('12px')}>{group.items.length} Results</div>}
+          {group.items.length > 0 && (
+            <Icon
+              containerStyle={{
+                position: 'absolute',
+                left: -30,
+                top: '50%',
+                transform: 'translateY(-50%)'
+              }}
+              style={{
+                transform: showChildren ? 'rotate(90deg)' : undefined,
+                transition: 'transform 0.3s ease'
+              }}
+              className={ClassName.circleButton()}
+              name="park-right"
+              onClick={toggleShowChildren}
+            />
+          )}
+          <SearchDetails highlightName={group.highlightName} metaId={metaId} onNavi={onNavi} />
+          {!showChildren && group.items.length > 0 && (
+            <div className={ClassName.description(FontSize['13px'])}>
+              {group.items.length} {t('general.results')}
+            </div>
+          )}
         </Content>
       )}
-      {!showChildren && <div dangerouslySetInnerHTML={{ __html: group.items[0].content }} className={ClassName.description('1rem')}></div>}
+      {!showChildren && (group.highlightDescription || group.items[0]?.content) && (
+        <div
+          dangerouslySetInnerHTML={{ __html: group.highlightDescription || group.items[0].content }}
+          className={ClassName.description('1rem')}
+        ></div>
+      )}
       {metaId && showChildren && (
         <ol
           style={{
@@ -170,18 +154,29 @@ const NoteSearchResult = ({
     <div dangerouslySetInnerHTML={{ __html: item.content }}></div>
   </li>
 )
-
-const SearchDetails = memo(({ metaId, onNavi }: { metaId: number; onNavi: VoidFunction }) => {
+const SearchDetails = memo(({ metaId, onNavi, highlightName }: { metaId: number; onNavi: VoidFunction; highlightName?: string }) => {
   const { renderTags, renderTitle } = useRenderObject({ metaObjectId: metaId })
   return (
     <>
       {renderTags({})}
-      {renderTitle({
-        onTitleClick: () => {
-          Actions.navigateToTargetObject(metaId)
-          onNavi()
-        }
-      })}
+      {highlightName ? (
+        <div
+          onClick={() => {
+            Actions.navigateToTargetObject(metaId)
+            onNavi()
+          }}
+          className={css([ClassName.ellipsisFont(2), DefaultObjectTitleRenderClazzName])}
+          style={{ cursor: 'pointer' }}
+          dangerouslySetInnerHTML={{ __html: highlightName }}
+        ></div>
+      ) : (
+        renderTitle({
+          onTitleClick: () => {
+            Actions.navigateToTargetObject(metaId)
+            onNavi()
+          }
+        })
+      )}
     </>
   )
 })

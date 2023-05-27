@@ -2,6 +2,8 @@ import { useGlobalAtomValue } from '@/hooks'
 import { GlobalScreenShotSelectionBoxState } from '.'
 import { Content } from '@/components'
 import ClassName from '@/styles/classNames'
+import { css } from '@emotion/css'
+import Colors from '@/consts/colors'
 
 const ScreenShotStatus = () => {
   const selectionBoxState = useGlobalAtomValue(GlobalScreenShotSelectionBoxState)
@@ -11,7 +13,12 @@ const ScreenShotStatus = () => {
     <Content
       flex
       gap={10}
-      className={ClassName.description()}
+      // @ts-ignore
+      className={css({
+        '*': {
+          textTransform: 'none !important'
+        }
+      })}
       style={{
         position: 'absolute',
         left: 0,
@@ -20,7 +27,8 @@ const ScreenShotStatus = () => {
         borderRadius: 4,
         padding: '2px 6px',
         userSelect: 'none',
-        width: 'max-content'
+        width: 'max-content',
+        color: Colors.Font.White
       }}
     >
       <div>x: {rect.left.toFixed(0)}px</div>

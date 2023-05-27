@@ -15,6 +15,7 @@ export interface AnimatePopoverProps extends Omit<PopoverProps, 'content' | 'isO
   content: React.ReactNode
   disableNudge?: boolean
   disableIntersection?: boolean
+  onVisiblityChange?: (v: boolean) => void
   innerRef?: RefObject<HTMLElement>
   parentElement?: HTMLElement | null
   backdropFilter?: boolean
@@ -28,7 +29,7 @@ const AnimatePopover: FC<PropsWithChildren<AnimatePopoverProps>> = ({
   content,
   children,
   visible,
-  disableIntersection,
+  disableIntersection = true,
   reposition = false,
   disableNudge = false,
   position,
@@ -42,6 +43,7 @@ const AnimatePopover: FC<PropsWithChildren<AnimatePopoverProps>> = ({
     borderRadius: '8px',
     zIndex: String(Zindexes.PopupMenu)
   },
+  onVisiblityChange,
   backdropFilter = true,
   onClickOutside,
   ...rest
@@ -88,6 +90,29 @@ const AnimatePopover: FC<PropsWithChildren<AnimatePopoverProps>> = ({
   }, [visible])
 
   useEffect(() => {
+    onVisiblityChange?.(isOpen)
+    if (isOpen) {
+      const containerDockPane = intersectionRef.current?.closest(`[role='tabpane']`)
+      if (containerDockPane) {
+        const visiblityWatcher = new MutationObserver(cb => {
+          cb.forEach(record => {
+            if (record.attributeName === 'style') {
+              const style = (record.target as HTMLElement).style
+              if (style.contentVisibility === 'hidden') {
+                setIsOpen(false)
+              }
+            }
+          })
+        })
+        visiblityWatcher.observe(containerDockPane, {
+          attributes: true,
+          attributeFilter: ['style']
+        })
+        return () => {
+          visiblityWatcher.disconnect()
+        }
+      }
+    }
     if (position) {
       if (isOpen === false) {
         setHasPosHelperPopoverVisible(false)

@@ -15,6 +15,7 @@ export const normalizeScreenshot = (screenshotBox: Box) => {
   allTabs.forEach(i => {
     const ele = i.tabElement
     if (ele) {
+      if (ele.style.contentVisibility === 'hidden') return
       const box = ele.getBoundingClientRect()
       if (boxesIntersect(box, rect)) {
         intersectedTabs.push(i)
@@ -81,8 +82,12 @@ export const normalizeScreenshot = (screenshotBox: Box) => {
             metaId: meta.id
           }
         }
-        // if (onlyIntersectedtab.type === 'whiteboard') {
-        // }
+        if (onlyIntersectedtab.type === 'whiteboard') {
+          normalizedImageMeta.fromObject = {
+            type: 'whiteboard',
+            metaId: meta.id
+          }
+        }
       }
     }
   }

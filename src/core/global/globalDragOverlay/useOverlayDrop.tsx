@@ -13,7 +13,7 @@ import { FormType, Modal } from '@/components'
 import { getSetting, intersectionOfMultipleSets } from '@/core'
 import { GlobalDraggingDetails, MetaLink, MetaObject } from '~/typings'
 import { useEventHandler } from '@/events'
-import useDropObject from './useDropObject'
+import useDropObject, { clearDragState } from './useDropObject'
 import { transformTextContentToNameAndDescription, createLink, addLinkBetweenTwoMetaObject } from './utils'
 
 const useOverlayDrop = () => {
@@ -53,6 +53,7 @@ const useOverlayDrop = () => {
     // drop event
     if (data.e) {
       const n = await normalizeDropToMeta(data.e)
+      clearDragState()
       normalizedMetaObject = n
         ? ({
             ...n,
@@ -378,12 +379,8 @@ const useOverlayDrop = () => {
           // give a new id to prevent hooks order change of get meta target obj
           if (metaObject) {
             const newMetaObj = { ...metaObject, ...obj }
-            updateMetaObject(newMetaObj, true)
+            updateMetaObject(newMetaObj)
 
-            const setting = getSetting()
-            if (setting.notification.enabled && setting.notification.object) {
-              toast.success('Successfully add object!')
-            }
             const promise = promiseRef.current
             if (promise) {
               promise.res?.(newMetaObj)

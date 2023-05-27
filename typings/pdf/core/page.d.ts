@@ -26,6 +26,7 @@ export interface PageFunctionRef {
   highlightText?: (text: string) => void
   onTextSelected?: (e: SelectedTextEvent) => void
   onTextSelectEnd?: VoidFunction
+  getTextLayerCanvas?: () => HTMLCanvasElement | null
   onCanvasRendered?: VoidFunction
   highlightArea?: (rect: Box) => void
   clearAllSelect?: VoidFunction
@@ -39,4 +40,5 @@ export interface RenderPageProps {
   pageIndex: number
   pageSize: PageSize
   pageFunctionRef: RefObject<PageFunctionRef>
+  containerRef: RefObject<HTMLElement>
 }

@@ -17,7 +17,9 @@ import getSetting from '../setting/getSetting'
 import { detectLanguage } from '@/utils/text'
 import { getPanelPosition } from './utils'
 import ResizeAndDrag from '@/components/base/ResizeAndDrag'
-import { ObjectStore } from '@/stores'
+import { MetaStore, ObjectStore } from '@/stores'
+import { searchToUrl } from '../webpage/utils'
+import Id from '@/utils/id'
 
 export const GlobalSearchInstance: Partial<{
   open: (options: { pos?: XYPosition; e?: MouseEvent; url?: string; query?: string; from?: MetaObject['fromObject'] }) => void
@@ -62,68 +64,12 @@ const GlobalSearchPanel = () => {
 
   Object.assign(GlobalSearchInstance, {
     open: async ({ url, query, from, pos, e }) => {
-      const setting = getSetting()
       let webUrl = url
-      let type: 'searchEngine' | 'summary' = 'searchEngine'
+      const type: 'searchEngine' | 'summary' = 'searchEngine'
       const userAgent =
-        'Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/112.0.0.0 Mobile Safari/537.36'
-      const defaultSearchEngine = setting.general.defaultSearchEngine
-      switch (defaultSearchEngine) {
-        case 'google': {
-          webUrl = 'https://google.com/search?q=' + query?.trim().replaceAll(' ', '+')
-          break
-        }
-        case 'google scholar': {
-          webUrl = 'https://scholar.google.com/scholar?q=' + query?.trim().replaceAll(' ', '+')
-          break
-        }
-        case 'wikipedia': {
-          let lang = 'en'
-          if (query) {
-            lang = detectLanguage(query) || 'en'
-          }
-          webUrl = `https://${lang}.wikipedia.org/w/index.php?fulltext=1&profile=advanced&search=${query?.trim()}`
-          break
-        }
-        case 'baidu': {
-          webUrl = 'https://www.baidu.com/s?&wd=' + query?.trim().replaceAll(' ', '+')
-          break
-        }
-        case 'vocabulary': {
-          webUrl =
-            'https://www.vocabulary.com/dictionary/' +
-            query
-              ?.trim()
-              .replace(/[\u2000-\u206F\u2E00-\u2E7F\\'!"#$%&()*+,\-.\/:;<=>?@\[\]^_`{|}~]/g, ' ')
-              .trim()
-              .toLowerCase()
-          break
-        }
-        case 'bing': {
-          webUrl = 'https://www.bing.com/search?q=' + query?.trim().replaceAll(' ', '+')
-          break
-        }
-        case 'bing dictionary': {
-          webUrl = `https://www.bing.com/dict/search?q=${query?.trim().replaceAll(' ', '+')}&go=Search`
-          break
-        }
-        case 'zhihu': {
-          webUrl = `https://www.zhihu.com/search?q=${query?.trim()}&type=content`
-          break
-        }
-        case 'wiki summary': {
-          type = 'summary'
-          break
-        }
-        case 'semantic scholar': {
-          webUrl = `https://www.semanticscholar.org/search?q=${query?.trim()}&sort=relevance`
-          break
-        }
-        case 'youdao dictionary': {
-          webUrl = `https://www.youdao.com/m/result?word=${query?.trim()}&lang=en`
-          break
-        }
-      }
+        'Mozilla/5.0 (Linux; Android 9.0; SAMSUNG SM-F900U Build/PPR1.180610.011) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/113.0.0.0 Mobile Safari/537.36'
+      webUrl = searchToUrl(query || '')
+
       if (url || query) {
         const _pos =
           !panelState.visible && getPanelPosition({ pos, e, defaultSize: panelState.size || PanelDefaultSize, placement: 'right' })
@@ -150,50 +96,17 @@ const SearchPanel = () => {
   const instanceRef = useRef<WebpageInstance>()
 
   const [panelState, setPanelState] = useGlobalAtom(SearchPanelStateAtom)
-  const { url, title, from, summaryTarget } = panelState
-  const [initialWebpageId, setInitialWebpageId] = useState<number>()
+  const { title, from, summaryTarget } = panelState
   const [currentWebpage, setCurrentWebpage] = useState<IWebpage>()
 
   const rndRef = useRef<Rnd>()
+
   useEffect(() => {
-    if (!initialWebpageId && panelState.url) {
-      objectStore('webpage')
-        .addOne({
-          url: panelState.url
-        })
-        .then(one => {
-          setInitialWebpageId(one.id)
-          setCurrentWebpageId(one.id)
-        })
-    }
     if (instanceRef.current && panelState.url) {
       instanceRef.current.changeUrl(panelState.url)
     }
   }, [panelState.url])
-  useEffect(() => {
-    if (summaryTarget) {
-      console.log(summaryTarget)
-      detectLanguage(summaryTarget).then(res => {
-        const code = res.data
-        if (code) {
-          const encodedQuery = encodeURIComponent(summaryTarget?.trim().replaceAll(' ', '_'))
-          fetch(`https://${code}.wikipedia.org/api/rest_v1/page/summary/${encodedQuery}`)
-            .then(result => {
-              if (result.status === 404) {
-                fetch(`https://${code}.wikipedia.org/w/api.php?action=opensearch&search=${encodedQuery}&namespace=0&format=json`)
-              } else {
-                return result.json()
-              }
-            })
-            .then(data => {
-              if (data.type === 'disambiguation') {
-                fetch(`https://${code}.wikipedia.org/w/api.php?action=opensearch&search=${encodedQuery}&namespace=0&format=json`)
-              }
-            })
-        }
-      })
-    }
-  }, [summaryTarget])
+
   useEffect(() => {
     rndRef.current?.updateOffsetFromParent()
   }, [panelState.currentPosition])
@@ -205,8 +118,10 @@ const SearchPanel = () => {
         padding: '6px 12px',
         borderRadius: 8,
         boxShadow: 'rgba(100, 100, 111, 0.2) 0px 7px 29px 0px',
-        zIndex: Zindexes.SearchPanel,
-        display: panelState.visible ? 'flex' : 'none',
+        zIndex: panelState.visible ? Zindexes.SearchPanel : Number.MIN_SAFE_INTEGER,
+        display: 'flex',
+        opacity: panelState.visible ? 1 : 0,
+        pointerEvents: panelState.visible ? 'auto' : 'none',
         flexDirection: 'column'
       }}
       position={panelState.currentPosition}
@@ -248,9 +163,9 @@ const SearchPanel = () => {
       >
         <div
           className={css([ClassName.title(FontSize['14px']), ClassName.ellipsisFont(1)])}
-          style={{ margin: 'auto', textAlign: 'center', flex: 1 }}
+          style={{ margin: 'auto', textAlign: 'center', flex: 1, textTransform: 'none' }}
         >
-          {title}
+          {title || 'Quick Search Panel'}
         </div>
         <Content flex gap={6} alignItems="center" style={{ marginLeft: 'auto', flexShrink: 0 }}>
           <Button.IconButton
@@ -267,27 +182,26 @@ const SearchPanel = () => {
           <Button.IconButton icon="park-close" onClick={() => setPanelState(s => ({ ...s, visible: false }))}></Button.IconButton>
         </Content>
       </Content>
-      {initialWebpageId && (
-        <Content fullWidth auto style={{ height: 0, overflow: 'hidden' }}>
-          <WebpagePage
-            webpageFrom={from}
-            navigationStyle={{
-              padding: '6px 0px',
-              fontSize: FontSize['14px']
-            }}
-            userAgent={panelState.userAgent}
-            onWebpageChange={i =>
-              setCurrentWebpage({
-                id: i.webpageId,
-                ...i
-              })
-            }
-            onTitleChange={t => setPanelState(s => ({ ...s, title: t }))}
-            initialWebpageId={initialWebpageId}
-            onWebpageInitialized={i => (instanceRef.current = i)}
-          />
-        </Content>
-      )}
+
+      <Content fullWidth auto style={{ height: 0, overflow: 'hidden' }}>
+        <WebpagePage
+          webpageFrom={from}
+          navigationStyle={{
+            padding: '6px 1px 6px 0px',
+            fontSize: FontSize['14px']
+          }}
+          userAgent="Mozilla/5.0 (Linux; Android 9.0; SAMSUNG SM-F900U Build/PPR1.180610.011) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/113.0.0.0 Mobile Safari/537.36"
+          onWebpageChange={i =>
+            setCurrentWebpage({
+              id: i.webpageId,
+              ...i
+            })
+          }
+          onTitleChange={t => setPanelState(s => ({ ...s, title: t }))}
+          initialUrl={searchToUrl('')}
+          onWebpageInitialized={i => (instanceRef.current = i)}
+        />
+      </Content>
     </ResizeAndDrag>
   )
 }

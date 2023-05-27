@@ -60,11 +60,13 @@ const Select: ISelect = ({
     }
   }
   const [menuVisible, setMenuVisible] = useState(false)
-  const menuItems = options?.map(o => ({
-    name: o.children,
-    value: o.value,
-    icon: o.icon
-  }))
+  const menuItems = options
+    .filter(i => i)
+    ?.map(o => ({
+      name: o.children,
+      value: o.value,
+      icon: o.icon
+    }))
 
   useEffect(() => {
     if (v) {

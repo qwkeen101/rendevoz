@@ -4,23 +4,44 @@ import { AnimatePresence, motion } from 'framer-motion'
 import { css } from '@emotion/css'
 import { Icon } from '.'
 import Colors from '@/consts/colors'
+import { useEffect, useRef, useState } from 'react'
+import { throttle } from 'lodash'
 
 const Notification = () => {
   const { toasts, handlers } = useToaster({
     duration: 6000
   })
+  const [isIn, setIsIn] = useState(false)
   const { startPause, endPause, calculateOffset, updateHeight } = handlers
-
+  const containerRef = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    if (isIn) {
+      startPause()
+      const throttledCheck = throttle((e: PointerEvent) => {
+        if (!containerRef.current?.contains(e.target) && !(e.target as HTMLElement).closest(`[role='object-popover-panel']`)) {
+          setIsIn(false)
+        }
+      }, 100)
+      document.addEventListener('pointermove', throttledCheck)
+      return () => {
+        document.removeEventListener('pointermove', throttledCheck)
+      }
+    } else {
+      endPause()
+    }
+  }, [isIn])
   return (
     <motion.div
+      ref={containerRef}
       style={{
         position: 'fixed',
         top: 60,
         right: 60,
         zIndex: Zindexes.Notification
       }}
-      onPointerEnter={startPause}
-      onPointerLeave={endPause}
+      onPointerEnter={() => {
+        setIsIn(true)
+      }}
     >
       <AnimatePresence>
         {toasts.map(toast => {
@@ -71,7 +92,9 @@ const Notification = () => {
               <>
                 {toast.type === 'success' && <Icon fill={'#82CD47'} theme="filled" size={20} name="park-correct" />}
                 {toast.type === 'error' && <Icon fill={'#F55050'} theme="filled" size={20} name="park-error" />}
-                <div style={{ display: 'flex', flex: 1, fontFamily: 'Muli', whiteSpace: 'nowrap', textTransform: 'capitalize' }}>{toast.message}</div>
+                <div style={{ display: 'flex', flex: 1, fontFamily: 'Muli', whiteSpace: 'nowrap', textTransform: 'capitalize' }}>
+                  {toast.message}
+                </div>
               </>
             </motion.div>
           )

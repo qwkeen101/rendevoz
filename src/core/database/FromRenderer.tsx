@@ -51,6 +51,7 @@ const FromRenderer = ({
             break
           }
           case 'webpage':
+          case 'whiteboard':
           case 'note': {
             setFromState({
               name: fromMeta.name,

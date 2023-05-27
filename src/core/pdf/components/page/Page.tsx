@@ -1,6 +1,6 @@
 import React, { Fragment, useEffect, useMemo, useRef, useState } from 'react'
 import ThoughtLabel from '../label/Label'
-import { WithBorder } from '@/components'
+import { Button, WithBorder } from '@/components'
 import { RenderPageProps, TextSelectEvent } from '~/typings'
 import { AnimatePopover } from '@/components'
 import TextSelectionToolbar from '../toolbar/TextSelectionToolbar'
@@ -14,17 +14,28 @@ import usePdfDraw from '../../hooks/usePdfDraw'
 import produce from 'immer'
 import { loadFromBlob } from '@excalidraw/excalidraw'
 import usePdfViewer from '../../core/hooks/useViewer'
-import { PAGE_INDEX_TO_CANVAS_LAYER } from '../../core/weakMaps'
+import { PAGE_INDEX_TO_CANVAS_LAYER, getTextContent } from '../../core/weakMaps'
 import { GlobalTranslateInstance } from '@/core/global/GlobalTranslatePanel'
 import { GlobalSearchInstance } from '@/core/global/GlobalSearchPanel'
 import { objectIdToMetaObjectIdMapAtom } from '@/stores/meta.store'
+import { useContextmenu } from '@/hooks'
+import { useTranslation } from 'react-i18next'
 
 interface PdfPageProps extends RenderPageProps {
   pdfId: number
   transformScale?: number
 }
 
-const PdfPage: React.FC<PdfPageProps> = ({ pageIndex, textLayer, canvasLayer, annotationLayer, pageFunctionRef, pageSize, pdfId }) => {
+const PdfPage: React.FC<PdfPageProps> = ({
+  containerRef,
+  pageIndex,
+  textLayer,
+  canvasLayer,
+  annotationLayer,
+  pageFunctionRef,
+  pageSize,
+  pdfId
+}) => {
   const labelContainerRef = useRef<HTMLDivElement>(null)
   const [cleanMode] = useCleanMode()
 
@@ -61,7 +72,7 @@ const PdfPage: React.FC<PdfPageProps> = ({ pageIndex, textLayer, canvasLayer, an
           if (annotation && viewer) {
             const canvas = PAGE_INDEX_TO_CANVAS_LAYER.get(viewer)?.get(pageIndex)
             if (annotation.dataUrl && canvas && canvas.getCanvasEle()) {
-              const data = await fetch(annotation.dataUrl.replace('rendefile', 'file'))
+              const data = await fetch(annotation.dataUrl)
               const blob = await data.blob()
               const state = await loadFromBlob(blob, null, null)
               drawOnPdf(state.elements, state.appState, state.files, canvas, true)
@@ -70,7 +81,7 @@ const PdfPage: React.FC<PdfPageProps> = ({ pageIndex, textLayer, canvasLayer, an
         })
     }
   })
-
+  const { contextMenuState, closeContextmenu } = useContextmenu(containerRef.current)
   if (pageFunctionRef.current) {
     pageFunctionRef.current.onTextSelected = e => {
       setTextSelect(e)
@@ -93,6 +104,7 @@ const PdfPage: React.FC<PdfPageProps> = ({ pageIndex, textLayer, canvasLayer, an
       }
     }
   }
+  const { t } = useTranslation()
   return (
     <>
       {renderModal()}
@@ -137,6 +149,39 @@ const PdfPage: React.FC<PdfPageProps> = ({ pageIndex, textLayer, canvasLayer, an
               )
           )}
       </div>
+      <AnimatePopover
+        visible={contextMenuState.visible}
+        align="start"
+        positions={['right', 'left']}
+        position={{ left: contextMenuState.pageX, top: contextMenuState.pageY }}
+        content={
+          <WithBorder padding={6}>
+            <Button.IconButton
+              icon="park-translate"
+              text={t('general.translate whole page')}
+              onClick={e => {
+                closeContextmenu()
+                if (viewer) {
+                  getTextContent(viewer, pageIndex).then(text => {
+                    GlobalTranslateInstance.open?.({
+                      e,
+                      query: text?.textContent.items.map(i => i.str).join(' '),
+                      source: {
+                        type: 'pdf',
+                        objectId: pdfId,
+                        page: pageIndex
+                      }
+                    })
+                  })
+                }
+              }}
+            />
+          </WithBorder>
+        }
+        onClickOutside={closeContextmenu}
+        disableIntersection
+        padding={10}
+      />
       <AnimatePopover
         padding={10}
         visible={textSelectionToolbarVisible}

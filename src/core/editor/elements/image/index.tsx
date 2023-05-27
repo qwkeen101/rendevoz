@@ -6,8 +6,7 @@ import { useEffect, useRef, useState } from 'react'
 import { Icon } from '@/components'
 import { Transforms } from 'slate'
 import useReadOnlyEditor from '../../hooks/useReadOnly'
-import { saveImageLocally } from '@/utils/img'
-import Id from '@/utils/id'
+import { fetchRemoteImageAndSaveLocally } from '@/utils/img'
 
 const Image = ({ element, children }: RenderElementProps) => {
   const imageEle = element as ImageElement
@@ -17,24 +16,17 @@ const Image = ({ element, children }: RenderElementProps) => {
   const editor = useSlateStatic()
   useEffect(() => {
     if (imageEle.url.startsWith('http')) {
-      fetch(imageEle.url, {
-        method: 'GET',
-        referrer: ''
+      fetchRemoteImageAndSaveLocally(imageEle.url).then(path => {
+        Transforms.setNodes(
+          editor,
+          {
+            url: path
+          },
+          {
+            at: ReactEditor.findPath(editor, imageEle)
+          }
+        )
       })
-        .then(res => res.blob())
-        .then(blob => {
-          saveImageLocally(Id.getStrId(), blob).then(data => {
-            Transforms.setNodes(
-              editor,
-              {
-                url: data.data
-              },
-              {
-                at: ReactEditor.findPath(editor, imageEle)
-              }
-            )
-          })
-        })
     }
   }, [])
   return (
@@ -48,15 +40,7 @@ const Image = ({ element, children }: RenderElementProps) => {
         style={{
           width: imageEle.width
         }}
-        className={css({
-          width: '100%',
-          height: '100%',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          userSelect: 'none',
-          position: 'relative'
-        })}
+        className={imageContainerClazz}
       >
         {!readOnly && (
           <>
@@ -74,27 +58,7 @@ const Image = ({ element, children }: RenderElementProps) => {
                 transition: 'opacity 0.2s ease',
                 fontSize: 16
               }}
-              className={css({
-                '> div': {
-                  padding: '4px 6px',
-                  background: 'rgba(0,0,0,0.6)',
-                  cursor: 'pointer',
-                  transition: 'background 0.2s ease',
-                  ':hover': {
-                    background: 'rgba(0,0,0,0.2)'
-                  },
-                  ':first-child': {
-                    borderTopLeftRadius: '4px',
-                    borderBottomLeftRadius: '4px',
-                    borderRight: '1px solid rgba(255,255,255,0.2)'
-                  },
-                  ':last-child': {
-                    borderTopRightRadius: '4px',
-                    borderBottomRightRadius: '4px',
-                    borderLeft: '1px solid rgba(255,255,255,0.2)'
-                  }
-                }
-              })}
+              className={toolbarContainerClazz}
             >
               <Icon
                 name="park-align-left"
@@ -127,18 +91,7 @@ const Image = ({ element, children }: RenderElementProps) => {
               dragMomentum={false}
               dragElastic={false}
               whileDrag={{ opacity: 1 }}
-              style={{
-                position: 'absolute',
-                left: 0,
-                top: 0,
-                width: 15,
-                height: '100%',
-                cursor: 'col-resize',
-                zIndex: 1,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center'
-              }}
+              className={leftResizerClazz}
               onDrag={(e, info) => {
                 const prevWidth = parseInt(window.getComputedStyle(imageContainerRef.current).width)
                 const newWidth = prevWidth - info.delta.x
@@ -182,18 +135,7 @@ const Image = ({ element, children }: RenderElementProps) => {
               whileDrag={{ opacity: 1 }}
               dragElastic={false}
               dragMomentum={false}
-              style={{
-                position: 'absolute',
-                right: 0,
-                top: 0,
-                width: 15,
-                height: '100%',
-                cursor: 'col-resize',
-                zIndex: 1,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center'
-              }}
+              className={rightResizerClazz}
               onDrag={(e, info) => {
                 const prevWidth = parseInt(window.getComputedStyle(imageContainerRef.current).width)
                 const newWidth = prevWidth + info.delta.x
@@ -248,3 +190,61 @@ const Image = ({ element, children }: RenderElementProps) => {
   )
 }
 export default Image
+
+const imageContainerClazz = css({
+  width: '100%',
+  height: '100%',
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  userSelect: 'none',
+  position: 'relative'
+})
+
+const toolbarContainerClazz = css({
+  '> div': {
+    padding: '4px 6px',
+    background: 'rgba(0,0,0,0.6)',
+    cursor: 'pointer',
+    transition: 'background 0.2s ease',
+    ':hover': {
+      background: 'rgba(0,0,0,0.2)'
+    },
+    ':first-child': {
+      borderTopLeftRadius: '4px',
+      borderBottomLeftRadius: '4px',
+      borderRight: '1px solid rgba(255,255,255,0.2)'
+    },
+    ':last-child': {
+      borderTopRightRadius: '4px',
+      borderBottomRightRadius: '4px',
+      borderLeft: '1px solid rgba(255,255,255,0.2)'
+    }
+  }
+})
+
+const leftResizerClazz = css({
+  position: 'absolute',
+  left: 0,
+  top: 0,
+  width: 15,
+  height: '100%',
+  cursor: 'col-resize',
+  zIndex: 1,
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center'
+})
+
+const rightResizerClazz = css({
+  position: 'absolute',
+  right: 0,
+  top: 0,
+  width: 15,
+  height: '100%',
+  cursor: 'col-resize',
+  zIndex: 1,
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center'
+})

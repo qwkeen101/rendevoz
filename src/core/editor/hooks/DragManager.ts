@@ -8,6 +8,7 @@ import { searchBlock } from '../utils/algorithm'
 import moveSingleElement from '../utils/moveSingleElement'
 import { getDistanceBetweenPointAndScrollableElement } from '../utils/scroll'
 import { ID_TO_ELEMENTS_MAP, ID_TO_PATH_MAP } from '../weakMaps'
+import { checkDropCanBeMeta, normalizeDropToMeta } from '@/core/global/globalDragOverlay/useDropObject'
 
 type Indicator = {
   direction: 'top' | 'left' | 'bottom' | 'right'
@@ -295,7 +296,7 @@ class DragManager {
     this.indicator = indicator
   }
 
-  drop = (e?: PointerEvent | DragEvent) => {
+  drop = async (e?: PointerEvent | DragEvent) => {
     if (this.indicator && this.editor) {
       // first get indicator
       const { direction, isNested, id } = this.indicator
@@ -358,7 +359,6 @@ class DragManager {
       }
       // we are not dragging note elements, maybe something eles
       else {
-        console.log('get here')
         let ele = {
           id: Id.getId(),
           children: [{ text: '' }]
@@ -369,6 +369,30 @@ class DragManager {
               objectId: number
             } = false
         if (e instanceof DragEvent) {
+          // not meta, just plain text drop
+          const canBeMeta = checkDropCanBeMeta(e)
+          if (!canBeMeta) {
+            if (e.dataTransfer?.getData('text/plain')) {
+              const plainText = e.dataTransfer.getData('text/plain')
+              this.onDrop?.({
+                targetNodeId: id,
+                direction,
+                isNested,
+                shouldAddElements: [
+                  {
+                    type: 'paragraph',
+                    id: Id.getId(),
+                    children: [
+                      {
+                        text: plainText
+                      }
+                    ]
+                  }
+                ]
+              })
+              return
+            }
+          }
           this.onDrop?.({
             targetNodeId: id,
             direction,

@@ -28,7 +28,7 @@ const EditorOverlayElements = ({
     const file = e.target.files?.[0]
     if (file) {
       if (file.type.startsWith('image')) {
-        saveImageLocally(Id.getStrId(), file).then(data => {
+        saveImageLocally(file).then(data => {
           manager.close()
           Transforms.insertNodes(
             editor,

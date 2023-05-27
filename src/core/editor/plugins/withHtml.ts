@@ -86,8 +86,9 @@ const withHtml = (editor: CustomEditor) => {
     const plainText = data.getData('text/plain')
     console.log(plainText, slateFragment, data)
     if (slateFragment) {
+
       ReactEditor.insertFragmentData(editor, data)
-      Transforms.deselect(editor)
+      // Transforms.deselect(editor)
       return
     }
     if (html) {
@@ -96,7 +97,6 @@ const withHtml = (editor: CustomEditor) => {
       console.log(deserialized)
       const normalized = normalize(deserialized)
       Transforms.insertFragment(editor, normalized)
-      Transforms.deselect(editor)
       return
     }
     insertData(data)

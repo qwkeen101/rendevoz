@@ -2,14 +2,15 @@ import Actions from '@/core/Actions'
 import useSidebarWidth from '@/hooks/components/useSidebarWidth'
 import { FC, useEffect, useMemo, useRef, useState } from 'react'
 import { Helmet } from 'react-helmet'
-import { Container } from '../base'
+import { Container, Icon } from '../base'
 import DockLayout, { LayoutData } from '../base/dock'
 import LayoutManager from './LayoutManager'
 import { css } from '@emotion/css'
-import { useSetting } from '@/core'
+import { useCreateObject, useSetting } from '@/core'
 import { LayoutTab } from './types'
 import { useGlobalAtomValue } from '@/hooks'
 import { SidebarStateAtom } from './sidebar'
+import ClassName from '@/styles/classNames'
 interface LayoutProps {
   sidebar?: React.ReactNode
   children?: React.ReactNode
@@ -17,7 +18,6 @@ interface LayoutProps {
 
 const initialLayout: LayoutData = {
   global: {
-    globalPanelExtra: () => <div></div>,
     currentFocusedPanelId: 'panel1'
   },
   dockbox: {
@@ -35,7 +35,33 @@ export const LayoutIdToTabMap = new Map<string, LayoutTab>()
 export let GlobalLayout: LayoutManager | null = null
 const Layout: FC<LayoutProps> = ({ sidebar }) => {
   const sidebarWidth = useGlobalAtomValue(SidebarStateAtom).width
-  const [layout, setLayout] = useState(initialLayout)
+
+  const { portal, open } = useCreateObject({
+    positions: ['bottom'],
+    padding: 20,
+    visiblities: {
+      localFile: false
+    }
+  })
+  const defaultLayout = {
+    ...initialLayout,
+    global: {
+      currentFocusedPanelId: 'panel1',
+      globalPanelExtra: () => (
+        <div style={{ height: '100%', background: 'rgba(0,0,0,0.12)', padding: '0px 4px', display: 'flex', alignItems: 'center' }}>
+          <Icon
+            className={ClassName.circleButton()}
+            name="park-plus"
+            onClick={e => {
+              console.log(e)
+              open(e)
+            }}
+          />
+        </div>
+      )
+    }
+  }
+  const [layout, setLayout] = useState(defaultLayout)
   const layoutManager = useMemo(() => new LayoutManager(), [])
   const layoutRef = useRef<DockLayout>()
   const [setting] = useSetting()
@@ -58,7 +84,7 @@ const Layout: FC<LayoutProps> = ({ sidebar }) => {
   GlobalLayout = layoutManager
 
   useEffect(() => {
-    layoutManager.registerLayout(initialLayout)
+    layoutManager.registerLayout(defaultLayout)
     layoutManager.onLayoutChange(layout => {
       setLayout(layout)
     })
@@ -95,6 +121,7 @@ const Layout: FC<LayoutProps> = ({ sidebar }) => {
       })}
       style={{ height: '100vh', overflowY: 'auto' }}
     >
+      {portal}
       <Helmet>
         <title>Rendevoz</title>
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />

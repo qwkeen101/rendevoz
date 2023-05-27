@@ -1,5 +1,5 @@
 import { Content } from '@/components/base'
-import { useTheme } from '@/hooks'
+import Colors from '@/consts/colors'
 import { css } from '@emotion/css'
 import { CSSProperties, FC, ReactNode } from 'react'
 
@@ -24,7 +24,7 @@ const SettingItem: FC<SettingItem> = ({ children, title, description, column = f
         padding: '10px 0px',
         maxHeight: '100%',
         ':not(:last-child)': {
-          borderBottom: '1px solid rgba(0,0,0,0.05)'
+          borderBottom: `1px solid ${Colors.Background.Border}`
         }
       })}
     >

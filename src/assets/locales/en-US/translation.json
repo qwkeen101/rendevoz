@@ -78,7 +78,33 @@
         "global graph": "global graph",
         "partial graph": "partial graph",
         "inbound links": "inbound links",
-        "outbound links": "outbound links"
+        "outbound links": "outbound links",
+        "pick image from internet": "pick image from internet",
+        "click to pick image": "click to pick image",
+        "choose this image": "choose this image",
+        "or": "or",
+        "upload image": "upload image",
+        "results": "results",
+        "full text search": "full text search",
+        "translate whole page": "translate whole page",
+        "search text content in pdfs, web pages, notes, etc.": "search text content in pdfs, web pages, notes, etc.",
+        "generate note object from selected text": "generate note object from selected text",
+        "copy image": "copy image",
+        "generate webpage object from selected link": "generate webpage from selected link",
+        "generate webpagelabel object from selected text": "generate webpage label from selected text",
+        "generate image object from selected iamge": "generate image from selected image",
+        "save locally": "save locally",
+        "search in default engine or input url": "search in default engine or input url",
+        "recognize text in image": "recognize text in image",
+        "loading": "loading",
+        "text recognition result": "text recognition result",
+        "save as object": "save as {{type}} object",
+        "show original web page": "show original web page",
+        "reader mode": "reader mode",
+        "upload file": "upload file",
+        "select one file or drop here": "select one file or drop here",
+        "select one file": "select one file",
+        "translating": "translating"
     },
     "dock": {
         "close": "close",
@@ -118,7 +144,8 @@
         "books": "Books",
         "objects": "Objects",
         "links": "Links",
-        "ago": "{{time}} ago"
+        "ago": "{{time}} ago",
+        "search home page objects": "search home page objects"
     },
     "sidebar":{
         "home": "Home",
@@ -170,6 +197,8 @@
         "show more": "show more",
         "show less": "show less",
         "background color": "background color",
+        "border color": "border color",
+        "highlight-block": "highlight block",
         "basic": "basic",
         "inline": "inline",
         "media": "media",
@@ -200,7 +229,8 @@
         "link": "link",
         "code": "code",
         "math": "math formula",
-        "input math formula": "please input formula"
+        "input math formula": "please input formula",
+        "code-block": "code block"
     },
     "settings": {
         "appearance": "Appearance",
@@ -253,12 +283,28 @@
         "object settings": "object settings",
         "enable drop auto generate object": "enable auto generate object for dropped item",
         "default search engine": "default search engine",
+        "default image search engine": "default image search engine",
         "google": "google",
         "google scholar": "google scholar",
         "wikipedia": "wikipedia",
         "vocabulary": "vocabulary",
         "baidu": "baidu",
-        "bing": "bing"
+        "bing": "bing",
+        "pinterest": "pinterest",
+        "semantic scholar": "semantic scholar",
+        "zhihu": "zhihu",
+        "bing dictionary": "bing dictionary",
+        "youdao dictionary": "youdao dictionary",
+        "open web search panel": "open web search panel",
+        "translate settings": "translate settings",
+        "auto go to translate original text": "auto go to original text when pointer hover on translated text",
+        "show original text when hover on text": "show original text when hover on translated text",
+        "webpage settings": "webpage settings",
+        "enable search auto suggestion": "enable search auto suggestion",
+        "resource usage": "resource usage",
+        "translation usage": "translation usage",
+        "ocr usage": "ocr usage",
+        "reset every month": "reset every month"
     },
     "form": {
         "choose file": "Choose file",
@@ -326,7 +372,10 @@
         "earliest create": "earliest created",
         "recent view": "recently viewed",
         "earliest view": "earliest viewed",
-        "most related": "most related"
+        "most related": "most related",
+        "object already exist": "object already exist",
+        "drop to add object into database": "drop to add object into database",
+        "can't add this type of object": "can't add this type of object"
     },
     "translate": {
       "show original": "show original text",

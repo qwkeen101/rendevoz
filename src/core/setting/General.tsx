@@ -18,7 +18,7 @@ import { useGlobalAtomValue } from '@/hooks/jotai'
 import { updateInfoAtom } from '@/Initializer'
 import { ipcInstance } from '@/plugins'
 import semver from 'semver'
-import { t } from 'i18next'
+import Colors from '@/consts/colors'
 
 const languageOptions: SelectOptionProps[] = [
   {
@@ -30,6 +30,7 @@ const languageOptions: SelectOptionProps[] = [
     children: 'English'
   }
 ]
+
 const GeneralSetting = () => {
   const [isExporting, toggleIsExporting] = useToggle(false)
   const [isImporting, toggleIsImporting] = useToggle(false)
@@ -162,7 +163,7 @@ const GeneralSetting = () => {
               flex
               centered
               gap={10}
-              style={{ border: '1px solid rgba(31,34,39,0.06)', padding: '4px 24px' }}
+              style={{ border: `1px solid ${Colors.Background.Border}`, padding: '4px 24px' }}
               className={ClassName.flatButton()}
               onClick={toggleIsExporting}
             >
@@ -182,7 +183,7 @@ const GeneralSetting = () => {
               flex
               gap={10}
               centered
-              style={{ border: '1px solid rgba(31,34,39,0.06)', padding: '4px 24px' }}
+              style={{ border: `1px solid ${Colors.Background.Border}`, padding: '4px 24px' }}
               onClick={() => {
                 toggleAlertVisible(true)
               }}
@@ -283,39 +284,81 @@ const GeneralSetting = () => {
             },
             {
               value: 'semantic scholar',
-              children: t('settings. semantic scholar')
+              children: t('settings.semantic scholar')
             },
             {
               value: 'wikipedia',
               children: t('settings.wikipedia')
             },
-            {
-              value: 'wiki summary',
-              children: t('settings.wiki summary')
-            },
+            // {
+            //   value: 'wiki summary',
+            //   children: t('settings.wiki summary')
+            // },
             {
               value: 'vocabulary',
               children: t('settings.vocabulary')
             },
             {
-              value: 'baidu',
-              children: t('settings.baidu')
+              value: 'bing',
+              children: t('settings.bing')
+            },
+            ...(setting.general.language === 'zh-CN'
+              ? [
+                  {
+                    value: 'baidu',
+                    children: t('settings.baidu')
+                  },
+                  {
+                    value: 'zhihu',
+                    children: t('settings.zhihu')
+                  },
+                  {
+                    value: 'bing dictionary',
+                    children: t('settings.bing dictionary')
+                  },
+                  {
+                    value: 'youdao dictionary',
+                    children: t('settings.youdao dictionary')
+                  }
+                ]
+              : [])
+          ]}
+        ></Select>
+      )
+    },
+    {
+      title: t('settings.default image search engine'),
+      children: (
+        <Select
+          closeOnSelect
+          value={setting.general.defaultImageSearchEngine}
+          menuStyle={{
+            maxHeight: 200,
+            overflowY: 'auto'
+          }}
+          onSelect={v => {
+            setSetting(
+              produce(setting, draft => {
+                draft.general.defaultImageSearchEngine = v[0]
+              })
+            )
+          }}
+          options={[
+            {
+              value: 'google',
+              children: t('settings.google')
             },
             {
               value: 'bing',
               children: t('settings.bing')
             },
             {
-              value: 'zhihu',
-              children: t('settings.zhihu')
+              value: 'pinterest',
+              children: t('settings.pinterest')
             },
-            {
-              value: 'bing dictionary',
-              children: t('settings.bing dictionary')
-            },
-            {
-              value: 'youdao dictionary',
-              children: t('settings.youdao dictionary')
+            setting.general.language === 'zh-CN' && {
+              value: 'baidu',
+              children: t('settings.baidu')
             }
           ]}
         ></Select>

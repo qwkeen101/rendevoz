@@ -9,7 +9,7 @@ const SidebarSearch = () => {
   const { t } = useTranslation()
   return (
     <>
-      <Modal noStyle visible={modalVisible} onClose={toggleModalVisible}>
+      <Modal showClose noStyle visible={modalVisible} onClose={toggleModalVisible}>
         <SearchDialog onClose={toggleModalVisible} />
       </Modal>
       <MenuItem onClick={toggleModalVisible}>

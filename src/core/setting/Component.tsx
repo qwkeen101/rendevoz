@@ -38,6 +38,30 @@ const ComponentSetting = () => {
       children: <Switch value={setting.editor.objectAutoBecomeInline} onChange={() => toggleSetting('editor', 'objectAutoBecomeInline')} />
     }
   ]
+  const translateSettingItems: SettingItem[] = [
+    {
+      title: t('settings.auto go to translate original text'),
+      children: <Switch value={setting.translate.autoGotoHoverText} onChange={() => toggleSetting('translate', 'autoGotoHoverText')} />
+    },
+    {
+      title: t('settings.show original text when hover on text'),
+      children: (
+        <Switch value={setting.translate.showOrigWhenHoverText} onChange={() => toggleSetting('translate', 'showOrigWhenHoverText')} />
+      )
+    }
+  ]
+
+  const webpageSettingItems: SettingItem[] = [
+    {
+      title: t('settings.enable search auto suggestion'),
+      children: (
+        <Switch
+          value={setting.webpage.enableSearchAutoSuggestion}
+          onChange={() => toggleSetting('webpage', 'enableSearchAutoSuggestion')}
+        />
+      )
+    }
+  ]
   return (
     <>
       <div className={ClassName.title('18px')}>{t('settings.whiteboard settings')}</div>
@@ -48,6 +72,18 @@ const ComponentSetting = () => {
         {t('settings.editor settings')}
       </div>
       {editorSettingItems.map(i => (
+        <SettingItem titleSize={14} key={i.title} {...i} />
+      ))}
+      <div className={ClassName.title('18px')} style={{ marginTop: 10 }}>
+        {t('settings.translate settings')}
+      </div>
+      {translateSettingItems.map(i => (
+        <SettingItem titleSize={14} key={i.title} {...i} />
+      ))}
+      <div className={ClassName.title('18px')} style={{ marginTop: 10 }}>
+        {t('settings.webpage settings')}
+      </div>
+      {webpageSettingItems.map(i => (
         <SettingItem titleSize={14} key={i.title} {...i} />
       ))}
     </>

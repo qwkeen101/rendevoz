@@ -1,4 +1,4 @@
-import { Button, Content } from '@/components'
+import { Button, Content, Icon, Tooltip } from '@/components'
 import { IconNameItem } from '@/components/layout/sidebar/SidebarCollection'
 import { getIcon } from '@/components/layout/sidebar/items/SidebarObjectItem'
 import { Zindexes } from '@/consts'
@@ -26,10 +26,11 @@ import { getPanelPosition } from './utils'
 import { getUser } from '@/services/login.service'
 import { toast } from 'react-hot-toast'
 import ResizeAndDrag from '@/components/base/ResizeAndDrag'
+import getSetting from '../setting/getSetting'
 
 type TranslateResult = {
   originalText: string
-  translatedText: string[]
+  translatedText: { trans: string; orig: string }[]
   from?: string
   to: 'zh'
   source?: TranslateSource
@@ -39,6 +40,7 @@ const TranslateStateAtom = atom<{
   visible: boolean
   allResults: TranslateResult[]
   currentResult?: TranslateResult
+  loading?: boolean
 }>({
   visible: false,
   allResults: []
@@ -120,24 +122,71 @@ const GlobalTranslateResult = () => {
         source,
         time: Date.now()
       } as TranslateResult
-      const result = await TranslateService.translate(query, to, from)
-      const reg = new RegExp('[\u3002\uff1b\uff0c\uff1a\u201c\u201d\u3001\uff1f\u300a\u300b]')
-      newResult.translatedText = result.result
-        .map(i => {
-          const end = i[i.length - 1]
-          if (reg.test(end)) {
-            return i + '\r\n'
-          } else {
+      setTranslateState(s => ({ ...s, loading: true }))
+      try {
+        const result = await TranslateService.translate(query, to, from)
+        //u201c u201d “ ”
+        const reg = new RegExp('[\u3002\uff1b\uff0c\uff1a\u201c\u201d\u3001\uff1f\u300a\u300b]')
+        newResult.translatedText = result.result
+          .map(i => {
+            const trans = i.trans.trim()
+            console.log(trans)
+            const endChar = trans[trans.length - 1]
+            // if end char is any of the punc, split it
+            if (reg.test(endChar)) {
+              i.trans += '\r\n'
+            }
             return i
-          }
+          })
+          .reduce(
+            (whole, curr) => {
+              const wholelast = whole[whole.length - 1]
+              if (wholelast) {
+                const removedWhole = wholelast.trans.replaceAll('\r\n', '').trim()
+                const removedCurr = curr.trans.replaceAll('\r\n', '').trim()
+                if (
+                  removedWhole.includes('\u201c') &&
+                  !removedWhole.endsWith('\u201d') &&
+                  !removedWhole.endsWith('\u201c') &&
+                  !removedWhole.includes('{xxx}')
+                ) {
+                  wholelast.orig += '' + curr.orig
+                  wholelast.trans += '' + removedCurr
+                  if (removedCurr.includes('\u201d')) {
+                    console.log(removedCurr)
+                    wholelast.trans += '{xxx}\r\n'
+                  }
+                  return whole
+                }
+
+                if (!wholelast.trans.endsWith('\r\n')) {
+                  wholelast.orig += ' ' + curr.orig
+                  wholelast.trans += ' ' + curr.trans
+                  return whole
+                }
+              }
+              whole.push(curr)
+              return whole
+            },
+            [] as {
+              trans: string
+              orig: string
+            }[]
+          )
+          .map(i => ({
+            ...i,
+            trans: i.trans.replaceAll('{xxx}', '')
+          }))
+        console.log(newResult.translatedText)
+        setTranslateState(s => {
+          s.currentResult = newResult
+          s.allResults.unshift(newResult)
+          return { ...s, allResults: [...s.allResults], loading: false }
         })
-        .join('')
-        .split('\r\n')
-      setTranslateState(s => {
-        s.currentResult = newResult
-        s.allResults.unshift(newResult)
-        return { ...s, allResults: [...s.allResults] }
-      })
+      } catch (e) {
+        setTranslateState(s => ({ ...s, loading: false }))
+        toast.error('Failed to translate!')
+      }
     },
     close: () => setTranslateState(s => ({ ...s, visible: false }))
   } as typeof GlobalTranslateInstance)
@@ -161,7 +210,7 @@ const TranslatePanel = () => {
   const [translateState, setTranslateState] = useGlobalAtom(TranslateStateAtom)
   const [panelState, setPanelState] = useGlobalAtom(TranslatePanelStateAtom)
   const { t } = useTranslation()
-
+  const [setting] = useSetting()
   const renderHistory = () => {
     return (
       <Content
@@ -185,7 +234,7 @@ const TranslatePanel = () => {
         {translateState.allResults.map(i => (
           <Content column flex key={i.time}>
             {i.source && <SourceRenderer small source={i.source} />}
-            <div className={ClassName.ellipsisFont(3)}>{i.translatedText}</div>
+            <div className={ClassName.ellipsisFont(3)}>{i.translatedText.map(i => i.trans).join(' ')}</div>
             <Content alignItems="center" flex gap={10} className={ClassName.description(FontSize['12px'])}>
               <div>{DateFormat.formatDistanceToNowStrict(i.time)}</div>
               <div
@@ -206,15 +255,37 @@ const TranslatePanel = () => {
       </Content>
     )
   }
-
+  const handleGotoOriginalPlace = (translateResult: TranslateResult, origText: string) => {
+    const setting = getSetting()
+    if (!setting.translate.autoGotoHoverText) return
+    if (translateResult.source?.type === 'pdf') {
+      const { objectId, page } = translateResult.source
+      if (page !== undefined) {
+        Actions.goToPdfSearchedText?.(origText, page, objectId)
+      }
+    }
+    if (translateResult.source?.type === 'webpage') {
+      Actions.goToWebpageSelectedText(translateResult.source.objectId, origText)
+    }
+  }
   const renderPanel = () => {
+    if (translateState.loading) {
+      return (
+        <Content flex auto centered>
+          <Content style={{ fontSize: FontSize['16px'], marginTop: -30 }} flex gap={16}>
+            <Icon name="park-loading-four" spin />
+            <div>{t('general.translating')}...</div>
+          </Content>
+        </Content>
+      )
+    }
     return (
       <Content
         flex
         auto
         column
         gap={8}
-        style={{ overflowY: 'auto', textTransform: 'none', paddingRight: 8 }}
+        style={{ overflowY: 'auto', textTransform: 'none', paddingRight: 12 }}
         // @ts-ignore
         className={css({
           '*': {
@@ -228,7 +299,33 @@ const TranslatePanel = () => {
             <div>{t('translate.original text')}</div>
             {translateState.currentResult?.originalText}
             <div>{t('translate.translated text')}</div>
-            {translateState.currentResult?.translatedText}
+            <div style={{ textIndent: '2em' }}>
+              {translateState.currentResult?.translatedText.map(i => (
+                <Tooltip
+                  disable={!setting.translate.showOrigWhenHoverText}
+                  onVisibleChange={v => {
+                    if (v) {
+                      handleGotoOriginalPlace(translateState.currentResult!, i.orig)
+                    }
+                  }}
+                  delay={800}
+                  contentTouchable
+                  content={
+                    <div
+                      className={ClassName.description(FontSize['15px'])}
+                      style={{
+                        maxWidth: 400,
+                        textTransform: 'none'
+                      }}
+                    >
+                      {i.orig}
+                    </div>
+                  }
+                >
+                  <p style={{ marginBottom: '0.5em', width: 'fit-content' }}>{i.trans}</p>
+                </Tooltip>
+              ))}
+            </div>
           </>
         ) : panelState.showOrigin ? (
           <div
@@ -241,7 +338,29 @@ const TranslatePanel = () => {
         ) : (
           <div style={{ textIndent: '2em' }}>
             {translateState.currentResult?.translatedText.map(i => (
-              <p style={{ marginBottom: '0.5em' }}>{i}</p>
+              <Tooltip
+                disable={!setting.translate.showOrigWhenHoverText}
+                onVisibleChange={v => {
+                  if (v) {
+                    handleGotoOriginalPlace(translateState.currentResult!, i.orig)
+                  }
+                }}
+                delay={800}
+                contentTouchable
+                content={
+                  <div
+                    className={ClassName.description(FontSize['15px'])}
+                    style={{
+                      maxWidth: 400,
+                      textTransform: 'none'
+                    }}
+                  >
+                    {i.orig}
+                  </div>
+                }
+              >
+                <p style={{ marginBottom: '0.5em', width: 'fit-content' }}>{i.trans}</p>
+              </Tooltip>
             ))}
           </div>
         )}
@@ -250,6 +369,7 @@ const TranslatePanel = () => {
   }
   return (
     <ResizeAndDrag
+      role="global-translate-panel"
       ref={r => {
         r && !panelState.ref && setPanelState(s => ({ ...s, ref: r }))
       }}
@@ -389,12 +509,21 @@ const SourceRenderer = ({ source, small }: { source: TranslateSource; small?: bo
     }
   }
   useEffect(() => {
+    if (source === undefined) {
+      setSourceState(undefined)
+    }
     const setState = async () => {
       const metaOne = globalStore.get(objectIdToMetaObjectIdMapAtom)?.get(source.objectId)
 
-      if (!metaOne) return
+      if (!metaOne) {
+        setSourceState(undefined)
+        return
+      }
       const meta = await MetaStore.getMetaObjectById(metaOne)
-      if (!meta) return
+      if (!meta) {
+        setSourceState(undefined)
+        return
+      }
       setSourceState(() => {
         const s = {
           name: meta.name || 'Unnamed Object',
@@ -413,6 +542,7 @@ const SourceRenderer = ({ source, small }: { source: TranslateSource; small?: bo
     }
     setState()
   }, [source])
+  if (!sourceState?.name) return null
   return (
     <div>
       <IconNameItem

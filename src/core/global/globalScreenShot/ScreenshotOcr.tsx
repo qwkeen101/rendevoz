@@ -1,35 +1,22 @@
-import { useGlobalAtom, useGlobalAtomValue, useToggle } from '@/hooks'
+import { useGlobalAtomValue } from '@/hooks'
 import { GlobalScreenShotOcrResult } from '.'
 import { Button, Content, Icon } from '@/components'
 import Colors from '@/consts/colors'
-import { atom } from 'jotai'
-import { useEffect } from 'react'
-import TranslateService from '@/services/translate.service'
 import ClassName from '@/styles/classNames'
 import { useTranslation } from 'react-i18next'
+import { GlobalTranslateInstance } from '../GlobalTranslatePanel'
 
-const ScreenShotTranslateResult = atom<string | undefined>(undefined)
 const ScreenShotOcr = ({ draggable, onToggleDraggable }: { draggable: boolean; onToggleDraggable: VoidFunction }) => {
   const ocrResult = useGlobalAtomValue(GlobalScreenShotOcrResult)
-  const [translateResult, setTranslateResult] = useGlobalAtom(ScreenShotTranslateResult)
-  const [showTranslate, toggleShowResult] = useToggle(false)
   const { t } = useTranslation()
 
-  useEffect(() => {
-    if (!ocrResult) {
-      setTranslateResult(undefined)
-    }
-  }, [ocrResult])
   const renderContent = () => {
-    if (showTranslate) {
-      return translateResult
-    }
     if (ocrResult === 'loading') {
       return (
-        <>
+        <Content flex gap={16}>
           <Icon name="park-loading-four" spin size={18} />
-          <div>Loading...</div>
-        </>
+          <div>{t('general.loading')}...</div>
+        </Content>
       )
     }
 
@@ -56,31 +43,23 @@ const ScreenShotOcr = ({ draggable, onToggleDraggable }: { draggable: boolean; o
     >
       {ocrResult && ocrResult !== 'loading' && (
         <Content flex column fullWidth gap={6}>
-          <div className={ClassName.title('1rem')}>Ocr Result</div>
+          <div className={ClassName.title('1rem')}>{t('general.text recognition result')}</div>
           <Content fullWidth flex gap={6}>
             <Button.IconButton icon="park-move-one" selected={draggable} onClick={onToggleDraggable} text={t('general.move')} />
             {ocrResult && (
               <Button.IconButton
-                onClick={async () => {
-                  toggleShowResult()
-                  if (!translateResult) {
-                    const result = await TranslateService.translate(ocrResult, 'zh')
-                    setTranslateResult(result.result.join(''))
-                  }
+                onClick={e => {
+                  GlobalTranslateInstance.open?.({ e, query: ocrResult })
                 }}
-                icon={showTranslate ? 'park-return' : 'park-translate'}
-                text={showTranslate ? t('general.return') : t('general.translate')}
+                icon={'park-translate'}
+                text={t('general.translate')}
               />
             )}
             <Button.IconButton
               icon="park-copy"
               text={t('general.copy')}
               onClick={() => {
-                if (showTranslate) {
-                  translateResult && navigator.clipboard.writeText(translateResult)
-                } else {
-                  ocrResult && navigator.clipboard.writeText(ocrResult)
-                }
+                ocrResult && navigator.clipboard.writeText(ocrResult)
               }}
             />
           </Content>

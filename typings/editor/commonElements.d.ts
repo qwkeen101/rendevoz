@@ -33,6 +33,12 @@ export interface MathElement {
   type: 'math'
   content: string
 }
+export interface HighlightBlockElement {
+  type: 'highlight-block'
+  icon?: string
+  borderColor?: string
+}
+
 export interface MediaElement {
   type: 'media'
   mediaType: 'audio' | 'video' | 'pdf'
@@ -140,6 +146,14 @@ export interface TableElement {
   }[]
   children: TableRowElement[]
 }
+
+export interface CodeBlockElement {
+  type: 'code-block'
+  content?: string
+  title?: string
+  language?: string
+  editorBackground?: string
+}
 export interface SupElement {
   type: 'sup'
   children: Descendant[]
@@ -221,3 +235,5 @@ export type CommonElement =
   | FigCaptionElement
   | OrderListItemElement
   | MathElement
+  | CodeBlockElement
+  | HighlightBlockElement

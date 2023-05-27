@@ -69,6 +69,7 @@ const BorderInput = ({
     update()
     setTimeout(() => {
       if (autoFocus) {
+        console.log('focus')
         inputRef.current?.focus()
       }
     })

@@ -17,6 +17,8 @@ import { MetaStore } from '@/stores'
 import { GraphPathFilterAtom } from '../GraphPathFilter'
 import { GraphPinNodesIdsAtom } from '../../hooks/useGraphFilter'
 import SvgIconRenderer from '../icons/SvgIconRenderer'
+import { GraphModeAtom } from '../../hooks/useGraphMode'
+import Colors from '@/consts/colors'
 
 interface NodeProps {
   node: GraphNode
@@ -29,15 +31,15 @@ interface NodeProps {
 
 export const TypeToNodeRadius: Record<MetaObject['type'], number> = {
   pdf: 50,
-  pdfLabel: 20,
+  pdfLabel: 35,
   note: 50,
-  normal: 20,
-  noteLabel: 20,
-  noteBlock: 20,
+  normal: 35,
+  noteLabel: 35,
+  noteBlock: 35,
   image: 50,
   whiteboard: 50,
   webpage: 50,
-  webpageLabel: 20,
+  webpageLabel: 35,
   video: 50,
   audio: 50,
   localFile: 50
@@ -56,6 +58,7 @@ const Node: FC<NodeProps> = memo(({ node, onMouseEnter, onMouseLeave, onContextM
   const meta = MetaStore.useValue(node.id)
   const setPathFilter = useSetAtom(GraphPathFilterAtom)
   const pinnedNodes = useAtomValue(GraphPinNodesIdsAtom)
+  const graphMode = useAtomValue(GraphModeAtom)
   const thisNodeShowTags = useMemo(() => {
     if (node.opacity !== 1) {
       return []
@@ -83,6 +86,23 @@ const Node: FC<NodeProps> = memo(({ node, onMouseEnter, onMouseLeave, onContextM
     } as Partial<GraphNode>
   }, [meta, node])
   const renderNode = () => {
+    if (graphMode === 'simple') {
+      return (
+        <>
+          <circle fill="#9DB2BF" cx={radius} cy={radius} r={radius} />
+          <text
+            transform={`translate(${d / 2},${d})`}
+            textAnchor="middle"
+            fontWeight={600}
+            fill={Colors.Font.Primary}
+            fontSize="calc(var(--zoom-level) * 16px)"
+            dy="1.6em"
+          >
+            {realNode.label || 'Unnamed Node'}
+          </text>
+        </>
+      )
+    }
     if (!meta) return null
     if (meta.icon) {
       return <EmojiNode node={realNode} />
@@ -223,9 +243,11 @@ const Node: FC<NodeProps> = memo(({ node, onMouseEnter, onMouseLeave, onContextM
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
       cursor="pointer"
-      pointerEvents={node.opacity ? (node.opacity < 1 ? 'none' : 'auto') : 'auto'}
+      // pointerEvents={node.opacity ? (node.opacity < 1 ? 'none' : 'auto') : 'auto'}
+      pointerEvents="auto"
       ref={nodeRef}
-      opacity={(node.opacity || 1) < 1 ? 0 : 1}
+      // opacity={(node.opacity || 1) < 1 ? 0 : 1}
+      opacity={node.opacity || 1}
       style={{ transition: 'opacity 0.2s ease', userSelect: 'none' }}
       transform={node.x && node.y ? `translate(${~~node.x},${~~node.y})` : undefined}
     >

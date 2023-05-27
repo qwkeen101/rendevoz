@@ -2,6 +2,7 @@ import { ColorPicker, Content, WithBorder } from '@/components'
 import { useToggle } from '@/hooks'
 import ClassName from '@/styles/classNames'
 import { css } from '@emotion/css'
+import { useTranslation } from 'react-i18next'
 
 type PickColorFunc = (color: string) => void
 const BlockColorPicker = ({
@@ -11,17 +12,23 @@ const BlockColorPicker = ({
   showFont = true,
   fontBackDefault = true,
   bgBackDefault = true,
+  borderBackDefault = true,
   showMoreBg,
   showMoreFont,
   showMoreBgOption,
-  showMoreFontOption
+  showMoreFontOption,
+  showBorder,
+  onPickBorderColor
 }: {
   onPickFontColor?: PickColorFunc
   onPickBackgroundColor?: PickColorFunc
+  onPickBorderColor?: PickColorFunc
   showBg?: boolean
   showFont?: boolean
+  showBorder?: boolean
   fontBackDefault?: boolean
   bgBackDefault?: boolean
+  borderBackDefault?: boolean
   showMoreBg?: boolean
   showMoreFont?: boolean
   showMoreFontOption?: boolean
@@ -29,6 +36,7 @@ const BlockColorPicker = ({
 }) => {
   const [showMoreColor, toggleShowMoreFontColor] = useToggle(false)
   const [showMoreBackground, toggleShowMoreBackground] = useToggle(false)
+  const { t } = useTranslation()
   return (
     <WithBorder
       className={css({
@@ -44,23 +52,31 @@ const BlockColorPicker = ({
       {showFont && (
         <>
           <Content flex alignItems="center" justifyContent="space-between" className={ClassName.description()}>
-            <span>Font color</span>
+            <span>{t('editor.font color')}</span>
             {showMoreFontOption && (
               <span onClick={toggleShowMoreFontColor} className={ClassName.flatButton(3, '0px 3px')}>
-                {showMoreColor ? 'Show less' : 'Show more'}
+                {showMoreColor ? t('editor.show less') : t('editor.show more')}
               </span>
             )}
           </Content>
           <ColorPicker enableDefault={fontBackDefault} isFont enableMore={!showMoreColor && !showMoreFont} onPick={onPickFontColor} />
         </>
       )}
+      {showBorder && (
+        <>
+          <Content flex alignItems="center" justifyContent="space-between" className={ClassName.description()}>
+            <span>{t('editor.border color')}</span>
+          </Content>
+          <ColorPicker enableDefault={borderBackDefault} enableMore={true} onPick={onPickBorderColor} />
+        </>
+      )}
       {showBg && (
         <>
           <Content flex alignItems="center" justifyContent="space-between" className={ClassName.description()}>
-            <span>Background color</span>
+            <span>{t('editor.background color')}</span>
             {showMoreBgOption && (
               <span onClick={toggleShowMoreBackground} className={ClassName.flatButton(3, '0px 3px')}>
-                {showMoreBackground ? 'Show less' : 'Show more'}
+                {showMoreBackground ? t('editor.show less') : t('editor.show more')}
               </span>
             )}
           </Content>

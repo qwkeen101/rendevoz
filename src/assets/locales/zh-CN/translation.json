@@ -78,7 +78,33 @@
         "global graph": "全局关系图",
         "partial graph": "局部关系图",
         "inbound links": "入链",
-        "outbound links": "出链"
+        "outbound links": "出链",
+        "pick image from internet": "从网络上选取图片",
+        "click to pick image": "点击以选取图片",
+        "choose this image": "选择这张图片",
+        "or": "或",
+        "upload image": "上传图片",
+        "results": "结果",
+        "full text search": "全文搜索",
+        "search text content in pdfs, web pages, notes, etc.": "搜索PDF，网页，笔记等文件中的文字内容",
+        "translate whole page": "翻译整页文字",
+        "generate note object from selected text": "通过选中文字生成笔记",
+        "generate webpage object from selected link": "通过选中链接生成网页",
+        "generate webpagelabel object from selected text": "通过选中文字生成网页标注",
+        "generate image object from selected iamge": "通过选中图像生成图片",
+        "copy image": "复制图片",
+        "save locally": "保存到本地",
+        "search in default engine or input url": "在默认引擎里搜索或输入网址",
+        "recognize text in image": "识别图片中的文字",
+        "loading": "正在加载中",
+        "text recognition result": "文字识别结果",
+        "save as object": "保存为{{type}}实体",
+        "show original web page": "显示原网页",
+        "reader mode": "阅读模式",
+        "upload file": "上传文件",
+        "select one file or drop here": "选择一个文件或拖拽到此处",
+        "select one file": "选择一个文件",
+        "translating": "正在翻译中"
     },
     "dock": {
         "close": "关闭标签页",
@@ -118,7 +144,8 @@
         "books": "书籍",
         "objects": "实体",
         "links": "链接",
-        "ago": "{{time}}前"
+        "ago": "{{time}}前",
+        "search home page objects": "搜索主页实体"
     },
     "sidebar":{
         "home": "主页",
@@ -170,6 +197,8 @@
         "show more": "显示更多",
         "show less": "显示更少",
         "background color": "背景颜色",
+        "highlight-block": "高亮块",
+        "border color": "边框颜色",
         "basic": "基础",
         "inline": "行内",
         "media": "媒体",
@@ -200,7 +229,8 @@
         "link": "链接",
         "code": "代码",
         "math": "数学公式",
-        "input math formula": "请输入公式"
+        "input math formula": "请输入公式",
+        "code-block": "代码块"
     },
     "settings": {
         "appearance": "外观",
@@ -253,12 +283,28 @@
         "object settings": "实体设置",
         "enable drop auto generate object": "允许自动生成拖拽出的实体",
         "default search engine": "默认搜索引擎",
+        "default image search engine": "默认图片搜索引擎",
         "google": "谷歌",
         "google scholar": "谷歌学术",
         "wikipedia": "维基百科",
         "vocabulary": "vocabulary",
         "baidu": "百度",
-        "bing": "必应"
+        "bing": "必应",
+        "pinterest": "pinterest",
+        "semantic scholar": "semantic scholar",
+        "zhihu": "知乎",
+        "bing dictionary": "必应词典",
+        "youdao dictionary": "有道词典",
+        "open web search panel": "打开网络搜索面板",
+        "translate settings": "翻译设置",
+        "auto go to translate original text": "当指针悬浮于译文时自动前往原文",
+        "show original text when hover on text": "当指针悬浮于译文时显示原文",
+        "webpage settings": "网页设置",
+        "enable search auto suggestion": "开启搜索自动提示",
+        "resource usage": "资源使用量",
+        "translation usage": "翻译使用量",
+        "ocr usage": "文字识别使用量",
+        "reset every month": "每月重置"
     },
     "form": {
         "choose file": "Choose file",
@@ -326,7 +372,10 @@
         "earliest create": "最早创建",
         "recent view": "最近浏览",
         "earliest view": "最早浏览",
-        "most related": "最多相关"
+        "most related": "最多相关",
+        "object already exist": "实体已存在",
+        "drop to add object into database": "放下以将实体添加进数据库",
+        "can't add this type of object": "不能添加此种类型的实体"
     },
     "translate": {
       "show original": "显示原文",

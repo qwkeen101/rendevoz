@@ -1,4 +1,4 @@
-import React, { memo, useContext, useLayoutEffect, useRef, useState } from 'react'
+import React, { memo, useContext, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { DragDropDiv } from './dragdrop/DragDropDiv'
 import { DockContextType, PanelData, TabData } from './DockData'
 import styles from './index.module.less'
@@ -74,7 +74,7 @@ export const DockTabBar = memo((props: DockTabBarProps) => {
           display: 'none',
           width: '80px',
           height: '100%',
-          background: 'rgba(0,0,0,0.07)'
+          background: 'rgba(0,0,0,0.12)'
         }}
         id={isTopLeft && os === 'macos' ? 'macos-placeholder' : undefined}
       ></div>
@@ -102,8 +102,8 @@ export const DockTabBar = memo((props: DockTabBarProps) => {
             }}
           />
         ))}
+        {restProps.extraArea}
       </Reorder.Group>
-      {restProps.extraArea}
     </DragDropDiv>
   )
 })
@@ -113,6 +113,7 @@ const TabItem = ({ onClick, isSelected, item, onDragStart }) => {
   const { t } = useTranslation()
   const dockContext = useContext(DockContextType)
   const [setting] = useSetting()
+  const tabRef = useRef<HTMLDivElement>(null)
   const renderTabContextMenu = () => (
     <WithBorder style={{ padding: 4, display: 'flex', flexDirection: 'column', gap: 4 }}>
       <div
@@ -165,12 +166,24 @@ const TabItem = ({ onClick, isSelected, item, onDragStart }) => {
       </div>
     </WithBorder>
   )
+  useEffect(() => {
+    if (isSelected) {
+      const previous = tabRef.current?.previousElementSibling
+      if (previous) {
+        previous.setAttribute('data-hide-border', 'true')
+        return () => {
+          previous.removeAttribute('data-hide-border')
+        }
+      }
+    }
+  }, [isSelected])
   return (
     <AnimatePopover
       positions={['bottom']}
       content={renderTabContextMenu()}
       onClickOutside={toggleContextMenuVisible}
       padding={10}
+      innerRef={tabRef}
       visible={contextMenuVisible}
     >
       <Reorder.Item

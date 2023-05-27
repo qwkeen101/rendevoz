@@ -96,29 +96,27 @@ const HighlightLabel: FC<HighlightLabelProps> = memo(
           </WithBorder>
         }
       >
-        <HoverObjectDetails objectId={labelId}>
-          <DraggableElement
-            hoverElement={<DraggingElement text="Drop to add pdf label." />}
-            draggingDetails={{
-              type: 'pdfLabel',
-              pdfId: documentId,
-              content: highlight.selectedText,
-              page: highlight.page,
-              labelId: highlight.id
+        <DraggableElement
+          hoverElement={<DraggingElement text="Drop to add pdf label." />}
+          draggingDetails={{
+            type: 'pdfLabel',
+            pdfId: documentId,
+            content: highlight.selectedText,
+            page: highlight.page,
+            labelId: highlight.id
+          }}
+        >
+          <Highlights
+            highlight={highlight}
+            pageSize={pageSize}
+            highlightRef={highlightRef}
+            labelId={labelId}
+            onClick={() => {
+              setPopoverVisible(true)
             }}
-          >
-            <Highlights
-              highlight={highlight}
-              pageSize={pageSize}
-              highlightRef={highlightRef}
-              labelId={labelId}
-              onClick={() => {
-                setPopoverVisible(true)
-              }}
-              key={highlight.id}
-            />
-          </DraggableElement>
-        </HoverObjectDetails>
+            key={highlight.id}
+          />
+        </DraggableElement>
       </AnimatePopover>
     )
   },

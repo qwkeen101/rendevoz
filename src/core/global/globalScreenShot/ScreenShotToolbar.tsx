@@ -40,10 +40,6 @@ const ScreenShotToolbar = ({ on }: { on: (event: ToolbarOnEvent) => void }) => {
         ></IconWithPopover>
       </Toolbar.Item>
 
-      {/* <Icon name="park-erase" onClick={toggleErase} />
-            <Icon name="park-pencil" onClick={toggleDrawing} /> */}
-      {/* <Icon name="park-save" onClick={closeAndSaveToGallery} /> */}
-      {/* <Icon name="park-more" onClick={() => on({ type: 'ocr' })} /> */}
       <Toolbar.Item iconName="park-plus" tooltip={t('general.add as object')} onClick={() => on({ type: 'add as object' })} />
       <Toolbar.Item iconName="park-download" tooltip={t('general.download')} onClick={() => on({ type: 'download' })} />
       <Toolbar.Item iconName="park-return" tooltip={t('general.return')} onClick={() => on({ type: 'return' })} />

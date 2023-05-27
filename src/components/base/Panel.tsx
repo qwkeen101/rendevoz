@@ -4,12 +4,14 @@ import { motion } from 'framer-motion'
 import Icon from './Icon'
 import { useMeasure } from 'react-use'
 import useToggle from '@/hooks/utils/useToggle'
+import ClassName from '@/styles/classNames'
 
 interface PanelProps {
   title: string | React.ReactNode
   children: React.ReactNode
   style?: React.CSSProperties
   defaultVisible?: boolean
+  className?: string
 }
 const variants = {
   open: {
@@ -21,7 +23,7 @@ const variants = {
     height: 0
   }
 }
-const Panel: React.FC<PanelProps> = ({ title, children, style, defaultVisible = true }) => {
+const Panel: React.FC<PanelProps> = ({ title, children, style, defaultVisible = true, className }) => {
   const [hide, toggle] = useToggle(!defaultVisible)
   const [duration, setDuration] = useState(0.3)
   const [ref, { height }] = useMeasure()
@@ -29,12 +31,12 @@ const Panel: React.FC<PanelProps> = ({ title, children, style, defaultVisible = 
     setDuration(getAutoHeightDuration(height) / 1000)
   }, [height])
   return (
-    <Content fullWidth flex column style={style}>
+    <Content fullWidth flex column style={style} className={className}>
       <Content flex alignItems="center" justifyContent="space-between">
         <div style={{ cursor: 'pointer' }} onClick={() => toggle()}>
           {title}
         </div>
-        <Icon cursor="pointer" name={hide ? 'park-down' : 'park-up'} onClick={() => toggle()} />
+        <Icon cursor="pointer" name={hide ? 'park-down' : 'park-up'} onClick={() => toggle()} className={ClassName.circleButton()} />
       </Content>
       <motion.div
         inherit={false}

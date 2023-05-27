@@ -68,7 +68,6 @@ const useEditorDrag = (editor: CustomEditor, scrollElement?: HTMLElement | null)
 
   dragManager.onDrop = ({ direction, isNested, objectId, targetNodeId, shouldAddElements, shouldRemoveElements, event }) => {
     let targetPath = ID_TO_PATH_MAP.get(editor)?.get(targetNodeId)
-    console.log('s', event)
     if (!targetPath) return
     const targetElement = Editor.node(editor, targetPath)[0] as CustomElement
     if (direction === 'bottom' && targetElement.type.startsWith('heading') && (targetElement as HeadingElement).folded === true) {
@@ -111,7 +110,6 @@ const useEditorDrag = (editor: CustomEditor, scrollElement?: HTMLElement | null)
     }
     // if we have objectId or drop event, it means need further process
     if ((objectId || event) && editor.noteId) {
-      console.log(event)
       emitter
         .emitWithCallback('global', {
           type: 'globalDropNeedFurtherProcess',
@@ -128,6 +126,7 @@ const useEditorDrag = (editor: CustomEditor, scrollElement?: HTMLElement | null)
           obj => {
             const metaObj = obj as MetaObject
             const setting = getSetting()
+            console.log(metaObj)
             if (setting.editor.objectAutoBecomeInline) {
               const editorNode: CustomElement = {
                 id: Id.getId(),

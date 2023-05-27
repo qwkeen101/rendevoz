@@ -27,7 +27,7 @@ const GlobalImagePreviewer = () => {
   }, [visible])
   GlobalImagePreviewerInstance.open = src => setPreviewerState({ imgSrc: src, visible: true })
   return (
-    <Modal visible={visible} onClose={() => setPreviewerState(s => ({ ...s, visible: false }))} noStyle zIndex={Zindexes.ImagePreview}>
+    <Modal showClose visible={visible} onClose={() => setPreviewerState(s => ({ ...s, visible: false }))} noStyle zIndex={Zindexes.ImagePreview}>
       <img
         ref={imgRef}
         src={imgSrc}

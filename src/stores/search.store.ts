@@ -19,8 +19,15 @@ export type SearchableDocument =
       targetObjectId: number
       pageIndex: number
     }
+  // search name or description
+  | {
+      specType: 'metaObject'
+      id: number
+      content?: string
+      name?: string
+    }
 export type SearchParams = {
-  specType: keyof ObjectFamily | 'all'
+  specType: keyof ObjectFamily | 'all' | 'metaObject'
   query?: string
   filter?: string[]
 }
@@ -61,11 +68,10 @@ const createSearchStore = () => {
   const updateSearchableFields = async () => {
     const index = getIndex()
     const searchables = await index.getSearchableAttributes()
-
-    if (searchables[0] === 'content') {
+    if (searchables[0] === 'content' && searchables[1] === 'name') {
       return
     } else {
-      index.updateSearchableAttributes(['content'])
+      index.updateSearchableAttributes(['content', 'name'])
     }
   }
   const updateFilterIndex = async () => {
@@ -85,6 +91,7 @@ const createSearchStore = () => {
       .map(doc => {
         switch (doc.specType) {
           case 'pdfPage':
+          case 'metaObject':
           case 'noteBlock':
             return doc
           default:
@@ -96,19 +103,23 @@ const createSearchStore = () => {
     const res = await index.addDocuments(addableDocs)
     return res
   }
+
   const searchDocument = async (params: SearchParams) => {
     const index = getIndex()
-    const filter = params.specType === 'all' ? undefined : `specType = ${params.specType}`
+    const filter = params.specType === 'all' ? [`specType = pdfPage OR specType = noteBlock`] : [`specType = ${params.specType}`]
     const result = await index.search(params.query, {
-      filter: filter || params.filter ? ([filter, ...(params.filter || [])].filter(i => i) as string[]) : undefined,
-      attributesToHighlight: ['*'],
-      attributesToCrop: ['content'],
-      attributesToRetrieve: [],
+      filter: filter || params.filter ? ([...filter, ...(params.filter || [])].filter(i => i) as string[]) : undefined,
+      attributesToHighlight: ['name', 'content'],
+      attributesToCrop: ['content', 'name'],
+      attributesToRetrieve: ['id', 'specType', 'targetObjectId', 'pageIndex'],
       cropLength: 50,
       hitsPerPage: 40
     })
     return result.hits.map(i => ({
-      doc: i._formatted as SearchableDocument,
+      doc: {
+        ...i._formatted,
+        ...i
+      } as SearchableDocument,
       positions: i._matchesPosition?.content
     })) as ISearchResultItem[]
   }

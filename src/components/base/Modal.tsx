@@ -6,7 +6,6 @@ import Zindexes from '@/consts/zindex'
 import ClassName from '@/styles/classNames'
 import isHotkey from 'is-hotkey'
 import { KEY } from '@/consts/key'
-import { useSetting } from '@/core'
 import Icon from './Icon'
 
 interface ModalProps {
@@ -24,6 +23,7 @@ interface ModalProps {
   noStyle?: boolean
   style?: CSSProperties
   zIndex?: number
+  showClose?: boolean
 }
 const Backdrop = ({ children, onMouseDown }) => {
   return (
@@ -66,7 +66,8 @@ const Modal: FC<ModalProps> = ({
   parentElement,
   noStyle,
   style,
-  zIndex
+  zIndex,
+  showClose = false
 }) => {
   useEffect(() => {
     const keyDownHandler = (e: KeyboardEvent) => {
@@ -104,25 +105,8 @@ const Modal: FC<ModalProps> = ({
             }}
             className={ClassName.Background.blurBackground}
           ></motion.div>
+
           <Backdrop onMouseDown={onClose} key={1}>
-            <motion.div
-              key={20}
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              style={{
-                position: 'fixed',
-                top: 30,
-                right: 30
-              }}
-              onPointerDown={e => {
-                onClose()
-                e.preventDefault()
-                e.stopPropagation()
-              }}
-            >
-              <Icon name="park-close" className={ClassName.circleButton()} size={18} />
-            </motion.div>
             <motion.div
               initial={{ y: 50, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
@@ -149,6 +133,27 @@ const Modal: FC<ModalProps> = ({
               }}
               transition={{ stiffness: 200, damping: 20 }}
             >
+              {showClose && (
+                <motion.div
+                  key={20}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  style={{
+                    position: 'absolute',
+                    top: 8,
+                    right: 8,
+                    zIndex: Number.MAX_SAFE_INTEGER
+                  }}
+                  onPointerDown={e => {
+                    onClose()
+                    e.preventDefault()
+                    e.stopPropagation()
+                  }}
+                >
+                  <Icon name="park-close" className={ClassName.circleButton()} size={18} />
+                </motion.div>
+              )}
               {children}
             </motion.div>
           </Backdrop>

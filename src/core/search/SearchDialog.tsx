@@ -6,60 +6,74 @@ import { atom } from 'jotai'
 import { useEffect } from 'react'
 import SearchResultItem from './SearchResultItem'
 import BorderInput from '@/components/base/BorderInput'
-import SearchAnalysis from './SearchAnalysis'
 import ClassName from '@/styles/classNames'
+import { useTranslation } from 'react-i18next'
+import FontSize from '@/consts/font'
+import { MetaStore } from '@/stores'
 
 export const GlobalSearchInputAtom = atom<string>('')
 
 export type SearchGroup = {
-  id: number
-  type: 'pdf' | 'note'
+  metaId: number
+  highlightName?: string
+  highlightDescription?: string
   items: (SearchableDocument & { positions?: ISearchResultItem['positions'] })[]
 }
 export type SearchGroupMap = Map<number, SearchGroup>
 export const GlobalSearchResultsAtom = atom<SearchGroupMap>(new Map())
-const getGroupId = (item: SearchableDocument) => {
-  return Number(item.targetObjectId)
-}
-const getGroupType = (item: SearchableDocument) => {
-  switch (item.specType) {
-    case 'noteBlock':
-      return 'note'
-    case 'pdfPage':
-      return 'pdf'
-  }
-}
+
 export const SearchDialog = ({ onClose }: { onClose: VoidFunction }) => {
   const [searchInput, setSearchInput] = useGlobalAtom(GlobalSearchInputAtom)
   const [searchResults, setSearchResults] = useGlobalAtom(GlobalSearchResultsAtom)
+  const { t } = useTranslation()
   const { run: debouncedSearch } = useDebounceFn(
     () => {
       if (searchInput.length) {
-        SearchStore.searchDocument({
-          query: searchInput,
-          specType: 'all'
-        }).then(result => {
+        Promise.all([
+          SearchStore.searchDocument({ query: searchInput, specType: 'metaObject' }),
+          SearchStore.searchDocument({
+            query: searchInput,
+            specType: 'all'
+          })
+        ]).then(result => {
           // put pdf page -> pdf, note block -> note
           const groupedMap = new Map() as SearchGroupMap
+          const deletedIds: number[] = []
           const addToMap = (item: ISearchResultItem) => {
-            const key = getGroupId(item.doc)
-            const group = groupedMap.get(key) || {
-              items: [],
-              type: getGroupType(item.doc),
-              id: key
+            const { doc } = item
+            const metaId = doc.specType === 'metaObject' ? doc.id : MetaStore.getMetaObjectByObjectId(Number(doc.targetObjectId))?.id
+            if (!metaId) {
+              deletedIds.push(Number(doc.id))
+              return
             }
-            const arr = group.items
-            arr.push({
-              ...item.doc,
-              positions: item.positions
-            })
-            groupedMap.set(key, group)
+            const numberMetaId = Number(metaId)
+            const group = groupedMap.get(numberMetaId) || {
+              items: [],
+              metaId: numberMetaId
+            }
+            if (doc.specType === 'metaObject') {
+              group.highlightName = doc.name
+              group.highlightDescription = doc.content
+            }
+            if (doc.specType !== 'metaObject') {
+              const arr = group.items
+              arr.push({
+                ...item.doc,
+                positions: item.positions
+              })
+            }
+            groupedMap.set(numberMetaId, group)
           }
-          result.forEach(item => {
+          result[1].forEach(item => {
             addToMap(item)
           })
-
+          result[0].forEach(item => {
+            addToMap(item)
+          })
           setSearchResults(groupedMap)
+          if (deletedIds.length) {
+            SearchStore.deleteDocuments(deletedIds)
+          }
         })
       }
     },
@@ -78,7 +92,7 @@ export const SearchDialog = ({ onClose }: { onClose: VoidFunction }) => {
       className={css([
         {
           width: 1100,
-          padding: '30px 30px 0px',
+          padding: '12px 24px 0px',
           borderRadius: 10,
           maxWidth: 'calc(100vw - 200px)',
           height: '80vh',
@@ -93,12 +107,32 @@ export const SearchDialog = ({ onClose }: { onClose: VoidFunction }) => {
         ClassName.Background.pseudoBlurContrastBackground
       ])}
     >
-      <BorderInput textarea={false} placeholder="Search Something" value={searchInput} onChange={e => setSearchInput(e)} />
+      <div className={ClassName.title(FontSize['16px'])}>{t('general.full text search')}</div>
+      <BorderInput
+        textarea={false}
+        placeholder={t('general.search text content in pdfs, web pages, notes, etc.')}
+        value={searchInput}
+        onChange={e => setSearchInput(e)}
+        autoFocus
+        style={{
+          padding: '10px 16px'
+        }}
+      />
       {/* <SearchAnalysis /> */}
-      <Content flex column style={{ height: 0, flex: 1, overflowY: 'auto', padding: '0px 50px', margin: '0px -30px' }}>
-        {Array.from(searchResults.values()).map(i => (
-          <SearchResultItem key={i.id} group={i} onNavi={onClose} />
-        ))}
+      <Content flex column style={{ height: 0, flex: 1, overflowY: 'auto', padding: '0px 30px 20px', margin: '0px -20px' }}>
+        {Array.from(searchResults.values())
+          .sort((b, a) => {
+            if (b.highlightName && !a.highlightName) {
+              return -1
+            }
+            if (a.highlightName && !b.highlightName) {
+              return 1
+            }
+            return 0
+          })
+          .map(i => (
+            <SearchResultItem key={i.metaId} group={i} onNavi={onClose} />
+          ))}
       </Content>
     </Content>
   )

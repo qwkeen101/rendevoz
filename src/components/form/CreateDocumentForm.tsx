@@ -11,6 +11,7 @@ import { Content, FileUploader } from '../base'
 import { toast } from 'react-hot-toast'
 import { ObjectStore } from '@/stores'
 import ObjectForm from './ObjectForm'
+import { useTranslation } from 'react-i18next'
 
 interface NewDocumentFormProps {
   onBack: () => void
@@ -27,7 +28,7 @@ const CreateDocumentForm: FC<NewDocumentFormProps> = ({ onBack, onSubmit }) => {
     createdAt: useTime(),
     name: 'Untitled Document'
   })
-
+  const { t } = useTranslation()
   const pdfjs = usePdfjs()
 
   const handleExtractMetadataOfPdf = async (file: File) => {
@@ -53,7 +54,7 @@ const CreateDocumentForm: FC<NewDocumentFormProps> = ({ onBack, onSubmit }) => {
 
     await renderTask.promise
     const data = canvas.toDataURL('image/png')
-    const imageData = await saveImageLocally(Id.getStrId(), data)
+    const imageData = await saveImageLocally(data)
     pdfDocument.current.metadata = {
       ...pdfDocument.current.metadata,
       coverUrl: imageData.data
@@ -74,10 +75,14 @@ const CreateDocumentForm: FC<NewDocumentFormProps> = ({ onBack, onSubmit }) => {
         column
         gap={30}
         justifyContent='center'
-        style={{ padding: 24, borderRadius: 8, width: 300 }}
+        style={{ padding: 24, borderRadius: 8 }}
       >
-        <div className={ClassName.title()}>Upload Document</div>
+        <div className={ClassName.title()}>{t('general.upload file')}</div>
         <FileUploader
+          style={{
+            width: 400,
+            height: 400
+          }}
           accept="application/pdf"
           onFileUploaded={async file => {
             if (file && file.type === 'application/pdf') {

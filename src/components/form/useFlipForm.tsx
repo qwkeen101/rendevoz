@@ -71,6 +71,7 @@ export type FlipFormLayoutItem =
       type: 'imagePicker'
       imageUrl?: string
       onChange: (url: string | undefined) => void
+      name: string
     }
   | {
       type: 'group'
@@ -277,7 +278,7 @@ const useFlipForm = (options: useFlipFormOptions) => {
           </div>
         )
       case 'imagePicker':
-        return <FormImagePicker imageUrl={i.imageUrl} onChange={i.onChange} />
+        return <FormImagePicker imageUrl={i.imageUrl} onChange={i.onChange} name={i.name}/>
       case 'previewGraph':
         return (
           <div

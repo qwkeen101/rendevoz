@@ -20,7 +20,7 @@ import { useIsomorphicLayoutEffect } from '../hooks/use-isomorphic-layout-effect
 import { ReadOnlyContext } from '../hooks/use-read-only'
 import { useSlate } from '../hooks/use-slate'
 import { TRIPLE_CLICK } from '../utils/constants'
-import { DOMElement,  DOMRange, DOMText, getDefaultView, isDOMElement, isDOMNode, isPlainTextOnlyPaste } from '../utils/dom'
+import { DOMElement, DOMRange, DOMText, getDefaultView, isDOMElement, isDOMNode, isPlainTextOnlyPaste } from '../utils/dom'
 import {
   CAN_USE_DOM,
   HAS_BEFORE_INPUT_SUPPORT,
@@ -48,7 +48,7 @@ import {
   IS_FOCUSED,
   IS_READ_ONLY,
   MARK_PLACEHOLDER_SYMBOL,
-  NODE_TO_ELEMENT,
+  NODE_TO_ELEMENT
 } from '../utils/weak-maps'
 import { RestoreDOM } from './restore-dom/restore-dom'
 import { useAndroidInputManager } from '../hooks/android-input-manager/use-android-input-manager'
@@ -498,27 +498,31 @@ export const Editable = (props: EditableProps) => {
         // COMPAT: For the deleting forward/backward input types we don't want
         // to change the selection because it is the range that will be deleted,
         // and those commands determine that for themselves.
-        if (!type.startsWith('delete') || type.startsWith('deleteBy')) {
-          const [targetRange] = (event as any).getTargetRanges()
+        try {
+          if (!type.startsWith('delete') || type.startsWith('deleteBy')) {
+            const [targetRange] = (event as any).getTargetRanges()
 
-          if (targetRange) {
-            const range = ReactEditor.toSlateRange(editor, targetRange, {
-              exactMatch: false,
-              suppressThrow: false
-            })
+            if (targetRange) {
+              const range = ReactEditor.toSlateRange(editor, targetRange, {
+                exactMatch: false,
+                suppressThrow: false
+              })
 
-            if (!selection || !Range.equals(selection, range)) {
-              native = false
+              if (!selection || !Range.equals(selection, range)) {
+                native = false
 
-              const selectionRef = !isCompositionChange && editor.selection && Editor.rangeRef(editor, editor.selection)
+                const selectionRef = !isCompositionChange && editor.selection && Editor.rangeRef(editor, editor.selection)
 
-              Transforms.select(editor, range)
+                Transforms.select(editor, range)
 
-              if (selectionRef) {
-                EDITOR_TO_USER_SELECTION.set(editor, selectionRef)
+                if (selectionRef) {
+                  EDITOR_TO_USER_SELECTION.set(editor, selectionRef)
+                }
               }
             }
           }
+        } catch (e) {
+          native = true
         }
 
         // Composition change types occur while a user is composing text and can't be

@@ -15,6 +15,7 @@ import { useMemo } from 'react'
 import { selectAtom } from 'jotai/utils'
 import { useGlobalAtomValue } from '@/hooks'
 import { getUser } from '@/services/login.service'
+import { SearchStore } from './search.store'
 
 export const metaObjectsAtom = atom<Map<number, MetaObject>>(new Map())
 
@@ -265,7 +266,6 @@ const createMetaStore = () => {
   const localObjectStore: Pick<IStoreDeprecated<MetaObject>, 'addOne' | 'updateOne' | 'deleteOneById' | 'getAll'> = {
     updateOne: (one, silent) => {
       return initializeObjectStore.updateOne(obj => {
-        console.log(obj)
         if (obj.objectId && one.name) {
           switch (obj.type) {
             case 'pdf': {
@@ -282,6 +282,12 @@ const createMetaStore = () => {
             }
           }
         }
+        SearchStore.addDocument({
+          specType: 'metaObject',
+          name: obj.name,
+          content: obj.description,
+          id: obj.id
+        })
         shouldToastObject(silent) &&
           toast.custom(
             <Notification
@@ -376,6 +382,12 @@ const createMetaStore = () => {
             }
           }
         }
+        SearchStore.addDocument({
+          specType: 'metaObject',
+          name: obj.name,
+          content: obj.description,
+          id: obj.id
+        })
         shouldToastObject(silent) &&
           toast.custom(
             <Notification

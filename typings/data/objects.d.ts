@@ -37,17 +37,6 @@ export interface IImage extends IBase {
   imageUrl: string
   ocrResult?: string
   excalidrawUrl?: string
-  from?:
-    | {
-        type: 'pdf'
-        pdfId: number
-        pages?: number[]
-        rect?: Box
-      }
-    | {
-        type: 'note'
-        noteId: number
-      }
 }
 export interface INoteBlock extends IBase {
   blockId: number

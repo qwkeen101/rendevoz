@@ -17,8 +17,8 @@ const SidebarPinned = memo(() => {
   const totalPinned = pinnedObjects.length + pinnedCollections.length
   const { t } = useTranslation()
   return (
-    <Content flex column>
-      <Content flex alignItems="center" justifyContent="space-between" style={{ padding: '0px 9px 0px 4px' }}>
+    <Content flex column style={{ marginBottom: 10 }}>
+      <Content flex alignItems="center" justifyContent="space-between" style={{ padding: '0px 9px 2px 4px' }}>
         <div style={{ cursor: 'pointer' }} onClick={toggleCollapsed}>
           {t('sidebar.pinned')}
         </div>

@@ -6,9 +6,10 @@ import { AnimatePopover, WithBorder } from '@/components'
 import { GraphEdge } from '../../types/edge'
 import EdgeAttributeCard from './EdgeAttributeCard'
 import NodePopover from './NodePopover'
-import { LeftTopPosition } from '~/typings'
+import { LeftTopPosition, Size } from '~/typings'
 import { Zindexes } from '@/consts'
 import PathIndicator from './PathIndicator'
+import useGraph from '../../hooks/useGraph'
 
 interface GraphOverlayProps {
   onAddLink: Noop
@@ -19,12 +20,14 @@ export type GraphOverlayManager = {
   open: VoidFunction
   setContent: (content: OverlayState['content']) => void
   setPosition: (position: LeftTopPosition) => void
+  setSize: (size: Size) => void
   setOverlayState: Dispatch<SetStateAction<OverlayState>>
   close: VoidFunction
 }
 type OverlayState = {
   visible?: boolean
   position?: LeftTopPosition
+  size?: Size
 } & (
   | {
       content?: 'edgeToolbar'
@@ -66,12 +69,15 @@ const useGraphOverlay = () => {
     }
   }, [overlayState.position, overlayState.visible])
 
+  const graph = useGraph()
   const positions = () => {
     switch (overlayState.content) {
       case 'pathIndicator':
         return ['right', 'left']
+      case 'nodePopover':
+        return ['top', 'right', 'left']
       default:
-        return ['top']
+        return ['top', 'bottom']
     }
   }
   const renderPortal = () => {
@@ -79,6 +85,9 @@ const useGraphOverlay = () => {
       <Portal>
         <AnimatePopover
           align="center"
+          disableIntersection
+          reposition
+          disableNudge
           containerStyle={{
             zIndex: String(Zindexes.GraphPopup),
             transition: enableTransition ? 'transform 0.2s ease' : undefined

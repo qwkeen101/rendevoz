@@ -63,6 +63,7 @@ const Layout: FC<LayoutProps> = ({ sidebar }) => {
             className={ClassName.circleButton()}
             name="park-plus"
             onClick={e => {
+              e.stopPropagation()
               console.log(e)
               open(e)
             }}

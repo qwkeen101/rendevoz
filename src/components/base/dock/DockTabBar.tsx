@@ -208,7 +208,7 @@ const TabItem = ({ onClick, isSelected, item, onDragStart, isLast }) => {
         }}
       >
         <div className={styles.tabContent}>{item.tab}</div>
-        {isLast && (
+        {isLast && dockContext.getLayout().global.globalPanelExtra && (
           <div style={{ position: 'absolute', right: 0, top: 0, bottom: 0, background: isSelected ? 'rgba(0,0,0,0.12)' : 'transparent'}}>
             {dockContext.getLayout().global.globalPanelExtra(null, null)}
           </div>

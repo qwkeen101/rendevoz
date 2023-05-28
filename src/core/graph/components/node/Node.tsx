@@ -254,24 +254,6 @@ const Node: FC<NodeProps> = memo(({ node, onMouseEnter, onMouseLeave, onContextM
       {renderNode()}
       {renderTags()}
       {pinnedNodes.has(node.id) && <SvgIconRenderer icon="park-pin" fill="#FFFF00" size={30} x={d} y={-25} />}
-      {node.isCenter && (graph?.nodesMap?.size || 0) < 100 && (
-        <motion.circle
-          style={{ transformOrigin: `${radius}px ${radius}px` }}
-          fill="none"
-          stroke={MarkerColor.EMPHASIS}
-          pointerEvents="none"
-          strokeWidth="2"
-          initial={{ scale: node.scale || 1, opacity: 0, r: radius + 10 }}
-          animate={{ scale: node.scale, opacity: 0.8, r: radius + 20 }}
-          transition={{
-            repeat: Infinity,
-            duration: 1,
-            repeatType: 'reverse'
-          }}
-          cx={radius}
-          cy={radius}
-        ></motion.circle>
-      )}
     </g>
   )
 })

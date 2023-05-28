@@ -37,7 +37,14 @@ const NodePopover = ({ metaId, nodeId, onClose }: { metaId: number; nodeId: numb
     }
   }, [nodeId])
   return (
-    <Content flex gap={12} alignItems="flex-start">
+    <Content
+      flex
+      gap={12}
+      alignItems="flex-start"
+      style={{
+        maxWidth: 320
+      }}
+    >
       {renderWhole({
         titleOptions: {
           style: {

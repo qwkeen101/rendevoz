@@ -123,7 +123,6 @@ const Modal: FC<ModalProps> = ({
 
         <Backdrop onMouseDown={onClose} key={1}>
           <motion.div
-            transition={{ duration: 0.2 }}
             initial={{ y: 50, opacity: 0 }}
             animate={{ y: 0, opacity: visible ? 1 : 0 }}
             exit={{ y: 50, opacity: 0 }}
@@ -147,7 +146,7 @@ const Modal: FC<ModalProps> = ({
             onClick={e => {
               e.stopPropagation()
             }}
-            transition={{ stiffness: 200, damping: 20 }}
+            transition={{ stiffness: 200, damping: 20, duration: 0.2 }}
           >
             {showClose && (
               <motion.div

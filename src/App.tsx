@@ -21,10 +21,12 @@ import ThemeSwitcher from './ThemeSwitcher'
 import GlobalImagePreviewer from './core/global/GlobalImagePreviewer'
 import classNames from 'classnames'
 import { css } from '@emotion/css'
-import GlobalTranslateResult from './core/global/GlobalTranslatePanel'
+import GlobalTranslateResult from './core/global/translate/GlobalTranslatePanel'
 import GlobalSearchPanel from './core/global/GlobalSearchPanel'
 import GlobalWebview from './core/global/GlobalWebview'
 import 'highlight.js/styles/atom-one-dark.css'
+import GlobalTextSearch from './core/global/GlobalTextSearch'
+import '@/consts/colors.less'
 
 export function getOS() {
   const userAgent = window.navigator.userAgent.toLowerCase(),
@@ -77,8 +79,8 @@ const App = () => {
       {os !== 'macos' && <TitleBar />}
       <Notification />
       <>
-
         <Initializer />
+        <GlobalTextSearch />
         <GlobalGraph />
         <GlobalScreenShot />
         <GlobalWebview />

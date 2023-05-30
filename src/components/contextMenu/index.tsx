@@ -101,7 +101,9 @@ export const PosHelper = forwardRef<HTMLDivElement, PosHelperProps>(({ top, left
       style={{
         position: 'absolute',
         top: top,
-        left: left
+        left: left,
+        width: 1,
+        height: 1
       }}
     >
       {children}

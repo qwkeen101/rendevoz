@@ -251,7 +251,7 @@ const MetaObjectNode: FC<InnerNodeProps> = ({ node: n, setPopoverElements, setNo
               minHeight: hasImage ? (!hasSize ? 'fit-content' : contentMinHeight) : '100%',
               overflow: 'hidden',
               containerType: hasSize ? 'size' : 'normal',
-              backgroundImage: hasImage ? 'linear-gradient(rgba(0,0,0,0),rgba(0,0,0,0.9))' : undefined
+              backgroundImage: hasImage ? 'linear-gradient(rgba(0,0,0,0),rgba(0,0,0,1))' : undefined
             }}
           >
             {renderWhole(renderOptions)}

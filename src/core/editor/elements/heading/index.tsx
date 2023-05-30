@@ -165,7 +165,10 @@ const Heading: FC<RenderElementProps> = ({ element, children }) => {
       </span>
     ),
     isEmpty && !isComposing && (
-      <div style={{ position: 'absolute', left: 0, top: 0, pointerEvents: 'none', userSelect: 'none', color: Colors.Font.Tertiary }}>
+      <div
+        contentEditable={false}
+        style={{ position: 'absolute', left: 0, top: 0, pointerEvents: 'none', userSelect: 'none', color: Colors.Font.Tertiary }}
+      >
         H{HeadingToLevel[element.type]}
       </div>
     )

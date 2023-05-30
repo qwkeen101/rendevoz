@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import Colors, { Background, Emphasis, Font, ThemeVars } from './consts/colors'
+import Colors, { Background, Emphasis, Font } from './consts/colors'
 import { useMount } from './hooks'
 import ClassName from './styles/classNames'
 import { useSetting } from './core'
@@ -14,9 +14,6 @@ const ThemeSwitcher = () => {
     setColor('background', Colors.Background.Global)
   })
   useEffect(() => {
-    Object.entries(ThemeVars).forEach(([key, color]) => {
-      setColor(key, color)
-    })
     if (!setting.general.darkMode) {
       setColor(Font.Primary, Colors.Font.Black)
       setColor(Font.Secondary, Colors.Font.SilverBlue)
@@ -29,6 +26,7 @@ const ThemeSwitcher = () => {
       setColor(Background.HighContrast, Colors.Background.LightHighContrast)
       setColor(Emphasis.Emphasis, Colors.Emphasis.LightEmphasis)
       setColor(Background.HighlightBorder, Colors.Background.LightHighlightBorder)
+      setColor(Background.Scrollbar, Colors.Background.LightScrollBar)
     } else {
       setColor(Font.Primary, Colors.Font.White)
       setColor(Font.Secondary, Colors.Font.Silver)
@@ -41,6 +39,7 @@ const ThemeSwitcher = () => {
       setColor(Background.HighContrast, Colors.Background.DarkHighContrast)
       setColor(Emphasis.Emphasis, Colors.Emphasis.DarkEmphasis)
       setColor(Background.HighlightBorder, Colors.Background.DarkHighlightBorder)
+      setColor(Background.Scrollbar, Colors.Background.DarkScrollBar)
     }
   }, [setting.general.darkMode])
   return null

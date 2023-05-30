@@ -1,13 +1,11 @@
 import { MetaStore } from '@/stores'
 import { Position } from '@/types'
-import { compareHotkey } from 'is-hotkey'
 import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { MetaLink, MetaObject } from '~/typings/data'
 import ObjectForm from '@/components/form/ObjectForm'
-import getSetting from '@/core/setting/getSetting'
 import { useEventHandler, useGlobalEventEmitter } from '@/events'
-import { useToggle } from '@/hooks'
+import { useShortcut, useToggle } from '@/hooks'
 import { Modal } from '@/components'
 import { useCreateObject } from '../database'
 import Id from '@/utils/id'
@@ -59,6 +57,7 @@ const GlobalCreateObject = () => {
               targetId: shouldAddObject.id
             } as MetaLink)
         )
+        console.log(links)
         links.forEach(i => MetaStore.addMetaLink(i, true))
         setPendingLinks(links)
       }
@@ -99,18 +98,13 @@ const GlobalCreateObject = () => {
 
   useEffect(() => {
     globalEventEmitter.addListener('global', handler)
-    const keyDownHandler = (e: KeyboardEvent) => {
-      const createObjectShortCut = getSetting().shortcut.quickCreateObject
-      if (createObjectShortCut && compareHotkey(createObjectShortCut, e)) {
-        openAtCenter()
-      }
-    }
-    document.addEventListener('keydown', keyDownHandler)
     return () => {
       globalEventEmitter.removeListener('global', handler)
-      document.removeEventListener('keydown', keyDownHandler)
     }
   }, [])
+  useShortcut('quickCreateObject', () => {
+    openAtCenter()
+  })
   useEffect(() => {
     if (modalVisible === false) {
       setInnerMeta(undefined)

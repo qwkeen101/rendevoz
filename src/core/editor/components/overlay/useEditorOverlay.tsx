@@ -1,7 +1,7 @@
 import { Noop } from '@/common/types'
 import { AnimatePopover } from '@/components/base'
 import { Position } from '@/types'
-import { useCallback, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { CustomEditor } from '~/typings'
 import EditorOverlayElements from './components/EditorOverlayElements'
 import EditorMetaQuery from './components/EditorMetaQuery'
@@ -12,7 +12,9 @@ import EditorBlockDetails from './components/EditorBlockDetails'
 import EditorSelectArea from './components/EditorSelectArea'
 import { LeftTopPosition } from '~/typings'
 import EditorLinkForm from './components/EditorLinkForm'
-import { Zindexes } from '@/consts'
+import { KEY, Zindexes } from '@/consts'
+import isHotkey from 'is-hotkey'
+import { useUpdate } from 'react-use'
 
 const AvalibleOverlayComponents = {
   emojiPicker: 'emojiPicker',
@@ -42,7 +44,7 @@ const useEditorOverlay = (editor: CustomEditor, scrollElement?: HTMLDivElement |
     setPosition: (position: LeftTopPosition) => setPopoverPosition(position),
     getContent: () => overlayContent
   }
-
+  const update = useUpdate()
   const renderOverlayContent = () => {
     switch (overlayContent) {
       case 'selectArea':
@@ -78,6 +80,17 @@ const useEditorOverlay = (editor: CustomEditor, scrollElement?: HTMLDivElement |
         return ['bottom']
     }
   }
+  useEffect(() => {
+    const keydownHandler = (e: KeyboardEvent) => {
+      if (isHotkey(KEY.Escape, e)) {
+        overlayManager.close()
+      }
+    }
+    document.addEventListener('keydown', keydownHandler)
+    return () => {
+      document.removeEventListener('keydown', keydownHandler)
+    }
+  }, [])
   const align = () => {
     switch (overlayContent) {
       case 'emojiPicker':
@@ -86,7 +99,13 @@ const useEditorOverlay = (editor: CustomEditor, scrollElement?: HTMLDivElement |
         return 'start'
     }
   }
-
+  useEffect(() => {
+    if (overlayContent === 'emojiPicker') {
+      setTimeout(() => {
+        update()
+      })
+    }
+  }, [overlayContent, popoverVisible])
   const renderOverlay = () => (
     <AnimatePopover
       containerStyle={{ zIndex: String(Zindexes.EditorSelectionToolbar) }}
@@ -99,9 +118,9 @@ const useEditorOverlay = (editor: CustomEditor, scrollElement?: HTMLDivElement |
       disableIntersection
       padding={20}
       reposition
-      disableNudge={overlayContent === 'emojiPicker'}
+      disableNudge={overlayContent === 'emojiPicker' || overlayContent === 'blockHandleMenu'}
       boundaryElement={document.body}
-      boundaryInset={60}
+      boundaryInset={20}
       content={renderAnimatedOverlay()}
       position={{
         left: popoverPosition?.left,

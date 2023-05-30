@@ -304,7 +304,8 @@
         "resource usage": "资源使用量",
         "translation usage": "翻译使用量",
         "ocr usage": "文字识别使用量",
-        "reset every month": "每月重置"
+        "reset every month": "每月重置",
+        "open global text search": "打开全局文字搜索面板"
     },
     "form": {
         "choose file": "Choose file",

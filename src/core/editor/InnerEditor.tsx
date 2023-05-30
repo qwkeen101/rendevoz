@@ -1,19 +1,14 @@
-import { useDebounceFn, useMemoizedFn, useMergedRef } from '@/hooks'
+import { useDebounceFn, useMemoizedFn } from '@/hooks'
 import isHotkey from 'is-hotkey'
 import { FC, KeyboardEventHandler, memo, RefObject, useCallback, useEffect, useRef } from 'react'
-import { Descendant, Editor, Path, Range, Transforms, Element as SlateElement, Node } from 'slate'
+import { Descendant, Editor, Path, Range, Transforms, Node } from 'slate'
 import { ReactEditor, Slate, RenderElementProps, RenderLeafProps, Editable, useSlateStatic } from './slate-react'
 import EditorToolbar from './components/toolbar'
 import HOTKEYS from './consts/hotkeys'
 import { CustomEditor, CustomElement } from '~/typings'
 import Divider from './Divider'
-import Emoji from './elements/Emoji'
-import { Block, Heading, Paragraph } from './elements'
+import { Block } from './elements'
 import styles from './index.module.less'
-import ListItem, { OrderListItem } from './elements/listItem'
-import MetaObject from './elements/meta'
-import Image from './elements/image'
-import ToDo from './elements/todo'
 import Id from '@/utils/id'
 import { InlineElements } from './consts/elements'
 import { KEY } from '@/consts/key'
@@ -22,21 +17,13 @@ import moveMultiElements from './utils/moveMultiElements'
 import useScopedEventEmitter from '@/events/useEventEmitter'
 import { EditableProps } from './slate-react/components/editable'
 import { css } from '@emotion/css'
-import Table from './elements/table/Table'
-import TableCell from './elements/table/Cell'
-import TableRow from './elements/table/Row'
 import ClassName from '@/styles/classNames'
 import classNames from 'classnames'
-import useReadOnlyEditor from './hooks/useReadOnly'
-import { GlobalEventHandler } from '@/events/globalEvent'
-import InlineMetaElement from './elements/meta/InlineMeta'
 import useEditorSlashMenu from './hooks/useEditorSlashMenu'
 import getCursorPosition from './utils/getCursorPosition'
 import HoverObjectDetails from '../database/HoverObjectDetails'
 import { DraggableElement, DraggingElement } from '../global'
-import MathElement from './elements/Math'
-import Code from './elements/Code'
-import HighlightBlock from './elements/Highlight'
+import { Element } from './renderer/renderElement'
 
 const EditableEditorClassName = css({
   p: {
@@ -130,19 +117,17 @@ export type InnerEditorProps = {
   onBlockMouseEnter: (e: MouseEvent, element: CustomElement) => void
   onBlockMouseLeave: (e: MouseEvent, element: CustomElement) => void
   onBlockMouseMove?: (e: MouseEvent, element: CustomElement) => void
-  onLinkClick?: (e: MouseEvent) => void
   readonly?: boolean
   compact?: boolean
   editorClassName?: string
 }
-const loopThroughTypes = ['tableRow', 'tableCell']
+
 const InnerEditor: FC<InnerEditorProps> = memo(
   ({
     editor,
     defaultValue,
     showToolbar,
     onBlockMouseEnter,
-    onLinkClick,
     onBlockMouseLeave,
     onBlockMouseMove,
     onChange,
@@ -152,10 +137,7 @@ const InnerEditor: FC<InnerEditorProps> = memo(
     editorClassName
   }) => {
     const scrollElement = scrollElementRef?.current
-    const renderInnerElement = useCallback(
-      (props: RenderElementProps & { onLinkClick?: InnerEditorProps['onLinkClick'] }) => <Element {...props} />,
-      []
-    )
+    const renderInnerElement = useCallback((props: RenderElementProps) => <Element {...props} />, [])
     const renderLeaf = useCallback((props: RenderLeafProps) => <Leaf {...props} />, [])
     const editableRef = useRef<EditableProps['innerRef']>()
     const scopedEmitter = useScopedEventEmitter()
@@ -264,11 +246,11 @@ const InnerEditor: FC<InnerEditorProps> = memo(
               type={element.type}
               scrollElementRef={scrollElementRef}
             >
-              {renderInnerElement({ children, element, attributes, onLinkClick })}
+              {renderInnerElement({ children, element, attributes })}
             </Block>
           )
         } else {
-          return renderInnerElement({ children, element, attributes, onLinkClick })
+          return renderInnerElement({ children, element, attributes })
         }
       },
       [scrollElement]
@@ -577,93 +559,6 @@ const changeFontSize = (editor: CustomEditor, fontSize: string) => {
 const isMarkActive = (editor: CustomEditor, mark: string) => {
   const marks = Editor.marks(editor)
   return marks ? mark in marks : false
-}
-const dividerClassName = css({
-  width: '100%',
-  height: '1px',
-  borderBottom: '1px solid rgba(55,53,47,0.16)'
-})
-
-export const Element = (props: RenderElementProps & { onLinkClick: InnerEditorProps['onLinkClick'] }) => {
-  const { element, attributes, children, onLinkClick } = props
-  switch (element.type) {
-    case 'paragraph':
-      return <Paragraph {...props} />
-    case 'block-quote':
-      return <blockquote>{children}</blockquote>
-    case 'bulleted-list':
-      return <ul>{children}</ul>
-    case 'order-list-item':
-      return <OrderListItem {...props} />
-    case 'math':
-      return <MathElement {...props} />
-    case 'link':
-      return (
-        <span {...attributes} style={{ display: 'inline' }}>
-          <a
-            target="_blank"
-            onClick={e => {
-              if (onLinkClick) {
-                onLinkClick?.(e)
-                return
-              }
-              if (navigator.userAgent.indexOf('Electron') >= 0) {
-                window.open(element.url)
-                e.preventDefault()
-              }
-            }}
-            href={element.url}
-          >
-            {children}
-          </a>
-        </span>
-      )
-    case 'figcaption':
-      return <figcaption>{children}</figcaption>
-    case 'pre':
-      return <pre>{children}</pre>
-    case 'table':
-      return <Table {...props} />
-    case 'tableCell':
-      return <TableCell {...props} />
-    case 'sup':
-      return <sup {...attributes}>{children}</sup>
-    case 'tableRow':
-      return <TableRow {...props} />
-    case 'code-block':
-      return <Code {...props} />
-    case 'divider':
-      return (
-        <div contentEditable={false} className={dividerClassName}>
-          {children}
-        </div>
-      )
-    case 'heading-one':
-    case 'heading-two':
-    case 'heading-three':
-    case 'heading-four':
-    case 'heading-five':
-    case 'heading-six':
-      return <Heading {...props} />
-    case 'highlight-block':
-      return <HighlightBlock {...props} />
-    case 'metaObject':
-      return <MetaObject {...props} />
-    case 'image':
-      return <Image {...props} />
-    case 'to-do':
-      return <ToDo {...props} />
-    case 'list-item':
-      return <ListItem {...props} />
-    case 'inline-metaObject':
-      return <InlineMetaElement {...props} />
-    case 'thought':
-      return <Thought {...props}>{children}</Thought>
-    case 'emoji':
-      return <Emoji {...props} />
-    default:
-      return <Paragraph {...props} />
-  }
 }
 
 const TextHighlightClassName = css({

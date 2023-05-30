@@ -13,6 +13,7 @@ import { goToBlock, selectBlock } from '../editor/utils'
 import { Content, Tooltip } from '@/components'
 import ClassName from '@/styles/classNames'
 import WebpageSourceRenderer from './WebpageSourceRenderer'
+import { PAGE_SPACING } from '../pdf/core/layouts/Layout'
 
 const FromRenderer = ({
   metaObject: initialObject,
@@ -81,7 +82,9 @@ const FromRenderer = ({
               const pageSize = pdf.getPageSize?.()
               if (pageSize) {
                 const realPageHeight = pageSize.height * pageSize.scale
-                pdf.scrollToOffset?.(pages[0] * realPageHeight + rect.top * realPageHeight + (rect.height * realPageHeight) / 2)
+                pdf.scrollToOffset?.(
+                  pages[0] * realPageHeight + rect.top * realPageHeight + (rect.height * realPageHeight) / 2 + pages[0] * PAGE_SPACING
+                )
               }
 
               pdf.highlightArea?.(pages[0], rect)

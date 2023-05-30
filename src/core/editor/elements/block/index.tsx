@@ -69,13 +69,17 @@ const Block: FC<React.DetailedHTMLProps<React.HTMLAttributes<HTMLDivElement>, HT
       }
       return () => {
         document.removeEventListener('click', handleGlobalClick)
-        const path = ReactEditor.findPath(editor, element)
-        if (editor.selection && Range.includes(editor.selection, path)) {
-          const currentPathEle = Editor.node(editor, path)
-          // maybe deleted
-          if (currentPathEle[0] === element) {
-            ReactEditor.deselect(editor)
+        try {
+          const path = ReactEditor.findPath(editor, element)
+          if (editor.selection && Range.includes(editor.selection, path)) {
+            const currentPathEle = Editor.node(editor, path)
+            // maybe deleted
+            if (currentPathEle[0] === element) {
+              ReactEditor.deselect(editor)
+            }
           }
+        } catch (e) {
+          console.error(e)
         }
       }
     }, [])

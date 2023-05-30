@@ -1,6 +1,5 @@
 import { Noop } from '@/common/types'
 import { Position } from '@/types'
-import { VirtualItem } from '@tanstack/react-virtual'
 import { Element, Path } from 'slate'
 import { CustomEditor } from '~/typings'
 

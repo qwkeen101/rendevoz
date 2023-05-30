@@ -492,6 +492,7 @@ class DragManager {
     Transforms.insertNodes(this.editor, node, { at: [end] })
     const targetPath = ID_TO_PATH_MAP.get(this.editor)?.get(targetNodeId)
     if (!targetPath) return
+    console.log(targetPath)
     moveSingleElement(this.editor, [end], targetPath, direction, nested)
   }
 }

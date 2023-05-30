@@ -1,5 +1,5 @@
 import Zindexes from '@/consts/zindex'
-import { useMemoizedFn, useMergedRef, useToggle } from '@/hooks'
+import { useMemoizedFn, useMergedRef, useShortcut, useToggle } from '@/hooks'
 import { undeletedMetaObjectsAtom } from '@/stores/meta.store'
 import { globalStore, MetaStore } from '@/stores'
 import ClassName from '@/styles/classNames'
@@ -9,7 +9,6 @@ import { useVirtualizer } from '@tanstack/react-virtual'
 import { useAtom, useAtomValue, useStore } from 'jotai/react'
 import React, { forwardRef, memo, ReactElement, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { Rnd } from 'react-rnd'
 import { MetaObject } from '~/typings/data'
 import { AnimatePopover, CheckBox, Content, Icon, WithBorder } from '@/components'
 import {
@@ -24,8 +23,6 @@ import {
   FiltersAtom
 } from '@/core'
 import { useSetting } from '@/core/setting'
-import { compareHotkey } from 'is-hotkey'
-import ObjectForm from '@/components/form/ObjectForm'
 import { selectAtom } from 'jotai/utils'
 import produce from 'immer'
 import { atom } from 'jotai'
@@ -118,19 +115,17 @@ export const GlobalObjectPanel = () => {
       rej
     }
   })
-  const keyDownHandler = useMemoizedFn((e: KeyboardEvent) => {
-    if (setting.shortcut.openObjectPanel && compareHotkey(setting.shortcut.openObjectPanel, e)) {
-      setPanelState(s => ({ ...s, visible: !s.visible }))
-    }
-  })
   useEffect(() => {
     GlobalEventEmitter().addListener('global', eventHandler)
-    document.addEventListener('keydown', keyDownHandler)
     return () => {
-      document.removeEventListener('keydown', keyDownHandler)
       GlobalEventEmitter().removeListener('global', eventHandler)
     }
   }, [])
+
+  useShortcut('openObjectPanel', () => {
+    setPanelState(s => ({ ...s, visible: !s.visible }))
+  })
+
   useEffect(() => {
     const container = containerRef.current
     const containerScrollHandler = (e: Event) => {

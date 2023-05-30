@@ -151,6 +151,20 @@ export const WebpageCore = ({
       }
     )
   })
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setTimeout(() => {
+        if (disableImageClick) {
+          ref.current?.send('disableImageClick')
+        } else {
+          ref.current?.send('enableImageClick')
+        }
+      }, 1000)
+    }, 100)
+    return () => {
+      clearInterval(interval)
+    }
+  }, [disableImageClick])
   useImperativeHandle(innerRef, () => ({
     capturePage: () => {
       return ref.current?.capturePage()

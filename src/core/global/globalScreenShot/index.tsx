@@ -1,20 +1,18 @@
-import { useGlobalAtom, useMemoizedFn, useToggle } from '@/hooks'
+import { useGlobalAtom, useMemoizedFn, useShortcut, useToggle } from '@/hooks'
 import { Position } from '@/types'
-import isHotkey, { compareHotkey } from 'is-hotkey'
+import isHotkey from 'is-hotkey'
 import { CSSProperties, useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { motion, PanInfo, useAnimationControls } from 'framer-motion'
 import { Content, Icon, Toolbar, Tooltip } from '@/components'
 import { css } from '@emotion/css'
 import ClassName from '@/styles/classNames'
-import { takeScreenshotCanvas } from './screenshot'
 import produce from 'immer'
 import Id from '@/utils/id'
 import ScreenShotCanvas from './ScreenShotCanvas'
 import { GlobalPocketInstance } from '../GlobalPocket'
 import { captureWebpage, saveImageLocally } from '@/utils/img'
-import panzoom, { PanZoom } from 'panzoom'
-import getSetting from '@/core/setting/getSetting'
+import { PanZoom } from 'panzoom'
 import { GlobalEventEmitter } from '@/events'
 import { normalizeScreenshot } from './normalizeScreenshot'
 import { ObjectStore } from '@/stores'
@@ -24,8 +22,6 @@ import ScreenShotStatus from './ScreenShotStatus'
 import ScreenShotToolbar from './ScreenShotToolbar'
 import OcrService from '@/services/ocr.service'
 import Colors from '@/consts/colors'
-import { selectBlock } from '@/core/editor/utils'
-import { drop } from 'lodash'
 import { delay } from '@/utils/functions'
 
 export const GlobalScreenShotOcrResult = atom<string | undefined | 'loading'>(undefined)
@@ -540,12 +536,11 @@ const GlobalScreenShot = () => {
       setOcrResult(undefined)
     }
   }, [screenShotLayerVisible])
+  useShortcut('openScreenShot', () => {
+    setScreenShotLayerVisible(state => !state)
+  })
   useEffect(() => {
     const keydownHandler = (e: KeyboardEvent) => {
-      const openScreenShotKey = getSetting().shortcut.openScreenShot
-      if (openScreenShotKey && compareHotkey(openScreenShotKey, e)) {
-        setScreenShotLayerVisible(state => !state)
-      }
       if (isHotkey('escape', e)) {
         setScreenShotLayerVisible(false)
         setSelectionBoxState({ visible: false })

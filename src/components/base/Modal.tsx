@@ -24,6 +24,7 @@ interface ModalProps {
   style?: CSSProperties
   zIndex?: number
   showClose?: boolean
+  notUnmount?: boolean
 }
 const Backdrop = ({ children, onMouseDown }) => {
   return (
@@ -67,7 +68,8 @@ const Modal: FC<ModalProps> = ({
   noStyle,
   style,
   zIndex,
-  showClose = false
+  showClose = false,
+  notUnmount
 }) => {
   useEffect(() => {
     const keyDownHandler = (e: KeyboardEvent) => {
@@ -90,76 +92,165 @@ const Modal: FC<ModalProps> = ({
     }
   }, [visible])
   return ReactDOM.createPortal(
-    <AnimatePresence>
-      {visible && (
-        <div style={{ position: 'fixed', inset: 0, zIndex: zIndex || Zindexes.ModalBackdrop }}>
-          <motion.div
-            key={2}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            style={{
-              position: 'absolute',
-              inset: 0,
-              backdropFilter: 'blur(4px)'
-            }}
-            className={ClassName.Background.blurBackground}
-          ></motion.div>
+    notUnmount ? (
+      <motion.div
+        animate={{
+          opacity: visible ? 1 : 0
+        }}
+        transition={{ duration: 0.2 }}
+        style={{
+          position: 'fixed',
+          inset: 0,
+          zIndex: zIndex || Zindexes.ModalBackdrop,
+          // opacity: visible ? 1 : 0,
+          pointerEvents: visible ? 'auto' : 'none'
+          // transition: 'opacity 0.3s ease'
+        }}
+      >
+        <motion.div
+          key={2}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: visible ? 1 : 0 }}
+          exit={{ opacity: 0 }}
+          style={{
+            position: 'absolute',
+            inset: 0,
+            backdropFilter: 'blur(4px)'
+          }}
+          transition={{ duration: 0.2 }}
+          className={ClassName.Background.blurBackground}
+        ></motion.div>
 
-          <Backdrop onMouseDown={onClose} key={1}>
+        <Backdrop onMouseDown={onClose} key={1}>
+          <motion.div
+            transition={{ duration: 0.2 }}
+            initial={{ y: 50, opacity: 0 }}
+            animate={{ y: 0, opacity: visible ? 1 : 0 }}
+            exit={{ y: 50, opacity: 0 }}
+            role="modal"
+            className={css([
+              !noStyle && { padding: '16px 24px', borderRadius: '6px', boxShadow: '0 10px 24px rgba(0, 0, 0, 0.18)', overflow: 'hidden' }
+            ])}
+            style={{
+              position: 'relative',
+              minWidth,
+              minHeight,
+              maxHeight,
+              maxWidth,
+              width,
+              height,
+              zIndex: Zindexes.Modal,
+              margin: 'auto',
+              ...style
+            }}
+            onPointerDown={e => e.stopPropagation()}
+            onClick={e => {
+              e.stopPropagation()
+            }}
+            transition={{ stiffness: 200, damping: 20 }}
+          >
+            {showClose && (
+              <motion.div
+                key={20}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                style={{
+                  position: 'absolute',
+                  top: 8,
+                  right: 8,
+                  zIndex: Number.MAX_SAFE_INTEGER
+                }}
+                onPointerDown={e => {
+                  onClose()
+                  e.preventDefault()
+                  e.stopPropagation()
+                }}
+              >
+                <Icon name="park-close" className={ClassName.circleButton()} size={18} />
+              </motion.div>
+            )}
+            {children}
+          </motion.div>
+        </Backdrop>
+      </motion.div>
+    ) : (
+      <AnimatePresence>
+        {visible && (
+          <div style={{ position: 'fixed', inset: 0, zIndex: zIndex || Zindexes.ModalBackdrop }}>
             <motion.div
-              initial={{ y: 50, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              exit={{ y: 50, opacity: 0 }}
-              role="modal"
-              className={css([
-                !noStyle && { padding: '16px 24px', borderRadius: '6px', boxShadow: '0 10px 24px rgba(0, 0, 0, 0.18)', overflow: 'hidden' }
-              ])}
+              key={2}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
               style={{
-                position: 'relative',
-                minWidth,
-                minHeight,
-                maxHeight,
-                maxWidth,
-                width,
-                height,
-                zIndex: Zindexes.Modal,
-                margin: 'auto',
-                ...style
+                position: 'absolute',
+                inset: 0,
+                backdropFilter: 'blur(4px)'
               }}
-              onPointerDown={e => e.stopPropagation()}
-              onClick={e => {
-                e.stopPropagation()
-              }}
-              transition={{ stiffness: 200, damping: 20 }}
-            >
-              {showClose && (
-                <motion.div
-                  key={20}
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  style={{
-                    position: 'absolute',
-                    top: 8,
-                    right: 8,
-                    zIndex: Number.MAX_SAFE_INTEGER
-                  }}
-                  onPointerDown={e => {
-                    onClose()
-                    e.preventDefault()
-                    e.stopPropagation()
-                  }}
-                >
-                  <Icon name="park-close" className={ClassName.circleButton()} size={18} />
-                </motion.div>
-              )}
-              {children}
-            </motion.div>
-          </Backdrop>
-        </div>
-      )}
-    </AnimatePresence>,
+              className={ClassName.Background.blurBackground}
+            ></motion.div>
+
+            <Backdrop onMouseDown={onClose} key={1}>
+              <motion.div
+                initial={{ y: 50, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                exit={{ y: 50, opacity: 0 }}
+                role="modal"
+                className={css([
+                  !noStyle && {
+                    padding: '16px 24px',
+                    borderRadius: '6px',
+                    boxShadow: '0 10px 24px rgba(0, 0, 0, 0.18)',
+                    overflow: 'hidden'
+                  }
+                ])}
+                style={{
+                  position: 'relative',
+                  minWidth,
+                  minHeight,
+                  maxHeight,
+                  maxWidth,
+                  width,
+                  height,
+                  zIndex: Zindexes.Modal,
+                  margin: 'auto',
+                  ...style
+                }}
+                onPointerDown={e => e.stopPropagation()}
+                onClick={e => {
+                  e.stopPropagation()
+                }}
+                transition={{ stiffness: 200, damping: 20 }}
+              >
+                {showClose && (
+                  <motion.div
+                    key={20}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    style={{
+                      position: 'absolute',
+                      top: 8,
+                      right: 8,
+                      zIndex: Number.MAX_SAFE_INTEGER
+                    }}
+                    onPointerDown={e => {
+                      onClose()
+                      e.preventDefault()
+                      e.stopPropagation()
+                    }}
+                  >
+                    <Icon name="park-close" className={ClassName.circleButton()} size={18} />
+                  </motion.div>
+                )}
+                {children}
+              </motion.div>
+            </Backdrop>
+          </div>
+        )}
+      </AnimatePresence>
+    ),
     parentElement || document.body
   )
 }

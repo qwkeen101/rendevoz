@@ -155,10 +155,10 @@ export const EditorSlashElementsMenu: typeof EditorElementsMenu = ({ onAddElemen
       style={{
         display: 'flex',
         flexDirection: 'column',
-        padding: 6,
+        padding: 10,
         maxHeight: 480,
         overflowY: 'auto',
-        width: 200
+        width: 220
       }}
       onClick={name => onAddElement(name)}
       layout={[

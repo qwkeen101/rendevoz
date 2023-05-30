@@ -47,7 +47,7 @@ const HoverObjectDetails = forwardRef(
         disableDefaultContent
         contentTouchable
         content={
-          <WithBorder style={{ maxWidth: 400, overflow: 'hidden' }}>
+          <WithBorder style={{ maxWidth: 320, overflow: 'hidden' }}>
             {renderWhole({
               rowGap: 5,
               columnGap: 6,

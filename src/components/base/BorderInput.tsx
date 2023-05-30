@@ -18,6 +18,7 @@ type BorderInputProps = {
   textarea?: boolean
   autoFocus?: boolean
   disable?: boolean
+  id?: string
   spellCheck?: 'false' | 'true'
 } & (
   | ({
@@ -39,14 +40,6 @@ const inputClassName = css({
   borderRadius: 6,
   border: 'none',
   background: 'transparent'
-  // border: `1px solid ${Colors.Background.Border}`,
-  // transition: 'all 0.2s ease',
-  // ':hover': {
-  // background: `${Colors.Background.Border}`
-  // },
-  // ':focus': {
-  // border: '1px solid var(--font-secondary)'
-  // }
 })
 const BorderInput = ({
   value,
@@ -58,6 +51,7 @@ const BorderInput = ({
   autoFocus,
   spellCheck = 'false',
   disable,
+  id,
   ...rest
 }: BorderInputProps) => {
   const [innerValue, setValue] = useState(value || defaultValue || '')
@@ -118,6 +112,7 @@ const BorderInput = ({
       </AnimatePresence>
       {textarea ? (
         <AutosizeTextarea
+          id={id}
           placeholder={placeholder}
           minRows={2}
           spellCheck={spellCheck}
@@ -141,6 +136,7 @@ const BorderInput = ({
         />
       ) : (
         <input
+          id={id}
           style={style}
           defaultValue={defaultValue}
           spellCheck={spellCheck}

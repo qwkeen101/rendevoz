@@ -8,13 +8,16 @@ import { useTranslation } from 'react-i18next'
 import { Content, Icon } from '../../components/base'
 import SettingItem from './Item'
 import { IShortCutSetting, useSetting } from '.'
+import { parseHotkey } from 'is-hotkey'
+import { toKeyName } from 'is-hotkey'
 
 const shortCutNameToTitle: Record<keyof IShortCutSetting['shortcut'], string> = {
   openObjectPanel: 'open quick object panel',
   quickCreateObject: 'open create object form',
   openScreenShot: 'open screen shot',
   openTranslatePanel: 'open translate panel',
-  openSearchPanel: 'open web search panel'
+  openSearchPanel: 'open web search panel',
+  openGlobalSearch: 'open global text search'
 }
 const ShortCutSetting = () => {
   const { t } = useTranslation()
@@ -66,16 +69,19 @@ const ShortCutItem = memo(({ shortCutName }: { shortCutName: keyof IShortCutSett
         setSetting(s =>
           produce(s, draft => {
             const { ctrlKey, altKey, shiftKey, key, metaKey } = e
+
             let realKey: string | undefined = key
             if ([KEY.Alt, KEY.Shift, KEY.Control, KEY.Meta].includes(key)) {
               realKey = undefined
             }
+
             draft.shortcut[shortCutName] = {
               ctrlKey,
               altKey,
               shiftKey,
               metaKey,
-              key: realKey
+              key: realKey,
+              displayKey: realKey ? String.fromCharCode(e.keyCode) : undefined
             }
           })
         )
@@ -116,9 +122,10 @@ const ShortCutItem = memo(({ shortCutName }: { shortCutName: keyof IShortCutSett
   }, [shortCut, setting])
   const renderKey = () => {
     if (!shortCut) return 'Not Set'
-    const { ctrlKey, altKey, shiftKey, key, metaKey } = shortCut
+    const { ctrlKey, altKey, shiftKey, key, metaKey, displayKey } = shortCut
+
     return `${ctrlKey ? 'Ctrl + ' : ''}${metaKey ? 'Meta + ' : ''}${altKey ? 'Alt + ' : ''}${shiftKey ? 'Shift + ' : ''}${
-      key ? key?.charAt(0).toUpperCase() + key?.slice(1) : ''
+      displayKey ? displayKey?.charAt(0).toUpperCase() + displayKey?.slice(1) : ''
     }`
   }
   return (

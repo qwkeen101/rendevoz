@@ -28,11 +28,14 @@ interface Props {
   contentDraggable?: boolean
   iconContainerStyle?: CSSProperties
   containerStyle?: CSSProperties
+  renderOnParent?: boolean
+  onClickOutside?: (e: MouseEvent, setVisible: React.Dispatch<React.SetStateAction<boolean>>) => void
 }
 const IconWithPopover: FC<Props> = (
   {
     name,
     content,
+    onClickOutside,
     color,
     align,
     size = 18,
@@ -54,7 +57,8 @@ const IconWithPopover: FC<Props> = (
     iconContainerStyle,
     onClick,
     tooltipPosition = 'top',
-    closeOnContentClick
+    closeOnContentClick,
+    renderOnParent = true
   },
   ref
 ) => {
@@ -84,6 +88,7 @@ const IconWithPopover: FC<Props> = (
         align={align}
         padding={padding}
         onClickOutside={e => {
+          onClickOutside?.(e, setVisible)
           if (e.path.some(i => i.getAttribute?.('role') === 'modal')) {
             return
           }
@@ -95,7 +100,7 @@ const IconWithPopover: FC<Props> = (
         }}
         contentDraggable={contentDraggable}
         containerStyle={zIndex ? { zIndex: zIndex?.toString() } : undefined}
-        parentElement={parentElement || containerRef.current || document.body}
+        parentElement={renderOnParent ? parentElement || containerRef.current || document.body : document.body}
         boundaryElement={document.body}
         boundaryInset={boundaryInset}
         visible={visible}

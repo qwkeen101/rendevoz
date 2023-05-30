@@ -1,12 +1,12 @@
 import { css } from '@emotion/css'
 import classNames from 'classnames'
-import { CSSProperties, FC, MouseEventHandler, ReactNode, useEffect, useState } from 'react'
+import React, { CSSProperties, FC, MouseEventHandler, ReactNode, useEffect, useState } from 'react'
 import IconButton from './IconButton'
 import styles from './index.module.less'
 import ClassName from '@/styles/classNames'
 import Colors from '@/consts/colors'
 
-interface ButtonProps {
+interface ButtonProps extends React.HTMLProps<HTMLDivElement>{
   children: ReactNode
   onClick?: MouseEventHandler
   className?: string

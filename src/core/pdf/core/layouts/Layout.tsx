@@ -378,7 +378,8 @@ const Layout: FC<LayoutProps> = ({
       getPageSize: () => ({
         scale,
         height: pageSize.height,
-        width: pageSize.width
+        width: pageSize.width,
+        pageSizeScale: pageSize.scale
       }),
       highlightArea: (pageIndex, rect) => {
         return new Promise(res => {

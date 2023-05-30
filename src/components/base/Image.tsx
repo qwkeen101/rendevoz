@@ -1,6 +1,6 @@
 import { css } from '@emotion/css'
 import classNames from 'classnames'
-import { FC, ImgHTMLAttributes, ReactNode, useState } from 'react'
+import { CSSProperties, FC, ImgHTMLAttributes, ReactNode, useState } from 'react'
 import Icon from './Icon'
 import ClassName from '@/styles/classNames'
 import { GlobalImagePreviewerInstance } from '@/core/global/GlobalImagePreviewer'
@@ -12,15 +12,17 @@ const Image: FC<
     ratio?: number
     preview?: boolean
     minWidth?: number
+    containerStyle?: CSSProperties
   }
-> = ({ placeHolderSize = 20, placeHolder, ratio = 1, width = 100, className, minWidth, preview, onLoad, ...rest }) => {
+> = ({ placeHolderSize = 20, placeHolder, ratio = 1, width = 100, className, minWidth, preview, onLoad, containerStyle, ...rest }) => {
   const [loaded, setLoaded] = useState(false)
   return (
     <>
       <div
         style={{
           width,
-          minWidth: minWidth || width
+          minWidth: minWidth || width,
+          ...containerStyle
         }}
         className={className}
       >

@@ -1,4 +1,5 @@
 import Id from '@/utils/id'
+import { Text } from 'slate'
 import { Descendant, Editor, Path, Transforms } from 'slate'
 import { CustomEditor, CustomElement } from '~/typings'
 
@@ -6,13 +7,16 @@ const moveSingleElement = (editor: CustomEditor, currPath: Path, targetPath: Pat
   if (!currPath) return
   const currElement = Editor.node(editor, currPath)
   if (!targetPath) return
+  const targetPathRef = Editor.pathRef(editor, targetPath)
   const targetElement = Editor.node(editor, targetPath)[0] as CustomElement
+  const targetParent = Editor.node(editor, Path.parent(targetPath))
+  const targetParentElement = targetParent[0]
+  const targetParentOnlyHaveOneChild = targetParentElement.children.length === 1
   const currParentPath = Path.parent(currPath)
   // use pathRef to track path change
   const currPathRef = Editor.pathRef(editor, currPath)
   const currParentPathRef = Editor.pathRef(editor, currParentPath)
   const currParentElement = Editor.node(editor, currParentPath)
-  const currentParentOnlyHaveOneChild = currParentElement[0].children.length === 1
 
   if (direction === 'top' || direction === 'bottom') {
     if (
@@ -149,21 +153,34 @@ const moveSingleElement = (editor: CustomEditor, currPath: Path, targetPath: Pat
       }
     )
   }
-  if (currentParentOnlyHaveOneChild && currParentElement[0].type === 'tableCell') {
-    // insert at origin position
-    Transforms.insertNodes(
-      editor,
-      {
-        type: 'paragraph',
-        id: Id.getId(),
-        children: [{ text: '' }]
-      },
-      {
-        at: [...currParentPathRef.current, 0]
-      }
-    )
+  if (currParentPathRef.current) {
+    const afterInsertCurrentParent = Editor.node(editor, currParentPathRef.current)
+    console.log(afterInsertCurrentParent)
+    if (Text.isText(afterInsertCurrentParent[0].children[0]) && currParentElement[0].type === 'tableCell') {
+      // insert at origin position
+      console.log('insert paragraph')
+      Transforms.insertNodes(
+        editor,
+        {
+          type: 'paragraph',
+          id: Id.getId(),
+          children: [{ text: '' }]
+        },
+        {
+          at: [...currParentPathRef.current, 0]
+        }
+      )
+    }
+  }
+  if (targetParentOnlyHaveOneChild && targetParentElement.type === 'tableCell' && Editor.isEmpty(editor, targetElement)) {
+    const targetPathNow = targetPathRef.current
+    Transforms.removeNodes(editor, {
+      at: targetPathNow
+    })
+    console.log('remove paragraph')
   }
   currPathRef.unref()
+  targetPathRef.unref()
   const afterMoveParentPath = currParentPathRef.unref()
   const afterMoveCurrParent = Editor.node(editor, afterMoveParentPath)
   const afterMoveCurrParentNode = afterMoveCurrParent[0]

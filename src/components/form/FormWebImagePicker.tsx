@@ -121,6 +121,7 @@ const FormWebImagePicker = ({ onPick, name = '' }: { onPick: (url: string) => vo
             showAddAsObject: false,
             showReaderMode: false
           }}
+          disableImageClick
           navigationStyle={{
             padding: '6px 0px',
             fontSize: FontSize['14px']

@@ -8,6 +8,7 @@ import ClassName from '@/styles/classNames'
 import { getOS } from '@/App'
 import { atom } from 'jotai'
 import { useGlobalAtom } from '@/hooks'
+import { Rendevoz } from '@/core/rendevoz'
 
 export const SidebarStateAtom = atom<{
   collapsed: boolean
@@ -46,6 +47,9 @@ export const Sidebar: FC = () => {
       tabIndex={-1}
       onMouseLeave={() => {
         if (!isResizing) setSidebarState(s => ({ ...s, hovered: false }))
+      }}
+      onClick={() => {
+
       }}
       onDragLeave={e => {
         e.preventDefault()

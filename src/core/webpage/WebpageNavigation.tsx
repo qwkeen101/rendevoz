@@ -47,6 +47,7 @@ const WebpageNavigation = ({
   const latestCurrentUrl = useLatest(currentUrl)
   const containerRef = useRef<HTMLElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
+  const navigationRef = useRef<HTMLDivElement>(null)
   useEffect(() => {
     const keyDownHandler = (e: KeyboardEvent) => {
       if (inputRef.current === document.activeElement && isHotkey(KEY.Enter, e)) {
@@ -107,7 +108,13 @@ const WebpageNavigation = ({
   }, [displayUrl])
 
   return (
-    <Content flex gap={8} alignItems="center" style={{ fontSize: FontSize['14px'], padding: '2px 16px 6px 10px', flexShrink: 0, ...style }}>
+    <Content
+      ref={navigationRef}
+      flex
+      gap={8}
+      alignItems="center"
+      style={{ fontSize: FontSize['14px'], padding: '2px 16px 6px 10px', flexShrink: 0, ...style }}
+    >
       <Icon className={ClassName.circleButton()} name="park-left" onClick={() => on({ action: 'back' })} />
       <Icon className={ClassName.circleButton()} name="park-right" onClick={() => on({ action: 'forward' })} />
       <Icon
@@ -127,6 +134,7 @@ const WebpageNavigation = ({
         padding={10}
         align="start"
         innerRef={containerRef}
+        parentElement={navigationRef.current}
         onClickOutside={() => setAutoSuggestResults([])}
         visible={!!allSuggestResults?.length && setting.webpage.enableSearchAutoSuggestion}
         containerStyle={{ zIndex: String(Zindexes.SearchPanel + 1) }}

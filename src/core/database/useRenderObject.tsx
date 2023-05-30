@@ -219,17 +219,24 @@ const _renderOptions = (
   {
     iconName = 'park-more',
     style,
-    customNode
+    customNode,
+    renderOnParent,
+    onClickOutside,
+    zIndex
   }: {
     customNode?: ReactNode
     style?: CSSProperties
     iconName?: string
+    renderOnParent?: boolean
+    zIndex?: number
+    onClickOutside?: (e: MouseEvent, setVisible: React.Dispatch<React.SetStateAction<boolean>>) => void
   },
   metaObject?: MetaObject
 ) => {
   return (
     metaObject && (
       <IconWithPopover
+        renderOnParent={renderOnParent}
         containerStyle={{
           position: 'absolute',
           top: 6,
@@ -237,9 +244,11 @@ const _renderOptions = (
           zIndex: 10,
           ...style
         }}
+        onClickOutside={onClickOutside}
         closeOnContentClick
         placement={['right', 'left']}
         align="start"
+        zIndex={zIndex}
         padding={0}
         name={iconName}
         className={ClassName.circleButton(2)}
@@ -284,8 +293,6 @@ const useRenderObject = (options: { metaObjectId: number }) => {
     _renderTitle({ ...options, onTitleClick: options.onTitleClick || (() => Actions.navigateToTargetObject(metaObjectId)) }, metaObject)
 
   const renderDescription = (options: Parameters<typeof _renderDescription>[0]) => _renderDescription(options, metaObject)
-
-  const renderImage = (options: Parameters<typeof _renderImage>[0]) => _renderImage(options, metaObject)
 
   const renderWhole = (options: Parameters<typeof WholeRenderer>[0]['options'] = defaultRenderWholeOptions) => (
     <WholeRenderer options={options} metaObject={metaObject} relatedNum={relatedSet?.size} />
@@ -336,7 +343,7 @@ const useRenderObject = (options: { metaObjectId: number }) => {
       </Content>
     )
   }
-
+  const renderOptions = (options: Parameters<typeof _renderOptions>[0]) => _renderOptions(options, metaObject)
   const renderPopover = ({
     icon = 'park-more',
     position = 'left',
@@ -410,7 +417,8 @@ const useRenderObject = (options: { metaObjectId: number }) => {
     renderFrom,
     renderColumnImageWhole,
     renderPopover,
-    renderInline
+    renderInline,
+    renderOptions
   }
 }
 

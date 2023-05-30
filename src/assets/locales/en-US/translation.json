@@ -304,7 +304,8 @@
         "resource usage": "resource usage",
         "translation usage": "translation usage",
         "ocr usage": "ocr usage",
-        "reset every month": "reset every month"
+        "reset every month": "reset every month",
+        "open global text search": "open global text search panel"
     },
     "form": {
         "choose file": "Choose file",

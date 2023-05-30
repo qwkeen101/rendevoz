@@ -4,7 +4,6 @@ import { useMergedRef } from '@/hooks'
 import { PageSize } from '~/typings'
 import { ObjectStore, globalStore } from '@/stores'
 import { CSSProperties, FC, forwardRef, memo, useEffect, useMemo, useRef, useState } from 'react'
-import { useClickAway } from 'react-use'
 import { ILabel } from '~/typings/data'
 import LabelToolbar from '../toolbar/LabelToolbar'
 import usePdfViewer from '@/core/pdf/core/hooks/useViewer'
@@ -12,10 +11,9 @@ import useClickOutside from '@/hooks/utils/useClickOutside'
 import tinycolor from 'tinycolor2'
 import { ID_TO_LABEL_MAP } from '../../weakMaps'
 import { Rect } from '@/types'
-import { GlobalTranslateInstance } from '@/core/global/GlobalTranslatePanel'
-import HoverObjectDetails from '@/core/database/HoverObjectDetails'
 import { objectIdToMetaObjectIdMapAtom } from '@/stores/meta.store'
 import { GlobalSearchInstance } from '@/core/global/GlobalSearchPanel'
+import { Rendevoz } from '@/core/rendevoz'
 
 interface HighlightLabelProps {
   labelId: number
@@ -63,7 +61,7 @@ const HighlightLabel: FC<HighlightLabelProps> = memo(
               onColorChange={handleColorChange}
               onTranslate={e => {
                 highlight.selectedText &&
-                  GlobalTranslateInstance.open?.({
+                  Rendevoz.Actions.Open.Translate.openTranslate({
                     to: 'zh',
                     query: highlight.selectedText,
                     e,

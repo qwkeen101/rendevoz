@@ -1,5 +1,5 @@
-import { Content, Icon } from '@/components'
-import { globalStore } from '@/stores'
+import { Content, Icon, Image } from '@/components'
+import { MetaStore, globalStore } from '@/stores'
 import { metaObjectsAtom } from '@/stores/meta.store'
 import { Fragment, memo } from 'react'
 import { useRenderObject } from '../database'
@@ -14,12 +14,13 @@ import { selectBlock } from '../editor/utils/blockActions'
 import { useTranslation } from 'react-i18next'
 import FontSize from '@/consts/font'
 import { DefaultObjectTitleRenderClazzName } from '../database/useRenderObject'
+import { Zindexes } from '@/consts'
 
 const SearchResultItem = ({ group, onNavi }: { group: SearchGroup; onNavi: VoidFunction }) => {
   const metaId = group.metaId
   const [showChildren, toggleShowChildren] = useToggle(false)
   const { t } = useTranslation()
-
+  const meta = MetaStore.useValue(metaId)
   return (
     <Content
       flex
@@ -33,11 +34,11 @@ const SearchResultItem = ({ group, onNavi }: { group: SearchGroup; onNavi: VoidF
         ':not(:last-child)': {
           borderBottom: `1px solid ${Colors.Background.Border}`
         },
-        padding: '10px 0px'
+        padding: '14px 0px'
       })}
     >
       {metaId && (
-        <Content>
+        <Content flex alignItems="center" gap={20} justifyContent="space-between">
           {group.items.length > 0 && (
             <Icon
               containerStyle={{
@@ -55,19 +56,24 @@ const SearchResultItem = ({ group, onNavi }: { group: SearchGroup; onNavi: VoidF
               onClick={toggleShowChildren}
             />
           )}
-          <SearchDetails highlightName={group.highlightName} metaId={metaId} onNavi={onNavi} />
-          {!showChildren && group.items.length > 0 && (
-            <div className={ClassName.description(FontSize['13px'])}>
-              {group.items.length} {t('general.results')}
-            </div>
+          <Content flex column style={{ zIndex: 9999 }} auto gap={3}>
+            <SearchDetails highlightName={group.highlightName} metaId={metaId} onNavi={onNavi} />
+            {!showChildren && group.items.length > 0 && (
+              <div className={ClassName.description(FontSize['13px'])}>
+                {group.items.length} {t('general.results')}
+              </div>
+            )}
+            {!showChildren && (group.highlightDescription || group.items[0]?.content) && (
+              <div
+                dangerouslySetInnerHTML={{ __html: group.highlightDescription || group.items[0].content }}
+                className={css([ClassName.description('1rem'), ClassName.ellipsisFont(3)])}
+              ></div>
+            )}
+          </Content>
+          {meta?.coverImgSrc && !showChildren && (
+            <Image preview src={meta.coverImgSrc} width={200} ratio={0.5625} containerStyle={{ borderRadius: 10 }} />
           )}
         </Content>
-      )}
-      {!showChildren && (group.highlightDescription || group.items[0]?.content) && (
-        <div
-          dangerouslySetInnerHTML={{ __html: group.highlightDescription || group.items[0].content }}
-          className={ClassName.description('1rem')}
-        ></div>
       )}
       {metaId && showChildren && (
         <ol
@@ -155,10 +161,33 @@ const NoteSearchResult = ({
   </li>
 )
 const SearchDetails = memo(({ metaId, onNavi, highlightName }: { metaId: number; onNavi: VoidFunction; highlightName?: string }) => {
-  const { renderTags, renderTitle } = useRenderObject({ metaObjectId: metaId })
+  const { renderTags, renderTitle, renderFrom, renderOptions, metaObject } = useRenderObject({ metaObjectId: metaId })
   return (
     <>
-      {renderTags({})}
+      {renderTags({
+        containerStyle: {
+          paddingRight: 60
+        },
+        // @ts-ignore
+        containerClassName: css({
+          '> *': {
+            fontSize: '11px !important'
+          },
+          '*': {
+            textTransform: 'capitalize !important'
+          }
+        })
+      })}
+      {renderOptions({
+        renderOnParent: false,
+        zIndex: Zindexes.Modal + 1,
+        style: {
+          top: 0
+        },
+        onClickOutside: (e, set) => {
+          set(false)
+        }
+      })}
       {highlightName ? (
         <div
           onClick={() => {
@@ -166,11 +195,14 @@ const SearchDetails = memo(({ metaId, onNavi, highlightName }: { metaId: number;
             onNavi()
           }}
           className={css([ClassName.ellipsisFont(2), DefaultObjectTitleRenderClazzName])}
-          style={{ cursor: 'pointer' }}
+          style={{ cursor: 'pointer', paddingRight: 40 }}
           dangerouslySetInnerHTML={{ __html: highlightName }}
         ></div>
       ) : (
         renderTitle({
+          style: {
+            paddingRight: 40
+          },
           onTitleClick: () => {
             Actions.navigateToTargetObject(metaId)
             onNavi()

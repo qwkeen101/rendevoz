@@ -259,7 +259,7 @@ export const DatabaseCard: FC<{
             <img
               onClick={() => GlobalImagePreviewerInstance.open?.(innerCover || cover)}
               src={cover}
-              style={{ height: '100%', objectFit: 'cover', maxHeight: 500 }}
+              style={{ height: '100%', objectFit: 'cover', maxHeight: 250 }}
             />
           )}
           <Content
@@ -462,7 +462,7 @@ export const ObjectActionPopover: FC<
 const RelatedPanel = memo(({ metaId }: { metaId: number }) => {
   const sourceToTarget = useGlobalAtomValue(indexedMetaLinksAtom)?.sourceIdToLinkIdsMap.get(metaId)
   const targetToSource = useGlobalAtomValue(indexedMetaLinksAtom)?.targetIdToLinkIdMap.get(metaId)
-  const linkStore = globalStore.get(metaLinksAtom)
+
   const [showIn, toggleShowIn] = useToggle(false)
   const [showOut, toggleShowOut] = useToggle(false)
   const { t } = useTranslation()
@@ -480,7 +480,7 @@ const RelatedPanel = memo(({ metaId }: { metaId: number }) => {
       sortedOutbounds
     }
   }, [metaId])
-  console.log(sortedInbounds, sortedOutbounds)
+
   return (
     <Content
       flex

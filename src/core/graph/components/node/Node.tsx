@@ -4,13 +4,11 @@ import ImageNode from './ImageNode'
 import { select } from 'd3-selection'
 import { drag as d3Drag } from 'd3-drag'
 import useGraph from '../../hooks/useGraph'
-import { motion } from 'framer-motion'
 import { NodeMouseEventHandler } from '../NodeContainer'
 import IconNode from './IconNode'
 import { ObjectTag, FilterSelectedTagsAtom } from '@/core'
 import { Content } from '@/components/base'
 import { MetaObject } from '~/typings/data'
-import { MarkerColor } from '@/consts'
 import { useAtomValue, useSetAtom } from 'jotai'
 import EmojiNode from './EmojiNode'
 import { MetaStore } from '@/stores'
@@ -59,6 +57,7 @@ const Node: FC<NodeProps> = memo(({ node, onMouseEnter, onMouseLeave, onContextM
   const setPathFilter = useSetAtom(GraphPathFilterAtom)
   const pinnedNodes = useAtomValue(GraphPinNodesIdsAtom)
   const graphMode = useAtomValue(GraphModeAtom)
+  const dragTimer = useRef(0)
   const thisNodeShowTags = useMemo(() => {
     if (node.opacity !== 1) {
       return []
@@ -194,6 +193,7 @@ const Node: FC<NodeProps> = memo(({ node, onMouseEnter, onMouseLeave, onContextM
     let restarted = false
     function dragstarted(event) {
       if (graph?.isAddingEdge) return
+      dragTimer.current = Date.now()
       if (!event.active) simulation?.alphaTarget(0.1)
       event.subject.fx = n.x
       event.subject.fy = n.y
@@ -201,6 +201,10 @@ const Node: FC<NodeProps> = memo(({ node, onMouseEnter, onMouseLeave, onContextM
 
     function dragged(event) {
       if (graph?.isAddingEdge) return
+      const now = Date.now()
+      if (now - dragTimer.current < 100) {
+        return
+      }
       if (!restarted) {
         restarted = true
         simulation?.restart()
@@ -213,6 +217,7 @@ const Node: FC<NodeProps> = memo(({ node, onMouseEnter, onMouseLeave, onContextM
 
     function dragended(event) {
       if (graph?.isAddingEdge) return
+      if (Date.now() - dragTimer.current < 100) return
       graph.isDragging = false
       if (!event.active) simulation?.alphaTarget(0)
       event.subject.fx = null

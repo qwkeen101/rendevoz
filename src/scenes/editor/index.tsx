@@ -9,7 +9,7 @@ import { Descendant } from 'slate'
 import SidebarToolbar from './HoverOutline'
 import { ObjectStore, globalStore } from '@/stores'
 import { Provider } from 'jotai'
-import { GlobalTranslateInstance } from '@/core/global/GlobalTranslatePanel'
+import { GlobalTranslateInstance } from '@/core/global/translate/GlobalTranslatePanel'
 import { GlobalSearchInstance } from '@/core/global/GlobalSearchPanel'
 import { objectIdToMetaObjectIdMapAtom } from '@/stores/meta.store'
 

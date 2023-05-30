@@ -133,7 +133,7 @@ const SidebarCollectionItem: FC<ISidebarItem> = memo(({ id, parentId, parentType
           className={css([
             ClassName.flatButton(),
             {
-              padding: 2,
+              padding: '3px 2px',
               margin: 2,
               paddingLeft: 14,
               paddingRight: 5

@@ -1,13 +1,20 @@
 import { IShortCutSetting, useSetting } from '@/core'
 import { useEffect } from 'react'
 import { useMemoizedFn } from '../utils'
-import { compareHotkey } from 'is-hotkey'
 
 export const useShortcut = (shortcutName: keyof IShortCutSetting['shortcut'], onTrigger: VoidFunction) => {
   const [setting] = useSetting()
+  const shortcut = setting.shortcut[shortcutName]
   const shortcutHandler = useMemoizedFn((e: KeyboardEvent) => {
-    if (setting.shortcut[shortcutName] && compareHotkey(setting.shortcut[shortcutName], e)) {
-      onTrigger()
+    if (shortcut) {
+      if (
+        e.key === shortcut.key &&
+        e.shiftKey === shortcut.shiftKey &&
+        e.ctrlKey === shortcut.ctrlKey &&
+        e.altKey === shortcut.altKey &&
+        e.metaKey === shortcut.metaKey
+      )
+        onTrigger()
     }
   })
   useEffect(() => {

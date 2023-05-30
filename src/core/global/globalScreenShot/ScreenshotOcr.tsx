@@ -4,7 +4,7 @@ import { Button, Content, Icon } from '@/components'
 import Colors from '@/consts/colors'
 import ClassName from '@/styles/classNames'
 import { useTranslation } from 'react-i18next'
-import { GlobalTranslateInstance } from '../GlobalTranslatePanel'
+import { Rendevoz } from '@/core/rendevoz'
 
 const ScreenShotOcr = ({ draggable, onToggleDraggable }: { draggable: boolean; onToggleDraggable: VoidFunction }) => {
   const ocrResult = useGlobalAtomValue(GlobalScreenShotOcrResult)
@@ -49,7 +49,7 @@ const ScreenShotOcr = ({ draggable, onToggleDraggable }: { draggable: boolean; o
             {ocrResult && (
               <Button.IconButton
                 onClick={e => {
-                  GlobalTranslateInstance.open?.({ e, query: ocrResult })
+                  Rendevoz.Actions.Open.Translate.openTranslate({ e, query: ocrResult })
                 }}
                 icon={'park-translate'}
                 text={t('general.translate')}

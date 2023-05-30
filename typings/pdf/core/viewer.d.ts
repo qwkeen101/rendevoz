@@ -28,7 +28,7 @@ export type IPdfViewer = Partial<{
   jumpToLabel: (labelId: number) => Promise<void>
   scrollBy: (offset: number) => void
   scrollToOffset: (offset: number) => void
-  getPageSize: () => PageSize
+  getPageSize: () => PageSize & { pageSizeScale: number }
   getOutline: () => Promise<
     {
       title: string

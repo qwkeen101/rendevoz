@@ -71,7 +71,7 @@ export interface EditorProps {
   innerEditorStyle?: CSSProperties
   innerEditorClassName?: string
   showToolbar?: boolean
-  onLinkClick?: InnerEditorProps['onLinkClick']
+  onLinkClick?: (e: React.MouseEvent) => void
   showBlockHandle?: boolean
   compact?: boolean
 }
@@ -202,6 +202,7 @@ export const EditorV1: FC<EditorProps> = memo(
     editor.noteId = noteId
     editor.readonly = !!readonly
     editor.onHighlightDrag = onHighlightDrag
+    editor.onLinkClick = onLinkClick
     if (note) {
       editor.note = note
     }

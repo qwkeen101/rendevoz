@@ -96,7 +96,7 @@ const SidebarObjectItem: FC<ISidebarItem> = ({ parentId, parentType, id, draggab
   )
   if (metaObject?.deleted || !metaObject) return null
   return (
-    <Content flex gap={10} ref={ref} onClick={() => Actions.navigateToTargetObject(id)} className={ClassName.flatButton(4, '2px 8px')}>
+    <Content flex gap={10} ref={ref} onClick={() => Actions.navigateToTargetObject(id)} className={ClassName.flatButton(4, '3px 8px')}>
       {contextMenuPortal}
       <IconNameItem
         style={{ fontSize: FontSize['12px'] }}

@@ -41,6 +41,7 @@ export type CustomEditor = BaseEditor &
     onTranslate?: (selectedText: string, blockId: number, e: React.MouseEvent) => void
     onSearch?: (selectedText: string, blockId: number, e: React.MouseEvent) => void
     onContentRendered?: () => void
+    onLinkClick?: (e: React.MouseEvent) => void
     initialized?: boolean
     contentInitialized?: boolean
     readonly?: boolean

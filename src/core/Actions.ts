@@ -5,8 +5,6 @@ import { GlobalLayout } from '../components/layout'
 import { IPdfViewer } from '~/typings'
 import { globalStore, MetaStore, ObjectStore } from '../stores'
 import { metaObjectsAtom, objectIdToMetaObjectIdMapAtom } from '../stores/meta.store'
-import { TextItem } from 'pdfjs-dist/types/src/display/api'
-import { getIndexesOfMatchStr } from '@/utils/str'
 import { goToBlock, selectBlock, waitForEditorContentInitialized } from './editor/utils/blockActions'
 import { goToTextHighlight } from './editor/utils'
 import { ipcInstance } from '@/plugins'
@@ -222,65 +220,7 @@ const goToPdfLabel = async (labelId: number) => {
     }
   }
 }
-// for search engine
-const goToPdfSearchPositions = async (
-  positions: {
-    start: number
-    length: number
-  }[],
-  pageIndex: number,
-  pdfId: number
-) => {
-  const pdf = await openPdf(pdfId)
 
-  if (pdf) {
-    const doc = pdf.getPdfInstance?.()
-    if (doc) {
-      const page = await doc.getPage(pageIndex + 1)
-      const textContent = await page.getTextContent()
-      const searchableText = textContent.items.map(i => ('str' in i ? i : undefined)).filter(i => i !== undefined) as ({
-        start?: number
-        end?: number
-      } & TextItem)[]
-      searchableText.forEach((v, idx, arr) => {
-        const curr = v
-        const prev = idx > 0 && arr[idx - 1]
-        if (prev && prev.end) {
-          curr.start = prev.end + 1
-          curr.end = curr.start + curr.str.length
-        } else {
-          curr.start = 0
-          curr.end = curr.str.length
-        }
-      })
-      // get all indexes of searched text
-      // get target text item
-      const items = positions.map(({ start, length }) => {
-        const endIndex = start + length - 1
-        const allTextItems: TextItem[] = []
-        let startIdx: number
-        let endIdx: number
-        searchableText.forEach((i, idx) => {
-          if (idx > endIdx) return
-          if (startIdx !== undefined) {
-            allTextItems.push(i)
-          }
-          // get start idx and push first item into arr
-          if (start >= i.start! && start <= i.end!) {
-            startIdx = idx
-            allTextItems.push(i)
-          }
-          // get end idx
-          if (endIndex >= i.start! && endIndex <= i.end!) {
-            endIdx = idx
-          }
-        })
-        return allTextItems
-      })
-      console.log(items)
-    }
-  }
-}
 const goToPdfSearchedText = async (text: string, pageIndex: number, pdfId: number) => {
   const pdf = await openPdf(pdfId)
 
@@ -343,7 +283,6 @@ const Actions = {
   highlightNoteBlock,
   goToPdfPage,
   goToPdfSearchedText,
-  goToPdfSearchPositions,
   goToNoteLabel,
   openImage,
   goToWebpageSelectedText

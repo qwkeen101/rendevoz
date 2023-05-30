@@ -1,5 +1,7 @@
 import { request } from '@/utils/request'
 import { blob } from 'd3'
+import { getUser } from './login.service'
+import { toast } from 'react-hot-toast'
 
 const localImageOcrInterface = 'http://localhost:9000/image/ocr'
 const remoteOcrInterface = 'https://api.rendevoz.com/image/ocr'
@@ -14,6 +16,10 @@ const OcrService = {
       }
     | undefined
   > => {
+    const user = getUser()
+    if (!user || !user.premiumEndDate || user.premiumEndDate < Date.now()) {
+      return Promise.reject()
+    }
     return new Promise(res => {
       const reader = new FileReader()
       reader.onload = async e => {

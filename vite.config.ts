@@ -26,6 +26,9 @@ export default defineConfig({
       styles: path.join(__dirname, 'src/assets/styles')
     }
   },
+  build: {
+    sourcemap: false
+  },
   plugins: [
     react(),
     electron({

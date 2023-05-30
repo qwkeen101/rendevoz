@@ -92,12 +92,16 @@ const TableCell = ({
   }, [])
   useEffect(() => {
     if (globalIsDragging) {
-      const pointerMoveHandler = (e: PointerEvent) => {
-        console.log(e)
+      const pointerMoveHandler = (e: PointerEvent | DragEvent) => {
         editor.dragManager?.dragInTableCell(e)
+        if (e instanceof DragEvent) {
+          e.preventDefault()
+        }
       }
+      tdRef.current?.addEventListener('dragover', pointerMoveHandler)
       tdRef.current?.addEventListener('pointermove', pointerMoveHandler)
       return () => {
+        tdRef.current?.removeEventListener('dragover', pointerMoveHandler)
         tdRef.current?.removeEventListener('pointermove', pointerMoveHandler)
       }
     }

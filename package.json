@@ -2,7 +2,7 @@
   "name": "rendevoz",
   "productName": "Rendevoz",
   "private": true,
-  "version": "0.2.12",
+  "version": "0.2.20",
   "author": "Rendevoz Team",
   "main": "dist-electron/electron/main/index.js",
   "debug": {
@@ -13,7 +13,7 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "publish": "vite build && electron-builder"
+    "publish": "NODE_OPTIONS=--max-old-space-size=8192 vite build && electron-builder"
   },
   "engines": {
     "node": "^14.18.0 || >=16.0.0"
@@ -96,6 +96,7 @@
     "react-infinite-scroller": "^1.2.5",
     "react-konva": "^18.2.3",
     "react-lorem-ipsum": "^1.4.10",
+    "react-plock": "^3.0.2",
     "react-responsive-masonry": "^2.1.7",
     "react-rnd": "^10.3.5",
     "react-router-dom": "^6.4.0",

@@ -16,7 +16,8 @@ import DatabaseListItem from './ListItem'
 import Select from '@/components/base/select'
 import { useTranslation } from 'react-i18next'
 import Colors from '@/consts/colors'
-import Masonry, { ResponsiveMasonry } from 'react-responsive-masonry'
+import Masonry from '@/components/base/Masonry'
+
 export const Database = () => {
   const undeletedMetaObjects = useAtomValue(undeletedMetaObjectsAtom, { store: globalStore })
   const [paginateState, setPaginateState] = useState<{
@@ -101,13 +102,11 @@ export const Database = () => {
       case 'detail card':
         return (
           <Flipper spring="stiff" flipKey={`${displayObjects[displayObjects.length - 1]?.id}_${displayObjects.length}`}>
-            <ResponsiveMasonry columnsCountBreakPoints={{ 360: 1, 800: 2, 1200: 3, 1600: 4 }}>
-              <Masonry gutter="35px">
-                {paginateObjects.map((i, idx) => (
-                  <DatabaseCard key={i.id} index={idx} metaObject={i} />
-                ))}
-              </Masonry>
-            </ResponsiveMasonry>
+            <Masonry gap={35} breakPoints={{ 350: 1, 750: 2, 1000: 3, 1300: 4, 1700: 5, 2100: 6, 2400: 7, 2800: 8 }}>
+              {paginateObjects.map((i, idx) => (
+                <DatabaseCard key={i.id} index={idx} metaObject={i} />
+              ))}
+            </Masonry>
           </Flipper>
         )
       case 'detail list':
@@ -290,6 +289,7 @@ export const Database = () => {
             ref={overflowContainerRef}
             style={{
               height: '100%',
+              width: '100%',
               overflowY: 'auto',
               padding: '0 30px 50px'
             }}

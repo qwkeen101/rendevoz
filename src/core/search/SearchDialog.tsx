@@ -95,7 +95,7 @@ export const SearchDialog = ({ onClose }: { onClose: VoidFunction }) => {
           padding: '12px 24px 0px',
           borderRadius: 10,
           maxWidth: 'calc(100vw - 200px)',
-          height: '80vh',
+          height: '85vh',
           '*': {
             textTransform: 'none'
           },
@@ -110,6 +110,7 @@ export const SearchDialog = ({ onClose }: { onClose: VoidFunction }) => {
       <div className={ClassName.title(FontSize['16px'])}>{t('general.full text search')}</div>
       <BorderInput
         textarea={false}
+        id="global-search-input"
         placeholder={t('general.search text content in pdfs, web pages, notes, etc.')}
         value={searchInput}
         onChange={e => setSearchInput(e)}

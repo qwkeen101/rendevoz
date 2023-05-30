@@ -1,6 +1,6 @@
 import { WithBorder } from '@/components/base'
 import { BasicElements, BlockElements, InlineElements, MediaElements } from '@/core/editor/consts/elements'
-import { CustomEditor, MetaObject } from '~/typings'
+import { CustomEditor } from '~/typings'
 import EditorElementsMenu, { EditorSlashElementsMenu } from '@/core/editor/components/EditorElementsMenu'
 import Id from '@/utils/id'
 import { saveImageLocally } from '@/utils/img'
@@ -95,9 +95,9 @@ const EditorOverlayElements = ({
     }
     if (!addElementPath.length) return
     addElementPathRef.current = addElementPath
-    if (isCurrentElementEmpty) {
-      Transforms.removeNodes(editor, { at: addElementPath })
-    }
+    // if (isCurrentElementEmpty) {
+    //   Transforms.removeNodes(editor, { at: addElementPath })
+    // }
 
     if (Object.values(BasicElements).some(i => i === elementName) || Object.values(BlockElements).some(i => i === elementName)) {
       switch (elementName) {

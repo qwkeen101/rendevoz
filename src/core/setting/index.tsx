@@ -67,6 +67,7 @@ type ShortCut = {
   altKey: boolean
   key?: string
   metaKey: boolean
+  displayKey?: string
 }
 export type IAppearanceSetting = {
   background: {
@@ -82,6 +83,7 @@ export type IShortCutSetting = {
     quickCreateObject: ShortCut | null
     openTranslatePanel: ShortCut | null
     openSearchPanel: ShortCut | null
+    openGlobalSearch: ShortCut | null
   }>
 }
 export type IObjectsAndLinkSetting = {

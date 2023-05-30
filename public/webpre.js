@@ -1,7 +1,7 @@
 const { ipcRenderer } = require('electron')
 
 const options = {
-  disableImageClick: true
+  disableImageClick: false
 }
 // for click in same domain iframe
 const windowBlurListener = e => {
@@ -14,10 +14,12 @@ window.addEventListener('blur', windowBlurListener)
 ipcRenderer.on('disableImageClick', () => {
   options.disableImageClick = true
 })
-
+ipcRenderer.on('enableImageClick', () => {
+  options.disableImageClick = false
+})
 const clickListener = e => {
   const closestImage = e.target.closest('img')
-  if (closestImage) {
+  if (closestImage && options.disableImageClick) {
     e.preventDefault()
     e.stopPropagation()
     e.stopImmediatePropagation()
@@ -30,12 +32,13 @@ const clickListener = e => {
   })
 }
 const contextmenuListener = e => {
-
-  ipcRenderer.sendToHost('event', {
-    eventType: 'contextmenu',
-    x: e.clientX,
-    y: e.clientY
-  })
+  if (!e.defaultPrevented) {
+    ipcRenderer.sendToHost('event', {
+      eventType: 'contextmenu',
+      x: e.clientX,
+      y: e.clientY
+    })
+  }
 }
 const dropListener = e => {
   ipcRenderer.sendToHost('event', {
@@ -51,11 +54,13 @@ const dragListener = e => {
   })
 }
 const pointerListener = e => {
-  const img = e.target.closest('img')
-  if (img) {
-    e.stopPropagation()
-    e.preventDefault()
-    e.stopImmediatePropagation()
+  if (options.disableImageClick) {
+    const img = e.target.closest('img')
+    if (img) {
+      e.stopPropagation()
+      e.preventDefault()
+      e.stopImmediatePropagation()
+    }
   }
 }
 
@@ -73,22 +78,21 @@ const keydownListener = e => {
 
 const addListener = () => {
   window.addEventListener('click', clickListener, true)
-  window.addEventListener('contextmenu', contextmenuListener, true)
+  window.addEventListener('contextmenu', contextmenuListener)
   window.addEventListener('drop', dropListener)
   window.addEventListener('dragstart', dragListener)
   window.addEventListener('keydown', keydownListener, true)
-  if (options.disableImageClick) {
-    window.addEventListener('pointerenter', pointerListener, true)
-    window.addEventListener('pointermove', pointerListener, true)
-    window.addEventListener('pointerover', pointerListener, true)
-    window.addEventListener('mouseenter', pointerListener, true)
-    window.addEventListener('mousemove', pointerListener, true)
-    window.addEventListener('mouseover', pointerListener, true)
-  }
+
+  window.addEventListener('pointerenter', pointerListener, true)
+  window.addEventListener('pointermove', pointerListener, true)
+  window.addEventListener('pointerover', pointerListener, true)
+  window.addEventListener('mouseenter', pointerListener, true)
+  window.addEventListener('mousemove', pointerListener, true)
+  window.addEventListener('mouseover', pointerListener, true)
 }
 const clearListener = () => {
   window.removeEventListener('click', clickListener, true)
-  window.removeEventListener('contextmenu', contextmenuListener, true)
+  window.removeEventListener('contextmenu', contextmenuListener)
   window.removeEventListener('drop', dropListener)
   window.removeEventListener('dragstart', dragListener)
   window.removeEventListener('keydown', keydownListener, true)

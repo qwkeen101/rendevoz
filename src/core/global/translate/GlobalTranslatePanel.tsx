@@ -4,29 +4,31 @@ import { getIcon } from '@/components/layout/sidebar/items/SidebarObjectItem'
 import { Zindexes } from '@/consts'
 import Colors from '@/consts/colors'
 import FontSize from '@/consts/font'
-import { useGlobalAtom } from '@/hooks'
+import { useGlobalAtom, useShortcut } from '@/hooks'
 import TranslateService from '@/services/translate.service'
 import { MetaStore, globalStore } from '@/stores'
 import { objectIdToMetaObjectIdMapAtom } from '@/stores/meta.store'
 import ClassName from '@/styles/classNames'
 import classnames from 'classnames'
-import { compareHotkey } from 'is-hotkey'
 import { atom } from 'jotai'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useTranslation } from 'react-i18next'
 import { Rnd } from 'react-rnd'
-import { XYPosition } from '~/typings'
-import Actions from '../Actions'
+import { GlobalInstances, XYPosition } from '~/typings'
+import Actions from '../../Actions'
 import { css } from '@emotion/css'
 import DateFormat from '@/utils/dateFormat'
-import { goToBlock, selectBlock } from '../editor/utils'
-import { useSetting } from '../setting'
-import { getPanelPosition } from './utils'
+import { goToBlock, selectBlock } from '../../editor/utils'
+import { useSetting } from '../../setting'
+import { getPanelPosition } from '../utils'
 import { getUser } from '@/services/login.service'
 import { toast } from 'react-hot-toast'
 import ResizeAndDrag from '@/components/base/ResizeAndDrag'
-import getSetting from '../setting/getSetting'
+import getSetting from '../../setting/getSetting'
+import { assignProperties } from '@/utils'
+import { Rendevoz } from '../../rendevoz'
+import { normalizeTranslateResult } from './utils'
 
 type TranslateResult = {
   originalText: string
@@ -79,18 +81,8 @@ type TranslateSource =
       objectId: number
       blockId?: number
     }
-export const GlobalTranslateInstance: {
-  open?: (options: {
-    query: string
-    from?: string
-    to: string
-    pos?: XYPosition
-    source?: TranslateSource
-    e?: PointerEvent | MouseEvent
-  }) => void
-  translate?: (options: { query: string; from?: string; to: string; source?: TranslateSource }) => Promise<void>
-  close?: VoidFunction
-} = {}
+
+export const GlobalTranslateInstance: Partial<GlobalInstances.TranslateInstance> = {}
 const PanelDefaultSize = {
   x: window.innerWidth / 2 - 200,
   y: window.innerHeight / 2 - 150,
@@ -100,8 +92,7 @@ const PanelDefaultSize = {
 const GlobalTranslateResult = () => {
   const [translateState, setTranslateState] = useGlobalAtom(TranslateStateAtom)
   const [panelState, setPanelState] = useGlobalAtom(TranslatePanelStateAtom)
-  const [setting] = useSetting()
-  Object.assign(GlobalTranslateInstance, {
+  assignProperties(GlobalTranslateInstance, {
     open: options => {
       const user = getUser()
       if (!user) {
@@ -112,7 +103,7 @@ const GlobalTranslateResult = () => {
         !translateState.visible && getPanelPosition({ e: options.e, pos: options.pos, defaultSize: panelState.size || PanelDefaultSize })
       setTranslateState(s => ({ ...s, visible: true }))
       setPanelState(s => ({ ...s, currentPosition: pos || s.currentPosition }))
-      GlobalTranslateInstance.translate?.(options)
+      Rendevoz.Actions.State.Translate.translate(options)
     },
     translate: async ({ from, query, to, source }) => {
       const newResult = {
@@ -125,63 +116,7 @@ const GlobalTranslateResult = () => {
       setTranslateState(s => ({ ...s, loading: true }))
       try {
         const result = await TranslateService.translate(query, to, from)
-        //u201c u201d “ ”
-        const reg = new RegExp('[\u3002\uff1b\uff0c\uff1a\u201c\u201d\u3001\uff1f\u300a\u300b]')
-
-        newResult.translatedText = result.result
-          .map(i => {
-            const trans = i.trans.trim()
-            console.log(trans)
-            const endChar = trans[trans.length - 1]
-            // if end char is any of the punc, split it
-            if (reg.test(endChar)) {
-              i.trans += '\r\n'
-            }
-            return i
-          })
-          .reduce(
-            (whole, curr) => {
-              const wholelast = whole[whole.length - 1]
-              const doubleQuotesReg = new RegExp(/“.*?”/gm)
-              if (wholelast) {
-                const removedWhole = wholelast.trans.replaceAll('\r\n', '').trim()
-                const removedCurr = curr.trans.replaceAll('\r\n', '').trim()
-                const hasDoubleQuote = doubleQuotesReg.test(removedWhole)
-
-                if (
-                  !hasDoubleQuote &&
-                  removedWhole.includes('\u201c') &&
-                  !removedWhole.endsWith('\u201d') &&
-                  !removedWhole.endsWith('\u201c') &&
-                  !removedWhole.includes('{xxx}')
-                ) {
-                  wholelast.orig += '' + curr.orig
-                  wholelast.trans += '' + removedCurr
-                  if (removedCurr.includes('\u201d')) {
-                    wholelast.trans += '{xxx}\r\n'
-                  }
-                  return whole
-                }
-
-                if (!wholelast.trans.endsWith('\r\n')) {
-                  wholelast.orig += ' ' + curr.orig
-                  wholelast.trans += ' ' + curr.trans
-                  return whole
-                }
-              }
-              whole.push(curr)
-              return whole
-            },
-            [] as {
-              trans: string
-              orig: string
-            }[]
-          )
-          .map(i => ({
-            ...i,
-            trans: i.trans.replaceAll('{xxx}', '')
-          }))
-        console.log(newResult.translatedText)
+        newResult.translatedText = normalizeTranslateResult(result.result)
         setTranslateState(s => {
           s.currentResult = newResult
           s.allResults.unshift(newResult)
@@ -193,20 +128,12 @@ const GlobalTranslateResult = () => {
       }
     },
     close: () => setTranslateState(s => ({ ...s, visible: false }))
-  } as typeof GlobalTranslateInstance)
+  })
 
-  useEffect(() => {
-    const keyDownHandler = (e: KeyboardEvent) => {
-      if (setting.shortcut.openTranslatePanel && compareHotkey(setting.shortcut.openTranslatePanel, e)) {
-        setTranslateState(s => ({ ...s, visible: !s.visible }))
-      }
-    }
+  useShortcut('openTranslatePanel', () => {
+    setTranslateState(s => ({ ...s, visible: !s.visible }))
+  })
 
-    document.addEventListener('keydown', keyDownHandler)
-    return () => {
-      document.removeEventListener('keydown', keyDownHandler)
-    }
-  }, [setting.shortcut.openTranslatePanel])
   return createPortal(translateState.visible && <TranslatePanel />, document.body)
 }
 
@@ -215,6 +142,13 @@ const TranslatePanel = () => {
   const [panelState, setPanelState] = useGlobalAtom(TranslatePanelStateAtom)
   const { t } = useTranslation()
   const [setting] = useSetting()
+  const panelRef = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    const panel = panelRef.current
+    if (panel) {
+      panel.scrollTop = 0
+    }
+  }, [translateState.currentResult?.translatedText])
   const renderHistory = () => {
     return (
       <Content
@@ -285,6 +219,7 @@ const TranslatePanel = () => {
     }
     return (
       <Content
+        ref={panelRef}
         flex
         auto
         column

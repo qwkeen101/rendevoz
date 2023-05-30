@@ -148,11 +148,13 @@ const AnimatePopover: FC<PropsWithChildren<AnimatePopoverProps>> = ({
           boundaryInset={boundaryInset}
           ref={mergedRef}
           content={({ nudgedLeft, nudgedTop }) => {
-            if ((!nudgedRef.current || _.isEqual(nudgedRef.current, { left: 0, top: 0 })) && !disableNudge) {
+            if (!disableNudge) {
               nudgedRef.current = {
                 left: nudgedLeft,
                 top: nudgedTop
               }
+            } else {
+              nudgedRef.current = undefined
             }
 
             const { left, top } = nudgedRef.current || { left: undefined, top: undefined }

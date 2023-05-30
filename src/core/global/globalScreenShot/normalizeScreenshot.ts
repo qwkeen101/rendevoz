@@ -28,8 +28,6 @@ export const normalizeScreenshot = (screenshotBox: Box) => {
     if ('objectId' in onlyIntersectedtab) {
       const meta = MetaStore.getMetaObjectByObjectId(onlyIntersectedtab.objectId)
       if (meta) {
-        relatedMeta.push(meta)
-
         if (onlyIntersectedtab.type === 'pdf') {
           const ele = onlyIntersectedtab.tabElement!
           const pages = ele.querySelectorAll('[data-page-index]')
@@ -104,6 +102,7 @@ export const normalizeScreenshot = (screenshotBox: Box) => {
         }
       })
   }
+
   return {
     relatedMeta,
     normalizedImage,

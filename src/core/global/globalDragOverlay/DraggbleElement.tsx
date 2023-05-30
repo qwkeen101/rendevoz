@@ -12,7 +12,7 @@ const DraggableElement = forwardRef<
     hoverElement?: ReactElement
     shouldPress?: number
   }
->(({ children, draggingDetails, draggable = true, hoverElement, onDragStart, shouldPress = 100 }, externalRef) => {
+>(({ children, draggingDetails, draggable = true, hoverElement, onDragStart, shouldPress = 60 }, externalRef) => {
   const isPressed = useRef(false)
   const pressStartTime = useRef(0)
   const childRef = useRef<HTMLElement | undefined>()

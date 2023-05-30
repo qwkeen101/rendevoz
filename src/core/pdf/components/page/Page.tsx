@@ -15,11 +15,12 @@ import produce from 'immer'
 import { loadFromBlob } from '@excalidraw/excalidraw'
 import usePdfViewer from '../../core/hooks/useViewer'
 import { PAGE_INDEX_TO_CANVAS_LAYER, getTextContent } from '../../core/weakMaps'
-import { GlobalTranslateInstance } from '@/core/global/GlobalTranslatePanel'
+import { GlobalTranslateInstance } from '@/core/global/translate/GlobalTranslatePanel'
 import { GlobalSearchInstance } from '@/core/global/GlobalSearchPanel'
 import { objectIdToMetaObjectIdMapAtom } from '@/stores/meta.store'
 import { useContextmenu } from '@/hooks'
 import { useTranslation } from 'react-i18next'
+import { Rendevoz } from '@/core/rendevoz'
 
 interface PdfPageProps extends RenderPageProps {
   pdfId: number
@@ -163,7 +164,7 @@ const PdfPage: React.FC<PdfPageProps> = ({
                 closeContextmenu()
                 if (viewer) {
                   getTextContent(viewer, pageIndex).then(text => {
-                    GlobalTranslateInstance.open?.({
+                    Rendevoz.Actions.Open.Translate.openTranslate({
                       e,
                       query: text?.textContent.items.map(i => i.str).join(' '),
                       source: {

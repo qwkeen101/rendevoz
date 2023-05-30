@@ -12,10 +12,8 @@ import { AnimatePresence, motion } from 'framer-motion'
 import BlockColorPicker from '../BlockColorPicker'
 import useReadOnlyEditor from '../../hooks/useReadOnly'
 import { useMemoizedFn } from '@/hooks'
-import { TextSelectionTranslate } from '@/core/pdf/components/toolbar/TextSelectionToolbar'
 import { css } from '@emotion/css'
 import ClassName from '@/styles/classNames'
-import { GlobalTranslateInstance } from '@/core/global/GlobalTranslatePanel'
 import { Zindexes } from '@/consts'
 
 type EditorToolbarEvents =

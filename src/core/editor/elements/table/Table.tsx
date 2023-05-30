@@ -55,7 +55,7 @@ const Table = ({ element, children }: RenderElementProps) => {
     })
     innerTableRef.current?.childNodes.forEach((i, idx) =>
       rows.push({
-        height: (i as HTMLElement).getBoundingClientRect().height,
+        height: (i as HTMLElement).getBoundingClientRect().height + 0.1,
         rowIndex: idx
       })
     )
@@ -202,7 +202,8 @@ const Table = ({ element, children }: RenderElementProps) => {
       const cellPath = [...tablePath, rowIndex, idx]
       const range = Editor.range(editor, [...cellPath, 0], [...cellPath, cell.children.length - 1])
       Transforms.removeNodes(editor, {
-        at: range
+        at: range,
+        voids: true
       })
       Transforms.insertNodes(
         editor,
@@ -267,7 +268,7 @@ const Table = ({ element, children }: RenderElementProps) => {
           ))}
       </div>
 
-      <div style={{ maxWidth: '100%', overflowX: 'auto', position: 'relative', padding: '10px 0px 4px' }}>
+      <div style={{ maxWidth: '100%', overflowX: 'auto', position: 'relative', padding: '10px 0px 6px', cursor: 'default' }}>
         <div
           contentEditable={false}
           style={{
@@ -317,6 +318,7 @@ const Table = ({ element, children }: RenderElementProps) => {
         <div
           style={{
             position: 'relative',
+            cursor: 'auto',
             width: tableEle.columns?.reduce((prev, curr) => {
               return prev + (curr.width || 150)
             }, 0),

@@ -124,7 +124,7 @@ export const NavigationMenu: FC<NavigationMenuProps> = ({ layout, keyboardNaviga
         return (
           <Button.IconButton
             selected={currentSelect !== undefined ? idx === currentSelect : undefined}
-            onPointerEnter={() => setCurrentSelect(idx)}
+            onPointerMove={() => setCurrentSelect(idx)}
             icon={item.icon}
             text={item.text}
             dangerous={item.dangerous}

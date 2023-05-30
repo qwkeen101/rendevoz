@@ -2,7 +2,7 @@ import { useMergedRef } from '@/hooks'
 import ClassName from '@/styles/classNames'
 import { css } from '@emotion/css'
 import classNames from 'classnames'
-import { CSSProperties, FC, forwardRef, MouseEventHandler, useLayoutEffect, useRef } from 'react'
+import React, { CSSProperties, FC, forwardRef, MouseEventHandler, useLayoutEffect, useRef } from 'react'
 import { Icon, Tooltip } from '..'
 import Content from '../Content'
 import Colors from '@/consts/colors'
@@ -27,7 +27,8 @@ const IconButton = forwardRef(
       onPointerEnter,
       style,
       tooltip,
-      spin
+      spin,
+      ...rest
     }: {
       icon?: string
       onClick?: MouseEventHandler
@@ -43,7 +44,7 @@ const IconButton = forwardRef(
       tooltip?: string
       spin?: boolean
       onPointerEnter?: React.PointerEventHandler
-    },
+    } & React.HTMLProps<HTMLDivElement>,
     ref
   ) => {
     const innerRef = useRef<HTMLDivElement>(null)
@@ -63,6 +64,7 @@ const IconButton = forwardRef(
           flex
           tabIndex={tabIndex}
           onPointerEnter={onPointerEnter}
+          {...rest}
           style={{
             flexDirection: reverse && icon ? 'row-reverse' : 'row',
             justifyContent: spaceBetween ? 'space-between' : undefined,

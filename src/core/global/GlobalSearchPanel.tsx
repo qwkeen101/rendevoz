@@ -12,14 +12,10 @@ import { Button, Content } from '@/components'
 import FontSize from '@/consts/font'
 import { css } from '@emotion/css'
 import Actions from '../Actions'
-import { objectStore } from '@/stores/object.store'
-import getSetting from '../setting/getSetting'
-import { detectLanguage } from '@/utils/text'
 import { getPanelPosition } from './utils'
 import ResizeAndDrag from '@/components/base/ResizeAndDrag'
-import { MetaStore, ObjectStore } from '@/stores'
+import { ObjectStore } from '@/stores'
 import { searchToUrl } from '../webpage/utils'
-import Id from '@/utils/id'
 
 export const GlobalSearchInstance: Partial<{
   open: (options: { pos?: XYPosition; e?: MouseEvent; url?: string; query?: string; from?: MetaObject['fromObject'] }) => void

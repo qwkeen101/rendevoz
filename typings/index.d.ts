@@ -11,3 +11,5 @@ export * from './instances'
 export * from './pdf/core/text'
 export * from './pdf/core/layer'
 export * from './globalInstances'
+export * from './video'
+

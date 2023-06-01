@@ -5,6 +5,9 @@ import { IBase } from './base'
 
 type IObject = IWebpage | IAudio
 
+export interface ILabel extends IBase {
+  parentObjectId: number
+}
 export interface IWebpage extends IBase {
   specType: 'webpage'
   url?: string
@@ -44,6 +47,18 @@ export interface INoteBlock extends IBase {
   specType: 'noteBlock'
 }
 
+export interface IVideo extends IBase {
+  specType: 'video'
+  videoUrl: string
+  // seconds
+  lastPlayedTime: number
+  // seconds
+  totalPlayedTime: number
+}
+export interface IVideoLabel extends ILabel {
+  // second
+  videoTime: number
+}
 export interface ILocalFile extends IBase {
   specType: 'localFile'
   fileUrl: string

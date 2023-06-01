@@ -129,8 +129,16 @@ export class AppController {
 
   private checkIfRendevozGenerated = () => {
     const rendevozPath = path.join(DEFAULT_USER_DATA_PATH, 'rendevoz')
+    const filePath = path.join(rendevozPath, 'files')
+    const imgPath = path.join(rendevozPath, 'imgs')
     if (!fs.existsSync(rendevozPath)) {
       fs.mkdirSync(rendevozPath, {})
+    }
+    if (!fs.existsSync(filePath)) {
+      fs.mkdirSync(filePath, {})
+    }
+    if (!fs.existsSync(imgPath)) {
+      fs.mkdirSync(imgPath, {})
     }
   }
 

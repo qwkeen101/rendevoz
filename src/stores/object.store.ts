@@ -13,6 +13,8 @@ import {
   INoteLabel,
   IPdfDocument,
   ITag,
+  IVideo,
+  IVideoLabel,
   IWebpage,
   IWebpageLabel,
   IWhiteboard,
@@ -41,6 +43,8 @@ export type ObjectFamily = {
   tag: ITag & { specType: 'tag' }
   image: IImage
   localFile: ILocalFile
+  video: IVideo
+  videoLabel: IVideoLabel
 }
 
 export const ObjectFamilyAtom = atomFamily(() => atom(new Map<number, ObjectFamily[keyof ObjectFamily]>()))

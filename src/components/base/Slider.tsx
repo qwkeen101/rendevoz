@@ -1,27 +1,36 @@
+import Colors from '@/consts/colors'
 import { css } from '@emotion/css'
+import classNames from 'classnames'
 import { default as RcSlider, SliderProps } from 'rc-slider'
 
 const Slider = (props: SliderProps) => {
   return (
     <RcSlider
       {...props}
-      className={css({
-        '.rc-slider-handle': {
-          border: 'solid 2px #8590ae',
-          cursor: 'grabbing',
-          opacity: 1,
-          ':hover': {
-            borderColor: '#8590ae'
+      className={classNames(
+        css({
+          '.rc-slider-handle': {
+            border: 'none !important',
+            cursor: 'grabbing',
+            backgroundColor: Colors.Font.Secondary,
+            opacity: 1,
+            ':hover': {
+              borderColor: 'transparent'
+            },
+            ':active': {
+              borderColor: 'transparent !important',
+              boxShadow: 'none !important'
+            }
           },
-          ':active': {
-            borderColor: '#8590ae !important',
-            boxShadow: '0 0 10px #8590ae !important'
+          '.rc-slider-track': {
+            backgroundColor: Colors.Font.Secondary
+          },
+          '.rc-slider-rail': {
+            backgroundColor: Colors.Background.ButtonHover
           }
-        },
-        '.rc-slider-track': {
-          backgroundColor: '#8590ae'
-        }
-      })}
+        }),
+        props.className
+      )}
     ></RcSlider>
   )
 }

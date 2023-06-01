@@ -20,6 +20,7 @@ import Colors from '@/consts/colors'
 import { Provider, atom, createStore, useAtom, useAtomValue } from 'jotai'
 import fuzzysort from 'fuzzysort'
 import CodeBlock from '@/components/base/CodeBlock'
+import Video from '@/core/video'
 
 const HomeSearchAtom = atom<string | undefined>(undefined)
 export const HomePage: FC = () => {
@@ -33,6 +34,7 @@ export const HomePage: FC = () => {
   return (
     <Content flex column fullHeight style={{ margin: '0 auto', width: '100%', maxWidth: 1400, padding: '18px 24px 0px' }}>
       <TabTitle title={t('general.home')} icon="park-home" />
+      {/* <Video /> */}
       <Content
         flex
         gap={10}

@@ -1,7 +1,7 @@
 import { ipcInstance, IpcResponse } from '@/plugins'
 import { Size, XYPosition } from '~/typings'
 
-export const saveImageLocally = (
+export const saveImageLocally = async (
   imgData: string | Blob,
   options: {
     imgName?: string

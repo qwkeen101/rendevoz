@@ -166,7 +166,10 @@ const PdfPage: React.FC<PdfPageProps> = ({
                   getTextContent(viewer, pageIndex).then(text => {
                     Rendevoz.Actions.Open.Translate.openTranslate({
                       e,
-                      query: text?.textContent.items.map(i => i.str).join(' '),
+                      query: text?.textContent.items
+                        .map(i => i.str)
+                        .filter(i => typeof i === 'string')
+                        .join(' '),
                       source: {
                         type: 'pdf',
                         objectId: pdfId,

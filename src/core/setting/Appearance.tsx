@@ -4,7 +4,7 @@ import SettingItem from './Item'
 import { useSetting } from '.'
 import produce from 'immer'
 import { css } from '@emotion/css'
-import Slider from 'rc-slider'
+import { Slider } from '@/components'
 import 'rc-slider/assets/index.css'
 import ClassName from '@/styles/classNames'
 import { saveImageLocally } from '@/utils/img'
@@ -70,23 +70,6 @@ const AppearanceSetting = () => {
           </div>
           <Slider
             value={setting.background.backgroundOpacity}
-            className={css({
-              '.rc-slider-handle': {
-                border: 'solid 2px #8590ae',
-                cursor: 'grabbing',
-                opacity: 1,
-                ':hover': {
-                  borderColor: '#8590ae'
-                },
-                ':active': {
-                  borderColor: '#8590ae !important',
-                  boxShadow: '0 0 10px #8590ae !important'
-                }
-              },
-              '.rc-slider-track': {
-                backgroundColor: '#8590ae'
-              }
-            })}
             onChange={n =>
               setSetting(
                 produce(setting, draft => {
@@ -103,23 +86,6 @@ const AppearanceSetting = () => {
           </div>
           <Slider
             value={setting.background.backgroundBlur}
-            className={css({
-              '.rc-slider-handle': {
-                border: 'solid 2px #8590ae',
-                cursor: 'grabbing',
-                opacity: 1,
-                ':hover': {
-                  borderColor: '#8590ae'
-                },
-                ':active': {
-                  borderColor: '#8590ae !important',
-                  boxShadow: '0 0 10px #8590ae !important'
-                }
-              },
-              '.rc-slider-track': {
-                backgroundColor: '#8590ae'
-              }
-            })}
             onChange={n =>
               setSetting(
                 produce(setting, draft => {

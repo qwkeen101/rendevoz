@@ -26,9 +26,13 @@ const slicedLength = 'rendefile://'.length
         const indexHtml = join(process.env.DIST, 'index.html')
         const windowsSearchEngine = join(process.env.PUBLIC, 'meilisearch-windows.exe')
         const macSearchEngine = join(process.env.PUBLIC, 'meilisearch-macos')
+        const defaultRendevozDataPath = join(DEFAULT_USER_DATA_PATH, 'rendevoz')
         const searchEngine = process.platform === 'win32' ? windowsSearchEngine : macSearchEngine
         const searchEngineDataPath = join(DEFAULT_USER_DATA_PATH, 'rendevoz', 'data.ms')
         const searcheEngineStartPath = join(DEFAULT_USER_DATA_PATH, 'rendevoz', process.platform === 'win32' ? 'search.exe' : 'search')
+        if (!fs.existsSync(defaultRendevozDataPath)) {
+          fs.mkdirSync(defaultRendevozDataPath)
+        }
         if (!fs.existsSync(searcheEngineStartPath)) {
           fs.copyFileSync(searchEngine, searcheEngineStartPath)
         }

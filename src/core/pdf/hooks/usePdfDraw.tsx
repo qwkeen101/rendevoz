@@ -3,15 +3,15 @@ import { usePdfViewer } from '@/core'
 import ImageDisplayer from '@/core/image/ImageDisplayer'
 import { useRef, useState } from 'react'
 import { PAGE_INDEX_TO_CANVAS_LAYER } from '../core/weakMaps'
-import { ExcalidrawImperativeAPI } from '@/core/excalidraw/src/types'
-import { exportToCanvas } from '@/core/excalidraw/src/packages/utils'
-import { getCommonBounds } from '@/core/excalidraw/src/element'
+import { ExcalidrawImperativeAPI } from '@excalidraw/excalidraw/types/types'
+import { exportToCanvas } from '@excalidraw/excalidraw'
 import { MIME_TYPES, loadFromBlob, serializeAsJSON } from '@excalidraw/excalidraw'
 import { saveBlobLocally } from '@/utils/file'
 import { NonDeletedExcalidrawElement } from '@excalidraw/excalidraw/types/element/types'
 import { AppState, BinaryFiles, ExcalidrawInitialDataState } from '@excalidraw/excalidraw/types/types'
 import Id from '@/utils/id'
 import { ICanvasLayerInstance } from '~/typings'
+import { getCommonBounds } from '@excalidraw/excalidraw/dist/excalidraw.production.min.js'
 
 const usePdfDraw = (options: { onClose?: VoidFunction } = {}) => {
   const viewer = usePdfViewer()

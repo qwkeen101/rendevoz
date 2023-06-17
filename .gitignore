@@ -30,3 +30,4 @@ dist-electron
 files
 imgs
 .VSCodeCounter
+public/meilisearch-windows.exe

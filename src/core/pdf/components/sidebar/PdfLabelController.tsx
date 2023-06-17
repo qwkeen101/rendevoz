@@ -136,6 +136,7 @@ const Label = ({ id }: { id: number }) => {
       })
     }
   }, [pdfLabel])
+  if (!label) return null
   return (
     <Content flex column style={{ padding: 8 }}>
       <Content flex style={{ marginBottom: 4 }}>

@@ -2,24 +2,37 @@ import { Content, VirtualList } from '@/components'
 import Colors from '@/consts/colors'
 import { usePdfViewer } from '@/core'
 import { PDF_TO_THUMBNAIL } from '@/core/pdf/core/weakMaps'
-import { useUpdate } from 'react-use'
-import { useMemo } from 'react'
+import { useEffect, useState } from 'react'
+import { useDebounceFn, useSelectAtomValue } from '@/hooks'
+import { PdfBarStateAtom } from '../hooks/usePdfBarState'
+import { useLatest } from 'react-use'
+import useThrottleFn from '@/hooks/utils/useThrottleFn'
 
 const PdfThumbnail = () => {
   const viewer = usePdfViewer()
-  const update = useUpdate()
-  viewer &&
-    (viewer.onThumbnailRendered = () => {
-      console.log(viewer.getPdfId?.())
-      update()
-    })
-  const thumbnailUrls = viewer ? Array.from(PDF_TO_THUMBNAIL.get(viewer)?.entries() || []) : undefined
-  const sortedThumbnails = useMemo(() => {
-    if (thumbnailUrls?.length) {
-      thumbnailUrls.sort((a, b) => a[0] - b[0])
-      return thumbnailUrls
+  const [thumbnailUrls, setThumbnailUrls] = useState<[number, string][]>([])
+  const showLeftBar = useSelectAtomValue(PdfBarStateAtom, s => s.showLeftBar)
+  const latestShowLeftBar = useLatest(showLeftBar)
+  const throttleUpdate = useThrottleFn(
+    () => {
+      if (latestShowLeftBar.current) {
+        const urls = Array.from(PDF_TO_THUMBNAIL.get(viewer)?.entries() || [])
+        urls.sort((a, b) => a[0] - b[0])
+        setThumbnailUrls(urls)
+      }
+    },
+    { wait: 200 }
+  )
+  useEffect(() => {
+    if (viewer && showLeftBar) {
+      viewer.onThumbnailRendered = () => {
+        throttleUpdate.run()
+      }
+      return () => {
+        delete viewer.onThumbnailRendered
+      }
     }
-  }, [thumbnailUrls?.length])
+  }, [showLeftBar])
 
   return (
     <Content
@@ -32,7 +45,7 @@ const PdfThumbnail = () => {
       }}
     >
       <VirtualList
-        items={sortedThumbnails || []}
+        items={thumbnailUrls || []}
         estimateSize={300}
         renderItem={(item, idx) => (
           <div

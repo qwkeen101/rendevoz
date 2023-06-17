@@ -6,6 +6,7 @@ import Colors from '@/consts/colors'
 import PdfOutline from '../floatBar/Outline'
 import ClassName from '@/styles/classNames'
 import { useTranslation } from 'react-i18next'
+import { ErrorBoundary } from 'react-error-boundary'
 
 const PdfLeftSidebar = () => {
   const { t } = useTranslation()
@@ -24,11 +25,12 @@ const PdfLeftSidebar = () => {
       minWidth={100}
       style={{
         height: '100%',
-        position: 'relative',
-        zIndex: 20,
+        position: pdfBarState.showLeftBar ? 'relative' : 'absolute',
+        left: 0,
+        zIndex: pdfBarState.showLeftBar ? 20 : -1,
         padding: 10,
         marginRight: 20,
-        display: pdfBarState.showLeftBar ? undefined : 'none'
+        contentVisibility: pdfBarState.showLeftBar ? 'visible' : 'hidden'
       }}
       handleStyles={{
         right: {
@@ -61,7 +63,9 @@ const PdfLeftSidebar = () => {
           }
           key="thumbnail"
         >
-          <PdfThumbnail />
+          <ErrorBoundary fallback={<div></div>}>
+            <PdfThumbnail />
+          </ErrorBoundary>
         </TabPane>
         <TabPane
           style={{

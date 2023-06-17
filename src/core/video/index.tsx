@@ -37,15 +37,39 @@ const VideoInner = ({ videoId, onInstanceInitialized }: VideoProps) => {
   const instance = useVideoInstance()
   const videoMeta = MetaStore.useObjectToMetaValue(videoId)
   const smallMode = width < 1000 || videoState.floated
+
+  const getPopIcon = () => {
+    console.log(videoState)
+    if (videoState.jumpIndicator) {
+      if (videoState.jumpIndicator === 'back') {
+        return 'park-double-left'
+      } else {
+        return 'park-double-right'
+      }
+    }
+    if (videoState.volumeIndicator) {
+      if (videoState.volumeIndicator === 'down') {
+        return 'park-volume-down'
+      } else {
+        return 'park-volume-up'
+      }
+    }
+    if (videoState.paused) {
+      return 'park-pause'
+    } else {
+      return 'park-play-one'
+    }
+  }
+
   useUpdateEffect(() => {
     setPlayIconVisible(true)
   }, [videoState.paused])
 
   useEffect(() => {
-    if (videoState.jumpIndicator) {
+    if (videoState.jumpIndicator || videoState.volumeIndicator) {
       setPlayIconVisible(true)
     }
-  }, [videoState.jumpIndicator])
+  }, [videoState.jumpIndicator, videoState.volumeIndicator])
 
   useVideoShortcut()
 
@@ -57,6 +81,7 @@ const VideoInner = ({ videoId, onInstanceInitialized }: VideoProps) => {
       () => onInstanceInitialized?.(instance)
     )
   }, [])
+
   return (
     <Content
       style={{
@@ -153,8 +178,8 @@ const VideoInner = ({ videoId, onInstanceInitialized }: VideoProps) => {
                       transition={{ duration: 0.6 }}
                       onAnimationComplete={() => {
                         setPlayIconVisible(false)
-                        if (videoState.jumpIndicator) {
-                          setVideoState(s => ({ ...s, jumpIndicator: undefined }))
+                        if (videoState.jumpIndicator || videoState.volumeIndicator) {
+                          setVideoState(s => ({ ...s, jumpIndicator: undefined, volumeIndicator: undefined }))
                         }
                       }}
                     >
@@ -167,15 +192,7 @@ const VideoInner = ({ videoId, onInstanceInitialized }: VideoProps) => {
                           borderRadius: 999,
                           padding: 14
                         }}
-                        name={
-                          videoState.jumpIndicator === 'back'
-                            ? 'park-double-left'
-                            : videoState.jumpIndicator === 'forward'
-                            ? 'park-double-right'
-                            : videoState.paused
-                            ? 'park-pause'
-                            : 'park-play-one'
-                        }
+                        name={getPopIcon()}
                       />
                     </motion.div>
                   )}
@@ -226,8 +243,8 @@ const VideoInner = ({ videoId, onInstanceInitialized }: VideoProps) => {
                   transition={{ duration: 0.6 }}
                   onAnimationComplete={() => {
                     setPlayIconVisible(false)
-                    if (videoState.jumpIndicator) {
-                      setVideoState(s => ({ ...s, jumpIndicator: undefined }))
+                    if (videoState.jumpIndicator || videoState.volumeIndicator) {
+                      setVideoState(s => ({ ...s, jumpIndicator: undefined, volumeIndicator: undefined }))
                     }
                   }}
                 >
@@ -240,15 +257,7 @@ const VideoInner = ({ videoId, onInstanceInitialized }: VideoProps) => {
                       borderRadius: 999,
                       padding: 14
                     }}
-                    name={
-                      videoState.jumpIndicator === 'back'
-                        ? 'park-double-left'
-                        : videoState.jumpIndicator === 'forward'
-                        ? 'park-double-right'
-                        : videoState.paused
-                        ? 'park-pause'
-                        : 'park-play-one'
-                    }
+                    name={getPopIcon()}
                   />
                 </motion.div>
               )}
@@ -302,9 +311,11 @@ export const Video = (props: VideoProps) => {
   useEffect(() => {
     const unsub = globalStore.sub(videoAtom, () => {
       const data = globalStore.get(videoAtom)
+      const currentVideoState = store.get(VideoStateAtom)
       store.set(VideoStateAtom, {
-        ...store.get(VideoStateAtom),
+        ...currentVideoState,
         ...data,
+        volume: currentVideoState.volume,
         videoId,
         sortedChapters: data?.chapters?.slice().sort((b, a) => b.startTime - a.startTime) || []
       })

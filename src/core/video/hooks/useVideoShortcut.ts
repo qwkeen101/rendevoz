@@ -23,6 +23,12 @@ const useVideoShortcut = () => {
     if (isHotkey(KEY.ArrowRight, e)) {
       setVideoState(s => ({ ...s, currentTime: Math.min((s.currentTime || 0) + 10, s.totalTime || 0), jumpIndicator: 'forward' }))
     }
+    if (isHotkey(KEY.ArrowDown, e)) {
+      setVideoState(s => ({ ...s, volume: Math.max(0, s.volume - 0.05), volumeIndicator: 'down' }))
+    }
+    if (isHotkey(KEY.ArrowUp, e)) {
+      setVideoState(s => ({ ...s, volume: Math.min(0.6, s.volume + 0.05), volumeIndicator: 'up' }))
+    }
   })
   useEffect(() => {
     document.addEventListener('keydown', keydownHandler)

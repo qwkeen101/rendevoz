@@ -10,6 +10,7 @@ export type VideoState = {
   progressbarHovering: boolean
   paused: boolean
   jumpIndicator?: 'back' | 'forward'
+  volumeIndicator?: 'up' | 'down'
   volume: number
   speed: number
   fullScreen: boolean

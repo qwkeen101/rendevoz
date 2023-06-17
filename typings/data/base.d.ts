@@ -4,5 +4,5 @@ export interface IBase {
   updatedAt: number
   viewAt?: number
   deleted?: boolean
-  pinned?: boolean
+  pinned?: boolean 
 }

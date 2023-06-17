@@ -93,7 +93,7 @@ const slicedLength = 'rendefile://'.length
           }
         ])
         await app.whenReady()
-        console.log(app.getLocale(), app.getLocaleCountryCode(), app.getSystemLocale(), app.getPreferredSystemLanguages())
+
         protocol.registerFileProtocol('rendefile', (req, callback) => {
           console.log(process.env.FILE_PATH)
           const FILE_PATH = process.env.FILE_PATH || DefaultRendevozDataPath

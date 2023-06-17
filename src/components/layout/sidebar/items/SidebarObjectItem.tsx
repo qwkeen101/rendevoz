@@ -1,13 +1,10 @@
 import { Content } from '@/components'
-import Actions from '@/core/Actions'
 import { GlobalEventEmitter } from '@/events'
 import { useGlobalAtomValue } from '@/hooks'
 import { CollectionStore, MetaStore } from '@/stores'
 import { metaObjectsAtom } from '@/stores/meta.store'
-import { css } from '@emotion/css'
 import { selectAtom } from 'jotai/utils'
 import { FC, useMemo, useRef } from 'react'
-import { MetaObject } from '~/typings'
 import { IconNameItem } from '../SidebarCollection'
 import useSidebarItemContextMenu from '../useSidebarItemContextMenu'
 import useSidebarItemDrag from '../useSidebarItemDrag'
@@ -15,41 +12,13 @@ import { ISidebarItem } from './type'
 import { toast } from 'react-hot-toast'
 import ClassName from '@/styles/classNames'
 import FontSize from '@/consts/font'
+import { Rendevoz } from '@/core/rendevoz'
 
-export const getIcon = (type?: MetaObject['type'], metaObject?: MetaObject) => {
-  if (metaObject?.icon) {
-    return metaObject.icon
-  }
-  if (metaObject?.from?.icon) {
-    return metaObject.from.icon
-  }
-  switch (type) {
-    case 'note':
-      return 'park-notes'
-    case 'pdf':
-      return 'park-file-pdf'
-    case 'webpage':
-      return 'park-web-page'
-    case 'webpageLabel':
-    case 'noteBlock':
-    case 'noteLabel':
-    case 'pdfLabel':
-      return 'park-label'
-    case 'whiteboard':
-      return 'park-new-computer'
-    case 'image':
-      return 'park-image-files'
-    case 'localFile':
-      return 'park-log'
-    default:
-      return 'park-file-question'
-  }
-}
 const SidebarObjectItem: FC<ISidebarItem> = ({ parentId, parentType, id, draggable = true }) => {
   const metaObjectAtom = useMemo(() => selectAtom(metaObjectsAtom, m => m.get(id)), [id])
   const metaObject = useGlobalAtomValue(metaObjectAtom)
   const ref = useRef<HTMLDivElement>(null)
-  const icon = getIcon(metaObject?.type)
+  const icon = Rendevoz.Utils.Object.getMetaObjectIcon(metaObject?.type)
   draggable &&
     useSidebarItemDrag({
       id,
@@ -96,7 +65,13 @@ const SidebarObjectItem: FC<ISidebarItem> = ({ parentId, parentType, id, draggab
   )
   if (metaObject?.deleted || !metaObject) return null
   return (
-    <Content flex gap={10} ref={ref} onClick={() => Actions.navigateToTargetObject(id)} className={ClassName.flatButton(4, '3px 8px')}>
+    <Content
+      flex
+      gap={10}
+      ref={ref}
+      onClick={() => Rendevoz.Actions.Open.Meta.openMetaObject(id)}
+      className={ClassName.flatButton(4, '3px 8px')}
+    >
       {contextMenuPortal}
       <IconNameItem
         style={{ fontSize: FontSize['12px'] }}

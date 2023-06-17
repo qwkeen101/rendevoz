@@ -56,7 +56,10 @@ export const getTextContent = async (viewer: IPdfViewer, pageIndex: number) => {
     return data
   }
 }
-
+export const deleteTextContent = async (viewer: IPdfViewer, pageIndex: number) => {
+  const map = PAGE_INDEX_TO_TEXT_CONTENT.get(viewer)
+  map?.delete(pageIndex)
+}
 export const PDF_TO_RENDER_QUEUE = new WeakMap<IPdfViewer, Set<number>>()
 
 export const removeFromRenderQueue = (viewer: IPdfViewer, pageIndex: number) => {

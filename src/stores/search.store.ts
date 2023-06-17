@@ -112,7 +112,7 @@ const createSearchStore = () => {
       attributesToHighlight: ['name', 'content'],
       attributesToCrop: ['content', 'name'],
       attributesToRetrieve: ['id', 'specType', 'targetObjectId', 'pageIndex'],
-      cropLength: 50,
+      cropLength: 60,
       hitsPerPage: 40
     })
     return result.hits.map(i => ({

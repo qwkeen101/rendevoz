@@ -1,6 +1,5 @@
 import { Button, Content, Icon, Tooltip } from '@/components'
 import { IconNameItem } from '@/components/layout/sidebar/SidebarCollection'
-import { getIcon } from '@/components/layout/sidebar/items/SidebarObjectItem'
 import { Zindexes } from '@/consts'
 import Colors from '@/consts/colors'
 import FontSize from '@/consts/font'
@@ -16,10 +15,8 @@ import { createPortal } from 'react-dom'
 import { useTranslation } from 'react-i18next'
 import { Rnd } from 'react-rnd'
 import { GlobalInstances, XYPosition } from '~/typings'
-import Actions from '../../Actions'
 import { css } from '@emotion/css'
 import DateFormat from '@/utils/dateFormat'
-import { goToBlock, selectBlock } from '../../editor/utils'
 import { useSetting } from '../../setting'
 import { getPanelPosition } from '../utils'
 import { getUser } from '@/services/login.service'
@@ -199,11 +196,11 @@ const TranslatePanel = () => {
     if (translateResult.source?.type === 'pdf') {
       const { objectId, page } = translateResult.source
       if (page !== undefined) {
-        Actions.goToPdfSearchedText?.(origText, page, objectId)
+        Rendevoz.Actions.Open.Pdf.openPdfSearchedText(origText, page, objectId)
       }
     }
     if (translateResult.source?.type === 'webpage') {
-      Actions.goToWebpageSelectedText(translateResult.source.objectId, origText)
+      Rendevoz.Actions.Open.Webpage.openWebpageSelectedText(translateResult.source.objectId, origText)
     }
   }
   const renderPanel = () => {
@@ -420,7 +417,7 @@ const SourceRenderer = ({ source, small }: { source: TranslateSource; small?: bo
     console.log(source)
     switch (type) {
       case 'pdf': {
-        const pdf = await Actions.openPdf(objectId)
+        const pdf = await Rendevoz.Actions.Open.Pdf.openPdf(objectId)
         if (source.page !== undefined) {
           pdf.jumpToPage?.(source.page)
           console.log(source.selectedText)
@@ -429,19 +426,21 @@ const SourceRenderer = ({ source, small }: { source: TranslateSource; small?: bo
         break
       }
       case 'note': {
-        const editor = await Actions.openEditor(objectId)
+        const editor = await Rendevoz.Actions.Open.Editor.openEditor(objectId)
         if (source.blockId) {
-          await goToBlock(source.blockId, editor)
-          selectBlock(source.blockId, editor)
+          editor.selectBlock?.({
+            blockId: source.blockId
+          })
         }
         break
       }
       case 'webpage': {
-        const webpage = await Actions.openWebpage(objectId)
+        const webpage = await Rendevoz.Actions.Open.Webpage.openWebpage(objectId)
         if (source.blockId) {
-          const editor = await webpage.transformToNote()
-          await goToBlock(source.blockId, editor)
-          selectBlock(source.blockId, editor)
+          const editor = await webpage.transformToNote?.()
+          if (editor) {
+            editor.selectBlock?.({ blockId: source.blockId })
+          }
         }
         break
       }
@@ -466,7 +465,7 @@ const SourceRenderer = ({ source, small }: { source: TranslateSource; small?: bo
       setSourceState(() => {
         const s = {
           name: meta.name || 'Unnamed Object',
-          icon: getIcon(meta.type, meta)
+          icon: Rendevoz.Utils.Object.getMetaObjectIcon(meta.type, meta)
         }
         switch (source.type) {
           case 'pdf': {

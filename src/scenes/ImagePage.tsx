@@ -1,7 +1,7 @@
-import { Container, Content } from '@/components'
+import { Content } from '@/components'
 import TabTitle from '@/components/layout/TabTitle'
-import { getIcon } from '@/components/layout/sidebar/items/SidebarObjectItem'
 import ImageDisplayer from '@/core/image/ImageDisplayer'
+import { Rendevoz } from '@/core/rendevoz'
 import { MetaStore } from '@/stores'
 
 const ImagePage = ({ imageId }: { imageId: number }) => {
@@ -9,7 +9,7 @@ const ImagePage = ({ imageId }: { imageId: number }) => {
 
   return (
     <Content fullWidth fullHeight>
-      <TabTitle title={imageMeta?.name || 'Unnamed Image'} icon={getIcon('image')} />
+      <TabTitle title={imageMeta?.name || 'Unnamed Image'} icon={Rendevoz.Utils.Object.getMetaObjectIcon('image')} />
       <ImageDisplayer imageId={imageId} />
     </Content>
   )

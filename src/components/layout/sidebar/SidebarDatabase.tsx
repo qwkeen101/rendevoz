@@ -1,6 +1,5 @@
 import { AnimatePopover, Icon } from '@/components'
-import { GlobalDragOverlayInstance, useGlobalIsDragging } from '@/core'
-import { useGlobalEventEmitter } from '@/events/useEventEmitter'
+import { useGlobalIsDragging } from '@/core'
 import { useMemoizedFn } from '@/hooks'
 import { objectIdToMetaObjectIdMapAtom, undeletedMetaObjectsAtom } from '@/stores/meta.store'
 import { globalStore } from '@/stores'
@@ -10,13 +9,13 @@ import { useAtomValue } from 'jotai/react'
 import { memo, useEffect, useRef, useState } from 'react'
 import { MenuItem } from './Item'
 import { useTranslation } from 'react-i18next'
-import Actions from '@/core/Actions'
+import { Rendevoz } from '@/core/rendevoz'
 
 const SidebarDatabase = memo(() => {
   const { t } = useTranslation()
   const [globalIsDragging] = useGlobalIsDragging()
   const itemRef = useRef<HTMLLIElement>(null)
-  const emitter = useGlobalEventEmitter()
+  const emitter = Rendevoz.Events.Emit.GlobalEventEmitter
   const [draggingHovered, setDraggingHovered] = useState({
     droppable: false,
     visible: false,
@@ -48,12 +47,12 @@ const SidebarDatabase = memo(() => {
       })
     }
   })
-
+  const DragState = Rendevoz.Actions.State.Drag
   const pointerHandler = useMemoizedFn((e: PointerEvent) => {
     if (!globalIsDragging) return
     if (e.type === 'pointerenter') {
       let droppable = false
-      const draggingEle = GlobalDragOverlayInstance.draggingDetails
+      const draggingEle = DragState.getDraggingDetails()
       const objectIdToMetaObjectIdMap = globalStore.get(objectIdToMetaObjectIdMapAtom)
       let objectId: number | undefined = undefined
       let alreadyExist = false
@@ -83,6 +82,9 @@ const SidebarDatabase = memo(() => {
           case 'image':
             droppable = true
             break
+          case 'videoLabel':
+            objectId = draggingEle.id
+            break
           default:
             droppable = false
         }
@@ -101,7 +103,7 @@ const SidebarDatabase = memo(() => {
       })
     }
     if (e.type === 'pointerup') {
-      const draggingEle = GlobalDragOverlayInstance.draggingDetails
+      const draggingEle = DragState.getDraggingDetails()
       if (draggingEle && draggingHovered.droppable) {
         emitter.emit('global', {
           type: 'globalDropNeedFurtherProcess',
@@ -163,7 +165,7 @@ const SidebarDatabase = memo(() => {
         }
       >
         <MenuItem
-          onClick={Actions.openDatabase}
+          onClick={Rendevoz.Actions.Open.openDatabase}
           className={css([draggingHovered.visible ? ClassName.Drag.droppableItemHovered(draggingHovered.droppable) : undefined])}
           style={{
             background: draggingHovered.visible ? 'white' : undefined,

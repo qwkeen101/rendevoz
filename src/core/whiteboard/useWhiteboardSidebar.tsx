@@ -9,12 +9,13 @@ import * as Algorithm from '@/components/base/dock/Algorithm'
 import { useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { Rnd } from 'react-rnd'
 import ImagePage from '@/scenes/ImagePage'
-import WebpagePage from '../webpage/Webpage'
+import Webpage from '../webpage/Webpage'
+import { Resizable } from 're-resizable'
+import VideoPage from '@/scenes/VideoPage'
 
 const useWhiteboardSidebar = () => {
-  const [collapsed, toggleCollapsed] = useToggle(false)
+  const [collapsed, toggleCollapsed] = useToggle(true)
   const id = useMemo(() => Id.getStrId(), [])
-  const [x, setX] = useState(-600)
   const [showTransition, toggleShowTransition] = useState(false)
   const layoutRef = useRef<DockLayout>()
   const [layout, setLayout] = useState<LayoutData>({
@@ -41,8 +42,10 @@ const useWhiteboardSidebar = () => {
         return <PdfPage pdfId={objectId} />
       case 'image':
         return <ImagePage imageId={objectId} />
+      case 'video':
+        return <VideoPage videoId={objectId} />
       case 'webpage':
-        return <WebpagePage initialWebpageId={objectId} />
+        return <Webpage initialWebpageId={objectId} />
     }
   }
   useLayoutEffect(() => {
@@ -53,7 +56,7 @@ const useWhiteboardSidebar = () => {
     }
   }, [collapsed])
 
-  const addTab = (type: 'pdf' | 'note' | 'webpage', objectId: number) => {
+  const addTab = (type: 'pdf' | 'note' | 'webpage' | 'video' | 'image', objectId: number) => {
     if (type && objectId) {
       toggleCollapsed(false)
       const layout = layoutRef.current?.getLayout()
@@ -79,23 +82,22 @@ const useWhiteboardSidebar = () => {
   }
   const render = () => {
     return (
-      <Rnd
-        enableResizing={{ left: collapsed ? false : true }}
-        disableDragging
-        default={{
+      <Resizable
+        enable={{
+          left: collapsed ? false : true
+        }}
+        defaultSize={{
           height: '100%',
-          width: '600px',
-          x: -600,
-          y: 0
+          width: 600
         }}
-        onResizeStop={(e, dir, ele, delta, pos) => {
-          setX(-ele.getBoundingClientRect().width)
+        minWidth={480}
+        style={{
+          borderLeft: '1px solid rgba(0,0,0,0.08)',
+          transform: collapsed ? 'translateX(100%)' : 'translateX(0px)',
+          position: 'absolute',
+          right: 0,
+          top: 0
         }}
-        position={{
-          y: 0,
-          x: collapsed ? 0 : layout.dockbox.children[0].tabs.length > 0 ? x : 0
-        }}
-        style={{ borderLeft: '1px solid rgba(0,0,0,0.08)' }}
       >
         {layout.dockbox.children[0].tabs.length > 0 && (
           <div style={{ position: 'absolute', top: 0, bottom: 0, left: -40, display: 'flex', alignItems: 'center' }}>
@@ -117,7 +119,7 @@ const useWhiteboardSidebar = () => {
             style={{ position: 'absolute', inset: 0 }}
           ></DockLayout>
         </Content>
-      </Rnd>
+      </Resizable>
     )
   }
 

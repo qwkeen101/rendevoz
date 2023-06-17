@@ -1,19 +1,17 @@
 import { IconNameItem } from '@/components/layout/sidebar/SidebarCollection'
-import { getIcon } from '@/components/layout/sidebar/items/SidebarObjectItem'
 import Colors from '@/consts/colors'
 import { MetaStore } from '@/stores'
 import { CSSProperties, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { MetaObject } from '~/typings'
-import Actions from '../Actions'
-import { delay } from '@/utils/functions'
+import { delay, waitFor } from '@/utils/functions'
 import FontSize from '@/consts/font'
 import { css } from '@emotion/css'
-import { goToBlock, selectBlock } from '../editor/utils'
 import { Content, Tooltip } from '@/components'
 import ClassName from '@/styles/classNames'
-import WebpageSourceRenderer from './WebpageSourceRenderer'
 import { PAGE_SPACING } from '../pdf/core/layouts/Layout'
+import { Rendevoz } from '../rendevoz'
+import { normalizeSecondsToTime } from '../video/utils'
 
 const FromRenderer = ({
   metaObject: initialObject,
@@ -28,6 +26,7 @@ const FromRenderer = ({
     name?: string
     icon?: string
   }>()
+  const getIcon = Rendevoz.Utils.Object.getMetaObjectIcon
   const { t } = useTranslation()
   useEffect(() => {
     const setAction = async () => {
@@ -48,6 +47,14 @@ const FromRenderer = ({
             setFromState({
               name: `${fromMeta.name}${pages ? ' ' + t('general.page') + ': ' + renderPages : ''}`,
               icon: fromMeta.icon || getIcon('pdf')
+            })
+            break
+          }
+          case 'video': {
+            const { time } = from
+            setFromState({
+              name: `${fromMeta.name}${time ? ' — ' + normalizeSecondsToTime(time) : ''}`,
+              icon: fromMeta.icon || getIcon('video')
             })
             break
           }
@@ -74,7 +81,7 @@ const FromRenderer = ({
       switch (from.type) {
         case 'pdf': {
           const { pages, rect, selectedText } = from
-          const pdf = await Actions.openPdf(objectId)
+          const pdf = await Rendevoz.Actions.Open.Pdf.openPdf(objectId)
           if (pages) {
             await delay(100)
             pdf.jumpToPage?.(pages[0])
@@ -96,76 +103,31 @@ const FromRenderer = ({
           break
         }
         case 'note': {
-          const editor = await Actions.openEditor(objectId)
+          const editor = await Rendevoz.Actions.Open.Editor.openEditor(objectId)
           if (from.blockId) {
-            await goToBlock(from.blockId, editor)
-            selectBlock(from.blockId, editor)
+            await editor.selectBlock?.({ blockId: from.blockId })
           }
           break
         }
         case 'webpage': {
-          const webpage = await Actions.openWebpage(objectId)
+          const webpage = await Rendevoz.Actions.Open.Webpage.openWebpage(objectId)
           if (from.blockId) {
-            const editor = await webpage.transformToNote()
-            await goToBlock(from.blockId, editor)
-            selectBlock(from.blockId, editor)
+            const editor = await webpage.transformToNote?.()
+            if (editor) {
+              editor.selectBlock?.({ blockId: from.blockId })
+            }
+          }
+          break
+        }
+        case 'video': {
+          if (from.time) {
+            Rendevoz.Actions.Open.Video.openVideoAtTime(objectId, from.time)
+          } else {
+            Rendevoz.Actions.Open.Video.openVideo(objectId)
           }
         }
       }
     }
-    // if (initialObject?.type && initialObject.objectId) {
-    //   const { type, objectId } = initialObject
-    //   switch (type) {
-    //     case 'image': {
-    //       const image = await ObjectStore('image').getOneById(objectId)
-    //       if (image) {
-    //         const { from } = image
-    //         if (from?.type === 'pdf') {
-    //           const { pages, rect } = from
-    //           const pdf = await Actions.openPdf(from.pdfId)
-    //           if (pages) {
-    //             await delay(100)
-    //             pdf.jumpToPage?.(pages[0])
-    //             if (rect) {
-    //               const pageSize = pdf.getPageSize?.()
-    //               if (pageSize) {
-    //                 const realPageHeight = pageSize.height * pageSize.scale
-    //                 pdf.scrollToOffset?.(pages[0] * realPageHeight + rect.top * realPageHeight + (rect.height * realPageHeight) / 2)
-    //               }
-
-    //               pdf.highlightArea?.(pages[0], rect)
-    //             }
-    //           }
-    //         }
-    //         if (from?.type === 'note') {
-    //           const { noteId } = from
-    //           Actions.openEditor(noteId)
-    //         }
-    //       }
-    //       break
-    //     }
-    //     case 'noteLabel':
-    //     case 'noteBlock': {
-    //       const one = await ObjectStore(type).getOneById(objectId)
-    //       if (one) {
-    //         const { noteId } = one
-    //         if (noteId) {
-    //           Actions.openEditor(noteId)
-    //         }
-    //       }
-    //       break
-    //     }
-    //     case 'pdfLabel': {
-    //       const label = await ObjectStore(type).getOneById(objectId)
-    //       if (label) {
-    //         const { documentId } = label
-    //         if (documentId) {
-    //           Actions.openPdf(documentId)
-    //         }
-    //       }
-    //     }
-    //   }
-    // }
   }
   if (!fromState?.name) return null
 

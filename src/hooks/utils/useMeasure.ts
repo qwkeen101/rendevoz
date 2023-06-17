@@ -3,10 +3,11 @@ import useCallbackRef from './useCallbackRef'
 import ResizeObserver from 'resize-observer-polyfill'
 const useMeasure = (ref: React.RefObject<unknown>) => {
   const [element, attachRef] = useCallbackRef()
-  const [bounds, setBounds] = useState({})
+  const [bounds, setBounds] = useState<{ width?: number; height?: number }>({})
   function onResize([entry]) {
     setBounds({
-      height: entry.contentRect.height
+      height: entry.contentRect.height,
+      width: entry.contentRect.width
     })
   }
   useEffect(() => {

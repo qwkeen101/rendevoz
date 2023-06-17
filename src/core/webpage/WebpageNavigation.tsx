@@ -1,4 +1,4 @@
-import { AnimatePopover, Button, Content, Icon, IconWithPopover, Menu, Tooltip, WithBorder } from '@/components'
+import { AnimatePopover, Content, Icon, Menu, Tooltip } from '@/components'
 import { KEY, Zindexes } from '@/consts'
 import Colors from '@/consts/colors'
 import FontSize from '@/consts/font'
@@ -10,11 +10,10 @@ import { CSSProperties, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useSetting } from '../setting'
 import { searchToUrl } from './utils'
-import { useToggle } from '@/hooks'
 import { TypeToTypeName } from '../database'
 import { useLatest } from 'react-use'
 
-type NavigationEvent =
+export type NavigationEvent =
   | {
       action: 'back' | 'forward' | 'refresh' | 'stop' | 'showOriginPage' | 'showReaderPage' | 'saveAsMetaObject' | 'zoom in' | 'zoom out'
     }
@@ -23,8 +22,6 @@ type NavigationEvent =
       url: string
     }
 
-const BAIDU_AUTO_SUGGEST_URL =
-  'https://www.baidu.com/sugrec?pre=1&p=3&ie=utf-8&json=1&prod=pc&from=pc_web&wd=automatically&csor=13&pwd=automaticall'
 const WebpageNavigation = ({
   on,
   navigationState,

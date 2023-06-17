@@ -1,4 +1,3 @@
-import Actions from '@/core/Actions'
 import { TypeToTypeName } from '@/core/database'
 import ClassName from '@/styles/classNames'
 import { css } from '@emotion/css'
@@ -11,6 +10,8 @@ import tinycolor from 'tinycolor2'
 import HoverObjectDetails from '@/core/database/HoverObjectDetails'
 import { MetaStore } from '@/stores'
 import { Content, Image } from '@/components'
+import { Rendevoz } from '@/core/rendevoz'
+import HoverAttachment from '@/core/database/HoverAttachment'
 
 const clazzName = css([
   {
@@ -23,16 +24,15 @@ const clazzName = css([
   ClassName.ellipsisFont(2)
 ])
 const nameClassName = css([
+  ClassName.objectTag,
   {
-    textTransform: 'capitalize',
     pointerEvents: 'none',
     fontSize: '0.78em',
     whiteSpace: 'nowrap',
     lineHeight: 1,
     padding: '0.2em 0.6em !important',
     margin: 'auto'
-  },
-  ClassName.objectTag
+  }
 ])
 const circleClassName = css({
   borderRadius: '50%',
@@ -64,53 +64,75 @@ const InlineMetaElement: FC<RenderElementProps> = ({ element, children, attribut
   }, [metaObject?.color])
   return (
     <span {...attributes} data-meta-id={element.id} style={{ margin: '0 6px', position: 'relative' }}>
-      <HoverObjectDetails metaObjectId={(element as InlineMetaObjectElement).originId}>
-        <div
-          style={{
-            display: 'inline-flex',
-            gap: metaObject?.coverImgSrc ? 12 : 6,
-            alignItems: metaObject?.coverImgSrc ? 'center' : 'baseline',
-            maxWidth: 'calc(100% - 20px)'
-          }}
-        >
-          {metaObject?.coverImgSrc ? (
-            <Image preview src={metaObject.coverImgSrc} width="3.4em" className={css({ borderRadius: 6, marginTop: 6 })} />
-          ) : (
-            <div
-              className={circleClassName}
-              style={{
-                background: innerColor,
-                border: `0.3em solid ${circleColor}`
-              }}
-            ></div>
-          )}
-          {metaObject?.coverImgSrc ? (
-            <Content flex column gap="0.2em" style={{ alignSelf: 'flex-end' }}>
-              <div style={{ width: 'fit-content', margin: 0, fontSize: '0.8em' }} className={nameClassName}>
+      <div
+        style={{
+          display: 'inline-flex',
+          gap: metaObject?.coverImgSrc ? 12 : 6,
+          alignItems: metaObject?.coverImgSrc ? 'center' : 'baseline',
+          maxWidth: 'calc(100% - 20px)'
+        }}
+      >
+        {metaObject?.coverImgSrc ? (
+          <Image preview src={metaObject.coverImgSrc} width="3.4em" className={css({ borderRadius: 6, marginTop: 6 })} />
+        ) : (
+          <div
+            className={circleClassName}
+            style={{
+              background: innerColor,
+              border: `0.3em solid ${circleColor}`
+            }}
+          ></div>
+        )}
+        {metaObject?.coverImgSrc ? (
+          <Content flex column gap="0.2em" style={{ alignSelf: 'flex-end' }}>
+            <Content flex gap={6}>
+              <div role="tag" style={{ width: 'fit-content', margin: 0, fontSize: '0.8em' }} className={nameClassName}>
                 {t(`general.${TypeToTypeName[metaObject?.type || 'normal']}`)}
               </div>
+              {metaObject.attachments?.length ? (
+                <HoverAttachment metaId={metaObject.id}>
+                  <div
+                    style={{
+                      width: 'fit-content',
+                      margin: 0,
+                      fontSize: '0.8em',
+                      cursor: 'pointer',
+                      pointerEvents: 'auto'
+                    }}
+                    role="tag"
+                    className={nameClassName}
+                  >
+                    {`${metaObject.attachments.length} ${t(`general.att`)}`}
+                  </div>
+                </HoverAttachment>
+              ) : null}
+            </Content>
+            <HoverObjectDetails metaObjectId={(element as InlineMetaObjectElement).originId}>
               <span
                 className={clazzName}
                 data-meta
                 onClick={() => {
-                  metaObject?.id && Actions.navigateToTargetObject(metaObject?.id)
+                  metaObject?.id && Rendevoz.Actions.Open.Meta.openMetaObject(metaObject.id)
                 }}
                 style={{
                   color: metaObject?.color,
                   lineHeight: 1.2,
-                  marginBottom: '-0.12em'
+                  marginBottom: '-0.12em',
+                  width: 'fit-content'
                 }}
               >
                 {metaObject?.name || 'Deleted Object'}
               </span>
-            </Content>
-          ) : (
-            <>
+            </HoverObjectDetails>
+          </Content>
+        ) : (
+          <>
+            <HoverObjectDetails metaObjectId={(element as InlineMetaObjectElement).originId}>
               <span
                 className={clazzName}
                 data-meta
                 onClick={() => {
-                  metaObject?.id && Actions.navigateToTargetObject(metaObject?.id)
+                  metaObject?.id && Rendevoz.Actions.Open.Meta.openMetaObject(metaObject.id)
                 }}
                 style={{
                   color: metaObject?.color
@@ -118,11 +140,22 @@ const InlineMetaElement: FC<RenderElementProps> = ({ element, children, attribut
               >
                 {metaObject?.name || 'Deleted Object'}
               </span>
-              <div className={nameClassName}>{t(`general.${TypeToTypeName[metaObject?.type || 'normal']}`)}</div>
-            </>
-          )}
-        </div>
-      </HoverObjectDetails>
+            </HoverObjectDetails>
+
+            <div className={nameClassName} role="tag">
+              {t(`general.${TypeToTypeName[metaObject?.type || 'normal']}`)}
+            </div>
+            {metaObject?.attachments?.length ? (
+              <HoverAttachment metaId={metaObject.id}>
+                <div style={{ width: 'fit-content', cursor: 'pointer', pointerEvents: 'auto' }} role="tag" className={nameClassName}>
+                  {`${metaObject.attachments.length} ${t(`general.att`)}`}
+                </div>
+              </HoverAttachment>
+            ) : null}
+          </>
+        )}
+      </div>
+
       {children}
     </span>
   )

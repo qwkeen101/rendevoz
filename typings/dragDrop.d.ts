@@ -1,5 +1,5 @@
 import { Path } from 'slate'
-import { CustomElement } from '.'
+import { CustomElement, IVideoLabel } from '.'
 
 export type GlobalDraggingDetails =
   | {
@@ -68,3 +68,7 @@ export type GlobalDraggingDetails =
       noteId: number
       textContent?: string
     }
+  | ({
+      type: 'videoLabel'
+      textContent?: string
+    } & Partial<IVideoLabel>)

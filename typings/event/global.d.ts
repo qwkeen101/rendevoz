@@ -22,6 +22,10 @@ export type DropOn =
       dropOn: 'whiteboard'
       whiteboardId: number
     }
+  | {
+      dropOn: 'attachment'
+      parentMetaId: number
+    }
 
 type GlobalDropNeedFurtherProcessEvent = {
   dropOn: DropOn
@@ -43,9 +47,7 @@ type GlobalNeedAddMetaObjectEvent = {
 type GlobalNeedEditMetaObjectEvent = {
   metaObjectId: number
 }
-type GlobalChooseMetaObjectEvent = {
-
-}
+type GlobalChooseMetaObjectEvent = {}
 export interface GlobalEventMap {
   globalDropNeedAddLink: Partial<DragDropEvent>
   globalDropNeedFurtherProcess: GlobalDropNeedFurtherProcessEvent

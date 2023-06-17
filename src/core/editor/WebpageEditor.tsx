@@ -1,47 +1,28 @@
 import Id from '@/utils/id'
 import { useMemo } from 'react'
-import { Editor, EditorProps } from './Editor'
+import { EditorProps } from './Editor'
+import EditorPage from '@/scenes/editor'
 
-type IWebpageEditor = {} & EditorProps
-const WebpageEditor = ({
-  initialValue,
-  title,
-  onLinkClick,
-  noteId,
-  onHighlight,
-  onHighlightDrag,
-  onHighlightRemove,
-  onTranslate,
-  onEditorInitialized,
-  onChange,
-  onSearch,
-  showToolbar,
-  readonly = true
-}: // readonly = true
-IWebpageEditor) => {
+type IWebpageEditor = EditorProps
+const WebpageEditor = ({ initialValue, title, noteId, on, showToolbar, onInstanceIntialized, readonly = true }: IWebpageEditor) => {
   const id = useMemo(() => Id.getStrId(), [])
   return (
-    <Editor
+    <EditorPage
+      disableTitle
       titleContainerStyle={{
         width: 800,
         padding: '20px 0px',
         maxWidth: 'calc(100% - 100px)'
       }}
+      on={on}
       readonly={readonly}
       showToolbar={showToolbar}
-      onHighlight={onHighlight}
-      onHighlightDrag={onHighlightDrag}
-      onHighlightRemove={onHighlightRemove}
-      onTranslate={onTranslate}
       id={id}
       titleEditable={false}
+      onInstanceInitialized={onInstanceIntialized}
       initialValue={initialValue}
-      onEditorInitialized={onEditorInitialized}
-      onChange={onChange}
       noteId={noteId}
-      onSearch={onSearch}
       title={title}
-      onLinkClick={onLinkClick}
     />
   )
 }

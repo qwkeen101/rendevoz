@@ -1,16 +1,15 @@
-import Actions from '@/core/Actions'
-import useSidebarWidth from '@/hooks/components/useSidebarWidth'
 import { FC, useEffect, useMemo, useRef, useState } from 'react'
 import { Helmet } from 'react-helmet'
 import { Container, Icon } from '../base'
 import DockLayout, { LayoutData } from '../base/dock'
-import LayoutManager from './LayoutManager'
+import LayoutManager from './layoutManager'
 import { css } from '@emotion/css'
 import { useCreateObject, useSetting } from '@/core'
-import { LayoutTab } from './types'
 import { useGlobalAtomValue } from '@/hooks'
 import { SidebarStateAtom } from './sidebar'
 import ClassName from '@/styles/classNames'
+import { ILayoutTab } from '~/typings'
+import { Rendevoz } from '@/core/rendevoz'
 interface LayoutProps {
   sidebar?: React.ReactNode
   children?: React.ReactNode
@@ -31,7 +30,7 @@ const initialLayout: LayoutData = {
   }
 }
 
-export const LayoutIdToTabMap = new Map<string, LayoutTab>()
+export const LayoutIdToTabMap = new Map<string, ILayoutTab>()
 export let GlobalLayout: LayoutManager | null = null
 const Layout: FC<LayoutProps> = ({ sidebar }) => {
   const sidebarWidth = useGlobalAtomValue(SidebarStateAtom).width
@@ -55,7 +54,7 @@ const Layout: FC<LayoutProps> = ({ sidebar }) => {
             display: 'flex',
             alignItems: 'center',
             zIndex: 10,
-            pointerEvents: 'auto',
+            pointerEvents: 'auto'
           }}
           draggable={false}
         >
@@ -77,21 +76,7 @@ const Layout: FC<LayoutProps> = ({ sidebar }) => {
   const layoutRef = useRef<DockLayout>()
   const [setting] = useSetting()
   layoutManager.makeTabActive = id => layoutRef.current?.updateTab(id, null, true)
-  layoutManager.hasTargetTab = tab => {
-    const target = Array.from(LayoutIdToTabMap.entries()).find(([k, v]) => {
-      if (tab.type === v.type) {
-        if ('objectId' in v && 'objectId' in tab) {
-          if (v.objectId === tab.objectId) {
-            return k
-          }
-          return
-        }
-        return k
-      }
-    })
 
-    return target?.[0]
-  }
   GlobalLayout = layoutManager
 
   useEffect(() => {
@@ -99,7 +84,7 @@ const Layout: FC<LayoutProps> = ({ sidebar }) => {
     layoutManager.onLayoutChange(layout => {
       setLayout(layout)
     })
-    Actions.openHome()
+    Rendevoz.Actions.Open.openHome()
   }, [])
   const handleLayoutChange = (layout: LayoutData) => {
     setLayout(layout)

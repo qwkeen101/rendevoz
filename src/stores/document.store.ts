@@ -1,18 +1,19 @@
 import PdfJs from '@/consts/pdfJs'
-import { saveFileLocally } from '@/utils/file'
+import { getFilenameWithoutExtension, saveFileLocally } from '@/utils/file'
 import Id from '@/utils/id'
 import { saveImageLocally } from '@/utils/img'
 import { atom } from 'jotai/vanilla'
 import { IPdfDocument } from '~/typings/data'
 import usePdfjs from '@/hooks/utils/usePdfjs'
 import { SearchStore, SearchableDocument } from './search.store'
+import { ObjectStore, globalStore } from '.'
 
 export const documentsAtom = atom<Map<number, IPdfDocument>>(new Map())
 
 export const initializePdfDocument = async (file: File): Promise<Partial<IPdfDocument> | undefined> => {
   if (file.type === 'application/pdf') {
     const pdfDocument: Partial<IPdfDocument> = {
-      name: file.name || 'Unnamed PDF'
+      name: getFilenameWithoutExtension(file.name) || 'Unnamed PDF'
     }
     const buffer = await file.arrayBuffer()
     const loadingTask = PdfJs.getDocument(new Uint8Array(buffer))
@@ -70,4 +71,10 @@ export const savePdfAsSearch = async (pdfFile: File | Uint8Array, pdfId: number)
     const filtered = allTexts.filter(i => i.content.length)
     SearchStore.addDocuments(filtered)
   }
+}
+
+export const getAllLabelsOfDocument = async (documentId: number) => {
+  await ObjectStore('pdfLabel').getAll()
+  const labels = Array.from(globalStore.get(ObjectStore('pdfLabel').objectMapAtom).values()).filter(i => i.documentId === documentId)
+  return labels
 }

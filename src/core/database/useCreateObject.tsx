@@ -4,10 +4,10 @@ import { ObjectStore } from '@/stores'
 import { useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useTranslation } from 'react-i18next'
-import Actions from '../Actions'
 import { AnimatePopoverProps } from '@/components/base/AnimatePopover'
 import { Zindexes } from '@/consts'
 import ClassName from '@/styles/classNames'
+import { Rendevoz } from '../rendevoz'
 
 export const useCreateObject = (options?: {
   positions: AnimatePopoverProps['positions']
@@ -18,6 +18,7 @@ export const useCreateObject = (options?: {
     whiteboard?: boolean
     webpage?: boolean
     localFile?: boolean
+    video?: boolean
   }
 }) => {
   const [modalState, setModalState] = useState<{
@@ -41,7 +42,7 @@ export const useCreateObject = (options?: {
             onBack={closeModal}
             onSubmit={meta => {
               closeModal()
-              Actions.navigateToTargetObject(meta.id)
+              Rendevoz.Actions.Open.Meta.openMetaObject(meta.id)
             }}
           />
         )}
@@ -71,29 +72,15 @@ export const useCreateObject = (options?: {
                   />
                 </Content>
               )}
-              {options?.visiblities?.pdf !== false && (
+              {options?.visiblities?.note !== false && (
                 <Button.IconButton
-                  icon="park-file-pdf"
-                  text={t('general.pdf')}
+                  icon="park-notes"
+                  text={t('general.note')}
                   onClick={() => {
-                    setModalState({ createDoc: true })
-                  }}
-                />
-              )}
-              {options?.visiblities?.webpage !== false && (
-                <Button.IconButton
-                  icon="park-web-page"
-                  text={t('general.webpage')}
-                  onClick={() => {
-                    ObjectStore('webpage')
-                      .addOneWithMeta(
-                        {
-                          title: 'Unknown webpage'
-                        },
-                        { showMetaModal: true }
-                      )
+                    ObjectStore('note')
+                      .addOneWithMeta({ title: 'Untitled' }, { showMetaModal: true })
                       .then(({ one }) => {
-                        Actions.openWebpage(one.id)
+                        Rendevoz.Actions.Open.Editor.openEditor(one.id)
                       })
                   }}
                 />
@@ -111,24 +98,60 @@ export const useCreateObject = (options?: {
                         { showMetaModal: true }
                       )
                       .then(({ one }) => {
-                        Actions.openWhiteboard(one.id)
+                        Rendevoz.Actions.Open.Whiteboard.openWhiteboard(one.id)
                       })
                   }}
                 />
               )}
-              {options?.visiblities?.note !== false && (
+              {options?.visiblities?.pdf !== false && (
                 <Button.IconButton
-                  icon="park-notes"
-                  text={t('general.note')}
+                  icon="park-file-pdf"
+                  text={t('general.pdf')}
                   onClick={() => {
-                    ObjectStore('note')
-                      .addOneWithMeta({ title: 'Untitled' }, { showMetaModal: true })
+                    setModalState({ createDoc: true })
+                  }}
+                />
+              )}
+              {options?.visiblities?.video !== false && (
+                <Button.IconButton
+                  icon="park-play-two"
+                  text={t('general.video')}
+                  onClick={() => {
+                    ObjectStore('video')
+                      .addOneWithMeta(
+                        {},
+                        {
+                          showMetaModal: true,
+                          currentMeta: {
+                            name: 'Unnamed Video'
+                          }
+                        }
+                      )
                       .then(({ one }) => {
-                        Actions.openEditor(one.id)
+                        Rendevoz.Actions.Open.Video.openVideo(one.id)
                       })
                   }}
                 />
               )}
+              {options?.visiblities?.webpage !== false && (
+                <Button.IconButton
+                  icon="park-web-page"
+                  text={t('general.webpage')}
+                  onClick={() => {
+                    ObjectStore('webpage')
+                      .addOneWithMeta(
+                        {
+                          title: 'Unknown webpage'
+                        },
+                        { showMetaModal: true }
+                      )
+                      .then(({ one }) => {
+                        Rendevoz.Actions.Open.Webpage.openWebpage(one.id)
+                      })
+                  }}
+                />
+              )}
+
               {options?.visiblities?.localFile !== false && (
                 <Button.IconButton
                   icon="park-log"

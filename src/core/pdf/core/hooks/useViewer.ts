@@ -1,7 +1,5 @@
-import { atom, useAtomValue } from 'jotai'
-import { IPdfViewer } from '~/typings'
+import usePdfInstance from '../../hooks/usePdfInstance'
 
-export const PdfViewerAtom = atom<IPdfViewer | null>(null)
+const usePdfViewer = () => usePdfInstance()
 
-const usePdfViewer = () => useAtomValue(PdfViewerAtom)
 export default usePdfViewer

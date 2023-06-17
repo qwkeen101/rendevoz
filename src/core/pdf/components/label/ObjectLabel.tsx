@@ -115,15 +115,16 @@ const ObjectLabel = ({ labelId, pageSize }: { labelId: number; pageSize: PageSiz
               {renderExpand({})}
             </div>
           ) : (
-            <HoverObjectDetails metaObjectId={label.metaObjectId}>
-              {renderInline({
-                containerStyle: {
-                  padding: '6px 8px',
-                  maxWidth: pageSize.width * 0.2,
-                  fontSize: FontSize['12px']
-                }
-              })}
-            </HoverObjectDetails>
+            renderInline({
+              ellipsisLine: 1,
+              showHoverObjectDetails: true,
+              showCircle: true,
+              containerStyle: {
+                padding: '6px 8px',
+                maxWidth: pageSize.width * 0.2,
+                fontSize: FontSize['12px']
+              }
+            })
           )}
         </Content>
       </AnimatePopover>

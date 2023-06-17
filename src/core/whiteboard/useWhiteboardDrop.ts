@@ -1,17 +1,15 @@
-import { GlobalEventHandler } from '@/events/globalEvent'
-import { useGlobalEventEmitter } from '@/events/useEventEmitter'
 import { useMemoizedFn } from '@/hooks'
-import { initializePdfDocument } from '@/stores/document.store'
 import { globalStore, ObjectStore } from '@/stores'
 import { saveFileLocally } from '@/utils/file'
 import Id from '@/utils/id'
 import produce from 'immer'
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { IWhiteboardNode, MetaObject } from '~/typings/data'
 import { useFlow, useSetWhiteboardItems, useSetWhiteboardNodes } from './hooks'
 import { isPointerOnContainer, transformXY } from './utils'
 import { objectIdToMetaObjectIdMapAtom } from '@/stores/meta.store'
 import { useEventHandler } from '@/events'
+import { Rendevoz } from '../rendevoz'
 
 const getAsStringPromise = (item: DataTransferItem): Promise<string> => {
   return new Promise(res => {
@@ -19,7 +17,7 @@ const getAsStringPromise = (item: DataTransferItem): Promise<string> => {
   })
 }
 const useWhiteboardDrop = () => {
-  const emitter = useGlobalEventEmitter()
+  const emitter = Rendevoz.Events.Emit.GlobalEventEmitter
   const handler = useEventHandler('global')
   const flow = useFlow()
   const setNodes = useSetWhiteboardNodes()

@@ -1,7 +1,7 @@
 import { PDFDocumentProxy } from 'pdfjs-dist'
 import { FC, memo, ReactElement, useEffect, useImperativeHandle, useRef, useState } from 'react'
-import { defaultRangeExtractor, Range, useVirtualizer, Virtualizer } from '@tanstack/react-virtual'
-import { useDebounceFn, useMemoizedFn, useUpdateEffect } from '@/hooks'
+import { defaultRangeExtractor, Range, useVirtualizer, VirtualItem, Virtualizer } from '@tanstack/react-virtual'
+import { useDebounceEffect, useDebounceFn, useMemoizedFn, useSelectAtomValue, useUpdateEffect } from '@/hooks'
 import PageLayer from '../layers/PageLayer'
 import { PageSize, RenderPageProps } from '../types/page'
 import { useScrollMode } from '../hooks/useScrollMode'
@@ -15,10 +15,11 @@ import useScopedEventEmitter from '@/events/useEventEmitter'
 import usePdfViewer from '../hooks/useViewer'
 import { ObjectStore } from '@/stores'
 import { IPdfViewer } from '~/typings'
-import { getTextContent, PAGE_INDEX_TO_PAGE_FUNCTION, PAGE_INDEX_TO_TEXT_LAYER, PDF_TO_DOC } from '../weakMaps'
+import { PAGE_INDEX_TO_PAGE_FUNCTION, PAGE_INDEX_TO_TEXT_LAYER, PDF_TO_DOC } from '../weakMaps'
 import { waitFor } from '@/utils/functions'
 import { normalizeText } from '../utils/search'
 import { ID_TO_LABEL_MAP } from '../../weakMaps'
+import { PdfStateAtom } from '../../hooks/usePdfState'
 
 interface LayoutProps {
   doc: PDFDocumentProxy
@@ -83,13 +84,14 @@ const Layout: FC<LayoutProps> = ({
   const [rotation, setRotation] = useState(0)
   const [scale, setScale] = useState(pageSize.scale)
   const [enablePan, setEnablePan] = useState(false)
+  const autoFitWhenResize = useSelectAtomValue(PdfStateAtom, s => s.autoFitWhenResize)
   const viewer = usePdfViewer()
+
   const textRef = useRef<
     {
       id: number
       str: string
       page: number
-      prepared: Fuzzysort.Prepared
     }[]
   >([])
   const scaleRef = useRef(pageSize.scale)
@@ -125,8 +127,10 @@ const Layout: FC<LayoutProps> = ({
     width: rect.w * scale
   }
   const estimateSize = () => {
-    return (scrollMode === 'horizontal' ? result.width : result.height) + PAGE_SPACING
+    // return (scrollMode === 'horizontal' ? result.width : result.height) + PAGE_SPACING
+    return scale * pageSize.height + PAGE_SPACING
   }
+
   const rangeExtractor = useMemoizedFn(range => {
     visibleRangeRef.current = [range.startIndex, range.endIndex]
     currentRangeRef.current = range
@@ -143,6 +147,14 @@ const Layout: FC<LayoutProps> = ({
       return scale * pageSize.height + PAGE_SPACING
     }
   })
+
+  const [virtualItems, setVirtualItems] = useState<VirtualItem[]>([])
+
+  useUpdateEffect(() => {
+    if (autoFitWhenResize) {
+      setScale(pageSize.scale)
+    }
+  }, [pageSize.scale, autoFitWhenResize])
 
   useUpdateEffect(() => {
     const previousScale = scaleRef.current
@@ -238,10 +250,10 @@ const Layout: FC<LayoutProps> = ({
       }[] = []
       const text = textRef.current
       const search = normalizeText(s).replace(/[\-\[\]\/\{\}\(\)\*\+\?\.\\\^\$\|]/g, '\\$&')
-
-      text.forEach(i => {
+      const reg = new RegExp(search, 'gi')
+      const quickFilter = text.filter(i => i.str.match(reg))
+      quickFilter.forEach(i => {
         const reg = new RegExp(search, 'gi')
-
         const indexes = ([...i.str.matchAll(reg)].map(i => i.index).filter(i => i !== undefined) as number[]).reduce((prev, curr, idx) => {
           if (idx === 0) {
             prev.push(curr)
@@ -301,16 +313,19 @@ const Layout: FC<LayoutProps> = ({
     if (initialPage) {
       virtualizer.scrollToIndex(initialPage, { align: 'start', behavior: 'auto' })
     }
-    if (textRef.current.length === 0) {
+    if (textRef.current.length === 0 && viewer) {
       const map = textRef.current
-      setTimeout(() => {
-        for (let i = 1; i < doc.numPages; i++) {
-          requestIdleCallback(() => {
-            if (!viewer) return
-            getTextContent(viewer, i - 1).then(item => {
-              if (!item) return
-              const text = item.textContent
-              const hasStrTexts = text.items.filter(i => (i as TextItem).str) as TextItem[]
+      const currentPage = {
+        current: 0
+      }
+      viewer.getDocument?.().then(doc => {
+        const asyncLoopTextContent = () => {
+          if (currentPage.current === doc.numPages) return
+          doc
+            .getPage(currentPage.current + 1)
+            .then(page => page.getTextContent())
+            .then(item => {
+              const hasStrTexts = item.items.filter(i => (i as TextItem).str) as TextItem[]
               const str = hasStrTexts
                 .map(i => {
                   if (i.hasEOL) {
@@ -325,13 +340,14 @@ const Layout: FC<LayoutProps> = ({
               map.push({
                 id,
                 str: normalized,
-                page: i - 1,
-                prepared: undefined
+                page: currentPage.current
               })
+              currentPage.current += 1
+              requestIdleCallback(() => asyncLoopTextContent())
             })
-          })
         }
-      }, 1000)
+        asyncLoopTextContent()
+      })
     }
     const pages = pagesRef.current
     if (pages) {
@@ -342,6 +358,13 @@ const Layout: FC<LayoutProps> = ({
     }
   }, [doc])
 
+  useDebounceEffect(
+    () => {
+      setVirtualItems(virtualizer.getVirtualItems())
+    },
+    [virtualizer.getVirtualItems()],
+    { wait: 20 }
+  )
   if (viewer) {
     Object.assign(viewer, {
       jumpToPage,
@@ -441,7 +464,7 @@ const Layout: FC<LayoutProps> = ({
     <div className={className} ref={pagesRef} style={{ height: '100%', width: '100%', overflow: 'auto' }}>
       <PanHelper enablePan={enablePan} containerEle={pagesRef.current} />
       <div style={{ height: virtualizer.getTotalSize(), width: '100%', position: 'relative' }}>
-        {virtualizer.getVirtualItems().map(item => (
+        {virtualItems.map(item => (
           <div
             data-index={item.index}
             ref={virtualizer.measureElement}
@@ -454,11 +477,10 @@ const Layout: FC<LayoutProps> = ({
               transform: `translateY(${item.start}px)`,
               paddingBottom: 10
             }}
-            key={`${item.index}_page`}
+            key={item.key}
             data-page-index={item.index}
           >
             <PageLayer
-              key={item.index}
               transformScale={transformScale}
               scrollElement={pagesRef}
               renderPage={renderPage}

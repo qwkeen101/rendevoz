@@ -4,14 +4,14 @@ import { css } from '@emotion/css'
 import { useAtomValue } from 'jotai'
 import { CustomEditor } from '~/typings'
 import { EditorHighlightsAtom } from './useEditorFilter'
-import Actions from '@/core/Actions'
 import { useState } from 'react'
 import fuzzysort from 'fuzzysort'
 import { Content, Icon } from '@/components'
+import { Rendevoz } from '@/core/rendevoz'
 
 const AllHighlights = ({ editor }: { editor: CustomEditor }) => {
   const allHighlights = useAtomValue(EditorHighlightsAtom)
-  const [search, setSearch] = useState<typeof allHighlights[0][]>()
+  const [search, setSearch] = useState<(typeof allHighlights)[0][]>()
   return (
     <>
       <Content
@@ -72,15 +72,16 @@ const AllHighlights = ({ editor }: { editor: CustomEditor }) => {
               {
                 transition: 'color 0.2s ease',
                 cursor: 'pointer',
+                padding: '8px 0px',
                 ':hover': {
                   color: '#8ab4f8'
                 }
               },
               ClassName.ellipsisFont(1)
             ])}
+            style={{ textTransform: 'none' }}
             onClick={() => {
-              console.log(i.highlightId, editor)
-              Actions.goToNoteLabel(i.highlightId, editor)
+              Rendevoz.Actions.Open.Editor.openNoteLabel(i.highlightId)
             }}
           >
             {i.str}

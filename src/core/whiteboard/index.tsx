@@ -5,7 +5,7 @@ import { memo, useEffect, useLayoutEffect, useMemo, useRef } from 'react'
 import TreeEdgeContainer from './EdgeContainer'
 import { FlowAtom, useFlow, WhiteboardAtom } from './hooks'
 import TreeNodeContainer from './NodeContainer'
-import useScopedEventEmitter, { useGlobalEventEmitter } from '@/events/useEventEmitter'
+import useScopedEventEmitter from '@/events/useEventEmitter'
 import { GlobalEventHandler } from '@/events/globalEvent'
 import useWhiteboardSelect from './useWhiteboardSelect'
 import useWhiteboardAutoPan from './useWhiteboardAutoPan'
@@ -19,12 +19,13 @@ import { Content } from '@/components'
 import { useSetting } from '../setting'
 import { useGlobalAtomValue } from '@/hooks'
 import useWhiteboardSidebar from './useWhiteboardSidebar'
+import { Rendevoz } from '../rendevoz'
 
 const WhiteboardInner = memo(({ id, enableMiniMap = true }: { id: number; enableMiniMap?: boolean }) => {
   const containerRef = useRef<HTMLDivElement>(null)
   const flow = useFlow()
   const panzoomRef = useRef<PanZoom>()
-  const emitter = useGlobalEventEmitter()
+  const emitter = Rendevoz.Events.Emit.GlobalEventEmitter
   const handler = useMemo(() => new GlobalEventHandler(), [])
   const scopedEmitter = useScopedEventEmitter()
   const whiteboard = useAtomValue(WhiteboardAtom)
@@ -120,6 +121,7 @@ const WhiteboardInner = memo(({ id, enableMiniMap = true }: { id: number; enable
                       case 'image':
                       case 'webpage':
                       case 'note':
+                      case 'video':
                         addTab(target.specType, meta.objectId)
                     }
                   }

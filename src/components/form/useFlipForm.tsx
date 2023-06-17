@@ -7,7 +7,7 @@ import { capitalize } from 'lodash'
 import { CSSProperties, Fragment, ReactNode, useMemo, useState } from 'react'
 import { Flipped, Flipper } from 'react-flip-toolkit'
 import { useTranslation } from 'react-i18next'
-import { Content, Form, Icon } from '..'
+import { Button, Content, Form, Icon } from '..'
 import { defaultBgColor } from '../picker/colorPicker'
 import { ObjectTag } from '@/core'
 import FormColorPicker from './FormColorPicker'
@@ -19,6 +19,7 @@ import { useToggle } from '@/hooks'
 import { MetaObject } from '~/typings'
 import FormFromDisplayer from './FormFromDisplayer'
 import FormFilePathPicker from './FormFilePathPicker'
+import { FormAttachmentDisplayer, FormAttachmentManager } from './FormAttachment'
 
 type useFlipFormOptions = {
   layout: FlipFormLayoutItem[]
@@ -91,9 +92,20 @@ export type FlipFormLayoutItem =
       onRemove?: VoidFunction
     }
   | {
+      type: 'attachmentDisplayer'
+      attachments: Required<MetaObject['attachments']>
+    }
+  | {
       type: 'filePathPicker'
       filePath: string
-      onChange: (filePath: string | undefined, fileName: string | undefined) => void
+      accept?: HTMLInputElement['accept']
+      onChange: (filePath: string | undefined, fileName: string | undefined, file: File | undefined) => void
+    }
+  | {
+      type: 'attchmentManager'
+      attachments: MetaObject['attachments']
+      onChange: (atts?: MetaObject['attachments']) => void
+      metaId: number
     }
   | undefined
 interface FormInnerState {
@@ -101,6 +113,7 @@ interface FormInnerState {
   tagPickerVisible: boolean
   iconPickerVisible: boolean
   colorPickerVisible: boolean
+  attachmentManagerVisible: boolean
 }
 export const groupClassName = css({
   boxShadow: `${Colors.Background.ButtonHover} 0px 0px 0px 1px inset`,
@@ -118,16 +131,23 @@ export const hoverLabelClassName = css({
   fontFamily: 'Muli',
   fontSize: '0.857rem'
 })
+const handleEnterUpdateDelete = ({ animateExitingElements, animateEnteringElements, hideEnteringElements, animateFlippedElements }) => {
+  hideEnteringElements()
+  animateExitingElements()
+  animateFlippedElements()
+  animateEnteringElements()
+}
 const useFlipForm = (options: useFlipFormOptions) => {
   const { layout, onBack, onSubmit, formTitle, containerStyle, submitText } = options
   const [formInnerState, setFormInnerState] = useState<Partial<FormInnerState>>({
     mainVisible: true
   })
-  const { mainVisible, tagPickerVisible, iconPickerVisible, colorPickerVisible } = formInnerState
+  const { mainVisible, tagPickerVisible, iconPickerVisible, colorPickerVisible, attachmentManagerVisible } = formInnerState
   const mainFlipId = useMemo(() => Id.getStrId(), [])
   const tagPickerFlipId = useMemo(() => Id.getStrId(), [])
   const colorPickerFlipId = useMemo(() => Id.getStrId(), [])
   const iconPickerFlipId = useMemo(() => Id.getStrId(), [])
+  const attachmentManagerFlipId = useMemo(() => Id.getStrId(), [])
   const [enlarged, toggleEnlarged] = useToggle(false)
   const { t } = useTranslation()
   const flattenedLayout = useMemo(
@@ -176,7 +196,7 @@ const useFlipForm = (options: useFlipFormOptions) => {
           />
         )
       case 'filePathPicker':
-        return <FormFilePathPicker maxWidth={enlarged ? '100%' : 400} filePath={i.filePath} onChange={i.onChange} />
+        return <FormFilePathPicker accept={i.accept} maxWidth={enlarged ? '100%' : 400} filePath={i.filePath} onChange={i.onChange} />
       case 'tagPicker':
         return (
           <Content
@@ -206,9 +226,11 @@ const useFlipForm = (options: useFlipFormOptions) => {
       case 'iconPicker': {
         const emoji = i.icon ? getEmoji(i.icon) : undefined
         return (
-          <div
+          <Content
+            alignItems="center"
+            justifyContent="space-between"
+            flex
             className={ClassName.flatButton()}
-            style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', textTransform: 'capitalize' }}
             onClick={() => {
               if (i.icon) {
                 i.onChange(undefined)
@@ -217,7 +239,10 @@ const useFlipForm = (options: useFlipFormOptions) => {
               }
             }}
           >
-            {i.icon ? `${t('general.delete')} ${t('general.icon')}` : t('general.icon')}
+            <Content gap={8} flex style={{ textTransform: 'capitalize' }}>
+              <Icon name="park-emotion-happy" />
+              <span>{t('general.icon')}</span>
+            </Content>
             {emoji ? (
               <Content flex centered style={{ width: 20, height: 20 }}>
                 <img
@@ -238,7 +263,7 @@ const useFlipForm = (options: useFlipFormOptions) => {
             ) : (
               <Icon name="park-right" onClick={() => setFormInnerState({ iconPickerVisible: true })} />
             )}
-          </div>
+          </Content>
         )
       }
       case 'tagDisplayer': {
@@ -268,17 +293,38 @@ const useFlipForm = (options: useFlipFormOptions) => {
       }
       case 'colorPicker':
         return (
-          <div
+          <Content
+            alignItems="center"
+            justifyContent="space-between"
+            flex
             className={ClassName.flatButton()}
-            style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', textTransform: 'capitalize' }}
             onClick={() => setFormInnerState({ colorPickerVisible: true })}
           >
-            {t('general.color')}
+            <Content gap={8} flex style={{ textTransform: 'capitalize' }}>
+              <Icon name="park-background-color" />
+              <span>{t('general.color')}</span>
+            </Content>
             {i?.color ? <div style={{ width: 20, height: 20, borderRadius: 4, background: i.color }}></div> : <Icon name="park-right" />}
-          </div>
+          </Content>
+        )
+      case 'attchmentManager':
+        return (
+          <Content
+            alignItems="center"
+            justifyContent="space-between"
+            flex
+            className={ClassName.flatButton()}
+            onClick={() => setFormInnerState({ attachmentManagerVisible: true })}
+          >
+            <Content gap={8} flex style={{ textTransform: 'capitalize' }}>
+              <Icon name="park-link" />
+              <span>{i.attachments?.length ? t('general.num attachments', { num: i.attachments.length }) : t('general.attachments')}</span>
+            </Content>
+            <Icon name="park-right" />
+          </Content>
         )
       case 'imagePicker':
-        return <FormImagePicker imageUrl={i.imageUrl} onChange={i.onChange} name={i.name}/>
+        return <FormImagePicker imageUrl={i.imageUrl} onChange={i.onChange} name={i.name} />
       case 'previewGraph':
         return (
           <div
@@ -377,15 +423,27 @@ const useFlipForm = (options: useFlipFormOptions) => {
       )
     }
   }
+  const renderAttachmentManager = () => {
+    const attachmentManagerItem = flattenedLayout.find(i => i && i.type === 'attchmentManager') as
+      | (FlipFormLayoutItem & { type: 'attchmentManager' })
+      | undefined
+    if (attachmentManagerItem) {
+      return (
+        <Flipped flipId={attachmentManagerFlipId} onAppear={FlipCardEnter} onExit={FlipCardExit}>
+          <FormAttachmentManager
+            metaId={attachmentManagerItem.metaId}
+            onClose={() => setFormInnerState({ mainVisible: true })}
+            attachments={attachmentManagerItem.attachments}
+            onAttachmentsChange={attachmentManagerItem.onChange}
+          />
+        </Flipped>
+      )
+    }
+  }
   const renderForm = () => {
     return (
       <Flipper
-        handleEnterUpdateDelete={({ animateExitingElements, animateEnteringElements, hideEnteringElements, animateFlippedElements }) => {
-          hideEnteringElements()
-          animateExitingElements()
-          animateFlippedElements()
-          animateEnteringElements()
-        }}
+        handleEnterUpdateDelete={handleEnterUpdateDelete}
         flipKey={`${JSON.stringify(formInnerState)}_${enlarged}`}
         spring={{ stiffness: 1600, damping: 100 }}
       >
@@ -403,6 +461,7 @@ const useFlipForm = (options: useFlipFormOptions) => {
             {iconPickerVisible && renderIconPicker()}
             {tagPickerVisible && renderTagPicker()}
             {colorPickerVisible && renderColorPicker()}
+            {attachmentManagerVisible && renderAttachmentManager()}
           </div>
         </Flipped>
       </Flipper>

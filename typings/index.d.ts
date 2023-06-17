@@ -12,4 +12,6 @@ export * from './pdf/core/text'
 export * from './pdf/core/layer'
 export * from './globalInstances'
 export * from './video'
-
+export * from './layout'
+export * from './webpage'
+export * from './pdf'

@@ -42,7 +42,7 @@ const Heading: FC<RenderElementProps> = ({ element, children }) => {
     let containEles = 0
     const parentEle = Editor.node(editor, Path.parent(currentPath))[0]
     let currIdx = parentEle.children.findIndex(i => i === element) + 1
-    while (parentEle.children[currIdx] && !parentEle.children[currIdx].type.startsWith('heading')) {
+    while (parentEle.children[currIdx] && !parentEle.children[currIdx]?.type?.startsWith('heading')) {
       currentPath = Path.next(currentPath)
       currIdx += 1
       containEles += 1
@@ -50,7 +50,7 @@ const Heading: FC<RenderElementProps> = ({ element, children }) => {
     setContainElements(containEles)
   }
 
-  const debounceCal = useDebounceFn(calculateContainElements, { wait: 1000 })
+  const debounceCal = useDebounceFn(calculateContainElements, { wait: 300 })
 
   useEffect(() => {
     handler.on('valueChange', () => {

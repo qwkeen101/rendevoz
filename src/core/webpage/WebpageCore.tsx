@@ -1,6 +1,5 @@
 import { Content } from '@/components/base'
-import { NativeImage } from 'electron/common'
-import { ReactNode, RefObject, useEffect, useImperativeHandle, useRef, useState } from 'react'
+import { ReactNode, useEffect, useRef, useState } from 'react'
 import { increaseLevel } from '../pdf/core/utils/zoom'
 import { decreaseLevel } from '../pdf/core/utils/zoom'
 import useWebpageOthers from './useWebpageOthers'
@@ -8,68 +7,34 @@ import { IpcWebpageEvent } from './webpageIpcEvent'
 import { useMemoizedFn } from '@/hooks'
 import { waitFor } from '@/utils/functions'
 import { useLatest } from 'react-use'
+import useWebpageInstance from './hooks/useWebpageInstance'
+import { assignProperties } from '@/utils'
+import useWebpageState from './hooks/useWebpageState'
+import { ObjectStore } from '@/stores'
 export const DEFAULT_USER_AGENT =
   'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/103.0.5026.0 Safari/537.36 Edg/103.0.1254.0'
-export type WebpageInnerRef = {
-  clip: () => Promise<{
-    html: string
-    url: string
-  }>
-  navigateTo: (url: string) => void
-  navigateBack: () => string | undefined
-  navigateForward: () => string | undefined
-  refresh: VoidFunction
-  stop: VoidFunction
-  capturePage: () => Promise<NativeImage>
-  getId: () => number
-  zoomIn: VoidFunction
-  setUserAgent: (agent: string) => void
-  zoomOut: VoidFunction
-  findInPage?: (text: string) => void
-  getUrl?: () => string
-}
 
 export type WebpageProps = {
   url?: string
-  onStartLoad?: VoidFunction
-  onEndLoad?: VoidFunction
-  onFaviconUpdated?: (data: { favicons: string[] }) => void
-  onTitleChange?: (data: { title: string }) => void
-  onUrlChange?: (data: { url: string }) => void
-  showReaderMode: boolean
-  innerRef?: RefObject<WebpageInnerRef | undefined>
   children?: ReactNode
   userAgent?: string
-  webpageId?: number
   onEvent?: (event: IpcWebpageEvent) => void
   disableImageClick?: boolean
 }
 
-export const WebpageCore = ({
-  url: _url,
-  children,
-  onStartLoad,
-  onEndLoad,
-  onFaviconUpdated,
-  onTitleChange,
-  onUrlChange,
-  innerRef,
-  userAgent = DEFAULT_USER_AGENT,
-  showReaderMode,
-  webpageId,
-  disableImageClick,
-  onEvent
-}: WebpageProps) => {
+export const WebpageCore = ({ url: _url, children, userAgent = DEFAULT_USER_AGENT, disableImageClick, onEvent }: WebpageProps) => {
   // if url change, can save as another webpage object
   const ref = useRef<HTMLWebViewElement>(null)
   const [displayUrl, setDisplayUrl] = useState(_url)
-  const [loaded, setLoaded] = useState(false)
+  const [webpageState, setWebpageState] = useWebpageState()
+  const { navigationUrl, currentWebpage, loaded, showReaderMode } = webpageState
   const latestLoaded = useLatest(loaded)
-  const [title, setTitle] = useState<string>()
   const faviconRef = useRef<string>()
   const { renderContextMenu } = useWebpageOthers(ref, {
-    webpageId
+    webpageId: currentWebpage?.id
   })
+  const instance = useWebpageInstance()
+
   const messageHanlder = useMemoizedFn(e => {
     const event = e.args[0]
     console.log(event)
@@ -78,56 +43,56 @@ export const WebpageCore = ({
       onEvent?.({ ...event, bodyX: webviewBounding?.left + event.x, bodyY: webviewBounding.top + event.y })
     }
   })
-  useEffect(() => {
-    const navigateHandler = (data: any) => {
-      if (!data.url.startsWith('https://www.google.com/uviewer')) {
-        setDisplayUrl(data.url)
-        onUrlChange?.(data)
-      }
-    }
-    const titleHandler = (data: any) => {
-      setTitle(data.title)
-    }
 
-    ref.current?.addEventListener('did-navigate', navigateHandler)
-    ref.current?.addEventListener('did-navigate-in-page', navigateHandler)
-    ref.current?.addEventListener('page-title-updated', titleHandler)
-    ref.current?.addEventListener('ipc-message', messageHanlder)
-    return () => {
-      ref.current?.removeEventListener('did-navigate', navigateHandler)
-      ref.current?.removeEventListener('page-title-updated', titleHandler)
-      ref.current?.removeEventListener('ipc-message', messageHanlder)
-      ref.current?.removeEventListener('did-navigate-in-page', navigateHandler)
-    }
-  }, [onUrlChange])
   useEffect(() => {
     const container = ref.current
     if (container) {
       const startLoadHandler = () => {
-        onStartLoad?.()
-        setLoaded(false)
+        setWebpageState(s => ({ ...s, loaded: false }))
       }
       const endLoadHandler = () => {
-        onEndLoad?.()
-        setLoaded(true)
+        setWebpageState(s => ({ ...s, loaded: true }))
       }
 
       const faviconUpdateHandler = (data: any) => {
-        onFaviconUpdated?.(data)
+        const { favicons } = data
+        const favicon = favicons[favicons.length - 1]
+        currentWebpage?.id && ObjectStore('webpage').updateOne({ id: currentWebpage?.id, favicon })
+        setWebpageState(s => ({ ...s, faviconUrl: favicon }))
         faviconRef.current = data.favicons[data.favicons.length - 1]
+      }
+      const navigateHandler = (data: any) => {
+        if (!data.url.startsWith('https://www.google.com/uviewer')) {
+          setDisplayUrl(data.url)
+          if (data.url !== navigationUrl) {
+            setWebpageState(s => ({ ...s, navigationUrl: data.url }))
+          }
+        }
+      }
+      const titleChangeHandler = data => {
+        setWebpageState(s => ({ ...s, title: data.title }))
       }
       container.addEventListener('did-start-loading', startLoadHandler)
       container.addEventListener('did-stop-loading', endLoadHandler)
       container.addEventListener('page-favicon-updated', faviconUpdateHandler)
-      onTitleChange && container.addEventListener('page-title-updated', onTitleChange)
+      container.addEventListener('page-title-updated', titleChangeHandler)
+
+      container.addEventListener('did-navigate', navigateHandler)
+      container.addEventListener('did-navigate-in-page', navigateHandler)
+      container.addEventListener('ipc-message', messageHanlder)
+
       return () => {
         container.removeEventListener('did-start-loading', startLoadHandler)
         container.removeEventListener('did-stop-loading', endLoadHandler)
         container.removeEventListener('page-favicon-updated', faviconUpdateHandler)
-        onTitleChange && container.removeEventListener('page-title-updated', onTitleChange)
+        container.removeEventListener('did-navigate', navigateHandler)
+        container.removeEventListener('page-title-updated', titleChangeHandler)
+        container.removeEventListener('ipc-message', messageHanlder)
+        container.removeEventListener('did-navigate-in-page', navigateHandler)
       }
     }
-  }, [onStartLoad, onEndLoad, onFaviconUpdated])
+  }, [webpageState])
+
   const findInPage = useMemoizedFn(text => {
     waitFor(
       () => {
@@ -151,6 +116,7 @@ export const WebpageCore = ({
       }
     )
   })
+
   useEffect(() => {
     const interval = setInterval(() => {
       setTimeout(() => {
@@ -165,7 +131,8 @@ export const WebpageCore = ({
       clearInterval(interval)
     }
   }, [disableImageClick])
-  useImperativeHandle(innerRef, () => ({
+
+  assignProperties(instance, {
     capturePage: () => {
       return ref.current?.capturePage()
     },
@@ -177,18 +144,18 @@ export const WebpageCore = ({
     },
     zoomIn: () => {
       const zoomFactor = ref.current?.getZoomFactor()
-      ref.current.setZoomFactor(increaseLevel(zoomFactor))
+      ref.current?.setZoomFactor(increaseLevel(zoomFactor))
     },
     zoomOut: () => {
       const zoomFactor = ref.current?.getZoomFactor()
-      ref.current.setZoomFactor(decreaseLevel(zoomFactor))
+      ref.current?.setZoomFactor(decreaseLevel(zoomFactor))
     },
     setUserAgent: agent => {
       if (loaded) {
         ref.current?.setUserAgent?.(agent)
       }
     },
-    clip: async () => {
+    clipHTML: async () => {
       if (loaded && displayUrl) {
         const html = await ref.current?.executeJavaScript(
           `function gethtml () {
@@ -237,7 +204,7 @@ export const WebpageCore = ({
       webview.stop()
     },
     findInPage
-  }))
+  })
 
   return (
     <Content flex column fullWidth fullHeight auto>

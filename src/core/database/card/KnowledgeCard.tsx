@@ -1,12 +1,12 @@
 import { FC, memo } from 'react'
 import { MetaDatabaseCardProps } from './types'
-import Actions from '@/core/Actions'
+import { Rendevoz } from '@/core/rendevoz'
 
 const MetaKnowledgeCard: FC<MetaDatabaseCardProps> = memo(({ metaObject, renderTitleAndDescription }) => {
   return renderTitleAndDescription({
     title: metaObject.name,
     description: metaObject.description,
-    onTitleClick: () => Actions.navigateToTargetObject(metaObject.id)
+    onTitleClick: () => Rendevoz.Actions.Open.Meta.openMetaObject(metaObject.id)
   })
 })
 

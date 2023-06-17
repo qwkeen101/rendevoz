@@ -11,5 +11,8 @@ export const KEY = {
   Escape: 'Escape',
   ArrowUp: 'ArrowUp',
   ArrowDown: 'ArrowDown',
-  Slash: '/'
+  Slash: '/',
+  Space: 'Space',
+  ArrowRight: 'ArrowRight',
+  ArrowLeft: 'ArrowLeft'
 }

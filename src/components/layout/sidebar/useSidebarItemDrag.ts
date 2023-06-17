@@ -1,6 +1,6 @@
-import { GlobalDragOverlayInstance, useGlobalIsDragging } from '@/core'
+import { useGlobalIsDragging } from '@/core'
+import { Rendevoz } from '@/core/rendevoz'
 import { GlobalEventHandler } from '@/events/globalEvent'
-import { useGlobalEventEmitter } from '@/events/useEventEmitter'
 import { useMemoizedFn } from '@/hooks'
 import { CollectionStore } from '@/stores'
 import useCollectionStore from '@/stores/collection.store'
@@ -42,9 +42,10 @@ const useSidebarItemDrag = (options: {
   const [isDragging] = useGlobalIsDragging()
   const [hovered, setHovered] = useState(false)
   const [droppable, setDroppable] = useState(false)
+  const DragState = Rendevoz.Actions.State.Drag
   const isPressedRef = useRef(false)
   const { findParentCollections, moveItems } = useCollectionStore()
-  const emitter = useGlobalEventEmitter()
+  const emitter = Rendevoz.Events.Emit.GlobalEventEmitter
   const globalDragEndHandler = useMemoizedFn(({ event }: { event: PointerEvent }) => {
     isPressedRef.current = false
     setTimeout(() => (sidebarDraggingState.current = undefined))
@@ -69,8 +70,8 @@ const useSidebarItemDrag = (options: {
             }
           })
           return
-        } else if (GlobalDragOverlayInstance.draggingDetails?.type === 'metaElement') {
-          CollectionStore.addItemToCollection({ id: GlobalDragOverlayInstance.draggingDetails.metaId, type: 'meta' }, id)
+        } else if (DragState.getDraggingDetails()?.type === 'metaElement') {
+          CollectionStore.addItemToCollection({ id: DragState.getDraggingDetails()?.metaId!, type: 'meta' }, id)
         }
       }
     }
@@ -92,11 +93,11 @@ const useSidebarItemDrag = (options: {
       const cloned = draggableElementRef?.current?.cloneNode(true) as HTMLElement
       cloned.style.width = `${draggableElementRef?.current?.clientWidth}px`
       cloned.style.height = `${draggableElementRef?.current?.clientHeight}px`
-      GlobalDragOverlayInstance.addDragElements?.(cloned)
+      DragState.addDragElements?.(cloned)
     }
     if (e.type === 'pointermove') {
       if (isPressedRef.current) {
-        GlobalDragOverlayInstance.startDrag?.()
+        DragState.startDrag?.()
         sidebarDraggingState.current = {
           draggingItemId: id,
           draggingItemType: type,
@@ -106,38 +107,38 @@ const useSidebarItemDrag = (options: {
         }
         switch (type) {
           case 'document': {
-            GlobalDragOverlayInstance.draggingDetails = {
+            DragState.setDraggingDetails({
               type: 'pdf',
               pdfId: id
-            }
+            })
             break
           }
           case 'whiteboard': {
-            GlobalDragOverlayInstance.draggingDetails = {
+            DragState.setDraggingDetails({
               type: 'whiteboard',
               whiteboardId: id
-            }
+            })
             break
           }
           case 'collection': {
-            GlobalDragOverlayInstance.draggingDetails = {
+            DragState.setDraggingDetails({
               type: 'collection',
               collectionId: id
-            }
+            })
             break
           }
           case 'note': {
-            GlobalDragOverlayInstance.draggingDetails = {
+            DragState.setDraggingDetails({
               type: 'note',
               noteId: id
-            }
+            })
             break
           }
           case 'meta': {
-            GlobalDragOverlayInstance.draggingDetails = {
+            DragState.setDraggingDetails({
               type: 'metaElement',
               metaId: id
-            }
+            })
           }
         }
       }
@@ -147,7 +148,7 @@ const useSidebarItemDrag = (options: {
         if (id !== sidebarDraggingState.current?.draggingItemId) {
           setHovered(true)
         }
-        const draggingEle = GlobalDragOverlayInstance.draggingDetails
+        const draggingEle = DragState.getDraggingDetails()
         if (draggingEle) {
           let drop = false
           switch (draggingEle.type) {

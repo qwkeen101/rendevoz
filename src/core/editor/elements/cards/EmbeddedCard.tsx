@@ -1,6 +1,6 @@
 import Id from '@/utils/id'
 import { ReactNode, useMemo, useRef, useState } from 'react'
-import { Editor, EditorV1 } from '../../Editor'
+import { Editor } from '../../Editor'
 import { motion } from 'framer-motion'
 import { css } from '@emotion/css'
 import { useSlate } from '../../slate-react'

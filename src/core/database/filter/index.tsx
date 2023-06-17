@@ -207,9 +207,9 @@ const TypeFilter = ({
   const shouldFilterIdSet = useAtomValue(ShouldFilterIdsAtom)
   const [popoverVisible, togglePopoverVisible] = useToggle(initialOpen)
   const { t } = useTranslation()
-  const fileTypes = ['image', 'pdf', 'webpage', 'localFile']
+  const fileTypes = ['image', 'pdf', 'webpage', 'video', 'localFile']
   const recordTypes = ['note', 'whiteboard']
-  const labelTypes = ['noteLabel', 'noteBlock', 'pdfLabel', 'webpageLabel']
+  const labelTypes = ['noteLabel', 'noteBlock', 'pdfLabel', 'videoLabel', 'webpageLabel']
   const types: MetaObject['type'][] = [
     'normal',
     'image',

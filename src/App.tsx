@@ -27,6 +27,18 @@ import GlobalWebview from './core/global/GlobalWebview'
 import 'highlight.js/styles/atom-one-dark.css'
 import GlobalTextSearch from './core/global/GlobalTextSearch'
 import '@/consts/colors.less'
+import { ILayoutTab } from '~/typings'
+import { TabData } from './core/rendevoz/layout'
+import EditorPage from './scenes/editor'
+import Id from './utils/id'
+import ImagePage from './scenes/ImagePage'
+import PdfPage from './scenes/pdf'
+import VideoPage from './scenes/VideoPage'
+import { Rendevoz } from './core/rendevoz'
+import Webpage from './core/webpage/Webpage'
+import WhiteboardPage from './scenes/WhiteboardPage'
+import { HomePage } from './scenes/HomePage'
+import DatabasePage from './scenes/DatabasePage'
 
 export function getOS() {
   const userAgent = window.navigator.userAgent.toLowerCase(),
@@ -50,6 +62,49 @@ export function getOS() {
   return os
 }
 
+const RENDEVOZ_DEFAULT_TABS: TabData[ILayoutTab['type']][] = [
+  {
+    type: 'note',
+    content: opts =>
+      opts.objectId && <EditorPage noteId={opts.objectId} id={Id.getStrId()} onInstanceInitialized={opts.onInstanceInitialized} />
+  },
+  {
+    type: 'image',
+    content: opts => opts.objectId && <ImagePage imageId={opts.objectId} />
+  },
+  {
+    type: 'pdf',
+    content: opts => opts.objectId && <PdfPage pdfId={opts.objectId} onInstanceInitialized={opts.onInstanceInitialized} />
+  },
+  {
+    type: 'video',
+    content: opts => opts.objectId && <VideoPage videoId={opts.objectId} onInstanceInitialized={opts.onInstanceInitialized} />
+  },
+  {
+    type: 'webpage',
+    content: opts =>
+      opts.objectId && (
+        <Webpage
+          onWebpageChange={newWebpage => (opts.tab.objectId = newWebpage.webpageId)}
+          initialWebpageId={opts.objectId}
+          onInstanceInitialized={opts.onInstanceInitialized}
+        />
+      )
+  },
+  {
+    type: 'whiteboard',
+    content: opts => opts.objectId && <WhiteboardPage whiteboardId={opts.objectId} />
+  },
+  {
+    type: 'home',
+    content: () => <HomePage />
+  },
+  {
+    type: 'database',
+    content: () => <DatabasePage />
+  }
+]
+
 const App = () => {
   const PdfJs = window['pdfjs-dist/build/pdf']
   PdfJs.GlobalWorkerOptions.workerSrc = PdfJsUrl
@@ -58,6 +113,7 @@ const App = () => {
 
   const [setting] = useSetting()
   const { i18n } = useTranslation()
+  RENDEVOZ_DEFAULT_TABS.forEach(i => Rendevoz.Actions.Layout.registerTabData(i))
   useEffect(() => {
     if (setting.general.language) {
       i18n.changeLanguage(setting.general.language)

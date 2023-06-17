@@ -1,12 +1,12 @@
-import { LayoutIdToTabMap, LayoutTab } from '@/components/layout'
+import { LayoutIdToTabMap } from '@/components/layout'
 import { MetaStore } from '@/stores'
 import { boxContain, boxesIntersect, getRelativeBoxSize } from '@/utils'
-import { Box, IImage, MetaObject } from '~/typings'
+import { Box, IImage, ILayoutTab, IVideoInstance, MetaObject } from '~/typings'
 
 export const normalizeScreenshot = (screenshotBox: Box) => {
   const rect = screenshotBox
   const allTabs = Array.from(LayoutIdToTabMap.values())
-  const intersectedTabs: LayoutTab[] = []
+  const intersectedTabs: ILayoutTab[] = []
   const normalizedImage: Partial<IImage> = {}
   const normalizedImageMeta: Partial<MetaObject> = {
     type: 'image'
@@ -22,7 +22,38 @@ export const normalizeScreenshot = (screenshotBox: Box) => {
       }
     }
   })
-
+  const floatedVideoInstances = allTabs
+    .filter(i => i.type === 'video')
+    ?.map(i => i.instance)
+    .filter(i => (i as IVideoInstance).getVideoState?.().floated === true) as (IVideoInstance | undefined)[]
+  if (floatedVideoInstances.length) {
+    const targetFloatedVideo = floatedVideoInstances.find(i => {
+      const playerEle = i?.getPlayerElement?.()
+      if (playerEle) {
+        const videoBounding = playerEle.getBoundingClientRect()
+        if (boxContain(videoBounding, screenshotBox)) return true
+      }
+      return false
+    })
+    if (targetFloatedVideo) {
+      const videoId = targetFloatedVideo.getVideoId?.()
+      if (videoId) {
+        const videoMeta = MetaStore.getMetaObjectByObjectId(videoId)
+        if (videoMeta) {
+          normalizedImageMeta.fromObject = {
+            type: 'video',
+            metaId: videoMeta.id,
+            time: targetFloatedVideo.getVideoState?.().currentTime
+          }
+          return {
+            relatedMeta,
+            normalizedImage,
+            normalizedImageMeta
+          }
+        }
+      }
+    }
+  }
   if (intersectedTabs.length === 1) {
     const onlyIntersectedtab = intersectedTabs[0]
     if ('objectId' in onlyIntersectedtab) {

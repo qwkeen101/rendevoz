@@ -177,3 +177,29 @@ export const PinnedIcon = () => {
     </>
   )
 }
+
+export const VideoIcon = () => {
+  return (
+    <>
+      <rect
+        x="6"
+        y="6"
+        width="36"
+        height="36"
+        rx="3"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="4"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      />
+      <path
+        d="M18.5 24V16.2058L25.25 20.1029L32 24L25.25 27.8971L18.5 31.7942V24Z"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="4"
+        stroke-linejoin="round"
+      />
+    </>
+  )
+}

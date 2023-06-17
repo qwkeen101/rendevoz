@@ -5,6 +5,7 @@ import { Editor, Node, Transforms } from 'slate'
 import { ReactEditor } from '../slate-react'
 import { EDITOR_TO_KEY_TO_ELEMENT } from '../slate-react/utils/weak-maps'
 import { css, keyframes } from '@emotion/css'
+import { waitFor } from '@/utils/functions'
 
 export const goToBlock = async (blockId: number, editor: CustomEditor) => {
   await waitForEditorContentInitialized(editor)
@@ -57,20 +58,13 @@ export const goToBlock = async (blockId: number, editor: CustomEditor) => {
 
 export const waitForEditorContentInitialized = (editor: CustomEditor) => {
   return new Promise(res => {
-    const currTime = Date.now()
-    const loop = () => {
-      if (Date.now() - currTime > 5000) {
-        return
-      }
-      if (editor.contentInitialized) {
-        res(null)
-      } else {
-        requestIdleCallback(loop)
-      }
-    }
-    loop()
+    waitFor(
+      () => !!editor.contentInitialized,
+      () => res(null)
+    )
   })
 }
+
 export const alignBlockAtCenter = (blockId: number, editor: CustomEditor) => {
   return new Promise(res => {
     const currTime = Date.now()
@@ -101,6 +95,7 @@ export const alignBlockAtCenter = (blockId: number, editor: CustomEditor) => {
     loop()
   })
 }
+
 export const selectBlock = (blockId: number, editor: CustomEditor) => {
   goToBlock(blockId, editor).then(() => {
     SELECTED_BLOCKS_MAP.get(editor)?.set(blockId, null)
@@ -142,9 +137,7 @@ export const highlightMeta = (elementId: number, editor: CustomEditor) => {
     }, 5600)
   }
 }
-export const highlightHeading = (headingId: number) => {
-
-}
+export const highlightHeading = (headingId: number) => {}
 const findNearHidenBlocks = (centerBlockIndex: number, eles: CustomElement[]) => {
   let leftIndex = centerBlockIndex
   let rightIndex = centerBlockIndex

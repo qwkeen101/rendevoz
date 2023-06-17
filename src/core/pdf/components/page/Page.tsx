@@ -21,6 +21,7 @@ import { objectIdToMetaObjectIdMapAtom } from '@/stores/meta.store'
 import { useContextmenu } from '@/hooks'
 import { useTranslation } from 'react-i18next'
 import { Rendevoz } from '@/core/rendevoz'
+import usePdfInstance from '../../hooks/usePdfInstance'
 
 interface PdfPageProps extends RenderPageProps {
   pdfId: number
@@ -49,6 +50,9 @@ const PdfPage: React.FC<PdfPageProps> = ({
   const [textSelect, setTextSelect] = useState<TextSelectEvent>()
 
   const viewer = usePdfViewer()
+
+  const instance = usePdfInstance()
+
   const { renderModal, open, save, drawOnPdf } = usePdfDraw({
     onClose: async () => {
       const pdf = await ObjectStore('pdf').getOneById(pdfId)
@@ -82,7 +86,9 @@ const PdfPage: React.FC<PdfPageProps> = ({
         })
     }
   })
+
   const { contextMenuState, closeContextmenu } = useContextmenu(containerRef.current)
+
   if (pageFunctionRef.current) {
     pageFunctionRef.current.onTextSelected = e => {
       setTextSelect(e)
@@ -105,6 +111,7 @@ const PdfPage: React.FC<PdfPageProps> = ({
       }
     }
   }
+
   const { t } = useTranslation()
   return (
     <>
@@ -225,20 +232,19 @@ const PdfPage: React.FC<PdfPageProps> = ({
               onHighlight={(color, specType) => {
                 setTextSelectionToolbarVisible(false)
                 pageFunctionRef.current?.clearTextLayer?.()
-                ObjectStore('pdfLabel').addOne({
+                instance.insertLabel?.({
                   page: pageIndex,
                   selectedText: textSelect?.selectedText,
                   type: 'highlight',
                   color,
                   specHighlightType: specType,
-                  documentId: pdfId,
                   rects: textSelect?.rects?.map(r => ({
                     percentageTop: r.percentageTop,
                     percentageHeight: r.percentageHeight,
                     percentageLeft: r.percentageLeft,
                     percentageWidth: r.percentageWidth
                   }))
-                } as IHighlightLabel)
+                })
               }}
               textSelect={textSelect}
             />

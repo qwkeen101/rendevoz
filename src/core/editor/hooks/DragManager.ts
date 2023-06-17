@@ -460,6 +460,13 @@ class DragManager {
               (needFurtherProcess = {
                 objectId: draggingEle.highlightId
               })
+            break
+          }
+          case 'videoLabel': {
+            draggingEle.id &&
+              (needFurtherProcess = {
+                objectId: draggingEle.id
+              })
           }
         }
         if (typeof needFurtherProcess === 'object') {

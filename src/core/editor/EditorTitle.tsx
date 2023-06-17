@@ -10,6 +10,7 @@ import { Content, Icon } from '@/components'
 import { ForwardRefComponent } from 'framer-motion'
 import { CustomEditor } from '~/typings'
 import getEmoji from '@/utils/emoji'
+import useReadOnlyEditor from './hooks/useReadOnly'
 
 interface EditorTitleProps {
   title?: string
@@ -51,6 +52,7 @@ const EditorTitle: ForwardRefComponent<HTMLDivElement, EditorTitleProps> = forwa
   ({ title, description, noteId, titleEditable = true, onTitleClick, titleContainerStyle, titleStyle, editor }, ref) => {
     const { run: debouncedUpdateNote } = useDebounceFn(ObjectStore('note').updateOne, { wait: 200 })
     const { t } = useTranslation()
+    const readonly = useReadOnlyEditor()
     const titleRef = useRef<HTMLDivElement>(null)
     useEffect(() => {
       if (titleRef.current) {
@@ -65,7 +67,7 @@ const EditorTitle: ForwardRefComponent<HTMLDivElement, EditorTitleProps> = forwa
         flex
         column
         gap={10}
-        style={titleContainerStyle}
+        style={{ padding: readonly ? '40px 10px 30px 35px' : undefined, ...titleContainerStyle }}
         ref={node => (editor.titleEle = node)}
       >
         <div

@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
-import { IWebpage, MetaObject, WebpageInstance, XYPosition } from '~/typings'
-import WebpagePage from '../webpage/Webpage'
+import { GlobalInstances, IWebpage, IWebpageInstance, MetaObject, WebpageInstance, XYPosition } from '~/typings'
+import Webpage from '../webpage/Webpage'
 import { createPortal } from 'react-dom'
 import { Rnd } from 'react-rnd'
 import { atom } from 'jotai'
@@ -11,15 +11,13 @@ import Colors from '@/consts/colors'
 import { Button, Content } from '@/components'
 import FontSize from '@/consts/font'
 import { css } from '@emotion/css'
-import Actions from '../Actions'
 import { getPanelPosition } from './utils'
 import ResizeAndDrag from '@/components/base/ResizeAndDrag'
 import { ObjectStore } from '@/stores'
 import { searchToUrl } from '../webpage/utils'
+import { Rendevoz } from '../rendevoz'
 
-export const GlobalSearchInstance: Partial<{
-  open: (options: { pos?: XYPosition; e?: MouseEvent; url?: string; query?: string; from?: MetaObject['fromObject'] }) => void
-}> = {}
+export const GlobalSearchInstance: Partial<GlobalInstances.WebSearchInstance> = {}
 
 const PanelDefaultSize = {
   x: window.innerWidth / 2 - 250,
@@ -89,7 +87,7 @@ const GlobalSearchPanel = () => {
 }
 
 const SearchPanel = () => {
-  const instanceRef = useRef<WebpageInstance>()
+  const instanceRef = useRef<IWebpageInstance>()
 
   const [panelState, setPanelState] = useGlobalAtom(SearchPanelStateAtom)
   const { title, from, summaryTarget } = panelState
@@ -99,7 +97,7 @@ const SearchPanel = () => {
 
   useEffect(() => {
     if (instanceRef.current && panelState.url) {
-      instanceRef.current.changeUrl(panelState.url)
+      instanceRef.current.changeUrl?.(panelState.url)
     }
   }, [panelState.url])
 
@@ -169,8 +167,7 @@ const SearchPanel = () => {
             onClick={async () => {
               if (currentWebpage) {
                 const one = await ObjectStore('webpage').addOne(currentWebpage)
-                console.log(one)
-                Actions.openWebpage(one.id)
+                Rendevoz.Actions.Open.Webpage.openWebpage(one.id)
               }
             }}
             icon="park-efferent-four"
@@ -180,7 +177,7 @@ const SearchPanel = () => {
       </Content>
 
       <Content fullWidth auto style={{ height: 0, overflow: 'hidden' }}>
-        <WebpagePage
+        <Webpage
           webpageFrom={from}
           navigationStyle={{
             padding: '6px 1px 6px 0px',
@@ -195,7 +192,7 @@ const SearchPanel = () => {
           }
           onTitleChange={t => setPanelState(s => ({ ...s, title: t }))}
           initialUrl={searchToUrl('')}
-          onWebpageInitialized={i => (instanceRef.current = i)}
+          onInstanceInitialized={i => (instanceRef.current = i)}
         />
       </Content>
     </ResizeAndDrag>

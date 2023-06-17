@@ -14,14 +14,14 @@ import { Button } from '../button'
 
 interface SelectProps {
   multiple?: boolean
-  value?: string | string[]
+  value?: string | string[] | number | number[]
   closeOnSelect?: boolean
   disabled?: boolean
   deselectable?: boolean
   defaultValue?: string
   placeholder?: string
   className?: string
-  onSelect: (value: string[]) => void
+  onSelect: (value: string[] | number[]) => void
   style?: CSSProperties
   menuStyle?: CSSProperties
   menuPosition?: 'top' | 'bottom'

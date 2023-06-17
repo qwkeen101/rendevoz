@@ -97,6 +97,7 @@ const Modal: FC<ModalProps> = ({
         animate={{
           opacity: visible ? 1 : 0
         }}
+        role="modal-container"
         transition={{ duration: 0.2 }}
         style={{
           position: 'fixed',
@@ -176,7 +177,7 @@ const Modal: FC<ModalProps> = ({
     ) : (
       <AnimatePresence>
         {visible && (
-          <div style={{ position: 'fixed', inset: 0, zIndex: zIndex || Zindexes.ModalBackdrop }}>
+          <div role="modal-container" style={{ position: 'fixed', inset: 0, zIndex: zIndex || Zindexes.ModalBackdrop }}>
             <motion.div
               key={2}
               initial={{ opacity: 0 }}

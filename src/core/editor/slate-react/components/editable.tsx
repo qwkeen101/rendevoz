@@ -352,58 +352,62 @@ export const Editable = (props: EditableProps) => {
       return newDomRange
     }
 
-    const newDomRange = setDomSelection()
-    const ensureSelection = androidInputManager?.isFlushing() === 'action'
+    try {
+      const newDomRange = setDomSelection()
+      const ensureSelection = androidInputManager?.isFlushing() === 'action'
 
-    if (!IS_ANDROID || !ensureSelection) {
-      setTimeout(() => {
-        // COMPAT: In Firefox, it's not enough to create a range, you also need
-        // to focus the contenteditable element too. (2016/11/16)
-        if (newDomRange && IS_FIREFOX) {
-          const el = ReactEditor.toDOMNode(editor, editor)
-          el.focus()
-        }
-
-        state.isUpdatingSelection = false
-      })
-      return
-    }
-
-    let timeoutId: ReturnType<typeof setTimeout> | null = null
-    const animationFrameId = requestAnimationFrame(() => {
-      if (ensureSelection) {
-        const ensureDomSelection = (forceChange?: boolean) => {
-          try {
+      if (!IS_ANDROID || !ensureSelection) {
+        setTimeout(() => {
+          // COMPAT: In Firefox, it's not enough to create a range, you also need
+          // to focus the contenteditable element too. (2016/11/16)
+          if (newDomRange && IS_FIREFOX) {
             const el = ReactEditor.toDOMNode(editor, editor)
             el.focus()
-
-            setDomSelection(forceChange)
-          } catch (e) {
-            // Ignore, dom and state might be out of sync
           }
-        }
 
-        // Compat: Android IMEs try to force their selection by manually re-applying it even after we set it.
-        // This essentially would make setting the slate selection during an update meaningless, so we force it
-        // again here. We can't only do it in the setTimeout after the animation frame since that would cause a
-        // visible flicker.
-        ensureDomSelection()
-
-        timeoutId = setTimeout(() => {
-          // COMPAT: While setting the selection in an animation frame visually correctly sets the selection,
-          // it doesn't update GBoards spellchecker state. We have to manually trigger a selection change after
-          // the animation frame to ensure it displays the correct state.
-          ensureDomSelection(true)
           state.isUpdatingSelection = false
         })
+        return
       }
-    })
 
-    return () => {
-      cancelAnimationFrame(animationFrameId)
-      if (timeoutId) {
-        clearTimeout(timeoutId)
+      let timeoutId: ReturnType<typeof setTimeout> | null = null
+      const animationFrameId = requestAnimationFrame(() => {
+        if (ensureSelection) {
+          const ensureDomSelection = (forceChange?: boolean) => {
+            try {
+              const el = ReactEditor.toDOMNode(editor, editor)
+              el.focus()
+
+              setDomSelection(forceChange)
+            } catch (e) {
+              // Ignore, dom and state might be out of sync
+            }
+          }
+
+          // Compat: Android IMEs try to force their selection by manually re-applying it even after we set it.
+          // This essentially would make setting the slate selection during an update meaningless, so we force it
+          // again here. We can't only do it in the setTimeout after the animation frame since that would cause a
+          // visible flicker.
+          ensureDomSelection()
+
+          timeoutId = setTimeout(() => {
+            // COMPAT: While setting the selection in an animation frame visually correctly sets the selection,
+            // it doesn't update GBoards spellchecker state. We have to manually trigger a selection change after
+            // the animation frame to ensure it displays the correct state.
+            ensureDomSelection(true)
+            state.isUpdatingSelection = false
+          })
+        }
+      })
+
+      return () => {
+        cancelAnimationFrame(animationFrameId)
+        if (timeoutId) {
+          clearTimeout(timeoutId)
+        }
       }
+    } catch (e) {
+      console.error(e)
     }
   })
 
@@ -1498,7 +1502,8 @@ const defaultScrollSelectionIntoView = (editor: ReactEditor, domRange: DOMRange)
     const leafEl = domRange.startContainer.parentElement!
     leafEl.getBoundingClientRect = domRange.getBoundingClientRect.bind(domRange)
     scrollIntoView(leafEl, {
-      scrollMode: 'if-needed'
+      scrollMode: 'if-needed',
+      block: 'nearest'
     })
 
     // @ts-expect-error an unorthodox delete D:

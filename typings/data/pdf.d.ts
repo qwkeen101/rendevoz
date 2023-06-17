@@ -16,6 +16,7 @@ export interface IPdfDocument extends IBase {
   fileUrl?: string
   color?: string
   icon?: string
+  labels?: number[]
   pageAnnotations?: Record<
     number,
     {

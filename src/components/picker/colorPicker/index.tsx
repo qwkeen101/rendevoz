@@ -1,7 +1,6 @@
 import { CSSProperties, FC, memo } from 'react'
 import * as material from 'material-colors'
 import { Content } from '../../base'
-import styles from './index.module.less'
 import { css } from '@emotion/css'
 import FontSize from '@/consts/font'
 

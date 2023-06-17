@@ -22,13 +22,14 @@ const useFileUpload = (onUpload?: (file: File) => void, accept?: string) => {
           ref={inputRef}
           accept={accept}
           onChange={e => {
+            e.target.files
             const file = e.target.files?.[0]
             if (file) {
               onUpload?.(file)
             }
           }}
         />
-        <label htmlFor={id} ref={labelRef} style={{display: 'none'}}></label>
+        <label htmlFor={id} ref={labelRef} style={{ display: 'none' }}></label>
       </>
     )
   }

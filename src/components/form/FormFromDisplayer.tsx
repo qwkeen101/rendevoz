@@ -3,10 +3,10 @@ import { MetaObject } from '~/typings'
 import { groupClassName, hoverLabelClassName } from './useFlipForm'
 import { useTranslation } from 'react-i18next'
 import { IconNameItem } from '../layout/sidebar/SidebarCollection'
-import { MetaStore, ObjectStore } from '@/stores'
-import { getIcon } from '../layout/sidebar/items/SidebarObjectItem'
+import { MetaStore } from '@/stores'
 import { Icon } from '../base'
 import ClassName from '@/styles/classNames'
+import { Rendevoz } from '@/core/rendevoz'
 
 const FormFromDisplayer = ({ initialObject, onRemove }: { initialObject: Partial<MetaObject>; onRemove: VoidFunction }) => {
   const [fromState, setFromState] = useState<{
@@ -14,6 +14,7 @@ const FormFromDisplayer = ({ initialObject, onRemove }: { initialObject: Partial
     icon?: string
   }>()
   const { t } = useTranslation()
+  const getIcon = Rendevoz.Utils.Object.getMetaObjectIcon
   useEffect(() => {
     const setAction = async () => {
       if (!initialObject.fromObject) {
@@ -36,6 +37,7 @@ const FormFromDisplayer = ({ initialObject, onRemove }: { initialObject: Partial
           }
           case 'whiteboard':
           case 'webpage':
+          case 'video':
           case 'note': {
             setFromState({
               name: fromMeta.name,

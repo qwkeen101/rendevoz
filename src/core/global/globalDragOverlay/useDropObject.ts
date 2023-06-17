@@ -5,6 +5,7 @@ import { saveImageLocally } from '@/utils/img'
 import { useEffect } from 'react'
 import { MetaObject } from '~/typings'
 import { transformTextContentToNameAndDescription } from './utils'
+import { getFilenameWithoutExtension } from '@/utils/file'
 function isUrlImage(url: string) {
   return fetch(url, { method: 'HEAD' }).then(res => {
     return res.headers.get('Content-Type')?.startsWith('image')
@@ -178,7 +179,7 @@ export const normalizeDropToMeta = async (e: DragEvent) => {
         fromObject: from,
         type: 'image',
         objectId: imageObject.id,
-        name: file.name || 'Unnamed Image'
+        name: getFilenameWithoutExtension(file.name) || 'Unnamed Image'
       } as MetaObject)
       return normalizedMetaObject
     }
@@ -309,7 +310,7 @@ const useDropObject = () => {
           fromObject: from,
           type: 'image',
           objectId: imageObject.id,
-          name: file.name || 'Unnamed Image'
+          name: getFilenameWithoutExtension(file.name) || 'Unnamed Image'
         } as MetaObject)
         return normalizedMetaObject
       }

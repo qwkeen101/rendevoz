@@ -28,6 +28,7 @@ export const handleMetaObjectsChange = () => {
   const prevIndex = globalStore.get(indexedMetaObjectsAtom)
   const prevMetaObjects = prevIndex?.oldMetaObjects as Map<number, MetaObject> | undefined
   const newMetaObjects = globalStore.get(metaObjectsAtom)
+  const metaAttachmentIdToMetaIdsMap: Map<number, Set<number>> = prevIndex?.metaAttachmentIdToMetaIdsMap || new Map()
   // question: what is the cost of creating a new set from exisiting set?
   // no need to create new set becuz everytime its reference is different: Array.from(...)
   const undeletedMetaObjectsSet: Set<MetaObject> = prevIndex?.undeletedMetaObjectsSet || new Set()
@@ -49,11 +50,19 @@ export const handleMetaObjectsChange = () => {
       pinnedMetaObjectsSet.delete(oldValue)
       deletedMetaObjectsSet.delete(oldValue)
       typeToMetaObjectIdsMap.get(oldValue.type)?.delete(oldValue.id)
+      // metaAttachmentIdToMetaIdsMap.delete(oldValue.id)
       // if (oldValue.objectId) {
       //   if (objectIdToMetaObjectMap.get(oldValue.objectId) === oldValue.id) {
       //     objectIdToMetaObjectMap.delete(oldValue.objectId)
       //   }
       // }
+      if (oldValue.attachments) {
+        oldValue.attachments
+          .filter(i => i.type !== 'attachmentText')
+          .forEach(att => {
+            metaAttachmentIdToMetaIdsMap.get(att.id)?.delete(oldValue.id)
+          })
+      }
       if (oldValue.tags) {
         oldValue.tags.forEach(tag => {
           tagToMetaObjectIdsMap.get(tag)?.delete(oldValue.id)
@@ -90,6 +99,15 @@ export const handleMetaObjectsChange = () => {
         }
       })
     }
+    if (v.attachments) {
+      v.attachments
+        .filter(i => i.type !== 'attachmentText')
+        .forEach(att => {
+          const set = metaAttachmentIdToMetaIdsMap.get(att.id) || new Set<number>()
+          set.add(v.id)
+          metaAttachmentIdToMetaIdsMap.set(att.id, set)
+        })
+    }
   })
   // left is force deleted objects
 
@@ -100,14 +118,13 @@ export const handleMetaObjectsChange = () => {
     v.objectId && objectIdToMetaObjectMap.delete(v.objectId)
     typeToMetaObjectIdsMap.get(v.type)?.delete(id)
     v.tags?.forEach(tag => {
-      if (tagToMetaObjectIdsMap.has(tag)) {
-        tagToMetaObjectIdsMap.get(tag)?.add(v.id)
-      } else {
-        const set = new Set<number>()
-        set.add(v.id)
-        tagToMetaObjectIdsMap.set(tag, set)
-      }
+      tagToMetaObjectIdsMap.get(tag)?.delete(v.id)
     })
+    v.attachments
+      ?.filter(i => i.type !== 'attachmentText')
+      .forEach(att => {
+        metaAttachmentIdToMetaIdsMap.get(att.id)?.delete(v.id)
+      })
   })
   const shouldReturnObjectIdToMetaObjectMap =
     prevIndex?.objectIdToMetaObjectMap.size === objectIdToMetaObjectMap.size ? prevIndex.objectIdToMetaObjectMap : objectIdToMetaObjectMap
@@ -119,7 +136,8 @@ export const handleMetaObjectsChange = () => {
     objectIdToMetaObjectMap: shouldReturnObjectIdToMetaObjectMap,
     tagToMetaObjectIdsMap,
     oldMetaObjects: newMetaObjects,
-    typeToMetaObjectIdsMap
+    typeToMetaObjectIdsMap,
+    metaAttachmentIdToMetaIdsMap
   })
 }
 
@@ -149,6 +167,7 @@ export const indexedMetaObjectsAtom = atom<{
   objectIdToMetaObjectMap: Map<number, number>
   tagToMetaObjectIdsMap: Map<number, Set<number>>
   typeToMetaObjectIdsMap: Map<string, Set<number>>
+  metaAttachmentIdToMetaIdsMap: Map<number, Set<number>>
   oldMetaObjects: Map<number, MetaObject>
 } | null>(null)
 
@@ -489,15 +508,33 @@ const createMetaStore = () => {
       return globalStore.get(metaObjectsAtom).get(metaObjectId)
     }
   }
-
+  const useObjectToMetaValue = (objectId: number) => {
+    const objectIdToMetaObjectIdAtom = useMemo(() => selectAtom(objectIdToMetaObjectIdMapAtom, m => m?.get(objectId)), [objectId])
+    const metaId = useGlobalAtomValue(objectIdToMetaObjectIdAtom)
+    const metaAtom = useMemo(() => (metaId ? selectAtom(metaObjectsAtom, m => m.get(metaId)) : atom(null)), [metaId])
+    return useGlobalAtomValue(metaAtom)
+  }
   const useValue = (id?: number) => {
     const ato = useMemo(() => (id ? selectAtom(metaObjectsAtom, m => m.get(id)) : atom(null)), [id])
     return useGlobalAtomValue(ato)
+  }
+  const addObjectAsMeta = async (opts: { objectId: number; type: MetaObject['type']; name?: string }) => {
+    await MetaStore.addMetaObject(
+      {
+        objectId: opts.objectId,
+        type: opts.type,
+        attachments: [],
+        name: opts.name || 'Unnamed Object'
+      },
+      true
+    )
   }
   return {
     getMetaObjectById,
     getMetaObjectByObjectId,
     useValue,
+    useObjectToMetaValue,
+    addObjectAsMeta,
     ...realStore
   }
 }

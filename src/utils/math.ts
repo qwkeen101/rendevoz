@@ -22,3 +22,8 @@ export const quadEquationGetX = (a: number, b: number, c: number) => {
   }
   return xArr
 }
+
+export function randomIntFromInterval(min: number, max: number) {
+  // min and max included
+  return Math.floor(Math.random() * (max - min + 1) + min)
+}

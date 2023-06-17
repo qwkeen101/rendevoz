@@ -14,6 +14,7 @@ import { Rect } from '@/types'
 import { objectIdToMetaObjectIdMapAtom } from '@/stores/meta.store'
 import { GlobalSearchInstance } from '@/core/global/GlobalSearchPanel'
 import { Rendevoz } from '@/core/rendevoz'
+import usePdfSelectMode from '../../hooks/useSelectMode'
 
 interface HighlightLabelProps {
   labelId: number
@@ -132,6 +133,7 @@ const Highlights = forwardRef((props, ref) => {
   const innerRef = useRef<HTMLDivElement>(null)
   const mergedRef = useMergedRef(highlightRef, innerRef, ref)
   const viewer = usePdfViewer()
+  const [selectMode] = usePdfSelectMode()
   const [focused, setFocused] = useState(false)
   useClickOutside(() => setFocused(false), highlightRef, focused)
   const containerRectRef = useRef<Rect>()
@@ -237,7 +239,8 @@ const Highlights = forwardRef((props, ref) => {
           key={idx}
           style={{
             position: 'absolute',
-            pointerEvents: 'auto',
+            cursor: 'pointer',
+            pointerEvents: selectMode ? 'none' : 'auto',
             opacity: 0.4,
             ...highlightStyle
           }}

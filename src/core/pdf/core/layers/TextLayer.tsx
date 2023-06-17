@@ -7,7 +7,7 @@ import { useMousePositionWithRef } from '@/hooks/utils/useMousePositionRef'
 import { Point } from '../types/point'
 import { TextContentBound, TextItem, TextRect, TextItemChar } from '../types/text'
 import isHotkey from 'is-hotkey'
-import { useMemoizedFn } from '@/hooks'
+import { useMemoizedFn, useUnMount } from '@/hooks'
 import { PageFunctionRef } from '~/typings'
 import useSelectingText from '../hooks/useIsSelectingText'
 import useScopedEventEmitter from '@/events/useEventEmitter'
@@ -16,7 +16,13 @@ import { useEventHandler } from '@/events'
 import usePdfjs from '@/hooks/utils/usePdfjs'
 import { usePdfViewer } from '@/core'
 import { ITextLayerInstance } from '~/typings'
-import { getTextContent, PAGE_INDEX_TO_PAGE_FUNCTION, PAGE_INDEX_TO_TEXT_LAYER } from '../weakMaps'
+import {
+  deleteTextContent,
+  getTextContent,
+  PAGE_INDEX_TO_PAGE_FUNCTION,
+  PAGE_INDEX_TO_TEXT_CONTENT,
+  PAGE_INDEX_TO_TEXT_LAYER
+} from '../weakMaps'
 import { CanvasOriginFillRect } from './CanvasLayer'
 import { getCharPoint } from '../utils/text'
 import { NormalizedMapObject, normalizeText } from '../utils/search'
@@ -74,7 +80,7 @@ const TextLayer: FC<TextLayerProps> = ({ scale, rotation, width, height, pageInd
   })
   const keyboardHandler = useMemoizedFn((e: KeyboardEvent) => {
     const selectedText = Object.values(globalSelectingText.selectedTexts).join('')
-    if (isHotkey('mod+c', e) && selectedText !== '' && window.getSelection()?.isCollapsed) {
+    if (isHotkey('mod+c', e) && selectedText !== '' && window.getSelection()?.toString() === '') {
       navigator.clipboard.writeText(selectedText)
     }
   })
@@ -246,7 +252,14 @@ const TextLayer: FC<TextLayerProps> = ({ scale, rotation, width, height, pageInd
     }
     pageFunctionRef.current.getTextLayerCanvas = () => canvasRef.current
   }
-
+  useUnMount(() => {
+    if (viewer) {
+      deleteTextContent(viewer, pageIndex)
+      console.log(PAGE_INDEX_TO_TEXT_CONTENT.get(viewer))
+      pageFunctionRef.current = undefined
+      renderTaskRef.current = undefined
+    }
+  })
   const memoizedHighlightText = useMemoizedFn(async text => {
     if (!viewer) return
     const result = await getTextContent(viewer, pageIndex)
@@ -326,54 +339,51 @@ const TextLayer: FC<TextLayerProps> = ({ scale, rotation, width, height, pageInd
       })
     }
     if (viewer) {
-      getTextContent(viewer, pageIndex).then(content => {
-        if (!content) return
-        emptyTextLayer()
-        const canvas = canvasRef.current
-        if (canvas) {
-          canvas.addEventListener('mousedown', mouseEventHandler)
-          canvas.addEventListener('mousemove', mouseEventHandler)
-          canvas.addEventListener('mouseup', mouseEventHandler)
-          canvas.addEventListener('dblclick', mouseEventHandler)
-          canvas.addEventListener('mouseleave', mouseEventHandler)
-          canvas.addEventListener('mouseenter', mouseEventHandler)
-          document.addEventListener('pointerup', globalMouseUpHandler)
-          canvas.width = width
-          canvas.height = height
-          const instance = {
-            paint,
-            paintBounds: (bounds, color) => {
-              emptyTextLayer()
-              const rects = bounds.map(i => ({
-                x: i.offset.left,
-                y: i.offset.top,
-                width: i.offset.size[0],
-                height: i.offset.size[1],
-                offset: i.offset.trans
-              })) as TextRect[]
-              const opti = optimizeRects(rects)
-              opti.forEach(i => {
-                paint(i, color || DEFAULT_SELECT_COLOR)
+      emptyTextLayer()
+      const canvas = canvasRef.current
+      if (canvas) {
+        canvas.addEventListener('mousedown', mouseEventHandler)
+        canvas.addEventListener('mousemove', mouseEventHandler)
+        canvas.addEventListener('mouseup', mouseEventHandler)
+        canvas.addEventListener('dblclick', mouseEventHandler)
+        canvas.addEventListener('mouseleave', mouseEventHandler)
+        canvas.addEventListener('mouseenter', mouseEventHandler)
+        document.addEventListener('pointerup', globalMouseUpHandler)
+        canvas.width = width
+        canvas.height = height
+        const instance = {
+          paint,
+          paintBounds: (bounds, color) => {
+            emptyTextLayer()
+            const rects = bounds.map(i => ({
+              x: i.offset.left,
+              y: i.offset.top,
+              width: i.offset.size[0],
+              height: i.offset.size[1],
+              offset: i.offset.trans
+            })) as TextRect[]
+            const opti = optimizeRects(rects)
+            opti.forEach(i => {
+              paint(i, color || DEFAULT_SELECT_COLOR)
+            })
+          },
+          paintItems: (items, color) => {
+            const textBounds = textContentBounds.current
+            const bounds = items
+              .map(i => {
+                return textBounds.find(o => o.str === i.str)
               })
-            },
-            paintItems: (items, color) => {
-              const textBounds = textContentBounds.current
-              const bounds = items
-                .map(i => {
-                  return textBounds.find(o => o.str === i.str)
-                })
-                .filter(i => i !== undefined) as TextContentBound[]
-              instance.paintBounds(bounds, color)
-            }
-          } as ITextLayerInstance
+              .filter(i => i !== undefined) as TextContentBound[]
+            instance.paintBounds(bounds, color)
+          }
+        } as ITextLayerInstance
 
-          viewer?.onTextLayerRendered?.(pageIndex, instance)
-        }
-        if (pageFunctionRef.current) {
-          pageFunctionRef.current.highlightText = memoizedHighlightText
-        }
-        document.addEventListener('keydown', keyboardHandler)
-      })
+        viewer?.onTextLayerRendered?.(pageIndex, instance)
+      }
+      if (pageFunctionRef.current) {
+        pageFunctionRef.current.highlightText = memoizedHighlightText
+      }
+      document.addEventListener('keydown', keyboardHandler)
     }
     return () => {
       document.removeEventListener('pointerup', globalMouseUpHandler)
@@ -398,11 +408,15 @@ const TextLayer: FC<TextLayerProps> = ({ scale, rotation, width, height, pageInd
   }, [viewport.height, viewport.width, viewport.scale])
   const buildText = async () => {
     if (viewer && !textContentBounds.current.length) {
-      const content = await getTextContent(viewer, pageIndex)
-      if (content) {
-        const { textContentBounds: bounds } = renderTaskRef.current!.render(content?.textContent)
-        textContentBounds.current = bounds
-      }
+      await new Promise(res => {
+        getTextContent(viewer, pageIndex).then(item => {
+          if (item) {
+            const { textContentBounds: bounds } = renderTaskRef.current!.render(item?.textContent)
+            textContentBounds.current = bounds
+          }
+          res(null)
+        })
+      })
     }
   }
   const isInTextBound = (point: Point, distanceTolerance: number) => {

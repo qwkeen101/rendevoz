@@ -42,7 +42,6 @@
     overflow-y: auto;
     height: 100%;
     padding: 0 24px;
-    .iosStyleScrollBar;
 }
 .mindmapContainer{
     position: absolute;
@@ -121,15 +120,18 @@
 }
 .editor{
     position: relative;
-    width: 100%;
+    width: 0;
+    flex: 1;
     display: flex;
     flex-direction: column;
     height: 100%;
-    *,
-    *::after,
-    *::before,
-    *::placeholder{
-        text-transform: none !important;
+    *{
+      ::after,
+      ::before,
+      ::placeholder,
+      :not([role="tag"]){
+          text-transform: none !important;
+      }
     }
     h1,h2,h3,h4,h5,h6{
         margin-top: 0;

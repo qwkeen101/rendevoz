@@ -1,8 +1,5 @@
 import { TextSelectRect } from '@/events/pdfEvent'
-import { PdfShapes } from '@/scenes/pdf/FloatBar/Shape'
-import { Rect } from '@/types'
 import { IBase } from './base'
-import { EditorDestination } from './note'
 
 export type ILabel = IBase & {
   id?: number
@@ -11,8 +8,11 @@ export type ILabel = IBase & {
   documentId?: number
   background?: string
   color?: string
+  name?: string
   page?: number
+  description?: string
 } & (IShapeLabel | IThoughtLabel | IHighlightLabel | IObjectLabel)
+
 export interface IDroppableLabel {
   page?: number
   rect?: number[]

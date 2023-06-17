@@ -1,20 +1,34 @@
-import { useEffect, useRef, useState } from 'react'
+import { memo, useEffect, useRef } from 'react'
 import { useVideoInstance } from './hooks/useVideoInstance'
 import { assignProperties } from '@/utils'
-import { useAtom } from 'jotai'
 import useVideoState from './hooks/useVideoState'
+import { Content } from '@/components'
+import useThrottleFn from '@/hooks/utils/useThrottleFn'
+import { ObjectStore } from '@/stores'
+import { useSelectGlobalAtomValue } from '@/hooks'
+import { SettingAtom } from '../setting'
+import { useSetAtom } from 'jotai'
+import { VideoToolbarStateAtom } from './hooks/useVideoToolbarState'
 
 interface VideoCoreProps {
   url?: string
 }
 
-const VideoCore = ({ url }: VideoCoreProps) => {
+const VideoCore = memo(({ url }: VideoCoreProps) => {
   const videoRef = useRef<HTMLVideoElement>(null)
   const instance = useVideoInstance()
   const [videoState, setVideoState] = useVideoState()
-  const { loop, muted, paused, volume } = videoState
+  const { loop, muted, paused, volume, currentTime, speed } = videoState
   const offscreenVideoRef = useRef<HTMLVideoElement>()
+  const loopSetting = useSelectGlobalAtomValue(SettingAtom, s => s.video.loop)
+  const autoPlaySetting = useSelectGlobalAtomValue(SettingAtom, s => s.video.autoPlay)
   const webviewRef = useRef<HTMLWebViewElement>()
+  const throttleUpdateLastViewTime = useThrottleFn(
+    () => {
+      videoState.videoId && ObjectStore('video').updateOne({ id: videoState.videoId, lastPlayedTime: currentTime })
+    },
+    { wait: 1000 }
+  )
   useEffect(() => {
     const webview = webviewRef.current
     if (webview) {
@@ -69,36 +83,69 @@ const VideoCore = ({ url }: VideoCoreProps) => {
       video.volume = volume ?? 0
     }
   }, [volume])
+  useEffect(() => {
+    throttleUpdateLastViewTime.run()
+    if (currentTime !== undefined && videoRef.current?.currentTime !== undefined) {
+      if (Math.abs(currentTime - videoRef.current.currentTime) > 1) {
+        videoRef.current.currentTime = currentTime
+      }
+    }
+  }, [currentTime])
+
+  useEffect(() => {
+    const video = videoRef.current
+    if (video) {
+      video.playbackRate = speed
+    }
+  }, [speed])
+
+  useEffect(() => {
+    if (autoPlaySetting) {
+      setVideoState(s => ({ ...s, paused: false }))
+    }
+  }, [])
   return (
-    <webview
-      ref={webviewRef}
-      src="https://www.bilibili.com/video/BV1UL4y1F7zk/?vd_source=352adb6d14f9a406216668a504da3cf6"
-      style={{
-        width: '100%',
-        height: 900,
-        pointerEvents: 'none'
-      }}
-    ></webview>
-    // <video
-    //   ref={videoRef}
-    //   src={url}
-    //   loop={loop}
-    //   muted={muted}
+    // <webview
+    //   ref={webviewRef}
+    //   src="https://www.bilibili.com/video/BV1UL4y1F7zk/?vd_source=352adb6d14f9a406216668a504da3cf6"
     //   style={{
     //     width: '100%',
-    //     height: '100%'
+    //     height: 900,
+    //     pointerEvents: 'none'
     //   }}
-    //   onClick={() => setVideoState(s => ({ ...s, paused: !s.paused }))}
-    //   onDurationChange={e => {
-    //     const duration = e.currentTarget.duration
-    //     setVideoState(s => ({ ...s, totalTime: duration }))
-    //   }}
-    //   onTimeUpdate={e => {
-    //     const currTime = e.currentTarget.currentTime
-    //     setVideoState(s => ({ ...s, currentTime: currTime }))
-    //   }}
-    // />
+    // ></webview>
+    <Content style={{ width: '100%', paddingBottom: '56.25%', height: 0 }}>
+      <video
+        ref={videoRef}
+        src={url}
+        loop={loopSetting}
+        autoPlay={autoPlaySetting}
+        muted={muted}
+        style={{
+          width: '100%',
+          height: '100%',
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          overflow: 'clip',
+          overflowClipMargin: 'content-box',
+          objectFit: 'contain',
+          borderRadius: videoState.floated ? '0px 0px 12px 12px' : 12
+        }}
+        onClick={() => {
+          setVideoState(s => ({ ...s, paused: !s.paused }))
+        }}
+        onDurationChange={e => {
+          const duration = e.currentTarget.duration
+          setVideoState(s => ({ ...s, totalTime: duration }))
+        }}
+        onTimeUpdate={e => {
+          const currTime = e.currentTarget.currentTime
+          setVideoState(s => ({ ...s, currentTime: currTime }))
+        }}
+      />
+    </Content>
   )
-}
+})
 
 export default VideoCore

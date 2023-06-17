@@ -11,10 +11,10 @@ import { CollectionStore, ObjectStore } from '@/stores'
 import { RefObject, useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useTranslation } from 'react-i18next'
-import Actions from '@/core/Actions'
 import { GlobalEventEmitter } from '@/events'
 import { MetaObject } from '~/typings'
 import { ObjectFamily } from '@/stores/object.store'
+import { Rendevoz } from '@/core/rendevoz'
 
 const useSidebarItemContextMenu = (
   contextMenuElementRef: RefObject<HTMLElement>,
@@ -281,7 +281,7 @@ const useSidebarItemContextMenu = (
               },
               item.id
             )
-            Actions.navigateToTargetObject(meta.id)
+            Rendevoz.Actions.Open.Meta.openMetaObject(meta.id)
             onAddNewSubItem?.()
           })
           .catch(() => {

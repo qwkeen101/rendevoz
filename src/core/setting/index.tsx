@@ -32,10 +32,17 @@ type AvaliableLanguages = 'en-US' | 'zh-CN'
 type Setting = INotificationSetting & IShortCutSetting & IGeneralSetting & IObjectsAndLinkSetting & IComponentSetting & IAppearanceSetting
 type IGeneralSetting = {
   general: {
-    language: AvaliableLanguages
+    language?: AvaliableLanguages
     openNewTab: 'always open new tab' | 'open existing tab'
     darkMode: boolean
+    customSearchEngineUrl?: string
+    userFilePath?: string
+    autoBackup: 'never' | 'every day' | '3 days' | 'one week' | 'one month'
+    backUpPath?: string
+    defaultFilePath?: string
+    defaultLanguage: string
     defaultSearchEngine:
+      | 'custom'
       | 'baidu'
       | 'google'
       | 'bing'
@@ -112,6 +119,15 @@ export type IComponentSetting = {
   webpage: {
     enableSearchAutoSuggestion: boolean
   }
+  pdf: {
+    renderMode: 'followTheme' | 'custom' | 'default'
+    customRenderBackground?: string
+    customRenderFont?: string
+  }
+  video: {
+    loop: boolean
+    autoPlay: boolean
+  }
 }
 const localSetting = JSON.parse(localStorage.getItem('setting'))
 localStorage.removeItem('setting')
@@ -127,11 +143,12 @@ const defaultSetting: Setting = {
   },
   shortcut: {},
   general: {
-    language: 'en-US',
+    defaultLanguage: 'en-US',
     openNewTab: 'open existing tab',
-    darkMode: false,
+    darkMode: true,
     defaultSearchEngine: 'google',
-    defaultImageSearchEngine: 'bing'
+    defaultImageSearchEngine: 'bing',
+    autoBackup: 'every day'
   },
   objectAndLink: {
     enableAll: true,
@@ -154,6 +171,13 @@ const defaultSetting: Setting = {
     showOrigWhenHoverText: true
   },
   background: {},
+  pdf: {
+    renderMode: 'followTheme'
+  },
+  video: {
+    autoPlay: false,
+    loop: true
+  },
   webpage: {
     enableSearchAutoSuggestion: true
   }
@@ -230,7 +254,7 @@ const SettingDialog = ({ onClose }: { onClose: VoidFunction }) => {
             </SettingSidebarItem>
           ))}
       </Content>
-      <Content style={{ padding: '0px 30px' }} fullHeight fullWidth>
+      <Content style={{ padding: '0px 30px', overflowY: 'auto' }} fullHeight fullWidth>
         {renderContent()}
       </Content>
     </Content>

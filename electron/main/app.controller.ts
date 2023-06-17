@@ -1,28 +1,27 @@
 import { Controller, Inject } from '@nestjs/common'
-import { WebContents, BrowserWindow, webContents, shell } from 'electron'
+import { WebContents, BrowserWindow, webContents, shell, app, dialog } from 'electron'
 import { AppService } from './app.service'
 import { IpcInvoke } from './transport'
 import fs from 'fs'
 import path from 'path'
 import { autoUpdater } from 'electron-updater'
 import { digestBuffer } from './utils'
-// import { franc } from 'franc'
-// import { iso6393To1 } from './iso-639-to-iso-631'
 
 export const DEFAULT_USER_DATA_PATH =
   process.env.APPDATA || (process.platform == 'darwin' ? process.env.HOME + '/Library/Preferences' : process.env.HOME + '/.local/share')
 
+export const DefaultRendevozDataPath = path.join(DEFAULT_USER_DATA_PATH, 'rendevoz')
+
 @Controller()
 export class AppController {
   constructor(private readonly appService: AppService, @Inject('WEB_CONTENTS') private readonly webContents: WebContents) {}
+  private DefaultRendevozDataPath = path.join(DEFAULT_USER_DATA_PATH, 'rendevoz')
+
   @IpcInvoke('reload')
   public reload() {
     this.webContents.reload()
   }
-  @IpcInvoke('ping')
-  public a() {
-    console.log('ping')
-  }
+
   @IpcInvoke('maximizeWindow')
   public async maximizeWindow() {
     if (BrowserWindow.getFocusedWindow()?.isMaximized()) {
@@ -43,7 +42,7 @@ export class AppController {
   @IpcInvoke('saveImage')
   public async saveImage(imgName: string, imgData: string) {
     this.checkIfRendevozGenerated()
-    const imgPath = path.join(DEFAULT_USER_DATA_PATH, 'rendevoz', 'imgs')
+    const imgPath = path.join(process.env.FILE_PATH || this.DefaultRendevozDataPath, 'imgs')
     if (!fs.existsSync(imgPath)) {
       fs.mkdirSync(imgPath, {})
     }
@@ -68,7 +67,7 @@ export class AppController {
   @IpcInvoke('saveFile')
   public async saveFile(filePath: string, fileName: string) {
     this.checkIfRendevozGenerated()
-    const rendevozFilePath = path.join(DEFAULT_USER_DATA_PATH, 'rendevoz', 'files')
+    const rendevozFilePath = path.join(process.env.FILE_PATH || this.DefaultRendevozDataPath, 'files')
     const newPath = path.join(rendevozFilePath, fileName)
 
     const protocolPath = 'rendefile://' + '/files/' + fileName
@@ -92,7 +91,7 @@ export class AppController {
   @IpcInvoke('saveBuffer')
   public async saveBuffer(buffer: Buffer | ArrayBuffer, fileName: string, filePath?: string) {
     this.checkIfRendevozGenerated()
-    const rendevozFilePath = path.join(DEFAULT_USER_DATA_PATH, 'rendevoz', 'files')
+    const rendevozFilePath = path.join(process.env.FILE_PATH || this.DefaultRendevozDataPath, 'files')
     const finalPathName =
       filePath
         ?.replace('rendefile://', '')
@@ -128,11 +127,12 @@ export class AppController {
   }
 
   private checkIfRendevozGenerated = () => {
-    const rendevozPath = path.join(DEFAULT_USER_DATA_PATH, 'rendevoz')
-    const filePath = path.join(rendevozPath, 'files')
-    const imgPath = path.join(rendevozPath, 'imgs')
-    if (!fs.existsSync(rendevozPath)) {
-      fs.mkdirSync(rendevozPath, {})
+    const customUserFilePath = process.env.FILE_PATH
+    const rendevozFilePath = customUserFilePath || this.DefaultRendevozDataPath
+    const filePath = path.join(rendevozFilePath, 'files')
+    const imgPath = path.join(rendevozFilePath, 'imgs')
+    if (!fs.existsSync(rendevozFilePath)) {
+      fs.mkdirSync(rendevozFilePath, {})
     }
     if (!fs.existsSync(filePath)) {
       fs.mkdirSync(filePath, {})
@@ -158,5 +158,30 @@ export class AppController {
       .find(i => i.id === webviewId)
       .capturePage()
     return image.toDataURL()
+  }
+  @IpcInvoke('getUserFilePath')
+  public async getUserFilePath() {
+    return this.DefaultRendevozDataPath
+  }
+
+  @IpcInvoke('getSelectedFolderPath')
+  public async getSelectedFolderPath() {
+    const path = await dialog.showOpenDialog({
+      properties: ['openDirectory', 'createDirectory']
+    })
+    return path.filePaths[0]
+  }
+
+  @IpcInvoke('changeFilePath')
+  public async changeFilePath(newPath: string) {
+    fs.rename(path.join(process.env.FILE_PATH || this.DefaultRendevozDataPath, 'files'), path.join(newPath, 'files'), () => {})
+    fs.rename(path.join(process.env.FILE_PATH || this.DefaultRendevozDataPath, 'imgs'), path.join(newPath, 'imgs'), () => {})
+    process.env.FILE_PATH = newPath
+  }
+
+  @IpcInvoke('openDatabaseFolder')
+  public async openDatabaseFolder() {
+    const databasePath = path.join(app.getPath('userData'), 'IndexedDB')
+    shell.showItemInFolder(databasePath)
   }
 }

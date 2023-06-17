@@ -38,6 +38,7 @@ export const TypeToNodeRadius: Record<MetaObject['type'], number> = {
   whiteboard: 50,
   webpage: 50,
   webpageLabel: 35,
+  videoLabel: 35,
   video: 50,
   audio: 50,
   localFile: 50

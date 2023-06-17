@@ -3,7 +3,7 @@ import { FC } from 'react'
 export type SelectOptionProps =
   | {
       children: string
-      value: string
+      value: string | number
       icon?: string
     }
   | boolean

@@ -1,8 +1,19 @@
-import { getIcon } from '@/components/layout/sidebar/items/SidebarObjectItem'
-import { ImageIcon, LabelIcon, LocalFileIcon, NotesIcon, PdfIcon, PinnedIcon, UnknownIcon, WebpageIcon, WhiteboardIcon } from './icons'
+import {
+  ImageIcon,
+  LabelIcon,
+  LocalFileIcon,
+  NotesIcon,
+  PdfIcon,
+  PinnedIcon,
+  UnknownIcon,
+  VideoIcon,
+  WebpageIcon,
+  WhiteboardIcon
+} from './icons'
 import { ReactElement } from 'react'
+import { Rendevoz } from '@/core/rendevoz'
 
-export const NAME_TO_ICON: Record<ReturnType<typeof getIcon> | 'park-pin', ReactElement> = {
+export const NAME_TO_ICON: Record<ReturnType<typeof Rendevoz.Utils.Object.getMetaObjectIcon> | 'park-pin', ReactElement> = {
   'park-notes': <NotesIcon />,
   'park-pdf': <PdfIcon />,
   'park-web-page': <WebpageIcon />,
@@ -11,5 +22,6 @@ export const NAME_TO_ICON: Record<ReturnType<typeof getIcon> | 'park-pin', React
   'park-image-files': <ImageIcon />,
   'park-log': <LocalFileIcon />,
   'park-file-question': <UnknownIcon />,
-  'park-pin': <PinnedIcon />
+  'park-pin': <PinnedIcon />,
+  'park-play-two': <VideoIcon />
 }

@@ -1,6 +1,19 @@
 import { Box } from '../common'
 import { IBase } from './base'
 
+export type IMetaAttachment =
+  | {
+      type: MetaObject['type']
+      id: MetaObject['id']
+      createdAt: number
+    }
+  | {
+      type: 'attachmentText'
+      id: number
+      createdAt: number
+      text: string
+    }
+
 // sourceType: note / metaObject / pdf document
 interface MetaObject extends IBase {
   type:
@@ -17,6 +30,7 @@ interface MetaObject extends IBase {
     | 'noteBlock'
     | 'webpageLabel'
     | 'localFile'
+    | 'videoLabel'
   name?: string
   description?: string
   coverImgSrc?: string
@@ -25,6 +39,7 @@ interface MetaObject extends IBase {
   tags?: number[]
   icon?: string
   color?: string
+  attachments?: IMetaAttachment[]
   from?: {
     icon?: string
     metaId?: number
@@ -55,31 +70,14 @@ interface MetaObject extends IBase {
         type: 'whiteboard'
         metaId: number
       }
+    | {
+        type: 'video'
+        metaId: number
+        time?: number
+      }
   temp?: boolean
 }
-interface MetaWithNote {
-  noteId: number
-}
-interface MetaKnowledgeObject extends MetaObject, MetaWithNote {
-  type: 'knowledge'
-  coverImgSrc?: string
-  keyword: string
-  noteIds?: number[]
-  commentIds?: number[]
-}
-interface MetaDocumentObject extends MetaObject, MetaWithNote {
-  type: 'document'
-  title: string
-  documentId: number
-}
-interface MetaNoteObject extends MetaObject {
-  type: 'note'
-  noteId: number
-  title: string
-}
-interface MetaComment extends IBase {
-  content: string
-}
+
 interface MetaLink extends IBase {
   sourceId: number
   sourceType: string

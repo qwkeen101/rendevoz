@@ -46,6 +46,7 @@ const CanvasLayer: FC<CanvasLayerProps> = ({ page, width, height, viewport, tran
       canvasEle.style.height = `${height}px`
       canvasEle.style.width = `${width}px`
       finalScaleRef.current = finalScale
+
       resizeCanvas(ctx, width * finalScale, height * finalScale)
       if (!renderedRef.current) {
         canvasEle.hidden = true
@@ -56,11 +57,7 @@ const CanvasLayer: FC<CanvasLayerProps> = ({ page, width, height, viewport, tran
   })
   const debouncedRenderCanvas = useDebounceFn(
     (ctx: CanvasRenderingContext2D, transform, viewport, viewer, canvasEle, onRendered) => {
-      const anotherCanvas = document.createElement('canvas')
-      anotherCanvas.width = canvasEle.width
-      anotherCanvas.height = canvasEle.height
-      const anotherCtx = anotherCanvas.getContext('2d')!
-      renderTaskRef.current = page.render({ canvasContext: anotherCtx, transform, viewport })
+      renderTaskRef.current = page.render({ canvasContext: ctx, transform, viewport })
       const renderQueue = PDF_TO_RENDER_QUEUE.get(viewer) || new Set<number>()
       PDF_TO_RENDER_QUEUE.set(viewer, renderQueue)
       renderQueue.add(pageIndex)
@@ -68,7 +65,6 @@ const CanvasLayer: FC<CanvasLayerProps> = ({ page, width, height, viewport, tran
       renderTaskRef.current.promise.then(() => {
         canvasEle.hidden = false
         onRendered?.()
-        ctx.drawImage(anotherCanvas, 0, 0, canvasEle.width, canvasEle.height)
         renderedRef.current = true
         setTimeout(() => {
           removeFromRenderQueue(viewer, pageIndex)
@@ -97,6 +93,7 @@ const CanvasLayer: FC<CanvasLayerProps> = ({ page, width, height, viewport, tran
         canvasEle.width = 0
         canvasEle.height = 0
       }
+      renderTaskRef.current = undefined
     }
   }, [])
 

@@ -10,8 +10,17 @@ type SettingItem = {
   column?: boolean
   titleSize?: number
   childrenContainerStyle?: CSSProperties
+  disableDescriptionFormat?: boolean
 }
-const SettingItem: FC<SettingItem> = ({ children, title, description, column = false, titleSize = 18, childrenContainerStyle }) => {
+const SettingItem: FC<SettingItem> = ({
+  children,
+  title,
+  description,
+  column = false,
+  titleSize = 18,
+  disableDescriptionFormat,
+  childrenContainerStyle
+}) => {
   return (
     <Content
       flex
@@ -37,7 +46,11 @@ const SettingItem: FC<SettingItem> = ({ children, title, description, column = f
         >
           {title}
         </div>
-        {description && <div className={css({ fontSize: 13 })}>{description}</div>}
+        {description && (
+          <div style={{ textTransform: 'none' }} className={css({ fontSize: 13 })}>
+            {description}
+          </div>
+        )}
       </div>
       <Content flex centered={!column} style={childrenContainerStyle}>
         {children}

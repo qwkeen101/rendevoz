@@ -1,6 +1,7 @@
 import { atom, useAtom } from 'jotai'
+import { IVideo, IVideoChapter } from '~/typings'
 
-export const VideoStateAtom = atom<{
+export type VideoState = {
   loop: boolean
   muted: boolean
   currentTime?: number
@@ -8,16 +9,27 @@ export const VideoStateAtom = atom<{
   url?: string
   progressbarHovering: boolean
   paused: boolean
+  jumpIndicator?: 'back' | 'forward'
   volume: number
   speed: number
   fullScreen: boolean
   windowed: boolean
-}>({
+  sortedChapters?: IVideoChapter[]
+  videoId?: number
+  floated?: boolean
+  sticky?: boolean
+  labelWithTime?: {
+    time: number
+    id: number
+  }[]
+} & Partial<IVideo>
+
+export const VideoStateAtom = atom<VideoState>({
   muted: false,
   loop: false,
   progressbarHovering: false,
   paused: true,
-  volume: 0.8,
+  volume: 0.3,
   speed: 1,
   fullScreen: false,
   windowed: false

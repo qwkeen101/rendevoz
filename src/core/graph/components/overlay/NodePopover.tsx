@@ -1,4 +1,3 @@
-import Actions from '@/core/Actions'
 import { ObjectActionPopover, useRenderObject } from '@/core/database'
 import { GlobalGraphInstance, getAllEdgesOfNodes, getRelatedNodesOfNode } from '../..'
 import useGraph from '../../hooks/useGraph'
@@ -13,6 +12,7 @@ import { relatedMetaObjectsMapAtom } from '@/stores/meta.store'
 import useGraphNodes from '../../hooks/useGraphNodes'
 import useEdges from '../../hooks/useEdges'
 import * as d3 from 'd3'
+import { Rendevoz } from '@/core/rendevoz'
 const NodePopover = ({ metaId, nodeId, onClose }: { metaId: number; nodeId: number; onClose: VoidFunction }) => {
   const { renderWhole } = useRenderObject({ metaObjectId: metaId })
   const graph = useGraph()
@@ -51,7 +51,7 @@ const NodePopover = ({ metaId, nodeId, onClose }: { metaId: number; nodeId: numb
             fontSize: FontSize['14px']
           },
           onTitleClick: () => {
-            Actions.navigateToTargetObject(metaId)
+            Rendevoz.Actions.Open.Meta.openMetaObject(metaId)
             GlobalGraphInstance.minimize?.()
             graph?.overlayManager?.close()
           }

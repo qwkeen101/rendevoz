@@ -1,12 +1,12 @@
 // TODO: Migrate all object types to IObject: PDF, PDFLABEL, NOTE, WHITEBOARD....
-
-import { Box } from '../common'
 import { IBase } from './base'
+import { ILabel as _IPdfLabel } from './label'
 
 type IObject = IWebpage | IAudio
 
 export interface ILabel extends IBase {
   parentObjectId: number
+  description?: string
 }
 export interface IWebpage extends IBase {
   specType: 'webpage'
@@ -35,18 +35,29 @@ export interface IWebpageLabel extends IBase {
   highlightId?: number
   selectedText?: string
 }
+
 export interface IImage extends IBase {
   specType: 'image'
   imageUrl: string
   ocrResult?: string
   excalidrawUrl?: string
 }
+
+export type IPdfLabel = _IPdfLabel
+
 export interface INoteBlock extends IBase {
   blockId: number
   noteId: number
   specType: 'noteBlock'
 }
 
+export type IVideoChapter = {
+  id: number
+  startTime: number
+  imageUrl?: string
+  endTime?: number
+  name: string
+}
 export interface IVideo extends IBase {
   specType: 'video'
   videoUrl: string
@@ -54,11 +65,20 @@ export interface IVideo extends IBase {
   lastPlayedTime: number
   // seconds
   totalPlayedTime: number
+  chapters?: IVideoChapter[]
+  // label ids
+  labels?: number[]
+  volume?: number
 }
+
 export interface IVideoLabel extends ILabel {
   // second
   videoTime: number
+  chapterId?: number
+  imageUrl?: string
+  name: string
 }
+
 export interface ILocalFile extends IBase {
   specType: 'localFile'
   fileUrl: string

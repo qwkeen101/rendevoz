@@ -1,17 +1,17 @@
 import { getDistanceBetweenPointAndElement } from '@/utils'
 import { GlobalDragOverlayInstance, useGlobalIsDragging } from '@/core'
 import { GlobalEventHandler } from '@/events/globalEvent'
-import { useGlobalEventEmitter } from '@/events/useEventEmitter'
 import { useMemoizedFn } from '@/hooks'
 import { ObjectStore } from '@/stores'
 import Id from '@/utils/id'
 import { useEffect, useState } from 'react'
 import { ILabel, IObjectLabel, IShapeLabel, MetaObject } from '~/typings/data'
+import { Rendevoz } from '@/core/rendevoz'
 
 const usePdfDrag = (viewbox: HTMLElement | null | undefined, pdfId: number) => {
   const [isGlobalDragging] = useGlobalIsDragging()
   const [isDraggingInside, setIsDraggingInside] = useState(false)
-  const globalEmitter = useGlobalEventEmitter()
+  const globalEmitter = Rendevoz.Events.Emit.GlobalEventEmitter
   const mouseEnterHandler = useMemoizedFn((e: MouseEvent) => {
     setIsDraggingInside(true)
   })

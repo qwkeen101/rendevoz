@@ -1,15 +1,15 @@
 import { useEffect, useRef } from 'react'
 import { INote } from '~/typings/data'
 import { CustomEditor } from '~/typings'
-import { Descendant, Transforms } from 'slate'
+import { Descendant } from 'slate'
 import Id from '@/utils/id'
 import { useDebounceFn, useMemoizedFn } from '@/hooks'
-import { serializeEditor } from '../utils/database/serialize'
 import { toast } from 'react-hot-toast'
 import { Notification } from '@/components'
 import getSetting from '@/core/setting/getSetting'
-import { useEventHandler, useGlobalEventEmitter } from '@/events'
+import { useEventHandler } from '@/events'
 import { NoteStore, ObjectStore } from '@/stores'
+import { Rendevoz } from '@/core/rendevoz'
 const initial = [
   {
     id: Id.getId(),
@@ -33,7 +33,7 @@ const useStoreValue = (note: INote | undefined, editor: CustomEditor, onContentR
   const contentRef = useRef<Descendant[]>()
   const noteId = note?.id
   const contentId = note?.contentId
-  const emitter = useGlobalEventEmitter()
+  const emitter = Rendevoz.Events.Emit.GlobalEventEmitter
 
   const handler = useEventHandler('editor')
   const debounceSaveE = useMemoizedFn(data => {
@@ -50,7 +50,7 @@ const useStoreValue = (note: INote | undefined, editor: CustomEditor, onContentR
         saveNoteAsSearch(editor, noteId)
         const setting = getSetting()
         if (setting.notification.enabled && setting.notification.editor) {
-          toast.success(<Notification title={`📝 ${note.title}`} content="Note is saved." />)
+          // toast.success(<Notification title={`📝 ${note.title}`} content="Note is saved." />)
         }
       }
     },
@@ -99,22 +99,18 @@ const useStoreValue = (note: INote | undefined, editor: CustomEditor, onContentR
     return () => {
       emitter.removeListener('editor', handler)
       window.removeEventListener('beforeunload', cleanUp)
-      const contentId = saveNoteAsBuffer(editor.children, note?.contentId)
+      saveNoteAsBuffer(editor.children, note?.contentId).then(c => {
+        if (note?.contentId !== c) {
+          ObjectStore('note').updateOne(
+            {
+              id: noteId,
+              contentId: c
+            },
+            { silent: true }
+          )
+        }
+      })
       saveNoteAsSearch(editor, noteId)
-      // const result = []
-      // serializeEditor(editor, editor, result)
-      // result.forEach(i => (i.noteId = noteId))
-      // saveBlocks(result)
-      // doc.destroy()
-      if (note?.contentId !== contentId) {
-        ObjectStore('note').updateOne(
-          {
-            id: noteId,
-            contentId
-          },
-          { silent: true }
-        )
-      }
     }
   }, [contentId])
   useEffect(() => {

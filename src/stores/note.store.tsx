@@ -6,29 +6,47 @@ import { INote } from '~/typings/data'
 import { SearchStore, SearchableDocument } from './search.store'
 import { CustomEditor } from '~/typings'
 import { Element } from 'slate'
+import { saveBlobLocally } from '@/utils/file'
 
 export const notesAtom = atom(new Map<number, INote>())
 
 const createNoteStore = () => {
   const blobDb = useDb('blobs')
-  const saveNoteAsBuffer = (value: Descendant[], id?: number) => {
+  const saveNoteAsBuffer = async (value: Descendant[], id?: number) => {
     const realId = id || Id.getId()
-    const encoder = new TextEncoder()
-    const arrayBuffer = encoder.encode(JSON.stringify(value))
-    blobDb.put({
-      id: realId,
-      value: arrayBuffer
-    })
+
+    await saveBlobLocally(new Blob([JSON.stringify(value)]), String(realId), `note_${realId}.json`).then(res =>
+      blobDb.put({
+        id: realId,
+        fileUrl: res.data
+      })
+    )
     return realId
   }
   const getNoteValue = async (id: number) => {
     const value = await blobDb.get(id)
     if (value) {
-      const buffer = value.value as ArrayBuffer
-      const decoder = new TextDecoder()
-      const str = decoder.decode(buffer)
-      const obj = JSON.parse(str)
-      return obj as Descendant[]
+      if (value.value) {
+        const buffer = value.value as ArrayBuffer
+        const decoder = new TextDecoder()
+        const str = decoder.decode(buffer)
+        const obj = JSON.parse(str)
+        saveBlobLocally(new Blob([JSON.stringify(obj)]), String(id), `note_${id}.json`).then(res => {
+          blobDb.put({
+            id,
+            fileUrl: res.data
+          })
+        })
+        return obj as Descendant[]
+      }
+      const fileUrl = value.fileUrl
+      if (fileUrl) {
+        const res = await fetch(fileUrl)
+        const text = await res.text()
+        const obj = JSON.parse(text)
+        console.log(obj, id)
+        return obj as Descendant[]
+      }
     }
   }
   const saveNoteAsSearch = async (editor: CustomEditor, noteId: number) => {

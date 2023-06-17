@@ -1,4 +1,4 @@
-import { FC, useEffect, useRef, useState } from 'react'
+import { FC, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import styles from './index.module.less'
 import Navigation from './Navigation'
 import { Rnd } from 'react-rnd'
@@ -7,8 +7,10 @@ import classNames from 'classnames'
 import ClassName from '@/styles/classNames'
 import { getOS } from '@/App'
 import { atom } from 'jotai'
-import { useGlobalAtom } from '@/hooks'
+import { useGlobalAtom, useMount } from '@/hooks'
 import { Rendevoz } from '@/core/rendevoz'
+import { LayoutIdToTabMap } from '..'
+import useAppState from '@/core/rendevoz/appState'
 
 export const SidebarStateAtom = atom<{
   collapsed: boolean
@@ -25,10 +27,20 @@ export const SidebarCollapseAtom = atom(false)
 export const Sidebar: FC = () => {
   const navRef = useRef<HTMLElement>(null)
   const rndRef = useRef<Rnd>(null)
+  const [appState, setAppState] = useAppState()
   const [sidebarState, setSidebarState] = useGlobalAtom(SidebarStateAtom)
   const [widthTransition, setWidthTransition] = useState(false)
   const [isResizing, setIsResizing] = useState(false)
 
+  useEffect(() => {
+    setAppState(s => ({ ...s, sidebarCollapsed: sidebarState.collapsed }))
+  }, [sidebarState.collapsed])
+
+  useLayoutEffect(() => {
+    if (appState.sidebarCollapsed) {
+      setSidebarState(s => ({ ...s, collapsed: appState.sidebarCollapsed, width: 0 }))
+    }
+  }, [])
   const { hovered, collapsed } = sidebarState
   useEffect(() => {
     const os = getOS()
@@ -49,7 +61,7 @@ export const Sidebar: FC = () => {
         if (!isResizing) setSidebarState(s => ({ ...s, hovered: false }))
       }}
       onClick={() => {
-
+        console.log(LayoutIdToTabMap)
       }}
       onDragLeave={e => {
         e.preventDefault()

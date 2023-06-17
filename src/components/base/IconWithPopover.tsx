@@ -2,17 +2,19 @@ import { AnimatePopover, Content, Icon } from '@/components'
 import Tooltip from '@/components/base/Tooltip'
 import { useMergedRef } from '@/hooks'
 import { FC, useRef, useState, useEffect, MutableRefObject, useImperativeHandle, forwardRef, CSSProperties, MouseEventHandler } from 'react'
+import { AnimatePopoverProps } from './AnimatePopover'
 
 interface Props {
   disableNudge?: boolean
   disableCloseOutside?: boolean
   disableIntersection?: boolean
   name: string
-  content: React.ReactNode
+  content: AnimatePopoverProps['content']
   tooltip?: string
   color?: string
   zIndex?: number
   defaultOpen?: boolean
+  strokeWidth?: number
   placement?: ('bottom' | 'top' | 'left' | 'right')[]
   size?: number
   innerRef?: MutableRefObject<any>
@@ -24,9 +26,10 @@ interface Props {
   className?: string
   onClick?: MouseEventHandler
   tooltipPosition?: 'top' | 'bottom'
-  closeOnContentClick?: boolean
+  closeOnContentClick?: boolean | string
   contentDraggable?: boolean
   iconContainerStyle?: CSSProperties
+  onContentClick?: MouseEventHandler
   containerStyle?: CSSProperties
   renderOnParent?: boolean
   onClickOutside?: (e: MouseEvent, setVisible: React.Dispatch<React.SetStateAction<boolean>>) => void
@@ -50,9 +53,11 @@ const IconWithPopover: FC<Props> = (
     contentDraggable,
     disableNudge,
     tooltip,
-    boundaryInset = 40,
+    boundaryInset = 20,
     disableCloseOutside,
     disableIntersection,
+    strokeWidth,
+    onContentClick,
     style,
     iconContainerStyle,
     onClick,
@@ -78,9 +83,17 @@ const IconWithPopover: FC<Props> = (
     <Content
       ref={mergedRef}
       style={containerStyle}
-      onClick={() => {
-        if (closeOnContentClick && visible) {
-          setVisible(false)
+      onClick={e => {
+        onContentClick?.(e)
+        if (visible) {
+          if (typeof closeOnContentClick === 'boolean' && closeOnContentClick) {
+            setVisible(false)
+          }
+          if (typeof closeOnContentClick === 'string') {
+            if (e.target instanceof Element && e.target.closest(closeOnContentClick)) {
+              setVisible(false)
+            }
+          }
         }
       }}
     >
@@ -103,6 +116,7 @@ const IconWithPopover: FC<Props> = (
         parentElement={renderOnParent ? parentElement || containerRef.current || document.body : document.body}
         boundaryElement={document.body}
         boundaryInset={boundaryInset}
+        onVisiblityChange={v => setVisible(v)}
         visible={visible}
         positions={placement}
         reposition
@@ -116,6 +130,7 @@ const IconWithPopover: FC<Props> = (
             containerStyle={iconContainerStyle}
             cursor="pointer"
             size={size}
+            strokeWidth={strokeWidth}
             className={className}
             onClick={e => {
               setVisible(!visible)

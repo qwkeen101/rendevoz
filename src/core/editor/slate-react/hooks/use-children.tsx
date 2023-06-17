@@ -34,42 +34,46 @@ const useChildren = (props: {
     const n = node.children[i] as Descendant
     const key = ReactEditor.findKey(editor, n)
 
-    const range = Editor.range(editor, p)
-    const sel = selection && Range.intersection(range, selection)
-    const ds = decorate([n, p])
+    try {
+      const range = Editor.range(editor, p)
+      const sel = selection && Range.intersection(range, selection)
+      const ds = decorate([n, p])
 
-    for (const dec of decorations) {
-      const d = Range.intersection(dec, range)
+      for (const dec of decorations) {
+        const d = Range.intersection(dec, range)
 
-      if (d) {
-        ds.push(d)
+        if (d) {
+          ds.push(d)
+        }
       }
-    }
 
-    if (Element.isElement(n)) {
-      children.push(
-        <ElementComponent
-          decorations={ds}
-          element={n}
-          key={key.id}
-          renderElement={renderElement}
-          renderPlaceholder={renderPlaceholder}
-          renderLeaf={renderLeaf}
-          selection={sel}
-        />
-      )
-    } else {
-      children.push(
-        <TextComponent
-          decorations={ds}
-          key={key.id}
-          isLast={isLeafBlock && i === node.children.length - 1}
-          parent={node}
-          renderPlaceholder={renderPlaceholder}
-          renderLeaf={renderLeaf}
-          text={n}
-        />
-      )
+      if (Element.isElement(n)) {
+        children.push(
+          <ElementComponent
+            decorations={ds}
+            element={n}
+            key={key.id}
+            renderElement={renderElement}
+            renderPlaceholder={renderPlaceholder}
+            renderLeaf={renderLeaf}
+            selection={sel}
+          />
+        )
+      } else {
+        children.push(
+          <TextComponent
+            decorations={ds}
+            key={key.id}
+            isLast={isLeafBlock && i === node.children.length - 1}
+            parent={node}
+            renderPlaceholder={renderPlaceholder}
+            renderLeaf={renderLeaf}
+            text={n}
+          />
+        )
+      }
+    } catch (e) {
+      console.error(e)
     }
 
     NODE_TO_INDEX.set(n, i)

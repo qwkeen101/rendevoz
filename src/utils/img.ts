@@ -1,5 +1,8 @@
 import { ipcInstance, IpcResponse } from '@/plugins'
 import { Size, XYPosition } from '~/typings'
+import ColorThief from 'colorthief'
+
+const colorThief = new ColorThief()
 
 export const saveImageLocally = async (
   imgData: string | Blob,
@@ -103,4 +106,24 @@ export const downloadImg = async (imageUrl: string, imageName?: string) => {
   a.click()
   document.body.removeChild(a)
   URL.revokeObjectURL(url)
+}
+
+export const getMainColorOfImage = (image: HTMLImageElement | string): Promise<[number, number, number]> => {
+  return new Promise(res => {
+    if (typeof image === 'string') {
+      const imageEle = new Image()
+      imageEle.src = image
+      imageEle.onload = () => {
+        res(colorThief.getColor(imageEle))
+      }
+    } else {
+      if (image.complete) {
+        res(colorThief.getColor(image))
+      } else {
+        image.onload = () => {
+          res(colorThief.getColor(image))
+        }
+      }
+    }
+  })
 }

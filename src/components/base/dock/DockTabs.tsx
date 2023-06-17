@@ -57,6 +57,7 @@ export class TabCache {
   onCloseClick = (e: React.MouseEvent) => {
     this.context.dockMove(this.data, null, 'remove')
     LayoutIdToTabMap.delete(this.data.id)
+    console.log(LayoutIdToTabMap)
     this.context.getGlobal().onTabClose?.(this.data)
     e.stopPropagation()
   }

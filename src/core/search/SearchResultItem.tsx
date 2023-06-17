@@ -9,12 +9,11 @@ import ClassName from '@/styles/classNames'
 import { useGlobalAtomValue, useToggle } from '@/hooks'
 import Colors from '@/consts/colors'
 import { css } from '@emotion/css'
-import Actions from '../Actions'
-import { selectBlock } from '../editor/utils/blockActions'
 import { useTranslation } from 'react-i18next'
 import FontSize from '@/consts/font'
 import { DefaultObjectTitleRenderClazzName } from '../database/useRenderObject'
 import { Zindexes } from '@/consts'
+import { Rendevoz } from '../rendevoz'
 
 const SearchResultItem = ({ group, onNavi }: { group: SearchGroup; onNavi: VoidFunction }) => {
   const metaId = group.metaId
@@ -111,14 +110,20 @@ const SearchResultItem = ({ group, onNavi }: { group: SearchGroup; onNavi: VoidF
                     if (metaId) {
                       const targetMeta = globalStore.get(metaObjectsAtom).get(metaId)
                       if (targetMeta?.type === 'note') {
-                        Actions.openEditor(Number(i.targetObjectId)).then(editor => {
-                          selectBlock(Number(i.id), editor)
-                        })
+                        Rendevoz.Actions.Open.Editor.openEditor(Number(i.targetObjectId)).then(editor =>
+                          editor.selectBlock?.({
+                            blockId: Number(i.id)
+                          })
+                        )
                       }
                       if (targetMeta?.type === 'webpage') {
-                        Actions.openWebpage(targetMeta?.objectId!).then(webpage => {
-                          webpage.transformToNote().then(editor => {
-                            selectBlock(Number(i.id), editor)
+                        Rendevoz.Actions.Open.Webpage.openWebpage(targetMeta?.objectId!).then(webpage => {
+                          console.log('yes yes yes')
+                          webpage.transformToNote?.().then(editor => {
+                            console.log(editor, i.id)
+                            editor.selectBlock?.({
+                              blockId: Number(i.id)
+                            })
                           })
                         })
                       }
@@ -141,7 +146,7 @@ const PdfSearchResult = ({ item, onNavi }: { item: { specType: 'pdfPage' } & Sea
       className={ClassName.flatButton(4, '8px')}
       onClick={() => {
         onNavi()
-        Actions.goToPdfSearchedText(globalSearch, Number(item.pageIndex), Number(item.targetObjectId))
+        Rendevoz.Actions.Open.Pdf.openPdfSearchedText(globalSearch, Number(item.pageIndex), Number(item.targetObjectId))
       }}
     >
       <div dangerouslySetInnerHTML={{ __html: item.content }}></div>
@@ -191,7 +196,7 @@ const SearchDetails = memo(({ metaId, onNavi, highlightName }: { metaId: number;
       {highlightName ? (
         <div
           onClick={() => {
-            Actions.navigateToTargetObject(metaId)
+            Rendevoz.Actions.Open.Meta.openMetaObject(metaId)
             onNavi()
           }}
           className={css([ClassName.ellipsisFont(2), DefaultObjectTitleRenderClazzName])}
@@ -204,7 +209,7 @@ const SearchDetails = memo(({ metaId, onNavi, highlightName }: { metaId: number;
             paddingRight: 40
           },
           onTitleClick: () => {
-            Actions.navigateToTargetObject(metaId)
+            Rendevoz.Actions.Open.Meta.openMetaObject(metaId)
             onNavi()
           }
         })

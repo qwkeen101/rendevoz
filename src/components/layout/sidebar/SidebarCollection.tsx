@@ -1,7 +1,7 @@
 import { AnimatePopover, Tooltip } from '@/components/base'
 import Modal from '@/components/base/Modal'
 import CollectionForm from '@/components/form/CollectionForm'
-import { GlobalDragOverlayInstance, useGlobalIsDragging } from '@/core'
+import { useGlobalIsDragging } from '@/core'
 import Zindexes from '@/consts/zindex'
 import { useMemoizedFn, useToggle } from '@/hooks'
 import useCollectionStore, { rootCollectionsAtom } from '@/stores/collection.store'
@@ -16,6 +16,7 @@ import Icon from '../../base/Icon'
 import SidebarCollectionItem from './items/SidebarCollectionItem'
 import { sidebarDraggingState } from './useSidebarItemDrag'
 import { useTranslation } from 'react-i18next'
+import { Rendevoz } from '@/core/rendevoz'
 
 const SidebarCollection = () => {
   const rootCollections = useAtomValue(rootCollectionsAtom, { store: globalStore })
@@ -33,7 +34,7 @@ const SidebarCollection = () => {
     if (e.type === 'pointerup') {
       toggleDropVisible(false)
     }
-    const draggingEle = GlobalDragOverlayInstance.draggingDetails
+    const draggingEle = Rendevoz.Actions.State.Drag.getDraggingDetails()
     if (draggingEle) {
       if (draggingEle.type === 'collection') {
         if (e.type === 'pointerenter') {

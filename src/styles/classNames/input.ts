@@ -22,3 +22,10 @@ export const input = () =>
       border: '1px solid var(--font-secondary)'
     }
   })
+
+export const noStyleInput = css({
+  outline: 'none',
+  border: 'none',
+  background: 'transparent',
+  color: Colors.Font.Primary
+})

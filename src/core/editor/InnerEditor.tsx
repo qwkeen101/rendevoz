@@ -24,6 +24,7 @@ import getCursorPosition from './utils/getCursorPosition'
 import HoverObjectDetails from '../database/HoverObjectDetails'
 import { DraggableElement, DraggingElement } from '../global'
 import { Element } from './renderer/renderElement'
+import Colors from '@/consts/colors'
 
 const EditableEditorClassName = css({
   p: {
@@ -89,7 +90,7 @@ const ReadOnlyEditorClassName = css({
   },
   cite: ClassName.description(),
   figcaption: {
-    color: 'rgb(77,77,77)',
+    color: Colors.Font.Secondary,
     fontSize: '0.8rem',
     margin: '0 0.8rem',
     padding: 0,
@@ -162,8 +163,10 @@ const InnerEditor: FC<InnerEditorProps> = memo(
         const firstLayerIdSet = new Set<number>()
         const firstLayerMap = ID_TO_FIRST_LAYER_MAP.get(editor) || new Map<number, Path>()
         ID_TO_FIRST_LAYER_MAP.set(editor, firstLayerMap)
-
+        firstLayerMap.clear()
+        firstLayerIdSet.clear()
         // normalize first layer ids to prevent path conflicts
+        console.log(editor.children.length)
         editor.children.forEach((i, idx) => {
           if (firstLayerIdSet.has(i.id)) {
             Transforms.setNodes(editor, { id: Id.getId() }, { at: [idx] })
@@ -404,10 +407,10 @@ const InnerEditor: FC<InnerEditorProps> = memo(
                   if (isActive) {
                     const highlightId = Editor.marks(editor)['highlight']
                     Editor.removeMark(editor, 'highlight')
-                    editor.onHighlightRemove?.(Number(highlightId))
+                    editor.on({ type: 'highlightRemove', highlightId: Number(highlightId) })
                   } else {
                     const highlightId = Id.getId()
-                    editor.onHighlight?.(highlightId)
+                    editor.on({ type: 'highlight', highlightId })
                     Editor.addMark(editor, 'highlight', highlightId)
                   }
                 }
@@ -601,7 +604,7 @@ export const Leaf = (props: RenderLeafProps) => {
     return (
       <HoverObjectDetails ref={attributes.ref || {}} objectId={leaf.highlight}>
         <DraggableElement
-          onDragStart={() => editor.onHighlightDrag?.(leaf.highlight!, editor)}
+          onDragStart={() => editor.on({ type: 'highlightDrag', highlightId: leaf.highlight! })}
           hoverElement={<DraggingElement text="Drop to add note label" />}
         >
           <span

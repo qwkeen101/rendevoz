@@ -11,16 +11,13 @@ import Select from '@/components/base/select'
 import DateFormat from '@/utils/dateFormat'
 import { css } from '@emotion/css'
 import { motion } from 'framer-motion'
-import Actions from '@/core/Actions'
 import { IconNameItem } from '@/components/layout/sidebar/SidebarCollection'
-import { getIcon } from '@/components/layout/sidebar/items/SidebarObjectItem'
 import { DraggableElement, ObjectActionPopover, TypeToTypeName, useCreateObject } from '@/core'
 import { Zindexes } from '@/consts'
 import Colors from '@/consts/colors'
 import { Provider, atom, createStore, useAtom, useAtomValue } from 'jotai'
 import fuzzysort from 'fuzzysort'
-import CodeBlock from '@/components/base/CodeBlock'
-import Video from '@/core/video'
+import { Rendevoz } from '@/core/rendevoz'
 
 const HomeSearchAtom = atom<string | undefined>(undefined)
 export const HomePage: FC = () => {
@@ -34,7 +31,6 @@ export const HomePage: FC = () => {
   return (
     <Content flex column fullHeight style={{ margin: '0 auto', width: '100%', maxWidth: 1400, padding: '18px 24px 0px' }}>
       <TabTitle title={t('general.home')} icon="park-home" />
-      {/* <Video /> */}
       <Content
         flex
         gap={10}
@@ -73,7 +69,7 @@ export const HomePage: FC = () => {
   )
 }
 
-const VisibleTypes: MetaObject['type'][] = ['note', 'pdf', 'whiteboard', 'webpage', 'localFile', 'image']
+const VisibleTypes: MetaObject['type'][] = ['note', 'video', 'pdf', 'whiteboard', 'webpage', 'localFile', 'image']
 const ColWidthState = { nameWidth: '100%', viewWidth: '200px', createWidth: '200px' }
 const Recent = () => {
   const all = useGlobalAtomValue(undeletedMetaObjectsAtom)
@@ -81,6 +77,7 @@ const Recent = () => {
   const [type, setType] = useState<MetaObject['type'] | 'all'>('all')
   const [showResizer, toggleShowResizer] = useToggle(false)
   const search = useAtomValue(HomeSearchAtom)
+  const getIcon = Rendevoz.Utils.Object.getMetaObjectIcon
   const [sortMode, setSortMode] = useState<'viewDesc' | 'viewAsc' | 'createDesc' | 'createAsc'>('viewDesc')
   const filteredItems = () => {
     switch (type) {
@@ -90,6 +87,7 @@ const Recent = () => {
       case 'webpage':
       case 'pdf':
       case 'localFile':
+      case 'video':
       case 'image':
       case 'whiteboard':
         return all.filter(i => i.type === type)
@@ -263,7 +261,7 @@ const Recent = () => {
             <tr
               onClick={e => {
                 if (!e.defaultPrevented) {
-                  Actions.navigateToTargetObject(i.id)
+                  Rendevoz.Actions.Open.Meta.openMetaObject(i.id)
                 }
               }}
               key={i.id}

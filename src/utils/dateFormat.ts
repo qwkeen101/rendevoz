@@ -13,7 +13,7 @@ const getLocale = () => {
 const DateFormat = {
   format: (date: number | Date, f: string) => format(date, f),
   formatDistanceToNow: (date: number) => formatDistanceToNow(date),
-  formatDistanceToNowStrict: (date: number) => formatDistanceToNowStrict(date, { locale: getLocale() }),
+  formatDistanceToNowStrict: (date: number, suffix = false) => formatDistanceToNowStrict(date, { locale: getLocale(), addSuffix: suffix }),
   Formats: {
     default: 'Y/M/d',
     withMinute: 'Y/M/d H:mm'

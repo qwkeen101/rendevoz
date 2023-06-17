@@ -1,11 +1,10 @@
-import Actions from '@/core/Actions'
 import { useGlobalAtomValue } from '@/hooks/jotai'
 import { metaObjectsAtom, relatedMetaObjectsMapAtom } from '@/stores/meta.store'
 import ClassName from '@/styles/classNames'
 import Id from '@/utils/id'
 import { css } from '@emotion/css'
 import { selectAtom } from 'jotai/utils'
-import { CSSProperties, ReactNode, memo, useMemo, useState } from 'react'
+import { CSSProperties, ReactNode, memo, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Content, Icon, IconWithPopover, Image } from '@/components'
 import { Editor } from '../editor/Editor'
@@ -13,25 +12,25 @@ import { PdfViewer } from '../pdf/PdfViewer'
 import { ObjectActionPopover, TypeToTypeName } from './card/DatabaseCard'
 import { ObjectTag, Whiteboard } from '@/core'
 import DateFormat from '@/utils/dateFormat'
-import getEmoji from '@/utils/emoji'
 import FromRenderer from './FromRenderer'
 import WebpageSourceRenderer from './WebpageSourceRenderer'
 import Colors from '@/consts/colors'
 import { TFunction } from 'i18next'
 import { MetaObject, Size } from '~/typings'
 import { GlobalImagePreviewerInstance } from '../global/GlobalImagePreviewer'
+import { Rendevoz } from '../rendevoz'
+import HoverAttachment from './HoverAttachment'
+import HoverObjectDetails from './HoverObjectDetails'
+import { useUpdate } from 'react-use'
 
-const clazzName = css([
-  {
-    cursor: 'pointer',
-    fontWeight: 500,
-    textTransform: 'none',
-    ':hover': {
-      textDecoration: 'underline'
-    }
-  },
-  ClassName.ellipsisFont(2)
-])
+const clazzName = css({
+  cursor: 'pointer',
+  fontWeight: 500,
+  textTransform: 'none',
+  ':hover': {
+    textDecoration: 'underline'
+  }
+})
 
 export const DefaultObjectTitleRenderClazzName = css([
   ClassName.title('16px'),
@@ -47,36 +46,47 @@ export const DefaultObjectTitleRenderClazzName = css([
     cursor: 'pointer'
   }
 ])
-const _renderTags = (
-  {
-    gap = 4,
-    flexWrap = 'wrap',
-    containerStyle,
-    showCreatedAt,
-    showUpdatedAt,
-    showViewAt,
-    containerClassName = css({
-      '> *': {
-        fontSize: '11px !important'
-      }
-    })
-  }: {
-    gap?: number
-    flexWrap?: CSSProperties['flexWrap']
-    containerStyle?: CSSProperties
-    containerClassName?: string
-    showUpdatedAt?: boolean
-    showCreatedAt?: boolean
-    showViewAt?: boolean
-    maxTagsToShow?: number
-  },
-  t: TFunction<'translation', undefined, 'translation'>,
-  relatedNum: number,
+const TagRenderer = ({
+  gap = 4,
+  flexWrap = 'wrap',
+  containerStyle,
+  showCreatedAt,
+  showUpdatedAt,
+  showViewAt,
+  showAttachments,
+  containerClassName = css({
+    '> *': {
+      fontSize: '11px !important'
+    }
+  }),
+  relatedNum,
+  metaObject,
+  t
+}: {
+  gap?: number
+  flexWrap?: CSSProperties['flexWrap']
+  containerStyle?: CSSProperties
+  containerClassName?: string
+  showUpdatedAt?: boolean
+  showCreatedAt?: boolean
+  showViewAt?: boolean
+  showAttachments?: boolean
+  maxTagsToShow?: number
+  relatedNum: number
   metaObject?: MetaObject
-) => {
+  t: TFunction<'translation', undefined, 'translation'>
+}) => {
+  const containerRef = useRef<HTMLDivElement>(null)
+  const update = useUpdate()
+  useEffect(() => {
+    if (metaObject?.attachments?.length) {
+      update()
+    }
+  }, [])
   return (
     <Content
       flex
+      ref={containerRef}
       gap={gap}
       style={{
         flexWrap,
@@ -112,12 +122,20 @@ const _renderTags = (
           {relatedNum} {t('general.related')}
         </div>
       )}
+      {metaObject?.attachments?.length && showAttachments !== false ? (
+        <HoverAttachment maxWidth={300} parentElement={containerRef.current} metaId={metaObject.id}>
+          <div style={{ textTransform: 'capitalize', cursor: 'pointer' }} className={ClassName.objectTag}>
+            {metaObject.attachments.length} {t('general.att')}
+          </div>
+        </HoverAttachment>
+      ) : null}
       {metaObject?.tags?.map(i => (
         <ObjectTag key={i} tag={i} hideAdd hideDelete hideSize small />
       ))}
     </Content>
   )
 }
+
 const _renderTitle = (
   {
     ellipsisLine = 2,
@@ -287,10 +305,15 @@ const useRenderObject = (options: { metaObjectId: number }) => {
 
   const { t } = useTranslation()
 
-  const renderTags = (options: Parameters<typeof _renderTags>[0]) => _renderTags(options, t, relatedSet?.size || 0, metaObject)
+  const renderTags = (options: Parameters<typeof TagRenderer>[0]) => (
+    <TagRenderer {...options} relatedNum={relatedSet?.size || 0} metaObject={metaObject} t={t} />
+  )
 
   const renderTitle = (options: Parameters<typeof _renderTitle>[0]) =>
-    _renderTitle({ ...options, onTitleClick: options.onTitleClick || (() => Actions.navigateToTargetObject(metaObjectId)) }, metaObject)
+    _renderTitle(
+      { ...options, onTitleClick: options.onTitleClick || (() => Rendevoz.Actions.Open.Meta.openMetaObject(metaObjectId)) },
+      metaObject
+    )
 
   const renderDescription = (options: Parameters<typeof _renderDescription>[0]) => _renderDescription(options, metaObject)
 
@@ -362,33 +385,78 @@ const useRenderObject = (options: { metaObjectId: number }) => {
     )
   }
 
-  const renderInline = ({ containerStyle }: { containerStyle?: CSSProperties }) => {
+  const renderInline = (
+    {
+      containerStyle,
+      ellipsisLine,
+      showCircle,
+      showUnderline,
+      showHoverObjectDetails,
+      renderAttOnParent,
+      renderObjectDetailsOnParent
+    }: {
+      containerStyle?: CSSProperties
+      ellipsisLine?: number
+      showCircle?: boolean
+      showUnderline?: boolean
+      showHoverObjectDetails?: boolean
+      renderAttOnParent?: boolean
+      renderObjectDetailsOnParent?: boolean
+    } = {
+      ellipsisLine: 2,
+      showCircle: true,
+      showUnderline: true,
+      showHoverObjectDetails: false,
+      renderAttOnParent: false,
+      renderObjectDetailsOnParent: true
+    }
+  ) => {
+    const containerRef = useRef(null)
+    const update = useUpdate()
+    useEffect(() => {
+      if (renderAttOnParent) {
+        update()
+      }
+    }, [renderAttOnParent])
     return (
-      <div style={{ display: 'flex', gap: 6, alignItems: 'baseline', ...containerStyle }}>
-        <div
-          style={{
-            borderRadius: '50%',
-            width: '1em',
-            height: '1em',
-            background: Colors.Background.Light,
-            border: `0.3em solid #6d6d6d`,
-            margin: 'auto',
-            flexShrink: 0,
-            padding: 3
-          }}
-        ></div>
-        <span
-          data-meta
-          onClick={() => {
-            metaObject?.id && Actions.navigateToTargetObject(metaObject?.id)
-          }}
-          className={clazzName}
-          style={{
-            color: metaObject?.color
-          }}
+      <div ref={containerRef} style={{ display: 'flex', gap: 6, alignItems: 'baseline', ...containerStyle }}>
+        {showCircle && (
+          <div
+            style={{
+              borderRadius: '50%',
+              width: '1em',
+              height: '1em',
+              background: Colors.Background.Light,
+              border: `0.3em solid #6d6d6d`,
+              margin: 'auto 0',
+              flexShrink: 0,
+              padding: 3
+            }}
+          ></div>
+        )}
+        <HoverObjectDetails
+          parentElmentRef={renderObjectDetailsOnParent ? containerRef : undefined}
+          metaObjectId={metaObject?.id}
+          disable={!showHoverObjectDetails}
         >
-          {metaObject?.name || 'Deleted Object'}
-        </span>
+          <span
+            role="meta-name"
+            data-meta
+            onClick={() => {
+              if (showUnderline !== false) {
+                metaObject?.id && Rendevoz.Actions.Open.Meta.openMetaObject(metaObject.id)
+              }
+            }}
+            className={css([clazzName, ClassName.ellipsisFont(ellipsisLine || 2)])}
+            style={{
+              color: metaObject?.color,
+              textTransform: 'none',
+              textDecoration: showUnderline === false ? 'none' : undefined
+            }}
+          >
+            {metaObject?.name || 'Deleted Object'}
+          </span>
+        </HoverObjectDetails>
         <div
           style={{
             textTransform: 'capitalize',
@@ -403,6 +471,25 @@ const useRenderObject = (options: { metaObjectId: number }) => {
         >
           {t(`general.${TypeToTypeName[metaObject?.type || 'normal']}`)}
         </div>
+        {metaObject?.attachments?.length ? (
+          <HoverAttachment parentElement={renderAttOnParent ? containerRef.current : undefined} metaId={metaObject.id}>
+            <div
+              style={{
+                textTransform: 'capitalize',
+                pointerEvents: 'auto',
+                cursor: 'pointer',
+                fontSize: 10,
+                whiteSpace: 'nowrap',
+                lineHeight: 1,
+                padding: '3px 8px',
+                margin: 'auto'
+              }}
+              className={ClassName.objectTag}
+            >
+              {`${metaObject.attachments.length} ${t(`general.att`)}`}
+            </div>
+          </HoverAttachment>
+        ) : null}
       </div>
     )
   }
@@ -435,7 +522,7 @@ const WholeRenderer = memo(
       containerStyle?: CSSProperties
       containerOnClick?: React.MouseEventHandler
       mainContainerStyle?: CSSProperties
-      tagsOptions?: Parameters<typeof _renderTags>[0]
+      tagsOptions?: Parameters<typeof TagRenderer>[0]
       titleOptions?: Parameters<typeof _renderTitle>[0]
       imageOptions?: Parameters<typeof _renderImage>[0]
       fromOptions?: Parameters<typeof _renderFrom>[0]
@@ -478,7 +565,7 @@ const WholeRenderer = memo(
       minWidth?: number
     }>(
       renderOptions.imageMode === 'whole'
-        ? { width: '100%', ratio: 0.5625, minWidth: 320 }
+        ? { width: '100%', ratio: 0.5625, minWidth: 280 }
         : {
             width: 50,
             height: 50,
@@ -523,16 +610,15 @@ const WholeRenderer = memo(
         })}
         <Content onClick={containerOnClick} style={mainContainerStyle} flex column gap={columnGap} justifyContent="center">
           {renderOptions.renderOption && _renderOptions(optionOptions, metaObject)}
-          {renderOptions?.renderTags !== false &&
-            _renderTags(
-              {
-                ...tagsOptions,
-                containerStyle: { ...tagsOptions.containerStyle, paddingRight: renderOptions.renderOption ? '40px' : undefined }
-              },
-              t,
-              relatedNum,
-              metaObject
-            )}
+          {renderOptions?.renderTags !== false && (
+            <TagRenderer
+              {...tagsOptions}
+              containerStyle={{ ...tagsOptions.containerStyle, paddingRight: renderOptions.renderOption ? '40px' : undefined }}
+              relatedNum={relatedNum}
+              metaObject={metaObject}
+              t={t}
+            />
+          )}
           {renderOptions?.renderTitle !== false &&
             _renderTitle(
               {
@@ -540,7 +626,7 @@ const WholeRenderer = memo(
                 onTitleClick:
                   titleOptions.onTitleClick ||
                   (() => {
-                    Actions.navigateToTargetObject(metaObject.id)
+                    Rendevoz.Actions.Open.Meta.openMetaObject(metaObject.id)
                   })
               },
               metaObject
@@ -559,16 +645,15 @@ const WholeRenderer = memo(
         style={{ ...containerStyle, ...mainContainerStyle }}
       >
         {renderOptions?.renderOption && _renderOptions(optionOptions, metaObject)}
-        {renderOptions?.renderTags !== false &&
-          _renderTags(
-            {
-              ...tagsOptions,
-              containerStyle: { ...tagsOptions.containerStyle, paddingRight: renderOptions.renderOption ? '40px' : undefined }
-            },
-            t,
-            relatedNum,
-            metaObject
-          )}
+        {renderOptions?.renderTags !== false && (
+          <TagRenderer
+            {...tagsOptions}
+            containerStyle={{ ...tagsOptions.containerStyle, paddingRight: renderOptions.renderOption ? '40px' : undefined }}
+            relatedNum={relatedNum}
+            metaObject={metaObject}
+            t={t}
+          />
+        )}
         {renderOptions?.renderTitle !== false &&
           _renderTitle(
             {
@@ -576,7 +661,7 @@ const WholeRenderer = memo(
               onTitleClick:
                 titleOptions.onTitleClick ||
                 (() => {
-                  metaObject && Actions.navigateToTargetObject(metaObject.id)
+                  metaObject && Rendevoz.Actions.Open.Meta.openMetaObject(metaObject.id)
                 })
             },
             metaObject

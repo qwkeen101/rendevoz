@@ -3,6 +3,8 @@ import Content from '../Content'
 import { AnimatePresence, motion } from 'framer-motion'
 import styles from './index.module.less'
 import Id from '@/utils/id'
+import Colors from '@/consts/colors'
+import ClassName from '@/styles/classNames'
 
 export interface TabNavListProps {
   defaultActiveKey: string
@@ -20,23 +22,26 @@ const TabNavList: FC<TabNavListProps> = ({ navs, onTabClick, defaultActiveKey, e
       setSelectedTabKey(defaultActiveKey)
     }
   }, [defaultActiveKey])
-  const uniqueId = useMemo(() => Id.getId(), [])
+
   return (
-    <Content flex alignItems="center" justifyContent="space-between">
-      <Content flex alignItems="center" style={{ flexShrink: 1 }}>
+    <Content flex alignItems="center" justifyContent="space-between" gap={16}>
+      <Content flex alignItems="center" style={{ flexShrink: 1, flexWrap: 'wrap' }} gap={10}>
         {navs.map(nav => (
           <div
-            className={styles.tabNav}
+            className={ClassName.flatButton()}
             onClick={e => {
               onTabClick(nav.key, e)
               setSelectedTabKey(nav.key)
             }}
+            style={{
+              userSelect: 'none',
+              padding: '4px 12px',
+              fontWeight: 600,
+              background: nav.key === selectedTabKey ? Colors.Background.ButtonHover : undefined
+            }}
             key={nav.key}
           >
             {nav.tab}
-            {nav.key === selectedTabKey ? (
-              <motion.div layout="position" className={styles.underline} initial={false} layoutId={`${navs[0].key}_${uniqueId}`} />
-            ) : null}
           </div>
         ))}
       </Content>
@@ -90,7 +95,7 @@ export const Tabs: FC<TabsProps> = memo(
         key: c.key
       }
     })
-    const [activeKey, setActiveKey] = useState(defaultActiveKey || tabNavs[0]?.key)
+    const [activeKey, setActiveKey] = useState(defaultActiveKey || outActiveKey || tabNavs[0]?.key)
     const onInternalTabClick = (key: string, e: MouseEvent) => {
       onTabClick?.(key, e)
       setActiveKey(key)
@@ -131,19 +136,29 @@ interface TabPaneProps {
   active?: boolean
 }
 export const TabPane: FC<TabPaneProps> = memo(({ children, onClick, style, active }) => {
-  const mergedStyle = { ...style }
+  const mergedStyle = { width: '100%', height: '100%', ...style }
   const variants = {
     hidden: {
-      display: 'none',
+      contentVisiblity: 'hidden',
+      position: 'absolute',
+      top: 0,
+      left: 0,
+      width: '100%',
+      height: '100%',
+      pointerEvents: 'none',
+      zIndex: -1,
       opacity: 0
     },
     visible: {
-      opacity: 1
+      opacity: 1,
+      pointerEvents: 'auto',
+      zIndex: 0
     }
   }
 
   return (
     <motion.div
+      initial="hidden"
       animate={active ? 'visible' : 'hidden'}
       variants={variants}
       className={styles.tabPane}

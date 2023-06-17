@@ -1,11 +1,12 @@
-import { useEventHandler, useGlobalEventEmitter } from '@/events'
+import { Rendevoz } from '@/core/rendevoz'
+import { useEventHandler } from '@/events'
 import { useDebounceFn } from '@/hooks'
 import { useEffect } from 'react'
 import { Transforms } from 'slate'
 import { CustomEditor } from '~/typings'
 
 const useLocalSyncValue = (editor: CustomEditor) => {
-  const emitter = useGlobalEventEmitter()
+  const emitter = Rendevoz.Events.Emit.GlobalEventEmitter
   const handler = useEventHandler('editor')
   const { id, noteId } = editor
   handler.on('operationApplied', data => {

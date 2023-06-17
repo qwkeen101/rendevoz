@@ -67,5 +67,6 @@ export default class EventEmitter {
     this.ackEvents = this.ackEvents.filter(i => i.data.eventId !== eventId)
   }
 }
+export const GlobalEventEmitter = new EventEmitter()
 
 export const eventEmitter = atom(new EventEmitter())

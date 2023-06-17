@@ -1,16 +1,16 @@
 import { FC, memo, useMemo, useRef, useState } from 'react'
 import { motion } from 'framer-motion'
 import { css } from '@emotion/css'
-import { useTheme, useToggle } from '@/hooks'
+import { useToggle } from '@/hooks'
 import MetaKnowledgeCard from './KnowledgeCard'
 import classNames from 'classnames'
 import ClassName from '@/styles/classNames'
-import { AnimatePopover, Button, Content, Icon, Image, Panel, Tooltip, WithBorder } from '@/components'
+import { AnimatePopover, Button, Content, Icon, Panel, Tooltip, WithBorder } from '@/components'
 import DateFormat from '@/utils/dateFormat'
-import { indexedMetaLinksAtom, metaObjectsAtom, metaStore, relatedMetaObjectsMapAtom } from '@/stores/meta.store'
+import { indexedMetaLinksAtom, indexedMetaObjectsAtom, metaObjectsAtom, relatedMetaObjectsMapAtom } from '@/stores/meta.store'
 import Modal from '@/components/base/Modal'
 import useCardDrag from './useCardDrag'
-import { GlobalDragOverlayInstance, GlobalGraphInstance, ObjectTag, useRenderObject } from '@/core'
+import { AttachmentWrapper, GlobalGraphInstance, ObjectTag, useRenderObject } from '@/core'
 import MetaNoteCard from './NoteCard'
 import MetaDocumentCard from './DocumentCard'
 import { Flipped, spring } from 'react-flip-toolkit'
@@ -31,6 +31,7 @@ import FontSize from '@/consts/font'
 import { GlobalImagePreviewerInstance } from '@/core/global/GlobalImagePreviewer'
 import FromRenderer from '../FromRenderer'
 import _ from 'lodash'
+import { Rendevoz } from '@/core/rendevoz'
 
 export const TypeToTypeName: Record<MetaObject['type'], string> = {
   pdfLabel: 'pdf label',
@@ -45,7 +46,8 @@ export const TypeToTypeName: Record<MetaObject['type'], string> = {
   noteLabel: 'note label',
   noteBlock: 'note block',
   webpageLabel: 'webpage label',
-  localFile: 'local file'
+  localFile: 'local file',
+  videoLabel: 'video label'
 }
 export const DatabaseCard: FC<{
   index?: number
@@ -235,7 +237,7 @@ export const DatabaseCard: FC<{
           })}
         >
           <div style={{ opacity: isCardDraggingInside ? 1 : 0, transition: 'opacity 0.3s ease' }}>
-            {GlobalDragOverlayInstance.draggingDetails?.type === 'image' ? 'Drop to change cover' : 'Drop to add Link'}
+            {Rendevoz.Actions.State.Drag.getDraggingDetails()?.type === 'image' ? 'Drop to change cover' : 'Drop to add Link'}
           </div>
         </motion.div>
         <Content
@@ -349,8 +351,11 @@ export const ObjectActionPopover: FC<
   const { updateMetaObject, deleteMetaObject } = MetaStore
   const { t } = useTranslation()
   const [relatedVisible, toggleRelatedVisible] = useToggle(false)
+  const [attachmentVisible, toggleAttachmentVisible] = useToggle(false)
   const metaObject = MetaStore.useValue(metaObjectId)
+  const metaAttToMetaIds = globalStore.get(indexedMetaObjectsAtom)?.metaAttachmentIdToMetaIdsMap
   const containerRef = useRef<HTMLDivElement>(null)
+  const of = metaAttToMetaIds?.get(metaObjectId)?.size
   if (!metaObject) return null
   return (
     <Content flex column style={{ padding: 6, fontWeight: 500, width: 180 }} ref={containerRef} role="object-popover-panel">
@@ -446,6 +451,44 @@ export const ObjectActionPopover: FC<
           }}
         ></Button.IconButton>
       </AnimatePopover>
+      {metaObject.attachments?.length || metaAttToMetaIds?.get(metaObjectId)?.size ? (
+        <AnimatePopover
+          positions={['right', 'left']}
+          visible={attachmentVisible}
+          onClickOutside={toggleAttachmentVisible}
+          boundaryInset={20}
+          padding={10}
+          containerStyle={{
+            zIndex: String(Zindexes.Tooltip)
+          }}
+          reposition
+          boundaryElement={document.body}
+          parentElement={containerRef.current}
+          content={
+            <WithBorder
+              onClick={e => e.stopPropagation()}
+              padding={8}
+              style={{
+                width: 320
+              }}
+            >
+              <AttachmentPanel metaId={metaObjectId} />
+            </WithBorder>
+          }
+        >
+          <Button.IconButton
+            text={`${
+              metaObject.attachments?.length ? t('general.with attachment', { with: metaObject.attachments.length }) + (of ? ', ' : '') : ''
+            }${of ? t('general.of attachment', { of }) : ''}`}
+            icon="park-link"
+            onClick={e => {
+              toggleAttachmentVisible()
+              e.preventDefault()
+              e.stopPropagation()
+            }}
+          ></Button.IconButton>
+        </AnimatePopover>
+      ) : null}
       <Button.IconButton
         text={t('general.delete')}
         dangerous
@@ -554,6 +597,57 @@ const RelatedItem = ({ metaId }: { metaId: number }) => {
     </div>
   )
 }
+
+const AttachmentPanel = memo(({ metaId }: { metaId: number }) => {
+  const metaAttToMetaIds = globalStore.get(indexedMetaObjectsAtom)?.metaAttachmentIdToMetaIdsMap.get(metaId)
+  const metaObject = MetaStore.useValue(metaId)
+  const { t } = useTranslation()
+  return (
+    <Content flex column gap={8}>
+      {metaObject?.attachments?.length ? (
+        <>
+          <div className={ClassName.description(FontSize['12px'])}>
+            {t('general.with attachment', { with: metaObject?.attachments?.length })}
+          </div>
+          <AttachmentWrapper
+            style={{ marginTop: 6 }}
+            renderAttOnParent
+            visible
+            maxVisibleAttachments={5}
+            metaId={metaId}
+            parentMetaId={metaId}
+          />
+        </>
+      ) : null}
+      {metaAttToMetaIds?.size ? (
+        <>
+          <div className={ClassName.description(FontSize['12px'])}>{t('general.of attachment', { of: metaAttToMetaIds.size })}</div>
+          <div style={{ marginTop: -4 }}>
+            {Array.from(metaAttToMetaIds.values()).map(i => (
+              <AttachmentObject metaId={i} key={i} />
+            ))}
+          </div>
+        </>
+      ) : null}
+    </Content>
+  )
+})
+
+const AttachmentObject = memo(({ metaId }: { metaId: number }) => {
+  const { renderInline } = useRenderObject({ metaObjectId: metaId })
+  return renderInline({
+    showHoverObjectDetails: true,
+    showCircle: false,
+    showUnderline: true,
+    ellipsisLine: 1,
+    renderAttOnParent: true,
+    containerStyle: {
+      width: 'fit-content',
+      fontSize: FontSize['12px']
+    }
+  })
+})
+
 export const TitleClassName = classNames(
   css({
     fontWeight: 600,

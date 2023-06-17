@@ -50,7 +50,7 @@ const MetaObjectNode: FC<InnerNodeProps> = ({ node: n, setPopoverElements, setNo
   }, [metaObject, n.width, n.height])
   useEffect(() => {
     if (metaObject?.type) {
-      if (['note', 'pdf', 'image', 'webpage'].includes(metaObject.type)) {
+      if (['note', 'pdf', 'image', 'webpage', 'video'].includes(metaObject.type)) {
         setPopoverElements?.(eles => {
           return [
             ...eles,

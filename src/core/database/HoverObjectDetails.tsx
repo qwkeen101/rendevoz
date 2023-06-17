@@ -1,17 +1,26 @@
 import { Tooltip, WithBorder } from '@/components'
-import { useGlobalAtomValue, useToggle, useUpdateEffect } from '@/hooks'
+import { useGlobalAtomValue, useMergedRef, useToggle, useUpdateEffect } from '@/hooks'
 
 import { objectIdToMetaObjectIdMapAtom } from '@/stores/meta.store'
-import { ReactElement, cloneElement, forwardRef, memo, useState } from 'react'
+import { ReactElement, RefObject, cloneElement, forwardRef, memo, useEffect, useRef, useState } from 'react'
 import useRenderObject from './useRenderObject'
 import FontSize from '@/consts/font'
 import ClassName from '@/styles/classNames'
 import { globalStore } from '@/stores'
 import { Zindexes } from '@/consts'
-import Actions from '../Actions'
+import { Rendevoz } from '../rendevoz'
 
 const HoverObjectDetails = forwardRef(
-  ({ objectId, metaObjectId, children }: { objectId?: number; metaObjectId?: number; children: ReactElement }, ref) => {
+  (
+    {
+      objectId,
+      metaObjectId,
+      children,
+      disable,
+      parentElmentRef
+    }: { objectId?: number; metaObjectId?: number; children: ReactElement; disable?: boolean; parentElmentRef?: RefObject<HTMLElement> },
+    ref
+  ) => {
     const [metaId, setMetaId] = useState(metaObjectId || (objectId && globalStore.get(objectIdToMetaObjectIdMapAtom)?.get(objectId)))
     const [tooltipVisible, toggleTooltipVisible] = useToggle(false)
     if (objectId) {
@@ -24,9 +33,29 @@ const HoverObjectDetails = forwardRef(
         }
       }, [objectIdToMetaMap])
     }
-
+    const childRef = useRef<Element>()
+    const mergedRef = useMergedRef(childRef, ref)
     const { renderWhole, metaObject } = useRenderObject({ metaObjectId: metaId || 0 })
-
+    useEffect(() => {
+      if (disable) {
+        const metaName = childRef.current?.querySelector("[role='meta-name']")
+        if (metaName) {
+          ;(metaName as HTMLElement).style.textDecoration = 'none'
+          return () => {
+            ;(metaName as HTMLElement).style.removeProperty('text-decoration')
+          }
+        }
+      }
+      if (tooltipVisible && !disable) {
+        const metaName = childRef.current?.querySelector("[role='meta-name']")
+        if (metaName) {
+          ;(metaName as HTMLElement).style.textDecoration = 'underline'
+          return () => {
+            ;(metaName as HTMLElement).style.removeProperty('text-decoration')
+          }
+        }
+      }
+    }, [tooltipVisible, disable])
     if (!metaObject || metaObject.deleted)
       return cloneElement(children as JSX.Element, {
         ref
@@ -34,23 +63,19 @@ const HoverObjectDetails = forwardRef(
     return (
       <Tooltip
         visible={tooltipVisible}
+        disable={disable}
+        parentElement={parentElmentRef?.current}
         onVisibleChange={v => toggleTooltipVisible(v)}
-        ref={node => {
-          if (typeof ref === 'function') {
-            ref(node)
-          } else if (ref) {
-            ref.current = node
-          }
-        }}
+        ref={mergedRef}
         zIndex={Zindexes.HoverObjectDetails}
         delay={800}
         disableDefaultContent
         contentTouchable
         content={
-          <WithBorder style={{ maxWidth: 320, overflow: 'hidden' }}>
+          <WithBorder style={{ maxWidth: 320, overflow: 'hidden', minWidth: 200 }}>
             {renderWhole({
               rowGap: 5,
-              columnGap: 6,
+              columnGap: 3,
               renderOptions: {
                 renderFrom: true,
                 renderOption: true,
@@ -58,7 +83,7 @@ const HoverObjectDetails = forwardRef(
                 imageMode: 'whole'
               },
               mainContainerStyle: {
-                padding: 10
+                padding: '8px 10px'
               },
               titleOptions: {
                 style: {
@@ -66,7 +91,7 @@ const HoverObjectDetails = forwardRef(
                 },
                 onTitleClick: () => {
                   toggleTooltipVisible(false)
-                  metaObject && Actions.navigateToTargetObject(metaObject.id)
+                  metaObject && Rendevoz.Actions.Open.Meta.openMetaObject(metaObject.id)
                 }
               },
               descriptionOptions: {

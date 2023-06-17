@@ -12,6 +12,7 @@ import { toast } from 'react-hot-toast'
 import { ObjectStore } from '@/stores'
 import ObjectForm from './ObjectForm'
 import { useTranslation } from 'react-i18next'
+import { getFilenameWithoutExtension } from '@/utils/file'
 
 interface NewDocumentFormProps {
   onBack: () => void
@@ -38,7 +39,7 @@ const CreateDocumentForm: FC<NewDocumentFormProps> = ({ onBack, onSubmit }) => {
     const metadata = await pdf.getMetadata()
     const { Title, Author } = metadata.info
     pdfDocument.current.metadata = {
-      title: Title || file.name,
+      title: Title || getFilenameWithoutExtension(file.name),
       author: Author
     }
 

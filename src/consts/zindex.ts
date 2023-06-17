@@ -3,6 +3,8 @@ const Zindexes = {
   PopupMenu: 9999,
   ToolBar: 20103,
   DragIndicator: 10001,
+  AttachmentPopover: 10002,
+  VideoFloatWindow: 10003,
   SearchPanel: 19989,
   HoverObjectDetails: 19990,
   ObjectPanel: 19992,

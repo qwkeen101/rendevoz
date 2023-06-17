@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react'
 import { AnimatePopover, Content, Footer, Icon, WithBorder } from '../base'
-import WebpagePage from '@/core/webpage/Webpage'
+import Webpage from '@/core/webpage/Webpage'
 import FontSize from '@/consts/font'
 import { Zindexes } from '@/consts'
 import { useTranslation } from 'react-i18next'
@@ -116,7 +116,7 @@ const FormWebImagePicker = ({ onPick, name = '' }: { onPick: (url: string) => vo
         <div>{t('general.click to pick image')}</div>
       </Content>
       <div style={{ width: '100%', height: 0, flex: 1 }}>
-        <WebpagePage
+        <Webpage
           navigationState={{
             showAddAsObject: false,
             showReaderMode: false

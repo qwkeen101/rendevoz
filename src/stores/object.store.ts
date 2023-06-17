@@ -91,11 +91,15 @@ const createObjectStore = <T extends keyof ObjectFamily, V extends ObjectFamily[
       return true
     },
     getOneById: async id => {
-      const result = await initalizedLocalStore.getOneById()(id)
-      if (result) {
-        options?.afterGetOneProcess?.onSuccess?.(result, true)
+      try {
+        const result = await initalizedLocalStore.getOneById()(id)
+        if (result) {
+          options?.afterGetOneProcess?.onSuccess?.(result, true)
+        }
+        return result
+      } catch (e) {
+        return undefined
       }
-      return result
     },
     fetchOneById: id => localStore.getOneById(id),
     addOne: async (n, opts) => {
@@ -242,6 +246,8 @@ export const objectStore = <T extends keyof ObjectFamily>(
           return createTagStore()
         case 'whiteboard':
           return createWhiteboardStore()
+        case 'videoLabel':
+          return createVideoLabelStore()
         default:
           return createObjectStore(type)
       }
@@ -339,5 +345,23 @@ const createTagStore = () => {
     }
   })
 }
-
+const createVideoLabelStore = () => {
+  return createObjectStore('videoLabel', {
+    afterUpdateProcess: {
+      onSuccess: obj => {
+        const labelMeta = MetaStore.getMetaObjectByObjectId(obj.id)
+        console.log(obj, labelMeta)
+        if (labelMeta) {
+          if (labelMeta.name !== obj.name || labelMeta.description !== obj.description) {
+            MetaStore.updateMetaObject({ id: labelMeta.id, name: obj.name || 'Unnamed Video Label', description: obj.description }, true)
+          }
+        }
+      }
+    }
+  })
+}
+export const getObjectById = <T extends keyof ObjectFamily>(id: number): Promise<ObjectFamily[T]> => {
+  const objectsDb = useDb('objects')
+  return objectsDb.get(id)
+}
 export default createObjectStore

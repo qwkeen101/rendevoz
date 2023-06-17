@@ -177,6 +177,7 @@ const TabItem = ({ onClick, isSelected, item, onDragStart, isLast }) => {
       }
     }
   }, [isSelected])
+  const isLastAndHasGlobalExtra = isLast && dockContext.getLayout().global.globalPanelExtra
   return (
     <AnimatePopover
       positions={['bottom']}
@@ -204,12 +205,12 @@ const TabItem = ({ onClick, isSelected, item, onDragStart, isLast }) => {
           setting.background.backgroundImage && setting.background.backgroundOpacity && styles.hasBg
         )}
         style={{
-          paddingRight: isLast ? 40 : undefined
+          paddingRight: isLastAndHasGlobalExtra ? 40 : undefined
         }}
       >
         <div className={styles.tabContent}>{item.tab}</div>
-        {isLast && dockContext.getLayout().global.globalPanelExtra && (
-          <div style={{ position: 'absolute', right: 0, top: 0, bottom: 0, background: isSelected ? 'rgba(0,0,0,0.12)' : 'transparent'}}>
+        {isLastAndHasGlobalExtra && (
+          <div style={{ position: 'absolute', right: 0, top: 0, bottom: 0, background: isSelected ? 'rgba(0,0,0,0.12)' : 'transparent' }}>
             {dockContext.getLayout().global.globalPanelExtra(null, null)}
           </div>
         )}

@@ -1,12 +1,12 @@
 import { join, resolve } from 'path'
 import { Module } from '@nestjs/common'
-import { BrowserWindow, app, shell, protocol, ipcRenderer, webContents } from 'electron'
+import { BrowserWindow, app, shell, protocol, ipcRenderer, session } from 'electron'
 import axios from 'axios'
 import { fileURLToPath } from 'url'
 import HttpsProxyAgent from 'https-proxy-agent'
 import { autoUpdater } from 'electron-updater'
 import * as child_process from 'child_process'
-import { DEFAULT_USER_DATA_PATH } from '../app.controller'
+import { DEFAULT_USER_DATA_PATH, DefaultRendevozDataPath } from '../app.controller'
 import fs from 'fs'
 
 process.env.ELECTRON_DISABLE_SECURITY_WARNINGS = 'true'
@@ -14,8 +14,8 @@ process.env.DIST_ELECTRON = join(__dirname, '../..')
 process.env.DIST = join(process.env.DIST_ELECTRON, '../../dist')
 process.env.PUBLIC = app.isPackaged ? process.env.DIST : join(process.env.DIST_ELECTRON, '../../public')
 
-const DEFAULT_FILE_PATH = DEFAULT_USER_DATA_PATH + '/rendevoz'
 const slicedLength = 'rendefile://'.length
+
 @Module({
   providers: [
     {
@@ -57,8 +57,16 @@ const slicedLength = 'rendefile://'.length
             autoUpdater.quitAndInstall()
           }, 6000)
         })
+
         app.on('window-all-closed', () => {
-          if (process.platform !== 'darwin') app.quit()
+          app.quit()
+          session.defaultSession.clearCache()
+          session.defaultSession.clearAuthCache()
+          session.defaultSession.clearCodeCaches({ urls: [] })
+        })
+        app.on('will-quit', () => {
+          session.defaultSession.clearCache()
+          session.defaultSession.clearCodeCaches({ urls: [] })
         })
         app.setAsDefaultProtocolClient('rendevoz')
         if (isDev) {
@@ -85,8 +93,11 @@ const slicedLength = 'rendefile://'.length
           }
         ])
         await app.whenReady()
+        console.log(app.getLocale(), app.getLocaleCountryCode(), app.getSystemLocale(), app.getPreferredSystemLanguages())
         protocol.registerFileProtocol('rendefile', (req, callback) => {
-          const filePath = fileURLToPath('file://' + DEFAULT_FILE_PATH + req.url.replace(DEFAULT_FILE_PATH, '').slice(slicedLength))
+          console.log(process.env.FILE_PATH)
+          const FILE_PATH = process.env.FILE_PATH || DefaultRendevozDataPath
+          const filePath = fileURLToPath('file://' + FILE_PATH + req.url.replace(FILE_PATH, '').slice(slicedLength))
           callback(filePath)
         })
 

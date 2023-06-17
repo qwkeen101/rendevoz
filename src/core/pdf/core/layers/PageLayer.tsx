@@ -90,6 +90,7 @@ const PageLayer: FC<PageLayerProps> = ({
       PAGE_INDEX_TO_PAGE_FUNCTION.set(viewer, map)
     }
     return () => {
+      console.log('unmount page ' + pageIndex)
       if (viewer) {
         const map = PAGE_INDEX_TO_PAGE_FUNCTION.get(viewer) || new Map()
         map.delete(pageIndex)
@@ -97,9 +98,11 @@ const PageLayer: FC<PageLayerProps> = ({
       }
     }
   }, [])
+
   useIsomorphicLayoutEffect(() => {
     getPageDetails()
   }, [scale.toFixed(2)])
+
   return (
     <div
       ref={pageRef}

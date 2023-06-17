@@ -11,7 +11,7 @@ import { GlobalSearchInstance } from '../global/GlobalSearchPanel'
 import { Zindexes } from '@/consts'
 import { transformTextContentToNameAndDescription } from '../global/globalDragOverlay/utils'
 import { downloadImg, fetchRemoteImageAndSaveLocally } from '@/utils/img'
-import { getIcon } from '@/components/layout/sidebar/items/SidebarObjectItem'
+import { Rendevoz } from '../rendevoz'
 
 type WebpageContextMenuData = {
   x: number
@@ -52,6 +52,7 @@ const useWebpageOthers = (
     position: { x: 0, y: 0 }
   })
   const { t } = useTranslation()
+  const getIcon = Rendevoz.Utils.Object.getMetaObjectIcon
   const { visible, position, selectedText, hasImage, currentImageUrl, altText, linkText, linkUrl } = contextMenuState
   const contextMenuHandler = useMemoizedFn((data: { params: WebpageContextMenuData }) => {
     const { params } = data
@@ -76,7 +77,7 @@ const useWebpageOthers = (
           webviewRef.current?.stopFindInPage('keepSelection')
           const clickEvent = new MouseEvent('click', {
             clientX: event.bodyX,
-            clientY: event.bodyY,
+            clientY: event.bodyY
             // target: webviewRef.current
           })
           webviewRef.current?.dispatchEvent(clickEvent)
@@ -161,6 +162,22 @@ const useWebpageOthers = (
             padding={6}
             onClick={() => setContextMenuState(s => ({ ...s, visible: false }))}
           >
+            {linkUrl && (
+              <Button.IconButton
+                icon="park-add-web"
+                text={t('general.open link in new tab')}
+                onClick={e => {
+                  ObjectStore('webpage')
+                    .addOne({
+                      title: selectedText || 'Unnamed Webpage',
+                      url: linkUrl
+                    })
+                    .then(one => {
+                      Rendevoz.Actions.Open.Webpage.openWebpage(one.id)
+                    })
+                }}
+              />
+            )}
             <Button.IconButton
               icon="park-copy"
               text={hasImage ? t('general.copy image') : t('general.copy')}
@@ -177,6 +194,7 @@ const useWebpageOthers = (
                 }
               }}
             />
+
             {!hasImage && selectedText && (
               <Button.IconButton
                 icon="park-translate"

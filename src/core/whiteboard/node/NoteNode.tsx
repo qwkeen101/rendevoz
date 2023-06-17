@@ -21,7 +21,11 @@ const NoteNode: FC<InnerNodeProps> = ({ node: n, onNameChange }) => {
       }}
     >
       <Editor
-        onTitleChange={onNameChange}
+        on={event => {
+          if (event.type === 'titleChange') {
+            onNameChange?.(event.value)
+          }
+        }}
         showBlockHandle={false}
         titleContainerStyle={{
           padding: '4% 4% 1%',
@@ -42,7 +46,7 @@ const NoteNode: FC<InnerNodeProps> = ({ node: n, onNameChange }) => {
           '.ParagraphBlock': {
             maxWidth: '100%'
           },
-          '.BlockCommon':{
+          '.BlockCommon': {
             '* span,textarea, a': {
               fontSize: '3cqmax !important'
             }

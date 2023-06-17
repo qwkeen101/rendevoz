@@ -10,6 +10,7 @@ import ClassName from '@/styles/classNames'
 import { useTranslation } from 'react-i18next'
 import FontSize from '@/consts/font'
 import { MetaStore } from '@/stores'
+import { getObjectById } from '@/stores/object.store'
 
 export const GlobalSearchInputAtom = atom<string>('')
 
@@ -39,9 +40,40 @@ export const SearchDialog = ({ onClose }: { onClose: VoidFunction }) => {
           // put pdf page -> pdf, note block -> note
           const groupedMap = new Map() as SearchGroupMap
           const deletedIds: number[] = []
-          const addToMap = (item: ISearchResultItem) => {
+          const addToMap = async (item: ISearchResultItem) => {
             const { doc } = item
-            const metaId = doc.specType === 'metaObject' ? doc.id : MetaStore.getMetaObjectByObjectId(Number(doc.targetObjectId))?.id
+
+            let metaId: number | undefined = undefined
+            if (doc.specType === 'metaObject') metaId = Number(doc.id)
+            else {
+              const targetObjectId = Number(doc.targetObjectId)
+              const object = await getObjectById(targetObjectId)
+              if (object) {
+                if ('specType' in object) {
+                  if (object.specType === 'pdf') {
+                    const pdfMeta = MetaStore.getMetaObjectByObjectId(object.id)
+                    if (pdfMeta) {
+                      metaId = pdfMeta.id
+                    }
+                  }
+                  if (object.specType === 'note') {
+                    const noteTargetMetaId = object.metaId
+                    if (noteTargetMetaId) {
+                      const noteTargetMeta = await MetaStore.getMetaObjectById(noteTargetMetaId)
+                      if (noteTargetMeta) {
+                        metaId = noteTargetMeta.id
+                      }
+                    } else {
+                      const noteMeta = MetaStore.getMetaObjectByObjectId(object.id)
+                      if (noteMeta) {
+                        metaId = noteMeta.id
+                      }
+                    }
+                  }
+                }
+              }
+            }
+
             if (!metaId) {
               deletedIds.push(Number(doc.id))
               return
@@ -64,16 +96,13 @@ export const SearchDialog = ({ onClose }: { onClose: VoidFunction }) => {
             }
             groupedMap.set(numberMetaId, group)
           }
-          result[1].forEach(item => {
-            addToMap(item)
+          Promise.all([...result[1].map(item => addToMap(item)), ...result[0].map(item => addToMap(item))]).then(() => {
+            console.log(groupedMap)
+            setSearchResults(groupedMap)
+            if (deletedIds.length) {
+              SearchStore.deleteDocuments(deletedIds)
+            }
           })
-          result[0].forEach(item => {
-            addToMap(item)
-          })
-          setSearchResults(groupedMap)
-          if (deletedIds.length) {
-            SearchStore.deleteDocuments(deletedIds)
-          }
         })
       }
     },
@@ -107,7 +136,7 @@ export const SearchDialog = ({ onClose }: { onClose: VoidFunction }) => {
         ClassName.Background.pseudoBlurContrastBackground
       ])}
     >
-      <div className={ClassName.title(FontSize['16px'])}>{t('general.full text search')}</div>
+      <div className={ClassName.title(FontSize['16px'])}>{t('general.search entire knowledge base')}</div>
       <BorderInput
         textarea={false}
         id="global-search-input"

@@ -4,11 +4,12 @@ import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { MetaLink, MetaObject } from '~/typings/data'
 import ObjectForm from '@/components/form/ObjectForm'
-import { useEventHandler, useGlobalEventEmitter } from '@/events'
+import { useEventHandler } from '@/events'
 import { useShortcut, useToggle } from '@/hooks'
 import { Modal } from '@/components'
 import { useCreateObject } from '../database'
 import Id from '@/utils/id'
+import { Rendevoz } from '../rendevoz'
 
 const GlobalCreateObjectInstance: Partial<{
   create: (preObject?: Partial<MetaObject>) => Promise<MetaObject>
@@ -34,7 +35,7 @@ const GlobalCreateObject = () => {
     }
   })
   const [modalVisible, toggleModalVisible] = useToggle(false)
-  const globalEventEmitter = useGlobalEventEmitter()
+  const globalEventEmitter = Rendevoz.Events.Emit.GlobalEventEmitter
   const { portal, openAtCenter } = useCreateObject({ positions: ['top'] })
   const handler = useEventHandler('global')
   const currentModeRef = useRef<'add' | 'edit'>()

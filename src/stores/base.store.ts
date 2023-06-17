@@ -270,8 +270,12 @@ export function initializeLocalStore<T>(atom: PrimitiveAtom<Map<number, T>>, dat
           res(atomOne)
         } else {
           database.get(id).then(one => {
-            globalStore.set(atom, BaseStore.add(one, globalStore.get(atom)))
-            res(one)
+            if (one) {
+              globalStore.set(atom, BaseStore.add(one, globalStore.get(atom)))
+              res(one)
+            } else {
+              res(undefined)
+            }
           })
         }
       })

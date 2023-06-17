@@ -94,7 +94,8 @@ const moveSingleElement = (editor: CustomEditor, currPath: Path, targetPath: Pat
           at: targetPath
         }
       )
-      Transforms.removeNodes(editor, { at: currPath })
+      const currentPath = currPathRef.current
+      Transforms.removeNodes(editor, { at: currentPath })
     } else {
       // left or right should insert new column at target path first
       // if there is only one block in the column and currPath = targetPath or targetPath = currPath + 1,do nothing

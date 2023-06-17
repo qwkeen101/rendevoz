@@ -3,6 +3,7 @@ import { AnimatePopover } from '..'
 import { useMemoizedFn, useMergedRef } from '@/hooks'
 import Zindexes from '@/consts/zindex'
 import { waitFor } from '@/utils/functions'
+import { AnimatePopoverProps } from './AnimatePopover'
 
 interface ToolTipProps {
   content?: string | ReactNode
@@ -15,22 +16,11 @@ interface ToolTipProps {
   zIndex?: string | number
   visible?: boolean
   onVisibleChange?: (v: boolean) => void
+  parentElement?: AnimatePopoverProps['parentElement']
 }
 
 const ToolTip: FC<PropsWithChildren<ToolTipProps>> = (
-  {
-    content,
-    children,
-    position = 'top',
-    style,
-    delay = 300,
-    disable,
-    disableDefaultContent,
-    contentTouchable,
-    zIndex,
-    visible,
-    onVisibleChange
-  },
+  { content, children, delay = 300, disable, disableDefaultContent, contentTouchable, zIndex, visible, onVisibleChange, parentElement },
   ref
 ) => {
   const [open, setOpen] = useState(false)
@@ -180,11 +170,12 @@ const ToolTip: FC<PropsWithChildren<ToolTipProps>> = (
         containerStyle={{ zIndex: zIndex ? String(zIndex) : String(Zindexes.Tooltip) }}
         padding={10}
         content={renderContent()}
-        boundaryElement={document.body}
+        boundaryElement={parentElement || document.body}
         boundaryInset={20}
         positions={['top', 'bottom', 'left', 'right']}
         reposition={true}
         disableNudge
+        parentElement={parentElement}
         innerRef={mergedRef}
         disableIntersection
         visible={!!content && open && !disable}

@@ -1,4 +1,4 @@
-import { FC, memo, PropsWithChildren, ReactNode, RefObject, useEffect, useRef, useState } from 'react'
+import React, { Dispatch, FC, memo, PropsWithChildren, ReactNode, RefObject, useEffect, useRef, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { Popover, PopoverProps } from 'react-tiny-popover'
 import useUnmount from '@/hooks/utils/useUnmount'
@@ -9,10 +9,11 @@ import ClassName from '@/styles/classNames'
 import { Zindexes } from '@/consts'
 import { Position } from '~/typings'
 import { PosHelper } from '../contextMenu'
+import { SetStateAction } from 'jotai'
 export interface AnimatePopoverProps extends Omit<PopoverProps, 'content' | 'isOpen' | 'children'> {
   animate?: boolean
   visible?: boolean
-  content: React.ReactNode
+  content: React.ReactNode | ((setVisible: Dispatch<SetStateAction<boolean>>) => ReactNode)
   disableNudge?: boolean
   disableIntersection?: boolean
   onVisiblityChange?: (v: boolean) => void
@@ -29,7 +30,6 @@ const AnimatePopover: FC<PropsWithChildren<AnimatePopoverProps>> = ({
   content,
   children,
   visible,
-  disableIntersection = true,
   reposition = false,
   disableNudge = false,
   position,
@@ -52,11 +52,6 @@ const AnimatePopover: FC<PropsWithChildren<AnimatePopoverProps>> = ({
   const [innerVisible, setInnerVisible] = useState(false)
   const [hasPosHelperPopoverVisible, setHasPosHelperPopoverVisible] = useState(false)
   const intersectionRef = useRef<HTMLElement>(null)
-  const intersection = useIntersection(intersectionRef, {
-    root: null,
-    rootMargin: '0px',
-    threshold: 1
-  })
 
   const popoverRef = useRef(null)
   const nudgedRef = useRef()
@@ -64,8 +59,8 @@ const AnimatePopover: FC<PropsWithChildren<AnimatePopoverProps>> = ({
   useEffect(() => {
     if (visible === undefined) {
       intersectionRef?.current?.addEventListener('click', () => {
-        setIsOpen(true)
-        setInnerVisible(true)
+        setIsOpen(s => true)
+        setInnerVisible(s => !s)
       })
     }
   }, [])
@@ -169,7 +164,7 @@ const AnimatePopover: FC<PropsWithChildren<AnimatePopoverProps>> = ({
                   top: top,
                   borderRadius: 8,
                   overflow: 'hidden',
-                  display: intersection?.isIntersecting || disableIntersection ? 'block' : 'none'
+                  display: 'block'
                 }}
               >
                 <AnimatePresence onExitComplete={() => setIsOpen(false)}>
@@ -186,7 +181,7 @@ const AnimatePopover: FC<PropsWithChildren<AnimatePopoverProps>> = ({
                         ></motion.div>
                       )}
                       <motion.div key={2} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-                        {content}
+                        {React.isValidElement(content) ? content : typeof content === 'function' ? content(setInnerVisible) : null}
                       </motion.div>
                     </>
                   )}
@@ -229,7 +224,7 @@ const AnimatePopover: FC<PropsWithChildren<AnimatePopoverProps>> = ({
                 left: left,
                 top: top,
                 borderRadius: 'inherit',
-                display: intersection?.isIntersecting || disableIntersection ? 'block' : 'none'
+                display: 'block'
               }}
             >
               <AnimatePresence onExitComplete={() => setIsOpen(false)}>
@@ -246,7 +241,7 @@ const AnimatePopover: FC<PropsWithChildren<AnimatePopoverProps>> = ({
                       ></motion.div>
                     )}
                     <motion.div key={2} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-                      {content}
+                      {React.isValidElement(content) ? content : typeof content === 'function' ? content(setInnerVisible) : null}
                     </motion.div>
                   </>
                 )}

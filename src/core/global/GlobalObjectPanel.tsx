@@ -1,7 +1,7 @@
 import Zindexes from '@/consts/zindex'
-import { useMemoizedFn, useMergedRef, useShortcut, useToggle } from '@/hooks'
+import { useMergedRef, useShortcut, useToggle } from '@/hooks'
 import { undeletedMetaObjectsAtom } from '@/stores/meta.store'
-import { globalStore, MetaStore } from '@/stores'
+import { globalStore } from '@/stores'
 import ClassName from '@/styles/classNames'
 import { Position } from '@/types'
 import { css } from '@emotion/css'
@@ -22,18 +22,17 @@ import {
   ObjectActionPopover,
   FiltersAtom
 } from '@/core'
-import { useSetting } from '@/core/setting'
 import { selectAtom } from 'jotai/utils'
 import produce from 'immer'
 import { atom } from 'jotai'
 import { useTranslation } from 'react-i18next'
 import { useRenderObject } from '@/core'
-import Actions from '@/core/Actions'
 import { GlobalEventEmitter, useEventHandler } from '@/events'
 import { LeftTopPosition } from '~/typings'
 import Colors from '@/consts/colors'
 import FontSize from '@/consts/font'
 import ResizeAndDrag from '@/components/base/ResizeAndDrag'
+import { Rendevoz } from '../rendevoz'
 
 export const GlobalObjectPanelInstance: {
   open?: (position?: LeftTopPosition) => void
@@ -81,7 +80,7 @@ export const GlobalObjectPanel = () => {
   const eventHandler = useEventHandler('global')
   const [showBoxShadow, toggleShowBoxShadow] = useToggle(false)
   const undeleteObjects = useAtomValue(undeletedMetaObjectsAtom, { store: globalStore })
-  const [setting] = useSetting()
+
   const [isGlobalDragging] = useGlobalIsDragging()
   const containerRef = useRef<HTMLDivElement>(null)
 
@@ -161,6 +160,7 @@ export const GlobalObjectPanel = () => {
         zIndex: Zindexes.ObjectPanel,
         pointerEvents: 'none'
       }}
+      id="global-object-panel"
     >
       {panelState.visible && (
         <ResizeAndDrag
@@ -174,7 +174,8 @@ export const GlobalObjectPanel = () => {
             transition: 'opacity 0.3s ease',
             position: 'relative',
             paddingBottom: 0,
-            borderRadius: 8
+            borderRadius: 8,
+            overflow: 'hidden'
           }}
           dragHandleClassName="global-drag-panel"
           size={panelState.size}
@@ -517,7 +518,7 @@ export const SimpleObject = memo(
             },
             titleClassName,
             onTitleClick: () => {
-              Actions.navigateToTargetObject(metaObjectId)
+              Rendevoz.Actions.Open.Meta.openMetaObject(metaObjectId)
               onNavigate?.()
             }
           },

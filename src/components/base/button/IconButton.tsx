@@ -59,6 +59,7 @@ const IconButton = forwardRef(
     return (
       <Tooltip content={tooltip} ref={mergedRef}>
         <Content
+          role="button"
           onClick={onClick}
           gap={gap}
           flex

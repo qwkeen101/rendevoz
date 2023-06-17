@@ -9,15 +9,20 @@
     font-size: 20px;
     height: 22px;
     line-height: 21px;
-    &[data-level='1'],&[data-level='3'],&[data-level='5']{
+    &[data-level='1'],&[data-level='4'],&[data-level='7']{
             &::before{
                 content: '\25E6';
             }
     }
-    &[data-level='2'],&[data-level='4'],&[data-level='6']{
+    &[data-level='2'],&[data-level='5'],&[data-level='8']{
         &::before{
             content: '\25AA';
         }
+    }
+    &[data-level='3'],&[data-level='6']{
+      &::before{
+        content: '\2022';
+    }
     }
     &::before{
         content: '\2022';

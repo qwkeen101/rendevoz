@@ -7,9 +7,7 @@ import Loader from './Loader'
 import { RenderPageProps } from './types'
 import { IAnnotation } from '~/typings'
 import { ScrollMode } from './types/layout'
-import { createStore, Provider } from 'jotai'
 import { IPdfViewer } from './types/pdfViewer'
-import { PdfViewerAtom } from './hooks/useViewer'
 
 interface ViewerProps {
   fileUrl: string | Uint8Array
@@ -22,7 +20,6 @@ interface ViewerProps {
   onDocumentLoaded?: (doc: PDFDocumentProxy) => void
   onRangeChange?: (range: Range) => void
   transformScale?: number
-  viewer: IPdfViewer
 }
 
 export const Viewer: FC<ViewerProps> = ({
@@ -35,37 +32,28 @@ export const Viewer: FC<ViewerProps> = ({
   layoutClassName,
   onDocumentLoaded,
   onRangeChange,
-  transformScale,
-  viewer
+  transformScale
 }) => {
-  const store = useMemo(() => {
-    const store = createStore()
-    store.set(PdfViewerAtom, viewer)
-    return store
-  }, [])
-
   return (
-    <Provider store={store}>
-      <Loader onDocumentLoaded={onDocumentLoaded} file={fileUrl}>
-        {doc => (
-          <LayoutWrapper doc={doc}>
-            {pageSize => (
-              <Layout
-                transformScale={transformScale}
-                className={layoutClassName}
-                renderPage={renderPage}
-                innerRef={innerRef}
-                onRangeChange={onRangeChange}
-                renderAnnotation={renderAnnotation}
-                initialPage={initialPage}
-                doc={doc}
-                pageSize={pageSize}
-              ></Layout>
-            )}
-          </LayoutWrapper>
-        )}
-      </Loader>
-    </Provider>
+    <Loader onDocumentLoaded={onDocumentLoaded} file={fileUrl}>
+      {doc => (
+        <LayoutWrapper doc={doc}>
+          {pageSize => (
+            <Layout
+              transformScale={transformScale}
+              className={layoutClassName}
+              renderPage={renderPage}
+              innerRef={innerRef}
+              onRangeChange={onRangeChange}
+              renderAnnotation={renderAnnotation}
+              initialPage={initialPage}
+              doc={doc}
+              pageSize={pageSize}
+            ></Layout>
+          )}
+        </LayoutWrapper>
+      )}
+    </Loader>
   )
 }
 

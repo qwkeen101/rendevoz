@@ -41,7 +41,6 @@ interface EditorToolbarProps {
 const MAX_TOLERANT_DISTANCE = 15
 const EditorToolbar: FC<EditorToolbarProps> = ({ scrollElement, showToolbar, style, on }) => {
   const { t } = useTranslation()
-  const isReading = useReadOnlyEditor()
   const editor = useSlate()
   const { selection } = editor
   const currentElement = selection ? Editor.node(editor, selection?.anchor?.path, { depth: 1 }) : null
@@ -304,7 +303,12 @@ const EditorToolbar: FC<EditorToolbarProps> = ({ scrollElement, showToolbar, sty
               })?.[0]
               console.log(block)
               if (!block?.id) return
-              editor.onTranslate?.(str, block.id as number, e)
+              editor.on({
+                type: 'translate',
+                translatedText: str,
+                blockId: block.id as number,
+                e
+              })
             }
           }
         }}
@@ -321,7 +325,12 @@ const EditorToolbar: FC<EditorToolbarProps> = ({ scrollElement, showToolbar, sty
                 at: editor.selection.anchor
               })?.[0]
               if (!block?.id) return
-              editor.onSearch?.(str, block.id as number, e)
+              editor.on({
+                type: 'search',
+                searchedText: str,
+                blockId: block.id as number,
+                e
+              })
             }
           }
         }}

@@ -1,7 +1,7 @@
 import Id from '@/utils/id'
 import { FC, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { ILocalFile, MetaObject } from '~/typings'
+import { ILocalFile, IVideo, MetaObject } from '~/typings'
 import { GlobalGraphInstance, TypeToTypeName } from '@/core'
 import { IForm } from './types'
 import useFlipForm from './useFlipForm'
@@ -13,6 +13,9 @@ import ClassName from '@/styles/classNames'
 import { Button } from '../base'
 import { transformTextContentToNameAndDescription } from '@/core/global/globalDragOverlay/utils'
 import { toast } from 'react-hot-toast'
+import { getFilenameWithoutExtension, saveFileLocally } from '@/utils/file'
+import { generateVideoThumbnail } from '@/core/video/utils'
+import { saveImageLocally } from '@/utils/img'
 
 const ObjectForm: FC<
   IForm<MetaObject> & {
@@ -84,10 +87,34 @@ const ObjectForm: FC<
             filePath: (targetObject as ILocalFile)?.fileUrl,
             onChange: (path, name) => {
               object.objectId && ObjectStore('localFile').updateOne({ id: object.objectId, fileUrl: path })
-              setObject(o => ({ ...o, name }))
+              setObject(o => ({ ...o, name: getFilenameWithoutExtension(name || '') }))
             }
           }
         : undefined,
+      object?.type === 'video'
+        ? {
+            type: 'filePathPicker',
+            filePath: (targetObject as IVideo)?.videoUrl,
+            onChange: (path, name, file) => {
+              if (path && name && file) {
+                saveFileLocally(path, name).then(p => {
+                  object.objectId && ObjectStore('video').updateOne({ id: object.objectId, videoUrl: p.data })
+                  generateVideoThumbnail(file).then(s => {
+                    saveImageLocally(s, { compress: false }).then(data => {
+                      setObject(o => ({ ...o, coverImgSrc: data.data }))
+                    })
+                  })
+                  setObject(o => ({ ...o, name: getFilenameWithoutExtension(name) }))
+                })
+              } else {
+                object.objectId && ObjectStore('video').updateOne({ id: object.objectId, videoUrl: undefined })
+                setObject(o => ({ ...o, name: undefined, coverImgSrc: undefined }))
+              }
+            },
+            accept: 'video/*'
+          }
+        : undefined,
+      object.attachments?.length ? { type: 'attachmentDisplayer', attachments: object.attachments } : undefined,
       {
         type: 'group',
         children: [
@@ -141,6 +168,12 @@ const ObjectForm: FC<
             type: 'iconPicker',
             icon: object.icon,
             onChange: i => setObject({ ...object, icon: i })
+          },
+          {
+            type: 'attchmentManager',
+            attachments: object.attachments,
+            onChange: atts => setObject({ ...object, attachments: atts }),
+            metaId: object.id
           },
           {
             type: 'tagPicker',

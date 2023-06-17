@@ -11,104 +11,117 @@ import { RenderElementProps, RenderLeafProps, RenderPlaceholderProps } from './e
 
 import { useVirtualizer } from '@tanstack/react-virtual'
 import { ID_TO_FIRST_LAYER_MAP } from '../../weakMaps'
-import { useMemoizedFn } from '@/hooks'
+import { useMemoizedFn, usePrevious } from '@/hooks'
+import useWhyDidYouUpdate from '@/hooks/utils/useWhyUpdate'
 
 /**
  * Children.
  */
 
-const VirtualChildren = (props: {
-  decorations: Range[]
-  children: Descendant[]
-  renderElement?: (props: RenderElementProps) => JSX.Element
-  renderPlaceholder: (props: RenderPlaceholderProps) => JSX.Element
-  renderLeaf?: (props: RenderLeafProps) => JSX.Element
-  selection: Range | null
-  scrollElement?: RefObject<HTMLElement | null>
-  readOnly?: boolean
-  parentElement?: RefObject<HTMLElement | null>
-}) => {
-  const { decorations, renderElement, renderPlaceholder, renderLeaf, selection, children, scrollElement, readOnly, parentElement } = props
-
-  const editor = useSlateStatic()
-
-  const visibleChildren = useMemo(() => {
-    return children.filter(i => !i.hide)
-  }, [children])
-  const titleHeight = editor.titleEle?.getBoundingClientRect().height || 0
-  const virtualizer = useVirtualizer({
-    count: visibleChildren.length,
-    estimateSize: idx => 30,
-    getScrollElement: () => scrollElement?.current || document.body,
-    overscan: readOnly ? editor.children.length : 20,
-    paddingEnd: 100,
-    paddingStart: titleHeight,
-    measureElement: (ele, entry, instance) => {
-      const getSize = () => ele.getBoundingClientRect().height
-      const index = instance.indexFromElement(ele)
-      const item = instance.measurementsCache[index]
-      if (entry) {
-        if (entry.contentRect.height === 0 && entry.contentRect.width === 0) {
-          return item ? item.size : 0
-        } else {
-          if (entry.borderBoxSize[0].blockSize !== item.size) {
-            return getSize()
+const VirtualChildren = memo(
+  (props: {
+    decorations: Range[]
+    children: Descendant[]
+    renderElement?: (props: RenderElementProps) => JSX.Element
+    renderPlaceholder: (props: RenderPlaceholderProps) => JSX.Element
+    renderLeaf?: (props: RenderLeafProps) => JSX.Element
+    selection: Range | null
+    scrollElement?: RefObject<HTMLElement | null>
+    readOnly?: boolean
+    parentElement?: RefObject<HTMLElement | null>
+  }) => {
+    const { decorations, renderElement, renderPlaceholder, renderLeaf, selection, children, scrollElement, readOnly, parentElement } = props
+    const previousChildrenLength = usePrevious(children.length)
+    console.log('rerender children')
+    const editor = useSlateStatic()
+    if (previousChildrenLength !== children.length && ID_TO_FIRST_LAYER_MAP.get(editor)?.size !== children.length) {
+      editor.onChange?.()
+      console.log('tainted change')
+    }
+    const visibleChildren = useMemo(() => {
+      return children.filter(i => !i.hide)
+    }, [children])
+    const titleHeight = editor.titleEle?.getBoundingClientRect().height || 0
+    const virtualizer = useVirtualizer({
+      count: visibleChildren.length,
+      estimateSize: idx => 30,
+      getScrollElement: () => scrollElement?.current || document.body,
+      overscan: readOnly ? editor.children.length : 5,
+      paddingEnd: 100,
+      paddingStart: titleHeight,
+      measureElement: (ele, entry, instance) => {
+        const getSize = () => ele.getBoundingClientRect().height
+        const index = instance.indexFromElement(ele)
+        const item = instance.measurementsCache[index]
+        if (entry) {
+          if (entry.contentRect.height === 0 && entry.contentRect.width === 0) {
+            return item ? item.size : 0
+          } else {
+            if (entry.borderBoxSize[0].blockSize !== item.size) {
+              return getSize()
+            }
           }
         }
-      }
-      return item ? item.size : getSize()
-    }
-  })
-
-  editor.virtualizer = virtualizer
-
-  const totalSize = virtualizer.getTotalSize()
-
-  if (parentElement?.current) {
-    const parentEle = parentElement.current
-    parentEle.style.height = `${totalSize}px`
-  }
-
-  const scrollTo = useMemoizedFn(idx => {
-    requestIdleCallback(() => {
-      if (!(idx >= 0 && idx <= visibleChildren.length - 1)) {
-        return
-      }
-      if (scrollElement?.current) {
-        virtualizer.scrollToIndex(idx, { behavior: 'auto' })
-      } else {
-        scrollTo(idx)
+        return item ? item.size : getSize()
       }
     })
-  })
 
-  const virtualItems = virtualizer.getVirtualItems()
+    editor.virtualizer = virtualizer
 
-  const first = virtualItems[0]
+    const totalSize = virtualizer.getTotalSize()
 
-  return (
-    <>
-      <div role="virtual-placeholder" contentEditable={false} style={{ height: first?.start - titleHeight }}></div>
-      {virtualItems.map(row => {
-        const { index } = row
-        const element = visibleChildren[index]
-        return (
-          <VirtualItem
-            key={element.id}
-            renderPlaceholder={renderPlaceholder}
-            renderElement={renderElement}
-            renderLeaf={renderLeaf}
-            index={index}
-            measureElement={virtualizer.measureElement}
-            decorations={decorations}
-            element={element}
-            selection={selection}
-          />
-        )
-      })}
-    </>
-  )
-}
+    if (parentElement?.current) {
+      const parentEle = parentElement.current
+      parentEle.style.minHeight = `${totalSize}px`
+    }
+
+    const scrollTo = useMemoizedFn(idx => {
+      requestIdleCallback(() => {
+        if (!(idx >= 0 && idx <= visibleChildren.length - 1)) {
+          return
+        }
+        if (scrollElement?.current) {
+          virtualizer.scrollToIndex(idx, { behavior: 'auto' })
+        } else {
+          scrollTo(idx)
+        }
+      })
+    })
+
+    const virtualItems = virtualizer.getVirtualItems()
+
+    const first = virtualItems[0]
+    console.log(first, titleHeight)
+    return (
+      <>
+        <div role="virtual-placeholder" contentEditable={false} style={{ height: first?.start - titleHeight }}></div>
+        {virtualItems.map(row => {
+          const { index } = row
+          const element = visibleChildren[index]
+          return (
+            <VirtualItem
+              key={element.id}
+              renderPlaceholder={renderPlaceholder}
+              renderElement={renderElement}
+              renderLeaf={renderLeaf}
+              index={index}
+              measureElement={virtualizer.measureElement}
+              decorations={decorations}
+              element={element}
+              selection={selection}
+            />
+          )
+        })}
+      </>
+    )
+  },
+  (prev, curr) =>
+    prev.selection === curr.selection &&
+    prev.children === curr.children &&
+    prev.scrollElement === curr.scrollElement &&
+    prev.readOnly === curr.readOnly &&
+    prev.parentElement === curr.parentElement
+)
 
 const VirtualItem = memo(
   ({
@@ -131,7 +144,7 @@ const VirtualItem = memo(
     index: number
   }) => {
     const editor = useSlateStatic()
-    const decorate = useDecorate()
+    // const decorate = useDecorate()
 
     if (element.hide || !element.id) {
       return null
@@ -139,36 +152,40 @@ const VirtualItem = memo(
     // get real path from map, row index can't be path
     // first layer path map should be sync with data model
     const path = ID_TO_FIRST_LAYER_MAP.get(editor)?.get(element.id)
+    if (!path?.length) return null
 
-    if (!path) return null
+    try {
+      const key = ReactEditor.findKey(editor, element)
+      const range = Editor.range(editor, path)
+      const sel = selection && Range.intersection(range, selection)
+      // const ds = decorate([element, path])
+      // for (const dec of decorations) {
+      //   const d = Range.intersection(dec, range)
+      //   if (d) {
+      //     ds.push(d)
+      //   }
+      // }
+      NODE_TO_INDEX.set(element, path[0])
+      NODE_TO_PARENT.set(element, editor)
 
-    const key = ReactEditor.findKey(editor, element)
-    const range = Editor.range(editor, path)
-    const sel = selection && Range.intersection(range, selection)
-    const ds = decorate([element, path])
-    for (const dec of decorations) {
-      const d = Range.intersection(dec, range)
-      if (d) {
-        ds.push(d)
+      if (SlateElement.isElement(element)) {
+        return (
+          <ElementComponent
+            // decorations={ds}
+            decorations={[]}
+            element={element}
+            key={key.id}
+            renderElement={renderElement}
+            renderPlaceholder={renderPlaceholder}
+            renderLeaf={renderLeaf}
+            selection={sel}
+            innerRef={measureElement}
+            index={index}
+          />
+        )
       }
-    }
-    NODE_TO_INDEX.set(element, path[0])
-    NODE_TO_PARENT.set(element, editor)
-
-    if (SlateElement.isElement(element)) {
-      return (
-        <ElementComponent
-          decorations={ds}
-          element={element}
-          key={key.id}
-          renderElement={renderElement}
-          renderPlaceholder={renderPlaceholder}
-          renderLeaf={renderLeaf}
-          selection={sel}
-          innerRef={measureElement}
-          index={index}
-        />
-      )
+    } catch (e) {
+      console.log(e, path)
     }
     return null
   }

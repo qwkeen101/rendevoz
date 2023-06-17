@@ -4,7 +4,10 @@ import { indexedMetaLinksAtom } from '@/stores/meta.store'
 import { PartialWithId } from '@/types'
 import Id from '@/utils/id'
 import { MetaLink, MetaObject } from '~/typings'
-
+function countWords(str: string) {
+  const matches = str.match(/[\u00ff-\uffff]|\S+/g)
+  return matches || []
+}
 export const transformTextContentToNameAndDescription = (
   textContent?: string
 ): {
@@ -18,9 +21,20 @@ export const transformTextContentToNameAndDescription = (
     }
   }
   let name = textContent
-  const description = textContent.length > 100 ? textContent : undefined
-  if (textContent.length > 100) {
-    name = textContent?.slice(0, 100) + '...'
+  const count = countWords(textContent)
+  const description = count.length > 35 ? textContent : undefined
+  if (count.length > 35) {
+    const length = count
+      .slice(0, 35)
+      .map(i => {
+        if (i.match(/[\u00ff-\uffff]/g)) {
+          return i.length
+        } else {
+          return i.length + 1
+        }
+      })
+      .reduce((prev, curr) => prev + curr, 0)
+    name = textContent.slice(0, length) + '...'
   }
   return {
     name,

@@ -1,14 +1,13 @@
 import { GraphNode } from '../../types/node'
 import { TypeToNodeRadius } from './Node'
 import Colors from '@/consts/colors'
-
-import { getIcon } from '@/components/layout/sidebar/items/SidebarObjectItem'
 import SvgIconRenderer from '../icons/SvgIconRenderer'
+import { Rendevoz } from '@/core/rendevoz'
 
 const IconNode = ({ node, label }: { node: GraphNode; label?: string }) => {
   const radius = TypeToNodeRadius[node.type || 'normal']
   const d = radius * 2
-  const icon = getIcon(node.type)
+  const icon = Rendevoz.Utils.Object.getMetaObjectIcon(node.type)
 
   return (
     <>

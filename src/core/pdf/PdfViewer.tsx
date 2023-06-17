@@ -2,7 +2,7 @@ import { Viewer } from './core'
 import { FC, memo, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import PdfPage from './components/page/Page'
 import styles from './index.module.less'
-import { RenderPageProps, IAnnotation, IPdfViewer } from '~/typings'
+import { RenderPageProps, IAnnotation, IPdfViewer, IPdfInstance } from '~/typings'
 import { AnnotationType } from './core/types/annotation'
 import { PDFDocumentProxy } from 'pdfjs-dist'
 import { useMemoizedFn, useMergedRef } from '@/hooks'
@@ -10,25 +10,27 @@ import { Range } from '@tanstack/react-virtual'
 import Link from './components/annotation/Link'
 import usePdfDrag from './hooks/usePdfDrag'
 import { useGlobalAtomValue } from '@/hooks/jotai'
-import createPdfViewer from './core/createPdfViewer'
 import { ID_TO_LABEL_MAP } from './weakMaps'
 import { useStore } from 'jotai'
-import { PdfViewerAtom } from './core/hooks/useViewer'
+import usePdfViewer from './core/hooks/useViewer'
 import { ObjectStore } from '@/stores'
 import { SearchStore } from '@/stores/search.store'
 import { savePdfAsSearch } from '@/stores/document.store'
+import { waitFor } from '@/utils/functions'
+import PdfFloatBar from './components/floatbar'
 
 interface PdfViewerProps {
   documentId: number
   transformScale?: number
   onViewerInitialized?: (viewer: IPdfViewer) => void
+  onInstanceInitialized?: (i: IPdfInstance) => void
 }
-export const PdfViewer: FC<PdfViewerProps> = memo(({ documentId, transformScale, onViewerInitialized }) => {
+export const PdfViewer: FC<PdfViewerProps> = memo(({ documentId, transformScale, onInstanceInitialized }) => {
   const documentAtom = ObjectStore('pdf').createAtom(documentId)
   const document = useGlobalAtomValue(documentAtom)
   const viewerRef = useRef()
+  const viewer = usePdfViewer()
   const mergedRef = useMergedRef(viewerRef)
-  const store = useStore()
   const [contextMenuVisible, setContextMenuVisible] = useState(false)
 
   // ref to store pdf viewer instance
@@ -38,25 +40,14 @@ export const PdfViewer: FC<PdfViewerProps> = memo(({ documentId, transformScale,
   // context event emitter
 
   usePdfDrag(viewboxRef.current, documentId)
-  const viewer = useMemo(() => {
-    const viewer = createPdfViewer()
-    store.set(PdfViewerAtom, viewer)
+  useEffect(() => {
     ID_TO_LABEL_MAP.set(viewer, new Map())
-    const currTime = Date.now()
-    const checkViewerInitialize = () => {
-      const checkTime = Date.now()
-      // total wait time 10 seconds
-      if (checkTime - currTime > 10000) {
-        return
+    waitFor(
+      () => Object.keys(viewer).length > 0,
+      () => {
+        onInstanceInitialized?.(viewer)
       }
-      if (viewer.jumpToPage) {
-        onViewerInitialized?.(viewer)
-      } else {
-        requestAnimationFrame(checkViewerInitialize)
-      }
-    }
-    checkViewerInitialize()
-    return viewer
+    )
   }, [])
 
   const handleOpenMenu = useCallback(e => {
@@ -106,7 +97,6 @@ export const PdfViewer: FC<PdfViewerProps> = memo(({ documentId, transformScale,
     <div ref={viewboxRef} className={styles.viewerBox} role="pdf-viewer">
       {document?.fileUrl && (
         <Viewer
-          viewer={viewer}
           onDocumentLoaded={doc => {
             documentRef.current = doc
             SearchStore.existTargetObjectDocuments(documentId).then(res => {
@@ -127,6 +117,7 @@ export const PdfViewer: FC<PdfViewerProps> = memo(({ documentId, transformScale,
           transformScale={transformScale}
         />
       )}
+      <PdfFloatBar />
     </div>
   )
 })

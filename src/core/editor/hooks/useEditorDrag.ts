@@ -1,6 +1,5 @@
 import { AvaliableGlobalDraggingElements, GlobalDragOverlayInstance, getSetting, useGlobalIsDragging } from '@/core'
 import { GlobalEventHandler } from '@/events/globalEvent'
-import { useGlobalEventEmitter } from '@/events/useEventEmitter'
 import { useMemoizedFn, useRafFn } from '@/hooks'
 import Id from '@/utils/id'
 import { useCallback, useEffect, useMemo, useRef } from 'react'
@@ -16,6 +15,7 @@ import moveMultiElements from '../utils/moveMultiElements'
 import moveSingleElement from '../utils/moveSingleElement'
 import { ID_TO_ELEMENTS_MAP, ID_TO_PATH_MAP, SELECTED_BLOCKS_MAP } from '../weakMaps'
 import useIsDragging from './useIsDragging'
+import { Rendevoz } from '@/core/rendevoz'
 
 export const normalizeEditorDragBlocksToGlobalDraggingDetails = (editor: CustomEditor) => {
   let normalizedGlobalDraggingDetails: Partial<AvaliableGlobalDraggingElements> = {}
@@ -57,7 +57,7 @@ export const normalizeEditorDragBlocksToGlobalDraggingDetails = (editor: CustomE
 const useEditorDrag = (editor: CustomEditor, scrollElement?: HTMLElement | null) => {
   const [isDraggingInsideEditor, setIsDragging] = useIsDragging()
   const [globalIsDragging] = useGlobalIsDragging()
-  const emitter = useGlobalEventEmitter()
+  const emitter = Rendevoz.Events.Emit.GlobalEventEmitter
   const readonly = editor.readonly
   // default is false
   const dragManager = useMemo(() => new DragManager(), [])

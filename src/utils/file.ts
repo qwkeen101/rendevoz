@@ -10,3 +10,25 @@ export const saveBlobLocally = (blob: Blob, name = Id.getStrId(), path?: string)
     return ipcInstance.send('saveBuffer', arrbuf, name, path)
   })
 }
+
+export const getFilenameWithoutExtension = (name: string) => {
+  return name.substr(0, name.lastIndexOf('.'))
+}
+
+export const getDefaultUserFilePath = async (): Promise<string> => {
+  const result = await ipcInstance.send('getUserFilePath')
+  return result.data
+}
+
+export const getSelectedFolderPath = async (): Promise<string> => {
+  const result = await ipcInstance.send('getSelectedFolderPath')
+  return result.data
+}
+
+export const changeFilePath = async (newPath: string) => {
+  ipcInstance.send('changeFilePath', newPath)
+}
+
+export const openDatabaseFolder = () => {
+  ipcInstance.send('openDatabaseFolder')
+}

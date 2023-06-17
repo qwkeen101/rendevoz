@@ -1,12 +1,15 @@
 import { useEffect } from 'react'
 import { CollectionStore, globalStore, MetaStore, ObjectStore } from './stores'
-import { atom } from 'jotai'
+import { atom, useSetAtom } from 'jotai'
 import { useGlobalAtom, useGlobalSetAtom } from './hooks/jotai'
 import { ipcInstance } from './plugins'
 import { loginStateAtom } from './components/Login'
 import LoginService, { userAtom } from './services/login.service'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'react-hot-toast'
+import { changeFilePath, getDefaultUserFilePath } from './utils/file'
+import { SettingAtom } from './core'
+import produce from 'immer'
 
 export const initializedAtom = atom(false)
 export const updateInfoAtom = atom<
@@ -23,6 +26,7 @@ const Initializer = () => {
   const { getAllCollections } = CollectionStore
   const setIntialized = useGlobalSetAtom(initializedAtom)
   const { t } = useTranslation()
+  const setSetting = useGlobalSetAtom(SettingAtom)
   useEffect(() => {
     if (loginState.autoLogin && loginState.password && !autoLogined) {
       const email = localStorage.getItem('email')
@@ -46,6 +50,28 @@ const Initializer = () => {
           })
       }
     }
+    getDefaultUserFilePath().then(path =>
+      setSetting(s =>
+        produce(s, s => {
+          if (s.general.language === undefined) {
+            if (navigator.language.includes('zh')) {
+              s.general.language = 'zh-CN'
+            } else {
+              s.general.language = 'en-US'
+            }
+            console.log(s.general.language)
+          }
+          s.general.defaultFilePath = path
+          if (s.general.userFilePath === undefined) {
+            s.general.userFilePath = path
+            return
+          }
+          if (s.general.userFilePath !== path) {
+            changeFilePath(s.general.userFilePath)
+          }
+        })
+      )
+    )
     Promise.all([
       getAllMetaLinks(),
       getAllMetaObjects(),

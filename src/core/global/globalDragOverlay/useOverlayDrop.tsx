@@ -1,5 +1,3 @@
-import { DropOn, GlobalEventHandler } from '@/events/globalEvent'
-import { useGlobalEventEmitter } from '@/events/useEventEmitter'
 import { useToggle } from '@/hooks'
 import { indexedMetaLinksAtom } from '@/stores/meta.store'
 import { globalStore, MetaStore, ObjectStore } from '@/stores'
@@ -7,17 +5,17 @@ import { PartialWithId } from '@/types'
 import Id from '@/utils/id'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { toast } from 'react-hot-toast'
 import { Node } from 'slate'
 import { FormType, Modal } from '@/components'
 import { getSetting, intersectionOfMultipleSets } from '@/core'
-import { GlobalDraggingDetails, MetaLink, MetaObject } from '~/typings'
+import { DropOn, GlobalDraggingDetails, MetaLink, MetaObject } from '~/typings'
 import { useEventHandler } from '@/events'
 import useDropObject, { clearDragState } from './useDropObject'
 import { transformTextContentToNameAndDescription, createLink, addLinkBetweenTwoMetaObject } from './utils'
+import { Rendevoz } from '@/core/rendevoz'
 
 const useOverlayDrop = () => {
-  const emitter = useGlobalEventEmitter()
+  const emitter = Rendevoz.Events.Emit.GlobalEventEmitter
   const dropEventHandler = useEventHandler('global')
   const { addMetaLink, addMetaObject, getMetaObjectById, getMetaObjectByObjectId, deleteMetaLink, deleteMetaObject, updateMetaObject } =
     MetaStore
@@ -141,6 +139,12 @@ const useOverlayDrop = () => {
         link.targetId = whiteboardMeta.id
         break
       }
+      case 'attachment': {
+        const targetMeta = await MetaStore.getMetaObjectById(dropOn.parentMetaId)
+        if (targetMeta) {
+          link.targetId = targetMeta.id
+        }
+      }
     }
     if (link.sourceId && link.targetId) {
       return link
@@ -187,6 +191,7 @@ const useOverlayDrop = () => {
       }
       case 'pdfLabel': {
         const labelMeta = getMetaObjectByObjectId(dragElement.labelId)
+        const labelObject = await ObjectStore('pdfLabel').getOneById(dragElement.labelId)
         const pdfMeta =
           (await getMetaObjectByObjectId(dragElement.pdfId)) || (await addMetaObject({ type: 'pdf', objectId: dragElement.pdfId }, true))
         if (labelMeta) {
@@ -219,8 +224,8 @@ const useOverlayDrop = () => {
             pages: dragElement.page ? [dragElement.page] : undefined
           }
           const { name, description } = transformTextContentToNameAndDescription(dragElement.content)
-          normalizedMetaObject.name = name || 'Unnamed PDF Label'
-          normalizedMetaObject.description = description
+          normalizedMetaObject.name = labelObject?.name || name || 'Unnamed PDF Label'
+          normalizedMetaObject.description = labelObject?.description || description
           if (enableDragFromPDFLink && enableAll) {
             const metaLink: PartialWithId<MetaLink> = {
               sourceId: pdfMeta.id,
@@ -343,6 +348,39 @@ const useOverlayDrop = () => {
           }
           normalizedLinks.push(createLink(webpageMeta.id, normalizedMetaObject.id))
         }
+        break
+      }
+      case 'videoLabel': {
+        const videoLabelObject = dragElement.id ? await ObjectStore('videoLabel').getOneById(dragElement.id) : undefined
+        const videoMeta = videoLabelObject?.parentObjectId && (await retrieveMetaObjectByObjectId(videoLabelObject.parentObjectId, 'video'))
+        const videoLabelMeta = dragElement.id && (await getMetaObjectByObjectId(dragElement.id))
+
+        if (videoLabelMeta) {
+          Object.assign(normalizedMetaObject, videoLabelMeta)
+          alreadyHasMeta = true
+          shouldOpenEditMetaModal = false
+          if (videoMeta) {
+            addLinkBetweenTwoMetaObject(videoMeta, videoLabelMeta)
+          }
+        } else {
+          normalizedMetaObject.type = 'videoLabel'
+          normalizedMetaObject.objectId = dragElement.id
+          normalizedMetaObject.name = videoLabelObject?.name || 'Video Label'
+          normalizedMetaObject.description = videoLabelObject?.description
+          normalizedMetaObject.coverImgSrc = videoLabelObject?.imageUrl
+          normalizedMetaObject.fromObject = videoMeta
+            ? {
+                type: 'video',
+                metaId: videoMeta.id,
+                time: dragElement.videoTime
+              }
+            : undefined
+
+          if (videoMeta) {
+            normalizedLinks.push(createLink(videoMeta.id, normalizedMetaObject.id))
+          }
+        }
+        break
       }
     }
     return {

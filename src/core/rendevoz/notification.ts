@@ -1,8 +1,17 @@
-const error = () => {}
+import { ReactElement } from 'react'
+import { toast } from 'react-hot-toast'
 
-const info = () => {}
+const error = ({ message }: { message: string | ReactElement }) => {
+  toast.error(message)
+}
 
-const success = () => {}
+const info = ({ message }: { message: string | ReactElement }) => {
+  toast.success(message)
+}
+
+const success = ({ message }: { message: string | ReactElement }) => {
+  toast.success(message)
+}
 
 const Notification = {
   success,

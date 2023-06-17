@@ -2,7 +2,6 @@ import { Noop } from '@/common/types'
 import { IconPicker, Toolbar, WithBorder, IconWithPopover } from '@/components'
 import BlockColorPicker from '@/core/editor/components/BlockColorPicker'
 import { FC, memo } from 'react'
-import { TextSelectionSearch } from './TextSelectionToolbar'
 import { IHighlightLabel } from '~/typings'
 
 type Layout =

@@ -219,19 +219,22 @@ export const TextNormalizeMapObject = {
   𝓋: 'v',
   𝓌: 'w'
 }
-
+const textRe = new RegExp(Object.keys(TextNormalizeMapObject).join('|'), 'g')
+const removeLigRegex = new RegExp(Object.keys(NormalizedMapObject).join('|'), 'g')
+const re = new RegExp(Object.keys(TextNormalizeMapObject).join('|'), 'g')
 export const normalizeChars = (chars: TextItemChar[]) => {
   const hasUnicodeChars = chars.filter(i => {
-    return TextNormalizeMapObject[i.unicode] || (i.unicode && i.unicode.length === 1)
+    if(TextNormalizeMapObject[i.unicode] || (i.unicode && i.unicode.length === 1)){
+      return true
+    }
+    return false
   })
-  const textRe = new RegExp(Object.keys(TextNormalizeMapObject).join('|'), 'g')
 
   // normalized chars
   const allTexts = hasUnicodeChars
     .map(i => i.unicode)
     .join('')
     .replace(textRe, matched => TextNormalizeMapObject[matched])
-  const removeLigRegex = new RegExp(Object.keys(NormalizedMapObject).join('|'), 'g')
   const normalizedIndexes = [...allTexts.matchAll(removeLigRegex)]
   const normalizedText = allTexts.replace(removeLigRegex, matched => NormalizedMapObject[matched])
   return {
@@ -244,6 +247,5 @@ export const normalizeChars = (chars: TextItemChar[]) => {
 }
 
 export const normalizeText = (text: string) => {
-  const re = new RegExp(Object.keys(TextNormalizeMapObject).join('|'), 'g')
   return text.replace(re, matched => TextNormalizeMapObject[matched]).replace(/\s\s+/g, ' ')
 }

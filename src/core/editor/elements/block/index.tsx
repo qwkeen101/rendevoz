@@ -1,4 +1,4 @@
-import { useMemoizedFn, useMergedRef, useUpdateEffect } from '@/hooks'
+import { useMemoizedFn, useMergedRef, usePrevious, useUpdateEffect } from '@/hooks'
 import classNames from 'classnames'
 import { FC, memo, useRef, useState, useEffect, cloneElement, MouseEvent, useCallback, RefObject, useLayoutEffect } from 'react'
 import { ReactEditor, RenderElementProps, useSlateStatic } from '../../slate-react'
@@ -6,7 +6,6 @@ import { CustomElement } from '~/typings'
 import { motion, AnimatePresence } from 'framer-motion'
 import styles from './index.module.less'
 import './index.less'
-import { scrollToTarget } from '../../utils/positions/scroll'
 import { SELECT_AREA_MAP, ID_TO_ELEMENTS_MAP, SELECTED_BLOCKS_MAP } from '../../weakMaps'
 import useIsSelecting from '../../hooks/useIsSelecting'
 import { getDistanceBetweenElementAndScrollableElement } from '@/core/editor/utils/scroll'
@@ -14,8 +13,11 @@ import { isRectsCollision } from '../../utils/positions/collision'
 import { css } from '@emotion/css'
 import { hexToRgb } from '@/utils/color'
 import { useGlobalIsDragging } from '@/core'
-import { Editor, Range, Transforms } from 'slate'
+import { Editor, Node, Path, Range, Transforms } from 'slate'
 import { NODE_TO_PARENT } from '../../slate-react/utils/weak-maps'
+import { useAtomValue } from 'jotai'
+import { EditorSearchAtom, SearchEntry, SearchOccurrence } from '../../hooks/useEditorSearch'
+import { CustomText } from '~/typings/editor/baseTypes'
 
 type BlockProps = {
   blockId: number
@@ -30,6 +32,8 @@ type BlockProps = {
 
 const CardBlocks = ['pdf', 'book-highlight', 'note']
 
+const PrimaryHighlight = 'primary-highlight'
+const SecondaryHighlight = 'secondary-highlight'
 const Block: FC<React.DetailedHTMLProps<React.HTMLAttributes<HTMLDivElement>, HTMLDivElement> & BlockProps & RenderElementProps> = memo(
   ({ scrollElementRef, blockId, children, ratio, type, attributes, element, onMouseEnter, onMouseLeave, onMouseMove, ...rest }) => {
     const blockRef = useRef<HTMLDivElement>(null)
@@ -40,7 +44,122 @@ const Block: FC<React.DetailedHTMLProps<React.HTMLAttributes<HTMLDivElement>, HT
     const [selected, setSelected] = useState(false)
     const [isSelecting] = useIsSelecting()
     const [isGlobalDragging] = useGlobalIsDragging()
+    const editorSearch = useAtomValue(EditorSearchAtom)
     const distanceToScrollElementRef = useRef<{ left: number; top: number; right: number; bottom: number }>()
+    const previousElement = usePrevious(element)
+    const getSearchEntries = (): SearchOccurrence[] | undefined => {
+      if (editorSearch.entryCache?.[blockId] && previousElement === element) return editorSearch.entryCache[blockId]
+      const query = editorSearch.query
+      if (!query) return
+      if (!editorSearch.entryCache) editorSearch.entryCache = {}
+      const textEntries = Array.from(Node.texts(element))
+      const withLengthEntries: {
+        text: CustomText
+        path: Path
+        totalLength: number
+        startLength: number
+      }[] = []
+      textEntries.forEach((e, idx, arr) => {
+        if (idx === 0) {
+          withLengthEntries.push({
+            text: e[0],
+            path: e[1],
+            totalLength: e[0].text.length,
+            startLength: 0
+          })
+        } else {
+          const prev = withLengthEntries[idx - 1]
+          withLengthEntries.push({
+            text: e[0],
+            path: e[1],
+            totalLength: e[0].text.length,
+            startLength: prev.startLength + prev.totalLength
+          })
+        }
+      })
+      const text = Node.string(element)
+      const indexes = [...text.matchAll(new RegExp(query, 'gi'))].map(i => i.index).filter(i => i !== undefined) as number[]
+      const entries = indexes
+        .map(i => {
+          const startIndex = i
+          const endIndex = i + query.length
+          const startEntry = withLengthEntries.findLast(i => i.startLength <= startIndex)
+          const endEntry = withLengthEntries.findLast(i => i.startLength <= endIndex)
+          if (!startEntry || !endEntry) return
+          const startOffset = startIndex - startEntry.startLength
+          const endOffset = endIndex - endEntry.startLength
+          return {
+            startEntry,
+            endEntry,
+            startOffset,
+            endOffset
+          }
+        })
+        .filter(i => i) as SearchOccurrence[]
+      editorSearch.entryCache[blockId] = entries
+      return entries
+    }
+    useEffect(() => {
+      if (editorSearch.results?.[blockId] && editorSearch.query) {
+        const entries = getSearchEntries()
+        if (entries) {
+          const currentOccur = editorSearch.currentOccurrence
+          const currentBlockPath = ReactEditor.findPath(editor, element)
+          const secondaryHighlightArr = Array.from(CSS.highlights.get(SecondaryHighlight)?.values() || [])
+          console.log(secondaryHighlightArr)
+          entries.forEach((entry, idx) => {
+            const range = ReactEditor.toDOMRange(editor, {
+              anchor: {
+                offset: entry.startOffset,
+                path: [...currentBlockPath, ...entry.startEntry.path]
+              },
+              focus: {
+                path: [...currentBlockPath, ...entry.endEntry.path],
+                offset: entry.endOffset
+              }
+            })
+            Object.assign(range, {
+              index: idx,
+              blockId
+            })
+            const alreadyExistSecondaryHighlightRange = secondaryHighlightArr.find(i => i.index === idx && i.blockId === blockId)
+            if (currentOccur?.blockId === blockId) {
+              if (currentOccur.idx === idx) {
+                const highlight = new Highlight()
+                highlight.add(range)
+                CSS.highlights.set(PrimaryHighlight, highlight)
+                if (alreadyExistSecondaryHighlightRange) {
+                  console.log(alreadyExistSecondaryHighlightRange)
+                  const set = CSS.highlights.get(SecondaryHighlight)
+                  set?.delete(alreadyExistSecondaryHighlightRange)
+                  CSS.highlights.set(SecondaryHighlight, set)
+                }
+                return
+              }
+            }
+            if (!alreadyExistSecondaryHighlightRange) {
+              const highlight = CSS.highlights.get(SecondaryHighlight) || new Highlight()
+              highlight.add(range)
+              CSS.highlights.set(SecondaryHighlight, highlight)
+            }
+          })
+        }
+      }
+      return () => {
+        const primary = CSS.highlights.get(PrimaryHighlight)
+        primary?.forEach(i => {
+          if (i.blockId === blockId) {
+            primary.delete(i)
+          }
+        })
+        const set = CSS.highlights.get(SecondaryHighlight)
+        set?.forEach(i => {
+          if (i.blockId === blockId) {
+            set?.delete(i)
+          }
+        })
+      }
+    }, [editorSearch, element])
 
     const handleCollisionSelectBlock = useMemoizedFn(() => {
       if (type === 'column' || type === 'columnList') return

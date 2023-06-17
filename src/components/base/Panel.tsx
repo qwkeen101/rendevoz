@@ -1,17 +1,21 @@
-import { useEffect, useState } from 'react'
+import { CSSProperties, Dispatch, ReactNode, SetStateAction, useEffect, useState } from 'react'
 import Content from './Content'
 import { motion } from 'framer-motion'
 import Icon from './Icon'
 import { useMeasure } from 'react-use'
 import useToggle from '@/hooks/utils/useToggle'
 import ClassName from '@/styles/classNames'
+import React from 'react'
 
 interface PanelProps {
-  title: string | React.ReactNode
+  title: string | React.ReactNode | ((set: Dispatch<SetStateAction<boolean>>) => ReactNode)
   children: React.ReactNode
   style?: React.CSSProperties
   defaultVisible?: boolean
   className?: string
+  childrenStyle?: CSSProperties
+  titleContainerStyle?: CSSProperties
+  overflow?: 'hidden' | 'auto' | 'visible'
 }
 const variants = {
   open: {
@@ -23,8 +27,17 @@ const variants = {
     height: 0
   }
 }
-const Panel: React.FC<PanelProps> = ({ title, children, style, defaultVisible = true, className }) => {
-  const [hide, toggle] = useToggle(!defaultVisible)
+const Panel: React.FC<PanelProps> = ({
+  title,
+  children,
+  style,
+  defaultVisible = true,
+  className,
+  titleContainerStyle,
+  overflow = 'hidden',
+  childrenStyle
+}) => {
+  const [hide, toggle] = useState(!defaultVisible)
   const [duration, setDuration] = useState(0.3)
   const [ref, { height }] = useMeasure()
   useEffect(() => {
@@ -32,21 +45,31 @@ const Panel: React.FC<PanelProps> = ({ title, children, style, defaultVisible = 
   }, [height])
   return (
     <Content fullWidth flex column style={style} className={className}>
-      <Content flex alignItems="center" justifyContent="space-between">
-        <div style={{ cursor: 'pointer' }} onClick={() => toggle()}>
-          {title}
-        </div>
-        <Icon cursor="pointer" name={hide ? 'park-down' : 'park-up'} onClick={() => toggle()} className={ClassName.circleButton()} />
+      <Content flex alignItems="center" justifyContent="space-between" style={titleContainerStyle}>
+        {typeof title === 'function' ? (
+          title(toggle)
+        ) : (
+          <div
+            style={{ cursor: 'pointer' }}
+            onClick={() => {
+              toggle(s => !s)
+            }}
+          >
+            {title}
+          </div>
+        )}
+        <Icon cursor="pointer" name={hide ? 'park-down' : 'park-up'} onClick={() => toggle(s => !s)} className={ClassName.circleButton()} />
       </Content>
       <motion.div
         inherit={false}
-        style={{ overflow: 'hidden' }}
+        style={{ overflow, ...childrenStyle }}
+        ref={ref}
         initial={hide ? 'hide' : 'open'}
         animate={hide ? 'hide' : 'open'}
         variants={variants}
         transition={{ ease: 'easeOut', duration: duration }}
       >
-        <div ref={ref}>{children}</div>
+        {children}
       </motion.div>
     </Content>
   )

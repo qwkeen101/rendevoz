@@ -1,4 +1,3 @@
-import { useGlobalEventEmitter } from '@/events/useEventEmitter'
 import { useMemoizedFn } from '@/hooks'
 import { css } from '@emotion/css'
 import { atom } from 'jotai/vanilla'
@@ -6,35 +5,23 @@ import { useAtom } from 'jotai/react'
 import React from 'react'
 import { memo, ReactElement, useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { GlobalDraggingDetails } from '~/typings'
+import { GlobalDraggingDetails, GlobalInstances } from '~/typings'
 import useOverlayDrop from './useOverlayDrop'
 import { globalStore } from '@/stores'
 import ClassName from '@/styles/classNames'
-
+import { Rendevoz } from '@/core/rendevoz'
+import { assignProperties } from '@/utils'
 
 export type AvaliableGlobalDraggingElements = GlobalDraggingDetails
-interface IGlobalDragOverlay {
-  addDragElements: (nodes: HTMLElement | HTMLElement[] | ReactElement | ReactElement[]) => void
-  startDrag: () => void
-  endDrag: () => void
-  removeDragElements: (nodes: HTMLElement | HTMLElement[]) => void
-  removeAllDragElement: () => void
-  getDraggingDetails: () => Partial<AvaliableGlobalDraggingElements>
-  setDraggingDetails: (draggingDetails: Partial<AvaliableGlobalDraggingElements>) => void
-  draggingDetails?: Partial<AvaliableGlobalDraggingElements>
-}
-const disableUserSelectClassName = css({
-  '*': {
-    userSelect: 'none'
-  }
-})
-export const GlobalDragOverlayInstance: Partial<IGlobalDragOverlay> = {}
+
+export const GlobalDragOverlayInstance: Partial<GlobalInstances.DragDropInstance> = {}
+
 const globalIsDraggingAtom = atom(false)
 export const useGlobalIsDragging = () => useAtom(globalIsDraggingAtom, { store: globalStore })
 export const GlobalDragOverlay = memo(() => {
   const [dragElements, setDragElements] = useState<(HTMLElement | ReactElement)[]>([])
   const [isDragging, setIsDragging] = useGlobalIsDragging()
-  const emitter = useGlobalEventEmitter()
+  const emitter = Rendevoz.Events.Emit.GlobalEventEmitter
   const { portal } = useOverlayDrop()
   const dragContainerRef = useRef<HTMLDivElement>(null)
   const dragHandler = useMemoizedFn((e: PointerEvent) => {
@@ -57,6 +44,16 @@ export const GlobalDragOverlay = memo(() => {
       setTimeout(() => setIsDragging(false), 0)
       setTimeout(() => (GlobalDragOverlayInstance.draggingDetails = undefined), 20)
       return
+    }
+    if (e.type === 'pointermove') {
+      GlobalDragOverlayInstance.draggingDetails &&
+        emitter.emit('global', {
+          type: 'globalDragPointerMove',
+          data: {
+            event: e,
+            draggingElement: GlobalDragOverlayInstance.draggingDetails
+          }
+        })
     }
     e.preventDefault()
     window.getSelection()?.empty()
@@ -117,7 +114,7 @@ export const GlobalDragOverlay = memo(() => {
       })
     }
   }, [dragElements])
-  Object.assign(GlobalDragOverlayInstance, {
+  assignProperties(GlobalDragOverlayInstance, {
     addDragElements: nodes => {
       let newNodes = nodes
 
@@ -149,7 +146,7 @@ export const GlobalDragOverlay = memo(() => {
     },
     setDraggingDetails: d => (GlobalDragOverlayInstance.draggingDetails = d),
     getDraggingDetails: () => GlobalDragOverlayInstance.draggingDetails
-  } as Partial<IGlobalDragOverlay>)
+  })
   return createPortal(
     <>
       <div

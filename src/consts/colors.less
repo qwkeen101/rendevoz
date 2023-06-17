@@ -1,4 +1,5 @@
 body {
+  background: var(--global-background);
   --font-white: #e8eaed;
   --font-silver: #d1d4dc;
   --font-black: #131722;
@@ -23,4 +24,42 @@ body {
   --dark-border: rgba(160,160,160,0.2);
   --light-scroll-bar: #c8c8c8;
   --dark-scroll-bar: #4f4f4f;
+  --dark-button-active-background: rgba(221,212,224,0.1);
+  --light-button-active-background: rgba(31,34,37,0.1);
+}
+html {
+  &[theme='dark']{
+    body {
+      --font-primary: var(--font-white);
+      --font-secondary: var(--font-silver);
+      --font-tertiary: var(--font-silver-second);
+      --linear-background: var(--dark-linear-gradient-background);
+      --global-background: var(--dark-background-color);
+      --background-secondary: var(--dark-background-color-secondary);
+      --button-hover-background: var(--dark-button-hover-background);
+      --border-background: var(--dark-border);
+      --high-contrast-background: var(--dark-high-contrast-background);
+      --emphasis: var(--dark-emphasis);
+      --highlight-border: var(--dark-highlight-border);
+      --scroll-bar: var(--dark-scroll-bar);
+      --button-active-background: var(--dark-button-active-background);
+    }
+  }
+  &[theme='light']{
+    body {
+      --font-primary: var(--font-black);
+      --font-secondary: var(--font-silver-blue);
+      --font-tertiary: var(--font-caption);
+      --linear-background: var(--light-linear-gradient-background);
+      --global-background: var(--light-background-color);
+      --background-secondary: var(--light-background-color-secondary);
+      --button-hover-background: var(--light-button-hover-background);
+      --border-background: var(--button-hover-background);
+      --high-contrast-background: var(--light-high-contrast-background);
+      --emphasis: var(--light-emphasis);
+      --highlight-border: var(--light-highlight-border);
+      --scroll-bar: var(--light-scroll-bar);
+      --button-active-background: var(--light-button-active-background);
+    }
+  }
 }

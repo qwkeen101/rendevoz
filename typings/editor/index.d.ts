@@ -12,6 +12,7 @@ import DragManager from '@/core/editor/hooks/DragManager'
 import { EditorOverlayManager } from '@/core/editor/components/overlay/useEditorOverlay'
 import { Virtualizer } from '@tanstack/react-virtual'
 import React, { ReactElement, ReactNode, RefObject } from 'react'
+import { IEditorEvent } from './events'
 
 export type CustomEditor = BaseEditor &
   ReactEditor &
@@ -35,13 +36,6 @@ export type CustomEditor = BaseEditor &
   } & {
     handler?: (e: { data?: any; type: string }) => void
     onHighlightClick?: (highlightId: number) => void
-    onHighlightDrag?: (highlightId: number, editor: CustomEditor) => void
-    onHighlight?: (highlightId: number) => void
-    onHighlightRemove?: (highlightId: number) => void
-    onTranslate?: (selectedText: string, blockId: number, e: React.MouseEvent) => void
-    onSearch?: (selectedText: string, blockId: number, e: React.MouseEvent) => void
-    onContentRendered?: () => void
-    onLinkClick?: (e: React.MouseEvent) => void
     initialized?: boolean
     contentInitialized?: boolean
     readonly?: boolean
@@ -50,6 +44,7 @@ export type CustomEditor = BaseEditor &
     renderTitle?: (ref: (node: HTMLElement) => void) => ReactNode
     goToHighlight?: (highlightId: number) => void
     titleEle?: HTMLElement | null
+    on: (event: IEditorEvent) => void
   }
 
 export type CustomElement = (CommonElement | OuterElement) & {
@@ -71,8 +66,25 @@ declare module 'slate' {
   }
 }
 
+export type IEditorInstance = Partial<{
+  scrollToBlock: (options: { blockId?: number }) => Promise<void>
+  selectBlock: (options: { blockId?: number }) => Promise<void>
+  scrollToHighlight: (options: { highlightId: number }) => Promise<void>
+  getSlateEditor: () => CustomEditor
+  search: (query: string, reset?: boolean) => [number, string][]
+  pureSearch: (query: string, reset?: boolean) => [number, string][]
+  getOccurrences: (query: string) => number
+  replace: (source: string, target: string, replaceCurrent?: boolean) => void
+  changeOccurrence: (direction: 'up' | 'down') => void
+  openSearch?: VoidFunction
+  closeSearch?: VoidFunction
+  toggleSearch?: VoidFunction
+}>
+
 export type { OuterElement, CommonElement, CommonElement }
 
 export * from './commonElements'
 
 export * from './baseElements'
+
+export * from './events'

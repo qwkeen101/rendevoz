@@ -13,11 +13,12 @@ import { EditorHeadingTreeAtom, useEditorFilter } from './useEditorFilter'
 import { useAtomValue } from 'jotai'
 import { goToBlock, highlightBlock } from '@/core/editor/utils'
 import { useTranslation } from 'react-i18next'
+import { Resizable } from 're-resizable'
+import Colors from '@/consts/colors'
 type IHeadingTreeNode = ReturnType<typeof Outliner.headingListToTree>
 const SidebarToolbar = ({ value, editor }: { value: Descendant[]; editor: CustomEditor }) => {
   const [collapsed, toggleCollapsed] = useToggle(true)
   useEditorFilter(editor)
-  const [width, setWidth] = useState(250)
   const sidebarRef = useRef<HTMLDivElement>(null)
   const { t } = useTranslation()
   return (
@@ -36,25 +37,34 @@ const SidebarToolbar = ({ value, editor }: { value: Descendant[]; editor: Custom
           className={ClassName.circleButton()}
         />
       )}
-      <div
+      <Resizable
+        enable={{ right: true }}
+        minWidth={200}
+        maxWidth={500}
+        defaultSize={{
+          width: 'auto',
+          height: '100%'
+        }}
+        handleStyles={{
+          right: {
+            width: 3,
+            background: Colors.Background.Border
+          }
+        }}
         ref={sidebarRef}
         style={{
-          position: 'absolute',
+          position: collapsed ? 'absolute' : 'relative',
+          left: 0,
+          top: 0,
           zIndex: 10,
           display: 'flex',
           flexDirection: 'column',
-          transition: 'all 0.2s ease',
-          padding: '6px 18px',
-          borderRadius: 10,
+          transition: 'transform 0.2s ease',
+          padding: '6px 12px 6px 18px',
           gap: 10,
-          width,
-          height: 'calc(100% - 60px)',
-          top: 15,
-          left: collapsed ? -width : 30,
-          maxWidth: 350,
-          minWidth: 200
+          height: '100%',
+          transform: collapsed ? 'translateX(-100%) translateX(-10px)' : 'translateX(0px)'
         }}
-        className={ClassName.Background.pseudoBlubBackground}
       >
         <Tabs
           defaultActiveKey="1"
@@ -72,7 +82,12 @@ const SidebarToolbar = ({ value, editor }: { value: Descendant[]; editor: Custom
         >
           <TabPane
             key="1"
-            tab={t('general.outline')}
+            tab={
+              <Content alignItems="center" flex gap={6}>
+                <Icon name="park-view-list" />
+                {t('general.outline')}
+              </Content>
+            }
             style={{
               paddingTop: 10
             }}
@@ -81,7 +96,12 @@ const SidebarToolbar = ({ value, editor }: { value: Descendant[]; editor: Custom
           </TabPane>
           <TabPane
             key="2"
-            tab={t('general.highlight')}
+            tab={
+              <Content alignItems="center" flex gap={6}>
+                <Icon name="park-high-light" />
+                {t('general.highlight')}
+              </Content>
+            }
             style={{
               paddingTop: 10
             }}
@@ -90,7 +110,12 @@ const SidebarToolbar = ({ value, editor }: { value: Descendant[]; editor: Custom
           </TabPane>
           <TabPane
             key="3"
-            tab={t('general.object')}
+            tab={
+              <Content alignItems="center" flex gap={6}>
+                <Icon name="park-share-one" />
+                {t('general.object')}
+              </Content>
+            }
             style={{
               paddingTop: 10
             }}
@@ -98,35 +123,7 @@ const SidebarToolbar = ({ value, editor }: { value: Descendant[]; editor: Custom
             <AllObjects editor={editor} />
           </TabPane>
         </Tabs>
-        <motion.div
-          drag="x"
-          dragMomentum={false}
-          dragConstraints={{ left: 0, right: 0 }}
-          dragElastic={0}
-          onDrag={(e, info) => {
-            const sidebar = sidebarRef.current
-            if (sidebar) {
-              sidebar.style.transition = 'none'
-              sidebar.style.width = `${width + info.offset.x}px`
-            }
-          }}
-          onDragEnd={() => {
-            if (sidebarRef.current) {
-              const width = parseInt(sidebarRef.current.style.width)
-              setWidth(Math.min(Math.max(200, width), 350))
-              sidebarRef.current.style.transition = 'all 0.2s ease'
-            }
-          }}
-          style={{
-            position: 'absolute',
-            right: 0,
-            top: 0,
-            bottom: 0,
-            width: 5,
-            cursor: 'col-resize'
-          }}
-        ></motion.div>
-      </div>
+      </Resizable>
     </>
   )
 }
@@ -180,6 +177,7 @@ const HeadingItem = ({ item, onClick }: { item: IHeadingTreeNode; onClick: (head
           onClick={() => {
             onClick(item.id)
           }}
+          style={{ textTransform: 'none' }}
           className={css([
             {
               transition: 'color 0.2s ease',

@@ -9,11 +9,11 @@ import SidebarPinned from './SidebarPinned'
 import SidebarDatabase from './SidebarDatabase'
 import SidebarSetting from './SidebarSetting'
 import SidebarUser from './SidebarUser'
-import Actions from '@/core/Actions'
 import SidebarSearch from './SidebarSearch'
 import classNames from 'classnames'
 import { css } from '@emotion/css'
 import FontSize from '@/consts/font'
+import { Rendevoz } from '@/core/rendevoz'
 
 const variants = {
   open: {
@@ -46,7 +46,7 @@ const Navigation = ({ hovered }: { hovered: boolean }) => {
         variants={variants}
       >
         <SidebarUser />
-        <MenuItem onClick={Actions.openHome}>
+        <MenuItem onClick={Rendevoz.Actions.Open.openHome}>
           <Icon name="park-home" style={{ marginRight: 10 }} size={16} />
           {t('sidebar.home')}
         </MenuItem>

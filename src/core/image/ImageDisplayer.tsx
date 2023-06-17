@@ -157,6 +157,8 @@ const ImageDisplayer = forwardRef<
         return 'en'
       case 'zh-CN':
         return 'zh-CN'
+      default:
+        return 'en'
     }
   }
 

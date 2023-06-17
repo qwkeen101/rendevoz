@@ -4,19 +4,25 @@ import { groupClassName, hoverLabelClassName } from './useFlipForm'
 import useFileUpload from '../base/useFileUpload'
 import { useTranslation } from 'react-i18next'
 import Colors from '@/consts/colors'
+import { useSelectAtomValue, useSelectGlobalAtomValue } from '@/hooks'
+import { SettingAtom } from '@/core'
 
 const FormFilePathPicker = ({
   onChange,
   filePath,
-  maxWidth
+  maxWidth,
+  accept
 }: {
-  onChange: (filePath: string | undefined, fileName: string | undefined) => void
+  onChange: (filePath: string | undefined, fileName: string | undefined, file: File | undefined) => void
   filePath: string
   maxWidth: number | string
+  accept?: HTMLInputElement['accept']
 }) => {
   const { renderUploader, upload, removeFile } = useFileUpload(file => {
-    onChange(file.path, file.name)
-  })
+    onChange(file.path, file.name, file)
+  }, accept)
+  const userFilePath = useSelectGlobalAtomValue(SettingAtom, s => s.general.userFilePath)
+  const defaultFilePath = useSelectGlobalAtomValue(SettingAtom, s => s.general.defaultFilePath)
   const { t } = useTranslation()
   return (
     <div className={groupClassName}>
@@ -25,7 +31,7 @@ const FormFilePathPicker = ({
         name="park-close"
         className={ClassName.circleButton()}
         onClick={() => {
-          onChange(undefined, undefined)
+          onChange(undefined, undefined, undefined)
           removeFile()
         }}
         containerStyle={{
@@ -49,7 +55,9 @@ const FormFilePathPicker = ({
         }}
         onClick={upload}
       >
-        {filePath || (
+        {filePath ? (
+          filePath.replace('rendefile://', userFilePath || defaultFilePath || '')
+        ) : (
           <>
             <Icon name="park-file-addition-one" />
             {t('general.choose one file')}

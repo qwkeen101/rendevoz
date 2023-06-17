@@ -1,8 +1,8 @@
 import { Content, Icon } from '@/components'
 import { DraggingElement, Editor, GlobalDragOverlayInstance, ReactEditor } from '@/core'
-import { CustomEditor } from '~/typings'
+import { CustomEditor, IEditorInstance } from '~/typings'
 import TabTitle from '@/components/layout/TabTitle'
-import { FC, useState } from 'react'
+import { FC, useEffect, useState } from 'react'
 import { useToggle } from '@/hooks'
 import ClassName from '@/styles/classNames'
 import { Descendant } from 'slate'
@@ -12,89 +12,151 @@ import { Provider } from 'jotai'
 import { GlobalTranslateInstance } from '@/core/global/translate/GlobalTranslatePanel'
 import { GlobalSearchInstance } from '@/core/global/GlobalSearchPanel'
 import { objectIdToMetaObjectIdMapAtom } from '@/stores/meta.store'
+import { EditorProps } from '@/core/editor/Editor'
+import { waitFor } from '@/utils/functions'
+import { createPortal } from 'react-dom'
 
-const EditorPage: FC<{
-  noteId: number
-  id: string
-  disableTitle?: boolean
-  defaultReadOnly?: boolean
-  onTitleChange?: (t: string) => void
-  onEditorInitialized?: (editor: CustomEditor) => void
-}> = ({ noteId, id, onEditorInitialized, disableTitle, onTitleChange, defaultReadOnly = false }) => {
+const EditorPage: FC<
+  {
+    noteId?: number
+    id: string
+    disableTitle?: boolean
+    defaultReadOnly?: boolean
+    onTitleChange?: (t: string) => void
+    onInstanceInitialized?: EditorProps['onInstanceIntialized']
+  } & EditorProps
+> = ({ noteId, id, onInstanceInitialized, disableTitle, onTitleChange, defaultReadOnly = false, readonly: outReadOnly, ...rest }) => {
   const [title, setTitle] = useState('Untitled')
   const [readOnly, toggleReadOnly] = useToggle(defaultReadOnly)
   const [value, setValue] = useState<Descendant[]>([])
   const [editor, setEditor] = useState<CustomEditor>()
+  const [instance, setInstance] = useState<IEditorInstance>()
+
+  const editorNode = editor && ReactEditor.toDOMNode(editor, editor).closest("[role='editor-container']")
+
+  useEffect(() => {
+    if (outReadOnly !== undefined) {
+      toggleReadOnly(outReadOnly)
+    }
+  }, [outReadOnly])
   return (
-    <Content fullHeight fullWidth flex centered>
+    <Content fullWidth fullHeight flex centered>
       {!disableTitle && <TabTitle title={title} icon="park-notes" />}
-      <Icon
-        name={readOnly ? 'park-edit' : 'park-book-open'}
-        onClick={toggleReadOnly}
-        className={ClassName.circleButton()}
-        size={18}
-        containerStyle={{ position: 'absolute', top: 30, right: 30, zIndex: 10 }}
-      />
+
       <Provider>{editor && <SidebarToolbar value={value} editor={editor} />}</Provider>
-      <Editor
-        id={id}
-        noteId={noteId}
-        showToolbar
-        readonly={readOnly}
-        onChange={e => setValue(e)}
-        onHighlightDrag={(highlightId, editor) => {
-          const editorNode = ReactEditor.toDOMNode(editor, editor)
-          const highlightTextContent = Array.from(editorNode.querySelectorAll(`[data-highlight="${highlightId}"]`)).reduce((prev, curr) => {
-            return prev + curr.textContent
-          }, '')
-          GlobalDragOverlayInstance.draggingDetails = {
-            type: 'note label',
-            highlightId,
-            noteId: noteId,
-            textContent: highlightTextContent
-          }
+      {editorNode &&
+        createPortal(
+          <>
+            <Icon
+              name={readOnly ? 'park-edit' : 'park-book-open'}
+              onClick={toggleReadOnly}
+              className={ClassName.circleButton()}
+              size={18}
+              containerStyle={{ position: 'absolute', top: 30, right: 30, zIndex: 10 }}
+            />
+            <Icon
+              name={'park-find'}
+              onClick={() => instance?.toggleSearch?.()}
+              className={ClassName.circleButton()}
+              size={18}
+              containerStyle={{ position: 'absolute', top: 70, right: 30, zIndex: 10 }}
+            />
+          </>,
+          editorNode
+        )}
+      <div
+        style={{
+          width: 0,
+          flex: 1,
+          display: 'flex',
+          height: '100%'
         }}
-        onSearch={(text, id, e, editor) => {
-          GlobalSearchInstance.open?.({
-            e,
-            query: text,
-            from: {
-              type: 'note',
-              metaId: globalStore.get(objectIdToMetaObjectIdMapAtom)?.get(editor.noteId),
-              selectedText: text,
-              blockId: id
+      >
+        <Editor
+          {...rest}
+          id={id}
+          noteId={noteId}
+          showToolbar={rest.showToolbar ?? true}
+          readonly={readOnly}
+          on={event => {
+            if (rest.on) {
+              rest.on(event)
+              return
             }
-          })
-        }}
-        onTitleChange={e => {
-          setTitle(e)
-          onTitleChange?.(e)
-        }}
-        onTranslate={(text, id, e, editor) => {
-          GlobalTranslateInstance.open?.({
-            e,
-            query: text,
-            source: {
-              type: 'note',
-              objectId: editor.noteId!,
-              blockId: id
+            switch (event.type) {
+              case 'valueChange': {
+                setValue(event.value)
+                break
+              }
+              case 'highlightDrag': {
+                const editorNode = ReactEditor.toDOMNode(event.editor, event.editor)
+                const highlightTextContent = Array.from(editorNode.querySelectorAll(`[data-highlight="${event.highlightId}"]`)).reduce(
+                  (prev, curr) => {
+                    return prev + curr.textContent
+                  },
+                  ''
+                )
+                GlobalDragOverlayInstance.draggingDetails = {
+                  type: 'note label',
+                  highlightId: event.highlightId,
+                  noteId: noteId,
+                  textContent: highlightTextContent
+                }
+                break
+              }
+              case 'search': {
+                GlobalSearchInstance.open?.({
+                  e: event.e,
+                  query: event.searchedText,
+                  from: {
+                    type: 'note',
+                    metaId: globalStore.get(objectIdToMetaObjectIdMapAtom)?.get(event.editor.noteId),
+                    selectedText: event.searchedText,
+                    blockId: event.blockId
+                  }
+                })
+                break
+              }
+              case 'titleChange': {
+                setTitle(event.value)
+                onTitleChange?.(event.value)
+                break
+              }
+              case 'highlight': {
+                ObjectStore('noteLabel').addOne({
+                  id: event.highlightId,
+                  noteId
+                })
+                break
+              }
+              case 'translate': {
+                GlobalTranslateInstance.open?.({
+                  e: event.e,
+                  query: event.translatedText,
+                  source: {
+                    type: 'note',
+                    objectId: event.editor.noteId!,
+                    blockId: id
+                  }
+                })
+                break
+              }
+              case 'highlightRemove': {
+                ObjectStore('noteLabel').deleteOneById(event.highlightId, { silent: true, force: true })
+              }
             }
-          })
-        }}
-        onHighlight={highlightId => {
-          ObjectStore('noteLabel').addOne({
-            id: highlightId,
-            noteId
-          })
-        }}
-        onEditorInitialized={e => {
-          onEditorInitialized?.(e)
-          setEditor(e)
-        }}
-        onHighlightRemove={h => {
-          ObjectStore('noteLabel').deleteOneById(h, { silent: true, force: true })
-        }}
-      />
+          }}
+          onInstanceIntialized={i => {
+            onInstanceInitialized?.(i)
+            rest.onInstanceIntialized?.(i)
+            setInstance(i)
+            waitFor(
+              () => !!i.getSlateEditor?.(),
+              () => setEditor(i.getSlateEditor?.())
+            )
+          }}
+        />
+      </div>
     </Content>
   )
 }

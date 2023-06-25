@@ -99,7 +99,7 @@ export const DatabaseCard: FC<{
           <span className={css({ fontSize: FontSize['20px'], fontWeight: 650 })}>{relatedNumber || 0}</span>
           <span className={css({ fontSize: FontSize['11px'], fontWeight: 500 })}>{t('general.related objects')}</span>
         </Content>
-
+ 
         <AnimatePopover
           visible={showPopover}
           innerRef={iconRef}

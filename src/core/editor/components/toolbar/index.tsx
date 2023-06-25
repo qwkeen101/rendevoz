@@ -10,11 +10,11 @@ import classNames from 'classnames'
 import { createPortal } from 'react-dom'
 import { AnimatePresence, motion } from 'framer-motion'
 import BlockColorPicker from '../BlockColorPicker'
-import useReadOnlyEditor from '../../hooks/useReadOnly'
 import { useMemoizedFn } from '@/hooks'
 import { css } from '@emotion/css'
 import ClassName from '@/styles/classNames'
 import { Zindexes } from '@/consts'
+import useEditorInstance from '../../hooks/useEditorInstance'
 
 type EditorToolbarEvents =
   | {
@@ -52,39 +52,27 @@ const EditorToolbar: FC<EditorToolbarProps> = ({ scrollElement, showToolbar, sty
     direction: string
   }>()
   const isOnHighlightRef = useRef(false)
+  const instance = useEditorInstance()
   editor.onHighlightClick = id => {
-    const editorNode = ReactEditor.toDOMNode(editor, editor)
-    const allHighlights = Array.from(editorNode.querySelectorAll(`[data-highlight='${id}']`))
-    const firstHighlight = allHighlights[0]
-    const lastHighlight = allHighlights[allHighlights.length - 1]
-    const range = document.createRange()
+    const location = instance.getHighlightLocation?.(id)
+    if (location?.length) {
+      const first = location[0]
+      const last = location[location.length - 1]
+      const range = Editor.range(editor, first[1], last[1])
+      if (range) {
+        const domRange = ReactEditor.toDOMRange(editor, range)
+        const bounding = domRange.getBoundingClientRect()
+        Transforms.setSelection(editor, range)
+        editor.selection = range
 
-    const startNode = ReactEditor.toSlateNode(editor, firstHighlight)
-    const lastNode = ReactEditor.toSlateNode(editor, lastHighlight)
-    const startNodePath = ReactEditor.findPath(editor, startNode)
-    const endNodePath = ReactEditor.findPath(editor, lastNode)
-    const startNodePoint = Editor.start(editor, startNodePath)
-    const endNodePoint = Editor.end(editor, endNodePath)
-    const startNodeDomPoint = ReactEditor.toDOMPoint(editor, startNodePoint)
-    const endNodeDomPoint = ReactEditor.toDOMPoint(editor, endNodePoint)
-    range.setStart(startNodeDomPoint[0], startNodeDomPoint[1])
-    range.setEnd(endNodeDomPoint[0], endNodeDomPoint[1])
-    const bounding = range.getBoundingClientRect()
-
-    isOnHighlightRef.current = true
-    Transforms.setSelection(editor, {
-      anchor: startNodePoint,
-      focus: endNodePoint
-    })
-    editor.selection = {
-      anchor: startNodePoint,
-      focus: endNodePoint
+        isOnHighlightRef.current = true
+        setFloatPosition({
+          direction: 'top',
+          left: bounding.left + bounding.width / 2,
+          top: bounding.top - 50
+        })
+      }
     }
-    setFloatPosition({
-      direction: 'top',
-      left: bounding.left + bounding.width / 2,
-      top: bounding.top - 50
-    })
   }
   const handleMouseUp = useMemoizedFn((e: MouseEvent) => {
     const { selection, readonly } = editor
@@ -141,6 +129,7 @@ const EditorToolbar: FC<EditorToolbarProps> = ({ scrollElement, showToolbar, sty
   useEffect(() => {
     if (floatPosition && editor.selection && !isOnHighlightRef.current) {
       window.getSelection()?.removeAllRanges()
+      console.log('clear range')
       try {
         window.getSelection()?.addRange(ReactEditor.toDOMRange(editor, editor.selection))
       } catch (e) {

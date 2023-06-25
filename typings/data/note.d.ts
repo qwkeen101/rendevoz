@@ -11,6 +11,7 @@ export interface INote extends IBase {
   metaId?: number
   coverPosition?: number
   contentId: number
+  labels?: number[]
 }
 
 export interface NoteBlock {

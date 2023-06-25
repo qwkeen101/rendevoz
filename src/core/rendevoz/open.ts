@@ -53,6 +53,7 @@ const openMetaObject = async (metaObjectId: number) => {
     toast.error('Target Item Not Exist!')
     return
   }
+  console.log(metaObject)
   updateViewAt(objectId)
   switch (metaObject.type) {
     case 'noteBlock':
@@ -118,11 +119,12 @@ const openWebpage = (webpageId: number): Promise<IWebpageInstance> => {
 const openWebpageLabel = async (labelId: number) => {
   const webpageLabel = await ObjectStore('webpageLabel').getOneById(labelId)
   if (webpageLabel) {
+    console.log(webpageLabel)
     const webpage = await openWebpage(webpageLabel.webpageId)
     // labeled in reader mode
-    if (webpageLabel.highlightId) {
+    if (webpageLabel.id) {
       const editor = await webpage.transformToNote?.()
-      editor?.scrollToHighlight?.({ highlightId: webpageLabel.highlightId })
+      editor?.scrollToHighlight?.({ highlightId: webpageLabel.id })
     } else {
       waitFor(
         () => !!webpage.findInPage,
@@ -152,7 +154,7 @@ const openNoteBlock = async (blockId: number) => {
     updateViewAt(blockId)
     const editor = await openEditor(block.noteId)
     if (editor) {
-      editor.scrollToBlock?.({ blockId })
+      editor.selectBlock?.({ blockId })
     }
   }
 }
@@ -271,6 +273,7 @@ const openNoteLabel = async (labelId: number) => {
 
 const updateViewAt = (objectId: number) => {
   const metaId = globalStore.get(objectIdToMetaObjectIdMapAtom)?.get(objectId)
+
   if (metaId) {
     MetaStore.updateMetaObject({ id: metaId, viewAt: Date.now() }, true)
   }

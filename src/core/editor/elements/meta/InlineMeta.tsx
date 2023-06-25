@@ -1,9 +1,9 @@
 import { TypeToTypeName } from '@/core/database'
 import ClassName from '@/styles/classNames'
 import { css } from '@emotion/css'
-import { FC, useMemo } from 'react'
+import { FC, useEffect, useMemo, useState } from 'react'
 import { InlineMetaObjectElement } from '~/typings/editor/outerElements'
-import { RenderElementProps } from '../../slate-react'
+import { ReactEditor, RenderElementProps, useSlateStatic } from '../../slate-react'
 import { useTranslation } from 'react-i18next'
 import Colors from '@/consts/colors'
 import tinycolor from 'tinycolor2'
@@ -12,6 +12,9 @@ import { MetaStore } from '@/stores'
 import { Content, Image } from '@/components'
 import { Rendevoz } from '@/core/rendevoz'
 import HoverAttachment from '@/core/database/HoverAttachment'
+import { Editor } from 'slate'
+import { useEventHandler, useScopedEventEmitter } from '@/events'
+import { useDebounceFn } from '@/hooks'
 
 const clazzName = css([
   {
@@ -42,28 +45,33 @@ const circleClassName = css({
   flexShrink: 0,
   padding: 3
 })
+const imageClassName = css({
+  borderRadius: 6,
+  marginTop: 6
+})
 const InlineMetaElement: FC<RenderElementProps> = ({ element, children, attributes }) => {
   const metaObject = MetaStore.useValue((element as InlineMetaObjectElement).originId)
   const { t } = useTranslation()
 
-  const { circleColor, innerColor } = useMemo(() => {
-    if (!metaObject?.color) {
-      return {
-        circleColor: '#6d6d6d',
-        innerColor: Colors.Background.Light
-      }
-    } else {
-      const color = tinycolor(metaObject.color)
-      const defaultColor = color.lighten(20).setAlpha(0.7).toRgbString()
-      const darken = tinycolor(metaObject.color).setAlpha(0.5)
-      return {
-        innerColor: `${darken.toRgbString()}`,
-        circleColor: defaultColor
-      }
-    }
-  }, [metaObject?.color])
+  // const { circleColor, innerColor } = useMemo(() => {
+  //   if (!metaObject?.color) {
+  //     return {
+  //       circleColor: '#6d6d6d',
+  //       innerColor: Colors.Background.Light
+  //     }
+  //   } else {
+  //     const color = tinycolor(metaObject.color)
+  //     const defaultColor = color.lighten(20).setAlpha(0.7).toRgbString()
+  //     const darken = tinycolor(metaObject.color).setAlpha(0.5)
+  //     return {
+  //       innerColor: `${darken.toRgbString()}`,
+  //       circleColor: defaultColor
+  //     }
+  //   }
+  // }, [metaObject?.color])
+
   return (
-    <span {...attributes} data-meta-id={element.id} style={{ margin: '0 6px', position: 'relative' }}>
+    <span {...attributes} data-meta-id={element.id} style={{ margin: '0 6px 0px 2px', position: 'relative' }}>
       <div
         style={{
           display: 'inline-flex',
@@ -72,8 +80,9 @@ const InlineMetaElement: FC<RenderElementProps> = ({ element, children, attribut
           maxWidth: 'calc(100% - 20px)'
         }}
       >
-        {metaObject?.coverImgSrc ? (
-          <Image preview src={metaObject.coverImgSrc} width="3.4em" className={css({ borderRadius: 6, marginTop: 6 })} />
+        {metaObject?.coverImgSrc && <Image preview src={metaObject.coverImgSrc} width="3.4em" className={imageClassName} />}
+        {/* {metaObject?.coverImgSrc ? (
+          <Image preview src={metaObject.coverImgSrc} width="3.4em"  />
         ) : (
           <div
             className={circleClassName}
@@ -82,7 +91,7 @@ const InlineMetaElement: FC<RenderElementProps> = ({ element, children, attribut
               border: `0.3em solid ${circleColor}`
             }}
           ></div>
-        )}
+        )} */}
         {metaObject?.coverImgSrc ? (
           <Content flex column gap="0.2em" style={{ alignSelf: 'flex-end' }}>
             <Content flex gap={6}>

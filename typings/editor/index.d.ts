@@ -1,9 +1,9 @@
 import EventEmitter from '@/events/eventEmitter'
 import { YHistoryEditor, YjsEditor } from '@slate-yjs/core'
-import { BaseEditor, Element } from 'slate'
+import { BaseEditor, Element, Location, NodeEntry } from 'slate'
 import { HistoryEditor } from 'slate-history'
 import { ReactEditor } from '@/core/editor/slate-react'
-import { INote } from '~/typings/data'
+import { IHighlightLabel, INote, INoteLabel, IWebpageLabel } from '~/typings/data'
 import { EditableProps } from '../slate-react/components/editable'
 import { CustomText, EmptyText } from './baseTypes'
 import { CommonElement } from './commonElements'
@@ -45,6 +45,7 @@ export type CustomEditor = BaseEditor &
     goToHighlight?: (highlightId: number) => void
     titleEle?: HTMLElement | null
     on: (event: IEditorEvent) => void
+    type?: 'note' | 'webpage'
   }
 
 export type CustomElement = (CommonElement | OuterElement) & {
@@ -79,6 +80,11 @@ export type IEditorInstance = Partial<{
   openSearch?: VoidFunction
   closeSearch?: VoidFunction
   toggleSearch?: VoidFunction
+  addLabel?: (label: Partial<INoteLabel>) => Promise<INoteLabel | void>
+  deleteLabel?: (id: number) => Promise<void>
+  toggleLabel: VoidFunction
+  getScrollElement: () => HTMLElement | undefined | null
+  getHighlightLocation: (highlightId: number) => NodeEntry<CustomText | EmptyText>[]
 }>
 
 export type { OuterElement, CommonElement, CommonElement }

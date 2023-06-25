@@ -15,6 +15,7 @@ export type IEditorEvent =
   | {
       type: 'highlight'
       highlightId: number
+      labelId: number
     }
   | {
       type: 'highlightDrag'

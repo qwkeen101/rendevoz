@@ -1,6 +1,6 @@
 import Icon from '@/components/base/Icon'
 import { AnimatePresence, LayoutGroup, motion } from 'framer-motion'
-import { CSSProperties, FC, useEffect, useRef, useState } from 'react'
+import { CSSProperties, FC, ReactNode, useEffect, useRef, useState } from 'react'
 import AnimatePopover from '../AnimatePopover'
 import Content from '../Content'
 import SelectOption, { SelectOptionProps } from './SelectOption'
@@ -21,6 +21,7 @@ interface SelectProps {
   defaultValue?: string
   placeholder?: string
   className?: string
+  displayRenderer?: (value: string | string[] | number | number[]) => ReactNode
   onSelect: (value: string[] | number[]) => void
   style?: CSSProperties
   menuStyle?: CSSProperties
@@ -43,7 +44,8 @@ const Select: ISelect = ({
   defaultValue,
   deselectable,
   menuPosition = 'bottom',
-  options
+  options,
+  displayRenderer
 }) => {
   let d = []
   if (defaultValue) {

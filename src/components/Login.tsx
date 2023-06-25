@@ -103,8 +103,8 @@ const Login = () => {
             }
             setLoadingState({ gettingUserDetails: true })
             LoginService.getUserDetails(user.email, data.data.token)
-              .then(user => {
-                setGlobalUser(user.data)
+              .then(u => {
+                setGlobalUser({ ...u.data, password: user.password })
                 toast.success(`${t('login.welcome to rendevoz')}!`)
               })
               .catch(e => toast.error(`${t('login.failed to get user details')}!`))

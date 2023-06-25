@@ -8,5 +8,6 @@ declare namespace NodeJS {
     /** /dist/ or /public/ */
     PUBLIC: string
     FILE_PATH?: string
+    SHOULD_CLOSE?: boolean
   }
 }

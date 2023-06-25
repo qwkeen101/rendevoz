@@ -150,7 +150,13 @@
         "auto play": "自动播放",
         "loop play": "循环播放",
         "sort by video time": "按视频时间排序",
-        "sort by create time": "按创建时间排序"
+        "sort by create time": "按创建时间排序",
+        "warning": "警告",
+        "importing": "导入中",
+        "import completed": "导入完成",
+        "import details": "共导入{{total}}个文件，{{success}}个成功，{{fail}}个失败",
+        "import markdown": "导入Markdown文件",
+        "premium end date": "会员到期时间"
     },
     "dock": {
         "close": "关闭标签页",
@@ -361,8 +367,8 @@
         "user file path": "用户文件路径",
         "choose folder": "选择文件夹",
         "reset as default folder": "重置为默认文件夹",
-        "file path description": "图片，视频，笔记与PDF等大文件将被存储在此处",
-        "export description": "图片，视频，笔记与PDF等大文件不会被导出，元数据会以JSON格式导出",
+        "file path description": "图片，视频，笔记，PDF与备份数据等大文件将被存储在此处",
+        "export description": "图片，视频，笔记，PDF与应用设置等不会被导出，元数据会以JSON格式导出",
         "open database folder": "打开数据库文件夹",
         "version info": "版本信息",
         "pdf render mode": "PDF渲染模式",
@@ -371,7 +377,14 @@
         "pdf background color": "PDF背景颜色",
         "pdf font color": "PDF字体颜色",
         "pdf settings": "PDF设置",
-        "default": "默认"
+        "default": "默认",
+        "import data warning": "导入的数据会覆盖您当前的数据，您确认要这么做吗？",
+        "autoBackup": "自动备份",
+        "never": "从不",
+        "whenClose": "关闭时",
+        "every day": "每天",
+        "every week": "每周",
+        "every month": "每月"
     },
     "form": {
         "choose file": "Choose file",

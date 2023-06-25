@@ -13,7 +13,12 @@ import { AttachmentWrapper } from '.'
 import BorderInput from '@/components/base/BorderInput'
 import { useTranslation } from 'react-i18next'
 
-const useRenderLabel = (opts: { objectId: number; type: 'videoLabel' | 'pdfLabel'; draggable?: boolean }) => {
+const useRenderLabel = (opts: {
+  objectId: number
+  type: 'videoLabel' | 'pdfLabel' | 'noteLabel' | 'webpageLabel'
+  draggable?: boolean
+  onDragStart?: VoidFunction
+}) => {
   const { objectId, type, draggable } = opts
   const label = ObjectStore(opts.type).useValue(opts.objectId)
   const labelMeta = MetaStore.useObjectToMetaValue(opts.objectId)
@@ -43,7 +48,7 @@ const useRenderLabel = (opts: { objectId: number; type: 'videoLabel' | 'pdfLabel
             }}
           />
         ) : (
-          <DraggableElement draggable={draggingDetails && draggable} draggingDetails={draggingDetails}>
+          <DraggableElement draggable={draggingDetails && draggable} onDragStart={opts.onDragStart} draggingDetails={draggingDetails}>
             <div
               onClick={() => onNameClick?.(label?.name)}
               className={css([ClassName.ellipsisFont(2), ClassName.title(FontSize['13px'])])}
@@ -129,9 +134,15 @@ const useRenderLabel = (opts: { objectId: number; type: 'videoLabel' | 'pdfLabel
             onKeyDown={e => {
               e.stopPropagation()
             }}
+            minRows={3}
+            maxRows={8}
             placeholder={t('general.edit description')}
             defaultValue={label?.description}
             containerStyle={style}
+            style={{
+              fontSize: FontSize['12px'],
+              padding: '8px 12px'
+            }}
             withSubmit
             onSubmit={() => setLabelState(s => ({ ...s, addingDescription: false }))}
             onChange={e => typeof e === 'string' && ObjectStore(type).updateOne({ id: objectId, description: e })}

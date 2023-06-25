@@ -11,11 +11,13 @@
     line-height: 21px;
     &[data-level='1'],&[data-level='4'],&[data-level='7']{
             &::before{
+                font-size: 1em;
                 content: '\25E6';
             }
     }
     &[data-level='2'],&[data-level='5'],&[data-level='8']{
         &::before{
+            font-size: 1em;
             content: '\25AA';
         }
     }
@@ -26,6 +28,7 @@
     }
     &::before{
         content: '\2022';
+        font-size: 1.5em;
     }
 }
 .fold{

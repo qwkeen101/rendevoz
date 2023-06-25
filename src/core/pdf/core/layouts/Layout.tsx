@@ -142,7 +142,7 @@ const Layout: FC<LayoutProps> = ({
     getScrollElement: () => pagesRef.current,
     estimateSize,
     rangeExtractor,
-    overscan: 2,
+    overscan: 3,
     measureElement: () => {
       return scale * pageSize.height + PAGE_SPACING
     }

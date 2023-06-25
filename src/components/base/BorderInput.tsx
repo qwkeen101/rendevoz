@@ -11,7 +11,6 @@ import FontSize from '@/consts/font'
 import { useTranslation } from 'react-i18next'
 
 type BorderInputProps = {
-  value?: string
   onChange?: (v: string) => void
   placeholder?: string
   style?: CSSProperties
@@ -129,7 +128,7 @@ const BorderInput = ({
           style={{ resize: 'none', ...style }}
           className={inputClassName}
           defaultValue={defaultValue}
-          value={value || innerValue}
+          value={value ?? innerValue}
           disabled={disable}
           autoFocus={autoFocus}
           ref={inputRef}
@@ -151,7 +150,7 @@ const BorderInput = ({
           defaultValue={defaultValue}
           spellCheck={spellCheck}
           ref={inputRef}
-          value={value || innerValue}
+          value={value ?? innerValue}
           placeholder={placeholder}
           onChange={e => {
             onChange?.(e.target.value)

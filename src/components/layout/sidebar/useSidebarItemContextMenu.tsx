@@ -183,7 +183,19 @@ const useSidebarItemContextMenu = (
                     text={t('general.pdf')}
                     icon="park-file-pdf"
                   />
-
+                  <Button.IconButton
+                    onClick={() => {
+                      createObjectWithOpenMeta(
+                        'video',
+                        {
+                          name: 'Unnamed Video'
+                        },
+                        'Unnamed Video'
+                      )
+                    }}
+                    text={t('general.video')}
+                    icon={Rendevoz.Utils.Object.getMetaObjectIcon('video')}
+                  />
                   <Button.IconButton
                     onClick={() => {
                       createObjectWithOpenMeta(

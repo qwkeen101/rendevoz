@@ -1,6 +1,6 @@
 import { assignProperties } from '@/utils'
 import { atom, useAtomValue, useSetAtom } from 'jotai'
-import { useEffect, useRef } from 'react'
+import { RefObject, useEffect, useRef } from 'react'
 import { CustomEditor, IEditorInstance } from '~/typings'
 import { goToBlock, goToTextHighlight, selectBlock, waitForEditorContentInitialized } from '../utils'
 import { Editor, Node, Transforms } from 'slate'
@@ -10,18 +10,41 @@ import { EditorSearchAtom, SearchEntry, SearchOccurrence } from './useEditorSear
 import { Text } from 'slate'
 import { ID_TO_PATH_MAP } from '../weakMaps'
 import useEditorBarState from './useEditorBarState'
+import { ObjectStore, globalStore } from '@/stores'
 
 export const EditorInstanceAtom = atom<IEditorInstance>({})
 
 const useEditorInstance = () => useAtomValue(EditorInstanceAtom)
 
-export const useAssignEditorInstance = (editor: CustomEditor) => {
+export const useAssignEditorInstance = (editor: CustomEditor, scrollElementRef: RefObject<HTMLElement>) => {
   const instance = useEditorInstance()
   const scopedEmitter = useScopedEventEmitter()
   const handler = useEventHandler('editor')
   const setEditorSearch = useSetAtom(EditorSearchAtom)
   const editorSearch = useAtomValue(EditorSearchAtom)
   const [barState, setEditorBarState] = useEditorBarState()
+  const getNote = async () => {
+    if (editor.noteId) {
+      return await ObjectStore('note').getOneById(editor.noteId)
+    }
+  }
+  const getHighlightLocation = (highlightId: number) => {
+    const iter = Node.texts(editor)
+    const values = []
+    let findFirst = false
+    for (const value of iter) {
+      if ('highlight' in value[0] && value[0].highlight === highlightId) {
+        findFirst = true
+        values.push(value)
+      } else {
+        if (findFirst && value[0].text.length) {
+          console.log(value)
+          break
+        }
+      }
+    }
+    return values
+  }
   useEffect(() => {
     scopedEmitter.addListener('editor', handler)
     return () => scopedEmitter.removeListener('editor', handler)
@@ -55,9 +78,16 @@ export const useAssignEditorInstance = (editor: CustomEditor) => {
           await goToBlock(opts.blockId, editor)
         }
       },
-      openSearch: () => setEditorBarState(s => ({ ...s, showSearch: true })),
-      closeSearch: () => setEditorBarState(s => ({ ...s, showSearch: false })),
-      toggleSearch: () => setEditorBarState(s => ({ ...s, showSearch: !s.showSearch })),
+      getHighlightLocation,
+      getScrollElement: () => scrollElementRef.current,
+      openSearch: () => setEditorBarState(s => ({ ...s, rightBarActive: 'search', showRightBar: true })),
+      closeSearch: () => setEditorBarState(s => ({ ...s, showRightBar: false })),
+      toggleSearch: () =>
+        setEditorBarState(s => ({
+          ...s,
+          showRightBar: s.rightBarActive === 'search' ? !s.showRightBar : true,
+          rightBarActive: 'search'
+        })),
       selectBlock: async opts => {
         if (opts.blockId !== undefined) {
           await selectBlock(opts.blockId, editor)
@@ -366,7 +396,35 @@ export const useAssignEditorInstance = (editor: CustomEditor) => {
         })
         const total = Object.values(occurrencesRecord).reduce((prev, curr) => prev + curr, 0)
         return total
-      }
+      },
+      addLabel: async label => {
+        const note = await getNote()
+        const noteId = editor.noteId
+        if (note && noteId) {
+          const newLabel = await ObjectStore('noteLabel').addOne({ ...label, noteId })
+          if (note.labels) {
+            const newLabels = [...note.labels, newLabel.id]
+            ObjectStore('note').updateOne({ id: noteId, labels: newLabels })
+          } else {
+            await ObjectStore('noteLabel').getAll()
+            const thisNoteLabels = Array.from(globalStore.get(ObjectStore('noteLabel').objectMapAtom).values()).filter(
+              i => i.noteId === editor.noteId
+            )
+            ObjectStore('note').updateOne({ id: noteId, labels: [...thisNoteLabels.map(i => i.id), newLabel.id] })
+          }
+          return newLabel
+        }
+      },
+      deleteLabel: async id => {
+        const note = await getNote()
+        if (note && note.labels) {
+          const { labels } = note
+          const newLabels = labels.filter(i => i !== id)
+          ObjectStore('note').updateOne({ id: note.id, labels: newLabels })
+        }
+      },
+      toggleLabel: () =>
+        setEditorBarState(s => ({ ...s, showRightBar: s.rightBarActive === 'label' ? !s.showRightBar : true, rightBarActive: 'label' }))
     })
   })
 }

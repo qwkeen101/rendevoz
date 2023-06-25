@@ -17,6 +17,7 @@ import {
   EDITOR_TO_PENDING_INSERTION_MARKS
 } from '../utils/weak-maps'
 import { ReactEditor } from './react-editor'
+import { EDITOR_TO_CHANGED } from '../../weakMaps'
 /**
  * `withReact` adds React and DOM specific behaviors to the editor.
  *
@@ -87,6 +88,7 @@ export const withReact = <T extends BaseEditor>(editor: T): T & ReactEditor => {
   // This attempts to reset the NODE_TO_KEY entry to the correct value
   // as apply() changes the object reference and hence invalidates the NODE_TO_KEY entry
   e.apply = (op: Operation) => {
+    EDITOR_TO_CHANGED.set(e, false)
     const matches: [Path, Key][] = []
 
     const pendingDiffs = EDITOR_TO_PENDING_DIFFS.get(e)

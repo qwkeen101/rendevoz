@@ -37,10 +37,11 @@ type IGeneralSetting = {
     darkMode: boolean
     customSearchEngineUrl?: string
     userFilePath?: string
-    autoBackup: 'never' | 'every day' | '3 days' | 'one week' | 'one month'
+    autoBackup: 'never' | 'every day' | '3 days' | 'one week' | 'one month' | 'whenClose'
     backUpPath?: string
     defaultFilePath?: string
     defaultLanguage: string
+    dataBackup: 'whenClose' | 'every day' | 'every week' | 'every month' | 'never'
     defaultSearchEngine:
       | 'custom'
       | 'baidu'
@@ -148,7 +149,8 @@ const defaultSetting: Setting = {
     darkMode: true,
     defaultSearchEngine: 'google',
     defaultImageSearchEngine: 'bing',
-    autoBackup: 'every day'
+    autoBackup: 'never',
+    dataBackup: 'never'
   },
   objectAndLink: {
     enableAll: true,

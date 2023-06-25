@@ -40,6 +40,7 @@ const FileUploader = ({
           e.preventDefault()
         }}
         onDragOver={e => {
+          console.log(e)
           e.preventDefault()
           toggleDragHighlight(true)
         }}
@@ -68,7 +69,7 @@ const FileUploader = ({
           border: `1px solid ${Colors.Background.Border}`,
           padding: 18,
           borderRadius: 8,
-          borderColor: dragHighlight ? '#8590ae' : Colors.Background.Border,
+          borderColor: dragHighlight ? Colors.Font.Primary : Colors.Background.Border,
           borderStyle: dashed ? 'dashed' : 'solid',
           transition: 'all 0.3s ease',
           cursor: showButton ? undefined : 'pointer',
@@ -82,8 +83,8 @@ const FileUploader = ({
             {t('general.select one file')}
           </Button>
         )}
+        {renderUploader()}
       </Content>
-      {renderUploader()}
     </>
   )
 }

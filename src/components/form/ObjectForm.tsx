@@ -16,6 +16,7 @@ import { toast } from 'react-hot-toast'
 import { getFilenameWithoutExtension, saveFileLocally } from '@/utils/file'
 import { generateVideoThumbnail } from '@/core/video/utils'
 import { saveImageLocally } from '@/utils/img'
+import FormNoteImporter from './FormNoteImporter'
 
 const ObjectForm: FC<
   IForm<MetaObject> & {
@@ -111,13 +112,19 @@ const ObjectForm: FC<
                 setObject(o => ({ ...o, name: undefined, coverImgSrc: undefined }))
               }
             },
-            accept: 'video/*'
+            accept: 'video/*,.flv'
           }
         : undefined,
       object.attachments?.length ? { type: 'attachmentDisplayer', attachments: object.attachments } : undefined,
       {
         type: 'group',
         children: [
+          initialObject?.type === 'note'
+            ? {
+                type: 'custom',
+                children: <FormNoteImporter onClose={() => onBack?.()} />
+              }
+            : undefined,
           initialObject?.type === 'image' && initialObject?.coverImgSrc
             ? {
                 type: 'custom',

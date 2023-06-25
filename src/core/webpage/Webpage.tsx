@@ -1,5 +1,5 @@
 import { Content, Icon, Image, Tooltip } from '@/components'
-import { ObjectStore, globalStore } from '@/stores'
+import { MetaStore, ObjectStore, globalStore } from '@/stores'
 import { objectIdToMetaObjectIdMapAtom } from '@/stores/meta.store'
 import Id from '@/utils/id'
 import { CSSProperties, FC, useEffect, useMemo, useState } from 'react'
@@ -16,8 +16,6 @@ import { DraggingElement, GlobalDragOverlayInstance } from '../global'
 import { EditorTitleClassName } from '../editor/EditorTitle'
 import ClassName from '@/styles/classNames'
 import { Provider, createStore } from 'jotai'
-import SidebarToolbar from '@/scenes/editor/HoverOutline'
-import FontSize from '@/consts/font'
 import { GlobalTranslateInstance } from '../global/translate/GlobalTranslatePanel'
 import { GlobalSearchInstance } from '../global/GlobalSearchPanel'
 import { deepEquals } from '../editor/yjs/utils/object'
@@ -140,6 +138,9 @@ const WebpageInner = ({
   }, [webpageFrom])
   useEffect(() => {
     if (title) {
+      if (currentWebpage?.id) {
+        ObjectStore('webpage').updateOne({ id: currentWebpage?.id, title })
+      }
       onTitleChange?.(title)
     }
   }, [title])
@@ -261,8 +262,6 @@ const WebpageInner = ({
                         textContent: highlightTextContent,
                         webpageId: currentWebpage.id
                       }
-                      GlobalDragOverlayInstance.addDragElements?.(<DraggingElement text="Drop to add webpage label" />)
-                      GlobalDragOverlayInstance.startDrag?.()
                       break
                     }
                     case 'translate': {
@@ -291,11 +290,14 @@ const WebpageInner = ({
                       break
                     }
                     case 'highlight': {
-                      ObjectStore('webpageLabel').addOne({
-                        id: event.highlightId,
-                        highlightId: event.highlightId,
-                        webpageId: currentWebpage.id
-                      })
+                      const { labelId } = event
+                      setTimeout(() => {
+                        ObjectStore('webpageLabel').updateOne({
+                          id: labelId,
+                          webpageId: currentWebpage.id,
+                          specType: 'webpageLabel'
+                        })
+                      }, 10)
                       break
                     }
                     case 'highlightRemove': {
@@ -332,14 +334,7 @@ const WebpageInner = ({
                         )}
                       </Content>
                     )}
-                    <div
-                      className={EditorTitleClassName}
-                      style={{ padding: 0 }}
-                      onClick={() => {
-                        // console.log(Outliner.headingListToTree(initialValue))
-                        // toggleReadonly(!readonly)
-                      }}
-                    >
+                    <div className={EditorTitleClassName} style={{ padding: 0 }}>
                       {title}
                     </div>
                     <hr style={{ marginTop: 24 }} />

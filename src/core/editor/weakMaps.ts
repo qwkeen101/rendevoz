@@ -43,3 +43,7 @@ export interface ElementFunction {
   openMathForm?: VoidFunction
 }
 export const ID_TO_ELEMENT_FUNCTION_MAP = new WeakMap<CustomEditor, Map<number, ElementFunction>>()
+
+export const EDITOR_TO_CHANGED = new WeakMap<CustomEditor, boolean>()
+
+export const ID_TO_VISIBLE_HEADING_MAP = new WeakMap<CustomEditor, Map<number, HTMLElement>>()

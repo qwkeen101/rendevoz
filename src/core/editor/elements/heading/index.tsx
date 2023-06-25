@@ -1,7 +1,7 @@
 import { Icon } from '@/components'
 import useScopedEventEmitter from '@/events/useEventEmitter'
 import { useDebounceFn, useToggle } from '@/hooks'
-import { cloneElement, FC, ReactElement, useEffect, useState } from 'react'
+import { cloneElement, FC, ReactElement, useEffect, useRef, useState } from 'react'
 import { Editor, Path, Range, Transforms } from 'slate'
 import { ReactEditor, RenderElementProps, useSlateStatic } from '../../slate-react'
 import { CustomElement, HeadingElement } from '~/typings'
@@ -9,6 +9,11 @@ import { useEventHandler } from '@/events'
 import useReadOnlyEditor from '../../hooks/useReadOnly'
 import Colors from '@/consts/colors'
 import FontSize from '@/consts/font'
+import useEditorInstance from '../../hooks/useEditorInstance'
+import { debounce, head } from 'lodash'
+import { useSetAtom } from 'jotai'
+import { EditorStateAtom } from '../../hooks/useEditorState'
+import { ID_TO_VISIBLE_HEADING_MAP } from '../../weakMaps'
 
 const HeadingToLevel: Partial<Record<CustomElement['type'], number>> = {
   'heading-one': 1,
@@ -36,7 +41,9 @@ const Heading: FC<RenderElementProps> = ({ element, children }) => {
   const isReadOnly = useReadOnlyEditor()
   const emitter = useScopedEventEmitter()
   const handler = useEventHandler('editor')
-
+  const instance = useEditorInstance()
+  const headingRef = useRef<HTMLElement>(null)
+  const setEditorState = useSetAtom(EditorStateAtom)
   const calculateContainElements = () => {
     let currentPath = ReactEditor.findPath(editor, element)
     let containEles = 0
@@ -65,10 +72,13 @@ const Heading: FC<RenderElementProps> = ({ element, children }) => {
         setIsComposing(true)
       }
     })
-
+    const ID_TO_HEADING = ID_TO_VISIBLE_HEADING_MAP.get(editor) || new Map()
+    ID_TO_HEADING.set(element.id, headingRef.current)
+    ID_TO_VISIBLE_HEADING_MAP.set(editor, ID_TO_HEADING)
     emitter.addListener('editor', handler)
     calculateContainElements()
     return () => {
+      ID_TO_HEADING.delete(element.id)
       emitter.removeListener('editor', handler)
     }
   }, [])
@@ -141,7 +151,8 @@ const Heading: FC<RenderElementProps> = ({ element, children }) => {
       onPointerLeave: () => toggleShowAction(false),
       style: {
         paddingRight: 50
-      }
+      },
+      ref: headingRef
     },
     !isReadOnly && action(),
     children,

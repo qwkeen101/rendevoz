@@ -9,8 +9,9 @@ import BorderInput from '@/components/base/BorderInput'
 import ClassName from '@/styles/classNames'
 import { useTranslation } from 'react-i18next'
 import FontSize from '@/consts/font'
-import { MetaStore } from '@/stores'
+import { MetaStore, globalStore } from '@/stores'
 import { getObjectById } from '@/stores/object.store'
+import { metaObjectsAtom } from '@/stores/meta.store'
 
 export const GlobalSearchInputAtom = atom<string>('')
 
@@ -54,6 +55,7 @@ export const SearchDialog = ({ onClose }: { onClose: VoidFunction }) => {
                     const pdfMeta = MetaStore.getMetaObjectByObjectId(object.id)
                     if (pdfMeta) {
                       metaId = pdfMeta.id
+                      console.log(pdfMeta)
                     }
                   }
                   if (object.specType === 'note') {
@@ -62,10 +64,12 @@ export const SearchDialog = ({ onClose }: { onClose: VoidFunction }) => {
                       const noteTargetMeta = await MetaStore.getMetaObjectById(noteTargetMetaId)
                       if (noteTargetMeta) {
                         metaId = noteTargetMeta.id
+                        console.log(noteTargetMeta)
                       }
                     } else {
                       const noteMeta = MetaStore.getMetaObjectByObjectId(object.id)
                       if (noteMeta) {
+                        console.log(noteMeta)
                         metaId = noteMeta.id
                       }
                     }
@@ -79,6 +83,7 @@ export const SearchDialog = ({ onClose }: { onClose: VoidFunction }) => {
               return
             }
             const numberMetaId = Number(metaId)
+            console.log(numberMetaId)
             const group = groupedMap.get(numberMetaId) || {
               items: [],
               metaId: numberMetaId
@@ -96,12 +101,20 @@ export const SearchDialog = ({ onClose }: { onClose: VoidFunction }) => {
             }
             groupedMap.set(numberMetaId, group)
           }
-          Promise.all([...result[1].map(item => addToMap(item)), ...result[0].map(item => addToMap(item))]).then(() => {
-            console.log(groupedMap)
-            setSearchResults(groupedMap)
-            if (deletedIds.length) {
-              SearchStore.deleteDocuments(deletedIds)
-            }
+          Promise.all([...result[1].map(item => addToMap(item))]).then(() => {
+            Promise.all([...result[0].map(item => addToMap(item))]).then(() => {
+              console.log(groupedMap)
+              const metaObjects = globalStore.get(metaObjectsAtom)
+              groupedMap.forEach((i, k) => {
+                if (!metaObjects.has(i.metaId)) {
+                  groupedMap.delete(k)
+                }
+              })
+              setSearchResults(groupedMap)
+              if (deletedIds.length) {
+                SearchStore.deleteDocuments(deletedIds)
+              }
+            })
           })
         })
       }

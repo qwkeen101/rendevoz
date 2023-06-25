@@ -1,6 +1,6 @@
 import { useDebounceFn, useMemoizedFn } from '@/hooks'
 import isHotkey from 'is-hotkey'
-import { FC, KeyboardEventHandler, memo, RefObject, useCallback, useEffect, useRef } from 'react'
+import { FC, KeyboardEventHandler, memo, RefObject, useCallback, useEffect, useMemo, useRef } from 'react'
 import { Descendant, Editor, Path, Range, Transforms, Node } from 'slate'
 import { ReactEditor, Slate, RenderElementProps, RenderLeafProps, Editable, useSlateStatic } from './slate-react'
 import EditorToolbar from './components/toolbar'
@@ -12,7 +12,7 @@ import styles from './index.module.less'
 import Id from '@/utils/id'
 import { InlineElements } from './consts/elements'
 import { KEY } from '@/consts/key'
-import { ID_TO_ELEMENTS_MAP, ID_TO_FIRST_LAYER_MAP, ID_TO_PATH_MAP, SELECTED_BLOCKS_MAP } from './weakMaps'
+import { EDITOR_TO_CHANGED, ID_TO_ELEMENTS_MAP, ID_TO_FIRST_LAYER_MAP, ID_TO_PATH_MAP, SELECTED_BLOCKS_MAP } from './weakMaps'
 import moveMultiElements from './utils/moveMultiElements'
 import useScopedEventEmitter from '@/events/useEventEmitter'
 import { EditableProps } from './slate-react/components/editable'
@@ -25,11 +25,22 @@ import HoverObjectDetails from '../database/HoverObjectDetails'
 import { DraggableElement, DraggingElement } from '../global'
 import { Element } from './renderer/renderElement'
 import Colors from '@/consts/colors'
+import FontSize from '@/consts/font'
+import useEditorInstance from './hooks/useEditorInstance'
+import { transformTextContentToNameAndDescription } from '../global/globalDragOverlay/utils'
 
 const EditableEditorClassName = css({
   p: {
     fontSize: '1em',
     margin: 0
+  },
+  figcaption: {
+    color: Colors.Font.Secondary,
+    fontSize: FontSize['12px'],
+    margin: `0px ${FontSize['12px']}`,
+    padding: 0,
+    display: 'flex',
+    justifyContent: 'center'
   }
 })
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
@@ -43,6 +54,14 @@ const ReadOnlyEditorClassName = css({
     '*': {
       whiteSpace: 'pre-wrap !important'
     }
+  },
+  figcaption: {
+    color: Colors.Font.Secondary,
+    fontSize: FontSize['12px'],
+    margin: `0px ${FontSize['12px']}`,
+    padding: 0,
+    display: 'flex',
+    justifyContent: 'center'
   },
   p: {
     fontSize: '1.15rem',
@@ -88,15 +107,7 @@ const ReadOnlyEditorClassName = css({
     fontStyle: 'italic',
     fontSize: '1.15rem'
   },
-  cite: ClassName.description(),
-  figcaption: {
-    color: Colors.Font.Secondary,
-    fontSize: '0.8rem',
-    margin: '0 0.8rem',
-    padding: 0,
-    display: 'flex',
-    justifyContent: 'center'
-  }
+  cite: ClassName.description()
 })
 
 const CompactReadOnlyEditorClassName = css({
@@ -144,6 +155,7 @@ const InnerEditor: FC<InnerEditorProps> = memo(
     const scopedEmitter = useScopedEventEmitter()
     const previousValue = useRef<Descendant[]>()
     const { handleSlashKeyDown } = useEditorSlashMenu(editor)
+    const instance = useEditorInstance()
     editor.innerRef = editableRef
     const { run: debounceIndex } = useDebounceFn(
       () => {
@@ -158,7 +170,12 @@ const InnerEditor: FC<InnerEditorProps> = memo(
       { wait: 500 }
     )
     const handleChange = useMemoizedFn((value: Descendant[]) => {
+      console.log(editor.selection)
       let shouldChange = false
+      // already triggered
+      console.log(EDITOR_TO_CHANGED.get(editor))
+      if (EDITOR_TO_CHANGED.get(editor) === true) return
+      EDITOR_TO_CHANGED.set(editor, true)
       if (!(editor.operations.length === 1 && editor.operations[0].type === 'set_selection')) {
         const firstLayerIdSet = new Set<number>()
         const firstLayerMap = ID_TO_FIRST_LAYER_MAP.get(editor) || new Map<number, Path>()
@@ -345,7 +362,7 @@ const InnerEditor: FC<InnerEditorProps> = memo(
         if (
           (currBlock[0].type === 'list-item' || currBlock[0].type === 'order-list-item' || currBlock?.[0].level > 0) &&
           selection &&
-          Editor.isStart(editor, selection?.anchor, currBlock?.[1])
+          Range.isCollapsed(selection)
         ) {
           Transforms.setNodes(editor, {
             level: currBlock[0].level ? (currBlock[0].level > 5 ? 6 : currBlock[0].level + 1) : 1
@@ -388,12 +405,13 @@ const InnerEditor: FC<InnerEditorProps> = memo(
         }
       }
     })
+
     return (
       <Slate editor={editor} onChange={handleChange} value={defaultValue}>
         <EditorToolbar
           showToolbar={showToolbar}
           scrollElement={scrollElement}
-          on={event => {
+          on={async event => {
             switch (event.action) {
               case 'bold':
               case 'code':
@@ -407,10 +425,16 @@ const InnerEditor: FC<InnerEditorProps> = memo(
                   if (isActive) {
                     const highlightId = Editor.marks(editor)['highlight']
                     Editor.removeMark(editor, 'highlight')
+                    instance.deleteLabel?.(Number(highlightId))
                     editor.on({ type: 'highlightRemove', highlightId: Number(highlightId) })
                   } else {
                     const highlightId = Id.getId()
-                    editor.on({ type: 'highlight', highlightId })
+                    const selectedText = editor.selection ? Editor.string(editor, editor.selection) : undefined
+                    const { name } = transformTextContentToNameAndDescription(selectedText)
+                    const label = await instance.addLabel?.({ id: highlightId, name: name || 'Unnamed Label' })
+                    if (label) {
+                      editor.on({ type: 'highlight', highlightId, labelId: label.id })
+                    }
                     Editor.addMark(editor, 'highlight', highlightId)
                   }
                 }
@@ -457,22 +481,20 @@ const InnerEditor: FC<InnerEditorProps> = memo(
         <Editable
           innerRef={editableRef}
           readOnly={readonly}
-          // scrollSelectionIntoView={() => {}}
           suppressContentEditableWarning={true}
           spellCheck="false"
-          onCompositionStart={() => {
+          onCompositionStart={useCallback(() => {
             scopedEmitter.emit('editor', { type: 'compositionStart' })
-          }}
-          onCompositionEnd={() => {
+          }, [])}
+          onCompositionEnd={useCallback(() => {
             scopedEmitter.emit('editor', { type: 'compositionEnd' })
-          }}
-          onCopy={() => {
+          }, [])}
+          onCopy={useCallback(() => {
             editor.currentCopyElement = undefined
             editor.currentCopyElements = undefined
-            // return true
             return false
-          }}
-          onPaste={e => {
+          }, [])}
+          onPaste={useCallback(e => {
             const copyElement = editor.currentCopyElement
             const copyElements = editor.currentCopyElements
             if (copyElement) {
@@ -494,7 +516,7 @@ const InnerEditor: FC<InnerEditorProps> = memo(
               return true
             }
             return false
-          }}
+          }, [])}
           renderElement={renderElement}
           renderLeaf={renderLeaf}
           onKeyDown={handleKeydown}
@@ -505,9 +527,12 @@ const InnerEditor: FC<InnerEditorProps> = memo(
             editorClassName
           )}
           scrollElementRef={scrollElementRef}
-          style={{
-            paddingBottom: readonly ? 0 : undefined
-          }}
+          style={useMemo(
+            () => ({
+              paddingBottom: readonly ? 0 : undefined
+            }),
+            [readonly]
+          )}
         ></Editable>
       </Slate>
     )
@@ -585,6 +610,7 @@ export const Leaf = (props: RenderLeafProps) => {
   if (leaf.sup) {
     children = <sup>{children}</sup>
   }
+
   if (leaf.bold) {
     children = <strong>{children}</strong>
   }
@@ -600,12 +626,13 @@ export const Leaf = (props: RenderLeafProps) => {
   if (leaf.underline) {
     children = <u>{children}</u>
   }
+
   if (leaf.highlight) {
     return (
       <HoverObjectDetails ref={attributes.ref || {}} objectId={leaf.highlight}>
         <DraggableElement
           onDragStart={() => editor.on({ type: 'highlightDrag', highlightId: leaf.highlight! })}
-          hoverElement={<DraggingElement text="Drop to add note label" />}
+          hoverElement={<DraggingElement text={editor.type === 'note' ? 'Drop to add note label' : 'Drop to add webpage label'} />}
         >
           <span
             {...attributes}
@@ -631,13 +658,7 @@ export const Leaf = (props: RenderLeafProps) => {
   return (
     <span
       {...attributes}
-      onClick={() => {
-        if (leaf.highlight) {
-          editor.onHighlightClick?.(leaf.highlight as number)
-        }
-      }}
-      data-highlight={leaf.highlight ? String(leaf.highlight) : undefined}
-      className={classNames(styles.leaf, leaf.highlight && TextHighlightClassName)}
+      className={styles.leaf}
       style={{
         fontSize: leaf.fontSize || '1em',
         '--block-font-color': leaf.fontColor,

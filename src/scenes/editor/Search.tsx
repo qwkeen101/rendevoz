@@ -172,27 +172,7 @@ const EditorSearchPanel = () => {
       .slice(0, currentOccurIdx || 0)
       .reduce((prev, curr) => prev + curr, 0) + (editorSearchState.currentOccurrence?.idx || 0)
   return (
-    <Resizable
-      style={{
-        display: visible ? 'flex' : 'none',
-        flexDirection: 'column',
-        padding: 16,
-        marginLeft: 20,
-        gap: 10
-      }}
-      handleStyles={{
-        left: {
-          width: 3,
-          background: Colors.Background.Border
-        }
-      }}
-      defaultSize={{
-        width: 280,
-        height: '100%'
-      }}
-      minWidth={200}
-      maxWidth={500}
-    >
+    <Content fullHeight fullWidth flex column gap={10}>
       <BorderInput
         value={searchInput}
         onChange={v => typeof v === 'string' && setSearchInput(v)}
@@ -241,19 +221,19 @@ const EditorSearchPanel = () => {
             <div
               className={ClassName.flatButton()}
               onClick={() => {
+                handleReplaceCurrent()
+              }}
+            >
+              {t('general.replace')}
+            </div>
+            <div
+              className={ClassName.flatButton()}
+              onClick={() => {
                 instance.replace?.(searchInput, searchState.replaceInput)
                 setTimeout(() => handleGetSearchResult(true), 100)
               }}
             >
               {t('general.replace all')}
-            </div>
-            <div
-              className={ClassName.flatButton()}
-              onClick={() => {
-                handleReplaceCurrent()
-              }}
-            >
-              {t('general.replace')}
             </div>
           </Content>
         </>
@@ -272,7 +252,7 @@ const EditorSearchPanel = () => {
           />
         )}
       ></VirtualList>
-    </Resizable>
+    </Content>
   )
 }
 

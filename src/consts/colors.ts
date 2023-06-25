@@ -44,10 +44,15 @@ export const Emphasis = {
   LightEmphasis: '--light-emphasis',
   Emphasis: '--emphasis'
 }
+export const Common = {
+  Green: '--green',
+  Red: '--red'
+}
 const Colors = {
   Font: Object.fromEntries(Object.entries(Font).map(i => [i[0], `var(${i[1]})`])) as Record<keyof typeof Font, string>,
   Background: Object.fromEntries(Object.entries(Background).map(i => [i[0], `var(${i[1]})`])) as Record<keyof typeof Background, string>,
-  Emphasis: Object.fromEntries(Object.entries(Emphasis).map(i => [i[0], `var(${i[1]})`])) as Record<keyof typeof Emphasis, string>
+  Emphasis: Object.fromEntries(Object.entries(Emphasis).map(i => [i[0], `var(${i[1]})`])) as Record<keyof typeof Emphasis, string>,
+  Common: Object.fromEntries(Object.entries(Common).map(i => [i[0], `var(${i[1]})`])) as Record<keyof typeof Common, string>
 }
 
 export default Colors

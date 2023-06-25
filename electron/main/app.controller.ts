@@ -89,20 +89,26 @@ export class AppController {
   }
 
   @IpcInvoke('saveBuffer')
-  public async saveBuffer(buffer: Buffer | ArrayBuffer, fileName: string, filePath?: string) {
+  public async saveBuffer(
+    buffer: Buffer | ArrayBuffer,
+    fileName: string,
+    filePath?: string,
+    fileSavePath: 'files' | 'imgs' | 'backup' = 'files'
+  ) {
     this.checkIfRendevozGenerated()
-    const rendevozFilePath = path.join(process.env.FILE_PATH || this.DefaultRendevozDataPath, 'files')
+    const rendevozFilePath = path.join(process.env.FILE_PATH || this.DefaultRendevozDataPath, fileSavePath)
+    const savePath = `/${fileSavePath}/`
     const finalPathName =
       filePath
         ?.replace('rendefile://', '')
         .replace('file://', '')
         .replace(rendevozFilePath, '')
         .replace('/rendevoz', '')
-        .replace('/files/', '') || fileName
+        .replace(savePath, '') || fileName
     const newPath = path.join(rendevozFilePath, finalPathName)
 
-    const protocolPath = 'rendefile://' + '/files/' + finalPathName
-
+    const protocolPath = 'rendefile://' + savePath + finalPathName
+    console.log(newPath, protocolPath)
     return new Promise(resolve => {
       if (buffer instanceof ArrayBuffer) {
         fs.writeFile(newPath, Buffer.from(buffer), () => {
@@ -131,6 +137,7 @@ export class AppController {
     const rendevozFilePath = customUserFilePath || this.DefaultRendevozDataPath
     const filePath = path.join(rendevozFilePath, 'files')
     const imgPath = path.join(rendevozFilePath, 'imgs')
+    const backupPath = path.join(rendevozFilePath, 'backup')
     if (!fs.existsSync(rendevozFilePath)) {
       fs.mkdirSync(rendevozFilePath, {})
     }
@@ -139,6 +146,9 @@ export class AppController {
     }
     if (!fs.existsSync(imgPath)) {
       fs.mkdirSync(imgPath, {})
+    }
+    if (!fs.existsSync(backupPath)) {
+      fs.mkdirSync(backupPath, {})
     }
   }
 
@@ -172,16 +182,40 @@ export class AppController {
     return path.filePaths[0]
   }
 
+  @IpcInvoke('beginBackup')
+  public async beginBackup() {
+    console.log('shouldBackup')
+    process.env.SHOULD_CLOSE = false
+  }
+
+  @IpcInvoke('endBackup')
+  public async endBackup() {
+    process.env.SHOULD_CLOSE = true
+  }
+
   @IpcInvoke('changeFilePath')
   public async changeFilePath(newPath: string) {
-    fs.rename(path.join(process.env.FILE_PATH || this.DefaultRendevozDataPath, 'files'), path.join(newPath, 'files'), () => {})
-    fs.rename(path.join(process.env.FILE_PATH || this.DefaultRendevozDataPath, 'imgs'), path.join(newPath, 'imgs'), () => {})
+    const targetFilesPath = path.join(newPath, 'files')
+    const targetImgsPath = path.join(newPath, 'imgs')
+    const targetBackupPath = path.join(newPath, 'backup')
+    if (!fs.existsSync(targetFilesPath)) {
+      fs.rename(path.join(process.env.FILE_PATH || this.DefaultRendevozDataPath, 'files'), path.join(newPath, 'files'), () => {})
+    }
+    if (!fs.existsSync(targetImgsPath)) {
+      fs.rename(path.join(process.env.FILE_PATH || this.DefaultRendevozDataPath, 'imgs'), path.join(newPath, 'imgs'), () => {})
+    }
+    if (!fs.existsSync(targetBackupPath)) {
+      fs.rename(path.join(process.env.FILE_PATH || this.DefaultRendevozDataPath, 'backup'), path.join(newPath, 'backup'), () => {})
+    }
     process.env.FILE_PATH = newPath
   }
 
   @IpcInvoke('openDatabaseFolder')
   public async openDatabaseFolder() {
-    const databasePath = path.join(app.getPath('userData'), 'IndexedDB')
+    const databasePath = path.join(process.env.FILE_PATH || this.DefaultRendevozDataPath, 'backup')
+    if (!fs.existsSync(databasePath)){
+      fs.mkdirSync(databasePath)
+    }
     shell.showItemInFolder(databasePath)
   }
 }

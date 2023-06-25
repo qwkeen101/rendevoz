@@ -8,27 +8,21 @@ import { createPortal } from 'react-dom'
 import { useTranslation } from 'react-i18next'
 import useReadOnlyEditor from '../hooks/useReadOnly'
 import ClassName from '@/styles/classNames'
+import { useAtomValue } from 'jotai'
+import { EditorBlockHandleAtom } from '../hooks/useBlockHandle'
 
-type BlockHandleProps = {
-  left?: number
-  top?: number
-  targetHeight?: number
-  targetId?: number
-}
-
-type IBlockHandle = FC<
-  BlockHandleProps & {
-    visible: boolean
-    onMouseDown: Noop
-    onClick: Noop
-    onDragClick: MouseEventHandler
-    onMenuClick: MouseEventHandler
-    onAddClick: MouseEventHandler
-  }
->
-const BlockHandle: IBlockHandle = ({ left, top, targetHeight, visible, onMouseDown, onClick, onAddClick, onDragClick, onMenuClick }) => {
+type IBlockHandle = FC<{
+  outerVisible: boolean
+  onDragClick: MouseEventHandler
+  onMenuClick: MouseEventHandler
+  onAddClick: MouseEventHandler
+}>
+const BlockHandle: IBlockHandle = ({ outerVisible, onAddClick, onDragClick, onMenuClick }) => {
   const [innerVisible, setInnerVisible] = useState(false)
   const [globalDragging] = useGlobalIsDragging()
+  const blockHandleState = useAtomValue(EditorBlockHandleAtom)
+  const { visible, targetHeight, top, left } = blockHandleState
+  const realVisible = outerVisible && visible
   const isReadOnly = useReadOnlyEditor()
   const { t } = useTranslation()
   const hasMouseSelection = () => {
@@ -41,18 +35,18 @@ const BlockHandle: IBlockHandle = ({ left, top, targetHeight, visible, onMouseDo
   }, [globalDragging])
   const isInside = useRef(false)
   useEffect(() => {
-    if (visible) {
+    if (realVisible) {
       setInnerVisible(true)
     }
     // leave block
-    if (!visible) {
+    if (!realVisible) {
       if (isInside.current) {
         return
       } else {
         setInnerVisible(false)
       }
     }
-  }, [visible])
+  }, [realVisible])
   const AddTooltip = (
     <div
       className={css({
@@ -93,7 +87,6 @@ const BlockHandle: IBlockHandle = ({ left, top, targetHeight, visible, onMouseDo
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            onPointerDown={onMouseDown}
             onPointerEnter={() => {
               isInside.current = true
             }}
@@ -103,14 +96,14 @@ const BlockHandle: IBlockHandle = ({ left, top, targetHeight, visible, onMouseDo
                 setInnerVisible(false)
               }
             }}
-            onClick={onClick}
             style={{
               position: 'fixed',
               top: top,
               left: left || 0 - 5,
               width: 5,
               height: targetHeight,
-              zIndex: 99
+              zIndex: 99,
+              userSelect: 'none'
             }}
           >
             <Tooltip delay={300} style={{ background: 'rgba(0,0,0,0.8)' }} position="top" content={AddTooltip}>

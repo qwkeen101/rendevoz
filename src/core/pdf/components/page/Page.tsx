@@ -239,10 +239,10 @@ const PdfPage: React.FC<PdfPageProps> = ({
                   color,
                   specHighlightType: specType,
                   rects: textSelect?.rects?.map(r => ({
-                    percentageTop: r.percentageTop,
-                    percentageHeight: r.percentageHeight,
-                    percentageLeft: r.percentageLeft,
-                    percentageWidth: r.percentageWidth
+                    percentageTop: parseFloat(r.percentageTop?.toFixed(4) || '0'),
+                    percentageHeight: parseFloat(r.percentageHeight?.toFixed(4) || '0'),
+                    percentageLeft: parseFloat(r.percentageLeft?.toFixed(4) || '0'),
+                    percentageWidth: parseFloat(r.percentageWidth?.toFixed(4) || '0')
                   }))
                 })
               }}

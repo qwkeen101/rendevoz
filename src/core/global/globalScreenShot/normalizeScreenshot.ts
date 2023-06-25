@@ -9,7 +9,8 @@ export const normalizeScreenshot = (screenshotBox: Box) => {
   const intersectedTabs: ILayoutTab[] = []
   const normalizedImage: Partial<IImage> = {}
   const normalizedImageMeta: Partial<MetaObject> = {
-    type: 'image'
+    type: 'image',
+    name: 'Unnamed Screenshot'
   }
   const relatedMeta: MetaObject[] = []
   allTabs.forEach(i => {
@@ -115,6 +116,25 @@ export const normalizeScreenshot = (screenshotBox: Box) => {
           normalizedImageMeta.fromObject = {
             type: 'whiteboard',
             metaId: meta.id
+          }
+        }
+        if (onlyIntersectedtab.type === 'video') {
+          const playingVideoEle = onlyIntersectedtab.instance.getVideoElement?.()
+          if (playingVideoEle) {
+            const playingVideoBounding = playingVideoEle.getBoundingClientRect()
+            if (boxContain(playingVideoBounding, screenshotBox)) {
+              const currentTime = onlyIntersectedtab.instance.getVideoState?.().currentTime
+              normalizedImageMeta.fromObject = {
+                type: 'video',
+                metaId: meta.id,
+                time: currentTime
+              }
+            }
+          } else {
+            normalizedImageMeta.fromObject = {
+              type: 'video',
+              metaId: meta.id
+            }
           }
         }
       }

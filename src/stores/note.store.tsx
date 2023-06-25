@@ -70,7 +70,7 @@ const createNoteStore = () => {
           }
         }
       })
-      .filter(i => i !== undefined) as SearchableDocument[]
+      .filter(i => i !== undefined && i.id) as SearchableDocument[]
     // have deleted blocks
     if (currentSearchableBlocksIdSet.size > 0) {
       SearchStore.deleteDocuments(Array.from(currentSearchableBlocksIdSet.values()))

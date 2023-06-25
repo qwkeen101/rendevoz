@@ -126,14 +126,12 @@ export const handleMetaObjectsChange = () => {
         metaAttachmentIdToMetaIdsMap.get(att.id)?.delete(v.id)
       })
   })
-  const shouldReturnObjectIdToMetaObjectMap =
-    prevIndex?.objectIdToMetaObjectMap.size === objectIdToMetaObjectMap.size ? prevIndex.objectIdToMetaObjectMap : objectIdToMetaObjectMap
 
   globalStore.set(indexedMetaObjectsAtom, {
     undeletedMetaObjectsSet,
     pinnedMetaObjectsSet,
     deletedMetaObjectsSet,
-    objectIdToMetaObjectMap: shouldReturnObjectIdToMetaObjectMap,
+    objectIdToMetaObjectMap: objectIdToMetaObjectMap,
     tagToMetaObjectIdsMap,
     oldMetaObjects: newMetaObjects,
     typeToMetaObjectIdsMap,
@@ -459,7 +457,6 @@ const createMetaStore = () => {
       const allMetaLinks = globalStore.get(allMetaLinksAtom)
       const existed = allMetaLinks.find(i => i.sourceId === one.sourceId && i.targetId === one.targetId && !i.deleted)
       if (existed) {
-        shouldToastLink(silent) && toast.success('Link to be added already exists!')
         return Promise.resolve(existed)
       }
       return initializedLinkStore.addOne(() => {

@@ -141,12 +141,16 @@ export const OrderListItem = ({ children, element }: RenderElementProps) => {
     let previousPath = Path.previous(path)
     let previous = Editor.node(editor, previousPath)
     let num = 1
+
     while (
       previous &&
-      (previous[0] as CustomElement).type === 'order-list-item' &&
-      (previous[0] as CustomElement).level === element.level
+      ((previous[0] as CustomElement).type === 'list-item' ||
+        ((previous[0] as CustomElement).type === 'order-list-item' && (previous[0] as CustomElement).level === element.level))
     ) {
-      num += 1
+      if ((previous[0] as CustomElement).type === 'order-list-item') {
+        num += 1
+      }
+
       if (!Path.hasPrevious(previousPath)) break
       previousPath = Path.previous(previous[1])
       previous = Editor.node(editor, previousPath)

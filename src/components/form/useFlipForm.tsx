@@ -20,6 +20,7 @@ import { MetaObject } from '~/typings'
 import FormFromDisplayer from './FormFromDisplayer'
 import FormFilePathPicker from './FormFilePathPicker'
 import { FormAttachmentDisplayer, FormAttachmentManager } from './FormAttachment'
+import FormNoteImporter from './FormNoteImporter'
 
 type useFlipFormOptions = {
   layout: FlipFormLayoutItem[]
@@ -90,6 +91,10 @@ export type FlipFormLayoutItem =
       type: 'fromDisplayer'
       object: Partial<MetaObject>
       onRemove?: VoidFunction
+    }
+  | {
+      type: 'markdownImporter'
+      onClose?: VoidFunction
     }
   | {
       type: 'attachmentDisplayer'
@@ -213,6 +218,8 @@ const useFlipForm = (options: useFlipFormOptions) => {
             <Icon name="park-right" />
           </Content>
         )
+      case 'markdownImporter':
+        return <FormNoteImporter onClose={i.onClose} />
       case 'group':
         return (
           <Form.Item type="component">

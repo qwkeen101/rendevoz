@@ -25,6 +25,7 @@ const PdfThumbnail = () => {
   )
   useEffect(() => {
     if (viewer && showLeftBar) {
+      throttleUpdate.run()
       viewer.onThumbnailRendered = () => {
         throttleUpdate.run()
       }

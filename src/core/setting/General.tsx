@@ -78,7 +78,7 @@ const GeneralSetting = () => {
       toast.error('Fail to import data! (Some errors happened)')
     }
   }
-  const { renderUploader, upload } = useFileUpload(file => handleImportData(file))
+  const { renderUploader, upload } = useFileUpload(file => handleImportData(file), 'application/JSON')
 
   const checkCanUpdate = () => {
     if (APP_VERSION && updateInfo?.version) {
@@ -202,21 +202,21 @@ const GeneralSetting = () => {
       children: (
         <>
           {renderUploader()}
-          <Modal visible={alertVisible} onClose={toggleAlertVisible}>
-            <Form
-              onBack={toggleAlertVisible}
-              onSubmit={() => {
-                toggleAlertVisible(false)
-                upload()
-              }}
-              title="Import Data Warning"
-              submitText="understand"
-              backText="cancel"
-            >
-              <div style={{ fontSize: 15, marginBottom: 24 }}>
-                Imported data will <b>overwrite your current database file</b>, are you sure?
-              </div>
-            </Form>
+          <Modal showClose noStyle visible={alertVisible} onClose={toggleAlertVisible}>
+            <div style={{ padding: '16px', borderRadius: 10 }} className={ClassName.Background.pseudoBlubBackground}>
+              <Form
+                onBack={toggleAlertVisible}
+                onSubmit={() => {
+                  toggleAlertVisible(false)
+                  upload()
+                }}
+                title={t('general.warning')}
+                submitText="understand"
+                backText="cancel"
+              >
+                <div style={{ margin: '10px 0px 16px', textTransform: 'none' }}>{t('settings.import data warning')}</div>
+              </Form>
+            </div>
           </Modal>
           <Content flex gap={20}>
             <Button.IconButton
@@ -235,6 +235,46 @@ const GeneralSetting = () => {
               spin={isImporting}
               icon={isImporting ? 'park-loading-four' : 'park-afferent-three'}
             />
+            <Select
+              style={{
+                border: `1px solid ${Colors.Background.Border}`,
+                padding: '4px 24px',
+                height: 'auto'
+              }}
+              closeOnSelect
+              value={setting.general.autoBackup}
+              placeholder={t('settings.autoBackup')}
+              onSelect={v => {
+                const value = v[0] as string
+                setSetting(s =>
+                  produce(s, d => {
+                    d.general.autoBackup = value
+                  })
+                )
+              }}
+              options={[
+                {
+                  value: 'never',
+                  children: t('settings.never')
+                },
+                {
+                  value: 'whenClose',
+                  children: t('settings.whenClose')
+                },
+                {
+                  value: 'every day',
+                  children: t('settings.every day')
+                },
+                {
+                  value: 'every week',
+                  children: t('settings.every week')
+                },
+                {
+                  value: 'every month',
+                  children: t('settings.every month')
+                }
+              ]}
+            ></Select>
             <Button.IconButton
               onClick={() => {
                 openDatabaseFolder()

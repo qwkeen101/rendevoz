@@ -21,6 +21,7 @@ const NoteNode: FC<InnerNodeProps> = ({ node: n, onNameChange }) => {
       }}
     >
       <Editor
+        type="note"
         on={event => {
           if (event.type === 'titleChange') {
             onNameChange?.(event.value)
@@ -35,6 +36,8 @@ const NoteNode: FC<InnerNodeProps> = ({ node: n, onNameChange }) => {
         titleStyle={{
           fontSize: '4cqmax'
         }}
+        showLeftBar={false}
+        showRightBar={false}
         compact
         innerEditorStyle={{
           paddingRight: '4%',
@@ -46,13 +49,13 @@ const NoteNode: FC<InnerNodeProps> = ({ node: n, onNameChange }) => {
           '.ParagraphBlock': {
             maxWidth: '100%'
           },
-          '.BlockCommon': {
-            '* span,textarea, a': {
-              fontSize: '3cqmax !important'
-            }
-          },
+          // '.BlockCommon': {
+          //   '* span,textarea, a': {
+          //     fontSize: '3cqmax !important'
+          //   }
+          // },
           width: '100% !important',
-          fontSize: '3cqmax'
+          // fontSize: '3cqmax'
         })}
         noteId={node.noteId}
         id={editorId}

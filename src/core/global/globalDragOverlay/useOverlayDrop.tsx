@@ -271,6 +271,7 @@ const useOverlayDrop = () => {
           const content = dragElement.elements
             ? dragElement.elements.map(n => Node.string(n)).join('\r\n')
             : Node.string(dragElement.element)
+          console.log(dragElement.element, content)
           const { name, description } = transformTextContentToNameAndDescription(content)
           normalizedMetaObject.name = name || 'Unnamed object'
           normalizedMetaObject.description = description
@@ -313,11 +314,12 @@ const useOverlayDrop = () => {
           shouldOpenEditMetaModal = false
           addLinkBetweenTwoMetaObject(noteMeta, noteLabelMeta)
         } else {
+          const existedLabel = await ObjectStore('noteLabel').getOneById(dragElement.highlightId)
           const { name, description } = transformTextContentToNameAndDescription(dragElement.textContent)
           normalizedMetaObject.type = 'noteLabel'
           normalizedMetaObject.objectId = dragElement.highlightId
-          normalizedMetaObject.name = name || 'Note Label'
-          normalizedMetaObject.description = description
+          normalizedMetaObject.name = existedLabel?.name || name || 'Note Label'
+          normalizedMetaObject.description = existedLabel?.name || description
           normalizedMetaObject.fromObject = {
             metaId: noteMeta.id,
             type: 'note',
@@ -336,11 +338,12 @@ const useOverlayDrop = () => {
           shouldOpenEditMetaModal = false
           addLinkBetweenTwoMetaObject(webpageMeta, webpageLabelMeta)
         } else {
+          const existedLabel = await ObjectStore('webpageLabel').getOneById(dragElement.highlightId)
           const { name, description } = transformTextContentToNameAndDescription(dragElement.textContent)
           normalizedMetaObject.type = 'webpageLabel'
           normalizedMetaObject.objectId = dragElement.highlightId
-          normalizedMetaObject.name = name || 'Webpage Label'
-          normalizedMetaObject.description = description
+          normalizedMetaObject.name = existedLabel?.name || name || 'Webpage Label'
+          normalizedMetaObject.description = existedLabel?.description || description
           normalizedMetaObject.fromObject = {
             type: 'webpage',
             metaId: webpageMeta.id,

@@ -65,7 +65,7 @@ const CreateDocumentForm: FC<NewDocumentFormProps> = ({ onBack, onSubmit }) => {
     const result = await ipcInstance.send('saveFile', fileRef.current?.path, fileRef.current?.name)
     pdfDocument.current.fileUrl = result.data
     // addDocument(pdfDocument.current)
-    const { meta, one } = await ObjectStore('pdf').addOneWithMeta(pdfDocument.current, { currentMeta: obj })
+    const { meta, one } = await ObjectStore('pdf').addOneWithMeta({ ...pdfDocument.current, labels: [] }, { currentMeta: obj })
     return meta
   }
   const renderUploadFile = () => {
@@ -75,7 +75,7 @@ const CreateDocumentForm: FC<NewDocumentFormProps> = ({ onBack, onSubmit }) => {
         flex
         column
         gap={30}
-        justifyContent='center'
+        justifyContent="center"
         style={{ padding: 24, borderRadius: 8 }}
       >
         <div className={ClassName.title()}>{t('general.upload file')}</div>
@@ -85,6 +85,7 @@ const CreateDocumentForm: FC<NewDocumentFormProps> = ({ onBack, onSubmit }) => {
             height: 400
           }}
           accept="application/pdf"
+          dashed
           onFileUploaded={async file => {
             if (file && file.type === 'application/pdf') {
               fileRef.current = file

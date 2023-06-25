@@ -1,6 +1,6 @@
 import { join, resolve } from 'path'
 import { Module } from '@nestjs/common'
-import { BrowserWindow, app, shell, protocol, ipcRenderer, session } from 'electron'
+import { BrowserWindow, app, shell, protocol, ipcRenderer, session, ipcMain } from 'electron'
 import axios from 'axios'
 import { fileURLToPath } from 'url'
 import HttpsProxyAgent from 'https-proxy-agent'
@@ -60,6 +60,7 @@ const slicedLength = 'rendefile://'.length
 
         app.on('window-all-closed', () => {
           app.quit()
+          search.kill()
           session.defaultSession.clearCache()
           session.defaultSession.clearAuthCache()
           session.defaultSession.clearCodeCaches({ urls: [] })
@@ -196,9 +197,15 @@ const slicedLength = 'rendefile://'.length
           // win.webContents.openDevTools()
         }
 
+        win.on('close', e => {
+          if (process.env.SHOULD_CLOSE === 'false') {
+            console.log('prevent close')
+            e.preventDefault()
+          }
+          win.webContents.send('close')
+        })
         win.on('closed', () => {
           win.destroy()
-          search.kill()
         })
 
         return win.webContents

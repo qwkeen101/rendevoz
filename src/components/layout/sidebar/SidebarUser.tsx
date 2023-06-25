@@ -14,6 +14,7 @@ import { toast } from 'react-hot-toast'
 import { useTranslation } from 'react-i18next'
 import FontSize from '@/consts/font'
 import { SidebarCollapseAtom, SidebarStateAtom } from '.'
+import Colors from '@/consts/colors'
 
 const SidebarUser = memo(() => {
   const [user] = useUser()
@@ -37,7 +38,7 @@ const SidebarUser = memo(() => {
             <Modal showClose noStyle visible={upgradePlanVisible} onClose={toggleUpgradPlanVisible}>
               <UpgradePlan />
             </Modal>
-            <Modal visible={updateUserVisible} onClose={toggleUpdateUserVisible}>
+            <Modal noStyle visible={updateUserVisible} onClose={toggleUpdateUserVisible}>
               <UpdateUser />
             </Modal>
             <AnimatePopover
@@ -129,11 +130,11 @@ const UserPopover = ({ onUpgradePlan, onUpdateUser }: { onUpgradePlan: VoidFunct
   const isPremium = user?.premiumEndDate && user?.premiumEndDate > Date.now()
   return (
     <WithBorder style={{ padding: 12, display: 'flex', flexDirection: 'column', fontFamily: 'Muli', minWidth: 220 }}>
-      <div style={{ padding: '0 8px' }} className={ClassName.description()}>
+      <div style={{ padding: '0 8px', textTransform: 'none' }} className={ClassName.description()}>
         Email: {user?.email || 'Unknown Email'}
       </div>
-      <div style={{ padding: '0 8px' }} className={ClassName.description()}>
-        Uid: {user?.uid || 'Unknown Uid'}
+      <div style={{ padding: '0 8px', textTransform: 'none' }} className={ClassName.description()}>
+        UID: {user?.uid || 'Unknown UID'}
       </div>
       <Content style={{ padding: '12px 8px 12px' }} flex column gap={6}>
         <Content flex alignItems="center" gap={8}>
@@ -152,8 +153,7 @@ const UserPopover = ({ onUpgradePlan, onUpdateUser }: { onUpgradePlan: VoidFunct
         </Content>
         {user?.premiumStartDate && user.premiumEndDate && (
           <div className={ClassName.description('12px')}>
-            Premium: {DateFormat.format(user?.premiumStartDate, DateFormat.Formats.default)} -{' '}
-            {DateFormat.format(user?.premiumEndDate, DateFormat.Formats.default)}
+            {t('general.premium end date')}: {DateFormat.format(user?.premiumEndDate, DateFormat.Formats.default)}
           </div>
         )}
       </Content>
@@ -236,7 +236,7 @@ const UpdateUser = () => {
       </div>
       <Content
         className={ClassName.flatButton()}
-        style={{ boxShadow: '0 0 0 1px rgba(31,34,39,0.1)' }}
+        style={{ border: `1px solid ${Colors.Background.Border}` }}
         flex
         alignItems="center"
         justifyContent="center"
@@ -292,7 +292,13 @@ const UpdateUser = () => {
     </Content>
   )
   return (
-    <Content flex column gap={16} style={{ fontFamily: 'Muli', width: 400 }}>
+    <Content
+      flex
+      column
+      gap={16}
+      style={{ fontFamily: 'Muli', width: 400, padding: 20, borderRadius: 10 }}
+      className={ClassName.Background.pseudoBlurContrastBackground}
+    >
       {formState.mainVisible && renderMain()}
       {formState.emailVisible && renderEmail()}
     </Content>

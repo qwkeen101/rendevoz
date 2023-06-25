@@ -25,6 +25,7 @@ export const EditorSearchAtom = atom<{
     blockId: number
     idx: number
   }
+  isSearching?: boolean
 }>({})
 
 const useEditorSearch = () => useAtom(EditorSearchAtom)

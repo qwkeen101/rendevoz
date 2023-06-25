@@ -1,6 +1,6 @@
 import { useDebounceEffect, useSelectAtomValue, useToggle } from '@/hooks'
 import { PdfStateAtom } from '../../hooks/usePdfState'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { IPdfLabel } from '~/typings'
 import { ObjectStore } from '@/stores'
 import { useRenderLabel } from '@/core/database'
@@ -36,8 +36,11 @@ const PdfLabelController = () => {
           page: number
         })[]
         if (sortMode === 'page') {
-          labels.sort((b, a) => b.page - a.page)
+          if (!labelSearch.results?.length) {
+            labels.sort((b, a) => b.page - a.page)
+          }
           const grouped = _.groupBy(labels, i => i.page)
+          console.log(labels, grouped)
           setGroupedLabel(grouped)
         } else {
           labels.sort((b, a) => b.createdAt - a.createdAt)
@@ -67,7 +70,24 @@ const PdfLabelController = () => {
     [labelSearch.searchInput],
     { wait: 500 }
   )
-
+  const labelSearchPageOrder = useMemo(() => {
+    if (labelSearch.results) {
+      return labelSearch.results.map(i => i.page)
+    }
+  }, [labelSearch.results])
+  const groupEntries = useMemo(() => {
+    const groupEntries = Object.entries(groupedLabel)
+    if (labelSearchPageOrder) {
+      groupEntries.sort((b, a) => {
+        const bpage = Number(b[0])
+        const apage = Number(a[0])
+        const bpageIdx = labelSearchPageOrder.findIndex(i => i === bpage)
+        const apageIdx = labelSearchPageOrder.findIndex(i => i === apage)
+        return bpageIdx - apageIdx
+      })
+    }
+    return groupEntries
+  }, [labelSearchPageOrder, groupedLabel])
   return (
     <Content
       flex
@@ -89,7 +109,7 @@ const PdfLabelController = () => {
       <VirtualList
         style={{ width: '100%', height: '100%' }}
         estimateSize={200}
-        items={sortMode === 'page' ? Object.entries(groupedLabel) : []}
+        items={sortMode === 'page' ? groupEntries : []}
         renderItem={group => (
           <Content key={group[0]}>
             <div
@@ -143,7 +163,15 @@ const Label = ({ id }: { id: number }) => {
         {renderName({
           onNameClick: () => instance.jumpToLabel?.(id)
         })}
-        {renderPopover({})}
+        {renderPopover({
+          on: event => {
+            switch (event.type) {
+              case 'delete': {
+                instance.deleteLabel?.(id)
+              }
+            }
+          }
+        })}
       </Content>
 
       {pdfLabel.type === 'highlight' && pdfLabel.selectedText && (

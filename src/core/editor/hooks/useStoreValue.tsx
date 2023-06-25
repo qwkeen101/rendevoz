@@ -10,6 +10,7 @@ import getSetting from '@/core/setting/getSetting'
 import { useEventHandler } from '@/events'
 import { NoteStore, ObjectStore } from '@/stores'
 import { Rendevoz } from '@/core/rendevoz'
+import { EDITOR_TO_CHANGED } from '../weakMaps'
 const initial = [
   {
     id: Id.getId(),
@@ -29,7 +30,7 @@ const normalizeFirstLayer = (editor: CustomEditor) => {
   })
 }
 const useStoreValue = (note: INote | undefined, editor: CustomEditor, onContentRendered?: (editor: CustomEditor) => void) => {
-  const { saveNoteAsBuffer, getNoteValue, saveBlocks, saveNoteAsSearch } = NoteStore
+  const { saveNoteAsBuffer, getNoteValue, saveNoteAsSearch } = NoteStore
   const contentRef = useRef<Descendant[]>()
   const noteId = note?.id
   const contentId = note?.contentId
@@ -58,7 +59,6 @@ const useStoreValue = (note: INote | undefined, editor: CustomEditor, onContentR
   )
   useEffect(() => {
     if (!noteId || !contentId) {
-      console.log('forbid go on')
       return
     }
     emitter.addListener('editor', handler)
@@ -72,6 +72,7 @@ const useStoreValue = (note: INote | undefined, editor: CustomEditor, onContentR
       const first = editorSet.values().next()
       editor.children = first.value.children
       normalizeFirstLayer(editor)
+      EDITOR_TO_CHANGED.set(editor, false)
       editor.onChange()
       editor.contentInitialized = true
       setTimeout(() => onContentRendered?.(editor))
@@ -82,6 +83,7 @@ const useStoreValue = (note: INote | undefined, editor: CustomEditor, onContentR
         contentRef.current = v
         editor.children = v || initial
         normalizeFirstLayer(editor)
+        EDITOR_TO_CHANGED.set(editor, false)
         editor.onChange()
         editor.contentInitialized = true
         setTimeout(() => onContentRendered?.(editor))

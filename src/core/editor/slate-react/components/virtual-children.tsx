@@ -10,7 +10,7 @@ import { NODE_TO_INDEX, NODE_TO_PARENT } from '../utils/weak-maps'
 import { RenderElementProps, RenderLeafProps, RenderPlaceholderProps } from './editable'
 
 import { useVirtualizer } from '@tanstack/react-virtual'
-import { ID_TO_FIRST_LAYER_MAP } from '../../weakMaps'
+import { EDITOR_TO_CHANGED, ID_TO_FIRST_LAYER_MAP } from '../../weakMaps'
 import { useMemoizedFn, usePrevious } from '@/hooks'
 import useWhyDidYouUpdate from '@/hooks/utils/useWhyUpdate'
 
@@ -31,13 +31,16 @@ const VirtualChildren = memo(
     parentElement?: RefObject<HTMLElement | null>
   }) => {
     const { decorations, renderElement, renderPlaceholder, renderLeaf, selection, children, scrollElement, readOnly, parentElement } = props
-    const previousChildrenLength = usePrevious(children.length)
-    console.log('rerender children')
+
     const editor = useSlateStatic()
-    if (previousChildrenLength !== children.length && ID_TO_FIRST_LAYER_MAP.get(editor)?.size !== children.length) {
+
+    // sometimes children rerendered earlier than onChange, idk why but we need to trigger onChange to reindex here.
+    // TODO: fix this earlier rerender triggered in editable
+    if (EDITOR_TO_CHANGED.get(editor) === false) {
       editor.onChange?.()
       console.log('tainted change')
     }
+
     const visibleChildren = useMemo(() => {
       return children.filter(i => !i.hide)
     }, [children])
@@ -46,23 +49,19 @@ const VirtualChildren = memo(
       count: visibleChildren.length,
       estimateSize: idx => 30,
       getScrollElement: () => scrollElement?.current || document.body,
-      overscan: readOnly ? editor.children.length : 5,
+      overscan: readOnly ? editor.children.length : 10,
       paddingEnd: 100,
       paddingStart: titleHeight,
       measureElement: (ele, entry, instance) => {
-        const getSize = () => ele.getBoundingClientRect().height
+        if (entry) {
+          const size = entry.borderBoxSize[0].blockSize
+          const marginTop = parseFloat(window.getComputedStyle(ele).marginTop)
+          const totalSize = size + marginTop
+          return totalSize
+        }
         const index = instance.indexFromElement(ele)
         const item = instance.measurementsCache[index]
-        if (entry) {
-          if (entry.contentRect.height === 0 && entry.contentRect.width === 0) {
-            return item ? item.size : 0
-          } else {
-            if (entry.borderBoxSize[0].blockSize !== item.size) {
-              return getSize()
-            }
-          }
-        }
-        return item ? item.size : getSize()
+        return item ? item.size : ele.getBoundingClientRect().height
       }
     })
 
@@ -72,7 +71,10 @@ const VirtualChildren = memo(
 
     if (parentElement?.current) {
       const parentEle = parentElement.current
-      parentEle.style.minHeight = `${totalSize}px`
+      if (parentEle) {
+        const size = totalSize
+        parentEle.style.height = `${size}px`
+      }
     }
 
     const scrollTo = useMemoizedFn(idx => {
@@ -91,7 +93,7 @@ const VirtualChildren = memo(
     const virtualItems = virtualizer.getVirtualItems()
 
     const first = virtualItems[0]
-    console.log(first, titleHeight)
+
     return (
       <>
         <div role="virtual-placeholder" contentEditable={false} style={{ height: first?.start - titleHeight }}></div>

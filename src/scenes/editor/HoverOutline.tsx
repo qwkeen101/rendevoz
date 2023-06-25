@@ -1,23 +1,25 @@
 import { Content, Icon, TabPane, Tabs } from '@/components'
 import { motion } from 'framer-motion'
 import Outliner from '@/core/editor/utils/outline/outliner'
-import { useToggle } from '@/hooks'
+import { useSelectAtomValue, useToggle } from '@/hooks'
 import ClassName from '@/styles/classNames'
 import { css } from '@emotion/css'
 import { useRef, useState } from 'react'
 import { Descendant } from 'slate'
 import { CustomEditor } from '~/typings'
-import AllHighlights from './AllHighlights'
 import AllObjects from './AllObjects'
 import { EditorHeadingTreeAtom, useEditorFilter } from './useEditorFilter'
-import { useAtomValue } from 'jotai'
+import { useAtomValue, useSetAtom } from 'jotai'
 import { goToBlock, highlightBlock } from '@/core/editor/utils'
 import { useTranslation } from 'react-i18next'
 import { Resizable } from 're-resizable'
 import Colors from '@/consts/colors'
+import useEditorValue from '@/core/editor/hooks/useEditorValue'
+import { EditorStateAtom } from '@/core/editor/hooks/useEditorState'
 type IHeadingTreeNode = ReturnType<typeof Outliner.headingListToTree>
-const SidebarToolbar = ({ value, editor }: { value: Descendant[]; editor: CustomEditor }) => {
+const SidebarToolbar = ({ editor }: { editor: CustomEditor }) => {
   const [collapsed, toggleCollapsed] = useToggle(true)
+  const value = useEditorValue()
   useEditorFilter(editor)
   const sidebarRef = useRef<HTMLDivElement>(null)
   const { t } = useTranslation()
@@ -63,6 +65,7 @@ const SidebarToolbar = ({ value, editor }: { value: Descendant[]; editor: Custom
           padding: '6px 12px 6px 18px',
           gap: 10,
           height: '100%',
+          pointerEvents: collapsed ? 'none' : 'auto',
           transform: collapsed ? 'translateX(-100%) translateX(-10px)' : 'translateX(0px)'
         }}
       >
@@ -93,20 +96,6 @@ const SidebarToolbar = ({ value, editor }: { value: Descendant[]; editor: Custom
             }}
           >
             <HeadingTree value={value} editor={editor} />
-          </TabPane>
-          <TabPane
-            key="2"
-            tab={
-              <Content alignItems="center" flex gap={6}>
-                <Icon name="park-high-light" />
-                {t('general.highlight')}
-              </Content>
-            }
-            style={{
-              paddingTop: 10
-            }}
-          >
-            <AllHighlights editor={editor} />
           </TabPane>
           <TabPane
             key="3"
@@ -151,6 +140,8 @@ const HeadingTree = ({ editor }: { value: Descendant[]; editor: CustomEditor }) 
 }
 const HeadingItem = ({ item, onClick }: { item: IHeadingTreeNode; onClick: (headingId: number) => void }) => {
   const [collapsed, toggleCollapsed] = useToggle(false)
+  const setEditorState = useSetAtom(EditorStateAtom)
+  const currentActiveHeadingId = useSelectAtomValue(EditorStateAtom, s => s.currentActiveHeadingId)
   return (
     <Content flex column gap={4}>
       <div
@@ -176,13 +167,14 @@ const HeadingItem = ({ item, onClick }: { item: IHeadingTreeNode; onClick: (head
         <div
           onClick={() => {
             onClick(item.id)
+            setEditorState(s => ({ ...s, currentActiveHeadingId: item.id }))
           }}
-          style={{ textTransform: 'none' }}
+          style={{ textTransform: 'none', fontWeight: currentActiveHeadingId === item.id ? 700 : undefined }}
           className={css([
             {
-              transition: 'color 0.2s ease',
+              fontWeight: 400,
               ':hover': {
-                color: '#8ab4f8'
+                fontWeight: 700
               }
             },
             ClassName.ellipsisFont(1)

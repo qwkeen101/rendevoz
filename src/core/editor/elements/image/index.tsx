@@ -3,10 +3,11 @@ import { ReactEditor, RenderElementProps, useSlateStatic } from '../../slate-rea
 import { ImageElement } from '~/typings'
 import { motion } from 'framer-motion'
 import { useEffect, useRef, useState } from 'react'
-import { Icon } from '@/components'
-import { Transforms } from 'slate'
+import { Icon, Tooltip } from '@/components'
+import { Path, Transforms } from 'slate'
 import useReadOnlyEditor from '../../hooks/useReadOnly'
 import { fetchRemoteImageAndSaveLocally } from '@/utils/img'
+import Id from '@/utils/id'
 
 const Image = ({ element, children }: RenderElementProps) => {
   const imageEle = element as ImageElement
@@ -60,6 +61,23 @@ const Image = ({ element, children }: RenderElementProps) => {
               }}
               className={toolbarContainerClazz}
             >
+              <Tooltip content="Insert caption for image">
+                <Icon
+                  name="park-info"
+                  onClick={() => {
+                    const path = ReactEditor.findPath(editor, element)
+                    Transforms.insertNodes(
+                      editor,
+                      {
+                        type: 'figcaption',
+                        id: Id.getId(),
+                        children: [{ text: 'Caption For Image' }]
+                      },
+                      { at: Path.next(path) }
+                    )
+                  }}
+                />
+              </Tooltip>
               <Icon
                 name="park-align-left"
                 onClick={() => {

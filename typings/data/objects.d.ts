@@ -27,12 +27,16 @@ export interface INoteLabel extends IBase {
   specType: 'noteLabel'
   noteId: number
   targetBlockId: number
+  name?: string
+  description?: string
 }
 
 export interface IWebpageLabel extends IBase {
   specType: 'webpageLabel'
   webpageId: number
   highlightId?: number
+  name?: string
+  description?: string
   selectedText?: string
 }
 

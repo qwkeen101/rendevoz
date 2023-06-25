@@ -1,23 +1,11 @@
 import Id from '@/utils/id'
 import { Transforms, Editor, Point, Range, Path, Element as SlateElement, Node } from 'slate'
 import { ReactEditor } from 'slate-react'
-import { CustomEditor } from '../../../../typings/editor/types'
-import { ParagraphElement } from '../../../../typings/editor/types/commonElementTypes'
+import { CustomEditor } from '~/typings'
 import { Positions } from '../utils/positions'
 import { CustomElement } from '~/typings'
+const softBlockTypes: CustomElement['type'][] = ['highlight-block', 'block-quote']
 
-const checkIfSpacerNeeded = (element: Node) => {
-  switch (element.type) {
-    case 'textSelectionCard':
-      return true
-    case 'thought':
-      return true
-    case 'highlight':
-      return true
-    default:
-      return false
-  }
-}
 const withCustomComponent = (editor: CustomEditor) => {
   const { deleteBackward, insertText, insertBreak, deleteForward, insertNode, insertFragment, apply } = editor
   editor.insertSoftBreak = () => {
@@ -28,7 +16,6 @@ const withCustomComponent = (editor: CustomEditor) => {
     insertFragment(nodes)
   }
   editor.insertNode = node => {
-    const { fontSize } = editor
     node.id = Id.getId()
     // node.children[0].fontSize = fontSize
     let nextPath = null
@@ -58,19 +45,7 @@ const withCustomComponent = (editor: CustomEditor) => {
           id: Id.getId(),
           children: [{ text: '' }]
         }
-        if (checkIfSpacerNeeded(node)) {
-          Transforms.insertNodes(
-            editor,
-            {
-              type: 'hole',
-              id: Id.getId(),
-              children: [{ type: 'spacer', children: [{ text: '' }] }, node, { type: 'spacer', children: [{ text: '' }] }]
-            },
-            { at: finalInsertPath }
-          )
-        } else {
-          Transforms.insertNodes(editor, node, { at: finalInsertPath })
-        }
+        Transforms.insertNodes(editor, node, { at: finalInsertPath })
         Transforms.select(editor, Editor.end(editor, finalInsertPath))
         ReactEditor.focus(editor)
         const placeHolderPath = Path.next(finalInsertPath)
@@ -83,30 +58,11 @@ const withCustomComponent = (editor: CustomEditor) => {
       }
     }
     if (nextPath) {
-      if (checkIfSpacerNeeded(node)) {
-        Transforms.insertNodes(
-          editor,
-          {
-            type: 'hole',
-            id: Id.getId(),
-            children: [{ type: 'spacer', children: [{ text: '' }] }, node, { type: 'spacer', children: [{ text: '' }] }]
-          },
-          { at: nextPath }
-        )
-      } else {
-        Transforms.insertNodes(editor, node, { at: nextPath })
-      }
+      Transforms.insertNodes(editor, node, { at: nextPath })
+
       Transforms.select(editor, Editor.end(editor, nextPath))
     } else {
-      if (checkIfSpacerNeeded(node)) {
-        insertNode({
-          type: 'hole',
-          id: Id.getId(),
-          children: [{ type: 'spacer', children: [{ text: '' }] }, node, { type: 'spacer', children: [{ text: '' }] }]
-        })
-      } else {
-        insertNode(node)
-      }
+      insertNode(node)
     }
   }
   editor.insertText = (text: string) => {
@@ -200,11 +156,11 @@ const withCustomComponent = (editor: CustomEditor) => {
       })
       if (match) {
         const [block, path] = match
-        const softBlockTypes: CustomElement['type'][] = ['highlight-block', 'block-quote']
         if (softBlockTypes.includes(block.type)) {
           editor.insertSoftBreak()
           return
         }
+
         const leaf = Editor.leaf(editor, selection)[0]
         const offset = selection.anchor.offset as number
         if (leaf.text[offset] === '\n') {
@@ -227,7 +183,12 @@ const withCustomComponent = (editor: CustomEditor) => {
           Transforms.splitNodes(editor, {
             always: true
           })
-          Transforms.setNodes(editor, { id: Id.getId() }, { at: Path.next(path) })
+          if ('type' in block && block.type.startsWith('heading')) {
+            Transforms.setNodes(editor, { id: Id.getId(), type: 'paragraph' }, { at: Path.next(path) })
+          } else {
+            Transforms.setNodes(editor, { id: Id.getId() }, { at: Path.next(path) })
+          }
+
           return
         }
       }

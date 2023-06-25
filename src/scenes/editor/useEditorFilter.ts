@@ -10,7 +10,7 @@ export type EditorHighlight = {
   highlightId: number
   str: string
 }
-export const EditorHighlightsAtom = atom<EditorHighlight[]>([])
+export const EditorHighlightsAtom = atom<Map<number, EditorHighlight>>(new Map())
 export const EditorObjectsAtom = atom<NodeEntry[]>([])
 export const EditorHeadingTreeAtom = atom<HeadingTreeNode | undefined>(undefined)
 export const useEditorFilter = (editor: CustomEditor) => {
@@ -46,7 +46,8 @@ export const useEditorFilter = (editor: CustomEditor) => {
           highlightId: i[0][0].highlight
         }
       })
-      setHighlights(highlightResult)
+      
+      setHighlights(new Map(highlightResult.map(i => [i.highlightId, i])))
       setObjects(objects)
       setHeadingTree(headingTree)
     },

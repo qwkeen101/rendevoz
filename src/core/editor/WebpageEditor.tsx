@@ -8,6 +8,7 @@ const WebpageEditor = ({ initialValue, title, noteId, on, showToolbar, onInstanc
   const id = useMemo(() => Id.getStrId(), [])
   return (
     <EditorPage
+      type="webpage"
       disableTitle
       titleContainerStyle={{
         width: 800,

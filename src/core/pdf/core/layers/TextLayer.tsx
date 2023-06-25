@@ -1,11 +1,11 @@
-import { FC, memo, RefObject, useEffect, useMemo, useRef } from 'react'
+import { FC, memo, RefObject, useEffect, useRef } from 'react'
 import { useIsomorphicLayoutEffect } from 'react-use'
 import { TextContent, TextStyle } from 'pdfjs-dist/types/src/display/api'
 import { PageViewport, PDFPageProxy } from 'pdfjs-dist'
 import { getNearestDistanceBetweenPointAndRect, getTextRect, getWordRect, isInBounds, isInRect } from '../utils/text'
 import { useMousePositionWithRef } from '@/hooks/utils/useMousePositionRef'
 import { Point } from '../types/point'
-import { TextContentBound, TextItem, TextRect, TextItemChar } from '../types/text'
+import { TextContentBound, TextItem, TextRect } from '../types/text'
 import isHotkey from 'is-hotkey'
 import { useMemoizedFn, useUnMount } from '@/hooks'
 import { PageFunctionRef } from '~/typings'
@@ -21,7 +21,8 @@ import {
   getTextContent,
   PAGE_INDEX_TO_PAGE_FUNCTION,
   PAGE_INDEX_TO_TEXT_CONTENT,
-  PAGE_INDEX_TO_TEXT_LAYER
+  PAGE_INDEX_TO_TEXT_LAYER,
+  PDF_IS_SELECTING
 } from '../weakMaps'
 import { CanvasOriginFillRect } from './CanvasLayer'
 import { getCharPoint } from '../utils/text'
@@ -102,8 +103,10 @@ const TextLayer: FC<TextLayerProps> = ({ scale, rotation, width, height, pageInd
           x: elX,
           y: elY
         }
+        PDF_IS_SELECTING.set(viewer, true)
       }
       if (rectsRef.current.length != 0) {
+        PDF_IS_SELECTING.set(viewer, false)
         pageFunctionRef.current?.onTextSelectEnd?.()
       }
       setGlobalSelectingText({ ...globalSelectingText, emptyAll: globalSelectingText.emptyAll + 1 })
@@ -143,20 +146,23 @@ const TextLayer: FC<TextLayerProps> = ({ scale, rotation, width, height, pageInd
         }
       }
       if (type === 'mousemove' && mousePos.current) {
-        selectText(
-          mousePos.current,
-          { x: mousePosRef.current.elX / transformScale, y: mousePosRef.current.elY / transformScale },
-          distanceToleranceAfterScale
-        )
-        if (!globalSelectingText.isSelecting) {
-          setGlobalSelectingText({
-            ...globalSelectingText,
-            startPage: pageIndex,
-            endPage: pageIndex,
-            isSelecting: true,
-            startPagePoint: mousePos.current,
-            selectedTexts: {}
-          })
+        const isSelecting = PDF_IS_SELECTING.get(viewer)
+        if (isSelecting) {
+          selectText(
+            mousePos.current,
+            { x: mousePosRef.current.elX / transformScale, y: mousePosRef.current.elY / transformScale },
+            distanceToleranceAfterScale
+          )
+          if (!globalSelectingText.isSelecting) {
+            setGlobalSelectingText({
+              ...globalSelectingText,
+              startPage: pageIndex,
+              endPage: pageIndex,
+              isSelecting: true,
+              startPagePoint: mousePos.current,
+              selectedTexts: {}
+            })
+          }
         }
       }
       if (type === 'mouseup' && mousePos.current && rectsRef.current.length !== 0) {
@@ -184,6 +190,7 @@ const TextLayer: FC<TextLayerProps> = ({ scale, rotation, width, height, pageInd
       }
       if (type === 'mouseup') {
         mousePos.current = null
+        PDF_IS_SELECTING.set(viewer, false)
         PAGE_INDEX_TO_PAGE_FUNCTION.get(viewer)?.forEach(v => {
           v.current.clearAllSelect?.()
         })

@@ -1,14 +1,15 @@
 import { useVirtualizer } from '@tanstack/react-virtual'
-import { CSSProperties, ReactElement, useRef } from 'react'
+import { CSSProperties, ReactElement, memo, useRef } from 'react'
 
 type Props<T> = {
   items: T[]
   renderItem: (item: T, idx: number) => ReactElement
   estimateSize: number
   style?: CSSProperties
+  childrenContainerClassname?: string
 }
 
-function VirtualList<T>({ items, renderItem, estimateSize, style }: Props<T>) {
+function VirtualList<T>({ items, renderItem, estimateSize, style, childrenContainerClassname }: Props<T>) {
   const contentRef = useRef<HTMLDivElement>(null)
   const virtualizer = useVirtualizer({
     count: items.length,
@@ -18,7 +19,7 @@ function VirtualList<T>({ items, renderItem, estimateSize, style }: Props<T>) {
   const itemz = virtualizer.getVirtualItems()
   return (
     <div ref={contentRef} style={{ overflowY: 'auto', overflowX: 'hidden', contain: 'strict', ...style }}>
-      <div style={{ height: virtualizer.getTotalSize(), width: '100%', position: 'relative' }}>
+      <div style={{ height: virtualizer.getTotalSize(), width: '100%', position: 'relative' }} className={childrenContainerClassname}>
         {itemz.map(i => (
           <div
             key={i.key}
@@ -40,4 +41,4 @@ function VirtualList<T>({ items, renderItem, estimateSize, style }: Props<T>) {
   )
 }
 
-export default VirtualList
+export default memo(VirtualList)

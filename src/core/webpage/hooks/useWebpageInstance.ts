@@ -21,7 +21,6 @@ export const useAssignWebpageInstance = () => {
     },
     transformToNote: () => {
       return new Promise(res => {
-        console.log(currentWebpage)
         waitFor(
           () => !!latestWebpage.current,
           () => {
@@ -30,7 +29,6 @@ export const useAssignWebpageInstance = () => {
             } else {
               setWebpageState(s => ({ ...s, showReaderMode: true }))
             }
-            console.log('goooogoggggggggggggggggggggggggggggggggggg', instance)
             waitFor(
               () => {
                 if (instance.editor) {

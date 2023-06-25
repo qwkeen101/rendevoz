@@ -4,12 +4,13 @@ import useWebpageInstance from './useWebpageInstance'
 import useWebpageState from './useWebpageState'
 import { captureWebpage, saveImageLocally } from '@/utils/img'
 import { Regexp } from '@/utils'
-import { searchToUrl } from '../utils'
+import { searchToUrl, transformHTML } from '../utils'
 import readibility from '@mozilla/readability'
 import { Descendant } from 'slate'
 import { deserializeHtmlNode, normalize } from '@/core/editor/plugins/deserializeHtml'
 import Id from '@/utils/id'
 import { objectIdToMetaObjectIdMapAtom } from '@/stores/meta.store'
+import { unified } from 'unified'
 
 const parseHTMLtoSlateDescandants = (
   html: string
@@ -23,6 +24,7 @@ const parseHTMLtoSlateDescandants = (
   const d = new readibility.Readability(doc).parse()
   if (d) {
     const parsedDoc = parser.parseFromString(d.content, 'text/html')
+    // transformHTML(d.content).then(result => console.log(result))
     const fragment = deserializeHtmlNode(parsedDoc.body)
     fragment.forEach(i => (i.id = Id.getId()))
     const normalized = normalize(fragment).filter(i => 'type' in i)
@@ -50,7 +52,6 @@ const useWebpageNavigationEventHandler = () => {
         setWebpageState(s => ({ ...s, showReaderMode: true }))
       } else {
         const result = parseHTMLtoSlateDescandants(html)
-        console.log(result)
         if (result) {
           const { value } = result
           const contentId = await NoteStore.saveNoteAsBuffer(value)
@@ -78,6 +79,7 @@ const useWebpageNavigationEventHandler = () => {
       // parse document and save as a temp note, maybe delete after url change if not save as meta object
       const result = parseHTMLtoSlateDescandants(html)
       if (result) {
+        console.log(result, html)
         const { value } = result
 
         saveNote(value).then(note => {

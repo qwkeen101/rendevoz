@@ -150,7 +150,13 @@
         "auto play": "auto play",
         "loop play": "loop play",
         "sort by video time": "sort by video time",
-        "sort by create time": "sort by create time"
+        "sort by create time": "sort by create time",
+        "warning": "warning",
+        "importing": "importing",
+        "import completed": "import completed",
+        "import details": "import {{total}} files, {{success}} succeeded, {{fail}} failed",
+        "import markdown": "import markdown files",
+        "premium end date": "premium end date"
     },
     "dock": {
         "close": "close",
@@ -371,7 +377,14 @@
         "pdf font color": "pdf font color",
         "follow theme": "follow theme",
         "pdf settings": "pdf settings",
-        "default": "default"
+        "default": "default",
+        "import data warning": "Imported data will overwrite your current data, are you sure you want to do this?",
+        "autoBackup": "auto backup",
+        "never": "never",
+        "whenClose": "when close",
+        "every day": "every day",
+        "every week": "every week",
+        "every month": "every month"
     },
     "form": {
         "choose file": "Choose file",

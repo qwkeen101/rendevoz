@@ -1,14 +1,11 @@
 import { Content, Icon } from '@/components'
-import { DraggingElement, Editor, GlobalDragOverlayInstance, ReactEditor } from '@/core'
+import { Editor, GlobalDragOverlayInstance, ReactEditor } from '@/core'
 import { CustomEditor, IEditorInstance } from '~/typings'
 import TabTitle from '@/components/layout/TabTitle'
 import { FC, useEffect, useState } from 'react'
 import { useToggle } from '@/hooks'
 import ClassName from '@/styles/classNames'
-import { Descendant } from 'slate'
-import SidebarToolbar from './HoverOutline'
 import { ObjectStore, globalStore } from '@/stores'
-import { Provider } from 'jotai'
 import { GlobalTranslateInstance } from '@/core/global/translate/GlobalTranslatePanel'
 import { GlobalSearchInstance } from '@/core/global/GlobalSearchPanel'
 import { objectIdToMetaObjectIdMapAtom } from '@/stores/meta.store'
@@ -28,7 +25,6 @@ const EditorPage: FC<
 > = ({ noteId, id, onInstanceInitialized, disableTitle, onTitleChange, defaultReadOnly = false, readonly: outReadOnly, ...rest }) => {
   const [title, setTitle] = useState('Untitled')
   const [readOnly, toggleReadOnly] = useToggle(defaultReadOnly)
-  const [value, setValue] = useState<Descendant[]>([])
   const [editor, setEditor] = useState<CustomEditor>()
   const [instance, setInstance] = useState<IEditorInstance>()
 
@@ -42,8 +38,6 @@ const EditorPage: FC<
   return (
     <Content fullWidth fullHeight flex centered>
       {!disableTitle && <TabTitle title={title} icon="park-notes" />}
-
-      <Provider>{editor && <SidebarToolbar value={value} editor={editor} />}</Provider>
       {editorNode &&
         createPortal(
           <>
@@ -60,6 +54,13 @@ const EditorPage: FC<
               className={ClassName.circleButton()}
               size={18}
               containerStyle={{ position: 'absolute', top: 70, right: 30, zIndex: 10 }}
+            />
+            <Icon
+              name={'park-label'}
+              onClick={() => instance?.toggleLabel?.()}
+              className={ClassName.circleButton()}
+              size={18}
+              containerStyle={{ position: 'absolute', top: 110, right: 30, zIndex: 10 }}
             />
           </>,
           editorNode
@@ -84,10 +85,6 @@ const EditorPage: FC<
               return
             }
             switch (event.type) {
-              case 'valueChange': {
-                setValue(event.value)
-                break
-              }
               case 'highlightDrag': {
                 const editorNode = ReactEditor.toDOMNode(event.editor, event.editor)
                 const highlightTextContent = Array.from(editorNode.querySelectorAll(`[data-highlight="${event.highlightId}"]`)).reduce(
@@ -123,10 +120,6 @@ const EditorPage: FC<
                 break
               }
               case 'highlight': {
-                ObjectStore('noteLabel').addOne({
-                  id: event.highlightId,
-                  noteId
-                })
                 break
               }
               case 'translate': {

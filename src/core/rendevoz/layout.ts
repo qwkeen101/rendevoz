@@ -44,6 +44,7 @@ const openNewTab = <T extends ILayoutTab['type']>({ data }: OpenTabOptions<T>) =
     const maybeExistTab = hasTargetTab(data)
     // open existing tab
     if (maybeExistTab) {
+      console.log(maybeExistTab)
       makeTabActive(maybeExistTab)
       const targetTab = LayoutIdToTabMap.get(maybeExistTab)
       // data.onInstanceInitialized?.(targetTab?.instance)
@@ -54,10 +55,11 @@ const openNewTab = <T extends ILayoutTab['type']>({ data }: OpenTabOptions<T>) =
   }
   // initialize new tab
   const initializedTab = initializeOneTab(tabData, data)
+  console.log(initializedTab)
   if (initializedTab) {
     const { layoutTab } = initializedTab
     const id = Id.getStrId()
-
+    console.log(layoutTab)
     LayoutIdToTabMap.set(id, layoutTab)
     tabData.onTabActive?.()
     GlobalLayout?.registerNewTab({
@@ -88,12 +90,12 @@ const initializeOneTab = <T extends ILayoutTab['type']>(
     objectId: openTabData.objectId
   }
   // get rendered element
+
   const contentElement = tabData.content({
     tab: layoutTab,
     objectId: openTabData.objectId,
     onInstanceInitialized: newInitializedFunction
   })
-
   if (!contentElement) return
   layoutTab.tabContent = contentElement
 

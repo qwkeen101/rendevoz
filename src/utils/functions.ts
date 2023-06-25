@@ -44,3 +44,33 @@ export const waitFor = (
 export function delay(ms: number) {
   return new Promise(resolve => setTimeout(resolve, ms))
 }
+
+export const loopProcess = <T>(
+  items: T[],
+  processor: (item: T, index: number) => Promise<void>,
+  cbs?: {
+    onEndProcess?: (item: T, index: number) => void
+    onBeginProcess?: (item: T, index: number) => void
+    onEnd?: () => void
+  }
+) => {
+  const index = {
+    current: 0
+  }
+  const asyncLoopItems = async () => {
+    const idx = index.current
+    if (idx === items.length) {
+      cbs?.onEnd?.()
+      return
+    } else {
+      index.current += 1
+    }
+    const currItem = items[idx]
+    cbs?.onBeginProcess?.(currItem, idx)
+    await processor(items[idx], idx)
+    cbs?.onEndProcess?.(currItem, idx)
+    asyncLoopItems()
+  }
+
+  asyncLoopItems()
+}

@@ -73,7 +73,7 @@ const useChildren = (props: {
         )
       }
     } catch (e) {
-      console.error(e)
+      console.error(e, node, n, p)
     }
 
     NODE_TO_INDEX.set(n, i)

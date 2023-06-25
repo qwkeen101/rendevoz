@@ -17,11 +17,9 @@ export const useAssignPdfInstance = (pdfId: number) => {
     insertLabel: async label => {
       const result = label.type === 'highlight' && label.selectedText && transformTextContentToNameAndDescription(label.selectedText)
       const truncatedName = result ? result.name : 'Unnamed Label'
-      const description = result ? result.description : undefined
       await ObjectStore('pdfLabel')
         .addOne({
           name: truncatedName,
-          description,
           documentId: pdfId,
           ...label
         })

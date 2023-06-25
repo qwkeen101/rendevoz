@@ -39,6 +39,7 @@ import Webpage from './core/webpage/Webpage'
 import WhiteboardPage from './scenes/WhiteboardPage'
 import { HomePage } from './scenes/HomePage'
 import DatabasePage from './scenes/DatabasePage'
+import GlobalNoteImporter from './core/global/GlobalNoteImporter'
 
 export function getOS() {
   const userAgent = window.navigator.userAgent.toLowerCase(),
@@ -85,7 +86,10 @@ const RENDEVOZ_DEFAULT_TABS: TabData[ILayoutTab['type']][] = [
     content: opts =>
       opts.objectId && (
         <Webpage
-          onWebpageChange={newWebpage => (opts.tab.objectId = newWebpage.webpageId)}
+          onWebpageChange={newWebpage => {
+            opts.tab.objectId = newWebpage.webpageId
+            opts.objectId = newWebpage.webpageId
+          }}
           initialWebpageId={opts.objectId}
           onInstanceInitialized={opts.onInstanceInitialized}
         />
@@ -147,6 +151,7 @@ const App = () => {
         <AuthenticatedLayout />
         <GlobalDragOverlay />
         <GlobalImagePreviewer />
+        <GlobalNoteImporter />
         <svg style={{ position: 'absolute', width: 0, height: 0, overflow: 'hidden' }}>
           <SvgMarker />
         </svg>

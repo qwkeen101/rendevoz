@@ -16,7 +16,7 @@ import { useGlobalIsDragging } from '@/core'
 import { Editor, Node, Path, Range, Transforms } from 'slate'
 import { NODE_TO_PARENT } from '../../slate-react/utils/weak-maps'
 import { useAtomValue } from 'jotai'
-import { EditorSearchAtom, SearchEntry, SearchOccurrence } from '../../hooks/useEditorSearch'
+import { EditorSearchAtom, SearchOccurrence } from '../../hooks/useEditorSearch'
 import { CustomText } from '~/typings/editor/baseTypes'
 
 type BlockProps = {
@@ -100,13 +100,12 @@ const Block: FC<React.DetailedHTMLProps<React.HTMLAttributes<HTMLDivElement>, HT
       return entries
     }
     useEffect(() => {
-      if (editorSearch.results?.[blockId] && editorSearch.query) {
+      if (editorSearch.results?.[blockId] && editorSearch.query && editorSearch.isSearching !== false) {
         const entries = getSearchEntries()
         if (entries) {
           const currentOccur = editorSearch.currentOccurrence
           const currentBlockPath = ReactEditor.findPath(editor, element)
           const secondaryHighlightArr = Array.from(CSS.highlights.get(SecondaryHighlight)?.values() || [])
-          console.log(secondaryHighlightArr)
           entries.forEach((entry, idx) => {
             const range = ReactEditor.toDOMRange(editor, {
               anchor: {
@@ -203,15 +202,6 @@ const Block: FC<React.DetailedHTMLProps<React.HTMLAttributes<HTMLDivElement>, HT
       }
     }, [])
 
-    useLayoutEffect(() => {
-      if (isSelecting) {
-        const block = blockRef.current
-        if (block && scrollElementRef?.current) {
-          distanceToScrollElementRef.current = getDistanceBetweenElementAndScrollableElement(block, scrollElementRef.current)
-        }
-      }
-    })
-
     useUpdateEffect(() => {
       const selectedBlocksMap = SELECTED_BLOCKS_MAP.get(editor)
       if (selected) {
@@ -272,6 +262,23 @@ const Block: FC<React.DetailedHTMLProps<React.HTMLAttributes<HTMLDivElement>, HT
     })
 
     useEffect(() => {
+      if (element.type === 'column') {
+        const width = `calc(( 100% - ${
+          46 * ((columnRef.current?.parentElement?.querySelectorAll("[data-type='column']").length || 2) - 1)
+        }px ) * ${ratio?.toFixed(3)})`
+        if (columnRef.current) {
+          columnRef.current.style.width = width
+        }
+      }
+    }, [ratio])
+
+    useLayoutEffect(() => {
+      if (isSelecting) {
+        const block = blockRef.current
+        if (block && scrollElementRef?.current) {
+          distanceToScrollElementRef.current = getDistanceBetweenElementAndScrollableElement(block, scrollElementRef.current)
+        }
+      }
       map?.set(blockId, {
         selectBlock,
         collisionSelectBlock: handleCollisionSelectBlock,
@@ -290,16 +297,6 @@ const Block: FC<React.DetailedHTMLProps<React.HTMLAttributes<HTMLDivElement>, HT
         map?.delete(blockId)
       }
     })
-    useEffect(() => {
-      if (element.type === 'column') {
-        const width = `calc(( 100% - ${
-          46 * ((columnRef.current?.parentElement?.querySelectorAll("[data-type='column']").length || 2) - 1)
-        }px ) * ${ratio?.toFixed(3)})`
-        if (columnRef.current) {
-          columnRef.current.style.width = width
-        }
-      }
-    }, [ratio])
 
     const handleMouseEnter = useCallback(e => onMouseEnter?.(e, element), [onMouseEnter, element])
     const handleMouseLeave = useCallback(e => onMouseLeave?.(e, element), [onMouseLeave, element])
@@ -312,6 +309,7 @@ const Block: FC<React.DetailedHTMLProps<React.HTMLAttributes<HTMLDivElement>, HT
       },
       [onMouseMove, element]
     )
+
     const { background, color, align, cardType } = element
     const linearBg = background && (background as string).startsWith('linear-gradient')
     const rgbaBg = background && hexToRgb(background)

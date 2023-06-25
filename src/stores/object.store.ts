@@ -138,9 +138,8 @@ const createObjectStore = <T extends keyof ObjectFamily, V extends ObjectFamily[
           }
         })) as MetaObject
       } else {
-        meta = await MetaStore.addMetaObject({ type: obj.specType, objectId: obj.id, ...opts?.currentMeta })
+        meta = await MetaStore.addMetaObject({ type: obj.specType, objectId: obj.id, ...opts?.currentMeta }, opts?.silent)
       }
-      console.log(meta)
       return {
         one: obj,
         meta
@@ -264,6 +263,9 @@ const createNoteStore = () => {
       if (n.contentId === undefined) {
         n.contentId = Id.getId()
       }
+      if (n.labels === undefined) {
+        n.labels = []
+      }
     },
     afterDeleteProcess: obj => {
       const blobDb = useDb('blobs')
@@ -294,6 +296,16 @@ const createWebpageStore = () => {
     beforeUpdateProcess: o => {
       if (!o.url?.startsWith('http://') && !o.url?.startsWith('https://') && o.url?.length) {
         o.url = 'https://' + o.url
+      }
+    },
+    afterUpdateProcess: {
+      onSuccess: obj => {
+        if (obj.title) {
+          const webpageMeta = MetaStore.getMetaObjectByObjectId(obj.id)
+          if (webpageMeta && webpageMeta.name !== obj.title && webpageMeta.name === 'Unknown webpage') {
+            MetaStore.updateMetaObject({ id: webpageMeta.id, name: obj.title }, true)
+          }
+        }
       }
     }
   })

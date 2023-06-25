@@ -4,6 +4,7 @@ import { MouseEventHandler } from 'react'
 import { Transforms } from 'slate'
 import { ReactEditor, RenderElementProps, useSlate } from '../../slate-react'
 import { ToDoElement } from '~/typings'
+import Colors from '@/consts/colors'
 
 const ToDo = ({ element, children }: RenderElementProps) => {
   const editor = useSlate()
@@ -22,24 +23,25 @@ const ToDo = ({ element, children }: RenderElementProps) => {
     )
   }
   return (
-    <Content flex alignItems="center" gap={10} contentEditable={false}>
+    <Content flex alignItems="center" gap={10}>
       <Content
         flex
         centered
+        contentEditable={false}
         onPointerDown={toggleChecked}
         className={css({
           borderRadius: 3,
-          border: '1px solid rgba(0,0,0,0.5)',
+          border: `1px solid ${Colors.Background.Border}`,
           width: 16,
           height: 16,
           userSelect: 'none',
           cursor: 'pointer',
           ':hover': {
-            borderColor: '#8590ae'
+            borderColor: Colors.Font.Secondary
           }
         })}
       >
-        {ele.checked && <Icon size={12} fill="#8590ae" name="park-check" />}
+        {ele.checked && <Icon size={12} fill={Colors.Font.Primary} name="park-check" />}
       </Content>
       <div
         className={css({
@@ -48,7 +50,6 @@ const ToDo = ({ element, children }: RenderElementProps) => {
           opacity: ele.checked ? 0.8 : undefined,
           outline: 'none'
         })}
-        contentEditable={true}
       >
         {children}
       </div>

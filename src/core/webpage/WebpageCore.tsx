@@ -70,7 +70,9 @@ export const WebpageCore = ({ url: _url, children, userAgent = DEFAULT_USER_AGEN
         }
       }
       const titleChangeHandler = data => {
-        setWebpageState(s => ({ ...s, title: data.title }))
+        if (data.title) {
+          setWebpageState(s => ({ ...s, title: data.title !== s.title ? data.title : s.title }))
+        }
       }
       container.addEventListener('did-start-loading', startLoadHandler)
       container.addEventListener('did-stop-loading', endLoadHandler)

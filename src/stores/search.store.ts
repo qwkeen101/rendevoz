@@ -106,7 +106,7 @@ const createSearchStore = () => {
 
   const searchDocument = async (params: SearchParams) => {
     const index = getIndex()
-    const filter = params.specType === 'all' ? [`specType = pdfPage OR specType = noteBlock`] : [`specType = ${params.specType}`]
+    const filter = params.specType === 'all' ? [`specType = noteBlock OR specType = pdfPage`] : [`specType = ${params.specType}`]
     const result = await index.search(params.query, {
       filter: filter || params.filter ? ([...filter, ...(params.filter || [])].filter(i => i) as string[]) : undefined,
       attributesToHighlight: ['name', 'content'],

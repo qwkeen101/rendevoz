@@ -14,8 +14,9 @@ export const DefaultRendevozDataPath = path.join(DEFAULT_USER_DATA_PATH, 'rendev
 
 @Controller()
 export class AppController {
-  constructor(private readonly appService: AppService, @Inject('WEB_CONTENTS') private readonly webContents: WebContents) {}
+  constructor(private readonly appService: AppService, @Inject('WEB_CONTENTS') private readonly win: BrowserWindow) {}
   private DefaultRendevozDataPath = path.join(DEFAULT_USER_DATA_PATH, 'rendevoz')
+  private webContents = this.win.webContents
 
   @IpcInvoke('reload')
   public reload() {
@@ -182,6 +183,10 @@ export class AppController {
     return path.filePaths[0]
   }
 
+  @IpcInvoke('close')
+  public async close() {
+    this.win.close()
+  }
   @IpcInvoke('beginBackup')
   public async beginBackup() {
     console.log('shouldBackup')

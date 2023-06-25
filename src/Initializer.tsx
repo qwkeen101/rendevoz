@@ -32,7 +32,7 @@ const Initializer = () => {
   const { t } = useTranslation()
   const setSetting = useGlobalSetAtom(SettingAtom)
   useEffect(() => {
-    const unloadListener = () => {
+    const unloadListener = (e: Event) => {
       const setting = getSetting()
       if (setting.general.autoBackup !== 'never') {
         const lastBackUp = getAppState().lastBackupDate

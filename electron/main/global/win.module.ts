@@ -154,6 +154,15 @@ const slicedLength = 'rendefile://'.length
           }
         )
 
+        win.on('close', e => {
+          console.log(process.env.SHOULD_CLOSE)
+          if (process.env.SHOULD_CLOSE === 'false') {
+            console.log('prevent close')
+            e.preventDefault()
+            win.hide()
+          }
+          win.webContents.send('close')
+        })
         win.on('maximize', () => {
           win.webContents.send('winMaximized')
         })
@@ -197,18 +206,13 @@ const slicedLength = 'rendefile://'.length
           // win.webContents.openDevTools()
         }
 
-        win.on('close', e => {
-          if (process.env.SHOULD_CLOSE === 'false') {
-            console.log('prevent close')
-            e.preventDefault()
-          }
-          win.webContents.send('close')
-        })
+
         win.on('closed', () => {
+          console.log('closed')
           win.destroy()
         })
 
-        return win.webContents
+        return win
       },
       inject: ['IS_DEV']
     }

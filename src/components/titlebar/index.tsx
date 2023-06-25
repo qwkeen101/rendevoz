@@ -38,7 +38,7 @@ const TitleBar = () => {
           maximizeWindow()
         }}
       />
-      <Icon name="park-close" className={styles.icon} cursor="pointer" onClick={() => window.close()} />
+      <Icon name="park-close" className={styles.icon} cursor="pointer" onClick={() => ipcInstance.send('close')} />
     </Content>
   )
 }

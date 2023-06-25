@@ -155,7 +155,7 @@ export const EditorV1: FC<EditorProps> = memo(
       return editor
     }, [])
 
-    const { dragManager, renderIndicator, renderOverlay, popoverVisible } = useEditorPluginHooks({
+    const { dragManager, renderIndicator, renderOverlay, popoverVisible, overlayManager } = useEditorPluginHooks({
       editor,
       scrollElementRef,
       noteId

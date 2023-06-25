@@ -16,7 +16,7 @@ const Image = ({ element, children }: RenderElementProps) => {
   const readOnly = useReadOnlyEditor()
   const editor = useSlateStatic()
   useEffect(() => {
-    if (imageEle.url.startsWith('http')) {
+    if (imageEle.url?.startsWith('http')) {
       fetchRemoteImageAndSaveLocally(imageEle.url).then(path => {
         Transforms.setNodes(
           editor,
@@ -30,6 +30,12 @@ const Image = ({ element, children }: RenderElementProps) => {
       })
     }
   }, [])
+  if (!imageEle.url) {
+    Transforms.removeNodes(editor, {
+      at: ReactEditor.findPath(editor, element)
+    })
+    return null
+  }
   return (
     <div style={{ display: 'flex', justifyContent: imageEle.align || 'center' }}>
       {children}

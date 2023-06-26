@@ -57,7 +57,9 @@ const slicedLength = 'rendefile://'.length
             autoUpdater.quitAndInstall()
           }, 6000)
         })
-
+        autoUpdater.on('download-progress', e => {
+          win.webContents.send('download', e)
+        })
         app.on('window-all-closed', () => {
           app.quit()
           search.kill()
@@ -205,7 +207,6 @@ const slicedLength = 'rendefile://'.length
           win.loadURL(url)
           // win.webContents.openDevTools()
         }
-
 
         win.on('closed', () => {
           console.log('closed')

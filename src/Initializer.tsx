@@ -13,7 +13,7 @@ import produce from 'immer'
 import { getAppState, setAppState } from './core/rendevoz/appState'
 import { exportRendevozDb } from './utils/db'
 import DateFormat from './utils/dateFormat'
-
+import { ProgressInfo } from 'electron-updater'
 export const initializedAtom = atom(false)
 export const updateInfoAtom = atom<
   | {
@@ -22,6 +22,14 @@ export const updateInfoAtom = atom<
   | undefined
 >(undefined)
 let autoLogined = false
+
+const DownloadInfoAtom = atom<{
+  beginDownload: boolean
+  downloadProgress?: number
+  downloadSpeed?: number
+}>({
+  beginDownload: false
+})
 const Initializer = () => {
   const [loginState] = useGlobalAtom(loginStateAtom)
   const [, setUser] = useGlobalAtom(userAtom)
@@ -31,6 +39,7 @@ const Initializer = () => {
   const setIntialized = useGlobalSetAtom(initializedAtom)
   const { t } = useTranslation()
   const setSetting = useGlobalSetAtom(SettingAtom)
+  const setDownloadInfo = useGlobalSetAtom(DownloadInfoAtom)
   useEffect(() => {
     const unloadListener = (e: Event) => {
       const setting = getSetting()
@@ -87,6 +96,11 @@ const Initializer = () => {
         }
       }
     }
+    const downloadListener = (e: ProgressInfo) => {
+      console.log(e)
+      setDownloadInfo(s => ({ ...s, beginDownload: true, downloadProgress: e.percent, downloadSpeed: e.bytesPerSecond }))
+    }
+    ipcInstance.on('download', downloadListener)
     ipcInstance.on('close', unloadListener)
     if (loginState.autoLogin && loginState.password && !autoLogined) {
       const email = localStorage.getItem('email')
@@ -153,6 +167,7 @@ const Initializer = () => {
     }
     return () => {
       ipcInstance.off('close')
+      ipcInstance.off('download')
     }
   }, [])
   useEffect(() => {

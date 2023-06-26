@@ -39,7 +39,7 @@
     deleteAppDataOnUninstall: false,
   },
   mac: {
-    target: ["dmg"],
+    target: ["default"],
     artifactName: "Rendevoz-MacOS-Setup.${ext}",
   },
   linux: {

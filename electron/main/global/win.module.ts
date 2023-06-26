@@ -37,8 +37,8 @@ const slicedLength = 'rendefile://'.length
           fs.copyFileSync(searchEngine, searcheEngineStartPath)
         }
         fs.chmodSync(searcheEngineStartPath, '744')
-        autoUpdater.autoDownload = false
-        autoUpdater.autoInstallOnAppQuit = false
+        autoUpdater.autoDownload = true
+        autoUpdater.autoInstallOnAppQuit = true
         autoUpdater.autoRunAppAfterInstall = false
         autoUpdater.setFeedURL({
           provider: 'generic',
@@ -51,15 +51,13 @@ const slicedLength = 'rendefile://'.length
         autoUpdater.on('update-available', info => {
           console.log(info)
         })
-        autoUpdater.on('update-downloaded', () => {
-          ipcRenderer.send('update downloaded')
-          setTimeout(() => {
-            autoUpdater.quitAndInstall()
-          }, 6000)
-        })
-        autoUpdater.on('download-progress', e => {
-          win.webContents.send('download', e)
-        })
+        // autoUpdater.on('update-downloaded', () => {
+        //   ipcRenderer.send('update downloaded')
+        //   setTimeout(() => {
+        //     autoUpdater.quitAndInstall()
+        //   }, 6000)
+        // })
+        // autoUpdater.autoInstallOnAppQuit = true
         app.on('window-all-closed', () => {
           app.quit()
           search.kill()
@@ -133,7 +131,9 @@ const slicedLength = 'rendefile://'.length
             y: 10
           }
         })
-
+        autoUpdater.on('download-progress', e => {
+          win.webContents.send('download', e)
+        })
         win.webContents.on('will-attach-webview', (e, webPreferences) => {
           const prePath = process.env.PUBLIC + '/webpre.js'
           const absolutePath = resolve(prePath)

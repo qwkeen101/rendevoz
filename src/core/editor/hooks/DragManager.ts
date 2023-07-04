@@ -9,6 +9,7 @@ import moveSingleElement from '../utils/moveSingleElement'
 import { getDistanceBetweenPointAndScrollableElement } from '../utils/scroll'
 import { ID_TO_ELEMENTS_MAP, ID_TO_PATH_MAP } from '../weakMaps'
 import { checkDropCanBeMeta, normalizeDropToMeta } from '@/core/global/globalDragOverlay/useDropObject'
+import { TypeToRegisteredObject } from '@/stores/object.store'
 
 type Indicator = {
   direction: 'top' | 'left' | 'bottom' | 'right'
@@ -402,6 +403,11 @@ class DragManager {
           return
         }
         if (!draggingEle) return
+        if (draggingEle.type && TypeToRegisteredObject.get(draggingEle.type)?.allowDropOnEditor === true) {
+          needFurtherProcess = {
+            objectId: 1
+          }
+        }
         switch (draggingEle.type) {
           // need further process: add meta object
           case 'pdfLabel': {
@@ -448,14 +454,14 @@ class DragManager {
               })
             break
           }
-          case 'webpage label': {
+          case 'webpageLabel': {
             draggingEle.highlightId &&
               (needFurtherProcess = {
                 objectId: draggingEle.highlightId
               })
             break
           }
-          case 'note label': {
+          case 'noteLabel': {
             draggingEle.highlightId &&
               (needFurtherProcess = {
                 objectId: draggingEle.highlightId

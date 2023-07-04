@@ -14,6 +14,7 @@ type VerifyUserOptions =
       type: 'uid'
       uid: string
     }
+
 export const userAtom = atom<IUser | null>(
   import.meta.env.PROD
     ? null

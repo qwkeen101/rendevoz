@@ -1,0 +1,34 @@
+import { MutableRefObject, CSSProperties, MouseEventHandler } from 'react';
+import { AnimatePopoverProps } from './AnimatePopover';
+interface Props {
+    disableNudge?: boolean;
+    disableCloseOutside?: boolean;
+    disableIntersection?: boolean;
+    name: string;
+    content: AnimatePopoverProps['content'];
+    tooltip?: string;
+    color?: string;
+    zIndex?: number;
+    defaultOpen?: boolean;
+    strokeWidth?: number;
+    placement?: ('bottom' | 'top' | 'left' | 'right')[];
+    size?: number;
+    innerRef?: MutableRefObject<any>;
+    parentElement?: HTMLElement;
+    padding?: number;
+    boundaryInset?: number;
+    style?: CSSProperties;
+    align?: string;
+    className?: string;
+    onClick?: MouseEventHandler;
+    tooltipPosition?: 'top' | 'bottom';
+    closeOnContentClick?: boolean | string;
+    contentDraggable?: boolean;
+    iconContainerStyle?: CSSProperties;
+    onContentClick?: MouseEventHandler;
+    containerStyle?: CSSProperties;
+    renderOnParent?: boolean;
+    onClickOutside?: (e: MouseEvent, setVisible: React.Dispatch<React.SetStateAction<boolean>>) => void;
+}
+declare const _default: import("react").ForwardRefExoticComponent<Props & import("react").RefAttributes<unknown>>;
+export default _default;

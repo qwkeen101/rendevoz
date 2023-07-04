@@ -172,6 +172,13 @@ const Block: FC<React.DetailedHTMLProps<React.HTMLAttributes<HTMLDivElement>, HT
     })
 
     const handleGlobalClick = useMemoizedFn(e => {
+      if (SELECTED_BLOCKS_MAP.get(editor)?.size && !isSelecting) {
+        // click outside
+        if (!e.target.closest("[data-type='block']") && scrollElementRef?.current?.contains(e.target)) {
+          SELECTED_BLOCKS_MAP.get(editor)?.clear()
+          console.log('clear')
+        }
+      }
       if (!isSelecting && selected) {
         if (!blockRef.current?.contains(e.target)) {
           setSelected(false)
@@ -321,7 +328,7 @@ const Block: FC<React.DetailedHTMLProps<React.HTMLAttributes<HTMLDivElement>, HT
         ref={mergedChildrenRef}
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
-        onMouseMoveCapture={handleMouseMove}
+        onMouseMove={handleMouseMove}
         suppressContentEditableWarning
         data-level={element?.level}
         style={{

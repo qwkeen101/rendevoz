@@ -7,6 +7,7 @@ export interface EventCallback {
   onSuccess?: VoidFunction
   onFail?: VoidFunction
 }
+
 export default class EventEmitter {
   private listeners: { [name: string]: Array<EventHandler<unknown>> } = {}
   private ackEvents: { name: string; data: any }[] = []

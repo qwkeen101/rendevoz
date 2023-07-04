@@ -3,7 +3,6 @@ import { Editor, GlobalDragOverlayInstance, ReactEditor } from '@/core'
 import { CustomEditor, IEditorInstance } from '~/typings'
 import TabTitle from '@/components/layout/TabTitle'
 import { FC, useEffect, useState } from 'react'
-import { useToggle } from '@/hooks'
 import ClassName from '@/styles/classNames'
 import { ObjectStore, globalStore } from '@/stores'
 import { GlobalTranslateInstance } from '@/core/global/translate/GlobalTranslatePanel'
@@ -12,6 +11,7 @@ import { objectIdToMetaObjectIdMapAtom } from '@/stores/meta.store'
 import { EditorProps } from '@/core/editor/Editor'
 import { waitFor } from '@/utils/functions'
 import { createPortal } from 'react-dom'
+import { useToggle } from '@/hooks'
 
 const EditorPage: FC<
   {
@@ -94,7 +94,7 @@ const EditorPage: FC<
                   ''
                 )
                 GlobalDragOverlayInstance.draggingDetails = {
-                  type: 'note label',
+                  type: 'noteLabel',
                   highlightId: event.highlightId,
                   noteId: noteId,
                   textContent: highlightTextContent

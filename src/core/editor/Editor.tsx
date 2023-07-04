@@ -175,7 +175,7 @@ export const EditorV1: FC<EditorProps> = memo(
     const instance = useEditorInstance()
 
     const handleBlockMouseMove = useMemoizedFn((e: MouseEvent, element: CustomElement) => {
-      if (!isDragging && !globalIsDragging) {
+      if (!globalIsDragging) {
         if (!e.currentTarget) return
         if (element.type === 'table' && !(e.target as HTMLElement).hasAttribute('data-table-slot')) return
         e.stopPropagation()

@@ -10,7 +10,7 @@ import { css } from '@emotion/css'
 const FormImagePicker = ({ imageUrl, onChange, name }: { imageUrl?: string; onChange?: (v: string | undefined) => void; name: string }) => {
   const { upload, renderUploader } = useFileUpload(file => {
     saveImageLocally(file).then(data => {
-      onChange?.(data.data)
+      onChange?.(data)
     })
   }, 'image/*')
   const { t } = useTranslation()

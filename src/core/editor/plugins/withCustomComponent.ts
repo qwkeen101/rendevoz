@@ -209,14 +209,6 @@ const withCustomComponent = (editor: CustomEditor) => {
           }
         })
       }
-      if (op.type === 'remove_node' && op.node.type === 'subPage') {
-        emitter.emit('editor', {
-          type: 'deleteSubPage',
-          data: {
-            subPageNoteId: op.node.originId
-          }
-        })
-      }
     }
     apply(op)
   }

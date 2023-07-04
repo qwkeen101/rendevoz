@@ -1,8 +1,6 @@
 import { Content, IconWithPopover } from '@/components'
 import { MetaStore, ObjectStore } from '@/stores'
-import { ObjectFamily } from '@/stores/object.store'
 import { CSSProperties, useState } from 'react'
-import { MetaObject } from '~/typings'
 import NameEditor from '../video/VideoNameEditor'
 import { AvaliableGlobalDraggingElements, DraggableElement } from '../global'
 import { css } from '@emotion/css'
@@ -12,6 +10,7 @@ import LabelActionMenu, { LabelActionEvent } from './LabelActionMenu'
 import { AttachmentWrapper } from '.'
 import BorderInput from '@/components/base/BorderInput'
 import { useTranslation } from 'react-i18next'
+import { IDraggableElement } from '~/typings/globalInstances/dragDrop'
 
 const useRenderLabel = (opts: {
   objectId: number
@@ -23,7 +22,7 @@ const useRenderLabel = (opts: {
   const label = ObjectStore(opts.type).useValue(opts.objectId)
   const labelMeta = MetaStore.useObjectToMetaValue(opts.objectId)
   const { t } = useTranslation()
-  const [draggingDetails, setDraggingDetails] = useState<AvaliableGlobalDraggingElements>()
+  const [draggingDetails, setDraggingDetails] = useState<IDraggableElement>()
   const [labelState, setLabelState] = useState<{
     addingAttachment: boolean
     addingDescription: boolean

@@ -326,13 +326,13 @@ const VideoBottomBar = () => {
                         saveImageLocally(data, { compress: false }).then(res => {
                           ObjectStore('image').addOneWithMeta(
                             {
-                              imageUrl: res.data
+                              imageUrl: res
                             },
                             {
                               showMetaModal: true,
                               currentMeta: {
                                 name: 'Video Screenshot',
-                                coverImgSrc: res.data,
+                                coverImgSrc: res,
                                 fromObject: videoMeta
                                   ? {
                                       metaId: videoMeta.id,

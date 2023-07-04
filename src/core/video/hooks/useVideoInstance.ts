@@ -34,7 +34,7 @@ export const useAssignVideoInstance = (videoId: number, containerRef: RefObject<
         const chapters = video.chapters || []
         if (chapters.length === 0) {
           const img = await captureVideoFrameBlob(offscreenVideo, 0)
-          const imgPath = (await saveImageLocally(img, { compress: false })).data
+          const imgPath = await saveImageLocally(img, { compress: false })
           chapters.push({
             startTime: 0,
             name: 'Untitled Chapter',
@@ -43,7 +43,7 @@ export const useAssignVideoInstance = (videoId: number, containerRef: RefObject<
           })
         }
         const img = await captureVideoFrameBlob(offscreenVideo, chapter.startTime)
-        const imgPath = (await saveImageLocally(img, { compress: false })).data
+        const imgPath = await saveImageLocally(img, { compress: false })
         await ObjectStore('video').updateOne({
           id: videoId,
           chapters: [
@@ -91,7 +91,7 @@ export const useAssignVideoInstance = (videoId: number, containerRef: RefObject<
       const ele = videoInstance.getOffscreenVideo?.()
       if (!time || !ele) return Promise.reject()
       const img = await captureVideoFrameBlob(ele, time)
-      const imgPath = (await saveImageLocally(img, { compress: false })).data
+      const imgPath = await saveImageLocally(img, { compress: false })
       const one = await ObjectStore('videoLabel').addOne({
         ...label,
         imageUrl: imgPath,

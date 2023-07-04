@@ -12,5 +12,6 @@
         "**/package-lock.json": true,
         "**/README.md": true,
         "**/release": true
-    }
+    },
+    "typescript.tsdk": "node_modules/typescript/lib"
 }

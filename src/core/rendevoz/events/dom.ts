@@ -1,4 +1,5 @@
 import { MouseEvent } from 'react'
+import { IDOMEventApi } from '~/typings'
 
 type DOMPointerEvent =
   | MouseEvent
@@ -9,10 +10,10 @@ type DOMPointerEvent =
   | MouseEvent<Element, TouchEvent>
 
 const hasButton = (e: DOMPointerEvent) => {
-  return e.target instanceof Element && e.target.closest("[role='button']")
+  return !!(e.target instanceof Element && e.target.closest("[role='button']"))
 }
 
-const DOM = {
+const DOM: IDOMEventApi = {
   hasButton
 }
 

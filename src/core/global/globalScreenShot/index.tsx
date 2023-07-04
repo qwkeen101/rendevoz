@@ -567,7 +567,7 @@ const GlobalScreenShot = () => {
       width: rect.width,
       height: rect.height
     })
-    const imageDataUrl = result.data!
+    const imageDataUrl = result!
     const img = new Image()
     img.src = imageDataUrl
     await new Promise(res => {
@@ -752,7 +752,7 @@ const GlobalScreenShot = () => {
                     if (selectionBoxState.rect) {
                       const blob = await getImageBlob()
                       const { relatedMeta, normalizedImage, normalizedImageMeta } = normalizeScreenshot(selectionBoxState.rect)
-                      const imgPath = (await saveImageLocally(blob, { compress: false })).data
+                      const imgPath = await saveImageLocally(blob, { compress: false })
                       const one = await ObjectStore('image').addOne({
                         ...normalizedImage,
                         imageUrl: imgPath

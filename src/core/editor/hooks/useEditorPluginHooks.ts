@@ -7,7 +7,7 @@ import useStoreValue from './useStoreValue'
 import useEditorDrag from './useEditorDrag'
 import useEditorOverlay from '../components/overlay/useEditorOverlay'
 import useEditorSelect from './useEditorSelect'
-import { useAssignEditorInstance } from './useEditorInstance'
+import useEditorInstance, { useAssignEditorInstance } from './useEditorInstance'
 import { debounce } from 'lodash'
 import { EditorStateAtom } from './useEditorState'
 import { useSetAtom } from 'jotai'
@@ -16,7 +16,7 @@ import { waitFor } from '@/utils/functions'
 
 const useEditorPluginHooks = (opts: { editor: CustomEditor; scrollElementRef: RefObject<HTMLElement>; noteId?: number }) => {
   const { editor, scrollElementRef, noteId } = opts
-
+  const instance = useEditorInstance()
   const note = ObjectStore('note').useValue(noteId)
 
   if (note) {
@@ -41,7 +41,7 @@ const useEditorPluginHooks = (opts: { editor: CustomEditor; scrollElementRef: Re
 
   editor.overlayManager = overlayManager
   editor.dragManager = dragManager
-
+  instance.getOverlayManager = () => overlayManager
   const setEditorState = useSetAtom(EditorStateAtom)
 
   useEffect(() => {

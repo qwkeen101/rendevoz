@@ -93,7 +93,7 @@ export const normalizeDropToMeta = async (e: DragEvent) => {
           })
         ).blob()
 
-        const imageFilePath = (await saveImageLocally(imageBlob, { compress: false })).data
+        const imageFilePath = await saveImageLocally(imageBlob, { compress: false })
 
         if (uriData) {
           // if dropped img uri not img
@@ -172,7 +172,7 @@ export const normalizeDropToMeta = async (e: DragEvent) => {
     const file = item.getAsFile()
     if (!file) return
     if (file.type.startsWith('image')) {
-      const imageFilePath = (await saveImageLocally(file, { compress: false })).data
+      const imageFilePath = await saveImageLocally(file, { compress: false })
       const imageObject = await ObjectStore('image').addOne({ imageUrl: imageFilePath })
       Object.assign(normalizedMetaObject, {
         coverImgSrc: imageFilePath,
@@ -224,7 +224,7 @@ const useDropObject = () => {
             })
           ).blob()
 
-          const imageFilePath = (await saveImageLocally(imageBlob, { compress: false })).data
+          const imageFilePath = await saveImageLocally(imageBlob, { compress: false })
 
           if (uriData) {
             // if dropped img uri not img
@@ -303,7 +303,7 @@ const useDropObject = () => {
       const file = item.getAsFile()
       if (!file) return
       if (file.type.startsWith('image')) {
-        const imageFilePath = (await saveImageLocally(file, { compress: false })).data
+        const imageFilePath = await saveImageLocally(file, { compress: false })
         const imageObject = await ObjectStore('image').addOne({ imageUrl: imageFilePath })
         Object.assign(normalizedMetaObject, {
           coverImgSrc: imageFilePath,

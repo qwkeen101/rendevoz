@@ -118,6 +118,7 @@
     "rehype-parse": "^8.0.4",
     "remark-parse": "^10.0.2",
     "remark-slate": "^1.8.6",
+    "rendevoz": "^0.2.46",
     "roughjs": "4.5.2",
     "rxjs": "^7.5.5",
     "sass": "1.51.0",

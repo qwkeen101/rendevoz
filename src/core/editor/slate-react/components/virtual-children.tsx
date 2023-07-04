@@ -49,7 +49,7 @@ const VirtualChildren = memo(
       count: visibleChildren.length,
       estimateSize: idx => 30,
       getScrollElement: () => scrollElement?.current || document.body,
-      overscan: readOnly ? editor.children.length : 10,
+      overscan: readOnly ? editor.children.length : 5,
       paddingEnd: 100,
       paddingStart: titleHeight,
       measureElement: (ele, entry, instance) => {

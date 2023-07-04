@@ -1,20 +1,20 @@
 import { useEventHandler } from '@/events'
 import { useRafFn } from '@/hooks'
 import { RefObject, useEffect } from 'react'
-import { GlobalDraggingDetails } from '~/typings'
+import { IDraggableElement } from 'rendevoz/typings/globalInstances/dragDrop'
 import { Rendevoz } from '../rendevoz'
 
 const useDropObjectArea = (
   dropArea: RefObject<HTMLElement> | HTMLElement,
   callback?: {
     onDragLeave?: () => void
-    onDragOver?: (element: GlobalDraggingDetails) => void
-    onDrop?: (element: GlobalDraggingDetails) => void
+    onDragOver?: (element: IDraggableElement) => void
+    onDrop?: (element: IDraggableElement) => void
   }
 ) => {
   const handler = useEventHandler('global')
   const emitter = Rendevoz.Events.Emit.GlobalEventEmitter
-  const rafCheck = useRafFn((e: PointerEvent | DragEvent, draggingElement: GlobalDraggingDetails) => {
+  const rafCheck = useRafFn((e: PointerEvent | DragEvent, draggingElement: IDraggableElement) => {
     const area = (dropArea instanceof HTMLElement ? dropArea : dropArea.current)!
     if (e.target instanceof Element && area.contains(e.target)) {
       callback?.onDragOver?.(draggingElement)

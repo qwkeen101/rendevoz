@@ -1,4 +1,5 @@
-import { MetaObject } from "~/typings";
+import { TypeToRegisteredMetaObject } from '@/stores/meta.store'
+import { MetaObject } from '~/typings'
 
 export const getMetaObjectIcon = (type?: MetaObject['type'], metaObject?: MetaObject) => {
   if (metaObject?.icon) {
@@ -6,6 +7,10 @@ export const getMetaObjectIcon = (type?: MetaObject['type'], metaObject?: MetaOb
   }
   if (metaObject?.from?.icon) {
     return metaObject.from.icon
+  }
+  if (type) {
+    const registered = TypeToRegisteredMetaObject.get(type)
+    if (registered?.icon) return registered.icon
   }
   switch (type) {
     case 'note':

@@ -4,8 +4,9 @@ import { useMemoizedFn } from '../utils'
 
 export const useShortcut = (shortcutName: keyof IShortCutSetting['shortcut'], onTrigger: VoidFunction) => {
   const [setting] = useSetting()
-  const shortcut = setting.shortcut[shortcutName]
+
   const shortcutHandler = useMemoizedFn((e: KeyboardEvent) => {
+    const shortcut = setting.shortcut[shortcutName]
     if (shortcut) {
       if (
         e.key === shortcut.key &&

@@ -3,7 +3,7 @@ import { GlobalInstances, IEditorInstance, IVideoInstance, IWebpageInstance } fr
 import { ID_TO_LABEL_MAP } from '@/core'
 import { IPdfViewer } from '~/typings'
 import { globalStore, MetaStore, ObjectStore } from '../../stores'
-import { metaObjectsAtom, objectIdToMetaObjectIdMapAtom } from '../../stores/meta.store'
+import { TypeToRegisteredMetaObject, metaObjectsAtom, objectIdToMetaObjectIdMapAtom } from '../../stores/meta.store'
 import { ipcInstance } from '@/plugins'
 import { waitFor } from '@/utils/functions'
 import { GlobalTextSearchInstance } from '../global/GlobalTextSearch'
@@ -15,6 +15,11 @@ const openMetaObject = async (metaObjectId: number) => {
   const metaObject = globalStore.get(metaObjectsAtom).get(metaObjectId)
   if (!metaObject) {
     toast.error('Target Object Not Exist!')
+    return
+  }
+  const registeredMetaObject = TypeToRegisteredMetaObject.get(metaObject.type)
+  if (registeredMetaObject?.onNavigate) {
+    registeredMetaObject.onNavigate(metaObject)
     return
   }
   if (!metaObject.objectId) {

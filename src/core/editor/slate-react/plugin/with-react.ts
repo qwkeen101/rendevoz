@@ -18,6 +18,7 @@ import {
 } from '../utils/weak-maps'
 import { ReactEditor } from './react-editor'
 import { EDITOR_TO_CHANGED } from '../../weakMaps'
+
 /**
  * `withReact` adds React and DOM specific behaviors to the editor.
  *

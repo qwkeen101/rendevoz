@@ -1,0 +1,20 @@
+declare const Zindexes: {
+    SidebarContextMenuOverlay: number;
+    PopupMenu: number;
+    ToolBar: number;
+    DragIndicator: number;
+    AttachmentPopover: number;
+    VideoFloatWindow: number;
+    SearchPanel: number;
+    HoverObjectDetails: number;
+    ObjectPanel: number;
+    TranslatePanel: number;
+    Modal: number;
+    ModalBackdrop: number;
+    GraphPopup: number;
+    Notification: number;
+    EditorSelectionToolbar: number;
+    Tooltip: number;
+    ImagePreview: number;
+};
+export default Zindexes;

@@ -1,5 +1,7 @@
 import { Content } from '@/components/base'
 import Colors from '@/consts/colors'
+import FontSize from '@/consts/font'
+import ClassName from '@/styles/classNames'
 import { css } from '@emotion/css'
 import { CSSProperties, FC, ReactNode } from 'react'
 
@@ -10,7 +12,7 @@ type SettingItem = {
   column?: boolean
   titleSize?: number
   childrenContainerStyle?: CSSProperties
-  disableDescriptionFormat?: boolean
+  type?: 'title' | 'item'
 }
 const SettingItem: FC<SettingItem> = ({
   children,
@@ -18,9 +20,12 @@ const SettingItem: FC<SettingItem> = ({
   description,
   column = false,
   titleSize = 18,
-  disableDescriptionFormat,
+  type = 'item',
   childrenContainerStyle
 }) => {
+  if (type === 'title') {
+    return <div className={ClassName.title(FontSize['18px'])}>{children}</div>
+  }
   return (
     <Content
       flex

@@ -1,12 +1,13 @@
 import { useMemoizedFn } from '@/hooks'
 import { cloneElement, forwardRef, ReactElement, useCallback, useEffect, useRef } from 'react'
-import { AvaliableGlobalDraggingElements, GlobalDragOverlayInstance } from '.'
+import { GlobalDragOverlayInstance } from '.'
+import { IDraggableElement } from '~/typings/globalInstances/dragDrop'
 
 const DraggableElement = forwardRef<
   HTMLElement,
   {
     children: ReactElement
-    draggingDetails?: AvaliableGlobalDraggingElements
+    draggingDetails?: IDraggableElement
     draggable?: boolean
     onDragStart?: VoidFunction
     hoverElement?: ReactElement

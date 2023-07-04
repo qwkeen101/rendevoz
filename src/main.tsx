@@ -5,7 +5,7 @@ import initI18n from './config/i18n'
 
 // Import the functions you need from the SDKs you need
 import { Provider } from 'jotai'
-import { globalStore } from './stores'
+import { Hooks } from 'rendevoz'
 import editorWorker from 'monaco-editor/esm/vs/editor/editor.worker?worker'
 import jsonWorker from 'monaco-editor/esm/vs/language/json/json.worker?worker'
 import cssWorker from 'monaco-editor/esm/vs/language/css/css.worker?worker'
@@ -33,10 +33,11 @@ self.MonacoEnvironment = {
     return new editorWorker()
   }
 }
+
 const root = createRoot(document.getElementById('root')!)
 
 root.render(
-  <Provider store={globalStore}>
+  <Provider store={Hooks.globalStore}>
     <App />
   </Provider>
 )

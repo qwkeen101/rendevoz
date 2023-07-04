@@ -1,7 +1,8 @@
-import { createStore } from 'jotai/vanilla'
 import { debounce } from 'lodash'
+import { Hooks } from 'rendevoz'
 import { handleMetaLinksChange, handleMetaObjectsChange, metaLinksAtom, metaObjectsAtom } from './meta.store'
-export const globalStore = createStore()
+
+export const globalStore = Hooks.globalStore
 
 export const findChangedProperties = (prev: object, curr: object) => {
   if (typeof prev !== 'object' || typeof curr !== 'object') return

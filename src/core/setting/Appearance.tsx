@@ -59,8 +59,7 @@ const AppearanceSetting = () => {
               accept="image/*"
               onFileUploaded={file => {
                 saveImageLocally(file, { compress: false }).then(data => {
-                  console.log(data)
-                  setBg(data.data)
+                  setBg(data)
                 })
               }}
             />

@@ -20,7 +20,7 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
-
+@types
 release
 .vscode/.debug.env
 package-lock.json

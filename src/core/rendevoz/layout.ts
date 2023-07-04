@@ -1,38 +1,18 @@
-import { ReactElement } from 'react'
-import { ILayoutTab } from '~/typings'
+import { ILayoutTab, TabData } from '~/typings'
 import getSetting from '../setting/getSetting'
 import { LayoutIdToTabMap } from '@/components/layout'
 import { GlobalLayout } from '@/components/layout'
 import Id from '@/utils/id'
 
-export type TabData = {
-  [K in ILayoutTab['type']]: {
-    type: K
-    content: (options: {
-      tab: ILayoutTab
-      objectId?: number
-      onInstanceInitialized?: (instance: Extract<ILayoutTab, { type: K }>['instance']) => void
-    }) => ReactElement | undefined | false | 0
-    onTabActive?: () => void
-  }
-}
-
 const TabDataMap = new Map<ILayoutTab['type'], TabData[ILayoutTab['type']]>()
 
-const registerTabData = <K extends ILayoutTab['type']>(options: TabData[K]) => {
-  TabDataMap.set(options.type, {
-    ...options
+const registerTabData = data => {
+  TabDataMap.set(data.type, {
+    ...data
   })
 }
 
-type OpenTabOptions<K extends ILayoutTab['type']> = {
-  data: { objectId?: number; onInstanceInitialized?: (instance: Extract<ILayoutTab, { type: K }>['instance']) => void } & Omit<
-    TabData[K],
-    'content'
-  >
-}
-
-const openNewTab = <T extends ILayoutTab['type']>({ data }: OpenTabOptions<T>) => {
+const openNewTab = ({ data }) => {
   const setting = getSetting()
   const { type } = data
   const tabData = TabDataMap.get(type)
@@ -55,7 +35,6 @@ const openNewTab = <T extends ILayoutTab['type']>({ data }: OpenTabOptions<T>) =
   }
   // initialize new tab
   const initializedTab = initializeOneTab(tabData, data)
-  console.log(initializedTab)
   if (initializedTab) {
     const { layoutTab } = initializedTab
     const id = Id.getStrId()
@@ -70,17 +49,10 @@ const openNewTab = <T extends ILayoutTab['type']>({ data }: OpenTabOptions<T>) =
   }
 }
 
-const initializeOneTab = <T extends ILayoutTab['type']>(
-  tabData: TabData[ILayoutTab['type']],
-  openTabData: OpenTabOptions<T>['data']
-):
-  | {
-      layoutTab: ILayoutTab
-    }
-  | undefined => {
+const initializeOneTab = (tabData, openTabData) => {
   if (!openTabData.type) return
   const originInitializeFunction = openTabData.onInstanceInitialized
-  const newInitializedFunction = (i: Extract<ILayoutTab, { type: T }>['instance']) => {
+  const newInitializedFunction = i => {
     layoutTab.instance = i
     tabToInstanceMap.set(layoutTab, i)
     originInitializeFunction?.(i)
@@ -104,7 +76,7 @@ const initializeOneTab = <T extends ILayoutTab['type']>(
   }
 }
 
-const hasTargetTab = <T extends ILayoutTab['type']>(tabData: OpenTabOptions<T>['data']) => {
+const hasTargetTab = tabData => {
   const { type, objectId } = tabData
 
   const target = Array.from(LayoutIdToTabMap.entries()).find(([k, v]) => {
@@ -123,13 +95,13 @@ const hasTargetTab = <T extends ILayoutTab['type']>(tabData: OpenTabOptions<T>['
   return target?.[0]
 }
 
-const getTab = <T extends ILayoutTab['type']>(opts: { objectId?: number; type: T }) => {
+const getTab = opts => {
   const tabId = hasTargetTab({
     type: opts.type,
     objectId: opts.objectId
   })
   if (tabId) {
-    return LayoutIdToTabMap.get(tabId) as ILayoutTab & { type: T }
+    return LayoutIdToTabMap.get(tabId)
   }
 }
 
@@ -144,13 +116,14 @@ const getVisibleTabs = () => {
 }
 const tabToInstanceMap = new WeakMap<ILayoutTab, any>()
 
-const makeTabActive = (tabId: string) => GlobalLayout?.makeTabActive?.(tabId)
+const makeTabActive = tabId => GlobalLayout?.makeTabActive?.(tabId)
 
 const Layout = {
   registerTabData,
   openNewTab,
   hasTargetTab,
   makeTabActive,
+  initializeOneTab,
   getTab,
   getVisibleTabs
 }

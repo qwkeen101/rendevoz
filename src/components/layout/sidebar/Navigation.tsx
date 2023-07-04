@@ -14,6 +14,9 @@ import classNames from 'classnames'
 import { css } from '@emotion/css'
 import FontSize from '@/consts/font'
 import { Rendevoz } from '@/core/rendevoz'
+import { KeyToRegisteredSidebarElement } from '@/core/plugin/RegisterMap'
+import { Fragment } from 'react'
+import React from 'react'
 
 const variants = {
   open: {
@@ -25,6 +28,7 @@ const variants = {
 }
 const Navigation = ({ hovered }: { hovered: boolean }) => {
   const { t } = useTranslation()
+  const registeredSidebarEles = Array.from(KeyToRegisteredSidebarElement.values())
   return (
     <>
       <motion.ul
@@ -53,6 +57,18 @@ const Navigation = ({ hovered }: { hovered: boolean }) => {
         <SidebarDatabase />
         <SidebarSearch />
         <SidebarSetting />
+        {registeredSidebarEles.map((i, idx) => (
+          <Fragment key={idx}>
+            {React.isValidElement(i) ? (
+              i
+            ) : (
+              <MenuItem onClick={i.onClick}>
+                <Icon name={i.icon} style={{ marginRight: 10 }} size={16} />
+                {typeof i.text === 'string' ? i.text : i.text()}
+              </MenuItem>
+            )}
+          </Fragment>
+        ))}
         {/* <GlobalPocket>{urls => <SidebarPocket urls={urls} />}</GlobalPocket> */}
         <Content
           flex

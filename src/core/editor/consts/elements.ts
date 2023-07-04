@@ -24,8 +24,8 @@ export const BlockElements = {
 }
 export const MediaElements = {
   Image: 'image',
-  Video: 'video',
-  Audio: 'audio'
+  // Video: 'video',
+  // Audio: 'audio'
 }
 
 export const OuterElements = {

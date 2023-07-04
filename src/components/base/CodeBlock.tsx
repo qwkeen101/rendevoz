@@ -1,7 +1,6 @@
 import { css } from '@emotion/css'
 import { CSSProperties, forwardRef, useEffect, useRef, useState } from 'react'
 import MonacoEditor, { RefEditorInstance } from '@uiw/react-monacoeditor'
-import Colors from '@/consts/colors'
 import { useMergedRef } from '@/hooks'
 export const CodeLanguageData = [
   'bat',

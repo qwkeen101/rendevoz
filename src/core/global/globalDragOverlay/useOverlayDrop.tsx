@@ -1,5 +1,5 @@
 import { useToggle } from '@/hooks'
-import { indexedMetaLinksAtom } from '@/stores/meta.store'
+import { indexedMetaLinksAtom, TypeToRegisteredMetaObject } from '@/stores/meta.store'
 import { globalStore, MetaStore, ObjectStore } from '@/stores'
 import { PartialWithId } from '@/types'
 import Id from '@/utils/id'
@@ -13,6 +13,8 @@ import { useEventHandler } from '@/events'
 import useDropObject, { clearDragState } from './useDropObject'
 import { transformTextContentToNameAndDescription, createLink, addLinkBetweenTwoMetaObject } from './utils'
 import { Rendevoz } from '@/core/rendevoz'
+import { TypeToRegisteredObject } from '@/stores/object.store'
+import { KeyToRegisteredDropOnProcessor } from '@/core/plugin/RegisterMap'
 
 const useOverlayDrop = () => {
   const emitter = Rendevoz.Events.Emit.GlobalEventEmitter
@@ -35,13 +37,26 @@ const useOverlayDrop = () => {
       shouldOpenEditMetaModal = false,
       alreadyHasMeta = false,
       preLinks: Partial<MetaLink>[] = []
+    let customNormalize = normalizeDraggingEleToMetaObject
+    const customGetDropOnLinks = getDropOnPostLinks
+
     if (data.draggingElement) {
+      console.log(data.draggingElement)
+      const type = data.draggingElement.type
+      if (TypeToRegisteredObject.has(type)) {
+        const { normalizeDraggingEleToMetaObject: _customNormalize } = TypeToRegisteredObject.get(type)!
+        console.log(normalizeDraggingEleToMetaObject)
+        if (_customNormalize) {
+          customNormalize = _customNormalize
+        }
+      }
+
       const {
         normalizedMetaObject: n,
         shouldOpenEditMetaModal: s,
         alreadyHasMeta: a,
         preLinks: p
-      } = await normalizeDraggingEleToMetaObject(data.draggingElement)
+      } = await customNormalize(data.draggingElement)
       normalizedMetaObject = n
       shouldOpenEditMetaModal = s
       alreadyHasMeta = a
@@ -63,12 +78,12 @@ const useOverlayDrop = () => {
       alreadyHasMeta = false
       preLinks = []
     }
-    let postLink: PartialWithId<MetaLink> | undefined
+    let postLink: PartialWithId<MetaLink>[] = []
     if (!normalizedMetaObject) return
     if (dropOn && normalizedMetaObject) {
-      postLink = await getDropOnPostLinks(dropOn, normalizedMetaObject)
+      postLink = [...((await customGetDropOnLinks(dropOn, normalizedMetaObject)) || [])]
     }
-    const allPendingLinks = [...preLinks, postLink].filter(i => i !== undefined && i.sourceId && i.targetId) as PartialWithId<MetaLink>[]
+    const allPendingLinks = [...preLinks, ...postLink].filter(i => i !== undefined && i.sourceId && i.targetId) as PartialWithId<MetaLink>[]
 
     if (shouldOpenEditMetaModal === false || alreadyHasMeta) {
       res?.(normalizedMetaObject)
@@ -95,6 +110,7 @@ const useOverlayDrop = () => {
       toggleEditMetaVisible(true)
     })
   })
+
   const getDropOnPostLinks = async (dropOn: DropOn, metaObject: MetaObject) => {
     const link: PartialWithId<MetaLink> = {
       id: Id.getId(),
@@ -102,6 +118,12 @@ const useOverlayDrop = () => {
     }
     const { enableAll, enableDropOnEditorLink, enableDropOnPDFLink, enableDropOnWhiteboardLink } = getSetting().objectAndLink
     if (!enableAll) return
+    const registeredDropOnProcessor = Array.from(KeyToRegisteredDropOnProcessor.values())
+    const processedLinks = (
+      (await Promise.all(registeredDropOnProcessor.map(processor => processor(dropOn, metaObject)))).filter(i =>
+        Array.isArray(i)
+      ) as MetaLink[][]
+    ).flatMap(i => i)
     switch (dropOn.dropOn) {
       case 'database': {
         break
@@ -146,10 +168,13 @@ const useOverlayDrop = () => {
         }
       }
     }
+    const allLinks: MetaLink[] = [...processedLinks]
     if (link.sourceId && link.targetId) {
-      return link
+      allLinks.push(link)
     }
+    return allLinks
   }
+
   const normalizeDraggingEleToMetaObject = async (
     dragElement: GlobalDraggingDetails
   ): Promise<{
@@ -305,7 +330,7 @@ const useOverlayDrop = () => {
         shouldOpenEditMetaModal = false
         break
       }
-      case 'note label': {
+      case 'noteLabel': {
         const noteMeta = await retrieveMetaObjectByObjectId(dragElement.noteId, 'note')
         const noteLabelMeta = await getMetaObjectByObjectId(dragElement.highlightId)
         if (noteLabelMeta) {
@@ -329,7 +354,7 @@ const useOverlayDrop = () => {
         }
         break
       }
-      case 'webpage label': {
+      case 'webpageLabel': {
         const webpageMeta = await retrieveMetaObjectByObjectId(dragElement.webpageId, 'webpage')
         const webpageLabelMeta = await getMetaObjectByObjectId(dragElement.highlightId)
         if (webpageLabelMeta) {

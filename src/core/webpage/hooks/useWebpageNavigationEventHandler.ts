@@ -135,9 +135,9 @@ const useWebpageNavigationEventHandler = () => {
         if (!showReaderMode) {
           const webcontentId = await instance.getId?.()
           if (webcontentId) {
-            const dataUrl = (await captureWebpage(webcontentId)).data
+            const dataUrl = await captureWebpage(webcontentId)
             if (dataUrl) {
-              coverImgSrc = (await saveImageLocally(dataUrl, { compress: false })).data
+              coverImgSrc = await saveImageLocally(dataUrl, { compress: false })
             }
           }
         }

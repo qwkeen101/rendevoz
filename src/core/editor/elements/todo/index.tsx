@@ -31,7 +31,7 @@ const ToDo = ({ element, children }: RenderElementProps) => {
         onPointerDown={toggleChecked}
         className={css({
           borderRadius: 3,
-          border: `1px solid ${Colors.Background.Border}`,
+          border: `1px solid var(--block-font-color, var(--font-tertiary))`,
           width: 16,
           height: 16,
           userSelect: 'none',
@@ -41,7 +41,7 @@ const ToDo = ({ element, children }: RenderElementProps) => {
           }
         })}
       >
-        {ele.checked && <Icon size={12} fill={Colors.Font.Primary} name="park-check" />}
+        {ele.checked && <Icon size={12} name="park-check" />}
       </Content>
       <div
         className={css({

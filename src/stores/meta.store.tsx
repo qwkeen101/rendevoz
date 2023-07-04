@@ -16,6 +16,7 @@ import { selectAtom } from 'jotai/utils'
 import { useGlobalAtomValue } from '@/hooks'
 import { getUser } from '@/services/login.service'
 import { SearchStore } from './search.store'
+import { RegisteredMetaObject } from 'rendevoz'
 
 export const metaObjectsAtom = atom<Map<number, MetaObject>>(new Map())
 
@@ -24,7 +25,6 @@ export const metaLinksAtom = atom<Map<number, MetaLink>>(new Map())
 const { orderedData, orderedArray } = BaseStore
 
 export const handleMetaObjectsChange = () => {
-  console.log('triggered change')
   const prevIndex = globalStore.get(indexedMetaObjectsAtom)
   const prevMetaObjects = prevIndex?.oldMetaObjects as Map<number, MetaObject> | undefined
   const newMetaObjects = globalStore.get(metaObjectsAtom)
@@ -158,16 +158,20 @@ export const handleMetaObjectDelete = (id: number) => {
     debounceSetUndeleted()
   }
 }
-export const indexedMetaObjectsAtom = atom<{
-  undeletedMetaObjectsSet: Set<MetaObject>
-  pinnedMetaObjectsSet: Set<MetaObject>
-  deletedMetaObjectsSet: Set<MetaObject>
-  objectIdToMetaObjectMap: Map<number, number>
-  tagToMetaObjectIdsMap: Map<number, Set<number>>
-  typeToMetaObjectIdsMap: Map<string, Set<number>>
-  metaAttachmentIdToMetaIdsMap: Map<number, Set<number>>
-  oldMetaObjects: Map<number, MetaObject>
-} | null>(null)
+
+export const indexedMetaObjectsAtom = atom<
+  | {
+      undeletedMetaObjectsSet: Set<MetaObject>
+      pinnedMetaObjectsSet: Set<MetaObject>
+      deletedMetaObjectsSet: Set<MetaObject>
+      objectIdToMetaObjectMap: Map<number, number>
+      tagToMetaObjectIdsMap: Map<number, Set<number>>
+      typeToMetaObjectIdsMap: Map<string, Set<number>>
+      metaAttachmentIdToMetaIdsMap: Map<number, Set<number>>
+      oldMetaObjects: Map<number, MetaObject>
+    }
+  | undefined
+>(undefined)
 
 export const handleMetaLinksChange = () => {
   const prevIndex = globalStore.get(indexedMetaLinksAtom)
@@ -242,15 +246,18 @@ export const handleMetaLinksChange = () => {
   })
 }
 
-export const indexedMetaLinksAtom = atom<{
-  sourceIdToLinkIdsMap: Map<number, Set<number>>
-  targetIdToLinkIdMap: Map<number, Set<number>>
-  relatedIdsMap: Map<number, Set<number>>
-  oldLinks: Map<number, MetaLink>
-  undeletedLinksSet: Set<MetaLink>
-  sourceIdToTargetIdsMap: Map<number, Set<number>>
-  targetIdToSourceIdsMap: Map<number, Set<number>>
-} | null>(null)
+export const indexedMetaLinksAtom = atom<
+  | {
+      sourceIdToLinkIdsMap: Map<number, Set<number>>
+      targetIdToLinkIdMap: Map<number, Set<number>>
+      relatedIdsMap: Map<number, Set<number>>
+      oldLinks: Map<number, MetaLink>
+      undeletedLinksSet: Set<MetaLink>
+      sourceIdToTargetIdsMap: Map<number, Set<number>>
+      targetIdToSourceIdsMap: Map<number, Set<number>>
+    }
+  | undefined
+>(undefined)
 
 export const orderedMetaObjectsAtom = atom(get => orderedData(get(metaObjectsAtom)))
 
@@ -475,6 +482,7 @@ const createMetaStore = () => {
       })(one, silent)
     }
   }
+
   const realStore = {
     addMetaObject: localObjectStore.addOne,
     updateMetaObject: localObjectStore.updateOne,
@@ -508,11 +516,11 @@ const createMetaStore = () => {
   const useObjectToMetaValue = (objectId: number) => {
     const objectIdToMetaObjectIdAtom = useMemo(() => selectAtom(objectIdToMetaObjectIdMapAtom, m => m?.get(objectId)), [objectId])
     const metaId = useGlobalAtomValue(objectIdToMetaObjectIdAtom)
-    const metaAtom = useMemo(() => (metaId ? selectAtom(metaObjectsAtom, m => m.get(metaId)) : atom(null)), [metaId])
+    const metaAtom = useMemo(() => (metaId ? selectAtom(metaObjectsAtom, m => m.get(metaId)) : atom(undefined)), [metaId])
     return useGlobalAtomValue(metaAtom)
   }
   const useValue = (id?: number) => {
-    const ato = useMemo(() => (id ? selectAtom(metaObjectsAtom, m => m.get(id)) : atom(null)), [id])
+    const ato = useMemo(() => (id ? selectAtom(metaObjectsAtom, m => m.get(id)) : atom(undefined)), [id])
     return useGlobalAtomValue(ato)
   }
   const addObjectAsMeta = async (opts: { objectId: number; type: MetaObject['type']; name?: string }) => {
@@ -526,16 +534,54 @@ const createMetaStore = () => {
       true
     )
   }
+
+  const getMetaObjectsMap = () => {
+    return globalStore.get(metaObjectsAtom)
+  }
+  const getMetaLinksMap = () => {
+    return globalStore.get(metaLinksAtom)
+  }
+  const useMetaObjectsMap = () => {
+    return useGlobalAtomValue(metaObjectsAtom)
+  }
+  const useMetaLinksMap = () => {
+    return useGlobalAtomValue(metaLinksAtom)
+  }
+  const useIndexedMetaObjects = () => {
+    return useGlobalAtomValue(indexedMetaObjectsAtom)
+  }
+  const getIndexedMetaObjects = () => {
+    return globalStore.get(indexedMetaObjectsAtom)
+  }
+
+  const getIndexedMetaLinks = () => {
+    return globalStore.get(indexedMetaLinksAtom)
+  }
+
+  const useIndexedMetaLinks = () => {
+    return useGlobalAtomValue(indexedMetaLinksAtom)
+  }
+
   return {
     getMetaObjectById,
     getMetaObjectByObjectId,
     useValue,
     useObjectToMetaValue,
     addObjectAsMeta,
+    getMetaObjectsMap,
+    getMetaLinksMap,
+    useMetaObjectsMap,
+    useMetaLinksMap,
+    getIndexedMetaObjects,
+    useIndexedMetaObjects,
+    getIndexedMetaLinks,
+    useIndexedMetaLinks,
     ...realStore
   }
 }
 
 export const metaStore = createMetaStore()
+
+export const TypeToRegisteredMetaObject = new Map<string, RegisteredMetaObject>()
 
 export default createMetaStore

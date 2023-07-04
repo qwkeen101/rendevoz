@@ -102,7 +102,7 @@ const ObjectForm: FC<
                   object.objectId && ObjectStore('video').updateOne({ id: object.objectId, videoUrl: p.data })
                   generateVideoThumbnail(file).then(s => {
                     saveImageLocally(s, { compress: false }).then(data => {
-                      setObject(o => ({ ...o, coverImgSrc: data.data }))
+                      setObject(o => ({ ...o, coverImgSrc: data }))
                     })
                   })
                   setObject(o => ({ ...o, name: getFilenameWithoutExtension(name) }))

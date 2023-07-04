@@ -28,6 +28,7 @@ import Colors from '@/consts/colors'
 import FontSize from '@/consts/font'
 import useEditorInstance from './hooks/useEditorInstance'
 import { transformTextContentToNameAndDescription } from '../global/globalDragOverlay/utils'
+import { content } from 'html2canvas/dist/types/css/property-descriptors/content'
 
 const EditableEditorClassName = css({
   p: {
@@ -170,10 +171,8 @@ const InnerEditor: FC<InnerEditorProps> = memo(
       { wait: 500 }
     )
     const handleChange = useMemoizedFn((value: Descendant[]) => {
-      console.log(editor.selection)
       let shouldChange = false
       // already triggered
-      console.log(EDITOR_TO_CHANGED.get(editor))
       if (EDITOR_TO_CHANGED.get(editor) === true) return
       EDITOR_TO_CHANGED.set(editor, true)
       if (!(editor.operations.length === 1 && editor.operations[0].type === 'set_selection')) {
@@ -279,6 +278,22 @@ const InnerEditor: FC<InnerEditorProps> = memo(
       const keydownHandler = (e: KeyboardEvent) => {
         if (isHotkey(KEY.Backspace, e) || isHotkey(KEY.Delete, e)) {
           const selected = SELECTED_BLOCKS_MAP.get(editor)
+          const isOverlayOpen = editor.overlayManager?.isOpen()
+          const content = editor.overlayManager?.getContent()
+          if (isOverlayOpen && content === 'slashMenu') {
+            if (editor.selection && Range.isCollapsed(editor.selection) && isHotkey(KEY.Backspace, e)) {
+              const prevDeleted = Editor.before(editor, editor.selection, { distance: 1, unit: 'character' })
+              if (prevDeleted) {
+                const prevText = Editor.string(editor, {
+                  anchor: prevDeleted,
+                  focus: editor.selection.focus
+                })
+                if (prevText === '/') {
+                  editor.overlayManager?.close()
+                }
+              }
+            }
+          }
           if (selected && selected.size > 0) {
             e.preventDefault()
             e.stopPropagation()
@@ -318,10 +333,12 @@ const InnerEditor: FC<InnerEditorProps> = memo(
         document?.removeEventListener('keydown', keydownHandler, true)
       }
     }, [scrollElement])
+
     useEffect(() => {
       // if only default value, trigger for path index
       editor.onChange()
     }, [])
+
     const handleKeydown: KeyboardEventHandler<HTMLDivElement> = useMemoizedFn(e => {
       const { selection } = editor
       handleSlashKeyDown(e)

@@ -1,6 +1,6 @@
 import { GlobalEventEmitter } from '@/events'
 import useDb from '@/hooks/stores/useDb'
-import { Atom, atom, PrimitiveAtom } from 'jotai'
+import { Atom, atom, PrimitiveAtom, useAtom } from 'jotai'
 import { atomFamily, selectAtom } from 'jotai/utils'
 import { useMemo } from 'react'
 import {
@@ -12,6 +12,7 @@ import {
   INoteBlock,
   INoteLabel,
   IPdfDocument,
+  IRegisterdObject,
   ITag,
   IVideo,
   IVideoLabel,
@@ -48,6 +49,8 @@ export type ObjectFamily = {
 }
 
 export const ObjectFamilyAtom = atomFamily(() => atom(new Map<number, ObjectFamily[keyof ObjectFamily]>()))
+
+export const TypeToRegisteredObject = new Map<string, IRegisterdObject>()
 
 const createObjectStore = <T extends keyof ObjectFamily, V extends ObjectFamily[T], S extends IStore<V>>(
   type: T,
@@ -207,18 +210,22 @@ const createObjectStore = <T extends keyof ObjectFamily, V extends ObjectFamily[
     const atom = createAtom(id)
     return useGlobalAtomValue(atom)
   }
-
+  const useAll = () => {
+    const all = useGlobalAtomValue(objectMapAtom)
+    return all
+  }
   return {
     objectMapAtom,
     localStore,
     adaptStore,
     createAtom,
     useValue,
+    useAll,
     ...realStore
   }
 }
 
-const storeMap = new Map<keyof ObjectFamily, ReturnType<typeof createObjectStore>>()
+export const storeMap = new Map<keyof ObjectFamily, ReturnType<typeof createObjectStore>>()
 
 export const objectStore = <T extends keyof ObjectFamily>(
   type: T

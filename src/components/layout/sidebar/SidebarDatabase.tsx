@@ -10,6 +10,7 @@ import { memo, useEffect, useRef, useState } from 'react'
 import { MenuItem } from './Item'
 import { useTranslation } from 'react-i18next'
 import { Rendevoz } from '@/core/rendevoz'
+import { TypeToRegisteredObject } from '@/stores/object.store'
 
 const SidebarDatabase = memo(() => {
   const { t } = useTranslation()
@@ -57,6 +58,10 @@ const SidebarDatabase = memo(() => {
       let objectId: number | undefined = undefined
       let alreadyExist = false
       if (draggingEle) {
+        if (draggingEle.type && TypeToRegisteredObject.has(draggingEle.type)) {
+          const { getObjectIdFromDraggingEle } = TypeToRegisteredObject.get(draggingEle.type)!
+          objectId = getObjectIdFromDraggingEle?.(draggingEle)
+        }
         switch (draggingEle.type) {
           case 'noteBlock':
             objectId = draggingEle.blockId
@@ -64,7 +69,7 @@ const SidebarDatabase = memo(() => {
           case 'pdfLabel':
             objectId = draggingEle.labelId
             break
-          case 'webpage label':
+          case 'webpageLabel':
             objectId = draggingEle.highlightId
             break
           case 'pdf':
@@ -73,7 +78,7 @@ const SidebarDatabase = memo(() => {
           case 'note':
             objectId = draggingEle.noteId
             break
-          case 'note label':
+          case 'noteLabel':
             objectId = draggingEle.highlightId
             break
           case 'whiteboard':

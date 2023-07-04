@@ -42,7 +42,7 @@ export type MdastNodeType =
 export const defaultNodeTypes: NodeTypes = {
   paragraph: 'paragraph',
   block_quote: 'blockquote',
-  code_block: 'code-block',
+  code_block: 'pre',
   link: 'link',
   ul_list: 'ul_list',
   ol_list: 'ol_list',

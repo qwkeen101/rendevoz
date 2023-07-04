@@ -7,9 +7,10 @@
 		"paths": {
 			"@/*": ["src/*"],
       "styles/*": ["src/assets/styles/*"],
-      "~/*" : ["./*"]
+      "~/*" : ["./_rendevoz/*"]
 		},
     "allowJs": false,
+    "declaration": true,
     "skipLibCheck": true,
     "esModuleInterop": false,
     "allowSyntheticDefaultImports": true,
@@ -22,7 +23,7 @@
     "noEmit": true,
     "jsx": "react-jsx"
   },
-  "include": ["src", "typings/data/whiteboard.d.ts", "typings/editor/types"],
+  "include": ["src", "typings"],
   "references": [{ "path": "./tsconfig.node.json" }]
 }
 

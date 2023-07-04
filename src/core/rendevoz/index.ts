@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-namespace */
 import Notification from './notification'
 import Open from './open'
 import State from './state'
@@ -6,20 +5,28 @@ import Layout from './layout'
 import Emit from './event'
 import Object from './utils/object'
 import DOM from './events/dom'
+import { default as ActionUtils } from './utils'
+import { Rendevoz as IRendevoz } from '~/typings'
+import Store from './store'
+import MetaUtils from './utils/meta'
+import InnerHooks from './hooks'
 
-export namespace Rendevoz {
-  export const Actions = {
+export const Rendevoz: typeof IRendevoz = {
+  Actions: {
     Open,
     State,
     Notification,
-    Layout
-  }
-  export const Events = {
+    Layout,
+    Utils: ActionUtils,
+    Store
+  },
+  Events: {
     Emit,
     DOM
-  }
-
-  export const Utils = {
-    Object
-  }
+  },
+  Utils: {
+    Object,
+    Meta: MetaUtils
+  },
+  InnerHooks
 }

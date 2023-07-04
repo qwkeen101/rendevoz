@@ -17,7 +17,6 @@ import WebpageSourceRenderer from './WebpageSourceRenderer'
 import Colors from '@/consts/colors'
 import { TFunction } from 'i18next'
 import { MetaObject, Size } from '~/typings'
-import { GlobalImagePreviewerInstance } from '../global/GlobalImagePreviewer'
 import { Rendevoz } from '../rendevoz'
 import HoverAttachment from './HoverAttachment'
 import HoverObjectDetails from './HoverObjectDetails'
@@ -159,6 +158,7 @@ const _renderTitle = (
     </>
   )
 }
+
 const _renderDescription = (
   {
     ellipsisLine = 4,
@@ -187,14 +187,12 @@ const _renderImage = (
     ratio = 1,
     borderRadius = 4,
     style,
-    minWidth,
-    renderMode = 'thumbnail'
+    minWidth
   }: Size & {
     ratio?: number
     minWidth?: number
     borderRadius?: number
     style?: CSSProperties
-    renderMode?: 'thumbnail' | 'whole'
   },
   metaObject?: MetaObject,
   onSizeChange?: (size: Size) => void
@@ -328,9 +326,9 @@ const useRenderObject = (options: { metaObjectId: number }) => {
       case 'pdf':
         return <PdfViewer documentId={objectId} />
       case 'note':
-        return <Editor titleStyle={editorTitleStyle} id={uniqueId} noteId={objectId} />
+        return <Editor type="note" titleStyle={editorTitleStyle} id={uniqueId} noteId={objectId} />
       case 'normal':
-        return <Editor titleStyle={editorTitleStyle} id={uniqueId} noteId={objectId} />
+        return <Editor type="note" titleStyle={editorTitleStyle} id={uniqueId} noteId={objectId} />
       case 'whiteboard':
         return <Whiteboard enableMiniMap={false} whiteboardId={objectId} />
     }
@@ -367,6 +365,7 @@ const useRenderObject = (options: { metaObjectId: number }) => {
     )
   }
   const renderOptions = (options: Parameters<typeof _renderOptions>[0]) => _renderOptions(options, metaObject)
+
   const renderPopover = ({
     icon = 'park-more',
     position = 'left',
@@ -672,4 +671,5 @@ const WholeRenderer = memo(
     )
   }
 )
+
 export default useRenderObject

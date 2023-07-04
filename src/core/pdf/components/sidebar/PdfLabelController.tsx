@@ -29,10 +29,14 @@ const PdfLabelController = () => {
   const [labelSearch, setLabelSearch] = useAtom(PdfLabelSearchAtom)
   const { t } = useTranslation()
   useEffect(() => {
+    console.log(labelIds)
     if (labelIds?.length) {
       const action = async () => {
-        const labels = (labelSearch.results ||
-          (await Promise.all(labelIds?.map(i => ObjectStore('pdfLabel').getOneById(i)) || [])).filter(i => i?.page)) as (IPdfLabel & {
+        const labels = (
+          labelSearch.results?.length
+            ? labelSearch.results
+            : (await Promise.all(labelIds?.map(i => ObjectStore('pdfLabel').getOneById(i)) || [])).filter(i => i?.page !== undefined)
+        ) as (IPdfLabel & {
           page: number
         })[]
         if (sortMode === 'page') {

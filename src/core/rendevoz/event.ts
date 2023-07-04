@@ -1,3 +1,4 @@
+import { useEventHandler, useScopedEventEmitter } from '@/events'
 import { GlobalEventEmitter } from '@/events/eventEmitter'
 import EventEmitter from '@/events/eventEmitter'
 
@@ -7,7 +8,9 @@ const emitEventGlobally = (...params: Parameters<EventEmitter['emit']>) => {
 
 const Emit = {
   emitEventGlobally,
-  GlobalEventEmitter: GlobalEventEmitter
+  GlobalEventEmitter: GlobalEventEmitter,
+  useEventHandler: type => useEventHandler(type),
+  useScopedEventEmitter: () => useScopedEventEmitter()
 }
 
 export default Emit

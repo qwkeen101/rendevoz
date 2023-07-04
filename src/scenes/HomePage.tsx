@@ -1,6 +1,6 @@
 import { Button, Icon, IconWithPopover, WithBorder } from '@/components'
-import { FC, useEffect, useMemo, useState } from 'react'
-import { Content } from '@/components'
+import { FC, useMemo, useState } from 'react'
+import { Components } from 'rendevoz'
 import { useDebounceFn, useGlobalAtomValue, useToggle } from '@/hooks'
 import { useTranslation } from 'react-i18next'
 import TabTitle from '@/components/layout/TabTitle'
@@ -19,6 +19,7 @@ import { Provider, atom, createStore, useAtom, useAtomValue } from 'jotai'
 import fuzzysort from 'fuzzysort'
 import { Rendevoz } from '@/core/rendevoz'
 
+const { Content } = Components
 const HomeSearchAtom = atom<string | undefined>(undefined)
 export const HomePage: FC = () => {
   const { t } = useTranslation()

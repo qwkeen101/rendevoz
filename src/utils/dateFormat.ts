@@ -10,7 +10,7 @@ const getLocale = () => {
     return enUS
   }
 }
-const DateFormat = {
+export const DateFormat = {
   format: (date: number | Date, f: string) => format(date, f),
   formatDistanceToNow: (date: number) => formatDistanceToNow(date),
   formatDistanceToNowStrict: (date: number, suffix = false) => formatDistanceToNowStrict(date, { locale: getLocale(), addSuffix: suffix }),

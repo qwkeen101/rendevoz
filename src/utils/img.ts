@@ -1,9 +1,11 @@
-import { ipcInstance, IpcResponse } from '@/plugins'
+import { ipcInstance } from '@/plugins'
 import { Size, XYPosition } from '~/typings'
 import ColorThief from 'colorthief'
 
 const colorThief = new ColorThief()
-
+/**
+ * Return: saved local path of img
+ */
 export const saveImageLocally = async (
   imgData: string | Blob,
   options: {
@@ -12,7 +14,7 @@ export const saveImageLocally = async (
   } = {
     compress: true
   }
-): Promise<IpcResponse<any>> => {
+): Promise<string> => {
   const data = imgData
   const { compress, imgName } = options
   if (imgData instanceof Blob) {
@@ -21,7 +23,7 @@ export const saveImageLocally = async (
       if (!compress) {
         reader.readAsDataURL(imgData)
         reader.onload = () => {
-          ipcInstance.send('saveImage', imgName, reader.result).then(data => resolve(data))
+          ipcInstance.send('saveImage', imgName, reader.result).then(data => resolve(data.data))
         }
 
         return
@@ -57,7 +59,7 @@ export const saveImageLocally = async (
             canvas.getContext('2d')?.drawImage(image, 0, 0, width, height)
             const newImageUrl = canvas.toDataURL('image/jpeg', 0.8)
 
-            ipcInstance.send('saveImage', imgName, newImageUrl).then(data => resolve(data))
+            ipcInstance.send('saveImage', imgName, newImageUrl).then(data => resolve(data.data))
           }
         }
       }
@@ -67,14 +69,16 @@ export const saveImageLocally = async (
     })
   }
   if (typeof imgData === 'string') {
-    return ipcInstance.send('saveImage', imgName, data)
+    return (await ipcInstance.send('saveImage', imgName, data)).data
   }
-  return ipcInstance.send('saveImage', imgName, imgData)
+  return (await ipcInstance.send('saveImage', imgName, imgData)).data
 }
 
-// return dataUrl
-export const captureWebpage = (webviewId?: number, rect?: XYPosition & Size) => {
-  return ipcInstance.send<string>('captureWebpage', webviewId, rect)
+/**
+ * Return: DataUrl of captured webpage image
+ */
+export const captureWebpage = async (webviewId?: number, rect?: XYPosition & Size) => {
+  return (await ipcInstance.send<string>('captureWebpage', webviewId, rect)).data
 }
 
 export const imageToDataUrl = (img: HTMLImageElement) => {
@@ -85,6 +89,9 @@ export const imageToDataUrl = (img: HTMLImageElement) => {
   return canvas.toDataURL('image/png')
 }
 
+/**
+ * Return: local img path
+ */
 export const fetchRemoteImageAndSaveLocally = async (remoteImageUrl: string): Promise<string> => {
   const imageBlob = await (
     await fetch(remoteImageUrl, {
@@ -93,7 +100,7 @@ export const fetchRemoteImageAndSaveLocally = async (remoteImageUrl: string): Pr
     })
   ).blob()
   const data = await saveImageLocally(imageBlob, { compress: false })
-  return data.data
+  return data
 }
 
 export const downloadImg = async (imageUrl: string, imageName?: string) => {
@@ -108,6 +115,9 @@ export const downloadImg = async (imageUrl: string, imageName?: string) => {
   URL.revokeObjectURL(url)
 }
 
+/**
+ * Return: R,G,B
+ */
 export const getMainColorOfImage = (image: HTMLImageElement | string): Promise<[number, number, number]> => {
   return new Promise(res => {
     if (typeof image === 'string') {

@@ -39,19 +39,38 @@ export const normalizeEditorDragBlocksToGlobalDraggingDetails = (editor: CustomE
       .filter(i => i !== undefined) as CustomElement[]
     normalizedGlobalDraggingDetails.elements = elements
   }
-  // right now we need to get elements hided by this heading and move together
-  if (normalizedGlobalDraggingDetails.element?.type.startsWith('heading')) {
-    const headingEle = editor.currentEnterElement
-    const parentEle = Editor.node(editor, Path.parent(ID_TO_PATH_MAP.get(editor)?.get(headingEle?.id)))[0] as CustomElement
-    let headingEleIdx = parentEle.children.findIndex(i => i === headingEle) + 1
-    const elements = [headingEle]
-    while (parentEle.children[headingEleIdx] && parentEle.children[headingEleIdx].hide === true) {
-      elements.push(parentEle.children[headingEleIdx])
-      headingEleIdx += 1
+  if (normalizedGlobalDraggingDetails.elements?.length) {
+    normalizedGlobalDraggingDetails.elements.forEach((i, idx) => {
+      if (i.type.startsWith('heading')) {
+        const normalized = normalizeHeadingToHeadingWithHidenElements(i, editor)
+        // remove first
+        normalized.shift()
+        normalizedGlobalDraggingDetails.elements.splice(idx, 0, ...normalized)
+      }
+    })
+  } else {
+    // right now we need to get elements hided by this heading and move together
+    if (normalizedGlobalDraggingDetails.element?.type.startsWith('heading')) {
+      const headingEle = editor.currentEnterElement
+      if (headingEle) {
+        const elements = normalizeHeadingToHeadingWithHidenElements(headingEle, editor)
+        normalizedGlobalDraggingDetails.elements = elements.filter(i => i !== undefined) as CustomElement[]
+      }
     }
-    normalizedGlobalDraggingDetails.elements = elements.filter(i => i !== undefined) as CustomElement[]
   }
+
   return normalizedGlobalDraggingDetails
+}
+
+const normalizeHeadingToHeadingWithHidenElements = (element: CustomElement, editor: CustomEditor) => {
+  const parentEle = Editor.node(editor, Path.parent(ID_TO_PATH_MAP.get(editor)?.get(element?.id)))[0] as CustomElement
+  let headingEleIdx = parentEle.children.findIndex(i => i === element) + 1
+  const elements = [element]
+  while (parentEle.children[headingEleIdx] && parentEle.children[headingEleIdx].hide === true) {
+    elements.push(parentEle.children[headingEleIdx])
+    headingEleIdx += 1
+  }
+  return elements
 }
 
 const useEditorDrag = (editor: CustomEditor, scrollElement?: HTMLElement | null) => {

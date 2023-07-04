@@ -256,7 +256,7 @@ const WebpageInner = ({
                         return prev + curr.textContent
                       }, '')
                       GlobalDragOverlayInstance.draggingDetails = {
-                        type: 'webpage label',
+                        type: 'webpageLabel',
                         highlightId: event.highlightId,
                         noteId: currentWebpage.noteId,
                         textContent: highlightTextContent,

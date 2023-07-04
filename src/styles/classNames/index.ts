@@ -5,7 +5,6 @@ import * as Input from './input'
 import * as Tag from './tag'
 import * as _Drag from './drag'
 import * as _Background from './background'
-import { css } from '@emotion/css'
 
 const disableUserSelectClassName = 'disableUserSelect'
 const ClassName = {

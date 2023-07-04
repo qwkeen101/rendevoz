@@ -1,8 +1,7 @@
 import { useGlobalAtom } from '@/hooks'
 import { globalStore } from '@/stores'
-import { atom } from 'jotai'
 import { atomWithStorage } from 'jotai/utils'
-import _, { merge } from 'lodash'
+import _ from 'lodash'
 
 const localAppState = JSON.parse(localStorage.getItem('appState') || JSON.stringify({}))
 

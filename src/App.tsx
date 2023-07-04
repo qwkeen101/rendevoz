@@ -9,12 +9,11 @@ import { GlobalObjectPanel, GlobalCreateObject, GlobalScreenShot, GlobalGraph } 
 import '@/core/editor/dock.less'
 import SvgMarker from './components/svg/Marker'
 import { useSetting } from './core/setting'
-import { useEffect } from 'react'
+import { Fragment, useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ErrorBoundary } from 'react-error-boundary'
 import ErrorFallback from './components/base/ErrorFallBack'
 import AuthenticatedLayout from './components/base/authenticatedLayout'
-// import '@/core/pdf/core/types/pdf.min.js'
 import '@/assets/pdf.js'
 import PdfJsUrl from '@/assets/pdf.worker.js?url'
 import ThemeSwitcher from './ThemeSwitcher'
@@ -27,8 +26,7 @@ import GlobalWebview from './core/global/GlobalWebview'
 import 'highlight.js/styles/atom-one-dark.css'
 import GlobalTextSearch from './core/global/GlobalTextSearch'
 import '@/consts/colors.less'
-import { ILayoutTab } from '~/typings'
-import { TabData } from './core/rendevoz/layout'
+import { ILayoutTab, TabData } from '~/typings'
 import EditorPage from './scenes/editor'
 import Id from './utils/id'
 import ImagePage from './scenes/ImagePage'
@@ -40,7 +38,11 @@ import WhiteboardPage from './scenes/WhiteboardPage'
 import { HomePage } from './scenes/HomePage'
 import DatabasePage from './scenes/DatabasePage'
 import GlobalNoteImporter from './core/global/GlobalNoteImporter'
-
+import PluginManager from './core/plugin/PluginManager'
+import BuiltinEditorPlugin from './core/plugin/builtin/EditorPlugin'
+import TestPlugin from './TestPlugin'
+import { KeyToRegisteredGlobalElements } from './core/plugin/RegisterMap'
+import React from 'react'
 export function getOS() {
   const userAgent = window.navigator.userAgent.toLowerCase(),
     macosPlatforms = /(macintosh|macintel|macppc|mac68k|macos)/i,
@@ -63,11 +65,14 @@ export function getOS() {
   return os
 }
 
+
 const RENDEVOZ_DEFAULT_TABS: TabData[ILayoutTab['type']][] = [
   {
     type: 'note',
     content: opts =>
-      opts.objectId && <EditorPage noteId={opts.objectId} id={Id.getStrId()} onInstanceInitialized={opts.onInstanceInitialized} />
+      opts.objectId && (
+        <EditorPage type="note" noteId={opts.objectId} id={Id.getStrId()} onInstanceInitialized={opts.onInstanceInitialized} />
+      )
   },
   {
     type: 'image',
@@ -109,6 +114,7 @@ const RENDEVOZ_DEFAULT_TABS: TabData[ILayoutTab['type']][] = [
   }
 ]
 
+export const GlobalPluginManager = new PluginManager()
 const App = () => {
   const PdfJs = window['pdfjs-dist/build/pdf']
   PdfJs.GlobalWorkerOptions.workerSrc = PdfJsUrl
@@ -117,12 +123,33 @@ const App = () => {
 
   const [setting] = useSetting()
   const { i18n } = useTranslation()
-  RENDEVOZ_DEFAULT_TABS.forEach(i => Rendevoz.Actions.Layout.registerTabData(i))
+  const executed = useRef(false)
+
+  if (executed.current === false) {
+    RENDEVOZ_DEFAULT_TABS.forEach(i => Rendevoz.Actions.Layout.registerTabData(i))
+    GlobalPluginManager.registerPlugin(BuiltinEditorPlugin)
+    GlobalPluginManager.registerPlugin(TestPlugin)
+    const plugins = import.meta.glob('./assets/testplugin/*.js')
+    for (const path in plugins) {
+      plugins[path]().then(mod => {
+        if (typeof mod === 'object' && mod) {
+          if ('default' in mod && typeof mod.default === 'function') {
+            GlobalPluginManager.registerPlugin(mod)
+          }
+        }
+      })
+    }
+    executed.current = true
+  }
+
   useEffect(() => {
     if (setting.general.language) {
       i18n.changeLanguage(setting.general.language)
     }
   }, [setting.general.language])
+
+  const registeredGlobalElements = Array.from(KeyToRegisteredGlobalElements.entries())
+
   return (
     <ErrorBoundary FallbackComponent={ErrorFallback}>
       {/* for unknown queryselector bug */}
@@ -152,6 +179,9 @@ const App = () => {
         <GlobalDragOverlay />
         <GlobalImagePreviewer />
         <GlobalNoteImporter />
+        {registeredGlobalElements.map(entry => (
+          <Fragment key={entry[0]}>{entry[1]()}</Fragment>
+        ))}
         <svg style={{ position: 'absolute', width: 0, height: 0, overflow: 'hidden' }}>
           <SvgMarker />
         </svg>

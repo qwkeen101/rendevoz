@@ -51,12 +51,12 @@ const slicedLength = 'rendefile://'.length
         autoUpdater.on('update-available', info => {
           console.log(info)
         })
-        // autoUpdater.on('update-downloaded', () => {
-        //   ipcRenderer.send('update downloaded')
-        //   setTimeout(() => {
-        //     autoUpdater.quitAndInstall()
-        //   }, 6000)
-        // })
+        autoUpdater.on('update-downloaded', () => {
+          ipcRenderer.send('update downloaded')
+          setTimeout(() => {
+            autoUpdater.quitAndInstall()
+          }, 6000)
+        })
         // autoUpdater.autoInstallOnAppQuit = true
         app.on('window-all-closed', () => {
           app.quit()

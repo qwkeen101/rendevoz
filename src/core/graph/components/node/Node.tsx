@@ -17,6 +17,7 @@ import { GraphPinNodesIdsAtom } from '../../hooks/useGraphFilter'
 import SvgIconRenderer from '../icons/SvgIconRenderer'
 import { GraphModeAtom } from '../../hooks/useGraphMode'
 import Colors from '@/consts/colors'
+import { TypeToRegisteredMetaObject } from '@/stores/meta.store'
 
 interface NodeProps {
   node: GraphNode
@@ -42,6 +43,15 @@ export const TypeToNodeRadius: Record<MetaObject['type'], number> = {
   video: 50,
   audio: 50,
   localFile: 50
+}
+
+export const getRadius = (type?: MetaObject['type']) => {
+  if (!type) return 50
+  if (TypeToNodeRadius[type]) {
+    return TypeToNodeRadius[type]
+  }
+  const registeredRadius = TypeToRegisteredMetaObject.get(type)?.graphSettings?.radius
+  return registeredRadius ?? 50
 }
 const sliceLabel = (label?: string) => {
   if (!label) return
@@ -74,7 +84,7 @@ const Node: FC<NodeProps> = memo(({ node, onMouseEnter, onMouseLeave, onContextM
     return showTags
   }, [filterTags, node.opacity, meta?.tags])
 
-  const radius = TypeToNodeRadius[node.type || 'normal']
+  const radius = getRadius(node.type || 'normal')
   const d = radius * 2
   const originNode = graph?.nodesMap?.get(node.id)
   const realNode = useMemo(() => {

@@ -32,6 +32,7 @@ export interface EditorOverlayManager {
   setContent: (content: AvalibleOverlayComponents) => void
   setPosition: (position: LeftTopPosition) => void
   getContent: () => keyof typeof AvalibleOverlayComponents | undefined
+  isOpen: () => boolean
 }
 const useEditorOverlay = (editor: CustomEditor, scrollElement?: HTMLDivElement | null) => {
   const [popoverVisible, setPopoverVisible] = useState(false)
@@ -42,7 +43,8 @@ const useEditorOverlay = (editor: CustomEditor, scrollElement?: HTMLDivElement |
     close: () => setPopoverVisible(false),
     setContent: (content: AvalibleOverlayComponents) => setOverlayContent(content),
     setPosition: (position: LeftTopPosition) => setPopoverPosition(position),
-    getContent: () => overlayContent
+    getContent: () => overlayContent,
+    isOpen: () => popoverVisible
   }
   const update = useUpdate()
   const renderOverlayContent = () => {
@@ -75,7 +77,7 @@ const useEditorOverlay = (editor: CustomEditor, scrollElement?: HTMLDivElement |
       case 'emojiPicker':
         return ['bottom', 'top']
       case 'slashMenu':
-        return ['bottom', 'top']
+        return ['right', 'top']
       default:
         return ['bottom']
     }
@@ -95,6 +97,8 @@ const useEditorOverlay = (editor: CustomEditor, scrollElement?: HTMLDivElement |
     switch (overlayContent) {
       case 'emojiPicker':
         return 'start'
+      case 'slashMenu':
+        return 'center'
       default:
         return 'start'
     }
@@ -115,10 +119,9 @@ const useEditorOverlay = (editor: CustomEditor, scrollElement?: HTMLDivElement |
       positions={positions()}
       align={align()}
       visible={popoverVisible}
-      disableIntersection
       padding={20}
       reposition
-      disableNudge={overlayContent === 'emojiPicker' || overlayContent === 'blockHandleMenu'}
+      disableNudge={overlayContent === 'emojiPicker' || overlayContent === 'blockHandleMenu' || overlayContent === 'slashMenu'}
       boundaryElement={document.body}
       boundaryInset={20}
       content={renderAnimatedOverlay()}

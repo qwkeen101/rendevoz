@@ -5,10 +5,11 @@ import { curveBasis } from 'd3'
 import { getMarkerId } from './utils/getMarkerId'
 import { MarkerColor } from '@/consts'
 import { GraphOverlayManager } from './components/overlay/useGraphOverlay'
-import { TypeToNodeRadius } from './components/node/Node'
+import { TypeToNodeRadius, getRadius } from './components/node/Node'
 import { SetStateAction } from 'react'
 import produce from 'immer'
 import createPanZoom, { PanZoom } from 'panzoom'
+import { TypeToRegisteredMetaObject } from '@/stores/meta.store'
 
 class D3GraphManager {
   public isChoosingNode: false | 'start' | 'end' = false
@@ -48,6 +49,10 @@ class D3GraphManager {
   public pinnedNodesIdsSet = new Set<number>()
 
   public getRadius = (type: string) => {
+    const registered = TypeToRegisteredMetaObject.get(type)?.graphSettings?.collisionRadius
+    if (registered) {
+      return registered
+    }
     switch (type) {
       case 'note':
       case 'pdf':
@@ -208,10 +213,10 @@ class D3GraphManager {
                 const thisNode = this.nodesMap?.get(n.id)
                 n.x = thisNode?.x
                 n.y = thisNode?.y
-                if(n.fx){
+                if (n.fx) {
                   n.fx = null
                 }
-                if(n.fy){
+                if (n.fy) {
                   n.fy = null
                 }
               })
@@ -300,9 +305,6 @@ class D3GraphManager {
     const targetNode = this.nodesMap?.get(edge.targetId)
     const sourceNode = this.nodesMap?.get(edge.sourceId)
 
-    const getRadius = (type?: string) => {
-      return TypeToNodeRadius[type || 'normal']
-    }
     const targetCircleCenterX = targetX + getRadius(targetNode?.type)
     const targetCircleCenterY = targetY + getRadius(targetNode?.type)
     const sourceCircleCenterX = sourceX + getRadius(sourceNode?.type)

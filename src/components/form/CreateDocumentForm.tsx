@@ -58,7 +58,7 @@ const CreateDocumentForm: FC<NewDocumentFormProps> = ({ onBack, onSubmit }) => {
     const imageData = await saveImageLocally(data)
     pdfDocument.current.metadata = {
       ...pdfDocument.current.metadata,
-      coverUrl: imageData.data
+      coverUrl: imageData
     }
   }
   const handleInsertDocument = async (obj: Partial<MetaObject>): Promise<MetaObject> => {

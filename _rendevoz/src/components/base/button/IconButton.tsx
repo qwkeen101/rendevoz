@@ -1,0 +1,96 @@
+import { useMergedRef } from '@/hooks'
+import ClassName from '@/styles/classNames'
+import { css } from '@emotion/css'
+import classNames from 'classnames'
+import React, { CSSProperties, FC, forwardRef, MouseEventHandler, useLayoutEffect, useRef } from 'react'
+import { Icon, Tooltip } from '..'
+import Content from '../Content'
+import Colors from '@/consts/colors'
+
+const DangerousButtonClassName = css({
+  color: '#FD8A8A'
+})
+
+const IconButton = forwardRef(
+  (
+    {
+      icon,
+      text,
+      gap = 10,
+      onClick,
+      dangerous,
+      className,
+      reverse,
+      spaceBetween,
+      tabIndex,
+      selected,
+      onPointerEnter,
+      style,
+      tooltip,
+      spin,
+      ...rest
+    }: {
+      icon?: string
+      onClick?: MouseEventHandler
+      gap?: number
+      text?: string
+      className?: string
+      dangerous?: boolean
+      reverse?: boolean
+      spaceBetween?: boolean
+      tabIndex?: number
+      selected?: boolean
+      style?: CSSProperties
+      tooltip?: string
+      spin?: boolean
+      onPointerEnter?: React.PointerEventHandler
+    } & React.HTMLProps<HTMLDivElement>,
+    ref
+  ) => {
+    const innerRef = useRef<HTMLDivElement>(null)
+    const mergedRef = useMergedRef(innerRef, ref)
+    useLayoutEffect(() => {
+      if (selected !== undefined) {
+        if (selected === false) {
+          innerRef.current?.style.setProperty('background', 'none', 'important')
+        }
+      }
+    }, [selected])
+    return (
+      <Tooltip content={tooltip} ref={mergedRef}>
+        <Content
+          role="button"
+          onClick={onClick}
+          gap={gap}
+          flex
+          tabIndex={tabIndex}
+          onPointerEnter={onPointerEnter}
+          {...rest}
+          style={{
+            flexDirection: reverse && icon ? 'row-reverse' : 'row',
+            justifyContent: spaceBetween ? 'space-between' : undefined,
+            background:
+              selected === true
+                ? dangerous
+                  ? 'rgb(253, 138, 138, 0.2)'
+                  : Colors.Background.ButtonHover
+                : selected === false
+                ? 'none'
+                : undefined,
+            ...style
+          }}
+          className={classNames(
+            className,
+            ClassName.flatButton(undefined, undefined, dangerous ? 'rgb(253, 138, 138, 0.2)' : undefined),
+            dangerous && DangerousButtonClassName
+          )}
+        >
+          {icon && <Icon spin={spin} name={icon} />}
+          {text && <div>{text}</div>}
+        </Content>
+      </Tooltip>
+    )
+  }
+)
+
+export default IconButton

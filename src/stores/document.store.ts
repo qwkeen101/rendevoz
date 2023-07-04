@@ -42,7 +42,7 @@ export const initializePdfDocument = async (file: File): Promise<Partial<IPdfDoc
     const imageResult = result[0]
     pdfDocument.metadata = {
       ...pdfDocument.metadata,
-      coverUrl: imageResult.data
+      coverUrl: imageResult
     }
     const pdfResult = result[1]
     pdfDocument.fileUrl = pdfResult.data

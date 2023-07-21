@@ -190,9 +190,15 @@ const slicedLength = 'rendefile://'.length
             return { action: 'deny' }
           })
         })
-        const search = child_process.exec(
-          `cd ${process.env.HOME} && ${searcheEngineStartPath} --db-path=${searchEngineDataPath}`,
-          (err, rr, r) => {
+        const searchCommand =
+          process.platform === 'win32'
+            ? `${searcheEngineStartPath} --db-path=${searchEngineDataPath}`
+            : `cd ${process.env.HOME} && ${searcheEngineStartPath} --db-path=${searchEngineDataPath}`
+        setTimeout(() => {
+          console.log(searchCommand)
+          win.webContents.send('search', searchCommand)
+        }, 5000)
+        const search = child_process.exec(searchCommand, (err, rr, r) => {
             win.webContents.send('search', {
               err,
               rr,

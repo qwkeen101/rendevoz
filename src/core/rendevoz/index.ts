@@ -9,9 +9,6 @@ import { default as ActionUtils } from './utils'
 import { IRendevoz } from '~/typings'
 import Store from './store'
 import MetaUtils from './utils/meta'
-import * as InnerHooks from './hooks'
-import * as InnerComponents from './components'
-
 export const Rendevoz: IRendevoz = {
   Actions: {
     Open,
@@ -28,7 +25,5 @@ export const Rendevoz: IRendevoz = {
   Utils: {
     Object,
     Meta: MetaUtils
-  },
-  InnerHooks,
-  InnerComponents
+  }
 }

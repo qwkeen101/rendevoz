@@ -43,7 +43,8 @@ import Id from '@/utils/id'
 import GlobalUtils from '@/core/global/GlobalUtils'
 import GlobalPdfPrinter from '@/core/global/GlobalPdfPrinter'
 import GraphPage from '@/scenes/GraphPage'
-
+import InnerHookz from '@/core/rendevoz/hooks'
+import * as InnerComponentz from '@/core/rendevoz/components'
 export function getOS() {
   const userAgent = window.navigator.userAgent.toLowerCase(),
     macosPlatforms = /(macintosh|macintel|macppc|mac68k|macos)/i,
@@ -120,6 +121,8 @@ const RENDEVOZ_DEFAULT_TABS: TabData[ILayoutTab['type']][] = [
 
 export const GlobalPluginManager = new PluginManager()
 const App = () => {
+  Rendevoz.InnerHooks = InnerHookz
+  Rendevoz.InnerComponents = InnerComponentz
   const PdfJs = window['pdfjs-dist/build/pdf']
   PdfJs.GlobalWorkerOptions.workerSrc = PdfJsUrl
 
@@ -131,17 +134,6 @@ const App = () => {
   if (!executed.current) {
     RENDEVOZ_DEFAULT_TABS.forEach(i => Rendevoz.Actions.Layout.registerTabData(i))
     GlobalPluginManager.registerPlugin(BuiltinEditorPlugin)
-    // GlobalPluginManager.registerPlugin(TestPlugin)
-    const plugins = import.meta.glob('./assets/testplugin/*.js')
-    for (const path in plugins) {
-      plugins[path]().then(mod => {
-        if (typeof mod === 'object' && mod) {
-          if ('default' in mod && typeof mod.default === 'function') {
-            GlobalPluginManager.registerPlugin(mod)
-          }
-        }
-      })
-    }
     executed.current = true
   }
 

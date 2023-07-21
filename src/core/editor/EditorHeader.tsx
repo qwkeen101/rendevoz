@@ -1,4 +1,4 @@
-import { useEditorInstance } from '@/core/rendevoz/hooks'
+import useEditorInstance from '@/core/editor/hooks/useEditorInstance'
 import { Button, Content, Icon, IconWithPopover, WithBorder } from '@/components'
 import UseEditorBarState from '@/core/editor/hooks/useEditorBarState'
 import useEditorState from '@/core/editor/hooks/useEditorState'
@@ -26,7 +26,9 @@ const EditorHeader = ({ title }: { title: string }) => {
           name={'park-left-bar'}
           onClick={() => setEditorBarState(s => ({ ...s, showLeftBar: !s.showLeftBar }))}
         />
-        <div style={{textTransform: 'none'}} className={css([ClassName.title('0.9rem'), ClassName.ellipsisFont(1)])}>{title}</div>
+        <div style={{ textTransform: 'none' }} className={css([ClassName.title('0.9rem'), ClassName.ellipsisFont(1)])}>
+          {title}
+        </div>
       </Content>
       <Content flex gap={10}>
         {!editorState.outReadOnly && (

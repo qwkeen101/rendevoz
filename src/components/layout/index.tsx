@@ -130,10 +130,6 @@ const Layout: FC<LayoutProps> = ({ sidebar }) => {
       <Container auto style={{ height: 0 }}>
         {sidebar}
         <Container
-          style={{
-            marginLeft: sidebarWidth,
-            transition: 'margin-left 0.3s ease-out'
-          }}
           auto
         >
           {layout && (

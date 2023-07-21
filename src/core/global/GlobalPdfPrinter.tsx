@@ -47,7 +47,7 @@ const GlobalPdfPrinter = () => {
   })
 
   const containerEle = useMemo(() => document.createElement('div'), [modalVisible])
-  const cache = useMemo(() => createCache({ key: 'external', container: containerEle }), [])
+  const cache = useMemo(() => createCache({ key: 'external', container: containerEle }), [containerEle])
   const externalWindowRef = useRef<Window>()
   useEffect(() => {
     if (modalVisible) {

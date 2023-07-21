@@ -1,5 +1,5 @@
 import { atom, useAtom } from "jotai";
 
-const canSubmitAtom = atom(false)
+const canSubmitAtom = atom(false);
 
 export const useCanSubmit = () => useAtom(canSubmitAtom)

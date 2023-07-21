@@ -1,16 +1,17 @@
-import { CSSProperties, FC, ReactNode, Ref } from 'react';
-import ToolbarItem from './ToolbarItem';
-import ToolbarSeparator from './ToolbarSeparator';
+import { CSSProperties, FC, ReactNode, Ref } from "react";
+import ToolbarItem from "./ToolbarItem";
+import ToolbarSeparator from "./ToolbarSeparator";
+
 export interface ToolbarProps {
-    direction?: 'vertical' | 'horizontal';
-    children?: ReactNode;
-    className?: string;
-    itemClassName?: string;
-    itemSpace?: number;
-    itemSize?: number;
-    itemClickPreventDefault?: boolean;
-    style?: CSSProperties;
-    innerRef?: Ref<HTMLDivElement>;
+  direction?: "vertical" | "horizontal";
+  children?: ReactNode;
+  className?: string;
+  itemClassName?: string;
+  itemSpace?: number;
+  itemSize?: number;
+  itemClickPreventDefault?: boolean;
+  style?: CSSProperties;
+  innerRef?: Ref<HTMLDivElement>;
 }
 interface IToolbar extends FC<ToolbarProps> {
     Item: typeof ToolbarItem;

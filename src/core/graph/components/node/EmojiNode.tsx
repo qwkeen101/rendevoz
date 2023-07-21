@@ -1,14 +1,20 @@
-import { GraphNode } from '../../types/node'
-import { motion } from 'framer-motion'
-import { TypeToNodeRadius } from './Node'
-import { useMemo } from 'react'
-import getEmoji from '@/utils/emoji'
-import Colors from '@/consts/colors'
+import { GraphNode } from "../../types/node";
+import { motion } from "framer-motion";
+import { TypeToNodeRadius } from "./Node";
+import { useMemo } from "react";
+import getEmoji from "@/utils/emoji";
+import Colors from "@/consts/colors";
 
-const EmojiNode = ({ node, label }: { node: GraphNode & { icon: string }; label?: string }) => {
-  const emoji = useMemo(() => getEmoji(node.icon), [node.icon])
-  const radius = TypeToNodeRadius[node.type || 'normal']
-  const d = radius * 2
+const EmojiNode = ({
+  node,
+  label,
+}: {
+  node: GraphNode & { icon: string };
+  label?: string;
+}) => {
+  const emoji = useMemo(() => getEmoji(node.icon), [node.icon]);
+  const radius = TypeToNodeRadius[node.type || "normal"];
+  const d = radius * 2;
 
   return (
     <>
@@ -19,19 +25,26 @@ const EmojiNode = ({ node, label }: { node: GraphNode & { icon: string }; label?
         initial={{ scale: 1 }}
         animate={{ scale: node.scale }}
       >
-        <div style={{ height: '100%', width: '100%', display: 'flex', justifyContent: 'center' }}>
+        <div
+          style={{
+            height: "100%",
+            width: "100%",
+            display: "flex",
+            justifyContent: "center",
+          }}
+        >
           {emoji && (
             <img
               src="data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw=="
               style={{
-                width: '100%',
-                height: '100%',
+                width: "100%",
+                height: "100%",
                 backgroundImage: `url(${emoji.imageSrc})`,
                 backgroundPositionX: `${(emoji.x * 100) / 60}%`,
                 backgroundPositionY: `${(emoji.y * 100) / 60}%`,
-                backgroundRepeat: 'no-repeat',
-                backgroundSize: '6100% 6100%',
-                verticalAlign: '-0.1em'
+                backgroundRepeat: "no-repeat",
+                backgroundSize: "6100% 6100%",
+                verticalAlign: "-0.1em",
               }}
             />
           )}
@@ -48,7 +61,7 @@ const EmojiNode = ({ node, label }: { node: GraphNode & { icon: string }; label?
         {label || node.label}
       </text>
     </>
-  )
-}
+  );
+};
 
-export default EmojiNode
+export default EmojiNode;

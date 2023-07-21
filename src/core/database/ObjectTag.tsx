@@ -1,16 +1,16 @@
-import { useToggle } from '@/hooks'
-import { tagToMetaObjectIdsMapAtom } from '@/stores/meta.store'
-import { ObjectStore, globalStore } from '@/stores'
-import ClassName from '@/styles/classNames'
-import { useAtomValue } from 'jotai/react'
-import { CSSProperties, MouseEventHandler, useEffect } from 'react'
-import { Content, Icon, IconWithPopover } from '../../components/base'
-import BlockColorPicker from '../editor/components/BlockColorPicker'
-import Colors from '@/consts/colors'
-import { defaultBgColor } from '@/components/picker/colorPicker'
-import isHotkey from 'is-hotkey'
-import { KEY } from '@/consts'
-import FontSize from '@/consts/font'
+import { useToggle } from "@/hooks";
+import { tagToMetaObjectIdsMapAtom } from "@/stores/meta.store";
+import { globalStore, ObjectStore } from "@/stores";
+import ClassName from "@/styles/classNames";
+import { useAtomValue } from "jotai/react";
+import { CSSProperties, MouseEventHandler, useEffect } from "react";
+import { Content, Icon, IconWithPopover } from "../../components/base";
+import BlockColorPicker from "../editor/components/BlockColorPicker";
+import Colors from "@/consts/colors";
+import { defaultBgColor } from "@/components/picker/colorPicker";
+import isHotkey from "is-hotkey";
+import { KEY } from "@/consts";
+import FontSize from "@/consts/font";
 
 const Tag = ({
   tag,
@@ -26,41 +26,43 @@ const Tag = ({
   showPickColor,
   showDBRemove,
   showEdit,
-  style
+  style,
 }: {
-  tag: number
-  hideSize?: boolean
-  hideDelete?: boolean
-  hideAdd?: boolean
-  onDelete?: VoidFunction
-  small?: boolean
-  cursor?: string
-  onClick?: MouseEventHandler
-  onAdd?: VoidFunction
-  parentElement?: HTMLElement
-  showDBRemove?: boolean
-  showEdit?: boolean
-  onDBRemove?: VoidFunction
-  showPickColor?: boolean
-  style?: CSSProperties
+  tag: number;
+  hideSize?: boolean;
+  hideDelete?: boolean;
+  hideAdd?: boolean;
+  onDelete?: VoidFunction;
+  small?: boolean;
+  cursor?: string;
+  onClick?: MouseEventHandler;
+  onAdd?: VoidFunction;
+  parentElement?: HTMLElement;
+  showDBRemove?: boolean;
+  showEdit?: boolean;
+  onDBRemove?: VoidFunction;
+  showPickColor?: boolean;
+  style?: CSSProperties;
 }) => {
-  const tagMap = !hideSize ? useAtomValue(tagToMetaObjectIdsMapAtom, { store: globalStore }) : undefined
+  const tagMap = !hideSize
+    ? useAtomValue(tagToMetaObjectIdsMapAtom, { store: globalStore })
+    : undefined;
 
-  const tagToObjectsSet = tagMap?.get(tag)
-  const tagObject = ObjectStore('tag').useValue(tag)
+  const tagToObjectsSet = tagMap?.get(tag);
+  const tagObject = ObjectStore("tag").useValue(tag);
 
-  const size = tagToObjectsSet?.size
-  const [pointerInTag, togglePointerInTag] = useToggle(false)
+  const size = tagToObjectsSet?.size;
+  const [pointerInTag, togglePointerInTag] = useToggle(false);
 
-  const [isEditing, toggleIsEditing] = useToggle(false)
+  const [isEditing, toggleIsEditing] = useToggle(false);
 
   useEffect(() => {
     if (tagObject?.deleted) {
-      onDelete?.()
+      onDelete?.();
     }
-  }, [tagObject?.deleted])
+  }, [tagObject?.deleted]);
 
-  if (tagObject?.deleted || !tagObject) return null
+  if (tagObject?.deleted || !tagObject) return null;
   return (
     <Content
       flex
@@ -71,17 +73,17 @@ const Tag = ({
       onPointerLeave={() => togglePointerInTag(false)}
       style={{
         background: tagObject?.color || Colors.Background.ButtonHover,
-        color: tagObject?.color ? 'white' : Colors.Font.Secondary,
+        color: tagObject?.color ? "white" : Colors.Font.Secondary,
         // borderRadius: small ? '999px' : '999px',
         borderRadius: 999,
-        padding: small ? '0px 8px 0px' : '3px 6px 3px 10px',
-        fontFamily: 'Muli',
-        width: 'fit-content',
-        justifyContent: 'space-between',
-        fontSize: small ? FontSize['12px'] : FontSize['14px'],
+        padding: small ? "0px 8px 0px" : "3px 6px 3px 10px",
+        fontFamily: "Muli",
+        width: "fit-content",
+        justifyContent: "space-between",
+        fontSize: small ? FontSize["12px"] : FontSize["14px"],
         cursor,
-        whiteSpace: 'nowrap',
-        ...style
+        whiteSpace: "nowrap",
+        ...style,
       }}
     >
       <Content flex gap={4}>
@@ -90,28 +92,31 @@ const Tag = ({
             autoFocus
             defaultValue={tagObject.name}
             style={{
-              border: 'none',
-              outline: 'none',
-              background: 'transparent'
+              border: "none",
+              outline: "none",
+              background: "transparent",
             }}
-            onKeyDown={e => {
+            onKeyDown={(e) => {
               if (isHotkey(KEY.Enter, e)) {
-                ObjectStore('tag').updateOne({ id: tag, name: e.currentTarget.value })
-                toggleIsEditing(false)
+                ObjectStore("tag").updateOne({
+                  id: tag,
+                  name: e.currentTarget.value,
+                });
+                toggleIsEditing(false);
               }
             }}
           />
         ) : (
-          <span style={{ textTransform: 'none' }}>{tagObject.name}</span>
+          <span style={{ textTransform: "none" }}>{tagObject.name}</span>
         )}
         {!hideSize && (
-          <Content flex style={{ width: 16, textAlign: 'center' }}>
+          <Content flex style={{ width: 16, textAlign: "center" }}>
             {pointerInTag && !hideAdd ? (
               <Icon
                 name="park-plus"
-                onClick={e => {
-                  e.stopPropagation()
-                  onAdd?.()
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onAdd?.();
                 }}
                 className={ClassName.circleButton(2)}
               />
@@ -121,20 +126,30 @@ const Tag = ({
           </Content>
         )}
       </Content>
-      {(showEdit || showDBRemove || showPickColor || (!small && !hideDelete)) && (
+      {(showEdit ||
+        showDBRemove ||
+        showPickColor ||
+        (!small && !hideDelete)) && (
         <Content flex gap={6}>
           {!small && !hideDelete && (
             <Icon
               size={12}
-              onClick={e => {
-                e.stopPropagation()
-                onDelete?.()
+              onClick={(e) => {
+                e.stopPropagation();
+                onDelete?.();
               }}
               className={ClassName.circleButton(3)}
               name="park-close"
             />
           )}
-          {showEdit && <Icon name="park-edit" className={ClassName.circleButton(3)} onClick={toggleIsEditing} size={12} />}
+          {showEdit && (
+            <Icon
+              name="park-edit"
+              className={ClassName.circleButton(3)}
+              onClick={toggleIsEditing}
+              size={12}
+            />
+          )}
           {showPickColor && (
             <IconWithPopover
               closeOnContentClick
@@ -145,8 +160,12 @@ const Tag = ({
                 <BlockColorPicker
                   showFont={false}
                   showMoreBgOption={false}
-                  onPickBackgroundColor={c =>
-                    tagObject?.id && ObjectStore('tag').updateOne({ id: tagObject?.id, color: c === defaultBgColor ? undefined : c })
+                  onPickBackgroundColor={(c) =>
+                    tagObject?.id &&
+                    ObjectStore("tag").updateOne({
+                      id: tagObject?.id,
+                      color: c === defaultBgColor ? undefined : c,
+                    })
                   }
                 />
               }
@@ -155,9 +174,9 @@ const Tag = ({
           {showDBRemove && (
             <Icon
               size={12}
-              onClick={e => {
-                e.stopPropagation()
-                onDBRemove?.()
+              onClick={(e) => {
+                e.stopPropagation();
+                onDBRemove?.();
               }}
               className={ClassName.circleButton(3)}
               name="park-delete"
@@ -166,7 +185,7 @@ const Tag = ({
         </Content>
       )}
     </Content>
-  )
-}
+  );
+};
 
-export default Tag
+export default Tag;

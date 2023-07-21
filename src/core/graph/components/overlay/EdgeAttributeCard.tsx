@@ -6,32 +6,51 @@ import { MetaStore } from '@/stores'
 import ClassName from '@/styles/classNames'
 import produce from 'immer'
 import { useMemo } from 'react'
-import useEdges from '../../hooks/useEdges'
+import useEdges, { oppositeEdgesMapAtom } from '../../hooks/useEdges'
 import { GraphEdge } from '../../types/edge'
+import { useStore } from 'jotai'
+import useGraph from '@/core/graph/hooks/useGraph'
 
 const EdgeAttributeCard = ({ currentEdge }: { currentEdge?: GraphEdge }) => {
   const [edges, setEdges] = useEdges()
   const { updateMetaLink, deleteMetaLink } = MetaStore
+  const store = useStore()
+  const graph = useGraph()
   const originEdgeIdx = useMemo(() => edges?.findIndex(i => i.id === currentEdge?.id), [edges, currentEdge?.id])
   const updateEdge = useMemoizedFn((edge: Partial<GraphEdge>) => {
     if (originEdgeIdx !== undefined && edges) {
       const originEdge = edges[originEdgeIdx]
       const newEdge = Object.assign({}, originEdge, edge)
+      const oppoEdgeId = store.get(oppositeEdgesMapAtom).get(originEdge.id)
+      graph?.ID_TO_EDGE_FUNCTION_MAP.get(currentEdge.id)?.drawEdge()
+      if (oppoEdgeId) {
+        graph?.ID_TO_EDGE_FUNCTION_MAP.get(oppoEdgeId)?.drawEdge()
+        updateMetaLink({ id: oppoEdgeId, color: newEdge.color, label: newEdge.label }, true)
+      }
       edges &&
         setEdges(
           produce(edges, draft => {
+            if (oppoEdgeId) {
+              const oppoEdge = edges.findIndex(i => i.id === oppoEdgeId)
+              draft[oppoEdge].color = newEdge.color
+            }
             draft[originEdgeIdx] = newEdge
           })
         )
       console.log(newEdge)
-      debouncedUpdateLink({
-        id: newEdge.id,
-        color: newEdge.color,
-        label: newEdge.label
-      })
+      debouncedUpdateLink(
+        {
+          id: newEdge.id,
+          color: newEdge.color,
+          label: newEdge.label
+        },
+        true
+      )
     }
   })
-  const { run: debouncedUpdateLink } = useDebounceFn(updateMetaLink, { wait: 1000 })
+  const { run: debouncedUpdateLink } = useDebounceFn(updateMetaLink, {
+    wait: 200
+  })
   return (
     <Toolbar>
       <Toolbar.Item>

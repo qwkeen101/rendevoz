@@ -1,7 +1,7 @@
-import { atom, useAtom } from 'jotai'
+import { atom, useAtom } from "jotai";
 
-const isSelectingAtom = atom(false)
+const isSelectingAtom = atom(false);
 
-const useIsSelecting = () => useAtom(isSelectingAtom)
+const useIsSelecting = () => useAtom(isSelectingAtom);
 
-export default useIsSelecting
+export default useIsSelecting;

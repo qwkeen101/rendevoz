@@ -1,8 +1,8 @@
-import _ from 'lodash'
-import { useEffect, useMemo, useRef } from 'react'
-import useLatest from './useLatest'
+import _ from "lodash";
+import { useEffect, useMemo } from "react";
+import useLatest from "./useLatest";
 
-type noop = (...args: any) => any
+type noop = (...args: any) => any;
 function useThrottleFn<T extends noop>(fn: T, options) {
   const fnRef = useLatest(fn)
   const wait = options?.wait ?? 1000

@@ -1,71 +1,98 @@
-import { AnimatePopover, Content, Toolbar, WithBorder } from '@/components/base'
-import { GlobalGraphInstance, useRenderObject } from '@/core'
-import { useToggle } from '@/hooks'
-import { PageSize } from '~/typings'
-import { globalStore, ObjectStore } from '@/stores'
-import { metaObjectsAtom } from '@/stores/meta.store'
-import { memo, useEffect, useLayoutEffect, useRef, useState } from 'react'
-import { Rnd } from 'react-rnd'
-import { IObjectLabel } from '~/typings/data'
-import Colors from '@/consts/colors'
-import FontSize from '@/consts/font'
-import HoverObjectDetails from '@/core/database/HoverObjectDetails'
+import {
+  AnimatePopover,
+  Content,
+  Toolbar,
+  WithBorder,
+} from "@/components/base";
+import { GlobalGraphInstance, useRenderObject } from "@/core";
+import { useToggle } from "@/hooks";
+import { PageSize } from "~/typings";
+import { globalStore, ObjectStore } from "@/stores";
+import { metaObjectsAtom } from "@/stores/meta.store";
+import { memo, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { Rnd } from "react-rnd";
+import { IObjectLabel } from "~/typings/data";
+import Colors from "@/consts/colors";
+import FontSize from "@/consts/font";
 
-const ObjectLabel = ({ labelId, pageSize }: { labelId: number; pageSize: PageSize }) => {
-  const label = ObjectStore('pdfLabel').useValue(labelId) as IObjectLabel
-  const { renderInline, renderExpand, metaObject } = useRenderObject({ metaObjectId: label.metaObjectId })
-  const [innerPosition, setInnerPosition] = useState<{ x: number; y: number }>()
-  const [top, left] = label?.rect || []
-  const [popoverVisible, togglePopoverVisible] = useToggle(false)
-  const [expanded, toggleExpanded] = useToggle(false)
-  const store = ObjectStore('pdfLabel')
-  const rndRef = useRef<Rnd>(null)
+const ObjectLabel = ({
+  labelId,
+  pageSize,
+}: {
+  labelId: number;
+  pageSize: PageSize;
+}) => {
+  const label = ObjectStore("pdfLabel").useValue(labelId) as IObjectLabel;
+  const { renderInline, renderExpand, metaObject } = useRenderObject({
+    metaObjectId: label.metaObjectId,
+  });
+  const [innerPosition, setInnerPosition] = useState<{
+    x: number;
+    y: number;
+  }>();
+  const [top, left] = label?.rect || [];
+  const [popoverVisible, togglePopoverVisible] = useToggle(false);
+  const [expanded, toggleExpanded] = useToggle(false);
+  const store = ObjectStore("pdfLabel");
+  const rndRef = useRef<Rnd>(null);
   useLayoutEffect(() => {
-    const { width, height } = pageSize
+    const { width, height } = pageSize;
     if (top && left) {
       setInnerPosition({
         x: left * width,
-        y: top * height
-      })
+        y: top * height,
+      });
     }
-  }, [pageSize, top, left])
+  }, [pageSize, top, left]);
 
   useEffect(() => {
     if (!expanded) {
-      rndRef.current?.updateSize({ width: 'auto', height: 'auto' })
+      rndRef.current?.updateSize({ width: "auto", height: "auto" });
     }
-  }, [expanded])
+  }, [expanded]);
   return (
     <Rnd
       ref={rndRef}
       onDragStop={(e, data) => {
-        store.updateOne({ id: labelId, rect: [data.y / pageSize.height, data.x / pageSize.width] }, { silent: true })
+        store.updateOne(
+          {
+            id: labelId,
+            rect: [data.y / pageSize.height, data.x / pageSize.width],
+          },
+          { silent: true }
+        );
       }}
       position={innerPosition}
       bounds="parent"
       onResizeStop={(e, dir, ele, delta, pos) => {
-        store.updateOne({ id: labelId, rect: [pos.y / pageSize.height, pos.x / pageSize.width] }, { silent: true })
+        store.updateOne(
+          {
+            id: labelId,
+            rect: [pos.y / pageSize.height, pos.x / pageSize.width],
+          },
+          { silent: true }
+        );
       }}
-      dragHandleClassName={expanded ? 'dragHandle' : undefined}
+      dragHandleClassName={expanded ? "dragHandle" : undefined}
       enableResizing={expanded}
       maxHeight="50%"
       maxWidth="50%"
       style={{
-        pointerEvents: 'auto',
+        pointerEvents: "auto",
         zIndex: 10,
         background: Colors.Background.Global,
-        boxShadow: '0px 0px 0px 2px #dce3e8',
-        borderRadius: 4
+        boxShadow: "0px 0px 0px 2px #dce3e8",
+        borderRadius: 4,
       }}
     >
       <AnimatePopover
         visible={popoverVisible}
         onClickOutside={togglePopoverVisible}
-        positions={['top', 'bottom']}
+        positions={["top", "bottom"]}
         padding={10}
         disableIntersection
         containerStyle={{
-          borderRadius: '999px'
+          borderRadius: "999px",
         }}
         content={
           <WithBorder padding="0px 12px" borderRadius={999}>
@@ -73,14 +100,20 @@ const ObjectLabel = ({ labelId, pageSize }: { labelId: number; pageSize: PageSiz
               <Toolbar.Item
                 tooltip="Delete"
                 iconName="park-delete"
-                onClick={() => ObjectStore('pdfLabel').deleteOneById(labelId, { force: true })}
+                onClick={() =>
+                  ObjectStore("pdfLabel").deleteOneById(labelId, {
+                    force: true,
+                  })
+                }
               />
               <Toolbar.Item
                 tooltip="Graph"
                 iconName="park-share-one"
                 onClick={() =>
                   globalStore.get(metaObjectsAtom).has(label.metaObjectId) &&
-                  GlobalGraphInstance?.open(globalStore.get(metaObjectsAtom).get(label.metaObjectId)!)
+                  GlobalGraphInstance?.open(
+                    globalStore.get(metaObjectsAtom).get(label.metaObjectId)!
+                  )
                 }
               />
             </Toolbar>
@@ -91,13 +124,13 @@ const ObjectLabel = ({ labelId, pageSize }: { labelId: number; pageSize: PageSiz
           {expanded && (
             <div
               style={{
-                position: 'absolute',
+                position: "absolute",
                 left: 0,
-                top: -30
+                top: -30,
               }}
               className="dragHandle"
             >
-              {metaObject?.name || 'Unnamed Object'}
+              {metaObject?.name || "Unnamed Object"}
             </div>
           )}
           {expanded ? (
@@ -105,11 +138,11 @@ const ObjectLabel = ({ labelId, pageSize }: { labelId: number; pageSize: PageSiz
               style={{
                 width: pageSize.width * 0.4,
                 height: pageSize.height * 0.4,
-                minWidth: '100%',
-                maxHeight: '100%',
-                maxWidth: '100%',
-                minHeight: '100%',
-                overflow: 'hidden'
+                minWidth: "100%",
+                maxHeight: "100%",
+                maxWidth: "100%",
+                minHeight: "100%",
+                overflow: "hidden",
               }}
             >
               {renderExpand({})}
@@ -120,16 +153,16 @@ const ObjectLabel = ({ labelId, pageSize }: { labelId: number; pageSize: PageSiz
               showHoverObjectDetails: true,
               showCircle: true,
               containerStyle: {
-                padding: '6px 8px',
+                padding: "6px 8px",
                 maxWidth: pageSize.width * 0.2,
-                fontSize: FontSize['12px']
-              }
+                fontSize: FontSize["12px"],
+              },
             })
           )}
         </Content>
       </AnimatePopover>
     </Rnd>
-  )
-}
+  );
+};
 
-export default memo(ObjectLabel)
+export default memo(ObjectLabel);

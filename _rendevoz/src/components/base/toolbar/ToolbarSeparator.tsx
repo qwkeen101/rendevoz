@@ -1,7 +1,7 @@
-import { CSSProperties, FC } from 'react'
+import { CSSProperties, FC } from "react";
 
 interface ToolbarSeparatorProps {
-  direction?: 'vertical' | 'horizontal'
+  direction?: "vertical" | "horizontal";
 }
 
 const ToolbarSeparator: FC<ToolbarSeparatorProps> = ({ direction }) => {

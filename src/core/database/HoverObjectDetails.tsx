@@ -2,7 +2,7 @@ import { Tooltip, WithBorder } from '@/components'
 import { useGlobalAtomValue, useMergedRef, useToggle, useUpdateEffect } from '@/hooks'
 
 import { objectIdToMetaObjectIdMapAtom } from '@/stores/meta.store'
-import { ReactElement, RefObject, cloneElement, forwardRef, memo, useEffect, useRef, useState } from 'react'
+import { cloneElement, forwardRef, memo, ReactElement, RefObject, useEffect, useRef, useState } from 'react'
 import useRenderObject from './useRenderObject'
 import FontSize from '@/consts/font'
 import ClassName from '@/styles/classNames'
@@ -18,7 +18,13 @@ const HoverObjectDetails = forwardRef(
       children,
       disable,
       parentElmentRef
-    }: { objectId?: number; metaObjectId?: number; children: ReactElement; disable?: boolean; parentElmentRef?: RefObject<HTMLElement> },
+    }: {
+      objectId?: number
+      metaObjectId?: number
+      children: ReactElement
+      disable?: boolean
+      parentElmentRef?: RefObject<HTMLElement>
+    },
     ref
   ) => {
     const [metaId, setMetaId] = useState(metaObjectId || (objectId && globalStore.get(objectIdToMetaObjectIdMapAtom)?.get(objectId)))
@@ -35,7 +41,9 @@ const HoverObjectDetails = forwardRef(
     }
     const childRef = useRef<Element>()
     const mergedRef = useMergedRef(childRef, ref)
-    const { renderWhole, metaObject } = useRenderObject({ metaObjectId: metaId || 0 })
+    const { renderWhole, metaObject } = useRenderObject({
+      metaObjectId: metaId || 0
+    })
     useEffect(() => {
       if (disable) {
         const metaName = childRef.current?.querySelector("[role='meta-name']")
@@ -87,7 +95,7 @@ const HoverObjectDetails = forwardRef(
               },
               titleOptions: {
                 style: {
-                  fontSize: FontSize['14px']
+                  fontSize: FontSize['13px']
                 },
                 onTitleClick: () => {
                   toggleTooltipVisible(false)

@@ -1,4 +1,4 @@
-import { FC, memo, MouseEventHandler, useEffect, useRef, useMemo } from 'react'
+import { FC, memo, MouseEventHandler, useEffect, useMemo, useRef } from 'react'
 import { GraphNode } from '../../types/node'
 import ImageNode from './ImageNode'
 import { select } from 'd3-selection'
@@ -6,7 +6,7 @@ import { drag as d3Drag } from 'd3-drag'
 import useGraph from '../../hooks/useGraph'
 import { NodeMouseEventHandler } from '../NodeContainer'
 import IconNode from './IconNode'
-import { ObjectTag, FilterSelectedTagsAtom } from '@/core'
+import { FilterSelectedTagsAtom, ObjectTag } from '@/core'
 import { Content } from '@/components/base'
 import { MetaObject } from '~/typings/data'
 import { useAtomValue, useSetAtom } from 'jotai'
@@ -19,7 +19,7 @@ import { GraphModeAtom } from '../../hooks/useGraphMode'
 import Colors from '@/consts/colors'
 import { TypeToRegisteredMetaObject } from '@/stores/meta.store'
 
-interface NodeProps {
+export interface NodeProps {
   node: GraphNode
   onMouseEnter?: NodeMouseEventHandler
   onMouseLeave?: NodeMouseEventHandler
@@ -29,20 +29,20 @@ interface NodeProps {
 }
 
 export const TypeToNodeRadius: Record<MetaObject['type'], number> = {
-  pdf: 50,
-  pdfLabel: 35,
-  note: 50,
-  normal: 35,
-  noteLabel: 35,
-  noteBlock: 35,
-  image: 50,
-  whiteboard: 50,
-  webpage: 50,
-  webpageLabel: 35,
-  videoLabel: 35,
-  video: 50,
-  audio: 50,
-  localFile: 50
+  pdf: 15,
+  pdfLabel: 10,
+  note: 15,
+  normal: 10,
+  noteLabel: 10,
+  noteBlock: 10,
+  image: 15,
+  whiteboard: 15,
+  webpage: 15,
+  webpageLabel: 10,
+  videoLabel: 10,
+  video: 15,
+  audio: 15,
+  localFile: 15
 }
 
 export const getRadius = (type?: MetaObject['type']) => {
@@ -53,7 +53,7 @@ export const getRadius = (type?: MetaObject['type']) => {
   const registeredRadius = TypeToRegisteredMetaObject.get(type)?.graphSettings?.radius
   return registeredRadius ?? 50
 }
-const sliceLabel = (label?: string) => {
+export const sliceLabel = (label?: string) => {
   if (!label) return
   if (label.length > 50) {
     return label.slice(0, 50) + '...'

@@ -2,7 +2,7 @@ import { useMemoizedFn } from '@/hooks'
 import { MetaStore } from '@/stores'
 import Id from '@/utils/id'
 import { css } from '@emotion/css'
-import { memo, MouseEvent } from 'react'
+import { memo, MouseEvent, useEffect } from 'react'
 import { MetaLink } from '~/typings/data'
 import useEdges from '../hooks/useEdges'
 import useGraph from '../hooks/useGraph'
@@ -10,6 +10,8 @@ import useGraphNodes from '../hooks/useGraphNodes'
 import { GraphNode } from '../types/node'
 import Node from './node/Node'
 import useGraphFilter from '../hooks/useGraphFilter'
+import { Container, useApp } from '@pixi/react'
+import PixiNode from '@/core/graph/components/node/PixiNode'
 
 export type NodeMouseEventHandler = (e: MouseEvent, node: GraphNode) => void
 
@@ -24,7 +26,7 @@ const svgContainerClassName = css({
 })
 export const NodeFakeHiddenOpacity = 0.1
 export const NodeFullVisibleOpacity = 1
-const NodeContainer = memo(() => {
+const NodeContainer = memo(({ type }: { type: 'canvas' | 'svg' }) => {
   const [nodes] = useGraphNodes()
   const [edges] = useEdges()
 
@@ -52,7 +54,11 @@ const NodeContainer = memo(() => {
         const startNode = graph.contextMenuNode
         const endNode = node
         if (startNode && endNode) {
-          const newEdge = { sourceId: startNode.id, targetId: endNode.id, id: Id.getId() }
+          const newEdge = {
+            sourceId: startNode.id,
+            targetId: endNode.id,
+            id: Id.getId()
+          }
           if (newEdge.sourceId === newEdge.targetId) {
             graph.endAddEdge()
             return
@@ -75,33 +81,72 @@ const NodeContainer = memo(() => {
       }
     }
   })
-  const nodeContextMenuHandler: NodeMouseEventHandler = useMemoizedFn((e, node) => {
-  })
+  const nodeContextMenuHandler: NodeMouseEventHandler = useMemoizedFn((e, node) => {})
+  const app = type === 'canvas' && useApp()
+  useEffect(() => {
+    if (type === 'canvas' && app) {
 
-  return (
-    <svg className={svgContainerClassName}>
-      <defs>
-        <clipPath id="circleClip">
-          <circle r={20} cx={20} cy={20}></circle>
-        </clipPath>
-        <clipPath id="roundRectClip">
-          <rect width={20} height={20} rx={5}></rect>
-        </clipPath>
-      </defs>
+      const resize = () => {
+        console.log('resize')
+        const parent = app.view.parentNode
+        if (parent) {
+          const width = parent.clientWidth,
+            height = parent.clientHeight
+          app.renderer.resize(width, height)
+          graph?.pixiViewport?.resize(width, height, width, height)
 
-      {nodes
-        // ?.filter(i => !i.hidden)
-        ?.map(node => (
-          <Node
-            onContextMenu={nodeContextMenuHandler}
+        }
+      }
+      const resizeHandler = () => {
+        resize()
+      }
+      window.addEventListener('resize', resizeHandler)
+      resize()
+      return () => {
+        window.removeEventListener('resize', resizeHandler)
+      }
+    }
+  }, [app])
+  if (type === 'svg') {
+    return (
+      <svg className={svgContainerClassName}>
+        <defs>
+          <clipPath id="circleClip">
+            <circle r={20} cx={20} cy={20}></circle>
+          </clipPath>
+          <clipPath id="roundRectClip">
+            <rect width={20} height={20} rx={5}></rect>
+          </clipPath>
+        </defs>
+
+        {nodes
+          // ?.filter(i => !i.hidden)
+          ?.map(node => (
+            <Node
+              onContextMenu={nodeContextMenuHandler}
+              onMouseEnter={nodeMouseEnterHandler}
+              onMouseLeave={nodeMouseLeaveHandler}
+              onClick={nodeClickHandler}
+              node={node}
+              key={node.id}
+            />
+          ))}
+      </svg>
+    )
+  } else {
+    return (
+      <Container position={[0, 0]}>
+        {nodes?.map(node => (
+          <PixiNode
+            node={node}
+            key={node.id}
             onMouseEnter={nodeMouseEnterHandler}
             onMouseLeave={nodeMouseLeaveHandler}
             onClick={nodeClickHandler}
-            node={node}
-            key={node.id}
           />
         ))}
-    </svg>
-  )
+      </Container>
+    )
+  }
 })
 export default NodeContainer

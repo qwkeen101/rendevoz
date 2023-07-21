@@ -1,200 +1,233 @@
-import { getElementId } from '@/utils'
-import { useMemoizedFn, useRafFn } from '@/hooks'
-import { Position } from '@/types'
-import _ from 'lodash'
-import { useEffect, useLayoutEffect, useMemo, useRef } from 'react'
-import { EditorOverlayManager } from '../components/overlay/useEditorOverlay'
-import ScrollManager from '../ScrollManager'
-import { CustomEditor } from '~/typings'
-import { searchBlock } from '../utils/algorithm'
-import { getDistanceBetweenElementAndScrollableElement, getDistanceBetweenPointAndScrollableElement } from '../utils/scroll'
-import { ID_TO_ELEMENTS_MAP, SELECTED_BLOCKS_MAP, SELECT_AREA_MAP } from '../weakMaps'
-import useIsSelecting from './useIsSelecting'
+import { getElementId } from "@/utils";
+import { useMemoizedFn, useRafFn } from "@/hooks";
+import { Position } from "@/types";
+import _ from "lodash";
+import { useEffect, useLayoutEffect, useMemo, useRef } from "react";
+import { EditorOverlayManager } from "../components/overlay/useEditorOverlay";
+import ScrollManager from "../ScrollManager";
+import { CustomEditor } from "~/typings";
+import { searchBlock } from "../utils/algorithm";
+import {
+  getDistanceBetweenElementAndScrollableElement,
+  getDistanceBetweenPointAndScrollableElement,
+} from "../utils/scroll";
+import {
+  ID_TO_ELEMENTS_MAP,
+  SELECT_AREA_MAP,
+  SELECTED_BLOCKS_MAP,
+} from "../weakMaps";
+import useIsSelecting from "./useIsSelecting";
 
-const useEditorSelect = (editor: CustomEditor, overlayManager: EditorOverlayManager, scrollElement?: HTMLElement | null) => {
-  const scrollManager = useMemo(() => new ScrollManager(), [])
-  const blockElementsArrayRef = useRef<any[]>([])
-  const blockElementsMapRef = useRef<Map<any, any>>(new Map())
-  const isPressed = useRef(false)
-  const [isSelecting, setIsSelecting] = useIsSelecting()
-  const readonly = editor.readonly
+const useEditorSelect = (
+  editor: CustomEditor,
+  overlayManager: EditorOverlayManager,
+  scrollElement?: HTMLElement | null
+) => {
+  const scrollManager = useMemo(() => new ScrollManager(), []);
+  const blockElementsArrayRef = useRef<any[]>([]);
+  const blockElementsMapRef = useRef<Map<any, any>>(new Map());
+  const isPressed = useRef(false);
+  const [isSelecting, setIsSelecting] = useIsSelecting();
+  const readonly = editor.readonly;
   const mouseDownHandler = (e: MouseEvent) => {
-    const target = e.target as HTMLElement
+    const target = e.target as HTMLElement;
     // target is title or textbox
-    if (target.getAttribute('role') === 'inner-editor') {
-      isPressed.current = true
+    if (target.getAttribute("role") === "inner-editor") {
+      isPressed.current = true;
     }
     // target is self
     if (target === e.currentTarget) {
-      isPressed.current = true
+      isPressed.current = true;
     }
-  }
+  };
 
   const mouseMoveHandler = useMemoizedFn((e: MouseEvent) => {
-    if (readonly) return
-    if (!scrollElement) return
+    if (readonly) return;
+    if (!scrollElement) return;
     if (isPressed.current) {
-      setIsSelecting(true)
+      setIsSelecting(true);
       if (scrollManager.isScrolling()) {
-        scrollManager.endScroll()
+        scrollManager.endScroll();
       }
       if (scrollManager.canScroll()) {
-        scrollManager.startScroll(e)
-        prepareSelect()
+        scrollManager.startScroll(e);
+        prepareSelect();
       }
-      const distanceToScrollElement = getDistanceBetweenElementAndScrollableElement(
-        {
-          left: e.clientX,
-          top: e.clientY,
-          x: e.clientX,
-          y: e.clientY,
-          right: e.clientX,
-          bottom: e.clientY,
-          width: 0,
-          height: 0
-        },
-        scrollElement
-      )
-      if (!distanceToScrollElement) return
-      const prevRect = SELECT_AREA_MAP.get(editor)
-      let startPoint: Required<Position>
+      const distanceToScrollElement =
+        getDistanceBetweenElementAndScrollableElement(
+          {
+            left: e.clientX,
+            top: e.clientY,
+            x: e.clientX,
+            y: e.clientY,
+            right: e.clientX,
+            bottom: e.clientY,
+            width: 0,
+            height: 0,
+          },
+          scrollElement
+        );
+      if (!distanceToScrollElement) return;
+      const prevRect = SELECT_AREA_MAP.get(editor);
+      let startPoint: Required<Position>;
       if (!prevRect) {
-        startPoint = { ...distanceToScrollElement }
+        startPoint = { ...distanceToScrollElement };
       } else {
-        startPoint = prevRect.startPoint as Required<Position>
+        startPoint = prevRect.startPoint as Required<Position>;
       }
-      const endPoint = { ...distanceToScrollElement }
+      const endPoint = { ...distanceToScrollElement };
       const currRect = {
         startPoint,
         endPoint,
         left: Math.min(startPoint.left, endPoint.left),
         top: Math.min(startPoint.top, endPoint.top),
-        right: Math.min(startPoint.left, endPoint.left) + Math.abs(endPoint.left - startPoint.left),
-        bottom: Math.min(startPoint.top, endPoint.top) + Math.abs(endPoint.top - startPoint.top)
-      }
-      SELECT_AREA_MAP.set(editor, currRect)
-      overlayManager.setContent('selectArea')
-      overlayManager.open()
+        right:
+          Math.min(startPoint.left, endPoint.left) +
+          Math.abs(endPoint.left - startPoint.left),
+        bottom:
+          Math.min(startPoint.top, endPoint.top) +
+          Math.abs(endPoint.top - startPoint.top),
+      };
+      SELECT_AREA_MAP.set(editor, currRect);
+      overlayManager.setContent("selectArea");
+      overlayManager.open();
       // start search selected blocks
-      const firstBlock = blockElementsArrayRef.current[0]
-      const lastBlock = blockElementsArrayRef.current[blockElementsArrayRef.current.length - 1]
-      const firstBlockRect = blockElementsMapRef.current.get(firstBlock)
-      const lastBlockRect = blockElementsMapRef.current.get(lastBlock)
-      const blocksMap = ID_TO_ELEMENTS_MAP.get(editor)
+      const firstBlock = blockElementsArrayRef.current[0];
+      const lastBlock =
+        blockElementsArrayRef.current[blockElementsArrayRef.current.length - 1];
+      const firstBlockRect = blockElementsMapRef.current.get(firstBlock);
+      const lastBlockRect = blockElementsMapRef.current.get(lastBlock);
+      const blocksMap = ID_TO_ELEMENTS_MAP.get(editor);
       if (!firstBlockRect || !lastBlockRect) {
-        console.log('return 1')
-        return
+        console.log("return 1");
+        return;
       }
       if (currRect.bottom < firstBlockRect.top) {
-        const prevSelectedBlocks = SELECTED_BLOCKS_MAP.get(editor)
+        const prevSelectedBlocks = SELECTED_BLOCKS_MAP.get(editor);
         if (prevSelectedBlocks) {
-          Array.from(prevSelectedBlocks.values()).forEach(i => {
-            const id = getElementId(i)
-            blocksMap?.get(id)?.collisionSelectBlock()
-          })
+          Array.from(prevSelectedBlocks.values()).forEach((i) => {
+            const id = getElementId(i);
+            blocksMap?.get(id)?.collisionSelectBlock();
+          });
         }
-        return
+        return;
       }
       if (currRect.top > lastBlockRect.top + lastBlockRect.height) {
-        return
+        return;
       }
-      const blockEntriesArray = Array.from(blockElementsMapRef.current.entries())
-      const topBlock = searchBlock(blockEntriesArray, currRect.top)
-      const bottomBlock = searchBlock(blockEntriesArray, currRect.bottom)
-      const topIdx = topBlock === -1 ? 0 : blockElementsArrayRef.current.findIndex(i => i === topBlock)
-      let finalBottomBlock = bottomBlock
+      const blockEntriesArray = Array.from(
+        blockElementsMapRef.current.entries()
+      );
+      const topBlock = searchBlock(blockEntriesArray, currRect.top);
+      const bottomBlock = searchBlock(blockEntriesArray, currRect.bottom);
+      const topIdx =
+        topBlock === -1
+          ? 0
+          : blockElementsArrayRef.current.findIndex((i) => i === topBlock);
+      let finalBottomBlock = bottomBlock;
       if (bottomBlock !== -1) {
-        finalBottomBlock = _.findLast(blockEntriesArray, i => {
-          return i[1].top === blockElementsMapRef.current.get(bottomBlock)?.top ? true : false
-        })?.[0]
+        finalBottomBlock = _.findLast(blockEntriesArray, (i) => {
+          return i[1].top === blockElementsMapRef.current.get(bottomBlock)?.top
+            ? true
+            : false;
+        })?.[0];
       }
 
       const bottomIdx =
         finalBottomBlock === -1
           ? blockElementsArrayRef.current.length
-          : blockElementsArrayRef.current.findIndex(i => i === finalBottomBlock) + 1
-      const blocks = blockElementsArrayRef.current.slice(topIdx, bottomIdx)
-      const prevSelectedBlocks = SELECTED_BLOCKS_MAP.get(editor)
+          : blockElementsArrayRef.current.findIndex(
+              (i) => i === finalBottomBlock
+            ) + 1;
+      const blocks = blockElementsArrayRef.current.slice(topIdx, bottomIdx);
+      const prevSelectedBlocks = SELECTED_BLOCKS_MAP.get(editor);
       if (prevSelectedBlocks) {
         Array.from(prevSelectedBlocks.values())
-          .filter(i => !blocks.some(o => o === i))
-          .forEach(i => {
-            const id = getElementId(i)
-            blocksMap?.get(id)?.collisionSelectBlock()
-          })
+          .filter((i) => !blocks.some((o) => o === i))
+          .forEach((i) => {
+            const id = getElementId(i);
+            blocksMap?.get(id)?.collisionSelectBlock();
+          });
       }
 
-      blocks.forEach(i => {
-        const id = getElementId(i)
-        blocksMap?.get(id)?.collisionSelectBlock()
-      })
+      blocks.forEach((i) => {
+        const id = getElementId(i);
+        blocksMap?.get(id)?.collisionSelectBlock();
+      });
     }
-  })
+  });
 
   const mouseUpHandler = (e: MouseEvent) => {
-    if (readonly) return
-    isPressed.current = false
+    if (readonly) return;
+    isPressed.current = false;
     if (isSelecting) {
-      overlayManager.close()
-      document.body.style.cursor = 'auto'
+      overlayManager.close();
+      document.body.style.cursor = "auto";
       setTimeout(() => {
-        setIsSelecting(false)
-      }, 50)
+        setIsSelecting(false);
+      }, 50);
     }
-    scrollManager.endScroll()
-    SELECT_AREA_MAP.delete(editor)
-  }
-  const throttledMoveMove = useRafFn(mouseMoveHandler)
+    scrollManager.endScroll();
+    SELECT_AREA_MAP.delete(editor);
+  };
+  const throttledMoveMove = useRafFn(mouseMoveHandler);
 
   const realMouseMoveHandler = (e: MouseEvent) => {
-    if (readonly) return
+    if (readonly) return;
     if (isPressed.current) {
-      e.preventDefault()
-      e.stopPropagation()
+      e.preventDefault();
+      e.stopPropagation();
       try {
-        throttledMoveMove(e)
+        throttledMoveMove(e);
       } catch (e) {
-        console.error(e)
+        console.error(e);
       }
     }
-  }
+  };
   useLayoutEffect(() => {
-    if (readonly) return
-    if (!scrollElement) return
+    if (readonly) return;
+    if (!scrollElement) return;
     if (isSelecting) {
-      document.body.style.cursor = 'default'
-      prepareSelect()
+      document.body.style.cursor = "default";
+      prepareSelect();
     }
-  }, [isSelecting])
+  }, [isSelecting]);
   const prepareSelect = () => {
-    blockElementsMapRef.current.clear()
-    blockElementsArrayRef.current = []
-    Array.from(scrollElement.querySelector(`[role="textbox"]`)?.querySelectorAll('[data-type="block"]') || []).forEach(i => {
-      const { left, top, width, height } = i.getBoundingClientRect()
-      const distance = getDistanceBetweenPointAndScrollableElement({ x: left, y: top }, scrollElement)
-      blockElementsArrayRef.current.push(i)
+    blockElementsMapRef.current.clear();
+    blockElementsArrayRef.current = [];
+    Array.from(
+      scrollElement
+        .querySelector(`[role="textbox"]`)
+        ?.querySelectorAll('[data-type="block"]') || []
+    ).forEach((i) => {
+      const { left, top, width, height } = i.getBoundingClientRect();
+      const distance = getDistanceBetweenPointAndScrollableElement(
+        { x: left, y: top },
+        scrollElement
+      );
+      blockElementsArrayRef.current.push(i);
       blockElementsMapRef.current.set(i, {
         left: distance.left,
         top: distance.top,
         width,
-        height
-      })
-    })
-  }
+        height,
+      });
+    });
+  };
   useEffect(() => {
-    if (readonly) return
+    if (readonly) return;
     if (scrollElement) {
-      scrollManager.registerScrollElement(scrollElement)
-      scrollElement.addEventListener('pointerdown', mouseDownHandler)
-      document.addEventListener('pointermove', realMouseMoveHandler, true)
-      document.addEventListener('pointerup', mouseUpHandler)
+      scrollManager.registerScrollElement(scrollElement);
+      scrollElement.addEventListener("pointerdown", mouseDownHandler);
+      document.addEventListener("pointermove", realMouseMoveHandler, true);
+      document.addEventListener("pointerup", mouseUpHandler);
       return () => {
-        scrollElement.removeEventListener('pointerdown', mouseDownHandler)
-        document.removeEventListener('pointermove', realMouseMoveHandler, true)
-        document.removeEventListener('pointerup', mouseUpHandler)
-      }
+        scrollElement.removeEventListener("pointerdown", mouseDownHandler);
+        document.removeEventListener("pointermove", realMouseMoveHandler, true);
+        document.removeEventListener("pointerup", mouseUpHandler);
+      };
     }
-  })
-}
+  });
+};
 
-export default useEditorSelect
+export default useEditorSelect;

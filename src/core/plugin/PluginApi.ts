@@ -2,13 +2,13 @@ import { PluginApi as PluginApiType } from '~/typings'
 import { Rendevoz } from '../rendevoz'
 import { css } from '@emotion/css'
 import { LayoutIdToTabMap } from '@/components/layout'
-import { MetaStore, ObjectStore, globalStore } from '@/stores'
+import { globalStore, MetaStore, ObjectStore } from '@/stores'
 import { EditorTypeToElementMap } from '../editor/maps'
-import createObjectStore, { TypeToRegisteredObject, storeMap } from '@/stores/object.store'
+import createObjectStore, { storeMap, TypeToRegisteredObject } from '@/stores/object.store'
 import { TypeToRegisteredMetaObject } from '@/stores/meta.store'
 import i18next from 'i18next'
 import { TypeToTypeName } from '../database'
-import { SettingAtom, getSetting } from '..'
+import { getSetting, SettingAtom } from '..'
 import {
   KeyToRegisterdSettings,
   KeyToRegisteredDropOnProcessor,
@@ -22,18 +22,16 @@ export class PluginApi {
   public name: string | undefined = undefined
 
   registeredMaps: PluginApiType['registeredMaps'] = {
-    registerdTabs: new Map(),
+    registeredTabs: new Map(),
     registeredMetaObjects: new Map(),
     registeredObjects: new Map(),
-    registerdDropOnProcessors: new Map(),
+    registeredDropOnProcessors: new Map(),
     registeredEditorElements: new Map(),
     registeredGlobalCSS: new Map(),
     registeredGlobalElements: new Map()
   }
 
   public keyValueStore: PluginApiType['keyValueStore'] = new Map()
-
-  private eventMap = new Map<string, () => void>()
 
   register: PluginApiType['register'] = {
     registerMetaObject: (type, opts) => {
@@ -47,10 +45,9 @@ export class PluginApi {
     },
     registerDropOnProcessor: (key, processor) => {
       KeyToRegisteredDropOnProcessor.set(key, processor)
-      this.registeredMaps.registerdDropOnProcessors.set(key, processor)
+      this.registeredMaps.registeredDropOnProcessors.set(key, processor)
     },
     registerObject: (type, opts) => {
-      if (!opts?.normalizeDraggingEleToMetaObject) return
       if (opts?.store) {
         const store = opts.store(createObjectStore)
         if (store) {
@@ -67,7 +64,7 @@ export class PluginApi {
     },
     registerTab: tabData => {
       Rendevoz.Actions.Layout.registerTabData(tabData)
-      this.registeredMaps.registerdTabs.set(tabData.type, tabData)
+      this.registeredMaps.registeredTabs.set(tabData.type, tabData)
     },
     registerEditorElement: ele => {
       EditorTypeToElementMap.set(ele.type, ele)
@@ -79,7 +76,7 @@ export class PluginApi {
       document.body.classList.add(clazz)
     },
     registerInSidebarMenu: (key, ele) => {
-      KeyToRegisteredSidebarElement.set(key, ele)
+      KeyToRegisteredSidebarElement.set(key, { ...ele, key })
     },
     registerInSettings: opts => {
       if (!this.name) return
@@ -120,17 +117,9 @@ export class PluginApi {
 
   Rendevoz = Rendevoz
 
-  describe: PluginApiType['describe'] = ({ name, settings }) => {
+  describe: PluginApiType['describe'] = ({ name }) => {
     this.name = name
     console.log(name)
-  }
-
-  on: PluginApiType['on'] = (type, handler) => {
-    this.eventMap.set(type, handler)
-  }
-
-  emit = (type: string) => {
-    this.eventMap.get(type)?.()
   }
 }
 

@@ -13,6 +13,7 @@ const TitleBar = () => {
     })
     ipcInstance.on('winMaximized', () => {
       setIsFullScreen(true)
+      console.log('yes')
     })
     return () => {
       ipcInstance.off('winMaximized')
@@ -27,7 +28,6 @@ const TitleBar = () => {
         cursor="pointer"
         onClick={() => {
           minimizeWindow()
-          console.log('asdsadas')
         }}
       />
       <Icon

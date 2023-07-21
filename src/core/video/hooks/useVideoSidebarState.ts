@@ -1,14 +1,14 @@
-import { atom, useAtom } from 'jotai'
+import { atom, useAtom } from "jotai";
 
 type IVideoSidebarState = {
-  showChapters: boolean
-  showLabels: boolean
-}
+  showChapters: boolean;
+  showLabels: boolean;
+};
 export const VideoSidebarStateAtom = atom<IVideoSidebarState>({
   showChapters: false,
-  showLabels: false
-})
+  showLabels: false,
+});
 
-const useVideoSidebarState = () => useAtom(VideoSidebarStateAtom)
+const useVideoSidebarState = () => useAtom(VideoSidebarStateAtom);
 
-export default useVideoSidebarState
+export default useVideoSidebarState;

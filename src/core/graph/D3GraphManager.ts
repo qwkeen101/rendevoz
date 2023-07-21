@@ -1,15 +1,18 @@
 import * as d3 from 'd3'
+import { curveBasis } from 'd3'
 import { GraphNode } from './types/node'
 import { GraphEdge } from './types/edge'
-import { curveBasis } from 'd3'
 import { getMarkerId } from './utils/getMarkerId'
 import { MarkerColor } from '@/consts'
 import { GraphOverlayManager } from './components/overlay/useGraphOverlay'
-import { TypeToNodeRadius, getRadius } from './components/node/Node'
+import { getRadius } from './components/node/Node'
 import { SetStateAction } from 'react'
 import produce from 'immer'
 import createPanZoom, { PanZoom } from 'panzoom'
 import { TypeToRegisteredMetaObject } from '@/stores/meta.store'
+import { Viewport } from 'pixi-viewport'
+import { Container, DisplayObject } from 'pixi.js'
+import { XYPosition } from 'rendevoz'
 
 class D3GraphManager {
   public isChoosingNode: false | 'start' | 'end' = false
@@ -24,18 +27,25 @@ class D3GraphManager {
   public nodesMap: Map<number, GraphNode> | null = null
   public edgesMap: Map<number, GraphEdge> | null = null
   public setNodes?: (update: SetStateAction<GraphNode[] | null>) => void
+  public setEdges?: (update: SetStateAction<GraphEdge[] | null>) => void
   private linkStartPoint = null
   public zoom?: d3.ZoomBehavior<Element, unknown>
   public panzoom?: PanZoom
+  public pixiViewport?: Viewport
   public centerNodeId?: number
+  public type: 'canvas' | 'svg' = 'canvas'
   // edge to edge map
   public oppositeEdgesMap = new Map<number, GraphEdge>()
+  public CACHED_ICON_TEXTURE = new Map<string, any>()
+  public ID_TO_PIXI_NODE_MAP = new Map<number, Container<DisplayObject>>()
+  public ID_TO_PIXI_EDGE_MAP = new Map<number, Container<DisplayObject>>()
   public isAddingEdge = false
   public newAddedEdge: GraphEdge | null = null
   private changeHandlerSet: Set<(nodes: GraphNode[], edges: GraphEdge[]) => void> = new Set()
   private zoomHandlerSet: Set<(transform: any) => void> = new Set()
   public overlayManager?: GraphOverlayManager
   public transformScale = 1
+  public currentClickNodeId?: number
   private ID_TO_NODE_ELEMENT_MAP = new Map<number, SVGElement>()
   private ID_TO_EDGE_ELEMENT_MAP = new Map<number, SVGElement>()
   public ID_TO_EDGE_LABEL_ELEMENT_MAP = new Map<number, SVGElement>()
@@ -43,9 +53,17 @@ class D3GraphManager {
     number,
     {
       drawEdge: VoidFunction
+      resetLineWidth: (newWidth: number) => void
+      hideLabel: VoidFunction
+      unhidenLabel: VoidFunction
     }
   >()
-
+  public ID_TO_NODE_FUNCTION_MAP = new Map<
+    number,
+    {
+      changePosition: (pos: XYPosition) => void
+    }
+  >()
   public pinnedNodesIdsSet = new Set<number>()
 
   public getRadius = (type: string) => {
@@ -53,16 +71,8 @@ class D3GraphManager {
     if (registered) {
       return registered
     }
-    switch (type) {
-      case 'note':
-      case 'pdf':
-      case 'webpage':
-      case 'localFile':
-      case 'whiteboard':
-        return 300
-      default:
-        return 150
-    }
+    const selfRadius = getRadius(type)
+    return selfRadius * 10
   }
   public registerHandler = (name: string, handler: any) => {
     if (name === 'change') {
@@ -75,35 +85,93 @@ class D3GraphManager {
 
   // outer container
   public registerContainer = (container: HTMLElement) => {
-    this.container = d3.select(container)
-    container.style.setProperty('--zoom-level', '1')
-    const panzoom = createPanZoom(container, {
-      maxZoom: 5,
-      minZoom: 0.1,
-      smoothScroll: false
-    })
-    this.panzoom = panzoom
-    this.panzoom.on('zoom', e => {
-      const transform = this.panzoom?.getTransform()!
-      this.transformScale = transform?.scale
-      const zoomMultipler = Math.sqrt(1 / transform?.scale)
-      this.container?.node()?.style.setProperty('--zoom-level', String(zoomMultipler))
-    })
-    // const zoom = d3.zoom().scaleExtent([0.1, 5]).on('zoom', this.zoomed)
-    // this.zoom = zoom
-    // this.container?.call(zoom).on('dblclick.zoom', null)
-    this.container?.on('mousemove', this.globalMousemoveHandler)
-    this.container.selectChild('#viewport').on('click', this.globalClickHandler)
+    // this.container = d3.select(container)
+    // container.style.setProperty('--zoom-level', '1')
+    // const panzoom = createPanZoom(container, {
+    //   maxZoom: 5,
+    //   minZoom: 0.1,
+    //   smoothScroll: false
+    // })
+    // this.panzoom = panzoom
+    // this.panzoom.on('zoom', e => {
+    //   const transform = this.panzoom?.getTransform()!
+    //   this.transformScale = transform?.scale
+    //   const zoomMultipler = Math.sqrt(1 / transform?.scale)
+    //   this.container?.node()?.style.setProperty('--zoom-level', String(zoomMultipler))
+    // })
+    // // const zoom = d3.zoom().scaleExtent([0.1, 5]).on('zoom', this.zoomed)
+    // // this.zoom = zoom
+    // // this.container?.call(zoom).on('dblclick.zoom', null)
+    // this.container?.on('mousemove', this.globalMousemoveHandler)
+    // this.container.selectChild('#viewport').on('click', this.globalClickHandler)
   }
   public clear = () => {
     this.originEdges = null
     this.originNodes = null
     this.d3Simulation = null
     this.moved = false
+    this.ID_TO_PIXI_NODE_MAP.clear()
+    this.ID_TO_EDGE_FUNCTION_MAP.clear()
+    this.ID_TO_NODE_FUNCTION_MAP.clear()
+    this.ID_TO_PIXI_EDGE_MAP.clear()
   }
   public registerNodes = (nodes: GraphNode[]) => {
     this.originNodes = structuredClone(nodes)
     this.nodesMap = new Map(this.originNodes!.map(n => [n.id, n]))
+  }
+
+  public addNodes = (newNodes: GraphNode[]) => {
+    const extraNodes = newNodes.filter(i => !this.nodesMap?.has(i.id))
+    console.log(extraNodes)
+    extraNodes.forEach(n => {
+      const cloned = { ...n }
+      this.originNodes?.push(cloned)
+      this.nodesMap?.set(n.id, cloned)
+    })
+    this.setNodes?.(n => {
+      const currentNodes = new Map(newNodes.map(i => [i.id, i]))
+      n?.forEach(i => currentNodes.set(i.id, i))
+      const nextNodes = Array.from(currentNodes.values())
+      return nextNodes
+    })
+    console.log(this.originNodes)
+  }
+
+  public addEdges = (newEdges: GraphEdge[]) => {
+    if (!this.originEdges || !this.edgesMap) return
+    const extraEdges = newEdges.filter(i => !this.edgesMap?.has(i.id))
+    console.log(extraEdges)
+    extraEdges.forEach(e => {
+      const cloned = { ...e, source: e.sourceId, target: e.targetId }
+      this.originEdges!.push(cloned)
+      this.edgesMap!.set(e.id, cloned)
+    })
+    this.setEdges?.(e => {
+      const currentEdges = new Map(newEdges.map(i => [i.id, i]))
+      e?.forEach(i => currentEdges.set(i.id, i))
+      const nextEdges = Array.from(currentEdges.values())
+      return nextEdges
+    })
+    console.log(this.originEdges)
+  }
+
+  public slightRestartSimu = () => {
+    this.d3Simulation
+      ?.nodes(this.originNodes?.filter(i => !i.hidden))
+      .force('center', d3.forceCenter())
+      .force('charge', d3.forceManyBody())
+      .force(
+        'link',
+        d3
+          .forceLink(this.originEdges?.filter(i => !i.hidden))
+          .id(d => d.id)
+          .distance(link => (link.target.type.includes('abel') || link.source.type.includes('abel') ? 100 : 200))
+      )
+      .alphaTarget(0.5)
+      .on('tick', this.ticked)
+      .restart()
+
+    setTimeout(() => this.d3Simulation?.alphaTarget(0), 1000)
   }
 
   public registerEdges = (edges: GraphEdge[]) => {
@@ -160,7 +228,7 @@ class D3GraphManager {
           d3
             .forceLink(this.originEdges?.filter(i => !i.hidden))
             .id(d => d.id)
-            .distance(300)
+            .distance(link => (link.target.type.includes('abel') || link.source.type.includes('abel') ? 100 : 200))
         )
         .force(
           'collision',
@@ -177,7 +245,7 @@ class D3GraphManager {
       const forceLink = d3
         .forceLink(this.originEdges)
         .id(d => d.id)
-        .distance(300)
+        .distance(link => (link.target.type.includes('abel') || link.source.type.includes('abel') ? 100 : 200))
 
       this.d3Simulation = d3
         .forceSimulation(this.originNodes)
@@ -192,15 +260,17 @@ class D3GraphManager {
         .tick(300)
         .on('tick', this.ticked)
         .on('end', () => {
-          this.d3Simulation?.force('center', d3.forceCenter())
           setTimeout(() => {
-            this.ID_TO_EDGE_FUNCTION_MAP.forEach(i => i.drawEdge())
+            // this.ID_TO_EDGE_FUNCTION_MAP.forEach(i => i.drawEdge())
             this.ID_TO_EDGE_LABEL_ELEMENT_MAP.forEach(i => i.removeAttribute('opacity'))
           }, 50)
           if (!this.moved) {
             const node = Array.from(this.nodesMap?.values() || []).find(i => i.isCenter)
             const bound = this.container?.node()?.getBoundingClientRect()
             node && this.panzoom?.moveTo(-node.x + bound?.width / 2, -node.y + bound?.height / 2)
+            if (this.pixiViewport) {
+              this.pixiViewport?.setTransform(-node.x + this.pixiViewport?.screenWidth / 2, -node.y + this.pixiViewport?.screenHeight / 2)
+            }
             this.moved = true
           }
           this.originNodes?.forEach(i => {
@@ -253,14 +323,31 @@ class D3GraphManager {
   public ticked = () => {
     this.d3Simulation?.tick(2)
     if (this.originEdges && this.originNodes) {
-      this.originEdges.forEach(edge => {
-        const path = this.drawEdge(edge, edge.source.x, edge.source.y, edge.target.x, edge.target.y)
-        this.ID_TO_EDGE_ELEMENT_MAP.get(edge.id)?.setAttribute('d', path)
-        this.ID_TO_EDGE_LABEL_ELEMENT_MAP.get(edge.id)?.setAttribute('opacity', '0')
-      })
-      this.originNodes.forEach(node => {
-        this.ID_TO_NODE_ELEMENT_MAP.get(node.id)?.setAttribute('transform', `translate(${node.x},${node.y})`)
-      })
+      if (this.type === 'canvas') {
+        // canvas mode
+        this.originNodes.forEach(node => {
+          const n = this.ID_TO_PIXI_NODE_MAP.get(node.id)
+          const bound = n.children[0].getLocalBounds()
+          if (n) {
+            n.x = node.x + bound.width / 2
+            n.y = node.y + bound.height / 2
+          }
+        })
+        this.originEdges.forEach(e => {
+          const edgeFunc = this.ID_TO_EDGE_FUNCTION_MAP.get(e.id)
+          edgeFunc?.drawEdge()
+        })
+      } else {
+        // svg mode
+        this.originEdges.forEach(edge => {
+          const path = this.drawEdge(edge, edge.source.x, edge.source.y, edge.target.x, edge.target.y)
+          this.ID_TO_EDGE_ELEMENT_MAP.get(edge.id)?.setAttribute('d', path)
+          this.ID_TO_EDGE_LABEL_ELEMENT_MAP.get(edge.id)?.setAttribute('opacity', '0')
+        })
+        this.originNodes.forEach(node => {
+          this.ID_TO_NODE_ELEMENT_MAP.get(node.id)?.setAttribute('transform', `translate(${node.x},${node.y})`)
+        })
+      }
     }
   }
   private zoomed = event => {
@@ -299,7 +386,12 @@ class D3GraphManager {
     const targetToSourceEdges = this.originEdges?.filter(i => i.target.id === sourceNode.id) || []
     const sourceToTargetNodes = this.originNodes?.filter(i => sourceToTargetEdges?.some(o => o.target.id === i.id)) || []
     const targetToSourceNodes = this.originNodes?.filter(i => targetToSourceEdges?.some(o => o.source.id === i.id)) || []
-    return { sourceToTargetEdges, targetToSourceNodes, targetToSourceEdges, sourceToTargetNodes }
+    return {
+      sourceToTargetEdges,
+      targetToSourceNodes,
+      targetToSourceEdges,
+      sourceToTargetNodes
+    }
   }
   private drawEdge = (edge, sourceX, sourceY, targetX, targetY) => {
     const targetNode = this.nodesMap?.get(edge.targetId)

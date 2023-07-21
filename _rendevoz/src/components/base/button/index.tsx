@@ -1,19 +1,26 @@
-import { css } from '@emotion/css'
-import classNames from 'classnames'
-import React, { CSSProperties, FC, MouseEventHandler, ReactNode, useEffect, useState } from 'react'
-import IconButton from './IconButton'
-import styles from './index.module.less'
-import ClassName from '@/styles/classNames'
-import Colors from '@/consts/colors'
+import { css } from "@emotion/css";
+import classNames from "classnames";
+import React, {
+  CSSProperties,
+  FC,
+  MouseEventHandler,
+  ReactNode,
+  useEffect,
+  useState,
+} from "react";
+import IconButton from "./IconButton";
+import styles from "./index.module.less";
+import ClassName from "@/styles/classNames";
+import Colors from "@/consts/colors";
 
-interface ButtonProps extends React.HTMLProps<HTMLDivElement>{
-  children: ReactNode
-  onClick?: MouseEventHandler
-  className?: string
-  tabIndex?: number
-  style?: CSSProperties
-  selected?: boolean
-  disabled?: boolean
+interface ButtonProps extends React.HTMLProps<HTMLDivElement> {
+  children: ReactNode;
+  onClick?: MouseEventHandler;
+  className?: string;
+  tabIndex?: number;
+  style?: CSSProperties;
+  selected?: boolean;
+  disabled?: boolean;
 }
 interface IButton extends FC<ButtonProps> {
   IconButton: typeof IconButton

@@ -10,7 +10,7 @@
       "~/*" : ["./_rendevoz/*"]
 		},
     "allowJs": false,
-    "declaration": true,
+    "declaration": false,
     "skipLibCheck": true,
     "esModuleInterop": false,
     "allowSyntheticDefaultImports": true,
@@ -23,7 +23,7 @@
     "noEmit": true,
     "jsx": "react-jsx"
   },
-  "include": ["src", "typings"],
+  "include": ["src"],
   "references": [{ "path": "./tsconfig.node.json" }]
 }
 

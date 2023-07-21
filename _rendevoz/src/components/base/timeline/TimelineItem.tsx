@@ -1,17 +1,17 @@
-import Icon from '@/components/base/Icon'
-import { CSSProperties, FC, ReactNode } from 'react'
-import Content from '../Content'
+import Icon from "@/components/base/Icon";
+import { CSSProperties, FC, ReactNode } from "react";
+import Content from "../Content";
 
 interface TimelineItemProps {
-  className?: string
-  style?: CSSProperties
-  iconName?: string
-  iconSize?: number
-  iconColor?: string
-  children?: ReactNode
-  hideTail?: boolean
-  iconFill?: string | string[]
-  iconTheme?: string
+  className?: string;
+  style?: CSSProperties;
+  iconName?: string;
+  iconSize?: number;
+  iconColor?: string;
+  children?: ReactNode;
+  hideTail?: boolean;
+  iconFill?: string | string[];
+  iconTheme?: string;
 }
 
 const TimelineItem: FC<TimelineItemProps> = ({

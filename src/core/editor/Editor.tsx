@@ -3,14 +3,14 @@ import Id from '@/utils/id'
 import { CSSProperties, FC, memo, MouseEventHandler, ReactNode, useCallback, useEffect, useMemo, useRef } from 'react'
 import { createEditor, Descendant } from 'slate'
 import { withHistory } from 'slate-history'
-import { withReact } from './slate-react'
-import { CustomEditor, CustomElement, IEditorEvent, IEditorInstance } from '~/typings'
+import { ReactEditor, withReact } from './slate-react'
+import { CustomEditor, CustomElement, EditorProps, IEditorEvent, IEditorInstance } from '~/typings'
 import InnerEditor from './InnerEditor'
 import withVoid from './plugins/withVoid'
 import styles from './index.module.less'
 import BlockHandle from './components/BlockHandle'
 import useIsDragging from './hooks/useIsDragging'
-import { MetaStore, ObjectStore } from '@/stores'
+import { globalStore, MetaStore, ObjectStore } from '@/stores'
 import withShortcuts from './plugins/withShortcuts'
 import withCustomComponent from './plugins/withCustomComponent'
 import withEmitter from './plugins/withEmitter'
@@ -22,7 +22,6 @@ import { useGlobalIsDragging } from '@/core'
 import withHandler from './plugins/withHandler'
 import { createStore } from 'jotai/vanilla'
 import { Provider, useSetAtom } from 'jotai/react'
-import { globalStore } from '@/stores'
 import EditorTitle from './EditorTitle'
 import rebuildDragSelect from './utils/rebuildDragSelect'
 import { ReadOnlyEditorAtom } from './hooks/useReadOnly'
@@ -36,6 +35,9 @@ import SidebarToolbar from '@/scenes/editor/HoverOutline'
 import { EditorBlockHandleAtom } from './hooks/useBlockHandle'
 import useThrottleFn from '@/hooks/utils/useThrottleFn'
 import useEditorPluginHooks from './hooks/useEditorPluginHooks'
+import { GlobalPdfPrinterInstance } from '@/core/global/GlobalPdfPrinter'
+import EditorHeader from '@/core/editor/EditorHeader'
+import { useAtom } from 'jotai'
 
 const initial = [
   {
@@ -45,38 +47,6 @@ const initial = [
   }
 ]
 
-export interface EditorProps {
-  on?: (
-    event: IEditorEvent & {
-      editor: CustomEditor
-      instance: IEditorInstance
-    }
-  ) => void
-  initialValue?: Descendant[]
-  id: string
-  noteId?: number
-  readonly?: boolean
-  showTitle?: boolean
-  type: 'webpage' | 'note'
-  onInstanceIntialized?: (instance: IEditorInstance) => void
-  titleStyle?: CSSProperties
-  titleContainerStyle?: CSSProperties
-  title?: string | ReactNode
-  titleEditable?: boolean
-  innerEditorStyle?: CSSProperties
-  innerEditorClassName?: string
-  showToolbar?: boolean
-  showBlockHandle?: boolean
-  compact?: boolean
-  showLeftBar?: boolean
-  showRightBar?: boolean
-}
-export interface IEditorRef {
-  insertNode: (element: CustomElement) => void
-  elementPropertyChange: (element: CustomElement) => void
-  outerElementPropertyChange: (element: CustomElement) => void
-  resetEditor: (value: Descendant[], title?: string) => void
-}
 export const GlobalProviderMap = new Map()
 export const EditorV1: FC<EditorProps> = memo(
   ({
@@ -91,14 +61,15 @@ export const EditorV1: FC<EditorProps> = memo(
     showToolbar,
     title,
     titleEditable,
+    stringTitle,
     type = 'note',
     showBlockHandle = true,
-    onInstanceIntialized,
+    onInstanceInitialized,
     compact,
-    showLeftBar = true,
     on,
-    showRightBar = true,
-    innerEditorClassName
+    defaultReadOnly,
+    innerEditorClassName,
+    showHeader
   }) => {
     const [isDragging, setIsDragging] = useIsDragging()
     const [globalIsDragging] = useGlobalIsDragging()
@@ -108,15 +79,15 @@ export const EditorV1: FC<EditorProps> = memo(
     const note = ObjectStore('note').useValue(noteId)
     const DragState = Rendevoz.Actions.State.Drag
     const metaObject = MetaStore.useValue(note?.metaId || (note?.id && globalStore.get(objectIdToMetaObjectIdMapAtom)?.get(note?.id)))
-
+    const [editorState, setEditorState] = useAtom(EditorStateAtom)
     useEffect(() => {
       const keyDownHandler = () => {
         setBlockHandle(s => (s.visible ? { ...s, visible: false } : s))
       }
       waitFor(
-        () => Object.keys(instance).length > 0,
+        () => !!editor.contentInitialized,
         () => {
-          onInstanceIntialized?.(instance)
+          onInstanceInitialized?.(instance)
         }
       )
       document.addEventListener('keydown', keyDownHandler)
@@ -124,7 +95,19 @@ export const EditorV1: FC<EditorProps> = memo(
         document.removeEventListener('keydown', keyDownHandler)
       }
     }, [])
-
+    useEffect(() => {
+      setEditorState(s => ({ ...s, outReadOnly: readonly }))
+    }, [readonly])
+    useEffect(() => {
+      console.log('set state')
+      setEditorState(s => ({ ...s, innerReadOnly: defaultReadOnly }))
+    }, [defaultReadOnly])
+    const readOnly = readonly || editorState.innerReadOnly
+    console.log(readOnly, readonly, editorState.innerReadOnly, defaultReadOnly)
+    const setReadOnlyEditor = useSetAtom(ReadOnlyEditorAtom)
+    useEffect(() => {
+      setReadOnlyEditor(readOnly)
+    }, [readOnly])
     // const { sharedType, doc, provider } = useMemo(() => {
     //   const doc = new Y.Doc()
     //   let provider
@@ -164,7 +147,7 @@ export const EditorV1: FC<EditorProps> = memo(
     editor.type = type
     editor.id = id
     editor.noteId = noteId
-    editor.readonly = !!readonly
+    editor.readonly = !!readOnly
     editor.on = event =>
       on?.({
         ...event,
@@ -174,6 +157,14 @@ export const EditorV1: FC<EditorProps> = memo(
 
     const instance = useEditorInstance()
 
+    const realTitle = stringTitle || metaObject?.name || note?.title || 'Untitled'
+
+    instance.printToPDF = () => {
+      GlobalPdfPrinterInstance.print?.({ type: 'note', noteId: noteId, title: realTitle })
+    }
+    instance.getTitle = () => {
+      return realTitle
+    }
     const handleBlockMouseMove = useMemoizedFn((e: MouseEvent, element: CustomElement) => {
       if (!globalIsDragging) {
         if (!e.currentTarget) return
@@ -190,7 +181,14 @@ export const EditorV1: FC<EditorProps> = memo(
             if (element.type.startsWith('heading')) {
               left -= 20
             }
-            return { ...s, left, top: targetRect.y, targetId: element.id, targetHeight: targetRect.height, visible: true }
+            return {
+              ...s,
+              left,
+              top: targetRect.y,
+              targetId: element.id,
+              targetHeight: targetRect.height,
+              visible: true
+            }
           } else {
             return s
           }
@@ -224,83 +222,93 @@ export const EditorV1: FC<EditorProps> = memo(
     }
 
     useEffect(() => {
-      editor.on({ type: 'titleChange', value: metaObject?.name || note?.title || 'Untitled' })
+      editor.on({
+        type: 'titleChange',
+        value: metaObject?.name || note?.title || 'Untitled'
+      })
     }, [metaObject?.name, note?.title])
 
     return (
-      <Content flex fullWidth fullHeight>
-        {showLeftBar && <SidebarToolbar editor={editor} />}
-        <div className={styles.editor} role="editor-container">
-          <div ref={scrollElementRef} className={styles.scrollWrapper}>
-            {showTitle &&
-              (typeof title === 'string' || typeof title === 'undefined' ? (
-                <EditorTitle
-                  titleContainerStyle={titleContainerStyle}
-                  titleStyle={titleStyle}
-                  noteId={noteId}
-                  description={metaObject?.description}
-                  titleEditable={titleEditable !== false && (!metaObject || metaObject.type === 'note')}
-                  title={title || metaObject?.name || note?.title || 'Untitled'}
-                  editor={editor}
-                />
-              ) : (
-                title
-              ))}
-            <div
-              role="inner-editor"
-              className={styles.InnerEditorWrapper}
-              style={{ padding: readonly ? '0px 50px' : undefined, '--block-bg': readonly ? 'none' : undefined, ...innerEditorStyle }}
-            >
-              <InnerEditor
-                compact={compact}
-                readonly={readonly}
-                showToolbar={showToolbar}
-                scrollElementRef={scrollElementRef}
-                editor={editor}
-                onChange={v => editor.on({ type: 'valueChange', value: v })}
-                defaultValue={initialValue}
-                onBlockMouseMove={(e, element) => {
-                  e.stopPropagation()
-                  throttleBlockMove.run(e, element)
+      <Content fullWidth fullHeight flex column>
+        {showHeader !== false && <EditorHeader title={realTitle} />}
+        <Content flex fullWidth auto style={{ height: 0 }}>
+          <SidebarToolbar editor={editor} />
+          <div className={styles.editor} role="editor-container">
+            <div ref={scrollElementRef} className={styles.scrollWrapper}>
+              {showTitle &&
+                (typeof title === 'string' || typeof title === 'undefined' ? (
+                  <EditorTitle
+                    titleContainerStyle={titleContainerStyle}
+                    titleStyle={titleStyle}
+                    noteId={noteId}
+                    description={metaObject?.description}
+                    titleEditable={titleEditable !== false && (!metaObject || metaObject.type === 'note')}
+                    title={title || metaObject?.name || note?.title || 'Untitled'}
+                    editor={editor}
+                  />
+                ) : (
+                  title
+                ))}
+              <div
+                role="inner-editor"
+                className={styles.InnerEditorWrapper}
+                style={{
+                  padding: readOnly ? '0px 20px' : undefined,
+                  '--block-bg': readOnly ? 'none' : undefined,
+                  ...innerEditorStyle
                 }}
-                editorClassName={innerEditorClassName}
-                onBlockMouseLeave={useCallback(() => {
-                  setBlockHandle(s => ({ ...s, visible: false }))
-                }, [])}
-              />
+              >
+                <InnerEditor
+                  compact={compact}
+                  readonly={readOnly}
+                  showToolbar={showToolbar}
+                  scrollElementRef={scrollElementRef}
+                  editor={editor}
+                  onChange={v => editor.on({ type: 'valueChange', value: v })}
+                  defaultValue={initialValue}
+                  onBlockMouseMove={(e, element) => {
+                    e.stopPropagation()
+                    throttleBlockMove.run(e, element)
+                  }}
+                  editorClassName={innerEditorClassName}
+                  onBlockMouseLeave={useCallback(() => {
+                    setBlockHandle(s => ({ ...s, visible: false }))
+                  }, [])}
+                />
+              </div>
             </div>
-          </div>
-          {renderOverlay()}
-          {renderIndicator}
-          <BlockHandle
-            onAddClick={handleBlockHandleMenu}
-            onDragClick={useCallback(
-              e => {
-                const selectedBlocksSet = SELECTED_BLOCKS_MAP.get(editor)
-                if (selectedBlocksSet && selectedBlocksSet.size > 0) {
-                  DragState.addDragElements?.(rebuildDragSelect(editor, e) || document.createElement('div'))
-                } else {
-                  const dragHTMLElement = editor.currentDragElement
-                  if (dragHTMLElement) {
-                    const cloned = dragHTMLElement.cloneNode(true)
-                    const rect = dragHTMLElement.getBoundingClientRect()
-                    const wrapper = document.createElement('div')
-                    wrapper.style.width = `${rect.width}px`
-                    wrapper.style.height = `${rect.height}px`
-                    wrapper.appendChild(cloned)
-                    DragState.addDragElements?.(wrapper)
+            {renderOverlay()}
+            {renderIndicator}
+            <BlockHandle
+              onAddClick={handleBlockHandleMenu}
+              onDragClick={useCallback(
+                e => {
+                  const selectedBlocksSet = SELECTED_BLOCKS_MAP.get(editor)
+                  if (selectedBlocksSet && selectedBlocksSet.size > 0) {
+                    DragState.addDragElements?.(rebuildDragSelect(editor, e) || document.createElement('div'))
+                  } else {
+                    const dragHTMLElement = editor.currentDragElement
+                    if (dragHTMLElement) {
+                      const cloned = dragHTMLElement.cloneNode(true)
+                      const rect = dragHTMLElement.getBoundingClientRect()
+                      const wrapper = document.createElement('div')
+                      wrapper.style.width = `${rect.width}px`
+                      wrapper.style.height = `${rect.height}px`
+                      wrapper.appendChild(cloned)
+                      DragState.addDragElements?.(wrapper)
+                    }
                   }
-                }
-                DragState.setDraggingDetails?.(normalizeEditorDragBlocksToGlobalDraggingDetails(editor))
-                DragState.startDrag?.()
-              },
-              [setIsDragging]
-            )}
-            onMenuClick={handleMenuClick}
-            outerVisible={!!(!isDragging && !popoverVisible && !readonly && showBlockHandle)}
-          />
-        </div>
-        {showRightBar && <EditorRightBar />}
+                  DragState.setDraggingDetails?.(normalizeEditorDragBlocksToGlobalDraggingDetails(editor))
+                  DragState.startDrag?.()
+                },
+                [setIsDragging]
+              )}
+              onMenuClick={handleMenuClick}
+              outerVisible={!!(!isDragging && !popoverVisible && !readonly && showBlockHandle)}
+            />
+          </div>
+          <EditorRightBar />
+        </Content>
       </Content>
     )
   }
@@ -314,11 +322,9 @@ export const Editor: FC<EditorProps> = memo(({ type = 'note', ...props }) => {
     return store
   }, [])
   useEffect(() => {
-    store.set(EditorStateAtom, { ...props, type })
+    const currentState = store.get(EditorStateAtom)
+    store.set(EditorStateAtom, { ...props, ...currentState, type })
   }, [props])
-  useEffect(() => {
-    store.set(ReadOnlyEditorAtom, props.readonly)
-  }, [props.readonly])
   return (
     <Provider store={store}>
       <EditorV1 {...props} type={type} />

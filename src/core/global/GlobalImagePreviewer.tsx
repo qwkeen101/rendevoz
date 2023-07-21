@@ -1,42 +1,49 @@
-import { Modal } from '@/components'
-import { Zindexes } from '@/consts'
-import createPanZoom from 'panzoom'
-import { useEffect, useRef, useState } from 'react'
+import { Modal } from "@/components";
+import { Zindexes } from "@/consts";
+import createPanZoom from "panzoom";
+import { useEffect, useRef, useState } from "react";
 
 export const GlobalImagePreviewerInstance: {
-  open?: (imgSrc: string) => void
-} = {}
+  open?: (imgSrc: string) => void;
+} = {};
 
 const GlobalImagePreviewer = () => {
   const [previewerState, setPreviewerState] = useState<{
-    visible: boolean
-    imgSrc?: string
+    visible: boolean;
+    imgSrc?: string;
   }>({
-    visible: false
-  })
-  const imgRef = useRef<HTMLImageElement>(null)
-  const { visible, imgSrc } = previewerState
+    visible: false,
+  });
+  const imgRef = useRef<HTMLImageElement>(null);
+  const { visible, imgSrc } = previewerState;
   useEffect(() => {
-    const img = imgRef.current
+    const img = imgRef.current;
     if (img && visible) {
-      const panzoom = createPanZoom(img)
+      const panzoom = createPanZoom(img);
       return () => {
-        panzoom.dispose()
-      }
+        panzoom.dispose();
+      };
     }
-  }, [visible])
-  GlobalImagePreviewerInstance.open = src => setPreviewerState({ imgSrc: src, visible: true })
+  }, [visible]);
+  GlobalImagePreviewerInstance.open = (src) =>
+    setPreviewerState({ imgSrc: src, visible: true });
   return (
-    <Modal showClose visible={visible} onClose={() => setPreviewerState(s => ({ ...s, visible: false }))} noStyle zIndex={Zindexes.ImagePreview}>
+    <Modal
+      showClose
+      visible={visible}
+      onClose={() => setPreviewerState((s) => ({ ...s, visible: false }))}
+      noStyle
+      zIndex={Zindexes.ImagePreview}
+    >
       <img
         ref={imgRef}
         src={imgSrc}
         style={{
-          maxHeight: '80vh'
+          maxHeight: "80vh",
         }}
       />
     </Modal>
-  )
-}
+  );
+};
 
-export default GlobalImagePreviewer
+export default GlobalImagePreviewer;

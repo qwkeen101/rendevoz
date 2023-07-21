@@ -4,7 +4,7 @@ import isHotkey from 'is-hotkey'
 import { CSSProperties, useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { motion, PanInfo, useAnimationControls } from 'framer-motion'
-import { Content, Icon, Toolbar, Tooltip } from '@/components'
+import { Content, Icon, Tooltip } from '@/components'
 import { css } from '@emotion/css'
 import ClassName from '@/styles/classNames'
 import produce from 'immer'
@@ -23,6 +23,8 @@ import ScreenShotToolbar from './ScreenShotToolbar'
 import OcrService from '@/services/ocr.service'
 import Colors from '@/consts/colors'
 import { delay } from '@/utils/functions'
+import { GlobalInstances } from '~/typings'
+import { assignProperties } from '@/utils'
 
 export const GlobalScreenShotOcrResult = atom<string | undefined | 'loading'>(undefined)
 export const GlobalScreenShotSelectionBoxState = atom<
@@ -37,6 +39,8 @@ export const GlobalScreenShotSelectionBoxState = atom<
     }>
   | undefined
 >(undefined)
+export const GlobalScreenshotInstance: GlobalInstances.ScreenshotInstance = {}
+
 const GlobalScreenShot = () => {
   const [ocrResult, setOcrResult] = useGlobalAtom(GlobalScreenShotOcrResult)
   const [screenShotLayerVisible, setScreenShotLayerVisible] = useState(false)
@@ -111,7 +115,11 @@ const GlobalScreenShot = () => {
             stable: true
           }))
         } else {
-          setSelectionBoxState({ ...selectionBoxState, isSelecting: false, stable: true })
+          setSelectionBoxState({
+            ...selectionBoxState,
+            isSelecting: false,
+            stable: true
+          })
         }
       }
     }
@@ -160,6 +168,11 @@ const GlobalScreenShot = () => {
     }
   })
 
+  assignProperties(GlobalScreenshotInstance, {
+    open: () => {
+      setScreenShotLayerVisible(true)
+    }
+  })
   const selectionBoxLines: {
     pos: string
     style: CSSProperties
@@ -641,8 +654,8 @@ const GlobalScreenShot = () => {
         className={css({
           width: 'fit-content',
           position: 'absolute',
-          left: 20,
-          top: 10,
+          right: 16,
+          top: 16,
           zIndex: 1000001,
           pointerEvents: 'auto',
           '> div': {
@@ -752,7 +765,9 @@ const GlobalScreenShot = () => {
                     if (selectionBoxState.rect) {
                       const blob = await getImageBlob()
                       const { relatedMeta, normalizedImage, normalizedImageMeta } = normalizeScreenshot(selectionBoxState.rect)
-                      const imgPath = await saveImageLocally(blob, { compress: false })
+                      const imgPath = await saveImageLocally(blob, {
+                        compress: false
+                      })
                       const one = await ObjectStore('image').addOne({
                         ...normalizedImage,
                         imageUrl: imgPath

@@ -1,8 +1,8 @@
-import { eventEmitter, GlobalEventEmitter as G } from '@/events/eventEmitter'
-import { useAtomValue } from 'jotai'
+import { eventEmitter, GlobalEventEmitter as G } from "@/events/eventEmitter";
+import { useAtomValue } from "jotai";
 
-export const useScopedEventEmitter = () => useAtomValue(eventEmitter)
+export const useScopedEventEmitter = () => useAtomValue(eventEmitter);
 
-export const GlobalEventEmitter = () => G
+export const GlobalEventEmitter = () => G;
 
-export default useScopedEventEmitter
+export default useScopedEventEmitter;

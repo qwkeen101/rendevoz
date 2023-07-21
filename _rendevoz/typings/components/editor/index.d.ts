@@ -1,23 +1,22 @@
 import EventEmitter from '@/events/eventEmitter'
-import { YHistoryEditor, YjsEditor } from '@slate-yjs/core'
-import { BaseEditor, Element, Location, NodeEntry } from 'slate'
+import { BaseEditor, Descendant, Element, Location, NodeEntry, Path } from 'slate'
 import { HistoryEditor } from 'slate-history'
-import { ReactEditor } from '@/core/editor/slate-react'
 import { INote, INoteLabel } from '~/typings/data'
-import { EditableProps } from '../slate-react/components/editable'
+import { EditableProps, RenderElementProps, ReactEditor } from 'slate-react'
+import { CustomTypes } from '../..'
 import { CustomText, EmptyText } from './baseTypes'
 import { CommonElement } from './commonElements'
 import { OuterElement } from './outerElements'
 import DragManager from '@/core/editor/hooks/DragManager'
 import { EditorOverlayManager } from '@/core/editor/components/overlay/useEditorOverlay'
 import { Virtualizer } from '@tanstack/react-virtual'
-import { ReactElement, ReactNode } from 'react'
+import { CSSProperties, ReactElement, ReactNode } from 'react'
 import { IEditorEvent } from './events'
 
 export type CustomEditor = BaseEditor &
   ReactEditor &
-  YjsEditor &
-  YHistoryEditor &
+  // YjsEditor &
+  // YHistoryEditor &
   HistoryEditor & {
     emitter?: EventEmitter
     id?: string
@@ -48,7 +47,7 @@ export type CustomEditor = BaseEditor &
     type?: 'note' | 'webpage'
   }
 
-export type CustomElement = (CommonElement | OuterElement) & {
+export type CustomElement = (CommonElement | OuterElement | CustomTypes['SlateElements']) & {
   hide?: boolean
   id: number
   color?: string
@@ -67,7 +66,20 @@ declare module 'slate' {
   }
 }
 
+export interface ElementFunctions {
+  selectBlock: VoidFunction
+  collisionSelectBlock: VoidFunction
+  getElement: () => CustomElement
+  removeSelf: VoidFunction
+  getPath: () => Path
+  getClientBound: () => DOMRect | undefined
+  getIndicatorPosition: (
+    direction: 'top' | 'bottom' | 'left' | 'right'
+  ) => { left: number; top: number; width: number; height: number } | undefined
+}
+
 export type IEditorInstance = Partial<{
+  getTitle: () => string
   scrollToBlock: (options: { blockId?: number }) => Promise<void>
   selectBlock: (options: { blockId?: number }) => Promise<void>
   scrollToHighlight: (options: { highlightId: number }) => Promise<void>
@@ -77,15 +89,26 @@ export type IEditorInstance = Partial<{
   getOccurrences: (query: string) => number
   replace: (source: string, target: string, replaceCurrent?: boolean) => void
   changeOccurrence: (direction: 'up' | 'down') => void
+  toggleLeftBar?: VoidFunction
   openSearch?: VoidFunction
   closeSearch?: VoidFunction
   toggleSearch?: VoidFunction
+  openSetting?: VoidFunction
+  closeSetting?: VoidFunction
+  toggleSetting?: VoidFunction
+  printToPDF: VoidFunction
   addLabel?: (label: Partial<INoteLabel>) => Promise<INoteLabel | void>
   deleteLabel?: (id: number) => Promise<void>
   toggleLabel: VoidFunction
   getScrollElement: () => HTMLElement | undefined | null
   getHighlightLocation: (highlightId: number) => NodeEntry<CustomText | EmptyText>[]
   getOverlayManager: () => EditorOverlayManager
+  /**
+   * Get element path by its id
+   */
+  getElementPathById: (id: number) => Path | undefined
+  getSelectedElements: () => CustomElement[]
+  getElementFunctionById: (id: number) => ElementFunctions | undefined
 }>
 
 export type DefaultAddElementHandler = (
@@ -99,7 +122,7 @@ export type DefaultAddElementHandler = (
   }
 ) => void
 
-export type RegisterdEditorElement = {
+export type RegisteredEditorElement = {
   registerInMenu?: {
     slashMenu?: boolean
     addMenu?: boolean
@@ -116,7 +139,37 @@ export type RegisterdEditorElement = {
   name?: string | (() => string)
 }
 
-export type { OuterElement, CommonElement, CommonElement }
+export interface EditorProps {
+  on?: (
+    event: IEditorEvent & {
+      editor: CustomEditor
+      instance: IEditorInstance
+    }
+  ) => void
+  stringTitle?: string
+  defaultReadOnly?: boolean
+  initialValue?: Descendant[]
+  id: string
+  noteId?: number
+  readonly?: boolean
+  showTitle?: boolean
+  type: 'webpage' | 'note'
+  onInstanceInitialized?: (instance: IEditorInstance) => void
+  titleStyle?: CSSProperties
+  titleContainerStyle?: CSSProperties
+  title?: string | ReactNode
+  titleEditable?: boolean
+  innerEditorStyle?: CSSProperties
+  innerEditorClassName?: string
+  showToolbar?: boolean
+  showBlockHandle?: boolean
+  compact?: boolean
+  showLeftBar?: boolean
+  showRightBar?: boolean
+  showHeader?: boolean
+}
+
+export type { OuterElement, CommonElement }
 
 export * from './commonElements'
 

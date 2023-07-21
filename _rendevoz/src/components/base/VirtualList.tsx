@@ -1,13 +1,13 @@
-import { useVirtualizer } from '@tanstack/react-virtual'
-import { CSSProperties, ReactElement, memo, useRef } from 'react'
+import { useVirtualizer } from "@tanstack/react-virtual";
+import { CSSProperties, memo, ReactElement, useRef } from "react";
 
 type Props<T> = {
-  items: T[]
-  renderItem: (item: T, idx: number) => ReactElement
-  estimateSize: number
-  style?: CSSProperties
-  childrenContainerClassname?: string
-}
+  items: T[];
+  renderItem: (item: T, idx: number) => ReactElement;
+  estimateSize: number;
+  style?: CSSProperties;
+  childrenContainerClassname?: string;
+};
 
 function VirtualList<T>({ items, renderItem, estimateSize, style, childrenContainerClassname }: Props<T>) {
   const contentRef = useRef<HTMLDivElement>(null)

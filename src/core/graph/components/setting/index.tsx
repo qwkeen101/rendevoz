@@ -1,70 +1,92 @@
-import { AnimatePopover, Content, Icon, Tooltip } from '@/components/base'
-import Zindexes from '@/consts/zindex'
-import ClassName from '@/styles/classNames'
-import { useState } from 'react'
-import GraphFilter from '../GraphFilter'
-import GraphPathFilter from '../GraphPathFilter'
-import GraphSetting from '../GraphSetting'
+import { AnimatePopover, Content, Icon, Tooltip } from "@/components/base";
+import Zindexes from "@/consts/zindex";
+import ClassName from "@/styles/classNames";
+import { useState } from "react";
+import GraphFilter from "../GraphFilter";
+import GraphPathFilter from "../GraphPathFilter";
+import GraphSetting from "../GraphSetting";
 
 const GraphSettingPanel = () => {
   const [panelState, setPanelState] = useState<{
-    visible?: boolean
-    currentPanel?: 'info' | 'filter' | 'path filter' | 'setting'
+    visible?: boolean;
+    currentPanel?: "info" | "filter" | "path filter" | "setting";
   }>({
-    currentPanel: 'info',
-    visible: false
-  })
+    currentPanel: "info",
+    visible: false,
+  });
 
-  const togglePanel = (panel: (typeof panelState)['currentPanel']) => {
+  const togglePanel = (panel: (typeof panelState)["currentPanel"]) => {
     setPanelState({
       currentPanel: panel,
-      visible: !panelState.visible
-    })
-  }
+      visible: !panelState.visible,
+    });
+  };
   const renderPopover = () => {
     switch (panelState.currentPanel) {
-      case 'filter':
-        return <GraphFilter />
-      case 'path filter':
-        return <GraphPathFilter />
-      case 'setting':
-        return <GraphSetting />
+      case "filter":
+        return <GraphFilter />;
+      case "path filter":
+        return <GraphPathFilter />;
+      case "setting":
+        return <GraphSetting />;
     }
-  }
+  };
   return (
     <AnimatePopover
       containerStyle={{
-        zIndex: String(Zindexes.GraphPopup)
+        zIndex: String(Zindexes.GraphPopup),
       }}
       visible={!!panelState.visible}
       padding={10}
-      positions={['left']}
+      positions={["left"]}
       align="start"
       content={
         <div
           style={{
-            border: '1px solid rgba(31,34,39,0.08)',
+            border: "1px solid rgba(31,34,39,0.08)",
             borderRadius: 6,
-            position: 'relative'
+            position: "relative",
           }}
         >
           {renderPopover()}
         </div>
       }
     >
-      <Content flex column gap={8} style={{ fontSize: 16, padding: '10px 6px', borderRadius: 8, overflow: 'hidden' }}>
+      <Content
+        flex
+        column
+        gap={8}
+        style={{
+          fontSize: 16,
+          padding: "10px 6px",
+          borderRadius: 8,
+          overflow: "hidden",
+        }}
+      >
         <Tooltip content="Graph Filter">
-          <Icon name="park-filter" className={ClassName.circleButton()} onClick={() => togglePanel('filter')} />
+          <Icon
+            name="park-filter"
+            className={ClassName.circleButton()}
+            onClick={() => togglePanel("filter")}
+          />
         </Tooltip>
         <Tooltip content="Graph Path Finder">
-          <Icon name="park-connection-point-two" className={ClassName.circleButton()} onClick={() => togglePanel('path filter')} />
+          <Icon
+            name="park-connection-point-two"
+            className={ClassName.circleButton()}
+            onClick={() => togglePanel("path filter")}
+          />
         </Tooltip>
-        <Tooltip content="Graph Setting">
-          <Icon name="park-setting" className={ClassName.circleButton()} onClick={() => togglePanel('setting')} />
-        </Tooltip>
+        {/*<Tooltip content="Graph Setting">*/}
+        {/*  <Icon*/}
+        {/*    name="park-setting"*/}
+        {/*    className={ClassName.circleButton()}*/}
+        {/*    onClick={() => togglePanel("setting")}*/}
+        {/*  />*/}
+        {/*</Tooltip>*/}
       </Content>
     </AnimatePopover>
-  )
-}
+  );
+};
 
-export default GraphSettingPanel
+export default GraphSettingPanel;

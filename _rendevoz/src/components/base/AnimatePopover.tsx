@@ -1,27 +1,41 @@
-import React, { Dispatch, FC, memo, PropsWithChildren, ReactNode, RefObject, useEffect, useRef, useState } from 'react'
-import { AnimatePresence, motion } from 'framer-motion'
-import { Popover, PopoverProps } from 'react-tiny-popover'
-import useUnmount from '@/hooks/utils/useUnmount'
-import _ from 'lodash'
-import { useMergedRef } from '@/hooks'
-import ClassName from '@/styles/classNames'
-import { Zindexes } from '@/consts'
-import { Position } from '~/typings'
-import { PosHelper } from './PosHelper'
-import { SetStateAction } from 'jotai'
-export interface AnimatePopoverProps extends Omit<PopoverProps, 'content' | 'isOpen' | 'children'> {
-  animate?: boolean
-  visible?: boolean
-  content: React.ReactNode | ((setVisible: Dispatch<SetStateAction<boolean>>) => ReactNode)
-  disableNudge?: boolean
-  disableIntersection?: boolean
-  onVisiblityChange?: (v: boolean) => void
-  innerRef?: RefObject<HTMLElement>
-  parentElement?: HTMLElement | null
-  backdropFilter?: boolean
-  position?: Position
-  children?: ReactNode
-  contentDraggable?: boolean
+import React, {
+  Dispatch,
+  FC,
+  memo,
+  PropsWithChildren,
+  ReactNode,
+  RefObject,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
+import { AnimatePresence, motion } from "framer-motion";
+import { Popover, PopoverProps } from "react-tiny-popover";
+import useUnmount from "@/hooks/utils/useUnmount";
+import _ from "lodash";
+import { useMergedRef } from "@/hooks";
+import ClassName from "@/styles/classNames";
+import { Zindexes } from "@/consts";
+import { Position } from "~/typings";
+import { PosHelper } from "./PosHelper";
+import { SetStateAction } from "jotai";
+
+export interface AnimatePopoverProps
+  extends Omit<PopoverProps, "content" | "isOpen" | "children"> {
+  animate?: boolean;
+  visible?: boolean;
+  content:
+    | React.ReactNode
+    | ((setVisible: Dispatch<SetStateAction<boolean>>) => ReactNode);
+  disableNudge?: boolean;
+  disableIntersection?: boolean;
+  onVisiblityChange?: (v: boolean) => void;
+  innerRef?: RefObject<HTMLElement>;
+  parentElement?: HTMLElement | null;
+  backdropFilter?: boolean;
+  position?: Position;
+  children?: ReactNode;
+  contentDraggable?: boolean;
 }
 
 const AnimatePopover: FC<PropsWithChildren<AnimatePopoverProps>> = ({

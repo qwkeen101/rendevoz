@@ -1,6 +1,6 @@
 import { join, resolve } from 'path'
 import { Module } from '@nestjs/common'
-import { BrowserWindow, app, shell, protocol, ipcRenderer, session, ipcMain } from 'electron'
+import { app, BrowserWindow, ipcRenderer, protocol, session, shell, webContents } from 'electron'
 import axios from 'axios'
 import { fileURLToPath } from 'url'
 import HttpsProxyAgent from 'https-proxy-agent'
@@ -8,6 +8,7 @@ import { autoUpdater } from 'electron-updater'
 import * as child_process from 'child_process'
 import { DEFAULT_USER_DATA_PATH, DefaultRendevozDataPath } from '../app.controller'
 import fs from 'fs'
+import WebContents = Electron.WebContents
 
 process.env.ELECTRON_DISABLE_SECURITY_WARNINGS = 'true'
 process.env.DIST_ELECTRON = join(__dirname, '../..')
@@ -57,6 +58,7 @@ const slicedLength = 'rendefile://'.length
             autoUpdater.quitAndInstall()
           }, 6000)
         })
+        app.setAsDefaultProtocolClient('rendevoz')
         // autoUpdater.autoInstallOnAppQuit = true
         app.on('window-all-closed', () => {
           app.quit()
@@ -69,7 +71,37 @@ const slicedLength = 'rendefile://'.length
           session.defaultSession.clearCache()
           session.defaultSession.clearCodeCaches({ urls: [] })
         })
+        app.on('open-url', (event, url) => {
+          const lowered = url.toLowerCase()
+          if (lowered.startsWith('rendevoz://object')) {
+            const newUrl = lowered.replace('rendevoz://object/', '')
+            if (newUrl.length) {
+              const metaId = Number(newUrl)
+              console.log(metaId)
+              win.webContents.send('openObject', {
+                metaId
+              })
+            }
+          }
+        })
         app.setAsDefaultProtocolClient('rendevoz')
+        app.on('second-instance', (event, commandLine, workingDirectory) => {
+          if (win) {
+            if (win.isMinimized()) win.restore()
+            win.focus()
+            const url = commandLine.pop().slice(0, -1)
+            const lowered = url.toLowerCase()
+            if (lowered.startsWith('rendevoz://object')) {
+              const newUrl = lowered.replace('rendevoz://object/', '')
+              if (newUrl.length) {
+                const metaId = Number(newUrl)
+                win.webContents.send('openObject', {
+                  metaId
+                })
+              }
+            }
+          }
+        })
         if (isDev) {
           if (process.platform === 'win32') {
             process.on('message', data => {
@@ -128,7 +160,20 @@ const slicedLength = 'rendefile://'.length
           titleBarStyle: 'hidden',
           trafficLightPosition: {
             x: 10,
-            y: 10
+            y: 8
+          }
+        })
+
+        win.webContents.setWindowOpenHandler(({ url, features, frameName }) => {
+          console.log(url)
+          if (url === 'about:blank#blocked') {
+            return {
+              action: 'allow'
+            }
+          }
+          shell.openExternal(url)
+          return {
+            action: 'deny'
           }
         })
         autoUpdater.on('download-progress', e => {
@@ -164,6 +209,12 @@ const slicedLength = 'rendefile://'.length
             win.hide()
           }
           win.webContents.send('close')
+        })
+        win.on('enter-full-screen', () => {
+          win.webContents.send('fullScreen')
+        })
+        win.on('leave-full-screen', () => {
+          win.webContents.send('leaveFullScreen')
         })
         win.on('maximize', () => {
           win.webContents.send('winMaximized')

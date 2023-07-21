@@ -1,0 +1,257 @@
+import { useToggle } from '@/hooks'
+import { assignProperties } from '@/utils'
+import { ReactElement, useEffect, useMemo, useRef, useState } from 'react'
+import createCache from '@emotion/cache'
+import { CacheProvider } from '@emotion/react'
+import { createPortal } from 'react-dom'
+import { ipcInstance } from '@/plugins'
+import { GlobalInstances } from '~/typings'
+import Id from '@/utils/id'
+import { Editor } from '@/core'
+import { css } from '@emotion/css'
+import { ClassName, Components, Consts } from 'rendevoz'
+import { Content, Switch } from '@/components'
+import { useTranslation } from 'react-i18next'
+import Select from '@/components/base/select'
+import { Colors } from '@/consts'
+
+export const GlobalPdfPrinterInstance: GlobalInstances.PdfPrinterInstance = {}
+
+const GlobalPdfPrinter = () => {
+  const [modalVisible, toggleModalVisible] = useToggle(false)
+  const [children, setChildren] = useState<ReactElement>()
+  const [saveButtonVisible, toggleSaveButtonVisible] = useState(false)
+  const currentTitleRef = useRef('')
+  assignProperties(GlobalPdfPrinterInstance, {
+    print: printable => {
+      switch (printable.type) {
+        case 'note': {
+          setChildren(
+            <Editor
+              readonly={true}
+              type={'note'}
+              showHeader={false}
+              showToolbar={false}
+              showBlockHandle={false}
+              id={Id.getStrId()}
+              noteId={printable.noteId}
+            />
+          )
+          console.log(printable.title)
+          currentTitleRef.current = printable.title
+          break
+        }
+      }
+      toggleModalVisible(true)
+    }
+  })
+
+  const containerEle = useMemo(() => document.createElement('div'), [modalVisible])
+  const cache = useMemo(() => createCache({ key: 'external', container: containerEle }), [])
+  const externalWindowRef = useRef<Window>()
+  useEffect(() => {
+    if (modalVisible) {
+      const center = {
+        x: window.screen.width / 2 - 400,
+        y: window.screen.height / 2 - 400
+      }
+      const externalWindow = window.open('', '', `width=800,height=800,left=${center.x},top=${center.y}`)
+      setTimeout(() => {
+        if (externalWindow) {
+          externalWindow.document.head.innerHTML = document.head.innerHTML
+          externalWindow.document.documentElement.setAttribute('theme', 'light')
+          externalWindow.document.body.style.height = 'auto'
+          externalWindow.document.documentElement.style.width = '100vw'
+          externalWindow.document.body.style.background = 'white'
+          externalWindow.document.body.style.width = '100%'
+          externalWindow.document.title = 'Export as PDF'
+          externalWindowRef.current = externalWindow
+          window.document.body.classList.forEach(i => {
+            externalWindow.document.body.classList.add(i)
+          })
+
+          externalWindow.document.documentElement.style.height = 'auto'
+          externalWindow.document.documentElement.style.overflowY = 'auto'
+          externalWindow.document.body.appendChild(containerEle)
+          externalWindow.onunload = () => {
+            toggleModalVisible(false)
+          }
+        }
+      }, 100)
+      toggleSaveButtonVisible(true)
+      return () => {
+        externalWindow?.close()
+        toggleSaveButtonVisible(false)
+        setChildren(undefined)
+      }
+    }
+  }, [modalVisible])
+  const containerRef = useRef(null)
+  if (modalVisible && children) {
+    return createPortal(
+      <CacheProvider value={cache}>
+        <Content fullWidth flex>
+          <div
+            style={{
+              width: saveButtonVisible ? 'calc(100% - 260px)' : '100%'
+            }}
+            ref={containerRef}
+            className={css({
+              '*': {
+                height: 'unset !important',
+                pointerEvents: 'none'
+              },
+              div: {
+                breakInside: 'avoid'
+              },
+              width: '100%'
+            })}
+          >
+            {children}
+          </div>
+          {saveButtonVisible && (
+            <PDFExportSettings
+              onExport={s => {
+                toggleSaveButtonVisible(false)
+                setTimeout(() => {
+                  console.log('printing to pdf')
+                  ipcInstance
+                    .send('printPDF', {
+                      name: currentTitleRef.current,
+                      size: s.pageSize,
+                      horizontal: s.horizontal,
+                      margin: s.margin
+                    })
+                    .then(res => {
+                      if (res) {
+                        if (res.data === 'OK') {
+                          toggleModalVisible(false)
+                        } else {
+                          toggleSaveButtonVisible(true)
+                        }
+                      }
+                    })
+                }, 500)
+              }}
+            />
+          )}
+        </Content>
+      </CacheProvider>,
+      containerEle
+    )
+  }
+  return null
+}
+
+const PDFExportSettings = ({ onExport }: { onExport: (setting: { pageSize: string; horizontal: boolean; margin: string }) => void }) => {
+  const [exportState, setExportState] = useState<{
+    pageSize: 'A3' | 'A4' | 'A5' | 'Letter' | 'Legal'
+    horizontal: boolean
+    margin: 'default' | 'none'
+  }>({
+    pageSize: 'A4',
+    horizontal: false,
+    margin: 'default'
+  })
+  const { t } = useTranslation()
+  return (
+    <Components.Content
+      flex
+      column
+      style={{
+        width: '260px',
+        right: 0,
+        position: 'fixed',
+        top: 0,
+        height: '100%',
+        borderLeft: `1px solid ${Colors.Background.Border}`,
+        padding: 24
+      }}
+    >
+      <div className={ClassName.title()} style={{ marginBottom: 30 }}>
+        {t('general.pdf export settings')}
+      </div>
+      <Components.Content
+        flex
+        column
+        gap={10}
+        className={css({
+          '> div': {
+            ':not(:last-child)': {
+              paddingBottom: 10,
+              borderBottom: `1px solid ${Consts.Colors.Background.Border}`
+            }
+          }
+        })}
+      >
+        <Components.Content flex alignItems="center" justifyContent="space-between">
+          <div>{t('general.horizontal')}</div>
+          <Switch value={exportState.horizontal} onChange={v => setExportState(s => ({ ...s, horizontal: v }))} />
+        </Components.Content>
+        <Components.Content flex alignItems="center" justifyContent="space-between">
+          <div>{t('general.page size')}</div>
+          <Select
+            closeOnSelect
+            value={exportState.pageSize}
+            onSelect={v => setExportState(s => ({ ...s, pageSize: v[0] }))}
+            options={[
+              {
+                value: 'A3',
+                children: 'A3'
+              },
+              {
+                value: 'A4',
+                children: 'A4'
+              },
+              {
+                value: 'A5',
+                children: 'A5'
+              },
+              {
+                value: 'Letter',
+                children: 'Letter'
+              },
+              {
+                value: 'Legal',
+                children: 'Legal'
+              }
+            ]}
+          ></Select>
+        </Components.Content>
+        <Components.Content flex alignItems="center" justifyContent="space-between">
+          <div>{t('general.margin')}</div>
+          <Select
+            closeOnSelect
+            value={exportState.margin}
+            onSelect={v => setExportState(s => ({ ...s, margin: v[0] }))}
+            options={[
+              {
+                value: 'none',
+                children: 'None'
+              },
+              {
+                value: 'default',
+                children: 'Default'
+              }
+            ]}
+          ></Select>
+        </Components.Content>
+      </Components.Content>
+      <div
+        className={ClassName.flatButton()}
+        style={{ marginTop: 30, border: `1px solid ${Colors.Background.Border}`, textAlign: 'center', fontWeight: 600 }}
+        onClick={() => {
+          onExport?.({
+            pageSize: exportState.pageSize,
+            margin: exportState.margin,
+            horizontal: exportState.horizontal
+          })
+        }}
+      >
+        {t('general.export')}
+      </div>
+    </Components.Content>
+  )
+}
+
+export default GlobalPdfPrinter

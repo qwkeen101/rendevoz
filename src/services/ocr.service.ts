@@ -1,45 +1,43 @@
-import { request } from '@/utils/request'
-import { blob } from 'd3'
-import { getUser } from './login.service'
-import { toast } from 'react-hot-toast'
+import { request } from "@/utils/request";
+import { getUser } from "./login.service";
 
-const localImageOcrInterface = 'http://localhost:9000/image/ocr'
-const remoteOcrInterface = 'https://api.rendevoz.com/image/ocr'
+const localImageOcrInterface = "http://localhost:9000/image/ocr";
+const remoteOcrInterface = "https://api.rendevoz.com/image/ocr";
 const OcrService = {
   ocrImage: (
     image: Blob
   ): Promise<
     | {
         result: {
-          words: string
-        }[]
+          words: string;
+        }[];
       }
     | undefined
   > => {
-    const user = getUser()
+    const user = getUser();
     if (!user || !user.premiumEndDate || user.premiumEndDate < Date.now()) {
-      return Promise.reject()
+      return Promise.reject();
     }
-    return new Promise(res => {
-      const reader = new FileReader()
-      reader.onload = async e => {
-        const result = e.target?.result?.toString()
+    return new Promise((res) => {
+      const reader = new FileReader();
+      reader.onload = async (e) => {
+        const result = e.target?.result?.toString();
         if (result) {
           const ocrResult = await request(remoteOcrInterface, {
             data: new URLSearchParams({
-              image: result
+              image: result,
             }),
-            method: 'POST',
+            method: "POST",
             headers: {
-              'content-type': 'application/x-www-form-urlencoded'
-            }
-          })
-          res(ocrResult.data)
+              "content-type": "application/x-www-form-urlencoded",
+            },
+          });
+          res(ocrResult.data);
         }
-      }
-      reader.readAsDataURL(image)
-    })
-  }
-}
+      };
+      reader.readAsDataURL(image);
+    });
+  },
+};
 
-export default OcrService
+export default OcrService;

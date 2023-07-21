@@ -1,45 +1,46 @@
-import { css } from '@emotion/css'
-import { CSSProperties, forwardRef, useEffect, useRef, useState } from 'react'
-import MonacoEditor, { RefEditorInstance } from '@uiw/react-monacoeditor'
-import { useMergedRef } from '@/hooks'
+import { css } from "@emotion/css";
+import { CSSProperties, forwardRef, useRef, useState } from "react";
+import MonacoEditor, { RefEditorInstance } from "@uiw/react-monacoeditor";
+import { useMergedRef } from "@/hooks";
+
 export const CodeLanguageData = [
-  'bat',
-  'c',
-  'clojure',
-  'cpp',
-  'csharp',
-  'css',
-  'dart',
-  'dockerfile',
-  'go',
-  'html',
-  'java',
-  'javascript',
-  'json',
-  'julia',
-  'kotlin',
-  'less',
-  'lua',
-  'markdown',
-  'mysql',
-  'pascal',
-  'perl',
-  'php',
-  'plaintext',
-  'powershell',
-  'python',
-  'ruby',
-  'rust',
-  'scala',
-  'scss',
-  'shell',
-  'sql',
-  'swift',
-  'typescript',
-  'verilog',
-  'xml',
-  'yaml'
-]
+  "bat",
+  "c",
+  "clojure",
+  "cpp",
+  "csharp",
+  "css",
+  "dart",
+  "dockerfile",
+  "go",
+  "html",
+  "java",
+  "javascript",
+  "json",
+  "julia",
+  "kotlin",
+  "less",
+  "lua",
+  "markdown",
+  "mysql",
+  "pascal",
+  "perl",
+  "php",
+  "plaintext",
+  "powershell",
+  "python",
+  "ruby",
+  "rust",
+  "scala",
+  "scss",
+  "shell",
+  "sql",
+  "swift",
+  "typescript",
+  "verilog",
+  "xml",
+  "yaml",
+];
 interface CodeBlockProps {
   onChange: (value: string) => void
   value: string

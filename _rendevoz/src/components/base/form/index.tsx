@@ -1,25 +1,25 @@
-import { KEY } from '@/consts/key'
-import ClassName from '@/styles/classNames'
-import { css } from '@emotion/css'
-import { isHotkey } from 'is-hotkey'
-import { Provider } from 'jotai'
-import { CSSProperties, FC, useEffect } from 'react'
-import Content from '../Content'
-import Footer from '../Footer'
-import FormItem from './FormItem'
-import { useCanSubmit } from './useCanSubmit'
-import { useIsSubmitted } from './useIsSubmitted'
+import { KEY } from "@/consts/key";
+import ClassName from "@/styles/classNames";
+import { css } from "@emotion/css";
+import { isHotkey } from "is-hotkey";
+import { Provider } from "jotai";
+import { CSSProperties, FC, useEffect } from "react";
+import Content from "../Content";
+import Footer from "../Footer";
+import FormItem from "./FormItem";
+import { useCanSubmit } from "./useCanSubmit";
+import { useIsSubmitted } from "./useIsSubmitted";
 
 interface FormProps {
-  children: React.ReactNode
-  title: string
-  description?: string
-  onBack?: () => void
-  onSubmit?: () => void
-  style?: CSSProperties
-  submitText?: string
-  backText?: string
-  extra?: React.ReactNode
+  children: React.ReactNode;
+  title: string;
+  description?: string;
+  onBack?: () => void;
+  onSubmit?: () => void;
+  style?: CSSProperties;
+  submitText?: string;
+  backText?: string;
+  extra?: React.ReactNode;
 }
 interface IForm extends FC<FormProps> {
   Item: typeof FormItem

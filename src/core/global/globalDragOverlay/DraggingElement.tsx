@@ -10,7 +10,6 @@ export const DraggingElement = ({ text }: { text: string }) => {
         width: 'fit-content',
         background: Colors.Background.Global,
         height: 'fit-content',
-        fontFamily: 'Muli,serif',
         fontWeight: 700,
         color: Colors.Font.Primary
       })}

@@ -1,22 +1,32 @@
-import { cloneElement, CSSProperties, FC, forwardRef, PropsWithChildren, ReactNode, useEffect, useRef, useState } from 'react'
-import { AnimatePopover } from '..'
-import { useMemoizedFn, useMergedRef } from '@/hooks'
-import Zindexes from '@/consts/zindex'
-import { waitFor } from '@/utils/functions'
-import { AnimatePopoverProps } from './AnimatePopover'
+import {
+  cloneElement,
+  CSSProperties,
+  FC,
+  forwardRef,
+  PropsWithChildren,
+  ReactNode,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
+import { AnimatePopover } from "..";
+import { useMemoizedFn, useMergedRef } from "@/hooks";
+import Zindexes from "@/consts/zindex";
+import { waitFor } from "@/utils/functions";
+import { AnimatePopoverProps } from "./AnimatePopover";
 
 interface ToolTipProps {
-  content?: string | ReactNode
-  position?: 'top' | 'bottom'
-  style?: CSSProperties
-  delay?: number
-  disable?: boolean
-  disableDefaultContent?: boolean
-  contentTouchable?: boolean
-  zIndex?: string | number
-  visible?: boolean
-  onVisibleChange?: (v: boolean) => void
-  parentElement?: AnimatePopoverProps['parentElement']
+  content?: string | ReactNode;
+  position?: "top" | "bottom";
+  style?: CSSProperties;
+  delay?: number;
+  disable?: boolean;
+  disableDefaultContent?: boolean;
+  contentTouchable?: boolean;
+  zIndex?: string | number;
+  visible?: boolean;
+  onVisibleChange?: (v: boolean) => void;
+  parentElement?: AnimatePopoverProps["parentElement"];
 }
 
 const ToolTip: FC<PropsWithChildren<ToolTipProps>> = (

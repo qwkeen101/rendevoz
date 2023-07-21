@@ -1,5 +1,5 @@
 import { ObjectActionPopover, useRenderObject } from '@/core/database'
-import { GlobalGraphInstance, getAllEdgesOfNodes, getRelatedNodesOfNode } from '../..'
+import { getAllEdgesOfNodes, getRelatedNodesOfNode, GlobalGraphInstance } from '../..'
 import useGraph from '../../hooks/useGraph'
 import { Content } from '@/components'
 import { useAtom } from 'jotai'
@@ -13,6 +13,7 @@ import useGraphNodes from '../../hooks/useGraphNodes'
 import useEdges from '../../hooks/useEdges'
 import * as d3 from 'd3'
 import { Rendevoz } from '@/core/rendevoz'
+
 const NodePopover = ({ metaId, nodeId, onClose }: { metaId: number; nodeId: number; onClose: VoidFunction }) => {
   const { renderWhole } = useRenderObject({ metaObjectId: metaId })
   const graph = useGraph()
@@ -63,7 +64,7 @@ const NodePopover = ({ metaId, nodeId, onClose }: { metaId: number; nodeId: numb
           ellipsisLine: 8
         },
         mainContainerStyle: {
-          padding: 10
+          padding: 4
         },
         rowGap: 5,
         renderOptions: {

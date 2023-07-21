@@ -1,49 +1,62 @@
-import React from 'react'
-import { Editor, Range, Element, Ancestor, Descendant } from 'slate'
+import React from "react";
+import { Ancestor, Descendant, Editor, Element, Range } from "slate";
 
-import ElementComponent from '../components/element'
-import TextComponent from '../components/text'
-import { ReactEditor } from '../plugin/react-editor'
-import { useSlateStatic } from './use-slate-static'
-import { useDecorate } from './use-decorate'
-import { NODE_TO_INDEX, NODE_TO_PARENT } from '../utils/weak-maps'
-import { RenderElementProps, RenderLeafProps, RenderPlaceholderProps } from '../components/editable'
-import { SelectedContext } from './use-selected'
+import ElementComponent from "../components/element";
+import TextComponent from "../components/text";
+import { ReactEditor } from "../plugin/react-editor";
+import { useSlateStatic } from "./use-slate-static";
+import { useDecorate } from "./use-decorate";
+import { NODE_TO_INDEX, NODE_TO_PARENT } from "../utils/weak-maps";
+import {
+  RenderElementProps,
+  RenderLeafProps,
+  RenderPlaceholderProps,
+} from "../components/editable";
 
 /**
  * Children.
  */
 
 const useChildren = (props: {
-  decorations: Range[]
-  node: Ancestor
-  renderElement?: (props: RenderElementProps) => JSX.Element
-  renderPlaceholder: (props: RenderPlaceholderProps) => JSX.Element
-  renderLeaf?: (props: RenderLeafProps) => JSX.Element
-  selection: Range | null
+  decorations: Range[];
+  node: Ancestor;
+  renderElement?: (props: RenderElementProps) => JSX.Element;
+  renderPlaceholder: (props: RenderPlaceholderProps) => JSX.Element;
+  renderLeaf?: (props: RenderLeafProps) => JSX.Element;
+  selection: Range | null;
 }) => {
-  const { decorations, node, renderElement, renderPlaceholder, renderLeaf, selection } = props
-  const decorate = useDecorate()
-  const editor = useSlateStatic()
-  const path = ReactEditor.findPath(editor, node)
-  const children = []
-  const isLeafBlock = Element.isElement(node) && !editor.isInline(node) && Editor.hasInlines(editor, node)
+  const {
+    decorations,
+    node,
+    renderElement,
+    renderPlaceholder,
+    renderLeaf,
+    selection,
+  } = props;
+  const decorate = useDecorate();
+  const editor = useSlateStatic();
+  const path = ReactEditor.findPath(editor, node);
+  const children = [];
+  const isLeafBlock =
+    Element.isElement(node) &&
+    !editor.isInline(node) &&
+    Editor.hasInlines(editor, node);
 
   for (let i = 0; i < node.children.length; i++) {
-    const p = path.concat(i)
-    const n = node.children[i] as Descendant
-    const key = ReactEditor.findKey(editor, n)
+    const p = path.concat(i);
+    const n = node.children[i] as Descendant;
+    const key = ReactEditor.findKey(editor, n);
 
     try {
-      const range = Editor.range(editor, p)
-      const sel = selection && Range.intersection(range, selection)
-      const ds = decorate([n, p])
+      const range = Editor.range(editor, p);
+      const sel = selection && Range.intersection(range, selection);
+      const ds = decorate([n, p]);
 
       for (const dec of decorations) {
-        const d = Range.intersection(dec, range)
+        const d = Range.intersection(dec, range);
 
         if (d) {
-          ds.push(d)
+          ds.push(d);
         }
       }
 
@@ -58,7 +71,7 @@ const useChildren = (props: {
             renderLeaf={renderLeaf}
             selection={sel}
           />
-        )
+        );
       } else {
         children.push(
           <TextComponent
@@ -70,17 +83,17 @@ const useChildren = (props: {
             renderLeaf={renderLeaf}
             text={n}
           />
-        )
+        );
       }
     } catch (e) {
-      console.error(e, node, n, p)
+      console.error(e, node, n, p);
     }
 
-    NODE_TO_INDEX.set(n, i)
-    NODE_TO_PARENT.set(n, node)
+    NODE_TO_INDEX.set(n, i);
+    NODE_TO_PARENT.set(n, node);
   }
 
-  return children
-}
+  return children;
+};
 
-export default useChildren
+export default useChildren;

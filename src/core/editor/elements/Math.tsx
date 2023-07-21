@@ -1,6 +1,6 @@
 import { css } from '@emotion/css'
 import { ReactEditor, RenderElementProps, useSlateStatic } from '../slate-react'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef } from 'react'
 import { ElementFunction, ID_TO_ELEMENT_FUNCTION_MAP } from '../weakMaps'
 import { useDebounceFn, useToggle } from '@/hooks'
 import { AnimatePopover, WithBorder } from '@/components'
@@ -118,7 +118,10 @@ const MathElement = ({ element, children, attributes }: RenderElementProps) => {
               background: `${Colors.Background.HighContrast} !important`
             }
           })}
-          style={{ display: 'inline-block', background: !mathEle.content?.length ? Colors.Background.ButtonHover : undefined }}
+          style={{
+            display: 'inline-block',
+            background: !mathEle.content?.length ? Colors.Background.ButtonHover : undefined
+          }}
           onClick={toggleFormVisible}
         ></div>
       </AnimatePopover>

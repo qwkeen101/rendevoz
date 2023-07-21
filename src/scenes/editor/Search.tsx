@@ -8,7 +8,6 @@ import { useDebounceEffect, useSelectAtomValue } from '@/hooks'
 import ClassName from '@/styles/classNames'
 import { css } from '@emotion/css'
 import { atom, useAtom } from 'jotai'
-import { Resizable } from 're-resizable'
 import { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { IEditorInstance } from '~/typings'
@@ -110,7 +109,10 @@ const EditorSearchPanel = () => {
             }
           }
         } else {
-          nextOccur = { blockId: currentOccur.blockId, idx: currentOccur.idx + 1 }
+          nextOccur = {
+            blockId: currentOccur.blockId,
+            idx: currentOccur.idx + 1
+          }
         }
         setEditorSearchState(s => ({ ...s, currentOccurrence: nextOccur }))
       } else {
@@ -160,7 +162,9 @@ const EditorSearchPanel = () => {
   }
   useEffect(() => {
     if (editorSearchState.currentOccurrence?.blockId) {
-      instance.scrollToBlock?.({ blockId: editorSearchState.currentOccurrence.blockId })
+      instance.scrollToBlock?.({
+        blockId: editorSearchState.currentOccurrence.blockId
+      })
     }
   }, [editorSearchState.currentOccurrence])
   const totalOccur = Object.values(editorSearchState.occurrences || {}).reduce((prev, curr) => prev + curr, 0)
@@ -189,7 +193,10 @@ const EditorSearchPanel = () => {
           selected={searchState.replaceVisible === true ? true : undefined}
           text={t('general.replace')}
           onClick={() => {
-            setSearchState(s => ({ ...s, replaceVisible: !s.replaceVisible }))
+            setSearchState(s => ({
+              ...s,
+              replaceVisible: !s.replaceVisible
+            }))
           }}
         />
         <Icon

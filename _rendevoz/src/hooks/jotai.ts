@@ -1,8 +1,14 @@
-import { PrimitiveAtom, createStore, useAtom, useAtomValue, useSetAtom } from 'jotai'
-import { selectAtom } from 'jotai/utils'
-import { useMemo } from 'react'
+import {
+  createStore,
+  PrimitiveAtom,
+  useAtom,
+  useAtomValue,
+  useSetAtom,
+} from "jotai";
+import { selectAtom } from "jotai/utils";
+import { useMemo } from "react";
 
-export const globalStore = createStore()
+export const globalStore = createStore();
 
 export const useGlobalAtom: typeof useAtom = (atom: Parameters<typeof useAtom>[0]) => useAtom(atom, { store: globalStore })
 

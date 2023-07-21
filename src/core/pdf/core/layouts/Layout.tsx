@@ -1,70 +1,93 @@
-import { PDFDocumentProxy } from 'pdfjs-dist'
-import { FC, memo, ReactElement, useEffect, useImperativeHandle, useRef, useState } from 'react'
-import { defaultRangeExtractor, Range, useVirtualizer, VirtualItem, Virtualizer } from '@tanstack/react-virtual'
-import { useDebounceEffect, useDebounceFn, useMemoizedFn, useSelectAtomValue, useUpdateEffect } from '@/hooks'
-import PageLayer from '../layers/PageLayer'
-import { PageSize, RenderPageProps } from '../types/page'
-import { useScrollMode } from '../hooks/useScrollMode'
-import { IAnnotation } from '../types/annotation'
-import { Noop } from '@/common/types'
-import { decreaseLevel, increaseLevel } from '../utils/zoom'
-import PanHelper from '../utils/pan'
-import { TextItem } from '../types/text'
-import Id from '@/utils/id'
-import useScopedEventEmitter from '@/events/useEventEmitter'
-import usePdfViewer from '../hooks/useViewer'
-import { ObjectStore } from '@/stores'
-import { IPdfViewer } from '~/typings'
-import { PAGE_INDEX_TO_PAGE_FUNCTION, PAGE_INDEX_TO_TEXT_LAYER, PDF_TO_DOC } from '../weakMaps'
-import { waitFor } from '@/utils/functions'
-import { normalizeText } from '../utils/search'
-import { ID_TO_LABEL_MAP } from '../../weakMaps'
-import { PdfStateAtom } from '../../hooks/usePdfState'
+import { PDFDocumentProxy } from "pdfjs-dist";
+import {
+  FC,
+  memo,
+  ReactElement,
+  useEffect,
+  useImperativeHandle,
+  useRef,
+  useState,
+} from "react";
+import {
+  defaultRangeExtractor,
+  Range,
+  useVirtualizer,
+  VirtualItem,
+} from "@tanstack/react-virtual";
+import {
+  useDebounceEffect,
+  useDebounceFn,
+  useMemoizedFn,
+  useSelectAtomValue,
+  useUpdateEffect,
+} from "@/hooks";
+import PageLayer from "../layers/PageLayer";
+import { PageSize, RenderPageProps } from "../types/page";
+import { useScrollMode } from "../hooks/useScrollMode";
+import { IAnnotation } from "../types/annotation";
+import { Noop } from "@/common/types";
+import { decreaseLevel, increaseLevel } from "../utils/zoom";
+import PanHelper from "../utils/pan";
+import { TextItem } from "../types/text";
+import Id from "@/utils/id";
+import useScopedEventEmitter from "@/events/useEventEmitter";
+import usePdfViewer from "../hooks/useViewer";
+import { ObjectStore } from "@/stores";
+import { IPdfViewer } from "~/typings";
+import {
+  PAGE_INDEX_TO_PAGE_FUNCTION,
+  PAGE_INDEX_TO_TEXT_LAYER,
+  PDF_TO_DOC,
+} from "../weakMaps";
+import { waitFor } from "@/utils/functions";
+import { normalizeText } from "../utils/search";
+import { ID_TO_LABEL_MAP } from "../../weakMaps";
+import { PdfStateAtom } from "../../hooks/usePdfState";
 
 interface LayoutProps {
-  doc: PDFDocumentProxy
-  defaultScale?: number
-  initialPage: number
-  pageSize: PageSize
-  renderPage?: (props: RenderPageProps) => ReactElement
-  renderAnnotation?: (annotation: IAnnotation) => ReactElement
-  onRangeChange?: (range?: Range) => void
-  innerRef: any
-  className?: string
-  transformScale?: number
+  doc: PDFDocumentProxy;
+  defaultScale?: number;
+  initialPage: number;
+  pageSize: PageSize;
+  renderPage?: (props: RenderPageProps) => ReactElement;
+  renderAnnotation?: (annotation: IAnnotation) => ReactElement;
+  onRangeChange?: (range?: Range) => void;
+  innerRef: any;
+  className?: string;
+  transformScale?: number;
 }
 export interface LayoutFunctions {
-  jumpToPage: (pageIndex: number) => void
+  jumpToPage: (pageIndex: number) => void;
   search: (word: string) => Fuzzysort.KeyResults<{
-    id: number
-    str: string
-    page: number
-    prepared: Fuzzysort.Prepared
-  }>
-  zoomIn: Noop
-  zoomOut: Noop
-  autoFit: Noop
-  togglePan: Noop
-  highlightText: (str: string, pageIndex: number) => void
-  jumpToDest: (dest: string | any[]) => void
-  jumpToOffset: (offset: number) => void
-  scrollBy: (offset: number) => void
+    id: number;
+    str: string;
+    page: number;
+    prepared: Fuzzysort.Prepared;
+  }>;
+  zoomIn: Noop;
+  zoomOut: Noop;
+  autoFit: Noop;
+  togglePan: Noop;
+  highlightText: (str: string, pageIndex: number) => void;
+  jumpToDest: (dest: string | any[]) => void;
+  jumpToOffset: (offset: number) => void;
+  scrollBy: (offset: number) => void;
   getOutline: () => Promise<
     {
-      title: string
-      bold: boolean
-      italic: boolean
-      color: Uint8ClampedArray
-      dest: string | any[] | null
-      url: string | null
-      unsafeUrl: string | undefined
-      newWindow: boolean | undefined
-      count: number | undefined
-      items: any[]
+      title: string;
+      bold: boolean;
+      italic: boolean;
+      color: Uint8ClampedArray;
+      dest: string | any[] | null;
+      url: string | null;
+      unsafeUrl: string | undefined;
+      newWindow: boolean | undefined;
+      count: number | undefined;
+      items: any[];
     }[]
-  >
+  >;
 }
-export const PAGE_SPACING = 10
+export const PAGE_SPACING = 10;
 const Layout: FC<LayoutProps> = ({
   doc,
   defaultScale,
@@ -75,27 +98,30 @@ const Layout: FC<LayoutProps> = ({
   innerRef,
   className,
   onRangeChange,
-  transformScale
+  transformScale,
 }) => {
-  const { numPages } = doc
-  const [scrollMode] = useScrollMode()
-  const pagesRef = useRef<HTMLDivElement>(null)
-  const visibleRangeRef = useRef([0, 0])
-  const [rotation, setRotation] = useState(0)
-  const [scale, setScale] = useState(pageSize.scale)
-  const [enablePan, setEnablePan] = useState(false)
-  const autoFitWhenResize = useSelectAtomValue(PdfStateAtom, s => s.autoFitWhenResize)
-  const viewer = usePdfViewer()
+  const { numPages } = doc;
+  const [scrollMode] = useScrollMode();
+  const pagesRef = useRef<HTMLDivElement>(null);
+  const visibleRangeRef = useRef([0, 0]);
+  const [rotation, setRotation] = useState(0);
+  const [scale, setScale] = useState(pageSize.scale);
+  const [enablePan, setEnablePan] = useState(false);
+  const autoFitWhenResize = useSelectAtomValue(
+    PdfStateAtom,
+    (s) => s.autoFitWhenResize
+  );
+  const viewer = usePdfViewer();
 
   const textRef = useRef<
     {
-      id: number
-      str: string
-      page: number
+      id: number;
+      str: string;
+      page: number;
     }[]
-  >([])
-  const scaleRef = useRef(pageSize.scale)
-  const currentRangeRef = useRef<Range>()
+  >([]);
+  const scaleRef = useRef(pageSize.scale);
+  const currentRangeRef = useRef<Range>();
 
   useImperativeHandle(innerRef, () => ({
     jumpToPage,
@@ -108,34 +134,34 @@ const Layout: FC<LayoutProps> = ({
     search,
     highlightText,
     jumpToOffset,
-    scrollBy
-  }))
-  const { height, width } = pageSize
-  const innerEmitter = useScopedEventEmitter()
+    scrollBy,
+  }));
+  const { height, width } = pageSize;
+  const innerEmitter = useScopedEventEmitter();
   const rect =
     Math.abs(rotation) % 180 === 0
       ? {
           h: height,
-          w: width
+          w: width,
         }
       : {
           h: width,
-          w: height
-        }
+          w: height,
+        };
   const result = {
     height: rect.h * scale,
-    width: rect.w * scale
-  }
+    width: rect.w * scale,
+  };
   const estimateSize = () => {
     // return (scrollMode === 'horizontal' ? result.width : result.height) + PAGE_SPACING
-    return scale * pageSize.height + PAGE_SPACING
-  }
+    return scale * pageSize.height + PAGE_SPACING;
+  };
 
-  const rangeExtractor = useMemoizedFn(range => {
-    visibleRangeRef.current = [range.startIndex, range.endIndex]
-    currentRangeRef.current = range
-    return defaultRangeExtractor(range)
-  })
+  const rangeExtractor = useMemoizedFn((range) => {
+    visibleRangeRef.current = [range.startIndex, range.endIndex];
+    currentRangeRef.current = range;
+    return defaultRangeExtractor(range);
+  });
 
   const virtualizer = useVirtualizer({
     count: numPages,
@@ -144,227 +170,256 @@ const Layout: FC<LayoutProps> = ({
     rangeExtractor,
     overscan: 3,
     measureElement: () => {
-      return scale * pageSize.height + PAGE_SPACING
-    }
-  })
+      return scale * pageSize.height + PAGE_SPACING;
+    },
+  });
 
-  const [virtualItems, setVirtualItems] = useState<VirtualItem[]>([])
+  const [virtualItems, setVirtualItems] = useState<VirtualItem[]>([]);
 
   useUpdateEffect(() => {
     if (autoFitWhenResize) {
-      setScale(pageSize.scale)
+      setScale(pageSize.scale);
     }
-  }, [pageSize.scale, autoFitWhenResize])
+  }, [pageSize.scale, autoFitWhenResize]);
 
   useUpdateEffect(() => {
-    const previousScale = scaleRef.current
-    scaleRef.current = scale
-    const pages = pagesRef.current
+    const previousScale = scaleRef.current;
+    scaleRef.current = scale;
+    const pages = pagesRef.current;
     if (!pages) {
-      return
+      return;
     }
-    const { scrollTop, scrollLeft } = pages
+    const { scrollTop, scrollLeft } = pages;
     const newOffset = {
       scrollTop: scrollTop * (scale / previousScale),
-      scrollLeft: scrollLeft * (scale / previousScale)
-    }
-    virtualizer.measure()
-    virtualizer.scrollToOffset(newOffset.scrollTop, { behavior: 'auto' })
-  }, [scale])
+      scrollLeft: scrollLeft * (scale / previousScale),
+    };
+    virtualizer.measure();
+    virtualizer.scrollToOffset(newOffset.scrollTop, { behavior: "auto" });
+  }, [scale]);
 
   const jumpToPage = (pageIndex: number) => {
     if (pageIndex >= 0 && pageIndex < numPages) {
-      const offset = pageIndex * pageSize.height * scale + pageIndex * 10
-      virtualizer.scrollToOffset(offset, { align: 'start', behavior: 'auto' })
+      const offset = pageIndex * pageSize.height * scale + pageIndex * 10;
+      virtualizer.scrollToOffset(offset, { align: "start", behavior: "auto" });
     }
-  }
+  };
   const jumpToLabel = async (labelId: number) => {
-    const label = await ObjectStore('pdfLabel').getOneById(labelId)
-    if (label && label.page !== undefined && ('rect' in label || 'rects' in label)) {
-      const labelPercentTop = 'rect' in label ? label.rect?.[1] : 'rects' in label ? label.rects?.[0].percentageTop : undefined
+    const label = await ObjectStore("pdfLabel").getOneById(labelId);
+    if (
+      label &&
+      label.page !== undefined &&
+      ("rect" in label || "rects" in label)
+    ) {
+      const labelPercentTop =
+        "rect" in label
+          ? label.rect?.[1]
+          : "rects" in label
+          ? label.rects?.[0].percentageTop
+          : undefined;
       if (labelPercentTop !== undefined) {
-        const realOffset = pageSize.height * scale * label.page + labelPercentTop * pageSize.height * scale + PAGE_SPACING * label.page
-        virtualizer.scrollToOffset(realOffset, { align: 'center' })
-        if (!viewer) return
+        const realOffset =
+          pageSize.height * scale * label.page +
+          labelPercentTop * pageSize.height * scale +
+          PAGE_SPACING * label.page;
+        virtualizer.scrollToOffset(realOffset, { align: "center" });
+        if (!viewer) return;
         waitFor(
           () => {
-            return !!ID_TO_LABEL_MAP.get(viewer)?.has(labelId)
+            return !!ID_TO_LABEL_MAP.get(viewer)?.has(labelId);
           },
           () => {
-            ID_TO_LABEL_MAP.get(viewer)?.get(labelId)?.focus()
+            ID_TO_LABEL_MAP.get(viewer)?.get(labelId)?.focus();
           }
-        )
+        );
       }
     }
-  }
+  };
   const jumpToDest = async (dest: string | any[]) => {
-    let realDest
-    if (typeof dest === 'string') {
-      realDest = await doc.getDestination(dest)
+    let realDest;
+    if (typeof dest === "string") {
+      realDest = await doc.getDestination(dest);
     } else {
-      realDest = dest
+      realDest = dest;
     }
-    if (!Array.isArray(realDest)) return
-    const destRef = realDest[0]
-    let pageNum = undefined
-    if (typeof destRef === 'object' && destRef !== null) {
-      pageNum = await doc.getPageIndex(destRef)
+    if (!Array.isArray(realDest)) return;
+    const destRef = realDest[0];
+    let pageNum = undefined;
+    if (typeof destRef === "object" && destRef !== null) {
+      pageNum = await doc.getPageIndex(destRef);
     }
     if (Number.isInteger(destRef)) {
-      pageNum = destRef + 1
+      pageNum = destRef + 1;
     }
     if (pageNum !== undefined) {
-      jumpToPage(pageNum)
+      jumpToPage(pageNum);
     }
-  }
+  };
   const jumpToOffset = (offset: number) => {
-    virtualizer.scrollToOffset(offset, { behavior: 'auto' })
-  }
+    virtualizer.scrollToOffset(offset, { behavior: "auto" });
+  };
   const scrollBy = (offset: number) => {
-    virtualizer.scrollBy(offset)
-  }
+    virtualizer.scrollBy(offset);
+  };
   const zoomIn = () => {
-    const nextScale = increaseLevel(scale)
-    setScale(nextScale)
-  }
+    const nextScale = increaseLevel(scale);
+    setScale(nextScale);
+  };
   const zoomOut = () => {
-    const nextScale = decreaseLevel(scale)
-    console.log(nextScale)
-    setScale(nextScale)
-  }
+    const nextScale = decreaseLevel(scale);
+    console.log(nextScale);
+    setScale(nextScale);
+  };
   const autoFit = () => {
-    setScale(pageSize.scale)
-  }
+    setScale(pageSize.scale);
+  };
   const togglePan = () => {
-    setEnablePan(!enablePan)
-  }
+    setEnablePan(!enablePan);
+  };
   const getOutline = async () => {
-    const outline = await doc.getOutline()
-    return outline
-  }
+    const outline = await doc.getOutline();
+    return outline;
+  };
   const search = (s: string) => {
     if (textRef.current) {
       const results: {
-        searchText: string
-        pageIndex: number
-      }[] = []
-      const text = textRef.current
-      const search = normalizeText(s).replace(/[\-\[\]\/\{\}\(\)\*\+\?\.\\\^\$\|]/g, '\\$&')
-      const reg = new RegExp(search, 'gi')
-      const quickFilter = text.filter(i => i.str.match(reg))
-      quickFilter.forEach(i => {
-        const reg = new RegExp(search, 'gi')
-        const indexes = ([...i.str.matchAll(reg)].map(i => i.index).filter(i => i !== undefined) as number[]).reduce((prev, curr, idx) => {
+        searchText: string;
+        pageIndex: number;
+      }[] = [];
+      const text = textRef.current;
+      const search = normalizeText(s).replace(
+        /[\-\[\]\/\{\}\(\)\*\+\?\.\\\^\$\|]/g,
+        "\\$&"
+      );
+      const reg = new RegExp(search, "gi");
+      const quickFilter = text.filter((i) => i.str.match(reg));
+      quickFilter.forEach((i) => {
+        const reg = new RegExp(search, "gi");
+        const indexes = (
+          [...i.str.matchAll(reg)]
+            .map((i) => i.index)
+            .filter((i) => i !== undefined) as number[]
+        ).reduce((prev, curr, idx) => {
           if (idx === 0) {
-            prev.push(curr)
+            prev.push(curr);
           } else {
-            const last = prev[prev.length - 1]
+            const last = prev[prev.length - 1];
             if (curr - last > 80 + search.length) {
-              prev.push(curr)
+              prev.push(curr);
             }
           }
-          return prev
-        }, [] as number[])
+          return prev;
+        }, [] as number[]);
         // five results per page
-        indexes.slice(0, 5).forEach(index => {
-          let cropStr = i.str.slice(Math.max(0, index - 80), Math.min(index + search.length + 80, i.str.length)).replace(reg, '<em>$&</em>')
-          const appendBefore = index - 80 > 0
-          const appendAfter = index + search.length + 80 < i.str.length
+        indexes.slice(0, 5).forEach((index) => {
+          let cropStr = i.str
+            .slice(
+              Math.max(0, index - 80),
+              Math.min(index + search.length + 80, i.str.length)
+            )
+            .replace(reg, "<em>$&</em>");
+          const appendBefore = index - 80 > 0;
+          const appendAfter = index + search.length + 80 < i.str.length;
           if (appendBefore) {
-            cropStr = '...' + cropStr
+            cropStr = "..." + cropStr;
           }
           if (appendAfter) {
-            cropStr = cropStr + '...'
+            cropStr = cropStr + "...";
           }
           results.push({
             searchText: cropStr,
-            pageIndex: i.page
-          })
-        })
-      })
-      return results
+            pageIndex: i.page,
+          });
+        });
+      });
+      return results;
     }
-  }
+  };
   const highlightText = (str: string, pageIndex: number) => {
     innerEmitter.emit(
-      'pdf',
+      "pdf",
       {
-        type: 'highlightText',
+        type: "highlightText",
         data: {
           page: pageIndex,
-          str
-        }
+          str,
+        },
       },
       true
-    )
-  }
+    );
+  };
 
   const { run: handleScroll } = useDebounceFn(
-    e => {
+    (e) => {
       currentRangeRef.current = {
         ...currentRangeRef.current,
-        progress: e.target.scrollTop / e.target.scrollHeight
-      }
-      onRangeChange?.(currentRangeRef.current)
+        progress: e.target.scrollTop / e.target.scrollHeight,
+      };
+      onRangeChange?.(currentRangeRef.current);
     },
     { wait: 500 }
-  )
+  );
   useEffect(() => {
     if (initialPage) {
-      virtualizer.scrollToIndex(initialPage, { align: 'start', behavior: 'auto' })
+      virtualizer.scrollToIndex(initialPage, {
+        align: "start",
+        behavior: "auto",
+      });
     }
     if (textRef.current.length === 0 && viewer) {
-      const map = textRef.current
+      const map = textRef.current;
       const currentPage = {
-        current: 0
-      }
-      viewer.getDocument?.().then(doc => {
+        current: 0,
+      };
+      viewer.getDocument?.().then((doc) => {
         const asyncLoopTextContent = () => {
-          if (currentPage.current === doc.numPages) return
+          if (currentPage.current === doc.numPages) return;
           doc
             .getPage(currentPage.current + 1)
-            .then(page => page.getTextContent())
-            .then(item => {
-              const hasStrTexts = item.items.filter(i => (i as TextItem).str) as TextItem[]
+            .then((page) => page.getTextContent())
+            .then((item) => {
+              const hasStrTexts = item.items.filter(
+                (i) => (i as TextItem).str
+              ) as TextItem[];
               const str = hasStrTexts
-                .map(i => {
+                .map((i) => {
                   if (i.hasEOL) {
-                    return i.str + ' '
+                    return i.str + " ";
                   }
-                  return i.str
+                  return i.str;
                 })
-                .join('')
-              const normalized = normalizeText(str)
+                .join("");
+              const normalized = normalizeText(str);
 
-              const id = Id.getId()
+              const id = Id.getId();
               map.push({
                 id,
                 str: normalized,
-                page: currentPage.current
-              })
-              currentPage.current += 1
-              requestIdleCallback(() => asyncLoopTextContent())
-            })
-        }
-        asyncLoopTextContent()
-      })
+                page: currentPage.current,
+              });
+              currentPage.current += 1;
+              requestIdleCallback(() => asyncLoopTextContent());
+            });
+        };
+        asyncLoopTextContent();
+      });
     }
-    const pages = pagesRef.current
+    const pages = pagesRef.current;
     if (pages) {
-      pages.addEventListener('scroll', handleScroll)
+      pages.addEventListener("scroll", handleScroll);
     }
     return () => {
-      pages?.removeEventListener('scroll', handleScroll)
-    }
-  }, [doc])
+      pages?.removeEventListener("scroll", handleScroll);
+    };
+  }, [doc]);
 
   useDebounceEffect(
     () => {
-      setVirtualItems(virtualizer.getVirtualItems())
+      setVirtualItems(virtualizer.getVirtualItems());
     },
     [virtualizer.getVirtualItems()],
     { wait: 20 }
-  )
+  );
   if (viewer) {
     Object.assign(viewer, {
       jumpToPage,
@@ -376,106 +431,121 @@ const Layout: FC<LayoutProps> = ({
       jumpToDest,
       search,
       highlightText: (str, pageIndex) => {
-        return new Promise(res => {
+        return new Promise((res) => {
           waitFor(
             () => {
-              const pageFunctionRef = PAGE_INDEX_TO_PAGE_FUNCTION.get(viewer)?.get(pageIndex)
+              const pageFunctionRef =
+                PAGE_INDEX_TO_PAGE_FUNCTION.get(viewer)?.get(pageIndex);
               if (pageFunctionRef?.current.highlightText) {
-                return true
+                return true;
               }
-              return false
+              return false;
             },
             () => {
-              PAGE_INDEX_TO_PAGE_FUNCTION.get(viewer)?.get(pageIndex)?.current.highlightText?.(str)
-              res()
+              PAGE_INDEX_TO_PAGE_FUNCTION.get(viewer)
+                ?.get(pageIndex)
+                ?.current.highlightText?.(str);
+              res();
             }
-          )
-        })
+          );
+        });
       },
       jumpToOffset,
       scrollBy,
       jumpToLabel,
-      scrollToOffset: offset => {
-        virtualizer.scrollToOffset(offset, { align: 'center' })
+      scrollToOffset: (offset) => {
+        virtualizer.scrollToOffset(offset, { align: "center" });
       },
       getPageSize: () => ({
         scale,
         height: pageSize.height,
         width: pageSize.width,
-        pageSizeScale: pageSize.scale
+        pageSizeScale: pageSize.scale,
       }),
       highlightArea: (pageIndex, rect) => {
-        return new Promise(res => {
+        return new Promise((res) => {
           waitFor(
             () => {
-              const pageFunctionRef = PAGE_INDEX_TO_PAGE_FUNCTION.get(viewer)?.get(pageIndex)
+              const pageFunctionRef =
+                PAGE_INDEX_TO_PAGE_FUNCTION.get(viewer)?.get(pageIndex);
               if (pageFunctionRef?.current.highlightArea) {
-                return true
+                return true;
               }
-              return false
+              return false;
             },
             () => {
-              const pageFunctionRef = PAGE_INDEX_TO_PAGE_FUNCTION.get(viewer)?.get(pageIndex)
+              const pageFunctionRef =
+                PAGE_INDEX_TO_PAGE_FUNCTION.get(viewer)?.get(pageIndex);
               if (pageFunctionRef) {
-                pageFunctionRef.current.highlightArea?.(rect)
-                res()
+                pageFunctionRef.current.highlightArea?.(rect);
+                res();
               }
             }
-          )
-        })
+          );
+        });
       },
       getDocument: () => {
-        return new Promise(res => {
+        return new Promise((res) => {
           if (PDF_TO_DOC.has(viewer)) {
-            res(PDF_TO_DOC.get(viewer)!)
+            res(PDF_TO_DOC.get(viewer)!);
           } else {
-            viewer.onDocumentLoaded = doc => {
-              PDF_TO_DOC.set(viewer, doc)
-              res(doc)
-            }
+            viewer.onDocumentLoaded = (doc) => {
+              PDF_TO_DOC.set(viewer, doc);
+              res(doc);
+            };
           }
-        })
+        });
       },
-      getTextLayerInstance: idx => {
-        return new Promise(res => {
+      getTextLayerInstance: (idx) => {
+        return new Promise((res) => {
           if (!PAGE_INDEX_TO_TEXT_LAYER.has(viewer)) {
-            console.log('create new map')
-            PAGE_INDEX_TO_TEXT_LAYER.set(viewer, new Map())
+            console.log("create new map");
+            PAGE_INDEX_TO_TEXT_LAYER.set(viewer, new Map());
           }
 
-          const map = PAGE_INDEX_TO_TEXT_LAYER.get(viewer)
+          const map = PAGE_INDEX_TO_TEXT_LAYER.get(viewer);
           if (map?.has(idx)) {
-            res(map.get(idx)!)
+            res(map.get(idx)!);
           } else {
-            viewer.jumpToPage?.(idx)
+            viewer.jumpToPage?.(idx);
             viewer.onTextLayerRendered = (pageIdx, ins) => {
-              map?.set(pageIdx, ins)
+              map?.set(pageIdx, ins);
               if (idx === pageIdx) {
-                res(ins)
+                res(ins);
               }
-            }
+            };
           }
-        })
-      }
-    } as IPdfViewer)
+        });
+      },
+    } as IPdfViewer);
   }
 
   return (
-    <div className={className} ref={pagesRef} style={{ height: '100%', width: '100%', overflow: 'auto' }}>
+    <div
+      className={className}
+      ref={pagesRef}
+      style={{ height: "100%", width: "100%", overflow: "auto" }}
+    >
       <PanHelper enablePan={enablePan} containerEle={pagesRef.current} />
-      <div style={{ height: virtualizer.getTotalSize(), width: '100%', position: 'relative' }}>
-        {virtualItems.map(item => (
+      <div
+        style={{
+          height: virtualizer.getTotalSize(),
+          width: "100%",
+          position: "relative",
+        }}
+      >
+        {virtualItems.map((item) => (
           <div
             data-index={item.index}
             ref={virtualizer.measureElement}
             style={{
-              position: 'absolute',
+              position: "absolute",
               top: 0,
               left: 0,
-              width: '100%',
+              width: "100%",
               height: item.size,
               transform: `translateY(${item.start}px)`,
-              paddingBottom: 10
+              paddingBottom: 10,
             }}
             key={item.key}
             data-page-index={item.index}
@@ -495,7 +565,7 @@ const Layout: FC<LayoutProps> = ({
         ))}
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default memo(Layout)
+export default memo(Layout);

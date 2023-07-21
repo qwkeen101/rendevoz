@@ -1,12 +1,12 @@
-import { CustomTypes, Event, MetaObject, Position } from '..'
-import { IDraggableElement } from '../globalInstances/dragDrop'
+import { CustomTypes, Event, MetaObject, Position } from "..";
+import { IDraggableElement } from "../globalInstances/dragDrop";
 
 type DragDropEvent = {
-  dropPosition: Position
-  target: EventTarget
-  dragElement: IDraggableElement
-  dragFrom: 'editor' | 'pdf' | 'database'
-} & DropOn
+  dropPosition: Position;
+  target: EventTarget;
+  dragElement: IDraggableElement;
+  dragFrom: "editor" | "pdf" | "database";
+} & DropOn;
 
 export type BuiltInDropOn =
   | {

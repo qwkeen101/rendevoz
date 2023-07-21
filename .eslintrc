@@ -9,16 +9,16 @@
         "jsx": true
         }
     },
-    "extends": [
-        "eslint:recommended",
-        "plugin:@typescript-eslint/recommended",
-        "plugin:prettier/recommended"
-    ],
-    "plugins": [
-        "@typescript-eslint",
-        "eslint-plugin-react",
-        "@emotion"
-    ],
+     "extends": [
+         "eslint:recommended",
+         "plugin:@typescript-eslint/recommended",
+         "plugin:prettier/recommended"
+     ],
+     "plugins": [
+         "@typescript-eslint",
+         "eslint-plugin-react",
+         "@emotion"
+     ],
     "rules": {
         "semi": ["error","never"],
         "prettier/prettier": [

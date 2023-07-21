@@ -1,18 +1,27 @@
-import ClassName from '@/styles/classNames'
-import classNames from 'classnames'
-import { CSSProperties, DetailedHTMLProps, FC, forwardRef, HTMLAttributes, MouseEventHandler, PropsWithChildren } from 'react'
+import ClassName from "@/styles/classNames";
+import classNames from "classnames";
+import {
+  CSSProperties,
+  DetailedHTMLProps,
+  FC,
+  forwardRef,
+  HTMLAttributes,
+  MouseEventHandler,
+  PropsWithChildren,
+} from "react";
 
-interface WithBorderProps extends DetailedHTMLProps<HTMLAttributes<HTMLDivElement>, HTMLDivElement> {
-  boxShadowBorder?: boolean
-  solidBorder?: boolean
-  borderRadius?: number
-  style?: CSSProperties
-  className?: string
-  onClick?: MouseEventHandler
-  contentEditable?: boolean
-  disableClosePopover?: boolean
-  padding?: CSSProperties['padding']
-  blur?: boolean
+interface WithBorderProps
+  extends DetailedHTMLProps<HTMLAttributes<HTMLDivElement>, HTMLDivElement> {
+  boxShadowBorder?: boolean;
+  solidBorder?: boolean;
+  borderRadius?: number;
+  style?: CSSProperties;
+  className?: string;
+  onClick?: MouseEventHandler;
+  contentEditable?: boolean;
+  disableClosePopover?: boolean;
+  padding?: CSSProperties["padding"];
+  blur?: boolean;
 }
 
 const WithBorder: FC<PropsWithChildren<WithBorderProps>> = (

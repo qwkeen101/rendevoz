@@ -4,7 +4,17 @@ import { EditorProps } from './Editor'
 import EditorPage from '@/scenes/editor'
 
 type IWebpageEditor = EditorProps
-const WebpageEditor = ({ initialValue, title, noteId, on, showToolbar, onInstanceIntialized, readonly = true }: IWebpageEditor) => {
+const WebpageEditor = ({
+  initialValue,
+  title,
+  noteId,
+  on,
+  showToolbar,
+  onInstanceInitialized,
+  readonly = true,
+  stringTitle,
+  defaultReadOnly = true
+}: IWebpageEditor) => {
   const id = useMemo(() => Id.getStrId(), [])
   return (
     <EditorPage
@@ -16,14 +26,15 @@ const WebpageEditor = ({ initialValue, title, noteId, on, showToolbar, onInstanc
         maxWidth: 'calc(100% - 100px)'
       }}
       on={on}
-      readonly={readonly}
+      defaultReadOnly={true}
       showToolbar={showToolbar}
       id={id}
       titleEditable={false}
-      onInstanceInitialized={onInstanceIntialized}
+      onInstanceInitialized={onInstanceInitialized}
       initialValue={initialValue}
       noteId={noteId}
       title={title}
+      stringTitle={stringTitle}
     />
   )
 }

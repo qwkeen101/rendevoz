@@ -7,11 +7,16 @@
  */
 export const isElementDraggable = (target: HTMLElement) => {
   let el = target;
-  while (el.parentElement && el.tagName !== 'BODY' && el.tagName !== 'MAIN' && !el.dataset.draggable) {
+  while (
+    el.parentElement &&
+    el.tagName !== "BODY" &&
+    el.tagName !== "MAIN" &&
+    !el.dataset.draggable
+  ) {
     el = el.parentElement;
   }
 
-  return el.dataset.draggable === 'true';
+  return el.dataset.draggable === "true";
 };
 
 /**
@@ -23,13 +28,13 @@ export const isSelectionDisabled = (target: HTMLElement) => {
   let el = target;
   while (
     el.parentElement &&
-    el.tagName !== 'BODY' &&
-    el.tagName !== 'MAIN' &&
+    el.tagName !== "BODY" &&
+    el.tagName !== "MAIN" &&
     !el.dataset.draggable &&
     !el.dataset.disableselect
   ) {
     el = el.parentElement;
   }
 
-  return el.dataset.draggable === 'true' || el.dataset.disableselect === 'true';
+  return el.dataset.draggable === "true" || el.dataset.disableselect === "true";
 };

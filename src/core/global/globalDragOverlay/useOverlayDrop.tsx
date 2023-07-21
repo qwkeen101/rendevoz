@@ -1,9 +1,9 @@
 import { useToggle } from '@/hooks'
-import { indexedMetaLinksAtom, TypeToRegisteredMetaObject } from '@/stores/meta.store'
+import { indexedMetaLinksAtom } from '@/stores/meta.store'
 import { globalStore, MetaStore, ObjectStore } from '@/stores'
 import { PartialWithId } from '@/types'
 import Id from '@/utils/id'
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { Node } from 'slate'
 import { FormType, Modal } from '@/components'
@@ -11,7 +11,7 @@ import { getSetting, intersectionOfMultipleSets } from '@/core'
 import { DropOn, GlobalDraggingDetails, MetaLink, MetaObject } from '~/typings'
 import { useEventHandler } from '@/events'
 import useDropObject, { clearDragState } from './useDropObject'
-import { transformTextContentToNameAndDescription, createLink, addLinkBetweenTwoMetaObject } from './utils'
+import { addLinkBetweenTwoMetaObject, createLink, transformTextContentToNameAndDescription } from './utils'
 import { Rendevoz } from '@/core/rendevoz'
 import { TypeToRegisteredObject } from '@/stores/object.store'
 import { KeyToRegisteredDropOnProcessor } from '@/core/plugin/RegisterMap'
@@ -45,6 +45,10 @@ const useOverlayDrop = () => {
       const type = data.draggingElement.type
       if (TypeToRegisteredObject.has(type)) {
         const { normalizeDraggingEleToMetaObject: _customNormalize } = TypeToRegisteredObject.get(type)!
+        if (!_customNormalize) {
+          console.error('No normalize function registered! Please register normalizeDraggingEleToMetaObject!')
+          return
+        }
         console.log(normalizeDraggingEleToMetaObject)
         if (_customNormalize) {
           customNormalize = _customNormalize
@@ -157,7 +161,14 @@ const useOverlayDrop = () => {
         if (!enableDropOnWhiteboardLink) break
         const whiteboardMeta =
           (await getMetaObjectByObjectId(dropOn.whiteboardId)) ||
-          (await addMetaObject({ id: Id.getId(), objectId: dropOn.whiteboardId, type: 'whiteboard' }, true))
+          (await addMetaObject(
+            {
+              id: Id.getId(),
+              objectId: dropOn.whiteboardId,
+              type: 'whiteboard'
+            },
+            true
+          ))
         link.targetId = whiteboardMeta.id
         break
       }
@@ -248,9 +259,7 @@ const useOverlayDrop = () => {
             selectedText: dragElement.content,
             pages: dragElement.page ? [dragElement.page] : undefined
           }
-          const { name, description } = transformTextContentToNameAndDescription(dragElement.content)
-          normalizedMetaObject.name = labelObject?.name || name || 'Unnamed PDF Label'
-          normalizedMetaObject.description = labelObject?.description || description
+          normalizedMetaObject.name = labelObject?.name || dragElement.content || 'Unnamed PDF Label'
           if (enableDragFromPDFLink && enableAll) {
             const metaLink: PartialWithId<MetaLink> = {
               sourceId: pdfMeta.id,
@@ -340,11 +349,10 @@ const useOverlayDrop = () => {
           addLinkBetweenTwoMetaObject(noteMeta, noteLabelMeta)
         } else {
           const existedLabel = await ObjectStore('noteLabel').getOneById(dragElement.highlightId)
-          const { name, description } = transformTextContentToNameAndDescription(dragElement.textContent)
           normalizedMetaObject.type = 'noteLabel'
           normalizedMetaObject.objectId = dragElement.highlightId
-          normalizedMetaObject.name = existedLabel?.name || name || 'Note Label'
-          normalizedMetaObject.description = existedLabel?.name || description
+          normalizedMetaObject.name = existedLabel?.name || dragElement.textContent || 'Note Label'
+          normalizedMetaObject.description = existedLabel?.description
           normalizedMetaObject.fromObject = {
             metaId: noteMeta.id,
             type: 'note',
@@ -364,11 +372,10 @@ const useOverlayDrop = () => {
           addLinkBetweenTwoMetaObject(webpageMeta, webpageLabelMeta)
         } else {
           const existedLabel = await ObjectStore('webpageLabel').getOneById(dragElement.highlightId)
-          const { name, description } = transformTextContentToNameAndDescription(dragElement.textContent)
           normalizedMetaObject.type = 'webpageLabel'
           normalizedMetaObject.objectId = dragElement.highlightId
-          normalizedMetaObject.name = existedLabel?.name || name || 'Webpage Label'
-          normalizedMetaObject.description = existedLabel?.description || description
+          normalizedMetaObject.name = existedLabel?.name || dragElement.textContent || 'Webpage Label'
+          normalizedMetaObject.description = existedLabel?.description
           normalizedMetaObject.fromObject = {
             type: 'webpage',
             metaId: webpageMeta.id,

@@ -1,4 +1,4 @@
-import { useIsomorphicLayoutEffect } from 'react-use'
-import { createUpdateEffect } from './useUpdateEffect'
+import { useIsomorphicLayoutEffect } from "react-use";
+import { createUpdateEffect } from "./useUpdateEffect";
 
-export default createUpdateEffect(useIsomorphicLayoutEffect)
+export default createUpdateEffect(useIsomorphicLayoutEffect);

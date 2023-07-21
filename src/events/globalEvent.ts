@@ -1,8 +1,8 @@
 import { AvaliableGlobalDraggingElements } from '@/components/globalDragOverlay/GlobalDragOverlay'
 import { Position } from '@/types'
-import { INote } from '~/typings/data'
 import { Event } from './eventEmitter'
 import EventHandler from './eventHandler'
+import { IDraggableElement } from '~/typings'
 
 type DragDropEvent = {
   dropPosition: Position
@@ -33,7 +33,7 @@ type GlobalDropNeedFurtherProcessEvent = {
 }
 type GlobalDragPointerUpEvent = {
   event: PointerEvent
-  draggingElement: AvaliableGlobalDraggingElements
+  draggingElement: IDraggableElement
 }
 type GlobalDragPointerMoveEvent = {
   event: PointerEvent

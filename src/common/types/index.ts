@@ -1,1 +1,1 @@
-export type { default as Noop } from './noop'
+export type { default as Noop } from "./noop";

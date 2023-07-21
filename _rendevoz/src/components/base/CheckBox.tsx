@@ -1,27 +1,26 @@
-import { useToggle } from '@/hooks'
-import { css } from '@emotion/css'
-import { CSSProperties } from 'react'
-import { Icon } from '..'
-import Content from './Content'
-import Colors from '@/consts/colors'
+import { css } from "@emotion/css";
+import { CSSProperties } from "react";
+import { Icon } from "..";
+import Content from "./Content";
+import Colors from "@/consts/colors";
 
 const iconClassName = css({
-  cursor: 'pointer',
+  cursor: "pointer",
   svg: {
-    strokeDasharray: '100px',
-    strokeDashoffset: '-100px',
-    transition: 'all 0.3s ease',
-    transitionDelay: '0.1s',
-    transform: 'translate3d(0,0,0)',
-    strokeLinecap: 'round',
-    strokeLinejoin: 'round'
+    strokeDasharray: "100px",
+    strokeDashoffset: "-100px",
+    transition: "all 0.3s ease",
+    transitionDelay: "0.1s",
+    transform: "translate3d(0,0,0)",
+    strokeLinecap: "round",
+    strokeLinejoin: "round",
   },
   '&[data-checked="true"]': {
     svg: {
-      strokeDashoffset: '0px'
-    }
-  }
-})
+      strokeDashoffset: "0px",
+    },
+  },
+});
 const CheckBox = ({
   checked,
   onChange,

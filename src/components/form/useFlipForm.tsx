@@ -7,7 +7,7 @@ import { capitalize } from 'lodash'
 import { CSSProperties, Fragment, ReactNode, useMemo, useState } from 'react'
 import { Flipped, Flipper } from 'react-flip-toolkit'
 import { useTranslation } from 'react-i18next'
-import { Button, Content, Form, Icon } from '..'
+import { Content, Form, Icon } from '..'
 import { defaultBgColor } from '../picker/colorPicker'
 import { ObjectTag } from '@/core'
 import FormColorPicker from './FormColorPicker'
@@ -16,10 +16,10 @@ import FormImagePicker from './FormImagePicker'
 import FormTagPicker from './FormTagPicker'
 import Colors from '@/consts/colors'
 import { useToggle } from '@/hooks'
-import { MetaObject } from '~/typings'
+import { MetaFormLayoutItem, MetaObject } from '~/typings'
 import FormFromDisplayer from './FormFromDisplayer'
 import FormFilePathPicker from './FormFilePathPicker'
-import { FormAttachmentDisplayer, FormAttachmentManager } from './FormAttachment'
+import { FormAttachmentManager } from './FormAttachment'
 import FormNoteImporter from './FormNoteImporter'
 
 type useFlipFormOptions = {
@@ -31,88 +31,8 @@ type useFlipFormOptions = {
   submitText?: string
 }
 
-export type FlipFormLayoutItem =
-  | {
-      type: 'nameInput'
-      disabled?: boolean
-      onChange: (v: string) => void
-      value?: string
-    }
-  | {
-      type: 'input'
-      disabled?: boolean
-      onChange?: (v: string) => void
-      value?: string
-      text?: string
-    }
-  | {
-      type: 'descriptionInput'
-      onChange: (v: string) => void
-      value?: string
-    }
-  | {
-      type: 'tagPicker'
-      tags?: number[]
-      onChange: (tags: string[]) => void
-    }
-  | {
-      type: 'colorPicker'
-      color?: string
-      onChange?: (color: string | undefined) => void
-    }
-  | {
-      type: 'tagDisplayer'
-      tags?: number[]
-    }
-  | {
-      type: 'iconPicker'
-      icon?: string
-      onChange: (icon: string | undefined) => void
-    }
-  | {
-      type: 'imagePicker'
-      imageUrl?: string
-      onChange: (url: string | undefined) => void
-      name: string
-    }
-  | {
-      type: 'group'
-      children: FlipFormLayoutItem[] | FlipFormLayoutItem | undefined
-    }
-  | {
-      type: 'previewGraph'
-      onClick?: React.MouseEventHandler
-    }
-  | {
-      type: 'custom'
-      children: ReactNode
-    }
-  | {
-      type: 'fromDisplayer'
-      object: Partial<MetaObject>
-      onRemove?: VoidFunction
-    }
-  | {
-      type: 'markdownImporter'
-      onClose?: VoidFunction
-    }
-  | {
-      type: 'attachmentDisplayer'
-      attachments: Required<MetaObject['attachments']>
-    }
-  | {
-      type: 'filePathPicker'
-      filePath: string
-      accept?: HTMLInputElement['accept']
-      onChange: (filePath: string | undefined, fileName: string | undefined, file: File | undefined) => void
-    }
-  | {
-      type: 'attchmentManager'
-      attachments: MetaObject['attachments']
-      onChange: (atts?: MetaObject['attachments']) => void
-      metaId: number
-    }
-  | undefined
+export type FlipFormLayoutItem = MetaFormLayoutItem
+
 interface FormInnerState {
   mainVisible: boolean
   tagPickerVisible: boolean
@@ -311,7 +231,18 @@ const useFlipForm = (options: useFlipFormOptions) => {
               <Icon name="park-background-color" />
               <span>{t('general.color')}</span>
             </Content>
-            {i?.color ? <div style={{ width: 20, height: 20, borderRadius: 4, background: i.color }}></div> : <Icon name="park-right" />}
+            {i?.color ? (
+              <div
+                style={{
+                  width: 20,
+                  height: 20,
+                  borderRadius: 4,
+                  background: i.color
+                }}
+              ></div>
+            ) : (
+              <Icon name="park-right" />
+            )}
           </Content>
         )
       case 'attchmentManager':
@@ -336,7 +267,12 @@ const useFlipForm = (options: useFlipFormOptions) => {
         return (
           <div
             className={ClassName.flatButton()}
-            style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', textTransform: 'capitalize' }}
+            style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              textTransform: 'capitalize'
+            }}
             onClick={i.onClick}
           >
             <Content gap={8} flex>
@@ -363,7 +299,12 @@ const useFlipForm = (options: useFlipFormOptions) => {
           className={ClassName.circleButton()}
         />
       }
-      style={{ minWidth: enlarged ? '80vw' : 320, maxWidth: enlarged ? '80vw' : 600, justifyContent: 'space-between', ...containerStyle }}
+      style={{
+        minWidth: enlarged ? '80vw' : 320,
+        maxWidth: enlarged ? '80vw' : 600,
+        justifyContent: 'space-between',
+        ...containerStyle
+      }}
     >
       {layout.map((i, idx) => (
         <Fragment key={idx}>{renderMainItem(i)}</Fragment>

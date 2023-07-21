@@ -1,35 +1,42 @@
-import Icon from '@/components/base/Icon'
-import { AnimatePresence, LayoutGroup, motion } from 'framer-motion'
-import { CSSProperties, FC, ReactNode, useEffect, useRef, useState } from 'react'
-import AnimatePopover from '../AnimatePopover'
-import Content from '../Content'
-import SelectOption, { SelectOptionProps } from './SelectOption'
-import styles from './index.module.less'
-import WithBorder from '../WithBorder'
-import classNames from 'classnames'
-import { isArray } from 'lodash'
-import ClassName from '@/styles/classNames'
-import { css } from '@emotion/css'
-import { Button } from '../button'
+import Icon from "@/components/base/Icon";
+import { AnimatePresence, LayoutGroup, motion } from "framer-motion";
+import {
+  CSSProperties,
+  FC,
+  ReactNode,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
+import AnimatePopover from "../AnimatePopover";
+import Content from "../Content";
+import SelectOption, { SelectOptionProps } from "./SelectOption";
+import styles from "./index.module.less";
+import WithBorder from "../WithBorder";
+import classNames from "classnames";
+import { isArray } from "lodash";
+import ClassName from "@/styles/classNames";
+import { css } from "@emotion/css";
+import { Button } from "../button";
 
 interface SelectProps {
-  multiple?: boolean
-  value?: string | string[] | number | number[]
-  closeOnSelect?: boolean
-  disabled?: boolean
-  deselectable?: boolean
-  defaultValue?: string
-  placeholder?: string
-  className?: string
-  displayRenderer?: (value: string | string[] | number | number[]) => ReactNode
-  onSelect: (value: string[] | number[]) => void
-  style?: CSSProperties
-  menuStyle?: CSSProperties
-  menuPosition?: 'top' | 'bottom'
-  options: SelectOptionProps[]
+  multiple?: boolean;
+  value?: string | string[] | number | number[];
+  closeOnSelect?: boolean;
+  disabled?: boolean;
+  deselectable?: boolean;
+  defaultValue?: string;
+  placeholder?: string;
+  className?: string;
+  displayRenderer?: (value: string | string[] | number | number[]) => ReactNode;
+  onSelect: (value: string[] | number[]) => void;
+  style?: CSSProperties;
+  menuStyle?: CSSProperties;
+  menuPosition?: "top" | "bottom";
+  options: SelectOptionProps[];
 }
 interface ISelect extends FC<SelectProps> {
-  Option: typeof SelectOption
+  Option: typeof SelectOption;
 }
 const Select: ISelect = ({
   disabled,
@@ -43,43 +50,43 @@ const Select: ISelect = ({
   value,
   defaultValue,
   deselectable,
-  menuPosition = 'bottom',
+  menuPosition = "bottom",
   options,
-  displayRenderer
+  displayRenderer,
 }) => {
-  let d = []
+  let d = [];
   if (defaultValue) {
-    d = [defaultValue]
+    d = [defaultValue];
   }
-  const containerRef = useRef<HTMLDivElement>(null)
-  const [selected, setSelected] = useState<string[]>(d)
-  let v = null
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [selected, setSelected] = useState<string[]>(d);
+  let v = null;
   if (value) {
     if (isArray(value)) {
-      v = value
+      v = value;
     } else {
-      v = [value]
+      v = [value];
     }
   }
-  const [menuVisible, setMenuVisible] = useState(false)
+  const [menuVisible, setMenuVisible] = useState(false);
   const menuItems = options
-    .filter(i => i)
-    ?.map(o => ({
+    .filter((i) => i)
+    ?.map((o) => ({
       name: o.children,
       value: o.value,
-      icon: o.icon
-    }))
+      icon: o.icon,
+    }));
 
   useEffect(() => {
     if (v) {
-      setSelected(v)
+      setSelected(v);
     }
-  }, [value])
+  }, [value]);
   const renderMultiple = () => {
     return (
       <LayoutGroup>
         <AnimatePresence>
-          {selected.map(i => (
+          {selected.map((i) => (
             <motion.div
               layout
               key={i}
@@ -92,20 +99,20 @@ const Select: ISelect = ({
                 tag={i}
                 onDelete={() => {
                   setSelected(() => {
-                    const newSelected = selected.filter(o => o !== i)
-                    onSelect(newSelected)
-                    return newSelected
-                  })
+                    const newSelected = selected.filter((o) => o !== i);
+                    onSelect(newSelected);
+                    return newSelected;
+                  });
                 }}
               />
             </motion.div>
           ))}
         </AnimatePresence>
       </LayoutGroup>
-    )
-  }
+    );
+  };
   const renderSingle = () => {
-    const name = menuItems.find(i => i.value === selected[0])?.name
+    const name = menuItems.find((i) => i.value === selected[0])?.name;
     return (
       <Content flex centered>
         <span className={styles.placeholder}>
@@ -118,8 +125,8 @@ const Select: ISelect = ({
           )}
         </span>
       </Content>
-    )
-  }
+    );
+  };
   return (
     <div ref={containerRef}>
       <AnimatePopover
@@ -128,7 +135,7 @@ const Select: ISelect = ({
         onClickOutside={() => setMenuVisible(false)}
         padding={10}
         disableIntersection
-        containerStyle={{ zIndex: '10000' }}
+        containerStyle={{ zIndex: "10000" }}
         parentElement={containerRef.current}
         boundaryElement={document.body}
         boundaryInset={20}
@@ -138,35 +145,35 @@ const Select: ISelect = ({
               style={menuStyle}
               menuItems={menuItems}
               selectedItems={selected}
-              onDeSelect={value => {
+              onDeSelect={(value) => {
                 if (!deselectable) {
-                  return
+                  return;
                 }
                 setSelected(() => {
-                  const newSelected = selected.filter(o => o !== value)
-                  onSelect(newSelected)
-                  return newSelected
-                })
+                  const newSelected = selected.filter((o) => o !== value);
+                  onSelect(newSelected);
+                  return newSelected;
+                });
                 if (closeOnSelect) {
-                  setMenuVisible(false)
+                  setMenuVisible(false);
                 }
               }}
-              onSelect={value => {
+              onSelect={(value) => {
                 if (multiple) {
                   setSelected(() => {
-                    const newSelected = [...selected, value]
-                    onSelect(newSelected)
-                    return newSelected
-                  })
+                    const newSelected = [...selected, value];
+                    onSelect(newSelected);
+                    return newSelected;
+                  });
                 } else {
                   setSelected(() => {
-                    const newSelected = [value]
-                    onSelect(newSelected)
-                    return newSelected
-                  })
+                    const newSelected = [value];
+                    onSelect(newSelected);
+                    return newSelected;
+                  });
                 }
                 if (closeOnSelect) {
-                  setMenuVisible(false)
+                  setMenuVisible(false);
                 }
               }}
             />
@@ -174,7 +181,7 @@ const Select: ISelect = ({
         }
       >
         <Content
-          onPointerDown={e => e.preventDefault()}
+          onPointerDown={(e) => e.preventDefault()}
           style={style}
           className={classNames(
             styles.selectContainer,
@@ -200,18 +207,18 @@ const Select: ISelect = ({
         </Content>
       </AnimatePopover>
     </div>
-  )
-}
+  );
+};
 const SelectMenu: FC<{
-  style?: CSSProperties
+  style?: CSSProperties;
   menuItems?: {
-    name: string
-    value: string
-    icon?: string
-  }[]
-  onSelect: (value: string) => void
-  onDeSelect: (value: string) => void
-  selectedItems: string[]
+    name: string;
+    value: string;
+    icon?: string;
+  }[];
+  onSelect: (value: string) => void;
+  onDeSelect: (value: string) => void;
+  selectedItems: string[];
 }> = ({ menuItems, onDeSelect, onSelect, selectedItems, style }) => {
   return (
     <div
@@ -219,40 +226,45 @@ const SelectMenu: FC<{
       className={css({
         padding: 8,
         minWidth: 180,
-        display: 'flex',
-        flexDirection: 'column',
-        gap: 4
+        display: "flex",
+        flexDirection: "column",
+        gap: 4,
       })}
     >
-      {menuItems?.map(item => (
+      {menuItems?.map((item) => (
         <Button.IconButton
           text={item.name}
           onClick={() => {
-            if (selectedItems.some(i => i === item.value)) {
-              onDeSelect(item.value)
+            if (selectedItems.some((i) => i === item.value)) {
+              onDeSelect(item.value);
             } else {
-              onSelect(item.value)
+              onSelect(item.value);
             }
           }}
           key={item.value}
           icon={item.icon}
-          selected={selectedItems.some(i => i === item.value) || undefined}
+          selected={selectedItems.some((i) => i === item.value) || undefined}
         />
       ))}
     </div>
-  )
-}
+  );
+};
 const Tag: FC<{
-  tag: string
-  onDelete: () => void
+  tag: string;
+  onDelete: () => void;
 }> = ({ tag, onDelete }) => {
   return (
-    <Content centered className={styles.tag} onClick={e => e.stopPropagation()} flex>
+    <Content
+      centered
+      className={styles.tag}
+      onClick={(e) => e.stopPropagation()}
+      flex
+    >
       <span>{tag}</span>
       <Icon size={12} onClick={onDelete} name="park-close" />
     </Content>
-  )
-}
-Select.Option = SelectOption
+  );
+};
+Select.Option = SelectOption;
 
-export default Select
+export default Select;

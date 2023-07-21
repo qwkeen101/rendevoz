@@ -3,6 +3,8 @@ import { RenderElementProps } from 'slate-react'
 import { MetaObjectElement } from '~/typings'
 import NoteCard from '../cards/NoteCard'
 import { useRenderObject } from '@/core'
+import { Content } from '@/components'
+import { css } from '@emotion/css'
 
 const MetaObject: FC<RenderElementProps> = memo(({ children, element }) => {
   const metaEle = element as MetaObjectElement
@@ -11,23 +13,33 @@ const MetaObject: FC<RenderElementProps> = memo(({ children, element }) => {
     metaObjectId: originId
   })
   const renderMain = () => <div></div>
-  const renderLineMain = () =>
-    renderWhole({
-      gap: 0,
-      titleOptions: {
-        style: {
-          fontSize: 14
+  const renderLineMain = () => (
+    <Content
+      className={css({
+        img: {
+          margin: 0
         }
-      },
-      descriptionOptions: {
-        style: {
-          fontSize: 13
+      })}
+    >
+      {renderWhole({
+        tagAboveImage: true,
+        gap: 0,
+        titleOptions: {
+          style: {
+            fontSize: 14
+          }
+        },
+        descriptionOptions: {
+          style: {
+            fontSize: 13
+          }
+        },
+        renderOptions: {
+          renderFrom: true
         }
-      },
-      renderOptions: {
-        renderFrom: true
-      }
-    })
+      })}
+    </Content>
+  )
   return (
     <NoteCard
       pictureUrl={metaObject?.coverImgSrc}

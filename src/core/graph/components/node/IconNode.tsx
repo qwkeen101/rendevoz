@@ -1,9 +1,10 @@
 import { GraphNode } from '../../types/node'
-import { TypeToNodeRadius, getRadius } from './Node'
+import { getRadius } from './Node'
 import Colors from '@/consts/colors'
 import SvgIconRenderer from '../icons/SvgIconRenderer'
 import { Rendevoz } from '@/core/rendevoz'
 
+export const DEFAULT_ICON_COLOR = '#393e46'
 const IconNode = ({ node, label }: { node: GraphNode; label?: string }) => {
   const radius = getRadius(node.type)
   const d = radius * 2

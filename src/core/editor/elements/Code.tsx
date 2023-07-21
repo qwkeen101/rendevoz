@@ -1,17 +1,15 @@
 import { FC, useRef, useState } from 'react'
-import { ReactEditor, RenderElementProps, useReadOnly, useSlateStatic } from '../slate-react'
+import { ReactEditor, RenderElementProps, useSlateStatic } from '../slate-react'
 import CodeBlock, { CodeLanguageData } from '@/components/base/CodeBlock'
 import { CustomElement } from '~/typings'
 import { Transforms } from 'slate'
 import { RefEditorInstance } from '@uiw/react-monacoeditor'
 import { useSetting } from '@/core/setting'
 import Colors from '@/consts/colors'
-import { Button, Content, Icon, IconWithPopover } from '@/components'
+import { Button, Content, Icon } from '@/components'
 import Select from '@/components/base/select'
 import { capitalize } from 'lodash'
 import FontSize from '@/consts/font'
-import BlockColorPicker from '../components/BlockColorPicker'
-import { defaultBgColor } from '@/components/picker/colorPicker'
 import useReadOnlyEditor from '../hooks/useReadOnly'
 
 const Code: FC<RenderElementProps> = ({ element, attributes, children }) => {
@@ -47,7 +45,13 @@ const Code: FC<RenderElementProps> = ({ element, attributes, children }) => {
         <Content flex gap={8} auto>
           <Icon name="park-code" />
           <input
-            style={{ outline: 'none', border: 'none', padding: 0, background: 'transparent', flex: 1 }}
+            style={{
+              outline: 'none',
+              border: 'none',
+              padding: 0,
+              background: 'transparent',
+              flex: 1
+            }}
             placeholder="Input Title"
             onChange={e =>
               Transforms.setNodes(
@@ -71,7 +75,10 @@ const Code: FC<RenderElementProps> = ({ element, attributes, children }) => {
               overflowY: 'auto',
               maxHeight: 400
             }}
-            options={CodeLanguageData.map(i => ({ value: i, children: capitalize(i) }))}
+            options={CodeLanguageData.map(i => ({
+              value: i,
+              children: capitalize(i)
+            }))}
             onSelect={v =>
               Transforms.setNodes(
                 editor,

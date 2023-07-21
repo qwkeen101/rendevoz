@@ -1,19 +1,22 @@
-import { useEffect } from 'react'
-import { CollectionStore, globalStore, MetaStore, ObjectStore } from './stores'
-import { atom, useSetAtom } from 'jotai'
-import { useGlobalAtom, useGlobalSetAtom, useSelectGlobalAtomValue } from './hooks/jotai'
-import { ipcInstance } from './plugins'
-import { loginStateAtom } from './components/Login'
-import LoginService, { userAtom } from './services/login.service'
-import { useTranslation } from 'react-i18next'
-import { toast } from 'react-hot-toast'
-import { changeFilePath, getDefaultUserFilePath, saveBlobLocally } from './utils/file'
-import { getSetting, SettingAtom, useSetting } from './core'
-import produce from 'immer'
-import { getAppState, setAppState } from './core/rendevoz/appState'
-import { exportRendevozDb } from './utils/db'
-import DateFormat from './utils/dateFormat'
 import { ProgressInfo } from 'electron-updater'
+import produce from 'immer'
+import { atom } from 'jotai'
+import { useEffect } from 'react'
+import { toast } from 'react-hot-toast'
+import { useTranslation } from 'react-i18next'
+import { loginStateAtom } from './components/Login'
+import { getSetting, SettingAtom } from './core'
+import { getAppState, setAppState } from './core/rendevoz/appState'
+import { useGlobalAtom, useGlobalAtomValue, useGlobalSetAtom, useSelectGlobalAtomValue } from './hooks/jotai'
+import { ipcInstance } from './plugins'
+import LoginService, { userAtom } from './services/login.service'
+import { CollectionStore, globalStore, MetaStore, ObjectStore } from './stores'
+import DateFormat from './utils/dateFormat'
+import { exportRendevozDb } from './utils/db'
+import { changeFilePath, getDefaultUserFilePath, saveBlobLocally } from './utils/file'
+import { Rendevoz } from '@/core/rendevoz'
+import { GlobalPluginManager } from '@/App'
+
 export const initializedAtom = atom(false)
 export const updateInfoAtom = atom<
   | {
@@ -30,6 +33,7 @@ const DownloadInfoAtom = atom<{
 }>({
   beginDownload: false
 })
+
 const Initializer = () => {
   const [loginState] = useGlobalAtom(loginStateAtom)
   const [, setUser] = useGlobalAtom(userAtom)
@@ -39,6 +43,23 @@ const Initializer = () => {
   const setIntialized = useGlobalSetAtom(initializedAtom)
   const { t } = useTranslation()
   const setSetting = useGlobalSetAtom(SettingAtom)
+  const setting = useGlobalAtomValue(SettingAtom)
+  useEffect(() => {
+    if (setting.general.userFilePath) {
+      const pluginsFolder = `${setting.general.userFilePath}/plugins`
+      ipcInstance.send('installPlugins', pluginsFolder).then(res => {
+        const { data } = res
+        console.log(data)
+        if (data && Array.isArray(data)) {
+          data.forEach(i => {
+            import(`file://${i.entry}`).then(main => {
+              GlobalPluginManager.registerPlugin(main)
+            })
+          })
+        }
+      })
+    }
+  }, [setting.general.userFilePath])
   const setDownloadInfo = useGlobalSetAtom(DownloadInfoAtom)
   useEffect(() => {
     const unloadListener = (e: Event) => {
@@ -96,12 +117,23 @@ const Initializer = () => {
         }
       }
     }
+
     const downloadListener = (e: ProgressInfo) => {
       console.log(e)
-      setDownloadInfo(s => ({ ...s, beginDownload: true, downloadProgress: e.percent, downloadSpeed: e.bytesPerSecond }))
+      setDownloadInfo(s => ({
+        ...s,
+        beginDownload: true,
+        downloadProgress: e.percent,
+        downloadSpeed: e.bytesPerSecond
+      }))
     }
     ipcInstance.on('download', downloadListener)
     ipcInstance.on('close', unloadListener)
+    ipcInstance.on('openObject', data => {
+      if (data.metaId) {
+        Rendevoz.Actions.Open.Meta.openMetaObject(Number(data.metaId))
+      }
+    })
     if (loginState.autoLogin && loginState.password && !autoLogined) {
       const email = localStorage.getItem('email')
       if (email) {
@@ -124,7 +156,7 @@ const Initializer = () => {
           })
       }
     }
-    getDefaultUserFilePath().then(path =>
+    getDefaultUserFilePath().then(path => {
       setSetting(s =>
         produce(s, s => {
           if (s.general.language === undefined) {
@@ -140,12 +172,13 @@ const Initializer = () => {
             s.general.userFilePath = path
             return
           }
+          const pluginsFolder = `${s.general.userFilePath}/plugins`
           if (s.general.userFilePath !== path) {
             changeFilePath(s.general.userFilePath)
           }
         })
       )
-    )
+    })
     Promise.all([getAllMetaLinks(), getAllMetaObjects(), getAllCollections(), ObjectStore('tag').getAll()]).then(() => {
       setIntialized(true)
     })
@@ -154,6 +187,7 @@ const Initializer = () => {
         version: res.data.version
       })
     })
+
     console.log(`
     Welcome to use Rendevoz to BOOST your work efficency 💪🏻!
     If you meet any problem or just interested in how I developed this, just contact me 💬!
@@ -168,8 +202,10 @@ const Initializer = () => {
     return () => {
       ipcInstance.off('close')
       ipcInstance.off('download')
+      ipcInstance.off('openObject')
     }
   }, [])
+
   useEffect(() => {
     if (autoBackup !== 'never') {
       ipcInstance.send('beginBackup')

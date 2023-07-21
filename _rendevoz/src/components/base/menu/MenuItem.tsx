@@ -1,21 +1,21 @@
-import { FC, MouseEvent, MouseEventHandler } from 'react'
-import Content from '../Content'
-import styles from './index.module.less'
-import { css } from '@emotion/css'
-import { Colors } from '@/consts'
-import ClassName from '@/styles/classNames'
+import { FC, MouseEvent, MouseEventHandler } from "react";
+import Content from "../Content";
+import styles from "./index.module.less";
+import { css } from "@emotion/css";
+import { Colors } from "@/consts";
+import ClassName from "@/styles/classNames";
 
 export interface MenuItemProps {
-  onClick?: MouseEventHandler
-  onDoubleClick?: MouseEventHandler
-  onContextMenu?: MouseEventHandler
-  icon?: React.ReactNode
-  type: 'button' | 'link' | 'separator'
-  children: React.ReactNode
-  selected?: boolean
-  id?: number | string
-  gap?: number
-  disabled?: boolean
+  onClick?: MouseEventHandler;
+  onDoubleClick?: MouseEventHandler;
+  onContextMenu?: MouseEventHandler;
+  icon?: React.ReactNode;
+  type: "button" | "link" | "separator";
+  children: React.ReactNode;
+  selected?: boolean;
+  id?: number | string;
+  gap?: number;
+  disabled?: boolean;
 }
 const MenuItem: FC<MenuItemProps> = ({
   type,

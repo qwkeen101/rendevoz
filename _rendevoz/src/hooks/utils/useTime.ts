@@ -1,6 +1,6 @@
-import { format } from 'date-fns'
+import { format } from "date-fns";
 
-function useTime(): number
+function useTime(): number;
 function useTime(time: number): string
 function useTime(time?: number) {
   if (time) {

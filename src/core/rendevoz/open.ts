@@ -1,15 +1,15 @@
 import { toast } from 'react-hot-toast'
-import { GlobalInstances, IEditorInstance, IVideoInstance, IWebpageInstance } from '~/typings'
+import { GlobalInstances, IEditorInstance, IPdfViewer, IVideoInstance, IWebpageInstance } from '~/typings'
 import { ID_TO_LABEL_MAP } from '@/core'
-import { IPdfViewer } from '~/typings'
 import { globalStore, MetaStore, ObjectStore } from '../../stores'
-import { TypeToRegisteredMetaObject, metaObjectsAtom, objectIdToMetaObjectIdMapAtom } from '../../stores/meta.store'
+import { metaObjectsAtom, objectIdToMetaObjectIdMapAtom, TypeToRegisteredMetaObject } from '../../stores/meta.store'
 import { ipcInstance } from '@/plugins'
 import { waitFor } from '@/utils/functions'
 import { GlobalTextSearchInstance } from '../global/GlobalTextSearch'
 import { GlobalTranslateInstance } from '../global/translate/GlobalTranslatePanel'
 import { Rendevoz } from '.'
 import { GlobalSearchInstance } from '../global/GlobalSearchPanel'
+import { SidebarPanelStateAtom } from '@/components/layout/sidebar'
 
 const openMetaObject = async (metaObjectId: number) => {
   const metaObject = globalStore.get(metaObjectsAtom).get(metaObjectId)
@@ -309,7 +309,10 @@ const openVideo = (videoId: number): Promise<IVideoInstance> => {
   })
 }
 const openVideoAtTime = async (videoId: number, time: number) => {
-  const alreadyOpenVideoTab = Rendevoz.Actions.Layout.getTab({ type: 'video', objectId: videoId })
+  const alreadyOpenVideoTab = Rendevoz.Actions.Layout.getTab({
+    type: 'video',
+    objectId: videoId
+  })
   const videoState = alreadyOpenVideoTab?.instance.getVideoState?.()
 
   if (videoState?.floated) {
@@ -336,7 +339,7 @@ const openEditMetaDialog = (metaId: number) => {
     }
   })
 }
-const Open = {
+const Open: typeof Rendevoz.Actions.Open = {
   Pdf: {
     openPdf,
     openPdfLabel,
@@ -374,7 +377,17 @@ const Open = {
   },
   openHome,
   openDatabase,
-  openImage
+  openImage,
+  openSidebarObjectDetails: id => {
+    globalStore.set(SidebarPanelStateAtom, {
+      open: true,
+      visible: 'database',
+      showObjectDetails: {
+        id,
+        visible: true
+      }
+    })
+  }
 }
 
 export default Open

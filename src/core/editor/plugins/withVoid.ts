@@ -1,56 +1,57 @@
-import { CustomEditor, CustomElement } from '~/typings'
-import { EditorTypeToElementMap } from '../maps'
+import { CustomEditor, CustomElement } from "~/typings";
+import { EditorTypeToElementMap } from "../maps";
 
 const withVoid = (editor: CustomEditor) => {
-  const { isVoid, isInline } = editor
+  const { isVoid, isInline } = editor;
   const voidElementTypeSet = new Set(
     Array.from(EditorTypeToElementMap.values())
-      .filter(i => i.isVoid)
-      .map(i => i.type)
-  )
+      .filter((i) => i.isVoid)
+      .map((i) => i.type)
+  );
   const inlineElementTypeSet = new Set(
     Array.from(EditorTypeToElementMap.values())
-      .filter(i => i.isInline)
-      .map(i => i.type)
-  )
+      .filter((i) => i.isInline)
+      .map((i) => i.type)
+  );
   const checkIfVoidComponents = (element: CustomElement) => {
-    if (voidElementTypeSet.has(element.type)) return true
+    if (voidElementTypeSet.has(element.type)) return true;
     switch (element.type) {
-      case 'book-highlight':
-      case 'emoji':
-      case 'metaObject':
-      case 'pdf':
-      case 'note':
-      case 'image':
-      case 'thought':
-      case 'divider':
-      case 'inline-metaObject':
-      case 'subPage':
-      case 'code-block':
-      case 'math':
-        return true
+      case "book-highlight":
+      case "emoji":
+      case "metaObject":
+      case "pdf":
+      case "note":
+      case "image":
+      case "thought":
+      case "divider":
+      case "inline-metaObject":
+      case "subPage":
+      case "code-block":
+      case "math":
+        return true;
       default:
-        return false
+        return false;
     }
-  }
+  };
   const checkIfInlineElements = (element: CustomElement) => {
-    if (inlineElementTypeSet.has(element.type)) return true
+    if (inlineElementTypeSet.has(element.type)) return true;
     switch (element.type) {
-      case 'emoji':
-      case 'link':
-      case 'sup':
-      case 'inline-metaObject':
-      case 'math':
-        return true
+      case "emoji":
+      case "link":
+      case "sup":
+      case "inline-metaObject":
+      case "math":
+        return true;
       default:
-        return false
+        return false;
     }
-  }
-  editor.isInline = element => checkIfInlineElements(element) || isInline(element)
-  editor.isVoid = element => {
-    return checkIfVoidComponents(element) ? true : isVoid(element)
-  }
-  return editor
-}
+  };
+  editor.isInline = (element) =>
+    checkIfInlineElements(element) || isInline(element);
+  editor.isVoid = (element) => {
+    return checkIfVoidComponents(element) ? true : isVoid(element);
+  };
+  return editor;
+};
 
-export default withVoid
+export default withVoid;

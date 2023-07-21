@@ -1,9 +1,9 @@
 export const getElementId = (element: Element | null): number | undefined => {
   if (!element) {
-    return
+    return;
   }
-  const id = element.getAttribute('id')
+  const id = element.getAttribute("id");
   if (id) {
-    return parseInt(id)
+    return parseInt(id);
   }
-}
+};

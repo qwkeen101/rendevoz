@@ -3,12 +3,10 @@ import './common.less'
 import TitleBar from './components/titlebar'
 import Initializer from './Initializer'
 import './global.less'
-import { GlobalDragOverlay } from '@/core'
+import { GlobalCreateObject, GlobalDragOverlay, GlobalGraph, GlobalObjectPanel, GlobalScreenShot, useSetting } from '@/core'
 import Notification from './components/NotificationCenter'
-import { GlobalObjectPanel, GlobalCreateObject, GlobalScreenShot, GlobalGraph } from '@/core'
 import '@/core/editor/dock.less'
 import SvgMarker from './components/svg/Marker'
-import { useSetting } from './core/setting'
 import { Fragment, useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ErrorBoundary } from 'react-error-boundary'
@@ -26,9 +24,7 @@ import GlobalWebview from './core/global/GlobalWebview'
 import 'highlight.js/styles/atom-one-dark.css'
 import GlobalTextSearch from './core/global/GlobalTextSearch'
 import '@/consts/colors.less'
-import { ILayoutTab, TabData } from '~/typings'
 import EditorPage from './scenes/editor'
-import Id from './utils/id'
 import ImagePage from './scenes/ImagePage'
 import PdfPage from './scenes/pdf'
 import VideoPage from './scenes/VideoPage'
@@ -42,7 +38,12 @@ import PluginManager from './core/plugin/PluginManager'
 import BuiltinEditorPlugin from './core/plugin/builtin/EditorPlugin'
 import TestPlugin from './TestPlugin'
 import { KeyToRegisteredGlobalElements } from './core/plugin/RegisterMap'
-import React from 'react'
+import { ILayoutTab, TabData } from 'rendevoz'
+import Id from '@/utils/id'
+import GlobalUtils from '@/core/global/GlobalUtils'
+import GlobalPdfPrinter from '@/core/global/GlobalPdfPrinter'
+import GraphPage from '@/scenes/GraphPage'
+
 export function getOS() {
   const userAgent = window.navigator.userAgent.toLowerCase(),
     macosPlatforms = /(macintosh|macintel|macppc|mac68k|macos)/i,
@@ -64,7 +65,6 @@ export function getOS() {
 
   return os
 }
-
 
 const RENDEVOZ_DEFAULT_TABS: TabData[ILayoutTab['type']][] = [
   {
@@ -111,6 +111,10 @@ const RENDEVOZ_DEFAULT_TABS: TabData[ILayoutTab['type']][] = [
   {
     type: 'database',
     content: () => <DatabasePage />
+  },
+  {
+    type: 'graph',
+    content: () => <GraphPage />
   }
 ]
 
@@ -124,11 +128,10 @@ const App = () => {
   const [setting] = useSetting()
   const { i18n } = useTranslation()
   const executed = useRef(false)
-
-  if (executed.current === false) {
+  if (!executed.current) {
     RENDEVOZ_DEFAULT_TABS.forEach(i => Rendevoz.Actions.Layout.registerTabData(i))
     GlobalPluginManager.registerPlugin(BuiltinEditorPlugin)
-    GlobalPluginManager.registerPlugin(TestPlugin)
+    // GlobalPluginManager.registerPlugin(TestPlugin)
     const plugins = import.meta.glob('./assets/testplugin/*.js')
     for (const path in plugins) {
       plugins[path]().then(mod => {
@@ -179,10 +182,19 @@ const App = () => {
         <GlobalDragOverlay />
         <GlobalImagePreviewer />
         <GlobalNoteImporter />
+        <GlobalPdfPrinter />
+        <GlobalUtils />
         {registeredGlobalElements.map(entry => (
           <Fragment key={entry[0]}>{entry[1]()}</Fragment>
         ))}
-        <svg style={{ position: 'absolute', width: 0, height: 0, overflow: 'hidden' }}>
+        <svg
+          style={{
+            position: 'absolute',
+            width: 0,
+            height: 0,
+            overflow: 'hidden'
+          }}
+        >
           <SvgMarker />
         </svg>
       </>

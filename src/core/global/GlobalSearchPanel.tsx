@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { GlobalInstances, IWebpage, IWebpageInstance, MetaObject, WebpageInstance, XYPosition } from '~/typings'
+import { GlobalInstances, IWebpage, IWebpageInstance, MetaObject, XYPosition } from '~/typings'
 import Webpage from '../webpage/Webpage'
 import { createPortal } from 'react-dom'
 import { Rnd } from 'react-rnd'
@@ -13,9 +13,10 @@ import FontSize from '@/consts/font'
 import { css } from '@emotion/css'
 import { getPanelPosition } from './utils'
 import ResizeAndDrag from '@/components/base/ResizeAndDrag'
-import { ObjectStore } from '@/stores'
+import { globalStore, ObjectStore } from '@/stores'
 import { searchToUrl } from '../webpage/utils'
 import { Rendevoz } from '../rendevoz'
+import { SidebarPanelStateAtom } from '@/components/layout/sidebar'
 
 export const GlobalSearchInstance: Partial<GlobalInstances.WebSearchInstance> = {}
 
@@ -66,7 +67,15 @@ const GlobalSearchPanel = () => {
 
       if (url || query) {
         const _pos =
-          !panelState.visible && getPanelPosition({ pos, e, defaultSize: panelState.size || PanelDefaultSize, placement: 'right' })
+          !panelState.visible &&
+          getPanelPosition({
+            pos,
+            e,
+            defaultSize: panelState.size || PanelDefaultSize,
+            placement: 'right'
+          })
+
+        globalStore.set(SidebarPanelStateAtom, { ...globalStore.get(SidebarPanelStateAtom), open: true, visible: 'webSearch' })
         setPanelState(s => ({
           ...s,
           from,
@@ -81,12 +90,14 @@ const GlobalSearchPanel = () => {
     }
   } as typeof GlobalSearchInstance)
   useShortcut('openSearchPanel', () => {
+    const state = globalStore.get(SidebarPanelStateAtom)
+    globalStore.set(SidebarPanelStateAtom, { ...state, open: !state.open, visible: 'webSearch' })
     setPanelState(s => ({ ...s, visible: !s.visible }))
   })
-  return createPortal(<SearchPanel />, document.body)
+  // return createPortal(<SearchPanel />, document.body)
 }
 
-const SearchPanel = () => {
+export const SearchPanel = () => {
   const instanceRef = useRef<IWebpageInstance>()
 
   const [panelState, setPanelState] = useGlobalAtom(SearchPanelStateAtom)
@@ -106,44 +117,7 @@ const SearchPanel = () => {
   }, [panelState.currentPosition])
 
   return (
-    <ResizeAndDrag
-      style={{
-        background: Colors.Background.Linear,
-        padding: '6px 12px',
-        borderRadius: 8,
-        boxShadow: 'rgba(100, 100, 111, 0.2) 0px 7px 29px 0px',
-        zIndex: panelState.visible ? Zindexes.SearchPanel : Number.MIN_SAFE_INTEGER,
-        display: 'flex',
-        opacity: panelState.visible ? 1 : 0,
-        pointerEvents: panelState.visible ? 'auto' : 'none',
-        flexDirection: 'column'
-      }}
-      position={panelState.currentPosition}
-      size={panelState.size}
-      ref={rndRef}
-      onResizeStop={(e, dir, ele, delta, pos) => {
-        const bounding = ele.getBoundingClientRect()
-        setPanelState(s => ({
-          ...s,
-          size: {
-            width: bounding.width,
-            height: bounding.height
-          },
-          currentPosition: pos
-        }))
-      }}
-      onDragStop={(e, data) => {
-        setPanelState(s => ({
-          ...s,
-          currentPosition: {
-            x: data.x,
-            y: data.y
-          }
-        }))
-      }}
-      className={ClassName.Background.pseudoBlubBackground}
-      dragHandleClassName="drag-handle"
-    >
+    <Content flex column fullWidth fullHeight>
       <Content
         flex
         alignItems="center"
@@ -151,13 +125,17 @@ const SearchPanel = () => {
         fullWidth
         gap={20}
         style={{
-          paddingLeft: 20,
-          cursor: 'grab'
+          padding: '6px 10px 0px 20px'
         }}
       >
         <div
           className={css([ClassName.title(FontSize['14px']), ClassName.ellipsisFont(1)])}
-          style={{ margin: 'auto', textAlign: 'center', flex: 1, textTransform: 'none' }}
+          style={{
+            margin: 'auto',
+            textAlign: 'center',
+            flex: 1,
+            textTransform: 'none'
+          }}
         >
           {title || 'Quick Search Panel'}
         </div>
@@ -172,16 +150,15 @@ const SearchPanel = () => {
             }}
             icon="park-efferent-four"
           ></Button.IconButton>
-          <Button.IconButton icon="park-close" onClick={() => setPanelState(s => ({ ...s, visible: false }))}></Button.IconButton>
+          {/*<Button.IconButton icon="park-close" onClick={() => setPanelState(s => ({ ...s, visible: false }))}></Button.IconButton>*/}
         </Content>
       </Content>
-
       <Content fullWidth auto style={{ height: 0, overflow: 'hidden' }}>
         <Webpage
           webpageFrom={from}
           navigationStyle={{
-            padding: '6px 1px 6px 0px',
-            fontSize: FontSize['14px']
+            padding: 6,
+            fontSize: FontSize['13px']
           }}
           userAgent="Mozilla/5.0 (Linux; Android 9.0; SAMSUNG SM-F900U Build/PPR1.180610.011) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/113.0.0.0 Mobile Safari/537.36"
           onWebpageChange={i =>
@@ -195,8 +172,105 @@ const SearchPanel = () => {
           onInstanceInitialized={i => (instanceRef.current = i)}
         />
       </Content>
-    </ResizeAndDrag>
+    </Content>
   )
+  // return (
+  //   <ResizeAndDrag
+  //     style={{
+  //       background: Colors.Background.Linear,
+  //       padding: '6px 12px',
+  //       borderRadius: 8,
+  //       boxShadow: 'rgba(100, 100, 111, 0.2) 0px 7px 29px 0px',
+  //       zIndex: panelState.visible ? Zindexes.SearchPanel : Number.MIN_SAFE_INTEGER,
+  //       display: 'flex',
+  //       opacity: panelState.visible ? 1 : 0,
+  //       pointerEvents: panelState.visible ? 'auto' : 'none',
+  //       flexDirection: 'column'
+  //     }}
+  //     position={panelState.currentPosition}
+  //     size={panelState.size}
+  //     ref={rndRef}
+  //     onResizeStop={(e, dir, ele, delta, pos) => {
+  //       const bounding = ele.getBoundingClientRect()
+  //       setPanelState(s => ({
+  //         ...s,
+  //         size: {
+  //           width: bounding.width,
+  //           height: bounding.height
+  //         },
+  //         currentPosition: pos
+  //       }))
+  //     }}
+  //     onDragStop={(e, data) => {
+  //       setPanelState(s => ({
+  //         ...s,
+  //         currentPosition: {
+  //           x: data.x,
+  //           y: data.y
+  //         }
+  //       }))
+  //     }}
+  //     className={ClassName.Background.pseudoBlubBackground}
+  //     dragHandleClassName="drag-handle"
+  //   >
+  //     <Content
+  //       flex
+  //       alignItems="center"
+  //       className="drag-handle"
+  //       fullWidth
+  //       gap={20}
+  //       style={{
+  //         paddingLeft: 20,
+  //         cursor: 'grab'
+  //       }}
+  //     >
+  //       <div
+  //         className={css([ClassName.title(FontSize['14px']), ClassName.ellipsisFont(1)])}
+  //         style={{
+  //           margin: 'auto',
+  //           textAlign: 'center',
+  //           flex: 1,
+  //           textTransform: 'none'
+  //         }}
+  //       >
+  //         {title || 'Quick Search Panel'}
+  //       </div>
+  //       <Content flex gap={6} alignItems="center" style={{ marginLeft: 'auto', flexShrink: 0 }}>
+  //         <Button.IconButton
+  //           tooltip="Open In New Tab"
+  //           onClick={async () => {
+  //             if (currentWebpage) {
+  //               const one = await ObjectStore('webpage').addOne(currentWebpage)
+  //               Rendevoz.Actions.Open.Webpage.openWebpage(one.id)
+  //             }
+  //           }}
+  //           icon="park-efferent-four"
+  //         ></Button.IconButton>
+  //         <Button.IconButton icon="park-close" onClick={() => setPanelState(s => ({ ...s, visible: false }))}></Button.IconButton>
+  //       </Content>
+  //     </Content>
+  //
+  //     <Content fullWidth auto style={{ height: 0, overflow: 'hidden' }}>
+  //       <Webpage
+  //         webpageFrom={from}
+  //         navigationStyle={{
+  //           padding: '6px 1px 6px 0px',
+  //           fontSize: FontSize['14px']
+  //         }}
+  //         userAgent="Mozilla/5.0 (Linux; Android 9.0; SAMSUNG SM-F900U Build/PPR1.180610.011) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/113.0.0.0 Mobile Safari/537.36"
+  //         onWebpageChange={i =>
+  //           setCurrentWebpage({
+  //             id: i.webpageId,
+  //             ...i
+  //           })
+  //         }
+  //         onTitleChange={t => setPanelState(s => ({ ...s, title: t }))}
+  //         initialUrl={searchToUrl('')}
+  //         onInstanceInitialized={i => (instanceRef.current = i)}
+  //       />
+  //     </Content>
+  //   </ResizeAndDrag>
+  // )
 }
 
 export default GlobalSearchPanel

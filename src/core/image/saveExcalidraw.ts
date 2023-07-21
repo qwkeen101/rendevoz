@@ -12,8 +12,8 @@ const saveExcalidraw = async (api: ExcalidrawImperativeAPI, url?: string) => {
   const blob = new Blob([serializedJsonData], {
     type: MIME_TYPES.excalidraw
   })
-  const fileUrl = (await saveBlobLocally(blob, `excalidraw_data_${Id.getStrId()}`, url)).data
-  return fileUrl
+
+  return await saveBlobLocally(blob, `excalidraw_data_${Id.getStrId()}`, url)
 }
 
 export default saveExcalidraw

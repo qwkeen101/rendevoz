@@ -1,22 +1,25 @@
-import { app } from 'electron'
-import { release } from 'os'
-import { NestFactory } from '@nestjs/core'
-import { MicroserviceOptions } from '@nestjs/microservices'
-import { AppModule } from './app.module'
-import { ElectronIpcTransport } from './transport'
-import { LocalModule } from './local.module'
+import { app } from "electron";
+import { release } from "os";
+import { NestFactory } from "@nestjs/core";
+import { MicroserviceOptions } from "@nestjs/microservices";
+import { AppModule } from "./app.module";
+import { ElectronIpcTransport } from "./transport";
+import { LocalModule } from "./local.module";
 
 async function bootstrap() {
   try {
-    const nestApp = await NestFactory.createMicroservice<MicroserviceOptions>(AppModule, {
-      strategy: new ElectronIpcTransport()
-    })
-    const local = await NestFactory.create(LocalModule)
-    local.listen(8888)
-    await nestApp.listen()
+    const nestApp = await NestFactory.createMicroservice<MicroserviceOptions>(
+      AppModule,
+      {
+        strategy: new ElectronIpcTransport(),
+      }
+    );
+    const local = await NestFactory.create(LocalModule);
+    local.listen(8888);
+    await nestApp.listen();
   } catch (error) {
-    console.log(error)
-    app.quit()
+    console.log(error);
+    app.quit();
   }
 }
 // Disable GPU Acceleration for Windows 7

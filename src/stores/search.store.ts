@@ -1,148 +1,157 @@
-import { MeiliSearch } from 'meilisearch'
-import { ObjectFamily } from './object.store'
+import { MeiliSearch } from "meilisearch";
+import { ObjectFamily } from "./object.store";
 
 const MeiliClient = new MeiliSearch({
-  host: 'http://127.0.0.1:7700'
-})
+  host: "http://127.0.0.1:7700",
+});
 
 export type SearchableDocument =
   | {
-      specType: 'noteBlock'
-      id: number
-      content: string
-      targetObjectId: number
+      specType: "noteBlock";
+      id: number;
+      content: string;
+      targetObjectId: number;
     }
   | {
-      specType: 'pdfPage'
-      id: number
-      content: string
-      targetObjectId: number
-      pageIndex: number
+      specType: "pdfPage";
+      id: number;
+      content: string;
+      targetObjectId: number;
+      pageIndex: number;
     }
   // search name or description
   | {
-      specType: 'metaObject'
-      id: number
-      content?: string
-      name?: string
-    }
+      specType: "metaObject";
+      id: number;
+      content?: string;
+      name?: string;
+    };
 export type SearchParams = {
-  specType: keyof ObjectFamily | 'all' | 'metaObject'
-  query?: string
-  filter?: string[]
-}
+  specType: keyof ObjectFamily | "all" | "metaObject";
+  query?: string;
+  filter?: string[];
+};
 
 export type ISearchResultItem = {
-  doc: SearchableDocument
+  doc: SearchableDocument;
   positions?: {
-    start: number
-    length: number
-  }[]
-}
+    start: number;
+    length: number;
+  }[];
+};
 const createSearchStore = () => {
-  const client = MeiliClient
+  const client = MeiliClient;
   const initializeSearchEngine = async () => {
     try {
-      const idx = await client.getIndex('rendevoz')
+      const idx = await client.getIndex("rendevoz");
       if (!idx.primaryKey) {
-        client.updateIndex('rendevoz', {
-          primaryKey: 'id'
-        })
+        client.updateIndex("rendevoz", {
+          primaryKey: "id",
+        });
       }
-      await updateSearchableFields()
-      await updateFilterIndex()
+      await updateSearchableFields();
+      await updateFilterIndex();
     } catch (e) {
-      await client.createIndex('rendevoz', {
-        primaryKey: 'id'
-      })
+      await client.createIndex("rendevoz", {
+        primaryKey: "id",
+      });
       setTimeout(() => {
-        updateSearchableFields()
-        updateFilterIndex()
-      }, 1000)
+        updateSearchableFields();
+        updateFilterIndex();
+      }, 1000);
     }
-  }
+  };
   const getIndex = () => {
-    return client.index('rendevoz')
-  }
+    return client.index("rendevoz");
+  };
 
   const updateSearchableFields = async () => {
-    const index = getIndex()
-    const searchables = await index.getSearchableAttributes()
-    if (searchables[0] === 'content' && searchables[1] === 'name') {
-      return
+    const index = getIndex();
+    const searchables = await index.getSearchableAttributes();
+    if (searchables[0] === "content" && searchables[1] === "name") {
+      return;
     } else {
-      index.updateSearchableAttributes(['content', 'name'])
+      index.updateSearchableAttributes(["content", "name"]);
     }
-  }
+  };
   const updateFilterIndex = async () => {
-    const index = getIndex()
-    const filterables = await index.getFilterableAttributes()
-    if (!filterables.includes('targetObjectId') || !filterables.includes('specType')) {
-      await index.updateFilterableAttributes(['targetObjectId', 'specType'])
+    const index = getIndex();
+    const filterables = await index.getFilterableAttributes();
+    if (
+      !filterables.includes("targetObjectId") ||
+      !filterables.includes("specType")
+    ) {
+      await index.updateFilterableAttributes(["targetObjectId", "specType"]);
     }
-  }
+  };
   const addDocument = async (doc: SearchableDocument) => {
-    const index = getIndex()
-    const res = await index.addDocuments([doc])
-    return res
-  }
+    const index = getIndex();
+    const res = await index.addDocuments([doc]);
+    return res;
+  };
   const addDocuments = async (docs: SearchableDocument[]) => {
     const addableDocs = docs
-      .map(doc => {
+      .map((doc) => {
         switch (doc.specType) {
-          case 'pdfPage':
-          case 'metaObject':
-          case 'noteBlock':
-            return doc
+          case "pdfPage":
+          case "metaObject":
+          case "noteBlock":
+            return doc;
           default:
-            return
+            return;
         }
       })
-      .filter(i => i !== undefined) as SearchableDocument[]
-    const index = getIndex()
-    const res = await index.addDocuments(addableDocs)
-    return res
-  }
+      .filter((i) => i !== undefined) as SearchableDocument[];
+    const index = getIndex();
+    const res = await index.addDocuments(addableDocs);
+    return res;
+  };
 
   const searchDocument = async (params: SearchParams) => {
-    const index = getIndex()
-    const filter = params.specType === 'all' ? [`specType = noteBlock OR specType = pdfPage`] : [`specType = ${params.specType}`]
+    const index = getIndex();
+    const filter =
+      params.specType === "all"
+        ? [`specType = noteBlock OR specType = pdfPage`]
+        : [`specType = ${params.specType}`];
     const result = await index.search(params.query, {
-      filter: filter || params.filter ? ([...filter, ...(params.filter || [])].filter(i => i) as string[]) : undefined,
-      attributesToHighlight: ['name', 'content'],
-      attributesToCrop: ['content', 'name'],
-      attributesToRetrieve: ['id', 'specType', 'targetObjectId', 'pageIndex'],
+      filter:
+        filter || params.filter
+          ? ([...filter, ...(params.filter || [])].filter((i) => i) as string[])
+          : undefined,
+      attributesToHighlight: ["name", "content"],
+      attributesToCrop: ["content", "name"],
+      attributesToRetrieve: ["id", "specType", "targetObjectId", "pageIndex"],
       cropLength: 60,
-      hitsPerPage: 40
-    })
-    return result.hits.map(i => ({
+      hitsPerPage: 40,
+    });
+    return result.hits.map((i) => ({
       doc: {
         ...i._formatted,
-        ...i
+        ...i,
       } as SearchableDocument,
-      positions: i._matchesPosition?.content
-    })) as ISearchResultItem[]
-  }
+      positions: i._matchesPosition?.content,
+    })) as ISearchResultItem[];
+  };
   const existTargetObjectDocuments = async (targetObjectId: number) => {
-    const index = getIndex()
+    const index = getIndex();
     const result = await index.search(undefined, {
       filter: [`targetObjectId=${targetObjectId}`],
       attributesToRetrieve: [],
-      hitsPerPage: 0
-    })
+      hitsPerPage: 0,
+    });
     if (result.totalHits === 0) {
-      return false
+      return false;
     }
     if (result.totalHits > 0) {
-      return true
+      return true;
     }
-    return false
-  }
+    return false;
+  };
   const deleteDocuments = async (ids: number[]) => {
-    const index = getIndex()
-    const result = await index.deleteDocuments(ids)
-    return result
-  }
+    const index = getIndex();
+    const result = await index.deleteDocuments(ids);
+    return result;
+  };
   return {
     addDocument,
     searchDocument,
@@ -151,9 +160,9 @@ const createSearchStore = () => {
     updateFilterIndex,
     updateSearchableFields,
     initializeSearchEngine,
-    existTargetObjectDocuments
-  }
-}
+    existTargetObjectDocuments,
+  };
+};
 
-export const SearchStore = createSearchStore()
-SearchStore.initializeSearchEngine()
+export const SearchStore = createSearchStore();
+SearchStore.initializeSearchEngine();

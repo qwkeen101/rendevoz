@@ -1,11 +1,18 @@
-import { BuiltInDraggableElement, BuiltInDropOn, BuiltInMetaObjectTypes, PluginApi } from 'rendevoz'
-import { useEffect, useRef } from 'react'
-import { BuiltInObjectTypes } from 'rendevoz/typings/store'
-import * as Rendevoz from 'rendevoz'
+import {
+  BuiltInDraggableElement,
+  BuiltInDropOn,
+  BuiltInMetaObjectTypes,
+  BuiltInObjectTypes,
+  BuiltInTabTypes,
+  Components,
+  PluginApi
+} from 'rendevoz'
+import { useEffect, useMemo, useState } from 'react'
+import { RenderElementProps } from 'slate-react'
 
 declare module 'rendevoz' {
   export interface CustomTypes {
-    MetaObject: BuiltInMetaObjectTypes | 'customEle'
+    MetaObject: BuiltInMetaObjectTypes | 'customEle' | 'task'
     Object: BuiltInObjectTypes & {
       task: {
         specType: 'task'
@@ -13,73 +20,218 @@ declare module 'rendevoz' {
     }
     DropOn: BuiltInDropOn
     DraggableElement: BuiltInDraggableElement
+    Tab:
+      | BuiltInTabTypes
+      | {
+          type: 'taskManager'
+          instance: never
+          objectId: never
+        }
   }
 }
 
 export default (plugin: PluginApi) => {
-  console.log('yes')
-  plugin.register.registerGlobalElement('learn-bar', () => (
-    <Rendevoz.Components.Modal visible>
-      <div>123213</div>
-    </Rendevoz.Components.Modal>
-  ))
-}
+  plugin.register.registerInSidebarMenu('sad', {})
+  plugin.Rendevoz.Actions.Open.openDatabase()
+  plugin.register.registerEditorElement({
+    type: 'custom',
+    renderElement: props => <CustomEditorElement {...props} plugin={plugin} />,
+    registerInMenu: {
+      addMenu: true,
+      slashMenu: true,
+      menuType: 'block'
+    },
+    name: 'Custom Search Element',
+    isVoid: true
+  })
+  plugin.describe({ name: 'task manager' })
+  plugin.register.registerObject('task', {
+    normalizeDraggingEleToMetaObject: async draggingDetails => {
+      return {}
+    }
+  })
 
-const Cus = () => {
-  useEffect(() => {
-    console.log('yes')
-  }, [])
-  return <div></div>
-}
-
-const CustomPanel = ({ api }: { api: IRendevozPluginApi }) => {
-  const store = api.api.getObjectStore('task')
-  const allTasks = store.useAll()
-  const globalEmitter = api.Rendevoz.Events.Emit.GlobalEventEmitter
-  const handler = api.Rendevoz.Events.Emit.useEventHandler('global')
-  handler.on('globalDragPointerUp', async data => {
-    if (data.event.target instanceof HTMLElement && containerRef.current?.contains(data.event.target)) {
-      if (data.event.target.hasAttribute('data-task-id') && data.draggingElement.type === 'metaElement') {
-        const dragMeta = await api.api.getMetaStore().getMetaObjectById(data.draggingElement.metaId)
-        const taskId = Number(data.event.target.getAttribute('data-task-id'))
-        store.updateOne({ id: taskId, name: dragMeta?.name })
-        globalEmitter.emit('global', {
-          type: 'globalDropNeedFurtherProcess',
-          data: {
-            dropOn: {
-              dropOn: 'custom'
-            },
-            draggingElement: api.Rendevoz.Actions.State.Drag.getDraggingDetails()
-          }
-        })
+  plugin.register.registerMetaObject('task', {
+    i18nKey: 'task',
+    icon: 'park-notes',
+    filterSettings: {
+      objectType: 'file'
+    },
+    defaultName: 'hello i am new task',
+    visibleInCreateMenu: true,
+    visibleInHomepage: true,
+    customEditForm: (obj, setobj) => [
+      {
+        type: 'nameInput',
+        value: obj.name,
+        onChange: v => setobj({ ...obj, name: v })
+      }
+    ],
+    onCreate: (m, obj) => {
+      console.log(m, obj)
+    },
+    onNavigate: m => {
+      console.log(m)
+      plugin.api.getMetaStore().updateMetaObject({ id: m.id, viewAt: Date.now() }, true)
+      plugin.Rendevoz.Actions.Layout.openNewTab({ data: { type: 'taskManager' } })
+    },
+    onUpdate: (curr, before, changed) => {
+      console.log(curr, before, changed)
+    }
+  })
+  plugin.register.registerTab({
+    type: 'taskManager',
+    content: () => (
+      <Components.Content>
+        <plugin.Rendevoz.InnerComponents.TabTitle title={'Hello I Am Task Manager'} />
+        1231313
+      </Components.Content>
+    )
+  })
+  // plugin.register.registerInSidebarMenu('Daily Note', {
+  //   icon: 'park-notes',
+  //   text: 'Create New Daily Note',
+  //   onClick: () => {
+  //     plugin.api
+  //       .getObjectStore('note')
+  //       .addOneWithMeta(
+  //         { title: `Daily Note: ${DateFormat.format(Date.now(), DateFormat.Formats.default)}` },
+  //         { currentMeta: { name: `Daily Note: ${DateFormat.format(Date.now(), DateFormat.Formats.default)}` } }
+  //       )
+  //       .then(({ one }) => {
+  //         plugin.Rendevoz.Actions.Open.Editor.openEditor(one.id).then(editor => {
+  //           const slateEditor = editor.getSlateEditor?.() as CustomEditor
+  //           if (slateEditor) {
+  //             slateEditor.children = []
+  //             Transforms.insertNodes(slateEditor, [
+  //               {
+  //                 type: 'paragraph',
+  //                 id: Id.getId(),
+  //                 children: [{ text: 'This is your first daily note!' }]
+  //               }
+  //             ])
+  //           }
+  //         })
+  //       })
+  //   }
+  // })
+  plugin.register.registerInSettings({
+    registerPanelName: 'plugins',
+    settingItems: [
+      {
+        type: 'title',
+        title: 'registeredNice'
+      },
+      {
+        type: 'item',
+        title: 'hello',
+        children: <div>1232132132</div>
+      }
+    ]
+  })
+  plugin.register.registerObject('custom-ele', {
+    normalizeDraggingEleToMetaObject: async d => {
+      const metaStore = plugin.api.getMetaStore()
+      metaStore.getMetaObjectById(1)
+      return {
+        normalizedMetaObject: {},
+        shouldOpenEditMetaModal: true,
+        alreadyHasMeta: true,
+        preLinks: []
       }
     }
   })
+  plugin.register.registerI18N('zh-CN', {
+    general: {
+      task: '任务'
+    },
+    settings: {
+      plugins: '插件'
+    }
+  })
+  plugin.register.registerEditorElement({
+    type: 'weather',
+    name: 'weather',
+    renderElement: props => <WeatherPanelElement {...props} />
+  })
+}
+
+const CustomEditorElement = (props: RenderElementProps & { plugin: PluginApi }) => {
+  const { Rendevoz, api } = props.plugin
+  api.getMetaStore()
+  const instance = Rendevoz.InnerHooks.useEditorInstance()
+  const objectStore = props.plugin.api.getObjectStore('note')
+  objectStore.useAll()
+  const [objState, setObjectState] = [objectStore.useValue(1), objectStore.updateOne]
+  setObjectState({ ...objState, title: '121' })
+  const metaStore = props.plugin.api.getMetaStore()
+  const index = metaStore.useIndexedMetaObjects()
+  if (index) {
+    const { typeToMetaObjectIdsMap, tagToMetaObjectIdsMap, pinnedMetaObjectsSet, metaAttachmentIdToMetaIdsMap, objectIdToMetaObjectMap } =
+      index
+    console.log()
+  }
+  const allMeta = metaStore.useMetaObjectsMap()
+  const scoped = Rendevoz.Events.Emit.GlobalEventEmitter
+
+  const handler = Rendevoz.Events.Emit.useEventHandler('global')
+  handler.on('globalDragPointerUp', ({ event, draggingElement }) => {
+
+
+  })
   useEffect(() => {
-    globalEmitter.addListener('global', handler)
-    store.getAll()
+    scoped.addListener('editor', handler)
     return () => {
-      globalEmitter.removeListener('global', handler)
+      scoped.removeListener('editor', handler)
     }
   }, [])
-
-  const containerRef = useRef<HTMLDivElement>(null)
-
+  handler.on('operationApplied', data => {
+    console.log(data)
+  })
+  Rendevoz.Actions.Notification.success({ message: 'Hello world!!!' })
+  const allTasks = useMemo(() => {
+    return Array.from(allMeta.values()).filter(i => i.type === 'task')
+  }, [allMeta])
   return (
-    <api.unstable.Components.Content flex fullHeight fullWidth style={{ padding: 30 }} column ref={containerRef}>
-      <h1>Task Manager</h1>
-      <api.unstable.TabTitle title="Task Manager" />
-      <div onClick={() => store.addOne({ name: 'new task' })}>add one task</div>
-      <div onClick={() => api.Rendevoz.Actions.Open.Translate.openTranslate({ query: 'hello you', to: 'zh-CN' })}>11111111111</div>
-      {Array.from(allTasks.values()).map(i => (
-        <api.unstable.Components.DraggableElement draggingDetails={{ type: 'task', id: i.id, name: i.name }}>
-          <div data-task-id={i.id} onClick={() => store.updateOne({ id: i.id, name: String(Math.random()) })}>
-            task: {i.name}
-          </div>
-        </api.unstable.Components.DraggableElement>
+    <div
+      style={{
+        background: 'transparent',
+        padding: '20px'
+      }}
+    >
+      <h1
+        contentEditable={false}
+        onClick={() => {
+          console.log('heelo')
+          Rendevoz.Actions.Utils.uploadFile().then(file => {
+            const a = document.createElement('a')
+            const url = URL.createObjectURL(file[0])
+            a.download = 'new item'
+            a.href = url
+            a.click()
+            URL.revokeObjectURL(url)
+          })
+        }}
+      >
+        实体面板
+      </h1>
+      {allTasks.map(i => (
+        <Renderer metaId={i.id} plugin={props.plugin} key={i.id} />
       ))}
-      {api.unstable.Consts.KEY.ArrowDown}
-      {api.unstable.Consts.Colors.Font.Primary}
-    </api.unstable.Components.Content>
+      {props.children}
+    </div>
   )
 }
+
+const WeatherPanelElement = (props: RenderElementProps) => {
+  const [todayWeather, setTodayWeather] = useState()
+  useEffect(() => {}, [])
+  return (
+    <div>
+      <div>Today Weather Is: </div>
+      {props.children}
+    </div>
+  )
+}
+
+

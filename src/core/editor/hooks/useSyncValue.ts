@@ -2,17 +2,18 @@ import { Rendevoz } from '@/core/rendevoz'
 import { useEventHandler } from '@/events'
 import { useDebounceFn } from '@/hooks'
 import { useEffect } from 'react'
-import { Transforms } from 'slate'
+import { Editor, Transforms } from 'slate'
 import { CustomEditor } from '~/typings'
+import { EDITOR_TO_CHANGED } from '@/core'
 
 const useLocalSyncValue = (editor: CustomEditor) => {
   const emitter = Rendevoz.Events.Emit.GlobalEventEmitter
   const handler = useEventHandler('editor')
   const { id, noteId } = editor
   handler.on('operationApplied', data => {
-    console.log(data)
     if (data.noteId === noteId && data.id !== id) {
       console.log(data)
+      EDITOR_TO_CHANGED.set(editor, false)
       const { operation } = data
       Transforms.transform(editor, operation)
       editor.operations.push(operation)

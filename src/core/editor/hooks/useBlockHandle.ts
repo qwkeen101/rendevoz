@@ -1,16 +1,16 @@
-import { atom, useAtom } from 'jotai'
+import { atom, useAtom } from "jotai";
 
 type DragHandleProps = {
-  left?: number
-  top?: number
-  targetHeight?: number
-  targetId?: number
-  visible?: boolean
-}
+  left?: number;
+  top?: number;
+  targetHeight?: number;
+  targetId?: number;
+  visible?: boolean;
+};
 export const EditorBlockHandleAtom = atom<DragHandleProps>({
-  visible: false
-})
+  visible: false,
+});
 
-const useEditorBlockHandle = () => useAtom(EditorBlockHandleAtom)
+const useEditorBlockHandle = () => useAtom(EditorBlockHandleAtom);
 
-export default useEditorBlockHandle
+export default useEditorBlockHandle;

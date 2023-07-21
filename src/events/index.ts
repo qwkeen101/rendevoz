@@ -1,2 +1,2 @@
-export * from './eventHandler'
-export * from './useEventEmitter'
+export * from "./eventHandler";
+export * from "./useEventEmitter";

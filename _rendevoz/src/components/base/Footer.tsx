@@ -1,16 +1,15 @@
-import { Noop } from '@/common/types'
-import { Button } from '@/components/base/button'
-import { css } from '@emotion/css'
-import { CSSProperties, FC } from 'react'
-import { useTranslation } from 'react-i18next'
-import Content from './Content'
+import { Noop } from "@/common/types";
+import { Button } from "@/components/base/button";
+import { CSSProperties, FC } from "react";
+import { useTranslation } from "react-i18next";
+import Content from "./Content";
 
 interface FooterProps {
-  submitText?: string
-  backText?: string
-  onSubmit?: Noop
-  onBack?: Noop
-  buttonStyle?: CSSProperties
+  submitText?: string;
+  backText?: string;
+  onSubmit?: Noop;
+  onBack?: Noop;
+  buttonStyle?: CSSProperties;
 }
 const Footer: FC<FooterProps> = ({ onBack, onSubmit, submitText = 'submit', backText = 'back', buttonStyle }) => {
   const { t } = useTranslation()

@@ -8,6 +8,9 @@ import { AnimatePopoverProps } from '@/components/base/AnimatePopover'
 import { Zindexes } from '@/consts'
 import ClassName from '@/styles/classNames'
 import { Rendevoz } from '../rendevoz'
+import { TypeToRegisteredMetaObject } from '@/stores/meta.store'
+import { TypeToTypeName } from '@/core'
+import { TypeToRegisteredObject } from '@/stores/object.store'
 
 export const useCreateObject = (options?: {
   positions: AnimatePopoverProps['positions']
@@ -32,7 +35,7 @@ export const useCreateObject = (options?: {
     y: number
     isOpenCenter?: boolean
   }>()
-
+  const registeredCreatableObjects = Array.from(TypeToRegisteredMetaObject.values()).filter(i => i.visibleInCreateMenu)
   const closeModal = () => setModalState(undefined)
   const portal = createPortal(
     <>
@@ -161,6 +164,22 @@ export const useCreateObject = (options?: {
                   }}
                 />
               )}
+              {registeredCreatableObjects.map(obj => (
+                <Button.IconButton
+                  key={obj.type}
+                  icon={obj.icon}
+                  text={t(`general.${TypeToTypeName[obj.i18nKey]}`)}
+                  onClick={() => {
+                    if (TypeToRegisteredObject.has(obj.type)) {
+                      ObjectStore(obj.type)
+                        .addOneWithMeta({}, { showMetaModal: true })
+                        .then(meta => {
+                          TypeToRegisteredMetaObject.get(obj.type)?.onCreate?.(meta.meta, meta.one)
+                        })
+                    }
+                  }}
+                ></Button.IconButton>
+              ))}
             </WithBorder>
           }
           onClickOutside={() => {
@@ -170,7 +189,13 @@ export const useCreateObject = (options?: {
             }, 300)
           }}
         >
-          <div style={{ position: 'fixed', top: popoverState.y, left: popoverState.x }}></div>
+          <div
+            style={{
+              position: 'fixed',
+              top: popoverState.y,
+              left: popoverState.x
+            }}
+          ></div>
         </AnimatePopover>
       )}
     </>,

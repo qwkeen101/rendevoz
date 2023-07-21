@@ -6,8 +6,7 @@ import PdfPage from '@/scenes/pdf'
 import ClassName from '@/styles/classNames'
 import Id from '@/utils/id'
 import * as Algorithm from '@/components/base/dock/Algorithm'
-import { useLayoutEffect, useMemo, useRef, useState } from 'react'
-import { Rnd } from 'react-rnd'
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import ImagePage from '@/scenes/ImagePage'
 import Webpage from '../webpage/Webpage'
 import { Resizable } from 're-resizable'
@@ -80,6 +79,11 @@ const useWhiteboardSidebar = () => {
       }
     }
   }
+  useEffect(() => {
+    if(layout.dockbox.children[0].tabs.length === 0){
+      toggleCollapsed(true)
+    }
+  },[layout.dockbox.children[0].tabs.length])
   const render = () => {
     return (
       <Resizable
@@ -100,7 +104,16 @@ const useWhiteboardSidebar = () => {
         }}
       >
         {layout.dockbox.children[0].tabs.length > 0 && (
-          <div style={{ position: 'absolute', top: 0, bottom: 0, left: -40, display: 'flex', alignItems: 'center' }}>
+          <div
+            style={{
+              position: 'absolute',
+              top: 0,
+              bottom: 0,
+              left: -40,
+              display: 'flex',
+              alignItems: 'center'
+            }}
+          >
             <Icon className={ClassName.circleButton()} size={24} name={collapsed ? 'park-left' : 'park-right'} onClick={toggleCollapsed} />
           </div>
         )}

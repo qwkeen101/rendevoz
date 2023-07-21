@@ -1,7 +1,7 @@
-import { Element, Node, Path, Text } from 'slate';
-import * as Y from 'yjs';
-import { YTarget } from '../model/types';
-import { sliceInsertDelta, yTextToInsertDelta } from './delta';
+import { Element, Node, Path, Text } from "slate";
+import * as Y from "yjs";
+import { YTarget } from "../model/types";
+import { sliceInsertDelta, yTextToInsertDelta } from "./delta";
 
 export function getSlateNodeYLength(node: Node | undefined): number {
   if (!node) {
@@ -23,11 +23,11 @@ export function getYTarget(
   path: Path
 ): YTarget {
   if (path.length === 0) {
-    throw new Error('Path has to a have a length >= 1');
+    throw new Error("Path has to a have a length >= 1");
   }
 
   if (Text.isText(slateRoot)) {
-    throw new Error('Cannot descent into slate text');
+    throw new Error("Cannot descent into slate text");
   }
 
   const [pathOffset, ...childPath] = path;
@@ -93,7 +93,7 @@ export function yOffsetToSlateOffsets(
   }
 
   if (yOffset > currentOffset + (insert ? 1 : 0)) {
-    throw new Error('yOffset out of bounds');
+    throw new Error("yOffset out of bounds");
   }
 
   if (insert) {
@@ -119,7 +119,7 @@ export function getSlatePath(
     }
 
     if (!(yParent instanceof Y.XmlText)) {
-      throw new Error('Unexpected y parent type');
+      throw new Error("Unexpected y parent type");
     }
 
     yNodePath.unshift(yParent);
@@ -143,11 +143,11 @@ export function getSlatePath(
         break;
       }
 
-      yOffset += typeof element.insert === 'string' ? element.insert.length : 1;
+      yOffset += typeof element.insert === "string" ? element.insert.length : 1;
     }
 
     if (Text.isText(slateParent)) {
-      throw new Error('Cannot descent into slate text');
+      throw new Error("Cannot descent into slate text");
     }
 
     const [pathOffset] = yOffsetToSlateOffsets(slateParent, yOffset);

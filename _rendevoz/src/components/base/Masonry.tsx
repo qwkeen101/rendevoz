@@ -1,30 +1,39 @@
-import { Children, ReactNode } from 'react'
-import { useMeasure } from 'react-use'
+import { Children, ReactNode } from "react";
+import { useMeasure } from "react-use";
 
-const Masonry = ({ breakPoints, gap, children }: { breakPoints: Record<number, number>; gap: number; children: ReactNode }) => {
-  const [ref, { width }] = useMeasure()
-  const columns = Object.entries(breakPoints).find(i => Number(i[0]) > width)?.[1] || 1
-  const arrChildren = Children.toArray(children)
-  const chunks = createChunks(arrChildren, columns)
-  const dataColumns = createDataColumns(chunks, columns)
+const Masonry = ({
+  breakPoints,
+  gap,
+  children,
+}: {
+  breakPoints: Record<number, number>;
+  gap: number;
+  children: ReactNode;
+}) => {
+  const [ref, { width }] = useMeasure();
+  const columns =
+    Object.entries(breakPoints).find((i) => Number(i[0]) > width)?.[1] || 1;
+  const arrChildren = Children.toArray(children);
+  const chunks = createChunks(arrChildren, columns);
+  const dataColumns = createDataColumns(chunks, columns);
   return (
     <div
       ref={ref}
       style={{
-        display: 'grid',
-        alignItems: 'start',
+        display: "grid",
+        alignItems: "start",
         columnGap: gap,
-        gridTemplateColumns: `repeat(${columns}, minmax(0,1fr))`
+        gridTemplateColumns: `repeat(${columns}, minmax(0,1fr))`,
       }}
     >
       {dataColumns.map((column, idx) => (
         <MasonryRow gap={gap} key={idx}>
-          {column.map(item => item)}
+          {column.map((item) => item)}
         </MasonryRow>
       ))}
     </div>
-  )
-}
+  );
+};
 export function MasonryRow({ children, gap }: { children: React.ReactNode; gap: number }) {
   return (
     <div

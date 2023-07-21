@@ -1,28 +1,29 @@
-import { Content, Icon, Image, Tooltip } from '@/components'
-import { MetaStore, ObjectStore, globalStore } from '@/stores'
+import { Content, Icon, Image } from '@/components'
+import { globalStore, ObjectStore } from '@/stores'
 import { objectIdToMetaObjectIdMapAtom } from '@/stores/meta.store'
 import Id from '@/utils/id'
 import { CSSProperties, FC, useEffect, useMemo, useState } from 'react'
 import { Descendant } from 'slate'
-import { CustomEditor, IWebpageInstance, MetaObject, WebpageInstance } from '~/typings'
+import { CustomEditor, IWebpageInstance, MetaObject } from '~/typings'
 import WebpageEditor from '../editor/WebpageEditor'
-import { WebpageProps } from './WebpageCore'
-import { WebpageCore } from './WebpageCore'
+import { WebpageCore, WebpageProps } from './WebpageCore'
 import WebpageNavigation from './WebpageNavigation'
 import TabTitle from '@/components/layout/TabTitle'
 import { useGlobalAtomValue, useMemoizedFn, useToggle } from '@/hooks'
 import { ReactEditor } from '../editor'
-import { DraggingElement, GlobalDragOverlayInstance } from '../global'
+import { GlobalDragOverlayInstance } from '../global'
 import { EditorTitleClassName } from '../editor/EditorTitle'
 import ClassName from '@/styles/classNames'
-import { Provider, createStore } from 'jotai'
+import { createStore, Provider } from 'jotai'
 import { GlobalTranslateInstance } from '../global/translate/GlobalTranslatePanel'
 import { GlobalSearchInstance } from '../global/GlobalSearchPanel'
 import { deepEquals } from '../editor/yjs/utils/object'
 import { webpageUrlToIdAtom } from '@/stores/index.atoms'
-import useWebpageInstance, { WebpageInstanceAtom, useAssignWebpageInstance } from './hooks/useWebpageInstance'
+import useWebpageInstance, { useAssignWebpageInstance, WebpageInstanceAtom } from './hooks/useWebpageInstance'
 import useWebpageState from './hooks/useWebpageState'
 import useWebpageNavigationEventHandler from './hooks/useWebpageNavigationEventHandler'
+import { Regexp } from '@/utils'
+
 type Props = {
   initialUrl?: string
   initialWebpageId?: number
@@ -96,7 +97,10 @@ const WebpageInner = ({
   useEffect(() => {
     // delete temp note when url change
     if (currentWebpage?.tempNoteId) {
-      ObjectStore('note').deleteOneById(currentWebpage.tempNoteId, { silent: true, force: true })
+      ObjectStore('note').deleteOneById(currentWebpage.tempNoteId, {
+        silent: true,
+        force: true
+      })
     }
     const action = async () => {
       if (navigationUrl !== initialUrl && navigationUrl && navigationUrl.length) {
@@ -154,7 +158,10 @@ const WebpageInner = ({
             .getOneById(currentWebpage.noteId)
             .then(note => {
               if (note && note?.metaId !== currentWebpageMeta) {
-                ObjectStore('note').updateOne({ id: currentWebpage.noteId!, metaId: currentWebpageMeta })
+                ObjectStore('note').updateOne({
+                  id: currentWebpage.noteId!,
+                  metaId: currentWebpageMeta
+                })
               }
             })
         }
@@ -202,8 +209,11 @@ const WebpageInner = ({
       window.open(url, '_blank')
     }
   })
-  const url = currentWebpage?.url ? new URL(currentWebpage?.url) : navigationUrl ? new URL(navigationUrl) : undefined
-  const [editorReaderMode, toggleEditorReaderMode] = useToggle(true)
+  const url = Regexp.isValidWebUrl(currentWebpage?.url || '')
+    ? new URL(currentWebpage?.url)
+    : Regexp.isValidWebUrl(navigationUrl)
+    ? new URL(navigationUrl)
+    : undefined
   const objectToIdMeta = useGlobalAtomValue(objectIdToMetaObjectIdMapAtom)
 
   return (
@@ -236,6 +246,7 @@ const WebpageInner = ({
             <>
               <WebpageEditor
                 id={editorId}
+                stringTitle={title}
                 noteId={currentWebpage.noteId || currentWebpage.tempNoteId}
                 on={event => {
                   switch (event.type) {
@@ -305,8 +316,7 @@ const WebpageInner = ({
                     }
                   }
                 }}
-                readonly={editorReaderMode}
-                onInstanceIntialized={i => {
+                onInstanceInitialized={i => {
                   instance.editor = i
                   console.log(instance.editor)
                   setEditor(i.getSlateEditor?.())
@@ -318,8 +328,8 @@ const WebpageInner = ({
                     column
                     ref={node => editor && (editor.titleEle = node)}
                     style={{
-                      maxWidth: 'calc(100% - 100px)',
-                      width: 800,
+                      maxWidth: 'calc(100% - 40px)',
+                      width: 790,
                       padding: '20px 0px',
                       margin: 'auto'
                     }}
@@ -337,7 +347,7 @@ const WebpageInner = ({
                     <div className={EditorTitleClassName} style={{ padding: 0 }}>
                       {title}
                     </div>
-                    <hr style={{ marginTop: 24 }} />
+                    <hr style={{ marginTop: 18 }} />
                   </Content>
                 }
               />

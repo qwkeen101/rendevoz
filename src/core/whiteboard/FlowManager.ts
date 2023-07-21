@@ -66,8 +66,8 @@ class FlowManager {
           const newWhiteboard = produce(whiteboard, draft => {
             draft?.nodes?.set(nodeId, {
               ...node,
-              width: box.width,
-              height: box.height
+              width: node.width || Math.min(box.width, 450),
+              height: node.width ? box.height : undefined
             })
           })
 

@@ -1,30 +1,30 @@
-import { CSSProperties, FC, MouseEventHandler, useEffect } from 'react'
-import { AnimatePresence, motion } from 'framer-motion'
-import ReactDOM from 'react-dom'
-import { css } from '@emotion/css'
-import Zindexes from '@/consts/zindex'
-import ClassName from '@/styles/classNames'
-import isHotkey from 'is-hotkey'
-import { KEY } from '@/consts/key'
-import Icon from './Icon'
+import { CSSProperties, FC, MouseEventHandler, useEffect } from "react";
+import { AnimatePresence, motion } from "framer-motion";
+import ReactDOM from "react-dom";
+import { css } from "@emotion/css";
+import Zindexes from "@/consts/zindex";
+import ClassName from "@/styles/classNames";
+import isHotkey from "is-hotkey";
+import { KEY } from "@/consts/key";
+import Icon from "./Icon";
 
 interface ModalProps {
-  visible: boolean
-  minWidth?: number
-  minHeight?: number
-  maxWidth?: number
-  maxHeight?: number
-  width?: number | string
-  height?: number | string
-  onClose: () => void
-  onClick?: MouseEventHandler
-  children: React.ReactNode
-  parentElement?: HTMLElement | null
-  noStyle?: boolean
-  style?: CSSProperties
-  zIndex?: number
-  showClose?: boolean
-  notUnmount?: boolean
+  visible: boolean;
+  minWidth?: number;
+  minHeight?: number;
+  maxWidth?: number;
+  maxHeight?: number;
+  width?: number | string;
+  height?: number | string;
+  onClose: () => void;
+  onClick?: MouseEventHandler;
+  children: React.ReactNode;
+  parentElement?: HTMLElement | null;
+  noStyle?: boolean;
+  style?: CSSProperties;
+  zIndex?: number;
+  showClose?: boolean;
+  notUnmount?: boolean;
 }
 const Backdrop = ({ children, onMouseDown }) => {
   return (
@@ -32,28 +32,28 @@ const Backdrop = ({ children, onMouseDown }) => {
       role="backdrop"
       className={css([
         {
-          position: 'fixed',
+          position: "fixed",
           top: 0,
           left: 0,
-          height: '100vh',
-          width: '100vw',
-          overflow: 'hidden'
+          height: "100vh",
+          width: "100vw",
+          overflow: "hidden",
         },
-        ClassName.flexLayout('center', 'center')
+        ClassName.flexLayout("center", "center"),
       ])}
-      onClick={e => {
-        e.stopPropagation()
-        e.preventDefault()
+      onClick={(e) => {
+        e.stopPropagation();
+        e.preventDefault();
       }}
-      initial={{ background: 'rgba(0,0,0,0)' }}
-      animate={{ background: 'rgba(0,0,0,0.2)' }}
-      exit={{ background: 'rgba(0,0,0,0)' }}
+      initial={{ background: "rgba(0,0,0,0)" }}
+      animate={{ background: "rgba(0,0,0,0.2)" }}
+      exit={{ background: "rgba(0,0,0,0)" }}
       onPointerDown={onMouseDown}
     >
       {children}
     </motion.div>
-  )
-}
+  );
+};
 const Modal: FC<ModalProps> = ({
   visible,
   onClose,
@@ -69,42 +69,42 @@ const Modal: FC<ModalProps> = ({
   style,
   zIndex,
   showClose = false,
-  notUnmount
+  notUnmount,
 }) => {
   useEffect(() => {
     const keyDownHandler = (e: KeyboardEvent) => {
       if (isHotkey(KEY.Escape, e) && visible) {
-        onClose?.()
+        onClose?.();
       }
-    }
-    document.addEventListener('keydown', keyDownHandler)
+    };
+    document.addEventListener("keydown", keyDownHandler);
     return () => {
-      document.removeEventListener('keydown', keyDownHandler)
-    }
-  }, [onClose, visible])
+      document.removeEventListener("keydown", keyDownHandler);
+    };
+  }, [onClose, visible]);
 
   useEffect(() => {
     if (visible) {
-      document.body.style.overflow = 'hidden'
+      document.body.style.overflow = "hidden";
       return () => {
-        document.body.style.overflow = 'unset'
-      }
+        document.body.style.overflow = "unset";
+      };
     }
-  }, [visible])
+  }, [visible]);
   return ReactDOM.createPortal(
     notUnmount ? (
       <motion.div
         animate={{
-          opacity: visible ? 1 : 0
+          opacity: visible ? 1 : 0,
         }}
         role="modal-container"
         transition={{ duration: 0.2 }}
         style={{
-          position: 'fixed',
+          position: "fixed",
           inset: 0,
           zIndex: zIndex || Zindexes.ModalBackdrop,
           // opacity: visible ? 1 : 0,
-          pointerEvents: visible ? 'auto' : 'none'
+          pointerEvents: visible ? "auto" : "none",
           // transition: 'opacity 0.3s ease'
         }}
       >
@@ -114,9 +114,9 @@ const Modal: FC<ModalProps> = ({
           animate={{ opacity: visible ? 1 : 0 }}
           exit={{ opacity: 0 }}
           style={{
-            position: 'absolute',
+            position: "absolute",
             inset: 0,
-            backdropFilter: 'blur(4px)'
+            backdropFilter: "blur(4px)",
           }}
           transition={{ duration: 0.2 }}
           className={ClassName.Background.blurBackground}
@@ -129,10 +129,15 @@ const Modal: FC<ModalProps> = ({
             exit={{ y: 50, opacity: 0 }}
             role="modal"
             className={css([
-              !noStyle && { padding: '16px 24px', borderRadius: '6px', boxShadow: '0 10px 24px rgba(0, 0, 0, 0.18)', overflow: 'hidden' }
+              !noStyle && {
+                padding: "16px 24px",
+                borderRadius: "6px",
+                boxShadow: "0 10px 24px rgba(0, 0, 0, 0.18)",
+                overflow: "hidden",
+              },
             ])}
             style={{
-              position: 'relative',
+              position: "relative",
               minWidth,
               minHeight,
               maxHeight,
@@ -140,12 +145,12 @@ const Modal: FC<ModalProps> = ({
               width,
               height,
               zIndex: Zindexes.Modal,
-              margin: 'auto',
-              ...style
+              margin: "auto",
+              ...style,
             }}
-            onPointerDown={e => e.stopPropagation()}
-            onClick={e => {
-              e.stopPropagation()
+            onPointerDown={(e) => e.stopPropagation()}
+            onClick={(e) => {
+              e.stopPropagation();
             }}
             transition={{ stiffness: 200, damping: 20, duration: 0.2 }}
           >
@@ -156,18 +161,22 @@ const Modal: FC<ModalProps> = ({
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
                 style={{
-                  position: 'absolute',
+                  position: "absolute",
                   top: 8,
                   right: 8,
-                  zIndex: Number.MAX_SAFE_INTEGER
+                  zIndex: Number.MAX_SAFE_INTEGER,
                 }}
-                onPointerDown={e => {
-                  onClose()
-                  e.preventDefault()
-                  e.stopPropagation()
+                onPointerDown={(e) => {
+                  onClose();
+                  e.preventDefault();
+                  e.stopPropagation();
                 }}
               >
-                <Icon name="park-close" className={ClassName.circleButton()} size={18} />
+                <Icon
+                  name="park-close"
+                  className={ClassName.circleButton()}
+                  size={18}
+                />
               </motion.div>
             )}
             {children}
@@ -177,16 +186,23 @@ const Modal: FC<ModalProps> = ({
     ) : (
       <AnimatePresence>
         {visible && (
-          <div role="modal-container" style={{ position: 'fixed', inset: 0, zIndex: zIndex || Zindexes.ModalBackdrop }}>
+          <div
+            role="modal-container"
+            style={{
+              position: "fixed",
+              inset: 0,
+              zIndex: zIndex || Zindexes.ModalBackdrop,
+            }}
+          >
             <motion.div
               key={2}
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               style={{
-                position: 'absolute',
+                position: "absolute",
                 inset: 0,
-                backdropFilter: 'blur(4px)'
+                backdropFilter: "blur(4px)",
               }}
               className={ClassName.Background.blurBackground}
             ></motion.div>
@@ -199,14 +215,14 @@ const Modal: FC<ModalProps> = ({
                 role="modal"
                 className={css([
                   !noStyle && {
-                    padding: '16px 24px',
-                    borderRadius: '6px',
-                    boxShadow: '0 10px 24px rgba(0, 0, 0, 0.18)',
-                    overflow: 'hidden'
-                  }
+                    padding: "16px 24px",
+                    borderRadius: "6px",
+                    boxShadow: "0 10px 24px rgba(0, 0, 0, 0.18)",
+                    overflow: "hidden",
+                  },
                 ])}
                 style={{
-                  position: 'relative',
+                  position: "relative",
                   minWidth,
                   minHeight,
                   maxHeight,
@@ -214,12 +230,12 @@ const Modal: FC<ModalProps> = ({
                   width,
                   height,
                   zIndex: Zindexes.Modal,
-                  margin: 'auto',
-                  ...style
+                  margin: "auto",
+                  ...style,
                 }}
-                onPointerDown={e => e.stopPropagation()}
-                onClick={e => {
-                  e.stopPropagation()
+                onPointerDown={(e) => e.stopPropagation()}
+                onClick={(e) => {
+                  e.stopPropagation();
                 }}
                 transition={{ stiffness: 200, damping: 20 }}
               >
@@ -230,18 +246,22 @@ const Modal: FC<ModalProps> = ({
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
                     style={{
-                      position: 'absolute',
+                      position: "absolute",
                       top: 8,
                       right: 8,
-                      zIndex: Number.MAX_SAFE_INTEGER
+                      zIndex: Number.MAX_SAFE_INTEGER,
                     }}
-                    onPointerDown={e => {
-                      onClose()
-                      e.preventDefault()
-                      e.stopPropagation()
+                    onPointerDown={(e) => {
+                      onClose();
+                      e.preventDefault();
+                      e.stopPropagation();
                     }}
                   >
-                    <Icon name="park-close" className={ClassName.circleButton()} size={18} />
+                    <Icon
+                      name="park-close"
+                      className={ClassName.circleButton()}
+                      size={18}
+                    />
                   </motion.div>
                 )}
                 {children}
@@ -252,7 +272,7 @@ const Modal: FC<ModalProps> = ({
       </AnimatePresence>
     ),
     parentElement || document.body
-  )
-}
+  );
+};
 
-export default Modal
+export default Modal;

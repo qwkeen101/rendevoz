@@ -1,33 +1,33 @@
-import { AnimatePopover } from '@/components'
-import { ReactNode, useEffect, useRef, useState } from 'react'
-import AttachmentWrapper from './AttachmentWrapper'
-import { Zindexes } from '@/consts'
-import { AnimatePopoverProps } from '@/components/base/AnimatePopover'
+import { AnimatePopover } from "@/components";
+import { ReactNode, useEffect, useRef, useState } from "react";
+import AttachmentWrapper from "./AttachmentWrapper";
+import { Zindexes } from "@/consts";
+import { AnimatePopoverProps } from "@/components/base/AnimatePopover";
 
 const HoverAttachment = ({
   metaId,
   children,
   parentElement,
   maxWidth = 300,
-  zIndex = Zindexes.AttachmentPopover
+  zIndex = Zindexes.AttachmentPopover,
 }: {
-  metaId: number
-  children: ReactNode
-  parentElement?: AnimatePopoverProps['parentElement']
-  zIndex?: number
-  maxWidth?: number
+  metaId: number;
+  children: ReactNode;
+  parentElement?: AnimatePopoverProps["parentElement"];
+  zIndex?: number;
+  maxWidth?: number;
 }) => {
-  const ref = useRef<HTMLElement>(null)
-  const [visible, setVisible] = useState(false)
+  const ref = useRef<HTMLElement>(null);
+  const [visible, setVisible] = useState(false);
 
   useEffect(() => {
-    const clickHandler = e => {
-      console.log('click')
-      setVisible(s => !s)
-    }
-    ref.current?.addEventListener('click', clickHandler)
-    return () => ref.current?.removeEventListener('click', clickHandler)
-  })
+    const clickHandler = (e) => {
+      console.log("click");
+      setVisible((s) => !s);
+    };
+    ref.current?.addEventListener("click", clickHandler);
+    return () => ref.current?.removeEventListener("click", clickHandler);
+  });
 
   return (
     <AnimatePopover
@@ -44,17 +44,17 @@ const HoverAttachment = ({
           visible
           closeIcon
           onClose={() => {
-            setVisible(false)
+            setVisible(false);
           }}
           metaId={metaId}
         />
       }
       disableIntersection
-      positions={['top', 'bottom']}
+      positions={["top", "bottom"]}
     >
       {children}
     </AnimatePopover>
-  )
-}
+  );
+};
 
-export default HoverAttachment
+export default HoverAttachment;

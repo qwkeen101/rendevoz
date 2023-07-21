@@ -1,7 +1,6 @@
 import { ILayoutTab, TabData } from '~/typings'
 import getSetting from '../setting/getSetting'
-import { LayoutIdToTabMap } from '@/components/layout'
-import { GlobalLayout } from '@/components/layout'
+import { GlobalLayout, LayoutIdToTabMap } from '@/components/layout'
 import Id from '@/utils/id'
 
 const TabDataMap = new Map<ILayoutTab['type'], TabData[ILayoutTab['type']]>()

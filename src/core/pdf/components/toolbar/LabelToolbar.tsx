@@ -1,5 +1,5 @@
 import { Noop } from '@/common/types'
-import { IconPicker, Toolbar, WithBorder, IconWithPopover } from '@/components'
+import { IconPicker, IconWithPopover, Toolbar, WithBorder } from '@/components'
 import BlockColorPicker from '@/core/editor/components/BlockColorPicker'
 import { FC, memo } from 'react'
 import { IHighlightLabel } from '~/typings'
@@ -16,6 +16,7 @@ type Layout =
   | 'delete'
   | 'direction'
   | 'copy'
+  | 'rightBar'
 
 type LabelToolbarProps = {
   color?: string
@@ -29,6 +30,7 @@ type LabelToolbarProps = {
   onColorChange?: (color: string) => void
   onCopy?: VoidFunction
   onDelete?: Noop
+  onOpenInSidebar?: VoidFunction
   onContentChange?: (value: string) => void
   onDirectionChange?: Noop
   onSearch?: React.MouseEventHandler
@@ -53,6 +55,7 @@ const LabelToolbar: FC<LabelToolbarProps> = ({
   onMovableChange,
   onDelete,
   onTranslate,
+  onOpenInSidebar,
   selectedText,
   onSearch,
   color,
@@ -110,6 +113,15 @@ const LabelToolbar: FC<LabelToolbarProps> = ({
       }}
     ></Toolbar.Item>
   )
+  const RightBarItem = (
+    <Toolbar.Item
+      key="rightBar"
+      iconName="park-right-bar"
+      onClick={() => {
+        onOpenInSidebar?.()
+      }}
+    ></Toolbar.Item>
+  )
   const DeleteItem = <Toolbar.Item key="delete" iconName="park-delete" onClick={onDelete}></Toolbar.Item>
   const toolbarRenderer = () => {
     return layout.map(i => {
@@ -130,6 +142,8 @@ const LabelToolbar: FC<LabelToolbarProps> = ({
           return DeleteItem
         case 'copy':
           return CopyItem
+        case 'rightBar':
+          return RightBarItem
       }
     })
   }

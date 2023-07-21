@@ -1,6 +1,6 @@
-import { Node, RemoveTextOperation } from 'slate';
-import type Y from 'yjs';
-import { getYTarget } from '../../utils/location';
+import { Node, RemoveTextOperation } from "slate";
+import type Y from "yjs";
+import { getYTarget } from "../../utils/location";
 
 export function removeText(
   sharedRoot: Y.XmlText,

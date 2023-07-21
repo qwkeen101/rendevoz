@@ -1,4 +1,6 @@
 import { GlobalUtilsInstance } from '../global/GlobalUtils'
+import { IRendevoz } from '~/typings'
+import { saveBlobLocally, saveImageLocally } from '@/utils'
 
 const uploadFile = (): Promise<File[]> => {
   return new Promise(res => {
@@ -6,8 +8,10 @@ const uploadFile = (): Promise<File[]> => {
   })
 }
 
-const Utils = {
-  uploadFile
+const Utils: IRendevoz['Actions']['Utils'] = {
+  uploadFile,
+  saveFile: (...args) => saveBlobLocally(...args),
+  saveImage: (...args) => saveImageLocally(...args)
 }
 
 export default Utils

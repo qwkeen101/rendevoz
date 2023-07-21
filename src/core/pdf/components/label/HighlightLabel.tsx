@@ -2,7 +2,7 @@ import { AnimatePopover, WithBorder } from '@/components'
 import { DraggableElement, DraggingElement } from '@/core'
 import { useMergedRef } from '@/hooks'
 import { PageSize } from '~/typings'
-import { ObjectStore, globalStore } from '@/stores'
+import { globalStore, ObjectStore } from '@/stores'
 import { CSSProperties, FC, forwardRef, memo, useEffect, useMemo, useRef, useState } from 'react'
 import { ILabel } from '~/typings/data'
 import LabelToolbar from '../toolbar/LabelToolbar'
@@ -15,13 +15,14 @@ import { objectIdToMetaObjectIdMapAtom } from '@/stores/meta.store'
 import { GlobalSearchInstance } from '@/core/global/GlobalSearchPanel'
 import { Rendevoz } from '@/core/rendevoz'
 import usePdfSelectMode from '../../hooks/useSelectMode'
+import usePdfInstance from '@/core/pdf/hooks/usePdfInstance'
 
 interface HighlightLabelProps {
   labelId: number
   pageSize: PageSize
   documentId: number
 }
-const layout = ['copy', 'colorPicker', 'separator', 'searcher', 'translator', 'separator', 'delete']
+const layout = ['copy', 'colorPicker', 'separator', 'searcher', 'translator', 'rightBar', 'separator', 'delete']
 
 const HighlightLabel: FC<HighlightLabelProps> = memo(
   ({ labelId, pageSize, documentId }) => {
@@ -30,7 +31,7 @@ const HighlightLabel: FC<HighlightLabelProps> = memo(
     const highlightRef = useRef<HTMLDivElement>(null)
     const metaRef = useRef<HTMLDivElement>(null)
     const toolbarRef = useRef<HTMLDivElement>(null)
-
+    const instance = usePdfInstance()
     useClickOutside(
       e => {
         if (!toolbarRef.current?.contains(e.target) && !metaRef.current?.contains(e.target)) {
@@ -88,6 +89,9 @@ const HighlightLabel: FC<HighlightLabelProps> = memo(
                     }
                   })
                 }
+              }}
+              onOpenInSidebar={() => {
+                instance.jumpToLabelInSidebar?.(labelId)
               }}
               onDelete={() => ObjectStore('pdfLabel').deleteOneById(labelId, { force: true })}
               selectedText={highlight.selectedText}

@@ -1,6 +1,6 @@
-import { atom, useAtom } from 'jotai'
-import { ScrollMode } from '../types/layout'
+import { atom, useAtom } from "jotai";
+import { ScrollMode } from "../types/layout";
 
-const scrollModeAtom = atom<ScrollMode>('vertical')
+const scrollModeAtom = atom<ScrollMode>("vertical");
 
-export const useScrollMode = () => useAtom(scrollModeAtom)
+export const useScrollMode = () => useAtom(scrollModeAtom);

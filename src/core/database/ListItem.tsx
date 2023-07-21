@@ -1,47 +1,56 @@
-import { AnimatePopover, Content, Icon, WithBorder } from '@/components'
-import { Zindexes } from '@/consts'
-import { useToggle } from '@/hooks'
-import ClassName from '@/styles/classNames'
-import { css } from '@emotion/css'
-import { ObjectActionPopover } from './card/DatabaseCard'
-import useRenderObject from './useRenderObject'
-import { memo, useMemo } from 'react'
+import { AnimatePopover, Content, Icon, WithBorder } from "@/components";
+import { Zindexes } from "@/consts";
+import { useToggle } from "@/hooks";
+import ClassName from "@/styles/classNames";
+import { css } from "@emotion/css";
+import { ObjectActionPopover } from "./card/DatabaseCard";
+import useRenderObject from "./useRenderObject";
+import { memo, useMemo } from "react";
 
-const DatabaseListItem = ({ id, mode }: { id: number; mode: 'all' | 'title' }) => {
+const DatabaseListItem = ({
+  id,
+  mode,
+}: {
+  id: number;
+  mode: "all" | "title";
+}) => {
   const { renderWhole } = useRenderObject({
-    metaObjectId: id
-  })
-  const [popoverVisible, togglePopoverVisible] = useToggle(false)
+    metaObjectId: id,
+  });
+  const [popoverVisible, togglePopoverVisible] = useToggle(false);
   const renderOptions = useMemo(
     () => ({
       renderOptions:
-        mode === 'all'
+        mode === "all"
           ? {
               renderFrom: true,
-              renderImage: true
+              renderImage: true,
             }
-          : mode === 'title'
+          : mode === "title"
           ? {
               renderFrom: false,
               renderImage: false,
-              renderDescription: false
+              renderDescription: false,
             }
           : { renderFrom: false, renderImage: true },
       descriptionOptions: {
-        descriptionClassName: css([ClassName.description(), ClassName.ellipsisFont(1)])
+        descriptionClassName: css([
+          ClassName.description(),
+          ClassName.ellipsisFont(1),
+        ]),
       },
       tagsOptions: {
         showCreatedAt: true,
-        showViewAt: true
+        showViewAt: true,
       },
       imageOptions: {
-        width: mode === 'all' ? 64 : 32,
-        height: mode === 'all' ? 64 : 32
+        width: mode === "all" ? 64 : 32,
+        height: mode === "all" ? 64 : 32,
       },
-      rowGap: 20
+      rowGap: 20,
     }),
     [mode]
-  )
+  );
   return (
     <Content flex gap={12}>
       <AnimatePopover
@@ -51,17 +60,25 @@ const DatabaseListItem = ({ id, mode }: { id: number; mode: 'all' | 'title' }) =
         onClickOutside={togglePopoverVisible}
         content={
           <WithBorder>
-            <ObjectActionPopover onClose={togglePopoverVisible} metaObjectId={id} />
+            <ObjectActionPopover
+              onClose={togglePopoverVisible}
+              metaObjectId={id}
+            />
           </WithBorder>
         }
         align="start"
-        positions={['left', 'right']}
+        positions={["left", "right"]}
       >
-        <Icon size={18} onClick={togglePopoverVisible} name="park-more" className={ClassName.circleButton()} />
+        <Icon
+          size={18}
+          onClick={togglePopoverVisible}
+          name="park-more"
+          className={ClassName.circleButton()}
+        />
       </AnimatePopover>
       {renderWhole(renderOptions)}
     </Content>
-  )
-}
+  );
+};
 
-export default memo(DatabaseListItem)
+export default memo(DatabaseListItem);

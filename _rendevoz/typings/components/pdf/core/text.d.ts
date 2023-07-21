@@ -1,8 +1,8 @@
-import { CSSProperties } from 'react'
+import { CSSProperties } from "react";
 
 export interface TextItemChar {
-  transform: any
-  str: string
+  transform: any;
+  str: string;
 }
 export interface TextItem {
   str: string

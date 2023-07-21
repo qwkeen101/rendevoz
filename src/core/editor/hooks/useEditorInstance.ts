@@ -1,15 +1,15 @@
 import { assignProperties } from '@/utils'
 import { atom, useAtomValue, useSetAtom } from 'jotai'
 import { RefObject, useEffect, useRef } from 'react'
-import { CustomEditor, IEditorInstance } from '~/typings'
+import { CustomEditor, CustomElement, IEditorInstance } from '~/typings'
 import { goToBlock, goToTextHighlight, selectBlock, waitForEditorContentInitialized } from '../utils'
 import { Editor, Node, Transforms } from 'slate'
 import { useEventHandler, useScopedEventEmitter } from '@/events'
 import { useDebounceFn } from '@/hooks'
 import { EditorSearchAtom, SearchEntry, SearchOccurrence } from './useEditorSearch'
-import { ID_TO_PATH_MAP } from '../weakMaps'
+import { ID_TO_ELEMENTS_MAP, ID_TO_PATH_MAP, SELECTED_BLOCKS_MAP } from '../weakMaps'
 import useEditorBarState from './useEditorBarState'
-import { ObjectStore, globalStore } from '@/stores'
+import { globalStore, ObjectStore } from '@/stores'
 
 export const EditorInstanceAtom = atom<IEditorInstance>({})
 
@@ -79,13 +79,26 @@ export const useAssignEditorInstance = (editor: CustomEditor, scrollElementRef: 
       },
       getHighlightLocation,
       getScrollElement: () => scrollElementRef.current,
-      openSearch: () => setEditorBarState(s => ({ ...s, rightBarActive: 'search', showRightBar: true })),
+      openSearch: () =>
+        setEditorBarState(s => ({
+          ...s,
+          rightBarActive: 'search',
+          showRightBar: true
+        })),
       closeSearch: () => setEditorBarState(s => ({ ...s, showRightBar: false })),
       toggleSearch: () =>
         setEditorBarState(s => ({
           ...s,
           showRightBar: s.rightBarActive === 'search' ? !s.showRightBar : true,
           rightBarActive: 'search'
+        })),
+      openSetting: () => setEditorBarState(s => ({ ...s, showRightBar: true, rightBarActive: 'setting' })),
+      closeSetting: () => setEditorBarState(s => ({ ...s, showRightBar: false })),
+      toggleSetting: () =>
+        setEditorBarState(s => ({
+          ...s,
+          showRightBar: s.rightBarActive === 'setting' ? !s.showRightBar : true,
+          rightBarActive: 'setting'
         })),
       selectBlock: async opts => {
         if (opts.blockId !== undefined) {
@@ -146,7 +159,10 @@ export const useAssignEditorInstance = (editor: CustomEditor, scrollElementRef: 
                 }
               }
             } else {
-              nextOccur = { blockId: currentOccur.blockId, idx: currentOccur.idx + 1 }
+              nextOccur = {
+                blockId: currentOccur.blockId,
+                idx: currentOccur.idx + 1
+              }
             }
             setEditorSearch(s => ({ ...s, currentOccurrence: nextOccur }))
           } else {
@@ -400,7 +416,10 @@ export const useAssignEditorInstance = (editor: CustomEditor, scrollElementRef: 
         const note = await getNote()
         const noteId = editor.noteId
         if (note && noteId) {
-          const newLabel = await ObjectStore('noteLabel').addOne({ ...label, noteId })
+          const newLabel = await ObjectStore('noteLabel').addOne({
+            ...label,
+            noteId
+          })
           if (note.labels) {
             const newLabels = [...note.labels, newLabel.id]
             ObjectStore('note').updateOne({ id: noteId, labels: newLabels })
@@ -409,7 +428,10 @@ export const useAssignEditorInstance = (editor: CustomEditor, scrollElementRef: 
             const thisNoteLabels = Array.from(globalStore.get(ObjectStore('noteLabel').objectMapAtom).values()).filter(
               i => i.noteId === editor.noteId
             )
-            ObjectStore('note').updateOne({ id: noteId, labels: [...thisNoteLabels.map(i => i.id), newLabel.id] })
+            ObjectStore('note').updateOne({
+              id: noteId,
+              labels: [...thisNoteLabels.map(i => i.id), newLabel.id]
+            })
           }
           return newLabel
         }
@@ -423,7 +445,24 @@ export const useAssignEditorInstance = (editor: CustomEditor, scrollElementRef: 
         }
       },
       toggleLabel: () =>
-        setEditorBarState(s => ({ ...s, showRightBar: s.rightBarActive === 'label' ? !s.showRightBar : true, rightBarActive: 'label' }))
+        setEditorBarState(s => ({
+          ...s,
+          showRightBar: s.rightBarActive === 'label' ? !s.showRightBar : true,
+          rightBarActive: 'label'
+        })),
+      getElementPathById: id => {
+        return ID_TO_PATH_MAP.get(editor)?.get(id)
+      },
+      getOverlayManager: () => {
+        return editor.overlayManager
+      },
+      getSelectedElements: () => {
+        const ids = Array.from(SELECTED_BLOCKS_MAP.get(editor)?.keys() || [])
+        return ids.map(id => ID_TO_ELEMENTS_MAP.get(editor)?.get(id)?.getElement()).filter(i => i !== undefined) as CustomElement[]
+      },
+      getElementFunctionById: id => {
+        return ID_TO_ELEMENTS_MAP.get(editor)?.get(id)
+      }
     })
   })
 }

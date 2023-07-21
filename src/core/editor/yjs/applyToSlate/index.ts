@@ -1,6 +1,6 @@
-import { Editor, Operation } from 'slate';
-import * as Y from 'yjs';
-import { translateYTextEvent } from './textEvent';
+import { Editor, Operation } from "slate";
+import * as Y from "yjs";
+import { translateYTextEvent } from "./textEvent";
 
 /**
  * Translate a yjs event into slate operations. The editor state has to match the
@@ -18,7 +18,7 @@ export function translateYjsEvent(
     return translateYTextEvent(sharedRoot, editor, event);
   }
 
-  throw new Error('Unexpected Y event type');
+  throw new Error("Unexpected Y event type");
 }
 
 /**

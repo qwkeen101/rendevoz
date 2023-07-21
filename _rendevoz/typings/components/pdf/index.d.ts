@@ -18,6 +18,7 @@ export type IPdfInstance = Partial<{
   zoomOut: VoidFunction
   autoFit: VoidFunction
   togglePan: VoidFunction
+  jumpToLabelInSidebar: (labelId: number) => void
   highlightText: (str: string, pageIndex: number) => Promise<void>
   highlightArea: (
     pageIndex: number,

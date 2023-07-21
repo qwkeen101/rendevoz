@@ -1,5 +1,4 @@
 import { Noop } from '@/common/types'
-import { Position } from '@/types'
 import { Dispatch, ReactNode, SetStateAction, useEffect, useMemo, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { AnimatePopover, WithBorder } from '@/components'
@@ -94,12 +93,9 @@ const useGraphOverlay = () => {
           }}
           positions={positions()}
           visible={!!overlayState.visible}
-          content={
-            <WithBorder padding={overlayState.content === 'nodePopover' ? 0 : '6px'} style={{ maxWidth: 400 }}>
-              {renderContent()}
-            </WithBorder>
-          }
+          content={<WithBorder style={{ maxWidth: 400, padding: '2px 6px' }}>{renderContent()}</WithBorder>}
           onClickOutside={e => {
+            if (graph?.currentClickNodeId) return
             setTimeout(() => {
               if (!e.defaultPrevented) {
                 setOverlayState({ ...overlayState, visible: false })
@@ -137,7 +133,15 @@ const useGraphOverlay = () => {
 
 const Portal = ({ children }: { children: ReactNode }) => {
   return createPortal(
-    <div role="graph-overlay" style={{ position: 'fixed', inset: 0, zIndex: 1000, pointerEvents: 'none' }}>
+    <div
+      role="graph-overlay"
+      style={{
+        position: 'fixed',
+        inset: 0,
+        zIndex: 1000,
+        pointerEvents: 'none'
+      }}
+    >
       {children}
     </div>,
     document.body

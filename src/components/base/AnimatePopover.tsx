@@ -1,28 +1,41 @@
-import React, { Dispatch, FC, memo, PropsWithChildren, ReactNode, RefObject, useEffect, useRef, useState } from 'react'
-import { AnimatePresence, motion } from 'framer-motion'
-import { Popover, PopoverProps } from 'react-tiny-popover'
-import useUnmount from '@/hooks/utils/useUnmount'
-import _ from 'lodash'
-import { useIntersection } from 'react-use'
-import { useMergedRef } from '@/hooks'
-import ClassName from '@/styles/classNames'
-import { Zindexes } from '@/consts'
-import { Position } from '~/typings'
-import { PosHelper } from '../contextMenu'
-import { SetStateAction } from 'jotai'
-export interface AnimatePopoverProps extends Omit<PopoverProps, 'content' | 'isOpen' | 'children'> {
-  animate?: boolean
-  visible?: boolean
-  content: React.ReactNode | ((setVisible: Dispatch<SetStateAction<boolean>>) => ReactNode)
-  disableNudge?: boolean
-  disableIntersection?: boolean
-  onVisiblityChange?: (v: boolean) => void
-  innerRef?: RefObject<HTMLElement>
-  parentElement?: HTMLElement | null
-  backdropFilter?: boolean
-  position?: Position
-  children?: ReactNode
-  contentDraggable?: boolean
+import React, {
+  Dispatch,
+  FC,
+  memo,
+  PropsWithChildren,
+  ReactNode,
+  RefObject,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
+import { AnimatePresence, motion } from "framer-motion";
+import { Popover, PopoverProps } from "react-tiny-popover";
+import useUnmount from "@/hooks/utils/useUnmount";
+import _ from "lodash";
+import { useMergedRef } from "@/hooks";
+import ClassName from "@/styles/classNames";
+import { Zindexes } from "@/consts";
+import { Position } from "~/typings";
+import { PosHelper } from "../contextMenu";
+import { SetStateAction } from "jotai";
+
+export interface AnimatePopoverProps
+  extends Omit<PopoverProps, "content" | "isOpen" | "children"> {
+  animate?: boolean;
+  visible?: boolean;
+  content:
+    | React.ReactNode
+    | ((setVisible: Dispatch<SetStateAction<boolean>>) => ReactNode);
+  disableNudge?: boolean;
+  disableIntersection?: boolean;
+  onVisiblityChange?: (v: boolean) => void;
+  innerRef?: RefObject<HTMLElement>;
+  parentElement?: HTMLElement | null;
+  backdropFilter?: boolean;
+  position?: Position;
+  children?: ReactNode;
+  contentDraggable?: boolean;
 }
 
 const AnimatePopover: FC<PropsWithChildren<AnimatePopoverProps>> = ({
@@ -40,93 +53,104 @@ const AnimatePopover: FC<PropsWithChildren<AnimatePopoverProps>> = ({
   contentDraggable,
   clickOutsideCapture = true,
   containerStyle = {
-    borderRadius: '8px',
-    zIndex: String(Zindexes.PopupMenu)
+    borderRadius: "8px",
+    zIndex: String(Zindexes.PopupMenu),
   },
   onVisiblityChange,
   backdropFilter = true,
   onClickOutside,
   ...rest
 }) => {
-  const [isOpen, setIsOpen] = useState(false)
-  const [innerVisible, setInnerVisible] = useState(false)
-  const [hasPosHelperPopoverVisible, setHasPosHelperPopoverVisible] = useState(false)
-  const intersectionRef = useRef<HTMLElement>(null)
+  const [isOpen, setIsOpen] = useState(false);
+  const [innerVisible, setInnerVisible] = useState(false);
+  const [hasPosHelperPopoverVisible, setHasPosHelperPopoverVisible] =
+    useState(false);
+  const intersectionRef = useRef<HTMLElement>(null);
 
-  const popoverRef = useRef(null)
-  const nudgedRef = useRef()
-  const mergedRef = useMergedRef(intersectionRef, innerRef)
+  const popoverRef = useRef(null);
+  const nudgedRef = useRef();
+  const mergedRef = useMergedRef(intersectionRef, innerRef);
   useEffect(() => {
     if (visible === undefined) {
-      intersectionRef?.current?.addEventListener('click', () => {
-        setIsOpen(s => true)
-        setInnerVisible(s => !s)
-      })
+      intersectionRef?.current?.addEventListener("click", () => {
+        setIsOpen((s) => true);
+        setInnerVisible((s) => !s);
+      });
     }
-  }, [])
+  }, []);
   useUnmount(() => {
-    setIsOpen(false)
-    nudgedRef.current = undefined
-  })
+    setIsOpen(false);
+    nudgedRef.current = undefined;
+  });
   useEffect(() => {
     // if open
     if (visible) {
       if (position) {
-        setHasPosHelperPopoverVisible(true)
+        setHasPosHelperPopoverVisible(true);
       }
-      setIsOpen(true)
-      setInnerVisible(true)
+      setIsOpen(true);
+      setInnerVisible(true);
     }
     // if close
     if (!visible) {
-      nudgedRef.current = undefined
-      setInnerVisible(false)
+      nudgedRef.current = undefined;
+      setInnerVisible(false);
     }
-  }, [visible])
+  }, [visible]);
 
   useEffect(() => {
-    onVisiblityChange?.(isOpen)
+    onVisiblityChange?.(isOpen);
     if (isOpen) {
-      const containerDockPane = intersectionRef.current?.closest(`[role='tabpane']`)
+      const containerDockPane =
+        intersectionRef.current?.closest(`[role='tabpane']`);
       if (containerDockPane) {
-        const visiblityWatcher = new MutationObserver(cb => {
-          cb.forEach(record => {
-            if (record.attributeName === 'style') {
-              const style = (record.target as HTMLElement).style
-              if (style.contentVisibility === 'hidden') {
-                setIsOpen(false)
+        const visiblityWatcher = new MutationObserver((cb) => {
+          cb.forEach((record) => {
+            if (record.attributeName === "style") {
+              const style = (record.target as HTMLElement).style;
+              if (style.contentVisibility === "hidden") {
+                setIsOpen(false);
               }
             }
-          })
-        })
+          });
+        });
         visiblityWatcher.observe(containerDockPane, {
           attributes: true,
-          attributeFilter: ['style']
-        })
+          attributeFilter: ["style"],
+        });
         return () => {
-          visiblityWatcher.disconnect()
-        }
+          visiblityWatcher.disconnect();
+        };
       }
     }
     if (position) {
       if (isOpen === false) {
-        setHasPosHelperPopoverVisible(false)
+        setHasPosHelperPopoverVisible(false);
       }
     }
-  }, [isOpen])
+  }, [isOpen]);
   const handleClickOutside = (e: MouseEvent) => {
-    if (e.path?.some(i => i instanceof HTMLElement && i.getAttribute('data-disable-close-popover') === 'true')) {
-      return
+    if (
+      e.path?.some(
+        (i) =>
+          i instanceof HTMLElement &&
+          i.getAttribute("data-disable-close-popover") === "true"
+      )
+    ) {
+      return;
     }
     setTimeout(() => {
-      if (e.defaultPrevented) return
-      onClickOutside?.(e)
+      if (e.defaultPrevented) return;
+      onClickOutside?.(e);
       if (visible === undefined) {
-        setInnerVisible(false)
+        setInnerVisible(false);
       }
-    })
-  }
-  const realParent = parentElement === null || parentElement === undefined ? document.body : parentElement
+    });
+  };
+  const realParent =
+    parentElement === null || parentElement === undefined
+      ? document.body
+      : parentElement;
 
   if (animate) {
     return position ? (
@@ -146,25 +170,28 @@ const AnimatePopover: FC<PropsWithChildren<AnimatePopoverProps>> = ({
             if (!disableNudge) {
               nudgedRef.current = {
                 left: nudgedLeft,
-                top: nudgedTop
-              }
+                top: nudgedTop,
+              };
             } else {
-              nudgedRef.current = undefined
+              nudgedRef.current = undefined;
             }
 
-            const { left, top } = nudgedRef.current || { left: undefined, top: undefined }
+            const { left, top } = nudgedRef.current || {
+              left: undefined,
+              top: undefined,
+            };
             return (
               <motion.div
                 drag={contentDraggable}
                 dragElastic={0}
                 dragMomentum={false}
                 style={{
-                  position: 'relative',
+                  position: "relative",
                   left: left,
                   top: top,
                   borderRadius: 8,
-                  overflow: 'hidden',
-                  display: 'block'
+                  overflow: "hidden",
+                  display: "block",
                 }}
               >
                 <AnimatePresence onExitComplete={() => setIsOpen(false)}>
@@ -176,21 +203,38 @@ const AnimatePopover: FC<PropsWithChildren<AnimatePopoverProps>> = ({
                           initial={{ opacity: 0 }}
                           animate={{ opacity: 1 }}
                           exit={{ opacity: 0 }}
-                          style={{ position: 'absolute', inset: 0, zIndex: -1, borderRadius: 'inherit' }}
+                          style={{
+                            position: "absolute",
+                            inset: 0,
+                            zIndex: -1,
+                            borderRadius: "inherit",
+                          }}
                           className={ClassName.Background.blurBackground}
                         ></motion.div>
                       )}
-                      <motion.div key={2} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-                        {React.isValidElement(content) ? content : typeof content === 'function' ? content(setInnerVisible) : null}
+                      <motion.div
+                        key={2}
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                      >
+                        {React.isValidElement(content)
+                          ? content
+                          : typeof content === "function"
+                          ? content(setInnerVisible)
+                          : null}
                       </motion.div>
                     </>
                   )}
                 </AnimatePresence>
               </motion.div>
-            )
+            );
           }}
         >
-          <PosHelper left={position.x || position.left} top={position.top || position.y} />
+          <PosHelper
+            left={position.x || position.left}
+            top={position.top || position.y}
+          />
         </Popover>
       )
     ) : (
@@ -198,7 +242,7 @@ const AnimatePopover: FC<PropsWithChildren<AnimatePopoverProps>> = ({
         {...rest}
         boundaryElement={boundaryElement}
         boundaryInset={boundaryInset}
-        containerStyle={{ borderRadius: '8px', ...containerStyle }}
+        containerStyle={{ borderRadius: "8px", ...containerStyle }}
         parentElement={realParent}
         onClickOutside={handleClickOutside}
         clickOutsideCapture={clickOutsideCapture}
@@ -206,25 +250,32 @@ const AnimatePopover: FC<PropsWithChildren<AnimatePopoverProps>> = ({
         isOpen={isOpen}
         ref={mergedRef}
         content={({ nudgedLeft, nudgedTop }) => {
-          if ((!nudgedRef.current || _.isEqual(nudgedRef.current, { left: 0, top: 0 })) && !disableNudge) {
+          if (
+            (!nudgedRef.current ||
+              _.isEqual(nudgedRef.current, { left: 0, top: 0 })) &&
+            !disableNudge
+          ) {
             nudgedRef.current = {
               left: nudgedLeft,
-              top: nudgedTop
-            }
+              top: nudgedTop,
+            };
           }
 
-          const { left, top } = nudgedRef.current || { left: undefined, top: undefined }
+          const { left, top } = nudgedRef.current || {
+            left: undefined,
+            top: undefined,
+          };
           return (
             <motion.div
               dragElastic={0}
               dragMomentum={false}
               drag={contentDraggable}
               style={{
-                position: 'relative',
+                position: "relative",
                 left: left,
                 top: top,
-                borderRadius: 'inherit',
-                display: 'block'
+                borderRadius: "inherit",
+                display: "block",
               }}
             >
               <AnimatePresence onExitComplete={() => setIsOpen(false)}>
@@ -236,23 +287,37 @@ const AnimatePopover: FC<PropsWithChildren<AnimatePopoverProps>> = ({
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
-                        style={{ position: 'absolute', inset: 0, borderRadius: 'inherit', zIndex: -1 }}
+                        style={{
+                          position: "absolute",
+                          inset: 0,
+                          borderRadius: "inherit",
+                          zIndex: -1,
+                        }}
                         className={ClassName.Background.blurBackground}
                       ></motion.div>
                     )}
-                    <motion.div key={2} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-                      {React.isValidElement(content) ? content : typeof content === 'function' ? content(setInnerVisible) : null}
+                    <motion.div
+                      key={2}
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                    >
+                      {React.isValidElement(content)
+                        ? content
+                        : typeof content === "function"
+                        ? content(setInnerVisible)
+                        : null}
                     </motion.div>
                   </>
                 )}
               </AnimatePresence>
             </motion.div>
-          )
+          );
         }}
       >
         {children}
       </Popover>
-    )
+    );
   }
   return (
     <Popover
@@ -265,7 +330,7 @@ const AnimatePopover: FC<PropsWithChildren<AnimatePopoverProps>> = ({
     >
       {children}
     </Popover>
-  )
-}
+  );
+};
 
-export default memo(AnimatePopover)
+export default memo(AnimatePopover);

@@ -1,16 +1,15 @@
-import { NoteStore, ObjectStore, globalStore } from '@/stores'
+import { globalStore, NoteStore, ObjectStore } from '@/stores'
 import { NavigationEvent } from '../WebpageNavigation'
 import useWebpageInstance from './useWebpageInstance'
 import useWebpageState from './useWebpageState'
 import { captureWebpage, saveImageLocally } from '@/utils/img'
 import { Regexp } from '@/utils'
-import { searchToUrl, transformHTML } from '../utils'
+import { searchToUrl } from '../utils'
 import readibility from '@mozilla/readability'
 import { Descendant } from 'slate'
 import { deserializeHtmlNode, normalize } from '@/core/editor/plugins/deserializeHtml'
 import Id from '@/utils/id'
 import { objectIdToMetaObjectIdMapAtom } from '@/stores/meta.store'
-import { unified } from 'unified'
 
 const parseHTMLtoSlateDescandants = (
   html: string
@@ -25,7 +24,9 @@ const parseHTMLtoSlateDescandants = (
   if (d) {
     const parsedDoc = parser.parseFromString(d.content, 'text/html')
     // transformHTML(d.content).then(result => console.log(result))
+    console.log(parsedDoc.body)
     const fragment = deserializeHtmlNode(parsedDoc.body)
+    console.log(fragment)
     fragment.forEach(i => (i.id = Id.getId()))
     const normalized = normalize(fragment).filter(i => 'type' in i)
     return {
@@ -52,6 +53,7 @@ const useWebpageNavigationEventHandler = () => {
         setWebpageState(s => ({ ...s, showReaderMode: true }))
       } else {
         const result = parseHTMLtoSlateDescandants(html)
+        console.log(result)
         if (result) {
           const { value } = result
           const contentId = await NoteStore.saveNoteAsBuffer(value)
@@ -67,7 +69,12 @@ const useWebpageNavigationEventHandler = () => {
               ObjectStore('webpage')
                 .updateOne({ id: currentWebpage.id, noteId: note.id })
                 .then(obj => {
-                  obj && setWebpageState(s => ({ ...s, showReaderMode: true, currentWebpage: obj }))
+                  obj &&
+                    setWebpageState(s => ({
+                      ...s,
+                      showReaderMode: true,
+                      currentWebpage: obj
+                    }))
                 })
             })
         }
@@ -85,7 +92,11 @@ const useWebpageNavigationEventHandler = () => {
         saveNote(value).then(note => {
           // eslint-disable-next-line @typescript-eslint/ban-ts-comment
           //@ts-ignore
-          setWebpageState(s => ({ ...s, currentWebpage: { ...s.currentWebpage, tempNoteId: note.id }, showReaderMode: true }))
+          setWebpageState(s => ({
+            ...s,
+            currentWebpage: { ...s.currentWebpage, tempNoteId: note.id },
+            showReaderMode: true
+          }))
         })
       }
     }
@@ -137,7 +148,9 @@ const useWebpageNavigationEventHandler = () => {
           if (webcontentId) {
             const dataUrl = await captureWebpage(webcontentId)
             if (dataUrl) {
-              coverImgSrc = await saveImageLocally(dataUrl, { compress: false })
+              coverImgSrc = await saveImageLocally(dataUrl, {
+                compress: false
+              })
             }
           }
         }

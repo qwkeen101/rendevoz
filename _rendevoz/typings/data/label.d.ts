@@ -1,17 +1,17 @@
-import { TextSelectRect } from '@/events/pdfEvent'
-import { IBase } from './base'
+import { TextSelectRect } from "@/events/pdfEvent";
+import { IBase } from "./base";
 
 export type ILabel = IBase & {
-  id?: number
-  title?: string
-  content?: string | any
-  documentId?: number
-  background?: string
-  color?: string
-  name?: string
-  page?: number
-  description?: string
-} & (IShapeLabel | IThoughtLabel | IHighlightLabel | IObjectLabel)
+  id?: number;
+  title?: string;
+  content?: string | any;
+  documentId?: number;
+  background?: string;
+  color?: string;
+  name?: string;
+  page?: number;
+  description?: string;
+} & (IShapeLabel | IThoughtLabel | IHighlightLabel | IObjectLabel);
 
 export interface IDroppableLabel {
   page?: number

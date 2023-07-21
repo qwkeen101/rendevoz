@@ -1,5 +1,6 @@
-import { useDebugValue, useEffect, useState } from 'react'
-const noop: (...args: any[]) => any = () => {}
+import { useDebugValue, useEffect, useState } from "react";
+
+const noop: (...args: any[]) => any = () => {};
 
 /**
  * `useRefEffect` returns a mutable ref object to be connected with a DOM Node.
@@ -17,9 +18,9 @@ export const useRefEffect = <T extends unknown>(
 ): React.RefCallback<T> & React.MutableRefObject<T | null> => {
   // Use the initial state as mutable reference
   const internalRef = useState(() => {
-    let currentValue = initialValue as T | null
-    let cleanupPreviousEffect = noop as () => void
-    let currentDeps: any[] | undefined
+    let currentValue = initialValue as T | null;
+    let cleanupPreviousEffect = noop as () => void;
+    let currentDeps: any[] | undefined;
     /**
      * React.RefCallback
      */
@@ -29,54 +30,54 @@ export const useRefEffect = <T extends unknown>(
         internalRef.dependencies_ !== currentDeps ||
         currentValue !== newElement
       ) {
-        currentValue = newElement
-        currentDeps = internalRef.dependencies_
-        internalRef.cleanup_()
+        currentValue = newElement;
+        currentDeps = internalRef.dependencies_;
+        internalRef.cleanup_();
         if (newElement) {
-          cleanupPreviousEffect = internalRef.effect_(newElement) || noop
+          cleanupPreviousEffect = internalRef.effect_(newElement) || noop;
         }
       }
-    }
+    };
     return {
       /** Execute the effects cleanup function */
       cleanup_: () => {
-        cleanupPreviousEffect()
-        cleanupPreviousEffect = noop
+        cleanupPreviousEffect();
+        cleanupPreviousEffect = noop;
       },
-      ref_: Object.defineProperty(setRefValue, 'current', {
+      ref_: Object.defineProperty(setRefValue, "current", {
         get: () => currentValue,
-        set: setRefValue
-      })
+        set: setRefValue,
+      }),
     } as {
-      cleanup_: () => void
-      ref_: React.RefCallback<T> & React.MutableRefObject<T | null>
+      cleanup_: () => void;
+      ref_: React.RefCallback<T> & React.MutableRefObject<T | null>;
       // Those two properties will be set immediately after initialisation
-      effect_: typeof effect
-      dependencies_: typeof dependencies
-    }
-  })[0]
+      effect_: typeof effect;
+      dependencies_: typeof dependencies;
+    };
+  })[0];
 
   // Show the current ref value in development
   // in react dev tools
-  if (process.env.NODE_ENV !== 'production') {
-    useDebugValue(internalRef.ref_.current)
+  if (process.env.NODE_ENV !== "production") {
+    useDebugValue(internalRef.ref_.current);
   }
 
   // Keep a ref to the latest callback
-  internalRef.effect_ = effect
+  internalRef.effect_ = effect;
 
   useEffect(
     () => {
       // Run effect if dependencies change
-      internalRef.ref_(internalRef.ref_.current)
+      internalRef.ref_(internalRef.ref_.current);
       return () => {
         if (internalRef.dependencies_ === dependencies) {
-          internalRef.cleanup_()
+          internalRef.cleanup_();
         }
-      }
+      };
     }, // Keep a ref to the latest dependencies
     (internalRef.dependencies_ = dependencies)
-  )
+  );
 
-  return internalRef.ref_
-}
+  return internalRef.ref_;
+};

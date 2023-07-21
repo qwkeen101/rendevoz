@@ -15,6 +15,10 @@ export const GraphTagsAtom = atom(new Set<string>())
 
 export const GraphHideNodesIdsAtom = atom(new Set<number>())
 
+const EDGE_HIDDEN_ALPHA = 0.05
+
+const EDGE_VISIBLE_ALPHA = 1
+
 export const GraphVisibleNodesIdsAtom = atom<number[]>([])
 const useGraphFilter = () => {
   const [allNodes, setAllNodes] = useGraphNodes()
@@ -50,7 +54,12 @@ const useGraphFilter = () => {
       const allPaths = findPathsBetweenTwoMetaObjects(startNodeId, endNodeId)
       setPathFilter(f => ({ ...f, allPaths, visiblePath: allPaths }))
     } else {
-      setPathFilter(f => ({ ...f, allPaths: undefined, visiblePath: undefined, filteredNodeIds: new Set() }))
+      setPathFilter(f => ({
+        ...f,
+        allPaths: undefined,
+        visiblePath: undefined,
+        filteredNodeIds: new Set()
+      }))
     }
   }, [pathFilter?.startNodeId, pathFilter?.endNodeId])
 
@@ -176,10 +185,10 @@ const useGraphFilter = () => {
           ? produce(edges, draft => {
               edges.forEach((edge, idx) => {
                 if (shouldHighlightNodesIds.has(edge.targetId) && shouldHighlightNodesIds.has(edge.sourceId)) {
-                  edge.opacity !== 1 && (draft[idx].opacity = 1)
+                  edge.opacity !== EDGE_VISIBLE_ALPHA && (draft[idx].opacity = EDGE_VISIBLE_ALPHA)
                   !edge.highlight && (draft[idx].highlight = true)
                 } else {
-                  edge.opacity === 1 && (draft[idx].opacity = 0)
+                  edge.opacity === EDGE_VISIBLE_ALPHA && (draft[idx].opacity = EDGE_HIDDEN_ALPHA)
                   edge.highlight && (draft[idx].highlight = false)
                 }
               })
@@ -201,7 +210,7 @@ const useGraphFilter = () => {
         edges
           ? produce(edges, draft => {
               edges.forEach((edge, idx) => {
-                edge.opacity !== 1 && (draft[idx].opacity = 1)
+                edge.opacity !== EDGE_VISIBLE_ALPHA && (draft[idx].opacity = EDGE_VISIBLE_ALPHA)
                 edge.highlight && (draft[idx].highlight = false)
               })
             })

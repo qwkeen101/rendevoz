@@ -1,41 +1,45 @@
-
-.wrapper{
-    display: flex;
-    align-items: center;
-    position: relative;
+.wrapper {
+  display: flex;
+  align-items: center;
+  position: relative;
 }
-.marker{
-    padding-right: 12px;
-    font-size: 20px;
-    height: 22px;
-    line-height: 21px;
-    &[data-level='1'],&[data-level='4'],&[data-level='7']{
-            &::before{
-                font-size: 1em;
-                content: '\25E6';
-            }
+.marker {
+  padding-right: 12px;
+  font-size: 20px;
+  height: 22px;
+  line-height: 21px;
+  &[data-level="1"],
+  &[data-level="4"],
+  &[data-level="7"] {
+    &::before {
+      font-size: 1em;
+      content: "\25E6";
     }
-    &[data-level='2'],&[data-level='5'],&[data-level='8']{
-        &::before{
-            font-size: 1em;
-            content: '\25AA';
-        }
+  }
+  &[data-level="2"],
+  &[data-level="5"],
+  &[data-level="8"] {
+    &::before {
+      font-size: 1em;
+      content: "\25AA";
     }
-    &[data-level='3'],&[data-level='6']{
-      &::before{
-        content: '\2022';
+  }
+  &[data-level="3"],
+  &[data-level="6"] {
+    &::before {
+      content: "\2022";
     }
-    }
-    &::before{
-        content: '\2022';
-        font-size: 1.5em;
-    }
+  }
+  &::before {
+    content: "\2022";
+    font-size: 1.5em;
+  }
 }
-.fold{
-    position: absolute;
-    top: 0;
-    user-select: none;
-    left: -15px;
-    top: 5px;
-    cursor: pointer;
+.fold {
+  position: absolute;
+  top: 0;
+  user-select: none;
+  left: -15px;
+  top: 5px;
+  cursor: pointer;
 }

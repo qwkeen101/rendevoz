@@ -1,10 +1,9 @@
 import { Content, Icon, TabPane, Tabs } from '@/components'
-import { motion } from 'framer-motion'
 import Outliner from '@/core/editor/utils/outline/outliner'
 import { useSelectAtomValue, useToggle } from '@/hooks'
 import ClassName from '@/styles/classNames'
 import { css } from '@emotion/css'
-import { useRef, useState } from 'react'
+import { useRef } from 'react'
 import { Descendant } from 'slate'
 import { CustomEditor } from '~/typings'
 import AllObjects from './AllObjects'
@@ -16,112 +15,111 @@ import { Resizable } from 're-resizable'
 import Colors from '@/consts/colors'
 import useEditorValue from '@/core/editor/hooks/useEditorValue'
 import { EditorStateAtom } from '@/core/editor/hooks/useEditorState'
+import UseEditorBarState from '@/core/editor/hooks/useEditorBarState'
+
 type IHeadingTreeNode = ReturnType<typeof Outliner.headingListToTree>
 const SidebarToolbar = ({ editor }: { editor: CustomEditor }) => {
-  const [collapsed, toggleCollapsed] = useToggle(true)
+  const [editorBarState, setEditorBarState] = UseEditorBarState()
   const value = useEditorValue()
   useEditorFilter(editor)
   const sidebarRef = useRef<HTMLDivElement>(null)
   const { t } = useTranslation()
+  const collapsed = !editorBarState.showLeftBar
   return (
-    <>
-      {collapsed && (
-        <Icon
-          onClick={toggleCollapsed}
-          name="park-hamburger-button"
-          size={18}
-          containerStyle={{
-            position: 'absolute',
-            left: 15,
-            top: 40,
-            zIndex: 10
-          }}
-          className={ClassName.circleButton()}
-        />
-      )}
-      <Resizable
-        enable={{ right: true }}
-        minWidth={200}
-        maxWidth={500}
-        defaultSize={{
-          width: 'auto',
-          height: '100%'
-        }}
-        handleStyles={{
-          right: {
-            width: 3,
-            background: Colors.Background.Border
-          }
-        }}
-        ref={sidebarRef}
-        style={{
-          position: collapsed ? 'absolute' : 'relative',
-          left: 0,
-          top: 0,
-          zIndex: 10,
-          display: 'flex',
-          flexDirection: 'column',
-          transition: 'transform 0.2s ease',
-          padding: '6px 12px 6px 18px',
-          gap: 10,
-          height: '100%',
-          pointerEvents: collapsed ? 'none' : 'auto',
-          transform: collapsed ? 'translateX(-100%) translateX(-10px)' : 'translateX(0px)'
-        }}
+    <Resizable
+      enable={{ right: true }}
+      minWidth={200}
+      maxWidth={500}
+      defaultSize={{
+        width: '300px',
+        height: '100%'
+      }}
+      handleStyles={{
+        right: {
+          width: 3,
+          background: Colors.Background.Border
+        }
+      }}
+      ref={sidebarRef}
+      style={{
+        position: collapsed ? 'absolute' : 'relative',
+        left: 0,
+        top: 0,
+        zIndex: 10,
+        display: 'flex',
+        flexDirection: 'column',
+        transition: 'transform 0.2s ease',
+        padding: '6px 8px 6px 12px',
+        gap: 10,
+        height: '100%',
+        pointerEvents: collapsed ? 'none' : 'auto',
+        transform: collapsed ? 'translateX(-100%) translateX(-10px)' : 'translateX(0px)'
+      }}
+    >
+      <Tabs
+        defaultActiveKey="1"
+        extra={
+          <Icon
+            size={18}
+            name="park-left"
+            containerStyle={{
+              width: 'fit-content'
+            }}
+            onClick={() => setEditorBarState(s => ({ ...s, showLeftBar: false }))}
+            className={ClassName.circleButton()}
+          />
+        }
       >
-        <Tabs
-          defaultActiveKey="1"
-          extra={
-            <Icon
-              size={18}
-              name="park-left"
-              containerStyle={{
-                width: 'fit-content'
-              }}
-              onClick={toggleCollapsed}
-              className={ClassName.circleButton()}
-            />
+        <TabPane
+          key="1"
+          tab={
+            <Content alignItems="center" flex gap={6}>
+              <Icon name="park-view-list" />
+              {t('general.outline')}
+            </Content>
           }
+          style={{
+            paddingTop: 10
+          }}
         >
-          <TabPane
-            key="1"
-            tab={
-              <Content alignItems="center" flex gap={6}>
-                <Icon name="park-view-list" />
-                {t('general.outline')}
-              </Content>
-            }
-            style={{
-              paddingTop: 10
-            }}
-          >
-            <HeadingTree value={value} editor={editor} />
-          </TabPane>
-          <TabPane
-            key="3"
-            tab={
-              <Content alignItems="center" flex gap={6}>
-                <Icon name="park-share-one" />
-                {t('general.object')}
-              </Content>
-            }
-            style={{
-              paddingTop: 10
-            }}
-          >
-            <AllObjects editor={editor} />
-          </TabPane>
-        </Tabs>
-      </Resizable>
-    </>
+          <HeadingTree value={value} editor={editor} />
+        </TabPane>
+        <TabPane
+          key="3"
+          tab={
+            <Content alignItems="center" flex gap={6}>
+              <Icon name="park-share-one" />
+              {t('general.object')}
+            </Content>
+          }
+          style={{
+            paddingTop: 10
+          }}
+        >
+          <AllObjects editor={editor} />
+        </TabPane>
+      </Tabs>
+    </Resizable>
   )
 }
+
 const HeadingTree = ({ editor }: { value: Descendant[]; editor: CustomEditor }) => {
   const headingTree = useAtomValue(EditorHeadingTreeAtom)
   return (
     <>
       {headingTree && (
-        <Content flex column gap={4} style={{ height: '100%', overflowY: 'auto', paddingLeft: 15, overflowX: 'hidden', paddingRight: 20 }}>
+        <Content
+          flex
+          column
+          gap={4}
+          style={{
+            height: '100%',
+            overflowY: 'auto',
+            paddingLeft: 15,
+            overflowX: 'hidden',
+            paddingRight: 20
+          }}
+        >
           {headingTree.children.map(i => (
             <HeadingItem
               item={i}
@@ -169,7 +167,10 @@ const HeadingItem = ({ item, onClick }: { item: IHeadingTreeNode; onClick: (head
             onClick(item.id)
             setEditorState(s => ({ ...s, currentActiveHeadingId: item.id }))
           }}
-          style={{ textTransform: 'none', fontWeight: currentActiveHeadingId === item.id ? 700 : undefined }}
+          style={{
+            textTransform: 'none',
+            fontWeight: currentActiveHeadingId === item.id ? 700 : undefined
+          }}
           className={css([
             {
               fontWeight: 400,

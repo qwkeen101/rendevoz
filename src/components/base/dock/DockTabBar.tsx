@@ -3,8 +3,7 @@ import { DragDropDiv } from './dragdrop/DragDropDiv'
 import { DockContextType, PanelData, TabData } from './DockData'
 import styles from './index.module.less'
 
-import './bar.less'
-import { Reorder, motion, AnimatePresence } from 'framer-motion'
+import { Reorder } from 'framer-motion'
 import { TabNavListProps } from '../tabs'
 import classNames from 'classnames'
 import AnimatePopover from '../AnimatePopover'
@@ -36,7 +35,6 @@ export const DockTabBar = memo((props: DockTabBarProps) => {
   const navs = TabNavList.navs
   const currentMoveTabId = useRef<string>()
   const [isTopRight, setIsTopRight] = useState(false)
-  const [isTopLeft, setIsTopLeft] = useState(false)
 
   useLayoutEffect(() => {
     const bar = ref.current
@@ -48,15 +46,6 @@ export const DockTabBar = memo((props: DockTabBarProps) => {
         setIsTopRight(true)
       } else {
         setIsTopRight(false)
-      }
-
-      const globalSidebar = document.getElementById('global-sidebar')
-      const sidebarWidth = globalSidebar?.getBoundingClientRect().width || 0
-
-      if (left - sidebarWidth < 10 && top < 10) {
-        setIsTopLeft(true)
-      } else {
-        setIsTopLeft(false)
       }
     }
   })
@@ -76,7 +65,6 @@ export const DockTabBar = memo((props: DockTabBarProps) => {
           height: '100%',
           background: 'rgba(0,0,0,0.12)'
         }}
-        id={isTopLeft && os === 'macos' ? 'macos-placeholder' : undefined}
       ></div>
       <Reorder.Group
         onReorder={r => {
@@ -155,7 +143,11 @@ const TabItem = ({ onClick, isSelected, item, onDragStart, isLast }) => {
           const leftTabs = parentPanel.tabs.slice(0, idx + 1)
           const rightTabs = parentPanel.tabs.slice(idx + 1, -1)
           rightTabs.forEach(tab => tab.id && LayoutIdToTabMap.delete(tab.id))
-          const newPanel = { ...parentPanel, tabs: [...leftTabs], activeId: tabData.id } as PanelData
+          const newPanel = {
+            ...parentPanel,
+            tabs: [...leftTabs],
+            activeId: tabData.id
+          } as PanelData
           const newLayout = replacePanel(dockContext.getLayout(), parentPanel, newPanel)
           dockContext.setLayout(newLayout)
           dockContext.onSilentChange()
@@ -210,7 +202,15 @@ const TabItem = ({ onClick, isSelected, item, onDragStart, isLast }) => {
       >
         <div className={styles.tabContent}>{item.tab}</div>
         {isLastAndHasGlobalExtra && (
-          <div style={{ position: 'absolute', right: 0, top: 0, bottom: 0, background: isSelected ? 'rgba(0,0,0,0.12)' : 'transparent' }}>
+          <div
+            style={{
+              position: 'absolute',
+              right: 0,
+              top: 0,
+              bottom: 0,
+              background: isSelected ? 'rgba(0,0,0,0.12)' : 'transparent'
+            }}
+          >
             {dockContext.getLayout().global.globalPanelExtra(null, null)}
           </div>
         )}

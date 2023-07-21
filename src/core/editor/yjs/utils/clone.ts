@@ -1,10 +1,10 @@
-import * as Y from 'yjs';
-import { InsertDelta } from '../model/types';
-import { yTextToInsertDelta } from './delta';
+import * as Y from "yjs";
+import { InsertDelta } from "../model/types";
+import { yTextToInsertDelta } from "./delta";
 
 export function cloneInsertDeltaDeep(delta: InsertDelta): InsertDelta {
   return delta.map((element) => {
-    if (typeof element.insert === 'string') {
+    if (typeof element.insert === "string") {
       return element;
     }
 

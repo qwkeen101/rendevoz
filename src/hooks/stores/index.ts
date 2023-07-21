@@ -1,1 +1,1 @@
-export { default as useDb } from './useDb'
+export { default as useDb } from "./useDb";

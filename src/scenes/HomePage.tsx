@@ -5,7 +5,7 @@ import { useDebounceFn, useGlobalAtomValue, useToggle } from '@/hooks'
 import { useTranslation } from 'react-i18next'
 import TabTitle from '@/components/layout/TabTitle'
 import ClassName from '@/styles/classNames'
-import { undeletedMetaObjectsAtom } from '@/stores/meta.store'
+import { TypeToRegisteredMetaObject, undeletedMetaObjectsAtom } from '@/stores/meta.store'
 import { MetaObject } from '~/typings'
 import Select from '@/components/base/select'
 import DateFormat from '@/utils/dateFormat'
@@ -15,7 +15,7 @@ import { IconNameItem } from '@/components/layout/sidebar/SidebarCollection'
 import { DraggableElement, ObjectActionPopover, TypeToTypeName, useCreateObject } from '@/core'
 import { Zindexes } from '@/consts'
 import Colors from '@/consts/colors'
-import { Provider, atom, createStore, useAtom, useAtomValue } from 'jotai'
+import { atom, createStore, Provider, useAtom, useAtomValue } from 'jotai'
 import fuzzysort from 'fuzzysort'
 import { Rendevoz } from '@/core/rendevoz'
 
@@ -30,7 +30,17 @@ export const HomePage: FC = () => {
   const [search, setSearch] = useAtom(HomeSearchAtom, { store: store })
   const debounceSetSearch = useDebounceFn(v => setSearch(v), { wait: 500 })
   return (
-    <Content flex column fullHeight style={{ margin: '0 auto', width: '100%', maxWidth: 1400, padding: '18px 24px 0px' }}>
+    <Content
+      flex
+      column
+      fullHeight
+      style={{
+        margin: '0 auto',
+        width: '100%',
+        maxWidth: 1400,
+        padding: '18px 24px 0px'
+      }}
+    >
       <TabTitle title={t('general.home')} icon="park-home" />
       <Content
         flex
@@ -71,7 +81,12 @@ export const HomePage: FC = () => {
 }
 
 const VisibleTypes: MetaObject['type'][] = ['note', 'video', 'pdf', 'whiteboard', 'webpage', 'localFile', 'image']
-const ColWidthState = { nameWidth: '100%', viewWidth: '200px', createWidth: '200px' }
+
+const ColWidthState = {
+  nameWidth: '100%',
+  viewWidth: '200px',
+  createWidth: '200px'
+}
 const Recent = () => {
   const all = useGlobalAtomValue(undeletedMetaObjectsAtom)
   const { t } = useTranslation()
@@ -79,19 +94,22 @@ const Recent = () => {
   const [showResizer, toggleShowResizer] = useToggle(false)
   const search = useAtomValue(HomeSearchAtom)
   const getIcon = Rendevoz.Utils.Object.getMetaObjectIcon
+  const allVisibleTypes = useMemo(() => {
+    const visible = Array.from(TypeToRegisteredMetaObject.values())
+      .filter(i => i.visibleInHomepage)
+      .map(i => i.type)
+    return [...VisibleTypes, ...visible]
+  }, [])
   const [sortMode, setSortMode] = useState<'viewDesc' | 'viewAsc' | 'createDesc' | 'createAsc'>('viewDesc')
   const filteredItems = () => {
     switch (type) {
       case 'all':
-        return all.filter(i => VisibleTypes.includes(i.type))
-      case 'note':
-      case 'webpage':
-      case 'pdf':
-      case 'localFile':
-      case 'video':
-      case 'image':
-      case 'whiteboard':
-        return all.filter(i => i.type === type)
+        return all.filter(i => allVisibleTypes.includes(i.type))
+      default: {
+        if (allVisibleTypes.includes(type)) {
+          return all.filter(i => i.type === type)
+        }
+      }
     }
   }
 
@@ -129,7 +147,13 @@ const Recent = () => {
         flex
         onPointerEnter={() => toggleShowResizer(true)}
         onPointerLeave={() => toggleShowResizer(false)}
-        style={{ position: 'sticky', top: 0, zIndex: 10, marginRight: 50, padding: '4px 0px' }}
+        style={{
+          position: 'sticky',
+          top: 0,
+          zIndex: 10,
+          marginRight: 50,
+          padding: '4px 0px'
+        }}
       >
         <div id="name-header" style={{ width: '100%' }}>
           <Select
@@ -143,7 +167,7 @@ const Recent = () => {
                 children: t('general.all types'),
                 icon: 'park-all-application'
               },
-              ...VisibleTypes.map(type => ({
+              ...allVisibleTypes.map(type => ({
                 value: type,
                 children: t(`general.${TypeToTypeName[type]}`),
                 icon: getIcon(type)
@@ -248,7 +272,14 @@ const Recent = () => {
             toggleShowFilter(false)
           }
         }}
-        style={{ display: 'block', height: 0, flex: 1, margin: '0px -24px', padding: '0px 24px', overflowY: 'auto' }}
+        style={{
+          display: 'block',
+          height: 0,
+          flex: 1,
+          margin: '0px -24px',
+          padding: '0px 24px',
+          overflowY: 'auto'
+        }}
       >
         <colgroup>
           <col width={ColWidthState.nameWidth} id="name-col" />

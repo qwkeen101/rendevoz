@@ -30,11 +30,11 @@ body > .dragging-layer > *:first-child {
   padding-left: 4px;
   // box-shadow: 0 0 8px rgba(0, 0, 0, 0.1), inset 0 0 8px rgba(0, 0, 0, 0.1);
 }
-body > .dragging-layer > .dragging > *:first-child{
+body > .dragging-layer > .dragging > *:first-child {
   /* prevent double translucent layers */
-    opacity: 0.6 !important;
-    border-radius: 4px;
-    padding-left: 4px;
+  opacity: 0.6 !important;
+  border-radius: 4px;
+  padding-left: 4px;
 }
 body > .dragging-layer > div:last-child {
   position: absolute;
@@ -45,7 +45,7 @@ body > .dragging-layer > div:last-child {
   user-select: none;
   -webkit-user-select: none;
   touch-action: none;
-  >div{
+  > div {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -74,7 +74,7 @@ body > .dragging-layer > div:last-child {
   outline: none;
   zoom: 1;
   margin-bottom: 6px;
-  &.top-right{
+  &.top-right {
     padding-right: calc(3rem + 65.5px);
   }
 }
@@ -187,7 +187,7 @@ body > .dragging-layer > div:last-child {
 .dock-tab-close-btn {
   position: absolute;
   cursor: pointer;
-  font-family: 'Fredoka One', sans-serif;
+  font-family: "Fredoka One", sans-serif;
   color: #ddd;
   right: -3px;
   font-size: 12px;
@@ -265,7 +265,7 @@ body > .dragging-layer > div:last-child {
 .dock-nav-more::after {
   position: absolute;
   z-index: 1;
-  content: '';
+  content: "";
   pointer-events: none;
   width: 30px;
   height: 30px;
@@ -322,7 +322,8 @@ body > .dragging-layer > div:last-child {
   background-clip: padding-box;
   border-radius: 2px;
   outline: none;
-  box-shadow: 0 3px 6px -4px rgba(0, 0, 0, 0.12), 0 6px 16px 0 rgba(0, 0, 0, 0.08), 0 9px 28px 8px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 3px 6px -4px rgba(0, 0, 0, 0.12),
+    0 6px 16px 0 rgba(0, 0, 0, 0.08), 0 9px 28px 8px rgba(0, 0, 0, 0.05);
 }
 .dock-dropdown-menu-item {
   min-width: 120px;
@@ -445,7 +446,7 @@ body.dock-dragging iframe {
   flex: 0 0 3px;
   transition: all 0.2s ease;
   background: rgba(0, 0, 0, 0.1);
-  z-index: 1
+  z-index: 1;
 }
 .dock-hbox > .dock-divider {
   cursor: ew-resize;
@@ -574,7 +575,7 @@ body.dock-dragging iframe {
   z-index: 300;
   width: 32px;
   height: 32px;
-  font-family: 'Fredoka One', sans-serif;
+  font-family: "Fredoka One", sans-serif;
   color: #ddd;
   background: #fff;
   border: 1px solid transparent;
@@ -612,7 +613,7 @@ body.dock-dragging iframe {
   width: 16px;
 }
 .dock-drop-layer .dock-drop-left::before {
-  content: '>';
+  content: ">";
   transform: rotate(180deg);
 }
 .dock-drop-layer .dock-drop-right {
@@ -623,7 +624,7 @@ body.dock-dragging iframe {
   width: 16px;
 }
 .dock-drop-layer .dock-drop-right::before {
-  content: '>';
+  content: ">";
 }
 .dock-drop-layer .dock-drop-top {
   top: calc(50% - 48px);
@@ -636,7 +637,7 @@ body.dock-dragging iframe {
   line-height: 1rem;
 }
 .dock-drop-layer .dock-drop-top::before {
-  content: '>';
+  content: ">";
   transform: rotate(270deg);
 }
 .dock-drop-layer .dock-drop-bottom {
@@ -650,7 +651,7 @@ body.dock-dragging iframe {
   line-height: 1rem;
 }
 .dock-drop-layer .dock-drop-bottom::before {
-  content: '>';
+  content: ">";
   transform: rotate(90deg);
 }
 .dock-drop-layer .dock-drop-square-dropping {
@@ -663,7 +664,7 @@ body.dock-dragging iframe {
 .dock-panel-max-btn {
   height: 15px;
   width: 15px;
-  font-family: 'Fredoka One', sans-serif;
+  font-family: "Fredoka One", sans-serif;
   margin: 2px 2px 2px 0;
   padding: 6px 4px 4px 2px;
   cursor: pointer;
@@ -719,8 +720,14 @@ body.dock-dragging iframe {
   /* transition: all 0.15s ease-in-out; */
 }
 .dock-layout > :not(.dock-fbox) .dock-panel.dock-style-headless .dock-bar:hover,
-.dock-layout > :not(.dock-fbox) .dock-panel.dock-style-headless .dock-bar:focus-within,
-.dock-layout > :not(.dock-fbox) .dock-panel.dock-style-headless.dock-panel-dropping .dock-bar {
+.dock-layout
+  > :not(.dock-fbox)
+  .dock-panel.dock-style-headless
+  .dock-bar:focus-within,
+.dock-layout
+  > :not(.dock-fbox)
+  .dock-panel.dock-style-headless.dock-panel-dropping
+  .dock-bar {
   opacity: 1;
   height: 31px;
 }

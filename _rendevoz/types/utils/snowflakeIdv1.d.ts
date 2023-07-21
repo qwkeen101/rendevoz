@@ -1,4 +1,5 @@
-import { snowflakeIdv1Option } from './snowflakeIdv1Option';
+import {snowflakeIdv1Option} from './snowflakeIdv1Option';
+
 /**
  *
  */

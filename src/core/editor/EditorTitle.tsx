@@ -4,12 +4,11 @@ import { ObjectStore } from '@/stores'
 import ClassName from '@/styles/classNames'
 import { css } from '@emotion/css'
 import isHotkey from 'is-hotkey'
-import { CSSProperties, FC, forwardRef, memo, useEffect, useMemo, useRef } from 'react'
+import { CSSProperties, forwardRef, memo, useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Content, Icon } from '@/components'
+import { Content } from '@/components'
 import { ForwardRefComponent } from 'framer-motion'
 import { CustomEditor } from '~/typings'
-import getEmoji from '@/utils/emoji'
 import useReadOnlyEditor from './hooks/useReadOnly'
 
 interface EditorTitleProps {
@@ -36,7 +35,7 @@ export const EditorTitleClassName = css({
   wordBreak: 'break-word',
   padding: '0px',
   whiteSpace: 'pre-wrap',
-  fontSize: '2rem',
+  fontSize: '1.5rem',
   fontWeight: 700,
   lineHeight: '1.2',
   minHeight: '1em',
@@ -67,7 +66,11 @@ const EditorTitle: ForwardRefComponent<HTMLDivElement, EditorTitleProps> = forwa
         flex
         column
         gap={10}
-        style={{ padding: readonly ? '40px 10px 30px 35px' : undefined, ...titleContainerStyle }}
+        style={{
+          width: readonly ? 840 : undefined,
+          paddingLeft: readonly ? 20 : undefined,
+          ...titleContainerStyle
+        }}
         ref={node => (editor.titleEle = node)}
       >
         <div

@@ -1,46 +1,46 @@
-import { Editor, Node, Operation, Path, Point, Range, Text } from 'slate'
-import { EDITOR_TO_PENDING_DIFFS } from './weak-maps'
+import { Editor, Node, Operation, Path, Point, Range, Text } from "slate";
+import { EDITOR_TO_PENDING_DIFFS } from "./weak-maps";
 
 export type StringDiff = {
-  start: number
-  end: number
-  text: string
-}
+  start: number;
+  end: number;
+  text: string;
+};
 
 export type TextDiff = {
-  id: number
-  path: Path
-  diff: StringDiff
-}
+  id: number;
+  path: Path;
+  diff: StringDiff;
+};
 
 /**
  * Check whether a text diff was applied in a way we can perform the pending action on /
  * recover the pending selection.
  */
 export function verifyDiffState(editor: Editor, textDiff: TextDiff): boolean {
-  const { path, diff } = textDiff
+  const { path, diff } = textDiff;
   if (!Editor.hasPath(editor, path)) {
-    return false
+    return false;
   }
 
-  const node = Node.get(editor, path)
+  const node = Node.get(editor, path);
   if (!Text.isText(node)) {
-    return false
+    return false;
   }
 
   if (diff.start !== node.text.length || diff.text.length === 0) {
     return (
       node.text.slice(diff.start, diff.start + diff.text.length) === diff.text
-    )
+    );
   }
 
-  const nextPath = Path.next(path)
+  const nextPath = Path.next(path);
   if (!Editor.hasPath(editor, nextPath)) {
-    return false
+    return false;
   }
 
-  const nextNode = Node.get(editor, nextPath)
-  return Text.isText(nextNode) && nextNode.text.startsWith(diff.text)
+  const nextNode = Node.get(editor, nextPath);
+  return Text.isText(nextNode) && nextNode.text.startsWith(diff.text);
 }
 
 function applyStringDiff(text: string, ...diffs: StringDiff[]) {
@@ -48,19 +48,19 @@ function applyStringDiff(text: string, ...diffs: StringDiff[]) {
     (text, diff) =>
       text.slice(0, diff.start) + diff.text + text.slice(diff.end),
     text
-  )
+  );
 }
 
 function longestCommonPrefixLength(str: string, another: string) {
-  const length = Math.min(str.length, another.length)
+  const length = Math.min(str.length, another.length);
 
   for (let i = 0; i < length; i++) {
     if (str.charAt(i) !== another.charAt(i)) {
-      return i
+      return i;
     }
   }
 
-  return length
+  return length;
 }
 
 function longestCommonSuffixLength(
@@ -68,44 +68,44 @@ function longestCommonSuffixLength(
   another: string,
   max: number
 ): number {
-  const length = Math.min(str.length, another.length, max)
+  const length = Math.min(str.length, another.length, max);
 
   for (let i = 0; i < length; i++) {
     if (
       str.charAt(str.length - i - 1) !== another.charAt(another.length - i - 1)
     ) {
-      return i
+      return i;
     }
   }
 
-  return length
+  return length;
 }
 
 /**
  * Remove redundant changes from the diff so that it spans the minimal possible range
  */
 export function normalizeStringDiff(targetText: string, diff: StringDiff) {
-  const { start, end, text } = diff
-  const removedText = targetText.slice(start, end)
+  const { start, end, text } = diff;
+  const removedText = targetText.slice(start, end);
 
-  const prefixLength = longestCommonPrefixLength(removedText, text)
+  const prefixLength = longestCommonPrefixLength(removedText, text);
   const max = Math.min(
     removedText.length - prefixLength,
     text.length - prefixLength
-  )
-  const suffixLength = longestCommonSuffixLength(removedText, text, max)
+  );
+  const suffixLength = longestCommonSuffixLength(removedText, text, max);
 
   const normalized: StringDiff = {
     start: start + prefixLength,
     end: end - suffixLength,
     text: text.slice(prefixLength, text.length - suffixLength),
-  }
+  };
 
   if (normalized.start === normalized.end && normalized.text.length === 0) {
-    return null
+    return null;
   }
 
-  return normalized
+  return normalized;
 }
 
 /**
@@ -117,35 +117,35 @@ export function mergeStringDiffs(
   a: StringDiff,
   b: StringDiff
 ): StringDiff | null {
-  const start = Math.min(a.start, b.start)
+  const start = Math.min(a.start, b.start);
   const overlap = Math.max(
     0,
     Math.min(a.start + a.text.length, b.end) - b.start
-  )
+  );
 
-  const applied = applyStringDiff(targetText, a, b)
+  const applied = applyStringDiff(targetText, a, b);
   const sliceEnd = Math.max(
     b.start + b.text.length,
     a.start +
       a.text.length +
       (a.start + a.text.length > b.start ? b.text.length : 0) -
       overlap
-  )
+  );
 
-  const text = applied.slice(start, sliceEnd)
-  const end = Math.max(a.end, b.end - a.text.length + (a.end - a.start))
-  return normalizeStringDiff(targetText, { start, end, text })
+  const text = applied.slice(start, sliceEnd);
+  const end = Math.max(a.end, b.end - a.text.length + (a.end - a.start));
+  return normalizeStringDiff(targetText, { start, end, text });
 }
 
 /**
  * Get the slate range the text diff spans.
  */
 export function targetRange(textDiff: TextDiff): Range {
-  const { path, diff } = textDiff
+  const { path, diff } = textDiff;
   return {
     anchor: { path, offset: diff.start },
     focus: { path, offset: diff.end },
-  }
+  };
 }
 
 /**
@@ -155,58 +155,58 @@ export function targetRange(textDiff: TextDiff): Range {
  * have a valid point inside the document
  */
 export function normalizePoint(editor: Editor, point: Point): Point | null {
-  let { path, offset } = point
+  let { path, offset } = point;
   if (!Editor.hasPath(editor, path)) {
-    return null
+    return null;
   }
 
-  let leaf = Node.get(editor, path)
+  let leaf = Node.get(editor, path);
   if (!Text.isText(leaf)) {
-    return null
+    return null;
   }
 
   const parentBlock = Editor.above(editor, {
-    match: n => Editor.isBlock(editor, n),
+    match: (n) => Editor.isBlock(editor, n),
     at: path,
-  })
+  });
 
   if (!parentBlock) {
-    return null
+    return null;
   }
 
   while (offset > leaf.text.length) {
-    const entry = Editor.next(editor, { at: path, match: Text.isText })
+    const entry = Editor.next(editor, { at: path, match: Text.isText });
     if (!entry || !Path.isDescendant(entry[1], parentBlock[1])) {
-      return null
+      return null;
     }
 
-    offset -= leaf.text.length
-    leaf = entry[0]
-    path = entry[1]
+    offset -= leaf.text.length;
+    leaf = entry[0];
+    path = entry[1];
   }
 
-  return { path, offset }
+  return { path, offset };
 }
 
 /**
  * Normalize a 'pending selection' to ensure it's valid in the current document state.
  */
 export function normalizeRange(editor: Editor, range: Range): Range | null {
-  const anchor = normalizePoint(editor, range.anchor)
+  const anchor = normalizePoint(editor, range.anchor);
   if (!anchor) {
-    return null
+    return null;
   }
 
   if (Range.isCollapsed(range)) {
-    return { anchor, focus: anchor }
+    return { anchor, focus: anchor };
   }
 
-  const focus = normalizePoint(editor, range.focus)
+  const focus = normalizePoint(editor, range.focus);
   if (!focus) {
-    return null
+    return null;
   }
 
-  return { anchor, focus }
+  return { anchor, focus };
 }
 
 export function transformPendingPoint(
@@ -214,59 +214,59 @@ export function transformPendingPoint(
   point: Point,
   op: Operation
 ): Point | null {
-  const pendingDiffs = EDITOR_TO_PENDING_DIFFS.get(editor)
+  const pendingDiffs = EDITOR_TO_PENDING_DIFFS.get(editor);
   const textDiff = pendingDiffs?.find(({ path }) =>
     Path.equals(path, point.path)
-  )
+  );
 
   if (!textDiff || point.offset <= textDiff.diff.start) {
-    return Point.transform(point, op, { affinity: 'backward' })
+    return Point.transform(point, op, { affinity: "backward" });
   }
 
-  const { diff } = textDiff
+  const { diff } = textDiff;
   // Point references location inside the diff => transform the point based on the location
   // the diff will be applied to and add the offset inside the diff.
   if (point.offset <= diff.start + diff.text.length) {
-    const anchor = { path: point.path, offset: diff.start }
+    const anchor = { path: point.path, offset: diff.start };
     const transformed = Point.transform(anchor, op, {
-      affinity: 'backward',
-    })
+      affinity: "backward",
+    });
 
     if (!transformed) {
-      return null
+      return null;
     }
 
     return {
       path: transformed.path,
       offset: transformed.offset + point.offset - diff.start,
-    }
+    };
   }
 
   // Point references location after the diff
   const anchor = {
     path: point.path,
     offset: point.offset - diff.text.length + diff.end - diff.start,
-  }
+  };
   const transformed = Point.transform(anchor, op, {
-    affinity: 'backward',
-  })
+    affinity: "backward",
+  });
   if (!transformed) {
-    return null
+    return null;
   }
 
   if (
-    op.type === 'split_node' &&
+    op.type === "split_node" &&
     Path.equals(op.path, point.path) &&
     anchor.offset < op.position &&
     diff.start < op.position
   ) {
-    return transformed
+    return transformed;
   }
 
   return {
     path: transformed.path,
     offset: transformed.offset + diff.text.length - diff.end + diff.start,
-  }
+  };
 }
 
 export function transformPendingRange(
@@ -274,33 +274,33 @@ export function transformPendingRange(
   range: Range,
   op: Operation
 ): Range | null {
-  const anchor = transformPendingPoint(editor, range.anchor, op)
+  const anchor = transformPendingPoint(editor, range.anchor, op);
   if (!anchor) {
-    return null
+    return null;
   }
 
   if (Range.isCollapsed(range)) {
-    return { anchor, focus: anchor }
+    return { anchor, focus: anchor };
   }
 
-  const focus = transformPendingPoint(editor, range.focus, op)
+  const focus = transformPendingPoint(editor, range.focus, op);
   if (!focus) {
-    return null
+    return null;
   }
 
-  return { anchor, focus }
+  return { anchor, focus };
 }
 
 export function transformTextDiff(
   textDiff: TextDiff,
   op: Operation
 ): TextDiff | null {
-  const { path, diff, id } = textDiff
+  const { path, diff, id } = textDiff;
 
   switch (op.type) {
-    case 'insert_text': {
+    case "insert_text": {
       if (!Path.equals(op.path, path) || op.offset >= diff.end) {
-        return textDiff
+        return textDiff;
       }
 
       if (op.offset <= diff.start) {
@@ -312,7 +312,7 @@ export function transformTextDiff(
           },
           id,
           path,
-        }
+        };
       }
 
       return {
@@ -323,11 +323,11 @@ export function transformTextDiff(
         },
         id,
         path,
-      }
+      };
     }
-    case 'remove_text': {
+    case "remove_text": {
       if (!Path.equals(op.path, path) || op.offset >= diff.end) {
-        return textDiff
+        return textDiff;
       }
 
       if (op.offset + op.text.length <= diff.start) {
@@ -339,7 +339,7 @@ export function transformTextDiff(
           },
           id,
           path,
-        }
+        };
       }
 
       return {
@@ -350,15 +350,15 @@ export function transformTextDiff(
         },
         id,
         path,
-      }
+      };
     }
-    case 'split_node': {
+    case "split_node": {
       if (!Path.equals(op.path, path) || op.position >= diff.end) {
         return {
           diff,
           id,
-          path: Path.transform(path, op, { affinity: 'backward' })!,
-        }
+          path: Path.transform(path, op, { affinity: "backward" })!,
+        };
       }
 
       if (op.position > diff.start) {
@@ -370,7 +370,7 @@ export function transformTextDiff(
           },
           id,
           path,
-        }
+        };
       }
 
       return {
@@ -380,16 +380,16 @@ export function transformTextDiff(
           text: diff.text,
         },
         id,
-        path: Path.transform(path, op, { affinity: 'forward' })!,
-      }
+        path: Path.transform(path, op, { affinity: "forward" })!,
+      };
     }
-    case 'merge_node': {
+    case "merge_node": {
       if (!Path.equals(op.path, path)) {
         return {
           diff,
           id,
           path: Path.transform(path, op)!,
-        }
+        };
       }
 
       return {
@@ -400,18 +400,18 @@ export function transformTextDiff(
         },
         id,
         path: Path.transform(path, op)!,
-      }
+      };
     }
   }
 
-  const newPath = Path.transform(path, op)
+  const newPath = Path.transform(path, op);
   if (!newPath) {
-    return null
+    return null;
   }
 
   return {
     diff,
     path: newPath,
     id,
-  }
+  };
 }

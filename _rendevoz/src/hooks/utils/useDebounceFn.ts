@@ -1,9 +1,9 @@
-import debounce from 'lodash/debounce'
-import { useMemo } from 'react'
-import useLatest from './useLatest'
-import useUnmount from './useUnmount'
+import debounce from "lodash/debounce";
+import { useMemo } from "react";
+import useLatest from "./useLatest";
+import useUnmount from "./useUnmount";
 
-type noop = (...args: any) => any
+type noop = (...args: any) => any;
 
 function useDebounceFn<T extends noop>(fn: T, options?: { wait?: number; leading?: boolean; trailing?: boolean; maxWait?: number }) {
   const fnRef = useLatest(fn)

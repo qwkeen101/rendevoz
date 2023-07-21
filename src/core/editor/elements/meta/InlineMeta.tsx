@@ -1,20 +1,15 @@
 import { TypeToTypeName } from '@/core/database'
 import ClassName from '@/styles/classNames'
 import { css } from '@emotion/css'
-import { FC, useEffect, useMemo, useState } from 'react'
+import { FC } from 'react'
 import { InlineMetaObjectElement } from '~/typings/editor/outerElements'
-import { ReactEditor, RenderElementProps, useSlateStatic } from '../../slate-react'
+import { RenderElementProps } from '../../slate-react'
 import { useTranslation } from 'react-i18next'
-import Colors from '@/consts/colors'
-import tinycolor from 'tinycolor2'
 import HoverObjectDetails from '@/core/database/HoverObjectDetails'
 import { MetaStore } from '@/stores'
 import { Content, Image } from '@/components'
 import { Rendevoz } from '@/core/rendevoz'
 import HoverAttachment from '@/core/database/HoverAttachment'
-import { Editor } from 'slate'
-import { useEventHandler, useScopedEventEmitter } from '@/events'
-import { useDebounceFn } from '@/hooks'
 
 const clazzName = css([
   {
@@ -23,8 +18,7 @@ const clazzName = css([
     ':hover': {
       textDecoration: 'underline'
     }
-  },
-  ClassName.ellipsisFont(2)
+  }
 ])
 const nameClassName = css([
   ClassName.objectTag,
@@ -156,7 +150,15 @@ const InlineMetaElement: FC<RenderElementProps> = ({ element, children, attribut
             </div>
             {metaObject?.attachments?.length ? (
               <HoverAttachment metaId={metaObject.id}>
-                <div style={{ width: 'fit-content', cursor: 'pointer', pointerEvents: 'auto' }} role="tag" className={nameClassName}>
+                <div
+                  style={{
+                    width: 'fit-content',
+                    cursor: 'pointer',
+                    pointerEvents: 'auto'
+                  }}
+                  role="tag"
+                  className={nameClassName}
+                >
                   {`${metaObject.attachments.length} ${t(`general.att`)}`}
                 </div>
               </HoverAttachment>

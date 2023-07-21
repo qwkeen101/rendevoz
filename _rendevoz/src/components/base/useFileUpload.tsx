@@ -1,53 +1,53 @@
-import Id from '@/utils/id'
-import { useRef } from 'react'
+import Id from "@/utils/id";
+import { useRef } from "react";
 
 const useFileUpload = (
   onUpload?: (file: File) => void,
   accept?: string,
   options?: {
-    multiple?: boolean
+    multiple?: boolean;
   }
 ) => {
-  const id = Id.getStrId()
-  const labelRef = useRef<HTMLLabelElement>(null)
-  const inputRef = useRef<HTMLInputElement>(null)
+  const id = Id.getStrId();
+  const labelRef = useRef<HTMLLabelElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
   const upload = () => {
-    labelRef.current?.click()
-  }
+    labelRef.current?.click();
+  };
   const removeFile = () => {
-    inputRef.current && (inputRef.current.value = '')
-  }
+    inputRef.current && (inputRef.current.value = "");
+  };
   const renderUploader = () => {
     return (
       <>
         <input
-          style={{ display: 'none' }}
+          style={{ display: "none" }}
           type="file"
           id={id}
           name={id}
           ref={inputRef}
           accept={accept}
           multiple={options?.multiple}
-          onChange={e => {
+          onChange={(e) => {
             if (options?.multiple) {
-              onUpload?.(Array.from(e.target.files))
+              onUpload?.(Array.from(e.target.files));
             } else {
-              const file = e.target.files?.[0]
+              const file = e.target.files?.[0];
               if (file) {
-                onUpload?.(file)
+                onUpload?.(file);
               }
             }
           }}
         />
-        <label htmlFor={id} ref={labelRef} style={{ display: 'none' }}></label>
+        <label htmlFor={id} ref={labelRef} style={{ display: "none" }}></label>
       </>
-    )
-  }
+    );
+  };
   return {
     renderUploader,
     upload,
-    removeFile
-  }
-}
+    removeFile,
+  };
+};
 
 export default useFileUpload

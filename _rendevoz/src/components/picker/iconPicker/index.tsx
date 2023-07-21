@@ -1,11 +1,11 @@
-import { Content, Icon, Toolbar } from '@/components'
-import _ from 'lodash'
-import { FC } from 'react'
+import { Content, Toolbar } from "@/components";
+import _ from "lodash";
+import { FC } from "react";
 
 interface IconPickerProps {
-  icons: string[]
-  rowSize?: number
-  onIconPick: (icon: string) => void
+  icons: string[];
+  rowSize?: number;
+  onIconPick: (icon: string) => void;
 }
 const IconPicker: FC<IconPickerProps> = ({ icons, onIconPick, rowSize = 5 }) => {
   return (

@@ -1,11 +1,11 @@
 import { GlobalWebviewInstance } from '@/core/global/GlobalWebview'
 import { MetaStore, ObjectStore } from '@/stores'
-import Id from '@/utils/id'
 import { saveImageLocally } from '@/utils/img'
 import { useEffect } from 'react'
 import { MetaObject } from '~/typings'
 import { transformTextContentToNameAndDescription } from './utils'
 import { getFilenameWithoutExtension } from '@/utils/file'
+
 function isUrlImage(url: string) {
   return fetch(url, { method: 'HEAD' }).then(res => {
     return res.headers.get('Content-Type')?.startsWith('image')
@@ -93,7 +93,9 @@ export const normalizeDropToMeta = async (e: DragEvent) => {
           })
         ).blob()
 
-        const imageFilePath = await saveImageLocally(imageBlob, { compress: false })
+        const imageFilePath = await saveImageLocally(imageBlob, {
+          compress: false
+        })
 
         if (uriData) {
           // if dropped img uri not img
@@ -101,7 +103,11 @@ export const normalizeDropToMeta = async (e: DragEvent) => {
             const result = await GlobalWebviewInstance.getTitleAndFaviconOfUrl?.(uriData)
             if (result) {
               const { title, favicon } = result
-              const webpageObject = await ObjectStore('webpage').addOne({ title, favicon, url: uriData })
+              const webpageObject = await ObjectStore('webpage').addOne({
+                title,
+                favicon,
+                url: uriData
+              })
               Object.assign(normalizedMetaObject, {
                 coverImgSrc: imageFilePath,
                 fromObject: from,
@@ -133,7 +139,11 @@ export const normalizeDropToMeta = async (e: DragEvent) => {
         const result = await GlobalWebviewInstance.getTitleAndFaviconOfUrl?.(link)
         if (result) {
           const { favicon, title } = result
-          const webpageObject = await ObjectStore('webpage').addOne({ title: webpageTitle || title, favicon, url: link })
+          const webpageObject = await ObjectStore('webpage').addOne({
+            title: webpageTitle || title,
+            favicon,
+            url: link
+          })
           Object.assign(normalizedMetaObject, {
             fromObject: from,
             objectId: webpageObject.id,
@@ -173,7 +183,9 @@ export const normalizeDropToMeta = async (e: DragEvent) => {
     if (!file) return
     if (file.type.startsWith('image')) {
       const imageFilePath = await saveImageLocally(file, { compress: false })
-      const imageObject = await ObjectStore('image').addOne({ imageUrl: imageFilePath })
+      const imageObject = await ObjectStore('image').addOne({
+        imageUrl: imageFilePath
+      })
       Object.assign(normalizedMetaObject, {
         coverImgSrc: imageFilePath,
         fromObject: from,
@@ -224,7 +236,9 @@ const useDropObject = () => {
             })
           ).blob()
 
-          const imageFilePath = await saveImageLocally(imageBlob, { compress: false })
+          const imageFilePath = await saveImageLocally(imageBlob, {
+            compress: false
+          })
 
           if (uriData) {
             // if dropped img uri not img
@@ -232,7 +246,11 @@ const useDropObject = () => {
               const result = await GlobalWebviewInstance.getTitleAndFaviconOfUrl?.(uriData)
               if (result) {
                 const { title, favicon } = result
-                const webpageObject = await ObjectStore('webpage').addOne({ title, favicon, url: uriData })
+                const webpageObject = await ObjectStore('webpage').addOne({
+                  title,
+                  favicon,
+                  url: uriData
+                })
                 Object.assign(normalizedMetaObject, {
                   coverImgSrc: imageFilePath,
                   fromObject: from,
@@ -264,7 +282,11 @@ const useDropObject = () => {
           const result = await GlobalWebviewInstance.getTitleAndFaviconOfUrl?.(link)
           if (result) {
             const { favicon, title } = result
-            const webpageObject = await ObjectStore('webpage').addOne({ title: webpageTitle || title, favicon, url: link })
+            const webpageObject = await ObjectStore('webpage').addOne({
+              title: webpageTitle || title,
+              favicon,
+              url: link
+            })
             Object.assign(normalizedMetaObject, {
               fromObject: from,
               objectId: webpageObject.id,
@@ -304,7 +326,9 @@ const useDropObject = () => {
       if (!file) return
       if (file.type.startsWith('image')) {
         const imageFilePath = await saveImageLocally(file, { compress: false })
-        const imageObject = await ObjectStore('image').addOne({ imageUrl: imageFilePath })
+        const imageObject = await ObjectStore('image').addOne({
+          imageUrl: imageFilePath
+        })
         Object.assign(normalizedMetaObject, {
           coverImgSrc: imageFilePath,
           fromObject: from,

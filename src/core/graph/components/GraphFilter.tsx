@@ -1,5 +1,5 @@
 import { Content, Icon } from '@/components/base'
-import { SimpleObject, FilterNameSearchAtom, DatabaseFilter } from '@/core'
+import { DatabaseFilter, FilterNameSearchAtom, SimpleObject } from '@/core'
 import { useToggle } from '@/hooks'
 import ClassName from '@/styles/classNames'
 import { css } from '@emotion/css'
@@ -13,7 +13,6 @@ import { GlobalGraphInstance } from '..'
 import useGraph from '../hooks/useGraph'
 import { GraphPinNodesIdsAtom, GraphVisibleNodesIdsAtom } from '../hooks/useGraphFilter'
 import useGraphNodes, { GraphNodesAtom } from '../hooks/useGraphNodes'
-import { GraphPathFilterAtom } from './GraphPathFilter'
 
 const graphFilterTitleClassName = css({
   cursor: 'grab',
@@ -153,7 +152,9 @@ const GraphFilter = () => {
           >
             <Icon name="park-search" />
             <input
-              placeholder={t('database.search for object', { object: t('general.object') })}
+              placeholder={t('database.search for object', {
+                object: t('general.object')
+              })}
               value={search}
               onChange={e => setSearch(e.target.value)}
               className={css({

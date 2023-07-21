@@ -5,6 +5,8 @@ export const EditorStateAtom = atom<
   Partial<
     EditorProps & {
       currentActiveHeadingId: number
+      outReadOnly?: boolean
+      innerReadOnly?: boolean
     }
   >
 >({})

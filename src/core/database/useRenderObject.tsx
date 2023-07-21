@@ -4,7 +4,7 @@ import ClassName from '@/styles/classNames'
 import Id from '@/utils/id'
 import { css } from '@emotion/css'
 import { selectAtom } from 'jotai/utils'
-import { CSSProperties, ReactNode, memo, useEffect, useMemo, useRef, useState } from 'react'
+import { CSSProperties, memo, ReactNode, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Content, Icon, IconWithPopover, Image } from '@/components'
 import { Editor } from '../editor/Editor'
@@ -100,20 +100,26 @@ const TagRenderer = ({
       {showCreatedAt && metaObject?.createdAt && (
         <Content flex gap={4} style={{ textTransform: 'capitalize' }} className={ClassName.objectTag}>
           <Icon name="park-add-one" />
-          {t('general.ago', { time: DateFormat.formatDistanceToNowStrict(metaObject?.createdAt) })}
+          {t('general.ago', {
+            time: DateFormat.formatDistanceToNowStrict(metaObject?.createdAt)
+          })}
         </Content>
       )}
       {showViewAt && metaObject?.viewAt && (
         <Content flex gap={4} style={{ textTransform: 'capitalize' }} className={ClassName.objectTag}>
           <Icon name="park-preview-open" />
-          {t('general.ago', { time: DateFormat.formatDistanceToNowStrict(metaObject?.viewAt) })}
+          {t('general.ago', {
+            time: DateFormat.formatDistanceToNowStrict(metaObject?.viewAt)
+          })}
         </Content>
       )}
       {showUpdatedAt && metaObject?.updatedAt && (
         <Content flex gap={4} style={{ textTransform: 'capitalize' }} className={ClassName.objectTag}>
           <Icon name="park-edit" />
 
-          {t('general.ago', { time: DateFormat.formatDistanceToNowStrict(metaObject?.updatedAt) })}
+          {t('general.ago', {
+            time: DateFormat.formatDistanceToNowStrict(metaObject?.updatedAt)
+          })}
         </Content>
       )}
       {relatedNum > 0 && (
@@ -255,7 +261,7 @@ const _renderOptions = (
         renderOnParent={renderOnParent}
         containerStyle={{
           position: 'absolute',
-          top: 6,
+          top: 0,
           right: 10,
           zIndex: 10,
           ...style
@@ -309,7 +315,10 @@ const useRenderObject = (options: { metaObjectId: number }) => {
 
   const renderTitle = (options: Parameters<typeof _renderTitle>[0]) =>
     _renderTitle(
-      { ...options, onTitleClick: options.onTitleClick || (() => Rendevoz.Actions.Open.Meta.openMetaObject(metaObjectId)) },
+      {
+        ...options,
+        onTitleClick: options.onTitleClick || (() => Rendevoz.Actions.Open.Meta.openMetaObject(metaObjectId))
+      },
       metaObject
     )
 
@@ -371,9 +380,11 @@ const useRenderObject = (options: { metaObjectId: number }) => {
     position = 'left',
     align = 'center',
     ...rest
-  }: { icon?: string; position?: 'left' | 'top' | 'right' | 'bottom'; align?: 'start' | 'center' | 'end' } & Partial<
-    Parameters<typeof ObjectActionPopover>[0]
-  >) => {
+  }: {
+    icon?: string
+    position?: 'left' | 'top' | 'right' | 'bottom'
+    align?: 'start' | 'center' | 'end'
+  } & Partial<Parameters<typeof ObjectActionPopover>[0]>) => {
     return (
       <IconWithPopover
         content={<ObjectActionPopover {...rest} metaObjectId={metaObjectId} />}
@@ -418,7 +429,15 @@ const useRenderObject = (options: { metaObjectId: number }) => {
       }
     }, [renderAttOnParent])
     return (
-      <div ref={containerRef} style={{ display: 'flex', gap: 6, alignItems: 'baseline', ...containerStyle }}>
+      <div
+        ref={containerRef}
+        style={{
+          display: 'flex',
+          gap: 6,
+          alignItems: 'baseline',
+          ...containerStyle
+        }}
+      >
         {showCircle && (
           <div
             style={{
@@ -464,7 +483,7 @@ const useRenderObject = (options: { metaObjectId: number }) => {
             whiteSpace: 'nowrap',
             lineHeight: 1,
             padding: '3px 8px',
-            margin: 'auto'
+            margin: 'auto 0'
           }}
           className={ClassName.objectTag}
         >
@@ -481,7 +500,7 @@ const useRenderObject = (options: { metaObjectId: number }) => {
                 whiteSpace: 'nowrap',
                 lineHeight: 1,
                 padding: '3px 8px',
-                margin: 'auto'
+                margin: 'auto 0'
               }}
               className={ClassName.objectTag}
             >
@@ -518,6 +537,7 @@ const WholeRenderer = memo(
       columnGap?: number
       rowGap?: number
       containerClassName?: string
+      tagAboveImage?: boolean
       containerStyle?: CSSProperties
       containerOnClick?: React.MouseEventHandler
       mainContainerStyle?: CSSProperties
@@ -553,7 +573,8 @@ const WholeRenderer = memo(
       containerClassName,
       containerStyle,
       containerOnClick,
-      mainContainerStyle
+      mainContainerStyle,
+      tagAboveImage = false
     } = options
     const { t } = useTranslation()
     const [imgDisplayFlexMode, setImgDisplayFlexMode] = useState<CSSProperties['flexDirection']>('row')
@@ -573,67 +594,85 @@ const WholeRenderer = memo(
     )
     if (!metaObject || metaObject.deleted) return null
     return metaObject?.coverImgSrc && renderOptions.renderImage !== false ? (
-      <Content
-        flex
-        alignItems="stretch"
-        gap={rowGap}
-        className={containerClassName}
-        style={{
-          ...containerStyle,
-          flexDirection: imgDisplayFlexMode,
-          padding: renderOptions.imageMode === 'whole' ? 0 : containerStyle?.padding,
-          alignItems: imgDisplayFlexMode === 'row-reverse' && renderOptions.imageMode === 'whole' ? 'stretch' : undefined
-        }}
-      >
-        {_renderImage({ ...imgSize, ...imageOptions, renderMode: renderOptions.imageMode }, metaObject, size => {
-          if (renderOptions.imageMode === 'whole') {
-            setImgDisplayFlexMode('column')
-            // if (size.height > size.width) {
-            //   setImgDisplayFlexMode('row-reverse')
-            //   setImgSize({
-            //     width: 'auto',
-            //     ratio: 1.777,
-            //     minWidth: 180,
-            //     height: 'unset'
-            //   })
-            // } else {
-            //   setImgSize({
-            //     height: 'auto',
-            //     ratio: 0.5625,
-            //     width: '100%',
-            //     minWidth: 320
-            //   })
-            //   setImgDisplayFlexMode('column')
-            // }
-          }
-        })}
-        <Content onClick={containerOnClick} style={mainContainerStyle} flex column gap={columnGap} justifyContent="center">
-          {renderOptions.renderOption && _renderOptions(optionOptions, metaObject)}
-          {renderOptions?.renderTags !== false && (
-            <TagRenderer
-              {...tagsOptions}
-              containerStyle={{ ...tagsOptions.containerStyle, paddingRight: renderOptions.renderOption ? '40px' : undefined }}
-              relatedNum={relatedNum}
-              metaObject={metaObject}
-              t={t}
-            />
-          )}
-          {renderOptions?.renderTitle !== false &&
-            _renderTitle(
-              {
-                ...titleOptions,
-                onTitleClick:
-                  titleOptions.onTitleClick ||
-                  (() => {
-                    Rendevoz.Actions.Open.Meta.openMetaObject(metaObject.id)
-                  })
-              },
-              metaObject
+      <>
+        {tagAboveImage && (
+          <TagRenderer
+            {...tagsOptions}
+            containerStyle={{
+              ...tagsOptions.containerStyle,
+              paddingRight: renderOptions.renderOption ? '40px' : undefined,
+              marginBottom: 6
+            }}
+            relatedNum={relatedNum}
+            metaObject={metaObject}
+            t={t}
+          />
+        )}
+        <Content
+          flex
+          alignItems="stretch"
+          gap={rowGap}
+          className={containerClassName}
+          style={{
+            ...containerStyle,
+            flexDirection: imgDisplayFlexMode,
+            padding: renderOptions.imageMode === 'whole' ? 0 : containerStyle?.padding,
+            alignItems: imgDisplayFlexMode === 'row-reverse' && renderOptions.imageMode === 'whole' ? 'stretch' : undefined
+          }}
+        >
+          {_renderImage({ ...imgSize, ...imageOptions, renderMode: renderOptions.imageMode }, metaObject, size => {
+            if (renderOptions.imageMode === 'whole') {
+              setImgDisplayFlexMode('column')
+              // if (size.height > size.width) {
+              //   setImgDisplayFlexMode('row-reverse')
+              //   setImgSize({
+              //     width: 'auto',
+              //     ratio: 1.777,
+              //     minWidth: 180,
+              //     height: 'unset'
+              //   })
+              // } else {
+              //   setImgSize({
+              //     height: 'auto',
+              //     ratio: 0.5625,
+              //     width: '100%',
+              //     minWidth: 320
+              //   })
+              //   setImgDisplayFlexMode('column')
+              // }
+            }
+          })}
+          <Content onClick={containerOnClick} style={mainContainerStyle} flex column gap={columnGap} justifyContent="center">
+            {renderOptions.renderOption && _renderOptions(optionOptions, metaObject)}
+            {renderOptions?.renderTags !== false && !tagAboveImage && (
+              <TagRenderer
+                {...tagsOptions}
+                containerStyle={{
+                  ...tagsOptions.containerStyle,
+                  paddingRight: renderOptions.renderOption ? '40px' : undefined
+                }}
+                relatedNum={relatedNum}
+                metaObject={metaObject}
+                t={t}
+              />
             )}
-          {renderOptions?.renderDescription !== false && _renderDescription(descriptionOptions, metaObject)}
-          {renderOptions?.renderFrom !== false && _renderFrom(fromOptions, metaObject)}
+            {renderOptions?.renderTitle !== false &&
+              _renderTitle(
+                {
+                  ...titleOptions,
+                  onTitleClick:
+                    titleOptions.onTitleClick ||
+                    (() => {
+                      Rendevoz.Actions.Open.Meta.openMetaObject(metaObject.id)
+                    })
+                },
+                metaObject
+              )}
+            {renderOptions?.renderDescription !== false && _renderDescription(descriptionOptions, metaObject)}
+            {renderOptions?.renderFrom !== false && _renderFrom(fromOptions, metaObject)}
+          </Content>
         </Content>
-      </Content>
+      </>
     ) : (
       <Content
         onClick={containerOnClick}
@@ -647,7 +686,10 @@ const WholeRenderer = memo(
         {renderOptions?.renderTags !== false && (
           <TagRenderer
             {...tagsOptions}
-            containerStyle={{ ...tagsOptions.containerStyle, paddingRight: renderOptions.renderOption ? '40px' : undefined }}
+            containerStyle={{
+              ...tagsOptions.containerStyle,
+              paddingRight: renderOptions.renderOption ? '40px' : undefined
+            }}
             relatedNum={relatedNum}
             metaObject={metaObject}
             t={t}

@@ -375,9 +375,10 @@ const WrapperNode = ({ node }: { node: IWhiteboardNode }) => {
   useLayoutEffect(() => {
     const container = containerRef.current
     if (container) {
-      setTimeout(() => {
-        flow.resizeObserver.observe(container)
-      }, 100)
+      flow.resizeObserver.observe(container)
+      // setTimeout(() => {
+      //
+      // }, 0)
       return () => {
         flow.resizeObserver.unobserve(container)
       }
@@ -441,7 +442,7 @@ const WrapperNode = ({ node }: { node: IWhiteboardNode }) => {
         '--node-color': background ? stringColor : lightenDefaultColor,
         '--darken-node-color': background ? darkenBackground : stringDefaultColor
       }}
-      minWidth={200}
+      minWidth={160}
       // maxWidth={nodeState.expanded ? undefined : 250}
       lockAspectRatio={lockResizeElements.includes(type)}
       disableDragging={nodeState.focused || nodeState.locked}
@@ -535,10 +536,19 @@ const WrapperNode = ({ node }: { node: IWhiteboardNode }) => {
           gap={10}
           onClick={() => {
             if (!nodeState.selected) {
-              setNodeState(s => ({ ...s, popoverVisible: true, selected: true }))
+              setNodeState(s => ({
+                ...s,
+                popoverVisible: true,
+                selected: true
+              }))
             } else {
               if (isDraggingRef.current === false) {
-                setNodeState(s => ({ ...s, popoverVisible: true, selected: true, focused: true }))
+                setNodeState(s => ({
+                  ...s,
+                  popoverVisible: true,
+                  selected: true,
+                  focused: true
+                }))
               }
             }
           }}
@@ -578,7 +588,12 @@ const WrapperNode = ({ node }: { node: IWhiteboardNode }) => {
         disableIntersection
         onClickOutside={e => {
           if (isResizingRef.current === false) {
-            setNodeState(s => ({ ...s, popoverVisible: false, selected: false, focused: false }))
+            setNodeState(s => ({
+              ...s,
+              popoverVisible: false,
+              selected: false,
+              focused: false
+            }))
           }
         }}
         padding={20}
@@ -613,14 +628,29 @@ const WrapperNode = ({ node }: { node: IWhiteboardNode }) => {
             <div
               onClick={e => {
                 if (!nodeState.selected) {
-                  setNodeState(s => ({ ...s, popoverVisible: true, selected: true }))
+                  setNodeState(s => ({
+                    ...s,
+                    popoverVisible: true,
+                    selected: true
+                  }))
                 } else {
                   if (isDraggingRef.current === false) {
-                    setNodeState(s => ({ ...s, popoverVisible: true, selected: true, focused: true }))
+                    setNodeState(s => ({
+                      ...s,
+                      popoverVisible: true,
+                      selected: true,
+                      focused: true
+                    }))
                   }
                 }
               }}
-              style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%' }}
+              style={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                width: '100%',
+                height: '100%'
+              }}
             ></div>
           )}
         </Content>

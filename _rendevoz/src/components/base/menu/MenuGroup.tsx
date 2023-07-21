@@ -1,10 +1,10 @@
-import { Content } from '@/components/base'
-import { FC, ReactNode } from 'react'
-import styles from './index.module.less'
+import { Content } from "@/components/base";
+import { FC, ReactNode } from "react";
+import styles from "./index.module.less";
 
 interface MenuGroupProps {
-  title: string
-  children: ReactNode
+  title: string;
+  children: ReactNode;
 }
 const MenuGroup: FC<MenuGroupProps> = ({ children, title }) => {
   return (

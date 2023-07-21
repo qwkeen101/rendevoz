@@ -1,42 +1,49 @@
-import React, { Children, cloneElement, CSSProperties, FC, ReactNode, Ref } from 'react'
-import Content from '../Content'
-import ToolbarItem from './ToolbarItem'
-import ToolbarSeparator from './ToolbarSeparator'
-import styles from './index.module.less'
-import classNames from 'classnames'
+import React, {
+  Children,
+  cloneElement,
+  CSSProperties,
+  FC,
+  ReactNode,
+  Ref,
+} from "react";
+import Content from "../Content";
+import ToolbarItem from "./ToolbarItem";
+import ToolbarSeparator from "./ToolbarSeparator";
+import styles from "./index.module.less";
+import classNames from "classnames";
 
 export interface ToolbarProps {
-  direction?: 'vertical' | 'horizontal'
-  children?: ReactNode
-  className?: string
-  itemClassName?: string
-  itemSpace?: number
-  itemSize?: number
-  itemClickPreventDefault?: boolean
-  style?: CSSProperties
-  innerRef?: Ref<HTMLDivElement>
+  direction?: "vertical" | "horizontal";
+  children?: ReactNode;
+  className?: string;
+  itemClassName?: string;
+  itemSpace?: number;
+  itemSize?: number;
+  itemClickPreventDefault?: boolean;
+  style?: CSSProperties;
+  innerRef?: Ref<HTMLDivElement>;
 }
 interface IToolbar extends FC<ToolbarProps> {
-  Item: typeof ToolbarItem
-  Separator: typeof ToolbarSeparator
+  Item: typeof ToolbarItem;
+  Separator: typeof ToolbarSeparator;
 }
 const Toolbar: IToolbar = ({
   className,
   children,
-  direction = 'horizontal',
+  direction = "horizontal",
   itemSpace = 6,
   itemSize,
   itemClickPreventDefault = false,
   style,
   itemClassName,
-  innerRef
+  innerRef,
 }) => {
-  let tools
+  let tools;
 
   if (children) {
     tools = Children.toArray(children).map((element, index) => {
       if (!element) {
-        return element
+        return element;
       }
       if (React.isValidElement(element)) {
         return cloneElement(element, {
@@ -45,11 +52,11 @@ const Toolbar: IToolbar = ({
           space: itemSpace,
           size: itemSize,
           clickPreventDefault: itemClickPreventDefault,
-          className: itemClassName
-        })
+          className: itemClassName,
+        });
       }
-      return element
-    })
+      return element;
+    });
   }
 
   return (
@@ -60,13 +67,13 @@ const Toolbar: IToolbar = ({
       flex
       centered
       className={classNames(styles.toolbar, className)}
-      column={direction === 'vertical'}
+      column={direction === "vertical"}
     >
       {tools}
     </Content>
-  )
-}
-Toolbar.Item = ToolbarItem
-Toolbar.Separator = ToolbarSeparator
+  );
+};
+Toolbar.Item = ToolbarItem;
+Toolbar.Separator = ToolbarSeparator;
 
-export default Toolbar
+export default Toolbar;

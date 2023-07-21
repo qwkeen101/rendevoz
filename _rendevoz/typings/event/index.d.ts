@@ -1,8 +1,8 @@
-import { EditorEvent, GlobalEvent, PdfEvent } from '..'
+import { EditorEvent, GlobalEvent, PdfEvent } from "..";
 
 export interface Event<T, K extends keyof T> {
-  readonly type: K
-  readonly data?: T[K]
+  readonly type: K;
+  readonly data?: T[K];
 }
 
 export interface EventMap {

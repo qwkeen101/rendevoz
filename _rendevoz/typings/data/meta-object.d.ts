@@ -1,6 +1,9 @@
 import { Box } from '../common'
 import { CustomTypes } from '../custom'
 import { IBase } from './base'
+import { ObjectFamily } from 'rendevoz'
+import { MetaFormLayoutItem } from '~/typings'
+import { Dispatch, SetStateAction } from 'react'
 
 export type IMetaAttachment =
   | {
@@ -44,12 +47,6 @@ export interface MetaObject extends IBase {
   icon?: string
   color?: string
   attachments?: IMetaAttachment[]
-  from?: {
-    icon?: string
-    metaId?: number
-    type?: MetaObject['type']
-    name?: string
-  }
   fromObject?:
     | {
         type: 'pdf'
@@ -82,11 +79,31 @@ export interface MetaObject extends IBase {
   temp?: boolean
 }
 
-export type RegisteredMetaObject = {
-  type: string
-  onNavigate?: (metaObject: MetaObject) => void
+export type RegisteredMetaObject<T = MetaObject['type']> = {
+  type: T
+  onNavigate?: (metaObject: MetaObject & { type: T }) => void
   icon: string
+  /**
+   * Default name for created meta-object
+   */
+  defaultName?: string | (() => string)
   i18nKey: string
+  /**
+   * If set true, will be visible in homepage
+   * Default: true
+   */
+  visibleInHomepage?: boolean
+  /**
+   * If set true, will be visible in create menu like homepage menu or collection menu
+   * Default: false
+   */
+  visibleInCreateMenu?: boolean
+  filterSettings: {
+    /**
+     * TODO: Custom object type
+     */
+    objectType: 'record' | 'file' | 'label'
+  }
   graphSettings?: {
     collisionRadius?: number
     /**
@@ -94,6 +111,30 @@ export type RegisteredMetaObject = {
      */
     radius?: number
   }
+  /**
+   * Customize your meta-object edit details form
+   */
+  customEditForm?: (
+    metaObject: MetaObject & { type: T },
+    setMetaObject: Dispatch<SetStateAction<MetaObject>>,
+    object?: ObjectFamily[T]
+  ) => MetaFormLayoutItem[]
+  /**
+   * Difference between onCreate and onAdd:
+   * onCreate is only triggered when meta-object is created in menus like homepage menu, collection menu
+   * onAdd will always be triggered when meta-object is added
+   * So if meta-object is created, onCreate and onAdd will all be triggered
+   * You can do works like navigating or toasting onCreate
+   * @param object corresponding object
+   */
+  onCreate?: (metaObject: MetaObject & { type: T }, object: ObjectFamily[T]) => void
+  onAdd?: (metaObject: MetaObject & { type: T }) => void
+  onDelete?: (metaObject: MetaObject & { type: T }) => void
+  onUpdate?: (
+    currMetaObject: MetaObject & { type: T },
+    prevMetaObject: MetaObject & { type: T },
+    changedProps?: { propName: string; prevProp: any; currProp: any }[]
+  ) => void
 }
 
 export interface MetaLink extends IBase {

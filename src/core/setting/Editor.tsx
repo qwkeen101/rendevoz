@@ -1,12 +1,7 @@
-import { Content } from '@/components/base'
+import { Content } from "@/components/base";
 
 const EditorSetting = () => {
+  return <Content flex column></Content>;
+};
 
-  return (
-    <Content flex column>
-
-    </Content>
-  )
-}
-
-export default EditorSetting
+export default EditorSetting;

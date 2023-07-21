@@ -1,7 +1,6 @@
 import { Content } from '@/components/base'
 import { ReactNode, useEffect, useRef, useState } from 'react'
-import { increaseLevel } from '../pdf/core/utils/zoom'
-import { decreaseLevel } from '../pdf/core/utils/zoom'
+import { decreaseLevel, increaseLevel } from '../pdf/core/utils/zoom'
 import useWebpageOthers from './useWebpageOthers'
 import { IpcWebpageEvent } from './webpageIpcEvent'
 import { useMemoizedFn } from '@/hooks'
@@ -11,8 +10,9 @@ import useWebpageInstance from './hooks/useWebpageInstance'
 import { assignProperties } from '@/utils'
 import useWebpageState from './hooks/useWebpageState'
 import { ObjectStore } from '@/stores'
+
 export const DEFAULT_USER_AGENT =
-  'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/103.0.5026.0 Safari/537.36 Edg/103.0.1254.0'
+  'Chrome/114.0.0.0 Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Safari/537.36'
 
 export type WebpageProps = {
   url?: string
@@ -40,7 +40,11 @@ export const WebpageCore = ({ url: _url, children, userAgent = DEFAULT_USER_AGEN
     console.log(event)
     if (event.x && event.y) {
       const webviewBounding = ref.current?.getBoundingClientRect()!
-      onEvent?.({ ...event, bodyX: webviewBounding?.left + event.x, bodyY: webviewBounding.top + event.y })
+      onEvent?.({
+        ...event,
+        bodyX: webviewBounding?.left + event.x,
+        bodyY: webviewBounding.top + event.y
+      })
     }
   })
 
@@ -71,7 +75,10 @@ export const WebpageCore = ({ url: _url, children, userAgent = DEFAULT_USER_AGEN
       }
       const titleChangeHandler = data => {
         if (data.title) {
-          setWebpageState(s => ({ ...s, title: data.title !== s.title ? data.title : s.title }))
+          setWebpageState(s => ({
+            ...s,
+            title: data.title !== s.title ? data.title : s.title
+          }))
         }
       }
       container.addEventListener('did-start-loading', startLoadHandler)
@@ -120,18 +127,13 @@ export const WebpageCore = ({ url: _url, children, userAgent = DEFAULT_USER_AGEN
   })
 
   useEffect(() => {
-    const interval = setInterval(() => {
-      setTimeout(() => {
-        if (disableImageClick) {
-          ref.current?.send('disableImageClick')
-        } else {
-          ref.current?.send('enableImageClick')
-        }
-      }, 1000)
-    }, 100)
-    return () => {
-      clearInterval(interval)
-    }
+    setTimeout(() => {
+      if (disableImageClick) {
+        ref.current?.send('disableImageClick')
+      } else {
+        ref.current?.send('enableImageClick')
+      }
+    }, 1000)
   }, [disableImageClick])
 
   assignProperties(instance, {

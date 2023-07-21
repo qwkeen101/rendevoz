@@ -1,7 +1,7 @@
 type InspectableObject = Record<string | number | symbol, unknown>;
 
 function isObject(o: unknown): o is InspectableObject {
-  return Object.prototype.toString.call(o) === '[object Object]';
+  return Object.prototype.toString.call(o) === "[object Object]";
 }
 
 export function isPlainObject(o: unknown): o is InspectableObject {
@@ -22,7 +22,7 @@ export function isPlainObject(o: unknown): o is InspectableObject {
   }
 
   // If constructor does not have an Object-specific method
-  if (prot.hasOwnProperty('isPrototypeOf') === false) {
+  if (prot.hasOwnProperty("isPrototypeOf") === false) {
     return false;
   }
 

@@ -1,4 +1,4 @@
-import { ReactNode, ReactPortal, useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { ReactNode, ReactPortal, useLayoutEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { Content, Icon, Modal } from '@/components'
 import { atom } from 'jotai/vanilla'
@@ -8,9 +8,12 @@ import ClassName from '@/styles/classNames'
 import { GlobalGraphInstance } from '.'
 import { css } from '@emotion/css'
 import { useTranslation } from 'react-i18next'
+
 export const globalGraphMinimizedAtom = atom(false)
 const GraphThumbnail = ({ children, onClose }: { children: ReactNode; onClose: VoidFunction }) => {
-  const [small, setSmall] = useAtom(globalGraphMinimizedAtom, { store: globalStore })
+  const [small, setSmall] = useAtom(globalGraphMinimizedAtom, {
+    store: globalStore
+  })
   const containerRef = useRef<HTMLDivElement>(null)
   const { t } = useTranslation()
   const cachedChildrenRef = useRef<HTMLDivElement>()

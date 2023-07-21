@@ -1,7 +1,7 @@
 import Zindexes from '@/consts/zindex'
-import { useMergedRef, useShortcut, useToggle } from '@/hooks'
-import { undeletedMetaObjectsAtom } from '@/stores/meta.store'
-import { globalStore } from '@/stores'
+import { useGlobalAtomValue, useMergedRef, useShortcut, useToggle } from '@/hooks'
+import { metaObjectsAtom, relatedMetaObjectsMapAtom, undeletedMetaObjectsAtom } from '@/stores/meta.store'
+import { globalStore, MetaStore } from '@/stores'
 import ClassName from '@/styles/classNames'
 import { Position } from '@/types'
 import { css } from '@emotion/css'
@@ -10,36 +10,43 @@ import { useAtom, useAtomValue, useStore } from 'jotai/react'
 import React, { forwardRef, memo, ReactElement, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { MetaObject } from '~/typings/data'
-import { AnimatePopover, CheckBox, Content, Icon, WithBorder } from '@/components'
+import { AnimatePopover, Button, CheckBox, Content, Icon, Image, Tooltip, WithBorder } from '@/components'
 import {
-  GlobalDragOverlayInstance,
-  useGlobalIsDragging,
+  AttachmentWrapper,
   CurrentFocusFilterAtom,
+  DatabaseFilter,
   FilterNameSearchAtom,
   FilterRelatedIdsAtom,
-  useObjectFilter,
-  DatabaseFilter,
+  FiltersAtom,
+  GlobalDragOverlayInstance,
+  GlobalGraphInstance,
   ObjectActionPopover,
-  FiltersAtom
+  RelatedPanel,
+  useGlobalIsDragging,
+  useObjectFilter,
+  useRenderObject
 } from '@/core'
 import { selectAtom } from 'jotai/utils'
 import produce from 'immer'
 import { atom } from 'jotai'
 import { useTranslation } from 'react-i18next'
-import { useRenderObject } from '@/core'
 import { GlobalEventEmitter, useEventHandler } from '@/events'
 import { LeftTopPosition } from '~/typings'
 import Colors from '@/consts/colors'
 import FontSize from '@/consts/font'
 import ResizeAndDrag from '@/components/base/ResizeAndDrag'
 import { Rendevoz } from '../rendevoz'
+import _ from 'lodash'
+import HoverObjectDetails from '@/core/database/HoverObjectDetails'
+import { toast } from 'react-hot-toast'
+import { GlobalLayout } from '@/components/layout'
+import { DateFormat } from '@/utils'
 
 export const GlobalObjectPanelInstance: {
   open?: (position?: LeftTopPosition) => void
   close?: VoidFunction
 } = {}
 export const GlobalObjectPanel = () => {
-  const [search, setSearch] = useAtom(FilterNameSearchAtom)
   const [panelState, setPanelState] = useState<
     Partial<{
       visible: boolean
@@ -76,15 +83,8 @@ export const GlobalObjectPanel = () => {
     },
     close: () => setPanelState(s => ({ ...s, visible: false }))
   } as typeof GlobalObjectPanelInstance)
-  const { t } = useTranslation()
   const eventHandler = useEventHandler('global')
-  const [showBoxShadow, toggleShowBoxShadow] = useToggle(false)
-  const undeleteObjects = useAtomValue(undeletedMetaObjectsAtom, { store: globalStore })
-
   const [isGlobalDragging] = useGlobalIsDragging()
-  const containerRef = useRef<HTMLDivElement>(null)
-
-  const [shouldDisplayObjects, setShouldDisplayObjects] = useState<MetaObject[]>(undeleteObjects)
   const [isAddingObject, toggleIsAddingObject] = useToggle(false)
   const promiseRef = useRef<{
     res?: any
@@ -96,17 +96,7 @@ export const GlobalObjectPanel = () => {
       toggleIsAddingObject(false)
     }
   }, [panelState.visible])
-  const virtualizer = useVirtualizer({
-    count: shouldDisplayObjects.length,
-    estimateSize: () => 100,
-    getScrollElement: () => containerRef.current,
 
-    overscan: 10
-  })
-  useObjectFilter(ids => {
-    const shouldDisplay = undeleteObjects.filter(i => ids.has(i.id))
-    setShouldDisplayObjects(shouldDisplay)
-  })
   eventHandler.on('globalChooseMetaObject', (data, res, rej) => {
     toggleIsAddingObject(true)
     promiseRef.current = {
@@ -114,6 +104,7 @@ export const GlobalObjectPanel = () => {
       rej
     }
   })
+
   useEffect(() => {
     GlobalEventEmitter().addListener('global', eventHandler)
     return () => {
@@ -125,23 +116,6 @@ export const GlobalObjectPanel = () => {
     setPanelState(s => ({ ...s, visible: !s.visible }))
   })
 
-  useEffect(() => {
-    const container = containerRef.current
-    const containerScrollHandler = (e: Event) => {
-      if ((e.target as HTMLElement).scrollTop > 0) {
-        toggleShowBoxShadow(true)
-      } else {
-        toggleShowBoxShadow(false)
-      }
-    }
-    if (container) {
-      container.addEventListener('scroll', containerScrollHandler)
-    }
-    return () => {
-      container?.removeEventListener('scroll', containerScrollHandler)
-    }
-  }, [])
-  const items = virtualizer.getVirtualItems()
   const handleAddObject = useCallback((id: number) => {
     promiseRef.current?.res(id)
     promiseRef.current = undefined
@@ -218,121 +192,13 @@ export const GlobalObjectPanel = () => {
             }}
             className={ClassName.Background.blurBackground}
           ></div>
-          <Content
-            flex
-            column
-            gap={10}
-            style={{
-              padding: '16px'
+          <ObjectPanel
+            onClose={() => {
+              setPanelState(s => ({ ...s, visible: false }))
             }}
-          >
-            <Content
-              flex
-              justifyContent="space-between"
-              style={{
-                borderBottom: `1px solid ${Colors.Background.Border}`,
-                cursor: 'grab',
-                padding: '0px 0px 8px'
-              }}
-              className="global-drag-panel"
-            >
-              <div className={ClassName.title('1rem')}>
-                {t('dialog.object panel', { object: t('general.object') })}{' '}
-                <span className={ClassName.description(FontSize['12px'])} style={{ marginLeft: 16 }}>{`${t('general.total objects')}: ${
-                  shouldDisplayObjects.length
-                }`}</span>
-              </div>
-              <Icon
-                name="park-close"
-                className={ClassName.circleButton()}
-                onClick={() => {
-                  setPanelState({ ...panelState, visible: false })
-                }}
-              />
-            </Content>
-            <Content
-              style={{
-                background: 'transparent',
-                borderRadius: 8,
-                border: `1px solid ${Colors.Background.Border}`,
-                padding: '6px 12px'
-              }}
-              flex
-              alignItems="center"
-              gap={10}
-            >
-              <Icon name="park-search" />
-              <input
-                placeholder={t('database.search for object', { object: t('general.object') })}
-                value={search}
-                onChange={e => setSearch(e.target.value)}
-                className={css({
-                  border: 'none',
-                  outline: 'none',
-                  background: 'inherit',
-                  flexGrow: 1
-                })}
-                autoFocus
-              />
-            </Content>
-            <DatabaseFilter />
-          </Content>
-          <div
-            ref={containerRef}
-            style={{
-              width: '100%',
-              height: '100%',
-              overflowY: 'auto',
-              overflowX: 'hidden',
-              fontFamily: 'Muli',
-              position: 'relative',
-              padding: '16px',
-              paddingTop: 0,
-              boxShadow: showBoxShadow ? 'rgb(55 53 47 / 9%) 0px 4px 3px -3px inset' : undefined,
-              transition: 'box-shadow 0.3s ease'
-            }}
-          >
-            <div
-              style={{
-                height: virtualizer.getTotalSize(),
-                width: '100%',
-                position: 'relative'
-              }}
-            >
-              <div
-                style={{
-                  position: 'absolute',
-                  top: 0,
-                  left: 0,
-                  width: '100%',
-                  transform: `translateY(${items[0]?.start}px)`
-                }}
-              >
-                {items.map(row => (
-                  <div
-                    key={row.key}
-                    data-index={row.index}
-                    ref={virtualizer.measureElement}
-                    className={css({
-                      ':first-child': {
-                        paddingTop: 0
-                      },
-                      ':not(:last-child)': {
-                        borderBottom: `1px solid ${Colors.Background.Border}`
-                      },
-                      padding: '10px 0px'
-                    })}
-                  >
-                    <SimpleObject
-                      metaObjectId={shouldDisplayObjects[row.index].id}
-                      isAddingObject={isAddingObject}
-                      onAddObject={handleAddObject}
-                    />
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
+            isAddingObject={isAddingObject}
+            handleAddObject={handleAddObject}
+          />
         </ResizeAndDrag>
       )}
     </div>,
@@ -341,6 +207,392 @@ export const GlobalObjectPanel = () => {
   )
 }
 
+type ObjectPanelProps = {
+  onClose?: VoidFunction
+  isAddingObject: boolean
+  handleAddObject: (id: number) => void
+  padding?: number
+  onOpenInTab?: VoidFunction
+  visiblility?: {
+    showOpenInTab?: boolean
+    showClose?: boolean
+    showCurrentTabObject?: boolean
+  }
+  showObjectDetails?: {
+    id: number
+  }
+  onBackToList?: VoidFunction
+}
+export const ObjectPanel = memo(
+  ({
+    onClose,
+    isAddingObject,
+    handleAddObject,
+    padding = 16,
+    onOpenInTab,
+    onBackToList,
+    visiblility = { showClose: true },
+    showObjectDetails
+  }: ObjectPanelProps) => {
+    const undeleteObjects = useAtomValue(undeletedMetaObjectsAtom, {
+      store: globalStore
+    })
+
+    const { t } = useTranslation()
+    const [search, setSearch] = useAtom(FilterNameSearchAtom)
+    const [shouldDisplayObjects, setShouldDisplayObjects] = useState<MetaObject[]>(undeleteObjects)
+    const [showBoxShadow, toggleShowBoxShadow] = useToggle(false)
+    const containerRef = useRef<HTMLDivElement>(null)
+    const virtualizer = useVirtualizer({
+      count: shouldDisplayObjects.length,
+      estimateSize: () => 100,
+      getScrollElement: () => containerRef.current,
+
+      overscan: 5
+    })
+    const items = virtualizer.getVirtualItems()
+    useObjectFilter(ids => {
+      const shouldDisplay = undeleteObjects.filter(i => ids.has(i.id))
+      setShouldDisplayObjects(shouldDisplay)
+    })
+    useEffect(() => {
+      const container = containerRef.current
+      const containerScrollHandler = (e: Event) => {
+        if ((e.target as HTMLElement).scrollTop > 0) {
+          toggleShowBoxShadow(true)
+        } else {
+          toggleShowBoxShadow(false)
+        }
+      }
+      if (container) {
+        container.addEventListener('scroll', containerScrollHandler)
+      }
+      return () => {
+        container?.removeEventListener('scroll', containerScrollHandler)
+      }
+    }, [])
+    return (
+      <>
+        <Content
+          flex
+          column
+          gap={10}
+          style={{
+            padding
+          }}
+        >
+          <Content
+            flex
+            justifyContent="space-between"
+            style={{
+              borderBottom: `1px solid ${Colors.Background.Border}`,
+              cursor: 'grab',
+              padding: '0px 0px 8px'
+            }}
+            className="global-drag-panel"
+          >
+            <div style={{ marginRight: 'auto' }} className={ClassName.title('1rem')}>
+              {t('general.object library')}
+              <span className={ClassName.description(FontSize['12px'])} style={{ marginLeft: 16 }}>{`${t('general.total objects')}: ${
+                shouldDisplayObjects.length
+              }`}</span>
+            </div>
+            {visiblility.showCurrentTabObject && (
+              <Tooltip content={t("general.show current tab's object")}>
+                <Icon
+                  containerStyle={{ marginRight: 8 }}
+                  name="park-hamburger-button"
+                  className={ClassName.circleButton()}
+                  onClick={() => {
+                    const currentActiveTab = GlobalLayout?.getCurrentActiveTab()
+                    if (currentActiveTab) {
+                      const tab = currentActiveTab.tab
+                      if (tab.objectId) {
+                        const meta = MetaStore.getMetaObjectByObjectId(tab.objectId)
+                        if (meta) {
+                          Rendevoz.Actions.Open.openSidebarObjectDetails(meta.id)
+                        }
+                      }
+                    }
+                  }}
+                />
+              </Tooltip>
+            )}
+            {visiblility.showOpenInTab && (
+              <Tooltip content={'Open Database In New Tab'}>
+                <Icon name="park-efferent-four" className={ClassName.circleButton()} onClick={onOpenInTab} />
+              </Tooltip>
+            )}
+            {visiblility.showClose && <Icon name="park-close" className={ClassName.circleButton()} onClick={onClose} />}
+          </Content>
+          <Content
+            style={{
+              background: 'transparent',
+              borderRadius: 6,
+              border: `1px solid ${Colors.Background.Border}`,
+              padding: '2px 8px',
+              fontSize: FontSize['13px']
+            }}
+            flex
+            alignItems="center"
+            gap={6}
+          >
+            <Icon name="park-search" />
+            <input
+              placeholder={t('database.search for object', {
+                object: t('general.object')
+              })}
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              className={css({
+                border: 'none',
+                outline: 'none',
+                background: 'inherit',
+                flexGrow: 1
+              })}
+              autoFocus
+            />
+          </Content>
+          <DatabaseFilter />
+        </Content>
+        <div
+          ref={containerRef}
+          style={{
+            width: '100%',
+            height: '100%',
+            overflowY: 'auto',
+            overflowX: 'hidden',
+            fontFamily: 'Muli',
+            position: 'relative',
+            padding: padding,
+            paddingTop: 0,
+            boxShadow: showBoxShadow ? 'rgb(55 53 47 / 9%) 0px 4px 3px -3px inset' : undefined,
+            transition: 'box-shadow 0.3s ease'
+          }}
+        >
+          <div
+            style={{
+              height: virtualizer.getTotalSize(),
+              width: '100%',
+              position: 'relative'
+            }}
+          >
+            <div
+              style={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                width: '100%',
+                transform: `translateY(${items[0]?.start}px)`
+              }}
+            >
+              {items.map(row => (
+                <div
+                  key={row.key}
+                  data-index={row.index}
+                  ref={virtualizer.measureElement}
+                  className={css({
+                    ':first-child': {
+                      paddingTop: 0
+                    },
+                    ':not(:last-child)': {
+                      borderBottom: `1px solid ${Colors.Background.Border}`
+                    },
+                    padding: '8px 0px 6px'
+                  })}
+                >
+                  <SimpleObject
+                    metaObjectId={shouldDisplayObjects[row.index].id}
+                    isAddingObject={isAddingObject}
+                    onAddObject={handleAddObject}
+                  />
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+        {showObjectDetails?.id && (
+          <Content flex column style={{ padding, position: 'absolute', left: '100%' }} fullWidth fullHeight>
+            <ObjectDetailsPanel metaId={showObjectDetails.id} onBack={onBackToList} />
+          </Content>
+        )}
+      </>
+    )
+  },
+  (prev, curr) => prev.isAddingObject === curr.isAddingObject && prev.showObjectDetails === curr.showObjectDetails
+)
+
+export const ObjectDetailsPanel = ({ metaId, onBack }: { metaId: number; onBack?: VoidFunction }) => {
+  const { renderWhole, metaObject, renderTags, renderFrom } = useRenderObject({ metaObjectId: metaId })
+  const { t } = useTranslation()
+  const relatedMap = useGlobalAtomValue(relatedMetaObjectsMapAtom)
+  const allRelatedByType = useMemo(() => {
+    const allRelatedIds = Array.from(relatedMap.get(metaId) || [])
+    const allRelatedByType = _.groupBy(
+      allRelatedIds.map(id => globalStore.get(metaObjectsAtom).get(id)),
+      i => i.type
+    )
+    return allRelatedByType
+  }, [relatedMap, metaId])
+  const [currentDisplayRelated, setCurrentDisplayRelated] = useState<MetaObject['type']>()
+  const [showAllRelated, setShowAllRelated] = useState(false)
+  const [attachmentVisible, setAttachmentVisible] = useState(false)
+  useEffect(() => {
+    if (showAllRelated) {
+      setShowAllRelated(false)
+    }
+    setAttachmentVisible(false)
+  }, [metaId])
+  return (
+    <Content flex column fullWidth fullHeight style={{ paddingBottom: 40 }}>
+      <Content flex style={{ marginBottom: 24 }}>
+        <Icon
+          name="park-left"
+          onClick={() => {
+            if (showAllRelated) {
+              setShowAllRelated(false)
+            } else {
+              onBack?.()
+            }
+          }}
+          containerStyle={{ position: 'absolute', top: '50%', transform: 'translateY(-50%)' }}
+          className={ClassName.circleButton()}
+        />
+        <div style={{ margin: 'auto', fontWeight: 600, fontSize: '0.9rem' }}>
+          {showAllRelated ? t('general.related objects') : t('general.object details')}
+        </div>
+      </Content>
+
+      {showAllRelated ? (
+        <RelatedPanel metaId={metaId} />
+      ) : (
+        <>
+          <Content flex alignItems="center" gap={10}>
+            {metaObject?.coverImgSrc && <Image src={metaObject.coverImgSrc} preview width={60} containerStyle={{ borderRadius: 10 }} />}
+            <Content>
+              <Content>{renderTags({})}</Content>
+              <div onClick={() => Rendevoz.Actions.Open.Meta.openMetaObject(metaId)} style={{ fontSize: '0.9rem', textTransform: 'none', cursor: 'pointer' }}>{metaObject?.name}</div>
+            </Content>
+          </Content>
+          {metaObject?.fromObject && (
+            <>
+              <div style={{ marginTop: 12 }} className={ClassName.description()}>
+                {t('general.from')}
+              </div>
+              {renderFrom({})}
+            </>
+          )}
+          {metaObject?.description && (
+            <>
+              <div style={{ marginTop: 12 }} className={ClassName.description()}>
+                {t('general.description')}
+              </div>
+              <div className={ClassName.description()}>{metaObject.description}</div>
+            </>
+          )}
+          {metaObject?.createdAt && (
+            <div className={ClassName.description()} style={{marginTop: 12}}>
+              {t('general.create at')}: {DateFormat.formatDistanceToNowStrict(metaObject.createdAt, true)}
+            </div>
+          )}
+          {metaObject?.viewAt && (
+            <div className={ClassName.description()}>
+              {t('general.view at')}: {DateFormat.formatDistanceToNowStrict(metaObject.viewAt, true)}
+            </div>
+          )}
+          {Object.keys(allRelatedByType).length > 0 && (
+            <>
+              <Content flex style={{ marginBottom: 4, marginTop: 12 }} className={ClassName.description()}>
+                <div>{t('general.related objects')}</div>
+                <div onClick={() => setShowAllRelated(true)} style={{ marginLeft: 'auto', cursor: 'pointer' }}>
+                  {t('general.show details')}
+                </div>
+              </Content>
+              <Content flex gap={6} style={{ flexWrap: 'wrap', marginBottom: 12 }}>
+                {Object.entries(allRelatedByType).map(k => (
+                  <div
+                    key={k[0]}
+                    style={{
+                      cursor: 'pointer',
+                      fontSize: '0.8rem'
+                    }}
+                    onClick={() => {
+                      setCurrentDisplayRelated(k[0])
+                    }}
+                    className={ClassName.objectTag}
+                  >
+                    {Rendevoz.Utils.Meta.getTypeName(k[0])}: {k[1].length}
+                  </div>
+                ))}
+              </Content>
+            </>
+          )}
+          {((metaObject?.attachments && metaObject?.attachments?.length > 0) || attachmentVisible) && (
+            <AttachmentWrapper
+              renderObjectDetailsOnParent={false}
+              renderAttOnParent={false}
+              style={{
+                margin: '30px 0px'
+              }}
+              closeIcon={!metaObject?.attachments?.length}
+              visible={true}
+              onClose={() => setAttachmentVisible(false)}
+              metaId={metaId}
+            />
+          )}
+          <div className={ClassName.description()} style={{ margin: 'auto 0px 0px 6px' }}>
+            {t('general.more actions')}
+          </div>
+          <Button.IconButton
+            text={t('general.edit')}
+            icon="park-edit"
+            onClick={() => {
+              GlobalEventEmitter().emit('global', {
+                type: 'globalNeedEditMetaObject',
+                data: {
+                  metaObjectId: metaId
+                }
+              })
+            }}
+          />{' '}
+          <Button.IconButton
+            text={t('general.global graph')}
+            icon="park-circle-four-line"
+            onClick={() => {
+              GlobalGraphInstance?.open?.(metaObject)
+            }}
+          />
+          <Button.IconButton
+            text={t('general.partial graph')}
+            icon="park-share-one"
+            onClick={() => {
+              GlobalGraphInstance?.open?.(metaObject, true)
+            }}
+          />
+          <Button.IconButton
+            text={t('general.add attachment')}
+            icon="park-link"
+            onClick={() => {
+              setAttachmentVisible(true)
+            }}
+          />
+          <Button.IconButton
+            text={t('general.generate link')}
+            onClick={() => {
+              toast.success(
+                <Content className={ClassName.description()}>
+                  <div style={{ textTransform: 'none' }}>{t('general.link is generated for this object')}!</div>
+                  <div style={{ userSelect: 'all', textTransform: 'none' }}>{`rendevoz://object/${metaId}`}</div>
+                </Content>
+              )
+            }}
+            icon="park-link-two"
+          />
+        </>
+      )}
+    </Content>
+  )
+}
 export const SimpleObject = memo(
   forwardRef(
     (
@@ -382,7 +634,7 @@ export const SimpleObject = memo(
       const containerRef = useRef<HTMLDivElement>(null)
       const mergedRef = useMergedRef(containerRef, ref)
       const isPressed = useRef(false)
-      const { renderWhole } = useRenderObject({
+      const { renderWhole, metaObject } = useRenderObject({
         metaObjectId: metaObjectId
       })
       const [hovered, setHovered] = useState(false)
@@ -491,6 +743,7 @@ export const SimpleObject = memo(
       }, [popoverVisible])
       const renderOptions = useMemo(
         () => ({
+          tagAboveImage: true,
           renderOptions: {
             renderFrom,
             renderDescription
@@ -504,7 +757,8 @@ export const SimpleObject = memo(
           },
           fromOptions: {
             style: {
-              margin: 0
+              margin: 0,
+              fontSize: '0.8rem'
             },
             className: ClassName.ellipsisFont(1)
           },
@@ -514,7 +768,7 @@ export const SimpleObject = memo(
           },
           titleOptions: {
             style: {
-              fontSize: FontSize['14px']
+              fontSize: FontSize['13px']
             },
             titleClassName,
             onTitleClick: () => {
@@ -539,9 +793,11 @@ export const SimpleObject = memo(
           flex
           ref={mergedRef}
           alignItems="center"
-          gap={10}
+          gap={4}
         >
-          {renderWhole(renderOptions)}
+          <Content fullWidth fullHeight flex={!metaObject?.coverImgSrc}>
+            {renderWhole(renderOptions)}
+          </Content>
           <div
             style={{
               marginLeft: 'auto',
@@ -556,7 +812,7 @@ export const SimpleObject = memo(
                 onChange={handleClickCheckBox}
               />
             ) : isAddingObject ? (
-              <Icon onClick={() => onAddObject?.(metaObjectId)} size={18} name="park-plus" className={ClassName.circleButton()}></Icon>
+              <Icon onClick={() => onAddObject?.(metaObjectId)} size={16} name="park-plus" className={ClassName.circleButton(3)}></Icon>
             ) : (
               <AnimatePopover
                 visible={popoverVisible}
@@ -575,13 +831,13 @@ export const SimpleObject = memo(
                 positions={['right', 'left']}
               >
                 <Icon
-                  size={18}
+                  size={16}
                   fill={iconColor}
                   onClick={e => onIconClick?.(e, togglePopoverVisible) || togglePopoverVisible()}
                   name={iconName}
                   theme={iconTheme}
                   className={css([
-                    ClassName.circleButton(),
+                    ClassName.circleButton(3),
                     {
                       color: iconColor,
                       ':hover': {
@@ -600,7 +856,7 @@ export const SimpleObject = memo(
 )
 
 const titleClassName = css([
-  ClassName.ellipsisFont(1),
+  ClassName.ellipsisFont(2),
   ClassName.title(FontSize['14px']),
   {
     position: 'relative',

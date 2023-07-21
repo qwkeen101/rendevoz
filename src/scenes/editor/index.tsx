@@ -1,17 +1,13 @@
-import { Content, Icon } from '@/components'
+import { Content } from '@/components'
 import { Editor, GlobalDragOverlayInstance, ReactEditor } from '@/core'
-import { CustomEditor, IEditorInstance } from '~/typings'
+import { EditorProps } from '~/typings'
 import TabTitle from '@/components/layout/TabTitle'
-import { FC, useEffect, useState } from 'react'
-import ClassName from '@/styles/classNames'
-import { ObjectStore, globalStore } from '@/stores'
+import { FC, useState } from 'react'
+import { globalStore, ObjectStore } from '@/stores'
 import { GlobalTranslateInstance } from '@/core/global/translate/GlobalTranslatePanel'
 import { GlobalSearchInstance } from '@/core/global/GlobalSearchPanel'
 import { objectIdToMetaObjectIdMapAtom } from '@/stores/meta.store'
-import { EditorProps } from '@/core/editor/Editor'
-import { waitFor } from '@/utils/functions'
-import { createPortal } from 'react-dom'
-import { useToggle } from '@/hooks'
+
 
 const EditorPage: FC<
   {
@@ -24,47 +20,10 @@ const EditorPage: FC<
   } & EditorProps
 > = ({ noteId, id, onInstanceInitialized, disableTitle, onTitleChange, defaultReadOnly = false, readonly: outReadOnly, ...rest }) => {
   const [title, setTitle] = useState('Untitled')
-  const [readOnly, toggleReadOnly] = useToggle(defaultReadOnly)
-  const [editor, setEditor] = useState<CustomEditor>()
-  const [instance, setInstance] = useState<IEditorInstance>()
 
-  const editorNode = editor && ReactEditor.toDOMNode(editor, editor).closest("[role='editor-container']")
-
-  useEffect(() => {
-    if (outReadOnly !== undefined) {
-      toggleReadOnly(outReadOnly)
-    }
-  }, [outReadOnly])
   return (
     <Content fullWidth fullHeight flex centered>
       {!disableTitle && <TabTitle title={title} icon="park-notes" />}
-      {editorNode &&
-        createPortal(
-          <>
-            <Icon
-              name={readOnly ? 'park-edit' : 'park-book-open'}
-              onClick={toggleReadOnly}
-              className={ClassName.circleButton()}
-              size={18}
-              containerStyle={{ position: 'absolute', top: 30, right: 30, zIndex: 10 }}
-            />
-            <Icon
-              name={'park-find'}
-              onClick={() => instance?.toggleSearch?.()}
-              className={ClassName.circleButton()}
-              size={18}
-              containerStyle={{ position: 'absolute', top: 70, right: 30, zIndex: 10 }}
-            />
-            <Icon
-              name={'park-label'}
-              onClick={() => instance?.toggleLabel?.()}
-              className={ClassName.circleButton()}
-              size={18}
-              containerStyle={{ position: 'absolute', top: 110, right: 30, zIndex: 10 }}
-            />
-          </>,
-          editorNode
-        )}
       <div
         style={{
           width: 0,
@@ -78,7 +37,8 @@ const EditorPage: FC<
           id={id}
           noteId={noteId}
           showToolbar={rest.showToolbar ?? true}
-          readonly={readOnly}
+          readonly={outReadOnly}
+          defaultReadOnly={defaultReadOnly}
           on={event => {
             if (rest.on) {
               rest.on(event)
@@ -135,18 +95,16 @@ const EditorPage: FC<
                 break
               }
               case 'highlightRemove': {
-                ObjectStore('noteLabel').deleteOneById(event.highlightId, { silent: true, force: true })
+                ObjectStore('noteLabel').deleteOneById(event.highlightId, {
+                  silent: true,
+                  force: true
+                })
               }
             }
           }}
-          onInstanceIntialized={i => {
+          onInstanceInitialized={i => {
             onInstanceInitialized?.(i)
             rest.onInstanceIntialized?.(i)
-            setInstance(i)
-            waitFor(
-              () => !!i.getSlateEditor?.(),
-              () => setEditor(i.getSlateEditor?.())
-            )
           }}
         />
       </div>

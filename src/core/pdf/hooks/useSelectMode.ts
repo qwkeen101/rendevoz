@@ -1,7 +1,7 @@
-import { atom, useAtom } from 'jotai'
+import { atom, useAtom } from "jotai";
 
-const PdfSelectModeAtom = atom(false)
+const PdfSelectModeAtom = atom(false);
 
-const usePdfSelectMode = () => useAtom(PdfSelectModeAtom)
+const usePdfSelectMode = () => useAtom(PdfSelectModeAtom);
 
-export default usePdfSelectMode
+export default usePdfSelectMode;

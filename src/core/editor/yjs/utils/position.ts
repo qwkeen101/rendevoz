@@ -1,11 +1,11 @@
-import { BasePoint, BaseRange, Node, Text } from 'slate';
-import * as Y from 'yjs';
-import { InsertDelta, RelativeRange, TextRange } from '../model/types';
-import { getInsertDeltaLength, yTextToInsertDelta } from './delta';
-import { getSlatePath, getYTarget, yOffsetToSlateOffsets } from './location';
-import { assertDocumentAttachment } from './yjs';
+import { BasePoint, BaseRange, Node, Text } from "slate";
+import * as Y from "yjs";
+import { InsertDelta, RelativeRange, TextRange } from "../model/types";
+import { getInsertDeltaLength, yTextToInsertDelta } from "./delta";
+import { getSlatePath, getYTarget, yOffsetToSlateOffsets } from "./location";
+import { assertDocumentAttachment } from "./yjs";
 
-export const STORED_POSITION_PREFIX = '__slateYjsStoredPosition_';
+export const STORED_POSITION_PREFIX = "__slateYjsStoredPosition_";
 
 export function slatePointToRelativePosition(
   sharedRoot: Y.XmlText,
@@ -20,7 +20,7 @@ export function slatePointToRelativePosition(
 
   if (yTarget) {
     throw new Error(
-      'Slate point points to a non-text element inside sharedRoot'
+      "Slate point points to a non-text element inside sharedRoot"
     );
   }
 
@@ -37,7 +37,7 @@ export function absolutePositionToSlatePoint(
   { type, index, assoc }: Y.AbsolutePosition
 ): BasePoint | null {
   if (!(type instanceof Y.XmlText)) {
-    throw new Error('Absolute position points to a non-XMLText');
+    throw new Error("Absolute position points to a non-XMLText");
   }
 
   const parentPath = getSlatePath(sharedRoot, slateRoot, type);
@@ -163,7 +163,7 @@ function getAbsolutePositionsInTextRange(
 function getAbsolutePositionsInYText(
   absolutePositions: Record<string, Y.AbsolutePosition>,
   yText: Y.XmlText,
-  parentPath = ''
+  parentPath = ""
 ): Record<string, Record<string, Y.AbsolutePosition>> {
   const positions = {
     [parentPath]: getAbsolutePositionsInTextRange(absolutePositions, yText),
@@ -195,7 +195,7 @@ export function getStoredPositionsInDeltaAbsolute(
   const absolutePositions = getStoredPositionsAbsolute(sharedRoot);
 
   const positions = {
-    '': getAbsolutePositionsInTextRange(absolutePositions, yText, {
+    "": getAbsolutePositionsInTextRange(absolutePositions, yText, {
       start: deltaOffset,
       end: deltaOffset + getInsertDeltaLength(delta),
     }),
@@ -220,7 +220,7 @@ export function restoreStoredPositionsWithDeltaAbsolute(
   delta: InsertDelta,
   newDeltaOffset = 0,
   previousDeltaOffset = 0,
-  path = ''
+  path = ""
 ) {
   const toRestore = absolutePositions[path];
 

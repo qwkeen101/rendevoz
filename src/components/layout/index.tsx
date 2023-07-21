@@ -10,6 +10,9 @@ import { SidebarStateAtom } from './sidebar'
 import ClassName from '@/styles/classNames'
 import { ILayoutTab } from '~/typings'
 import { Rendevoz } from '@/core/rendevoz'
+import { getOS } from '@/App'
+import MacTitlebar from '@/components/titlebar/MacTitlebar'
+
 interface LayoutProps {
   sidebar?: React.ReactNode
   children?: React.ReactNode
@@ -96,6 +99,7 @@ const Layout: FC<LayoutProps> = ({ sidebar }) => {
     // }
     return setting.background.backgroundImage
   }, [setting.background.backgroundImage])
+  const os = getOS()
   return (
     <Container
       auto
@@ -122,9 +126,16 @@ const Layout: FC<LayoutProps> = ({ sidebar }) => {
         <title>Rendevoz</title>
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
       </Helmet>
-      <Container auto>
+      {os === 'macos' && <MacTitlebar />}
+      <Container auto style={{ height: 0 }}>
         {sidebar}
-        <Container style={{ marginLeft: sidebarWidth, transition: 'margin-left 0.3s ease-out' }} auto>
+        <Container
+          style={{
+            marginLeft: sidebarWidth,
+            transition: 'margin-left 0.3s ease-out'
+          }}
+          auto
+        >
           {layout && (
             <DockLayout
               ref={layoutRef}

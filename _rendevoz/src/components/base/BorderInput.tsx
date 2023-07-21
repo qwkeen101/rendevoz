@@ -1,37 +1,39 @@
-import { KEY } from '@/consts'
-import ClassName from '@/styles/classNames'
-import { css } from '@emotion/css'
-import { AnimatePresence, motion } from 'framer-motion'
-import { isHotkey } from 'is-hotkey'
-import { CSSProperties, HTMLProps, useEffect, useRef, useState } from 'react'
-import AutosizeTextarea, { TextareaAutosizeProps } from '../custom/input/autosizeTextarea'
-import Colors from '@/consts/colors'
-import { useUpdate } from 'react-use'
-import FontSize from '@/consts/font'
-import { useTranslation } from 'react-i18next'
+import { KEY } from "@/consts";
+import ClassName from "@/styles/classNames";
+import { css } from "@emotion/css";
+import { AnimatePresence, motion } from "framer-motion";
+import { isHotkey } from "is-hotkey";
+import { CSSProperties, HTMLProps, useEffect, useRef, useState } from "react";
+import AutosizeTextarea, {
+  TextareaAutosizeProps,
+} from "../custom/input/autosizeTextarea";
+import Colors from "@/consts/colors";
+import { useUpdate } from "react-use";
+import FontSize from "@/consts/font";
+import { useTranslation } from "react-i18next";
 
 type BorderInputProps = {
-  onChange?: (v: string) => void
-  placeholder?: string
-  style?: CSSProperties
-  defaultValue?: string
-  textarea?: boolean
-  containerStyle?: CSSProperties
-  autoFocus?: boolean
-  disable?: boolean
-  id?: string
-  withSubmit?: boolean
-  onSubmit?: VoidFunction
-  spellCheck?: 'false' | 'true'
+  onChange?: (v: string) => void;
+  placeholder?: string;
+  style?: CSSProperties;
+  defaultValue?: string;
+  textarea?: boolean;
+  containerStyle?: CSSProperties;
+  autoFocus?: boolean;
+  disable?: boolean;
+  id?: string;
+  withSubmit?: boolean;
+  onSubmit?: VoidFunction;
+  spellCheck?: "false" | "true";
 } & (
   | ({
-      textarea: true
+      textarea: true;
     } & TextareaAutosizeProps)
   | {
-      textarea: false
+      textarea: false;
     }
 ) &
-  HTMLProps<HTMLInputElement>
+  HTMLProps<HTMLInputElement>;
 
 const inputClassName = css({
   padding: '12px 16px',

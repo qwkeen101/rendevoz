@@ -1,12 +1,12 @@
-import { Content } from '@/components/base'
-import Icon from '@/components/base/Icon'
-import getEmoji from '@/utils/emoji'
-import classNames from 'classnames'
-import { FC, useEffect, useLayoutEffect, useState, useTransition } from 'react'
-import styles from './index.module.less'
-import categoriesJson from '@/assets/categories.json?raw'
+import { Content } from "@/components/base";
+import Icon from "@/components/base/Icon";
+import getEmoji from "@/utils/emoji";
+import classNames from "classnames";
+import { FC, useLayoutEffect, useState } from "react";
+import styles from "./index.module.less";
+import categoriesJson from "@/assets/categories.json?raw";
 
-type ICategory = Record<string, string[]>
+type ICategory = Record<string, string[]>;
 type ICategories = {
   Emotion: ICategory
   People: ICategory

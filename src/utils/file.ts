@@ -5,10 +5,15 @@ export const saveFileLocally = (filePath: string, fileName: string) => {
   return ipcInstance.send('saveFile', filePath, fileName)
 }
 
-export const saveBlobLocally = (blob: Blob, name = Id.getStrId(), path?: string, savePath?: 'files' | 'imgs' | 'backup') => {
-  return blob.arrayBuffer().then(arrbuf => {
-    return ipcInstance.send('saveBuffer', arrbuf, name, path, savePath)
-  })
+export const saveBlobLocally = async (
+  blob: Blob,
+  name = Id.getStrId(),
+  path?: string,
+  savePath?: 'files' | 'imgs' | 'backup'
+): Promise<string | undefined> => {
+  const arrBuff = await blob.arrayBuffer()
+  const res = await ipcInstance.send('saveBuffer', arrBuff, name, path, savePath)
+  return res.data
 }
 
 export const getFilenameWithoutExtension = (name: string) => {

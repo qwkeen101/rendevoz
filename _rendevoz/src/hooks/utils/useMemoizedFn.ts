@@ -1,6 +1,6 @@
-import { useMemo, useRef } from 'react'
+import { useMemo, useRef } from "react";
 
-type noop = (this: any, ...args: any[]) => any
+type noop = (this: any, ...args: any[]) => any;
 
 type PickFunction<T extends noop> = (this: ThisParameterType<T>, ...args: Parameters<T>) => ReturnType<T>
 

@@ -18,7 +18,9 @@ const MetaObjectNode: FC<InnerNodeProps> = ({ node: n, setPopoverElements, setNo
   const { expanded } = node
   const { metaObjectId } = node
   const updateNodes = useSetWhiteboardNodes()
-  const { renderWhole, metaObject, renderInline } = useRenderObject({ metaObjectId: metaObjectId! })
+  const { renderWhole, metaObject, renderInline } = useRenderObject({
+    metaObjectId: metaObjectId!
+  })
   const hasSize = node.width && node.height
   const [contentMinHeight, setContentMinHeight] = useState(0)
   const flow = useFlow()
@@ -127,6 +129,7 @@ const MetaObjectNode: FC<InnerNodeProps> = ({ node: n, setPopoverElements, setNo
       }
     }
   }, [metaObject?.type])
+
   useUpdateEffect(() => {
     if (expanded !== undefined) {
       console.log('update nodes expand')
@@ -182,7 +185,12 @@ const MetaObjectNode: FC<InnerNodeProps> = ({ node: n, setPopoverElements, setNo
       tagsOptions: {
         containerClassName: hasSize
           ? css([
-              { '> *': { fontSize: `max(${FontSize['11px']}, 3cqmax) !important` }, gap: 'max(1.5cqmax, 0.3rem) !important' },
+              {
+                '> *': {
+                  fontSize: `max(${FontSize['11px']}, 3cqmax) !important`
+                },
+                gap: 'max(1.5cqmax, 0.3rem) !important'
+              },
               hasImage
                 ? {
                     '> *': {
@@ -202,13 +210,26 @@ const MetaObjectNode: FC<InnerNodeProps> = ({ node: n, setPopoverElements, setNo
   )
   const hasImageRenderer = () => (
     <Content fullHeight fullWidth>
-      <div style={{ width: '100%', maxHeight: `calc(100% - ${contentMinHeight}px)`, height: '100%', overflow: 'hidden' }}>
+      <div
+        style={{
+          width: '100%',
+          maxHeight: `calc(100% - ${contentMinHeight}px)`,
+          height: '100%',
+          overflow: 'hidden'
+        }}
+      >
         <div style={{ width: '100%', paddingBottom: '100%' }}></div>
       </div>
       <img
         draggable={false}
         src={metaObject?.coverImgSrc}
-        style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }}
+        style={{
+          position: 'absolute',
+          inset: 0,
+          width: '100%',
+          height: '100%',
+          objectFit: 'cover'
+        }}
       />
       <div
         ref={wholeContainerRef}
@@ -234,7 +255,8 @@ const MetaObjectNode: FC<InnerNodeProps> = ({ node: n, setPopoverElements, setNo
       ellipsisLine: 1000,
       containerStyle: {
         padding: 8,
-        width: '100%'
+        minWidth: '100%',
+        maxWidth: '100%'
       }
     })
 

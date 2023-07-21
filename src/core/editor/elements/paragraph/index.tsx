@@ -1,8 +1,8 @@
-import { FC, memo } from 'react'
-import { RenderElementProps } from 'slate-react'
+import { FC, memo } from "react";
+import { RenderElementProps } from "slate-react";
 
 const Paragraph: FC<RenderElementProps> = memo(({ children }) => {
-  return <p>{children}</p>
-})
+  return <p>{children}</p>;
+});
 
-export default Paragraph
+export default Paragraph;

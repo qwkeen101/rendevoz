@@ -1,4 +1,4 @@
-import * as React from 'react'
+import * as React from "react";
 
 /**
  * Helper to remove plumbing involved with adding and removing an event listener
@@ -15,22 +15,23 @@ export default function useEventListener<T extends EventListener>(
   element: Window | Node = window,
   options: AddEventListenerOptions = {}
 ) {
-  const savedHandler = React.useRef<T>()
-  const { capture, passive, once } = options
+  const savedHandler = React.useRef<T>();
+  const { capture, passive, once } = options;
 
   React.useEffect(() => {
-    savedHandler.current = handler
-  }, [handler])
+    savedHandler.current = handler;
+  }, [handler]);
 
   React.useEffect(() => {
-    const isSupported = element?.addEventListener
+    const isSupported = element?.addEventListener;
     if (!isSupported) {
-      console.error('not support', element)
-      return
+      console.error("not support", element);
+      return;
     }
-    const eventListener: EventListener = event => savedHandler.current?.(event)
-    const opts = { capture, passive, once }
-    element.addEventListener(eventName, eventListener, opts)
-    return () => element.removeEventListener(eventName, eventListener, opts)
-  }, [eventName, element, capture, passive, once])
+    const eventListener: EventListener = (event) =>
+      savedHandler.current?.(event);
+    const opts = { capture, passive, once };
+    element.addEventListener(eventName, eventListener, opts);
+    return () => element.removeEventListener(eventName, eventListener, opts);
+  }, [eventName, element, capture, passive, once]);
 }

@@ -1,7 +1,7 @@
-import { Event } from '..'
+import { Event } from "..";
 
 interface JumpToHighlightEvent {
-  area: HighlightArea
+  area: HighlightArea;
 }
 
 interface JumpToDestEvent {

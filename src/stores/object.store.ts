@@ -1,6 +1,6 @@
 import { GlobalEventEmitter } from '@/events'
 import useDb from '@/hooks/stores/useDb'
-import { Atom, atom, PrimitiveAtom, useAtom } from 'jotai'
+import { Atom, atom, PrimitiveAtom } from 'jotai'
 import { atomFamily, selectAtom } from 'jotai/utils'
 import { useMemo } from 'react'
 import {
@@ -22,10 +22,10 @@ import {
   IWhiteboardEdge,
   IWhiteboardNode,
   MetaObject
-} from '~/typings'
+} from 'rendevoz'
 import { globalStore, MetaStore, ObjectStore } from '.'
 import BaseStore, { initializeLocalStore } from './base.store'
-import { metaObjectsAtom, objectIdToMetaObjectIdMapAtom, tagToMetaObjectIdsMapAtom } from './meta.store'
+import { metaObjectsAtom, objectIdToMetaObjectIdMapAtom, tagToMetaObjectIdsMapAtom, TypeToRegisteredMetaObject } from './meta.store'
 import { IStore } from './store.type'
 import { useGlobalAtomValue } from '@/hooks'
 import Id from '@/utils/id'
@@ -126,26 +126,36 @@ const createObjectStore = <T extends keyof ObjectFamily, V extends ObjectFamily[
     },
     addOneWithMeta: async (n, opts) => {
       // right here we add meta manually
-      const obj = await localStore.addOne(n, { ...opts, preventAddMeta: true, silent: true })
+      const obj = await localStore.addOne(n, {
+        ...opts,
+        preventAddMeta: true,
+        silent: true
+      })
       let meta: MetaObject
-      if (opts?.showMetaModal) {
-        meta = (await GlobalEventEmitter().emitWithCallback('global', {
-          type: 'globalNeedAddMetaObject',
-          data: {
-            currentObject: {
-              type: obj.specType,
-              objectId: obj.id,
-              name: n.name || n.title || 'Unnamed Object',
-              ...opts.currentMeta
+      try {
+        if (opts?.showMetaModal) {
+          const registeredDefaultName = TypeToRegisteredMetaObject.get(obj.specType)?.defaultName
+          meta = (await GlobalEventEmitter().emitWithCallback('global', {
+            type: 'globalNeedAddMetaObject',
+            data: {
+              currentObject: {
+                type: obj.specType,
+                objectId: obj.id,
+                name: n.name || n.title || registeredDefaultName || 'Unnamed Object',
+                ...opts.currentMeta
+              }
             }
-          }
-        })) as MetaObject
-      } else {
-        meta = await MetaStore.addMetaObject({ type: obj.specType, objectId: obj.id, ...opts?.currentMeta }, opts?.silent)
-      }
-      return {
-        one: obj,
-        meta
+          })) as MetaObject
+        } else {
+          meta = await MetaStore.addMetaObject({ type: obj.specType, objectId: obj.id, ...opts?.currentMeta }, opts?.silent)
+        }
+        return {
+          one: obj,
+          meta
+        }
+      } catch (e) {
+        console.log('error')
+        ObjectStore(obj.specType).deleteOneById(obj.id, { force: true, silent: true })
       }
     },
     updateOne: (n, opts) => {
@@ -372,7 +382,14 @@ const createVideoLabelStore = () => {
         console.log(obj, labelMeta)
         if (labelMeta) {
           if (labelMeta.name !== obj.name || labelMeta.description !== obj.description) {
-            MetaStore.updateMetaObject({ id: labelMeta.id, name: obj.name || 'Unnamed Video Label', description: obj.description }, true)
+            MetaStore.updateMetaObject(
+              {
+                id: labelMeta.id,
+                name: obj.name || 'Unnamed Video Label',
+                description: obj.description
+              },
+              true
+            )
           }
         }
       }

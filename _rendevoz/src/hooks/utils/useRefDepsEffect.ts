@@ -1,6 +1,12 @@
-import { useRef, useEffect, RefObject, EffectCallback, DependencyList } from 'react'
+import {
+  DependencyList,
+  EffectCallback,
+  RefObject,
+  useEffect,
+  useRef,
+} from "react";
 
-export const useRefDepsEffect = createRefDepsHook(useEffect)
+export const useRefDepsEffect = createRefDepsHook(useEffect);
 
 type UseEffectLike = (effect: EffectCallback, deps?: DependencyList) => void
 

@@ -1,41 +1,41 @@
-import { globalStore } from '@/stores'
-import { request } from '@/utils/request'
-import { userAtom } from './login.service'
+import { globalStore } from "@/stores";
+import { request } from "@/utils/request";
+import { userAtom } from "./login.service";
 
-const localTranslateInterface = 'http://localhost:9000/translate'
-const remoteTranslateInterface = 'https://api.rendevoz.com/translate'
+const localTranslateInterface = "http://localhost:9000/translate";
+const remoteTranslateInterface = "https://api.rendevoz.com/translate";
 const TranslateService = {
-  translate: async (query: string, to = 'zh', from?: string) => {
+  translate: async (query: string, to = "zh", from?: string) => {
     const result = await request<{
       result: {
-        trans: string
-        orig: string
-      }[]
-      monthlyTranslateNum: number
-      totalTranslateNum: number
-      monthlyTranslateUsed: number
-      totalTranslateUsed: number
+        trans: string;
+        orig: string;
+      }[];
+      monthlyTranslateNum: number;
+      totalTranslateNum: number;
+      monthlyTranslateUsed: number;
+      totalTranslateUsed: number;
     }>(remoteTranslateInterface, {
       params: {
         query,
         to,
-        from
+        from,
       },
-      method: 'GET'
-    })
-    const user = globalStore.get(userAtom)
+      method: "GET",
+    });
+    const user = globalStore.get(userAtom);
     if (user) {
-      const d = result.data
+      const d = result.data;
       globalStore.set(userAtom, {
         ...user,
         totalTranslateNum: d.totalTranslateNum,
         monthlyTranslateNum: d.monthlyTranslateNum,
         monthlyTranslateUsed: d.monthlyTranslateUsed,
-        totalTranslateUsed: d.totalTranslateUsed
-      })
+        totalTranslateUsed: d.totalTranslateUsed,
+      });
     }
-    return result.data
-  }
-}
+    return result.data;
+  },
+};
 
-export default TranslateService
+export default TranslateService;

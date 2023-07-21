@@ -1,15 +1,15 @@
-import { Colors, FontSize } from '@/consts'
-import { css } from '@emotion/css'
+import { Colors, FontSize } from "@/consts";
+import { css } from "@emotion/css";
 
 export const ellipsisFont = (line: number) =>
   css({
-    textOverflow: 'ellipsis',
-    display: '-webkit-box',
+    textOverflow: "ellipsis",
+    display: "-webkit-box",
     WebkitLineClamp: `${line}`,
-    WebkitBoxOrient: 'vertical',
-    overflow: 'hidden',
-    wordBreak: 'break-all'
-  })
+    WebkitBoxOrient: "vertical",
+    overflow: "hidden",
+    wordBreak: "break-all",
+  });
 
 export const defaultFont = (fontSize = FontSize['14px'], fontWeight = 400) =>
   css({

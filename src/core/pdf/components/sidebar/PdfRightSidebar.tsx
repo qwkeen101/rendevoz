@@ -17,7 +17,12 @@ const PdfRightSidebar = () => {
         width: pdfBarState.rightBarWidth,
         height: '100%'
       }}
-      onResizeStop={(e, dir, ele) => setPdfBarState(s => ({ ...s, rightBarWidth: ele.getBoundingClientRect().width }))}
+      onResizeStop={(e, dir, ele) =>
+        setPdfBarState(s => ({
+          ...s,
+          rightBarWidth: ele.getBoundingClientRect().width
+        }))
+      }
       maxWidth={500}
       minWidth={200}
       enable={{

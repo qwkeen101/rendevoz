@@ -1,6 +1,7 @@
 import { IIconAllProps } from '@icon-park/react/es/all'
 import React from 'react'
 import * as IconMap from './map'
+
 function toPascalCase(val: string): string {
   return val.replace(/(^\w|-\w)/g, c => c.slice(-1).toUpperCase())
 }

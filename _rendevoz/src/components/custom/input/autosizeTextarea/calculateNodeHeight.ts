@@ -1,4 +1,4 @@
-import { SizingData } from './getSizingData'
+import {SizingData} from './getSizingData'
 import forceHiddenStyles from './forceHiddenStyles'
 
 // TODO: use labelled tuples once they are avaiable:

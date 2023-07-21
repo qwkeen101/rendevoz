@@ -1,4 +1,4 @@
-import { Content, Icon, Modal, AnimatePopover } from '@/components'
+import { AnimatePopover, Content, Icon, Modal } from '@/components'
 import CollectionForm from '@/components/form/CollectionForm'
 import useCollectionStore, { collectionsAtom } from '@/stores/collection.store'
 import { globalStore } from '@/stores'
@@ -131,10 +131,8 @@ const SidebarCollectionItem: FC<ISidebarItem> = memo(({ id, parentId, parentType
           alignItems="center"
           justifyContent="space-between"
           className={css([
-            ClassName.flatButton(),
+            ClassName.flatButton(4, '3px 8px'),
             {
-              padding: '3px 2px',
-              margin: 2,
               paddingLeft: 14,
               paddingRight: 5
             },
@@ -156,14 +154,14 @@ const SidebarCollectionItem: FC<ISidebarItem> = memo(({ id, parentId, parentType
             />
             {collection && (
               <IconNameItem
-                style={{ fontSize: FontSize['12px'] }}
+                style={{ fontSize: FontSize['13px'] }}
                 name={collection.name || 'Unnamed Collection'}
                 color={collection.color}
                 icon={collection.icon || 'park-folder-close'}
               />
             )}
           </Content>
-          {childrenLength ? childrenLength : undefined}
+          {childrenLength ? <div className={ClassName.description(FontSize['13px'])}>{childrenLength}</div> : undefined}
         </Content>
       </AnimatePopover>
       <AnimatePresence>

@@ -1,12 +1,11 @@
-import { useTheme, useToggle } from '@/hooks'
-import { CSSProperties, FC, useEffect, useState } from 'react'
-import Icon from './Icon'
-import { Content } from '.'
+import { useTheme, useToggle } from "@/hooks";
+import { CSSProperties, FC } from "react";
+import { Content } from ".";
 
 interface ReadMoreProps {
-  textLength?: number
-  children: React.ReactNode
-  style?: CSSProperties
+  textLength?: number;
+  children: React.ReactNode;
+  style?: CSSProperties;
 }
 const ReadMore: FC<ReadMoreProps> = ({ children, textLength = 150, style }) => {
   const text = children as string

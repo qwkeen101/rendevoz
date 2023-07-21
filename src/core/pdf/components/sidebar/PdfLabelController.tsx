@@ -15,6 +15,8 @@ import { dividerClazz } from '../floatBar/Search'
 import BorderInput from '@/components/base/BorderInput'
 import { atom, useAtom } from 'jotai'
 import fuzzysort from 'fuzzysort'
+import usePdfBarState from '@/core/pdf/hooks/usePdfBarState'
+import { Virtualizer } from '@tanstack/react-virtual'
 
 const PdfLabelSearchAtom = atom<{
   searchInput?: string
@@ -27,9 +29,21 @@ const PdfLabelController = () => {
   const [groupedLabel, setGroupedLabel] = useState<Record<number, IPdfLabel[]>>({})
   const [sortMode, setSortMode] = useState<'createTime' | 'page'>('page')
   const [labelSearch, setLabelSearch] = useAtom(PdfLabelSearchAtom)
+  const [pdfBarState, setPdfBarState] = usePdfBarState()
+  const [currentHighlightLabel, setCurrentHighlightLabel] = useState<number>()
   const { t } = useTranslation()
+  const instance = usePdfInstance()
+  const virtualizerRef = useRef<Virtualizer<HTMLDivElement, Element>>()
+  instance.jumpToLabelInSidebar = id => {
+    setPdfBarState(s => ({ ...s, rightBarActive: 'label', showRightBar: true }))
+    const indexOfLabel = Object.values(groupEntries).findIndex(i => i[1].some(o => o.id === id))
+    virtualizerRef.current?.scrollToIndex(indexOfLabel)
+    setCurrentHighlightLabel(id)
+    setTimeout(() => {
+      setCurrentHighlightLabel(undefined)
+    }, 3000)
+  }
   useEffect(() => {
-    console.log(labelIds)
     if (labelIds?.length) {
       const action = async () => {
         const labels = (
@@ -111,6 +125,7 @@ const PdfLabelController = () => {
         placeholder={t('general.search')}
       ></BorderInput>
       <VirtualList
+        ref={virtualizerRef}
         style={{ width: '100%', height: '100%' }}
         estimateSize={200}
         items={sortMode === 'page' ? groupEntries : []}
@@ -126,12 +141,19 @@ const PdfLabelController = () => {
                 margin: '6px auto 0px'
               }}
             >
-              <span style={{ display: 'inline-block', padding: '0px 10px', position: 'relative' }} className={dividerClazz}>
+              <span
+                style={{
+                  display: 'inline-block',
+                  padding: '0px 10px',
+                  position: 'relative'
+                }}
+                className={dividerClazz}
+              >
                 {group[0]}
               </span>
             </div>
             {group[1]?.map(i => (
-              <Label id={i.id} key={i.id} />
+              <Label id={i.id} key={i.id} highlight={i.id === currentHighlightLabel} />
             ))}
           </Content>
         )}
@@ -140,7 +162,7 @@ const PdfLabelController = () => {
   )
 }
 
-const Label = ({ id }: { id: number }) => {
+const Label = ({ id, highlight }: { id: number; highlight: boolean }) => {
   const { label, labelMeta, renderName, renderPopover, renderAttachment, renderDescription, setDraggingDetails } = useRenderLabel({
     objectId: id,
     type: 'pdfLabel'
@@ -149,6 +171,7 @@ const Label = ({ id }: { id: number }) => {
   const instance = usePdfInstance()
   const [showMore, toggleShowMore] = useToggle(false)
   const { t } = useTranslation()
+  const containerRef = useRef<HTMLDivElement>(null)
   useEffect(() => {
     if (pdfLabel && pdfLabel.documentId) {
       setDraggingDetails({
@@ -160,9 +183,24 @@ const Label = ({ id }: { id: number }) => {
       })
     }
   }, [pdfLabel])
+  useEffect(() => {
+    const container = containerRef.current
+    if (highlight && container) {
+      console.log(container)
+      container.style.border = `1px solid ${Colors.Emphasis.Emphasis}`
+      container.style.borderRadius = '6px'
+      container.scrollIntoView({
+        block: 'center'
+      })
+      return () => {
+        container.style.border = 'unset'
+        container.style.borderRadius = '0px'
+      }
+    }
+  }, [highlight])
   if (!label) return null
   return (
-    <Content flex column style={{ padding: 8 }}>
+    <Content flex column style={{ padding: 8 }} ref={containerRef}>
       <Content flex style={{ marginBottom: 4 }}>
         {renderName({
           onNameClick: () => instance.jumpToLabel?.(id)
@@ -193,7 +231,13 @@ const Label = ({ id }: { id: number }) => {
           </div>
           {pdfLabel.selectedText.length > 120 && (
             <div
-              style={{ marginLeft: 'auto', textAlign: 'end', fontSize: FontSize['12px'], cursor: 'pointer', width: 'fit-content' }}
+              style={{
+                marginLeft: 'auto',
+                textAlign: 'end',
+                fontSize: FontSize['12px'],
+                cursor: 'pointer',
+                width: 'fit-content'
+              }}
               onClick={toggleShowMore}
             >
               {showMore ? t('editor.show less') : t('editor.show more')}
@@ -202,7 +246,11 @@ const Label = ({ id }: { id: number }) => {
         </div>
       )}
       {renderDescription({ style: { marginTop: 10, width: '100%' } })}
-      {renderAttachment({ style: { marginTop: 16 }, renderAttOnParent: false, renderObjectDetailsOnParent: false })}
+      {renderAttachment({
+        style: { marginTop: 16 },
+        renderAttOnParent: false,
+        renderObjectDetailsOnParent: false
+      })}
     </Content>
   )
 }

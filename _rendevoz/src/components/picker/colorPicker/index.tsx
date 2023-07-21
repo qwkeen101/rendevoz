@@ -1,17 +1,17 @@
-import { CSSProperties, FC, memo } from 'react'
-import * as material from 'material-colors'
-import { Content } from '../../base'
-import { css } from '@emotion/css'
-import FontSize from '@/consts/font'
+import { CSSProperties, FC, memo } from "react";
+import * as material from "material-colors";
+import { Content } from "../../base";
+import { css } from "@emotion/css";
+import FontSize from "@/consts/font";
 
 interface ColorPickerProps {
-  colors?: string[][]
-  onPick: (color: string) => void
-  enableMore?: boolean
-  isFont?: boolean
-  enableDefault?: boolean
-  disableLinear?: boolean
-  text?: string
+  colors?: string[][];
+  onPick: (color: string) => void;
+  enableMore?: boolean;
+  isFont?: boolean;
+  enableDefault?: boolean;
+  disableLinear?: boolean;
+  text?: string;
 }
 export const Colors: string[][] = [
   [material.red['900'], material.red['700'], material.red['500'], material.red['300'], material.red['100']],

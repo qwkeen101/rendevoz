@@ -1,5 +1,5 @@
 import React from 'react'
-import { DockContext, DockContextType, DropDirection, PanelData, TabData, TabGroup } from './DockData'
+import { DockContext, DockContextType, DropDirection, PanelData, TabData } from './DockData'
 import * as DragManager from './dragdrop/DragManager'
 import { DragDropDiv } from './dragdrop/DragDropDiv'
 import { DockTabBar } from './DockTabBar'

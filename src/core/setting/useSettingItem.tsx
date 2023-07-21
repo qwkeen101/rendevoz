@@ -1,8 +1,5 @@
 const useSettingItem = () => {
+  const renderSwitchItem = () => {};
+};
 
-  const renderSwitchItem = () => {
-    
-  }
-}
-
-export default useSettingItem
+export default useSettingItem;

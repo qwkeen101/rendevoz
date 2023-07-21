@@ -1,21 +1,21 @@
-import useLatest from '@/hooks/utils/useLatest'
-import * as React from 'react'
+import useLatest from "@/hooks/utils/useLatest";
+import * as React from "react";
 
 export const useWindowResizeListener = (listener: (event: UIEvent) => any) => {
-  const latestListener = useLatest(listener)
+  const latestListener = useLatest(listener);
 
   React.useLayoutEffect(() => {
-    const handler: typeof listener = event => {
-      latestListener.current(event)
-    }
+    const handler: typeof listener = (event) => {
+      latestListener.current(event);
+    };
 
-    window.addEventListener('resize', handler)
+    window.addEventListener("resize", handler);
 
     return () => {
-      window.removeEventListener('resize', handler)
-    }
-  }, [])
-}
+      window.removeEventListener("resize", handler);
+    };
+  }, []);
+};
 
 // basically Exclude<React.ClassAttributes<T>["ref"], string>
 type UserRef<T> = ((instance: T | null) => void) | React.RefObject<T> | null | undefined

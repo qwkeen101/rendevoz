@@ -1,13 +1,17 @@
-import React, { ReactElement, useRef } from 'react';
-import MouseSelection, { MouseSelectionProps } from '../components/SelectionContainer';
-import { useSelectionLogic } from './useSelectionLogic';
-import { MouseSelectionRef, OnSelectionChange } from '../utils/types';
+import React, { ReactElement, useRef } from "react";
+import MouseSelection, {
+  MouseSelectionProps,
+} from "../components/SelectionContainer";
+import { useSelectionLogic } from "./useSelectionLogic";
+import { MouseSelectionRef, OnSelectionChange } from "../utils/types";
 
 interface UseSelectionContainerResult {
   /**
    * method to cancel current selecting
    */
-  cancelCurrentSelection: ReturnType<typeof useSelectionLogic>['cancelCurrentSelection'];
+  cancelCurrentSelection: ReturnType<
+    typeof useSelectionLogic
+  >["cancelCurrentSelection"];
   /**
    * ReactNode which displays mouse selection. It should be rendered at the top of container of elements we want to select
    */
@@ -51,8 +55,10 @@ export function useSelectionContainer<T extends HTMLElement>({
     eventsElement,
   });
 
-  const DragSelection = () => <MouseSelection ref={containerRef} {...selectionProps} />;
-  DragSelection.displayName = 'DragSelection';
+  const DragSelection = () => (
+    <MouseSelection ref={containerRef} {...selectionProps} />
+  );
+  DragSelection.displayName = "DragSelection";
 
   return {
     cancelCurrentSelection,

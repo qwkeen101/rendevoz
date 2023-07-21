@@ -1,10 +1,10 @@
-import { Children, cloneElement, FC, ReactElement, ReactNode } from 'react'
-import TimelineItem from './TimelineItem'
+import { Children, cloneElement, FC, ReactElement, ReactNode } from "react";
+import TimelineItem from "./TimelineItem";
 
 interface TimelineProps {
-  children?: ReactNode
-  iconSize?: number
-  iconColor?: string
+  children?: ReactNode;
+  iconSize?: number;
+  iconColor?: string;
 }
 
 interface ITimeline extends FC<TimelineProps> {

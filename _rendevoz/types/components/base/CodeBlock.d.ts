@@ -1,5 +1,6 @@
-import { CSSProperties } from 'react';
-import { RefEditorInstance } from '@uiw/react-monacoeditor';
+import { CSSProperties } from "react";
+import { RefEditorInstance } from "@uiw/react-monacoeditor";
+
 export declare const CodeLanguageData: string[];
 interface CodeBlockProps {
     onChange: (value: string) => void;

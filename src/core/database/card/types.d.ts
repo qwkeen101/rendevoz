@@ -1,15 +1,15 @@
-import { ReactElement } from 'react'
-import { MetaObject } from '~/typings/data'
+import { ReactElement } from "react";
+import { MetaObject } from "~/typings/data";
 
 export interface MetaDatabaseCardProps {
-  metaObject: MetaObject
+  metaObject: MetaObject;
   renderTitleAndDescription: ({
     title,
     description,
-    onTitleClick
+    onTitleClick,
   }: {
-    title?: string
-    description?: string
-    onTitleClick?: VoidFunction
-  }) => ReactElement
+    title?: string;
+    description?: string;
+    onTitleClick?: VoidFunction;
+  }) => ReactElement;
 }

@@ -49,13 +49,7 @@ const NoteNode: FC<InnerNodeProps> = ({ node: n, onNameChange }) => {
           '.ParagraphBlock': {
             maxWidth: '100%'
           },
-          // '.BlockCommon': {
-          //   '* span,textarea, a': {
-          //     fontSize: '3cqmax !important'
-          //   }
-          // },
-          width: '100% !important',
-          // fontSize: '3cqmax'
+          width: '100% !important'
         })}
         noteId={node.noteId}
         id={editorId}

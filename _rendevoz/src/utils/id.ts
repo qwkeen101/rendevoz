@@ -1,6 +1,6 @@
-import { SnowflakeIdv1 } from './snowflakeIdv1'
+import { SnowflakeIdv1 } from "./snowflakeIdv1";
 
-const generator = new SnowflakeIdv1({ workerId: 1, workerIdBitLength: 1 })
+const generator = new SnowflakeIdv1({ workerId: 1, workerIdBitLength: 1 });
 function getNumberId() {
   return generator.NextNumber()
 }

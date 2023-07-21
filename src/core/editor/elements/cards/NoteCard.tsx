@@ -1,10 +1,9 @@
-import { cloneElement, ReactNode } from 'react'
-import { CustomElement } from '../../../../../typings/editor/types'
-import { CardElement } from '../../../../../typings/editor/types/baseTypes'
-import EmbeddedCard from './EmbeddedCard'
-import LineCard from './LineCard'
-import SlimCard from './SlimCard'
-import WideCard from './WideCard'
+import { cloneElement, ReactNode } from "react";
+import { CustomElement } from "../../../../../typings/editor/types";
+import EmbeddedCard from "./EmbeddedCard";
+import LineCard from "./LineCard";
+import SlimCard from "./SlimCard";
+import WideCard from "./WideCard";
 
 const NoteCard = ({
   children,
@@ -12,32 +11,32 @@ const NoteCard = ({
   pictureUrl,
   type,
   noteId,
-  element
+  element,
 }: {
-  children: ReactNode
-  main: ReactNode
-  pictureUrl?: string
-  noteId?: number
-  type?: 'note' | 'pdf'
-  element: CustomElement & { cardType?: string }
+  children: ReactNode;
+  main: ReactNode;
+  pictureUrl?: string;
+  noteId?: number;
+  type?: "note" | "pdf";
+  element: CustomElement & { cardType?: string };
 }) => {
-  let card
-  const cardType = element?.cardType || 'line'
+  let card;
+  const cardType = element?.cardType || "line";
   switch (cardType) {
-    case 'slim':
-      card = <SlimCard />
-      break
-    case 'wide':
-      card = <WideCard />
-      break
-    case 'line':
-      card = <LineCard />
-      break
-    case 'embedded':
-      card = <EmbeddedCard />
-      break
+    case "slim":
+      card = <SlimCard />;
+      break;
+    case "wide":
+      card = <WideCard />;
+      break;
+    case "line":
+      card = <LineCard />;
+      break;
+    case "embedded":
+      card = <EmbeddedCard />;
+      break;
     default:
-      card = <LineCard />
+      card = <LineCard />;
   }
   return cloneElement(card, {
     slateChildren: children,
@@ -45,8 +44,8 @@ const NoteCard = ({
     pictureUrl,
     type,
     element,
-    noteId
-  })
-}
+    noteId,
+  });
+};
 
-export default NoteCard
+export default NoteCard;

@@ -1,11 +1,10 @@
 import useDb from '@/hooks/stores/useDb'
 import Id from '@/utils/id'
 import { atom } from 'jotai'
-import { Descendant, Node } from 'slate'
+import { Descendant, Element, Node } from 'slate'
 import { INote } from '~/typings/data'
-import { SearchStore, SearchableDocument } from './search.store'
+import { SearchableDocument, SearchStore } from './search.store'
 import { CustomEditor } from '~/typings'
-import { Element } from 'slate'
 import { saveBlobLocally } from '@/utils/file'
 
 export const notesAtom = atom(new Map<number, INote>())
@@ -18,7 +17,7 @@ const createNoteStore = () => {
     await saveBlobLocally(new Blob([JSON.stringify(value)]), String(realId), `note_${realId}.json`).then(res =>
       blobDb.put({
         id: realId,
-        fileUrl: res.data
+        fileUrl: res
       })
     )
     return realId
@@ -34,7 +33,7 @@ const createNoteStore = () => {
         saveBlobLocally(new Blob([JSON.stringify(obj)]), String(id), `note_${id}.json`).then(res => {
           blobDb.put({
             id,
-            fileUrl: res.data
+            fileUrl: res
           })
         })
         return obj as Descendant[]

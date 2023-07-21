@@ -1,10 +1,9 @@
-import * as React from 'react'
-import calculateNodeHeight from './calculateNodeHeight'
-import getSizingData, { noop, SizingData } from './getSizingData'
-import { useWindowResizeListener } from './hooks'
-import useComposedRef from './hooks'
+import * as React from "react";
+import calculateNodeHeight from "./calculateNodeHeight";
+import getSizingData, { noop, SizingData } from "./getSizingData";
+import useComposedRef, { useWindowResizeListener } from "./hooks";
 
-type TextareaProps = React.TextareaHTMLAttributes<HTMLTextAreaElement>
+type TextareaProps = React.TextareaHTMLAttributes<HTMLTextAreaElement>;
 
 type Style = Omit<NonNullable<TextareaProps['style']>, 'maxHeight' | 'minHeight'> & {
   height?: number

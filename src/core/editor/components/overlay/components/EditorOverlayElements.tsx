@@ -1,43 +1,49 @@
-import { WithBorder } from '@/components/base'
-import { CustomEditor } from '~/typings'
-import EditorElementsMenu, { EditorSlashElementsMenu } from '@/core/editor/components/EditorElementsMenu'
-import { EditorOverlayManager } from '../useEditorOverlay'
-import { defaultHandler } from '../../handleAddElementInMenu'
-import useEditorInstance from '@/core/editor/hooks/useEditorInstance'
-import { EditorTypeToElementMap } from '@/core/editor/maps'
+import { WithBorder } from "@/components/base";
+import { CustomEditor } from "~/typings";
+import EditorElementsMenu, {
+  EditorSlashElementsMenu,
+} from "@/core/editor/components/EditorElementsMenu";
+import { EditorOverlayManager } from "../useEditorOverlay";
+import { defaultHandler } from "../../handleAddElementInMenu";
+import useEditorInstance from "@/core/editor/hooks/useEditorInstance";
+import { EditorTypeToElementMap } from "@/core/editor/maps";
 
 const EditorOverlayElements = ({
   editor,
   manager,
-  mode
+  mode,
 }: {
-  editor: CustomEditor
-  manager: EditorOverlayManager
-  mode: 'block' | 'slash'
+  editor: CustomEditor;
+  manager: EditorOverlayManager;
+  mode: "block" | "slash";
 }) => {
-  const instance = useEditorInstance()
+  const instance = useEditorInstance();
 
   const handleElementAdd = (type: string) => {
-    const registered = EditorTypeToElementMap.get(type)
+    const registered = EditorTypeToElementMap.get(type);
     if (registered) {
       if (registered.registerInMenu?.onAddInMenu) {
-        registered.registerInMenu.onAddInMenu({ editor, type, defaultAddHandler: defaultHandler })
-        return
+        registered.registerInMenu.onAddInMenu({
+          editor,
+          type,
+          defaultAddHandler: defaultHandler,
+        });
+        return;
       }
     }
-    defaultHandler(type, instance, mode)
-  }
+    defaultHandler(type, instance, mode);
+  };
   return (
     <>
       <WithBorder>
-        {mode === 'block' ? (
+        {mode === "block" ? (
           <EditorElementsMenu onAddElement={handleElementAdd} />
         ) : (
           <EditorSlashElementsMenu onAddElement={handleElementAdd} />
         )}
       </WithBorder>
     </>
-  )
-}
+  );
+};
 
-export default EditorOverlayElements
+export default EditorOverlayElements;

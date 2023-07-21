@@ -1,20 +1,20 @@
 import {
-  IWebpage,
   IAudio,
-  INote,
-  INoteLabel,
-  INoteBlock,
-  IWebpageLabel,
-  IPdfDocument,
-  IWhiteboard,
-  ILabel,
-  ITag,
   IImage,
+  ILabel,
   ILocalFile,
+  INote,
+  INoteBlock,
+  INoteLabel,
+  IPdfDocument,
+  ITag,
   IVideo,
   IVideoLabel,
-  MetaObject,
-  MetaLink
+  IWebpage,
+  IWebpageLabel,
+  IWhiteboard,
+  MetaLink,
+  MetaObject
 } from './data'
 import { PartialWithId } from './common'
 import { CustomTypes } from './custom'
@@ -75,7 +75,6 @@ export interface IStore<T> {
     one: Partial<T>,
     options?: {
       silent?: boolean
-      overPremium?: boolean
       preventAddMeta?: boolean
     }
   ) => Promise<T>

@@ -4,10 +4,11 @@ import { useMemoizedFn, useMergedRef } from '@/hooks'
 import Zindexes from '@/consts/zindex'
 import { waitFor } from '@/utils/functions'
 import { AnimatePopoverProps } from './AnimatePopover'
+import FontSize from '@/consts/font'
 
 interface ToolTipProps {
   content?: string | ReactNode
-  position?: 'top' | 'bottom'
+  position?: 'top' | 'bottom' | 'right' | 'left'
   style?: CSSProperties
   delay?: number
   disable?: boolean
@@ -20,7 +21,7 @@ interface ToolTipProps {
 }
 
 const ToolTip: FC<PropsWithChildren<ToolTipProps>> = (
-  { content, children, delay = 300, disable, disableDefaultContent, contentTouchable, zIndex, visible, onVisibleChange, parentElement },
+  { content, children, delay = 300, disable, disableDefaultContent, contentTouchable, zIndex, visible, onVisibleChange, parentElement, position },
   ref
 ) => {
   const [open, setOpen] = useState(false)
@@ -119,7 +120,8 @@ const ToolTip: FC<PropsWithChildren<ToolTipProps>> = (
           color: 'white',
           borderRadius: 4,
           lineHeight: 1.2,
-          padding: '2px 4px 4px'
+          padding: '2px 4px 2px',
+          fontSize: FontSize['13px']
         }}
       >
         {content}
@@ -167,12 +169,14 @@ const ToolTip: FC<PropsWithChildren<ToolTipProps>> = (
   return (
     children && (
       <AnimatePopover
-        containerStyle={{ zIndex: zIndex ? String(zIndex) : String(Zindexes.Tooltip) }}
+        containerStyle={{
+          zIndex: zIndex ? String(zIndex) : String(Zindexes.Tooltip)
+        }}
         padding={10}
         content={renderContent()}
         boundaryElement={parentElement || document.body}
         boundaryInset={20}
-        positions={['top', 'bottom', 'left', 'right']}
+        positions={position ? [position] : ['top', 'bottom', 'left', 'right']}
         reposition={true}
         disableNudge
         parentElement={parentElement}

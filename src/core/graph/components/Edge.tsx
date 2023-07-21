@@ -1,4 +1,4 @@
-import { FC, memo, MouseEventHandler, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { FC, memo, MouseEventHandler, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { GraphEdge } from '../types/edge'
 import { line } from 'd3-shape'
 import { getMarkerId } from '../utils/getMarkerId'
@@ -6,12 +6,13 @@ import { MarkerColor } from '@/consts'
 import useGraph from '../hooks/useGraph'
 import { select } from 'd3'
 import { useMemoizedFn } from '@/hooks'
-import { getRadius, TypeToNodeRadius } from './node/Node'
+import { getRadius } from './node/Node'
 import { NodeFakeHiddenOpacity } from '../consts/opacity'
 import { oppositeEdgesMapAtom } from '../hooks/useEdges'
 import { useStore } from 'jotai'
 import Colors from '@/consts/colors'
 import FontSize from '@/consts/font'
+
 interface EdgeProps {
   edge: GraphEdge
 }
@@ -66,7 +67,11 @@ const Edge: FC<EdgeProps> = memo(({ edge }) => {
   useEffect(() => {
     if (textRef.current && graph) {
       const textBound = textRef.current?.getBoundingClientRect()
-      textBound && setRect({ width: textBound?.width / graph.transformScale, height: textBound?.height / graph.transformScale })
+      textBound &&
+        setRect({
+          width: textBound?.width / graph.transformScale,
+          height: textBound?.height / graph.transformScale
+        })
     }
   }, [edge.label, finalPosition])
 
@@ -170,7 +175,10 @@ const Edge: FC<EdgeProps> = memo(({ edge }) => {
       pointerEvents={edge.opacity === 0 ? 'none' : 'auto'}
       cursor="pointer"
       opacity={edge.opacity ?? 1}
-      style={{ transition: 'opacity 0.2s ease', display: edge.opacity === 0 ? 'none' : undefined }}
+      style={{
+        transition: 'opacity 0.2s ease',
+        display: edge.opacity === 0 ? 'none' : undefined
+      }}
     >
       <path
         ref={edgeRef}

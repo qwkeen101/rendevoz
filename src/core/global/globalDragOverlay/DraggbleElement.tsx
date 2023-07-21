@@ -1,7 +1,7 @@
 import { useMemoizedFn } from '@/hooks'
 import { cloneElement, forwardRef, ReactElement, useCallback, useEffect, useRef } from 'react'
 import { GlobalDragOverlayInstance } from '.'
-import { IDraggableElement } from '~/typings/globalInstances/dragDrop'
+import { IDraggableElement } from 'rendevoz'
 
 const DraggableElement = forwardRef<
   HTMLElement,

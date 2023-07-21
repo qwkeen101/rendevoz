@@ -3,7 +3,7 @@
  */
 
 import { ReactElement } from 'react'
-import { IEditorInstance } from './editor'
+import { IEditorInstance } from '.'
 import { GlobalInstances } from './globalInstances'
 import { ILayoutTab, TabData } from './layout'
 import { IPdfInstance } from './pdf'
@@ -12,12 +12,15 @@ import { IWebpageInstance } from './webpage'
 import { EditorEventMap, GlobalEventMap, IEventEmitter, IEventHandler, PdfEventMap } from './event'
 import { NoteStore } from './stores'
 import { SearchStore } from './stores/search.store'
+import { MetaObject } from './data'
+import { InnerComponents, InnerHooks } from './inner'
 
 export type IRendevoz = {
   Actions: typeof Action
   Utils: typeof Utils
   Events: typeof Events
   InnerHooks: typeof InnerHooks
+  InnerComponents: typeof InnerComponents
 }
 
 export type OpenTabOptions<K extends ILayoutTab['type']> = {
@@ -27,9 +30,6 @@ export type OpenTabOptions<K extends ILayoutTab['type']> = {
   >
 }
 
-declare const InnerHooks: {
-  useEditorInstance: () => IEditorInstance
-}
 /**
  * Layout actions Api
  */
@@ -78,6 +78,7 @@ declare const Open: {
   openHome: VoidFunction
   openDatabase: VoidFunction
   openImage: (id: number) => void
+  openSidebarObjectDetails: (metaId: number) => void
   Pdf: {
     openPdf: (id: number) => Promise<IPdfInstance>
     openPdfLabel: (id: number) => Promise<void>
@@ -123,6 +124,20 @@ declare const Notification: {
 
 declare const ActionUtils: {
   uploadFile: () => Promise<File[]>
+  /**
+   * Return local image path of saved image
+   */
+  saveImage: (
+    imageData: string | Blob,
+    options?: {
+      imgName?: string
+      compress: boolean
+    }
+  ) => Promise<string | undefined>
+  /**
+   * Return local image path of saved file
+   */
+  saveFile: (blob: Blob, name?: string, path?: string, saveAt?: 'files' | 'imgs' | 'backup') => Promise<string | undefined>
 }
 /**
  * Actions Api
@@ -174,7 +189,7 @@ declare const Events: {
 }
 
 /**
- * Utils Api
+ * Utils Api for inner states like object and meta-object
  */
 declare const Utils: {
   Object: typeof ObjectUtils
@@ -187,9 +202,10 @@ declare const ObjectUtils: {
 
 declare const MetaUtils: {
   findPathsBetweenTwoMetaObjects: (sourceMetaId: number, targetMetaId: number) => number[][]
+  getTypeName: (type: MetaObject['type']) => string
 }
 
-declare const Store = {
-  NoteStore: () => NoteStore,
+declare const Store: {
+  NoteStore: () => NoteStore
   SearchStore: () => SearchStore
 }

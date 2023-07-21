@@ -1,8 +1,8 @@
-import { atom, useAtom } from 'jotai'
+import { atom, useAtom } from "jotai";
 
-const isDraggingAtom = atom(false)
-const isDraggingDividerAtom = atom(false)
-export const useIsDraggingDivider = () => useAtom(isDraggingDividerAtom)
-const useIsDragging = () => useAtom(isDraggingAtom)
+const isDraggingAtom = atom(false);
+const isDraggingDividerAtom = atom(false);
+export const useIsDraggingDivider = () => useAtom(isDraggingDividerAtom);
+const useIsDragging = () => useAtom(isDraggingAtom);
 
-export default useIsDragging
+export default useIsDragging;

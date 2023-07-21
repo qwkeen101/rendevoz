@@ -14,7 +14,7 @@ import QRCode from 'qrcode'
 import { toast } from 'react-hot-toast'
 import DateFormat from '@/utils/dateFormat'
 
-const FreePlanIncludes = ['最多创建300个实体', '查看实体关系图', '每月最多50次翻译', '全文搜索已有笔记，PDF，网页']
+const FreePlanIncludes = ['最多创建100个实体', '查看实体关系图', '每月最多50次翻译', '全文搜索已有笔记，PDF，网页']
 const ProPlanIncludes = [
   '解锁全部本地功能，无限制使用',
   '每月可使用多达10000次翻译',
@@ -33,7 +33,7 @@ const UpgradePlan = () => {
     qrcodeImgData?: string
     loading?: 'none' | 'getQrcode' | 'loadUserDetails'
   }>({
-    method: 'monthly',
+    method: 'yearly',
     count: 1
   })
   const [upgradeModalVisible, toggleUpgradeModalVisible] = useToggle(false)
@@ -58,45 +58,95 @@ const UpgradePlan = () => {
   }, [upgradeDetails.qrcodeStr])
   useEffect(() => {
     if (upgradeModalVisible === false) {
-      setUpgradeDetails(s => ({ ...s, method: 'monthly', count: 0, qrcodeStr: undefined, qrcodeImgData: undefined, loading: 'none' }))
+      setUpgradeDetails(s => ({
+        ...s,
+        method: 'yearly',
+        count: 1,
+        qrcodeStr: undefined,
+        qrcodeImgData: undefined,
+        loading: 'none'
+      }))
     }
   }, [upgradeModalVisible])
 
   return (
     <Content
-      flex
-      column
       className={ClassName.Background.pseudoBlurContrastBackground}
-      style={{
-        padding: '24px 60px',
-        borderRadius: 10
-      }}
+      flex
+      gap={30}
+      style={{ borderRadius: 12, overflow: 'hidden', padding: 32 }}
     >
-      <Modal noStyle visible={upgradeModalVisible} onClose={toggleUpgradeModalVisible}>
+      <Content flex column style={{ paddingRight: 30, borderRight: `1px solid ${Colors.Background.Border}` }}>
+        <Content
+          flex
+          alignItems="center"
+          justifyContent="space-between"
+          gap={40}
+          style={{
+            paddingBottom: 40,
+            borderBottom: `1px solid ${Colors.Background.Border}`
+          }}
+        >
+          <Content flex column gap={10}>
+            <div className={ClassName.title()}>免费账户</div>
+            <div className={ClassName.description()}>￥0 / 月</div>
+          </Content>
+          <Content flex column gap={6} style={{ width: 250 }}>
+            {FreePlanIncludes.map(i => (
+              <Content flex gap={6} key={i}>
+                <Icon fill={'rgb(34,197,94)'} name="park-check" />
+                <div>{i}</div>
+              </Content>
+            ))}
+          </Content>
+        </Content>
+
+        <Content flex gap={40} alignItems="center" justifyContent="space-between" style={{ paddingTop: 40 }}>
+          <Content flex column gap={10}>
+            <div className={ClassName.title()}>标准账户</div>
+            <Content className={ClassName.description()}>
+              <div>￥15 / 月</div>
+              <div>
+                <span style={{ textDecoration: 'line-through', marginRight: 6 }}>￥158</span>
+                ￥108{' (早鸟特惠) '} / 年{' '}
+              </div>
+            </Content>
+          </Content>
+          <Content flex column gap={6} style={{ width: 250 }}>
+            {ProPlanIncludes.map(i => (
+              <Content flex gap={6} key={i}>
+                <Icon fill={'rgb(34,197,94)'} name="park-check" />
+                <div>{i}</div>
+              </Content>
+            ))}
+            <div style={{ marginTop: 15 }} className={ClassName.description('11px')}>
+              带*为当前版本暂未上线的功能
+            </div>
+          </Content>
+        </Content>
+      </Content>
+      <Content>
         {upgradeDetails.qrcodeStr ? (
-          <Content
-            flex
-            column
-            gap={10}
-            className={ClassName.Background.pseudoBlurContrastBackground}
-            style={{
-              width: 320,
-              padding: '16px 20px',
-              borderRadius: 10
-            }}
-          >
+          <Content flex column gap={10}>
             <Content fullWidth flex justifyContent="space-between">
               <div className={ClassName.title()}>请使用微信扫码支付</div>
               <Icon
                 name="park-close"
                 className={ClassName.circleButton()}
                 onClick={() => {
-                  setUpgradeDetails(s => ({ ...s, qrcodeStr: undefined, qrcodeImgData: undefined }))
+                  setUpgradeDetails(s => ({
+                    ...s,
+                    qrcodeStr: undefined,
+                    qrcodeImgData: undefined
+                  }))
                 }}
               />
             </Content>
             <img
-              style={{ borderRadius: 8, width: '100%', border: `1px solid ${Colors.Background.Border}` }}
+              style={{
+                width: '100%',
+                border: `1px solid ${Colors.Background.Border}`
+              }}
               src={upgradeDetails.qrcodeImgData}
             />
             <Content
@@ -105,7 +155,10 @@ const UpgradePlan = () => {
               className={ClassName.flatButton()}
               onClick={() => {
                 if (user && user.email && user.password) {
-                  setUpgradeDetails(s => ({ ...s, loading: 'loadUserDetails' }))
+                  setUpgradeDetails(s => ({
+                    ...s,
+                    loading: 'loadUserDetails'
+                  }))
                   LoginService.login(user.email, user.password)
                     .then(data => {
                       LoginService.getUserDetails(user.email, data.data.token).then(data => {
@@ -142,29 +195,20 @@ const UpgradePlan = () => {
             </Content>
           </Content>
         ) : (
-          <Content
-            flex
-            column
-            gap={10}
-            className={ClassName.Background.pseudoBlurContrastBackground}
-            style={{
-              width: 360,
-              padding: 20,
-              borderRadius: 10
-            }}
-          >
+          <Content flex column gap={10}>
             <div className={ClassName.title(FontSize['15px'])}>升级为会员</div>
             <div className={ClassName.description()}>订阅方式</div>
             <Content flex gap={6}>
               <Button.IconButton
-                onClick={() => setUpgradeDetails(s => ({ ...s, method: 'monthly' }))}
-                selected={upgradeDetails?.method === 'monthly' || undefined}
-                text="月付"
-              />
-              <Button.IconButton
+                style={{fontWeight: 600}}
                 onClick={() => setUpgradeDetails(s => ({ ...s, method: 'yearly' }))}
                 selected={upgradeDetails?.method === 'yearly' || undefined}
                 text="年付 (-40%)"
+              />
+              <Button.IconButton
+                onClick={() => setUpgradeDetails(s => ({ ...s, method: 'monthly' }))}
+                selected={upgradeDetails?.method === 'monthly' || undefined}
+                text="月付"
               />
             </Content>
             <div className={ClassName.description()}>
@@ -183,7 +227,10 @@ const UpgradePlan = () => {
               textarea={false}
               value={upgradeDetails.count}
               onChange={v => {
-                setUpgradeDetails(s => ({ ...s, count: Number.isSafeInteger(Number(v)) ? Number(v) : s.count }))
+                setUpgradeDetails(s => ({
+                  ...s,
+                  count: Number.isSafeInteger(Number(v)) ? Number(v) : s.count
+                }))
               }}
               style={{ padding: '6px 12px' }}
             ></BorderInput>
@@ -209,7 +256,11 @@ const UpgradePlan = () => {
                 )
                   .then(res => {
                     if (res) {
-                      setUpgradeDetails(s => ({ ...s, qrcodeStr: res, loading: 'none' }))
+                      setUpgradeDetails(s => ({
+                        ...s,
+                        qrcodeStr: res,
+                        loading: 'none'
+                      }))
                     } else {
                       setUpgradeDetails(s => ({ ...s, loading: 'none' }))
                       toast.error('获取微信支付失败！')
@@ -241,59 +292,6 @@ const UpgradePlan = () => {
             </div>
           </Content>
         )}
-      </Modal>
-      <Content
-        flex
-        alignItems="center"
-        justifyContent="space-between"
-        gap={40}
-        style={{
-          borderBottom: `1px solid ${Colors.Background.Border}`,
-          padding: '40px 0px'
-        }}
-      >
-        <Content flex column gap={10}>
-          <div className={ClassName.title()}>免费账户</div>
-          <div className={ClassName.description()}>￥0 / 月</div>
-        </Content>
-        <Content flex column gap={6} style={{ width: 250 }}>
-          {FreePlanIncludes.map(i => (
-            <Content flex gap={6} key={i}>
-              <Icon fill={'rgb(34,197,94)'} name="park-check" />
-              <div>{i}</div>
-            </Content>
-          ))}
-        </Content>
-      </Content>
-
-      <Content flex gap={40} alignItems="center" style={{ padding: '40px 0px' }} justifyContent="space-between">
-        <Content flex column gap={10}>
-          <div className={ClassName.title()}>标准账户</div>
-          <Content flex className={ClassName.description()}>
-            ￥15 / 月或 <span style={{ textDecoration: 'line-through', marginRight: 6 }}>￥158</span>
-            <span>￥108{' (早鸟特惠) '} </span> / 年
-          </Content>
-          <Button.IconButton
-            style={{
-              justifyContent: 'center',
-              border: `1px solid ${Colors.Background.Border}`
-            }}
-            icon="park-arrow-circle-up"
-            text="现在升级"
-            onClick={toggleUpgradeModalVisible}
-          />
-        </Content>
-        <Content flex column gap={6} style={{ width: 250 }}>
-          {ProPlanIncludes.map(i => (
-            <Content flex gap={6} key={i}>
-              <Icon fill={'rgb(34,197,94)'} name="park-check" />
-              <div>{i}</div>
-            </Content>
-          ))}
-          <div style={{ marginTop: 15 }} className={ClassName.description('11px')}>
-            带*为当前版本暂未上线的功能
-          </div>
-        </Content>
       </Content>
     </Content>
   )

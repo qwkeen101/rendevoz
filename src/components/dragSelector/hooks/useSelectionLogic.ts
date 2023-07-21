@@ -1,9 +1,9 @@
-import { RefObject, useCallback, useEffect, useRef } from 'react';
-import throttle from 'lodash.throttle';
-import { MouseSelectionRef, Point, SelectionBox } from '../utils/types';
-import { calculateBoxArea, calculateSelectionBox } from '../utils/boxes';
-import { isSelectionDisabled } from '../utils/utils';
-import { UseSelectionContainerParams } from './useSelectionContainer';
+import { RefObject, useCallback, useEffect, useRef } from "react";
+import throttle from "lodash.throttle";
+import { MouseSelectionRef, Point, SelectionBox } from "../utils/types";
+import { calculateBoxArea, calculateSelectionBox } from "../utils/boxes";
+import { isSelectionDisabled } from "../utils/utils";
+import { UseSelectionContainerParams } from "./useSelectionContainer";
 
 interface UseSelectionLogicResult {
   cancelCurrentSelection: () => void;
@@ -12,7 +12,11 @@ interface UseSelectionLogicResult {
 interface UseSelectionLogicParams<T extends HTMLElement>
   extends Pick<
     UseSelectionContainerParams<T>,
-    'onSelectionChange' | 'onSelectionEnd' | 'onSelectionStart' | 'isEnabled' | 'eventsElement'
+    | "onSelectionChange"
+    | "onSelectionEnd"
+    | "onSelectionStart"
+    | "isEnabled"
+    | "eventsElement"
   > {
   containerRef: RefObject<MouseSelectionRef>;
 }
@@ -33,7 +37,7 @@ export function useSelectionLogic<T extends HTMLElement>({
   onSelectionStart,
   onSelectionEnd,
   isEnabled = true,
-  eventsElement = typeof window !== 'undefined' ? window : undefined,
+  eventsElement = typeof window !== "undefined" ? window : undefined,
 }: UseSelectionLogicParams<T>): UseSelectionLogicResult {
   const startPoint = useRef<null | Point>(null);
   const endPoint = useRef<null | Point>(null);
@@ -46,7 +50,10 @@ export function useSelectionLogic<T extends HTMLElement>({
   const isEnabledRef = useRef(isEnabled);
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  currentSelectionChange.current = useCallback(throttle(onSelectionChange, 150), [onSelectionChange]);
+  currentSelectionChange.current = useCallback(
+    throttle(onSelectionChange, 150),
+    [onSelectionChange]
+  );
   currentSelectionStart.current = onSelectionStart;
   currentSelectionEnd.current = onSelectionEnd;
   isEnabledRef.current = isEnabled;
@@ -78,7 +85,7 @@ export function useSelectionLogic<T extends HTMLElement>({
         y: event.clientY - (rect?.top || 0),
       };
     },
-    [containerRef],
+    [containerRef]
   );
 
   /**
@@ -119,7 +126,7 @@ export function useSelectionLogic<T extends HTMLElement>({
         cancelCurrentSelection();
       }
     },
-    [cancelCurrentSelection, containerRef],
+    [cancelCurrentSelection, containerRef]
   );
 
   const onMouseMove = useCallback(
@@ -132,7 +139,7 @@ export function useSelectionLogic<T extends HTMLElement>({
       endPoint.current = getPointFromEvent(e as MouseEvent, rect);
       handleMouseMove(rect);
     },
-    [handleMouseMove, getPointFromEvent, containerRef],
+    [handleMouseMove, getPointFromEvent, containerRef]
   );
 
   const onMouseUp = useCallback(
@@ -140,14 +147,14 @@ export function useSelectionLogic<T extends HTMLElement>({
       // handle only left button click
       if ((e as MouseEvent).button === 0) {
         cancelCurrentSelection();
-        document.body.style.removeProperty('userSelect');
-        document.body.style.removeProperty('webkitUserSelect');
+        document.body.style.removeProperty("userSelect");
+        document.body.style.removeProperty("webkitUserSelect");
 
-        eventsElement?.removeEventListener('mousemove', onMouseMove);
-        window?.removeEventListener('mouseup', onMouseUp);
+        eventsElement?.removeEventListener("mousemove", onMouseMove);
+        window?.removeEventListener("mouseup", onMouseUp);
       }
     },
-    [eventsElement, cancelCurrentSelection, onMouseMove],
+    [eventsElement, cancelCurrentSelection, onMouseMove]
   );
 
   const onMouseDown = useCallback(
@@ -162,24 +169,24 @@ export function useSelectionLogic<T extends HTMLElement>({
         }
 
         // disable text selection for all document
-        document.body.style.userSelect = 'none';
-        document.body.style.webkitUserSelect = 'none';
+        document.body.style.userSelect = "none";
+        document.body.style.webkitUserSelect = "none";
         startPoint.current = getPointFromEvent(e as MouseEvent);
 
-        eventsElement?.addEventListener('mousemove', onMouseMove);
-        window?.addEventListener('mouseup', onMouseUp);
+        eventsElement?.addEventListener("mousemove", onMouseMove);
+        window?.addEventListener("mouseup", onMouseUp);
       }
     },
-    [eventsElement, getPointFromEvent, onMouseMove, onMouseUp],
+    [eventsElement, getPointFromEvent, onMouseMove, onMouseUp]
   );
 
   useEffect(() => {
-    eventsElement?.addEventListener('mousedown', onMouseDown);
+    eventsElement?.addEventListener("mousedown", onMouseDown);
 
     return () => {
-      eventsElement?.removeEventListener('mousedown', onMouseDown);
-      eventsElement?.removeEventListener('mousemove', onMouseMove);
-      window.removeEventListener('mouseup', onMouseUp);
+      eventsElement?.removeEventListener("mousedown", onMouseDown);
+      eventsElement?.removeEventListener("mousemove", onMouseMove);
+      window.removeEventListener("mouseup", onMouseUp);
     };
   }, [eventsElement, onMouseDown, onMouseMove, onMouseUp]);
 

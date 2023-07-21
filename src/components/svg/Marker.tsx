@@ -1,13 +1,13 @@
-import { MarkerColor } from '@/consts'
+import { MarkerColor } from "@/consts";
 
-function getMarkerId(direction: 'end' | 'start', color: string) {
-  return `${direction}-arrow-${color}`
+function getMarkerId(direction: "end" | "start", color: string) {
+  return `${direction}-arrow-${color}`;
 }
 
 const SvgMarker = () => {
   return (
     <defs>
-      {(Object.values(MarkerColor) as string[]).map(color => (
+      {(Object.values(MarkerColor) as string[]).map((color) => (
         <marker
           refX={0}
           refY={0}
@@ -15,7 +15,7 @@ const SvgMarker = () => {
           viewBox="-10,-10,20,20"
           orient="auto"
           key={color}
-          id={getMarkerId('end', color)}
+          id={getMarkerId("end", color)}
           markerWidth={12.5}
           markerHeight={12.5}
         >
@@ -30,7 +30,7 @@ const SvgMarker = () => {
         </marker>
       ))}
     </defs>
-  )
-}
+  );
+};
 
-export default SvgMarker
+export default SvgMarker;

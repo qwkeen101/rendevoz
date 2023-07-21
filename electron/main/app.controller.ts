@@ -1,5 +1,5 @@
 import { Controller, Inject } from '@nestjs/common'
-import { WebContents, BrowserWindow, webContents, shell, app, dialog } from 'electron'
+import { BrowserWindow, dialog, shell, webContents } from 'electron'
 import { AppService } from './app.service'
 import { IpcInvoke } from './transport'
 import fs from 'fs'
@@ -170,6 +170,43 @@ export class AppController {
       .capturePage()
     return image.toDataURL()
   }
+
+  @IpcInvoke('printPDF')
+  public async printPDF(
+    options: { name?: string; size?: string; margin?: 'default' | 'none'; horizontal?: boolean } = {
+      name: 'Untitled',
+      size: 'A4',
+      margin: 'default',
+      horizontal: false
+    }
+  ) {
+    console.log('printing')
+    const pdf = await webContents
+      .getAllWebContents()
+      .find(i => i.getURL() === 'about:blank')
+      .printToPDF?.({
+        printBackground: true,
+        pageSize: options.size,
+        landscape: options.horizontal,
+        margins: {
+          marginType: options.margin
+        }
+      })
+
+    const pos = await dialog.showSaveDialog({
+      defaultPath: `${options.name}.pdf`,
+      title: 'Save PDF'
+    })
+    if (pos.filePath) {
+      await new Promise(res => {
+        fs.writeFile(pos.filePath, pdf, {}, () => {
+          res(true)
+        })
+      })
+      return 'OK'
+    }
+    return 'Cancel'
+  }
   @IpcInvoke('getUserFilePath')
   public async getUserFilePath() {
     return this.DefaultRendevozDataPath
@@ -215,10 +252,40 @@ export class AppController {
     process.env.FILE_PATH = newPath
   }
 
+  @IpcInvoke('installPlugins')
+  public async installPlugins(pluginPath: string) {
+    console.log(pluginPath)
+    if (fs.existsSync(pluginPath)) {
+      const allPluginsFolders = fs.readdirSync(pluginPath)
+      const installablePluginsPaths = allPluginsFolders
+        .map(i => {
+          console.log(i)
+          try{
+            const fileNames = fs.readdirSync(`${pluginPath}/${i}`)
+            if (fileNames.includes('manifest.json') && fileNames.includes('main.js')) {
+              const manifest = fs.readFileSync(`${pluginPath}/${i}/manifest.json`, 'utf-8')
+              const parsedManifest = JSON.parse(manifest)
+              return {
+                name: parsedManifest.name,
+                version: parsedManifest.version,
+                author: parsedManifest.author,
+                entry: `${pluginPath}/${i}/main.js`
+              }
+            }
+          }catch(e){
+            console.log(e)
+          }
+        })
+        .filter(i => i)
+      console.log(allPluginsFolders, installablePluginsPaths)
+      return installablePluginsPaths
+    }
+  }
+
   @IpcInvoke('openDatabaseFolder')
   public async openDatabaseFolder() {
     const databasePath = path.join(process.env.FILE_PATH || this.DefaultRendevozDataPath, 'backup')
-    if (!fs.existsSync(databasePath)){
+    if (!fs.existsSync(databasePath)) {
       fs.mkdirSync(databasePath)
     }
     shell.showItemInFolder(databasePath)

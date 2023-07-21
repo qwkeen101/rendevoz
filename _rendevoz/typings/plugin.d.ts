@@ -1,12 +1,20 @@
-import { TabData, ILayoutTab } from './layout'
+import { ILayoutTab, TabData } from './layout'
 import { Element } from 'slate'
-import { CustomEditor, RegisterdEditorElement } from './editor'
-import { MetaStore, ObjectFamily, createObjectStore } from './store'
-import { DropOn, IRendevoz, IUser, MetaLink, MetaObject, PartialWithId, Setting } from '.'
-import { IDraggableElement } from './globalInstances/dragDrop'
+import { createObjectStore, MetaStore, ObjectFamily } from './store'
+import {
+  DropOn,
+  IRendevoz,
+  MetaLink,
+  MetaObject,
+  PartialWithId,
+  Setting,
+  CustomEditor,
+  RegisteredEditorElement,
+  IDraggableElement,
+  RegisteredMetaObject
+} from '.'
 import { ReactElement } from 'react'
-import { RegisteredSetting } from './registered'
-import { IUser } from './data'
+import { RegisteredSetting, RegisteredSidebarItem } from './registered'
 
 type IEditorElementEvent = (
   | {
@@ -23,32 +31,15 @@ type IEditorElementEvent = (
   editor: CustomEditor
 }
 
-type IPluginEvents =
-  | {
-      type: 'load'
-    }
-  | {
-      type: 'unload'
-    }
-  | {
-      type: 'allPluginsLoaded'
-    }
-  | {
-      type: 'appLoaded'
-    }
-  | {
-      type: 'appInitialized'
-    }
-
 export type PluginApi = {
   name: string | undefined
   keyValueStore: Map<string, any>
 
   registeredMaps: {
-    registerdTabs: Map<string, any>
+    registeredTabs: Map<string, any>
     registeredMetaObjects: Map<string, any>
     registeredObjects: Map<string, any>
-    registerdDropOnProcessors: Map<string, any>
+    registeredDropOnProcessors: Map<string, any>
     registeredEditorElements: Map<string, any>
     registeredGlobalCSS: Map<string, any>
     registeredGlobalElements: Map<string, any>
@@ -78,42 +69,21 @@ export type PluginApi = {
     ) => void
     registerI18N: (lng: 'zh-CN' | 'en-US', resource: Record<string, any>) => void
     registerDropOnProcessor: (key: string, processor: (dropOn: DropOn, sourceMetaObject: MetaObject) => Promise<MetaLink[] | void>) => void
-    registerMetaObject: <T extends MetaObject['type']>(
-      type: T,
-      opts: {
-        /**
-         * Required for graph & other places
-         */
-        icon: string
-        i18nKey: string
-        graphSettings?: {
-          /**
-           * Default collision radius: 300
-           */
-          collisionRadius?: number
-          /**
-           * Default radius: 45
-           */
-          radius?: number
-        }
-        onNavigate: (metaObject: MetaObject) => void
-      }
-    ) => void
-    registerEditorElement: (opts: RegisterdEditorElement) => void
+
+    /**
+     * Meta-object's type should be strictly same with its corresponding object!!!
+     *
+     * Meta-object's type should be strictly same with its corresponding object!!!
+     *
+     * Meta-object's type should be strictly same with its corresponding object!!!
+     */
+    registerMetaObject: <T extends MetaObject['type']>(type: T, opts: Omit<RegisteredMetaObject, 'type'>) => void
+    registerEditorElement: (opts: RegisteredEditorElement) => void
     /**
      * Template CSS: https://github.com/Rendevoz/RendevozPublic/blob/main/colors.less
      */
     registerGlobalCSS: (css: TemplateStringsArray) => void
-    registerInSidebarMenu: (
-      key: string,
-      element:
-        | ReactElement
-        | {
-            icon: string
-            text: string | (() => string)
-            onClick: React.MouseEventHandler
-          }
-    ) => void
+    registerInSidebarMenu: (key: string, registerd: RegisteredSidebarItem) => void
     registerInSettings: (opts: RegisteredSetting) => void
     /**
      * Register an element which will never unmount
@@ -133,6 +103,5 @@ export type PluginApi = {
     getUserDetails: () => Pick<IUser, 'email' | 'emailVerified' | 'photoURL' | 'username' | 'uid'> | undefined
   }
   Rendevoz: IRendevoz
-  on: (e: IPluginEvents['type'], handler: () => void) => void
-  describe: (description: { name: string; settings: any[] }) => void
+  describe: (description: { name: string }) => void
 }

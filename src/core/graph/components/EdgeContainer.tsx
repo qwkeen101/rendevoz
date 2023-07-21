@@ -8,6 +8,12 @@ import { selectAtom } from 'jotai/utils'
 import { memo, useEffect, useMemo } from 'react'
 import useEdges, { useSetOppsiteEdgesMap } from '../hooks/useEdges'
 import Edge from './Edge'
+import { Container, useApp } from '@pixi/react'
+import PixiEdge from '@/core/graph/components/PixiEdge'
+import { UpOne } from '@icon-park/svg'
+import { SVGScene } from '@pixi-essentials/svg'
+import { RenderTexture } from 'pixi.js'
+import useGraph from '@/core/graph/hooks/useGraph'
 
 const svgContainerClassName = css({
   position: 'absolute',
@@ -18,13 +24,23 @@ const svgContainerClassName = css({
   overflow: 'visible',
   pointerEvents: 'none'
 })
-const EdgeContainer = () => {
+
+export const cachedArrowTexture: {
+  current: undefined | RenderTexture
+} = {
+  current: undefined
+}
+const EdgeContainer = ({ type = 'canvas' }: { type: 'canvas' | 'svg' }) => {
   const [edges] = useEdges()
   const setOppositeEdgesMap = useSetOppsiteEdgesMap()
   const sourceIdToLinkIdsMapAtom = useMemo(() => selectAtom(indexedMetaLinksAtom, i => i?.sourceIdToLinkIdsMap), [])
   const targetIdToLinkIdsMapAtom = useMemo(() => selectAtom(indexedMetaLinksAtom, i => i?.targetIdToLinkIdMap), [])
   const previousEdges = usePrevious(edges)
-
+  const app = type === 'canvas' && useApp()
+  const graph = useGraph()
+  // if (type === 'canvas' && app && !graph?.CACHED_ICON_TEXTURE.has('_edge_arrow')) {
+  //   graph?.CACHED_ICON_TEXTURE.set('_edge_arrow', texture)
+  // }
   useEffect(() => {
     if (edges && edges?.length !== previousEdges?.length && edges?.length > 0) {
       const sourceIdToLinkIdsMap = globalStore.get(sourceIdToLinkIdsMapAtom)
@@ -50,15 +66,25 @@ const EdgeContainer = () => {
       })
     }
   }, [edges])
-
-  return (
-    <svg className={svgContainerClassName}>
-      {edges
-        ?.filter(i => !i.hidden)
-        ?.map(edge => (
-          <Edge edge={edge} key={`${edge.id}`} />
+  console.log(edges)
+  if (type === 'svg') {
+    return (
+      <svg className={svgContainerClassName}>
+        {edges
+          ?.filter(i => !i.hidden)
+          ?.map(edge => (
+            <Edge edge={edge} key={`${edge.id}`} />
+          ))}
+      </svg>
+    )
+  } else {
+    return (
+      <Container position={[0, 0]} sortableChildren={true}>
+        {edges?.map(e => (
+          <PixiEdge edge={e} key={e.id} />
         ))}
-    </svg>
-  )
+      </Container>
+    )
+  }
 }
 export default memo(EdgeContainer)

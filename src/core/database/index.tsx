@@ -1,259 +1,312 @@
-import { useDebounceFn, useToggle } from '@/hooks'
-import { relatedMetaObjectsMapAtom, undeletedMetaObjectsAtom } from '@/stores/meta.store'
-import { globalStore } from '@/stores'
-import ClassName from '@/styles/classNames'
-import { css } from '@emotion/css'
-import { Provider, useAtomValue, useSetAtom } from 'jotai/react'
-import { createStore } from 'jotai/vanilla'
-import { useEffect, useMemo, useRef, useState } from 'react'
-import { Flipper } from 'react-flip-toolkit'
-import { MetaObject } from '~/typings/data'
-import { Content, Icon } from '@/components'
-import { DatabaseCard } from './card/DatabaseCard'
-import { DatabaseFilter } from './filter'
-import { FilterNameSearchAtom, useObjectFilter } from './filter/useObjectFilter'
-import DatabaseListItem from './ListItem'
-import Select from '@/components/base/select'
-import { useTranslation } from 'react-i18next'
-import Colors from '@/consts/colors'
-import Masonry from '@/components/base/Masonry'
+import { useDebounceFn, useToggle } from "@/hooks";
+import {
+  relatedMetaObjectsMapAtom,
+  undeletedMetaObjectsAtom,
+} from "@/stores/meta.store";
+import { globalStore } from "@/stores";
+import ClassName from "@/styles/classNames";
+import { css } from "@emotion/css";
+import { Provider, useAtomValue, useSetAtom } from "jotai/react";
+import { createStore } from "jotai/vanilla";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { Flipper } from "react-flip-toolkit";
+import { MetaObject } from "~/typings/data";
+import { Content, Icon } from "@/components";
+import { DatabaseCard } from "./card/DatabaseCard";
+import { DatabaseFilter } from "./filter";
+import {
+  FilterNameSearchAtom,
+  useObjectFilter,
+} from "./filter/useObjectFilter";
+import DatabaseListItem from "./ListItem";
+import Select from "@/components/base/select";
+import { useTranslation } from "react-i18next";
+import Colors from "@/consts/colors";
+import Masonry from "@/components/base/Masonry";
 
 export const Database = () => {
-  const undeletedMetaObjects = useAtomValue(undeletedMetaObjectsAtom, { store: globalStore })
+  const undeletedMetaObjects = useAtomValue(undeletedMetaObjectsAtom, {
+    store: globalStore,
+  });
   const [paginateState, setPaginateState] = useState<{
-    itemPerPage: number
-    currentPage: number
+    itemPerPage: number;
+    currentPage: number;
   }>({
     itemPerPage: 20,
-    currentPage: 0
-  })
+    currentPage: 0,
+  });
   const [databaseState, setDatabaseState] = useState<{
-    renderMode: 'detail card' | 'detail list' | 'title list'
+    renderMode: "detail card" | "detail list" | "title list";
   }>({
-    renderMode: 'detail card'
-  })
-  const DatabaseStore = useMemo(() => createStore(), [])
-  const setSearch = useSetAtom(FilterNameSearchAtom, { store: DatabaseStore })
+    renderMode: "detail card",
+  });
+  const DatabaseStore = useMemo(() => createStore(), []);
+  const setSearch = useSetAtom(FilterNameSearchAtom, { store: DatabaseStore });
 
-  const [sortMode, setSortMode] = useState<'new create' | 'old create' | 'new view' | 'old view' | 'most related'>('new create')
+  const [sortMode, setSortMode] = useState<
+    "new create" | "old create" | "new view" | "old view" | "most related"
+  >("new create");
 
-  useObjectFilter(ids => {
-    const shouldDisplay = undeletedMetaObjects.filter(i => ids.has(i.id))
+  useObjectFilter((ids) => {
+    const shouldDisplay = undeletedMetaObjects.filter((i) => ids.has(i.id));
     const getSortMethod = (): ((a: MetaObject, b: MetaObject) => number) => {
       switch (sortMode) {
-        case 'old create':
-          return (a, b) => a.createdAt - b.createdAt
-        case 'old view':
-          return (a, b) => (a.viewAt || 0) - (b.viewAt || 0)
-        case 'new create':
-          return (a, b) => b.createdAt - a.createdAt
-        case 'new view':
-          return (a, b) => (b.viewAt || 0) - (a.viewAt || 0)
+        case "old create":
+          return (a, b) => a.createdAt - b.createdAt;
+        case "old view":
+          return (a, b) => (a.viewAt || 0) - (b.viewAt || 0);
+        case "new create":
+          return (a, b) => b.createdAt - a.createdAt;
+        case "new view":
+          return (a, b) => (b.viewAt || 0) - (a.viewAt || 0);
         default:
-          return (a, b) => a.createdAt - b.createdAt
+          return (a, b) => a.createdAt - b.createdAt;
       }
-    }
-    const sort = getSortMethod()
-    shouldDisplay.sort(sort)
-    setDisplayObjects(shouldDisplay)
-  }, DatabaseStore)
+    };
+    const sort = getSortMethod();
+    shouldDisplay.sort(sort);
+    setDisplayObjects(shouldDisplay);
+  }, DatabaseStore);
   useEffect(() => {
-    const relatedMap = globalStore.get(relatedMetaObjectsMapAtom)
+    const relatedMap = globalStore.get(relatedMetaObjectsMapAtom);
     const getSortMethod = (): ((a: MetaObject, b: MetaObject) => number) => {
       switch (sortMode) {
-        case 'old create':
-          return (a, b) => a.createdAt - b.createdAt
-        case 'old view':
-          return (a, b) => (a.viewAt || 0) - (b.viewAt || 0)
-        case 'new create':
-          return (a, b) => b.createdAt - a.createdAt
-        case 'new view':
-          return (a, b) => (b.viewAt || 0) - (a.viewAt || 0)
-        case 'most related':
+        case "old create":
+          return (a, b) => a.createdAt - b.createdAt;
+        case "old view":
+          return (a, b) => (a.viewAt || 0) - (b.viewAt || 0);
+        case "new create":
+          return (a, b) => b.createdAt - a.createdAt;
+        case "new view":
+          return (a, b) => (b.viewAt || 0) - (a.viewAt || 0);
+        case "most related":
           return (a, b) => {
-            const aRelated = relatedMap.get(a.id)?.size || 0
-            const bRelated = relatedMap.get(b.id)?.size || 0
+            const aRelated = relatedMap.get(a.id)?.size || 0;
+            const bRelated = relatedMap.get(b.id)?.size || 0;
 
-            return bRelated - aRelated
-          }
+            return bRelated - aRelated;
+          };
         default:
-          return (a, b) => a.createdAt - b.createdAt
+          return (a, b) => a.createdAt - b.createdAt;
       }
-    }
-    const sort = getSortMethod()
-    setDisplayObjects(s => {
-      s.sort(sort)
-      return [...s]
-    })
-  }, [sortMode])
+    };
+    const sort = getSortMethod();
+    setDisplayObjects((s) => {
+      s.sort(sort);
+      return [...s];
+    });
+  }, [sortMode]);
 
-  const { run: debouncedSetSearch } = useDebounceFn(setSearch, { wait: 200 })
+  const { run: debouncedSetSearch } = useDebounceFn(setSearch, { wait: 200 });
 
-  const { currentPage, itemPerPage } = paginateState
+  const { currentPage, itemPerPage } = paginateState;
 
-  const [displayObjects, setDisplayObjects] = useState<MetaObject[]>(undeletedMetaObjects)
+  const [displayObjects, setDisplayObjects] =
+    useState<MetaObject[]>(undeletedMetaObjects);
 
-  const paginateObjects = displayObjects.slice(currentPage * itemPerPage, (currentPage + 1) * itemPerPage)
+  const paginateObjects = displayObjects.slice(
+    currentPage * itemPerPage,
+    (currentPage + 1) * itemPerPage
+  );
 
-  const hasNextPage = displayObjects.length > (currentPage + 1) * itemPerPage
+  const hasNextPage = displayObjects.length > (currentPage + 1) * itemPerPage;
 
   const renderItems = () => {
     switch (databaseState?.renderMode) {
-      case 'detail card':
+      case "detail card":
         return (
-          <Flipper spring="stiff" flipKey={`${displayObjects[displayObjects.length - 1]?.id}_${displayObjects.length}`}>
-            <Masonry gap={35} breakPoints={{ 350: 1, 750: 2, 1000: 3, 1300: 4, 1700: 5, 2100: 6, 2400: 7, 2800: 8 }}>
+          <Flipper
+            spring="stiff"
+            flipKey={`${displayObjects[displayObjects.length - 1]?.id}_${
+              displayObjects.length
+            }`}
+          >
+            <Masonry
+              gap={35}
+              breakPoints={{
+                350: 1,
+                750: 2,
+                1000: 3,
+                1300: 4,
+                1700: 5,
+                2100: 6,
+                2400: 7,
+                2800: 8,
+              }}
+            >
               {paginateObjects.map((i, idx) => (
                 <DatabaseCard key={i.id} index={idx} metaObject={i} />
               ))}
             </Masonry>
           </Flipper>
-        )
-      case 'detail list':
+        );
+      case "detail list":
         return (
           <div
             className={css({
-              display: 'flex',
-              flexDirection: 'column',
-              transition: 'all 0.2s ease',
-              width: '100%',
+              display: "flex",
+              flexDirection: "column",
+              transition: "all 0.2s ease",
+              width: "100%",
               gap: 16,
-              '> div': {
-                paddingBottom: '8px',
-                ':not(:last-child)': {
-                  borderBottom: `1px solid ${Colors.Background.Border}`
-                }
-              }
+              "> div": {
+                paddingBottom: "8px",
+                ":not(:last-child)": {
+                  borderBottom: `1px solid ${Colors.Background.Border}`,
+                },
+              },
             })}
           >
-            {paginateObjects.map(i => (
+            {paginateObjects.map((i) => (
               <DatabaseListItem id={i.id} key={i.id} mode="all" />
             ))}
           </div>
-        )
-      case 'title list':
+        );
+      case "title list":
         return (
           <div
             className={css({
-              display: 'flex',
-              flexDirection: 'column',
-              transition: 'all 0.2s ease',
-              width: '100%',
+              display: "flex",
+              flexDirection: "column",
+              transition: "all 0.2s ease",
+              width: "100%",
               gap: 16,
-              '> div': {
-                paddingBottom: '8px',
-                ':not(:last-child)': {
-                  borderBottom: '1px solid rgba(0,0,0,0.05)'
-                }
-              }
+              "> div": {
+                paddingBottom: "8px",
+                ":not(:last-child)": {
+                  borderBottom: "1px solid rgba(0,0,0,0.05)",
+                },
+              },
             })}
           >
-            {paginateObjects.map(i => (
+            {paginateObjects.map((i) => (
               <DatabaseListItem id={i.id} key={i.id} mode="title" />
             ))}
           </div>
-        )
+        );
     }
-  }
-  const overflowContainerRef = useRef<HTMLDivElement>(null)
+  };
+  const overflowContainerRef = useRef<HTMLDivElement>(null);
 
-  const [showBoxShadow, toggleShowBoxShadow] = useToggle(false)
+  const [showBoxShadow, toggleShowBoxShadow] = useToggle(false);
 
   useEffect(() => {
-    const scrollHandler = e => {
+    const scrollHandler = (e) => {
       if (overflowContainerRef.current?.scrollTop) {
-        toggleShowBoxShadow(true)
+        toggleShowBoxShadow(true);
       } else {
-        toggleShowBoxShadow(false)
+        toggleShowBoxShadow(false);
       }
-    }
-    overflowContainerRef.current?.addEventListener('scroll', scrollHandler)
+    };
+    overflowContainerRef.current?.addEventListener("scroll", scrollHandler);
     return () => {
-      overflowContainerRef.current?.removeEventListener('scroll', scrollHandler)
-    }
-  }, [])
+      overflowContainerRef.current?.removeEventListener(
+        "scroll",
+        scrollHandler
+      );
+    };
+  }, []);
 
-  const { t } = useTranslation()
+  const { t } = useTranslation();
   return (
     <Provider store={DatabaseStore}>
-      <Content flex column gap={16} className={css({ padding: 30, height: '100%' })}>
+      <Content
+        flex
+        column
+        gap={16}
+        className={css({ padding: 30, height: "100%" })}
+      >
         <input
-          placeholder={t('database.search for object', { object: t('general.object') })}
-          onChange={e => debouncedSetSearch(e.target.value)}
+          placeholder={t("database.search for object", {
+            object: t("general.object"),
+          })}
+          onChange={(e) => debouncedSetSearch(e.target.value)}
           className={css([ClassName.input(), { borderRadius: 8 }])}
         />
         <DatabaseFilter />
         <Content flex alignItems="center" justifyContent="space-between">
-          <Content className={ClassName.description()} flex alignItems="center" gap={30}>
+          <Content
+            className={ClassName.description()}
+            flex
+            alignItems="center"
+            gap={30}
+          >
             <Select
               value={databaseState.renderMode}
               closeOnSelect
-              onSelect={v => {
+              onSelect={(v) => {
                 setDatabaseState({
-                  renderMode: v[0] as (typeof databaseState)['renderMode']
-                })
+                  renderMode: v[0] as (typeof databaseState)["renderMode"],
+                });
               }}
               options={[
                 {
-                  value: 'detail card',
-                  children: t('database.detail card')
+                  value: "detail card",
+                  children: t("database.detail card"),
                 },
                 {
-                  value: 'detail list',
-                  children: t('database.detail list')
+                  value: "detail list",
+                  children: t("database.detail list"),
                 },
                 {
-                  value: 'title list',
-                  children: t('database.title list')
-                }
+                  value: "title list",
+                  children: t("database.title list"),
+                },
               ]}
             ></Select>
             <Select
               value={sortMode}
               closeOnSelect
-              onSelect={v => {
-                setSortMode(v[0] as typeof sortMode)
+              onSelect={(v) => {
+                setSortMode(v[0] as typeof sortMode);
               }}
               options={[
                 {
-                  value: 'new create',
-                  children: t('database.recent create')
+                  value: "new create",
+                  children: t("database.recent create"),
                 },
                 {
-                  value: 'old create',
-                  children: t('database.earliest create')
+                  value: "old create",
+                  children: t("database.earliest create"),
                 },
                 {
-                  value: 'new view',
-                  children: t('database.recent view')
+                  value: "new view",
+                  children: t("database.recent view"),
                 },
                 {
-                  value: 'old view',
-                  children: t('database.earliest view')
+                  value: "old view",
+                  children: t("database.earliest view"),
                 },
                 {
-                  value: 'most related',
-                  children: t('database.most related')
-                }
+                  value: "most related",
+                  children: t("database.most related"),
+                },
               ]}
             ></Select>
           </Content>
-          <Content className={ClassName.description()} flex alignItems="center" gap={20}>
+          <Content
+            className={ClassName.description()}
+            flex
+            alignItems="center"
+            gap={20}
+          >
             <Icon
               className={ClassName.circleButton()}
               size={20}
               name="park-left"
-              style={{ cursor: currentPage === 0 ? 'not-allowed' : 'pointer' }}
+              style={{ cursor: currentPage === 0 ? "not-allowed" : "pointer" }}
               onClick={() => {
                 if (currentPage > 0) {
                   setPaginateState({
                     ...paginateState,
-                    currentPage: paginateState.currentPage - 1
-                  })
+                    currentPage: paginateState.currentPage - 1,
+                  });
                 }
               }}
             />
-            {`${currentPage + 1} / ${Math.floor(displayObjects.length / itemPerPage) + 1}`}
+            {`${currentPage + 1} / ${
+              Math.floor(displayObjects.length / itemPerPage) + 1
+            }`}
             <Icon
               className={ClassName.circleButton()}
               size={20}
@@ -262,36 +315,38 @@ export const Database = () => {
                 if (hasNextPage) {
                   setPaginateState({
                     ...paginateState,
-                    currentPage: paginateState.currentPage + 1
-                  })
+                    currentPage: paginateState.currentPage + 1,
+                  });
                 }
               }}
-              style={{ cursor: hasNextPage ? 'pointer' : 'not-allowed' }}
+              style={{ cursor: hasNextPage ? "pointer" : "not-allowed" }}
             />
           </Content>
         </Content>
-        <Content style={{ margin: '0px -30px -30px', height: 0, flexGrow: 1 }}>
+        <Content style={{ margin: "0px -30px -30px", height: 0, flexGrow: 1 }}>
           <div
             style={{
-              position: 'absolute',
+              position: "absolute",
               top: 0,
               left: 0,
               right: 0,
               height: 100,
-              boxShadow: showBoxShadow ? 'rgb(55 53 47 / 9%) 0px 20px 10px -10px inset' : undefined,
-              transition: 'box-shadow 0.3s ease',
+              boxShadow: showBoxShadow
+                ? "rgb(55 53 47 / 9%) 0px 20px 10px -10px inset"
+                : undefined,
+              transition: "box-shadow 0.3s ease",
               zIndex: 10,
-              pointerEvents: 'none'
+              pointerEvents: "none",
             }}
           ></div>
 
           <Content
             ref={overflowContainerRef}
             style={{
-              height: '100%',
-              width: '100%',
-              overflowY: 'auto',
-              padding: '0 30px 50px'
+              height: "100%",
+              width: "100%",
+              overflowY: "auto",
+              padding: "0 30px 50px",
             }}
           >
             {renderItems()}
@@ -299,16 +354,16 @@ export const Database = () => {
         </Content>
       </Content>
     </Provider>
-  )
-}
+  );
+};
 
-export { default as useRenderObject } from './useRenderObject'
+export { default as useRenderObject } from "./useRenderObject";
 
-export * from './filter'
-export * from './card/DatabaseCard'
-export * from './useCreateObject'
-export { default as useDropObjectArea } from './useDropObjectArea'
-export { default as AttachmentObject } from './AttachmentObject'
-export { default as AttachmentList } from './AttachmentList'
-export { default as AttachmentWrapper } from './AttachmentWrapper'
-export { default as useRenderLabel } from './useRenderLabel'
+export * from "./filter";
+export * from "./card/DatabaseCard";
+export * from "./useCreateObject";
+export { default as useDropObjectArea } from "./useDropObjectArea";
+export { default as AttachmentObject } from "./AttachmentObject";
+export { default as AttachmentList } from "./AttachmentList";
+export { default as AttachmentWrapper } from "./AttachmentWrapper";
+export { default as useRenderLabel } from "./useRenderLabel";

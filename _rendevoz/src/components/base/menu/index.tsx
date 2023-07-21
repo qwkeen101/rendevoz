@@ -1,21 +1,29 @@
-import { FontSize, KEY } from '@/consts'
-import { isHotkey } from 'is-hotkey'
-import { CSSProperties, FC, Fragment, MouseEventHandler, ReactNode, useEffect, useMemo, useRef, useState } from 'react'
-import Content from '../Content'
-import { Button } from '../button'
-import styles from './index.module.less'
-import MenuGroup from './MenuGroup'
-import MenuItem, { MenuItemProps } from './MenuItem'
-import ClassName from '@/styles/classNames'
+import { FontSize, KEY } from "@/consts";
+import { isHotkey } from "is-hotkey";
+import {
+  CSSProperties,
+  FC,
+  MouseEventHandler,
+  ReactNode,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
+import Content from "../Content";
+import { Button } from "../button";
+import styles from "./index.module.less";
+import MenuGroup from "./MenuGroup";
+import MenuItem, { MenuItemProps } from "./MenuItem";
+import ClassName from "@/styles/classNames";
 
 interface MenuProps {
-  title?: string
-  extra?: ReactNode
-  footer?: ReactNode
-  children: ReactNode
-  style?: CSSProperties
-  onClick?: MouseEventHandler
-  layout?: MenuItemProps[]
+  title?: string;
+  extra?: ReactNode;
+  footer?: ReactNode;
+  children: ReactNode;
+  style?: CSSProperties;
+  onClick?: MouseEventHandler;
+  layout?: MenuItemProps[];
 }
 interface IMenu extends FC<MenuProps> {
   Item: typeof MenuItem

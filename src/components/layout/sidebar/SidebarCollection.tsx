@@ -5,7 +5,7 @@ import { useGlobalIsDragging } from '@/core'
 import Zindexes from '@/consts/zindex'
 import { useMemoizedFn, useToggle } from '@/hooks'
 import useCollectionStore, { rootCollectionsAtom } from '@/stores/collection.store'
-import { globalStore, CollectionStore } from '@/stores'
+import { CollectionStore, globalStore } from '@/stores'
 import ClassName from '@/styles/classNames'
 import getEmoji from '@/utils/emoji'
 import { css } from '@emotion/css'
@@ -17,9 +17,13 @@ import SidebarCollectionItem from './items/SidebarCollectionItem'
 import { sidebarDraggingState } from './useSidebarItemDrag'
 import { useTranslation } from 'react-i18next'
 import { Rendevoz } from '@/core/rendevoz'
+import FontSize from '@/consts/font'
 
 const SidebarCollection = () => {
-  const rootCollections = useAtomValue(rootCollectionsAtom, { store: globalStore })
+  const rootCollections = useAtomValue(rootCollectionsAtom, {
+    store: globalStore
+  })
+  const sortedCollections = rootCollections.slice().sort((a, b) => (a.name || '1')[0].localeCompare((b.name || '1')[0]))
   const [newCollectionVisible, setNewCollectionVisible] = useState(false)
   const [globalIsDragging] = useGlobalIsDragging()
   const containerRef = useRef<HTMLDivElement>(null)
@@ -89,7 +93,15 @@ const SidebarCollection = () => {
         padding={10}
         containerStyle={{ zIndex: String(Zindexes.PopupMenu) }}
         content={
-          <div style={{ color: 'white', background: 'rgba(0,0,0,0.8)', padding: '2px 4px', borderRadius: 4, fontSize: '0.857rem' }}>
+          <div
+            style={{
+              color: 'white',
+              background: 'rgba(0,0,0,0.8)',
+              padding: '2px 4px',
+              borderRadius: 4,
+              fontSize: '0.857rem'
+            }}
+          >
             Move collection to root
           </div>
         }
@@ -100,9 +112,9 @@ const SidebarCollection = () => {
           alignItems="center"
           justifyContent="space-between"
           className={dropVisible ? ClassName.Drag.droppableItemHovered(true) : undefined}
-          style={{ padding: '0px 4px', transition: 'all 0.3s ease' }}
+          style={{ transition: 'all 0.3s ease' }}
         >
-          <div style={{ cursor: 'pointer' }} onClick={toggleCollapsed}>
+          <div style={{ cursor: 'pointer', fontSize: FontSize['13px'] }} onClick={toggleCollapsed}>
             {t('sidebar.collections')}
           </div>
           <Tooltip position="top" content={t('sidebar.create new collection')}>
@@ -118,8 +130,8 @@ const SidebarCollection = () => {
         </Content>
       </AnimatePopover>
       {!collapsed && (
-        <Content flex column style={{ padding: '0px 2px' }}>
-          {rootCollections.map(i => (
+        <Content flex column gap={2}>
+          {sortedCollections.map(i => (
             <SidebarCollectionItem key={i.id} id={i.id} parentId={0} parentType="collection" />
           ))}
         </Content>
@@ -140,7 +152,14 @@ export const IconNameItem = memo(
         onClick,
         style,
         className
-      }: { name?: string; icon?: string; color?: string; onClick?: React.MouseEventHandler; style?: CSSProperties; className?: string },
+      }: {
+        name?: string
+        icon?: string
+        color?: string
+        onClick?: React.MouseEventHandler
+        style?: CSSProperties
+        className?: string
+      },
       ref
     ) => {
       const isPark = icon?.startsWith('park')
@@ -152,7 +171,7 @@ export const IconNameItem = memo(
         <Content
           flex
           alignItems="center"
-          gap={10}
+          gap={8}
           style={{ overflow: 'hidden', ...style }}
           className={className}
           onClick={onClick}

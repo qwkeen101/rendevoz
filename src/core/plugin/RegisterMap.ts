@@ -1,18 +1,10 @@
 import { ReactElement } from 'react'
 import { DropOn, MetaLink, MetaObject } from '~/typings'
-import { RegisteredSetting } from '~/typings/registered'
+import { RegisteredSetting, RegisteredSidebarItem } from '~/typings/registered'
 
 export const KeyToRegisterdSettings = new Map<string, RegisteredSetting>()
 
-export const KeyToRegisteredSidebarElement = new Map<
-  string,
-  | ReactElement
-  | {
-      icon: string
-      text: string
-      onClick: React.MouseEventHandler
-    }
->()
+export const KeyToRegisteredSidebarElement = new Map<string, RegisteredSidebarItem>()
 
 export const KeyToRegisteredDropOnProcessor = new Map<
   string,

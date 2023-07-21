@@ -1,10 +1,10 @@
 // TODO: Migrate all object types to IObject: PDF, PDFLABEL, NOTE, WHITEBOARD....
-import { MetaLink, MetaObject, PartialWithId } from '..'
-import { IDraggableElement } from '../globalInstances/dragDrop'
-import { IBase } from './base'
-import { ILabel as _IPdfLabel } from './label'
+import { MetaLink, MetaObject, PartialWithId } from "..";
+import { IDraggableElement } from "../globalInstances/dragDrop";
+import { IBase } from "./base";
+import { ILabel as _IPdfLabel } from "./label";
 
-type IObject = IWebpage | IAudio
+type IObject = IWebpage | IAudio;
 
 export type IRegisterdObject = {
   type: string

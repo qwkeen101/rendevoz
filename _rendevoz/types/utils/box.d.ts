@@ -1,4 +1,5 @@
-import { Point } from '~/typings';
+import {Point} from '~/typings';
+
 /** This method returns true if two boxes intersects
  * @param boxA
  * @param boxB

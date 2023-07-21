@@ -3,9 +3,9 @@ import useDb from '@/hooks/stores/useDb'
 import Id from '@/utils/id'
 import { atom } from 'jotai/vanilla'
 import { toast } from 'react-hot-toast'
-import { MetaLink, MetaObject } from '~/typings/data'
+import { MetaLink, MetaObject } from 'rendevoz'
 import BaseStore, { initializeLocalStore } from './base.store'
-import { globalStore, MetaStore, ObjectStore } from '.'
+import { findChangedProperties, globalStore, MetaStore, ObjectStore } from '.'
 import { SimpleObject } from '@/core'
 import { IStoreDeprecated } from './store.type'
 import getSetting from '@/core/setting/getSetting'
@@ -178,8 +178,8 @@ export const handleMetaLinksChange = () => {
   const undeletedLinksSet = prevIndex?.undeletedLinksSet || new Set()
   const sourceIdToLinkIdsMap = new Map(prevIndex?.sourceIdToLinkIdsMap)
   const targetIdToLinkIdMap = new Map(prevIndex?.targetIdToLinkIdMap)
-  const sourceIdToTargetIdsMap = prevIndex?.sourceIdToTargetIdsMap || new Map<number, Set<number>>()
-  const targetIdToSourceIdsMap = prevIndex?.targetIdToSourceIdsMap || new Map<number, Set<number>>()
+  const sourceIdToTargetIdsMap = new Map<number, Set<number>>(prevIndex?.sourceIdToTargetIdsMap)
+  const targetIdToSourceIdsMap = new Map<number, Set<number>>(prevIndex?.targetIdToSourceIdsMap)
   const newMetaLinks = globalStore.get(metaLinksAtom)
   const relatedIdsMapDraft = createDraft(prevIndex?.relatedIdsMap || new Map<number, Set<number>>())
 
@@ -275,7 +275,7 @@ export const objectIdToMetaObjectIdMapAtom = atom(get => get(indexedMetaObjectsA
 
 export const tagToMetaObjectIdsMapAtom = atom(get => get(indexedMetaObjectsAtom)?.tagToMetaObjectIdsMap)
 
-export const MAX_META_NUMBER = 300
+export const MAX_META_NUMBER = 100
 
 const createMetaStore = () => {
   const { get, initBaseObject, dispatch } = BaseStore
@@ -289,6 +289,7 @@ const createMetaStore = () => {
   }
   const localObjectStore: Pick<IStoreDeprecated<MetaObject>, 'addOne' | 'updateOne' | 'deleteOneById' | 'getAll'> = {
     updateOne: (one, silent) => {
+      const currentOne = globalStore.get(metaObjectsAtom).get(one.id)
       return initializeObjectStore.updateOne(obj => {
         if (obj.objectId && one.name) {
           switch (obj.type) {
@@ -312,6 +313,8 @@ const createMetaStore = () => {
           content: obj.description,
           id: obj.id
         })
+        const changed = currentOne ? findChangedProperties(currentOne, obj) : undefined
+        TypeToRegisteredMetaObject.get(obj.type)?.onUpdate?.(obj, currentOne, changed)
         shouldToastObject(silent) &&
           toast.custom(
             <Notification
@@ -352,7 +355,9 @@ const createMetaStore = () => {
       }
 
       const initedMetaObject = initBaseObject(one)
-
+      if (!initedMetaObject.type) {
+        return Promise.reject()
+      }
       if (one.fromObject) {
         const link: Partial<MetaLink> = {
           sourceId: one.fromObject.metaId,
@@ -374,6 +379,11 @@ const createMetaStore = () => {
             break
           case 'webpage':
             initedName = 'Unnamed Webpage'
+        }
+        const registeredDefaultName = TypeToRegisteredMetaObject.get(initedMetaObject.type)?.defaultName
+
+        if (registeredDefaultName) {
+          initedName = registeredDefaultName
         }
         initedMetaObject.name = initedName
       }
@@ -412,6 +422,7 @@ const createMetaStore = () => {
           content: obj.description,
           id: obj.id
         })
+        TypeToRegisteredMetaObject.get(obj.type)?.onAdd?.(obj)
         shouldToastObject(silent) &&
           toast.custom(
             <Notification
@@ -434,6 +445,7 @@ const createMetaStore = () => {
     },
     deleteOneById: (id, silent, force = true) => {
       const allMetaLinks = globalStore.get(undeletedMetaLinksAtom)
+      const one = globalStore.get(metaObjectsAtom).get(id)
       const relatedLink = allMetaLinks.filter(l => l.sourceId === id || l.targetId === id)
       relatedLink.forEach(i =>
         dispatch({
@@ -444,6 +456,9 @@ const createMetaStore = () => {
         })
       )
       return initializeObjectStore.deleteOneById(() => {
+        if (one) {
+          TypeToRegisteredMetaObject.get(one.type)?.onDelete?.(one)
+        }
         shouldToastObject(silent) && toast.success('Object successfully deleted!')
         handleMetaObjectDelete(id)
       })(id, silent, force)

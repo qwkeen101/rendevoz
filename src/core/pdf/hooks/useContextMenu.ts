@@ -1,6 +1,6 @@
-import { atom, useAtom } from 'jotai'
+import { atom, useAtom } from "jotai";
 
-const contextMenuOpen = atom(false)
+const contextMenuOpen = atom(false);
 export const useContextMenu = () => {
-  return useAtom(contextMenuOpen)
-}
+  return useAtom(contextMenuOpen);
+};

@@ -1,32 +1,9 @@
-import { Descendant } from 'slate'
-import { CustomElement, Event } from '..'
+import { Event } from '..'
+import { Operation } from 'slate'
 
-export interface ElementPropertyChangeEvent {
-  element: CustomElement
-}
 export interface IndicatorChangeEvent {
   direction?: string
   id?: number
-}
-
-export interface InsertTabEvent {
-  id?: string
-  panelId?: string
-  noteId?: number
-  parentNoteId?: number
-  autoFocus?: boolean
-  isNew?: boolean
-}
-
-export type OuterElementPropertyChangeEvent = ElementPropertyChangeEvent
-
-export interface SelectBlockEvent {
-  blockId: number
-}
-
-export interface ValueChangeEvent {
-  noteId: number
-  value: Descendant[]
 }
 
 export interface OperationAppliedEvent {
@@ -35,23 +12,24 @@ export interface OperationAppliedEvent {
   operation: Operation
 }
 
-export interface TabelCellOpEvent {
+export interface TableCellOpEvent {
   type: 'pointerEnterCell' | 'pointerLeaveCell' | 'pointerEnterResizer' | 'pointerLeaveResizer' | 'selectCol'
   colName: string
   rowIndex?: number
   tableId: number
 }
 export interface EditorEventMap {
+  /**
+   * These are scoped event
+   */
   compositionStart: VoidFunction
   compositionEnd: VoidFunction
-  selectBlock: SelectBlockEvent
-  indicatorChange: IndicatorChangeEvent
-  insertTab: InsertTabEvent
-  elementPropertyChange: ElementPropertyChangeEvent
-  outerElementPropertyChange: OuterElementPropertyChangeEvent
-  valueChange: ValueChangeEvent
+  valueChange: VoidFunction
+  tableCellOp: TableCellOpEvent
+  /**
+   * This is global event
+   */
   operationApplied: OperationAppliedEvent
-  tableCellOp: TabelCellOpEvent
 }
 
 export type EditorEvent = Event<EditorEventMap, keyof EditorEventMap>

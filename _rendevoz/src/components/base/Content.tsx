@@ -1,21 +1,22 @@
-import { DetailedHTMLProps, forwardRef, HTMLAttributes, memo } from 'react'
-import { Property } from 'csstype'
-import { css } from '@emotion/css'
-import classNames from 'classnames'
+import { DetailedHTMLProps, forwardRef, HTMLAttributes, memo } from "react";
+import { Property } from "csstype";
+import { css } from "@emotion/css";
+import classNames from "classnames";
 
-interface ContentProps extends DetailedHTMLProps<HTMLAttributes<HTMLDivElement>, HTMLDivElement> {
-  position?: 'absolute' | 'relative' | 'fixed'
-  flex?: boolean
-  column?: boolean
-  alignItems?: Property.AlignItems
-  justifyContent?: Property.JustifyContent
-  gap?: number | string
-  centered?: boolean
-  children?: React.ReactNode
-  className?: string
-  fullWidth?: boolean
-  fullHeight?: boolean
-  auto?: boolean
+interface ContentProps
+  extends DetailedHTMLProps<HTMLAttributes<HTMLDivElement>, HTMLDivElement> {
+  position?: "absolute" | "relative" | "fixed";
+  flex?: boolean;
+  column?: boolean;
+  alignItems?: Property.AlignItems;
+  justifyContent?: Property.JustifyContent;
+  gap?: number | string;
+  centered?: boolean;
+  children?: React.ReactNode;
+  className?: string;
+  fullWidth?: boolean;
+  fullHeight?: boolean;
+  auto?: boolean;
 }
 const Content = forwardRef<HTMLDivElement, ContentProps>(
   (

@@ -1,19 +1,28 @@
-import { cloneElement, CSSProperties, FC, memo, MouseEventHandler, ReactElement, ReactNode, useEffect, useMemo, useState } from 'react'
-import Content from '../Content'
-import { AnimatePresence, motion } from 'framer-motion'
-import styles from './index.module.less'
-import Id from '@/utils/id'
-import Colors from '@/consts/colors'
-import ClassName from '@/styles/classNames'
+import {
+  cloneElement,
+  CSSProperties,
+  FC,
+  memo,
+  MouseEventHandler,
+  ReactElement,
+  ReactNode,
+  useEffect,
+  useState,
+} from "react";
+import Content from "../Content";
+import { AnimatePresence, motion } from "framer-motion";
+import styles from "./index.module.less";
+import Colors from "@/consts/colors";
+import ClassName from "@/styles/classNames";
 
 export interface TabNavListProps {
-  defaultActiveKey: string
+  defaultActiveKey: string;
   navs: {
-    tab: string | ReactElement
-    key: string
-  }[]
-  onTabClick: (key: string, e: MouseEvent) => void
-  extra?: ReactNode
+    tab: string | ReactElement;
+    key: string;
+  }[];
+  onTabClick: (key: string, e: MouseEvent) => void;
+  extra?: ReactNode;
 }
 const TabNavList: FC<TabNavListProps> = ({ navs, onTabClick, defaultActiveKey, extra }) => {
   const [selectedTabKey, setSelectedTabKey] = useState(defaultActiveKey)

@@ -1,7 +1,7 @@
-import { atom, useAtomValue } from 'jotai'
+import { atom, useAtomValue } from "jotai";
 
-export const ReadOnlyEditorAtom = atom(false)
+export const ReadOnlyEditorAtom = atom(false);
 
-const useReadOnlyEditor = () => useAtomValue(ReadOnlyEditorAtom)
+const useReadOnlyEditor = () => useAtomValue(ReadOnlyEditorAtom);
 
-export default useReadOnlyEditor
+export default useReadOnlyEditor;

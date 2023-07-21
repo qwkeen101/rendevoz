@@ -1,9 +1,9 @@
-import { Descendant } from 'slate'
-import { CardElement, CustomText, ElementWithId, EmptyText } from './baseTypes'
+import { Descendant } from "slate";
+import { CardElement, CustomText, ElementWithId, EmptyText } from "./baseTypes";
 
 export interface HeadingElement extends ElementWithId {
-  children: Descendant[]
-  folded?: boolean
+  children: Descendant[];
+  folded?: boolean;
 }
 
 export interface HeadingOneElement extends HeadingElement {

@@ -1,5 +1,3 @@
-const VideoTimePicker = () => {
+const VideoTimePicker = () => {};
 
-}
-
-export default VideoTimePicker
+export default VideoTimePicker;

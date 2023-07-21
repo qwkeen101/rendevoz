@@ -78,6 +78,7 @@ const ContextMenu = forwardRef<ContextMenuRef, ContextMenuProps>(
         <AnimatePopover
           align="start"
           positions={position}
+          disableNudge={true}
           visible={contextMenuOpen}
           containerStyle={{ zIndex: '1000' }}
           content={<div ref={contentRef}>{renderContent()}</div>}

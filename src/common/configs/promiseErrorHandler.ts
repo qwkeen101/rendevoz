@@ -1,7 +1,7 @@
-import toast from 'react-hot-toast'
+import toast from "react-hot-toast";
 
-const globalPromiseErrorHandler = e => {
-  toast.error(e.reason)
-}
+const globalPromiseErrorHandler = (e) => {
+  toast.error(e.reason);
+};
 
-window.onunhandledrejection = globalPromiseErrorHandler
+window.onunhandledrejection = globalPromiseErrorHandler;

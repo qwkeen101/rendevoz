@@ -1,25 +1,19 @@
-import { RelativeRange } from './model/types'
+import { RelativeRange } from "./model/types";
 import {
-  // CursorEditor,
-  // CursorState,
-  // CursorStateChangeEvent,
-  // RemoteCursorChangeEventListener,
-  // withCursors,
-  // WithCursorsOptions,
   withYHistory,
   WithYHistoryOptions,
   withYjs,
   WithYjsOptions,
   YHistoryEditor,
-  YjsEditor
-} from './plugins'
-import { slateNodesToInsertDelta, yTextToSlateElement } from './utils/convert'
+  YjsEditor,
+} from "./plugins";
+import { slateNodesToInsertDelta, yTextToSlateElement } from "./utils/convert";
 import {
   relativePositionToSlatePoint,
   relativeRangeToSlateRange,
   slatePointToRelativePosition,
-  slateRangeToRelativeRange
-} from './utils/position'
+  slateRangeToRelativeRange,
+} from "./utils/position";
 
 export {
   withYjs,
@@ -32,8 +26,8 @@ export {
   slateRangeToRelativeRange,
   relativeRangeToSlateRange,
   slatePointToRelativePosition,
-  relativePositionToSlatePoint
-}
+  relativePositionToSlatePoint,
+};
 export type {
   WithYjsOptions,
   WithYHistoryOptions,
@@ -45,5 +39,5 @@ export type {
   // RemoteCursorChangeEventListener,
   // CursorStateChangeEvent,
   // Utils
-  RelativeRange
-}
+  RelativeRange,
+};

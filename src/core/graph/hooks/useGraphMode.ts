@@ -1,7 +1,7 @@
-import { atom, useAtom } from 'jotai'
+import { atom, useAtom } from "jotai";
 
-export const GraphModeAtom = atom<'simple' | 'normal'>('normal')
+export const GraphModeAtom = atom<"simple" | "normal">("normal");
 
-const useGraphMode = () => useAtom(GraphModeAtom)
+const useGraphMode = () => useAtom(GraphModeAtom);
 
-export default useGraphMode
+export default useGraphMode;

@@ -1,8 +1,13 @@
-import { ReactNode } from 'react';
-declare const Masonry: ({ breakPoints, gap, children }: {
-    breakPoints: Record<number, number>;
-    gap: number;
-    children: ReactNode;
+import { ReactNode } from "react";
+
+declare const Masonry: ({
+  breakPoints,
+  gap,
+  children,
+}: {
+  breakPoints: Record<number, number>;
+  gap: number;
+  children: ReactNode;
 }) => JSX.Element;
 export declare function MasonryRow({ children, gap }: {
     children: React.ReactNode;

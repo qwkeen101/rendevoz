@@ -1,38 +1,51 @@
-import { AnimatePopover, Content, Icon } from '@/components'
-import Tooltip from '@/components/base/Tooltip'
-import { useMergedRef } from '@/hooks'
-import { FC, useRef, useState, useEffect, MutableRefObject, useImperativeHandle, forwardRef, CSSProperties, MouseEventHandler } from 'react'
-import { AnimatePopoverProps } from './AnimatePopover'
+import { AnimatePopover, Content, Icon } from "@/components";
+import Tooltip from "@/components/base/Tooltip";
+import { useMergedRef } from "@/hooks";
+import {
+  CSSProperties,
+  FC,
+  forwardRef,
+  MouseEventHandler,
+  MutableRefObject,
+  useEffect,
+  useImperativeHandle,
+  useRef,
+  useState,
+} from "react";
+import { AnimatePopoverProps } from "./AnimatePopover";
 
 interface Props {
-  disableNudge?: boolean
-  disableCloseOutside?: boolean
-  disableIntersection?: boolean
-  name: string
-  content: AnimatePopoverProps['content']
-  tooltip?: string
-  color?: string
-  zIndex?: number
-  defaultOpen?: boolean
-  strokeWidth?: number
-  placement?: ('bottom' | 'top' | 'left' | 'right')[]
-  size?: number
-  innerRef?: MutableRefObject<any>
-  parentElement?: HTMLElement
-  padding?: number
-  boundaryInset?: number
-  style?: CSSProperties
-  align?: string
-  className?: string
-  onClick?: MouseEventHandler
-  tooltipPosition?: 'top' | 'bottom'
-  closeOnContentClick?: boolean | string
-  contentDraggable?: boolean
-  iconContainerStyle?: CSSProperties
-  onContentClick?: MouseEventHandler
-  containerStyle?: CSSProperties
-  renderOnParent?: boolean
-  onClickOutside?: (e: MouseEvent, setVisible: React.Dispatch<React.SetStateAction<boolean>>) => void
+  disableNudge?: boolean;
+  disableCloseOutside?: boolean;
+  disableIntersection?: boolean;
+  name: string;
+  content: AnimatePopoverProps["content"];
+  tooltip?: string;
+  color?: string;
+  zIndex?: number;
+  defaultOpen?: boolean;
+  strokeWidth?: number;
+  placement?: ("bottom" | "top" | "left" | "right")[];
+  size?: number;
+  innerRef?: MutableRefObject<any>;
+  parentElement?: HTMLElement;
+  padding?: number;
+  boundaryInset?: number;
+  style?: CSSProperties;
+  align?: string;
+  className?: string;
+  onClick?: MouseEventHandler;
+  tooltipPosition?: "top" | "bottom";
+  closeOnContentClick?: boolean | string;
+  contentDraggable?: boolean;
+  iconContainerStyle?: CSSProperties;
+  onContentClick?: MouseEventHandler;
+  containerStyle?: CSSProperties;
+  renderOnParent?: boolean;
+  onClickOutside?: (
+    e: MouseEvent,
+    setVisible: React.Dispatch<React.SetStateAction<boolean>>
+  ) => void;
 }
 const IconWithPopover: FC<Props> = (
   {

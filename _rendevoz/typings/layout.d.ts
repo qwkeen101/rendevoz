@@ -1,5 +1,5 @@
 import { ReactElement } from 'react'
-import { IPdfInstance, IEditorInstance, IWebpageInstance, IVideoInstance, CustomTypes } from '.'
+import { CustomTypes, IEditorInstance, IPdfInstance, IVideoInstance, IWebpageInstance } from '.'
 
 export type IVideoTab = {
   type: 'video'
@@ -49,7 +49,13 @@ export type IDatabaseTab = {
   objectId: never
 }
 
-export type BuiltInTabTypes = IVideoTab | IWhiteboardTab | INoteTab | IImageTab | IPDFTab | IWebpageTab | IDatabaseTab | IHomeTab
+export type IGraphTab = {
+  type: 'graph'
+  instance: never
+  objectId: never
+}
+
+export type BuiltInTabTypes = IVideoTab | IWhiteboardTab | INoteTab | IImageTab | IPDFTab | IWebpageTab | IDatabaseTab | IHomeTab | IGraphTab
 
 export type ILayoutTab = CustomTypes['Tab'] & {
   tabContent: ReactElement

@@ -1,7 +1,7 @@
-import { Noop } from '@/common/types'
-import { Content } from '../base'
-import Menu from '../base/menu'
-import Icon from '../base/Icon'
+import { Noop } from "@/common/types";
+import { Content } from "../base";
+import Menu from "../base/menu";
+import Icon from "../base/Icon";
 
 const PdfViewerToolMenu = ({
   onZoomIn,
@@ -11,12 +11,12 @@ const PdfViewerToolMenu = ({
   onSearch,
   onClean,
 }: {
-  onZoomIn?: Noop
-  onZoomOut?: Noop
-  onAutoFit?: Noop
-  onSearch?: Noop
-  onPan?: Noop
-  onClean?: Noop
+  onZoomIn?: Noop;
+  onZoomOut?: Noop;
+  onAutoFit?: Noop;
+  onSearch?: Noop;
+  onPan?: Noop;
+  onClean?: Noop;
 }) => {
   return (
     <Menu>
@@ -57,7 +57,7 @@ const PdfViewerToolMenu = ({
         </Content>
       </Menu.Item> */}
     </Menu>
-  )
-}
+  );
+};
 
-export default PdfViewerToolMenu
+export default PdfViewerToolMenu;

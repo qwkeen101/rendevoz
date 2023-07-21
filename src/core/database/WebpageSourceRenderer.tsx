@@ -3,6 +3,7 @@ import FontSize from '@/consts/font'
 import { ObjectStore } from '@/stores'
 import ClassName from '@/styles/classNames'
 import { css } from '@emotion/css'
+import { Regexp } from '@/utils'
 
 const WebpageSourceRenderer = ({ objectId }: { objectId: number }) => {
   const webpage = ObjectStore('webpage').useValue(objectId)
@@ -10,7 +11,7 @@ const WebpageSourceRenderer = ({ objectId }: { objectId: number }) => {
   if (webpage) {
     const { favicon, title, url } = webpage
     if (!url) return null
-    const displayUrl = url ? new URL(url).hostname : title
+    const displayUrl = Regexp.isValidWebUrl(url) ? new URL(url).hostname : title
 
     return (
       <IconNameItem
@@ -23,6 +24,7 @@ const WebpageSourceRenderer = ({ objectId }: { objectId: number }) => {
           },
           ClassName.description(FontSize['11px'])
         ])}
+        style={{ marginLeft: 2, marginTop: 3 }}
         icon={favicon}
         name={displayUrl}
       />

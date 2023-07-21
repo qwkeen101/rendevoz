@@ -1,2 +1,3 @@
-import { Components } from 'rendevoz'
-export default Components.Form
+import { Components } from "rendevoz";
+
+export default Components.Form;

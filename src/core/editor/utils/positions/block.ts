@@ -1,59 +1,65 @@
-import { Ancestor, Editor, Node, NodeEntry, Path, Point, Range } from 'slate'
-import { Positions } from '.'
-import { CustomEditor } from '../../customTypes'
+import { Ancestor, Editor, Node, NodeEntry, Path, Point, Range } from "slate";
+import { Positions } from ".";
+import { CustomEditor } from "../../customTypes";
 
 export interface IBlockPosition {
-  outermostBlock: (editor: CustomEditor) => NodeEntry<Ancestor> | undefined
-  parentBlock: (editor: CustomEditor) => NodeEntry<Node> | undefined
-  isInsideCommonBlock: (editor: CustomEditor) => boolean
-  isInsideHole: (editor: CustomEditor) => boolean
-  nextRowOfCurrentSelection: (editor: CustomEditor) => Path | undefined
+  outermostBlock: (editor: CustomEditor) => NodeEntry<Ancestor> | undefined;
+  parentBlock: (editor: CustomEditor) => NodeEntry<Node> | undefined;
+  isInsideCommonBlock: (editor: CustomEditor) => boolean;
+  isInsideHole: (editor: CustomEditor) => boolean;
+  nextRowOfCurrentSelection: (editor: CustomEditor) => Path | undefined;
 }
 export const BlockPosition: IBlockPosition = {
-  outermostBlock: editor => {
+  outermostBlock: (editor) => {
     const match = Editor.above(editor, {
-      match: n => Editor.isBlock(editor, n),
-      mode: 'all',
-      voids: true
-    })
-    return match
+      match: (n) => Editor.isBlock(editor, n),
+      mode: "all",
+      voids: true,
+    });
+    return match;
   },
-  parentBlock: editor => {
-    const { selection } = editor
+  parentBlock: (editor) => {
+    const { selection } = editor;
     if (selection && Range.isCollapsed(selection)) {
-      let parentPath = Path.parent(selection.anchor.path)
+      let parentPath = Path.parent(selection.anchor.path);
       if (Positions.isInsideHole(editor)) {
-        parentPath = Path.parent(Path.parent(selection.anchor.path))
+        parentPath = Path.parent(Path.parent(selection.anchor.path));
       }
-      return Editor.node(editor, parentPath)
+      return Editor.node(editor, parentPath);
     }
   },
-  isInsideCommonBlock: editor => {
-    const { selection } = editor
+  isInsideCommonBlock: (editor) => {
+    const { selection } = editor;
     if (selection && Range.isCollapsed(selection)) {
-      const node = Editor.node(editor, selection?.anchor?.path, { depth: 1 })
+      const node = Editor.node(editor, selection?.anchor?.path, { depth: 1 });
       if (node) {
-        return true
+        return true;
       }
     }
-    return false
+    return false;
   },
-  isInsideHole: editor => {
-    if (Array.from(Editor.levels(editor, { voids: true })).some(i => i[0].type === 'hole')) {
-      return true
+  isInsideHole: (editor) => {
+    if (
+      Array.from(Editor.levels(editor, { voids: true })).some(
+        (i) => i[0].type === "hole"
+      )
+    ) {
+      return true;
     }
-    return false
+    return false;
   },
-  nextRowOfCurrentSelection: editor => {
-    const { selection } = editor
+  nextRowOfCurrentSelection: (editor) => {
+    const { selection } = editor;
     if (selection && Range.isCollapsed(selection)) {
-      const endPoint = Point.isAfter(selection?.anchor, selection?.focus) ? selection?.anchor : selection?.focus
-      const parentPath = Path.parent(endPoint.path)
-      let nextPath = Path.next(parentPath)
+      const endPoint = Point.isAfter(selection?.anchor, selection?.focus)
+        ? selection?.anchor
+        : selection?.focus;
+      const parentPath = Path.parent(endPoint.path);
+      let nextPath = Path.next(parentPath);
       if (Positions.isInsideHole(editor)) {
-        nextPath = Path.next(Path.parent(parentPath))
+        nextPath = Path.next(Path.parent(parentPath));
       }
-      return nextPath
+      return nextPath;
     }
-  }
-}
+  },
+};

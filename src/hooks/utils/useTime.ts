@@ -1,11 +1,11 @@
-import { format } from 'date-fns'
+import { format } from "date-fns";
 
-function useTime(): number
-function useTime(time: number): string
+function useTime(): number;
+function useTime(time: number): string;
 function useTime(time?: number) {
   if (time) {
-    return format(time, 'd MMM yyyy')
+    return format(time, "d MMM yyyy");
   }
-  return Date.now()
+  return Date.now();
 }
-export default useTime
+export default useTime;

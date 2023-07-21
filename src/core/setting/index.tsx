@@ -1,11 +1,11 @@
-import { Content, Icon } from '@/components/base'
+import { Content } from '@/components/base'
 import { globalStore } from '@/stores'
 import ClassName from '@/styles/classNames'
 import { css } from '@emotion/css'
 import { useAtom } from 'jotai/react'
 import { atomWithStorage } from 'jotai/vanilla/utils'
 import _ from 'lodash'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import AppearanceSetting from './Appearance'
 import ComponentSetting from './Component'
@@ -17,6 +17,8 @@ import SettingSidebarItem from './SidebarItem'
 import AboutSetting from './About'
 import UsageSetting from './Usage'
 import { useUser } from '@/services/login.service'
+import { KeyToRegisterdSettings } from '@/core/plugin/RegisterMap'
+import SettingItem from '@/core/setting/Item'
 
 enum Settings {
   'general',
@@ -29,7 +31,14 @@ enum Settings {
   // 'about'
 }
 type AvaliableLanguages = 'en-US' | 'zh-CN'
-type Setting = INotificationSetting & IShortCutSetting & IGeneralSetting & IObjectsAndLinkSetting & IComponentSetting & IAppearanceSetting
+type Setting = INotificationSetting &
+  IShortCutSetting &
+  IGeneralSetting &
+  IObjectsAndLinkSetting &
+  IComponentSetting &
+  IAppearanceSetting & {
+    sidebarVisibleItems: string[]
+  }
 type IGeneralSetting = {
   general: {
     language?: AvaliableLanguages
@@ -105,6 +114,7 @@ export type IObjectsAndLinkSetting = {
     enableDropAutoGenerateObject: boolean
   }
 }
+
 export type IComponentSetting = {
   whiteboard: {
     enableMinimap: boolean
@@ -130,9 +140,12 @@ export type IComponentSetting = {
     autoPlay: boolean
   }
 }
+
 const localSetting = JSON.parse(localStorage.getItem('setting'))
 localStorage.removeItem('setting')
+
 const defaultSetting: Setting = {
+  sidebarVisibleItems: ['home', 'database', 'collections', 'search', 'graph', 'webSearch', 'screenshot', 'settings'],
   notification: {
     enabled: true,
     pdf: true,
@@ -185,6 +198,7 @@ const defaultSetting: Setting = {
   }
 }
 _.merge(defaultSetting, localSetting)
+defaultSetting.sidebarVisibleItems = localSetting.sidebarVisibleItems || defaultSetting.sidebarVisibleItems
 localStorage.setItem('setting', JSON.stringify(defaultSetting))
 export const SettingAtom = atomWithStorage<Setting>('setting', defaultSetting)
 
@@ -195,6 +209,8 @@ const SettingDialog = ({ onClose }: { onClose: VoidFunction }) => {
   const [currentSettingPanel, setCurrentSettingPanel] = useState<keyof typeof Settings>('general')
   const [setting] = useSetting()
   const [user] = useUser()
+  const registeredPanels = new Map(Array.from(KeyToRegisterdSettings.values()).map(i => [i.registerPanelName, i.settingItems]))
+
   const renderContent = () => {
     switch (currentSettingPanel) {
       case 'general':
@@ -217,6 +233,19 @@ const SettingDialog = ({ onClose }: { onClose: VoidFunction }) => {
         }
       }
     }
+    if (registeredPanels.has(currentSettingPanel)) {
+      const items = registeredPanels.get(currentSettingPanel)
+
+      if (items) {
+        return (
+          <Content flex column fullHeight>
+            {items?.map((i, idx) => (
+              <SettingItem {...i} key={idx} />
+            ))}
+          </Content>
+        )
+      }
+    }
   }
   return (
     <Content
@@ -237,12 +266,13 @@ const SettingDialog = ({ onClose }: { onClose: VoidFunction }) => {
         className={css({
           boxShadow: '7px 0 15px -8px rgba(0,0,0,0.1)',
           width: '200px',
-          paddingRight: 12
+          paddingRight: 12,
+          overflowY: 'auto'
         })}
         flex
         column
       >
-        {Object.keys(Settings)
+        {[...Object.keys(Settings), ...registeredPanels.keys()]
           .filter(i => isNaN(Number(i)))
           .filter(i => {
             if (i === 'resource usage' && !user) {

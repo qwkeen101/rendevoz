@@ -1,8 +1,8 @@
 import { useDebounceFn, useMemoizedFn } from '@/hooks'
 import isHotkey from 'is-hotkey'
 import { FC, KeyboardEventHandler, memo, RefObject, useCallback, useEffect, useMemo, useRef } from 'react'
-import { Descendant, Editor, Path, Range, Transforms, Node } from 'slate'
-import { ReactEditor, Slate, RenderElementProps, RenderLeafProps, Editable, useSlateStatic } from './slate-react'
+import { Descendant, Editor, Node, Path, Range, Transforms } from 'slate'
+import { Editable, ReactEditor, RenderElementProps, RenderLeafProps, Slate, useSlateStatic } from './slate-react'
 import EditorToolbar from './components/toolbar'
 import HOTKEYS from './consts/hotkeys'
 import { CustomEditor, CustomElement } from '~/typings'
@@ -28,7 +28,6 @@ import Colors from '@/consts/colors'
 import FontSize from '@/consts/font'
 import useEditorInstance from './hooks/useEditorInstance'
 import { transformTextContentToNameAndDescription } from '../global/globalDragOverlay/utils'
-import { content } from 'html2canvas/dist/types/css/property-descriptors/content'
 
 const EditableEditorClassName = css({
   p: {
@@ -47,7 +46,7 @@ const EditableEditorClassName = css({
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 //@ts-ignore
 const ReadOnlyEditorClassName = css({
-  fontFamily: 'Muli, serif',
+  // fontFamily: 'Muli, serif',
   '*': {
     textTransform: 'none'
   },
@@ -282,7 +281,10 @@ const InnerEditor: FC<InnerEditorProps> = memo(
           const content = editor.overlayManager?.getContent()
           if (isOverlayOpen && content === 'slashMenu') {
             if (editor.selection && Range.isCollapsed(editor.selection) && isHotkey(KEY.Backspace, e)) {
-              const prevDeleted = Editor.before(editor, editor.selection, { distance: 1, unit: 'character' })
+              const prevDeleted = Editor.before(editor, editor.selection, {
+                distance: 1,
+                unit: 'character'
+              })
               if (prevDeleted) {
                 const prevText = Editor.string(editor, {
                   anchor: prevDeleted,
@@ -354,7 +356,11 @@ const InnerEditor: FC<InnerEditorProps> = memo(
             }
           }
 
-          Transforms.move(editor, { unit: 'offset', reverse: true, distance })
+          Transforms.move(editor, {
+            unit: 'offset',
+            reverse: true,
+            distance
+          })
           return
         }
         if (isHotkey('right', e)) {
@@ -373,7 +379,9 @@ const InnerEditor: FC<InnerEditorProps> = memo(
       }
       if (isHotkey('tab', e)) {
         e.preventDefault()
-        const currBlock = Editor.above(editor, { match: n => Editor.isBlock(editor, n) })
+        const currBlock = Editor.above(editor, {
+          match: n => Editor.isBlock(editor, n)
+        })
         const { selection } = editor
         if (!currBlock) return
         if (
@@ -443,14 +451,24 @@ const InnerEditor: FC<InnerEditorProps> = memo(
                     const highlightId = Editor.marks(editor)['highlight']
                     Editor.removeMark(editor, 'highlight')
                     instance.deleteLabel?.(Number(highlightId))
-                    editor.on({ type: 'highlightRemove', highlightId: Number(highlightId) })
+                    editor.on({
+                      type: 'highlightRemove',
+                      highlightId: Number(highlightId)
+                    })
                   } else {
                     const highlightId = Id.getId()
                     const selectedText = editor.selection ? Editor.string(editor, editor.selection) : undefined
                     const { name } = transformTextContentToNameAndDescription(selectedText)
-                    const label = await instance.addLabel?.({ id: highlightId, name: name || 'Unnamed Label' })
+                    const label = await instance.addLabel?.({
+                      id: highlightId,
+                      name: name || 'Unnamed Label'
+                    })
                     if (label) {
-                      editor.on({ type: 'highlight', highlightId, labelId: label.id })
+                      editor.on({
+                        type: 'highlight',
+                        highlightId,
+                        labelId: label.id
+                      })
                     }
                     Editor.addMark(editor, 'highlight', highlightId)
                   }

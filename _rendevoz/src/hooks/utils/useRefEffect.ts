@@ -1,5 +1,6 @@
-import { useDebugValue, useEffect, useState } from 'react'
-const noop: (...args: any[]) => any = () => {}
+import { useDebugValue, useEffect, useState } from "react";
+
+const noop: (...args: any[]) => any = () => {};
 
 /**
  * `useRefEffect` returns a mutable ref object to be connected with a DOM Node.

@@ -1,15 +1,15 @@
-import { css } from '@emotion/css'
-import classNames from 'classnames'
-import { FC } from 'react'
+import { css } from "@emotion/css";
+import classNames from "classnames";
+import { FC } from "react";
 
 interface ContainerProps {
-  className?: string
-  column?: boolean
-  auto?: boolean
-  levelCenter?: boolean
-  verticalCenter?: boolean
-  children: React.ReactNode
-  style?: React.CSSProperties
+  className?: string;
+  column?: boolean;
+  auto?: boolean;
+  levelCenter?: boolean;
+  verticalCenter?: boolean;
+  children: React.ReactNode;
+  style?: React.CSSProperties;
 }
 
 const Container: FC<ContainerProps> = ({ column, auto, children, levelCenter, verticalCenter, style, className }) => {

@@ -1,32 +1,39 @@
-import Icon from '@/components/base/Icon'
-import { AnimatePresence, LayoutGroup, motion } from 'framer-motion'
-import { CSSProperties, FC, ReactNode, useEffect, useRef, useState } from 'react'
-import AnimatePopover from '../AnimatePopover'
-import Content from '../Content'
-import SelectOption, { SelectOptionProps } from './SelectOption'
-import styles from './index.module.less'
-import WithBorder from '../WithBorder'
-import classNames from 'classnames'
-import { isArray } from 'lodash'
-import ClassName from '@/styles/classNames'
-import { css } from '@emotion/css'
-import { Button } from '../button'
+import Icon from "@/components/base/Icon";
+import { AnimatePresence, LayoutGroup, motion } from "framer-motion";
+import {
+  CSSProperties,
+  FC,
+  ReactNode,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
+import AnimatePopover from "../AnimatePopover";
+import Content from "../Content";
+import SelectOption, { SelectOptionProps } from "./SelectOption";
+import styles from "./index.module.less";
+import WithBorder from "../WithBorder";
+import classNames from "classnames";
+import { isArray } from "lodash";
+import ClassName from "@/styles/classNames";
+import { css } from "@emotion/css";
+import { Button } from "../button";
 
 interface SelectProps {
-  multiple?: boolean
-  value?: string | string[] | number | number[]
-  closeOnSelect?: boolean
-  disabled?: boolean
-  deselectable?: boolean
-  defaultValue?: string
-  placeholder?: string
-  className?: string
-  displayRenderer?: (value: string | string[] | number | number[]) => ReactNode
-  onSelect: (value: string[] | number[]) => void
-  style?: CSSProperties
-  menuStyle?: CSSProperties
-  menuPosition?: 'top' | 'bottom'
-  options: SelectOptionProps[]
+  multiple?: boolean;
+  value?: string | string[] | number | number[];
+  closeOnSelect?: boolean;
+  disabled?: boolean;
+  deselectable?: boolean;
+  defaultValue?: string;
+  placeholder?: string;
+  className?: string;
+  displayRenderer?: (value: string | string[] | number | number[]) => ReactNode;
+  onSelect: (value: string[] | number[]) => void;
+  style?: CSSProperties;
+  menuStyle?: CSSProperties;
+  menuPosition?: "top" | "bottom";
+  options: SelectOptionProps[];
 }
 interface ISelect extends FC<SelectProps> {
   Option: typeof SelectOption

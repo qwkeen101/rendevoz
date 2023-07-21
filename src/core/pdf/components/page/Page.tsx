@@ -1,20 +1,18 @@
-import React, { Fragment, useEffect, useMemo, useRef, useState } from 'react'
+import React, { Fragment, useMemo, useRef, useState } from 'react'
 import ThoughtLabel from '../label/Label'
-import { Button, WithBorder } from '@/components'
+import { AnimatePopover, Button, WithBorder } from '@/components'
 import { RenderPageProps, TextSelectEvent } from '~/typings'
-import { AnimatePopover } from '@/components'
 import TextSelectionToolbar from '../toolbar/TextSelectionToolbar'
 import HighlightLabel from '../label/HighlightLabel'
 import useCleanMode from '../../hooks/useCleanMode'
 import { useAtomValue } from 'jotai/react'
-import { ObjectStore, globalStore } from '@/stores'
-import { IHighlightLabel } from '~/typings/data'
+import { globalStore, ObjectStore } from '@/stores'
 import ObjectLabel from '../label/ObjectLabel'
 import usePdfDraw from '../../hooks/usePdfDraw'
 import produce from 'immer'
 import { loadFromBlob } from '@excalidraw/excalidraw'
 import usePdfViewer from '../../core/hooks/useViewer'
-import { PAGE_INDEX_TO_CANVAS_LAYER, getTextContent } from '../../core/weakMaps'
+import { getTextContent, PAGE_INDEX_TO_CANVAS_LAYER } from '../../core/weakMaps'
 import { GlobalTranslateInstance } from '@/core/global/translate/GlobalTranslatePanel'
 import { GlobalSearchInstance } from '@/core/global/GlobalSearchPanel'
 import { objectIdToMetaObjectIdMapAtom } from '@/stores/meta.store'
@@ -41,7 +39,9 @@ const PdfPage: React.FC<PdfPageProps> = ({
   const labelContainerRef = useRef<HTMLDivElement>(null)
   const [cleanMode] = useCleanMode()
 
-  const allLabels = useAtomValue(ObjectStore('pdfLabel').objectMapAtom, { store: globalStore })
+  const allLabels = useAtomValue(ObjectStore('pdfLabel').objectMapAtom, {
+    store: globalStore
+  })
   const labels = useMemo(() => {
     return Array.from(allLabels.values()).filter(i => i.page === pageIndex && i.documentId === pdfId)
   }, [allLabels.size])
@@ -58,7 +58,7 @@ const PdfPage: React.FC<PdfPageProps> = ({
       const pdf = await ObjectStore('pdf').getOneById(pdfId)
       save()
         .then(res => {
-          const savedBlobUrl = res?.data
+          const savedBlobUrl = res
           if (savedBlobUrl && pdf) {
             const newPageAnnotations = produce(pdf.pageAnnotations || {}, draft => {
               draft[pageIndex] = {

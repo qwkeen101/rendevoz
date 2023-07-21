@@ -1,7 +1,6 @@
 /* eslint-disable semi */
 import * as React from 'react'
-import { RefObject, useEffect } from 'react'
-import { useEvent } from 'react-use'
+import {RefObject, useEffect} from 'react'
 import useEventListener from './useEventListener'
 
 /**

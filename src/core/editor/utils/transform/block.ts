@@ -1,7 +1,3 @@
-interface IBlockTransform {
-    
-}
+interface IBlockTransform {}
 
-export const BlockTransform = {
-
-}
+export const BlockTransform = {};

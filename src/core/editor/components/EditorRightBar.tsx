@@ -9,6 +9,7 @@ import Colors from '@/consts/colors'
 import { useEffect } from 'react'
 import { useSetAtom } from 'jotai'
 import { EditorSearchAtom } from '../hooks/useEditorSearch'
+import { useEditorInstance } from '@/core/rendevoz/hooks'
 
 const EditorRightBar = () => {
   const [barState, setBarState] = useEditorBarState()
@@ -21,6 +22,7 @@ const EditorRightBar = () => {
       setEditorSearch(s => ({ ...s, isSearching: true }))
     }
   }, [barState])
+
   return (
     <Resizable
       enable={{
@@ -36,7 +38,7 @@ const EditorRightBar = () => {
         contentVisibility: barState.showRightBar ? 'visible' : 'hidden',
         position: barState.showRightBar ? 'relative' : 'absolute',
         pointerEvents: barState.showRightBar ? 'auto' : 'none',
-        padding: 16,
+        padding: '6px 12px',
         marginLeft: 12
       }}
       handleStyles={{

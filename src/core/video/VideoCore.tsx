@@ -7,8 +7,6 @@ import useThrottleFn from '@/hooks/utils/useThrottleFn'
 import { ObjectStore } from '@/stores'
 import { useSelectGlobalAtomValue } from '@/hooks'
 import { SettingAtom } from '../setting'
-import { useSetAtom } from 'jotai'
-import { VideoToolbarStateAtom } from './hooks/useVideoToolbarState'
 
 interface VideoCoreProps {
   url?: string
@@ -25,7 +23,11 @@ const VideoCore = memo(({ url }: VideoCoreProps) => {
   const webviewRef = useRef<HTMLWebViewElement>()
   const throttleUpdateLastViewTime = useThrottleFn(
     () => {
-      videoState.videoId && ObjectStore('video').updateOne({ id: videoState.videoId, lastPlayedTime: currentTime })
+      videoState.videoId &&
+        ObjectStore('video').updateOne({
+          id: videoState.videoId,
+          lastPlayedTime: currentTime
+        })
     },
     { wait: 1000 }
   )
@@ -86,7 +88,7 @@ const VideoCore = memo(({ url }: VideoCoreProps) => {
   useEffect(() => {
     throttleUpdateLastViewTime.run()
     if (currentTime !== undefined && videoRef.current?.currentTime !== undefined) {
-      if (Math.abs(currentTime - videoRef.current.currentTime) > 1) {
+      if (Math.abs(currentTime - videoRef.current.currentTime) > 3) {
         videoRef.current.currentTime = currentTime
       }
     }

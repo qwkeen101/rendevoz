@@ -3,17 +3,14 @@ import { useRenderObject } from '@/core'
 import { useAtomValue } from 'jotai'
 import { memo } from 'react'
 import { EditorObjectsAtom } from './useEditorFilter'
-import { Path } from 'slate'
 import { CustomEditor } from '~/typings'
 import { useMemoizedFn } from '@/hooks'
-import { highlightMeta, goToBlock } from '@/core/editor/utils'
+import { goToBlock, highlightMeta } from '@/core/editor/utils'
 import FontSize from '@/consts/font'
 
 const AllObjects = ({ editor }: { editor: CustomEditor }) => {
   const allObjects = useAtomValue(EditorObjectsAtom)
-  //   const {} = useVirtualizer({
-  //     count: allObjects?.length
-  //   })
+
   const handleJump = useMemoizedFn((blockId: number) => {
     goToBlock(blockId, editor).then(() => {
       highlightMeta(blockId, editor)
@@ -23,11 +20,11 @@ const AllObjects = ({ editor }: { editor: CustomEditor }) => {
     <Content
       flex
       column
-      gap={10}
+      gap={8}
       style={{
         height: '100%',
         overflowY: 'overlay',
-        paddingRight: 10
+        paddingRight: 6
       }}
     >
       {allObjects?.map(i => (
@@ -42,12 +39,12 @@ const ObjectItem = memo(({ metaId, onJump }: { metaId: number; onJump: VoidFunct
 
   if (!metaObject) return null
   return (
-    <Content flex gap={10} justifyContent="space-between">
+    <Content flex gap={8} justifyContent="space-between">
       <Content flex column>
         {renderTags({})}
         {renderTitle({
           style: {
-            fontSize: FontSize['14px']
+            fontSize: FontSize['12px']
           }
         })}
       </Content>

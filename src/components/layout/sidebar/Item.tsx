@@ -27,7 +27,13 @@ export const MenuItem = React.forwardRef(
       onClick,
       style,
       className
-    }: { className?: string; children: React.ReactNode; to?: string; onClick?: React.MouseEventHandler; style?: React.CSSProperties },
+    }: {
+      className?: string
+      children: React.ReactNode
+      to?: string
+      onClick?: React.MouseEventHandler
+      style?: React.CSSProperties
+    },
     ref: React.ForwardedRef<HTMLLIElement>
   ) => {
     return (
@@ -38,10 +44,9 @@ export const MenuItem = React.forwardRef(
         className={css([
           className,
           ClassName.ellipsisFont(1),
-          ClassName.flatButton(),
-          ClassName.flexLayout('center', 'flex-start'),
+          ClassName.flatButton(8, '4px'),
+          ClassName.flexLayout('center', 'center'),
           {
-            minWidth: 150,
             cursor: 'pointer',
             userSelect: 'none',
             flexShrink: 0

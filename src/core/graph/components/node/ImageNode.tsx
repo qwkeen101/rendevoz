@@ -1,13 +1,11 @@
 import { GraphNode } from '../../types/node'
-import { motion } from 'framer-motion'
-import { TypeToNodeRadius } from './Node'
-import { useMemo } from 'react'
+import { getRadius, TypeToNodeRadius } from './Node'
 import Colors from '@/consts/colors'
 
 const ImageNode = ({ node, imageUrl, label }: { node: GraphNode; imageUrl?: string; label?: string }) => {
   const realImageUrl = imageUrl || node.coverImgSrc
   const realLabel = label || node.label
-  const radius = TypeToNodeRadius[node.type || 'normal']
+  const radius = getRadius(node.type)
   const d = radius * 2
 
   return (

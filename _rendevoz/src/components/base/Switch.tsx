@@ -1,14 +1,14 @@
-import { useSetTheme, useTheme, useToggle } from '@/hooks'
-import { CSSProperties, FC } from 'react'
-import { motion } from 'framer-motion'
-import { css } from '@emotion/css'
+import { useTheme, useToggle } from "@/hooks";
+import { CSSProperties, FC } from "react";
+import { motion } from "framer-motion";
+import { css } from "@emotion/css";
 
 interface SwitchProps {
-  onChange?: (value: boolean) => void
-  defaultValue?: boolean
-  width?: number
-  height?: number
-  value?: boolean
+  onChange?: (value: boolean) => void;
+  defaultValue?: boolean;
+  width?: number;
+  height?: number;
+  value?: boolean;
 }
 const spring = {
   type: 'spring',

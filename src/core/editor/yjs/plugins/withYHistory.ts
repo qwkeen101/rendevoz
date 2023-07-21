@@ -1,15 +1,15 @@
-import { Editor, Transforms } from 'slate';
-import * as Y from 'yjs';
-import { HistoryStackItem, RelativeRange } from '../model/types';
+import { Editor, Transforms } from "slate";
+import * as Y from "yjs";
+import { HistoryStackItem, RelativeRange } from "../model/types";
 import {
   relativeRangeToSlateRange,
   slateRangeToRelativeRange,
-} from '../utils/position';
-import { YjsEditor } from './withYjs';
+} from "../utils/position";
+import { YjsEditor } from "./withYjs";
 
 const LAST_SELECTION: WeakMap<Editor, RelativeRange | null> = new WeakMap();
 const DEFAULT_WITHOUT_SAVING_ORIGIN = Symbol(
-  'slate-yjs-history-without-saving'
+  "slate-yjs-history-without-saving"
 );
 
 export type YHistoryEditor = YjsEditor & {
@@ -26,9 +26,9 @@ export const YHistoryEditor = {
     return (
       YjsEditor.isYjsEditor(value) &&
       (value as YHistoryEditor).undoManager instanceof Y.UndoManager &&
-      typeof (value as YHistoryEditor).undo === 'function' &&
-      typeof (value as YHistoryEditor).redo === 'function' &&
-      'withoutSavingOrigin' in value
+      typeof (value as YHistoryEditor).undo === "function" &&
+      typeof (value as YHistoryEditor).redo === "function" &&
+      "withoutSavingOrigin" in value
     );
   },
 
@@ -90,23 +90,23 @@ export function withYHistory<T extends YjsEditor>(
     stackItem,
   }: {
     stackItem: HistoryStackItem;
-    type: 'redo' | 'undo';
+    type: "redo" | "undo";
   }) => {
     stackItem.meta.set(
-      'selection',
+      "selection",
       e.selection && slateRangeToRelativeRange(e.sharedRoot, e, e.selection)
     );
-    stackItem.meta.set('selectionBefore', LAST_SELECTION.get(e));
+    stackItem.meta.set("selectionBefore", LAST_SELECTION.get(e));
   };
 
   const handleStackItemUpdated = ({
     stackItem,
   }: {
     stackItem: HistoryStackItem;
-    type: 'redo' | 'undo';
+    type: "redo" | "undo";
   }) => {
     stackItem.meta.set(
-      'selection',
+      "selection",
       e.selection && slateRangeToRelativeRange(e.sharedRoot, e, e.selection)
     );
   };
@@ -116,19 +116,19 @@ export function withYHistory<T extends YjsEditor>(
     type,
   }: {
     stackItem: HistoryStackItem;
-    type: 'redo' | 'undo';
+    type: "redo" | "undo";
   }) => {
     // TODO: Change once https://github.com/yjs/yjs/issues/353 is resolved
     const inverseStack =
-      type === 'undo' ? e.undoManager.redoStack : e.undoManager.undoStack;
+      type === "undo" ? e.undoManager.redoStack : e.undoManager.undoStack;
     const inverseItem = inverseStack[inverseStack.length - 1];
     if (inverseItem) {
-      inverseItem.meta.set('selection', stackItem.meta.get('selectionBefore'));
-      inverseItem.meta.set('selectionBefore', stackItem.meta.get('selection'));
+      inverseItem.meta.set("selection", stackItem.meta.get("selectionBefore"));
+      inverseItem.meta.set("selectionBefore", stackItem.meta.get("selection"));
     }
 
     const relativeSelection = stackItem.meta.get(
-      'selectionBefore'
+      "selectionBefore"
     ) as RelativeRange | null;
 
     if (!relativeSelection) {
@@ -152,15 +152,15 @@ export function withYHistory<T extends YjsEditor>(
   e.connect = () => {
     connect();
 
-    e.undoManager.on('stack-item-added', handleStackItemAdded);
-    e.undoManager.on('stack-item-popped', handleStackItemPopped);
-    e.undoManager.on('stack-item-updated', handleStackItemUpdated);
+    e.undoManager.on("stack-item-added", handleStackItemAdded);
+    e.undoManager.on("stack-item-popped", handleStackItemPopped);
+    e.undoManager.on("stack-item-updated", handleStackItemUpdated);
   };
 
   e.disconnect = () => {
-    e.undoManager.off('stack-item-added', handleStackItemAdded);
-    e.undoManager.off('stack-item-popped', handleStackItemPopped);
-    e.undoManager.off('stack-item-updated', handleStackItemUpdated);
+    e.undoManager.off("stack-item-added", handleStackItemAdded);
+    e.undoManager.off("stack-item-popped", handleStackItemPopped);
+    e.undoManager.off("stack-item-updated", handleStackItemUpdated);
 
     disconnect();
   };

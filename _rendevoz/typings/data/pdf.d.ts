@@ -1,31 +1,31 @@
-import { IBase } from './base'
-import { IHighlightLabel, IThoughtLabel } from './label'
+import { IBase } from "./base";
+import { IHighlightLabel, IThoughtLabel } from "./label";
 
 export interface IPdfDocument extends IBase {
-  name?: string
-  description?: string
-  metadata?: IPdfMetadata
-  lastReadPage?: number
-  lastReadAt?: number
-  totalReadTime?: number
-  readProgress?: number
-  noteIds: number[]
-  totalNoteNumber?: number
-  deletedAt?: number
-  starred?: boolean
-  fileUrl?: string
-  color?: string
-  icon?: string
-  labels?: number[]
+  name?: string;
+  description?: string;
+  metadata?: IPdfMetadata;
+  lastReadPage?: number;
+  lastReadAt?: number;
+  totalReadTime?: number;
+  readProgress?: number;
+  noteIds: number[];
+  totalNoteNumber?: number;
+  deletedAt?: number;
+  starred?: boolean;
+  fileUrl?: string;
+  color?: string;
+  icon?: string;
+  labels?: number[];
   pageAnnotations?: Record<
     number,
     {
       // fetch from remote
-      dataUrl?: string
+      dataUrl?: string;
       // fetch from blob db
-      dataId?: number
+      dataId?: number;
     }
-  >
+  >;
 }
 export type CustomLabel = IHighlightLabel | IThoughtLabel
 export interface PdfNoteData {

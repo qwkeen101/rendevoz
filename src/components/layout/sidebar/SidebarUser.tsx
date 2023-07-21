@@ -1,7 +1,7 @@
 import { AnimatePopover, Button, Content, Icon, Image, Modal, Tooltip, WithBorder } from '@/components/base'
 import UpgradePlan from '@/components/UpgradePlan'
 import Zindexes from '@/consts/zindex'
-import { useGlobalAtom, useGlobalAtomValue, useToggle } from '@/hooks'
+import { useGlobalAtom, useToggle } from '@/hooks'
 import LoginService, { useUser } from '@/services/login.service'
 import ClassName from '@/styles/classNames'
 import DateFormat from '@/utils/dateFormat'
@@ -13,9 +13,23 @@ import Login, { indicatorClassName, loginInputClassName } from '@/components/Log
 import { toast } from 'react-hot-toast'
 import { useTranslation } from 'react-i18next'
 import FontSize from '@/consts/font'
-import { SidebarCollapseAtom, SidebarStateAtom } from '.'
+import { SidebarStateAtom } from '.'
 import Colors from '@/consts/colors'
 
+const StringToRgb = (str: string) => {
+  let hash = 0
+  if (str.length === 0) return hash
+  for (let i = 0; i < str.length; i++) {
+    hash = str.charCodeAt(i) + ((hash << 5) - hash)
+    hash = hash & hash
+  }
+  const rgb = [0, 0, 0]
+  for (let i = 0; i < 3; i++) {
+    const value = (hash >> (i * 16)) & 255
+    rgb[i] = value
+  }
+  return `rgb(${rgb[0]}, ${rgb[1]}, ${rgb[2]})`
+}
 const SidebarUser = memo(() => {
   const [user] = useUser()
   const [popoverVisible, togglePopoverVisible] = useToggle(false)
@@ -31,7 +45,12 @@ const SidebarUser = memo(() => {
     }
   }, [user])
   return (
-    <Content flex alignItems="center" gap={10} style={{ marginBottom: 10 }}>
+    <Content
+      flex
+      alignItems="center"
+      gap={10}
+      style={{ borderBottom: `1px solid ${Colors.Background.Border}`, paddingBottom: 10, paddingTop: 10 }}
+    >
       <Content auto>
         {user ? (
           <>
@@ -53,42 +72,38 @@ const SidebarUser = memo(() => {
               boundaryInset={18}
               boundaryTolerance={18}
             >
-              <Content
-                flex
-                onClick={togglePopoverVisible}
-                alignItems="center"
-                gap={8}
-                className={ClassName.flatButton()}
-                style={{ padding: '8px 8px', cursor: 'pointer' }}
-              >
+              <Content flex onClick={togglePopoverVisible} alignItems="center" style={{ cursor: 'pointer' }}>
                 {user?.photoURL && <Image width={25} src={user.photoURL} className={css({ borderRadius: 4 })} />}
                 <div
-                  className={css([
-                    {
-                      fontWeight: 600,
-                      fontFamily: 'Muli'
-                    },
-                    ClassName.ellipsisFont(1)
-                  ])}
+                  style={{
+                    width: 28,
+                    height: 28,
+                    borderRadius: 999,
+                    userSelect: 'none',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontWeight: 600,
+                    backgroundColor: Colors.Background.ButtonHover
+                  }}
                 >
-                  {user?.displayName || 'Unnamed User'}
+                  {user?.displayName?.slice(0, 2) || '?'}
                 </div>
                 <Tooltip content={isPremium ? 'You are premium user' : 'You are not premium user'}>
-                  <Icon theme="filled" fill={isPremium ? 'rgb(255,215,0)' : 'rgb(218,223,225)'} name="park-vip" />
+                  <Icon
+                    containerStyle={{ position: 'absolute', top: -3, right: -3 }}
+                    theme="filled"
+                    fill={isPremium ? 'rgb(255,215,0)' : 'rgb(218,223,225)'}
+                    name="park-vip"
+                    size={10}
+                  />
                 </Tooltip>
               </Content>
             </AnimatePopover>
           </>
         ) : (
           <>
-            <Button.IconButton
-              onClick={() => toggleLoginVisible(true)}
-              icon="park-user"
-              style={{
-                padding: '8px 10px'
-              }}
-              text={t('login.login')}
-            ></Button.IconButton>
+            <Icon onClick={() => toggleLoginVisible(true)} name={'park-user'} size={20} className={ClassName.flatButton(6, '4px')} />
             <Modal visible={loginVisible} onClose={toggleLoginVisible} noStyle>
               <div
                 className={ClassName.Background.pseudoBlurContrastBackground}
@@ -104,22 +119,26 @@ const SidebarUser = memo(() => {
           </>
         )}
       </Content>
-      <Icon
-        size={20}
-        className={ClassName.flatButton()}
-        onClick={() => {
-          if (sidebarState.collapsed) {
-            setSidebarState(s => ({ ...s, width: sidebarState.ref?.getSelfElement()?.clientWidth || 240, collapsed: false }))
-          } else {
-            setSidebarState({
-              hovered: false,
-              collapsed: true,
-              width: 0
-            })
-          }
-        }}
-        name={sidebarState.collapsed ? 'park-menu-unfold' : 'park-menu-fold'}
-      />
+      {/*<Icon*/}
+      {/*  size={20}*/}
+      {/*  className={ClassName.flatButton()}*/}
+      {/*  onClick={() => {*/}
+      {/*    if (sidebarState.collapsed) {*/}
+      {/*      setSidebarState(s => ({*/}
+      {/*        ...s,*/}
+      {/*        width: sidebarState.ref?.getSelfElement()?.clientWidth || 240,*/}
+      {/*        collapsed: false*/}
+      {/*      }))*/}
+      {/*    } else {*/}
+      {/*      setSidebarState({*/}
+      {/*        hovered: false,*/}
+      {/*        collapsed: true,*/}
+      {/*        width: 0*/}
+      {/*      })*/}
+      {/*    }*/}
+      {/*  }}*/}
+      {/*  name={sidebarState.collapsed ? 'park-menu-unfold' : 'park-menu-fold'}*/}
+      {/*/>*/}
     </Content>
   )
 })
@@ -129,7 +148,15 @@ const UserPopover = ({ onUpgradePlan, onUpdateUser }: { onUpgradePlan: VoidFunct
   const { t } = useTranslation()
   const isPremium = user?.premiumEndDate && user?.premiumEndDate > Date.now()
   return (
-    <WithBorder style={{ padding: 12, display: 'flex', flexDirection: 'column', fontFamily: 'Muli', minWidth: 220 }}>
+    <WithBorder
+      style={{
+        padding: 12,
+        display: 'flex',
+        flexDirection: 'column',
+        fontFamily: 'Muli',
+        minWidth: 220
+      }}
+    >
       <div style={{ padding: '0 8px', textTransform: 'none' }} className={ClassName.description()}>
         Email: {user?.email || 'Unknown Email'}
       </div>

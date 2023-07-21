@@ -3,8 +3,8 @@ import TimePicker from '@/components/base/TimePicker'
 import { ObjectTag } from '@/core'
 import Zindexes from '@/consts/zindex'
 import { useToggle } from '@/hooks'
-import { indexedMetaObjectsAtom, metaObjectsAtom, tagToMetaObjectIdsMapAtom } from '@/stores/meta.store'
-import { ObjectStore, globalStore } from '@/stores'
+import { indexedMetaObjectsAtom, metaObjectsAtom, tagToMetaObjectIdsMapAtom, TypeToRegisteredMetaObject } from '@/stores/meta.store'
+import { globalStore, ObjectStore } from '@/stores'
 import ClassName from '@/styles/classNames'
 import DateFormat from '@/utils/dateFormat'
 import Id from '@/utils/id'
@@ -33,6 +33,7 @@ import { atom } from 'jotai'
 import Colors from '@/consts/colors'
 import FontSize from '@/consts/font'
 import { useUpdate } from 'react-use'
+import { Rendevoz } from '@/core/rendevoz'
 
 export type FilterType = 'tag' | 'type' | 'createdAt' | 'relatedObjectsSize' | 'addOne' | 'related' | 'viewAt'
 
@@ -41,8 +42,8 @@ const filterContainerClassName = (focused: boolean) =>
     border: focused ? '1px solid #8590ae' : `1px solid ${Colors.Background.Border}`,
     transition: 'all 0.3s ease',
     cursor: 'pointer',
-    borderRadius: 8,
-    padding: '4px 8px'
+    borderRadius: 6,
+    padding: '2px 8px'
   })
 export const FiltersAtom = atom<
   {
@@ -96,7 +97,11 @@ export const DatabaseFilter = () => {
         content={
           <WithBorder style={{ padding: 6, width: 200, fontFamily: 'Muli' }} className={css({ '> div': { textTransform: 'capitalize' } })}>
             <div style={{ marginLeft: 10 }} className={ClassName.description()}>
-              {t('dialog.choose one filter', { choose: t('general.choose'), one: t('general.one'), filter: t('general.filter') })}
+              {t('dialog.choose one filter', {
+                choose: t('general.choose'),
+                one: t('general.one'),
+                filter: t('general.filter')
+              })}
             </div>
             {!filters.some(i => i.filterType === 'createdAt') && (
               <Content flex gap={6} className={ClassName.flatButton()} onClick={() => addFilter('createdAt')}>
@@ -133,11 +138,12 @@ export const DatabaseFilter = () => {
           alignItems="center"
           className={ClassName.flatButton()}
           style={{
-            borderRadius: 8,
-            padding: '4px 12px',
+            borderRadius: 6,
+            padding: '2px 8px',
             border: `1px solid ${Colors.Background.Border}`,
             fontFamily: 'Muli',
-            textTransform: 'capitalize'
+            textTransform: 'capitalize',
+            fontSize: FontSize['13px']
           }}
           onClick={toggleChooseFilterVisible}
         >
@@ -207,9 +213,24 @@ const TypeFilter = ({
   const shouldFilterIdSet = useAtomValue(ShouldFilterIdsAtom)
   const [popoverVisible, togglePopoverVisible] = useToggle(initialOpen)
   const { t } = useTranslation()
-  const fileTypes = ['image', 'pdf', 'webpage', 'video', 'localFile']
-  const recordTypes = ['note', 'whiteboard']
-  const labelTypes = ['noteLabel', 'noteBlock', 'pdfLabel', 'videoLabel', 'webpageLabel']
+  const allObjectFilters = Array.from(TypeToRegisteredMetaObject.values()).filter(i => i.filterSettings)
+  const fileTypes = [
+    'image',
+    'pdf',
+    'webpage',
+    'video',
+    'localFile',
+    ...allObjectFilters.filter(i => i.filterSettings.objectType === 'file').map(i => i.type)
+  ]
+  const recordTypes = ['note', 'whiteboard', ...allObjectFilters.filter(i => i.filterSettings.objectType === 'record').map(i => i.type)]
+  const labelTypes = [
+    'noteLabel',
+    'noteBlock',
+    'pdfLabel',
+    'videoLabel',
+    'webpageLabel',
+    ...allObjectFilters.filter(i => i.filterSettings.objectType === 'label').map(i => i.type)
+  ]
   const types: MetaObject['type'][] = [
     'normal',
     'image',
@@ -220,7 +241,8 @@ const TypeFilter = ({
     'pdfLabel',
     'whiteboard',
     'webpage',
-    'webpageLabel'
+    'webpageLabel',
+    ...Array.from(TypeToRegisteredMetaObject.values()).map(i => i.type)
   ]
   const toggleType = (type: (typeof types)[number]) => {
     if (filterTypes.has(type)) {
@@ -261,8 +283,8 @@ const TypeFilter = ({
           update()
         }}
         className={css({
-          width: 180,
-          padding: 12,
+          width: 160,
+          padding: 6,
           borderRadius: 8,
           fontFamily: 'Muli',
           textTransform: 'capitalize',
@@ -281,8 +303,8 @@ const TypeFilter = ({
           content={
             <WithBorder
               className={css({
-                minWidth: 200,
-                padding: 12,
+                minWidth: 160,
+                padding: 6,
                 borderRadius: 8,
                 boxShadow: 'rgba(100, 100, 111, 0.2) 0px 7px 29px 0px',
                 fontFamily: 'Muli',
@@ -305,8 +327,8 @@ const TypeFilter = ({
           content={
             <WithBorder
               className={css({
-                minWidth: 200,
-                padding: 12,
+                minWidth: 160,
+                padding: 6,
                 borderRadius: 8,
                 boxShadow: 'rgba(100, 100, 111, 0.2) 0px 7px 29px 0px',
                 fontFamily: 'Muli',
@@ -329,8 +351,8 @@ const TypeFilter = ({
           content={
             <WithBorder
               className={css({
-                minWidth: 200,
-                padding: 12,
+                minWidth: 160,
+                padding: 6,
                 borderRadius: 8,
                 boxShadow: 'rgba(100, 100, 111, 0.2) 0px 7px 29px 0px',
                 fontFamily: 'Muli',
@@ -373,7 +395,7 @@ const TypeFilter = ({
         {Array.from(filterTypes).map(i => (
           <div
             style={{
-              fontSize: FontSize['13px'],
+              fontSize: FontSize['12px'],
               flexShrink: 0
             }}
             className={ClassName.objectTag}
@@ -404,7 +426,9 @@ const TagFilter = ({
   initialOpen: boolean
   parentElement: HTMLElement | null
 }) => {
-  const tagToMetaObjectsMap = useAtomValue(tagToMetaObjectIdsMapAtom, { store: globalStore })
+  const tagToMetaObjectsMap = useAtomValue(tagToMetaObjectIdsMapAtom, {
+    store: globalStore
+  })
   const shouldFilterIdSet = useAtomValue(ShouldFilterIdsAtom)
   const allTags = useMemo(() => {
     if (shouldFilterIdSet && tagToMetaObjectsMap) {
@@ -514,7 +538,9 @@ const CreateTimeFilter = ({
   parentElement: HTMLElement | null
 }) => {
   const databaseStore = useStore()
-  const [filterInterval, setFilterInterval] = useAtom(FilterDateIntervalsAtom, { store: databaseStore })
+  const [filterInterval, setFilterInterval] = useAtom(FilterDateIntervalsAtom, {
+    store: databaseStore
+  })
   const [popoverVisible, togglePopoverVisible] = useToggle(initialOpen)
 
   const renderContent = () => {
@@ -638,7 +664,15 @@ const CreateTimeFilter = ({
     >
       <Content alignItems="center" gap={4} flex onClick={togglePopoverVisible} className={filterContainerClassName(popoverVisible)}>
         <Icon name="park-time" size={16} fill="grey" />
-        <Content flex gap={6} style={{ fontSize: FontSize['12px'], fontWeight: 600, fontFamily: 'Muli' }}>
+        <Content
+          flex
+          gap={6}
+          style={{
+            fontSize: FontSize['12px'],
+            fontWeight: 600,
+            fontFamily: 'Muli'
+          }}
+        >
           <div>{filterInterval.start && DateFormat.format(filterInterval.start, DateFormat.Formats.default)}</div>
           <div>{'-'}</div>
           <div>{filterInterval.end && DateFormat.format(filterInterval.end, DateFormat.Formats.default)}</div>
@@ -789,7 +823,15 @@ const ViewTimeFilter = ({
     >
       <Content alignItems="center" gap={4} flex onClick={togglePopoverVisible} className={filterContainerClassName(popoverVisible)}>
         <Icon name="park-preview-open" size={16} fill="grey" />
-        <Content flex gap={6} style={{ fontSize: FontSize['12px'], fontWeight: 600, fontFamily: 'Muli' }}>
+        <Content
+          flex
+          gap={6}
+          style={{
+            fontSize: FontSize['12px'],
+            fontWeight: 600,
+            fontFamily: 'Muli'
+          }}
+        >
           <div>{filterInterval.start && DateFormat.format(filterInterval.start, DateFormat.Formats.default)}</div>
           <div>{'-'}</div>
           <div>{filterInterval.end && DateFormat.format(filterInterval.end, DateFormat.Formats.default)}</div>

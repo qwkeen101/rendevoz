@@ -1,53 +1,66 @@
-import { Content, IconButton, Switch, WithBorder } from '@/components/base'
-import ClassName from '@/styles/classNames'
-import { useTranslation } from 'react-i18next'
+import { Content, IconButton, Switch, WithBorder } from "@/components/base";
+import ClassName from "@/styles/classNames";
+import { useTranslation } from "react-i18next";
 
 const RowMenu = ({
   on,
   isHeader,
-  showHeader
+  showHeader,
 }: {
-  on: (type: 'headerRow' | 'insertAbove' | 'insertBelow' | 'delete' | 'clearContent') => void
-  isHeader: boolean
-  showHeader: boolean
+  on: (
+    type:
+      | "headerRow"
+      | "insertAbove"
+      | "insertBelow"
+      | "delete"
+      | "clearContent"
+  ) => void;
+  isHeader: boolean;
+  showHeader: boolean;
 }) => {
-  const { t } = useTranslation()
+  const { t } = useTranslation();
   const buttons: Parameters<typeof IconButton>[0][] = [
     {
-      icon: 'park-down',
-      onClick: () => on('insertBelow'),
-      text: t('editor.insert row below')
+      icon: "park-down",
+      onClick: () => on("insertBelow"),
+      text: t("editor.insert row below"),
     },
     {
-      icon: 'park-up',
-      onClick: () => on('insertAbove'),
-      text: t('editor.insert row above')
+      icon: "park-up",
+      onClick: () => on("insertAbove"),
+      text: t("editor.insert row above"),
     },
     {
-      icon: 'park-close',
-      onClick: () => on('clearContent'),
-      text: t('editor.clear row content')
+      icon: "park-close",
+      onClick: () => on("clearContent"),
+      text: t("editor.clear row content"),
     },
     {
-      icon: 'park-delete',
-      onClick: () => on('delete'),
-      text: t('general.delete'),
-      dangerous: true
-    }
-  ]
+      icon: "park-delete",
+      onClick: () => on("delete"),
+      text: t("general.delete"),
+      dangerous: true,
+    },
+  ];
   return (
     <WithBorder style={{ padding: 4, width: 200 }}>
       {showHeader && (
-        <Content flex gap={4} justifyContent="space-between" onClick={() => on('headerRow')} className={ClassName.flatButton()}>
-          <div>{t('editor.header row')}</div>
+        <Content
+          flex
+          gap={4}
+          justifyContent="space-between"
+          onClick={() => on("headerRow")}
+          className={ClassName.flatButton()}
+        >
+          <div>{t("editor.header row")}</div>
           <Switch value={isHeader} />
         </Content>
       )}
-      {buttons.map(i => (
+      {buttons.map((i) => (
         <IconButton {...i} key={i.icon} />
       ))}
     </WithBorder>
-  )
-}
+  );
+};
 
-export default RowMenu
+export default RowMenu;

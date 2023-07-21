@@ -17,7 +17,12 @@ const PdfLeftSidebar = () => {
         width: pdfBarState.leftBarWidth,
         height: '100%'
       }}
-      onResizeStop={(e, dir, ele) => setPdfBarState(s => ({ ...s, leftBarWidth: ele.getBoundingClientRect().width }))}
+      onResizeStop={(e, dir, ele) =>
+        setPdfBarState(s => ({
+          ...s,
+          leftBarWidth: ele.getBoundingClientRect().width
+        }))
+      }
       enable={{
         right: true
       }}

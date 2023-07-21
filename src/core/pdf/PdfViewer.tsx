@@ -1,8 +1,8 @@
 import { Viewer } from './core'
-import { FC, memo, useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { FC, memo, useCallback, useEffect, useRef, useState } from 'react'
 import PdfPage from './components/page/Page'
 import styles from './index.module.less'
-import { RenderPageProps, IAnnotation, IPdfViewer, IPdfInstance } from '~/typings'
+import { IAnnotation, IPdfInstance, IPdfViewer, RenderPageProps } from '~/typings'
 import { AnnotationType } from './core/types/annotation'
 import { PDFDocumentProxy } from 'pdfjs-dist'
 import { useMemoizedFn, useMergedRef } from '@/hooks'
@@ -11,7 +11,6 @@ import Link from './components/annotation/Link'
 import usePdfDrag from './hooks/usePdfDrag'
 import { useGlobalAtomValue } from '@/hooks/jotai'
 import { ID_TO_LABEL_MAP } from './weakMaps'
-import { useStore } from 'jotai'
 import usePdfViewer from './core/hooks/useViewer'
 import { ObjectStore } from '@/stores'
 import { SearchStore } from '@/stores/search.store'
@@ -43,7 +42,7 @@ export const PdfViewer: FC<PdfViewerProps> = memo(({ documentId, transformScale,
   useEffect(() => {
     ID_TO_LABEL_MAP.set(viewer, new Map())
     waitFor(
-      () => Object.keys(viewer).length > 0,
+      () => !!viewer.jumpToLabel,
       () => {
         onInstanceInitialized?.(viewer)
       }

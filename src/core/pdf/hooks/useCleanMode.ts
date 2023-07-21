@@ -1,7 +1,7 @@
-import { atom, useAtom } from 'jotai'
+import { atom, useAtom } from "jotai";
 
-const cleanMode = atom(false)
+const cleanMode = atom(false);
 
-const useCleanMode = () => useAtom(cleanMode)
+const useCleanMode = () => useAtom(cleanMode);
 
-export default useCleanMode
+export default useCleanMode;

@@ -1,7 +1,8 @@
 import Id from '@/utils/id'
-import { Descendant, Element, Text } from 'slate'
+import { Descendant, Element } from 'slate'
 import { jsx } from 'slate-hyperscript'
 import { TableRowElement } from '~/typings'
+
 const ELEMENT_TAGS = {
   A: el => ({ type: 'link', url: el.getAttribute('href'), id: Id.getId() }),
   BLOCKQUOTE: () => ({ type: 'quote', id: Id.getId() }),
@@ -11,7 +12,11 @@ const ELEMENT_TAGS = {
   H4: () => ({ type: 'heading-four', id: Id.getId() }),
   H5: () => ({ type: 'heading-five', id: Id.getId() }),
   H6: () => ({ type: 'heading-six', id: Id.getId() }),
-  IMG: el => ({ type: 'image', url: el.getAttribute('data-src') || el.getAttribute('src'), id: Id.getId() }),
+  IMG: el => ({
+    type: 'image',
+    url: el.getAttribute('data-src') || el.getAttribute('src'),
+    id: Id.getId()
+  }),
   LI: () => ({ type: 'list-item', id: Id.getId() }),
   OI: () => ({ type: 'order-list-item', id: Id.getId() }),
   OL: () => ({ type: 'numbered-list', id: Id.getId() }),
@@ -66,12 +71,16 @@ const WrapperNodeNames = ['SECTION', 'DIV']
 
 const NoNestedNodeNames = ['A', 'BLOCKQUOTE', 'H1', 'H2', 'H3', 'H4', 'H5', 'H6', 'LI', 'OI', 'PRE', 'SUP', 'FIGCAPTION']
 
-const ElementsAvailableInParagraph = ['IMG', 'SUP']
+const ElementsAvailableInParagraph = ['IMG', 'SUP', 'A']
 export const deserializeHtmlNode = (node: HTMLElement | ChildNode) => {
   if (node.nodeType === Node.TEXT_NODE) {
     // const trimmedText = node.textContent?.replace(/^\n+|\n+$/g, '') ?? ''
     // return trimmedText.length > 0 ? trimmedText : null
-    return node.textContent?.trim() || ''
+    if (!node.previousSibling && !node.nextSibling) return node.textContent?.trim() || ''
+    if (!node.nextSibling) return node.textContent?.trimEnd() || ''
+    if (!node.previousSibling) return node.textContent?.trimStart() || ''
+
+    return node.textContent || ''
   }
   if (node.nodeType !== Node.ELEMENT_NODE) return null
   // for span in header TODO: more format
@@ -107,6 +116,13 @@ export const deserializeHtmlNode = (node: HTMLElement | ChildNode) => {
     // img in p, ...in p
     if (nodeName === 'P') {
       if (Array.from(node.childNodes).some(i => ELEMENT_TAGS[i.nodeName] && !ElementsAvailableInParagraph.includes(i.nodeName))) {
+        console.log(
+          'meet nested in paragraph',
+          Array.from(node.childNodes).filter(i => ELEMENT_TAGS[i.nodeName] && !ElementsAvailableInParagraph.includes(i.nodeName))
+        )
+        // turn <p>...</p> into <span/>, <img/>, <span/> <span/>
+        // then wrap them together
+
         return jsx('fragment', {}, deserializeHtmlNodeChildren(node))
       }
     }

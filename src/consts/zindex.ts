@@ -15,7 +15,7 @@ const Zindexes = {
   Notification: 20003,
   EditorSelectionToolbar: 22005,
   Tooltip: 30102,
-  ImagePreview: 32004
-}
+  ImagePreview: 32004,
+};
 
-export default Zindexes
+export default Zindexes;

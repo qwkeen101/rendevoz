@@ -1,3 +1,3 @@
-const PdfJs = window['pdfjs-dist/build/pdf']
+const PdfJs = window["pdfjs-dist/build/pdf"];
 
-export default PdfJs
+export default PdfJs;

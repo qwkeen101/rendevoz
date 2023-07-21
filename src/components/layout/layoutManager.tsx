@@ -1,5 +1,6 @@
 import { LayoutData, PanelData, TabData } from '../base/dock'
 import * as Algorithm from '@/components/base/dock/Algorithm'
+import { LayoutIdToTabMap } from '@/components/layout/index'
 
 class LayoutManager {
   private layout: LayoutData | null = null
@@ -22,7 +23,23 @@ class LayoutManager {
       }
     }
   }
-
+  public getCurrentActiveTab = () => {
+    if (this.layout) {
+      const currentFocusedPanelId = this.layout.global.currentFocusedPanelId
+      if (currentFocusedPanelId) {
+        console.log(currentFocusedPanelId, this.layout)
+        const currentPanel = (Algorithm.find(this.layout, currentFocusedPanelId) || this.layout.dockbox.children[0]) as PanelData
+        const currentTab = currentPanel.tabs.find(i => i.id === currentPanel.activeId)
+        if (currentTab?.id) {
+          const tab = LayoutIdToTabMap.get(currentTab.id)
+          return {
+            tab,
+            id: currentTab.id
+          }
+        }
+      }
+    }
+  }
   public updateTab = (tab: Partial<TabData>) => {
     if (!tab.id || !this.layout) return
     const targetTab = Algorithm.find(this.layout, tab.id) as TabData

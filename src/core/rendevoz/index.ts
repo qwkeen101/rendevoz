@@ -6,12 +6,13 @@ import Emit from './event'
 import Object from './utils/object'
 import DOM from './events/dom'
 import { default as ActionUtils } from './utils'
-import { Rendevoz as IRendevoz } from '~/typings'
+import { IRendevoz } from '~/typings'
 import Store from './store'
 import MetaUtils from './utils/meta'
-import InnerHooks from './hooks'
+import * as InnerHooks from './hooks'
+import * as InnerComponents from './components'
 
-export const Rendevoz: typeof IRendevoz = {
+export const Rendevoz: IRendevoz = {
   Actions: {
     Open,
     State,
@@ -28,5 +29,6 @@ export const Rendevoz: typeof IRendevoz = {
     Object,
     Meta: MetaUtils
   },
-  InnerHooks
+  InnerHooks,
+  InnerComponents
 }

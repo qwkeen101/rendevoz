@@ -66,7 +66,12 @@ const PdfThumbnail = () => {
             <div style={{ margin: '4px auto 0px', textAlign: 'center' }}>{idx + 1}</div>
           </div>
         )}
-        style={{ width: '100%', height: '100%', padding: '16px', paddingTop: 0 }}
+        style={{
+          width: '100%',
+          height: '100%',
+          padding: '16px',
+          paddingTop: 0
+        }}
       />
     </Content>
   )

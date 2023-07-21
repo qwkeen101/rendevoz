@@ -4,7 +4,7 @@ const Equalizer = () => {
       xmlns="http://www.w3.org/2000/svg"
       xmlnsXlink="http://www.w3.org/1999/xlink"
       style={{
-        background: 'transparent'
+        background: "transparent",
       }}
       width="18px"
       height="18px"
@@ -50,7 +50,7 @@ const Equalizer = () => {
         </rect>
       </g>
     </svg>
-  )
-}
+  );
+};
 
-export default Equalizer
+export default Equalizer;

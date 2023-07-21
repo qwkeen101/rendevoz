@@ -1,15 +1,21 @@
-import { useMergedRef } from '@/hooks'
-import ClassName from '@/styles/classNames'
-import { css } from '@emotion/css'
-import classNames from 'classnames'
-import React, { CSSProperties, FC, forwardRef, MouseEventHandler, useLayoutEffect, useRef } from 'react'
-import { Icon, Tooltip } from '..'
-import Content from '../Content'
-import Colors from '@/consts/colors'
+import { useMergedRef } from "@/hooks";
+import ClassName from "@/styles/classNames";
+import { css } from "@emotion/css";
+import classNames from "classnames";
+import React, {
+  CSSProperties,
+  forwardRef,
+  MouseEventHandler,
+  useLayoutEffect,
+  useRef,
+} from "react";
+import { Icon, Tooltip } from "..";
+import Content from "../Content";
+import Colors from "@/consts/colors";
 
 const DangerousButtonClassName = css({
-  color: '#FD8A8A'
-})
+  color: "#FD8A8A",
+});
 
 const IconButton = forwardRef(
   (

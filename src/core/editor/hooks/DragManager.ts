@@ -1,14 +1,14 @@
 import EventEmitter from '@/events/eventEmitter'
 import Id from '@/utils/id'
 import { Transforms } from 'slate'
-import { getElementId, getDistanceBetweenPointAndElement } from '@/utils'
+import { getDistanceBetweenPointAndElement, getElementId } from '@/utils'
 import { GlobalDragOverlayInstance, ReactEditor } from '@/core'
 import { CustomEditor, CustomElement } from '~/typings'
 import { searchBlock } from '../utils/algorithm'
 import moveSingleElement from '../utils/moveSingleElement'
 import { getDistanceBetweenPointAndScrollableElement } from '../utils/scroll'
 import { ID_TO_ELEMENTS_MAP, ID_TO_PATH_MAP } from '../weakMaps'
-import { checkDropCanBeMeta, normalizeDropToMeta } from '@/core/global/globalDragOverlay/useDropObject'
+import { checkDropCanBeMeta } from '@/core/global/globalDragOverlay/useDropObject'
 import { TypeToRegisteredObject } from '@/stores/object.store'
 
 type Indicator = {
@@ -330,7 +330,10 @@ class DragManager {
               targetNodeId: id,
               isNested,
               direction,
-              shouldAddElements: draggingEle.elements!.map(e => ({ ...e, id: Id.getId() }))
+              shouldAddElements: draggingEle.elements!.map(e => ({
+                ...e,
+                id: Id.getId()
+              }))
             })
           }
         } else {

@@ -1,19 +1,16 @@
 import Id from '@/utils/id'
 import { Table } from 'dexie'
 import produce, { createDraft, finishDraft } from 'immer'
-import { PrimitiveAtom } from 'jotai/vanilla'
-import { Atom } from 'jotai/vanilla'
-import _ from 'lodash'
+import { Atom, PrimitiveAtom } from 'jotai/vanilla'
 import { orderBy } from 'lodash'
 import { IBase } from '~/typings/data'
 import { IStoreDeprecated } from './store.type'
 import { globalStore } from '.'
-import { getUser } from '@/services/login.service'
-import { toast } from 'react-hot-toast'
 
 type PartialWithId<T> = Partial<T> & { id: number }
 
 const ATOM_QUEUE_MAP = new Map<Atom<any>, StoreDispatchEvent<any>[]>()
+
 type StoreDispatchEvent<T> = {
   atom: PrimitiveAtom<Map<number, T>>
   data: PartialWithId<T>
@@ -37,17 +34,9 @@ type StoreDispatchEvent<T> = {
       onSuccess?: (silent?: boolean) => void
     }
 )
-function isRevokedProxy(value) {
-  try {
-    new Proxy(value, value)
-    return false
-  } catch (err) {
-    return Object(value) === value
-  }
-}
+
 const handleQueue = () => {
   console.log('handle queue')
-
   const DB_ACTION_MAP = new Map<Table, any[]>()
   Array.from(ATOM_QUEUE_MAP.entries()).forEach(([k, v]) => {
     const atomValue = globalStore.get(k)
@@ -71,7 +60,9 @@ const handleQueue = () => {
             return
           }
           const origin = draft.get(data.id)
-          const newObj = Object.assign({}, origin, data)
+          const newObj = Object.assign({}, origin, data, {
+            updatedAt: Date.now()
+          })
           console.log(data, newObj)
           // if (_.isEqual(origin, newObj)) break
           draft.set(data.id, newObj)

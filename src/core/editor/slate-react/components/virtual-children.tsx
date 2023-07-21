@@ -1,18 +1,16 @@
-import { RefObject, memo, useMemo } from 'react'
-import { Editor, Range, Element as SlateElement, Descendant, Selection } from 'slate'
+import { memo, RefObject, useMemo } from 'react'
+import { Descendant, Editor, Element as SlateElement, Range, Selection } from 'slate'
 
 import ElementComponent from './element'
 
 import { ReactEditor } from '../plugin/react-editor'
 import { useSlateStatic } from '../hooks/use-slate-static'
-import { useDecorate } from '../hooks/use-decorate'
 import { NODE_TO_INDEX, NODE_TO_PARENT } from '../utils/weak-maps'
 import { RenderElementProps, RenderLeafProps, RenderPlaceholderProps } from './editable'
 
 import { useVirtualizer } from '@tanstack/react-virtual'
 import { EDITOR_TO_CHANGED, ID_TO_FIRST_LAYER_MAP } from '../../weakMaps'
-import { useMemoizedFn, usePrevious } from '@/hooks'
-import useWhyDidYouUpdate from '@/hooks/utils/useWhyUpdate'
+import { useMemoizedFn } from '@/hooks'
 
 /**
  * Children.

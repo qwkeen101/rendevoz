@@ -1,4 +1,4 @@
-import { Canvas } from '@/components'
+import { Canvas } from "@/components";
 
 const ScreenShotCanvas = ({ innerRef, style, erase }) => {
   return (
@@ -8,9 +8,18 @@ const ScreenShotCanvas = ({ innerRef, style, erase }) => {
       //   ref={mergedRef}
       erase={erase}
       innerRef={innerRef}
-      style={{ position: 'absolute', left: 0, top: 0, width: '100%', pointerEvents: 'auto', zIndex: 3, height: '100%', ...style }}
+      style={{
+        position: "absolute",
+        left: 0,
+        top: 0,
+        width: "100%",
+        pointerEvents: "auto",
+        zIndex: 3,
+        height: "100%",
+        ...style,
+      }}
     />
-  )
-}
+  );
+};
 
-export default ScreenShotCanvas
+export default ScreenShotCanvas;

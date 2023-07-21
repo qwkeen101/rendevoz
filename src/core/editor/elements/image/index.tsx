@@ -13,7 +13,7 @@ const Image = ({ element, children }: RenderElementProps) => {
   const imageEle = element as ImageElement
   const imageContainerRef = useRef<HTMLDivElement>(null)
   const [maskVisible, setMaskVisible] = useState(false)
-  const readOnly = useReadOnlyEditor() 
+  const readOnly = useReadOnlyEditor()
   const editor = useSlateStatic()
   useEffect(() => {
     if (imageEle.url?.startsWith('http')) {

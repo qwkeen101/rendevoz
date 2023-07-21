@@ -1,30 +1,30 @@
-import { CSSProperties, FC, MouseEventHandler, useEffect } from 'react'
-import { AnimatePresence, motion } from 'framer-motion'
-import ReactDOM from 'react-dom'
-import { css } from '@emotion/css'
-import Zindexes from '@/consts/zindex'
-import ClassName from '@/styles/classNames'
-import { isHotkey } from 'is-hotkey'
-import { KEY } from '@/consts/key'
-import Icon from './Icon'
+import { CSSProperties, FC, MouseEventHandler, useEffect } from "react";
+import { AnimatePresence, motion } from "framer-motion";
+import ReactDOM from "react-dom";
+import { css } from "@emotion/css";
+import Zindexes from "@/consts/zindex";
+import ClassName from "@/styles/classNames";
+import { isHotkey } from "is-hotkey";
+import { KEY } from "@/consts/key";
+import Icon from "./Icon";
 
 interface ModalProps {
-  visible: boolean
-  minWidth?: number
-  minHeight?: number
-  maxWidth?: number
-  maxHeight?: number
-  width?: number | string
-  height?: number | string
-  onClose: () => void
-  onClick?: MouseEventHandler
-  children: React.ReactNode
-  parentElement?: HTMLElement | null
-  noStyle?: boolean
-  style?: CSSProperties
-  zIndex?: number
-  showClose?: boolean
-  notUnmount?: boolean
+  visible: boolean;
+  minWidth?: number;
+  minHeight?: number;
+  maxWidth?: number;
+  maxHeight?: number;
+  width?: number | string;
+  height?: number | string;
+  onClose: () => void;
+  onClick?: MouseEventHandler;
+  children: React.ReactNode;
+  parentElement?: HTMLElement | null;
+  noStyle?: boolean;
+  style?: CSSProperties;
+  zIndex?: number;
+  showClose?: boolean;
+  notUnmount?: boolean;
 }
 const Backdrop = ({ children, onMouseDown }) => {
   return (

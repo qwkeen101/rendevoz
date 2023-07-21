@@ -198,14 +198,14 @@ const slicedLength = 'rendefile://'.length
           console.log(searchCommand)
           win.webContents.send('search', searchCommand)
         }, 5000)
+
         const search = child_process.exec(searchCommand, (err, rr, r) => {
-            win.webContents.send('search', {
-              err,
-              rr,
-              r
-            })
-          }
-        )
+          win.webContents.send('search', {
+            err,
+            rr,
+            r
+          })
+        })
 
         win.on('close', e => {
           console.log(process.env.SHOULD_CLOSE)
@@ -269,6 +269,9 @@ const slicedLength = 'rendefile://'.length
           console.log('closed')
           win.destroy()
         })
+        // app.on('browser-window-created', (e, win) => {
+        //   win.removeMenu()
+        // })
 
         return win
       },

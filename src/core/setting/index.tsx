@@ -198,7 +198,7 @@ const defaultSetting: Setting = {
   }
 }
 _.merge(defaultSetting, localSetting)
-defaultSetting.sidebarVisibleItems = localSetting.sidebarVisibleItems || defaultSetting.sidebarVisibleItems
+defaultSetting.sidebarVisibleItems = localSetting?.sidebarVisibleItems || defaultSetting.sidebarVisibleItems
 localStorage.setItem('setting', JSON.stringify(defaultSetting))
 export const SettingAtom = atomWithStorage<Setting>('setting', defaultSetting)
 

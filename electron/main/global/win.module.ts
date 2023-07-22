@@ -269,6 +269,9 @@ const slicedLength = 'rendefile://'.length
           console.log('closed')
           win.destroy()
         })
+        app.on('will-quit', () => {
+          search.kill()
+        })
         // app.on('browser-window-created', (e, win) => {
         //   win.removeMenu()
         // })

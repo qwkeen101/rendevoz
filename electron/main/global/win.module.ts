@@ -41,6 +41,7 @@ const slicedLength = 'rendefile://'.length
         autoUpdater.autoDownload = true
         autoUpdater.autoInstallOnAppQuit = true
         autoUpdater.autoRunAppAfterInstall = false
+        let updateAvailable = false
         autoUpdater.setFeedURL({
           provider: 'generic',
           url: 'https://rendevoz.com/download'
@@ -50,14 +51,16 @@ const slicedLength = 'rendefile://'.length
           console.log(info)
         })
         autoUpdater.on('update-available', info => {
+          updateAvailable = true
           console.log(info)
         })
         autoUpdater.on('update-downloaded', () => {
           ipcRenderer.send('update downloaded')
           setTimeout(() => {
-            autoUpdater.quitAndInstall()
+            autoUpdater.quitAndInstall(true, true)
           }, 6000)
         })
+
         app.setAsDefaultProtocolClient('rendevoz')
         // autoUpdater.autoInstallOnAppQuit = true
         app.on('window-all-closed', () => {
@@ -68,8 +71,13 @@ const slicedLength = 'rendefile://'.length
           session.defaultSession.clearCodeCaches({ urls: [] })
         })
         app.on('will-quit', () => {
+          search.kill()
           session.defaultSession.clearCache()
           session.defaultSession.clearCodeCaches({ urls: [] })
+          const os = process.platform
+          if (os === 'win32' && updateAvailable) {
+            autoUpdater.quitAndInstall(true, false)
+          }
         })
 
         if (isDev) {
@@ -157,21 +165,11 @@ const slicedLength = 'rendefile://'.length
           process.platform === 'win32'
             ? `${searcheEngineStartPath} --db-path=${searchEngineDataPath}`
             : `cd ${process.env.HOME} && ${searcheEngineStartPath} --db-path=${searchEngineDataPath}`
-        setTimeout(() => {
-          console.log(searchCommand)
-          win.webContents.send('search', searchCommand)
-        }, 5000)
 
-        const search = child_process.exec(searchCommand, (err, rr, r) => {
-          win.webContents.send('search', {
-            err,
-            rr,
-            r
-          })
-        })
+        const testSearchCmd = searcheEngineStartPath
+        const search = child_process.spawn(testSearchCmd, ['--db-path', searchEngineDataPath])
 
         win.on('close', e => {
-          console.log(process.env.SHOULD_CLOSE)
           if (process.env.SHOULD_CLOSE === 'false') {
             console.log('prevent close')
             e.preventDefault()
@@ -231,9 +229,6 @@ const slicedLength = 'rendefile://'.length
         win.on('closed', () => {
           console.log('closed')
           win.destroy()
-        })
-        app.on('will-quit', () => {
-          search.kill()
         })
         // app.on('browser-window-created', (e, win) => {
         //   win.removeMenu()

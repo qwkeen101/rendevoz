@@ -85,7 +85,7 @@ export class AppController {
 
   @IpcInvoke('getUpdateDetails')
   public async getUpdateDetails() {
-    const result = await autoUpdater.checkForUpdates()
+    const result = await autoUpdater.checkForUpdatesAndNotify()
     return result.updateInfo
   }
 
@@ -129,7 +129,7 @@ export class AppController {
       const result = await autoUpdater.downloadUpdate()
       return result
     } catch (e) {
-      autoUpdater.quitAndInstall()
+      autoUpdater.quitAndInstall(true, true)
     }
   }
 

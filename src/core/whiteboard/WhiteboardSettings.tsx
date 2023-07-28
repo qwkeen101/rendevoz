@@ -17,7 +17,7 @@ const WhiteboardSettings = () => {
           <WithBorder
             padding={6}
             style={{
-              fontSize: '0.857rem'
+              fontSize: '0.95rem'
             }}
           >
             <Button.IconButton

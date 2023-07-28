@@ -1,16 +1,16 @@
-import { IBase } from "../../data/base";
-import { ICollectionItem } from "../../data/collection";
+import { IBase } from '../../data/base'
+import { ICollectionItem } from '../../data/collection'
 
 export type IWhiteboardEdge = {
-  id: number;
-  sourceId: number;
-  targetId: number;
-  sourcePosition?: EdgePosition;
-  targetPosition?: EdgePosition;
-  metaLinkId?: number;
-  label?: string;
-  color?: string;
-};
+  id: number
+  sourceId: number
+  targetId: number
+  sourcePosition?: EdgePosition
+  targetPosition?: EdgePosition
+  metaLinkId?: number
+  label?: string
+  color?: string
+}
 
 export type EdgePosition = 'top' | 'right' | 'left' | 'bottom'
 
@@ -39,6 +39,7 @@ export type IWhiteboardNode = {
   | {
       type: 'webpage'
       url: string
+      webpageId: number
     }
   | {
       type: 'audio'
@@ -55,6 +56,10 @@ export type IWhiteboardNode = {
     }
   | {
       type: 'group'
+    }
+  | {
+      type: 'text'
+      content: string
     }
 )
 

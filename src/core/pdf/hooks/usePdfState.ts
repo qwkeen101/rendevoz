@@ -5,6 +5,8 @@ type IPdfState = {
   pdfId?: number;
   document?: IPdfDocument;
   autoFitWhenResize?: boolean;
+
+
 };
 
 export const PdfStateAtom = atom<IPdfState>({

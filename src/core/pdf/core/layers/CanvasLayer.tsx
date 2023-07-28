@@ -1,5 +1,5 @@
 import useUpdateIsomorphicLayoutEffect from "@/hooks/utils/useUpdateIsomorphicLayoutEffect";
-import { PageViewport, PDFPageProxy, RenderTask } from "pdfjs-dist";
+import { PageViewport, PDFPageProxy, RenderTask, AnnotationMode } from "pdfjs-dist";
 import { FC, memo, RefObject, useMemo, useRef } from "react";
 import { useIsomorphicLayoutEffect } from "react-use";
 import { resizeCanvas } from "../utils/canvas";
@@ -94,6 +94,7 @@ const CanvasLayer: FC<CanvasLayerProps> = ({
         canvasContext: ctx,
         transform,
         viewport,
+        annotationMode: AnnotationMode.ENABLE_STORAGE
       });
       const renderQueue = PDF_TO_RENDER_QUEUE.get(viewer) || new Set<number>();
       PDF_TO_RENDER_QUEUE.set(viewer, renderQueue);

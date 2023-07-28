@@ -1,8 +1,8 @@
-import { EditorEvent, GlobalEvent, PdfEvent } from "..";
+import { EditorEvent, GlobalEvent, PdfEvent, WhiteboardEvent } from '..'
 
 export interface Event<T, K extends keyof T> {
-  readonly type: K;
-  readonly data?: T[K];
+  readonly type: K
+  readonly data?: T[K]
 }
 
 export interface EventMap {
@@ -28,3 +28,4 @@ export interface IEventEmitter {
 export * from './editor'
 export * from './global'
 export * from './pdf'
+export * from './whiteboard'

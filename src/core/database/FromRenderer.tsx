@@ -1,6 +1,6 @@
 import { IconNameItem } from '@/components/layout/sidebar/SidebarCollection'
 import Colors from '@/consts/colors'
-import { MetaStore } from '@/stores'
+import { globalStore, MetaStore } from '@/stores'
 import { CSSProperties, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { MetaObject } from '~/typings'
@@ -12,6 +12,7 @@ import ClassName from '@/styles/classNames'
 import { PAGE_SPACING } from '../pdf/core/layouts/Layout'
 import { Rendevoz } from '../rendevoz'
 import { normalizeSecondsToTime } from '../video/utils'
+import { metaObjectsAtom } from '@/stores/meta.store'
 
 const FromRenderer = ({
   metaObject: initialObject,
@@ -129,7 +130,13 @@ const FromRenderer = ({
       }
     }
   }
-  if (!fromState?.name) return null
+  if (!fromState?.name) {
+    if (initialObject?.fromObject && globalStore.get(metaObjectsAtom).has(initialObject.fromObject.metaId)) {
+      return <div style={{ height: '1.456rem', width: 1 }}></div>
+    } else {
+      return null
+    }
+  }
 
   return (
     <Tooltip

@@ -74,10 +74,7 @@ const ReadOnlyEditorClassName = css({
   },
   img: {
     borderRadius: 6,
-    maxWidth: '100%',
-    width: 'calc(100% - 120px)',
-    margin: '10px 60px',
-    height: '100%'
+    maxWidth: '100%'
   },
   'h1,h2,h3,h4,h5,h6': {
     fontWeight: 600
@@ -112,12 +109,12 @@ const ReadOnlyEditorClassName = css({
 
 const CompactReadOnlyEditorClassName = css({
   p: {
-    margin: '0 !important',
-    lineHeight: '1.2 !important'
+    margin: '0px !important',
+    lineHeight: '1.4 !important'
   },
   '.ParagraphBlock': {
-    margin: 0,
-    padding: 0
+    margin: '3px 0px',
+    padding: '2px'
   }
 })
 export type InnerEditorProps = {

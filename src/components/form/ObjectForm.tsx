@@ -175,12 +175,6 @@ const ObjectForm: FC<
               )
             }
           : undefined,
-        shouldPreviewGraph
-          ? {
-              type: 'previewGraph',
-              onClick: () => GlobalGraphInstance?.open?.(object)
-            }
-          : undefined,
         {
           type: 'imagePicker',
           imageUrl: object.coverImgSrc,

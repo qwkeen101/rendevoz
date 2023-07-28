@@ -15,6 +15,7 @@ import {
   AttachmentWrapper,
   CurrentFocusFilterAtom,
   DatabaseFilter,
+  DraggableElement,
   FilterNameSearchAtom,
   FilterRelatedIdsAtom,
   FiltersAtom,
@@ -221,6 +222,7 @@ type ObjectPanelProps = {
   showObjectDetails?: {
     id: number
   }
+  renderFilterOnParent?: boolean
   onBackToList?: VoidFunction
 }
 export const ObjectPanel = memo(
@@ -231,6 +233,7 @@ export const ObjectPanel = memo(
     padding = 16,
     onOpenInTab,
     onBackToList,
+    renderFilterOnParent,
     visiblility = { showClose: true },
     showObjectDetails
   }: ObjectPanelProps) => {
@@ -353,7 +356,7 @@ export const ObjectPanel = memo(
               autoFocus
             />
           </Content>
-          <DatabaseFilter />
+          <DatabaseFilter renderOnParent={renderFilterOnParent} />
         </Content>
         <div
           ref={containerRef}
@@ -471,7 +474,14 @@ export const ObjectDetailsPanel = ({ metaId, onBack }: { metaId: number; onBack?
             {metaObject?.coverImgSrc && <Image src={metaObject.coverImgSrc} preview width={60} containerStyle={{ borderRadius: 10 }} />}
             <Content>
               <Content>{renderTags({})}</Content>
-              <div onClick={() => Rendevoz.Actions.Open.Meta.openMetaObject(metaId)} style={{ fontSize: '0.9rem', textTransform: 'none', cursor: 'pointer' }}>{metaObject?.name}</div>
+              <DraggableElement draggingDetails={{ type: 'metaElement', metaId: metaId }}>
+                <div
+                  onClick={() => Rendevoz.Actions.Open.Meta.openMetaObject(metaId)}
+                  style={{ fontSize: '0.9rem', textTransform: 'none', cursor: 'pointer' }}
+                >
+                  {metaObject?.name}
+                </div>
+              </DraggableElement>
             </Content>
           </Content>
           {metaObject?.fromObject && (
@@ -491,7 +501,7 @@ export const ObjectDetailsPanel = ({ metaId, onBack }: { metaId: number; onBack?
             </>
           )}
           {metaObject?.createdAt && (
-            <div className={ClassName.description()} style={{marginTop: 12}}>
+            <div className={ClassName.description()} style={{ marginTop: 12 }}>
               {t('general.create at')}: {DateFormat.formatDistanceToNowStrict(metaObject.createdAt, true)}
             </div>
           )}

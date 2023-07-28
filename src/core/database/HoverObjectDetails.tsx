@@ -93,6 +93,11 @@ const HoverObjectDetails = forwardRef(
               mainContainerStyle: {
                 padding: '8px 10px'
               },
+              optionOptions: {
+                style: {
+                  top: metaObject.coverImgSrc ? 0 : 5
+                }
+              },
               titleOptions: {
                 style: {
                   fontSize: FontSize['13px']

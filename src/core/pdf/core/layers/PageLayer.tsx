@@ -1,39 +1,33 @@
-import { PageViewport, PDFDocumentProxy, PDFPageProxy } from "pdfjs-dist";
-import {
-  FC,
-  memo,
-  MutableRefObject,
-  ReactElement,
-  useRef,
-  useState,
-} from "react";
-import { useIsomorphicLayoutEffect } from "react-use";
-import { Box, PageFunctionRef, RenderPageProps } from "~/typings";
-import { getPage } from "../utils/pages";
-import CanvasLayer from "./CanvasLayer";
-import TextLayer from "./TextLayer";
-import styles from "./index.module.less";
-import Spinner from "@/components/base/Spinner";
-import { useMemoizedFn } from "@/hooks";
-import AnnotationLayer from "./AnnotationLayer";
-import { IAnnotation } from "../types/annotation";
-import usePdfViewer from "../hooks/useViewer";
-import { PAGE_INDEX_TO_PAGE_FUNCTION } from "../weakMaps";
+import { PageViewport, PDFDocumentProxy, PDFPageProxy } from 'pdfjs-dist'
+import { FC, memo, MutableRefObject, ReactElement, useRef, useState } from 'react'
+import { useIsomorphicLayoutEffect } from 'react-use'
+import { Box, PageFunctionRef, RenderPageProps } from '~/typings'
+import { getPage } from '../utils/pages'
+import CanvasLayer from './CanvasLayer'
+import TextLayer from './TextLayer'
+import styles from './index.module.less'
+import Spinner from '@/components/base/Spinner'
+import { useMemoizedFn } from '@/hooks'
+import AnnotationLayer from './AnnotationLayer'
+import { IAnnotation } from '../types/annotation'
+import usePdfViewer from '../hooks/useViewer'
+import { PAGE_INDEX_TO_PAGE_FUNCTION } from '../weakMaps'
+import EditorLayer from '@/core/pdf/core/layers/EditorLayer'
 
 interface PageLayerProps {
-  doc: PDFDocumentProxy;
-  height: number;
-  scale: number;
-  width: number;
-  pageIndex: number;
-  renderPage?: (props: RenderPageProps) => ReactElement;
-  renderAnnotation?: (annotation: IAnnotation) => ReactElement;
-  scrollElement?: MutableRefObject<HTMLDivElement>;
-  transformScale?: number;
+  doc: PDFDocumentProxy
+  height: number
+  scale: number
+  width: number
+  pageIndex: number
+  renderPage?: (props: RenderPageProps) => ReactElement
+  renderAnnotation?: (annotation: IAnnotation) => ReactElement
+  scrollElement?: MutableRefObject<HTMLDivElement>
+  transformScale?: number
 }
 interface PageDetails {
-  page: PDFPageProxy | null;
-  viewport: PageViewport | null;
+  page: PDFPageProxy | null
+  viewport: PageViewport | null
 }
 // todo: impl page rotation
 const PageLayer: FC<PageLayerProps> = ({
@@ -45,43 +39,43 @@ const PageLayer: FC<PageLayerProps> = ({
   renderPage,
   renderAnnotation,
   scrollElement,
-  transformScale,
+  transformScale
 }) => {
   const [pageDetails, setPageDetails] = useState<PageDetails>({
     page: null,
-    viewport: null,
-  });
+    viewport: null
+  })
 
   const [highlightState, setHighlightState] = useState<{
-    visible?: boolean;
-    rect?: Box;
-  }>();
+    visible?: boolean
+    rect?: Box
+  }>()
 
-  const pageRef = useRef<HTMLDivElement>(null);
-  const pageFunctionRef = useRef<PageFunctionRef>({});
+  const pageRef = useRef<HTMLDivElement>(null)
+  const pageFunctionRef = useRef<PageFunctionRef>({})
 
-  const viewer = usePdfViewer();
+  const viewer = usePdfViewer()
 
-  pageFunctionRef.current.highlightArea = (rect) => {
+  pageFunctionRef.current.highlightArea = rect => {
     setHighlightState({
       rect,
-      visible: true,
-    });
-  };
+      visible: true
+    })
+  }
 
   const getPageDetails = () => {
-    getPage(doc, pageIndex).then((page) => {
-      const viewport = page.getViewport({ scale });
+    getPage(doc, pageIndex).then(page => {
+      const viewport = page.getViewport({ scale })
       setPageDetails({
         page,
-        viewport,
-      });
-    });
-  };
+        viewport
+      })
+    })
+  }
 
   const pageRenderer = useMemoizedFn((props: RenderPageProps): ReactElement => {
     if (renderPage) {
-      return renderPage(props);
+      return renderPage(props)
     } else {
       return (
         <>
@@ -89,43 +83,43 @@ const PageLayer: FC<PageLayerProps> = ({
           {props.textLayer}
           {props.annotationLayer}
         </>
-      );
+      )
     }
-  });
+  })
   useIsomorphicLayoutEffect(() => {
     if (viewer) {
-      const map = PAGE_INDEX_TO_PAGE_FUNCTION.get(viewer) || new Map();
-      map.set(pageIndex, pageFunctionRef);
-      PAGE_INDEX_TO_PAGE_FUNCTION.set(viewer, map);
+      const map = PAGE_INDEX_TO_PAGE_FUNCTION.get(viewer) || new Map()
+      map.set(pageIndex, pageFunctionRef)
+      PAGE_INDEX_TO_PAGE_FUNCTION.set(viewer, map)
     }
     return () => {
-      console.log("unmount page " + pageIndex);
+      console.log('unmount page ' + pageIndex)
       if (viewer) {
-        const map = PAGE_INDEX_TO_PAGE_FUNCTION.get(viewer) || new Map();
-        map.delete(pageIndex);
-        PAGE_INDEX_TO_PAGE_FUNCTION.set(viewer, map);
+        const map = PAGE_INDEX_TO_PAGE_FUNCTION.get(viewer) || new Map()
+        map.delete(pageIndex)
+        PAGE_INDEX_TO_PAGE_FUNCTION.set(viewer, map)
       }
-    };
-  }, []);
+    }
+  }, [])
 
   useIsomorphicLayoutEffect(() => {
-    getPageDetails();
-  }, [scale.toFixed(2)]);
+    getPageDetails()
+  }, [scale.toFixed(2)])
 
   return (
     <div
       ref={pageRef}
       style={{
         height,
-        width,
+        width
       }}
       className={styles.pageLayer}
     >
       {pageDetails.viewport ? (
         <div
           style={{
-            width: "100%",
-            height: "100%",
+            width: '100%',
+            height: '100%'
           }}
         >
           {pageRenderer({
@@ -168,31 +162,31 @@ const PageLayer: FC<PageLayerProps> = ({
             ),
             pageIndex: pageIndex,
             pageSize: { width, height, scale },
-            pageFunctionRef,
+            pageFunctionRef
           })}
           {highlightState?.visible && highlightState.rect && (
             <div
               style={{
-                width: "100%",
-                height: "100%",
-                position: "absolute",
+                width: '100%',
+                height: '100%',
+                position: 'absolute',
                 left: 0,
-                top: 0,
+                top: 0
               }}
-              onClick={(e) => {
+              onClick={e => {
                 if (e.target === e.currentTarget) {
-                  setHighlightState(undefined);
+                  setHighlightState(undefined)
                 }
               }}
             >
               <div
                 style={{
-                  position: "absolute",
+                  position: 'absolute',
                   top: `${highlightState.rect.top * 100}%`,
                   width: `${highlightState.rect.width * 100}%`,
                   left: `${highlightState.rect.left * 100}%`,
                   height: `${highlightState.rect.height * 100}%`,
-                  boxShadow: "0 0 0 9999em rgb(0,0,0,0.7)",
+                  boxShadow: '0 0 0 9999em rgb(0,0,0,0.7)'
                 }}
               ></div>
             </div>
@@ -202,7 +196,7 @@ const PageLayer: FC<PageLayerProps> = ({
         <Spinner size={50} />
       )}
     </div>
-  );
-};
+  )
+}
 
-export default memo(PageLayer);
+export default memo(PageLayer)

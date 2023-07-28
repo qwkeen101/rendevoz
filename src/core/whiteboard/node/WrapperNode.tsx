@@ -1,14 +1,14 @@
 import produce from 'immer'
 import { CSSProperties, Dispatch, memo, ReactNode, SetStateAction, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { useAddingEdges, useFlow, useSetWhiteboardEdges, useSetWhiteboardNodes } from '../hooks'
-import { EdgePosition, IWhiteboardNode } from '../../../../typings/data/whiteboard'
-import { useMemoizedFn, useRafFn, useToggle } from '@/hooks'
+import { EdgePosition, IWhiteboardNode } from '~/typings'
+import { useMemoizedFn, useRafFn, useSelectGlobalAtomValue, useToggle } from '@/hooks'
 import { AnimatePopover, Content, Icon, IconWithPopover, Tooltip, WithBorder } from '@/components'
 import ClassName from '@/styles/classNames'
 import { css } from '@emotion/css'
 import { Rnd } from 'react-rnd'
 import Zindexes from '@/consts/zindex'
-import { getNodeData, getRelativeHandlePosition } from '../utils'
+import { getNodeData, getRelativeHandlePosition, transformXY } from '../utils'
 import { AnimatePresence, motion } from 'framer-motion'
 import { boxesIntersect, pointInBox } from '@/utils'
 import { Box } from '~/typings'
@@ -26,31 +26,11 @@ import useGroupDrag from './useGroupDrag'
 import isHotkey from 'is-hotkey'
 import { KEY } from '@/consts/key'
 import Colors from '@/consts/colors'
+import { nodeClassName, nodeNameClassName } from './nodeClasses'
+import TextNode from '@/core/whiteboard/node/TextNode'
+import { useScopedEventEmitter } from '@/events'
+import { getSetting, SettingAtom } from '@/core'
 
-const nodeClassName = css({
-  boxShadow: 'rgba(0, 0, 0, 0.24) 0px 3px 8px',
-  borderRadius: 6,
-  fontFamily: 'Muli',
-  background: 'white',
-  overflow: 'visible',
-  pointerEvents: 'auto'
-})
-
-const nodeNameClassName = css({
-  position: 'absolute',
-  left: 0,
-  top: 'calc(-4px * var(--zoom-level))',
-  transform: 'translate(0, -100%) scale(var(--zoom-level))',
-  transformOrigin: 'bottom left',
-  maxWidth: 'calc(100% / var(--zoom-level))',
-  overflow: 'hidden',
-  fontSize: '1.5em',
-  padding: '4px 8px',
-  borderRadius: 4,
-  lineHeight: 1,
-  pointerEvents: 'auto',
-  color: 'var(--darken-node-color)'
-})
 type NodeInnerState = Partial<{
   popoverVisible: boolean
   expanded: boolean
@@ -58,6 +38,7 @@ type NodeInnerState = Partial<{
   focused: boolean
   isEditingName: boolean
   locked: boolean
+  keepRatioResize: boolean
 }>
 export interface InnerNodeProps {
   node: Partial<IWhiteboardNode>
@@ -67,7 +48,7 @@ export interface InnerNodeProps {
 }
 
 const lockResizeElements = ['image', 'video']
-
+const transparentBackgroundNodes = ['text']
 const WrapperNode = ({ node }: { node: IWhiteboardNode }) => {
   const { x, y, type, name, id, background, width, height } = node
   const containerRef = useRef<HTMLDivElement>()
@@ -86,11 +67,14 @@ const WrapperNode = ({ node }: { node: IWhiteboardNode }) => {
     selected: false,
     focused: false,
     locked: false,
-    isEditingName: false
+    isEditingName: false,
+    keepRatioResize: false
   })
   const getNodeState = useMemoizedFn(() => {
     return nodeState
   })
+
+  const shouldKeepRatio = useSelectGlobalAtomValue(SettingAtom, s => s.whiteboard.imageResizeKeepRatio)
   const [visiblePopoverElements, setVisiblePopoverElements] = useState<((() => ReactNode) | undefined)[]>([
     () => (
       <Tooltip position="top" content="Remove">
@@ -99,7 +83,6 @@ const WrapperNode = ({ node }: { node: IWhiteboardNode }) => {
           className={ClassName.circleButton(undefined, 4)}
           name="park-delete"
           onClick={() => {
-            console.log('s')
             setNodes(nodes =>
               produce(nodes, draft => {
                 draft.delete(id)
@@ -331,13 +314,13 @@ const WrapperNode = ({ node }: { node: IWhiteboardNode }) => {
       flow.ID_TO_EDGE_MAP.get(i)?.drawPath()
     })
   })
-
+  // remove selected state on click outside
   useEffect(() => {
-    if (nodeState.selected) {
+    if (nodeState.selected || nodeState.focused) {
       const pointerDownHandler = (e: PointerEvent) => {
         if (flow.hasMultiSelectBox) return
         if (!containerRef.current?.contains(e.target as HTMLElement) && isResizingRef.current === false) {
-          setNodeState(s => ({ ...s, selected: false }))
+          setNodeState(s => ({ ...s, selected: false, focused: false }))
         }
       }
       document.addEventListener('pointerdown', pointerDownHandler)
@@ -345,7 +328,7 @@ const WrapperNode = ({ node }: { node: IWhiteboardNode }) => {
         document.removeEventListener('pointerdown', pointerDownHandler)
       }
     }
-  }, [nodeState.selected])
+  }, [nodeState.selected, nodeState.focused])
 
   const forceRender = useUpdate()
 
@@ -370,60 +353,89 @@ const WrapperNode = ({ node }: { node: IWhiteboardNode }) => {
         return <NoteNode onNameChange={handleNameChange} node={node} />
       case 'pdf':
         return <PdfNode onNameChange={handleNameChange} node={node} />
+      case 'text':
+        return <TextNode node={node} />
     }
   }
   useLayoutEffect(() => {
     const container = containerRef.current
     if (container) {
       flow.resizeObserver.observe(container)
-      // setTimeout(() => {
-      //
-      // }, 0)
       return () => {
         flow.resizeObserver.unobserve(container)
       }
     }
   }, [])
 
-  const { stringColor, darkenBackground, stringDefaultColor, lightenDefaultColor, opacityBackground } = useMemo(() => {
-    const defaultColor = tinycolor('#c9c9c9')
-    const stringDefaultColor = defaultColor.toString('rgb')
-    const lightenDefaultColor = defaultColor.lighten(5).toString('rgb')
-    const color = background ? tinycolor(background) : tinycolor('#c9c9c9')
-    const stringColor = color.toString('rgb')
-    const darkenBackground = color.darken(20).toString('rgb')
-    const lightenBackground = color.lighten(15).toString('rgb')
-    const opacityBackground = color.setAlpha(0.2).toPercentageRgb()
-    return {
-      stringColor,
-      darkenBackground,
-      lightenBackground,
-      stringDefaultColor,
-      lightenDefaultColor,
-      opacityBackground
-    }
-  }, [background])
+  const { stringColor, darkenBackground, stringDefaultColor, lightenDefaultColor, opacityBackground, darkenSecondBackground } =
+    useMemo(() => {
+      const defaultColor = tinycolor('#c9c9c9')
+      const stringDefaultColor = defaultColor.toString('rgb')
+      const lightenDefaultColor = defaultColor.lighten(5).toString('rgb')
+      const color = background ? tinycolor(background) : tinycolor('#c9c9c9')
+      const stringColor = color.toString('rgb')
+      const setting = getSetting()
+      const isDarkMode = setting.general.darkMode
+      const darkenSecondBackground = (background ? tinycolor(background) : tinycolor('#c9c9c9'))
+        .darken(isDarkMode ? 30 : 10)
+        .setAlpha(0.5)
+        .toString('rgb')
+      const darkenBackground = color.darken(20).toString('rgb')
+      const lightenBackground = color.lighten(15).toString('rgb')
+      const opacityBackground = color.setAlpha(0.2).toPercentageRgb()
+      return {
+        stringColor,
+        darkenBackground,
+        lightenBackground,
+        stringDefaultColor,
+        lightenDefaultColor,
+        opacityBackground,
+        darkenSecondBackground
+      }
+    }, [background])
+
+  const rndRef = useRef<Rnd>()
 
   const getNodeBoxShadow = () => {
     if (nodeState.selected || nodeState.popoverVisible || nodeState.focused || nodeState.locked) {
-      return '0 0 0 calc(4px * var(--zoom-level)) var(--darken-node-color, --node-color)'
+      return '0 0 0 calc(2px * var(--zoom-level)) var(--darken-node-color, --node-color)'
+    }
+    if (transparentBackgroundNodes.includes(node.type)) {
+      return undefined
     }
     if (stringColor) {
-      return '0 0 0 calc(4px * var(--zoom-level)) var(--node-color)'
+      return '0 0 0 calc(2px * var(--zoom-level)) var(--node-color)'
     }
   }
-
+  const scopedEmitter = useScopedEventEmitter()
+  const [mouseIn, toggleMouseIn] = useState(false)
+  useEffect(() => {
+    const pointerHandler = (e: PointerEvent) => {
+      if (e.type === 'pointerenter') {
+        toggleMouseIn(true)
+      } else {
+        toggleMouseIn(false)
+      }
+    }
+    const container = containerRef.current
+    if (container) {
+      container.addEventListener('pointerenter', pointerHandler)
+      container.addEventListener('pointerleave', pointerHandler)
+      return () => {
+        container.removeEventListener('pointerenter', pointerHandler)
+        container.removeEventListener('pointerleave', pointerHandler)
+      }
+    }
+  }, [])
   return (
     <Rnd
       ref={node => {
+        rndRef.current = node
         containerRef.current = node?.getSelfElement()
-        containerRef.current?.addEventListener('dblclick', e => {
-          // e.preventDefault()
-          e.stopPropagation()
-        })
       }}
       data-node-id={id}
       position={{ x, y }}
+      enableResizing={mouseIn ? true : false}
       style={{
         zIndex: type === 'group' ? -10000 : nodeState.expanded ? 1000 : undefined,
         cursor: addingEdgeState.isAdding ? 'pointer' : nodeState.focused || nodeState.locked ? 'auto' : 'grab',
@@ -431,6 +443,10 @@ const WrapperNode = ({ node }: { node: IWhiteboardNode }) => {
         background:
           type === 'group'
             ? `rgba(${opacityBackground.r},${opacityBackground.g},${opacityBackground.b},${opacityBackground.a})`
+            : node.background
+            ? darkenSecondBackground
+            : transparentBackgroundNodes.includes(node.type)
+            ? 'transparent'
             : Colors.Background.Linear,
         pointerEvents:
           type === 'group'
@@ -444,7 +460,7 @@ const WrapperNode = ({ node }: { node: IWhiteboardNode }) => {
       }}
       minWidth={160}
       // maxWidth={nodeState.expanded ? undefined : 250}
-      lockAspectRatio={lockResizeElements.includes(type)}
+      lockAspectRatio={(lockResizeElements.includes(type) || nodeState.keepRatioResize) && shouldKeepRatio}
       disableDragging={nodeState.focused || nodeState.locked}
       resizeHandleComponent={{
         left: <NodeResizer nodeId={id} position="left" />,
@@ -455,18 +471,61 @@ const WrapperNode = ({ node }: { node: IWhiteboardNode }) => {
       className={nodeClassName}
       onResizeStart={() => {
         forceRender()
+        scopedEmitter.emit('whiteboard', {
+          type: 'nodeResizeStart',
+          data: {
+            resizingNode: node
+          }
+        })
       }}
-      onResize={() => {
+      onResize={(e, dir, ele, delta, position) => {
         isResizingRef.current = true
         rafUpdateEdge()
+        if (node.type !== 'group') {
+          const nodeData = getNodeData(node.id, flow)
+          const bound = ele.getBoundingClientRect()
+          if (!node.width || !node.height) return
+          let mouseX = node.x
+          let mouseY = node.y
+
+          if (dir.includes('top')) {
+            mouseY -= delta.height
+          }
+          if (dir.toLowerCase().includes('left')) {
+            mouseX -= delta.width
+          }
+          scopedEmitter.emit('whiteboard', {
+            type: 'nodeResize',
+            data: {
+              resizingNode: {
+                ...node,
+                width: bound.width / flow?.containerTransformScale,
+                height: bound.height / flow?.containerTransformScale,
+                x: nodeData.transformedXY.x,
+                y: nodeData.transformedXY.y,
+                mouseY,
+                mouseX,
+                deltaHeight: delta.height,
+                deltaWidth: delta.width,
+                mouseWidth: node.width + delta.width,
+                mouseHeight: node.height + delta.height
+              },
+              nodeElement: ele,
+              rnd: rndRef.current
+            }
+          })
+        }
       }}
       resizeHandleWrapperStyle={{ pointerEvents: 'auto' }}
       onResizeStop={(e, dir, ele, delta, pos) => {
         const bound = ele.getBoundingClientRect()
+
+        scopedEmitter.emit('whiteboard', {
+          type: 'nodeResizeEnd'
+        })
         setTimeout(() => {
           isResizingRef.current = false
         })
-        console.log('resiz st')
         setNodes(nodes =>
           produce(nodes, draft => {
             const origin = nodes.get(id)
@@ -483,6 +542,12 @@ const WrapperNode = ({ node }: { node: IWhiteboardNode }) => {
         )
       }}
       onDragStart={() => {
+        scopedEmitter.emit('whiteboard', {
+          type: 'nodeDragStart',
+          data: {
+            draggingNode: node
+          }
+        })
         forceRender()
         flow.isDraggingNode = true
         if (type === 'group') {
@@ -490,17 +555,35 @@ const WrapperNode = ({ node }: { node: IWhiteboardNode }) => {
         }
       }}
       onDrag={(e, data) => {
-        if (type === 'group') {
+        if (Math.abs(data.deltaX) > 2 || Math.abs(data.deltaY) > 2) {
           isDraggingRef.current = true
+        }
+        if (type === 'group') {
           handleGroupMove(data, containerRef.current)
           rafUpdateEdge()
           // intentionally throw error to stop rnd set draggable state to sync drag state with inner group nodes
           throw ''
+        } else {
+          rafUpdateEdge()
+          if (isDraggingRef.current) {
+            scopedEmitter.emit('whiteboard', {
+              type: 'nodeDrag',
+              data: {
+                draggingNode: {
+                  ...node,
+                  x: data.x,
+                  y: data.y
+                },
+                nodeElement: data.node
+              }
+            })
+          }
         }
-        rafUpdateEdge()
-        isDraggingRef.current = true
       }}
       onDragStop={(e, data) => {
+        scopedEmitter.emit('whiteboard', {
+          type: 'nodeDragEnd'
+        })
         flow.isDraggingNode = false
         setTimeout(() => {
           isDraggingRef.current = false
@@ -509,6 +592,7 @@ const WrapperNode = ({ node }: { node: IWhiteboardNode }) => {
         if (type === 'group') {
           handleGroupMoveEnd(data)
         } else {
+          const nodeData = getNodeData(node.id, flow)
           console.log('drag stop')
           setNodes(nodes =>
             produce(nodes, draft => {
@@ -516,8 +600,8 @@ const WrapperNode = ({ node }: { node: IWhiteboardNode }) => {
               if (origin) {
                 draft.set(id, {
                   ...origin,
-                  x: data.x,
-                  y: data.y
+                  x: nodeData.transformedXY?.x,
+                  y: nodeData.transformedXY.y
                 })
               }
             })
@@ -530,7 +614,7 @@ const WrapperNode = ({ node }: { node: IWhiteboardNode }) => {
       }}
       scale={flow.containerTransformScale}
     >
-      {(name || type === 'group' || nodeState.locked) && (
+      {((name && type === 'group') || nodeState.locked) && (
         <Content
           flex
           gap={10}
@@ -596,10 +680,14 @@ const WrapperNode = ({ node }: { node: IWhiteboardNode }) => {
             }))
           }
         }}
-        padding={20}
+        padding={10}
         containerStyle={{ zIndex: String(Zindexes.ToolBar) }}
         content={
-          <WithBorder onClick={e => e.stopPropagation()} style={{ display: 'flex', gap: 6, padding: '2px 6px' }}>
+          <WithBorder
+            onMouseDownCapture={e => e.stopPropagation()}
+            onClick={e => e.stopPropagation()}
+            style={{ display: 'flex', gap: 6, padding: '2px 6px' }}
+          >
             {renderPopoverElements()}
           </WithBorder>
         }
@@ -627,21 +715,13 @@ const WrapperNode = ({ node }: { node: IWhiteboardNode }) => {
           {!nodeState.focused && !nodeState.locked && (
             <div
               onClick={e => {
-                if (!nodeState.selected) {
+                if (isDraggingRef.current === false) {
                   setNodeState(s => ({
                     ...s,
                     popoverVisible: true,
-                    selected: true
+                    selected: true,
+                    focused: true
                   }))
-                } else {
-                  if (isDraggingRef.current === false) {
-                    setNodeState(s => ({
-                      ...s,
-                      popoverVisible: true,
-                      selected: true,
-                      focused: true
-                    }))
-                  }
                 }
               }}
               style={{
@@ -714,7 +794,9 @@ const ChangeNameInput = ({
       onChange={e => setInnerName(e.target.value)}
     />
   ) : (
-    <div className={ClassName.ellipsisFont(1)}>{name || 'Unnamed Group'}</div>
+    <div className={ClassName.ellipsisFont(1)} style={{ textTransform: 'none' }}>
+      {name || 'Unnamed Group'}
+    </div>
   )
 }
 const NodeResizer = memo(({ position, nodeId }: { position: EdgePosition; nodeId: number }) => {

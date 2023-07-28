@@ -16,7 +16,7 @@ import {
 } from '@/stores/meta.store'
 import Modal from '@/components/base/Modal'
 import useCardDrag from './useCardDrag'
-import { AttachmentWrapper, GlobalGraphInstance, ObjectTag, useRenderObject } from '@/core'
+import { AttachmentWrapper, DraggableElement, GlobalGraphInstance, ObjectTag, useRenderObject } from '@/core'
 import MetaNoteCard from './NoteCard'
 import MetaDocumentCard from './DocumentCard'
 import { Flipped, spring } from 'react-flip-toolkit'
@@ -38,6 +38,8 @@ import FromRenderer from '../FromRenderer'
 import _ from 'lodash'
 import { Rendevoz } from '@/core/rendevoz'
 import { toast } from 'react-hot-toast'
+import HoverObjectDetails from '@/core/database/HoverObjectDetails'
+import Select from '@/components/base/select'
 
 export const TypeToTypeName: {
   [key in MetaObject['type']]?: string
@@ -457,41 +459,6 @@ export const ObjectActionPopover: FC<
           onClose?.()
         }}
       />
-      <AnimatePopover
-        positions={['right', 'left']}
-        visible={relatedVisible}
-        onClickOutside={toggleRelatedVisible}
-        boundaryInset={20}
-        padding={10}
-        containerStyle={{
-          zIndex: String(Zindexes.Tooltip)
-        }}
-        reposition
-        boundaryElement={document.body}
-        parentElement={containerRef.current}
-        content={
-          <WithBorder
-            onClick={e => e.stopPropagation()}
-            padding={8}
-            style={{
-              minWidth: 200,
-              maxWidth: 400
-            }}
-          >
-            <RelatedPanel metaId={metaObjectId} />
-          </WithBorder>
-        }
-      >
-        <Button.IconButton
-          text={t('general.related')}
-          icon="park-link-one"
-          onClick={e => {
-            toggleRelatedVisible()
-            e.preventDefault()
-            e.stopPropagation()
-          }}
-        ></Button.IconButton>
-      </AnimatePopover>
       {metaObject.attachments?.length || metaAttToMetaIds?.get(metaObjectId)?.size ? (
         <AnimatePopover
           positions={['right', 'left']}
@@ -539,7 +506,7 @@ export const ObjectActionPopover: FC<
         onClick={() => {
           toast.success(
             <Content className={ClassName.description()}>
-              <div style={{ textTransform: 'none' }}>{t('general.link is generated for this object' )}!</div>
+              <div style={{ textTransform: 'none' }}>{t('general.link is generated for this object')}!</div>
               <div style={{ userSelect: 'all', textTransform: 'none' }}>{`rendevoz://object/${metaObjectId}`}</div>
             </Content>
           )
@@ -566,25 +533,27 @@ export const RelatedPanel = memo(({ metaId }: { metaId: number }) => {
 
   const { t } = useTranslation()
 
-  const { sortedInbounds, sortedOutbounds, sortedAll, allObjects } = useMemo(() => {
+  const { allObjects, inboundObjects, outboundObjects } = useMemo(() => {
     const inboundLinkIds = Array.from(targetToSource?.values() || [])
     const outboundLinkIds = Array.from(sourceToTarget?.values() || [])
-    const inboundObjects = inboundLinkIds.map(i => globalStore.get(metaObjectsAtom).get(globalStore.get(metaLinksAtom).get(i)!.sourceId))
-    const outboundObjects = outboundLinkIds.map(i => globalStore.get(metaObjectsAtom).get(globalStore.get(metaLinksAtom).get(i)!.targetId))
-    const allObjects = [...inboundObjects, ...outboundObjects]
-    const sortedAll = _.groupBy(allObjects, b => b?.type)
-    const sortedInbounds = _.groupBy(inboundObjects, b => b?.type)
-    const sortedOutbounds = _.groupBy(outboundObjects, b => b?.type)
-    sortedAll['all'] = allObjects
+    const inboundObjects = inboundLinkIds
+      .map(i => globalStore.get(metaObjectsAtom).get(globalStore.get(metaLinksAtom).get(i)!.sourceId))
+      .filter(i => i)
+      .map(i => i.id)
+    const outboundObjects = outboundLinkIds
+      .map(i => globalStore.get(metaObjectsAtom).get(globalStore.get(metaLinksAtom).get(i)!.targetId))
+      .filter(i => i)
+      .map(i => i.id)
+    const allObjects = Array.from(new Set([...outboundObjects, ...inboundObjects]).values())
+
     return {
-      sortedInbounds,
-      sortedOutbounds,
-      sortedAll,
+      inboundObjects,
+      outboundObjects,
       allObjects
     }
   }, [metaId, indexed])
   const [visibleTab, setVisibleTab] = useState<'out' | 'in' | 'all'>('all')
-  const [visible, setVisible] = useState()
+
   return (
     <Content
       flex
@@ -627,38 +596,7 @@ export const RelatedPanel = memo(({ metaId }: { metaId: number }) => {
             </Content>
           }
         >
-          <Tabs
-            tabNavStyle={{
-              fontSize: FontSize['12px'],
-              padding: '2px 8px'
-            }}
-            defaultActiveKey={visible}
-            activeKey={visible}
-          >
-            {Object.entries(sortedAll)
-              .sort((b, a) => (a[0] === 'all' ? 1 : b[0] === 'all' ? -1 : 0))
-              .map(i => (
-                <TabPane
-                  style={{
-                    paddingTop: 8
-                  }}
-                  onClick={() => setTimeout(() => setVisible(i[0]))}
-                  key={i[0]}
-                  tab={
-                    i[0] === 'all' ? (
-                      <Content>{t('general.all')}</Content>
-                    ) : (
-                      <Content flex gap={6}>
-                        <Icon name={Rendevoz.Utils.Object.getMetaObjectIcon(i[0])} />
-                        <div>{Rendevoz.Utils.Meta.getTypeName(i[0])}</div>
-                      </Content>
-                    )
-                  }
-                >
-                  <RelatedGroup key={i[0]} groupType={i[0]} metaIds={i[1].map(i => i?.id)} />
-                </TabPane>
-              ))}
-          </Tabs>
+          <RelatedGroup metaIds={allObjects} />
         </TabPane>
         <TabPane
           style={{
@@ -673,32 +611,7 @@ export const RelatedPanel = memo(({ metaId }: { metaId: number }) => {
           }
           key={'in'}
         >
-          <Tabs
-            tabNavStyle={{
-              fontSize: FontSize['12px'],
-              padding: '2px 8px'
-            }}
-            defaultActiveKey={visible}
-            activeKey={visible}
-          >
-            {Object.entries(sortedInbounds).map(i => (
-              <TabPane
-                style={{
-                  paddingTop: 8
-                }}
-                onClick={() => setTimeout(() => setVisible(i[0]))}
-                key={i[0]}
-                tab={
-                  <Content flex gap={6}>
-                    <Icon name={Rendevoz.Utils.Object.getMetaObjectIcon(i[0])} />
-                    <div>{Rendevoz.Utils.Meta.getTypeName(i[0])}</div>
-                  </Content>
-                }
-              >
-                <RelatedGroup key={i[0]} groupType={i[0]} metaIds={i[1].map(i => i?.id)} />
-              </TabPane>
-            ))}
-          </Tabs>
+          <RelatedGroup metaIds={inboundObjects} />
         </TabPane>
         <TabPane
           style={{
@@ -713,43 +626,63 @@ export const RelatedPanel = memo(({ metaId }: { metaId: number }) => {
           }
           key={'out'}
         >
-          <Tabs
-            tabNavStyle={{
-              fontSize: FontSize['12px'],
-              padding: '2px 8px'
-            }}
-            defaultActiveKey={visible}
-            activeKey={visible}
-          >
-            {Object.entries(sortedOutbounds).map(i => (
-              <TabPane
-                style={{
-                  paddingTop: 8
-                }}
-                onClick={() => setTimeout(() => setVisible(i[0]))}
-                key={i[0]}
-                tab={
-                  <Content flex gap={6}>
-                    <Icon name={Rendevoz.Utils.Object.getMetaObjectIcon(i[0])} />
-                    <div>{Rendevoz.Utils.Meta.getTypeName(i[0])}</div>
-                  </Content>
-                }
-              >
-                <RelatedGroup key={i[0]} groupType={i[0]} metaIds={i[1].map(i => i?.id)} />
-              </TabPane>
-            ))}
-          </Tabs>
+          <RelatedGroup metaIds={outboundObjects} />
         </TabPane>
       </Tabs>
     </Content>
   )
 })
-const RelatedGroup = ({ groupType, metaIds }: { groupType: MetaObject['type']; metaIds: number[] }) => {
+const RelatedGroup = ({ metaIds }: { metaIds: number[] }) => {
+  const [groupType, setGroupType] = useState<'all' | MetaObject['type']>('all')
+  const allMetas = useMemo(() => {
+    const metaMap = globalStore.get(metaObjectsAtom)
+    return metaIds.map(i => metaMap.get(i))
+  }, [metaIds]) as MetaObject[]
+  const types = useMemo(() => {
+    return Object.keys(_.groupBy(allMetas, m => m.type))
+  }, [allMetas])
+  const groupedMetas = useMemo(() => {
+    if (groupType === 'all') return allMetas
+    return allMetas.filter(i => i.type === groupType)
+  }, [allMetas, groupType])
+  console.log(groupedMetas, groupType)
+  const { t } = useTranslation()
   return (
-    <Content fullWidth fullHeight style={{ padding: '0px 8px 12px 0px', overflowY: 'auto' }}>
-      {metaIds.map(i => (
-        <RelatedItem metaId={i} key={i} />
-      ))}
+    <Content fullWidth fullHeight style={{ padding: '0px 8px 12px 0px', display: 'flex', flexDirection: 'column' }}>
+      <Select
+        value={groupType}
+        closeOnSelect={true}
+        onSelect={v => setGroupType(v[0])}
+        style={{ fontSize: '0.9rem', marginBottom: 10, border: `1px solid ${Colors.Background.Border}` }}
+        menuStyle={{
+          fontSize: '0.9rem',
+          overflowY: 'auto',
+          maxHeight: 240
+        }}
+        options={[
+          {
+            value: 'all',
+            children: t('general.all'),
+            icon: 'park-all-application'
+          },
+          ...types.map(t => ({
+            value: t,
+            children: Rendevoz.Utils.Meta.getTypeName(t),
+            icon: Rendevoz.Utils.Object.getMetaObjectIcon(t)
+          }))
+        ]}
+      />
+      <Content
+        style={{
+          overflowY: 'auto',
+          flex: 1,
+          width: '100%'
+        }}
+      >
+        {groupedMetas.map(i => (
+          <RelatedItem metaId={i.id} key={i.id} />
+        ))}
+      </Content>
     </Content>
   )
 }
@@ -757,32 +690,34 @@ const RelatedItem = ({ metaId }: { metaId: number }) => {
   const { renderWhole } = useRenderObject({ metaObjectId: metaId })
 
   return (
-    <div>
-      {renderWhole({
-        renderOptions: {
-          renderDescription: false,
-          renderOption: true,
-          renderFrom: false
-        },
-        mainContainerStyle: {
-          flex: 1
-        },
-        optionOptions: {
-          renderOnParent: false
-        },
-        titleOptions: {
-          ellipsisLine: 1,
-          style: {
-            fontSize: '0.9rem'
+    <DraggableElement draggingDetails={{ type: 'metaElement', metaId: metaId }}>
+      <div>
+        {renderWhole({
+          renderOptions: {
+            renderDescription: false,
+            renderOption: true,
+            renderFrom: false
+          },
+          mainContainerStyle: {
+            flex: 1
+          },
+          optionOptions: {
+            renderOnParent: false
+          },
+          titleOptions: {
+            ellipsisLine: 1,
+            style: {
+              fontSize: '0.9rem'
+            }
+          },
+          containerStyle: {
+            width: '100%',
+            padding: '4px 0px',
+            flex: 1
           }
-        },
-        containerStyle: {
-          width: '100%',
-          padding: '4px 0px',
-          flex: 1
-        }
-      })}
-    </div>
+        })}
+      </div>
+    </DraggableElement>
   )
 }
 

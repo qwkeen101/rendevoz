@@ -20,6 +20,8 @@ import { useContextmenu } from '@/hooks'
 import { useTranslation } from 'react-i18next'
 import { Rendevoz } from '@/core/rendevoz'
 import usePdfInstance from '../../hooks/usePdfInstance'
+import EditorLayer from '@/core/pdf/core/layers/EditorLayer'
+import InkLabel from '@/core/pdf/components/label/InkLabel'
 
 interface PdfPageProps extends RenderPageProps {
   pdfId: number
@@ -153,10 +155,12 @@ const PdfPage: React.FC<PdfPageProps> = ({
                   {i.type === 'highlight' && <HighlightLabel documentId={pdfId} labelId={i.id} key={i.id} pageSize={pageSize} />}
                   {i.type === 'thought' && <ThoughtLabel dragBoundRef={labelContainerRef} labelId={i.id} key={i.id} />}
                   {i.type === 'object' && <ObjectLabel labelId={i.id} key={i.id} pageSize={pageSize} />}
+                  {i.type === 'ink' && <InkLabel labelId={i.id} pageSize={pageSize} />}
                 </Fragment>
               )
           )}
       </div>
+      {/*<EditorLayer pageIndex={pageIndex} pageSize={pageSize} />*/}
       <AnimatePopover
         visible={contextMenuState.visible}
         align="start"

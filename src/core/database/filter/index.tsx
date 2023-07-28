@@ -52,7 +52,7 @@ export const FiltersAtom = atom<
     initialOpen: boolean
   }[]
 >([])
-export const DatabaseFilter = () => {
+export const DatabaseFilter = ({ renderOnParent = true }: { renderOnParent?: boolean }) => {
   const [filters, setFilters] = useAtom(FiltersAtom)
   const [chooseFilterVisible, toggleChooseFilterVisible] = useToggle(false)
   const setCurrentFocusFilter = useSetAtom(CurrentFocusFilterAtom)
@@ -73,7 +73,7 @@ export const DatabaseFilter = () => {
     <Content flex gap={10} style={{ flexWrap: 'wrap', alignItems: 'stretch' }} ref={filterContainerRef}>
       {filters.map(i => (
         <Filter
-          parentElement={filterContainerRef.current}
+          parentElement={renderOnParent ? filterContainerRef.current : document.body}
           id={i.id}
           onClose={() => {
             const idx = filters.findIndex(o => o === i)
@@ -87,7 +87,7 @@ export const DatabaseFilter = () => {
       ))}
       <AnimatePopover
         align="start"
-        parentElement={filterContainerRef.current}
+        parentElement={renderOnParent ? filterContainerRef.current : document.body}
         visible={chooseFilterVisible}
         disableIntersection
         disableNudge

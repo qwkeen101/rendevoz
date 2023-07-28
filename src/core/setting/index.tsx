@@ -44,6 +44,7 @@ type IGeneralSetting = {
     language?: AvaliableLanguages
     openNewTab: 'always open new tab' | 'open existing tab'
     darkMode: boolean
+    copyFileWhenImport: boolean
     customSearchEngineUrl?: string
     userFilePath?: string
     autoBackup: 'never' | 'every day' | '3 days' | 'one week' | 'one month' | 'whenClose'
@@ -119,6 +120,8 @@ export type IComponentSetting = {
   whiteboard: {
     enableMinimap: boolean
     enableAddLinkBetweenObjectsWhenConnect: boolean
+    snapToObject: boolean
+    imageResizeKeepRatio: boolean
   }
   editor: {
     objectAutoBecomeInline: boolean
@@ -160,6 +163,7 @@ const defaultSetting: Setting = {
     defaultLanguage: 'en-US',
     openNewTab: 'open existing tab',
     darkMode: true,
+    copyFileWhenImport: true,
     defaultSearchEngine: 'google',
     defaultImageSearchEngine: 'bing',
     autoBackup: 'never',
@@ -176,7 +180,9 @@ const defaultSetting: Setting = {
   },
   whiteboard: {
     enableMinimap: true,
-    enableAddLinkBetweenObjectsWhenConnect: false
+    enableAddLinkBetweenObjectsWhenConnect: false,
+    imageResizeKeepRatio: true,
+    snapToObject: true
   },
   editor: {
     objectAutoBecomeInline: true

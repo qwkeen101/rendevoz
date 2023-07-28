@@ -9,6 +9,7 @@ import { GraphEdge } from '@/core/graph/types/edge'
 import { GraphNode } from '@/core/graph/types/node'
 import { atom } from 'jotai'
 import { useGlobalAtom } from '@/hooks'
+import { useTranslation } from 'react-i18next'
 
 export const GlobalGraphAtom = atom<
   | {
@@ -19,6 +20,7 @@ export const GlobalGraphAtom = atom<
 >(undefined)
 const GraphPage = () => {
   const [globalGraph, setGlobalGraph] = useGlobalAtom(GlobalGraphAtom)
+  const { t } = useTranslation()
   useEffect(() => {
     if (!globalGraph) {
       const allNodes = Array.from(globalStore.get(metaObjectsAtom).values()).map(i => ({
@@ -41,7 +43,7 @@ const GraphPage = () => {
   }, [])
   return (
     <Content fullWidth fullHeight>
-      <TabTitle icon={<Icon name={'park-share-one'} size={16} />} title={'Graph view'} />
+      <TabTitle icon={<Icon name={'park-share-one'} size={16} />} title={t('general.graph view')} />
       {globalGraph && <GraphContainer edges={globalGraph.edges} nodes={globalGraph.nodes} />}
     </Content>
   )

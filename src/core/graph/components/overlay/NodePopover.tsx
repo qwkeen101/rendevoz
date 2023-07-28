@@ -49,17 +49,19 @@ const NodePopover = ({ metaId, nodeId, onClose }: { metaId: number; nodeId: numb
       {renderWhole({
         titleOptions: {
           style: {
-            fontSize: FontSize['14px']
+            fontSize: FontSize['13px']
           },
+          ellipsisLine: 4,
           onTitleClick: () => {
             Rendevoz.Actions.Open.Meta.openMetaObject(metaId)
             GlobalGraphInstance.minimize?.()
             graph?.overlayManager?.close()
           }
         },
+
         descriptionOptions: {
           style: {
-            fontSize: FontSize['13px']
+            fontSize: FontSize['12px']
           },
           ellipsisLine: 8
         },
@@ -74,6 +76,9 @@ const NodePopover = ({ metaId, nodeId, onClose }: { metaId: number; nodeId: numb
           renderOption: true
         },
         optionOptions: {
+          style: {
+            right: 0
+          },
           customNode: (
             <ObjectActionPopover
               metaObjectId={metaId}

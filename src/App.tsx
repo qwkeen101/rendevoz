@@ -18,6 +18,7 @@ import ThemeSwitcher from './ThemeSwitcher'
 import GlobalImagePreviewer from './core/global/GlobalImagePreviewer'
 import classNames from 'classnames'
 import { css } from '@emotion/css'
+import { CacheProvider } from '@emotion/react'
 import GlobalTranslateResult from './core/global/translate/GlobalTranslatePanel'
 import GlobalSearchPanel from './core/global/GlobalSearchPanel'
 import GlobalWebview from './core/global/GlobalWebview'
@@ -45,6 +46,7 @@ import GlobalPdfPrinter from '@/core/global/GlobalPdfPrinter'
 import GraphPage from '@/scenes/GraphPage'
 import InnerHookz from '@/core/rendevoz/hooks'
 import * as InnerComponentz from '@/core/rendevoz/components'
+import createCache from '@emotion/cache'
 export function getOS() {
   const userAgent = window.navigator.userAgent.toLowerCase(),
     macosPlatforms = /(macintosh|macintel|macppc|mac68k|macos)/i,
@@ -103,7 +105,7 @@ const RENDEVOZ_DEFAULT_TABS: TabData[ILayoutTab['type']][] = [
   },
   {
     type: 'whiteboard',
-    content: opts => opts.objectId && <WhiteboardPage whiteboardId={opts.objectId} />
+    content: opts => opts.objectId && <WhiteboardPage whiteboardId={opts.objectId} onInstanceInitialized={opts.onInstanceInitialized}/>
   },
   {
     type: 'home',
@@ -120,6 +122,8 @@ const RENDEVOZ_DEFAULT_TABS: TabData[ILayoutTab['type']][] = [
 ]
 
 export const GlobalPluginManager = new PluginManager()
+
+export const cache = createCache({ key: 'external', speedy: false })
 const App = () => {
   Rendevoz.InnerHooks = InnerHookz
   Rendevoz.InnerComponents = InnerComponentz
@@ -146,51 +150,53 @@ const App = () => {
   const registeredGlobalElements = Array.from(KeyToRegisteredGlobalElements.entries())
 
   return (
-    <ErrorBoundary FallbackComponent={ErrorFallback}>
-      {/* for unknown queryselector bug */}
-      <div
-        className={classNames(
-          'excalidraw',
-          css({
-            '--color-selection': '#6965db'
-          })
-        )}
-        style={{ display: 'none' }}
-      ></div>
-      <ThemeSwitcher />
-      {os !== 'macos' && <TitleBar />}
-      <Notification />
-      <>
-        <Initializer />
-        <GlobalTextSearch />
-        <GlobalGraph />
-        <GlobalScreenShot />
-        <GlobalWebview />
-        <GlobalObjectPanel />
-        <GlobalSearchPanel />
-        <GlobalCreateObject />
-        <GlobalTranslateResult />
-        <AuthenticatedLayout />
-        <GlobalDragOverlay />
-        <GlobalImagePreviewer />
-        <GlobalNoteImporter />
-        <GlobalPdfPrinter />
-        <GlobalUtils />
-        {registeredGlobalElements.map(entry => (
-          <Fragment key={entry[0]}>{entry[1]()}</Fragment>
-        ))}
-        <svg
-          style={{
-            position: 'absolute',
-            width: 0,
-            height: 0,
-            overflow: 'hidden'
-          }}
-        >
-          <SvgMarker />
-        </svg>
-      </>
-    </ErrorBoundary>
+    <CacheProvider value={cache}>
+      <ErrorBoundary FallbackComponent={ErrorFallback}>
+        {/* for unknown queryselector bug */}
+        <div
+          className={classNames(
+            'excalidraw',
+            css({
+              '--color-selection': '#6965db'
+            })
+          )}
+          style={{ display: 'none' }}
+        ></div>
+        <ThemeSwitcher />
+        {os !== 'macos' && <TitleBar />}
+        <Notification />
+        <>
+          <Initializer />
+          <GlobalTextSearch />
+          <GlobalGraph />
+          <GlobalScreenShot />
+          <GlobalWebview />
+          <GlobalObjectPanel />
+          <GlobalSearchPanel />
+          <GlobalCreateObject />
+          <GlobalTranslateResult />
+          <AuthenticatedLayout />
+          <GlobalDragOverlay />
+          <GlobalImagePreviewer />
+          <GlobalNoteImporter />
+          <GlobalPdfPrinter />
+          <GlobalUtils />
+          {registeredGlobalElements.map(entry => (
+            <Fragment key={entry[0]}>{entry[1]()}</Fragment>
+          ))}
+          <svg
+            style={{
+              position: 'absolute',
+              width: 0,
+              height: 0,
+              overflow: 'hidden'
+            }}
+          >
+            <SvgMarker />
+          </svg>
+        </>
+      </ErrorBoundary>
+    </CacheProvider>
   )
 }
 

@@ -8,7 +8,7 @@ import { autoUpdater } from 'electron-updater'
 import * as child_process from 'child_process'
 import { DEFAULT_USER_DATA_PATH, DefaultRendevozDataPath } from '../app.controller'
 import fs from 'fs'
-import WebContents = Electron.WebContents
+import openUrlHandler from './openUrlHandler'
 
 process.env.ELECTRON_DISABLE_SECURITY_WARNINGS = 'true'
 process.env.DIST_ELECTRON = join(__dirname, '../..')
@@ -71,37 +71,7 @@ const slicedLength = 'rendefile://'.length
           session.defaultSession.clearCache()
           session.defaultSession.clearCodeCaches({ urls: [] })
         })
-        app.on('open-url', (event, url) => {
-          const lowered = url.toLowerCase()
-          if (lowered.startsWith('rendevoz://object')) {
-            const newUrl = lowered.replace('rendevoz://object/', '')
-            if (newUrl.length) {
-              const metaId = Number(newUrl)
-              console.log(metaId)
-              win.webContents.send('openObject', {
-                metaId
-              })
-            }
-          }
-        })
-        app.setAsDefaultProtocolClient('rendevoz')
-        app.on('second-instance', (event, commandLine, workingDirectory) => {
-          if (win) {
-            if (win.isMinimized()) win.restore()
-            win.focus()
-            const url = commandLine.pop().slice(0, -1)
-            const lowered = url.toLowerCase()
-            if (lowered.startsWith('rendevoz://object')) {
-              const newUrl = lowered.replace('rendevoz://object/', '')
-              if (newUrl.length) {
-                const metaId = Number(newUrl)
-                win.webContents.send('openObject', {
-                  metaId
-                })
-              }
-            }
-          }
-        })
+
         if (isDev) {
           if (process.platform === 'win32') {
             process.on('message', data => {
@@ -137,6 +107,9 @@ const slicedLength = 'rendefile://'.length
         app.on('web-contents-created', (createEvent, contents) => {
           contents.setWindowOpenHandler(({ url }) => {
             console.log(url)
+            if (url.includes('printer.html')) return { action: 'allow' }
+            if (url.includes('blank')) return { action: 'allow' }
+            if (url.includes('index.html')) return { action: 'allow' }
             if (url.startsWith('https://rendevoz.firebaseapp.com/')) {
               return { action: 'allow' }
             }
@@ -164,18 +137,8 @@ const slicedLength = 'rendefile://'.length
           }
         })
 
-        win.webContents.setWindowOpenHandler(({ url, features, frameName }) => {
-          console.log(url)
-          if (url === 'about:blank#blocked') {
-            return {
-              action: 'allow'
-            }
-          }
-          shell.openExternal(url)
-          return {
-            action: 'deny'
-          }
-        })
+        openUrlHandler(app, win)
+
         autoUpdater.on('download-progress', e => {
           win.webContents.send('download', e)
         })

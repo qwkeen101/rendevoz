@@ -81,7 +81,7 @@ export const useCreateObject = (options?: {
                   text={t('general.note')}
                   onClick={() => {
                     ObjectStore('note')
-                      .addOneWithMeta({ title: 'Untitled' }, { showMetaModal: true })
+                      .addOneWithMeta({ title: 'Untitled' }, { showMetaModal: false })
                       .then(({ one }) => {
                         Rendevoz.Actions.Open.Editor.openEditor(one.id)
                       })
@@ -98,7 +98,7 @@ export const useCreateObject = (options?: {
                         {
                           name: 'Unknown whiteboard'
                         },
-                        { showMetaModal: true }
+                        { showMetaModal: false }
                       )
                       .then(({ one }) => {
                         Rendevoz.Actions.Open.Whiteboard.openWhiteboard(one.id)

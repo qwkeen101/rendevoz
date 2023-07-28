@@ -266,10 +266,8 @@ class D3GraphManager {
           }, 50)
           if (!this.moved) {
             const node = Array.from(this.nodesMap?.values() || []).find(i => i.isCenter)
-            const bound = this.container?.node()?.getBoundingClientRect()
-            node && this.panzoom?.moveTo(-node.x + bound?.width / 2, -node.y + bound?.height / 2)
-            if (this.pixiViewport) {
-              this.pixiViewport?.setTransform(-node.x + this.pixiViewport?.screenWidth / 2, -node.y + this.pixiViewport?.screenHeight / 2)
+            if (node) {
+              this.moveToNode(node.id)
             }
             this.moved = true
           }
@@ -295,7 +293,12 @@ class D3GraphManager {
         })
     }
   }
-
+  public moveToNode = (nodeId: number) => {
+    const node = Array.from(this.nodesMap?.values() || []).find(i => i.id === nodeId)
+    if (this.pixiViewport && node && node.x !== undefined && node.y !== undefined) {
+      this.pixiViewport.setTransform(-node.x + this.pixiViewport.screenWidth / 2, -node.y + this.pixiViewport.screenHeight / 2, 1, 1)
+    }
+  }
   public startAddEdge = (sourceNode: SVGGElement) => {
     const bounding = (
       sourceNode.querySelector('image') ||

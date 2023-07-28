@@ -232,7 +232,7 @@ export const EditorV1: FC<EditorProps> = memo(
       <Content fullWidth fullHeight flex column>
         {showHeader !== false && <EditorHeader title={realTitle} />}
         <Content flex fullWidth auto style={{ height: 0 }}>
-          <SidebarToolbar editor={editor} />
+          {showHeader !== false && <SidebarToolbar editor={editor} />}
           <div className={styles.editor} role="editor-container">
             <div ref={scrollElementRef} className={styles.scrollWrapper}>
               {showTitle &&
@@ -307,7 +307,7 @@ export const EditorV1: FC<EditorProps> = memo(
               outerVisible={!!(!isDragging && !popoverVisible && !readonly && showBlockHandle)}
             />
           </div>
-          <EditorRightBar />
+          {showHeader !== false && <EditorRightBar />}
         </Content>
       </Content>
     )

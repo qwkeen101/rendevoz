@@ -1,21 +1,15 @@
-import { useMergedRef } from "@/hooks";
-import ClassName from "@/styles/classNames";
-import { css } from "@emotion/css";
-import classNames from "classnames";
-import React, {
-  CSSProperties,
-  forwardRef,
-  MouseEventHandler,
-  useLayoutEffect,
-  useRef,
-} from "react";
-import { Icon, Tooltip } from "..";
-import Content from "../Content";
-import Colors from "@/consts/colors";
+import { useMergedRef } from '@/hooks'
+import ClassName from '@/styles/classNames'
+import { css } from '@emotion/css'
+import classNames from 'classnames'
+import React, { CSSProperties, forwardRef, MouseEventHandler, useLayoutEffect, useRef } from 'react'
+import { Icon, Tooltip } from '..'
+import Content from '../Content'
+import Colors from '@/consts/colors'
 
 const DangerousButtonClassName = css({
-  color: "#FD8A8A",
-});
+  color: '#FD8A8A'
+})
 
 const IconButton = forwardRef(
   (
@@ -34,38 +28,36 @@ const IconButton = forwardRef(
       style,
       tooltip,
       spin,
+      enabled,
       ...rest
     }: {
-      icon?: string;
-      onClick?: MouseEventHandler;
-      gap?: number;
-      text?: string;
-      className?: string;
-      dangerous?: boolean;
-      reverse?: boolean;
-      spaceBetween?: boolean;
-      tabIndex?: number;
-      selected?: boolean;
-      style?: CSSProperties;
-      tooltip?: string;
-      spin?: boolean;
-      onPointerEnter?: React.PointerEventHandler;
+      icon?: string
+      onClick?: MouseEventHandler
+      gap?: number
+      text?: string
+      enabled?: boolean
+      className?: string
+      dangerous?: boolean
+      reverse?: boolean
+      spaceBetween?: boolean
+      tabIndex?: number
+      selected?: boolean
+      style?: CSSProperties
+      tooltip?: string
+      spin?: boolean
+      onPointerEnter?: React.PointerEventHandler
     } & React.HTMLProps<HTMLDivElement>,
     ref
   ) => {
-    const innerRef = useRef<HTMLDivElement>(null);
-    const mergedRef = useMergedRef(innerRef, ref);
+    const innerRef = useRef<HTMLDivElement>(null)
+    const mergedRef = useMergedRef(innerRef, ref)
     useLayoutEffect(() => {
       if (selected !== undefined) {
         if (selected === false) {
-          innerRef.current?.style.setProperty(
-            "background",
-            "none",
-            "important"
-          );
+          innerRef.current?.style.setProperty('background', 'none', 'important')
         }
       }
-    }, [selected]);
+    }, [selected])
     return (
       <Tooltip content={tooltip} ref={mergedRef}>
         <Content
@@ -77,34 +69,31 @@ const IconButton = forwardRef(
           onPointerEnter={onPointerEnter}
           {...rest}
           style={{
-            flexDirection: reverse && icon ? "row-reverse" : "row",
-            justifyContent: spaceBetween ? "space-between" : undefined,
+            flexDirection: reverse && icon ? 'row-reverse' : 'row',
+            justifyContent: spaceBetween ? 'space-between' : undefined,
             background:
               selected === true
                 ? dangerous
-                  ? "rgb(253, 138, 138, 0.2)"
+                  ? 'rgb(253, 138, 138, 0.2)'
                   : Colors.Background.ButtonHover
                 : selected === false
-                ? "none"
+                ? 'none'
                 : undefined,
-            ...style,
+            ...style
           }}
           className={classNames(
             className,
-            ClassName.flatButton(
-              undefined,
-              undefined,
-              dangerous ? "rgb(253, 138, 138, 0.2)" : undefined
-            ),
+            ClassName.flatButton(undefined, undefined, dangerous ? 'rgb(253, 138, 138, 0.2)' : undefined),
             dangerous && DangerousButtonClassName
           )}
         >
           {icon && <Icon spin={spin} name={icon} />}
           {text && <div>{text}</div>}
+          {enabled && <Icon name="park-check-small" containerStyle={{ marginLeft: 'auto' }} />}
         </Content>
       </Tooltip>
-    );
+    )
   }
-);
+)
 
-export default IconButton;
+export default IconButton

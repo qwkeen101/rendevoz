@@ -11,6 +11,19 @@ const registerTabData = data => {
   })
 }
 
+const openTabInWhiteboard = (data: ILayoutTab) => {
+  const currentFocusTab = GlobalLayout?.getCurrentActiveTab()
+  console.log(currentFocusTab)
+  if (currentFocusTab) {
+    if (currentFocusTab.tab?.type === 'whiteboard') {
+      const opened = currentFocusTab.tab.instance?.openTabInSidebar?.(data)
+      console.log(opened)
+      return opened
+    }
+  }
+  return false
+}
+
 const openNewTab = ({ data }) => {
   const setting = getSetting()
   const { type } = data
@@ -20,6 +33,10 @@ const openNewTab = ({ data }) => {
     return
   }
   if (setting.general.openNewTab === 'open existing tab') {
+    const whiteboardTab = openTabInWhiteboard(data)
+    if (whiteboardTab) {
+      return
+    }
     const maybeExistTab = hasTargetTab(data)
     // open existing tab
     if (maybeExistTab) {

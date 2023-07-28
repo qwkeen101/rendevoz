@@ -1,17 +1,18 @@
-import { TextSelectRect } from "@/events/pdfEvent";
-import { IBase } from "./base";
+import { TextSelectRect } from '@/events/pdfEvent'
+import { IBase } from './base'
+import { XYPosition } from '..'
 
 export type ILabel = IBase & {
-  id?: number;
-  title?: string;
-  content?: string | any;
-  documentId?: number;
-  background?: string;
-  color?: string;
-  name?: string;
-  page?: number;
-  description?: string;
-} & (IShapeLabel | IThoughtLabel | IHighlightLabel | IObjectLabel);
+  id?: number
+  title?: string
+  content?: string | any
+  documentId?: number
+  background?: string
+  color?: string
+  name?: string
+  page?: number
+  description?: string
+} & (IShapeLabel | IThoughtLabel | IHighlightLabel | IObjectLabel | IInkLabel)
 
 export interface IDroppableLabel {
   page?: number
@@ -26,6 +27,15 @@ export type IObjectLabel = {
   // [top,left,width,height]
   rect?: number[]
   metaObjectId: number
+}
+
+export interface IInkLabel {
+  type: 'ink'
+  // [top, left, width, height]
+  rect: number[]
+  points: XYPosition[]
+  // [width, height]
+  drawPdfSize: number[]
 }
 export interface IHighlightLabel {
   type: 'highlight'

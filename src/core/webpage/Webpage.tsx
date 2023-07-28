@@ -2,14 +2,14 @@ import { Content, Icon, Image } from '@/components'
 import { globalStore, ObjectStore } from '@/stores'
 import { objectIdToMetaObjectIdMapAtom } from '@/stores/meta.store'
 import Id from '@/utils/id'
-import { CSSProperties, FC, useEffect, useMemo, useState } from 'react'
+import { CSSProperties, FC, useEffect, useMemo, useRef, useState } from 'react'
 import { Descendant } from 'slate'
 import { CustomEditor, IWebpageInstance, MetaObject } from '~/typings'
 import WebpageEditor from '../editor/WebpageEditor'
 import { WebpageCore, WebpageProps } from './WebpageCore'
 import WebpageNavigation from './WebpageNavigation'
 import TabTitle from '@/components/layout/TabTitle'
-import { useGlobalAtomValue, useMemoizedFn, useToggle } from '@/hooks'
+import { useGlobalAtomValue, useMemoizedFn, usePrevious, useToggle } from '@/hooks'
 import { ReactEditor } from '../editor'
 import { GlobalDragOverlayInstance } from '../global'
 import { EditorTitleClassName } from '../editor/EditorTitle'
@@ -28,11 +28,12 @@ type Props = {
   initialUrl?: string
   initialWebpageId?: number
   onTitleChange?: (title: string) => void
-  onWebpageChange?: (newWebpageDetails: { webpageId: number }) => void
+  onWebpageChange?: (newWebpageDetails: { webpageId: number; oldWebpageId: number }) => void
   onInstanceInitialized?: (instance: IWebpageInstance) => void
   navigationStyle?: CSSProperties
   webpageFrom?: MetaObject['fromObject']
   userAgent?: string
+  disableTabTitle?: boolean
   navigationState?: {
     showReaderMode?: boolean
     showAddAsObject?: boolean
@@ -43,6 +44,7 @@ const WebpageInner = ({
   initialWebpageId,
   onWebpageChange,
   onTitleChange,
+  disableTabTitle,
   initialUrl: externalInitialUrl,
   navigationStyle,
   webpageFrom,
@@ -148,6 +150,7 @@ const WebpageInner = ({
       onTitleChange?.(title)
     }
   }, [title])
+  const previousWebpageId = useRef(currentWebpage?.id)
 
   useEffect(() => {
     if (currentWebpage) {
@@ -168,11 +171,14 @@ const WebpageInner = ({
       }
       onWebpageChange?.({
         webpageId: currentWebpage.id,
+        oldWebpageId: previousWebpageId.current,
         ...currentWebpage
       })
     }
   }, [currentWebpage])
-
+  useEffect(() => {
+    previousWebpageId.current = currentWebpage?.id
+  }, [currentWebpage?.id])
   useEffect(() => {
     if (currentWebpage?.id) {
       ObjectStore('webpage')
@@ -218,18 +224,20 @@ const WebpageInner = ({
 
   return (
     <Content flex column fullHeight fullWidth>
-      <TabTitle
-        title={title || 'Webpage'}
-        icon={
-          !realLoaded ? (
-            <Icon size={16} name="park-loading-four" spin />
-          ) : faviconUrl ? (
-            <Image src={faviconUrl} width={16} />
-          ) : (
-            'park-web-page'
-          )
-        }
-      />
+      {!disableTabTitle && (
+        <TabTitle
+          title={title || 'Webpage'}
+          icon={
+            !realLoaded ? (
+              <Icon size={16} name="park-loading-four" spin />
+            ) : faviconUrl ? (
+              <Image src={faviconUrl} width={16} />
+            ) : (
+              'park-web-page'
+            )
+          }
+        />
+      )}
       <WebpageNavigation
         style={navigationStyle}
         on={e => handleNavigationEvent(e)}

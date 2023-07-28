@@ -101,8 +101,10 @@ const useFlipForm = (options: useFlipFormOptions) => {
             autoFocus
             text={capitalize(t('general.name'))}
             disable={i.disabled}
-            type="input"
-            style={{ fontSize: enlarged ? '1rem' : undefined }}
+            type="textarea"
+            minRows={1}
+            maxRows={7}
+            style={{ fontSize: enlarged ? '1rem' : undefined, padding: '8px 12px 0px', wordBreak: 'break-all' }}
             value={i.value}
             onChange={i.onChange}
           />
@@ -112,7 +114,7 @@ const useFlipForm = (options: useFlipFormOptions) => {
           <Form.Item
             text={capitalize(t('general.description'))}
             minRows={enlarged ? 10 : undefined}
-            style={{ fontSize: enlarged ? '1rem' : undefined }}
+            style={{ fontSize: enlarged ? '1rem' : undefined, padding: '8px 12px 0px', }}
             type="textarea"
             maxRows={enlarged ? 18 : 10}
             value={i.value}

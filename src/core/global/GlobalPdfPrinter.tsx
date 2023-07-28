@@ -1,14 +1,14 @@
 import { useToggle } from '@/hooks'
 import { assignProperties } from '@/utils'
 import { ReactElement, useEffect, useMemo, useRef, useState } from 'react'
-import createCache from '@emotion/cache'
+
 import { CacheProvider } from '@emotion/react'
+import { css, sheet, cache } from '@emotion/css'
 import { createPortal } from 'react-dom'
 import { ipcInstance } from '@/plugins'
 import { GlobalInstances } from '~/typings'
 import Id from '@/utils/id'
 import { Editor } from '@/core'
-import { css } from '@emotion/css'
 import { ClassName, Components, Consts } from 'rendevoz'
 import { Content, Switch } from '@/components'
 import { useTranslation } from 'react-i18next'
@@ -31,6 +31,7 @@ const GlobalPdfPrinter = () => {
               readonly={true}
               type={'note'}
               showHeader={false}
+              stringTitle={currentTitleRef.current}
               showToolbar={false}
               showBlockHandle={false}
               id={Id.getStrId()}
@@ -47,18 +48,21 @@ const GlobalPdfPrinter = () => {
   })
 
   const containerEle = useMemo(() => document.createElement('div'), [modalVisible])
-  const cache = useMemo(() => createCache({ key: 'external', container: containerEle }), [containerEle])
+
   const externalWindowRef = useRef<Window>()
+
   useEffect(() => {
     if (modalVisible) {
       const center = {
         x: window.screen.width / 2 - 400,
         y: window.screen.height / 2 - 400
       }
-      const externalWindow = window.open('', '', `width=800,height=800,left=${center.x},top=${center.y}`)
+      const externalWindow = window.open('printer.html', '', `width=800,height=800,left=${center.x},top=${center.y}`)
       setTimeout(() => {
         if (externalWindow) {
-          externalWindow.document.head.innerHTML = document.head.innerHTML
+          Array.from(document.head.children)
+            .filter(i => i.nodeName === 'LINK')
+            .forEach(i => externalWindow.document.head.appendChild(i.cloneNode(true)))
           externalWindow.document.documentElement.setAttribute('theme', 'light')
           externalWindow.document.body.style.height = 'auto'
           externalWindow.document.documentElement.style.width = '100vw'
@@ -66,18 +70,35 @@ const GlobalPdfPrinter = () => {
           externalWindow.document.body.style.width = '100%'
           externalWindow.document.title = 'Export as PDF'
           externalWindowRef.current = externalWindow
+          document.head.querySelectorAll('[data-emotion]').forEach(style => {
+            console.log(style)
+            const s = document.createElement('style')
+            s.appendChild(document.createTextNode(''))
+            externalWindow.document.head.appendChild(s)
+            const newSheet = s.sheet
+            Array.from(style.sheet.cssRules || []).forEach(rule => {
+              newSheet.insertRule(rule.cssText)
+            })
+          })
+
+          // s.sheet.insertRule()
           window.document.body.classList.forEach(i => {
             externalWindow.document.body.classList.add(i)
           })
 
+          // Object.entries(sheet.tags).forEach(i => {
+          //   externalWindow.document.head.appendChild(i[1].cloneNode(true))
+          // })
           externalWindow.document.documentElement.style.height = 'auto'
           externalWindow.document.documentElement.style.overflowY = 'auto'
           externalWindow.document.body.appendChild(containerEle)
+          containerEle.style.width = '100%'
           externalWindow.onunload = () => {
             toggleModalVisible(false)
           }
         }
       }, 100)
+
       toggleSaveButtonVisible(true)
       return () => {
         externalWindow?.close()

@@ -46,14 +46,14 @@ const EditorHeader = ({ title }: { title: string }) => {
           placement={['bottom']}
           content={
             <WithBorder padding={4} style={{ minWidth: 160, fontSize: FontSize['13px'] }}>
-              {/* <Button.IconButton
+              <Button.IconButton
                 style={{ padding: '2px 6px' }}
                 text={'Export as PDF'}
                 icon="park-file-pdf"
                 onClick={() => {
                   instance.printToPDF?.()
                 }}
-              /> */}
+              />
               <Button.IconButton
                 style={{ padding: '2px 6px' }}
                 text={'Export as Markdown'}

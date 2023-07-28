@@ -40,6 +40,7 @@ const SidebarPanel = () => {
             >
               <Provider store={store}>
                 <ObjectPanel
+                  renderFilterOnParent={false}
                   padding={8}
                   onOpenInTab={() => {
                     Rendevoz.Actions.Open.openDatabase()

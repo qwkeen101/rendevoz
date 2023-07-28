@@ -183,7 +183,7 @@ export class AppController {
     console.log('printing')
     const pdf = await webContents
       .getAllWebContents()
-      .find(i => i.getURL() === 'about:blank')
+      .find(i => i.getTitle().includes('PDF'))
       .printToPDF?.({
         printBackground: true,
         pageSize: options.size,

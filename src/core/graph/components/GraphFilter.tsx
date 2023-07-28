@@ -1,4 +1,4 @@
-import { Content, Icon } from '@/components/base'
+import { Content, Icon, WithBorder } from '@/components/base'
 import { DatabaseFilter, FilterNameSearchAtom, SimpleObject } from '@/core'
 import { useToggle } from '@/hooks'
 import ClassName from '@/styles/classNames'
@@ -13,6 +13,7 @@ import { GlobalGraphInstance } from '..'
 import useGraph from '../hooks/useGraph'
 import { GraphPinNodesIdsAtom, GraphVisibleNodesIdsAtom } from '../hooks/useGraphFilter'
 import useGraphNodes, { GraphNodesAtom } from '../hooks/useGraphNodes'
+import { Colors } from '@/consts'
 
 const graphFilterTitleClassName = css({
   cursor: 'grab',
@@ -41,32 +42,22 @@ const GraphFilter = () => {
     const graphNodes = store.get(GraphNodesAtom)
     if (graphNodes && graph) {
       const targetNode = graphNodes.find(n => n.id === nodeId)
-      if (targetNode && targetNode.x !== undefined && targetNode.y !== undefined) {
-        const bound = graph.container?.node()?.getBoundingClientRect()
-        if (bound) {
-          const zoom = graph.panzoom?.getTransform().scale || 1
-          setNodes(nodes =>
-            nodes
-              ? produce(nodes, draft => {
-                  nodes?.forEach((n, idx) => {
-                    if (n.isCenter && n.id !== nodeId) {
-                      draft[idx].isCenter = false
-                    }
-                    if (n.id === nodeId) {
-                      draft[idx].isCenter = true
-                    }
-                  })
+      if (targetNode) {
+        graph.moveToNode(targetNode.id)
+        setNodes(nodes =>
+          nodes
+            ? produce(nodes, draft => {
+                nodes?.forEach((n, idx) => {
+                  if (n.isCenter && n.id !== nodeId) {
+                    draft[idx].isCenter = false
+                  }
+                  if (n.id === nodeId) {
+                    draft[idx].isCenter = true
+                  }
                 })
-              : nodes
-          )
-          if (Math.abs(zoom - 1) < 0.1) {
-            graph.panzoom?.smoothMoveTo(-targetNode.x + bound.width / 2, -targetNode.y + bound.height / 2)
-          } else {
-            // wtf is this?
-            graph.panzoom?.moveTo(-targetNode.x * zoom + bound.width / 2 / zoom, -targetNode.y * zoom + bound.height / 2 / zoom)
-            graph.panzoom?.smoothZoomAbs(bound.width / 2 / zoom, bound.height / 2 / zoom, 1)
-          }
-        }
+              })
+            : nodes
+        )
       }
     }
   }
@@ -135,14 +126,16 @@ const GraphFilter = () => {
             }}
             className={graphFilterTitleClassName}
           >
-            <div className={ClassName.title('1rem')}>Graph Filter</div>
-            <div className={ClassName.description()}>Total Nodes: {graphVisibleNodesIds.length}</div>
+            <div className={ClassName.title('1rem')}>{t('general.graph filter')}</div>
+            <div className={ClassName.description()}>
+              {t('general.total objects')}: {graphVisibleNodesIds.length}
+            </div>
           </div>
           <Content
             style={{
               background: 'transparent',
-              borderRadius: 999,
-              border: '1px solid rgba(0,0,0,0.1)',
+              borderRadius: 4,
+              border: `1px solid ${Colors.Background.Border}`,
               padding: '4px 12px',
               height: '32px'
             }}
@@ -153,7 +146,7 @@ const GraphFilter = () => {
             <Icon name="park-search" />
             <input
               placeholder={t('database.search for object', {
-                object: t('general.object')
+                object: t('general.total objects')
               })}
               value={search}
               onChange={e => setSearch(e.target.value)}
@@ -212,9 +205,9 @@ const GraphFilter = () => {
                         paddingTop: 0
                       },
                       ':not(:last-child)': {
-                        borderBottom: '1px solid rgba(0,0,0,0.05)'
+                        borderBottom: `1px solid ${Colors.Background.Border}`
                       },
-                      padding: '10px 0px'
+                      padding: '8px 0px 4px'
                     })}
                   >
                     <SimpleObject
@@ -222,14 +215,14 @@ const GraphFilter = () => {
                       renderFrom={false}
                       draggable={false}
                       iconPopover={
-                        <>
+                        <WithBorder padding={6}>
                           <div onClick={() => handleFocus(nodeId)} className={ClassName.flatButton()}>
-                            Focus
+                            {t('general.focus')}
                           </div>
                           <div onClick={() => handleHighlightRelated(nodeId)} className={ClassName.flatButton()}>
-                            {isPinned ? 'Unpin' : 'Pin'}
+                            {isPinned ? t('general.unpin on graph') : t('general.pin on graph')}
                           </div>
-                        </>
+                        </WithBorder>
                       }
                       onNavigate={() => {
                         GlobalGraphInstance.minimize?.()

@@ -63,11 +63,18 @@ class FlowManager {
         const node = whiteboard?.nodes?.get(nodeId)
         if (node) {
           const box = entry.contentRect
+          const newSize = {
+            width: node.width || Math.min(box.width, 450),
+            height: node.width ? box.height : undefined
+          }
+          const style = (target as HTMLElement).style
+          style.width = `${newSize.width}px`
+          style.height = `${newSize.height}px`
           const newWhiteboard = produce(whiteboard, draft => {
             draft?.nodes?.set(nodeId, {
               ...node,
-              width: node.width || Math.min(box.width, 450),
-              height: node.width ? box.height : undefined
+              width: newSize.width,
+              height: newSize.height
             })
           })
 

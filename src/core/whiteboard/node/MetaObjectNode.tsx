@@ -8,10 +8,13 @@ import { useFlow, useSetWhiteboardNodes } from '../hooks'
 import produce from 'immer'
 import PdfNode from './PdfNode'
 import NoteNode from './NoteNode'
-import { useRenderObject } from '@/core'
+import { useRenderObject, Video } from '@/core'
 import { css } from '@emotion/css'
 import { GlobalEventEmitter } from '@/events'
 import FontSize from '@/consts/font'
+import WebpageNode from '@/core/whiteboard/node/WebpageNode'
+import VideoCore from '@/core/video/VideoCore'
+import { Rendevoz } from '@/core/rendevoz'
 
 const MetaObjectNode: FC<InnerNodeProps> = ({ node: n, setPopoverElements, setNodeState, onNameChange }) => {
   const node = n as IWhiteboardNode & { type: 'metaObject' }
@@ -22,7 +25,7 @@ const MetaObjectNode: FC<InnerNodeProps> = ({ node: n, setPopoverElements, setNo
     metaObjectId: metaObjectId!
   })
   const hasSize = node.width && node.height
-  const [contentMinHeight, setContentMinHeight] = useState(0)
+
   const flow = useFlow()
   const wholeContainerRef = useRef<HTMLDivElement>(null)
   const toggleExpanded = useMemoizedFn(() => {
@@ -38,18 +41,7 @@ const MetaObjectNode: FC<InnerNodeProps> = ({ node: n, setPopoverElements, setNo
   const getNodeState = useMemoizedFn(() => {
     return node
   })
-  useEffect(() => {
-    if (!wholeContainerRef.current?.firstChild) return
 
-    setTimeout(() => {
-      if (!n.width || !n.height) return
-      const renderWholeBounding = (wholeContainerRef.current?.firstChild as HTMLElement).getBoundingClientRect()
-      const width = n.width
-
-      const padding = (width / 100) * 35
-      setContentMinHeight(renderWholeBounding.height / flow.containerTransformScale + padding)
-    }, 100)
-  }, [metaObject, n.width, n.height])
   useEffect(() => {
     if (metaObject?.type) {
       if (['note', 'pdf', 'image', 'webpage', 'video'].includes(metaObject.type)) {
@@ -74,7 +66,22 @@ const MetaObjectNode: FC<InnerNodeProps> = ({ node: n, setPopoverElements, setNo
                 />
               </Tooltip>
             ),
-            metaObject.type === 'note'
+            () => (
+              <Tooltip position="top" content="Show Object Info">
+                <Icon
+                  size={18}
+                  className={ClassName.circleButton(undefined, 4)}
+                  name="park-info"
+                  onClick={() => {
+                    if (metaObjectId) {
+                      Rendevoz.Actions.Open.openSidebarObjectDetails(metaObjectId)
+                    }
+                    setNodeState?.(s => ({ ...s, popoverVisible: false }))
+                  }}
+                />
+              </Tooltip>
+            ),
+            ['note', 'webpage', 'video'].includes(metaObject.type)
               ? () => (
                   <Tooltip position="top" content={!getNodeState().expanded ? 'Expand Node' : 'Fold Node'}>
                     <Icon
@@ -123,6 +130,21 @@ const MetaObjectNode: FC<InnerNodeProps> = ({ node: n, setPopoverElements, setNo
                   }}
                 />
               </Tooltip>
+            ),
+            () => (
+              <Tooltip position="top" content="Show Object Info">
+                <Icon
+                  size={18}
+                  className={ClassName.circleButton(undefined, 4)}
+                  name="park-info"
+                  onClick={() => {
+                    if (metaObjectId) {
+                      Rendevoz.Actions.Open.openSidebarObjectDetails(metaObjectId)
+                    }
+                    setNodeState?.(s => ({ ...s, popoverVisible: false }))
+                  }}
+                />
+              </Tooltip>
             )
           ]
         })
@@ -155,7 +177,13 @@ const MetaObjectNode: FC<InnerNodeProps> = ({ node: n, setPopoverElements, setNo
   }, [metaObject?.name])
 
   const hasImage = metaObject?.coverImgSrc !== undefined
-
+  useEffect(() => {
+    if (hasImage) {
+      setNodeState?.(s => ({ ...s, keepRatioResize: true }))
+    } else {
+      setNodeState?.(s => ({ ...s, keepRatioResize: false }))
+    }
+  }, [hasImage])
   const renderOptions = useMemo(
     () => ({
       renderOptions: {
@@ -165,84 +193,45 @@ const MetaObjectNode: FC<InnerNodeProps> = ({ node: n, setPopoverElements, setNo
       },
       titleOptions: {
         style: {
-          fontSize: hasSize ? `max(4.3cqmax, ${FontSize['15px']})` : undefined,
-          color: hasImage ? 'white' : undefined
+          fontSize: FontSize['16px']
         }
       },
       descriptionOptions: {
         style: {
-          fontSize: hasSize ? `max(${FontSize['14px']},4cqmax)` : undefined,
-          color: hasImage ? 'white' : undefined
+          fontSize: FontSize['14px']
         }
       },
       fromOptions: {
         style: {
-          fontSize: hasSize ? `max(${FontSize['13px']},3.7cqmax)` : undefined,
-          gap: 'max(1.5cqmax, 0.3rem)'
+          fontSize: FontSize['13px'],
+          gap: '0.3rem'
         },
         className: ClassName.ellipsisFont(1)
-      },
-      tagsOptions: {
-        containerClassName: hasSize
-          ? css([
-              {
-                '> *': {
-                  fontSize: `max(${FontSize['11px']}, 3cqmax) !important`
-                },
-                gap: 'max(1.5cqmax, 0.3rem) !important'
-              },
-              hasImage
-                ? {
-                    '> *': {
-                      color: 'white',
-                      border: '0.5cqmax solid white',
-                      padding: '0.5cqmax 1cqmax',
-                      borderRadius: '2cqmax',
-                      background: 'transparent'
-                    }
-                  }
-                : undefined
-            ])
-          : undefined
       }
     }),
     [hasSize, hasImage]
   )
   const hasImageRenderer = () => (
-    <Content fullHeight fullWidth>
-      <div
-        style={{
-          width: '100%',
-          maxHeight: `calc(100% - ${contentMinHeight}px)`,
-          height: '100%',
-          overflow: 'hidden'
-        }}
-      >
-        <div style={{ width: '100%', paddingBottom: '100%' }}></div>
-      </div>
+    <Content fullWidth flex column style={{ height: 450, minHeight: '100%' }}>
       <img
         draggable={false}
         src={metaObject?.coverImgSrc}
         style={{
-          position: 'absolute',
-          inset: 0,
+          position: 'relative',
           width: '100%',
-          height: '100%',
-          objectFit: 'cover'
+          objectFit: 'cover',
+          flex: 1,
+          overflow: 'hidden'
         }}
       />
       <div
         ref={wholeContainerRef}
         style={{
-          padding: hasImage ? '30% 5% 5%' : '4%',
+          padding: '3% 3% 2%',
           minWidth: '100%',
           width: 'auto',
           maxWidth: '400px',
-          height: 'auto',
-          minHeight: hasImage ? (!hasSize ? 'fit-content' : contentMinHeight) : '100%',
-          overflow: 'hidden',
-          containerType: hasSize ? 'size' : 'normal',
-          backgroundImage: hasImage ? 'linear-gradient(rgba(0,0,0,0),rgba(0,0,0,1))' : undefined
+          height: 'auto'
         }}
       >
         {renderWhole(renderOptions)}
@@ -250,13 +239,19 @@ const MetaObjectNode: FC<InnerNodeProps> = ({ node: n, setPopoverElements, setNo
     </Content>
   )
   const CommonRenderer = () =>
-    renderInline({
-      showCircle: false,
-      ellipsisLine: 1000,
+    renderWhole({
+      renderOptions: {
+        renderDescription: true,
+        renderOption: false,
+        renderTags: true
+      },
+      titleOptions: {
+        ellipsisLine: 1000
+      },
       containerStyle: {
         padding: 8,
-        minWidth: '100%',
-        maxWidth: '100%'
+        width: '100%',
+        height: 'auto'
       }
     })
 
@@ -271,6 +266,17 @@ const MetaObjectNode: FC<InnerNodeProps> = ({ node: n, setPopoverElements, setNo
               }}
             />
           )
+        case 'webpage':
+          return (
+            <WebpageNode
+              node={{ webpageId: metaObject.objectId }}
+              onTitleChange={v => {
+                onNameChange?.(v)
+              }}
+            />
+          )
+        case 'video':
+          return <Video videoId={metaObject.objectId} />
         case 'note': {
           return (
             <NoteNode

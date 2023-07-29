@@ -9,6 +9,7 @@
     "object": "实体",
     "graph filter": "筛选图谱",
     "total objects": "全部实体",
+    "whiteboard indicator 1": "拖拽实体或文件到此处以创建节点",
     "focus": "聚焦",
     "pin on graph": "在图谱上固定",
     "unpin on graph": "取消固定",

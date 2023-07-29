@@ -29,6 +29,7 @@ import { IWhiteboardInstance } from '~/typings'
 import { waitFor } from '@/utils'
 import WhiteboardSettings from '@/core/whiteboard/WhiteboardSettings'
 import useWhiteboardHistory from '@/core/whiteboard/hooks/useWhiteboardHistory'
+import WhiteboardEmptyIndicator from '@/core/whiteboard/WhiteboardEmptyIndicator'
 
 const WhiteboardInner = memo(
   ({
@@ -194,10 +195,12 @@ const WhiteboardInner = memo(
           <TreeNodeContainer />
           {renderSelect()}
           {renderSnapLayer()}
+          <WhiteboardEmptyIndicator />
         </div>
         <div style={{ position: 'absolute', right: 0, top: 0, bottom: 0 }}>{render()}</div>
         <WhiteboardBottomBar />
         <WhiteboardSettings />
+
         {enableMiniMap && setting.whiteboard.enableMinimap && (
           <div
             style={{

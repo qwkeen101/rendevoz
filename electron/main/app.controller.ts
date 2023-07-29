@@ -126,6 +126,7 @@ export class AppController {
   @IpcInvoke('updateAndInstall')
   public async updateAndInstall() {
     try {
+      process.env.USER_CALL_UPDATE = 'true'
       const result = await autoUpdater.downloadUpdate()
       return result
     } catch (e) {

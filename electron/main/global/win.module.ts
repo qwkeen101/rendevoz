@@ -55,10 +55,12 @@ const slicedLength = 'rendefile://'.length
           console.log(info)
         })
         autoUpdater.on('update-downloaded', () => {
-          ipcRenderer.send('update downloaded')
-          setTimeout(() => {
-            autoUpdater.quitAndInstall(true, true)
-          }, 6000)
+          if(process.env.USER_CALL_UPDATE === 'true'){
+            win.webContents.send('update downloaded')
+            setTimeout(() => {
+              autoUpdater.quitAndInstall(true, true)
+            }, 6000)
+          }
         })
 
         app.setAsDefaultProtocolClient('rendevoz')

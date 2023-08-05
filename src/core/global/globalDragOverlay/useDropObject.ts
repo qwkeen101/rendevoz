@@ -1,10 +1,12 @@
 import { GlobalWebviewInstance } from '@/core/global/GlobalWebview'
 import { MetaStore, ObjectStore } from '@/stores'
-import { saveImageLocally } from '@/utils/img'
+import { fetchRemoteImageAndSaveLocally, saveImageLocally } from '@/utils/img'
 import { useEffect } from 'react'
 import { MetaObject } from '~/typings'
 import { transformTextContentToNameAndDescription } from './utils'
 import { getFilenameWithoutExtension } from '@/utils/file'
+import { Regexp } from '@/utils'
+import { Rendevoz } from '@/core/rendevoz'
 
 function isUrlImage(url: string) {
   return fetch(url, { method: 'HEAD' }).then(res => {
@@ -65,137 +67,48 @@ export const checkDropCanBeMeta = (e: DragEvent) => {
   }
   return false
 }
-export const normalizeDropToMeta = async (e: DragEvent) => {
-  const { dragFrom, metaId } = ObjectDragState
-  const normalizedMetaObject: Partial<MetaObject> = {}
-  const from: MetaObject['fromObject'] | undefined =
-    dragFrom && metaId
-      ? {
-          type: dragFrom,
-          metaId: metaId
-        }
-      : undefined
-  const html = Array.from(e.dataTransfer?.items || []).find(i => i.type === 'text/html')
-  if (html) {
-    const htmlData = e.dataTransfer?.getData('text/html')
-    const uriData = e.dataTransfer?.getData('text/uri-list')
-    const textData = e.dataTransfer?.getData('text/plain')
-    if (htmlData) {
-      const parser = new DOMParser()
-      const doc = parser.parseFromString(htmlData, 'text/html')
-      const imgEle = doc.querySelector('img')
-      const linkEle = doc.querySelector('a')
-      if (imgEle && imgEle.src) {
-        const imageBlob = await (
-          await fetch(imgEle.src, {
-            method: 'GET',
-            referrer: ''
-          })
-        ).blob()
 
-        const imageFilePath = await saveImageLocally(imageBlob, {
-          compress: false
-        })
-
-        if (uriData) {
-          // if dropped img uri not img
-          if (!(await isUrlImage(uriData))) {
-            const result = await GlobalWebviewInstance.getTitleAndFaviconOfUrl?.(uriData)
-            if (result) {
-              const { title, favicon } = result
-              const webpageObject = await ObjectStore('webpage').addOne({
-                title,
-                favicon,
-                url: uriData
-              })
-              Object.assign(normalizedMetaObject, {
-                coverImgSrc: imageFilePath,
-                fromObject: from,
-                type: 'webpage',
-                objectId: webpageObject.id,
-                name: webpageObject.title
-              } as MetaObject)
-              return normalizedMetaObject
-            }
-          } else {
-            const imageObject = await ObjectStore('image').addOne({
-              imageUrl: imageFilePath
-            })
-            const imageName = imgEle.alt || uriData || 'Unnamed Image'
-            Object.assign(normalizedMetaObject, {
-              coverImgSrc: imageFilePath,
-              fromObject: from,
-              type: 'image',
-              objectId: imageObject.id,
-              name: imageName
-            } as MetaObject)
-            return normalizedMetaObject
-          }
-        }
-      }
-      if (linkEle && linkEle.href && uriData) {
-        const link = linkEle.href
-        const webpageTitle = linkEle.textContent
-        const result = await GlobalWebviewInstance.getTitleAndFaviconOfUrl?.(link)
-        if (result) {
-          const { favicon, title } = result
-          const webpageObject = await ObjectStore('webpage').addOne({
-            title: webpageTitle || title,
-            favicon,
-            url: link
-          })
-          Object.assign(normalizedMetaObject, {
-            fromObject: from,
-            objectId: webpageObject.id,
-            type: 'webpage',
-            name: webpageObject.title
-          } as MetaObject)
-          return normalizedMetaObject
-        }
-      }
-
-      if (textData) {
-        if (!from) return
-        const webpageMeta = await MetaStore.getMetaObjectById(from.metaId)
-        if (!webpageMeta?.objectId) return
-        const webpageLabelObject = await ObjectStore('webpageLabel').addOne({
-          selectedText: textData,
-          webpageId: webpageMeta.objectId
-        })
-        if (from) {
-          from.selectedText = textData
-        }
-        const { name, description } = transformTextContentToNameAndDescription(textData)
-        Object.assign(normalizedMetaObject, {
-          type: 'webpageLabel',
-          objectId: webpageLabelObject.id,
-          fromObject: from,
-          name,
-          description
-        } as MetaObject)
-        return normalizedMetaObject
-      }
+const fetchHeadAndUpdateWebpage = async (url: string, webpageId: number) => {
+  const res = await fetch(url)
+  const text = await res.text()
+  const parser = new DOMParser()
+  const dom = parser.parseFromString(text, 'text/html')
+  const head = dom.head
+  const title = head.querySelector('title')?.textContent
+  const icon = Array.from(head.querySelectorAll('link').values())
+    .find(i => i.rel.includes('icon'))
+    ?.href.replace('http://localhost:7777', '')
+  const urlRoot = new URL(url).host
+  console.log(urlRoot)
+  const realIcon = icon ? (Regexp.isValidWebUrl(icon) ? icon : `https://${urlRoot}${icon}`) : undefined
+  const metas = Array.from(head.querySelectorAll('meta').values())
+  const descriptionMeta = metas.find(i => i.name === 'description' || i.getAttribute('property') === 'og:description')?.content
+  const imageMeta = metas.find(i => i.getAttribute('property') === 'og:image')?.content
+  const coverImgSrc = imageMeta && (await fetchRemoteImageAndSaveLocally(imageMeta))
+  const iconSrc = realIcon && (await fetchRemoteImageAndSaveLocally(realIcon))
+  ObjectStore('webpage').updateOne({ id: webpageId, favicon: iconSrc, title })
+  setTimeout(() => {
+    const webpageMeta = MetaStore.getMetaObjectByObjectId(webpageId)
+    console.log({
+      coverImgSrc,
+      imageMeta,
+      descriptionMeta,
+      icon,
+      realIcon,
+      title
+    })
+    if (webpageMeta) {
+      MetaStore.updateMetaObject(
+        {
+          id: webpageMeta.id,
+          description: webpageMeta.description || descriptionMeta,
+          coverImgSrc: webpageMeta.coverImgSrc || coverImgSrc,
+          name: title || webpageMeta.name
+        },
+        true
+      )
     }
-  }
-  if (e.dataTransfer?.items.length === 1) {
-    const item = e.dataTransfer.items[0]
-    const file = item.getAsFile()
-    if (!file) return
-    if (file.type.startsWith('image')) {
-      const imageFilePath = await saveImageLocally(file, { compress: false })
-      const imageObject = await ObjectStore('image').addOne({
-        imageUrl: imageFilePath
-      })
-      Object.assign(normalizedMetaObject, {
-        coverImgSrc: imageFilePath,
-        fromObject: from,
-        type: 'image',
-        objectId: imageObject.id,
-        name: getFilenameWithoutExtension(file.name) || 'Unnamed Image'
-      } as MetaObject)
-      return normalizedMetaObject
-    }
-  }
+  }, 1000)
 }
 const useDropObject = () => {
   const documentDropHandler = () => {
@@ -213,15 +126,23 @@ const useDropObject = () => {
             metaId: metaId
           }
         : undefined
-    const html = Array.from(e.dataTransfer?.items || []).find(i => i.type === 'text/html')
+    const allStrings = (await Promise.all(
+      Array.from(e.dataTransfer?.items || []).map(i => new Promise(res => i.getAsString(s => res(s))))
+    )) as string[]
+    const html = Array.from(e.dataTransfer?.items || []).find(i => i.type === 'text/html') || allStrings.some(i => i.startsWith('http'))
     if (html) {
       const htmlData = e.dataTransfer?.getData('text/html')
       const uriData = e.dataTransfer?.getData('text/uri-list')
-      const textData = e.dataTransfer?.getData('text/plain')
+      const textData = e.dataTransfer?.getData('text/plain').startsWith('http') ? undefined : e.dataTransfer?.getData('text/plain')
+      let plainLinkData = e.dataTransfer?.getData('text/plain').startsWith('http') ? e.dataTransfer?.getData('text/plain') : undefined
+      if (allStrings.some(i => i.startsWith('http'))) {
+        plainLinkData = allStrings.find(i => i.startsWith('http'))
+      }
       console.log({
         html: htmlData,
         uri: uriData,
-        text: textData
+        text: textData,
+        plain: plainLinkData
       })
       if (htmlData) {
         const parser = new DOMParser()
@@ -243,23 +164,19 @@ const useDropObject = () => {
           if (uriData) {
             // if dropped img uri not img
             if (!(await isUrlImage(uriData))) {
-              const result = await GlobalWebviewInstance.getTitleAndFaviconOfUrl?.(uriData)
-              if (result) {
-                const { title, favicon } = result
-                const webpageObject = await ObjectStore('webpage').addOne({
-                  title,
-                  favicon,
-                  url: uriData
-                })
-                Object.assign(normalizedMetaObject, {
-                  coverImgSrc: imageFilePath,
-                  fromObject: from,
-                  type: 'webpage',
-                  objectId: webpageObject.id,
-                  name: webpageObject.title
-                } as MetaObject)
-                return normalizedMetaObject
-              }
+              const webpageObject = await ObjectStore('webpage').addOne({
+                title: uriData,
+                url: uriData
+              })
+              fetchHeadAndUpdateWebpage(uriData, webpageObject.id)
+              Object.assign(normalizedMetaObject, {
+                coverImgSrc: imageFilePath,
+                fromObject: from,
+                type: 'webpage',
+                objectId: webpageObject.id,
+                name: webpageObject.title
+              } as MetaObject)
+              return normalizedMetaObject
             } else {
               const imageObject = await ObjectStore('image').addOne({
                 imageUrl: imageFilePath
@@ -279,22 +196,18 @@ const useDropObject = () => {
         if (linkEle && linkEle.href && uriData) {
           const link = linkEle.href
           const webpageTitle = linkEle.textContent
-          const result = await GlobalWebviewInstance.getTitleAndFaviconOfUrl?.(link)
-          if (result) {
-            const { favicon, title } = result
-            const webpageObject = await ObjectStore('webpage').addOne({
-              title: webpageTitle || title,
-              favicon,
-              url: link
-            })
-            Object.assign(normalizedMetaObject, {
-              fromObject: from,
-              objectId: webpageObject.id,
-              type: 'webpage',
-              name: webpageObject.title
-            } as MetaObject)
-            return normalizedMetaObject
-          }
+          const webpageObject = await ObjectStore('webpage').addOne({
+            title: webpageTitle || link,
+            url: link
+          })
+          fetchHeadAndUpdateWebpage(link, webpageObject.id)
+          Object.assign(normalizedMetaObject, {
+            fromObject: from,
+            type: 'webpage',
+            objectId: webpageObject.id,
+            name: webpageObject.title
+          } as MetaObject)
+          return normalizedMetaObject
         }
 
         if (textData) {
@@ -318,6 +231,22 @@ const useDropObject = () => {
           } as MetaObject)
           return normalizedMetaObject
         }
+      }
+      if (plainLinkData) {
+        const link = plainLinkData
+        const webpageTitle = plainLinkData
+        const webpageObject = await ObjectStore('webpage').addOne({
+          title: webpageTitle || link,
+          url: link
+        })
+        fetchHeadAndUpdateWebpage(link, webpageObject.id)
+        Object.assign(normalizedMetaObject, {
+          fromObject: from,
+          type: 'webpage',
+          objectId: webpageObject.id,
+          name: webpageObject.title
+        } as MetaObject)
+        return normalizedMetaObject
       }
     }
     if (e.dataTransfer?.items.length === 1) {

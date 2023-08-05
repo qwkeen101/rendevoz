@@ -1,10 +1,10 @@
-import { FC, memo } from 'react'
+import { FC, memo, useState } from 'react'
 import { RenderElementProps } from 'slate-react'
 import { MetaObjectElement } from '~/typings'
 import NoteCard from '../cards/NoteCard'
 import { useRenderObject } from '@/core'
 import { Content } from '@/components'
-import { css } from '@emotion/css'
+import { Colors } from '@/consts'
 
 const MetaObject: FC<RenderElementProps> = memo(({ children, element }) => {
   const metaEle = element as MetaObjectElement
@@ -12,32 +12,77 @@ const MetaObject: FC<RenderElementProps> = memo(({ children, element }) => {
   const { renderWhole, metaObject } = useRenderObject({
     metaObjectId: originId
   })
+  const [mouseIn, setMouseIn] = useState(false)
   const renderMain = () => <div></div>
   const renderLineMain = () => (
     <Content
-      className={css({
-        img: {
-          margin: 0
-        }
-      })}
+      onPointerMove={() => {
+        setMouseIn(true)
+      }}
+      onPointerLeave={() => {
+        setMouseIn(false)
+      }}
+      flex
+      style={{
+        flexWrap: 'wrap-reverse',
+        width: '100%',
+        borderRadius: 6,
+        alignItems: 'stretch',
+        overflow: 'hidden',
+        border: `1px solid ${Colors.Background.Border}`,
+        minHeight: 80
+      }}
     >
-      {renderWhole({
-        tagAboveImage: true,
-        gap: 0,
-        titleOptions: {
-          style: {
-            fontSize: 14
+      <div
+        style={{
+          flex: '4 1 180px',
+          overflow: 'hidden',
+          padding: '12px 14px 12px',
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'center'
+        }}
+      >
+        {renderWhole({
+          columnGap: 3,
+          optionOptions: {
+            style: {
+              top: -5,
+              right: 0
+            }
+          },
+          renderOptions: {
+            renderFrom: true,
+            renderImage: false,
+            renderOption: mouseIn ? true : false
           }
-        },
-        descriptionOptions: {
-          style: {
-            fontSize: 13
-          }
-        },
-        renderOptions: {
-          renderFrom: true
-        }
-      })}
+        })}
+      </div>
+      {metaObject?.coverImgSrc && (
+        <div
+          style={{
+            flex: '1 1 180px',
+            position: 'relative'
+          }}
+        >
+          <div
+            style={{
+              position: 'absolute',
+              inset: 0
+            }}
+          >
+            <img
+              style={{
+                objectFit: 'cover',
+                borderRadius: 1,
+                width: '100%',
+                height: '100%'
+              }}
+              src={metaObject.coverImgSrc}
+            />
+          </div>
+        </div>
+      )}
     </Content>
   )
   return (

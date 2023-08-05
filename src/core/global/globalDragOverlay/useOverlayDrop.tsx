@@ -33,6 +33,7 @@ const useOverlayDrop = () => {
   // two situations, 1. drop metaobject / object 2. drop event
   dropEventHandler.on('globalDropNeedFurtherProcess', async (data, res, rej) => {
     const { dropOn } = data
+    console.log(data)
     let normalizedMetaObject: MetaObject | undefined = undefined,
       shouldOpenEditMetaModal = false,
       alreadyHasMeta = false,
@@ -71,6 +72,7 @@ const useOverlayDrop = () => {
     if (data.e) {
       const n = await normalizeDropToMeta(data.e)
       clearDragState()
+      console.log(n)
       normalizedMetaObject = n
         ? ({
             ...n,
@@ -87,15 +89,18 @@ const useOverlayDrop = () => {
     if (dropOn && normalizedMetaObject) {
       postLink = [...((await customGetDropOnLinks(dropOn, normalizedMetaObject)) || [])]
     }
-    const allPendingLinks = [...preLinks, ...postLink].filter(i => i !== undefined && i.sourceId && i.targetId) as PartialWithId<MetaLink>[]
-
+    let allPendingLinks = [...preLinks, ...postLink].filter(i => i !== undefined && i.sourceId && i.targetId) as PartialWithId<MetaLink>[]
+    const settings = getSetting()
+    const enableLink = settings.objectAndLink.enableAll
+    if (!enableLink) {
+      allPendingLinks = []
+    }
     if (shouldOpenEditMetaModal === false || alreadyHasMeta) {
       res?.(normalizedMetaObject)
       allPendingLinks.forEach(i => addMetaLink(i))
       return
     }
 
-    const settings = getSetting()
     if (settings.objectAndLink.enableDropAutoGenerateObject) {
       allPendingLinks.forEach(i => addMetaLink(i, true))
       addMetaObject(normalizedMetaObject).then(m => {

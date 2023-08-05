@@ -1,4 +1,4 @@
-import { memo, useEffect, useRef } from 'react'
+import { memo, useEffect, useRef, useState } from 'react'
 import { useVideoInstance } from './hooks/useVideoInstance'
 import { assignProperties } from '@/utils'
 import useVideoState from './hooks/useVideoState'
@@ -7,7 +7,7 @@ import useThrottleFn from '@/hooks/utils/useThrottleFn'
 import { ObjectStore } from '@/stores'
 import { useSelectGlobalAtomValue } from '@/hooks'
 import { SettingAtom } from '../setting'
-
+import { WebVTTParser } from 'webvtt-parser'
 interface VideoCoreProps {
   url?: string
 }
@@ -16,7 +16,7 @@ const VideoCore = memo(({ url }: VideoCoreProps) => {
   const videoRef = useRef<HTMLVideoElement>(null)
   const instance = useVideoInstance()
   const [videoState, setVideoState] = useVideoState()
-  const { loop, muted, paused, volume, currentTime, speed } = videoState
+  const { loop, muted, paused, volume, currentTime, speed, subtitles, subtitleUrl } = videoState
   const offscreenVideoRef = useRef<HTMLVideoElement>()
   const loopSetting = useSelectGlobalAtomValue(SettingAtom, s => s.video.loop)
   const autoPlaySetting = useSelectGlobalAtomValue(SettingAtom, s => s.video.autoPlay)
@@ -45,6 +45,18 @@ const VideoCore = memo(({ url }: VideoCoreProps) => {
       })
     }
   }, [])
+
+  useEffect(() => {
+    if (videoState.subtitleUrl) {
+      fetch(videoState.subtitleUrl)
+        .then(res => res.text())
+        .then(r => {
+          const parser = new WebVTTParser()
+          const tree = parser.parse(r, 'metadata')
+          setVideoState(s => ({ ...s, subtitles: tree.cues }))
+        })
+    }
+  }, [videoState.subtitleUrl])
   useEffect(() => {
     const video = videoRef.current
     if (video) {
@@ -145,7 +157,9 @@ const VideoCore = memo(({ url }: VideoCoreProps) => {
           const currTime = e.currentTarget.currentTime
           setVideoState(s => ({ ...s, currentTime: currTime }))
         }}
-      />
+      >
+        {subtitleUrl && videoState.showSubtitle !== false && <track src={subtitleUrl} kind="captions" default />}
+      </video>
     </Content>
   )
 })

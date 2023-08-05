@@ -23,6 +23,7 @@ export const useCreateObject = (options?: {
     localFile?: boolean
     video?: boolean
   }
+  quickCreateNote?: boolean
 }) => {
   const [modalState, setModalState] = useState<{
     createDoc?: boolean
@@ -81,7 +82,7 @@ export const useCreateObject = (options?: {
                   text={t('general.note')}
                   onClick={() => {
                     ObjectStore('note')
-                      .addOneWithMeta({ title: 'Untitled' }, { showMetaModal: false })
+                      .addOneWithMeta({ title: 'Untitled' }, { showMetaModal: options?.quickCreateNote !== false ? false : true })
                       .then(({ one }) => {
                         Rendevoz.Actions.Open.Editor.openEditor(one.id)
                       })

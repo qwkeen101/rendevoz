@@ -10,6 +10,7 @@ import { isPointerOnContainer, transformXY } from './utils'
 import { objectIdToMetaObjectIdMapAtom } from '@/stores/meta.store'
 import { useEventHandler } from '@/events'
 import { Rendevoz } from '../rendevoz'
+import { getSetting } from '@/core'
 
 const getAsStringPromise = (item: DataTransferItem): Promise<string> => {
   return new Promise(res => {
@@ -90,10 +91,21 @@ const useWhiteboardDrop = () => {
       if (fileItem) {
         const file = fileItem.getAsFile()
         if (!file) return
+        const setting = getSetting()
+        if (setting.whiteboard.dropFileAutoObject) {
+          const meta = await Rendevoz.Utils.Meta.addMetaObjectFromFile(file)
+          if (meta) {
+            console.log(meta)
+            setTimeout(() => {
+              insertMetaObjectAtPointer(e, meta.id, true)
+            }, 100)
+            return
+          }
+        }
+
         const { name, path } = file
 
         const res = await saveFileLocally(path, name)
-        console.log(name, path, file.type)
         if (file.type.startsWith('image')) {
           whiteboardNode = {
             type: 'image',
@@ -142,11 +154,11 @@ const useWhiteboardDrop = () => {
     }
   })
   const insertMetaObjectAtPointer = (e: PointerEvent, metaId: number, expanded = false) => {
+    const nodeId = Id.getId()
     setNodes(nodes => {
       const transformedXY = transformXY(flow.containerEle?.getBoundingClientRect(), e.clientX, e.clientY, flow.containerTransformScale)
       if (transformedXY) {
         return produce(nodes, draft => {
-          const nodeId = Id.getId()
           draft.set(nodeId, {
             id: nodeId,
             x: transformedXY.x,

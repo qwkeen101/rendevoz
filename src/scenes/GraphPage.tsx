@@ -10,6 +10,7 @@ import { GraphNode } from '@/core/graph/types/node'
 import { atom } from 'jotai'
 import { useGlobalAtom } from '@/hooks'
 import { useTranslation } from 'react-i18next'
+import { renderPageInNormalMode } from '@/core/pdf/core/utils/renderer'
 
 export const GlobalGraphAtom = atom<
   | {
@@ -21,6 +22,7 @@ export const GlobalGraphAtom = atom<
 const GraphPage = () => {
   const [globalGraph, setGlobalGraph] = useGlobalAtom(GlobalGraphAtom)
   const { t } = useTranslation()
+  renderPageInNormalMode()
   useEffect(() => {
     if (!globalGraph) {
       const allNodes = Array.from(globalStore.get(metaObjectsAtom).values()).map(i => ({

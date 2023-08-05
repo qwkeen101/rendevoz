@@ -7,6 +7,7 @@ import { FC, memo, useEffect } from 'react'
 import { IWhiteboardNode } from '~/typings/data'
 import { useFlow } from '../hooks'
 import { InnerNodeProps } from './WrapperNode'
+import Pdf from '@/core/pdf'
 
 const PdfNode: FC<InnerNodeProps> = memo(
   ({ node }) => {
@@ -40,7 +41,7 @@ const PdfNode: FC<InnerNodeProps> = memo(
           overflow: 'hidden'
         }}
       >
-        <PdfViewer documentId={documentId} transformScale={flow.containerTransformScale} />
+        <Pdf pdfId={documentId} transformScale={flow.containerTransformScale} />
       </div>
     )
   },

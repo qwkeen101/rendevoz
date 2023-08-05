@@ -162,6 +162,22 @@ const createObjectStore = <T extends keyof ObjectFamily, V extends ObjectFamily[
       options?.beforeUpdateProcess?.(n, opts)
       return initalizedLocalStore.updateOne(
         (obj, silent) => {
+          setTimeout(() => {
+            const meta = Array.from(globalStore.get(metaObjectsAtom).values()).find(i => i.objectId === obj.id)
+            console.log(meta, obj)
+            if (meta && 'name' in obj && meta.name !== obj.name && 'name' in n && obj.name !== n.name) {
+              MetaStore.updateMetaObject({ id: meta.id, name: obj.name }, true)
+            }
+            if (
+              meta &&
+              'description' in obj &&
+              meta.description !== obj.description &&
+              'description' in n &&
+              obj.description !== n.description
+            ) {
+              MetaStore.updateMetaObject({ id: meta.id, description: obj.description }, true)
+            }
+          })
           options?.afterUpdateProcess?.onSuccess?.(obj, silent)
         },
         silent => {

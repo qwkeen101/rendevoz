@@ -47,6 +47,7 @@ import GraphPage from '@/scenes/GraphPage'
 import InnerHookz from '@/core/rendevoz/hooks'
 import * as InnerComponentz from '@/core/rendevoz/components'
 import createCache from '@emotion/cache'
+import { startDrive } from '@/driver'
 export function getOS() {
   const userAgent = window.navigator.userAgent.toLowerCase(),
     macosPlatforms = /(macintosh|macintel|macppc|mac68k|macos)/i,
@@ -139,6 +140,9 @@ const App = () => {
     RENDEVOZ_DEFAULT_TABS.forEach(i => Rendevoz.Actions.Layout.registerTabData(i))
     GlobalPluginManager.registerPlugin(BuiltinEditorPlugin)
     executed.current = true
+    setTimeout(() => {
+      startDrive()
+    }, 1000)
   }
 
   useEffect(() => {

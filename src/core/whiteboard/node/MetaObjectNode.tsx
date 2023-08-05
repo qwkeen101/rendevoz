@@ -21,11 +21,13 @@ const MetaObjectNode: FC<InnerNodeProps> = ({ node: n, setPopoverElements, setNo
   const { expanded } = node
   const { metaObjectId } = node
   const updateNodes = useSetWhiteboardNodes()
+
   const { renderWhole, metaObject, renderInline } = useRenderObject({
     metaObjectId: metaObjectId!
   })
+  console.log(metaObject)
   const hasSize = node.width && node.height
-
+  const imageRef = useRef<HTMLImageElement>(null)
   const flow = useFlow()
   const wholeContainerRef = useRef<HTMLDivElement>(null)
   const toggleExpanded = useMemoizedFn(() => {
@@ -189,11 +191,12 @@ const MetaObjectNode: FC<InnerNodeProps> = ({ node: n, setPopoverElements, setNo
       renderOptions: {
         renderImage: false,
         renderFrom: true,
-        renderDescription: !hasImage
+        renderDescription: true
       },
       titleOptions: {
         style: {
-          fontSize: FontSize['16px']
+          fontSize: FontSize['16px'],
+          whiteSpace: 'pre-wrap'
         }
       },
       descriptionOptions: {
@@ -211,10 +214,32 @@ const MetaObjectNode: FC<InnerNodeProps> = ({ node: n, setPopoverElements, setNo
     }),
     [hasSize, hasImage]
   )
+  useEffect(() => {
+    if (hasImage) {
+      const img = imageRef.current
+      if (img && node.height) {
+        const ratio = img.naturalHeight / img.naturalWidth
+        const realHeight = ratio * img.clientWidth
+        const currentHeight = img.clientHeight
+        const heightOffset = realHeight - currentHeight
+        updateNodes(nodes =>
+          produce(nodes, draft => {
+            const origin = nodes.get(node.id)
+            if (!origin?.height) return
+            draft.set(node.id, {
+              ...origin,
+              height: origin.height + heightOffset
+            })
+          })
+        )
+      }
+    }
+  }, [hasImage])
   const hasImageRenderer = () => (
     <Content fullWidth flex column style={{ height: 450, minHeight: '100%' }}>
       <img
         draggable={false}
+        ref={imageRef}
         src={metaObject?.coverImgSrc}
         style={{
           position: 'relative',
@@ -246,7 +271,10 @@ const MetaObjectNode: FC<InnerNodeProps> = ({ node: n, setPopoverElements, setNo
         renderTags: true
       },
       titleOptions: {
-        ellipsisLine: 1000
+        ellipsisLine: 1000,
+        style: {
+          whiteSpace: 'pre-wrap'
+        }
       },
       containerStyle: {
         padding: 8,
@@ -285,6 +313,9 @@ const MetaObjectNode: FC<InnerNodeProps> = ({ node: n, setPopoverElements, setNo
               }}
             />
           )
+        }
+        default: {
+          return hasImage ? hasImageRenderer() : <CommonRenderer />
         }
       }
     }

@@ -202,6 +202,7 @@ const Navigation = ({ hovered }: { hovered: boolean }) => {
             i =>
               i && (
                 <Reorder.Item
+                  id={`sidebar-${i}`}
                   onDrag={() => {
                     isDraggingRef.current = true
                   }}

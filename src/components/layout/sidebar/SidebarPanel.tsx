@@ -4,15 +4,16 @@ import { ObjectPanel } from '@/core'
 import { Hooks } from 'rendevoz'
 import { Resizable } from 're-resizable'
 import { Content, TabPane, Tabs } from '@/components'
-import { Provider } from 'jotai'
+import { createStore, Provider } from 'jotai'
 import SidebarFolder from '@/components/layout/sidebar/SidebarFolder'
 import { Colors } from '@/consts'
 import { Rendevoz } from '@/core/rendevoz'
 import { SearchPanel } from '@/core/global/GlobalSearchPanel'
+import { useMemo } from 'react'
 
 const SidebarPanel = () => {
   const [panelState, setPanelState] = useGlobalAtom(SidebarPanelStateAtom)
-  const store = Hooks.globalStore
+  const store = useMemo(() => createStore(), [])
   console.log(panelState)
   return (
     <Resizable

@@ -18,7 +18,7 @@ import { savePdfAsSearch } from '@/stores/document.store'
 import { waitFor } from '@/utils/functions'
 import PdfFloatBar from './components/floatbar'
 
-interface PdfViewerProps {
+export interface PdfViewerProps {
   documentId: number
   transformScale?: number
   onViewerInitialized?: (viewer: IPdfViewer) => void

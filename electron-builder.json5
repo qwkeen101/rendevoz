@@ -1,5 +1,5 @@
 {
-  appId: "Rendevoz",
+  appId: "rendevoz",
   productName: "Rendevoz",
   copyright: "Copyright © 2022 RealRong",
   asar: true,
@@ -41,6 +41,10 @@
   mac: {
     target: ["default"],
     artifactName: "Rendevoz-MacOS-Setup.${ext}",
+    hardenedRuntime: true,
+    entitlements: "./entitlements.mac.plist",
+    entitlementsInherit: "./entitlements.mac.plist",
+    gatekeeperAssess: false
   },
   linux: {
     icon: "electron/resources/iconset",

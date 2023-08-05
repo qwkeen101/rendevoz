@@ -1,6 +1,6 @@
 import { Button, Content, Icon, IconWithPopover, Switch, WithBorder } from '@/components'
 import useVideoState from './hooks/useVideoState'
-import { MetaStore } from '@/stores'
+import { MetaStore, ObjectStore } from '@/stores'
 import ClassName from '@/styles/classNames'
 import { useState } from 'react'
 import { AttachmentWrapper } from '../database'
@@ -12,6 +12,11 @@ import { css } from '@emotion/css'
 import DateFormat from '@/utils/dateFormat'
 import { useSetting } from '../setting'
 import produce from 'immer'
+import { toast } from 'react-hot-toast'
+import { saveBlobLocally, saveFileLocally } from '@/utils'
+import toWebVTT from 'srt-webvtt'
+import { WebVTTParser } from 'webvtt-parser'
+import Id from '@/utils/id'
 
 const VideoStatusBar = () => {
   const [videoState, setVideoState] = useVideoState()
@@ -37,6 +42,16 @@ const VideoStatusBar = () => {
             </Content>
           ) : null}
         </Content>
+        {videoState.subtitleUrl && sidebarState.showSubtitles === false && (
+          <Button.IconButton
+            icon="park-align-text-bottom-one"
+            style={{ flexShrink: 0 }}
+            onClick={() => {
+              setSidebarState(s => ({ ...s, showSubtitles: true }))
+            }}
+            text={t('general.show subtitles')}
+          ></Button.IconButton>
+        )}
         {sidebarState.showChapters === false && (
           <Button.IconButton
             icon="park-link"
@@ -70,6 +85,7 @@ const VideoStatusBar = () => {
           padding={10}
           closeOnContentClick
           disableNudge={true}
+          renderOnParent={false}
           content={
             <WithBorder padding={6} style={{ minWidth: 150, fontSize: FontSize['14px'] }}>
               <Button.IconButton
@@ -81,6 +97,46 @@ const VideoStatusBar = () => {
                 icon="park-plus"
                 text={t('general.add attachment')}
                 onClick={() => setBarState(s => ({ ...s, addingAttachment: true }))}
+              ></Button.IconButton>
+              <Button.IconButton
+                icon="park-align-text-bottom-one"
+                text={t('general.import subtitles')}
+                onClick={() => {
+                  Rendevoz.Actions.Utils.uploadFile().then(files => {
+                    const file = files[0]
+                    if (file) {
+                      if (file.name.endsWith('srt')) {
+                        toWebVTT(file)
+                          .then(res => {
+                            const url = res
+                            setVideoState(s => ({ ...s, subtitleUrl: url, showSubtitle: true }))
+                            fetch(url)
+                              .then(s => s.blob())
+                              .then(r => {
+                                saveBlobLocally(r, `subtitles_${Id.getId()}`).then(s => {
+                                  const id = videoState.videoId
+                                  if (id) {
+                                    ObjectStore('video').updateOne({ id, subtitleUrl: s })
+                                  }
+                                })
+                              })
+                          })
+                          .catch(e => {
+                            toast.error('Unsupported Subtitle File!')
+                          })
+                      }
+                      if (file.name.endsWith('vtt')) {
+                        saveFileLocally(file.path, file.name).then(res => {
+                          const id = videoState.videoId
+                          if (id) {
+                            ObjectStore('video').updateOne({ id, subtitleUrl: res.data })
+                          }
+                        })
+                      }
+                    }
+                    toast.error('Failed to import subtitle! Only supports .srt or .vtt file!')
+                  })
+                }}
               ></Button.IconButton>
               <Content
                 onClick={e => {

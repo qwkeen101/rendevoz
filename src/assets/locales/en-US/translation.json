@@ -9,6 +9,9 @@
     "graph filter": "graph filter",
     "total objects": "total objects",
     "focus": "focus",
+    "import subtitles": "import subtitles",
+    "subtitles": "subtitles",
+    "show subtitles": "show subtitles",
     "pin on graph": "pin on graph",
     "unpin on graph": "unpin on graph",
     "whiteboard indicator 1": "Drag Object or File Here Can Create New Node",
@@ -32,7 +35,7 @@
     "margin": "margin",
     "export": "export",
     "drop here to add object": "drop here to add object",
-    "link is generated for this object": "link is generated for this object",
+    "link is generated for this object": "link is generated for this object and copied to your clipboard",
     "pdf": "PDF",
     "subcollection": "subcollection",
     "object details": "object details",
@@ -315,8 +318,15 @@
     "hotkeys": "Hotkeys",
     "editor": "Editor",
     "about": "About",
+    "label settings": "Label settings",
+    "drop file auto object": "Turn dropped file into object automatically",
+    "show original text": "Show original text",
     "files": "Files",
+    "video settings": "video settings",
+    "video shortcuts": "video shortcuts",
+    "make video label": "make video label",
     "language": "Language",
+    "jump back when making label": "jump back time(s) when making label",
     "auto copy file when import": "auto copy imported file",
     "choose display language": "Choose display language",
     "copy file desc": "If enabled, the imported file will be copied into library to avoid invalid file problems",
@@ -516,5 +526,28 @@
     "shortest path length": "shortest path length",
     "longest path length": "longest path length",
     "total reverse paths": "total reverse paths"
+  },
+  "intro": {
+    "next": "next",
+    "prev": "prev",
+    "done": "done",
+    "before getting started": " \uD83E\uDD73 Before getting started",
+    "create something": "Create something",
+    "create desc": "You can create objects by uploading files or make labels in them.",
+    "object library": "Object library",
+    "library desc": "You can find all objects here. Objects can be dragged into notes, whiteboards or attachments of other objects.",
+    "graph view": "Graph view",
+    "graph desc": "You can see relationships among objects, use filters to see more clearly!",
+    "collections": "Collections",
+    "collections desc": "You can create collection and drag objects into them.",
+    "search": "Global search",
+    "search desc": "You can search through your knowledge base here, PDFs, Notes and Webpages are all supported.",
+    "web search": "Search online",
+    "web search desc": "You can search online whenever you want, and turn webpage into object with one click!"
+
+
+
+
+
   }
 }

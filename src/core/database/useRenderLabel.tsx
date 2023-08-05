@@ -1,4 +1,4 @@
-import { Content, IconWithPopover } from '@/components'
+import { AnimatePopover, Content, IconWithPopover, Tooltip, WithBorder } from '@/components'
 import { MetaStore, ObjectStore } from '@/stores'
 import { CSSProperties, useState } from 'react'
 import NameEditor from '../video/VideoNameEditor'
@@ -7,10 +7,15 @@ import { css } from '@emotion/css'
 import ClassName from '@/styles/classNames'
 import FontSize from '@/consts/font'
 import LabelActionMenu, { LabelActionEvent } from './LabelActionMenu'
-import { AttachmentWrapper } from '.'
+import { AttachmentWrapper, useRenderObject } from '.'
 import BorderInput from '@/components/base/BorderInput'
 import { useTranslation } from 'react-i18next'
 import { IDraggableElement } from '~/typings/globalInstances/dragDrop'
+import { Consts } from 'rendevoz'
+import { Colors } from '@/consts'
+import { useGlobalAtomValue, useSelectGlobalAtomValue } from '@/hooks'
+import { relatedMetaObjectsMapAtom } from '@/stores/meta.store'
+import { SettingAtom } from '@/core'
 
 const useRenderLabel = (opts: {
   objectId: number
@@ -28,13 +33,18 @@ const useRenderLabel = (opts: {
     addingDescription: boolean
     focused: boolean
     editingName: boolean
+    showMoreText: boolean
   }>({
     focused: false,
     editingName: false,
     addingDescription: false,
-    addingAttachment: false
+    addingAttachment: false,
+    showMoreText: false
   })
 
+  const relatedMap = useGlobalAtomValue(relatedMetaObjectsMapAtom)
+  const metaRelated = labelMeta && relatedMap.get(labelMeta.id)
+  const shouldShouldOriginal = useSelectGlobalAtomValue(SettingAtom, s => s.label.showOriginalText)
   const renderName = ({ onNameClick }: { onNameClick?: (name?: string) => void }) => {
     return (
       <Content flex column auto>
@@ -49,15 +59,44 @@ const useRenderLabel = (opts: {
         ) : (
           <DraggableElement draggable={draggingDetails && draggable} onDragStart={opts.onDragStart} draggingDetails={draggingDetails}>
             <div
-              onClick={() => onNameClick?.(label?.name)}
-              className={css([ClassName.ellipsisFont(2), ClassName.title(FontSize['13px'])])}
+              className={css([shouldShouldOriginal && ClassName.ellipsisFont(2), ClassName.title(FontSize['13px'])])}
               style={{
                 cursor: 'pointer',
                 width: 'fit-content',
-                textTransform: 'none'
+                color: labelMeta ? labelMeta.color || Colors.Font.Link : undefined
               }}
             >
-              {label?.name || 'Unnamed Label'}
+              {metaRelated && (
+                <AnimatePopover
+                  content={
+                    <WithBorder style={{ fontSize: '0.85rem', maxWidth: 400 }} padding={6}>
+                      <div className={ClassName.description()}>{t('general.related objects')}</div>
+                      {Array.from(metaRelated.values()).map(i => (
+                        <LabelRelatedItem metaId={i} key={i} />
+                      ))}
+                    </WithBorder>
+                  }
+                >
+                  <Tooltip content="Click to show related objects">
+                    <span
+                      onClick={e => {
+                        e.stopPropagation()
+                      }}
+                      style={{ padding: '2px 4px', borderRadius: 4, marginRight: 4, background: Colors.Background.Border }}
+                    >
+                      {metaRelated.size}
+                    </span>
+                  </Tooltip>
+                </AnimatePopover>
+              )}
+              <span
+                style={{
+                  textTransform: 'none'
+                }}
+                onClick={() => onNameClick?.(label?.name)}
+              >
+                {label?.name || 'Unnamed Label'}
+              </span>
             </div>
           </DraggableElement>
         )}
@@ -162,15 +201,62 @@ const useRenderLabel = (opts: {
       </>
     )
   }
+
+  const renderOriginalText = (text: string) => {
+    if (!shouldShouldOriginal) {
+      return null
+    }
+    return (
+      <div
+        style={{
+          fontSize: FontSize['12px'],
+          padding: '4px 12px 4px',
+          textTransform: 'none',
+          borderLeft: `3px solid ${Colors.Font.Secondary}`,
+          background: Colors.Background.ButtonHover
+        }}
+      >
+        <div style={{ textTransform: 'none' }} className={labelState.showMoreText ? undefined : ClassName.ellipsisFont(3)}>
+          {text}
+        </div>
+        {text.length > 120 && (
+          <div
+            style={{
+              marginLeft: 'auto',
+              textAlign: 'end',
+              fontSize: FontSize['12px'],
+              cursor: 'pointer',
+              width: 'fit-content'
+            }}
+            onClick={() => setLabelState(s => ({ ...s, showMoreText: !s.showMoreText }))}
+          >
+            {labelState.showMoreText ? t('editor.show less') : t('editor.show more')}
+          </div>
+        )}
+      </div>
+    )
+  }
   return {
     renderName,
     renderPopover,
     renderAttachment,
     renderDescription,
+    renderOriginalText,
     labelMeta,
     label,
     setDraggingDetails
   }
 }
 
+const LabelRelatedItem = ({ metaId }: { metaId: number }) => {
+  const { renderInline } = useRenderObject({ metaObjectId: metaId })
+  return renderInline({
+    showCircle: false,
+    showHoverObjectDetails: true,
+    ellipsisLine: 2,
+    renderObjectDetailsOnParent: true,
+    renderAttOnParent: true,
+    containerStyle: { width: 'fit-content' }
+  })
+}
 export default useRenderLabel

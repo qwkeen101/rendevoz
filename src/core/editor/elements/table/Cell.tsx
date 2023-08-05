@@ -1,232 +1,242 @@
-import useScopedEventEmitter from "@/events/useEventEmitter";
-import { useMemoizedFn, useMergedRef, useToggle } from "@/hooks";
-import { css } from "@emotion/css";
-import produce from "immer";
-import { useEffect, useRef } from "react";
-import { Path, Transforms } from "slate";
-import { ReactEditor, RenderElementProps, useSlate } from "../../slate-react";
-import {
-  NODE_TO_INDEX,
-  NODE_TO_PARENT,
-} from "../../slate-react/utils/weak-maps";
-import {
-  CustomElement,
-  TableCellElement,
-  TableElement,
-  TableRowElement,
-} from "~/typings";
-import { ID_TO_PATH_MAP } from "../../weakMaps";
-import { useEventHandler } from "@/events/eventHandler";
-import { useGlobalIsDragging } from "@/core";
-import ClassName from "@/styles/classNames";
-import Colors from "@/consts/colors";
+import useScopedEventEmitter from '@/events/useEventEmitter'
+import { useMemoizedFn, useMergedRef, useToggle } from '@/hooks'
+import { css } from '@emotion/css'
+import produce from 'immer'
+import { useEffect, useRef } from 'react'
+import { Path, Transforms } from 'slate'
+import { ReactEditor, RenderElementProps, useSlate } from '../../slate-react'
+import { NODE_TO_INDEX, NODE_TO_PARENT } from '../../slate-react/utils/weak-maps'
+import { CustomElement, TableCellElement, TableElement, TableRowElement } from '~/typings'
+import { ID_TO_PATH_MAP } from '../../weakMaps'
+import { useEventHandler } from '@/events/eventHandler'
+import { useGlobalIsDragging } from '@/core'
+import ClassName from '@/styles/classNames'
+import Colors from '@/consts/colors'
 
 const TableCellWrapperClassName = css({
   minHeight: 32,
-  border: "1px solid var(--font-primary)",
-  position: "relative",
-});
+  border: '1px solid var(--border-background)',
+  position: 'relative'
+})
 const CellResizerWrapperClassName = css({
-  position: "absolute",
+  position: 'absolute',
   right: 0,
   width: 0,
   top: 0,
-  height: "100%",
-  zIndex: 1,
-});
+  height: '100%',
+  zIndex: 1
+})
 const CellResizerClassName = css({
-  position: "absolute",
+  position: 'absolute',
   width: 3,
   marginLeft: -1,
   marginTop: -1,
-  height: "calc(100% + 2px)",
-  cursor: "col-resize",
-  background: "rgba(35,131,226)",
-  transition: "opacity 0.2s ease",
-});
+  height: 'calc(100% + 2px)',
+  cursor: 'col-resize',
+  background: 'rgba(35,131,226)',
+  transition: 'opacity 0.2s ease'
+})
 const TableCell = ({
   element,
   children,
-  attributes,
-}: Omit<RenderElementProps, "element"> & {
-  element: TableCellElement & CustomElement;
+  attributes
+}: Omit<RenderElementProps, 'element'> & {
+  element: TableCellElement & CustomElement
 }) => {
-  const scopedEmitter = useScopedEventEmitter();
-  const row = NODE_TO_PARENT.get(element) as TableRowElement | undefined;
-  const table = (row ? NODE_TO_PARENT.get(row) : undefined) as
-    | (CustomElement & TableElement)
-    | undefined;
-  const [globalIsDragging] = useGlobalIsDragging();
-  const [resizerVisible, toggleResizerVisible] = useToggle(false);
-  const [resizing, toggleResizing] = useToggle(false);
-  const [selected, toggleSelected] = useToggle(false);
-  const columnInitialWidth = useRef<number>();
-  const initialClientX = useRef<number>();
-  const editor = useSlate();
-  const handler = useEventHandler("editor");
-  const tdRef = useRef<HTMLTableCellElement>(null);
-  const mergedRef = useMergedRef(attributes.ref, tdRef);
-  handler.on("tableCellOp", ({ colName, type, tableId }) => {
-    if (table?.id !== tableId) return;
-    if (type === "selectCol") {
+  const scopedEmitter = useScopedEventEmitter()
+  const row = NODE_TO_PARENT.get(element) as TableRowElement | undefined
+  const table = (row ? NODE_TO_PARENT.get(row) : undefined) as (CustomElement & TableElement) | undefined
+  const [globalIsDragging] = useGlobalIsDragging()
+  const [resizerVisible, toggleResizerVisible] = useToggle(false)
+  const [resizing, toggleResizing] = useToggle(false)
+  const [selected, toggleSelected] = useToggle(false)
+  const columnInitialWidth = useRef<number>()
+  const initialClientX = useRef<number>()
+  const editor = useSlate()
+  const handler = useEventHandler('editor')
+  const tdRef = useRef<HTMLTableCellElement>(null)
+  const mergedRef = useMergedRef(attributes.ref, tdRef)
+  handler.on('tableCellOp', ({ colName, type, tableId }) => {
+    if (table?.id !== tableId) return
+    if (type === 'selectCol') {
       if (colName === element.colName) {
-        setTimeout(() => toggleSelected(true));
+        setTimeout(() => toggleSelected(true))
       }
     }
-    if (type === "pointerEnterResizer") {
+    if (type === 'pointerEnterResizer') {
       if (colName === element.colName) {
-        toggleResizerVisible(true);
+        toggleResizerVisible(true)
       }
     }
-    if (type === "pointerLeaveResizer") {
+    if (type === 'pointerLeaveResizer') {
       if (colName === element.colName) {
-        toggleResizerVisible(false);
+        toggleResizerVisible(false)
       }
     }
-  });
+  })
 
   const getRowIndex = () => {
-    const path = ReactEditor.findPath(editor, element);
-    const parent = Path.parent(path);
-    const rowIndex = parent.pop();
-    return rowIndex;
-  };
+    const path = ReactEditor.findPath(editor, element)
+    const parent = Path.parent(path)
+    const rowIndex = parent.pop()
+    return rowIndex
+  }
 
-  const rowIndex = getRowIndex();
+  const rowIndex = getRowIndex()
 
-  const isHeaderColumnCell =
-    element.colName === table?.columns?.[0].accessor && table.headerColumn;
-  const isHeaderRowCell =
-    row && NODE_TO_INDEX.get(row) === 0 && table?.headerRow;
-  const isHeader = isHeaderColumnCell || isHeaderRowCell;
+  const isHeaderColumnCell = element.colName === table?.columns?.[0].accessor && table.headerColumn
+  const isHeaderRowCell = row && NODE_TO_INDEX.get(row) === 0 && table?.headerRow
+  const isHeader = isHeaderColumnCell || isHeaderRowCell
   useEffect(() => {
-    scopedEmitter.addListener("editor", handler);
+    scopedEmitter.addListener('editor', handler)
     return () => {
-      scopedEmitter.removeListener("editor", handler);
-    };
-  }, []);
+      scopedEmitter.removeListener('editor', handler)
+    }
+  }, [])
   useEffect(() => {
     if (globalIsDragging) {
       const pointerMoveHandler = (e: PointerEvent | DragEvent) => {
-        editor.dragManager?.dragInTableCell(e);
+        editor.dragManager?.dragInTableCell(e)
         if (e instanceof DragEvent) {
-          e.preventDefault();
+          e.preventDefault()
         }
-      };
-      tdRef.current?.addEventListener("dragover", pointerMoveHandler);
-      tdRef.current?.addEventListener("pointermove", pointerMoveHandler);
+      }
+      tdRef.current?.addEventListener('dragover', pointerMoveHandler)
+      tdRef.current?.addEventListener('pointermove', pointerMoveHandler)
       return () => {
-        tdRef.current?.removeEventListener("dragover", pointerMoveHandler);
-        tdRef.current?.removeEventListener("pointermove", pointerMoveHandler);
-      };
+        tdRef.current?.removeEventListener('dragover', pointerMoveHandler)
+        tdRef.current?.removeEventListener('pointermove', pointerMoveHandler)
+      }
     }
-  }, [globalIsDragging]);
+  }, [globalIsDragging])
   useEffect(() => {
     if (selected) {
       const clickHandler = () => {
-        toggleSelected(false);
-      };
-      document.addEventListener("click", clickHandler);
+        toggleSelected(false)
+      }
+      document.addEventListener('click', clickHandler)
       return () => {
-        document.removeEventListener("click", clickHandler);
-      };
+        document.removeEventListener('click', clickHandler)
+      }
     }
-  }, [selected]);
+  }, [selected])
   const resizerDragHandler = useMemoizedFn((e: PointerEvent) => {
-    const table = (row ? NODE_TO_PARENT.get(row) : undefined) as
-      | (CustomElement & TableElement)
-      | undefined;
-    if (!table || !initialClientX.current) return;
-    const tablePath = ID_TO_PATH_MAP.get(editor)?.get(table.id);
-    if (e.type === "pointermove") {
-      const newColumns = produce(table.columns, (draft) => {
-        const targetColumn = draft.find((i) => i.accessor === element.colName);
-        if (targetColumn) {
+    const table = (row ? NODE_TO_PARENT.get(row) : undefined) as (CustomElement & TableElement) | undefined
+    if (!table || !initialClientX.current) return
+    const tablePath = ID_TO_PATH_MAP.get(editor)?.get(table.id)
+    if (e.type === 'pointermove') {
+      const targetColumnIndex = table.columns.findIndex(i => i.accessor === element.colName)
+      if (targetColumnIndex >= 0) {
+        const colGroup = tdRef.current?.closest('table')?.firstElementChild
+        if (colGroup && colGroup.nodeName === 'COLGROUP') {
+          const col = colGroup.children[targetColumnIndex]
+          const colWidth = parseInt(col.getAttribute('width') || '150')
           if (!columnInitialWidth.current) {
-            columnInitialWidth.current = targetColumn.width || 150;
+            columnInitialWidth.current = colWidth
           }
-          const offset = initialClientX.current! - e.clientX;
-          const finalWidth =
-            targetColumn.width !== undefined
-              ? (targetColumn.width = columnInitialWidth.current - offset)
-              : (targetColumn.width = 150);
-          targetColumn.width = Math.max(finalWidth, 100);
+          const offset = initialClientX.current! - e.clientX
+          const containerWidth = colGroup.parentElement?.parentElement?.style.width
+          if (containerWidth) {
+            const properWidth = Math.max(columnInitialWidth.current - offset, 100)
+            col.setAttribute('width', properWidth.toString())
+            let allWidth = 0
+            colGroup.childNodes.forEach(i => {
+              const w = (i as HTMLElement).getAttribute('width')
+              if (w) {
+                allWidth += parseInt(w)
+              }
+            })
+            const s = colGroup.parentElement?.parentElement?.style
+            if (s) {
+              s.width = `${allWidth}px`
+            }
+          }
         }
-      });
-      Transforms.setNodes(
-        editor,
-        {
-          columns: newColumns,
-        },
-        { at: tablePath }
-      );
+      }
     }
-    if (e.type === "pointerup") {
-      toggleResizing(false);
+    if (e.type === 'pointerup') {
+      toggleResizing(false)
+      columnInitialWidth.current = undefined
+      const targetColumnIndex = table.columns.findIndex(i => i.accessor === element.colName)
+      if (targetColumnIndex >= 0) {
+        const colGroup = tdRef.current?.closest('table')?.firstElementChild
+        if (colGroup && colGroup.nodeName === 'COLGROUP') {
+          const col = colGroup.children[targetColumnIndex]
+          const colWidth = parseInt(col.getAttribute('width') || '150')
+          const newColumns = produce(table.columns, draft => {
+            draft[targetColumnIndex].width = colWidth
+          })
+          Transforms.setNodes(
+            editor,
+            {
+              columns: newColumns
+            },
+            { at: tablePath }
+          )
+        }
+      }
     }
-  });
+  })
   useEffect(() => {
     if (resizing) {
-      document.addEventListener("pointermove", resizerDragHandler);
-      document.addEventListener("pointerup", resizerDragHandler);
-      document.body.classList.add(ClassName.disableUserSelect);
+      document.addEventListener('pointermove', resizerDragHandler)
+      document.addEventListener('pointerup', resizerDragHandler)
+      document.body.classList.add(ClassName.disableUserSelect)
       return () => {
-        columnInitialWidth.current = undefined;
-        document.removeEventListener("pointermove", resizerDragHandler);
-        document.removeEventListener("pointerup", resizerDragHandler);
-        document.body.classList.remove(ClassName.disableUserSelect);
-        scopedEmitter.emit("editor", {
-          type: "tableCellOp",
+        columnInitialWidth.current = undefined
+        document.removeEventListener('pointermove', resizerDragHandler)
+        document.removeEventListener('pointerup', resizerDragHandler)
+        document.body.classList.remove(ClassName.disableUserSelect)
+        scopedEmitter.emit('editor', {
+          type: 'tableCellOp',
           data: {
-            type: "pointerLeaveResizer",
+            type: 'pointerLeaveResizer',
             colName: element.colName,
             rowIndex,
-            tableId: table.id,
-          },
-        });
-      };
+            tableId: table.id
+          }
+        })
+      }
     }
-  }, [resizing]);
+  }, [resizing])
 
-  const colSpan =
-    table && row ? table?.columns.length / row?.children.length : undefined;
+  const colSpan = table && row ? table?.columns.length / row?.children.length : undefined
   return (
     <td
       id={String(element.id)}
       colSpan={colSpan}
       style={{
-        position: "relative",
+        position: 'relative',
         fontWeight: isHeader ? 700 : undefined,
-        verticalAlign: isHeader ? "middle" : "top",
-        padding: "7px 9px",
+        verticalAlign: isHeader ? 'middle' : 'top',
+        padding: '7px 9px',
         background: isHeader ? Colors.Background.Secondary : undefined,
-        textAlign:
-          colSpan === table?.columns.length || isHeader ? "center" : undefined,
+        textAlign: colSpan === table?.columns.length || isHeader ? 'center' : undefined
       }}
       onPointerLeave={() => {
         if (table) {
-          scopedEmitter.emit("editor", {
-            type: "tableCellOp",
+          scopedEmitter.emit('editor', {
+            type: 'tableCellOp',
             data: {
-              type: "pointerLeaveCell",
+              type: 'pointerLeaveCell',
               rowIndex,
               colName: element.colName,
-              tableId: table.id,
-            },
-          });
+              tableId: table.id
+            }
+          })
         }
       }}
       onPointerEnter={() => {
         if (table) {
-          scopedEmitter.emit("editor", {
-            type: "tableCellOp",
+          scopedEmitter.emit('editor', {
+            type: 'tableCellOp',
             data: {
-              type: "pointerEnterCell",
+              type: 'pointerEnterCell',
               rowIndex,
               colName: element.colName,
-              tableId: table.id,
-            },
-          });
+              tableId: table.id
+            }
+          })
         }
       }}
       data-col={element.colName}
@@ -238,55 +248,52 @@ const TableCell = ({
       {selected && (
         <div
           style={{
-            position: "absolute",
+            position: 'absolute',
             inset: 0,
-            pointerEvents: "none",
-            background: "#8590aea4",
+            pointerEvents: 'none',
+            background: '#8590aea4'
           }}
         ></div>
       )}
       <div
         onPointerEnter={() => {
           table &&
-            scopedEmitter.emit("editor", {
-              type: "tableCellOp",
+            scopedEmitter.emit('editor', {
+              type: 'tableCellOp',
               data: {
-                type: "pointerEnterResizer",
+                type: 'pointerEnterResizer',
                 colName: element.colName,
                 rowIndex,
-                tableId: table.id,
-              },
-            });
+                tableId: table.id
+              }
+            })
         }}
         onPointerLeave={() => {
           table &&
             !resizing &&
-            scopedEmitter.emit("editor", {
-              type: "tableCellOp",
+            scopedEmitter.emit('editor', {
+              type: 'tableCellOp',
               data: {
-                type: "pointerLeaveResizer",
+                type: 'pointerLeaveResizer',
                 colName: element.colName,
                 rowIndex,
-                tableId: table.id,
-              },
-            });
+                tableId: table.id
+              }
+            })
         }}
         className={CellResizerWrapperClassName}
         style={{
-          background: resizing ? "rgba(35,131,226)" : undefined,
+          background: resizing ? 'rgba(35,131,226)' : undefined
         }}
-        onPointerDown={(e) => {
-          toggleResizing();
-          initialClientX.current = e.clientX;
+        onPointerDown={e => {
+          toggleResizing()
+          initialClientX.current = e.clientX
         }}
       >
-        <div
-          className={CellResizerClassName}
-          style={{ opacity: resizerVisible ? 1 : 0 }}
-        ></div>
+        <div className={CellResizerClassName} style={{ opacity: resizerVisible ? 1 : 0 }}></div>
       </div>
     </td>
-  );
-};
+  )
+}
 
-export default TableCell;
+export default TableCell

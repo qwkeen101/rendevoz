@@ -54,7 +54,8 @@ const VirtualChildren = memo(
         if (entry) {
           const size = entry.borderBoxSize[0].blockSize
           const marginTop = parseFloat(window.getComputedStyle(ele).marginTop)
-          const totalSize = size + marginTop
+          const marginBottom = parseFloat(window.getComputedStyle(ele).marginBottom)
+          const totalSize = size + marginTop + marginBottom
           return totalSize
         }
         const index = instance.indexFromElement(ele)

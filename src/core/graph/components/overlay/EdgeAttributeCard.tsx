@@ -93,13 +93,7 @@ const EdgeAttributeCard = ({ currentEdge }: { currentEdge?: GraphEdge }) => {
       <Toolbar.Item
         iconName="park-delete"
         onClick={() => {
-          setEdges(edges =>
-            produce(edges, draft => {
-              const idx = edges?.findIndex(i => i.id === currentEdge?.id)
-              draft?.splice(idx, 1)
-            })
-          )
-          currentEdge?.id && deleteMetaLink(currentEdge?.id)
+          currentEdge?.id && graph?.deleteEdges([currentEdge.id])
         }}
       ></Toolbar.Item>
     </Toolbar>

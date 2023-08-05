@@ -180,7 +180,9 @@ const PixiEdge: FC<EdgeProps> = memo(({ edge }) => {
   const edgeClickHandler: MouseEventHandler = e => {
     e.stopPropagation()
     e.preventDefault()
+    if (!graph) return
     const manager = graph?.overlayManager
+    graph.currentClickEdgeId = edge.id
     if (manager && !isHidden) {
       manager.setOverlayState(s => {
         return {

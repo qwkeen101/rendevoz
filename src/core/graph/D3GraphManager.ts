@@ -46,6 +46,7 @@ class D3GraphManager {
   public overlayManager?: GraphOverlayManager
   public transformScale = 1
   public currentClickNodeId?: number
+  public currentClickEdgeId?: number
   private ID_TO_NODE_ELEMENT_MAP = new Map<number, SVGElement>()
   private ID_TO_EDGE_ELEMENT_MAP = new Map<number, SVGElement>()
   public ID_TO_EDGE_LABEL_ELEMENT_MAP = new Map<number, SVGElement>()
@@ -84,26 +85,28 @@ class D3GraphManager {
   }
 
   // outer container
-  public registerContainer = (container: HTMLElement) => {
-    // this.container = d3.select(container)
-    // container.style.setProperty('--zoom-level', '1')
-    // const panzoom = createPanZoom(container, {
-    //   maxZoom: 5,
-    //   minZoom: 0.1,
-    //   smoothScroll: false
-    // })
-    // this.panzoom = panzoom
-    // this.panzoom.on('zoom', e => {
-    //   const transform = this.panzoom?.getTransform()!
-    //   this.transformScale = transform?.scale
-    //   const zoomMultipler = Math.sqrt(1 / transform?.scale)
-    //   this.container?.node()?.style.setProperty('--zoom-level', String(zoomMultipler))
-    // })
-    // // const zoom = d3.zoom().scaleExtent([0.1, 5]).on('zoom', this.zoomed)
-    // // this.zoom = zoom
-    // // this.container?.call(zoom).on('dblclick.zoom', null)
-    // this.container?.on('mousemove', this.globalMousemoveHandler)
-    // this.container.selectChild('#viewport').on('click', this.globalClickHandler)
+  public registerContainer = (container: HTMLElement) => {}
+
+  public deleteEdges = (edgeIds: number[]) => {
+    this.setEdges?.(edges => {
+      if (!edges) return edges
+      return produce(edges, draft => {
+        edgeIds.forEach(id => {
+          const idx = draft?.findIndex(o => o.id === id)
+          if (idx >= 0) {
+            draft.splice(idx, 1)
+          }
+        })
+      })
+    })
+    edgeIds.forEach(id => {
+      const idx = this.originEdges?.findIndex(i => i.id === id)
+      if (idx !== undefined && idx >= 0) {
+        this.originEdges?.splice(idx, 1)
+      }
+      this.edgesMap?.delete(id)
+      this.ID_TO_EDGE_FUNCTION_MAP.delete(id)
+    })
   }
   public clear = () => {
     this.originEdges = null

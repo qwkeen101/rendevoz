@@ -216,9 +216,9 @@ sup {
   top: -0.5em;
 }
 a {
-  color: #8ab4f8 !important;
-  text-decoration: underline;
+  color: var(--font-link) !important;
   background-color: transparent;
+  text-decoration: none;
   outline: none;
   cursor: pointer;
   -webkit-text-decoration-skip: objects;
@@ -226,6 +226,7 @@ a {
 a:active,
 a:hover {
   outline: 0;
+  text-decoration: underline !important;
 }
 a:focus {
   outline: 0;

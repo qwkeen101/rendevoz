@@ -1,15 +1,12 @@
-import { IShortCutSetting, useSetting } from "@/core";
-import { useEffect } from "react";
-import { useMemoizedFn } from "../utils";
+import { IShortCutSetting, useSetting } from '@/core'
+import { useEffect } from 'react'
+import { useMemoizedFn } from '../utils'
 
-export const useShortcut = (
-  shortcutName: keyof IShortCutSetting["shortcut"],
-  onTrigger: VoidFunction
-) => {
-  const [setting] = useSetting();
+export const useShortcut = (shortcutName: keyof IShortCutSetting['shortcut'], onTrigger: VoidFunction) => {
+  const [setting] = useSetting()
 
   const shortcutHandler = useMemoizedFn((e: KeyboardEvent) => {
-    const shortcut = setting.shortcut[shortcutName];
+    const shortcut = setting.shortcut[shortcutName]
     if (shortcut) {
       if (
         e.key === shortcut.key &&
@@ -18,13 +15,13 @@ export const useShortcut = (
         e.altKey === shortcut.altKey &&
         e.metaKey === shortcut.metaKey
       )
-        onTrigger();
+        onTrigger()
     }
-  });
+  })
   useEffect(() => {
-    document.addEventListener("keydown", shortcutHandler);
+    document.addEventListener('keydown', shortcutHandler)
     return () => {
-      document.removeEventListener("keydown", shortcutHandler);
-    };
-  }, []);
-};
+      document.removeEventListener('keydown', shortcutHandler)
+    }
+  }, [])
+}

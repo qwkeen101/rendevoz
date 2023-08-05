@@ -21,6 +21,7 @@ import { Rendevoz } from '../rendevoz'
 import HoverAttachment from './HoverAttachment'
 import HoverObjectDetails from './HoverObjectDetails'
 import { useUpdate } from 'react-use'
+import Pdf from '@/core/pdf'
 
 const clazzName = css({
   cursor: 'pointer',
@@ -32,7 +33,7 @@ const clazzName = css({
 })
 
 export const DefaultObjectTitleRenderClazzName = css([
-  ClassName.title('16px'),
+  ClassName.title('1rem'),
   {
     position: 'relative',
     width: 'fit-content',
@@ -333,7 +334,7 @@ const useRenderObject = (options: { metaObjectId: number }) => {
     const { objectId } = metaObject
     switch (metaObject?.type) {
       case 'pdf':
-        return <PdfViewer documentId={objectId} />
+        return <Pdf pdfId={objectId} />
       case 'note':
         return <Editor type="note" titleStyle={editorTitleStyle} id={uniqueId} noteId={objectId} />
       case 'normal':

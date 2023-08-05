@@ -43,6 +43,7 @@ const PixiRenderer = () => {
     if (graph) {
       setTimeout(() => {
         graph.currentClickNodeId = undefined
+        graph.currentClickEdgeId = undefined
       }, 50)
       if (graph?.pixiViewport) {
         graph.pixiViewport.pause = false

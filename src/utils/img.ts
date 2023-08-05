@@ -1,153 +1,149 @@
-import { ipcInstance } from "@/plugins";
-import { Size, XYPosition } from "~/typings";
-import ColorThief from "colorthief";
+import { ipcInstance } from '@/plugins'
+import { Size, XYPosition } from '~/typings'
+import ColorThief from 'colorthief'
+import { saveBlobLocally } from '@/utils/file'
+import Id from '@/utils/id'
 
-const colorThief = new ColorThief();
+const colorThief = new ColorThief()
 /**
  * Return: saved local path of img
  */
 export const saveImageLocally = async (
   imgData: string | Blob,
   options: {
-    imgName?: string;
-    compress: boolean;
+    imgName?: string
+    compress: boolean
   } = {
-    compress: true,
+    compress: true
   }
 ): Promise<string> => {
-  const data = imgData;
-  const { compress, imgName } = options;
+  const data = imgData
+  const { compress, imgName } = options
   if (imgData instanceof Blob) {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      if (!compress) {
-        reader.readAsDataURL(imgData);
-        reader.onload = () => {
-          ipcInstance
-            .send("saveImage", imgName, reader.result)
-            .then((data) => resolve(data.data));
-        };
-
-        return;
+    if (imgData.type === 'image/svg+xml') {
+      const res = await saveBlobLocally(imgData, `${options.imgName || Id.getId()}`)
+      console.log(res)
+      if (res) {
+        return res
       }
-      reader.readAsArrayBuffer(imgData);
+      return Promise.reject()
+    }
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader()
+      if (!compress) {
+        reader.readAsDataURL(imgData)
+        reader.onload = () => {
+          ipcInstance.send('saveImage', imgName, reader.result).then(data => resolve(data.data))
+        }
+        return
+      }
+      reader.readAsArrayBuffer(imgData)
       reader.onload = () => {
         if (reader.result) {
-          const blob = new Blob([reader.result as ArrayBuffer]);
-          const blobUrl = window.URL.createObjectURL(blob);
-          const image = new Image();
-          image.src = blobUrl;
+          const blob = new Blob([reader.result as ArrayBuffer])
+          const blobUrl = window.URL.createObjectURL(blob)
+          const image = new Image()
+          image.src = blobUrl
           image.onload = () => {
-            const canvas = document.createElement("canvas");
-            let width = image.width;
-            let height = image.height;
-            const max_height = 1080;
-            const max_width = 1920;
+            const canvas = document.createElement('canvas')
+            let width = image.width
+            let height = image.height
+            const max_height = 1080
+            const max_width = 1920
             if (width > height) {
               if (width > max_width) {
                 //height *= max_width / width;
-                height = Math.round((height *= max_width / width));
-                width = max_width;
+                height = Math.round((height *= max_width / width))
+                width = max_width
               }
             } else {
               if (height > max_height) {
                 //width *= max_height / height;
-                width = Math.round((width *= max_height / height));
-                height = max_height;
+                width = Math.round((width *= max_height / height))
+                height = max_height
               }
             }
-            canvas.width = width;
-            canvas.height = height;
-            canvas.getContext("2d")?.drawImage(image, 0, 0, width, height);
-            const newImageUrl = canvas.toDataURL("image/jpeg", 0.8);
+            canvas.width = width
+            canvas.height = height
+            canvas.getContext('2d')?.drawImage(image, 0, 0, width, height)
+            const newImageUrl = canvas.toDataURL('image/jpeg', 0.8)
 
-            ipcInstance
-              .send("saveImage", imgName, newImageUrl)
-              .then((data) => resolve(data.data));
-          };
+            ipcInstance.send('saveImage', imgName, newImageUrl).then(data => resolve(data.data))
+          }
         }
-      };
+      }
       reader.onerror = () => {
-        reject();
-      };
-    });
+        reject()
+      }
+    })
   }
-  if (typeof imgData === "string") {
-    return (await ipcInstance.send("saveImage", imgName, data)).data;
+  if (typeof imgData === 'string') {
+    return (await ipcInstance.send('saveImage', imgName, data)).data
   }
-  return (await ipcInstance.send("saveImage", imgName, imgData)).data;
-};
+  return (await ipcInstance.send('saveImage', imgName, imgData)).data
+}
 
 /**
  * Return: DataUrl of captured webpage image
  */
-export const captureWebpage = async (
-  webviewId?: number,
-  rect?: XYPosition & Size
-) => {
-  return (await ipcInstance.send<string>("captureWebpage", webviewId, rect))
-    .data;
-};
+export const captureWebpage = async (webviewId?: number, rect?: XYPosition & Size) => {
+  return (await ipcInstance.send<string>('captureWebpage', webviewId, rect)).data
+}
 
 export const imageToDataUrl = (img: HTMLImageElement) => {
-  const canvas = document.createElement("canvas");
-  canvas.width = img.width;
-  canvas.height = img.height;
-  canvas.getContext("2d")?.drawImage(img, 0, 0, img.width, img.height);
-  return canvas.toDataURL("image/png");
-};
+  const canvas = document.createElement('canvas')
+  canvas.width = img.width
+  canvas.height = img.height
+  canvas.getContext('2d')?.drawImage(img, 0, 0, img.width, img.height)
+  return canvas.toDataURL('image/png')
+}
 
 /**
  * Return: local img path
  */
-export const fetchRemoteImageAndSaveLocally = async (
-  remoteImageUrl: string
-): Promise<string> => {
+export const fetchRemoteImageAndSaveLocally = async (remoteImageUrl: string): Promise<string> => {
   const imageBlob = await (
     await fetch(remoteImageUrl, {
-      method: "GET",
-      referrer: "",
+      method: 'GET',
+      referrer: ''
     })
-  ).blob();
-  const data = await saveImageLocally(imageBlob, { compress: false });
-  return data;
-};
+  ).blob()
+
+  const data = await saveImageLocally(imageBlob, { compress: false, imgName: remoteImageUrl.replaceAll('/', '_').replaceAll('\\', '_') })
+  return data
+}
 
 export const downloadImg = async (imageUrl: string, imageName?: string) => {
-  const data = await (
-    await fetch(imageUrl, { method: "GET", referrer: "" })
-  ).blob();
-  const url = URL.createObjectURL(data);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = imageName || imageUrl;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
-};
+  const data = await (await fetch(imageUrl, { method: 'GET', referrer: '' })).blob()
+  const url = URL.createObjectURL(data)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = imageName || imageUrl
+  document.body.appendChild(a)
+  a.click()
+  document.body.removeChild(a)
+  URL.revokeObjectURL(url)
+}
 
 /**
  * Return: R,G,B
  */
-export const getMainColorOfImage = (
-  image: HTMLImageElement | string
-): Promise<[number, number, number]> => {
-  return new Promise((res) => {
-    if (typeof image === "string") {
-      const imageEle = new Image();
-      imageEle.src = image;
+export const getMainColorOfImage = (image: HTMLImageElement | string): Promise<[number, number, number]> => {
+  return new Promise(res => {
+    if (typeof image === 'string') {
+      const imageEle = new Image()
+      imageEle.src = image
       imageEle.onload = () => {
-        res(colorThief.getColor(imageEle));
-      };
+        res(colorThief.getColor(imageEle))
+      }
     } else {
       if (image.complete) {
-        res(colorThief.getColor(image));
+        res(colorThief.getColor(image))
       } else {
         image.onload = () => {
-          res(colorThief.getColor(image));
-        };
+          res(colorThief.getColor(image))
+        }
       }
     }
-  });
-};
+  })
+}

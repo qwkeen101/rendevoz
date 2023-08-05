@@ -8,7 +8,8 @@ export const Font = {
   Secondary: '--font-secondary',
   Tertiary: '--font-tertiary',
   Caption: '--font-caption',
-  Description: '--font-tertiary'
+  Description: '--font-tertiary',
+  Link: '--font-link'
 }
 
 export const Background = {

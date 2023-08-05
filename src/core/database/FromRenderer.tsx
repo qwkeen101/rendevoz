@@ -144,7 +144,7 @@ const FromRenderer = ({
         <Content
           flex
           column
-          style={{ maxWidth: 500, padding: 8 }}
+          style={{ maxWidth: 500, padding: 8, color: Colors.Font.White }}
           gap={7}
           // @ts-ignore
           className={css({
@@ -175,7 +175,7 @@ const FromRenderer = ({
         })}
         style={{
           color: Colors.Font.Secondary,
-          fontSize: FontSize['13px'],
+          fontSize: FontSize['12px'],
           textTransform: 'none',
           cursor: 'pointer',
           width: 'fit-content',

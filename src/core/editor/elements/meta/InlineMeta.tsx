@@ -31,14 +31,17 @@ const nameClassName = css([
     margin: 'auto'
   }
 ])
-const circleClassName = css({
-  borderRadius: '50%',
-  width: '1em',
-  height: '1em',
-  margin: 'auto',
-  flexShrink: 0,
-  padding: 3
-})
+const inlineClassName = css([
+  ClassName.objectTag,
+  {
+    pointerEvents: 'none',
+    fontSize: '0.78em',
+    whiteSpace: 'nowrap',
+    lineHeight: 1,
+    padding: '0.1em 0.6em !important',
+    margin: 'auto'
+  }
+])
 const imageClassName = css({
   borderRadius: 6,
   marginTop: 6
@@ -47,46 +50,18 @@ const InlineMetaElement: FC<RenderElementProps> = ({ element, children, attribut
   const metaObject = MetaStore.useValue((element as InlineMetaObjectElement).originId)
   const { t } = useTranslation()
 
-  // const { circleColor, innerColor } = useMemo(() => {
-  //   if (!metaObject?.color) {
-  //     return {
-  //       circleColor: '#6d6d6d',
-  //       innerColor: Colors.Background.Light
-  //     }
-  //   } else {
-  //     const color = tinycolor(metaObject.color)
-  //     const defaultColor = color.lighten(20).setAlpha(0.7).toRgbString()
-  //     const darken = tinycolor(metaObject.color).setAlpha(0.5)
-  //     return {
-  //       innerColor: `${darken.toRgbString()}`,
-  //       circleColor: defaultColor
-  //     }
-  //   }
-  // }, [metaObject?.color])
-
-  return (
-    <span {...attributes} data-meta-id={element.id} style={{ margin: '0 6px 0px 2px', position: 'relative' }}>
-      <div
-        style={{
-          display: 'inline-flex',
-          gap: metaObject?.coverImgSrc ? 12 : 6,
-          alignItems: metaObject?.coverImgSrc ? 'center' : 'baseline',
-          maxWidth: 'calc(100% - 20px)'
-        }}
-      >
-        {metaObject?.coverImgSrc && <Image preview src={metaObject.coverImgSrc} width="3.4em" className={imageClassName} />}
-        {/* {metaObject?.coverImgSrc ? (
-          <Image preview src={metaObject.coverImgSrc} width="3.4em"  />
-        ) : (
-          <div
-            className={circleClassName}
-            style={{
-              background: innerColor,
-              border: `0.3em solid ${circleColor}`
-            }}
-          ></div>
-        )} */}
-        {metaObject?.coverImgSrc ? (
+  if (metaObject?.coverImgSrc) {
+    return (
+      <span {...attributes} data-meta-id={element.id} style={{ margin: '0 6px 0px 2px', position: 'relative' }}>
+        <div
+          style={{
+            display: 'inline-flex',
+            gap: metaObject?.coverImgSrc ? 12 : 6,
+            alignItems: metaObject?.coverImgSrc ? 'center' : 'baseline',
+            maxWidth: 'calc(100% - 20px)'
+          }}
+        >
+          <Image preview src={metaObject.coverImgSrc} width="3.4em" className={imageClassName} />
           <Content flex column gap="0.2em" style={{ alignSelf: 'flex-end' }}>
             <Content flex gap={6}>
               <div role="tag" style={{ width: 'fit-content', margin: 0, fontSize: '0.8em' }} className={nameClassName}>
@@ -128,45 +103,59 @@ const InlineMetaElement: FC<RenderElementProps> = ({ element, children, attribut
               </span>
             </HoverObjectDetails>
           </Content>
-        ) : (
-          <>
-            <HoverObjectDetails metaObjectId={(element as InlineMetaObjectElement).originId}>
+        </div>
+        {children}
+      </span>
+    )
+  }
+  return (
+    <span {...attributes} data-meta-id={element.id} style={{ margin: '0 6px 0px 2px', position: 'relative' }}>
+      <span>
+        <>
+          <HoverObjectDetails metaObjectId={(element as InlineMetaObjectElement).originId}>
+            <span
+              className={clazzName}
+              data-meta
+              onClick={() => {
+                metaObject?.id && Rendevoz.Actions.Open.Meta.openMetaObject(metaObject.id)
+              }}
+              style={{
+                color: metaObject?.color
+              }}
+            >
+              {metaObject?.name || 'Deleted Object'}
+            </span>
+          </HoverObjectDetails>
+
+          <span
+            style={{
+              background: 'var(--button-hover-background)',
+              marginLeft: 6
+            }}
+            className={inlineClassName}
+            role="tag"
+          >
+            {t(`general.${TypeToTypeName[metaObject?.type || 'normal']}`)}
+          </span>
+          {metaObject?.attachments?.length ? (
+            <HoverAttachment metaId={metaObject.id}>
               <span
-                className={clazzName}
-                data-meta
-                onClick={() => {
-                  metaObject?.id && Rendevoz.Actions.Open.Meta.openMetaObject(metaObject.id)
-                }}
                 style={{
-                  color: metaObject?.color
+                  width: 'fit-content',
+                  cursor: 'pointer',
+                  background: 'var(--button-hover-background)',
+                  pointerEvents: 'auto',
+                  marginLeft: 6
                 }}
+                role="tag"
+                className={inlineClassName}
               >
-                {metaObject?.name || 'Deleted Object'}
+                {`${metaObject.attachments.length} ${t(`general.att`)}`}
               </span>
-            </HoverObjectDetails>
-
-            <div className={nameClassName} role="tag">
-              {t(`general.${TypeToTypeName[metaObject?.type || 'normal']}`)}
-            </div>
-            {metaObject?.attachments?.length ? (
-              <HoverAttachment metaId={metaObject.id}>
-                <div
-                  style={{
-                    width: 'fit-content',
-                    cursor: 'pointer',
-                    pointerEvents: 'auto'
-                  }}
-                  role="tag"
-                  className={nameClassName}
-                >
-                  {`${metaObject.attachments.length} ${t(`general.att`)}`}
-                </div>
-              </HoverAttachment>
-            ) : null}
-          </>
-        )}
-      </div>
-
+            </HoverAttachment>
+          ) : null}
+        </>
+      </span>
       {children}
     </span>
   )

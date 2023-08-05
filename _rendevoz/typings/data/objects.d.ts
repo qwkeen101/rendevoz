@@ -79,6 +79,7 @@ export type IVideoChapter = {
 export interface IVideo extends IBase {
   specType: 'video'
   videoUrl: string
+  subtitleUrl?: string
   // seconds
   lastPlayedTime: number
   // seconds

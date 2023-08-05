@@ -1,59 +1,82 @@
-import { KEY } from "@/consts";
-import { useMemoizedFn } from "@/hooks";
-import isHotkey from "is-hotkey";
-import { useEffect } from "react";
-import useVideoState from "./useVideoState";
+import { KEY } from '@/consts'
+import { useMemoizedFn } from '@/hooks'
+import isHotkey, { compareHotkey } from 'is-hotkey'
+import { RefObject, useEffect } from 'react'
+import useVideoState from './useVideoState'
+import { getSetting } from '@/core'
+import { useVideoInstance } from '@/core/video/hooks/useVideoInstance'
 
-const useVideoShortcut = () => {
-  const [, setVideoState] = useVideoState();
+const useVideoShortcut = (containerRef: RefObject<HTMLElement>) => {
+  const [, setVideoState] = useVideoState()
+  const instance = useVideoInstance()
   const keydownHandler = useMemoizedFn((e: KeyboardEvent) => {
+    const setting = getSetting()
+    console.log(compareHotkey(setting.shortcut.makeVideoLabel, e))
+    const shortcut = setting.shortcut.makeVideoLabel
+    if (
+      shortcut &&
+      e.key === shortcut.key &&
+      e.shiftKey === shortcut.shiftKey &&
+      e.ctrlKey === shortcut.ctrlKey &&
+      e.altKey === shortcut.altKey &&
+      e.metaKey === shortcut.metaKey
+    ) {
+      const time = instance.getVideoState?.().currentTime
+      if (time) {
+        instance.insertLabel?.({
+          videoTime: time
+        })
+      }
+    }
     if (isHotkey(KEY.Space, e)) {
       if (
         !(
           e.target instanceof HTMLElement &&
-          (e.target.closest("input") ||
-            e.target.closest("textarea") ||
-            e.target.closest("[contenteditable=true]"))
+          (e.target.closest('input') || e.target.closest('textarea') || e.target.closest('[contenteditable=true]'))
         )
       ) {
-        setVideoState((s) => ({ ...s, paused: !s.paused }));
+        e.preventDefault()
+        setVideoState(s => ({ ...s, paused: !s.paused }))
       }
     }
     if (isHotkey(KEY.ArrowLeft, e)) {
-      setVideoState((s) => ({
+      setVideoState(s => ({
         ...s,
         currentTime: Math.max((s.currentTime || 0) - 10, 0),
-        jumpIndicator: "back",
-      }));
+        jumpIndicator: 'back'
+      }))
     }
     if (isHotkey(KEY.ArrowRight, e)) {
-      setVideoState((s) => ({
+      setVideoState(s => ({
         ...s,
         currentTime: Math.min((s.currentTime || 0) + 10, s.totalTime || 0),
-        jumpIndicator: "forward",
-      }));
+        jumpIndicator: 'forward'
+      }))
     }
     if (isHotkey(KEY.ArrowDown, e)) {
-      setVideoState((s) => ({
+      setVideoState(s => ({
         ...s,
         volume: Math.max(0, s.volume - 0.05),
-        volumeIndicator: "down",
-      }));
+        volumeIndicator: 'down'
+      }))
     }
     if (isHotkey(KEY.ArrowUp, e)) {
-      setVideoState((s) => ({
+      setVideoState(s => ({
         ...s,
         volume: Math.min(0.6, s.volume + 0.05),
-        volumeIndicator: "up",
-      }));
+        volumeIndicator: 'up'
+      }))
     }
-  });
+  })
   useEffect(() => {
-    document.addEventListener("keydown", keydownHandler);
-    return () => {
-      document.removeEventListener("keydown", keydownHandler);
-    };
-  }, []);
-};
+    const container = containerRef.current
+    if (container) {
+      container.addEventListener('keydown', keydownHandler)
+      return () => {
+        container.removeEventListener('keydown', keydownHandler)
+      }
+    }
+  }, [containerRef])
+}
 
-export default useVideoShortcut;
+export default useVideoShortcut

@@ -1,29 +1,45 @@
-import { atom, useAtom } from "jotai";
-import { IVideo, IVideoChapter } from "~/typings";
+import { atom, useAtom } from 'jotai'
+import { IVideo, IVideoChapter } from '~/typings'
 
 export type VideoState = {
-  loop: boolean;
-  muted: boolean;
-  currentTime?: number;
-  totalTime?: number;
-  url?: string;
-  progressbarHovering: boolean;
-  paused: boolean;
-  jumpIndicator?: "back" | "forward";
-  volumeIndicator?: "up" | "down";
-  volume: number;
-  speed: number;
-  fullScreen: boolean;
-  windowed: boolean;
-  sortedChapters?: IVideoChapter[];
-  videoId?: number;
-  floated?: boolean;
-  sticky?: boolean;
+  loop: boolean
+  muted: boolean
+  currentTime?: number
+  totalTime?: number
+  url?: string
+  progressbarHovering: boolean
+  paused: boolean
+  jumpIndicator?: 'back' | 'forward'
+  volumeIndicator?: 'up' | 'down'
+  volume: number
+  speed: number
+  fullScreen: boolean
+  windowed: boolean
+  showSubtitle?: boolean
+  subtitleUrl?: string
+  subtitles?: {
+    alignment: string
+    direction: 'vertical' | 'horizontal'
+    endTime: number
+    startTime: number
+    id: string
+    lineAlign: string
+    pauseOnExit: false
+    positionAlign: string
+    size: number
+    snapToLines: boolean
+    text: string
+    textPosition: string
+  }[]
+  sortedChapters?: IVideoChapter[]
+  videoId?: number
+  floated?: boolean
+  sticky?: boolean
   labelWithTime?: {
-    time: number;
-    id: number;
-  }[];
-} & Partial<IVideo>;
+    time: number
+    id: number
+  }[]
+} & Partial<IVideo>
 
 export const VideoStateAtom = atom<VideoState>({
   muted: false,
@@ -34,8 +50,9 @@ export const VideoStateAtom = atom<VideoState>({
   speed: 1,
   fullScreen: false,
   windowed: false,
-});
+  showSubtitle: true
+})
 
-const useVideoState = () => useAtom(VideoStateAtom);
+const useVideoState = () => useAtom(VideoStateAtom)
 
-export default useVideoState;
+export default useVideoState

@@ -333,6 +333,7 @@ const WrapperNode = ({ node }: { node: IWhiteboardNode }) => {
   const forceRender = useUpdate()
 
   const renderInnerNode = () => {
+    console.log(type)
     switch (type) {
       case 'metaObject':
         return (

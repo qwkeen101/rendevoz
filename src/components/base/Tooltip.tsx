@@ -18,10 +18,24 @@ interface ToolTipProps {
   visible?: boolean
   onVisibleChange?: (v: boolean) => void
   parentElement?: AnimatePopoverProps['parentElement']
+  padding?: number
 }
 
 const ToolTip: FC<PropsWithChildren<ToolTipProps>> = (
-  { content, children, delay = 300, disable, disableDefaultContent, contentTouchable, zIndex, visible, onVisibleChange, parentElement, position },
+  {
+    content,
+    children,
+    delay = 300,
+    disable,
+    disableDefaultContent,
+    contentTouchable,
+    zIndex,
+    visible,
+    onVisibleChange,
+    parentElement,
+    position,
+    padding = 10
+  },
   ref
 ) => {
   const [open, setOpen] = useState(false)
@@ -34,7 +48,13 @@ const ToolTip: FC<PropsWithChildren<ToolTipProps>> = (
   const handleMouseEvent = useMemoizedFn((e: MouseEvent) => {
     const pointerUphandler = e => {
       if (e.type === 'pointerup') {
-        isKeyDownRef.current = false
+        if (delay) {
+          setTimeout(() => {
+            isKeyDownRef.current = false
+          }, delay + 10)
+        } else {
+          isKeyDownRef.current = false
+        }
         document.removeEventListener('pointerup', pointerUphandler)
       }
     }
@@ -172,7 +192,7 @@ const ToolTip: FC<PropsWithChildren<ToolTipProps>> = (
         containerStyle={{
           zIndex: zIndex ? String(zIndex) : String(Zindexes.Tooltip)
         }}
-        padding={10}
+        padding={padding}
         content={renderContent()}
         boundaryElement={parentElement || document.body}
         boundaryInset={20}

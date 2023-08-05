@@ -166,12 +166,12 @@ export const IconNameItem = memo(
       const emoji = useMemo(() => !isPark && icon && getEmoji(icon), [icon])
       const linearFontColor = color?.startsWith('linear')
       const linearColors = color && linearFontColor && linearToSvg(color)
-      const [imgDisplayOk, toggleImgDisplayOk] = useToggle(true)
+
       return (
         <Content
           flex
           alignItems="center"
-          gap={8}
+          gap="0.5em"
           style={{ overflow: 'hidden', ...style }}
           className={className}
           onClick={onClick}

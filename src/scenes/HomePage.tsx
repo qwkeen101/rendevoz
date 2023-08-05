@@ -24,7 +24,8 @@ const HomeSearchAtom = atom<string | undefined>(undefined)
 export const HomePage: FC = () => {
   const { t } = useTranslation()
   const { portal, open } = useCreateObject({
-    positions: ['bottom']
+    positions: ['bottom'],
+    quickCreateNote: false
   })
   const store = useMemo(() => createStore(), [])
   const [search, setSearch] = useAtom(HomeSearchAtom, { store: store })
@@ -67,7 +68,13 @@ export const HomePage: FC = () => {
       </Content>
       <Content flex alignItems="center" justifyContent="space-between">
         <div className={ClassName.title()}>{t('general.home')}</div>
-        <Button.IconButton onClick={e => open(e)} text={t('general.create')} icon="park-down" reverse></Button.IconButton>
+        <Button.IconButton
+          id="home-create-button"
+          onClick={e => open(e)}
+          text={t('general.create')}
+          icon="park-down"
+          reverse
+        ></Button.IconButton>
       </Content>
       <Content flex column style={{ height: 0, flex: 1 }}>
         <div>{t('general.recent view')}</div>

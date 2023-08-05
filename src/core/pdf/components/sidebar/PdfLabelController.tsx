@@ -163,14 +163,14 @@ const PdfLabelController = () => {
 }
 
 const Label = ({ id, highlight }: { id: number; highlight: boolean }) => {
-  const { label, labelMeta, renderName, renderPopover, renderAttachment, renderDescription, setDraggingDetails } = useRenderLabel({
-    objectId: id,
-    type: 'pdfLabel'
-  })
+  const { label, labelMeta, renderName, renderOriginalText, renderPopover, renderAttachment, renderDescription, setDraggingDetails } =
+    useRenderLabel({
+      objectId: id,
+      type: 'pdfLabel'
+    })
   const pdfLabel = label as IPdfLabel
   const instance = usePdfInstance()
-  const [showMore, toggleShowMore] = useToggle(false)
-  const { t } = useTranslation()
+
   const containerRef = useRef<HTMLDivElement>(null)
   useEffect(() => {
     if (pdfLabel && pdfLabel.documentId) {
@@ -200,8 +200,8 @@ const Label = ({ id, highlight }: { id: number; highlight: boolean }) => {
   }, [highlight])
   if (!label) return null
   return (
-    <Content flex column style={{ padding: 8 }} ref={containerRef}>
-      <Content flex style={{ marginBottom: 4 }}>
+    <Content flex column gap={6} style={{ padding: 8 }} ref={containerRef}>
+      <Content flex>
         {renderName({
           onNameClick: () => instance.jumpToLabel?.(id)
         })}
@@ -216,38 +216,10 @@ const Label = ({ id, highlight }: { id: number; highlight: boolean }) => {
         })}
       </Content>
 
-      {pdfLabel.type === 'highlight' && pdfLabel.selectedText && (
-        <div
-          style={{
-            fontSize: FontSize['12px'],
-            padding: '4px 12px 4px',
-            textTransform: 'none',
-            borderLeft: `3px solid ${Colors.Font.Secondary}`,
-            background: Colors.Background.ButtonHover
-          }}
-        >
-          <div style={{ textTransform: 'none' }} className={showMore ? undefined : ClassName.ellipsisFont(3)}>
-            {pdfLabel.selectedText}
-          </div>
-          {pdfLabel.selectedText.length > 120 && (
-            <div
-              style={{
-                marginLeft: 'auto',
-                textAlign: 'end',
-                fontSize: FontSize['12px'],
-                cursor: 'pointer',
-                width: 'fit-content'
-              }}
-              onClick={toggleShowMore}
-            >
-              {showMore ? t('editor.show less') : t('editor.show more')}
-            </div>
-          )}
-        </div>
-      )}
-      {renderDescription({ style: { marginTop: 10, width: '100%' } })}
+      {pdfLabel.type === 'highlight' && pdfLabel.selectedText && renderOriginalText(pdfLabel.selectedText)}
+      {renderDescription({ style: { width: '100%' } })}
       {renderAttachment({
-        style: { marginTop: 16 },
+        style: { marginTop: 8 },
         renderAttOnParent: false,
         renderObjectDetailsOnParent: false
       })}

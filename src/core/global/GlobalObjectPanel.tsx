@@ -497,7 +497,9 @@ export const ObjectDetailsPanel = ({ metaId, onBack }: { metaId: number; onBack?
               <div style={{ marginTop: 12 }} className={ClassName.description()}>
                 {t('general.description')}
               </div>
-              <div className={ClassName.description()}>{metaObject.description}</div>
+              <div className={ClassName.description()} style={{ textTransform: 'none', whiteSpace: 'pre-wrap', wordBreak: 'break-all' }}>
+                {metaObject.description}
+              </div>
             </>
           )}
           {metaObject?.createdAt && (
@@ -589,10 +591,12 @@ export const ObjectDetailsPanel = ({ metaId, onBack }: { metaId: number; onBack?
           <Button.IconButton
             text={t('general.generate link')}
             onClick={() => {
+              const link = `rendevoz://object/${metaId}`
+              navigator.clipboard.writeText(link)
               toast.success(
                 <Content className={ClassName.description()}>
                   <div style={{ textTransform: 'none' }}>{t('general.link is generated for this object')}!</div>
-                  <div style={{ userSelect: 'all', textTransform: 'none' }}>{`rendevoz://object/${metaId}`}</div>
+                  <div style={{ userSelect: 'all', textTransform: 'none' }}>{link}</div>
                 </Content>
               )
             }}

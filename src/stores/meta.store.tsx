@@ -184,7 +184,9 @@ export const handleMetaLinksChange = () => {
   const relatedIdsMapDraft = createDraft(prevIndex?.relatedIdsMap || new Map<number, Set<number>>())
 
   const oldLinks = prevIndex?.oldLinks
+  const idSet = new Set(oldLinks?.keys())
   newMetaLinks.forEach((link, id) => {
+    idSet.delete(id)
     const { sourceId, targetId } = link
     const oldLink = oldLinks?.get(id)
     // early quit
@@ -234,6 +236,18 @@ export const handleMetaLinksChange = () => {
     } else {
       targetIdToLinkIdMap.set(targetId, new Set([id]))
     }
+  })
+  idSet.forEach(id => {
+    const link = oldLinks?.get(id)
+    if (!link) return
+    undeletedLinksSet.delete(link)
+    const { sourceId, targetId } = link
+    sourceIdToLinkIdsMap.get(sourceId)?.delete(id)
+    targetIdToLinkIdMap.get(targetId)?.delete(id)
+    sourceIdToTargetIdsMap.get(sourceId)?.delete(targetId)
+    targetIdToSourceIdsMap.get(targetId)?.delete(sourceId)
+    relatedIdsMapDraft.get(sourceId)?.delete(targetId)
+    relatedIdsMapDraft.get(targetId)?.delete(sourceId)
   })
   globalStore.set(indexedMetaLinksAtom, {
     undeletedLinksSet,
@@ -290,21 +304,17 @@ const createMetaStore = () => {
   const localObjectStore: Pick<IStoreDeprecated<MetaObject>, 'addOne' | 'updateOne' | 'deleteOneById' | 'getAll'> = {
     updateOne: (one, silent) => {
       const currentOne = globalStore.get(metaObjectsAtom).get(one.id)
-      return initializeObjectStore.updateOne(obj => {
+      return initializeObjectStore.updateOne(async obj => {
         if (obj.objectId && one.name) {
-          switch (obj.type) {
-            case 'pdf': {
-              ObjectStore('pdf').updateOne({ id: obj.objectId, name: obj.name }, { silent: true })
-              break
-            }
-            case 'note': {
-              ObjectStore('note').updateOne({ id: obj.objectId, title: obj.name }, { silent: true })
-              break
-            }
-            case 'whiteboard': {
-              ObjectStore('whiteboard').updateOne({ id: obj.objectId, name: obj.name }, { silent: true })
-              break
-            }
+          const targetObject = await ObjectStore(obj.type).getOneById(obj.objectId)
+          console.log(targetObject)
+          if (targetObject) {
+            ObjectStore(obj.type).updateOne(
+              { id: obj.objectId, name: obj.name, description: obj.description },
+              {
+                silent: true
+              }
+            )
           }
         }
         SearchStore.addDocument({

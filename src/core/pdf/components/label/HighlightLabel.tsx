@@ -245,7 +245,7 @@ const Highlights = forwardRef((props, ref) => {
             position: 'absolute',
             cursor: 'pointer',
             pointerEvents: selectMode ? 'none' : 'auto',
-            opacity: 0.4,
+            opacity: highlight.specHighlightType === 'underline' ? 1 : 0.4,
             ...highlightStyle
           }}
         ></div>

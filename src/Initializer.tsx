@@ -130,6 +130,7 @@ const Initializer = () => {
     ipcInstance.on('download', downloadListener)
     ipcInstance.on('close', unloadListener)
     ipcInstance.on('openObject', data => {
+      console.error(data)
       if (data.metaId) {
         Rendevoz.Actions.Open.Meta.openMetaObject(Number(data.metaId))
       }

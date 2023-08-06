@@ -1,5 +1,5 @@
 {
-  "name": "rendevoz",
+  "name": "rendevoz-app",
   "productName": "Rendevoz",
   "private": true,
   "version": "0.3.3",
@@ -45,7 +45,7 @@
     "date-fns": "^2.29.2",
     "dexie": "^3.2.1",
     "dexie-export-import": "^4.0.5",
-    "driver.js": "^1.1.0",
+    "driver.js": "^1.2.1",
     "electron-updater": "^5.3.0",
     "framer-motion": "^6.3.4",
     "franc": "^6.1.0",
@@ -69,7 +69,6 @@
     "monaco-editor": "^0.38.0",
     "optics-ts": "^2.3.0",
     "panzoom": "^9.4.3",
-    "pdfjs-dist": "^3.8.162",
     "pica": "^9.0.1",
     "pixi-svg": "^3.2.0",
     "pixi-viewport": "^5.0.1",

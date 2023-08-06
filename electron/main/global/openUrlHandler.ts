@@ -19,7 +19,7 @@ export default (app: App, win: BrowserWindow) => {
     if (win) {
       if (win.isMinimized()) win.restore()
       win.focus()
-      const url = commandLine.pop().slice(0, -1)
+      const url = commandLine.pop().slice()
       const lowered = url.toLowerCase()
       if (lowered.startsWith('rendevoz://object')) {
         const newUrl = lowered.replace('rendevoz://object/', '')

@@ -97,7 +97,7 @@ const useWhiteboardDrop = () => {
           if (meta) {
             console.log(meta)
             setTimeout(() => {
-              insertMetaObjectAtPointer(e, meta.id, true)
+              insertMetaObjectAtPointer(e, meta.id, false)
             }, 100)
             return
           }

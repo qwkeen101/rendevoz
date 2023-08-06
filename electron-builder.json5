@@ -38,6 +38,7 @@
     allowToChangeInstallationDirectory: true,
     deleteAppDataOnUninstall: false,
   },
+  afterSign: "electron-builder-notarize",
   mac: {
     target: ["default"],
     artifactName: "Rendevoz-MacOS-Setup.${ext}",

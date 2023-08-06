@@ -83,7 +83,7 @@ const MetaObjectNode: FC<InnerNodeProps> = ({ node: n, setPopoverElements, setNo
                 />
               </Tooltip>
             ),
-            ['note', 'webpage', 'video'].includes(metaObject.type)
+            ['note', 'webpage', 'video', 'pdf'].includes(metaObject.type)
               ? () => (
                   <Tooltip position="top" content={!getNodeState().expanded ? 'Expand Node' : 'Fold Node'}>
                     <Icon

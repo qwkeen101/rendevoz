@@ -76,12 +76,13 @@ const EditorToolbar: FC<EditorToolbarProps> = ({ scrollElement, showToolbar, sty
   }
   const handleMouseUp = useMemoizedFn((e: MouseEvent) => {
     const { selection, readonly } = editor
+    console.log(ReactEditor.isFocused(editor))
     const windowSelection = window.getSelection()
     if (
       (showToolbar || !readonly) &&
       selection &&
       windowSelection &&
-      ReactEditor.isFocused(editor) &&
+      (showToolbar || ReactEditor.isFocused(editor)) &&
       windowSelection.toString().length > 0 &&
       !Range.isCollapsed(selection) &&
       !toolbarRef.current?.contains(e.target)
@@ -332,7 +333,7 @@ const EditorToolbar: FC<EditorToolbarProps> = ({ scrollElement, showToolbar, sty
       />
     </Toolbar>
   )
-
+  console.log(showToolbar, floatPosition, editor.noteId)
   // only render when have noteid
   const renderFloatToolbar = () =>
     createPortal(

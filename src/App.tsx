@@ -140,9 +140,9 @@ const App = () => {
     RENDEVOZ_DEFAULT_TABS.forEach(i => Rendevoz.Actions.Layout.registerTabData(i))
     GlobalPluginManager.registerPlugin(BuiltinEditorPlugin)
     executed.current = true
-    setTimeout(() => {
-      startDrive()
-    }, 1000)
+    // setTimeout(() => {
+    //   startDrive()
+    // }, 1000)
   }
 
   useEffect(() => {

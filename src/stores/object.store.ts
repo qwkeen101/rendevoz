@@ -151,14 +151,14 @@ const createObjectStore = <T extends keyof ObjectFamily, V extends ObjectFamily[
         (obj, silent) => {
           setTimeout(() => {
             const meta = Array.from(globalStore.get(metaObjectsAtom).values()).find(i => i.objectId === obj.id)
-            console.log(meta, obj, n)
+
             if (meta && 'name' in obj && meta.name !== obj.name && 'name' in n) {
               MetaStore.updateMetaObject({ id: meta.id, name: obj.name }, true)
             }
             if (meta && 'description' in obj && meta.description !== obj.description && 'description' in n) {
               MetaStore.updateMetaObject({ id: meta.id, description: obj.description }, true)
             }
-          }, 500)
+          }, 0)
           options?.afterUpdateProcess?.onSuccess?.(obj, silent)
         },
         silent => {

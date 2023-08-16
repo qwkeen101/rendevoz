@@ -40,10 +40,8 @@ const MathElement = ({ element, children, attributes }: RenderElementProps) => {
     () => {
       const renderContainer = renderContainerRef.current
       if (renderContainer && mathEle.content && width) {
-        const normalized = mathEle.content
-          .replaceAll(' ', '\\ ')
-          .replaceAll('\n', '\\\\')
-          .replace(/\{([^*]+)\}/g, str => `{\\displaylines${str}}`)
+        const normalized = mathEle.content.replaceAll(' ', '\\ ').replaceAll('\n', '\\\\')
+        // .replace(/\{([^*]+)\}/g, str => `{\\displaylines${str}}`)
         MathJax.tex2svgPromise(`\\displaylines{${normalized}}`, { scale: 0.5 })
           .then(m => {
             const containerBounding = renderContainer.parentElement?.parentElement.getBoundingClientRect()

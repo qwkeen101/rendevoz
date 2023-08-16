@@ -11,6 +11,7 @@ export type VideoState = {
   paused: boolean
   jumpIndicator?: 'back' | 'forward'
   volumeIndicator?: 'up' | 'down'
+  mode?: 'web' | 'video'
   volume: number
   speed: number
   fullScreen: boolean
@@ -50,7 +51,8 @@ export const VideoStateAtom = atom<VideoState>({
   speed: 1,
   fullScreen: false,
   windowed: false,
-  showSubtitle: true
+  showSubtitle: true,
+  mode: 'web'
 })
 
 const useVideoState = () => useAtom(VideoStateAtom)

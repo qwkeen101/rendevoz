@@ -22,6 +22,13 @@ import HoverAttachment from './HoverAttachment'
 import HoverObjectDetails from './HoverObjectDetails'
 import { useUpdate } from 'react-use'
 import Pdf from '@/core/pdf'
+import BorderInput from '@/components/base/BorderInput'
+import isHotkey from 'is-hotkey'
+import { KEY } from '@/consts'
+import { MetaStore } from '@/stores'
+import FontSize from '@/consts/font'
+import AutosizeTextarea from '@/components/custom/input/autosizeTextarea'
+import { toast } from 'react-hot-toast'
 
 const clazzName = css({
   cursor: 'pointer',
@@ -32,6 +39,19 @@ const clazzName = css({
   }
 })
 
+export const keyboard = {
+  ctrl: false
+}
+window.addEventListener('DOMContentLoaded', () => {
+  document.addEventListener('keydown', e => {
+    if (e.ctrlKey || e.metaKey) {
+      keyboard.ctrl = true
+    }
+  })
+  document.addEventListener('keyup', e => {
+    keyboard.ctrl = false
+  })
+})
 export const DefaultObjectTitleRenderClazzName = css([
   ClassName.title('1rem'),
   {
@@ -142,26 +162,113 @@ const TagRenderer = ({
   )
 }
 
-const _renderTitle = (
-  {
-    ellipsisLine = 2,
-    titleClassName = css([ellipsisLine ? ClassName.ellipsisFont(ellipsisLine) : undefined, DefaultObjectTitleRenderClazzName]),
-    onTitleClick,
-    style
-  }: {
-    titleClassName?: string
-    onTitleClick?: React.MouseEventHandler
-    style?: CSSProperties
-    ellipsisLine?: number
-  },
+const TitleRenderer = ({
+  ellipsisLine = 2,
+  titleClassName = css([ellipsisLine ? ClassName.ellipsisFont(ellipsisLine) : undefined, DefaultObjectTitleRenderClazzName]),
+  onTitleClick,
+  style,
+  renderWebpageFrom = true,
+  metaObject
+}: {
+  titleClassName?: string
+  onTitleClick?: React.MouseEventHandler
+  style?: CSSProperties
+  ellipsisLine?: number
+  renderWebpageFrom?: boolean
   metaObject?: MetaObject
-) => {
+}) => {
+  const [isEditing, setIsEditing] = useState(false)
+  const { t } = useTranslation()
   return (
     <>
-      {metaObject?.type === 'webpage' && metaObject.objectId && <WebpageSourceRenderer objectId={metaObject.objectId} />}
-      <div onClick={onTitleClick} style={{ color: metaObject?.color, ...style, textTransform: 'none' }} className={titleClassName}>
-        {metaObject?.name}
-      </div>
+      {metaObject?.type === 'webpage' && renderWebpageFrom && metaObject.objectId && (
+        <WebpageSourceRenderer objectId={metaObject.objectId} />
+      )}
+      {isEditing ? (
+        <div
+          style={{
+            margin: '6px 0px',
+            border: `1px solid ${Colors.Background.Border}`,
+            background: 'transparent',
+            borderRadius: 6,
+            position: 'relative'
+          }}
+        >
+          <AutosizeTextarea
+            onKeyDownCapture={e => {
+              e.stopPropagation()
+              if (isHotkey(KEY.Tab, e)) {
+                e.preventDefault()
+                const t = e.currentTarget
+                const start = t.selectionStart
+                const end = t.selectionEnd
+
+                // set textarea value to: text before caret + tab + text after caret
+                t.value = t.value.substring(0, start) + '  ' + t.value.substring(end)
+
+                // put caret at right position again
+                t.selectionStart = t.selectionEnd = start + 2
+              }
+              if (isHotkey(KEY.Escape, e)) {
+                setIsEditing(false)
+              }
+            }}
+            style={{
+              padding: '6px 8px',
+              fontSize: FontSize['13px'],
+              background: 'transparent',
+              width: '100%',
+              border: 'none',
+              outline: 'none'
+            }}
+            className={css({
+              '::-webkit-resizer': {
+                background: 'transparent'
+              }
+            })}
+            spellCheck="false"
+            defaultValue={metaObject?.name}
+            minRows={2}
+            maxRows={9999}
+            placeholder="Input new name"
+          />
+          <div
+            onClick={e => {
+              const v = e.currentTarget.previousElementSibling?.value
+              if (v !== undefined && metaObject) {
+                MetaStore.updateMetaObject({ id: metaObject.id, name: v }, true)
+              }
+              setIsEditing(false)
+            }}
+            className={ClassName.description(FontSize['12px'])}
+            style={{ position: 'absolute', right: 10, bottom: 3, cursor: 'pointer' }}
+          >
+            确认
+          </div>
+        </div>
+      ) : (
+        <div
+          onContextMenu={() => setIsEditing(!isEditing)}
+          onClick={e => {
+            if (keyboard.ctrl && metaObject) {
+              const link = `rendevoz://object/${metaObject?.id}`
+              navigator.clipboard.writeText(link)
+              toast.success(
+                <Content className={ClassName.description()}>
+                  <div style={{ textTransform: 'none' }}>{t('general.link is generated for this object')}!</div>
+                  <div style={{ userSelect: 'all', textTransform: 'none' }}>{link}</div>
+                </Content>
+              )
+            } else {
+              onTitleClick?.(e)
+            }
+          }}
+          style={{ color: metaObject?.color, ...style, textTransform: 'none' }}
+          className={titleClassName}
+        >
+          {metaObject?.name}
+        </div>
+      )}
     </>
   )
 }
@@ -314,14 +421,13 @@ const useRenderObject = (options: { metaObjectId: number }) => {
     <TagRenderer {...options} relatedNum={relatedSet?.size || 0} metaObject={metaObject} t={t} />
   )
 
-  const renderTitle = (options: Parameters<typeof _renderTitle>[0]) =>
-    _renderTitle(
-      {
-        ...options,
-        onTitleClick: options.onTitleClick || (() => Rendevoz.Actions.Open.Meta.openMetaObject(metaObjectId))
-      },
-      metaObject
-    )
+  const renderTitle = (options: Parameters<typeof TitleRenderer>[0]) => (
+    <TitleRenderer
+      {...options}
+      onTitleClick={options.onTitleClick || (() => Rendevoz.Actions.Open.Meta.openMetaObject(metaObjectId))}
+      metaObject={metaObject}
+    />
+  )
 
   const renderDescription = (options: Parameters<typeof _renderDescription>[0]) => _renderDescription(options, metaObject)
 
@@ -543,7 +649,7 @@ const WholeRenderer = memo(
       containerOnClick?: React.MouseEventHandler
       mainContainerStyle?: CSSProperties
       tagsOptions?: Parameters<typeof TagRenderer>[0]
-      titleOptions?: Parameters<typeof _renderTitle>[0]
+      titleOptions?: Parameters<typeof TitleRenderer>[0]
       imageOptions?: Parameters<typeof _renderImage>[0]
       fromOptions?: Parameters<typeof _renderFrom>[0]
       optionOptions?: Parameters<typeof _renderOptions>[0]
@@ -657,18 +763,18 @@ const WholeRenderer = memo(
                 t={t}
               />
             )}
-            {renderOptions?.renderTitle !== false &&
-              _renderTitle(
-                {
-                  ...titleOptions,
-                  onTitleClick:
-                    titleOptions.onTitleClick ||
-                    (() => {
-                      Rendevoz.Actions.Open.Meta.openMetaObject(metaObject.id)
-                    })
-                },
-                metaObject
-              )}
+            {renderOptions?.renderTitle !== false && (
+              <TitleRenderer
+                {...titleOptions}
+                onTitleClick={
+                  titleOptions.onTitleClick ||
+                  (() => {
+                    Rendevoz.Actions.Open.Meta.openMetaObject(metaObject.id)
+                  })
+                }
+                metaObject={metaObject}
+              />
+            )}
             {renderOptions?.renderDescription !== false && _renderDescription(descriptionOptions, metaObject)}
             {renderOptions?.renderFrom !== false && _renderFrom(fromOptions, metaObject)}
           </Content>
@@ -696,18 +802,18 @@ const WholeRenderer = memo(
             t={t}
           />
         )}
-        {renderOptions?.renderTitle !== false &&
-          _renderTitle(
-            {
-              ...titleOptions,
-              onTitleClick:
-                titleOptions.onTitleClick ||
-                (() => {
-                  metaObject && Rendevoz.Actions.Open.Meta.openMetaObject(metaObject.id)
-                })
-            },
-            metaObject
-          )}
+        {renderOptions?.renderTitle !== false && (
+          <TitleRenderer
+            {...titleOptions}
+            onTitleClick={
+              titleOptions.onTitleClick ||
+              (() => {
+                metaObject && Rendevoz.Actions.Open.Meta.openMetaObject(metaObject.id)
+              })
+            }
+            metaObject={metaObject}
+          />
+        )}
         {renderOptions?.renderDescription !== false && _renderDescription(descriptionOptions, metaObject)}
         {renderOptions?.renderFrom !== false && _renderFrom(fromOptions, metaObject)}
       </Content>

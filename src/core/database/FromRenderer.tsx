@@ -154,13 +154,13 @@ const FromRenderer = ({
             }
           })}
         >
-          <div className={ClassName.description(FontSize['12px'])}>
+          <div style={{color: Colors.Font.Silver}} className={ClassName.description(FontSize['12px'])}>
             {t('general.from')} {t(`general.${initialObject?.fromObject?.type}`)}
           </div>
           <p className={ClassName.ellipsisFont(2)}>{fromState.name}</p>
           {initialObject?.fromObject?.selectedText && (
             <>
-              <div className={ClassName.description(FontSize['12px'])}>{t('general.selected text')}</div>
+              <div style={{color: Colors.Font.Silver}} className={ClassName.description(FontSize['12px'])}>{t('general.selected text')}</div>
               <p className={ClassName.ellipsisFont(5)}>{initialObject.fromObject.selectedText}</p>
             </>
           )}

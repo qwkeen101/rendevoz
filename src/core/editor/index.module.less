@@ -125,13 +125,11 @@
   display: flex;
   flex-direction: column;
   height: 100%;
-  * {
-    ::after,
-    ::before,
-    ::placeholder,
-    :not([role="tag"]) {
-      text-transform: none !important;
-    }
+  ::highlight(secondary-highlight) {
+    background-color: rgba(209, 146, 56, 0.7);
+  }
+  ::highlight(primary-highlight) {
+    background-color: rgba(255, 230, 148, 0.7);
   }
   h1,
   h2,

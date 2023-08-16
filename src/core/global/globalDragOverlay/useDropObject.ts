@@ -68,7 +68,24 @@ export const checkDropCanBeMeta = (e: DragEvent) => {
   return false
 }
 
-const fetchHeadAndUpdateWebpage = async (url: string, webpageId: number) => {
+export const fetchHead = async (url: string) => {
+  const res = await fetch(url)
+  const text = await res.text()
+  const parser = new DOMParser()
+  const dom = parser.parseFromString(text, 'text/html')
+  const head = dom.head
+  const title = head.querySelector('title')?.textContent
+  const metas = Array.from(head.querySelectorAll('meta').values())
+  const descriptionMeta = metas.find(i => i.name === 'description' || i.getAttribute('property') === 'og:description')?.content
+  const imageMeta = metas.find(i => i.getAttribute('property') === 'og:image')?.content
+  const coverImgSrc = imageMeta && (await fetchRemoteImageAndSaveLocally(imageMeta))
+  return {
+    title,
+    description: descriptionMeta,
+    coverImgSrc
+  }
+}
+export const fetchHeadAndUpdateWebpage = async (url: string, webpageId: number) => {
   const res = await fetch(url)
   const text = await res.text()
   const parser = new DOMParser()
@@ -89,14 +106,6 @@ const fetchHeadAndUpdateWebpage = async (url: string, webpageId: number) => {
   ObjectStore('webpage').updateOne({ id: webpageId, favicon: iconSrc, title })
   setTimeout(() => {
     const webpageMeta = MetaStore.getMetaObjectByObjectId(webpageId)
-    console.log({
-      coverImgSrc,
-      imageMeta,
-      descriptionMeta,
-      icon,
-      realIcon,
-      title
-    })
     if (webpageMeta) {
       MetaStore.updateMetaObject(
         {

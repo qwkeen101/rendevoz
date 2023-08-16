@@ -51,24 +51,6 @@ const MetaObjectNode: FC<InnerNodeProps> = ({ node: n, setPopoverElements, setNo
           return [
             ...eles,
             () => (
-              <Tooltip position="top" content="Edit Object Details">
-                <Icon
-                  size={18}
-                  className={ClassName.circleButton(undefined, 4)}
-                  name="park-edit"
-                  onClick={() => {
-                    GlobalEventEmitter().emit('global', {
-                      type: 'globalNeedEditMetaObject',
-                      data: {
-                        metaObjectId: metaObject.id
-                      }
-                    })
-                    setNodeState?.(s => ({ ...s, popoverVisible: false }))
-                  }}
-                />
-              </Tooltip>
-            ),
-            () => (
               <Tooltip position="top" content="Show Object Info">
                 <Icon
                   size={18}
@@ -115,24 +97,6 @@ const MetaObjectNode: FC<InnerNodeProps> = ({ node: n, setPopoverElements, setNo
         setPopoverElements?.(eles => {
           return [
             ...eles,
-            () => (
-              <Tooltip position="top" content="Edit Object Details">
-                <Icon
-                  size={18}
-                  className={ClassName.circleButton(undefined, 4)}
-                  name="park-edit"
-                  onClick={() => {
-                    GlobalEventEmitter().emit('global', {
-                      type: 'globalNeedEditMetaObject',
-                      data: {
-                        metaObjectId: metaObject.id
-                      }
-                    })
-                    setNodeState?.(s => ({ ...s, popoverVisible: false }))
-                  }}
-                />
-              </Tooltip>
-            ),
             () => (
               <Tooltip position="top" content="Show Object Info">
                 <Icon
@@ -195,18 +159,19 @@ const MetaObjectNode: FC<InnerNodeProps> = ({ node: n, setPopoverElements, setNo
       },
       titleOptions: {
         style: {
-          fontSize: FontSize['16px'],
+          fontSize: FontSize['14px'],
           whiteSpace: 'pre-wrap'
-        }
+        },
+        ellipsisLine: 999
       },
       descriptionOptions: {
         style: {
-          fontSize: FontSize['14px']
+          fontSize: FontSize['13px']
         }
       },
       fromOptions: {
         style: {
-          fontSize: FontSize['13px'],
+          fontSize: FontSize['12px'],
           gap: '0.3rem'
         },
         className: ClassName.ellipsisFont(1)
@@ -236,7 +201,7 @@ const MetaObjectNode: FC<InnerNodeProps> = ({ node: n, setPopoverElements, setNo
     }
   }, [hasImage])
   const hasImageRenderer = () => (
-    <Content fullWidth flex column style={{ height: 450, minHeight: '100%' }}>
+    <Content fullWidth flex column style={{ height: 450, minHeight: '100%', maxHeight: '100%' }}>
       <img
         draggable={false}
         ref={imageRef}
@@ -304,7 +269,11 @@ const MetaObjectNode: FC<InnerNodeProps> = ({ node: n, setPopoverElements, setNo
             />
           )
         case 'video':
-          return <Video videoId={metaObject.objectId} />
+          return (
+            <div style={{ width: '600px', maxWidth: '100%', minWidth: '100%' }}>
+              <Video onlyCore={true} videoId={metaObject.objectId} />
+            </div>
+          )
         case 'note': {
           return (
             <NoteNode

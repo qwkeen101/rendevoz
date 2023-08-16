@@ -1,36 +1,34 @@
-import { AttachmentList } from "@/core";
-import { useEffect, useRef } from "react";
-import { IMetaAttachment, MetaObject } from "~/typings";
-import { Content, Icon } from "../base";
-import ClassName from "@/styles/classNames";
-import { useTranslation } from "react-i18next";
-import { groupClassName, hoverLabelClassName } from "./useFlipForm";
+import { AttachmentList } from '@/core'
+import { useEffect, useRef } from 'react'
+import { IMetaAttachment, MetaObject } from '~/typings'
+import { Content, Icon } from '../base'
+import ClassName from '@/styles/classNames'
+import { useTranslation } from 'react-i18next'
+import { groupClassName, hoverLabelClassName } from './useFlipForm'
 
 export const FormAttachmentManager = ({
   attachments,
   onAttachmentsChange,
   onClose,
-  metaId,
+  metaId
 }: {
-  onClose: VoidFunction;
-  attachments: MetaObject["attachments"];
-  onAttachmentsChange: (atts?: IMetaAttachment[]) => void;
-  metaId: number;
+  onClose: VoidFunction
+  attachments: MetaObject['attachments']
+  onAttachmentsChange: (atts?: IMetaAttachment[]) => void
+  metaId: number
 }) => {
-  const { t } = useTranslation();
-  const containerRef = useRef<HTMLElement>(null);
+  const { t } = useTranslation()
+  const containerRef = useRef<HTMLElement>(null)
   useEffect(() => {
-    const containerModal = containerRef.current?.closest(
-      "[role='modal-container']"
-    );
+    const containerModal = containerRef.current?.closest("[role='modal-container']")
     if (containerModal) {
-      const currentZindex = containerModal.style.zIndex;
-      containerModal.style.zIndex = "10000";
+      const currentZindex = containerModal.style.zIndex
+      containerModal.style.zIndex = '10000'
       return () => {
-        containerModal.style.zIndex = currentZindex;
-      };
+        containerModal.style.zIndex = currentZindex
+      }
     }
-  }, []);
+  }, [])
   return (
     <Content
       flex
@@ -38,39 +36,33 @@ export const FormAttachmentManager = ({
       column
       style={{
         minWidth: 300,
-        maxWidth: 500,
+        maxWidth: 500
       }}
     >
       <div
         style={{
           marginBottom: 16,
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "baseline",
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'baseline',
           marginLeft: 8,
           marginRight: -4,
-          textTransform: "capitalize",
+          textTransform: 'capitalize'
         }}
         className={ClassName.description()}
       >
-        {t("general.manage attachments")}
-        <Icon
-          name="park-close"
-          onClick={onClose}
-          className={ClassName.circleButton()}
-        />
+        {t('general.manage attachments')}
+        <Icon name="park-close" onClick={onClose} className={ClassName.circleButton()} />
       </div>
-      <div
-        style={{ height: 0, flex: 1, display: "flex", flexDirection: "column" }}
-      >
+      <div style={{ height: 0, flex: 1, display: 'flex', flexDirection: 'column' }}>
         <AttachmentList
           parentMetaId={metaId}
           style={{ flex: 1 }}
           innerContainerStyle={{
-            justifyContent: "space-between",
+            justifyContent: 'space-between',
             minHeight: 200,
-            maxHeight: "60vh",
-            overflowY: "auto",
+            maxHeight: '60vh',
+            overflowY: 'auto'
           }}
           maxVisibleAttachments={99999}
           onAttachmentsChange={onAttachmentsChange}
@@ -78,14 +70,14 @@ export const FormAttachmentManager = ({
         ></AttachmentList>
       </div>
     </Content>
-  );
-};
+  )
+}
 export const FormAttachmentDisplayer = ({ length }: { length: number }) => {
-  const { t } = useTranslation();
+  const { t } = useTranslation()
   return (
     <div className={groupClassName}>
-      <div className={hoverLabelClassName}>{t("general.attachments")}</div>
+      <div className={hoverLabelClassName}>{t('general.attachments')}</div>
       <div>{length} attachments</div>
     </div>
-  );
-};
+  )
+}

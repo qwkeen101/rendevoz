@@ -48,3 +48,7 @@ export const changeFilePath = async (newPath: string) => {
 export const openDatabaseFolder = () => {
   ipcInstance.send('openDatabaseFolder')
 }
+
+export const deleteRendefile = (url: string) => {
+  ipcInstance.send('deleteRendefile', url)
+}

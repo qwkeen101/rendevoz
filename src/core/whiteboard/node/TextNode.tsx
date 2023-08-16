@@ -22,7 +22,7 @@ const TextNode = ({ node }: InnerNodeProps) => {
       style={{
         background: 'transparent',
         width: '100%',
-        height: '100%',
+        height: 'calc(100% - 6px)',
         resize: 'none',
         border: 'none',
         overflowY: 'auto',

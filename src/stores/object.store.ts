@@ -22,7 +22,7 @@ import {
   IWhiteboardEdge,
   IWhiteboardNode,
   MetaObject
-} from 'rendevoz'
+} from '~/typings'
 import { globalStore, MetaStore, ObjectStore } from '.'
 import BaseStore, { initializeLocalStore } from './base.store'
 import { metaObjectsAtom, objectIdToMetaObjectIdMapAtom, tagToMetaObjectIdsMapAtom, TypeToRegisteredMetaObject } from './meta.store'
@@ -30,23 +30,10 @@ import { IStore } from './store.type'
 import { useGlobalAtomValue } from '@/hooks'
 import Id from '@/utils/id'
 import { INotificationSetting } from '@/core'
+import { CustomTypes } from 'rendevoz'
+import { deleteRendefile } from '@/utils'
 
-export type ObjectFamily = {
-  webpage: IWebpage
-  audio: IAudio
-  note: { specType: 'note' } & INote
-  noteLabel: INoteLabel
-  noteBlock: INoteBlock
-  webpageLabel: IWebpageLabel
-  pdf: { specType: 'pdf' } & IPdfDocument
-  whiteboard: { specType: 'whiteboard' } & IWhiteboard
-  pdfLabel: ILabel & { specType: 'pdfLabel' }
-  tag: ITag & { specType: 'tag' }
-  image: IImage
-  localFile: ILocalFile
-  video: IVideo
-  videoLabel: IVideoLabel
-}
+export type ObjectFamily = CustomTypes['Object']
 
 export const ObjectFamilyAtom = atomFamily(() => atom(new Map<number, ObjectFamily[keyof ObjectFamily]>()))
 
@@ -164,20 +151,14 @@ const createObjectStore = <T extends keyof ObjectFamily, V extends ObjectFamily[
         (obj, silent) => {
           setTimeout(() => {
             const meta = Array.from(globalStore.get(metaObjectsAtom).values()).find(i => i.objectId === obj.id)
-            console.log(meta, obj)
-            if (meta && 'name' in obj && meta.name !== obj.name && 'name' in n && obj.name !== n.name) {
+            console.log(meta, obj, n)
+            if (meta && 'name' in obj && meta.name !== obj.name && 'name' in n) {
               MetaStore.updateMetaObject({ id: meta.id, name: obj.name }, true)
             }
-            if (
-              meta &&
-              'description' in obj &&
-              meta.description !== obj.description &&
-              'description' in n &&
-              obj.description !== n.description
-            ) {
+            if (meta && 'description' in obj && meta.description !== obj.description && 'description' in n) {
               MetaStore.updateMetaObject({ id: meta.id, description: obj.description }, true)
             }
-          })
+          }, 500)
           options?.afterUpdateProcess?.onSuccess?.(obj, silent)
         },
         silent => {
@@ -191,13 +172,58 @@ const createObjectStore = <T extends keyof ObjectFamily, V extends ObjectFamily[
         return Promise.reject()
       }
       const one = await realStore.getOneById(id)
+      const handleRemoveNote = async (noteId: number) => {
+        const note = await ObjectStore('note').getOneById(noteId)
+        if (note) {
+          const contentId = note.contentId
+          const blobDb = useDb('blobs')
+          const url = await blobDb.get(contentId)
+          if (url?.fileUrl.startsWith('rendefile')) {
+            await deleteRendefile(url.fileUrl)
+          }
+        }
+      }
       if (one) {
+        switch (one.specType) {
+          case 'webpage': {
+            if (one.noteId) {
+              await handleRemoveNote(one.noteId)
+            }
+            break
+          }
+          case 'video': {
+            if (one.videoUrl?.startsWith('rendefile')) {
+              deleteRendefile(one.videoUrl)
+            }
+            break
+          }
+          case 'pdf': {
+            if (one.fileUrl?.startsWith('rendefile')) {
+              deleteRendefile(one.fileUrl)
+            }
+            break
+          }
+          case 'image': {
+            if (one.imageUrl?.startsWith('rendefile')) {
+              deleteRendefile(one.imageUrl)
+            }
+            break
+          }
+          case 'note': {
+            await handleRemoveNote(one.id)
+            break
+          }
+        }
         return initalizedLocalStore.deleteOneById(() => {
           options?.afterDeleteProcess?.(one)
           const objectIdToMetaObjectIdMap = globalStore.get(objectIdToMetaObjectIdMapAtom)
           const targetMeta = objectIdToMetaObjectIdMap?.get(id)
+
           if (targetMeta) {
-            MetaStore.deleteMetaObject(targetMeta, true, true)
+            const includesMeta = MetaStore.getMetaObjectsMap().get(targetMeta)
+            if (includesMeta) {
+              MetaStore.deleteMetaObject(targetMeta, true, true)
+            }
           }
         })(id, opts?.silent, opts?.force)
       }
@@ -270,16 +296,12 @@ export const objectStore = <T extends keyof ObjectFamily>(
       switch (type) {
         case 'webpage':
           return createWebpageStore()
-        case 'noteLabel':
-          return createNoteLabelStore()
         case 'note':
           return createNoteStore()
         case 'tag':
           return createTagStore()
         case 'whiteboard':
           return createWhiteboardStore()
-        case 'videoLabel':
-          return createVideoLabelStore()
         default:
           return createObjectStore(type)
       }
@@ -304,15 +326,22 @@ const createNoteStore = () => {
       const blobDb = useDb('blobs')
       blobDb.delete(obj.contentId)
     },
-    afterUpdateProcess: {
-      onSuccess: obj => {
-        console.log(obj)
-        const metaId = globalStore.get(objectIdToMetaObjectIdMapAtom)?.get(obj.id)
+    beforeUpdateProcess: n => {
+      if (n.title) {
+        n.name = n.title
+        const metaId = globalStore.get(objectIdToMetaObjectIdMapAtom)?.get(n.id)
         if (metaId) {
           const meta = globalStore.get(metaObjectsAtom).get(metaId)
-          if (meta && meta.name !== obj.title) {
-            MetaStore.updateMetaObject({ id: metaId, name: obj.title }, true)
+          if (meta && meta.name !== n.title) {
+            MetaStore.updateMetaObject({ id: metaId, name: n.title }, true)
           }
+        }
+      }
+    },
+    afterUpdateProcess: {
+      onSuccess: obj => {
+        if (obj.name && obj.name !== obj.title) {
+          ObjectStore('note').updateOne({ id: obj.id, title: obj.name })
         }
       }
     }
@@ -365,9 +394,7 @@ const createWhiteboardStore = () => {
     }
   })
 }
-const createNoteLabelStore = () => {
-  return createObjectStore('noteLabel', {})
-}
+
 const createTagStore = () => {
   return createObjectStore('tag', {
     beforeDeleteProcess: async id => {
@@ -390,28 +417,7 @@ const createTagStore = () => {
     }
   })
 }
-const createVideoLabelStore = () => {
-  return createObjectStore('videoLabel', {
-    afterUpdateProcess: {
-      onSuccess: obj => {
-        const labelMeta = MetaStore.getMetaObjectByObjectId(obj.id)
-        console.log(obj, labelMeta)
-        if (labelMeta) {
-          if (labelMeta.name !== obj.name || labelMeta.description !== obj.description) {
-            MetaStore.updateMetaObject(
-              {
-                id: labelMeta.id,
-                name: obj.name || 'Unnamed Video Label',
-                description: obj.description
-              },
-              true
-            )
-          }
-        }
-      }
-    }
-  })
-}
+
 export const getObjectById = <T extends keyof ObjectFamily>(id: number): Promise<ObjectFamily[T]> => {
   const objectsDb = useDb('objects')
   return objectsDb.get(id)

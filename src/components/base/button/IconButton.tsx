@@ -29,6 +29,7 @@ const IconButton = forwardRef(
       tooltip,
       spin,
       enabled,
+      suffixIcon,
       ...rest
     }: {
       icon?: string
@@ -43,6 +44,7 @@ const IconButton = forwardRef(
       tabIndex?: number
       selected?: boolean
       style?: CSSProperties
+      suffixIcon?: string
       tooltip?: string
       spin?: boolean
       onPointerEnter?: React.PointerEventHandler
@@ -90,6 +92,7 @@ const IconButton = forwardRef(
           {icon && <Icon spin={spin} name={icon} />}
           {text && <div>{text}</div>}
           {enabled && <Icon name="park-check-small" containerStyle={{ marginLeft: 'auto' }} />}
+          {suffixIcon && <Icon name={suffixIcon} containerStyle={{ marginLeft: 'auto' }} />}
         </Content>
       </Tooltip>
     )

@@ -30,6 +30,7 @@ import { nodeClassName, nodeNameClassName } from './nodeClasses'
 import TextNode from '@/core/whiteboard/node/TextNode'
 import { useScopedEventEmitter } from '@/events'
 import { getSetting, SettingAtom } from '@/core'
+import useAddingEdgeInsideNode from '@/core/whiteboard/hooks/useAddingEdgeInsideNode'
 
 type NodeInnerState = Partial<{
   popoverVisible: boolean
@@ -52,15 +53,11 @@ const transparentBackgroundNodes = ['text']
 const WrapperNode = ({ node }: { node: IWhiteboardNode }) => {
   const { x, y, type, name, id, background, width, height } = node
   const containerRef = useRef<HTMLDivElement>()
-
   const flow = useFlow()
-
   const setNodes = useSetWhiteboardNodes()
   const setEdges = useSetWhiteboardEdges()
-  const [addingEdgeState, setAddingEdgeState] = useAddingEdges()
   const isDraggingRef = useRef(false)
   const isResizingRef = useRef(false)
-  const innerNodeIdsRef = useRef(new Set<number>())
   const [nodeState, setNodeState] = useState<NodeInnerState>({
     popoverVisible: false,
     expanded: false,
@@ -168,6 +165,7 @@ const WrapperNode = ({ node }: { node: IWhiteboardNode }) => {
   }
 
   const { handleGroupMove, handleGroupMoveEnd, handleGroupMoveStart } = type === 'group' ? useGroupDrag(node) : {}
+
   const handleSelectIntersection = () => {
     const nodeData = getNodeData(id, flow)
     if (nodeData?.transformedXY && flow.selectBox && flow.selectStartPoint) {
@@ -223,88 +221,6 @@ const WrapperNode = ({ node }: { node: IWhiteboardNode }) => {
       getNode: () => node
     })
   }
-  const getInGroupNodes = () => {
-    if (innerNodeIdsRef.current.size > 0) return
-    if (type === 'group' && width && height) {
-      flow.ID_TO_NODE_ELEMENT_MAP.forEach((node, id) => {
-        if (
-          node.boxIntersect({
-            width,
-            height,
-            left: x,
-            top: y
-          })
-        ) {
-          innerNodeIdsRef.current.add(id)
-        }
-      })
-    }
-  }
-  useEffect(() => {
-    const container = containerRef.current
-    if (addingEdgeState.isAdding && container) {
-      const pointerHandler = (e: PointerEvent) => {
-        if (e.type === 'pointerenter') {
-          getInGroupNodes()
-          setAddingEdgeState(s => ({
-            ...s,
-            targetNodeId: id
-          }))
-        }
-        if (e.type === 'pointerleave') {
-          setAddingEdgeState(s => ({
-            ...s,
-            targetNodeId: undefined
-          }))
-        }
-        if (e.type === 'pointerup') {
-          setAddingEdgeState({
-            isAdding: false
-          })
-        }
-      }
-      const pointerMoveHandler = (e: PointerEvent) => {
-        getInGroupNodes()
-        if (innerNodeIdsRef.current.has(addingEdgeState.sourceNodeId)) {
-          setAddingEdgeState(s => ({
-            ...s,
-            targetNodeId: undefined,
-            targetPosition: undefined
-          }))
-          return
-        }
-        const containerBound = container.getBoundingClientRect()
-        const position = getRelativeHandlePosition(
-          {
-            width: containerBound.width,
-            height: containerBound.height
-          },
-          {
-            x: e.clientX - containerBound.x,
-            y: e.clientY - containerBound.y
-          }
-        )
-        setAddingEdgeState(s => ({
-          ...s,
-          targetPosition: position,
-          targetNodeId: id
-        }))
-      }
-      container.addEventListener('pointermove', pointerMoveHandler)
-      container.addEventListener('pointerenter', pointerHandler)
-      container.addEventListener('pointerleave', pointerHandler)
-      document.addEventListener('pointerup', pointerHandler)
-      return () => {
-        container.removeEventListener('pointerenter', pointerHandler)
-        container.removeEventListener('pointerleave', pointerHandler)
-        document.removeEventListener('pointerup', pointerHandler)
-        container.removeEventListener('pointermove', pointerMoveHandler)
-      }
-    } else {
-      innerNodeIdsRef.current.clear()
-    }
-  }, [addingEdgeState.isAdding])
-
   useEffect(() => {
     setTimeout(() => rafUpdateEdge())
   }, [nodeState.expanded])
@@ -367,7 +283,7 @@ const WrapperNode = ({ node }: { node: IWhiteboardNode }) => {
       }
     }
   }, [])
-
+  const { shouldDisplayCover, groupEnablePointer } = useAddingEdgeInsideNode(node, containerRef.current)
   const { stringColor, darkenBackground, stringDefaultColor, lightenDefaultColor, opacityBackground, darkenSecondBackground } =
     useMemo(() => {
       const defaultColor = tinycolor('#c9c9c9')
@@ -439,7 +355,7 @@ const WrapperNode = ({ node }: { node: IWhiteboardNode }) => {
       enableResizing={mouseIn ? true : false}
       style={{
         zIndex: type === 'group' ? -10000 : nodeState.expanded ? 1000 : undefined,
-        cursor: addingEdgeState.isAdding ? 'pointer' : nodeState.focused || nodeState.locked ? 'auto' : 'grab',
+        cursor: shouldDisplayCover ? 'pointer' : nodeState.focused || nodeState.locked ? 'auto' : 'grab',
         boxShadow: getNodeBoxShadow(),
         background:
           type === 'group'
@@ -451,8 +367,8 @@ const WrapperNode = ({ node }: { node: IWhiteboardNode }) => {
             : Colors.Background.Linear,
         pointerEvents:
           type === 'group'
-            ? (nodeState.popoverVisible || nodeState.focused || nodeState.locked || nodeState.selected || addingEdgeState.isAdding) &&
-              (addingEdgeState.sourceNodeId ? !innerNodeIdsRef.current.has(addingEdgeState.sourceNodeId) : true)
+            ? (nodeState.popoverVisible || nodeState.focused || nodeState.locked || nodeState.selected || shouldDisplayCover) &&
+              groupEnablePointer
               ? 'auto'
               : 'none'
             : 'auto',
@@ -601,8 +517,8 @@ const WrapperNode = ({ node }: { node: IWhiteboardNode }) => {
               if (origin) {
                 draft.set(id, {
                   ...origin,
-                  x: nodeData.transformedXY?.x,
-                  y: nodeData.transformedXY.y
+                  x: Number(nodeData.transformedXY.x.toFixed(2)),
+                  y: Number(nodeData.transformedXY.y.toFixed(2))
                 })
               }
             })
@@ -665,7 +581,7 @@ const WrapperNode = ({ node }: { node: IWhiteboardNode }) => {
         </Content>
       )}
       <AnimatePopover
-        visible={!!nodeState.popoverVisible && !addingEdgeState.isAdding && !nodeState.isEditingName}
+        visible={!!nodeState.popoverVisible && !shouldDisplayCover && !nodeState.isEditingName}
         positions={['top']}
         parentElement={flow.parentContainerEle}
         reposition={false}
@@ -701,8 +617,8 @@ const WrapperNode = ({ node }: { node: IWhiteboardNode }) => {
           style={{
             minHeight: 'auto',
             maxHeight: '100%',
-            overflowY: 'overlay',
-            overflowX: 'hidden',
+            // overflowY: 'overlay',
+            // overflowX: 'hidden',
             borderRadius: 6
           }}
           onWheelCapture={e => {
@@ -712,7 +628,7 @@ const WrapperNode = ({ node }: { node: IWhiteboardNode }) => {
             e.stopPropagation()
           }}
         >
-          {renderInnerNode()}
+          <div style={{ width: '100%', height: '100%', overflowX: 'hidden', overflowY: 'overlay' }}>{renderInnerNode()}</div>
           {!nodeState.focused && !nodeState.locked && (
             <div
               onClick={e => {
@@ -795,7 +711,7 @@ const ChangeNameInput = ({
       onChange={e => setInnerName(e.target.value)}
     />
   ) : (
-    <div className={ClassName.ellipsisFont(1)} style={{ textTransform: 'none' }}>
+    <div className={ClassName.ellipsisFont(1)}>
       {name || 'Unnamed Group'}
     </div>
   )

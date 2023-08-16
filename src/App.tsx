@@ -3,7 +3,15 @@ import './common.less'
 import TitleBar from './components/titlebar'
 import Initializer from './Initializer'
 import './global.less'
-import { GlobalCreateObject, GlobalDragOverlay, GlobalGraph, GlobalObjectPanel, GlobalScreenShot, useSetting } from '@/core'
+import {
+  GlobalCreateObject,
+  GlobalDragOverlay,
+  GlobalGraph,
+  GlobalObjectPanel,
+  GlobalScreenShot,
+  ObjectTimeline,
+  useSetting
+} from '@/core'
 import Notification from './components/NotificationCenter'
 import '@/core/editor/dock.less'
 import SvgMarker from './components/svg/Marker'
@@ -48,6 +56,8 @@ import InnerHookz from '@/core/rendevoz/hooks'
 import * as InnerComponentz from '@/core/rendevoz/components'
 import createCache from '@emotion/cache'
 import { startDrive } from '@/driver'
+import ReviewManager from '@/core/review/components/ReviewManager'
+import TimelineManager from '@/core/database/TimelineManager'
 export function getOS() {
   const userAgent = window.navigator.userAgent.toLowerCase(),
     macosPlatforms = /(macintosh|macintel|macppc|mac68k|macos)/i,
@@ -106,7 +116,7 @@ const RENDEVOZ_DEFAULT_TABS: TabData[ILayoutTab['type']][] = [
   },
   {
     type: 'whiteboard',
-    content: opts => opts.objectId && <WhiteboardPage whiteboardId={opts.objectId} onInstanceInitialized={opts.onInstanceInitialized}/>
+    content: opts => opts.objectId && <WhiteboardPage whiteboardId={opts.objectId} onInstanceInitialized={opts.onInstanceInitialized} />
   },
   {
     type: 'home',
@@ -119,6 +129,14 @@ const RENDEVOZ_DEFAULT_TABS: TabData[ILayoutTab['type']][] = [
   {
     type: 'graph',
     content: () => <GraphPage />
+  },
+  {
+    type: 'review',
+    content: () => <ReviewManager />
+  },
+  {
+    type: 'timeline',
+    content: () => <ObjectTimeline />
   }
 ]
 
@@ -140,9 +158,11 @@ const App = () => {
     RENDEVOZ_DEFAULT_TABS.forEach(i => Rendevoz.Actions.Layout.registerTabData(i))
     GlobalPluginManager.registerPlugin(BuiltinEditorPlugin)
     executed.current = true
-    // setTimeout(() => {
-    //   startDrive()
-    // }, 1000)
+
+    setTimeout(() => {
+      // startDrive()
+      // Rendevoz.Actions.Layout.openNewTab({ data: { type: 'review' } })
+    }, 2000)
   }
 
   useEffect(() => {

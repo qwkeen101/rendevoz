@@ -82,14 +82,19 @@ const defaultSetting: Setting = {
     enableDropAutoGenerateObject: true
   },
   whiteboard: {
-    enableMinimap: true,
+    enableMinimap: false,
     enableAddLinkBetweenObjectsWhenConnect: false,
-    imageResizeKeepRatio: true,
+    imageResizeKeepRatio: false,
     snapToObject: true,
-    dropFileAutoObject: true
+    dropFileAutoObject: true,
+    defaultLineType: 'curve',
+    defaultBackgroundType: 'dot'
   },
   editor: {
     objectAutoBecomeInline: true
+  },
+  object: {
+    deleteFileWhenDeleteObject: true
   },
   translate: {
     autoGotoHoverText: true,

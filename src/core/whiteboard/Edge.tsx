@@ -1,14 +1,14 @@
 import { FC, memo, MouseEventHandler, useEffect, useMemo, useRef, useState } from 'react'
 import { IWhiteboardEdge } from '~/typings'
-import { useFlow, useSetWhiteboardEdges } from './hooks'
+import { IsAddingEdgeAtom, useFlow, useSetWhiteboardEdges, WhiteboardAtom, WhiteboardEdgesAtom } from './hooks'
 import { getBezierPath, getEdgeData, transformXY } from './utils'
 import { getMarkerId } from '../graph/utils/getMarkerId'
 import { MarkerColor } from '@/consts'
 import { motion } from 'framer-motion'
 import { Position } from '@/types'
-import { AnimatePopover, Icon, IconWithPopover, Tooltip, WithBorder } from '@/components'
+import { AnimatePopover, Content, Icon, IconWithPopover, Tooltip, WithBorder } from '@/components'
 import Zindexes from '@/consts/zindex'
-import { useToggle } from '@/hooks'
+import { useSelectAtomValue, useSelectGlobalAtomValue, useToggle } from '@/hooks'
 import BlockColorPicker from '../editor/components/BlockColorPicker'
 import { defaultBgColor } from '@/components/picker/colorPicker'
 import ClassName from '@/styles/classNames'
@@ -18,19 +18,40 @@ import { hexToRgb } from '@/utils/color'
 import useClickOutside from '@/hooks/utils/useClickOutside'
 import { throttle } from 'lodash'
 import Colors from '@/consts/colors'
-import { css } from '@emotion/css'
+import { css, keyframes } from '@emotion/css'
 import FontSize from '@/consts/font'
+import { getSmoothPolyPath } from '@/core/whiteboard/utils/getSmoothPoly'
+import { useAtomValue, useSetAtom } from 'jotai'
+import { disableAllUserSelect } from '@/components/base/ResizeAndDrag'
+import { SettingAtom } from '@/core'
+import { useTranslation } from 'react-i18next'
+import Select from '@/components/base/select'
+
+const keyframe = keyframes({
+  '0%': {
+    strokeDashoffset: 10
+  }
+})
+
+export const animatedEdgeClazz = css({
+  strokeDasharray: 5,
+  animation: `${keyframe} 0.5s linear infinite`
+})
+export const dashEdgeClazz = css({
+  strokeDasharray: 5
+})
 
 const TreeEdge: FC<{
   edge: IWhiteboardEdge
 }> = memo(({ edge }) => {
-  const { id, sourceId, targetId, targetPosition = 'left', sourcePosition = 'right', metaLinkId } = edge
+  const { id, sourceId, targetId, targetPosition = 'left', sourcePosition = 'right', metaLinkId, lineType, lineStyle = 'straight' } = edge
   const [innerLink, setInnerLink] = useState<Partial<IWhiteboardEdge>>(edge)
   const [isEditingLabel, toggleIsEditingLabel] = useToggle(false)
-
+  const defaultLineType = useSelectAtomValue(WhiteboardAtom, s => s?.lineType)
+  const realLineType = lineType || defaultLineType
   const labelRef = useRef<HTMLDivElement>(null)
   const labelContainerRef = useRef<SVGGElement>(null)
-
+  const setAddingEdge = useSetAtom(IsAddingEdgeAtom)
   const flow = useFlow()
 
   const edgeRef = useRef<SVGPathElement>(null)
@@ -47,6 +68,7 @@ const TreeEdge: FC<{
   >({
     visible: false
   })
+
   const underEdgeRef = useRef<SVGPathElement>(null)
 
   const drawPath = () => {
@@ -58,17 +80,39 @@ const TreeEdge: FC<{
       const containerBound = container.getBoundingClientRect()
       const { x: TSX, y: TSY } = transformXY(containerBound, sourceX, sourceY, flow.containerTransformScale)
       const { x: TTX, y: TTY } = transformXY(containerBound, targetX, targetY, flow.containerTransformScale)
-      const [path, labelX, labelY] = getBezierPath({
-        sourceX: TSX,
-        sourceY: TSY,
-        targetX: TTX,
-        targetY: TTY,
-        sourcePosition,
-        targetPosition
-      })
-      edgeRef.current?.setAttribute('d', path)
-      pathRef.current = path
-      labelContainerRef.current?.setAttribute('transform', `translate(${labelX} ${labelY})`)
+      if (realLineType === 'curve') {
+        const [path, labelX, labelY] = getBezierPath({
+          sourceX: TSX,
+          sourceY: TSY,
+          targetX: TTX,
+          targetY: TTY,
+          sourcePosition,
+          targetPosition
+        })
+        edgeRef.current?.setAttribute('d', path)
+        pathRef.current = path
+        labelContainerRef.current?.setAttribute('transform', `translate(${labelX} ${labelY})`)
+      }
+      if (realLineType === 'straight') {
+        const path = `M ${TSX},${TSY} L ${TTX},${TTY}`
+        edgeRef.current?.setAttribute('d', path)
+        pathRef.current = path
+        labelContainerRef.current?.setAttribute('transform', `translate(${(TSX + TTX) / 2} ${(TSY + TTY) / 2})`)
+      }
+      if (realLineType === 'polyline') {
+        const [path, labelX, labelY] = getSmoothPolyPath({
+          sourceX: TSX,
+          sourceY: TSY,
+          sourcePosition,
+          targetPosition,
+          targetX: TTX,
+          targetY: TTY,
+          borderRadius: 4
+        })
+        edgeRef.current?.setAttribute('d', path)
+        pathRef.current = path
+        labelContainerRef.current?.setAttribute('transform', `translate(${labelX} ${labelY})`)
+      }
     }
   }
 
@@ -88,8 +132,28 @@ const TreeEdge: FC<{
       nodeToEdgesMap.get(sourceId)?.delete(id)
       nodeToEdgesMap.get(targetId)?.delete(id)
     }
-  }, [])
+  }, [sourceId, targetId])
+
   const clickHandler: MouseEventHandler = e => {
+    const container = flow?.containerEle
+    const edgeData = getEdgeData(sourceId, targetId, sourcePosition, targetPosition, flow)
+
+    if (edgeData && container) {
+      const { sourceX, sourceY, targetX, targetY } = edgeData
+      const containerBound = container.getBoundingClientRect()
+      const { x: TSX, y: TSY } = transformXY(containerBound, sourceX, sourceY, flow.containerTransformScale)
+      const { x: TTX, y: TTY } = transformXY(containerBound, targetX, targetY, flow.containerTransformScale)
+      const s = getSmoothPolyPath({
+        sourceX: TSX,
+        sourceY: TSY,
+        sourcePosition,
+        targetPosition,
+        targetX: TTX,
+        targetY: TTY,
+        borderRadius: 4
+      })
+      console.log(s.pop())
+    }
     setPopoverState(s => ({
       visible: !s.visible,
       position: {
@@ -105,6 +169,74 @@ const TreeEdge: FC<{
       labelRef.current.textContent = edge.label || ''
     }
   }, [edge?.label])
+
+  const handlePointerDown = (e: PointerEvent) => {
+    const node = e.currentTarget as SVGElement
+    const bounding = node.getBoundingClientRect()
+    const edgeData = getEdgeData(sourceId, targetId, sourcePosition, targetPosition, flow)
+    if (!edgeData) return
+    document.body.classList.add(disableAllUserSelect)
+    const center = bounding.left + bounding.width / 2
+    let drag = 'dragSource'
+
+    if (e.clientX < center) {
+      if (edgeData.sourceX > edgeData.targetX) {
+        drag = 'dragTarget'
+      }
+    } else {
+      if (edgeData.sourceX < edgeData.targetX) {
+        drag = 'dragTarget'
+      }
+    }
+
+    // right to left
+
+    const currPos = {
+      x: e.clientX,
+      y: e.clientY
+    }
+    let inited = false
+    const globalPointerMoveHandler = (e: PointerEvent) => {
+      const curr = {
+        x: e.clientX,
+        y: e.clientY
+      }
+
+      if (!inited && (Math.abs(curr.x - currPos.x) > 10 || Math.abs(curr.y - currPos.y) > 10)) {
+        inited = true
+        node.style.display = 'none'
+        if (drag === 'dragSource') {
+          setAddingEdge(s => ({
+            isAdding: false,
+            currentEdgeId: id,
+            isReposition: true,
+            currentRepositionEnd: 'source',
+            targetPosition,
+            targetNodeId: targetId
+          }))
+        } else {
+          setAddingEdge(s => ({
+            isAdding: false,
+            currentEdgeId: id,
+            isReposition: true,
+            currentRepositionEnd: 'target',
+            sourcePosition,
+            sourceNodeId: sourceId
+          }))
+        }
+
+        document.removeEventListener('pointermove', globalPointerMoveHandler)
+      }
+    }
+    const globalPointerUpHandler = () => {
+      node.style.display = 'unset'
+      document.body.classList.remove(disableAllUserSelect)
+      document.removeEventListener('pointermove', globalPointerMoveHandler)
+      document.removeEventListener('pointerup', globalPointerUpHandler)
+    }
+    document.addEventListener('pointermove', globalPointerMoveHandler)
+    document.addEventListener('pointerup', globalPointerUpHandler)
+  }
   useEffect(() => {
     if (isEditingLabel) {
       const keydownHandler = (e: KeyboardEvent) => {
@@ -152,6 +284,10 @@ const TreeEdge: FC<{
       }
     }
   }, [isIn])
+  useEffect(() => {
+    drawPath()
+  }, [sourceId, sourcePosition, targetPosition, targetId, realLineType])
+
   return (
     <>
       {createPortal(
@@ -163,7 +299,7 @@ const TreeEdge: FC<{
           disableNudge
           reposition={false}
           content={
-            <WithBorder style={{ display: 'flex', gap: 6, padding: '2px 6px' }}>
+            <WithBorder style={{ display: 'flex', gap: 6, padding: '2px 6px', alignItems: 'center' }}>
               <Tooltip content="Change Edge Label">
                 <Icon
                   className={ClassName.circleButton(undefined, 4)}
@@ -196,6 +332,25 @@ const TreeEdge: FC<{
                   />
                 }
               ></IconWithPopover>
+              <IconWithPopover
+                size={18}
+                name="custom-straight"
+                className={ClassName.circleButton(undefined, 4)}
+                content={
+                  <EdgeStylePicker
+                    onChange={v => {
+                      updateEdge({
+                        ...v
+                      })
+                      setInnerLink({
+                        ...innerLink,
+                        ...v
+                      })
+                    }}
+                    edge={{ lineType: realLineType, lineStyle }}
+                  />
+                }
+              />
               <Icon
                 name="park-delete"
                 onClick={() => {
@@ -223,6 +378,7 @@ const TreeEdge: FC<{
       )}
       <g
         onClick={clickHandler}
+        onPointerDown={handlePointerDown}
         style={{
           pointerEvents: 'none',
           cursor: 'pointer'
@@ -242,6 +398,7 @@ const TreeEdge: FC<{
           />
         )}
         <motion.path
+          className={lineStyle === 'animatedDash' ? animatedEdgeClazz : lineStyle === 'dash' ? dashEdgeClazz : undefined}
           onPointerEnter={() => setIsIn(true)}
           pointerEvents="auto"
           ref={edgeRef}
@@ -254,7 +411,13 @@ const TreeEdge: FC<{
           }}
         ></motion.path>
         {(innerLink?.label || isEditingLabel || edge.label) && (
-          <foreignObject ref={labelContainerRef} width={1} height={1} style={{ overflow: 'visible', pointerEvents: 'auto' }}>
+          <foreignObject
+            ref={labelContainerRef}
+            width={1}
+            height={1}
+            style={{ overflow: 'visible', pointerEvents: 'auto' }}
+            onPointerDown={e => e.stopPropagation()}
+          >
             <div
               onClick={e => e.stopPropagation()}
               style={{
@@ -288,7 +451,71 @@ const TreeEdge: FC<{
     </>
   )
 })
-
+const types = [
+  {
+    icon: 'custom-straight',
+    value: 'straight',
+    children: 'straight'
+  },
+  {
+    icon: 'custom-curve',
+    value: 'curve',
+    children: 'curve'
+  },
+  {
+    icon: 'park-connection',
+    value: 'polyline',
+    children: 'step'
+  }
+]
+const styles = [
+  {
+    icon: 'custom-straight-no-arrow',
+    value: 'straight',
+    children: 'straight'
+  },
+  {
+    icon: 'custom-dash',
+    value: 'dash',
+    children: 'dash'
+  },
+  { icon: 'custom-animated-dash', value: 'animatedDash', children: 'animated' }
+]
+const EdgeStylePicker = ({ edge, onChange }: { edge: Partial<IWhiteboardEdge>; onChange: (newProps: any) => void }) => {
+  const { t } = useTranslation()
+  return (
+    <WithBorder style={{ padding: '6px 10px', display: 'flex', flexDirection: 'column', gap: 4 }}>
+      <div className={ClassName.description(FontSize['12px'])}>{t('general.Line type')}</div>
+      <Content flex gap={6}>
+        {types.map(i => (
+          <Icon
+            onClick={() => onChange({ lineType: i.value })}
+            name={i.icon}
+            style={{
+              background: edge.lineType === i.value ? Colors.Background.ButtonActive : undefined
+            }}
+            key={i.icon}
+            className={ClassName.flatButton(4, '4px 12px')}
+          />
+        ))}
+      </Content>
+      <div className={ClassName.description(FontSize['12px'])}>{t('general.Line style')}</div>
+      <Content flex gap={6}>
+        {styles.map(i => (
+          <Icon
+            onClick={() => onChange({ lineStyle: i.value })}
+            style={{
+              background: edge.lineStyle === i.value ? Colors.Background.ButtonActive : undefined
+            }}
+            name={i.icon}
+            key={i.icon}
+            className={ClassName.flatButton(4, '4px 12px')}
+          />
+        ))}
+      </Content>
+    </WithBorder>
+  )
+}
 const EdgeClassName = css({
   transform: 'translateX(-50%) translateY(-50%)',
   outline: 'none',

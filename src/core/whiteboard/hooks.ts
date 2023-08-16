@@ -28,7 +28,7 @@ const WhiteboardNodesAtom = atom(
   }
 )
 
-const WhiteboardEdgesAtom = atom(
+export const WhiteboardEdgesAtom = atom(
   get => {
     const edges = get(WhiteboardSelectEdgesAtom)
     return edges || new Map()
@@ -75,12 +75,15 @@ const WhiteboardSelectEdgesAtom = selectAtom(WhiteboardAtom, w => w?.edges)
 
 const WhiteboardSelectItemsAtom = selectAtom(WhiteboardAtom, w => w?.items)
 
-const IsAddingEdgeAtom = atom<{
+export const IsAddingEdgeAtom = atom<{
   isAdding: boolean
+  currentEdgeId?: number
   targetNodeId?: number
   sourceNodeId?: number
   targetPosition?: EdgePosition
   sourcePosition?: EdgePosition
+  isReposition?: boolean
+  currentRepositionEnd?: 'source' | 'target'
 }>({
   isAdding: false
 })

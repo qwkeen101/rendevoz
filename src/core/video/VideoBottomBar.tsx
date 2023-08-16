@@ -179,23 +179,6 @@ const VideoBottomBar = () => {
         <VideoScrubber />
       </div>
       <Content
-        flex
-        alignItems="center"
-        gap={12}
-        role="choose-time-indicator"
-        style={{
-          opacity: chooseTime ? 1 : 0,
-          transition: 'opacity 0.3s ease',
-          position: 'absolute',
-          top: -30,
-          right: 30,
-          color: Colors.Font.SilverSecond
-        }}
-      >
-        <Icon name="park-info" />
-        <div>点击时间轴以选取时间</div>
-      </Content>
-      <Content
         style={{ height: 44, padding: '0px 12px' }}
         flex
         justifyContent="space-between"
@@ -308,7 +291,6 @@ const VideoBottomBar = () => {
             />
           )}
           <AnimatePopover
-            parentElement={containerRef.current}
             padding={10}
             content={setState => (
               <WithBorder
@@ -347,8 +329,25 @@ const VideoBottomBar = () => {
           </AnimatePopover>
           <IconWithPopover
             padding={0}
+            renderOnParent={false}
             content={setState => (
               <WithBorder onClick={e => Rendevoz.Events.DOM.hasButton(e) && setState(false)} padding={8} style={{ borderRadius: 8 }}>
+                <Button.IconButton
+                  icon="park-down-picture"
+                  text={t('general.Download screenshot')}
+                  onClick={() => {
+                    const videoMeta = videoState.videoId ? MetaStore.getMetaObjectByObjectId(videoState.videoId) : undefined
+                    if (!videoMeta) return
+                    instance.captureCurrentImage?.().then(res => {
+                      if (res) {
+                        const a = document.createElement('a')
+                        a.href = res
+                        a.download = `${videoMeta.name}_${normalizeSecondsToTime(currentTime)}.png`
+                        a.click()
+                      }
+                    })
+                  }}
+                />
                 <Button.IconButton
                   icon="park-screenshot"
                   onClick={() => {
@@ -361,9 +360,9 @@ const VideoBottomBar = () => {
                               imageUrl: res
                             },
                             {
-                              showMetaModal: true,
+                              showMetaModal: false,
                               currentMeta: {
-                                name: 'Video Screenshot',
+                                name: 'Video screenshot',
                                 coverImgSrc: res,
                                 fromObject: videoMeta
                                   ? {

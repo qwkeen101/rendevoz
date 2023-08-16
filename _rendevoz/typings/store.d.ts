@@ -13,6 +13,7 @@ import {
   IWebpage,
   IWebpageLabel,
   IWhiteboard,
+  IReviewRecord,
   MetaLink,
   MetaObject
 } from './data'
@@ -34,6 +35,7 @@ export type BuiltInObjectTypes = {
   localFile: ILocalFile
   video: IVideo
   videoLabel: IVideoLabel
+  review: IReviewRecord
 }
 
 export type ObjectFamily = CustomTypes['Object']

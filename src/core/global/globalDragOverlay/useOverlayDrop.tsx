@@ -42,6 +42,9 @@ const useOverlayDrop = () => {
     const customGetDropOnLinks = getDropOnPostLinks
 
     if (data.draggingElement) {
+      if(data.draggingElement.type === 'collection'){
+        return Promise.reject()
+      }
       console.log(data.draggingElement)
       const type = data.draggingElement.type
       if (TypeToRegisteredObject.has(type)) {

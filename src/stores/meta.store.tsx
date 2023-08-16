@@ -307,7 +307,6 @@ const createMetaStore = () => {
       return initializeObjectStore.updateOne(async obj => {
         if (obj.objectId && one.name) {
           const targetObject = await ObjectStore(obj.type).getOneById(obj.objectId)
-          console.log(targetObject)
           if (targetObject) {
             ObjectStore(obj.type).updateOne(
               { id: obj.objectId, name: obj.name, description: obj.description },
@@ -468,6 +467,10 @@ const createMetaStore = () => {
       return initializeObjectStore.deleteOneById(() => {
         if (one) {
           TypeToRegisteredMetaObject.get(one.type)?.onDelete?.(one)
+          const objId = one.objectId
+          if (objId) {
+            ObjectStore(one.type).deleteOneById(objId, { force: true })
+          }
         }
         shouldToastObject(silent) && toast.success('Object successfully deleted!')
         handleMetaObjectDelete(id)

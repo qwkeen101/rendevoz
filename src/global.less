@@ -6,12 +6,7 @@ body {
   overflow: hidden;
   background: var(--global-background);
 }
-::highlight(secondary-highlight) {
-  background-color: rgba(209, 146, 56, 0.7);
-}
-::highlight(primary-highlight) {
-  background-color: rgba(255, 230, 148, 0.7);
-}
+
 input::-ms-clear,
 input::-ms-reveal {
   display: none;
@@ -35,23 +30,10 @@ input::-ms-reveal {
   box-sizing: border-box;
 }
 
-*:not(input):not(textarea):not([contenteditable]),
-*::before,
-*::after,
-*::placeholder {
-  text-transform: capitalize;
-}
-*[contenteditable="true"] {
-  * {
-    text-transform: none;
-  }
-}
 *:focus {
   outline: none;
 }
-input {
-  text-transform: none;
-}
+
 * {
   &::-webkit-scrollbar {
     width: 6px;
@@ -261,7 +243,6 @@ pre {
   background-color: #1e272f;
   //font-family: Muli, serif;
   border-radius: 4px;
-  text-transform: none;
   font-size: 1rem;
   padding: 1.125rem;
   code {

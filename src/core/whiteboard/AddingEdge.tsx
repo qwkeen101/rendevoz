@@ -1,185 +1,216 @@
-import { useMemoizedFn } from "@/hooks";
-import Id from "@/utils/id";
-import produce from "immer";
-import { useEffect, useState } from "react";
-import { getMarkerId } from "../graph/utils/getMarkerId";
-import { MarkerColor } from "@/consts";
-import {
-  useAddingEdges,
-  useFlow,
-  useSetWhiteboardEdges,
-  WhiteboardAtom,
-} from "./hooks";
-import { EdgePosition } from "../../../typings/data/whiteboard";
-import { getBezierPath, getHandlePosition, transformXY } from "./utils";
-import { useStore } from "jotai";
-import getSetting from "../setting/getSetting";
-import { MetaStore } from "@/stores";
+import { useMemoizedFn, useSelectGlobalAtomValue } from '@/hooks'
+import Id from '@/utils/id'
+import produce from 'immer'
+import { useEffect, useState } from 'react'
+import { getMarkerId } from '../graph/utils/getMarkerId'
+import { MarkerColor } from '@/consts'
+import { useAddingEdges, useFlow, useSetWhiteboardEdges, WhiteboardAtom, WhiteboardEdgesAtom } from './hooks'
+import { EdgePosition, IWhiteboardEdge } from '~/typings'
+import { getBezierPath, getHandlePosition, transformXY } from './utils'
+import { useStore } from 'jotai'
+import getSetting from '../setting/getSetting'
+import { MetaStore } from '@/stores'
+import { disableAllUserSelect } from '@/components/base/ResizeAndDrag'
+import { getSmoothPolyPath } from '@/core/whiteboard/utils/getSmoothPoly'
+import { SettingAtom } from '@/core'
+import { animatedEdgeClazz, dashEdgeClazz } from '@/core/whiteboard/Edge'
 
 const getTargetPosition = (
   sourcePosition: {
-    x: number;
-    y: number;
+    x: number
+    y: number
   },
   targetPosition: {
-    x: number;
-    y: number;
+    x: number
+    y: number
   }
 ): EdgePosition => {
-  const { x: sourceX } = sourcePosition;
-  const { x: targetX } = targetPosition;
+  const { x: sourceX } = sourcePosition
+  const { x: targetX } = targetPosition
   if (sourceX < targetX) {
-    return "left";
+    return 'left'
   } else {
-    return "right";
+    return 'right'
   }
-};
+}
 const AddingEdge = () => {
-  const [addingEdgeState] = useAddingEdges();
-  const [path, setPath] = useState<string>();
-  const setEdges = useSetWhiteboardEdges();
-  const store = useStore();
-  const flow = useFlow();
+  const [addingEdgeState, setIsAddingEdge] = useAddingEdges()
+  const [path, setPath] = useState<string>()
+  const [currentEdge, setCurrentEdge] = useState<IWhiteboardEdge>()
+  const setEdges = useSetWhiteboardEdges()
+  const store = useStore()
+  const flow = useFlow()
+  const defaultLineType = useSelectGlobalAtomValue(SettingAtom, s => s.whiteboard.defaultLineType)
   const pointerMoveHandler = useMemoizedFn((e: PointerEvent) => {
-    const { clientX, clientY } = e;
-    if (!addingEdgeState.sourceNodeId || !addingEdgeState.sourcePosition)
-      return;
+    const { clientX, clientY } = e
+    const { sourcePosition, sourceNodeId, targetNodeId, targetPosition, currentRepositionEnd, currentEdgeId } = addingEdgeState
+    if (currentEdgeId && !currentEdge) {
+      const e = store.get(WhiteboardEdgesAtom).get(currentEdgeId)
+      setCurrentEdge(e)
+    }
+    const containerBound = flow.containerEle?.getBoundingClientRect()
+    // reposition, maybe drag source or target
 
-    const { sourcePosition, sourceNodeId, targetNodeId, targetPosition } =
-      addingEdgeState;
-    const containerBound = flow.containerEle?.getBoundingClientRect();
-    let transformedTargetXY;
+    let transformedTargetXY, targetHandlePos
+    let transformedSourceXY, sourceHandlePos
+
     if (targetNodeId && targetPosition) {
-      const targetXY = getHandlePosition(targetNodeId, targetPosition, flow);
-      if (!targetXY) return;
-      transformedTargetXY = transformXY(
-        containerBound,
-        targetXY?.x,
-        targetXY?.y,
-        flow.containerTransformScale
-      );
+      targetHandlePos = targetPosition
+      const targetXY = getHandlePosition(targetNodeId, targetPosition, flow)
+      if (!targetXY) return
+      transformedTargetXY = transformXY(containerBound, targetXY?.x, targetXY?.y, flow.containerTransformScale)
     } else {
-      transformedTargetXY = transformXY(
-        containerBound,
-        clientX,
-        clientY,
-        flow.containerTransformScale
-      );
+      transformedTargetXY = transformXY(containerBound, clientX, clientY, flow.containerTransformScale)
     }
-    const sourceHandlePosition = getHandlePosition(
-      sourceNodeId,
-      sourcePosition,
-      flow
-    );
-    const targetHandlePosition =
-      targetNodeId && targetPosition
-        ? targetPosition
-        : getTargetPosition(
-            {
-              x: sourceHandlePosition?.x,
-              y: sourceHandlePosition?.y,
-            },
-            {
-              x: clientX,
-              y: clientY,
-            }
-          );
-    if (!sourceHandlePosition) return;
-    const transformedSourceXY = transformXY(
-      containerBound,
-      sourceHandlePosition.x,
-      sourceHandlePosition.y,
-      flow.containerTransformScale
-    );
+
+    if (sourceNodeId && sourcePosition) {
+      sourceHandlePos = sourcePosition
+      const sourceXY = getHandlePosition(sourceNodeId, sourcePosition, flow)
+      if (!sourceXY) return
+      transformedSourceXY = transformXY(containerBound, sourceXY.x, sourceXY.y, flow.containerTransformScale)
+    } else {
+      transformedSourceXY = transformXY(containerBound, clientX, clientY, flow.containerTransformScale)
+    }
+    if (sourceHandlePos && !targetHandlePos) {
+      const sourceHandlePosition = getHandlePosition(sourceNodeId, sourcePosition, flow)
+      targetHandlePos = getTargetPosition(
+        {
+          x: sourceHandlePosition?.x,
+          y: sourceHandlePosition?.y
+        },
+        {
+          x: clientX,
+          y: clientY
+        }
+      )
+    }
+    if (targetHandlePos && !sourceHandlePos) {
+      const targetHandlePosition = getHandlePosition(targetNodeId, targetPosition, flow)
+      if (targetHandlePosition!.x < clientX) {
+        sourceHandlePos = 'left'
+      } else {
+        sourceHandlePos = 'right'
+      }
+    }
     if (transformedTargetXY && transformedSourceXY) {
-      const path = getBezierPath({
-        sourceX: transformedSourceXY.x,
-        sourceY: transformedSourceXY.y,
-        targetX: transformedTargetXY.x,
-        targetY: transformedTargetXY.y,
-        sourcePosition: addingEdgeState.sourcePosition,
-        targetPosition: targetHandlePosition,
-      });
-      setPath(path[0]);
+      let path = []
+      const lineType = currentEdge?.lineType || defaultLineType
+      if (lineType === 'curve') {
+        path = getBezierPath({
+          sourceX: transformedSourceXY.x,
+          sourceY: transformedSourceXY.y,
+          targetX: transformedTargetXY.x,
+          targetY: transformedTargetXY.y,
+          sourcePosition: sourceHandlePos,
+          targetPosition: targetHandlePos
+        })
+      } else if (lineType === 'polyline') {
+        path = getSmoothPolyPath({
+          sourceX: transformedSourceXY.x,
+          sourceY: transformedSourceXY.y,
+          targetX: transformedTargetXY.x,
+          targetY: transformedTargetXY.y,
+          sourcePosition: sourceHandlePos,
+          targetPosition: targetHandlePos,
+          borderRadius: 5
+        })
+      } else {
+        path = [`M ${transformedSourceXY.x},${transformedSourceXY.y} L ${transformedTargetXY.x},${transformedTargetXY.y}`]
+      }
+      setPath(path[0])
     }
-  });
+  })
   const pointerUpHandler = useMemoizedFn(() => {
-    if (
-      addingEdgeState.sourceNodeId &&
-      addingEdgeState.sourcePosition &&
-      addingEdgeState.targetNodeId &&
-      addingEdgeState.targetPosition
-    ) {
-      setEdges((edges) => {
+    setIsAddingEdge({
+      isAdding: false,
+      isReposition: false
+    })
+    setCurrentEdge(undefined)
+    if (addingEdgeState.sourceNodeId && addingEdgeState.sourcePosition && addingEdgeState.targetNodeId && addingEdgeState.targetPosition) {
+      if (addingEdgeState.sourceNodeId === addingEdgeState.targetNodeId) return
+      setEdges(edges => {
         if (
           Array.from(edges.values()).some(
-            (i) =>
+            i =>
               i.sourceId === addingEdgeState.sourceNodeId &&
               i.targetId === addingEdgeState.targetNodeId &&
               i.sourcePosition === addingEdgeState.sourcePosition &&
               i.targetPosition === addingEdgeState.targetPosition
           )
         ) {
-          return edges;
+          return edges
         }
-        return produce(edges, (draft) => {
-          const id = Id.getId();
-          draft.set(id, {
-            id,
-            sourceId: addingEdgeState.sourceNodeId!,
-            sourcePosition: addingEdgeState.sourcePosition,
-            targetId: addingEdgeState.targetNodeId!,
-            targetPosition: addingEdgeState.targetPosition,
-          });
-          console.log(draft);
-        });
-      });
-      const whiteboard = store.get(WhiteboardAtom);
-      const sourceNode = whiteboard?.nodes?.get(addingEdgeState.sourceNodeId);
-      const targetNode = whiteboard?.nodes?.get(addingEdgeState.targetNodeId);
-      if (
-        sourceNode &&
-        targetNode &&
-        getSetting().whiteboard.enableAddLinkBetweenObjectsWhenConnect
-      ) {
-        if (
-          sourceNode.type === "metaObject" &&
-          targetNode.type === "metaObject"
-        ) {
+        return produce(edges, draft => {
+          if (addingEdgeState.isReposition) {
+            if (!addingEdgeState.currentEdgeId) return
+            const currentRepoEdge = edges.get(addingEdgeState.currentEdgeId)
+            if (!currentRepoEdge) return
+            console.log(currentRepoEdge, addingEdgeState)
+            draft.set(currentRepoEdge.id, {
+              ...currentRepoEdge,
+              id: currentRepoEdge.id,
+              sourceId: addingEdgeState.sourceNodeId,
+              targetId: addingEdgeState.targetNodeId,
+              sourcePosition: addingEdgeState.sourcePosition,
+              targetPosition: addingEdgeState.targetPosition
+            })
+          } else {
+            const id = Id.getId()
+            draft.set(id, {
+              id,
+              sourceId: addingEdgeState.sourceNodeId!,
+              sourcePosition: addingEdgeState.sourcePosition,
+              targetId: addingEdgeState.targetNodeId!,
+              targetPosition: addingEdgeState.targetPosition
+            })
+          }
+        })
+      })
+      const whiteboard = store.get(WhiteboardAtom)
+      const sourceNode = whiteboard?.nodes?.get(addingEdgeState.sourceNodeId)
+      const targetNode = whiteboard?.nodes?.get(addingEdgeState.targetNodeId)
+      if (sourceNode && targetNode && getSetting().whiteboard.enableAddLinkBetweenObjectsWhenConnect) {
+        if (sourceNode.type === 'metaObject' && targetNode.type === 'metaObject') {
           MetaStore.addMetaLink({
             sourceId: sourceNode.metaObjectId,
-            targetId: targetNode.metaObjectId,
-          });
+            targetId: targetNode.metaObjectId
+          })
         }
       }
     }
-  });
+  })
   useEffect(() => {
-    if (addingEdgeState.isAdding) {
-      document.addEventListener("pointermove", pointerMoveHandler);
-      document.addEventListener("pointerup", pointerUpHandler);
-      flow.isAddingEdge = true;
+    if (addingEdgeState.isAdding || addingEdgeState.isReposition) {
+      document.addEventListener('pointermove', pointerMoveHandler)
+      document.addEventListener('pointerup', pointerUpHandler)
+      window.getSelection()?.empty()
+      document.body.classList.add(disableAllUserSelect)
+      flow.isAddingEdge = true
       return () => {
-        document.removeEventListener("pointermove", pointerMoveHandler);
-        document.removeEventListener("pointerup", pointerUpHandler);
-      };
+        document.removeEventListener('pointermove', pointerMoveHandler)
+        document.removeEventListener('pointerup', pointerUpHandler)
+        document.body.classList.remove(disableAllUserSelect)
+      }
     } else {
-      flow.isAddingEdge = false;
-      setPath(undefined);
+      flow.isAddingEdge = false
+      setPath(undefined)
     }
-  }, [addingEdgeState.isAdding]);
+  }, [addingEdgeState.isAdding, addingEdgeState.isReposition])
 
   return (
     <g>
       <path
+        className={
+          currentEdge?.lineStyle === 'animatedDash' ? animatedEdgeClazz : currentEdge?.lineStyle === 'dash' ? dashEdgeClazz : undefined
+        }
         fill="none"
-        markerEnd={`url(#${getMarkerId("end", MarkerColor.LIGHTGREY)})`}
-        stroke={MarkerColor.LIGHTGREY}
+        markerEnd={`url(#${getMarkerId('end', currentEdge?.color || MarkerColor.LIGHTGREY)})`}
+        stroke={currentEdge?.color || MarkerColor.LIGHTGREY}
         d={path}
         strokeWidth={2}
       ></path>
     </g>
-  );
-};
+  )
+}
 
-export default AddingEdge;
+export default AddingEdge

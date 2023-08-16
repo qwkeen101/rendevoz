@@ -1,17 +1,37 @@
 import { Content } from '@/components'
 import VideoChapterController from './VideoChapterController'
 import VideoLabelController from './VideoLabelController'
-import { memo, useRef } from 'react'
+import { memo, useRef, useState } from 'react'
 import useVideoSidebarState from './hooks/useVideoSidebarState'
+import { Resizable } from 're-resizable'
 
 const VideoSidebar = memo(({ width }: { width: number | string }) => {
-  const sidebarRef = useRef<HTMLDivElement>(null)
   const [sidebarState, setSidebarState] = useVideoSidebarState()
+  const [innerWidth, setInnerWidth] = useState(420)
   return sidebarState.showChapters || sidebarState.showLabels ? (
-    <Content column ref={sidebarRef} gap={20} flex style={{ width, maxWidth: 1200, height: '100%' }}>
+    <Resizable
+      size={{
+        height: width === '100%' ? 0 : '100%',
+        width: width === '100%' ? width : innerWidth
+      }}
+      onResizeStop={(event, direction, elementRef, delta) => {
+        const width = elementRef.clientWidth
+        setInnerWidth(width)
+      }}
+      maxWidth={1200}
+      enable={
+        width === '100%'
+          ? {}
+          : {
+              left: true
+            }
+      }
+      minHeight={width === '100%' ? 300 : undefined}
+      style={{ display: 'flex', flexDirection: 'column', gap: 20, flex: width === '100%' ? 1 : undefined }}
+    >
       {sidebarState.showChapters && <VideoChapterController />}
       {sidebarState.showLabels && <VideoLabelController />}
-    </Content>
+    </Resizable>
   ) : null
 })
 

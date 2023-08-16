@@ -5,6 +5,7 @@ import NoteCard from '../cards/NoteCard'
 import { useRenderObject } from '@/core'
 import { Content } from '@/components'
 import { Colors } from '@/consts'
+import FontSize from '@/consts/font'
 
 const MetaObject: FC<RenderElementProps> = memo(({ children, element }) => {
   const metaEle = element as MetaObjectElement
@@ -49,6 +50,12 @@ const MetaObject: FC<RenderElementProps> = memo(({ children, element }) => {
             style: {
               top: -5,
               right: 0
+            }
+          },
+          titleOptions: {
+            ellipsisLine: 9999,
+            style: {
+              fontSize: FontSize['13px']
             }
           },
           renderOptions: {

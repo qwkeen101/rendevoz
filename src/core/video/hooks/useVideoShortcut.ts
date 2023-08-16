@@ -11,7 +11,6 @@ const useVideoShortcut = (containerRef: RefObject<HTMLElement>) => {
   const instance = useVideoInstance()
   const keydownHandler = useMemoizedFn((e: KeyboardEvent) => {
     const setting = getSetting()
-    console.log(compareHotkey(setting.shortcut.makeVideoLabel, e))
     const shortcut = setting.shortcut.makeVideoLabel
     if (
       shortcut &&
@@ -42,14 +41,16 @@ const useVideoShortcut = (containerRef: RefObject<HTMLElement>) => {
     if (isHotkey(KEY.ArrowLeft, e)) {
       setVideoState(s => ({
         ...s,
-        currentTime: Math.max((s.currentTime || 0) - 10, 0),
+        currentTime: Math.max((s.currentTime || 0) - 5, 0),
         jumpIndicator: 'back'
       }))
+      e.preventDefault()
     }
     if (isHotkey(KEY.ArrowRight, e)) {
+      e.preventDefault()
       setVideoState(s => ({
         ...s,
-        currentTime: Math.min((s.currentTime || 0) + 10, s.totalTime || 0),
+        currentTime: Math.min((s.currentTime || 0) + 5, s.totalTime || 0),
         jumpIndicator: 'forward'
       }))
     }

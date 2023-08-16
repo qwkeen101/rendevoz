@@ -80,6 +80,7 @@ export type MetaFormLayoutItem =
       type: 'filePathPicker'
       filePath: string
       accept?: HTMLInputElement['accept']
+      enableWeb?: boolean
       onChange: (filePath: string | undefined, fileName: string | undefined, file: File | undefined) => void
     }
   | {

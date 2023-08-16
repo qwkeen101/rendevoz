@@ -30,6 +30,10 @@ import { waitFor } from '@/utils'
 import WhiteboardSettings from '@/core/whiteboard/WhiteboardSettings'
 import useWhiteboardHistory from '@/core/whiteboard/hooks/useWhiteboardHistory'
 import WhiteboardEmptyIndicator from '@/core/whiteboard/WhiteboardEmptyIndicator'
+import { WhiteboardTransformAtom } from '@/core/whiteboard/hooks/useWhiteboardTransform'
+import Background from '@/core/whiteboard/Background'
+import { Colors } from '@/consts'
+import { getSetting } from '@/core'
 
 const WhiteboardInner = memo(
   ({
@@ -52,6 +56,7 @@ const WhiteboardInner = memo(
     const [setting] = useSetting()
     const { renderSnapLayer } = useSnapDrag()
     useWhiteboardHistory()
+    const setWhiteboardTransform = useSetAtom(WhiteboardTransformAtom)
     const instance = useWhiteboardInstance()
     useEffect(() => {
       waitFor(
@@ -107,9 +112,13 @@ const WhiteboardInner = memo(
           scopedEmitter.emit('whiteboard', {
             type: 'panChange'
           })
+          const t = panzoom.getTransform()
+
+          setWhiteboardTransform([t.x, t.y, t.scale])
         })
         panzoom.on('zoom', e => {
-          const { scale } = panzoom.getTransform()
+          const { scale, x, y } = panzoom.getTransform()
+          setWhiteboardTransform([x, y, scale])
           console.log(scale)
           flow.containerTransformScale = scale
           const zoomMultipler = Math.sqrt(1 / scale)
@@ -142,8 +151,11 @@ const WhiteboardInner = memo(
       if (whiteboard?.lastViewport) {
         const lastViewport = whiteboard.lastViewport
         const panzoom = panzoomRef.current
+        setWhiteboardTransform([lastViewport.x, lastViewport.y, lastViewport.scale])
         panzoom?.zoomTo(0, 0, lastViewport.scale)
         panzoom?.moveTo(lastViewport.x, lastViewport.y)
+      } else {
+        setWhiteboardTransform([0, 0, 1])
       }
     }, [whiteboard?.lastViewport])
     flow.onNodeFocus = node => {
@@ -197,6 +209,7 @@ const WhiteboardInner = memo(
           {renderSnapLayer()}
           <WhiteboardEmptyIndicator />
         </div>
+        <Background />
         <div style={{ position: 'absolute', right: 0, top: 0, bottom: 0 }}>{render()}</div>
         <WhiteboardBottomBar />
         <WhiteboardSettings />
@@ -206,7 +219,10 @@ const WhiteboardInner = memo(
             style={{
               position: 'absolute',
               right: 15,
-              bottom: 15
+              bottom: 15,
+              borderRadius: 6,
+              overflow: 'hidden',
+              border: `1px solid ${Colors.Background.Border}`
             }}
           >
             <WhiteboardMiniMap />
@@ -235,7 +251,16 @@ export const Whiteboard = memo(
     const store = useMemo(() => {
       const store = createStore()
       const whiteboard = globalStore.get(whiteboardAtom)
-      console.log(whiteboard)
+      if (!whiteboard?.lineType) {
+        const setting = getSetting()
+        setTimeout(() => {
+          ObjectStore('whiteboard').updateOne({
+            id: whiteboardId,
+            lineType: setting.whiteboard.defaultLineType || 'curve',
+            backgroundType: setting.whiteboard.defaultBackgroundType || 'dot'
+          })
+        }, 10)
+      }
       previousWhiteboard.current = whiteboard
       store.set(WhiteboardAtom, whiteboard)
       const flowManager = new FlowManager()
@@ -249,8 +274,7 @@ export const Whiteboard = memo(
       const unsub = globalStore.sub(whiteboardAtom, () => {
         const whiteboard = globalStore.get(whiteboardAtom)
         const prev = previousWhiteboard.current
-        console.log('sub change')
-        console.log(whiteboard, prev)
+
         previousWhiteboard.current = whiteboard
         if (prev && prev !== whiteboard) {
           store.set(WhiteboardAtom, whiteboard)

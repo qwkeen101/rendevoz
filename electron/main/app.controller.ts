@@ -261,7 +261,7 @@ export class AppController {
       const installablePluginsPaths = allPluginsFolders
         .map(i => {
           console.log(i)
-          try{
+          try {
             const fileNames = fs.readdirSync(`${pluginPath}/${i}`)
             if (fileNames.includes('manifest.json') && fileNames.includes('main.js')) {
               const manifest = fs.readFileSync(`${pluginPath}/${i}/manifest.json`, 'utf-8')
@@ -273,7 +273,7 @@ export class AppController {
                 entry: `${pluginPath}/${i}/main.js`
               }
             }
-          }catch(e){
+          } catch (e) {
             console.log(e)
           }
         })
@@ -290,5 +290,12 @@ export class AppController {
       fs.mkdirSync(databasePath)
     }
     shell.showItemInFolder(databasePath)
+  }
+
+  @IpcInvoke('deleteRendefile')
+  public async deleteRendefile(url: string) {
+    const databasePath = path.resolve(process.env.FILE_PATH || this.DefaultRendevozDataPath)
+    const replacedPath = url.replace('rendefile://', databasePath)
+    fs.rmSync(replacedPath)
   }
 }

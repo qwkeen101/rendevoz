@@ -27,8 +27,9 @@ import VideoSubtitleSidebar from '@/core/video/VideoSubtitleSidebar'
 export interface VideoProps {
   videoId: number
   onInstanceInitialized?: (instance: Partial<IVideoInstance>) => void
+  onlyCore?: boolean
 }
-const VideoInner = ({ videoId, onInstanceInitialized }: VideoProps) => {
+const VideoInner = ({ videoId, onInstanceInitialized, onlyCore }: VideoProps) => {
   const [playIconVisible, setPlayIconVisible] = useState(false)
   const [, setToolbarState] = useVideoToolbarState()
   const [videoState, setVideoState] = useVideoState()
@@ -83,6 +84,30 @@ const VideoInner = ({ videoId, onInstanceInitialized }: VideoProps) => {
     )
   }, [])
 
+  if (onlyCore) {
+    return (
+      <Content
+        style={{
+          width: '100%',
+          height: '100%'
+        }}
+      >
+        <VideoCore url={videoState.url} />
+        {videoState.mode === 'video' && (
+          <div
+            style={{
+              position: 'absolute',
+              bottom: 0,
+              left: 0,
+              right: 0
+            }}
+          >
+            <VideoBottomBar />
+          </div>
+        )}
+      </Content>
+    )
+  }
   return (
     <Content
       style={{
@@ -102,7 +127,7 @@ const VideoInner = ({ videoId, onInstanceInitialized }: VideoProps) => {
       flex
       ref={outerContainerRef}
     >
-      {!smallMode && <VideoSubtitleSidebar small={!!smallMode}/>}
+      {!smallMode && <VideoSubtitleSidebar small={!!smallMode} />}
       <Content
         flex
         column
@@ -113,7 +138,6 @@ const VideoInner = ({ videoId, onInstanceInitialized }: VideoProps) => {
           maxWidth: 1200
         }}
       >
-
         {videoState.floated ? (
           createPortal(
             <ResizeAndDrag
@@ -210,16 +234,18 @@ const VideoInner = ({ videoId, onInstanceInitialized }: VideoProps) => {
                   )}
                 </AnimatePresence>
                 <VideoCore url={videoState.url}></VideoCore>
-                <div
-                  style={{
-                    position: 'absolute',
-                    bottom: 0,
-                    left: 0,
-                    right: 0
-                  }}
-                >
-                  <VideoBottomBar />
-                </div>
+                {videoState.mode === 'video' && (
+                  <div
+                    style={{
+                      position: 'absolute',
+                      bottom: 0,
+                      left: 0,
+                      right: 0
+                    }}
+                  >
+                    <VideoBottomBar />
+                  </div>
+                )}
               </Content>
             </ResizeAndDrag>,
             document.body
@@ -279,26 +305,39 @@ const VideoInner = ({ videoId, onInstanceInitialized }: VideoProps) => {
               )}
             </AnimatePresence>
             <VideoCore url={videoState.url}></VideoCore>
-            <div
-              style={{
-                position: 'absolute',
-                bottom: 0,
-                left: 0,
-                right: 0
-              }}
-            >
-              <VideoBottomBar />
-            </div>
+            {videoState.mode === 'video' && (
+              <div
+                style={{
+                  position: 'absolute',
+                  bottom: 0,
+                  left: 0,
+                  right: 0
+                }}
+              >
+                <VideoBottomBar />
+              </div>
+            )}
           </Content>
         )}
         <VideoStatusBar />
       </Content>
-      {smallMode && <VideoSubtitleSidebar small={true}/>}
+      {smallMode && <VideoSubtitleSidebar small={true} />}
       <VideoSidebar width={smallMode ? '100%' : 420} />
     </Content>
   )
 }
 
+const transformUrl = (url?: string) => {
+  if (!url) return url
+  if (url.startsWith('rendefile') || url.startsWith('file')) return url
+  if (url.includes('bilibili')) return url
+  if (url.includes('youtube')) {
+    const U = new URL(url)
+    const videoId = U.searchParams.get('v')
+    if (!videoId) return url
+    return `https://www.youtube.com/embed/${videoId}`
+  }
+}
 export const Video = (props: VideoProps) => {
   const { videoId } = props
   const videoAtom = ObjectStore('video').createAtom(videoId)
@@ -312,7 +351,8 @@ export const Video = (props: VideoProps) => {
         ...store.get(VideoStateAtom),
         ...video,
         videoId,
-        url: video.videoUrl,
+        url: transformUrl(video.videoUrl),
+        mode: video.videoUrl.startsWith('rendefile') || video.videoUrl.startsWith('file') ? 'video' : 'web',
         currentTime: video.lastPlayedTime || 0
       })
       store.set(VideoSidebarStateAtom, {
@@ -334,6 +374,8 @@ export const Video = (props: VideoProps) => {
         ...data,
         volume: currentVideoState.volume,
         videoId,
+        url: transformUrl(data?.videoUrl),
+        mode: data?.videoUrl.startsWith('rendefile') || data?.videoUrl.startsWith('file') ? 'video' : 'web',
         sortedChapters: data?.chapters?.slice().sort((b, a) => b.startTime - a.startTime) || []
       })
     })

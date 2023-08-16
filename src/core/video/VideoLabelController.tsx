@@ -40,7 +40,7 @@ const VideoLabelController = () => {
           i => i
         ) as IVideoLabel[]
         labels.sort((b, a) => b.createdAt - a.createdAt)
-        setSortedLabels(labels.map(i => i.id))
+        setSortedLabels(labels.reverse().map(i => i.id))
       }
     }
     action()
@@ -175,7 +175,13 @@ const Label = ({ id }: { id: number }) => {
             {`${normalizeSecondsToTime(label?.videoTime)}${chapter ? '  ——  ' + chapter?.name : ''}`}
           </div>
         </Content>
-        {renderPopover({})}
+        {renderPopover({
+          on: e => {
+            if (e.type === 'delete') {
+              instance.deleteLabel?.(id)
+            }
+          }
+        })}
       </Content>
       {renderDescription({})}
       {renderAttachment({})}

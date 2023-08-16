@@ -3,10 +3,11 @@ import * as d3 from 'd3'
 import { MetaLink } from '~/typings/data'
 import { globalStore } from '@/stores'
 import { metaObjectsAtom, undeletedMetaLinksAtom } from '@/stores/meta.store'
-import { EdgePosition, IWhiteboardEdge, IWhiteboardNode } from '../../../typings/data/whiteboard'
+import { EdgePosition, IWhiteboardEdge, IWhiteboardNode } from '~/typings'
 import Id from '@/utils/id'
 import { Position } from '@/types'
 import { Box } from '../dragSelector'
+import { XYPosition } from '~/typings'
 
 export const getNodeData = (nodeId: number, flow: FlowManager) => {
   const nodeEle = flow.ID_TO_NODE_ELEMENT_MAP.get(nodeId)?.element
@@ -79,11 +80,11 @@ export const getHandlePosition = (nodeId: number, handlePosition: EdgePosition, 
       }
   }
 }
+const toleranceRate = 0.2
 export const getRelativeHandlePosition = (
   containerSize: { width: number; height: number },
   relativePosition: { x: number; y: number }
 ): EdgePosition => {
-  const toleranceRate = 0.2
   const { width, height } = containerSize
   const tolaranceWidth = toleranceRate * width
   const halfHeight = height / 2
@@ -99,16 +100,7 @@ export const getRelativeHandlePosition = (
   }
   return 'top'
 }
-export const getRelativePositionOfContainer = (containerBound: DOMRect, mousePos: Position) => {
-  const { x, y } = mousePos
-  const { left, top, height, width, right, bottom } = containerBound
-  const widthTolerance = width * 0.1
-  const heightTolerance = height * 0.1
-  if (x - left < widthTolerance) return 'left'
-  if (right - x < widthTolerance) return 'right'
-  if (y - top < heightTolerance) return 'top'
-  if (bottom - y < heightTolerance) return 'bottom'
-}
+
 export const transformXY = (containerRect?: DOMRect, posX: number, posY: number, scale: number) => {
   if (!containerRect) return
   return {
@@ -413,8 +405,8 @@ export const getBoxOfNodes = (nodes: IWhiteboardNode[]): Box | undefined => {
   const boxes = nodes.map(i => ({
     left: i.x,
     top: i.y,
-    width: i.width,
-    height: i.height
+    width: i.width || 0,
+    height: i.height || 0
   })) as Box[]
   return getBoxOfBoxes(boxes)
 }

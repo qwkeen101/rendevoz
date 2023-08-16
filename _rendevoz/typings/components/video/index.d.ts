@@ -25,6 +25,7 @@ export type IVideoInstance = Partial<{
       labelId?: number
     }
   ) => void
+  captureCurrentImage: () => Promise<string | undefined>
   closeThumbnail: VoidFunction
   insertChapter: (chapter: Partial<IVideoChapter>) => Promise<void>
   insertChapters: (chapters: IVideoChapter[]) => Promise<void>

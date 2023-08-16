@@ -114,7 +114,7 @@ const useFlipForm = (options: useFlipFormOptions) => {
           <Form.Item
             text={capitalize(t('general.description'))}
             minRows={enlarged ? 10 : undefined}
-            style={{ fontSize: enlarged ? '1rem' : undefined, padding: '8px 12px 0px', }}
+            style={{ fontSize: enlarged ? '1rem' : undefined, padding: '8px 12px 0px' }}
             type="textarea"
             maxRows={enlarged ? 18 : 10}
             value={i.value}
@@ -123,7 +123,15 @@ const useFlipForm = (options: useFlipFormOptions) => {
           />
         )
       case 'filePathPicker':
-        return <FormFilePathPicker accept={i.accept} maxWidth={enlarged ? '100%' : 400} filePath={i.filePath} onChange={i.onChange} />
+        return (
+          <FormFilePathPicker
+            enableWeb={i.enableWeb}
+            accept={i.accept}
+            maxWidth={enlarged ? '100%' : 400}
+            filePath={i.filePath}
+            onChange={i.onChange}
+          />
+        )
       case 'tagPicker':
         return (
           <Content

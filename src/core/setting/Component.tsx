@@ -29,10 +29,6 @@ const ComponentSetting = () => {
   ]
   const whiteboardSettingItems: SettingItem[] = [
     {
-      title: t('settings.enable whiteboard minimap'),
-      children: <Switch value={setting.whiteboard.enableMinimap} onChange={() => toggleSetting('whiteboard', 'enableMinimap')} />
-    },
-    {
       title: t('settings.enable add link between objects when connect'),
       children: (
         <Switch

@@ -10,6 +10,8 @@ export type IWhiteboardEdge = {
   metaLinkId?: number
   label?: string
   color?: string
+  lineType?: 'straight' | 'polyline' | 'curve'
+  lineStyle?: 'straight' | 'dash' | 'animatedDash'
 }
 
 export type EdgePosition = 'top' | 'right' | 'left' | 'bottom'
@@ -71,6 +73,8 @@ export interface IWhiteboard extends IBase {
   color?: string
   icon?: string
   groups?: any[]
+  backgroundType?: 'dot' | 'line' | 'none'
+  lineType: 'straight' | 'polyline' | 'curve'
   lastViewport?: {
     x: number
     y: number

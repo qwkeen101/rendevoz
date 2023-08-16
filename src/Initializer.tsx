@@ -49,7 +49,6 @@ const Initializer = () => {
       const pluginsFolder = `${setting.general.userFilePath}/plugins`
       ipcInstance.send('installPlugins', pluginsFolder).then(res => {
         const { data } = res
-        console.log(data)
         if (data && Array.isArray(data)) {
           data.forEach(i => {
             import(`file://${i.entry}`).then(main => {

@@ -55,7 +55,7 @@ const slicedLength = 'rendefile://'.length
           console.log(info)
         })
         autoUpdater.on('update-downloaded', () => {
-          if(process.env.USER_CALL_UPDATE === 'true'){
+          if (process.env.USER_CALL_UPDATE === 'true') {
             win.webContents.send('update downloaded')
             setTimeout(() => {
               autoUpdater.quitAndInstall(true, true)
@@ -101,6 +101,7 @@ const slicedLength = 'rendefile://'.length
           {
             scheme: 'rendefile',
             privileges: {
+              stream: true,
               supportFetchAPI: true
             }
           }
@@ -152,9 +153,15 @@ const slicedLength = 'rendefile://'.length
         autoUpdater.on('download-progress', e => {
           win.webContents.send('download', e)
         })
-        win.webContents.on('will-attach-webview', (e, webPreferences) => {
+        win.webContents.on('will-attach-webview', (e, webPreferences, params) => {
           const prePath = process.env.PUBLIC + '/webpre.js'
+          const videoPrePath = process.env.PUBLIC + '/videopre.js'
           const absolutePath = resolve(prePath)
+          const videoAboPath = resolve(videoPrePath)
+          if (params.webpreferences.includes('video')) {
+            webPreferences.preload = videoAboPath
+            return
+          }
           webPreferences.preload = absolutePath
         })
         win.webContents.on('did-attach-webview', (_, contents) => {
@@ -202,7 +209,16 @@ const slicedLength = 'rendefile://'.length
           c({ cancel: false, responseHeaders: d.responseHeaders })
         })
         const wsession = win.webContents.session
-
+        const filter = {
+          urls: ['*://*/*']
+        }
+        wsession.webRequest.onBeforeSendHeaders(filter, (details, cb) => {
+          if (details.requestHeaders['bili']) {
+            const refer = details.requestHeaders['bili']
+            details.requestHeaders['Referer'] = refer
+          }
+          cb({ cancel: false, requestHeaders: details.requestHeaders })
+        })
         // 下面的代码会尝试解析代理配置，如果用户配置了系统代理，
         // 并且代理规则没有排除 www.google.com，那我们就可以读取到代理信息
         wsession.resolveProxy('https://www.google.com').then(proxyUrl => {

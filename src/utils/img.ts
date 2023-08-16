@@ -48,8 +48,8 @@ export const saveImageLocally = async (
             const canvas = document.createElement('canvas')
             let width = image.width
             let height = image.height
-            const max_height = 1080
-            const max_width = 1920
+            const max_height = 720
+            const max_width = 1280
             if (width > height) {
               if (width > max_width) {
                 //height *= max_width / width;

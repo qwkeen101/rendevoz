@@ -4,7 +4,7 @@ import { captureVideoFrame, captureVideoFrameBlob } from '../utils'
 import { saveImageLocally } from '@/utils/img'
 import { ObjectStore } from '@/stores'
 import { RefObject } from 'react'
-import { assignProperties } from '@/utils'
+import { assignProperties, delay } from '@/utils'
 import { VideoStateAtom } from './useVideoState'
 import { VideoToolbarStateAtom } from './useVideoToolbarState'
 import Id from '@/utils/id'
@@ -30,19 +30,28 @@ export const useAssignVideoInstance = (videoId: number, containerRef: RefObject<
       if (!chapter.startTime) return
       const video = await ObjectStore('video').getOneById(videoId)
       const offscreenVideo = videoInstance.getOffscreenVideo?.()
-      if (video && offscreenVideo) {
+      if (video) {
         const chapters = video.chapters || []
         if (chapters.length === 0) {
-          const img = await captureVideoFrameBlob(offscreenVideo, 0)
-          const imgPath = await saveImageLocally(img, { compress: false })
-          chapters.push({
-            startTime: 0,
-            name: 'Untitled Chapter',
-            id: Id.getId(),
-            imageUrl: imgPath
-          })
+          if (offscreenVideo) {
+            const img = await captureVideoFrameBlob(offscreenVideo, 0)
+            const imgPath = await saveImageLocally(img, { compress: false })
+            chapters.push({
+              startTime: 0,
+              name: 'Untitled Chapter',
+              id: Id.getId(),
+              imageUrl: imgPath
+            })
+          } else {
+            chapters.push({
+              startTime: 0,
+              name: 'Untitled Chapter',
+              id: Id.getId()
+            })
+          }
         }
-        const img = await captureVideoFrameBlob(offscreenVideo, chapter.startTime)
+        const img = await videoInstance.captureCurrentImage?.()
+        if (!img) return Promise.reject()
         const imgPath = await saveImageLocally(img, { compress: false })
         await ObjectStore('video').updateOne({
           id: videoId,
@@ -99,10 +108,11 @@ export const useAssignVideoInstance = (videoId: number, containerRef: RefObject<
       const time = shouldJumpBack ? Math.max(0, label.videoTime - goBack) : label.videoTime
       if (goBack > 0 && shouldJumpBack) {
         videoInstance.jumpTo?.(time)
+        await delay(500)
       }
-      const ele = videoInstance.getOffscreenVideo?.()
-      if (!time || !ele) return Promise.reject()
-      const img = await captureVideoFrameBlob(ele, time)
+      if (!time) return Promise.reject()
+      const img = await videoInstance.captureCurrentImage?.()
+      if (!img) return Promise.reject()
       const imgPath = await saveImageLocally(img, { compress: false })
       const one = await ObjectStore('videoLabel').addOne({
         ...label,

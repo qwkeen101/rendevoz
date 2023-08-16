@@ -13,3 +13,9 @@ export interface IWhiteboardInstance {
   // if true, opened, if false, not opened
   openTabInSidebar?: (tab: ILayoutTab) => ILayoutTab | undefined
 }
+
+export type IReviewInstance = Partial<{
+  createCard?: (rating: number) => void
+  reviewCard?: () => void
+  deleteCard?: () => void
+}>

@@ -16,6 +16,8 @@ import { Colors } from '@/consts'
 import { useGlobalAtomValue, useSelectGlobalAtomValue } from '@/hooks'
 import { relatedMetaObjectsMapAtom } from '@/stores/meta.store'
 import { SettingAtom } from '@/core'
+import { keyboard } from '@/core/database/useRenderObject'
+import { toast } from 'react-hot-toast'
 
 const useRenderLabel = (opts: {
   objectId: number
@@ -59,10 +61,11 @@ const useRenderLabel = (opts: {
         ) : (
           <DraggableElement draggable={draggingDetails && draggable} onDragStart={opts.onDragStart} draggingDetails={draggingDetails}>
             <div
-              className={css([shouldShouldOriginal && ClassName.ellipsisFont(2), ClassName.title(FontSize['13px'])])}
+              className={ClassName.title(FontSize['13px'])}
               style={{
                 cursor: 'pointer',
                 width: 'fit-content',
+                whiteSpace: 'pre-wrap',
                 color: labelMeta ? labelMeta.color || Colors.Font.Link : undefined
               }}
             >
@@ -90,10 +93,39 @@ const useRenderLabel = (opts: {
                 </AnimatePopover>
               )}
               <span
-                style={{
-                  textTransform: 'none'
+                onContextMenu={() => setLabelState(s => ({ ...s, editingName: true }))}
+                onClick={() => {
+                  console.log(keyboard)
+                  if (keyboard.ctrl) {
+                    if (labelMeta) {
+                      const link = `rendevoz://object/${labelMeta?.id}`
+                      navigator.clipboard.writeText(link)
+                      toast.success(
+                        <Content className={ClassName.description()}>
+                          <div style={{ textTransform: 'none' }}>{t('general.link is generated for this object')}!</div>
+                          <div style={{ userSelect: 'all', textTransform: 'none' }}>{link}</div>
+                        </Content>
+                      )
+                    } else {
+                      MetaStore.addMetaObject(
+                        { type: type, name: label?.name, description: label?.description, objectId: objectId },
+                        true
+                      ).then(meta => {
+                        const link = `rendevoz://object/${meta?.id}`
+                        navigator.clipboard.writeText(link)
+                        toast.success(
+                          <Content className={ClassName.description()}>
+                            <div>{t('general.link is generated for this object')}!</div>
+                            <div style={{ userSelect: 'all' }}>{link}</div>
+                          </Content>
+                        )
+                      })
+                    }
+                    return
+                  } else {
+                    onNameClick?.(label?.name)
+                  }
                 }}
-                onClick={() => onNameClick?.(label?.name)}
               >
                 {label?.name || 'Unnamed Label'}
               </span>
@@ -173,6 +205,7 @@ const useRenderLabel = (opts: {
               wordBreak: 'break-all',
               ...style
             }}
+            onContextMenu={() => setLabelState(s => ({ ...s, addingDescription: true }))}
             className={ClassName.description(FontSize['12px'])}
           >
             {label.description}
@@ -194,8 +227,10 @@ const useRenderLabel = (opts: {
               padding: '8px 12px'
             }}
             withSubmit
-            onSubmit={() => setLabelState(s => ({ ...s, addingDescription: false }))}
-            onChange={e => typeof e === 'string' && ObjectStore(type).updateOne({ id: objectId, description: e })}
+            onSubmit={(v: string) => {
+              setLabelState(s => ({ ...s, addingDescription: false }))
+              ObjectStore(type).updateOne({ id: objectId, description: v })
+            }}
           />
         )}
       </>

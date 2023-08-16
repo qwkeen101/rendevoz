@@ -74,6 +74,9 @@ export type IObjectsAndLinkSetting = {
     enableDragFromEditorLink: boolean
     enableDropAutoGenerateObject: boolean
   }
+  object: {
+    deleteFileWhenDeleteObject: boolean
+  }
 }
 
 export type IComponentSetting = {
@@ -86,6 +89,8 @@ export type IComponentSetting = {
     snapToObject: boolean
     imageResizeKeepRatio: boolean
     dropFileAutoObject: boolean
+    defaultLineType: 'straight' | 'polyline' | 'curve'
+    defaultBackgroundType: 'none' | 'dot' | 'line'
   }
   editor: {
     objectAutoBecomeInline: boolean

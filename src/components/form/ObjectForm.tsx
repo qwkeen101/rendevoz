@@ -5,7 +5,7 @@ import { ILocalFile, IVideo, MetaObject } from 'rendevoz'
 import { GlobalGraphInstance, TypeToTypeName } from '@/core'
 import { IForm } from './types'
 import useFlipForm from './useFlipForm'
-import { ObjectStore } from '@/stores'
+import { MetaStore, ObjectStore } from '@/stores'
 import { ObjectFamily } from '@/stores/object.store'
 import { useGlobalAtomValue } from '@/hooks'
 import OcrService from '@/services/ocr.service'
@@ -18,6 +18,7 @@ import { generateVideoThumbnail } from '@/core/video/utils'
 import { saveImageLocally } from '@/utils/img'
 import FormNoteImporter from './FormNoteImporter'
 import { TypeToRegisteredMetaObject } from '@/stores/meta.store'
+import { fetchHead } from '@/core/global/globalDragOverlay/useDropObject'
 
 const ObjectForm: FC<
   IForm<MetaObject> & {
@@ -101,6 +102,7 @@ const ObjectForm: FC<
     object?.type === 'video'
       ? {
           type: 'filePathPicker',
+          enableWeb: true,
           filePath: (targetObject as IVideo)?.videoUrl,
           onChange: (path, name, file) => {
             if (path && name && file) {
@@ -120,6 +122,26 @@ const ObjectForm: FC<
                   name: getFilenameWithoutExtension(name)
                 }))
               })
+              return
+            } else if (path && name) {
+              setObject(o => ({ ...o, name }))
+              if (object.objectId) {
+                fetchHead(path).then(res => {
+                  setObject(o => ({ ...o, name: res.title || name, coverImgSrc: res.coverImgSrc }))
+                  if (MetaStore.getMetaObjectsMap().has(object.id)) {
+                    const meta = MetaStore.getMetaObjectsMap().get(object.id)
+                    MetaStore.updateMetaObject(
+                      {
+                        id: object.id,
+                        coverImgSrc: res.coverImgSrc || meta?.coverImgSrc,
+                        name: res.title || meta?.name
+                      },
+                      true
+                    )
+                  }
+                })
+                ObjectStore('video').updateOne({ id: object.objectId, videoUrl: path })
+              }
             } else {
               object.objectId &&
                 ObjectStore('video').updateOne({

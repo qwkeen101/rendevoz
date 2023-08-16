@@ -55,9 +55,9 @@ import GraphPage from '@/scenes/GraphPage'
 import InnerHookz from '@/core/rendevoz/hooks'
 import * as InnerComponentz from '@/core/rendevoz/components'
 import createCache from '@emotion/cache'
-import { startDrive } from '@/driver'
-import ReviewManager from '@/core/review/components/ReviewManager'
-import TimelineManager from '@/core/database/TimelineManager'
+// import { startDrive } from '@/driver'
+// import ReviewManager from '@/core/review/components/ReviewManager'
+// import TimelineManager from '@/core/database/TimelineManager'
 export function getOS() {
   const userAgent = window.navigator.userAgent.toLowerCase(),
     macosPlatforms = /(macintosh|macintel|macppc|mac68k|macos)/i,

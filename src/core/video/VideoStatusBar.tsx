@@ -19,6 +19,8 @@ import { WebVTTParser } from 'webvtt-parser'
 import Id from '@/utils/id'
 import { useVideoInstance } from '@/core/video/hooks/useVideoInstance'
 import { normalizeSecondsToTime } from '@/core/video/utils'
+import VideoActionsMenu from '@/core/video/VideoActionsMenu'
+import requestVideoSubtitle from '@/components/fileImporter/baidudisk/requestVideoSubtitle'
 
 const VideoStatusBar = () => {
   const [videoState, setVideoState] = useVideoState()
@@ -26,7 +28,7 @@ const VideoStatusBar = () => {
   const [barState, setBarState] = useState<{
     addingAttachment: boolean
   }>()
-  const instance = useVideoInstance()
+
   const [sidebarState, setSidebarState] = useVideoSidebarState()
   const { t } = useTranslation()
   const [setting, setSetting] = useSetting()
@@ -80,84 +82,14 @@ const VideoStatusBar = () => {
           text={t('general.edit details')}
           style={{ flexShrink: 0 }}
           onClick={() => {
+            console.log(videoMeta, videoState)
             videoMeta?.id && Rendevoz.Actions.Open.Meta.openEditMetaDialog(videoMeta?.id)
           }}
         ></Button.IconButton>
         {videoState.mode === 'web' && (
           <IconWithPopover
             padding={0}
-            content={setState => (
-              <WithBorder onClick={e => Rendevoz.Events.DOM.hasButton(e) && setState(false)} padding={8} style={{ borderRadius: 8 }}>
-                <Button.IconButton
-                  icon="park-down-picture"
-                  text={t('general.Download screenshot')}
-                  onClick={() => {
-                    const videoMeta = videoState.videoId ? MetaStore.getMetaObjectByObjectId(videoState.videoId) : undefined
-                    if (!videoMeta) return
-                    instance.captureCurrentImage?.().then(res => {
-                      if (res) {
-                        const a = document.createElement('a')
-                        a.href = res
-                        a.download = `${videoMeta.name}_${normalizeSecondsToTime(videoState.currentTime || 0)}.png`
-                        a.click()
-                      }
-                    })
-                  }}
-                />
-                <Button.IconButton
-                  icon="park-screenshot"
-                  onClick={() => {
-                    instance.captureCurrentImage?.().then(data => {
-                      if (data) {
-                        const videoMeta = videoState.videoId ? MetaStore.getMetaObjectByObjectId(videoState.videoId) : undefined
-                        saveImageLocally(data, { compress: false }).then(res => {
-                          ObjectStore('image').addOneWithMeta(
-                            {
-                              imageUrl: res
-                            },
-                            {
-                              showMetaModal: false,
-                              currentMeta: {
-                                name: 'Video Screenshot',
-                                coverImgSrc: res,
-                                fromObject: videoMeta
-                                  ? {
-                                      metaId: videoMeta.id,
-                                      type: 'video',
-                                      time: videoState.currentTime
-                                    }
-                                  : undefined
-                              }
-                            }
-                          )
-                        })
-                      }
-                    })
-                  }}
-                  text={t('general.add screenshot')}
-                ></Button.IconButton>
-                <Button.IconButton
-                  onClick={() => {
-                    instance.insertChapter?.({
-                      startTime: videoState.currentTime,
-                      name: 'Untitled Chapter'
-                    })
-                  }}
-                  text={t('general.add chapter')}
-                  icon="park-link"
-                ></Button.IconButton>
-                <Button.IconButton
-                  icon="park-pin"
-                  onClick={() => {
-                    instance.insertLabel?.({
-                      videoTime: videoState.currentTime,
-                      name: 'Unnamed Label'
-                    })
-                  }}
-                  text={t('general.add label')}
-                ></Button.IconButton>
-              </WithBorder>
-            )}
+            content={setState => <VideoActionsMenu onClose={() => setState(false)} />}
             name="park-plus"
             className={ClassName.circleButton()}
             strokeWidth={6}
@@ -185,8 +117,7 @@ const VideoStatusBar = () => {
                 icon="park-align-text-bottom-one"
                 text={t('general.import subtitles')}
                 onClick={() => {
-                  Rendevoz.Actions.Utils.uploadFile().then(files => {
-                    const file = files[0]
+                  Rendevoz.Actions.Utils.uploadFile().then(file => {
                     if (file) {
                       if (file.name.endsWith('srt')) {
                         toWebVTT(file)
@@ -207,6 +138,7 @@ const VideoStatusBar = () => {
                           .catch(e => {
                             toast.error('Unsupported Subtitle File!')
                           })
+                        return
                       }
                       if (file.name.endsWith('vtt')) {
                         saveFileLocally(file.path, file.name).then(res => {
@@ -215,6 +147,7 @@ const VideoStatusBar = () => {
                             ObjectStore('video').updateOne({ id, subtitleUrl: res.data })
                           }
                         })
+                        return
                       }
                     }
                     toast.error('Failed to import subtitle! Only supports .srt or .vtt file!')

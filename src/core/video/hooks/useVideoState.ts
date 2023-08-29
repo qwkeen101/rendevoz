@@ -2,6 +2,7 @@ import { atom, useAtom } from 'jotai'
 import { IVideo, IVideoChapter } from '~/typings'
 
 export type VideoState = {
+  loaded: boolean
   loop: boolean
   muted: boolean
   currentTime?: number
@@ -11,9 +12,11 @@ export type VideoState = {
   paused: boolean
   jumpIndicator?: 'back' | 'forward'
   volumeIndicator?: 'up' | 'down'
-  mode?: 'web' | 'video'
+  mode?: 'web' | 'video' | 'baidudisk'
   volume: number
   speed: number
+  autoPlay?: boolean
+  jumpTime?: number
   fullScreen: boolean
   windowed: boolean
   showSubtitle?: boolean
@@ -44,6 +47,7 @@ export type VideoState = {
 
 export const VideoStateAtom = atom<VideoState>({
   muted: false,
+  loaded: false,
   loop: false,
   progressbarHovering: false,
   paused: true,

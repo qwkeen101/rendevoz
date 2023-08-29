@@ -57,11 +57,11 @@ const InlineMetaElement: FC<RenderElementProps> = ({ element, children, attribut
           style={{
             display: 'inline-flex',
             gap: metaObject?.coverImgSrc ? 12 : 6,
-            alignItems: metaObject?.coverImgSrc ? 'center' : 'baseline',
+            alignItems: metaObject?.coverImgSrc ? 'flex-end' : 'baseline',
             maxWidth: 'calc(100% - 20px)'
           }}
         >
-          <Image preview src={metaObject.coverImgSrc} width="3.4em" className={imageClassName} />
+          <Image preview src={metaObject.coverImgSrc} width="2.5em" className={imageClassName} />
           <Content flex column gap="0.2em" style={{ alignSelf: 'flex-end' }}>
             <Content flex gap={6}>
               <div role="tag" style={{ width: 'fit-content', margin: 0, fontSize: '0.8em' }} className={nameClassName}>

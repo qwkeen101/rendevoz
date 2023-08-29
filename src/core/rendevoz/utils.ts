@@ -2,9 +2,9 @@ import { GlobalUtilsInstance } from '../global/GlobalUtils'
 import { IRendevoz } from '~/typings'
 import { saveBlobLocally, saveImageLocally } from '@/utils'
 
-const uploadFile = (): Promise<File[]> => {
+const uploadFile: IRendevoz['Actions']['Utils']['uploadFile'] = opts => {
   return new Promise(res => {
-    GlobalUtilsInstance.upload?.().then(files => res(files))
+    GlobalUtilsInstance.upload?.(opts).then(files => res(files))
   })
 }
 

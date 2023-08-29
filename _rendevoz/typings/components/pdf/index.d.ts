@@ -28,6 +28,7 @@ export type IPdfInstance = Partial<{
   jumpToDest: (dest: string | any[]) => void
   jumpToOffset: (offset: number) => void
   jumpToLabel: (labelId: number) => Promise<void>
+  jumpToArea: (page: number, area: Box) => void
   scrollBy: (offset: number) => void
   scrollToOffset: (offset: number) => void
   getPageSize: () => PageSize & { pageSizeScale: number }

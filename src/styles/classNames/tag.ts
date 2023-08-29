@@ -30,7 +30,8 @@ export const objectTag = css({
   textTransform: 'capitalize',
   color: 'var(--font-secondary)',
   background: 'var(--button-hover-background)',
-  borderRadius: 999,
-  padding: '0px 8px',
+  borderRadius: 4,
+  lineHeight: '16px',
+  padding: '0px 6px',
   fontFamily: 'Muli'
 })

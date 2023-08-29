@@ -6,61 +6,93 @@ import { useTranslation } from 'react-i18next'
 import Colors from '@/consts/colors'
 import { useSelectGlobalAtomValue, useToggle } from '@/hooks'
 import { SettingAtom } from '@/core'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Regexp } from '@/utils'
+import { MetaFormLayoutItem } from '~/typings'
+import Select from '@/components/base/select'
+import { BaidudiskInstance } from '@/components/fileImporter/baidudisk/BaidudiskDisplayer'
 
 const FormFilePathPicker = ({
   onChange,
   filePath,
   maxWidth,
   accept,
-  enableWeb
-}: {
-  onChange: (filePath: string | undefined, fileName: string | undefined, file: File | undefined) => void
-  filePath: string
-  maxWidth: number | string
-  accept?: HTMLInputElement['accept']
-  enableWeb?: boolean
-}) => {
+  enableWeb,
+  enableBaidudisk,
+  baidudiskCategory
+}: MetaFormLayoutItem & { type: 'filePathPicker' }) => {
   const { renderUploader, upload, removeFile } = useFileUpload(file => {
-    onChange(file.path, file.name, file)
+    onChange({
+      type: 'local',
+      filePath: file.path,
+      file: file,
+      fileName: file.name
+    })
   }, accept)
   const userFilePath = useSelectGlobalAtomValue(SettingAtom, s => s.general.userFilePath)
   const defaultFilePath = useSelectGlobalAtomValue(SettingAtom, s => s.general.defaultFilePath)
   const { t } = useTranslation()
-  const [isWebChooser, toggleIsWebChoose] = useToggle(enableWeb)
+
+  const [chooser, setChooser] = useState<'web' | 'local' | 'baidudisk'>('local')
   const [validUrl, setValidUrl] = useState(Regexp.isValidWebUrl(filePath))
+  const inputRef = useRef<HTMLInputElement>(null)
   useEffect(() => {
     if (filePath?.startsWith('http')) {
-      toggleIsWebChoose(true)
+      setChooser('web')
+    }
+    if (filePath?.startsWith('baidudisk')) {
+      setChooser('baidudisk')
     }
     if ((filePath?.includes('youtube') || filePath?.includes('bilibili')) && Regexp.isValidWebUrl(filePath)) {
       setValidUrl(true)
     }
   }, [filePath])
-
+  const selectOptions = [
+    {
+      value: 'local',
+      children: 'Local file'
+    }
+  ]
+  if (enableWeb) {
+    selectOptions.push({
+      value: 'web',
+      children: 'Online file'
+    })
+  }
+  if (enableBaidudisk) {
+    selectOptions.push({
+      value: 'baidudisk',
+      children: 'Baidu disk file'
+    })
+  }
   return (
     <div className={groupClassName}>
-      <div className={hoverLabelClassName}>{isWebChooser ? t('general.Video URL') : t('general.file path')}</div>
-      {enableWeb && (
-        <Icon
-          onClick={toggleIsWebChoose}
-          className={ClassName.circleButton()}
-          name={isWebChooser ? 'park-file-addition' : 'park-add-web'}
-          containerStyle={{
-            position: 'absolute',
-            top: -10,
-            right: 32,
-            fontSize: 10
+      <div className={hoverLabelClassName}>{t('general.file path')}</div>
+      {(enableWeb || enableBaidudisk) && (
+        <Select
+          gap={6}
+          onSelect={v => setChooser(v[0])}
+          options={selectOptions}
+          value={chooser}
+          style={{ fontSize: 12, position: 'absolute', top: -8, right: 32, padding: '2px 4px', height: 16 }}
+          menuStyle={{
+            fontSize: 12,
+            lineHeight: 1.3,
+            minWidth: 140
           }}
+          closeOnSelect
         />
       )}
       <Icon
         name="park-close"
         className={ClassName.circleButton()}
         onClick={() => {
-          onChange(undefined, undefined, undefined)
+          onChange({ type: 'clear' })
           removeFile()
+          if (inputRef.current) {
+            inputRef.current.value = ''
+            inputRef.current.focus()
+          }
         }}
         containerStyle={{
           position: 'absolute',
@@ -69,7 +101,7 @@ const FormFilePathPicker = ({
           fontSize: 10
         }}
       />
-      {isWebChooser ? (
+      {chooser === 'web' && (
         <>
           <div>
             {!validUrl && (
@@ -81,6 +113,7 @@ const FormFilePathPicker = ({
               </Content>
             )}
             <input
+              ref={inputRef}
               style={{
                 outline: 'none',
                 border: 'none',
@@ -98,14 +131,18 @@ const FormFilePathPicker = ({
               }}
               onBlur={e => {
                 if (validUrl) {
-                  onChange(e.currentTarget.value, e.currentTarget.value, undefined)
+                  onChange({
+                    type: 'web',
+                    url: e.target.value
+                  })
                 }
               }}
               placeholder={t('general.Input video url')}
             />
           </div>
         </>
-      ) : (
+      )}
+      {chooser === 'local' && (
         <>
           {renderUploader()}
           <div
@@ -121,6 +158,36 @@ const FormFilePathPicker = ({
           >
             {filePath ? (
               filePath.replace('rendefile://', userFilePath || defaultFilePath || '')
+            ) : (
+              <>
+                <Icon name="park-file-addition-one" />
+                {t('general.choose one file')}
+              </>
+            )}
+          </div>
+        </>
+      )}
+      {chooser === 'baidudisk' && (
+        <>
+          <div
+            style={{
+              cursor: 'pointer',
+              maxWidth,
+              color: filePath ? undefined : Colors.Font.Description,
+              display: 'flex',
+              gap: 10,
+              alignItems: 'center'
+            }}
+            onClick={() => {
+              BaidudiskInstance.chooseFile?.(1, true).then(res => {
+                if (res) {
+                  onChange({ type: 'baidudisk', name: res.filename, url: res.path })
+                }
+              })
+            }}
+          >
+            {filePath ? (
+              filePath.replace('baidudisk', '')
             ) : (
               <>
                 <Icon name="park-file-addition-one" />

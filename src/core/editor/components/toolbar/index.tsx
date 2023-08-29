@@ -1,4 +1,4 @@
-import { Toolbar, WithBorder } from '@/components/base'
+import { AnimatePopover, Toolbar, WithBorder } from '@/components/base'
 import Select from '@/components/base/select'
 import IconWithPopover from '@/components/base/IconWithPopover'
 import { CSSProperties, FC, useEffect, useRef, useState } from 'react'
@@ -13,8 +13,9 @@ import BlockColorPicker from '../BlockColorPicker'
 import { useMemoizedFn } from '@/hooks'
 import { css } from '@emotion/css'
 import ClassName from '@/styles/classNames'
-import { Zindexes } from '@/consts'
+import { Colors, Zindexes } from '@/consts'
 import useEditorInstance from '../../hooks/useEditorInstance'
+import { EditorProps } from '~/typings'
 
 type EditorToolbarEvents =
   | {
@@ -37,9 +38,10 @@ interface EditorToolbarProps {
   showToolbar?: boolean
   on: (event: EditorToolbarEvents) => void
   style?: CSSProperties
+  toolbarOptions?: EditorProps['toolbarOptions']
 }
 const MAX_TOLERANT_DISTANCE = 15
-const EditorToolbar: FC<EditorToolbarProps> = ({ scrollElement, showToolbar, style, on }) => {
+const EditorToolbar: FC<EditorToolbarProps> = ({ scrollElement, showToolbar, style, on, toolbarOptions }) => {
   const { t } = useTranslation()
   const editor = useSlate()
   const { selection } = editor
@@ -50,6 +52,7 @@ const EditorToolbar: FC<EditorToolbarProps> = ({ scrollElement, showToolbar, sty
     top: number
     left: number
     direction: string
+    visible: boolean
   }>()
   const isOnHighlightRef = useRef(false)
   const instance = useEditorInstance()
@@ -69,7 +72,8 @@ const EditorToolbar: FC<EditorToolbarProps> = ({ scrollElement, showToolbar, sty
         setFloatPosition({
           direction: 'top',
           left: bounding.left + bounding.width / 2,
-          top: bounding.top - 50
+          top: bounding.top,
+          visible: true
         })
       }
     }
@@ -78,6 +82,7 @@ const EditorToolbar: FC<EditorToolbarProps> = ({ scrollElement, showToolbar, sty
     const { selection, readonly } = editor
     console.log(ReactEditor.isFocused(editor))
     const windowSelection = window.getSelection()
+    if (!ReactEditor.toDOMNode(editor, editor).contains(e.target)) return
     if (
       (showToolbar || !readonly) &&
       selection &&
@@ -106,9 +111,10 @@ const EditorToolbar: FC<EditorToolbarProps> = ({ scrollElement, showToolbar, sty
         direction = 'bottom'
       }
       setFloatPosition({
-        left: focusRect.left + 30,
-        top: focusRect.top - (direction === 'top' ? 50 : -(focusRect.height + 10)),
-        direction
+        left: focusRect.left + focusRect.width / 2,
+        top: direction === 'top' ? focusRect.top : focusRect.bottom,
+        direction,
+        visible: true
       })
     }
   })
@@ -116,7 +122,7 @@ const EditorToolbar: FC<EditorToolbarProps> = ({ scrollElement, showToolbar, sty
   const handleMouseDown = (e: MouseEvent) => {
     if (!toolbarRef.current?.contains(e.target)) {
       window.getSelection()?.empty()
-      setFloatPosition(undefined)
+      setFloatPosition(s => ({ ...s, visible: false }))
       isOnHighlightRef.current = false
     } else {
       if (isOnHighlightRef.current === false) {
@@ -126,10 +132,10 @@ const EditorToolbar: FC<EditorToolbarProps> = ({ scrollElement, showToolbar, sty
     }
   }
   const handleScroll = e => {
-    setFloatPosition(undefined)
+    setFloatPosition(s => ({...s, visible: false}))
   }
   useEffect(() => {
-    if (floatPosition && editor.selection && !isOnHighlightRef.current) {
+    if (floatPosition?.visible && editor.selection && !isOnHighlightRef.current) {
       window.getSelection()?.removeAllRanges()
       console.log('clear range')
       try {
@@ -162,6 +168,7 @@ const EditorToolbar: FC<EditorToolbarProps> = ({ scrollElement, showToolbar, sty
   const renderToolbar = () => (
     <Toolbar innerRef={toolbarRef} className={classNames(styles.toolbar, styles.float)} style={style} itemClickPreventDefault itemSize={16}>
       {currentElement &&
+        toolbarOptions?.fontSize !== false &&
         !['heading-one', 'heading-two', 'heading-three', 'heading-four', 'heading-five', 'heading-six'].includes(
           currentElement[0].type
         ) && (
@@ -225,12 +232,14 @@ const EditorToolbar: FC<EditorToolbarProps> = ({ scrollElement, showToolbar, sty
           ></Select>
         )}
 
-      <Toolbar.Item
-        tooltip={t('general.highlight')}
-        iconName="park-high-light"
-        onClick={() => on({ action: 'highlight' })}
-        isActive={isMarkActive('highlight')}
-      />
+      {toolbarOptions?.highlight !== false && (
+        <Toolbar.Item
+          tooltip={t('general.highlight')}
+          iconName="park-high-light"
+          onClick={() => on({ action: 'highlight' })}
+          isActive={isMarkActive('highlight')}
+        />
+      )}
 
       <Toolbar.Item
         tooltip={t('editor.bold')}
@@ -255,7 +264,7 @@ const EditorToolbar: FC<EditorToolbarProps> = ({ scrollElement, showToolbar, sty
         iconName="park-link"
         onClick={() => {
           on({ action: 'link' })
-          setFloatPosition(undefined)
+          setFloatPosition(s => ({...s, visible: false}))
         }}
       />
       <Toolbar.Item
@@ -285,120 +294,88 @@ const EditorToolbar: FC<EditorToolbarProps> = ({ scrollElement, showToolbar, sty
           name="park-font-size-two"
         ></IconWithPopover>
       </Toolbar.Item>
-      <Toolbar.Separator direction="horizontal" />
-      <Toolbar.Item
-        iconName="park-translate"
-        tooltip={t('general.translate')}
-        onClick={e => {
-          if (editor.selection) {
-            const str = Editor.string(editor, editor.selection)
-            if (str) {
-              const block = Editor.above(editor, {
-                match: n => Element.isElement(n) && 'id' in n,
-                at: editor.selection.anchor
-              })?.[0]
-              console.log(block)
-              if (!block?.id) return
-              editor.on({
-                type: 'translate',
-                translatedText: str,
-                blockId: block.id as number,
-                e
-              })
-            }
-          }
-        }}
-      />
-      <Toolbar.Item
-        iconName="park-search"
-        tooltip={t('general.search')}
-        onClick={e => {
-          if (editor.selection) {
-            const str = Editor.string(editor, editor.selection)
-            if (str) {
-              const block = Editor.above(editor, {
-                match: n => Element.isElement(n) && 'id' in n,
-                at: editor.selection.anchor
-              })?.[0]
-              if (!block?.id) return
-              editor.on({
-                type: 'search',
-                searchedText: str,
-                blockId: block.id as number,
-                e
-              })
-            }
-          }
-        }}
-      />
+      {toolbarOptions?.extra !== false && (
+        <>
+          <Toolbar.Separator direction="horizontal" />
+          <Toolbar.Item
+            iconName="park-translate"
+            tooltip={t('general.translate')}
+            onClick={e => {
+              if (editor.selection) {
+                const str = Editor.string(editor, editor.selection)
+                if (str) {
+                  const block = Editor.above(editor, {
+                    match: n => Element.isElement(n) && 'id' in n,
+                    at: editor.selection.anchor
+                  })?.[0]
+                  console.log(block)
+                  if (!block?.id) return
+                  editor.on({
+                    type: 'translate',
+                    translatedText: str,
+                    blockId: block.id as number,
+                    e
+                  })
+                }
+              }
+            }}
+          />
+          <Toolbar.Item
+            iconName="park-search"
+            tooltip={t('general.search')}
+            onClick={e => {
+              if (editor.selection) {
+                const str = Editor.string(editor, editor.selection)
+                if (str) {
+                  const block = Editor.above(editor, {
+                    match: n => Element.isElement(n) && 'id' in n,
+                    at: editor.selection.anchor
+                  })?.[0]
+                  if (!block?.id) return
+                  editor.on({
+                    type: 'search',
+                    searchedText: str,
+                    blockId: block.id as number,
+                    e
+                  })
+                }
+              }
+            }}
+          />
+        </>
+      )}
     </Toolbar>
   )
   console.log(showToolbar, floatPosition, editor.noteId)
   // only render when have noteid
   const renderFloatToolbar = () =>
     createPortal(
-      <AnimatePresence>
-        {floatPosition && editor.noteId && (
-          <motion.div
-            key="editorTool"
-            style={{
-              position: 'fixed',
-              top: floatPosition.top,
-              left: floatPosition.left,
-              zIndex: Zindexes.EditorSelectionToolbar
-            }}
+      <AnimatePopover
+        padding={15}
+        visible={!!(floatPosition?.visible && (editor.noteId || showToolbar))}
+        position={{
+          left: floatPosition?.left,
+          top: floatPosition?.top
+        }}
+        positions={[floatPosition?.direction || 'top']}
+        containerStyle={{ zIndex: String(Zindexes.EditorSelectionToolbar), borderRadius: '999px' }}
+        content={
+          <WithBorder
+            borderRadius={999}
+            padding="0px 12px"
+            className={css({
+              width: 'fit-content'
+            })}
           >
-            <WithBorder
-              borderRadius={999}
-              padding="0px 12px"
-              style={{
-                border: 'none'
-              }}
-              className={css({
-                position: 'sticky',
-                marginLeft: 'auto',
-                marginRight: 'auto',
-                width: 'fit-content',
-                transform: 'translateX(-50%)'
-              })}
-            >
-              <motion.div
-                key={2}
-                style={{ position: 'absolute', inset: 1, borderRadius: 999 }}
-                initial={{
-                  opacity: 0,
-                  y: floatPosition.direction === 'top' ? -20 : 20
-                }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{
-                  opacity: 0,
-                  y: floatPosition.direction === 'top' ? -20 : 20
-                }}
-                className={ClassName.Background.blurBackground}
-              ></motion.div>
-              <motion.div
-                key={3}
-                initial={{
-                  opacity: 0,
-                  y: floatPosition.direction === 'top' ? -20 : 20
-                }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{
-                  opacity: 0,
-                  y: floatPosition.direction === 'top' ? -20 : 20
-                }}
-              >
-                {renderToolbar()}
-              </motion.div>
-            </WithBorder>
-          </motion.div>
-        )}
-      </AnimatePresence>,
+            <motion.div key={3}>{renderToolbar()}</motion.div>
+          </WithBorder>
+        }
+      />,
       document.body,
       'editorToolbar'
     )
 
-  return position === 'float' ? renderFloatToolbar() : renderToolbar()
+  return renderFloatToolbar()
 }
 
 export default EditorToolbar

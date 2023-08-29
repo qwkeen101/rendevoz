@@ -130,8 +130,8 @@ const Initializer = () => {
     ipcInstance.on('close', unloadListener)
     ipcInstance.on('openObject', data => {
       console.error(data)
-      if (data.metaId) {
-        Rendevoz.Actions.Open.Meta.openMetaObject(Number(data.metaId))
+      if (data.url) {
+        Rendevoz.Actions.Open.openRendevozLink(data.url)
       }
     })
     if (loginState.autoLogin && loginState.password && !autoLogined) {

@@ -32,6 +32,8 @@ import Id from '@/utils/id'
 import { INotificationSetting } from '@/core'
 import { CustomTypes } from 'rendevoz'
 import { deleteRendefile } from '@/utils'
+import { DEFAULT_BACKGROUND_COLORS } from '@/components/picker/colorPicker'
+import _ from 'lodash'
 
 export type ObjectFamily = CustomTypes['Object']
 
@@ -397,6 +399,12 @@ const createWhiteboardStore = () => {
 
 const createTagStore = () => {
   return createObjectStore('tag', {
+    beforeAddProcess: async o => {
+      if (!o.color) {
+        o.color = _.sample(DEFAULT_BACKGROUND_COLORS)
+      }
+      return true
+    },
     beforeDeleteProcess: async id => {
       const tag = await ObjectStore('tag').getOneById(id)
       if (tag && tag.name) {

@@ -9,25 +9,7 @@ import {
 import { useEffect, useMemo, useState } from 'react'
 import { RenderElementProps } from 'slate-react'
 
-declare module 'rendevoz' {
-  export interface CustomTypes {
-    MetaObject: BuiltInMetaObjectTypes | 'customEle' | 'task'
-    Object: BuiltInObjectTypes & {
-      task: {
-        specType: 'task'
-      }
-    }
-    DropOn: BuiltInDropOn
-    DraggableElement: BuiltInDraggableElement
-    Tab:
-      | BuiltInTabTypes
-      | {
-          type: 'taskManager'
-          instance: never
-          objectId: never
-        }
-  }
-}
+
 
 export default (plugin: PluginApi) => {
   plugin.register.registerInSidebarMenu('sad', {})

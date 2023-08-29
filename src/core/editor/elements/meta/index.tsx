@@ -58,6 +58,16 @@ const MetaObject: FC<RenderElementProps> = memo(({ children, element }) => {
               fontSize: FontSize['13px']
             }
           },
+          descriptionOptions: {
+            style: {
+              fontSize: FontSize['12px']
+            }
+          },
+          fromOptions: {
+            style: {
+              fontSize: FontSize['12px']
+            }
+          },
           renderOptions: {
             renderFrom: true,
             renderImage: false,

@@ -27,11 +27,22 @@ export const captureVideoFrame = (
   size: Size = {
     width: 533,
     height: 300
-  }
+  },
+  skipSeek?: boolean
 ): Promise<string> => {
   return new Promise(res => {
-    video.currentTime = time
-    video.onseeked = () => {
+    if (!skipSeek) {
+      video.currentTime = time
+      video.onseeked = () => {
+        const canvas = document.createElement('canvas')
+        canvas.height = Number(size.height)
+        canvas.width = Number(size.width)
+        const ctx = canvas.getContext('2d')
+        ctx?.drawImage(video, 0, 0, canvas.width, canvas.height)
+        const dataUrl = canvas.toDataURL()
+        res(dataUrl)
+      }
+    } else {
       const canvas = document.createElement('canvas')
       canvas.height = Number(size.height)
       canvas.width = Number(size.width)
@@ -63,10 +74,14 @@ export const captureVideoFrameBlob = (video: HTMLVideoElement, time: number): Pr
 const zeroPad = (num: number) => String(num).padStart(2, '0')
 
 export const normalizeSecondsToTime = (seconds: number) => {
-  const duration = intervalToDuration({ start: 0, end: seconds * 1000 })
-  return `${duration.hours ? duration.hours + ':' : ''}${duration.hours ? zeroPad(duration.minutes || 0) : duration.minutes}:${zeroPad(
-    duration.seconds || 0
-  )}`
+  try {
+    const duration = intervalToDuration({ start: 0, end: seconds * 1000 })
+    return `${duration.hours ? duration.hours + ':' : ''}${duration.hours ? zeroPad(duration.minutes || 0) : duration.minutes}:${zeroPad(
+      duration.seconds || 0
+    )}`
+  } catch (e) {
+    return '00:00'
+  }
 }
 
 export const generateVideoThumbnail = (file: File, time?: number): Promise<string> => {

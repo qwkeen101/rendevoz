@@ -6,7 +6,7 @@ import { css } from '@emotion/css'
 import { selectAtom } from 'jotai/utils'
 import { CSSProperties, memo, ReactNode, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Content, Icon, IconWithPopover, Image } from '@/components'
+import { Content, Icon, IconWithPopover, Image, WithBorder } from '@/components'
 import { Editor } from '../editor/Editor'
 import { PdfViewer } from '../pdf/PdfViewer'
 import { ObjectActionPopover, TypeToTypeName } from './card/DatabaseCard'
@@ -76,7 +76,8 @@ const TagRenderer = ({
   showAttachments,
   containerClassName = css({
     '> *': {
-      fontSize: '11px !important'
+      fontSize: '11px !important',
+      lineHeight: '1.5 !important'
     }
   }),
   relatedNum,
@@ -156,7 +157,7 @@ const TagRenderer = ({
         </HoverAttachment>
       ) : null}
       {metaObject?.tags?.map(i => (
-        <ObjectTag key={i} tag={i} hideAdd hideDelete hideSize small />
+        <ObjectTag key={i} tag={i} hideAdd hideDelete hideSize square />
       ))}
     </Content>
   )
@@ -191,6 +192,7 @@ const TitleRenderer = ({
             border: `1px solid ${Colors.Background.Border}`,
             background: 'transparent',
             borderRadius: 6,
+            width: '100%',
             position: 'relative'
           }}
         >
@@ -383,7 +385,13 @@ const _renderOptions = (
         name={iconName}
         className={ClassName.circleButton(2)}
         disableIntersection
-        content={customNode || <ObjectActionPopover metaObjectId={metaObject.id} />}
+        content={
+          customNode || (
+            <WithBorder>
+              <ObjectActionPopover metaObjectId={metaObject.id} />
+            </WithBorder>
+          )
+        }
       ></IconWithPopover>
     )
   )

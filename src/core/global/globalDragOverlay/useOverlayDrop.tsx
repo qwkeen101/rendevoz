@@ -42,7 +42,7 @@ const useOverlayDrop = () => {
     const customGetDropOnLinks = getDropOnPostLinks
 
     if (data.draggingElement) {
-      if(data.draggingElement.type === 'collection'){
+      if (data.draggingElement.type === 'collection') {
         return Promise.reject()
       }
       console.log(data.draggingElement)
@@ -53,7 +53,6 @@ const useOverlayDrop = () => {
           console.error('No normalize function registered! Please register normalizeDraggingEleToMetaObject!')
           return
         }
-        console.log(normalizeDraggingEleToMetaObject)
         if (_customNormalize) {
           customNormalize = _customNormalize
         }
@@ -75,7 +74,6 @@ const useOverlayDrop = () => {
     if (data.e) {
       const n = await normalizeDropToMeta(data.e)
       clearDragState()
-      console.log(n)
       normalizedMetaObject = n
         ? ({
             ...n,
@@ -202,7 +200,9 @@ const useOverlayDrop = () => {
     shouldOpenEditMetaModal: boolean
     preLinks: PartialWithId<MetaLink>[]
   }> => {
-    const { enableDragFromEditorLink, enableDragFromPDFLink, enableAll } = getSetting().objectAndLink
+    const setting = getSetting()
+    const { showOriginalText } = setting.label
+    const { enableDragFromEditorLink, enableDragFromPDFLink, enableAll } = setting.objectAndLink
     const normalizedLinks: PartialWithId<MetaLink>[] = []
     const normalizedMetaObject: PartialWithId<MetaObject & { noteId: number }> = {
       id: Id.getId(),
@@ -267,7 +267,9 @@ const useOverlayDrop = () => {
             selectedText: dragElement.content,
             pages: dragElement.page ? [dragElement.page] : undefined
           }
-          normalizedMetaObject.name = labelObject?.name || dragElement.content || 'Unnamed PDF Label'
+          normalizedMetaObject.name =
+            labelObject?.name || showOriginalText ? 'Unnamed PDF label' : dragElement.content || 'Unnamed PDF Label'
+          normalizedMetaObject.coverImgSrc = dragElement.imageUrl
           if (enableDragFromPDFLink && enableAll) {
             const metaLink: PartialWithId<MetaLink> = {
               sourceId: pdfMeta.id,

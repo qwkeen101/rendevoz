@@ -36,8 +36,10 @@ const useRenderLabel = (opts: {
     focused: boolean
     editingName: boolean
     showMoreText: boolean
+    editingOrigin: boolean
   }>({
     focused: false,
+    editingOrigin: false,
     editingName: false,
     addingDescription: false,
     addingAttachment: false,
@@ -95,7 +97,6 @@ const useRenderLabel = (opts: {
               <span
                 onContextMenu={() => setLabelState(s => ({ ...s, editingName: true }))}
                 onClick={() => {
-                  console.log(keyboard)
                   if (keyboard.ctrl) {
                     if (labelMeta) {
                       const link = `rendevoz://object/${labelMeta?.id}`
@@ -241,6 +242,17 @@ const useRenderLabel = (opts: {
     if (!shouldShouldOriginal) {
       return null
     }
+    if (labelState.editingOrigin) {
+      return (
+        <NameEditor
+          value={text}
+          onChange={v => {
+            setLabelState(s => ({ ...s, editingOrigin: false }))
+            ObjectStore(type).updateOne({ id: label?.id, selectedText: v })
+          }}
+        />
+      )
+    }
     return (
       <div
         style={{
@@ -254,20 +266,26 @@ const useRenderLabel = (opts: {
         <div style={{ textTransform: 'none' }} className={labelState.showMoreText ? undefined : ClassName.ellipsisFont(3)}>
           {text}
         </div>
-        {text.length > 120 && (
-          <div
-            style={{
-              marginLeft: 'auto',
-              textAlign: 'end',
-              fontSize: FontSize['12px'],
-              cursor: 'pointer',
-              width: 'fit-content'
-            }}
-            onClick={() => setLabelState(s => ({ ...s, showMoreText: !s.showMoreText }))}
-          >
-            {labelState.showMoreText ? t('editor.show less') : t('editor.show more')}
+
+        <div
+          style={{
+            marginLeft: 'auto',
+            display: 'flex',
+            gap: 6,
+            textAlign: 'end',
+            fontSize: FontSize['12px'],
+            width: 'fit-content'
+          }}
+        >
+          <div style={{ cursor: 'pointer' }} onClick={() => setLabelState(s => ({ ...s, editingOrigin: true }))}>
+            {t('general.edit')}
           </div>
-        )}
+          {text.length > 120 && (
+            <div style={{ cursor: 'pointer' }} onClick={() => setLabelState(s => ({ ...s, showMoreText: !s.showMoreText }))}>
+              {labelState.showMoreText ? t('editor.show less') : t('editor.show more')}
+            </div>
+          )}
+        </div>
       </div>
     )
   }

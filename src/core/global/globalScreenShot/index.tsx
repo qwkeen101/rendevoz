@@ -764,10 +764,17 @@ const GlobalScreenShot = () => {
                   case 'add as object': {
                     if (selectionBoxState.rect) {
                       const blob = await getImageBlob()
-                      const { relatedMeta, normalizedImage, normalizedImageMeta } = normalizeScreenshot(selectionBoxState.rect)
                       const imgPath = await saveImageLocally(blob, {
                         compress: false
                       })
+                      const { relatedMeta, normalizedImage, normalizedImageMeta } = await normalizeScreenshot(
+                        selectionBoxState.rect,
+                        imgPath
+                      )
+                      if (!normalizedImageMeta) {
+                        setScreenShotLayerVisible(false)
+                        return
+                      }
                       const one = await ObjectStore('image').addOne({
                         ...normalizedImage,
                         imageUrl: imgPath

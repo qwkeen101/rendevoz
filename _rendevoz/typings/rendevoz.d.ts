@@ -123,7 +123,8 @@ declare const Notification: {
 }
 
 declare const ActionUtils: {
-  uploadFile: () => Promise<File[]>
+  uploadFile: (options?: { accept?: string; multiple?: boolean; dir?: boolean }) => Promise<File[]>
+
   /**
    * Return local image path of saved image
    */

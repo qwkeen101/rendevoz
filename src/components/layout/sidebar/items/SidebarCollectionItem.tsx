@@ -176,8 +176,7 @@ const SidebarCollectionItem: FC<ISidebarItem> = memo(({ id, parentId, parentType
             className={css({
               paddingLeft: 15,
               display: 'flex',
-              flexDirection: 'column',
-              overflow: 'hidden'
+              flexDirection: 'column'
             })}
           >
             {childrenCollections?.map(i => (

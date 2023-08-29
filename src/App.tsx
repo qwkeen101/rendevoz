@@ -3,15 +3,7 @@ import './common.less'
 import TitleBar from './components/titlebar'
 import Initializer from './Initializer'
 import './global.less'
-import {
-  GlobalCreateObject,
-  GlobalDragOverlay,
-  GlobalGraph,
-  GlobalObjectPanel,
-  GlobalScreenShot,
-  ObjectTimeline,
-  useSetting
-} from '@/core'
+import { GlobalCreateObject, GlobalDragOverlay, GlobalGraph, GlobalObjectPanel, GlobalScreenShot, ObjectTimeline, useSetting } from '@/core'
 import Notification from './components/NotificationCenter'
 import '@/core/editor/dock.less'
 import SvgMarker from './components/svg/Marker'
@@ -42,7 +34,7 @@ import Webpage from './core/webpage/Webpage'
 import WhiteboardPage from './scenes/WhiteboardPage'
 import { HomePage } from './scenes/HomePage'
 import DatabasePage from './scenes/DatabasePage'
-import GlobalNoteImporter from './core/global/GlobalNoteImporter'
+import GlobalImporter from './core/global/GlobalImporter'
 import PluginManager from './core/plugin/PluginManager'
 import BuiltinEditorPlugin from './core/plugin/builtin/EditorPlugin'
 import TestPlugin from './TestPlugin'
@@ -55,6 +47,11 @@ import GraphPage from '@/scenes/GraphPage'
 import InnerHookz from '@/core/rendevoz/hooks'
 import * as InnerComponentz from '@/core/rendevoz/components'
 import createCache from '@emotion/cache'
+import useBetterFilter from '@/core/database/filter/useBetterFilter'
+import MetaGroupPage from '@/scenes/MetaGroupPage'
+import { BuiltInDraggableElement, BuiltInDropOn, BuiltInMetaObjectTypes, BuiltInObjectTypes, BuiltInTabTypes } from '~/typings'
+import { ObjectStore } from '@/stores'
+import { GlobalBaidudisk } from '@/components/fileImporter/baidudisk/BaidudiskDisplayer'
 // import { startDrive } from '@/driver'
 // import ReviewManager from '@/core/review/components/ReviewManager'
 // import TimelineManager from '@/core/database/TimelineManager'
@@ -137,11 +134,33 @@ const RENDEVOZ_DEFAULT_TABS: TabData[ILayoutTab['type']][] = [
   {
     type: 'timeline',
     content: () => <ObjectTimeline />
+  },
+  {
+    type: 'group',
+    content: opts => <MetaGroupPage groupId={opts.objectId} />
   }
 ]
 
 export const GlobalPluginManager = new PluginManager()
-
+declare module 'rendevoz' {
+  export interface CustomTypes {
+    MetaObject: BuiltInMetaObjectTypes | 'customEle' | 'task' | 'collection'
+    Object: BuiltInObjectTypes & {
+      task: {
+        specType: 'task'
+      }
+    }
+    DropOn: BuiltInDropOn
+    DraggableElement: BuiltInDraggableElement
+    Tab:
+      | BuiltInTabTypes
+      | {
+          type: 'taskManager'
+          instance: never
+          objectId: never
+        }
+  }
+}
 export const cache = createCache({ key: 'external', speedy: false })
 const App = () => {
   Rendevoz.InnerHooks = InnerHookz
@@ -150,7 +169,7 @@ const App = () => {
   PdfJs.GlobalWorkerOptions.workerSrc = PdfJsUrl
 
   const os = getOS()
-
+  useBetterFilter()
   const [setting] = useSetting()
   const { i18n } = useTranslation()
   const executed = useRef(false)
@@ -160,6 +179,8 @@ const App = () => {
     executed.current = true
 
     setTimeout(() => {
+      // Rendevoz.Actions.Layout.openNewTab({ data: { type: 'group', objectId: 1 } })
+      // ObjectStore('group').addOne({ rootFilterGroup: { groupType: 'and', rules: [], filterType: 'group' }, id: 1, childrenMetaIds: [] })
       // startDrive()
       // Rendevoz.Actions.Layout.openNewTab({ data: { type: 'review' } })
     }, 2000)
@@ -196,13 +217,14 @@ const App = () => {
           <GlobalScreenShot />
           <GlobalWebview />
           <GlobalObjectPanel />
+          <GlobalBaidudisk />
           <GlobalSearchPanel />
           <GlobalCreateObject />
           <GlobalTranslateResult />
           <AuthenticatedLayout />
           <GlobalDragOverlay />
           <GlobalImagePreviewer />
-          <GlobalNoteImporter />
+          <GlobalImporter />
           <GlobalPdfPrinter />
           <GlobalUtils />
           {registeredGlobalElements.map(entry => (

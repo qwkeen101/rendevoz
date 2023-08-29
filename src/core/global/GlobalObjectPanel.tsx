@@ -1,5 +1,5 @@
 import Zindexes from '@/consts/zindex'
-import { useGlobalAtomValue, useMergedRef, useShortcut, useToggle } from '@/hooks'
+import { useGlobalAtomValue, useMergedRef, useShortcut, useToggle, useDebounceFn } from '@/hooks'
 import { metaObjectsAtom, relatedMetaObjectsMapAtom, undeletedMetaObjectsAtom } from '@/stores/meta.store'
 import { globalStore, MetaStore } from '@/stores'
 import ClassName from '@/styles/classNames'
@@ -9,7 +9,7 @@ import { useVirtualizer } from '@tanstack/react-virtual'
 import { useAtom, useAtomValue, useStore } from 'jotai/react'
 import React, { forwardRef, memo, ReactElement, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { MetaObject } from '~/typings/data'
+import { MetaFilterGroup, MetaObject } from '~/typings/data'
 import { AnimatePopover, Button, CheckBox, Content, Icon, Image, Tooltip, WithBorder } from '@/components'
 import {
   AttachmentWrapper,
@@ -42,6 +42,12 @@ import HoverObjectDetails from '@/core/database/HoverObjectDetails'
 import { toast } from 'react-hot-toast'
 import { GlobalLayout } from '@/components/layout'
 import { DateFormat } from '@/utils'
+import { calculateFilterObjects } from '@/core/database/filter/useBetterFilter'
+import BetterFilter from '@/core/database/filter/BetterFilter'
+import BetterSorter, { calculateSortObjects, SorterGroup } from '@/core/database/filter/BetterSorter'
+import { go } from 'fuzzysort'
+import isHotkey from 'is-hotkey'
+import { KEY } from '@/consts'
 
 export const GlobalObjectPanelInstance: {
   open?: (position?: LeftTopPosition) => void
@@ -225,6 +231,28 @@ type ObjectPanelProps = {
   renderFilterOnParent?: boolean
   onBackToList?: VoidFunction
 }
+
+const ObjectPanelFilterSortAtom = atom<{
+  filter?: MetaFilterGroup
+  filterVisible?: boolean
+  sorterVisible?: boolean
+  sorter?: SorterGroup
+  searchInput?: string
+  searchVisible?: boolean
+}>({
+  filterVisible: false,
+  sorterVisible: false,
+  searchInput: '',
+  searchVisible: false,
+  sorter: {
+    sorters: []
+  },
+  filter: {
+    groupType: 'and',
+    filterType: 'group',
+    rules: []
+  }
+})
 export const ObjectPanel = memo(
   ({
     onClose,
@@ -242,7 +270,7 @@ export const ObjectPanel = memo(
     })
 
     const { t } = useTranslation()
-    const [search, setSearch] = useAtom(FilterNameSearchAtom)
+    const [filterSort, setFilterSort] = useAtom(ObjectPanelFilterSortAtom)
     const [shouldDisplayObjects, setShouldDisplayObjects] = useState<MetaObject[]>(undeleteObjects)
     const [showBoxShadow, toggleShowBoxShadow] = useToggle(false)
     const containerRef = useRef<HTMLDivElement>(null)
@@ -254,10 +282,36 @@ export const ObjectPanel = memo(
       overscan: 5
     })
     const items = virtualizer.getVirtualItems()
-    useObjectFilter(ids => {
-      const shouldDisplay = undeleteObjects.filter(i => ids.has(i.id))
-      setShouldDisplayObjects(shouldDisplay)
-    })
+
+    useEffect(() => {
+      if (
+        filterSort.filterVisible === false &&
+        filterSort.sorterVisible === false &&
+        (filterSort.filter?.rules.length || filterSort.sorter?.sorters.length || filterSort.searchInput)
+      ) {
+        const afterFilter =
+          (filterSort.filter?.rules.length ? calculateFilterObjects(filterSort.filter) : undeleteObjects) || undeleteObjects
+        const afterSearch = filterSort.searchInput
+          ? Array.from(
+              go(filterSort.searchInput, afterFilter, {
+                keys: ['name', 'description']
+              }).values()
+            ).map(i => i.obj)
+          : afterFilter
+        const afterSort = filterSort.sorter?.sorters.length ? calculateSortObjects(afterSearch, filterSort.sorter) : afterSearch
+        setShouldDisplayObjects(afterSort)
+      }
+      if (
+        filterSort.filterVisible === false &&
+        filterSort.sorterVisible === false &&
+        !filterSort.filter?.rules.length &&
+        !filterSort.sorter?.sorters.length &&
+        !filterSort.searchInput
+      ) {
+        setShouldDisplayObjects(undeleteObjects)
+      }
+    }, [filterSort.filterVisible, undeleteObjects, filterSort.sorterVisible, filterSort.searchInput])
+
     useEffect(() => {
       const container = containerRef.current
       const containerScrollHandler = (e: Event) => {
@@ -274,6 +328,13 @@ export const ObjectPanel = memo(
         container?.removeEventListener('scroll', containerScrollHandler)
       }
     }, [])
+
+    const debounceSet = useDebounceFn(
+      v => {
+        setFilterSort(s => ({ ...s, searchInput: v }))
+      },
+      { wait: 500 }
+    )
     return (
       <>
         <Content
@@ -321,42 +382,119 @@ export const ObjectPanel = memo(
                 />
               </Tooltip>
             )}
-            {visiblility.showOpenInTab && (
-              <Tooltip content={'Open Database In New Tab'}>
-                <Icon name="park-efferent-four" className={ClassName.circleButton()} onClick={onOpenInTab} />
-              </Tooltip>
-            )}
+            {/*{visiblility.showOpenInTab && (*/}
+            {/*  <Tooltip content={'Open Database In New Tab'}>*/}
+            {/*    <Icon name="park-efferent-four" className={ClassName.circleButton()} onClick={onOpenInTab} />*/}
+            {/*  </Tooltip>*/}
+            {/*)}*/}
             {visiblility.showClose && <Icon name="park-close" className={ClassName.circleButton()} onClick={onClose} />}
           </Content>
-          <Content
-            style={{
-              background: 'transparent',
-              borderRadius: 6,
-              border: `1px solid ${Colors.Background.Border}`,
-              padding: '2px 8px',
-              fontSize: FontSize['13px']
-            }}
-            flex
-            alignItems="center"
-            gap={6}
-          >
-            <Icon name="park-search" />
-            <input
-              placeholder={t('database.search for object', {
-                object: t('general.object')
-              })}
-              value={search}
-              onChange={e => setSearch(e.target.value)}
-              className={css({
-                border: 'none',
-                outline: 'none',
-                background: 'inherit',
-                flexGrow: 1
-              })}
-              autoFocus
+          {filterSort.searchVisible && (
+            <Content
+              flex
+              alignItems="center"
+              gap={5}
+              style={{
+                fontSize: '13px',
+                padding: '2px 6px',
+                border: `1px solid ${Colors.Background.Border}`,
+                borderRadius: 4
+              }}
+            >
+              <Icon name={'park-search'} />
+              <input
+                autoFocus={true}
+                className={ClassName.noStyleInput}
+                style={{
+                  flex: 1
+                }}
+                onChange={e => {
+                  debounceSet.run(e.target.value)
+                }}
+                placeholder="Search content"
+                defaultValue={filterSort.searchInput}
+                onKeyDown={e => {
+                  if (isHotkey(KEY.Enter, e)) {
+                    setFilterSort(s => ({ ...s, searchInput: e.target.value }))
+                  }
+                }}
+                onBlur={e => {
+                  setFilterSort(s => ({ ...s, searchInput: e.target.value }))
+                }}
+              />
+              <Icon
+                name={'park-close'}
+                style={{
+                  cursor: 'pointer'
+                }}
+                onClick={() => setFilterSort(s => ({ ...s, searchInput: '', searchVisible: false }))}
+              />
+            </Content>
+          )}
+          <Content flex gap={6}>
+            <Button.IconButton
+              gap={6}
+              style={{
+                fontSize: 12,
+                padding: '2px 6px',
+                border: `1px solid ${Colors.Background.Border}`
+              }}
+              onClick={() => setFilterSort(s => ({ ...s, searchVisible: !s.searchVisible }))}
+              text={t('general.search')}
+              icon="park-search"
             />
+            <AnimatePopover
+              padding={6}
+              align="start"
+              onVisiblityChange={v => [setFilterSort(s => ({ ...s, filterVisible: v }))]}
+              positions={['bottom']}
+              content={
+                <WithBorder padding={8}>
+                  <BetterFilter
+                    onChange={v => {
+                      setFilterSort(s => ({ ...s, filter: v }))
+                    }}
+                    root={filterSort.filter}
+                  />
+                </WithBorder>
+              }
+            >
+              <Button.IconButton
+                gap={6}
+                style={{
+                  fontSize: 12,
+                  padding: '2px 6px',
+                  border: `1px solid ${Colors.Background.Border}`
+                }}
+                text={t('filter.Filter')}
+                icon="park-filter"
+                suffixStr={filterSort.filter?.rules.length || undefined}
+              />
+            </AnimatePopover>
+            <AnimatePopover
+              padding={6}
+              align="start"
+              onVisiblityChange={v => [setFilterSort(s => ({ ...s, sorterVisible: v }))]}
+              positions={['bottom']}
+              content={
+                <WithBorder padding={8}>
+                  <BetterSorter root={filterSort.sorter} onChange={o => setFilterSort(s => ({ ...s, sorter: o }))} />
+                </WithBorder>
+              }
+            >
+              <Button.IconButton
+                gap={6}
+                style={{
+                  fontSize: 12,
+                  padding: '2px 6px',
+                  border: `1px solid ${Colors.Background.Border}`
+                }}
+                text={t('filter.Sort')}
+                icon="park-sort-one"
+                suffixStr={filterSort.sorter?.sorters.length || undefined}
+              />
+            </AnimatePopover>
           </Content>
-          <DatabaseFilter renderOnParent={renderFilterOnParent} />
         </Content>
         <div
           ref={containerRef}

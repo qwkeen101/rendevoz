@@ -72,7 +72,7 @@ const useGraphOverlay = () => {
   const positions = () => {
     switch (overlayState.content) {
       case 'pathIndicator':
-        return ['right', 'left']
+        return ['top', 'bottom']
       case 'nodePopover':
         return ['top', 'right', 'left']
       default:
@@ -86,10 +86,12 @@ const useGraphOverlay = () => {
           align="center"
           disableIntersection
           reposition
-          disableNudge
           containerStyle={{
-            zIndex: String(Zindexes.GraphPopup),
-            transition: enableTransition ? 'transform 0.2s ease' : undefined
+            zIndex: String(Zindexes.GraphPopup)
+          }}
+          position={{
+            left: overlayState.position?.left,
+            top: overlayState.position?.top
           }}
           positions={positions()}
           visible={!!overlayState.visible}
@@ -103,15 +105,7 @@ const useGraphOverlay = () => {
               }
             }, 50)
           }}
-        >
-          <div
-            style={{
-              position: 'absolute',
-              left: overlayState.position?.left,
-              top: overlayState.position?.top
-            }}
-          ></div>
-        </AnimatePopover>
+        ></AnimatePopover>
       </Portal>
     )
   }

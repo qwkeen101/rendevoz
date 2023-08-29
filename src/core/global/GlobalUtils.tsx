@@ -1,13 +1,15 @@
 import useFileUpload from '@/components/base/useFileUpload'
 import { assignProperties } from '@/utils'
-import { useRef } from 'react'
+import { useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { IGlobalUtilsInstance } from '~/typings/globalInstances/utils'
+import { IRendevoz } from '~/typings'
 
 export const GlobalUtilsInstance: Partial<IGlobalUtilsInstance> = {}
 
 const GlobalUtils = () => {
   const currentUploadPromiseRef = useRef<any>()
+  const [uploadOptions, setUploadOptions] = useState<Parameters<IRendevoz['Actions']['Utils']['uploadFile']>[0]>()
   const { removeFile, renderUploader, upload } = useFileUpload(
     files => {
       if (currentUploadPromiseRef.current) {
@@ -15,15 +17,17 @@ const GlobalUtils = () => {
         currentUploadPromiseRef.current = undefined
       }
     },
-    undefined,
+    uploadOptions?.accept,
     {
-      multiple: true
+      multiple: uploadOptions?.multiple,
+      dir: uploadOptions?.dir
     }
   )
   assignProperties(GlobalUtilsInstance, {
-    upload: () => {
+    upload: opts => {
       return new Promise(res => {
-        upload()
+        setUploadOptions(opts)
+        setTimeout(() => upload())
         currentUploadPromiseRef.current = res
       })
     }

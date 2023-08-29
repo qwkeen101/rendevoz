@@ -89,6 +89,39 @@ const openMetaObject = async (metaObjectId: number) => {
   }
 }
 
+const openRendevozLink = async (link: string) => {
+  if (link.startsWith('rendevoz://object')) {
+    const url = new URL(link)
+    const query = url.searchParams
+    const pathname = url.pathname
+    const metaId = parseInt(pathname.replace('//object/', ''))
+    console.log(metaId)
+    if (!metaId || metaId.toString().length !== 14) {
+      return
+    }
+    if (query.has('t')) {
+      const videoObjectId = (await MetaStore.getMetaObjectById(metaId))?.objectId
+      if (!videoObjectId) return
+      await openVideoAtTime(videoObjectId, parseInt(query.get('t')))
+    } else {
+      await openMetaObject(metaId)
+    }
+  }
+  if (link.startsWith('rendevoz://baidudisk')) {
+    const url = new URL(link)
+    const search = url.searchParams
+
+    if (search.has('code')) {
+      ipcInstance.send('loginBaidudisk', search.get('code')).then(res => {
+        if(res){
+          localStorage.setItem('bda', res.data.access_token)
+          toast.success('登录网盘成功！')
+        }
+      })
+    }
+  }
+  return
+}
 const openLocalFile = async (fileId: number) => {
   const localFile = await ObjectStore('localFile').getOneById(fileId)
   if (localFile && localFile.fileUrl) {
@@ -313,15 +346,20 @@ const openVideoAtTime = async (videoId: number, time: number) => {
     type: 'video',
     objectId: videoId
   })
+  console.log(alreadyOpenVideoTab)
   const videoState = alreadyOpenVideoTab?.instance.getVideoState?.()
-
   if (videoState?.floated) {
     alreadyOpenVideoTab?.instance.jumpTo?.(time)
   } else {
+    console.log('video load')
     const video = await openVideo(videoId)
+    console.log('video load two')
     waitFor(
       () => !!video.jumpTo,
-      () => video.jumpTo?.(time)
+      () => video.jumpTo?.(time),
+      {
+        timeout: 15000
+      }
     )
   }
 }
@@ -378,6 +416,7 @@ const Open: typeof Rendevoz.Actions.Open = {
   openHome,
   openDatabase,
   openImage,
+  openRendevozLink,
   openSidebarObjectDetails: id => {
     globalStore.set(SidebarPanelStateAtom, {
       open: true,

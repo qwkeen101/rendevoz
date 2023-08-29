@@ -17,6 +17,7 @@ import ToDo from '@/core/editor/elements/todo'
 import InlineMetaElement from '@/core/editor/elements/meta/InlineMeta'
 import Emoji from '@/core/editor/elements/Emoji'
 import { t } from 'i18next'
+import InlineMetaPicker from '@/core/editor/elements/InlineMetaPicker'
 
 const dividerClassName = css({
   width: '100%',
@@ -31,7 +32,7 @@ const BuiltinTypeToRegistered: Record<CustomElement['type'], RegisterdEditorElem
     name: () => t('editor.inline metaobject'),
     registerInMenu: {
       icon: 'park-share-one',
-      slashMenu: true,
+      slashMenu: false,
       menuType: 'basic'
     }
   },
@@ -267,6 +268,12 @@ const BuiltinTypeToRegistered: Record<CustomElement['type'], RegisterdEditorElem
       menuType: 'inline',
       icon: 'park-emotion-happy'
     }
+  },
+  inlineMetapicker: {
+    renderElement: props => <InlineMetaPicker {...props} />,
+    type: 'inline-metapicker',
+    isInline: true,
+    isVoid: false
   }
 }
 

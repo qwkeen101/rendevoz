@@ -153,6 +153,7 @@ const VirtualItem = memo(
     // get real path from map, row index can't be path
     // first layer path map should be sync with data model
     const path = ID_TO_FIRST_LAYER_MAP.get(editor)?.get(element.id)
+
     if (!path?.length) return null
 
     try {

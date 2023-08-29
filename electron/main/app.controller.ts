@@ -6,6 +6,7 @@ import fs from 'fs'
 import path from 'path'
 import { autoUpdater } from 'electron-updater'
 import { digestBuffer } from './utils'
+import fetch from 'node-fetch'
 
 export const DEFAULT_USER_DATA_PATH =
   process.env.APPDATA || (process.platform == 'darwin' ? process.env.HOME + '/Library/Preferences' : process.env.HOME + '/.local/share')
@@ -297,5 +298,33 @@ export class AppController {
     const databasePath = path.resolve(process.env.FILE_PATH || this.DefaultRendevozDataPath)
     const replacedPath = url.replace('rendefile://', databasePath)
     fs.rmSync(replacedPath)
+  }
+
+  @IpcInvoke('getBaidudiskFiles')
+  public async getBaidudiskFiles(accessToken: string) {
+    const result = await fetch(
+      `https://pan.baidu.com/rest/2.0/xpan/multimedia?method=listall&access_token=${accessToken}&path=/&recursion=1&web=1`,
+      {
+        method: 'get',
+        headers: {
+          Referer: '',
+          'User-Agent': 'pan.baidu.com'
+        }
+      }
+    )
+    const j = await result.json()
+    return j
+  }
+
+  @IpcInvoke('loginBaidudisk')
+  public async loginBaidudisk(code: string) {
+    const url = `https://openapi.baidu.com/oauth/2.0/token?
+grant_type=authorization_code&
+code=${code}&
+client_id=PVYWIzaqR20Cv3ukyubu9YofKMSrqmLC&
+client_secret=Za8BXRX1N9ONG4drbWNeg6yhKXL7x8KF&
+redirect_uri=rendevoz://baidudisk`
+    const result = await (await fetch(url)).json()
+    return result
   }
 }

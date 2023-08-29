@@ -1,5 +1,5 @@
 import { PartialWithId } from '@/types'
-import { IVideoChapter, IVideoLabel } from '../data'
+import { IVideoChapter, IVideoLabel } from '../..'
 import { VideoState } from '@/core/video/hooks/useVideoState'
 import { Size } from '../common'
 

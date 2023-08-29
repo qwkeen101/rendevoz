@@ -383,7 +383,6 @@ export const ObjectActionPopover: FC<
 > = ({ onClose, onEdit, onPin, onGraph, onDelete, metaObjectId, visibility, onJump, onGraphPin, onShowRelated }) => {
   const { updateMetaObject, deleteMetaObject } = MetaStore
   const { t } = useTranslation()
-  const [relatedVisible, toggleRelatedVisible] = useToggle(false)
   const [attachmentVisible, toggleAttachmentVisible] = useToggle(false)
   const metaObject = MetaStore.useValue(metaObjectId)
   const metaAttToMetaIds = globalStore.get(indexedMetaObjectsAtom)?.metaAttachmentIdToMetaIdsMap

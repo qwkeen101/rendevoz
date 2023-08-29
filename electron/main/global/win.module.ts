@@ -213,10 +213,20 @@ const slicedLength = 'rendefile://'.length
           urls: ['*://*/*']
         }
         wsession.webRequest.onBeforeSendHeaders(filter, (details, cb) => {
+          if(details.url.includes('https://pan.baidu.com/rest/2.0/xpan/file?method=streaming')){
+            details.requestHeaders['User-Agent'] = 'xpanvideo;netdisk;iPhone13;ios-iphone;15.1;ts'
+          }
           if (details.requestHeaders['bili']) {
             const refer = details.requestHeaders['bili']
             details.requestHeaders['Referer'] = refer
+          } else {
+            if (details.requestHeaders['Referer'] && details.requestHeaders['Referer'].includes('localhost')) {
+              const U = new URL(details.url)
+              // details.requestHeaders['Referer'] = U.origin
+              delete details.requestHeaders['Referer']
+            }
           }
+
           cb({ cancel: false, requestHeaders: details.requestHeaders })
         })
         // 下面的代码会尝试解析代理配置，如果用户配置了系统代理，

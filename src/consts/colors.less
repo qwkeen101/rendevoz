@@ -9,7 +9,10 @@ body {
   --font-description: #898989;
   --light-background-color: #F9F5F6;
   --dark-background-color: #2c2c2e;
-  --dark-linear-gradient-background: linear-gradient(116deg; rgba(5,5,5,0.4); rgba(23,23,23,0.4));
+  --dark-linear-gradient-background: rgba(49,49,49,0.9);
+  //--dark-linear-gradient-background: linear-gradient(116deg; rgba(5,5,5,0.4); rgba(23,23,23,0.4));
+  //--dark-linear-gradient-background: rgba(34,34,34,0.86);
+  //--dark-linear-gradient-background: linear-gradient(116deg; var(--background-secondary); var(--background-secondary));
   --light-linear-gradient-background: linear-gradient(116deg; rgba(250,250,250,0.85); rgba(244,244,244,0.75));
   --light-button-hover-background: rgba(31, 34, 37, 0.08);
   --dark-button-hover-background: rgba(221,212,224, 0.08);
@@ -26,6 +29,8 @@ body {
   --dark-scroll-bar: #4f4f4f;
   --dark-button-active-background: rgba(221,212,224,0.1);
   --light-button-active-background: rgba(31,34,37,0.1);
+  --dark-box-shadow: rgba(15, 15, 15, 0.1) 0px 0px 0px 1px, rgba(15,15,15, 0.15) 0px 5px 4px, rgba(15,15,15,0.2) 0px 7px 5px;
+  --light-box-shadow: rgba(15,15,15,0.05) 0px 0px 0px 1px, rgba(15,15,15, 0.1) 0px 3px 6px, rgba(15,15,15,0.2) 0px 9px 24px;
   --green: rgb(52, 199, 36);
   --red: rgb(253, 138, 138);
   --font-link: #919fde;
@@ -47,6 +52,7 @@ html {
       --scroll-bar: var(--dark-scroll-bar);
       --button-active-background: var(--dark-button-active-background);
       --sidebar-background: rgba(217, 217, 217, 0.3);
+      --box-shadow: var(--dark-box-shadow);
     }
   }
   &[theme='light']{
@@ -65,6 +71,7 @@ html {
       --scroll-bar: var(--light-scroll-bar);
       --button-active-background: var(--light-button-active-background);
       --sidebar-background: rgba(217, 217, 217, 0.3);
+      --box-shadow: var(--light-box-shadow);
     }
   }
 }

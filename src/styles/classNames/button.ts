@@ -1,45 +1,40 @@
-import Colors from "@/consts/colors";
-import { css } from "@emotion/css";
+import Colors from '@/consts/colors'
+import { css } from '@emotion/css'
 
 export const circleButton = (padding = 4, borderRadius = 999) => {
   return css({
-    transition: "all 0.2s ease",
+    transition: 'all 0.2s ease',
     padding,
-    cursor: "pointer",
+    cursor: 'pointer',
     borderRadius,
     '&[data-active="true"]': {
-      background: `${Colors.Background.ButtonHover} !important`,
+      background: `${Colors.Background.ButtonHover}`
     },
-    ":hover": {
-      background: `${Colors.Background.ButtonHover} !important`,
+    ':hover': {
+      background: `${Colors.Background.ButtonHover}`
     },
-    ":active": {
-      background: `${Colors.Background.ButtonActive} !important`,
-    },
-  });
-};
+    ':active': {
+      background: `${Colors.Background.ButtonActive}`
+    }
+  })
+}
 
-export const flatButton = (
-  borderRadius = 4,
-  padding = "4px 8px",
-  background = Colors.Background.ButtonHover,
-  border = false
-) => {
+export const flatButton = (borderRadius = 4, padding = '4px 8px', background = Colors.Background.ButtonHover, border = false) => {
   return css({
-    transition: "all 0.2s ease",
+    transition: 'all 0.2s ease',
     borderRadius,
     padding,
-    cursor: "pointer",
-    userSelect: "none",
+    cursor: 'pointer',
+    userSelect: 'none',
     border: border ? `1px solid ${Colors.Background.Border}` : undefined,
     '&[data-active="true"]': {
-      background: `${background} !important`,
+      background: `${background}`
     },
-    ":hover": {
-      background: `${background} !important`,
+    ':hover': {
+      background: `${background}`
     },
-    ":active": {
-      background: `${Colors.Background.ButtonActive} !important`,
-    },
-  });
-};
+    ':active': {
+      background: `${Colors.Background.ButtonActive}`
+    }
+  })
+}

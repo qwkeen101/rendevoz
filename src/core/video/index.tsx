@@ -23,6 +23,7 @@ import useMeasure from '@/hooks/utils/useMeasure'
 import { Zindexes } from '@/consts'
 import { VideoSidebarStateAtom } from './hooks/useVideoSidebarState'
 import VideoSubtitleSidebar from '@/core/video/VideoSubtitleSidebar'
+import { useLatest } from 'react-use'
 
 export interface VideoProps {
   videoId: number
@@ -39,9 +40,8 @@ const VideoInner = ({ videoId, onInstanceInitialized, onlyCore }: VideoProps) =>
   const instance = useVideoInstance()
   const videoMeta = MetaStore.useObjectToMetaValue(videoId)
   const smallMode = width < 1000 || videoState.floated
-
+  const showIcon = playIconVisible && videoState.loaded
   const getPopIcon = () => {
-    console.log(videoState)
     if (videoState.jumpIndicator) {
       if (videoState.jumpIndicator === 'back') {
         return 'park-double-left'
@@ -76,24 +76,83 @@ const VideoInner = ({ videoId, onInstanceInitialized, onlyCore }: VideoProps) =>
   useVideoShortcut(outerContainerRef)
 
   useAssignVideoInstance(videoId, containerRef)
-
+  const latestVideoLoaded = useLatest(videoState.loaded)
   useEffect(() => {
     waitFor(
-      () => Object.keys(instance).length > 0,
-      () => onInstanceInitialized?.(instance)
+      () => {
+        console.log(latestVideoLoaded.current)
+        return latestVideoLoaded.current
+      },
+      () => {
+        console.log('success load')
+        onInstanceInitialized?.(instance)
+      },
+      {
+        timeout: 15000
+      }
     )
   }, [])
 
   if (onlyCore) {
     return (
       <Content
-        style={{
-          width: '100%',
-          height: '100%'
+        tabIndex={0}
+        ref={ref => {
+          containerRef.current = ref
+          outerContainerRef.current = ref
+        }}
+        fullHeight
+        fullWidth
+        onPointerMove={e => {
+          setToolbarState(s => {
+            if (s.visible) return s
+            else return { ...s, visible: true }
+          })
+        }}
+        onPointerLeave={e => {
+          setToolbarState(s => ({ ...s, visible: false }))
         }}
       >
+        <AnimatePresence>
+          {showIcon && (
+            <motion.div
+              initial={{ opacity: 0.8, scale: 1, x: '-50%', y: '-50%' }}
+              animate={{ opacity: 0, scale: 1.3, x: '-50%', y: '-50%' }}
+              style={{
+                position: 'absolute',
+                left: '50%',
+                top: '50%',
+                zIndex: 9999,
+                transform: 'translateX(-50%); translateY(-50%)'
+              }}
+              transition={{ duration: 0.6 }}
+              onAnimationComplete={() => {
+                setPlayIconVisible(false)
+                if (videoState.jumpIndicator || videoState.volumeIndicator) {
+                  setVideoState(s => ({
+                    ...s,
+                    jumpIndicator: undefined,
+                    volumeIndicator: undefined
+                  }))
+                }
+              }}
+            >
+              <Icon
+                fill={Colors.Font.White}
+                size={40}
+                theme="filled"
+                containerStyle={{
+                  background: 'rgba(0,0,0,0.36)',
+                  borderRadius: 999,
+                  padding: 14
+                }}
+                name={getPopIcon()}
+              />
+            </motion.div>
+          )}
+        </AnimatePresence>
         <VideoCore url={videoState.url} />
-        {videoState.mode === 'video' && (
+        {videoState.mode !== 'web' && (
           <div
             style={{
               position: 'absolute',
@@ -196,7 +255,7 @@ const VideoInner = ({ videoId, onInstanceInitialized, onlyCore }: VideoProps) =>
                 }}
               >
                 <AnimatePresence>
-                  {playIconVisible && (
+                  {showIcon && (
                     <motion.div
                       initial={{ opacity: 0.8, scale: 1, x: '-50%', y: '-50%' }}
                       animate={{ opacity: 0, scale: 1.3, x: '-50%', y: '-50%' }}
@@ -234,7 +293,7 @@ const VideoInner = ({ videoId, onInstanceInitialized, onlyCore }: VideoProps) =>
                   )}
                 </AnimatePresence>
                 <VideoCore url={videoState.url}></VideoCore>
-                {videoState.mode === 'video' && (
+                {videoState.mode !== 'web' && (
                   <div
                     style={{
                       position: 'absolute',
@@ -267,7 +326,7 @@ const VideoInner = ({ videoId, onInstanceInitialized, onlyCore }: VideoProps) =>
             }}
           >
             <AnimatePresence>
-              {playIconVisible && (
+              {showIcon && (
                 <motion.div
                   initial={{ opacity: 0.8, scale: 1, x: '-50%', y: '-50%' }}
                   animate={{ opacity: 0, scale: 1.3, x: '-50%', y: '-50%' }}
@@ -305,7 +364,7 @@ const VideoInner = ({ videoId, onInstanceInitialized, onlyCore }: VideoProps) =>
               )}
             </AnimatePresence>
             <VideoCore url={videoState.url}></VideoCore>
-            {videoState.mode === 'video' && (
+            {videoState.mode !== 'web' && (
               <div
                 style={{
                   position: 'absolute',
@@ -337,6 +396,7 @@ const transformUrl = (url?: string) => {
     if (!videoId) return url
     return `https://www.youtube.com/embed/${videoId}`
   }
+  if (url.startsWith('baidudisk')) return url
 }
 export const Video = (props: VideoProps) => {
   const { videoId } = props
@@ -347,13 +407,19 @@ export const Video = (props: VideoProps) => {
     store.set(VideoInstanceAtom, {})
     const action = async () => {
       const video = (await ObjectStore('video').getOneById(videoId)) || (await ObjectStore('video').addOne({ id: videoId }))
+      console.log(video)
       store.set(VideoStateAtom, {
         ...store.get(VideoStateAtom),
         ...video,
         videoId,
         url: transformUrl(video.videoUrl),
-        mode: video.videoUrl.startsWith('rendefile') || video.videoUrl.startsWith('file') ? 'video' : 'web',
-        currentTime: video.lastPlayedTime || 0
+        mode:
+          video.videoUrl?.startsWith('rendefile') || video.videoUrl?.startsWith('file')
+            ? 'video'
+            : video.videoUrl?.startsWith('baidudisk')
+            ? 'baidudisk'
+            : 'web',
+        jumpTime: video.lastPlayedTime || undefined
       })
       store.set(VideoSidebarStateAtom, {
         ...store.get(VideoSidebarStateAtom),
@@ -375,7 +441,12 @@ export const Video = (props: VideoProps) => {
         volume: currentVideoState.volume,
         videoId,
         url: transformUrl(data?.videoUrl),
-        mode: data?.videoUrl.startsWith('rendefile') || data?.videoUrl.startsWith('file') ? 'video' : 'web',
+        mode:
+          data?.videoUrl?.startsWith('rendefile') || data?.videoUrl?.startsWith('file')
+            ? 'video'
+            : data?.videoUrl?.startsWith('baidudisk')
+            ? 'baidudisk'
+            : 'web',
         sortedChapters: data?.chapters?.slice().sort((b, a) => b.startTime - a.startTime) || []
       })
     })

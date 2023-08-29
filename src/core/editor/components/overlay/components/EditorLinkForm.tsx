@@ -102,82 +102,82 @@ const EditorLinkForm = ({ editor, manager }: { editor: CustomEditor; manager: Ed
           value={link}
           placeholder="Input Link"
         ></input>
-        <Tooltip content="Link object">
-          <Icon
-            className={ClassName.circleButton()}
-            name="park-share-one"
-            onClick={() => {
-              manager.close()
-              const cursorPosition = getCursorPosition(editor)
-              if (!cursorPosition) return
-              GlobalObjectPanelInstance.open?.({
-                left: cursorPosition.x + 20,
-                top: cursorPosition.y + 20
-              })
+        {/*<Tooltip content="Link object">*/}
+        {/*  <Icon*/}
+        {/*    className={ClassName.circleButton()}*/}
+        {/*    name="park-share-one"*/}
+        {/*    onClick={() => {*/}
+        {/*      manager.close()*/}
+        {/*      const cursorPosition = getCursorPosition(editor)*/}
+        {/*      if (!cursorPosition) return*/}
+        {/*      GlobalObjectPanelInstance.open?.({*/}
+        {/*        left: cursorPosition.x + 20,*/}
+        {/*        top: cursorPosition.y + 20*/}
+        {/*      })*/}
 
-              GlobalEventEmitter()
-                .emitWithCallback('global', {
-                  type: 'globalChooseMetaObject'
-                })
-                .then(id => {
-                  const lin = `rendevoz://object/${id}`
-                  const selected = CustomTransforms.getSelectedText(editor)
-                  const aboveNode = Editor.above(editor)
-                  if (aboveNode?.[0].type === 'link') {
+        {/*      GlobalEventEmitter()*/}
+        {/*        .emitWithCallback('global', {*/}
+        {/*          type: 'globalChooseMetaObject'*/}
+        {/*        })*/}
+        {/*        .then(id => {*/}
+        {/*          const lin = `rendevoz://object/${id}`*/}
+        {/*          const selected = CustomTransforms.getSelectedText(editor)*/}
+        {/*          const aboveNode = Editor.above(editor)*/}
+        {/*          if (aboveNode?.[0].type === 'link') {*/}
 
-                    Transforms.setNodes(
-                      editor,
-                      {
-                        url: lin
-                      },
-                      {
-                        at: aboveNode[1]
-                      }
-                    )
-                    return
-                  }
-                  if (selected?.length) {
-                    CustomTransforms.replaceSelectedNode(editor, {
-                      type: 'link',
-                      url: lin,
-                      children: [
-                        {
-                          text: selected
-                        }
-                      ]
-                    })
-                  } else {
-                    MetaStore.getMetaObjectById(id).then(m => {
-                      if (!m) return
-                      if (!editor.selection) return
-                      const before = Editor.previous(editor)
-                      const parent = Editor.parent(editor, editor.selection)
-                      let path = undefined
-                      if (!((before === undefined || Text.isText(before[0])) && parent[0].type !== 'link')) {
-                        path = Editor.after(editor, editor.selection)
-                      }
-                      Transforms.insertNodes(
-                        editor,
-                        {
-                          type: 'link',
-                          url: lin,
-                          children: [{ text: m.name || 'Unnamed Object' }]
-                        },
-                        {
-                          at: path
-                        }
-                      )
-                      const p = Editor.after(editor, editor.selection)
-                      if (p) {
-                        Transforms.select(editor, p)
-                      }
-                      ReactEditor.focus(editor)
-                    })
-                  }
-                })
-            }}
-          />
-        </Tooltip>
+        {/*            Transforms.setNodes(*/}
+        {/*              editor,*/}
+        {/*              {*/}
+        {/*                url: lin*/}
+        {/*              },*/}
+        {/*              {*/}
+        {/*                at: aboveNode[1]*/}
+        {/*              }*/}
+        {/*            )*/}
+        {/*            return*/}
+        {/*          }*/}
+        {/*          if (selected?.length) {*/}
+        {/*            CustomTransforms.replaceSelectedNode(editor, {*/}
+        {/*              type: 'link',*/}
+        {/*              url: lin,*/}
+        {/*              children: [*/}
+        {/*                {*/}
+        {/*                  text: selected*/}
+        {/*                }*/}
+        {/*              ]*/}
+        {/*            })*/}
+        {/*          } else {*/}
+        {/*            MetaStore.getMetaObjectById(id).then(m => {*/}
+        {/*              if (!m) return*/}
+        {/*              if (!editor.selection) return*/}
+        {/*              const before = Editor.previous(editor)*/}
+        {/*              const parent = Editor.parent(editor, editor.selection)*/}
+        {/*              let path = undefined*/}
+        {/*              if (!((before === undefined || Text.isText(before[0])) && parent[0].type !== 'link')) {*/}
+        {/*                path = Editor.after(editor, editor.selection)*/}
+        {/*              }*/}
+        {/*              Transforms.insertNodes(*/}
+        {/*                editor,*/}
+        {/*                {*/}
+        {/*                  type: 'link',*/}
+        {/*                  url: lin,*/}
+        {/*                  children: [{ text: m.name || 'Unnamed Object' }]*/}
+        {/*                },*/}
+        {/*                {*/}
+        {/*                  at: path*/}
+        {/*                }*/}
+        {/*              )*/}
+        {/*              const p = Editor.after(editor, editor.selection)*/}
+        {/*              if (p) {*/}
+        {/*                Transforms.select(editor, p)*/}
+        {/*              }*/}
+        {/*              ReactEditor.focus(editor)*/}
+        {/*            })*/}
+        {/*          }*/}
+        {/*        })*/}
+        {/*    }}*/}
+        {/*  />*/}
+        {/*</Tooltip>*/}
         <Icon
           className={ClassName.circleButton()}
           name="park-check"

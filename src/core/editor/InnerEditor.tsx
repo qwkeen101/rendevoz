@@ -1,11 +1,11 @@
 import { useDebounceFn, useMemoizedFn } from '@/hooks'
 import isHotkey from 'is-hotkey'
-import { FC, KeyboardEventHandler, memo, RefObject, useCallback, useEffect, useMemo, useRef } from 'react'
+import { FC, KeyboardEventHandler, memo, RefObject, useCallback, useEffect, useLayoutEffect, useMemo, useRef } from 'react'
 import { Descendant, Editor, Node, Path, Range, Transforms } from 'slate'
 import { Editable, ReactEditor, RenderElementProps, RenderLeafProps, Slate, useSlateStatic } from './slate-react'
 import EditorToolbar from './components/toolbar'
 import HOTKEYS from './consts/hotkeys'
-import { CustomEditor, CustomElement } from '~/typings'
+import { CustomEditor, CustomElement, EditorProps } from '~/typings'
 import Divider from './Divider'
 import { Block } from './elements'
 import styles from './index.module.less'
@@ -28,6 +28,7 @@ import Colors from '@/consts/colors'
 import FontSize from '@/consts/font'
 import useEditorInstance from './hooks/useEditorInstance'
 import { transformTextContentToNameAndDescription } from '../global/globalDragOverlay/utils'
+import useEditorMention from '@/core/editor/hooks/useEditorMention'
 
 const EditableEditorClassName = css({
   p: {
@@ -129,6 +130,7 @@ export type InnerEditorProps = {
   readonly?: boolean
   compact?: boolean
   editorClassName?: string
+  toolbarOptions?: EditorProps['toolbarOptions']
 }
 
 const InnerEditor: FC<InnerEditorProps> = memo(
@@ -143,7 +145,8 @@ const InnerEditor: FC<InnerEditorProps> = memo(
     scrollElementRef,
     readonly,
     compact,
-    editorClassName
+    editorClassName,
+    toolbarOptions
   }) => {
     const scrollElement = scrollElementRef?.current
     const renderInnerElement = useCallback((props: RenderElementProps) => <Element {...props} />, [])
@@ -152,6 +155,7 @@ const InnerEditor: FC<InnerEditorProps> = memo(
     const scopedEmitter = useScopedEventEmitter()
     const previousValue = useRef<Descendant[]>()
     const { handleSlashKeyDown } = useEditorSlashMenu(editor)
+    const { handleMentionKey } = useEditorMention(editor)
     const instance = useEditorInstance()
     editor.innerRef = editableRef
     const { run: debounceIndex } = useDebounceFn(
@@ -186,7 +190,7 @@ const InnerEditor: FC<InnerEditorProps> = memo(
           firstLayerIdSet.add(i.id)
           i.id && firstLayerMap.set(i.id, [idx])
         })
-
+        console.log(firstLayerMap)
         scopedEmitter.emit('editor', {
           type: 'valueChange'
         })
@@ -203,7 +207,7 @@ const InnerEditor: FC<InnerEditorProps> = memo(
         onChange?.(value)
       }
     })
-    const inlineKeys = [...Object.values(InlineElements), 'tableCell', 'tableRow', 'inline-metaObject', 'math']
+    const inlineKeys = [...Object.values(InlineElements), 'tableCell', 'tableRow', 'inline-metaObject', 'math', 'inline-metapicker']
     const renderElement = useCallback(
       ({ children, element, attributes }: RenderElementProps) => {
         if (element.hide === true) return null
@@ -333,13 +337,23 @@ const InnerEditor: FC<InnerEditorProps> = memo(
       }
     }, [scrollElement])
 
-    useEffect(() => {
+    useLayoutEffect(() => {
       // if only default value, trigger for path index
-      editor.onChange()
+      if (!editor.noteId) {
+        editor.children = [...defaultValue]
+        EDITOR_TO_CHANGED.set(editor, false)
+        editor.contentInitialized = true
+        editor.onChange()
+        editor.history = { redos: [], undos: [] }
+        editor.initialized = true
+      } else {
+        editor.onChange()
+      }
     }, [])
 
     const handleKeydown: KeyboardEventHandler<HTMLDivElement> = useMemoizedFn(e => {
       const { selection } = editor
+      handleMentionKey(e)
       handleSlashKeyDown(e)
       if (selection && Range.isCollapsed(selection)) {
         if (isHotkey('left', e)) {
@@ -463,6 +477,7 @@ const InnerEditor: FC<InnerEditorProps> = memo(
         <EditorToolbar
           showToolbar={showToolbar}
           scrollElement={scrollElement}
+          toolbarOptions={toolbarOptions}
           on={async event => {
             switch (event.action) {
               case 'bold':
@@ -588,6 +603,11 @@ const InnerEditor: FC<InnerEditorProps> = memo(
             compact && readonly && CompactReadOnlyEditorClassName,
             editorClassName
           )}
+          onKeyDownCapture={e => {
+            if (isHotkey(KEY.ArrowUp, e) || isHotkey(KEY.ArrowDown, e) || isHotkey(KEY.ArrowRight, e) || isHotkey(KEY.ArrowLeft, e)) {
+              e.stopPropagation()
+            }
+          }}
           scrollElementRef={scrollElementRef}
           style={useMemo(
             () => ({

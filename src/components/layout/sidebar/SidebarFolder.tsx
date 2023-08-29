@@ -8,7 +8,7 @@ import FontSize from '@/consts/font'
 const SidebarFolder = () => {
   const { t } = useTranslation()
   return (
-    <Content fullHeight fullWidth style={{ padding: '12px 8px' }}>
+    <Content fullHeight flex column fullWidth style={{ padding: '12px 8px' }}>
       <div className={ClassName.title(FontSize['14px'])}>{t('general.collection')}</div>
       <div className={ClassName.description()} style={{ marginBottom: '20px' }}>
         {t('general.drag object to add into collections')}

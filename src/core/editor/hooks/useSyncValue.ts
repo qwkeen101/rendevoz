@@ -11,6 +11,7 @@ const useLocalSyncValue = (editor: CustomEditor) => {
   const handler = useEventHandler('editor')
   const { id, noteId } = editor
   handler.on('operationApplied', data => {
+    if (!noteId) return
     if (data.noteId === noteId && data.id !== id) {
       console.log(data)
       EDITOR_TO_CHANGED.set(editor, false)

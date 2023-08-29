@@ -14,7 +14,7 @@ import Id from '@/utils/id'
 import useScopedEventEmitter from '@/events/useEventEmitter'
 import usePdfViewer from '../hooks/useViewer'
 import { ObjectStore } from '@/stores'
-import { IPdfViewer } from '~/typings'
+import { Box, IPdfViewer } from '~/typings'
 import { PAGE_INDEX_TO_PAGE_FUNCTION, PAGE_INDEX_TO_TEXT_LAYER, PDF_TO_DOC } from '../weakMaps'
 import { waitFor } from '@/utils/functions'
 import { normalizeText } from '../utils/search'
@@ -179,9 +179,21 @@ const Layout: FC<LayoutProps> = ({
       virtualizer.scrollToOffset(offset, { align: 'start', behavior: 'auto' })
     }
   }
+  const jumpToArea = (page: number, box: Box) => {
+    jumpToPage?.(page)
+    if (rect) {
+      const pageSize = viewer.getPageSize?.()
+      if (pageSize) {
+        const realPageHeight = pageSize.height * pageSize.scale
+        viewer.scrollToOffset?.(page * realPageHeight + box.top * realPageHeight + (box.height * realPageHeight) / 2 + page * PAGE_SPACING)
+      }
+
+      viewer.highlightArea?.(page, box)
+    }
+  }
   const jumpToLabel = async (labelId: number) => {
     const label = await ObjectStore('pdfLabel').getOneById(labelId)
-    if (label && label.page !== undefined && ('rect' in label || 'rects' in label)) {
+    if (label && label.type === 'highlight' && label.page !== undefined && ('rect' in label || 'rects' in label)) {
       const labelPercentTop = 'rect' in label ? label.rect?.[1] : 'rects' in label ? label.rects?.[0].percentageTop : undefined
       if (labelPercentTop !== undefined) {
         const realOffset = pageSize.height * scale * label.page + labelPercentTop * pageSize.height * scale + PAGE_SPACING * label.page
@@ -196,6 +208,9 @@ const Layout: FC<LayoutProps> = ({
           }
         )
       }
+    }
+    if (label && label.type === 'crop' && label.page !== undefined && label.rect) {
+      await jumpToArea(label.page, label.rect)
     }
   }
   const jumpToDest = async (dest: string | any[]) => {
@@ -379,6 +394,7 @@ const Layout: FC<LayoutProps> = ({
       getOutline,
       jumpToDest,
       search,
+      jumpToArea,
       highlightText: (str, pageIndex) => {
         return new Promise(res => {
           waitFor(

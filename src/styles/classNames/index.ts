@@ -1,12 +1,12 @@
-import * as Font from "./font";
-import * as Display from "./display";
-import * as Button from "./button";
-import * as Input from "./input";
-import * as Tag from "./tag";
-import * as _Drag from "./drag";
-import * as _Background from "./background";
+import * as Font from './font'
+import * as Display from './display'
+import * as Button from './button'
+import * as Input from './input'
+import * as Tag from './tag'
+import * as _Drag from './drag'
+import * as _Background from './background'
 
-const disableUserSelectClassName = "disableUserSelect";
+const disableUserSelectClassName = 'disableUserSelect'
 const ClassName = {
   ...Font,
   ...Display,
@@ -15,7 +15,7 @@ const ClassName = {
   ...Tag,
   Drag: { ..._Drag },
   Background: { ..._Background },
-  disableUserSelect: disableUserSelectClassName,
-};
+  disableUserSelect: disableUserSelectClassName
+}
 
-export default ClassName;
+export default ClassName

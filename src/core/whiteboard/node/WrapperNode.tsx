@@ -271,7 +271,7 @@ const WrapperNode = ({ node }: { node: IWhiteboardNode }) => {
       case 'pdf':
         return <PdfNode onNameChange={handleNameChange} node={node} />
       case 'text':
-        return <TextNode node={node} />
+        return <TextNode node={node} setPopoverElements={setVisiblePopoverElements}/>
     }
   }
   useLayoutEffect(() => {

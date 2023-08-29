@@ -9,20 +9,23 @@ import { usePrevious, useSelectGlobalAtomValue } from '@/hooks'
 import { SettingAtom } from '../setting'
 import { WebVTTParser } from 'webvtt-parser'
 import { ipcRenderer } from 'electron'
+import BaidudiskVideoPlayer from '@/core/video/players/BaidudiskVideoPlayer'
+import WebVideoPlayer from '@/core/video/players/WebVideoPlayer'
+import LocalVideoPlayer from '@/core/video/players/LocalVideoPlayer'
+import './loading.css'
+import { Colors } from '@/consts'
+
 interface VideoCoreProps {
   url?: string
 }
 
 const VideoCore = memo(({ url }: VideoCoreProps) => {
-  const videoRef = useRef<HTMLVideoElement>(null)
   const instance = useVideoInstance()
   const [videoState, setVideoState] = useVideoState()
-  const { loop, muted, paused, volume, currentTime, speed, subtitles, subtitleUrl, mode } = videoState
-  const offscreenVideoRef = useRef<HTMLVideoElement>()
-  const loopSetting = useSelectGlobalAtomValue(SettingAtom, s => s.video.loop)
+  const { currentTime, mode } = videoState
+
   const autoPlaySetting = useSelectGlobalAtomValue(SettingAtom, s => s.video.autoPlay)
-  const webviewRef = useRef<HTMLWebViewElement>()
-  const webReady = useRef(false)
+
   const throttleUpdateLastViewTime = useThrottleFn(
     () => {
       videoState.videoId &&
@@ -33,51 +36,6 @@ const VideoCore = memo(({ url }: VideoCoreProps) => {
     },
     { wait: 1000 }
   )
-  const previousTime = usePrevious(currentTime)
-  useEffect(() => {
-    const webview = webviewRef.current
-    if (webview) {
-      const listener = event => {
-        const { channel, args } = event
-        console.log(args)
-        if (channel === 'event') {
-          const e = args[0]
-          switch (e.type) {
-            case 'timeUpdate': {
-              setVideoState(s => ({ ...s, currentTime: e.time }))
-              break
-            }
-            case 'play': {
-              setVideoState(s => ({ ...s, paused: false }))
-              break
-            }
-            case 'pause': {
-              setVideoState(s => ({ ...s, paused: true }))
-              break
-            }
-            case 'durationChange': {
-              setVideoState(s => ({ ...s, totalTime: e.duration }))
-              break
-            }
-          }
-        }
-      }
-      const readyListener = () => {
-        webReady.current = true
-      }
-      const destoryListener = () => {
-        webReady.current = false
-      }
-      webview.addEventListener('ipc-message', listener)
-      webview.addEventListener('dom-ready', readyListener)
-      webview.addEventListener('destroyed', destoryListener)
-      return () => {
-        webview.removeEventListener('ipc-message', listener)
-        webview.removeEventListener('dom-ready', readyListener)
-        webview.removeEventListener('destroyed', destoryListener)
-      }
-    }
-  })
 
   useEffect(() => {
     if (videoState.subtitleUrl) {
@@ -92,113 +50,31 @@ const VideoCore = memo(({ url }: VideoCoreProps) => {
   }, [videoState.subtitleUrl])
 
   useEffect(() => {
-    setVideoState(s => ({ ...s, url }))
-    if (url) {
-      const video = document.createElement('video')
-      video.src = url
-      offscreenVideoRef.current = video
-    }
-  }, [url])
-  useEffect(() => {
-    if (mode === 'video') {
-      const video = videoRef.current
-      if (video) {
-        if (paused) {
-          video.pause()
-        } else {
-          video.play()
-        }
-      }
-    } else {
-      if (paused) {
-        instance.pause?.()
-      } else {
-        instance.play?.()
-      }
-    }
-  }, [paused])
-  useEffect(() => {
-    const video = videoRef.current
-    if (video) {
-      console.log(volume)
-      video.volume = volume ?? 0
-    }
-  }, [volume])
-
-  useEffect(() => {
-    const video = videoRef.current
-    if (video) {
-      video.playbackRate = speed
-    }
-  }, [speed])
-
-  useEffect(() => {
     if (autoPlaySetting) {
-      setVideoState(s => ({ ...s, paused: false }))
+      setVideoState(s => ({ ...s, autoPlay: autoPlaySetting, paused: false }))
     }
-    return () => {
-      webReady.current = false
-    }
-  }, [])
+  }, [autoPlaySetting])
+
   useEffect(() => {
     throttleUpdateLastViewTime.run()
-    const previous = previousTime || 0
-
-    if (currentTime !== undefined) {
-      if (Math.abs(currentTime - previous) > 3) {
-        console.log('jumped', instance)
-        instance.jumpTo?.(currentTime)
-      }
-    }
+    setVideoState(s => ({...s, jumpTime: undefined}))
   }, [currentTime])
-  useEffect(() => {
-    if (mode === 'web') {
-      const web = webviewRef.current
-      if (web && webReady.current) {
-        assignProperties(instance, {
-          pause: () => webReady.current && web.send('videoEvent', { type: 'stop' }),
-          play: () => webReady.current && web.send('videoEvent', { type: 'play' }),
-          jumpTo: t => {
-            webReady.current && web.send('videoEvent', { type: 'jump', time: t })
-          },
-          captureCurrentImage: () => {
-            webReady.current && web.send('videoEvent', { type: 'captureSnapshot' })
-            return new Promise(res => {
-              const handler = e => {
-                const { channel, args } = e
-                if (channel === 'event' && args[0].type === 'captureImage') {
-                  res(args[0].url)
-                  web.removeEventListener('ipc-message', handler)
-                }
-              }
-              web.addEventListener('ipc-message', handler)
-            })
-          }
-        })
-      }
-    } else {
-      const video = videoRef.current
-      if (video) {
-        assignProperties(instance, {
-          pause: () => setVideoState(s => ({ ...s, paused: true })),
-          play: () => setVideoState(s => ({ ...s, paused: false })),
-          loop: () => setVideoState(s => ({ ...s, loop: true })),
-          unloop: () => setVideoState(s => ({ ...s, loop: false })),
-          getUrl: () => url,
-          jumpTo: t => (video.currentTime = t),
-          getVideoElement: () => video,
-          getOffscreenVideo: () => offscreenVideoRef.current,
-          captureCurrentImage: () => {
-            return new Promise(res => {
-              if (currentTime) {
-                instance.captureImage?.(currentTime, { width: 1600, height: 900 }).then(r => {
-                  res(r)
-                })
-              }
-            })
-          }
-        })
-      }
+
+  assignProperties(instance, {
+    pause: () => setVideoState(s => ({ ...s, paused: true })),
+    play: () => setVideoState(s => ({ ...s, paused: false })),
+    loop: () => setVideoState(s => ({ ...s, loop: true })),
+    unloop: () => setVideoState(s => ({ ...s, loop: false })),
+    getUrl: () => url,
+    jumpTo: t => setVideoState(s => ({ ...s, jumpTime: t })),
+    captureCurrentImage: () => {
+      return new Promise(res => {
+        if (currentTime) {
+          instance.captureImage?.(currentTime, { width: 1600, height: 900 }).then(r => {
+            res(r)
+          })
+        }
+      })
     }
   })
 
@@ -234,57 +110,61 @@ const VideoCore = memo(({ url }: VideoCoreProps) => {
   //       }
   //     })
   // }, [])
-  return mode === 'web' ? (
-    <Content style={{ width: '100%', paddingBottom: '56.25%', height: 0 }}>
-      <webview
-        ref={webviewRef}
-        webpreferences="video"
-        src={url}
-        httpreferrer={'https://www.youtube.com'}
-        style={{
-          width: '100%',
-          height: '100%',
-          position: 'absolute',
-          top: 0,
-          left: 0
-        }}
-      ></webview>
-    </Content>
-  ) : (
-    <Content style={{ width: '100%', paddingBottom: '56.25%', height: 0 }}>
-      <video
-        ref={videoRef}
-        src={url}
-        loop={loopSetting}
-        autoPlay={autoPlaySetting}
-        muted={muted}
-        style={{
-          width: '100%',
-          height: '100%',
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          overflow: 'clip',
-          overflowClipMargin: 'content-box',
-          objectFit: 'contain',
-          borderRadius: videoState.floated ? '0px 0px 12px 12px' : 12
-        }}
-        onClick={() => {
-          setVideoState(s => ({ ...s, paused: !s.paused }))
-        }}
-        onDurationChange={e => {
-          const duration = e.currentTarget.duration
-          setVideoState(s => ({ ...s, totalTime: duration }))
-        }}
-        onTimeUpdate={e => {
-          const currTime = e.currentTarget.currentTime
-          setVideoState(s => ({ ...s, currentTime: currTime }))
-        }}
-      >
-        {subtitleUrl && videoState.showSubtitle !== false && <track src={subtitleUrl} kind="captions" default />}
-      </video>
+  if (!url) return null
+  return (
+    <Content
+      style={{
+        width: '100%',
+        paddingBottom: '56.25%',
+        height: 0,
+        borderRadius: videoState.floated ? '0px 0px 12px 12px' : 12,
+        overflow: 'hidden'
+      }}
+    >
+      {!videoState.loaded && (
+        <div style={{ position: 'absolute', inset: 0, zIndex: 999 }}>
+          <LoadingAnimation />
+        </div>
+      )}
+      {mode === 'web' && <WebVideoPlayer url={url} />}
+      {mode === 'video' && <LocalVideoPlayer url={url} />}
+      {mode === 'baidudisk' && <BaidudiskVideoPlayer url={url} />}
     </Content>
   )
 })
+
+const LoadingAnimation = () => {
+  const [dots, setDotsNum] = useState(0)
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setDotsNum(s => {
+        const next = s + 1
+        return next > 3 ? 0 : next
+      })
+    }, 300)
+    return () => {
+      clearInterval(interval)
+    }
+  }, [])
+  return (
+    <div className="loading_center">
+      <Content flex>
+        <div className="loading_wave"></div>
+        <div className="loading_wave"></div>
+        <div className="loading_wave"></div>
+        <div className="loading_wave"></div>
+        <div className="loading_wave"></div>
+        <div className="loading_wave"></div>
+        <div className="loading_wave"></div>
+        <div className="loading_wave"></div>
+        <div className="loading_wave"></div>
+        <div className="loading_wave"></div>
+      </Content>
+      <div style={{ fontSize: 18, color: Colors.Font.Description, marginTop: 20 }}>
+        Loading video {Array.from(Array(dots).keys()).map(i => `.`)}
+      </div>
+    </div>
+  )
+}
 
 export default VideoCore

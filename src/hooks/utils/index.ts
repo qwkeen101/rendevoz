@@ -13,3 +13,4 @@ export { default as useDebounceFn } from "./useDebounceFn";
 export { default as useRafFn } from "./useRafFn";
 export { default as useUpdateEffect } from "./useUpdateEffect";
 export { default as useDebounceEffect } from "./useDebounceEffect";
+export { default as useClickOutside } from './useClickOutside'

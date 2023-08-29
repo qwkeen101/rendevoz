@@ -38,7 +38,8 @@ export const Background = {
   DarkHighlightBorder: '--dark-highlight-border',
   LightScrollBar: '--light-scroll-bar',
   DarkScrollBar: '--dark-scroll-bar',
-  Scrollbar: '--scroll-bar'
+  Scrollbar: '--scroll-bar',
+  BoxShadow: '--box-shadow'
 }
 export const Emphasis = {
   DarkEmphasis: '--dark-emphasis',

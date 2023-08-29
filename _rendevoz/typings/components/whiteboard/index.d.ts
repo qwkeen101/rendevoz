@@ -61,7 +61,8 @@ export type IWhiteboardNode = {
     }
   | {
       type: 'text'
-      content: string
+      fontSize?: 'middle' | 'large' | 'small' | 'super large'
+      content: string | any[]
     }
 )
 

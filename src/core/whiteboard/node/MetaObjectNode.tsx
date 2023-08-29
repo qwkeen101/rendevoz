@@ -217,7 +217,7 @@ const MetaObjectNode: FC<InnerNodeProps> = ({ node: n, setPopoverElements, setNo
       <div
         ref={wholeContainerRef}
         style={{
-          padding: '3% 3% 2%',
+          padding: '10px',
           minWidth: '100%',
           width: 'auto',
           maxWidth: '400px',
@@ -270,7 +270,7 @@ const MetaObjectNode: FC<InnerNodeProps> = ({ node: n, setPopoverElements, setNo
           )
         case 'video':
           return (
-            <div style={{ width: '600px', maxWidth: '100%', minWidth: '100%' }}>
+            <div style={{ width: '450px', maxWidth: '100%', minWidth: '100%', height: 253, minHeight: '100%', maxHeight: '100%' }}>
               <Video onlyCore={true} videoId={metaObject.objectId} />
             </div>
           )

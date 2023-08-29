@@ -32,7 +32,15 @@ const useWhiteboardDrop = () => {
       let expanded = false
       if (draggingElement.type === 'whiteboard-text') {
         insertNodeAtPointer(event, {
-          type: 'text'
+          type: 'text',
+          background: '#e6e6e6',
+          content: [
+            {
+              type: 'paragraph',
+              children: [{ text: 'Input something' }],
+              id: Id.getId()
+            }
+          ]
         })
         return
       }

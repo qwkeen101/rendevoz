@@ -1,10 +1,13 @@
-import Colors from "@/consts/colors";
-import { css } from "@emotion/css";
+import Colors from '@/consts/colors'
+import { css } from '@emotion/css'
 
 export const blurBackground = css({
   background: Colors.Background.Linear,
-  backdropFilter: "saturate(1.5) blur(32px)",
-});
+  backdropFilter: 'saturate(1.5) blur(32px)',
+  'html[theme="dark"]': {
+    backdropFilter: 'saturate(0.5) blur(40px)'
+  }
+})
 
 export const pseudoBlubBackground = css({
   position: 'relative',
@@ -21,6 +24,9 @@ export const pseudoBlubBackground = css({
     zIndex: -1,
     background: Colors.Background.Linear,
     backdropFilter: 'saturate(1.5) blur(32px)'
+  },
+  'html[theme="dark"]': {
+    backdropFilter: 'saturate(0.5) blur(40px)'
   }
 })
 

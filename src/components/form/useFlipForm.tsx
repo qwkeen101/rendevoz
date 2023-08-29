@@ -7,7 +7,7 @@ import { capitalize } from 'lodash'
 import { CSSProperties, Fragment, ReactNode, useMemo, useState } from 'react'
 import { Flipped, Flipper } from 'react-flip-toolkit'
 import { useTranslation } from 'react-i18next'
-import { Content, Form, Icon } from '..'
+import { Button, Content, Form, Icon } from '..'
 import { defaultBgColor } from '../picker/colorPicker'
 import { ObjectTag } from '@/core'
 import FormColorPicker from './FormColorPicker'
@@ -37,6 +37,7 @@ interface FormInnerState {
   mainVisible: boolean
   tagPickerVisible: boolean
   iconPickerVisible: boolean
+  descVisible: boolean
   colorPickerVisible: boolean
   attachmentManagerVisible: boolean
 }
@@ -65,7 +66,8 @@ const handleEnterUpdateDelete = ({ animateExitingElements, animateEnteringElemen
 const useFlipForm = (options: useFlipFormOptions) => {
   const { layout, onBack, onSubmit, formTitle, containerStyle, submitText } = options
   const [formInnerState, setFormInnerState] = useState<Partial<FormInnerState>>({
-    mainVisible: true
+    mainVisible: true,
+    descVisible: false
   })
   const { mainVisible, tagPickerVisible, iconPickerVisible, colorPickerVisible, attachmentManagerVisible } = formInnerState
   const mainFlipId = useMemo(() => Id.getStrId(), [])
@@ -110,6 +112,7 @@ const useFlipForm = (options: useFlipFormOptions) => {
           />
         )
       case 'descriptionInput':
+        if (!i.value && !formInnerState.descVisible) return null
         return (
           <Form.Item
             text={capitalize(t('general.description'))}
@@ -126,10 +129,21 @@ const useFlipForm = (options: useFlipFormOptions) => {
         return (
           <FormFilePathPicker
             enableWeb={i.enableWeb}
+            baidudiskCategory={i.baidudiskCategory}
+            enableBaidudisk={i.enableBaidudisk}
             accept={i.accept}
             maxWidth={enlarged ? '100%' : 400}
             filePath={i.filePath}
             onChange={i.onChange}
+          />
+        )
+      case 'addDesc':
+        if (i.value || formInnerState.descVisible) return null
+        return (
+          <Button.IconButton
+            onClick={() => setFormInnerState(s => ({ ...s, descVisible: true }))}
+            icon={'park-info'}
+            text={t('general.add description')}
           />
         )
       case 'tagPicker':

@@ -37,6 +37,10 @@ export type MetaFormLayoutItem =
       onChange?: (color: string | undefined) => void
     }
   | {
+      type: 'addDesc'
+      value?: string
+    }
+  | {
       type: 'tagDisplayer'
       tags?: number[]
     }
@@ -78,10 +82,33 @@ export type MetaFormLayoutItem =
     }
   | {
       type: 'filePathPicker'
+      maxWidth?: any
       filePath: string
       accept?: HTMLInputElement['accept']
       enableWeb?: boolean
-      onChange: (filePath: string | undefined, fileName: string | undefined, file: File | undefined) => void
+      enableBaidudisk?: boolean
+      baidudiskCategory?: number
+      onChange: (
+        value:
+          | {
+              type: 'local'
+              filePath: string | undefined
+              fileName: string | undefined
+              file: File | undefined
+            }
+          | {
+              type: 'baidudisk'
+              url: string
+              name: string
+            }
+          | {
+              type: 'web'
+              url: string
+            }
+          | {
+              type: 'clear'
+            }
+      ) => void
     }
   | {
       type: 'attchmentManager'

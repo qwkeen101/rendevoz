@@ -34,6 +34,8 @@ import { WhiteboardTransformAtom } from '@/core/whiteboard/hooks/useWhiteboardTr
 import Background from '@/core/whiteboard/Background'
 import { Colors } from '@/consts'
 import { getSetting } from '@/core'
+import { Excalidraw } from '@excalidraw/excalidraw'
+import { ExcalidrawImperativeAPI } from '@excalidraw/excalidraw/types/types'
 
 const WhiteboardInner = memo(
   ({
@@ -79,6 +81,7 @@ const WhiteboardInner = memo(
         flow.containerEle = containerRef.current
         flow.parentContainerEle = flow.containerEle.parentElement as HTMLElement
         containerRef.current?.style.setProperty('--zoom-level', '1')
+        const excalidraw = excalidrawRef.current
         const panzoom = createPanZoom(containerRef.current, {
           smoothScroll: false,
           maxZoom: 5,
@@ -113,12 +116,44 @@ const WhiteboardInner = memo(
             type: 'panChange'
           })
           const t = panzoom.getTransform()
-
+          if (excalidrawRef.current) {
+            const { x, y, scale } = t
+            const ex = excalidrawRef.current
+            console.log(ex.getAppState())
+            const exScroll = {
+              x: x / scale,
+              y: y / scale
+            }
+            ex.updateScene({
+              elements: ex.getSceneElements(),
+              appState: { ...ex.getAppState(), scrollY: exScroll.y, scrollX: exScroll.x, zoom: { value: scale } }
+            })
+          }
+          // excalidrawRef.current?.updateScene({
+          //   appState: {
+          //     scrollY: t.y,
+          //     scrollX: t.x,
+          //     zoom: t.scale
+          //   }
+          // })
           setWhiteboardTransform([t.x, t.y, t.scale])
         })
         panzoom.on('zoom', e => {
           const { scale, x, y } = panzoom.getTransform()
           setWhiteboardTransform([x, y, scale])
+          if (excalidrawRef.current) {
+            const ex = excalidrawRef.current
+            console.log(ex.getAppState())
+            const exScroll = {
+              x: x / scale,
+              y: y / scale
+            }
+            ex.updateScene({
+              elements: ex.getSceneElements(),
+              appState: { ...ex.getAppState(), scrollY: exScroll.y, scrollX: exScroll.x, zoom: { value: scale } }
+            })
+          }
+
           console.log(scale)
           flow.containerTransformScale = scale
           const zoomMultipler = Math.sqrt(1 / scale)
@@ -191,8 +226,44 @@ const WhiteboardInner = memo(
     const { renderSelect } = useWhiteboardSelect(containerRef)
     useWhiteboardAutoPan()
     useWhiteboardDrop()
+    const excalidrawRef = useRef<ExcalidrawImperativeAPI>(null)
     return (
       <Content fullHeight fullWidth role="data-container" tabIndex={undefined}>
+        {/*<div style={{ position: 'absolute', inset: 0, zIndex: 0 }}>*/}
+        {/*  <Excalidraw*/}
+        {/*    ref={r =>*/}
+        {/*      r?.readyPromise?.then(v => {*/}
+        {/*        excalidrawRef.current = v*/}
+        {/*      })*/}
+        {/*    }*/}
+        {/*    onChange={(elements, appState, files) => {*/}
+        {/*      console.log(appState)*/}
+        {/*      const { scrollX, scrollY, zoom } = appState*/}
+        {/*      if (appState.zoom.value && panzoomRef.current) {*/}
+        {/*        const realTransform = {*/}
+        {/*          x: scrollX * zoom.value,*/}
+        {/*          y: scrollY * zoom.value*/}
+        {/*        }*/}
+        {/*        const currentTransform = panzoomRef.current?.getTransform()*/}
+        {/*        if (!currentTransform) return*/}
+        {/*        if (currentTransform.x === realTransform.x && currentTransform.y === realTransform.y) return*/}
+        {/*        setWhiteboardTransform([realTransform.x, realTransform.y, zoom.value])*/}
+        {/*        setWhiteboardState(s => ({ ...s, zoom: zoom.value }))*/}
+        {/*        const zoomMultipler = Math.sqrt(1 / zoom.value)*/}
+        {/*        debounceSetZoom.run(zoomMultipler)*/}
+        {/*        panzoomRef.current?.moveTo(realTransform.x, realTransform.y)*/}
+        {/*      }*/}
+        {/*    }}*/}
+        {/*    initialData={{*/}
+        {/*      appState: {*/}
+        {/*        showWelcomeScreen: false,*/}
+        {/*        openSidebar: null,*/}
+        {/*        showStats: false,*/}
+        {/*        viewBackgroundColor: 'transparent'*/}
+        {/*      }*/}
+        {/*    }}*/}
+        {/*  />*/}
+        {/*</div>*/}
         <div
           ref={containerRef}
           role="data-container"
@@ -213,7 +284,6 @@ const WhiteboardInner = memo(
         <div style={{ position: 'absolute', right: 0, top: 0, bottom: 0 }}>{render()}</div>
         <WhiteboardBottomBar />
         <WhiteboardSettings />
-
         {enableMiniMap && setting.whiteboard.enableMinimap && (
           <div
             style={{

@@ -130,7 +130,16 @@ const SidebarCollection = () => {
         </Content>
       </AnimatePopover>
       {!collapsed && (
-        <Content flex column gap={2}>
+        <Content
+          flex
+          column
+          gap={2}
+          style={{
+            overflowY: 'auto',
+            margin: '0 -8px',
+            padding: '0 8px'
+          }}
+        >
           {sortedCollections.map(i => (
             <SidebarCollectionItem key={i.id} id={i.id} parentId={0} parentType="collection" />
           ))}

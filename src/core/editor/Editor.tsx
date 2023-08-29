@@ -1,10 +1,10 @@
 import { useMemoizedFn } from '@/hooks'
 import Id from '@/utils/id'
-import { CSSProperties, FC, memo, MouseEventHandler, ReactNode, useCallback, useEffect, useMemo, useRef } from 'react'
-import { createEditor, Descendant } from 'slate'
+import { FC, memo, MouseEventHandler, useCallback, useEffect, useMemo, useRef } from 'react'
+import { createEditor } from 'slate'
 import { withHistory } from 'slate-history'
-import { ReactEditor, withReact } from './slate-react'
-import { CustomEditor, CustomElement, EditorProps, IEditorEvent, IEditorInstance } from '~/typings'
+import { withReact } from './slate-react'
+import { CustomElement, EditorProps } from '~/typings'
 import InnerEditor from './InnerEditor'
 import withVoid from './plugins/withVoid'
 import styles from './index.module.less'
@@ -69,7 +69,8 @@ export const EditorV1: FC<EditorProps> = memo(
     on,
     defaultReadOnly,
     innerEditorClassName,
-    showHeader
+    showHeader,
+    toolbarOptions
   }) => {
     const [isDragging, setIsDragging] = useIsDragging()
     const [globalIsDragging] = useGlobalIsDragging()
@@ -259,6 +260,7 @@ export const EditorV1: FC<EditorProps> = memo(
                 }}
               >
                 <InnerEditor
+                  toolbarOptions={toolbarOptions}
                   compact={compact}
                   readonly={readOnly}
                   showToolbar={showToolbar}
@@ -279,33 +281,35 @@ export const EditorV1: FC<EditorProps> = memo(
             </div>
             {renderOverlay()}
             {renderIndicator}
-            <BlockHandle
-              onAddClick={handleBlockHandleMenu}
-              onDragClick={useCallback(
-                e => {
-                  const selectedBlocksSet = SELECTED_BLOCKS_MAP.get(editor)
-                  if (selectedBlocksSet && selectedBlocksSet.size > 0) {
-                    DragState.addDragElements?.(rebuildDragSelect(editor, e) || document.createElement('div'))
-                  } else {
-                    const dragHTMLElement = editor.currentDragElement
-                    if (dragHTMLElement) {
-                      const cloned = dragHTMLElement.cloneNode(true)
-                      const rect = dragHTMLElement.getBoundingClientRect()
-                      const wrapper = document.createElement('div')
-                      wrapper.style.width = `${rect.width}px`
-                      wrapper.style.height = `${rect.height}px`
-                      wrapper.appendChild(cloned)
-                      DragState.addDragElements?.(wrapper)
+            {showBlockHandle !== false && (
+              <BlockHandle
+                onAddClick={handleBlockHandleMenu}
+                onDragClick={useCallback(
+                  e => {
+                    const selectedBlocksSet = SELECTED_BLOCKS_MAP.get(editor)
+                    if (selectedBlocksSet && selectedBlocksSet.size > 0) {
+                      DragState.addDragElements?.(rebuildDragSelect(editor, e) || document.createElement('div'))
+                    } else {
+                      const dragHTMLElement = editor.currentDragElement
+                      if (dragHTMLElement) {
+                        const cloned = dragHTMLElement.cloneNode(true)
+                        const rect = dragHTMLElement.getBoundingClientRect()
+                        const wrapper = document.createElement('div')
+                        wrapper.style.width = `${rect.width}px`
+                        wrapper.style.height = `${rect.height}px`
+                        wrapper.appendChild(cloned)
+                        DragState.addDragElements?.(wrapper)
+                      }
                     }
-                  }
-                  DragState.setDraggingDetails?.(normalizeEditorDragBlocksToGlobalDraggingDetails(editor))
-                  DragState.startDrag?.()
-                },
-                [setIsDragging]
-              )}
-              onMenuClick={handleMenuClick}
-              outerVisible={!!(!isDragging && !popoverVisible && !readonly && showBlockHandle)}
-            />
+                    DragState.setDraggingDetails?.(normalizeEditorDragBlocksToGlobalDraggingDetails(editor))
+                    DragState.startDrag?.()
+                  },
+                  [setIsDragging]
+                )}
+                onMenuClick={handleMenuClick}
+                outerVisible={!!(!isDragging && !popoverVisible && !readonly && showBlockHandle)}
+              />
+            )}
           </div>
           {showHeader !== false && <EditorRightBar />}
         </Content>

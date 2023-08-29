@@ -30,6 +30,7 @@ export interface IWebpage extends IBase {
   //clipped note
   noteId?: number
   readerMode?: boolean
+  labels?: number[]
 }
 
 export interface IAudio extends IBase {

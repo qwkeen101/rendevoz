@@ -162,6 +162,12 @@ export interface EditorProps {
   innerEditorStyle?: CSSProperties
   innerEditorClassName?: string
   showToolbar?: boolean
+  toolbarOptions?: {
+    fontSize?: boolean
+    color?: boolean
+    highlight?: boolean
+    extra?: boolean
+  }
   showBlockHandle?: boolean
   compact?: boolean
   showLeftBar?: boolean

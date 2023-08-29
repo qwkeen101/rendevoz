@@ -3,7 +3,7 @@ import { IVideoInstance } from '~/typings'
 import { captureVideoFrame, captureVideoFrameBlob } from '../utils'
 import { saveImageLocally } from '@/utils/img'
 import { ObjectStore } from '@/stores'
-import { RefObject } from 'react'
+import { RefObject, useEffect } from 'react'
 import { assignProperties, delay } from '@/utils'
 import { VideoStateAtom } from './useVideoState'
 import { VideoToolbarStateAtom } from './useVideoToolbarState'
@@ -16,7 +16,9 @@ export const useAssignVideoInstance = (videoId: number, containerRef: RefObject<
   const videoInstance = useVideoInstance()
   const videoState = useAtomValue(VideoStateAtom)
   const setToolbarState = useSetAtom(VideoToolbarStateAtom)
-
+  useEffect(() => {
+    containerRef.current?.focus?.()
+  }, [videoState.paused])
   assignProperties(videoInstance, {
     getVideoId: () => videoId,
     getVideoState: () => videoState,
@@ -27,6 +29,7 @@ export const useAssignVideoInstance = (videoId: number, containerRef: RefObject<
       }
     },
     insertChapter: async chapter => {
+      console.log(chapter)
       if (!chapter.startTime) return
       const video = await ObjectStore('video').getOneById(videoId)
       const offscreenVideo = videoInstance.getOffscreenVideo?.()
@@ -114,11 +117,13 @@ export const useAssignVideoInstance = (videoId: number, containerRef: RefObject<
       const img = await videoInstance.captureCurrentImage?.()
       if (!img) return Promise.reject()
       const imgPath = await saveImageLocally(img, { compress: false })
+      console.log(time, label.videoTime)
       const one = await ObjectStore('videoLabel').addOne({
-        ...label,
+        videoTime: time,
         imageUrl: imgPath,
         parentObjectId: videoId
       })
+      console.log(one)
       const video = await ObjectStore('video').getOneById(videoId)
       if (video) {
         const labels = video.labels || []

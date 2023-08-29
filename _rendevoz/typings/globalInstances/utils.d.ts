@@ -1,3 +1,5 @@
+import { IRendevoz } from '~/typings'
+
 export type IGlobalUtilsInstance = Partial<{
-  upload: () => Promise<File[]>
+  upload: IRendevoz['Actions']['Utils']['uploadFile']
 }>

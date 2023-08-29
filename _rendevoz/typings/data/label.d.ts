@@ -1,6 +1,6 @@
 import { TextSelectRect } from '@/events/pdfEvent'
 import { IBase } from './base'
-import { XYPosition } from '..'
+import { Box, XYPosition } from '..'
 
 export type ILabel = IBase & {
   id?: number
@@ -12,7 +12,13 @@ export type ILabel = IBase & {
   name?: string
   page?: number
   description?: string
-} & (IShapeLabel | IThoughtLabel | IHighlightLabel | IObjectLabel | IInkLabel)
+} & (IShapeLabel | IThoughtLabel | IHighlightLabel | IObjectLabel | IInkLabel | ICropLabel)
+
+export type ICropLabel = {
+  type: 'crop'
+  rect: Box
+  imageUrl: string
+}
 
 export interface IDroppableLabel {
   page?: number

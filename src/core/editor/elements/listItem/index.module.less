@@ -1,38 +1,49 @@
 .wrapper {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   position: relative;
 }
 .marker {
   padding-right: 12px;
-  font-size: 20px;
-  height: 22px;
-  line-height: 21px;
+  display: flex;
+  align-items: center;
+  height: 23px;
+  padding-top: 2px;
+  padding-left: 4px;
   &[data-level="1"],
   &[data-level="4"],
   &[data-level="7"] {
     &::before {
-      font-size: 1em;
-      content: "\25E6";
+      content: "◦";
+      font-family: Arial;
+      line-height: 14px;
+      font-size: 1.5em;
     }
   }
   &[data-level="2"],
   &[data-level="5"],
   &[data-level="8"] {
     &::before {
-      font-size: 1em;
-      content: "\25AA";
+      content: "▪";
+      line-height: 14px;
+      font-family: Arial;
+      font-size: 1.5em;
     }
   }
   &[data-level="3"],
   &[data-level="6"] {
     &::before {
-      content: "\2022";
+      content: "•";
+      font-family: Arial;
+      line-height: 14px;
+      font-size: 1.5em;
     }
   }
   &::before {
-    content: "\2022";
+    line-height: 14px;
+    font-family: Arial;
     font-size: 1.5em;
+    content: "•";
   }
 }
 .fold {

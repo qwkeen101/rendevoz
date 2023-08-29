@@ -19,6 +19,7 @@ const NameEditor = ({ value, onChange, style }: { value: string; onChange: (v: s
         border: `1px solid ${Colors.Background.Border}`,
         padding: '2px 4px',
         borderRadius: 6,
+        width: '100%',
         ...style
       }}
       flex
@@ -30,9 +31,12 @@ const NameEditor = ({ value, onChange, style }: { value: string; onChange: (v: s
         ref={inputRef}
         minRows={2}
         maxRows={999}
+        spellCheck="false"
         style={{
           paddingBottom: 10,
-          resize: 'none'
+          resize: 'none',
+          width: '100%',
+          fontSize: FontSize['13px']
         }}
         defaultValue={value}
         onChange={e => setInnerValue(e.target.value)}

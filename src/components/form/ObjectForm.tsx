@@ -19,6 +19,8 @@ import { saveImageLocally } from '@/utils/img'
 import FormNoteImporter from './FormNoteImporter'
 import { TypeToRegisteredMetaObject } from '@/stores/meta.store'
 import { fetchHead } from '@/core/global/globalDragOverlay/useDropObject'
+import { IPdfDocument, MetaFormLayoutItem } from '~/typings'
+import { initializePdfDocument } from '@/stores/document.store'
 
 const ObjectForm: FC<
   IForm<MetaObject> & {
@@ -33,7 +35,7 @@ const ObjectForm: FC<
       ? ObjectStore(initialObject.type as keyof ObjectFamily).createAtom(initialObject.objectId)
       : undefined
   const targetObject = objectAtom && useGlobalAtomValue(objectAtom)
-  const defaultLayout = [
+  const defaultLayout: MetaFormLayoutItem[] = [
     initialObject?.type
       ? {
           type: 'custom',
@@ -86,16 +88,39 @@ const ObjectForm: FC<
       ? {
           type: 'filePathPicker',
           filePath: (targetObject as ILocalFile)?.fileUrl,
-          onChange: (path, name) => {
+          onChange: details => {
+            if (details.type !== 'local') return
             object.objectId &&
+              details.type === 'local' &&
               ObjectStore('localFile').updateOne({
                 id: object.objectId,
-                fileUrl: path
+                fileUrl: details.filePath
               })
             setObject(o => ({
               ...o,
-              name: getFilenameWithoutExtension(name || '')
+              name: getFilenameWithoutExtension(details.fileName || '')
             }))
+          }
+        }
+      : undefined,
+    object?.type === 'pdf'
+      ? {
+          type: 'filePathPicker',
+          filePath: (targetObject as IPdfDocument)?.fileUrl || '',
+          accept: 'application/pdf',
+          onChange: details => {
+            if (object.objectId && details.type === 'local' && details.file) {
+              initializePdfDocument(details.file).then(doc => {
+                ObjectStore('pdf')
+                  .updateOne({ id: object.objectId, ...doc })
+                  .then(one => {
+                    setObject({ ...object, name: one?.metadata?.title, coverImgSrc: one?.metadata?.coverUrl })
+                  })
+              })
+            }
+            if (object.objectId && details.type === 'clear') {
+              ObjectStore('pdf').updateOne({ id: object.objectId, fileUrl: undefined })
+            }
           }
         }
       : undefined,
@@ -103,31 +128,33 @@ const ObjectForm: FC<
       ? {
           type: 'filePathPicker',
           enableWeb: true,
+          enableBaidudisk: true,
+          baidudiskCategory: 1,
           filePath: (targetObject as IVideo)?.videoUrl,
-          onChange: (path, name, file) => {
-            if (path && name && file) {
-              saveFileLocally(path, name).then(p => {
+          onChange: details => {
+            if (details.type === 'local') {
+              saveFileLocally(details.filePath, details.fileName).then(p => {
                 object.objectId &&
                   ObjectStore('video').updateOne({
                     id: object.objectId,
                     videoUrl: p.data
                   })
-                generateVideoThumbnail(file).then(s => {
+                generateVideoThumbnail(details.file).then(s => {
                   saveImageLocally(s, { compress: false }).then(data => {
                     setObject(o => ({ ...o, coverImgSrc: data }))
                   })
                 })
                 setObject(o => ({
                   ...o,
-                  name: getFilenameWithoutExtension(name)
+                  name: getFilenameWithoutExtension(details.fileName)
                 }))
               })
               return
-            } else if (path && name) {
-              setObject(o => ({ ...o, name }))
+            } else if (details.type === 'web') {
+              setObject(o => ({ ...o, name: details.url }))
               if (object.objectId) {
-                fetchHead(path).then(res => {
-                  setObject(o => ({ ...o, name: res.title || name, coverImgSrc: res.coverImgSrc }))
+                fetchHead(details.url).then(res => {
+                  setObject(o => ({ ...o, name: res.title || details.url, coverImgSrc: res.coverImgSrc }))
                   if (MetaStore.getMetaObjectsMap().has(object.id)) {
                     const meta = MetaStore.getMetaObjectsMap().get(object.id)
                     MetaStore.updateMetaObject(
@@ -140,9 +167,14 @@ const ObjectForm: FC<
                     )
                   }
                 })
-                ObjectStore('video').updateOne({ id: object.objectId, videoUrl: path })
+                ObjectStore('video').updateOne({ id: object.objectId, videoUrl: details.url })
               }
-            } else {
+            } else if (details.type === 'baidudisk') {
+              setObject(o => ({ ...o, name: details.name }))
+              if (object.objectId) {
+                ObjectStore('video').updateOne({ id: object.objectId, videoUrl: `baidudisk${details.url}` })
+              }
+            } else if (details.type === 'clear') {
               object.objectId &&
                 ObjectStore('video').updateOne({
                   id: object.objectId,
@@ -162,12 +194,6 @@ const ObjectForm: FC<
     {
       type: 'group',
       children: [
-        initialObject?.type === 'note'
-          ? {
-              type: 'custom',
-              children: <FormNoteImporter onClose={() => onBack?.()} />
-            }
-          : undefined,
         initialObject?.type === 'image' && initialObject?.coverImgSrc
           ? {
               type: 'custom',
@@ -197,6 +223,10 @@ const ObjectForm: FC<
               )
             }
           : undefined,
+        {
+          type: 'addDesc',
+          value: object.description
+        },
         {
           type: 'imagePicker',
           imageUrl: object.coverImgSrc,

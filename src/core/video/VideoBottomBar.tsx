@@ -18,6 +18,7 @@ import { MetaStore, ObjectStore } from '@/stores'
 import { saveImageLocally } from '@/utils/img'
 import { useSetAtom } from 'jotai'
 import { VideoSidebarStateAtom } from './hooks/useVideoSidebarState'
+import VideoActionsMenu from '@/core/video/VideoActionsMenu'
 
 const playerControlMask = css({
   backgroundImage:
@@ -37,6 +38,7 @@ const VideoBottomBar = () => {
   const instance = useVideoInstance()
   const [videoState, setVideoState] = useVideoState()
   const [toolbarState, setToolbarState] = useVideoToolbarState()
+  const videoMeta = videoState.videoId ? MetaStore.getMetaObjectByObjectId(videoState.videoId) : undefined
   const setSidebarState = useSetAtom(VideoSidebarStateAtom)
   const { totalTime = 0, currentTime = 0, paused, volume, muted } = videoState
   const { showVolume, chooseTime, thumbnailUrl, thumbnailVisible, thumbnailPosition, currentHoverTime, draggingScrubber } = toolbarState
@@ -52,14 +54,14 @@ const VideoBottomBar = () => {
   }, [totalTime, currentTime])
 
   const containerRef = useRef<HTMLDivElement>(null)
-  const { t } = useTranslation()
+  const opacity = toolbarState.visible || chooseTime || toolbarState.currentHoverLabelId || paused || draggingScrubber ? 1 : 0
   return (
     <Content
       flex
       column
       ref={containerRef}
       style={{
-        opacity: toolbarState.visible || chooseTime || toolbarState.currentHoverLabelId || paused || draggingScrubber ? 1 : 0
+        opacity
       }}
       className={css({
         transition: 'opacity 0.3s ease',
@@ -87,11 +89,9 @@ const VideoBottomBar = () => {
         containerStyle={{
           pointerEvents: 'none'
         }}
-        parentElement={containerRef.current}
         content={
-          <Content flex column alignItems="center">
+          <Content flex column alignItems="center" style={{ opacity }}>
             <img width={200} src={thumbnailUrl} style={{ borderRadius: 10 }} />
-
             <Content
               flex
               column
@@ -330,78 +330,7 @@ const VideoBottomBar = () => {
           <IconWithPopover
             padding={0}
             renderOnParent={false}
-            content={setState => (
-              <WithBorder onClick={e => Rendevoz.Events.DOM.hasButton(e) && setState(false)} padding={8} style={{ borderRadius: 8 }}>
-                <Button.IconButton
-                  icon="park-down-picture"
-                  text={t('general.Download screenshot')}
-                  onClick={() => {
-                    const videoMeta = videoState.videoId ? MetaStore.getMetaObjectByObjectId(videoState.videoId) : undefined
-                    if (!videoMeta) return
-                    instance.captureCurrentImage?.().then(res => {
-                      if (res) {
-                        const a = document.createElement('a')
-                        a.href = res
-                        a.download = `${videoMeta.name}_${normalizeSecondsToTime(currentTime)}.png`
-                        a.click()
-                      }
-                    })
-                  }}
-                />
-                <Button.IconButton
-                  icon="park-screenshot"
-                  onClick={() => {
-                    instance.captureImage?.(currentTime, { width: 1600, height: 900 }).then(data => {
-                      if (data) {
-                        const videoMeta = videoState.videoId ? MetaStore.getMetaObjectByObjectId(videoState.videoId) : undefined
-                        saveImageLocally(data, { compress: false }).then(res => {
-                          ObjectStore('image').addOneWithMeta(
-                            {
-                              imageUrl: res
-                            },
-                            {
-                              showMetaModal: false,
-                              currentMeta: {
-                                name: 'Video screenshot',
-                                coverImgSrc: res,
-                                fromObject: videoMeta
-                                  ? {
-                                      metaId: videoMeta.id,
-                                      type: 'video',
-                                      time: currentTime
-                                    }
-                                  : undefined
-                              }
-                            }
-                          )
-                        })
-                      }
-                    })
-                  }}
-                  text={t('general.add screenshot')}
-                ></Button.IconButton>
-                <Button.IconButton
-                  onClick={() => {
-                    instance.insertChapter?.({
-                      startTime: currentTime,
-                      name: 'Untitled Chapter'
-                    })
-                  }}
-                  text={t('general.add chapter')}
-                  icon="park-link"
-                ></Button.IconButton>
-                <Button.IconButton
-                  icon="park-pin"
-                  onClick={() => {
-                    instance.insertLabel?.({
-                      videoTime: currentTime,
-                      name: 'Unnamed Label'
-                    })
-                  }}
-                  text={t('general.add label')}
-                ></Button.IconButton>
-              </WithBorder>
-            )}
+            content={setState => <VideoActionsMenu onClose={() => setState(false)} />}
             name="park-plus"
             className={ClassName.circleButton()}
             strokeWidth={6}

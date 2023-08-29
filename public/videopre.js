@@ -109,7 +109,9 @@ window.addEventListener('DOMContentLoaded', () => {
       }
       clearInterval(interval)
       prepareVideo()
-      ipcRenderer.sendToHost('videoLoaded')
+      ipcRenderer.sendToHost('event', {
+        type: 'loaded'
+      })
     } else {
       ipcRenderer.sendToHost('videoNotLoaded')
     }

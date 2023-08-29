@@ -32,12 +32,14 @@ interface Props {
   onContentClick?: MouseEventHandler
   containerStyle?: CSSProperties
   renderOnParent?: boolean
+  withClickCover?: boolean
   onClickOutside?: (e: MouseEvent, setVisible: React.Dispatch<React.SetStateAction<boolean>>) => void
 }
 const IconWithPopover: FC<Props> = (
   {
     name,
     content,
+    withClickCover,
     onClickOutside,
     color,
     align,
@@ -111,6 +113,7 @@ const IconWithPopover: FC<Props> = (
             }, 0)
           }
         }}
+        withClickCover={withClickCover}
         contentDraggable={contentDraggable}
         containerStyle={zIndex ? { zIndex: zIndex?.toString() } : undefined}
         parentElement={renderOnParent ? parentElement || containerRef.current || document.body : document.body}

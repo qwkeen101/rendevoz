@@ -33,7 +33,7 @@ const fetchClient = () => {
                         ...request.headers,
                         "x-auth-token": idToken,
                       };
-                      console.log("ger we2");
+
                       globalStore.set(userAtom, {
                         ...user,
                         idToken,

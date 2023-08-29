@@ -98,13 +98,14 @@ const PixiNode: FC<NodeProps> = memo(({ node, onMouseEnter, onMouseLeave, onCont
     if (graph?.isChoosingNode === 'end') {
       graph.overlayManager?.setContent('pathIndicator')
       const nodeBounding = {
-        left: e.screenX,
-        top: e.screenY,
+        left: e.clientX,
+        top: e.clientY,
         width: e.width
       }
+      console.log(nodeBounding)
       graph.overlayManager?.setPosition({
-        left: nodeBounding?.left + nodeBounding?.width + 10,
-        top: nodeBounding?.top
+        left: nodeBounding?.left + nodeBounding?.width / 2,
+        top: nodeBounding?.top - 15
       })
       graph.overlayManager?.open()
 

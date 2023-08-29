@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { IPdfLabel } from '~/typings'
 import { ObjectStore } from '@/stores'
 import { useRenderLabel } from '@/core/database'
-import { Content, VirtualList } from '@/components'
+import { Content, Image, VirtualList } from '@/components'
 import FontSize from '@/consts/font'
 import ClassName from '@/styles/classNames'
 import { useTranslation } from 'react-i18next'
@@ -175,6 +175,7 @@ const Label = ({ id, highlight }: { id: number; highlight: boolean }) => {
   useEffect(() => {
     if (pdfLabel && pdfLabel.documentId) {
       setDraggingDetails({
+        ...pdfLabel,
         pdfId: pdfLabel.documentId,
         content: pdfLabel.name,
         page: pdfLabel.page,
@@ -198,6 +199,7 @@ const Label = ({ id, highlight }: { id: number; highlight: boolean }) => {
       }
     }
   }, [highlight])
+
   if (!label) return null
   return (
     <Content flex column gap={6} style={{ padding: 8 }} ref={containerRef}>
@@ -217,6 +219,9 @@ const Label = ({ id, highlight }: { id: number; highlight: boolean }) => {
       </Content>
 
       {pdfLabel.type === 'highlight' && pdfLabel.selectedText && renderOriginalText(pdfLabel.selectedText)}
+      {pdfLabel.type === 'crop' && pdfLabel.imageUrl && (
+        <Image src={pdfLabel.imageUrl} width={'min(100%, 250px)'} containerStyle={{ borderRadius: 10 }} preview />
+      )}
       {renderDescription({ style: { width: '100%' } })}
       {renderAttachment({
         style: { marginTop: 8 },

@@ -20,14 +20,13 @@ const EDGE_HIDDEN_ALPHA = 0.05
 const EDGE_VISIBLE_ALPHA = 1
 
 export const GraphVisibleNodesIdsAtom = atom<number[]>([])
+export const GraphFilterNodesIdsAtom = atom<number[]>([])
 const useGraphFilter = () => {
   const [allNodes, setAllNodes] = useGraphNodes()
   const [, setAllEdges] = useEdges()
 
   const setGraphVisibleNodesIds = useSetAtom(GraphVisibleNodesIdsAtom)
-  const store = useStore()
-
-  const allNodesIdSet = useMemo(() => new Set(allNodes?.map(i => i.id)), [allNodes?.length])
+  const graphFilterNodes = useAtomValue(GraphFilterNodesIdsAtom)
 
   const nodesVisibilityState = useRef({
     afterFilterNodesIds: new Set<number>(),
@@ -36,15 +35,11 @@ const useGraphFilter = () => {
     pointerEnterNodesIds: new Set<number>(),
     pathFilterNodeIds: new Set<number>()
   })
+  useEffect(() => {
+    nodesVisibilityState.current.afterFilterNodesIds = new Set([...graphFilterNodes])
+    triggerGraphChange()
+  }, [graphFilterNodes])
 
-  useObjectFilter(
-    ids => {
-      nodesVisibilityState.current.afterFilterNodesIds = ids
-      triggerGraphChange()
-    },
-    store,
-    allNodesIdSet
-  )
   const pinnedNodesIds = useAtomValue(GraphPinNodesIdsAtom)
   const hideNodesIds = useAtomValue(GraphHideNodesIdsAtom)
   const [pathFilter, setPathFilter] = useAtom(GraphPathFilterAtom)

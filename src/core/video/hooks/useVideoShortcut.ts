@@ -39,22 +39,26 @@ const useVideoShortcut = (containerRef: RefObject<HTMLElement>) => {
       }
     }
     if (isHotkey(KEY.ArrowLeft, e)) {
+      e.stopPropagation()
       setVideoState(s => ({
         ...s,
-        currentTime: Math.max((s.currentTime || 0) - 5, 0),
+        jumpTime: Math.max((s.currentTime || 0) - 5, 0),
         jumpIndicator: 'back'
       }))
       e.preventDefault()
     }
     if (isHotkey(KEY.ArrowRight, e)) {
+      e.stopPropagation()
       e.preventDefault()
       setVideoState(s => ({
         ...s,
-        currentTime: Math.min((s.currentTime || 0) + 5, s.totalTime || 0),
+        jumpTime: Math.min((s.currentTime || 0) + 5, s.totalTime || 0),
         jumpIndicator: 'forward'
       }))
     }
     if (isHotkey(KEY.ArrowDown, e)) {
+      e.stopPropagation()
+      e.preventDefault()
       setVideoState(s => ({
         ...s,
         volume: Math.max(0, s.volume - 0.05),
@@ -62,6 +66,8 @@ const useVideoShortcut = (containerRef: RefObject<HTMLElement>) => {
       }))
     }
     if (isHotkey(KEY.ArrowUp, e)) {
+      e.preventDefault()
+      e.stopPropagation()
       setVideoState(s => ({
         ...s,
         volume: Math.min(0.6, s.volume + 0.05),

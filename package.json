@@ -2,7 +2,7 @@
   "name": "rendevoz-app",
   "productName": "Rendevoz",
   "private": true,
-  "version": "0.3.6",
+  "version": "0.3.7",
   "author": "Rendevoz Team",
   "main": "dist-electron/electron/main/index.js",
   "debug": {
@@ -34,10 +34,12 @@
     "@pixi-essentials/svg": "^2.0.1",
     "@pixi/react": "^7.1.0",
     "@slate-yjs/core": "^0.2.8",
+    "@tanstack/react-table": "^8.9.3",
     "@tanstack/react-virtual": "^3.0.0-beta.52",
     "@types/d3-sankey": "^0.12.1",
     "@uiw/react-heat-map": "^2.1.1",
     "@uiw/react-monacoeditor": "^3.5.8",
+    "async-await-queue": "^2.1.4",
     "axios": "^0.25.0",
     "babel-plugin-import": "latest",
     "classnames": "^2.3.1",
@@ -70,6 +72,7 @@
     "mathjax": "^3.2.2",
     "meilisearch": "^0.32.3",
     "monaco-editor": "^0.38.0",
+    "nodejs-file-downloader": "^4.12.1",
     "optics-ts": "^2.3.0",
     "panzoom": "^9.4.3",
     "pdfjs-dist": "^3.8.162",
@@ -158,6 +161,7 @@
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "typescript": "^4.8.6",
+    "video.js": "^8.5.2",
     "vite": "^3.2.7",
     "vite-electron-plugin": "^0.4.6"
   }

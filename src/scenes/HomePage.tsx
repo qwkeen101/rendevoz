@@ -1,5 +1,5 @@
-import { Button, Icon, IconWithPopover, WithBorder } from '@/components'
-import { FC, useMemo, useState } from 'react'
+import { Button, Icon, IconWithPopover, Modal, WithBorder } from '@/components'
+import { FC, useEffect, useMemo, useState } from 'react'
 import { Components } from 'rendevoz'
 import { useDebounceFn, useGlobalAtomValue, useToggle } from '@/hooks'
 import { useTranslation } from 'react-i18next'
@@ -18,6 +18,8 @@ import Colors from '@/consts/colors'
 import { atom, createStore, Provider, useAtom, useAtomValue } from 'jotai'
 import fuzzysort from 'fuzzysort'
 import { Rendevoz } from '@/core/rendevoz'
+import FileImporter from '@/components/fileImporter'
+import BetterFilter from '@/core/database/filter/BetterFilter'
 
 const { Content } = Components
 const HomeSearchAtom = atom<string | undefined>(undefined)
@@ -30,6 +32,7 @@ export const HomePage: FC = () => {
   const store = useMemo(() => createStore(), [])
   const [search, setSearch] = useAtom(HomeSearchAtom, { store: store })
   const debounceSetSearch = useDebounceFn(v => setSearch(v), { wait: 500 })
+  const [createVisible, toggleCreateVisible] = useToggle(false)
   return (
     <Content
       flex
@@ -43,6 +46,9 @@ export const HomePage: FC = () => {
       }}
     >
       <TabTitle title={t('general.home')} icon="park-home" />
+      <Modal visible={createVisible} onClose={toggleCreateVisible} style={{}}>
+        <FileImporter onClose={toggleCreateVisible}/>
+      </Modal>
       <Content
         flex
         gap={10}
@@ -70,10 +76,9 @@ export const HomePage: FC = () => {
         <div className={ClassName.title()}>{t('general.home')}</div>
         <Button.IconButton
           id="home-create-button"
-          onClick={e => open(e)}
+          onClick={e => toggleCreateVisible()}
           text={t('general.create')}
-          icon="park-down"
-          reverse
+          icon="park-plus"
         ></Button.IconButton>
       </Content>
       <Content flex column style={{ height: 0, flex: 1 }}>

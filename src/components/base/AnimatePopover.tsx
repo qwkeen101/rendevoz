@@ -9,6 +9,8 @@ import { Zindexes } from '@/consts'
 import { Position } from '~/typings'
 import { PosHelper } from '../contextMenu'
 import { SetStateAction } from 'jotai'
+import { createPortal } from 'react-dom'
+import zindex from '@/consts/zindex'
 
 export interface AnimatePopoverProps extends Omit<PopoverProps, 'content' | 'isOpen' | 'children'> {
   animate?: boolean
@@ -24,6 +26,7 @@ export interface AnimatePopoverProps extends Omit<PopoverProps, 'content' | 'isO
   children?: ReactNode
   contentDraggable?: boolean
   closeOnClickOutside?: boolean
+  withClickCover?: boolean
 }
 
 const AnimatePopover: FC<PropsWithChildren<AnimatePopoverProps>> = ({
@@ -48,6 +51,7 @@ const AnimatePopover: FC<PropsWithChildren<AnimatePopoverProps>> = ({
   backdropFilter = true,
   onClickOutside,
   closeOnClickOutside,
+  withClickCover,
   ...rest
 }) => {
   const [isOpen, setIsOpen] = useState(false)
@@ -117,9 +121,23 @@ const AnimatePopover: FC<PropsWithChildren<AnimatePopoverProps>> = ({
     }
   }, [isOpen])
   const handleClickOutside = (e: MouseEvent) => {
+    let clickOnCover = false
+    if (withClickCover) {
+      if (e.target instanceof HTMLElement && e.target.getAttribute('role') === 'click-cover') {
+        clickOnCover = true
+      } else {
+        return
+      }
+    }
+    if (!clickOnCover && document.body.querySelector('[role="click-cover"]')) {
+      if (isOpen) {
+        return
+      }
+    }
     if (e.path?.some(i => i instanceof HTMLElement && i.getAttribute('data-disable-close-popover') === 'true')) {
       return
     }
+
     setTimeout(() => {
       if (e.defaultPrevented) return
       onClickOutside?.(e)
@@ -132,7 +150,44 @@ const AnimatePopover: FC<PropsWithChildren<AnimatePopoverProps>> = ({
     })
   }
   const realParent = parentElement === null || parentElement === undefined ? document.body : parentElement
-
+  const getTransformOrigin = (position: 'left' | 'top' | 'right' | 'bottom' | undefined, align?: 'start' | 'end' | 'center') => {
+    // top left
+    const origin = {
+      x: 0.5,
+      y: 0.5
+    }
+    switch (align) {
+      case 'start':
+        if (position !== 'top' && position !== 'bottom') {
+          origin.y = 0
+        } else {
+          origin.x = 0
+        }
+        break
+      case 'end':
+        if (position !== 'top' && position !== 'bottom') {
+          origin.y = 1
+        } else {
+          origin.x = 1
+        }
+        break
+    }
+    switch (position) {
+      case 'left':
+        origin.x = 1
+        break
+      case 'right':
+        origin.x = 0
+        break
+      case 'top':
+        origin.y = 1
+        break
+      case 'bottom':
+        origin.y = 0
+        break
+    }
+    return origin
+  }
   if (animate) {
     return position ? (
       hasPosHelperPopoverVisible && (
@@ -147,7 +202,8 @@ const AnimatePopover: FC<PropsWithChildren<AnimatePopoverProps>> = ({
           boundaryElement={boundaryElement}
           boundaryInset={boundaryInset}
           ref={mergedRef}
-          content={({ nudgedLeft, nudgedTop, position }) => {
+          content={({ nudgedLeft, nudgedTop, position, align }) => {
+            const origin = getTransformOrigin(position, align)
             if (!disableNudge) {
               nudgedRef.current = {
                 left: nudgedLeft,
@@ -170,30 +226,60 @@ const AnimatePopover: FC<PropsWithChildren<AnimatePopoverProps>> = ({
                   position: 'relative',
                   left: left,
                   top: top,
-                  borderRadius: 8,
-                  overflow: 'hidden',
+                  borderRadius: containerStyle?.borderRadius,
+                  // overflow: 'hidden',
                   display: 'block'
                 }}
               >
+                {withClickCover &&
+                  createPortal(
+                    <div
+                      role={'click-cover'}
+                      style={{
+                        position: 'fixed',
+                        top: 0,
+                        left: 0,
+                        width: '100%',
+                        height: '100%',
+                        zIndex: Number(containerStyle?.zIndex || '9999') - 1
+                      }}
+                      onClick={e => {
+                        e.stopPropagation()
+                        handleClickOutside(e)
+                      }}
+                    ></div>,
+                    document.body
+                  )}
                 <AnimatePresence onExitComplete={() => setIsOpen(false)}>
                   {innerVisible && (
                     <>
                       {backdropFilter && (
                         <motion.div
                           key={1}
-                          initial={{ opacity: 0 }}
-                          animate={{ opacity: 1 }}
+                          initial={{ opacity: 0.6, scale: 0.95 }}
+                          animate={{ opacity: 1, scale: 1 }}
                           exit={{ opacity: 0 }}
                           style={{
                             position: 'absolute',
                             inset: 0,
                             zIndex: -1,
-                            borderRadius: 'inherit'
+                            borderRadius: 'inherit',
+                            originX: origin.x,
+                            originY: origin.y
                           }}
                           className={ClassName.Background.blurBackground}
                         ></motion.div>
                       )}
-                      <motion.div key={2} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+                      <motion.div
+                        key={2}
+                        style={{
+                          originX: origin.x,
+                          originY: origin.y
+                        }}
+                        initial={{ opacity: 0.6, scale: 0.95 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0 }}
+                      >
                         {React.isValidElement(content) ? content : typeof content === 'function' ? content(setInnerVisible) : null}
                       </motion.div>
                     </>
@@ -218,7 +304,8 @@ const AnimatePopover: FC<PropsWithChildren<AnimatePopoverProps>> = ({
         reposition={reposition}
         isOpen={isOpen}
         ref={mergedRef}
-        content={({ nudgedLeft, nudgedTop }) => {
+        content={({ nudgedLeft, nudgedTop, position, align }) => {
+          const origin = getTransformOrigin(position, align)
           if ((!nudgedRef.current || _.isEqual(nudgedRef.current, { left: 0, top: 0 })) && !disableNudge) {
             nudgedRef.current = {
               left: nudgedLeft,
@@ -243,25 +330,55 @@ const AnimatePopover: FC<PropsWithChildren<AnimatePopoverProps>> = ({
                 display: 'block'
               }}
             >
+              {withClickCover &&
+                createPortal(
+                  <div
+                    role={'click-cover'}
+                    style={{
+                      position: 'fixed',
+                      top: 0,
+                      left: 0,
+                      width: '100%',
+                      height: '100%',
+                      zIndex: Number(containerStyle?.zIndex || '9999') - 1
+                    }}
+                    onClick={e => {
+                      e.stopPropagation()
+                      handleClickOutside(e)
+                    }}
+                  ></div>,
+                  document.body
+                )}
               <AnimatePresence onExitComplete={() => setIsOpen(false)}>
                 {innerVisible && (
                   <>
                     {backdropFilter && (
                       <motion.div
                         key={1}
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
+                        initial={{ opacity: 0.6, scale: 0.95 }}
+                        animate={{ opacity: 1, scale: 1 }}
                         exit={{ opacity: 0 }}
                         style={{
                           position: 'absolute',
                           inset: 0,
                           borderRadius: 'inherit',
-                          zIndex: -1
+                          zIndex: -1,
+                          originX: origin.x,
+                          originY: origin.y
                         }}
                         className={ClassName.Background.blurBackground}
                       ></motion.div>
                     )}
-                    <motion.div key={2} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+                    <motion.div
+                      key={2}
+                      initial={{ opacity: 0.6, scale: 0.95 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      exit={{ opacity: 0 }}
+                      style={{
+                        originX: origin.x,
+                        originY: origin.y
+                      }}
+                    >
                       {React.isValidElement(content) ? content : typeof content === 'function' ? content(setInnerVisible) : null}
                     </motion.div>
                   </>

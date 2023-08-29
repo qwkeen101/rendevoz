@@ -4,6 +4,7 @@ import { IBase } from './base'
 import { ObjectFamily } from 'rendevoz'
 import { MetaFormLayoutItem } from '~/typings'
 import { Dispatch, SetStateAction } from 'react'
+import { MetaSorter, SorterGroup } from '../../../src/core/database/filter/BetterSorter'
 
 export type IMetaAttachment =
   | {
@@ -33,6 +34,7 @@ export type BuiltInMetaObjectTypes =
   | 'webpageLabel'
   | 'localFile'
   | 'videoLabel'
+  | 'group'
 
 // sourceType: note / metaObject / pdf document
 export interface MetaObject extends IBase {
@@ -135,6 +137,109 @@ export type RegisteredMetaObject<T = MetaObject['type']> = {
     prevMetaObject: MetaObject & { type: T },
     changedProps?: { propName: string; prevProp: any; currProp: any }[]
   ) => void
+}
+
+export type MetaTableHeader = {
+  name: string
+  width: number
+  display: () => string
+  icon: string
+}
+export type MetaGroupChild = {
+  type: 'metaObject'
+  id: number
+  rowId: number
+  children?: MetaGroupChild[]
+  toggled?: boolean
+}
+export interface MetaGroup extends IBase {
+  childrenMetaIds: number[]
+  value?: MetaGroupChild[]
+  hideInnerTypes?: string[]
+  renderMode: 'table' | 'list'
+  rootFilterGroup: MetaFilterGroup
+  filter?: MetaFilterGroup
+  sort?: SorterGroup
+  search?: string
+  afterFilterValue?: MetaGroupChild[]
+  tableProperties?: {
+    headers?: MetaTableHeader[]
+    visibleProperties: string[]
+    hiddenProperties: string[]
+    wrapColumns?: boolean
+  }
+}
+
+export type StringFieldFilterRule = {
+  type: 'contains' | 'not contains' | 'is' | 'is not' | 'starts with' | 'ends with' | 'empty' | 'not empty'
+  value: string
+}
+export type DateFieldFilterRule = {
+  type: 'is' | 'before' | 'after' | 'empty' | 'not empty' | 'on and before' | 'on and after'
+  value: 'today' | 'yesterday' | 'one week ago' | 'one month ago' | 'three month ago' | 'specific'
+  specDate: number
+}
+type TagFieldFilterRule = {
+  type: 'contains' | 'not contains' | 'empty' | 'not empty' | 'is' | 'is not'
+  tagIds?: number[]
+}
+
+type TypeFieldFilterRule = {
+  type: 'is' | 'is not'
+  filterType: 'rule'
+  value: string
+}
+
+export type MetaFilterer =
+  | {
+      metaType: 'spec'
+      metaId: number
+    }
+  | {
+      metaType: 'rule'
+      group: MetaFilterGroup
+    }
+export type FromFieldFilterRule = {
+  type: 'is'
+} & MetaFilterer
+
+export type MetaFilterGroup = {
+  groupType: 'and' | 'or'
+  rules: MetaFilterRule[]
+  filterType: 'group'
+}
+export type LinkFilterRule = {
+  filterType: 'link'
+  type: 'source' | 'target' | 'related'
+  ruleType: 'contains' | 'not contains' | 'is' | 'is not'
+} & MetaFilterer
+
+export type MetaFilterRule = (
+  | ({
+      filterType: 'rule'
+      field: 'name'
+    } & StringFieldFilterRule)
+  | ({
+      filterType: 'rule'
+      field: 'description'
+    } & StringFieldFilterRule)
+  | ({
+      filterType: 'rule'
+      field: 'createdAt' | 'viewAt' | 'updatedAt'
+    } & DateFieldFilterRule)
+  | ({
+      filterType: 'rule'
+      field: 'tags'
+    } & TagFieldFilterRule)
+  | ({
+      filterType: 'rule'
+      field: 'fromObject'
+    } & FromFieldFilterRule)
+  | ({ filterType: 'rule'; field: 'type' } & TypeFieldFilterRule)
+  | LinkFilterRule
+  | MetaFilterGroup
+) & {
+  id: number
 }
 
 export interface MetaLink extends IBase {

@@ -77,7 +77,19 @@ const TextareaAutosize: React.ForwardRefRenderFunction<HTMLTextAreaElement, Text
     useWindowResizeListener(resizeTextarea)
   }
 
-  return <textarea {...props} onChange={handleChange} ref={ref} />
+  return (
+    <textarea
+      onFocus={e => {
+        const el = e.currentTarget
+
+        el.selectionStart = el.selectionEnd = el.value.length
+      }}
+      {...props}
+      onChange={handleChange}
+      ref={ref}
+      spellCheck={"false"}
+    />
+  )
 }
 
 export default /* #__PURE__ */ React.forwardRef(TextareaAutosize)

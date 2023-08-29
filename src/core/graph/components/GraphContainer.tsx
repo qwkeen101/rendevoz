@@ -119,8 +119,8 @@ const GraphInner: FC<GraphContainerProps> = ({ edges, nodes, type, store }) => {
         <div
           style={{
             position: 'absolute',
-            top: '20%',
-            right: 10,
+            top: 20,
+            left: 20,
             zIndex: 10
           }}
         >

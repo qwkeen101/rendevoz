@@ -119,6 +119,7 @@ export const useAssignVideoInstance = (videoId: number, containerRef: RefObject<
       const imgPath = await saveImageLocally(img, { compress: false })
       console.log(time, label.videoTime)
       const one = await ObjectStore('videoLabel').addOne({
+        ...label,
         videoTime: time,
         imageUrl: imgPath,
         parentObjectId: videoId

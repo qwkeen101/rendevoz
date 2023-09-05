@@ -35,17 +35,19 @@ function getIndicesOf(searchStr, str, caseSensitive) {
 
 export const truncateString = (str: string) => {
   const matches = str.match(/[\u00ff-\uffff]|\S+/g)
-  if (matches) {
-    console.log(matches)
-    // 20 words for english and chinese
-    if (matches.length > 20) {
-      const lastWord = matches[20]
-      const indices = getIndicesOf(lastWord, str, false)
-      const wordIndex = indices.find(i => i >= 20)
-      const lastWordIndex = wordIndex + lastWord.length
-      return str.slice(0, lastWordIndex) + '...'
-    }
-    return str
+
+  // 20 words for english and chinese
+  if (matches && matches.length > 20) {
+    const lastWord = matches[20]
+    const indices = getIndicesOf(lastWord, str, false)
+    const wordIndex = indices.find(i => i >= 20)
+    const lastWordIndex = Math.min(20, Math.max(wordIndex, 50)) + lastWord.length
+    return str.slice(0, lastWordIndex) + '...'
+  }
+
+  // fallback
+  if (str.length > 30) {
+    return str.slice(0, 30) + '...'
   }
   return str
 }

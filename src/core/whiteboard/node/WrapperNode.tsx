@@ -265,15 +265,16 @@ const WrapperNode = ({ node }: { node: IWhiteboardNode }) => {
   // remove selected state on click outside
   useEffect(() => {
     if (nodeState.selected || nodeState.focused) {
-      const pointerDownHandler = (e: PointerEvent) => {
+      const pointerDownHandler = (e: MouseEvent) => {
         if (flow.hasMultiSelectBox) return
         if (!containerRef.current?.contains(e.target as HTMLElement) && isResizingRef.current === false) {
+          if (e.target instanceof HTMLElement && e.target.getAttribute('data-cover-id') === `${node.id}`) return
           setNodeState(s => ({ ...s, selected: false, focused: false }))
         }
       }
-      document.addEventListener('pointerdown', pointerDownHandler)
+      document.addEventListener('click', pointerDownHandler)
       return () => {
-        document.removeEventListener('pointerdown', pointerDownHandler)
+        document.removeEventListener('click', pointerDownHandler)
       }
     }
   }, [nodeState.selected, nodeState.focused])
@@ -398,6 +399,15 @@ const WrapperNode = ({ node }: { node: IWhiteboardNode }) => {
       darkenSecondBackground
     }
   })
+
+  let showCover = true
+
+  if (nodeState.focused || nodeState.locked) {
+    showCover = false
+  }
+  if (node.type === 'freehand' && !node.background) {
+    showCover = false
+  }
 
   return (
     <Rnd
@@ -672,8 +682,9 @@ const WrapperNode = ({ node }: { node: IWhiteboardNode }) => {
           }}
         >
           <div style={{ width: '100%', height: '100%', ...containerOverflow }}>{renderInnerNode()}</div>
-          {!nodeState.focused && !nodeState.locked && !(node.type === 'freehand' && !node.background) && (
+          {showCover && (
             <div
+              data-cover-id={node.id}
               onClick={e => {
                 if (isDraggingRef.current === false) {
                   setNodeState(s => ({

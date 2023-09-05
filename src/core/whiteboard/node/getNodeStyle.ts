@@ -52,6 +52,7 @@ const getNodeStyle = (
     opacity: opts.isErased ? 0.2 : 1,
     borderRadius: nodeState.selected ? 4 : 6,
     zIndex: node.type === 'group' ? -10000 : nodeState.expanded ? 1000 : undefined,
+    userSelect: nodeState.focused || nodeState.focused ? 'auto' : 'none',
     background:
       node.type === 'group'
         ? opts.background.opacityBackground

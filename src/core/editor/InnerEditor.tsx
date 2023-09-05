@@ -351,9 +351,7 @@ const InnerEditor: FC<InnerEditorProps> = memo(
                     const highlightId = Id.getId()
                     const selectedText = editor.selection ? Editor.string(editor, editor.selection) : undefined
                     if (!selectedText) return
-                    const name = getSetting().label.showOriginalText
-                      ? truncateString(selectedText)
-                      : selectedText
+                    const name = getSetting().label.showOriginalText ? truncateString(selectedText) : selectedText
                     const label = await instance.addLabel?.({
                       id: highlightId,
                       name: name || 'Unnamed Label',

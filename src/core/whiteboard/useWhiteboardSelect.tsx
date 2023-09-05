@@ -286,6 +286,7 @@ const useWhiteboardSelect = (containerRef: MutableRefObject<HTMLElement | null>)
                     iconName="park-group"
                     onClick={() => {
                       setMultiSelectedBox(undefined)
+                      flow.hasMultiSelectBox = false
                       updateWhiteboard(w => {
                         const groupNodeId = Id.getId()
                         w.nodes?.set(groupNodeId, {

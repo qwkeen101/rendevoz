@@ -225,10 +225,11 @@ const MetaObjectNode: FC<InnerNodeProps> = ({ node: n, setPopoverElements, setNo
       </div>
     </Content>
   )
-  let width = 350
-  if (!metaObject?.type.includes('Label')) {
+  let width = node.width || 350
+  if (!metaObject?.type.includes('Label') && !node.width) {
     width = Math.min(getTextWidth(metaObject?.name || 'Default Name') + 30, 450)
   }
+
   const CommonRenderer = () =>
     renderWhole({
       renderOptions: {

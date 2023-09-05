@@ -95,7 +95,7 @@ const useFreeHand = () => {
   const isPressed = useRef(false)
   const handlePointerDown: React.PointerEventHandler<SVGSVGElement> = e => {
     if (whiteboardState.isPanning) return
-    if (e.button === 0) {
+    if (e.isPrimary) {
       e.preventDefault()
       e.stopPropagation()
       isPressed.current = true

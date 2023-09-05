@@ -12,11 +12,15 @@ const useWhiteboardShortcut = () => {
   useEffect(() => {
     const keydownHandler = (e: KeyboardEvent) => {
       if (isHotkey(KEY.Delete, e) || isHotkey(KEY.Backspace, e)) {
-        if (flow.selectedNodeIds.size) {
-          instance.deleteNodes?.(Array.from(flow.selectedNodeIds.values()))
-          flow.selectedNodeIds.clear()
-        }
-        flow.clearSelectBox?.()
+        setTimeout(() => {
+          if (!e.defaultPrevented) {
+            if (flow.selectedNodeIds.size) {
+              instance.deleteNodes?.(Array.from(flow.selectedNodeIds.values()))
+              flow.selectedNodeIds.clear()
+            }
+            flow.clearSelectBox?.()
+          }
+        })
       }
       if (isHotkey(KEY.Escape, e)) {
         console.log(whiteboardState)
@@ -34,9 +38,9 @@ const useWhiteboardShortcut = () => {
         }
       }
     }
-    document.addEventListener('keydown', keydownHandler, true)
+    document.addEventListener('keyup', keydownHandler, true)
     return () => {
-      document.removeEventListener('keydown', keydownHandler, true)
+      document.removeEventListener('keyup', keydownHandler, true)
     }
   })
 }

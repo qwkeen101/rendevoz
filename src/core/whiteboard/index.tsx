@@ -125,7 +125,7 @@ const WhiteboardInner = memo(
               return true
             }
             if (e.shiftKey) {
-              panzoom.moveTo(curr.x - e.deltaX, curr.y)
+              panzoom.moveTo(curr.x - e.deltaY, curr.y)
             } else {
               panzoom.moveTo(curr.x, curr.y - e.deltaY)
             }

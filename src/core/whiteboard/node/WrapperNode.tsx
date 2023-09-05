@@ -672,9 +672,16 @@ const WrapperNode = ({ node }: { node: IWhiteboardNode }) => {
             maxHeight: '100%',
             borderRadius: 6
           }}
+          onKeyUpCapture={e => {
+            if (nodeState.focused || nodeState.locked) {
+              e.preventDefault()
+            }
+          }}
           onWheelCapture={e => {
             if (node.type !== 'group') {
-              e.stopPropagation()
+              if (nodeState.focused || nodeState.locked) {
+                e.stopPropagation()
+              }
             }
           }}
           onKeyDown={e => {

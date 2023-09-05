@@ -4,6 +4,8 @@ import { assignProperties } from '@/utils'
 import { atom, useAtomValue } from 'jotai'
 import { IPdfInstance } from '~/typings'
 import { getSetting } from '@/core'
+import { truncate } from 'lodash'
+import { truncateString } from '@/utils/text'
 
 export const PdfInstanceAtom = atom<IPdfInstance>({})
 
@@ -16,10 +18,9 @@ export const useAssignPdfInstance = (pdfId: number) => {
     getPdfId: () => pdfId,
     insertLabel: async label => {
       const setting = getSetting()
-      const result = label.type === 'highlight' && label.selectedText && transformTextContentToNameAndDescription(label.selectedText)
       let name = 'Unnamed PDF Label'
-      if (setting.label.showOriginalText) {
-        name = 'Unnamed PDF Label'
+      if (setting.label.showOriginalText && label.type === 'highlight' && label.selectedText) {
+        name = truncateString(label.selectedText)
       } else if (label.type === 'highlight' && label.selectedText) {
         name = label.selectedText
       }

@@ -1,7 +1,9 @@
-import { useMousePositionRef, useRafFn } from '@/hooks'
+import { useMemoizedFn, useMousePositionRef, useRafFn } from '@/hooks'
 import { Position, Rect } from '@/types'
 import { useEffect, useRef } from 'react'
 import { useFlow } from './hooks'
+import { useWhiteboardState } from '@/core/whiteboard/hooks/useWhiteboardState'
+import UseMemoizedFn from '@/hooks/utils/useMemoizedFn'
 
 type XYPosition = Required<Pick<Position, 'x' | 'y'>>
 
@@ -37,9 +39,14 @@ const useWhiteboardAutoPan = () => {
   const flow = useFlow()
   const autoPanId = useRef<number>()
   const mousePosRef = useMousePositionRef()
-  const autoPan = () => {
+  const [whiteboardState] = useWhiteboardState()
+  const canDrag =
+    whiteboardState.isSelecting || whiteboardState.erasing || whiteboardState.freeDrawing || flow.isDraggingNode || flow.isAddingEdge
+
+  const autoPan = useMemoizedFn(() => {
     const container = flow.containerEle
-    if (!container || (!flow.isSelecting && !flow.isAddingEdge && !flow.isDraggingNode)) {
+    console.log(whiteboardState.isSelecting, whiteboardState.erasing, whiteboardState.freeDrawing, flow.isDraggingNode, flow.isAddingEdge)
+    if (!container || !canDrag) {
       autoPanId.current = undefined
       return
     }
@@ -56,9 +63,9 @@ const useWhiteboardAutoPan = () => {
       flow.panzoom?.moveBy(xMovement, yMovement, false)
     }
     autoPanId.current = requestAnimationFrame(autoPan)
-  }
+  })
   const pointerMoveHandler = (e: PointerEvent) => {
-    if (flow.isSelecting || flow.isDraggingNode || flow.isAddingEdge) {
+    if (whiteboardState.isSelecting || whiteboardState.erasing || whiteboardState.freeDrawing || flow.isDraggingNode || flow.isAddingEdge) {
       if (!autoPanId.current) {
         autoPan()
       }

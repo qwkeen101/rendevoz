@@ -1,14 +1,14 @@
 .ColumnListBlock {
   width: 100%;
   align-self: center;
-  max-width: 800px;
+  max-width: var(--editor-max-width);
   display: flex;
   position: relative;
 }
 .Selected {
   position: absolute;
   inset: 0;
-  background: #8590ae2d !important;
+  background: rgba(39, 158, 255, 0.2);
   border-radius: 4px;
   user-select: none;
   pointer-events: none;
@@ -56,10 +56,10 @@
 }
 .HeadingBlock {
   width: 100%;
-  max-width: 800px;
+  max-width: var(--editor-max-width);
   position: relative;
-  margin-top: 1em;
-  margin-bottom: 0.8em;
+  margin-top: 0.4em;
+  margin-bottom: 1em;
   padding-bottom: 0;
   overflow: visible !important;
   &:first-child {

@@ -1,35 +1,20 @@
 import { InnerNodeProps } from './WrapperNode'
-import { useSetWhiteboardNodes } from '@/core/whiteboard/hooks'
-import TextareaAutosize from '@/components/custom/input/autosizeTextarea'
 import { IWhiteboardNode } from '~/typings'
-import produce from 'immer'
 import SimpleEditor from '@/core/editor/SimpleEditor'
-import { useEffect } from 'react'
-import { Button, Icon, IconWithPopover, Toolbar, Tooltip, WithBorder } from '@/components'
+import { useEffect, useRef } from 'react'
+import { Button, IconWithPopover, Tooltip, WithBorder } from '@/components'
 import ClassName from '@/styles/classNames'
-const TextNode = ({ node, setPopoverElements }: InnerNodeProps) => {
+import { useWhiteboardInstance } from '@/core/whiteboard/hooks/useWhiteboardInstance'
+
+const TextNode = ({ node, setPopoverElements, onClick }: InnerNodeProps & { onClick: VoidFunction }) => {
   const textNode = node as IWhiteboardNode & { type: 'text' }
-  const setNodes = useSetWhiteboardNodes()
+  const instance = useWhiteboardInstance()
+  const firstChanged = useRef(false)
   const handleChangeValue = (newValue: string) => {
-    setNodes(s =>
-      produce(s, draft => {
-        draft.set(textNode.id, {
-          ...textNode,
-          content: newValue
-        })
-      })
-    )
+    instance.updateNode?.(textNode.id, n => ({ ...n, content: newValue }), false)
   }
-  const handleChangeSize = (newSize: string) => {
-    setNodes(s =>
-      produce(s, draft => {
-        const origin = s.get(textNode.id)
-        draft.set(textNode.id, {
-          ...origin,
-          fontSize: newSize
-        })
-      })
-    )
+  const handleChangeSize = (newSize: (IWhiteboardNode & { type: 'text' })['fontSize']) => {
+    instance.updateNode?.(textNode.id, n => ({ ...n, fontSize: newSize }))
   }
   useEffect(() => {
     setPopoverElements?.(eles => [
@@ -42,10 +27,10 @@ const TextNode = ({ node, setPopoverElements }: InnerNodeProps) => {
             name={'park-add-text'}
             content={
               <WithBorder padding={6} style={{ width: 160 }}>
-                <Button.IconButton onClick={() => handleChangeSize('super large')} text={'Super large'} style={{ fontSize: '1.5rem' }} />
-                <Button.IconButton onClick={() => handleChangeSize('large')} text={'Large'} style={{ fontSize: '1.3rem' }} />
-                <Button.IconButton onClick={() => handleChangeSize('middle')} text={'Middle'} style={{ fontSize: '1.1rem' }} />
-                <Button.IconButton onClick={() => handleChangeSize('small')} text={'Small'} style={{ fontSize: '0.9rem' }} />
+                <Button.IconButton onClick={() => handleChangeSize('super large')} text={'Super large'} />
+                <Button.IconButton onClick={() => handleChangeSize('large')} text={'Large'} />
+                <Button.IconButton onClick={() => handleChangeSize('middle')} text={'Middle'} />
+                <Button.IconButton onClick={() => handleChangeSize('small')} text={'Small'} />
               </WithBorder>
             }
           />
@@ -54,7 +39,7 @@ const TextNode = ({ node, setPopoverElements }: InnerNodeProps) => {
     ])
   }, [])
   const getFontsize = () => {
-    switch (node.fontSize) {
+    switch (textNode.fontSize) {
       case 'small':
         return '0.9rem'
       case 'middle':
@@ -78,10 +63,29 @@ const TextNode = ({ node, setPopoverElements }: InnerNodeProps) => {
         maxHeight: '100%',
         height: '150px',
         padding: '4px 0px 4px 4px',
+        pointerEvents: 'auto',
         fontSize: getFontsize()
       }}
+      onClick={onClick}
     >
-      <SimpleEditor value={textNode.content} onChange={v => handleChangeValue(v)} />
+      <SimpleEditor
+        value={textNode.content}
+        onChange={v => {
+          if (firstChanged.current) {
+            handleChangeValue(v)
+            return
+          }
+          firstChanged.current = true
+          // let equal = true
+          // v.forEach((v, idx) => {
+          //   if (textNode.content[idx] !== v) equal = false
+          // })
+          // if (!equal) {
+          //   handleChangeValue(v)
+          //   console.log(v, 'changed', textNode.content)
+          // }
+        }}
+      />
     </div>
   )
 }

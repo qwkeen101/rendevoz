@@ -15,7 +15,7 @@ import withShortcuts from './plugins/withShortcuts'
 import withCustomComponent from './plugins/withCustomComponent'
 import withEmitter from './plugins/withEmitter'
 import withHtml from './plugins/withHtml'
-import { ID_TO_ELEMENTS_MAP, SELECTED_BLOCKS_MAP } from './weakMaps'
+import { ID_TO_ELEMENTS_MAP } from './weakMaps'
 import { objectIdToMetaObjectIdMapAtom } from '@/stores/meta.store'
 import { normalizeEditorDragBlocksToGlobalDraggingDetails } from './hooks/useEditorDrag'
 import { useGlobalIsDragging } from '@/core'
@@ -38,6 +38,7 @@ import useEditorPluginHooks from './hooks/useEditorPluginHooks'
 import { GlobalPdfPrinterInstance } from '@/core/global/GlobalPdfPrinter'
 import EditorHeader from '@/core/editor/EditorHeader'
 import { useAtom } from 'jotai'
+import withColumns from '@/core/editor/plugins/withColumns'
 
 const initial = [
   {
@@ -66,6 +67,7 @@ export const EditorV1: FC<EditorProps> = memo(
     showBlockHandle = true,
     onInstanceInitialized,
     compact,
+    noBottomPadding,
     on,
     defaultReadOnly,
     innerEditorClassName,
@@ -132,10 +134,13 @@ export const EditorV1: FC<EditorProps> = memo(
 
     const editor = useMemo(() => {
       const editor = withVoid(
-        withHtml(withCustomComponent(withShortcuts(withHandler(withEmitter(withHistory(withReact(createEditor())), emitter), handler))))
+        withHtml(
+          withCustomComponent(
+            withShortcuts(withHandler(withEmitter(withColumns(withHistory(withReact(createEditor()))), emitter), handler))
+          )
+        )
       )
       ID_TO_ELEMENTS_MAP.set(editor, new Map())
-      SELECTED_BLOCKS_MAP.set(editor, new Map())
       return editor
     }, [])
 
@@ -149,6 +154,7 @@ export const EditorV1: FC<EditorProps> = memo(
     editor.id = id
     editor.noteId = noteId
     editor.readonly = !!readOnly
+    editor.noBottomPadding = noBottomPadding
     editor.on = event =>
       on?.({
         ...event,
@@ -181,6 +187,9 @@ export const EditorV1: FC<EditorProps> = memo(
             let left = targetRect.x - 5
             if (element.type.startsWith('heading')) {
               left -= 20
+            }
+            if (element.type === 'table') {
+              left -= 12
             }
             return {
               ...s,
@@ -235,7 +244,13 @@ export const EditorV1: FC<EditorProps> = memo(
         <Content flex fullWidth auto style={{ height: 0 }}>
           {showHeader !== false && <SidebarToolbar editor={editor} />}
           <div className={styles.editor} role="editor-container">
-            <div ref={scrollElementRef} className={styles.scrollWrapper}>
+            <div
+              ref={scrollElementRef}
+              className={styles.scrollWrapper}
+              style={{
+                '--editor-max-width': note?.width === 'full' ? '100%' : '800px'
+              }}
+            >
               {showTitle &&
                 (typeof title === 'string' || typeof title === 'undefined' ? (
                   <EditorTitle
@@ -256,6 +271,8 @@ export const EditorV1: FC<EditorProps> = memo(
                 style={{
                   padding: readOnly ? '0px 20px' : undefined,
                   '--block-bg': readOnly ? 'none' : undefined,
+                  fontSize: note?.fontSize,
+                  width: '100%',
                   ...innerEditorStyle
                 }}
               >
@@ -286,9 +303,11 @@ export const EditorV1: FC<EditorProps> = memo(
                 onAddClick={handleBlockHandleMenu}
                 onDragClick={useCallback(
                   e => {
-                    const selectedBlocksSet = SELECTED_BLOCKS_MAP.get(editor)
-                    if (selectedBlocksSet && selectedBlocksSet.size > 0) {
-                      DragState.addDragElements?.(rebuildDragSelect(editor, e) || document.createElement('div'))
+                    if (instance.values.selectedBlocks.size > 0) {
+                      const rebuild = rebuildDragSelect(instance, e)
+                      if (rebuild) {
+                        DragState.addDragElements?.(rebuild)
+                      }
                     } else {
                       const dragHTMLElement = editor.currentDragElement
                       if (dragHTMLElement) {
@@ -301,7 +320,7 @@ export const EditorV1: FC<EditorProps> = memo(
                         DragState.addDragElements?.(wrapper)
                       }
                     }
-                    DragState.setDraggingDetails?.(normalizeEditorDragBlocksToGlobalDraggingDetails(editor))
+                    DragState.setDraggingDetails?.(normalizeEditorDragBlocksToGlobalDraggingDetails(instance))
                     DragState.startDrag?.()
                   },
                   [setIsDragging]
@@ -321,7 +340,11 @@ export const EditorV1: FC<EditorProps> = memo(
 export const Editor: FC<EditorProps> = memo(({ type = 'note', ...props }) => {
   const store = useMemo(() => {
     const store = createStore()
-    store.set(EditorInstanceAtom, {})
+    store.set(EditorInstanceAtom, {
+      values: {
+        selectedBlocks: new Map()
+      }
+    })
     store.set(EditorStateAtom, { ...props, type })
     return store
   }, [])

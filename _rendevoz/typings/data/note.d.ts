@@ -12,6 +12,8 @@ export interface INote extends IBase {
   coverPosition?: number
   contentId: number
   labels?: number[]
+  fontSize?: number
+  width?: 'default' | 'full' | 'wider'
 }
 
 export interface NoteBlock {

@@ -15,13 +15,16 @@ export const DefaultRendevozDataPath = path.join(DEFAULT_USER_DATA_PATH, 'rendev
 
 @Controller()
 export class AppController {
-  constructor(private readonly appService: AppService, @Inject('WEB_CONTENTS') private readonly win: BrowserWindow) {}
+  constructor(
+    private readonly appService: AppService,
+    @Inject('WEB_CONTENTS') private readonly win: BrowserWindow
+  ) {}
   private DefaultRendevozDataPath = path.join(DEFAULT_USER_DATA_PATH, 'rendevoz')
-  private webContents = this.win.webContents
+  private webContents = this.win?.webContents
 
   @IpcInvoke('reload')
   public reload() {
-    this.webContents.reload()
+    BrowserWindow.getFocusedWindow().reload()
   }
 
   @IpcInvoke('maximizeWindow')
@@ -161,7 +164,7 @@ export class AppController {
   }
 
   @IpcInvoke('captureWebpage')
-  public async captureWebpage(webviewId?: number, rect?: Electron.Rectangle) {
+  public async captureWebpage(webviewId?: number) {
     if (!webviewId) {
       const image = await BrowserWindow.getFocusedWindow().capturePage()
       return image.toDataURL()

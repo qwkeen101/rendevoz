@@ -1,4 +1,4 @@
-import { enableMapSet } from 'immer'
+import { enableMapSet, enablePatches } from 'immer'
 import { createRoot } from 'react-dom/client'
 import App from './App'
 import initI18n from './config/i18n'
@@ -16,6 +16,7 @@ import { showDirectoryPicker } from 'wicg-file-system-access'
 
 PIXI.Assets.load(PIXIFontUrl)
 enableMapSet()
+enablePatches()
 const lang = 'zh-CN'
 initI18n(lang)
 const userAgent = navigator.userAgent.toLowerCase()

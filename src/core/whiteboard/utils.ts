@@ -3,11 +3,9 @@ import * as d3 from 'd3'
 import { MetaLink } from '~/typings/data'
 import { globalStore } from '@/stores'
 import { metaObjectsAtom, undeletedMetaLinksAtom } from '@/stores/meta.store'
-import { EdgePosition, IWhiteboardEdge, IWhiteboardNode } from '~/typings'
+import { EdgePosition, IWhiteboardEdge, IWhiteboardNode, Box } from '~/typings'
 import Id from '@/utils/id'
 import { Position } from '@/types'
-import { Box } from '../dragSelector'
-import { XYPosition } from '~/typings'
 
 export const getNodeData = (nodeId: number, flow: FlowManager) => {
   const nodeEle = flow.ID_TO_NODE_ELEMENT_MAP.get(nodeId)?.element
@@ -386,6 +384,24 @@ export const getBoxOfBoxes = (boxes: Box[]): Box | undefined => {
     maxX = Math.max(maxX, box.left + box.width)
     maxY = Math.max(maxY, box.top + box.height)
   }
+  return {
+    left: minX,
+    top: minY,
+    width: maxX - minX,
+    height: maxY - minY
+  }
+}
+export const getBoxOfPoints = (points: [number, number][]) => {
+  let minX = Infinity,
+    minY = Infinity,
+    maxX = -Infinity,
+    maxY = -Infinity
+  points.forEach(p => {
+    minX = Math.min(minX, p[0])
+    minY = Math.min(minY, p[1])
+    maxX = Math.max(maxX, p[0])
+    maxY = Math.max(maxY, p[1])
+  })
   return {
     left: minX,
     top: minY,

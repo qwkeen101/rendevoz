@@ -5,7 +5,7 @@ import ToolbarSeparator from './ToolbarSeparator'
 import styles from './index.module.less'
 import classNames from 'classnames'
 
-export interface ToolbarProps extends HTMLAttributes<HTMLDivElement>, HTMLDivElement {
+export interface ToolbarProps extends React.DetailedHTMLProps<React.HTMLAttributes<HTMLDivElement>, HTMLDivElement> {
   direction?: 'vertical' | 'horizontal'
   children?: ReactNode
   className?: string
@@ -15,6 +15,7 @@ export interface ToolbarProps extends HTMLAttributes<HTMLDivElement>, HTMLDivEle
   itemClickPreventDefault?: boolean
   style?: CSSProperties
   innerRef?: Ref<HTMLDivElement>
+  disableDefaultStyle?: boolean
 }
 interface IToolbar extends FC<ToolbarProps> {
   Item: typeof ToolbarItem
@@ -30,6 +31,7 @@ const Toolbar: IToolbar = ({
   style,
   itemClassName,
   innerRef,
+  disableDefaultStyle,
   ...rest
 }) => {
   let tools
@@ -61,7 +63,7 @@ const Toolbar: IToolbar = ({
       gap={style?.gap || 4}
       flex
       centered
-      className={classNames(styles.toolbar, className)}
+      className={classNames(!disableDefaultStyle && styles.toolbar, className)}
       column={direction === 'vertical'}
     >
       {tools}

@@ -2,9 +2,6 @@ import { Controller, Inject } from '@nestjs/common'
 import { IpcInvoke } from './transport'
 import path from 'path'
 import fs from 'fs'
-import levenshteinMatch from './utils/levenshtein'
-import { AppService } from './app.service'
-import { BrowserWindow } from 'electron'
 
 @Controller()
 export class VideoController {

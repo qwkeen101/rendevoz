@@ -7,6 +7,7 @@ import Id from '@/utils/id'
 const useEditorMention = (editor: CustomEditor) => {
   const handleMentionKey = (e: KeyboardEvent) => {
     const curr = Editor.above(editor)
+    if (!curr) return
     if (curr[0].type === 'inline-metapicker') return
     if (e.key === '@') {
       e.preventDefault()

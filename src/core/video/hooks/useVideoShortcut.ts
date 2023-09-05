@@ -5,6 +5,9 @@ import { RefObject, useEffect } from 'react'
 import useVideoState from './useVideoState'
 import { getSetting } from '@/core'
 import { useVideoInstance } from '@/core/video/hooks/useVideoInstance'
+import { normalizeSecondsToTime } from '@/core/video/utils'
+import { MetaStore } from '@/stores'
+import { toast } from 'react-hot-toast'
 
 const useVideoShortcut = (containerRef: RefObject<HTMLElement>) => {
   const [, setVideoState] = useVideoState()
@@ -12,6 +15,29 @@ const useVideoShortcut = (containerRef: RefObject<HTMLElement>) => {
   const keydownHandler = useMemoizedFn((e: KeyboardEvent) => {
     const setting = getSetting()
     const shortcut = setting.shortcut.makeVideoLabel
+    const timestampShortcut = setting.shortcut.copyVideoTimestamp
+    if (
+      timestampShortcut &&
+      e.key === timestampShortcut.key &&
+      e.shiftKey === timestampShortcut.shiftKey &&
+      e.ctrlKey === timestampShortcut.ctrlKey &&
+      e.altKey === timestampShortcut.altKey &&
+      e.metaKey === timestampShortcut.metaKey
+    ) {
+      const curr = instance.getVideoState?.().currentTime
+      const videoId = instance.getVideoId?.()
+      const videoMeta = videoId ? MetaStore.getMetaObjectByObjectId(videoId) : undefined
+      if (videoMeta) {
+        const type = 'text/html'
+        const url = `rendevoz://object/${videoMeta.id}?t=${curr}`
+        const text = new Blob([url], { type: 'text/plain' })
+        const blob = new Blob([`<a href="${url}">${videoMeta.name} — ${normalizeSecondsToTime(curr)}</a>`], { type })
+        navigator.clipboard.write([new ClipboardItem({ 'text/html': blob, 'text/plain': text })])
+        toast.success('Timestamp is copied!', {
+          duration: 1000
+        })
+      }
+    }
     if (
       shortcut &&
       e.key === shortcut.key &&

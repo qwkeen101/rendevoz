@@ -14,7 +14,6 @@ const MetaObject: FC<RenderElementProps> = memo(({ children, element }) => {
     metaObjectId: originId
   })
   const [mouseIn, setMouseIn] = useState(false)
-  const renderMain = () => <div></div>
   const renderLineMain = () => (
     <Content
       onPointerMove={() => {
@@ -67,6 +66,10 @@ const MetaObject: FC<RenderElementProps> = memo(({ children, element }) => {
             style: {
               fontSize: FontSize['12px']
             }
+          },
+          originalTextOptions: {
+            showEdit: false,
+            ellipis: false
           },
           renderOptions: {
             renderFrom: true,

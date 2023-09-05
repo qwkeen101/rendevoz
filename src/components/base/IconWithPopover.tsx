@@ -103,8 +103,9 @@ const IconWithPopover: FC<Props> = (
         align={align}
         padding={padding}
         onClickOutside={e => {
+          console.log(e)
           onClickOutside?.(e, setVisible)
-          if (e.path.some(i => i.getAttribute?.('role') === 'modal')) {
+          if (e.target instanceof Element && e.target.closest('[role="modal"]')) {
             return
           }
           if (!disableCloseOutside) {

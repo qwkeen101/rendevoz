@@ -15,6 +15,7 @@ import { addLinkBetweenTwoMetaObject, createLink, transformTextContentToNameAndD
 import { Rendevoz } from '@/core/rendevoz'
 import { TypeToRegisteredObject } from '@/stores/object.store'
 import { KeyToRegisteredDropOnProcessor } from '@/core/plugin/RegisterMap'
+import { truncate } from 'lodash'
 
 const useOverlayDrop = () => {
   const emitter = Rendevoz.Events.Emit.GlobalEventEmitter
@@ -268,7 +269,9 @@ const useOverlayDrop = () => {
             pages: dragElement.page ? [dragElement.page] : undefined
           }
           normalizedMetaObject.name =
-            labelObject?.name || showOriginalText ? 'Unnamed PDF label' : dragElement.content || 'Unnamed PDF Label'
+            labelObject?.name || (showOriginalText ? truncate(dragElement.content, {
+              length: 20
+            }) : dragElement.content || 'Unnamed PDF Label')
           normalizedMetaObject.coverImgSrc = dragElement.imageUrl
           if (enableDragFromPDFLink && enableAll) {
             const metaLink: PartialWithId<MetaLink> = {
@@ -361,7 +364,13 @@ const useOverlayDrop = () => {
           const existedLabel = await ObjectStore('noteLabel').getOneById(dragElement.highlightId)
           normalizedMetaObject.type = 'noteLabel'
           normalizedMetaObject.objectId = dragElement.highlightId
-          normalizedMetaObject.name = existedLabel?.name || dragElement.textContent || 'Note Label'
+          normalizedMetaObject.name =
+            existedLabel?.name ||
+            (showOriginalText
+              ? truncate(dragElement.content, {
+                  length: 20
+                })
+              : dragElement.content || 'Unnamed Note Label')
           normalizedMetaObject.description = existedLabel?.description
           normalizedMetaObject.fromObject = {
             metaId: noteMeta.id,
@@ -384,7 +393,13 @@ const useOverlayDrop = () => {
           const existedLabel = await ObjectStore('webpageLabel').getOneById(dragElement.highlightId)
           normalizedMetaObject.type = 'webpageLabel'
           normalizedMetaObject.objectId = dragElement.highlightId
-          normalizedMetaObject.name = existedLabel?.name || dragElement.textContent || 'Webpage Label'
+          normalizedMetaObject.name =
+            existedLabel?.name ||
+            (showOriginalText
+              ? truncate(dragElement.content, {
+                  length: 20
+                })
+              : dragElement.content || 'Unnamed Webpage label')
           normalizedMetaObject.description = existedLabel?.description
           normalizedMetaObject.fromObject = {
             type: 'webpage',

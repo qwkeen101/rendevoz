@@ -117,7 +117,7 @@ const VideoCore = memo(({ url }: VideoCoreProps) => {
         width: '100%',
         paddingBottom: '56.25%',
         height: 0,
-        borderRadius: videoState.floated ? '0px 0px 12px 12px' : 12,
+        borderRadius: videoState.floated ? '0px 0px 4px 4px' : 4,
         overflow: 'hidden'
       }}
     >

@@ -2,8 +2,6 @@ import { css } from '@emotion/css'
 
 export const nodeClassName = css({
   borderRadius: 6,
-  fontFamily: 'Muli',
-  background: 'white',
   overflow: 'visible',
   pointerEvents: 'auto'
 })

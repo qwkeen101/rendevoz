@@ -4,20 +4,7 @@ import { Atom, atom, PrimitiveAtom } from 'jotai'
 import { atomFamily, selectAtom } from 'jotai/utils'
 import { useMemo } from 'react'
 import {
-  IAudio,
-  IImage,
-  ILabel,
-  ILocalFile,
-  INote,
-  INoteBlock,
-  INoteLabel,
-  IPdfDocument,
   IRegisterdObject,
-  ITag,
-  IVideo,
-  IVideoLabel,
-  IWebpage,
-  IWebpageLabel,
   IWhiteboard,
   IWhiteboardEdge,
   IWhiteboardNode,

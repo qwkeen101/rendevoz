@@ -2,13 +2,14 @@ import { rmSync } from 'fs'
 import path, { resolve } from 'path'
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
-import electron from 'vite-electron-plugin'
-import { customStart } from 'vite-electron-plugin/plugin'
-
+import electron from 'vite-plugin-electron/simple'
+import { VitePluginDoubleshot } from 'vite-plugin-doubleshot'
 rmSync(path.join(__dirname, 'dist-electron'), { recursive: true, force: true })
+const isDev = process.env.NODE_ENV === 'development'
+const isProd = process.env.NODE_ENV === 'production'
 
 // https://vitejs.dev/config/
-export default defineConfig({
+export default defineConfig(({ command }) => ({
   css: {
     preprocessorOptions: {
       less: {
@@ -26,6 +27,7 @@ export default defineConfig({
       styles: path.join(__dirname, 'src/assets/styles')
     }
   },
+  base: './',
   build: {
     sourcemap: false,
     rollupOptions: {
@@ -37,15 +39,21 @@ export default defineConfig({
   },
   plugins: [
     react(),
-    electron({
-      include: ['electron', 'preload'],
-      transformOptions: {
-        sourcemap: !!process.env.VSCODE_DEBUG
-      },
-      // Will start Electron via VSCode Debug
-      plugins: process.env.VSCODE_DEBUG
-        ? [customStart(debounce(() => console.log(/* For `.vscode/.debug.script.mjs` */ '[startup] Electron App')))]
-        : undefined
+    VitePluginDoubleshot({
+      type: 'electron',
+      main: 'dist-electron/main/index.js',
+      entry: 'electron/main/index.ts',
+      outDir: 'dist-electron/main',
+      external: ['electron'],
+      electron: {
+        build: {
+          config: './electron-builder.json5'
+        },
+        preload: {
+          entry: 'electron/preload/index.ts',
+          outDir: 'dist-electron/preload'
+        }
+      }
     })
   ],
   server: {
@@ -54,12 +62,4 @@ export default defineConfig({
     hmr: false
   },
   clearScreen: false
-})
-
-function debounce<Fn extends (...args: any[]) => void>(fn: Fn, delay = 299) {
-  let t: NodeJS.Timeout
-  return ((...args) => {
-    clearTimeout(t)
-    t = setTimeout(() => fn(...args), delay)
-  }) as Fn
-}
+}))

@@ -1,6 +1,6 @@
 import { FC, memo, MouseEventHandler, useEffect, useMemo, useRef, useState } from 'react'
 import { IWhiteboardEdge } from '~/typings'
-import { IsAddingEdgeAtom, useFlow, useSetWhiteboardEdges, WhiteboardAtom, WhiteboardEdgesAtom } from './hooks'
+import { IsAddingEdgeAtom, useFlow, WhiteboardAtom } from './hooks'
 import { getBezierPath, getEdgeData, transformXY } from './utils'
 import { getMarkerId } from '../graph/utils/getMarkerId'
 import { MarkerColor } from '@/consts'
@@ -8,11 +8,10 @@ import { motion } from 'framer-motion'
 import { Position } from '@/types'
 import { AnimatePopover, Content, Icon, IconWithPopover, Tooltip, WithBorder } from '@/components'
 import Zindexes from '@/consts/zindex'
-import { useSelectAtomValue, useSelectGlobalAtomValue, useToggle } from '@/hooks'
+import { useSelectAtomValue, useToggle, useUpdateEffect } from '@/hooks'
 import BlockColorPicker from '../editor/components/BlockColorPicker'
 import { defaultBgColor } from '@/components/picker/colorPicker'
 import ClassName from '@/styles/classNames'
-import produce from 'immer'
 import { createPortal } from 'react-dom'
 import { hexToRgb } from '@/utils/color'
 import useClickOutside from '@/hooks/utils/useClickOutside'
@@ -21,11 +20,11 @@ import Colors from '@/consts/colors'
 import { css, keyframes } from '@emotion/css'
 import FontSize from '@/consts/font'
 import { getSmoothPolyPath } from '@/core/whiteboard/utils/getSmoothPoly'
-import { useAtomValue, useSetAtom } from 'jotai'
+import { useSetAtom } from 'jotai'
 import { disableAllUserSelect } from '@/components/base/ResizeAndDrag'
-import { SettingAtom } from '@/core'
 import { useTranslation } from 'react-i18next'
-import Select from '@/components/base/select'
+import useEraseEdge from '@/core/whiteboard/useEraseEdge'
+import { useWhiteboardInstance } from '@/core/whiteboard/hooks/useWhiteboardInstance'
 
 const keyframe = keyframes({
   '0%': {
@@ -53,10 +52,9 @@ const TreeEdge: FC<{
   const labelContainerRef = useRef<SVGGElement>(null)
   const setAddingEdge = useSetAtom(IsAddingEdgeAtom)
   const flow = useFlow()
-
+  const { handlePointerEvent, isTouched, isErasing } = useEraseEdge(id)
   const edgeRef = useRef<SVGPathElement>(null)
-
-  const setEdges = useSetWhiteboardEdges()
+  const instance = useWhiteboardInstance()
 
   const pathRef = useRef<string>()
 
@@ -237,7 +235,7 @@ const TreeEdge: FC<{
     document.addEventListener('pointermove', globalPointerMoveHandler)
     document.addEventListener('pointerup', globalPointerUpHandler)
   }
-  useEffect(() => {
+  useUpdateEffect(() => {
     if (isEditingLabel) {
       const keydownHandler = (e: KeyboardEvent) => {
         e.stopPropagation()
@@ -249,7 +247,9 @@ const TreeEdge: FC<{
         document.removeEventListener('keydown', keydownHandler, true)
       }
     } else {
-      updateEdge({ label: innerLink.label })
+      if (innerLink.label && innerLink.label !== edge.label) {
+        updateEdge({ label: innerLink.label })
+      }
     }
   }, [isEditingLabel])
   const [isIn, setIsIn] = useState(false)
@@ -262,14 +262,7 @@ const TreeEdge: FC<{
   )
 
   const updateEdge = (edge: Partial<IWhiteboardEdge>) => {
-    setEdges(_edges =>
-      produce(_edges, draft => {
-        const origin = _edges.get(id)
-        if (origin) {
-          draft.set(id, { ...origin, ...edge })
-        }
-      })
-    )
+    instance.updateEdge?.(id, e => ({ ...e, ...edge }))
   }
   useEffect(() => {
     if (isIn) {
@@ -354,11 +347,7 @@ const TreeEdge: FC<{
               <Icon
                 name="park-delete"
                 onClick={() => {
-                  setEdges(edges =>
-                    produce(edges, draft => {
-                      draft.delete(id)
-                    })
-                  )
+                  instance.deleteEdge?.(id)
                 }}
                 className={ClassName.circleButton(undefined, 4)}
                 size={18}
@@ -381,10 +370,11 @@ const TreeEdge: FC<{
         onPointerDown={handlePointerDown}
         style={{
           pointerEvents: 'none',
-          cursor: 'pointer'
+          cursor: isErasing ? 'crosshair' : 'pointer',
+          opacity: isTouched ? 0.3 : 1
         }}
       >
-        {isIn && (
+        {isIn && !isErasing && (
           <motion.path
             ref={underEdgeRef}
             pointerEvents="auto"
@@ -399,7 +389,10 @@ const TreeEdge: FC<{
         )}
         <motion.path
           className={lineStyle === 'animatedDash' ? animatedEdgeClazz : lineStyle === 'dash' ? dashEdgeClazz : undefined}
-          onPointerEnter={() => setIsIn(true)}
+          onPointerEnter={e => {
+            setIsIn(true)
+            handlePointerEvent(e)
+          }}
           pointerEvents="auto"
           ref={edgeRef}
           fill="none"

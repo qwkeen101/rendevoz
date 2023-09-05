@@ -42,7 +42,8 @@ const captureVideoFrame = (
 ) => {
   return new Promise(res => {
     const canvas = window.document.createElement('canvas')
-    canvas.height = Number(size.height)
+    const realHeight = (video.videoHeight / video.videoWidth) * Number(size.width)
+    canvas.height = realHeight
     canvas.width = Number(size.width)
     const ctx = canvas.getContext('2d')
     ctx?.drawImage(video, 0, 0, canvas.width, canvas.height)

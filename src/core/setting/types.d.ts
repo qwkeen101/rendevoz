@@ -62,6 +62,7 @@ export type IShortCutSetting = {
     openSearchPanel: ShortCut | null
     openGlobalSearch: ShortCut | null
     makeVideoLabel: ShortCut | null
+    copyVideoTimestamp: ShortCut | null
   }>
 }
 export type IObjectsAndLinkSetting = {

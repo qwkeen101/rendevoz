@@ -1,6 +1,6 @@
 import { join, resolve } from 'path'
 import { Module } from '@nestjs/common'
-import { app, BrowserWindow, ipcRenderer, protocol, session, shell, webContents } from 'electron'
+import { app, BrowserWindow, protocol, session, shell } from 'electron'
 import axios from 'axios'
 import { fileURLToPath } from 'url'
 import HttpsProxyAgent from 'https-proxy-agent'
@@ -12,18 +12,20 @@ import openUrlHandler from './openUrlHandler'
 
 process.env.ELECTRON_DISABLE_SECURITY_WARNINGS = 'true'
 process.env.DIST_ELECTRON = join(__dirname, '../..')
-process.env.DIST = join(process.env.DIST_ELECTRON, '../../dist')
-process.env.PUBLIC = app.isPackaged ? process.env.DIST : join(process.env.DIST_ELECTRON, '../../public')
+process.env.DIST = join(process.env.DIST_ELECTRON, './dist')
+process.env.PUBLIC = app.isPackaged ? process.env.DIST : join(process.env.DIST_ELECTRON, './public')
 
 const slicedLength = 'rendefile://'.length
-
+console.log(process.env.DIST)
 @Module({
   providers: [
     {
       provide: 'WEB_CONTENTS',
-      async useFactory(isDev: boolean) {
-        const preload = join(__dirname, '../../preload/index.js')
-        const url = process.env.VITE_DEV_SERVER_URL
+      async useFactory() {
+        const isDev = !app.isPackaged
+        const preload = join(__dirname, '../preload/index.js')
+        console.log(preload)
+        const url = 'http://localhost:7777'
         const indexHtml = join(process.env.DIST, 'index.html')
         const windowsSearchEngine = join(process.env.PUBLIC, 'meilisearch-windows.exe')
         const macSearchEngine = join(process.env.PUBLIC, 'meilisearch-macos')
@@ -159,6 +161,7 @@ const slicedLength = 'rendefile://'.length
           const absolutePath = resolve(prePath)
           const videoAboPath = resolve(videoPrePath)
           if (params.webpreferences.includes('video')) {
+            console.log(videoAboPath)
             webPreferences.preload = videoAboPath
             return
           }

@@ -221,7 +221,7 @@ const VideoInner = ({ videoId, onInstanceInitialized, onlyCore }: VideoProps) =>
                 justifyContent="space-between"
                 className={ClassName.Background.pseudoBlubBackground}
                 style={{
-                  borderRadius: '8px 8px 0px 0px',
+                  borderRadius: '4px 4px 0px 0px',
                   cursor: 'grab',
                   padding: '6px 12px'
                 }}

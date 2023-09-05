@@ -12,10 +12,7 @@ import Colors from '@/consts/colors'
 import FontSize from '@/consts/font'
 import VideoProgressLabelPin from './VideoProgressLabelPin'
 import VideoScrubber from './VideoScrubber'
-import { useTranslation } from 'react-i18next'
-import { Rendevoz } from '../rendevoz'
-import { MetaStore, ObjectStore } from '@/stores'
-import { saveImageLocally } from '@/utils/img'
+import { MetaStore } from '@/stores'
 import { useSetAtom } from 'jotai'
 import { VideoSidebarStateAtom } from './hooks/useVideoSidebarState'
 import VideoActionsMenu from '@/core/video/VideoActionsMenu'
@@ -31,18 +28,16 @@ const playerControlMask = css({
   backgroundRepeat: 'repeat-x',
   width: '100%',
   height: 288,
-  borderRadius: '0px 0px 12px 12px'
+  borderRadius: '0px 0px 4px 4px'
 })
 const playSpeed: number[] = [2, 1.5, 1.25, 1, 0.75, 0.5]
 const VideoBottomBar = () => {
-  const instance = useVideoInstance()
   const [videoState, setVideoState] = useVideoState()
   const [toolbarState, setToolbarState] = useVideoToolbarState()
-  const videoMeta = videoState.videoId ? MetaStore.getMetaObjectByObjectId(videoState.videoId) : undefined
   const setSidebarState = useSetAtom(VideoSidebarStateAtom)
   const { totalTime = 0, currentTime = 0, paused, volume, muted } = videoState
   const { showVolume, chooseTime, thumbnailUrl, thumbnailVisible, thumbnailPosition, currentHoverTime, draggingScrubber } = toolbarState
-  const { currDuration, totalDuration, percent, currentChapter } = useMemo(() => {
+  const { currDuration, totalDuration, currentChapter } = useMemo(() => {
     setToolbarState(s => (s.draggingScrubber ? s : { ...s, currentScrubberTime: currentTime }))
     const currentChapter = videoState.sortedChapters?.findLast(i => i.startTime < currentTime)
     return {

@@ -22,8 +22,6 @@ const NameEditor = ({ value, onChange, style }: { value: string; onChange: (v: s
         width: '100%',
         ...style
       }}
-      flex
-      alignItems="center"
     >
       <AutosizeTextarea
         autoFocus
@@ -43,9 +41,11 @@ const NameEditor = ({ value, onChange, style }: { value: string; onChange: (v: s
       ></AutosizeTextarea>
       <div
         style={{
-          position: 'absolute',
+          position: 'sticky',
           right: 10,
           bottom: 3,
+          width: 'fit-content',
+          marginLeft: 'auto',
           cursor: 'pointer'
         }}
         className={ClassName.description(FontSize['12px'])}

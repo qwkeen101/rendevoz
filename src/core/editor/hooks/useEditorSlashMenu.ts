@@ -1,12 +1,10 @@
-import { KEY } from '@/consts'
-import isHotkey from 'is-hotkey'
 import React from 'react'
 import { CustomEditor } from '~/typings'
 import getCursorPosition from '../utils/getCursorPosition'
 
 const useEditorSlashMenu = (editor: CustomEditor) => {
   const handleSlashKeyDown: React.KeyboardEventHandler = e => {
-    if (e.code === 'Slash') {
+    if (e.code === 'Slash' && !e.altKey && !e.ctrlKey && !e.shiftKey && !e.metaKey) {
       const cursorPosition = getCursorPosition(editor)
       if (cursorPosition) {
         editor.overlayManager?.setPosition({
@@ -16,11 +14,11 @@ const useEditorSlashMenu = (editor: CustomEditor) => {
         console.log(cursorPosition)
         editor.overlayManager?.setContent('slashMenu')
         editor.overlayManager?.open()
+        return
       }
-    } else {
-      //   if (editor.overlayManager?.getContent() === 'slashMenu') {
-      //     editor.overlayManager?.close()
-      //   }
+    }
+    if (editor.overlayManager?.isOpen() && editor.overlayManager.getContent() === 'slashMenu') {
+      editor.overlayManager.close()
     }
     return
   }

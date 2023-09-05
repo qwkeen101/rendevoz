@@ -25,7 +25,7 @@ interface EditorTitleProps {
 export const editorTitleWrapperClassName = css({
   maxWidth: '100%',
   minWidth: 0,
-  width: 870,
+  width: 'max(var(--editor-max-width), 870px)',
   margin: 'auto',
   padding: '40px 10px 30px 50px'
 })
@@ -67,7 +67,7 @@ const EditorTitle: ForwardRefComponent<HTMLDivElement, EditorTitleProps> = forwa
         column
         gap={10}
         style={{
-          width: readonly ? 840 : undefined,
+          width: readonly ? 'max(840px, var(--editor-max-width))' : undefined,
           paddingLeft: readonly ? 20 : undefined,
           ...titleContainerStyle
         }}

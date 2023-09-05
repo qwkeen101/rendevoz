@@ -56,8 +56,6 @@ const Label = memo(({ labelId, type }: { labelId: number; type: EditorProps['typ
       }
     }
   })
-  const [showMore, toggleShowMore] = useToggle(false)
-  const { t } = useTranslation()
   const previousHighlight = usePrevious(highlight)
   useEffect(() => {
     if (previousHighlight?.str) {
@@ -109,7 +107,7 @@ const Label = memo(({ labelId, type }: { labelId: number; type: EditorProps['typ
           }
         })}
       </Content>
-      {highlight?.str && renderOriginalText(highlight.str)}
+      {highlight?.str && renderOriginalText({ text: highlight.str })}
       {renderDescription({})}
       {renderAttachment({
         renderAttOnParent: false,

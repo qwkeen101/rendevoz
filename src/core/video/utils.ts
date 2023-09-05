@@ -31,11 +31,12 @@ export const captureVideoFrame = (
   skipSeek?: boolean
 ): Promise<string> => {
   return new Promise(res => {
+    const realHeight = size.width === 533 ? size.height : (video.videoHeight / video.videoWidth) * size.width
     if (!skipSeek) {
       video.currentTime = time
       video.onseeked = () => {
         const canvas = document.createElement('canvas')
-        canvas.height = Number(size.height)
+        canvas.height = Number(realHeight)
         canvas.width = Number(size.width)
         const ctx = canvas.getContext('2d')
         ctx?.drawImage(video, 0, 0, canvas.width, canvas.height)
@@ -44,7 +45,7 @@ export const captureVideoFrame = (
       }
     } else {
       const canvas = document.createElement('canvas')
-      canvas.height = Number(size.height)
+      canvas.height = Number(realHeight)
       canvas.width = Number(size.width)
       const ctx = canvas.getContext('2d')
       ctx?.drawImage(video, 0, 0, canvas.width, canvas.height)

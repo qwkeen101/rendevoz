@@ -68,6 +68,7 @@ const SimpleEditor = ({ value, onChange }: SimpleEditorProps) => {
         paddingLeft: 0,
         paddingRight: 10
       }}
+      noBottomPadding={true}
       showToolbar={true}
       initialValue={initialValue}
       showTitle={false}

@@ -23,6 +23,7 @@ import {
   GlobalGraphInstance,
   ObjectActionPopover,
   RelatedPanel,
+  useDropObjectArea,
   useGlobalIsDragging,
   useObjectFilter,
   useRenderObject
@@ -335,8 +336,36 @@ export const ObjectPanel = memo(
       },
       { wait: 500 }
     )
+    const outerContainerRef = useRef<HTMLDivElement>(null)
+    const { isDragging, canDropAsMeta } = useDropObjectArea(outerContainerRef, {
+      onDrop: () => {
+        if (canDropAsMeta.droppable) {
+          Rendevoz.Events.Emit.GlobalEventEmitter.emit('global', {
+            type: 'globalDropNeedFurtherProcess',
+            data: {
+              dropOn: {
+                dropOn: 'database'
+              },
+              draggingElement: Rendevoz.Actions.State.Drag.getDraggingDetails()
+            }
+          })
+        }
+      }
+    })
     return (
       <>
+        <div
+          ref={outerContainerRef}
+          style={{
+            position: 'absolute',
+            inset: 0,
+            zIndex: 9999,
+            pointerEvents: isDragging ? 'auto' : 'none',
+            opacity: isDragging ? 0.25 : 0,
+            transition: 'opacity 0.25s ease',
+            background: !canDropAsMeta.droppable ? Colors.Common.Red : Colors.Common.SelectColor
+          }}
+        ></div>
         <Content
           flex
           column
@@ -898,7 +927,8 @@ export const SimpleObject = memo(
           tagAboveImage: true,
           renderOptions: {
             renderFrom,
-            renderDescription
+            renderDescription,
+            renderOriginalText: false
           },
           containerStyle: {
             width: '100%'

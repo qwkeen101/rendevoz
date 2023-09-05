@@ -44,6 +44,7 @@ export interface INoteLabel extends IBase {
   targetBlockId: number
   name?: string
   description?: string
+  selectedText?: string
 }
 
 export interface IWebpageLabel extends IBase {

@@ -20,7 +20,8 @@ const shortCutNameToTitle = {
     openGlobalSearch: 'open global text search'
   },
   video: {
-    makeVideoLabel: 'make video label'
+    makeVideoLabel: 'make video label',
+    copyVideoTimestamp: 'Copy video timestamp'
   }
 }
 

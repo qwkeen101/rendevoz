@@ -12,12 +12,12 @@ const NoteNode: FC<InnerNodeProps> = ({ node: n, onNameChange }) => {
     <div
       style={{
         minWidth: '100%',
-        width: '20rem',
-        height: '25rem',
+        width: '30rem',
+        height: '40rem',
         minHeight: '100%',
         maxWidth: '100%',
         overflow: 'hidden',
-        'container-type': 'size'
+        maxHeight: '100%'
       }}
     >
       <Editor
@@ -30,24 +30,36 @@ const NoteNode: FC<InnerNodeProps> = ({ node: n, onNameChange }) => {
         showHeader={false}
         showBlockHandle={false}
         titleContainerStyle={{
-          padding: '4% 4% 1%',
-          paddingLeft: '4%',
+          padding: '10px 16px 8px',
           maxWidth: '100%',
           width: '100%'
         }}
         titleStyle={{
           fontSize: '1.6rem'
         }}
-        compact
         innerEditorStyle={{
-          paddingRight: '4%',
-          paddingLeft: '4%',
+          paddingRight: '16px',
+          paddingLeft: '16px',
           width: '100%'
         }}
-        readonly
+        noBottomPadding={true}
         innerEditorClassName={css({
+          fontSize: '1em',
           '.ParagraphBlock': {
-            maxWidth: '100%'
+            maxWidth: '100%',
+            marginTop: 2,
+            marginBottom: 2,
+            fontSize: '1em',
+            padding: '2px 0px'
+          },
+          p: {
+            fontSize: '1em',
+            marginTop: 0,
+            marginBottom: 0,
+            lineHeight: 1.4
+          },
+          '.BlockCommon': {
+            lineHeight: 1.4
           },
           width: '100% !important'
         })}

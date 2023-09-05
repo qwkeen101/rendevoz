@@ -15,7 +15,8 @@ export type IWhiteboardEdge = {
 }
 
 export type EdgePosition = 'top' | 'right' | 'left' | 'bottom'
-
+// [x,y,pressure]
+export type FreehandPoint = [number, number, number]
 export type IWhiteboardNode = {
   id: number
   x: number
@@ -64,7 +65,26 @@ export type IWhiteboardNode = {
       fontSize?: 'middle' | 'large' | 'small' | 'super large'
       content: string | any[]
     }
+  | {
+      type: 'freehand'
+      points: FreehandPoint[]
+      // default: 16
+      strokeWidth?: number
+      // default: 1
+      opacity?: number
+      // default: theme(dark: white, light: black)
+      fillColor?: string
+      penType: 'pen' | 'ballpen' | 'marker'
+      mode: 'pencil' | 'marker' | 'dash'
+      style?: IPenStyle
+    }
 )
+
+export type IPenStyle = {
+  width: number
+  opacity: number
+  color: string
+}
 
 export interface IWhiteboard extends IBase {
   name?: string

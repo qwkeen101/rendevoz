@@ -2,43 +2,35 @@ import { useMemoizedFn, useUpdateEffect } from '@/hooks'
 import { IWhiteboardNode } from '~/typings/data'
 import { Content, Icon, Tooltip } from '@/components/base'
 import ClassName from '@/styles/classNames'
-import { FC, memo, useEffect, useMemo, useRef, useState } from 'react'
+import { FC, memo, useEffect, useMemo, useRef } from 'react'
 import { InnerNodeProps } from './WrapperNode'
-import { useFlow, useSetWhiteboardNodes } from '../hooks'
-import produce from 'immer'
+import { useFlow } from '../hooks'
 import PdfNode from './PdfNode'
 import NoteNode from './NoteNode'
 import { useRenderObject, Video } from '@/core'
-import { css } from '@emotion/css'
-import { GlobalEventEmitter } from '@/events'
 import FontSize from '@/consts/font'
 import WebpageNode from '@/core/whiteboard/node/WebpageNode'
-import VideoCore from '@/core/video/VideoCore'
 import { Rendevoz } from '@/core/rendevoz'
+import { useWhiteboardInstance } from '@/core/whiteboard/hooks/useWhiteboardInstance'
 
 const MetaObjectNode: FC<InnerNodeProps> = ({ node: n, setPopoverElements, setNodeState, onNameChange }) => {
   const node = n as IWhiteboardNode & { type: 'metaObject' }
   const { expanded } = node
   const { metaObjectId } = node
-  const updateNodes = useSetWhiteboardNodes()
-
-  const { renderWhole, metaObject, renderInline } = useRenderObject({
+  const instance = useWhiteboardInstance()
+  const { renderWhole, metaObject } = useRenderObject({
     metaObjectId: metaObjectId!
   })
-  console.log(metaObject)
+
   const hasSize = node.width && node.height
   const imageRef = useRef<HTMLImageElement>(null)
   const flow = useFlow()
   const wholeContainerRef = useRef<HTMLDivElement>(null)
   const toggleExpanded = useMemoizedFn(() => {
-    updateNodes(nodes =>
-      produce(nodes, draft => {
-        draft.set(node.id, {
-          ...node,
-          expanded: !node.expanded
-        })
-      })
-    )
+    instance.updateNode?.(node.id, n => ({
+      ...n,
+      expanded: !n.expanded
+    }))
   })
   const getNodeState = useMemoizedFn(() => {
     return node
@@ -73,6 +65,15 @@ const MetaObjectNode: FC<InnerNodeProps> = ({ node: n, setPopoverElements, setNo
                       className={ClassName.circleButton(undefined, 4)}
                       name={getNodeState().expanded ? 'park-collapse-text-input' : 'park-expand-text-input'}
                       onClick={() => {
+                        instance.updateNode?.(
+                          node.id,
+                          n => ({
+                            ...n,
+                            width: undefined,
+                            height: undefined
+                          }),
+                          false
+                        )
                         toggleExpanded()
                       }}
                     />
@@ -118,20 +119,6 @@ const MetaObjectNode: FC<InnerNodeProps> = ({ node: n, setPopoverElements, setNo
     }
   }, [metaObject?.type])
 
-  useUpdateEffect(() => {
-    if (expanded !== undefined) {
-      console.log('update nodes expand')
-      updateNodes(nodes =>
-        produce(nodes, draft => {
-          draft.set(node.id, {
-            ...node,
-            width: undefined,
-            height: undefined
-          })
-        })
-      )
-    }
-  }, [expanded])
   useEffect(() => {
     setTimeout(() => {
       if (metaObject?.name) {
@@ -155,19 +142,34 @@ const MetaObjectNode: FC<InnerNodeProps> = ({ node: n, setPopoverElements, setNo
       renderOptions: {
         renderImage: false,
         renderFrom: true,
-        renderDescription: true
+        renderDescription: true,
+        renderOriginalText: true
+      },
+      originalTextOptions: {
+        showEdit: false,
+        ellipis: false,
+        editorStyle: {
+          height: 0,
+          flexGrow: 1,
+          overflow: 'auto'
+        },
+        style: {
+          margin: '4px 0px',
+          padding: '2px 6px 4px'
+        }
       },
       titleOptions: {
         style: {
           fontSize: FontSize['14px'],
           whiteSpace: 'pre-wrap'
         },
-        ellipsisLine: 999
+        ellipsisLine: 0
       },
       descriptionOptions: {
         style: {
           fontSize: FontSize['13px']
-        }
+        },
+        ellipsisLine: 0
       },
       fromOptions: {
         style: {
@@ -187,21 +189,17 @@ const MetaObjectNode: FC<InnerNodeProps> = ({ node: n, setPopoverElements, setNo
         const realHeight = ratio * img.clientWidth
         const currentHeight = img.clientHeight
         const heightOffset = realHeight - currentHeight
-        updateNodes(nodes =>
-          produce(nodes, draft => {
-            const origin = nodes.get(node.id)
-            if (!origin?.height) return
-            draft.set(node.id, {
-              ...origin,
-              height: origin.height + heightOffset
-            })
-          })
-        )
+        instance.updateNode?.(node.id, n => (n.height ? { ...n, height: n.height + heightOffset } : n), false)
       }
     }
   }, [hasImage])
   const hasImageRenderer = () => (
-    <Content fullWidth flex column style={{ height: 450, minHeight: '100%', maxHeight: '100%' }}>
+    <Content
+      fullWidth
+      flex
+      column
+      style={{ width: 450, minHeight: '100%', maxHeight: '100%', minWidth: '100%', maxWidth: '100%', overflowY: 'overlay' }}
+    >
       <img
         draggable={false}
         ref={imageRef}
@@ -211,16 +209,15 @@ const MetaObjectNode: FC<InnerNodeProps> = ({ node: n, setPopoverElements, setNo
           width: '100%',
           objectFit: 'cover',
           flex: 1,
-          overflow: 'hidden'
+          overflow: 'hidden',
+          borderRadius: '8px 8px 0px 0px'
         }}
       />
       <div
         ref={wholeContainerRef}
         style={{
           padding: '10px',
-          minWidth: '100%',
-          width: 'auto',
-          maxWidth: '400px',
+          width: '100%',
           height: 'auto'
         }}
       >
@@ -228,22 +225,47 @@ const MetaObjectNode: FC<InnerNodeProps> = ({ node: n, setPopoverElements, setNo
       </div>
     </Content>
   )
+  let width = 350
+  if (!metaObject?.type.includes('Label')) {
+    width = Math.min(getTextWidth(metaObject?.name || 'Default Name') + 30, 450)
+  }
   const CommonRenderer = () =>
     renderWhole({
       renderOptions: {
         renderDescription: true,
         renderOption: false,
-        renderTags: true
+        renderTags: true,
+        renderOriginalText: true
+      },
+      originalTextOptions: {
+        showEdit: false,
+        ellipis: false,
+        editorStyle: {
+          height: 0,
+          flexGrow: 1,
+          overflow: 'auto'
+        },
+        style: {
+          margin: '4px 0px',
+          padding: '2px 6px 4px'
+        }
       },
       titleOptions: {
-        ellipsisLine: 1000,
+        ellipsisLine: 0,
         style: {
           whiteSpace: 'pre-wrap'
         }
       },
+      descriptionOptions: {
+        ellipsisLine: 0
+      },
       containerStyle: {
         padding: 8,
-        width: '100%',
+        width,
+        minWidth: '100%',
+        maxWidth: '100%',
+        minHeight: '100%',
+        maxHeight: '100%',
         height: 'auto'
       }
     })
@@ -270,7 +292,7 @@ const MetaObjectNode: FC<InnerNodeProps> = ({ node: n, setPopoverElements, setNo
           )
         case 'video':
           return (
-            <div style={{ width: '450px', maxWidth: '100%', minWidth: '100%', height: 253, minHeight: '100%', maxHeight: '100%' }}>
+            <div style={{ width: '800px', maxWidth: '100%', minWidth: '100%', height: 450, minHeight: '100%', maxHeight: '100%' }}>
               <Video onlyCore={true} videoId={metaObject.objectId} />
             </div>
           )
@@ -292,4 +314,10 @@ const MetaObjectNode: FC<InnerNodeProps> = ({ node: n, setPopoverElements, setNo
   return expanded ? renderExpanded() : hasImage ? hasImageRenderer() : <CommonRenderer />
 }
 
+const measureTextCanvas = document.createElement('canvas')
+const ctx = measureTextCanvas.getContext('2d')!
+ctx.font = '15px opensans'
+const getTextWidth = (str: string) => {
+  return ctx.measureText(str).width
+}
 export default memo(MetaObjectNode)

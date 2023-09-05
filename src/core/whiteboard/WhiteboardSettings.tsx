@@ -53,19 +53,19 @@ const WhiteboardSettings = () => {
               fontSize: '0.95rem'
             }}
           >
-            <Button.IconButton
-              icon="park-full-screen-play"
-              text={t('settings.enable whiteboard minimap')}
-              className={buttonClazz}
-              onClick={() => {
-                setSetting(s =>
-                  produce(s, draft => {
-                    draft.whiteboard.enableMinimap = !draft.whiteboard.enableMinimap
-                  })
-                )
-              }}
-              enabled={setting.whiteboard.enableMinimap}
-            />
+            {/*<Button.IconButton*/}
+            {/*  icon="park-full-screen-play"*/}
+            {/*  text={t('settings.enable whiteboard minimap')}*/}
+            {/*  className={buttonClazz}*/}
+            {/*  onClick={() => {*/}
+            {/*    setSetting(s =>*/}
+            {/*      produce(s, draft => {*/}
+            {/*        draft.whiteboard.enableMinimap = !draft.whiteboard.enableMinimap*/}
+            {/*      })*/}
+            {/*    )*/}
+            {/*  }}*/}
+            {/*  enabled={setting.whiteboard.enableMinimap}*/}
+            {/*/>*/}
             <Button.IconButton
               icon="park-zoom-internal"
               text={t('settings.keep ratio when resizing image')}

@@ -1,10 +1,9 @@
 import { useMemoizedFn, useSelectGlobalAtomValue } from '@/hooks'
 import Id from '@/utils/id'
-import produce from 'immer'
 import { useEffect, useState } from 'react'
 import { getMarkerId } from '../graph/utils/getMarkerId'
 import { MarkerColor } from '@/consts'
-import { useAddingEdges, useFlow, useSetWhiteboardEdges, WhiteboardAtom, WhiteboardEdgesAtom } from './hooks'
+import { useAddingEdges, useFlow, WhiteboardAtom, WhiteboardEdgesAtom } from './hooks'
 import { EdgePosition, IWhiteboardEdge } from '~/typings'
 import { getBezierPath, getHandlePosition, transformXY } from './utils'
 import { useStore } from 'jotai'
@@ -14,6 +13,7 @@ import { disableAllUserSelect } from '@/components/base/ResizeAndDrag'
 import { getSmoothPolyPath } from '@/core/whiteboard/utils/getSmoothPoly'
 import { SettingAtom } from '@/core'
 import { animatedEdgeClazz, dashEdgeClazz } from '@/core/whiteboard/Edge'
+import useUpdateWhiteboard from '@/core/whiteboard/hooks/useUpdateWhiteboard'
 
 const getTargetPosition = (
   sourcePosition: {
@@ -37,13 +37,13 @@ const AddingEdge = () => {
   const [addingEdgeState, setIsAddingEdge] = useAddingEdges()
   const [path, setPath] = useState<string>()
   const [currentEdge, setCurrentEdge] = useState<IWhiteboardEdge>()
-  const setEdges = useSetWhiteboardEdges()
+  const updateWhiteboard = useUpdateWhiteboard()
   const store = useStore()
   const flow = useFlow()
   const defaultLineType = useSelectGlobalAtomValue(SettingAtom, s => s.whiteboard.defaultLineType)
   const pointerMoveHandler = useMemoizedFn((e: PointerEvent) => {
     const { clientX, clientY } = e
-    const { sourcePosition, sourceNodeId, targetNodeId, targetPosition, currentRepositionEnd, currentEdgeId } = addingEdgeState
+    const { sourcePosition, sourceNodeId, targetNodeId, targetPosition, currentEdgeId } = addingEdgeState
     if (currentEdgeId && !currentEdge) {
       const e = store.get(WhiteboardEdgesAtom).get(currentEdgeId)
       setCurrentEdge(e)
@@ -128,7 +128,9 @@ const AddingEdge = () => {
     setCurrentEdge(undefined)
     if (addingEdgeState.sourceNodeId && addingEdgeState.sourcePosition && addingEdgeState.targetNodeId && addingEdgeState.targetPosition) {
       if (addingEdgeState.sourceNodeId === addingEdgeState.targetNodeId) return
-      setEdges(edges => {
+      updateWhiteboard(w => {
+        const edges = w.edges
+        if (!edges) return
         if (
           Array.from(edges.values()).some(
             i =>
@@ -140,32 +142,31 @@ const AddingEdge = () => {
         ) {
           return edges
         }
-        return produce(edges, draft => {
-          if (addingEdgeState.isReposition) {
-            if (!addingEdgeState.currentEdgeId) return
-            const currentRepoEdge = edges.get(addingEdgeState.currentEdgeId)
-            if (!currentRepoEdge) return
-            console.log(currentRepoEdge, addingEdgeState)
-            draft.set(currentRepoEdge.id, {
-              ...currentRepoEdge,
-              id: currentRepoEdge.id,
-              sourceId: addingEdgeState.sourceNodeId,
-              targetId: addingEdgeState.targetNodeId,
-              sourcePosition: addingEdgeState.sourcePosition,
-              targetPosition: addingEdgeState.targetPosition
-            })
-          } else {
-            const id = Id.getId()
-            draft.set(id, {
-              id,
-              sourceId: addingEdgeState.sourceNodeId!,
-              sourcePosition: addingEdgeState.sourcePosition,
-              targetId: addingEdgeState.targetNodeId!,
-              targetPosition: addingEdgeState.targetPosition
-            })
-          }
-        })
-      })
+
+        if (addingEdgeState.isReposition) {
+          if (!addingEdgeState.currentEdgeId) return
+          const currentRepoEdge = edges.get(addingEdgeState.currentEdgeId)
+          if (!currentRepoEdge) return
+          edges.set(currentRepoEdge.id, {
+            ...currentRepoEdge,
+            id: currentRepoEdge.id,
+            sourceId: addingEdgeState.sourceNodeId,
+            targetId: addingEdgeState.targetNodeId,
+            sourcePosition: addingEdgeState.sourcePosition,
+            targetPosition: addingEdgeState.targetPosition
+          })
+        } else {
+          const id = Id.getId()
+          edges.set(id, {
+            id,
+            sourceId: addingEdgeState.sourceNodeId!,
+            sourcePosition: addingEdgeState.sourcePosition,
+            targetId: addingEdgeState.targetNodeId!,
+            targetPosition: addingEdgeState.targetPosition
+          })
+        }
+      }, true)
+
       const whiteboard = store.get(WhiteboardAtom)
       const sourceNode = whiteboard?.nodes?.get(addingEdgeState.sourceNodeId)
       const targetNode = whiteboard?.nodes?.get(addingEdgeState.targetNodeId)

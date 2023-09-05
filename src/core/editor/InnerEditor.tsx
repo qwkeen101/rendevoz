@@ -1,7 +1,7 @@
 import { useDebounceFn, useMemoizedFn } from '@/hooks'
 import isHotkey from 'is-hotkey'
-import { FC, KeyboardEventHandler, memo, RefObject, useCallback, useEffect, useLayoutEffect, useMemo, useRef } from 'react'
-import { Descendant, Editor, Node, Path, Range, Transforms } from 'slate'
+import { FC, memo, RefObject, useCallback, useLayoutEffect, useMemo, useRef } from 'react'
+import { Descendant, Editor, Node, Path, Transforms } from 'slate'
 import { Editable, ReactEditor, RenderElementProps, RenderLeafProps, Slate, useSlateStatic } from './slate-react'
 import EditorToolbar from './components/toolbar'
 import HOTKEYS from './consts/hotkeys'
@@ -12,8 +12,7 @@ import styles from './index.module.less'
 import Id from '@/utils/id'
 import { InlineElements } from './consts/elements'
 import { KEY } from '@/consts/key'
-import { EDITOR_TO_CHANGED, ID_TO_ELEMENTS_MAP, ID_TO_FIRST_LAYER_MAP, ID_TO_PATH_MAP, SELECTED_BLOCKS_MAP } from './weakMaps'
-import moveMultiElements from './utils/moveMultiElements'
+import { EDITOR_TO_CHANGED, ID_TO_FIRST_LAYER_MAP, ID_TO_PATH_MAP } from './weakMaps'
 import useScopedEventEmitter from '@/events/useEventEmitter'
 import { EditableProps } from './slate-react/components/editable'
 import { css } from '@emotion/css'
@@ -29,6 +28,14 @@ import FontSize from '@/consts/font'
 import useEditorInstance from './hooks/useEditorInstance'
 import { transformTextContentToNameAndDescription } from '../global/globalDragOverlay/utils'
 import useEditorMention from '@/core/editor/hooks/useEditorMention'
+import useEditorDeleteKey from '@/core/editor/hooks/keyboards/useEditorDeleteKey'
+import useEditorArrowKey from '@/core/editor/hooks/keyboards/useEditorArrowKey'
+import useEditorCopyKey from '@/core/editor/hooks/keyboards/useEditorCopyKey'
+import useEditorSelectAllKey from '@/core/editor/hooks/keyboards/useEditorSelectAllKey'
+import useEditorTabKey from '@/core/editor/hooks/keyboards/useEditorTabKey'
+import { getSetting } from '@/core'
+import { truncate } from 'lodash'
+import { truncateString } from '@/utils/text'
 
 const EditableEditorClassName = css({
   p: {
@@ -65,10 +72,9 @@ const ReadOnlyEditorClassName = css({
     justifyContent: 'center'
   },
   p: {
-    fontSize: '1.15rem',
-    marginBottom: '0.5rem',
-    marginTop: '0.5rem',
-    lineHeight: 1.6
+    fontSize: '1em',
+    lineHeight: 1.6,
+    margin: '0.2em'
   },
   'reach-inline-nav': {
     display: 'none'
@@ -157,6 +163,11 @@ const InnerEditor: FC<InnerEditorProps> = memo(
     const { handleSlashKeyDown } = useEditorSlashMenu(editor)
     const { handleMentionKey } = useEditorMention(editor)
     const instance = useEditorInstance()
+    const handleDeleteKey = useEditorDeleteKey(instance)
+    const handleArrowKey = useEditorArrowKey(instance)
+    const handleCopyKey = useEditorCopyKey(instance)
+    const handleSelectAllKey = useEditorSelectAllKey(instance)
+    const handleTabKey = useEditorTabKey(instance)
     editor.innerRef = editableRef
     const { run: debounceIndex } = useDebounceFn(
       () => {
@@ -274,71 +285,10 @@ const InnerEditor: FC<InnerEditorProps> = memo(
       },
       [scrollElement]
     )
-    useEffect(() => {
-      const keydownHandler = (e: KeyboardEvent) => {
-        if (isHotkey(KEY.Backspace, e) || isHotkey(KEY.Delete, e)) {
-          const selected = SELECTED_BLOCKS_MAP.get(editor)
-          const isOverlayOpen = editor.overlayManager?.isOpen()
-          const content = editor.overlayManager?.getContent()
-          if (isOverlayOpen && content === 'slashMenu') {
-            if (editor.selection && Range.isCollapsed(editor.selection) && isHotkey(KEY.Backspace, e)) {
-              const prevDeleted = Editor.before(editor, editor.selection, {
-                distance: 1,
-                unit: 'character'
-              })
-              if (prevDeleted) {
-                const prevText = Editor.string(editor, {
-                  anchor: prevDeleted,
-                  focus: editor.selection.focus
-                })
-                if (prevText === '/') {
-                  editor.overlayManager?.close()
-                }
-              }
-            }
-          }
-          if (selected && selected.size > 0) {
-            e.preventDefault()
-            e.stopPropagation()
-            if (selected.size === ID_TO_PATH_MAP.get(editor)?.size) {
-              Transforms.removeNodes(editor, {
-                at: Editor.range(editor, [0], [editor.children.length - 1])
-              })
-              SELECTED_BLOCKS_MAP.set(editor, new Map())
-              return
-            }
-            const ids = Array.from(selected.keys())
-            const elements: [CustomElement, Path][] = []
-            const eles = ID_TO_ELEMENTS_MAP.get(editor)
-            ids.forEach(id => {
-              const ele = eles?.get(id)
-              if (ele) {
-                elements.push([ele.getElement(), ID_TO_PATH_MAP.get(editor)?.get(id)])
-                selected.delete(id)
-              }
-            })
-            moveMultiElements(editor, elements, [editor.children.length - 1], 'bottom', false)
-            Transforms.removeNodes(editor, {
-              at: {
-                anchor: {
-                  path: [editor.children.length - elements.length],
-                  offset: 0
-                },
-                focus: Editor.end(editor, [])
-              }
-            })
-            Transforms.deselect(editor)
-          }
-        }
-      }
-      document?.addEventListener('keydown', keydownHandler, true)
-      return () => {
-        document?.removeEventListener('keydown', keydownHandler, true)
-      }
-    }, [scrollElement])
 
     useLayoutEffect(() => {
       // if only default value, trigger for path index
+      document.addEventListener('keydown', globalKeydownHandler)
       if (!editor.noteId) {
         editor.children = [...defaultValue]
         EDITOR_TO_CHANGED.set(editor, false)
@@ -349,120 +299,18 @@ const InnerEditor: FC<InnerEditorProps> = memo(
       } else {
         editor.onChange()
       }
+      return () => {
+        document.removeEventListener('keydown', globalKeydownHandler)
+      }
     }, [])
 
-    const handleKeydown: KeyboardEventHandler<HTMLDivElement> = useMemoizedFn(e => {
-      const { selection } = editor
+    const handleKeydown = useMemoizedFn((e: KeyboardEvent) => {
       handleMentionKey(e)
       handleSlashKeyDown(e)
-      if (selection && Range.isCollapsed(selection)) {
-        if (isHotkey('left', e)) {
-          e.preventDefault()
-          const path = selection.anchor.path
-          let distance = 1
-          const curr = Editor.above(editor)
-          if (
-            curr?.[0].type === 'link' &&
-            (Editor.isStart(editor, selection.anchor, selection.anchor.path) ||
-              Editor.isStart(
-                editor,
-                {
-                  path: selection.anchor.path,
-                  offset: selection.anchor.offset - 1
-                },
-                selection.anchor.path
-              ))
-          )
-            distance = 2
-          if (Path.hasPrevious(path) && Editor.isStart(editor, selection.anchor, selection.anchor.path)) {
-            const prevNode = Editor.node(editor, Path.previous(path))[0]
-            if (['emoji', 'link'].includes(prevNode.type) || Editor.isVoid(editor, prevNode)) {
-              distance = 2
-            }
-          }
-
-          Transforms.move(editor, {
-            unit: 'offset',
-            reverse: true,
-            distance
-          })
-          return
-        }
-        if (isHotkey('right', e)) {
-          e.preventDefault()
-          const path = selection.anchor.path
-          let distance = 1
-          const curr = Editor.above(editor)
-          if (curr?.[0].type === 'link') {
-            if (
-              Editor.isEnd(editor, selection.anchor, selection.anchor.path) ||
-              Editor.isEnd(
-                editor,
-                {
-                  path: selection.anchor.path,
-                  offset: selection.anchor.offset + 1
-                },
-                selection.anchor.path
-              )
-            ) {
-              distance = 2
-            }
-          }
-          if (Editor.hasPath(editor, Path.next(path)) && Editor.isEnd(editor, selection.anchor, selection.anchor.path)) {
-            const nextNode = Editor.node(editor, Path.next(path))[0]
-            if (['emoji', 'link'].includes(nextNode.type) || Editor.isVoid(editor, nextNode)) {
-              distance = 2
-            }
-          }
-          Transforms.move(editor, { unit: 'offset', distance })
-          return
-        }
-      }
-      if (isHotkey('tab', e)) {
-        e.preventDefault()
-        const currBlock = Editor.above(editor, {
-          match: n => Editor.isBlock(editor, n)
-        })
-        const { selection } = editor
-        if (!currBlock) return
-        if (
-          (currBlock[0].type === 'list-item' || currBlock[0].type === 'order-list-item' || currBlock?.[0].level > 0) &&
-          selection &&
-          Range.isCollapsed(selection)
-        ) {
-          Transforms.setNodes(editor, {
-            level: currBlock[0].level ? (currBlock[0].level > 5 ? 6 : currBlock[0].level + 1) : 1
-          })
-        } else {
-          Transforms.insertText(editor, '\u2003')
-        }
-      }
-      if (isHotkey('mod+a', e)) {
-        e.preventDefault()
-        const selectedBlocksMap = SELECTED_BLOCKS_MAP.get(editor)
-        ID_TO_PATH_MAP.get(editor)?.forEach((v, k) => {
-          selectedBlocksMap?.set(k, null)
-        })
-        ID_TO_ELEMENTS_MAP.get(editor)?.forEach(i => {
-          i.selectBlock()
-        })
-      }
-      if (isHotkey('mod+c', e)) {
-        const selected = SELECTED_BLOCKS_MAP.get(editor)
-        if (selected && selected.size > 0) {
-          e.preventDefault()
-          const idToPath = ID_TO_PATH_MAP.get(editor)
-          const elements = Array.from(selected.keys())
-            .map(id => {
-              const path = idToPath?.get(id)
-              if (!path) return
-              const node = Editor.node(editor, path)[0]
-              return node
-            })
-            .filter(i => i !== undefined) as CustomElement[]
-          editor.currentCopyElements = elements
-        }
-      }
+      handleDeleteKey(e)
+      handleArrowKey(e)
+      handleCopyKey(e)
+      handleSelectAllKey(e)
       for (const hotkey in HOTKEYS) {
         if (isHotkey(hotkey, e)) {
           e.preventDefault()
@@ -471,7 +319,9 @@ const InnerEditor: FC<InnerEditorProps> = memo(
         }
       }
     })
-
+    const globalKeydownHandler = useMemoizedFn((e: KeyboardEvent) => {
+      handleTabKey(e)
+    })
     return (
       <Slate editor={editor} onChange={handleChange} value={defaultValue}>
         <EditorToolbar
@@ -500,10 +350,14 @@ const InnerEditor: FC<InnerEditorProps> = memo(
                   } else {
                     const highlightId = Id.getId()
                     const selectedText = editor.selection ? Editor.string(editor, editor.selection) : undefined
-                    const { name } = transformTextContentToNameAndDescription(selectedText)
+                    if (!selectedText) return
+                    const name = getSetting().label.showOriginalText
+                      ? truncateString(selectedText)
+                      : selectedText
                     const label = await instance.addLabel?.({
                       id: highlightId,
-                      name: name || 'Unnamed Label'
+                      name: name || 'Unnamed Label',
+                      selectedText
                     })
                     if (label) {
                       editor.on({
@@ -611,7 +465,7 @@ const InnerEditor: FC<InnerEditorProps> = memo(
           scrollElementRef={scrollElementRef}
           style={useMemo(
             () => ({
-              paddingBottom: readonly ? 0 : undefined,
+              paddingBottom: readonly || editor.noBottomPadding ? 0 : undefined,
               display: 'flex',
               flexDirection: 'column'
             }),

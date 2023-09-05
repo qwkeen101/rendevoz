@@ -218,7 +218,7 @@ const Label = ({ id, highlight }: { id: number; highlight: boolean }) => {
         })}
       </Content>
 
-      {pdfLabel.type === 'highlight' && pdfLabel.selectedText && renderOriginalText(pdfLabel.selectedText)}
+      {pdfLabel.type === 'highlight' && pdfLabel.selectedText && renderOriginalText({text: pdfLabel.selectedText})}
       {pdfLabel.type === 'crop' && pdfLabel.imageUrl && (
         <Image src={pdfLabel.imageUrl} width={'min(100%, 250px)'} containerStyle={{ borderRadius: 10 }} preview />
       )}

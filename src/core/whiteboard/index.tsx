@@ -3,28 +3,24 @@ import { createStore } from 'jotai/vanilla'
 import createPanZoom, { PanZoom } from 'panzoom'
 import { memo, useEffect, useLayoutEffect, useMemo, useRef } from 'react'
 import TreeEdgeContainer from './EdgeContainer'
-import { FlowAtom, useFlow, WhiteboardAtom } from './hooks'
+import { FlowAtom, useFlow, useSetWhiteboardNodes, WhiteboardAtom } from './hooks'
 import TreeNodeContainer from './NodeContainer'
 import useScopedEventEmitter from '@/events/useEventEmitter'
 import { GlobalEventHandler } from '@/events/globalEvent'
 import useWhiteboardSelect from './useWhiteboardSelect'
 import useWhiteboardAutoPan from './useWhiteboardAutoPan'
-import WhiteboardSetting from './WhiteboardSetting'
 import useWhiteboardDrop from './useWhiteboardDrop'
 import { globalStore, MetaStore, ObjectStore } from '@/stores'
 import FlowManager from './FlowManager'
 import { IWhiteboard } from '~/typings/data'
-import WhiteboardMiniMap from './minimap/WhiteboardMinimap'
 import { Content } from '@/components'
-import { useSetting } from '../setting'
 import { useDebounceFn, useGlobalAtomValue } from '@/hooks'
 import useWhiteboardSidebar from './useWhiteboardSidebar'
 import { Rendevoz } from '../rendevoz'
 import useSnapDrag from '@/core/whiteboard/hooks/useSnapDrag'
-import WhiteboardBottomBar from '@/core/whiteboard/WhiteboardBottomBar'
 import { useSetAtom } from 'jotai'
 import { WhiteboardStateAtom } from '@/core/whiteboard/hooks/useWhiteboardState'
-import { useWhiteboardInstance, WhiteboardInstanceAtom } from '@/core/whiteboard/hooks/useWhiteboardInstance'
+import { useAssignWhiteboardInstance, useWhiteboardInstance, WhiteboardInstanceAtom } from '@/core/whiteboard/hooks/useWhiteboardInstance'
 import { IWhiteboardInstance } from '~/typings'
 import { waitFor } from '@/utils'
 import WhiteboardSettings from '@/core/whiteboard/WhiteboardSettings'
@@ -32,10 +28,15 @@ import useWhiteboardHistory from '@/core/whiteboard/hooks/useWhiteboardHistory'
 import WhiteboardEmptyIndicator from '@/core/whiteboard/WhiteboardEmptyIndicator'
 import { WhiteboardTransformAtom } from '@/core/whiteboard/hooks/useWhiteboardTransform'
 import Background from '@/core/whiteboard/Background'
-import { Colors } from '@/consts'
 import { getSetting } from '@/core'
-import { Excalidraw } from '@excalidraw/excalidraw'
 import { ExcalidrawImperativeAPI } from '@excalidraw/excalidraw/types/types'
+import useFreeHand from '@/core/whiteboard/freehand/useFreeHand'
+import useWhiteboardErase from '@/core/whiteboard/hooks/useWhiteboardErase'
+import useWhiteboardPanzoom from '@/core/whiteboard/hooks/useWhiteboardPanzoom'
+import WhiteboardControlBar from '@/core/whiteboard/toolbars/WhiteboardControlBar'
+import WhiteboardNodesBar from '@/core/whiteboard/toolbars/WhiteboardNodesBar'
+import WhiteboardPenToolsBar from '@/core/whiteboard/toolbars/WhiteboardPenToolsBar'
+import useWhiteboardShortcut from '@/core/whiteboard/hooks/useWhiteboardShortcut'
 
 const WhiteboardInner = memo(
   ({
@@ -55,9 +56,10 @@ const WhiteboardInner = memo(
     const scopedEmitter = useScopedEventEmitter()
     const whiteboard = useAtomValue(WhiteboardAtom)
     const { addTab, render } = useWhiteboardSidebar()
-    const [setting] = useSetting()
     const { renderSnapLayer } = useSnapDrag()
+    useWhiteboardShortcut()
     useWhiteboardHistory()
+    useAssignWhiteboardInstance()
     const setWhiteboardTransform = useSetAtom(WhiteboardTransformAtom)
     const instance = useWhiteboardInstance()
     useEffect(() => {
@@ -85,10 +87,13 @@ const WhiteboardInner = memo(
         const panzoom = createPanZoom(containerRef.current, {
           smoothScroll: false,
           maxZoom: 5,
-          minZoom: 0.0625,
+          minZoom: 0.05,
+          filterKey: () => {
+            return true
+          },
           zoomDoubleClickSpeed: 1,
           beforeMouseDown: e => {
-            if (flow.selectable) return true
+            // if (flow.selectable) return true
             if (!(e.target as HTMLElement).hasAttribute('role')) return true
             if ((e.target as HTMLElement).hasAttribute('role')) {
               const role = (e.target as HTMLElement).getAttribute('role')
@@ -102,11 +107,29 @@ const WhiteboardInner = memo(
             }
           },
           beforeWheel: e => {
+            console.log(e)
+            const pointerMode = flow.parentContainerEle?.getAttribute('data-pointer-mode')
             if (e.defaultPrevented) {
               return true
-            } else {
+            }
+            if (pointerMode === 'pan') {
               return false
             }
+
+            if (e.ctrlKey || e.metaKey) {
+              return false
+            }
+            const curr = panzoom.getTransform()
+            if (e.deltaX !== 0 && e.deltaY !== 0) {
+              panzoom.moveTo(curr.x - e.deltaX, curr.y - e.deltaY)
+              return true
+            }
+            if (e.shiftKey) {
+              panzoom.moveTo(curr.x - e.deltaX, curr.y)
+            } else {
+              panzoom.moveTo(curr.x, curr.y - e.deltaY)
+            }
+            return true
           },
           disableKeyboardInteraction: true
         })
@@ -140,6 +163,7 @@ const WhiteboardInner = memo(
         })
         panzoom.on('zoom', e => {
           const { scale, x, y } = panzoom.getTransform()
+          flow.containerTransformScale = scale
           setWhiteboardTransform([x, y, scale])
           if (excalidrawRef.current) {
             const ex = excalidrawRef.current
@@ -155,7 +179,7 @@ const WhiteboardInner = memo(
           }
 
           console.log(scale)
-          flow.containerTransformScale = scale
+
           const zoomMultipler = Math.sqrt(1 / scale)
           scopedEmitter.emit('whiteboard', {
             type: 'zoomChange',
@@ -170,6 +194,7 @@ const WhiteboardInner = memo(
         flow.panzoom = panzoom
         return () => {
           const transform = panzoom.getTransform()
+          flow.dispose()
           ObjectStore('whiteboard').updateOne(
             {
               id,
@@ -223,19 +248,55 @@ const WhiteboardInner = memo(
           addTab('note', node.noteId)
       }
     }
+    const setNodes = useSetWhiteboardNodes()
+    flow.setNodes = setNodes
     const { renderSelect } = useWhiteboardSelect(containerRef)
     useWhiteboardAutoPan()
     useWhiteboardDrop()
+    useWhiteboardErase()
+    const { renderFreehands, renderDrawLayer } = useFreeHand()
+    const { containerCursor } = useWhiteboardPanzoom()
     const excalidrawRef = useRef<ExcalidrawImperativeAPI>(null)
+
     return (
-      <Content fullHeight fullWidth role="data-container" tabIndex={undefined}>
-        {/*<div style={{ position: 'absolute', inset: 0, zIndex: 0 }}>*/}
+      <Content
+        fullHeight
+        fullWidth
+        role="data-container"
+        ref={node => {
+          if (node) {
+            flow.parentContainerEle = node
+          }
+        }}
+        tabIndex={undefined}
+        style={{ cursor: containerCursor }}
+      >
+        {/*<div*/}
+        {/*  style={{ position: 'absolute', inset: 0, zIndex: 0 }}*/}
+        {/*  className={css({*/}
+        {/*    '.layer-ui__wrapper': {*/}
+        {/*      display: 'none'*/}
+        {/*    }*/}
+        {/*  })}*/}
+        {/*>*/}
         {/*  <Excalidraw*/}
         {/*    ref={r =>*/}
         {/*      r?.readyPromise?.then(v => {*/}
         {/*        excalidrawRef.current = v*/}
         {/*      })*/}
         {/*    }*/}
+        {/*    UIOptions={{*/}
+        {/*      canvasActions: {*/}
+        {/*        loadScene: false,*/}
+        {/*        changeViewBackgroundColor: false,*/}
+        {/*        clearCanvas: false,*/}
+        {/*        export: false,*/}
+        {/*        saveToActiveFile: false,*/}
+        {/*        toggleTheme: false,*/}
+        {/*        saveAsImage: false*/}
+        {/*      }*/}
+        {/*    }}*/}
+        {/*    renderEmbeddable={() => null}*/}
         {/*    onChange={(elements, appState, files) => {*/}
         {/*      console.log(appState)*/}
         {/*      const { scrollX, scrollY, zoom } = appState*/}
@@ -257,6 +318,10 @@ const WhiteboardInner = memo(
         {/*    initialData={{*/}
         {/*      appState: {*/}
         {/*        showWelcomeScreen: false,*/}
+        {/*        activeTool: {*/}
+        {/*          type: 'freedraw'*/}
+        {/*        },*/}
+        {/*        penMode: true,*/}
         {/*        openSidebar: null,*/}
         {/*        showStats: false,*/}
         {/*        viewBackgroundColor: 'transparent'*/}
@@ -268,36 +333,30 @@ const WhiteboardInner = memo(
           ref={containerRef}
           role="data-container"
           style={{
-            position: 'relative',
+            position: 'absolute',
             width: '100%',
             height: '100%',
-            background: 'transparent'
+            top: 0,
+            left: 0,
+            background: 'transparent',
+            pointerEvents: 'none'
           }}
         >
           <TreeEdgeContainer />
           <TreeNodeContainer />
           {renderSelect()}
           {renderSnapLayer()}
+          {renderFreehands()}
           <WhiteboardEmptyIndicator />
         </div>
+        {renderDrawLayer()}
         <Background />
+
         <div style={{ position: 'absolute', right: 0, top: 0, bottom: 0 }}>{render()}</div>
-        <WhiteboardBottomBar />
+        <WhiteboardNodesBar />
         <WhiteboardSettings />
-        {enableMiniMap && setting.whiteboard.enableMinimap && (
-          <div
-            style={{
-              position: 'absolute',
-              right: 15,
-              bottom: 15,
-              borderRadius: 6,
-              overflow: 'hidden',
-              border: `1px solid ${Colors.Background.Border}`
-            }}
-          >
-            <WhiteboardMiniMap />
-          </div>
-        )}
+        <WhiteboardPenToolsBar />
+        <WhiteboardControlBar />
       </Content>
     )
   }

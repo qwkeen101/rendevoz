@@ -1,18 +1,16 @@
 import { AnimatePopover, Icon } from '@/components'
 import { useGlobalIsDragging } from '@/core'
 import { useGlobalAtom, useMemoizedFn } from '@/hooks'
-import { objectIdToMetaObjectIdMapAtom, undeletedMetaObjectsAtom } from '@/stores/meta.store'
+import { objectIdToMetaObjectIdMapAtom } from '@/stores/meta.store'
 import { globalStore } from '@/stores'
 import ClassName from '@/styles/classNames'
 import { css } from '@emotion/css'
-import { useAtomValue } from 'jotai/react'
 import { memo, useEffect, useRef, useState } from 'react'
 import { MenuItem } from './Item'
 import { useTranslation } from 'react-i18next'
 import { Rendevoz } from '@/core/rendevoz'
 import { TypeToRegisteredObject } from '@/stores/object.store'
 import { SidebarPanelStateAtom } from '@/components/layout/sidebar/index'
-import useDropObject from '@/core/global/globalDragOverlay/useDropObject'
 
 const SidebarDatabase = memo(() => {
   const { t } = useTranslation()
@@ -25,7 +23,7 @@ const SidebarDatabase = memo(() => {
     alreadyExist: false
   })
   const [sidebarPanel, setSidebarPanel] = useGlobalAtom(SidebarPanelStateAtom)
-  const { normalizeDropToMeta } = useDropObject()
+
   const dragHandler = useMemoizedFn((e: DragEvent) => {
     if (e.type === 'dragover') {
       e.preventDefault()

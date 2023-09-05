@@ -16,8 +16,6 @@ export interface ElementFunctions {
 }
 export const ID_TO_ELEMENTS_MAP = new WeakMap<CustomEditor, Map<number, ElementFunctions>>()
 
-export const SELECTED_ID_TO_ELEMENTS_SET = new WeakMap<CustomEditor, Map<number, ElementFunctions>>()
-
 export interface EditorSelectArea {
   startPoint: Position
   endPoint: Position
@@ -28,16 +26,9 @@ export interface EditorSelectArea {
 }
 export const SELECT_AREA_MAP = new WeakMap<CustomEditor, EditorSelectArea>()
 
-export const SELECTED_BLOCKS_MAP = new WeakMap<CustomEditor, Map<number, HTMLElement | null>>()
-
 export const ID_TO_PATH_MAP = new WeakMap<CustomEditor, Map<number, Path>>()
 
 export const ID_TO_FIRST_LAYER_MAP = new WeakMap<CustomEditor, Map<number, Path>>()
-
-export const hasSelectedBlocks = (editor: CustomEditor) => {
-  const selectedBlocksMap = SELECTED_BLOCKS_MAP.get(editor)
-  return selectedBlocksMap && selectedBlocksMap.size > 0
-}
 
 export interface ElementFunction {
   openMathForm?: VoidFunction

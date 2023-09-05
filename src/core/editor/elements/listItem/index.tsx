@@ -184,9 +184,7 @@ export const OrderListItem = ({ children, element }: RenderElementProps) => {
           padding: '0 2px',
           marginRight: 6,
           minWidth: 18,
-          fontSize: FontSize['16px'],
-          fontWeight: 500,
-          lineHeight: '22px'
+          fontWeight: 500
         }}
       >
         {prefix}.{' '}

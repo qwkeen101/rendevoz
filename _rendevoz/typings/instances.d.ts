@@ -1,6 +1,6 @@
 import { WebpageInnerRef } from '@/core/webpage/WebpageCore'
 import { CustomEditor } from './editor'
-import { Box, ILayoutTab, MetaGroupChild, TabData } from '..'
+import { Box, ILayoutTab, IWhiteboardEdge, IWhiteboardNode, MetaGroupChild, PartialWithId, TabData } from '..'
 
 export interface WebpageInstance {
   transformToNote: () => Promise<CustomEditor>
@@ -12,6 +12,20 @@ export interface WebpageInstance {
 export interface IWhiteboardInstance {
   // if true, opened, if false, not opened
   openTabInSidebar?: (tab: ILayoutTab) => ILayoutTab | undefined
+  deleteNode: (nodeId: number) => void
+  deleteEdge: (edgeId: number) => void
+  deleteNodes: (nodeIds: number[]) => void
+  insertNode: (node: Partial<IWhiteboardNode>) => Promise<IWhiteboardNode>
+  updateEdge: (
+    obj: PartialWithId<IWhiteboardEdge> | number,
+    updater?: (curr: IWhiteboardEdge) => IWhiteboardEdge,
+    withUndo?: boolean
+  ) => Promise<void>
+  updateNode: (
+    obj: PartialWithId<IWhiteboardNode> | number,
+    updater?: (curr: IWhiteboardNode) => IWhiteboardNode,
+    withUndo?: boolean
+  ) => Promise<void>
 }
 
 export type IReviewInstance = Partial<{

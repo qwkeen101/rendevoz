@@ -9,6 +9,8 @@ import { IWhiteboardNode } from '~/typings/data'
 import { useFlow, useWhiteboardNodes } from '../hooks'
 import { getBoxOfBoxes, getBoxOfNodes } from '../utils'
 import tinycolor from 'tinycolor2'
+import { WithBorder } from '@/components'
+import { Colors } from '@/consts'
 
 interface MinimapProps {
   width?: number
@@ -114,34 +116,42 @@ const WhiteboardMiniMap: FC<MinimapProps> = memo(({ width = DEFAULT_MINIMAP_WIDT
     }
   }
   return (
-    <svg
-      onPointerDown={svgPointerDownHandler}
-      onPointerMove={svgPointerMoveHandler}
+    <WithBorder
       style={{
-        '--view-scale': viewScale
+        background: Colors.Background.Secondary,
+        height: 150,
+        overflow: 'hidden'
       }}
-      onPointerUp={() => {
-        isPressedRef.current = false
-      }}
-      width={width}
-      height={height}
-      viewBox={`${x} ${y} ${realWidth} ${realHeight}`}
     >
-      {Array.from(nodes.values()).map(i => (
-        <MinimapNode {...i} key={i.id} />
-      ))}
-      {viewBox && (
-        <path
-          d={`M${x - offset},${y - offset}h${realWidth + offset * 2}v${realHeight + offset * 2}h${-realWidth - offset * 2}z
+      <svg
+        onPointerDown={svgPointerDownHandler}
+        onPointerMove={svgPointerMoveHandler}
+        style={{
+          '--view-scale': viewScale
+        }}
+        onPointerUp={() => {
+          isPressedRef.current = false
+        }}
+        width={width}
+        height={height}
+        viewBox={`${x} ${y} ${realWidth} ${realHeight}`}
+      >
+        {Array.from(nodes.values()).map(i => (
+          <MinimapNode {...i} key={i.id} />
+        ))}
+        {viewBox && (
+          <path
+            d={`M${x - offset},${y - offset}h${realWidth + offset * 2}v${realHeight + offset * 2}h${-realWidth - offset * 2}z
         M${viewBox.left},${viewBox.top}h${viewBox.width / flow.containerTransformScale}v${viewBox.height / flow.containerTransformScale}h${
-            -viewBox.width / flow.containerTransformScale
-          }z`}
-          fill={'rgba(0,0,0,0.2)'}
-          fillRule="evenodd"
-          pointerEvents="none"
-        />
-      )}
-    </svg>
+              -viewBox.width / flow.containerTransformScale
+            }z`}
+            fill={'rgba(0,0,0,0.2)'}
+            fillRule="evenodd"
+            pointerEvents="none"
+          />
+        )}
+      </svg>
+    </WithBorder>
   )
 })
 

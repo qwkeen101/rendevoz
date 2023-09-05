@@ -88,9 +88,7 @@ const SubtitleItem = ({ subtitle }: { subtitle: any }) => {
     >
       <Content>
         <div className={ClassName.description(FontSize['12px'])}>{normalizeSecondsToTime(subtitle.startTime)}</div>
-        <div className={ClassName.ellipsisFont(1)} style={{ userSelect: 'text' }}>
-          {subtitle.text}
-        </div>
+        <div style={{ userSelect: 'text' }}>{subtitle.text}</div>
       </Content>
       <Tooltip content={'Add as label'}>
         <Icon

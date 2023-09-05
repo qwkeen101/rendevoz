@@ -1,5 +1,5 @@
 import EventEmitter from '@/events/eventEmitter'
-import { BaseEditor, Descendant, Element, Location, NodeEntry, Path } from 'slate'
+import { BaseEditor, Descendant, Element, Location, NodeEntry, Path, PathRef } from 'slate'
 import { HistoryEditor } from 'slate-history'
 import { INote, INoteLabel } from '~/typings/data'
 import { EditableProps, RenderElementProps, ReactEditor } from 'slate-react'
@@ -89,16 +89,27 @@ export type IEditorInstance = Partial<{
   getOccurrences: (query: string) => number
   replace: (source: string, target: string, replaceCurrent?: boolean) => void
   changeOccurrence: (direction: 'up' | 'down') => void
-  toggleLeftBar?: VoidFunction
-  openSearch?: VoidFunction
-  closeSearch?: VoidFunction
-  toggleSearch?: VoidFunction
-  openSetting?: VoidFunction
-  closeSetting?: VoidFunction
-  toggleSetting?: VoidFunction
+  isSelectionCollapsed?: () => boolean
+  blockOps: {
+    getAboveBlock: () => [CustomElement, Path] | undefined
+    isIndentableBlock: (type: string) => boolean
+    insertBlockIndent: (path: Path) => void
+    minusBlockIndent: (path: Path) => void
+  }
+  textOps: {
+    // get text before selection anchor
+    getBeforeText: (distance: number, unit?: 'character' | 'word') => string | undefined
+  }
+  toggleLeftBar: VoidFunction
+  openSearch: VoidFunction
+  closeSearch: VoidFunction
+  toggleSearch: VoidFunction
+  openSetting: VoidFunction
+  closeSetting: VoidFunction
+  toggleSetting: VoidFunction
   printToPDF: VoidFunction
-  addLabel?: (label: Partial<INoteLabel>) => Promise<INoteLabel | void>
-  deleteLabel?: (id: number) => Promise<void>
+  addLabel: (label: Partial<INoteLabel>) => Promise<INoteLabel | void>
+  deleteLabel: (id: number) => Promise<void>
   toggleLabel: VoidFunction
   getScrollElement: () => HTMLElement | undefined | null
   getHighlightLocation: (highlightId: number) => NodeEntry<CustomText | EmptyText>[]
@@ -109,7 +120,22 @@ export type IEditorInstance = Partial<{
   getElementPathById: (id: number) => Path | undefined
   getSelectedElements: () => CustomElement[]
   getElementFunctionById: (id: number) => ElementFunctions | undefined
-}>
+}> & {
+  values: {
+    selectingAll?: boolean
+    // selected id to element and pathRef map
+    selectedBlocks: Map<
+      number,
+      {
+        element: CustomElement
+        // we use path ref to track its path, this is expensive, unref it asap
+        pathRef?: PathRef
+        removeSelectedState?: VoidFunction
+        node?: HTMLElement | null
+      }
+    >
+  }
+}
 
 export type DefaultAddElementHandler = (
   type: CustomElement['type'],
@@ -162,6 +188,7 @@ export interface EditorProps {
   innerEditorStyle?: CSSProperties
   innerEditorClassName?: string
   showToolbar?: boolean
+  noBottomPadding?: boolean
   toolbarOptions?: {
     fontSize?: boolean
     color?: boolean

@@ -2,49 +2,42 @@ import { useMemoizedFn } from '@/hooks'
 import { globalStore, ObjectStore } from '@/stores'
 import { saveFileLocally } from '@/utils/file'
 import Id from '@/utils/id'
-import produce from 'immer'
 import { useEffect, useState } from 'react'
 import { IWhiteboardNode, MetaObject } from '~/typings/data'
-import { useFlow, useSetWhiteboardItems, useSetWhiteboardNodes } from './hooks'
+import { useFlow } from './hooks'
 import { isPointerOnContainer, transformXY } from './utils'
 import { objectIdToMetaObjectIdMapAtom } from '@/stores/meta.store'
 import { useEventHandler } from '@/events'
 import { Rendevoz } from '../rendevoz'
 import { getSetting } from '@/core'
+import { useWhiteboardInstance } from '@/core/whiteboard/hooks/useWhiteboardInstance'
 
-const getAsStringPromise = (item: DataTransferItem): Promise<string> => {
-  return new Promise(res => {
-    item.getAsString(data => res(data))
-  })
-}
 const useWhiteboardDrop = () => {
   const emitter = Rendevoz.Events.Emit.GlobalEventEmitter
   const handler = useEventHandler('global')
   const flow = useFlow()
-  const setNodes = useSetWhiteboardNodes()
+  const instance = useWhiteboardInstance()
   const [isDraggingInside, setDraggingInside] = useState(false)
-  const setItems = useSetWhiteboardItems()
   handler.on('globalDragPointerUp', async data => {
     const { draggingElement, event } = data
-
+    console.log(draggingElement, event)
     if (flow.parentContainerEle?.contains(event.target as HTMLElement)) {
       if (!isPointerOnContainer(event)) return
       let expanded = false
-      if (draggingElement.type === 'whiteboard-text') {
+      if (draggingElement?.type === 'whiteboard-text') {
         insertNodeAtPointer(event, {
           type: 'text',
-          background: '#e6e6e6',
           content: [
             {
               type: 'paragraph',
-              children: [{ text: 'Input something' }],
+              children: [{ text: 'Write somthing here' }],
               id: Id.getId()
             }
           ]
         })
         return
       }
-      if (draggingElement.type === 'note') {
+      if (draggingElement?.type === 'note') {
         expanded = true
         if (!globalStore.get(objectIdToMetaObjectIdMapAtom)?.has(draggingElement.noteId)) {
           // prevent add meta object
@@ -56,17 +49,6 @@ const useWhiteboardDrop = () => {
             insertNoteCardAtPointer(event, note.id)
             return
           }
-          // todo: can we sync?
-          setTimeout(() => {
-            setItems(items =>
-              produce(items, draft => {
-                draft?.push({
-                  type: 'note',
-                  id: draggingElement.noteId
-                })
-              })
-            )
-          })
         }
       }
       // wait for previous
@@ -90,6 +72,7 @@ const useWhiteboardDrop = () => {
 
   const dropHandler = useMemoizedFn(async (e: DragEvent) => {
     e.preventDefault()
+    console.log('dropoea')
     if (!isPointerOnContainer(e)) return
     const { clientX, clientY } = e
     const transformedXY = transformXY(flow.containerEle?.getBoundingClientRect(), clientX, clientY, flow.containerTransformScale)
@@ -154,69 +137,47 @@ const useWhiteboardDrop = () => {
       whiteboardNode.x = transformedXY?.x
       whiteboardNode.y = transformedXY?.y
       whiteboardNode.id = Id.getId()
-      setNodes(nodes =>
-        produce(nodes, draft => {
-          draft.set(whiteboardNode.id, whiteboardNode)
-        })
-      )
+      instance.insertNode?.(whiteboardNode)
     }
   })
   const insertMetaObjectAtPointer = (e: PointerEvent, metaId: number, expanded = false) => {
-    const nodeId = Id.getId()
-    setNodes(nodes => {
-      const transformedXY = transformXY(flow.containerEle?.getBoundingClientRect(), e.clientX, e.clientY, flow.containerTransformScale)
-      if (transformedXY) {
-        return produce(nodes, draft => {
-          draft.set(nodeId, {
-            id: nodeId,
-            x: transformedXY.x,
-            y: transformedXY.y,
-            metaObjectId: metaId,
-            type: 'metaObject',
-            name: '',
-            expanded
-          })
-        })
-      }
-      return nodes
-    })
+    const transformedXY = flow.transformPointer(e)
+    console.log(e, transformedXY)
+    if (transformedXY) {
+      instance.insertNode?.({
+        x: transformedXY.x,
+        y: transformedXY.y,
+        metaObjectId: metaId,
+        type: 'metaObject',
+        name: '',
+        expanded
+      })
+    }
   }
   const insertNodeAtPointer = (e: PointerEvent, node: Partial<IWhiteboardNode>) => {
-    setNodes(nodes => {
-      const transformedXY = transformXY(flow.containerEle?.getBoundingClientRect(), e.clientX, e.clientY, flow.containerTransformScale)
-      if (transformedXY) {
-        return produce(nodes, draft => {
-          const nodeId = Id.getId()
-          draft.set(nodeId, {
-            id: nodeId,
-            x: transformedXY.x,
-            y: transformedXY.y,
-            ...node
-          })
-        })
-      }
-      return nodes
-    })
+    const transformed = flow.transformPointer(e)
+    if (transformed) {
+      instance.insertNode?.({
+        x: transformed.x,
+        y: transformed.y,
+        width: 200,
+        height: 34,
+        ...node
+      })
+    }
   }
   const insertNoteCardAtPointer = (e: PointerEvent, noteId: number) => {
-    setNodes(nodes => {
-      const transformedXY = transformXY(flow.containerEle?.getBoundingClientRect(), e.clientX, e.clientY, flow.containerTransformScale)
-      if (transformedXY) {
-        return produce(nodes, draft => {
-          const nodeId = Id.getId()
-          draft.set(nodeId, {
-            id: nodeId,
-            x: transformedXY.x,
-            y: transformedXY.y,
-            type: 'note',
-            name: '',
-            isCard: true,
-            noteId
-          })
-        })
-      }
-      return nodes
-    })
+    const transformed = flow.transformPointer(e)
+    if (transformed) {
+      instance.insertNode?.({
+        x: transformed.x,
+        y: transformed.y,
+        type: 'note',
+        name: '',
+        isCard: true,
+        noteId
+      })
+    }
   }
   useEffect(() => {
     const dragOverHandler = (e: DragEvent) => {
@@ -232,10 +193,8 @@ const useWhiteboardDrop = () => {
       flow.parentContainerEle?.removeEventListener('dragover', dragOverHandler)
     }
   })
-
   return {
     isDraggingInside
   }
 }
-
 export default useWhiteboardDrop

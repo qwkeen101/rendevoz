@@ -48,7 +48,9 @@ export const Emphasis = {
 }
 export const Common = {
   Green: '--green',
-  Red: '--red'
+  Red: '--red',
+  SelectColorTransparent: '--select-color-transparent',
+  SelectColor: '--select-color'
 }
 const Colors = {
   Font: Object.fromEntries(Object.entries(Font).map(i => [i[0], `var(${i[1]})`])) as Record<keyof typeof Font, string>,

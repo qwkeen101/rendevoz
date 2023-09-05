@@ -1,4 +1,4 @@
-import { useGlobalAtomValue } from '@/hooks/jotai'
+import { useGlobalAtomValue, useSelectGlobalAtomValue } from '@/hooks/jotai'
 import { metaObjectsAtom, relatedMetaObjectsMapAtom } from '@/stores/meta.store'
 import ClassName from '@/styles/classNames'
 import Id from '@/utils/id'
@@ -10,7 +10,7 @@ import { Content, Icon, IconWithPopover, Image, WithBorder } from '@/components'
 import { Editor } from '../editor/Editor'
 import { PdfViewer } from '../pdf/PdfViewer'
 import { ObjectActionPopover, TypeToTypeName } from './card/DatabaseCard'
-import { ObjectTag, Whiteboard } from '@/core'
+import { ObjectTag, SettingAtom, useRenderLabel, Whiteboard } from '@/core'
 import DateFormat from '@/utils/dateFormat'
 import FromRenderer from './FromRenderer'
 import WebpageSourceRenderer from './WebpageSourceRenderer'
@@ -25,7 +25,7 @@ import Pdf from '@/core/pdf'
 import BorderInput from '@/components/base/BorderInput'
 import isHotkey from 'is-hotkey'
 import { KEY } from '@/consts'
-import { MetaStore } from '@/stores'
+import { MetaStore, ObjectStore } from '@/stores'
 import FontSize from '@/consts/font'
 import AutosizeTextarea from '@/components/custom/input/autosizeTextarea'
 import { toast } from 'react-hot-toast'
@@ -156,9 +156,7 @@ const TagRenderer = ({
           </div>
         </HoverAttachment>
       ) : null}
-      {metaObject?.tags?.map(i => (
-        <ObjectTag key={i} tag={i} hideAdd hideDelete hideSize square />
-      ))}
+      {metaObject?.tags?.map(i => <ObjectTag key={i} tag={i} hideAdd hideDelete hideSize square />)}
     </Content>
   )
 }
@@ -245,7 +243,7 @@ const TitleRenderer = ({
             className={ClassName.description(FontSize['12px'])}
             style={{ position: 'absolute', right: 10, bottom: 3, cursor: 'pointer' }}
           >
-            确认
+            {t('general.Confirm')}
           </div>
         </div>
       ) : (
@@ -642,6 +640,41 @@ const useRenderObject = (options: { metaObjectId: number }) => {
   }
 }
 
+const OriginText = memo(
+  ({
+    objectId,
+    style,
+    showEdit,
+    ellipis,
+    editorStyle,
+    type,
+    name
+  }: {
+    name: string
+    objectId: number
+    type: MetaObject['type']
+    style?: CSSProperties
+    showEdit?: boolean
+    ellipis?: boolean
+    editorStyle?: CSSProperties
+  }) => {
+    const { renderOriginalText, label } = useRenderLabel({ objectId: objectId, type })
+    if (!label?.selectedText || label.selectedText === name) return null
+    return renderOriginalText({
+      text: label.selectedText,
+      style,
+      showEdit,
+      ellipis,
+      editorStyle
+    })
+  }
+)
+const noshrinkClass = css({
+  '> *': {
+    flexShrink: 0
+  }
+})
+
 const WholeRenderer = memo(
   ({
     options,
@@ -660,6 +693,7 @@ const WholeRenderer = memo(
       titleOptions?: Parameters<typeof TitleRenderer>[0]
       imageOptions?: Parameters<typeof _renderImage>[0]
       fromOptions?: Parameters<typeof _renderFrom>[0]
+      originalTextOptions?: Omit<Parameters<typeof OriginText>[0], 'objectId'>
       optionOptions?: Parameters<typeof _renderOptions>[0]
       descriptionOptions?: Parameters<typeof _renderDescription>[0]
       renderOptions: {
@@ -669,6 +703,7 @@ const WholeRenderer = memo(
         renderDescription?: boolean
         renderFrom?: boolean
         renderOption?: boolean
+        renderOriginalText?: boolean
         imageMode?: 'thumbnail' | 'whole'
       }
     }
@@ -683,6 +718,12 @@ const WholeRenderer = memo(
       descriptionOptions = {},
       tagsOptions = {},
       imageOptions = {},
+      originalTextOptions = {
+        style: {
+          margin: '4px 0px',
+          padding: '2px 6px 4px'
+        }
+      },
       fromOptions = {},
       optionOptions = {},
       containerClassName,
@@ -693,6 +734,7 @@ const WholeRenderer = memo(
     } = options
     const { t } = useTranslation()
     const [imgDisplayFlexMode, setImgDisplayFlexMode] = useState<CSSProperties['flexDirection']>('row')
+    const originalTextVisible = useSelectGlobalAtomValue(SettingAtom, s => s.label.showOriginalText)
     const [imgSize, setImgSize] = useState<{
       width?: number | string
       height?: number | string
@@ -727,7 +769,7 @@ const WholeRenderer = memo(
           flex
           alignItems="stretch"
           gap={rowGap}
-          className={containerClassName}
+          className={css([containerClassName, noshrinkClass])}
           style={{
             ...containerStyle,
             flexDirection: imgDisplayFlexMode,
@@ -738,23 +780,6 @@ const WholeRenderer = memo(
           {_renderImage({ ...imgSize, ...imageOptions, renderMode: renderOptions.imageMode }, metaObject, size => {
             if (renderOptions.imageMode === 'whole') {
               setImgDisplayFlexMode('column')
-              // if (size.height > size.width) {
-              //   setImgDisplayFlexMode('row-reverse')
-              //   setImgSize({
-              //     width: 'auto',
-              //     ratio: 1.777,
-              //     minWidth: 180,
-              //     height: 'unset'
-              //   })
-              // } else {
-              //   setImgSize({
-              //     height: 'auto',
-              //     ratio: 0.5625,
-              //     width: '100%',
-              //     minWidth: 320
-              //   })
-              //   setImgDisplayFlexMode('column')
-              // }
             }
           })}
           <Content onClick={containerOnClick} style={mainContainerStyle} flex column gap={columnGap} justifyContent="center">
@@ -784,6 +809,12 @@ const WholeRenderer = memo(
               />
             )}
             {renderOptions?.renderDescription !== false && _renderDescription(descriptionOptions, metaObject)}
+            {originalTextVisible &&
+              metaObject.type.includes('Label') &&
+              renderOptions.renderOriginalText !== false &&
+              metaObject.objectId && (
+                <OriginText {...originalTextOptions} name={metaObject.name} type={metaObject.type} objectId={metaObject.objectId} />
+              )}
             {renderOptions?.renderFrom !== false && _renderFrom(fromOptions, metaObject)}
           </Content>
         </Content>
@@ -794,7 +825,7 @@ const WholeRenderer = memo(
         flex
         column
         gap={columnGap}
-        className={containerClassName}
+        className={css([containerClassName, noshrinkClass])}
         style={{ ...containerStyle, ...mainContainerStyle }}
       >
         {renderOptions?.renderOption && _renderOptions(optionOptions, metaObject)}
@@ -823,6 +854,9 @@ const WholeRenderer = memo(
           />
         )}
         {renderOptions?.renderDescription !== false && _renderDescription(descriptionOptions, metaObject)}
+        {originalTextVisible && metaObject.type.includes('Label') && renderOptions.renderOriginalText !== false && metaObject.objectId && (
+          <OriginText {...originalTextOptions} name={metaObject.name} type={metaObject.type} objectId={metaObject.objectId} />
+        )}
         {renderOptions?.renderFrom !== false && _renderFrom(fromOptions, metaObject)}
       </Content>
     )

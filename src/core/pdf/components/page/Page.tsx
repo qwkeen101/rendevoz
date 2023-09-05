@@ -1,7 +1,7 @@
-import React, { Fragment, useMemo, useRef, useState } from 'react'
+import React, { Fragment, useEffect, useMemo, useRef, useState } from 'react'
 import ThoughtLabel from '../label/Label'
 import { AnimatePopover, Button, WithBorder } from '@/components'
-import { RenderPageProps, TextSelectEvent } from '~/typings'
+import { IPdfLabel, RenderPageProps, TextSelectEvent } from '~/typings'
 import TextSelectionToolbar from '../toolbar/TextSelectionToolbar'
 import HighlightLabel from '../label/HighlightLabel'
 import useCleanMode from '../../hooks/useCleanMode'
@@ -40,13 +40,17 @@ const PdfPage: React.FC<PdfPageProps> = ({
 }) => {
   const labelContainerRef = useRef<HTMLDivElement>(null)
   const [cleanMode] = useCleanMode()
+  const pdf = ObjectStore('pdf').useValue(pdfId)
+  const [allLabels, setAllLabels] = useState<IPdfLabel[]>([])
+  useEffect(() => {
+    Promise.all(pdf?.labels?.map(i => ObjectStore('pdfLabel').getOneById(i)) || []).then(labels => {
+      if (labels) {
+        const l = labels.filter(i => i && i.page === pageIndex && i.documentId === pdfId) as IPdfLabel[]
 
-  const allLabels = useAtomValue(ObjectStore('pdfLabel').objectMapAtom, {
-    store: globalStore
-  })
-  const labels = useMemo(() => {
-    return Array.from(allLabels.values()).filter(i => i.page === pageIndex && i.documentId === pdfId)
-  }, [allLabels.size])
+        setAllLabels(l)
+      }
+    })
+  }, [pdf?.labels])
 
   const [textSelectionToolbarVisible, setTextSelectionToolbarVisible] = useState(false)
   const [textSelect, setTextSelect] = useState<TextSelectEvent>()
@@ -131,24 +135,11 @@ const PdfPage: React.FC<PdfPageProps> = ({
           zIndex: 999,
           pointerEvents: 'none'
         }}
-        onClick={async () => {
-          // const pdf = await ObjectStore('pdf').getOneById(pdfId)
-          // if (pdf?.pageAnnotations?.[pageIndex]) {
-          //   const annotation = pdf.pageAnnotations[pageIndex]
-          //   if (annotation.dataUrl) {
-          //     const data = await fetch(annotation.dataUrl.replace('rendefile', 'file'))
-          //     const blob = await data.blob()
-          //     open(pageIndex, blob)
-          //     return
-          //   }
-          // }
-          // open(pageIndex)
-        }}
         ref={labelContainerRef}
         role="custom-element-layer"
       >
         {!cleanMode &&
-          labels?.map(
+          allLabels?.map(
             i =>
               i.id && (
                 <Fragment key={i.id}>

@@ -2,7 +2,7 @@
   "name": "rendevoz-app",
   "productName": "Rendevoz",
   "private": true,
-  "version": "0.3.9",
+  "version": "0.3.10",
   "author": "Rendevoz Team",
   "main": "dist-electron/main/index.js",
   "debug": {

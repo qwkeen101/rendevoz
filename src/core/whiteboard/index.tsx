@@ -37,6 +37,7 @@ import WhiteboardControlBar from '@/core/whiteboard/toolbars/WhiteboardControlBa
 import WhiteboardNodesBar from '@/core/whiteboard/toolbars/WhiteboardNodesBar'
 import WhiteboardPenToolsBar from '@/core/whiteboard/toolbars/WhiteboardPenToolsBar'
 import useWhiteboardShortcut from '@/core/whiteboard/hooks/useWhiteboardShortcut'
+import { css } from '@emotion/css'
 
 const WhiteboardInner = memo(
   ({
@@ -90,6 +91,9 @@ const WhiteboardInner = memo(
           minZoom: 0.05,
           filterKey: () => {
             return true
+          },
+          onTouch: e => {
+            return false
           },
           zoomDoubleClickSpeed: 1,
           beforeMouseDown: e => {
@@ -268,8 +272,13 @@ const WhiteboardInner = memo(
             flow.parentContainerEle = node
           }
         }}
+        className={css({
+          '*': {
+            touchAction: 'none'
+          }
+        })}
         tabIndex={undefined}
-        style={{ cursor: containerCursor }}
+        style={{ cursor: containerCursor, touchAction: 'none' }}
       >
         {/*<div*/}
         {/*  style={{ position: 'absolute', inset: 0, zIndex: 0 }}*/}

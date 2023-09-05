@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react'
+import React, { useMemo, useState, useRef } from 'react'
 import { useFlow } from '@/core/whiteboard/hooks'
 import { getStroke } from 'perfect-freehand'
 import { getBoxOfPoints } from '@/core/whiteboard/utils'
@@ -92,11 +92,13 @@ const useFreeHand = () => {
   const flow = useFlow()
   const currentTool = useSelectAtomValue(WhiteboardStateAtom, s => s.currentTool)
   const [whiteboardState, setWhiteboardState] = useWhiteboardState()
+  const isPressed = useRef(false)
   const handlePointerDown: React.PointerEventHandler<SVGSVGElement> = e => {
     if (whiteboardState.isPanning) return
     if (e.button === 0) {
       e.preventDefault()
       e.stopPropagation()
+      isPressed.current = true
     }
     ;(e.target as SVGSVGElement).setPointerCapture(e.pointerId)
     const transformedXY = flow.transformPointer(e)
@@ -107,7 +109,7 @@ const useFreeHand = () => {
   }
 
   const handlePointerMove: React.PointerEventHandler<SVGSVGElement> = e => {
-    if (e.buttons !== 1 || whiteboardState.isPanning) return
+    if (!isPressed.current || whiteboardState.isPanning) return
     const transformedXY = flow.transformPointer(e)
     if (transformedXY && points) {
       e.preventDefault()
@@ -119,6 +121,7 @@ const useFreeHand = () => {
   const rafPointerMove = useRafFn(handlePointerMove)
   const instance = useWhiteboardInstance()
   const handlePointerUp = (e: PointerEvent) => {
+    isPressed.current = false
     setWhiteboardState(s => ({ ...s, freeDrawing: false }))
     if (points) {
       const bounds = getBoxOfPoints(points)

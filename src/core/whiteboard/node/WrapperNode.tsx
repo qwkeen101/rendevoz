@@ -1,7 +1,7 @@
 import { CSSProperties, Dispatch, memo, ReactNode, SetStateAction, useEffect, useRef, useState } from 'react'
 import { useFlow } from '../hooks'
 import { IWhiteboardNode } from '~/typings'
-import { useMemoizedFn, useRafFn, useSelectGlobalAtomValue } from '@/hooks'
+import { useMemoizedFn, useRafFn, useSelectAtomValue, useSelectGlobalAtomValue } from '@/hooks'
 import { AnimatePopover, Content, Icon, IconWithPopover, Tooltip, WithBorder } from '@/components'
 import ClassName from '@/styles/classNames'
 import { Rnd } from 'react-rnd'
@@ -34,6 +34,7 @@ import useEraseNode from '@/core/whiteboard/node/hooks/useEraseNode'
 import useNodeSize from '@/core/whiteboard/node/hooks/useNodeSize'
 import useUpdateWhiteboard from '@/core/whiteboard/hooks/useUpdateWhiteboard'
 import { useWhiteboardInstance } from '@/core/whiteboard/hooks/useWhiteboardInstance'
+import { WhiteboardStateAtom } from '@/core/whiteboard/hooks/useWhiteboardState'
 
 export type NodeInnerState = Partial<{
   popoverVisible: boolean
@@ -75,6 +76,7 @@ const WrapperNode = ({ node }: { node: IWhiteboardNode }) => {
   const getNodeState = useMemoizedFn(() => {
     return nodeState
   })
+  const panPointerMode = useSelectAtomValue(WhiteboardStateAtom, s => s.pointerMode) === 'pan'
   const instance = useWhiteboardInstance()
   const eventHandler = eventHandlerRef.current
   const shouldKeepRatio = useSelectGlobalAtomValue(SettingAtom, s => s.whiteboard.imageResizeKeepRatio)
@@ -266,6 +268,7 @@ const WrapperNode = ({ node }: { node: IWhiteboardNode }) => {
   useEffect(() => {
     if (nodeState.selected || nodeState.focused) {
       const pointerDownHandler = (e: MouseEvent) => {
+        console.log('click')
         if (flow.hasMultiSelectBox) return
         if (!containerRef.current?.contains(e.target as HTMLElement) && isResizingRef.current === false) {
           if (e.target instanceof HTMLElement && e.target.getAttribute('data-cover-id') === `${node.id}`) return
@@ -300,16 +303,7 @@ const WrapperNode = ({ node }: { node: IWhiteboardNode }) => {
         return (
           <FreehandNode
             node={node}
-            onClick={() => {
-              if (isDraggingRef.current === false) {
-                setNodeState(s => ({
-                  ...s,
-                  popoverVisible: true,
-                  selected: true,
-                  focused: true
-                }))
-              }
-            }}
+            onClick={handleClick}
             onEventHandlerRegistered={handler => {
               eventHandlerRef.current = handler
             }}
@@ -323,22 +317,7 @@ const WrapperNode = ({ node }: { node: IWhiteboardNode }) => {
       case 'pdf':
         return <PdfNode onNameChange={handleNameChange} node={node} />
       case 'text':
-        return (
-          <TextNode
-            node={node}
-            onClick={() => {
-              if (isDraggingRef.current === false) {
-                setNodeState(s => ({
-                  ...s,
-                  popoverVisible: true,
-                  selected: true,
-                  focused: true
-                }))
-              }
-            }}
-            setPopoverElements={setVisiblePopoverElements}
-          />
-        )
+        return <TextNode node={node} onClick={handleClick} setPopoverElements={setVisiblePopoverElements} />
     }
   }
 
@@ -374,26 +353,41 @@ const WrapperNode = ({ node }: { node: IWhiteboardNode }) => {
       handlePointerEvent(e)
       if (e.type === 'pointerenter') {
         toggleMouseIn(true)
-      } else {
+      } else if (e.type === 'pointerleave') {
         toggleMouseIn(false)
+      } else if (e.type === 'pointerup') {
+        if (e.pointerType === 'touch') {
+          handleClick()
+        }
       }
     }
     const container = containerRef.current
     if (container) {
+      container.addEventListener('pointerup', pointerHandler)
       container.addEventListener('pointerenter', pointerHandler)
       container.addEventListener('pointerleave', pointerHandler)
       return () => {
+        container.removeEventListener('pointerup', pointerHandler)
         container.removeEventListener('pointerenter', pointerHandler)
         container.removeEventListener('pointerleave', pointerHandler)
       }
     }
-  }, [])
-
+  })
+  const handleClick = () => {
+    if (isDraggingRef.current || panPointerMode) return
+    setNodeState(s => ({
+      ...s,
+      popoverVisible: true,
+      selected: true,
+      focused: true
+    }))
+  }
   const nodeStyle = getNodeStyle(node, nodeState, {
     displayCover: shouldDisplayCover,
     groupEnablePointer: groupEnablePointer,
     isErased: isTouched,
     isErasing,
+    panPointerMode,
     background: {
       opacityBackground,
       darkenSecondBackground
@@ -426,7 +420,7 @@ const WrapperNode = ({ node }: { node: IWhiteboardNode }) => {
       minWidth={160}
       // maxWidth={nodeState.expanded ? undefined : 250}
       lockAspectRatio={(lockResizeElements.includes(type) || nodeState.keepRatioResize) && shouldKeepRatio}
-      disableDragging={nodeState.focused || nodeState.locked}
+      disableDragging={nodeState.focused || nodeState.locked || panPointerMode}
       resizeHandleComponent={{
         left: <NodeResizer nodeId={id} position="left" />,
         top: <NodeResizer nodeId={id} position="top" />,
@@ -515,7 +509,7 @@ const WrapperNode = ({ node }: { node: IWhiteboardNode }) => {
           }
         }, true)
       }}
-      onDragStart={() => {
+      onDragStart={e => {
         scopedEmitter.emit('whiteboard', {
           type: 'nodeDragStart',
           data: {
@@ -580,6 +574,16 @@ const WrapperNode = ({ node }: { node: IWhiteboardNode }) => {
           }, true)
         }
       }}
+      onMouseDown={e => {
+        console.log(e)
+      }}
+      onMouseUp={e => {
+        console.log(e)
+        // handleClick()
+      }}
+      onTouchEnd={e => {
+        console.log(e)
+      }}
       size={{
         height: height || 'auto',
         width: width || 'auto'
@@ -591,22 +595,7 @@ const WrapperNode = ({ node }: { node: IWhiteboardNode }) => {
           flex
           gap={10}
           onClick={() => {
-            if (!nodeState.selected) {
-              setNodeState(s => ({
-                ...s,
-                popoverVisible: true,
-                selected: true
-              }))
-            } else {
-              if (isDraggingRef.current === false) {
-                setNodeState(s => ({
-                  ...s,
-                  popoverVisible: true,
-                  selected: true,
-                  focused: true
-                }))
-              }
-            }
+            handleClick()
           }}
           style={{
             position: 'absolute',
@@ -675,6 +664,7 @@ const WrapperNode = ({ node }: { node: IWhiteboardNode }) => {
           onKeyUpCapture={e => {
             if (nodeState.focused || nodeState.locked) {
               e.preventDefault()
+              e.stopPropagation()
             }
           }}
           onWheelCapture={e => {
@@ -685,7 +675,9 @@ const WrapperNode = ({ node }: { node: IWhiteboardNode }) => {
             }
           }}
           onKeyDown={e => {
-            e.stopPropagation()
+            if (e.key === 'Tab') {
+              e.preventDefault()
+            }
           }}
         >
           <div style={{ width: '100%', height: '100%', ...containerOverflow }}>{renderInnerNode()}</div>
@@ -693,14 +685,16 @@ const WrapperNode = ({ node }: { node: IWhiteboardNode }) => {
             <div
               data-cover-id={node.id}
               onClick={e => {
-                if (isDraggingRef.current === false) {
-                  setNodeState(s => ({
-                    ...s,
-                    popoverVisible: true,
-                    selected: true,
-                    focused: true
-                  }))
+                console.log(e)
+                handleClick()
+                e.stopPropagation()
+              }}
+              onPointerDownCapture={e => {
+                const pointerMode = flow.parentContainerEle?.getAttribute('data-pointer-mode')
+                if (pointerMode === 'pan') {
+                  return
                 }
+                e.stopPropagation()
               }}
               style={{
                 position: 'absolute',

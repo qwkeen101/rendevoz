@@ -1,7 +1,7 @@
 import { Content, Icon } from '@/components'
 import { useAssignVideoInstance, useVideoInstance, VideoInstanceAtom } from './hooks/useVideoInstance'
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { createStore, Provider } from 'jotai'
+import { createStore, Provider, useAtomValue } from 'jotai'
 import VideoCore from './VideoCore'
 import VideoBottomBar from './VideoBottomBar'
 import useVideoToolbarState from './hooks/useVideoToolbarState'
@@ -24,6 +24,7 @@ import { Zindexes } from '@/consts'
 import { VideoSidebarStateAtom } from './hooks/useVideoSidebarState'
 import VideoSubtitleSidebar from '@/core/video/VideoSubtitleSidebar'
 import { useLatest } from 'react-use'
+import useChangeVideoLayout, { VideoLayoutAtom } from '@/core/video/hooks/useVideoLayout'
 
 export interface VideoProps {
   videoId: number
@@ -41,6 +42,9 @@ const VideoInner = ({ videoId, onInstanceInitialized, onlyCore }: VideoProps) =>
   const videoMeta = MetaStore.useObjectToMetaValue(videoId)
   const smallMode = width < 1000 || videoState.floated
   const showIcon = playIconVisible && videoState.loaded
+  const videoLayout = useAtomValue(VideoLayoutAtom)
+  useChangeVideoLayout(outerContainerRef, containerRef)
+  const { allColumn, rightColumn } = videoLayout
   const getPopIcon = () => {
     if (videoState.jumpIndicator) {
       if (videoState.jumpIndicator === 'back') {
@@ -92,16 +96,23 @@ const VideoInner = ({ videoId, onInstanceInitialized, onlyCore }: VideoProps) =>
       }
     )
   }, [])
+  const renderSubtitle = () => {
+    return <VideoSubtitleSidebar small={!!smallMode} />
+  }
 
-  if (onlyCore) {
+  const renderCore = () => {
     return (
       <Content
         tabIndex={0}
         ref={ref => {
           containerRef.current = ref
-          outerContainerRef.current = ref
+          if (videoState.floated) {
+            outerContainerRef.current = ref
+          }
         }}
-        fullHeight
+        style={{
+          height: 'fit-content'
+        }}
         fullWidth
         onPointerMove={e => {
           setToolbarState(s => {
@@ -167,221 +178,103 @@ const VideoInner = ({ videoId, onInstanceInitialized, onlyCore }: VideoProps) =>
       </Content>
     )
   }
+  const renderFloated = () => {
+    return createPortal(
+      <ResizeAndDrag
+        lockAspectRatio={true}
+        dragHandleClassName="video-drag-handle"
+        minWidth={385}
+        default={{
+          width: 800,
+          height: 'auto',
+          x: 200,
+          y: 200
+        }}
+        style={{
+          zIndex: Zindexes.VideoFloatWindow
+        }}
+        onResizeStop={(e, dir, element) => {
+          element.style.height = 'auto'
+        }}
+      >
+        <Content
+          flex
+          justifyContent="space-between"
+          className={ClassName.Background.pseudoBlubBackground}
+          style={{
+            borderRadius: '4px 4px 0px 0px',
+            cursor: 'grab',
+            padding: '6px 12px'
+          }}
+        >
+          <Content flex gap={10} style={{ flexShrink: 1, flexGrow: 1 }} className="video-drag-handle">
+            <Icon name={Rendevoz.Utils.Object.getMetaObjectIcon('video')} />
+            <div style={{ width: '100%', userSelect: 'none' }} className={ClassName.ellipsisFont(1)}>
+              {videoMeta?.name}
+            </div>
+          </Content>
+          <Icon
+            containerStyle={{ paddingLeft: 10 }}
+            style={{ cursor: 'pointer' }}
+            name="park-close"
+            onClick={() => setVideoState(s => ({ ...s, floated: false }))}
+          />
+        </Content>
+        {renderCore()}
+      </ResizeAndDrag>,
+      document.body
+    )
+  }
+
+  if (onlyCore) {
+    return renderCore()
+  }
   return (
     <Content
       style={{
-        maxWidth: smallMode ? undefined : 1730,
         margin: 'auto',
         width: '100%',
         overflowY: 'auto',
         height: '100%',
-        flexDirection: smallMode ? 'column' : 'row',
-        padding: '24px 32px',
-        justifyContent: smallMode ? 'flex-start' : 'center',
-        alignItems: smallMode ? 'center' : undefined
+        flexDirection: allColumn ? 'column' : 'row',
+        padding: '24px',
+        justifyContent: allColumn ? 'flex-start' : 'center',
+        alignItems: allColumn ? 'center' : undefined
       }}
       tabIndex={0}
-      gap={smallMode ? 0 : 30}
+      gap={allColumn ? 20 : 30}
       fullHeight
       flex
       ref={outerContainerRef}
     >
-      {!smallMode && <VideoSubtitleSidebar small={!!smallMode} />}
+      {!allColumn && <VideoSubtitleSidebar small={!!allColumn} />}
       <Content
         flex
-        column
         auto
+        fullWidth
+        gap={allColumn || rightColumn ? 20 : 30}
+        fullHeight
         style={{
-          width: smallMode ? '100%' : 0,
-          flexGrow: smallMode ? 0 : 1,
-          maxWidth: 1200
+          flexDirection: rightColumn || allColumn ? 'column' : 'row'
         }}
       >
-        {videoState.floated ? (
-          createPortal(
-            <ResizeAndDrag
-              lockAspectRatio={true}
-              dragHandleClassName="video-drag-handle"
-              minWidth={385}
-              default={{
-                width: 800,
-                height: 'auto',
-                x: 200,
-                y: 200
-              }}
-              style={{
-                zIndex: Zindexes.VideoFloatWindow
-              }}
-              onResizeStop={(e, dir, element) => {
-                element.style.height = 'auto'
-              }}
-            >
-              <Content
-                flex
-                justifyContent="space-between"
-                className={ClassName.Background.pseudoBlubBackground}
-                style={{
-                  borderRadius: '4px 4px 0px 0px',
-                  cursor: 'grab',
-                  padding: '6px 12px'
-                }}
-              >
-                <Content flex gap={10} style={{ flexShrink: 1, flexGrow: 1 }} className="video-drag-handle">
-                  <Icon name={Rendevoz.Utils.Object.getMetaObjectIcon('video')} />
-                  <div style={{ width: '100%', userSelect: 'none' }} className={ClassName.ellipsisFont(1)}>
-                    {videoMeta?.name}
-                  </div>
-                </Content>
-                <Icon
-                  containerStyle={{ paddingLeft: 10 }}
-                  style={{ cursor: 'pointer' }}
-                  name="park-close"
-                  onClick={() => setVideoState(s => ({ ...s, floated: false }))}
-                />
-              </Content>
-              <Content
-                ref={containerRef}
-                flex
-                style={{ height: 'fit-content' }}
-                fullWidth
-                onPointerMove={e => {
-                  setToolbarState(s => {
-                    if (s.visible) return s
-                    else return { ...s, visible: true }
-                  })
-                }}
-                onPointerLeave={e => {
-                  setToolbarState(s => ({ ...s, visible: false }))
-                }}
-              >
-                <AnimatePresence>
-                  {showIcon && (
-                    <motion.div
-                      initial={{ opacity: 0.8, scale: 1, x: '-50%', y: '-50%' }}
-                      animate={{ opacity: 0, scale: 1.3, x: '-50%', y: '-50%' }}
-                      style={{
-                        position: 'absolute',
-                        left: '50%',
-                        top: '50%',
-                        zIndex: 9999,
-                        transform: 'translateX(-50%); translateY(-50%)'
-                      }}
-                      transition={{ duration: 0.6 }}
-                      onAnimationComplete={() => {
-                        setPlayIconVisible(false)
-                        if (videoState.jumpIndicator || videoState.volumeIndicator) {
-                          setVideoState(s => ({
-                            ...s,
-                            jumpIndicator: undefined,
-                            volumeIndicator: undefined
-                          }))
-                        }
-                      }}
-                    >
-                      <Icon
-                        fill={Colors.Font.White}
-                        size={40}
-                        theme="filled"
-                        containerStyle={{
-                          background: 'rgba(0,0,0,0.36)',
-                          borderRadius: 999,
-                          padding: 14
-                        }}
-                        name={getPopIcon()}
-                      />
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-                <VideoCore url={videoState.url}></VideoCore>
-                {videoState.mode !== 'web' && (
-                  <div
-                    style={{
-                      position: 'absolute',
-                      bottom: 0,
-                      left: 0,
-                      right: 0
-                    }}
-                  >
-                    <VideoBottomBar />
-                  </div>
-                )}
-              </Content>
-            </ResizeAndDrag>,
-            document.body
-          )
-        ) : (
-          <Content
-            flex
-            ref={containerRef}
-            style={{ height: 'fit-content' }}
-            fullWidth
-            onPointerMove={e => {
-              setToolbarState(s => {
-                if (s.visible) return s
-                else return { ...s, visible: true }
-              })
-            }}
-            onPointerLeave={e => {
-              setToolbarState(s => ({ ...s, visible: false }))
-            }}
-          >
-            <AnimatePresence>
-              {showIcon && (
-                <motion.div
-                  initial={{ opacity: 0.8, scale: 1, x: '-50%', y: '-50%' }}
-                  animate={{ opacity: 0, scale: 1.3, x: '-50%', y: '-50%' }}
-                  style={{
-                    position: 'absolute',
-                    left: '50%',
-                    top: '50%',
-                    zIndex: 9999,
-                    transform: 'translateX(-50%); translateY(-50%)'
-                  }}
-                  transition={{ duration: 0.6 }}
-                  onAnimationComplete={() => {
-                    setPlayIconVisible(false)
-                    if (videoState.jumpIndicator || videoState.volumeIndicator) {
-                      setVideoState(s => ({
-                        ...s,
-                        jumpIndicator: undefined,
-                        volumeIndicator: undefined
-                      }))
-                    }
-                  }}
-                >
-                  <Icon
-                    fill={Colors.Font.White}
-                    size={40}
-                    theme="filled"
-                    containerStyle={{
-                      background: 'rgba(0,0,0,0.36)',
-                      borderRadius: 999,
-                      padding: 14
-                    }}
-                    name={getPopIcon()}
-                  />
-                </motion.div>
-              )}
-            </AnimatePresence>
-            <VideoCore url={videoState.url}></VideoCore>
-            {videoState.mode !== 'web' && (
-              <div
-                style={{
-                  position: 'absolute',
-                  bottom: 0,
-                  left: 0,
-                  right: 0
-                }}
-              >
-                <VideoBottomBar />
-              </div>
-            )}
-          </Content>
-        )}
-        <VideoStatusBar />
+        <Content
+          flex
+          column
+          auto
+          style={{
+            width: '100%',
+            maxWidth: 1500,
+            height: 'fit-content',
+            flex: 1
+          }}
+        >
+          {videoState.floated ? renderFloated() : renderCore()}
+          <VideoStatusBar />
+        </Content>
+        {allColumn && <VideoSubtitleSidebar small={true} />}
+        <VideoSidebar width={allColumn || rightColumn ? '100%' : 420} />
       </Content>
-      {smallMode && <VideoSubtitleSidebar small={true} />}
-      <VideoSidebar width={smallMode ? '100%' : 420} />
     </Content>
   )
 }
@@ -398,6 +291,7 @@ const transformUrl = (url?: string) => {
   }
   if (url.startsWith('baidudisk')) return url
 }
+
 export const Video = (props: VideoProps) => {
   const { videoId } = props
   const videoAtom = ObjectStore('video').createAtom(videoId)
@@ -406,8 +300,14 @@ export const Video = (props: VideoProps) => {
     const store = createStore()
     store.set(VideoInstanceAtom, {})
     const action = async () => {
-      const video = (await ObjectStore('video').getOneById(videoId)) || (await ObjectStore('video').addOne({ id: videoId }))
-      console.log(video)
+      let video = (await ObjectStore('video').getOneById(videoId)) || (await ObjectStore('video').addOne({ id: videoId }))
+      if (video.subtitleUrl && !video.subtitleList) {
+        video = (await ObjectStore('video').updateOne({
+          id: videoId,
+          subtitleUrl: undefined,
+          subtitleList: [{ lang: 'default', url: video.subtitleUrl }]
+        }))!
+      }
       store.set(VideoStateAtom, {
         ...store.get(VideoStateAtom),
         ...video,
@@ -447,7 +347,8 @@ export const Video = (props: VideoProps) => {
             : data?.videoUrl?.startsWith('baidudisk')
             ? 'baidudisk'
             : 'web',
-        sortedChapters: data?.chapters?.slice().sort((b, a) => b.startTime - a.startTime) || []
+        sortedChapters: data?.chapters?.slice().sort((b, a) => b.startTime - a.startTime) || [],
+        subtitles: []
       })
     })
     return () => {

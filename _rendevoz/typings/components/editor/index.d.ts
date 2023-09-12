@@ -9,7 +9,7 @@ import { CommonElement } from './commonElements'
 import { OuterElement } from './outerElements'
 import DragManager from '@/core/editor/hooks/DragManager'
 import { EditorOverlayManager } from '@/core/editor/components/overlay/useEditorOverlay'
-import { Virtualizer } from '@tanstack/react-virtual'
+import { Range, Virtualizer } from '@tanstack/react-virtual'
 import { CSSProperties, ReactElement, ReactNode } from 'react'
 import { IEditorEvent } from './events'
 
@@ -45,6 +45,10 @@ export type CustomEditor = BaseEditor &
     titleEle?: HTMLElement | null
     on: (event: IEditorEvent) => void
     type?: 'note' | 'webpage'
+    editorMode?: 'note' | 'webpage' | 'syncedBlock'
+    instance: IEditorInstance
+    noBottomPadding?: boolean
+    onSelectionChange?: VoidFunction
   }
 
 export type CustomElement = (CommonElement | OuterElement | CustomTypes['SlateElements']) & {
@@ -56,6 +60,7 @@ export type CustomElement = (CommonElement | OuterElement | CustomTypes['SlateEl
   cardType?: string
   collapsed?: boolean
   level?: number
+  folded?: boolean
 }
 
 declare module 'slate' {
@@ -93,8 +98,20 @@ export type IEditorInstance = Partial<{
   blockOps: {
     getAboveBlock: () => [CustomElement, Path] | undefined
     isIndentableBlock: (type: string) => boolean
-    insertBlockIndent: (path: Path) => void
-    minusBlockIndent: (path: Path) => void
+    insertBlockIndent: (path: Path, recursive?: boolean) => void
+    minusBlockIndent: (path: Path, recursive?: boolean) => void
+  }
+  toggleOps: {
+    haveToggledChildren: (path: Path) => boolean
+    toggleBlock: (path: Path) => void
+    untoggleBlock: (path: Path) => void
+    deleteToggledBlock: (path: Path) => void
+    isTogglableElement: (element: CustomElement) => boolean
+    findAllPossibleChildrenNodes: (path: Path) => [CustomElement, Path][] | undefined
+    // 如果节点未折叠，返回此节点，如果已折叠，返回被这个节点折叠的节点
+    getUnderNodes: (path: Path) => [CustomElement, Path][]
+    getFoldedOffsetPath: (path: Path) => Path
+    extendElements: (elements: CustomElement | CustomElement[]) => [CustomElement, Path][]
   }
   textOps: {
     // get text before selection anchor
@@ -123,6 +140,13 @@ export type IEditorInstance = Partial<{
 }> & {
   values: {
     selectingAll?: boolean
+    // indicator's path and element are safe to use
+    indicator?: {
+      direction: 'left' | 'top' | 'bottom' | 'right'
+      isNested?: boolean
+      element: CustomElement
+      path: Path
+    }
     // selected id to element and pathRef map
     selectedBlocks: Map<
       number,
@@ -179,7 +203,7 @@ export interface EditorProps {
   noteId?: number
   readonly?: boolean
   showTitle?: boolean
-  type: 'webpage' | 'note'
+  type: 'webpage' | 'note' | 'syncedBlock'
   onInstanceInitialized?: (instance: IEditorInstance) => void
   titleStyle?: CSSProperties
   titleContainerStyle?: CSSProperties

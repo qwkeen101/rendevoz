@@ -1,4 +1,4 @@
-import { memo, RefObject, useMemo } from 'react'
+import { memo, RefObject, useMemo, useState } from 'react'
 import { Descendant, Editor, Element as SlateElement, Range, Selection } from 'slate'
 
 import ElementComponent from './element'
@@ -7,10 +7,10 @@ import { ReactEditor } from '../plugin/react-editor'
 import { useSlateStatic } from '../hooks/use-slate-static'
 import { NODE_TO_INDEX, NODE_TO_PARENT } from '../utils/weak-maps'
 import { RenderElementProps, RenderLeafProps, RenderPlaceholderProps } from './editable'
-
-import { useVirtualizer } from '@tanstack/react-virtual'
-import { EDITOR_TO_CHANGED, ID_TO_FIRST_LAYER_MAP } from '../../weakMaps'
+import { useVirtualizer, Range as VirtualRange, defaultRangeExtractor } from '@tanstack/react-virtual'
+import { EDITOR_TO_CHANGED, ID_TO_FIRST_LAYER_EXCEPET_HIDEN_MAP, ID_TO_FIRST_LAYER_MAP } from '../../weakMaps'
 import { useMemoizedFn } from '@/hooks'
+import useEditorInstance from '@/core/editor/hooks/useEditorInstance'
 
 /**
  * Children.
@@ -36,20 +36,45 @@ const VirtualChildren = memo(
     // TODO: fix this earlier rerender triggered in editable
     if (EDITOR_TO_CHANGED.get(editor) === false) {
       editor.onChange?.()
-      console.log('tainted change')
     }
 
     const visibleChildren = useMemo(() => {
       return children.filter(i => !i.hide)
     }, [children])
+    const overscan = readOnly ? editor.children.length : 5
+
+    let rangeExtractor: (r: VirtualRange) => number[] | undefined = undefined
+    const firstLayerMap = ID_TO_FIRST_LAYER_EXCEPET_HIDEN_MAP.get(editor)!
+    if (ReactEditor.isFocused(editor) && selection && window.getSelection()?.toString()) {
+      const startIndex = selection.anchor.path[0]
+      // maybe have hiden nodes
+      const startNodeRealIndex = firstLayerMap.get(editor.children[startIndex].id) || startIndex
+      const endIndex = selection.focus.path[0]
+      const endNodeRealIndex = firstLayerMap.get(editor.children[endIndex].id) || endIndex
+      console.log(startIndex, startNodeRealIndex, endIndex, endNodeRealIndex)
+      rangeExtractor = r => {
+        const s = Math.max(Math.min(startNodeRealIndex - overscan, r.startIndex - overscan), 0)
+        const e = Math.min(Math.max(endNodeRealIndex + overscan, r.endIndex + overscan), editor.children.length)
+        if (e > r.endIndex || s < r.startIndex) {
+          const arr = []
+          for (let i = s; i <= e; i++) {
+            arr.push(i)
+          }
+          return arr
+        }
+        return defaultRangeExtractor(r)
+      }
+    }
+
     const titleHeight = editor.titleEle?.getBoundingClientRect().height || 0
     const virtualizer = useVirtualizer({
       count: visibleChildren.length,
       estimateSize: idx => 30,
       getScrollElement: () => scrollElement?.current || document.body,
-      overscan: readOnly ? editor.children.length : 5,
+      overscan: overscan,
       paddingEnd: editor.noBottomPadding ? 0 : 100,
       paddingStart: titleHeight,
+      rangeExtractor: rangeExtractor || defaultRangeExtractor,
       measureElement: (ele, entry, instance) => {
         if (entry) {
           const size = entry.borderBoxSize[0].blockSize
@@ -97,6 +122,7 @@ const VirtualChildren = memo(
       <>
         <div role="virtual-placeholder" contentEditable={false} style={{ height: first?.start - titleHeight }}></div>
         {virtualItems.map(row => {
+          if (!row) return null
           const { index } = row
           const element = visibleChildren[index]
           return (

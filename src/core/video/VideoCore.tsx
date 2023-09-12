@@ -38,18 +38,6 @@ const VideoCore = memo(({ url }: VideoCoreProps) => {
   )
 
   useEffect(() => {
-    if (videoState.subtitleUrl) {
-      fetch(videoState.subtitleUrl)
-        .then(res => res.text())
-        .then(r => {
-          const parser = new WebVTTParser()
-          const tree = parser.parse(r, 'metadata')
-          setVideoState(s => ({ ...s, subtitles: tree.cues }))
-        })
-    }
-  }, [videoState.subtitleUrl])
-
-  useEffect(() => {
     if (autoPlaySetting) {
       setVideoState(s => ({ ...s, autoPlay: autoPlaySetting, paused: false }))
     }
@@ -57,7 +45,7 @@ const VideoCore = memo(({ url }: VideoCoreProps) => {
 
   useEffect(() => {
     throttleUpdateLastViewTime.run()
-    setVideoState(s => ({...s, jumpTime: undefined}))
+    setVideoState(s => (s.jumpTime ? { ...s, jumpTime: undefined } : s))
   }, [currentTime])
 
   assignProperties(instance, {

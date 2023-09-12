@@ -12,6 +12,7 @@ import useEditorBarState from './useEditorBarState'
 import { globalStore, ObjectStore } from '@/stores'
 import assignBlockOps from '@/core/editor/hooks/instance/assignBlockOps'
 import assignTextOps from '@/core/editor/hooks/instance/assignTextOps'
+import assignToggle from '@/core/editor/hooks/instance/assignToggle'
 
 export const EditorInstanceAtom = atom<IEditorInstance>({})
 
@@ -73,6 +74,7 @@ export const useAssignEditorInstance = (editor: CustomEditor, scrollElementRef: 
   )
   assignBlockOps(instance, editor)
   assignTextOps(instance, editor)
+  assignToggle(instance, editor)
   assignProperties(instance, {
     scrollToBlock: async opts => {
       if (opts.blockId !== undefined) {

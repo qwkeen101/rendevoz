@@ -104,7 +104,7 @@ export const useAssignVideoInstance = (videoId: number, containerRef: RefObject<
         }
       }
     },
-    insertLabel: async (label, shouldJumpBack = true) => {
+    insertLabel: async (label, shouldJumpBack = true, skipCaptureImage = false) => {
       if (!label.videoTime) return
       const setting = getSetting()
       const goBack = setting.video.goBackWhenMakingLabel || 0
@@ -114,10 +114,13 @@ export const useAssignVideoInstance = (videoId: number, containerRef: RefObject<
         await delay(500)
       }
       if (!time) return Promise.reject()
-      const img = await videoInstance.captureCurrentImage?.()
-      if (!img) return Promise.reject()
-      const imgPath = await saveImageLocally(img, { compress: false })
-      console.log(time, label.videoTime)
+      let imgPath: string | undefined = undefined
+      if (!skipCaptureImage) {
+        const img = await videoInstance.captureCurrentImage?.()
+        if (!img) return Promise.reject()
+        imgPath = await saveImageLocally(img, { compress: false })
+      }
+
       const one = await ObjectStore('videoLabel').addOne({
         ...label,
         videoTime: time,

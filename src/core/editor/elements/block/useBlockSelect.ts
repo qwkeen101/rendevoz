@@ -30,11 +30,23 @@ const useBlockSelect = (opts: {
     right: number
     bottom: number
   }>()
+  const checkCanBeSelected = () => {
+    const blockContainer = blockRef.current?.parentElement
+    if (!blockContainer) return false
+    if (
+      blockContainer.closest('[data-spec-type="table"]') ||
+      blockContainer.closest('[data-spec-type="synced"]') ||
+      element.type === 'column' ||
+      element.type === 'columnList'
+    ) {
+      return false
+    }
+    return true
+  }
   const handleCollisionSelectBlock = useMemoizedFn(() => {
-    if (type === 'column' || type === 'columnList' || !editor) return
     const selectArea = SELECT_AREA_MAP.get(editor)
     if (!selectArea || !distanceToScrollElementRef.current) return
-    if (blockRef.current?.parentElement?.closest('[data-spec-type="table"]')) return
+    if (!checkCanBeSelected()) return
     if (isRectsCollision(selectArea, distanceToScrollElementRef.current)) {
       setIsSelected(true)
     } else {
@@ -67,11 +79,7 @@ const useBlockSelect = (opts: {
       if (currentSelected?.pathRef) {
         currentSelected.pathRef.unref()
       }
-      if (
-        blockRef.current?.parentElement?.closest('[data-spec-type="table"]') ||
-        element.type === 'column' ||
-        element.type === 'columnList'
-      ) {
+      if (!checkCanBeSelected()) {
         setIsSelected(false)
         return
       }
@@ -95,11 +103,7 @@ const useBlockSelect = (opts: {
     isSelected,
     handleCollisionSelectBlock,
     selectBlock: () => {
-      if (
-        blockRef.current?.parentElement?.closest('[data-spec-type="table"]') ||
-        element.type === 'column' ||
-        element.type === 'columnList'
-      ) {
+      if (!checkCanBeSelected()) {
         setIsSelected(false)
         return
       }

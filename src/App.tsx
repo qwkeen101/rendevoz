@@ -21,7 +21,6 @@ import { css } from '@emotion/css'
 import { CacheProvider } from '@emotion/react'
 import GlobalTranslateResult from './core/global/translate/GlobalTranslatePanel'
 import GlobalSearchPanel from './core/global/GlobalSearchPanel'
-import GlobalWebview from './core/global/GlobalWebview'
 import 'highlight.js/styles/atom-one-dark.css'
 import GlobalTextSearch from './core/global/GlobalTextSearch'
 import '@/consts/colors.less'
@@ -37,7 +36,6 @@ import DatabasePage from './scenes/DatabasePage'
 import GlobalImporter from './core/global/GlobalImporter'
 import PluginManager from './core/plugin/PluginManager'
 import BuiltinEditorPlugin from './core/plugin/builtin/EditorPlugin'
-import TestPlugin from './TestPlugin'
 import { KeyToRegisteredGlobalElements } from './core/plugin/RegisterMap'
 import { ILayoutTab, TabData } from 'rendevoz'
 import Id from '@/utils/id'
@@ -50,8 +48,8 @@ import createCache from '@emotion/cache'
 import useBetterFilter from '@/core/database/filter/useBetterFilter'
 import MetaGroupPage from '@/scenes/MetaGroupPage'
 import { BuiltInDraggableElement, BuiltInDropOn, BuiltInMetaObjectTypes, BuiltInObjectTypes, BuiltInTabTypes } from '~/typings'
-import { ObjectStore } from '@/stores'
 import { GlobalBaidudisk } from '@/components/fileImporter/baidudisk/BaidudiskDisplayer'
+import SyncedBlockPage from '@/scenes/SyncedBlockPage'
 // import { startDrive } from '@/driver'
 // import ReviewManager from '@/core/review/components/ReviewManager'
 // import TimelineManager from '@/core/database/TimelineManager'
@@ -138,6 +136,10 @@ const RENDEVOZ_DEFAULT_TABS: TabData[ILayoutTab['type']][] = [
   {
     type: 'group',
     content: opts => <MetaGroupPage groupId={opts.objectId} />
+  },
+  {
+    type: 'synced',
+    content: opts => <SyncedBlockPage metaId={opts.objectId} />
   }
 ]
 
@@ -215,7 +217,6 @@ const App = () => {
           <GlobalTextSearch />
           <GlobalGraph />
           <GlobalScreenShot />
-          <GlobalWebview />
           <GlobalObjectPanel />
           <GlobalBaidudisk />
           <GlobalSearchPanel />

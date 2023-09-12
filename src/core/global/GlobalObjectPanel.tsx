@@ -970,7 +970,7 @@ export const SimpleObject = memo(
       )
       return (
         <Content
-          onPointerOver={() => setHovered(true)}
+          onPointerMove={() => setHovered(true)}
           onPointerLeave={() => setHovered(false)}
           flex
           ref={mergedRef}

@@ -767,12 +767,12 @@ const GlobalScreenShot = () => {
                       const imgPath = await saveImageLocally(blob, {
                         compress: false
                       })
+                      setScreenShotLayerVisible(false)
                       const { relatedMeta, normalizedImage, normalizedImageMeta } = await normalizeScreenshot(
                         selectionBoxState.rect,
                         imgPath
                       )
                       if (!normalizedImageMeta) {
-                        setScreenShotLayerVisible(false)
                         return
                       }
                       const one = await ObjectStore('image').addOne({
@@ -801,6 +801,7 @@ const GlobalScreenShot = () => {
                     getImageBlob().then(blob => {
                       a.href = URL.createObjectURL(blob)
                       a.click()
+                      setScreenShotLayerVisible(false)
                     })
                     break
                   }

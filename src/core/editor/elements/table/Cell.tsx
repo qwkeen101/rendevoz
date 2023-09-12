@@ -46,7 +46,6 @@ const TableCell = ({
   const scopedEmitter = useScopedEventEmitter()
   const row = NODE_TO_PARENT.get(element) as TableRowElement | undefined
   const table = (row ? NODE_TO_PARENT.get(row) : undefined) as (CustomElement & TableElement) | undefined
-  const [globalIsDragging] = useGlobalIsDragging()
   const [resizerVisible, toggleResizerVisible] = useToggle(false)
   const [resizing, toggleResizing] = useToggle(false)
   const [selected, toggleSelected] = useToggle(false)
@@ -93,22 +92,7 @@ const TableCell = ({
       scopedEmitter.removeListener('editor', handler)
     }
   }, [])
-  useEffect(() => {
-    if (globalIsDragging) {
-      const pointerMoveHandler = (e: PointerEvent | DragEvent) => {
-        editor.dragManager?.dragInTableCell(e)
-        if (e instanceof DragEvent) {
-          e.preventDefault()
-        }
-      }
-      tdRef.current?.addEventListener('dragover', pointerMoveHandler)
-      tdRef.current?.addEventListener('pointermove', pointerMoveHandler)
-      return () => {
-        tdRef.current?.removeEventListener('dragover', pointerMoveHandler)
-        tdRef.current?.removeEventListener('pointermove', pointerMoveHandler)
-      }
-    }
-  }, [globalIsDragging])
+
   useEffect(() => {
     if (selected) {
       const clickHandler = () => {
@@ -179,13 +163,13 @@ const TableCell = ({
   })
   useEffect(() => {
     if (resizing) {
-      document.addEventListener('pointermove', resizerDragHandler)
-      document.addEventListener('pointerup', resizerDragHandler)
+      document.addEventListener('pointermove', resizerDragHandler, true)
+      document.addEventListener('pointerup', resizerDragHandler, true)
       document.body.classList.add(ClassName.disableUserSelect)
       return () => {
         columnInitialWidth.current = undefined
-        document.removeEventListener('pointermove', resizerDragHandler)
-        document.removeEventListener('pointerup', resizerDragHandler)
+        document.removeEventListener('pointermove', resizerDragHandler, true)
+        document.removeEventListener('pointerup', resizerDragHandler, true)
         document.body.classList.remove(ClassName.disableUserSelect)
         scopedEmitter.emit('editor', {
           type: 'tableCellOp',
@@ -203,6 +187,7 @@ const TableCell = ({
   const colSpan = table && row ? table?.columns.length / row?.children.length : undefined
   return (
     <td
+      data-drag={true}
       id={String(element.id)}
       colSpan={colSpan}
       style={{
@@ -256,6 +241,7 @@ const TableCell = ({
         ></div>
       )}
       <div
+        contentEditable={false}
         onPointerEnter={() => {
           table &&
             scopedEmitter.emit('editor', {

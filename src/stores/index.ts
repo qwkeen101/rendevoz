@@ -37,7 +37,7 @@ export { noteStore as NoteStore } from './note.store'
 export { metaStore as MetaStore } from './meta.store'
 export { collectionStore as CollectionStore } from './collection.store'
 export { objectStore as ObjectStore } from './object.store'
-
+export * as StoreUtils from './utils.store'
 window.addEventListener('DOMContentLoaded', () => {
   globalStore.sub(metaObjectsAtom, debounce(handleMetaObjectsChange, 1000))
   globalStore.sub(metaLinksAtom, debounce(handleMetaLinksChange, 1000))

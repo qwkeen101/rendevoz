@@ -4,7 +4,7 @@ import { Container, Icon } from '../base'
 import DockLayout, { LayoutData } from '../base/dock'
 import LayoutManager from './layoutManager'
 import { css } from '@emotion/css'
-import { useCreateObject, useSetting } from '@/core'
+import { getSetting, useCreateObject, useSetting } from '@/core'
 import { useGlobalAtomValue } from '@/hooks'
 import { SidebarStateAtom } from './sidebar'
 import ClassName from '@/styles/classNames'
@@ -12,6 +12,8 @@ import { ILayoutTab } from '~/typings'
 import { Rendevoz } from '@/core/rendevoz'
 import { getOS } from '@/App'
 import MacTitlebar from '@/components/titlebar/MacTitlebar'
+import * as Algorithm from '../base/dock/Algorithm'
+import * as Serializer from '../base/dock/Serializer'
 
 interface LayoutProps {
   sidebar?: React.ReactNode
@@ -78,27 +80,49 @@ const Layout: FC<LayoutProps> = ({ sidebar }) => {
   const layoutManager = useMemo(() => new LayoutManager(), [])
   const layoutRef = useRef<DockLayout>()
   const [setting] = useSetting()
+  const loadTab = tab => {
+    const restored = Rendevoz.Actions.Layout.restoreSavedTab(tab)
+    console.log(restored)
+    return restored || tab
+  }
   layoutManager.makeTabActive = id => layoutRef.current?.updateTab(id, null, true)
 
   GlobalLayout = layoutManager
 
   useEffect(() => {
+    const setting = getSetting()
+    if (setting.general.autoSaveLayout) {
+      const savedLayout = localStorage.getItem('layout')
+      if (savedLayout) {
+        const parsed = JSON.parse(savedLayout)
+        const after = {
+          ...defaultLayout,
+          ...Serializer.loadLayoutData(parsed, defaultLayout, loadTab)
+        }
+
+        setLayout(after)
+        layoutManager.registerLayout(after)
+        layoutManager.onLayoutChange(layout => {
+          setLayout(layout)
+        })
+        return
+      }
+    }
+
     layoutManager.registerLayout(defaultLayout)
     layoutManager.onLayoutChange(layout => {
       setLayout(layout)
     })
-    Rendevoz.Actions.Open.openHome()
+    setTimeout(() => {
+      Rendevoz.Actions.Open.openHome()
+    })
   }, [])
   const handleLayoutChange = (layout: LayoutData) => {
     setLayout(layout)
     layoutManager.registerLayout(layout)
+    localStorage.setItem('layout', JSON.stringify(layoutRef.current?.saveLayout()))
   }
-  const resolvedBgUrl = useMemo(() => {
-    // if (setting.background.backgroundImage?.startsWith('rendefile')) {
-    //   return setting.background.backgroundImage.replace('rendefile', 'file').replaceAll('\\', '/')
-    // }
-    return setting.background.backgroundImage
-  }, [setting.background.backgroundImage])
+
   const os = getOS()
   return (
     <Container
@@ -112,7 +136,7 @@ const Layout: FC<LayoutProps> = ({ sidebar }) => {
           left: 0,
           width: '100%',
           height: '100%',
-          backgroundImage: `url(${resolvedBgUrl})`,
+          backgroundImage: `url(${setting.background.backgroundImage})`,
           backgroundRepeat: 'no-repeat',
           backgroundSize: 'cover',
           opacity: setting.background.backgroundOpacity ?? 0.1,
@@ -129,9 +153,7 @@ const Layout: FC<LayoutProps> = ({ sidebar }) => {
       {os === 'macos' && <MacTitlebar />}
       <Container auto style={{ height: 0 }}>
         {sidebar}
-        <Container
-          auto
-        >
+        <Container auto>
           {layout && (
             <DockLayout
               ref={layoutRef}

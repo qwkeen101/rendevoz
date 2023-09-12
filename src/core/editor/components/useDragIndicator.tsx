@@ -18,7 +18,7 @@ const useDragIndicator = () => {
   const indicatorManager = {
     setIndicatorState
   }
-  console.log(Colors.Common.SelectColor)
+
   const renderIndicator = createPortal(
     indicatorState?.visible && (
       <div
@@ -66,7 +66,7 @@ const useDragIndicator = () => {
                 width: 16,
                 top: 0,
                 height: indicatorState.height,
-                background: Colors.Common.SelectColorTransparent,
+                background: 'rgba(39, 158, 255, 0.6)',
                 opacity: 0.45,
                 borderRadius: 8
               }}

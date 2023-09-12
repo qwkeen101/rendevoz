@@ -90,6 +90,13 @@ export interface IVideo extends IBase {
   // label ids
   labels?: number[]
   volume?: number
+  subtitleMode?: 'list' | 'article'
+  subtitleLang?: string
+  subtitleFollow?: boolean
+  subtitleList?: {
+    lang: string
+    url: string
+  }[]
 }
 
 export interface IVideoLabel extends ILabel {
@@ -104,4 +111,13 @@ export interface ILocalFile extends IBase {
   specType: 'localFile'
   fileUrl: string
   fileName: string
+}
+
+export interface ISyncedBlock extends IBase {
+  specType: 'syncedBlock'
+  blockChildren: import('slate').Descendant[]
+  syncVersion: number
+  // notes, whiteboards
+  syncedMetaIds: number[]
+  lastCheckTime?: number
 }

@@ -1,6 +1,6 @@
 import { useDebounceFn, useMemoizedFn } from '@/hooks'
 import isHotkey from 'is-hotkey'
-import { FC, memo, RefObject, useCallback, useLayoutEffect, useMemo, useRef } from 'react'
+import { FC, memo, PointerEventHandler, RefObject, useCallback, useLayoutEffect, useMemo, useRef } from 'react'
 import { Descendant, Editor, Node, Path, Transforms } from 'slate'
 import { Editable, ReactEditor, RenderElementProps, RenderLeafProps, Slate, useSlateStatic } from './slate-react'
 import EditorToolbar from './components/toolbar'
@@ -12,7 +12,7 @@ import styles from './index.module.less'
 import Id from '@/utils/id'
 import { InlineElements } from './consts/elements'
 import { KEY } from '@/consts/key'
-import { EDITOR_TO_CHANGED, ID_TO_FIRST_LAYER_MAP, ID_TO_PATH_MAP } from './weakMaps'
+import { EDITOR_TO_CHANGED, ID_TO_FIRST_LAYER_EXCEPET_HIDEN_MAP, ID_TO_FIRST_LAYER_MAP, ID_TO_PATH_MAP } from './weakMaps'
 import useScopedEventEmitter from '@/events/useEventEmitter'
 import { EditableProps } from './slate-react/components/editable'
 import { css } from '@emotion/css'
@@ -26,7 +26,6 @@ import { Element } from './renderer/renderElement'
 import Colors from '@/consts/colors'
 import FontSize from '@/consts/font'
 import useEditorInstance from './hooks/useEditorInstance'
-import { transformTextContentToNameAndDescription } from '../global/globalDragOverlay/utils'
 import useEditorMention from '@/core/editor/hooks/useEditorMention'
 import useEditorDeleteKey from '@/core/editor/hooks/keyboards/useEditorDeleteKey'
 import useEditorArrowKey from '@/core/editor/hooks/keyboards/useEditorArrowKey'
@@ -34,7 +33,6 @@ import useEditorCopyKey from '@/core/editor/hooks/keyboards/useEditorCopyKey'
 import useEditorSelectAllKey from '@/core/editor/hooks/keyboards/useEditorSelectAllKey'
 import useEditorTabKey from '@/core/editor/hooks/keyboards/useEditorTabKey'
 import { getSetting } from '@/core'
-import { truncate } from 'lodash'
 import { truncateString } from '@/utils/text'
 
 const EditableEditorClassName = css({
@@ -135,6 +133,7 @@ export type InnerEditorProps = {
   onBlockMouseMove?: (e: MouseEvent, element: CustomElement) => void
   readonly?: boolean
   compact?: boolean
+  onPointerLeave?: PointerEventHandler
   editorClassName?: string
   toolbarOptions?: EditorProps['toolbarOptions']
 }
@@ -152,7 +151,8 @@ const InnerEditor: FC<InnerEditorProps> = memo(
     readonly,
     compact,
     editorClassName,
-    toolbarOptions
+    toolbarOptions,
+    onPointerLeave
   }) => {
     const scrollElement = scrollElementRef?.current
     const renderInnerElement = useCallback((props: RenderElementProps) => <Element {...props} />, [])
@@ -189,19 +189,28 @@ const InnerEditor: FC<InnerEditorProps> = memo(
       if (!(editor.operations.length === 1 && editor.operations[0].type === 'set_selection')) {
         const firstLayerIdSet = new Set<number>()
         const firstLayerMap = ID_TO_FIRST_LAYER_MAP.get(editor) || new Map<number, Path>()
+
         ID_TO_FIRST_LAYER_MAP.set(editor, firstLayerMap)
+
         firstLayerMap.clear()
         firstLayerIdSet.clear()
+
+        const firstLayerArr = []
         // normalize first layer ids to prevent path conflicts
-        console.log(editor.children.length)
+
         editor.children.forEach((i, idx) => {
           if (firstLayerIdSet.has(i.id)) {
             Transforms.setNodes(editor, { id: Id.getId() }, { at: [idx] })
           }
-          firstLayerIdSet.add(i.id)
-          i.id && firstLayerMap.set(i.id, [idx])
+          if (i.id) {
+            firstLayerIdSet.add(i.id)
+            firstLayerMap.set(i.id, [idx])
+            if (!i.hide) {
+              firstLayerArr.push(i)
+            }
+          }
         })
-        console.log(firstLayerMap)
+        ID_TO_FIRST_LAYER_EXCEPET_HIDEN_MAP.set(editor, new Map(firstLayerArr.map((i, idx) => [i.id, idx])))
         scopedEmitter.emit('editor', {
           type: 'valueChange'
         })
@@ -412,6 +421,7 @@ const InnerEditor: FC<InnerEditorProps> = memo(
           readOnly={readonly}
           suppressContentEditableWarning={true}
           spellCheck="false"
+          onPointerLeave={onPointerLeave}
           onCompositionStart={useCallback(() => {
             scopedEmitter.emit('editor', { type: 'compositionStart' })
           }, [])}

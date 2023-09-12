@@ -1,7 +1,7 @@
-import { Content, Icon, IconWithPopover, Image } from '@/components'
+import { Content, Icon, Image } from '@/components'
 import { useSelectAtomValue } from '@/hooks'
 import { VideoStateAtom } from './hooks/useVideoState'
-import { MetaStore, ObjectStore } from '@/stores'
+import { ObjectStore } from '@/stores'
 import { useVideoInstance } from './hooks/useVideoInstance'
 import { useEffect, useRef, useState } from 'react'
 import { IVideoLabel } from '~/typings'
@@ -9,17 +9,12 @@ import ClassName from '@/styles/classNames'
 import { normalizeSecondsToTime } from './utils'
 import { css } from '@emotion/css'
 import FontSize from '@/consts/font'
-import { AttachmentWrapper } from '../database'
-import BorderInput from '@/components/base/BorderInput'
 import Colors from '@/consts/colors'
-import { DraggableElement } from '../global'
 import { VideoToolbarStateAtom } from './hooks/useVideoToolbarState'
 import { useSetAtom } from 'jotai'
-import NameEditor from './VideoNameEditor'
 import Select from '@/components/base/select'
 import { VideoSidebarStateAtom } from './hooks/useVideoSidebarState'
 import { useTranslation } from 'react-i18next'
-import LabelActionMenu from '../database/LabelActionMenu'
 import { useRenderLabel } from '@/core'
 
 const VideoLabelController = () => {
@@ -54,7 +49,8 @@ const VideoLabelController = () => {
         border: `1px solid ${Colors.Background.Border}`,
         borderRadius: 10,
         overflow: 'hidden',
-        maxHeight: '100%'
+        maxHeight: '100%',
+        flex: 1
       }}
     >
       <Content

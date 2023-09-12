@@ -6,7 +6,7 @@ import { CustomElement } from '~/typings'
 import { AnimatePresence, motion } from 'framer-motion'
 import styles from './index.module.less'
 import './index.less'
-import { ID_TO_ELEMENTS_MAP} from '../../weakMaps'
+import { ID_TO_ELEMENTS_MAP } from '../../weakMaps'
 import { css } from '@emotion/css'
 import { hexToRgb } from '@/utils/color'
 import { useGlobalIsDragging } from '@/core'
@@ -28,7 +28,7 @@ type BlockProps = {
 }
 
 const CardBlocks = ['pdf', 'book-highlight', 'note']
-
+const disableOverflowTypes = ['list-item', 'order-list-item', 'table', 'synced', 'column', 'columnList']
 const Block: FC<React.DetailedHTMLProps<React.HTMLAttributes<HTMLDivElement>, HTMLDivElement> & BlockProps & RenderElementProps> = memo(
   ({ scrollElementRef, blockId, children, ratio, type, attributes, element, onMouseEnter, onMouseLeave, onMouseMove, ...rest }) => {
     const blockRef = useRef<HTMLDivElement>(null)
@@ -163,9 +163,9 @@ const Block: FC<React.DetailedHTMLProps<React.HTMLAttributes<HTMLDivElement>, HT
         key={blockId}
         {...attributes}
         ref={mergedChildrenRef}
-        onMouseEnter={handleMouseEnter}
-        onMouseLeave={handleMouseLeave}
-        onMouseMove={handleMouseMove}
+        onPointerEnter={handleMouseEnter}
+        onPointerLeave={handleMouseLeave}
+        onPointerMove={handleMouseMove}
         suppressContentEditableWarning
         data-level={element?.level}
         style={{
@@ -177,7 +177,7 @@ const Block: FC<React.DetailedHTMLProps<React.HTMLAttributes<HTMLDivElement>, HT
           '--block-font-color': linearFont ? undefined : color,
           color: 'var(--block-font-color)',
           background: nestedBlocks.includes(type) && rgbaBg ? `rgba(${rgbaBg.r},${rgbaBg.g},${rgbaBg.b},0.6)` : undefined,
-          overflow: type === 'table' ? 'visible' : 'hidden',
+          overflow: disableOverflowTypes.includes(type) ? 'visible' : 'hidden',
           ...rest.style
         }}
         className={classNames(
@@ -222,7 +222,8 @@ const Block: FC<React.DetailedHTMLProps<React.HTMLAttributes<HTMLDivElement>, HT
               paddingTop: 12,
               paddingBottom: 12,
               flexGrow: 1,
-              flexShrink: 0
+              flexShrink: 0,
+              overflow: 'visible'
             },
             role: 'column'
           },

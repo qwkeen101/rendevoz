@@ -8,17 +8,80 @@ import { RenderElementProps } from 'slate-react'
 import { CustomElement } from '~/typings'
 import { ReactEditor, useSlateStatic } from '../../slate-react'
 import styles from './index.module.less'
-import FontSize from '@/consts/font'
+import useEditorInstance from '@/core/editor/hooks/useEditorInstance'
+import useToggleList from '@/core/editor/elements/listItem/useToggleList'
+import { Colors } from '@/consts'
+
+const BorderIndent = ({ index }: { index: number }) => {
+  // 20: initial margin left, 15: indent
+  const offset = 24 * (index + 1)
+  return (
+    <div
+      contentEditable={false}
+      style={{
+        position: 'absolute',
+        top: -3,
+        bottom: -3,
+        left: -offset,
+        userSelect: 'none',
+        pointerEvents: 'none',
+        width: 1,
+        transform: 'translateX(calc(0.2em))',
+        background: Colors.Background.Border
+      }}
+    ></div>
+  )
+}
 
 export const ListItem = ({ children, element }: RenderElementProps) => {
+  const { containerRef, showToggle, hidenNodesLength, canToggle, toggle } = useToggleList(element)
+  const instance = useEditorInstance()
   return (
-    <div className={styles.wrapper}>
-      <div style={{ display: 'flex', alignItems: 'center' }} contentEditable={false}>
-        <div role="list-item-marker" data-level={element.level} className={styles.marker}></div>
+    <div className={styles.wrapper} ref={containerRef}>
+      {element.level && element.level > 0 ? (
+        <div contentEditable={false}>
+          {Array.from(Array(element.level)).map((i, index) => (
+            <BorderIndent index={index} key={index} />
+          ))}
+        </div>
+      ) : null}
+      <div style={{ display: 'flex', alignItems: 'center', marginRight: 1 }} contentEditable={false}>
+        <div contentEditable={false} role="list-item-marker" data-level={element.level} className={styles.markerWrapper}>
+          <div
+            contentEditable={false}
+            onClick={() => {
+              if (canToggle) {
+                toggle()
+              }
+            }}
+            className={styles.marker}
+            data-collapse={canToggle}
+            data-folded={element.folded}
+            data-level={element.level}
+            style={{ marginLeft: 0 }}
+          ></div>
+        </div>
       </div>
-      <span role="list-item-line-wrapper" className={css({ width: '100%' })}>
+      <span role="list-item-line-wrapper" style={{ minWidth: 2 }}>
         {children}
       </span>
+      {/*{hidenNodesLength > 0 && element.folded ? (*/}
+      {/*  <span*/}
+      {/*    contentEditable={false}*/}
+      {/*    style={{*/}
+      {/*      userSelect: 'none',*/}
+      {/*      lineHeight: 1,*/}
+      {/*      padding: '3px 5px',*/}
+      {/*      color: Colors.Font.Tertiary,*/}
+      {/*      fontSize: '0.8rem',*/}
+      {/*      margin: '0.2em 10px 0 auto',*/}
+      {/*      background: Colors.Background.ButtonHover,*/}
+      {/*      borderRadius: 4*/}
+      {/*    }}*/}
+      {/*  >*/}
+      {/*    {hidenNodesLength}*/}
+      {/*  </span>*/}
+      {/*) : null}*/}
     </div>
   )
 }
@@ -138,23 +201,26 @@ export const OrderListItem = ({ children, element }: RenderElementProps) => {
   const loopGetNumber = () => {
     if (!Path.hasPrevious(path)) return 1
     let previousPath = Path.previous(path)
-    let previous = Editor.node(editor, previousPath)
-    let num = 1
+    try {
+      let previous = Editor.node(editor, previousPath)
+      let num = 1
+      while (
+        previous &&
+        ((previous[0] as CustomElement).type === 'list-item' ||
+          ((previous[0] as CustomElement).type === 'order-list-item' && (previous[0] as CustomElement).level === element.level))
+      ) {
+        if ((previous[0] as CustomElement).type === 'order-list-item') {
+          num += 1
+        }
 
-    while (
-      previous &&
-      ((previous[0] as CustomElement).type === 'list-item' ||
-        ((previous[0] as CustomElement).type === 'order-list-item' && (previous[0] as CustomElement).level === element.level))
-    ) {
-      if ((previous[0] as CustomElement).type === 'order-list-item') {
-        num += 1
+        if (!Path.hasPrevious(previousPath)) break
+        previousPath = Path.previous(previous[1])
+        previous = Editor.node(editor, previousPath)
       }
-
-      if (!Path.hasPrevious(previousPath)) break
-      previousPath = Path.previous(previous[1])
-      previous = Editor.node(editor, previousPath)
+      return num
+    } catch (e) {
+      return 1
     }
-    return num
   }
 
   const prefix = useMemo(() => {

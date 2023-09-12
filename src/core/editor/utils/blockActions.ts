@@ -6,6 +6,7 @@ import { ReactEditor } from '../slate-react'
 import { EDITOR_TO_KEY_TO_ELEMENT } from '../slate-react/utils/weak-maps'
 import { css, keyframes } from '@emotion/css'
 import { waitFor } from '@/utils/functions'
+import { HeadingToLevel } from '@/core/editor/elements/heading'
 
 export const goToBlock = async (blockId: number, editor: CustomEditor) => {
   await waitForEditorContentInitialized(editor)
@@ -30,20 +31,12 @@ export const goToBlock = async (blockId: number, editor: CustomEditor) => {
       const { leftIndex, rightIndex } = findNearHidenBlocks(path[0], editor.children as CustomElement[])
       Transforms.setNodes(
         editor,
-        { hide: false },
+        { hide: false, folded: false },
         {
-          at: Editor.range(editor, [leftIndex + 1], [rightIndex])
+          at: Editor.range(editor, [leftIndex], [rightIndex - 1])
         }
       )
-      Transforms.setNodes(
-        editor,
-        {
-          folded: false
-        },
-        {
-          at: [leftIndex]
-        }
-      )
+      Transforms.setNodes(editor, { hide: false }, { at: [rightIndex] })
     }
 
     setTimeout(() => {
@@ -101,9 +94,7 @@ export const selectBlock = (blockId: number, instance: IEditorInstance) => {
   if (!editor) return
   goToBlock(blockId, editor).then(() => {
     instance.values.selectedBlocks.set(blockId, null)
-    ID_TO_ELEMENTS_MAP.get(editor)
-      ?.get(blockId)
-      ?.selectBlock()
+    ID_TO_ELEMENTS_MAP.get(editor)?.get(blockId)?.selectBlock()
   })
 }
 
@@ -141,28 +132,60 @@ export const highlightMeta = (elementId: number, editor: CustomEditor) => {
     }, 5600)
   }
 }
-export const highlightHeading = (headingId: number) => {}
 const findNearHidenBlocks = (centerBlockIndex: number, eles: CustomElement[]) => {
-  let leftIndex = centerBlockIndex
-  let rightIndex = centerBlockIndex
-  while (leftIndex) {
-    leftIndex -= 1
-    const currentEle = eles[leftIndex]
-    if ('type' in currentEle && currentEle.type.startsWith('heading')) {
-      break
+  const centerBlock = eles[centerBlockIndex]
+  // 当前块为标题，如果展开需要把前面所有的标题都展开
+  if (centerBlock.type.startsWith('heading')) {
+    const centerBlockLevel = HeadingToLevel[centerBlock.type]
+    let leftIndex = centerBlockIndex
+    let rightIndex = centerBlockIndex
+    // 这里和普通块一样
+    while (rightIndex < eles.length - 1) {
+      rightIndex += 1
+      const currentEle = eles[rightIndex]
+      if ('type' in currentEle && currentEle.type.startsWith('heading')) {
+        break
+      }
     }
-  }
-  while (rightIndex < eles.length - 1) {
-    rightIndex += 1
-    const currentEle = eles[rightIndex]
-    if ('type' in currentEle && currentEle.type.startsWith('heading')) {
-      break
+    while (leftIndex) {
+      leftIndex -= 1
+      const currentEle = eles[leftIndex]
+      if ('type' in currentEle && currentEle.type.startsWith('heading')) {
+        const currHeadingLevel = HeadingToLevel[currentEle.type]
+        if (currHeadingLevel > centerBlockLevel) {
+          break
+        }
+      }
     }
-  }
-  const allEles = eles.slice(leftIndex, rightIndex)
-  return {
-    allEles,
-    leftIndex,
-    rightIndex
+    const allEles = eles.slice(leftIndex, rightIndex)
+    return {
+      allEles,
+      leftIndex,
+      rightIndex
+    }
+  } else {
+    // 当前块为普通块，仅需要展开到上个标题至下个标题
+    let leftIndex = centerBlockIndex
+    let rightIndex = centerBlockIndex
+    while (leftIndex) {
+      leftIndex -= 1
+      const currentEle = eles[leftIndex]
+      if ('type' in currentEle && currentEle.type.startsWith('heading')) {
+        break
+      }
+    }
+    while (rightIndex < eles.length - 1) {
+      rightIndex += 1
+      const currentEle = eles[rightIndex]
+      if ('type' in currentEle && currentEle.type.startsWith('heading')) {
+        break
+      }
+    }
+    const allEles = eles.slice(leftIndex, rightIndex)
+    return {
+      allEles,
+      leftIndex,
+      rightIndex
+    }
   }
 }

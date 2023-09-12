@@ -1,4 +1,4 @@
-import { useMemoizedFn } from '@/hooks'
+import { useClickOutside, useMemoizedFn } from '@/hooks'
 import Id from '@/utils/id'
 import { FC, memo, MouseEventHandler, useCallback, useEffect, useMemo, useRef } from 'react'
 import { createEditor } from 'slate'
@@ -17,7 +17,7 @@ import withEmitter from './plugins/withEmitter'
 import withHtml from './plugins/withHtml'
 import { ID_TO_ELEMENTS_MAP } from './weakMaps'
 import { objectIdToMetaObjectIdMapAtom } from '@/stores/meta.store'
-import { normalizeEditorDragBlocksToGlobalDraggingDetails } from './hooks/useEditorDrag'
+import { normalizeEditorDragBlocksToGlobalDraggingDetails } from './hooks/drag/useEditorDrag'
 import { useGlobalIsDragging } from '@/core'
 import withHandler from './plugins/withHandler'
 import { createStore } from 'jotai/vanilla'
@@ -84,6 +84,14 @@ export const EditorV1: FC<EditorProps> = memo(
     const metaObject = MetaStore.useValue(note?.metaId || (note?.id && globalStore.get(objectIdToMetaObjectIdMapAtom)?.get(note?.id)))
     const [editorState, setEditorState] = useAtom(EditorStateAtom)
     useEffect(() => {
+      if (note && !note.metaId) {
+        const noteMetaObject = Array.from(MetaStore.getMetaObjectsMap().values()).find(i => i.objectId === note.id)
+        if (noteMetaObject) {
+          ObjectStore('note').updateOne({ id: note.id, metaId: noteMetaObject.id })
+        }
+      }
+    }, [note])
+    useEffect(() => {
       const keyDownHandler = () => {
         setBlockHandle(s => (s.visible ? { ...s, visible: false } : s))
       }
@@ -102,11 +110,10 @@ export const EditorV1: FC<EditorProps> = memo(
       setEditorState(s => ({ ...s, outReadOnly: readonly }))
     }, [readonly])
     useEffect(() => {
-      console.log('set state')
       setEditorState(s => ({ ...s, innerReadOnly: defaultReadOnly }))
     }, [defaultReadOnly])
     const readOnly = readonly || editorState.innerReadOnly
-    console.log(readOnly, readonly, editorState.innerReadOnly, defaultReadOnly)
+
     const setReadOnlyEditor = useSetAtom(ReadOnlyEditorAtom)
     useEffect(() => {
       setReadOnlyEditor(readOnly)
@@ -131,12 +138,16 @@ export const EditorV1: FC<EditorProps> = memo(
         overlayManager.open()
       }
     }
-
+    const instance = useEditorInstance()
+    const withInstance = e => {
+      e.instance = instance
+      return e
+    }
     const editor = useMemo(() => {
       const editor = withVoid(
         withHtml(
           withCustomComponent(
-            withShortcuts(withHandler(withEmitter(withColumns(withHistory(withReact(createEditor()))), emitter), handler))
+            withShortcuts(withHandler(withInstance(withEmitter(withColumns(withHistory(withReact(createEditor()))), emitter)), handler))
           )
         )
       )
@@ -151,9 +162,12 @@ export const EditorV1: FC<EditorProps> = memo(
     })
 
     editor.type = type
+    editor.editorMode = type
     editor.id = id
     editor.noteId = noteId
     editor.readonly = !!readOnly
+    editor.note = note
+    editor.instance = instance
     editor.noBottomPadding = noBottomPadding
     editor.on = event =>
       on?.({
@@ -161,8 +175,6 @@ export const EditorV1: FC<EditorProps> = memo(
         editor,
         instance
       })
-
-    const instance = useEditorInstance()
 
     const realTitle = stringTitle || metaObject?.name || note?.title || 'Untitled'
 
@@ -180,7 +192,6 @@ export const EditorV1: FC<EditorProps> = memo(
         editor.currentEnterElement = element
         editor.currentDragElement = e.currentTarget as HTMLElement
         dragManager.registerDragHtmlElement(e.currentTarget as HTMLElement)
-
         setBlockHandle(s => {
           if (s.targetId !== element.id || s.visible === false) {
             const targetRect = (e.currentTarget as HTMLElement).getBoundingClientRect()
@@ -191,6 +202,9 @@ export const EditorV1: FC<EditorProps> = memo(
             if (element.type === 'table') {
               left -= 12
             }
+            // if (instance.toggleOps?.isTogglableElement(element) && instance.toggleOps?.haveToggledChildren(elementPath)) {
+            //   left -= 10
+            // }
             return {
               ...s,
               left,
@@ -237,7 +251,10 @@ export const EditorV1: FC<EditorProps> = memo(
         value: metaObject?.name || note?.title || 'Untitled'
       })
     }, [metaObject?.name, note?.title])
-
+    useClickOutside(() => {
+      console.log('yes')
+      setBlockHandle(s => (s.visible === false ? s : { ...s, visible: false }))
+    }, scrollElementRef)
     return (
       <Content fullWidth fullHeight flex column>
         {showHeader !== false && <EditorHeader title={realTitle} />}
@@ -289,10 +306,13 @@ export const EditorV1: FC<EditorProps> = memo(
                     e.stopPropagation()
                     throttleBlockMove.run(e, element)
                   }}
-                  editorClassName={innerEditorClassName}
-                  onBlockMouseLeave={useCallback(() => {
+                  onBlockMouseLeave={e => {
+                    if (e.pointerType === 'touch') {
+                      return
+                    }
                     setBlockHandle(s => ({ ...s, visible: false }))
-                  }, [])}
+                  }}
+                  editorClassName={innerEditorClassName}
                 />
               </div>
             </div>

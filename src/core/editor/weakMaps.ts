@@ -27,7 +27,7 @@ export interface EditorSelectArea {
 export const SELECT_AREA_MAP = new WeakMap<CustomEditor, EditorSelectArea>()
 
 export const ID_TO_PATH_MAP = new WeakMap<CustomEditor, Map<number, Path>>()
-
+export const ID_TO_FIRST_LAYER_EXCEPET_HIDEN_MAP = new WeakMap<CustomEditor, Map<number, number>>()
 export const ID_TO_FIRST_LAYER_MAP = new WeakMap<CustomEditor, Map<number, Path>>()
 
 export interface ElementFunction {

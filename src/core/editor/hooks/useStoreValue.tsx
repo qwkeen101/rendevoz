@@ -54,7 +54,7 @@ const useStoreValue = (note: INote | undefined, editor: CustomEditor, onContentR
         }
       }
     },
-    { wait: 10000 }
+    { wait: 1000 }
   )
   useEffect(() => {
     if (!noteId || !contentId) {

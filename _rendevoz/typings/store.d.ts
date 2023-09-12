@@ -15,7 +15,7 @@ import {
   IWhiteboard,
   IReviewRecord,
   MetaLink,
-  MetaObject
+  MetaObject, ISyncedBlock
 } from './data'
 import { PartialWithId } from './common'
 import { CustomTypes } from './custom'
@@ -36,6 +36,7 @@ export type BuiltInObjectTypes = {
   video: IVideo
   videoLabel: IVideoLabel
   review: IReviewRecord
+  syncedBlock: ISyncedBlock
 }
 
 export type ObjectFamily = CustomTypes['Object']

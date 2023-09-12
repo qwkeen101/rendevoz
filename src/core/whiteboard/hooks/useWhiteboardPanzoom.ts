@@ -44,12 +44,12 @@ const useWhiteboardPanzoom = () => {
     }
     const pointerDownUpHandler = (e: PointerEvent) => {
       if (e.type === 'pointerdown' && e.button === 1) {
-        setWhiteboardState(s => ({ ...s, isPanning: true }))
+        setWhiteboardState(s => ({ ...s, isPanning: true, pointerMode: 'pan' }))
         middleButtonPressed.current = true
       }
       if (e.type === 'pointerup') {
         middleButtonPressed.current = false
-        setWhiteboardState(s => ({ ...s, isPanning: false }))
+        setWhiteboardState(s => ({ ...s, isPanning: false, pointerMode: s.toolbarPointerMode }))
       }
     }
     if (container) {
@@ -60,24 +60,12 @@ const useWhiteboardPanzoom = () => {
     }
   }, [])
 
-  // useEffect(() => {
-  //   if (whiteboardState.isPanning) {
-  //     flow.panzoom?.resume()
-  //   }
-  //   if (whiteboardState.currentTool === 'freehand' || whiteboardState.currentTool === 'erase') {
-  //     if (whiteboardState.isPanning) {
-  //       flow.panzoom?.resume()
-  //     } else {
-  //       flow.panzoom?.pause()
-  //     }
-  //   }
-  // }, [whiteboardState.isPanning, whiteboardState.currentTool])
-
   useEffect(() => {
     const container = flow.parentContainerEle
     if (container && whiteboardState.pointerMode) {
       container.setAttribute('data-pointer-mode', whiteboardState.pointerMode)
     }
+    container?.setAttribute('data-is-panning', whiteboardState.isPanning ? 'true' : 'false')
     if (whiteboardState.pointerMode === 'pan' && container) {
       const pointerHandler = (e: PointerEvent) => {
         if (e.type === 'pointerdown') {
@@ -93,7 +81,7 @@ const useWhiteboardPanzoom = () => {
         container.removeEventListener('pointerup', pointerHandler)
       }
     }
-  }, [whiteboardState.pointerMode])
+  }, [whiteboardState.pointerMode, whiteboardState.isPanning])
   return {
     containerCursor
   }

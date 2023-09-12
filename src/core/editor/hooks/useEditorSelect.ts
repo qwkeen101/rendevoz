@@ -5,7 +5,7 @@ import _ from 'lodash'
 import { useEffect, useLayoutEffect, useMemo, useRef } from 'react'
 import { EditorOverlayManager } from '../components/overlay/useEditorOverlay'
 import ScrollManager from '../ScrollManager'
-import { CustomEditor } from '~/typings'
+import { CustomEditor, CustomElement } from '~/typings'
 import { searchBlock } from '../utils/algorithm'
 import { getDistanceBetweenElementAndScrollableElement, getDistanceBetweenPointAndScrollableElement } from '../utils/scroll'
 import { ID_TO_ELEMENTS_MAP, SELECT_AREA_MAP } from '../weakMaps'
@@ -81,17 +81,26 @@ const useEditorSelect = (editor: CustomEditor, overlayManager: EditorOverlayMana
         e.preventDefault()
         e.stopPropagation()
         const hasPaths = Array.from(selected.values()).filter(i => i.pathRef)
+        const elements = hasPaths
+          .map(n => {
+            if (n.pathRef?.current) return Editor.node(editor, n.pathRef.current)[0]
+          })
+          .filter(i => i) as CustomElement[]
+        hasPaths.forEach(i => i.pathRef?.unref())
+        const extended = instance.toggleOps?.extendElements(elements)
+        if (extended?.length) {
+          const extendedWithPathRef = extended.map(e => ({
+            element: e[0],
+            pathRef: Editor.pathRef(editor, e[1])
+          }))
 
-        if (hasPaths.length) {
           Editor.withoutNormalizing(editor, () => {
-            hasPaths.forEach(i => {
-              const current = i.pathRef?.current
-              i.pathRef?.unref()
-              if (current) {
+            extendedWithPathRef.forEach(i => {
+              i.pathRef.current &&
                 Transforms.removeNodes(editor, {
-                  at: current
+                  at: i.pathRef.current
                 })
-              }
+              i.pathRef.unref()
             })
           })
           selected.clear()

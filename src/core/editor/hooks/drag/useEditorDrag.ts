@@ -6,17 +6,21 @@ import { useCallback, useEffect, useMemo, useRef } from 'react'
 import { toast } from 'react-hot-toast'
 import { Editor, Path, Transforms } from 'slate'
 import { MetaObject } from '~/typings/data'
-import useDragIndicator from '../components/useDragIndicator'
+import useDragIndicator from '../../components/useDragIndicator'
 import DragManager from './DragManager'
-import ScrollManager from '../ScrollManager'
-import { ReactEditor } from '../slate-react'
-import { CustomEditor, CustomElement, HeadingElement, IEditorInstance, MetaObjectElement } from '~/typings'
-import moveMultiElements from '../utils/moveMultiElements'
-import moveSingleElement from '../utils/moveSingleElement'
-import { ID_TO_ELEMENTS_MAP, ID_TO_PATH_MAP } from '../weakMaps'
-import useIsDragging from './useIsDragging'
+import ScrollManager from '../../ScrollManager'
+import { ReactEditor } from '../../slate-react'
+import { BuiltInDraggableElement, CustomEditor, CustomElement, HeadingElement, IEditorInstance, MetaObjectElement } from '~/typings'
+import moveMultiElements from '../../utils/moveMultiElements'
+import moveSingleElement from '../../utils/moveSingleElement'
+import { ID_TO_ELEMENTS_MAP, ID_TO_PATH_MAP } from '../../weakMaps'
+import useIsDragging from '../useIsDragging'
 import { Rendevoz } from '@/core/rendevoz'
 import useEditorInstance from '@/core/editor/hooks/useEditorInstance'
+import useToggleDrag from '@/core/editor/hooks/drag/useToggleDrag'
+import useDropToNoteElements from '@/core/editor/hooks/drag/useDropToNoteElements'
+import useMoveElements from '@/core/editor/hooks/drag/useMoveElements'
+import useDragCreateSyncBlock from '@/core/editor/hooks/drag/useDragCreateSyncBlock'
 
 export const normalizeEditorDragBlocksToGlobalDraggingDetails = (instance: IEditorInstance) => {
   let normalizedGlobalDraggingDetails: Partial<AvaliableGlobalDraggingElements> = {}
@@ -86,138 +90,37 @@ const useEditorDrag = (editor: CustomEditor, scrollElement?: HTMLElement | null)
   const preventLastMouseMoveRef = useRef(false)
   const { renderIndicator, indicatorManager } = useDragIndicator()
   const instance = useEditorInstance()
-  dragManager.onDrop = ({ direction, isNested, objectId, targetNodeId, shouldAddElements, shouldRemoveElements, event }) => {
-    let targetPath = ID_TO_PATH_MAP.get(editor)?.get(targetNodeId)
-    if (!targetPath) return
-    const targetElement = Editor.node(editor, targetPath)[0] as CustomElement
-    if (direction === 'bottom' && targetElement.type.startsWith('heading') && (targetElement as HeadingElement).folded === true) {
-      const parentEle = Editor.node(editor, Path.parent(targetPath))[0]
-      let currIdx = parentEle.children.findIndex(i => i === targetElement) + 1
-      while (parentEle.children[currIdx] && parentEle.children[currIdx].hide === true) {
-        targetPath = Path.next(targetPath)
-        currIdx += 1
-      }
-    }
-    // if generate a new column and target heading is folded, we need to get hided elements and move to that heading's under
-    if (
-      (direction === 'left' || direction === 'right') &&
-      targetElement.type.startsWith('heading') &&
-      (targetElement as HeadingElement).folded === true
-    ) {
-      const parentEle = Editor.node(editor, Path.parent(targetPath))[0]
-      let currIdx = parentEle.children.findIndex(i => i === targetElement) + 1
-      const shouldMoveIds: number[] = []
-      while (parentEle.children[currIdx] && parentEle.children[currIdx].hide === true) {
-        shouldMoveIds.push(parentEle.children[currIdx].id)
-        currIdx += 1
-      }
-      // in the next macro task, we move to them
-      setTimeout(() => {
-        const entries = shouldMoveIds
-          .map(id => {
-            const path = ID_TO_PATH_MAP.get(editor)?.get(id)
-            if (path) {
-              const ele = Editor.node(editor, path)[0]
-              if (ele) return [ele, path]
-            }
-          })
-          .filter(i => i !== undefined)
-        const currTargetPath = ID_TO_PATH_MAP.get(editor)?.get(targetNodeId)
-        if (currTargetPath && entries) {
-          moveMultiElements(editor, entries, currTargetPath, 'bottom', false)
-        }
-      })
-    }
-    // if we have objectId or drop event, it means need further process
-    if ((objectId || event) && editor.noteId) {
-      emitter
-        .emitWithCallback('global', {
-          type: 'globalDropNeedFurtherProcess',
-          data: {
-            dropOn: {
-              dropOn: 'editor',
-              noteId: editor.noteId
-            },
-            draggingElement: GlobalDragOverlayInstance.draggingDetails,
-            e: event
-          }
-        })
-        .then(
-          obj => {
-            const metaObj = obj as MetaObject
-            const setting = getSetting()
-            console.log(metaObj)
-            if (setting.editor.objectAutoBecomeInline) {
-              const editorNode: CustomElement = {
-                id: Id.getId(),
-                type: 'paragraph',
-                children: [
-                  {
-                    type: 'inline-metaObject',
-                    originId: metaObj.id,
-                    children: [{ text: '' }],
-                    id: Id.getId()
-                  }
-                ]
-              }
-              dragManager.insertNodeAtTargetPlace(editorNode, targetNodeId, direction, isNested)
-              return
-            }
-            const editorNode: MetaObjectElement = {
-              id: Id.getId(),
-              type: 'metaObject',
-              originId: metaObj.id,
-              children: [{ text: '' }]
-            }
-            dragManager.insertNodeAtTargetPlace(editorNode, targetNodeId, direction, isNested)
-          },
-          () => {
-            toast.error('Object creation was cancelled!')
-          }
-        )
-      return
-    }
-    // this means we are dragging multiple blocks
-    if (shouldAddElements && shouldRemoveElements && shouldAddElements === shouldRemoveElements) {
-      const pathMap = ID_TO_PATH_MAP.get(editor)
-      const entries = shouldAddElements
-        .map(ele => (pathMap?.has(ele.id) ? [ele, pathMap.get(ele.id)] : undefined))
-        .filter(i => i !== undefined)
-      moveMultiElements(editor, entries, targetPath, direction, isNested)
-      return
-    }
-    // drag from other components, just add
-    if (shouldAddElements && !shouldRemoveElements) {
+  const handleToggleDrag = useToggleDrag(instance, editor)
+  const handleProcessDrop = useDropToNoteElements(instance, editor)
+  const handleMoveElements = useMoveElements(instance, editor)
+
+  const handleDrop = async (e: PointerEvent | DragEvent) => {
+    // this process doesn't change editor's value
+    const indicator = instance.values.indicator
+    const { shouldAddElements, shouldMoveElements } = await handleProcessDrop(e)
+    // avoid adding elements and moving elements at the same time
+    if (shouldMoveElements.length && shouldAddElements.length) return
+    // this process change layout
+    if (shouldAddElements.length && indicator) {
       const length = editor.children.length
       const entries = shouldAddElements.map((e, idx) => [e, [length + idx]])
       Transforms.insertNodes(editor, shouldAddElements, {
         at: [editor.children.length]
       })
-      moveMultiElements(editor, entries, targetPath, direction, isNested)
-      return
-    }
 
-    if (shouldAddElements && shouldRemoveElements && shouldAddElements[0] === shouldRemoveElements[0]) {
-      const movedSingleElementPath = ID_TO_PATH_MAP.get(editor)?.get(shouldAddElements[0].id)
-      if (movedSingleElementPath) {
-        moveSingleElement(editor, movedSingleElementPath, targetPath, direction, isNested)
-      }
+      moveMultiElements({
+        editor,
+        currNodes: entries,
+        targetPath: indicator.path,
+        direction: indicator.direction,
+        isNested: !!indicator.isNested
+      })
+    }
+    if (shouldMoveElements.length) {
+      handleMoveElements(shouldMoveElements)
     }
   }
-  dragManager.onIndicatorChange = indicator => {
-    dragManager.changeIndicator(indicator)
-    if (indicator.direction) {
-      const indicatorPosition = ID_TO_ELEMENTS_MAP.get(editor)?.get(indicator.id)?.getIndicatorPosition(indicator.direction)
 
-      if (indicatorPosition && !preventLastMouseMoveRef.current) {
-        indicatorManager.setIndicatorState({
-          ...indicatorPosition,
-          visible: true,
-          nested: indicator.isNested
-        })
-      }
-    }
-  }
   dragManager.eventEmitter = emitter
 
   const mouseMoveHandler = useMemoizedFn((e: MouseEvent) => {
@@ -235,8 +138,32 @@ const useEditorDrag = (editor: CustomEditor, scrollElement?: HTMLElement | null)
     }
 
     const indicator = dragManager.drag(e)
+    const targetPath = indicator?.path
+    if (!targetPath) return
 
+    const draggingElement = Rendevoz.Actions.State.Drag.getDraggingDetails() as BuiltInDraggableElement
+    if (draggingElement.type === 'noteBlock') {
+      if (editor.noteId === draggingElement.noteId) {
+        const element = draggingElement.element
+        const path = instance.getElementPathById?.(element.id)
+        if (!path) return
+        if (Path.isChild(targetPath, path)) {
+          return
+        }
+      }
+
+      if (draggingElement.element.type === 'synced' && e.target instanceof HTMLElement && e.target.closest('[data-spec-type="synced"]')) {
+        if (indicator.element.type === 'synced' && (indicator.direction === 'top' || indicator.direction === 'bottom')) {
+        } else {
+          return
+        }
+      }
+    }
     if (indicator) {
+      if (indicator.element && indicator.path) {
+        instance.values.indicator = indicator
+      }
+
       dragManager.changeIndicator(indicator)
       if (indicator.direction) {
         const indicatorPosition = ID_TO_ELEMENTS_MAP.get(editor)?.get(indicator.id)?.getIndicatorPosition(indicator.direction)
@@ -332,7 +259,7 @@ const useEditorDrag = (editor: CustomEditor, scrollElement?: HTMLElement | null)
     globalEventHandler.on('globalDragPointerUp', ({ event }) => {
       preventLastMouseMoveRef.current = true
       if (scrollElement?.contains(event.target as HTMLElement)) {
-        dragManager.drop(event)
+        handleDrop(event)
       }
       scrollManager.endScroll()
       setIsDragging(false)

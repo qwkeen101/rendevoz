@@ -20,6 +20,7 @@ const DraggableElement = forwardRef<
   const dragStartTriggered = useRef(false)
   const pointerHandler = useMemoizedFn((e: PointerEvent) => {
     if (e.type === 'pointerdown') {
+      (e.target as Element).releasePointerCapture(e.pointerId)
       isPressed.current = true
       pressStartTime.current = Date.now()
       dragStartTriggered.current = false

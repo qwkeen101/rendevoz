@@ -3,11 +3,12 @@ import { Editor, Element as SlateElement, Path, Point, Range, Transforms } from 
 import { ReactEditor } from 'slate-react'
 import { CustomEditor, CustomElement } from '~/typings'
 import { Positions } from '../utils/positions'
+import { MetaStore, ObjectStore } from '@/stores'
 
 const softBlockTypes: CustomElement['type'][] = ['highlight-block', 'block-quote']
 
 const withCustomComponent = (editor: CustomEditor) => {
-  const { deleteBackward, insertText, insertBreak, deleteForward, insertNode, insertFragment, apply } = editor
+  const { deleteBackward, insertText, insertBreak, deleteForward, insertNode, insertFragment, apply, instance } = editor
   editor.insertSoftBreak = () => {
     editor.insertText('\n')
   }
@@ -185,13 +186,13 @@ const withCustomComponent = (editor: CustomEditor) => {
           const curr = Editor.above(editor)
           if (curr?.[0].type === 'link' && editor.selection) {
             if (Point.equals(Editor.end(editor, curr[1]), editor.selection.focus)) {
-              console.log('yrs')
               const p = Editor.after(editor, Editor.end(editor, curr[1]))
               if (p) {
                 Transforms.select(editor, p)
               }
             }
           }
+          const offsetPath = instance.toggleOps?.getFoldedOffsetPath(path)
           Transforms.splitNodes(editor, {
             always: true
           })
@@ -202,9 +203,14 @@ const withCustomComponent = (editor: CustomEditor) => {
               { at: Path.next(path) }
             )
           } else {
-            Transforms.setNodes(editor, { id: Id.getId(), background: undefined, color: undefined }, { at: Path.next(path) })
+            Transforms.setNodes(editor, { id: Id.getId(), background: undefined, color: undefined, folded: false }, { at: Path.next(path) })
           }
-
+          if (offsetPath && offsetPath !== path) {
+            Transforms.moveNodes(editor, {
+              at: Path.next(path),
+              to: offsetPath
+            })
+          }
           return
         }
       }

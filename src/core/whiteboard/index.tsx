@@ -1,6 +1,6 @@
 import { Provider, useAtomValue } from 'jotai/react'
 import { createStore } from 'jotai/vanilla'
-import createPanZoom, { PanZoom } from 'panzoom'
+import { createPanZoom } from './panzoom'
 import { memo, useEffect, useLayoutEffect, useMemo, useRef } from 'react'
 import TreeEdgeContainer from './EdgeContainer'
 import { FlowAtom, useFlow, useSetWhiteboardNodes, WhiteboardAtom } from './hooks'
@@ -84,7 +84,6 @@ const WhiteboardInner = memo(
         flow.containerEle = containerRef.current
         flow.parentContainerEle = flow.containerEle.parentElement as HTMLElement
         containerRef.current?.style.setProperty('--zoom-level', '1')
-        const excalidraw = excalidrawRef.current
         const panzoom = createPanZoom(containerRef.current, {
           smoothScroll: false,
           maxZoom: 5,
@@ -93,11 +92,18 @@ const WhiteboardInner = memo(
             return true
           },
           onTouch: e => {
+            e.preventDefault()
             return false
           },
           zoomDoubleClickSpeed: 1,
           beforeMouseDown: e => {
-            // if (flow.selectable) return true
+            const pointerMode = flow.parentContainerEle?.getAttribute('data-pointer-mode')
+            if (pointerMode === 'pan') {
+              return false
+            }
+            if (e.button === 1) {
+              return false
+            }
             if (!(e.target as HTMLElement).hasAttribute('role')) return true
             if ((e.target as HTMLElement).hasAttribute('role')) {
               const role = (e.target as HTMLElement).getAttribute('role')
@@ -111,7 +117,6 @@ const WhiteboardInner = memo(
             }
           },
           beforeWheel: e => {
-            console.log(e)
             const pointerMode = flow.parentContainerEle?.getAttribute('data-pointer-mode')
             if (e.defaultPrevented) {
               return true
@@ -129,7 +134,7 @@ const WhiteboardInner = memo(
               return true
             }
             if (e.shiftKey) {
-              panzoom.moveTo(curr.x - e.deltaY, curr.y)
+              panzoom.moveTo(curr.x - (e.deltaY || e.deltaX), curr.y)
             } else {
               panzoom.moveTo(curr.x, curr.y - e.deltaY)
             }
@@ -277,67 +282,15 @@ const WhiteboardInner = memo(
             touchAction: 'none'
           }
         })}
-        tabIndex={undefined}
+        tabIndex={0}
+        onFocus={() => {
+          flow.focused = true
+        }}
+        onBlur={() => {
+          flow.focused = false
+        }}
         style={{ cursor: containerCursor, touchAction: 'none' }}
       >
-        {/*<div*/}
-        {/*  style={{ position: 'absolute', inset: 0, zIndex: 0 }}*/}
-        {/*  className={css({*/}
-        {/*    '.layer-ui__wrapper': {*/}
-        {/*      display: 'none'*/}
-        {/*    }*/}
-        {/*  })}*/}
-        {/*>*/}
-        {/*  <Excalidraw*/}
-        {/*    ref={r =>*/}
-        {/*      r?.readyPromise?.then(v => {*/}
-        {/*        excalidrawRef.current = v*/}
-        {/*      })*/}
-        {/*    }*/}
-        {/*    UIOptions={{*/}
-        {/*      canvasActions: {*/}
-        {/*        loadScene: false,*/}
-        {/*        changeViewBackgroundColor: false,*/}
-        {/*        clearCanvas: false,*/}
-        {/*        export: false,*/}
-        {/*        saveToActiveFile: false,*/}
-        {/*        toggleTheme: false,*/}
-        {/*        saveAsImage: false*/}
-        {/*      }*/}
-        {/*    }}*/}
-        {/*    renderEmbeddable={() => null}*/}
-        {/*    onChange={(elements, appState, files) => {*/}
-        {/*      console.log(appState)*/}
-        {/*      const { scrollX, scrollY, zoom } = appState*/}
-        {/*      if (appState.zoom.value && panzoomRef.current) {*/}
-        {/*        const realTransform = {*/}
-        {/*          x: scrollX * zoom.value,*/}
-        {/*          y: scrollY * zoom.value*/}
-        {/*        }*/}
-        {/*        const currentTransform = panzoomRef.current?.getTransform()*/}
-        {/*        if (!currentTransform) return*/}
-        {/*        if (currentTransform.x === realTransform.x && currentTransform.y === realTransform.y) return*/}
-        {/*        setWhiteboardTransform([realTransform.x, realTransform.y, zoom.value])*/}
-        {/*        setWhiteboardState(s => ({ ...s, zoom: zoom.value }))*/}
-        {/*        const zoomMultipler = Math.sqrt(1 / zoom.value)*/}
-        {/*        debounceSetZoom.run(zoomMultipler)*/}
-        {/*        panzoomRef.current?.moveTo(realTransform.x, realTransform.y)*/}
-        {/*      }*/}
-        {/*    }}*/}
-        {/*    initialData={{*/}
-        {/*      appState: {*/}
-        {/*        showWelcomeScreen: false,*/}
-        {/*        activeTool: {*/}
-        {/*          type: 'freedraw'*/}
-        {/*        },*/}
-        {/*        penMode: true,*/}
-        {/*        openSidebar: null,*/}
-        {/*        showStats: false,*/}
-        {/*        viewBackgroundColor: 'transparent'*/}
-        {/*      }*/}
-        {/*    }}*/}
-        {/*  />*/}
-        {/*</div>*/}
         <div
           ref={containerRef}
           role="data-container"

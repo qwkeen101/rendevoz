@@ -19,41 +19,41 @@ enableMapSet()
 enablePatches()
 const lang = 'zh-CN'
 initI18n(lang)
-const userAgent = navigator.userAgent.toLowerCase()
-if (userAgent.indexOf(' electron/') <= -1) {
-  let fileHandle: FileSystemDirectoryHandle | undefined = undefined
-  document.body.addEventListener('click', () => {
-    if (!fileHandle)
-      window.showDirectoryPicker().then(res => {
-        fileHandle = res
-        fileHandle.requestPermission({ mode: 'readwrite' })
-      })
-  })
-
-  const { get, set } = Object.getOwnPropertyDescriptor(Image.prototype, 'src')!
-  Object.defineProperty(Image.prototype, 'src', {
-    set(newVal) {
-      if (newVal.startsWith('rendefile')) {
-        const replaced = newVal.replace('rendefile:///imgs/', '')
-        fileHandle?.getDirectoryHandle('imgs').then(i => {
-          i.getFileHandle(replaced)
-            .then(h => h.getFile())
-            .then(file => {
-              const url = URL.createObjectURL(file)
-              set.call(this, url)
-              // console.log(file)
-            })
-        })
-
-        return set.call(this, replaced)
-      }
-      return set.call(this, newVal)
-    },
-    get() {
-      return get.call(this)
-    }
-  })
-}
+// const userAgent = navigator.userAgent.toLowerCase()
+// if (userAgent.indexOf(' electron/') <= -1) {
+//   let fileHandle: FileSystemDirectoryHandle | undefined = undefined
+//   document.body.addEventListener('click', () => {
+//     if (!fileHandle)
+//       window.showDirectoryPicker().then(res => {
+//         fileHandle = res
+//         fileHandle.requestPermission({ mode: 'readwrite' })
+//       })
+//   })
+//
+//   const { get, set } = Object.getOwnPropertyDescriptor(Image.prototype, 'src')!
+//   Object.defineProperty(Image.prototype, 'src', {
+//     set(newVal) {
+//       if (newVal.startsWith('rendefile')) {
+//         const replaced = newVal.replace('rendefile:///imgs/', '')
+//         fileHandle?.getDirectoryHandle('imgs').then(i => {
+//           i.getFileHandle(replaced)
+//             .then(h => h.getFile())
+//             .then(file => {
+//               const url = URL.createObjectURL(file)
+//               set.call(this, url)
+//               // console.log(file)
+//             })
+//         })
+//
+//         return set.call(this, replaced)
+//       }
+//       return set.call(this, newVal)
+//     },
+//     get() {
+//       return get.call(this)
+//     }
+//   })
+// }
 
 self.MonacoEnvironment = {
   getWorker: function (_, label) {

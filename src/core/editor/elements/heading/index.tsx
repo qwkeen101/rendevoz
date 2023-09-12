@@ -14,7 +14,7 @@ import { useSetAtom } from 'jotai'
 import { EditorStateAtom } from '../../hooks/useEditorState'
 import { ID_TO_VISIBLE_HEADING_MAP } from '../../weakMaps'
 
-const HeadingToLevel: Partial<Record<CustomElement['type'], number>> = {
+export const HeadingToLevel: Partial<Record<CustomElement['type'], number>> = {
   'heading-one': 1,
   'heading-two': 2,
   'heading-three': 3,
@@ -33,7 +33,7 @@ const HeadingToElement: Partial<Record<CustomElement['type'], ReactElement>> = {
 const Heading: FC<RenderElementProps> = ({ element, children }) => {
   const { folded } = element as HeadingElement
   const editor = useSlateStatic()
-  const isEmpty = Editor.isEmpty(editor, element) ? true : false
+  const isEmpty = Editor.isEmpty(editor, element)
   const [isComposing, setIsComposing] = useState(false)
   const [showAction, toggleShowAction] = useToggle(false)
   const [containElements, setContainElements] = useState(0)
@@ -42,18 +42,9 @@ const Heading: FC<RenderElementProps> = ({ element, children }) => {
   const handler = useEventHandler('editor')
   const instance = useEditorInstance()
   const headingRef = useRef<HTMLElement>(null)
-  const setEditorState = useSetAtom(EditorStateAtom)
   const calculateContainElements = () => {
     let currentPath = ReactEditor.findPath(editor, element)
-    let containEles = 0
-    const parentEle = Editor.node(editor, Path.parent(currentPath))[0]
-    let currIdx = parentEle.children.findIndex(i => i === element) + 1
-    while (parentEle.children[currIdx] && !parentEle.children[currIdx]?.type?.startsWith('heading')) {
-      currentPath = Path.next(currentPath)
-      currIdx += 1
-      containEles += 1
-    }
-    setContainElements(containEles)
+    setContainElements(instance.toggleOps?.findAllPossibleChildrenNodes(currentPath)?.length || 0)
   }
 
   const debounceCal = useDebounceFn(calculateContainElements, { wait: 300 })
@@ -100,30 +91,11 @@ const Heading: FC<RenderElementProps> = ({ element, children }) => {
             Transforms.deselect(editor)
             e.stopPropagation()
             e.preventDefault()
-            let currentPath = ReactEditor.findPath(editor, element)
-            const parentEle = Editor.node(editor, Path.parent(currentPath))[0]
-            let currIdx = parentEle.children.findIndex(i => i === element) + 1
-            while (parentEle.children[currIdx] && !parentEle.children[currIdx].type.startsWith('heading')) {
-              currentPath = Path.next(currentPath)
-              editor.apply({
-                type: 'set_node',
-                path: currentPath,
-                properties: {
-                  hide: folded
-                },
-                newProperties: {
-                  hide: !folded
-                }
-              })
-              currIdx += 1
+            if (element.folded) {
+              instance.toggleOps?.untoggleBlock(ReactEditor.findPath(editor, element))
+            } else {
+              instance.toggleOps?.toggleBlock(ReactEditor.findPath(editor, element))
             }
-            Transforms.setNodes(
-              editor,
-              {
-                folded: !folded
-              },
-              { at: ReactEditor.findPath(editor, element) }
-            )
           }}
         >
           <Icon

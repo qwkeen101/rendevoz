@@ -8,7 +8,7 @@ import { createPortal } from 'react-dom'
 import { Node } from 'slate'
 import { FormType, Modal } from '@/components'
 import { getSetting, intersectionOfMultipleSets } from '@/core'
-import { DropOn, GlobalDraggingDetails, MetaLink, MetaObject } from '~/typings'
+import { BuiltInDraggableElement, DropOn, GlobalDraggingDetails, MetaLink, MetaObject } from '~/typings'
 import { useEventHandler } from '@/events'
 import useDropObject, { clearDragState } from './useDropObject'
 import { addLinkBetweenTwoMetaObject, createLink, transformTextContentToNameAndDescription } from './utils'
@@ -46,7 +46,7 @@ const useOverlayDrop = () => {
       if (data.draggingElement.type === 'collection') {
         return Promise.reject()
       }
-      console.log(data.draggingElement)
+
       const type = data.draggingElement.type
       if (TypeToRegisteredObject.has(type)) {
         const { normalizeDraggingEleToMetaObject: _customNormalize } = TypeToRegisteredObject.get(type)!
@@ -194,7 +194,7 @@ const useOverlayDrop = () => {
   }
 
   const normalizeDraggingEleToMetaObject = async (
-    dragElement: GlobalDraggingDetails
+    dragElement: BuiltInDraggableElement
   ): Promise<{
     normalizedMetaObject: MetaObject
     alreadyHasMeta: boolean
@@ -269,9 +269,12 @@ const useOverlayDrop = () => {
             pages: dragElement.page ? [dragElement.page] : undefined
           }
           normalizedMetaObject.name =
-            labelObject?.name || (showOriginalText ? truncate(dragElement.content, {
-              length: 20
-            }) : dragElement.content || 'Unnamed PDF Label')
+            labelObject?.name ||
+            (showOriginalText
+              ? truncate(dragElement.content, {
+                  length: 20
+                })
+              : dragElement.content || 'Unnamed PDF Label')
           normalizedMetaObject.coverImgSrc = dragElement.imageUrl
           if (enableDragFromPDFLink && enableAll) {
             const metaLink: PartialWithId<MetaLink> = {
@@ -295,7 +298,39 @@ const useOverlayDrop = () => {
             break
           }
         }
-        const noteMeta = await retrieveMetaObjectByObjectId(dragElement.noteId, 'note')
+        const note = await ObjectStore('note').getOneById(dragElement.noteId)
+        if (!note?.metaId) break
+        const noteMeta = await MetaStore.getMetaObjectById(note.metaId)
+        if (!noteMeta) break
+        // turn in sync block when drag blocks from one note to another note or whiteboard
+        const elements = dragElement.elements ? dragElement.elements : [dragElement.element]
+        const syncBlockMeta = (
+          await ObjectStore('syncedBlock').addOneWithMeta(
+            {
+              blockChildren: elements,
+              syncVersion: 1,
+              syncedMetaIds: [noteMeta.id]
+            },
+            { silent: true }
+          )
+        ).meta
+        emitter.emit('editor', {
+          type: 'turnElementsToSyncBlock',
+          data: {
+            syncBlockMetaId: syncBlockMeta.id,
+            draggingDetails: dragElement
+          }
+        })
+        Object.assign(normalizedMetaObject, { ...syncBlockMeta })
+        if (enableDragFromEditorLink && enableAll) {
+          const metaLink: PartialWithId<MetaLink> = {
+            sourceId: noteMeta.id,
+            targetId: normalizedMetaObject.id,
+            id: Id.getId()
+          }
+          normalizedLinks.push(metaLink)
+        }
+        break
         const noteBlockMeta = getMetaObjectByObjectId(dragElement.blockId)
         if (noteBlockMeta) {
           alreadyHasMeta = true

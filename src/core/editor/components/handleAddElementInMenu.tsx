@@ -9,21 +9,17 @@ import { GlobalObjectPanelInstance } from '@/core/global'
 import { GlobalEventEmitter } from '@/events'
 import { waitFor } from '@/utils/functions'
 import { ID_TO_ELEMENT_FUNCTION_MAP } from '../weakMaps'
+import { MetaStore, ObjectStore } from '@/stores'
 
 export const defaultHandler: DefaultAddElementHandler = (type, instance, mode, opts) => {
   let addElementPath: Path = []
   // let isCurrentElementEmpty = false
   const editor = instance.getSlateEditor?.()
   if (!editor) return
-
   const { currentAddClickElement } = editor
   if (currentAddClickElement) {
     addElementPath = ReactEditor.findPath(editor, currentAddClickElement)
     addElementPath = Path.next(addElementPath)
-    // isCurrentElementEmpty = Editor.isEmpty(editor, currentAddClickElement)
-    // if (isCurrentElementEmpty) {
-    //   addElementPath = Path.previous(addElementPath)
-    // }
   }
   if (mode === 'slash' && editor.selection && Range.isCollapsed(editor.selection)) {
     checkNeedRemoveSlash(type, editor)
@@ -67,6 +63,9 @@ export const defaultHandler: DefaultAddElementHandler = (type, instance, mode, o
       })
       break
     }
+    case 'synced':
+      handleAddSyncedBlock(addElementPath, editor)
+      break
     case 'emoji':
       setTimeout(() => {
         const overlayManager = instance.getOverlayManager?.()
@@ -156,6 +155,31 @@ const removeSlash = (selection: BaseSelection, editor: CustomEditor) => {
       unit: 'character',
       distance: 1
     })
+  }
+}
+
+const handleAddSyncedBlock = async (path: Path, editor: CustomEditor) => {
+  const noteMeta = editor.note?.metaId
+  if (noteMeta) {
+    const syncedBlockMeta = (
+      await ObjectStore('syncedBlock').addOneWithMeta(
+        { syncVersion: 1, syncedMetaIds: [noteMeta], blockChildren: [{ type: 'paragraph', id: Id.getId(), children: [{ text: '' }] }] },
+        { silent: true }
+      )
+    ).meta
+    if (!syncedBlockMeta) return
+
+    Transforms.insertNodes(
+      editor,
+      {
+        type: 'synced',
+        children: [{ text: '' }],
+        syncVersion: 0,
+        originId: syncedBlockMeta.id,
+        id: Id.getId()
+      },
+      { at: path }
+    )
   }
 }
 

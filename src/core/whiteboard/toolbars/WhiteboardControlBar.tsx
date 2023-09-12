@@ -86,7 +86,16 @@ const WhiteboardControlBar = () => {
           name={'park-minus'}
           className={ClassName.circleButton(6, 6)}
         />
-        <div style={{ fontSize: FontSize['12px'], fontWeight: 600, fontFamily: 'Muli' }}>{(whiteboardState.zoom * 100).toFixed(0)}%</div>
+        <div
+          onClick={() => {
+            console.log('click here')
+            const bounding = flow.parentContainerEle?.getBoundingClientRect()
+            flow.panzoom?.smoothZoomAbs(bounding.width / 2, bounding.height / 2, 1)
+          }}
+          style={{ fontSize: FontSize['12px'], fontWeight: 600, fontFamily: 'Muli', cursor: 'pointer' }}
+        >
+          {(whiteboardState.zoom * 100).toFixed(0)}%
+        </div>
         <Icon
           onClick={e => {
             e.preventDefault()

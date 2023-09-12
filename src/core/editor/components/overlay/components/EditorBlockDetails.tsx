@@ -1,7 +1,6 @@
 import { AnimatePopover, Content, Icon, WithBorder } from '@/components/base'
 import { ReactEditor } from '@/core'
 import { CustomEditor, CustomElement } from '~/typings'
-import moveSingleElement from '@/core/editor/utils/moveSingleElement'
 import ClassName from '@/styles/classNames'
 import { useRef, useState } from 'react'
 import { Editor, Transforms } from 'slate'

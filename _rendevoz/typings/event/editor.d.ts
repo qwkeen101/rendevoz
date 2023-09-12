@@ -1,4 +1,4 @@
-import { Event } from '..'
+import { Event, IDraggableElement } from '..'
 import { Operation } from 'slate'
 
 export interface IndicatorChangeEvent {
@@ -18,6 +18,10 @@ export interface TableCellOpEvent {
   rowIndex?: number
   tableId: number
 }
+export interface TurnSyncBlockEvent {
+  syncBlockMetaId: number
+  draggingDetails: IDraggableElement
+}
 export interface EditorEventMap {
   /**
    * These are scoped event
@@ -27,9 +31,10 @@ export interface EditorEventMap {
   valueChange: VoidFunction
   tableCellOp: TableCellOpEvent
   /**
-   * This is global event
+   * These are global event
    */
   operationApplied: OperationAppliedEvent
+  turnElementsToSyncBlock: TurnSyncBlockEvent
 }
 
 export type EditorEvent = Event<EditorEventMap, keyof EditorEventMap>

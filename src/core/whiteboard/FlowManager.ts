@@ -16,7 +16,7 @@ type HistoryItem = {
 class FlowManager {
   public whiteboardId?: number
   private intervalId: ReturnType<typeof setInterval> | undefined
-
+  public focused = false
   public clearSelectBox?: VoidFunction
   constructor() {
     // loop to avoid nodes without width & height

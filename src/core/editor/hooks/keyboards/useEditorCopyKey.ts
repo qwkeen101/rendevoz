@@ -1,5 +1,6 @@
 import { IEditorInstance } from '~/typings'
 import isHotkey from 'is-hotkey'
+import { Editor, Node } from 'slate'
 
 const useEditorCopyKey = (instance: IEditorInstance) => {
   const editor = instance.getSlateEditor?.()
@@ -9,8 +10,11 @@ const useEditorCopyKey = (instance: IEditorInstance) => {
       if (selected.size > 0) {
         e.preventDefault()
         const selectedElements = Array.from(selected.values()).map(i => i.element)
-        if(editor){
-          editor.currentCopyElements = selectedElements
+        const string = selectedElements.map(i => Node.string(i)).join('\n')
+        navigator.clipboard.writeText(string)
+        const extended = instance.toggleOps?.extendElements(selectedElements).map(i => i[0])
+        if (editor && extended) {
+          editor.currentCopyElements = extended
         }
       }
     }

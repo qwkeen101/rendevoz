@@ -18,6 +18,7 @@ import InlineMetaElement from '@/core/editor/elements/meta/InlineMeta'
 import Emoji from '@/core/editor/elements/Emoji'
 import { t } from 'i18next'
 import InlineMetaPicker from '@/core/editor/elements/InlineMetaPicker'
+import Synced from '@/core/editor/elements/synced'
 
 const dividerClassName = css({
   width: '100%',
@@ -92,6 +93,17 @@ const BuiltinTypeToRegistered: Record<CustomElement['type'], RegisterdEditorElem
       slashMenu: true,
       menuType: 'block',
       icon: 'park-table-file'
+    }
+  },
+  synced: {
+    type: 'synced',
+    name: () => t('editor.synced'),
+    renderElement: props => <Synced {...props} />,
+    registerInMenu: {
+      addMenu: true,
+      slashMenu: true,
+      menuType: 'block',
+      icon: 'park-transfer-data'
     }
   },
   tableCell: {

@@ -1,7 +1,7 @@
 import { AnimatePopover, Toolbar, WithBorder } from '@/components/base'
 import Select from '@/components/base/select'
 import IconWithPopover from '@/components/base/IconWithPopover'
-import { CSSProperties, FC, useEffect, useRef, useState } from 'react'
+import { CSSProperties, FC, useEffect, useMemo, useRef, useState } from 'react'
 import { Editor, Element, Range, Transforms } from 'slate'
 import { ReactEditor, useSlate } from '../../slate-react'
 import styles from './index.module.less'
@@ -45,7 +45,6 @@ const EditorToolbar: FC<EditorToolbarProps> = ({ scrollElement, showToolbar, sty
   const { t } = useTranslation()
   const editor = useSlate()
   const { selection } = editor
-  const currentElement = selection ? Editor.node(editor, selection?.anchor?.path, { depth: 1 }) : null
   const toolbarRef = useRef<HTMLElement>(null)
   const position = 'float'
   const [floatPosition, setFloatPosition] = useState<{
@@ -56,6 +55,24 @@ const EditorToolbar: FC<EditorToolbarProps> = ({ scrollElement, showToolbar, sty
   }>()
   const isOnHighlightRef = useRef(false)
   const instance = useEditorInstance()
+  const disableShowHighlight = useMemo(() => {
+    return (
+      Array.from(
+        Editor.nodes(editor, {
+          match: n => {
+            console.log(n)
+            return 'type' in n && n.type === 'synced'
+          }
+        })
+      ).length > 0
+    )
+  }, [floatPosition?.visible])
+  let currentElement
+  try {
+    currentElement = selection ? Editor.node(editor, selection?.anchor?.path, { depth: 1 }) : null
+  } catch (e) {
+    console.error(e)
+  }
   editor.onHighlightClick = id => {
     const location = instance.getHighlightLocation?.(id)
     if (location?.length) {
@@ -80,7 +97,6 @@ const EditorToolbar: FC<EditorToolbarProps> = ({ scrollElement, showToolbar, sty
   }
   const handleMouseUp = useMemoizedFn((e: MouseEvent) => {
     const { selection, readonly } = editor
-    console.log(ReactEditor.isFocused(editor))
     const windowSelection = window.getSelection()
     if (!ReactEditor.toDOMNode(editor, editor).contains(e.target)) return
     if (
@@ -120,7 +136,9 @@ const EditorToolbar: FC<EditorToolbarProps> = ({ scrollElement, showToolbar, sty
   })
 
   const handleMouseDown = (e: MouseEvent) => {
+    console.log(toolbarRef.current, e.target)
     if (!toolbarRef.current?.contains(e.target)) {
+      console.log('clear')
       window.getSelection()?.empty()
       setFloatPosition(s => ({ ...s, visible: false }))
       isOnHighlightRef.current = false
@@ -132,7 +150,7 @@ const EditorToolbar: FC<EditorToolbarProps> = ({ scrollElement, showToolbar, sty
     }
   }
   const handleScroll = e => {
-    setFloatPosition(s => ({...s, visible: false}))
+    setFloatPosition(s => ({ ...s, visible: false }))
   }
   useEffect(() => {
     if (floatPosition?.visible && editor.selection && !isOnHighlightRef.current) {
@@ -156,13 +174,21 @@ const EditorToolbar: FC<EditorToolbarProps> = ({ scrollElement, showToolbar, sty
     }
   })
   const isMarkActive = format => {
-    const marks = Editor.marks(editor)
-    return marks ? format in marks && marks[format] !== undefined : false
+    try {
+      const marks = Editor.marks(editor)
+      return marks ? format in marks && marks[format] !== undefined : false
+    } catch (e) {
+      return false
+    }
   }
 
   const getMark = (mark: string) => {
-    const marks = Editor.marks(editor)
-    return marks ? marks[mark] : undefined
+    try {
+      const marks = Editor.marks(editor)
+      return marks ? marks[mark] : undefined
+    } catch (e) {
+      console.log(e)
+    }
   }
 
   const renderToolbar = () => (
@@ -232,7 +258,7 @@ const EditorToolbar: FC<EditorToolbarProps> = ({ scrollElement, showToolbar, sty
           ></Select>
         )}
 
-      {toolbarOptions?.highlight !== false && (
+      {toolbarOptions?.highlight !== false && !disableShowHighlight && (
         <Toolbar.Item
           tooltip={t('general.highlight')}
           iconName="park-high-light"
@@ -264,7 +290,7 @@ const EditorToolbar: FC<EditorToolbarProps> = ({ scrollElement, showToolbar, sty
         iconName="park-link"
         onClick={() => {
           on({ action: 'link' })
-          setFloatPosition(s => ({...s, visible: false}))
+          setFloatPosition(s => ({ ...s, visible: false }))
         }}
       />
       <Toolbar.Item
@@ -346,7 +372,7 @@ const EditorToolbar: FC<EditorToolbarProps> = ({ scrollElement, showToolbar, sty
       )}
     </Toolbar>
   )
-  console.log(showToolbar, floatPosition, editor.noteId)
+
   // only render when have noteid
   const renderFloatToolbar = () =>
     createPortal(

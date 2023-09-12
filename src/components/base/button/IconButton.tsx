@@ -30,6 +30,7 @@ const IconButton = forwardRef(
       spin,
       suffixStr,
       enabled,
+      onSuffixIconClick,
       suffixIcon,
       size,
       ...rest
@@ -47,6 +48,7 @@ const IconButton = forwardRef(
       selected?: boolean
       style?: CSSProperties
       suffixIcon?: string
+      onSuffixIconClick?: React.MouseEventHandler
       size?: number
       suffixStr?: string | number
       tooltip?: string
@@ -96,7 +98,7 @@ const IconButton = forwardRef(
           {icon && <Icon spin={spin} name={icon} size={size} />}
           {text && <div className={ClassName.ellipsisFont(1)}>{text}</div>}
           {enabled && <Icon name="park-check-small" containerStyle={{ marginLeft: 'auto' }} />}
-          {suffixIcon && <Icon name={suffixIcon} containerStyle={{ marginLeft: 'auto' }} />}
+          {suffixIcon && <Icon onClick={onSuffixIconClick} name={suffixIcon} containerStyle={{ marginLeft: 'auto' }} />}
           {suffixStr && (
             <span className={ClassName.description()} style={{ fontSize: 'inherit' }}>
               {suffixStr}

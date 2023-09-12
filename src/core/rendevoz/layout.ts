@@ -24,6 +24,24 @@ const openTabInWhiteboard = (data: ILayoutTab) => {
   return false
 }
 
+const restoreSavedTab = (tab: { type: string; objectId: number; id: string }) => {
+  const { type, objectId, id } = tab
+  const tabData = TabDataMap.get(type)
+  if (!tabData) return
+  const initialized = initializeOneTab(tabData, { type, objectId })
+  if (initialized) {
+    const { layoutTab } = initialized
+    LayoutIdToTabMap.set(id, layoutTab)
+    return {
+      content: layoutTab.tabContent,
+      id,
+      title: 'New Tab',
+      type,
+      objectId
+    }
+  }
+}
+
 const openNewTab = ({ data }) => {
   const setting = getSetting()
   const { type } = data
@@ -40,7 +58,6 @@ const openNewTab = ({ data }) => {
     const maybeExistTab = hasTargetTab(data)
     // open existing tab
     if (maybeExistTab) {
-      console.log(maybeExistTab)
       makeTabActive(maybeExistTab)
       const targetTab = LayoutIdToTabMap.get(maybeExistTab)
       // data.onInstanceInitialized?.(targetTab?.instance)
@@ -54,13 +71,14 @@ const openNewTab = ({ data }) => {
   if (initializedTab) {
     const { layoutTab } = initializedTab
     const id = Id.getStrId()
-    console.log(layoutTab)
     LayoutIdToTabMap.set(id, layoutTab)
     tabData.onTabActive?.()
     GlobalLayout?.registerNewTab({
       content: layoutTab.tabContent,
       id,
-      title: 'New Tab'
+      title: 'New Tab',
+      type: layoutTab.type,
+      objectId: layoutTab.objectId
     })
   }
 }
@@ -141,7 +159,8 @@ const Layout = {
   makeTabActive,
   initializeOneTab,
   getTab,
-  getVisibleTabs
+  getVisibleTabs,
+  restoreSavedTab
 }
 
 export default Layout

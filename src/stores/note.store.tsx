@@ -6,7 +6,7 @@ import { INote } from '~/typings/data'
 import { SearchableDocument, SearchStore } from './search.store'
 import { CustomEditor } from '~/typings'
 import { saveBlobLocally } from '@/utils/file'
-
+import { Descendant } from 'slate'
 export const notesAtom = atom(new Map<number, INote>())
 
 const createNoteStore = () => {
@@ -22,7 +22,7 @@ const createNoteStore = () => {
     )
     return realId
   }
-  const getNoteValue = async (id: number) => {
+  const getNoteValue = async (id: number): Promise<Descendant[] | undefined> => {
     const value = await blobDb.get(id)
     if (value) {
       if (value.value) {
@@ -41,10 +41,8 @@ const createNoteStore = () => {
       const fileUrl = value.fileUrl
       if (fileUrl) {
         const res = await fetch(fileUrl)
-        const text = await res.text()
-        const obj = JSON.parse(text)
-        console.log(obj, id)
-        return obj as Descendant[]
+        const text = await res.json()
+        return text as Descendant[]
       }
     }
   }

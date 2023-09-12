@@ -17,6 +17,7 @@ export default defineConfig(({ command }) => ({
       }
     }
   },
+  assetsInclude: ['**/*.bcmap'],
   define: {
     APP_VERSION: JSON.stringify(process.env.npm_package_version),
     'process.env': {}

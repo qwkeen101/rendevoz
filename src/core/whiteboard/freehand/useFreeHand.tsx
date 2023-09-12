@@ -95,9 +95,9 @@ const useFreeHand = () => {
   const isPressed = useRef(false)
   const handlePointerDown: React.PointerEventHandler<SVGSVGElement> = e => {
     if (whiteboardState.isPanning) return
+    if (whiteboardState.pointerMode === 'pan') return
     if (e.isPrimary) {
       e.preventDefault()
-      e.stopPropagation()
       isPressed.current = true
     }
     ;(e.target as SVGSVGElement).setPointerCapture(e.pointerId)
@@ -113,7 +113,6 @@ const useFreeHand = () => {
     const transformedXY = flow.transformPointer(e)
     if (transformedXY && points) {
       e.preventDefault()
-      e.stopPropagation()
       points.push([Number(transformedXY.x.toFixed(4)), Number(transformedXY.y.toFixed(4)), e.pressure])
       setPoints([...points])
     }
@@ -159,7 +158,12 @@ const useFreeHand = () => {
           overflow: 'visible'
         }}
         onPointerDown={handlePointerDown}
-        onPointerMove={rafPointerMove}
+        onPointerMove={e => {
+          if (whiteboardState.pointerMode !== 'pan') {
+            e.preventDefault()
+            rafPointerMove(e)
+          }
+        }}
         onPointerUp={handlePointerUp}
       ></svg>
     )

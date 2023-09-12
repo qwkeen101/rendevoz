@@ -14,6 +14,8 @@ export interface INote extends IBase {
   labels?: number[]
   fontSize?: number
   width?: 'default' | 'full' | 'wider'
+  // synced blocks meta ids
+  syncedBlocks?: number[]
 }
 
 export interface NoteBlock {

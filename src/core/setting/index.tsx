@@ -63,6 +63,7 @@ const defaultSetting: Setting = {
   },
   shortcut: {},
   general: {
+    autoSaveLayout: false,
     defaultLanguage: 'en-US',
     openNewTab: 'open existing tab',
     darkMode: true,

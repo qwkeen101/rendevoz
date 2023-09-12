@@ -42,7 +42,8 @@ export const TypeToNodeRadius: Record<MetaObject['type'], number> = {
   videoLabel: 10,
   video: 15,
   audio: 15,
-  localFile: 15
+  localFile: 15,
+  syncedBlock: 15
 }
 
 export const getRadius = (type?: MetaObject['type']) => {

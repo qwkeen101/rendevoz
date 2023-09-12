@@ -35,6 +35,7 @@ export type BuiltInMetaObjectTypes =
   | 'localFile'
   | 'videoLabel'
   | 'group'
+  | 'syncedBlock'
 
 // sourceType: note / metaObject / pdf document
 export interface MetaObject extends IBase {

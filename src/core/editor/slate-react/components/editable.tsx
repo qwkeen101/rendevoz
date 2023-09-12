@@ -159,8 +159,6 @@ export const Editable = memo(
 
     const [, forceRender] = useReducer((s) => s + 1, 0);
 
-    console.log("rerender editor");
-
     EDITOR_TO_FORCE_RENDER.set(editor, forceRender);
 
     // Update internal state on each render.
@@ -197,7 +195,6 @@ export const Editable = memo(
     // while a selection is being dragged.
     const onDOMSelectionChange = useCallback(
       throttle(() => {
-        console.log("selection change");
         if (
           (IS_ANDROID || !ReactEditor.isComposing(editor)) &&
           (!state.isUpdatingSelection || androidInputManager?.isFlushing()) &&

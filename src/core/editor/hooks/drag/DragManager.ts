@@ -4,10 +4,10 @@ import { Transforms } from 'slate'
 import { getDistanceBetweenPointAndElement, getElementId } from '@/utils'
 import { GlobalDragOverlayInstance, ReactEditor } from '@/core'
 import { CustomEditor, CustomElement } from '~/typings'
-import { searchBlock } from '../utils/algorithm'
-import moveSingleElement from '../utils/moveSingleElement'
-import { getDistanceBetweenPointAndScrollableElement } from '../utils/scroll'
-import { ID_TO_ELEMENTS_MAP, ID_TO_PATH_MAP } from '../weakMaps'
+import { searchBlock } from '../../utils/algorithm'
+import moveSingleElement from '../../utils/moveSingleElement'
+import { getDistanceBetweenPointAndScrollableElement } from '../../utils/scroll'
+import { ID_TO_ELEMENTS_MAP, ID_TO_PATH_MAP } from '../../weakMaps'
 import { checkDropCanBeMeta } from '@/core/global/globalDragOverlay/useDropObject'
 import { TypeToRegisteredObject } from '@/stores/object.store'
 
@@ -81,20 +81,33 @@ class DragManager {
       })
   }
 
-  public dragInTableCell = (e: PointerEvent) => {
-    // cell is also like column
-    // get in which cell
-    const cellContainer = e.currentTarget as HTMLTableCellElement
-    const result = this.dragInColumnContainer(cellContainer, e)
+  // drag in nested blocks like table cell
+  public dragInNestedColumnLike = (e: PointerEvent) => {
+    const container = (e.target as HTMLElement).closest('[data-drag="true"]')
+    if (!container) return
+    console.log(container)
+    const result = this.dragInColumnContainer(container, e)
     if (result) {
-      this.onIndicatorChange?.(result)
+      return result
     }
+  }
+  private checkIsDraggingInNestedBlock = (e: PointerEvent) => {
+    const target = e.target
+    if (!(target instanceof HTMLElement)) return false
+    if (target.closest('[data-spec-type="table"],[data-spec-type="synced"]')) {
+      return true
+    }
+    return false
   }
   dragResult = (direction: 'top' | 'left' | 'right' | 'bottom', id?: number, e: PointerEvent): Indicator => {
     let shouldNested = false
+    let element = undefined,
+      path = undefined
     if (this.editor && id) {
       const targetElement = ID_TO_ELEMENTS_MAP.get(this.editor)?.get(id)
       if (targetElement) {
+        element = targetElement.getElement()
+        path = ID_TO_PATH_MAP.get(this.editor)?.get(element.id)
         const type = targetElement.getElement().type
         if (direction === 'bottom' && (type === 'list-item' || type === 'order-list-item')) {
           const targetBound = targetElement.getClientBound()
@@ -114,12 +127,18 @@ class DragManager {
     return {
       direction,
       id,
+      element,
+      path,
       isNested: shouldNested
     }
   }
+
   drag = (e: PointerEvent): Indicator | undefined => {
     if (!this.scrollElement || !GlobalDragOverlayInstance?.draggingDetails || !this.editor || this.blockElementsArray.length === 0) {
       return
+    }
+    if (this.checkIsDraggingInNestedBlock(e)) {
+      return this.dragInNestedColumnLike(e)
     }
     const dragResult = this.dragResult
     const distanceToScrollElement = getDistanceBetweenPointAndScrollableElement({ x: e.clientX, y: e.clientY }, this.scrollElement)
@@ -296,207 +315,6 @@ class DragManager {
   changeIndicator = (indicator: Indicator) => {
     this.indicator = indicator
   }
-
-  drop = async (e?: PointerEvent | DragEvent) => {
-    if (this.indicator && this.editor) {
-      // first get indicator
-      const { direction, isNested, id } = this.indicator
-      if (!id) return
-      const draggingEle = GlobalDragOverlayInstance.draggingDetails
-      if (!draggingEle && e !== undefined && !(e instanceof DragEvent)) return
-
-      // this means not dragging something outside editor, such as pdf / pdf element / meta element, etc. And is dragging things of the same note.
-      const isDraggingInSameNoteIdEditor = draggingEle?.type === 'noteBlock' && draggingEle.noteId === this.editor.noteId
-      // reset cursor
-      document.body.style.cursor = 'auto'
-      const isDraggingNoteElement = draggingEle?.type === 'noteBlock'
-      // we need to process this differently
-      console.log('get here 2', isDraggingNoteElement, draggingEle)
-      if (isDraggingNoteElement) {
-        if (!draggingEle.element && !draggingEle.elements) return
-        const isMultipleDrag = draggingEle.elements !== undefined
-        if (isMultipleDrag) {
-          // if in same note, we just need to change the positions of the selected blocks
-          if (isDraggingInSameNoteIdEditor) {
-            this.onDrop?.({
-              targetNodeId: id,
-              isNested,
-              direction,
-              shouldAddElements: draggingEle.elements!,
-              shouldRemoveElements: draggingEle.elements!
-            })
-          } else {
-            this.onDrop?.({
-              targetNodeId: id,
-              isNested,
-              direction,
-              shouldAddElements: draggingEle.elements!.map(e => ({
-                ...e,
-                id: Id.getId()
-              }))
-            })
-          }
-        } else {
-          if (!draggingEle.element) return
-          if (isDraggingInSameNoteIdEditor) {
-            this.onDrop?.({
-              targetNodeId: id,
-              direction,
-              isNested,
-              shouldAddElements: [draggingEle.element],
-              shouldRemoveElements: [draggingEle.element]
-            })
-          } else {
-            this.onDrop?.({
-              targetNodeId: id,
-              direction,
-              isNested,
-              shouldAddElements: [
-                {
-                  ...draggingEle.element,
-                  id: Id.getId()
-                }
-              ]
-            })
-          }
-        }
-      }
-      // we are not dragging note elements, maybe something eles
-      else {
-        let ele = {
-          id: Id.getId(),
-          children: [{ text: '' }]
-        }
-        let needFurtherProcess:
-          | boolean
-          | {
-              objectId: number
-            } = false
-        if (e instanceof DragEvent) {
-          // not meta, just plain text drop
-          const canBeMeta = checkDropCanBeMeta(e)
-          if (!canBeMeta) {
-            if (e.dataTransfer?.getData('text/plain')) {
-              const plainText = e.dataTransfer.getData('text/plain')
-              this.onDrop?.({
-                targetNodeId: id,
-                direction,
-                isNested,
-                shouldAddElements: [
-                  {
-                    type: 'paragraph',
-                    id: Id.getId(),
-                    children: [
-                      {
-                        text: plainText
-                      }
-                    ]
-                  }
-                ]
-              })
-              return
-            }
-          }
-          this.onDrop?.({
-            targetNodeId: id,
-            direction,
-            isNested,
-            event: e
-          })
-          return
-        }
-        if (!draggingEle) return
-        if (draggingEle.type && TypeToRegisteredObject.get(draggingEle.type)?.allowDropOnEditor === true) {
-          needFurtherProcess = {
-            objectId: 1
-          }
-        }
-        switch (draggingEle.type) {
-          // need further process: add meta object
-          case 'pdfLabel': {
-            draggingEle.labelId &&
-              (needFurtherProcess = {
-                objectId: draggingEle.labelId
-              })
-            break
-          }
-          case 'metaElement': {
-            draggingEle.metaId &&
-              (needFurtherProcess = {
-                objectId: draggingEle.metaId
-              })
-            break
-          }
-          case 'pdf': {
-            draggingEle.pdfId &&
-              (needFurtherProcess = {
-                objectId: draggingEle.pdfId
-              })
-            break
-          }
-          case 'image': {
-            ele = {
-              ...ele,
-              type: 'image',
-              url: draggingEle.url,
-              children: [{ text: '' }]
-            }
-            break
-          }
-          case 'note': {
-            draggingEle.noteId &&
-              (needFurtherProcess = {
-                objectId: draggingEle.noteId
-              })
-            break
-          }
-          case 'whiteboard': {
-            draggingEle.whiteboardId &&
-              (needFurtherProcess = {
-                objectId: draggingEle.whiteboardId
-              })
-            break
-          }
-          case 'webpageLabel': {
-            draggingEle.highlightId &&
-              (needFurtherProcess = {
-                objectId: draggingEle.highlightId
-              })
-            break
-          }
-          case 'noteLabel': {
-            draggingEle.highlightId &&
-              (needFurtherProcess = {
-                objectId: draggingEle.highlightId
-              })
-            break
-          }
-          case 'videoLabel': {
-            draggingEle.id &&
-              (needFurtherProcess = {
-                objectId: draggingEle.id
-              })
-          }
-        }
-        if (typeof needFurtherProcess === 'object') {
-          this.onDrop?.({
-            targetNodeId: id,
-            direction,
-            isNested,
-            objectId: needFurtherProcess.objectId
-          })
-        } else {
-          this.onDrop?.({
-            targetNodeId: id,
-            direction,
-            isNested,
-            shouldAddElements: [ele]
-          })
-        }
-      }
-    }
-  }
-
   public insertNodeAtTargetPlace = (
     node: Partial<CustomElement>,
     targetNodeId: number,

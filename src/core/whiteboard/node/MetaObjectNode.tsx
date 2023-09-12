@@ -12,6 +12,7 @@ import FontSize from '@/consts/font'
 import WebpageNode from '@/core/whiteboard/node/WebpageNode'
 import { Rendevoz } from '@/core/rendevoz'
 import { useWhiteboardInstance } from '@/core/whiteboard/hooks/useWhiteboardInstance'
+import SyncedBlockNode from '@/core/whiteboard/node/SyncedBlockNode'
 
 const MetaObjectNode: FC<InnerNodeProps> = ({ node: n, setPopoverElements, setNodeState, onNameChange }) => {
   const node = n as IWhiteboardNode & { type: 'metaObject' }
@@ -38,7 +39,7 @@ const MetaObjectNode: FC<InnerNodeProps> = ({ node: n, setPopoverElements, setNo
 
   useEffect(() => {
     if (metaObject?.type) {
-      if (['note', 'pdf', 'image', 'webpage', 'video'].includes(metaObject.type)) {
+      if (['note', 'pdf', 'image', 'webpage', 'video', 'syncedBlock'].includes(metaObject.type)) {
         setPopoverElements?.(eles => {
           return [
             ...eles,
@@ -57,7 +58,7 @@ const MetaObjectNode: FC<InnerNodeProps> = ({ node: n, setPopoverElements, setNo
                 />
               </Tooltip>
             ),
-            ['note', 'webpage', 'video', 'pdf'].includes(metaObject.type)
+            ['note', 'webpage', 'video', 'pdf', 'syncedBlock'].includes(metaObject.type)
               ? () => (
                   <Tooltip position="top" content={!getNodeState().expanded ? 'Expand Node' : 'Fold Node'}>
                     <Icon
@@ -306,6 +307,8 @@ const MetaObjectNode: FC<InnerNodeProps> = ({ node: n, setPopoverElements, setNo
             />
           )
         }
+        case 'syncedBlock':
+          return <SyncedBlockNode node={node} />
         default: {
           return hasImage ? hasImageRenderer() : <CommonRenderer />
         }

@@ -49,6 +49,7 @@ const EditorHeader = ({ title }: { title: string }) => {
         <IconWithPopover
           disableNudge={true}
           padding={6}
+          renderOnParent={false}
           placement={['bottom']}
           content={
             <WithBorder padding={6} style={{ minWidth: 160, fontSize: FontSize['13px'] }}>

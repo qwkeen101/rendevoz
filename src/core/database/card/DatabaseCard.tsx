@@ -57,7 +57,8 @@ export const TypeToTypeName: {
   noteBlock: 'note block',
   webpageLabel: 'webpage label',
   localFile: 'local file',
-  videoLabel: 'video label'
+  videoLabel: 'video label',
+  syncedBlock: 'syncedBlock'
 }
 export const DatabaseCard: FC<{
   index?: number

@@ -10,6 +10,7 @@ export type IGeneralSetting = {
     backUpPath?: string
     defaultFilePath?: string
     defaultLanguage: string
+    autoSaveLayout: boolean
     dataBackup: 'whenClose' | 'every day' | 'every week' | 'every month' | 'never'
     defaultSearchEngine:
       | 'custom'

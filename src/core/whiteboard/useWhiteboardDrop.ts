@@ -1,16 +1,17 @@
 import { useMemoizedFn } from '@/hooks'
-import { globalStore, ObjectStore } from '@/stores'
+import { globalStore, MetaStore, ObjectStore } from '@/stores'
 import { saveFileLocally } from '@/utils/file'
 import Id from '@/utils/id'
 import { useEffect, useState } from 'react'
 import { IWhiteboardNode, MetaObject } from '~/typings/data'
 import { useFlow } from './hooks'
 import { isPointerOnContainer, transformXY } from './utils'
-import { objectIdToMetaObjectIdMapAtom } from '@/stores/meta.store'
+import { metaObjectsAtom, objectIdToMetaObjectIdMapAtom } from '@/stores/meta.store'
 import { useEventHandler } from '@/events'
 import { Rendevoz } from '../rendevoz'
 import { getSetting } from '@/core'
 import { useWhiteboardInstance } from '@/core/whiteboard/hooks/useWhiteboardInstance'
+import { pushNumberIntoUnrepeatableArray } from '@/utils'
 
 const useWhiteboardDrop = () => {
   const emitter = Rendevoz.Events.Emit.GlobalEventEmitter
@@ -142,7 +143,22 @@ const useWhiteboardDrop = () => {
   })
   const insertMetaObjectAtPointer = (e: PointerEvent, metaId: number, expanded = false) => {
     const transformedXY = flow.transformPointer(e)
-    console.log(e, transformedXY)
+    const targetMeta = globalStore.get(metaObjectsAtom).get(metaId)
+    const whiteboardMeta = MetaStore.getMetaObjectByObjectId(flow.whiteboardId)
+    if (targetMeta?.type === 'syncedBlock' && whiteboardMeta) {
+      if (targetMeta.objectId) {
+        ObjectStore('syncedBlock')
+          .getOneById(targetMeta.objectId)
+          .then(o => {
+            if (o) {
+              ObjectStore('syncedBlock').updateOne({
+                id: targetMeta.objectId,
+                syncedMetaIds: pushNumberIntoUnrepeatableArray(whiteboardMeta.id, o.syncedMetaIds)
+              })
+            }
+          })
+      }
+    }
     if (transformedXY) {
       instance.insertNode?.({
         x: transformedXY.x,

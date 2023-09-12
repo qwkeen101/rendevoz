@@ -13,6 +13,7 @@ const getNodeStyle = (
     groupEnablePointer: boolean
     isErased?: boolean
     isErasing?: boolean
+    panPointerMode?: boolean
     background: {
       opacityBackground: string
       darkenSecondBackground: string
@@ -42,9 +43,15 @@ const getNodeStyle = (
       pointerEvents = 'none'
     }
   if (node.type === 'freehand' || node.type === 'text') {
-    if (!(nodeState.popoverVisible || nodeState.selected || nodeState.focused || nodeState.locked || opts.displayCover) && !node.background) {
+    if (
+      !(nodeState.popoverVisible || nodeState.selected || nodeState.focused || nodeState.locked || opts.displayCover) &&
+      !node.background
+    ) {
       pointerEvents = 'none'
     }
+  }
+  if(opts.panPointerMode){
+    pointerEvents = 'none'
   }
 
   return {

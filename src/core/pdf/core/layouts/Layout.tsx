@@ -143,10 +143,10 @@ const Layout: FC<LayoutProps> = ({
     getScrollElement: () => pagesRef.current,
     estimateSize,
     rangeExtractor,
-    overscan: 3,
-    measureElement: () => {
-      return scale * pageSize.height + PAGE_SPACING
-    }
+    overscan: 3
+    // measureElement: () => {
+    //   return scale * pageSize.height + PAGE_SPACING
+    // }
   })
 
   const [virtualItems, setVirtualItems] = useState<VirtualItem[]>([])
@@ -490,35 +490,41 @@ const Layout: FC<LayoutProps> = ({
           position: 'relative'
         }}
       >
-        {virtualItems.map(item => (
-          <div
-            data-index={item.index}
-            ref={virtualizer.measureElement}
-            style={{
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              width: '100%',
-              height: item.size,
-              transform: `translateY(${item.start}px)`,
-              paddingBottom: 10
-            }}
-            key={item.key}
-            data-page-index={item.index}
-          >
-            <PageLayer
-              transformScale={transformScale}
-              scrollElement={pagesRef}
-              renderPage={renderPage}
-              doc={doc}
-              height={result.height}
-              pageIndex={item.index}
-              scale={scale}
-              width={result.width}
-              renderAnnotation={renderAnnotation}
-            />
-          </div>
-        ))}
+        <div
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            width: '100%',
+            transform: virtualItems?.[0] ? `translateY(${virtualItems[0].start}px)` : undefined
+          }}
+        >
+          {virtualItems.map(item => (
+            <div
+              data-index={item.index}
+              ref={virtualizer.measureElement}
+              style={{
+                width: '100%',
+                paddingBottom: 10,
+                position: 'relative'
+              }}
+              key={item.key}
+              data-page-index={item.index}
+            >
+              <PageLayer
+                transformScale={transformScale}
+                scrollElement={pagesRef}
+                renderPage={renderPage}
+                doc={doc}
+                height={result.height}
+                pageIndex={item.index}
+                scale={scale}
+                width={result.width}
+                renderAnnotation={renderAnnotation}
+              />
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   )

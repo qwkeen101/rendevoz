@@ -3,13 +3,14 @@ import { useEffect, useMemo } from 'react'
 import Id from '@/utils/id'
 import { useUpdate } from 'react-use'
 import { css } from '@emotion/css'
+import { EditorProps } from '~/typings'
 
-type SimpleEditorProps = {
+type SimpleEditorProps = EditorProps & {
   value?: string
   onChange?: (v: any[]) => void
 }
 
-const SimpleEditor = ({ value, onChange }: SimpleEditorProps) => {
+const SimpleEditor = ({ value, onChange, type = 'note' }: SimpleEditorProps) => {
   const id = useMemo(() => Id.getStrId(), [])
   const initialValue = useMemo(() => {
     if (value) {
@@ -74,7 +75,7 @@ const SimpleEditor = ({ value, onChange }: SimpleEditorProps) => {
       showTitle={false}
       showBlockHandle={false}
       showHeader={false}
-      type="note"
+      type={type}
     />
   )
 }

@@ -1,4 +1,4 @@
-import { GlobalWebviewInstance } from '@/core/global/GlobalWebview'
+
 import { MetaStore, ObjectStore } from '@/stores'
 import { fetchRemoteImageAndSaveLocally, saveImageLocally } from '@/utils/img'
 import { useEffect } from 'react'

@@ -39,6 +39,7 @@ const openMetaObject = async (metaObjectId: number) => {
     case 'image':
     case 'videoLabel':
     case 'video':
+    case 'syncedBlock':
     case 'whiteboard': {
       const one = await ObjectStore(metaObject.type).getOneById(objectId)
       if (!one) {
@@ -86,6 +87,8 @@ const openMetaObject = async (metaObjectId: number) => {
       return openVideo(objectId)
     case 'videoLabel':
       return openVideoLabel(objectId)
+    // case 'syncedBlock':
+    //   return openSyncedEditor(metaObjectId)
   }
 }
 
@@ -113,7 +116,7 @@ const openRendevozLink = async (link: string) => {
 
     if (search.has('code')) {
       ipcInstance.send('loginBaidudisk', search.get('code')).then(res => {
-        if(res){
+        if (res) {
           localStorage.setItem('bda', res.data.access_token)
           toast.success('登录网盘成功！')
         }
@@ -129,6 +132,17 @@ const openLocalFile = async (fileId: number) => {
   }
 }
 
+const openSyncedEditor = (syncMetaId: number) => {
+  return new Promise(res => {
+    Rendevoz.Actions.Layout.openNewTab({
+      data: {
+        type: 'synced',
+        objectId: syncMetaId
+      }
+    })
+    MetaStore.updateMetaObject({ id: syncMetaId, viewAt: Date.now() }, true)
+  })
+}
 const openEditor = (noteId: number): Promise<IEditorInstance> => {
   return new Promise(res => {
     Rendevoz.Actions.Layout.openNewTab?.({

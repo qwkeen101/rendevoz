@@ -44,6 +44,14 @@ const useWhiteboardHistory = () => {
   }
   flow.undo = undo
   const keydownHandler = useMemoizedFn((e: KeyboardEvent) => {
+    if (!flow.focused) return
+    const target = e.target
+    if (
+      target instanceof HTMLElement &&
+      (target.closest('input') || target.closest('textarea') || target.closest('[contenteditable="true"]'))
+    ) {
+      return
+    }
     if (isHotkey('mod+z', e)) {
       undo()
     }

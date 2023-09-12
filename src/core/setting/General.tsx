@@ -328,6 +328,21 @@ const GeneralSetting = () => {
       )
     },
     {
+      title: t('settings.auto save layout'),
+      children: (
+        <Switch
+          value={setting.general.autoSaveLayout}
+          onChange={v =>
+            setSetting(
+              produce(setting, draft => {
+                draft.general.autoSaveLayout = !setting.general.autoSaveLayout
+              })
+            )
+          }
+        />
+      )
+    },
+    {
       title: t('settings.language'),
       description: t('settings.choose display language'),
       children: (

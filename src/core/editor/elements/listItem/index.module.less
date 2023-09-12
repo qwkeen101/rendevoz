@@ -3,18 +3,61 @@
   align-items: flex-start;
   position: relative;
 }
-.marker {
+.markerWrapper {
   padding-right: 12px;
   display: flex;
   align-items: center;
   height: 1.5em;
   padding-top: 0.14em;
   padding-left: 4px;
+  line-height: 14px;
+  position: relative;
+}
+.marker{
+  position: relative;
+  &[data-collapse="false"]{
+    &::after{
+      display: none;
+    }
+  }
+  &[data-folded="true"]{
+    &::before{
+      color: var(--block-font-color, var(--select-color)) !important;
+    }
+    &::after{
+      opacity: 1;
+      background: var(--select-color-transparent);
+    }
+  }
+  &[data-collapse="true"]{
+    &:hover{
+      &::before{
+        color: var(--block-font-color, var(--font-primary));
+      }
+      &::after{
+        opacity: 1;
+      }
+    }
+  }
+  &::after {
+    position: absolute;
+    content: "";
+    pointer-events: none;
+    width: 0.8em;
+    height: 0.8em;
+    top: 50%;
+    left: 50%;
+    transition: opacity 0.2s ease;
+    border-radius: 50%;
+    transform: translate(-50%, -53%);
+    opacity: 0;
+    background: rgba(255,255,255,0.2);
+  }
   &[data-level="1"],
   &[data-level="4"],
   &[data-level="7"] {
     &::before {
-      content: "◦";
+      //content: "◦";
       font-family: Arial;
       line-height: 14px;
       font-size: 1.5em;
@@ -24,7 +67,7 @@
   &[data-level="5"],
   &[data-level="8"] {
     &::before {
-      content: "▪";
+      //content: "▪";
       line-height: 14px;
       font-family: Arial;
       font-size: 1.5em;
@@ -44,6 +87,9 @@
     font-family: Arial;
     font-size: 1.5em;
     content: "•";
+    position: absolute;
+    color: var(--block-font-color, var(--font-description));
+    transform: translate(-50%, -50%);
   }
 }
 .fold {

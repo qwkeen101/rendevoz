@@ -1,10 +1,10 @@
-import React, { CSSProperties, forwardRef } from 'react'
+import React, { CSSProperties, DetailedHTMLProps, forwardRef, HTMLAttributes } from 'react'
 import { Property } from 'csstype'
 import { default as IconPark } from '@icon-park/react/es/all'
 import { Content } from '.'
 import CustomIcon from '../custom/icons/CustomIcon'
 
-export interface IconProps {
+export interface IconProps extends DetailedHTMLProps<HTMLAttributes<HTMLDivElement>, HTMLDivElement> {
   name: string
   theme?: 'outline' | 'filled' | 'two-tone' | 'multi-color'
   strokeWidth?: number
@@ -52,7 +52,7 @@ const Icon = forwardRef<HTMLDivElement, IconProps>(
       }
     }
     return (
-      <Content style={containerStyle} className={containerClassName} onClick={onClick} flex centered ref={ref}>
+      <Content {...rest} style={containerStyle} className={containerClassName} onClick={onClick} flex centered ref={ref}>
         {renderIcon(name)}
       </Content>
     )

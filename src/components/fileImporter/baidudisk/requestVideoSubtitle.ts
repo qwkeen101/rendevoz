@@ -12,10 +12,7 @@ const requestBaiduVideoSubtitle = async (path: string) => {
     const url = `https://pan.baidu.com/rest/2.0/xpan/file?method=streaming&access_token=${bda}&path=${encodedPath}&type=M3U8_SUBTITLE_SRT`
 
     const result = await request(url, {
-      method: 'get',
-      headers: {
-        'User-Agent': 'pan.baidu.com'
-      }
+      method: 'get'
     }).catch(e => {
       switch (e.response.data.error_code) {
         case 31304:
@@ -38,7 +35,7 @@ const requestBaiduVideoSubtitle = async (path: string) => {
     })
 
     if (result.headers['content-type'] === 'application/x-mpegURL') {
-      return result
+      return result.data
     } else {
       toast.error('获取字幕出现未知错误')
     }

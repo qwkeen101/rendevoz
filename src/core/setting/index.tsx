@@ -25,13 +25,16 @@ import {
   IGeneralSetting,
   IObjectsAndLinkSetting,
   IComponentSetting,
-  IAppearanceSetting
+  IAppearanceSetting,
+  IWorkspaceSetting
 } from './types'
+import WorkspaceSetting from '@/core/setting/Workspace'
 
 enum Settings {
   'general',
   'appearance',
   'components',
+  'workspace',
   'shortcuts',
   'object and link',
   'notification',
@@ -44,6 +47,7 @@ type Setting = INotificationSetting &
   IGeneralSetting &
   IObjectsAndLinkSetting &
   IComponentSetting &
+  IWorkspaceSetting &
   IAppearanceSetting & {
     sidebarVisibleItems: string[]
   }
@@ -51,7 +55,7 @@ const localSetting = JSON.parse(localStorage.getItem('setting'))
 localStorage.removeItem('setting')
 
 const defaultSetting: Setting = {
-  sidebarVisibleItems: ['home', 'database', 'collections', 'search', 'graph', 'webSearch', 'screenshot', 'settings'],
+  sidebarVisibleItems: ['home', 'database', 'collections', 'search', 'graph', 'settings'],
   notification: {
     enabled: true,
     pdf: true,
@@ -81,6 +85,10 @@ const defaultSetting: Setting = {
     enableDragFromEditorLink: true,
     enableDragFromPDFLink: true,
     enableDropAutoGenerateObject: true
+  },
+  workspace: {
+    currentSpace: 'default',
+    allSpaces: ['default']
   },
   whiteboard: {
     enableMinimap: false,
@@ -118,6 +126,7 @@ const defaultSetting: Setting = {
 }
 _.merge(defaultSetting, localSetting)
 defaultSetting.sidebarVisibleItems = localSetting?.sidebarVisibleItems || defaultSetting.sidebarVisibleItems
+defaultSetting.workspace.allSpaces = localSetting?.workspace?.allSpaces || defaultSetting.workspace.allSpaces
 localStorage.setItem('setting', JSON.stringify(defaultSetting))
 export const SettingAtom = atomWithStorage<Setting>('setting', defaultSetting)
 
@@ -146,6 +155,8 @@ const SettingDialog = ({ onClose }: { onClose: VoidFunction }) => {
         return <AppearanceSetting />
       case 'resource usage':
         return user ? <UsageSetting /> : null
+      case 'workspace':
+        return <WorkspaceSetting />
       case 'about': {
         if (setting.general.language === 'zh-CN') {
           return <AboutSetting />
@@ -158,9 +169,7 @@ const SettingDialog = ({ onClose }: { onClose: VoidFunction }) => {
       if (items) {
         return (
           <Content flex column fullHeight>
-            {items?.map((i, idx) => (
-              <SettingItem {...i} key={idx} />
-            ))}
+            {items?.map((i, idx) => <SettingItem {...i} key={idx} />)}
           </Content>
         )
       }

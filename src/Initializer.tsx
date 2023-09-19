@@ -16,6 +16,7 @@ import { exportRendevozDb } from './utils/db'
 import { changeFilePath, getDefaultUserFilePath, saveBlobLocally } from './utils/file'
 import { Rendevoz } from '@/core/rendevoz'
 import { GlobalPluginManager } from '@/App'
+import initializeWorkspace from '@/startup/initializeWorkspace'
 
 export const initializedAtom = atom(false)
 export const updateInfoAtom = atom<
@@ -179,7 +180,14 @@ const Initializer = () => {
         })
       )
     })
-    Promise.all([getAllMetaLinks(), getAllMetaObjects(), getAllCollections(), ObjectStore('tag').getAll()]).then(() => {
+    Promise.all([
+      initializeWorkspace(setSetting),
+      getAllMetaLinks(),
+      getAllMetaObjects(),
+      getAllCollections(),
+      ObjectStore('tag').getAll(),
+      ObjectStore('group').getAll()
+    ]).then(() => {
       setIntialized(true)
     })
     ipcInstance.send('getUpdateDetails').then(res => {

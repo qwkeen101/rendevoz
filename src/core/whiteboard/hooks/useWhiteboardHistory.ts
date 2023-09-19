@@ -46,6 +46,7 @@ const useWhiteboardHistory = () => {
   const keydownHandler = useMemoizedFn((e: KeyboardEvent) => {
     if (!flow.focused) return
     const target = e.target
+    console.log(target)
     if (
       target instanceof HTMLElement &&
       (target.closest('input') || target.closest('textarea') || target.closest('[contenteditable="true"]'))

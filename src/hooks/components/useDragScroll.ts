@@ -43,7 +43,7 @@ const useDragScroll = (
   const autoPanId = useRef<number>()
   const mousePosRef = useMousePositionRef()
   const [enable, setEnable] = useState(false)
-  const enableref  =useRef(false)
+  const enableref = useRef(false)
   enableref.current = enable
   const autoPan = () => {
     if (!enableref.current) return

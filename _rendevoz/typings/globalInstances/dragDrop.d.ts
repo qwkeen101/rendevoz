@@ -1,6 +1,6 @@
 import { ReactElement } from 'react'
 import { Path } from 'slate'
-import { CustomElement, CustomTypes, IVideoLabel } from '..'
+import { CustomElement, CustomTypes, IVideoLabel, MetaGroupChild } from '..'
 
 export type BuiltInDraggableElement =
   | {
@@ -15,6 +15,12 @@ export type BuiltInDraggableElement =
       metaId?: number
     }
   // something inside pdf, not pdf itself
+  | ({
+      type: 'groupItem'
+      groupId: number
+    } & {
+      value: MetaGroupChild[]
+    })
   | {
       type: 'pdfLabel'
       labelId: number

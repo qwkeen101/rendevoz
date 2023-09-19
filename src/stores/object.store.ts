@@ -13,7 +13,7 @@ import {
 import { globalStore, MetaStore, ObjectStore } from '.'
 import BaseStore, { initializeLocalStore } from './base.store'
 import { metaObjectsAtom, objectIdToMetaObjectIdMapAtom, tagToMetaObjectIdsMapAtom, TypeToRegisteredMetaObject } from './meta.store'
-import { IStore } from './store.type'
+import { IStore } from './types'
 import { useGlobalAtomValue } from '@/hooks'
 import Id from '@/utils/id'
 import { INotificationSetting } from '@/core'

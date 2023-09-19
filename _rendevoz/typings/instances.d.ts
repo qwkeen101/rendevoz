@@ -1,6 +1,9 @@
 import { WebpageInnerRef } from '@/core/webpage/WebpageCore'
 import { CustomEditor } from './editor'
 import { Box, ILayoutTab, IWhiteboardEdge, IWhiteboardNode, MetaGroupChild, PartialWithId, TabData } from '..'
+import { PrimitiveAtom } from 'jotai'
+import { Patch } from 'immer'
+import { Path } from 'slate'
 
 export interface WebpageInstance {
   transformToNote: () => Promise<CustomEditor>
@@ -34,17 +37,6 @@ export type IReviewInstance = Partial<{
   deleteCard?: () => void
 }>
 
-export type IMetaTableInstance = Partial<{
-  startDrag: (metaId: number, rowNode: HTMLElement) => void
-  update: (newValue: Partial<MetaGroupChild>, path: number[]) => void
-  setDragHandle: (details: { path: number[]; node: HTMLElement; element: MetaGroupChild }) => void
-  removeDragHandle: (path: number[]) => void
-  setCurrentDragDetails: (
-    details: { path: number[]; position: 'top' | 'bottom'; rowMetaId: number; rowNode: HTMLElement } | undefined
-  ) => void
-  getCurrentRows: () => MetaGroupChild[]
-  scrollTable: (movement: { x?: number; y?: number }) => void
-}>
 
 export type IBaidudiskInstance = Partial<{
   // choose file, return file path or undefined

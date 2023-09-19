@@ -28,6 +28,14 @@ export type IGeneralSetting = {
     defaultImageSearchEngine: 'bing' | 'google' | 'pinterest' | 'baidu'
   }
 }
+
+export type IWorkspaceSetting = {
+  workspace: {
+    currentSpace: string
+    allSpaces: { name: string; createdAt: number }[]
+  }
+}
+
 export type INotificationSetting = {
   notification: {
     enabled: boolean

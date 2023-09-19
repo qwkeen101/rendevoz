@@ -46,8 +46,21 @@ export const HomePage: FC = () => {
       }}
     >
       <TabTitle title={t('general.home')} icon="park-home" />
+      {/*<div*/}
+      {/*  onClick={() => {*/}
+      {/*    fetch('https://www.bbc.co.uk/news/business-66783922')*/}
+      {/*      .then(res => res.text())*/}
+      {/*      .then(text => {*/}
+      {/*        const praser = new DOMParser()*/}
+      {/*        const doc = praser.parseFromString(text, 'text/html')*/}
+      {/*        console.log(doc.body)*/}
+      {/*      })*/}
+      {/*  }}*/}
+      {/*>*/}
+      {/*  fetg*/}
+      {/*</div>*/}
       <Modal visible={createVisible} onClose={toggleCreateVisible} style={{}}>
-        <FileImporter onClose={toggleCreateVisible}/>
+        <FileImporter onClose={toggleCreateVisible} />
       </Modal>
       <Content
         flex

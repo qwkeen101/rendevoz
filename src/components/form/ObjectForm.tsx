@@ -7,7 +7,7 @@ import { IForm } from './types'
 import useFlipForm from './useFlipForm'
 import { MetaStore, ObjectStore } from '@/stores'
 import { ObjectFamily } from '@/stores/object.store'
-import { useGlobalAtomValue } from '@/hooks'
+import { useDebounceEffect, useGlobalAtomValue } from '@/hooks'
 import OcrService from '@/services/ocr.service'
 import ClassName from '@/styles/classNames'
 import { Button } from '../base'
@@ -18,7 +18,7 @@ import { generateVideoThumbnail } from '@/core/video/utils'
 import { saveImageLocally } from '@/utils/img'
 import FormNoteImporter from './FormNoteImporter'
 import { TypeToRegisteredMetaObject } from '@/stores/meta.store'
-import { fetchHead } from '@/core/global/globalDragOverlay/useDropObject'
+import { fetchHead, fetchHeadAndUpdateWebpage } from '@/core/global/globalDragOverlay/useDropObject'
 import { IPdfDocument, MetaFormLayoutItem } from '~/typings'
 import { initializePdfDocument } from '@/stores/document.store'
 
@@ -35,6 +35,21 @@ const ObjectForm: FC<
       ? ObjectStore(initialObject.type as keyof ObjectFamily).createAtom(initialObject.objectId)
       : undefined
   const targetObject = objectAtom && useGlobalAtomValue(objectAtom)
+  useDebounceEffect(
+    () => {
+      if (targetObject) {
+        if (targetObject.specType === 'webpage' && targetObject.url) {
+          if (!object.name || object.name === 'Unnamed webpage') {
+            fetchHead(targetObject.url).then(res => {
+              setObject(s => ({ ...s, name: res.title, coverImgSrc: res.coverImgSrc, description: res.description }))
+            })
+          }
+        }
+      }
+    },
+    [targetObject],
+    { wait: 200 }
+  )
   const defaultLayout: MetaFormLayoutItem[] = [
     initialObject?.type
       ? {

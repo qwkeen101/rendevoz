@@ -6,7 +6,7 @@ export * from './video'
 export * from './webpage'
 export * from './pdf'
 export * from './whiteboard'
-
+export * from './group'
 export type MetaFormLayoutItem =
   | {
       type: 'nameInput'

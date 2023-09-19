@@ -1,5 +1,8 @@
 import { CustomTypes, Event, MetaObject, Position } from "..";
 import { IDraggableElement } from "../globalInstances/dragDrop";
+import { Patch } from 'immer'
+import { PrimitiveAtom } from 'jotai'
+import { LocalDatabaseAction } from '../../../src/stores/types'
 
 type DragDropEvent = {
   dropPosition: Position;
@@ -52,6 +55,13 @@ type GlobalNeedEditMetaObjectEvent = {
   metaObjectId: number
 }
 type GlobalChooseMetaObjectEvent = {}
+
+type GlobalValueChangeEvent = {
+  patches: Patch[]
+  inversePatches: Patch[]
+  atom: PrimitiveAtom<any>
+  databaseName: string
+}
 export interface GlobalEventMap {
   globalDropNeedAddLink: Partial<DragDropEvent>
   globalDropNeedFurtherProcess: GlobalDropNeedFurtherProcessEvent
@@ -60,6 +70,7 @@ export interface GlobalEventMap {
   globalNeedAddMetaObject: GlobalNeedAddMetaObjectEvent
   globalNeedEditMetaObject: GlobalNeedEditMetaObjectEvent
   globalChooseMetaObject: GlobalChooseMetaObjectEvent
+  globalValueChange: GlobalValueChangeEvent
 }
 
 export type GlobalEvent = Event<GlobalEventMap, keyof GlobalEventMap>

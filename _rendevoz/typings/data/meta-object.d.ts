@@ -40,7 +40,7 @@ export type BuiltInMetaObjectTypes =
 // sourceType: note / metaObject / pdf document
 export interface MetaObject extends IBase {
   type: CustomTypes['MetaObject']
-
+  workspace: string
   name?: string
   description?: string
   coverImgSrc?: string
@@ -147,13 +147,18 @@ export type MetaTableHeader = {
   icon: string
 }
 export type MetaGroupChild = {
-  type: 'metaObject'
-  id: number
   rowId: number
   children?: MetaGroupChild[]
   toggled?: boolean
-}
+} & (
+  | { type: 'metaObject'; id: number }
+  | {
+      textContent: string
+      type: 'text'
+    }
+)
 export interface MetaGroup extends IBase {
+  belongsTo?: number
   childrenMetaIds: number[]
   value?: MetaGroupChild[]
   hideInnerTypes?: string[]
@@ -163,6 +168,7 @@ export interface MetaGroup extends IBase {
   sort?: SorterGroup
   search?: string
   afterFilterValue?: MetaGroupChild[]
+  openIn?: 'center' | 'newTab'
   tableProperties?: {
     headers?: MetaTableHeader[]
     visibleProperties: string[]

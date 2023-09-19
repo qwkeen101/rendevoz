@@ -3,11 +3,11 @@ import useDb from '@/hooks/stores/useDb'
 import Id from '@/utils/id'
 import { atom } from 'jotai/vanilla'
 import { toast } from 'react-hot-toast'
-import { MetaLink, MetaObject } from 'rendevoz'
+import { MetaLink, MetaObject } from '~/typings'
 import BaseStore, { initializeLocalStore } from './base.store'
 import { findChangedProperties, globalStore, MetaStore, ObjectStore } from '.'
 import { SimpleObject } from '@/core'
-import { IStoreDeprecated } from './store.type'
+import { IStoreDeprecated } from './types'
 import getSetting from '@/core/setting/getSetting'
 import { createDraft, finishDraft } from 'immer'
 import { debounce } from 'lodash'
@@ -50,12 +50,6 @@ export const handleMetaObjectsChange = () => {
       pinnedMetaObjectsSet.delete(oldValue)
       deletedMetaObjectsSet.delete(oldValue)
       typeToMetaObjectIdsMap.get(oldValue.type)?.delete(oldValue.id)
-      // metaAttachmentIdToMetaIdsMap.delete(oldValue.id)
-      // if (oldValue.objectId) {
-      //   if (objectIdToMetaObjectMap.get(oldValue.objectId) === oldValue.id) {
-      //     objectIdToMetaObjectMap.delete(oldValue.objectId)
-      //   }
-      // }
       if (oldValue.attachments) {
         oldValue.attachments
           .filter(i => i.type !== 'attachmentText')
@@ -363,7 +357,7 @@ const createMetaStore = () => {
         }
       }
 
-      const initedMetaObject = initBaseObject(one)
+      const initedMetaObject = initBaseObject(one) as Partial<MetaObject>
       if (!initedMetaObject.type) {
         return Promise.reject()
       }
@@ -374,6 +368,7 @@ const createMetaStore = () => {
         }
         MetaStore.addMetaLink(link, true)
       }
+      initedMetaObject.workspace = getSetting().workspace.currentSpace
       if (!initedMetaObject.name) {
         let initedName = 'Unnamed Object'
         switch (initedMetaObject.type) {
@@ -476,7 +471,7 @@ const createMetaStore = () => {
         handleMetaObjectDelete(id)
       })(id, silent, force)
     },
-    getAll: initializeObjectStore.getAll()
+    getAll: initializeObjectStore.getAll(obj => obj.workspace === getSetting().workspace.currentSpace)
   }
 
   const initializedLinkStore = initializeLocalStore(metaLinksAtom, metaLinkDb)
@@ -590,6 +585,10 @@ const createMetaStore = () => {
     return useGlobalAtomValue(indexedMetaLinksAtom)
   }
 
+  const switchWorkspace = (newWorkspace: string) => {
+    globalStore.set(metaObjectsAtom, new Map())
+    realStore.getAllMetaObjects()
+  }
   return {
     getMetaObjectById,
     getMetaObjectByObjectId,
@@ -604,6 +603,7 @@ const createMetaStore = () => {
     useIndexedMetaObjects,
     getIndexedMetaLinks,
     useIndexedMetaLinks,
+    switchWorkspace,
     ...realStore
   }
 }

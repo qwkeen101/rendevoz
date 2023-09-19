@@ -1,14 +1,10 @@
-import PdfJs from '@/consts/pdfJs'
 import { getFilenameWithoutExtension, saveFileLocally } from '@/utils/file'
 import Id from '@/utils/id'
 import { saveImageLocally } from '@/utils/img'
-import { atom } from 'jotai/vanilla'
 import { IPdfDocument } from '~/typings/data'
 import usePdfjs from '@/hooks/utils/usePdfjs'
 import { SearchableDocument, SearchStore } from './search.store'
 import { globalStore, ObjectStore } from '.'
-
-export const documentsAtom = atom<Map<number, IPdfDocument>>(new Map())
 
 export const initializePdfDocument = async (file: File): Promise<Partial<IPdfDocument> | undefined> => {
   if (file.type === 'application/pdf') {

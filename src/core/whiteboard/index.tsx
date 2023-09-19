@@ -283,7 +283,7 @@ const WhiteboardInner = memo(
           }
         })}
         tabIndex={0}
-        onFocus={() => {
+        onClick={() => {
           flow.focused = true
         }}
         onBlur={() => {

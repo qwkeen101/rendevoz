@@ -49,9 +49,6 @@ const useStoreValue = (note: INote | undefined, editor: CustomEditor, onContentR
         saveNoteAsBuffer(editor.children, note.contentId)
         saveNoteAsSearch(editor, noteId)
         const setting = getSetting()
-        if (setting.notification.enabled && setting.notification.editor) {
-          // toast.success(<Notification title={`📝 ${note.title}`} content="Note is saved." />)
-        }
       }
     },
     { wait: 1000 }

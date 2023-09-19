@@ -14,37 +14,30 @@ import { Virtualizer } from '@tanstack/react-virtual'
 const MetaTagPicker = forwardRef(
   (
     {
-      metaId,
       style,
       selectMode,
-      alreadyTags,
+      alreadyTags = [],
       onChange
-    }: { metaId?: number; style?: CSSProperties; selectMode?: boolean; alreadyTags?: number[]; onChange?: (tags: number[]) => void },
+    }: { style?: CSSProperties; selectMode?: boolean; alreadyTags?: number[]; onChange?: (tags: number[]) => void },
     ref
   ) => {
-    const metaObject = MetaStore.useValue(metaId)
     const index = MetaStore.useIndexedMetaObjects()?.tagToMetaObjectIdsMap
     const allTags = useGlobalAtomValue(ObjectStore('tag').objectMapAtom)
     const [search, setSearch] = useState('')
     const result = useMemo(() => {
-      if (metaId) {
-        if (!metaObject) return
-      }
-      const metaTags = selectMode ? alreadyTags || [] : metaObject?.tags || []
-      const tagsIds = new Set([...metaTags])
+      const tagsIds = new Set([...alreadyTags])
       const leftTags = Array.from(allTags.values())
         .filter(i => !tagsIds.has(i.id))
         .map(i => i.id)
       return {
-        metaTags,
         leftTags
       }
-    }, [metaObject?.tags, allTags, alreadyTags])
+    }, [allTags, alreadyTags])
 
     const sortedTags = useMemo(() => {
       if (!result?.leftTags) return
       const { leftTags } = result
-      const map = globalStore.get(ObjectStore('tag').objectMapAtom)
+      const map = allTags
       const copyed = leftTags.map(i => map.get(i)!)
       if (selectMode) {
         copyed.sort((b, a) => {
@@ -82,27 +75,20 @@ const MetaTagPicker = forwardRef(
     const handleSelected = useCallback(
       (tag: number | string) => {
         if (typeof tag === 'number') {
-          if (selectMode && alreadyTags) {
-            onChange?.([...alreadyTags, tag])
-          }
-          MetaStore.updateMetaObject({ id: metaId, tags: [...(metaTags || []), tag] }, true)
+          onChange?.([...alreadyTags, tag])
         } else {
           setSearch('')
           ObjectStore('tag')
             .addOne({ name: tag })
             .then(one => {
-              if (selectMode && alreadyTags) {
-                onChange?.([...alreadyTags, one.id])
-              }
-              MetaStore.updateMetaObject({ id: metaId, tags: [...(metaTags || []), one.id] }, true)
+              onChange?.([...alreadyTags, one.id])
             })
         }
       },
-      [metaId, result?.metaTags, alreadyTags]
+      [alreadyTags]
     )
     const virtualizer = useRef<Virtualizer<any, any>>()
     if (!result) return null
-    const { metaTags } = result
     return (
       <Content flex column style={style} ref={ref}>
         <Content
@@ -116,14 +102,10 @@ const MetaTagPicker = forwardRef(
             overflowY: 'auto'
           }}
         >
-          {metaTags.map(i => (
+          {alreadyTags.map(i => (
             <Tag
               onDelete={() => {
-                if (selectMode) {
-                  onChange?.(alreadyTags?.filter(o => o !== i) || [])
-                } else {
-                  MetaStore.updateMetaObject({ id: metaId, tags: [...metaTags.filter(o => o !== i)] }, true)
-                }
+                onChange?.(alreadyTags?.filter(o => o !== i) || [])
               }}
               square
               hideSize
@@ -132,7 +114,7 @@ const MetaTagPicker = forwardRef(
             />
           ))}
           <input
-            placeholder={!metaTags.length ? 'Search for one tag' : undefined}
+            placeholder={!alreadyTags.length ? 'Search for one tag' : undefined}
             value={search}
             onChange={e => setSearch(e.target.value)}
             className={ClassName.noStyleInput}

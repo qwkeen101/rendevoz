@@ -1,16 +1,19 @@
 import Id from '@/utils/id'
 import { Table } from 'dexie'
-import produce, { createDraft, finishDraft } from 'immer'
+import produce, { createDraft, finishDraft, Patch } from 'immer'
 import { Atom, PrimitiveAtom } from 'jotai/vanilla'
 import { orderBy } from 'lodash'
 import { IBase } from '~/typings/data'
-import { IStoreDeprecated } from './store.type'
+import { type IStoreDeprecated, LocalDatabaseAction } from './types'
 import { globalStore } from '.'
-
-type PartialWithId<T> = Partial<T> & { id: number }
+import { type PartialWithId } from '@/types'
+import { useDb } from '@/hooks'
+import { immerWithDatabase } from '@/stores/immerWithDatabase'
 
 const ATOM_QUEUE_MAP = new Map<Atom<any>, StoreDispatchEvent<any>[]>()
 
+let historyStore: typeof import('./history.store') | undefined = undefined
+import('./history.store').then(store => (historyStore = store))
 type StoreDispatchEvent<T> = {
   atom: PrimitiveAtom<Map<number, T>>
   data: PartialWithId<T>
@@ -37,20 +40,15 @@ type StoreDispatchEvent<T> = {
 
 const handleQueue = () => {
   console.log('handle queue')
-  const DB_ACTION_MAP = new Map<Table, any[]>()
+  const DB_ACTION_MAP = new Map<Table, Patch[]>()
   Array.from(ATOM_QUEUE_MAP.entries()).forEach(([k, v]) => {
     const atomValue = globalStore.get(k)
     const draft = createDraft(atomValue)
     v.forEach(i => {
-      const { type, data, database, onSuccess, onFail } = i
-      if (!DB_ACTION_MAP.has(database)) {
-        DB_ACTION_MAP.set(database, [])
-      }
-      const dbActionArr = DB_ACTION_MAP.get(database)!
+      const { type, data, onSuccess, onFail } = i
       switch (type) {
         case 'add':
           draft.set(data.id, data)
-          dbActionArr.push(i)
           setTimeout(() => onSuccess?.(data))
           return
         case 'update': {
@@ -63,21 +61,12 @@ const handleQueue = () => {
           const newObj = Object.assign({}, origin, data, {
             updatedAt: Date.now()
           })
-          console.log(data, newObj)
-          // if (_.isEqual(origin, newObj)) break
           draft.set(data.id, newObj)
-          dbActionArr.push({
-            ...i,
-            data: newObj
-          })
           setTimeout(() => onSuccess?.(newObj))
           return
         }
         case 'forceRemove': {
           draft.delete(data.id)
-          dbActionArr.push({
-            ...i
-          })
           setTimeout(() => onSuccess?.())
           return
         }
@@ -85,44 +74,28 @@ const handleQueue = () => {
           const origin = atomValue.get(data.id)
           const newObj = Object.assign({}, origin, { deleted: true })
           draft.set(data.id, newObj)
-          dbActionArr.push({
-            ...i,
-            data: newObj
-          })
           setTimeout(() => onSuccess?.())
           return
         }
       }
     })
-    const newAtom = finishDraft(draft)
+    const newAtom = finishDraft(draft, (patches, inversePatches) => {
+      const { database } = v[0]
+      const dbName = database.name
+      historyStore?.finishProcess(patches, inversePatches, k, dbName)
+      DB_ACTION_MAP.set(database, patches)
+    })
     globalStore.set(k, newAtom)
     ATOM_QUEUE_MAP.delete(k)
   })
-  Array.from(DB_ACTION_MAP.entries()).forEach(([k, v]) => {
-    // const putActionData = v.filter(i => i.type === 'add' || i.type === 'update').map(i => i.data)
-    // const removeActionData = v.filter(i => i.type === 'remove').map(i => i.data.id)
-    const forceRemoveActionData = v.filter(i => i.type === 'forceRemove').map(i => i.data.id)
-    console.log(v)
-    const putActionData = Array.from(
-      new Map(v.filter(i => i.type === 'add' || i.type === 'update' || i.type === 'remove').map(i => [i.data.id, i])).values()
-    ).map(i => {
-      const newData: Record<string, unknown> = {}
-      Object.entries(i.data).map(([k, v]) => {
-        if (v instanceof Map) {
-          newData[k] = Array.from(v.values())
-        } else {
-          newData[k] = v
-        }
-      })
-      return newData
+  setTimeout(() => {
+    Array.from(DB_ACTION_MAP.entries()).forEach(([k, v]) => {
+      immerWithDatabase(v, k.name)
+      DB_ACTION_MAP.delete(k)
     })
-
-    putActionData.length > 0 && k.bulkPut(putActionData)
-    forceRemoveActionData.length > 0 && k.bulkDelete(forceRemoveActionData)
-    DB_ACTION_MAP.delete(k)
-    // removeActionData.length > 0 && k.bulkDelete(removeActionData)
   })
 }
+
 const BaseStore = {
   clear(data: Map<number, any>) {
     return produce(data, draft => {
@@ -207,7 +180,7 @@ const BaseStore = {
 type ILocalStore<T> = {
   addOne: (onSuccess?: (obj: T, silent: boolean) => void, onFail?: (silent: boolean) => void) => IStoreDeprecated<T>['addOne']
   deleteOneById: (onSuccess?: (silent: boolean) => void, onFail?: (silent: boolean) => void) => IStoreDeprecated<T>['deleteOneById']
-  getAll: () => IStoreDeprecated<T>['getAll']
+  getAll: (filterer?: (obj: T) => boolean) => IStoreDeprecated<T>['getAll']
   getOneById: () => IStoreDeprecated<T>['getOneById']
   updateOne: (onSuccess?: (obj: T, silent: boolean) => void, onFail?: (silent: boolean) => void) => IStoreDeprecated<T>['updateOne']
 }
@@ -249,9 +222,10 @@ export function initializeLocalStore<T>(atom: PrimitiveAtom<Map<number, T>>, dat
           })
         })
       },
-    getAll: () => async () => {
+    getAll: filterer => async () => {
       const arr = await database.toArray()
-      globalStore.set(atom, bulkAdd(arr, globalStore.get(atom)))
+      const filtered = filterer ? arr.filter(i => filterer(i)) : arr
+      globalStore.set(atom, bulkAdd(filtered, globalStore.get(atom)))
       return true
     },
     getOneById: () => id => {
@@ -261,6 +235,7 @@ export function initializeLocalStore<T>(atom: PrimitiveAtom<Map<number, T>>, dat
           res(atomOne)
         } else {
           database.get(id).then(one => {
+            console.log(one)
             if (one) {
               globalStore.set(atom, BaseStore.add(one, globalStore.get(atom)))
               res(one)

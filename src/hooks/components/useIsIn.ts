@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 
 const useIsIn = () => {
   const [isIn, setIsIn] = useState(false)
-  const ref = useRef<HTMLElement>()
+  const ref = useRef<HTMLElement>(null)
   useEffect(() => {
     const pointerHandler = (e: PointerEvent) => {
       if (e.type === 'pointerenter') {

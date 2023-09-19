@@ -15,7 +15,7 @@ type MousePosition = [number, number]
  * @returns Mouse position as a tuple of [x, y]
  */
 
-const mousePos = {
+export const mousePos = {
   current: [0, 0]
 }
 document.addEventListener('pointermove', e => {

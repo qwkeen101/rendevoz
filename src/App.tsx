@@ -50,6 +50,7 @@ import MetaGroupPage from '@/scenes/MetaGroupPage'
 import { BuiltInDraggableElement, BuiltInDropOn, BuiltInMetaObjectTypes, BuiltInObjectTypes, BuiltInTabTypes } from '~/typings'
 import { GlobalBaidudisk } from '@/components/fileImporter/baidudisk/BaidudiskDisplayer'
 import SyncedBlockPage from '@/scenes/SyncedBlockPage'
+import { ObjectStore } from '@/stores'
 // import { startDrive } from '@/driver'
 // import ReviewManager from '@/core/review/components/ReviewManager'
 // import TimelineManager from '@/core/database/TimelineManager'
@@ -181,8 +182,18 @@ const App = () => {
     executed.current = true
 
     setTimeout(() => {
-      // Rendevoz.Actions.Layout.openNewTab({ data: { type: 'group', objectId: 1 } })
-      // ObjectStore('group').addOne({ rootFilterGroup: { groupType: 'and', rules: [], filterType: 'group' }, id: 1, childrenMetaIds: [] })
+      // ObjectStore('group')
+      //   .getOneById(1)
+      //   .then(async res => {
+      //     if (!res) {
+      //       await ObjectStore('group').addOne({
+      //         rootFilterGroup: { groupType: 'and', rules: [], filterType: 'group' },
+      //         id: 1,
+      //         childrenMetaIds: []
+      //       })
+      //     }
+      //     Rendevoz.Actions.Layout.openNewTab({ data: { type: 'group', objectId: 1 } })
+      //   })
       // startDrive()
       // Rendevoz.Actions.Layout.openNewTab({ data: { type: 'review' } })
     }, 2000)

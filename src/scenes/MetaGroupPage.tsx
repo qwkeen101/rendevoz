@@ -1,5 +1,5 @@
 import { Content } from '@/components'
-import MetaGroupInner from '@/core/database/group/MetaGroup'
+import MetaGroupInner from '@/core/group/MetaGroup'
 
 const MetaGroupPage = ({ groupId }: { groupId: number }) => {
   return (

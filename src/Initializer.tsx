@@ -180,16 +180,18 @@ const Initializer = () => {
         })
       )
     })
-    Promise.all([
-      initializeWorkspace(setSetting),
-      getAllMetaLinks(),
-      getAllMetaObjects(),
-      getAllCollections(),
-      ObjectStore('tag').getAll(),
-      ObjectStore('group').getAll()
-    ]).then(() => {
-      setIntialized(true)
+    initializeWorkspace(setSetting).then(() => {
+      Promise.all([
+        getAllMetaLinks(),
+        getAllMetaObjects(),
+        getAllCollections(),
+        ObjectStore('tag').getAll(),
+        ObjectStore('group').getAll()
+      ]).then(() => {
+        setIntialized(true)
+      })
     })
+
     ipcInstance.send('getUpdateDetails').then(res => {
       globalStore.set(updateInfoAtom, {
         version: res.data.version

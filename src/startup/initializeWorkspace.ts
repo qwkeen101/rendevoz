@@ -4,6 +4,7 @@ import { MetaObject } from '~/typings'
 import KeyvalueStore from '@/stores/keyvalue.store'
 import produce from 'immer'
 import { useSetAtom } from 'jotai'
+import { delay } from '@/utils'
 
 const initializeWorkspace = async (setSetting: ReturnType<typeof useSetAtom<typeof SettingAtom>>) => {
   const keyvalueDb = useDb('keypairs')
@@ -32,7 +33,9 @@ const initializeWorkspace = async (setSetting: ReturnType<typeof useSetAtom<type
   const metaObjectDb = useDb('metaObjects')
   const all = (await metaObjectDb.filter(i => !i.workspace).toArray()) as MetaObject[]
   const update = all.map(i => ({ ...i, workspace: currentWorkspace }))
-  await metaObjectDb.bulkPut(update)
+  if (update.length) {
+    await metaObjectDb.bulkPut(update)
+  }
 }
 
 export default initializeWorkspace

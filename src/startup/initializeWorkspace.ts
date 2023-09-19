@@ -30,11 +30,9 @@ const initializeWorkspace = async (setSetting: ReturnType<typeof useSetAtom<type
     })
   )
   const metaObjectDb = useDb('metaObjects')
-  const all = (await metaObjectDb.toArray()) as MetaObject[]
-  const update = (all.map(i => !i.workspace && i).filter(i => i) as MetaObject[]).map(async i => {
-    metaObjectDb.put({ ...i, workspace: currentWorkspace })
-  })
-  await Promise.all(update)
+  const all = (await metaObjectDb.filter(i => !i.workspace).toArray()) as MetaObject[]
+  const update = all.map(i => ({ ...i, workspace: currentWorkspace }))
+  await metaObjectDb.bulkPut(update)
 }
 
 export default initializeWorkspace

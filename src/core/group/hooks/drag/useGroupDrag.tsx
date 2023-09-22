@@ -1,22 +1,19 @@
 import { RefObject, useEffect, useRef, useState } from 'react'
 import { Rendevoz } from '@/core/rendevoz'
-import { useTableInstance } from '@/core/group/hooks/useTableInstance'
 import { assignProperties } from '@/utils'
-import { Box, BuiltInDraggableElement, GlobalDragPointerMoveEvent, GlobalDragPointerUpEvent, MetaGroupChild, XYPosition } from '~/typings'
+import { BuiltInDraggableElement, GlobalDragPointerUpEvent, MetaGroupChild, XYPosition } from '~/typings'
 import { createPortal } from 'react-dom'
 import { AnimatePresence, motion } from 'framer-motion'
 import { Icon } from '@/components'
 import { ClassName } from 'rendevoz'
 import { useGlobalIsDragging } from '@/core'
-import { useDragScroll } from '@/hooks'
 import produce from 'immer'
 import { ObjectStore } from '@/stores'
 import Id from '@/utils/id'
 import { Path } from 'slate'
-import { GroupTransforms } from '@/core/group/actions/transforms'
 import { useGroupInstance } from '@/core/group/hooks/useGroupInstance'
 import reorderDragItems from '@/core/group/hooks/drag/reorderItems'
-import UseMousePositionRef, { mousePos } from '@/hooks/utils/useMousePositionRef'
+import { mousePos } from '@/hooks/utils/useMousePositionRef'
 
 const useGroupDrag = (options: { bodyRef: RefObject<HTMLElement>; groupId: number }) => {
   const emitter = Rendevoz.Events.Emit.GlobalEventEmitter
@@ -42,8 +39,9 @@ const useGroupDrag = (options: { bodyRef: RefObject<HTMLElement>; groupId: numbe
         const { value, node } = details
         setIsDragging(true)
         instance.bodyOps?.startDetectAutoScroll?.()
-        Rendevoz.Actions.State.Drag.addDragElements(node.cloneNode(true) as HTMLElement)
+
         if (instance.values.selectedRowIdSet.size) {
+          Rendevoz.Actions.State.Drag.addDragElements(<div>{instance.values.selectedRowIdSet.size} rows are dragged</div>)
           const selectedPathes = Array.from(instance.values.selectedRowIdSet.values())
             .map(id => instance.pathOps?.getPathById(id))
             .filter(i => i) as Path[]
@@ -67,6 +65,7 @@ const useGroupDrag = (options: { bodyRef: RefObject<HTMLElement>; groupId: numbe
               .filter(i => i) as MetaGroupChild[]
           })
         } else {
+          Rendevoz.Actions.State.Drag.addDragElements(node.cloneNode(true) as HTMLElement)
           Rendevoz.Actions.State.Drag.setDraggingDetails({
             type: 'groupItem',
             groupId: options.groupId,
@@ -89,8 +88,10 @@ const useGroupDrag = (options: { bodyRef: RefObject<HTMLElement>; groupId: numbe
       setDragHandle: details => {
         if (globalDragging) return
         const box = details.node.getBoundingClientRect()
-        if (details.value === dragHandle?.value) return
-        if (box.top === dragHandle?.position?.y) return
+        if (dragHandle?.visible) {
+          if (details.value === dragHandle?.value) return
+          if (box.top === dragHandle?.position?.y) return
+        }
         const { left, top, height } = box
         const position = {
           x: left - 24,

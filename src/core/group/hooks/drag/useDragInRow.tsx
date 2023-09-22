@@ -5,9 +5,9 @@ import { useTableInstance } from '@/core/group/hooks/useTableInstance'
 import { Colors } from '@/consts'
 import { useGroupInstance } from '@/core/group/hooks/useGroupInstance'
 import { MetaGroupChild } from '~/typings'
-
+import { motion } from 'framer-motion'
 const useDragInRow = (opts: { rowRef: RefObject<HTMLElement>; value: MetaGroupChild }) => {
-  const { rowRef, metaId, path } = opts
+  const { rowRef } = opts
   const [draggingIndicator, setDraggingIndicator] = useState<{
     inLink?: 'in' | 'out'
     position?: 'inner' | 'top' | 'bottom'
@@ -58,47 +58,17 @@ const useDragInRow = (opts: { rowRef: RefObject<HTMLElement>; value: MetaGroupCh
   }, [globalDragging])
 
   const renderIndicator = () => {
-    if (draggingIndicator) {
-      if (draggingIndicator.position === 'top') {
-        return (
-          <div
-            style={{
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              width: '100%',
-              pointerEvents: 'none',
-              height: 4,
-              background: Colors.Common.SelectColorTransparent
-            }}
-          ></div>
-        )
-      } else if (draggingIndicator.position === 'bottom') {
-        return (
-          <div
-            style={{
-              position: 'absolute',
-              bottom: -4,
-              left: 0,
-              pointerEvents: 'none',
-              width: '100%',
-              height: 4,
-              background: Colors.Common.SelectColorTransparent
-            }}
-          ></div>
-        )
-      } else if (draggingIndicator.position === 'inner') {
-        return (
-          <div
-            style={{
-              position: 'absolute',
-              inset: 0,
-              pointerEvents: 'none',
-              background: Colors.Common.SelectColorTransparent
-            }}
-          ></div>
-        )
-      }
+    if (draggingIndicator?.position) {
+      const pos = draggingIndicator.position
+      return (
+        <motion.div
+          style={{ position: 'absolute', background: Colors.Common.SelectColorTransparent, pointerEvents: 'none', left: 0 }}
+          initial={{ opacity: 1, width: '100%', top: pos === 'top' ? 0 : pos === 'bottom' ? 'calc(100% + 1px)' : 0, height: 4 }}
+          transition={{ damping: 0, duration: 0.15 }}
+          animate={{ height: pos === 'inner' ? '100%' : 4, top: pos === 'top' ? 0 : pos === 'bottom' ? 'calc(100% + 1px)' : 0 }}
+          exit={{ opacity: 0 }}
+        ></motion.div>
+      )
     } else {
       return null
     }

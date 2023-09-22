@@ -1,7 +1,7 @@
 import { AnimatePopover, Content, Icon, Modal } from '@/components'
 import CollectionForm from '@/components/form/CollectionForm'
 import useCollectionStore, { collectionsAtom } from '@/stores/collection.store'
-import { globalStore } from '@/stores'
+import { CollectionStore, globalStore, MetaStore } from '@/stores'
 import ClassName from '@/styles/classNames'
 import { css } from '@emotion/css'
 import { AnimatePresence, motion } from 'framer-motion'
@@ -30,7 +30,17 @@ const SidebarCollectionItem: FC<ISidebarItem> = memo(({ id, parentId, parentType
   const { childrenCollections, childrenMetas } = useMemo(() => {
     const childrenCollections = items?.filter(i => i.type === 'collection' && i.id) as Required<ICollectionItem>[]
     const childrenMetas = items?.filter(i => i.type === 'meta' && i.id) as Required<ICollectionItem>[]
-
+    const map = MetaStore.getMetaObjectsMap()
+    const collectionMap = globalStore.get(collectionsAtom)
+    childrenCollections.sort((a, b) =>
+      (collectionMap.get(a.id)?.name || '1').localeCompare(collectionMap.get(b.id)?.name || '1', undefined, {
+        numeric: true,
+        sensitivity: 'base'
+      })
+    )
+    childrenMetas.sort((a, b) =>
+      (map.get(a.id)?.name || '1').localeCompare(map.get(b.id)?.name || '1', undefined, { numeric: true, sensitivity: 'base' })
+    )
     return {
       childrenCollections,
       childrenMetas
@@ -44,7 +54,8 @@ const SidebarCollectionItem: FC<ISidebarItem> = memo(({ id, parentId, parentType
   const childrenMetasSize = childrenMetas.filter(i => !allMetas.get(i.id)?.deleted && allMetas.has(i.id)).length
 
   const childrenLength = childrenCollectionsSize + childrenMetasSize
-  const [hideChildren, toggleHideChildren] = useToggle(true)
+
+  const hideChildren = !collection?.toggled
 
   const [editModalVisible, toggleEditModalVisible] = useToggle(false)
 
@@ -77,7 +88,7 @@ const SidebarCollectionItem: FC<ISidebarItem> = memo(({ id, parentId, parentType
       onPin: () => collection && updateCollection({ id: collection.id, pinned: !collection.pinned }),
       onDelete: () => collection && deleteCollection(collection.id),
       onEdit: toggleEditModalVisible,
-      onAddNewSubItem: () => toggleHideChildren(false)
+      onAddNewSubItem: () => CollectionStore.updateCollection({ ...collection, toggled: false }, true)
     }
   )
 
@@ -127,7 +138,7 @@ const SidebarCollectionItem: FC<ISidebarItem> = memo(({ id, parentId, parentType
       >
         <Content
           flex
-          onClick={toggleHideChildren}
+          onClick={() => CollectionStore.updateCollection({ ...collection, toggled: !collection.toggled }, true)}
           alignItems="center"
           justifyContent="space-between"
           className={css([
@@ -166,26 +177,18 @@ const SidebarCollectionItem: FC<ISidebarItem> = memo(({ id, parentId, parentType
       </AnimatePopover>
       <AnimatePresence>
         {!hideChildren && (
-          <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{
-              opacity: 1,
-              height: 'auto'
-            }}
-            exit={{ opacity: 0, height: 0 }}
+          <div
             className={css({
               paddingLeft: 15,
               display: 'flex',
               flexDirection: 'column'
             })}
           >
-            {childrenCollections?.map(i => (
-              <SidebarCollectionItem key={i.id} id={i.id} parentId={id} parentType="collection" />
-            ))}
+            {childrenCollections?.map(i => <SidebarCollectionItem key={i.id} id={i.id} parentId={id} parentType="collection" />)}
             {childrenMetas.map(i => (
               <SidebarObjectItem key={i.id} id={i.id} parentId={id} parentType="collection" />
             ))}
-          </motion.div>
+          </div>
         )}
       </AnimatePresence>
     </Content>

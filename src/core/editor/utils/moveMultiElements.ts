@@ -10,7 +10,7 @@ const moveMultiElements = (details: {
   direction: string
   nextLevel?: number | ((curr: number) => number)
 }) => {
-  const { editor, currNodes, targetPath, direction, nextLevel } = details
+  let { editor, currNodes, targetPath, direction, nextLevel } = details
   const tempPathRefMap = new Map<Element, PathRef>()
   // before moving, track all paths
   currNodes.forEach(([element, path]) => {

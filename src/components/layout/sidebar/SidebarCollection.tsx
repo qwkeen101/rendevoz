@@ -23,7 +23,9 @@ const SidebarCollection = () => {
   const rootCollections = useAtomValue(rootCollectionsAtom, {
     store: globalStore
   })
-  const sortedCollections = rootCollections.slice().sort((a, b) => (a.name || '1')[0].localeCompare((b.name || '1')[0]))
+  const sortedCollections = rootCollections
+    .slice()
+    .sort((a, b) => (a.name || '1').localeCompare(b.name || '1', undefined, { numeric: true, sensitivity: 'base' }))
   const [newCollectionVisible, setNewCollectionVisible] = useState(false)
   const [globalIsDragging] = useGlobalIsDragging()
   const containerRef = useRef<HTMLDivElement>(null)
@@ -137,7 +139,7 @@ const SidebarCollection = () => {
           style={{
             overflowY: 'auto',
             margin: '0 -8px',
-            padding: '0 8px'
+            padding: '0 8px 0px 8px'
           }}
         >
           {sortedCollections.map(i => (

@@ -9,7 +9,8 @@ const searchFiles = async (search: string, category?: number) => {
         access_token: access,
         key: search,
         method: 'search',
-        category,
+        // category,
+        web: 1,
         recursion: true
       }
     })

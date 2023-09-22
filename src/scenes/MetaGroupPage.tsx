@@ -1,9 +1,14 @@
 import { Content } from '@/components'
 import MetaGroupInner from '@/core/group/MetaGroup'
+import { MetaStore } from '@/stores'
+import { TabTitle } from '@/core/rendevoz/components'
 
-const MetaGroupPage = ({ groupId }: { groupId: number }) => {
+const MetaGroupPage = ({ groupId = 0 }: { groupId?: number }) => {
+  // const groupData = MetaStore.useObjectToMetaValue(groupId)
+  // if (!groupData) return null
   return (
     <Content fullHeight fullWidth>
+      {/*<TabTitle title={groupData.name || 'Unnamed Group'} />*/}
       <MetaGroupInner groupId={groupId} />
     </Content>
   )

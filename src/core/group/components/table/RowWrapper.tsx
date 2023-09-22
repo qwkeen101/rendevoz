@@ -36,7 +36,6 @@ export const RowWrapper = ({ rowDetails, path }: { rowDetails: MetaGroupChild; p
       clearSelectState()
     }
   })
-  console.log(rowDetails)
   useEffect(() => {
     instance.values.inViewRowFuncs.set(rowDetails.rowId, {
       checkIntersected: checkIntersect,

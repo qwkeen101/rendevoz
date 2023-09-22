@@ -4,9 +4,11 @@ import { Group } from '@/core/group/hooks/weakmaps'
 import Node from '@/core/group/utils/node'
 import { ObjectStore } from '@/stores'
 import produce from 'immer'
-import { Path } from 'slate'
+import { Path, PathRef } from 'slate'
 import Id from '@/utils/id'
-import { useRef, useState } from 'react'
+import { useEffect, useRef } from 'react'
+import { useSetAtom } from 'jotai/index'
+import { GroupStateAtom } from '@/core/group/hooks/useGroupState'
 
 type GroupUpdateEvent =
   | {
@@ -32,44 +34,37 @@ type RootNode = {
   children: MetaGroupChild[]
 }
 const useAssignValueOps = (instance: IGroupInstance, value: MetaGroupChild[], groupId: number) => {
-  const [updateQueues] = useState<GroupUpdateEvent[]>([])
   const flushed = useRef(false)
-  const handleQueues = () => {
+  const applyEvent = (e: GroupUpdateEvent) => {
+    const op = {
+      type: TypeToSlateType[e.type],
+      path: e.path
+    }
+    for (const ref of instance.values.pathRefs) {
+      PathRef.transform(ref, op)
+    }
+    const nextValue = produce(instance.values.currentValue, draft => {
+      const rootNode = {
+        children: draft
+      }
+      switch (e.type) {
+        case 'add':
+          handleAdd(e.value, e.path, rootNode)
+          break
+        case 'update':
+          handleUpdate(e.value, e.path, rootNode)
+          break
+        case 'remove':
+          handleRemove(e.path, rootNode)
+          break
+      }
+    })
+    instance.values.currentValue = nextValue
     if (!flushed.current) {
       flushed.current = true
       Promise.resolve().then(() => {
         flushed.current = false
-        console.log(structuredClone(updateQueues))
-        const nextValue = produce(value, draft => {
-          const rootNode = {
-            children: draft
-          }
-          while (updateQueues.length) {
-            const firstEvent = updateQueues[0]
-            if (firstEvent.path?.length) {
-              switch (firstEvent.type) {
-                case 'add':
-                  handleAdd(firstEvent.value, firstEvent.path, rootNode)
-                  break
-                case 'update':
-                  handleUpdate(firstEvent.value, firstEvent.path, rootNode)
-                  break
-                case 'remove':
-                  handleRemove(firstEvent.path, rootNode)
-                  break
-              }
-            }
-            updateQueues.shift()
-            updateQueues.forEach(e => {
-              if (!e.path || !firstEvent.path) return
-              e.path = Path.transform(e.path, {
-                type: TypeToSlateType[firstEvent.type],
-                path: firstEvent.path
-              })
-            })
-          }
-        })
-        ObjectStore('group').updateOne({ id: groupId, value: nextValue })
+        ObjectStore('group').updateOne({ id: groupId, value: instance.values.currentValue })
       })
     }
   }
@@ -77,13 +72,18 @@ const useAssignValueOps = (instance: IGroupInstance, value: MetaGroupChild[], gr
     const parent = Node.get(draft, Path.parent(path))
     if (parent) {
       const index = path[path.length - 1]
-      parent.children.splice(index, 0, v)
+      if (!parent.children) {
+        parent.children = [v]
+      } else {
+        parent.children.splice(index, 0, v)
+      }
     }
   }
   const handleUpdate = (v: Partial<MetaGroupChild>, path: Path, draft: RootNode) => {
     const parent = Node.get(draft, Path.parent(path))
     if (parent) {
       const index = path[path.length - 1]
+      if (!parent.children?.[index]) return
       parent.children[index] = { ...parent.children[index], ...v }
     }
   }
@@ -94,39 +94,85 @@ const useAssignValueOps = (instance: IGroupInstance, value: MetaGroupChild[], gr
       parent.children.splice(index, 1)
     }
   }
+  const setGroupState = useSetAtom(GroupStateAtom)
+  const buildIndex = () => {
+    let unToggledCount = 0
+    const id_to_path_map = Group.ID_TO_PATH_MAP.get(instance)
+    const id_to_value_map = Group.ID_TO_VALUE_MAP.get(instance)
+    if (!id_to_path_map || !id_to_value_map) return
+    id_to_path_map.clear()
+    const loop = (v: MetaGroupChild, index: number, curr: Path, parentToggled: boolean) => {
+      id_to_value_map.set(v.rowId, v)
+      const thisPath = [...curr, index]
+      id_to_path_map.set(v.rowId, thisPath)
+      if (!parentToggled) {
+        unToggledCount += 1
+      }
+      if (v.children?.length) {
+        v.children.forEach((value, index1) => loop(value, index1, thisPath, !!v.toggled))
+      }
+    }
+    value.forEach((value, index) => {
+      loop(value, index, [], false)
+    })
+    setGroupState(s => (s.unToggledValueCount !== unToggledCount ? { ...s, unToggledValueCount: unToggledCount } : s))
+  }
+  useEffect(() => {
+    instance.values.currentValue = value
+  }, [value])
   assignProperties(instance, {
     valueOps: {
       getValueById: id => Group.ID_TO_VALUE_MAP.get(instance)?.get(id),
       getValueByPath: path => {
         return Node.get({ children: value }, path)
       },
+      buildIndex,
       insertValueByPath: (v, path) => {
-        if (!v.type) return
-        if (!v.rowId) {
-          v.rowId = Id.getId()
+        const finalPath = path || [value.length]
+        if (Array.isArray(v)) {
+          const parentPath = Path.parent(finalPath)
+          let index = finalPath[finalPath.length - 1]
+          const filtered = v
+            .filter(i => i.type)
+            .map(o => {
+              if (!o.rowId) {
+                o.rowId = Id.getId()
+              }
+              return o
+            })
+          filtered.forEach(v => {
+            const path = parentPath.concat(index)
+            index++
+            applyEvent({
+              type: 'add',
+              value: v,
+              path
+            })
+          })
+        } else {
+          if (!v.type) return
+          if (!v.rowId) {
+            v.rowId = Id.getId()
+          }
+          applyEvent({
+            type: 'add',
+            value: v,
+            path: finalPath
+          })
         }
-        const finalPath = path ? Path.next(path) : [value.length]
-        updateQueues.push({
-          type: 'add',
-          value: v,
-          path: finalPath
-        })
-        handleQueues()
       },
       removeByPath: path => {
-        updateQueues.push({
+        applyEvent({
           type: 'remove',
           path
         })
-        handleQueues()
       },
       updateValueByPath: (v, path) => {
-        updateQueues.push({
+        applyEvent({
           type: 'update',
           value: v,
           path
         })
-        handleQueues()
       },
       getVisibleValues: () => {
         return Node.elements({ children: value }, { match: n => !n.toggled })

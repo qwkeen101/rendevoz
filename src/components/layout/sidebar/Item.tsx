@@ -43,8 +43,7 @@ export const MenuItem = React.forwardRef(
         onClick={onClick}
         className={css([
           className,
-          ClassName.ellipsisFont(1),
-          ClassName.flatButton(8, '4px'),
+          ClassName.flatButton(4, '4px'),
           ClassName.flexLayout('center', 'center'),
           {
             cursor: 'pointer',

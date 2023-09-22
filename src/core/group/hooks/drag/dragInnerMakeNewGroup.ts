@@ -2,7 +2,7 @@ import { MetaGroupChild } from '~/typings'
 import { globalStore, GroupStore, MetaStore, ObjectStore } from '@/stores'
 import i18next from 'i18next'
 
-const dragInnerMakeNewGroup = async (details: { targetValue: MetaGroupChild }) => {
+const dragInnerMakeNewGroup = async (details: { targetValue: MetaGroupChild; items: MetaGroupChild[] }) => {
   const { targetValue } = details
   if (targetValue.type === 'metaObject') {
     const lang = i18next.language
@@ -12,10 +12,11 @@ const dragInnerMakeNewGroup = async (details: { targetValue: MetaGroupChild }) =
       return
     } else {
       const initializedGroup = GroupStore.initializeGroup()
-      const { one, meta } = await ObjectStore('group').addOneWithMeta(
+      ObjectStore('group').addOneWithMeta(
         {
+          ...initializedGroup,
           belongsTo: targetValue.id,
-          ...initializedGroup
+          value: details.items
         },
         {
           currentMeta: {

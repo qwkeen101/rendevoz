@@ -44,7 +44,7 @@ const PdfLabelController = () => {
     }, 3000)
   }
   useEffect(() => {
-    if (labelIds?.length) {
+    if (labelIds?.length !== undefined) {
       const action = async () => {
         const labels = (
           labelSearch.results?.length

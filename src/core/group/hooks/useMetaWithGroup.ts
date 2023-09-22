@@ -1,5 +1,5 @@
 import { MetaGroupChild } from '~/typings'
-import { useSelectGlobalAtomValue } from '@/hooks'
+import { useDebounceEffect, useSelectGlobalAtomValue } from '@/hooks'
 import { MetaIdToGroupAtom } from '@/stores/group.store'
 import { useEffect } from 'react'
 import { isEqual } from 'lodash'
@@ -16,19 +16,25 @@ const useMetaWithGroup = (currentValue: MetaGroupChild, metaId: number, path: Pa
   const targetGroup = ObjectStore('group').useValue(metaHasGroup)
   const instance = useGroupInstance()
 
-  useEffect(() => {
-    if (targetGroup && currentValue.children) {
-      const targetGroupValue = targetGroup.value
+  useDebounceEffect(
+    () => {
+      if (targetGroup && currentValue.children && currentValue.syncVersion) {
+        const targetGroupValue = targetGroup.value
 
-      const allMetasInCurrentValue = getAllMetasInTable(currentValue.children)
-      if (allMetasInCurrentValue.has(metaId)) return
-      if (!isEqual(targetGroupValue, currentValue.children)) {
-        ObjectStore('group').updateOne({ id: targetGroup.id, value: currentValue.children })
+        const allMetasInCurrentValue = getAllMetasInTable(currentValue.children)
+        if (allMetasInCurrentValue.has(metaId)) return
+        if (!isEqual(targetGroupValue, currentValue.children)) {
+          const nextVersion = targetGroup.syncVersion + 1
+          instance.valueOps?.updateValueByPath({ syncVersion: nextVersion }, path)
+          ObjectStore('group').updateOne({ id: targetGroup.id, value: currentValue.children, syncVersion: nextVersion })
+        }
       }
-    }
-  }, [currentValue.children])
+    },
+    [currentValue.children],
+    { wait: 300 }
+  )
   useEffect(() => {
-    if (targetGroup?.value) {
+    if (targetGroup?.syncVersion && targetGroup.syncVersion > (currentValue.syncVersion || 0)) {
       const targetGroupValue = targetGroup.value
       console.log(targetGroupValue, currentValue.children)
       if (!targetGroupValue) return
@@ -38,10 +44,10 @@ const useMetaWithGroup = (currentValue: MetaGroupChild, metaId: number, path: Pa
       const allMetasInCurrentValue = getAllMetasInTable(currentValue.children)
       if (allMetasInCurrentValue.has(metaId)) return
       if (!isEqual(targetGroupValue, currentValue.children)) {
-        instance.valueOps?.updateValueByPath({ children: targetGroupValue }, path)
+        instance.valueOps?.updateValueByPath({ children: targetGroupValue, syncVersion: targetGroup.syncVersion }, path)
       }
     }
-  }, [targetGroup?.value])
+  }, [targetGroup?.syncVersion])
   return targetGroup
 }
 

@@ -1,7 +1,7 @@
 import { Box, MetaGroupChild, MetaObject, PartialWithId } from '../..'
 import { PrimitiveAtom } from 'jotai/esm'
 import { Patch } from 'immer'
-import { Path } from 'slate'
+import { Path, PathRef } from 'slate'
 
 type GroupHistoryItem = {
   atom: PrimitiveAtom<any>
@@ -34,6 +34,7 @@ type GroupDragOps = {
 
 type GroupPathOps = {
   getPathById: (id: number) => Path | undefined
+  pathRef: (path: Path) => PathRef
 }
 
 type GroupMetaOps = {
@@ -48,9 +49,10 @@ type GroupValueOps = {
   isParent: (maybeParent: MetaGroupChild, child: MetaGroupChild) => boolean
   updateValueByPath: (value: Partial<MetaGroupChild>, path: Path) => void
   // if no path, insert at end of group
-  insertValueByPath: (value: Partial<MetaGroupChild>, path?: Path) => void
+  insertValueByPath: (value: Partial<MetaGroupChild> | Partial<MetaGroupChild>[], path?: Path) => void
   removeByPath: (path: Path) => void
   getVisibleValues: () => GroupValueEntry[]
+  buildIndex: VoidFunction
 }
 
 export type IGroupInstance = Partial<{
@@ -69,8 +71,10 @@ export type IGroupInstance = Partial<{
     isFocused: boolean
     // id => row func
     inViewRowFuncs: Map<number, GroupRowFunctions>
+    pathRefs: Set<PathRef>
     selectBox?: Box
     selectedRowIdSet: Set<number>
+    currentValue: MetaGroupChild[]
     rowIdToRowMap: Map<number, MetaGroupChild & { path: Path }>
   }
 }

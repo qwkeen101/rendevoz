@@ -1,5 +1,5 @@
 import { assignProperties } from '@/utils'
-import { useRef } from 'react'
+import { memo, useRef } from 'react'
 import { useSelectAtomValue } from '@/hooks'
 import { TableStateAtom } from '@/core/group/hooks/useTableState'
 import { Content, VirtualList } from '@/components'
@@ -13,23 +13,20 @@ import useAssignBodyOps from '@/core/group/hooks/ops/useAssignBodyOps'
 import useGroupSelect from '@/core/group/hooks/select/useGroupSelect'
 import PlaceholderRow from '@/core/group/components/table/PlaceholderRow'
 
-const TableWrapper = ({ value }: { value: MetaGroupChild[] }) => {
+const TableWrapper = memo(({ value }: { value: MetaGroupChild[] }) => {
   const ref = useRef<HTMLDivElement>(null)
-  const virtualizerRef = useRef<Virtualizer<any, any>>()
   const instance = useGroupInstance()
   const virtualizer = useVirtualizer({
     getScrollElement: () => ref.current,
-    overscan: 5,
+    overscan: 10,
     estimateSize: () => 30,
     count: value.length
   })
   instance.getScrollElement = () => ref.current
   const renderSelectBox = useGroupSelect(ref.current)
-  useAssignBodyOps(instance, ref, virtualizerRef)
+  useAssignBodyOps(instance, ref, virtualizer)
   const headers = useSelectAtomValue(TableStateAtom, s => s.headers)
   const items = virtualizer.getVirtualItems()
-  if (!items.length) return null
-  console.log(value)
   // root layer, path is the first index
   return (
     <Content
@@ -40,7 +37,7 @@ const TableWrapper = ({ value }: { value: MetaGroupChild[] }) => {
       style={{
         width: 'auto',
         overflowY: 'auto',
-        padding: '0px 40px'
+        padding: '0px 60px'
       }}
     >
       {renderSelectBox()}
@@ -63,6 +60,6 @@ const TableWrapper = ({ value }: { value: MetaGroupChild[] }) => {
       <PlaceholderRow/>
     </Content>
   )
-}
+})
 
 export default TableWrapper

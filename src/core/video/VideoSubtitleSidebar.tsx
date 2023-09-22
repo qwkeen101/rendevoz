@@ -261,7 +261,7 @@ const SubtitleItem = memo(
           <div className={ClassName.description(FontSize['11px'])} style={{ lineHeight: 1, userSelect: 'none' }}>
             {normalizeSecondsToTime(subtitle.startTime)}
           </div>
-          <div style={{ userSelect: 'text', fontSize: FontSize['13px'] }}>{subtitle.text}</div>
+          <div style={{ userSelect: 'text', fontSize: FontSize['13px'], whiteSpace: 'pre-wrap' }}>{subtitle.text}</div>
         </Content>
         <Tooltip content={'Add as label'}>
           <Icon

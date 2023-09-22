@@ -10,6 +10,7 @@ import { useVideoInstance } from '@/core/video/hooks/useVideoInstance'
 import { assignProperties } from '@/utils'
 import { captureVideoFrame } from '@/core/video/utils'
 import loginBaidudisk from '@/components/fileImporter/baidudisk/loginBaidudisk'
+import { useUnmount } from 'react-use'
 
 const BaidudiskVideoPlayer = ({ url }: PlayerCommonProps) => {
   const [videoState, setVideoState] = useVideoState()
@@ -99,6 +100,9 @@ const BaidudiskVideoPlayer = ({ url }: PlayerCommonProps) => {
       player?.autoplay(videoState.autoPlay)
     }
   }, [videoState.autoPlay, videoState.loaded])
+  useUnmount(() => {
+    player?.dispose()
+  })
   useEffect(() => {
     if (videoState.loaded && videoState.subtitleUrl && videoState.showSubtitle) {
       const track = document.createElement('track')

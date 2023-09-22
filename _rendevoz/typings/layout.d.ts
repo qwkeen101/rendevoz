@@ -54,8 +54,22 @@ export type IGraphTab = {
   instance: never
   objectId: never
 }
-
-export type BuiltInTabTypes = IVideoTab | IWhiteboardTab | INoteTab | IImageTab | IPDFTab | IWebpageTab | IDatabaseTab | IHomeTab | IGraphTab
+export type IGroupTab = {
+  type: 'group'
+  instance: never
+  objectId: number
+}
+export type BuiltInTabTypes =
+  | IVideoTab
+  | IWhiteboardTab
+  | INoteTab
+  | IImageTab
+  | IPDFTab
+  | IWebpageTab
+  | IDatabaseTab
+  | IHomeTab
+  | IGraphTab
+  | IGroupTab
 
 export type ILayoutTab = CustomTypes['Tab'] & {
   tabContent: ReactElement

@@ -67,7 +67,7 @@ export type IWhiteboardNode = {
     }
   | {
       type: 'freehand'
-      points: FreehandPoint[]
+      points: FreehandPoint[] | FreehandPoint[][]
       // default: 16
       strokeWidth?: number
       // default: 1
@@ -86,6 +86,11 @@ export type IPenStyle = {
   color: string
 }
 
+type MultiplePenStyles = {
+  first: IPenStyle
+  second: IPenStyle
+  third: IPenStyle
+}
 export interface IWhiteboard extends IBase {
   name?: string
   nodes?: Map<number, IWhiteboardNode>
@@ -100,5 +105,10 @@ export interface IWhiteboard extends IBase {
     x: number
     y: number
     scale: number
+  }
+  penStyles?: {
+    ballpen: MultiplePenStyles
+    pen: MultiplePenStyles
+    marker: MultiplePenStyles
   }
 }

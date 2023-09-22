@@ -47,7 +47,8 @@ const GroupStore = {
         visibleProperties: [],
         hiddenProperties: [],
         wrapColumns: false
-      }
+      },
+      syncVersion: 1
     } as MetaGroup
   }
 }

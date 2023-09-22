@@ -93,7 +93,8 @@ const MetaGroup = ({ groupId }: { groupId: number }) => {
         isFocused: false,
         selectedRowIdSet: new Set(),
         rowIdToPathMap: new Map(),
-        inViewRowFuncs: new Map()
+        inViewRowFuncs: new Map(),
+        pathRefs: new Set()
       }
     } as IGroupInstance)
     return store

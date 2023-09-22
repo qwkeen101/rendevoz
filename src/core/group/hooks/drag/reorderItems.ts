@@ -1,9 +1,6 @@
 import { IGroupInstance, MetaGroupChild } from '~/typings'
 import { ObjectStore } from '@/stores'
 import { Path } from 'slate'
-import { insertItems } from './insertItems'
-import produce from 'immer'
-import deleteItems from '@/core/group/hooks/drag/deleteItems'
 import dragInnerMakeNewGroup from '@/core/group/hooks/drag/dragInnerMakeNewGroup'
 /**
  * 在树中移动多个元素
@@ -24,33 +21,30 @@ const reorderDragItems = async (opts: {
     if (!targetPath) return
 
     items.sort((b, a) => (Path.isAfter(getPath(b.rowId)!, getPath(a.rowId)!) ? 1 : -1))
-    const endPath = getPath(items[items.length - 1].rowId)
-    const startPath = getPath(items[0].rowId)
-    console.log(startPath, endPath, targetPath)
-    if (Path.isBefore(endPath, targetPath)) {
-      const newValue = produce(currentGroup.value, draft => {
-        insertItems(towards, targetPath, draft, items)
-        deleteItems(draft, startPath, endPath)
-        if (towards === 'inner') {
-          dragInnerMakeNewGroup({
-            targetValue: targetValue
-          })
-        }
+    const endPath = getPath(items[items.length - 1]?.rowId)
+    const startPath = getPath(items[0]?.rowId)
+    if (!endPath?.length || !startPath?.length) return
+    const targetPathRef = instance.pathOps?.pathRef(targetPath)
+    const itemsWithPathref = items.map(i => ({ ...i, pathRef: instance.pathOps?.pathRef(getPath(i.rowId)) }))
+    itemsWithPathref.forEach(i => {
+      const path = i.pathRef?.unref()
+      path && instance.valueOps?.removeByPath(path)
+    })
+    const nowTargetPath = targetPathRef?.unref()
+    if (!nowTargetPath) return
+    instance.valueOps?.insertValueByPath(
+      items,
+      towards === 'top'
+        ? nowTargetPath
+        : towards === 'inner'
+        ? [...nowTargetPath, targetValue.children?.length || 0]
+        : Path.next(nowTargetPath)
+    )
+    if (towards === 'inner') {
+      dragInnerMakeNewGroup({
+        targetValue: targetValue,
+        items
       })
-      await ObjectStore('group').updateOne({ id: currentGroup.id, value: newValue })
-    }
-    if (Path.isAfter(startPath, targetPath)) {
-      const newValue = produce(currentGroup.value, draft => {
-        deleteItems(draft, startPath, endPath)
-        insertItems(towards, targetPath, draft, items)
-        if (towards === 'inner') {
-          dragInnerMakeNewGroup({
-            targetValue: targetValue
-          })
-        }
-      })
-      console.log(newValue)
-      await ObjectStore('group').updateOne({ id: currentGroup.id, value: newValue })
     }
   }
 }

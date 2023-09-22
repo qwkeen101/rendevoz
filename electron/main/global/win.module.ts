@@ -216,8 +216,11 @@ console.log(process.env.DIST)
           urls: ['*://*/*']
         }
         wsession.webRequest.onBeforeSendHeaders(filter, (details, cb) => {
-          if(details.url.includes('https://pan.baidu.com/rest/2.0/xpan/file?method=streaming')){
+          if (details.url.includes('https://pan.baidu.com/rest/2.0/xpan/file?method=streaming')) {
             details.requestHeaders['User-Agent'] = 'xpanvideo;netdisk;iPhone13;ios-iphone;15.1;ts'
+          }
+          if (details.url.includes('baidu') && details.url.includes('pcs')) {
+            details.requestHeaders['User-Agent'] = 'pan.baidu.com'
           }
           if (details.requestHeaders['bili']) {
             const refer = details.requestHeaders['bili']

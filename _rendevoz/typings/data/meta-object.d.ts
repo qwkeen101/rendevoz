@@ -149,6 +149,7 @@ export type MetaTableHeader = {
 export type MetaGroupChild = {
   rowId: number
   children?: MetaGroupChild[]
+  syncVersion?: number
   toggled?: boolean
 } & (
   | { type: 'metaObject'; id: number }
@@ -169,6 +170,7 @@ export interface MetaGroup extends IBase {
   search?: string
   afterFilterValue?: MetaGroupChild[]
   openIn?: 'center' | 'newTab'
+  syncVersion: number
   tableProperties?: {
     headers?: MetaTableHeader[]
     visibleProperties: string[]

@@ -7,3 +7,4 @@ export * from "./font";
 export { default as Colors } from "./colors";
 export * from "./colors";
 export * from "./iso-639-to-iso-631";
+export * from './errors'

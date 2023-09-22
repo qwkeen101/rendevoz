@@ -11,6 +11,10 @@ import { ObjectStore } from '@/stores'
 import { IBaidudiskInstance } from '~/typings'
 import searchFiles from '@/components/fileImporter/baidudisk/searchFiles'
 import { useDebounceEffect } from '@/hooks'
+import {
+  categorizeFilesByPath,
+  handleImportAllAndCreateCollections, normalizeGroupToCollections
+} from '@/components/fileImporter/baidudisk/handleImportAllAndCreateCollections'
 
 type BaiduFile = {
   category: number
@@ -65,7 +69,7 @@ const BaidudiskDisplayer = ({
     { wait: 500 }
   )
   useEffect(() => {
-    getAllFilesAndFolders(currentDir, onlyVisibleCategory).then(data => {
+    getAllFilesAndFolders(currentDir).then(data => {
       if (data) {
         setDirState([
           ...dirState,
@@ -103,11 +107,24 @@ const BaidudiskDisplayer = ({
                 onClick={() => {
                   dirState.pop()
                   setDirState([...dirState])
+                  setCurrentDir(dirState[dirState.length - 1].path)
                 }}
               >
                 返回上级
               </div>
             )}
+            <div
+              className={ClassName.link()}
+              onClick={() => {
+                handleImportAllAndCreateCollections(currentDir).then(data => {
+                  const group = categorizeFilesByPath(data, currentDir)
+                  console.log(group)
+                  normalizeGroupToCollections(group)
+                })
+              }}
+            >
+              导入当前文件夹下所有文件与子文件夹
+            </div>
             <Content flex alignItems="center" gap={4}>
               <Icon name={'park-search'} />
               <input

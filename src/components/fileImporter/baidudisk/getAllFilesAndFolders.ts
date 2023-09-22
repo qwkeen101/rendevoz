@@ -16,10 +16,6 @@ const getAllFilesAndFolders = async (currentPath = '/', category?: number) => {
     }
     const result = await request(`https://pan.baidu.com/rest/2.0/xpan/file`, {
       method: 'get',
-      headers: {
-        Referer: '',
-        'User-Agent': 'pan.baidu.com'
-      },
       params: {
         method,
         access_token: access,

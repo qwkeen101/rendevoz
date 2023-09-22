@@ -40,8 +40,8 @@ interface TextLayerProps {
 }
 
 const DEFAULT_DISTANCE_TOLERANCE = 6
-const DEFAULT_HIGHLIGHT_COLOR = '#8590AE'
-const DEFAULT_SELECT_COLOR = '#8590AE'
+const DEFAULT_HIGHLIGHT_COLOR = 'rgba(39, 158, 255)'
+const DEFAULT_SELECT_COLOR = 'rgba(39, 158, 255)'
 
 const TextLayer: FC<TextLayerProps> = ({ scale, rotation, width, height, pageIndex, viewport, pageFunctionRef, transformScale = 1 }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null)
@@ -494,7 +494,7 @@ const TextLayer: FC<TextLayerProps> = ({ scale, rotation, width, height, pageInd
     const ctx = canvas?.getContext('2d')
     if (!canvas || !ctx) return
     ctx.fillStyle = color
-    ctx.globalAlpha = 0.5
+    ctx.globalAlpha = 0.4
     if (offset && offset.angle) {
       ctx.fillRect(x + offset.dx, y + offset.dy, width, height)
       rect = {
@@ -579,7 +579,7 @@ const TextLayer: FC<TextLayerProps> = ({ scale, rotation, width, height, pageInd
     selectedTextRef.current = ''
     optimizedRects.forEach(rect => {
       const text = rect.text as string
-      selectedTextRef.current += text + ' '
+      selectedTextRef.current += text + ''
     })
     globalSelectingText.selectedTexts[pageIndex] = selectedTextRef.current
     optimizedRects.forEach(rect => {

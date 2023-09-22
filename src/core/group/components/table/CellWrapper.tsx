@@ -3,6 +3,7 @@ import { MetaStore } from '@/stores'
 import { Colors } from '@/consts'
 import { RelatedCell, InnerLabelsCell, InLinkCell, OutLinkCell, FromCell, DisplayCell, EditableCell, TagCell } from './cells'
 import { useGroupInstance } from '@/core/group/hooks/useGroupInstance'
+import { Path } from 'slate'
 
 const CellWrapper = ({
   field,
@@ -12,7 +13,8 @@ const CellWrapper = ({
   objectId,
   wrap,
   hasChildren,
-  onToggle,
+  path,
+  toggled,
   indent = 0
 }: {
   objectId?: number
@@ -22,10 +24,12 @@ const CellWrapper = ({
   type: MetaObject['type']
   wrap?: boolean
   hasChildren?: boolean
-  onToggle?: (v: boolean) => void
   indent?: number
+  toggled?: boolean
+  path: Path
 }) => {
   const instance = useGroupInstance()
+  const showToggle = field === 'name' && !!hasChildren
   const renderer = () => {
     switch (field) {
       case 'name':
@@ -34,7 +38,8 @@ const CellWrapper = ({
             value={value}
             showToggle={!!hasChildren}
             openMeta={metaId}
-            onToggle={onToggle}
+            toggled={toggled}
+            path={path}
             indent={indent}
             onChange={v => {
               instance.metaOps?.updateMeta({ id: metaId, [field]: v })
@@ -74,14 +79,15 @@ const CellWrapper = ({
   return (
     <div
       style={{
-        padding: '5px 8px',
+        padding: showToggle ? '5px 8px 5px 2px' : '5px 8px',
         position: 'relative',
         height: wrap ? undefined : '34px',
         minHeight: '34px',
         wordBreak: 'break-all',
         overflow: wrap ? 'visible' : 'hidden',
         whiteSpace: wrap ? 'pre-wrap' : 'nowrap',
-        borderRight: `1px solid ${Colors.Background.Border}`
+        borderRight: `1px solid ${Colors.Background.Border}`,
+        cursor: 'pointer'
       }}
     >
       {renderer()}

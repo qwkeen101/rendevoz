@@ -16,6 +16,7 @@ import resizeMultipleNodes from '@/core/whiteboard/utils/resizeMultipleNodes'
 import useUpdateWhiteboard from '@/core/whiteboard/hooks/useUpdateWhiteboard'
 import { useWhiteboardInstance } from '@/core/whiteboard/hooks/useWhiteboardInstance'
 import { css } from '@emotion/css'
+import groupFreehands from '@/core/whiteboard/utils/groupFreehands'
 
 const cursorClass = css({
   '*': {

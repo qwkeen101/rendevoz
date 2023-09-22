@@ -8,47 +8,52 @@ import { RowWrapper } from '@/core/group/components/table/RowWrapper'
 import isHotkey from 'is-hotkey'
 import AutosizeTextarea from '@/components/custom/input/autosizeTextarea'
 import { useState } from 'react'
+import { Container } from '@/core/group/components/table/rows/MetaRow'
+import ToggleArrow from '@/core/group/components/basic/ToggleArrow'
 
-const TextRow = ({ rowDetails, path, rowRef, renderIndicator, isSelected }: IGroupRow) => {
+const TextRow = ({ rowDetails, path, rowRef, renderIndicator, isSelected, renderCheckbox }: IGroupRow) => {
   const textRowDetails = rowDetails as MetaGroupChild & { type: 'text' }
-  const hasChildren = textRowDetails.children?.length
+  const hasChildren = !!textRowDetails.children?.length
   const instance = useGroupInstance()
   const indent = path.length - 1
   const [height, setHeight] = useState(0)
-  // const handleInsertNewRow = () => {
-  //   instance.valueOps?.insertValueByPath(
-  //     {
-  //       type: 'text',
-  //       textContent: 'new add'
-  //     },
-  //     path
-  //   )
-  // }
-  if (hasChildren) {
-    return (
-      <Content flex column>
+
+  return (
+    <Container hasChildren={hasChildren}>
+      <Content
+        flex
+        alignItems={'center'}
+        ref={rowRef}
+        style={{
+          position: 'relative',
+          borderBottom: `1px solid ${Colors.Background.Border}`,
+          background: isSelected ? Colors.Common.SelectColorTransparent : undefined,
+          transition: 'background 0.2s ease'
+        }}
+      >
+        {renderCheckbox()}
         {renderIndicator()}
-        <div
-          ref={rowRef}
+        <Content
           style={{
-            position: 'relative',
-            borderBottom: `1px solid ${Colors.Background.Border}`,
-            paddingLeft: indent * 20,
-            height,
-            background: isSelected ? Colors.Common.SelectColorTransparent : undefined
+            height: height + 10,
+            padding: `5px 8px 5px 8px`,
+            paddingLeft: `${indent * 30 + (hasChildren ? 2 : 8) - (hasChildren && indent ? 26 : 0)}px`
           }}
+          fullWidth
+          flex
+          alignItems={'flex-start'}
+          gap={4}
         >
+          {hasChildren && (
+            <div style={{ marginTop: 1 }}>
+              <ToggleArrow path={path} toggled={!!rowDetails.toggled} />
+            </div>
+          )}
           <AutosizeTextarea
             onHeightChange={height => setHeight(height)}
-            style={{ width: '100%' }}
+            style={{ width: '100%', padding: 0, resize: 'none' }}
             className={ClassName.noStyleInput}
             defaultValue={textRowDetails.textContent}
-            // onKeyDown={e => {
-            //   if (isHotkey(KEY.Enter, e)) {
-            //     handleInsertNewRow()
-            //     e.preventDefault()
-            //   }
-            // }}
             onBlur={e => {
               if (e.currentTarget.value !== textRowDetails.textContent) {
                 instance.valueOps?.updateValueByPath(
@@ -60,49 +65,11 @@ const TextRow = ({ rowDetails, path, rowRef, renderIndicator, isSelected }: IGro
               }
             }}
           />
-        </div>
-        {!rowDetails.toggled && rowDetails.children?.map((i, idx) => <RowWrapper rowDetails={i} path={[...path, idx]} />)}
+        </Content>
       </Content>
-    )
-  } else {
-    return (
-      <div
-        ref={rowRef}
-        style={{
-          position: 'relative',
-          borderBottom: `1px solid ${Colors.Background.Border}`,
-          paddingLeft: indent * 20,
-          height,
-          background: isSelected ? Colors.Common.SelectColorTransparent : undefined
-        }}
-      >
-        {renderIndicator()}
-        <AutosizeTextarea
-          onHeightChange={height => setHeight(height)}
-          // onKeyDown={e => {
-          //   if (isHotkey(KEY.Enter, e)) {
-          //     handleInsertNewRow()
-          //     e.preventDefault()
-          //   }
-          // }}
-          className={ClassName.noStyleInput}
-          style={{ width: '100%', padding: '5px 8px' }}
-          defaultValue={textRowDetails.textContent}
-          onBlur={e => {
-            if (e.currentTarget.value !== textRowDetails.textContent) {
-              console.log('update')
-              instance.valueOps?.updateValueByPath(
-                {
-                  textContent: e.currentTarget.value
-                },
-                path
-              )
-            }
-          }}
-        />
-      </div>
-    )
-  }
+      {!rowDetails.toggled && rowDetails.children?.map((i, idx) => <RowWrapper rowDetails={i} path={[...path, idx]} />)}
+    </Container>
+  )
 }
 
 export default TextRow

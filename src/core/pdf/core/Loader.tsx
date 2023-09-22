@@ -5,7 +5,7 @@ import { FC, useEffect, useRef, useState } from 'react'
 import usePdfViewer from './hooks/useViewer'
 import { PDF_TO_DOC, PDF_TO_THUMBNAIL } from './weakMaps'
 import { renderPageInDarkMode } from './utils/renderer'
-import cMapsUrl from '@/../../../../public/cmaps/?url'
+
 interface LoaderProps {
   file: string | Uint8Array
   children: (doc: PDFDocumentProxy) => React.ReactElement
@@ -20,6 +20,7 @@ const Loader: FC<LoaderProps> = ({ file, children, onDocumentLoaded }) => {
   const docRef = useRef<PDFDocumentProxy | null>(null)
   const viewer = usePdfViewer()
   const [loadingState, setLoadingState] = useState(LoadingState.Loading)
+
   const getThumbnail = async (doc: PDFDocumentProxy) => {
     const map = (viewer && PDF_TO_THUMBNAIL.get(viewer)) || new Map<number, string>()
     if (viewer) {
@@ -84,6 +85,7 @@ const Loader: FC<LoaderProps> = ({ file, children, onDocumentLoaded }) => {
       viewer?.onDocumentLoaded?.(doc)
       setLoadingState(LoadingState.Complete)
     })
+
     return () => {
       console.log('clearing')
       loadingTask.destroy()

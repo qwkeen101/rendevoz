@@ -3,7 +3,14 @@ import './common.less'
 import TitleBar from './components/titlebar'
 import Initializer from './Initializer'
 import './global.less'
-import { GlobalCreateObject, GlobalDragOverlay, GlobalGraph, GlobalObjectPanel, GlobalScreenShot, ObjectTimeline, useSetting } from '@/core'
+import {
+  GlobalCreateObject,
+  GlobalDragOverlay,
+  GlobalGraph,
+  GlobalObjectPanel,
+  GlobalScreenShot,
+  SettingAtom
+} from '@/core'
 import Notification from './components/NotificationCenter'
 import '@/core/editor/dock.less'
 import SvgMarker from './components/svg/Marker'
@@ -24,33 +31,21 @@ import GlobalSearchPanel from './core/global/GlobalSearchPanel'
 import 'highlight.js/styles/atom-one-dark.css'
 import GlobalTextSearch from './core/global/GlobalTextSearch'
 import '@/consts/colors.less'
-import EditorPage from './scenes/editor'
-import ImagePage from './scenes/ImagePage'
-import PdfPage from './scenes/pdf'
-import VideoPage from './scenes/VideoPage'
 import { Rendevoz } from './core/rendevoz'
-import Webpage from './core/webpage/Webpage'
-import WhiteboardPage from './scenes/WhiteboardPage'
-import { HomePage } from './scenes/HomePage'
-import DatabasePage from './scenes/DatabasePage'
 import GlobalImporter from './core/global/GlobalImporter'
 import PluginManager from './core/plugin/PluginManager'
 import BuiltinEditorPlugin from './core/plugin/builtin/EditorPlugin'
 import { KeyToRegisteredGlobalElements } from './core/plugin/RegisterMap'
-import { ILayoutTab, TabData } from 'rendevoz'
-import Id from '@/utils/id'
 import GlobalUtils from '@/core/global/GlobalUtils'
 import GlobalPdfPrinter from '@/core/global/GlobalPdfPrinter'
-import GraphPage from '@/scenes/GraphPage'
 import InnerHookz from '@/core/rendevoz/hooks'
 import * as InnerComponentz from '@/core/rendevoz/components'
 import createCache from '@emotion/cache'
-import useBetterFilter from '@/core/database/filter/useBetterFilter'
-import MetaGroupPage from '@/scenes/MetaGroupPage'
 import { BuiltInDraggableElement, BuiltInDropOn, BuiltInMetaObjectTypes, BuiltInObjectTypes, BuiltInTabTypes } from '~/typings'
 import { GlobalBaidudisk } from '@/components/fileImporter/baidudisk/BaidudiskDisplayer'
-import SyncedBlockPage from '@/scenes/SyncedBlockPage'
 import { ObjectStore } from '@/stores'
+import { useSelectGlobalAtomValue } from '@/hooks'
+import registerTabs from '@/startup/registerTabs'
 // import { startDrive } from '@/driver'
 // import ReviewManager from '@/core/review/components/ReviewManager'
 // import TimelineManager from '@/core/database/TimelineManager'
@@ -75,74 +70,6 @@ export function getOS() {
 
   return os
 }
-
-const RENDEVOZ_DEFAULT_TABS: TabData[ILayoutTab['type']][] = [
-  {
-    type: 'note',
-    content: opts =>
-      opts.objectId && (
-        <EditorPage type="note" noteId={opts.objectId} id={Id.getStrId()} onInstanceInitialized={opts.onInstanceInitialized} />
-      )
-  },
-  {
-    type: 'image',
-    content: opts => opts.objectId && <ImagePage imageId={opts.objectId} />
-  },
-  {
-    type: 'pdf',
-    content: opts => opts.objectId && <PdfPage pdfId={opts.objectId} onInstanceInitialized={opts.onInstanceInitialized} />
-  },
-  {
-    type: 'video',
-    content: opts => opts.objectId && <VideoPage videoId={opts.objectId} onInstanceInitialized={opts.onInstanceInitialized} />
-  },
-  {
-    type: 'webpage',
-    content: opts =>
-      opts.objectId && (
-        <Webpage
-          onWebpageChange={newWebpage => {
-            opts.tab.objectId = newWebpage.webpageId
-            opts.objectId = newWebpage.webpageId
-          }}
-          initialWebpageId={opts.objectId}
-          onInstanceInitialized={opts.onInstanceInitialized}
-        />
-      )
-  },
-  {
-    type: 'whiteboard',
-    content: opts => opts.objectId && <WhiteboardPage whiteboardId={opts.objectId} onInstanceInitialized={opts.onInstanceInitialized} />
-  },
-  {
-    type: 'home',
-    content: () => <HomePage />
-  },
-  {
-    type: 'database',
-    content: () => <DatabasePage />
-  },
-  {
-    type: 'graph',
-    content: () => <GraphPage />
-  },
-  {
-    type: 'review',
-    content: () => <ReviewManager />
-  },
-  {
-    type: 'timeline',
-    content: () => <ObjectTimeline />
-  },
-  {
-    type: 'group',
-    content: opts => <MetaGroupPage groupId={opts.objectId} />
-  },
-  {
-    type: 'synced',
-    content: opts => <SyncedBlockPage metaId={opts.objectId} />
-  }
-]
 
 export const GlobalPluginManager = new PluginManager()
 declare module 'rendevoz' {
@@ -172,38 +99,34 @@ const App = () => {
   PdfJs.GlobalWorkerOptions.workerSrc = PdfJsUrl
 
   const os = getOS()
-  useBetterFilter()
-  const [setting] = useSetting()
+  const lang = useSelectGlobalAtomValue(SettingAtom, s => s.general.language)
   const { i18n } = useTranslation()
   const executed = useRef(false)
   if (!executed.current) {
-    RENDEVOZ_DEFAULT_TABS.forEach(i => Rendevoz.Actions.Layout.registerTabData(i))
+    registerTabs()
     GlobalPluginManager.registerPlugin(BuiltinEditorPlugin)
     executed.current = true
 
-    setTimeout(() => {
-      // ObjectStore('group')
-      //   .getOneById(1)
-      //   .then(async res => {
-      //     if (!res) {
-      //       await ObjectStore('group').addOne({
-      //         rootFilterGroup: { groupType: 'and', rules: [], filterType: 'group' },
-      //         id: 1,
-      //         childrenMetaIds: []
-      //       })
-      //     }
-      //     Rendevoz.Actions.Layout.openNewTab({ data: { type: 'group', objectId: 1 } })
-      //   })
-      // startDrive()
-      // Rendevoz.Actions.Layout.openNewTab({ data: { type: 'review' } })
-    }, 2000)
+    // setTimeout(() => {
+    //   ObjectStore('group')
+    //     .getOneById(1)
+    //     .then(async res => {
+    //       if (!res) {
+    //         await ObjectStore('group').addOne({
+    //           rootFilterGroup: { groupType: 'and', rules: [], filterType: 'group' },
+    //           id: 1,
+    //           syncVersion: 1,
+    //           childrenMetaIds: []
+    //         })
+    //       }
+    //       Rendevoz.Actions.Layout.openNewTab({ data: { type: 'group', objectId: 1 } })
+    //     })
+    // }, 2000)
   }
 
   useEffect(() => {
-    if (setting.general.language) {
-      i18n.changeLanguage(setting.general.language)
-    }
-  }, [setting.general.language])
+    i18n.changeLanguage(lang)
+  }, [lang])
 
   const registeredGlobalElements = Array.from(KeyToRegisteredGlobalElements.entries())
 

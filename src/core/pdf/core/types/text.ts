@@ -66,5 +66,6 @@ export interface TextRect {
   height: number;
   text: string;
   offset?: any;
+  hasEOL?: boolean
 }
 export type TextContentTrans = number[];

@@ -66,7 +66,6 @@ function* nodes(root: Node, options: NodeNodesOptions = {}): Generator<NodeEntry
 }
 
 const deleteItems = (value: Draft<MetaGroupChild>[], startPath: Path, endPath: Path) => {
-  console.log(startPath, endPath, value)
   const items = nodes(
     { children: value },
     {
@@ -75,10 +74,8 @@ const deleteItems = (value: Draft<MetaGroupChild>[], startPath: Path, endPath: P
     }
   )
   const itemsArr = Array.from(items)
-  console.log(structuredClone(itemsArr.map(i => i[1])))
   for (const [node, path] of itemsArr) {
     if (!path?.length) continue
-    console.log(path)
     const index = path[path.length - 1]
     const parent = Node.get({ children: value }, Path.parent(path))
     parent.children.splice(index, 1)

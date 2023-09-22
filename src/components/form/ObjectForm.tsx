@@ -129,7 +129,7 @@ const ObjectForm: FC<
                 ObjectStore('pdf')
                   .updateOne({ id: object.objectId, ...doc })
                   .then(one => {
-                    setObject({ ...object, name: one?.metadata?.title, coverImgSrc: one?.metadata?.coverUrl })
+                    setObject({ ...object, name: details.fileName, coverImgSrc: one?.metadata?.coverUrl })
                   })
               })
             }

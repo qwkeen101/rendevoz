@@ -17,43 +17,41 @@ const GroupTableHeader = () => {
   const handleSelectVisibleItems = () => {
     const elements = instance.valueOps?.getVisibleValues()
     if (elements?.length) {
-      const allSelected = groupState.selectedCount === groupState.unToggledValueCount
+      const allSelected = groupState.unToggledSelectedCount === groupState.unToggledValueCount
       // 如果全选，清除
       if (allSelected) {
         instance.values.inViewRowFuncs.forEach(v => v.clearSelectState())
         instance.values.selectedRowIdSet.clear()
-        setGroupState(s => ({ ...s, selectedCount: 0 }))
         return
       }
-      if (groupState.selectedCount >= 0 && groupState.selectedCount < groupState.unToggledValueCount) {
+      if (groupState.unToggledSelectedCount >= 0 && groupState.unToggledSelectedCount < groupState.unToggledValueCount) {
         instance.values.inViewRowFuncs.forEach(v => v.select())
         elements.forEach(([e, p]) => {
           instance.values.selectedRowIdSet.add(e.rowId)
         })
-        setGroupState(s => ({ ...s, selectedCount: elements.length }))
         return
       }
     } else {
-      setGroupState(s => ({ ...s, selectedCount: 0 }))
+      instance.values.inViewRowFuncs.forEach(v => v.clearSelectState())
+      instance.values.selectedRowIdSet.clear()
     }
   }
   useEffect(() => {
     if (!checkboxRef.current) return
-    console.log(groupState.selectedCount, groupState.unToggledValueCount)
-    if (groupState.selectedCount > 0 && groupState.selectedCount < groupState.unToggledValueCount) {
+    if (groupState.unToggledSelectedCount > 0 && groupState.unToggledSelectedCount < groupState.unToggledValueCount) {
       checkboxRef.current.indeterminate = true
     } else {
       checkboxRef.current.indeterminate = false
     }
   }, [groupState])
   return (
-    <Content flex alignItems={'center'}>
+    <Content flex alignItems={'center'} style={{ padding: '0 60px' }}>
       <input
         ref={checkboxRef}
         onClick={e => {
           handleSelectVisibleItems()
         }}
-        checked={groupState.selectedCount > 0 && groupState.selectedCount === groupState.unToggledValueCount}
+        checked={groupState.selectedCount > 0 && groupState.unToggledSelectedCount === groupState.unToggledValueCount}
         type={'checkbox'}
       />
       <Reorder.Group

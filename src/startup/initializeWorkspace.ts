@@ -1,10 +1,9 @@
-import { getSetting, SettingAtom } from '@/core'
+import {  SettingAtom } from '@/core'
 import { useDb } from '@/hooks'
 import { MetaObject } from '~/typings'
 import KeyvalueStore from '@/stores/keyvalue.store'
 import produce from 'immer'
 import { useSetAtom } from 'jotai'
-import { delay } from '@/utils'
 
 const initializeWorkspace = async (setSetting: ReturnType<typeof useSetAtom<typeof SettingAtom>>) => {
   const keyvalueDb = useDb('keypairs')

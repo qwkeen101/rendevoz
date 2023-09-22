@@ -11,12 +11,14 @@ const useCheckboxSelect = (selected: boolean, onChange: (selected: boolean) => v
       <Content
         ref={ref}
         flex
+        justifyContent={'center'}
         alignItems={'center'}
         style={{
           opacity: isIn || selected ? 1 : 0,
           width: 32,
           height: 32,
-          transition: 'opacity 0.25s ease'
+          transition: 'opacity 0.25s ease',
+          flexShrink: 0
         }}
       >
         <input
@@ -24,7 +26,8 @@ const useCheckboxSelect = (selected: boolean, onChange: (selected: boolean) => v
             width: 14,
             height: 14,
             border: 'none',
-            outline: 'none'
+            outline: 'none',
+            cursor: 'pointer'
           }}
           onChange={() => onChange(!selected)}
           type={'checkbox'}

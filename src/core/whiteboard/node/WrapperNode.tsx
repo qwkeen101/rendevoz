@@ -691,7 +691,7 @@ const WrapperNode = ({ node }: { node: IWhiteboardNode }) => {
               }}
               onPointerDownCapture={e => {
                 const pointerMode = flow.parentContainerEle?.getAttribute('data-pointer-mode')
-                if (pointerMode === 'pan') {
+                if (pointerMode === 'pan' || e.button === 1) {
                   return
                 }
                 e.stopPropagation()

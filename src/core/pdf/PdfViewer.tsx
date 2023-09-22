@@ -17,6 +17,11 @@ import { SearchStore } from '@/stores/search.store'
 import { savePdfAsSearch } from '@/stores/document.store'
 import { waitFor } from '@/utils/functions'
 import PdfFloatBar from './components/floatbar'
+import DownloadRemotePdf from '@/core/pdf/core/utils/downloadRemotePdf'
+import { DownloadProgress, formatBytes } from '@/utils/fetchProcess'
+import { Content, Icon } from '@/components'
+import { ProgressInfo } from 'electron-updater'
+import { Colors } from '@/consts'
 
 export interface PdfViewerProps {
   documentId: number
@@ -30,6 +35,7 @@ export const PdfViewer: FC<PdfViewerProps> = memo(({ documentId, transformScale,
   const viewerRef = useRef()
   const viewer = usePdfViewer()
   const mergedRef = useMergedRef(viewerRef)
+  const [downloadState, setDownloadState] = useState<DownloadProgress>()
   const [contextMenuVisible, setContextMenuVisible] = useState(false)
 
   // ref to store pdf viewer instance
@@ -40,6 +46,14 @@ export const PdfViewer: FC<PdfViewerProps> = memo(({ documentId, transformScale,
 
   usePdfDrag(viewboxRef.current, documentId)
   useEffect(() => {
+    if (document?.webFileUrl && !document.fileUrl) {
+      DownloadRemotePdf(document.webFileUrl, p => {
+        setDownloadState(p)
+      }).then(data => {
+        ObjectStore('pdf').updateOne({ id: documentId, fileUrl: data })
+        setDownloadState(undefined)
+      })
+    }
     ID_TO_LABEL_MAP.set(viewer, new Map())
     waitFor(
       () => !!viewer.jumpToLabel,
@@ -94,6 +108,20 @@ export const PdfViewer: FC<PdfViewerProps> = memo(({ documentId, transformScale,
   }, [])
   return (
     <div ref={viewboxRef} className={styles.viewerBox} role="pdf-viewer">
+      {downloadState && (
+        <Content flex column alignItems={'center'} fullWidth justifyContent={'center'} gap={10}>
+          <div style={{ width: 'min(800px, 60%)', height: 6, borderRadius: 999, overflow: 'hidden', background: Colors.Background.Secondary }}>
+            <div
+              style={{
+                height: '100%',
+                width: `${downloadState.percentage}%`,
+                background: Colors.Common.SelectColor
+              }}
+            ></div>
+          </div>
+          <div>Remaining: {formatBytes(downloadState.remaining, 0)}</div>
+        </Content>
+      )}
       {document?.fileUrl && (
         <Viewer
           onDocumentLoaded={doc => {

@@ -53,7 +53,7 @@ export const GroupRenderer = ({ groupId }: { groupId: number }) => {
   // }
   if (allMetas && groupData?.value) {
     return (
-      <Content ref={containerRef} flex column fullHeight style={{padding: 30}}>
+      <Content ref={containerRef} flex column fullHeight>
         <TableRenderer value={afterFilter || groupData?.value} />
       </Content>
     )

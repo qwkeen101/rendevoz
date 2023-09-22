@@ -6,23 +6,26 @@ import { Icon } from '@/components'
 import { Rendevoz } from '@/core/rendevoz'
 import { PopupWrapper } from '@/core/group/components'
 import { ClassName } from 'rendevoz'
+import { Path } from 'slate'
+import ToggleArrow from '@/core/group/components/basic/ToggleArrow'
 
 const EditableCell = ({
   value,
   onChange,
   openMeta,
   showToggle,
-  onToggle,
+  path,
+  toggled,
   indent = 0
 }: {
   value: string
   openMeta?: number
   onChange: (v: string) => void
   showToggle: boolean
-  onToggle: (v: boolean) => void
   indent?: number
+  path?: Path
+  toggled?: boolean
 }) => {
-  const [toggled, setToggled] = useState(false)
   const containerRef = useRef<HTMLTextAreaElement>(null)
   const [height, setHeight] = useState(0)
   const { openPopover, renderPopover } = usePopoverCell({
@@ -44,23 +47,14 @@ const EditableCell = ({
       <div
         onPointerEnter={() => setIsIn(true)}
         onPointerLeave={() => setIsIn(false)}
-        style={{ width: '100%', height: '100%', display: 'flex', gap: 6, paddingLeft: indent * 20 }}
+        style={{ width: '100%', height: '100%', display: 'flex', gap: 4, paddingLeft: indent * 30 }}
         onClick={e => {
           const parent = e.currentTarget.parentElement
           if (!parent) return
           openPopover(parent)
         }}
       >
-        {showToggle && (
-          <Icon
-            name={'park-right'}
-            onClick={e => {
-              e.stopPropagation()
-              setToggled(!toggled)
-              onToggle(!toggled)
-            }}
-          />
-        )}
+        {showToggle && path && <ToggleArrow path={path} toggled={!!toggled} />}
         <div>{value}</div>
         {openMeta && isIn && (
           <Icon

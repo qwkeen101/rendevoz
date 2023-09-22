@@ -14,7 +14,7 @@ import markdown from '@/assets/images/markdown.png?url'
 import { Colors } from '@/consts'
 import FontSize from '@/consts/font'
 import { useState } from 'react'
-import { assignProperties } from '@/utils'
+import { assignProperties, fetchRemoteImageAndSaveLocally } from '@/utils'
 import { BaidudiskInstance } from '@/components/fileImporter/baidudisk/BaidudiskDisplayer'
 import { ObjectStore } from '@/stores'
 import { Rendevoz } from '@/core/rendevoz'
@@ -165,11 +165,21 @@ const FileImporter = ({ onClose }: { onClose: VoidFunction }) => {
           return
         }
         BaidudiskInstance.chooseFile?.(1)
-        BaidudiskInstance.onChooseFile = file => {
+        BaidudiskInstance.onChooseFile = async file => {
+          const thumb = await fetchRemoteImageAndSaveLocally(file.thumbs.url3)
           if (file.category === 1) {
             if (file) {
-              ObjectStore('video').addOneWithMeta({ videoUrl: `baidudisk${file.path}` }, { currentMeta: { name: file.filename } })
+              ObjectStore('video').addOneWithMeta(
+                { videoUrl: `baidudisk${file.path}` },
+                { currentMeta: { name: file.filename, coverImgSrc: thumb } }
+              )
             }
+          }
+          if (file.category === 4) {
+            ObjectStore('pdf').addOneWithMeta(
+              { webFileUrl: `baidudisk/${file.fs_id}` },
+              { currentMeta: { name: file.filename, coverImgSrc: thumb } }
+            )
           }
         }
       }

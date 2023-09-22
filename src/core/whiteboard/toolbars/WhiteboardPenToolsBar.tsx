@@ -9,6 +9,9 @@ import { useEffect, useState } from 'react'
 import { defaultBgColor } from '@/components/picker/colorPicker'
 import UseDebounceEffect from '@/hooks/utils/useDebounceEffect'
 import { useTranslation } from 'react-i18next'
+import { useSelectAtomValue } from '@/hooks'
+import { WhiteboardAtom } from '@/core/whiteboard/hooks'
+import useUpdateWhiteboard from '@/core/whiteboard/hooks/useUpdateWhiteboard'
 
 const PenStyleAtom = atom({
   ballpen: {
@@ -65,9 +68,11 @@ const PenStyleAtom = atom({
 })
 const WhiteboardPenToolsBar = () => {
   const [whiteboardState, setWhiteboardState] = useWhiteboardState()
+  const whiteboardPenStyles = useSelectAtomValue(WhiteboardAtom, s => s?.penStyles)
   const penType = whiteboardState.freeHandConfig.type || 'ballpen'
   const [penStyles, setPenStyles] = useAtom(PenStyleAtom)
   const [selectedPenStyle, setSelectedPenStyle] = useState('first')
+  const update = useUpdateWhiteboard()
   const changePenType = (type: (typeof whiteboardState)['freeHandConfig']['type']) => {
     setWhiteboardState(s =>
       produce(s, draft => {
@@ -75,7 +80,20 @@ const WhiteboardPenToolsBar = () => {
       })
     )
   }
-
+  useEffect(() => {
+    if (whiteboardPenStyles) {
+      setPenStyles(whiteboardPenStyles)
+    }
+  }, [])
+  UseDebounceEffect(
+    () => {
+      update(d => {
+        d.penStyles = penStyles
+      }, false)
+    },
+    [penStyles],
+    { wait: 300 }
+  )
   UseDebounceEffect(
     () => {
       const selected = penStyles[penType][selectedPenStyle]

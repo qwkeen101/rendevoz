@@ -139,56 +139,27 @@ const FromRenderer = ({
   }
 
   return (
-    <Tooltip
-      content={
-        <Content
-          flex
-          column
-          style={{ maxWidth: 500, padding: 8, color: Colors.Font.White }}
-          gap={7}
-          // @ts-ignore
-          className={css({
-            p: {
-              textTransform: 'none !important',
-              margin: 0
-            }
-          })}
-        >
-          <div style={{color: Colors.Font.Silver}} className={ClassName.description(FontSize['12px'])}>
-            {t('general.from')} {t(`general.${initialObject?.fromObject?.type}`)}
-          </div>
-          <p className={ClassName.ellipsisFont(2)}>{fromState.name}</p>
-          {initialObject?.fromObject?.selectedText && (
-            <>
-              <div style={{color: Colors.Font.Silver}} className={ClassName.description(FontSize['12px'])}>{t('general.selected text')}</div>
-              <p className={ClassName.ellipsisFont(5)}>{initialObject.fromObject.selectedText}</p>
-            </>
-          )}
-        </Content>
-      }
-    >
-      <IconNameItem
-        className={css({
-          ':hover': {
-            textDecoration: 'underline'
-          }
-        })}
-        style={{
-          color: Colors.Font.Secondary,
-          fontSize: FontSize['12px'],
-          textTransform: 'none',
-          cursor: 'pointer',
-          width: 'fit-content',
-          ...style
-        }}
-        onClick={() => {
-          handleNavigateToFrom()
-          onFromClick?.()
-        }}
-        name={fromState?.name}
-        icon={fromState?.icon}
-      />
-    </Tooltip>
+    <IconNameItem
+      className={css({
+        ':hover': {
+          textDecoration: 'underline'
+        }
+      })}
+      style={{
+        color: Colors.Font.Secondary,
+        fontSize: FontSize['12px'],
+        textTransform: 'none',
+        cursor: 'pointer',
+        width: 'fit-content',
+        ...style
+      }}
+      onClick={() => {
+        handleNavigateToFrom()
+        onFromClick?.()
+      }}
+      name={fromState?.name}
+      icon={fromState?.icon}
+    />
   )
 }
 

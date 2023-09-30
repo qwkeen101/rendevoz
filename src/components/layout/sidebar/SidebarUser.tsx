@@ -1,7 +1,7 @@
-import { AnimatePopover, Button, Content, Icon, Image, Modal, Tooltip, WithBorder } from '@/components/base'
+import { AnimatePopover, Content, Icon, Image, Modal, Tooltip, WithBorder } from '@/components/base'
 import UpgradePlan from '@/components/UpgradePlan'
 import Zindexes from '@/consts/zindex'
-import { useGlobalAtom, useToggle } from '@/hooks'
+import { useToggle } from '@/hooks'
 import LoginService, { useUser } from '@/services/login.service'
 import ClassName from '@/styles/classNames'
 import DateFormat from '@/utils/dateFormat'
@@ -13,23 +13,8 @@ import Login, { indicatorClassName, loginInputClassName } from '@/components/Log
 import { toast } from 'react-hot-toast'
 import { useTranslation } from 'react-i18next'
 import FontSize from '@/consts/font'
-import { SidebarStateAtom } from '.'
 import Colors from '@/consts/colors'
 
-const StringToRgb = (str: string) => {
-  let hash = 0
-  if (str.length === 0) return hash
-  for (let i = 0; i < str.length; i++) {
-    hash = str.charCodeAt(i) + ((hash << 5) - hash)
-    hash = hash & hash
-  }
-  const rgb = [0, 0, 0]
-  for (let i = 0; i < 3; i++) {
-    const value = (hash >> (i * 16)) & 255
-    rgb[i] = value
-  }
-  return `rgb(${rgb[0]}, ${rgb[1]}, ${rgb[2]})`
-}
 const SidebarUser = memo(() => {
   const [user] = useUser()
   const [popoverVisible, togglePopoverVisible] = useToggle(false)
@@ -37,8 +22,6 @@ const SidebarUser = memo(() => {
   const [upgradePlanVisible, toggleUpgradPlanVisible] = useToggle(false)
   const [loginVisible, toggleLoginVisible] = useToggle(false)
   const isPremium = user?.premiumEndDate && user?.premiumEndDate > Date.now()
-  const [sidebarState, setSidebarState] = useGlobalAtom(SidebarStateAtom)
-  const { t } = useTranslation()
   useEffect(() => {
     if (user && loginVisible) {
       toggleLoginVisible(false)
@@ -49,7 +32,7 @@ const SidebarUser = memo(() => {
       flex
       alignItems="center"
       gap={10}
-      style={{ borderBottom: `1px solid ${Colors.Background.Border}`, paddingBottom: 10, paddingTop: 10 }}
+      style={{ borderBottom: `1px solid ${Colors.Background.Border}`, paddingBottom: 10, paddingTop: 2 }}
     >
       <Content auto>
         {user ? (

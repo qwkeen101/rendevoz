@@ -79,6 +79,7 @@ const ContextMenu = forwardRef<ContextMenuRef, ContextMenuProps>(
           align="start"
           positions={position}
           disableNudge={true}
+          reposition={true}
           visible={contextMenuOpen}
           containerStyle={{ zIndex: '1000' }}
           content={<div ref={contentRef}>{renderContent()}</div>}

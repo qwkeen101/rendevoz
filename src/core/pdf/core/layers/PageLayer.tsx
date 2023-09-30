@@ -7,11 +7,12 @@ import CanvasLayer from './CanvasLayer'
 import TextLayer from './TextLayer'
 import styles from './index.module.less'
 import Spinner from '@/components/base/Spinner'
-import { useMemoizedFn, useMergedRef } from '@/hooks'
+import { useMemoizedFn, useMergedRef, useSelectAtomValue } from '@/hooks'
 import AnnotationLayer from './AnnotationLayer'
 import { IAnnotation } from '../types/annotation'
 import usePdfViewer from '../hooks/useViewer'
 import { PAGE_INDEX_TO_PAGE_FUNCTION } from '../weakMaps'
+import useCroppingImage from '@/core/pdf/core/hooks/useCroppingImage'
 
 interface PageLayerProps {
   doc: PDFDocumentProxy
@@ -46,8 +47,13 @@ const PageLayer: FC<PageLayerProps> = forwardRef(
     const pageRef = useRef<HTMLDivElement>(null)
     const mergedRef = useMergedRef(pageRef, ref)
     const pageFunctionRef = useRef<PageFunctionRef>({})
-
     const viewer = usePdfViewer()
+    const { isCroppingImage, renderSelectBox } = useCroppingImage(pageRef, async box => {
+      const path = await viewer.capturePageImage?.(pageIndex, box)
+      if (path) {
+        pageFunctionRef.current.onImageCropped?.(box, path)
+      }
+    })
 
     pageFunctionRef.current.highlightArea = rect => {
       setHighlightState({
@@ -105,15 +111,18 @@ const PageLayer: FC<PageLayerProps> = forwardRef(
           ref={mergedRef}
           style={{
             height: pageDetails.viewport?.height || height,
-            width: pageDetails.viewport?.width || width
+            width: pageDetails.viewport?.width || width,
+            cursor: isCroppingImage ? 'crosshair' : undefined
           }}
           className={styles.pageLayer}
         >
+          {renderSelectBox()}
           {pageDetails.viewport ? (
             <div
               style={{
                 width: '100%',
-                height: '100%'
+                height: '100%',
+                pointerEvents: isCroppingImage ? 'none' : 'auto'
               }}
             >
               {pageRenderer({

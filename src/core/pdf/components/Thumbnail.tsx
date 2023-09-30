@@ -2,11 +2,14 @@ import { Content, VirtualList } from '@/components'
 import Colors from '@/consts/colors'
 import { usePdfViewer } from '@/core'
 import { PDF_TO_THUMBNAIL } from '@/core/pdf/core/weakMaps'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useSelectAtomValue } from '@/hooks'
 import { PdfBarStateAtom } from '../hooks/usePdfBarState'
 import { useLatest } from 'react-use'
 import useThrottleFn from '@/hooks/utils/useThrottleFn'
+import usePdfState from '@/core/pdf/hooks/usePdfState'
+import { ObjectStore } from '@/stores'
+import { Virtualizer } from '@tanstack/react-virtual'
 
 const PdfThumbnail = () => {
   const viewer = usePdfViewer()
@@ -23,6 +26,8 @@ const PdfThumbnail = () => {
     },
     { wait: 200 }
   )
+  const documentId = viewer.getPdfId?.()
+  const pdf = ObjectStore('pdf').useValue(documentId)
   useEffect(() => {
     if (viewer && showLeftBar) {
       throttleUpdate.run()
@@ -34,6 +39,18 @@ const PdfThumbnail = () => {
       }
     }
   }, [showLeftBar])
+  const virtualizerRef = useRef<Virtualizer<any, any>>()
+  useEffect(() => {
+    if (pdf && pdf.lastReadPage !== undefined && thumbnailUrls.length) {
+      try {
+        setTimeout(() => {
+          virtualizerRef.current?.scrollToIndex(pdf.lastReadPage)
+        })
+      } catch (e) {
+        console.log(e)
+      }
+    }
+  }, [pdf?.lastReadPage, showLeftBar, thumbnailUrls])
 
   return (
     <Content
@@ -46,25 +63,35 @@ const PdfThumbnail = () => {
       }}
     >
       <VirtualList
+        ref={virtualizerRef}
         items={thumbnailUrls || []}
         estimateSize={300}
+        overscan={10}
         renderItem={(item, idx) => (
-          <div
+          <Content
+            flex
+            column
+            alignItems={'center'}
             key={idx}
             onClick={() => {
               viewer?.jumpToPage?.(idx)
+            }}
+            style={{
+              width: '100%'
             }}
           >
             <img
               src={item[1]}
               style={{
                 cursor: 'pointer',
-                border: `2px solid ${Colors.Font.Primary}`,
-                width: '100%'
+                boxShadow: idx === pdf?.lastReadPage ? `0 0 0 3px ${Colors.Common.SelectColor}` : Colors.Background.BoxShadow,
+                width: 'min(180px, 100%)',
+                borderRadius: 6,
+                marginTop: 2
               }}
             />
-            <div style={{ margin: '4px auto 0px', textAlign: 'center' }}>{idx + 1}</div>
-          </div>
+            <div style={{ margin: '6px 0px' }}>{idx + 1}</div>
+          </Content>
         )}
         style={{
           width: '100%',

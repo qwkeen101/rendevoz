@@ -9,7 +9,8 @@ export const Font = {
   Tertiary: '--font-tertiary',
   Caption: '--font-caption',
   Description: '--font-tertiary',
-  Link: '--font-link'
+  Link: '--font-link',
+  Transparent: '--font-transparent'
 }
 
 export const Background = {
@@ -39,7 +40,10 @@ export const Background = {
   LightScrollBar: '--light-scroll-bar',
   DarkScrollBar: '--dark-scroll-bar',
   Scrollbar: '--scroll-bar',
-  BoxShadow: '--box-shadow'
+  BoxShadow: '--box-shadow',
+  LightRadialGradient: '--light-radial-gradient-background',
+  DarkRadialGradient: '--dark-radial-gradient-background',
+  RadialGradient: '--radial-gradient-background'
 }
 export const Emphasis = {
   DarkEmphasis: '--dark-emphasis',

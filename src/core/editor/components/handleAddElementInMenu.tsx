@@ -10,6 +10,7 @@ import { GlobalEventEmitter } from '@/events'
 import { waitFor } from '@/utils/functions'
 import { ID_TO_ELEMENT_FUNCTION_MAP } from '../weakMaps'
 import { MetaStore, ObjectStore } from '@/stores'
+import { saveFileLocally } from '@/utils'
 
 export const defaultHandler: DefaultAddElementHandler = (type, instance, mode, opts) => {
   let addElementPath: Path = []
@@ -98,10 +99,11 @@ export const defaultHandler: DefaultAddElementHandler = (type, instance, mode, o
     }
     case 'image':
       Rendevoz.Actions.Utils.uploadFile().then(files => {
-        const firstFile = files[0]
+        const firstFile = files as File
         if (firstFile && firstFile.type.startsWith('image')) {
           saveImageLocally(firstFile, { compress: false }).then(data => {
             instance.getOverlayManager?.().close()
+            console.log(data)
             Transforms.insertNodes(
               editor,
               {

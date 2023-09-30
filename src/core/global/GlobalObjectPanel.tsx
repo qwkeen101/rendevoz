@@ -10,7 +10,7 @@ import { useAtom, useAtomValue, useStore } from 'jotai/react'
 import React, { forwardRef, memo, ReactElement, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { MetaFilterGroup, MetaObject } from '~/typings/data'
-import { AnimatePopover, Button, CheckBox, Content, Icon, Image, Tooltip, WithBorder } from '@/components'
+import { AnimatePopover, Button, CheckBox, Content, Icon, Image, Tooltip, WithBorder, VirtualList } from '@/components'
 import {
   AttachmentWrapper,
   CurrentFocusFilterAtom,
@@ -266,23 +266,13 @@ export const ObjectPanel = memo(
     visiblility = { showClose: true },
     showObjectDetails
   }: ObjectPanelProps) => {
-    const undeleteObjects = useAtomValue(undeletedMetaObjectsAtom, {
-      store: globalStore
-    })
+    const undeleteObjects = useGlobalAtomValue(undeletedMetaObjectsAtom)
 
     const { t } = useTranslation()
     const [filterSort, setFilterSort] = useAtom(ObjectPanelFilterSortAtom)
     const [shouldDisplayObjects, setShouldDisplayObjects] = useState<MetaObject[]>(undeleteObjects)
     const [showBoxShadow, toggleShowBoxShadow] = useToggle(false)
     const containerRef = useRef<HTMLDivElement>(null)
-    const virtualizer = useVirtualizer({
-      count: shouldDisplayObjects.length,
-      estimateSize: () => 100,
-      getScrollElement: () => containerRef.current,
-
-      overscan: 5
-    })
-    const items = virtualizer.getVirtualItems()
 
     useEffect(() => {
       if (
@@ -352,6 +342,7 @@ export const ObjectPanel = memo(
         }
       }
     })
+    console.log('rerender')
     return (
       <>
         <div
@@ -525,62 +516,27 @@ export const ObjectPanel = memo(
             </AnimatePopover>
           </Content>
         </Content>
-        <div
-          ref={containerRef}
+        <VirtualList
+          itemContainerClassname={css({
+            '>': {
+              ':not(:last-child)': {
+                borderBottom: `1px solid ${Colors.Background.Border}`
+              }
+            }
+          })}
+          itemStyle={{
+            paddingTop: 6,
+            paddingBottom: 4
+          }}
+          items={shouldDisplayObjects}
+          renderItem={item => <SimpleObject metaObjectId={item.id} isAddingObject={isAddingObject} onAddObject={handleAddObject} />}
+          estimateSize={40}
           style={{
             width: '100%',
             height: '100%',
-            overflowY: 'auto',
-            overflowX: 'hidden',
-            fontFamily: 'Muli',
-            position: 'relative',
-            padding: padding,
-            paddingTop: 0,
-            boxShadow: showBoxShadow ? 'rgb(55 53 47 / 9%) 0px 4px 3px -3px inset' : undefined,
-            transition: 'box-shadow 0.3s ease'
+            padding: '0px 8px'
           }}
-        >
-          <div
-            style={{
-              height: virtualizer.getTotalSize(),
-              width: '100%',
-              position: 'relative'
-            }}
-          >
-            <div
-              style={{
-                position: 'absolute',
-                top: 0,
-                left: 0,
-                width: '100%',
-                transform: `translateY(${items[0]?.start}px)`
-              }}
-            >
-              {items.map(row => (
-                <div
-                  key={row.key}
-                  data-index={row.index}
-                  ref={virtualizer.measureElement}
-                  className={css({
-                    ':first-child': {
-                      paddingTop: 0
-                    },
-                    ':not(:last-child)': {
-                      borderBottom: `1px solid ${Colors.Background.Border}`
-                    },
-                    padding: '8px 0px 6px'
-                  })}
-                >
-                  <SimpleObject
-                    metaObjectId={shouldDisplayObjects[row.index].id}
-                    isAddingObject={isAddingObject}
-                    onAddObject={handleAddObject}
-                  />
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
+        ></VirtualList>
         {showObjectDetails?.id && (
           <Content flex column style={{ padding, position: 'absolute', left: '100%' }} fullWidth fullHeight>
             <ObjectDetailsPanel metaId={showObjectDetails.id} onBack={onBackToList} />

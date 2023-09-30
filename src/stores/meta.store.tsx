@@ -15,8 +15,8 @@ import { useMemo } from 'react'
 import { selectAtom } from 'jotai/utils'
 import { useGlobalAtomValue } from '@/hooks'
 import { getUser } from '@/services/login.service'
-import { SearchStore } from './search.store'
 import { RegisteredMetaObject } from 'rendevoz'
+import SearchHelper from '@/textSearch/SearchHelper'
 
 export const metaObjectsAtom = atom<Map<number, MetaObject>>(new Map())
 
@@ -24,6 +24,7 @@ export const metaLinksAtom = atom<Map<number, MetaLink>>(new Map())
 
 const { orderedData, orderedArray } = BaseStore
 
+let lastWarned = Date.now()
 export const handleMetaObjectsChange = () => {
   const prevIndex = globalStore.get(indexedMetaObjectsAtom)
   const prevMetaObjects = prevIndex?.oldMetaObjects as Map<number, MetaObject> | undefined
@@ -310,10 +311,12 @@ const createMetaStore = () => {
             )
           }
         }
-        SearchStore.addDocument({
-          specType: 'metaObject',
+        SearchHelper.insertDocument({
+          docType: 'metaObject',
           name: obj.name,
-          content: obj.description,
+          description: obj.description,
+          metaType: obj.type,
+          metaId: obj.id,
           id: obj.id
         })
         const changed = currentOne ? findChangedProperties(currentOne, obj) : undefined
@@ -342,11 +345,17 @@ const createMetaStore = () => {
       const user = getUser()
       const allMetaNum = globalStore.get(undeletedMetaObjectsAtom).length
       if ((!user || !user.premiumEndDate || user.premiumEndDate < Date.now()) && allMetaNum > MAX_META_NUMBER) {
-        toast.error('Exceeding maximum number of objects limit!')
+        if (Date.now() - lastWarned > 1000) {
+          toast.error('Exceeding maximum number of objects limit!')
+          lastWarned = Date.now()
+        }
         return Promise.reject()
       }
       if (user?.disabled) {
-        toast.error('Your account has been disabled!')
+        if (Date.now() - lastWarned > 1000) {
+          toast.error('Your account has been disabled!')
+          lastWarned = Date.now()
+        }
         return Promise.reject()
       }
 
@@ -420,10 +429,12 @@ const createMetaStore = () => {
             }
           }
         }
-        SearchStore.addDocument({
-          specType: 'metaObject',
+        SearchHelper.insertDocument({
+          docType: 'metaObject',
           name: obj.name,
-          content: obj.description,
+          description: obj.description,
+          metaType: obj.type,
+          metaId: obj.id,
           id: obj.id
         })
         TypeToRegisteredMetaObject.get(obj.type)?.onAdd?.(obj)
@@ -460,6 +471,7 @@ const createMetaStore = () => {
         })
       )
       return initializeObjectStore.deleteOneById(() => {
+        SearchHelper.deleteDocuments(id)
         if (one) {
           TypeToRegisteredMetaObject.get(one.type)?.onDelete?.(one)
           const objId = one.objectId
@@ -490,18 +502,18 @@ const createMetaStore = () => {
         return Promise.resolve(existed)
       }
       return initializedLinkStore.addOne(() => {
-        shouldToastLink(silent) && toast.success('Link successfully added!')
+        // shouldToastLink(silent) && toast.success('Link successfully added!')
       })(one, silent)
     },
     getAll: initializedLinkStore.getAll(),
     deleteOneById: (one, silent, force = true) => {
       return initializedLinkStore.deleteOneById(() => {
-        shouldToastLink(silent) && toast.success('Link successfully deleted!')
+        // shouldToastLink(silent) && toast.success('Link successfully deleted!')
       })(one, silent, force)
     },
     updateOne: (one, silent) => {
       return initializedLinkStore.updateOne(() => {
-        shouldToastLink(silent) && toast.success('Link successfully updated!')
+        // shouldToastLink(silent) && toast.success('Link successfully updated!')
       })(one, silent)
     }
   }

@@ -5,7 +5,7 @@ import _ from 'lodash'
 import { useEffect, useLayoutEffect, useMemo, useRef } from 'react'
 import { EditorOverlayManager } from '../components/overlay/useEditorOverlay'
 import ScrollManager from '../ScrollManager'
-import { CustomEditor, CustomElement } from '~/typings'
+import { CustomEditor } from '~/typings'
 import { searchBlock } from '../utils/algorithm'
 import { getDistanceBetweenElementAndScrollableElement, getDistanceBetweenPointAndScrollableElement } from '../utils/scroll'
 import { ID_TO_ELEMENTS_MAP, SELECT_AREA_MAP } from '../weakMaps'
@@ -13,7 +13,6 @@ import useIsSelecting from './useIsSelecting'
 import useEditorInstance from '@/core/editor/hooks/useEditorInstance'
 import isHotkey from 'is-hotkey'
 import { KEY } from '@/consts'
-import { Editor, Transforms } from 'slate'
 
 const useEditorSelect = (editor: CustomEditor, overlayManager: EditorOverlayManager, scrollElement?: HTMLElement | null) => {
   const scrollManager = useMemo(() => new ScrollManager(), [])
@@ -57,7 +56,6 @@ const useEditorSelect = (editor: CustomEditor, overlayManager: EditorOverlayMana
         selected.clear()
       }
     }
-    console.log(instance.values.selectedBlocks)
     // target is self
     if (target === e.currentTarget) {
       isPressed.current = true
@@ -66,45 +64,10 @@ const useEditorSelect = (editor: CustomEditor, overlayManager: EditorOverlayMana
   const keyDownHandler = (e: KeyboardEvent) => {
     const selected = instance.values.selectedBlocks
     if (isHotkey(KEY.Delete, e) || isHotkey(KEY.Backspace, e)) {
-      if (selected.size > 0) {
-        // delete all
-        if (instance.values.selectingAll) {
-          instance.values.selectingAll = false
-          selected.forEach(v => {
-            v.pathRef?.unref()
-          })
-          selected.clear()
-          Transforms.removeNodes(editor, {
-            at: Editor.range(editor, [0], [editor.children.length - 1])
-          })
-        }
+      instance.blockOps?.deleteBlock()
+      if (selected.size) {
         e.preventDefault()
         e.stopPropagation()
-        const hasPaths = Array.from(selected.values()).filter(i => i.pathRef)
-        const elements = hasPaths
-          .map(n => {
-            if (n.pathRef?.current) return Editor.node(editor, n.pathRef.current)[0]
-          })
-          .filter(i => i) as CustomElement[]
-        hasPaths.forEach(i => i.pathRef?.unref())
-        const extended = instance.toggleOps?.extendElements(elements)
-        if (extended?.length) {
-          const extendedWithPathRef = extended.map(e => ({
-            element: e[0],
-            pathRef: Editor.pathRef(editor, e[1])
-          }))
-
-          Editor.withoutNormalizing(editor, () => {
-            extendedWithPathRef.forEach(i => {
-              i.pathRef.current &&
-                Transforms.removeNodes(editor, {
-                  at: i.pathRef.current
-                })
-              i.pathRef.unref()
-            })
-          })
-          selected.clear()
-        }
       }
     }
     if (isHotkey(KEY.Escape, e)) {

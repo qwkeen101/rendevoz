@@ -84,24 +84,9 @@ export const normalizeScreenshot = async (screenshotBox: Box, imagePath: string)
 
             // if totally inside page bounding
             if (boxContain(bounding, screenshotBox)) {
-              const { percentageHeight, percentageWidth, percentageX, percentageY } = getRelativeBoxSize(bounding, screenshotBox)
-              onlyIntersectedtab.instance?.insertLabel?.({
-                type: 'crop',
-                rect: {
-                  left: percentageX,
-                  top: percentageY,
-                  width: percentageWidth,
-                  height: percentageHeight
-                },
-                name: 'Unnamed PDF image',
-                page: intersectedPage.pageIndex,
-                imageUrl: imagePath
-              })
-              normalizedImageMeta = undefined
-              return {
-                relatedMeta,
-                normalizedImage,
-                normalizedImageMeta
+              normalizedImageMeta.fromObject = {
+                type: 'pdf',
+                metaId: meta.id
               }
             }
           }

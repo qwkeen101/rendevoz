@@ -1,13 +1,16 @@
 import useDb from '@/hooks/stores/useDb'
 import { atom } from 'jotai'
-import { orderBy } from 'lodash'
+import { debounce, orderBy } from 'lodash'
 import { ICollection, ICollectionItem } from '~/typings/data'
 import BaseStore, { initializeLocalStore } from './base.store'
 import produce from 'immer'
 import { IStoreDeprecated } from './types'
 import { toast } from 'react-hot-toast'
-import { globalStore, ObjectStore } from '.'
+import { globalStore, MetaStore, ObjectStore } from '.'
 import getSetting from '@/core/setting/getSetting'
+import { useMemo } from 'react'
+import { useSelectGlobalAtomValue } from '@/hooks'
+import { metaObjectsAtom } from '@/stores/meta.store'
 
 const { orderedData } = BaseStore
 
@@ -24,6 +27,61 @@ export const rootCollectionsAtom = atom(get =>
     'desc'
   )
 )
+
+type TreeCollection = ICollection & { children: ICollection[] }
+
+function list_to_tree(list: ICollection[]): {
+  list: TreeCollection[]
+} {
+  list.sort(b => (b.parentId === 0 ? -1 : 1))
+  let map = {},
+    node,
+    roots = [],
+    i
+
+  for (i = 0; i < list.length; i += 1) {
+    map[list[i].id] = i // initialize the map
+    list[i] = {
+      ...list[i],
+      children: []
+    } // initialize the children
+  }
+
+  for (i = 0; i < list.length; i += 1) {
+    node = list[i]
+    if (node.parentId !== 0) {
+      // if you have dangling branches check that map[node.parentId] exists
+      list[map[node.parentId]]?.children.push(node)
+    } else {
+      roots.push(node)
+    }
+  }
+  return {
+    roots,
+    list
+  }
+}
+export const MetaIdToCollectionIdsAtom = atom<Map<number, Set<number>>>(new Map())
+
+window.addEventListener('DOMContentLoaded', () => {
+  const debounceIndexCollection = debounce(() => {
+    const allCollections = globalStore.get(collectionsAtom)
+    const map = new Map()
+    const metaMap = MetaStore.getMetaObjectsMap()
+    allCollections.forEach(collection => {
+      collection.items?.forEach(i => {
+        if (i.type === 'meta' && i.id && metaMap.has(i.id)) {
+          const set = map.get(i.id) || new Set()
+          set.add(collection.id)
+          map.set(i.id, set)
+        }
+      })
+    })
+    globalStore.set(MetaIdToCollectionIdsAtom, map)
+  }, 1000)
+  globalStore.sub(collectionsAtom, () => debounceIndexCollection())
+})
+
 const useCollectionStore = () => {
   const database = useDb('collections')
   const shouldToast = (silent?: boolean) => {
@@ -40,17 +98,58 @@ const useCollectionStore = () => {
       !silent && shouldToast(silent) && toast.success('Collection successfully added!')
     }),
     updateOne: store.updateOne((obj, silent) => {
-      !silent && shouldToast(silent) && toast.success('Collection successfully updated!')
+      // !silent && shouldToast(silent) && toast.success('Collection successfully updated!')
     }),
     deleteOneById: store.deleteOneById(silent => {
       !silent && shouldToast(silent) && toast.success('Collection successfully deleted!')
     }),
-    getAll: store.getAll(),
+    getAll: store.getAll(i => i.workspace === getSetting().workspace.currentSpace),
     getOneById: store.getOneById()
+  }
+  const findNestedCollections = (
+    collectionId: number
+  ): {
+    collections: number[]
+    metas: number[]
+  } => {
+    const allCollectionIds: number[] = []
+    const allMetaIds: number[] = []
+    const allCollections = globalStore.get(collectionsAtom)
+    const { list } = list_to_tree(Array.from(allCollections.values()))
+    const root = list.find(i => i.id === collectionId)
+    const loop = (root: TreeCollection) => {
+      allCollectionIds.push(root.id)
+      root.items?.forEach(i => {
+        if (i.type === 'meta' && i.id) {
+          allMetaIds.push(i.id)
+        }
+      })
+      root.children.forEach(i => {
+        loop(i)
+      })
+    }
+    if (root) {
+      loop(root)
+    }
+    return {
+      collections: allCollectionIds,
+      metas: allMetaIds
+    }
+  }
+  const deleteCollection = (collectionId: number, deleteMeta?: boolean) => {
+    const { collections, metas } = findNestedCollections(collectionId)
+    collections.forEach(id => {
+      localStore.deleteOneById(id, true, true)
+    })
+    if (deleteMeta) {
+      metas.forEach(id => {
+        MetaStore.deleteMetaObject(id, true)
+      })
+    }
   }
   const realStore = {
     addCollection: localStore.addOne,
-    deleteCollection: localStore.deleteOneById,
+    deleteCollection: deleteCollection,
     updateCollection: localStore.updateOne,
     getAllCollections: localStore.getAll,
     getCollectionById: localStore.getOneById
@@ -114,12 +213,10 @@ const useCollectionStore = () => {
     if (sourceFromType === 'collection') {
       const sourceCollection = await getCollectionById(sourceFromId)
       if (!sourceCollection) return
-      console.log(itemId, sourceCollection)
       const newSource = produce(sourceCollection, draft => {
         draft.items = draft.items?.filter(i => i.id !== itemId)
       })
       realStore.updateCollection(newSource, true)
-      console.log(newSource)
     }
     if (sourceFromType === 'whiteboard') {
       const sourceWhiteboard = await ObjectStore('whiteboard').getOneById(sourceFromId)
@@ -192,8 +289,8 @@ const useCollectionStore = () => {
       })
     })
   }
-  const findParentCollections = async (collectionId: number) => {
-    const collection = await realStore.getCollectionById(collectionId)
+  const findParentCollections = (collectionId: number) => {
+    const collection = globalStore.get(collectionsAtom).get(collectionId)
     if (!collection) return
     let innerCollection = collection
     const parentCollectionsList = [collection]
@@ -208,12 +305,39 @@ const useCollectionStore = () => {
     }
     return parentCollectionsList
   }
-
+  const buildMetaCollections = (metaId: number): ICollection[][] => {
+    const hasMetaCollecions = Array.from(globalStore.get(MetaIdToCollectionIdsAtom).get(metaId)?.values() || [])
+    const res = hasMetaCollecions
+      .map(collection => {
+        return findParentCollections(collection)
+      })
+      .filter(i => i) as ICollection[][]
+    return res
+  }
+  const useMetaCollections = (metaId: number) => {
+    const map = useSelectGlobalAtomValue(MetaIdToCollectionIdsAtom, s => s.get(metaId))
+    const collections = useMemo(() => {
+      const res = Array.from(map?.values() || [])
+        .map(collection => {
+          return findParentCollections(collection)
+        })
+        .filter(i => i) as ICollection[][]
+      return res
+    }, [map])
+    return collections
+  }
+  const switchWorkspace = () => {
+    globalStore.set(collectionsAtom, new Map())
+    realStore.getAllCollections()
+  }
   return {
     findParentCollections,
     addItemToCollection,
     moveItemBetweenCollections,
     moveItems,
+    buildMetaCollections,
+    useMetaCollections,
+    switchWorkspace,
     ...realStore
   }
 }

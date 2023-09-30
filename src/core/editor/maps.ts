@@ -1,3 +1,3 @@
-import { RegisterdEditorElement } from "~/typings";
+import { RegisteredEditorElement } from '~/typings'
 
-export const EditorTypeToElementMap = new Map<string, RegisterdEditorElement>();
+export const EditorTypeToElementMap = new Map<string, RegisteredEditorElement>();

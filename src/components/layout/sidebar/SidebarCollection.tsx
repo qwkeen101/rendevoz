@@ -139,7 +139,7 @@ const SidebarCollection = () => {
           style={{
             overflowY: 'auto',
             margin: '0 -8px',
-            padding: '0 8px 0px 8px'
+            padding: '2px 8px 2px 8px'
           }}
         >
           {sortedCollections.map(i => (
@@ -173,7 +173,7 @@ export const IconNameItem = memo(
       },
       ref
     ) => {
-      const isPark = icon?.startsWith('park')
+      const isPark = icon?.startsWith('park') || icon?.startsWith('custom')
       const emoji = useMemo(() => !isPark && icon && getEmoji(icon), [icon])
       const linearFontColor = color?.startsWith('linear')
       const linearColors = color && linearFontColor && linearToSvg(color)

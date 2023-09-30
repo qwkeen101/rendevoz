@@ -34,7 +34,7 @@ const PdfLeftSidebar = () => {
         left: 0,
         zIndex: pdfBarState.showLeftBar ? 20 : -1,
         padding: 10,
-        marginRight: 20,
+        marginRight: 5,
         contentVisibility: pdfBarState.showLeftBar ? 'visible' : 'hidden'
       }}
       handleStyles={{
@@ -69,7 +69,7 @@ const PdfLeftSidebar = () => {
           key="thumbnail"
         >
           <ErrorBoundary fallback={<div></div>}>
-            <PdfThumbnail />
+            <PdfThumbnail/>
           </ErrorBoundary>
         </TabPane>
         <TabPane

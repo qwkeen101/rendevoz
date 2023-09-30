@@ -8,6 +8,8 @@ import { Path, Transforms } from 'slate'
 import useReadOnlyEditor from '../../hooks/useReadOnly'
 import { fetchRemoteImageAndSaveLocally } from '@/utils/img'
 import Id from '@/utils/id'
+import { Resizable } from 're-resizable'
+import { useIsIn } from '@/hooks'
 
 const Image = ({ element, children }: RenderElementProps) => {
   const imageEle = element as ImageElement
@@ -15,6 +17,7 @@ const Image = ({ element, children }: RenderElementProps) => {
   const [maskVisible, setMaskVisible] = useState(false)
   const readOnly = useReadOnlyEditor()
   const editor = useSlateStatic()
+  const { ref, isIn } = useIsIn()
   useEffect(() => {
     if (imageEle.url?.startsWith('http')) {
       fetchRemoteImageAndSaveLocally(imageEle.url).then(path => {
@@ -37,7 +40,7 @@ const Image = ({ element, children }: RenderElementProps) => {
     return null
   }
   return (
-    <div style={{ display: 'flex', justifyContent: imageEle.align || 'center' }}>
+    <div style={{ display: 'flex' }}>
       {children}
       <div
         ref={imageContainerRef}
@@ -45,7 +48,8 @@ const Image = ({ element, children }: RenderElementProps) => {
         onMouseLeave={() => setMaskVisible(false)}
         contentEditable={false}
         style={{
-          width: imageEle.width
+          width: '100%',
+          justifyContent: imageEle.align || 'center'
         }}
         className={imageContainerClazz}
       >
@@ -63,7 +67,8 @@ const Image = ({ element, children }: RenderElementProps) => {
                 color: 'white',
                 opacity: maskVisible ? 1 : 0,
                 transition: 'opacity 0.2s ease',
-                fontSize: 16
+                fontSize: 16,
+                zIndex: 10
               }}
               className={toolbarContainerClazz}
             >
@@ -106,109 +111,69 @@ const Image = ({ element, children }: RenderElementProps) => {
                 }}
               />
             </div>
-            <motion.div
-              role="img-resizer-left"
-              drag="x"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: maskVisible ? 1 : 0 }}
-              dragConstraints={{ left: 0, right: 0 }}
-              dragMomentum={false}
-              dragElastic={false}
-              whileDrag={{ opacity: 1 }}
-              className={leftResizerClazz}
-              onDrag={(e, info) => {
-                const prevWidth = parseInt(window.getComputedStyle(imageContainerRef.current).width)
-                const newWidth = prevWidth - info.delta.x
-                if (newWidth > 200) {
-                  imageContainerRef.current?.style.setProperty('width', `${newWidth}px`)
-                }
-              }}
-              onDragEnd={() => {
-                const currentWidth = parseInt(imageContainerRef.current?.style.width || '0')
-                if (currentWidth) {
-                  const path = ReactEditor.findPath(editor, element)
-                  Transforms.setNodes(
-                    editor,
-                    {
-                      width: currentWidth
-                    },
-                    {
-                      at: path
-                    }
-                  )
-                }
-              }}
-            >
-              <div
-                style={{
-                  background: 'rgba(0,0,0,0.8)',
-                  width: 6,
-                  height: 80,
-                  maxHeight: '50%',
-                  border: '1px solid white',
-                  borderRadius: 20
-                }}
-              ></div>
-            </motion.div>
-            <motion.div
-              role="img-resizer-right"
-              drag="x"
-              dragConstraints={{ left: 0, right: 0 }}
-              initial={{ opacity: 0 }}
-              animate={{ opacity: maskVisible ? 1 : 0 }}
-              whileDrag={{ opacity: 1 }}
-              dragElastic={false}
-              dragMomentum={false}
-              className={rightResizerClazz}
-              onDrag={(e, info) => {
-                const prevWidth = parseInt(window.getComputedStyle(imageContainerRef.current).width)
-                const newWidth = prevWidth + info.delta.x
-                if (newWidth > 200) {
-                  imageContainerRef.current?.style.setProperty('width', `${newWidth}px`)
-                }
-              }}
-              onDragEnd={() => {
-                const currentWidth = parseInt(imageContainerRef.current?.style.width || '0')
-                if (currentWidth) {
-                  const path = ReactEditor.findPath(editor, element)
-                  Transforms.setNodes(
-                    editor,
-                    {
-                      width: currentWidth
-                    },
-                    {
-                      at: path
-                    }
-                  )
-                }
-              }}
-            >
-              {' '}
-              <div
-                style={{
-                  background: 'rgba(0,0,0,0.8)',
-                  width: 6,
-                  height: 80,
-                  maxHeight: '50%',
-                  border: '1px solid white',
-                  borderRadius: 20
-                }}
-              ></div>
-            </motion.div>
           </>
         )}
-        <img
-          style={{
-            width: '100%'
+        <Resizable
+          ref={e => {
+            ref.current = e?.resizable
           }}
-          className={css({
-            objectFit: 'cover',
-            borderRadius: 10,
-            width: '100%'
-          })}
-          draggable={true}
-          src={imageEle.url}
-        />
+          handleStyles={{
+            left: {
+              height: '30%',
+              border: '1px solid white',
+              top: '50%',
+              transform: 'translateY(-50%)',
+              borderRadius: 99,
+              width: 5,
+              opacity: isIn ? 1 : 0,
+              left: 2,
+              transition: 'opacity 0.3s ease',
+              background: 'black'
+            },
+            right: {
+              height: '30%',
+              top: '50%',
+              transform: 'translateY(-50%)',
+              border: '1px solid white',
+              borderRadius: 99,
+              width: 5,
+              right: 2,
+              transition: 'opacity 0.3s ease',
+              opacity: isIn ? 1 : 0,
+              background: 'black'
+            }
+          }}
+          size={{ height: 'auto', width: imageEle.width || '100%' }}
+          enable={{ left: true, right: true }}
+          minWidth={'50%'}
+          maxWidth={'100%'}
+          onResizeStop={(event, direction, elementRef, delta) => {
+            const currentWidth = elementRef.getBoundingClientRect().width
+            const path = ReactEditor.findPath(editor, element)
+            Transforms.setNodes(
+              editor,
+              {
+                width: currentWidth
+              },
+              {
+                at: path
+              }
+            )
+          }}
+        >
+          <img
+            style={{
+              width: '100%'
+            }}
+            className={css({
+              objectFit: 'cover',
+              borderRadius: 10,
+              width: '100%'
+            })}
+            draggable={true}
+            src={imageEle.url}
+          />
+        </Resizable>
       </div>
     </div>
   )

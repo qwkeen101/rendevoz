@@ -377,6 +377,7 @@ const EditorToolbar: FC<EditorToolbarProps> = ({ scrollElement, showToolbar, sty
   const renderFloatToolbar = () =>
     createPortal(
       <AnimatePopover
+        borderRadius={999}
         padding={15}
         visible={!!(floatPosition?.visible && (editor.noteId || showToolbar))}
         position={{

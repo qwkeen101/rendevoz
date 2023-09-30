@@ -61,9 +61,9 @@ export const checkDropCanBeMeta = (e: DragEvent) => {
     const item = e.dataTransfer.items[0]
     const file = item.getAsFile()
     if (!file) return false
-    if (file.type.startsWith('image')) {
-      return true
-    }
+    // if (file.type.startsWith('image')) {
+    //   return true
+    // }
   }
   return false
 }

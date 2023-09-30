@@ -18,12 +18,11 @@ const FormImagePicker = ({ imageUrl, onChange, name }: { imageUrl?: string; onCh
   return (
     <>
       {renderUploader()}
-      <Modal showClose noStyle visible={webImagePickerVisible} onClose={toggleWebImagePickerVisible}>
+      <Modal showClose visible={webImagePickerVisible} onClose={toggleWebImagePickerVisible}>
         <FormWebImagePicker
           name={name}
           onPick={url => {
             onChange?.(url)
-            console.log(url)
             toggleWebImagePickerVisible(false)
           }}
         />

@@ -9,6 +9,7 @@ export interface IPdfDocument extends IBase {
   lastReadAt?: number
   totalReadTime?: number
   readProgress?: number
+  totalPageNum?: number
   noteIds: number[]
   totalNoteNumber?: number
   deletedAt?: number

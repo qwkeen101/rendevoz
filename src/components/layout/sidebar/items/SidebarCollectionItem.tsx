@@ -8,7 +8,7 @@ import { AnimatePresence, motion } from 'framer-motion'
 import { useAtomValue } from 'jotai'
 import { selectAtom } from 'jotai/utils'
 import { FC, memo, useMemo, useRef } from 'react'
-import { useGlobalAtomValue, useToggle } from '@/hooks'
+import { useGlobalAtomValue, useSelectGlobalAtomValue, useToggle } from '@/hooks'
 import { ICollectionItem } from '~/typings/data'
 import { IconNameItem } from '../SidebarCollection'
 import useSidebarItemContextMenu from '../useSidebarItemContextMenu'
@@ -19,11 +19,9 @@ import { metaObjectsAtom } from '@/stores/meta.store'
 import FontSize from '@/consts/font'
 
 const SidebarCollectionItem: FC<ISidebarItem> = memo(({ id, parentId, parentType, draggable = true }) => {
-  const { updateCollection, deleteCollection } = useCollectionStore()
+  const { updateCollection, deleteCollection } = CollectionStore
 
-  const collectionAtom = useMemo(() => selectAtom(collectionsAtom, c => c.get(id)), [id])
-
-  const collection = useAtomValue(collectionAtom, { store: globalStore })
+  const collection = useSelectGlobalAtomValue(collectionsAtom, c => c.get(id))
 
   const items = collection?.items
 
@@ -86,8 +84,9 @@ const SidebarCollectionItem: FC<ISidebarItem> = memo(({ id, parentId, parentType
       pinned: collection?.pinned,
       name: collection?.name,
       onPin: () => collection && updateCollection({ id: collection.id, pinned: !collection.pinned }),
-      onDelete: () => collection && deleteCollection(collection.id),
+      onDelete: () => collection && deleteCollection(collection.id, false),
       onEdit: toggleEditModalVisible,
+      onDeleteWithMeta: () => collection && deleteCollection(collection.id, true),
       onAddNewSubItem: () => CollectionStore.updateCollection({ ...collection, toggled: false }, true)
     }
   )
@@ -117,7 +116,7 @@ const SidebarCollectionItem: FC<ISidebarItem> = memo(({ id, parentId, parentType
       </Modal>
       {contextMenuPortal}
       <AnimatePopover
-        visible={hovered}
+        visible={hovered && !droppable}
         padding={10}
         content={
           <div

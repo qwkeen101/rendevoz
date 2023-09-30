@@ -38,6 +38,8 @@
     allowToChangeInstallationDirectory: true,
     deleteAppDataOnUninstall: false,
   },
+  nodeGypRebuild: false,
+  npmRebuild: false,
   afterSign: "electron-builder-notarize",
   mac: {
     target: ["default"],

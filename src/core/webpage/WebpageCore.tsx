@@ -160,13 +160,8 @@ export const WebpageCore = ({ url: _url, children, userAgent = DEFAULT_USER_AGEN
       }
     },
     clipHTML: async () => {
-      if (loaded && displayUrl) {
-        const html = await ref.current?.executeJavaScript(
-          `function gethtml () {
-    return new Promise((resolve, reject) => { resolve(document.documentElement.innerHTML); });
-    }
-    gethtml();`
-        )
+      if (displayUrl) {
+        const html = await fetch(displayUrl).then(res => res.text())
         return {
           html,
           url: displayUrl

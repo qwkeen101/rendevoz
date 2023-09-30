@@ -7,4 +7,5 @@ export interface IAnnotation {
   subtype: string
   pageIndex: number
   dest?: [{ num: number }]
+  url?: string
 }

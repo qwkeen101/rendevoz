@@ -56,7 +56,6 @@ const useSidebarItemDrag = (options: {
       if (!droppable || !id || !type) return
       if (isDroppableItem(type)) {
         if (prevDraggingState) {
-          console.log(prevDraggingState, sidebarDraggingState)
           moveItems({
             targetToType: type,
             targetToId: id,
@@ -70,8 +69,18 @@ const useSidebarItemDrag = (options: {
             }
           })
           return
-        } else if (DragState.getDraggingDetails()?.type === 'metaElement') {
-          CollectionStore.addItemToCollection({ id: DragState.getDraggingDetails()?.metaId!, type: 'meta' }, id)
+        } else {
+          Rendevoz.Events.Emit.GlobalEventEmitter.emitWithCallback('global', {
+            type: 'globalDropNeedFurtherProcess',
+            data: {
+              draggingElement: DragState.getDraggingDetails(),
+              e: event
+            }
+          }).then(res => {
+            if (res) {
+              CollectionStore.addItemToCollection({ id: res.id, type: 'meta' }, id)
+            }
+          })
         }
       }
     }
@@ -152,12 +161,6 @@ const useSidebarItemDrag = (options: {
         if (draggingEle) {
           let drop = false
           switch (draggingEle.type) {
-            case 'pdf':
-            case 'whiteboard':
-            case 'note':
-            case 'metaElement':
-              drop = true
-              break
             case 'collection': {
               if (type === 'collection') {
                 const myParentCollections = await findParentCollections(id)
@@ -169,6 +172,11 @@ const useSidebarItemDrag = (options: {
                 break
               }
               drop = false
+              break
+            }
+            default: {
+              drop = true
+              break
             }
           }
           setDroppable(drop)

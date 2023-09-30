@@ -93,7 +93,7 @@ const TabPanesList: FC<TabPanesListProps> = memo(({ activeKey, tabPanes, disable
 
 interface TabsProps {
   defaultActiveKey: string
-  children: ReactElement<TabPaneProps> | ReactElement<TabPaneProps>[]
+  children: ReactElement<TabPaneProps> | (ReactElement<TabPaneProps> | null)[] | null
   extra?: ReactNode
   activeKey?: string
   onTabClick?: (key: string, e: MouseEvent) => void
@@ -118,12 +118,13 @@ export const Tabs: FC<TabsProps> = memo(
     tabNavStyle,
     tabNavContainerStyle
   }) => {
-    let panes: ReactElement<TabPaneProps>[]
+    let panes: (ReactElement<TabPaneProps> | null)[]
     if (!Array.isArray(children)) {
       panes = [children]
     } else {
       panes = children
     }
+    panes = panes.filter(i => i)
 
     const tabNavs = panes.map(c => {
       return {

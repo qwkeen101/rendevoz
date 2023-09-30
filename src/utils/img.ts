@@ -90,6 +90,10 @@ export const captureWebpage = async (webviewId?: number, rect?: XYPosition & Siz
   return (await ipcInstance.send<string>('captureWebpage', webviewId, rect)).data
 }
 
+export const deleteLocalFile = async (filepath: string) => {
+  return (await ipcInstance.send('deleteLocalFile', filepath)).data
+}
+
 export const imageToDataUrl = (img: HTMLImageElement) => {
   const canvas = document.createElement('canvas')
   canvas.width = img.width
@@ -146,4 +150,9 @@ export const getMainColorOfImage = (image: HTMLImageElement | string): Promise<[
       }
     }
   })
+}
+
+export const calculateImageAspectRatio = (srcWidth: number, srcHeight: number, maxWidth: number, maxHeight: number) => {
+  const ratio = Math.min(maxWidth / srcWidth, maxHeight / srcHeight)
+  return { width: srcWidth * ratio, height: srcHeight * ratio }
 }

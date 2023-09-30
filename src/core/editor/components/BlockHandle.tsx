@@ -10,6 +10,7 @@ import ClassName from '@/styles/classNames'
 import { useAtomValue } from 'jotai'
 import { EditorBlockHandleAtom } from '../hooks/useBlockHandle'
 import useEventListener from '@/hooks/utils/useEventListener'
+import { Colors } from '@/consts'
 
 type IBlockHandle = FC<{
   outerVisible: boolean
@@ -90,7 +91,7 @@ const BlockHandle: IBlockHandle = ({ outerVisible, onAddClick, onDragClick, onMe
         {targetHeight && innerVisible && !hasMouseSelection() && !isReadOnly && (
           <motion.div
             key={top}
-            initial={{ opacity: 0 }}
+            initial={{ opacity: 0.8 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onPointerEnter={() => {
@@ -126,7 +127,8 @@ const BlockHandle: IBlockHandle = ({ outerVisible, onAddClick, onDragClick, onMe
                   transform: 'translateY(-50%)',
                   width: 20,
                   height: 20,
-                  cursor: 'pointer'
+                  cursor: 'pointer',
+                  color: Colors.Font.Transparent
                 }}
               >
                 <Icon size={16} name="park-plus" />
@@ -170,7 +172,8 @@ const BlockHandle: IBlockHandle = ({ outerVisible, onAddClick, onDragClick, onMe
                   transform: 'translateY(-50%)',
                   width: 20,
                   height: 20,
-                  cursor: 'grab'
+                  cursor: 'grab',
+                  color: Colors.Font.Transparent
                 }}
               >
                 <Icon size={16} name="park-drag" />

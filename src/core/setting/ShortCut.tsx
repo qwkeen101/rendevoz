@@ -12,8 +12,8 @@ import { IShortCutSetting } from './types'
 
 const shortCutNameToTitle = {
   global: {
-    openObjectPanel: 'open quick object panel',
-    quickCreateObject: 'open create object form',
+    // openObjectPanel: 'open quick object panel',
+    // quickCreateObject: 'open create object form',
     openScreenShot: 'open screen shot',
     openTranslatePanel: 'open translate panel',
     openSearchPanel: 'open web search panel',

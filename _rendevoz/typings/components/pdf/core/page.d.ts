@@ -30,6 +30,7 @@ export interface PageFunctionRef {
   onCanvasRendered?: VoidFunction
   highlightArea?: (rect: Box) => void
   clearAllSelect?: VoidFunction
+  onImageCropped?: (rect: Box, imagePath: string) => void
 }
 
 export interface RenderPageProps {

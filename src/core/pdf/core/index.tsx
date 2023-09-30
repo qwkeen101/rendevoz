@@ -4,9 +4,7 @@ import { FC, ReactElement } from 'react'
 import Layout from './layouts/Layout'
 import LayoutWrapper from './layouts/LayoutWrapper'
 import Loader from './Loader'
-import { RenderPageProps } from './types'
-import { IAnnotation } from '~/typings'
-import { ScrollMode } from './types/layout'
+import { IAnnotation, ScrollMode, RenderPageProps } from '~/typings'
 
 interface ViewerProps {
   fileUrl: string | Uint8Array

@@ -5,6 +5,7 @@ import { FC, useEffect, useRef, useState } from 'react'
 import usePdfViewer from './hooks/useViewer'
 import { PDF_TO_DOC, PDF_TO_THUMBNAIL } from './weakMaps'
 import { renderPageInDarkMode } from './utils/renderer'
+import { calculateImageAspectRatio } from '@/utils'
 
 interface LoaderProps {
   file: string | Uint8Array
@@ -31,15 +32,16 @@ const Loader: FC<LoaderProps> = ({ file, children, onDocumentLoaded }) => {
     }
     const totalPages = doc.numPages
     const canvas = document.createElement('canvas')
-    const width = 400
     const firstPage = await doc.getPage(1)
-    let viewport = firstPage.getViewport({ scale: 1 })
-    const scale = width / viewport.width
-    viewport = firstPage.getViewport({ scale })
+    const viewport = firstPage.getViewport({ scale: 1 })
     const outputScale = window.devicePixelRatio || 1
-    const transform = outputScale !== 1 ? [outputScale, 0, 0, outputScale, 0, 0] : null
-    canvas.width = Math.floor(viewport.width * outputScale)
-    canvas.height = Math.floor(viewport.height * outputScale)
+
+    const originalWidth = viewport.width
+    const originalHeight = viewport.height
+    const { width: w, height: h } = calculateImageAspectRatio(originalWidth, originalHeight, 400, 400)
+    const transform = [w / originalWidth, 0, 0, h / originalHeight, 0, 0]
+    canvas.width = w
+    canvas.height = h
     const ctx = canvas.getContext('2d')!
     const asyncGetThumbnailLoop = () => {
       const curr = currentPage.current
@@ -51,7 +53,7 @@ const Loader: FC<LoaderProps> = ({ file, children, onDocumentLoaded }) => {
         try {
           const page = await doc.getPage(curr + 1)
           renderPageInDarkMode()
-          await page.render({ canvasContext: ctx, transform, viewport }).promise
+          await page.render({ canvasContext: ctx, transform, viewport: page.getViewport({ scale: 1 }) }).promise
           requestIdleCallback(() => {
             canvas.toBlob(b => {
               if (b) {

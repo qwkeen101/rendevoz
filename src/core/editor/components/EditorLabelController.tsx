@@ -46,7 +46,7 @@ const Label = memo(({ labelId, type }: { labelId: number; type: EditorProps['typ
   const highlightId = label && 'highlightId' in label && label.highlightId ? label.highlightId : labelId
   const instance = useEditorInstance()
   const highlight = useSelectAtomValue(EditorHighlightsAtom, s => s.get(highlightId))
-  const { renderName, renderAttachment, renderDescription, renderPopover, renderOriginalText } = useRenderLabel({
+  const { renderName, renderAttachment, renderDescription, renderPopover, renderOriginalText, ref } = useRenderLabel({
     objectId: labelId,
     type: type === 'note' ? 'noteLabel' : 'webpageLabel',
     onDragStart: () => {
@@ -54,6 +54,12 @@ const Label = memo(({ labelId, type }: { labelId: number; type: EditorProps['typ
       if (editor) {
         editor.on?.({ type: 'highlightDrag', highlightId })
       }
+    },
+    onNavigate: () => {
+      instance.getHighlightLocation?.(highlightId)
+      instance.scrollToHighlight?.({
+        highlightId
+      })
     }
   })
   const previousHighlight = usePrevious(highlight)
@@ -66,16 +72,10 @@ const Label = memo(({ labelId, type }: { labelId: number; type: EditorProps['typ
   }, [highlight])
 
   return (
-    <Content flex column style={{ padding: '8px 0px 12px' }} gap={8}>
+    <Content ref={ref} flex column style={{ padding: '8px 0px 12px' }} gap={8}>
+      {highlight?.str && renderOriginalText({ text: highlight.str })}
       <Content flex alignItems="center" justifyContent="space-between" gap={10}>
-        {renderName({
-          onNameClick: () => {
-            instance.getHighlightLocation?.(highlightId)
-            instance.scrollToHighlight?.({
-              highlightId
-            })
-          }
-        })}
+        {renderName({})}
         {renderPopover({
           on: event => {
             switch (event.type) {
@@ -107,7 +107,7 @@ const Label = memo(({ labelId, type }: { labelId: number; type: EditorProps['typ
           }
         })}
       </Content>
-      {highlight?.str && renderOriginalText({ text: highlight.str })}
+
       {renderDescription({})}
       {renderAttachment({
         renderAttOnParent: false,

@@ -1,15 +1,26 @@
 import { atom } from 'jotai'
 import { useDb, useSelectGlobalAtomValue } from '@/hooks'
-import { initializeLocalStore } from '@/stores/base.store'
 import { globalStore } from '@/stores/index'
 import { useEffect } from 'react'
 
 export type CurrentKeyValues = {
   currentWorkspace: string
+  searchHistory: string[]
   allWorkspaces: {
     name: string
     createdAt: number
   }[]
+  homeDisplayMode: 'gallery' | 'table'
+  homeGallery: {
+    visibleLists: {
+      name: string
+      visible: boolean
+      type?: 'collection' | 'objects' | 'sorter'
+      collectionId?: number
+    }[]
+  }
+  rightBarItems: string[]
+  leftBarItems: string[]
 }
 const keyvalueAtom = atom<Map<string, any>>(new Map())
 
@@ -35,7 +46,6 @@ const createKeyvalueStore = () => {
       useEffect(() => {
         if (!v) {
           keyvalueDb.get(key).then(one => {
-            console.log(one)
             const newMap = new Map(globalStore.get(keyvalueAtom))
             newMap.set(key, one)
             globalStore.set(keyvalueAtom, newMap)
@@ -48,4 +58,7 @@ const createKeyvalueStore = () => {
 }
 
 const KeyvalueStore = createKeyvalueStore()
+window.addEventListener('load', () => {
+  KeyvalueStore.getAll()
+})
 export default KeyvalueStore

@@ -157,11 +157,6 @@ const SettingDialog = ({ onClose }: { onClose: VoidFunction }) => {
         return user ? <UsageSetting /> : null
       case 'workspace':
         return <WorkspaceSetting />
-      case 'about': {
-        if (setting.general.language === 'zh-CN') {
-          return <AboutSetting />
-        }
-      }
     }
     if (registeredPanels.has(currentSettingPanel)) {
       const items = registeredPanels.get(currentSettingPanel)
@@ -178,7 +173,6 @@ const SettingDialog = ({ onClose }: { onClose: VoidFunction }) => {
   return (
     <Content
       flex
-      className={ClassName.Background.pseudoBlurContrastBackground}
       style={{
         width: 1100,
         maxWidth: 'calc(100vw - 100px)',

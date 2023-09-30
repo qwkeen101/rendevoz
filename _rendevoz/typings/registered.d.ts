@@ -9,7 +9,8 @@ export type RegisteredSetting = {
 export type RegisteredSidebarItem = {
   key: string
   icon?: string
-  text?: string | (() => string)
+  text?: () => string
   onClick?: React.MouseEventHandler
   element?: ReactElement
+  tooltip?: () => string
 }

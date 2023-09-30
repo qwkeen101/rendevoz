@@ -1,26 +1,26 @@
-import { AnimatePopover, Button, WithBorder } from "@/components";
-import Modal from "@/components/base/Modal";
-import CollectionForm from "@/components/form/CollectionForm";
-import CreateDocumentForm from "@/components/form/CreateDocumentForm";
-import Zindexes from "@/consts/zindex";
-import ClassName from "@/styles/classNames";
-import { Position } from "@/types";
-import Id from "@/utils/id";
-import { css } from "@emotion/css";
-import { CollectionStore, ObjectStore } from "@/stores";
-import { RefObject, useEffect, useState } from "react";
-import { createPortal } from "react-dom";
-import { useTranslation } from "react-i18next";
-import { GlobalEventEmitter } from "@/events";
-import { MetaObject } from "~/typings";
-import { ObjectFamily } from "@/stores/object.store";
-import { Rendevoz } from "@/core/rendevoz";
+import { AnimatePopover, Button, WithBorder } from '@/components'
+import Modal from '@/components/base/Modal'
+import CollectionForm from '@/components/form/CollectionForm'
+import CreateDocumentForm from '@/components/form/CreateDocumentForm'
+import Zindexes from '@/consts/zindex'
+import ClassName from '@/styles/classNames'
+import { Position } from '@/types'
+import Id from '@/utils/id'
+import { css } from '@emotion/css'
+import { CollectionStore, ObjectStore } from '@/stores'
+import { RefObject, useEffect, useState } from 'react'
+import { createPortal } from 'react-dom'
+import { useTranslation } from 'react-i18next'
+import { GlobalEventEmitter } from '@/events'
+import { MetaObject } from '~/typings'
+import { ObjectFamily } from '@/stores/object.store'
+import { Rendevoz } from '@/core/rendevoz'
 
 const useSidebarItemContextMenu = (
   contextMenuElementRef: RefObject<HTMLElement>,
   item: {
-    type: "collection" | "note" | "pdf" | "whiteboard" | "meta";
-    id: number;
+    type: 'collection' | 'note' | 'pdf' | 'whiteboard' | 'meta'
+    id: number
   },
   {
     onPin,
@@ -28,47 +28,49 @@ const useSidebarItemContextMenu = (
     onEdit,
     onAddNewSubItem,
     onRemoveFromCollection,
-    pinned,
+    onDeleteWithMeta,
+    pinned
   }: {
-    onPin?: VoidFunction;
-    onDelete?: VoidFunction;
-    onEdit?: VoidFunction;
-    onRemoveFromCollection?: VoidFunction;
-    pinned?: boolean;
-    name?: string;
-    onAddNewSubItem?: VoidFunction;
+    onPin?: VoidFunction
+    onDelete?: VoidFunction
+    onEdit?: VoidFunction
+    onDeleteWithMeta?: VoidFunction
+    onRemoveFromCollection?: VoidFunction
+    pinned?: boolean
+    name?: string
+    onAddNewSubItem?: VoidFunction
   } = {}
 ) => {
   const [contextMenuState, setContextMenuState] = useState<
     Partial<
       Position & {
-        contextMenuVisible: boolean;
-        renameVisible: boolean;
-        createVisible: boolean;
-        targetElementLeft: number;
-        targetElementTop: number;
-        targetElementHeight: number;
-        targetElementRight: number;
+        contextMenuVisible: boolean
+        renameVisible: boolean
+        createVisible: boolean
+        targetElementLeft: number
+        targetElementTop: number
+        targetElementHeight: number
+        targetElementRight: number
       }
     >
   >({
-    contextMenuVisible: false,
-  });
+    contextMenuVisible: false
+  })
   const [formState, setFormState] = useState<
     Partial<{
-      newCollectionVisible: boolean;
-      newPdfVisible: boolean;
-      editCollectionVisible: boolean;
+      newCollectionVisible: boolean
+      newPdfVisible: boolean
+      editCollectionVisible: boolean
     }>
   >({
     newCollectionVisible: false,
     newPdfVisible: false,
-    editCollectionVisible: false,
-  });
-  const { t } = useTranslation();
+    editCollectionVisible: false
+  })
+  const { t } = useTranslation()
   const contextMenuHandler = (e: MouseEvent) => {
-    const currentTarget = e.currentTarget as HTMLElement;
-    const rect = currentTarget.getBoundingClientRect();
+    const currentTarget = e.currentTarget as HTMLElement
+    const rect = currentTarget.getBoundingClientRect()
     setContextMenuState({
       renameVisible: false,
       contextMenuVisible: true,
@@ -77,174 +79,156 @@ const useSidebarItemContextMenu = (
       targetElementLeft: rect.left,
       targetElementTop: rect.top,
       targetElementHeight: rect.height,
-      targetElementRight: rect.right,
-    });
-  };
-  const { addItemToCollection, addCollection } = CollectionStore;
+      targetElementRight: rect.right
+    })
+  }
+  const { addItemToCollection, addCollection } = CollectionStore
   useEffect(() => {
-    contextMenuElementRef?.current?.addEventListener(
-      "contextmenu",
-      contextMenuHandler
-    );
+    contextMenuElementRef?.current?.addEventListener('contextmenu', contextMenuHandler)
     return () => {
-      contextMenuElementRef?.current?.removeEventListener(
-        "contextmenu",
-        contextMenuHandler
-      );
-    };
-  }, []);
+      contextMenuElementRef?.current?.removeEventListener('contextmenu', contextMenuHandler)
+    }
+  }, [])
   const portal = createPortal(
     <AnimatePopover
       visible={contextMenuState.contextMenuVisible}
       disableNudge
       disableIntersection
-      positions={["right"]}
+      positions={['right']}
       align="start"
-      onClickOutside={() =>
-        setContextMenuState((s) => ({ ...s, contextMenuVisible: false }))
-      }
+      onClickOutside={() => setContextMenuState(s => ({ ...s, contextMenuVisible: false }))}
       position={{
         left: contextMenuState.left,
-        top: contextMenuState.top,
+        top: contextMenuState.top
       }}
       content={
         <WithBorder
-          onContextMenu={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
+          onContextMenu={e => {
+            e.preventDefault()
+            e.stopPropagation()
             if (e.target === e.currentTarget) {
               setContextMenuState({
                 ...contextMenuState,
-                contextMenuVisible: false,
-              });
+                contextMenuVisible: false
+              })
             }
           }}
-          className={css([
-            ClassName.defaultFont(13, 600),
-            ClassName.Background.pseudoBlubBackground,
-          ])}
-          style={{
-            padding: 3,
-            width: 150,
-            textTransform: "capitalize",
-          }}
-          onClick={(e) => {
+          className={ClassName.defaultFont(13, 600)}
+          padding={6}
+          width={150}
+          onClick={e => {
             if (e.target !== e.currentTarget) {
-              e.stopPropagation();
+              e.stopPropagation()
               setContextMenuState({
                 ...contextMenuState,
-                createVisible: false,
-              });
+                createVisible: false
+              })
               setTimeout(() => {
-                setContextMenuState((s) => ({
+                setContextMenuState(s => ({
                   ...s,
-                  contextMenuVisible: false,
-                }));
-              });
+                  contextMenuVisible: false
+                }))
+              })
             }
           }}
         >
-          {item?.type === "collection" && (
+          {item?.type === 'collection' && (
             <AnimatePopover
               containerStyle={{ zIndex: String(Zindexes.PopupMenu) }}
-              positions={["right"]}
+              positions={['right']}
               align="start"
               visible={!!contextMenuState.createVisible}
               content={
                 <WithBorder
-                  style={{
-                    width: 150,
-                    padding: 3,
-                    textTransform: "capitalize",
-                  }}
+                  width={150}
+                  padding={6}
                   className={css([
                     ClassName.defaultFont(13, 600),
-                    ClassName.Background.pseudoBlubBackground,
-                    ClassName.childrenAllFlex(undefined, "flex-start"),
+                    ClassName.childrenAllFlex(undefined, 'flex-start'),
                     {
-                      "> *": [
+                      '> *': [
                         {
-                          gap: 6,
+                          gap: 6
                         },
-                        ClassName.flatButton(),
-                      ],
-                    },
+                        ClassName.flatButton()
+                      ]
+                    }
                   ])}
                 >
                   <Button.IconButton
                     onClick={() => {
                       setFormState({
-                        newCollectionVisible: true,
-                      });
+                        newCollectionVisible: true
+                      })
                     }}
-                    text={t("general.subcollection")}
+                    text={t('general.subcollection')}
                     icon="park-folder-close"
                   />
 
                   <Button.IconButton
                     onClick={() => {
                       createObjectWithOpenMeta(
-                        "note",
+                        'note',
                         {
                           contentId: Id.getId(),
-                          title: "Untitled",
+                          title: 'Untitled'
                         },
-                        "Untitled Note"
-                      );
+                        'Untitled Note'
+                      )
                     }}
-                    text={t("general.note")}
+                    text={t('general.note')}
                     icon="park-notes"
                   />
 
                   <Button.IconButton
                     onClick={() => {
                       setFormState({
-                        newPdfVisible: true,
-                      });
+                        newPdfVisible: true
+                      })
                     }}
-                    text={t("general.pdf")}
+                    text={t('general.pdf')}
                     icon="park-file-pdf"
                   />
                   <Button.IconButton
                     onClick={() => {
                       createObjectWithOpenMeta(
-                        "video",
+                        'video',
                         {
-                          name: "Unnamed Video",
+                          name: 'Unnamed Video'
                         },
-                        "Unnamed Video"
-                      );
+                        'Unnamed Video'
+                      )
                     }}
-                    text={t("general.video")}
-                    icon={Rendevoz.Utils.Object.getMetaObjectIcon("video")}
+                    text={t('general.video')}
+                    icon={Rendevoz.Utils.Object.getMetaObjectIcon('video')}
                   />
                   <Button.IconButton
                     onClick={() => {
                       createObjectWithOpenMeta(
-                        "whiteboard",
+                        'whiteboard',
                         {
-                          name: "Unnamed Whiteboard",
+                          name: 'Unnamed Whiteboard',
                           edges: new Map(),
                           nodes: new Map(),
-                          items: [],
+                          items: []
                         },
-                        "Unnamed Whiteboard"
-                      );
+                        'Unnamed Whiteboard'
+                      )
                     }}
-                    text={t("general.whiteboard")}
+                    text={t('general.whiteboard')}
                     icon="park-new-computer"
                   />
                   <Button.IconButton
                     icon="park-web-page"
-                    text={t("general.webpage")}
-                    onClick={(e) => {
-                      e.stopPropagation();
+                    text={t('general.webpage')}
+                    onClick={e => {
+                      e.stopPropagation()
                       setContextMenuState({
                         ...contextMenuState,
                         createVisible: false,
-                        contextMenuVisible: false,
-                      });
-                      createObjectWithOpenMeta("webpage");
+                        contextMenuVisible: false
+                      })
+                      createObjectWithOpenMeta('webpage')
                     }}
                   />
                 </WithBorder>
@@ -252,45 +236,39 @@ const useSidebarItemContextMenu = (
             >
               <Button.IconButton
                 icon="park-right"
-                text={t("general.create")}
+                text={t('general.create')}
                 reverse
                 spaceBetween
-                onClick={(e) => {
-                  e.stopPropagation();
+                onClick={e => {
+                  e.stopPropagation()
                   setContextMenuState({
                     ...contextMenuState,
-                    createVisible: !contextMenuState.createVisible,
-                  });
+                    createVisible: !contextMenuState.createVisible
+                  })
                 }}
               />
             </AnimatePopover>
           )}
           <Button.IconButton
-            text={t("general.edit")}
+            text={t('general.edit')}
             icon="park-edit"
-            onClick={(e) => {
-              e.stopPropagation();
-              onEdit?.();
+            onClick={e => {
+              e.stopPropagation()
+              onEdit?.()
               setContextMenuState({
                 ...contextMenuState,
-                contextMenuVisible: false,
-              });
+                contextMenuVisible: false
+              })
             }}
           />
-          <Button.IconButton
-            text={pinned ? t("general.unpin") : t("general.pin")}
-            icon="park-pin"
-            onClick={onPin}
-          />
-          <Button.IconButton
-            text={t("general.delete")}
-            icon="park-delete"
-            dangerous
-            onClick={onDelete}
-          />
-          {item.type !== "collection" && (
+          <Button.IconButton text={pinned ? t('general.unpin') : t('general.pin')} icon="park-pin" onClick={onPin} />
+          <Button.IconButton text={t('general.delete')} icon="park-delete" dangerous onClick={onDelete} />
+          {item.type === 'collection' && (
+            <Button.IconButton text={t('general.delete collection and all objects')} icon="park-delete" dangerous onClick={onDeleteWithMeta} />
+          )}
+          {item.type !== 'collection' && (
             <Button.IconButton
-              text={t("general.remove from collection")}
+              text={t('general.remove from collection')}
               icon="park-folder-minus"
               dangerous
               onClick={onRemoveFromCollection}
@@ -300,71 +278,67 @@ const useSidebarItemContextMenu = (
       }
     ></AnimatePopover>,
     document.body
-  );
-  const createObjectWithOpenMeta = (
-    type: keyof ObjectFamily,
-    object?: Partial<ObjectFamily[typeof type]>,
-    metaName?: string
-  ) => {
+  )
+  const createObjectWithOpenMeta = (type: keyof ObjectFamily, object?: Partial<ObjectFamily[typeof type]>, metaName?: string) => {
     ObjectStore(type)
       .addOne({ ...object }, { silent: true, preventAddMeta: true })
-      .then((obj) => {
+      .then(obj => {
         GlobalEventEmitter()
-          .emitWithCallback("global", {
-            type: "globalNeedAddMetaObject",
+          .emitWithCallback('global', {
+            type: 'globalNeedAddMetaObject',
             data: {
               currentObject: {
                 type: type,
                 objectId: obj.id,
-                name: metaName,
-              },
-            },
+                name: metaName
+              }
+            }
           })
-          .then((meta) => {
+          .then(meta => {
             addItemToCollection(
               {
                 id: (meta as MetaObject).id,
-                type: "meta",
+                type: 'meta'
               },
               item.id
-            );
-            Rendevoz.Actions.Open.Meta.openMetaObject(meta.id);
-            onAddNewSubItem?.();
+            )
+            Rendevoz.Actions.Open.Meta.openMetaObject(meta.id)
+            onAddNewSubItem?.()
           })
           .catch(() => {
             ObjectStore(type).deleteOneById(obj.id, {
               force: true,
-              silent: true,
-            });
-          });
-      });
-  };
+              silent: true
+            })
+          })
+      })
+  }
   const formPortal = createPortal(
     <>
       <Modal
         visible={!!formState.newCollectionVisible}
         noStyle
         onClose={() => {
-          setFormState({ newCollectionVisible: false });
+          setFormState({ newCollectionVisible: false })
         }}
       >
         <CollectionForm
-          onSubmit={(collection) => {
-            setFormState({ newCollectionVisible: false });
+          onSubmit={collection => {
+            setFormState({ newCollectionVisible: false })
             const newCollection = {
               ...collection,
               parentId: item?.id,
-              id: Id.getId(),
-            };
+              id: Id.getId()
+            }
             addItemToCollection(
               {
-                type: "collection",
-                id: newCollection.id,
+                type: 'collection',
+                id: newCollection.id
               },
               item?.id
-            );
-            addCollection(newCollection);
-            onAddNewSubItem?.();
+            )
+            addCollection(newCollection)
+            onAddNewSubItem?.()
           }}
           onBack={() => setFormState({ newCollectionVisible: false })}
         />
@@ -374,24 +348,24 @@ const useSidebarItemContextMenu = (
         noStyle
         visible={!!formState.newPdfVisible}
         onClose={() => {
-          setFormState({ newPdfVisible: false });
+          setFormState({ newPdfVisible: false })
         }}
       >
         <CreateDocumentForm
           onBack={() => setFormState({ newPdfVisible: false })}
-          onSubmit={(meta) => {
-            setFormState({ newPdfVisible: false });
-            addItemToCollection({ id: meta.id, type: "meta" }, item?.id);
-            onAddNewSubItem?.();
+          onSubmit={meta => {
+            setFormState({ newPdfVisible: false })
+            addItemToCollection({ id: meta.id, type: 'meta' }, item?.id)
+            onAddNewSubItem?.()
           }}
         />
       </Modal>
     </>,
     document.body
-  );
+  )
   return {
-    contextMenuPortal: [portal, formPortal],
-  };
-};
+    contextMenuPortal: [portal, formPortal]
+  }
+}
 
-export default useSidebarItemContextMenu;
+export default useSidebarItemContextMenu

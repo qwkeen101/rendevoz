@@ -1,11 +1,10 @@
-import React, { Fragment, useEffect, useMemo, useRef, useState } from 'react'
+import React, { Fragment, useEffect, useRef, useState } from 'react'
 import ThoughtLabel from '../label/Label'
 import { AnimatePopover, Button, WithBorder } from '@/components'
 import { IPdfLabel, RenderPageProps, TextSelectEvent } from '~/typings'
 import TextSelectionToolbar from '../toolbar/TextSelectionToolbar'
 import HighlightLabel from '../label/HighlightLabel'
 import useCleanMode from '../../hooks/useCleanMode'
-import { useAtomValue } from 'jotai/react'
 import { globalStore, ObjectStore } from '@/stores'
 import ObjectLabel from '../label/ObjectLabel'
 import usePdfDraw from '../../hooks/usePdfDraw'
@@ -20,8 +19,8 @@ import { useContextmenu } from '@/hooks'
 import { useTranslation } from 'react-i18next'
 import { Rendevoz } from '@/core/rendevoz'
 import usePdfInstance from '../../hooks/usePdfInstance'
-import EditorLayer from '@/core/pdf/core/layers/EditorLayer'
 import InkLabel from '@/core/pdf/components/label/InkLabel'
+import CropLabel from '@/core/pdf/components/label/CropLabel'
 
 interface PdfPageProps extends RenderPageProps {
   pdfId: number
@@ -103,6 +102,15 @@ const PdfPage: React.FC<PdfPageProps> = ({
     pageFunctionRef.current.onTextSelectEnd = () => {
       setTextSelectionToolbarVisible(false)
     }
+    pageFunctionRef.current.onImageCropped = (rect, path) => {
+      instance.insertLabel?.({
+        type: 'crop',
+        rect,
+        imageUrl: path,
+        page: pageIndex,
+        color: 'rgba(39, 158, 255)'
+      })
+    }
     pageFunctionRef.current.onCanvasRendered = async () => {
       const pdf = await ObjectStore('pdf').getOneById(pdfId)
       const annotation = pdf?.pageAnnotations?.[pageIndex]
@@ -144,9 +152,7 @@ const PdfPage: React.FC<PdfPageProps> = ({
               i.id && (
                 <Fragment key={i.id}>
                   {i.type === 'highlight' && <HighlightLabel documentId={pdfId} labelId={i.id} key={i.id} pageSize={pageSize} />}
-                  {i.type === 'thought' && <ThoughtLabel dragBoundRef={labelContainerRef} labelId={i.id} key={i.id} />}
-                  {i.type === 'object' && <ObjectLabel labelId={i.id} key={i.id} pageSize={pageSize} />}
-                  {i.type === 'ink' && <InkLabel labelId={i.id} pageSize={pageSize} />}
+                  {i.type === 'crop' && <CropLabel labelId={i.id} pageSize={pageSize} />}
                 </Fragment>
               )
           )}
@@ -190,6 +196,7 @@ const PdfPage: React.FC<PdfPageProps> = ({
       />
       <AnimatePopover
         padding={10}
+        borderRadius={999}
         visible={textSelectionToolbarVisible}
         containerStyle={{ zIndex: '9999', borderRadius: '999px' }}
         content={

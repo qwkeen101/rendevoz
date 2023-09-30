@@ -8,6 +8,8 @@ import { slateToMarkdown } from '@/core/editor/plugins/slateToMarkdown'
 import { css } from '@emotion/css'
 import { ObjectStore } from '@/stores'
 import { useTranslation } from 'react-i18next'
+import { DateFormat } from '@/utils'
+import { Colors } from '@/consts'
 
 const EditorHeader = ({ title }: { title: string }) => {
   const instance = useEditorInstance()
@@ -24,17 +26,24 @@ const EditorHeader = ({ title }: { title: string }) => {
       style={{
         padding: '4px 12px'
       }}
+      gap={30}
       justifyContent="space-between"
     >
-      <Content flex gap={20}>
+      <Content flex gap={8} alignItems={'center'}>
         <Icon
-          className={ClassName.circleButton(3, 4)}
-          name={'park-left-bar'}
+          size={16}
+          className={ClassName.flatButton(6, '3px 5px')}
+          name={'custom-left-bar'}
           onClick={() => setEditorBarState(s => ({ ...s, showLeftBar: !s.showLeftBar }))}
         />
         <div style={{ textTransform: 'none' }} className={css([ClassName.title('0.9rem'), ClassName.ellipsisFont(1)])}>
           {title}
         </div>
+        {note?.lastSavedAt && (
+          <div style={{ fontSize: 12, marginLeft: 8, color: Colors.Font.Transparent, flexShrink: 0 }}>
+            {t('general.Last saved at')}: {DateFormat.format(note?.lastSavedAt, DateFormat.Formats.withSecond)}
+          </div>
+        )}
       </Content>
       <Content flex gap={10}>
         {!editorState.outReadOnly && (
@@ -53,7 +62,9 @@ const EditorHeader = ({ title }: { title: string }) => {
           placement={['bottom']}
           content={
             <WithBorder padding={6} style={{ minWidth: 160, fontSize: FontSize['13px'] }}>
-              <div>{t('general.Font size')}: {note?.fontSize || 15}</div>
+              <div>
+                {t('general.Font size')}: {note?.fontSize || 15}
+              </div>
               <Slider
                 style={{
                   margin: '4px 0px'

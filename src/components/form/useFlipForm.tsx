@@ -421,7 +421,6 @@ const useFlipForm = (options: useFlipFormOptions) => {
       >
         <Flipped flipId={mainFlipId}>
           <div
-            className={ClassName.Background.pseudoBlurContrastBackground}
             style={{
               padding: '16px 24px',
               borderRadius: 8,

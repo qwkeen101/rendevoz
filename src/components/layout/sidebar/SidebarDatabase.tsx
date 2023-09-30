@@ -1,6 +1,6 @@
 import { AnimatePopover, Icon } from '@/components'
 import { useGlobalIsDragging } from '@/core'
-import { useGlobalAtom, useMemoizedFn } from '@/hooks'
+import { useMemoizedFn } from '@/hooks'
 import { objectIdToMetaObjectIdMapAtom } from '@/stores/meta.store'
 import { globalStore } from '@/stores'
 import ClassName from '@/styles/classNames'
@@ -10,7 +10,7 @@ import { MenuItem } from './Item'
 import { useTranslation } from 'react-i18next'
 import { Rendevoz } from '@/core/rendevoz'
 import { TypeToRegisteredObject } from '@/stores/object.store'
-import { SidebarPanelStateAtom } from '@/components/layout/sidebar/index'
+import { setPanelState } from '@/components/layout/sidebar/index'
 
 const SidebarDatabase = memo(() => {
   const { t } = useTranslation()
@@ -22,8 +22,6 @@ const SidebarDatabase = memo(() => {
     visible: false,
     alreadyExist: false
   })
-  const [sidebarPanel, setSidebarPanel] = useGlobalAtom(SidebarPanelStateAtom)
-
   const dragHandler = useMemoizedFn((e: DragEvent) => {
     if (e.type === 'dragover') {
       e.preventDefault()
@@ -53,7 +51,7 @@ const SidebarDatabase = memo(() => {
             })
           }
         })
-      }else{
+      } else {
         emitter.emit('global', {
           type: 'globalDropNeedFurtherProcess',
           data: {
@@ -188,7 +186,13 @@ const SidebarDatabase = memo(() => {
       >
         <MenuItem
           onClick={() => {
-            setSidebarPanel(s => ({ ...s, visible: 'database', open: s.visible === 'database' ? !s.open : true }))
+            setPanelState(s => {
+              if (s.visible.has('database')) {
+                s.visible.delete('database')
+              } else {
+                s.visible.add('database')
+              }
+            })
           }}
           className={css([draggingHovered.visible ? ClassName.Drag.droppableItemHovered(draggingHovered.droppable) : undefined])}
           style={{
@@ -198,8 +202,6 @@ const SidebarDatabase = memo(() => {
           }}
         >
           <Icon name="park-data" size={20} />
-          {/*{t('sidebar.database')}*/}
-          {/*<div style={{ marginLeft: 'auto', fontSize: '0.857rem' }}>{undeletedMetaObjects.length}</div>*/}
         </MenuItem>
       </AnimatePopover>
     </>

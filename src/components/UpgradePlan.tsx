@@ -1,5 +1,5 @@
 import ClassName from '@/styles/classNames'
-import { Button, Content, Icon, Modal } from './base'
+import { Button, Content, Icon } from './base'
 import { useSetting } from '@/core'
 import Colors from '@/consts/colors'
 import LoginService, { useUser } from '@/services/login.service'

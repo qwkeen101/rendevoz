@@ -7,6 +7,7 @@ import { checkDropCanBeMeta } from '@/core/global/globalDragOverlay/useDropObjec
 import useDragCreateSyncBlock from '@/core/editor/hooks/drag/useDragCreateSyncBlock'
 import { MetaStore, ObjectStore } from '@/stores'
 import { pushNumberIntoUnrepeatableArray } from '@/utils'
+import useDropInsertMedia from '@/core/editor/hooks/drag/useDropInsertMedia'
 
 /**
  * 拖拽到笔记上到元素可能是笔记块或者其他元素，分情况处理
@@ -17,6 +18,7 @@ import { pushNumberIntoUnrepeatableArray } from '@/utils'
 const useDropToNoteElements = (instance: IEditorInstance, editor: CustomEditor) => {
   const toggleOps = instance.toggleOps
   useDragCreateSyncBlock(instance, editor)
+  const handleDropMedia = useDropInsertMedia()
   const processDrop = async (e: PointerEvent | DragEvent) => {
     const result = e instanceof PointerEvent ? await handlePointerDrop(e) : await handleDragDrop(e)
     return result
@@ -134,6 +136,7 @@ const useDropToNoteElements = (instance: IEditorInstance, editor: CustomEditor) 
   }
 
   const handleDragDrop = async (e: DragEvent) => {
+    e.preventDefault()
     // not meta, just plain text drop
     const canBeMeta = checkDropCanBeMeta(e)
     if (!canBeMeta) {
@@ -149,6 +152,20 @@ const useDropToNoteElements = (instance: IEditorInstance, editor: CustomEditor) 
                   text: plainText
                 }
               ]
+            }
+          ],
+          shouldMoveElements: []
+        }
+      }
+      const result = await handleDropMedia(e)
+      if (result?.type === 'image') {
+        return {
+          shouldAddElements: [
+            {
+              type: 'image',
+              id: Id.getId(),
+              url: result.path,
+              children: [{ text: '' }]
             }
           ],
           shouldMoveElements: []

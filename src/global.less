@@ -11,6 +11,15 @@ input::-ms-clear,
 input::-ms-reveal {
   display: none;
 }
+input::-webkit-outer-spin-button,
+input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+@font-face {
+  font-family: Inter;
+  src: url("/Inter.ttf");
+}
 @font-face {
   font-family: Muli;
   src: url("/Muli.ttf");
@@ -37,7 +46,7 @@ input::-ms-reveal {
 
 * {
   &::-webkit-scrollbar {
-    width: 6px;
+    width: 4px;
     border-radius: 6px;
   }
   &::-webkit-scrollbar-track {
@@ -165,7 +174,6 @@ blockquote {
   font-style: italic;
   font-size: 1.3em;
   &::before {
-    font-family: Muli;
     font-size: 3.5em;
     margin-right: 16px;
     margin-left: -0.2em;
@@ -242,7 +250,6 @@ pre {
   overflow: auto;
   color: #e0e3e6;
   background-color: #1e272f;
-  //font-family: Muli, serif;
   border-radius: 4px;
   font-size: 1rem;
   padding: 1.125rem;
@@ -380,8 +387,8 @@ template {
   display: none !important;
 }
 mark {
-  padding: 0.2em;
-  background-color: #feffe6;
+  color: var(--select-color);
+  background-color: transparent;
 }
 .clearfix::before {
   display: table;

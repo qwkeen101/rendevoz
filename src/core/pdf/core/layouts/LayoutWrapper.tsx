@@ -49,7 +49,7 @@ const LayoutWrapper: FC<LayoutWrapperProps> = ({ defaultScale = 1, doc, children
       if (parentEle) {
         parentEleRef.current = parentEle
         ref(parentEle)
-        const scaleOfWidth = (Math.min(1500, parentEle.clientWidth) - RESERVED_WIDTH) / vw,
+        const scaleOfWidth = (Math.min(1100, parentEle.clientWidth) - RESERVED_WIDTH) / vw,
           scaleOfHeight = (parentEle?.clientHeight - RESERVED_HEIGHT) / vh
         let scale = defaultScale
         scrollMode === 'vertical' && (scale = scaleOfWidth)

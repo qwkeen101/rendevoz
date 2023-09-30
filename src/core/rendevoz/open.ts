@@ -9,7 +9,7 @@ import { GlobalTextSearchInstance } from '../global/GlobalTextSearch'
 import { GlobalTranslateInstance } from '../global/translate/GlobalTranslatePanel'
 import { Rendevoz } from '.'
 import { GlobalSearchInstance } from '../global/GlobalSearchPanel'
-import { SidebarPanelStateAtom } from '@/components/layout/sidebar'
+import { setPanelState } from '@/components/layout/sidebar'
 
 const openMetaObject = async (metaObjectId: number) => {
   const metaObject = globalStore.get(metaObjectsAtom).get(metaObjectId)
@@ -360,7 +360,6 @@ const openVideoAtTime = async (videoId: number, time: number) => {
     type: 'video',
     objectId: videoId
   })
-  console.log(alreadyOpenVideoTab)
   const videoState = alreadyOpenVideoTab?.instance.getVideoState?.()
   if (videoState?.floated) {
     alreadyOpenVideoTab?.instance.jumpTo?.(time)
@@ -432,10 +431,9 @@ const Open: typeof Rendevoz.Actions.Open = {
   openImage,
   openRendevozLink,
   openSidebarObjectDetails: id => {
-    globalStore.set(SidebarPanelStateAtom, {
-      open: true,
-      visible: 'database',
-      showObjectDetails: {
+    setPanelState(s => {
+      s.visible.add('database')
+      s.showObjectDetails = {
         id,
         visible: true
       }

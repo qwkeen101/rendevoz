@@ -1,24 +1,17 @@
-import { FC, useEffect, useMemo, useRef, useState } from 'react'
+import { memo, useEffect, useMemo, useRef, useState } from 'react'
 import { Helmet } from 'react-helmet'
 import { Container, Icon } from '../base'
 import DockLayout, { LayoutData } from '../base/dock'
 import LayoutManager from './layoutManager'
 import { css } from '@emotion/css'
 import { getSetting, useCreateObject, useSetting } from '@/core'
-import { useGlobalAtomValue } from '@/hooks'
-import { SidebarStateAtom } from './sidebar'
+import { Sidebar } from './sidebar'
 import ClassName from '@/styles/classNames'
 import { ILayoutTab } from '~/typings'
 import { Rendevoz } from '@/core/rendevoz'
 import { getOS } from '@/App'
 import MacTitlebar from '@/components/titlebar/MacTitlebar'
-import * as Algorithm from '../base/dock/Algorithm'
 import * as Serializer from '../base/dock/Serializer'
-
-interface LayoutProps {
-  sidebar?: React.ReactNode
-  children?: React.ReactNode
-}
 
 const initialLayout: LayoutData = {
   global: {
@@ -37,9 +30,7 @@ const initialLayout: LayoutData = {
 
 export const LayoutIdToTabMap = new Map<string, ILayoutTab>()
 export let GlobalLayout: LayoutManager | null = null
-const Layout: FC<LayoutProps> = ({ sidebar }) => {
-  const sidebarWidth = useGlobalAtomValue(SidebarStateAtom).width
-
+const Layout = () => {
   const { portal, open } = useCreateObject({
     positions: ['bottom'],
     padding: 20,
@@ -152,7 +143,7 @@ const Layout: FC<LayoutProps> = ({ sidebar }) => {
       </Helmet>
       {os === 'macos' && <MacTitlebar />}
       <Container auto style={{ height: 0 }}>
-        {sidebar}
+        <Sidebar direction={'right'} />
         <Container auto>
           {layout && (
             <DockLayout
@@ -167,9 +158,10 @@ const Layout: FC<LayoutProps> = ({ sidebar }) => {
             ></DockLayout>
           )}
         </Container>
+        <Sidebar direction={'left'} />
       </Container>
     </Container>
   )
 }
 
-export default Layout
+export default memo(Layout)

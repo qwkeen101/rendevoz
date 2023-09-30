@@ -33,7 +33,7 @@ const PdfRightSidebar = () => {
         position: 'relative',
         zIndex: 20,
         padding: 10,
-        marginLeft: 20,
+        marginLeft: 5,
         display: pdfBarState.showRightBar ? undefined : 'none'
       }}
       handleStyles={{
@@ -56,7 +56,7 @@ const PdfRightSidebar = () => {
         onTabClick={key => setPdfBarState(s => ({ ...s, rightBarActive: key }))}
       >
         <TabPane
-          style={{ paddingTop: 20 }}
+          style={{ paddingTop: 10 }}
           tab={
             <Content alignItems="center" flex gap={6}>
               <Icon name="park-search" />
@@ -68,7 +68,6 @@ const PdfRightSidebar = () => {
           <PdfSearch />
         </TabPane>
         <TabPane
-          style={{ paddingTop: 10 }}
           tab={
             <Content alignItems="center" flex gap={6}>
               <Icon name="park-label" />

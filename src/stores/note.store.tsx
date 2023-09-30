@@ -1,13 +1,10 @@
 import useDb from '@/hooks/stores/useDb'
 import Id from '@/utils/id'
-import { atom } from 'jotai'
-import { Descendant, Element, Node } from 'slate'
-import { INote } from '~/typings/data'
-import { SearchableDocument, SearchStore } from './search.store'
+import { Descendant, Node } from 'slate'
 import { CustomEditor } from '~/typings'
 import { saveBlobLocally } from '@/utils/file'
-import { Descendant } from 'slate'
-export const notesAtom = atom(new Map<number, INote>())
+import SearchHelper from '@/textSearch/SearchHelper'
+import { MetaStore, ObjectStore } from '@/stores/index'
 
 const createNoteStore = () => {
   const blobDb = useDb('blobs')
@@ -47,32 +44,21 @@ const createNoteStore = () => {
     }
   }
   const saveNoteAsSearch = async (editor: CustomEditor, noteId: number) => {
-    const currentBlocks = await SearchStore.searchDocument({
-      specType: 'noteBlock',
-      filter: [`targetObjectId=${noteId}`]
-    })
-    const currentSearchableBlocksIdSet = new Set(currentBlocks.map(i => Number(i.doc.id)))
-    const result = editor.children
-      .map(i => {
-        if (Element.isElement(i)) {
-          currentSearchableBlocksIdSet.delete(i.id)
-          const str = Node.string(i).replaceAll('\n', '')
-          if (str.length) {
-            return {
-              content: str,
-              id: i.id,
-              specType: 'noteBlock',
-              targetObjectId: noteId
-            } as SearchableDocument
-          }
-        }
-      })
-      .filter(i => i !== undefined && i.id) as SearchableDocument[]
-    // have deleted blocks
-    if (currentSearchableBlocksIdSet.size > 0) {
-      SearchStore.deleteDocuments(Array.from(currentSearchableBlocksIdSet.values()))
+    const note = await ObjectStore('note').getOneById(noteId)
+    if (note && note.metaId) {
+      const targetMeta = await MetaStore.getMetaObjectById(note.metaId)
+      if (targetMeta) {
+        SearchHelper.insertDocument({
+          id: targetMeta.id,
+          docType: 'metaObject',
+          metaId: targetMeta.id,
+          metaType: targetMeta.type,
+          name: targetMeta.name,
+          description: targetMeta.description,
+          content: Node.string(editor)
+        })
+      }
     }
-    SearchStore.addDocuments(result)
   }
 
   return {

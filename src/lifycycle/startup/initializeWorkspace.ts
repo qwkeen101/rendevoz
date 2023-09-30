@@ -1,6 +1,6 @@
-import {  SettingAtom } from '@/core'
+import { SettingAtom } from '@/core'
 import { useDb } from '@/hooks'
-import { MetaObject } from '~/typings'
+import { ICollection, MetaObject } from '~/typings'
 import KeyvalueStore from '@/stores/keyvalue.store'
 import produce from 'immer'
 import { useSetAtom } from 'jotai'
@@ -30,10 +30,16 @@ const initializeWorkspace = async (setSetting: ReturnType<typeof useSetAtom<type
     })
   )
   const metaObjectDb = useDb('metaObjects')
+  const collectionDb = useDb('collections')
+  const allCollections = (await collectionDb.filter(i => !i.workspace).toArray()) as ICollection[]
   const all = (await metaObjectDb.filter(i => !i.workspace).toArray()) as MetaObject[]
   const update = all.map(i => ({ ...i, workspace: currentWorkspace }))
+  const updateCollection = allCollections.map(i => ({ ...i, workspace: currentWorkspace }))
   if (update.length) {
     await metaObjectDb.bulkPut(update)
+  }
+  if (updateCollection.length) {
+    await collectionDb.bulkPut(updateCollection)
   }
 }
 

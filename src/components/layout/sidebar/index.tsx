@@ -1,94 +1,138 @@
-import { FC, useEffect, useLayoutEffect, useRef, useState } from 'react'
-import styles from './index.module.less'
-import Navigation from './Navigation'
-import { Rnd } from 'react-rnd'
-import { delay } from 'lodash'
-import classNames from 'classnames'
-import ClassName from '@/styles/classNames'
-import { getOS } from '@/App'
+import React from 'react'
+import SidebarIcons from './SidebarIcons'
 import { atom } from 'jotai'
-import { useGlobalAtom, useGlobalAtomValue } from '@/hooks'
-import { LayoutIdToTabMap } from '..'
-import useAppState from '@/core/rendevoz/appState'
 import { Content } from '@/components'
 import SidebarPanel from '@/components/layout/sidebar/SidebarPanel'
-import { Colors } from '@/consts'
+import { KeyToRegisteredSidebarElement } from '@/core/plugin/RegisterMap'
+import KeyvalueStore from '@/stores/keyvalue.store'
+import { RegisteredSidebarItem } from '~/typings/registered'
+import { Rendevoz } from '@/core/rendevoz'
+import { t } from 'i18next'
+import { globalStore } from '@/stores'
+import { GlobalScreenshotInstance } from '@/core/global/globalScreenShot'
+import { GlobalTextSearchInstance } from '@/core/global/GlobalTextSearch'
+import SidebarDatabase from '@/components/layout/sidebar/SidebarDatabase'
+import SidebarSetting from '@/components/layout/sidebar/SidebarSetting'
+import produce, { Draft } from 'immer'
 
-export const SidebarStateAtom = atom<{
-  collapsed: boolean
-  width: number
-  hovered: boolean
-  ref?: Rnd
-}>({
-  collapsed: false,
-  width: 64,
-  hovered: false
-})
+export const setPanelState = (updater: (panelState: Draft<SidebarPanelState>) => void) => {
+  const panelState = globalStore.get(SidebarPanelStateAtom)
+  const newState = produce(panelState, draft => {
+    updater(draft)
+  })
+  globalStore.set(SidebarPanelStateAtom, newState)
+}
+export const BuiltInSidebarItems: Record<string, RegisteredSidebarItem> = {
+  home: {
+    key: 'home',
+    icon: 'park-home',
+    onClick: () => {
+      Rendevoz.Actions.Open.openHome()
+    },
+    text: () => t('general.home')
+  },
+  collections: {
+    key: 'collections',
+    icon: 'park-folder-close',
+    onClick: () => {
+      setPanelState(s => {
+        s.visible.has('collections') ? s.visible.delete('collections') : s.visible.add('collections')
+      })
+    },
+    text: () => t('general.collection')
+  },
+  screenshot: {
+    key: 'screenshot',
+    icon: 'park-screenshot-one',
+    onClick: () => {
+      GlobalScreenshotInstance.open?.()
+    },
+    text: () => t('general.screenshot')
+  },
+  search: {
+    key: 'search',
+    icon: 'park-search',
+    onClick: () => {
+      GlobalTextSearchInstance.open?.()
+    },
+    text: () => t('general.search')
+  },
+  graph: {
+    key: 'graph',
+    icon: 'park-share-one',
+    text: () => t('general.graph'),
+    onClick: () => {
+      Rendevoz.Actions.Layout.openNewTab({ data: { type: 'graph' } })
+    }
+  },
+  database: {
+    key: 'database',
+    text: () => t('general.object library'),
+    tooltip: () => t('general.drop here to add object'),
+    element: <SidebarDatabase />,
+    icon: 'park-data'
+  },
+  settings: {
+    key: 'settings',
+    text: () => t('general.settings'),
+    element: <SidebarSetting />,
+    icon: 'park-setting-two'
+  },
+  webSearch: {
+    key: 'webSearch',
+    text: () => t('general.web search'),
+    icon: 'park-google',
+    onClick: () => {
+      setPanelState(s => {
+        s.visible.has('webSearch') ? s.visible.delete('webSearch') : s.visible.add('webSearch')
+      })
+    }
+  }
+}
 
-export const SidebarPanelStateAtom = atom<{
-  visible?: 'database' | 'collections' | 'webSearch'
-  open: boolean
+export type ISidebarPanelVisibleItems = 'database' | 'collections' | 'webSearch'
+
+type SidebarPanelState = {
+  visible: Set<ISidebarPanelVisibleItems>
   showObjectDetails?: {
     id: number
     visible: boolean
   }
-}>({
-  open: false
+}
+export const SidebarPanelStateAtom = atom<SidebarPanelState>({
+  visible: new Set<ISidebarPanelVisibleItems>()
 })
 
-export const SidebarCollapseAtom = atom(false)
-export const Sidebar: FC = () => {
-  const navRef = useRef<HTMLElement>(null)
-  const rndRef = useRef<Rnd>(null)
-  const [appState, setAppState] = useAppState()
-  const [sidebarState, setSidebarState] = useGlobalAtom(SidebarStateAtom)
-  const [widthTransition, setWidthTransition] = useState(false)
-  const [isResizing, setIsResizing] = useState(false)
+const defaultSidebarItems = ['home', 'database', 'collections', 'search', 'graph', 'settings']
 
-  useEffect(() => {
-    setAppState(s => ({ ...s, sidebarCollapsed: sidebarState.collapsed }))
-  }, [sidebarState.collapsed])
+export const Sidebar = ({ direction = 'right' }: { direction: 'left' | 'right' }) => {
+  const builtinSidebarEles = Array.from(Object.values(BuiltInSidebarItems))
+  const registeredSidebarEles = Array.from(KeyToRegisteredSidebarElement.values())
 
-  useLayoutEffect(() => {
-    if (appState.sidebarCollapsed) {
-      setSidebarState(s => ({
-        ...s,
-        collapsed: appState.sidebarCollapsed,
-        width: 0
-      }))
-    }
-  }, [])
-  const { hovered, collapsed } = sidebarState
-  useEffect(() => {
-    const os = getOS()
-    if (os === 'macos' && collapsed) {
-      const macosPlaceholder = document.getElementById('macos-placeholder')
-      if (macosPlaceholder) {
-        macosPlaceholder.style.setProperty('display', 'block')
-        return () => {
-          macosPlaceholder.style.setProperty('display', 'none')
-        }
-      }
-    }
-  }, [collapsed])
+  const allItems = [...builtinSidebarEles, ...registeredSidebarEles]
+  const allItemsMap = new Map(allItems.map(i => [i.key, i]))
+  const key = direction === 'right' ? 'leftBarItems' : 'rightBarItems'
+  const items = KeyvalueStore.useValue(key) || (direction === 'right' ? defaultSidebarItems : [])
+  const usedItems = new Set([
+    ...(KeyvalueStore.useValue('leftBarItems') || defaultSidebarItems),
+    ...(KeyvalueStore.useValue('rightBarItems') || [])
+  ])
+  const leftItems = [...(items.map(key => allItemsMap.get(key)).filter(o => o) as RegisteredSidebarItem[])].concat(
+    ...allItems.filter(i => !usedItems.has(i.key))
+  )
+
   return (
-    <Content
-      flex
-      tabIndex={-1}
-      style={{ zIndex: 1000 }}
-      onMouseLeave={() => {
-        if (!isResizing) setSidebarState(s => ({ ...s, hovered: false }))
-      }}
-      onClick={() => {
-        console.log(LayoutIdToTabMap)
-      }}
-      onDragLeave={e => {
-        e.preventDefault()
-        if (!isResizing) setSidebarState(s => ({ ...s, hovered: false }))
-      }}
-    >
-      <Navigation hovered={collapsed}></Navigation>
-      <SidebarPanel />
+    <Content flex style={{ zIndex: 1000, flexDirection: direction === 'right' ? 'row' : 'row-reverse' }}>
+      <SidebarIcons
+        items={items}
+        direction={direction}
+        showUser={direction === 'right'}
+        leftItems={leftItems}
+        onChange={v => {
+          KeyvalueStore.updateOne(key, v)
+        }}
+      ></SidebarIcons>
+      <SidebarPanel items={items} direction={direction} />
     </Content>
   )
 }

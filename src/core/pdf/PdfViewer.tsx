@@ -3,7 +3,6 @@ import { FC, memo, useCallback, useEffect, useRef, useState } from 'react'
 import PdfPage from './components/page/Page'
 import styles from './index.module.less'
 import { IAnnotation, IPdfInstance, IPdfViewer, RenderPageProps } from '~/typings'
-import { AnnotationType } from './core/types/annotation'
 import { PDFDocumentProxy } from 'pdfjs-dist'
 import { useMemoizedFn, useMergedRef } from '@/hooks'
 import { Range } from '@tanstack/react-virtual'
@@ -12,16 +11,14 @@ import usePdfDrag from './hooks/usePdfDrag'
 import { useGlobalAtomValue } from '@/hooks/jotai'
 import { ID_TO_LABEL_MAP } from './weakMaps'
 import usePdfViewer from './core/hooks/useViewer'
-import { ObjectStore } from '@/stores'
-import { SearchStore } from '@/stores/search.store'
-import { savePdfAsSearch } from '@/stores/document.store'
+import { MetaStore, ObjectStore } from '@/stores'
 import { waitFor } from '@/utils/functions'
-import PdfFloatBar from './components/floatbar'
 import DownloadRemotePdf from '@/core/pdf/core/utils/downloadRemotePdf'
 import { DownloadProgress, formatBytes } from '@/utils/fetchProcess'
-import { Content, Icon } from '@/components'
-import { ProgressInfo } from 'electron-updater'
+import { Content } from '@/components'
 import { Colors } from '@/consts'
+import PdfHeader from '@/core/pdf/components/PdfHeader'
+import LabelToolbarRenderer from '@/core/pdf/components/label/LabelToolbarRenderer'
 
 export interface PdfViewerProps {
   documentId: number
@@ -32,6 +29,7 @@ export interface PdfViewerProps {
 export const PdfViewer: FC<PdfViewerProps> = memo(({ documentId, transformScale, onInstanceInitialized }) => {
   const documentAtom = ObjectStore('pdf').createAtom(documentId)
   const document = useGlobalAtomValue(documentAtom)
+  const documentMeta = MetaStore.useObjectToMetaValue(documentId)
   const viewerRef = useRef()
   const viewer = usePdfViewer()
   const mergedRef = useMergedRef(viewerRef)
@@ -43,7 +41,15 @@ export const PdfViewer: FC<PdfViewerProps> = memo(({ documentId, transformScale,
   // ref to store pdf document
   const documentRef = useRef<PDFDocumentProxy>()
   // context event emitter
-
+  useEffect(() => {
+    if (documentMeta && !documentMeta.coverImgSrc) {
+      setTimeout(() => {
+        viewer.capturePageImage?.(0).then(s => {
+          MetaStore.updateMetaObject({ id: documentMeta.id, coverImgSrc: s }, true)
+        })
+      }, 100)
+    }
+  }, [documentMeta])
   usePdfDrag(viewboxRef.current, documentId)
   useEffect(() => {
     if (document?.webFileUrl && !document.fileUrl) {
@@ -58,6 +64,13 @@ export const PdfViewer: FC<PdfViewerProps> = memo(({ documentId, transformScale,
     waitFor(
       () => !!viewer.jumpToLabel,
       () => {
+        if (documentMeta && !documentMeta.coverImgSrc) {
+          setTimeout(() => {
+            viewer.capturePageImage?.(0).then(s => {
+              MetaStore.updateMetaObject({ id: documentMeta.id, coverImgSrc: s }, true)
+            })
+          }, 100)
+        }
         onInstanceInitialized?.(viewer)
       }
     )
@@ -79,14 +92,14 @@ export const PdfViewer: FC<PdfViewerProps> = memo(({ documentId, transformScale,
     (props: RenderPageProps) => (documentId ? <PdfPage pdfId={documentId} key={props.pageIndex} {...props} /> : null),
     [documentId]
   )
-  const handleRangeChange = useMemoizedFn((range?: Range) => {
+  const handleRangeChange = useMemoizedFn((range?: Range & { progress: number; currentIndex: number }) => {
     if (range) {
       const progress = range?.progress || 0
       ObjectStore('pdf').updateOne(
         {
           id: documentId,
           readProgress: progress,
-          lastReadPage: range.startIndex,
+          lastReadPage: range.currentIndex,
           lastReadAt: Date.now()
         },
         { silent: true }
@@ -96,10 +109,14 @@ export const PdfViewer: FC<PdfViewerProps> = memo(({ documentId, transformScale,
 
   const renderAnnotation = useCallback((annotation: IAnnotation) => {
     switch (annotation.annotationType) {
-      case AnnotationType.Link:
+      case 2:
         return (
           <Link
             onClick={() => {
+              console.log(annotation)
+              if (annotation.url) {
+                window.open(annotation.url)
+              }
               annotation.dest && viewer.jumpToDest?.(annotation.dest)
             }}
           />
@@ -108,9 +125,13 @@ export const PdfViewer: FC<PdfViewerProps> = memo(({ documentId, transformScale,
   }, [])
   return (
     <div ref={viewboxRef} className={styles.viewerBox} role="pdf-viewer">
+      <PdfHeader documentId={documentId} />
+      <LabelToolbarRenderer />
       {downloadState && (
         <Content flex column alignItems={'center'} fullWidth justifyContent={'center'} gap={10}>
-          <div style={{ width: 'min(800px, 60%)', height: 6, borderRadius: 999, overflow: 'hidden', background: Colors.Background.Secondary }}>
+          <div
+            style={{ width: 'min(800px, 60%)', height: 6, borderRadius: 999, overflow: 'hidden', background: Colors.Background.Secondary }}
+          >
             <div
               style={{
                 height: '100%',
@@ -126,13 +147,7 @@ export const PdfViewer: FC<PdfViewerProps> = memo(({ documentId, transformScale,
         <Viewer
           onDocumentLoaded={doc => {
             documentRef.current = doc
-            SearchStore.existTargetObjectDocuments(documentId).then(res => {
-              if (!res) {
-                doc.getData().then(data => {
-                  savePdfAsSearch(data, documentId)
-                })
-              }
-            })
+            ObjectStore('pdf').updateOne({ id: documentId, totalPageNum: doc.numPages })
           }}
           layoutClassName={styles.viewerLayout}
           innerRef={mergedRef}
@@ -144,7 +159,6 @@ export const PdfViewer: FC<PdfViewerProps> = memo(({ documentId, transformScale,
           transformScale={transformScale}
         />
       )}
-      <PdfFloatBar />
     </div>
   )
 })

@@ -14,7 +14,7 @@ import { globalStore, MetaStore, ObjectStore } from '@/stores'
 import FlowManager from './FlowManager'
 import { IWhiteboard } from '~/typings/data'
 import { Content } from '@/components'
-import { useDebounceFn, useGlobalAtomValue } from '@/hooks'
+import { useCapturePreviewImage, useDebounceEffect, useDebounceFn, useGlobalAtomValue } from '@/hooks'
 import useWhiteboardSidebar from './useWhiteboardSidebar'
 import { Rendevoz } from '../rendevoz'
 import useSnapDrag from '@/core/whiteboard/hooks/useSnapDrag'
@@ -38,17 +38,10 @@ import WhiteboardNodesBar from '@/core/whiteboard/toolbars/WhiteboardNodesBar'
 import WhiteboardPenToolsBar from '@/core/whiteboard/toolbars/WhiteboardPenToolsBar'
 import useWhiteboardShortcut from '@/core/whiteboard/hooks/useWhiteboardShortcut'
 import { css } from '@emotion/css'
+import { exportWhiteboardAsImage } from '@/core/whiteboard/utils/exportAsImage'
 
 const WhiteboardInner = memo(
-  ({
-    id,
-    enableMiniMap = true,
-    onInstanceInitialized
-  }: {
-    id: number
-    enableMiniMap?: boolean
-    onInstanceInitialized?: (i: IWhiteboardInstance) => void
-  }) => {
+  ({ id, onInstanceInitialized }: { id: number; enableMiniMap?: boolean; onInstanceInitialized?: (i: IWhiteboardInstance) => void }) => {
     const containerRef = useRef<HTMLDivElement>(null)
     const flow = useFlow()
     const panzoomRef = useRef<PanZoom>()
@@ -266,7 +259,24 @@ const WhiteboardInner = memo(
     const { renderFreehands, renderDrawLayer } = useFreeHand()
     const { containerCursor } = useWhiteboardPanzoom()
     const excalidrawRef = useRef<ExcalidrawImperativeAPI>(null)
-
+    const whiteboardMeta = MetaStore.useObjectToMetaValue(whiteboard?.id)
+    const { updatePreview } = useCapturePreviewImage(whiteboardMeta?.id)
+    const isExporting = useRef(false)
+    // useDebounceEffect(
+    //   () => {
+    //     if (whiteboard?.nodes && !isExporting.current && containerRef.current) {
+    //       isExporting.current = true
+    //       requestIdleCallback(() => {
+    //         exportWhiteboardAsImage(Array.from(whiteboard.nodes.values()), containerRef.current).then(res => {
+    //           updatePreview(res)
+    //           isExporting.current = false
+    //         })
+    //       })
+    //     }
+    //   },
+    //   [whiteboard?.nodes, whiteboard?.edges],
+    //   { wait: 5000 }
+    // )
     return (
       <Content
         fullHeight

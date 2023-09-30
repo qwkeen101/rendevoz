@@ -1,16 +1,16 @@
-export {};
-import "i18next";
+export {}
+import 'i18next'
 
 declare global {
   interface Window {
     // Expose some Api through preload script
-    fs: typeof import("fs");
-    ipcRenderer: import("electron").IpcRenderer;
-    removeLoading: () => void;
+    fs: typeof import('fs')
+    ipcRenderer: import('electron').IpcRenderer
+    removeLoading: () => void
   }
 }
-declare module "i18next" {
+declare module 'i18next' {
   interface CustomTypeOptions {
-    returnNull: false;
+    returnNull: false
   }
 }

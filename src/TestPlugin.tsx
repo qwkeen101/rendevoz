@@ -1,10 +1,4 @@
 import {
-  BuiltInDraggableElement,
-  BuiltInDropOn,
-  BuiltInMetaObjectTypes,
-  BuiltInObjectTypes,
-  BuiltInTabTypes,
-  PluginApi
 } from '~/typings'
 import { useEffect, useMemo, useState } from 'react'
 import { RenderElementProps } from 'slate-react'

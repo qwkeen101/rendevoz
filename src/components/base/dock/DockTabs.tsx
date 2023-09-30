@@ -143,7 +143,7 @@ export class TabCache {
     if (typeof content === 'function') {
       content = content(this.data)
     }
-    if (typeof icon === 'string' && icon.startsWith('park')) {
+    if (typeof icon === 'string' && (icon.startsWith('park') || icon.startsWith('custom'))) {
       icon = <Icon name={icon} />
     }
     const tab = (

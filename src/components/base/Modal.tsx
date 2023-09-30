@@ -26,8 +26,9 @@ interface ModalProps {
   zIndex?: number
   showClose?: boolean
   notUnmount?: boolean
+  disableAnimation?: boolean
 }
-const Backdrop = ({ children, onMouseDown }) => {
+const Backdrop = ({ children, onMouseDown, disableAnimation }) => {
   return (
     <motion.div
       role="backdrop"
@@ -49,6 +50,7 @@ const Backdrop = ({ children, onMouseDown }) => {
       initial={{ background: 'rgba(0,0,0,0)' }}
       animate={{ background: 'rgba(0,0,0,0.2)' }}
       exit={{ background: 'rgba(0,0,0,0)' }}
+      transition={{ duration: disableAnimation ? 0 : 0.2 }}
       onPointerDown={onMouseDown}
     >
       {children}
@@ -70,7 +72,8 @@ const Modal: FC<ModalProps> = ({
   style,
   zIndex,
   showClose = false,
-  notUnmount
+  notUnmount,
+  disableAnimation
 }) => {
   useEffect(() => {
     const keyDownHandler = (e: KeyboardEvent) => {
@@ -99,7 +102,7 @@ const Modal: FC<ModalProps> = ({
           opacity: visible ? 1 : 0
         }}
         role="modal-container"
-        transition={{ duration: 0.2 }}
+        transition={{ duration: disableAnimation ? 0 : 0.2 }}
         style={{
           position: 'fixed',
           inset: 0,
@@ -119,7 +122,7 @@ const Modal: FC<ModalProps> = ({
             inset: 0,
             backdropFilter: 'blur(4px)'
           }}
-          transition={{ duration: 0.2 }}
+          transition={{ duration: disableAnimation ? 0 : 0.2 }}
           className={ClassName.Background.blurBackground}
         ></motion.div>
 
@@ -129,15 +132,7 @@ const Modal: FC<ModalProps> = ({
             animate={{ y: 0, opacity: visible ? 1 : 0 }}
             exit={{ y: 50, opacity: 0 }}
             role="modal"
-            className={css([
-              !noStyle && {
-                padding: '16px 24px',
-                borderRadius: '6px',
-                boxShadow: Colors.Background.BoxShadow,
-                overflow: 'hidden',
-                background: Colors.Background.HighContrast
-              }
-            ])}
+            className={ClassName.Background.pseudoBlurContrastBackground}
             style={{
               position: 'relative',
               minWidth,
@@ -148,13 +143,14 @@ const Modal: FC<ModalProps> = ({
               height,
               zIndex: Zindexes.Modal,
               margin: 'auto',
+              borderRadius: 12,
               ...style
             }}
             onPointerDown={e => e.stopPropagation()}
             onClick={e => {
               e.stopPropagation()
             }}
-            transition={{ stiffness: 200, damping: 20, duration: 0.2 }}
+            transition={{ stiffness: 200, damping: 20, duration: disableAnimation ? 0 : 0.2 }}
           >
             {showClose && (
               <motion.div
@@ -211,15 +207,7 @@ const Modal: FC<ModalProps> = ({
                 animate={{ y: 0, opacity: 1 }}
                 exit={{ y: 50, opacity: 0 }}
                 role="modal"
-                className={css([
-                  !noStyle && {
-                    padding: '16px 24px',
-                    borderRadius: '6px',
-                    boxShadow: Colors.Background.BoxShadow,
-                    overflow: 'hidden',
-                    background: Colors.Background.HighContrast
-                  }
-                ])}
+                className={ClassName.Background.pseudoBlurContrastBackground}
                 style={{
                   position: 'relative',
                   minWidth,
@@ -228,6 +216,7 @@ const Modal: FC<ModalProps> = ({
                   maxWidth,
                   width,
                   height,
+                  borderRadius: 12,
                   zIndex: Zindexes.Modal,
                   margin: 'auto',
                   ...style

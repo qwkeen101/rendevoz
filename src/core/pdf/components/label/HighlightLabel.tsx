@@ -1,21 +1,18 @@
-import { AnimatePopover, WithBorder } from '@/components'
 import { DraggableElement, DraggingElement } from '@/core'
-import { useMergedRef } from '@/hooks'
+import { useMergedRef, useSelectAtomValue } from '@/hooks'
 import { PageSize } from '~/typings'
-import { globalStore, ObjectStore } from '@/stores'
+import { ObjectStore } from '@/stores'
 import { CSSProperties, FC, forwardRef, memo, useEffect, useMemo, useRef, useState } from 'react'
 import { ILabel } from '~/typings/data'
-import LabelToolbar from '../toolbar/LabelToolbar'
 import usePdfViewer from '@/core/pdf/core/hooks/useViewer'
 import useClickOutside from '@/hooks/utils/useClickOutside'
 import tinycolor from 'tinycolor2'
 import { ID_TO_LABEL_MAP } from '../../weakMaps'
 import { Rect } from '@/types'
-import { objectIdToMetaObjectIdMapAtom } from '@/stores/meta.store'
-import { GlobalSearchInstance } from '@/core/global/GlobalSearchPanel'
-import { Rendevoz } from '@/core/rendevoz'
 import usePdfSelectMode from '../../hooks/useSelectMode'
-import usePdfInstance from '@/core/pdf/hooks/usePdfInstance'
+import { useSetAtom } from 'jotai'
+import { PdfStateAtom } from '@/core/pdf/hooks/usePdfState'
+import LabelNoteRenderer from '@/core/pdf/components/label/LabelNoteRenderer'
 
 interface HighlightLabelProps {
   labelId: number
@@ -27,100 +24,44 @@ const layout = ['copy', 'colorPicker', 'separator', 'searcher', 'translator', 'r
 const HighlightLabel: FC<HighlightLabelProps> = memo(
   ({ labelId, pageSize, documentId }) => {
     const highlight = ObjectStore('pdfLabel').useValue(labelId) as (ILabel & { type: 'highlight' }) | undefined
-    const [popoverVisible, setPopoverVisible] = useState(false)
     const highlightRef = useRef<HTMLDivElement>(null)
-    const metaRef = useRef<HTMLDivElement>(null)
-    const toolbarRef = useRef<HTMLDivElement>(null)
-    const instance = usePdfInstance()
-    useClickOutside(
-      e => {
-        if (!toolbarRef.current?.contains(e.target) && !metaRef.current?.contains(e.target)) {
-          setPopoverVisible(false)
-        }
-      },
-      highlightRef,
-      popoverVisible
-    )
-
-    const handleColorChange = (color: string) => {
-      ObjectStore('pdfLabel').updateOne({ id: labelId, color })
-    }
-
+    const setPdfState = useSetAtom(PdfStateAtom)
     if (!highlight) return null
 
     return (
-      <AnimatePopover
-        padding={10}
-        boundaryElement={document.body}
-        visible={popoverVisible}
-        positions={['top']}
-        containerStyle={{ borderRadius: '999px' }}
-        content={
-          <WithBorder ref={toolbarRef} key={highlight.id} padding="0px 12px" borderRadius={999}>
-            <LabelToolbar
-              layout={layout}
-              key={highlight.id}
-              onColorChange={handleColorChange}
-              onTranslate={e => {
-                highlight.selectedText &&
-                  Rendevoz.Actions.Open.Translate.openTranslate({
-                    to: 'zh',
-                    query: highlight.selectedText,
-                    e,
-                    source: {
-                      type: 'pdf',
-                      objectId: highlight.documentId,
-                      page: highlight.page,
-                      selectedText: highlight.selectedText
-                    }
-                  })
-              }}
-              onSearch={e => {
-                const pdfMetaId = globalStore.get(objectIdToMetaObjectIdMapAtom)?.get(documentId)
-                if (pdfMetaId) {
-                  GlobalSearchInstance.open?.({
-                    e,
-                    query: highlight?.selectedText,
-                    from: {
-                      pages: [highlight.page],
-                      type: 'pdf',
-                      metaId: pdfMetaId,
-                      selectedText: highlight?.selectedText
-                    }
-                  })
-                }
-              }}
-              onOpenInSidebar={() => {
-                instance.jumpToLabelInSidebar?.(labelId)
-              }}
-              onDelete={() => ObjectStore('pdfLabel').deleteOneById(labelId, { force: true })}
-              selectedText={highlight.selectedText}
-            />
-          </WithBorder>
-        }
+      <DraggableElement
+        hoverElement={<DraggingElement text="Drop to add pdf label." />}
+        draggingDetails={{
+          type: 'pdfLabel',
+          pdfId: documentId,
+          content: highlight.selectedText,
+          page: highlight.page,
+          labelId: highlight.id
+        }}
       >
-        <DraggableElement
-          hoverElement={<DraggingElement text="Drop to add pdf label." />}
-          draggingDetails={{
-            type: 'pdfLabel',
-            pdfId: documentId,
-            content: highlight.selectedText,
-            page: highlight.page,
-            labelId: highlight.id
+        <Highlights
+          highlight={highlight}
+          pageSize={pageSize}
+          highlightRef={highlightRef}
+          labelId={labelId}
+          onClick={e => {
+            setTimeout(() =>
+              setPdfState(s => ({
+                ...s,
+                currentFocusedLabel: {
+                  labelId,
+                  position: {
+                    x: e.clientX,
+                    y: e.clientY
+                  }
+                }
+              }))
+            )
           }}
-        >
-          <Highlights
-            highlight={highlight}
-            pageSize={pageSize}
-            highlightRef={highlightRef}
-            labelId={labelId}
-            onClick={() => {
-              setPopoverVisible(true)
-            }}
-            key={highlight.id}
-          />
-        </DraggableElement>
-      </AnimatePopover>
+          key={highlight.id}
+        />
+      </DraggableElement>
+      // </AnimatePopover>
     )
   },
   (prev, curr) => {
@@ -136,12 +77,11 @@ const Highlights = forwardRef((props, ref) => {
   const { highlight, onClick, highlightRef, pageSize, labelId } = props
   const innerRef = useRef<HTMLDivElement>(null)
   const mergedRef = useMergedRef(highlightRef, innerRef, ref)
-  const viewer = usePdfViewer()
   const [selectMode] = usePdfSelectMode()
   const [focused, setFocused] = useState(false)
   useClickOutside(() => setFocused(false), highlightRef, focused)
   const containerRectRef = useRef<Rect>()
-
+  const setPdfState = useSetAtom(PdfStateAtom)
   useEffect(() => {
     const container = innerRef.current
     if (container) {
@@ -153,7 +93,8 @@ const Highlights = forwardRef((props, ref) => {
         right: 0,
         bottom: 0
       }
-      container.childNodes.forEach((node, idx) => {
+      const rectNodes = Array.from(container.childNodes).filter(i => i.hasAttribute('data-rect'))
+      rectNodes.forEach((node, idx) => {
         const rect = highlight.rects[idx]
         const n = node as HTMLElement
         const ct = rect.percentageTop * pageSize.height
@@ -179,7 +120,7 @@ const Highlights = forwardRef((props, ref) => {
         n.style.width = `${w}px`
         n.style.height = `${h}px`
       })
-      container.childNodes.forEach((node, idx) => {
+      rectNodes.forEach((node, idx) => {
         const n = node as HTMLElement
         const rect = highlight.rects[idx]
         const ct = rect.percentageTop * pageSize.height
@@ -197,25 +138,21 @@ const Highlights = forwardRef((props, ref) => {
       containerRectRef.current = containerRect
     }
   }, [pageSize.width, pageSize.height, pageSize.scale])
+  const currentHighlightLabelId = useSelectAtomValue(PdfStateAtom, s => s.currentHighlightLabelId)
   useEffect(() => {
-    if (viewer) {
-      ID_TO_LABEL_MAP.get(viewer)?.set(labelId, {
-        focus: () => {
-          setTimeout(() => {
-            setFocused(true)
-          })
-        }
-      })
-      viewer.onLabelRendered?.(labelId)
-      return () => {
-        ID_TO_LABEL_MAP.get(viewer)?.delete(labelId)
-      }
+    if (currentHighlightLabelId === labelId) {
+      setFocused(true)
+      setTimeout(() => {
+        setFocused(false)
+        setPdfState(s => ({ ...s, currentHighlightLabelId: undefined }))
+      }, 1500)
     }
-  }, [])
-  const darkenColor = useMemo(() => {
+  }, [currentHighlightLabelId])
+  const { darkenColor, transparentColor } = useMemo(() => {
     const color = tinycolor(highlight.color || '#8590ae')
-    const darkenColor = color.darken(20).toString('rgb')
-    return darkenColor
+    const darkenColor = color.clone().darken(20).toString('rgb')
+    const transparentColor = color.clone().setAlpha(0.4)
+    return { darkenColor, transparentColor }
   }, [highlight.color])
   const highlightStyle: CSSProperties =
     highlight.specHighlightType === 'underline'
@@ -233,14 +170,17 @@ const Highlights = forwardRef((props, ref) => {
       style={{
         pointerEvents: 'none',
         outline: focused ? `2px solid ${darkenColor}` : undefined,
+        background: focused ? transparentColor : undefined,
         borderRadius: 4
       }}
       ref={mergedRef}
       onClick={onClick}
     >
+      <LabelNoteRenderer labelId={labelId} />
       {highlight.rects?.map((rect, idx) => (
         <div
           key={idx}
+          data-rect={true}
           style={{
             position: 'absolute',
             cursor: 'pointer',

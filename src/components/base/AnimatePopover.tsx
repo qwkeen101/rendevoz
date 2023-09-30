@@ -27,6 +27,7 @@ export interface AnimatePopoverProps extends Omit<PopoverProps, 'content' | 'isO
   contentDraggable?: boolean
   closeOnClickOutside?: boolean
   withClickCover?: boolean
+  borderRadius?: number
 }
 
 const AnimatePopover: FC<PropsWithChildren<AnimatePopoverProps>> = ({
@@ -34,6 +35,7 @@ const AnimatePopover: FC<PropsWithChildren<AnimatePopoverProps>> = ({
   content,
   children,
   visible,
+  borderRadius = 8,
   reposition = false,
   disableNudge = false,
   position,
@@ -43,7 +45,7 @@ const AnimatePopover: FC<PropsWithChildren<AnimatePopoverProps>> = ({
   innerRef,
   contentDraggable,
   clickOutsideCapture = true,
-  containerStyle = {
+  containerStyle: _containerStyle = {
     borderRadius: '8px',
     zIndex: String(Zindexes.PopupMenu)
   },
@@ -188,6 +190,10 @@ const AnimatePopover: FC<PropsWithChildren<AnimatePopoverProps>> = ({
     }
     return origin
   }
+  const containerStyle = {
+    ..._containerStyle,
+    borderRadius
+  }
   if (animate) {
     return position ? (
       hasPosHelperPopoverVisible && (
@@ -297,7 +303,7 @@ const AnimatePopover: FC<PropsWithChildren<AnimatePopoverProps>> = ({
         {...rest}
         boundaryElement={boundaryElement}
         boundaryInset={boundaryInset}
-        containerStyle={{ borderRadius: '8px', ...containerStyle }}
+        containerStyle={containerStyle}
         parentElement={realParent}
         onClickOutside={handleClickOutside}
         clickOutsideCapture={clickOutsideCapture}
@@ -326,7 +332,7 @@ const AnimatePopover: FC<PropsWithChildren<AnimatePopoverProps>> = ({
                 position: 'relative',
                 left: left,
                 top: top,
-                borderRadius: 'inherit',
+                borderRadius: containerStyle.borderRadius,
                 display: 'block'
               }}
             >

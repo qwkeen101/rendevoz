@@ -26,11 +26,10 @@ const getTransformForBounds = (bounds: Box, width: number, height: number, minZo
 }
 const clamp = (val: number, min = 0, max = 1): number => Math.min(Math.max(val, min), max)
 
-export const exportWhiteboardAsImage = (allNodes: IWhiteboardNode[], node: HTMLElement) => {
+export const exportWhiteboardAsImage = async (allNodes: IWhiteboardNode[], node: HTMLElement) => {
   const box = getBoxOfNodes(allNodes)
   const transform = getTransformForBounds(box, imageWidth, imageHeight, 0, 200)
-  console.log(box, transform)
-  toSvg(node, {
+  const res = await toPng(node, {
     width: imageWidth,
     height: imageHeight,
     style: {
@@ -38,5 +37,6 @@ export const exportWhiteboardAsImage = (allNodes: IWhiteboardNode[], node: HTMLE
       height: imageHeight,
       transform: `translate(${transform[0]}px, ${transform[1]}px) scale(${transform[2]})`
     }
-  }).then(res => downloadImage(res))
+  })
+  return res
 }

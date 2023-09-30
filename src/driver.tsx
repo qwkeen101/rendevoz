@@ -27,13 +27,6 @@ const IntroEle = () => {
 export const startDrive = () => {
   const driverObj = driver({
     showProgress: true,
-    popoverClass: css([
-      {
-        '*': {
-          textTransform: 'none !important'
-        }
-      }
-    ]),
     nextBtnText: t('intro.next'),
     prevBtnText: t('intro.prev'),
     doneBtnText: t('intro.done'),

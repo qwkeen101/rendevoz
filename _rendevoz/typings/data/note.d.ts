@@ -16,6 +16,7 @@ export interface INote extends IBase {
   width?: 'default' | 'full' | 'wider'
   // synced blocks meta ids
   syncedBlocks?: number[]
+  lastSavedAt?: number
 }
 
 export interface NoteBlock {

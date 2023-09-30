@@ -1,22 +1,18 @@
 import { useEffect, useRef, useState } from 'react'
 import { GlobalInstances, IWebpage, IWebpageInstance, MetaObject, XYPosition } from '~/typings'
 import Webpage from '../webpage/Webpage'
-import { createPortal } from 'react-dom'
 import { Rnd } from 'react-rnd'
 import { atom } from 'jotai'
 import { useGlobalAtom, useShortcut } from '@/hooks'
 import ClassName from '@/styles/classNames'
-import { Zindexes } from '@/consts'
-import Colors from '@/consts/colors'
 import { Button, Content } from '@/components'
 import FontSize from '@/consts/font'
 import { css } from '@emotion/css'
 import { getPanelPosition } from './utils'
-import ResizeAndDrag from '@/components/base/ResizeAndDrag'
-import { globalStore, ObjectStore } from '@/stores'
+import { ObjectStore } from '@/stores'
 import { searchToUrl } from '../webpage/utils'
 import { Rendevoz } from '../rendevoz'
-import { SidebarPanelStateAtom } from '@/components/layout/sidebar'
+import { setPanelState as setSidebarPanelState } from '@/components/layout/sidebar'
 
 export const GlobalSearchInstance: Partial<GlobalInstances.WebSearchInstance> = {}
 
@@ -75,7 +71,10 @@ const GlobalSearchPanel = () => {
             placement: 'right'
           })
 
-        globalStore.set(SidebarPanelStateAtom, { ...globalStore.get(SidebarPanelStateAtom), open: true, visible: 'webSearch' })
+        setSidebarPanelState(s => {
+          s.visible.clear()
+          s.visible.add('webSearch')
+        })
         setPanelState(s => ({
           ...s,
           from,
@@ -90,8 +89,9 @@ const GlobalSearchPanel = () => {
     }
   } as typeof GlobalSearchInstance)
   useShortcut('openSearchPanel', () => {
-    const state = globalStore.get(SidebarPanelStateAtom)
-    globalStore.set(SidebarPanelStateAtom, { ...state, open: !state.open, visible: 'webSearch' })
+    setSidebarPanelState(s => {
+      s.visible.has('webSearch') ? s.visible.delete('webSearch') : s.visible.add('webSearch')
+    })
     setPanelState(s => ({ ...s, visible: !s.visible }))
   })
   // return createPortal(<SearchPanel />, document.body)

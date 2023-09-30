@@ -34,6 +34,7 @@ import useEditorSelectAllKey from '@/core/editor/hooks/keyboards/useEditorSelect
 import useEditorTabKey from '@/core/editor/hooks/keyboards/useEditorTabKey'
 import { getSetting } from '@/core'
 import { truncateString } from '@/utils/text'
+import useEditorSaveKey from '@/core/editor/hooks/keyboards/useEditorSaveKey'
 
 const EditableEditorClassName = css({
   p: {
@@ -166,6 +167,7 @@ const InnerEditor: FC<InnerEditorProps> = memo(
     const handleDeleteKey = useEditorDeleteKey(instance)
     const handleArrowKey = useEditorArrowKey(instance)
     const handleCopyKey = useEditorCopyKey(instance)
+    const handleSaveKey = useEditorSaveKey(instance)
     const handleSelectAllKey = useEditorSelectAllKey(instance)
     const handleTabKey = useEditorTabKey(instance)
     editor.innerRef = editableRef
@@ -320,6 +322,7 @@ const InnerEditor: FC<InnerEditorProps> = memo(
       handleArrowKey(e)
       handleCopyKey(e)
       handleSelectAllKey(e)
+      handleSaveKey(e)
       for (const hotkey in HOTKEYS) {
         if (isHotkey(hotkey, e)) {
           e.preventDefault()
@@ -360,7 +363,7 @@ const InnerEditor: FC<InnerEditorProps> = memo(
                     const highlightId = Id.getId()
                     const selectedText = editor.selection ? Editor.string(editor, editor.selection) : undefined
                     if (!selectedText) return
-                    const name = getSetting().label.showOriginalText ? truncateString(selectedText) : selectedText
+                    const name = 'Unnamed Label'
                     const label = await instance.addLabel?.({
                       id: highlightId,
                       name: name || 'Unnamed Label',

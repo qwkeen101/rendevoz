@@ -1,7 +1,7 @@
 import { Content } from '@/components'
 import { createStore, Provider } from 'jotai'
 import { useEffect, useMemo } from 'react'
-import { PdfViewer, PdfViewerProps } from './PdfViewer'
+import { PdfViewer } from './PdfViewer'
 import PdfRightSidebar from './components/sidebar/PdfRightSidebar'
 import { PdfStateAtom } from './hooks/usePdfState'
 import { globalStore, ObjectStore } from '@/stores'
@@ -40,7 +40,6 @@ const PdfInner = ({ pdfId, onInstanceInitialized, transformScale }: PdfProps) =>
   }, [])
   return (
     <Content flex column fullHeight fullWidth>
-      {/* <PdfPageHeader /> */}
       <Content flex centered auto style={{ height: 0 }}>
         <PdfLeftSidebar />
         <PdfViewer documentId={pdfId} transformScale={transformScale} onInstanceInitialized={onInstanceInitialized} />

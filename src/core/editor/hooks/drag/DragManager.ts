@@ -85,7 +85,6 @@ class DragManager {
   public dragInNestedColumnLike = (e: PointerEvent) => {
     const container = (e.target as HTMLElement).closest('[data-drag="true"]')
     if (!container) return
-    console.log(container)
     const result = this.dragInColumnContainer(container, e)
     if (result) {
       return result
@@ -314,20 +313,6 @@ class DragManager {
 
   changeIndicator = (indicator: Indicator) => {
     this.indicator = indicator
-  }
-  public insertNodeAtTargetPlace = (
-    node: Partial<CustomElement>,
-    targetNodeId: number,
-    direction: Indicator['direction'],
-    nested: Indicator['isNested']
-  ) => {
-    if (!this.editor) return
-    const end = this.editor.children.length
-    Transforms.insertNodes(this.editor, node, { at: [end] })
-    const targetPath = ID_TO_PATH_MAP.get(this.editor)?.get(targetNodeId)
-    if (!targetPath) return
-    console.log(targetPath)
-    moveSingleElement(this.editor, [end], targetPath, direction, nested)
   }
 }
 

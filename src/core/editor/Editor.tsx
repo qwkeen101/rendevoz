@@ -1,7 +1,7 @@
-import { useClickOutside, useMemoizedFn } from '@/hooks'
+import { useCapturePreviewImage, useClickOutside, useDebounceEffect, useMemoizedFn } from '@/hooks'
 import Id from '@/utils/id'
-import { FC, memo, MouseEventHandler, useCallback, useEffect, useMemo, useRef } from 'react'
-import { createEditor } from 'slate'
+import { FC, memo, MouseEventHandler, useCallback, useEffect, useLayoutEffect, useMemo, useRef } from 'react'
+import { createEditor, Node } from 'slate'
 import { withHistory } from 'slate-history'
 import { withReact } from './slate-react'
 import { CustomElement, EditorProps } from '~/typings'
@@ -39,6 +39,8 @@ import { GlobalPdfPrinterInstance } from '@/core/global/GlobalPdfPrinter'
 import EditorHeader from '@/core/editor/EditorHeader'
 import { useAtom } from 'jotai'
 import withColumns from '@/core/editor/plugins/withColumns'
+import { useLatest } from 'react-use'
+import { Colors } from '@/consts'
 
 const initial = [
   {
@@ -234,6 +236,7 @@ export const EditorV1: FC<EditorProps> = memo(
     }
 
     const handleMenuClick: MouseEventHandler = e => {
+      ID_TO_ELEMENTS_MAP.get(editor)?.get(editor.currentEnterElement!.id)?.selectBlock()
       editor.currentAddClickElement = editor.currentEnterElement
       setIsDragging(false)
       overlayManager.setContent('blockDetailsMenu')
@@ -252,9 +255,28 @@ export const EditorV1: FC<EditorProps> = memo(
       })
     }, [metaObject?.name, note?.title])
     useClickOutside(() => {
-      console.log('yes')
       setBlockHandle(s => (s.visible === false ? s : { ...s, visible: false }))
     }, scrollElementRef)
+    const { captureImage } = useCapturePreviewImage()
+    const latestNote = useLatest(note)
+    useLayoutEffect(() => {
+      // return () => {
+      setTimeout(() => {
+        const str = Node.string(editor)
+        if (str) {
+          const node = scrollElementRef.current?.querySelector('[role="textbox"]')
+          if (node) {
+            const c = window.getComputedStyle(document.body).getPropertyValue('--global-background')
+            captureImage(latestNote.current?.metaId, node, {
+              width: 350,
+              height: 350,
+              backgroundColor: c
+            })
+          }
+        }
+      }, 1000)
+      // }
+    }, [])
     return (
       <Content fullWidth fullHeight flex column>
         {showHeader !== false && <EditorHeader title={realTitle} />}

@@ -1,9 +1,7 @@
-import { AnimatePopover, Content, IconWithPopover, Tooltip, WithBorder } from '@/components'
+import { AnimatePopover, Content, Icon, IconWithPopover, Tooltip, WithBorder, ContentEditor } from '@/components'
 import { MetaStore, ObjectStore } from '@/stores'
 import { CSSProperties, useState } from 'react'
-import NameEditor from '../video/VideoNameEditor'
 import { DraggableElement } from '../global'
-import { css } from '@emotion/css'
 import ClassName from '@/styles/classNames'
 import FontSize from '@/consts/font'
 import LabelActionMenu, { LabelActionEvent } from './LabelActionMenu'
@@ -11,19 +9,17 @@ import { AttachmentWrapper, useRenderObject } from '.'
 import BorderInput from '@/components/base/BorderInput'
 import { useTranslation } from 'react-i18next'
 import { IDraggableElement } from '~/typings/globalInstances/dragDrop'
-import { Consts } from 'rendevoz'
 import { Colors } from '@/consts'
-import { useGlobalAtomValue, useSelectGlobalAtomValue } from '@/hooks'
+import { useGlobalAtomValue, useIsIn, useSelectGlobalAtomValue } from '@/hooks'
 import { relatedMetaObjectsMapAtom } from '@/stores/meta.store'
 import { SettingAtom } from '@/core'
-import { keyboard } from '@/core/database/useRenderObject'
-import { toast } from 'react-hot-toast'
-
+const DEFAULT_LABEL_NAME = 'Unnamed Label'
 const useRenderLabel = (opts: {
   objectId: number
   type: 'videoLabel' | 'pdfLabel' | 'noteLabel' | 'webpageLabel'
   draggable?: boolean
   onDragStart?: VoidFunction
+  onNavigate?: VoidFunction
 }) => {
   const { objectId, type, draggable } = opts
   const label = ObjectStore(opts.type).useValue(opts.objectId)
@@ -45,7 +41,8 @@ const useRenderLabel = (opts: {
     addingAttachment: false,
     showMoreText: false
   })
-
+  const { ref, isIn } = useIsIn()
+  const currentLabelHasName = label && label.name && label.name !== DEFAULT_LABEL_NAME
   const relatedMap = useGlobalAtomValue(relatedMetaObjectsMapAtom)
   const metaRelated = labelMeta && relatedMap.get(labelMeta.id)
   const shouldShouldOriginal = useSelectGlobalAtomValue(SettingAtom, s => s.label.showOriginalText)
@@ -53,8 +50,8 @@ const useRenderLabel = (opts: {
     return (
       <Content flex column auto>
         {labelState.editingName ? (
-          <NameEditor
-            value={label?.name || 'Unnamed Label'}
+          <ContentEditor
+            value={currentLabelHasName ? label?.name : undefined}
             onChange={v => {
               ObjectStore(type).updateOne({ id: objectId, name: v })
               setLabelState(s => ({ ...s, editingName: false }))
@@ -63,11 +60,11 @@ const useRenderLabel = (opts: {
         ) : (
           <DraggableElement draggable={draggingDetails && draggable} onDragStart={opts.onDragStart} draggingDetails={draggingDetails}>
             <div
-              className={ClassName.title(FontSize['13px'])}
               style={{
                 cursor: 'pointer',
                 width: 'fit-content',
                 whiteSpace: 'pre-wrap',
+                fontSize: FontSize['13px'],
                 color: labelMeta ? labelMeta.color || Colors.Font.Link : undefined
               }}
             >
@@ -95,40 +92,16 @@ const useRenderLabel = (opts: {
                 </AnimatePopover>
               )}
               <span
-                onContextMenu={() => setLabelState(s => ({ ...s, editingName: true }))}
+                style={{
+                  color: currentLabelHasName ? undefined : Colors.Font.Tertiary,
+                  fontWeight: 500,
+                  wordBreak: 'break-word'
+                }}
                 onClick={() => {
-                  if (keyboard.ctrl) {
-                    if (labelMeta) {
-                      const link = `rendevoz://object/${labelMeta?.id}`
-                      navigator.clipboard.writeText(link)
-                      toast.success(
-                        <Content className={ClassName.description()}>
-                          <div style={{ textTransform: 'none' }}>{t('general.link is generated for this object')}!</div>
-                          <div style={{ userSelect: 'all', textTransform: 'none' }}>{link}</div>
-                        </Content>
-                      )
-                    } else {
-                      MetaStore.addMetaObject(
-                        { type: type, name: label?.name, description: label?.description, objectId: objectId },
-                        true
-                      ).then(meta => {
-                        const link = `rendevoz://object/${meta?.id}`
-                        navigator.clipboard.writeText(link)
-                        toast.success(
-                          <Content className={ClassName.description()}>
-                            <div>{t('general.link is generated for this object')}!</div>
-                            <div style={{ userSelect: 'all' }}>{link}</div>
-                          </Content>
-                        )
-                      })
-                    }
-                    return
-                  } else {
-                    onNameClick?.(label?.name)
-                  }
+                  setLabelState(s => ({ ...s, editingName: true }))
                 }}
               >
-                {label?.name || 'Unnamed Label'}
+                {currentLabelHasName ? label?.name : t('general.Click to add note')}
               </span>
             </div>
           </DraggableElement>
@@ -137,39 +110,70 @@ const useRenderLabel = (opts: {
     )
   }
   const renderPopover = ({ on }: { on?: (e: LabelActionEvent) => void }) => {
+    if (labelState.editingName) return null
     return (
-      <IconWithPopover
-        name="park-more"
-        className={ClassName.circleButton()}
-        closeOnContentClick="[role='button']"
-        placement={['right', 'left']}
-        renderOnParent={false}
-        content={
-          <LabelActionMenu
-            on={event => {
-              on?.(event)
-              switch (event.type) {
-                case 'addAttachment':
-                  setLabelState(s => ({ ...s, addingAttachment: true }))
-                  break
-                case 'addDescription':
-                  setLabelState(s => ({
-                    ...s,
-                    addingDescription: !s.addingDescription
-                  }))
-                  break
-                case 'delete':
-                  break
-                case 'changeName':
-                  setLabelState(s => ({ ...s, editingName: true }))
-                  break
-              }
-            }}
-            objectId={objectId}
-            type={type}
-          />
-        }
-      ></IconWithPopover>
+      <Content
+        flex
+        gap={4}
+        style={{
+          opacity: isIn ? 1 : 0,
+          transition: 'all 0.2s ease',
+          position: 'absolute',
+          right: 0,
+          top: 0,
+          padding: '3px 5px',
+          background: Colors.Background.Secondary,
+          borderRadius: 999,
+          border: `1px solid ${Colors.Background.Border}`
+        }}
+      >
+        <Icon
+          size={14}
+          name={'park-share-two'}
+          onClick={() => {
+            opts.onNavigate?.()
+          }}
+          className={ClassName.circleButton(3)}
+        />
+        <IconWithPopover
+          name="park-more"
+          size={14}
+          className={ClassName.circleButton(3)}
+          closeOnContentClick="[role='button']"
+          placement={['left', 'right']}
+          renderOnParent={false}
+          disableNudge={true}
+          content={
+            <LabelActionMenu
+              on={event => {
+                on?.(event)
+                switch (event.type) {
+                  case 'addAttachment':
+                    setLabelState(s => ({ ...s, addingAttachment: true }))
+                    break
+                  case 'editOriginal': {
+                    setLabelState(s => ({ ...s, editingOrigin: true }))
+                    break
+                  }
+                  case 'addDescription':
+                    setLabelState(s => ({
+                      ...s,
+                      addingDescription: !s.addingDescription
+                    }))
+                    break
+                  case 'delete':
+                    break
+                  case 'changeName':
+                    setLabelState(s => ({ ...s, editingName: true }))
+                    break
+                }
+              }}
+              objectId={objectId}
+              type={type}
+            />
+          }
+        ></IconWithPopover>
+      </Content>
     )
   }
   const renderAttachment = ({
@@ -250,7 +254,7 @@ const useRenderLabel = (opts: {
     }
     if (labelState.editingOrigin) {
       return (
-        <NameEditor
+        <ContentEditor
           style={opts.editorStyle}
           value={opts.text}
           onChange={v => {
@@ -262,44 +266,22 @@ const useRenderLabel = (opts: {
     }
     return (
       <div
-        onContextMenu={() => setLabelState(s => ({ ...s, editingOrigin: true }))}
         style={{
-          fontSize: FontSize['12px'],
+          fontSize: '0.9rem',
           padding: '4px 8px',
           borderRadius: 4,
           background: Colors.Background.ButtonHover,
           ...opts.style
         }}
+        onContextMenu={() => setLabelState(s => ({ ...s, editingOrigin: true }))}
       >
         <div
           style={{
             whiteSpace: 'pre-wrap',
             wordBreak: 'break-word'
           }}
-          className={labelState.showMoreText || opts.ellipis === false ? undefined : ClassName.ellipsisFont(3)}
         >
           {opts.text}
-        </div>
-        <div
-          style={{
-            marginLeft: 'auto',
-            display: 'flex',
-            gap: 6,
-            textAlign: 'end',
-            fontSize: FontSize['12px'],
-            width: 'fit-content'
-          }}
-        >
-          {opts.showEdit !== false && (
-            <div style={{ cursor: 'pointer' }} onClick={() => setLabelState(s => ({ ...s, editingOrigin: true }))}>
-              {t('general.edit')}
-            </div>
-          )}
-          {opts.text?.length > 120 && opts.ellipis !== false && (
-            <div style={{ cursor: 'pointer' }} onClick={() => setLabelState(s => ({ ...s, showMoreText: !s.showMoreText }))}>
-              {labelState.showMoreText ? t('editor.show less') : t('editor.show more')}
-            </div>
-          )}
         </div>
       </div>
     )
@@ -312,7 +294,8 @@ const useRenderLabel = (opts: {
     renderOriginalText,
     labelMeta,
     label,
-    setDraggingDetails
+    setDraggingDetails,
+    ref
   }
 }
 

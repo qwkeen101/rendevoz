@@ -1,25 +1,22 @@
 import { PDFDocumentProxy } from 'pdfjs-dist'
-import { FC, memo, ReactElement, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react'
+import { FC, memo, ReactElement, useEffect, useImperativeHandle, useRef, useState } from 'react'
 import { defaultRangeExtractor, Range, useVirtualizer, VirtualItem } from '@tanstack/react-virtual'
 import { useDebounceEffect, useDebounceFn, useMemoizedFn, useSelectAtomValue, useUpdateEffect } from '@/hooks'
 import PageLayer from '../layers/PageLayer'
-import { PageSize, RenderPageProps } from '../types/page'
 import { useScrollMode } from '../hooks/useScrollMode'
-import { IAnnotation } from '../types/annotation'
-import { Noop } from '@/common/types'
 import { decreaseLevel, increaseLevel } from '../utils/zoom'
 import PanHelper from '../utils/pan'
-import { TextItem } from '../types/text'
 import Id from '@/utils/id'
 import useScopedEventEmitter from '@/events/useEventEmitter'
 import usePdfViewer from '../hooks/useViewer'
 import { ObjectStore } from '@/stores'
-import { Box, IPdfViewer } from '~/typings'
+import { Box, IPdfViewer, PageSize, RenderPageProps, IAnnotation, TextItem } from '~/typings'
 import { PAGE_INDEX_TO_PAGE_FUNCTION, PAGE_INDEX_TO_TEXT_LAYER, PDF_TO_DOC } from '../weakMaps'
 import { waitFor } from '@/utils/functions'
 import { normalizeText } from '../utils/search'
-import { ID_TO_LABEL_MAP } from '../../weakMaps'
 import { PdfStateAtom } from '../../hooks/usePdfState'
+import { calculateImageAspectRatio, saveImageLocally } from '@/utils'
+import { useSetAtom } from 'jotai'
 
 interface LayoutProps {
   doc: PDFDocumentProxy
@@ -33,37 +30,7 @@ interface LayoutProps {
   className?: string
   transformScale?: number
 }
-export interface LayoutFunctions {
-  jumpToPage: (pageIndex: number) => void
-  search: (word: string) => Fuzzysort.KeyResults<{
-    id: number
-    str: string
-    page: number
-    prepared: Fuzzysort.Prepared
-  }>
-  zoomIn: Noop
-  zoomOut: Noop
-  autoFit: Noop
-  togglePan: Noop
-  highlightText: (str: string, pageIndex: number) => void
-  jumpToDest: (dest: string | any[]) => void
-  jumpToOffset: (offset: number) => void
-  scrollBy: (offset: number) => void
-  getOutline: () => Promise<
-    {
-      title: string
-      bold: boolean
-      italic: boolean
-      color: Uint8ClampedArray
-      dest: string | any[] | null
-      url: string | null
-      unsafeUrl: string | undefined
-      newWindow: boolean | undefined
-      count: number | undefined
-      items: any[]
-    }[]
-  >
-}
+
 export const PAGE_SPACING = 10
 const Layout: FC<LayoutProps> = ({
   doc,
@@ -84,8 +51,8 @@ const Layout: FC<LayoutProps> = ({
   const [rotation, setRotation] = useState(0)
   const [scale, setScale] = useState(pageSize.scale)
   const [enablePan, setEnablePan] = useState(false)
-  const autoFitWhenResize = useSelectAtomValue(PdfStateAtom, s => s.autoFitWhenResize)
-
+  const autoFitWhenResize = false
+  const setPdfState = useSetAtom(PdfStateAtom)
   const viewer = usePdfViewer()
 
   const textRef = useRef<
@@ -96,7 +63,12 @@ const Layout: FC<LayoutProps> = ({
     }[]
   >([])
   const scaleRef = useRef(pageSize.scale)
-  const currentRangeRef = useRef<Range>()
+  const currentRangeRef = useRef<Range>({
+    startIndex: 0,
+    endIndex: 0,
+    overscan: 5,
+    count: 0
+  })
 
   useImperativeHandle(innerRef, () => ({
     jumpToPage,
@@ -143,7 +115,8 @@ const Layout: FC<LayoutProps> = ({
     getScrollElement: () => pagesRef.current,
     estimateSize,
     rangeExtractor,
-    overscan: 3
+    overscan: 3,
+    paddingStart: 50
     // measureElement: () => {
     //   return scale * pageSize.height + PAGE_SPACING
     // }
@@ -198,20 +171,14 @@ const Layout: FC<LayoutProps> = ({
       if (labelPercentTop !== undefined) {
         const realOffset = pageSize.height * scale * label.page + labelPercentTop * pageSize.height * scale + PAGE_SPACING * label.page
         virtualizer.scrollToOffset(realOffset, { align: 'center' })
-        if (!viewer) return
-        waitFor(
-          () => {
-            return !!ID_TO_LABEL_MAP.get(viewer)?.has(labelId)
-          },
-          () => {
-            ID_TO_LABEL_MAP.get(viewer)?.get(labelId)?.focus()
-          }
-        )
       }
     }
     if (label && label.type === 'crop' && label.page !== undefined && label.rect) {
-      await jumpToArea(label.page, label.rect)
+      const percentageTop = label.rect.top
+      const realOffset = pageSize.height * scale * label.page + percentageTop * pageSize.height * scale + PAGE_SPACING * label.page
+      virtualizer.scrollToOffset(realOffset, { align: 'center' })
     }
+    setPdfState(s => ({ ...s, currentHighlightLabelId: labelId }))
   }
   const jumpToDest = async (dest: string | any[]) => {
     let realDest
@@ -317,13 +284,22 @@ const Layout: FC<LayoutProps> = ({
 
   const { run: handleScroll } = useDebounceFn(
     e => {
+      setPdfState(s => (s.currentFocusedLabel ? { ...s, currentFocusedLabel: undefined } : s))
+      const currentStart = currentRangeRef.current?.startIndex
+      const offsetOfStart = virtualizer.getOffsetForIndex(currentStart)[0]
+      const offsetOfSecond = virtualizer.getOffsetForIndex(currentStart + 1)[0]
+      const height = offsetOfSecond - offsetOfStart
+      console.log(height, e.target.scrollTop)
+      currentRangeRef.current.currentIndex =
+        e.target.scrollTop > offsetOfStart + height / 2 ? Math.min(currentStart + 1, doc.numPages - 1) : currentStart
+
       currentRangeRef.current = {
         ...currentRangeRef.current,
         progress: e.target.scrollTop / e.target.scrollHeight
       }
       onRangeChange?.(currentRangeRef.current)
     },
-    { wait: 500 }
+    { wait: 200 }
   )
   useEffect(() => {
     if (initialPage) {
@@ -414,6 +390,50 @@ const Layout: FC<LayoutProps> = ({
       },
       jumpToOffset,
       scrollBy,
+      capturePageImage: (page: number, box: Box) => {
+        return new Promise(res => {
+          doc.getPage(page + 1).then(p => {
+            const c = document.createElement('canvas')
+            const viewport = p.getViewport({ scale: 1.5 })
+            const resolution = window.devicePixelRatio
+            c.width = viewport.width * resolution
+            c.height = viewport.height * resolution
+            const r = p.render({ canvasContext: c.getContext('2d')!, viewport, transform: [resolution, 0, 0, resolution, 0, 0] })
+            r.promise.then(() => {
+              if (box) {
+                const newCanvas = document.createElement('canvas')
+                const originalWidth = viewport.width * box.width * resolution
+                const originalHeight = viewport.height * box.height * resolution
+                const { width, height } = calculateImageAspectRatio(originalWidth, originalHeight, 800, 800)
+                newCanvas.width = width
+                newCanvas.height = height
+                newCanvas
+                  .getContext('2d')
+                  ?.drawImage(
+                    c,
+                    viewport.width * box.left * resolution,
+                    viewport.height * box.top * resolution,
+                    viewport.width * box.width * resolution,
+                    viewport.height * box.height * resolution,
+                    0,
+                    0,
+                    width,
+                    height
+                  )
+                const dataURL = newCanvas.toDataURL()
+                saveImageLocally(dataURL).then(s => {
+                  res(s)
+                })
+              } else {
+                const dataURL = c.toDataURL()
+                saveImageLocally(dataURL).then(s => {
+                  res(s)
+                })
+              }
+            })
+          })
+        })
+      },
       jumpToLabel,
       scrollToOffset: offset => {
         virtualizer.scrollToOffset(offset, { align: 'center' })

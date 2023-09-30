@@ -96,10 +96,13 @@ export type IEditorInstance = Partial<{
   changeOccurrence: (direction: 'up' | 'down') => void
   isSelectionCollapsed?: () => boolean
   blockOps: {
+    // if has selected, delete selected, else delete target path
+    deleteBlock: (path?: Path) => void
     getAboveBlock: () => [CustomElement, Path] | undefined
     isIndentableBlock: (type: string) => boolean
     insertBlockIndent: (path: Path, recursive?: boolean) => void
     minusBlockIndent: (path: Path, recursive?: boolean) => void
+    transformBlockType: (path: Path, newType: string) => void
   }
   toggleOps: {
     haveToggledChildren: (path: Path) => boolean
@@ -117,6 +120,7 @@ export type IEditorInstance = Partial<{
     // get text before selection anchor
     getBeforeText: (distance: number, unit?: 'character' | 'word') => string | undefined
   }
+  save: VoidFunction
   toggleLeftBar: VoidFunction
   openSearch: VoidFunction
   closeSearch: VoidFunction

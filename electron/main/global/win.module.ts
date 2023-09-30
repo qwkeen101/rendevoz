@@ -5,7 +5,6 @@ import axios from 'axios'
 import { fileURLToPath } from 'url'
 import HttpsProxyAgent from 'https-proxy-agent'
 import { autoUpdater } from 'electron-updater'
-import * as child_process from 'child_process'
 import { DEFAULT_USER_DATA_PATH, DefaultRendevozDataPath } from '../app.controller'
 import fs from 'fs'
 import openUrlHandler from './openUrlHandler'
@@ -16,7 +15,7 @@ process.env.DIST = join(process.env.DIST_ELECTRON, './dist')
 process.env.PUBLIC = app.isPackaged ? process.env.DIST : join(process.env.DIST_ELECTRON, './public')
 
 const slicedLength = 'rendefile://'.length
-console.log(process.env.DIST)
+
 @Module({
   providers: [
     {
@@ -24,22 +23,12 @@ console.log(process.env.DIST)
       async useFactory() {
         const isDev = !app.isPackaged
         const preload = join(__dirname, '../preload/index.js')
-        console.log(preload)
         const url = 'http://localhost:7777'
         const indexHtml = join(process.env.DIST, 'index.html')
-        const windowsSearchEngine = join(process.env.PUBLIC, 'meilisearch-windows.exe')
-        const macSearchEngine = join(process.env.PUBLIC, 'meilisearch-macos')
         const defaultRendevozDataPath = join(DEFAULT_USER_DATA_PATH, 'rendevoz')
-        const searchEngine = process.platform === 'win32' ? windowsSearchEngine : macSearchEngine
-        const searchEngineDataPath = join(DEFAULT_USER_DATA_PATH, 'rendevoz', 'data.ms')
-        const searcheEngineStartPath = join(DEFAULT_USER_DATA_PATH, 'rendevoz', process.platform === 'win32' ? 'search.exe' : 'search')
         if (!fs.existsSync(defaultRendevozDataPath)) {
           fs.mkdirSync(defaultRendevozDataPath)
         }
-        if (!fs.existsSync(searcheEngineStartPath)) {
-          fs.copyFileSync(searchEngine, searcheEngineStartPath)
-        }
-        fs.chmodSync(searcheEngineStartPath, '744')
         autoUpdater.autoDownload = true
         autoUpdater.autoInstallOnAppQuit = true
         autoUpdater.autoRunAppAfterInstall = false
@@ -69,13 +58,11 @@ console.log(process.env.DIST)
         // autoUpdater.autoInstallOnAppQuit = true
         app.on('window-all-closed', () => {
           app.quit()
-          search.kill()
           session.defaultSession.clearCache()
           session.defaultSession.clearAuthCache()
           session.defaultSession.clearCodeCaches({ urls: [] })
         })
         app.on('will-quit', () => {
-          search.kill()
           session.defaultSession.clearCache()
           session.defaultSession.clearCodeCaches({ urls: [] })
           const os = process.platform
@@ -173,21 +160,13 @@ console.log(process.env.DIST)
             return { action: 'deny' }
           })
         })
-        const searchCommand =
-          process.platform === 'win32'
-            ? `${searcheEngineStartPath} --db-path=${searchEngineDataPath}`
-            : `cd ${process.env.HOME} && ${searcheEngineStartPath} --db-path=${searchEngineDataPath}`
-
-        const testSearchCmd = searcheEngineStartPath
-        const search = child_process.spawn(testSearchCmd, ['--db-path', searchEngineDataPath])
-
+        process.env.SHOULD_CLOSE = 'false'
         win.on('close', e => {
           if (process.env.SHOULD_CLOSE === 'false') {
-            console.log('prevent close')
+            win.webContents.send('unload')
             e.preventDefault()
             win.hide()
           }
-          win.webContents.send('close')
         })
         win.on('enter-full-screen', () => {
           win.webContents.send('fullScreen')
@@ -227,8 +206,6 @@ console.log(process.env.DIST)
             details.requestHeaders['Referer'] = refer
           } else {
             if (details.requestHeaders['Referer'] && details.requestHeaders['Referer'].includes('localhost')) {
-              const U = new URL(details.url)
-              // details.requestHeaders['Referer'] = U.origin
               delete details.requestHeaders['Referer']
             }
           }
@@ -257,17 +234,12 @@ console.log(process.env.DIST)
           win.loadFile(indexHtml)
         } else {
           win.loadURL(url)
-          // win.webContents.openDevTools()
         }
 
         win.on('closed', () => {
           console.log('closed')
           win.destroy()
         })
-        // app.on('browser-window-created', (e, win) => {
-        //   win.removeMenu()
-        // })
-
         return win
       },
       inject: ['IS_DEV']

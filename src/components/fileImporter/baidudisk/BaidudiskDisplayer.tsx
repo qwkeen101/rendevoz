@@ -1,20 +1,19 @@
 import { useEffect, useRef, useState } from 'react'
 import getAllFilesAndFolders from '@/components/fileImporter/baidudisk/getAllFilesAndFolders'
-import { Button, Content, Icon, Modal } from '@/components'
-
+import { Button, Content, Icon, IconWithPopover, Modal, WithBorder } from '@/components'
 import { ClassName } from 'rendevoz'
 import FontSize from '@/consts/font'
 import { assignProperties, DateFormat } from '@/utils'
 import { Colors } from '@/consts'
-import requestBaiduVideo from '@/components/fileImporter/baidudisk/requestVideo'
-import { ObjectStore } from '@/stores'
 import { IBaidudiskInstance } from '~/typings'
 import searchFiles from '@/components/fileImporter/baidudisk/searchFiles'
 import { useDebounceEffect } from '@/hooks'
 import {
   categorizeFilesByPath,
-  handleImportAllAndCreateCollections, normalizeGroupToCollections
+  handleImportAllAndCreateCollections,
+  normalizeGroupToCollections
 } from '@/components/fileImporter/baidudisk/handleImportAllAndCreateCollections'
+import loginBaidudisk from '@/components/fileImporter/baidudisk/loginBaidudisk'
 
 type BaiduFile = {
   category: number
@@ -69,81 +68,95 @@ const BaidudiskDisplayer = ({
     { wait: 500 }
   )
   useEffect(() => {
+    if (dirState.some(i => i.path === currentDir)) return
     getAllFilesAndFolders(currentDir).then(data => {
-      if (data) {
-        setDirState([
-          ...dirState,
-          {
-            path: currentDir,
-            files: (data.list || data.info).map(i => ({
-              ...i,
-              filename: i.server_filename,
-              createdAt: i.server_ctime * 1000
-            }))
+      if (data?.list || data?.info) {
+        setDirState(currentState => {
+          const index = currentState.findIndex(i => i.path === currentDir)
+          if (index >= 0) {
+            return currentState
           }
-        ])
+          return [
+            ...currentState,
+            {
+              path: currentDir,
+              files: (data.list || data.info).map(i => ({
+                ...i,
+                filename: i.server_filename,
+                createdAt: i.server_ctime * 1000
+              }))
+            }
+          ]
+        })
       }
     })
   }, [currentDir, onlyVisibleCategory])
   const prevDirname = useRef(currentDir)
+  console.log(dirState)
   if (dirState || searchResults) {
     return (
       <>
-        <Content
-          flex
-          column
-          style={{ height: '100%', width: '100%', background: Colors.Background.Global, borderRadius: 16, overflow: 'hidden' }}
-        >
+        <Content flex column style={{ height: '100%', width: '100%', borderRadius: 16, overflow: 'hidden' }}>
           <div style={{ padding: '4px 24px' }} className={ClassName.title()}>
             选取文件
           </div>
-          <div className={ClassName.description()} style={{ fontSize: 12, padding: '0px 24px' }}>
-            暂时仅支持导入视频文件
-          </div>
-          <Content flex alignItems={'center'} gap={20} style={{ padding: '3px 24px 0px' }}>
+          {dirState.length > 1 && <div style={{ fontSize: 13, color: Colors.Font.Transparent, padding: '0px 24px 4px' }}>{currentDir}</div>}
+          <Content flex alignItems={'center'} gap={14} style={{ padding: '3px 24px 0px' }}>
             {dirState.length > 1 && (
-              <div
-                className={ClassName.link()}
+              <Icon
+                name={'park-left'}
+                className={ClassName.circleButton()}
                 onClick={() => {
                   dirState.pop()
                   setDirState([...dirState])
                   setCurrentDir(dirState[dirState.length - 1].path)
                 }}
-              >
-                返回上级
-              </div>
+              ></Icon>
             )}
-            <div
-              className={ClassName.link()}
-              onClick={() => {
-                handleImportAllAndCreateCollections(currentDir).then(data => {
-                  const group = categorizeFilesByPath(data, currentDir)
-                  console.log(group)
-                  normalizeGroupToCollections(group)
-                })
-              }}
-            >
-              导入当前文件夹下所有文件与子文件夹
-            </div>
-            <Content flex alignItems="center" gap={4}>
+            <Content flex alignItems="center" auto gap={8}>
               <Icon name={'park-search'} />
               <input
                 placeholder={'搜索文件'}
                 className={ClassName.noStyleInput}
                 style={{
+                  width: '100%',
                   borderBottom: `1px solid ${Colors.Background.Border}`
                 }}
                 value={search}
                 onChange={e => setSearch(e.target.value)}
               />
             </Content>
+            <IconWithPopover
+              className={ClassName.circleButton()}
+              content={
+                <WithBorder padding={6}>
+                  <Button.IconButton
+                    text={'导入当前文件夹内所有文件'}
+                    onClick={() => {
+                      handleImportAllAndCreateCollections(currentDir).then(data => {
+                        const group = categorizeFilesByPath(data, currentDir)
+                        normalizeGroupToCollections(group)
+                      })
+                    }}
+                  />
+                  <Button.IconButton
+                    text={'重新登录'}
+                    onClick={() => {
+                      loginBaidudisk()
+                    }}
+                  />
+                </WithBorder>
+              }
+              name={'park-more'}
+              padding={10}
+              placement={['bottom']}
+            ></IconWithPopover>
           </Content>
           <Content style={{ width: '100%', height: 0, flex: 1 }}>
             {searchResults ? (
               <Content
                 style={{
                   position: 'absolute',
-                  background: Colors.Background.Global,
                   top: 0,
                   left: 0,
                   width: '100%',
@@ -153,7 +166,7 @@ const BaidudiskDisplayer = ({
                   padding: '10px 16px'
                 }}
               >
-                {searchResults.files.map(i => (
+                {searchResults.files?.map(i => (
                   <FileItemRenderer
                     file={i}
                     key={i.fs_id}
@@ -173,11 +186,10 @@ const BaidudiskDisplayer = ({
               </Content>
             ) : (
               <>
-                {dirState.map((dir, idx) => (
+                {dirState?.map((dir, idx) => (
                   <Content
                     style={{
                       position: 'absolute',
-                      background: Colors.Background.Global,
                       top: 0,
                       left: 0,
                       width: '100%',
@@ -185,10 +197,11 @@ const BaidudiskDisplayer = ({
                       zIndex: idx,
                       overflowY: 'auto',
                       overflowX: 'hidden',
-                      padding: '10px 16px'
+                      padding: '10px 16px',
+                      display: idx === dirState.length - 1 ? 'block' : 'none'
                     }}
                   >
-                    {dir.files.map(i => (
+                    {dir.files?.map(i => (
                       <FileItemRenderer
                         file={i}
                         key={i.fs_id}
@@ -271,7 +284,6 @@ export const GlobalBaidudisk = () => {
   return (
     <Modal
       visible={visible}
-      noStyle={true}
       style={{
         width: 'min(60vw, 800px)',
         height: `min(80vh, 800px)`

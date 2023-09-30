@@ -1,5 +1,5 @@
 import { Content, Icon, Image } from '@/components'
-import { useSelectAtomValue } from '@/hooks'
+import { useMergedRef, useSelectAtomValue } from '@/hooks'
 import { VideoStateAtom } from './hooks/useVideoState'
 import { ObjectStore } from '@/stores'
 import { useVideoInstance } from './hooks/useVideoInstance'
@@ -104,9 +104,7 @@ const VideoLabelController = () => {
           }
         })}
       >
-        {sortedLabels?.map(i => (
-          <Label id={i} key={i} />
-        ))}
+        {sortedLabels?.map(i => <Label id={i} key={i} />)}
       </Content>
     </Content>
   )
@@ -118,11 +116,20 @@ const Label = ({ id }: { id: number }) => {
   const containerRef = useRef<HTMLElement>(null)
   const setToolbarState = useSetAtom(VideoToolbarStateAtom)
   const instance = useVideoInstance()
-  const { renderName, renderAttachment, renderDescription, renderPopover, setDraggingDetails, label } = useRenderLabel({
+
+  const { renderName, renderAttachment, renderDescription, renderPopover, setDraggingDetails, label, ref } = useRenderLabel({
     objectId: id,
     type: 'videoLabel',
-    draggable: true
+    draggable: true,
+    onNavigate: () => {
+      if (videoLabel) {
+        instance.jumpTo?.(videoLabel.videoTime)
+        instance.closeThumbnail?.()
+      }
+    }
   })
+  const videoLabel = label as IVideoLabel
+  const mergedRef = useMergedRef(containerRef, ref)
   useEffect(() => {
     if (label) {
       setDraggingDetails({ type: 'videoLabel', ...label })
@@ -145,11 +152,11 @@ const Label = ({ id }: { id: number }) => {
   }, [currentFocusLabelId])
 
   if (!label) return null
-  const chapter = sortedChapters?.findLast(i => i.startTime < label.videoTime)
+  const chapter = sortedChapters?.findLast(i => i.startTime < videoLabel.videoTime)
   return (
-    <Content ref={containerRef} flex column gap={8} style={{ padding: 10 }}>
-      <Content flex gap={12} alignItems="center">
-        {label?.imageUrl && (
+    <Content ref={mergedRef} flex column gap={8} style={{ padding: 10 }}>
+      <Content flex gap={12} alignItems="flex-start">
+        {videoLabel?.imageUrl && (
           <Image
             width={100}
             preview
@@ -157,18 +164,13 @@ const Label = ({ id }: { id: number }) => {
             containerStyle={{
               borderRadius: 8
             }}
-            src={label?.imageUrl}
+            src={videoLabel?.imageUrl}
           ></Image>
         )}
-        <Content flex column auto>
-          {renderName({
-            onNameClick: () => {
-              instance.jumpTo?.(label?.videoTime)
-              instance.closeThumbnail?.()
-            }
-          })}
+        <Content flex column auto style={{ margin: 'auto' }}>
+          {renderName({})}
           <div style={{ flexShrink: 0 }} className={ClassName.description(FontSize['11px'])}>
-            {`${normalizeSecondsToTime(label?.videoTime)}${chapter ? '  ——  ' + chapter?.name : ''}`}
+            {`${normalizeSecondsToTime(videoLabel?.videoTime)}${chapter ? '  ——  ' + chapter?.name : ''}`}
           </div>
         </Content>
         {renderPopover({

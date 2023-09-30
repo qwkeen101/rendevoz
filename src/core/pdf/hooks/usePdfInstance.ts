@@ -18,12 +18,12 @@ export const useAssignPdfInstance = (pdfId: number) => {
     getPdfId: () => pdfId,
     insertLabel: async label => {
       const setting = getSetting()
-      let name = 'Unnamed PDF Label'
-      if (setting.label.showOriginalText && label.type === 'highlight' && label.selectedText) {
-        name = truncateString(label.selectedText)
-      } else if (label.type === 'highlight' && label.selectedText) {
-        name = label.selectedText
-      }
+      const name = 'Unnamed Label'
+      // if (setting.label.showOriginalText && label.type === 'highlight' && label.selectedText) {
+      //   name = truncateString(label.selectedText)
+      // } else if (label.type === 'highlight' && label.selectedText) {
+      //   name = label.selectedText
+      // }
       const truncatedName = name
       await ObjectStore('pdfLabel')
         .addOne({

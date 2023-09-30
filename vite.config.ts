@@ -4,6 +4,7 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import electron from 'vite-plugin-electron/simple'
 import { VitePluginDoubleshot } from 'vite-plugin-doubleshot'
+// import { nodePolyfills } from 'vite-plugin-node-polyfills'
 rmSync(path.join(__dirname, 'dist-electron'), { recursive: true, force: true })
 const isDev = process.env.NODE_ENV === 'development'
 const isProd = process.env.NODE_ENV === 'production'

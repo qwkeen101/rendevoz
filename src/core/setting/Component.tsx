@@ -21,12 +21,12 @@ const ComponentSetting = () => {
       })
     )
   }
-  const labelSettingItems: SettingItem[] = [
-    {
-      title: t('settings.show original text'),
-      children: <Switch value={setting.label.showOriginalText} onChange={() => toggleSetting('label', 'showOriginalText')} />
-    }
-  ]
+  // const labelSettingItems: SettingItem[] = [
+  //   {
+  //     title: t('settings.show original text'),
+  //     children: <Switch value={setting.label.showOriginalText} onChange={() => toggleSetting('label', 'showOriginalText')} />
+  //   }
+  // ]
   const whiteboardSettingItems: SettingItem[] = [
     {
       title: t('settings.enable add link between objects when connect'),
@@ -202,10 +202,10 @@ const ComponentSetting = () => {
   ]
   return (
     <>
-      <div className={ClassName.title('18px')}>{t('settings.label settings')}</div>
-      {labelSettingItems.map(i => (
-        <SettingItem titleSize={14} key={i.title} {...i} />
-      ))}
+      {/*<div className={ClassName.title('18px')}>{t('settings.label settings')}</div>*/}
+      {/*{labelSettingItems.map(i => (*/}
+      {/*  <SettingItem titleSize={14} key={i.title} {...i} />*/}
+      {/*))}*/}
       <div className={ClassName.title('18px')} style={{ marginTop: 10 }}>
         {t('settings.whiteboard settings')}
       </div>

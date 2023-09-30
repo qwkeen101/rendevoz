@@ -521,6 +521,7 @@ export const ObjectActionPopover: FC<
         onClick={() => {
           deleteMetaObject(metaObject.id, false, true)
           onDelete?.()
+          onClose?.()
         }}
         icon="park-delete"
       />

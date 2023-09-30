@@ -214,7 +214,7 @@ const FileImporter = ({ onClose }: { onClose: VoidFunction }) => {
     )
   }
   return (
-    <Content flex column style={{ maxWidth: `min(960px, 60vw)`, maxHeight: 'min(800px, 80vh)', overflowY: 'auto' }} gap={12}>
+    <Content flex column style={{ maxWidth: `min(960px, 60vw)`, maxHeight: 'min(800px, 80vh)', padding: 16, overflowY: 'auto' }} gap={12}>
       <div style={{ paddingLeft: 8, marginBottom: 20 }} className={ClassName.title('20px')}>
         {t('general.Create new object')}
       </div>

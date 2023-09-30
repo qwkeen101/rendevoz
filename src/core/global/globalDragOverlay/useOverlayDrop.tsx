@@ -34,7 +34,6 @@ const useOverlayDrop = () => {
   // two situations, 1. drop metaobject / object 2. drop event
   dropEventHandler.on('globalDropNeedFurtherProcess', async (data, res, rej) => {
     const { dropOn } = data
-    console.log(data)
     let normalizedMetaObject: MetaObject | undefined = undefined,
       shouldOpenEditMetaModal = false,
       alreadyHasMeta = false,
@@ -72,7 +71,7 @@ const useOverlayDrop = () => {
     }
 
     // drop event
-    if (data.e) {
+    if (data.e && data.e instanceof DragEvent) {
       const n = await normalizeDropToMeta(data.e)
       clearDragState()
       normalizedMetaObject = n

@@ -7,7 +7,6 @@ import { IBase } from '~/typings/data'
 import { type IStoreDeprecated, LocalDatabaseAction } from './types'
 import { globalStore } from '.'
 import { type PartialWithId } from '@/types'
-import { useDb } from '@/hooks'
 import { immerWithDatabase } from '@/stores/immerWithDatabase'
 
 const ATOM_QUEUE_MAP = new Map<Atom<any>, StoreDispatchEvent<any>[]>()
@@ -89,6 +88,7 @@ const handleQueue = () => {
     ATOM_QUEUE_MAP.delete(k)
   })
   setTimeout(() => {
+    console.log(DB_ACTION_MAP)
     Array.from(DB_ACTION_MAP.entries()).forEach(([k, v]) => {
       immerWithDatabase(v, k.name)
       DB_ACTION_MAP.delete(k)

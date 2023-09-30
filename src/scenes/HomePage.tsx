@@ -1,7 +1,7 @@
-import { Button, Icon, IconWithPopover, Modal, WithBorder } from '@/components'
-import { FC, useEffect, useMemo, useState } from 'react'
+import { AnimatePopover, Button, Icon, IconWithPopover, Modal, WithBorder } from '@/components'
+import { FC, useMemo, useState } from 'react'
 import { Components } from 'rendevoz'
-import { useDebounceFn, useGlobalAtomValue, useToggle } from '@/hooks'
+import { useDebounceFn, useGlobalAtomValue, useSelectAtomValue, useToggle } from '@/hooks'
 import { useTranslation } from 'react-i18next'
 import TabTitle from '@/components/layout/TabTitle'
 import ClassName from '@/styles/classNames'
@@ -15,92 +15,86 @@ import { IconNameItem } from '@/components/layout/sidebar/SidebarCollection'
 import { DraggableElement, ObjectActionPopover, TypeToTypeName, useCreateObject } from '@/core'
 import { Zindexes } from '@/consts'
 import Colors from '@/consts/colors'
-import { atom, createStore, Provider, useAtom, useAtomValue } from 'jotai'
+import { atom, createStore, useAtomValue } from 'jotai'
 import fuzzysort from 'fuzzysort'
 import { Rendevoz } from '@/core/rendevoz'
 import FileImporter from '@/components/fileImporter'
-import BetterFilter from '@/core/database/filter/BetterFilter'
+import HomeGallery from '@/scenes/home/HomeGallery'
+import KeyvalueStore from '@/stores/keyvalue.store'
+import GalleryConfig from '@/scenes/home/GalleryConfig'
 
 const { Content } = Components
 const HomeSearchAtom = atom<string | undefined>(undefined)
 export const HomePage: FC = () => {
   const { t } = useTranslation()
-  const { portal, open } = useCreateObject({
-    positions: ['bottom'],
-    quickCreateNote: false
-  })
-  const store = useMemo(() => createStore(), [])
-  const [search, setSearch] = useAtom(HomeSearchAtom, { store: store })
-  const debounceSetSearch = useDebounceFn(v => setSearch(v), { wait: 500 })
+  const currentWorkspace = KeyvalueStore.useValue('currentWorkspace') || 'default'
+  const homeMode = KeyvalueStore.useValue('homeDisplayMode') || 'gallery'
   const [createVisible, toggleCreateVisible] = useToggle(false)
   return (
-    <Content
-      flex
-      column
-      fullHeight
-      style={{
-        margin: '0 auto',
-        width: '100%',
-        maxWidth: 1400,
-        padding: '18px 24px 0px'
-      }}
-    >
-      <TabTitle title={t('general.home')} icon="park-home" />
-      {/*<div*/}
-      {/*  onClick={() => {*/}
-      {/*    fetch('https://www.bbc.co.uk/news/business-66783922')*/}
-      {/*      .then(res => res.text())*/}
-      {/*      .then(text => {*/}
-      {/*        const praser = new DOMParser()*/}
-      {/*        const doc = praser.parseFromString(text, 'text/html')*/}
-      {/*        console.log(doc.body)*/}
-      {/*      })*/}
-      {/*  }}*/}
-      {/*>*/}
-      {/*  fetg*/}
-      {/*</div>*/}
-      <Modal visible={createVisible} onClose={toggleCreateVisible} style={{}}>
-        <FileImporter onClose={toggleCreateVisible} />
-      </Modal>
+    <Content fullHeight fullWidth style={{ overflowY: 'auto' }}>
       <Content
         flex
-        gap={10}
+        column
         style={{
-          padding: '4px 8px',
-          borderRadius: 6,
-          border: `1px solid ${Colors.Background.Border}`,
-          marginBottom: 16
+          height: 'auto',
+          margin: '0 auto',
+          width: '100%',
+          maxWidth: 1400,
+          padding: '18px 24px'
         }}
       >
-        <Icon name="park-search" />
-        <input
-          placeholder={t('home.search home page objects')}
-          defaultValue={search}
-          onChange={v => debounceSetSearch.run(v.target.value)}
-          style={{
-            border: 'none',
-            outline: 'none',
-            background: 'transparent',
-            width: '100%'
-          }}
-        />
+        <TabTitle title={t('general.home')} icon="park-home" />
+        <Modal visible={createVisible} onClose={toggleCreateVisible} style={{}}>
+          <FileImporter onClose={toggleCreateVisible} />
+        </Modal>
+        <Content flex alignItems="center" justifyContent="space-between" style={{ margin: '16px 0px' }}>
+          <div
+            style={{
+              fontSize: 20,
+              fontWeight: 500
+            }}
+          >
+            {currentWorkspace === 'default' ? 'Default workspace' : currentWorkspace}
+          </div>
+          <Content flex gap={8} alignItems={'center'}>
+            <Icon
+              name={'park-all-application'}
+              size={20}
+              className={ClassName.flatButton(4, 4)}
+              onClick={() => {
+                KeyvalueStore.updateOne('homeDisplayMode', 'gallery')
+              }}
+              style={{ background: homeMode === 'gallery' ? Colors.Background.ButtonActive : undefined }}
+            />
+            <Icon
+              name={'park-list-view'}
+              size={20}
+              onClick={() => {
+                KeyvalueStore.updateOne('homeDisplayMode', 'table')
+              }}
+              className={ClassName.flatButton(4, 4)}
+              style={{ background: homeMode === 'table' ? Colors.Background.ButtonActive : undefined }}
+            />
+            <div style={{ height: 20, width: 1, background: Colors.Background.Border }}></div>
+            <Icon size={20} className={ClassName.flatButton(4, 4)} onClick={e => toggleCreateVisible()} name="park-plus"></Icon>
+            {homeMode === 'gallery' && (
+              <AnimatePopover
+                align={'end'}
+                content={
+                  <WithBorder padding={6} width={180}>
+                    <GalleryConfig />
+                  </WithBorder>
+                }
+                positions={['bottom']}
+              >
+                <Icon name={'park-more'} size={20} className={ClassName.flatButton(4, 4)} />
+              </AnimatePopover>
+            )}
+          </Content>
+        </Content>
+        {homeMode === 'gallery' && <HomeGallery />}
+        {homeMode === 'table' && <Recent />}
       </Content>
-      <Content flex alignItems="center" justifyContent="space-between">
-        <div className={ClassName.title()}>{t('general.home')}</div>
-        <Button.IconButton
-          id="home-create-button"
-          onClick={e => toggleCreateVisible()}
-          text={t('general.create')}
-          icon="park-plus"
-        ></Button.IconButton>
-      </Content>
-      <Content flex column style={{ height: 0, flex: 1 }}>
-        <div>{t('general.recent view')}</div>
-        <Provider store={store}>
-          <Recent />
-        </Provider>
-      </Content>
-      {portal}
     </Content>
   )
 }
@@ -166,6 +160,7 @@ const Recent = () => {
   }, [type, all, sortMode, search])
 
   const [showFilter, toggleShowFilter] = useToggle(false)
+
   return (
     <>
       <Content
@@ -173,8 +168,6 @@ const Recent = () => {
         onPointerEnter={() => toggleShowResizer(true)}
         onPointerLeave={() => toggleShowResizer(false)}
         style={{
-          position: 'sticky',
-          top: 0,
           zIndex: 10,
           marginRight: 50,
           padding: '4px 0px'
@@ -302,8 +295,7 @@ const Recent = () => {
           height: 0,
           flex: 1,
           margin: '0px -24px',
-          padding: '0px 24px',
-          overflowY: 'auto'
+          padding: '0px 24px'
         }}
       >
         <colgroup>

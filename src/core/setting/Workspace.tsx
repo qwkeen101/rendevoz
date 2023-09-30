@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next'
 import { Button, Content, Icon, IconWithPopover, WithBorder } from '@/components'
-import { MetaStore } from '@/stores'
+import { CollectionStore, MetaStore } from '@/stores'
 import KeyvalueStore from '@/stores/keyvalue.store'
 import { useSetting } from '@/core'
 import { useEffect, useState } from 'react'
@@ -84,6 +84,7 @@ const WorkspaceSetting = () => {
   const handleSwitchWorkspace = (name: string) => {
     KeyvalueStore.updateOne('currentWorkspace', name)
     MetaStore.switchWorkspace(name)
+    CollectionStore.switchWorkspace()
   }
 
   const handleRenameWorkspace = () => {

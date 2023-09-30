@@ -1,10 +1,10 @@
 import { memo, useEffect, useRef, useState } from 'react'
 import { useVideoInstance } from './hooks/useVideoInstance'
-import { assignProperties } from '@/utils'
+import { assignProperties, saveImageLocally } from '@/utils'
 import useVideoState from './hooks/useVideoState'
-import { Content } from '@/components'
+import { Content, WithBorder } from '@/components'
 import useThrottleFn from '@/hooks/utils/useThrottleFn'
-import { ObjectStore } from '@/stores'
+import { MetaStore, ObjectStore } from '@/stores'
 import { usePrevious, useSelectGlobalAtomValue } from '@/hooks'
 import { SettingAtom } from '../setting'
 import { WebVTTParser } from 'webvtt-parser'
@@ -14,6 +14,8 @@ import WebVideoPlayer from '@/core/video/players/WebVideoPlayer'
 import LocalVideoPlayer from '@/core/video/players/LocalVideoPlayer'
 import './loading.css'
 import { Colors } from '@/consts'
+import ContextMenu from '@/components/contextMenu'
+import VideoActionsMenu from '@/core/video/VideoActionsMenu'
 
 interface VideoCoreProps {
   url?: string
@@ -23,7 +25,7 @@ const VideoCore = memo(({ url }: VideoCoreProps) => {
   const instance = useVideoInstance()
   const [videoState, setVideoState] = useVideoState()
   const { currentTime, mode } = videoState
-
+  const videoMeta = MetaStore.useObjectToMetaValue(videoState.videoId)
   const autoPlaySetting = useSelectGlobalAtomValue(SettingAtom, s => s.video.autoPlay)
 
   const throttleUpdateLastViewTime = useThrottleFn(
@@ -42,7 +44,21 @@ const VideoCore = memo(({ url }: VideoCoreProps) => {
       setVideoState(s => ({ ...s, autoPlay: autoPlaySetting, paused: false }))
     }
   }, [autoPlaySetting])
-
+  useEffect(() => {
+    if (videoState.loaded && !videoState.paused) {
+      if (!videoMeta?.coverImgSrc && videoMeta) {
+        setTimeout(() => {
+          instance.captureCurrentImage?.().then(res => {
+            if (res) {
+              saveImageLocally(res).then(p => {
+                MetaStore.updateMetaObject({ id: videoMeta.id, coverImgSrc: p }, true)
+              })
+            }
+          })
+        }, 1000)
+      }
+    }
+  }, [videoState.loaded, videoState.paused])
   useEffect(() => {
     throttleUpdateLastViewTime.run()
     setVideoState(s => (s.jumpTime ? { ...s, jumpTime: undefined } : s))
@@ -98,26 +114,39 @@ const VideoCore = memo(({ url }: VideoCoreProps) => {
   //       }
   //     })
   // }, [])
+  const contextMenuRef = useRef()
   if (!url) return null
   return (
-    <Content
-      style={{
-        width: '100%',
-        paddingBottom: '56.25%',
-        height: 0,
-        borderRadius: videoState.floated ? '0px 0px 4px 4px' : 4,
-        overflow: 'hidden'
-      }}
+    <ContextMenu
+      ref={contextMenuRef}
+      enableContextMenu={videoState.loaded}
+      content={
+        <VideoActionsMenu
+          onClose={() => {
+            contextMenuRef.current?.closeContextMenu?.()
+          }}
+        />
+      }
     >
-      {!videoState.loaded && (
-        <div style={{ position: 'absolute', inset: 0, zIndex: 999 }}>
-          <LoadingAnimation />
-        </div>
-      )}
-      {mode === 'web' && <WebVideoPlayer url={url} />}
-      {mode === 'video' && <LocalVideoPlayer url={url} />}
-      {mode === 'baidudisk' && <BaidudiskVideoPlayer url={url} />}
-    </Content>
+      <Content
+        style={{
+          width: '100%',
+          paddingBottom: '56.25%',
+          height: 0,
+          borderRadius: videoState.floated ? '0px 0px 4px 4px' : 4,
+          overflow: 'hidden'
+        }}
+      >
+        {!videoState.loaded && (
+          <div style={{ position: 'absolute', inset: 0, zIndex: 999 }}>
+            <LoadingAnimation />
+          </div>
+        )}
+        {mode === 'web' && <WebVideoPlayer url={url} />}
+        {mode === 'video' && <LocalVideoPlayer url={url} />}
+        {mode === 'baidudisk' && <BaidudiskVideoPlayer url={url} />}
+      </Content>
+    </ContextMenu>
   )
 })
 

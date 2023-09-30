@@ -3,13 +3,7 @@ import useDb from '@/hooks/stores/useDb'
 import { Atom, atom, PrimitiveAtom } from 'jotai'
 import { atomFamily, selectAtom } from 'jotai/utils'
 import { useMemo } from 'react'
-import {
-  IRegisterdObject,
-  IWhiteboard,
-  IWhiteboardEdge,
-  IWhiteboardNode,
-  MetaObject
-} from '~/typings'
+import { IRegisterdObject, IWhiteboard, IWhiteboardEdge, IWhiteboardNode, MetaObject } from '~/typings'
 import { globalStore, MetaStore, ObjectStore } from '.'
 import BaseStore, { initializeLocalStore } from './base.store'
 import { metaObjectsAtom, objectIdToMetaObjectIdMapAtom, tagToMetaObjectIdsMapAtom, TypeToRegisteredMetaObject } from './meta.store'
@@ -130,7 +124,6 @@ const createObjectStore = <T extends keyof ObjectFamily, V extends ObjectFamily[
           meta
         }
       } catch (e) {
-        console.log('error')
         ObjectStore(obj.specType).deleteOneById(obj.id, { force: true, silent: true })
       }
     },
@@ -204,6 +197,34 @@ const createObjectStore = <T extends keyof ObjectFamily, V extends ObjectFamily[
           }
         }
         return initalizedLocalStore.deleteOneById(() => {
+          // delete all labels
+          if ('labels' in one && one.labels) {
+            let store = undefined
+            const allLabels = one.labels
+            switch (one.specType) {
+              case 'webpage': {
+                store = ObjectStore('webpageLabel')
+                break
+              }
+              case 'video': {
+                store = ObjectStore('videoLabel')
+                break
+              }
+              case 'note': {
+                store = ObjectStore('noteLabel')
+                break
+              }
+              case 'pdf': {
+                store = ObjectStore('pdfLabel')
+                break
+              }
+            }
+            if (store) {
+              allLabels.forEach(i => {
+                store.deleteOneById(i)
+              })
+            }
+          }
           options?.afterDeleteProcess?.(one)
           const objectIdToMetaObjectIdMap = globalStore.get(objectIdToMetaObjectIdMapAtom)
           const targetMeta = objectIdToMetaObjectIdMap?.get(id)

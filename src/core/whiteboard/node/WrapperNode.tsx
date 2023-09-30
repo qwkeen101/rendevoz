@@ -266,13 +266,13 @@ const WrapperNode = ({ node }: { node: IWhiteboardNode }) => {
   })
   // remove selected state on click outside
   useEffect(() => {
-    if (nodeState.selected || nodeState.focused) {
+    if (nodeState.selected || nodeState.focused || nodeState.popoverVisible) {
       const pointerDownHandler = (e: MouseEvent) => {
         console.log('click')
         if (flow.hasMultiSelectBox) return
         if (!containerRef.current?.contains(e.target as HTMLElement) && isResizingRef.current === false) {
           if (e.target instanceof HTMLElement && e.target.getAttribute('data-cover-id') === `${node.id}`) return
-          setNodeState(s => ({ ...s, selected: false, focused: false }))
+          setNodeState(s => ({ ...s, selected: false, focused: false, popoverVisible: false }))
         }
       }
       document.addEventListener('click', pointerDownHandler)
@@ -280,7 +280,7 @@ const WrapperNode = ({ node }: { node: IWhiteboardNode }) => {
         document.removeEventListener('click', pointerDownHandler)
       }
     }
-  }, [nodeState.selected, nodeState.focused])
+  }, [nodeState.selected, nodeState.focused, nodeState.popoverVisible])
 
   const forceRender = useUpdate()
 

@@ -14,10 +14,11 @@ interface WithBorderProps extends DetailedHTMLProps<HTMLAttributes<HTMLDivElemen
   disableClosePopover?: boolean
   padding?: CSSProperties['padding']
   blur?: boolean
+  width?: number
 }
 
 const WithBorder: FC<PropsWithChildren<WithBorderProps>> = (
-  { borderRadius = 8, disableClosePopover = false, blur, children, style, onClick, className, contentEditable, padding, ...rest },
+  { borderRadius = 8, width, disableClosePopover = false, blur, children, style, onClick, className, contentEditable, padding, ...rest },
   ref
 ) => {
   const DefaultBorder: CSSProperties = {
@@ -25,6 +26,7 @@ const WithBorder: FC<PropsWithChildren<WithBorderProps>> = (
     // border: '1px solid rgba(0,0,0,0.1)',
     borderRadius: borderRadius,
     padding,
+    minWidth: width,
     ...style
   }
   const handleClick = e => {

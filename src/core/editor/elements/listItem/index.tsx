@@ -1,5 +1,4 @@
 import { useEventHandler, useScopedEventEmitter } from '@/events'
-import { useDebounceFn } from '@/hooks'
 import { css } from '@emotion/css'
 import { useEffect, useMemo } from 'react'
 import { useUpdate } from 'react-use'
@@ -34,8 +33,7 @@ const BorderIndent = ({ index }: { index: number }) => {
 }
 
 export const ListItem = ({ children, element }: RenderElementProps) => {
-  const { containerRef, showToggle, hidenNodesLength, canToggle, toggle } = useToggleList(element)
-  const instance = useEditorInstance()
+  const { containerRef, canToggle, toggle } = useToggleList(element)
   return (
     <div className={styles.wrapper} ref={containerRef}>
       {element.level && element.level > 0 ? (
@@ -65,23 +63,6 @@ export const ListItem = ({ children, element }: RenderElementProps) => {
       <span role="list-item-line-wrapper" style={{ minWidth: 2 }}>
         {children}
       </span>
-      {/*{hidenNodesLength > 0 && element.folded ? (*/}
-      {/*  <span*/}
-      {/*    contentEditable={false}*/}
-      {/*    style={{*/}
-      {/*      userSelect: 'none',*/}
-      {/*      lineHeight: 1,*/}
-      {/*      padding: '3px 5px',*/}
-      {/*      color: Colors.Font.Tertiary,*/}
-      {/*      fontSize: '0.8rem',*/}
-      {/*      margin: '0.2em 10px 0 auto',*/}
-      {/*      background: Colors.Background.ButtonHover,*/}
-      {/*      borderRadius: 4*/}
-      {/*    }}*/}
-      {/*  >*/}
-      {/*    {hidenNodesLength}*/}
-      {/*  </span>*/}
-      {/*) : null}*/}
     </div>
   )
 }
@@ -178,7 +159,7 @@ export const OrderListItem = ({ children, element }: RenderElementProps) => {
   const editor = useSlateStatic()
   const scopedEmitter = useScopedEventEmitter()
   const handler = useEventHandler('editor')
-
+  const { containerRef, canToggle, toggle } = useToggleList(element)
   useEffect(() => {
     scopedEmitter.addListener('editor', handler)
     return () => {
@@ -189,7 +170,6 @@ export const OrderListItem = ({ children, element }: RenderElementProps) => {
   const path = ReactEditor.findPath(editor, element)
 
   const forceUpdate = useUpdate()
-  // const previousPath = Path.previous(path)
   handler.on('valueChange', () => {
     setTimeout(() => {
       if (!Path.equals(path, ReactEditor.findPath(editor, element))) {
@@ -206,13 +186,19 @@ export const OrderListItem = ({ children, element }: RenderElementProps) => {
       let num = 1
       while (
         previous &&
-        ((previous[0] as CustomElement).type === 'list-item' ||
-          ((previous[0] as CustomElement).type === 'order-list-item' && (previous[0] as CustomElement).level === element.level))
+        ((previous[0] as CustomElement).type === 'list-item' || (previous[0] as CustomElement).type === 'order-list-item')
       ) {
-        if ((previous[0] as CustomElement).type === 'order-list-item') {
+        const el = previous[0] as CustomElement
+        if ((el.level || 0) < (element.level || 0)) break
+        if ((el.level || 0) !== (element.level || 0)) {
+          if (!Path.hasPrevious(previousPath)) break
+          previousPath = Path.previous(previous[1])
+          previous = Editor.node(editor, previousPath)
+          continue
+        }
+        if (el.type === 'order-list-item') {
           num += 1
         }
-
         if (!Path.hasPrevious(previousPath)) break
         previousPath = Path.previous(previous[1])
         previous = Editor.node(editor, previousPath)
@@ -238,9 +224,21 @@ export const OrderListItem = ({ children, element }: RenderElementProps) => {
   }, [...path, element.level])
 
   return (
-    <div className={styles.wrapper}>
+    <div className={styles.wrapper} ref={containerRef}>
+      {element.level && element.level > 0 ? (
+        <div contentEditable={false}>
+          {Array.from(Array(element.level)).map((i, index) => (
+            <BorderIndent index={index} key={index} />
+          ))}
+        </div>
+      ) : null}
       <div
         contentEditable={false}
+        onClick={() => {
+          if (canToggle) {
+            toggle()
+          }
+        }}
         data-level={element.level}
         role="list-item-marker"
         style={{
@@ -250,7 +248,9 @@ export const OrderListItem = ({ children, element }: RenderElementProps) => {
           padding: '0 2px',
           marginRight: 6,
           minWidth: 18,
-          fontWeight: 500
+          fontWeight: 500,
+          cursor: 'pointer',
+          color: element.folded ? Colors.Common.SelectColor : undefined
         }}
       >
         {prefix}.{' '}

@@ -98,10 +98,10 @@ export class AppController {
     buffer: Buffer | ArrayBuffer,
     fileName: string,
     filePath?: string,
-    fileSavePath: 'files' | 'imgs' | 'backup' = 'files'
+    fileSavePath: 'files' | 'imgs' | 'backup' | 'root' = 'files'
   ) {
     this.checkIfRendevozGenerated()
-    const rendevozFilePath = path.join(process.env.FILE_PATH || this.DefaultRendevozDataPath, fileSavePath)
+    const rendevozFilePath = path.join(process.env.FILE_PATH || this.DefaultRendevozDataPath, fileSavePath === 'root' ? '' : fileSavePath)
     const savePath = `/${fileSavePath}/`
     const finalPathName =
       filePath
@@ -227,17 +227,8 @@ export class AppController {
 
   @IpcInvoke('close')
   public async close() {
+    process.env.SHOULD_CLOSE = 'true'
     this.win.close()
-  }
-  @IpcInvoke('beginBackup')
-  public async beginBackup() {
-    console.log('shouldBackup')
-    process.env.SHOULD_CLOSE = false
-  }
-
-  @IpcInvoke('endBackup')
-  public async endBackup() {
-    process.env.SHOULD_CLOSE = true
   }
 
   @IpcInvoke('changeFilePath')
@@ -329,5 +320,15 @@ client_secret=Za8BXRX1N9ONG4drbWNeg6yhKXL7x8KF&
 redirect_uri=rendevoz://baidudisk`
     const result = await (await fetch(url)).json()
     return result
+  }
+
+  @IpcInvoke('deleteLocalFile')
+  public async deleteLocalFile(filepath: string) {
+    if (filepath.startsWith('rendefile')) {
+      const rendevozFilePath = path.join(process.env.FILE_PATH || this.DefaultRendevozDataPath, filepath.replace('rendefile://', ''))
+      await new Promise(res => fs.rm(rendevozFilePath, () => res(null)))
+    } else {
+      await new Promise(res => fs.rm(filepath, () => res(null)))
+    }
   }
 }

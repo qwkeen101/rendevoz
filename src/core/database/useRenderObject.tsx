@@ -6,9 +6,8 @@ import { css } from '@emotion/css'
 import { selectAtom } from 'jotai/utils'
 import { CSSProperties, memo, ReactNode, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Content, Icon, IconWithPopover, Image, WithBorder } from '@/components'
+import { Content, ContentEditor, Icon, IconWithPopover, Image, WithBorder } from '@/components'
 import { Editor } from '../editor/Editor'
-import { PdfViewer } from '../pdf/PdfViewer'
 import { ObjectActionPopover, TypeToTypeName } from './card/DatabaseCard'
 import { ObjectTag, SettingAtom, useRenderLabel, Whiteboard } from '@/core'
 import DateFormat from '@/utils/dateFormat'
@@ -22,10 +21,9 @@ import HoverAttachment from './HoverAttachment'
 import HoverObjectDetails from './HoverObjectDetails'
 import { useUpdate } from 'react-use'
 import Pdf from '@/core/pdf'
-import BorderInput from '@/components/base/BorderInput'
 import isHotkey from 'is-hotkey'
 import { KEY } from '@/consts'
-import { MetaStore, ObjectStore } from '@/stores'
+import { MetaStore } from '@/stores'
 import FontSize from '@/consts/font'
 import AutosizeTextarea from '@/components/custom/input/autosizeTextarea'
 import { toast } from 'react-hot-toast'
@@ -184,68 +182,20 @@ const TitleRenderer = ({
         <WebpageSourceRenderer objectId={metaObject.objectId} />
       )}
       {isEditing ? (
-        <div
-          style={{
-            margin: '6px 0px',
-            border: `1px solid ${Colors.Background.Border}`,
-            background: 'transparent',
-            borderRadius: 6,
-            width: '100%',
-            position: 'relative'
+        <ContentEditor
+          style={{ marginTop: 8 }}
+          onChange={v => {
+            if (!v) {
+              toast.error('Value can not be empty!')
+              return
+            }
+            if (v !== metaObject?.name && metaObject?.id) {
+              MetaStore.updateMetaObject({ id: metaObject.id, name: v }, true)
+            }
+            setIsEditing(false)
           }}
-        >
-          <AutosizeTextarea
-            onKeyDownCapture={e => {
-              e.stopPropagation()
-              if (isHotkey(KEY.Tab, e)) {
-                e.preventDefault()
-                const t = e.currentTarget
-                const start = t.selectionStart
-                const end = t.selectionEnd
-
-                // set textarea value to: text before caret + tab + text after caret
-                t.value = t.value.substring(0, start) + '  ' + t.value.substring(end)
-
-                // put caret at right position again
-                t.selectionStart = t.selectionEnd = start + 2
-              }
-              if (isHotkey(KEY.Escape, e)) {
-                setIsEditing(false)
-              }
-            }}
-            style={{
-              padding: '6px 8px',
-              fontSize: FontSize['13px'],
-              background: 'transparent',
-              width: '100%',
-              border: 'none',
-              outline: 'none'
-            }}
-            className={css({
-              '::-webkit-resizer': {
-                background: 'transparent'
-              }
-            })}
-            spellCheck="false"
-            defaultValue={metaObject?.name}
-            minRows={2}
-            maxRows={9999}
-            placeholder="Input new name"
-          />
-          <div
-            onClick={e => {
-              const v = e.currentTarget.previousElementSibling?.value
-              if (v !== undefined && metaObject) {
-                MetaStore.updateMetaObject({ id: metaObject.id, name: v }, true)
-              }
-              setIsEditing(false)
-            }}
-            className={ClassName.description(FontSize['12px'])}
-            style={{ position: 'absolute', right: 10, bottom: 3, cursor: 'pointer' }}
-          >
-            {t('general.Confirm')}
-          </div>
-        </div>
+          value={metaObject?.name}
+        />
       ) : (
         <div
           onContextMenu={() => setIsEditing(!isEditing)}

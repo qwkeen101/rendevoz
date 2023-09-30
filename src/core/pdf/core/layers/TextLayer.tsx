@@ -421,9 +421,11 @@ const TextLayer: FC<TextLayerProps> = ({ scale, rotation, width, height, pageInd
   const buildText = async () => {
     if (viewer && !textContentBounds.current.length) {
       await new Promise(res => {
+        const task = renderTaskRef.current
+        if (!task) return
         getTextContent(viewer, pageIndex).then(item => {
           if (item) {
-            const { textContentBounds: bounds } = renderTaskRef.current!.render(item?.textContent)
+            const { textContentBounds: bounds } = task.render(item?.textContent)
             textContentBounds.current = bounds
           }
           res(null)

@@ -33,9 +33,11 @@ body {
   --light-box-shadow: rgba(15,15,15,0.05) 0px 0px 0px 1px, rgba(15,15,15, 0.1) 0px 3px 6px, rgba(15,15,15,0.2) 0px 9px 24px;
   --green: rgb(52, 199, 36);
   --red: rgb(253, 138, 138);
-  --font-link: #919fde;
+  --font-link: var(--select-color);
   --select-color: rgba(39, 158, 255);
   --select-color-transparent: rgba(39, 158, 255, 0.2);
+  --light-radial-gradient-background: radial-gradient(300% 300% at 50% 50%, #F9F5F6 1%, rgba(216, 0, 0, 0) 99%), radial-gradient(142% 91% at -6% 74%, rgb(90 142 189 / 62%) 45%, rgb(88 79 158 / 41%) 99%), radial-gradient(40% 91% at 111% 84%, rgb(206 112 239) 45%, rgb(145 153 220) 120%);
+  --dark-radial-gradient-background: radial-gradient(160% 160% at 50% 50%, rgb(44, 44, 46) 1%, rgba(216, 0, 0, 0) 99%), radial-gradient(142% 91% at -6% 74%, rgb(65 106 144 / 62%) 45%, rgba(21, 18, 46, 0.41) 99%), radial-gradient(40% 91% at 111% 84%, rgb(104 87 110) 45%, rgb(50 57 116) 120%);
 }
 html {
   &[theme='dark']{
@@ -43,6 +45,7 @@ html {
       --font-primary: var(--font-white);
       --font-secondary: var(--font-silver);
       --font-tertiary: var(--font-silver-second);
+      --font-transparent: rgba(244,244,244,0.65);
       --linear-background: var(--dark-linear-gradient-background);
       --global-background: var(--dark-background-color);
       --background-secondary: var(--dark-background-color-secondary);
@@ -55,6 +58,7 @@ html {
       --button-active-background: var(--dark-button-active-background);
       --sidebar-background: rgba(217, 217, 217, 0.3);
       --box-shadow: var(--dark-box-shadow);
+      --radial-gradient-background: var(--dark-radial-gradient-background);
     }
   }
   &[theme='light']{
@@ -62,6 +66,7 @@ html {
       --font-primary: var(--font-black);
       --font-secondary: var(--font-silver-blue);
       --font-tertiary: var(--font-caption);
+      --font-transparent: rgba(31, 34, 37, 0.65);
       --linear-background: var(--light-linear-gradient-background);
       --global-background: var(--light-background-color);
       --background-secondary: var(--light-background-color-secondary);
@@ -74,6 +79,7 @@ html {
       --button-active-background: var(--light-button-active-background);
       --sidebar-background: rgba(217, 217, 217, 0.3);
       --box-shadow: var(--light-box-shadow);
+      --radial-gradient-background: var(--light-radial-gradient-background);
     }
   }
 }

@@ -9,6 +9,8 @@ import { useEventHandler } from '@/events'
 import { NoteStore, ObjectStore } from '@/stores'
 import { Rendevoz } from '@/core/rendevoz'
 import { EDITOR_TO_CHANGED } from '../weakMaps'
+import useEditorInstance from '@/core/editor/hooks/useEditorInstance'
+import { assignProperties } from '@/utils'
 
 const initial = [
   {
@@ -30,6 +32,7 @@ const normalizeFirstLayer = (editor: CustomEditor) => {
 }
 const useStoreValue = (note: INote | undefined, editor: CustomEditor, onContentRendered?: (editor: CustomEditor) => void) => {
   const { saveNoteAsBuffer, getNoteValue, saveNoteAsSearch } = NoteStore
+  const instance = useEditorInstance()
   const contentRef = useRef<Descendant[]>()
   const noteId = note?.id
   const contentId = note?.contentId
@@ -42,14 +45,21 @@ const useStoreValue = (note: INote | undefined, editor: CustomEditor, onContentR
     }
   })
   handler.on('operationApplied', debounceSaveE)
+  const saveNote = () => {
+    if (!noteId) return
+    if (editor === EditorInstanceMap.get(noteId)?.values().next().value) {
+      saveNoteAsBuffer(editor.children, note.contentId)
+      saveNoteAsSearch(editor, noteId)
+      ObjectStore('note').updateOne({ id: noteId, lastSavedAt: Date.now() })
+    }
+  }
+
+  assignProperties(instance, {
+    save: saveNote
+  })
   const { run: debouncedSave } = useDebounceFn(
     () => {
-      if (!noteId) return
-      if (editor === EditorInstanceMap.get(noteId)?.values().next().value) {
-        saveNoteAsBuffer(editor.children, note.contentId)
-        saveNoteAsSearch(editor, noteId)
-        const setting = getSetting()
-      }
+      saveNote()
     },
     { wait: 1000 }
   )

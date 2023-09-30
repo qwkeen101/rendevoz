@@ -8,7 +8,7 @@ export const immerWithDatabase = (patches: Patch[], databaseName: string) => {
     if (i.op === 'add' || i.op === 'replace') {
       putActions.push(i.value)
     } else {
-      removeActions.push(i.value.id)
+      removeActions.push(i.path[0])
     }
   })
   const db = useDb(databaseName)

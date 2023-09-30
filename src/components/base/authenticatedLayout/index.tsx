@@ -6,7 +6,7 @@ interface Props {
   children?: React.ReactNode
 }
 const AuthenticatedLayout: FC<Props> = () => {
-  return <Layout sidebar={<Sidebar />} />
+  return <Layout />
 }
 
 export default AuthenticatedLayout

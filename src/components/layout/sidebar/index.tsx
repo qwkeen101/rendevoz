@@ -14,7 +14,6 @@ import { GlobalTextSearchInstance } from '@/core/global/GlobalTextSearch'
 import SidebarDatabase from '@/components/layout/sidebar/SidebarDatabase'
 import SidebarSetting from '@/components/layout/sidebar/SidebarSetting'
 import produce, { Draft } from 'immer'
-
 export const setPanelState = (updater: (panelState: Draft<SidebarPanelState>) => void) => {
   const panelState = globalStore.get(SidebarPanelStateAtom)
   const newState = produce(panelState, draft => {
@@ -108,7 +107,6 @@ const defaultSidebarItems = ['home', 'database', 'collections', 'search', 'graph
 export const Sidebar = ({ direction = 'right' }: { direction: 'left' | 'right' }) => {
   const builtinSidebarEles = Array.from(Object.values(BuiltInSidebarItems))
   const registeredSidebarEles = Array.from(KeyToRegisteredSidebarElement.values())
-
   const allItems = [...builtinSidebarEles, ...registeredSidebarEles]
   const allItemsMap = new Map(allItems.map(i => [i.key, i]))
   const key = direction === 'right' ? 'leftBarItems' : 'rightBarItems'

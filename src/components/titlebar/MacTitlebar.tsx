@@ -7,7 +7,6 @@ const MacTitlebar = () => {
   const [isFullscreen, setIsFullScreen] = useState(false)
   useEffect(() => {
     const mh = () => {
-      console.log('fulsc')
       setIsFullScreen(true)
     }
     const umh = () => {

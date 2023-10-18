@@ -9,7 +9,6 @@ import { waitFor } from '@/utils/functions'
 import { HeadingToLevel } from '@/core/editor/elements/heading'
 
 export const goToBlock = async (blockId: number, editor: CustomEditor) => {
-  await waitForEditorContentInitialized(editor)
   return new Promise(res => {
     let path = ID_TO_PATH_MAP.get(editor)?.get(blockId)
     if (!path) {

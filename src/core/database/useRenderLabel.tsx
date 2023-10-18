@@ -10,7 +10,7 @@ import BorderInput from '@/components/base/BorderInput'
 import { useTranslation } from 'react-i18next'
 import { IDraggableElement } from '~/typings/globalInstances/dragDrop'
 import { Colors } from '@/consts'
-import { useGlobalAtomValue, useIsIn, useSelectGlobalAtomValue } from '@/hooks'
+import { GlobalInstance, useGlobalAtomValue, useIsIn, useSelectGlobalAtomValue } from '@/hooks'
 import { relatedMetaObjectsMapAtom } from '@/stores/meta.store'
 import { SettingAtom } from '@/core'
 const DEFAULT_LABEL_NAME = 'Unnamed Label'
@@ -23,6 +23,9 @@ const useRenderLabel = (opts: {
 }) => {
   const { objectId, type, draggable } = opts
   const label = ObjectStore(opts.type).useValue(opts.objectId)
+  if (label && !label.parentObjectId) {
+    ObjectStore(type).updateOne({ id: objectId, parentObjectId: label.webpageId || label.videoId || label.pdfId || label.noteId })
+  }
   const labelMeta = MetaStore.useObjectToMetaValue(opts.objectId)
   const { t } = useTranslation()
   const [draggingDetails, setDraggingDetails] = useState<IDraggableElement>()
@@ -53,7 +56,7 @@ const useRenderLabel = (opts: {
           <ContentEditor
             value={currentLabelHasName ? label?.name : undefined}
             onChange={v => {
-              ObjectStore(type).updateOne({ id: objectId, name: v })
+              ObjectStore(type).updateOne({ id: objectId, name: v || 'Unnamed label' })
               setLabelState(s => ({ ...s, editingName: false }))
             }}
           />
@@ -145,7 +148,7 @@ const useRenderLabel = (opts: {
           disableNudge={true}
           content={
             <LabelActionMenu
-              on={event => {
+              on={async event => {
                 on?.(event)
                 switch (event.type) {
                   case 'addAttachment':

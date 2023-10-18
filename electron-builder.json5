@@ -15,7 +15,8 @@
   },
   files: [
     "dist-electron",
-    "dist"
+    "dist",
+    "!node_modules"
   ],
   protocols: {
     name: "rendevoz",
@@ -40,7 +41,7 @@
   },
   nodeGypRebuild: false,
   npmRebuild: false,
-  afterSign: "electron-builder-notarize",
+//  afterSign: "electron-builder-notarize",
   mac: {
     target: ["default"],
     artifactName: "Rendevoz-MacOS-Setup.${ext}",

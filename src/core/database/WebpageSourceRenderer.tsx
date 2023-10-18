@@ -15,16 +15,11 @@ const WebpageSourceRenderer = ({ objectId }: { objectId: number }) => {
 
     return (
       <IconNameItem
-        className={css([
-          // @ts-ignore
-          {
-            '*': {
-              textTransform: 'none !important'
-            }
-          },
-          ClassName.description(FontSize['11px'])
-        ])}
-        style={{ marginLeft: 2, marginTop: 3 }}
+        onClick={() => {
+          window.open(url)
+        }}
+        className={ClassName.description(FontSize['11px'])}
+        style={{ textTransform: 'uppercase', cursor: 'pointer' }}
         icon={favicon}
         name={displayUrl}
       />

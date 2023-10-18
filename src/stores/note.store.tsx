@@ -1,7 +1,7 @@
 import useDb from '@/hooks/stores/useDb'
 import Id from '@/utils/id'
 import { Descendant, Node } from 'slate'
-import { CustomEditor } from '~/typings'
+import { CustomEditor, INote } from '~/typings'
 import { saveBlobLocally } from '@/utils/file'
 import SearchHelper from '@/textSearch/SearchHelper'
 import { MetaStore, ObjectStore } from '@/stores/index'
@@ -43,7 +43,7 @@ const createNoteStore = () => {
       }
     }
   }
-  const saveNoteAsSearch = async (editor: CustomEditor, noteId: number) => {
+  const saveNoteAsSearch = async (value: Descendant[], noteId: number) => {
     const note = await ObjectStore('note').getOneById(noteId)
     if (note && note.metaId) {
       const targetMeta = await MetaStore.getMetaObjectById(note.metaId)
@@ -55,16 +55,23 @@ const createNoteStore = () => {
           metaType: targetMeta.type,
           name: targetMeta.name,
           description: targetMeta.description,
-          content: Node.string(editor)
+          content: Node.string({ children: value })
         })
       }
     }
   }
-
+  const initializeNoteWithValue = async (value: Descendant[], initialNote?: Partial<INote>): Promise<INote> => {
+    const note = await ObjectStore('note').addOne({ ...initialNote })
+    const contentId = note.contentId || Id.getId()
+    await saveNoteAsBuffer(value, contentId)
+    await ObjectStore('note').updateOne({ id: note.id, contentId })
+    return note
+  }
   return {
     saveNoteAsBuffer,
     getNoteValue,
-    saveNoteAsSearch
+    saveNoteAsSearch,
+    initializeNoteWithValue
   }
 }
 

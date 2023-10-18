@@ -42,11 +42,12 @@ const useDropObjectArea = (
         case 'noteBlock':
           objectId = draggingEle.blockId
           break
+        case 'noteLabel':
+        case 'videoLabel':
+        case 'audioLabel':
         case 'pdfLabel':
-          objectId = draggingEle.labelId
-          break
         case 'webpageLabel':
-          objectId = draggingEle.highlightId
+          objectId = draggingEle.labelId
           break
         case 'pdf':
           objectId = draggingEle.pdfId
@@ -54,17 +55,11 @@ const useDropObjectArea = (
         case 'note':
           objectId = draggingEle.noteId
           break
-        case 'noteLabel':
-          objectId = draggingEle.highlightId
-          break
         case 'whiteboard':
           objectId = draggingEle.whiteboardId
           break
         case 'image':
           droppable = true
-          break
-        case 'videoLabel':
-          objectId = draggingEle.id
           break
         default:
           droppable = false

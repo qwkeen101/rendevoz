@@ -2,17 +2,12 @@ import { TextSelectRect } from '@/events/pdfEvent'
 import { IBase } from './base'
 import { Box, XYPosition } from '..'
 
-export type ILabel = IBase & {
-  id?: number
-  title?: string
-  content?: string | any
-  documentId?: number
+export interface IPDFLabel extends IBase {
   background?: string
   color?: string
   name?: string
   page?: number
-  description?: string
-} & (IShapeLabel | IThoughtLabel | IHighlightLabel | IObjectLabel | IInkLabel | ICropLabel)
+}
 
 export type ICropLabel = {
   type: 'crop'

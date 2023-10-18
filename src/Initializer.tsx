@@ -15,6 +15,7 @@ import { Rendevoz } from '@/core/rendevoz'
 import { GlobalPluginManager } from '@/App'
 import initializeWorkspace from '@/lifycycle/startup/initializeWorkspace'
 import '@/lifycycle/close/close'
+import initializeApp from '@/lifycycle/startup/initializeApp'
 export const initializedAtom = atom(false)
 export const updateInfoAtom = atom<
   | {
@@ -43,17 +44,17 @@ const Initializer = () => {
   const setting = useGlobalAtomValue(SettingAtom)
   useEffect(() => {
     if (setting.general.userFilePath) {
-      const pluginsFolder = `${setting.general.userFilePath}/plugins`
-      ipcInstance.send('installPlugins', pluginsFolder).then(res => {
-        const { data } = res
-        if (data && Array.isArray(data)) {
-          data.forEach(i => {
-            import(`file://${i.entry}`).then(main => {
-              GlobalPluginManager.registerPlugin(main)
-            })
-          })
-        }
-      })
+      // const pluginsFolder = `${setting.general.userFilePath}/plugins`
+      // ipcInstance.send('installPlugins', pluginsFolder).then(res => {
+      //   const { data } = res
+      //   if (data && Array.isArray(data)) {
+      //     data.forEach(i => {
+      //       import(`file://${i.entry}`).then(main => {
+      //         GlobalPluginManager.registerPlugin(main)
+      //       })
+      //     })
+      //   }
+      // })
     }
   }, [setting.general.userFilePath])
   const setDownloadInfo = useGlobalSetAtom(DownloadInfoAtom)
@@ -118,16 +119,9 @@ const Initializer = () => {
         })
       )
     })
-    initializeWorkspace(setSetting).then(() => {
-      Promise.all([
-        getAllMetaLinks(),
-        getAllMetaObjects(),
-        getAllCollections(),
-        ObjectStore('tag').getAll(),
-        ObjectStore('group').getAll()
-      ]).then(() => {
-        setIntialized(true)
-      })
+
+    initializeApp().then(() => {
+      setIntialized(true)
     })
 
     ipcInstance.send('getUpdateDetails').then(res => {

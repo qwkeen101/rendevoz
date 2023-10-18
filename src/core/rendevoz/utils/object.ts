@@ -17,6 +17,8 @@ export const getMetaObjectIcon = (type?: MetaObject['type'], metaObject?: MetaOb
       return 'park-notes'
     case 'pdf':
       return 'custom-pdf'
+    case 'audio':
+      return 'park-music'
     case 'webpage':
       return 'park-web-page'
     case 'video':

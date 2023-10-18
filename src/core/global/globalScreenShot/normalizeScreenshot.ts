@@ -1,7 +1,7 @@
 import { LayoutIdToTabMap } from '@/components/layout'
 import { MetaStore, ObjectStore } from '@/stores'
 import { boxContain, boxesIntersect, getRelativeBoxSize } from '@/utils'
-import { Box, IImage, ILayoutTab, IVideoInstance, MetaObject } from '~/typings'
+import { Box, IImage, ILayoutTab, IMediaInstance, MetaObject } from '~/typings'
 
 export const normalizeScreenshot = async (screenshotBox: Box, imagePath: string) => {
   const rect = screenshotBox
@@ -26,7 +26,7 @@ export const normalizeScreenshot = async (screenshotBox: Box, imagePath: string)
   const floatedVideoInstances = allTabs
     .filter(i => i.type === 'video')
     ?.map(i => i.instance)
-    .filter(i => (i as IVideoInstance).getVideoState?.().floated === true) as (IVideoInstance | undefined)[]
+    .filter(i => (i as IMediaInstance).getVideoState?.().floated === true) as (IMediaInstance | undefined)[]
   if (floatedVideoInstances.length) {
     const targetFloatedVideo = floatedVideoInstances.find(i => {
       const playerEle = i?.getPlayerElement?.()

@@ -219,18 +219,8 @@ const withCustomComponent = (editor: CustomEditor) => {
     insertBreak()
   }
   editor.apply = op => {
-    const { emitter } = editor
-    if (emitter) {
-      if (op.type !== 'set_selection' && editor.initialized) {
-        emitter.emit('editor', {
-          type: 'operationApplied',
-          data: {
-            noteId: editor.noteId,
-            id: editor.id,
-            operation: op
-          }
-        })
-      }
+    if (op.type !== 'set_selection') {
+      editor.onOperationApplied?.(op)
     }
     apply(op)
   }

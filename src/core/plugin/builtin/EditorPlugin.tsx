@@ -118,6 +118,22 @@ const BuiltinTypeToRegistered: Record<CustomElement['type'], RegisterdEditorElem
     renderElement: props => <TableRow {...props} />,
     type: 'tableRow'
   },
+  audio: {
+    type: 'audio',
+    isVoid: true,
+    renderElement: props => (
+      <audio
+        style={{
+          width: '100%',
+          height: 40
+        }}
+        controls={true}
+        src={props.element.url}
+      >
+        {props.children}
+      </audio>
+    )
+  },
   'code-block': {
     renderElement: props => <Code {...props} />,
     type: 'code-block',
@@ -247,6 +263,24 @@ const BuiltinTypeToRegistered: Record<CustomElement['type'], RegisterdEditorElem
       slashMenu: true,
       icon: 'park-add-pic'
     }
+  },
+  iframe: {
+    renderElement: props => (
+      <div
+        onClick={e => {
+          console.log(e.currentTarget.querySelector('iframe')?.getIframe?.())
+        }}
+        style={{ width: '100%', position: 'relative', paddingBottom: '56.25%', boxShadow: 'var(--box-shadow)' }}
+      >
+        <iframe
+          style={{ width: '100%', height: '100%', position: 'absolute', inset: 0, border: 'none' }}
+          src={`${props.element.url}?enablejsapi=1`}
+        />
+        {props.children}
+      </div>
+    ),
+    type: 'iframe',
+    isVoid: true
   },
   'to-do': {
     renderElement: props => <ToDo {...props} />,

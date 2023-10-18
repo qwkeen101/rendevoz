@@ -1,5 +1,5 @@
 .ParagraphBlock {
-  width: 100%;
+  width: -webkit-fill-available;
   max-width: var(--editor-max-width);
   position: relative;
   word-break: break-word;
@@ -8,6 +8,7 @@
   border-radius: 4px;
   transition: background 0.3s ease, color 0.3s ease;
   white-space: pre-wrap;
+  line-height: var(--editable-line-height);
   &:not([data-spec-type="highlight-block"]) {
     background: rgba(var(--block-rgb-bg), 0.6);
     background-image: var(--block-linear-bg);

@@ -14,5 +14,5 @@ export const useGlobalSetAtom: typeof useSetAtom = (atom: Parameters<typeof useS
 export const useSelectAtomValue = <T, Slice>(atom: Atom<T>, selector: (v: T) => Slice): Slice =>
   useAtomValue(useMemo(() => selectAtom(atom, selector), [atom]))
 
-export const useSelectGlobalAtomValue = <T, Slice>(atom: Atom<T>, selector: (v: T) => Slice): Slice =>
-  useGlobalAtomValue(useMemo(() => selectAtom(atom, selector), [atom]))
+export const useSelectGlobalAtomValue = <T, Slice>(atom: Atom<T>, selector: (v: T) => Slice, dep?: any[]): Slice =>
+  useGlobalAtomValue(useMemo(() => selectAtom(atom, selector), [atom, ...(dep || [])]))

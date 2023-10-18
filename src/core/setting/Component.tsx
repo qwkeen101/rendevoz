@@ -2,7 +2,7 @@ import ClassName from '@/styles/classNames'
 import produce from 'immer'
 import { useTranslation } from 'react-i18next'
 import { AnimatePopover, Button, Content, Switch } from '../../components/base'
-import SettingItem from './Item'
+import { ISettingItem } from './SettingItem'
 import { useSetting } from '.'
 import Select from '@/components/base/select'
 import { ChromePicker } from 'react-color'
@@ -10,6 +10,7 @@ import { useEffect, useRef } from 'react'
 import { useUpdate } from 'react-use'
 import { NumberInput } from '@/components'
 import { IComponentSetting } from '@/core/setting/types'
+import SettingGroup from '@/core/setting/SettingGroup'
 
 const ComponentSetting = () => {
   const { t } = useTranslation()
@@ -21,13 +22,8 @@ const ComponentSetting = () => {
       })
     )
   }
-  // const labelSettingItems: SettingItem[] = [
-  //   {
-  //     title: t('settings.show original text'),
-  //     children: <Switch value={setting.label.showOriginalText} onChange={() => toggleSetting('label', 'showOriginalText')} />
-  //   }
-  // ]
-  const whiteboardSettingItems: SettingItem[] = [
+
+  const whiteboardSettingItems: ISettingItem[] = [
     {
       title: t('settings.enable add link between objects when connect'),
       children: (
@@ -43,13 +39,13 @@ const ComponentSetting = () => {
     }
   ]
 
-  const editorSettingItems: SettingItem[] = [
+  const editorSettingItems: ISettingItem[] = [
     {
       title: t('settings.object auto become inline when dragged into editor'),
       children: <Switch value={setting.editor.objectAutoBecomeInline} onChange={() => toggleSetting('editor', 'objectAutoBecomeInline')} />
     }
   ]
-  const translateSettingItems: SettingItem[] = [
+  const translateSettingItems: ISettingItem[] = [
     {
       title: t('settings.auto go to translate original text'),
       children: <Switch value={setting.translate.autoGotoHoverText} onChange={() => toggleSetting('translate', 'autoGotoHoverText')} />
@@ -71,7 +67,7 @@ const ComponentSetting = () => {
       update()
     }
   }, [setting.pdf.renderMode])
-  const pdfSettingItems: (SettingItem | undefined)[] = [
+  const pdfSettingItems: (ISettingItem | undefined)[] = [
     {
       title: t('settings.pdf render mode'),
       children: (
@@ -167,9 +163,9 @@ const ComponentSetting = () => {
           )
         }
       : undefined
-  ]
+  ].filter(i => i)
 
-  const webpageSettingItems: SettingItem[] = [
+  const webpageSettingItems: ISettingItem[] = [
     {
       title: t('settings.enable search auto suggestion'),
       children: (
@@ -181,7 +177,7 @@ const ComponentSetting = () => {
     }
   ]
 
-  const videoSettingItems: SettingItem[] = [
+  const videoSettingItems: ISettingItem[] = [
     {
       title: t('settings.jump back when making label'),
       children: (
@@ -202,42 +198,12 @@ const ComponentSetting = () => {
   ]
   return (
     <>
-      {/*<div className={ClassName.title('18px')}>{t('settings.label settings')}</div>*/}
-      {/*{labelSettingItems.map(i => (*/}
-      {/*  <SettingItem titleSize={14} key={i.title} {...i} />*/}
-      {/*))}*/}
-      <div className={ClassName.title('18px')} style={{ marginTop: 10 }}>
-        {t('settings.whiteboard settings')}
-      </div>
-      {whiteboardSettingItems.map(i => (
-        <SettingItem titleSize={14} key={i.title} {...i} />
-      ))}
-      <div className={ClassName.title('18px')} style={{ marginTop: 10 }}>
-        {t('settings.editor settings')}
-      </div>
-      {editorSettingItems.map(i => (
-        <SettingItem titleSize={14} key={i.title} {...i} />
-      ))}
-      <div className={ClassName.title('18px')} style={{ marginTop: 10 }}>
-        {t('settings.translate settings')}
-      </div>
-      {translateSettingItems.map(i => (
-        <SettingItem titleSize={14} key={i.title} {...i} />
-      ))}
-      <div className={ClassName.title('18px')} style={{ marginTop: 10 }}>
-        {t('settings.webpage settings')}
-      </div>
-      {webpageSettingItems.map(i => (
-        <SettingItem titleSize={14} key={i.title} {...i} />
-      ))}
-      <div className={ClassName.title('18px')} style={{ marginTop: 10 }}>
-        {t('settings.pdf settings')}
-      </div>
-      {pdfSettingItems.map(i => i && <SettingItem titleSize={14} key={i.title} {...i} />)}
-      <div className={ClassName.title('18px')} style={{ marginTop: 10 }}>
-        {t('settings.video settings')}
-      </div>
-      {videoSettingItems.map(i => i && <SettingItem titleSize={14} key={i.title} {...i} />)}
+      <SettingGroup title={t('settings.whiteboard settings')} layout={whiteboardSettingItems} />
+      <SettingGroup title={t('settings.editor settings')} layout={editorSettingItems} />
+      <SettingGroup title={t('settings.translate settings')} layout={translateSettingItems} />
+      <SettingGroup title={t('settings.webpage settings')} layout={webpageSettingItems} />
+      <SettingGroup title={t('settings.pdf settings')} layout={pdfSettingItems} />
+      <SettingGroup title={t('settings.video settings')} layout={videoSettingItems} />
     </>
   )
 }

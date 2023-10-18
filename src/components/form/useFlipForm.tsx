@@ -424,7 +424,6 @@ const useFlipForm = (options: useFlipFormOptions) => {
             style={{
               padding: '16px 24px',
               borderRadius: 8,
-              boxShadow: '0 10px 24px rgba(0, 0, 0, 0.18)',
               overflow: 'hidden'
             }}
           >

@@ -5,6 +5,8 @@ import { ObjectTimeline } from '@/core'
 import SyncedBlockPage from '@/scenes/SyncedBlockPage'
 import { EditorPage, HomePage, PdfPage, WhiteboardPage, ImagePage, VideoPage, GraphPage, MetaGroupPage, DatabasePage } from '@/scenes'
 import { Rendevoz } from '@/core/rendevoz'
+import FeedViewer from '@/core/feed'
+import AudioPage from '@/scenes/AudioPage'
 
 const RENDEVOZ_DEFAULT_TABS: TabData[ILayoutTab['type']][] = [
   {
@@ -27,18 +29,12 @@ const RENDEVOZ_DEFAULT_TABS: TabData[ILayoutTab['type']][] = [
     content: opts => opts.objectId && <VideoPage videoId={opts.objectId} onInstanceInitialized={opts.onInstanceInitialized} />
   },
   {
+    type: 'audio',
+    content: opts => opts.objectId && <AudioPage audioId={opts.objectId} onInstanceInitialized={opts.onInstanceInitialized} />
+  },
+  {
     type: 'webpage',
-    content: opts =>
-      opts.objectId && (
-        <Webpage
-          onWebpageChange={newWebpage => {
-            opts.tab.objectId = newWebpage.webpageId
-            opts.objectId = newWebpage.webpageId
-          }}
-          initialWebpageId={opts.objectId}
-          onInstanceInitialized={opts.onInstanceInitialized}
-        />
-      )
+    content: opts => opts.objectId && <Webpage initialWebpageId={opts.objectId} onInstanceInitialized={opts.onInstanceInitialized} />
   },
   {
     type: 'whiteboard',
@@ -71,6 +67,10 @@ const RENDEVOZ_DEFAULT_TABS: TabData[ILayoutTab['type']][] = [
   {
     type: 'synced',
     content: opts => <SyncedBlockPage metaId={opts.objectId} />
+  },
+  {
+    type: 'feeds',
+    content: opts => <FeedViewer />
   }
 ]
 

@@ -36,6 +36,7 @@ const backup = async () => {
       shouldBackup = true
     }
     if (shouldBackup) {
+      console.log('yes')
       const blob = await exportRendevozDb()
       await saveBlobLocally(blob, `rendevoz_data_backup_${DateFormat.format(Date.now(), 'Y_M_d_H_mm')}.json`, undefined, 'backup')
       setAppState({

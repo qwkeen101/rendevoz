@@ -1,7 +1,7 @@
-import { atom, useAtomValue } from "jotai";
+import { useSelectAtomValue } from '@/hooks'
+import { EditorStateAtom } from '@/core/editor/hooks/useEditorState'
 
-export const ReadOnlyEditorAtom = atom(false);
 
-const useReadOnlyEditor = () => useAtomValue(ReadOnlyEditorAtom);
+const useReadOnlyEditor = () => useSelectAtomValue(EditorStateAtom, s => s.readOnly) || false
 
-export default useReadOnlyEditor;
+export default useReadOnlyEditor

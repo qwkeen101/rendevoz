@@ -17,10 +17,11 @@ import {
   MetaLink,
   MetaObject,
   ISyncedBlock,
-  MetaGroup
+  MetaGroup, IFeed
 } from './data'
 import { PartialWithId } from './common'
 import { CustomTypes } from './custom'
+import { FeedItem, IFeedCollection, IFeedFolder } from '~/typings/components'
 
 export type BuiltInObjectTypes = {
   webpage: IWebpage
@@ -37,9 +38,12 @@ export type BuiltInObjectTypes = {
   localFile: ILocalFile
   video: IVideo
   videoLabel: IVideoLabel
+  feed: FeedItem
   review: IReviewRecord
   syncedBlock: ISyncedBlock
   group: MetaGroup
+  feedCollection: IFeedCollection
+  feedFolder: IFeedFolder
 }
 
 export type ObjectFamily = CustomTypes['Object']

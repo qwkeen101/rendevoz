@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next'
 import { MetaObject } from '~/typings'
 import { transformTextContentToNameAndDescription } from '../global/globalDragOverlay/utils'
 import { Rendevoz } from '@/core/rendevoz'
+import { GlobalInstance } from '@/hooks'
 
 export type LabelActionEvent =
   | {
@@ -32,28 +33,10 @@ const LabelActionMenu = ({ on, objectId, type }: Props) => {
   const meta = MetaStore.getMetaObjectByObjectId(objectId)
   const label = ObjectStore(type).useValue(objectId)
   const checkObjectIsMeta = async () => {
-    const meta = MetaStore.getMetaObjectByObjectId(objectId)
-    if (!meta) {
-      const object = await ObjectStore(type).getOneById(objectId)
-      if (object) {
-        if ('selectedText' in object) {
-          const { name, description } = transformTextContentToNameAndDescription(object.selectedText)
-          MetaStore.addMetaObject({
-            type,
-            objectId,
-            name: name,
-            description: description
-          })
-        } else {
-          MetaStore.addMetaObject({
-            type,
-            objectId,
-            name: object.name,
-            description: object.description
-          })
-        }
-      }
-    }
+    await GlobalInstance.metaOps?.addDraggableAsMeta({
+      type,
+      labelId: objectId
+    })
   }
   return (
     <WithBorder padding={6} width={160}>
@@ -66,7 +49,18 @@ const LabelActionMenu = ({ on, objectId, type }: Props) => {
           }}
         />
       )}
-      <Button.IconButton icon="park-edit" text={t('general.edit name')} onClick={() => on({ type: 'changeName' })}></Button.IconButton>
+      {!meta && (
+        <Button.IconButton
+          icon={'park-share-one'}
+          text={t('general.add as object')}
+          onClick={() => {
+            GlobalInstance.metaOps?.addDraggableAsMeta({
+              type,
+              labelId: objectId
+            })
+          }}
+        />
+      )}
       <Button.IconButton
         icon="park-edit-one"
         text={t('general.edit description')}
@@ -79,6 +73,18 @@ const LabelActionMenu = ({ on, objectId, type }: Props) => {
           onClick={() => on({ type: 'editOriginal' })}
         ></Button.IconButton>
       )}
+      <Button.IconButton
+        icon={'park-folder-close'}
+        text={t('general.Assign to collection')}
+        onClick={() => {
+          GlobalInstance.metaOps
+            ?.addDraggableAsMeta({
+              type,
+              labelId: objectId
+            })
+            .then(res => GlobalInstance.collectionOps?.addMetaIntoCollection(res.id))
+        }}
+      />
       <Button.IconButton
         icon="park-link"
         text={t('general.add attachment')}

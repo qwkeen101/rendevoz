@@ -1,9 +1,6 @@
-import { Controller, Inject } from '@nestjs/common'
-import { IpcInvoke } from './transport'
 import path from 'path'
 import fs from 'fs'
 
-@Controller()
 export class VideoController {
   constructor() {}
   private cachedDir = {
@@ -11,7 +8,6 @@ export class VideoController {
     files: undefined,
     matchSubtitleFiles: undefined
   }
-  @IpcInvoke('getVideoSubtitle')
   // videoPath should be absolute
   public async getVideoSubtitle(videoPath: string) {
     const parsed = path.parse(videoPath)

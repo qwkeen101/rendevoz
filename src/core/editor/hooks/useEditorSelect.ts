@@ -13,6 +13,7 @@ import useIsSelecting from './useIsSelecting'
 import useEditorInstance from '@/core/editor/hooks/useEditorInstance'
 import isHotkey from 'is-hotkey'
 import { KEY } from '@/consts'
+import useReadOnlyEditor from '@/core/editor/hooks/useReadOnly'
 
 const useEditorSelect = (editor: CustomEditor, overlayManager: EditorOverlayManager, scrollElement?: HTMLElement | null) => {
   const scrollManager = useMemo(() => new ScrollManager(), [])
@@ -20,7 +21,7 @@ const useEditorSelect = (editor: CustomEditor, overlayManager: EditorOverlayMana
   const blockElementsMapRef = useRef<Map<any, any>>(new Map())
   const isPressed = useRef(false)
   const [isSelecting, setIsSelecting] = useIsSelecting()
-  const readonly = editor.readonly
+  const readonly = useReadOnlyEditor()
   const instance = useEditorInstance()
   const mouseDownHandler = (e: MouseEvent) => {
     const target = e.target as HTMLElement

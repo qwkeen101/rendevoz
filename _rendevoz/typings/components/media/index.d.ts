@@ -1,0 +1,115 @@
+import { PartialWithId } from '@/types'
+import { IMedia, IMediaChapter, IMediaLabel, IMetaAttachment, IVideoLabel } from '../..'
+import { VideoState } from '@/core/video/hooks/useVideoState'
+import { Size } from '../common'
+import { IMediaEvent } from '~/typings/components/media/event'
+
+export type IMediaState = {
+  loaded: boolean
+  jumpTime?: number
+  subtitleUrl?: string
+  videoId?: number
+} & Partial<IMedia> &
+  IMediaInternalState &
+  IMediaExternalState
+
+export type IMediaExternalState = {
+  name: string
+  description?: string
+  isPinned?: boolean
+  // url
+  thumbnail?: string
+  labelType: string
+  loop?: boolean
+  muted?: boolean
+  volume?: number
+  speed?: number
+  currentTime?: number
+  totalTime?: number
+  autoPlay?: boolean
+  url: string
+  collectionName?: string
+  // for attachments
+  metaId?: number
+  toolbar?: {
+    pin?: boolean
+    assignToCollection?: boolean
+  }
+}
+
+export type IMediaInternalState = {
+  floated?: boolean
+  progressbarHovering: boolean
+  sticky?: boolean
+  fullScreen: boolean
+  isTranscribing?: boolean
+  windowed: boolean
+  jumpIndicator?: 'back' | 'forward'
+  volumeIndicator?: 'up' | 'down'
+  mode?: 'web' | 'video' | 'baidudisk' | 'audio'
+  paused: boolean
+  sortedChapters?: IMediaChapter[]
+  showSubtitle?: boolean
+  subtitles?: {
+    alignment: string
+    direction: 'vertical' | 'horizontal'
+    endTime: number
+    startTime: number
+    id: string
+    lineAlign: string
+    pauseOnExit: false
+    positionAlign: string
+    size: number
+    snapToLines: boolean
+    text: string
+    textPosition: string
+  }[]
+  labelWithTime?: {
+    time: number
+    id: number
+  }[]
+}
+
+export type IMediaInstance = Partial<{
+  actionOps: {
+    play: VoidFunction
+    pause: VoidFunction
+    // second
+    jumpTo: (time: number) => void
+    mute: VoidFunction
+    unmute: VoidFunction
+    loop: VoidFunction
+    unloop: VoidFunction
+  }
+  imageOps: {
+    captureCurrentImage: () => Promise<string | undefined>
+    captureImage: (time: number, size?: Size) => Promise<string | undefined>
+  }
+  transcribe?: VoidFunction
+  cancelTranscribe?: VoidFunction
+  // get audio for transcribing
+  getAudioFile: () => Promise<Blob>
+  getMediaState: () => IMediaState
+  on: (event: IMediaEvent) => any
+  getUrl: () => string | undefined
+  getVideoId: () => number
+  getVideoElement: () => HTMLVideoElement | undefined
+  getPlayerElement: () => HTMLElement | undefined | null
+  getOffscreenVideo: () => HTMLVideoElement | undefined
+  getVideoState: () => VideoState
+  openThumbnailAtTime: (
+    time: number,
+    options?: {
+      labelName?: string
+      labelId?: number
+    }
+  ) => void
+  closeThumbnail: VoidFunction
+  insertChapter: (chapter: Partial<IMediaChapter>) => Promise<void>
+  insertChapters: (chapters: IMediaChapter[]) => Promise<void>
+  deleteChapter: (chapterId: number) => Promise<void>
+  updateChapter: (newChapter: PartialWithId<IMediaChapter>) => Promise<void>
+  insertLabel: (label: Partial<IMediaLabel>, shouldJumpBack?: boolean, skipCaptureImage?: boolean) => Promise<IMediaLabel>
+  deleteLabel: (labelId: number) => Promise<void>
+  getMarkerContainer: () => HTMLElement | undefined | null
+}>

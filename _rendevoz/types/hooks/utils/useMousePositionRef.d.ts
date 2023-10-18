@@ -1,6 +1,5 @@
 import * as React from 'react';
-import {RefObject} from 'react';
-
+import { RefObject } from 'react';
 /**
  * Mouse position as a tuple of [x, y]
  */

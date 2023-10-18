@@ -22,13 +22,6 @@ export type BuiltInDraggableElement =
       value: MetaGroupChild[]
     })
   | {
-      type: 'pdfLabel'
-      labelId: number
-      pdfId: number
-      content?: string
-      page?: number
-    }
-  | {
       type: 'metaElement'
       metaId: number
     }
@@ -55,31 +48,10 @@ export type BuiltInDraggableElement =
       type: 'whiteboard'
       whiteboardId: number
     }
-  | ({
-      type: 'pendingPdfElement'
-      labelType: ILabel['type']
-    } & {
-      labelType: 'shape'
-      shapeType: IShapeLabel['shape']
-    })
   | {
-      type: 'webpageLabel'
-      highlightId: number
-      noteId: number
-      webpageId: number
-      textContent?: string
+      type: 'webpageLabel' | 'videoLabel' | 'noteLabel' | 'pdfLabel'
+      labelId: number
     }
-  | {
-      type: 'noteLabel'
-      highlightId: number
-      noteId: number
-      textContent?: string
-    }
-  | ({
-      type: 'videoLabel'
-      textContent?: string
-    } & Partial<IVideoLabel>)
-
 export type IDraggableElement = CustomTypes['DraggableElement']
 
 export interface IGlobalDragDropInstance {
@@ -89,6 +61,6 @@ export interface IGlobalDragDropInstance {
   removeDragElements: (nodes: HTMLElement | HTMLElement[]) => void
   removeAllDragElement: () => void
   getDraggingDetails: () => Partial<IDraggableElement> | undefined
-  setDraggingDetails: (draggingDetails: Partial<IDraggableElement>) => void
+  setDraggingDetails: (draggingDetails: Partial<BuiltInDraggableElement>) => void
   draggingDetails?: Partial<IDraggableElement>
 }

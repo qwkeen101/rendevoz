@@ -21,7 +21,31 @@ export type CurrentKeyValues = {
   }
   rightBarItems: string[]
   leftBarItems: string[]
+  feedCardView: 'magazine' | 'card' | 'details' | 'title'
+  feedOpenMode: 'rightBar' | 'center' | 'sidePeek'
+  feedReadLaterIds: number[]
+  feedRecentlyReadIds: number[]
+  feedLastSyncTime: number
+  feedModalWidth: number
+  mediaRightbarWidth: number
+  googleNewsSearchLang: string
+  homeGalleryRows?: number
+  editorSettings: {
+    editMode: {
+      typeface: string
+      fontSize: number
+      lineSpacing: number
+      pageWidth: string
+    }
+    readerMode: {
+      pageWidth: string
+      typeface: string
+      fontSize: number
+      lineSpacing: number
+    }
+  }
 }
+
 const keyvalueAtom = atom<Map<string, any>>(new Map())
 
 const createKeyvalueStore = () => {
@@ -40,6 +64,9 @@ const createKeyvalueStore = () => {
       map.set(key, newValue)
       globalStore.set(keyvalueAtom, map)
       keyvalueDb.put(newValue, key)
+    },
+    getOne: <T extends keyof CurrentKeyValues>(key: T): CurrentKeyValues[T] | undefined => {
+      return globalStore.get(keyvalueAtom).get(key)
     },
     useValue: <T extends keyof CurrentKeyValues>(key: T): CurrentKeyValues[T] | undefined => {
       const v = useSelectGlobalAtomValue(keyvalueAtom, s => s.get(key))

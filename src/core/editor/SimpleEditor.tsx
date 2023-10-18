@@ -1,16 +1,13 @@
 import { Editor } from '@/core'
-import { useEffect, useMemo } from 'react'
+import { useMemo } from 'react'
 import Id from '@/utils/id'
-import { useUpdate } from 'react-use'
-import { css } from '@emotion/css'
-import { EditorProps } from '~/typings'
 
-type SimpleEditorProps = EditorProps & {
+type SimpleEditorProps = {
   value?: string
-  onChange?: (v: any[]) => void
+  onChange?: (v: import('slate').Descendant[]) => void
 }
 
-const SimpleEditor = ({ value, onChange, type = 'note' }: SimpleEditorProps) => {
+const SimpleEditor = ({ value, onChange }: SimpleEditorProps) => {
   const id = useMemo(() => Id.getStrId(), [])
   const initialValue = useMemo(() => {
     if (value) {
@@ -49,33 +46,25 @@ const SimpleEditor = ({ value, onChange, type = 'note' }: SimpleEditorProps) => 
   return (
     <Editor
       id={id}
-      toolbarOptions={{
-        fontSize: false,
-        extra: false,
-        highlight: false
-      }}
       on={e => {
         if (e.type === 'valueChange') {
           onChange?.(e.value)
         }
       }}
-      innerEditorClassName={css({
-        '.ParagraphBlock': {
-          marginTop: 1,
-          marginBottom: 1
-        }
-      })}
-      innerEditorStyle={{
-        paddingLeft: 0,
-        paddingRight: 10
+      defaultValue={initialValue}
+      styles={{
+        pageMinPadding: 0
       }}
-      noBottomPadding={true}
-      showToolbar={true}
-      initialValue={initialValue}
-      showTitle={false}
-      showBlockHandle={false}
-      showHeader={false}
-      type={type}
+      state={{
+        showSyncBlockShadow: false
+      }}
+      layout={{
+        showTitle: false,
+        showBlockHandle: false,
+        showHeader: false,
+        showToolbar: false,
+        showBottomPadding: false
+      }}
     />
   )
 }

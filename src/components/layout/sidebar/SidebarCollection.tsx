@@ -18,8 +18,19 @@ import { sidebarDraggingState } from './useSidebarItemDrag'
 import { useTranslation } from 'react-i18next'
 import { Rendevoz } from '@/core/rendevoz'
 import FontSize from '@/consts/font'
+import { ICollection, ICollectionItem } from '~/typings'
 
-const SidebarCollection = () => {
+const SidebarCollection = ({
+  onClick,
+  showHeader,
+  onlyCollection,
+  selectMode
+}: {
+  onClick?: (e: MouseEvent, item: ICollectionItem) => void
+  showHeader?: boolean
+  onlyCollection?: boolean
+  selectMode?: boolean
+}) => {
   const rootCollections = useAtomValue(rootCollectionsAtom, {
     store: globalStore
   })
@@ -89,48 +100,50 @@ const SidebarCollection = () => {
           onBack={() => setNewCollectionVisible(false)}
         />
       </Modal>
-      <AnimatePopover
-        visible={dropVisible}
-        positions={['top']}
-        padding={10}
-        containerStyle={{ zIndex: String(Zindexes.PopupMenu) }}
-        content={
-          <div
-            style={{
-              color: 'white',
-              background: 'rgba(0,0,0,0.8)',
-              padding: '2px 4px',
-              borderRadius: 4,
-              fontSize: '0.857rem'
-            }}
-          >
-            Move collection to root
-          </div>
-        }
-        innerRef={containerRef}
-      >
-        <Content
-          flex
-          alignItems="center"
-          justifyContent="space-between"
-          className={dropVisible ? ClassName.Drag.droppableItemHovered(true) : undefined}
-          style={{ transition: 'all 0.3s ease' }}
-        >
-          <div style={{ cursor: 'pointer', fontSize: FontSize['13px'] }} onClick={toggleCollapsed}>
-            {t('sidebar.collections')}
-          </div>
-          <Tooltip position="top" content={t('sidebar.create new collection')}>
-            <Icon
-              name="park-plus"
-              size={14}
-              onClick={() => {
-                setNewCollectionVisible(true)
+      {showHeader !== false && (
+        <AnimatePopover
+          visible={dropVisible}
+          positions={['top']}
+          padding={10}
+          containerStyle={{ zIndex: String(Zindexes.PopupMenu) }}
+          content={
+            <div
+              style={{
+                color: 'white',
+                background: 'rgba(0,0,0,0.8)',
+                padding: '2px 4px',
+                borderRadius: 4,
+                fontSize: '0.857rem'
               }}
-              className={ClassName.circleButton(2, 4)}
-            />
-          </Tooltip>
-        </Content>
-      </AnimatePopover>
+            >
+              Move collection to root
+            </div>
+          }
+          innerRef={containerRef}
+        >
+          <Content
+            flex
+            alignItems="center"
+            justifyContent="space-between"
+            className={dropVisible ? ClassName.Drag.droppableItemHovered(true) : undefined}
+            style={{ transition: 'all 0.3s ease' }}
+          >
+            <div style={{ cursor: 'pointer', fontSize: FontSize['13px'] }} onClick={toggleCollapsed}>
+              {t('sidebar.collections')}
+            </div>
+            <Tooltip position="top" content={t('sidebar.create new collection')}>
+              <Icon
+                name="park-plus"
+                size={14}
+                onClick={() => {
+                  setNewCollectionVisible(true)
+                }}
+                className={ClassName.circleButton(2, 4)}
+              />
+            </Tooltip>
+          </Content>
+        </AnimatePopover>
+      )}
       {!collapsed && (
         <Content
           flex
@@ -143,7 +156,15 @@ const SidebarCollection = () => {
           }}
         >
           {sortedCollections.map(i => (
-            <SidebarCollectionItem key={i.id} id={i.id} parentId={0} parentType="collection" />
+            <SidebarCollectionItem
+              selectMode={selectMode}
+              onlyCollection={onlyCollection}
+              onClick={onClick}
+              key={i.id}
+              id={i.id}
+              parentId={0}
+              parentType="collection"
+            />
           ))}
         </Content>
       )}
@@ -228,8 +249,7 @@ export const IconNameItem = memo(
           <div
             style={{
               color: color,
-              backgroundImage: linearFontColor ? color : undefined,
-              textTransform: 'none'
+              backgroundImage: linearFontColor ? color : undefined
             }}
             className={css([
               ClassName.ellipsisFont(1),

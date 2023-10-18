@@ -82,11 +82,12 @@ const SidebarDatabase = memo(() => {
           case 'noteBlock':
             objectId = draggingEle.blockId
             break
+          case 'videoLabel':
+          case 'audioLabel':
           case 'pdfLabel':
-            objectId = draggingEle.labelId
-            break
           case 'webpageLabel':
-            objectId = draggingEle.highlightId
+          case 'noteLabel':
+            objectId = draggingEle.labelId
             break
           case 'pdf':
             objectId = draggingEle.pdfId
@@ -94,21 +95,16 @@ const SidebarDatabase = memo(() => {
           case 'note':
             objectId = draggingEle.noteId
             break
-          case 'noteLabel':
-            objectId = draggingEle.highlightId
-            break
           case 'whiteboard':
             objectId = draggingEle.whiteboardId
             break
           case 'image':
             droppable = true
             break
-          case 'videoLabel':
-            objectId = draggingEle.id
-            break
           default:
             droppable = false
         }
+        console.log(objectId)
         if (objectId !== undefined && !objectIdToMetaObjectIdMap?.has(objectId)) droppable = true
         if ((objectId && objectIdToMetaObjectIdMap?.has(objectId)) || draggingEle.type === 'metaElement') alreadyExist = true
       }

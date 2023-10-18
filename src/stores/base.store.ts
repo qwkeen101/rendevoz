@@ -88,8 +88,8 @@ const handleQueue = () => {
     ATOM_QUEUE_MAP.delete(k)
   })
   setTimeout(() => {
-    console.log(DB_ACTION_MAP)
     Array.from(DB_ACTION_MAP.entries()).forEach(([k, v]) => {
+      console.log(v, k)
       immerWithDatabase(v, k.name)
       DB_ACTION_MAP.delete(k)
     })
@@ -251,6 +251,7 @@ export function initializeLocalStore<T>(atom: PrimitiveAtom<Map<number, T>>, dat
       (obj, silent = false) => {
         return new Promise(res => {
           if (globalStore.get(atom).has(obj.id)) {
+            console.log(obj)
             dispatch({
               type: 'update',
               data: obj,

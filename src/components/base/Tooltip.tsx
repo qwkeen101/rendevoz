@@ -19,12 +19,14 @@ interface ToolTipProps {
   onVisibleChange?: (v: boolean) => void
   parentElement?: AnimatePopoverProps['parentElement']
   padding?: number
+  align?: AnimatePopoverProps['align']
 }
 
 const ToolTip: FC<PropsWithChildren<ToolTipProps>> = (
   {
     content,
     children,
+    align,
     delay = 300,
     disable,
     disableDefaultContent,
@@ -193,6 +195,7 @@ const ToolTip: FC<PropsWithChildren<ToolTipProps>> = (
           zIndex: zIndex ? String(zIndex) : String(Zindexes.Tooltip)
         }}
         padding={padding}
+        align={align}
         content={renderContent()}
         boundaryElement={parentElement || document.body}
         boundaryInset={20}

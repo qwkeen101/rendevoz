@@ -47,3 +47,10 @@ export const pseudoBlurContrastBackground = css({
     backdropFilter: 'saturate(1.5) blur(32px)'
   }
 })
+
+export const focusedComponent = css({
+  transition: 'all 0.25s ease',
+  ':focus':{
+    boxShadow: '0 0 0 2px var(--select-color)'
+  }
+})

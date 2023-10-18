@@ -8,7 +8,7 @@ import { toast } from 'react-hot-toast'
 import { Button, Content, Form, Switch } from '../../components/base'
 import Modal from '../../components/base/Modal'
 import useFileUpload from '../../components/base/useFileUpload'
-import SettingItem from './Item'
+import SettingItem, { ISettingItem } from './SettingItem'
 import { useTranslation } from 'react-i18next'
 import { useSetting } from '.'
 import Select from '../../components/base/select'
@@ -23,6 +23,9 @@ import BorderInput from '@/components/base/BorderInput'
 import FontSize from '@/consts/font'
 import { isValidHttpUrl } from '../webpage/utils'
 import { changeFilePath, getSelectedFolderPath, openDatabaseFolder } from '@/utils/file'
+import SettingGroup from '@/core/setting/SettingGroup'
+import { DateFormat } from '@/utils'
+import { getAppState } from '@/core/rendevoz/appState'
 
 const languageOptions: SelectOptionProps[] = [
   {
@@ -42,6 +45,7 @@ const GeneralSetting = () => {
   const updateInfo = useGlobalAtomValue(updateInfoAtom)
   const latestIsExporting = useLatest(isExporting)
   const hasExporting = useRef(false)
+  const lastBackUp = getAppState().lastBackupDate
   const { getAllMetaObjects, getAllMetaLinks } = MetaStore
   const { getAllCollections } = CollectionStore
   const { t } = useTranslation()
@@ -123,7 +127,7 @@ const GeneralSetting = () => {
     }
   }, [setting.general.customSearchEngineUrl])
 
-  const items: (SettingItem | undefined)[] = [
+  const VersionItems: ISettingItem[] = [
     {
       title: t('settings.current version'),
       description: `Beta ${APP_VERSION || 'Unknown'}`
@@ -152,196 +156,9 @@ const GeneralSetting = () => {
           {t('settings.download and install')}
         </div>
       )
-    },
-    {
-      title: t('settings.user file path'),
-      description: t('settings.file path description'),
-      column: true,
-      children: (
-        <Content style={{ marginTop: -6 }} fullWidth justifyContent="space-between" flex alignItems="center">
-          <div style={{ flex: 1 }} className={ClassName.ellipsisFont(1)}>
-            {setting.general.userFilePath || 'Default User Path'}
-          </div>
-          <Content flex gap={10}>
-            {setting.general.userFilePath !== setting.general.defaultFilePath && (
-              <Button.IconButton
-                onClick={() =>
-                  setSetting(
-                    produce(setting, s => {
-                      s.general.userFilePath = s.general.defaultFilePath
-                      s.general.defaultFilePath && changeFilePath(s.general.defaultFilePath)
-                    })
-                  )
-                }
-                icon="park-redo"
-                text={t('settings.reset as default folder')}
-              />
-            )}
-            <Button.IconButton
-              onClick={() =>
-                getSelectedFolderPath().then(path =>
-                  setSetting(
-                    produce(setting, s => {
-                      s.general.userFilePath = path
-                      changeFilePath(path)
-                    })
-                  )
-                )
-              }
-              icon="park-folder-close"
-              text={t('settings.choose folder')}
-            />
-          </Content>
-        </Content>
-      )
-    },
-    {
-      title: t('settings.auto copy file when import'),
-      description: t('settings.copy file desc'),
-      children: (
-        <Switch
-          value={setting.general.copyFileWhenImport}
-          onChange={v =>
-            setSetting(s =>
-              produce(s, draft => {
-                draft.general.copyFileWhenImport = v
-              })
-            )
-          }
-        />
-      )
-    },
-    {
-      title: t('settings.export/import data'),
-      description: t('settings.export description'),
-      column: true,
-      children: (
-        <>
-          {renderUploader()}
-          <Modal showClose noStyle visible={alertVisible} onClose={toggleAlertVisible}>
-            <div style={{ padding: '16px', borderRadius: 10 }} className={ClassName.Background.pseudoBlubBackground}>
-              <Form
-                onBack={toggleAlertVisible}
-                onSubmit={() => {
-                  toggleAlertVisible(false)
-                  upload()
-                }}
-                title={t('general.warning')}
-                submitText="understand"
-                backText="cancel"
-              >
-                <div style={{ margin: '10px 0px 16px', textTransform: 'none' }}>{t('settings.import data warning')}</div>
-              </Form>
-            </div>
-          </Modal>
-          <Content flex gap={20}>
-            <Button.IconButton
-              style={{
-                border: `1px solid ${Colors.Background.Border}`,
-                padding: '4px 24px'
-              }}
-              onClick={toggleIsExporting}
-              spin={isExporting}
-              text={t('settings.export')}
-              icon={isExporting ? 'park-loading-four' : 'park-efferent-three'}
-            />
-            <Button.IconButton
-              style={{
-                border: `1px solid ${Colors.Background.Border}`,
-                padding: '4px 24px'
-              }}
-              onClick={() => {
-                toggleAlertVisible(true)
-              }}
-              text={t('settings.import')}
-              spin={isImporting}
-              icon={isImporting ? 'park-loading-four' : 'park-afferent-three'}
-            />
-            <Select
-              style={{
-                border: `1px solid ${Colors.Background.Border}`,
-                padding: '4px 24px',
-                height: 'auto'
-              }}
-              closeOnSelect
-              value={setting.general.autoBackup}
-              placeholder={t('settings.autoBackup')}
-              onSelect={v => {
-                const value = v[0] as string
-                setSetting(s =>
-                  produce(s, d => {
-                    d.general.autoBackup = value
-                  })
-                )
-              }}
-              options={[
-                {
-                  value: 'never',
-                  children: t('settings.never')
-                },
-                {
-                  value: 'whenClose',
-                  children: t('settings.whenClose')
-                },
-                {
-                  value: 'every day',
-                  children: t('settings.every day')
-                },
-                {
-                  value: 'every week',
-                  children: t('settings.every week')
-                },
-                {
-                  value: 'every month',
-                  children: t('settings.every month')
-                }
-              ]}
-            ></Select>
-            <Button.IconButton
-              onClick={() => {
-                openDatabaseFolder()
-              }}
-              icon="park-folder-open"
-              text={t('settings.open database folder')}
-              style={{
-                border: `1px solid ${Colors.Background.Border}`,
-                padding: '4px 24px'
-              }}
-            />
-          </Content>
-        </>
-      )
-    },
-    {
-      title: t('settings.dark mode'),
-      children: (
-        <Switch
-          value={setting.general.darkMode}
-          onChange={v =>
-            setSetting(
-              produce(setting, draft => {
-                draft.general.darkMode = !setting.general.darkMode
-              })
-            )
-          }
-        />
-      )
-    },
-    {
-      title: t('settings.auto save layout'),
-      children: (
-        <Switch
-          value={setting.general.autoSaveLayout}
-          onChange={v =>
-            setSetting(
-              produce(setting, draft => {
-                draft.general.autoSaveLayout = !setting.general.autoSaveLayout
-              })
-            )
-          }
-        />
-      )
-    },
+    }
+  ]
+  const LanguageItems: ISettingItem[] = [
     {
       title: t('settings.language'),
       description: t('settings.choose display language'),
@@ -359,23 +176,23 @@ const GeneralSetting = () => {
           }}
         ></Select>
       )
-    },
+    }
+  ]
+  const OthersItems: ISettingItem[] = [
     {
-      title: t('settings.open new tab'),
-      description: t('settings.choose open new tab action'),
+      title: t('settings.auto save layout'),
+      description: t('settings.Save layout desc'),
       children: (
-        <Select
-          closeOnSelect
-          options={newTabOptions}
-          value={setting.general.openNewTab}
-          onSelect={v => {
+        <Switch
+          value={setting.general.autoSaveLayout}
+          onChange={v =>
             setSetting(
               produce(setting, draft => {
-                draft.general.openNewTab = v[0] as typeof setting.general.openNewTab
+                draft.general.autoSaveLayout = !setting.general.autoSaveLayout
               })
             )
-          }}
-        ></Select>
+          }
+        />
       )
     },
     {
@@ -488,48 +305,171 @@ const GeneralSetting = () => {
             </Content>
           )
         }
-      : undefined,
+      : undefined
+  ].filter(i => i) as ISettingItem[]
+  const FileItems: ISettingItem[] = [
     {
-      title: t('settings.default image search engine'),
+      title: t('settings.user file path'),
+      description: t('settings.file path description'),
+      column: true,
       children: (
-        <Select
-          closeOnSelect
-          value={setting.general.defaultImageSearchEngine}
-          menuStyle={{
-            maxHeight: 200,
-            overflowY: 'auto'
-          }}
-          onSelect={v => {
-            setSetting(
-              produce(setting, draft => {
-                draft.general.defaultImageSearchEngine = v[0]
+        <Content fullWidth justifyContent="space-between" flex alignItems="center">
+          <div style={{ flex: 1 }} className={ClassName.ellipsisFont(1)}>
+            {setting.general.userFilePath || 'Default User Path'}
+          </div>
+          <Content flex gap={10}>
+            {setting.general.userFilePath !== setting.general.defaultFilePath && (
+              <Button.IconButton
+                onClick={() =>
+                  setSetting(
+                    produce(setting, s => {
+                      s.general.userFilePath = s.general.defaultFilePath
+                      s.general.defaultFilePath && changeFilePath(s.general.defaultFilePath)
+                    })
+                  )
+                }
+                icon="park-redo"
+                text={t('settings.reset as default folder')}
+              />
+            )}
+            <Button.IconButton
+              onClick={() =>
+                getSelectedFolderPath().then(path =>
+                  setSetting(
+                    produce(setting, s => {
+                      s.general.userFilePath = path
+                      changeFilePath(path)
+                    })
+                  )
+                )
+              }
+              icon="park-folder-close"
+              text={t('settings.choose folder')}
+            />
+          </Content>
+        </Content>
+      )
+    },
+    {
+      title: t('settings.auto copy file when import'),
+      description: t('settings.copy file desc'),
+      children: (
+        <Switch
+          value={setting.general.copyFileWhenImport}
+          onChange={v =>
+            setSetting(s =>
+              produce(s, draft => {
+                draft.general.copyFileWhenImport = v
               })
             )
-          }}
-          options={[
-            {
-              value: 'google',
-              children: t('settings.google')
-            },
-            {
-              value: 'bing',
-              children: t('settings.bing')
-            },
-            {
-              value: 'pinterest',
-              children: t('settings.pinterest')
-            },
-            setting.general.language === 'zh-CN' && {
-              value: 'baidu',
-              children: t('settings.baidu')
-            }
-          ]}
-        ></Select>
+          }
+        />
+      )
+    },
+    {
+      title: t('settings.export/import data'),
+      description: t('settings.export description'),
+      children: (
+        <>
+          {renderUploader()}
+          <Modal showClose noStyle visible={alertVisible} onClose={toggleAlertVisible}>
+            <div style={{ padding: '16px', borderRadius: 10 }} className={ClassName.Background.pseudoBlubBackground}>
+              <Form
+                onBack={toggleAlertVisible}
+                onSubmit={() => {
+                  toggleAlertVisible(false)
+                  upload()
+                }}
+                title={t('general.warning')}
+                submitText="understand"
+                backText="cancel"
+              >
+                <div style={{ margin: '10px 0px 16px', textTransform: 'none' }}>{t('settings.import data warning')}</div>
+              </Form>
+            </div>
+          </Modal>
+          <Content flex gap={8}>
+            <Button.IconButton
+              onClick={toggleIsExporting}
+              spin={isExporting}
+              text={t('settings.export')}
+              icon={isExporting ? 'park-loading-four' : 'park-efferent-three'}
+            />
+            <Button.IconButton
+              onClick={() => {
+                toggleAlertVisible(true)
+              }}
+              text={t('settings.import')}
+              spin={isImporting}
+              icon={isImporting ? 'park-loading-four' : 'park-afferent-three'}
+            />
+          </Content>
+        </>
+      )
+    },
+    {
+      title: t('settings.data backup'),
+      description: lastBackUp ? t('settings.last backup at') + ': ' + DateFormat.formatDistanceToNowStrict(lastBackUp, true) : undefined,
+      children: (
+        <Content flex gap={8}>
+          <Select
+            style={{
+              height: 'auto'
+            }}
+            closeOnSelect
+            value={setting.general.autoBackup}
+            placeholder={t('settings.autoBackup')}
+            onSelect={v => {
+              const value = v[0] as string
+              setSetting(s =>
+                produce(s, d => {
+                  d.general.autoBackup = value
+                })
+              )
+            }}
+            options={[
+              {
+                value: 'never',
+                children: t('settings.never')
+              },
+              {
+                value: 'whenClose',
+                children: t('settings.whenClose')
+              },
+              {
+                value: 'every day',
+                children: t('settings.every day')
+              },
+              {
+                value: 'every week',
+                children: t('settings.every week')
+              },
+              {
+                value: 'every month',
+                children: t('settings.every month')
+              }
+            ]}
+          ></Select>
+          <Button.IconButton
+            onClick={() => {
+              openDatabaseFolder()
+            }}
+            icon="park-folder-open"
+            text={t('settings.open backup folder')}
+          />
+        </Content>
       )
     }
   ]
-
-  return <>{items.map((i, idx) => i && <SettingItem key={idx} {...i} />)}</>
+  console.log(lastBackUp)
+  return (
+    <>
+      <SettingGroup title={t('settings.Application details')} layout={VersionItems} />
+      <SettingGroup title={t('settings.language')} layout={LanguageItems} />
+      <SettingGroup title={t('settings.File and data')} layout={FileItems} />
+      <SettingGroup title={t('settings.others')} layout={OthersItems} />
+    </>
+  )
 }
 
 export default GeneralSetting

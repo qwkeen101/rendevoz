@@ -17,18 +17,11 @@ export const useAssignPdfInstance = (pdfId: number) => {
   assignProperties(instance, {
     getPdfId: () => pdfId,
     insertLabel: async label => {
-      const setting = getSetting()
       const name = 'Unnamed Label'
-      // if (setting.label.showOriginalText && label.type === 'highlight' && label.selectedText) {
-      //   name = truncateString(label.selectedText)
-      // } else if (label.type === 'highlight' && label.selectedText) {
-      //   name = label.selectedText
-      // }
-      const truncatedName = name
       await ObjectStore('pdfLabel')
         .addOne({
-          name: truncatedName,
-          documentId: pdfId,
+          name,
+          parentObjectId: pdfId,
           ...label
         })
         .then(one =>

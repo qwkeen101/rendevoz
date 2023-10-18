@@ -10,7 +10,7 @@ const useDragCreateSyncBlock = (instance: IEditorInstance, editor: CustomEditor)
   handler.on('turnElementsToSyncBlock', async data => {
     const currentDraggingDetails = data.draggingDetails as BuiltInDraggableElement
     // transform elements to synced block
-    if (currentDraggingDetails.type === 'noteBlock' && currentDraggingDetails.noteId === editor.noteId) {
+    if (currentDraggingDetails.type === 'noteBlock' && currentDraggingDetails.editorId === editor.id) {
       const elements = currentDraggingDetails.elements || [currentDraggingDetails.element]
       const start = elements[0]
       const end = elements[elements.length - 1]

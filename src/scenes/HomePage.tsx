@@ -22,6 +22,7 @@ import FileImporter from '@/components/fileImporter'
 import HomeGallery from '@/scenes/home/HomeGallery'
 import KeyvalueStore from '@/stores/keyvalue.store'
 import GalleryConfig from '@/scenes/home/GalleryConfig'
+import fetchGoogleNews from '@/core/feed/utils/googleNewsScraper'
 
 const { Content } = Components
 const HomeSearchAtom = atom<string | undefined>(undefined)

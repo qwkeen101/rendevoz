@@ -1,20 +1,18 @@
-import { Content } from "@/components";
-import TabTitle from "@/components/layout/TabTitle";
-import { Video, VideoProps } from "@/core";
-import { Rendevoz } from "@/core/rendevoz";
-import { MetaStore } from "@/stores";
+import { Content } from '@/components'
+import TabTitle from '@/components/layout/TabTitle'
+import { Rendevoz } from '@/core/rendevoz'
+import { MetaStore } from '@/stores'
+import Video from '@/core/media/wrappers/Video'
+import { IMediaInstance } from '~/typings'
 
-const VideoPage = (props: VideoProps) => {
-  const video = MetaStore.getMetaObjectByObjectId(props.videoId);
+const VideoPage = ({ videoId, onInstanceInitialized }: { videoId: number; onInstanceInitialized: (i: IMediaInstance) => void }) => {
+  const video = MetaStore.getMetaObjectByObjectId(videoId)
   return (
     <Content fullWidth fullHeight>
-      <TabTitle
-        title={video?.name || "Unnamed Video"}
-        icon={Rendevoz.Utils.Object.getMetaObjectIcon("video")}
-      />
-      <Video {...props} />
+      <TabTitle title={video?.name || 'Unnamed Video'} icon={Rendevoz.Utils.Object.getMetaObjectIcon('video')} />
+      <Video onInstanceInitialized={onInstanceInitialized} videoId={videoId} />
     </Content>
-  );
-};
+  )
+}
 
-export default VideoPage;
+export default VideoPage

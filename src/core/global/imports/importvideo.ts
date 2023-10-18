@@ -1,6 +1,6 @@
 import { getFilenameWithoutExtension, saveFileLocally, saveImageLocally } from '@/utils'
 import { ObjectStore } from '@/stores'
-import { generateVideoThumbnail } from '@/core/video/utils'
+import { generateVideoThumbnail } from '@/core/media/utils'
 
 const importvideo = async (file: File) => {
   const name = getFilenameWithoutExtension(file.name)

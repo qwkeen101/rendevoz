@@ -10,12 +10,14 @@ import classNames from 'classnames'
 import { createPortal } from 'react-dom'
 import { AnimatePresence, motion } from 'framer-motion'
 import BlockColorPicker from '../BlockColorPicker'
-import { useMemoizedFn } from '@/hooks'
+import { useMemoizedFn, useSelectAtomValue } from '@/hooks'
 import { css } from '@emotion/css'
 import ClassName from '@/styles/classNames'
 import { Colors, Zindexes } from '@/consts'
 import useEditorInstance from '../../hooks/useEditorInstance'
 import { EditorProps } from '~/typings'
+import { EditorStateAtom } from '@/core/editor/hooks/useEditorState'
+import useReadOnlyEditor from '@/core/editor/hooks/useReadOnly'
 
 type EditorToolbarEvents =
   | {
@@ -35,13 +37,13 @@ type EditorToolbarEvents =
     }
 interface EditorToolbarProps {
   scrollElement?: HTMLElement | null
-  showToolbar?: boolean
   on: (event: EditorToolbarEvents) => void
   style?: CSSProperties
-  toolbarOptions?: EditorProps['toolbarOptions']
 }
 const MAX_TOLERANT_DISTANCE = 15
-const EditorToolbar: FC<EditorToolbarProps> = ({ scrollElement, showToolbar, style, on, toolbarOptions }) => {
+const EditorToolbar: FC<EditorToolbarProps> = ({ scrollElement, style, on }) => {
+  const showToolbar = useSelectAtomValue(EditorStateAtom, s => s.layout?.showToolbar)
+  const toolbarOptions = useSelectAtomValue(EditorStateAtom, s => s.toolbar)
   const { t } = useTranslation()
   const editor = useSlate()
   const { selection } = editor
@@ -50,17 +52,17 @@ const EditorToolbar: FC<EditorToolbarProps> = ({ scrollElement, showToolbar, sty
   const [floatPosition, setFloatPosition] = useState<{
     top: number
     left: number
-    direction: string
+    direction: 'top' | 'bottom'
     visible: boolean
   }>()
   const isOnHighlightRef = useRef(false)
   const instance = useEditorInstance()
+  const readOnly = useReadOnlyEditor()
   const disableShowHighlight = useMemo(() => {
     return (
       Array.from(
         Editor.nodes(editor, {
           match: n => {
-            console.log(n)
             return 'type' in n && n.type === 'synced'
           }
         })
@@ -96,14 +98,14 @@ const EditorToolbar: FC<EditorToolbarProps> = ({ scrollElement, showToolbar, sty
     }
   }
   const handleMouseUp = useMemoizedFn((e: MouseEvent) => {
-    const { selection, readonly } = editor
+    const { selection } = editor
     const windowSelection = window.getSelection()
     if (!ReactEditor.toDOMNode(editor, editor).contains(e.target)) return
     if (
-      (showToolbar || !readonly) &&
+      showToolbar !== false &&
       selection &&
       windowSelection &&
-      (showToolbar || ReactEditor.isFocused(editor)) &&
+      (ReactEditor.isFocused(editor) || readOnly) &&
       windowSelection.toString().length > 0 &&
       !Range.isCollapsed(selection) &&
       !toolbarRef.current?.contains(e.target)
@@ -136,9 +138,7 @@ const EditorToolbar: FC<EditorToolbarProps> = ({ scrollElement, showToolbar, sty
   })
 
   const handleMouseDown = (e: MouseEvent) => {
-    console.log(toolbarRef.current, e.target)
     if (!toolbarRef.current?.contains(e.target)) {
-      console.log('clear')
       window.getSelection()?.empty()
       setFloatPosition(s => ({ ...s, visible: false }))
       isOnHighlightRef.current = false
@@ -155,7 +155,6 @@ const EditorToolbar: FC<EditorToolbarProps> = ({ scrollElement, showToolbar, sty
   useEffect(() => {
     if (floatPosition?.visible && editor.selection && !isOnHighlightRef.current) {
       window.getSelection()?.removeAllRanges()
-      console.log('clear range')
       try {
         window.getSelection()?.addRange(ReactEditor.toDOMRange(editor, editor.selection))
       } catch (e) {
@@ -193,70 +192,71 @@ const EditorToolbar: FC<EditorToolbarProps> = ({ scrollElement, showToolbar, sty
 
   const renderToolbar = () => (
     <Toolbar innerRef={toolbarRef} className={classNames(styles.toolbar, styles.float)} style={style} itemClickPreventDefault itemSize={16}>
-      {currentElement &&
-        toolbarOptions?.fontSize !== false &&
-        !['heading-one', 'heading-two', 'heading-three', 'heading-four', 'heading-five', 'heading-six'].includes(
-          currentElement[0].type
-        ) && (
-          <Select
-            menuPosition="bottom"
-            closeOnSelect
-            hideUnderlineWhenNotHover
-            disabled={
-              currentElement &&
-              ['heading-one', 'heading-two', 'heading-three', 'heading-four', 'heading-five', 'heading-six'].includes(
-                currentElement[0].type
-              )
-            }
-            value={getMark('fontSize') || 'default'}
-            defaultValue={t('editor.default font')}
-            menuStyle={{ width: 90, minWidth: 70 }}
-            style={{ width: 80, margin: '0px 0px 0px 10px', padding: '0 8px' }}
-            onSelect={value => on({ action: 'changeFontSize', fontSize: value[0] })}
-            options={[
-              {
-                value: 'default',
-                children: t('editor.default font')
-              },
-              {
-                value: '14px',
-                children: '14px'
-              },
-              {
-                value: '16px',
-                children: '16px'
-              },
-              {
-                value: '20px',
-                children: '20px'
-              },
-              {
-                value: '24px',
-                children: '24px'
-              },
-              {
-                value: '28px',
-                children: '28px'
-              },
-              {
-                value: '32px',
-                children: '32px'
-              },
-              {
-                value: '36px',
-                children: '36px'
-              },
-              {
-                value: '40px',
-                children: '40px'
-              },
-              {
-                value: '50px',
-                children: '50px'
-              }
-            ]}
-          ></Select>
-        )}
+      {/*{currentElement &&*/}
+      {/*  !readOnly &&*/}
+      {/*  toolbarOptions?.fontSize !== false &&*/}
+      {/*  !['heading-one', 'heading-two', 'heading-three', 'heading-four', 'heading-five', 'heading-six'].includes(*/}
+      {/*    currentElement[0].type*/}
+      {/*  ) && (*/}
+      {/*    <Select*/}
+      {/*      menuPosition="bottom"*/}
+      {/*      closeOnSelect*/}
+      {/*      hideUnderlineWhenNotHover*/}
+      {/*      disabled={*/}
+      {/*        currentElement &&*/}
+      {/*        ['heading-one', 'heading-two', 'heading-three', 'heading-four', 'heading-five', 'heading-six'].includes(*/}
+      {/*          currentElement[0].type*/}
+      {/*        )*/}
+      {/*      }*/}
+      {/*      value={getMark('fontSize') || 'default'}*/}
+      {/*      defaultValue={t('editor.default font')}*/}
+      {/*      menuStyle={{ width: 90, minWidth: 70 }}*/}
+      {/*      style={{ width: 80, margin: '0px 0px 0px 10px', padding: '0 8px' }}*/}
+      {/*      onSelect={value => on({ action: 'changeFontSize', fontSize: value[0] })}*/}
+      {/*      options={[*/}
+      {/*        {*/}
+      {/*          value: 'default',*/}
+      {/*          children: t('editor.default font')*/}
+      {/*        },*/}
+      {/*        {*/}
+      {/*          value: '14px',*/}
+      {/*          children: '14px'*/}
+      {/*        },*/}
+      {/*        {*/}
+      {/*          value: '16px',*/}
+      {/*          children: '16px'*/}
+      {/*        },*/}
+      {/*        {*/}
+      {/*          value: '20px',*/}
+      {/*          children: '20px'*/}
+      {/*        },*/}
+      {/*        {*/}
+      {/*          value: '24px',*/}
+      {/*          children: '24px'*/}
+      {/*        },*/}
+      {/*        {*/}
+      {/*          value: '28px',*/}
+      {/*          children: '28px'*/}
+      {/*        },*/}
+      {/*        {*/}
+      {/*          value: '32px',*/}
+      {/*          children: '32px'*/}
+      {/*        },*/}
+      {/*        {*/}
+      {/*          value: '36px',*/}
+      {/*          children: '36px'*/}
+      {/*        },*/}
+      {/*        {*/}
+      {/*          value: '40px',*/}
+      {/*          children: '40px'*/}
+      {/*        },*/}
+      {/*        {*/}
+      {/*          value: '50px',*/}
+      {/*          children: '50px'*/}
+      {/*        }*/}
+      {/*      ]}*/}
+      {/*    ></Select>*/}
+      {/*  )}*/}
 
       {toolbarOptions?.highlight !== false && !disableShowHighlight && (
         <Toolbar.Item
@@ -285,20 +285,24 @@ const EditorToolbar: FC<EditorToolbarProps> = ({ scrollElement, showToolbar, sty
         iconName="park-text-underline"
         onClick={() => on({ action: 'underline' })}
       />
-      <Toolbar.Item
-        tooltip={t('editor.link')}
-        iconName="park-link"
-        onClick={() => {
-          on({ action: 'link' })
-          setFloatPosition(s => ({ ...s, visible: false }))
-        }}
-      />
-      <Toolbar.Item
-        tooltip={t('editor.code')}
-        isActive={isMarkActive('code')}
-        iconName="park-code"
-        onClick={() => on({ action: 'code' })}
-      />
+      {!readOnly && (
+        <>
+          <Toolbar.Item
+            tooltip={t('editor.link')}
+            iconName="park-link"
+            onClick={() => {
+              on({ action: 'link' })
+              setFloatPosition(s => ({ ...s, visible: false }))
+            }}
+          />
+          <Toolbar.Item
+            tooltip={t('editor.code')}
+            isActive={isMarkActive('code')}
+            iconName="park-code"
+            onClick={() => on({ action: 'code' })}
+          />
+        </>
+      )}
       <Toolbar.Item tooltip={t('editor.font color')}>
         <IconWithPopover
           placement={['bottom']}
@@ -320,66 +324,64 @@ const EditorToolbar: FC<EditorToolbarProps> = ({ scrollElement, showToolbar, sty
           name="park-font-size-two"
         ></IconWithPopover>
       </Toolbar.Item>
-      {toolbarOptions?.extra !== false && (
-        <>
-          <Toolbar.Separator direction="horizontal" />
-          <Toolbar.Item
-            iconName="park-translate"
-            tooltip={t('general.translate')}
-            onClick={e => {
-              if (editor.selection) {
-                const str = Editor.string(editor, editor.selection)
-                if (str) {
-                  const block = Editor.above(editor, {
-                    match: n => Element.isElement(n) && 'id' in n,
-                    at: editor.selection.anchor
-                  })?.[0]
-                  console.log(block)
-                  if (!block?.id) return
-                  editor.on({
-                    type: 'translate',
-                    translatedText: str,
-                    blockId: block.id as number,
-                    e
-                  })
-                }
-              }
-            }}
-          />
-          <Toolbar.Item
-            iconName="park-search"
-            tooltip={t('general.search')}
-            onClick={e => {
-              if (editor.selection) {
-                const str = Editor.string(editor, editor.selection)
-                if (str) {
-                  const block = Editor.above(editor, {
-                    match: n => Element.isElement(n) && 'id' in n,
-                    at: editor.selection.anchor
-                  })?.[0]
-                  if (!block?.id) return
-                  editor.on({
-                    type: 'search',
-                    searchedText: str,
-                    blockId: block.id as number,
-                    e
-                  })
-                }
-              }
-            }}
-          />
-        </>
-      )}
+      {/*{toolbarOptions?.extra !== false && (*/}
+      {/*  <>*/}
+      {/*    <Toolbar.Separator direction="horizontal" />*/}
+      {/*    <Toolbar.Item*/}
+      {/*      iconName="park-translate"*/}
+      {/*      tooltip={t('general.translate')}*/}
+      {/*      onClick={e => {*/}
+      {/*        if (editor.selection) {*/}
+      {/*          const str = Editor.string(editor, editor.selection)*/}
+      {/*          if (str) {*/}
+      {/*            const block = Editor.above(editor, {*/}
+      {/*              match: n => Element.isElement(n) && 'id' in n,*/}
+      {/*              at: editor.selection.anchor*/}
+      {/*            })?.[0]*/}
+      {/*            if (!block?.id) return*/}
+      {/*            editor.on({*/}
+      {/*              type: 'translate',*/}
+      {/*              translatedText: str,*/}
+      {/*              blockId: block.id as number,*/}
+      {/*              e*/}
+      {/*            })*/}
+      {/*          }*/}
+      {/*        }*/}
+      {/*      }}*/}
+      {/*    />*/}
+      {/*    <Toolbar.Item*/}
+      {/*      iconName="park-search"*/}
+      {/*      tooltip={t('general.search')}*/}
+      {/*      onClick={e => {*/}
+      {/*        if (editor.selection) {*/}
+      {/*          const str = Editor.string(editor, editor.selection)*/}
+      {/*          if (str) {*/}
+      {/*            const block = Editor.above(editor, {*/}
+      {/*              match: n => Element.isElement(n) && 'id' in n,*/}
+      {/*              at: editor.selection.anchor*/}
+      {/*            })?.[0]*/}
+      {/*            if (!block?.id) return*/}
+      {/*            editor.on({*/}
+      {/*              type: 'search',*/}
+      {/*              searchedText: str,*/}
+      {/*              blockId: block.id as number,*/}
+      {/*              e*/}
+      {/*            })*/}
+      {/*          }*/}
+      {/*        }*/}
+      {/*      }}*/}
+      {/*    />*/}
+      {/*  </>*/}
+      {/*)}*/}
     </Toolbar>
   )
-
   // only render when have noteid
   const renderFloatToolbar = () =>
     createPortal(
       <AnimatePopover
         borderRadius={999}
-        padding={15}
-        visible={!!(floatPosition?.visible && (editor.noteId || showToolbar))}
+        padding={10}
+        visible={!!(floatPosition?.visible && showToolbar !== false)}
         position={{
           left: floatPosition?.left,
           top: floatPosition?.top

@@ -4,7 +4,6 @@ import App from './App'
 import initI18n from './config/i18n'
 import * as PIXI from 'pixi.js'
 import PIXIFontUrl from '@/assets/font.xml?url'
-// Import the functions you need from the SDKs you need
 import { Provider } from 'jotai'
 import { Hooks } from 'rendevoz'
 import editorWorker from 'monaco-editor/esm/vs/editor/editor.worker?worker'
@@ -12,13 +11,12 @@ import jsonWorker from 'monaco-editor/esm/vs/language/json/json.worker?worker'
 import cssWorker from 'monaco-editor/esm/vs/language/css/css.worker?worker'
 import htmlWorker from 'monaco-editor/esm/vs/language/html/html.worker?worker'
 import tsWorker from 'monaco-editor/esm/vs/language/typescript/ts.worker?worker'
-import { showDirectoryPicker } from 'wicg-file-system-access'
-
 PIXI.Assets.load(PIXIFontUrl)
 enableMapSet()
 enablePatches()
 const lang = 'zh-CN'
 initI18n(lang)
+
 // const userAgent = navigator.userAgent.toLowerCase()
 // if (userAgent.indexOf(' electron/') <= -1) {
 //   let fileHandle: FileSystemDirectoryHandle | undefined = undefined

@@ -9,6 +9,7 @@ import ClassName from '@/styles/classNames'
 import { globalStore } from '@/stores'
 import { Zindexes } from '@/consts'
 import { Rendevoz } from '../rendevoz'
+import { AnimatePopoverProps } from '@/components/base/AnimatePopover'
 
 const HoverObjectDetails = forwardRef(
   (
@@ -17,11 +18,15 @@ const HoverObjectDetails = forwardRef(
       metaObjectId,
       children,
       disable,
-      parentElmentRef
+      parentElmentRef,
+      positions,
+      align
     }: {
       objectId?: number
       metaObjectId?: number
       children: ReactElement
+      positions?: AnimatePopoverProps['positions']
+      align?: AnimatePopoverProps['align']
       disable?: boolean
       parentElmentRef?: RefObject<HTMLElement>
     },
@@ -70,12 +75,14 @@ const HoverObjectDetails = forwardRef(
       })
     return (
       <Tooltip
+        align={align}
         visible={tooltipVisible}
         disable={disable}
         parentElement={parentElmentRef?.current}
         onVisibleChange={v => toggleTooltipVisible(v)}
         ref={mergedRef}
         zIndex={Zindexes.HoverObjectDetails}
+        position={positions ? positions[0] : 'top'}
         delay={800}
         disableDefaultContent
         contentTouchable

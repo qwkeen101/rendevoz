@@ -38,17 +38,10 @@ export const defaultHandler: DefaultAddElementHandler = (type, instance, mode, o
     }
   }
   if (!addElementPath.length) return
-
-  // if (isCurrentElementEmpty) {
-  //   Transforms.removeNodes(editor, { at: addElementPath })
-  // }
   switch (type) {
     case 'table':
       // add two columns three rows table
       handleAddTableAtPath(addElementPath, editor)
-      break
-    case 'inline-metaObject':
-      handleAddInlineMetaObject(editor)
       break
     case 'link': {
       setTimeout(() => {
@@ -161,28 +154,9 @@ const removeSlash = (selection: BaseSelection, editor: CustomEditor) => {
 }
 
 const handleAddSyncedBlock = async (path: Path, editor: CustomEditor) => {
-  const noteMeta = editor.note?.metaId
-  if (noteMeta) {
-    const syncedBlockMeta = (
-      await ObjectStore('syncedBlock').addOneWithMeta(
-        { syncVersion: 1, syncedMetaIds: [noteMeta], blockChildren: [{ type: 'paragraph', id: Id.getId(), children: [{ text: '' }] }] },
-        { silent: true }
-      )
-    ).meta
-    if (!syncedBlockMeta) return
-
-    Transforms.insertNodes(
-      editor,
-      {
-        type: 'synced',
-        children: [{ text: '' }],
-        syncVersion: 0,
-        originId: syncedBlockMeta.id,
-        id: Id.getId()
-      },
-      { at: path }
-    )
-  }
+  const normalizedElement = await editor.on({ type: 'addNewElementFromMenu', newElementType: 'sync' })
+  if (!normalizedElement) return
+  Transforms.insertNodes(editor, normalizedElement, { at: path })
 }
 
 const handleAddTableAtPath = (path: Path, editor: CustomEditor) => {
@@ -312,43 +286,4 @@ const handleAddTableAtPath = (path: Path, editor: CustomEditor) => {
       at: path
     }
   )
-}
-
-const handleAddInlineMetaObject = (editor: CustomEditor) => {
-  const { selection } = editor
-  if (!selection) return
-  const cursorPosition = getCursorPosition(editor)
-  const currSelection = structuredClone(selection) as BaseSelection
-  if (cursorPosition) {
-    GlobalObjectPanelInstance.open?.({
-      left: cursorPosition.x + 20,
-      top: cursorPosition.y + 20
-    })
-    GlobalEventEmitter()
-      .emitWithCallback('global', {
-        type: 'globalChooseMetaObject'
-      })
-      .then(id => {
-        removeSlash(currSelection, editor)
-        Transforms.insertNodes(editor, {
-          type: 'inline-metaObject',
-          originId: id,
-          id: Id.getId(),
-          children: [{ text: '' }]
-        })
-        GlobalEventEmitter().emit('global', {
-          type: 'globalDropNeedFurtherProcess',
-          data: {
-            draggingElement: {
-              type: 'metaElement',
-              metaId: id
-            },
-            dropOn: {
-              dropOn: 'editor',
-              noteId: editor.noteId
-            }
-          }
-        })
-      })
-  }
 }

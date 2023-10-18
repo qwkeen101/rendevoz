@@ -39,16 +39,6 @@ export interface HighlightBlockElement {
   borderColor?: string
 }
 
-export interface MediaElement {
-  type: 'media'
-  mediaType: 'audio' | 'video' | 'pdf'
-  children: EmptyText[]
-}
-export interface PdfElement extends CardElement {
-  type: 'pdf'
-  pdfId: number
-  children: EmptyText[]
-}
 export interface NoteElement extends CardElement {
   type: 'note'
   noteId: number
@@ -120,10 +110,7 @@ export interface ListItemElement {
   type: 'list-item'
   children: Descendant[]
 }
-export interface OrderListItemElement {
-  type: 'order-list-item'
-  children: Descendant[]
-}
+
 export interface MentionElement {
   type: 'mention'
   character: string
@@ -177,10 +164,6 @@ export interface TitleElement {
   children: Descendant[]
 }
 
-export interface OrderedListItemElement {}
-
-export interface UnorderedListItemElement {}
-
 export interface VideoElement {
   type: 'video'
   url: string
@@ -209,7 +192,6 @@ export type CommonElement =
   | ButtonElement
   | ListItemElement
   | MentionElement
-  | ParagraphElement
   | TableElement
   | TitleElement
   | VideoElement
@@ -223,7 +205,6 @@ export type CommonElement =
   | EmojiElement
   | ToDoElement
   | ParagraphElement
-  | PdfElement
   | NoteElement
   | ColumnElement
   | ColumnListElement
@@ -233,7 +214,6 @@ export type CommonElement =
   | PreElement
   | SupElement
   | FigCaptionElement
-  | OrderListItemElement
   | MathElement
   | CodeBlockElement
   | HighlightBlockElement

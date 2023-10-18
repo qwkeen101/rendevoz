@@ -1,5 +1,5 @@
 import { toast } from 'react-hot-toast'
-import { GlobalInstances, IEditorInstance, IPdfViewer, IVideoInstance, IWebpageInstance } from '~/typings'
+import { GlobalInstances, IEditorInstance, IPdfViewer, IMediaInstance, IWebpageInstance } from '~/typings'
 import { ID_TO_LABEL_MAP } from '@/core'
 import { globalStore, MetaStore, ObjectStore } from '../../stores'
 import { metaObjectsAtom, objectIdToMetaObjectIdMapAtom, TypeToRegisteredMetaObject } from '../../stores/meta.store'
@@ -13,6 +13,7 @@ import { setPanelState } from '@/components/layout/sidebar'
 
 const openMetaObject = async (metaObjectId: number) => {
   const metaObject = globalStore.get(metaObjectsAtom).get(metaObjectId)
+  console.log(metaObjectId, metaObject)
   if (!metaObject) {
     toast.error('Target Object Not Exist!')
     return
@@ -39,6 +40,8 @@ const openMetaObject = async (metaObjectId: number) => {
     case 'image':
     case 'videoLabel':
     case 'video':
+    case 'audio':
+    case 'audioLabel':
     case 'syncedBlock':
     case 'whiteboard': {
       const one = await ObjectStore(metaObject.type).getOneById(objectId)
@@ -83,15 +86,28 @@ const openMetaObject = async (metaObjectId: number) => {
       return openImage(objectId)
     case 'localFile':
       return openLocalFile(objectId)
+    case 'audio':
+      return openAudio(objectId)
     case 'video':
       return openVideo(objectId)
     case 'videoLabel':
       return openVideoLabel(objectId)
+    case 'audioLabel':
+      return openAudioLabel(objectId)
     // case 'syncedBlock':
     //   return openSyncedEditor(metaObjectId)
   }
 }
 
+const openAudioLabel = async (objectId: number) => {
+  const label = await ObjectStore('audioLabel').getOneById(objectId)
+  if (label && label.parentObjectId) {
+    const i = await openAudio(label.parentObjectId)
+    if (i) {
+      i.actionOps?.jumpTo?.(label.time)
+    }
+  }
+}
 const openRendevozLink = async (link: string) => {
   if (link.startsWith('rendevoz://object')) {
     const url = new URL(link)
@@ -103,9 +119,9 @@ const openRendevozLink = async (link: string) => {
       return
     }
     if (query.has('t')) {
-      const videoObjectId = (await MetaStore.getMetaObjectById(metaId))?.objectId
-      if (!videoObjectId) return
-      await openVideoAtTime(videoObjectId, parseInt(query.get('t')))
+      const mediaObject = await MetaStore.getMetaObjectById(metaId)
+      if (!mediaObject || !mediaObject.objectId) return
+      await openMediaAtTime(mediaObject.objectId, mediaObject.type, parseInt(query.get('t')))
     } else {
       await openMetaObject(metaId)
     }
@@ -143,6 +159,18 @@ const openSyncedEditor = (syncMetaId: number) => {
     MetaStore.updateMetaObject({ id: syncMetaId, viewAt: Date.now() }, true)
   })
 }
+const openAudio = async (audioId: number): Promise<IMediaInstance> => {
+  return new Promise(res => {
+    Rendevoz.Actions.Layout.openNewTab?.({
+      data: {
+        type: 'audio',
+        objectId: audioId,
+        onInstanceInitialized: (i: IMediaInstance) => res(i)
+      }
+    })
+    updateViewAt(audioId)
+  })
+}
 const openEditor = (noteId: number): Promise<IEditorInstance> => {
   return new Promise(res => {
     Rendevoz.Actions.Layout.openNewTab?.({
@@ -171,33 +199,9 @@ const openWebpage = (webpageId: number): Promise<IWebpageInstance> => {
 const openWebpageLabel = async (labelId: number) => {
   const webpageLabel = await ObjectStore('webpageLabel').getOneById(labelId)
   if (webpageLabel) {
-    console.log(webpageLabel)
-    const webpage = await openWebpage(webpageLabel.webpageId)
-    // labeled in reader mode
-    if (webpageLabel.id) {
-      const editor = await webpage.transformToNote?.()
-      editor?.scrollToHighlight?.({ highlightId: webpageLabel.id })
-    } else {
-      waitFor(
-        () => !!webpage.findInPage,
-        () => webpageLabel.selectedText && webpage.findInPage?.(webpageLabel.selectedText),
-        {
-          timeout: 10000
-        }
-      )
-    }
+    const webpage = await openWebpage(webpageLabel.parentObjectId)
+    await webpage.editorInstance?.labelOps?.scrollToLabel(labelId)
   }
-}
-
-const openWebpageSelectedText = async (webpageId: number, text: string) => {
-  const webpage = await openWebpage(webpageId)
-  waitFor(
-    () => !!webpage.findInPage,
-    () => webpage.findInPage?.(text),
-    {
-      timeout: 10000
-    }
-  )
 }
 
 const openNoteBlock = async (blockId: number) => {
@@ -246,7 +250,7 @@ const openPdfLabel = async (labelId: number) => {
   const label = await ObjectStore('pdfLabel').getOneById(labelId)
   if (label) {
     updateViewAt(labelId)
-    const pdfId = label.documentId
+    const pdfId = label.parentObjectId
     if (pdfId) {
       const viewer = await openPdf(pdfId)
       setTimeout(() => {
@@ -315,7 +319,7 @@ const openWhiteboard = (whiteboardId: number) => {
 const openNoteLabel = async (labelId: number) => {
   const noteLabel = await ObjectStore('noteLabel').getOneById(labelId)
   if (noteLabel) {
-    const targetEditor = await openEditor(noteLabel.noteId)
+    const targetEditor = await openEditor(noteLabel.parentObjectId)
     if (targetEditor) {
       console.log(targetEditor)
       targetEditor.scrollToHighlight?.({ highlightId: labelId })
@@ -343,33 +347,32 @@ const openTranslate = (opts: Parameters<GlobalInstances.TranslateInstance['open'
   GlobalTranslateInstance.open?.(opts)
 }
 
-const openVideo = (videoId: number): Promise<IVideoInstance> => {
+const openVideo = (videoId: number): Promise<IMediaInstance> => {
   return new Promise(res => {
     Rendevoz.Actions.Layout.openNewTab({
       data: {
         type: 'video',
         objectId: videoId,
-        onInstanceInitialized: (i: IVideoInstance) => res(i)
+        onInstanceInitialized: (i: IMediaInstance) => res(i)
       }
     })
     updateViewAt(videoId)
   })
 }
-const openVideoAtTime = async (videoId: number, time: number) => {
-  const alreadyOpenVideoTab = Rendevoz.Actions.Layout.getTab({
-    type: 'video',
-    objectId: videoId
-  })
-  const videoState = alreadyOpenVideoTab?.instance.getVideoState?.()
-  if (videoState?.floated) {
-    alreadyOpenVideoTab?.instance.jumpTo?.(time)
-  } else {
-    console.log('video load')
-    const video = await openVideo(videoId)
-    console.log('video load two')
+
+const openMediaAtTime = async (id: number, type: string, time: number) => {
+  let i
+  if (type === 'audio') {
+    i = await openAudio(id)
+  }
+  if (type === 'video') {
+    i = await openVideo(id)
+  }
+  if (i) {
+    const ins = i as IMediaInstance
     waitFor(
-      () => !!video.jumpTo,
-      () => video.jumpTo?.(time),
+      () => !!ins.actionOps?.jumpTo,
+      () => ins.actionOps?.jumpTo(time),
       {
         timeout: 15000
       }
@@ -379,7 +382,7 @@ const openVideoAtTime = async (videoId: number, time: number) => {
 const openVideoLabel = async (labelId: number) => {
   const label = await ObjectStore('videoLabel').getOneById(labelId)
   if (label) {
-    openVideoAtTime(label.parentObjectId, label.videoTime)
+    openMediaAtTime(label.parentObjectId, 'video', label.time)
   }
 }
 const openEditMetaDialog = (metaId: number) => {
@@ -411,13 +414,12 @@ const Open: typeof Rendevoz.Actions.Open = {
   },
   Webpage: {
     openWebpage,
-    openWebpageLabel,
-    openWebpageSelectedText
+    openWebpageLabel
   },
   Video: {
     openVideo,
     openVideoLabel,
-    openVideoAtTime
+    openVideoAtTime: openMediaAtTime
   },
   Search: {
     openTextSearch,

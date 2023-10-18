@@ -127,7 +127,7 @@ const Heading: FC<RenderElementProps> = ({ element, children }) => {
     },
     !isReadOnly && action(),
     children,
-    containElements > 0 && (
+    containElements > 0 && folded && (
       <span
         contentEditable={false}
         style={{

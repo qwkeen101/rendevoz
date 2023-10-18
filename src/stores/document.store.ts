@@ -1,9 +1,6 @@
 import { getFilenameWithoutExtension, saveFileLocally } from '@/utils/file'
-import Id from '@/utils/id'
 import { saveImageLocally } from '@/utils/img'
 import { IPdfDocument } from '~/typings/data'
-import usePdfjs from '@/hooks/utils/usePdfjs'
-import { SearchableDocument, SearchStore } from './search.store'
 import { globalStore, ObjectStore } from '.'
 
 export const initializePdfDocument = async (file: File): Promise<Partial<IPdfDocument> | undefined> => {
@@ -43,29 +40,6 @@ export const initializePdfDocument = async (file: File): Promise<Partial<IPdfDoc
     const pdfResult = result[1]
     pdfDocument.fileUrl = pdfResult.data
     return pdfDocument
-  }
-}
-export const savePdfAsSearch = async (pdfFile: File | Uint8Array, pdfId: number) => {
-  const PdfJs = usePdfjs()
-  if ((pdfFile instanceof File && pdfFile.type === 'application/pdf') || pdfFile instanceof Uint8Array) {
-    const buffer = await (pdfFile instanceof Uint8Array ? pdfFile : pdfFile.arrayBuffer())
-    const loadingTask = PdfJs.getDocument(new Uint8Array(buffer))
-    const pdf = await loadingTask.promise
-    const allTexts = await Promise.all(
-      Array.from(Array(pdf.numPages).keys()).map(async (i, idx) => {
-        const page = await pdf.getPage(idx + 1)
-        const text = await page.getTextContent()
-        return {
-          pageIndex: idx,
-          specType: 'pdfPage',
-          content: text.items.map(item => item.str).join(' '),
-          targetObjectId: pdfId,
-          id: Id.getId()
-        } as SearchableDocument
-      })
-    )
-    const filtered = allTexts.filter(i => i.content.length)
-    SearchStore.addDocuments(filtered)
   }
 }
 

@@ -1,0 +1,418 @@
+import { Content, Icon } from '@/components'
+import { useAssignMediaInstance, useMediaInstance, MediaInstanceAtom } from './hooks/useMediaInstance'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import { createStore, Provider, useAtomValue } from 'jotai'
+import MediaCore from './MediaCore'
+import MediaBottomBar from './MediaBottomBar'
+import useMediaToolbarState from './hooks/useMediaToolbarState'
+import useMediaState, { IMediaState, MediaStateAtom } from './hooks/useMediaState'
+import { useUpdateEffect } from '@/hooks'
+import { AnimatePresence, motion } from 'framer-motion'
+import Colors from '@/consts/colors'
+import MediaSidebar from './components/sidebar/MediaSidebar'
+import useMediaShortcut from './hooks/useMediaShortcut'
+import { IMediaInstance } from '~/typings'
+import { waitFor } from '@/utils/functions'
+import ResizeAndDrag from '@/components/base/ResizeAndDrag'
+import { createPortal } from 'react-dom'
+import ClassName from '@/styles/classNames'
+import { Rendevoz } from '../rendevoz'
+import useMeasure from '@/hooks/utils/useMeasure'
+import { Zindexes } from '@/consts'
+import MediaSubtitleSidebar from '@/core/media/components/sidebar/MediaSubtitleSidebar'
+import { useLatest } from 'react-use'
+import useChangeVideoLayout, { MediaLayoutAtom } from '@/core/media/hooks/useVideoLayout'
+import { IMediaEvent } from '~/typings/components/media/event'
+import MediaTranscriber from '@/core/media/components/MediaTranscriber'
+import { TabTitle } from '@/core/rendevoz/components'
+import MediaToolbar from '@/core/media/components/MediaToolbar'
+export interface MediaProps {
+  onInstanceInitialized?: (instance: Partial<IMediaInstance>) => void
+  onlyCore?: boolean
+  mediaState?: IMediaState
+  onMediaStateChange?: (state: IMediaState) => void
+  on?: (e: IMediaEvent) => Promise<any>
+  disableTabTitle?: boolean
+}
+const MediaInner = ({ onInstanceInitialized, onlyCore, on, disableTabTitle = true }: MediaProps) => {
+  const [playIconVisible, setPlayIconVisible] = useState(false)
+  const [, setToolbarState] = useMediaToolbarState()
+  const [mediaState, setMediaState] = useMediaState()
+  const outerContainerRef = useRef<HTMLDivElement>(null)
+  const containerRef = useRef<HTMLDivElement>(null)
+  const { width = 0 } = useMeasure(outerContainerRef)
+  const instance = useMediaInstance()
+  instance.on = on
+  const smallMode = width < 1000 || mediaState.floated
+  const showIcon = mediaState.mode !== 'audio' && playIconVisible && mediaState.loaded
+  const mediaLayout = useAtomValue(MediaLayoutAtom)
+  const audioMode = mediaState.mode === 'audio'
+  useChangeVideoLayout(outerContainerRef)
+
+  const columnLayout = mediaLayout
+  const getPopIcon = () => {
+    if (mediaState.jumpIndicator) {
+      if (mediaState.jumpIndicator === 'back') {
+        return 'park-double-left'
+      } else {
+        return 'park-double-right'
+      }
+    }
+    if (mediaState.volumeIndicator) {
+      if (mediaState.volumeIndicator === 'down') {
+        return 'park-volume-down'
+      } else {
+        return 'park-volume-up'
+      }
+    }
+    if (mediaState.paused) {
+      return 'park-pause'
+    } else {
+      return 'park-play-one'
+    }
+  }
+
+  useUpdateEffect(() => {
+    setPlayIconVisible(true)
+  }, [mediaState.paused])
+
+  useEffect(() => {
+    if (mediaState.jumpIndicator || mediaState.volumeIndicator) {
+      setPlayIconVisible(true)
+    }
+  }, [mediaState.jumpIndicator, mediaState.volumeIndicator])
+
+  useMediaShortcut(outerContainerRef)
+  useAssignMediaInstance(containerRef)
+
+  const latestVideoLoaded = useLatest(mediaState.loaded)
+
+  useEffect(() => {
+    waitFor(
+      () => {
+        return latestVideoLoaded.current
+      },
+      () => {
+        onInstanceInitialized?.(instance)
+      },
+      {
+        timeout: 15000
+      }
+    )
+  }, [])
+
+  const renderCore = () => {
+    return (
+      <Content
+        tabIndex={0}
+        ref={ref => {
+          containerRef.current = ref
+          if (mediaState.floated) {
+            outerContainerRef.current = ref
+          }
+        }}
+        style={{
+          height: 'fit-content'
+        }}
+        fullWidth
+        onPointerMove={e => {
+          setToolbarState(s => {
+            if (s.visible) return s
+            else return { ...s, visible: true }
+          })
+        }}
+        onPointerLeave={e => {
+          setToolbarState(s => ({ ...s, visible: false }))
+        }}
+      >
+        <AnimatePresence>
+          {showIcon && (
+            <motion.div
+              initial={{ opacity: 0.8, scale: 1, x: '-50%', y: '-50%' }}
+              animate={{ opacity: 0, scale: 1.3, x: '-50%', y: '-50%' }}
+              style={{
+                position: 'absolute',
+                left: '50%',
+                top: '50%',
+                zIndex: 9999,
+                transform: 'translateX(-50%); translateY(-50%)'
+              }}
+              transition={{ duration: 0.6 }}
+              onAnimationComplete={() => {
+                setPlayIconVisible(false)
+                if (mediaState.jumpIndicator || mediaState.volumeIndicator) {
+                  setMediaState(s => ({
+                    ...s,
+                    jumpIndicator: undefined,
+                    volumeIndicator: undefined
+                  }))
+                }
+              }}
+            >
+              <Icon
+                fill={Colors.Font.White}
+                size={40}
+                theme="filled"
+                containerStyle={{
+                  background: 'rgba(0,0,0,0.36)',
+                  borderRadius: 999,
+                  padding: 14
+                }}
+                name={getPopIcon()}
+              />
+            </motion.div>
+          )}
+        </AnimatePresence>
+        <MediaCore url={mediaState.url} />
+        {mediaState.mode !== 'web' && mediaState.mode !== 'audio' && (
+          <div
+            style={{
+              position: 'absolute',
+              bottom: 0,
+              left: 0,
+              right: 0
+            }}
+          >
+            <MediaBottomBar />
+          </div>
+        )}
+      </Content>
+    )
+  }
+  const renderFloated = () => {
+    return createPortal(
+      <ResizeAndDrag
+        lockAspectRatio={mediaState.mode === 'audio' ? false : true}
+        dragHandleClassName="video-drag-handle"
+        minWidth={385}
+        default={{
+          width: mediaState.mode === 'audio' ? 400 : 800,
+          height: 'auto',
+          x: 200,
+          y: 200
+        }}
+        style={{
+          zIndex: Zindexes.VideoFloatWindow,
+          boxShadow: Colors.Background.BoxShadow,
+          borderRadius: 12,
+          background: Colors.Background.Secondary
+        }}
+        onResizeStop={(e, dir, element) => {
+          element.style.height = 'auto'
+        }}
+      >
+        {mediaState.mode !== 'audio' && (
+          <Content
+            flex
+            justifyContent="space-between"
+            className={ClassName.Background.pseudoBlubBackground}
+            style={{
+              borderRadius: '4px 4px 0px 0px',
+              cursor: 'grab',
+              padding: '6px 12px'
+            }}
+          >
+            <Content flex gap={10} style={{ flexShrink: 1, flexGrow: 1 }} className="video-drag-handle">
+              <Icon name={Rendevoz.Utils.Object.getMetaObjectIcon('video')} />
+              <div style={{ width: '100%', userSelect: 'none' }} className={ClassName.ellipsisFont(1)}>
+                {mediaState.name}
+              </div>
+            </Content>
+            <Icon
+              containerStyle={{ paddingLeft: 10 }}
+              style={{ cursor: 'pointer' }}
+              name="park-close"
+              onClick={() => setMediaState(s => ({ ...s, floated: false }))}
+            />
+          </Content>
+        )}
+        {mediaState.mode === 'audio' && (
+          <Icon
+            containerStyle={{ position: 'absolute', top: 10, right: 10 }}
+            style={{ cursor: 'pointer', zIndex: 20 }}
+            name="park-close"
+            onClick={() => setMediaState(s => ({ ...s, floated: false }))}
+          />
+        )}
+        {renderCore()}
+      </ResizeAndDrag>,
+      document.body
+    )
+  }
+
+  if (onlyCore) {
+    return renderCore()
+  }
+  return (
+    <Content fullWidth fullHeight ref={outerContainerRef}>
+      <MediaTranscriber />
+      {!disableTabTitle && <TabTitle title={mediaState.name} icon={<Icon name={'park-video'} />} />}
+      <Content
+        style={{
+          margin: 'auto',
+          width: '100%',
+          height: '100%',
+          flexDirection: columnLayout ? 'column' : 'row',
+          justifyContent: columnLayout ? 'unset' : 'center',
+          alignItems: 'center'
+        }}
+        tabIndex={0}
+        fullHeight
+        flex
+      >
+        <Content
+          style={{
+            width: '100%',
+            height: columnLayout ? 'fit-content' : '100%',
+            overflowY: columnLayout ? undefined : 'auto',
+            padding: 24,
+            display: 'flex'
+          }}
+        >
+          <Content
+            flex
+            centered
+            column
+            gap={12}
+            style={{
+              width: '100%',
+              maxWidth: 'calc((100vh - 260px) * (1/0.6))',
+              minWidth: 'calc(250px * (1 / 0.5625))',
+              height: 'fit-content',
+              margin: 'auto auto'
+            }}
+          >
+            {mediaState.floated ? renderFloated() : renderCore()}
+            {mediaState.mode !== 'audio' && <div style={{ fontWeight: 600, fontSize: 16, width: '100%' }}>{mediaState.name}</div>}
+            {mediaState.mode !== 'audio' && <MediaToolbar />}
+          </Content>
+        </Content>
+        <MediaSidebar />
+      </Content>
+    </Content>
+  )
+}
+
+const transformUrl = (url?: string) => {
+  if (!url) return url
+  if (url.startsWith('rendefile') || url.startsWith('file')) return url
+  if (url.includes('bilibili')) return url
+  if (url.includes('youtube')) {
+    const U = new URL(url)
+    const videoId = U.searchParams.get('v')
+    if (!videoId) return url
+    return `https://www.youtube.com/embed/${videoId}`
+  }
+  if (url.startsWith('baidudisk')) return url
+  return url
+}
+
+const Media = (props: MediaProps) => {
+  const getMediaMode = (url?: string): IMediaState['mode'] => {
+    if (!url) return 'video'
+    if (url.startsWith('rendefile') || url.startsWith('file')) {
+      return 'video'
+    }
+    if (url.startsWith('baidudisk')) {
+      return 'baidudisk'
+    }
+    return 'web'
+  }
+  const store = useMemo(() => {
+    const store = createStore()
+    const {
+      url,
+      thumbnail,
+      labels,
+      labelType,
+      lastPlayedTime,
+      name,
+      isPinned,
+      description,
+      mode,
+      subtitleLang,
+      subtitleMode = 'list',
+      subtitleList,
+      subtitleFollow,
+      collectionName,
+      metaId
+    } = props.mediaState || {}
+    console.log(url)
+    store.set(MediaInstanceAtom, {})
+    store.set(MediaStateAtom, {
+      ...store.get(MediaStateAtom),
+      url: transformUrl(url),
+      mode: mode || getMediaMode(url),
+      thumbnail: thumbnail,
+      isPinned,
+      collectionName,
+      jumpTime: lastPlayedTime,
+      labels,
+      subtitleMode,
+      labelType,
+      name,
+      metaId,
+      description,
+      subtitleLang,
+      subtitleList,
+      subtitleFollow
+    })
+    return store
+  }, [])
+
+  useEffect(() => {
+    if (!props.mediaState) return
+    const currentState = store.get(MediaStateAtom)
+    const {
+      url,
+      labels = [],
+      labelType,
+      thumbnail,
+      name,
+      description,
+      isPinned,
+      subtitleLang,
+      subtitleList,
+      mode,
+      subtitleMode = 'list',
+      chapters = [],
+      subtitleFollow,
+      metaId,
+      collectionName
+    } = props.mediaState
+    console.log(labels, props.mediaState)
+    store.set(MediaStateAtom, {
+      ...currentState,
+      url: transformUrl(url),
+      isPinned,
+      metaId,
+      subtitleMode,
+      collectionName,
+      subtitleLang,
+      subtitleList,
+      subtitleFollow,
+      chapters,
+      mode: mode || getMediaMode(url),
+      sortedChapters: (props.mediaState.chapters || currentState.chapters)?.slice().sort((b, a) => b.startTime - a.startTime) || [],
+      labelType,
+      labels,
+      thumbnail,
+      name,
+      description
+    })
+  }, [props.mediaState])
+  useEffect(() => {
+    const currentState = store.get(MediaStateAtom)
+    store.set(MediaStateAtom, {
+      ...currentState,
+      subtitles: []
+    })
+  }, [props.mediaState?.url])
+  return (
+    <Provider store={store}>
+      <MediaInner {...props} />
+    </Provider>
+  )
+}
+
+export default Media

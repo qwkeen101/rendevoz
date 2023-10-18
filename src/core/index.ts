@@ -1,11 +1,12 @@
-export * from "./database";
-export * from "./editor";
-export * from "./global";
-export * from "./pdf";
-export * from "./graph";
-export * from "./setting";
-export * from "./whiteboard";
-export { default as ObjectTag } from "./database/ObjectTag";
-export { default as useRenderObject } from "./database/useRenderObject";
-export { default as getSetting } from "./setting/getSetting";
-export * from "./video";
+export * from './database'
+export * from './editor'
+export * from './global'
+export * from './pdf'
+export * from './graph'
+export * from './setting'
+export * from './whiteboard'
+export { default as ObjectTag } from './database/ObjectTag'
+export { default as useRenderObject } from './database/useRenderObject'
+export { default as getSetting } from './setting/getSetting'
+export * from './media'
+export { default as Media } from './media'

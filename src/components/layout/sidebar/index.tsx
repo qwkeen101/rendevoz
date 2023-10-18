@@ -14,6 +14,9 @@ import { GlobalTextSearchInstance } from '@/core/global/GlobalTextSearch'
 import SidebarDatabase from '@/components/layout/sidebar/SidebarDatabase'
 import SidebarSetting from '@/components/layout/sidebar/SidebarSetting'
 import produce, { Draft } from 'immer'
+import { Colors } from '@/consts'
+import { useSelectGlobalAtomValue } from '@/hooks'
+import { SettingAtom } from '@/core'
 
 export const setPanelState = (updater: (panelState: Draft<SidebarPanelState>) => void) => {
   const panelState = globalStore.get(SidebarPanelStateAtom)
@@ -78,6 +81,14 @@ export const BuiltInSidebarItems: Record<string, RegisteredSidebarItem> = {
     element: <SidebarSetting />,
     icon: 'park-setting-two'
   },
+  feeds: {
+    key: 'feeds',
+    text: () => 'Feeds',
+    icon: 'park-broadcast',
+    onClick: () => {
+      Rendevoz.Actions.Layout.openNewTab({ data: { type: 'feeds' } })
+    }
+  },
   webSearch: {
     key: 'webSearch',
     text: () => t('general.web search'),
@@ -103,7 +114,7 @@ export const SidebarPanelStateAtom = atom<SidebarPanelState>({
   visible: new Set<ISidebarPanelVisibleItems>()
 })
 
-const defaultSidebarItems = ['home', 'database', 'collections', 'search', 'graph', 'settings']
+const defaultSidebarItems = ['home', 'database', 'collections', 'feeds', 'search', 'graph', 'settings']
 
 export const Sidebar = ({ direction = 'right' }: { direction: 'left' | 'right' }) => {
   const builtinSidebarEles = Array.from(Object.values(BuiltInSidebarItems))
@@ -121,8 +132,17 @@ export const Sidebar = ({ direction = 'right' }: { direction: 'left' | 'right' }
     ...allItems.filter(i => !usedItems.has(i.key))
   )
 
+  const hasBgImg = useSelectGlobalAtomValue(SettingAtom, s => s.background.backgroundImage)
+  const notTransp = (useSelectGlobalAtomValue(SettingAtom, s => s.background.backgroundOpacity) || 0) > 0
   return (
-    <Content flex style={{ zIndex: 1000, flexDirection: direction === 'right' ? 'row' : 'row-reverse' }}>
+    <Content
+      flex
+      style={{
+        zIndex: 1000,
+        flexDirection: direction === 'right' ? 'row' : 'row-reverse',
+        background: hasBgImg && notTransp ? undefined : Colors.Background.Secondary
+      }}
+    >
       <SidebarIcons
         items={items}
         direction={direction}

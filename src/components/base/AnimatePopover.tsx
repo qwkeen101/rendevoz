@@ -123,6 +123,7 @@ const AnimatePopover: FC<PropsWithChildren<AnimatePopoverProps>> = ({
     }
   }, [isOpen])
   const handleClickOutside = (e: MouseEvent) => {
+    console.log(e)
     let clickOnCover = false
     if (withClickCover) {
       if (e.target instanceof HTMLElement && e.target.getAttribute('role') === 'click-cover') {
@@ -141,6 +142,7 @@ const AnimatePopover: FC<PropsWithChildren<AnimatePopoverProps>> = ({
     }
 
     setTimeout(() => {
+      console.log(e)
       if (e.defaultPrevented) return
       onClickOutside?.(e)
       if (closeOnClickOutside) {

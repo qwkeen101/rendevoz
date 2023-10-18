@@ -2,11 +2,12 @@ import React, { ReactNode } from 'react'
 import { MetaObject } from '~/typings'
 
 export * from './editor'
-export * from './video'
+export * from './media'
 export * from './webpage'
 export * from './pdf'
 export * from './whiteboard'
 export * from './group'
+export * from './feed'
 export type MetaFormLayoutItem =
   | {
       type: 'nameInput'

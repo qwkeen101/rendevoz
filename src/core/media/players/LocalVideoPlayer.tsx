@@ -1,0 +1,116 @@
+import useMediaState from '@/core/media/hooks/useMediaState'
+import { useEffect, useRef } from 'react'
+import { useMediaInstance } from '@/core/media/hooks/useMediaInstance'
+import { assignProperties } from '@/utils'
+import { captureVideoFrame } from '@/core/media/utils'
+
+const LocalVideoPlayer = () => {
+  const [mediaState, setMediaState] = useMediaState()
+  const ref = useRef<HTMLVideoElement>(null)
+  const offscreenVideoRef = useRef<HTMLVideoElement>()
+  const instance = useMediaInstance()
+  const { paused, speed, loaded, volume, jumpTime, url } = mediaState
+  const v = ref.current
+  useEffect(() => {
+    setMediaState(s => ({ ...s, url }))
+    if (url) {
+      const video = document.createElement('video')
+      video.src = url
+      offscreenVideoRef.current = video
+    }
+  }, [url])
+
+  assignProperties(instance, {
+    imageOps: {
+      captureImage: async (time, size) => {
+        const v = offscreenVideoRef.current
+        if (v) {
+          const image = await captureVideoFrame(v, time, size || { width: 1600, height: 900 }, true)
+          return image
+        }
+      },
+      captureCurrentImage: async () => {
+        return await instance.imageOps?.captureImage(mediaState.currentTime || 0)
+      }
+    }
+  })
+  useEffect(() => {
+    if (v && loaded) {
+      if (paused) {
+        v.pause()
+      } else {
+        v.play()
+      }
+    }
+  }, [paused, loaded])
+
+  useEffect(() => {
+    if (loaded && v && jumpTime) {
+      v.currentTime = jumpTime
+    }
+  }, [loaded, jumpTime])
+  useEffect(() => {
+    if (loaded && v) {
+      v.volume = volume
+    }
+  }, [loaded, volume])
+
+  useEffect(() => {
+    if (loaded && v) {
+      v.playbackRate = speed
+    }
+  }, [loaded, speed])
+
+  useEffect(() => {
+    if (loaded && mediaState.autoPlay && v) {
+      v.play()
+    }
+  }, [loaded, mediaState.autoPlay])
+  return (
+    <video
+      ref={ref}
+      src={url}
+      loop={mediaState.loop}
+      muted={mediaState.muted}
+      style={{
+        width: '100%',
+        height: '100%',
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        overflow: 'clip',
+        overflowClipMargin: 'content-box',
+        objectFit: 'contain'
+      }}
+      onClick={() => {
+        setMediaState(s => ({ ...s, paused: !s.paused }))
+      }}
+      onDurationChange={e => {
+        const duration = e.currentTarget.duration
+        if (duration) {
+          setTimeout(() => {
+            setMediaState(s => ({ ...s, totalTime: duration }))
+          })
+        }
+      }}
+      onTimeUpdate={e => {
+        const currTime = e.currentTarget.currentTime
+        setTimeout(() => {
+          setMediaState(s => ({ ...s, currentTime: currTime }))
+        })
+      }}
+      onLoad={() => {
+        console.log('load')
+        setMediaState(s => ({ ...s, loaded: true }))
+      }}
+      onLoadedData={() => {
+        console.log('load')
+        setMediaState(s => ({ ...s, loaded: true }))
+      }}
+    >
+      {mediaState.subtitleUrl && mediaState.showSubtitle !== false && <track src={mediaState.subtitleUrl} kind="captions" default />}
+    </video>
+  )
+}
+
+export default LocalVideoPlayer

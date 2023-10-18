@@ -1,26 +1,17 @@
 import { KEY } from '@/consts/key'
 import { useDebounceFn } from '@/hooks'
-import { ObjectStore } from '@/stores'
-import ClassName from '@/styles/classNames'
 import { css } from '@emotion/css'
 import isHotkey from 'is-hotkey'
-import { CSSProperties, forwardRef, memo, useEffect, useRef } from 'react'
+import { forwardRef, memo, useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Content } from '@/components'
 import { ForwardRefComponent } from 'framer-motion'
-import { CustomEditor } from '~/typings'
+import { CustomEditor, EditorProps } from '~/typings'
 import useReadOnlyEditor from './hooks/useReadOnly'
 
-interface EditorTitleProps {
-  title?: string
-  description?: string
-  noteId?: number
-  titleEditable?: boolean
-  onTitleClick?: VoidFunction
-  titleContainerStyle?: CSSProperties
-  titleStyle?: CSSProperties
-  editable?: boolean
+type EditorTitleProps = EditorProps['title'] & {
   editor: CustomEditor
+  stringTitle?: string
 }
 export const editorTitleWrapperClassName = css({
   maxWidth: '100%',
@@ -48,18 +39,23 @@ export const EditorTitleClassName = css({
   }
 })
 const EditorTitle: ForwardRefComponent<HTMLDivElement, EditorTitleProps> = forwardRef(
-  ({ title, description, noteId, titleEditable = true, onTitleClick, titleContainerStyle, titleStyle, editor }, ref) => {
-    const { run: debouncedUpdateNote } = useDebounceFn(ObjectStore('note').updateOne, { wait: 200 })
+  ({ titleEditable = true, titleContainerStyle, customTitleRenderer, titleStyle, stringTitle, editor }, ref) => {
+    const { run: debouncedUpdateNote } = useDebounceFn(
+      (update: string) => {
+        editor.on({ type: 'titleChange', value: update })
+      },
+      { wait: 200 }
+    )
     const { t } = useTranslation()
-    const readonly = useReadOnlyEditor()
+    const readOnly = useReadOnlyEditor()
     const titleRef = useRef<HTMLDivElement>(null)
     useEffect(() => {
       if (titleRef.current) {
         if (document.activeElement !== titleRef.current) {
-          titleRef.current.textContent = title || ''
+          titleRef.current.textContent = stringTitle || ''
         }
       }
-    }, [title])
+    }, [stringTitle])
     return (
       <Content
         className={editorTitleWrapperClassName}
@@ -67,45 +63,39 @@ const EditorTitle: ForwardRefComponent<HTMLDivElement, EditorTitleProps> = forwa
         column
         gap={10}
         style={{
-          width: readonly ? 'max(840px, var(--editor-max-width))' : undefined,
-          paddingLeft: readonly ? 20 : undefined,
+          width: 'var(--editor-max-width)',
+          padding: '40px 0px 20px',
           ...titleContainerStyle
         }}
         ref={node => (editor.titleEle = node)}
       >
-        <div
-          style={titleStyle}
-          ref={titleRef}
-          onInput={e => {
-            const text = (e.target as HTMLDivElement).textContent
-            noteId &&
-              debouncedUpdateNote({
-                id: noteId,
-                title: text || t('general.untitled')
-              })
-          }}
-          onBlur={() => {
-            if (titleRef.current?.textContent === '') {
-              titleRef.current && (titleRef.current.textContent = t('general.untitled'))
-            }
-          }}
-          onKeyDown={e => {
-            if (isHotkey(KEY.Enter, e)) {
-              e.preventDefault()
-              e.currentTarget.blur()
-            }
-          }}
-          spellCheck="false"
-          className={EditorTitleClassName}
-          placeholder={t('editor.untitled')}
-          suppressContentEditableWarning={true}
-          contentEditable={titleEditable}
-          onClick={onTitleClick}
-        />
-        {description && (
-          <div style={{ paddingLeft: 4, marginTop: -4, whiteSpace: 'pre-wrap' }} className={ClassName.description()}>
-            {description}
-          </div>
+        {customTitleRenderer ? (
+          customTitleRenderer(stringTitle || 'Untitled')
+        ) : (
+          <div
+            contentEditable={titleEditable && !readOnly}
+            style={titleStyle}
+            ref={titleRef}
+            onInput={e => {
+              const text = (e.target as HTMLDivElement).textContent
+              debouncedUpdateNote(text || '')
+            }}
+            onBlur={() => {
+              if (titleRef.current?.textContent === '') {
+                titleRef.current && (titleRef.current.textContent = t('general.untitled'))
+              }
+            }}
+            onKeyDown={e => {
+              if (isHotkey(KEY.Enter, e)) {
+                e.preventDefault()
+                e.currentTarget.blur()
+              }
+            }}
+            spellCheck="false"
+            className={EditorTitleClassName}
+            placeholder={t('editor.untitled')}
+            suppressContentEditableWarning={true}
+          />
         )}
       </Content>
     )

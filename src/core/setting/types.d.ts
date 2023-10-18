@@ -5,6 +5,7 @@ export type IGeneralSetting = {
     darkMode: boolean
     copyFileWhenImport: boolean
     customSearchEngineUrl?: string
+    followSystemTheme?: boolean
     userFilePath?: string
     autoBackup: 'never' | 'every day' | '3 days' | 'one week' | 'one month' | 'whenClose'
     backUpPath?: string
@@ -26,13 +27,6 @@ export type IGeneralSetting = {
       | 'youdao dictionary'
       | 'semantic scholar'
     defaultImageSearchEngine: 'bing' | 'google' | 'pinterest' | 'baidu'
-  }
-}
-
-export type IWorkspaceSetting = {
-  workspace: {
-    currentSpace: string
-    allSpaces: { name: string; createdAt: number }[]
   }
 }
 

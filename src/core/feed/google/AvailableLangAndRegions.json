@@ -1,0 +1,110 @@
+[
+  {
+    "language_code": "ar",
+    "language_name": "Arabic"
+  },
+  {
+    "language_code": "zh-cn",
+    "language_name": "Chinese (Simplified)"
+  },
+  {
+    "language_code": "zh-tw",
+    "language_name": "Chinese (Traditional)"
+  },
+  {
+    "language_code": "da",
+    "language_name": "Danish"
+  },
+  {
+    "language_code": "nl",
+    "language_name": "Dutch"
+  },
+  {
+    "language_code": "en",
+    "language_name": "English"
+  },
+  {
+    "language_code": "fr",
+    "language_name": "French"
+  },
+  {
+    "language_code": "de",
+    "language_name": "German"
+  },
+  {
+    "language_code": "hi",
+    "language_name": "Hindi"
+  },
+  {
+    "language_code": "id",
+    "language_name": "Indonesian"
+  },
+  {
+    "language_code": "ga",
+    "language_name": "Irish"
+  },
+  {
+    "language_code": "it",
+    "language_name": "Italian"
+  },
+  {
+    "language_code": "ja",
+    "language_name": "Japanese"
+  },
+  {
+    "language_code": "ko",
+    "language_name": "Korean"
+  },
+  {
+    "language_code": "la",
+    "language_name": "Latin"
+  },
+  {
+    "language_code": "ml",
+    "language_name": "Malayalam"
+  },
+  {
+    "language_code": "no",
+    "language_name": "Norwegian"
+  },
+  {
+    "language_code": "pl",
+    "language_name": "Polish"
+  },
+  {
+    "language_code": "pt",
+    "language_name": "Portuguese"
+  },
+  {
+    "language_code": "pt-br",
+    "language_name": "Portuguese (Brazil)"
+  },
+  {
+    "language_code": "pt-pt",
+    "language_name": "Portuguese (Portugal)"
+  },
+  {
+    "language_code": "ru",
+    "language_name": "Russian"
+  },
+  {
+    "language_code": "es",
+    "language_name": "Spanish"
+  },
+  {
+    "language_code": "es-419",
+    "language_name": "Spanish (Latin American)"
+  },
+  {
+    "language_code": "th",
+    "language_name": "Thai"
+  },
+  {
+    "language_code": "tr",
+    "language_name": "Turkish"
+  },
+  {
+    "language_code": "vi",
+    "language_name": "Vietnamese"
+  }
+]

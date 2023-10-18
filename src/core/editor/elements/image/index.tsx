@@ -9,7 +9,8 @@ import useReadOnlyEditor from '../../hooks/useReadOnly'
 import { fetchRemoteImageAndSaveLocally } from '@/utils/img'
 import Id from '@/utils/id'
 import { Resizable } from 're-resizable'
-import { useIsIn } from '@/hooks'
+import { useIsIn, useSelectAtomValue } from '@/hooks'
+import { EditorStateAtom } from '@/core/editor/hooks/useEditorState'
 
 const Image = ({ element, children }: RenderElementProps) => {
   const imageEle = element as ImageElement
@@ -18,19 +19,37 @@ const Image = ({ element, children }: RenderElementProps) => {
   const readOnly = useReadOnlyEditor()
   const editor = useSlateStatic()
   const { ref, isIn } = useIsIn()
+  const shouldSaveImageLocally = useSelectAtomValue(EditorStateAtom, s => s.state?.saveImgLocally) ?? false
   useEffect(() => {
     if (imageEle.url?.startsWith('http')) {
-      fetchRemoteImageAndSaveLocally(imageEle.url).then(path => {
-        Transforms.setNodes(
-          editor,
-          {
-            url: path
-          },
-          {
-            at: ReactEditor.findPath(editor, imageEle)
+      // if remote can be touched, don't save and remove
+      try {
+        fetch(imageEle.url).then(res => {
+          if (res.ok) {
+            if (shouldSaveImageLocally) {
+              fetchRemoteImageAndSaveLocally(imageEle.url).then(path => {
+                Transforms.setNodes(
+                  editor,
+                  {
+                    url: path
+                  },
+                  {
+                    at: ReactEditor.findPath(editor, imageEle)
+                  }
+                )
+              })
+            }
+          } else {
+            Transforms.removeNodes(editor, {
+              at: ReactEditor.findPath(editor, element)
+            })
           }
-        )
-      })
+        })
+      } catch (e) {
+        Transforms.removeNodes(editor, {
+          at: ReactEditor.findPath(editor, element)
+        })
+      }
     }
   }, [])
   if (!imageEle.url) {
@@ -144,7 +163,7 @@ const Image = ({ element, children }: RenderElementProps) => {
             }
           }}
           size={{ height: 'auto', width: imageEle.width || '100%' }}
-          enable={{ left: true, right: true }}
+          enable={{ left: !readOnly && true, right: !readOnly && true }}
           minWidth={'50%'}
           maxWidth={'100%'}
           onResizeStop={(event, direction, elementRef, delta) => {

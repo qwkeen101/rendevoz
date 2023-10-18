@@ -58,7 +58,8 @@ export const TypeToTypeName: {
   webpageLabel: 'webpage label',
   localFile: 'local file',
   videoLabel: 'video label',
-  syncedBlock: 'syncedBlock'
+  syncedBlock: 'syncedBlock',
+  audioLabel: 'audioLabel'
 }
 export const DatabaseCard: FC<{
   index?: number
@@ -332,9 +333,7 @@ export const DatabaseCard: FC<{
               </div>
               {metaObject.tags && metaObject.tags.length > 0 && (
                 <Content flex gap={4} style={{ flexWrap: 'wrap', marginBottom: 4 }}>
-                  {metaObject.tags?.map(i => (
-                    <ObjectTag small hideSize hideDelete tag={i} key={i} />
-                  ))}
+                  {metaObject.tags?.map(i => <ObjectTag small hideSize hideDelete tag={i} key={i} />)}
                 </Content>
               )}
               <div>{renderCardContent()}</div>

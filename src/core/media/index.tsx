@@ -26,6 +26,7 @@ import { IMediaEvent } from '~/typings/components/media/event'
 import MediaTranscriber from '@/core/media/components/MediaTranscriber'
 import { TabTitle } from '@/core/rendevoz/components'
 import MediaToolbar from '@/core/media/components/MediaToolbar'
+import _ from 'lodash'
 export interface MediaProps {
   onInstanceInitialized?: (instance: Partial<IMediaInstance>) => void
   onlyCore?: boolean
@@ -81,7 +82,10 @@ const MediaInner = ({ onInstanceInitialized, onlyCore, on, disableTabTitle = tru
       setPlayIconVisible(true)
     }
   }, [mediaState.jumpIndicator, mediaState.volumeIndicator])
-
+  useEffect(() => {
+    const { muted, loop, volume, totalPlayedTime, totalTime, currentTime } = mediaState
+    instance.on?.({ type: 'externalStateChange', state: { muted, loop, totalTime, currentTime, totalPlayedTime, volume } })
+  }, [mediaState.muted, mediaState.volume, mediaState.loop, mediaState.currentTime, mediaState.totalPlayedTime, mediaState.totalTime])
   useMediaShortcut(outerContainerRef)
   useAssignMediaInstance(containerRef)
 
@@ -333,29 +337,31 @@ const Media = (props: MediaProps) => {
       subtitleLang,
       subtitleMode = 'list',
       subtitleList,
+      volume,
       subtitleFollow,
       collectionName,
       metaId
     } = props.mediaState || {}
-    console.log(url)
     store.set(MediaInstanceAtom, {})
     store.set(MediaStateAtom, {
-      ...store.get(MediaStateAtom),
+      ..._.merge(store.get(MediaStateAtom), {
+        thumbnail,
+        isPinned,
+        collectionName,
+        jumpTime: lastPlayedTime,
+        labels,
+        subtitleMode,
+        volume,
+        labelType,
+        name,
+        metaId,
+        description,
+        subtitleLang,
+        subtitleList,
+        subtitleFollow
+      }),
       url: transformUrl(url),
-      mode: mode || getMediaMode(url),
-      thumbnail: thumbnail,
-      isPinned,
-      collectionName,
-      jumpTime: lastPlayedTime,
-      labels,
-      subtitleMode,
-      labelType,
-      name,
-      metaId,
-      description,
-      subtitleLang,
-      subtitleList,
-      subtitleFollow
+      mode: mode || getMediaMode(url)
     })
     return store
   }, [])
@@ -374,6 +380,7 @@ const Media = (props: MediaProps) => {
       subtitleLang,
       subtitleList,
       mode,
+      volume,
       subtitleMode = 'list',
       chapters = [],
       subtitleFollow,
@@ -392,6 +399,7 @@ const Media = (props: MediaProps) => {
       subtitleList,
       subtitleFollow,
       chapters,
+      volume: volume || currentState.volume,
       mode: mode || getMediaMode(url),
       sortedChapters: (props.mediaState.chapters || currentState.chapters)?.slice().sort((b, a) => b.startTime - a.startTime) || [],
       labelType,

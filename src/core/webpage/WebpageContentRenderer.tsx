@@ -246,7 +246,7 @@ const WebpageContentRenderer = ({
               url={webpageState.currentUrl}
               {...webpageState.externalState}
               {...webpageState.currentWebpage}
-              title={webpageMeta?.name || webpageState.currentWebpage?.title || webpageState.externalState?.title}
+              title={webpageMeta?.name || webpageState.externalState?.title || webpageState.currentWebpage?.title}
             />
           ),
           titleContainerStyle: {

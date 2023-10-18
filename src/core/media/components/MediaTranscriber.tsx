@@ -91,7 +91,13 @@ export default () => {
       session.current?.destroy()
     }
   }, [])
-
+  useEffect(() => {
+    getAvailableModels().then(res => {
+      if (res && res.length) {
+        setTranscribeState(s => ({ ...s, availableModels: res, selectedModel: s.selectedModel }))
+      }
+    })
+  }, [transcribeState.selectedModel])
   const session = useRef<InferenceSession>(null)
   const loadModel = async () => {
     if (session.current) {

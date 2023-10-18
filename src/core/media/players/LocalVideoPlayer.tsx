@@ -24,8 +24,9 @@ const LocalVideoPlayer = () => {
     imageOps: {
       captureImage: async (time, size) => {
         const v = offscreenVideoRef.current
+        console.log(v, time)
         if (v) {
-          const image = await captureVideoFrame(v, time, size || { width: 1600, height: 900 }, true)
+          const image = await captureVideoFrame(v, time, size || { width: 1600, height: 900 })
           return image
         }
       },

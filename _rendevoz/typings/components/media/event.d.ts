@@ -1,4 +1,4 @@
-import { IMedia, IMediaChapter, IMediaLabel } from '~/typings'
+import { IMedia, IMediaChapter, IMediaExternalState, IMediaInternalState, IMediaLabel } from '~/typings'
 
 export type IMediaEvent =
   | {
@@ -67,4 +67,8 @@ export type IMediaEvent =
       subtitleLang?: IMedia['subtitleLang']
       subtitleMode?: IMedia['subtitleMode']
       subtitleFollow?: IMedia['subtitleFollow']
+    }
+  | {
+      type: 'externalStateChange'
+      state: Partial<IMediaExternalState>
     }

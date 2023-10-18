@@ -7,6 +7,7 @@ import { MetaStore, ObjectStore } from '@/stores'
 import { GlobalInstance } from '@/hooks'
 import useMediaLabelChapter from '@/core/media/wrappers/labelChapter'
 import { normalizeSecondsToTime } from '@/core/media/utils'
+import _ from 'lodash'
 
 const useMediaEventHandlerWrapper = (options: {
   mediaState: Partial<IMediaState>
@@ -70,17 +71,25 @@ const useMediaEventHandlerWrapper = (options: {
       case 'assignToNewCollection':
         if (!metaId) return
         return await GlobalInstance.collectionOps?.addMetaIntoCollection(metaId)
-      case 'pin':
-      {
+      case 'pin': {
         console.log(metaId)
         if (!metaId) return
-        return await MetaStore.updateMetaObject({ id: metaId, pinned: meta ? !meta.pinned : true })
+        return await MetaStore.updateMetaObject({ id: metaId, pinned: meta ? !meta.pinned : true }, true)
+      }
+      case 'externalStateChange': {
+        if (object) {
+          const merged = _.merge({ ...object }, e.state)
+          ObjectStore(type).updateOne({ ...merged })
+        }
+        break
       }
       case 'copyTimestamp': {
         const type = 'text/html'
         const url = `rendevoz://object/${metaId}?t=${e.currentTime}`
         const text = new Blob([url], { type: 'text/plain' })
-        const blob = new Blob([`<a href="${url}">${meta?.name || mediaState.name} — ${normalizeSecondsToTime(e.currentTime)}</a>`], { type })
+        const blob = new Blob([`<a href="${url}">${meta?.name || mediaState.name} — ${normalizeSecondsToTime(e.currentTime)}</a>`], {
+          type
+        })
         navigator.clipboard.write([new ClipboardItem({ 'text/html': blob, 'text/plain': text })])
         return
       }

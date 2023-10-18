@@ -99,6 +99,7 @@ const useWebpageContent = (options: {
           }
         })
         .catch(e => {
+          console.error(e)
           if (webpageState.externalState?.content) {
             options.onEndLoad?.()
             return

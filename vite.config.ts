@@ -3,7 +3,7 @@ import path, { resolve } from 'path'
 import { defineConfig } from 'vite'
 import electron from 'vite-plugin-electron/simple'
 import react from '@vitejs/plugin-react'
-import json5Plugin from 'vite-plugin-json5'
+
 // https://vitejs.dev/config/
 export default defineConfig(() => ({
   css: {
@@ -13,7 +13,6 @@ export default defineConfig(() => ({
       }
     }
   },
-  assetsInclude: ['**/*.bcmap'],
   define: {
     APP_VERSION: JSON.stringify(process.env.npm_package_version),
     'process.env': {}
@@ -21,6 +20,7 @@ export default defineConfig(() => ({
   resolve: {
     alias: {
       stream: 'stream-browserify',
+      cheerio: path.resolve(__dirname, './node_modules/cheerio'),
       '@': path.join(__dirname, 'src'),
       styles: path.join(__dirname, 'src/assets/styles')
     }
@@ -40,7 +40,6 @@ export default defineConfig(() => ({
     }
   },
   plugins: [
-    json5Plugin(),
     react(),
     electron({
       main: {
@@ -63,8 +62,7 @@ export default defineConfig(() => ({
   ],
   server: {
     host: '127.0.0.1',
-    port: 7777,
-    hmr: false
+    port: 7777
   },
   clearScreen: false
 }))

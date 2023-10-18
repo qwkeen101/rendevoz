@@ -67,7 +67,7 @@ const Label = memo(({ labelId, type }: { labelId: number; type: string }) => {
   }, [highlight])
 
   return (
-    <Content ref={ref} flex column style={{ padding: '8px 0px 6px' }} gap={8}>
+    <Content ref={ref} flex column style={{ padding: '8px 0px 0px' }} gap={8}>
       {highlight?.str && renderOriginalText({ text: highlight.str })}
       <Content flex alignItems="center" justifyContent="space-between" gap={10}>
         {renderName({})}

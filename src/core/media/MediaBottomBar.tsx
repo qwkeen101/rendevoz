@@ -27,7 +27,7 @@ const playerControlMask = css({
   backgroundRepeat: 'repeat-x',
   width: '100%',
   height: 288,
-  borderRadius: '0px 0px 4px 4px'
+  borderRadius: '0px 0px 12px 12px'
 })
 const playSpeed: number[] = [2, 1.5, 1.25, 1, 0.75, 0.5]
 const MediaBottomBar = () => {

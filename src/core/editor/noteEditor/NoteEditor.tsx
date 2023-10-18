@@ -123,7 +123,7 @@ const NoteEditor = ({ noteId, labelIds, on, ...rest }: { noteId?: number } & Edi
             console.log(e.value, noteMeta)
             if (noteMeta) {
               const newTitle = e.value
-              MetaStore.updateMetaObject({ id: noteMeta.id, name: newTitle })
+              MetaStore.updateMetaObject({ id: noteMeta.id, name: newTitle }, true)
             }
             return
           }

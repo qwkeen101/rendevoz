@@ -41,6 +41,7 @@ import { useSelectGlobalAtomValue } from '@/hooks'
 import registerTabs from '@/lifycycle/startup/registerTabs'
 import { ipcInstance } from '@/plugins'
 import GlobalCollection from '@/core/global/GlobalCollection'
+Object.d
 // import { startDrive } from '@/driver'
 // import ReviewManager from '@/core/review/components/ReviewManager'
 // import TimelineManager from '@/core/database/TimelineManager'

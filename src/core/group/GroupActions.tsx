@@ -1,7 +1,7 @@
 import { AnimatePopover, Button, Content, Icon, IconWithPopover, WithBorder } from '@/components'
 import { globalStore, MetaStore, ObjectStore } from '@/stores'
 import { MetaGroup } from '~/typings'
-import BetterFilter from '@/core/database/filter/BetterFilter'
+import BetterFilter from '@/core/object/filter/BetterFilter'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { ClassName } from 'rendevoz'
 import fuzzysort from 'fuzzysort'

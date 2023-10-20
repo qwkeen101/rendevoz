@@ -10,7 +10,7 @@ import { CSSProperties, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useSetting } from "../setting";
 import { searchToUrl } from "./utils";
-import { TypeToTypeName } from "../database";
+import { TypeToTypeName } from "../object";
 import { useLatest } from "react-use";
 
 export type NavigationEvent =

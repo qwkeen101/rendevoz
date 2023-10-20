@@ -16,20 +16,23 @@ import useEditorInstance from '@/core/editor/hooks/useEditorInstance'
 import useToggleDrag from '@/core/editor/hooks/drag/useToggleDrag'
 import useDropToNoteElements from '@/core/editor/hooks/drag/useDropToNoteElements'
 import useMoveElements from '@/core/editor/hooks/drag/useMoveElements'
+import useReadOnlyEditor from '@/core/editor/hooks/useReadOnly'
 
-export const normalizeEditorDragBlocksToGlobalDraggingDetails = (instance: IEditorInstance) => {
+export const normalizeEditorDragBlocksToGlobalDraggingDetails = async (instance: IEditorInstance) => {
   let normalizedGlobalDraggingDetails: Partial<AvaliableGlobalDraggingElements> = {}
   const editor = instance.getSlateEditor?.()
   if (!editor) return
   const selected = instance.values.selectedBlocks
+  console.log(editor.on({ type: 'blockDragged' }))
   normalizedGlobalDraggingDetails = {
     type: 'noteBlock',
     element: editor.currentEnterElement,
-    noteId: editor.noteId,
     blockId: editor.currentEnterElement?.id,
     editorId: editor.id,
-    path: ReactEditor.findPath(editor, editor.currentEnterElement)
+    path: ReactEditor.findPath(editor, editor.currentEnterElement),
+    ...(await editor.on({ type: 'blockDragged' }))
   }
+  console.log(normalizedGlobalDraggingDetails)
   if (editor.currentEnterElement?.type === 'metaObject' && !(selected.size > 0)) {
     normalizedGlobalDraggingDetails.metaId = editor.currentEnterElement.originId
   }
@@ -77,7 +80,7 @@ const useEditorDrag = (editor: CustomEditor, scrollElement?: HTMLElement | null)
   const [isDraggingInsideEditor, setIsDragging] = useIsDragging()
   const [globalIsDragging] = useGlobalIsDragging()
   const emitter = Rendevoz.Events.Emit.GlobalEventEmitter
-  const readonly = editor.readonly
+  const readonly = useReadOnlyEditor()
   // default is false
   const dragManager = useMemo(() => new DragManager(), [])
   const scrollManager = useMemo(() => new ScrollManager(), [])
@@ -85,7 +88,6 @@ const useEditorDrag = (editor: CustomEditor, scrollElement?: HTMLElement | null)
   const preventLastMouseMoveRef = useRef(false)
   const { renderIndicator, indicatorManager } = useDragIndicator()
   const instance = useEditorInstance()
-  const handleToggleDrag = useToggleDrag(instance, editor)
   const handleProcessDrop = useDropToNoteElements(instance, editor)
   const handleMoveElements = useMoveElements(instance, editor)
 
@@ -93,6 +95,7 @@ const useEditorDrag = (editor: CustomEditor, scrollElement?: HTMLElement | null)
     // this process doesn't change editor's value
     const indicator = instance.values.indicator
     const { shouldAddElements, shouldMoveElements } = await handleProcessDrop(e)
+    console.log(shouldAddElements, shouldMoveElements)
     // avoid adding elements and moving elements at the same time
     if (shouldMoveElements.length && shouldAddElements.length) return
     // this process change layout
@@ -138,7 +141,7 @@ const useEditorDrag = (editor: CustomEditor, scrollElement?: HTMLElement | null)
 
     const draggingElement = Rendevoz.Actions.State.Drag.getDraggingDetails() as BuiltInDraggableElement
     if (draggingElement.type === 'noteBlock') {
-      if (editor.noteId === draggingElement.noteId) {
+      if (editor.id === draggingElement.editorId) {
         const element = draggingElement.element
         const path = instance.getElementPathById?.(element.id)
         if (!path) return

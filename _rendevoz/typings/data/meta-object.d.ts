@@ -4,7 +4,7 @@ import { IBase } from './base'
 import { ObjectFamily } from 'rendevoz'
 import { MetaFormLayoutItem } from '~/typings'
 import { Dispatch, SetStateAction } from 'react'
-import { MetaSorter, SorterGroup } from '../../../src/core/database/filter/BetterSorter'
+import { MetaSorter, SorterGroup } from '../../../src/core/object/filter/BetterSorter'
 
 export type IMetaAttachment =
   | {

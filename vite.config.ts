@@ -1,16 +1,11 @@
 import { rmSync } from 'fs'
 import path, { resolve } from 'path'
 import { defineConfig } from 'vite'
-import react from '@vitejs/plugin-react'
 import electron from 'vite-plugin-electron/simple'
-import { VitePluginDoubleshot } from 'vite-plugin-doubleshot'
-// import { nodePolyfills } from 'vite-plugin-node-polyfills'
-rmSync(path.join(__dirname, 'dist-electron'), { recursive: true, force: true })
-const isDev = process.env.NODE_ENV === 'development'
-const isProd = process.env.NODE_ENV === 'production'
+import react from '@vitejs/plugin-react'
 
 // https://vitejs.dev/config/
-export default defineConfig(({ command }) => ({
+export default defineConfig(() => ({
   css: {
     preprocessorOptions: {
       less: {
@@ -18,18 +13,23 @@ export default defineConfig(({ command }) => ({
       }
     }
   },
-  assetsInclude: ['**/*.bcmap'],
   define: {
     APP_VERSION: JSON.stringify(process.env.npm_package_version),
     'process.env': {}
   },
   resolve: {
     alias: {
+      stream: 'stream-browserify',
+      cheerio: path.resolve(__dirname, './node_modules/cheerio'),
       '@': path.join(__dirname, 'src'),
       styles: path.join(__dirname, 'src/assets/styles')
     }
   },
   base: './',
+  optimizeDeps: {
+    include: ['retry'],
+    exclude: ['canvas', 'whisper-turbo']
+  },
   build: {
     sourcemap: false,
     rollupOptions: {
@@ -41,27 +41,28 @@ export default defineConfig(({ command }) => ({
   },
   plugins: [
     react(),
-    VitePluginDoubleshot({
-      type: 'electron',
-      main: 'dist-electron/main/index.js',
-      entry: 'electron/main/index.ts',
-      outDir: 'dist-electron/main',
-      external: ['electron'],
-      electron: {
-        build: {
-          config: './electron-builder.json5'
-        },
-        preload: {
-          entry: 'electron/preload/index.ts',
-          outDir: 'dist-electron/preload'
+    electron({
+      main: {
+        entry: 'electron/main/index.ts',
+        vite: {
+          build: {
+            outDir: 'dist-electron/main'
+          }
+        }
+      },
+      preload: {
+        input: __dirname + '/electron/preload/index.ts',
+        vite: {
+          build: {
+            outDir: 'dist-electron/preload'
+          }
         }
       }
     })
   ],
   server: {
     host: '127.0.0.1',
-    port: 7777,
-    hmr: false
+    port: 7777
   },
   clearScreen: false
 }))

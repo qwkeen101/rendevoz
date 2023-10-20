@@ -5,6 +5,7 @@ import { ipcInstance } from '@/plugins'
 ipcInstance.on('unload', () => {
   close()
 })
+
 const close = async () => {
   await SearchHelper.saveSearchIndexLocally()
   await backup()

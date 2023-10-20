@@ -1,4 +1,5 @@
 import { App, BrowserWindow } from 'electron'
+import callback from '../controller/callback'
 
 export default (app: App, win: BrowserWindow) => {
   let cachedRequests: string[] = []
@@ -13,11 +14,9 @@ export default (app: App, win: BrowserWindow) => {
       cachedRequests = []
     }
   }
-  win.webContents.on('did-finish-load', () => {
-    setTimeout(() => {
-      loaded = true
-      handleRequest()
-    }, 5000)
+  callback('appOk', async () => {
+    loaded = true
+    handleRequest()
   })
   app.on('open-url', (event, url) => {
     const lowered = url.toLowerCase()

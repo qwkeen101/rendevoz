@@ -37,8 +37,7 @@ const EditorSearchPanel = () => {
   >([])
   const handleGetSearchResult = (reset = true) => {
     if (searchInput) {
-      const result = instance?.search?.(searchInput, reset)
-      console.log(result)
+      const result = instance.searchOps?.search?.(searchInput, reset)
       result?.length
         ? setSearchResult(
             result.map(i => ({
@@ -155,7 +154,7 @@ const EditorSearchPanel = () => {
     const replaceString = searchState.replaceInput
     const sourceString = searchInput
     if (replaceString === sourceString) return
-    instance.replace?.(sourceString, replaceString, true)
+    instance.searchOps?.replace?.(sourceString, replaceString, true)
     setTimeout(() => {
       handleGetSearchResult(false)
     })
@@ -236,7 +235,7 @@ const EditorSearchPanel = () => {
             <div
               className={ClassName.flatButton()}
               onClick={() => {
-                instance.replace?.(searchInput, searchState.replaceInput)
+                instance.searchOps?.replace?.(searchInput, searchState.replaceInput)
                 setTimeout(() => handleGetSearchResult(true), 100)
               }}
             >
@@ -288,11 +287,9 @@ const ResultItem = ({
       <div
         className={css({
           emphasis: {
-            color: Colors.Emphasis.Emphasis,
-            textTransform: 'none !important'
+            color: Colors.Common.SelectColor
           }
         })}
-        style={{ textTransform: 'none' }}
         dangerouslySetInnerHTML={{ __html: replacedHTML }}
       ></div>
     </div>

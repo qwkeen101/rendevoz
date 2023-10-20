@@ -30,6 +30,7 @@ const IconButton = forwardRef(
       spin,
       suffixStr,
       enabled,
+      theme,
       onSuffixIconClick,
       suffixIcon,
       size,
@@ -39,6 +40,7 @@ const IconButton = forwardRef(
       onClick?: MouseEventHandler
       gap?: number
       text?: string
+      theme?: string
       enabled?: boolean
       className?: string
       dangerous?: boolean
@@ -95,7 +97,7 @@ const IconButton = forwardRef(
             dangerous && DangerousButtonClassName
           )}
         >
-          {icon && <Icon spin={spin} name={icon} size={size} />}
+          {icon && <Icon theme={theme} spin={spin} name={icon} size={size} />}
           {text && <div className={ClassName.ellipsisFont(1)}>{text}</div>}
           {enabled && <Icon name="park-check-small" containerStyle={{ marginLeft: 'auto' }} />}
           {suffixIcon && <Icon onClick={onSuffixIconClick} name={suffixIcon} containerStyle={{ marginLeft: 'auto' }} />}

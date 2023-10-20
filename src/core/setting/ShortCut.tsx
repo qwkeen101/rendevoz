@@ -6,9 +6,10 @@ import _ from 'lodash'
 import { memo, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Content, Icon } from '../../components/base'
-import SettingItem from './Item'
+import { ISettingItem } from './SettingItem'
 import { useSetting } from '.'
 import { IShortCutSetting } from './types'
+import SettingGroup from '@/core/setting/SettingGroup'
 
 const shortCutNameToTitle = {
   global: {
@@ -27,24 +28,18 @@ const shortCutNameToTitle = {
 
 const ShortCutSetting = () => {
   const { t } = useTranslation()
-  const globalItems: SettingItem[] = Object.entries(shortCutNameToTitle.global).map(entry => ({
+  const globalItems: ISettingItem[] = Object.entries(shortCutNameToTitle.global).map(entry => ({
     title: t(`settings.${entry[1]}`),
     children: <ShortCutItem shortCutName={entry[0]} />
   }))
-  const videoItems: SettingItem[] = Object.entries(shortCutNameToTitle.video).map(entry => ({
+  const videoItems: ISettingItem[] = Object.entries(shortCutNameToTitle.video).map(entry => ({
     title: t(`settings.${entry[1]}`),
     children: <ShortCutItem shortCutName={entry[0]} />
   }))
   return (
     <>
-      <div className={ClassName.title('18px')}>{t('settings.global shortcuts')}</div>
-      {globalItems.map(i => (
-        <SettingItem titleSize={14} key={i.title} {...i} />
-      ))}
-      <div className={ClassName.title('18px')}>{t('settings.video shortcuts')}</div>
-      {videoItems.map(i => (
-        <SettingItem titleSize={14} key={i.title} {...i} />
-      ))}
+      <SettingGroup title={t('settings.global shortcuts')} layout={globalItems} />
+      <SettingGroup title={t('settings.video shortcuts')} layout={videoItems} />
     </>
   )
 }
@@ -53,12 +48,10 @@ const ShortCutItem = memo(({ shortCutName }: { shortCutName: keyof IShortCutSett
   const [setting, setSetting] = useSetting()
   const shortCut = setting.shortcut?.[shortCutName]
   const [isSelected, setIsSelected] = useState(false)
-  const [conflictState, setConflictState] = useState<
-    Partial<{
-      isConflicted: boolean
-      conflictWith: string[]
-    }>
-  >({
+  const [conflictState, setConflictState] = useState<Partial<{
+    isConflicted: boolean
+    conflictWith: string[]
+  }>>({
     isConflicted: false
   })
   const containerRef = useRef<HTMLDivElement>(null)
@@ -142,7 +135,7 @@ const ShortCutItem = memo(({ shortCutName }: { shortCutName: keyof IShortCutSett
     }`
   }
   return (
-    <Content flex gap={10} ref={containerRef} alignItems="center">
+    <Content flex gap={10} ref={containerRef} alignItems='center'>
       {conflictState.isConflicted && conflictState.conflictWith && (
         <div style={{ display: 'flex', gap: 10 }} className={ClassName.description()}>
           <span>Conflict with :</span>
@@ -168,7 +161,7 @@ const ShortCutItem = memo(({ shortCutName }: { shortCutName: keyof IShortCutSett
       {isSelected && (
         <Icon
           className={ClassName.circleButton()}
-          name="park-delete"
+          name='park-delete'
           onClick={() => {
             setSetting(s =>
               produce(s, draft => {

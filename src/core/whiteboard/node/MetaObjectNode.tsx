@@ -7,7 +7,7 @@ import { InnerNodeProps } from './WrapperNode'
 import { useFlow } from '../hooks'
 import PdfNode from './PdfNode'
 import NoteNode from './NoteNode'
-import { useRenderObject, Video } from '@/core'
+import { useRenderObject, Media } from '@/core'
 import FontSize from '@/consts/font'
 import WebpageNode from '@/core/whiteboard/node/WebpageNode'
 import { Rendevoz } from '@/core/rendevoz'
@@ -295,7 +295,7 @@ const MetaObjectNode: FC<InnerNodeProps> = ({ node: n, setPopoverElements, setNo
         case 'video':
           return (
             <div style={{ width: '800px', maxWidth: '100%', minWidth: '100%', height: 450, minHeight: '100%', maxHeight: '100%' }}>
-              <Video onlyCore={true} videoId={metaObject.objectId} />
+              <Media onlyCore={true} videoId={metaObject.objectId} />
             </div>
           )
         case 'note': {

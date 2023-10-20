@@ -78,10 +78,14 @@ const parseNode = (idx: number, eles: CustomElement[]) => {
     str += '```'
   }
   if (ele.type === 'image') {
-    const setting = getSetting()
-    const filePath = setting.general.userFilePath
-    const replacedFilePath = filePath + ele.url.replace('rendefile://', '')
-    str += `![image](file://${replacedFilePath})`
+    if (ele.url.startsWith('rendefile')) {
+      const setting = getSetting()
+      const filePath = setting.general.userFilePath
+      const replacedFilePath = filePath + ele.url.replace('rendefile://', '')
+      str += `![image](file://${replacedFilePath})`
+    } else {
+      str += `![image](${ele.url})`
+    }
   }
   if (ele.type === 'order-list-item') {
     const order = getOrderOfNode(idx, eles)

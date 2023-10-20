@@ -1,14 +1,13 @@
-import { useDebounceFn, useMemoizedFn } from '@/hooks'
+import { useDebounceFn, useMemoizedFn, useSelectAtomValue } from '@/hooks'
 import isHotkey from 'is-hotkey'
 import { FC, memo, PointerEventHandler, RefObject, useCallback, useLayoutEffect, useMemo, useRef } from 'react'
 import { Descendant, Editor, Node, Path, Transforms } from 'slate'
 import { Editable, ReactEditor, RenderElementProps, RenderLeafProps, Slate, useSlateStatic } from './slate-react'
 import EditorToolbar from './components/toolbar'
 import HOTKEYS from './consts/hotkeys'
-import { CustomEditor, CustomElement, EditorProps } from '~/typings'
+import { CustomEditor, CustomElement } from '~/typings'
 import Divider from './Divider'
 import { Block } from './elements'
-import styles from './index.module.less'
 import Id from '@/utils/id'
 import { InlineElements } from './consts/elements'
 import { KEY } from '@/consts/key'
@@ -20,11 +19,9 @@ import ClassName from '@/styles/classNames'
 import classNames from 'classnames'
 import useEditorSlashMenu from './hooks/useEditorSlashMenu'
 import getCursorPosition from './utils/getCursorPosition'
-import HoverObjectDetails from '../database/HoverObjectDetails'
+import HoverObjectDetails from '../object/HoverObjectDetails'
 import { DraggableElement, DraggingElement } from '../global'
 import { Element } from './renderer/renderElement'
-import Colors from '@/consts/colors'
-import FontSize from '@/consts/font'
 import useEditorInstance from './hooks/useEditorInstance'
 import useEditorMention from '@/core/editor/hooks/useEditorMention'
 import useEditorDeleteKey from '@/core/editor/hooks/keyboards/useEditorDeleteKey'
@@ -32,59 +29,12 @@ import useEditorArrowKey from '@/core/editor/hooks/keyboards/useEditorArrowKey'
 import useEditorCopyKey from '@/core/editor/hooks/keyboards/useEditorCopyKey'
 import useEditorSelectAllKey from '@/core/editor/hooks/keyboards/useEditorSelectAllKey'
 import useEditorTabKey from '@/core/editor/hooks/keyboards/useEditorTabKey'
-import { getSetting } from '@/core'
-import { truncateString } from '@/utils/text'
 import useEditorSaveKey from '@/core/editor/hooks/keyboards/useEditorSaveKey'
+import useReadOnlyEditor from '@/core/editor/hooks/useReadOnly'
+import EditorClasses from '@/core/editor/consts/classes'
+import { assignProperties } from '@/utils'
 
-const EditableEditorClassName = css({
-  p: {
-    fontSize: '1em',
-    margin: 0
-  },
-  figcaption: {
-    color: Colors.Font.Secondary,
-    fontSize: FontSize['12px'],
-    margin: `0px ${FontSize['12px']}`,
-    padding: 0,
-    display: 'flex',
-    justifyContent: 'center'
-  }
-})
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-//@ts-ignore
 const ReadOnlyEditorClassName = css({
-  // fontFamily: 'Muli, serif',
-  '*': {
-    textTransform: 'none'
-  },
-  pre: {
-    '*': {
-      whiteSpace: 'pre-wrap !important'
-    }
-  },
-  figcaption: {
-    color: Colors.Font.Secondary,
-    fontSize: FontSize['12px'],
-    margin: `0px ${FontSize['12px']}`,
-    padding: 0,
-    display: 'flex',
-    justifyContent: 'center'
-  },
-  p: {
-    fontSize: '1em',
-    lineHeight: 1.6,
-    margin: '0.2em'
-  },
-  'reach-inline-nav': {
-    display: 'none'
-  },
-  img: {
-    borderRadius: 6,
-    maxWidth: '100%'
-  },
-  'h1,h2,h3,h4,h5,h6': {
-    fontWeight: 600
-  },
   table: {
     width: '100%',
     borderSpacing: 0,
@@ -97,6 +47,9 @@ const ReadOnlyEditorClassName = css({
         border: 'none'
       }
     }
+  },
+  'img,p,pre,blockquote,iframe': {
+    marginBottom: 'calc((var(--font-size) / 16 * 1rem) - 6px)'
   },
   tbody: {
     tr: {
@@ -113,46 +66,31 @@ const ReadOnlyEditorClassName = css({
   cite: ClassName.description()
 })
 
-const CompactReadOnlyEditorClassName = css({
-  p: {
-    margin: '0px !important',
-    lineHeight: '1.4 !important'
-  },
-  '.ParagraphBlock': {
-    margin: '3px 0px',
-    padding: '2px'
-  }
-})
 export type InnerEditorProps = {
   editor: CustomEditor
   defaultValue: Descendant[]
   scrollElementRef?: RefObject<HTMLDivElement | null>
   onChange?: (value: Descendant[]) => void
   showToolbar?: boolean
-  onBlockMouseEnter: (e: MouseEvent, element: CustomElement) => void
-  onBlockMouseLeave: (e: MouseEvent, element: CustomElement) => void
-  onBlockMouseMove?: (e: MouseEvent, element: CustomElement) => void
+  onBlockMouseEnter: (e: PointerEvent, element: CustomElement) => void
+  onBlockMouseLeave: (e: PointerEvent, element: CustomElement) => void
+  onBlockMouseMove?: (e: PointerEvent, element: CustomElement) => void
   readonly?: boolean
   compact?: boolean
   onPointerLeave?: PointerEventHandler
   editorClassName?: string
-  toolbarOptions?: EditorProps['toolbarOptions']
 }
 
 const InnerEditor: FC<InnerEditorProps> = memo(
   ({
     editor,
     defaultValue,
-    showToolbar,
     onBlockMouseEnter,
     onBlockMouseLeave,
     onBlockMouseMove,
     onChange,
     scrollElementRef,
-    readonly,
-    compact,
     editorClassName,
-    toolbarOptions,
     onPointerLeave
   }) => {
     const scrollElement = scrollElementRef?.current
@@ -161,6 +99,7 @@ const InnerEditor: FC<InnerEditorProps> = memo(
     const editableRef = useRef<EditableProps['innerRef']>()
     const scopedEmitter = useScopedEventEmitter()
     const previousValue = useRef<Descendant[]>()
+    const readOnly = useReadOnlyEditor()
     const { handleSlashKeyDown } = useEditorSlashMenu(editor)
     const { handleMentionKey } = useEditorMention(editor)
     const instance = useEditorInstance()
@@ -171,18 +110,26 @@ const InnerEditor: FC<InnerEditorProps> = memo(
     const handleSelectAllKey = useEditorSelectAllKey(instance)
     const handleTabKey = useEditorTabKey(instance)
     editor.innerRef = editableRef
+    const index = () => {
+      const map = new Map<number, Path>()
+
+      ID_TO_PATH_MAP.set(editor, map)
+
+      for (const [node, path] of Node.elements(editor)) {
+        node.id && map.set(node.id, path)
+      }
+    }
     const { run: debounceIndex } = useDebounceFn(
       () => {
-        const map = ID_TO_PATH_MAP.get(editor) || new Map<number, Path>()
-
-        ID_TO_PATH_MAP.set(editor, map)
-
-        for (const [node, path] of Node.elements(editor)) {
-          node.id && map.set(node.id, path)
-        }
+        index()
       },
       { wait: 500 }
     )
+    assignProperties(instance, {
+      indexPath: () => {
+        index()
+      }
+    })
     const handleChange = useMemoizedFn((value: Descendant[]) => {
       let shouldChange = false
       // already triggered
@@ -298,18 +245,10 @@ const InnerEditor: FC<InnerEditorProps> = memo(
     )
 
     useLayoutEffect(() => {
-      // if only default value, trigger for path index
+      EDITOR_TO_CHANGED.set(editor, false)
+      handleChange(defaultValue)
+      index()
       document.addEventListener('keydown', globalKeydownHandler)
-      if (!editor.noteId) {
-        editor.children = [...defaultValue]
-        EDITOR_TO_CHANGED.set(editor, false)
-        editor.contentInitialized = true
-        editor.onChange()
-        editor.history = { redos: [], undos: [] }
-        editor.initialized = true
-      } else {
-        editor.onChange()
-      }
       return () => {
         document.removeEventListener('keydown', globalKeydownHandler)
       }
@@ -337,9 +276,7 @@ const InnerEditor: FC<InnerEditorProps> = memo(
     return (
       <Slate editor={editor} onChange={handleChange} value={defaultValue}>
         <EditorToolbar
-          showToolbar={showToolbar}
           scrollElement={scrollElement}
-          toolbarOptions={toolbarOptions}
           on={async event => {
             switch (event.action) {
               case 'bold':
@@ -354,29 +291,20 @@ const InnerEditor: FC<InnerEditorProps> = memo(
                   if (isActive) {
                     const highlightId = Editor.marks(editor)['highlight']
                     Editor.removeMark(editor, 'highlight')
-                    instance.deleteLabel?.(Number(highlightId))
-                    editor.on({
-                      type: 'highlightRemove',
-                      highlightId: Number(highlightId)
-                    })
+                    instance.labelOps?.deleteLabel(Number(highlightId))
                   } else {
                     const highlightId = Id.getId()
-                    const selectedText = editor.selection ? Editor.string(editor, editor.selection) : undefined
+                    const selectedText = editor.selection ? Editor.string(editor, editor.selection) : ''
                     if (!selectedText) return
-                    const name = 'Unnamed Label'
-                    const label = await instance.addLabel?.({
+                    Editor.addMark(editor, 'highlight', highlightId)
+                    const label = await instance.labelOps?.addLabel?.({
                       id: highlightId,
-                      name: name || 'Unnamed Label',
                       selectedText
                     })
-                    if (label) {
-                      editor.on({
-                        type: 'highlight',
-                        highlightId,
-                        labelId: label.id
-                      })
+                    // if successfully add label
+                    if (!label) {
+                      Editor.removeMark(editor, 'highlight')
                     }
-                    Editor.addMark(editor, 'highlight', highlightId)
                   }
                 }
                 break
@@ -421,7 +349,7 @@ const InnerEditor: FC<InnerEditorProps> = memo(
         />
         <Editable
           innerRef={editableRef}
-          readOnly={readonly}
+          readOnly={readOnly}
           suppressContentEditableWarning={true}
           spellCheck="false"
           onPointerLeave={onPointerLeave}
@@ -463,9 +391,9 @@ const InnerEditor: FC<InnerEditorProps> = memo(
           renderLeaf={renderLeaf}
           onKeyDown={handleKeydown}
           className={classNames(
-            styles.editorWrapper,
-            readonly ? ReadOnlyEditorClassName : EditableEditorClassName,
-            compact && readonly && CompactReadOnlyEditorClassName,
+            EditorClasses.TextBoxClass,
+            EditorClasses.DefaultContentClass,
+            readOnly && ReadOnlyEditorClassName,
             editorClassName
           )}
           onKeyDownCapture={e => {
@@ -476,11 +404,11 @@ const InnerEditor: FC<InnerEditorProps> = memo(
           scrollElementRef={scrollElementRef}
           style={useMemo(
             () => ({
-              paddingBottom: readonly || editor.noBottomPadding ? 0 : undefined,
+              paddingBottom: readOnly || editor.noBottomPadding ? 0 : undefined,
               display: 'flex',
               flexDirection: 'column'
             }),
-            [readonly]
+            [readOnly]
           )}
         ></Editable>
       </Slate>
@@ -578,36 +506,33 @@ export const Leaf = (props: RenderLeafProps) => {
 
   if (leaf.highlight) {
     return (
-      <HoverObjectDetails ref={attributes.ref || {}} objectId={leaf.highlight}>
-        <DraggableElement
-          onDragStart={() => editor.on({ type: 'highlightDrag', highlightId: leaf.highlight! })}
-          hoverElement={<DraggingElement text={editor.type === 'note' ? 'Drop to add note label' : 'Drop to add webpage label'} />}
+      <DraggableElement
+        onDragStart={() => editor.on({ type: 'labelDrag', labelId: leaf.highlight! })}
+        hoverElement={<DraggingElement text={editor.type === 'note' ? 'Drop to add note label' : 'Drop to add webpage label'} />}
+      >
+        <span
+          {...attributes}
+          onClick={() => {
+            if (leaf.highlight) {
+              editor.onHighlightClick?.(leaf.highlight as number)
+            }
+          }}
+          data-highlight={leaf.highlight ? String(leaf.highlight) : undefined}
+          className={classNames(leaf.highlight && TextHighlightClassName)}
+          style={{
+            fontSize: leaf.fontSize || '1em',
+            '--block-font-color': leaf.fontColor,
+            background: leaf.backgroundColor
+          }}
         >
-          <span
-            {...attributes}
-            onClick={() => {
-              if (leaf.highlight) {
-                editor.onHighlightClick?.(leaf.highlight as number)
-              }
-            }}
-            data-highlight={leaf.highlight ? String(leaf.highlight) : undefined}
-            className={classNames(styles.leaf, leaf.highlight && TextHighlightClassName)}
-            style={{
-              fontSize: leaf.fontSize || '1em',
-              '--block-font-color': leaf.fontColor,
-              background: leaf.backgroundColor
-            }}
-          >
-            {children}
-          </span>
-        </DraggableElement>
-      </HoverObjectDetails>
+          {children}
+        </span>
+      </DraggableElement>
     )
   }
   return (
     <span
       {...attributes}
-      className={styles.leaf}
       style={{
         fontSize: leaf.fontSize || '1em',
         '--block-font-color': leaf.fontColor,

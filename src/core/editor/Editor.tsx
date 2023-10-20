@@ -1,30 +1,22 @@
-import { useCapturePreviewImage, useClickOutside, useDebounceEffect, useMemoizedFn } from '@/hooks'
+import { useCapturePreviewImage, useClickOutside, useMemoizedFn, useSelectAtomValue } from '@/hooks'
 import Id from '@/utils/id'
-import { FC, memo, MouseEventHandler, useCallback, useEffect, useLayoutEffect, useMemo, useRef } from 'react'
-import { createEditor, Node } from 'slate'
+import { FC, memo, MouseEventHandler, useCallback, useEffect, useMemo, useRef } from 'react'
+import { createEditor } from 'slate'
 import { withHistory } from 'slate-history'
 import { withReact } from './slate-react'
 import { CustomElement, EditorProps } from '~/typings'
 import InnerEditor from './InnerEditor'
 import withVoid from './plugins/withVoid'
-import styles from './index.module.less'
 import BlockHandle from './components/BlockHandle'
 import useIsDragging from './hooks/useIsDragging'
-import { globalStore, MetaStore, ObjectStore } from '@/stores'
-import withShortcuts from './plugins/withShortcuts'
-import withCustomComponent from './plugins/withCustomComponent'
-import withEmitter from './plugins/withEmitter'
-import withHtml from './plugins/withHtml'
-import { ID_TO_ELEMENTS_MAP } from './weakMaps'
-import { objectIdToMetaObjectIdMapAtom } from '@/stores/meta.store'
+import { withShortcuts, withCustomComponent, withHtml } from './plugins'
+import { EDITOR_TO_CHANGED, ID_TO_ELEMENTS_MAP } from './weakMaps'
 import { normalizeEditorDragBlocksToGlobalDraggingDetails } from './hooks/drag/useEditorDrag'
 import { useGlobalIsDragging } from '@/core'
-import withHandler from './plugins/withHandler'
 import { createStore } from 'jotai/vanilla'
 import { Provider, useSetAtom } from 'jotai/react'
 import EditorTitle from './EditorTitle'
 import rebuildDragSelect from './utils/rebuildDragSelect'
-import { ReadOnlyEditorAtom } from './hooks/useReadOnly'
 import useEditorInstance, { EditorInstanceAtom } from './hooks/useEditorInstance'
 import { Rendevoz } from '../rendevoz'
 import { Content } from '@/components'
@@ -37,109 +29,100 @@ import useThrottleFn from '@/hooks/utils/useThrottleFn'
 import useEditorPluginHooks from './hooks/useEditorPluginHooks'
 import { GlobalPdfPrinterInstance } from '@/core/global/GlobalPdfPrinter'
 import EditorHeader from '@/core/editor/EditorHeader'
-import { useAtom } from 'jotai'
 import withColumns from '@/core/editor/plugins/withColumns'
-import { useLatest } from 'react-use'
-import { Colors } from '@/consts'
+import EditorClasses from '@/core/editor/consts/classes'
+import useReadOnlyEditor from '@/core/editor/hooks/useReadOnly'
+import KeyvalueStore from '@/stores/keyvalue.store'
+import { DefaultEditorSettings } from '@/lifycycle/startup/initializeSettings'
+import { default as Cla } from 'classnames'
 
-const initial = [
+// function, get unique id everytime
+const defaultSlateValue = () => [
   {
     id: Id.getId(),
     type: 'paragraph',
     children: [{ text: '' }]
   }
 ]
-
-export const GlobalProviderMap = new Map()
+const pageWidthToSize = {
+  'X-Small': 500,
+  Small: 650,
+  Medium: 800,
+  Large: 1000,
+  'X-Large': 1200
+}
+/**
+ * Editor core, controlled component / uncontrolled
+ * Can be independent component outside Rendevoz
+ * Slate can not be a controlled component, but we can manage to make that happen
+ */
 export const EditorV1: FC<EditorProps> = memo(
   ({
     id,
-    noteId,
-    readonly,
-    showTitle = true,
-    titleContainerStyle,
-    titleStyle,
-    innerEditorStyle,
-    initialValue = initial,
-    showToolbar,
-    title,
-    titleEditable,
-    stringTitle,
-    type = 'note',
-    showBlockHandle = true,
     onInstanceInitialized,
-    compact,
-    noBottomPadding,
     on,
-    defaultReadOnly,
-    innerEditorClassName,
-    showHeader,
-    toolbarOptions
+    onOperationApplied,
+    defaultValue = defaultSlateValue(),
+    readOnly,
+    layout,
+    state,
+    title,
+    onReadOnlyChange,
+    stringTitle = 'Untitled',
+    styles,
+    initialScrollOffset,
+    classNames,
+    defaultReadOnly = false
   }) => {
     const [isDragging, setIsDragging] = useIsDragging()
     const [globalIsDragging] = useGlobalIsDragging()
     const scrollElementRef = useRef<HTMLDivElement>(null)
+    const defaultEditorSetting = KeyvalueStore.useValue('editorSettings') || DefaultEditorSettings
     const setBlockHandle = useSetAtom(EditorBlockHandleAtom)
-    const emitter = Rendevoz.Events.Emit.GlobalEventEmitter
-    const note = ObjectStore('note').useValue(noteId)
     const DragState = Rendevoz.Actions.State.Drag
-    const metaObject = MetaStore.useValue(note?.metaId || (note?.id && globalStore.get(objectIdToMetaObjectIdMapAtom)?.get(note?.id)))
-    const [editorState, setEditorState] = useAtom(EditorStateAtom)
-    useEffect(() => {
-      if (note && !note.metaId) {
-        const noteMetaObject = Array.from(MetaStore.getMetaObjectsMap().values()).find(i => i.objectId === note.id)
-        if (noteMetaObject) {
-          ObjectStore('note').updateOne({ id: note.id, metaId: noteMetaObject.id })
-        }
-      }
-    }, [note])
+    const setEditorState = useSetAtom(EditorStateAtom)
+    const isDraggingDivider = useSelectAtomValue(EditorStateAtom, s => s.isDraggingDivider)
+
     useEffect(() => {
       const keyDownHandler = () => {
         setBlockHandle(s => (s.visible ? { ...s, visible: false } : s))
       }
-      waitFor(
-        () => !!editor.contentInitialized,
-        () => {
-          onInstanceInitialized?.(instance)
-        }
-      )
+      setEditorState(s => ({ ...s, readOnly: defaultReadOnly }))
+      onInstanceInitialized?.(instance)
       document.addEventListener('keydown', keyDownHandler)
       return () => {
         document.removeEventListener('keydown', keyDownHandler)
       }
     }, [])
-    useEffect(() => {
-      setEditorState(s => ({ ...s, outReadOnly: readonly }))
-    }, [readonly])
-    useEffect(() => {
-      setEditorState(s => ({ ...s, innerReadOnly: defaultReadOnly }))
-    }, [defaultReadOnly])
-    const readOnly = readonly || editorState.innerReadOnly
 
-    const setReadOnlyEditor = useSetAtom(ReadOnlyEditorAtom)
     useEffect(() => {
-      setReadOnlyEditor(readOnly)
-    }, [readOnly])
-    // const { sharedType, doc, provider } = useMemo(() => {
-    //   const doc = new Y.Doc()
-    //   let provider
-    //   if (!GlobalProviderMap.has(noteId)) {
-    //     provider = new IndexeddbPersistence(String(noteId), doc)
-    //     GlobalProviderMap.set(noteId, provider)
-    //   } else {
-    //     // share the same provider
-    //     provider = GlobalProviderMap.get(noteId)
-    //   }
-    //   const sharedType = provider.doc.get('content', Y.XmlText)
-    //   return { doc, provider, sharedType }
-    // }, [noteId])
-
-    const handler = (e: { type: string; data: any }) => {
-      if (e.type === 'addMetaObject') {
-        overlayManager.setContent('metaQuery')
-        overlayManager.open()
+      if (readOnly !== undefined) {
+        setEditorState(s => ({ ...s, readOnly }))
       }
-    }
+    }, [readOnly])
+
+    // readonly can be set innerly
+    const realReadOnly = useReadOnlyEditor()
+
+    useEffect(() => {
+      if (readOnly !== undefined && realReadOnly !== readOnly) {
+        onReadOnlyChange?.(!!realReadOnly)
+      }
+    }, [realReadOnly])
+
+    const editorState = realReadOnly
+      ? {
+          typeface: state?.typeface || defaultEditorSetting.readerMode.typeface,
+          fontSize: state?.fontSize || defaultEditorSetting.readerMode.fontSize,
+          lineSpacing: state?.lineSpacing || defaultEditorSetting.readerMode.lineSpacing,
+          pageWidth: state?.pageWidth || defaultEditorSetting.readerMode.pageWidth
+        }
+      : {
+          typeface: state?.typeface || defaultEditorSetting.editMode.typeface,
+          fontSize: state?.fontSize || defaultEditorSetting.editMode.fontSize,
+          lineSpacing: state?.lineSpacing || defaultEditorSetting.editMode.lineSpacing,
+          pageWidth: state?.pageWidth || defaultEditorSetting.editMode.pageWidth
+        }
     const instance = useEditorInstance()
     const withInstance = e => {
       e.instance = instance
@@ -147,11 +130,7 @@ export const EditorV1: FC<EditorProps> = memo(
     }
     const editor = useMemo(() => {
       const editor = withVoid(
-        withHtml(
-          withCustomComponent(
-            withShortcuts(withHandler(withInstance(withEmitter(withColumns(withHistory(withReact(createEditor()))), emitter)), handler))
-          )
-        )
+        withHtml(withCustomComponent(withShortcuts(withInstance(withColumns(withHistory(withReact(createEditor())))))))
       )
       ID_TO_ELEMENTS_MAP.set(editor, new Map())
       return editor
@@ -159,18 +138,12 @@ export const EditorV1: FC<EditorProps> = memo(
 
     const { dragManager, renderIndicator, renderOverlay, popoverVisible, overlayManager } = useEditorPluginHooks({
       editor,
-      scrollElementRef,
-      noteId
+      scrollElementRef
     })
-
-    editor.type = type
-    editor.editorMode = type
+    editor.onOperationApplied = onOperationApplied
     editor.id = id
-    editor.noteId = noteId
-    editor.readonly = !!readOnly
-    editor.note = note
     editor.instance = instance
-    editor.noBottomPadding = noBottomPadding
+    editor.initialScrollOffset = initialScrollOffset
     editor.on = event =>
       on?.({
         ...event,
@@ -178,16 +151,14 @@ export const EditorV1: FC<EditorProps> = memo(
         instance
       })
 
-    const realTitle = stringTitle || metaObject?.name || note?.title || 'Untitled'
-
     instance.printToPDF = () => {
-      GlobalPdfPrinterInstance.print?.({ type: 'note', noteId: noteId, title: realTitle })
+      GlobalPdfPrinterInstance.print?.({ type: 'note', value: editor.children, title: stringTitle })
     }
     instance.getTitle = () => {
-      return realTitle
+      return stringTitle
     }
     const handleBlockMouseMove = useMemoizedFn((e: MouseEvent, element: CustomElement) => {
-      if (!globalIsDragging) {
+      if (!globalIsDragging && !isDraggingDivider) {
         if (!e.currentTarget) return
         if (element.type === 'table' && !(e.target as HTMLElement).hasAttribute('data-table-slot')) return
         e.stopPropagation()
@@ -204,9 +175,6 @@ export const EditorV1: FC<EditorProps> = memo(
             if (element.type === 'table') {
               left -= 12
             }
-            // if (instance.toggleOps?.isTogglableElement(element) && instance.toggleOps?.haveToggledChildren(elementPath)) {
-            //   left -= 10
-            // }
             return {
               ...s,
               left,
@@ -248,84 +216,62 @@ export const EditorV1: FC<EditorProps> = memo(
       overlayManager.open()
     }
 
-    useEffect(() => {
-      editor.on({
-        type: 'titleChange',
-        value: metaObject?.name || note?.title || 'Untitled'
-      })
-    }, [metaObject?.name, note?.title])
     useClickOutside(() => {
       setBlockHandle(s => (s.visible === false ? s : { ...s, visible: false }))
     }, scrollElementRef)
+
     const { captureImage } = useCapturePreviewImage()
-    const latestNote = useLatest(note)
-    useLayoutEffect(() => {
-      // return () => {
-      setTimeout(() => {
-        const str = Node.string(editor)
-        if (str) {
-          const node = scrollElementRef.current?.querySelector('[role="textbox"]')
-          if (node) {
-            const c = window.getComputedStyle(document.body).getPropertyValue('--global-background')
-            captureImage(latestNote.current?.metaId, node, {
-              width: 350,
-              height: 350,
-              backgroundColor: c
-            })
-          }
-        }
-      }, 1000)
-      // }
-    }, [])
+
+    // useLayoutEffect(() => {
+    //   // return () => {
+    //   setTimeout(() => {
+    //     const str = Node.string(editor)
+    //     if (str) {
+    //       const node = scrollElementRef.current?.querySelector('[role="textbox"]')
+    //       if (node) {
+    //         const c = window.getComputedStyle(document.body).getPropertyValue('--global-background')
+    //         captureImage(latestNote.current?.metaId, node, {
+    //           width: 350,
+    //           height: 350,
+    //           backgroundColor: c
+    //         })
+    //       }
+    //     }
+    //   }, 1000)
+    //   // }
+    // }, [])
     return (
       <Content fullWidth fullHeight flex column>
-        {showHeader !== false && <EditorHeader title={realTitle} />}
+        {layout?.showHeader !== false && <EditorHeader title={stringTitle} editor={editor} />}
         <Content flex fullWidth auto style={{ height: 0 }}>
-          {showHeader !== false && <SidebarToolbar editor={editor} />}
-          <div className={styles.editor} role="editor-container">
+          {layout?.showHeader !== false && <SidebarToolbar editor={editor} />}
+          <div className={EditorClasses.Editor} role="editor-container">
             <div
               ref={scrollElementRef}
-              className={styles.scrollWrapper}
+              className={EditorClasses.ScrollWrapperClass}
               style={{
-                '--editor-max-width': note?.width === 'full' ? '100%' : '800px'
+                '--editor-max-width': `${pageWidthToSize[editorState.pageWidth] || 800}px`,
+                '--editable-line-height': editorState.lineSpacing,
+                fontFamily: editorState.typeface || 'Inter',
+                padding: styles?.pageMinPadding ?? '0px 40px 0px 60px'
               }}
             >
-              {showTitle &&
-                (typeof title === 'string' || typeof title === 'undefined' ? (
-                  <EditorTitle
-                    titleContainerStyle={titleContainerStyle}
-                    titleStyle={titleStyle}
-                    noteId={noteId}
-                    description={metaObject?.description}
-                    titleEditable={titleEditable !== false && (!metaObject || metaObject.type === 'note')}
-                    title={title || metaObject?.name || note?.title || 'Untitled'}
-                    editor={editor}
-                  />
-                ) : (
-                  title
-                ))}
+              {layout?.showTitle !== false && <EditorTitle stringTitle={stringTitle} {...title} editor={editor} />}
               <div
                 role="inner-editor"
-                className={styles.InnerEditorWrapper}
+                className={Cla(EditorClasses.EditorWrapper, classNames?.editorContainerClassName)}
                 style={{
-                  padding: readOnly ? '0px 20px' : undefined,
-                  '--block-bg': readOnly ? 'none' : undefined,
-                  fontSize: note?.fontSize,
-                  width: '100%',
-                  ...innerEditorStyle
+                  '--block-bg': realReadOnly ? 'none' : undefined,
+                  '--font-size': editorState.fontSize,
+                  fontSize: editorState.fontSize
                 }}
               >
                 <InnerEditor
-                  toolbarOptions={toolbarOptions}
-                  compact={compact}
-                  readonly={readOnly}
-                  showToolbar={showToolbar}
+                  defaultValue={defaultValue}
                   scrollElementRef={scrollElementRef}
                   editor={editor}
                   onChange={v => editor.on({ type: 'valueChange', value: v })}
-                  defaultValue={initialValue}
                   onBlockMouseMove={(e, element) => {
-                    e.stopPropagation()
                     throttleBlockMove.run(e, element)
                   }}
                   onBlockMouseLeave={e => {
@@ -334,13 +280,12 @@ export const EditorV1: FC<EditorProps> = memo(
                     }
                     setBlockHandle(s => ({ ...s, visible: false }))
                   }}
-                  editorClassName={innerEditorClassName}
                 />
               </div>
             </div>
             {renderOverlay()}
             {renderIndicator}
-            {showBlockHandle !== false && (
+            {layout?.showBlockHandle !== false && (
               <BlockHandle
                 onAddClick={handleBlockHandleMenu}
                 onDragClick={useCallback(
@@ -362,24 +307,26 @@ export const EditorV1: FC<EditorProps> = memo(
                         DragState.addDragElements?.(wrapper)
                       }
                     }
-                    DragState.setDraggingDetails?.(normalizeEditorDragBlocksToGlobalDraggingDetails(instance))
-                    DragState.startDrag?.()
+                    normalizeEditorDragBlocksToGlobalDraggingDetails(instance).then(res => {
+                      DragState.setDraggingDetails?.(res)
+                      DragState.startDrag?.()
+                    })
                   },
                   [setIsDragging]
                 )}
                 onMenuClick={handleMenuClick}
-                outerVisible={!!(!isDragging && !popoverVisible && !readonly && showBlockHandle)}
+                outerVisible={!!(!isDragging && !popoverVisible && !realReadOnly)}
               />
             )}
           </div>
-          {showHeader !== false && <EditorRightBar />}
+          {layout?.showHeader !== false && <EditorRightBar />}
         </Content>
       </Content>
     )
   }
 )
 
-export const Editor: FC<EditorProps> = memo(({ type = 'note', ...props }) => {
+export const Editor: FC<EditorProps> = memo(props => {
   const store = useMemo(() => {
     const store = createStore()
     store.set(EditorInstanceAtom, {
@@ -387,16 +334,16 @@ export const Editor: FC<EditorProps> = memo(({ type = 'note', ...props }) => {
         selectedBlocks: new Map()
       }
     })
-    store.set(EditorStateAtom, { ...props, type })
+    store.set(EditorStateAtom, { ...props })
     return store
   }, [])
   useEffect(() => {
     const currentState = store.get(EditorStateAtom)
-    store.set(EditorStateAtom, { ...props, ...currentState, type })
+    store.set(EditorStateAtom, { ...currentState, ...props })
   }, [props])
   return (
     <Provider store={store}>
-      <EditorV1 {...props} type={type} />
+      <EditorV1 {...props} />
     </Provider>
   )
 })

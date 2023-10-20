@@ -1,9 +1,14 @@
 import { WebpageInnerRef } from '@/core/webpage/WebpageCore'
 import { CustomEditor } from './editor'
-import { Box, ILayoutTab, IWhiteboardEdge, IWhiteboardNode, MetaGroupChild, PartialWithId, TabData } from '..'
-import { PrimitiveAtom } from 'jotai'
-import { Patch } from 'immer'
-import { Path } from 'slate'
+import {
+  BuiltInDraggableElement,
+  ICollection,
+  ILayoutTab,
+  IWhiteboardEdge,
+  IWhiteboardNode,
+  MetaObject,
+  PartialWithId
+} from '..'
 
 export interface WebpageInstance {
   transformToNote: () => Promise<CustomEditor>
@@ -37,9 +42,19 @@ export type IReviewInstance = Partial<{
   deleteCard?: () => void
 }>
 
-
 export type IBaidudiskInstance = Partial<{
   // choose file, return file path or undefined
   chooseFile: (category?: number, closeAfterChoose?: boolean) => Promise<any | undefined>
   onChooseFile: (file: any) => void
+}>
+
+export type IGlobalInstance = Partial<{
+  collectionOps: {
+    selectCollection: () => Promise<ICollection>
+    addMetaIntoCollection: (metaId: number) => Promise<void>
+  }
+  metaOps: {
+    openDetails: (id: number) => void
+    addDraggableAsMeta: (d: BuiltInDraggableElement) => Promise<MetaObject>
+  }
 }>

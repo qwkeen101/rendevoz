@@ -22,6 +22,11 @@ export interface TurnSyncBlockEvent {
   syncBlockMetaId: number
   draggingDetails: IDraggableElement
 }
+
+// prevent saved for multiple times
+interface ValueSavedEvent {
+  noteId: number
+}
 export interface EditorEventMap {
   /**
    * These are scoped event
@@ -34,6 +39,7 @@ export interface EditorEventMap {
    * These are global event
    */
   operationApplied: OperationAppliedEvent
+  valueSaved: ValueSavedEvent
   turnElementsToSyncBlock: TurnSyncBlockEvent
 }
 

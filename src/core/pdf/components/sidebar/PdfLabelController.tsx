@@ -3,7 +3,7 @@ import { PdfStateAtom } from '../../hooks/usePdfState'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { IPdfLabel } from '~/typings'
 import { ObjectStore } from '@/stores'
-import { useRenderLabel } from '@/core/database'
+import { useRenderLabel } from '@/core/object'
 import { Content, Image, VirtualList } from '@/components'
 import FontSize from '@/consts/font'
 import ClassName from '@/styles/classNames'
@@ -179,12 +179,18 @@ const PdfLabelController = () => {
 }
 
 const Label = ({ id, highlight }: { id: number; highlight: boolean }) => {
-  const { label, labelMeta, ref, renderName, renderOriginalText, renderPopover, renderAttachment, renderDescription, setDraggingDetails } =
+  const { label, ref, renderName, renderOriginalText, renderPopover, renderAttachment, renderDescription, setDraggingDetails } =
     useRenderLabel({
       objectId: id,
       type: 'pdfLabel',
       onNavigate: () => {
         instance.jumpToLabel?.(id)
+      },
+      onDragStart: () => {
+        setDraggingDetails({
+          type: 'pdfLabel',
+          labelId: pdfLabel.id
+        })
       }
     })
   const pdfLabel = label as IPdfLabel
@@ -192,18 +198,7 @@ const Label = ({ id, highlight }: { id: number; highlight: boolean }) => {
 
   const containerRef = useRef<HTMLDivElement>(null)
   const mergedContainerRef = useMergedRef(ref, containerRef)
-  useEffect(() => {
-    if (pdfLabel && pdfLabel.documentId) {
-      setDraggingDetails({
-        ...pdfLabel,
-        pdfId: pdfLabel.documentId,
-        content: pdfLabel.name,
-        page: pdfLabel.page,
-        labelId: pdfLabel.id,
-        type: 'pdfLabel'
-      })
-    }
-  }, [pdfLabel])
+
   useEffect(() => {
     const container = containerRef.current
     if (highlight && container) {

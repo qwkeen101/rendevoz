@@ -4,7 +4,7 @@ import { SyncedBlockElement } from '~/typings/components/editor/outerElements'
 import { useEffect, useRef } from 'react'
 import { Editor, Transforms } from 'slate'
 import { ReactEditor, useRenderObject, useSlateStatic } from '@/core'
-import { useDebounceEffect, useMemoizedFn } from '@/hooks'
+import { useDebounceEffect, useMemoizedFn, useSelectAtomValue } from '@/hooks'
 import { Colors } from '@/consts'
 import { AnimatePopover, Button, Content, Icon, IconWithPopover, WithBorder } from '@/components'
 import { ClassName } from 'rendevoz'
@@ -13,6 +13,7 @@ import FontSize from '@/consts/font'
 import _ from 'lodash'
 import { HistoryEditor } from 'slate-history'
 import { useTranslation } from 'react-i18next'
+import { EditorStateAtom } from '@/core/editor/hooks/useEditorState'
 
 const SyncedBlock = ({ element, children }: RenderElementProps) => {
   const syncElement = element as SyncedBlockElement
@@ -102,14 +103,16 @@ const SyncedBlock = ({ element, children }: RenderElementProps) => {
       inputRef.current.value = syncMeta.name
     }
   }, [syncMeta?.name])
+  const showBlockShadow = useSelectAtomValue(EditorStateAtom, s => s.state?.showSyncBlockShadow)
   if (!syncMeta) {
     const path = ReactEditor.findPath(editor, element)
     Transforms.removeNodes(editor, { at: path })
+    return null
   }
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column' }} data-drag={true}>
-      {editor.editorMode !== 'syncedBlock' && (
+      {showBlockShadow !== false && (
         <>
           <div
             style={{
@@ -135,15 +138,19 @@ const SyncedBlock = ({ element, children }: RenderElementProps) => {
           ref={inputRef}
           placeholder={'Unnamed synced block'}
           className={ClassName.noStyleInput}
-          defaultValue={syncMeta.name}
+          defaultValue={syncMeta?.name}
           style={{ flex: 1 }}
           onBlur={e => MetaStore.updateMetaObject({ id: syncMeta.id, name: e.target.value }, true)}
         />
 
-        <Content flex gap={6} alignItems={'center'}>
+        <Content flex gap={6} style={{ fontSize: 14 }} alignItems={'center'}>
           <AnimatePopover
             positions={['bottom', 'top']}
-            content={<WithBorder padding={6}>{blockDetails?.syncedMetaIds.map(i => <InlinePageRenderer metaId={i} />)}</WithBorder>}
+            content={
+              <WithBorder style={{ fontSize: 14 }} padding={6}>
+                {blockDetails?.syncedMetaIds.map(i => <InlinePageRenderer metaId={i} />)}
+              </WithBorder>
+            }
           >
             <Content flex gap={6} className={ClassName.flatButton(4, '2px 6px')}>
               <Icon name={'park-transfer-data'} />

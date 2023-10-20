@@ -27,6 +27,7 @@ const HomeGallery = () => {
       }
     ]
   }
+  const rows = KeyvalueStore.useValue('homeGalleryRows') || 1
   useEffect(() => {
     if (objectIndex) {
       if (objectIndex.typeToMetaObjectIdsMap) {
@@ -66,14 +67,15 @@ const GalleryPanel = ({ panelName, count }: { panelName: string; count: number }
   const allObjects = MetaStore.useMetaObjectsMap()
   const index = MetaStore.useIndexedMetaObjects()
   const { t } = useTranslation()
+  const rows = KeyvalueStore.useValue('homeGalleryRows') || 1
   const [pag, setPag] = useState<{
     start: number
   }>({
     start: 0
   })
-  const pagable = displayMetaIds.length > count
+  const pagable = displayMetaIds.length > count * rows
   const hasBefore = pag.start > 0
-  const hasNext = displayMetaIds.length > count + pag.start
+  const hasNext = displayMetaIds.length > count * rows + pag.start
   useEffect(() => {}, [count])
   useEffect(() => {
     const map = MetaStore.getMetaObjectsMap()
@@ -111,7 +113,7 @@ const GalleryPanel = ({ panelName, count }: { panelName: string; count: number }
               name={'park-left'}
               onClick={() => {
                 if (hasBefore) {
-                  setPag({ start: Math.max(pag.start - count, 0) })
+                  setPag({ start: Math.max(pag.start - count * rows, 0) })
                 }
               }}
             />
@@ -122,15 +124,15 @@ const GalleryPanel = ({ panelName, count }: { panelName: string; count: number }
               className={ClassName.circleButton()}
               onClick={() => {
                 if (hasNext) {
-                  setPag({ start: pag.start + count })
+                  setPag({ start: pag.start + count * rows })
                 }
               }}
             />
           </Content>
         )}
       </Content>
-      <Content flex gap={20}>
-        {displayMetaIds.slice(pag.start, pag.start + count).map(i => (
+      <Content flex gap={20} style={{ flexWrap: 'wrap' }}>
+        {displayMetaIds.slice(pag.start, pag.start + count * rows).map(i => (
           <GalleryItem metaId={i} key={i} />
         ))}
       </Content>

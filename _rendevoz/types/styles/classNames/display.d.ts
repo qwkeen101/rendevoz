@@ -1,4 +1,4 @@
-export declare const gridLayout: ({ rowGap, columnGap, itemMinWidth }: {
+export declare const gridLayout: ({ rowGap, columnGap, itemMinWidth, }: {
     rowGap?: number;
     columnGap?: number;
     itemMinWidth?: number;

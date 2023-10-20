@@ -3,7 +3,7 @@ import { t } from 'i18next'
 import { TypeToTypeName } from '@/core'
 import { getFilenameWithoutExtension, saveFileLocally, saveImageLocally } from '@/utils'
 import { MetaStore, ObjectStore } from '@/stores'
-import { generateVideoThumbnail } from '@/core/video/utils'
+import { generateVideoThumbnail } from '@/core/media/utils'
 import { initializePdfDocument } from '@/stores/document.store'
 
 // supports PDF, video, image only

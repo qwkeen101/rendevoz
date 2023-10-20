@@ -1,9 +1,6 @@
 import { RefObject, useEffect } from 'react'
 import { CustomEditor } from '~/typings'
 import useAutoInsertEndline from './useAutoInsertEndline'
-import { ObjectStore } from '@/stores'
-import useLocalSyncValue from './useSyncValue'
-import useStoreValue from './useStoreValue'
 import useEditorDrag from './drag/useEditorDrag'
 import useEditorOverlay from '../components/overlay/useEditorOverlay'
 import useEditorSelect from './useEditorSelect'
@@ -13,22 +10,11 @@ import { EditorStateAtom } from './useEditorState'
 import { useSetAtom } from 'jotai'
 import { ID_TO_VISIBLE_HEADING_MAP } from '../weakMaps'
 
-const useEditorPluginHooks = (opts: { editor: CustomEditor; scrollElementRef: RefObject<HTMLElement>; noteId?: number }) => {
-  const { editor, scrollElementRef, noteId } = opts
+const useEditorPluginHooks = (opts: { editor: CustomEditor; scrollElementRef: RefObject<HTMLElement>}) => {
+  const { editor, scrollElementRef } = opts
   const instance = useEditorInstance()
-  const note = ObjectStore('note').useValue(noteId)
-
-  if (note) {
-    editor.note = note
-  }
 
   useAutoInsertEndline(scrollElementRef, editor)
-
-  useLocalSyncValue(editor)
-
-  useStoreValue(note, editor, e => {
-    editor.on({ type: 'contentRetrieved' })
-  })
 
   useAssignEditorInstance(editor, scrollElementRef)
 
@@ -57,7 +43,6 @@ const useEditorPluginHooks = (opts: { editor: CustomEditor; scrollElementRef: Re
           ]) as [number, { element: HTMLElement; offsetTop: number }][]
           withBoundingHeadings.sort((b, a) => b[1].offsetTop - a[1].offsetTop)
           const realScrollTop = Math.max(0, scrollElement.scrollTop - (editor.titleEle?.getBoundingClientRect().height || 0))
-          console.log(withBoundingHeadings, realScrollTop)
           if (realScrollTop < withBoundingHeadings[0][1].offsetTop) {
             setEditorState(s => ({
               ...s,
@@ -65,7 +50,6 @@ const useEditorPluginHooks = (opts: { editor: CustomEditor; scrollElementRef: Re
             }))
           } else {
             const currIdx = withBoundingHeadings.findLastIndex(i => i[1].offsetTop < realScrollTop)
-            console.log(currIdx)
             setEditorState(s => ({
               ...s,
               currentActiveHeadingId: withBoundingHeadings[currIdx][0]

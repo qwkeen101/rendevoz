@@ -11,6 +11,7 @@ import getSetting from '@/core/setting/getSetting'
 import { useMemo } from 'react'
 import { useSelectGlobalAtomValue } from '@/hooks'
 import { metaObjectsAtom } from '@/stores/meta.store'
+import KeyvalueStore from '@/stores/keyvalue.store'
 
 const { orderedData } = BaseStore
 
@@ -103,7 +104,7 @@ const useCollectionStore = () => {
     deleteOneById: store.deleteOneById(silent => {
       !silent && shouldToast(silent) && toast.success('Collection successfully deleted!')
     }),
-    getAll: store.getAll(i => i.workspace === getSetting().workspace.currentSpace),
+    getAll: store.getAll(i => i.workspace === KeyvalueStore.getOne('currentWorkspace')),
     getOneById: store.getOneById()
   }
   const findNestedCollections = (
@@ -156,10 +157,12 @@ const useCollectionStore = () => {
   }
 
   const addItemToCollection = (item: ICollectionItem, collectionId: number) => {
+    console.log(item, collectionId)
     const origin = structuredClone(globalStore.get(collectionsAtom).get(collectionId)) as ICollection
     origin.items = origin.items || []
     if (origin.items.some(i => i.id === item.id)) return
     origin.items.push(item)
+    console.log(origin)
     realStore.updateCollection(origin, true)
   }
 

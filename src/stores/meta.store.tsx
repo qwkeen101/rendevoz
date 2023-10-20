@@ -17,6 +17,7 @@ import { useGlobalAtomValue } from '@/hooks'
 import { getUser } from '@/services/login.service'
 import { RegisteredMetaObject } from 'rendevoz'
 import SearchHelper from '@/textSearch/SearchHelper'
+import KeyvalueStore from '@/stores/keyvalue.store'
 
 export const metaObjectsAtom = atom<Map<number, MetaObject>>(new Map())
 
@@ -377,7 +378,7 @@ const createMetaStore = () => {
         }
         MetaStore.addMetaLink(link, true)
       }
-      initedMetaObject.workspace = getSetting().workspace.currentSpace
+      initedMetaObject.workspace = KeyvalueStore.getOne('currentWorkspace')
       if (!initedMetaObject.name) {
         let initedName = 'Unnamed Object'
         switch (initedMetaObject.type) {
@@ -483,7 +484,7 @@ const createMetaStore = () => {
         handleMetaObjectDelete(id)
       })(id, silent, force)
     },
-    getAll: initializeObjectStore.getAll(obj => obj.workspace === getSetting().workspace.currentSpace)
+    getAll: initializeObjectStore.getAll(obj => obj.workspace === KeyvalueStore.getOne('currentWorkspace'))
   }
 
   const initializedLinkStore = initializeLocalStore(metaLinksAtom, metaLinkDb)
@@ -548,8 +549,8 @@ const createMetaStore = () => {
       return globalStore.get(metaObjectsAtom).get(metaObjectId)
     }
   }
-  const useObjectToMetaValue = (objectId: number) => {
-    const objectIdToMetaObjectIdAtom = useMemo(() => selectAtom(objectIdToMetaObjectIdMapAtom, m => m?.get(objectId)), [objectId])
+  const useObjectToMetaValue = (objectId?: number) => {
+    const objectIdToMetaObjectIdAtom = useMemo(() => selectAtom(objectIdToMetaObjectIdMapAtom, m => m?.get(objectId || 0)), [objectId])
     const metaId = useGlobalAtomValue(objectIdToMetaObjectIdAtom)
     const metaAtom = useMemo(() => (metaId ? selectAtom(metaObjectsAtom, m => m.get(metaId)) : atom(undefined)), [metaId])
     return useGlobalAtomValue(metaAtom)

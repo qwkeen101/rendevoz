@@ -1,9 +1,9 @@
 import { ReactElement } from 'react'
-import { CustomTypes, IEditorInstance, IPdfInstance, IVideoInstance, IWebpageInstance } from '.'
+import { CustomTypes, IEditorInstance, IPdfInstance, IMediaInstance, IWebpageInstance } from '.'
 
 export type IVideoTab = {
   type: 'video'
-  instance: IVideoInstance
+  instance: IMediaInstance
   objectId: number
 }
 

@@ -2,6 +2,7 @@ import { useTheme, useToggle } from '@/hooks'
 import { CSSProperties, FC } from 'react'
 import { motion } from 'framer-motion'
 import { css } from '@emotion/css'
+import { Colors } from '@/consts'
 
 interface SwitchProps {
   onChange?: (value: boolean) => void
@@ -27,10 +28,9 @@ const SwitchClassName = css({
 })
 const Switch: FC<SwitchProps> = ({ onChange, defaultValue = false, value, small }) => {
   const [on, toggleOn] = useToggle(defaultValue)
-  const { primaryColor } = useTheme('primaryColor')
   const realOn = value !== undefined ? value : on
   const switchStyle: CSSProperties = {
-    backgroundColor: realOn ? primaryColor : '#00000040',
+    backgroundColor: realOn ? Colors.Common.SelectColor : '#00000040',
     justifyContent: realOn ? 'flex-end' : 'flex-start',
     height: small ? 16 : 22,
     width: small ? 32 : 44

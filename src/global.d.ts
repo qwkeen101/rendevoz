@@ -14,3 +14,15 @@ declare module 'i18next' {
     returnNull: false
   }
 }
+
+declare module 'react' {
+  interface CSSProperties {
+    // For inline css variables
+    [key: `--${string}`]: string | number | undefined
+  }
+}
+
+declare module '*.json5' {
+  const src: string
+  export default src
+}

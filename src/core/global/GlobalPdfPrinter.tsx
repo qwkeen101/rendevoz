@@ -3,7 +3,7 @@ import { assignProperties } from '@/utils'
 import { ReactElement, useEffect, useMemo, useRef, useState } from 'react'
 
 import { CacheProvider } from '@emotion/react'
-import { css, sheet, cache } from '@emotion/css'
+import { css, cache } from '@emotion/css'
 import { createPortal } from 'react-dom'
 import { ipcInstance } from '@/plugins'
 import { GlobalInstances } from '~/typings'
@@ -28,17 +28,18 @@ const GlobalPdfPrinter = () => {
         case 'note': {
           setChildren(
             <Editor
-              readonly={true}
-              type={'note'}
-              showHeader={false}
-              stringTitle={currentTitleRef.current}
-              showToolbar={false}
-              showBlockHandle={false}
+              readOnly={true}
+              defaultValue={printable.value}
+              layout={{
+                showBlockHandle: false,
+                showToolbar: false,
+                showBottomPadding: false,
+                showHeader: false
+              }}
+              stringTitle={printable.title}
               id={Id.getStrId()}
-              noteId={printable.noteId}
             />
           )
-          console.log(printable.title)
           currentTitleRef.current = printable.title
           break
         }

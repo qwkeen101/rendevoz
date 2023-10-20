@@ -1,6 +1,8 @@
+import { Descendant } from 'slate'
+
 type Printable = {
   type: 'note'
-  noteId: number
+  value: Descendant[]
   title: string
 }
 

@@ -18,7 +18,7 @@ import AboutSetting from './About'
 import UsageSetting from './Usage'
 import { useUser } from '@/services/login.service'
 import { KeyToRegisterdSettings } from '@/core/plugin/RegisterMap'
-import SettingItem from '@/core/setting/Item'
+import SettingItem from '@/core/setting/SettingItem'
 import {
   INotificationSetting,
   IShortCutSetting,
@@ -29,11 +29,14 @@ import {
   IWorkspaceSetting
 } from './types'
 import WorkspaceSetting from '@/core/setting/Workspace'
+import EditorSetting from '@/core/setting/Editor'
+import { Colors } from '@/consts'
 
 enum Settings {
   'general',
   'appearance',
   'components',
+  'editor',
   'workspace',
   'shortcuts',
   'object and link',
@@ -47,7 +50,6 @@ type Setting = INotificationSetting &
   IGeneralSetting &
   IObjectsAndLinkSetting &
   IComponentSetting &
-  IWorkspaceSetting &
   IAppearanceSetting & {
     sidebarVisibleItems: string[]
   }
@@ -75,7 +77,8 @@ const defaultSetting: Setting = {
     defaultSearchEngine: 'google',
     defaultImageSearchEngine: 'bing',
     autoBackup: 'never',
-    dataBackup: 'never'
+    dataBackup: 'never',
+    followSystemTheme: false
   },
   objectAndLink: {
     enableAll: true,
@@ -85,10 +88,6 @@ const defaultSetting: Setting = {
     enableDragFromEditorLink: true,
     enableDragFromPDFLink: true,
     enableDropAutoGenerateObject: true
-  },
-  workspace: {
-    currentSpace: 'default',
-    allSpaces: ['default']
   },
   whiteboard: {
     enableMinimap: false,
@@ -126,7 +125,6 @@ const defaultSetting: Setting = {
 }
 _.merge(defaultSetting, localSetting)
 defaultSetting.sidebarVisibleItems = localSetting?.sidebarVisibleItems || defaultSetting.sidebarVisibleItems
-defaultSetting.workspace.allSpaces = localSetting?.workspace?.allSpaces || defaultSetting.workspace.allSpaces
 localStorage.setItem('setting', JSON.stringify(defaultSetting))
 export const SettingAtom = atomWithStorage<Setting>('setting', defaultSetting)
 
@@ -135,7 +133,6 @@ export const useSetting = () => useAtom(SettingAtom, { store: globalStore })
 const SettingDialog = ({ onClose }: { onClose: VoidFunction }) => {
   const { t } = useTranslation()
   const [currentSettingPanel, setCurrentSettingPanel] = useState<keyof typeof Settings>('general')
-  const [setting] = useSetting()
   const [user] = useUser()
   const registeredPanels = new Map(Array.from(KeyToRegisterdSettings.values()).map(i => [i.registerPanelName, i.settingItems]))
 
@@ -147,6 +144,8 @@ const SettingDialog = ({ onClose }: { onClose: VoidFunction }) => {
         return <NotificationSetting />
       case 'shortcuts':
         return <ShortCutSetting />
+      case 'editor':
+        return <EditorSetting />
       case 'object and link':
         return <ObjectsAndLinksSetting />
       case 'components':
@@ -179,17 +178,17 @@ const SettingDialog = ({ onClose }: { onClose: VoidFunction }) => {
         height: '50vh',
         minHeight: 600,
         maxHeight: 'calc(100vh - 100px)',
-        fontFamily: 'Muli',
-        padding: 12,
+        overflow: 'hidden',
         borderRadius: 6
       }}
     >
       <Content
         className={css({
-          boxShadow: '7px 0 15px -8px rgba(0,0,0,0.1)',
+          borderRight: `1px solid ${Colors.Background.Border}`,
           width: '200px',
-          paddingRight: 12,
-          overflowY: 'auto'
+          padding: '36px 12px 0px',
+          overflowY: 'auto',
+          fontWeight: 600
         })}
         flex
         column
@@ -208,7 +207,7 @@ const SettingDialog = ({ onClose }: { onClose: VoidFunction }) => {
             </SettingSidebarItem>
           ))}
       </Content>
-      <Content style={{ padding: '0px 30px', overflowY: 'auto' }} fullHeight fullWidth>
+      <Content style={{ padding: '32px 60px', overflowY: 'auto' }} fullHeight fullWidth flex column gap={36}>
         {renderContent()}
       </Content>
     </Content>

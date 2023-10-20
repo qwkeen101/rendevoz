@@ -9,14 +9,13 @@ import Colors from '@/consts/colors'
 import { useEffect } from 'react'
 import { useSetAtom } from 'jotai'
 import { EditorSearchAtom } from '../hooks/useEditorSearch'
-import { useEditorInstance } from '@/core/rendevoz/hooks'
 
 const EditorRightBar = () => {
   const [barState, setBarState] = useEditorBarState()
   const { t } = useTranslation()
   const setEditorSearch = useSetAtom(EditorSearchAtom)
   useEffect(() => {
-    if (barState.showRightBar === false || barState.rightBarActive !== 'search') {
+    if (!barState.showRightBar || barState.rightBarActive !== 'search') {
       setEditorSearch(s => ({ ...s, isSearching: false }))
     } else if (barState.showRightBar && barState.rightBarActive === 'search') {
       setEditorSearch(s => ({ ...s, isSearching: true }))
@@ -34,21 +33,27 @@ const EditorRightBar = () => {
       }}
       minWidth={300}
       maxWidth={600}
+      handleStyles={{
+        left: {
+          left: 0
+        }
+      }}
       style={{
-        contentVisibility: barState.showRightBar ? 'visible' : 'hidden',
+        transform: barState.showRightBar ? 'unset' : 'translateX(100%)',
+        transition: 'transform 0.2s ease',
         position: barState.showRightBar ? 'relative' : 'absolute',
         pointerEvents: barState.showRightBar ? 'auto' : 'none',
         padding: '6px 12px',
-        marginLeft: 12
-      }}
-      handleStyles={{
-        left: {
-          width: 3,
-          background: Colors.Background.Border
-        }
+        borderLeft: `1px solid ${Colors.Background.Border}`,
+        background: Colors.Background.Secondary,
+        right: 0,
+        top: 0
       }}
     >
       <Tabs
+        tabNavContainerStyle={{
+          padding: '8px 0px 4px'
+        }}
         extra={
           <Icon name="park-close" className={ClassName.circleButton()} onClick={() => setBarState(s => ({ ...s, showRightBar: false }))} />
         }
@@ -59,7 +64,7 @@ const EditorRightBar = () => {
         <TabPane
           key="search"
           style={{
-            paddingTop: 20
+            paddingTop: 12
           }}
           tab={
             <Content alignItems="center" flex gap={6}>

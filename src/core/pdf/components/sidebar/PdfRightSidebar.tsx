@@ -34,13 +34,8 @@ const PdfRightSidebar = () => {
         zIndex: 20,
         padding: 10,
         marginLeft: 5,
+        background: Colors.Background.Secondary,
         display: pdfBarState.showRightBar ? undefined : 'none'
-      }}
-      handleStyles={{
-        left: {
-          width: 3,
-          background: Colors.Background.ButtonHover
-        }
       }}
     >
       <Tabs

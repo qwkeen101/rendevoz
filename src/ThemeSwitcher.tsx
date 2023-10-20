@@ -4,10 +4,45 @@ import ClassName from './styles/classNames'
 import { useSetting } from './core'
 
 const ThemeSwitcher = () => {
-  const [setting] = useSetting()
+  const [setting, setSetting] = useSetting()
   useMount(() => {
     document.body.classList.add(ClassName.defaultFont('1rem', 400))
   })
+  useEffect(() => {
+    if (setting.general.followSystemTheme) {
+      const mq = window.matchMedia('(prefers-color-scheme: dark)')
+      setSetting(s => ({
+        ...s,
+        general: {
+          ...s.general,
+          darkMode: mq.matches
+        }
+      }))
+      const listener = e => {
+        if (e.matches) {
+          setSetting(s => ({
+            ...s,
+            general: {
+              ...s.general,
+              darkMode: true
+            }
+          }))
+        } else {
+          setSetting(s => ({
+            ...s,
+            general: {
+              ...s.general,
+              darkMode: false
+            }
+          }))
+        }
+      }
+      mq.addEventListener('change', listener)
+      return () => {
+        mq.removeEventListener('change', listener)
+      }
+    }
+  }, [setting.general.followSystemTheme])
   useEffect(() => {
     if (!setting.general.darkMode) {
       document.documentElement.setAttribute('theme', 'light')

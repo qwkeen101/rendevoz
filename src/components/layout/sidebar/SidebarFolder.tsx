@@ -4,6 +4,7 @@ import SidebarCollection from '@/components/layout/sidebar/SidebarCollection'
 import { ClassName } from 'rendevoz'
 import { useTranslation } from 'react-i18next'
 import FontSize from '@/consts/font'
+import SidebarTags from '@/components/layout/sidebar/SidebarTags'
 
 const SidebarFolder = () => {
   const { t } = useTranslation()
@@ -13,6 +14,7 @@ const SidebarFolder = () => {
       <div className={ClassName.description()} style={{ marginBottom: '20px' }}>
         {t('general.drag object to add into collections')}
       </div>
+      {/*<SidebarTags />*/}
       <SidebarPinned />
       <SidebarCollection />
     </Content>

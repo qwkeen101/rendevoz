@@ -79,12 +79,16 @@ const ContextMenu = forwardRef<ContextMenuRef, ContextMenuProps>(
           align="start"
           positions={position}
           disableNudge={true}
+          position={{
+            top: memoizedPosition.current?.[1],
+            left: memoizedPosition.current?.[0]
+          }}
           reposition={true}
           visible={contextMenuOpen}
           containerStyle={{ zIndex: '1000' }}
           content={<div ref={contentRef}>{renderContent()}</div>}
         >
-          <PosHelper top={memoizedPosition.current?.[1]} left={memoizedPosition.current?.[0]} />
+
         </AnimatePopover>
         {renderChild()}
       </>

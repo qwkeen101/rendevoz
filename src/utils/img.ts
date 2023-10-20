@@ -66,7 +66,7 @@ export const saveImageLocally = async (
             canvas.width = width
             canvas.height = height
             canvas.getContext('2d')?.drawImage(image, 0, 0, width, height)
-            const newImageUrl = canvas.toDataURL('image/jpeg', 0.8)
+            const newImageUrl = canvas.toDataURL('image/webp', 1)
 
             ipcInstance.send('saveImage', imgName, newImageUrl).then(data => resolve(data.data))
           }
@@ -113,7 +113,7 @@ export const fetchRemoteImageAndSaveLocally = async (remoteImageUrl: string): Pr
     })
   ).blob()
 
-  const data = await saveImageLocally(imageBlob, { compress: false, imgName: remoteImageUrl.replaceAll('/', '_').replaceAll('\\', '_') })
+  const data = await saveImageLocally(imageBlob, { compress: true, imgName: remoteImageUrl.replaceAll('/', '_').replaceAll('\\', '_') })
   return data
 }
 

@@ -67,6 +67,12 @@ const createObjectStore = <T extends keyof ObjectFamily, V extends ObjectFamily[
       try {
         const result = await initalizedLocalStore.getOneById()(id)
         if (result) {
+          if (result.specType?.includes('Label') && !result.parentObjectId) {
+            ObjectStore(result.specType).updateOne({
+              id,
+              parentObjectId: result.webpageId || result.videoId || result.noteId || result.pdfId || result.documentId
+            })
+          }
           options?.afterGetOneProcess?.onSuccess?.(result, true)
         }
         return result
@@ -235,7 +241,7 @@ const createObjectStore = <T extends keyof ObjectFamily, V extends ObjectFamily[
               MetaStore.deleteMetaObject(targetMeta, true, true)
             }
           }
-        })(id, opts?.silent, opts?.force)
+        })(id, opts?.silent, opts?.force ?? true)
       }
       return Promise.reject()
     }

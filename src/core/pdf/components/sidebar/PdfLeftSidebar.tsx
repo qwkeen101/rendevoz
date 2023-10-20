@@ -35,13 +35,8 @@ const PdfLeftSidebar = () => {
         zIndex: pdfBarState.showLeftBar ? 20 : -1,
         padding: 10,
         marginRight: 5,
-        contentVisibility: pdfBarState.showLeftBar ? 'visible' : 'hidden'
-      }}
-      handleStyles={{
-        right: {
-          width: 3,
-          background: Colors.Background.ButtonHover
-        }
+        background: Colors.Background.Secondary,
+        visibility: pdfBarState.showLeftBar ? 'visible' : 'hidden'
       }}
     >
       <Tabs

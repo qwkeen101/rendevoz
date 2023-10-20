@@ -9,6 +9,7 @@ export declare const Font: {
     Tertiary: string;
     Caption: string;
     Description: string;
+    Link: string;
 };
 export declare const Background: {
     Global: string;
@@ -48,7 +49,7 @@ export declare const Common: {
     Red: string;
 };
 declare const Colors: {
-    Font: Record<"White" | "Silver" | "SilverSecond" | "Black" | "SilverBlue" | "Primary" | "Secondary" | "Tertiary" | "Caption" | "Description", string>;
+    Font: Record<"White" | "Silver" | "SilverSecond" | "Black" | "SilverBlue" | "Primary" | "Secondary" | "Tertiary" | "Caption" | "Description" | "Link", string>;
     Background: Record<"Scrollbar" | "Secondary" | "Global" | "Light" | "LightSecondary" | "Dark" | "DarkSecondary" | "DarkLinear" | "LightLinear" | "LightButtonHover" | "DarkButtonHover" | "ButtonHover" | "ButtonActive" | "DarkButtonActive" | "LightButtonActive" | "Linear" | "DarkBorder" | "Border" | "LightHighContrast" | "DarkHighContrast" | "HighContrast" | "HighlightBorder" | "LightHighlightBorder" | "DarkHighlightBorder" | "LightScrollBar" | "DarkScrollBar", string>;
     Emphasis: Record<"DarkEmphasis" | "LightEmphasis" | "Emphasis", string>;
     Common: Record<"Green" | "Red", string>;

@@ -1,5 +1,5 @@
 import ClassName from "@/styles/classNames";
-import SettingItem from "./Item";
+import SettingItem from "./SettingItem";
 import { useTranslation } from "react-i18next";
 import { useUser } from "@/services/login.service";
 import { Content } from "@/components";

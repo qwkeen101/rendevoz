@@ -1,13 +1,8 @@
 import type { DependencyList, EffectCallback } from "react";
-
-declare function useDebounceEffect(
-  effect: EffectCallback,
-  deps?: DependencyList,
-  options?: {
+declare function useDebounceEffect(effect: EffectCallback, deps?: DependencyList, options?: {
     wait?: number;
     leading?: boolean;
     trailing?: boolean;
     maxWait?: number;
-  }
-): void;
+}): void;
 export default useDebounceEffect;

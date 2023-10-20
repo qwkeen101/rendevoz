@@ -8,6 +8,8 @@ import isHotkey from 'is-hotkey'
 import { KEY } from '@/consts/key'
 import Icon from './Icon'
 import { Colors } from '@/consts'
+import { useSelectGlobalAtomValue } from '@/hooks'
+import { SettingAtom } from '@/core'
 
 interface ModalProps {
   visible: boolean
@@ -27,8 +29,10 @@ interface ModalProps {
   showClose?: boolean
   notUnmount?: boolean
   disableAnimation?: boolean
+  enableClickEvent?: boolean
 }
-const Backdrop = ({ children, onMouseDown, disableAnimation }) => {
+const Backdrop = ({ children, onMouseDown, disableAnimation, enableClickEvent }) => {
+  const darkMode = useSelectGlobalAtomValue(SettingAtom, s => s.general.darkMode)
   return (
     <motion.div
       role="backdrop"
@@ -44,14 +48,20 @@ const Backdrop = ({ children, onMouseDown, disableAnimation }) => {
         ClassName.flexLayout('center', 'center')
       ])}
       onClick={e => {
-        e.stopPropagation()
-        e.preventDefault()
+        if (!enableClickEvent) {
+          e.stopPropagation()
+          e.preventDefault()
+        }
       }}
-      initial={{ background: 'rgba(0,0,0,0)' }}
-      animate={{ background: 'rgba(0,0,0,0.2)' }}
-      exit={{ background: 'rgba(0,0,0,0)' }}
+      initial={{ background: 'rgba(15, 15, 15, 0)' }}
+      animate={{ background: darkMode ? 'rgba(15, 15, 15, 0.8)' : 'rgba(15, 15, 15, 0.4)' }}
+      exit={{ background: 'rgba(15, 15, 15, 0)' }}
       transition={{ duration: disableAnimation ? 0 : 0.2 }}
-      onPointerDown={onMouseDown}
+      onPointerDown={e => {
+        if (e.target === e.currentTarget) {
+          onMouseDown?.()
+        }
+      }}
     >
       {children}
     </motion.div>
@@ -68,12 +78,12 @@ const Modal: FC<ModalProps> = ({
   width,
   height,
   parentElement,
-  noStyle,
   style,
   zIndex,
   showClose = false,
   notUnmount,
-  disableAnimation
+  disableAnimation,
+  enableClickEvent
 }) => {
   useEffect(() => {
     const keyDownHandler = (e: KeyboardEvent) => {
@@ -123,18 +133,18 @@ const Modal: FC<ModalProps> = ({
             backdropFilter: 'blur(4px)'
           }}
           transition={{ duration: disableAnimation ? 0 : 0.2 }}
-          className={ClassName.Background.blurBackground}
         ></motion.div>
 
-        <Backdrop onMouseDown={onClose} key={1}>
+        <Backdrop onMouseDown={onClose} enableClickEvent={enableClickEvent} key={1}>
           <motion.div
             initial={{ y: 50, opacity: 0 }}
             animate={{ y: 0, opacity: visible ? 1 : 0 }}
             exit={{ y: 50, opacity: 0 }}
-            role="modal"
-            className={ClassName.Background.pseudoBlurContrastBackground}
+            role={enableClickEvent ? undefined : 'modal'}
             style={{
               position: 'relative',
+              background: Colors.Background.Secondary,
+              boxShadow: Colors.Background.BoxShadow,
               minWidth,
               minHeight,
               maxHeight,
@@ -143,12 +153,18 @@ const Modal: FC<ModalProps> = ({
               height,
               zIndex: Zindexes.Modal,
               margin: 'auto',
-              borderRadius: 12,
+              borderRadius: 8,
               ...style
             }}
-            onPointerDown={e => e.stopPropagation()}
+            onPointerDown={e => {
+              if (!enableClickEvent) {
+                e.stopPropagation()
+              }
+            }}
             onClick={e => {
-              e.stopPropagation()
+              if (!enableClickEvent) {
+                e.stopPropagation()
+              }
             }}
             transition={{ stiffness: 200, damping: 20, duration: disableAnimation ? 0 : 0.2 }}
           >
@@ -166,8 +182,10 @@ const Modal: FC<ModalProps> = ({
                 }}
                 onPointerDown={e => {
                   onClose()
-                  e.preventDefault()
-                  e.stopPropagation()
+                  if (!enableClickEvent) {
+                    e.preventDefault()
+                    e.stopPropagation()
+                  }
                 }}
               >
                 <Icon name="park-close" className={ClassName.circleButton()} size={18} />
@@ -198,32 +216,38 @@ const Modal: FC<ModalProps> = ({
                 inset: 0,
                 backdropFilter: 'blur(4px)'
               }}
-              className={ClassName.Background.blurBackground}
             ></motion.div>
 
-            <Backdrop onMouseDown={onClose} key={1}>
+            <Backdrop onMouseDown={onClose} key={1} enableClickEvent={enableClickEvent}>
               <motion.div
                 initial={{ y: 50, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
                 exit={{ y: 50, opacity: 0 }}
-                role="modal"
-                className={ClassName.Background.pseudoBlurContrastBackground}
+                role={enableClickEvent ? undefined : 'modal'}
                 style={{
                   position: 'relative',
+                  background: Colors.Background.Secondary,
+                  boxShadow: Colors.Background.BoxShadow,
                   minWidth,
                   minHeight,
                   maxHeight,
                   maxWidth,
                   width,
                   height,
-                  borderRadius: 12,
+                  borderRadius: 8,
                   zIndex: Zindexes.Modal,
                   margin: 'auto',
                   ...style
                 }}
-                onPointerDown={e => e.stopPropagation()}
+                onPointerDown={e => {
+                  if (!enableClickEvent) {
+                    e.stopPropagation()
+                  }
+                }}
                 onClick={e => {
-                  e.stopPropagation()
+                  if (!enableClickEvent) {
+                    e.stopPropagation()
+                  }
                 }}
                 transition={{ stiffness: 200, damping: 20 }}
               >
@@ -241,8 +265,10 @@ const Modal: FC<ModalProps> = ({
                     }}
                     onPointerDown={e => {
                       onClose()
-                      e.preventDefault()
-                      e.stopPropagation()
+                      if (!enableClickEvent) {
+                        e.stopPropagation()
+                        e.preventDefault()
+                      }
                     }}
                   >
                     <Icon name="park-close" className={ClassName.circleButton()} size={18} />

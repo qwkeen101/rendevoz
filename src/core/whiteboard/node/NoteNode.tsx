@@ -4,10 +4,10 @@ import { FC, memo, useMemo } from 'react'
 import { IWhiteboardNode } from '~/typings/data'
 import { InnerNodeProps } from './WrapperNode'
 import { css } from '@emotion/css'
+import NoteEditor from '@/core/editor/noteEditor/NoteEditor'
 
 const NoteNode: FC<InnerNodeProps> = ({ node: n, onNameChange }) => {
   const node = n as IWhiteboardNode & { type: 'note' }
-  const editorId = useMemo(() => Id.getStrId(), [])
   return (
     <div
       style={{
@@ -20,51 +20,38 @@ const NoteNode: FC<InnerNodeProps> = ({ node: n, onNameChange }) => {
         maxHeight: '100%'
       }}
     >
-      <Editor
-        type="note"
+      <NoteEditor
         on={event => {
           if (event.type === 'titleChange') {
             onNameChange?.(event.value)
           }
         }}
-        showHeader={false}
-        showBlockHandle={false}
-        titleContainerStyle={{
-          padding: '10px 16px 8px',
-          maxWidth: '100%',
-          width: '100%'
+        layout={{
+          showHeader: false,
+          showBottomPadding: false,
+          showToolbar: false,
+          showBlockHandle: false
         }}
-        titleStyle={{
-          fontSize: '1.6rem'
-        }}
-        innerEditorStyle={{
-          paddingRight: '16px',
-          paddingLeft: '16px',
-          width: '100%'
-        }}
-        noBottomPadding={true}
-        innerEditorClassName={css({
-          fontSize: '1em',
-          '.ParagraphBlock': {
+        title={{
+          titleContainerStyle: {
+            padding: '10px 0px 8px',
             maxWidth: '100%',
-            marginTop: 2,
-            marginBottom: 2,
+            width: '100%'
+          },
+          titleStyle: {
+            fontSize: '1.5rem'
+          }
+        }}
+        styles={{
+          pageMinPadding: '0px 16px'
+        }}
+        classNames={{
+          editorContainerClassName: css({
             fontSize: '1em',
-            padding: '2px 0px'
-          },
-          p: {
-            fontSize: '1em',
-            marginTop: 0,
-            marginBottom: 0,
-            lineHeight: 1.4
-          },
-          '.BlockCommon': {
-            lineHeight: 1.4
-          },
-          width: '100% !important'
-        })}
+            width: '100% !important'
+          })
+        }}
         noteId={node.noteId}
-        id={editorId}
       />
     </div>
   )

@@ -2,7 +2,7 @@ import ClassName from "@/styles/classNames";
 import produce from "immer";
 import { useTranslation } from "react-i18next";
 import { Switch } from "../../components/base";
-import SettingItem from "./Item";
+import SettingItem from "./SettingItem";
 import { IObjectsAndLinkSetting, useSetting } from ".";
 
 const ObjectsAndLinksSetting = () => {

@@ -34,12 +34,6 @@ const SidebarToolbar = ({ editor }: { editor: CustomEditor }) => {
         width: '300px',
         height: '100%'
       }}
-      handleStyles={{
-        right: {
-          width: 3,
-          background: Colors.Background.Border
-        }
-      }}
       ref={sidebarRef}
       style={{
         position: collapsed ? 'absolute' : 'relative',
@@ -49,11 +43,14 @@ const SidebarToolbar = ({ editor }: { editor: CustomEditor }) => {
         display: 'flex',
         flexDirection: 'column',
         transition: 'transform 0.2s ease',
-        padding: '6px 8px 6px 12px',
+        padding: '12px 8px 6px 12px',
         gap: 10,
         height: '100%',
         pointerEvents: collapsed ? 'none' : 'auto',
-        transform: collapsed ? 'translateX(-100%) translateX(-10px)' : 'translateX(0px)'
+        transform: collapsed ? 'translateX(-100%) translateX(-10px)' : 'translateX(0px)',
+        visibility: collapsed ? 'hidden' : 'visible',
+        background: Colors.Background.Secondary,
+        borderRight: `1px solid ${Colors.Background.Border}`
       }}
     >
       <Tabs

@@ -1,110 +1,33 @@
-import { Element, Text, Transforms } from "slate";
-import { jsx } from "slate-hyperscript";
-import { ReactEditor } from "slate-react";
-import { CustomEditor } from "../../../../typings/editor/types";
-import { deserializeHtmlNode, normalize } from "./deserializeHtml";
+import { Transforms } from 'slate'
+import { ReactEditor } from 'slate-react'
+import { CustomEditor } from '~/typings'
+import { deserializeHTML, normalize } from './deserializeHtml'
 
-const ELEMENT_TAGS = {
-  A: (el) => ({ type: "link", url: el.getAttribute("href") }),
-  BLOCKQUOTE: () => ({ type: "quote" }),
-  H1: () => ({ type: "heading-one" }),
-  H2: () => ({ type: "heading-two" }),
-  H3: () => ({ type: "heading-three" }),
-  H4: () => ({ type: "heading-four" }),
-  H5: () => ({ type: "heading-five" }),
-  H6: () => ({ type: "heading-six" }),
-  IMG: (el) => ({ type: "image", url: el.getAttribute("src") }),
-  LI: () => ({ type: "list-item" }),
-  OL: () => ({ type: "numbered-list" }),
-  P: () => ({ type: "paragraph" }),
-  PRE: () => ({ type: "code" }),
-  UL: () => ({ type: "bulleted-list" }),
-};
-
-// COMPAT: `B` is omitted here because Google Docs uses `<b>` in weird ways.
-const TEXT_TAGS = {
-  CODE: () => ({ code: true }),
-  DEL: () => ({ strikethrough: true }),
-  EM: () => ({ italic: true }),
-  I: () => ({ italic: true }),
-  S: () => ({ strikethrough: true }),
-  STRONG: () => ({ bold: true }),
-  U: () => ({ underline: true }),
-};
-
-export const deserialize = (el) => {
-  if (el.nodeType === 3) {
-    return el.textContent;
-  } else if (el.nodeType !== Node.ELEMENT_NODE) {
-    return null;
-  } else if (el.nodeName === "BR") {
-    return "\n";
-  }
-
-  const { nodeName } = el;
-
-  let parent = el;
-
-  if (
-    nodeName === "PRE" &&
-    el.childNodes[0] &&
-    el.childNodes[0].nodeName === "CODE"
-  ) {
-    parent = el.childNodes[0];
-  }
-  let children = Array.from(parent.childNodes).map(deserialize).flat();
-  if (children.length === 0) {
-    children = [{ text: "" }];
-  }
-
-  if (el.nodeName === "BODY") {
-    return jsx("fragment", {}, children);
-  }
-
-  if (ELEMENT_TAGS[nodeName]) {
-    const attrs = ELEMENT_TAGS[nodeName](el);
-    return jsx("element", attrs, children);
-  }
-
-  if (TEXT_TAGS[nodeName]) {
-    const attrs = TEXT_TAGS[nodeName](el);
-    return children.map((child) => {
-      if (Text.isText(child)) {
-        return jsx("text", attrs, child);
-      }
-      if (Element.isElement(child)) {
-        return jsx("element", attrs, child);
-      }
-    });
-  }
-
-  return children;
-};
 const withHtml = (editor: CustomEditor) => {
-  const { insertData } = editor;
+  const { insertData } = editor
 
-  editor.insertData = (data) => {
-    const html = data.getData("text/html");
-    const slateFragment = data.getData("application/x-slate-fragment");
-    const plainText = data.getData("text/plain");
-    console.log(plainText, slateFragment, data);
+  editor.insertData = data => {
+    const html = data.getData('text/html')
+    const slateFragment = data.getData('application/x-slate-fragment')
+    const plainText = data.getData('text/plain')
+    console.log(plainText, slateFragment, data)
     if (slateFragment) {
-      ReactEditor.insertFragmentData(editor, data);
+      ReactEditor.insertFragmentData(editor, data)
       // Transforms.deselect(editor)
-      return;
+      return
     }
     if (html) {
-      const parsed = new DOMParser().parseFromString(html, "text/html");
-      const deserialized = deserializeHtmlNode(parsed.body);
-      console.log(deserialized);
-      const normalized = normalize(deserialized);
-      Transforms.insertFragment(editor, normalized);
-      return;
+      const parsed = new DOMParser().parseFromString(html, 'text/html')
+      const deserialized = deserializeHTML(parsed.body)
+      console.log(deserialized)
+      const normalized = normalize(deserialized)
+      Transforms.insertFragment(editor, normalized)
+      return
     }
-    insertData(data);
-  };
+    insertData(data)
+  }
 
-  return editor;
-};
+  return editor
+}
 
-export default withHtml;
+export default withHtml

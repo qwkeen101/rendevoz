@@ -3,7 +3,6 @@ import { AnimatePopover } from '@/components/base'
 import { useCallback, useEffect, useState } from 'react'
 import { CustomEditor, LeftTopPosition } from '~/typings'
 import EditorOverlayElements from './components/EditorOverlayElements'
-import EditorMetaQuery from './components/EditorMetaQuery'
 import { PopoverPosition } from 'react-tiny-popover'
 import EditorEmojiPicker from './components/EditorEmojiPicker'
 import EditorBlockDetails from './components/EditorBlockDetails'
@@ -15,7 +14,6 @@ import { useUpdate } from 'react-use'
 
 const AvalibleOverlayComponents = {
   emojiPicker: 'emojiPicker',
-  metaQuery: 'metaQuery',
   blockHandleMenu: 'blockHandleMenu',
   blockDetailsMenu: 'blockDetailsMenu',
   selectArea: 'selectArea',
@@ -49,8 +47,6 @@ const useEditorOverlay = (editor: CustomEditor, scrollElement?: HTMLDivElement |
     switch (overlayContent) {
       case 'selectArea':
         return <EditorSelectArea editor={editor} scrollElement={scrollElement} />
-      case 'metaQuery':
-        return <EditorMetaQuery editor={editor} manager={overlayManager} />
       case 'emojiPicker':
         return <EditorEmojiPicker editor={editor} manager={overlayManager} />
       case 'blockHandleMenu':

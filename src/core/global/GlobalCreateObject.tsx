@@ -7,7 +7,7 @@ import ObjectForm from "@/components/form/ObjectForm";
 import { useEventHandler } from "@/events";
 import { useShortcut, useToggle } from "@/hooks";
 import { Modal } from "@/components";
-import { useCreateObject } from "../database";
+import { useCreateObject } from "../object";
 import Id from "@/utils/id";
 import { Rendevoz } from "../rendevoz";
 

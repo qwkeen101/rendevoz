@@ -14,8 +14,11 @@ export interface INote extends IBase {
   labels?: number[]
   fontSize?: number
   width?: 'default' | 'full' | 'wider'
+  lineSpacing?: number
+  typeface?: 'Inter' | 'Roboto' | 'Source Serif' | 'Merriweather' | 'Open Sans' | 'Muli' | 'Lato'
   // synced blocks meta ids
   syncedBlocks?: number[]
+  pageWidth?: 'X-Small' | 'Small' | 'Medium' | 'Large' | 'X-Large'
   lastSavedAt?: number
 }
 

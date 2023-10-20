@@ -1,14 +1,19 @@
+import { ICollectionItem } from '~/typings'
+
 export type ISidebarItem = {
-  id: number;
+  id: number
+  onlyCollection?: boolean
+  selectMode?: boolean
+  onClick?: (e: MouseEvent, item: ICollectionItem) => void
 } & (
   | {
-      draggable?: true | undefined;
-      parentId: number;
-      parentType: "whiteboard" | "collection";
+      draggable?: true | undefined
+      parentId: number
+      parentType: 'whiteboard' | 'collection'
     }
   | {
-      draggable?: false | undefined;
-      parentId: never;
-      parentType: never;
+      draggable?: false | undefined
+      parentId: never
+      parentType: never
     }
-);
+)

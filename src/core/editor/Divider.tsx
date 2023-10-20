@@ -1,11 +1,13 @@
-import { useMemoizedFn } from '@/hooks'
-import classNames from 'classnames'
+import { useMemoizedFn, useSelectAtomValue } from '@/hooks'
 import { animate, AnimationPlaybackControls, motion, PanInfo } from 'framer-motion'
 import { FC, memo, useRef, useState } from 'react'
 import { Path, Transforms } from 'slate'
 import useIsDragging from './hooks/useIsDragging'
-import styles from './index.module.less'
 import { ReactEditor, useSlateStatic } from './slate-react'
+import EditorClasses from '@/core/editor/consts/classes'
+import { ClassName } from 'rendevoz'
+import { useSetAtom } from 'jotai'
+import { EditorStateAtom } from '@/core/editor/hooks/useEditorState'
 
 type DividerProps = {
   currentPath: Path
@@ -18,7 +20,9 @@ const Divider: FC<DividerProps> = memo(({ currentPath }) => {
     previousColumnWidth?: number
     nextColumnWidth?: number
   }>()
-  const [isDraggingHandle, setIsDraggingHandle] = useState(false)
+  const setEditorState = useSetAtom(EditorStateAtom)
+  const isDraggingHandle = useSelectAtomValue(EditorStateAtom, s => s.isDraggingDivider)
+
   const [isMouseOnDivider, setIsMouseOnDivider] = useState(true)
   const prevPrevColumnAnim = useRef<AnimationPlaybackControls>()
   const prevNextColumnAnim = useRef<AnimationPlaybackControls>()
@@ -26,7 +30,7 @@ const Divider: FC<DividerProps> = memo(({ currentPath }) => {
     if (isDragging) return
     if (isDraggingHandle) return
     ReactEditor.deselect(editor)
-    setIsDraggingHandle(true)
+    setEditorState(s => ({ ...s, isDraggingDivider: true }))
     const divider = dividerRef.current
     if (divider) {
       const previousColumn = divider.previousElementSibling
@@ -66,7 +70,7 @@ const Divider: FC<DividerProps> = memo(({ currentPath }) => {
     widthRef.current = undefined
     prevNextColumnAnim.current?.stop()
     prevPrevColumnAnim.current?.stop()
-    setIsDraggingHandle(false)
+    setEditorState(s => ({ ...s, isDraggingDivider: false }))
     const divider = dividerRef.current
     if (divider) {
       if (!divider.contains(e.target)) {
@@ -105,10 +109,10 @@ const Divider: FC<DividerProps> = memo(({ currentPath }) => {
         pointerEvents: isDraggingHandle ? 'all' : isDragging ? 'none' : undefined
       }}
       contentEditable={false}
-      className={classNames(styles.DividerWrapper)}
+      className={EditorClasses.DividerWrapperClass}
       transition={{ duration: 0.1 }}
     >
-      <motion.div className={styles.Divider}></motion.div>
+      <motion.div className={EditorClasses.DividerClass}></motion.div>
     </motion.div>
   )
 })

@@ -3,14 +3,8 @@ import './common.less'
 import TitleBar from './components/titlebar'
 import Initializer from './Initializer'
 import './global.less'
-import {
-  GlobalCreateObject,
-  GlobalDragOverlay,
-  GlobalGraph,
-  GlobalObjectPanel,
-  GlobalScreenShot,
-  SettingAtom
-} from '@/core'
+import './font.less'
+import { GlobalCreateObject, GlobalDragOverlay, GlobalGraph, GlobalObjectPanel, GlobalScreenShot, SettingAtom } from '@/core'
 import Notification from './components/NotificationCenter'
 import '@/core/editor/dock.less'
 import SvgMarker from './components/svg/Marker'
@@ -45,6 +39,10 @@ import { BuiltInDraggableElement, BuiltInDropOn, BuiltInMetaObjectTypes, BuiltIn
 import { GlobalBaidudisk } from '@/components/fileImporter/baidudisk/BaidudiskDisplayer'
 import { useSelectGlobalAtomValue } from '@/hooks'
 import registerTabs from '@/lifycycle/startup/registerTabs'
+import { ipcInstance } from '@/plugins'
+import GlobalCollection from '@/core/global/GlobalCollection'
+import { GlobalObjectDetails } from '@/core/object/details'
+
 // import { startDrive } from '@/driver'
 // import ReviewManager from '@/core/review/components/ReviewManager'
 // import TimelineManager from '@/core/database/TimelineManager'
@@ -105,7 +103,6 @@ const App = () => {
     registerTabs()
     GlobalPluginManager.registerPlugin(BuiltinEditorPlugin)
     executed.current = true
-
     // setTimeout(() => {
     //   ObjectStore('group')
     //     .getOneById(1)
@@ -152,6 +149,8 @@ const App = () => {
           <GlobalObjectPanel />
           <GlobalBaidudisk />
           <GlobalSearchPanel />
+          <GlobalCollection />
+          {/*<GlobalObjectDetails />*/}
           <GlobalCreateObject />
           <GlobalTranslateResult />
           <AuthenticatedLayout />

@@ -1,15 +1,15 @@
-import { TypeToTypeName } from '@/core/database'
+import { TypeToTypeName } from '@/core/object'
 import ClassName from '@/styles/classNames'
 import { css } from '@emotion/css'
 import { FC } from 'react'
 import { InlineMetaObjectElement } from '~/typings/editor/outerElements'
 import { RenderElementProps } from '../../slate-react'
 import { useTranslation } from 'react-i18next'
-import HoverObjectDetails from '@/core/database/HoverObjectDetails'
+import HoverObjectDetails from '@/core/object/HoverObjectDetails'
 import { MetaStore } from '@/stores'
 import { Content, Image } from '@/components'
 import { Rendevoz } from '@/core/rendevoz'
-import HoverAttachment from '@/core/database/HoverAttachment'
+import HoverAttachment from '@/core/object/HoverAttachment'
 
 const clazzName = css([
   {

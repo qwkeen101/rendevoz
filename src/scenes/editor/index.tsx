@@ -1,29 +1,25 @@
 import { Content } from '@/components'
-import { Editor, GlobalDragOverlayInstance, ReactEditor } from '@/core'
 import { EditorProps } from '~/typings'
 import TabTitle from '@/components/layout/TabTitle'
-import { FC, useState } from 'react'
-import { globalStore, ObjectStore } from '@/stores'
+import { FC } from 'react'
+import { globalStore, MetaStore } from '@/stores'
 import { GlobalTranslateInstance } from '@/core/global/translate/GlobalTranslatePanel'
 import { GlobalSearchInstance } from '@/core/global/GlobalSearchPanel'
 import { objectIdToMetaObjectIdMapAtom } from '@/stores/meta.store'
-
+import NoteEditor from '@/core/editor/noteEditor/NoteEditor'
 
 const EditorPage: FC<
   {
-    noteId?: number
-    id: string
-    disableTitle?: boolean
-    defaultReadOnly?: boolean
-    onTitleChange?: (t: string) => void
-    onInstanceInitialized?: EditorProps['onInstanceIntialized']
+    noteId: number
+    disableTabTitle?: boolean
+    onInstanceInitialized?: EditorProps['onInstanceInitialized']
   } & EditorProps
-> = ({ noteId, id, onInstanceInitialized, disableTitle, onTitleChange, defaultReadOnly = false, readonly: outReadOnly, ...rest }) => {
-  const [title, setTitle] = useState('Untitled')
+> = ({ noteId, onInstanceInitialized, disableTabTitle, ...rest }) => {
+  const note = MetaStore.useObjectToMetaValue(noteId)
 
   return (
     <Content fullWidth fullHeight flex centered>
-      {!disableTitle && <TabTitle title={title} icon="park-notes" />}
+      {!disableTabTitle && <TabTitle title={note?.name || 'Untitled'} icon="park-notes" />}
       <div
         style={{
           width: 0,
@@ -32,35 +28,15 @@ const EditorPage: FC<
           height: '100%'
         }}
       >
-        <Editor
+        <NoteEditor
           {...rest}
-          id={id}
           noteId={noteId}
-          showToolbar={rest.showToolbar ?? true}
-          readonly={outReadOnly}
-          defaultReadOnly={defaultReadOnly}
           on={event => {
             if (rest.on) {
               rest.on(event)
               return
             }
             switch (event.type) {
-              case 'highlightDrag': {
-                const editorNode = ReactEditor.toDOMNode(event.editor, event.editor)
-                const highlightTextContent = Array.from(editorNode.querySelectorAll(`[data-highlight="${event.highlightId}"]`)).reduce(
-                  (prev, curr) => {
-                    return prev + curr.textContent
-                  },
-                  ''
-                )
-                GlobalDragOverlayInstance.draggingDetails = {
-                  type: 'noteLabel',
-                  highlightId: event.highlightId,
-                  noteId: noteId,
-                  textContent: highlightTextContent
-                }
-                break
-              }
               case 'search': {
                 GlobalSearchInstance.open?.({
                   e: event.e,
@@ -72,11 +48,6 @@ const EditorPage: FC<
                     blockId: event.blockId
                   }
                 })
-                break
-              }
-              case 'titleChange': {
-                setTitle(event.value)
-                onTitleChange?.(event.value)
                 break
               }
               case 'highlight': {
@@ -94,17 +65,10 @@ const EditorPage: FC<
                 })
                 break
               }
-              case 'highlightRemove': {
-                ObjectStore('noteLabel').deleteOneById(event.highlightId, {
-                  silent: true,
-                  force: true
-                })
-              }
             }
           }}
           onInstanceInitialized={i => {
             onInstanceInitialized?.(i)
-            rest.onInstanceIntialized?.(i)
           }}
         />
       </div>

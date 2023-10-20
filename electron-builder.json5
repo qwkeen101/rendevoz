@@ -15,7 +15,8 @@
   },
   files: [
     "dist-electron",
-    "dist"
+    "dist",
+    "!node_modules"
   ],
   protocols: {
     name: "rendevoz",

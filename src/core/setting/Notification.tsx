@@ -11,7 +11,7 @@ import {
   Switch,
   WithBorder,
 } from "../../components/base";
-import SettingItem from "./Item";
+import SettingItem from "./SettingItem";
 import { useSetting } from ".";
 import FontSize from "@/consts/font";
 

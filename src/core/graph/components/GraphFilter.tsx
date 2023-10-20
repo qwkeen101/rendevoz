@@ -14,9 +14,9 @@ import useGraph from '../hooks/useGraph'
 import { GraphFilterNodesIdsAtom, GraphPinNodesIdsAtom, GraphVisibleNodesIdsAtom } from '../hooks/useGraphFilter'
 import useGraphNodes, { GraphNodesAtom } from '../hooks/useGraphNodes'
 import { Colors } from '@/consts'
-import BetterFilter from '@/core/database/filter/BetterFilter'
+import BetterFilter from '@/core/object/filter/BetterFilter'
 import { MetaFilterGroup, MetaObject } from '~/typings'
-import { calculateFilterObjects } from '@/core/database/filter/useBetterFilter'
+import { calculateFilterObjects } from '@/core/object/filter/useBetterFilter'
 import { MetaStore } from '@/stores'
 
 const graphFilterTitleClassName = css({

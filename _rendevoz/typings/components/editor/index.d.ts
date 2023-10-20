@@ -1,15 +1,15 @@
 import EventEmitter from '@/events/eventEmitter'
-import { BaseEditor, Descendant, Element, Location, NodeEntry, Path, PathRef } from 'slate'
+import { BaseEditor, Descendant, Element, Location, Operation, Path } from 'slate'
 import { HistoryEditor } from 'slate-history'
-import { INote, INoteLabel } from '~/typings/data'
+import { INote } from '~/typings/data'
 import { EditableProps, RenderElementProps, ReactEditor } from 'slate-react'
-import { CustomTypes } from '../..'
+import { CustomTypes, IEditorInstance } from '.'
 import { CustomText, EmptyText } from './baseTypes'
 import { CommonElement } from './commonElements'
 import { OuterElement } from './outerElements'
 import DragManager from '@/core/editor/hooks/DragManager'
 import { EditorOverlayManager } from '@/core/editor/components/overlay/useEditorOverlay'
-import { Range, Virtualizer } from '@tanstack/react-virtual'
+import { Virtualizer } from '@tanstack/react-virtual'
 import { CSSProperties, ReactElement, ReactNode } from 'react'
 import { IEditorEvent } from './events'
 
@@ -18,11 +18,6 @@ export type CustomEditor = BaseEditor &
   // YjsEditor &
   // YHistoryEditor &
   HistoryEditor & {
-    emitter?: EventEmitter
-    id?: string
-    noteId?: number
-    note?: INote
-  } & {
     currentEnterElement?: Element
     currentAddClickElement?: Element
     currentCopyElement?: Element
@@ -31,24 +26,25 @@ export type CustomEditor = BaseEditor &
     dragManager?: DragManager
     overlayManager?: EditorOverlayManager
   } & {
-    fontSize?: number
-  } & {
-    handler?: (e: { data?: any; type: string }) => void
+    emitter?: EventEmitter
+    id?: string
+    onOperationApplied?: (op: Operation) => void
     onHighlightClick?: (highlightId: number) => void
     initialized?: boolean
     contentInitialized?: boolean
-    readonly?: boolean
     innerRef?: EditableProps['innerRef']
     virtualizer?: Virtualizer
     renderTitle?: (ref: (node: HTMLElement) => void) => ReactNode
     goToHighlight?: (highlightId: number) => void
     titleEle?: HTMLElement | null
-    on: (event: IEditorEvent) => void
+    on: (event: IEditorEvent) => Promise<any>
     type?: 'note' | 'webpage'
     editorMode?: 'note' | 'webpage' | 'syncedBlock'
+    labelIds?: number[]
     instance: IEditorInstance
     noBottomPadding?: boolean
     onSelectionChange?: VoidFunction
+    initialScrollOffset?: number
   }
 
 export type CustomElement = (CommonElement | OuterElement | CustomTypes['SlateElements']) & {
@@ -81,88 +77,6 @@ export interface ElementFunctions {
   getIndicatorPosition: (
     direction: 'top' | 'bottom' | 'left' | 'right'
   ) => { left: number; top: number; width: number; height: number } | undefined
-}
-
-export type IEditorInstance = Partial<{
-  getTitle: () => string
-  scrollToBlock: (options: { blockId?: number }) => Promise<void>
-  selectBlock: (options: { blockId?: number }) => Promise<void>
-  scrollToHighlight: (options: { highlightId: number }) => Promise<void>
-  getSlateEditor: () => CustomEditor
-  search: (query: string, reset?: boolean) => [number, string][]
-  pureSearch: (query: string, reset?: boolean) => [number, string][]
-  getOccurrences: (query: string) => number
-  replace: (source: string, target: string, replaceCurrent?: boolean) => void
-  changeOccurrence: (direction: 'up' | 'down') => void
-  isSelectionCollapsed?: () => boolean
-  blockOps: {
-    // if has selected, delete selected, else delete target path
-    deleteBlock: (path?: Path) => void
-    getAboveBlock: () => [CustomElement, Path] | undefined
-    isIndentableBlock: (type: string) => boolean
-    insertBlockIndent: (path: Path, recursive?: boolean) => void
-    minusBlockIndent: (path: Path, recursive?: boolean) => void
-    transformBlockType: (path: Path, newType: string) => void
-  }
-  toggleOps: {
-    haveToggledChildren: (path: Path) => boolean
-    toggleBlock: (path: Path) => void
-    untoggleBlock: (path: Path) => void
-    deleteToggledBlock: (path: Path) => void
-    isTogglableElement: (element: CustomElement) => boolean
-    findAllPossibleChildrenNodes: (path: Path) => [CustomElement, Path][] | undefined
-    // 如果节点未折叠，返回此节点，如果已折叠，返回被这个节点折叠的节点
-    getUnderNodes: (path: Path) => [CustomElement, Path][]
-    getFoldedOffsetPath: (path: Path) => Path
-    extendElements: (elements: CustomElement | CustomElement[]) => [CustomElement, Path][]
-  }
-  textOps: {
-    // get text before selection anchor
-    getBeforeText: (distance: number, unit?: 'character' | 'word') => string | undefined
-  }
-  save: VoidFunction
-  toggleLeftBar: VoidFunction
-  openSearch: VoidFunction
-  closeSearch: VoidFunction
-  toggleSearch: VoidFunction
-  openSetting: VoidFunction
-  closeSetting: VoidFunction
-  toggleSetting: VoidFunction
-  printToPDF: VoidFunction
-  addLabel: (label: Partial<INoteLabel>) => Promise<INoteLabel | void>
-  deleteLabel: (id: number) => Promise<void>
-  toggleLabel: VoidFunction
-  getScrollElement: () => HTMLElement | undefined | null
-  getHighlightLocation: (highlightId: number) => NodeEntry<CustomText | EmptyText>[]
-  getOverlayManager: () => EditorOverlayManager
-  /**
-   * Get element path by its id
-   */
-  getElementPathById: (id: number) => Path | undefined
-  getSelectedElements: () => CustomElement[]
-  getElementFunctionById: (id: number) => ElementFunctions | undefined
-}> & {
-  values: {
-    selectingAll?: boolean
-    // indicator's path and element are safe to use
-    indicator?: {
-      direction: 'left' | 'top' | 'bottom' | 'right'
-      isNested?: boolean
-      element: CustomElement
-      path: Path
-    }
-    // selected id to element and pathRef map
-    selectedBlocks: Map<
-      number,
-      {
-        element: CustomElement
-        // we use path ref to track its path, this is expensive, unref it asap
-        pathRef?: PathRef
-        removeSelectedState?: VoidFunction
-        node?: HTMLElement | null
-      }
-    >
-  }
 }
 
 export type DefaultAddElementHandler = (
@@ -200,34 +114,75 @@ export interface EditorProps {
       instance: IEditorInstance
     }
   ) => void
+  layout?: {
+    showHeader?: boolean
+    showTitle?: boolean
+    showToolbar?: boolean
+    showBlockHandle: boolean
+    showBottomPadding?: boolean
+  }
+  title?: {
+    customTitleRenderer?: (realTitle: string) => ReactElement
+    titleStyle?: CSSProperties
+    titleContainerStyle?: CSSProperties
+    titleEditable?: boolean
+  }
+  // title can be custom node, you should pass string title to show in header
   stringTitle?: string
-  defaultReadOnly?: boolean
-  initialValue?: Descendant[]
-  id: string
-  noteId?: number
-  readonly?: boolean
-  showTitle?: boolean
-  type: 'webpage' | 'note' | 'syncedBlock'
-  onInstanceInitialized?: (instance: IEditorInstance) => void
-  titleStyle?: CSSProperties
-  titleContainerStyle?: CSSProperties
-  title?: string | ReactNode
-  titleEditable?: boolean
-  innerEditorStyle?: CSSProperties
-  innerEditorClassName?: string
-  showToolbar?: boolean
-  noBottomPadding?: boolean
-  toolbarOptions?: {
+  styles?: {
+    editorContainerStyle?: CSSProperties
+    pageMinPadding?: string | number
+  }
+  header?: {
+    boxShadow?: boolean
+    display?: {
+      modeSwitcher?: boolean
+      search?: boolean
+      label?: boolean
+      translate?: boolean
+      title?: boolean
+      leftbar?: boolean
+      more?: boolean
+    }
+    moreOptions?: {
+      exportMD?: boolean
+      exportPDF?: boolean
+    }
+    // before leftbar
+    leftExtra?: ReactElement
+    rightExtra?: ReactElement
+  }
+  state?: {
+    pageWidth?: INote['pageWidth']
+    fontSize?: number
+    lastSavedAt?: number
+    typeface?: INote['typeface']
+    lineSpacing?: INote['lineSpacing']
+    saveImgLocally?: boolean
+    showSyncBlockShadow?: boolean
+  }
+  labelType?: string
+  labelIds?: number[]
+  toolbar?: {
     fontSize?: boolean
     color?: boolean
     highlight?: boolean
     extra?: boolean
   }
-  showBlockHandle?: boolean
-  compact?: boolean
-  showLeftBar?: boolean
-  showRightBar?: boolean
-  showHeader?: boolean
+  classNames?: {
+    editorContainerClassName?: string
+  }
+  initialScrollOffset?: number
+  // slate can not be controlled component, but you can use instance.replaceChildren to replace its value (lose all history, no redo/undo)
+  defaultValue?: Descendant[]
+  id: string
+  // controlled
+  readOnly?: boolean
+  onReadOnlyChange?: (v: boolean) => void
+  onOperationApplied?: (operation: Operation) => void
+  // not controlled
+  defaultReadOnly?: boolean
+  onInstanceInitialized?: (instance: IEditorInstance) => void
 }
 
 export type { OuterElement, CommonElement }
@@ -237,3 +192,5 @@ export * from './commonElements'
 export * from './baseElements'
 
 export * from './events'
+
+export * from './instance'

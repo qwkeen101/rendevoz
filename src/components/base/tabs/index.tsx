@@ -205,6 +205,7 @@ export const TabPane: FC<TabPaneProps> = memo(({ children, onClick, style, activ
     visible: {
       opacity: 1,
       pointerEvents: 'auto',
+      position: 'relative',
       zIndex: 0
     }
   }

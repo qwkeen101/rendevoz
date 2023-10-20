@@ -1,11 +1,8 @@
-import { SettingAtom } from '@/core'
 import { useDb } from '@/hooks'
 import { ICollection, MetaObject } from '~/typings'
 import KeyvalueStore from '@/stores/keyvalue.store'
-import produce from 'immer'
-import { useSetAtom } from 'jotai'
 
-const initializeWorkspace = async (setSetting: ReturnType<typeof useSetAtom<typeof SettingAtom>>) => {
+const initializeWorkspace = async () => {
   const keyvalueDb = useDb('keypairs')
   await KeyvalueStore.getAll()
   const currentWorkspace = (await keyvalueDb.get('currentWorkspace')) || 'default'
@@ -21,14 +18,6 @@ const initializeWorkspace = async (setSetting: ReturnType<typeof useSetAtom<type
   if (!(await keyvalueDb.get('allWorkspaces'))) {
     await keyvalueDb.put(allWorkspace, 'allWorkspaces')
   }
-  setSetting(s =>
-    produce(s, draft => {
-      draft.workspace = {
-        allSpaces: allWorkspace,
-        currentSpace: currentWorkspace
-      }
-    })
-  )
   const metaObjectDb = useDb('metaObjects')
   const collectionDb = useDb('collections')
   const allCollections = (await collectionDb.filter(i => !i.workspace).toArray()) as ICollection[]

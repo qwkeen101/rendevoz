@@ -2,9 +2,7 @@
 import { MetaLink, MetaObject, PartialWithId } from '..'
 import { IDraggableElement } from '../globalInstances/dragDrop'
 import { IBase } from './base'
-import { ILabel as _IPdfLabel } from './label'
-
-type IObject = IWebpage | IAudio
+import { IPDFLabel as _IPdfLabel } from './label'
 
 export type IRegisterdObject = {
   type: string
@@ -19,8 +17,10 @@ export type IRegisterdObject = {
 }
 
 export interface ILabel extends IBase {
+  name?: string
   parentObjectId: number
   description?: string
+  imageUrl?: string
 }
 export interface IWebpage extends IBase {
   specType: 'webpage'
@@ -30,29 +30,58 @@ export interface IWebpage extends IBase {
   //clipped note
   noteId?: number
   readerMode?: boolean
+  author?: string
+  domain?: string
+  image?: string
   labels?: number[]
 }
 
-export interface IAudio extends IBase {
-  specType: 'audio'
-  url?: string
+export interface IMedia extends IBase {
+  url: string
+  // seconds
+  lastPlayedTime: number
+  // seconds
+  totalPlayedTime: number
+  chapters?: IMediaChapter[]
+  // label ids
+  labels?: number[]
+  volume?: number
+  thumbnail?: string
+  subtitleMode?: 'list' | 'article'
+  subtitleLang?: string
+  subtitleFollow?: boolean
+  subtitleList?: {
+    lang: string
+    url: string
+  }[]
 }
 
-export interface INoteLabel extends IBase {
+export interface IMediaLabel extends ILabel {
+  // seconds
+  imageUrl?: string
+  time: number
+}
+
+export interface IVideo extends IMedia {
+  specType: 'video'
+  videoMode?: 'default' | 'theater'
+}
+
+export interface IAudio extends IMedia {
+  specType: 'audio'
+}
+
+export interface INoteLabel extends ILabel {
   specType: 'noteLabel'
-  noteId: number
   targetBlockId: number
   name?: string
   description?: string
   selectedText?: string
 }
 
-export interface IWebpageLabel extends IBase {
+export interface IWebpageLabel extends ILabel {
   specType: 'webpageLabel'
-  webpageId: number
   highlightId?: number
-  name?: string
-  description?: string
   selectedText?: string
 }
 
@@ -71,42 +100,25 @@ export interface INoteBlock extends IBase {
   specType: 'noteBlock'
 }
 
-export type IVideoChapter = {
+export type IMediaChapter = {
   id: number
   startTime: number
   imageUrl?: string
   endTime?: number
   name: string
 }
-export interface IVideo extends IBase {
-  specType: 'video'
-  videoUrl: string
-  subtitleUrl?: string
-  // seconds
-  lastPlayedTime: number
-  // seconds
-  totalPlayedTime: number
-  chapters?: IVideoChapter[]
-  // label ids
-  labels?: number[]
-  volume?: number
-  subtitleMode?: 'list' | 'article'
-  subtitleLang?: string
-  subtitleFollow?: boolean
-  subtitleList?: {
-    lang: string
-    url: string
-  }[]
-}
 
-export interface IVideoLabel extends ILabel {
+export interface IVideoLabel extends IMediaLabel {
   // second
-  videoTime: number
+  specType: 'videoLabel'
   chapterId?: number
   imageUrl?: string
   name: string
 }
 
+export interface IAudioLabel extends IMediaLabel {
+  specType: 'audioLabel'
+}
 export interface ILocalFile extends IBase {
   specType: 'localFile'
   fileUrl: string

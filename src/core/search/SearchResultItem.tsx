@@ -2,7 +2,7 @@ import { Content, Icon, Image } from "@/components";
 import { globalStore, MetaStore } from "@/stores";
 import { metaObjectsAtom } from "@/stores/meta.store";
 import { Fragment, memo } from "react";
-import { useRenderObject } from "../database";
+import { useRenderObject } from "../object";
 import { GlobalSearchInputAtom, SearchGroup } from "./SearchDialog";
 
 import ClassName from "@/styles/classNames";
@@ -11,7 +11,7 @@ import Colors from "@/consts/colors";
 import { css } from "@emotion/css";
 import { useTranslation } from "react-i18next";
 import FontSize from "@/consts/font";
-import { DefaultObjectTitleRenderClazzName } from "../database/useRenderObject";
+import { DefaultObjectTitleRenderClazzName } from "../object/useRenderObject";
 import { Zindexes } from "@/consts";
 import { Rendevoz } from "../rendevoz";
 

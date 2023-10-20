@@ -152,7 +152,7 @@ export const EditorV1: FC<EditorProps> = memo(
       })
 
     instance.printToPDF = () => {
-      // GlobalPdfPrinterInstance.print?.({ type: 'note', noteId: noteId, title: realTitle })
+      GlobalPdfPrinterInstance.print?.({ type: 'note', value: editor.children, title: stringTitle })
     }
     instance.getTitle = () => {
       return stringTitle

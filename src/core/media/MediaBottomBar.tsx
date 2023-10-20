@@ -96,19 +96,18 @@ const MediaBottomBar = () => {
               alignItems="center"
               style={{
                 fontSize: FontSize['12px'],
-                textShadow: '0 0 4px rgba(0,0,0,0.75)',
+                textShadow: '0 0 4px rgba(0,0,0,0.45)',
                 padding: '5px 9px',
-                color: Colors.Font.White,
+                color: mediaState.mode === 'audio' ? Colors.Font.Transparent : Colors.Font.White,
                 lineHeight: 1.3
               }}
             >
               {toolbarState.thumbnailLabelName && (
                 <Content flex alignItems="center" gap={6}>
-                  <Icon name="park-pin" fill="#FFE7A0" size={12} />
                   <div
                     style={{
                       maxWidth: 160,
-                      color: Colors.Emphasis.DarkEmphasis
+                      color: Colors.Common.SelectColor
                     }}
                     className={ClassName.ellipsisFont(1)}
                   >

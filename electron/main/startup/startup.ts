@@ -169,6 +169,11 @@ const startElectron = async () => {
       win.webContents.send('unload')
       e.preventDefault()
       win.hide()
+      // 10s timeout, for renderer crash
+      setTimeout(() => {
+        process.env.SHOULD_CLOSE = 'true'
+        win.close()
+      }, 10000)
     }
   })
   win.on('enter-full-screen', () => {

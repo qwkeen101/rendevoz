@@ -1,9 +1,9 @@
 import { useRef } from 'react'
 import usePopoverCell from '@/core/group/hooks/usePopoverCell'
 import { Content } from '@/components'
-import MetaTagPicker from '@/core/database/MetaTagPicker'
+import MetaTagPicker from '@/core/object/MetaTagPicker'
 import { Colors } from '@/consts'
-import Tag from '@/core/database/ObjectTag'
+import Tag from '@/core/object/ObjectTag'
 import { MetaStore } from '@/stores'
 import { useGroupInstance } from '@/core/group/hooks/useGroupInstance'
 

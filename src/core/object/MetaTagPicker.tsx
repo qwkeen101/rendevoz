@@ -1,6 +1,6 @@
 import { globalStore, MetaStore, ObjectStore } from '@/stores'
 import { Content, Icon, IconWithPopover, VirtualList, WithBorder } from '@/components'
-import Tag from '@/core/database/ObjectTag'
+import Tag from '@/core/object/ObjectTag'
 import { ClassName } from 'rendevoz'
 import { CSSProperties, forwardRef, memo, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import isHotkey from 'is-hotkey'

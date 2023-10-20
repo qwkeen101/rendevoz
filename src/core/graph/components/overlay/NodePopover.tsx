@@ -1,4 +1,4 @@
-import { ObjectActionPopover, useRenderObject } from '@/core/database'
+import { ObjectActionPopover, useRenderObject } from '@/core/object'
 import { getAllEdgesOfNodes, getRelatedNodesOfNode, GlobalGraphInstance } from '../..'
 import useGraph from '../../hooks/useGraph'
 import { Content, WithBorder } from '@/components'

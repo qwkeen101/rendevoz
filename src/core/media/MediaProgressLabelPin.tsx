@@ -6,6 +6,7 @@ import { MediaToolbarStateAtom } from './hooks/useMediaToolbarState'
 import { useSetAtom } from 'jotai'
 import { useMediaInstance } from './hooks/useMediaInstance'
 import { memo } from 'react'
+import { Colors } from '@/consts'
 
 const MediaProgressLabelPin = memo(({ labelId }: { labelId: number }) => {
   const labelType = useSelectAtomValue(MediaStateAtom, s => s.labelType)
@@ -55,7 +56,7 @@ const MediaProgressLabelPin = memo(({ labelId }: { labelId: number }) => {
       }}
       style={{
         position: 'absolute',
-        bottom: 6,
+        bottom: 4,
         left: `${(time / totalTime) * 100}%`,
         zIndex: 50,
         transition: 'all 0.3s ease',
@@ -64,7 +65,7 @@ const MediaProgressLabelPin = memo(({ labelId }: { labelId: number }) => {
         opacity: currentHoverLabelId === labelId ? 0.2 : 1
       }}
     >
-      <Icon name="park-pushpin" fill="#FFE7A0" theme="filled" size={12} />
+      <Icon name="park-pushpin" fill={Colors.Common.SelectColor} theme="filled" size={12} />
     </div>
   )
 })

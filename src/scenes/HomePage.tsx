@@ -45,17 +45,20 @@ export const HomePage: FC = () => {
         }}
       >
         <TabTitle title={t('general.home')} icon="park-home" />
-        <Modal visible={createVisible} onClose={toggleCreateVisible} style={{}}>
+        <Modal visible={createVisible} onClose={toggleCreateVisible}>
           <FileImporter onClose={toggleCreateVisible} />
         </Modal>
         <Content flex alignItems="center" justifyContent="space-between" style={{ margin: '16px 0px' }}>
-          <div
-            style={{
-              fontSize: 20,
-              fontWeight: 500
-            }}
-          >
-            {currentWorkspace === 'default' ? 'Default workspace' : currentWorkspace}
+          <div>
+            <div style={{ fontSize: 13, color: Colors.Font.Transparent }}>{t('settings.workspace')}</div>
+            <div
+              style={{
+                fontSize: 20,
+                fontWeight: 500
+              }}
+            >
+              {currentWorkspace === 'default' ? 'Default workspace' : currentWorkspace}
+            </div>
           </div>
           <Content flex gap={8} alignItems={'center'}>
             <Icon

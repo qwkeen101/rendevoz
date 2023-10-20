@@ -44,7 +44,7 @@ const PdfPage: React.FC<PdfPageProps> = ({
   useEffect(() => {
     Promise.all(pdf?.labels?.map(i => ObjectStore('pdfLabel').getOneById(i)) || []).then(labels => {
       if (labels) {
-        const l = labels.filter(i => i && i.page === pageIndex && i.documentId === pdfId) as IPdfLabel[]
+        const l = labels.filter(i => i && i.page === pageIndex && i.parentObjectId === pdfId) as IPdfLabel[]
 
         setAllLabels(l)
       }

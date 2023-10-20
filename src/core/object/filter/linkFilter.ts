@@ -1,5 +1,5 @@
 import { LinkFilterRule, MetaObject } from '~/typings'
-import { transformFilterGroupToFilterArray } from '@/core/database/filter/useBetterFilter'
+import { transformFilterGroupToFilterArray } from '@/core/object/filter/useBetterFilter'
 import { MetaStore } from '@/stores'
 
 const linkFilter = (rule: LinkFilterRule): ((o: MetaObject) => boolean) => {

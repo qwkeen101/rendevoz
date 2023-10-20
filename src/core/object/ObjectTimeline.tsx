@@ -18,7 +18,7 @@ import isHotkey from 'is-hotkey'
 import { useUpdate } from 'react-use'
 import * as Sankey from 'd3-sankey'
 import dagre from '@dagrejs/dagre'
-import { getEdgePosition } from '@/core/database/timelineToWhiteboard'
+import { getEdgePosition } from '@/core/object/timelineToWhiteboard'
 import Id from '@/utils/id'
 
 const groupInterval = 10 * 24 * 60 * 60000

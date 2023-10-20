@@ -7,7 +7,7 @@ import { EditorTypeToElementMap } from '../editor/maps'
 import createObjectStore, { storeMap, TypeToRegisteredObject } from '@/stores/object.store'
 import { TypeToRegisteredMetaObject } from '@/stores/meta.store'
 import i18next from 'i18next'
-import { TypeToTypeName } from '../database'
+import { TypeToTypeName } from '../object'
 import { getSetting, SettingAtom } from '..'
 import {
   KeyToRegisterdSettings,

@@ -1,6 +1,6 @@
 import { useEventHandler } from '@/events'
 import { useRafFn } from '@/hooks'
-import { RefObject, useEffect, useState } from 'react'
+import { RefObject, useEffect, useRef, useState } from 'react'
 import { IDraggableElement } from 'rendevoz/typings/globalInstances/dragDrop'
 import { Rendevoz } from '../rendevoz'
 import { useGlobalIsDragging } from '@/core'
@@ -14,8 +14,10 @@ const useDropObjectArea = (
     onDragLeave?: () => void
     onDragOver?: (element: IDraggableElement) => void
     onDrop?: (element: IDraggableElement) => void
+    onDragStart?: (element: IDraggableElement) => void
   }
 ) => {
+  const startDragRef = useRef(false)
   const handler = useEventHandler('global')
   const emitter = Rendevoz.Events.Emit.GlobalEventEmitter
   const [canDropAsMeta, setCanDropAsMeta] = useState<{
@@ -81,6 +83,7 @@ const useDropObjectArea = (
     }
   })
   handler.on('globalDragPointerUp', data => {
+    startDragRef.current = false
     setTimeout(() => {
       setCanDropAsMeta({
         droppable: false,
@@ -96,6 +99,11 @@ const useDropObjectArea = (
     }
   })
   handler.on('globalDragPointerMove', data => {
+    if (!startDragRef.current && data.draggingElement) {
+      callback?.onDragStart?.(data.draggingElement)
+      startDragRef.current = true
+    }
+
     const area = dropArea instanceof HTMLElement ? dropArea : dropArea.current
     if (area) {
       const { event, draggingElement } = data

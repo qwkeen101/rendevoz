@@ -13,7 +13,7 @@ import { toast } from 'react-hot-toast'
 import ClassName from '@/styles/classNames'
 import FontSize from '@/consts/font'
 import { Rendevoz } from '@/core/rendevoz'
-import HoverObjectDetails from '@/core/database/HoverObjectDetails'
+import HoverObjectDetails from '@/core/object/HoverObjectDetails'
 
 const SidebarObjectItem: FC<ISidebarItem> = ({ parentId, parentType, id, draggable = true }) => {
   const metaObjectAtom = useMemo(() => selectAtom(metaObjectsAtom, m => m.get(id)), [id])

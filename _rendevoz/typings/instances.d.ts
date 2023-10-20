@@ -54,6 +54,7 @@ export type IGlobalInstance = Partial<{
     addMetaIntoCollection: (metaId: number) => Promise<void>
   }
   metaOps: {
+    openDetails: (id: number) => void
     addDraggableAsMeta: (d: BuiltInDraggableElement) => Promise<MetaObject>
   }
 }>

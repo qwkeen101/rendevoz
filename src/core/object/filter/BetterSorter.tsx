@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Button, Content, Icon } from '@/components'
-import { FilterSelect } from '@/core/database/filter/BetterFilter'
+import { FilterSelect } from '@/core/object/filter/BetterFilter'
 import produce from 'immer'
 import Id from '@/utils/id'
 import { Colors } from '@/consts'

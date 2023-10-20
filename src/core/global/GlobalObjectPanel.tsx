@@ -39,13 +39,13 @@ import FontSize from '@/consts/font'
 import ResizeAndDrag from '@/components/base/ResizeAndDrag'
 import { Rendevoz } from '../rendevoz'
 import _ from 'lodash'
-import HoverObjectDetails from '@/core/database/HoverObjectDetails'
+import HoverObjectDetails from '@/core/object/HoverObjectDetails'
 import { toast } from 'react-hot-toast'
 import { GlobalLayout } from '@/components/layout'
 import { DateFormat } from '@/utils'
-import { calculateFilterObjects } from '@/core/database/filter/useBetterFilter'
-import BetterFilter from '@/core/database/filter/BetterFilter'
-import BetterSorter, { calculateSortObjects, SorterGroup } from '@/core/database/filter/BetterSorter'
+import { calculateFilterObjects } from '@/core/object/filter/useBetterFilter'
+import BetterFilter from '@/core/object/filter/BetterFilter'
+import BetterSorter, { calculateSortObjects, SorterGroup } from '@/core/object/filter/BetterSorter'
 import { go } from 'fuzzysort'
 import isHotkey from 'is-hotkey'
 import { KEY } from '@/consts'
@@ -537,199 +537,12 @@ export const ObjectPanel = memo(
             padding: '0px 8px'
           }}
         ></VirtualList>
-        {showObjectDetails?.id && (
-          <Content flex column style={{ padding, position: 'absolute', left: '100%' }} fullWidth fullHeight>
-            <ObjectDetailsPanel metaId={showObjectDetails.id} onBack={onBackToList} />
-          </Content>
-        )}
       </>
     )
   },
   (prev, curr) => prev.isAddingObject === curr.isAddingObject && prev.showObjectDetails === curr.showObjectDetails
 )
 
-export const ObjectDetailsPanel = ({ metaId, onBack }: { metaId: number; onBack?: VoidFunction }) => {
-  const { renderWhole, metaObject, renderTags, renderFrom } = useRenderObject({ metaObjectId: metaId })
-  const { t } = useTranslation()
-  const relatedMap = useGlobalAtomValue(relatedMetaObjectsMapAtom)
-  const allRelatedByType = useMemo(() => {
-    const allRelatedIds = Array.from(relatedMap.get(metaId) || [])
-    const allRelatedByType = _.groupBy(
-      allRelatedIds.map(id => globalStore.get(metaObjectsAtom).get(id)),
-      i => i.type
-    )
-    return allRelatedByType
-  }, [relatedMap, metaId])
-  const [currentDisplayRelated, setCurrentDisplayRelated] = useState<MetaObject['type']>()
-  const [showAllRelated, setShowAllRelated] = useState(false)
-  const [attachmentVisible, setAttachmentVisible] = useState(false)
-  useEffect(() => {
-    if (showAllRelated) {
-      setShowAllRelated(false)
-    }
-    setAttachmentVisible(false)
-  }, [metaId])
-  return (
-    <Content flex column fullWidth fullHeight style={{ paddingBottom: 40 }}>
-      <Content flex style={{ marginBottom: 24 }}>
-        <Icon
-          name="park-left"
-          onClick={() => {
-            if (showAllRelated) {
-              setShowAllRelated(false)
-            } else {
-              onBack?.()
-            }
-          }}
-          containerStyle={{ position: 'absolute', top: '50%', transform: 'translateY(-50%)' }}
-          className={ClassName.circleButton()}
-        />
-        <div style={{ margin: 'auto', fontWeight: 600, fontSize: '0.9rem' }}>
-          {showAllRelated ? t('general.related objects') : t('general.object details')}
-        </div>
-      </Content>
-
-      {showAllRelated ? (
-        <RelatedPanel metaId={metaId} />
-      ) : (
-        <>
-          <Content flex alignItems="center" gap={10}>
-            {metaObject?.coverImgSrc && <Image src={metaObject.coverImgSrc} preview width={60} containerStyle={{ borderRadius: 10 }} />}
-            <Content>
-              <Content>{renderTags({})}</Content>
-              <DraggableElement draggingDetails={{ type: 'metaElement', metaId: metaId }}>
-                <div
-                  onClick={() => Rendevoz.Actions.Open.Meta.openMetaObject(metaId)}
-                  style={{ fontSize: '0.9rem', textTransform: 'none', cursor: 'pointer' }}
-                >
-                  {metaObject?.name}
-                </div>
-              </DraggableElement>
-            </Content>
-          </Content>
-          {metaObject?.fromObject && (
-            <>
-              <div style={{ marginTop: 12 }} className={ClassName.description()}>
-                {t('general.from')}
-              </div>
-              {renderFrom({})}
-            </>
-          )}
-          {metaObject?.description && (
-            <>
-              <div style={{ marginTop: 12 }} className={ClassName.description()}>
-                {t('general.description')}
-              </div>
-              <div className={ClassName.description()} style={{ textTransform: 'none', whiteSpace: 'pre-wrap', wordBreak: 'break-all' }}>
-                {metaObject.description}
-              </div>
-            </>
-          )}
-          {metaObject?.createdAt && (
-            <div className={ClassName.description()} style={{ marginTop: 12 }}>
-              {t('general.create at')}: {DateFormat.formatDistanceToNowStrict(metaObject.createdAt, true)}
-            </div>
-          )}
-          {metaObject?.viewAt && (
-            <div className={ClassName.description()}>
-              {t('general.view at')}: {DateFormat.formatDistanceToNowStrict(metaObject.viewAt, true)}
-            </div>
-          )}
-          {Object.keys(allRelatedByType).length > 0 && (
-            <>
-              <Content flex style={{ marginBottom: 4, marginTop: 12 }} className={ClassName.description()}>
-                <div>{t('general.related objects')}</div>
-                <div onClick={() => setShowAllRelated(true)} style={{ marginLeft: 'auto', cursor: 'pointer' }}>
-                  {t('general.show details')}
-                </div>
-              </Content>
-              <Content flex gap={6} style={{ flexWrap: 'wrap', marginBottom: 12 }}>
-                {Object.entries(allRelatedByType).map(k => (
-                  <div
-                    key={k[0]}
-                    style={{
-                      cursor: 'pointer',
-                      fontSize: '0.8rem'
-                    }}
-                    onClick={() => {
-                      setCurrentDisplayRelated(k[0])
-                    }}
-                    className={ClassName.objectTag}
-                  >
-                    {Rendevoz.Utils.Meta.getTypeName(k[0])}: {k[1].length}
-                  </div>
-                ))}
-              </Content>
-            </>
-          )}
-          {((metaObject?.attachments && metaObject?.attachments?.length > 0) || attachmentVisible) && (
-            <AttachmentWrapper
-              renderObjectDetailsOnParent={false}
-              renderAttOnParent={false}
-              style={{
-                margin: '30px 0px'
-              }}
-              closeIcon={!metaObject?.attachments?.length}
-              visible={true}
-              onClose={() => setAttachmentVisible(false)}
-              metaId={metaId}
-            />
-          )}
-          <div className={ClassName.description()} style={{ margin: 'auto 0px 0px 6px' }}>
-            {t('general.more actions')}
-          </div>
-          <Button.IconButton
-            text={t('general.edit')}
-            icon="park-edit"
-            onClick={() => {
-              GlobalEventEmitter().emit('global', {
-                type: 'globalNeedEditMetaObject',
-                data: {
-                  metaObjectId: metaId
-                }
-              })
-            }}
-          />{' '}
-          <Button.IconButton
-            text={t('general.global graph')}
-            icon="park-circle-four-line"
-            onClick={() => {
-              GlobalGraphInstance?.open?.(metaObject)
-            }}
-          />
-          <Button.IconButton
-            text={t('general.partial graph')}
-            icon="park-share-one"
-            onClick={() => {
-              GlobalGraphInstance?.open?.(metaObject, true)
-            }}
-          />
-          <Button.IconButton
-            text={t('general.add attachment')}
-            icon="park-link"
-            onClick={() => {
-              setAttachmentVisible(true)
-            }}
-          />
-          <Button.IconButton
-            text={t('general.generate link')}
-            onClick={() => {
-              const link = `rendevoz://object/${metaId}`
-              navigator.clipboard.writeText(link)
-              toast.success(
-                <Content className={ClassName.description()}>
-                  <div style={{ textTransform: 'none' }}>{t('general.link is generated for this object')}!</div>
-                  <div style={{ userSelect: 'all', textTransform: 'none' }}>{link}</div>
-                </Content>
-              )
-            }}
-            icon="park-link-two"
-          />
-        </>
-      )}
-    </Content>
-  )
-}
 export const SimpleObject = memo(
   forwardRef(
     (

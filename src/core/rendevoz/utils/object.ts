@@ -24,6 +24,7 @@ export const getMetaObjectIcon = (type?: MetaObject['type'], metaObject?: MetaOb
     case 'video':
       return 'park-play-two'
     case 'webpageLabel':
+    case 'audioLabel':
     case 'noteBlock':
     case 'noteLabel':
     case 'pdfLabel':

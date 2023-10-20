@@ -10,6 +10,7 @@ import { GlobalTranslateInstance } from '../global/translate/GlobalTranslatePane
 import { Rendevoz } from '.'
 import { GlobalSearchInstance } from '../global/GlobalSearchPanel'
 import { setPanelState } from '@/components/layout/sidebar'
+import { GlobalInstance } from '@/hooks'
 
 const openMetaObject = async (metaObjectId: number) => {
   const metaObject = globalStore.get(metaObjectsAtom).get(metaObjectId)
@@ -433,13 +434,7 @@ const Open: typeof Rendevoz.Actions.Open = {
   openImage,
   openRendevozLink,
   openSidebarObjectDetails: id => {
-    setPanelState(s => {
-      s.visible.add('database')
-      s.showObjectDetails = {
-        id,
-        visible: true
-      }
-    })
+    GlobalInstance.metaOps?.openDetails(id)
   }
 }
 

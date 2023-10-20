@@ -1,4 +1,4 @@
-import { intersectionOfMultipleSets } from '@/core/database'
+import { intersectionOfMultipleSets } from '@/core/object'
 import { globalStore, MetaStore } from '@/stores'
 import { indexedMetaLinksAtom } from '@/stores/meta.store'
 import { PartialWithId } from '@/types'

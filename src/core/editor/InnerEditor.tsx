@@ -19,7 +19,6 @@ import ClassName from '@/styles/classNames'
 import classNames from 'classnames'
 import useEditorSlashMenu from './hooks/useEditorSlashMenu'
 import getCursorPosition from './utils/getCursorPosition'
-import HoverObjectDetails from '../object/HoverObjectDetails'
 import { DraggableElement, DraggingElement } from '../global'
 import { Element } from './renderer/renderElement'
 import useEditorInstance from './hooks/useEditorInstance'
@@ -130,6 +129,7 @@ const InnerEditor: FC<InnerEditorProps> = memo(
         index()
       }
     })
+
     const handleChange = useMemoizedFn((value: Descendant[]) => {
       let shouldChange = false
       // already triggered
@@ -173,7 +173,9 @@ const InnerEditor: FC<InnerEditorProps> = memo(
         }
       }
       if (shouldChange) {
-        onChange?.(value)
+        if (value !== defaultValue) {
+          onChange?.(value)
+        }
       }
     })
     const inlineKeys = [...Object.values(InlineElements), 'tableCell', 'tableRow', 'inline-metaObject', 'math', 'inline-metapicker']

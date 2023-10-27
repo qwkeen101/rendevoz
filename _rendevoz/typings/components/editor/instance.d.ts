@@ -13,6 +13,8 @@ export type IEditorInstance = Partial<{
   indexPath: VoidFunction
   getScrollPosition: () => number
   scrollToPosition: (offset: number) => void
+  // trigger change index without triggering onChange
+  handleChange: VoidFunction
   blockOps: {
     // if has selected, delete selected, else delete target path
     deleteBlock: (path?: Path) => void

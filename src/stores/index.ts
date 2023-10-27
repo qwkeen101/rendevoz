@@ -41,6 +41,6 @@ export { default as GroupStore } from './group.store'
 export * from '@/textSearch/createSearchIndex'
 export * as StoreUtils from './utils.store'
 window.addEventListener('DOMContentLoaded', () => {
-  globalStore.sub(metaObjectsAtom, debounce(handleMetaObjectsChange, 1000))
-  globalStore.sub(metaLinksAtom, debounce(handleMetaLinksChange, 1000))
+  globalStore.sub(metaObjectsAtom, debounce(handleMetaObjectsChange, 600))
+  globalStore.sub(metaLinksAtom, debounce(handleMetaLinksChange, 600))
 })

@@ -5,12 +5,12 @@ import Id from '@/utils/id'
 import { deserializeHTMLChildren } from '@/core/editor/plugins/transformHTML/deserializeHTML'
 import { ElementsAvailableInParagraph } from '@/core/editor/plugins/transformHTML/consts'
 import deserializeSpan from '@/core/editor/plugins/transformHTML/deserialize/deserializeSpan'
+import normalizeText from '@/core/editor/plugins/transformHTML/deserialize/normalizeText'
 
 export default (node: HTMLElement) => {
   let shouldBeFragment = true
   // 如果内部有text node就不是fragment，不然就是fragment
   for (const n of node.childNodes) {
-    console.log(n)
     // if children nodes has div or p, be fragment
     if (['DIV', 'P'].includes(n.nodeName)) {
       shouldBeFragment = true
@@ -18,12 +18,14 @@ export default (node: HTMLElement) => {
     }
     // has text node, not fragment
     if (n.nodeType === Node.TEXT_NODE) {
-      if (n.textContent?.replace(/(?:\r\n|\r|\n)/g, '').length) {
+      const normalized = normalizeText(n)
+      if (normalized?.length) {
         shouldBeFragment = false
       }
     }
     if (TEXT_TAGS[n.nodeName]) {
-      if (n.textContent?.replace(/(?:\r\n|\r|\n)/g, '').length) {
+      const normalized = normalizeText(n)
+      if (normalized?.length) {
         shouldBeFragment = false
       }
     }
@@ -32,7 +34,6 @@ export default (node: HTMLElement) => {
       shouldBeFragment = false
     }
   }
-  console.log(shouldBeFragment, node)
   // normalize div/p into fragment
   if (shouldBeFragment) {
     return jsx('fragment', {}, deserializeHTMLChildren(node))
@@ -46,15 +47,18 @@ export default (node: HTMLElement) => {
         }
         if (ElementsAvailableInParagraph.includes(i.nodeName)) {
           const attrs = ELEMENT_TAGS[i.nodeName](i)
-          return jsx('element', attrs, [{ text: i.textContent }])
+          const content = normalizeText(i)
+          if (content?.length) {
+            return jsx('element', attrs, [{ text: content }])
+          }
+          return null
         }
         if (i.nodeName === 'SPAN') {
           return deserializeSpan(i)
         }
-        const content = i.textContent
-        const replaced = content?.replace(/(?:\r\n|\r|\n)/g, '')
-        if (replaced?.length) {
-          return jsx('text', {}, i.textContent)
+        const content = normalizeText(i)
+        if (content?.length) {
+          return jsx('text', {}, content)
         }
         return null
       })

@@ -36,7 +36,6 @@ const assignValueOps = (instance: IEditorInstance, editor: CustomEditor) => {
       }
     },
     replaceChildren: (newValue, restoreScrollPosition) => {
-      console.log(newValue, restoreScrollPosition)
       const currentScroll = instance.getScrollPosition?.()
       editor.children = newValue
       editor.selection = null

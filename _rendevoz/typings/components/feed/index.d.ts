@@ -11,7 +11,7 @@ export interface FeedItem extends IBase {
   description?: string
   date?: number
   lastRead?: number
-  feedType: 'webpage' | 'podcast'
+  feedType: 'webpage' | 'podcast' | 'youtube'
   enclosure?: {
     url: string
     length?: number
@@ -32,6 +32,7 @@ export interface IFeedCollection extends IBase {
   name: string
   items: number[]
   lastFetchedAt?: number
+  unreadCount?: number
   collectionType: 'podcast' | 'webpage'
 }
 

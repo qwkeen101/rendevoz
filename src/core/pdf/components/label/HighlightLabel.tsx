@@ -33,9 +33,6 @@ const HighlightLabel: FC<HighlightLabelProps> = memo(
         hoverElement={<DraggingElement text="Drop to add pdf label." />}
         draggingDetails={{
           type: 'pdfLabel',
-          pdfId: documentId,
-          content: highlight.selectedText,
-          page: highlight.page,
           labelId: highlight.id
         }}
       >

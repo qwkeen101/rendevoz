@@ -19,6 +19,7 @@ import { useTranslation } from 'react-i18next'
 import { Rendevoz } from '@/core/rendevoz'
 import FontSize from '@/consts/font'
 import { ICollection, ICollectionItem } from '~/typings'
+import { Colors } from '@/consts'
 
 const SidebarCollection = ({
   onClick,
@@ -126,9 +127,9 @@ const SidebarCollection = ({
             alignItems="center"
             justifyContent="space-between"
             className={dropVisible ? ClassName.Drag.droppableItemHovered(true) : undefined}
-            style={{ transition: 'all 0.3s ease' }}
+            style={{ transition: 'all 0.3s ease', color: Colors.Font.Transparent, fontSize: 13 }}
           >
-            <div style={{ cursor: 'pointer', fontSize: FontSize['13px'] }} onClick={toggleCollapsed}>
+            <div style={{ cursor: 'pointer' }} onClick={toggleCollapsed}>
               {t('sidebar.collections')}
             </div>
             <Tooltip position="top" content={t('sidebar.create new collection')}>
@@ -150,7 +151,6 @@ const SidebarCollection = ({
           column
           gap={2}
           style={{
-            overflowY: 'auto',
             margin: '0 -8px',
             padding: '2px 8px 2px 8px'
           }}
@@ -204,7 +204,7 @@ export const IconNameItem = memo(
           flex
           alignItems="center"
           gap="0.5em"
-          style={{ overflow: 'hidden', ...style }}
+          style={{  ...style }}
           className={className}
           onClick={onClick}
           ref={ref}

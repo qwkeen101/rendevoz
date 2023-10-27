@@ -113,9 +113,6 @@ const Initializer = () => {
             return
           }
           const pluginsFolder = `${s.general.userFilePath}/plugins`
-          if (s.general.userFilePath !== path) {
-            changeFilePath(s.general.userFilePath)
-          }
         })
       )
     })

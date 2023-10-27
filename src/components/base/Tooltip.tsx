@@ -19,6 +19,7 @@ interface ToolTipProps {
   onVisibleChange?: (v: boolean) => void
   parentElement?: AnimatePopoverProps['parentElement']
   padding?: number
+  boundaryInset?: number
   align?: AnimatePopoverProps['align']
 }
 
@@ -29,6 +30,7 @@ const ToolTip: FC<PropsWithChildren<ToolTipProps>> = (
     align,
     delay = 300,
     disable,
+    boundaryInset = 20,
     disableDefaultContent,
     contentTouchable,
     zIndex,
@@ -197,14 +199,12 @@ const ToolTip: FC<PropsWithChildren<ToolTipProps>> = (
         padding={padding}
         align={align}
         content={renderContent()}
-        boundaryElement={parentElement || document.body}
-        boundaryInset={20}
-        positions={position ? [position] : ['top', 'bottom', 'left', 'right']}
+        boundaryElement={document.body}
         reposition={true}
-        disableNudge
+        boundaryInset={boundaryInset}
+        positions={['top', 'bottom', 'left', 'right']}
         parentElement={parentElement}
         innerRef={mergedRef}
-        disableIntersection
         visible={!!content && open && !disable}
         onVisiblityChange={v => v !== open && setOpen(v)}
       >

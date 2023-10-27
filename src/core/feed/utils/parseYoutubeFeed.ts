@@ -40,12 +40,7 @@ const parseYoutubeFeed = (item: {
     link: item.link,
     image: item['media:group']['media:thumbnail'][0].$.url,
     description: item['media:group']['media:description'][0],
-    state: {
-      title: item.title,
-      domain: 'www.youtube.com',
-      author: item.author,
-      content: noteValue
-    }
+    feedType: 'youtube'
   }
 }
 

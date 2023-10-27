@@ -7,11 +7,11 @@ const requestIntercepter = (win: electron.BrowserWindow) => {
   }
   session.webRequest.onBeforeSendHeaders(filter, async (details, callback) => {
     const headers = details.requestHeaders
-    headers['User-Agent'] =
-      'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/117.0.0.0 Safari/537.36'
-    // change for google news
-    if (details.url.includes('google')) {
 
+    // change for google news
+    if (details.url.includes('news.google')) {
+      headers['User-Agent'] =
+        'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/117.0.0.0 Safari/537.36'
       headers['Accept'] =
         'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3'
       headers['Accept-Encoding'] = 'gzip'
@@ -20,7 +20,6 @@ const requestIntercepter = (win: electron.BrowserWindow) => {
       headers['Referer'] = 'https://www.google.com/'
       headers['Sec-Fetch-Site'] = 'same-origin'
       delete headers['Referer']
-      // headers['Cookie'] = `CONSENT=YES+cb.${new Date().toISOString().split('T')[0].replace(/-/g,'')}-04-p0.en-GB+FX+667`
     }
     if (details.url.includes('https://pan.baidu.com/rest/2.0/xpan/file?method=streaming')) {
       details.requestHeaders['User-Agent'] = 'xpanvideo;netdisk;iPhone13;ios-iphone;15.1;ts'

@@ -35,6 +35,8 @@ const FormImagePicker = ({ imageUrl, onChange, name }: { imageUrl?: string; onCh
         onClick={() => {
           if (imageUrl) {
             onChange?.(undefined)
+          } else {
+            upload()
           }
         }}
         className={ClassName.flatButton()}
@@ -48,33 +50,7 @@ const FormImagePicker = ({ imageUrl, onChange, name }: { imageUrl?: string; onCh
           ) : (
             <>
               <Icon name="park-add-pic" />
-              <div
-                className={css({
-                  ':hover': {
-                    textDecoration: 'underline'
-                  }
-                })}
-                onClick={e => {
-                  e.stopPropagation()
-                  upload()
-                }}
-              >
-                {t('general.upload image')}{' '}
-              </div>
-              <span>{t('general.or')} </span>
-              <div
-                className={css({
-                  ':hover': {
-                    textDecoration: 'underline'
-                  }
-                })}
-                onClick={e => {
-                  e.stopPropagation()
-                  toggleWebImagePickerVisible()
-                }}
-              >
-                {t('general.pick image from internet')}
-              </div>
+              <div>{t('general.upload image')}</div>
             </>
           )}
         </Content>

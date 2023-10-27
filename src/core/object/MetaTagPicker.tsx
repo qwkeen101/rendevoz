@@ -119,7 +119,7 @@ const MetaTagPicker = forwardRef(
             onChange={e => setSearch(e.target.value)}
             className={ClassName.noStyleInput}
             autoFocus
-            style={{ flex: '1 1 100px', overflow: 'hidden', fontSize: '0.95rem', lineHeight: '20px' }}
+            style={{ flex: '1 1 100px', overflow: 'hidden', fontSize: '13px', lineHeight: '20px' }}
           />
         </Content>
         <div style={{ padding: '4px 12px 2px', color: Colors.Font.Secondary, fontSize: 12, fontWeight: 600 }}>
@@ -172,7 +172,7 @@ const TagRenderer = memo(
             lineHeight: '20px',
             fontSize: FontSize['12px'],
             transition: 'none',
-            background: selected ? Colors.Background.ButtonActive : 'transparent'
+            background: selected ? Colors.Background.ButtonHover : 'transparent'
           }}
         >
           Create{' '}
@@ -196,7 +196,7 @@ const TagRenderer = memo(
         onClick={() => onChoose(tag)}
         className={ClassName.flatButton(4, '3px 6px')}
         style={{
-          background: selected ? Colors.Background.ButtonActive : 'transparent'
+          background: selected ? Colors.Background.ButtonHover : 'transparent'
         }}
       >
         <Tag hideAdd={true} hideSize={!showSize} square hideDelete tag={tag} />

@@ -1,9 +1,6 @@
-import {
-} from '~/typings'
+import {} from '~/typings'
 import { useEffect, useMemo, useState } from 'react'
 import { RenderElementProps } from 'slate-react'
-
-
 
 export default (plugin: PluginApi) => {
   plugin.register.registerInSidebarMenu('sad', {})
@@ -150,10 +147,7 @@ const CustomEditorElement = (props: RenderElementProps & { plugin: PluginApi }) 
   const scoped = Rendevoz.Events.Emit.GlobalEventEmitter
 
   const handler = Rendevoz.Events.Emit.useEventHandler('global')
-  handler.on('globalDragPointerUp', ({ event, draggingElement }) => {
-
-
-  })
+  handler.on('globalDragPointerUp', ({ event, draggingElement }) => {})
   useEffect(() => {
     scoped.addListener('editor', handler)
     return () => {
@@ -208,5 +202,3 @@ const WeatherPanelElement = (props: RenderElementProps) => {
     </div>
   )
 }
-
-

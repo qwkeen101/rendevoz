@@ -56,11 +56,10 @@ export const DefaultObjectTitleRenderClazzName = css([
     position: 'relative',
     width: 'fit-content',
     maxWidth: '100%',
-    textDecoration: 'underline 1px rgba(0,0,0,0)',
-    transition: 'text-decoration-color 0.3s ease',
     ':hover': {
-      textDecorationColor: 'inherit'
+      color: Colors.Common.SelectColor
     },
+    transition: 'color 0.2s ease',
     cursor: 'pointer'
   }
 ])
@@ -179,7 +178,12 @@ const TitleRenderer = ({
   return (
     <>
       {metaObject?.type === 'webpage' && renderWebpageFrom && metaObject.objectId && (
-        <WebpageSourceRenderer objectId={metaObject.objectId} />
+        <WebpageSourceRenderer
+          style={{
+            marginTop: metaObject.coverImgSrc ? 0 : 4
+          }}
+          objectId={metaObject.objectId}
+        />
       )}
       {isEditing ? (
         <ContentEditor
@@ -574,7 +578,9 @@ const useRenderObject = (options: { metaObjectId: number }) => {
       </div>
     )
   }
-
+  const renderOriginalText = (opts?: Partial<Parameters<typeof OriginText>[0]>) => (
+    <OriginText name={metaObject.name} objectId={metaObject.objectId} type={metaObject.type} {...opts} />
+  )
   return {
     renderTitle,
     renderTags,
@@ -586,7 +592,8 @@ const useRenderObject = (options: { metaObjectId: number }) => {
     renderColumnImageWhole,
     renderPopover,
     renderInline,
-    renderOptions
+    renderOptions,
+    renderOriginalText
   }
 }
 
@@ -670,7 +677,6 @@ const WholeRenderer = memo(
       imageOptions = {},
       originalTextOptions = {
         style: {
-          margin: '4px 0px',
           padding: '2px 6px 4px'
         }
       },
@@ -694,27 +700,31 @@ const WholeRenderer = memo(
       renderOptions.imageMode === 'whole'
         ? { width: '100%', ratio: 0.5625, minWidth: 280 }
         : {
-            width: 50,
-            height: 50,
+            width: 64,
+            height: 64,
             ratio: 1
           }
     )
+
     if (!metaObject || metaObject.deleted) return null
     return metaObject?.coverImgSrc && renderOptions.renderImage !== false ? (
       <>
-        {tagAboveImage && (
-          <TagRenderer
-            {...tagsOptions}
-            containerStyle={{
-              ...tagsOptions.containerStyle,
-              paddingRight: renderOptions.renderOption ? '40px' : undefined,
-              marginBottom: 6
-            }}
-            relatedNum={relatedNum}
-            metaObject={metaObject}
-            t={t}
-          />
-        )}
+        <Content flex>
+          {tagAboveImage && (
+            <TagRenderer
+              {...tagsOptions}
+              containerStyle={{
+                ...tagsOptions.containerStyle,
+                paddingRight: renderOptions.renderOption ? '40px' : undefined,
+                marginBottom: 6
+              }}
+              relatedNum={relatedNum}
+              metaObject={metaObject}
+              t={t}
+            />
+          )}
+          {renderOptions.renderOption && tagAboveImage && _renderOptions(optionOptions, metaObject)}
+        </Content>
         <Content
           flex
           alignItems="stretch"
@@ -733,7 +743,7 @@ const WholeRenderer = memo(
             }
           })}
           <Content onClick={containerOnClick} style={mainContainerStyle} flex column gap={columnGap} justifyContent="center">
-            {renderOptions.renderOption && _renderOptions(optionOptions, metaObject)}
+            {renderOptions.renderOption && !tagAboveImage && _renderOptions(optionOptions, metaObject)}
             {renderOptions?.renderTags !== false && !tagAboveImage && (
               <TagRenderer
                 {...tagsOptions}

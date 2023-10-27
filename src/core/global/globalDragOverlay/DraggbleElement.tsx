@@ -12,15 +12,16 @@ const DraggableElement = forwardRef<
     onDragStart?: VoidFunction
     hoverElement?: ReactElement
     shouldPress?: number
+    dragHandleClassName?: string
   }
->(({ children, draggingDetails, draggable = true, hoverElement, onDragStart, shouldPress = 60 }, externalRef) => {
+>(({ children, draggingDetails, draggable = true, hoverElement, onDragStart, dragHandleClassName, shouldPress = 60 }, externalRef) => {
   const isPressed = useRef(false)
   const pressStartTime = useRef(0)
   const childRef = useRef<HTMLElement | undefined>()
   const dragStartTriggered = useRef(false)
   const pointerHandler = useMemoizedFn((e: PointerEvent) => {
     if (e.type === 'pointerdown') {
-      (e.target as Element).releasePointerCapture(e.pointerId)
+      ;(e.target as Element).releasePointerCapture(e.pointerId)
       isPressed.current = true
       pressStartTime.current = Date.now()
       dragStartTriggered.current = false
@@ -70,6 +71,19 @@ const DraggableElement = forwardRef<
     [externalRef]
   )
   useEffect(() => {
+    if (dragHandleClassName) {
+      const node = childRef.current?.getElementsByClassName(dragHandleClassName)[0]
+      if (node) {
+        node.addEventListener('pointerdown', pointerHandler)
+        node.addEventListener('pointermove', pointerHandler)
+        document.addEventListener('pointerup', pointerHandler)
+        return () => {
+          node.removeEventListener('pointerdown', pointerHandler)
+          node.removeEventListener('pointermove', pointerHandler)
+          document.removeEventListener('pointerup', pointerHandler)
+        }
+      }
+    }
     childRef.current?.addEventListener('pointerdown', pointerHandler)
     childRef.current?.addEventListener('pointermove', pointerHandler)
     document.addEventListener('pointerup', pointerHandler)
@@ -78,7 +92,7 @@ const DraggableElement = forwardRef<
       childRef.current?.removeEventListener('pointermove', pointerHandler)
       document.removeEventListener('pointerup', pointerHandler)
     }
-  }, [])
+  }, [dragHandleClassName])
   const renderChild = () =>
     cloneElement(children as JSX.Element, {
       ref: handleRef

@@ -434,6 +434,7 @@ const Open: typeof Rendevoz.Actions.Open = {
   openImage,
   openRendevozLink,
   openSidebarObjectDetails: id => {
+    console.log(id)
     GlobalInstance.metaOps?.openDetails(id)
   }
 }

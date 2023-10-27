@@ -67,7 +67,11 @@ const createObjectStore = <T extends keyof ObjectFamily, V extends ObjectFamily[
       try {
         const result = await initalizedLocalStore.getOneById()(id)
         if (result) {
-          if (result.specType?.includes('Label') && !result.parentObjectId) {
+          if (
+            result.specType?.includes('Label') &&
+            !result.parentObjectId &&
+            (result.webpageId || result.videoId || result.noteId || result.pdfId || result.documentId)
+          ) {
             ObjectStore(result.specType).updateOne({
               id,
               parentObjectId: result.webpageId || result.videoId || result.noteId || result.pdfId || result.documentId

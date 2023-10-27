@@ -1,49 +1,45 @@
-import { KEY } from "@/consts";
-import ClassName from "@/styles/classNames";
-import { css } from "@emotion/css";
-import { AnimatePresence, motion } from "framer-motion";
-import { isHotkey } from "is-hotkey";
-import { CSSProperties, HTMLProps, useEffect, useRef, useState } from "react";
-import AutosizeTextarea, {
-  TextareaAutosizeProps,
-} from "../custom/input/autosizeTextarea";
-import Colors from "@/consts/colors";
-import { useUpdate } from "react-use";
-import FontSize from "@/consts/font";
-import { useTranslation } from "react-i18next";
+import { KEY } from '@/consts'
+import ClassName from '@/styles/classNames'
+import { css } from '@emotion/css'
+import { AnimatePresence, motion } from 'framer-motion'
+import { isHotkey } from 'is-hotkey'
+import { CSSProperties, HTMLProps, useEffect, useRef, useState } from 'react'
+import AutosizeTextarea, { TextareaAutosizeProps } from '../custom/input/autosizeTextarea'
+import Colors from '@/consts/colors'
+import { useUpdate } from 'react-use'
+import FontSize from '@/consts/font'
+import { useTranslation } from 'react-i18next'
 
 type BorderInputProps = {
-  onChange?: (v: string) => void;
-  placeholder?: string;
-  style?: CSSProperties;
-  defaultValue?: string;
-  textarea?: boolean;
-  containerStyle?: CSSProperties;
-  autoFocus?: boolean;
-  disable?: boolean;
-  id?: string;
-  withSubmit?: boolean;
-  onSubmit?: VoidFunction;
-  spellCheck?: "false" | "true";
+  onChange?: (v: string) => void
+  placeholder?: string
+  style?: CSSProperties
+  defaultValue?: string
+  textarea?: boolean
+  containerStyle?: CSSProperties
+  autoFocus?: boolean
+  disable?: boolean
+  id?: string
+  withSubmit?: boolean
+  onSubmit?: VoidFunction
+  spellCheck?: 'false' | 'true'
 } & (
   | ({
-      textarea: true;
+      textarea: true
     } & TextareaAutosizeProps)
   | {
-      textarea: false;
+      textarea: false
     }
 ) &
-  HTMLProps<HTMLInputElement>;
+  HTMLProps<HTMLInputElement>
 
 const inputClassName = css({
   padding: '12px 16px',
   width: '100%',
   outline: 'none',
   position: 'relative',
-  fontSize: FontSize['14px'],
+  fontSize: FontSize['13px'],
   fontWeight: 500,
-  letterSpacing: '-0.04px',
-  borderRadius: 6,
   border: 'none',
   background: 'transparent'
 })
@@ -82,16 +78,12 @@ const BorderInput = ({
   return (
     <fieldset
       className={css({
-        border: `1px solid ${Colors.Background.Border}`,
-        transition: 'all 0.2s ease',
-        ':hover': {
-          background: `${Colors.Background.Border}`
-        },
+        border: '1px solid var(--border-background)',
         ':focus-within': {
-          border: '1px solid var(--font-secondary)'
+          border: '2px solid var(--select-color)'
         }
       })}
-      style={{ position: 'relative', borderRadius: 8, ...containerStyle }}
+      style={{ position: 'relative', borderRadius: 6, ...containerStyle }}
     >
       <AnimatePresence>
         {translatedPlaceholder && (
@@ -101,9 +93,6 @@ const BorderInput = ({
             animate={{ opacity: 1, x: 0, y: -6, zIndex: 1 }}
             exit={{ opacity: 0, x: 6, y: 16, position: 'absolute' }}
             className={css({
-              // position: 'absolute',
-              // left: 16,
-              // top: 10,
               height: 0,
               width: 'fit-content',
               fontSize: '0.857rem',

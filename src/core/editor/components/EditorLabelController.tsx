@@ -15,7 +15,7 @@ import { EditorStateAtom } from '@/core/editor/hooks/useEditorState'
 const EditorLabelController = memo(() => {
   const labels = useSelectAtomValue(EditorStateAtom, s => s.labelIds)
   const labelType = useSelectAtomValue(EditorStateAtom, s => s.labelType) || 'noteLabel'
-  console.log(labels)
+
   return (
     <Content fullHeight fullWidth>
       {labels && labelType && (

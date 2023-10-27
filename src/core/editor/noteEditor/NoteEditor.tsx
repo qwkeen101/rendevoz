@@ -9,6 +9,8 @@ import useStoreValue from '@/core/editor/noteEditor/useStoreValue'
 import useDrop from '@/core/editor/noteEditor/useDrop'
 import useAddNewElement from '@/core/editor/noteEditor/useAddNewElement'
 import useLabel from '@/core/editor/noteEditor/useLabel'
+import { GlobalInstance } from '@/hooks'
+import { GlobalSearchInstance } from '@/core/global/GlobalSearchPanel'
 
 /**
  *  基于笔记的编辑器
@@ -39,7 +41,7 @@ const NoteEditor = ({ noteId, labelIds, on, ...rest }: { noteId?: number } & Edi
   const { handleDeleteLable, handleAddLabel } = useLabel(note)
   const emitter = Rendevoz.Events.Emit.GlobalEventEmitter
   const updater = ObjectStore('note').updateOne
-  console.log(noteMeta, note)
+
   return (
     <Editor
       {...rest}
@@ -65,10 +67,8 @@ const NoteEditor = ({ noteId, labelIds, on, ...rest }: { noteId?: number } & Edi
           : rest.state
       }
       on={async e => {
-        console.log(e)
         if (on) {
           const res = await on?.(e)
-          console.log(res)
           if (res) {
             return res
           }
@@ -93,6 +93,16 @@ const NoteEditor = ({ noteId, labelIds, on, ...rest }: { noteId?: number } & Edi
             return await handleAddNewElementFromMenu(e.newElementType)
           case 'drop': {
             return await handleDrop(e)
+          }
+          case 'search': {
+            GlobalSearchInstance.open({
+              query: e.searchedText,
+              from: {
+                type: 'note',
+                metaId: noteMeta.id
+              }
+            })
+            return
           }
           case 'stateChange': {
             switch (e.event.type) {

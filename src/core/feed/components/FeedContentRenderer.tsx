@@ -5,7 +5,6 @@ import { Content, Icon, Tooltip } from '@/components'
 import { Colors } from '@/consts'
 import KeyvalueStore from '@/stores/keyvalue.store'
 import { ClassName } from 'rendevoz'
-import transformFeedItemIntoWebpage from '@/core/feed/utils/transformFeedItemIntoWebpage'
 import { useGlobalAtomValue, useMemoizedFn } from '@/hooks'
 import { UrlToWebpageMap } from '@/core/webpage/hooks/useWebpageContent'
 import { TransformGoogleNewsLinkToRealLink } from '@/core/feed/utils/googleNewsScraper'
@@ -13,6 +12,8 @@ import moveToReadLater from '@/core/feed/utils/moveToReadLater'
 import removeReadLater from '@/core/feed/utils/removeReadLater'
 import FeedPodcastRenderer from '@/core/feed/components/FeedPodcastRenderer'
 import { ObjectStore } from '@/stores'
+import FeedYoutubeRenderer from '@/core/feed/components/FeedYoutubeRenderer'
+import addFeedAsMeta from '@/core/feed/utils/service/addFeedAsMeta'
 
 const FeedContentRenderer = () => {
   const [feedState, setFeedState] = useFeedState()
@@ -33,18 +34,45 @@ const FeedContentRenderer = () => {
   if (currentItem?.state && !currentItem.lastRead) {
     ObjectStore('feed').updateOne({ id: currentItem.id, lastRead: Date.now() })
   }
-  console.log(currentItem)
   const memoedContent = useMemo(() => {
-    console.log(currentItem)
     return currentItem?.state?.content
   }, [currentItem?.link])
   const memoparse = useMemoizedFn(p => {
     const item = structuredClone(currentItem)
     console.log(p, item)
-    if (p?.link === item.link) {
+    if (p?.link === item.link && !item?.state) {
       ObjectStore('feed').updateOne({ id: item.id, image: item.image || p?.image, state: p, lastRead: Date.now() })
     }
   })
+  if (currentItem?.feedType === 'youtube') {
+    return (
+      <Content
+        style={{
+          height: '100%',
+          width: '100%'
+        }}
+      >
+        {displayMode === 'sidePeek' && (
+          <Icon
+            name={feedState.modalOpen ? 'park-right' : 'park-left'}
+            className={ClassName.circleButton()}
+            size={24}
+            onClick={() => {
+              setFeedState(s => ({ ...s, modalOpen: !s.modalOpen }))
+            }}
+            containerStyle={{
+              position: 'absolute',
+              left: -40,
+              top: '50%',
+              transform: 'translateY(-50%)',
+              zIndex: 15
+            }}
+          />
+        )}
+        <FeedYoutubeRenderer />
+      </Content>
+    )
+  }
   if (currentItem?.feedType == 'podcast') {
     return (
       <Content
@@ -53,11 +81,28 @@ const FeedContentRenderer = () => {
           width: '100%'
         }}
       >
+        {displayMode === 'sidePeek' && (
+          <Icon
+            name={feedState.modalOpen ? 'park-right' : 'park-left'}
+            className={ClassName.circleButton()}
+            size={24}
+            onClick={() => {
+              setFeedState(s => ({ ...s, modalOpen: !s.modalOpen }))
+            }}
+            containerStyle={{
+              position: 'absolute',
+              left: -40,
+              top: '50%',
+              transform: 'translateY(-50%)',
+              zIndex: 15
+            }}
+          />
+        )}
         <FeedPodcastRenderer />
       </Content>
     )
   }
-  console.log(isLoading, failLoading)
+
   if (currentItem && !currentItem.link.includes('news.google.com')) {
     return (
       <Content
@@ -66,14 +111,14 @@ const FeedContentRenderer = () => {
           width: '100%',
           overflow: 'hidden',
           borderRadius: displayMode === 'center' ? 12 : 0,
-          background: Colors.Background.Secondary
+          borderLeft: displayMode !== 'center' ? `1px solid ${Colors.Background.Border}` : undefined
         }}
       >
         <Content
           fullHeight
           fullWidth
           style={{
-            visibility: isLoading ? 'hidden' : 'visible'
+            opacity: isLoading ? 0 : 1
           }}
         >
           <Webpage
@@ -85,6 +130,7 @@ const FeedContentRenderer = () => {
             editorOptions={{
               on: async e => {
                 if (e.type === 'valueChange') {
+                  console.log(e.value, currentItem)
                   ObjectStore('feed').updateOne({ id: currentItem.id, state: { ...currentItem.state, content: e.value } })
                 }
                 if (e.type === 'titleChange') {
@@ -104,7 +150,7 @@ const FeedContentRenderer = () => {
                           size={16}
                           className={ClassName.flatButton(4, '4px')}
                           onClick={() => {
-                            transformFeedItemIntoWebpage(currentItem)
+                            addFeedAsMeta(currentItem?.id)
                           }}
                           name={'park-share-one'}
                         />
@@ -179,7 +225,7 @@ const FeedContentRenderer = () => {
             ) : (
               <>
                 <Icon name={'park-loading-four'} spin size={48} />
-                <Content flex column alignItems={'center'} justifyContent={'center'} gap={4}>
+                <Content flex column fullWidth alignItems={'center'} justifyContent={'center'} gap={4}>
                   <div style={{ color: Colors.Font.Transparent, fontSize: 13, maxWidth: '60%', wordBreak: 'break-word' }}>
                     Loading and parsing webpage
                   </div>

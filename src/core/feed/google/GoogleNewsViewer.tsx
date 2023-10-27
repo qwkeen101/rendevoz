@@ -31,7 +31,7 @@ const GoogleNewsViewer = () => {
                 name: 'The Verge'
               }}
             />
-            <Content style={{ padding: '0px 0px 32px 32px' }} fullHeight>
+            <Content style={{ height: 0, flex: 1, width: '100%' }}>
               <FeedContainer pageContainer={pageContainerRef.current} />
             </Content>
           </>

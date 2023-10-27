@@ -3,35 +3,38 @@ import Media, { MediaProps } from '@/core/media'
 import { saveImageLocally } from '@/utils'
 import { normalizeSecondsToTime } from '@/core/media/utils'
 import useMediaEventHandlerWrapper from '@/core/media/wrappers/eventHandler'
+import useRealId from '@/core/media/wrappers/useRealId'
 
 export default ({ videoId, ...rest }: { videoId: number } & MediaProps) => {
-  const video = ObjectStore('video').useValue(videoId)
-  const videoMeta = MetaStore.useValue(MetaStore.useObjectToMetaValue(videoId)?.id)
+  const realId = useRealId('video', rest.mediaState?.url, videoId)
+  const video = ObjectStore('video').useValue(realId)
+  const videoMeta = MetaStore.useValue(MetaStore.useObjectToMetaValue(realId)?.id)
   if (!video?.url && video?.videoUrl) {
-    ObjectStore('video').updateOne({ id: videoId, url: video.videoUrl })
+    ObjectStore('video').updateOne({ id: realId, url: video.videoUrl })
   }
+  const externalMediaState = rest.mediaState
   const mediaState = {
     ...video,
-    url: video?.url,
-    description: videoMeta?.description || rest.mediaState?.description,
-    name: videoMeta?.name || 'Unnamed video',
+    ...externalMediaState,
+    url: video?.url || externalMediaState?.url,
+    description: videoMeta?.description || externalMediaState?.description,
+    name: videoMeta?.name || externalMediaState?.name || 'Unnamed video',
     labelType: 'videoLabel',
     isPinned: videoMeta?.pinned,
     metaId: videoMeta?.id
   }
   console.log(video)
   const eventHandler = useMediaEventHandlerWrapper({
-    objectId: videoId,
+    objectId: realId,
     type: 'video',
     labelType: 'videoLabel',
     mediaState
   })
-  if (!video) return null
-  console.log(videoMeta)
   return (
     <Media
       {...rest}
       on={async e => {
+        console.log(e)
         switch (e.type) {
           case 'addScreenshot': {
             const path = await saveImageLocally(e.imageDataUrl)

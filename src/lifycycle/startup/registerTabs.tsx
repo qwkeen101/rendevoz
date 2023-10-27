@@ -8,7 +8,7 @@ import { Rendevoz } from '@/core/rendevoz'
 import FeedViewer from '@/core/feed'
 import AudioPage from '@/scenes/AudioPage'
 
-const RENDEVOZ_DEFAULT_TABS: TabData[ILayoutTab['type']][] = [
+export const RENDEVOZ_DEFAULT_TABS: TabData[ILayoutTab['type']][] = [
   {
     type: 'note',
     content: opts =>

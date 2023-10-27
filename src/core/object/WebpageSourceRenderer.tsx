@@ -4,8 +4,9 @@ import { ObjectStore } from '@/stores'
 import ClassName from '@/styles/classNames'
 import { css } from '@emotion/css'
 import { Regexp } from '@/utils'
+import { CSSProperties } from 'react'
 
-const WebpageSourceRenderer = ({ objectId }: { objectId: number }) => {
+const WebpageSourceRenderer = ({ objectId, style }: { objectId: number; style?: CSSProperties }) => {
   const webpage = ObjectStore('webpage').useValue(objectId)
 
   if (webpage) {
@@ -19,7 +20,7 @@ const WebpageSourceRenderer = ({ objectId }: { objectId: number }) => {
           window.open(url)
         }}
         className={ClassName.description(FontSize['11px'])}
-        style={{ textTransform: 'uppercase', cursor: 'pointer' }}
+        style={{ textTransform: 'uppercase', cursor: 'pointer', lineHeight: 1, ...style }}
         icon={favicon}
         name={displayUrl}
       />

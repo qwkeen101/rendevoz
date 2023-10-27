@@ -15,6 +15,7 @@ const useDropObjectArea = (
     onDragOver?: (element: IDraggableElement) => void
     onDrop?: (element: IDraggableElement) => void
     onDragStart?: (element: IDraggableElement) => void
+    onDragEnd?: (element: IDraggableElement) => void
   }
 ) => {
   const startDragRef = useRef(false)
@@ -23,18 +24,22 @@ const useDropObjectArea = (
   const [canDropAsMeta, setCanDropAsMeta] = useState<{
     droppable: boolean
     existed: boolean
+    metaId?: number
   }>({
     droppable: true,
     existed: false
   })
   const [isDragging] = useGlobalIsDragging()
   const rafCheck = useRafFn((e: PointerEvent | DragEvent, draggingElement: IDraggableElement) => {
+    if(!startDragRef.current) return
     const area = dropArea instanceof HTMLElement ? dropArea : dropArea.current
+    console.log(area, draggingElement)
     let droppable = false
     const draggingEle = Rendevoz.Actions.State.Drag.getDraggingDetails()
     const objectIdToMetaObjectIdMap = globalStore.get(objectIdToMetaObjectIdMapAtom)
     let objectId: number | undefined = undefined
     let alreadyExist = false
+    let metaId: number | undefined = undefined
     if (draggingEle) {
       if (draggingEle.type && TypeToRegisteredObject.has(draggingEle.type)) {
         const { getObjectIdFromDraggingEle } = TypeToRegisteredObject.get(draggingEle.type)!
@@ -67,16 +72,22 @@ const useDropObjectArea = (
           droppable = false
       }
       if (objectId !== undefined && !objectIdToMetaObjectIdMap?.has(objectId)) droppable = true
-      if ((objectId && objectIdToMetaObjectIdMap?.has(objectId)) || draggingEle.type === 'metaElement') alreadyExist = true
+      if (objectId && objectIdToMetaObjectIdMap?.has(objectId)) {
+        alreadyExist = true
+        metaId = objectIdToMetaObjectIdMap?.get(objectId)
+      }
+      if (draggingEle.type === 'metaElement') {
+        alreadyExist = true
+        metaId = draggingEle.metaId
+      }
       setCanDropAsMeta({
         droppable,
-        existed: alreadyExist
+        existed: alreadyExist,
+        metaId
       })
     }
     if (!e) return
     if (area?.contains(e.target)) {
-      console.log('checking')
-
       callback?.onDragOver?.(draggingElement)
     } else {
       callback?.onDragLeave?.()
@@ -90,6 +101,7 @@ const useDropObjectArea = (
         existed: false
       })
     }, 500)
+    callback?.onDragEnd?.(data.draggingElement)
     const area = dropArea instanceof HTMLElement ? dropArea : dropArea.current
     if (area) {
       const { event } = data

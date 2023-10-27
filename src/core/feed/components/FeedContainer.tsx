@@ -51,7 +51,9 @@ const FeedContainer = ({ pageContainer }: { pageContainer?: HTMLDivElement }) =>
             style={{
               display: 'flex',
               justifyContent: 'center',
-              position: 'relative'
+              position: 'relative',
+              background: Colors.Background.Global,
+              borderRadius: 12
             }}
             maxWidth={'90vw'}
             minWidth={500}
@@ -63,7 +65,7 @@ const FeedContainer = ({ pageContainer }: { pageContainer?: HTMLDivElement }) =>
                 left: -50,
                 top: '50%',
                 transform: 'translateY(-50%)',
-                color: Colors.Font.Transparent
+                color: Colors.Font.White
               }}
             >
               <Icon
@@ -81,7 +83,7 @@ const FeedContainer = ({ pageContainer }: { pageContainer?: HTMLDivElement }) =>
                 right: -50,
                 top: '50%',
                 transform: 'translateY(-50%)',
-                color: Colors.Font.Transparent
+                color: Colors.Font.White
               }}
             >
               <Icon
@@ -106,37 +108,33 @@ const FeedContainer = ({ pageContainer }: { pageContainer?: HTMLDivElement }) =>
             height: '100%',
             width: 800
           }}
+          minWidth={400}
         >
           <FeedContentRenderer />
         </Resizable>
       )}
-      {openMode === 'sidePeek' &&
-        pageContainer &&
-        createPortal(
-          <Resizable
-            enable={{
-              left: true
-            }}
-            defaultSize={{
-              height: '100%',
-              width: '40vw'
-            }}
-            style={{
-              position: 'absolute',
-              top: 0,
-              bottom: 0,
-              right: 0,
-              transition: 'transform 0.27s ease',
-              transform: !feedState.modalOpen ? 'translateX(100%)' : 'translateX(0)',
-              boxShadow: Colors.Background.BoxShadow,
-              zIndex: 100,
-              background: Colors.Background.Secondary
-            }}
-          >
-            <FeedContentRenderer />
-          </Resizable>,
-          pageContainer
-        )}
+      {openMode === 'sidePeek' && (
+        <Resizable
+          enable={{
+            left: true
+          }}
+          defaultSize={{
+            height: '100%',
+            width: '40vw'
+          }}
+          style={{
+            position: 'absolute',
+            top: 0,
+            right: 0,
+            transform: !feedState.modalOpen ? 'translateX(100%)' : undefined,
+            boxShadow: Colors.Background.BoxShadow,
+            zIndex: 100,
+            background: Colors.Background.Secondary
+          }}
+        >
+          <FeedContentRenderer />
+        </Resizable>
+      )}
     </Content>
   )
 }

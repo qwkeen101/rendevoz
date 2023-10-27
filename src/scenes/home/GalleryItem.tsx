@@ -18,11 +18,11 @@ const GalleryItem = memo(({ metaId }: { metaId: number }) => {
   if (!meta) return null
   return (
     <ContextMenu
-      content={
+      content={setV => (
         <WithBorder>
-          <ObjectActionPopover metaObjectId={metaId} />
+          <ObjectActionPopover onClose={() => setV(false)} metaObjectId={metaId} />
         </WithBorder>
-      }
+      )}
     >
       <Content
         flex

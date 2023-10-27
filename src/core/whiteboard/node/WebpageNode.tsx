@@ -14,7 +14,18 @@ const WebpageNode = ({ node, onTitleChange }: { node: IWhiteboardNode & { type: 
         maxHeight: '100%'
       }}
     >
-      <Webpage disableTabTitle={true} initialWebpageId={node.webpageId} onTitleChange={onTitleChange} />
+      <Webpage
+        disableTabTitle={true}
+        initialWebpageId={node.webpageId}
+        editorOptions={{
+          layout: {
+            showHeader: false
+          },
+          styles:{
+            pageMinPadding: '0px 20px'
+          }
+        }}
+      />
     </Content>
   )
 }

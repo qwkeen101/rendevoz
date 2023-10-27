@@ -19,7 +19,7 @@ export const circleButton = (padding = 4, borderRadius = 999) => {
   })
 }
 
-export const flatButton = (borderRadius = 4, padding = '4px 8px', background = Colors.Background.ButtonHover, border = false) => {
+export const flatButton = (borderRadius = 4, padding = '3px 8px', background = Colors.Background.ButtonHover, border = false) => {
   return css({
     transition: 'all 0.2s ease',
     borderRadius,

@@ -1,27 +1,17 @@
 import { useMemo, useState } from 'react'
-import { Button, ColumnResizer, Content, Icon, IconWithPopover, Modal, WithBorder } from '@/components'
+import { Button, Content } from '@/components'
 import KeyvalueStore from '@/stores/keyvalue.store'
 import { ObjectStore } from '@/stores'
-import { FeedItem, IWebpage } from '~/typings'
-import transformWebpageToFeedItem from '@/core/feed/utils/transformWebpageToFeedItem'
 import useFeedState from '@/core/feed/hooks/useFeedState'
-import useFetchFeeds from '@/core/feed/hooks/useFetchFeeds'
 import { useGlobalAtomValue } from '@/hooks'
 import { Resizable } from 're-resizable'
 import { useTranslation } from 'react-i18next'
 import { Colors } from '@/consts'
-import ContextMenu from '@/components/contextMenu'
-import deleteCollection from '@/core/feed/utils/deleteCollection'
-import { ClassName } from 'rendevoz'
-import fetchFeedAndAddCollection from '@/core/feed/utils/fetchFeedAndAddCollection'
 import FeedSidebarItem from '@/core/feed/components/FeedSidebarItem'
-import feedCollections from '@/core/feed/components/others/FeedCollections'
 import FeedSidebarFolder from '@/core/feed/components/FeedSidebarFolder'
 
 const FeedSidebar = () => {
   const [feedState, setFeedState] = useFeedState()
-  const readLaterIds = KeyvalueStore.useValue('feedReadLaterIds') || []
-  const recentlyIds = KeyvalueStore.useValue('feedRecentlyReadIds') || []
   ObjectStore('feedCollection').getAll()
   ObjectStore('feedFolder').getAll()
   const allCollections = useGlobalAtomValue(ObjectStore('feedCollection').objectMapAtom)
@@ -92,7 +82,7 @@ const FeedSidebar = () => {
         transition: 'transform 0.25s ease'
       }}
     >
-      <Content flex column gap={4} style={{ padding: '6px 12px', borderBottom: `1px solid ${Colors.Background.Border}`, marginBottom: 10 }}>
+      <Content flex column gap={4} style={{ padding: '6px 6px' }}>
         <Button.IconButton onClick={() => handleSetReadLater()} icon={'park-star'} text={t('general.Read later')}></Button.IconButton>
         <Button.IconButton onClick={() => handleSetHistory()} icon={'park-history'} text={t('general.History')}></Button.IconButton>
         <Button.IconButton
@@ -110,7 +100,7 @@ const FeedSidebar = () => {
           text={t('general.Add new feed')}
         ></Button.IconButton>
       </Content>
-      <Content flex column style={{ padding: '0px 12px', overflowY: 'auto', flexGrow: 1, flexShrink: 0, flexBasis: '100%' }}>
+      <Content flex column style={{ padding: '0px 8px 10px', overflowY: 'auto', flexGrow: 1 }}>
         <div
           style={{
             fontSize: 13,
@@ -120,7 +110,7 @@ const FeedSidebar = () => {
         >
           {t('general.Feeds')}
         </div>
-        <Content flex column>
+        <Content flex column gap={3}>
           {rootFolders?.map(i => <FeedSidebarFolder folderId={i} key={i} />)}
           {rootCollections?.map(i => <FeedSidebarItem collectionId={i} key={i} />)}
         </Content>
@@ -133,7 +123,7 @@ const FeedSidebar = () => {
         >
           {t('general.Podcasts')}
         </div>
-        <Content flex column>
+        <Content flex column gap={3}>
           {rootPodcasts?.map(i => <FeedSidebarItem collectionId={i} key={i} />)}
         </Content>
       </Content>

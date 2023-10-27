@@ -63,6 +63,7 @@ const useStoreValue = (options: {
       const noteValue = await getNoteValue(note.contentId)
       if (noteValue) {
         onContentLoaded?.()
+        console.log(noteValue)
         const currentValue = instance?.getSlateEditor?.().children
         if (!isEqual(currentValue, noteValue)) {
           instance?.replaceChildren?.(noteValue)
@@ -73,10 +74,13 @@ const useStoreValue = (options: {
   useEffect(() => {
     if (note?.contentId && instance) {
       fetchValue()
-    } else if (defaultValue) {
+    }
+  }, [note?.contentId, instance])
+  useEffect(() => {
+    if (defaultValue && !note?.contentId) {
       instance?.replaceChildren?.(defaultValue)
     }
-  }, [note?.contentId, instance, defaultValue])
+  }, [defaultValue, instance, note?.contentId])
   useEffect(() => {
     globalEmitter.addListener('editor', handler)
     return () => {

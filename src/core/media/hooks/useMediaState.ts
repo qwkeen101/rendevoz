@@ -3,7 +3,7 @@ import { IMediaState as I } from '~/typings'
 
 export type IMediaState = I
 
-export const MediaStateAtom = atom<I>({
+export const DEFAULT_MEDIA_STATE = {
   muted: false,
   loaded: false,
   loop: false,
@@ -17,7 +17,8 @@ export const MediaStateAtom = atom<I>({
   mode: 'web',
   name: 'Unnamed media',
   labelType: 'videoLabel'
-})
+}
+export const MediaStateAtom = atom<I>(DEFAULT_MEDIA_STATE)
 
 const useMediaState = () => useAtom(MediaStateAtom)
 

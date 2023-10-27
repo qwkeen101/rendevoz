@@ -146,13 +146,22 @@ const SidebarCollectionItem: FC<ISidebarItem> = memo(
         >
           <Content
             flex
+            onClick={e => {
+              onClick?.(e, {
+                type: 'collection',
+                id
+              })
+            }}
             alignItems="center"
             justifyContent="space-between"
             className={css([ClassName.flatButton(4, '3px 8px 3px 2px'), hovered && ClassName.Drag.droppableItemHovered(droppable)])}
           >
             <Content flex gap={4}>
               <Icon
-                onClick={() => CollectionStore.updateCollection({ ...collection, toggled: !collection.toggled }, true)}
+                onClick={e => {
+                  e.stopPropagation()
+                  CollectionStore.updateCollection({ ...collection, toggled: !collection.toggled }, true)
+                }}
                 className={css({
                   transform: !hideChildren ? 'rotate(90deg)' : undefined,
                   transition: 'all 0.2s ease',
@@ -164,12 +173,7 @@ const SidebarCollectionItem: FC<ISidebarItem> = memo(
               />
               {collection && (
                 <IconNameItem
-                  onClick={e => {
-                    onClick?.(e, {
-                      type: 'collection',
-                      id
-                    })
-                  }}
+                  onClick={e => {}}
                   style={{ fontSize: FontSize['13px'] }}
                   name={collection.name || 'Unnamed Collection'}
                   color={collection.color}

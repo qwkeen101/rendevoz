@@ -150,7 +150,7 @@ const MetaFilterer = ({ withInput = true, autoFocus, onChange, currentInput, sho
             <Button.IconButton
               style={{
                 lineHeight: 1.3,
-                fontSize: '0.95rem'
+                fontSize: '13px'
               }}
               onClick={() => setFiltererState({ currentSelectType: item.type })}
               icon={Rendevoz.Utils.Object.getMetaObjectIcon(item.type)}
@@ -183,7 +183,7 @@ const ButtonItem = ({ onClick, item, selected }: { item: MetaObject; selected: b
     <Button.IconButton
       style={{
         lineHeight: 1.3,
-        fontSize: '0.95rem'
+        fontSize: '13px'
       }}
       onClick={onClick}
       icon={icon}

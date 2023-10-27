@@ -324,55 +324,53 @@ const EditorToolbar: FC<EditorToolbarProps> = ({ scrollElement, style, on }) => 
           name="park-font-size-two"
         ></IconWithPopover>
       </Toolbar.Item>
-      {/*{toolbarOptions?.extra !== false && (*/}
-      {/*  <>*/}
-      {/*    <Toolbar.Separator direction="horizontal" />*/}
-      {/*    <Toolbar.Item*/}
-      {/*      iconName="park-translate"*/}
-      {/*      tooltip={t('general.translate')}*/}
-      {/*      onClick={e => {*/}
-      {/*        if (editor.selection) {*/}
-      {/*          const str = Editor.string(editor, editor.selection)*/}
-      {/*          if (str) {*/}
-      {/*            const block = Editor.above(editor, {*/}
-      {/*              match: n => Element.isElement(n) && 'id' in n,*/}
-      {/*              at: editor.selection.anchor*/}
-      {/*            })?.[0]*/}
-      {/*            if (!block?.id) return*/}
-      {/*            editor.on({*/}
-      {/*              type: 'translate',*/}
-      {/*              translatedText: str,*/}
-      {/*              blockId: block.id as number,*/}
-      {/*              e*/}
-      {/*            })*/}
-      {/*          }*/}
-      {/*        }*/}
-      {/*      }}*/}
-      {/*    />*/}
-      {/*    <Toolbar.Item*/}
-      {/*      iconName="park-search"*/}
-      {/*      tooltip={t('general.search')}*/}
-      {/*      onClick={e => {*/}
-      {/*        if (editor.selection) {*/}
-      {/*          const str = Editor.string(editor, editor.selection)*/}
-      {/*          if (str) {*/}
-      {/*            const block = Editor.above(editor, {*/}
-      {/*              match: n => Element.isElement(n) && 'id' in n,*/}
-      {/*              at: editor.selection.anchor*/}
-      {/*            })?.[0]*/}
-      {/*            if (!block?.id) return*/}
-      {/*            editor.on({*/}
-      {/*              type: 'search',*/}
-      {/*              searchedText: str,*/}
-      {/*              blockId: block.id as number,*/}
-      {/*              e*/}
-      {/*            })*/}
-      {/*          }*/}
-      {/*        }*/}
-      {/*      }}*/}
-      {/*    />*/}
-      {/*  </>*/}
-      {/*)}*/}
+      {toolbarOptions?.extra !== false && (
+        <>
+          <Toolbar.Separator direction="horizontal" />
+          {/*<Toolbar.Item*/}
+          {/*  iconName="park-translate"*/}
+          {/*  tooltip={t('general.translate')}*/}
+          {/*  onClick={e => {*/}
+          {/*    if (editor.selection) {*/}
+          {/*      const str = Editor.string(editor, editor.selection)*/}
+          {/*      if (str) {*/}
+          {/*        const block = Editor.above(editor, {*/}
+          {/*          match: n => Element.isElement(n) && 'id' in n,*/}
+          {/*          at: editor.selection.anchor*/}
+          {/*        })?.[0]*/}
+          {/*        if (!block?.id) return*/}
+          {/*        editor.on({*/}
+          {/*          type: 'translate',*/}
+          {/*          translatedText: str,*/}
+          {/*          blockId: block.id as number,*/}
+          {/*          e*/}
+          {/*        })*/}
+          {/*      }*/}
+          {/*    }*/}
+          {/*  }}*/}
+          {/*/>*/}
+          <Toolbar.Item
+            iconName="park-search"
+            tooltip={t('general.search')}
+            onClick={e => {
+              if (editor.selection) {
+                const str = Editor.string(editor, editor.selection)
+                if (str) {
+                  const block = Editor.above(editor, {
+                    match: n => Element.isElement(n) && 'id' in n,
+                    at: editor.selection.anchor
+                  })?.[0]
+                  if (!block?.id) return
+                  editor.on({
+                    type: 'search',
+                    searchedText: str
+                  })
+                }
+              }
+            }}
+          />
+        </>
+      )}
     </Toolbar>
   )
   // only render when have noteid

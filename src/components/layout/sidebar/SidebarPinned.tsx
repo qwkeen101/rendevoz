@@ -10,6 +10,7 @@ import SidebarCollectionItem from './items/SidebarCollectionItem'
 import { useToggle } from '@/hooks'
 import { useTranslation } from 'react-i18next'
 import FontSize from '@/consts/font'
+import { Colors } from '@/consts'
 
 const SidebarPinned = memo(() => {
   const pinnedObjects = useGlobalAtomValue(pinnedMetaObjectsAtom)
@@ -19,8 +20,8 @@ const SidebarPinned = memo(() => {
   const { t } = useTranslation()
   return (
     <Content flex column style={{ marginBottom: 10 }}>
-      <Content flex alignItems="center" justifyContent="space-between">
-        <div style={{ cursor: 'pointer', fontSize: FontSize['13px'] }} onClick={toggleCollapsed}>
+      <Content flex alignItems="center" justifyContent="space-between" style={{ fontSize: 13, color: Colors.Font.Transparent }}>
+        <div style={{ cursor: 'pointer' }} onClick={toggleCollapsed}>
           {t('sidebar.pinned')}
         </div>
         {totalPinned > 0 ? totalPinned : undefined}

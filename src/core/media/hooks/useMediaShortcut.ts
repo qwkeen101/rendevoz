@@ -5,9 +5,6 @@ import { RefObject, useEffect } from 'react'
 import useMediaState from './useMediaState'
 import { getSetting } from '@/core'
 import { useMediaInstance } from '@/core/media/hooks/useMediaInstance'
-import { normalizeSecondsToTime } from '@/core/media/utils'
-import { MetaStore } from '@/stores'
-import { toast } from 'react-hot-toast'
 
 const useMediaShortcut = (containerRef: RefObject<HTMLElement>) => {
   const [mediaState, setMediaState] = useMediaState()
@@ -42,7 +39,7 @@ const useMediaShortcut = (containerRef: RefObject<HTMLElement>) => {
       const time = instance.getVideoState?.().currentTime
       if (time) {
         instance.insertLabel?.({
-          videoTime: time
+          time
         })
       }
     }

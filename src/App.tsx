@@ -42,6 +42,7 @@ import registerTabs from '@/lifycycle/startup/registerTabs'
 import { ipcInstance } from '@/plugins'
 import GlobalCollection from '@/core/global/GlobalCollection'
 import { GlobalObjectDetails } from '@/core/object/details'
+import GlobalPreviewPanel from '@/core/global/GlobalPreviewPanel'
 
 // import { startDrive } from '@/driver'
 // import ReviewManager from '@/core/review/components/ReviewManager'
@@ -147,11 +148,12 @@ const App = () => {
           <GlobalTextSearch />
           <GlobalGraph />
           <GlobalScreenShot />
+          <GlobalPreviewPanel />
           <GlobalObjectPanel />
           <GlobalBaidudisk />
           <GlobalSearchPanel />
           <GlobalCollection />
-          {/*<GlobalObjectDetails />*/}
+          <GlobalObjectDetails />
           <GlobalCreateObject />
           <GlobalTranslateResult />
           <AuthenticatedLayout />

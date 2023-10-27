@@ -5,7 +5,7 @@ import { createStore, Provider, useAtomValue } from 'jotai'
 import MediaCore from './MediaCore'
 import MediaBottomBar from './MediaBottomBar'
 import useMediaToolbarState from './hooks/useMediaToolbarState'
-import useMediaState, { IMediaState, MediaStateAtom } from './hooks/useMediaState'
+import useMediaState, { DEFAULT_MEDIA_STATE, IMediaState, MediaStateAtom } from './hooks/useMediaState'
 import { useUpdateEffect } from '@/hooks'
 import { AnimatePresence, motion } from 'framer-motion'
 import Colors from '@/consts/colors'
@@ -27,6 +27,7 @@ import MediaTranscriber from '@/core/media/components/MediaTranscriber'
 import { TabTitle } from '@/core/rendevoz/components'
 import MediaToolbar from '@/core/media/components/MediaToolbar'
 import _ from 'lodash'
+import useMediaSidebarState from '@/core/media/hooks/useMediaSidebarState'
 export interface MediaProps {
   onInstanceInitialized?: (instance: Partial<IMediaInstance>) => void
   onlyCore?: boolean
@@ -44,7 +45,6 @@ const MediaInner = ({ onInstanceInitialized, onlyCore, on, disableTabTitle = tru
   const { width = 0 } = useMeasure(outerContainerRef)
   const instance = useMediaInstance()
   instance.on = on
-  const smallMode = width < 1000 || mediaState.floated
   const showIcon = mediaState.mode !== 'audio' && playIconVisible && mediaState.loaded
   const mediaLayout = useAtomValue(MediaLayoutAtom)
   const audioMode = mediaState.mode === 'audio'
@@ -88,7 +88,7 @@ const MediaInner = ({ onInstanceInitialized, onlyCore, on, disableTabTitle = tru
   }, [mediaState.muted, mediaState.volume, mediaState.loop, mediaState.currentTime, mediaState.totalPlayedTime, mediaState.totalTime])
   useMediaShortcut(outerContainerRef)
   useAssignMediaInstance(containerRef)
-
+  const sidebarState = useMediaSidebarState()[0]
   const latestVideoLoaded = useLatest(mediaState.loaded)
 
   useEffect(() => {
@@ -269,7 +269,7 @@ const MediaInner = ({ onInstanceInitialized, onlyCore, on, disableTabTitle = tru
             width: '100%',
             height: columnLayout ? 'fit-content' : '100%',
             overflowY: columnLayout ? undefined : 'auto',
-            padding: 24,
+            padding: '16px 16px 12px',
             display: 'flex'
           }}
         >
@@ -277,7 +277,7 @@ const MediaInner = ({ onInstanceInitialized, onlyCore, on, disableTabTitle = tru
             flex
             centered
             column
-            gap={12}
+            gap={8}
             style={{
               width: '100%',
               maxWidth: 'calc((100vh - 260px) * (1/0.6))',
@@ -343,8 +343,9 @@ const Media = (props: MediaProps) => {
       metaId
     } = props.mediaState || {}
     store.set(MediaInstanceAtom, {})
+    console.log(subtitleList, subtitleLang, DEFAULT_MEDIA_STATE)
     store.set(MediaStateAtom, {
-      ..._.merge(store.get(MediaStateAtom), {
+      ..._.merge({}, DEFAULT_MEDIA_STATE, {
         thumbnail,
         isPinned,
         collectionName,
@@ -387,7 +388,7 @@ const Media = (props: MediaProps) => {
       metaId,
       collectionName
     } = props.mediaState
-    console.log(labels, props.mediaState)
+    console.log(props.mediaState, currentState)
     store.set(MediaStateAtom, {
       ...currentState,
       url: transformUrl(url),
@@ -395,8 +396,8 @@ const Media = (props: MediaProps) => {
       metaId,
       subtitleMode,
       collectionName,
-      subtitleLang,
-      subtitleList,
+      subtitleLang: subtitleLang || currentState.subtitleLang,
+      subtitleList: subtitleList || currentState.subtitleList,
       subtitleFollow,
       chapters,
       volume: volume || currentState.volume,
@@ -413,7 +414,11 @@ const Media = (props: MediaProps) => {
     const currentState = store.get(MediaStateAtom)
     store.set(MediaStateAtom, {
       ...currentState,
-      subtitles: []
+      currentTime: props.mediaState?.currentTime,
+      totalTime: props.mediaState?.totalTime,
+      subtitles: [],
+      subtitleList: props.mediaState?.subtitleList,
+      subtitleLang: props.mediaState?.subtitleLang
     })
   }, [props.mediaState?.url])
   return (

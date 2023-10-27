@@ -8,7 +8,17 @@ import AutosizeTextarea from '@/components/custom/input/autosizeTextarea'
 import { useTranslation } from 'react-i18next'
 import FontSize from '@/consts/font'
 
-const NameEditor = ({ value, onChange, style, placeholder }: { value?: string; onChange: (v: string) => void; style?: CSSProperties; placeholder?: string }) => {
+const NameEditor = ({
+  value,
+  onChange,
+  style,
+  placeholder = 'Edit content...'
+}: {
+  value?: string
+  onChange: (v: string) => void
+  style?: CSSProperties
+  placeholder?: string
+}) => {
   const inputRef = useRef<HTMLInputElement>(null)
   const [innerValue, setInnerValue] = useState(value)
   const { t } = useTranslation()
@@ -43,7 +53,7 @@ const NameEditor = ({ value, onChange, style, placeholder }: { value?: string; o
             onChange(value)
           }
         }}
-        placeholder={placeholder || t('general.Add note for label')}
+        placeholder={placeholder}
         defaultValue={value}
         onChange={e => setInnerValue(e.target.value)}
       ></AutosizeTextarea>

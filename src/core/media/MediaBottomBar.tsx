@@ -266,36 +266,36 @@ const MediaBottomBar = () => {
           )}
         </Content>
         <Content flex fullHeight alignItems="center" role="right-toolbar" gap={16} style={{ flexShrink: 0 }}>
-          {/*{mediaState.subtitleList?.length && (*/}
-          {/*  <Icon*/}
-          {/*    onClick={() => {*/}
-          {/*      setMediaState(s => ({ ...s, showSubtitle: !s.showSubtitle }))*/}
-          {/*    }}*/}
-          {/*    size={16}*/}
-          {/*    data-pressed={!!mediaState.showSubtitle}*/}
-          {/*    className={css({*/}
-          {/*      cursor: 'pointer',*/}
-          {/*      position: 'relative',*/}
-          {/*      ':after': {*/}
-          {/*        content: '""',*/}
-          {/*        position: 'absolute',*/}
-          {/*        bottom: -4,*/}
-          {/*        borderRadius: 3,*/}
-          {/*        height: 2,*/}
-          {/*        left: -2,*/}
-          {/*        width: 0,*/}
-          {/*        background: Colors.Font.White,*/}
-          {/*        transition: 'all 0.2s ease'*/}
-          {/*      },*/}
-          {/*      "&[data-pressed='true']": {*/}
-          {/*        ':after': {*/}
-          {/*          width: 'calc(100% + 4px)'*/}
-          {/*        }*/}
-          {/*      }*/}
-          {/*    })}*/}
-          {/*    name="custom-CC"*/}
-          {/*  />*/}
-          {/*)}*/}
+          {mediaState.subtitleList?.length ? (
+            <Icon
+              onClick={() => {
+                setMediaState(s => ({ ...s, showSubtitle: !s.showSubtitle }))
+              }}
+              size={16}
+              data-pressed={!!mediaState.showSubtitle}
+              className={css({
+                cursor: 'pointer',
+                position: 'relative',
+                ':after': {
+                  content: '""',
+                  position: 'absolute',
+                  bottom: -4,
+                  borderRadius: 3,
+                  height: 2,
+                  left: -2,
+                  width: 0,
+                  background: Colors.Font.White,
+                  transition: 'all 0.2s ease'
+                },
+                "&[data-pressed='true']": {
+                  ':after': {
+                    width: 'calc(100% + 4px)'
+                  }
+                }
+              })}
+              name="custom-CC"
+            />
+          ) : null}
           <AnimatePopover
             padding={10}
             content={setState => (

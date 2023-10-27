@@ -323,7 +323,9 @@ const Recent = () => {
                   borderTop: `1px solid ${Colors.Background.Border}`,
                   userSelect: 'none',
                   td: {
-                    padding: '10px 8px'
+                    padding: '6px 8px',
+                    fontWeight: 600,
+                    fontSize: 14
                   },
                   ':hover': {
                     borderColor: 'transparent',
@@ -342,7 +344,14 @@ const Recent = () => {
                     metaId: i.id
                   }}
                 >
-                  <IconNameItem icon={i.icon || getIcon(i.type, i)} name={i.name} color={i.color} />
+                  <Content flex gap={12} alignItems={'center'}>
+                    {i.coverImgSrc ? (
+                      <img src={i.coverImgSrc} width={36} height={36} style={{ objectFit: 'cover', borderRadius: 4 }} />
+                    ) : (
+                      <Icon size={18} name={getIcon(i.type)} />
+                    )}
+                    <div className={ClassName.ellipsisFont(1)}>{i.name}</div>
+                  </Content>
                 </DraggableElement>
               </td>
               <td>{i.viewAt && DateFormat.formatDistanceToNowStrict(i.viewAt)}</td>

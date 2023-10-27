@@ -1,21 +1,19 @@
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import Id from '@/utils/id'
-import useWebpageState, { IWebpageState } from '@/core/webpage/hooks/useWebpageState'
+import useWebpageState from '@/core/webpage/hooks/useWebpageState'
 import NoteEditor from '@/core/editor/noteEditor/NoteEditor'
-import { Editor } from '@/core'
-import { Content } from '@/components'
+import { Content, Tooltip, Icon } from '@/components'
 import { Colors } from '@/consts'
-import { Descendant } from 'slate'
 import { EditorProps, IEditorEvent, IEditorInstance } from '~/typings'
-import { useUpdateEffect } from '@/hooks'
 import KeyvalueStore from '@/stores/keyvalue.store'
 import { DefaultEditorSettings } from '@/lifycycle/startup/initializeSettings'
 import { MetaStore, ObjectStore } from '@/stores'
-import { fetchRemoteImageAndSaveLocally } from '@/utils'
 import addWebpageAsMeta from '@/core/webpage/utils/addWebpageAsMeta'
 import { Rendevoz } from '@/core/rendevoz'
 import useWebpageInstance from '@/core/webpage/hooks/useWebpageInstance'
 import { IWebpageProps } from '@/core/webpage/Webpage'
+import { ClassName } from 'rendevoz'
+import { GlobalSearchInstance } from '@/core/global/GlobalSearchPanel'
 
 const WebpageTitle = ({
   title = 'Untitled',
@@ -59,7 +57,7 @@ const WebpageTitle = ({
         {author && (
           <>
             <div style={{ fontSize: 18, lineHeight: 0 }}>•</div>
-            <div>{author}</div>
+            <div className={ClassName.ellipsisFont(1)}>{author}</div>
           </>
         )}
       </Content>
@@ -83,6 +81,7 @@ const WebpageContentRenderer = ({
   const currentWepbage = ObjectStore('webpage').useValue(webpageState.currentWebpageId)
   const webpageInstance = useWebpageInstance()
   const webpageMeta = MetaStore.useObjectToMetaValue(webpageState.currentWebpageId)
+  const [showOriginal, setShowOriginal] = useState(false)
   const webpageEditorOnHandler = async (e: IEditorEvent) => {
     editorOptions?.on?.(e)
     if (e.type === 'stateChange') {
@@ -171,10 +170,23 @@ const WebpageContentRenderer = ({
       }
     }
     switch (e.type) {
+      case 'search': {
+        GlobalSearchInstance.open({
+          query: e.searchedText,
+          from: webpageMeta
+            ? {
+                type: 'webpage',
+                metaId: webpageMeta.id
+              }
+            : undefined
+        })
+        return true
+      }
       case 'addLabel': {
         let webpage = currentWepbage
         if (!hasWebpageMeta) {
           const stateWebpage = webpageState.currentWebpage || webpageState.externalState
+          console.log(stateWebpage, webpageState)
           if (!stateWebpage) return
           webpage = (await addWebpageAsMeta({ ...stateWebpage, url: webpageState.currentUrl }, e.afterAddValue)).one
         }
@@ -210,8 +222,12 @@ const WebpageContentRenderer = ({
 
   useEffect(() => {
     console.log(editorInstanceRef.current)
-    editorInstanceRef.current?.scrollToPosition?.(0)
-  }, [webpageState.currentUrl])
+    if (webpageState.loaded) {
+      setTimeout(() => {
+        editorInstanceRef.current?.scrollToPosition?.(0)
+      })
+    }
+  }, [webpageState.currentUrl, webpageState.loaded])
 
   console.log(webpageState.externalState, webpageState.currentParsedContent, webpageState)
   if (!webpageState.currentWebpageNoteId && !webpageState.currentParsedContent && !webpageState.externalState?.content) return null
@@ -221,7 +237,6 @@ const WebpageContentRenderer = ({
         {...editorOptions}
         labelType={'webpageLabel'}
         onInstanceInitialized={i => {
-          console.log(i)
           editorInstanceRef.current = i
           webpageInstance.editorInstance = i
           onInstanceInitialized?.(webpageInstance)
@@ -235,6 +250,23 @@ const WebpageContentRenderer = ({
           fontSize: isReadOnly ? editorSetting.readerMode.fontSize : editorSetting.editMode.fontSize,
           typeface: isReadOnly ? editorSetting.readerMode.typeface : editorSetting.editMode.typeface
         }}
+        header={{
+          ...editorOptions?.header,
+          rightExtra: (
+            <>
+              {editorOptions?.header?.rightExtra}
+              <Tooltip content={'Show original website'}>
+                <Icon
+                  className={ClassName.flatButton(4, '4px')}
+                  onClick={() => {
+                    setShowOriginal(!showOriginal)
+                  }}
+                  name={'park-web-page'}
+                />
+              </Tooltip>
+            </>
+          )
+        }}
         labelIds={currentWepbage?.labels || []}
         on={webpageEditorOnHandler}
         stringTitle={webpageState.currentWebpage?.title || webpageState.externalState?.title || 'Untitled'}
@@ -244,8 +276,8 @@ const WebpageContentRenderer = ({
           customTitleRenderer: () => (
             <WebpageTitle
               url={webpageState.currentUrl}
-              {...webpageState.externalState}
               {...webpageState.currentWebpage}
+              {...webpageState.externalState}
               title={webpageMeta?.name || webpageState.externalState?.title || webpageState.currentWebpage?.title}
             />
           ),
@@ -258,7 +290,26 @@ const WebpageContentRenderer = ({
   }
   return (
     <Content fullHeight fullWidth style={{ overflow: 'hidden' }}>
-      {renderer()}
+      {showOriginal && (
+        <Icon
+          name={'park-close'}
+          containerStyle={{
+            position: 'absolute',
+            right: 20,
+            cursor: 'pointer',
+            top: 15,
+            zIndex: 15,
+            borderRadius: 999,
+            color: 'white',
+            padding: '6px',
+            background: 'rgba(0,0,0,0.7)'
+          }}
+          onClick={() => {
+            setShowOriginal(false)
+          }}
+        />
+      )}
+      {showOriginal ? <webview src={webpageState.currentUrl} style={{ width: '100%', height: '100%', background: 'white' }} /> : renderer()}
     </Content>
   )
 }

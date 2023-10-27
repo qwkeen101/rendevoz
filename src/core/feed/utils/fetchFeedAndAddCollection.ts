@@ -11,7 +11,9 @@ export default async (feedUrl: string, type: FeedItem['feedType'] = 'webpage') =
     const res = await FeedParser(text, true)
     const items = await Promise.all(
       res.items.map(async i => {
-        i.feedType = type
+        if (!i.feedType) {
+          i.feedType = type
+        }
         return await ObjectStore('feed').addOne(i)
       })
     )
@@ -22,6 +24,7 @@ export default async (feedUrl: string, type: FeedItem['feedType'] = 'webpage') =
       name: res.title,
       feedUrl: feedUrl,
       collectionType: type,
+      unreadCount: items.length,
       icon: res.image?.url
     })
   } catch (e) {

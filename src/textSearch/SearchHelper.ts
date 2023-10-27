@@ -19,38 +19,40 @@ const normalizeMetaToDoc = (meta: MetaObject) => {
     description: meta.description
   }
 }
-// fetch('rendefile:///meta-search-index.json')
-//   .then(res => {
-//     console.log(res)
-//     if (res.ok) {
-//       res.text().then(t => {
-//         worker.postMessage({
-//           event: 'load',
-//           json: t
-//         })
-//       })
-//     }
-//   })
-//   .catch(e => {
-//     metaDb.toArray().then(docs => {
-//       worker.postMessage({
-//         event: 'insertDocuments',
-//         documents: docs.map(i => normalizeMetaToDoc(i))
-//       })
-//       loadAllNotes().then(values => {
-//         const normalizedDocuments = values
-//           .filter(i => i)
-//           .map(i => ({
-//             ...normalizeMetaToDoc(i.targetMeta),
-//             content: Node.string({ children: i.value })
-//           }))
-//         worker.postMessage({
-//           event: 'updateDocuments',
-//           documents: normalizedDocuments
-//         })
-//       })
-//     })
-//   })
+export const initializeSearch = async () => {
+  fetch('rendefile:///meta-search-index.json')
+    .then(res => {
+      console.log(res)
+      if (res.ok) {
+        res.text().then(t => {
+          worker.postMessage({
+            event: 'load',
+            json: t
+          })
+        })
+      }
+    })
+    .catch(e => {
+      metaDb.toArray().then(docs => {
+        worker.postMessage({
+          event: 'insertDocuments',
+          documents: docs.map(i => normalizeMetaToDoc(i))
+        })
+        loadAllNotes().then(values => {
+          const normalizedDocuments = values
+            .filter(i => i)
+            .map(i => ({
+              ...normalizeMetaToDoc(i.targetMeta),
+              content: Node.string({ children: i.value })
+            }))
+          worker.postMessage({
+            event: 'updateDocuments',
+            documents: normalizedDocuments
+          })
+        })
+      })
+    })
+}
 
 class SearchHelper {
   public insertDocument = async (doc: ISearchableDocument) => {
@@ -110,3 +112,4 @@ class SearchHelper {
 
 const search = new SearchHelper()
 export default search
+

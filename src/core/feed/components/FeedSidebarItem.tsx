@@ -1,5 +1,5 @@
 import ContextMenu from '@/components/contextMenu'
-import { AnimatePopover, Button, WithBorder } from '@/components'
+import { AnimatePopover, Button, Content, WithBorder } from '@/components'
 import deleteCollection from '@/core/feed/utils/deleteCollection'
 import { ClassName } from 'rendevoz'
 import { useSetAtom } from 'jotai'
@@ -123,7 +123,7 @@ export default ({ collectionId, parentFolderId }: { collectionId: number; parent
           }}
         />
       ) : (
-        <div
+        <Content
           onClick={() => {
             setFeedState(s => ({
               ...s,
@@ -133,10 +133,19 @@ export default ({ collectionId, parentFolderId }: { collectionId: number; parent
               headerName: undefined
             }))
           }}
-          className={css([ClassName.flatButton(4, '2px 6px'), ClassName.ellipsisFont(1)])}
+          className={ClassName.flatButton(4, '2px 6px')}
+          flex
+          justifyContent={'space-between'}
+          gap={10}
         >
-          {c.name}
-        </div>
+          <Content flex alignItems={'center'} gap={10}>
+            {c.icon && <img src={c.icon} width={20} height={20} style={{ objectFit: 'cover', borderRadius: 999 }} />}
+            <div className={ClassName.ellipsisFont(1)}>{c.name}</div>
+          </Content>
+          {c.unreadCount !== undefined && c.unreadCount > 0 && (
+            <div style={{ fontSize: 13, color: Colors.Font.Transparent }}>{c.unreadCount}</div>
+          )}
+        </Content>
       )}
     </ContextMenu>
   )

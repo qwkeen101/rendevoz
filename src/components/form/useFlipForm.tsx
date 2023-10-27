@@ -42,10 +42,11 @@ interface FormInnerState {
   attachmentManagerVisible: boolean
 }
 export const groupClassName = css({
-  boxShadow: `${Colors.Background.ButtonHover} 0px 0px 0px 1px inset`,
+  boxShadow: `${Colors.Background.ButtonHover} 0px 0px 0px 1px`,
   borderRadius: 6,
-  padding: 8,
-  background: 'rgba(31,34,37,0.03)',
+  padding: 6,
+  fontWeight: 500,
+  fontSize: 14,
   position: 'relative'
 })
 
@@ -54,7 +55,6 @@ export const hoverLabelClassName = css({
   top: -10,
   left: 10,
   fontWeight: 600,
-  fontFamily: 'Muli',
   fontSize: '0.857rem'
 })
 const handleEnterUpdateDelete = ({ animateExitingElements, animateEnteringElements, hideEnteringElements, animateFlippedElements }) => {
@@ -79,16 +79,19 @@ const useFlipForm = (options: useFlipFormOptions) => {
   const { t } = useTranslation()
   const flattenedLayout = useMemo(
     () =>
-      layout.reduce((prev, curr) => {
-        if (!curr) return prev
-        if (!('children' in curr)) {
-          prev.push(curr)
-        } else {
-          const items = Array.isArray(curr.children) ? curr.children.flat(0) : [curr.children]
-          items.forEach(i => prev.push(i))
-        }
-        return prev
-      }, [] as Required<FlipFormLayoutItem[]>),
+      layout.reduce(
+        (prev, curr) => {
+          if (!curr) return prev
+          if (!('children' in curr)) {
+            prev.push(curr)
+          } else {
+            const items = Array.isArray(curr.children) ? curr.children.flat(0) : [curr.children]
+            items.forEach(i => prev.push(i))
+          }
+          return prev
+        },
+        [] as Required<FlipFormLayoutItem[]>
+      ),
     [layout]
   )
 
@@ -96,7 +99,18 @@ const useFlipForm = (options: useFlipFormOptions) => {
     if (!i) return
     switch (i.type) {
       case 'input':
-        return <Form.Item text={capitalize(i.text)} disable={i.disabled} type="input" value={i.value} onChange={i.onChange} />
+        return (
+          <Form.Item
+            style={{
+              padding: '12px 10px'
+            }}
+            text={capitalize(i.text)}
+            disable={i.disabled}
+            type="input"
+            value={i.value}
+            onChange={i.onChange}
+          />
+        )
       case 'nameInput':
         return (
           <Form.Item
@@ -106,7 +120,7 @@ const useFlipForm = (options: useFlipFormOptions) => {
             type="textarea"
             minRows={1}
             maxRows={7}
-            style={{ fontSize: enlarged ? '1rem' : undefined, padding: '8px 12px 0px', wordBreak: 'break-all' }}
+            style={{ fontSize: enlarged ? '1rem' : undefined, padding: '10px 10px 0px', wordBreak: 'break-all' }}
             value={i.value}
             onChange={i.onChange}
           />
@@ -117,7 +131,7 @@ const useFlipForm = (options: useFlipFormOptions) => {
           <Form.Item
             text={capitalize(t('general.description'))}
             minRows={enlarged ? 10 : undefined}
-            style={{ fontSize: enlarged ? '1rem' : undefined, padding: '8px 12px 0px' }}
+            style={{ fontSize: enlarged ? '1rem' : undefined, padding: '10px 10px 0px' }}
             type="textarea"
             maxRows={enlarged ? 18 : 10}
             value={i.value}
@@ -278,7 +292,7 @@ const useFlipForm = (options: useFlipFormOptions) => {
             className={ClassName.flatButton()}
             onClick={() => setFormInnerState({ attachmentManagerVisible: true })}
           >
-            <Content gap={8} flex style={{ textTransform: 'capitalize' }}>
+            <Content gap={8} flex>
               <Icon name="park-link" />
               <span>{i.attachments?.length ? t('general.num attachments', { num: i.attachments.length }) : t('general.attachments')}</span>
             </Content>
@@ -422,11 +436,25 @@ const useFlipForm = (options: useFlipFormOptions) => {
         <Flipped flipId={mainFlipId}>
           <div
             style={{
-              padding: '16px 24px',
+              padding: 16,
               borderRadius: 8,
-              overflow: 'hidden'
+              overflow: 'hidden',
+              position: 'relative'
             }}
           >
+            <div
+              className={'FormDrag'}
+              style={{
+                position: 'absolute',
+                top: 16,
+                left: 16,
+                right: 20,
+                zIndex: 20,
+                height: 24,
+                width: 'calc(100% - 60px)',
+                cursor: 'grab'
+              }}
+            ></div>
             {mainVisible && renderMain()}
             {iconPickerVisible && renderIconPicker()}
             {tagPickerVisible && renderTagPicker()}

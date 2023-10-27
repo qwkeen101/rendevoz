@@ -3,7 +3,7 @@ import { GlobalInstance, useGlobalAtomValue } from '@/hooks'
 import { indexedMetaLinksAtom, metaLinksAtom, metaObjectsAtom } from '@/stores/meta.store'
 import { useTranslation } from 'react-i18next'
 import { globalStore, MetaStore } from '@/stores'
-import { Button, Content, ContentEditor, Icon, IconWithPopover, TabPane, Tabs, WithBorder } from '@/components'
+import { AnimatePopover, Button, Content, ContentEditor, Icon, IconWithPopover, TabPane, Tabs, WithBorder } from '@/components'
 import { css } from '@emotion/css'
 import FontSize from '@/consts/font'
 import Colors from '@/consts/colors'
@@ -14,6 +14,8 @@ import { Rendevoz } from '@/core/rendevoz'
 import { DraggableElement, useDropObjectArea, useRenderObject } from '@/core'
 import { MetaLink } from '~/typings'
 import useDropObject from '@/core/global/globalDragOverlay/useDropObject'
+import MetaFilterer from '@/core/object/filter/MetaFilterer'
+import HoverObjectDetails from '@/core/object/HoverObjectDetails'
 
 export const RelatedPanel = memo(({ metaId }: { metaId: number }) => {
   const indexed = useGlobalAtomValue(indexedMetaLinksAtom)
@@ -32,19 +34,14 @@ export const RelatedPanel = memo(({ metaId }: { metaId: number }) => {
       outboundLinkIds,
       allLinkIds
     }
-  }, [metaId, indexed])
+  }, [metaId, indexed, sourceToTarget, targetToSource])
   const [visibleTab, setVisibleTab] = useState<'out' | 'in' | 'all'>('all')
 
   return (
     <Content
       flex
       column
-      onClick={e => {
-        e.stopPropagation()
-        e.preventDefault()
-      }}
       className={css({
-        minHeight: '100%',
         maxHeight: '600px',
         height: '100%',
         overflowY: 'auto',
@@ -58,18 +55,11 @@ export const RelatedPanel = memo(({ metaId }: { metaId: number }) => {
           fontSize: FontSize['12px'],
           padding: '2px 8px'
         }}
-        tabNavContainerStyle={{
-          paddingBottom: 6,
-          borderBottom: `1px solid ${Colors.Background.Border}`
-        }}
         defaultActiveKey={'all'}
         activeKey={visibleTab}
       >
         <TabPane
           key="all"
-          style={{
-            paddingTop: 6
-          }}
           onClick={() => setVisibleTab('all')}
           tab={
             <Content flex gap={6}>
@@ -81,9 +71,6 @@ export const RelatedPanel = memo(({ metaId }: { metaId: number }) => {
           <RelatedGroup direction={'all'} rootMetaId={metaId} linkIds={allLinkIds} />
         </TabPane>
         <TabPane
-          style={{
-            paddingTop: 6
-          }}
           onClick={() => setVisibleTab('in')}
           tab={
             <Content flex gap={6}>
@@ -96,9 +83,6 @@ export const RelatedPanel = memo(({ metaId }: { metaId: number }) => {
           <RelatedGroup direction={'in'} rootMetaId={metaId} linkIds={inboundLinkIds} />
         </TabPane>
         <TabPane
-          style={{
-            paddingTop: 6
-          }}
           onClick={() => setVisibleTab('out')}
           tab={
             <Content flex gap={6}>
@@ -117,41 +101,47 @@ export const RelatedPanel = memo(({ metaId }: { metaId: number }) => {
 const RelatedGroup = ({ linkIds, rootMetaId, direction }: { direction: 'all' | 'in' | 'out'; linkIds: number[]; rootMetaId: number }) => {
   const [groupType, setGroupType] = useState<'all' | MetaObject['type']>('all')
   const ref = useRef(null)
+  const handleAddLink = (metaId: number) => {
+    if (direction === 'all') {
+      MetaStore.addMetaLink(
+        {
+          sourceId: rootMetaId,
+          targetId: metaId
+        },
+        true
+      )
+      MetaStore.addMetaLink({
+        sourceId: metaId,
+        targetId: rootMetaId
+      })
+    }
+    if (direction === 'in') {
+      MetaStore.addMetaLink({
+        sourceId: metaId,
+        targetId: rootMetaId
+      })
+    }
+    if (direction === 'out') {
+      MetaStore.addMetaLink({
+        sourceId: rootMetaId,
+        targetId: metaId
+      })
+    }
+  }
   const { canDropAsMeta, isDragging } = useDropObjectArea(ref, {
     onDrop: async element => {
       let metaId
-      if (canDropAsMeta) {
+      if (canDropAsMeta.droppable) {
         metaId = (await GlobalInstance.metaOps?.addDraggableAsMeta(element))?.id
+      }
+      if (canDropAsMeta.existed) {
+        metaId = canDropAsMeta.metaId
       }
       if (element.type === 'metaElement') {
         metaId = element.metaId
       }
       if (!metaId) return
-      if (direction === 'all') {
-        MetaStore.addMetaLink(
-          {
-            sourceId: rootMetaId,
-            targetId: metaId
-          },
-          true
-        )
-        MetaStore.addMetaLink({
-          sourceId: metaId,
-          targetId: rootMetaId
-        })
-      }
-      if (direction === 'in') {
-        MetaStore.addMetaLink({
-          sourceId: metaId,
-          targetId: rootMetaId
-        })
-      }
-      if (direction === 'out') {
-        MetaStore.addMetaLink({
-          sourceId: rootMetaId,
-          targetId: metaId
-        })
-      }
+      handleAddLink(metaId)
     }
   })
   const allLinkWithMetas = useMemo(() => {
@@ -183,32 +173,13 @@ const RelatedGroup = ({ linkIds, rootMetaId, direction }: { direction: 'all' | '
     return allLinkWithMetas.filter(i => i.targetType === groupType)
   }, [groupType, allLinkWithMetas])
   const { t } = useTranslation()
+  const parentRef = useRef(null)
   return (
-    <Content fullWidth fullHeight style={{ padding: '0px 8px 12px 0px', display: 'flex', flexDirection: 'column' }}>
-      <Select
-        value={groupType}
-        closeOnSelect={true}
-        onSelect={v => setGroupType(v[0])}
-        style={{ fontSize: '0.9rem', marginBottom: 10, border: `1px solid ${Colors.Background.Border}` }}
-        menuStyle={{
-          fontSize: '0.9rem',
-          overflowY: 'auto',
-          maxHeight: 240
-        }}
-        options={[
-          {
-            value: 'all',
-            children: t('general.all'),
-            icon: 'park-all-application'
-          },
-          ...types.map(t => ({
-            value: t,
-            children: Rendevoz.Utils.Meta.getTypeName(t),
-            icon: Rendevoz.Utils.Object.getMetaObjectIcon(t)
-          }))
-        ]}
-      />
+    <Content fullWidth ref={parentRef} fullHeight style={{ display: 'flex', flexDirection: 'column' }}>
       <Content
+        flex
+        column
+        gap={8}
         ref={ref}
         style={{
           overflowY: 'auto',
@@ -216,69 +187,136 @@ const RelatedGroup = ({ linkIds, rootMetaId, direction }: { direction: 'all' | '
           width: '100%',
           height: '100%',
           background: isDragging ? Colors.Common.SelectColorTransparent : undefined,
-          transition: 'all 0.2s ease'
+          transition: 'all 0.2s ease',
+          padding: '8px 6px 0px 4px',
+          minHeight: '200px'
         }}
       >
         {groupedMetas.map(i => (
           <RelatedItem metaId={i.targetMetaId} linkId={i.linkId} key={i.linkId} />
         ))}
+
+        <Content
+          flex
+          gap={4}
+          alignItems={'center'}
+          style={{ fontSize: 13, width: '100%', color: Colors.Font.Transparent, lineHeight: 1.2, marginTop: 'auto' }}
+        >
+          <AnimatePopover
+            closeOnClickOutside={true}
+            positions={['top', 'bottom']}
+            padding={6}
+            content={setV => (
+              <WithBorder padding={'4px 0px 4px 4px'}>
+                <MetaFilterer
+                  onChange={v => {
+                    handleAddLink(v)
+                    setV(false)
+                  }}
+                />
+              </WithBorder>
+            )}
+          >
+            <Button.IconButton style={{ border: `1px solid ${Colors.Background.Border}` }} text={'Select object'} />
+          </AnimatePopover>
+          <div style={{ marginRight: 'auto' }}>or drop here to add link.</div>
+          <Select
+            value={groupType}
+            closeOnSelect={true}
+            onSelect={v => setGroupType(v[0])}
+            style={{ fontSize: '0.9rem', padding: '0px 6px', width: 160, height: 24 }}
+            menuStyle={{
+              fontSize: '0.9rem',
+              overflowY: 'auto',
+              maxHeight: 240
+            }}
+            options={[
+              {
+                value: 'all',
+                children: t('general.all'),
+                icon: 'park-all-application'
+              },
+              ...types.map(t => ({
+                value: t,
+                children: Rendevoz.Utils.Meta.getTypeName(t),
+                icon: Rendevoz.Utils.Object.getMetaObjectIcon(t)
+              }))
+            ]}
+          />
+        </Content>
       </Content>
     </Content>
   )
 }
 const RelatedItem = ({ metaId, linkId }: { metaId: number; linkId: number }) => {
-  const { renderWhole, renderTags, renderTitle } = useRenderObject({ metaObjectId: metaId })
+  const { renderInline } = useRenderObject({ metaObjectId: metaId })
   const { t } = useTranslation()
   const link = MetaStore.useMetaLinksMap().get(linkId)
   const [editName, setEditName] = useState(false)
   return (
-    <Content flex column style={{ padding: '8px 2px' }}>
-      <IconWithPopover
-        containerStyle={{
-          position: 'absolute',
-          top: 0,
-          right: 0,
-          zIndex: 10
-        }}
-        className={ClassName.circleButton(2)}
-        name={'park-more'}
-        closeOnContentClick={true}
-        content={
-          <WithBorder padding={6} style={{ fontSize: 14 }}>
-            <Button.IconButton
-              text={t('general.Edit link')}
-              icon={'park-edit'}
-              onClick={() => {
-                setEditName(true)
-              }}
-            />
-            <Button.IconButton icon={'park-delete'} dangerous text={t('general.Delete link')} />
-            <Button.IconButton
-              text={t('general.View details')}
-              icon={'park-preview-open'}
-              onClick={() => {
-                GlobalInstance.metaOps?.openDetails(metaId)
-              }}
-            />
-            <Button.IconButton
-              text={t('general.delete object')}
-              icon={'park-delete'}
-              onClick={() => {
-                setEditName(true)
-              }}
-            />
-          </WithBorder>
-        }
-      ></IconWithPopover>
-      {renderTags({})}
-      {renderTitle({
-        style: {
-          fontSize: 13
-        }
-      })}
+    <Content flex column>
+      <Content flex gap={12} justifyContent={'space-between'} alignItems={'center'}>
+        <HoverObjectDetails metaObjectId={metaId}>
+          {renderInline({
+            containerStyle: {
+              fontSize: 14
+            },
+            ellipsisLine: 1
+          })}
+        </HoverObjectDetails>
+        <IconWithPopover
+          className={ClassName.circleButton(2)}
+          name={'park-more'}
+          closeOnContentClick={true}
+          content={
+            <WithBorder
+              onPointerEnter={e => e.stopPropagation()}
+              onPointerMove={e => e.stopPropagation()}
+              width={160}
+              padding={6}
+              style={{ fontSize: 14 }}
+            >
+              <Button.IconButton
+                text={t('general.Edit link')}
+                icon={'park-edit'}
+                onClick={() => {
+                  setEditName(true)
+                }}
+              />
+              <Button.IconButton
+                icon={'park-unlink'}
+                onClick={() => {
+                  MetaStore.deleteMetaLink(linkId, true)
+                }}
+                dangerous
+                text={t('general.Delete link')}
+              />
+              <Button.IconButton
+                text={t('general.View details')}
+                icon={'park-preview-open'}
+                onClick={() => {
+                  GlobalInstance.metaOps?.openDetails(metaId)
+                }}
+              />
+              <Button.IconButton
+                text={t('general.delete object')}
+                icon={'park-delete'}
+                dangerous
+                onClick={() => {
+                  setEditName(true)
+                }}
+              />
+            </WithBorder>
+          }
+        ></IconWithPopover>
+      </Content>
+
       {editName ? (
         <ContentEditor
           placeholder={"Edit link's name"}
+          style={{
+            marginTop: 6
+          }}
           onChange={v => {
             MetaStore.updateMetaLink({ id: linkId, label: v }, true)
             setEditName(false)

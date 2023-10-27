@@ -86,6 +86,7 @@ export type IObjectsAndLinkSetting = {
 export type IComponentSetting = {
   label: {
     showOriginalText: boolean
+    customTextBackground: boolean
   }
   whiteboard: {
     enableMinimap: boolean

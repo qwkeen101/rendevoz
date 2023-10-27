@@ -21,6 +21,7 @@ export interface ILabel extends IBase {
   parentObjectId: number
   description?: string
   imageUrl?: string
+  color?: string
 }
 export interface IWebpage extends IBase {
   specType: 'webpage'
@@ -52,7 +53,12 @@ export interface IMedia extends IBase {
   subtitleFollow?: boolean
   subtitleList?: {
     lang: string
-    url: string
+    url?: string
+    value?: {
+      start: number
+      end: number
+      text: number
+    }[]
   }[]
 }
 

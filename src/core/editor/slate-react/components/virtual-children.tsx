@@ -53,11 +53,10 @@ const VirtualChildren = memo(
       scrollToPosition: offset => {
         if (offset === 0) {
           console.log('yes')
+
           setTimeout(() => {
             virtualizer.scrollToOffset(0, { align: 'start' })
-            console.log(virtualizer.scrollOffset)
-          }, 50)
-
+          })
           return
         }
         virtualizer.scrollToOffset(offset)

@@ -10,6 +10,8 @@ import MediaToolbar from '@/core/media/components/MediaToolbar'
 import { useAtomValue } from 'jotai'
 import { MediaLayoutAtom } from '@/core/media/hooks/useVideoLayout'
 import { ClassName } from 'rendevoz'
+import { useSelectAtomValue } from '@/hooks'
+import useMediaSidebarState from '@/core/media/hooks/useMediaSidebarState'
 
 const IMG = 'https://i.ytimg.com/vi/-N-ij9aPGVY/hqdefault.jpg?s…AFwAcABBg==&rs=AOn4CLADUEmOZGoF82oTlcqi2FQFxks28g'
 
@@ -18,6 +20,8 @@ export default () => {
   const audioRef = useRef<HTMLAudioElement>(null)
   const { loaded, paused, currentTime = 0, totalTime = 0, jumpTime, volume = 0, speed = 1 } = mediaState
   const a = audioRef.current
+  const columnLayout = useAtomValue(MediaLayoutAtom)
+  const sidebarOpen = useMediaSidebarState()[0].rightBarVisible
   const instance = useMediaInstance()
   assignProperties(instance, {
     getAudioFile: async () => {
@@ -62,7 +66,6 @@ export default () => {
   const [ref, { width }] = useMeasure()
   const columnMode = width < 800
   const floated = mediaState.floated
-  const columnLayout = useAtomValue(MediaLayoutAtom)
   return (
     <Content
       flex
@@ -74,6 +77,7 @@ export default () => {
       column={columnMode}
     >
       {!floated &&
+        !(columnLayout && sidebarOpen) &&
         (mediaState.thumbnail ? (
           <img
             src={mediaState.thumbnail}
@@ -108,12 +112,14 @@ export default () => {
         >
           {mediaState.name}
         </div>
-        {!floated && (
-          <div className={ClassName.ellipsisFont(5)} style={{ fontSize: 14, color: Colors.Font.Transparent, marginBottom: 30 }}>
+        {!floated && !(columnLayout && sidebarOpen) && (
+          <div className={ClassName.ellipsisFont(5)} style={{ fontSize: 14, color: Colors.Font.Transparent }}>
             {mediaState.description}
           </div>
         )}
-        <MediaBottomBar />
+        <div style={{ width: '100%', marginTop: 25 }}>
+          <MediaBottomBar />
+        </div>
         {!floated && <MediaToolbar />}
         <audio
           onLoadedData={() => {

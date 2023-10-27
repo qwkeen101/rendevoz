@@ -22,6 +22,12 @@ const ComponentSetting = () => {
       })
     )
   }
+  const labelSettingItems: ISettingItem[] = [
+    {
+      title: t('settings.custom original text background'),
+      children: <Switch value={setting.label.customTextBackground} onChange={() => toggleSetting('label', 'customTextBackground')} />
+    }
+  ]
 
   const whiteboardSettingItems: ISettingItem[] = [
     {
@@ -198,6 +204,7 @@ const ComponentSetting = () => {
   ]
   return (
     <>
+      <SettingGroup title={t('settings.label settings')} layout={labelSettingItems} />
       <SettingGroup title={t('settings.whiteboard settings')} layout={whiteboardSettingItems} />
       <SettingGroup title={t('settings.editor settings')} layout={editorSettingItems} />
       <SettingGroup title={t('settings.translate settings')} layout={translateSettingItems} />

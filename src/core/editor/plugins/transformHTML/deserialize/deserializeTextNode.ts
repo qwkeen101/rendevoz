@@ -1,6 +1,10 @@
+import normalizeText from './normalizeText'
+import { jsx } from 'slate-hyperscript'
+
 export default (node: HTMLElement & { nodeType: typeof Node.TEXT_NODE }) => {
-  if (!node.previousSibling && !node.nextSibling) return node.textContent?.trim() || ''
-  if (!node.nextSibling) return node.textContent?.trimEnd() || ''
-  if (!node.previousSibling) return node.textContent?.trimStart() || ''
-  return node.textContent || ''
+  const text = normalizeText(node, node.textContent || '')
+  if (text?.length) {
+    return jsx('text', {}, text)
+  }
+  return null
 }

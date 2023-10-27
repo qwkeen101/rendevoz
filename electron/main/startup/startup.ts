@@ -155,7 +155,7 @@ const startElectron = async () => {
       webPreferences.preload = videoAboPath
       return
     }
-    webPreferences.preload = absolutePath
+    // webPreferences.preload = absolutePath
   })
   win.webContents.on('did-attach-webview', (_, contents) => {
     contents.setWindowOpenHandler(details => {

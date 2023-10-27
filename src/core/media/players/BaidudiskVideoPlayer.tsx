@@ -107,6 +107,7 @@ const BaidudiskVideoPlayer = () => {
     player?.dispose()
   })
   useEffect(() => {
+    console.log(mediaState.subtitleUrl)
     if (mediaState.loaded && mediaState.subtitleUrl && mediaState.showSubtitle) {
       const track = document.createElement('track')
       track.src = mediaState.subtitleUrl
@@ -114,10 +115,10 @@ const BaidudiskVideoPlayer = () => {
       track.kind = 'captions'
       createdTextTrackRef.current = track
       videoContainerRef.current?.querySelector('video')?.appendChild(track)
-    }
-    if (mediaState.showSubtitle === false && createdTextTrackRef.current) {
-      createdTextTrackRef.current?.remove()
-      createdTextTrackRef.current = undefined
+      return () => {
+        createdTextTrackRef.current?.remove()
+        createdTextTrackRef.current = undefined
+      }
     }
   }, [mediaState.subtitleUrl, mediaState.loaded, mediaState.showSubtitle])
   useEffect(() => {

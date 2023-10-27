@@ -1,12 +1,14 @@
 import { IFeedCollection } from '~/typings'
 import KeyvalueStore from '@/stores/keyvalue.store'
-import { AnimatePopover, Content, Icon, WithBorder } from '@/components'
+import { AnimatePopover, Button, Content, Icon, WithBorder } from '@/components'
 import { useTranslation } from 'react-i18next'
 import { ClassName } from 'rendevoz'
 import { Colors } from '@/consts'
 import useFeedState from '@/core/feed/hooks/useFeedState'
 import { ObjectStore } from '@/stores'
 import useFeedInstance from '@/core/feed/hooks/useFeedInstance'
+import { useMemo } from 'react'
+import markAllAsRead from '@/core/feed/utils/service/markAllAsRead'
 
 const viewToTranslate = {
   magazine: 'general.Magazine view',
@@ -23,10 +25,12 @@ const openToTranslate = {
 const FeedHeaderBar = () => {
   const cardMode = KeyvalueStore.useValue('feedCardView') || 'magazine'
   const openMode = KeyvalueStore.useValue('feedOpenMode') || 'rightBar'
+  const readMode = KeyvalueStore.useValue('feedReadRule') || 'all'
   const { t } = useTranslation()
   const [feedState, setFeedState] = useFeedState()
   const instance = useFeedInstance()
   const currentCollection = ObjectStore('feedCollection').useValue(feedState.currentCollectionId)
+
   return (
     <Content
       flex
@@ -35,7 +39,7 @@ const FeedHeaderBar = () => {
       fullWidth
       gap={20}
       style={{
-        padding: '12px 24px 12px 20px',
+        padding: '8px 24px 8px 20px',
         zIndex: 99,
         borderBottom: `1px solid ${Colors.Background.Border}`
       }}
@@ -49,11 +53,19 @@ const FeedHeaderBar = () => {
           }}
         />
         {currentCollection?.icon && <img src={currentCollection.icon} height={32} style={{ borderRadius: 4, objectFit: 'cover' }} />}
-        <div className={ClassName.ellipsisFont(1)} style={{ fontSize: 18, fontWeight: 600 }}>
+        <div className={ClassName.ellipsisFont(1)} style={{ fontSize: 18, fontWeight: 600, flexShrink: 1 }}>
           {currentCollection?.name || feedState.headerName}
         </div>
       </Content>
-      <Content flex gap={6}>
+      <Content flex gap={6} style={{ flexShrink: 0 }}>
+        <Button.IconButton
+          onClick={() => {
+            markAllAsRead(feedState.allFeedItems, feedState.currentCollectionId)
+          }}
+          icon={'park-check'}
+          text={'Mark all as read'}
+          style={{ border: `1px solid ${Colors.Background.Border}`, fontSize: 14, fontWeight: 600 }}
+        />
         <Icon
           size={20}
           name={'park-up'}
@@ -112,11 +124,47 @@ const FeedHeaderBar = () => {
                   className={ClassName.flatButton()}
                   onClick={() => {
                     KeyvalueStore.updateOne('feedOpenMode', k)
+                    setFeedState(s => ({ ...s, currentFocusedFeedItemId: undefined }))
                   }}
                 >
                   {t(openToTranslate[k])}
                 </Content>
               ))}
+              <div
+                style={{
+                  color: Colors.Font.Transparent,
+                  fontSize: 13,
+                  paddingLeft: 8,
+                  paddingTop: 3,
+                  marginTop: 3,
+                  marginBottom: 2,
+                  borderTop: `1px solid ${Colors.Background.Border}`
+                }}
+              >
+                {t('general.Articles')}
+              </div>
+              <Content
+                style={{
+                  background: readMode === 'unread' ? Colors.Background.ButtonActive : undefined
+                }}
+                className={ClassName.flatButton()}
+                onClick={() => {
+                  KeyvalueStore.updateOne('feedReadRule', 'unread')
+                }}
+              >
+                {t('general.Unread')}
+              </Content>
+              <Content
+                style={{
+                  background: readMode === 'all' ? Colors.Background.ButtonActive : undefined
+                }}
+                className={ClassName.flatButton()}
+                onClick={() => {
+                  KeyvalueStore.updateOne('feedReadRule', 'all')
+                }}
+              >
+                {t('general.All articles')}
+              </Content>
             </WithBorder>
           }
         >

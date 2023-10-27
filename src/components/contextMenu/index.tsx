@@ -39,7 +39,9 @@ const ContextMenu = forwardRef<ContextMenuRef, ContextMenuProps>(
       cloneElement(children as JSX.Element, {
         ref: handleRef
       })
-    const renderContent = () => <ContextMenuProvider value={inContainerMousePos}>{content}</ContextMenuProvider>
+    const renderContent = setV => (
+      <ContextMenuProvider value={inContainerMousePos}>{typeof content === 'function' ? content(setV) : content}</ContextMenuProvider>
+    )
     const handle = (e: MouseEvent) => {
       if (!enableContextMenu) {
         return
@@ -79,6 +81,9 @@ const ContextMenu = forwardRef<ContextMenuRef, ContextMenuProps>(
           align="start"
           positions={position}
           disableNudge={true}
+          onVisiblityChange={s => {
+            setContextMenuOpen(s)
+          }}
           position={{
             top: memoizedPosition.current?.[1],
             left: memoizedPosition.current?.[0]
@@ -86,10 +91,8 @@ const ContextMenu = forwardRef<ContextMenuRef, ContextMenuProps>(
           reposition={true}
           visible={contextMenuOpen}
           containerStyle={{ zIndex: '1000' }}
-          content={<div ref={contentRef}>{renderContent()}</div>}
-        >
-
-        </AnimatePopover>
+          content={setV => <div ref={contentRef}>{renderContent(setV)}</div>}
+        ></AnimatePopover>
         {renderChild()}
       </>
     )

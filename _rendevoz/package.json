@@ -1,12 +1,13 @@
 {
   "name": "rendevoz",
   "productName": "Rendevoz",
-  "version": "0.3.2",
+  "version": "0.4.10",
   "author": "Rendevoz Team",
   "main": "dist/index.mjs",
   "scripts": {
     "dev": "vite",
-    "build": "cross-env NODE_OPTIONS=--max-old-space-size=8192 vite build"
+    "build": "cross-env NODE_OPTIONS=--max-old-space-size=8192 vite build",
+    "pub": "npm run build && npm version patch --force && npm publish && cd .. && npm install rendevoz@latest"
   },
   "engines": {
     "node": ">=18"

@@ -35,8 +35,8 @@ export const FormAttachmentManager = ({
       ref={containerRef}
       column
       style={{
-        minWidth: 300,
-        maxWidth: 500
+        minWidth: 'min(90vw, 400px)',
+        maxWidth: 'min(90vw, 650px)'
       }}
     >
       <div

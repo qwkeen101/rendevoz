@@ -5,6 +5,8 @@ import { ClassName } from 'rendevoz'
 import { ObjectStore } from '@/stores'
 import { Colors } from '@/consts'
 import { DateFormat } from '@/utils'
+import ItemsToolbar from '@/core/feed/components/items/ItemsToolbar'
+import useFeedIsRead from '@/core/feed/hooks/useFeedIsRead'
 
 const MagazineFeedItem = ({
   id,
@@ -25,14 +27,15 @@ const MagazineFeedItem = ({
 }) => {
   const {
     imageSize = {
-      width: 130,
-      height: 78
+      width: 180,
+      height: 108
     },
     titleSize = 16,
     titleWeight = 600,
     mainGap = 20
   } = styles || {}
   const item = ObjectStore('feed').useValue(id)
+  const isRead = useFeedIsRead(id)
   if (!item) return null
   return (
     <Content
@@ -41,7 +44,9 @@ const MagazineFeedItem = ({
       gap={mainGap}
       style={{
         cursor: 'pointer',
-        padding: '4px 0px'
+        padding: '4px 0px',
+        width: '100%',
+        color: isRead ? Colors.Font.Transparent : undefined
       }}
     >
       {item.image && (
@@ -58,7 +63,7 @@ const MagazineFeedItem = ({
           }}
         ></div>
       )}
-      <Content flex column>
+      <Content flex column auto>
         <div
           style={{
             fontSize: titleSize,
@@ -72,30 +77,16 @@ const MagazineFeedItem = ({
           style={{
             fontSize: 13,
             lineHeight: 1.4,
-            marginTop: 4
+            marginTop: 4,
+            marginBottom: 'auto'
           }}
           className={ClassName.ellipsisFont(2)}
         >
           {item.description}
         </div>
-        <Content
-          flex
-          alignItems={'center'}
-          gap={12}
-          style={{
-            fontSize: 13,
-            lineHeight: 1.3,
-            marginTop: 4,
-            color: Colors.Font.Transparent
-          }}
-        >
-          {item.date && DateFormat.formatDistanceToNowStrict(item.date)}
-          {item.lastRead && (
-            <Content flex gap={6}>
-              <Icon name={'park-preview-open'} /> {DateFormat.formatDistanceToNowStrict(item.lastRead, true)}
-            </Content>
-          )}
-        </Content>
+        <div style={{ width: '100%', marginTop: 6 }}>
+          <ItemsToolbar itemId={item.id} />
+        </div>
       </Content>
     </Content>
   )

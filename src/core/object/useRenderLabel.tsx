@@ -13,6 +13,8 @@ import { Colors } from '@/consts'
 import { GlobalInstance, useGlobalAtomValue, useIsIn, useSelectGlobalAtomValue } from '@/hooks'
 import { relatedMetaObjectsMapAtom } from '@/stores/meta.store'
 import { SettingAtom } from '@/core'
+import { getColor } from '@/consts/targetColor'
+import { Rendevoz } from '@/core/rendevoz'
 const DEFAULT_LABEL_NAME = 'Unnamed Label'
 const useRenderLabel = (opts: {
   objectId: number
@@ -23,12 +25,11 @@ const useRenderLabel = (opts: {
 }) => {
   const { objectId, type, draggable } = opts
   const label = ObjectStore(opts.type).useValue(opts.objectId)
-  if (label && !label.parentObjectId) {
+  if (label && !label.parentObjectId && (label.webpageId || label.videoId || label.pdfId || label.noteId)) {
     ObjectStore(type).updateOne({ id: objectId, parentObjectId: label.webpageId || label.videoId || label.pdfId || label.noteId })
   }
   const labelMeta = MetaStore.useObjectToMetaValue(opts.objectId)
   const { t } = useTranslation()
-  const [draggingDetails, setDraggingDetails] = useState<IDraggableElement>()
   const [labelState, setLabelState] = useState<{
     addingAttachment: boolean
     addingDescription: boolean
@@ -49,11 +50,13 @@ const useRenderLabel = (opts: {
   const relatedMap = useGlobalAtomValue(relatedMetaObjectsMapAtom)
   const metaRelated = labelMeta && relatedMap.get(labelMeta.id)
   const shouldShouldOriginal = useSelectGlobalAtomValue(SettingAtom, s => s.label.showOriginalText)
+  const customBackground = useSelectGlobalAtomValue(SettingAtom, s => s.label.customTextBackground)
   const renderName = ({ onNameClick }: { onNameClick?: (name?: string) => void }) => {
     return (
       <Content flex column auto>
         {labelState.editingName ? (
           <ContentEditor
+            placeholder={t('general.Add note for label')}
             value={currentLabelHasName ? label?.name : undefined}
             onChange={v => {
               ObjectStore(type).updateOne({ id: objectId, name: v || 'Unnamed label' })
@@ -61,7 +64,7 @@ const useRenderLabel = (opts: {
             }}
           />
         ) : (
-          <DraggableElement draggable={draggingDetails && draggable} onDragStart={opts.onDragStart} draggingDetails={draggingDetails}>
+          <DraggableElement draggable={draggable} onDragStart={opts.onDragStart}>
             <div
               style={{
                 cursor: 'pointer',
@@ -270,13 +273,21 @@ const useRenderLabel = (opts: {
     return (
       <div
         style={{
-          fontSize: '0.9rem',
+          fontSize: 13,
           padding: '4px 8px',
           borderRadius: 4,
-          background: Colors.Background.ButtonHover,
+          background: customBackground
+            ? label?.color
+              ? getColor(label.color)
+              : Colors.Background.ButtonHover
+            : Colors.Background.ButtonHover,
           ...opts.style
         }}
-        onContextMenu={() => setLabelState(s => ({ ...s, editingOrigin: true }))}
+        onClick={e => {
+          if (!window.getSelection().toString()) {
+            setLabelState(s => ({ ...s, editingOrigin: true }))
+          }
+        }}
       >
         <div
           style={{
@@ -297,7 +308,7 @@ const useRenderLabel = (opts: {
     renderOriginalText,
     labelMeta,
     label,
-    setDraggingDetails,
+    setDraggingDetails: Rendevoz.Actions.State.Drag.setDraggingDetails,
     ref
   }
 }

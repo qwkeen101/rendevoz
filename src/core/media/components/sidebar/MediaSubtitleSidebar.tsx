@@ -26,14 +26,12 @@ const MediaSubtitleSidebar = memo(() => {
     subtitleLang,
     subtitleFollow = true
   } = mediaState
-  const { t } = useTranslation()
-  const [sidebarState, setSidebarState] = useAtom(VideoSidebarStateAtom)
   const [currentSelectedIndex, setCurrentSelectedIndex] = useState(0)
   const { ref, isIn } = useIsIn()
   const virtualizerRef = useRef<Virtualizer<any, any>>()
   useEffect(() => {
     if (currentTime && currentSubtitles) {
-      const index = currentSubtitles.findIndex(i => i.startTime <= currentTime && i.endTime >= currentTime)
+      const index = currentSubtitles.findLastIndex(i => i.startTime <= currentTime && i.endTime >= currentTime)
       if (index >= 0) {
         setCurrentSelectedIndex(index)
       }
@@ -48,14 +46,29 @@ const MediaSubtitleSidebar = memo(() => {
       if (!targetFile) {
         setMediaState(s => ({ ...s, subtitles: undefined }))
       } else {
-        fetch(targetFile.url).then(file => {
-          file.text().then(text => {
-            const parser = new WebVTTParser()
-            const tree = parser.parse(text, 'metadata')
-            console.log(tree)
-            setMediaState(s => ({ ...s, subtitles: tree.cues, subtitleLang: subtitleLang || subtitles[0].lang }))
+        if (targetFile.value) {
+          setMediaState(s => ({
+            ...s,
+            subtitleLang: targetFile.lang,
+            subtitles: targetFile.value.map(i => ({ startTime: i.start, endTime: i.end, text: i.text }))
+          }))
+          return
+        }
+        if (targetFile.url) {
+          fetch(targetFile.url).then(file => {
+            file.text().then(text => {
+              const parser = new WebVTTParser()
+              const tree = parser.parse(text, 'metadata')
+              console.log(tree)
+              setMediaState(s => ({
+                ...s,
+                subtitles: tree.cues,
+                subtitleLang: subtitleLang || subtitles[0].lang,
+                subtitleUrl: targetFile.url
+              }))
+            })
           })
-        })
+        }
       }
     }
   }, [subtitleLang])
@@ -74,7 +87,7 @@ const MediaSubtitleSidebar = memo(() => {
   const instance = useMediaInstance()
   const { renderPopover, containerRef } = useSubtitleSelectAsLabel(currentSubtitles)
   const mergedRef = useMergedRef(containerRef, ref)
-  console.log(currentSubtitles, subtitles)
+
   if (!currentSubtitles.length && !subtitles.length)
     return (
       <Content flex centered fullWidth fullHeight style={{ minHeight: 240 }}>
@@ -96,25 +109,34 @@ const MediaSubtitleSidebar = memo(() => {
               <SelectButton
                 icon={'park-view-list'}
                 text={'列表模式'}
-                onClick={() => instance.on?.({ type: 'subtitleUpdated', subtitleMode: 'list' })}
+                onClick={() => {
+                  setMediaState(s => ({ ...s, subtitleMode: 'list' }))
+                  instance.on?.({ type: 'subtitleUpdated', subtitleMode: 'list' })
+                }}
               />
               <SelectButton
                 icon={'park-align-text-middle-one'}
                 text={'文章模式'}
-                onClick={() => instance.on?.({ type: 'subtitleUpdated', subtitleMode: 'article' })}
+                onClick={() => {
+                  setMediaState(s => ({ ...s, subtitleMode: 'article' }))
+                  instance.on?.({ type: 'subtitleUpdated', subtitleMode: 'article' })
+                }}
               />
               <div className={ClassName.description(FontSize['12px'])}>字幕语言</div>
               {subtitles.map((i, index) => (
                 <SelectButton
                   onClick={() => {
+                    setMediaState(s => ({ ...s, subtitleLang: i.lang }))
                     instance.on?.({ type: 'subtitleUpdated', subtitleLang: i.lang })
                   }}
                   text={i.lang}
-                  key={i.lang}
+                  key={index}
                   onSuffixIconClick={e => {
                     e.stopPropagation()
-                    subtitles.splice(index, 1)
-                    instance.on?.({ type: 'subtitleUpdated', subtitleList: [...subtitles] })
+                    const copyed = subtitles.slice(0)
+                    copyed.splice(index, 1)
+                    setMediaState(s => ({ ...s, subtitleList: [...copyed] }))
+                    instance.on?.({ type: 'subtitleUpdated', subtitleList: [...copyed] })
                   }}
                   suffixIcon={'park-delete'}
                 />
@@ -123,7 +145,10 @@ const MediaSubtitleSidebar = memo(() => {
               <SelectButton
                 text={'字幕跟随'}
                 enabled={subtitleFollow}
-                onClick={() => instance.on?.({ type: 'subtitleUpdated', subtitleFollow: !mediaState.subtitleFollow })}
+                onClick={() => {
+                  setMediaState(s => ({ ...s, subtitleFollow: !mediaState.subtitleFollow }))
+                  instance.on?.({ type: 'subtitleUpdated', subtitleFollow: !mediaState.subtitleFollow })
+                }}
               />
             </WithBorder>
           }

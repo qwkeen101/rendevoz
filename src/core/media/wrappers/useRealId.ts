@@ -2,8 +2,8 @@ import { atom } from 'jotai'
 import { globalStore, ObjectStore } from '@/stores'
 import { useSelectGlobalAtomValue } from '@/hooks'
 
-const urlToAudioMapAtom = atom(new Map<string, number>())
-const urlToVideoMapAtom = atom(new Map<string, number>())
+export const urlToAudioMapAtom = atom(new Map<string, number>())
+export const urlToVideoMapAtom = atom(new Map<string, number>())
 
 document.addEventListener('DOMContentLoaded', () => {
   ObjectStore('video').getAll()

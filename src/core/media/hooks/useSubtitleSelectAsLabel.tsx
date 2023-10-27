@@ -37,7 +37,7 @@ const useSubtitleSelectAsLabel = (currentSubtitles?: Required<IMediaState>['subt
               const bounding = selection.getRangeAt(0).getBoundingClientRect()
               const aI = Number(anchorIndex)
               const fI = Number(focusIndex)
-              if (aI && fI) {
+              if (aI >= 0 && fI >= 0) {
                 const endOffset = (focus.textContent?.length || 0) - r.endOffset
                 setTimeout(() => {
                   setAddLabelState({
@@ -80,6 +80,7 @@ const useSubtitleSelectAsLabel = (currentSubtitles?: Required<IMediaState>['subt
       boundaryInset={10}
       parentElement={containerRef.current}
       padding={10}
+      disableNudge={true}
       content={
         <WithBorder padding={4}>
           <Button.IconButton

@@ -20,6 +20,7 @@ const useMediaEventHandlerWrapper = (options: {
   const meta = MetaStore.useObjectToMetaValue(objectId)
   const handleLabelChapter = useMediaLabelChapter(type, labelType, mediaState, objectId)
   const handler = async (e: IMediaEvent) => {
+    console.log(e)
     let id = objectId
     let metaId = meta?.id
     switch (e.type) {
@@ -51,6 +52,7 @@ const useMediaEventHandlerWrapper = (options: {
       }
       case 'subtitleUpdated': {
         if (object) {
+          console.log(e)
           return await ObjectStore(type).updateOne({
             id: object.id,
             subtitleMode: e.subtitleMode ?? mediaState.subtitleMode,

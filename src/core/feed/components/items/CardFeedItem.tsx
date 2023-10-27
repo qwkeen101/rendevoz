@@ -1,8 +1,11 @@
 import { FeedItem } from '@/core/feed/types'
 import React from 'react'
-import { Content } from '@/components'
+import { Content, Icon } from '@/components'
 import { ClassName } from 'rendevoz'
 import { ObjectStore } from '@/stores'
+import ItemsToolbar from '@/core/feed/components/items/ItemsToolbar'
+import useFeedIsRead from '@/core/feed/hooks/useFeedIsRead'
+import { Colors } from '@/consts'
 
 const CardFeedItem = ({
   id,
@@ -19,10 +22,17 @@ const CardFeedItem = ({
 }) => {
   const item = ObjectStore('feed').useValue(id)
   const { titleSize = 16, titleWeight = 600 } = styles || {}
+  const isRead = useFeedIsRead(id)
   if (!item) return null
   return (
-    <Content flex column gap={4} style={{ width: 'calc(100% / var(--items-per-row) - 20px)', cursor: 'pointer' }} onClick={onClick}>
-      {item.image && (
+    <Content
+      flex
+      column
+      gap={4}
+      style={{ width: 'calc(100% / var(--items-per-row) - 30px)', cursor: 'pointer', color: isRead ? Colors.Font.Transparent : undefined }}
+      onClick={onClick}
+    >
+      {item.image ? (
         <div
           style={{
             width: '100%',
@@ -35,6 +45,24 @@ const CardFeedItem = ({
             backgroundImage: `url(${item.image})`
           }}
         ></div>
+      ) : (
+        <div
+          style={{
+            width: '100%',
+            paddingBottom: '56%',
+            borderRadius: 4,
+            marginBottom: 5,
+            position: 'relative',
+            background: Colors.Background.RadialGradient
+          }}
+        >
+          <Icon
+            name={item.feedType === 'podcast' ? 'park-music' : item.feedType === 'youtube' ? 'park-youtube' : 'park-broadcast'}
+            size={60}
+            style={{ color: Colors.Font.Secondary }}
+            containerStyle={{ position: 'absolute', left: '50%', top: '50%', transform: 'translate(-50%,-50%)' }}
+          />
+        </div>
       )}
       <div
         style={{
@@ -42,6 +70,7 @@ const CardFeedItem = ({
           fontWeight: titleWeight,
           lineHeight: 1.25
         }}
+        className={ClassName.ellipsisFont(2)}
       >
         {item.title}
       </div>
@@ -54,6 +83,7 @@ const CardFeedItem = ({
       >
         {item.description}
       </div>
+      <ItemsToolbar itemId={id} />
     </Content>
   )
 }

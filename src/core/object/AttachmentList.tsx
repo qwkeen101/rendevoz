@@ -101,9 +101,9 @@ const AttachmentList = ({
         padding: '12px 12px 8px',
         borderRadius: 8,
         width: '100%',
-        transition: 'border 0.3s ease',
+        transition: 'box-shadow 0.25s ease',
         position: 'relative',
-        border: `1px solid ${dragOver ? Colors.Common.SelectColor : Colors.Background.Border}`,
+        boxShadow: dragOver ? '0 0 0 2px var(--select-color)' : `0 0 0 1px ${Colors.Background.Border}`,
         ...style
       }}
     >

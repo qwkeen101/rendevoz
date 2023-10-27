@@ -2,6 +2,7 @@ import { atom, useAtom } from 'jotai'
 import { FeedItem } from '@/core/feed/types'
 
 export type IFeedState = {
+  filteredFeedItems?: number[]
   allFeedItems: number[]
   currentFocusedFeedItemId?: number
   lastFetchedDate?: Date

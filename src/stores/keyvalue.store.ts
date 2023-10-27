@@ -19,15 +19,18 @@ export type CurrentKeyValues = {
       collectionId?: number
     }[]
   }
+  webpageShowOriginal: boolean
   rightBarItems: string[]
   leftBarItems: string[]
   feedCardView: 'magazine' | 'card' | 'details' | 'title'
   feedOpenMode: 'rightBar' | 'center' | 'sidePeek'
+  feedReadRule: 'all' | 'unread'
   feedReadLaterIds: number[]
   feedRecentlyReadIds: number[]
   feedLastSyncTime: number
   feedModalWidth: number
   mediaRightbarWidth: number
+  feedReadIds: number[]
   googleNewsSearchLang: string
   homeGalleryRows?: number
   editorSettings: {

@@ -33,6 +33,12 @@ const useWebpageContent = (options: {
   const currentWebpage = ObjectStore('webpage').useValue(webpageState.currentWebpageId)
   const memoedLoadUrl = useMemoizedFn(async () => {
     if (webpageState.externalState?.content) {
+      setWebpageState(s => ({
+        ...s,
+        currentParsedContent: webpageState.externalState?.content,
+        loaded: true,
+        currentWebpage: webpageState.externalState
+      }))
       options.onEndLoad?.()
       return
     }

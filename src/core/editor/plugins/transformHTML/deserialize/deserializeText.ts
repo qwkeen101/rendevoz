@@ -1,10 +1,12 @@
 import { TEXT_TAGS } from '../HTMLTags'
 import { jsx } from 'slate-hyperscript'
+import normalizeText from './normalizeText'
 
 export default (node: HTMLElement) => {
   const text = TEXT_TAGS[node.nodeName]?.()
-  const content = node.textContent
-  if (content?.length) {
-    return jsx('text', text || {}, content)
+  const textContent = normalizeText(node)
+  if (textContent?.length) {
+    return jsx('text', text || {}, textContent)
   }
+  return null
 }

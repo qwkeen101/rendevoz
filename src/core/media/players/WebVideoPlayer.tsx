@@ -3,8 +3,7 @@ import { useSetAtom } from 'jotai'
 import useMediaState, { MediaStateAtom } from '@/core/media/hooks/useMediaState'
 import { assignProperties } from '@/utils'
 import { useMediaInstance } from '@/core/media/hooks/useMediaInstance'
-import { captureVideoFrame } from '@/core/media/utils'
-
+import youtubeCaptionScrapper, { YoutubeCaptionParser } from '@/core/media/utils/youtubeCaptionScrapper'
 const WebVideoPlayer = () => {
   const webviewRef = useRef<HTMLWebViewElement>()
   const webReady = useRef(false)
@@ -58,7 +57,29 @@ const WebVideoPlayer = () => {
     }
   })
   const web = webviewRef.current
-
+  useEffect(() => {
+    if (url.includes('youtube')) {
+      youtubeCaptionScrapper(url.split('embed/')[1]).then(res => {
+        console.log(res)
+        res.forEach(async i => {
+          const text = await fetch(i.baseUrl).then(res => res.text())
+          const data = YoutubeCaptionParser(text)
+          console.log(i.name.simpleText)
+          setMediaState(s => ({
+            ...s,
+            subtitleLang: i.name.simpleText,
+            subtitleList: [
+              ...(s.subtitleList || []),
+              {
+                lang: i.name.simpleText,
+                value: data
+              }
+            ]
+          }))
+        })
+      })
+    }
+  }, [url])
   useEffect(() => {
     if (mediaState.loaded && web && webReady.current) {
       if (paused) {

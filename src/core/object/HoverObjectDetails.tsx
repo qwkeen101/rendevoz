@@ -82,8 +82,8 @@ const HoverObjectDetails = forwardRef(
         onVisibleChange={v => toggleTooltipVisible(v)}
         ref={mergedRef}
         zIndex={Zindexes.HoverObjectDetails}
-        position={positions ? positions[0] : 'top'}
         delay={800}
+        boundaryInset={30}
         disableDefaultContent
         contentTouchable
         content={

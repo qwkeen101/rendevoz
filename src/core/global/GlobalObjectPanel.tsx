@@ -525,8 +525,8 @@ export const ObjectPanel = memo(
             }
           })}
           itemStyle={{
-            paddingTop: 6,
-            paddingBottom: 4
+            paddingTop: 8,
+            paddingBottom: 8
           }}
           items={shouldDisplayObjects}
           renderItem={item => <SimpleObject metaObjectId={item.id} isAddingObject={isAddingObject} onAddObject={handleAddObject} />}
@@ -614,74 +614,6 @@ export const SimpleObject = memo(
         }
       }, [currentFocusFilter])
       const store = useStore()
-
-      const handleDragStart = () => {
-        const container = containerRef.current
-        firstDragTimeRef.current = Date.now()
-        if (container) {
-          const cloned = container.cloneNode(true) as HTMLElement
-          const bound = container.getBoundingClientRect()
-          cloned.style.setProperty('width', `${bound.width}px`)
-          cloned.style.setProperty('height', `${bound.height}px`)
-          GlobalDragOverlayInstance.addDragElements?.(cloned)
-          GlobalDragOverlayInstance.draggingDetails = {
-            type: 'metaElement',
-            metaId: metaObjectId
-          }
-          isPressed.current = true
-        }
-      }
-      const handleDrag = () => {
-        if (isPressed.current) {
-          const now = Date.now()
-          // add a delay to prevent uncarefully drag
-          if (now - firstDragTimeRef.current > 100) {
-            GlobalDragOverlayInstance.startDrag?.()
-          }
-        }
-      }
-      const handleDragEnd = () => {
-        isPressed.current = false
-      }
-      const iconRef = useRef<HTMLDivElement>(null)
-
-      useEffect(() => {
-        if (draggable) {
-          iconRef.current?.addEventListener('pointerdown', handleDragStart)
-          document.addEventListener('pointermove', handleDrag)
-          document.addEventListener('pointerup', handleDragEnd)
-          return () => {
-            iconRef.current?.removeEventListener('pointerdown', handleDragStart)
-            document.removeEventListener('pointermove', handleDrag)
-            document.removeEventListener('pointerup', handleDragEnd)
-          }
-        }
-      })
-
-      const handleClickCheckBox = (checked: boolean) => {
-        if (currentFocusFilter?.id) {
-          if (checked) {
-            store.set(
-              FilterRelatedIdsAtom,
-              produce(store.get(FilterRelatedIdsAtom), draft => {
-                if (draft.has(currentFocusFilter.id)) {
-                  draft.get(currentFocusFilter.id)?.add(metaObjectId)
-                } else {
-                  draft.set(currentFocusFilter.id, new Set([metaObjectId]))
-                }
-              })
-            )
-          } else {
-            store.set(
-              FilterRelatedIdsAtom,
-              produce(store.get(FilterRelatedIdsAtom), draft => {
-                draft.get(currentFocusFilter.id)?.delete(metaObjectId)
-              })
-            )
-          }
-        }
-      }
-
       useEffect(() => {
         if (popoverVisible === false) {
           setTimeout(() => {
@@ -697,7 +629,14 @@ export const SimpleObject = memo(
           renderOptions: {
             renderFrom,
             renderDescription,
-            renderOriginalText: false
+            renderOption: true,
+            renderOriginalText: true
+          },
+          optionOptions: {
+            style: {
+              right: 0,
+              top: -1
+            }
           },
           containerStyle: {
             width: '100%'
@@ -714,12 +653,13 @@ export const SimpleObject = memo(
             className: ClassName.ellipsisFont(1)
           },
           tagsOptions: {
-            showCreatedAt: filters.some(i => i.filterType === 'createdAt'),
-            showViewAt: filters.some(i => i.filterType === 'viewAt')
+            showCreatedAt: false,
+            showViewAt: false
           },
           titleOptions: {
             style: {
-              fontSize: FontSize['13px']
+              fontSize: '14px',
+              lineHeight: 1.3
             },
             titleClassName,
             onTitleClick: () => {
@@ -728,6 +668,7 @@ export const SimpleObject = memo(
             }
           },
           rowGap: 10,
+          columnGap: 4,
           descriptionOptions: {
             style: {
               fontSize: FontSize['12px']
@@ -735,89 +676,36 @@ export const SimpleObject = memo(
             descriptionClassName
           }
         }),
-        [filters, metaObjectId]
+        [metaObjectId]
       )
       return (
-        <Content
-          onPointerMove={() => setHovered(true)}
-          onPointerLeave={() => setHovered(false)}
-          flex
+        <DraggableElement
+          dragHandleClassName={titleClassName}
           ref={mergedRef}
-          alignItems="center"
-          gap={4}
+          draggingDetails={{
+            type: 'metaElement',
+            metaId: metaObjectId
+          }}
         >
-          <Content fullWidth fullHeight flex={!metaObject?.coverImgSrc}>
-            {renderWhole(renderOptions)}
+          <Content onPointerMove={() => setHovered(true)} onPointerLeave={() => setHovered(false)} flex alignItems="center" gap={4}>
+            <Content fullWidth fullHeight flex={!metaObject?.coverImgSrc}>
+              {renderWhole(renderOptions)}
+            </Content>
           </Content>
-          <div
-            style={{
-              marginLeft: 'auto',
-              display: hovered || popoverContainerVisible || popoverVisible || showCheckBox || showIcon ? undefined : 'none',
-              opacity: hovered || popoverVisible || showCheckBox || showIcon ? 1 : 0
-            }}
-          >
-            {showCheckBox ? (
-              <CheckBox
-                style={{ flexShrink: 0, margin: '0px 4px' }}
-                checked={currentRelatedIds?.has(metaObjectId)}
-                onChange={handleClickCheckBox}
-              />
-            ) : isAddingObject ? (
-              <Icon onClick={() => onAddObject?.(metaObjectId)} size={16} name="park-plus" className={ClassName.circleButton(3)}></Icon>
-            ) : (
-              <AnimatePopover
-                visible={popoverVisible}
-                innerRef={iconRef}
-                padding={10}
-                containerStyle={{ zIndex: String(Zindexes.ToolBar) }}
-                onClickOutside={() => {
-                  togglePopoverVisible(false)
-                }}
-                content={
-                  <WithBorder>
-                    {iconPopover || <ObjectActionPopover onClose={togglePopoverVisible} metaObjectId={metaObjectId} />}
-                  </WithBorder>
-                }
-                align="start"
-                positions={['right', 'left']}
-              >
-                <Icon
-                  size={16}
-                  fill={iconColor}
-                  onClick={e => onIconClick?.(e, togglePopoverVisible) || togglePopoverVisible()}
-                  name={iconName}
-                  theme={iconTheme}
-                  className={css([
-                    ClassName.circleButton(3),
-                    {
-                      color: iconColor,
-                      ':hover': {
-                        color: heavyIconColor
-                      }
-                    }
-                  ])}
-                />
-              </AnimatePopover>
-            )}
-          </div>
-        </Content>
+        </DraggableElement>
       )
     }
   )
 )
 
 const titleClassName = css([
-  ClassName.ellipsisFont(2),
+  ClassName.ellipsisFont(3),
   ClassName.title(FontSize['14px']),
   {
-    position: 'relative',
-    width: 'fit-content',
-    maxWidth: '100%',
-    textDecoration: 'underline 1px rgba(0,0,0,0)',
-    transition: 'text-decoration-color 0.3s ease',
+    cursor: 'pointer',
+    transition: 'color 0.16s ease',
     ':hover': {
-      textDecorationColor: 'inherit'
-    },
-    cursor: 'pointer'
+      color: Colors.Common.SelectColor
+    }
   }
 ])

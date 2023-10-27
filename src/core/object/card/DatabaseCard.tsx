@@ -1,7 +1,7 @@
 import { FC, memo, useMemo, useRef, useState } from 'react'
 import { motion } from 'framer-motion'
 import { css } from '@emotion/css'
-import { useToggle } from '@/hooks'
+import { GlobalInstance, useToggle } from '@/hooks'
 import MetaKnowledgeCard from './KnowledgeCard'
 import classNames from 'classnames'
 import ClassName from '@/styles/classNames'
@@ -390,7 +390,7 @@ export const ObjectActionPopover: FC<
   const of = metaAttToMetaIds?.get(metaObjectId)?.size
   if (!metaObject) return null
   return (
-    <Content flex column style={{ padding: 6, fontWeight: 500, width: 180 }} ref={containerRef} role="object-popover-panel">
+    <Content flex column style={{ padding: 4, fontWeight: 500, width: 180, fontSize: 14 }} ref={containerRef} role="object-popover-panel">
       {visibility?.jumpToVisible && <Button.IconButton onClick={onJump} text="Focus" icon="park-share-two" />}
       {visibility?.graphPinVisible && (
         <Button.IconButton
@@ -409,26 +409,22 @@ export const ObjectActionPopover: FC<
           icon="park-circle-four"
         />
       )}
+      {GlobalInstance.metaOps?.canPreview(metaObject) && (
+        <Button.IconButton
+          text={t('general.Preview')}
+          icon="park-preview-open"
+          onClick={() => {
+            onClose?.()
+            GlobalInstance.metaOps?.preview(metaObjectId)
+          }}
+        />
+      )}
       <Button.IconButton
         text={t('general.show object info')}
         icon="park-info"
         onClick={() => {
           onClose?.()
           Rendevoz.Actions.Open.openSidebarObjectDetails(metaObjectId)
-        }}
-      />
-      <Button.IconButton
-        text={t('general.edit')}
-        icon="park-edit"
-        onClick={() => {
-          onClose?.()
-          GlobalEventEmitter().emit('global', {
-            type: 'globalNeedEditMetaObject',
-            data: {
-              metaObjectId
-            }
-          })
-          onEdit?.()
         }}
       />
       <Button.IconButton
@@ -441,22 +437,12 @@ export const ObjectActionPopover: FC<
         text={metaObject.pinned ? t('general.unpin') : t('general.pin')}
       />
       <Button.IconButton
-        text={t('general.global graph')}
-        icon="park-circle-four-line"
         onClick={() => {
-          GlobalGraphInstance?.open?.(metaObject)
-          onGraph?.()
+          GlobalInstance.collectionOps?.addMetaIntoCollection(metaObjectId)
           onClose?.()
         }}
-      />
-      <Button.IconButton
-        text={t('general.partial graph')}
-        icon="park-share-one"
-        onClick={() => {
-          GlobalGraphInstance?.open?.(metaObject, true)
-          onGraph?.()
-          onClose?.()
-        }}
+        icon="park-folder-close"
+        text={t('general.Assign to collection')}
       />
       {metaObject.attachments?.length || metaAttToMetaIds?.get(metaObjectId)?.size ? (
         <AnimatePopover
@@ -527,7 +513,6 @@ export const ObjectActionPopover: FC<
     </Content>
   )
 }
-
 
 const AttachmentPanel = memo(({ metaId }: { metaId: number }) => {
   const metaAttToMetaIds = globalStore.get(indexedMetaObjectsAtom)?.metaAttachmentIdToMetaIdsMap.get(metaId)

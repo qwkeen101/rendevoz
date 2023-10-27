@@ -111,9 +111,6 @@ const Label = ({ id, type }: { id: number; type: string }) => {
     }
   })
   const mediaLabel = label as IMediaLabel
-  if (!mediaLabel.time && mediaLabel.videoTime) {
-    ObjectStore(type).updateOne({ id, time: mediaLabel.videoTime })
-  }
   const mergedRef = useMergedRef(containerRef, ref)
   useEffect(() => {
     if (id === currentFocusLabelId) {
@@ -130,11 +127,15 @@ const Label = ({ id, type }: { id: number; type: string }) => {
       }
     }
   }, [currentFocusLabelId])
+  if (!mediaLabel) return null
+  if (!mediaLabel.time && mediaLabel.videoTime) {
+    ObjectStore(type).updateOne({ id, time: mediaLabel.videoTime })
+  }
 
   if (!label) return null
   const chapter = sortedChapters?.findLast(i => i.startTime < mediaLabel.time)
   return (
-    <Content ref={mergedRef} flex column gap={8} style={{ padding: 10 }}>
+    <Content ref={mergedRef} flex column gap={8} style={{ padding: '10px 0px 10px 6px' }}>
       <Content flex gap={12} alignItems="flex-start">
         {mediaLabel?.imageUrl && (
           <Image

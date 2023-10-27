@@ -35,6 +35,7 @@ const createSearchStore = () => {
   }
 
   const searchDocument = (params: ISearchQuery) => {
+    console.log(metaSearch)
     const fields = ['name', 'content', 'description']
     const splittedPinyin = splitPinyin(params.queryText)
     const query = splittedPinyin.join('') === params.queryText ? splitPinyin(params.queryText).join(' ') : params.queryText

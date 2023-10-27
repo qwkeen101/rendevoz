@@ -10,8 +10,9 @@ import KeyvalueStore from '@/stores/keyvalue.store'
 export default () => {
   const [feedState, setFeedState] = useFeedState()
   const lastFetched = KeyvalueStore.useValue('feedLastSyncTime')
+  const readRule = KeyvalueStore.useValue('feedReadRule') || 'all'
+  const alreadyRead = KeyvalueStore.useValue('feedReadIds') || []
   useEffect(() => {
-    console.log(lastFetched, Date.now(), Date.now() - lastFetched)
     if (!lastFetched) {
       setFeedState(s => ({ ...s, isSyncing: true }))
       updateAllFeeds()
@@ -23,7 +24,7 @@ export default () => {
         })
       return
     }
-    if (Date.now() - lastFetched > 24 * 60 * 60 * 1000) {
+    if (Date.now() - lastFetched > 6 * 60 * 60 * 1000) {
       setFeedState(s => ({ ...s, isSyncing: true }))
       updateAllFeeds()
         .then(() => {
@@ -58,14 +59,26 @@ export default () => {
         ObjectStore('feedCollection').updateOne({
           id: collectionId,
           items: [...newItemIds.map(i => i.id), ...collection.items],
-          lastFetchedAt: Date.now()
+          lastFetchedAt: Date.now(),
+          unreadCount: (collection.unreadCount || 0) + newItemIds.length
         })
       }
     }
   }
   useEffect(() => {
     if (feedCollection?.items) {
-      setFeedState(s => ({ ...s, allFeedItems: feedCollection.items }))
+      const readIdSet = new Set(alreadyRead)
+      const unreadCount = feedCollection.items.filter(i => !readIdSet.has(i)).length
+      ObjectStore('feedCollection').updateOne({ id: feedCollection.id, unreadCount })
+      if (readRule === 'all') {
+        setFeedState(s => ({ ...s, allFeedItems: feedCollection.items, filteredFeedItems: undefined }))
+      } else {
+        setFeedState(s => ({
+          ...s,
+          allFeedItems: feedCollection.items,
+          filteredFeedItems: feedCollection.items.filter(i => !readIdSet.has(i))
+        }))
+      }
     }
-  }, [feedCollection?.items])
+  }, [feedCollection?.items, readRule])
 }

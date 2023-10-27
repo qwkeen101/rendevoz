@@ -10,6 +10,7 @@ import ClassName from '@/styles/classNames'
 import { ILayoutTab } from '~/typings'
 import { Rendevoz } from '@/core/rendevoz'
 import { getOS } from '@/App'
+import TitleBar from '@/components/titlebar'
 import MacTitlebar from '@/components/titlebar/MacTitlebar'
 import * as Serializer from '../base/dock/Serializer'
 
@@ -141,6 +142,7 @@ const Layout = () => {
         <title>Rendevoz</title>
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
       </Helmet>
+      {os === 'windows' && <TitleBar />}
       {os === 'macos' && <MacTitlebar />}
       <Container auto style={{ height: 0 }}>
         <Sidebar direction={'right'} />

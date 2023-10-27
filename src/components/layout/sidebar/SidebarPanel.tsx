@@ -11,7 +11,7 @@ import { Rendevoz } from '@/core/rendevoz'
 import { SearchPanel } from '@/core/global/GlobalSearchPanel'
 import { useMemo } from 'react'
 import produce from 'immer'
-
+import { getOS } from '@/App'
 const SidebarPanel = ({ direction, items }: { direction: 'right' | 'left'; items: string[] }) => {
   const [panelState, setPanelState] = useGlobalAtom(SidebarPanelStateAtom)
   const store = useMemo(() => createStore(), [])

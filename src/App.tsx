@@ -141,7 +141,6 @@ const App = () => {
           style={{ display: 'none' }}
         ></div>
         <ThemeSwitcher />
-        {os !== 'macos' && <TitleBar />}
         <Notification />
         <>
           <Initializer />

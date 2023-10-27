@@ -119,7 +119,6 @@ const defaultSidebarItems = ['home', 'database', 'collections', 'feeds', 'search
 export const Sidebar = ({ direction = 'right' }: { direction: 'left' | 'right' }) => {
   const builtinSidebarEles = Array.from(Object.values(BuiltInSidebarItems))
   const registeredSidebarEles = Array.from(KeyToRegisteredSidebarElement.values())
-
   const allItems = [...builtinSidebarEles, ...registeredSidebarEles]
   const allItemsMap = new Map(allItems.map(i => [i.key, i]))
   const key = direction === 'right' ? 'leftBarItems' : 'rightBarItems'

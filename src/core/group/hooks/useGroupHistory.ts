@@ -8,13 +8,14 @@ import { applyPatchesOnAtom } from '@/stores/history.store'
 /**
  * 组历史有两种情况：1.对objectstore或metasore更改，2.更改组属性
  */
-const useGroupHistory = () => {
+const useGroupHistory = (groupId: number) => {
   const instance = useGroupInstance()
   const lastTriggered = useRef<undefined | number>(0)
   const emitter = Rendevoz.Events.Emit.GlobalEventEmitter
   const handler = Rendevoz.Events.Emit.useEventHandler('global')
   const handleUndo = () => {
     const last = instance.values.undos.pop()
+    console.log(last)
     if (last) {
       applyPatchesOnAtom(last.atom, last.inversePatches, last.databaseName)
     }
@@ -38,14 +39,18 @@ const useGroupHistory = () => {
     }
   })
   handler.on('globalValueChange', data => {
-    console.log(data)
     if (lastTriggered.current) {
-      console.log('get heree')
+      console.log(data)
       // only listen to meta object's history
       if (data.databaseName === 'metaObjects') {
         instance.values.undos.push({
           ...data
         })
+      }
+      if (data.databaseName === 'objects') {
+        if (data.patches.some(i => i.value.specType === 'group' && i.value.id === groupId)) {
+          instance.values.undos.push({ ...data })
+        }
       }
     }
   })

@@ -31,9 +31,9 @@ import { toast } from 'react-hot-toast'
 const clazzName = css({
   cursor: 'pointer',
   fontWeight: 500,
-  textTransform: 'none',
+  transition: 'color 0.2s ease',
   ':hover': {
-    textDecoration: 'underline'
+    color: Colors.Common.SelectColor
   }
 })
 
@@ -470,7 +470,9 @@ const useRenderObject = (options: { metaObjectId: number }) => {
       showUnderline,
       showHoverObjectDetails,
       renderAttOnParent,
-      renderObjectDetailsOnParent
+      renderObjectDetailsOnParent,
+      onClick,
+      reverse
     }: {
       containerStyle?: CSSProperties
       ellipsisLine?: number
@@ -479,6 +481,8 @@ const useRenderObject = (options: { metaObjectId: number }) => {
       showHoverObjectDetails?: boolean
       renderAttOnParent?: boolean
       renderObjectDetailsOnParent?: boolean
+      reverse?: boolean
+      onClick?: React.MouseEventHandler
     } = {
       ellipsisLine: 2,
       showCircle: true,
@@ -502,6 +506,7 @@ const useRenderObject = (options: { metaObjectId: number }) => {
           display: 'flex',
           gap: 6,
           alignItems: 'baseline',
+          flexDirection: reverse ? 'row-reverse' : 'row',
           ...containerStyle
         }}
       >
@@ -527,10 +532,12 @@ const useRenderObject = (options: { metaObjectId: number }) => {
           <span
             role="meta-name"
             data-meta
-            onClick={() => {
-              if (showUnderline !== false) {
-                metaObject?.id && Rendevoz.Actions.Open.Meta.openMetaObject(metaObject.id)
+            onClick={e => {
+              if (onClick) {
+                onClick(e)
+                return
               }
+              metaObject?.id && Rendevoz.Actions.Open.Meta.openMetaObject(metaObject.id)
             }}
             className={css([clazzName, ClassName.ellipsisFont(ellipsisLine || 2)])}
             style={{
@@ -756,6 +763,12 @@ const WholeRenderer = memo(
                 t={t}
               />
             )}
+            {originalTextVisible &&
+              metaObject.type.includes('Label') &&
+              renderOptions.renderOriginalText !== false &&
+              metaObject.objectId && (
+                <OriginText {...originalTextOptions} name={metaObject.name} type={metaObject.type} objectId={metaObject.objectId} />
+              )}
             {renderOptions?.renderTitle !== false && (
               <TitleRenderer
                 {...titleOptions}
@@ -769,12 +782,6 @@ const WholeRenderer = memo(
               />
             )}
             {renderOptions?.renderDescription !== false && _renderDescription(descriptionOptions, metaObject)}
-            {originalTextVisible &&
-              metaObject.type.includes('Label') &&
-              renderOptions.renderOriginalText !== false &&
-              metaObject.objectId && (
-                <OriginText {...originalTextOptions} name={metaObject.name} type={metaObject.type} objectId={metaObject.objectId} />
-              )}
             {renderOptions?.renderFrom !== false && _renderFrom(fromOptions, metaObject)}
           </Content>
         </Content>
@@ -801,6 +808,9 @@ const WholeRenderer = memo(
             t={t}
           />
         )}
+        {originalTextVisible && metaObject.type.includes('Label') && renderOptions.renderOriginalText !== false && metaObject.objectId && (
+          <OriginText {...originalTextOptions} name={metaObject.name} type={metaObject.type} objectId={metaObject.objectId} />
+        )}
         {renderOptions?.renderTitle !== false && (
           <TitleRenderer
             {...titleOptions}
@@ -814,9 +824,6 @@ const WholeRenderer = memo(
           />
         )}
         {renderOptions?.renderDescription !== false && _renderDescription(descriptionOptions, metaObject)}
-        {originalTextVisible && metaObject.type.includes('Label') && renderOptions.renderOriginalText !== false && metaObject.objectId && (
-          <OriginText {...originalTextOptions} name={metaObject.name} type={metaObject.type} objectId={metaObject.objectId} />
-        )}
         {renderOptions?.renderFrom !== false && _renderFrom(fromOptions, metaObject)}
       </Content>
     )

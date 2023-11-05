@@ -3,8 +3,6 @@ import { Box } from '~/typings'
 import { boxesIntersect } from '@/utils'
 import { getDistanceBetweenElementAndScrollableElement } from '@/core/editor/utils/scroll'
 import { useGroupInstance } from '@/core/group/hooks/useGroupInstance'
-import { useSetAtom } from 'jotai'
-import { GroupStateAtom } from '@/core/group/hooks/useGroupState'
 
 /**
  * 检查是否被选中，支持表格，列表，画廊视图等

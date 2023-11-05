@@ -8,7 +8,6 @@ import { Node } from 'slate'
 import { useDb } from '@/hooks'
 import { Rendevoz } from '@/core/rendevoz'
 
-
 const retrieveMetaObjectByObjectId = async (objectId: number, type: MetaObject['type']) => {
   const { addMetaObject, getMetaObjectByObjectId } = MetaStore
   return (await getMetaObjectByObjectId(objectId)) || (await addMetaObject({ type, objectId }, true))
@@ -46,6 +45,18 @@ export default async (
       Object.assign(normalizedMetaObject, pdfMeta)
       alreadyHasMeta = true
       shouldOpenEditMetaModal = false
+      break
+    }
+    case 'groupItem': {
+      const meta = dragElement.value.find(i => i.type === 'metaObject' && i.id)
+      if (meta) {
+        const metaObject = await MetaStore.getMetaObjectById(meta.id)
+        if (metaObject) {
+          Object.assign(normalizedMetaObject, metaObject)
+          alreadyHasMeta = true
+          shouldOpenEditMetaModal = false
+        }
+      }
       break
     }
     case 'note': {

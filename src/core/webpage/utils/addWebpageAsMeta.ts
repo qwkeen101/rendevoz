@@ -13,9 +13,10 @@ export default async (webpageState: WebpageState, value: import('slate').Descend
     {
       silent: true,
       currentMeta: {
+        ...meta,
         name: webpageState.title,
-        coverImgSrc: webpageState.image ? await fetchRemoteImageAndSaveLocally(webpageState.image) : undefined,
-        ...meta
+        description: meta?.description === webpageState.title ? undefined : meta?.description,
+        coverImgSrc: webpageState.image ? await fetchRemoteImageAndSaveLocally(webpageState.image) : undefined
       }
     }
   )

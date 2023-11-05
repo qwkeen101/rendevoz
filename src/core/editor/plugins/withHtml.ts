@@ -2,6 +2,7 @@ import { Transforms } from 'slate'
 import { ReactEditor } from 'slate-react'
 import { CustomEditor } from '~/typings'
 import { deserializeHTML, normalize } from './deserializeHtml'
+import Id from '@/utils/id'
 
 const withHtml = (editor: CustomEditor) => {
   const { insertData } = editor
@@ -11,6 +12,17 @@ const withHtml = (editor: CustomEditor) => {
     const slateFragment = data.getData('application/x-slate-fragment')
     const plainText = data.getData('text/plain')
     console.log(plainText, slateFragment, data)
+    const image = Array.from(data.files).find(i => i.type.startsWith('image'))
+    if (image) {
+      console.log(image.path)
+      Transforms.insertNodes(editor, {
+        type: 'image',
+        url: `file://${image.path}`,
+        id: Id.getId(),
+        children: [{ text: '' }]
+      })
+      return
+    }
     if (slateFragment) {
       ReactEditor.insertFragmentData(editor, data)
       // Transforms.deselect(editor)

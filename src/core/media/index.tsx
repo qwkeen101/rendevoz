@@ -253,7 +253,7 @@ const MediaInner = ({ onInstanceInitialized, onlyCore, on, disableTabTitle = tru
       {!disableTabTitle && <TabTitle title={mediaState.name} icon={<Icon name={'park-video'} />} />}
       <Content
         style={{
-          margin: 'auto',
+          margin: mediaState.mode !== 'audio' ? undefined : '0 auto',
           width: '100%',
           height: '100%',
           flexDirection: columnLayout ? 'column' : 'row',
@@ -283,12 +283,12 @@ const MediaInner = ({ onInstanceInitialized, onlyCore, on, disableTabTitle = tru
               maxWidth: 'calc((100vh - 260px) * (1/0.6))',
               minWidth: 'calc(250px * (1 / 0.5625))',
               height: 'fit-content',
-              margin: 'auto auto'
+              margin: audioMode ? 'auto' : '0 auto'
             }}
           >
             {mediaState.floated ? renderFloated() : renderCore()}
-            {mediaState.mode !== 'audio' && <div style={{ fontWeight: 600, fontSize: 16, width: '100%' }}>{mediaState.name}</div>}
-            {mediaState.mode !== 'audio' && <MediaToolbar />}
+            {!audioMode && <div style={{ fontWeight: 600, fontSize: 16, width: '100%' }}>{mediaState.name}</div>}
+            {!audioMode && <MediaToolbar />}
           </Content>
         </Content>
         <MediaSidebar />

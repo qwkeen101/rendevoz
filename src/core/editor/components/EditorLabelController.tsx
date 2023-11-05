@@ -1,24 +1,18 @@
 import { ObjectStore } from '@/stores'
 import useEditorInstance from '../hooks/useEditorInstance'
 import { Content, VirtualList } from '@/components'
-import { memo, useEffect, useState } from 'react'
-import { EditorProps } from '~/typings'
+import { memo, useEffect } from 'react'
 import { useRenderLabel } from '@/core/object'
 import { EditorHighlightsAtom } from '@/scenes/editor/useEditorFilter'
 import { usePrevious, useSelectAtomValue } from '@/hooks'
 import Colors from '@/consts/colors'
 import { css } from '@emotion/css'
 import { Transforms } from 'slate'
-import { getObjectById } from '@/stores/object.store'
-import { EditorStateAtom } from '@/core/editor/hooks/useEditorState'
 
-const EditorLabelController = memo(() => {
-  const labels = useSelectAtomValue(EditorStateAtom, s => s.labelIds)
-  const labelType = useSelectAtomValue(EditorStateAtom, s => s.labelType) || 'noteLabel'
-
+const EditorLabelController = memo(({ labelIds, labelType }: { labelIds?: number[]; labelType: string }) => {
   return (
     <Content fullHeight fullWidth>
-      {labels && labelType && (
+      {labelIds && labelType && (
         <VirtualList
           estimateSize={140}
           childrenContainerClassname={css({
@@ -30,7 +24,7 @@ const EditorLabelController = memo(() => {
           })}
           renderItem={item => <Label labelId={item} type={labelType} />}
           style={{ width: '100%', height: '100%', paddingRight: 8, paddingLeft: 8 }}
-          items={labels}
+          items={labelIds}
         ></VirtualList>
       )}
     </Content>
@@ -39,9 +33,8 @@ const EditorLabelController = memo(() => {
 
 const Label = memo(({ labelId, type }: { labelId: number; type: string }) => {
   const label = ObjectStore(type).useValue(labelId)
-  const highlightId = label?.highlightId || labelId
+  const highlightId = labelId
   const instance = useEditorInstance()
-  const highlight = useSelectAtomValue(EditorHighlightsAtom, s => s.get(highlightId))
   const { renderName, renderAttachment, renderDescription, renderPopover, renderOriginalText, ref } = useRenderLabel({
     objectId: labelId,
     type,
@@ -57,18 +50,10 @@ const Label = memo(({ labelId, type }: { labelId: number; type: string }) => {
       })
     }
   })
-  const previousHighlight = usePrevious(highlight)
-  useEffect(() => {
-    if (previousHighlight?.str) {
-      if (!highlight?.str) {
-        instance.labelOps?.deleteLabel(labelId)
-      }
-    }
-  }, [highlight])
 
   return (
     <Content ref={ref} flex column style={{ padding: '8px 0px 0px' }} gap={8}>
-      {highlight?.str && renderOriginalText({ text: highlight.str })}
+      {renderOriginalText({ text: label?.selectedText || '' })}
       <Content flex alignItems="center" justifyContent="space-between" gap={10}>
         {renderName({})}
         {renderPopover({

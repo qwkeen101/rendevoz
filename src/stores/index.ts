@@ -1,6 +1,6 @@
 import { debounce } from 'lodash'
 import { Hooks } from 'rendevoz'
-import { handleMetaLinksChange, handleMetaObjectsChange, metaLinksAtom, metaObjectsAtom } from './meta.store'
+import { handleMetaGroupRules, handleMetaLinksChange, handleMetaObjectsChange, metaLinksAtom, metaObjectsAtom } from './meta.store'
 
 export const globalStore = Hooks.globalStore
 
@@ -42,5 +42,6 @@ export * from '@/textSearch/createSearchIndex'
 export * as StoreUtils from './utils.store'
 window.addEventListener('DOMContentLoaded', () => {
   globalStore.sub(metaObjectsAtom, debounce(handleMetaObjectsChange, 600))
+  globalStore.sub(metaObjectsAtom, debounce(handleMetaGroupRules, 2000))
   globalStore.sub(metaLinksAtom, debounce(handleMetaLinksChange, 600))
 })

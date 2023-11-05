@@ -27,6 +27,7 @@ const WithBorder: FC<PropsWithChildren<WithBorderProps>> = (
     borderRadius: borderRadius,
     padding,
     minWidth: width,
+    fontSize: 14,
     ...style
   }
   const handleClick = e => {

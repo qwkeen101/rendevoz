@@ -59,7 +59,8 @@ export const TypeToTypeName: {
   localFile: 'local file',
   videoLabel: 'video label',
   syncedBlock: 'syncedBlock',
-  audioLabel: 'audioLabel'
+  audioLabel: 'audioLabel',
+  group: 'group'
 }
 export const DatabaseCard: FC<{
   index?: number
@@ -489,14 +490,7 @@ export const ObjectActionPopover: FC<
       <Button.IconButton
         text={t('general.generate link')}
         onClick={() => {
-          const link = `rendevoz://object/${metaObjectId}`
-          navigator.clipboard.writeText(link)
-          toast.success(
-            <Content className={ClassName.description()}>
-              <div style={{ textTransform: 'none' }}>{t('general.link is generated for this object')}!</div>
-              <div style={{ userSelect: 'all', textTransform: 'none' }}>{link}</div>
-            </Content>
-          )
+          GlobalInstance.metaOps?.copyLink(metaObjectId)
         }}
         icon="park-link-two"
       />

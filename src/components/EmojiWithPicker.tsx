@@ -1,5 +1,5 @@
 import { PopoverProps } from 'react-tiny-popover'
-import { useMemo } from 'react'
+import { CSSProperties, useMemo } from 'react'
 import { getEmoji } from '@/utils'
 import { AnimatePopover, WithBorder } from '@/components/base'
 import EmojiPicker from '@/components/picker/emojiPicker'
@@ -13,6 +13,7 @@ type Props = {
   emoji?: string
   onChange?: (newEmoji: string) => void
   size?: Size
+  style?: CSSProperties
 }
 
 const EmojiWithPicker = ({
@@ -21,6 +22,7 @@ const EmojiWithPicker = ({
   positions = ['bottom', 'right', 'left', 'top'],
   align,
   emoji,
+  style,
   size = {
     width: '1em',
     height: '1em'
@@ -37,7 +39,7 @@ const EmojiWithPicker = ({
 
   const renderImg = () => {
     return (
-      <div className={ClassName.flatButton(4, '6px')} style={{ lineHeight: 1 }}>
+      <div className={ClassName.flatButton(4, '6px')} style={{ lineHeight: 1, ...style }}>
         <img
           src="data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw=="
           style={{
@@ -60,12 +62,18 @@ const EmojiWithPicker = ({
       <AnimatePopover
         align={align}
         padding={10}
+        withClickCover={true}
         positions={positions}
-        content={
+        content={setV => (
           <WithBorder>
-            <EmojiPicker onPick={s => onChange?.(s)} />
+            <EmojiPicker
+              onPick={s => {
+                onChange?.(s)
+                setV(false)
+              }}
+            />
           </WithBorder>
-        }
+        )}
       >
         {renderImg()}
       </AnimatePopover>

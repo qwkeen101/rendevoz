@@ -1,15 +1,15 @@
 import { useGroupInstance } from '@/core/group/hooks/useGroupInstance'
 import useGroupState from '@/core/group/hooks/useGroupState'
-import { RefObject, useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useMemoizedFn, useRafFn } from '@/hooks'
 import { Box, Point } from '~/typings'
-import { calculateBoxArea, calculateSelectionBox } from '@/utils'
-import { ClassName } from 'rendevoz'
+import { calculateSelectionBox } from '@/utils'
 import { getDistanceBetweenPointAndScrollableElement } from '@/core/editor/utils/scroll'
 import { createPortal } from 'react-dom'
 import { Colors } from '@/consts'
+import useKeyboardSelect from '@/core/group/hooks/select/useKeyboardSelect'
 
-const useGroupSelect = (container?: HTMLElement) => {
+const useGroupSelect = (selectContainer?: HTMLElement, scrollContainer?: HTMLElement) => {
   const instance = useGroupInstance()
   const [groupState, setGroupState] = useGroupState()
   const [selectBox, setSelectBox] = useState<
@@ -23,13 +23,14 @@ const useGroupSelect = (container?: HTMLElement) => {
     e.preventDefault()
     rafPointerMove(e)
   })
+  useKeyboardSelect()
   const rafPointerMove = useRafFn((e: PointerEvent) => {
     if (stoped.current) return
     instance.bodyOps?.startDetectAutoScroll()
     setSelectBox(s => {
       if (s) {
         const { startPoint } = s
-        const distance = getDistanceBetweenPointAndScrollableElement({ x: e.clientX, y: e.clientY }, container)
+        const distance = getDistanceBetweenPointAndScrollableElement({ x: e.clientX, y: e.clientY }, selectContainer)
         const endPoint = {
           x: distance.left,
           y: distance.top
@@ -53,17 +54,19 @@ const useGroupSelect = (container?: HTMLElement) => {
     })
   })
   useEffect(() => {
-    if (container) {
+    if (selectContainer && scrollContainer) {
       const pointerDownHandler = (e: PointerEvent) => {
-        if (e.target === e.currentTarget) {
+        if (e.target instanceof HTMLElement && !e.target.closest('[role="table-wrapper"') && !e.target.closest('input,textarea')) {
+          window.getSelection()?.empty()
+          document.activeElement?.blur?.()
           stoped.current = false
+          instance.selectOps?.clearAllSelect()
           if (selectBox) {
             setSelectBox(undefined)
-            instance.values.selectedRowIdSet.clear()
             return
           }
           e.preventDefault()
-          const distance = getDistanceBetweenPointAndScrollableElement({ x: e.clientX, y: e.clientY }, container)
+          const distance = getDistanceBetweenPointAndScrollableElement({ x: e.clientX, y: e.clientY }, scrollContainer)
           setSelectBox({
             startPoint: {
               x: distance.left,
@@ -84,19 +87,18 @@ const useGroupSelect = (container?: HTMLElement) => {
         document.removeEventListener('pointerup', pointerUpHandler)
         document.removeEventListener('pointermove', pointerMoveHandler, true)
       }
-      container.addEventListener('pointerdown', pointerDownHandler)
+      selectContainer.addEventListener('pointerdown', pointerDownHandler)
       return () => {
-        container.removeEventListener('pointerdown', pointerDownHandler)
+        selectContainer.removeEventListener('pointerdown', pointerDownHandler)
       }
     }
   })
   const renderSelectBox = () =>
-    container &&
+    selectContainer &&
+    selectBox &&
     createPortal(
-      // <div style={{ position: 'fixed', inset: 0, zIndex: 9999, pointerEvents: 'none' }}>
-      <div style={{ position: 'absolute', ...selectBox, background: Colors.Common.SelectColorTransparent }}></div>,
-      // </div>,
-      container
+      <div style={{ position: 'absolute', ...selectBox, background: Colors.Common.SelectColorTransparent, zIndex: 10000 }}></div>,
+      selectContainer
     )
   return renderSelectBox
 }

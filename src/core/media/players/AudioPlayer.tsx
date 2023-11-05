@@ -70,7 +70,7 @@ export default () => {
     <Content
       flex
       alignItems={'center'}
-      justifyContent={columnLayout ? 'unset' : 'center'}
+      justifyContent={'center'}
       style={{ margin: 'auto' }}
       gap={columnMode ? 16 : 40}
       ref={ref}
@@ -99,7 +99,7 @@ export default () => {
             <Icon size={120} name={'park-music'} theme={'filled'} />
           </Content>
         ))}
-      <Content flex column style={{ width: '100%', maxWidth: columnLayout ? '100%' : 660, padding: floated ? '12px 16px 4px' : 0 }}>
+      <Content flex column style={{ width: '100%', maxWidth: columnLayout ? '100%' : 800, padding: floated ? '12px 16px 4px' : 0 }}>
         <div
           className={'video-drag-handle'}
           style={{

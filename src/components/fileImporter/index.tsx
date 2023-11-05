@@ -22,12 +22,27 @@ import { GlobalImporterInstance } from '@/core/global/GlobalImporter'
 import loginBaidudisk from '@/components/fileImporter/baidudisk/loginBaidudisk'
 import { toast } from 'react-hot-toast'
 import { useSetting } from '@/core'
+import { MetaObject } from '~/typings'
+import GroupStore from '@/stores/group.store'
 
 export const GlobalFileImporterInstance = {}
-const FileImporter = ({ onClose }: { onClose: VoidFunction }) => {
+const FileImporter = ({
+  onClose,
+  onCreate,
+  autoOpen = true
+}: {
+  onClose: VoidFunction
+  onCreate?: (object: MetaObject) => void
+  autoOpen: boolean
+}) => {
   const { t } = useTranslation()
   const [visible, toggleVisible] = useState(false)
   const isChinese = useSetting()[0].general.language === 'zh-CN'
+
+  const handleAfterCreate = (one: { meta: MetaObject }) => {
+    autoOpen && Rendevoz.Actions.Open.Meta.openMetaObject(one.meta.id)
+    onCreate?.(one.meta)
+  }
   assignProperties(GlobalFileImporterInstance, {
     open: () => toggleVisible(true),
     close: () => toggleVisible(false)
@@ -39,9 +54,7 @@ const FileImporter = ({ onClose }: { onClose: VoidFunction }) => {
       image: note,
       onClick: () => {
         onClose?.()
-        ObjectStore('note')
-          .addOneWithMeta({})
-          .then(one => Rendevoz.Actions.Open.Meta.openMetaObject(one.meta.id))
+        ObjectStore('note').addOneWithMeta({}).then(handleAfterCreate)
       }
     },
     {
@@ -49,9 +62,7 @@ const FileImporter = ({ onClose }: { onClose: VoidFunction }) => {
       desc: t('general.Present your brilliant ideas on whiteboards'),
       image: whiteboard,
       onClick: () => {
-        ObjectStore('whiteboard')
-          .addOneWithMeta({})
-          .then(one => Rendevoz.Actions.Open.Meta.openMetaObject(one.meta.id))
+        ObjectStore('whiteboard').addOneWithMeta({}).then(handleAfterCreate)
         onClose?.()
       }
     },
@@ -59,7 +70,16 @@ const FileImporter = ({ onClose }: { onClose: VoidFunction }) => {
       name: t('general.Object group'),
       desc: t('general.Manage objects with powerful groups'),
       image: group,
-      onClick: () => toast.error('Not available right now!')
+      onClick: () => {
+        ObjectStore('group')
+          .addOneWithMeta(GroupStore.initializeGroup(), {
+            currentMeta: {
+              name: 'Unnamed group'
+            }
+          })
+          .then(handleAfterCreate)
+        onClose?.()
+      }
     }
   ]
 
@@ -79,7 +99,7 @@ const FileImporter = ({ onClose }: { onClose: VoidFunction }) => {
               showMetaModal: true
             }
           )
-          .then(one => Rendevoz.Actions.Open.Meta.openMetaObject(one.meta.id))
+          .then(handleAfterCreate)
         onClose?.()
       }
     },
@@ -98,7 +118,7 @@ const FileImporter = ({ onClose }: { onClose: VoidFunction }) => {
               showMetaModal: true
             }
           )
-          .then(one => Rendevoz.Actions.Open.Meta.openMetaObject(one.meta.id))
+          .then(handleAfterCreate)
         onClose?.()
       }
     },
@@ -117,7 +137,7 @@ const FileImporter = ({ onClose }: { onClose: VoidFunction }) => {
               showMetaModal: true
             }
           )
-          .then(one => Rendevoz.Actions.Open.Meta.openMetaObject(one.meta.id))
+          .then(handleAfterCreate)
         onClose?.()
       }
     }
@@ -169,17 +189,15 @@ const FileImporter = ({ onClose }: { onClose: VoidFunction }) => {
           const thumb = await fetchRemoteImageAndSaveLocally(file.thumbs.url3)
           if (file.category === 1) {
             if (file) {
-              ObjectStore('video').addOneWithMeta(
-                { videoUrl: `baidudisk${file.path}` },
-                { currentMeta: { name: file.filename, coverImgSrc: thumb } }
-              )
+              ObjectStore('video')
+                .addOneWithMeta({ videoUrl: `baidudisk${file.path}` }, { currentMeta: { name: file.filename, coverImgSrc: thumb } })
+                .then(handleAfterCreate)
             }
           }
           if (file.category === 4) {
-            ObjectStore('pdf').addOneWithMeta(
-              { webFileUrl: `baidudisk/${file.fs_id}` },
-              { currentMeta: { name: file.filename, coverImgSrc: thumb } }
-            )
+            ObjectStore('pdf')
+              .addOneWithMeta({ webFileUrl: `baidudisk/${file.fs_id}` }, { currentMeta: { name: file.filename, coverImgSrc: thumb } })
+              .then(handleAfterCreate)
           }
         }
       }

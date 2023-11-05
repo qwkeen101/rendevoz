@@ -58,10 +58,12 @@ export const FilterSelect = ({
 const BetterFilter = ({
   root,
   onChange,
-  disableAddGroup
+  disableAddGroup,
+  visibleTypes
 }: {
   disableAddGroup?: boolean
   root?: MetaFilterGroup
+  visibleTypes?: string[]
   onChange?: (root: MetaFilterGroup) => void
 }) => {
   const [filterRoot, setFilterRoot] = useState<MetaFilterGroup>(
@@ -106,6 +108,7 @@ const BetterFilter = ({
     >
       {filterRoot.rules.map((i, idx) => (
         <FilterItem
+          visibleTypes={visibleTypes}
           onChangeGroupType={v => {
             setFilterRoot({ ...filterRoot, groupType: v })
           }}
@@ -186,7 +189,8 @@ const FilterItem = ({
   onChange,
   onDelete,
   index,
-  onChangeGroupType
+  onChangeGroupType,
+  visibleTypes
 }: {
   rule: MetaFilterRule
   groupType: 'and' | 'or'
@@ -194,6 +198,7 @@ const FilterItem = ({
   onDelete: (id: number) => void
   index: number
   onChangeGroupType: (t: 'and' | 'or') => void
+  visibleTypes?: string[]
 }) => {
   const filterType = rule.filterType
   const { t } = useTranslation()
@@ -246,7 +251,7 @@ const FilterItem = ({
         case 'description':
           return <StringFilter rule={rule} onChange={onChange} />
         case 'type':
-          return <TypeFilter rule={rule} onChange={onChange} />
+          return <TypeFilter visibleTypes={visibleTypes} rule={rule} onChange={onChange} />
         case 'updatedAt':
         case 'viewAt':
         case 'createdAt':
@@ -484,9 +489,17 @@ const StringFilter = ({ rule, onChange }: { rule: StringFieldFilterRule; onChang
   )
 }
 
-const TypeFilter = ({ rule, onChange }: { rule: TypeFieldFilterRule; onChange: (newRule: MetaFilterRule) => void }) => {
+const TypeFilter = ({
+  rule,
+  onChange,
+  visibleTypes
+}: {
+  rule: TypeFieldFilterRule
+  onChange: (newRule: MetaFilterRule) => void
+  visibleTypes?: string[]
+}) => {
   const { t } = useTranslation()
-  const existedTypes = Array.from(MetaStore.useIndexedMetaObjects()?.typeToMetaObjectIdsMap.keys() || [])
+  const existedTypes = visibleTypes || Array.from(MetaStore.useIndexedMetaObjects()?.typeToMetaObjectIdsMap.keys() || [])
   const options = [
     {
       value: 'is',

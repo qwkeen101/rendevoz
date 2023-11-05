@@ -59,6 +59,7 @@ const useDragScroll = (
       },
       parentBound
     )
+    console.log(yMovement)
     if (yMovement !== 0) {
       cbs.onScroll?.(yMovement)
     }
@@ -79,9 +80,15 @@ const useDragScroll = (
     }
   })
   return {
-    startScroll: () => setEnable(true),
+    startScroll: () => {
+      if (!enable) {
+        setEnable(true)
+        console.log('start scroll')
+      }
+    },
     endScroll: () => {
       console.log('end scroll')
+      autoPanId.current = undefined
       setEnable(false)
     }
   }

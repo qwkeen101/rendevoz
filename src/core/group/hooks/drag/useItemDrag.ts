@@ -1,7 +1,6 @@
 import { RefObject, useEffect } from 'react'
 import { MetaGroupChild } from '~/typings'
 import { useGroupInstance } from '@/core/group/hooks/useGroupInstance'
-import { useGlobalIsDragging } from '@/core'
 
 const useItemDrag = (containerRef: RefObject<HTMLElement>, value: MetaGroupChild) => {
   const instance = useGroupInstance()

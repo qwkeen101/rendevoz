@@ -1,9 +1,8 @@
-import { Path } from 'slate'
 import { Content, Icon } from '@/components'
 import { ClassName } from 'rendevoz'
 import { useGroupInstance } from '@/core/group/hooks/useGroupInstance'
 
-const ToggleArrow = ({ path, toggled }: { path: Path; toggled: boolean }) => {
+const ToggleArrow = ({ rowId, toggled }: { rowId: number; toggled: boolean }) => {
   const instance = useGroupInstance()
   return (
     <Content flex alignItems={'center'}>
@@ -11,7 +10,7 @@ const ToggleArrow = ({ path, toggled }: { path: Path; toggled: boolean }) => {
         <Icon
           onClick={e => {
             e.stopPropagation()
-            instance.valueOps?.updateValueByPath({ toggled: !toggled }, path)
+            instance.valueOps?.handleToggle(rowId, !toggled)
           }}
           style={{
             transform: toggled ? undefined : 'rotate(90deg)',

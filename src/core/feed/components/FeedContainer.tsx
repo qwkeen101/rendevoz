@@ -8,9 +8,8 @@ import KeyvalueStore from '@/stores/keyvalue.store'
 import { ClassName } from 'rendevoz'
 import { Colors } from '@/consts'
 import useFeedInstance from '@/core/feed/hooks/useFeedInstance'
-import { createPortal } from 'react-dom'
 
-const FeedContainer = ({ pageContainer }: { pageContainer?: HTMLDivElement }) => {
+const FeedContainer = () => {
   const [feedState, setFeedState] = useFeedState()
   const feedModalWidth = KeyvalueStore.useValue('feedModalWidth') || 900
   const openMode = KeyvalueStore.useValue('feedOpenMode') || 'rightBar'

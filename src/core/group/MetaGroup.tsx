@@ -1,41 +1,21 @@
-import { ObjectStore } from '@/stores'
-import { Content } from '@/components'
+import { Content, Icon } from '@/components'
 import { GroupRenderer } from '@/core/group/GroupRenderer'
 import GroupTitleRenderer from '@/core/group/GroupTitleRenderer'
 import GroupActions from '@/core/group/GroupActions'
 import { useEffect, useMemo, useRef } from 'react'
-import { useStore, Provider, createStore } from 'jotai'
-import { GroupAtomAtom } from '@/core/group/hooks/useTableState'
+import { Provider, createStore, useSetAtom } from 'jotai'
 import { Group, PATH_TO_ELEMENT_MAP } from '@/core/group/hooks/weakmaps'
-import useAssignTableInstance from '@/core/group/hooks/useAssignTableInstance'
 import { GroupInstanceAtom, useGroupInstance } from '@/core/group/hooks/useGroupInstance'
-import useGroupHistory from '@/core/group/hooks/useGroupHistory'
 import { IGroupInstance } from '~/typings'
-import GroupOverlay from '@/core/group/GroupOverlay'
-import useAssignPathOps from '@/core/group/hooks/ops/useAssignPathOps'
-import useGroupDrag from '@/core/group/hooks/drag/useGroupDrag'
-import useBuildInGroupIndex from '@/core/group/hooks/ops/useBuildInGroupIndex'
-import useAssignValueOps from '@/core/group/hooks/ops/useAssignValueOps'
-import useGroupGlobalKey from '@/core/group/hooks/keyboard/useGroupGlobalKey'
-import useAssignMetaOps from '@/core/group/hooks/ops/useAssignMetaOps'
-
+import GroupSidebarPeek from '@/core/group/components/basic/GroupSidebarPeek'
+import GroupDragHandle from '@/core/group/GroupDragHandle'
+import GroupSelectBox from '@/core/group/GroupSelectBox'
+import GroupOpsAssigner from '@/core/group/GroupOpsAssigner'
+import GroupDataProcessor from '@/core/group/GroupDataProcessor'
 const MetaGroupInner = ({ groupId }: { groupId: number }) => {
-  const groupAtom = ObjectStore('group').createAtom(groupId)
-  const store = useStore()
   const instance = useGroupInstance()
   const containerRef = useRef<HTMLDivElement>(null)
-  const groupValue = ObjectStore('group').useValue(groupId)
-  useAssignTableInstance(groupId)
-  useGroupHistory()
-  useBuildInGroupIndex(groupId)
-  useAssignValueOps(instance, groupValue?.value, groupId)
-  useAssignPathOps(instance)
-  useAssignMetaOps(instance)
-  useGroupGlobalKey()
-  const { renderHandle } = useGroupDrag({
-    groupId,
-    bodyRef: containerRef
-  })
+
   useEffect(() => {
     if (instance) {
       if (containerRef.current) {
@@ -47,39 +27,43 @@ const MetaGroupInner = ({ groupId }: { groupId: number }) => {
       PATH_TO_ELEMENT_MAP.set(instance, new Map())
     }
   }, [instance])
-  useMemo(() => {
-    if (groupAtom) {
-      store.set(GroupAtomAtom, groupAtom)
-    }
-  }, [groupAtom])
+
+  const container = containerRef.current
+  if (container) {
+    instance.values.pageContainer = container
+    instance.getScrollElement = () => container
+  }
+
   return (
-    <Content
-      tabIndex={0}
-      onBlur={() => {
-        instance.values.isFocused = false
-      }}
-      onClick={() => {
-        instance.values.isFocused = true
-      }}
-      fullHeight
-      ref={containerRef}
-      fullWidth
-      flex
-      column
-    >
-      <GroupTitleRenderer groupId={groupId} />
-      <GroupActions groupId={groupId} />
-      <div
-        onClick={() => {
-          console.log(instance.values.undos)
+    <>
+      <Content
+        tabIndex={0}
+        onBlur={() => {
+          instance.values.isFocused = false
         }}
+        onClick={() => {
+          instance.values.isFocused = true
+        }}
+        onFocus={() => {
+          instance.values.isFocused = true
+        }}
+        style={{ overflow: 'auto' }}
+        fullHeight
+        ref={containerRef}
+        fullWidth
+        flex
+        column
       >
-        show undos
-      </div>
-      <GroupOverlay />
-      <GroupRenderer groupId={groupId} />
-      {renderHandle()}
-    </Content>
+        <GroupTitleRenderer groupId={groupId} />
+        <GroupActions groupId={groupId} />
+        <GroupRenderer />
+      </Content>
+      <GroupOpsAssigner bodyRef={containerRef} groupId={groupId} />
+      <GroupSidebarPeek />
+      <GroupDataProcessor groupId={groupId} />
+      <GroupDragHandle bodyRef={containerRef} groupId={groupId} />
+      <GroupSelectBox scrollContainerRef={containerRef} selectContainerRef={containerRef} />
+    </>
   )
 }
 

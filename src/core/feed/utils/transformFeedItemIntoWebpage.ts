@@ -25,7 +25,7 @@ export default async (item: FeedItem) => {
       silent: true,
       currentMeta: {
         name: state.title,
-        description: item.description,
+        description: state.title === item.description ? undefined : item.description,
         coverImgSrc: imageSrc
       }
     }

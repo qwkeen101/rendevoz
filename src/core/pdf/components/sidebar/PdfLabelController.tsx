@@ -39,8 +39,7 @@ const addSepartor = css({
     }
   }
 })
-const PdfLabelController = () => {
-  const labelIds = useSelectAtomValue(PdfStateAtom, s => s.document?.labels)
+const PdfLabelController = ({ labelIds }: { labelIds?: number[] }) => {
   const [sortedLabel, setSortedLabel] = useState<IPdfLabel[]>()
   const [groupedLabel, setGroupedLabel] = useState<Record<number, IPdfLabel[]>>({})
   const [sortMode, setSortMode] = useState<'createTime' | 'page'>('page')

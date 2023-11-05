@@ -3,17 +3,15 @@ import { Rendevoz } from '@/core/rendevoz'
 import { assignProperties } from '@/utils'
 import { BuiltInDraggableElement, GlobalDragPointerUpEvent, MetaGroupChild, XYPosition } from '~/typings'
 import { createPortal } from 'react-dom'
-import { AnimatePresence, motion } from 'framer-motion'
-import { Icon } from '@/components'
+import { AnimatePopover, Icon, WithBorder } from '@/components'
 import { ClassName } from 'rendevoz'
 import { useGlobalIsDragging } from '@/core'
-import produce from 'immer'
-import { ObjectStore } from '@/stores'
 import Id from '@/utils/id'
 import { Path } from 'slate'
 import { useGroupInstance } from '@/core/group/hooks/useGroupInstance'
 import reorderDragItems from '@/core/group/hooks/drag/reorderItems'
 import { mousePos } from '@/hooks/utils/useMousePositionRef'
+import RowMenu from '@/core/group/components/menu/RowMenu'
 
 const useGroupDrag = (options: { bodyRef: RefObject<HTMLElement>; groupId: number }) => {
   const emitter = Rendevoz.Events.Emit.GlobalEventEmitter
@@ -95,15 +93,19 @@ const useGroupDrag = (options: { bodyRef: RefObject<HTMLElement>; groupId: numbe
         const { left, top, height } = box
         const position = {
           x: left - 24,
-          y: top + height / 2
+          y: top + 15
         }
-        setDragHandle({ position, value: details.value, node: details.node, visible: true })
+        setTimeout(() => {
+          setDragHandle({ position, value: details.value, node: details.node.cloneNode(true), visible: true })
+        },500)
       },
       removeDragHandle: () => {
         if (isInHandleRef.current) return
+        if (!dragHandle?.visible) return
         const [x, y] = mousePos.current
         if (document.elementFromPoint(x, y)?.closest('[data-group-item]')) return
-        setDragHandle(s => ({ ...s, visible: false }))
+        console.log('set here')
+        setDragHandle(undefined)
       }
     }
   })
@@ -118,7 +120,6 @@ const useGroupDrag = (options: { bodyRef: RefObject<HTMLElement>; groupId: numbe
       if (target instanceof HTMLElement && body?.contains(target)) {
         const element = data.draggingElement as BuiltInDraggableElement
         if (element.type === 'groupItem' && element.groupId === options.groupId && element.value.length) {
-          console.log(element)
           reorderDragItems({
             items: element.value,
             groupId: options.groupId,
@@ -134,28 +135,33 @@ const useGroupDrag = (options: { bodyRef: RefObject<HTMLElement>; groupId: numbe
   })
 
   const handleInsertItem = (data: GlobalDragPointerUpEvent) => {
-    const { draggingElement } = data
+    const { draggingElement, event } = data
     const newItem: Partial<MetaGroupChild> = {
       rowId: Id.getId()
     }
-    if (draggingElement?.type === 'metaElement') {
-      if (dragDetailsRef.current) {
-        newItem.type = 'metaObject'
-        newItem.id = draggingElement.metaId
-        const { rowIndex, position } = dragDetailsRef.current
-        const currentRows = instance.tableOps?.getCurrentRows?.()
-        if (!currentRows?.length) return
-        if (currentRows.some(i => i === draggingElement.metaId)) return
-        const newRows = produce(currentRows, draft => {
-          if (position === 'top') {
-            draft.splice(rowIndex, 0, draggingElement.metaId)
-          } else {
-            draft.splice(rowIndex + 1, 0, draggingElement.metaId)
-          }
-        })
-        ObjectStore('group').updateOne({ id: 1, childrenMetaIds: newRows })
+    Rendevoz.Events.Emit.GlobalEventEmitter.emitWithCallback('global', {
+      type: 'globalDropNeedFurtherProcess',
+      data: {
+        draggingElement: draggingElement,
+        e: event
       }
-    }
+    }).then(meta => {
+      if (meta) {
+        if (dragDetailsRef.current) {
+          newItem.type = 'metaObject'
+          newItem.id = meta.id
+          const { value, towards } = dragDetailsRef.current
+          reorderDragItems({
+            items: [newItem],
+            groupId: options.groupId,
+            instance,
+            insert: true,
+            towards: dragDetailsRef.current?.towards,
+            targetValue: dragDetailsRef.current?.value
+          })
+        }
+      }
+    })
   }
 
   useEffect(() => {
@@ -167,42 +173,55 @@ const useGroupDrag = (options: { bodyRef: RefObject<HTMLElement>; groupId: numbe
 
   const renderHandle = () =>
     createPortal(
-      <AnimatePresence>
-        {dragHandle && !globalDragging && (
-          <motion.div
-            style={{
-              position: 'fixed',
-              transform: 'translateY(-50%)'
-            }}
-            initial={{
-              opacity: 0
-            }}
-            animate={{
-              opacity: dragHandle.visible ? 1 : 0,
-              left: dragHandle.position.x,
-              top: dragHandle.position.y
-            }}
-            exit={{ opacity: 0 }}
-            onPointerDown={() => {
-              if (dragHandle.value) {
-                instance.dragOps?.startDrag?.({
-                  value: dragHandle.value,
-                  node: dragHandle.node
-                })
-              }
-            }}
-            onPointerEnter={event => {
-              isInHandleRef.current = true
-            }}
-            onPointerLeave={() => {
-              isInHandleRef.current = false
-              instance.dragOps?.removeDragHandle?.()
-            }}
+      dragHandle && !globalDragging && (
+        <div
+          style={{
+            position: 'fixed',
+            width: '100vw',
+            height: '100vh',
+            pointerEvents: 'none'
+          }}
+        >
+          <AnimatePopover
+            positions={['right']}
+            withClickCover={true}
+            content={setV => (
+              <WithBorder padding={6}>
+                <RowMenu details={dragHandle.value} onClose={() => setV(false)} />
+              </WithBorder>
+            )}
           >
-            <Icon className={ClassName.circleButton(3, 4)} name={'park-drag'} />
-          </motion.div>
-        )}
-      </AnimatePresence>,
+            <div
+              style={{
+                position: 'absolute',
+                transform: `translate(${dragHandle.position?.x ?? 0}px,${dragHandle.position?.y ?? 0}px)`,
+                left: 0,
+                pointerEvents: 'auto',
+                top: 0,
+                opacity: dragHandle.visible ? 1 : 0,
+                transition: 'all 0.16s ease'
+              }}
+              onPointerDown={() => {
+                if (dragHandle.value) {
+                  instance.dragOps?.startDrag?.({
+                    value: dragHandle.value,
+                    node: dragHandle.node
+                  })
+                }
+              }}
+              onPointerEnter={event => {
+                isInHandleRef.current = true
+              }}
+              onPointerLeave={() => {
+                isInHandleRef.current = false
+                instance.dragOps?.removeDragHandle?.()
+              }}
+            >
+              <Icon className={ClassName.circleButton(3, 4)} name={'park-drag'} />
+            </div>
+          </AnimatePopover>
+        </div>
+      ),
       document.body
     )
 

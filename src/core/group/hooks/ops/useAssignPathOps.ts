@@ -5,9 +5,12 @@ import { PathRef } from 'slate'
 const useAssignPathOps = (instance: IGroupInstance) => {
   assignProperties(instance, {
     pathOps: {
-      getPathById: id => {
-        console.log(Group.ID_TO_PATH_MAP.get(instance))
-        return Group.ID_TO_PATH_MAP.get(instance)?.get(id)
+      getPathById: (id, afterFilter) => {
+        if (afterFilter) {
+          return Group.ID_TO_FILTER_PATH_MAP.get(instance)?.get(id) || Group.ID_TO_PATH_MAP.get(instance)?.get(id)
+        } else {
+          return Group.ID_TO_PATH_MAP.get(instance)?.get(id)
+        }
       },
       pathRef: path => {
         const ref: PathRef = {

@@ -37,14 +37,22 @@ const CardFeedItem = ({
           style={{
             width: '100%',
             paddingBottom: '56%',
-            backgroundPosition: 'center',
-            backgroundRepeat: 'no-repeat',
-            backgroundSize: 'cover',
-            borderRadius: 4,
             marginBottom: 5,
-            backgroundImage: `url(${item.image})`
+            position: 'relative'
           }}
-        ></div>
+        >
+          <img
+            src={item.image}
+            style={{
+              objectFit: 'cover',
+              borderRadius: 4,
+              position: 'absolute',
+              inset: 0,
+              width: '100%',
+              height: '100%'
+            }}
+          />
+        </div>
       ) : (
         <div
           style={{

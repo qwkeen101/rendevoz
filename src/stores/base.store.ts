@@ -181,6 +181,7 @@ type ILocalStore<T> = {
   addOne: (onSuccess?: (obj: T, silent: boolean) => void, onFail?: (silent: boolean) => void) => IStoreDeprecated<T>['addOne']
   deleteOneById: (onSuccess?: (silent: boolean) => void, onFail?: (silent: boolean) => void) => IStoreDeprecated<T>['deleteOneById']
   getAll: (filterer?: (obj: T) => boolean) => IStoreDeprecated<T>['getAll']
+  getAllData: (filterer?: (obj: T) => boolean) => IStoreDeprecated<T>['getAllData']
   getOneById: () => IStoreDeprecated<T>['getOneById']
   updateOne: (onSuccess?: (obj: T, silent: boolean) => void, onFail?: (silent: boolean) => void) => IStoreDeprecated<T>['updateOne']
 }
@@ -228,6 +229,10 @@ export function initializeLocalStore<T>(atom: PrimitiveAtom<Map<number, T>>, dat
       globalStore.set(atom, bulkAdd(filtered, globalStore.get(atom)))
       return true
     },
+    getAllData: filterer => async () => {
+      const arr = await (filterer ? database.filter(filterer).toArray() : database.toArray())
+      return arr
+    },
     getOneById: () => id => {
       return new Promise(res => {
         const atomOne = globalStore.get(atom).get(id)
@@ -235,7 +240,6 @@ export function initializeLocalStore<T>(atom: PrimitiveAtom<Map<number, T>>, dat
           res(atomOne)
         } else {
           database.get(id).then(one => {
-            console.log(one)
             if (one) {
               globalStore.set(atom, BaseStore.add(one, globalStore.get(atom)))
               res(one)

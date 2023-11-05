@@ -1,11 +1,10 @@
-import { IGroupInstance } from '~/typings'
 import { Content, Icon } from '@/components'
-import { Colors } from '@/consts'
-import { useRef } from 'react'
 import { useIsIn } from '@/hooks'
+import { useGroupInstance } from '@/core/group/hooks/useGroupInstance'
 
 const useCheckboxSelect = (selected: boolean, onChange: (selected: boolean) => void) => {
   const { isIn, ref } = useIsIn()
+  const instance = useGroupInstance()
   const renderCheckbox = () => {
     return (
       <Content
@@ -18,7 +17,10 @@ const useCheckboxSelect = (selected: boolean, onChange: (selected: boolean) => v
           width: 32,
           height: 32,
           transition: 'opacity 0.25s ease',
-          flexShrink: 0
+          flexShrink: 0,
+          position: 'sticky',
+          left: 0,
+          zIndex: 20
         }}
       >
         <input
@@ -29,7 +31,11 @@ const useCheckboxSelect = (selected: boolean, onChange: (selected: boolean) => v
             outline: 'none',
             cursor: 'pointer'
           }}
-          onChange={() => onChange(!selected)}
+          onChange={e => {
+            onChange(!selected)
+            e.currentTarget.blur()
+            instance.getOuterContainer?.()?.focus()
+          }}
           type={'checkbox'}
           checked={selected}
         />

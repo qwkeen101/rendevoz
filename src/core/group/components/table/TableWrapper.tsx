@@ -1,55 +1,55 @@
-import { assignProperties } from '@/utils'
-import { memo, useRef } from 'react'
-import { useSelectAtomValue } from '@/hooks'
-import { TableStateAtom } from '@/core/group/hooks/useTableState'
-import { Content, VirtualList } from '@/components'
-import { useTableInstance } from '@/core/group/hooks/useTableInstance'
-import useGroupDrag from '@/core/group/hooks/drag/useGroupDrag'
-import { useVirtualizer, Virtualizer } from '@tanstack/react-virtual'
+import { memo, useEffect, useRef } from 'react'
+import { Content } from '@/components'
+import { useVirtualizer } from '@tanstack/react-virtual'
 import { MetaGroupChild } from '~/typings'
 import { RowWrapper } from '@/core/group/components/table/RowWrapper'
 import { useGroupInstance } from '@/core/group/hooks/useGroupInstance'
-import useAssignBodyOps from '@/core/group/hooks/ops/useAssignBodyOps'
-import useGroupSelect from '@/core/group/hooks/select/useGroupSelect'
 import PlaceholderRow from '@/core/group/components/table/PlaceholderRow'
 
-const TableWrapper = memo(({ value }: { value: MetaGroupChild[] }) => {
+const TableWrapper = memo(({ value = [] }: { value: MetaGroupChild[] }) => {
   const ref = useRef<HTMLDivElement>(null)
   const instance = useGroupInstance()
   const virtualizer = useVirtualizer({
-    getScrollElement: () => ref.current,
-    overscan: 10,
+    overscan: 5,
+    getScrollElement: () => instance.values.pageContainer,
     estimateSize: () => 30,
     count: value.length
   })
-  instance.getScrollElement = () => ref.current
-  const renderSelectBox = useGroupSelect(ref.current)
-  useAssignBodyOps(instance, ref, virtualizer)
-  const headers = useSelectAtomValue(TableStateAtom, s => s.headers)
+  useEffect(() => {
+    console.log(value)
+  },[value])
+  instance.getScrollMargin = () => ref.current?.parentElement?.parentElement?.parentElement?.offsetTop ?? 0
+  instance.virtualizer = virtualizer
   const items = virtualizer.getVirtualItems()
   // root layer, path is the first index
   return (
     <Content
       flex
       column
-      fullHeight
       ref={ref}
       style={{
-        width: 'auto',
-        overflowY: 'auto',
-        padding: '0px 60px'
+        width: '100%',
+        fontSize: 14,
+        height: 'auto'
       }}
     >
-      {renderSelectBox()}
       <div
         style={{
           height: virtualizer.getTotalSize(),
-          width: headers.reduce((prev, curr) => prev + curr.width, 0) + 12,
+          width: '100%',
           position: 'relative',
           flexShrink: 0
         }}
       >
-        <div style={{ position: 'relative', transform: `translateY(${items[0].start}px)` }}>
+        <div
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            width: '100%',
+            transform: `translateY(${items[0]?.start ?? 0}px)`
+          }}
+        >
           {items.map(i => (
             <div key={i.key} data-index={i.index} ref={virtualizer.measureElement}>
               <RowWrapper rowDetails={value[i.index]} path={[i.index]} />
@@ -57,7 +57,7 @@ const TableWrapper = memo(({ value }: { value: MetaGroupChild[] }) => {
           ))}
         </div>
       </div>
-      <PlaceholderRow/>
+      <PlaceholderRow />
     </Content>
   )
 })

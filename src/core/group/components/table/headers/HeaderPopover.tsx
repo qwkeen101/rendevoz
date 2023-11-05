@@ -1,7 +1,7 @@
-import { MetaTableHeader } from '~/typings'
+import { MetaGroupProperty } from '~/typings'
 import { Content } from '@/components'
 
-const HeaderPopover = ({header}: {header: MetaTableHeader}) => {
+const HeaderPopover = ({header}: {header: MetaGroupProperty}) => {
   return (
     <Content flex column>
 

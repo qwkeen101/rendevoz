@@ -12,7 +12,7 @@ import ClassName from '@/styles/classNames'
 import { css } from '@emotion/css'
 import { Button } from '../button'
 
-interface SelectProps {
+export interface SelectProps {
   multiple?: boolean
   value?: string | string[] | number | number[]
   closeOnSelect?: boolean
@@ -21,13 +21,14 @@ interface SelectProps {
   defaultValue?: string
   placeholder?: string
   className?: string
-  displayRenderer?: (value: string | string[] | number | number[]) => ReactNode
+  displayRenderer?: (value: string | string[] | number | number[], children: string) => ReactNode
   onSelect: (value: string[] | number[]) => void
   style?: CSSProperties
   menuStyle?: CSSProperties
   menuPosition?: 'top' | 'bottom'
   options: SelectOptionProps[]
   gap?: number
+  containerStyle?: CSSProperties
 }
 interface ISelect extends FC<SelectProps> {
   Option: typeof SelectOption
@@ -44,6 +45,7 @@ const Select: ISelect = ({
   value,
   defaultValue,
   deselectable,
+  containerStyle,
   gap = 12,
   menuPosition = 'bottom',
   options,
@@ -110,14 +112,32 @@ const Select: ISelect = ({
     const name = menuItems.find(i => i.value === selected[0])?.name
     return (
       <Content flex centered>
-        <span className={styles.placeholder}>
-          {name}
-        </span>
+        <span className={styles.placeholder}>{name}</span>
+      </Content>
+    )
+  }
+  const renderContent = () => {
+    if (displayRenderer) {
+      const children = menuItems.find(i => i.value === value)
+      if (!children) {
+        return null
+      }
+      return displayRenderer(value, children.name)
+    }
+    return disabled ? null : selected.length ? (
+      <Content fullWidth flex justifyContent="space-between" gap={gap}>
+        {multiple ? renderMultiple() : renderSingle()}
+        <Icon name="park-down" />
+      </Content>
+    ) : (
+      <Content fullWidth flex justifyContent="space-between" gap={gap}>
+        <span className={styles.placeholder}>{placeholder}</span>
+        <Icon name="park-down" />
       </Content>
     )
   }
   return (
-    <div ref={containerRef}>
+    <div style={containerStyle} ref={containerRef}>
       <AnimatePopover
         visible={menuVisible}
         positions={[menuPosition]}
@@ -126,6 +146,7 @@ const Select: ISelect = ({
         disableIntersection
         containerStyle={{ zIndex: '10000' }}
         parentElement={containerRef.current}
+        align={'end'}
         boundaryElement={document.body}
         boundaryInset={20}
         content={
@@ -182,17 +203,7 @@ const Select: ISelect = ({
           onClick={() => !disabled && setMenuVisible(!menuVisible)}
           flex
         >
-          {disabled ? null : selected.length ? (
-            <Content fullWidth flex justifyContent="space-between" gap={gap}>
-              {multiple ? renderMultiple() : renderSingle()}
-              <Icon name="park-down" />
-            </Content>
-          ) : (
-            <Content fullWidth flex justifyContent="space-between" gap={gap}>
-              <span className={styles.placeholder}>{placeholder}</span>
-              <Icon name="park-down" />
-            </Content>
-          )}
+          {renderContent()}
         </Content>
       </AnimatePopover>
     </div>

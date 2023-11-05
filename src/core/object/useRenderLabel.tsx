@@ -59,7 +59,7 @@ const useRenderLabel = (opts: {
             placeholder={t('general.Add note for label')}
             value={currentLabelHasName ? label?.name : undefined}
             onChange={v => {
-              ObjectStore(type).updateOne({ id: objectId, name: v || 'Unnamed label' })
+              ObjectStore(type).updateOne({ id: objectId, name: v || DEFAULT_LABEL_NAME })
               setLabelState(s => ({ ...s, editingName: false }))
             }}
           />
@@ -284,7 +284,7 @@ const useRenderLabel = (opts: {
           ...opts.style
         }}
         onClick={e => {
-          if (!window.getSelection().toString()) {
+          if (!window.getSelection()?.toString()) {
             setLabelState(s => ({ ...s, editingOrigin: true }))
           }
         }}

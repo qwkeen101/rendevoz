@@ -4,7 +4,6 @@ import { IBase } from './base'
 import { ObjectFamily } from 'rendevoz'
 import { MetaFormLayoutItem } from '~/typings'
 import { Dispatch, SetStateAction } from 'react'
-import { MetaSorter, SorterGroup } from '../../../src/core/object/filter/BetterSorter'
 
 export type IMetaAttachment =
   | {
@@ -51,6 +50,8 @@ export interface MetaObject extends IBase {
   tags?: number[]
   icon?: string
   color?: string
+  // hidden by group
+  hidden?: boolean
   attachments?: IMetaAttachment[]
   fromObject?:
     | {
@@ -140,45 +141,6 @@ export type RegisteredMetaObject<T = MetaObject['type']> = {
     prevMetaObject: MetaObject & { type: T },
     changedProps?: { propName: string; prevProp: any; currProp: any }[]
   ) => void
-}
-
-export type MetaTableHeader = {
-  name: string
-  width: number
-  display: () => string
-  icon: string
-}
-export type MetaGroupChild = {
-  rowId: number
-  children?: MetaGroupChild[]
-  syncVersion?: number
-  toggled?: boolean
-} & (
-  | { type: 'metaObject'; id: number }
-  | {
-      textContent: string
-      type: 'text'
-    }
-)
-export interface MetaGroup extends IBase {
-  belongsTo?: number
-  childrenMetaIds: number[]
-  value?: MetaGroupChild[]
-  hideInnerTypes?: string[]
-  renderMode: 'table' | 'list'
-  rootFilterGroup: MetaFilterGroup
-  filter?: MetaFilterGroup
-  sort?: SorterGroup
-  search?: string
-  afterFilterValue?: MetaGroupChild[]
-  openIn?: 'center' | 'newTab'
-  syncVersion: number
-  tableProperties?: {
-    headers?: MetaTableHeader[]
-    visibleProperties: string[]
-    hiddenProperties: string[]
-    wrapColumns?: boolean
-  }
 }
 
 export type StringFieldFilterRule = {

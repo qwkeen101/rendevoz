@@ -16,18 +16,18 @@ const Node = {
   elements(
     root: GroupRoot,
     options?: {
-      match?: (r: MetaGroupChild) => boolean
+      match?: (r: MetaGroupChild, path: Path, parent?: MetaGroupChild) => boolean
     }
   ) {
     const entries: GroupValueEntry[] = []
-    const loop = (r: MetaGroupChild, path: Path) => {
+    const loop = (r: MetaGroupChild, path: Path, parent?: MetaGroupChild) => {
       if (options?.match) {
-        const matched = options.match(r)
+        const matched = options.match(r, path, parent)
         if (!matched) return
       }
       entries.push([r, path])
       if (r.children) {
-        r.children.forEach((v, i) => loop(v, [...path, i]))
+        r.children.forEach((v, i) => loop(v, [...path, i], r))
       }
     }
     root.children.forEach((v, i) => loop(v, [i]))
@@ -47,6 +47,16 @@ const Node = {
     }
 
     return true
+  },
+  fragment(root: GroupRoot, startPath: Path, endPath: Path) {
+    const start = Path.isAfter(startPath, endPath) ? endPath : startPath
+    const end = start === startPath ? endPath : startPath
+    const entries = Node.elements(root, {
+      match: (n, path) => {
+        return Path.compare(path, start) >= 0 && Path.compare(path, end) <= 0
+      }
+    })
+    return entries
   }
 }
 

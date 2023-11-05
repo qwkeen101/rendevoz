@@ -1,63 +1,97 @@
-import { useAtom } from 'jotai'
+import { useAtom, useSetAtom } from 'jotai'
 import { TableStateAtom } from '@/core/group/hooks/useTableState'
-import { useEffect, useRef, useState } from 'react'
+import { memo, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { Reorder } from 'framer-motion'
 import { Colors } from '@/consts'
 import GroupHeaderItem from '@/core/group/components/table/headers/HeaderItem'
 import { Content } from '@/components'
-import useGroupState from '@/core/group/hooks/useGroupState'
+import { GroupStateAtom } from '@/core/group/hooks/useGroupState'
 import { useGroupInstance } from '@/core/group/hooks/useGroupInstance'
+import produce from 'immer'
+import { useIsIn, useSelectAtomValue } from '@/hooks'
 
-const GroupTableHeader = () => {
-  const [groupState, setGroupState] = useGroupState()
-  const [tableState, setTableState] = useAtom(TableStateAtom)
+const GroupTableHeader = memo(() => {
+  const setGroupState = useSetAtom(GroupStateAtom)
+  const unToggledSelectedCount = useSelectAtomValue(GroupStateAtom, s => s.unToggledSelectedCount)
+  const unToggledValueCount = useSelectAtomValue(GroupStateAtom, s => s.unToggledValueCount)
+  const selectedCount = useSelectAtomValue(GroupStateAtom, s => s.selectedCount)
+  const currentView = useSelectAtomValue(GroupStateAtom, s => s.currentView)
+  const allHeaders = currentView?.options.properties || []
+  const visibleHeaders = currentView?.options.properties?.filter(i => i.visible) || []
   const instance = useGroupInstance()
-  const [innerItems, setInnerItems] = useState(tableState.headers)
-  const checkboxRef = useRef<HTMLInputElement>(null)
+  const [innerItems, setInnerItems] = useState(visibleHeaders)
+  const { ref: checkboxRef, isIn } = useIsIn()
   const handleSelectVisibleItems = () => {
     const elements = instance.valueOps?.getVisibleValues()
     if (elements?.length) {
-      const allSelected = groupState.unToggledSelectedCount === groupState.unToggledValueCount
+      const allSelected = unToggledSelectedCount === unToggledValueCount
       // 如果全选，清除
       if (allSelected) {
-        instance.values.inViewRowFuncs.forEach(v => v.clearSelectState())
-        instance.values.selectedRowIdSet.clear()
+        instance.selectOps?.clearAllSelect()
         return
       }
-      if (groupState.unToggledSelectedCount >= 0 && groupState.unToggledSelectedCount < groupState.unToggledValueCount) {
-        instance.values.inViewRowFuncs.forEach(v => v.select())
-        elements.forEach(([e, p]) => {
-          instance.values.selectedRowIdSet.add(e.rowId)
-        })
+      if (unToggledSelectedCount >= 0 && unToggledSelectedCount < unToggledValueCount) {
+        instance.selectOps?.selectAll()
         return
       }
     } else {
-      instance.values.inViewRowFuncs.forEach(v => v.clearSelectState())
-      instance.values.selectedRowIdSet.clear()
+      instance.selectOps?.clearAllSelect()
     }
   }
-  useEffect(() => {
+  console.log({
+    selectedCount,
+    unToggledSelectedCount,
+    unToggledValueCount
+  })
+  useLayoutEffect(() => {
+    setInnerItems(visibleHeaders)
+  }, [currentView?.options.properties])
+  useLayoutEffect(() => {
     if (!checkboxRef.current) return
-    if (groupState.unToggledSelectedCount > 0 && groupState.unToggledSelectedCount < groupState.unToggledValueCount) {
+    if (unToggledSelectedCount > 0 && unToggledSelectedCount < unToggledValueCount) {
       checkboxRef.current.indeterminate = true
     } else {
       checkboxRef.current.indeterminate = false
     }
-  }, [groupState])
+  }, [unToggledSelectedCount, unToggledValueCount])
+
   return (
-    <Content flex alignItems={'center'} style={{ padding: '0 60px' }}>
+    <Content
+      flex
+      alignItems={'center'}
+      style={{
+        position: 'sticky',
+        top: 0,
+        background: Colors.Background.Global,
+        zIndex: 10,
+        borderBottom: `1px solid ${Colors.Background.Border}`,
+        borderTop: `1px solid ${Colors.Background.Border}`
+      }}
+    >
       <input
         ref={checkboxRef}
         onClick={e => {
           handleSelectVisibleItems()
         }}
-        checked={groupState.selectedCount > 0 && groupState.unToggledSelectedCount === groupState.unToggledValueCount}
+        style={{
+          margin: '0px 9px',
+          width: 14,
+          cursor: 'pointer',
+          height: 14,
+          position: 'sticky',
+          transition: 'opacity 0.2s ease',
+          left: 8,
+          opacity: isIn || selectedCount > 0 ? 1 : 0,
+          zIndex: 20
+        }}
+        checked={selectedCount > 0 && unToggledSelectedCount === unToggledValueCount}
         type={'checkbox'}
       />
       <Reorder.Group
         axis="x"
         as={'div'}
-        style={{ display: 'flex', borderBottom: `1px solid ${Colors.Background.Border}` }}
+        layoutScroll={true}
+        style={{ display: 'flex' }}
         values={innerItems}
         onReorder={items => {
           setInnerItems(items)
@@ -68,22 +102,42 @@ const GroupTableHeader = () => {
             item={i}
             key={i.name}
             onDragEnd={() => {
-              setTableState(s => ({ ...s, headers: innerItems, headerColumn: innerItems.map(i => `${i.width + 1}px`).join(' ') }))
+              instance.updateCurrentView?.(s => ({
+                ...s,
+                options: {
+                  ...s.options,
+                  properties: [...innerItems, ...(allHeaders.filter(i => i.visible === false) || [])]
+                }
+              }))
+            }}
+            onResize={newItem => {
+              const idx = visibleHeaders.findIndex(i => i.name === newItem.name)
+              const newVisibleHeaders = [...visibleHeaders]
+              newVisibleHeaders[idx] = newItem
+              setGroupState(s => ({
+                ...s,
+                headerColumn: newVisibleHeaders.map(i => `${i.width + 1}px`).join(' '),
+                tableWidth: newVisibleHeaders.reduce((prev, curr) => prev + curr.width, 0) + 35
+              }))
             }}
             onResizeEnd={newItem => {
-              setInnerItems(items => {
-                const idx = items.findIndex(i => i.name === newItem.name)
-                items[idx] = newItem
-                const newArr = [...items]
-                setTableState(s => ({ ...s, headers: newArr, headerColumn: newArr.map(i => `${i.width + 1}px`).join(' ') }))
-                return newArr
+              const idx = allHeaders.findIndex(i => i.name === newItem.name)
+              const newHeaders = produce(allHeaders, s => {
+                s[idx] = newItem
               })
+              instance.updateCurrentView?.(s => ({
+                ...s,
+                options: {
+                  ...s.options,
+                  properties: newHeaders
+                }
+              }))
             }}
           />
         ))}
       </Reorder.Group>
     </Content>
   )
-}
+})
 
 export default GroupTableHeader

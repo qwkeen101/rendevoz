@@ -4,7 +4,6 @@ import { Modal } from '@/components'
 import QueryPanel from '@/core/group/hooks/queryLibrary/QueryPanel'
 
 const useGroupQueryLibrary = (groupId: number) => {
-  const groupData = ObjectStore('group').useValue(groupId)
   const [visible, setVisible] = useState(false)
 
   const renderPanel = () => {

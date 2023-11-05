@@ -53,7 +53,7 @@ const SidebarIcons = ({
         </MenuItem>
       )
       return (
-        <Tooltip position="right" content={buildIn.tooltip ? buildIn.tooltip() : buildIn.text?.()}>
+        <Tooltip positions={['right']} boundaryInset={8} content={buildIn.tooltip ? buildIn.tooltip() : buildIn.text?.()}>
           <Content
             style={{
               background: selectedItem.has(k) ? Colors.Background.ButtonActive : undefined,

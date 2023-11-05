@@ -43,6 +43,11 @@ import { ipcInstance } from '@/plugins'
 import GlobalCollection from '@/core/global/GlobalCollection'
 import { GlobalObjectDetails } from '@/core/object/details'
 import GlobalPreviewPanel from '@/core/global/GlobalPreviewPanel'
+import { ObjectStore } from '@/stores'
+import channelScraper from '@/core/feed/utils/youtube/channelScraper'
+import GlobalObjectCreator from '@/core/global/GlobalObjectCreator'
+import Id from '@/utils/id'
+import { DEFAULT_GROUP_PROPERTIES } from '@/core/group/consts/defaultProperties'
 
 // import { startDrive } from '@/driver'
 // import ReviewManager from '@/core/review/components/ReviewManager'
@@ -95,8 +100,6 @@ const App = () => {
   Rendevoz.InnerComponents = InnerComponentz
   const PdfJs = window['pdfjs-dist/build/pdf']
   PdfJs.GlobalWorkerOptions.workerSrc = PdfJsUrl
-
-  const os = getOS()
   const lang = useSelectGlobalAtomValue(SettingAtom, s => s.general.language)
   const { i18n } = useTranslation()
   const executed = useRef(false)
@@ -104,21 +107,7 @@ const App = () => {
     registerTabs()
     GlobalPluginManager.registerPlugin(BuiltinEditorPlugin)
     executed.current = true
-    // setTimeout(() => {
-    //   ObjectStore('group')
-    //     .getOneById(1)
-    //     .then(async res => {
-    //       if (!res) {
-    //         await ObjectStore('group').addOne({
-    //           rootFilterGroup: { groupType: 'and', rules: [], filterType: 'group' },
-    //           id: 1,
-    //           syncVersion: 1,
-    //           childrenMetaIds: []
-    //         })
-    //       }
-    //       Rendevoz.Actions.Layout.openNewTab({ data: { type: 'group', objectId: 1 } })
-    //     })
-    // }, 2000)
+    // channelScraper()
   }
 
   useEffect(() => {
@@ -152,6 +141,7 @@ const App = () => {
           <GlobalBaidudisk />
           <GlobalSearchPanel />
           <GlobalCollection />
+          <GlobalObjectCreator />
           <GlobalObjectDetails />
           <GlobalCreateObject />
           <GlobalTranslateResult />

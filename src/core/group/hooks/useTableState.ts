@@ -1,66 +1,97 @@
 import { atom, PrimitiveAtom } from 'jotai'
-import { MetaGroup, MetaTableHeader } from '~/typings'
+import { MetaGroup, MetaGroupProperty } from '~/typings'
 import { t } from 'i18next'
 import { Atom } from 'jotai/vanilla'
 
 const DEFAULT_HEADERS = [
   {
+    width: 100,
+    name: 'type',
+    display: 'general.type',
+    icon: 'park-edit',
+    visible: true
+  },
+  {
+    width: 200,
+    name: 'parentItems',
+    display: 'general.parent Items',
+    icon: 'park-edit',
+    visible: true
+  },
+  {
     width: 300,
     name: 'name',
-    display: () => t('general.name'),
-    icon: 'park-edit'
+    display: 'general.name',
+    icon: 'park-edit',
+    visible: true
   },
   {
     width: 300,
     name: 'description',
     icon: 'park-info',
-    display: () => t('general.description')
+    display: 'general.description',
+    visible: true
   },
   {
     width: 300,
     name: 'tags',
     icon: 'park-tag-one',
-    display: () => t('general.tags')
+    display: 'general.tags',
+    visible: true
+  },
+  {
+    width: 300,
+    name: 'coverImgSrc',
+    icon: 'park-picture',
+    display: 'general.image',
+    visible: true
   },
   {
     width: 300,
     name: 'fromObject',
     icon: 'park-share-one',
-    display: () => t('general.from')
+    display: 'general.from',
+    visible: false
   },
   {
     width: 150,
     name: 'related',
-    display: () => t('general.related')
+    display: 'general.related',
+    visible: false
   },
   {
     width: 150,
     name: 'inLinks',
-    display: () => t('general.inbound links')
+    display: 'general.inbound links',
+    visible: false
   },
   {
     width: 150,
     name: 'outLinks',
-    display: () => t('general.outbound links')
+    display: 'general.outbound links',
+    visible: false
+  },
+  {
+    width: 150,
+    name: 'createdAt',
+    icon: 'park-time',
+    display: 'general.createdAt',
+    visible: false
+  },
+  {
+    width: 150,
+    name: 'viewAt',
+    icon: 'park-preview-open',
+    display: 'general.viewAt',
+    visible: false
+  },
+  {
+    width: 150,
+    name: 'updatedAt',
+    icon: 'park-redo',
+    display: 'general.updatedAt',
+    visible: false
   }
-  // {
-  //   width: 150,
-  //   name: 'createdAt',
-  //   icon: 'park-time',
-  //   display: () => t('general.createdAt')
-  // },
-  // {
-  //   width: 150,
-  //   name: 'viewAt',
-  //   icon: 'park-preview-open',
-  //   display: () => t('general.viewAt')
-  // },
-  // {
-  //   width: 150,
-  //   name: 'updatedAt',
-  //   icon: 'park-redo',
-  //   display: () => t('general.updatedAt')
-  // }
 ]
 
 // plus one for border
@@ -68,7 +99,7 @@ const DEFAULT_HEADERS = [
 export const GroupAtomAtom = atom<Atom<MetaGroup | undefined>>(atom(undefined))
 
 export const TableStateAtom = atom<{
-  headers: MetaTableHeader[]
+  headers: MetaGroupProperty[]
   headerColumn: string
   wrap: boolean
 }>({

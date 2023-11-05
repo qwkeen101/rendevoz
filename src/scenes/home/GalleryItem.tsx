@@ -61,7 +61,7 @@ const GalleryItem = memo(({ metaId }: { metaId: number }) => {
         </div>
         <Content flex column gap={5} auto style={{ paddingTop: 12 }}>
           <div
-            style={{ fontWeight: 'bold', letterSpacing: '-0.2px', fontSize: 14, lineHeight: '20px', height: 40 }}
+            style={{ fontWeight: 'bold', letterSpacing: '-0.2px', fontSize: 14, lineHeight: '18px', height: 36 }}
             className={ClassName.ellipsisFont(2)}
           >
             {meta.name}

@@ -27,16 +27,20 @@ const HomeGallery = () => {
       }
     ]
   }
-  const rows = KeyvalueStore.useValue('homeGalleryRows') || 1
   useEffect(() => {
     if (objectIndex) {
       if (objectIndex.typeToMetaObjectIdsMap) {
         const map = objectIndex.typeToMetaObjectIdsMap
+        const metaMap = MetaStore.getMetaObjectsMap()
         if (map.size) {
           const allTypes = new Set(map.keys())
           let newVisibleList = gallerySettings.visibleLists.filter(i => {
             if (['recentlyViewed', 'recentlyCreated', 'pinned'].includes(i.name)) return true
             if (!allTypes.has(i.name)) return false
+            if (!Array.from(map.get(i.name)?.values() || []).filter(i => metaMap.has(i) && !metaMap.get(i)?.hidden).length) {
+              allTypes.delete(i.name)
+              return false
+            }
             if (allTypes.has(i.name)) {
               allTypes.delete(i.name)
               return true
@@ -76,7 +80,6 @@ const GalleryPanel = ({ panelName, count }: { panelName: string; count: number }
   const pagable = displayMetaIds.length > count * rows
   const hasBefore = pag.start > 0
   const hasNext = displayMetaIds.length > count * rows + pag.start
-  useEffect(() => {}, [count])
   useEffect(() => {
     const map = MetaStore.getMetaObjectsMap()
     if (panelName === 'pinned') {
@@ -85,25 +88,26 @@ const GalleryPanel = ({ panelName, count }: { panelName: string; count: number }
     }
     const arrayObjects = Array.from(allObjects.values())
     if (panelName === 'recentlyViewed') {
-      const viewed = arrayObjects.filter(i => i.viewAt)
+      const viewed = arrayObjects.filter(i => i.viewAt && !i.hidden)
       viewed.sort((b, a) => a.viewAt! - b.viewAt!)
       setDisplayMetaIds(viewed.map(i => i.id))
       return
     }
     if (panelName === 'recentlyCreated') {
-      arrayObjects.sort((b, a) => a.id - b.id)
-      setDisplayMetaIds(arrayObjects.map(i => i.id))
+      const created = arrayObjects.filter(i => !i.hidden)
+      created.sort((b, a) => a.id - b.id)
+      setDisplayMetaIds(created.map(i => i.id))
       return
     }
     const objects = Array.from(index?.typeToMetaObjectIdsMap?.get(panelName)?.values() || []).filter(i => map.has(i)) as number[]
     objects.sort((b, a) => map.get(a)!.createdAt - map.get(b)!.createdAt)
     setDisplayMetaIds(objects)
   }, [panelName, allObjects, index])
-
+  if (!displayMetaIds.length) return null
   return (
     <Content style={{ width: '100%' }}>
       <Content flex justifyContent={'space-between'}>
-        <div style={{ fontSize: 13, color: Colors.Font.Transparent, margin: '10px 0px' }}>{t(`general.${panelName}`)}</div>
+        <div style={{ fontSize: 14, color: Colors.Font.Primary, margin: '10px 0px' }}>{t(`general.${panelName}`)}</div>
         {pagable && (
           <Content flex gap={10}>
             <Icon

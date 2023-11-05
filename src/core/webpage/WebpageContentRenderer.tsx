@@ -14,6 +14,8 @@ import useWebpageInstance from '@/core/webpage/hooks/useWebpageInstance'
 import { IWebpageProps } from '@/core/webpage/Webpage'
 import { ClassName } from 'rendevoz'
 import { GlobalSearchInstance } from '@/core/global/GlobalSearchPanel'
+import { waitFor } from '@/utils'
+import { useMemoizedFn } from '@/hooks'
 
 const WebpageTitle = ({
   title = 'Untitled',
@@ -221,15 +223,14 @@ const WebpageContentRenderer = ({
   }
 
   useEffect(() => {
-    console.log(editorInstanceRef.current)
     if (webpageState.loaded) {
+      console.log(webpageState)
       setTimeout(() => {
         editorInstanceRef.current?.scrollToPosition?.(0)
       })
     }
   }, [webpageState.currentUrl, webpageState.loaded])
 
-  console.log(webpageState.externalState, webpageState.currentParsedContent, webpageState)
   if (!webpageState.currentWebpageNoteId && !webpageState.currentParsedContent && !webpageState.externalState?.content) return null
   const renderer = () => {
     return (

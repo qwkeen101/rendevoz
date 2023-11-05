@@ -22,7 +22,6 @@ import {
   GlobalDragOverlayInstance,
   GlobalGraphInstance,
   ObjectActionPopover,
-  RelatedPanel,
   useDropObjectArea,
   useGlobalIsDragging,
   useObjectFilter,
@@ -636,7 +635,8 @@ export const SimpleObject = memo(
             style: {
               right: 0,
               top: -1
-            }
+            },
+            renderOnParent: false
           },
           containerStyle: {
             width: '100%'

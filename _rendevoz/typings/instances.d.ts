@@ -57,6 +57,8 @@ export type IGlobalInstance = Partial<{
     canPreview: (metaObject: MetaObject) => boolean
     openDetails: (id: number) => void
     preview: (id: number) => void
+    createObject: () => Promise<MetaObject>
+    copyLink: (id: number) => void
     addDraggableAsMeta: (d: BuiltInDraggableElement) => Promise<MetaObject>
   }
 }>

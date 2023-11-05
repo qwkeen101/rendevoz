@@ -3,9 +3,9 @@ import useDb from '@/hooks/stores/useDb'
 import Id from '@/utils/id'
 import { atom } from 'jotai/vanilla'
 import { toast } from 'react-hot-toast'
-import { MetaLink, MetaObject } from '~/typings'
+import { MetaGroup, MetaGroupChild, MetaLink, MetaObject } from '~/typings'
 import BaseStore, { initializeLocalStore } from './base.store'
-import { findChangedProperties, globalStore, MetaStore, ObjectStore } from '.'
+import { findChangedProperties, globalStore, GroupStore, MetaStore, ObjectStore } from '.'
 import { SimpleObject } from '@/core'
 import { IStoreDeprecated } from './types'
 import getSetting from '@/core/setting/getSetting'
@@ -18,6 +18,7 @@ import { getUser } from '@/services/login.service'
 import { RegisteredMetaObject } from 'rendevoz'
 import SearchHelper from '@/textSearch/SearchHelper'
 import KeyvalueStore from '@/stores/keyvalue.store'
+import { calculateFilterObjects } from '@/core/object/filter/useBetterFilter'
 
 export const metaObjectsAtom = atom<Map<number, MetaObject>>(new Map())
 
@@ -26,6 +27,41 @@ export const metaLinksAtom = atom<Map<number, MetaLink>>(new Map())
 const { orderedData, orderedArray } = BaseStore
 
 let lastWarned = Date.now()
+
+export const handleMetaGroupRules = () => {
+  console.log('getting')
+  const unhiddenMetas = Array.from(MetaStore.getMetaObjectsMap().values())
+    .filter(i => !i.hidden)
+    .map(i => i.id)
+  ObjectStore('group')
+    .getAllData()
+    .then(res => {
+      const groups = res as MetaGroup[]
+      groups.forEach(g => {
+        // have automation rules
+        if (g.rootFilterGroup?.rules?.length) {
+          const correctObjects = calculateFilterObjects(g.rootFilterGroup, unhiddenMetas)
+          if (correctObjects?.length) {
+            const items = correctObjects.map(i => ({
+              id: i.id,
+              type: 'metaObject',
+              rowId: Id.getId()
+            })) as MetaGroupChild[]
+            GroupStore.insertItemsIntoGroup(items, g.id)
+            if (g.hideObjectsInside) {
+              correctObjects.forEach(o => {
+                if (o.type === 'group' && g.hideGroupsInside !== true) {
+                  return
+                }
+                MetaStore.updateMetaObject({ id: o.id, hidden: true }, true)
+              })
+            }
+          }
+        }
+      })
+    })
+}
+
 export const handleMetaObjectsChange = () => {
   const prevIndex = globalStore.get(indexedMetaObjectsAtom)
   const prevMetaObjects = prevIndex?.oldMetaObjects as Map<number, MetaObject> | undefined
@@ -71,12 +107,14 @@ export const handleMetaObjectsChange = () => {
       }
       return
     }
-    if (typeToMetaObjectIdsMap.has(v.type)) {
-      typeToMetaObjectIdsMap.get(v.type)?.add(k)
-    } else {
-      typeToMetaObjectIdsMap.set(v.type, new Set([k]))
+    if (!v.hidden) {
+      if (typeToMetaObjectIdsMap.has(v.type)) {
+        typeToMetaObjectIdsMap.get(v.type)?.add(k)
+      } else {
+        typeToMetaObjectIdsMap.set(v.type, new Set([k]))
+      }
+      undeletedMetaObjectsSet.add(v)
     }
-    undeletedMetaObjectsSet.add(v)
     if (v.pinned) {
       pinnedMetaObjectsSet.add(v)
     }
@@ -383,7 +421,7 @@ const createMetaStore = () => {
         let initedName = 'Unnamed Object'
         switch (initedMetaObject.type) {
           case 'note':
-            initedName = 'Untitled Note'
+            initedName = 'Untitled'
             break
           case 'pdf':
             initedName = 'Unnamed PDF'

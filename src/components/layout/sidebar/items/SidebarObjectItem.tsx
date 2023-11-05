@@ -14,6 +14,7 @@ import ClassName from '@/styles/classNames'
 import FontSize from '@/consts/font'
 import { Rendevoz } from '@/core/rendevoz'
 import HoverObjectDetails from '@/core/object/HoverObjectDetails'
+import { DraggableElement } from '@/core'
 
 const SidebarObjectItem: FC<ISidebarItem> = ({ parentId, parentType, id, draggable = true }) => {
   const metaObjectAtom = useMemo(() => selectAtom(metaObjectsAtom, m => m.get(id)), [id])
@@ -66,22 +67,31 @@ const SidebarObjectItem: FC<ISidebarItem> = ({ parentId, parentType, id, draggab
   )
   if (metaObject?.deleted || !metaObject) return null
   return (
-    <HoverObjectDetails ref={ref} metaObjectId={metaObject.id} positions={['right']}>
-      <Content
-        flex
-        gap={10}
-        onClick={() => Rendevoz.Actions.Open.Meta.openMetaObject(id)}
-        className={ClassName.flatButton(4, '3px 8px')}
-      >
-        {contextMenuPortal}
-        <IconNameItem
-          style={{ fontSize: FontSize['12px'] }}
-          icon={metaObject?.icon || icon}
-          name={metaObject?.name}
-          color={metaObject?.color}
-        />
-      </Content>
-    </HoverObjectDetails>
+    <DraggableElement
+      ref={ref}
+      draggingDetails={{
+        type: 'metaElement',
+        metaId: metaObject.id
+      }}
+    >
+      <HoverObjectDetails metaObjectId={metaObject.id} positions={['right']}>
+        <Content
+          flex
+          ref={ref}
+          gap={10}
+          onClick={() => Rendevoz.Actions.Open.Meta.openMetaObject(id)}
+          className={ClassName.flatButton(4, '3px 8px')}
+        >
+          {contextMenuPortal}
+          <IconNameItem
+            style={{ fontSize: FontSize['12px'] }}
+            icon={metaObject?.icon || icon}
+            name={metaObject?.name}
+            color={metaObject?.color}
+          />
+        </Content>
+      </HoverObjectDetails>
+    </DraggableElement>
   )
 }
 

@@ -104,6 +104,13 @@ const NoteEditor = ({ noteId, labelIds, on, ...rest }: { noteId?: number } & Edi
             })
             return
           }
+          case 'labelDrag': {
+            Rendevoz.Actions.State.Drag.setDraggingDetails({
+              type: 'noteLabel',
+              labelId: e.labelId
+            })
+            return
+          }
           case 'stateChange': {
             switch (e.event.type) {
               case 'fontSize': {

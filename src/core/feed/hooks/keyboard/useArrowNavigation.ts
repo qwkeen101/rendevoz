@@ -16,8 +16,10 @@ const useArrowNavigation = () => {
     if (feed && !feed.state?.content) {
       const result = await fetchUrlAndParseNote(feed.link)
       if (result) {
+        console.log(result)
         ObjectStore('feed').updateOne({
           id: feed.id,
+          image: result.image,
           state: {
             title: result.title,
             author: result.author,
@@ -87,9 +89,11 @@ const useArrowNavigation = () => {
   useEffect(() => {
     const keyboardHandler = (e: KeyboardEvent) => {
       if (isHotkey(KEY.ArrowRight, e)) {
+        e.preventDefault()
         instance.navigateOps?.forward()
       }
       if (isHotkey(KEY.ArrowLeft, e)) {
+        e.preventDefault()
         instance.navigateOps?.back()
       }
     }

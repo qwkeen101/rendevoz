@@ -7,6 +7,7 @@ import { useGlobalIsDragging } from '@/core'
 import { globalStore } from '@/stores'
 import { objectIdToMetaObjectIdMapAtom } from '@/stores/meta.store'
 import { TypeToRegisteredObject } from '@/stores/object.store'
+import { BuiltInDraggableElement } from '~/typings'
 
 const useDropObjectArea = (
   dropArea: RefObject<HTMLElement> | HTMLElement,
@@ -31,11 +32,10 @@ const useDropObjectArea = (
   })
   const [isDragging] = useGlobalIsDragging()
   const rafCheck = useRafFn((e: PointerEvent | DragEvent, draggingElement: IDraggableElement) => {
-    if(!startDragRef.current) return
+    if (!startDragRef.current) return
     const area = dropArea instanceof HTMLElement ? dropArea : dropArea.current
-    console.log(area, draggingElement)
     let droppable = false
-    const draggingEle = Rendevoz.Actions.State.Drag.getDraggingDetails()
+    const draggingEle = Rendevoz.Actions.State.Drag.getDraggingDetails() as BuiltInDraggableElement | undefined
     const objectIdToMetaObjectIdMap = globalStore.get(objectIdToMetaObjectIdMapAtom)
     let objectId: number | undefined = undefined
     let alreadyExist = false
@@ -79,6 +79,15 @@ const useDropObjectArea = (
       if (draggingEle.type === 'metaElement') {
         alreadyExist = true
         metaId = draggingEle.metaId
+      }
+      if (draggingEle.type === 'groupItem') {
+        if (draggingEle.value.length) {
+          const meta = draggingEle.value.find(i => i.type === 'metaObject' && i.id)
+          if (meta) {
+            alreadyExist = true
+            metaId = meta.id
+          }
+        }
       }
       setCanDropAsMeta({
         droppable,

@@ -1,70 +1,36 @@
-import { ObjectStore } from '@/stores'
-import { MetaGroup, MetaGroupChild, MetaTableHeader } from '~/typings'
-import { useAtom } from 'jotai'
-import { Content, Icon, Image, VirtualList } from '@/components'
-import { useRenderObject } from '@/core'
-import { Rendevoz } from '@/core/rendevoz'
-import { useEffect, useRef, useState } from 'react'
-import { Reorder, useDragControls } from 'framer-motion'
-import { Colors } from '@/consts'
-import { Resizable } from 're-resizable'
-import { TableStateAtom } from '@/core/group/hooks/useTableState'
+import { MetaGroupChild } from '~/typings'
+import { Content } from '@/components'
+import { memo, useRef } from 'react'
 import TableBodyRenderer from '@/core/group/components/table/TableWrapper'
-import { useTableInstance } from '@/core/group/hooks/useTableInstance'
-import { assignProperties } from '@/utils'
 import useGroupFilter from '@/core/group/hooks/useGroupFilter'
-import Id from '@/utils/id'
-import useGroupSelect from '@/core/group/hooks/select/useGroupSelect'
-import { createPortal } from 'react-dom'
 import GroupTableHeader from '@/core/group/components/table/headers/TableHeader'
+import useTableHeaders from '@/core/group/hooks/useTableHeaders'
+import { useSelectAtomValue } from '@/hooks'
+import { GroupStateAtom } from '@/core/group/hooks/useGroupState'
 
-export const GroupRenderer = ({ groupId }: { groupId: number }) => {
-  const groupData = ObjectStore('group').useValue(groupId) as MetaGroup | undefined
-  const allMetas = groupData && [...groupData.childrenMetaIds]
-  const renderMode = groupData?.renderMode
-  const afterFilter = groupData?.afterFilterValue
-  const instance = useTableInstance()
+export const GroupRenderer = memo(() => {
+  const displayValues = useSelectAtomValue(GroupStateAtom, s => s.viewValues)
+  const filterValues = useSelectAtomValue(GroupStateAtom, s => s.filterValues)
   const containerRef = useRef<HTMLDivElement>(null)
-  assignProperties(instance, {
-    getCurrentRows: () => groupData?.value || []
-  })
-  useGroupFilter(groupId)
-  useEffect(() => {
-    if (groupData?.value) {
-      let update = false
-      const newValue = groupData.value.map(i => {
-        if (i.rowId) {
-          return i
-        } else {
-          update = true
-          return {
-            ...i,
-            rowId: Id.getId()
-          }
-        }
-      })
-      if (update) {
-        ObjectStore('group').updateOne({ id: groupId, value: newValue })
-      }
-    }
-  }, [groupData])
-  // if (renderMode === 'list' && allMetas) {
-  //   return <ListRenderer metaIds={allMetas} />
-  // }
-  if (allMetas && groupData?.value) {
-    return (
-      <Content ref={containerRef} flex column fullHeight>
-        <TableRenderer value={afterFilter || groupData?.value} />
-      </Content>
-    )
-  }
-}
 
-const TableRenderer = ({ value }: { value: MetaGroupChild[] }) => {
+  useTableHeaders()
+
   return (
-    <Content flex column style={{ height: 0, flex: 1, overflowX: 'auto', overflowY: 'hidden' }}>
-      <GroupTableHeader />
-      <TableBodyRenderer value={value} />
+    <Content ref={containerRef} flex column fullHeight style={{ minWidth: 'fit-content', width: '100%' }}>
+      <TableRenderer value={filterValues || displayValues} />
     </Content>
   )
-}
+})
+
+const TableRenderer = memo(({ value }: { value?: MetaGroupChild[] }) => {
+  const currentViewId = useSelectAtomValue(GroupStateAtom, s => s.currentView?.id)
+  return (
+    <Content flex column style={{ height: 0, flex: 1, padding: '0px 60px', width: '100%' }}>
+      <Content role={'table-wrapper'} style={{ width: '100%', height: 'auto' }}>
+        <GroupTableHeader key={currentViewId} />
+        <TableBodyRenderer value={value} />
+      </Content>
+      <div style={{ height: 500, width: 1, flexShrink: 0 }}></div>
+    </Content>
+  )
+})

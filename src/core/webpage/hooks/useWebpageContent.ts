@@ -44,7 +44,7 @@ const useWebpageContent = (options: {
     }
     if (webpageState.currentUrl) {
       const url = webpageState.currentUrl
-      if (!webpageState.currentWebpageId || (webpageState.currentWebpageId && !currentWebpage?.noteId)) {
+      if (!webpageState.currentWebpageId || (webpageState.currentWebpageId && !webpageState.currentWebpageNoteId)) {
         // check if already has this webpage registered
         const map = globalStore.get(UrlToWebpageMap)
         if (map.has(url)) {
@@ -56,6 +56,11 @@ const useWebpageContent = (options: {
             return
           }
         }
+      }
+      if (webpageState.currentWebpageNoteId) {
+        setWebpageState(s => ({ ...s, loaded: true }))
+        options.onEndLoad?.()
+        return
       }
       setWebpageState(s => ({ ...s, loaded: false }))
       options.onStartLoad?.()

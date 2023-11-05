@@ -17,9 +17,7 @@ import { VideoSidebarStateAtom } from '../../hooks/useMediaSidebarState'
 import { useTranslation } from 'react-i18next'
 import { useRenderLabel } from '@/core'
 
-const MediaLabelController = () => {
-  const labelType = useSelectAtomValue(MediaStateAtom, s => s.labelType)
-  const labelIds = useSelectAtomValue(MediaStateAtom, s => s.labels)
+const MediaLabelController = ({ labelType, labelIds }: { labelType: string; labelIds?: number[] }) => {
   const [sortedLabels, setSortedLabels] = useState<number[]>()
   const [sortMode, setSortMode] = useState<'createTime' | 'videoTime'>('videoTime')
   useEffect(() => {

@@ -50,18 +50,16 @@ const MagazineFeedItem = ({
       }}
     >
       {item.image && (
-        <div
+        <img
+          src={item.image}
           style={{
-            backgroundPosition: 'center',
-            backgroundRepeat: 'no-repeat',
-            backgroundSize: 'cover',
+            objectFit: 'cover',
             borderRadius: 4,
-            backgroundImage: `url(${item.image})`,
             width: imageSize.width,
             height: imageSize.height,
             flexShrink: 0
           }}
-        ></div>
+        ></img>
       )}
       <Content flex column auto>
         <div

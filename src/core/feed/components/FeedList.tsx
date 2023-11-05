@@ -103,6 +103,7 @@ const FeedList = () => {
           overflowY: 'auto',
           padding: '30px 0px 30px 30px',
           flexWrap: 'wrap',
+          overflowX: 'hidden',
           flex: '1 1 820px',
           maxWidth: '100%',
           height: 'fit-content',

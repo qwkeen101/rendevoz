@@ -1,17 +1,21 @@
-import { Content, TabPane, Tabs } from '@/components'
+import { TabPane, Tabs } from '@/components'
 import MediaChapterController from './MediaChapterController'
 import MediaLabelController from './MediaLabelController'
-import { memo, useRef, useState } from 'react'
+import { memo } from 'react'
 import useMediaSidebarState from '../../hooks/useMediaSidebarState'
 import { Resizable } from 're-resizable'
 import MediaSubtitleSidebar from '@/core/media/components/sidebar/MediaSubtitleSidebar'
 import { Colors } from '@/consts'
 import { useAtomValue } from 'jotai'
 import { MediaLayoutAtom } from '@/core/media/hooks/useVideoLayout'
+import { useSelectAtomValue } from '@/hooks'
+import { MediaStateAtom } from '@/core/media/hooks/useMediaState'
 
 const MediaSidebar = memo(() => {
   const [sidebarState, setSidebarState] = useMediaSidebarState()
   const column = useAtomValue(MediaLayoutAtom)
+  const labelType = useSelectAtomValue(MediaStateAtom, s => s.labelType)
+  const labelIds = useSelectAtomValue(MediaStateAtom, s => s.labels)
   return (
     <Resizable
       size={{
@@ -28,7 +32,7 @@ const MediaSidebar = memo(() => {
       ref={ref => {
         if (column) {
           ref?.resizable?.style.setProperty('flex-shrink', '1')
-          ref?.resizable?.style.setProperty('width', 'calc(100% - 48px)')
+          ref?.resizable?.style.setProperty('width', 'calc(100% - 32px)')
         } else {
           ref?.resizable?.style.setProperty('flex-shrink', '0')
         }
@@ -57,7 +61,7 @@ const MediaSidebar = memo(() => {
     >
       <Tabs activeKey={sidebarState.rightBarActive}>
         <TabPane tab={'Labels'} key="label">
-          <MediaLabelController />
+          <MediaLabelController labelType={labelType} labelIds={labelIds} />
         </TabPane>
         <TabPane tab={'Chapters'} key="chapter">
           <MediaChapterController />

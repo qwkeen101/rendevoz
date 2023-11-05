@@ -2,6 +2,7 @@ import * as React from 'react'
 import calculateNodeHeight from './calculateNodeHeight'
 import getSizingData, { noop, SizingData } from './getSizingData'
 import useComposedRef, { useWindowResizeListener } from './hooks'
+import { CSSProperties } from 'react'
 
 type TextareaProps = React.TextareaHTMLAttributes<HTMLTextAreaElement>
 
@@ -17,7 +18,7 @@ export interface TextareaAutosizeProps extends Omit<TextareaProps, 'style'> {
   minRows?: number
   onHeightChange?: (height: number, meta: TextareaHeightChangeMeta) => void
   cacheMeasurements?: boolean
-  style?: Style
+  style?: CSSProperties
 }
 
 const TextareaAutosize: React.ForwardRefRenderFunction<HTMLTextAreaElement, TextareaAutosizeProps> = (

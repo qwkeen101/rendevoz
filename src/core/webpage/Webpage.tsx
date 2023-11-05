@@ -7,6 +7,7 @@ import useWebpageState, { IWebpageState } from './hooks/useWebpageState'
 import useWebpageContent from '@/core/webpage/hooks/useWebpageContent'
 import WebpageContentRenderer from '@/core/webpage/WebpageContentRenderer'
 import { TabTitle } from '@/core/rendevoz/components'
+import { MetaStore } from '@/stores'
 
 /**
  * Webpage can be a controlled or uncontrolled component
@@ -56,13 +57,13 @@ const WebpageInner = ({
   useEffect(() => {
     setWebpageState(s => ({ ...s, externalState: state }))
   }, [state])
-
+  const webpageMeta = MetaStore.useObjectToMetaValue(webpageState.currentWebpageId)
   return (
     <Content flex column fullHeight fullWidth>
       {!disableTabTitle && (
         <TabTitle
           icon={<Icon size={16} name={'park-web-page'} />}
-          title={webpageState.currentWebpage?.title || webpageState.externalState?.title}
+          title={webpageMeta?.name || webpageState.externalState?.title || webpageState.currentWebpage?.title}
         />
       )}
       <div style={{ height: 0, flex: 1, width: '100%' }}>

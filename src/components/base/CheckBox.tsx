@@ -1,36 +1,17 @@
-import { css } from "@emotion/css";
-import { CSSProperties } from "react";
-import { Icon } from "..";
-import Content from "./Content";
-import Colors from "@/consts/colors";
+import { css } from '@emotion/css'
+import { CSSProperties } from 'react'
+import Content from './Content'
 
-const iconClassName = css({
-  cursor: "pointer",
-  svg: {
-    strokeDasharray: "100px",
-    strokeDashoffset: "-100px",
-    transition: "all 0.3s ease",
-    transitionDelay: "0.1s",
-    transform: "translate3d(0,0,0)",
-    strokeLinecap: "round",
-    strokeLinejoin: "round",
-  },
-  '&[data-checked="true"]': {
-    svg: {
-      strokeDashoffset: "0px",
-    },
-  },
-});
 const CheckBox = ({
   checked,
   onChange,
   style,
-  className,
+  className
 }: {
-  checked?: boolean;
-  onChange?: (checked: boolean) => void;
-  style?: CSSProperties;
-  className?: string;
+  checked?: boolean
+  onChange?: (checked: boolean) => void
+  style?: CSSProperties
+  className?: string
 }) => {
   return (
     <Content
@@ -38,21 +19,16 @@ const CheckBox = ({
       centered
       onClick={() => onChange?.(!checked)}
       style={{
-        border: `1px solid ${Colors.Background.Border}`,
-        borderRadius: 6,
-        width: 20,
-        height: 20,
-        ...style,
+        width: 14,
+        height: 14,
+        cursor: 'pointer',
+        ...style
       }}
       className={className}
     >
-      <Icon
-        data-checked={checked}
-        className={iconClassName}
-        name="park-check"
-      />
+      <input type={'checkbox'} checked={checked} style={{ width: '100%', height: '100%' }} />
     </Content>
-  );
-};
+  )
+}
 
-export default CheckBox;
+export default CheckBox

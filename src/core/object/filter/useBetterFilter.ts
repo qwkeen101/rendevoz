@@ -8,25 +8,6 @@ import linkFilter from '@/core/object/filter/linkFilter'
 import typeFilter from '@/core/object/filter/typeFilter'
 import tagFilter from '@/core/object/filter/tagFilter'
 
-const BetterFiltersAtom = atom<MetaFilterGroup>({
-  rules: [
-    {
-      filterType: 'link',
-      type: 'source',
-      linkType: 'spec',
-      metaId: 14516102227141
-    },
-    {
-      filterType: 'link',
-      type: 'target',
-      linkType: 'spec',
-      metaId: 14516102227141
-    }
-  ],
-  groupType: 'and',
-  filterType: 'group'
-})
-
 const transformRules = (rules: MetaFilterRule[]) => {
   const finalRuleFilter = (rules.filter(i => i.filterType === 'rule') as (MetaFilterRule & { filterType: 'rule' })[])
     .map(rule => {
@@ -90,36 +71,18 @@ export const transformFilterGroupToFilterArray = (rootGroup: MetaFilterGroup) =>
   return f
 }
 
-export const calculateFilterObjects = (filter: MetaFilterGroup, objects?: number[]) => {
+export const calculateFilterObjects = (filter: MetaFilterGroup, objects?: number[], showHidden?: boolean) => {
   const filterFunc = transformFilterGroupToFilterArray(filter)
   if (filterFunc !== undefined) {
     const map = MetaStore.getMetaObjectsMap()
-    const allObjects = objects
+    let allObjects = objects
       ? (objects.map(i => map.get(i)).filter(i => i) as MetaObject[])
       : Array.from(MetaStore.getMetaObjectsMap().values())
+    if (!showHidden) {
+      allObjects = allObjects.filter(i => !i.hidden)
+    }
     allObjects.sort((b, a) => a.createdAt - b.createdAt)
     const leftObjects = allObjects.filter(filterFunc)
     return leftObjects
   }
 }
-const useBetterFilter = () => {
-  const [filterRoot, setFilterRoot] = useAtom(BetterFiltersAtom)
-  setTimeout(() => {
-    const filterFunc = transformFilterGroupToFilterArray(filterRoot)
-    if (filterFunc !== undefined) {
-      const allObjects = Array.from(MetaStore.getMetaObjectsMap().values())
-      const leftObjects = allObjects.filter(filterFunc)
-      console.log(leftObjects)
-    }
-  }, 3000)
-  // useEffect(() => {
-  //   const filterFunc = transformFilterGroupToFilterArray(filterRoot)
-  //   if (filterFunc !== undefined) {
-  //     const allObjects = Array.from(MetaStore.getMetaObjectsMap().values())
-  //     const leftObjects = allObjects.filter(filterFunc)
-  //     console.log(leftObjects)
-  //   }
-  // }, [filterRoot])
-}
-
-export default useBetterFilter

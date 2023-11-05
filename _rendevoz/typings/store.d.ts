@@ -18,7 +18,7 @@ import {
   MetaObject,
   ISyncedBlock,
   MetaGroup, IFeed
-} from './data'
+} from '.'
 import { PartialWithId } from './common'
 import { CustomTypes } from './custom'
 import { FeedItem, IFeedCollection, IFeedFolder } from '~/typings/components'

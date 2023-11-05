@@ -1,14 +1,14 @@
-import { FC } from "react";
+import { FC } from 'react'
 
 export type SelectOptionProps =
   | {
-      children: string;
-      value: string | number;
-      icon?: string;
+      children: string
+      value: string | number
+      icon?: string
     }
-  | boolean;
+  | boolean
 
 const SelectOption: FC<SelectOptionProps> = () => {
-  return null;
-};
-export default SelectOption;
+  return null
+}
+export default SelectOption

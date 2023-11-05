@@ -8,7 +8,7 @@ const useChangeMediaLayout = (containerRef: RefObject<HTMLElement>) => {
   const [, setVideoLayout] = useAtom(MediaLayoutAtom)
   const containerSize = useMeasure(containerRef)
   useLayoutEffect(() => {
-    if ((containerSize.width || 0) < 1000) {
+    if ((containerSize.width || 0) <= 1000) {
       setVideoLayout(true)
     } else {
       setVideoLayout(false)

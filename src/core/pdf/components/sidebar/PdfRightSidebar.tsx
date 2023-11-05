@@ -6,11 +6,13 @@ import PdfSearch from '../floatbar/Search'
 import Colors from '@/consts/colors'
 import ClassName from '@/styles/classNames'
 import { useTranslation } from 'react-i18next'
+import { useSelectAtomValue } from '@/hooks'
+import { PdfStateAtom } from '@/core/pdf/hooks/usePdfState'
 
 const PdfRightSidebar = () => {
   const [pdfBarState, setPdfBarState] = usePdfBarState()
   const { t } = useTranslation()
-
+  const labelIds = useSelectAtomValue(PdfStateAtom, s => s.document?.labels)
   return (
     <Resizable
       defaultSize={{
@@ -71,7 +73,7 @@ const PdfRightSidebar = () => {
           }
           key="label"
         >
-          <PdfLabelController />
+          <PdfLabelController labelIds={labelIds} />
         </TabPane>
       </Tabs>
     </Resizable>

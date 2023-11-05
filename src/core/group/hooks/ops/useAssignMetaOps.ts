@@ -21,6 +21,7 @@ const useAssignMetaOps = (instance: IGroupInstance) => {
             MetaStore.updateMetaObject({ ...nextMeta, id: i }, true)
           })
         } else {
+          console.log(nextMeta)
           MetaStore.updateMetaObject(nextMeta, true)
         }
         instance.triggerChange?.()

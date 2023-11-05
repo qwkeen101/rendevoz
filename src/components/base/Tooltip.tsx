@@ -16,6 +16,7 @@ interface ToolTipProps {
   contentTouchable?: boolean
   zIndex?: string | number
   visible?: boolean
+  positions?: string[]
   onVisibleChange?: (v: boolean) => void
   parentElement?: AnimatePopoverProps['parentElement']
   padding?: number
@@ -30,6 +31,7 @@ const ToolTip: FC<PropsWithChildren<ToolTipProps>> = (
     align,
     delay = 300,
     disable,
+    positions,
     boundaryInset = 20,
     disableDefaultContent,
     contentTouchable,
@@ -200,9 +202,9 @@ const ToolTip: FC<PropsWithChildren<ToolTipProps>> = (
         align={align}
         content={renderContent()}
         boundaryElement={document.body}
-        reposition={true}
+        // reposition={true}
         boundaryInset={boundaryInset}
-        positions={['top', 'bottom', 'left', 'right']}
+        positions={positions || ['top', 'bottom', 'left', 'right']}
         parentElement={parentElement}
         innerRef={mergedRef}
         visible={!!content && open && !disable}

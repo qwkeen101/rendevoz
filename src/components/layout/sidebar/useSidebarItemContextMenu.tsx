@@ -173,7 +173,7 @@ const useSidebarItemContextMenu = (
                           contentId: Id.getId(),
                           title: 'Untitled'
                         },
-                        'Untitled Note'
+                        'Untitled'
                       )
                     }}
                     text={t('general.note')}

@@ -66,9 +66,7 @@ const BetterSorter = ({ root, onChange }: { root?: SorterGroup; onChange?: (sort
         }
       })}
     >
-      {rootSorter?.sorters.map(i => (
-        <SorterItem sorter={i} onChange={handleChange} onDelete={handleDelete} key={i.id} />
-      ))}
+      {rootSorter?.sorters.map(i => <SorterItem sorter={i} onChange={handleChange} onDelete={handleDelete} key={i.id} />)}
       <Button.IconButton
         size={11}
         gap={6}
@@ -160,7 +158,7 @@ const SorterItem = ({
 export function calculateSortObjects(objects: MetaObject[], group: SorterGroup) {
   const result = _.orderBy(
     objects,
-    [...group.sorters.map(i => i.field)],
+    [...group.sorters.map(i => o => o[i.field] ?? '')],
     [...group.sorters.map(i => (i.type === 'ascending' ? 'asc' : 'desc'))]
   )
   return result

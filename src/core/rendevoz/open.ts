@@ -44,6 +44,7 @@ const openMetaObject = async (metaObjectId: number) => {
     case 'audio':
     case 'audioLabel':
     case 'syncedBlock':
+    case 'group':
     case 'whiteboard': {
       const one = await ObjectStore(metaObject.type).getOneById(objectId)
       if (!one) {
@@ -63,7 +64,6 @@ const openMetaObject = async (metaObjectId: number) => {
     toast.error('Target Item Not Exist!')
     return
   }
-  console.log(metaObject)
   updateViewAt(objectId)
   switch (metaObject.type) {
     case 'noteBlock':
@@ -95,9 +95,21 @@ const openMetaObject = async (metaObjectId: number) => {
       return openVideoLabel(objectId)
     case 'audioLabel':
       return openAudioLabel(objectId)
-    // case 'syncedBlock':
-    //   return openSyncedEditor(metaObjectId)
+    case 'group':
+      return openGroup(objectId)
   }
+}
+
+const openGroup = async (objectId: number) => {
+  return new Promise(res => {
+    Rendevoz.Actions.Layout.openNewTab({
+      data: {
+        type: 'group',
+        objectId: objectId
+      }
+    })
+    res(null)
+  })
 }
 
 const openAudioLabel = async (objectId: number) => {

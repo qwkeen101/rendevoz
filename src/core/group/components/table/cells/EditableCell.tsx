@@ -1,30 +1,33 @@
-import { useRef, useState } from 'react'
+import { CSSProperties, useRef, useState } from 'react'
 import usePopoverCell from '@/core/group/hooks/usePopoverCell'
 import AutosizeTextarea from '@/components/custom/input/autosizeTextarea'
 import { Colors } from '@/consts'
-import { Icon } from '@/components'
-import { Rendevoz } from '@/core/rendevoz'
+import { Button } from '@/components'
 import { PopupWrapper } from '@/core/group/components'
 import { ClassName } from 'rendevoz'
-import { Path } from 'slate'
 import ToggleArrow from '@/core/group/components/basic/ToggleArrow'
+import { useGroupInstance } from '@/core/group/hooks/useGroupInstance'
+import { css } from '@emotion/css'
 
 const EditableCell = ({
   value,
   onChange,
   openMeta,
-  showToggle,
-  path,
+  showToggle = false,
+  rowId,
   toggled,
+  style,
   indent = 0
 }: {
   value: string
   openMeta?: number
   onChange: (v: string) => void
-  showToggle: boolean
+  showToggle?: boolean
   indent?: number
-  path?: Path
+  rowId?: number
   toggled?: boolean
+  style?: CSSProperties
+  placeholder?: string
 }) => {
   const containerRef = useRef<HTMLTextAreaElement>(null)
   const [height, setHeight] = useState(0)
@@ -42,6 +45,7 @@ const EditableCell = ({
   })
   const [isIn, setIsIn] = useState(false)
   const valueRef = useRef('')
+  const instance = useGroupInstance()
   return (
     <>
       <div
@@ -54,28 +58,37 @@ const EditableCell = ({
           openPopover(parent)
         }}
       >
-        {showToggle && path && <ToggleArrow path={path} toggled={!!toggled} />}
-        <div>{value}</div>
+        {showToggle && rowId && <ToggleArrow rowId={rowId} toggled={!!toggled} />}
+        <div style={style}>{value}</div>
         {openMeta && isIn && (
-          <Icon
-            size={13}
-            name="park-expand-text-input"
+          <Button.IconButton
+            gap={6}
+            icon={'park-expand-text-input'}
+            text={'Open'}
             onClick={e => {
               e.stopPropagation()
-              Rendevoz.Actions.Open.Meta.openMetaObject(openMeta)
+              instance.openObject?.(openMeta)
             }}
-            containerStyle={{
+            className={css({
+              background: Colors.Background.Global,
+              ':hover': {
+                background: Colors.Background.Secondary
+              },
+              ':active': {
+                background: Colors.Background.Secondary
+              }
+            })}
+            style={{
               border: `1px solid ${Colors.Background.Border}`,
+              boxShadow: Colors.Background.BoxShadow,
               borderRadius: 4,
               position: 'absolute',
               right: 4,
-              top: '50%',
-              transform: 'translateY(-50%)',
-              padding: 3,
-              cursor: 'pointer',
-              background: Colors.Background.Secondary
+              fontSize: 13,
+              height: 24,
+              padding: '0px 6px'
             }}
-          ></Icon>
+          ></Button.IconButton>
         )}
       </div>
       {renderPopover(box => (
@@ -84,7 +97,7 @@ const EditableCell = ({
             onHeightChange={h => setHeight(h)}
             autoFocus={true}
             minRows={1}
-            maxRows={999}
+            maxRows={20}
             className={ClassName.noStyleInput}
             ref={containerRef}
             spellCheck="false"

@@ -85,7 +85,7 @@ export const HomePage: FC = () => {
               <AnimatePopover
                 align={'end'}
                 content={
-                  <WithBorder padding={6} width={180}>
+                  <WithBorder padding={6} width={200}>
                     <GalleryConfig />
                   </WithBorder>
                 }
@@ -103,7 +103,7 @@ export const HomePage: FC = () => {
   )
 }
 
-const VisibleTypes: MetaObject['type'][] = ['note', 'video', 'pdf', 'whiteboard', 'webpage', 'localFile', 'image']
+const VisibleTypes: MetaObject['type'][] = ['note', 'video', 'pdf', 'whiteboard', 'webpage', 'localFile', 'image', 'audio', 'group']
 
 const ColWidthState = {
   nameWidth: '100%',

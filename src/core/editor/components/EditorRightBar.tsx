@@ -9,10 +9,14 @@ import Colors from '@/consts/colors'
 import { useEffect } from 'react'
 import { useSetAtom } from 'jotai'
 import { EditorSearchAtom } from '../hooks/useEditorSearch'
+import { useSelectAtomValue } from '@/hooks'
+import { EditorStateAtom } from '@/core/editor/hooks/useEditorState'
 
 const EditorRightBar = () => {
   const [barState, setBarState] = useEditorBarState()
   const { t } = useTranslation()
+  const labels = useSelectAtomValue(EditorStateAtom, s => s.labelIds)
+  const labelType = useSelectAtomValue(EditorStateAtom, s => s.labelType) || 'noteLabel'
   const setEditorSearch = useSetAtom(EditorSearchAtom)
   useEffect(() => {
     if (!barState.showRightBar || barState.rightBarActive !== 'search') {
@@ -84,7 +88,7 @@ const EditorRightBar = () => {
             </Content>
           }
         >
-          <EditorLabelController />
+          <EditorLabelController labelType={labelType} labelIds={labels} />
         </TabPane>
       </Tabs>
     </Resizable>

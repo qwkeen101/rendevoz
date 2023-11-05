@@ -1,7 +1,10 @@
-import { Box, MetaGroupChild, MetaObject, PartialWithId } from '../..'
+import { Box, MetaGroupChild, MetaObject, PartialWithId, MetaGroup } from '../..'
 import { PrimitiveAtom } from 'jotai/esm'
 import { Patch } from 'immer'
 import { Path, PathRef } from 'slate'
+import { Virtualizer } from '@tanstack/react-virtual'
+
+export * from './group'
 
 type GroupHistoryItem = {
   atom: PrimitiveAtom<any>
@@ -33,12 +36,13 @@ type GroupDragOps = {
 }
 
 type GroupPathOps = {
-  getPathById: (id: number) => Path | undefined
+  getPathById: (id: number, afterFilter?: boolean) => Path | undefined
   pathRef: (path: Path) => PathRef
 }
 
 type GroupMetaOps = {
   updateMeta: (nextMeta: PartialWithId<MetaObject>) => Promise<void>
+  hasMetaInGroup: (metaId: number) => boolean
 }
 
 export type GroupValueEntry = [MetaGroupChild, Path]
@@ -53,6 +57,19 @@ type GroupValueOps = {
   removeByPath: (path: Path) => void
   getVisibleValues: () => GroupValueEntry[]
   buildIndex: VoidFunction
+  removeByPaths: (paths: Path[]) => void
+  handleToggle: (rowId: number, toggled: boolean) => void
+}
+
+type GroupSelectOps = {
+  clearAllSelect: VoidFunction
+  selectAll: VoidFunction
+  getSelectedItems: () => [MetaGroupChild, Path][]
+  selectBetweenPath: (startPath: Path, endPath: Path) => void
+}
+
+type GroupSidebarOps = {
+  open: (details: { type: 'preview'; metaId: number } | { type: 'labels'; objectId: number; objectType: string }) => void
 }
 
 export type IGroupInstance = Partial<{
@@ -61,20 +78,38 @@ export type IGroupInstance = Partial<{
   pathOps: GroupPathOps
   valueOps: GroupValueOps
   metaOps: GroupMetaOps
+  selectOps: GroupSelectOps
+  sidebarOps: GroupSidebarOps
+  openObject: (metaId: number) => void
   triggerChange: VoidFunction
+  openFilterPanel: VoidFunction
   getOuterContainer: () => HTMLElement
   getScrollElement: () => HTMLElement
+  getScrollMargin: () => number
+  deleteView: (viewId: number) => void
+  updateCurrentView: (updater: (currentView: MetaGroup['views'][0]) => MetaGroup['views'][0]) => void
+  updateGroupData: (updater: (currentData: MetaGroup) => MetaGroup) => Promise<MetaGroup>
+  virtualizer: Virtualizer<any, any>
 }> & {
   values: {
     redos: GroupHistoryItem[]
     undos: GroupHistoryItem[]
     isFocused: boolean
+    currentInsertTarget?: {
+      rowId: number
+      direction: 'above' | 'below' | 'inner'
+    }
     // id => row func
     inViewRowFuncs: Map<number, GroupRowFunctions>
     pathRefs: Set<PathRef>
     selectBox?: Box
     selectedRowIdSet: Set<number>
+    currentValueIndex?: Record<number, number>
+    currentIndex?: number[]
     currentValue: MetaGroupChild[]
+    pageContainer?: HTMLElement
+    // for shift multiple select
+    lastSelectRowId?: number
     rowIdToRowMap: Map<number, MetaGroupChild & { path: Path }>
   }
 }

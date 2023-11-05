@@ -36,6 +36,8 @@ export const getMetaObjectIcon = (type?: MetaObject['type'], metaObject?: MetaOb
       return 'park-pic'
     case 'localFile':
       return 'park-log'
+    case 'group':
+      return 'park-form'
     case 'syncedBlock':
       return 'park-transfer-data'
     default:

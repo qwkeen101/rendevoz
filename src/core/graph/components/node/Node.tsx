@@ -44,16 +44,17 @@ export const TypeToNodeRadius: Record<MetaObject['type'], number> = {
   audio: 15,
   localFile: 15,
   audioLabel: 10,
+  group: 15,
   syncedBlock: 15
 }
 
 export const getRadius = (type?: MetaObject['type']) => {
-  if (!type) return 50
+  if (!type) return 15
   if (TypeToNodeRadius[type]) {
     return TypeToNodeRadius[type]
   }
   const registeredRadius = TypeToRegisteredMetaObject.get(type)?.graphSettings?.radius
-  return registeredRadius ?? 50
+  return registeredRadius ?? 15
 }
 export const sliceLabel = (label?: string) => {
   if (!label) return

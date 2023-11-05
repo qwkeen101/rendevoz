@@ -44,7 +44,7 @@ const MetaObject: FC<RenderElementProps> = memo(({ children, element }) => {
         }}
       >
         {renderWhole({
-          columnGap: 3,
+          columnGap: 6,
           optionOptions: {
             style: {
               top: -5,
@@ -52,7 +52,6 @@ const MetaObject: FC<RenderElementProps> = memo(({ children, element }) => {
             }
           },
           titleOptions: {
-            ellipsisLine: 9999,
             style: {
               fontSize: FontSize['13px']
             }
@@ -66,10 +65,6 @@ const MetaObject: FC<RenderElementProps> = memo(({ children, element }) => {
             style: {
               fontSize: FontSize['12px']
             }
-          },
-          originalTextOptions: {
-            showEdit: false,
-            ellipis: false
           },
           renderOptions: {
             renderFrom: true,

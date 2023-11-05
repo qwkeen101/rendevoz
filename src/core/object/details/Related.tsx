@@ -11,9 +11,8 @@ import { ClassName, MetaObject } from 'rendevoz'
 import _ from 'lodash'
 import Select from '@/components/base/select'
 import { Rendevoz } from '@/core/rendevoz'
-import { DraggableElement, useDropObjectArea, useRenderObject } from '@/core'
+import { useDropObjectArea, useRenderObject } from '@/core'
 import { MetaLink } from '~/typings'
-import useDropObject from '@/core/global/globalDragOverlay/useDropObject'
 import MetaFilterer from '@/core/object/filter/MetaFilterer'
 import HoverObjectDetails from '@/core/object/HoverObjectDetails'
 
@@ -268,6 +267,7 @@ const RelatedItem = ({ metaId, linkId }: { metaId: number; linkId: number }) => 
           className={ClassName.circleButton(2)}
           name={'park-more'}
           closeOnContentClick={true}
+          renderOnParent={false}
           content={
             <WithBorder
               onPointerEnter={e => e.stopPropagation()}

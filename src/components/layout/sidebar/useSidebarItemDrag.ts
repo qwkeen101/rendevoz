@@ -141,29 +141,6 @@ const useSidebarItemDrag = (options: {
       setTimeout(() => (sidebarDraggingState.current = undefined))
     }
   })
-
-  const pointerHandler = useMemoizedFn(async (e: MouseEvent) => {
-    if (e.type === 'pointerdown') {
-      isPressedRef.current = true
-      const cloned = draggableElementRef?.current?.cloneNode(true) as HTMLElement
-      cloned.style.width = `${draggableElementRef?.current?.clientWidth}px`
-      cloned.style.height = `${draggableElementRef?.current?.clientHeight}px`
-      DragState.addDragElements?.(cloned)
-    }
-  })
-
-  useEffect(() => {
-    draggableElementRef?.current?.addEventListener('pointerdown', pointerHandler)
-    draggableElementRef?.current?.addEventListener('pointermove', pointerHandler)
-    draggableElementRef?.current?.addEventListener('pointerleave', pointerHandler)
-    draggableElementRef?.current?.addEventListener('pointerenter', pointerHandler)
-    return () => {
-      draggableElementRef?.current?.removeEventListener('pointerdown', pointerHandler)
-      draggableElementRef?.current?.removeEventListener('pointermove', pointerHandler)
-      draggableElementRef?.current?.removeEventListener('pointerleave', pointerHandler)
-      draggableElementRef?.current?.removeEventListener('pointerenter', pointerHandler)
-    }
-  })
   return {
     droppable,
     isDragging,

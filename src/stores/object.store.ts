@@ -53,7 +53,7 @@ const createObjectStore = <T extends keyof ObjectFamily, V extends ObjectFamily[
 } & IStore<V> => {
   const objectsDb = useDb('objects')
   const objectMapAtom = ObjectFamilyAtom(type) as unknown as PrimitiveAtom<Map<number, V>>
-  const initalizedLocalStore = initializeLocalStore(objectMapAtom, objectsDb)
+  const initializedLocalStore = initializeLocalStore(objectMapAtom, objectsDb)
 
   const localStore: IStore<V> = {
     getAll: async () => {
@@ -63,9 +63,12 @@ const createObjectStore = <T extends keyof ObjectFamily, V extends ObjectFamily[
       globalStore.set(objectMapAtom, BaseStore.bulkAdd(data, globalStore.get(objectMapAtom)))
       return true
     },
+    getAllData: async () => {
+      return await initializedLocalStore.getAllData(s => s.specType === type)()
+    },
     getOneById: async id => {
       try {
-        const result = await initalizedLocalStore.getOneById()(id)
+        const result = await initializedLocalStore.getOneById()(id)
         if (result) {
           if (
             result.specType?.includes('Label') &&
@@ -92,7 +95,7 @@ const createObjectStore = <T extends keyof ObjectFamily, V extends ObjectFamily[
         return Promise.reject()
       }
       inited.specType = type
-      return initalizedLocalStore.addOne(
+      return initializedLocalStore.addOne(
         obj => {
           // if (shouldToast(opts?.silent)) {
           //   toast.success(t('toast.successfully add', { item: t(`general.${type}`) }))
@@ -139,7 +142,7 @@ const createObjectStore = <T extends keyof ObjectFamily, V extends ObjectFamily[
     },
     updateOne: (n, opts) => {
       options?.beforeUpdateProcess?.(n, opts)
-      return initalizedLocalStore.updateOne(
+      return initializedLocalStore.updateOne(
         (obj, silent) => {
           setTimeout(() => {
             const meta = Array.from(globalStore.get(metaObjectsAtom).values()).find(i => i.objectId === obj.id)
@@ -206,7 +209,7 @@ const createObjectStore = <T extends keyof ObjectFamily, V extends ObjectFamily[
             break
           }
         }
-        return initalizedLocalStore.deleteOneById(() => {
+        return initializedLocalStore.deleteOneById(() => {
           // delete all labels
           if ('labels' in one && one.labels) {
             let store = undefined
@@ -262,7 +265,8 @@ const createObjectStore = <T extends keyof ObjectFamily, V extends ObjectFamily[
     getOneById: adaptStore().getOneById,
     getAll: adaptStore().getAll,
     fetchOneById: adaptStore().fetchOneById,
-    addOneWithMeta: adaptStore().addOneWithMeta
+    addOneWithMeta: adaptStore().addOneWithMeta,
+    getAllData: adaptStore().getAllData
   }
 
   const createAtom = (id?: number) => {

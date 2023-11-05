@@ -31,15 +31,17 @@ const Switch: FC<SwitchProps> = ({ onChange, defaultValue = false, value, small 
   const realOn = value !== undefined ? value : on
   const switchStyle: CSSProperties = {
     backgroundColor: realOn ? Colors.Common.SelectColor : '#00000040',
-    justifyContent: realOn ? 'flex-end' : 'flex-start',
+    // justifyContent: realOn ? 'flex-end' : 'flex-start',
     height: small ? 16 : 22,
-    width: small ? 32 : 44
+    width: small ? 32 : 44,
+    position: 'relative'
   }
   const handleStyle: CSSProperties = {
     width: small ? 12 : 18,
     height: small ? 12 : 18,
     backgroundColor: 'white',
-    borderRadius: 999
+    borderRadius: 999,
+    flexShrink: 0
   }
   return (
     <div
@@ -50,7 +52,13 @@ const Switch: FC<SwitchProps> = ({ onChange, defaultValue = false, value, small 
       }}
       style={switchStyle}
     >
-      <motion.div style={handleStyle} layout transition={spring}></motion.div>
+      <div
+        style={{
+          width: realOn ? '100%' : 0,
+          transition: 'width 0.25s ease'
+        }}
+      ></div>
+      <div style={handleStyle}></div>
     </div>
   )
 }

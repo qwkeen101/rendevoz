@@ -15,7 +15,6 @@ export default () => {
           e.preventDefault()
         }
         if (e.shiftKey) {
-          e.preventDefault()
           setGroupState(s => ({ ...s, shiftPressed: true }))
         }
         document.addEventListener('keyup', s)

@@ -1,4 +1,3 @@
-import { rmSync } from 'fs'
 import path, { resolve } from 'path'
 import { defineConfig } from 'vite'
 import electron from 'vite-plugin-electron/simple'

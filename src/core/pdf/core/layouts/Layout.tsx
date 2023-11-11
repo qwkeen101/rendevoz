@@ -116,7 +116,8 @@ const Layout: FC<LayoutProps> = ({
     estimateSize,
     rangeExtractor,
     overscan: 3,
-    paddingStart: 50
+    paddingEnd: 70,
+    paddingStart: 100
     // measureElement: () => {
     //   return scale * pageSize.height + PAGE_SPACING
     // }

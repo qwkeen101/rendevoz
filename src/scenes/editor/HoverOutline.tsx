@@ -71,7 +71,7 @@ const SidebarToolbar = ({ editor }: { editor: CustomEditor }) => {
           key="1"
           tab={
             <Content alignItems="center" flex gap={6}>
-              <Icon name="park-view-list" />
+              <Icon name="park-mindmap-list" />
               {t('general.outline')}
             </Content>
           }
@@ -112,9 +112,8 @@ const HeadingTree = ({ editor }: { value: Descendant[]; editor: CustomEditor }) 
           style={{
             height: '100%',
             overflowY: 'auto',
-            paddingLeft: 15,
             overflowX: 'hidden',
-            paddingRight: 20
+            paddingRight: 10
           }}
         >
           {headingTree.children.map(i => (
@@ -139,22 +138,14 @@ const HeadingItem = ({ item, onClick }: { item: IHeadingTreeNode; onClick: (head
   const currentActiveHeadingId = useSelectAtomValue(EditorStateAtom, s => s.currentActiveHeadingId)
   return (
     <Content flex column gap={4}>
-      <div
-        className={css({
-          position: 'relative',
-          cursor: 'pointer'
-        })}
-      >
+      <Content flex gap={6} style={{ cursor: 'pointer' }}>
         {item.children.length > 0 && (
           <Icon
-            name="park-right"
+            theme={'filled'}
+            name="park-right-one"
             containerStyle={{
-              position: 'absolute',
-              left: -18,
-              top: '50%',
-              transform: collapsed ? 'translateY(-50%)' : 'rotate(90deg) translateY(-50%)',
-              transition: 'all 0.2s ease',
-              transformOrigin: 'top'
+              transform: collapsed ? undefined : 'rotate(90deg)',
+              transition: 'all 0.2s ease'
             }}
             onClick={toggleCollapsed}
           />
@@ -166,21 +157,22 @@ const HeadingItem = ({ item, onClick }: { item: IHeadingTreeNode; onClick: (head
           }}
           style={{
             textTransform: 'none',
-            fontWeight: currentActiveHeadingId === item.id ? 700 : undefined
+            fontWeight: 600,
+            transition: 'color 0.2s ease',
+            color: currentActiveHeadingId === item.id ? Colors.Common.SelectColor : undefined
           }}
           className={css([
+            ClassName.ellipsisFont(1),
             {
-              fontWeight: 400,
               ':hover': {
-                fontWeight: 700
+                color: Colors.Common.SelectColor
               }
-            },
-            ClassName.ellipsisFont(1)
+            }
           ])}
         >
           {item.text}
         </div>
-      </div>
+      </Content>
       {item.children.length > 0 && (
         <Content flex column style={{ paddingLeft: 10, display: collapsed ? 'none' : 'flex' }} gap={4}>
           {item.children.map(i => (

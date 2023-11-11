@@ -8,22 +8,17 @@
   width: 32px;
   height: 32px;
   &:hover {
-    background: rgba(55, 53, 47, 0.08);
+    background: var(--button-hover-background);
   }
 }
 .emojisContainer {
-  width: 400px;
-  min-height: 200px;
-  max-height: 270px;
-  overflow: hidden auto;
+  width: 100%;
   display: flex;
   flex-flow: wrap;
-  padding: 4;
 }
 .categories {
   overflow: auto hidden;
   flex-wrap: nowrap;
-  padding: 4px;
   width: 400px;
 }
 .category {
@@ -36,10 +31,10 @@
   border-radius: 6px;
   font-weight: 500;
   &:hover {
-    background: rgba(55, 53, 47, 0.08);
+    background: var(--botton-hover-background);
   }
   &.selected {
-    background: rgba(55, 53, 47, 0.08);
+    background: var(--button-hover-background);
   }
   &:not(:first-child) {
     margin-left: 4px;

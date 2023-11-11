@@ -13,11 +13,10 @@ const TableWrapper = memo(({ value = [] }: { value: MetaGroupChild[] }) => {
     overscan: 5,
     getScrollElement: () => instance.values.pageContainer,
     estimateSize: () => 30,
+    debug: true,
     count: value.length
   })
-  useEffect(() => {
-    console.log(value)
-  },[value])
+
   instance.getScrollMargin = () => ref.current?.parentElement?.parentElement?.parentElement?.offsetTop ?? 0
   instance.virtualizer = virtualizer
   const items = virtualizer.getVirtualItems()

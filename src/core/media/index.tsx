@@ -257,7 +257,7 @@ const MediaInner = ({ onInstanceInitialized, onlyCore, on, disableTabTitle = tru
           width: '100%',
           height: '100%',
           flexDirection: columnLayout ? 'column' : 'row',
-          justifyContent: columnLayout ? 'unset' : 'center',
+          justifyContent: columnLayout && !audioMode ? 'unset' : 'center',
           alignItems: 'center'
         }}
         tabIndex={0}

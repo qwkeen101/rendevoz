@@ -4,7 +4,7 @@ import { css } from '@emotion/css'
 import { toast } from 'react-hot-toast'
 import { useGlobalAtom, useToggle } from '@/hooks'
 import LoginService, { useUser } from '@/services/login.service'
-import ClassName from '@/styles/classNames'
+import { ClassName } from 'rendevoz'
 import { useTranslation } from 'react-i18next'
 import Colors from '@/consts/colors'
 import { atomWithStorage } from 'jotai/utils'
@@ -181,7 +181,7 @@ const Login = () => {
     }
   }
   return (
-    <Content fullHeight fullWidth flex alignItems="center" justifyContent="center" style={{ fontFamily: 'Muli' }}>
+    <Content fullHeight fullWidth flex alignItems="center" justifyContent="center">
       <Content flex column gap={20} style={{ width: 400 }}>
         <div className={loginTextClassName}>{t('login.login')}</div>
         <div>
@@ -211,20 +211,13 @@ const Login = () => {
                 className={css([{ position: 'absolute', right: 0, bottom: 2 }, ClassName.circleButton()])}
               />
             </div>
-            <Content flex gap={10}>
+            <Content flex alignItems={'center'} gap={10}>
               <CheckBox checked={loginState.rememberMe} onChange={v => setLoginState(s => ({ ...s, rememberMe: v }))} />
               <div>{t('login.remember me')}</div>
               <CheckBox checked={loginState.autoLogin} onChange={v => setLoginState(s => ({ ...s, autoLogin: v }))} />
               <div>{t('login.auto login')}</div>
             </Content>
-            <Content
-              flex
-              alignItems="center"
-              gap={10}
-              justifyContent="center"
-              className={ClassName.flatButton(undefined, undefined, undefined, true)}
-              onClick={handleLogin}
-            >
+            <Content flex alignItems="center" gap={10} justifyContent="center" className={ClassName.selectButton()} onClick={handleLogin}>
               {(loadingState?.logining || loadingState?.gettingUserDetails) && <Icon name="park-loading-one" size={20} spin />}
               {loadingState?.gettingUserDetails ? t('login.retrieving user details') : isFirstLogin ? t('login.sign up') : t('login.login')}
             </Content>
@@ -236,7 +229,7 @@ const Login = () => {
                 flex
                 gap={10}
                 alignItems="center"
-                className={ClassName.flatButton(undefined, undefined, undefined, true)}
+                className={ClassName.selectButton()}
                 onClick={handleCheckEmailExist}
                 justifyContent="center"
               >
@@ -278,7 +271,7 @@ const Login = () => {
                   gap={10}
                   alignItems="center"
                   justifyContent="center"
-                  className={ClassName.flatButton(undefined, undefined, undefined, true)}
+                  className={ClassName.selectButton()}
                   onClick={handleVerifyCode}
                 >
                   {loadingState?.verifingCode ? (

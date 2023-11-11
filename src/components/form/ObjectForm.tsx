@@ -50,20 +50,6 @@ const ObjectForm: FC<
     { wait: 200 }
   )
   const defaultLayout: MetaFormLayoutItem[] = [
-    initialObject?.type
-      ? {
-          type: 'custom',
-          children: (
-            <div
-              style={{
-                fontWeight: 600
-              }}
-            >
-              {t('general.type')}: {t(`general.${TypeToTypeName[initialObject.type]}`)}
-            </div>
-          )
-        }
-      : undefined,
     targetObject && 'url' in targetObject
       ? {
           type: 'input',
@@ -81,10 +67,6 @@ const ObjectForm: FC<
       type: 'descriptionInput',
       value: object.description,
       onChange: v => setObject({ ...object, description: v })
-    },
-    {
-      type: 'tagDisplayer',
-      tags: object.tags
     },
     object?.type
       ? {
@@ -256,12 +238,6 @@ const ObjectForm: FC<
           type: 'iconPicker',
           icon: object.icon,
           onChange: i => setObject({ ...object, icon: i })
-        },
-        {
-          type: 'attchmentManager',
-          attachments: object.attachments,
-          onChange: atts => setObject({ ...object, attachments: atts }),
-          metaId: object.id
         },
         {
           type: 'tagPicker',

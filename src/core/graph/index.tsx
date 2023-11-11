@@ -110,15 +110,6 @@ export const GlobalGraph = () => {
     }
   })
   return null
-  // return (
-  //   <>
-  //     {visible && (
-  //       <GraphThumbnail onClose={() => setVisible(false)}>
-  //         <GraphContainer edges={currentEdges} nodes={currentNodes} />
-  //       </GraphThumbnail>
-  //     )}
-  //   </>
-  // )
 }
 
 export { default as GlobalGraphThumbnail } from './GraphThumbnail'

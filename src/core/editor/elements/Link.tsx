@@ -56,7 +56,6 @@ const Link = ({ element, attributes, children }: RenderElementProps) => {
   const handleEdit = () => {
     const path = ReactEditor.findPath(editor, element)
     const selection = Editor.range(editor, path)
-    console.log(selection)
     Transforms.select(editor, selection)
     editor.overlayManager?.setContent('linkForm')
     editor.overlayManager?.open()
@@ -79,9 +78,7 @@ const Link = ({ element, attributes, children }: RenderElementProps) => {
         )
       }
       return (
-        <WithBorder
-          style={{ display: 'flex', gap: 16, fontSize: FontSize['13px'], alignItems: 'center', padding: '6px 8px 6px 12px', maxWidth: 400 }}
-        >
+        <WithBorder style={{ fontSize: FontSize['13px'], padding: '6px', maxWidth: 400 }}>
           <Content
             flex
             gap={6}
@@ -93,27 +90,36 @@ const Link = ({ element, attributes, children }: RenderElementProps) => {
                 color: Colors.Font.Link
               },
               cursor: 'pointer',
-              transition: 'all 0.2s ease'
+              transition: 'all 0.2s ease',
+              wordBreak: 'break-all',
+              whiteSpace: 'pre-wrap'
             })}
-            alignItems="center"
           >
-            <Icon name="park-efferent-three" />
-            <div style={{ textTransform: 'none' }}>{linkTarget.url}</div>
+            {linkTarget.url}
           </Content>
-          <Icon
-            onClick={() => {
-              handleEdit()
-            }}
-            name="park-edit"
-            className={ClassName.circleButton()}
-          />
-          <Icon
-            onClick={() => {
-              handleRemoveLink()
-            }}
-            name="park-delete"
-            className={ClassName.circleButton()}
-          />
+          <Content flex gap={6} style={{ fontSize: 16, color: Colors.Font.Transparent, justifyContent: 'flex-end' }}>
+            <Icon
+              onClick={() => {
+                navigator.clipboard.writeText(element.url)
+              }}
+              name="park-copy-link"
+              className={ClassName.circleButton()}
+            />
+            <Icon
+              onClick={() => {
+                handleEdit()
+              }}
+              name="park-edit"
+              className={ClassName.circleButton()}
+            />
+            <Icon
+              onClick={() => {
+                handleRemoveLink()
+              }}
+              name="park-delete"
+              className={ClassName.circleButton()}
+            />
+          </Content>
         </WithBorder>
       )
     }

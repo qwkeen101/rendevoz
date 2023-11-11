@@ -29,6 +29,7 @@ export interface SelectProps {
   options: SelectOptionProps[]
   gap?: number
   containerStyle?: CSSProperties
+  align?: 'start' | 'center' | 'end'
 }
 interface ISelect extends FC<SelectProps> {
   Option: typeof SelectOption
@@ -46,6 +47,7 @@ const Select: ISelect = ({
   defaultValue,
   deselectable,
   containerStyle,
+  align = 'end',
   gap = 12,
   menuPosition = 'bottom',
   options,
@@ -146,7 +148,7 @@ const Select: ISelect = ({
         disableIntersection
         containerStyle={{ zIndex: '10000' }}
         parentElement={containerRef.current}
-        align={'end'}
+        align={align}
         boundaryElement={document.body}
         boundaryInset={20}
         content={

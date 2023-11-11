@@ -34,7 +34,6 @@ const MacTitlebar = () => {
         fontSize: 13
       }}
     >
-      Rendevoz
     </Content>
   )
 }

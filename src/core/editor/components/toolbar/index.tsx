@@ -219,24 +219,22 @@ const EditorToolbar: FC<EditorToolbarProps> = ({ scrollElement, style, on }) => 
         iconName="park-text-underline"
         onClick={() => on({ action: 'underline' })}
       />
-      {!readOnly && (
-        <>
-          <Toolbar.Item
-            tooltip={t('editor.link')}
-            iconName="park-link"
-            onClick={() => {
-              on({ action: 'link' })
-              setFloatPosition(s => ({ ...s, visible: false }))
-            }}
-          />
-          <Toolbar.Item
-            tooltip={t('editor.code')}
-            isActive={isMarkActive('code')}
-            iconName="park-code"
-            onClick={() => on({ action: 'code' })}
-          />
-        </>
-      )}
+      <>
+        <Toolbar.Item
+          tooltip={t('editor.link')}
+          iconName="park-link"
+          onClick={() => {
+            on({ action: 'link' })
+            setFloatPosition(s => ({ ...s, visible: false }))
+          }}
+        />
+        <Toolbar.Item
+          tooltip={t('editor.code')}
+          isActive={isMarkActive('code')}
+          iconName="park-code"
+          onClick={() => on({ action: 'code' })}
+        />
+      </>
       <Toolbar.Item tooltip={t('editor.font color')}>
         <IconWithPopover
           placement={['bottom']}

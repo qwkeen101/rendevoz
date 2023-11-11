@@ -18,68 +18,16 @@ import BetterFilter from '@/core/object/filter/BetterFilter'
 import { MetaFilterGroup, MetaObject } from '~/typings'
 import { calculateFilterObjects } from '@/core/object/filter/useBetterFilter'
 import { MetaStore } from '@/stores'
-
-const graphFilterTitleClassName = css({
-  cursor: 'grab',
-  fontFamily: 'Muli',
-  padding: '4px 12px'
-})
 const GraphFilter = () => {
-  const { t } = useTranslation()
   const [nodes, setNodes] = useGraphNodes()
-  const graphVisibleNodesIds = useAtomValue(GraphVisibleNodesIdsAtom)
-  const [pinnedNodesIds, setPinnedNodesIds] = useAtom(GraphPinNodesIdsAtom)
   const setGraphFilterIds = useSetAtom(GraphFilterNodesIdsAtom)
-  const store = useStore()
-  const graph = useGraph()
-
-  const handleFocus = (nodeId: number) => {
-    const graphNodes = store.get(GraphNodesAtom)
-    if (graphNodes && graph) {
-      const targetNode = graphNodes.find(n => n.id === nodeId)
-      if (targetNode) {
-        graph.moveToNode(targetNode.id)
-        setNodes(nodes =>
-          nodes
-            ? produce(nodes, draft => {
-                nodes?.forEach((n, idx) => {
-                  if (n.isCenter && n.id !== nodeId) {
-                    draft[idx].isCenter = false
-                  }
-                  if (n.id === nodeId) {
-                    draft[idx].isCenter = true
-                  }
-                })
-              })
-            : nodes
-        )
-      }
-    }
-  }
-
-  const handleHighlightRelated = (nodeId: number) => {
-    if (pinnedNodesIds.has(nodeId)) {
-      setPinnedNodesIds(ns =>
-        produce(ns, draft => {
-          draft.delete(nodeId)
-        })
-      )
-    } else {
-      setPinnedNodesIds(ns =>
-        produce(ns, draft => {
-          draft.add(nodeId)
-        })
-      )
-    }
-  }
 
   const handleDebounceFilter = useDebounceFn(
     (filterGroup: MetaFilterGroup) => {
       const currentObjects = nodes?.map(i => i.id)
       const filtered = calculateFilterObjects(filterGroup, currentObjects)
-      if (filtered) {
-        setGraphFilterIds(filtered.map(i => i.id))
-      }
+
+      setGraphFilterIds(filtered?.map(i => i.id) || [])
     },
     { wait: 500 }
   )

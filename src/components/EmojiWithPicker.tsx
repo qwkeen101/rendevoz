@@ -65,7 +65,12 @@ const EmojiWithPicker = ({
         withClickCover={true}
         positions={positions}
         content={setV => (
-          <WithBorder>
+          <WithBorder
+            style={{
+              width: 400,
+              height: 400
+            }}
+          >
             <EmojiPicker
               onPick={s => {
                 onChange?.(s)

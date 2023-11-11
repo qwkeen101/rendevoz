@@ -17,6 +17,15 @@ enablePatches()
 const lang = 'zh-CN'
 initI18n(lang)
 
+document.addEventListener(
+  'error',
+  e => {
+    if (e.target instanceof HTMLImageElement) {
+      e.target.src = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mO8Ww8AAj8BXkQ+xPEAAAAASUVORK5CYII='
+    }
+  },
+  true
+)
 // const userAgent = navigator.userAgent.toLowerCase()
 // if (userAgent.indexOf(' electron/') <= -1) {
 //   let fileHandle: FileSystemDirectoryHandle | undefined = undefined

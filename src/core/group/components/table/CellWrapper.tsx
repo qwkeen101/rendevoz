@@ -1,6 +1,5 @@
-import { MetaObject } from '~/typings'
 import { Colors } from '@/consts'
-import { RelatedCell, InLinkCell, OutLinkCell, FromCell, DisplayCell, EditableCell, TagCell } from './cells'
+import { RelatedCell, FromCell, DisplayCell, EditableCell, TagCell } from './cells'
 import { useGroupInstance } from '@/core/group/hooks/useGroupInstance'
 import { Path } from 'slate'
 import ImageCell from '@/core/group/components/table/cells/ImageCell'
@@ -108,10 +107,6 @@ const CellWrapper = memo(
           return <DisplayCell value={value} type={field} />
         case 'related':
           return <RelatedCell metaId={metaId} />
-        case 'outLinks':
-          return <OutLinkCell metaId={metaId} />
-        case 'inLinks':
-          return <InLinkCell metaId={metaId} />
       }
     }
     return (

@@ -54,7 +54,7 @@ export default () => {
     if (a) {
       a.volume = volume
     }
-  }, [volume])
+  }, [volume, loaded])
   useEffect(() => {
     setMediaState(s => ({ ...s, loaded: false }))
   }, [mediaState.url])
@@ -62,7 +62,7 @@ export default () => {
     if (a) {
       a.playbackRate = speed
     }
-  }, [speed])
+  }, [speed, loaded])
   const [ref, { width }] = useMeasure()
   const columnMode = width < 800
   const floated = mediaState.floated
@@ -91,7 +91,7 @@ export default () => {
             centered
             style={{
               background: Colors.Background.RadialGradient,
-              color: Colors.Font.Secondary,
+              color: Colors.Font.Tertiary,
               padding: 60,
               borderRadius: 24
             }}

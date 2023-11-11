@@ -88,7 +88,7 @@ export const DockTabPane: FC<DockTabPaneProps> = memo(({ cached, cacheId, childr
     position: active ? 'relative' : 'absolute',
     top: active ? undefined : 36,
     width: '100%',
-    height: 'calc( 100% - 36px )',
+    height: 'calc( 100% - 33px )',
     // display: active ? undefined : 'none'
     contentVisibility: active ? 'visible' : 'hidden',
     pointerEvents: active ? undefined : 'none'

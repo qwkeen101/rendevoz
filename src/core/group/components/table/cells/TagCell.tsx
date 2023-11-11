@@ -17,21 +17,27 @@ const TagCell = ({ value = [], metaId, wrap }: { value: number[]; metaId: number
   return (
     <>
       <Content
-        flex
         fullWidth
-        gap={4}
-        style={{ flexWrap: wrap ? 'wrap' : 'nowrap', overflow: 'hidden', height: 'fit-content', minHeight: 24, height: '100%' }}
-        alignItems="flex-start"
+        fullHeight
         onClick={e => {
           const parent = e.currentTarget.parentElement
           if (parent) {
+            console.log('open here')
             openPopover(parent)
           }
         }}
       >
-        {value.map(i => (
-          <Tag hideDelete square hideSize tag={i} key={i} />
-        ))}
+        <Content
+          flex
+          fullWidth
+          gap={4}
+          style={{ flexWrap: wrap ? 'wrap' : 'nowrap', overflow: 'hidden', height: 'fit-content', minHeight: 24 }}
+          alignItems="flex-start"
+        >
+          {value.map(i => (
+            <Tag hideDelete square hideSize tag={i} key={i} style={{ margin: 'auto 0' }} />
+          ))}
+        </Content>
       </Content>
       {renderPopover(box => (
         <MetaTagPicker

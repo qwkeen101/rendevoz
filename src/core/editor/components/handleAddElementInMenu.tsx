@@ -68,7 +68,7 @@ export const defaultHandler: DefaultAddElementHandler = (type, instance, mode, o
           overlayManager.open()
         }
       }, 50)
-      break
+      return
     case 'math': {
       const mathId = Id.getId()
       Transforms.insertNodes(editor, {

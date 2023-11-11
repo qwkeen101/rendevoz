@@ -19,6 +19,7 @@ import { RegisteredMetaObject } from 'rendevoz'
 import SearchHelper from '@/textSearch/SearchHelper'
 import KeyvalueStore from '@/stores/keyvalue.store'
 import { calculateFilterObjects } from '@/core/object/filter/useBetterFilter'
+import Node from '@/core/group/utils/node'
 
 export const metaObjectsAtom = atom<Map<number, MetaObject>>(new Map())
 
@@ -30,14 +31,15 @@ let lastWarned = Date.now()
 
 export const handleMetaGroupRules = () => {
   console.log('getting')
-  const unhiddenMetas = Array.from(MetaStore.getMetaObjectsMap().values())
-    .filter(i => !i.hidden)
-    .map(i => i.id)
+  const unhiddenMetasz = Array.from(MetaStore.getMetaObjectsMap().values()).filter(i => !i.hidden)
+  const groupMetas = new Set(unhiddenMetasz.filter(i => i.type === 'group').map(i => i.objectId))
+  const unhiddenMetas = unhiddenMetasz.map(i => i.id)
   ObjectStore('group')
     .getAllData()
     .then(res => {
       const groups = res as MetaGroup[]
       groups.forEach(g => {
+        if (!groupMetas.has(g.id)) return
         // have automation rules
         if (g.rootFilterGroup?.rules?.length) {
           const correctObjects = calculateFilterObjects(g.rootFilterGroup, unhiddenMetas)
@@ -47,7 +49,15 @@ export const handleMetaGroupRules = () => {
               type: 'metaObject',
               rowId: Id.getId()
             })) as MetaGroupChild[]
-            GroupStore.insertItemsIntoGroup(items, g.id)
+            const alreadyInGroupMetaIds = new Set(
+              Node.elements({ children: g.values })
+                .filter(i => i[0].type === 'metaObject')
+                .map(i => i[0].id)
+            )
+            const finalItems = items.filter(i => !alreadyInGroupMetaIds.has(i.id))
+            if (finalItems.length) {
+              GroupStore.insertItemsIntoGroup(finalItems, g.id)
+            }
             if (g.hideObjectsInside) {
               correctObjects.forEach(o => {
                 if (o.type === 'group' && g.hideGroupsInside !== true) {

@@ -53,12 +53,12 @@ const usePopoverCell = (opts: {
           e.preventDefault()
         }
       }
-      const c = (e: MouseEvent) => {
-        if (opts.closeWhenClickoutside === false) return
-        if (!popoverRef.current?.contains(e.target)) {
-          setCellState({ visible: false })
-        }
-      }
+      // const c = (e: MouseEvent) => {
+      //   if (opts.closeWhenClickoutside === false) return
+      //   if (!popoverRef.current?.contains(e.target)) {
+      //     setCellState({ visible: false })
+      //   }
+      // }
 
       const currentbox = opts?.targetRef?.current?.getBoundingClientRect()
       if (currentbox) {
@@ -76,10 +76,10 @@ const usePopoverCell = (opts: {
         }
       }
       window.addEventListener('wheel', h, { passive: false })
-      document.addEventListener('pointerdown', c)
+      // document.addEventListener('click', c)
       return () => {
         window.removeEventListener('wheel', h)
-        document.removeEventListener('pointerdown', c)
+        // document.removeEventListener('click', c)
         opts?.onClose?.()
       }
     }
@@ -90,10 +90,12 @@ const usePopoverCell = (opts: {
       return createPortal(
         <div
           ref={popoverRef}
-          onPointerDown={e => {
+          onClick={e => {
             if (withCover && opts.closeWhenClickoutside !== false) {
+              console.log(e.target, e.currentTarget)
               if (e.target === e.currentTarget) {
                 setCellState({ visible: false })
+                console.log('set here')
               }
             }
           }}

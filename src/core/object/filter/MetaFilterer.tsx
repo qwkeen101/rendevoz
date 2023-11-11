@@ -138,7 +138,7 @@ const MetaFilterer = ({ withInput = true, autoFocus, onChange, currentInput, sho
           renderItem={(item, idx, selected) => <ButtonItem onClick={() => handleSelectItem(item)} item={item} selected={!!selected} />}
           style={{ width: '100%', height: '100%' }}
         />
-      ) : visibleTypes ? (
+      ) : visibleTypes?.length ? (
         <VirtualList
           withKeyboardNavigation={true}
           estimateSize={30}
@@ -161,9 +161,7 @@ const MetaFilterer = ({ withInput = true, autoFocus, onChange, currentInput, sho
           )}
           style={{ width: '100%', height: '100%' }}
         />
-      ) : (
-        <div>123</div>
-      )}
+      ) : null}
     </Content>
   )
 }

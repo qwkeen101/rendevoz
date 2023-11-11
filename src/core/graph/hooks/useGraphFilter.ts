@@ -72,8 +72,6 @@ const useGraphFilter = () => {
   useEffect(() => {
     if (pathFilter?.visiblePath?.length) {
       const { visiblePath } = pathFilter
-      console.log(visiblePath)
-
       const nodeIds = new Set<number>()
       visiblePath.map(path => {
         path.forEach(nodeId => {
@@ -159,7 +157,7 @@ const useGraphFilter = () => {
     pointerEnterNodesIds.forEach(id => {
       shouldHighlightNodesIds.add(id)
     })
-
+    console.log(hasShouldHighlight)
     // one condition: has highlight
     if (hasShouldHighlight) {
       setAllNodes(nodes =>

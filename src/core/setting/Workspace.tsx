@@ -122,7 +122,7 @@ const WorkspaceSetting = () => {
   }
 
   return (
-    <>
+    <Content flex column gap={9}>
       <div className={ClassName.title(FontSize['16px'])}>{t('settings.Current workspace')}</div>
       <div>{currentWorkspace}</div>
       <div style={{ marginTop: 10 }} className={ClassName.title(FontSize['16px'])}>
@@ -221,7 +221,7 @@ const WorkspaceSetting = () => {
           text={t('settings.Create new workspace')}
         />
       </Content>
-    </>
+    </Content>
   )
 }
 

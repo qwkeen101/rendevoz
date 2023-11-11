@@ -155,51 +155,26 @@ const SidebarDatabase = memo(() => {
 
   return (
     <>
-      <AnimatePopover
-        innerRef={itemRef}
-        visible={draggingHovered.visible}
-        positions={['top']}
-        containerStyle={{ zIndex: '10000' }}
-        padding={10}
-        content={
-          <div
-            style={{
-              pointerEvents: 'none',
-              background: 'rgba(0,0,0,0.8)',
-              color: 'white',
-              padding: '2px 6px',
-              borderRadius: 4,
-              fontSize: '0.857rem'
-            }}
-          >
-            {draggingHovered.alreadyExist
-              ? t('database.object already exist')
-              : draggingHovered.droppable
-              ? t('database.drop to add object into database')
-              : t(`database.can't add this type of object`)}
-          </div>
-        }
+      <MenuItem
+        ref={itemRef}
+        onClick={() => {
+          setPanelState(s => {
+            if (s.visible.has('database')) {
+              s.visible.delete('database')
+            } else {
+              s.visible.add('database')
+            }
+          })
+        }}
+        className={css([draggingHovered.visible ? ClassName.Drag.droppableItemHovered(draggingHovered.droppable) : undefined])}
+        style={{
+          background: draggingHovered.visible ? 'white' : undefined,
+          position: 'relative',
+          overflow: 'visible'
+        }}
       >
-        <MenuItem
-          onClick={() => {
-            setPanelState(s => {
-              if (s.visible.has('database')) {
-                s.visible.delete('database')
-              } else {
-                s.visible.add('database')
-              }
-            })
-          }}
-          className={css([draggingHovered.visible ? ClassName.Drag.droppableItemHovered(draggingHovered.droppable) : undefined])}
-          style={{
-            background: draggingHovered.visible ? 'white' : undefined,
-            position: 'relative',
-            overflow: 'visible'
-          }}
-        >
-          <Icon name="park-data" size={20} />
-        </MenuItem>
-      </AnimatePopover>
+        <Icon name="park-data" size={20} />
+      </MenuItem>
     </>
   )
 })

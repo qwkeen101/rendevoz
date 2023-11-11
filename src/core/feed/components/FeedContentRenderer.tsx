@@ -124,7 +124,9 @@ const FeedContentRenderer = () => {
           <Webpage
             initialWebpageId={alreadySaved}
             onFailLoad={() => {
-              setFailLoading(true)
+              if (!currentItem?.state?.content) {
+                setFailLoading(true)
+              }
             }}
             disableTabTitle={true}
             editorOptions={{

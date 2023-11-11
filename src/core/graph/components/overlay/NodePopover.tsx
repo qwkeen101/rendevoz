@@ -39,36 +39,26 @@ const NodePopover = ({ metaId, nodeId, onClose }: { metaId: number; nodeId: numb
   }, [nodeId])
   return (
     <Content
-      flex
-      gap={12}
-      alignItems="flex-start"
       style={{
-        maxWidth: 320
+        maxWidth: 320,
+        padding: 8
       }}
     >
       {renderWhole({
         titleOptions: {
-          style: {
-            fontSize: FontSize['13px']
-          },
           ellipsisLine: 4,
           onTitleClick: () => {
             Rendevoz.Actions.Open.Meta.openMetaObject(metaId)
-            GlobalGraphInstance.minimize?.()
             graph?.overlayManager?.close()
           }
         },
 
         descriptionOptions: {
           style: {
-            fontSize: FontSize['12px']
+            fontSize: FontSize['13px']
           },
           ellipsisLine: 8
         },
-        mainContainerStyle: {
-          padding: 4
-        },
-        rowGap: 5,
         renderOptions: {
           renderImage: true,
           imageMode: 'whole',
@@ -77,7 +67,8 @@ const NodePopover = ({ metaId, nodeId, onClose }: { metaId: number; nodeId: numb
         },
         optionOptions: {
           style: {
-            right: 0
+            right: 0,
+            top: -3
           },
           customNode: (
             <WithBorder>

@@ -38,7 +38,8 @@ const FormTagPicker = ({
         alignItems={'center'}
         style={{
           marginBottom: 6,
-          textTransform: 'capitalize'
+          textTransform: 'capitalize',
+          marginLeft: 10
         }}
         className={ClassName.description()}
       >

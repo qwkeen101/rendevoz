@@ -1,5 +1,5 @@
 import { Content, Icon } from '@/components'
-import { FC, useEffect, useMemo } from 'react'
+import { FC, useEffect, useMemo, memo } from 'react'
 import { EditorProps, IWebpageInstance, MetaObject } from '~/typings'
 import { createStore, Provider } from 'jotai'
 import { useAssignWebpageInstance, WebpageInstanceAtom } from './hooks/useWebpageInstance'
@@ -84,4 +84,4 @@ const Webpage: FC<IWebpageProps> = props => {
     </Provider>
   )
 }
-export default Webpage
+export default memo(Webpage)

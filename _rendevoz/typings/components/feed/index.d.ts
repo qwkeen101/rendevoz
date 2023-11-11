@@ -46,6 +46,9 @@ export type IFeedInstance = Partial<{
   navigateOps: {
     back: VoidFunction
     forward: VoidFunction
+    prepareContent: (
+      feedItemId: number
+    ) => void
   }
   folderOps: {
     createFolder: (currentFolder?: Partial<IFeedFolder>) => Promise<IFeedFolder>

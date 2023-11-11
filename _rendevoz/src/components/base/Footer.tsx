@@ -1,42 +1,48 @@
-import { Noop } from "@/common/types";
-import { Button } from "@/components/base/button";
-import { CSSProperties, FC } from "react";
-import { useTranslation } from "react-i18next";
-import Content from "./Content";
+import { Noop } from '@/common/types'
+import { Button } from '@/components/base/button'
+import { CSSProperties, FC } from 'react'
+import { useTranslation } from 'react-i18next'
+import Content from './Content'
+import { ClassName } from 'rendevoz'
 
 interface FooterProps {
-  submitText?: string;
-  backText?: string;
-  onSubmit?: Noop;
-  onBack?: Noop;
-  buttonStyle?: CSSProperties;
+  submitText?: string
+  backText?: string
+  onSubmit?: Noop
+  onBack?: Noop
+  buttonStyle?: CSSProperties
 }
 const Footer: FC<FooterProps> = ({ onBack, onSubmit, submitText = 'submit', backText = 'back', buttonStyle }) => {
   const { t } = useTranslation()
   return (
     <Content flex alignItems="center" justifyContent="space-between">
-      <Button
+      <div
+        className={ClassName.flatButton()}
         style={{
-          padding: '6px 18px',
+          padding: '3px 12px',
           boxShadow: 'none',
           marginRight: 30,
+          fontWeight: 600,
+          border: '1px solid var(--button-hover-background)',
           ...buttonStyle
         }}
         onClick={onBack}
       >
         {t(`footer.${backText}`)}
-      </Button>
-      <Button
+      </div>
+      <div
+        className={ClassName.selectButton()}
         style={{
           boxShadow: 'none',
-          padding: '6px 18px',
+          padding: '3px 12px',
+          fontWeight: 600,
           borderRadius: 6,
           ...buttonStyle
         }}
         onClick={onSubmit}
       >
         {t(`footer.${submitText}`)}
-      </Button>
+      </div>
     </Content>
   )
 }

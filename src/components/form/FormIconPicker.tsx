@@ -6,7 +6,7 @@ import EmojiPicker from '../picker/emojiPicker'
 const FormIconPicker = ({ onPick, onClose }: { onPick: (icon: string) => void; onClose: VoidFunction }) => {
   const { t } = useTranslation()
   return (
-    <div style={{ width: 550 }}>
+    <Content flex column style={{ width: 550, height: 400 }}>
       <Content
         flex
         alignItems={'center'}
@@ -15,7 +15,7 @@ const FormIconPicker = ({ onPick, onClose }: { onPick: (icon: string) => void; o
           display: 'flex',
           justifyContent: 'space-between',
           textTransform: 'capitalize',
-          paddingLeft: 8,
+          paddingLeft: 6,
           marginRight: -4
         }}
         className={ClassName.description()}
@@ -23,8 +23,10 @@ const FormIconPicker = ({ onPick, onClose }: { onPick: (icon: string) => void; o
         {`${t('general.choose')} ${t('general.icon')}`}
         <Icon name="park-close" onClick={onClose} className={ClassName.circleButton()} />
       </Content>
-      <EmojiPicker width="100%" onPick={onPick} />
-    </div>
+      <Content auto style={{ height: 0 }}>
+        <EmojiPicker width="100%" onPick={onPick} />
+      </Content>
+    </Content>
   )
 }
 

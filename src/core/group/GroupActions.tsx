@@ -168,9 +168,11 @@ const GroupActions = memo(({ groupId }: { groupId: number }) => {
             }
           }}
           onBlur={e => {
-            setShowSearch(false)
-            setSearch('')
-            e.currentTarget.value = ''
+            if (e.currentTarget.value === '') {
+              setShowSearch(false)
+              setSearch('')
+              e.currentTarget.value = ''
+            }
           }}
           autoFocus={true}
           placeholder={'Search in group...'}

@@ -177,14 +177,14 @@ const TitleRenderer = ({
   const { t } = useTranslation()
   return (
     <>
-      {metaObject?.type === 'webpage' && renderWebpageFrom && metaObject.objectId && (
-        <WebpageSourceRenderer
-          style={{
-            marginTop: metaObject.coverImgSrc ? 0 : 4
-          }}
-          objectId={metaObject.objectId}
-        />
-      )}
+      {/*{metaObject?.type === 'webpage' && renderWebpageFrom && metaObject.objectId && (*/}
+      {/*  <WebpageSourceRenderer*/}
+      {/*    style={{*/}
+      {/*      marginTop: metaObject.coverImgSrc ? 0 : 4*/}
+      {/*    }}*/}
+      {/*    objectId={metaObject.objectId}*/}
+      {/*  />*/}
+      {/*)}*/}
       {isEditing ? (
         <ContentEditor
           style={{ marginTop: 8 }}
@@ -668,6 +668,7 @@ const WholeRenderer = memo(
         renderFrom?: boolean
         renderOption?: boolean
         renderOriginalText?: boolean
+        renderWebpageFrom?: boolean
         imageMode?: 'thumbnail' | 'whole'
       }
     }
@@ -684,7 +685,8 @@ const WholeRenderer = memo(
       imageOptions = {},
       originalTextOptions = {
         style: {
-          padding: '2px 6px 4px'
+          padding: '2px 6px 4px',
+          margin: '8px 0px 4px'
         }
       },
       fromOptions = {},

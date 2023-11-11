@@ -35,6 +35,7 @@ export type OpenTabOptions<K extends ILayoutTab['type']> = {
  */
 declare const Layout: {
   registerTabData: <K extends ILayoutTab['type']>(data: TabData[K]) => void
+  getRegisteredTabContent: <K extends ILayoutTab['type']>(type: K) => TabData[K]['content'] | undefined
   openNewTab: <T extends ILayoutTab['type']>({ data }: OpenTabOptions<T>) => void
   /**
    * get layoutTab from tabData and openTabData

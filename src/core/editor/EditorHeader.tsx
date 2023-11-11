@@ -27,8 +27,7 @@ const EditorHeader = ({ title, editor }: { editor: CustomEditor; title: string }
       alignItems="center"
       style={{
         padding: '6px 16px',
-        background: Colors.Background.Secondary,
-        borderBottom: `1px solid ${Colors.Background.Border}`
+        borderBottom: `1px solid ${Colors.Background.ButtonHover}`
       }}
       gap={30}
       justifyContent="space-between"

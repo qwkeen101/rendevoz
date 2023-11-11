@@ -52,7 +52,9 @@ const EdgeAttributeCard = ({ currentEdge }: { currentEdge?: GraphEdge }) => {
     wait: 200
   })
   return (
-    <Toolbar>
+    <Toolbar style={{
+      padding: '0px 6px'
+    }}>
       <Toolbar.Item>
         <IconWithPopover
           name="park-edit"

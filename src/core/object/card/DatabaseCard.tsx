@@ -429,6 +429,15 @@ export const ObjectActionPopover: FC<
         }}
       />
       <Button.IconButton
+        text={t('general.edit')}
+        icon="park-edit"
+        onClick={() => {
+          onClose?.()
+          onEdit?.()
+          Rendevoz.Actions.Open.Meta.openEditMetaDialog(metaObjectId)
+        }}
+      />
+      <Button.IconButton
         onClick={() => {
           updateMetaObject({ id: metaObject.id, pinned: !metaObject.pinned })
           onPin?.()

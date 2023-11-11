@@ -26,7 +26,7 @@ const CheckBox = ({
       }}
       className={className}
     >
-      <input type={'checkbox'} checked={checked} style={{ width: '100%', height: '100%' }} />
+      <input type={'checkbox'} checked={checked} style={{ width: '100%', height: '100%', cursor: 'pointer' }} />
     </Content>
   )
 }

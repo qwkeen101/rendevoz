@@ -19,19 +19,23 @@ const RelatedCell = ({ metaId }: { metaId: number }) => {
     closeWhenClickoutside: false
   })
   return (
-    <Content
-      onClick={e => {
-        const parent = e.currentTarget.parentElement
-        if (parent) {
-          openPopover(parent)
-        }
-      }}
-      ref={ref}
-      style={{
-        fontWeight: 600
-      }}
-    >
-      {size}
+    <>
+      <Content
+        onClick={e => {
+          const parent = e.currentTarget.parentElement
+          if (parent) {
+            openPopover(parent)
+          }
+        }}
+        ref={ref}
+        style={{
+          fontWeight: 600,
+          width: '100%',
+          height: '100%'
+        }}
+      >
+        {size}
+      </Content>
       {renderPopover(
         box => (
           <PopupWrapper box={{ ...box, width: 480 }}>
@@ -56,7 +60,7 @@ const RelatedCell = ({ metaId }: { metaId: number }) => {
         ),
         false
       )}
-    </Content>
+    </>
   )
 }
 

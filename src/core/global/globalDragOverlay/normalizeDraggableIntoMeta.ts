@@ -90,7 +90,16 @@ export default async (
             syncVersion: 1,
             syncedMetaIds: [noteMeta.id]
           },
-          { silent: true }
+          {
+            silent: true,
+            currentMeta: {
+              name: 'Untitled block',
+              fromObject: {
+                type: 'note',
+                metaId: noteMeta.id
+              }
+            }
+          }
         )
       ).meta
       Rendevoz.Events.Emit.GlobalEventEmitter.emit('editor', {

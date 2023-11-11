@@ -7,12 +7,16 @@ import { InnerNodeProps } from './WrapperNode'
 import { useFlow } from '../hooks'
 import PdfNode from './PdfNode'
 import NoteNode from './NoteNode'
-import { useRenderObject, Media } from '@/core'
+import { useRenderObject } from '@/core'
 import FontSize from '@/consts/font'
 import WebpageNode from '@/core/whiteboard/node/WebpageNode'
 import { Rendevoz } from '@/core/rendevoz'
 import { useWhiteboardInstance } from '@/core/whiteboard/hooks/useWhiteboardInstance'
 import SyncedBlockNode from '@/core/whiteboard/node/SyncedBlockNode'
+import Video from '@/core/media/wrappers/Video'
+import Audio from '@/core/media/wrappers/Audio'
+import { MetaGroupPage } from '@/scenes'
+import { DockTabPaneContext } from '@/components/base/dock/DockTabPane'
 
 const MetaObjectNode: FC<InnerNodeProps> = ({ node: n, setPopoverElements, setNodeState, onNameChange }) => {
   const node = n as IWhiteboardNode & { type: 'metaObject' }
@@ -39,7 +43,7 @@ const MetaObjectNode: FC<InnerNodeProps> = ({ node: n, setPopoverElements, setNo
 
   useEffect(() => {
     if (metaObject?.type) {
-      if (['note', 'pdf', 'image', 'webpage', 'video', 'syncedBlock'].includes(metaObject.type)) {
+      if (['note', 'pdf', 'image', 'webpage', 'video', 'syncedBlock', 'group', 'audio'].includes(metaObject.type)) {
         setPopoverElements?.(eles => {
           return [
             ...eles,
@@ -58,7 +62,7 @@ const MetaObjectNode: FC<InnerNodeProps> = ({ node: n, setPopoverElements, setNo
                 />
               </Tooltip>
             ),
-            ['note', 'webpage', 'video', 'pdf', 'syncedBlock'].includes(metaObject.type)
+            ['note', 'webpage', 'video', 'pdf', 'syncedBlock', 'audio', 'group'].includes(metaObject.type)
               ? () => (
                   <Tooltip position="top" content={!getNodeState().expanded ? 'Expand Node' : 'Fold Node'}>
                     <Icon
@@ -88,6 +92,7 @@ const MetaObjectNode: FC<InnerNodeProps> = ({ node: n, setPopoverElements, setNo
                   className={ClassName.circleButton(undefined, 4)}
                   name={'park-right-bar'}
                   onClick={() => {
+                    console.log('focus here')
                     flow.onNodeFocus?.(node)
                   }}
                 />
@@ -147,13 +152,6 @@ const MetaObjectNode: FC<InnerNodeProps> = ({ node: n, setPopoverElements, setNo
         renderOriginalText: true
       },
       originalTextOptions: {
-        showEdit: false,
-        ellipis: false,
-        editorStyle: {
-          height: 0,
-          flexGrow: 1,
-          overflow: 'auto'
-        },
         style: {
           margin: '4px 0px',
           padding: '2px 6px 4px'
@@ -239,19 +237,6 @@ const MetaObjectNode: FC<InnerNodeProps> = ({ node: n, setPopoverElements, setNo
         renderTags: true,
         renderOriginalText: true
       },
-      originalTextOptions: {
-        showEdit: false,
-        ellipis: false,
-        editorStyle: {
-          height: 0,
-          flexGrow: 1,
-          overflow: 'auto'
-        },
-        style: {
-          margin: '4px 0px',
-          padding: '2px 6px 4px'
-        }
-      },
       titleOptions: {
         ellipsisLine: 0,
         style: {
@@ -283,6 +268,30 @@ const MetaObjectNode: FC<InnerNodeProps> = ({ node: n, setPopoverElements, setNo
               }}
             />
           )
+        case 'group': {
+          return (
+            <div style={{ width: '1000px', maxWidth: '100%', minWidth: '100%', height: 800, minHeight: '100%', maxHeight: '100%' }}>
+              <MetaGroupPage groupId={metaObject.objectId} />
+            </div>
+          )
+        }
+        case 'audio': {
+          return (
+            <div
+              style={{
+                width: '1000px',
+                maxWidth: '100%',
+                minWidth: '100%',
+                height: 365,
+                padding: 30,
+                minHeight: '100%',
+                maxHeight: '100%'
+              }}
+            >
+              <Audio onlyCore={true} audioId={metaObject.objectId} />
+            </div>
+          )
+        }
         case 'webpage':
           return (
             <WebpageNode
@@ -295,7 +304,7 @@ const MetaObjectNode: FC<InnerNodeProps> = ({ node: n, setPopoverElements, setNo
         case 'video':
           return (
             <div style={{ width: '800px', maxWidth: '100%', minWidth: '100%', height: 450, minHeight: '100%', maxHeight: '100%' }}>
-              <Media onlyCore={true} videoId={metaObject.objectId} />
+              <Video onlyCore={true} videoId={metaObject.objectId} />
             </div>
           )
         case 'note': {
@@ -315,7 +324,13 @@ const MetaObjectNode: FC<InnerNodeProps> = ({ node: n, setPopoverElements, setNo
       }
     }
   }
-  return expanded ? renderExpanded() : hasImage ? hasImageRenderer() : <CommonRenderer />
+  return expanded ? (
+    <DockTabPaneContext.Provider value={{ currentTabId: '' }}>{renderExpanded()}</DockTabPaneContext.Provider>
+  ) : hasImage ? (
+    hasImageRenderer()
+  ) : (
+    <CommonRenderer />
+  )
 }
 
 const measureTextCanvas = document.createElement('canvas')

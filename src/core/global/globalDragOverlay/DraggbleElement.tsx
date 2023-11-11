@@ -73,7 +73,7 @@ const DraggableElement = forwardRef<
   useEffect(() => {
     if (dragHandleClassName) {
       const node = childRef.current?.getElementsByClassName(dragHandleClassName)[0]
-      if (node) {
+      if (node && node instanceof HTMLElement) {
         node.addEventListener('pointerdown', pointerHandler)
         node.addEventListener('pointermove', pointerHandler)
         document.addEventListener('pointerup', pointerHandler)
@@ -92,7 +92,7 @@ const DraggableElement = forwardRef<
       childRef.current?.removeEventListener('pointermove', pointerHandler)
       document.removeEventListener('pointerup', pointerHandler)
     }
-  }, [dragHandleClassName])
+  })
   const renderChild = () =>
     cloneElement(children as JSX.Element, {
       ref: handleRef

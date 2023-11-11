@@ -1,28 +1,27 @@
 import { AnimatePopover, Button, Icon, IconWithPopover, Modal, WithBorder } from '@/components'
 import { FC, useMemo, useState } from 'react'
 import { Components } from 'rendevoz'
-import { useDebounceFn, useGlobalAtomValue, useSelectAtomValue, useToggle } from '@/hooks'
+import { GlobalInstance, useGlobalAtomValue, useToggle } from '@/hooks'
 import { useTranslation } from 'react-i18next'
 import TabTitle from '@/components/layout/TabTitle'
-import ClassName from '@/styles/classNames'
+import { ClassName } from 'rendevoz'
 import { TypeToRegisteredMetaObject, undeletedMetaObjectsAtom } from '@/stores/meta.store'
 import { MetaObject } from '~/typings'
 import Select from '@/components/base/select'
 import DateFormat from '@/utils/dateFormat'
 import { css } from '@emotion/css'
 import { motion } from 'framer-motion'
-import { IconNameItem } from '@/components/layout/sidebar/SidebarCollection'
-import { DraggableElement, ObjectActionPopover, TypeToTypeName, useCreateObject } from '@/core'
+import { DraggableElement, ObjectActionPopover, TypeToTypeName } from '@/core'
 import { Zindexes } from '@/consts'
 import Colors from '@/consts/colors'
-import { atom, createStore, useAtomValue } from 'jotai'
+import { atom, useAtomValue } from 'jotai'
 import fuzzysort from 'fuzzysort'
 import { Rendevoz } from '@/core/rendevoz'
 import FileImporter from '@/components/fileImporter'
 import HomeGallery from '@/scenes/home/HomeGallery'
 import KeyvalueStore from '@/stores/keyvalue.store'
 import GalleryConfig from '@/scenes/home/GalleryConfig'
-import fetchGoogleNews from '@/core/feed/utils/googleNewsScraper'
+import { MetaStore } from '@/stores'
 
 const { Content } = Components
 const HomeSearchAtom = atom<string | undefined>(undefined)
@@ -30,7 +29,6 @@ export const HomePage: FC = () => {
   const { t } = useTranslation()
   const currentWorkspace = KeyvalueStore.useValue('currentWorkspace') || 'default'
   const homeMode = KeyvalueStore.useValue('homeDisplayMode') || 'gallery'
-  const [createVisible, toggleCreateVisible] = useToggle(false)
   return (
     <Content fullHeight fullWidth style={{ overflowY: 'auto' }}>
       <Content
@@ -45,16 +43,13 @@ export const HomePage: FC = () => {
         }}
       >
         <TabTitle title={t('general.home')} icon="park-home" />
-        <Modal visible={createVisible} onClose={toggleCreateVisible}>
-          <FileImporter onClose={toggleCreateVisible} />
-        </Modal>
         <Content flex alignItems="center" justifyContent="space-between" style={{ margin: '16px 0px' }}>
           <div>
             <div style={{ fontSize: 13, color: Colors.Font.Transparent }}>{t('settings.workspace')}</div>
             <div
               style={{
-                fontSize: 20,
-                fontWeight: 500
+                fontSize: 22,
+                fontWeight: 600
               }}
             >
               {currentWorkspace === 'default' ? 'Default workspace' : currentWorkspace}
@@ -63,24 +58,28 @@ export const HomePage: FC = () => {
           <Content flex gap={8} alignItems={'center'}>
             <Icon
               name={'park-all-application'}
-              size={20}
+              size={18}
               className={ClassName.flatButton(4, 4)}
               onClick={() => {
                 KeyvalueStore.updateOne('homeDisplayMode', 'gallery')
               }}
-              style={{ background: homeMode === 'gallery' ? Colors.Background.ButtonActive : undefined }}
+              style={{
+                background: homeMode === 'gallery' ? Colors.Background.ButtonActive : undefined,
+                color: homeMode === 'table' ? Colors.Font.Transparent : undefined
+              }}
             />
             <Icon
-              name={'park-list-view'}
-              size={20}
+              name={'park-table-file'}
+              size={18}
               onClick={() => {
                 KeyvalueStore.updateOne('homeDisplayMode', 'table')
               }}
               className={ClassName.flatButton(4, 4)}
-              style={{ background: homeMode === 'table' ? Colors.Background.ButtonActive : undefined }}
+              style={{
+                background: homeMode === 'table' ? Colors.Background.ButtonActive : undefined,
+                color: homeMode === 'gallery' ? Colors.Font.Transparent : undefined
+              }}
             />
-            <div style={{ height: 20, width: 1, background: Colors.Background.Border }}></div>
-            <Icon size={20} className={ClassName.flatButton(4, 4)} onClick={e => toggleCreateVisible()} name="park-plus"></Icon>
             {homeMode === 'gallery' && (
               <AnimatePopover
                 align={'end'}
@@ -91,9 +90,16 @@ export const HomePage: FC = () => {
                 }
                 positions={['bottom']}
               >
-                <Icon name={'park-more'} size={20} className={ClassName.flatButton(4, 4)} />
+                <Icon name={'park-more'} size={18} className={ClassName.flatButton(4, 4)} />
               </AnimatePopover>
             )}
+            <div
+              onClick={() => GlobalInstance.metaOps?.createObject()}
+              className={ClassName.selectButton(4, '1px 8px')}
+              style={{ fontSize: 14, fontWeight: 600, color: 'white', marginLeft: 12 }}
+            >
+              {t('general.New')}
+            </div>
           </Content>
         </Content>
         {homeMode === 'gallery' && <HomeGallery />}
@@ -117,12 +123,9 @@ const Recent = () => {
   const [showResizer, toggleShowResizer] = useToggle(false)
   const search = useAtomValue(HomeSearchAtom)
   const getIcon = Rendevoz.Utils.Object.getMetaObjectIcon
-  const allVisibleTypes = useMemo(() => {
-    const visible = Array.from(TypeToRegisteredMetaObject.values())
-      .filter(i => i.visibleInHomepage)
-      .map(i => i.type)
-    return [...VisibleTypes, ...visible]
-  }, [])
+  const allVisibleTypes = Array.from(MetaStore.useIndexedMetaObjects()?.typeToMetaObjectIdsMap.keys() || []).filter(i =>
+    VisibleTypes.includes(i)
+  )
   const [sortMode, setSortMode] = useState<'viewDesc' | 'viewAsc' | 'createDesc' | 'createAsc'>('viewDesc')
   const filteredItems = () => {
     switch (type) {
@@ -179,14 +182,18 @@ const Recent = () => {
       >
         <div id="name-header" style={{ width: '100%' }}>
           <Select
-            style={{ marginLeft: -8 }}
+            align={'start'}
             value={type}
             onSelect={v => setType(v[0])}
             closeOnSelect
+            style={{
+              fontWeight: 600,
+              width: 200
+            }}
             options={[
               {
                 value: 'all',
-                children: t('general.all types'),
+                children: t('general.all'),
                 icon: 'park-all-application'
               },
               ...allVisibleTypes.map(type => ({
@@ -219,7 +226,7 @@ const Recent = () => {
               }}
               style={{
                 width: '0px',
-                borderLeft: '2px solid rgba(0,0,0,0.1)',
+                borderLeft: '2px solid var(--border-background)',
                 cursor: 'col-resize',
                 height: '100%',
                 top: 0,
@@ -232,7 +239,7 @@ const Recent = () => {
             <Button.IconButton
               spaceBetween
               reverse
-              style={{ flex: 1, whiteSpace: 'nowrap' }}
+              style={{ flex: 1, whiteSpace: 'nowrap', fontWeight: 600 }}
               text={t('general.view at')}
               onClick={() => {
                 setSortMode(sortMode === 'viewDesc' ? 'viewAsc' : 'viewDesc')
@@ -263,7 +270,7 @@ const Recent = () => {
               }}
               style={{
                 width: '0px',
-                borderLeft: '2px solid rgba(0,0,0,0.1)',
+                borderLeft: '2px solid var(--border-background)',
                 cursor: 'col-resize',
                 height: '100%',
                 top: 0,
@@ -275,7 +282,7 @@ const Recent = () => {
             ></motion.div>
             <Button.IconButton
               spaceBetween
-              style={{ flex: 1, whiteSpace: 'nowrap' }}
+              style={{ flex: 1, whiteSpace: 'nowrap', fontWeight: 600 }}
               reverse
               text={t('general.create at')}
               onClick={() => {

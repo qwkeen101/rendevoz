@@ -39,7 +39,7 @@ const PathIndicator = () => {
   }, [pathFilter?.startNodeId, pathFilter?.tempEndNodeId])
 
   return (
-    <Content style={{ maxWidth: 350, overflow: 'hidden' }}>
+    <Content style={{ maxWidth: 350, overflow: 'hidden', padding: '2px 6px' }}>
       {indicatorState?.pathsNum ? (
         <>
           <div className={ClassName.ellipsisFont(1)} style={{ fontSize: FontSize['12px'] }}>

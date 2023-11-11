@@ -13,8 +13,7 @@ const withHtml = (editor: CustomEditor) => {
     const plainText = data.getData('text/plain')
     console.log(plainText, slateFragment, data)
     const image = Array.from(data.files).find(i => i.type.startsWith('image'))
-    if (image) {
-      console.log(image.path)
+    if (image && image.path) {
       Transforms.insertNodes(editor, {
         type: 'image',
         url: `file://${image.path}`,
@@ -25,7 +24,6 @@ const withHtml = (editor: CustomEditor) => {
     }
     if (slateFragment) {
       ReactEditor.insertFragmentData(editor, data)
-      // Transforms.deselect(editor)
       return
     }
     if (html) {

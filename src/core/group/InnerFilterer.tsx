@@ -20,7 +20,11 @@ const InnerFilterer = ({ groupId }: { groupId: number }) => {
       {groupData?.rootFilterGroup && (
         <BetterFilter
           root={groupData.rootFilterGroup}
-          onChange={r => ObjectStore('group').updateOne({ id: groupId, rootFilterGroup: r })}
+          onChange={r => {
+            if (r !== groupData?.rootFilterGroup) {
+              ObjectStore('group').updateOne({ id: groupId, rootFilterGroup: r })
+            }
+          }}
         />
       )}
     </Content>

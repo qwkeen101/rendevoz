@@ -7,7 +7,7 @@ import { Colors } from '@/consts'
 import useFeedState from '@/core/feed/hooks/useFeedState'
 import { ObjectStore } from '@/stores'
 import useFeedInstance from '@/core/feed/hooks/useFeedInstance'
-import { useMemo } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import markAllAsRead from '@/core/feed/utils/service/markAllAsRead'
 
 const viewToTranslate = {
@@ -30,7 +30,19 @@ const FeedHeaderBar = () => {
   const [feedState, setFeedState] = useFeedState()
   const instance = useFeedInstance()
   const currentCollection = ObjectStore('feedCollection').useValue(feedState.currentCollectionId)
-
+  const allItems = feedState.filteredFeedItems || feedState.allFeedItems
+  const readItems = KeyvalueStore.useValue('feedReadIds')
+  const [alreadyReadAll, setAlreadyReadAll] = useState(false)
+  useEffect(() => {
+    if (readItems) {
+      const realIds = new Set(readItems)
+      if (allItems.filter(i => realIds.has(i)).length === allItems.length) {
+        setAlreadyReadAll(true)
+        return
+      }
+    }
+    setAlreadyReadAll(false)
+  }, [readItems?.length, allItems.length])
   return (
     <Content
       flex
@@ -58,14 +70,17 @@ const FeedHeaderBar = () => {
         </div>
       </Content>
       <Content flex gap={6} style={{ flexShrink: 0 }}>
-        <Button.IconButton
-          onClick={() => {
-            markAllAsRead(feedState.allFeedItems, feedState.currentCollectionId)
-          }}
-          icon={'park-check'}
-          text={'Mark all as read'}
-          style={{ border: `1px solid ${Colors.Background.Border}`, fontSize: 14, fontWeight: 600 }}
-        />
+        {!alreadyReadAll && (
+          <Button.IconButton
+            onClick={() => {
+              markAllAsRead(feedState.allFeedItems, feedState.currentCollectionId)
+            }}
+            icon={'park-check'}
+            text={'Mark all as read'}
+            className={ClassName.selectButton()}
+            style={{ fontSize: 14, fontWeight: 600 }}
+          />
+        )}
         <Icon
           size={20}
           name={'park-up'}

@@ -14,36 +14,38 @@ export default ({ value, onChange }: { value: string; onChange: (filePath?: stri
   })
 
   return (
-    <Content
-      flex
-      justifyContent={'space-between'}
-      ref={ref}
-      onClick={e => {
-        const parent = e.currentTarget.parentElement
-        if (parent) {
-          openPopover(parent)
-        }
-      }}
-      style={{
-        height: '100%',
-        position: 'relative'
-      }}
-    >
-      {value && (
-        <img
-          loading={'lazy'}
-          style={{
-            objectFit: 'cover',
-            maxWidth: '100%',
-            borderRadius: 4,
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            maxHeight: '100%'
-          }}
-          src={value}
-        />
-      )}
+    <>
+      <Content
+        flex
+        justifyContent={'space-between'}
+        ref={ref}
+        onClick={e => {
+          const parent = e.currentTarget.parentElement
+          if (parent) {
+            openPopover(parent)
+          }
+        }}
+        style={{
+          height: '100%',
+          position: 'relative'
+        }}
+      >
+        {value && (
+          <img
+            loading={'lazy'}
+            style={{
+              objectFit: 'cover',
+              maxWidth: '100%',
+              borderRadius: 4,
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              maxHeight: '100%'
+            }}
+            src={value}
+          />
+        )}
+      </Content>
       {renderPopover(box => (
         <PopupWrapper box={{ ...box, width: Math.max(300, box.width) }}>
           <ImageRenderer
@@ -56,6 +58,6 @@ export default ({ value, onChange }: { value: string; onChange: (filePath?: stri
           />
         </PopupWrapper>
       ))}
-    </Content>
+    </>
   )
 }

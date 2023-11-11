@@ -1,42 +1,36 @@
-import { WithBorder } from "@/components";
-import { CustomEditor } from "~/typings";
-import EmojiPicker from "@/components/picker/emojiPicker";
-import { useLayoutEffect } from "react";
-import { Transforms } from "slate";
-import { ReactEditor } from "../../../slate-react";
-import { EditorOverlayManager } from "../useEditorOverlay";
+import { WithBorder } from '@/components'
+import { CustomEditor } from '~/typings'
+import EmojiPicker from '@/components/picker/emojiPicker'
+import { useLayoutEffect } from 'react'
+import { Transforms } from 'slate'
+import { ReactEditor } from '../../../slate-react'
+import { EditorOverlayManager } from '../useEditorOverlay'
 
-const EditorEmojiPicker = ({
-  editor,
-  manager,
-}: {
-  editor: CustomEditor;
-  manager: EditorOverlayManager;
-}) => {
+const EditorEmojiPicker = ({ editor, manager }: { editor: CustomEditor; manager: EditorOverlayManager }) => {
   useLayoutEffect(() => {
-    const { selection } = editor;
+    const { selection } = editor
     if (selection) {
-      const domRange = ReactEditor.toDOMRange(editor, selection);
-      const rect = domRange.getBoundingClientRect();
+      const domRange = ReactEditor.toDOMRange(editor, selection)
+      const rect = domRange.getBoundingClientRect()
       manager.setPosition({
         left: rect.left,
-        top: rect.top + 10,
-      });
+        top: rect.top + 10
+      })
     }
-  }, []);
+  }, [])
   return (
-    <WithBorder>
+    <WithBorder style={{ width: 400, height: 400 }}>
       <EmojiPicker
-        onPick={(name) => {
+        onPick={name => {
           Transforms.insertNodes(editor, {
-            type: "emoji",
+            type: 'emoji',
             name,
-            children: [{ text: "" }],
-          });
+            children: [{ text: '' }]
+          })
         }}
       />
     </WithBorder>
-  );
-};
+  )
+}
 
-export default EditorEmojiPicker;
+export default EditorEmojiPicker

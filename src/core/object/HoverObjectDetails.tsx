@@ -83,6 +83,7 @@ const HoverObjectDetails = forwardRef(
         ref={mergedRef}
         zIndex={Zindexes.HoverObjectDetails}
         delay={800}
+        positions={positions}
         boundaryInset={30}
         disableDefaultContent
         contentTouchable

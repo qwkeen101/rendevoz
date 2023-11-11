@@ -97,19 +97,10 @@ export const selectBlock = (blockId: number, instance: IEditorInstance) => {
   })
 }
 
-const blinkOutline = keyframes({
-  '0%': {
-    outline: '3px solid #F3E99F'
-  },
-  '100%': {
-    outline: '3px solid transparent'
-  }
-})
 export const highlightClassName = css({
-  animation: `${blinkOutline} 0.8s infinite`,
-  animationDirection: 'alternate',
-  borderRadius: 4,
-  width: 'fit-content !important'
+  background: '#f3e99f2e',
+  outline: '3px solid #F3E99F',
+  borderRadius: 4
 })
 export const highlightBlock = (blockId: number, editor: CustomEditor) => {
   const editorNode = ReactEditor.toDOMNode(editor, editor)

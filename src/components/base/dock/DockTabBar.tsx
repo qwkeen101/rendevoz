@@ -208,7 +208,7 @@ const TabItem = ({ onClick, isSelected, item, onDragStart, isLast }) => {
               right: 0,
               top: 0,
               bottom: 0,
-              background: isSelected ? 'rgba(0,0,0,0.12)' : 'transparent'
+              background: isSelected ? 'var(--tabs-bg)' : 'transparent'
             }}
           >
             {dockContext.getLayout().global.globalPanelExtra(null, null)}

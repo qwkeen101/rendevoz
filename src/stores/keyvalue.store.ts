@@ -19,6 +19,7 @@ export type CurrentKeyValues = {
       collectionId?: number
     }[]
   }
+  recentlyUsedIcons: string[]
   webpageShowOriginal: boolean
   rightBarItems: string[]
   leftBarItems: string[]

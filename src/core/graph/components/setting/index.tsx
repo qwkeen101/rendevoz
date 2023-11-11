@@ -49,7 +49,8 @@ const GraphSettingPanel = () => {
           overflow: 'hidden',
           display: 'flex',
           gap: 10,
-          background: Colors.Background.Secondary
+          background: Colors.Background.Secondary,
+          boxShadow: 'none'
         }}
       >
         <Tooltip content="Graph Filter">

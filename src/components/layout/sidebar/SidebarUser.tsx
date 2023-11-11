@@ -89,7 +89,6 @@ const SidebarUser = memo(() => {
             <Icon onClick={() => toggleLoginVisible(true)} name={'park-user'} size={20} className={ClassName.flatButton(6, '4px')} />
             <Modal visible={loginVisible} onClose={toggleLoginVisible} noStyle>
               <div
-                className={ClassName.Background.pseudoBlurContrastBackground}
                 style={{
                   width: '800px',
                   height: '600px',
@@ -102,26 +101,6 @@ const SidebarUser = memo(() => {
           </>
         )}
       </Content>
-      {/*<Icon*/}
-      {/*  size={20}*/}
-      {/*  className={ClassName.flatButton()}*/}
-      {/*  onClick={() => {*/}
-      {/*    if (sidebarState.collapsed) {*/}
-      {/*      setSidebarState(s => ({*/}
-      {/*        ...s,*/}
-      {/*        width: sidebarState.ref?.getSelfElement()?.clientWidth || 240,*/}
-      {/*        collapsed: false*/}
-      {/*      }))*/}
-      {/*    } else {*/}
-      {/*      setSidebarState({*/}
-      {/*        hovered: false,*/}
-      {/*        collapsed: true,*/}
-      {/*        width: 0*/}
-      {/*      })*/}
-      {/*    }*/}
-      {/*  }}*/}
-      {/*  name={sidebarState.collapsed ? 'park-menu-unfold' : 'park-menu-fold'}*/}
-      {/*/>*/}
     </Content>
   )
 })

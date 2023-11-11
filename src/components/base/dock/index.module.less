@@ -1,4 +1,7 @@
-.tabNav {
+@backgroundColor: var(--tabs-bg);
+
+body{
+  --tabs-bg: var(--background-secondary);
 }
 .tabs {
   flex-grow: 1;
@@ -10,14 +13,14 @@
   flex-shrink: 1;
   overflow: hidden;
   padding-left: 0px;
-  height: 36px;
+  height: 32px;
   margin-bottom: -1px;
   padding-right: 0px;
   &::after {
     content: "";
     flex: 1;
     height: 100%;
-    background: rgba(0, 0, 0, 0.12);
+    background: @backgroundColor;
   }
 }
 .tab {
@@ -30,13 +33,15 @@
   user-select: none;
   flex: 100;
   min-width: 0;
+  letter-spacing: -0.04px;
+  font-weight: 600;
   height: 100%;
   position: relative;
   padding: 2px 8px;
   cursor: pointer;
   z-index: 1000 !important;
-  background: rgba(0, 0, 0, 0.12);
-  color: var(--font-primary);
+  background: @backgroundColor;
+  color: var(--font-transparent);
   &.isLast {
     &::after {
       right: 32px;
@@ -54,6 +59,7 @@
   &.active {
     background: transparent !important;
     z-index: 1001 !important;
+    color: var(--font-primary);
     &::after {
       display: none;
     }
@@ -66,7 +72,6 @@
 }
 .title {
   padding-right: 0.9rem;
-  font-family: Muli;
   font-size: 0.9rem;
   > div {
     text-align: left;

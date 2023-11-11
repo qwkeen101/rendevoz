@@ -1,14 +1,6 @@
-import { BuiltInDraggableElement, CustomEditor, CustomElement, IEditorInstance, MetaObject } from '~/typings'
+import { BuiltInDraggableElement, CustomEditor, IEditorInstance } from '~/typings'
 import { Rendevoz } from '@/core/rendevoz'
-import { Path } from 'slate'
-import { getSetting, GlobalDragOverlayInstance, ID_TO_PATH_MAP } from '@/core'
-import Id from '@/utils/id'
-import { checkDropCanBeMeta } from '@/core/global/globalDragOverlay/useDropObject'
 import useDragCreateSyncBlock from '@/core/editor/hooks/drag/useDragCreateSyncBlock'
-import { MetaStore, ObjectStore } from '@/stores'
-import { pushNumberIntoUnrepeatableArray } from '@/utils'
-import useDropInsertMedia from '@/core/editor/hooks/drag/useDropInsertMedia'
-
 /**
  * 拖拽到笔记上到元素可能是笔记块或者其他元素，分情况处理
  * 还会遇到带有隐藏到元素的，比如折叠等

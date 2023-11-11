@@ -436,7 +436,7 @@ const useFlipForm = (options: useFlipFormOptions) => {
         <Flipped flipId={mainFlipId}>
           <div
             style={{
-              padding: 16,
+              padding: tagPickerVisible ? '8px 6px' : 16,
               borderRadius: 8,
               overflow: 'hidden',
               position: 'relative'

@@ -16,6 +16,18 @@ const useDropInsertMedia = () => {
         }
       }
     }
+    const texthtml = e.dataTransfer?.getData('text/html')
+    if (texthtml) {
+      const parser = new DOMParser()
+      const doc = parser.parseFromString(texthtml, 'text/html')
+      const imgEle = doc.querySelector('img')
+      if (imgEle && imgEle.src) {
+        return {
+          type: 'image',
+          path: imgEle.src
+        }
+      }
+    }
   }
   return dropHandler
 }

@@ -272,12 +272,31 @@ const WrapperNode = ({ node }: { node: IWhiteboardNode }) => {
         if (flow.hasMultiSelectBox) return
         if (!containerRef.current?.contains(e.target as HTMLElement) && isResizingRef.current === false) {
           if (e.target instanceof HTMLElement && e.target.getAttribute('data-cover-id') === `${node.id}`) return
-          setNodeState(s => ({ ...s, selected: false, focused: false, popoverVisible: false }))
+          // click on container
+          if (
+            e.target instanceof HTMLElement &&
+            e.target.getAttribute('role') === 'data-container' &&
+            flow.parentContainerEle?.contains(e.target)
+          ) {
+            console.log('clear here 1 ')
+            setNodeState(s => ({ ...s, selected: false, focused: false, popoverVisible: false }))
+          }
+          // click on another node
+          if (e.target instanceof HTMLElement) {
+            const targetNode = e.target.closest('[data-node-id]')
+            if (targetNode) {
+              const nodeId = targetNode.getAttribute('data-node-id')!
+              if (Number(nodeId) !== node.id) {
+                console.log('clear here 2')
+                setNodeState(s => ({ ...s, selected: false, focused: false, popoverVisible: false }))
+              }
+            }
+          }
         }
       }
-      document.addEventListener('click', pointerDownHandler)
+      document.addEventListener('click', pointerDownHandler, true)
       return () => {
-        document.removeEventListener('click', pointerDownHandler)
+        document.removeEventListener('click', pointerDownHandler, true)
       }
     }
   }, [nodeState.selected, nodeState.focused, nodeState.popoverVisible])
@@ -629,16 +648,6 @@ const WrapperNode = ({ node }: { node: IWhiteboardNode }) => {
         reposition={false}
         disableNudge
         disableIntersection
-        onClickOutside={e => {
-          if (isResizingRef.current === false) {
-            setNodeState(s => ({
-              ...s,
-              popoverVisible: false,
-              selected: false,
-              focused: false
-            }))
-          }
-        }}
         padding={10}
         containerStyle={{ zIndex: String(Zindexes.ToolBar) }}
         content={

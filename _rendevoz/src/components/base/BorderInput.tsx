@@ -80,7 +80,7 @@ const BorderInput = ({
       className={css({
         border: '1px solid var(--border-background)',
         ':focus-within': {
-          border: '2px solid var(--select-color)'
+          border: '1px solid var(--select-color)'
         }
       })}
       style={{ position: 'relative', borderRadius: 6, ...containerStyle }}

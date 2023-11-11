@@ -4,7 +4,7 @@ import { Container, Icon } from '../base'
 import DockLayout, { LayoutData } from '../base/dock'
 import LayoutManager from './layoutManager'
 import { css } from '@emotion/css'
-import { getSetting, useCreateObject, useSetting } from '@/core'
+import { getSetting, useSetting } from '@/core'
 import { Sidebar } from './sidebar'
 import ClassName from '@/styles/classNames'
 import { ILayoutTab } from '~/typings'
@@ -13,6 +13,7 @@ import { getOS } from '@/App'
 import TitleBar from '@/components/titlebar'
 import MacTitlebar from '@/components/titlebar/MacTitlebar'
 import * as Serializer from '../base/dock/Serializer'
+import { GlobalInstance } from '@/hooks'
 
 const initialLayout: LayoutData = {
   global: {
@@ -32,13 +33,6 @@ const initialLayout: LayoutData = {
 export const LayoutIdToTabMap = new Map<string, ILayoutTab>()
 export let GlobalLayout: LayoutManager | null = null
 const Layout = () => {
-  const { portal, open } = useCreateObject({
-    positions: ['bottom'],
-    padding: 20,
-    visiblities: {
-      localFile: false
-    }
-  })
   const defaultLayout = {
     ...initialLayout,
     global: {
@@ -60,8 +54,9 @@ const Layout = () => {
             name="park-plus"
             onClick={e => {
               e.stopPropagation()
-              console.log(e)
-              open(e)
+              GlobalInstance.metaOps?.createObject().then(meta => {
+                Rendevoz.Actions.Open.Meta.openMetaObject(meta.id)
+              })
             }}
           />
         </div>
@@ -74,7 +69,6 @@ const Layout = () => {
   const [setting] = useSetting()
   const loadTab = tab => {
     const restored = Rendevoz.Actions.Layout.restoreSavedTab(tab)
-    console.log(restored)
     return restored || tab
   }
   layoutManager.makeTabActive = id => layoutRef.current?.updateTab(id, null, true)
@@ -137,7 +131,6 @@ const Layout = () => {
       })}
       style={{ height: '100vh', overflowY: 'auto' }}
     >
-      {portal}
       <Helmet>
         <title>Rendevoz</title>
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />

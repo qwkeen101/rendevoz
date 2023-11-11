@@ -49,7 +49,7 @@ const WhiteboardInner = memo(
     const handler = useMemo(() => new GlobalEventHandler(), [])
     const scopedEmitter = useScopedEventEmitter()
     const whiteboard = useAtomValue(WhiteboardAtom)
-    const { addTab, render } = useWhiteboardSidebar()
+    const { render } = useWhiteboardSidebar()
     const { renderSnapLayer } = useSnapDrag()
     useWhiteboardShortcut()
     useWhiteboardHistory()
@@ -220,34 +220,18 @@ const WhiteboardInner = memo(
         setWhiteboardTransform([0, 0, 1])
       }
     }, [whiteboard?.lastViewport])
-    flow.onNodeFocus = node => {
+    flow.onNodeFocus = async node => {
       switch (node.type) {
-        case 'metaObject':
-          {
-            const { metaObjectId } = node
-            if (metaObjectId) {
-              MetaStore.getMetaObjectById(metaObjectId).then(async meta => {
-                if (meta) {
-                  if (meta.objectId) {
-                    const target = await ObjectStore(meta.type).getOneById(meta.objectId)
-                    if (target) {
-                      switch (target.specType) {
-                        case 'pdf':
-                        case 'image':
-                        case 'webpage':
-                        case 'note':
-                        case 'video':
-                          addTab(target.specType, meta.objectId)
-                      }
-                    }
-                  }
-                }
-              })
+        case 'metaObject': {
+          if (node.metaObjectId) {
+            const obj = await MetaStore.getMetaObjectById(node.metaObjectId)
+            if (obj?.objectId) {
+              instance.openTabInSidebar?.(obj.type, obj.objectId)
             }
           }
+
           break
-        case 'note':
-          addTab('note', node.noteId)
+        }
       }
     }
     const setNodes = useSetWhiteboardNodes()

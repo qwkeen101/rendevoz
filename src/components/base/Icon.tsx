@@ -3,6 +3,8 @@ import { Property } from 'csstype'
 import { default as IconPark } from '@icon-park/react/es/all'
 import { Content } from '.'
 import CustomIcon from '../custom/icons/CustomIcon'
+import classNames from 'classnames'
+import { css } from '@emotion/css'
 
 export interface IconProps extends DetailedHTMLProps<HTMLAttributes<HTMLDivElement>, HTMLDivElement> {
   name: string
@@ -28,6 +30,7 @@ const Icon = forwardRef<HTMLDivElement, IconProps>(
     const style: React.CSSProperties = {
       cursor: cursor,
       userSelect: 'none',
+      pointerEvents: 'auto',
       ...rest.style
     }
     const renderIcon = (name: string) => {
@@ -52,7 +55,22 @@ const Icon = forwardRef<HTMLDivElement, IconProps>(
       }
     }
     return (
-      <Content {...rest} style={containerStyle} className={containerClassName} onClick={onClick} flex centered ref={ref}>
+      <Content
+        {...rest}
+        style={containerStyle}
+        className={classNames(
+          containerClassName,
+          css({
+            svg: {
+              pointerEvents: 'none'
+            }
+          })
+        )}
+        onClick={onClick}
+        flex
+        centered
+        ref={ref}
+      >
         {renderIcon(name)}
       </Content>
     )

@@ -31,7 +31,7 @@ const FormFilePathPicker = ({
   }, accept)
   const userFilePath = useSelectGlobalAtomValue(SettingAtom, s => s.general.userFilePath)
   const defaultFilePath = useSelectGlobalAtomValue(SettingAtom, s => s.general.defaultFilePath)
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
 
   const [chooser, setChooser] = useState<'web' | 'local' | 'baidudisk'>('local')
   const [validUrl, setValidUrl] = useState(Regexp.isValidWebUrl(filePath))
@@ -56,10 +56,10 @@ const FormFilePathPicker = ({
   if (enableWeb) {
     selectOptions.push({
       value: 'web',
-      children: 'Online file'
+      children: 'Web file'
     })
   }
-  if (enableBaidudisk) {
+  if (enableBaidudisk && i18n.language === 'zh-CN') {
     selectOptions.push({
       value: 'baidudisk',
       children: 'Baidu disk file'
@@ -74,10 +74,8 @@ const FormFilePathPicker = ({
           onSelect={v => setChooser(v[0])}
           options={selectOptions}
           value={chooser}
-          style={{ fontSize: 12, position: 'absolute', top: -8, right: 32, padding: '2px 4px', height: 16 }}
+          style={{ fontSize: 13, padding: '2px 4px', height: 24, width: 'fit-content', margin: '4px 0px 0px' }}
           menuStyle={{
-            fontSize: 12,
-            lineHeight: 1.3,
             minWidth: 140
           }}
           closeOnSelect
@@ -105,7 +103,7 @@ const FormFilePathPicker = ({
         <>
           <div>
             {!validUrl && (
-              <Content flex gap={6} style={{ color: Colors.Common.Red, fontSize: '11px' }}>
+              <Content flex gap={6} style={{ color: Colors.Common.Red, fontSize: '13px' }}>
                 <Tooltip content="Only supports Youtube and Bilibili">
                   <Icon name={'park-info'} />
                 </Tooltip>

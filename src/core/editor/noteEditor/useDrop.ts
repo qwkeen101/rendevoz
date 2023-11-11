@@ -102,29 +102,31 @@ const useDrop = (noteId?: number) => {
   }
   const handleDropDropToNoteEditor = async (event: DragEvent) => {
     event.preventDefault()
+    if (event.dataTransfer?.getData('text/plain')) {
+      const plainText = event.dataTransfer.getData('text/plain')
+      return {
+        type: 'paragraph',
+        id: Id.getId(),
+        children: [
+          {
+            text: plainText
+          }
+        ]
+      }
+    }
+    const mediaDrop = await handleDropMedia(event)
+    console.log(mediaDrop)
+    if (mediaDrop?.type === 'image') {
+      return {
+        type: 'image',
+        id: Id.getId(),
+        url: mediaDrop.path,
+        children: [{ text: '' }]
+      }
+    }
     const canBeMeta = checkDropCanBeMeta(event)
     if (!canBeMeta) {
-      if (event.dataTransfer?.getData('text/plain')) {
-        const plainText = event.dataTransfer.getData('text/plain')
-        return {
-          type: 'paragraph',
-          id: Id.getId(),
-          children: [
-            {
-              text: plainText
-            }
-          ]
-        }
-      }
-      const result = await handleDropMedia(event)
-      if (result?.type === 'image') {
-        return {
-          type: 'image',
-          id: Id.getId(),
-          url: result.path,
-          children: [{ text: '' }]
-        }
-      }
+      return
     }
     const result = (await Rendevoz.Events.Emit.GlobalEventEmitter.emitWithCallback('global', {
       type: 'globalDropNeedFurtherProcess',

@@ -1,43 +1,19 @@
 import { MetaStore } from '@/stores'
-import { Position } from '@/types'
 import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { MetaLink, MetaObject } from '~/typings/data'
 import ObjectForm from '@/components/form/ObjectForm'
 import { useEventHandler } from '@/events'
-import { useShortcut, useToggle } from '@/hooks'
-import { Modal, ResizeAndDrag } from '@/components'
-import { useCreateObject } from '../object'
+import { useToggle } from '@/hooks'
+import { Modal } from '@/components'
 import Id from '@/utils/id'
 import { Rendevoz } from '../rendevoz'
-import { Colors } from '@/consts'
 
-const GlobalCreateObjectInstance: Partial<{
-  create: (preObject?: Partial<MetaObject>) => Promise<MetaObject>
-}> = {}
 const GlobalCreateObject = () => {
   const [innerMeta, setInnerMeta] = useState<Partial<MetaObject>>()
   const [pendingLinks, setPendingLinks] = useState<MetaLink[]>()
-  const [panelState, setPanelState] = useState<
-    Partial<{
-      visible: boolean
-      position: Position
-      size: { width: number | string; height: number | string }
-    }>
-  >({
-    visible: false,
-    size: {
-      width: 'auto',
-      height: 'auto'
-    },
-    position: {
-      left: 300,
-      top: 300
-    }
-  })
   const [modalVisible, toggleModalVisible] = useToggle(false)
   const globalEventEmitter = Rendevoz.Events.Emit.GlobalEventEmitter
-  const { portal, openAtCenter } = useCreateObject({ positions: ['top'] })
   const handler = useEventHandler('global')
   const currentModeRef = useRef<'add' | 'edit'>()
   handler.on('globalNeedAddMetaObject', (data, res, rej) => {
@@ -85,28 +61,12 @@ const GlobalCreateObject = () => {
     rej?: (v: any) => void
   }>()
 
-  Object.assign(GlobalCreateObjectInstance, {
-    create: obj => {
-      return new Promise((res, rej) => {
-        setInnerMeta(obj)
-        promiseRef.current = {
-          res,
-          rej
-        }
-        setPanelState(s => ({ ...s, visible: true }))
-      })
-    }
-  } as typeof GlobalCreateObjectInstance)
-
   useEffect(() => {
     globalEventEmitter.addListener('global', handler)
     return () => {
       globalEventEmitter.removeListener('global', handler)
     }
   }, [])
-  useShortcut('quickCreateObject', () => {
-    openAtCenter()
-  })
   useEffect(() => {
     if (modalVisible === false) {
       setInnerMeta(undefined)
@@ -132,6 +92,7 @@ const GlobalCreateObject = () => {
       <Modal
         noStyle={true}
         visible={modalVisible}
+        zIndex={9000}
         onClose={() => {
           handleCancelCreate()
         }}
@@ -167,8 +128,6 @@ const GlobalCreateObject = () => {
           }}
         />
       </Modal>
-
-      {portal}
     </>,
     document.body,
     'global-create-object-form'

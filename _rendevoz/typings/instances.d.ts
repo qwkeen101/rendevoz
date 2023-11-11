@@ -18,8 +18,7 @@ export interface WebpageInstance {
 }
 
 export interface IWhiteboardInstance {
-  // if true, opened, if false, not opened
-  openTabInSidebar?: (tab: ILayoutTab) => ILayoutTab | undefined
+  openTabInSidebar?: (type: string, objectId?: number) => void
   deleteNode: (nodeId: number) => void
   deleteEdge: (edgeId: number) => void
   deleteNodes: (nodeIds: number[]) => void

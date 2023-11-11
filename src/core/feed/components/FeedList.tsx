@@ -10,13 +10,18 @@ import { useMeasure } from 'react-use'
 import { css } from '@emotion/css'
 import readItem from '@/core/feed/utils/service/readItem'
 import { ClassName } from 'rendevoz'
+import useFeedInstance from '@/core/feed/hooks/useFeedInstance'
 
 const DEFAULT_CARD_PAG = 20
 const FeedList = () => {
   const [feedState, setFeedState] = useFeedState()
   const itemMode = keyvalueStore.useValue('feedCardView') || 'magazine'
+  const instance = useFeedInstance()
   const handleNavigate = async (id: number) => {
     readItem(id, currentCollection?.id)
+    const idx = items.findIndex(i => i === id)
+    const range = items.slice(Math.max(idx - 2, 0), Math.min(idx + 2, items.length))
+    range.forEach(i => instance.navigateOps?.prepareContent(i))
     setFeedState(s => ({
       ...s,
       currentFocusedFeedItemId: id,

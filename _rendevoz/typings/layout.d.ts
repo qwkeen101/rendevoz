@@ -80,7 +80,7 @@ export type TabData = {
   [K in ILayoutTab['type']]: {
     type: K
     content: (options: {
-      tab: ILayoutTab
+      tab?: ILayoutTab
       objectId?: number
       onInstanceInitialized?: (instance: Extract<ILayoutTab, { type: K }>['instance']) => void
     }) => ReactElement | undefined | false | 0

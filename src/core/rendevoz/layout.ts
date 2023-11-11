@@ -2,6 +2,7 @@ import { ILayoutTab, TabData } from '~/typings'
 import getSetting from '../setting/getSetting'
 import { GlobalLayout, LayoutIdToTabMap } from '@/components/layout'
 import Id from '@/utils/id'
+import { ReactElement } from 'react'
 
 const TabDataMap = new Map<ILayoutTab['type'], TabData[ILayoutTab['type']]>()
 
@@ -16,8 +17,7 @@ const openTabInWhiteboard = (data: ILayoutTab) => {
   console.log(currentFocusTab)
   if (currentFocusTab) {
     if (currentFocusTab.tab?.type === 'whiteboard') {
-      const opened = currentFocusTab.tab.instance?.openTabInSidebar?.(data)
-      console.log(opened)
+      const opened = currentFocusTab.tab.instance?.openTabInSidebar?.(data.type, data.objectId)
       return opened
     }
   }
@@ -51,10 +51,10 @@ const openNewTab = ({ data }) => {
     return
   }
   if (setting.general.openNewTab === 'open existing tab') {
-    const whiteboardTab = openTabInWhiteboard(data)
-    if (whiteboardTab) {
-      return
-    }
+    // const whiteboardTab = openTabInWhiteboard(data)
+    // if (whiteboardTab) {
+    //   return
+    // }
     const maybeExistTab = hasTargetTab(data)
     // open existing tab
     if (maybeExistTab) {
@@ -148,6 +148,10 @@ const getVisibleTabs = () => {
     return false
   })
 }
+
+const getRegisteredTabContent = <K extends keyof TabData>(type: string): TabData[K]['content'] | undefined => {
+  return TabDataMap.get(type)?.content
+}
 const tabToInstanceMap = new WeakMap<ILayoutTab, any>()
 
 const makeTabActive = tabId => GlobalLayout?.makeTabActive?.(tabId)
@@ -160,7 +164,8 @@ const Layout = {
   initializeOneTab,
   getTab,
   getVisibleTabs,
-  restoreSavedTab
+  restoreSavedTab,
+  getRegisteredTabContent
 }
 
 export default Layout

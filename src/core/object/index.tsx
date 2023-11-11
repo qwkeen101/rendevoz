@@ -322,7 +322,6 @@ export { default as useRenderObject } from './useRenderObject'
 
 export * from './filter'
 export * from './card/DatabaseCard'
-export * from './useCreateObject'
 export { default as useDropObjectArea } from './useDropObjectArea'
 export { default as AttachmentObject } from './AttachmentObject'
 export { default as AttachmentList } from './AttachmentList'

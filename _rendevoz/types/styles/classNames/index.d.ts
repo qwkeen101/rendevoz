@@ -14,6 +14,7 @@ declare const ClassName: {
     objectTag: string;
     input: () => string;
     noStyleInput: string;
+    selectButton: (borderRadius?: number, padding?: string) => string;
     circleButton: (padding?: number, borderRadius?: number) => string;
     flatButton: (borderRadius?: number, padding?: string, background?: any, border?: boolean) => string;
     gridLayout: ({ rowGap, columnGap, itemMinWidth, }: {

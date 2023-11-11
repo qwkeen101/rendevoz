@@ -71,7 +71,6 @@ const UpgradePlan = () => {
 
   return (
     <Content
-      className={ClassName.Background.pseudoBlurContrastBackground}
       flex
       gap={30}
       style={{ borderRadius: 12, overflow: 'hidden', padding: 32 }}
@@ -128,23 +127,9 @@ const UpgradePlan = () => {
       <Content>
         {upgradeDetails.qrcodeStr ? (
           <Content flex column gap={10}>
-            <Content fullWidth flex justifyContent="space-between">
-              <div className={ClassName.title()}>请使用微信扫码支付</div>
-              <Icon
-                name="park-close"
-                className={ClassName.circleButton()}
-                onClick={() => {
-                  setUpgradeDetails(s => ({
-                    ...s,
-                    qrcodeStr: undefined,
-                    qrcodeImgData: undefined
-                  }))
-                }}
-              />
-            </Content>
             <img
               style={{
-                width: '100%',
+                width: '240px',
                 border: `1px solid ${Colors.Background.Border}`
               }}
               src={upgradeDetails.qrcodeImgData}

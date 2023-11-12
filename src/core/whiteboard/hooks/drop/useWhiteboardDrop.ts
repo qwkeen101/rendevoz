@@ -4,11 +4,11 @@ import { saveFileLocally } from '@/utils/file'
 import Id from '@/utils/id'
 import { useEffect, useState } from 'react'
 import { IWhiteboardNode, MetaObject } from '~/typings/data'
-import { useFlow } from './hooks'
-import { isPointerOnContainer, transformXY } from './utils'
+import { useFlow } from '../../hooks'
+import { isPointerOnContainer, transformXY } from '../../utils'
 import { metaObjectsAtom, objectIdToMetaObjectIdMapAtom } from '@/stores/meta.store'
 import { useEventHandler } from '@/events'
-import { Rendevoz } from '../rendevoz'
+import { Rendevoz } from '../../../rendevoz'
 import { getSetting } from '@/core'
 import { useWhiteboardInstance } from '@/core/whiteboard/hooks/useWhiteboardInstance'
 import { pushNumberIntoUnrepeatableArray } from '@/utils'
@@ -73,11 +73,11 @@ const useWhiteboardDrop = () => {
 
   const dropHandler = useMemoizedFn(async (e: DragEvent) => {
     e.preventDefault()
-    console.log('dropoea')
     if (!isPointerOnContainer(e)) return
     const { clientX, clientY } = e
     const transformedXY = transformXY(flow.containerEle?.getBoundingClientRect(), clientX, clientY, flow.containerTransformScale)
-    if (e.dataTransfer?.items) {
+    console.log('yes')
+    if (e.dataTransfer?.items.length) {
       let whiteboardNode: Partial<IWhiteboardNode> = {}
       const fileItem = Array.from(e.dataTransfer.items).find(i => i.kind === 'file')
       if (fileItem) {
@@ -120,6 +120,21 @@ const useWhiteboardDrop = () => {
           }
         }
       } else {
+        const plainText = e.dataTransfer?.getData('text/plain')
+        if (plainText) {
+          insertNodeAtPointer(e, {
+            content: [
+              {
+                type: 'paragraph',
+                children: [{ text: plainText }],
+                id: Id.getId()
+              }
+            ],
+            type: 'text',
+            width: Math.min(600, 15 * plainText.length)
+          })
+          return
+        }
         const meta = await emitter.emitWithCallback('global', {
           type: 'globalDropNeedFurtherProcess',
           data: {
@@ -134,7 +149,6 @@ const useWhiteboardDrop = () => {
         return
       }
       if (!whiteboardNode.type) return
-      console.log(whiteboardNode)
       whiteboardNode.x = transformedXY?.x
       whiteboardNode.y = transformedXY?.y
       whiteboardNode.id = Id.getId()
@@ -176,8 +190,6 @@ const useWhiteboardDrop = () => {
       instance.insertNode?.({
         x: transformed.x,
         y: transformed.y,
-        width: 200,
-        height: 34,
         ...node
       })
     }

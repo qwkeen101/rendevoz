@@ -39,33 +39,48 @@ const SimpleEditor = ({ value, onChange }: SimpleEditorProps) => {
         type: 'paragraph',
         id: Id.getId(),
         children: [{ text: 'Input something' }]
+      },
+      {
+        type: 'paragraph',
+        id: Id.getId(),
+        children: [{ text: 'Input something' }]
+      },
+      {
+        type: 'paragraph',
+        id: Id.getId(),
+        children: [{ text: 'Input something' }]
+      },
+      {
+        type: 'paragraph',
+        id: Id.getId(),
+        children: [{ text: 'Input something' }]
       }
     ]
   }, [])
 
   return (
-    <Editor
-      id={id}
-      on={e => {
-        if (e.type === 'valueChange') {
-          onChange?.(e.value)
-        }
-      }}
-      defaultValue={initialValue}
-      styles={{
-        pageMinPadding: 0
-      }}
-      state={{
-        showSyncBlockShadow: false
-      }}
-      layout={{
-        showTitle: false,
-        showBlockHandle: false,
-        showHeader: false,
-        showToolbar: false,
-        showBottomPadding: false
-      }}
-    />
+      <Editor
+        id={id}
+        on={e => {
+          if (e.type === 'valueChange') {
+            onChange?.(e.value)
+          }
+        }}
+        defaultValue={initialValue}
+        styles={{
+          pageMinPadding: 0
+        }}
+        state={{
+          showSyncBlockShadow: false
+        }}
+        layout={{
+          showTitle: false,
+          showBlockHandle: false,
+          showHeader: false,
+          showToolbar: false,
+          showBottomPadding: false
+        }}
+      />
   )
 }
 

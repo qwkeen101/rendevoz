@@ -261,6 +261,7 @@ export const EditorV1: FC<EditorProps> = memo(
                 role="inner-editor"
                 className={Cla(EditorClasses.EditorWrapper, classNames?.editorContainerClassName)}
                 style={{
+                  paddingBottom: layout?.showBottomPadding === false ? 0 : undefined,
                   '--block-bg': realReadOnly ? 'none' : undefined,
                   '--font-size': editorState.fontSize,
                   fontSize: editorState.fontSize

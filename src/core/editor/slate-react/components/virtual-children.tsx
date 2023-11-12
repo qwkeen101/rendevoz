@@ -94,7 +94,6 @@ const VirtualChildren = memo(
       overscan: overscan,
       paddingEnd: showPaddingBottom !== false ? 100 : 0,
       paddingStart: titleHeight,
-      initialOffset: editor.initialScrollOffset,
       rangeExtractor: rangeExtractor || defaultRangeExtractor,
       measureElement: (ele, entry, instance) => {
         if (entry) {

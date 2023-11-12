@@ -28,15 +28,23 @@ export interface MetaGroup extends IBase {
   belongsTo?: number
   // value id - index dict
   values: MetaGroupChild[]
-  views: ({
-    type: 'table'
-    options: {
-      wrapColumns?: boolean
-      properties?: (MetaGroupProperty & {
-        width: number
-      })[]
-    }
-  } & {
+  views: ((
+    | {
+        type: 'table'
+        options: {
+          wrapColumns?: boolean
+          properties?: (MetaGroupProperty & {
+            width: number
+          })[]
+        }
+      }
+    | {
+        type: 'gallery'
+        options: {
+          properties?: MetaGroupProperty[]
+        }
+      }
+  ) & {
     // view id
     id: number
     name: string

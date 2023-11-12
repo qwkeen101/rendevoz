@@ -12,12 +12,15 @@ export const GroupRenderer = memo(() => {
   const displayValues = useSelectAtomValue(GroupStateAtom, s => s.viewValues)
   const filterValues = useSelectAtomValue(GroupStateAtom, s => s.filterValues)
   const containerRef = useRef<HTMLDivElement>(null)
-
+  // const currentView = useSelectAtomValue(GroupStateAtom, s => s.currentView?.type)
   useTableHeaders()
 
   return (
     <Content ref={containerRef} flex column fullHeight style={{ minWidth: 'fit-content', width: '100%' }}>
+      {/*{currentView === 'table' && <TableRenderer value={filterValues || displayValues} />}*/}
+      {/*{currentView === 'gallery' && <TableRenderer value={filterValues || displayValues} />}*/}
       <TableRenderer value={filterValues || displayValues} />
+      {/*{currentView === 'gallery' && <TableRenderer value={filterValues || displayValues} />}*/}
     </Content>
   )
 })

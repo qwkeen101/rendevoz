@@ -85,10 +85,10 @@ const GroupActions = memo(({ groupId }: { groupId: number }) => {
             views: [
               ...s.views,
               {
-                type: 'table',
+                type: 'gallery',
                 unToggledIds: [],
                 id: Id.getId(),
-                name: 'Table',
+                name: 'Gallery',
                 options: {
                   properties: DEFAULT_GROUP_PROPERTIES
                 },

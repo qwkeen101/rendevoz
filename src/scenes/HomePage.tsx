@@ -94,7 +94,13 @@ export const HomePage: FC = () => {
               </AnimatePopover>
             )}
             <div
-              onClick={() => GlobalInstance.metaOps?.createObject()}
+              onClick={() =>
+                GlobalInstance.metaOps?.createObject().then(res => {
+                  if (res) {
+                    Rendevoz.Actions.Open.Meta.openMetaObject(res.id)
+                  }
+                })
+              }
               className={ClassName.selectButton(4, '1px 8px')}
               style={{ fontSize: 14, fontWeight: 600, color: 'white', marginLeft: 12 }}
             >

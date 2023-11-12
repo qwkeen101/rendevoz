@@ -9,19 +9,21 @@ import FontSize from '@/consts/font'
 import { css } from '@emotion/css'
 import { Content, Tooltip } from '@/components'
 import ClassName from '@/styles/classNames'
-import { PAGE_SPACING } from '../pdf/core/layouts/Layout'
-import { Rendevoz } from '../rendevoz'
-import { normalizeSecondsToTime } from '../media/utils'
+import { PAGE_SPACING } from '../../../pdf/core/layouts/Layout'
+import { Rendevoz } from '../../../rendevoz'
+import { normalizeSecondsToTime } from '../../../media/utils'
 import { metaObjectsAtom } from '@/stores/meta.store'
 
+export type FromRendererProps = {
+  style?: CSSProperties
+  onFromClick?: () => void
+}
 const FromRenderer = ({
   metaObject: initialObject,
   style,
   onFromClick
-}: {
-  metaObject?: MetaObject
-  style?: CSSProperties
-  onFromClick?: () => void
+}: FromRendererProps & {
+  metaObject: MetaObject
 }) => {
   const getIcon = Rendevoz.Utils.Object.getMetaObjectIcon
   const fromMeta = MetaStore.useValue(initialObject?.fromObject?.metaId)
@@ -40,11 +42,10 @@ const FromRenderer = ({
         }
       })}
       style={{
-        color: Colors.Font.Secondary,
-        fontSize: FontSize['12px'],
-        textTransform: 'none',
+        fontSize: 12,
         cursor: 'pointer',
         width: 'fit-content',
+        color: Colors.Font.Transparent,
         ...style
       }}
       onClick={() => {

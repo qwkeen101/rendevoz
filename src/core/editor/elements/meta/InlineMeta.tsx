@@ -1,25 +1,25 @@
 import { TypeToTypeName } from '@/core/object'
-import ClassName from '@/styles/classNames'
+import { ClassName } from 'rendevoz'
 import { css } from '@emotion/css'
 import { FC } from 'react'
 import { InlineMetaObjectElement } from '~/typings/editor/outerElements'
 import { RenderElementProps } from '../../slate-react'
 import { useTranslation } from 'react-i18next'
 import HoverObjectDetails from '@/core/object/HoverObjectDetails'
-import { MetaStore } from '@/stores'
+import { MetaStore, ObjectStore } from '@/stores'
 import { Content, Image } from '@/components'
 import { Rendevoz } from '@/core/rendevoz'
 import HoverAttachment from '@/core/object/HoverAttachment'
+import { Colors } from '@/consts'
 
-const clazzName = css([
-  {
-    cursor: 'pointer',
-    fontWeight: 600,
-    ':hover': {
-      textDecoration: 'underline'
-    }
+const clazzName = css({
+  cursor: 'pointer',
+  fontWeight: 500,
+  transition: 'color 0.2s ease',
+  ':hover': {
+    color: Colors.Common.SelectColor
   }
-])
+})
 const nameClassName = css([
   ClassName.objectTag,
   {
@@ -49,7 +49,8 @@ const imageClassName = css({
 const InlineMetaElement: FC<RenderElementProps> = ({ element, children, attributes }) => {
   const metaObject = MetaStore.useValue((element as InlineMetaObjectElement).originId)
   const { t } = useTranslation()
-
+  const targetObject = ObjectStore(metaObject?.type).useValue(metaObject?.objectId)
+  const showOriginalText = metaObject?.name === 'Unnamed Label' && targetObject?.selectedText
   if (metaObject?.coverImgSrc) {
     return (
       <span {...attributes} data-meta-id={element.id} style={{ margin: '0 6px 0px 2px', position: 'relative' }}>
@@ -65,7 +66,7 @@ const InlineMetaElement: FC<RenderElementProps> = ({ element, children, attribut
           <Content flex column gap="0.2em" style={{ alignSelf: 'flex-end' }}>
             <Content flex gap={6}>
               <div role="tag" style={{ width: 'fit-content', margin: 0, fontSize: '0.8em' }} className={nameClassName}>
-                {t(`general.${TypeToTypeName[metaObject?.type || 'normal']}`)}
+                {Rendevoz.Utils.Meta.getTypeName(metaObject.type)}
               </div>
               {metaObject.attachments?.length ? (
                 <HoverAttachment metaId={metaObject.id}>
@@ -96,10 +97,11 @@ const InlineMetaElement: FC<RenderElementProps> = ({ element, children, attribut
                   color: metaObject?.color,
                   lineHeight: 1.2,
                   marginBottom: '-0.12em',
-                  width: 'fit-content'
+                  width: 'fit-content',
+                  fontStyle: showOriginalText ? 'italic' : undefined
                 }}
               >
-                {metaObject?.name || 'Deleted Object'}
+                {showOriginalText || metaObject?.name || 'Deleted Object'}
               </span>
             </HoverObjectDetails>
           </Content>
@@ -120,10 +122,11 @@ const InlineMetaElement: FC<RenderElementProps> = ({ element, children, attribut
                 metaObject?.id && Rendevoz.Actions.Open.Meta.openMetaObject(metaObject.id)
               }}
               style={{
-                color: metaObject?.color
+                color: metaObject?.color,
+                fontStyle: showOriginalText ? 'italic' : undefined
               }}
             >
-              {metaObject?.name || 'Deleted Object'}
+              {showOriginalText || metaObject?.name || 'Deleted Object'}
             </span>
           </HoverObjectDetails>
 
@@ -135,7 +138,7 @@ const InlineMetaElement: FC<RenderElementProps> = ({ element, children, attribut
             className={inlineClassName}
             role="tag"
           >
-            {t(`general.${TypeToTypeName[metaObject?.type || 'normal']}`)}
+            {Rendevoz.Utils.Meta.getTypeName(metaObject?.type)}
           </span>
           {metaObject?.attachments?.length ? (
             <HoverAttachment metaId={metaObject.id}>

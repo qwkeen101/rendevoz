@@ -22,6 +22,7 @@ export interface ILabel extends IBase {
   description?: string
   imageUrl?: string
   color?: string
+  selectedText?: string
 }
 export interface IWebpage extends IBase {
   specType: 'webpage'

@@ -8,7 +8,8 @@ import { MetaObject } from '~/typings'
 import FontSize from '@/consts/font'
 import fuzzysort from 'fuzzysort'
 import { Virtualizer } from '@tanstack/react-virtual'
-import { Colors } from '@/consts'
+import { Colors, KEY } from '@/consts'
+import isHotkey from 'is-hotkey'
 
 interface MetaFiltererProps {
   withInput?: boolean
@@ -31,6 +32,7 @@ const MetaFilterer = ({ withInput = true, autoFocus, onChange, currentInput, sho
   const virtualizerRef = useRef<Virtualizer<any, any>>()
   const visibleTypes = useMemo(() => {
     const index = MetaStore.getIndexedMetaObjects()
+    document.activeElement?.blur?.()
     if (!index) return
     const arr = Array.from(index.typeToMetaObjectIdsMap.entries()).map(i => ({
       type: i[0],
@@ -50,6 +52,20 @@ const MetaFilterer = ({ withInput = true, autoFocus, onChange, currentInput, sho
       setFiltererState(s => ({ ...s, currentTypeItems: allObjects }))
     }
   }, [filtererState.currentSelectType])
+
+  useEffect(() => {
+    const keydownHandler = (e: KeyboardEvent) => {
+      if (!currentInput) {
+        if (isHotkey(KEY.Backspace, e)) {
+          setFiltererState(s => ({ ...s, currentSelectType: undefined, currentVisibleItems: undefined, currentTypeItems: undefined }))
+        }
+      }
+    }
+    document.addEventListener('keydown', keydownHandler)
+    return () => {
+      document.removeEventListener('keydown', keydownHandler)
+    }
+  })
   useEffect(() => {
     if (filtererState.currentInput?.length) {
       const map = MetaStore.getMetaObjectsMap()

@@ -10,14 +10,16 @@ export default () => {
   useEffect(() => {
     const s = (e: KeyboardEvent) => {
       if (e.type === 'keydown') {
-        if (isHotkey('mod+a', e)) {
-          instance.selectOps?.selectAll()
-          e.preventDefault()
+        if (instance.values.isFocused) {
+          if (isHotkey('mod+a', e)) {
+            instance.selectOps?.selectAll()
+            e.preventDefault()
+          }
+          if (e.shiftKey) {
+            setGroupState(s => ({ ...s, shiftPressed: true }))
+          }
+          document.addEventListener('keyup', s)
         }
-        if (e.shiftKey) {
-          setGroupState(s => ({ ...s, shiftPressed: true }))
-        }
-        document.addEventListener('keyup', s)
       }
       if (e.type === 'keyup') {
         setGroupState(s => (s.shiftPressed ? { ...s, shiftPressed: false } : s))

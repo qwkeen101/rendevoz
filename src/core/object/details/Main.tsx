@@ -10,6 +10,7 @@ import { Rendevoz } from '@/core/rendevoz'
 import { DateFormat } from '@/utils'
 import { toast } from 'react-hot-toast'
 import { RENDEVOZ_DEFAULT_TABS } from '@/lifycycle/startup/registerTabs'
+import { GlobalInstance } from '@/hooks'
 
 const flatButton = css([
   ClassName.flatButton(999, '3px 10px '),
@@ -130,19 +131,6 @@ const MetaMainDetails = ({
           {renderFrom({})}
         </Content>
       </Content>
-      {/*<Content*/}
-      {/*  flex*/}
-      {/*  alignItems={'center'}*/}
-      {/*  gap={10}*/}
-      {/*  style={{*/}
-      {/*    fontSize: 12,*/}
-      {/*    color: Colors.Font.Transparent,*/}
-      {/*    marginTop: 6*/}
-      {/*  }}*/}
-      {/*>*/}
-      {/*  <div>{DateFormat.formatDistanceToNowStrict(object.createdAt, true)} </div>*/}
-      {/*  {object.viewAt && <div>Last viewed: {DateFormat.formatDistanceToNowStrict(object.viewAt, true)}</div>}*/}
-      {/*</Content>*/}
       <Content style={{ paddingTop: 12, flexWrap: 'wrap' }} flex gap={8}>
         <Button.IconButton
           text={t('general.Open')}
@@ -150,6 +138,14 @@ const MetaMainDetails = ({
           onClick={() => {
             Rendevoz.Actions.Open.Meta.openMetaObject(metaId)
           }}
+          className={flatButton}
+        ></Button.IconButton>
+        <Button.IconButton
+          onClick={() => {
+            Rendevoz.Actions.Open.Meta.openEditMetaDialog(metaId)
+          }}
+          text={t('general.edit')}
+          icon={'park-edit'}
           className={flatButton}
         ></Button.IconButton>
         <Button.IconButton
@@ -165,8 +161,14 @@ const MetaMainDetails = ({
           className={flatButton}
         ></Button.IconButton>
         <Button.IconButton onClick={onViewLinks} text={t('general.Links')} icon={'park-link'} className={flatButton}></Button.IconButton>
-        <Button.IconButton onClick={onOpenTag} text={t('general.Tags')} icon={'park-tag-one'} className={flatButton}></Button.IconButton>
-
+        <Button.IconButton
+          onClick={() => {
+            onViewAtt()
+          }}
+          text={t('general.attachments')}
+          icon={'park-link-one'}
+          className={flatButton}
+        ></Button.IconButton>
         <Button.IconButton
           onClick={() => {
             GlobalGraphInstance.open?.({ id: metaId }, true)
@@ -180,16 +182,9 @@ const MetaMainDetails = ({
           content={
             <WithBorder padding={6} style={{ fontSize: 14 }} width={180}>
               <Button.IconButton
-                text={'Generate link'}
+                text={t('general.Copy link')}
                 onClick={() => {
-                  const link = `rendevoz://object/${metaId}`
-                  navigator.clipboard.writeText(link)
-                  toast.success(
-                    <Content className={ClassName.description()}>
-                      <div style={{ textTransform: 'none' }}>{t('general.link is generated for this object')}!</div>
-                      <div style={{ userSelect: 'all', textTransform: 'none' }}>{link}</div>
-                    </Content>
-                  )
+                  GlobalInstance.metaOps?.copyLink(metaId)
                 }}
                 icon={'park-link'}
               />
@@ -225,13 +220,6 @@ const MetaMainDetails = ({
                   }}
                 ></Button.IconButton>
               )}
-              <Button.IconButton
-                onClick={() => {
-                  onViewAtt()
-                }}
-                text={'View attachments'}
-                icon={'park-link-one'}
-              ></Button.IconButton>
               <Button.IconButton
                 text={'Delete object'}
                 icon={'park-delete'}

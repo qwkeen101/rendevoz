@@ -44,8 +44,10 @@ const MetaGroupInner = ({ groupId }: { groupId: number }) => {
         onClick={() => {
           instance.values.isFocused = true
         }}
-        onFocus={() => {
-          instance.values.isFocused = true
+        onFocus={e => {
+          if (e.target === e.currentTarget) {
+            instance.values.isFocused = true
+          }
         }}
         style={{ overflow: 'auto' }}
         fullHeight

@@ -29,7 +29,7 @@ const PageSetting = ({ editor }: { editor: CustomEditor }) => {
       />
       <ButtonChooser
         icon={'park-auto-line-height'}
-        value={`${(editorState.state?.lineSpacing || 1.2).toFixed(1)}`}
+        value={`${(editorState.state?.lineSpacing || 1.3).toFixed(1)}`}
         onChange={v => {
           editor.on({
             type: 'stateChange',

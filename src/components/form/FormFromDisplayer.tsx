@@ -34,17 +34,17 @@ const FormFromDisplayer = ({ initialObject, onRemove }: { initialObject: Partial
   return (
     <div className={groupClassName}>
       <div className={hoverLabelClassName}>{t('general.from')}</div>
-      <Icon
-        name="park-delete"
-        className={ClassName.circleButton()}
-        onClick={onRemove}
-        containerStyle={{
-          position: 'absolute',
-          top: -10,
-          right: 10,
-          fontSize: 10
-        }}
-      />
+      {/*<Icon*/}
+      {/*  name="park-delete"*/}
+      {/*  className={ClassName.circleButton()}*/}
+      {/*  onClick={onRemove}*/}
+      {/*  containerStyle={{*/}
+      {/*    position: 'absolute',*/}
+      {/*    top: -10,*/}
+      {/*    right: 10,*/}
+      {/*    fontSize: 10*/}
+      {/*  }}*/}
+      {/*/>*/}
       <div style={{ fontSize: 13 }}>
         <IconNameItem icon={fromState?.icon} name={fromState?.name} />
       </div>

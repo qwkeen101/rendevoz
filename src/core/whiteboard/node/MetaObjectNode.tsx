@@ -151,12 +151,6 @@ const MetaObjectNode: FC<InnerNodeProps> = ({ node: n, setPopoverElements, setNo
         renderDescription: true,
         renderOriginalText: true
       },
-      originalTextOptions: {
-        style: {
-          margin: '4px 0px',
-          padding: '2px 6px 4px'
-        }
-      },
       titleOptions: {
         style: {
           fontSize: FontSize['14px'],
@@ -174,8 +168,7 @@ const MetaObjectNode: FC<InnerNodeProps> = ({ node: n, setPopoverElements, setNo
         style: {
           fontSize: FontSize['12px'],
           gap: '0.3rem'
-        },
-        className: ClassName.ellipsisFont(1)
+        }
       }
     }),
     [hasSize, hasImage]
@@ -241,10 +234,8 @@ const MetaObjectNode: FC<InnerNodeProps> = ({ node: n, setPopoverElements, setNo
         ellipsisLine: 0,
         style: {
           whiteSpace: 'pre-wrap'
-        }
-      },
-      descriptionOptions: {
-        ellipsisLine: 0
+        },
+        showAddNote: false
       },
       containerStyle: {
         padding: 8,

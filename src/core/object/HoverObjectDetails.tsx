@@ -91,7 +91,6 @@ const HoverObjectDetails = forwardRef(
           <WithBorder style={{ maxWidth: 320, overflow: 'hidden', minWidth: 200 }}>
             {renderWhole({
               rowGap: 5,
-              columnGap: 3,
               renderOptions: {
                 renderFrom: true,
                 renderOption: true,
@@ -103,10 +102,11 @@ const HoverObjectDetails = forwardRef(
               },
               optionOptions: {
                 style: {
-                  top: metaObject.coverImgSrc ? 0 : 5
+                  top: metaObject.coverImgSrc ? 2 : 5
                 }
               },
               titleOptions: {
+                showAddNote: false,
                 style: {
                   fontSize: FontSize['13px']
                 },
@@ -121,13 +121,9 @@ const HoverObjectDetails = forwardRef(
                 }
               },
               fromOptions: {
-                style: {
-                  fontSize: FontSize['11px']
-                },
                 onFromClick: () => {
                   toggleTooltipVisible(false)
-                },
-                className: ClassName.ellipsisFont(1)
+                }
               }
             })}
           </WithBorder>

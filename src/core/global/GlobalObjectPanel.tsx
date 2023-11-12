@@ -218,15 +218,11 @@ type ObjectPanelProps = {
   onClose?: VoidFunction
   isAddingObject: boolean
   handleAddObject: (id: number) => void
-  padding?: number
-  onOpenInTab?: VoidFunction
+  padding?: number | string
   visiblility?: {
     showOpenInTab?: boolean
     showClose?: boolean
     showCurrentTabObject?: boolean
-  }
-  showObjectDetails?: {
-    id: number
   }
   renderFilterOnParent?: boolean
   onBackToList?: VoidFunction
@@ -254,24 +250,12 @@ const ObjectPanelFilterSortAtom = atom<{
   }
 })
 export const ObjectPanel = memo(
-  ({
-    onClose,
-    isAddingObject,
-    handleAddObject,
-    padding = 16,
-    onOpenInTab,
-    onBackToList,
-    renderFilterOnParent,
-    visiblility = { showClose: true },
-    showObjectDetails
-  }: ObjectPanelProps) => {
+  ({ onClose, isAddingObject, handleAddObject, padding = 16, visiblility = { showClose: true } }: ObjectPanelProps) => {
     const undeleteObjects = useGlobalAtomValue(undeletedMetaObjectsAtom)
 
     const { t } = useTranslation()
     const [filterSort, setFilterSort] = useAtom(ObjectPanelFilterSortAtom)
     const [shouldDisplayObjects, setShouldDisplayObjects] = useState<MetaObject[]>(undeleteObjects)
-    const [showBoxShadow, toggleShowBoxShadow] = useToggle(false)
-    const containerRef = useRef<HTMLDivElement>(null)
 
     useEffect(() => {
       if (
@@ -301,23 +285,6 @@ export const ObjectPanel = memo(
         setShouldDisplayObjects(undeleteObjects)
       }
     }, [filterSort.filterVisible, undeleteObjects, filterSort.sorterVisible, filterSort.searchInput])
-
-    useEffect(() => {
-      const container = containerRef.current
-      const containerScrollHandler = (e: Event) => {
-        if ((e.target as HTMLElement).scrollTop > 0) {
-          toggleShowBoxShadow(true)
-        } else {
-          toggleShowBoxShadow(false)
-        }
-      }
-      if (container) {
-        container.addEventListener('scroll', containerScrollHandler)
-      }
-      return () => {
-        container?.removeEventListener('scroll', containerScrollHandler)
-      }
-    }, [])
 
     const debounceSet = useDebounceFn(
       v => {
@@ -359,7 +326,7 @@ export const ObjectPanel = memo(
         <Content
           flex
           column
-          gap={10}
+          gap={8}
           style={{
             padding
           }}
@@ -547,81 +514,24 @@ export const SimpleObject = memo(
     (
       {
         metaObjectId,
-        iconName = 'park-drag',
-        iconPopover,
         descriptionClassName = css([ClassName.description(), ClassName.ellipsisFont(2)]),
         onNavigate,
-        draggable = true,
         renderFrom = true,
-        renderDescription = false,
-        isAddingObject,
-        iconTheme,
-        iconColor = Colors.Font.Secondary,
-        heavyIconColor = Colors.Font.Primary,
-        onAddObject,
-        showIcon = false,
-        onIconClick
+        renderDescription = false
       }: {
         metaObjectId: number
-        iconName?: string
-        iconColor?: string
-        iconTheme?: string
-        heavyIconColor?: string
-        iconPopover?: ReactElement
         descriptionClassName?: string
         onNavigate?: VoidFunction
-        draggable?: boolean
         renderDescription?: boolean
         renderFrom?: boolean
-        isAddingObject?: boolean
-        onAddObject?: (id: number) => void
-        showIcon?: boolean
-        onIconClick?: (e: React.MouseEvent, togglePopoverVisible: React.SetStateAction<boolean>) => void
       },
       ref
     ) => {
       const containerRef = useRef<HTMLDivElement>(null)
       const mergedRef = useMergedRef(containerRef, ref)
-      const isPressed = useRef(false)
       const { renderWhole, metaObject } = useRenderObject({
         metaObjectId: metaObjectId
       })
-      const [hovered, setHovered] = useState(false)
-      const [popoverContainerVisible, togglePopoverContainerVisible] = useState(false)
-      const [popoverVisible, togglePopoverVisible] = useToggle(false)
-      const [showCheckBox, toggleShowCheckBox] = useToggle(false)
-      const firstDragTimeRef = useRef<number>(0)
-      const currentFocusFilter = useAtomValue(CurrentFocusFilterAtom)
-      const filters = useAtomValue(FiltersAtom)
-      const currentRelatedIdsAtom = useMemo(() => {
-        if (currentFocusFilter) {
-          if (currentFocusFilter.id && currentFocusFilter.type === 'related') {
-            const idsAtom = selectAtom(FilterRelatedIdsAtom, f => f.get(currentFocusFilter.id))
-            return idsAtom
-          }
-        }
-        return atom(null)
-      }, [currentFocusFilter?.id])
-      const currentRelatedIds = useAtomValue(currentRelatedIdsAtom)
-      useEffect(() => {
-        if (currentFocusFilter) {
-          if (currentFocusFilter.type === 'related') {
-            toggleShowCheckBox(true)
-          }
-        } else {
-          toggleShowCheckBox(false)
-        }
-      }, [currentFocusFilter])
-      const store = useStore()
-      useEffect(() => {
-        if (popoverVisible === false) {
-          setTimeout(() => {
-            togglePopoverContainerVisible(false)
-          }, 300)
-        } else {
-          togglePopoverContainerVisible(true)
-        }
-      }, [popoverVisible])
       const renderOptions = useMemo(
         () => ({
           tagAboveImage: true,
@@ -645,18 +555,8 @@ export const SimpleObject = memo(
             flex: 1,
             width: 0
           },
-          fromOptions: {
-            style: {
-              margin: 0,
-              fontSize: '0.8rem'
-            },
-            className: ClassName.ellipsisFont(1)
-          },
-          tagsOptions: {
-            showCreatedAt: false,
-            showViewAt: false
-          },
           titleOptions: {
+            showAddNote: false,
             style: {
               fontSize: '14px',
               lineHeight: 1.3
@@ -668,7 +568,6 @@ export const SimpleObject = memo(
             }
           },
           rowGap: 10,
-          columnGap: 4,
           descriptionOptions: {
             style: {
               fontSize: FontSize['12px']
@@ -687,7 +586,7 @@ export const SimpleObject = memo(
             metaId: metaObjectId
           }}
         >
-          <Content onPointerMove={() => setHovered(true)} onPointerLeave={() => setHovered(false)} flex alignItems="center" gap={4}>
+          <Content flex alignItems="center" gap={4}>
             <Content fullWidth fullHeight flex={!metaObject?.coverImgSrc}>
               {renderWhole(renderOptions)}
             </Content>

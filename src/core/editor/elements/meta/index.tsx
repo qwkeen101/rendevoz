@@ -13,15 +13,8 @@ const MetaObject: FC<RenderElementProps> = memo(({ children, element }) => {
   const { renderWhole, metaObject } = useRenderObject({
     metaObjectId: originId
   })
-  const [mouseIn, setMouseIn] = useState(false)
   const renderLineMain = () => (
     <Content
-      onPointerMove={() => {
-        setMouseIn(true)
-      }}
-      onPointerLeave={() => {
-        setMouseIn(false)
-      }}
       flex
       style={{
         flexWrap: 'wrap-reverse',
@@ -44,7 +37,6 @@ const MetaObject: FC<RenderElementProps> = memo(({ children, element }) => {
         }}
       >
         {renderWhole({
-          columnGap: 6,
           optionOptions: {
             style: {
               top: -5,
@@ -52,8 +44,9 @@ const MetaObject: FC<RenderElementProps> = memo(({ children, element }) => {
             }
           },
           titleOptions: {
+            showAddNote: false,
             style: {
-              fontSize: FontSize['13px']
+              fontSize: 14
             }
           },
           descriptionOptions: {
@@ -61,15 +54,10 @@ const MetaObject: FC<RenderElementProps> = memo(({ children, element }) => {
               fontSize: FontSize['12px']
             }
           },
-          fromOptions: {
-            style: {
-              fontSize: FontSize['12px']
-            }
-          },
           renderOptions: {
             renderFrom: true,
             renderImage: false,
-            renderOption: mouseIn ? true : false
+            renderOption: true
           }
         })}
       </div>

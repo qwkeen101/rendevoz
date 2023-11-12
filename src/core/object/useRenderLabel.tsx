@@ -254,6 +254,7 @@ const useRenderLabel = (opts: {
     showEdit?: boolean
     ellipis?: boolean
     editorStyle?: CSSProperties
+    onClick?: VoidFunction
   }) => {
     if (!shouldShouldOriginal) {
       return null
@@ -276,6 +277,7 @@ const useRenderLabel = (opts: {
           fontSize: 13,
           padding: '4px 8px',
           borderRadius: 4,
+          cursor: 'pointer',
           background: customBackground
             ? label?.color
               ? getColor(label.color)
@@ -283,9 +285,15 @@ const useRenderLabel = (opts: {
             : Colors.Background.ButtonHover,
           ...opts.style
         }}
+        onContextMenu={() => {
+          setLabelState(s => ({ ...s, editingOrigin: true }))
+        }}
         onClick={e => {
           if (!window.getSelection()?.toString()) {
-            setLabelState(s => ({ ...s, editingOrigin: true }))
+            if (opts.onClick) {
+              opts.onClick()
+              return
+            }
           }
         }}
       >

@@ -34,7 +34,7 @@ const EditableCell = ({
   const { openPopover, renderPopover } = usePopoverCell({
     onClose: () => {
       if (valueRef.current !== value) {
-        onChange(valueRef.current || 'Unnamed Object')
+        onChange(valueRef.current)
       }
       valueRef.current = ''
     },
@@ -60,35 +60,72 @@ const EditableCell = ({
       >
         {showToggle && rowId && <ToggleArrow rowId={rowId} toggled={!!toggled} />}
         <div style={style}>{value}</div>
-        {openMeta && isIn && (
-          <Button.IconButton
-            gap={6}
-            icon={'park-expand-text-input'}
-            text={'Open'}
-            onClick={e => {
-              e.stopPropagation()
-              instance.openObject?.(openMeta)
-            }}
-            className={css({
-              background: Colors.Background.Global,
-              ':hover': {
-                background: Colors.Background.Secondary
-              },
-              ':active': {
-                background: Colors.Background.Secondary
-              }
-            })}
+        {isIn && (
+          <div
             style={{
-              border: `1px solid ${Colors.Background.Border}`,
-              boxShadow: Colors.Background.BoxShadow,
-              borderRadius: 4,
               position: 'absolute',
               right: 4,
-              fontSize: 13,
-              height: 24,
-              padding: '0px 6px'
+              display: 'flex',
+              gap: 4
             }}
-          ></Button.IconButton>
+          >
+            {openMeta && (
+              <Button.IconButton
+                gap={6}
+                icon={'park-expand-text-input'}
+                text={'Open'}
+                onClick={e => {
+                  e.stopPropagation()
+                  instance.openObject?.(openMeta)
+                }}
+                className={css({
+                  background: Colors.Background.Global,
+                  ':hover': {
+                    background: Colors.Background.Secondary
+                  },
+                  ':active': {
+                    background: Colors.Background.Secondary
+                  }
+                })}
+                style={{
+                  border: `1px solid ${Colors.Background.Border}`,
+                  boxShadow: Colors.Background.BoxShadow,
+                  borderRadius: 4,
+                  fontSize: 13,
+                  height: 24,
+                  padding: '0px 6px'
+                }}
+              ></Button.IconButton>
+            )}
+            {!openMeta && value && (
+              <Button.IconButton
+                gap={6}
+                icon={'park-copy'}
+                text={'Copy'}
+                onClick={e => {
+                  e.stopPropagation()
+                  navigator.clipboard.writeText(value)
+                }}
+                className={css({
+                  background: Colors.Background.Global,
+                  ':hover': {
+                    background: Colors.Background.Secondary
+                  },
+                  ':active': {
+                    background: Colors.Background.Secondary
+                  }
+                })}
+                style={{
+                  border: `1px solid ${Colors.Background.Border}`,
+                  boxShadow: Colors.Background.BoxShadow,
+                  borderRadius: 4,
+                  fontSize: 13,
+                  height: 24,
+                  padding: '0px 6px'
+                }}
+              ></Button.IconButton>
+            )}
+          </div>
         )}
       </div>
       {renderPopover(box => (

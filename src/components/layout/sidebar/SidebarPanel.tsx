@@ -47,7 +47,7 @@ const SidebarPanel = ({ direction, items }: { direction: 'right' | 'left'; items
                 <Provider store={store}>
                   <ObjectPanel
                     renderFilterOnParent={false}
-                    padding={8}
+                    padding={'8px 8px 0px'}
                     onOpenInTab={() => {
                       Rendevoz.Actions.Open.openDatabase()
                     }}

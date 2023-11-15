@@ -49,7 +49,7 @@ const ObjectForm: FC<
     { wait: 200 }
   )
   const defaultLayout: MetaFormLayoutItem[] = [
-    targetObject && 'url' in targetObject
+    targetObject && 'url' in targetObject && targetObject.specType === 'webpage'
       ? {
           type: 'input',
           text: t('general.url'),

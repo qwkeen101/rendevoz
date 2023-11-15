@@ -1,4 +1,4 @@
-import { MetaStore, ObjectStore } from '@/stores'
+import { MetaStore, ObjectStore } from '@/api/stores'
 import { Content, Icon } from '@/components'
 import { ClassName } from 'rendevoz'
 import usePdfBarState from '@/core/pdf/hooks/usePdfBarState'

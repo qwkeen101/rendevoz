@@ -1,5 +1,5 @@
 import { toPng } from 'html-to-image'
-import { MetaStore } from '@/stores'
+import { MetaStore } from '@/api/stores'
 import { deleteLocalFile, saveImageLocally } from '@/utils'
 import { RefObject } from 'react'
 import { useDebounceEffect } from '@/hooks'

@@ -1,5 +1,5 @@
 import { useGlobalAtom } from '@/hooks'
-import { globalStore } from '@/stores'
+import { globalStore } from '@/api/stores'
 import { atomWithStorage } from 'jotai/utils'
 import _ from 'lodash'
 

@@ -1,6 +1,6 @@
 import { useEffect } from 'react'
-import { MetaStore, ObjectStore } from '@/stores'
-import { fetchMetaNoteContent } from '@/stores/utils.store'
+import { MetaStore, ObjectStore } from '@/api/stores'
+import { fetchMetaNoteContent } from '@/api/stores/utils.store'
 import { Node } from 'slate'
 import { useSlateStatic } from '@/core'
 import { pushNumberIntoUnrepeatableArray } from '@/utils'

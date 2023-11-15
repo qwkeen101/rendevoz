@@ -2,7 +2,7 @@ import { FC, memo, MouseEventHandler, useCallback, useEffect, useMemo, useRef } 
 import useGraph from '@/core/graph/hooks/useGraph'
 import { useAtomValue, useSetAtom } from 'jotai'
 import { FilterSelectedTagsAtom, ObjectTag } from '@/core'
-import { MetaStore } from '@/stores'
+import { MetaStore } from '@/api/stores'
 import { GraphPathFilterAtom } from '@/core/graph/components/GraphPathFilter'
 import { GraphModeAtom } from '@/core/graph/hooks/useGraphMode'
 import { GraphNode } from '@/core/graph/types/node'

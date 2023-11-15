@@ -1,4 +1,4 @@
-import KeyvalueStore from '@/stores/keyvalue.store'
+import KeyvalueStore from '@/api/stores/keyvalue.store'
 
 export default async (feedItemId: number) => {
   const currentReadlaters = (await KeyvalueStore.getOne('feedReadLaterIds')) || []

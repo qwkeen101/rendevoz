@@ -1,15 +1,15 @@
 import { AnimatePopover, Icon } from '@/components'
 import { useGlobalIsDragging } from '@/core'
 import { useMemoizedFn } from '@/hooks'
-import { objectIdToMetaObjectIdMapAtom } from '@/stores/meta.store'
-import { globalStore } from '@/stores'
+import { objectIdToMetaObjectIdMapAtom } from '@/api/stores/meta.store'
+import { globalStore } from '@/api/stores'
 import ClassName from '@/styles/classNames'
 import { css } from '@emotion/css'
 import { memo, useEffect, useRef, useState } from 'react'
 import { MenuItem } from './Item'
 import { useTranslation } from 'react-i18next'
 import { Rendevoz } from '@/core/rendevoz'
-import { TypeToRegisteredObject } from '@/stores/object.store'
+import { TypeToRegisteredObject } from '@/api/stores/object.store'
 import { setPanelState } from '@/components/layout/sidebar/index'
 
 const SidebarDatabase = memo(() => {

@@ -1,4 +1,4 @@
-import { ObjectStore } from '@/stores'
+import { ObjectStore } from '@/api/stores'
 import { useDebounceEffect, useSelectAtomValue } from '@/hooks'
 import { Group } from '@/core/group/hooks/weakmaps'
 import { MetaGroupChild } from '~/typings'

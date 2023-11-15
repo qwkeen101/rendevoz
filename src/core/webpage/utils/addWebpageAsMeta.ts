@@ -1,5 +1,5 @@
 import { IWebpageState, WebpageState } from '@/core/webpage/hooks/useWebpageState'
-import { NoteStore, ObjectStore } from '@/stores'
+import { NoteStore, ObjectStore } from '@/api/stores'
 import { fetchRemoteImageAndSaveLocally } from '@/utils'
 import { MetaObject } from '~/typings'
 

@@ -1,7 +1,7 @@
 import { AnimatePopover, Content, Icon, Modal } from '@/components'
 import CollectionForm from '@/components/form/CollectionForm'
-import useCollectionStore, { collectionsAtom } from '@/stores/collection.store'
-import { CollectionStore, globalStore, MetaStore } from '@/stores'
+import useCollectionStore, { collectionsAtom } from '@/api/stores/collection.store'
+import { CollectionStore, globalStore, MetaStore } from '@/api/stores'
 import ClassName from '@/styles/classNames'
 import { css } from '@emotion/css'
 import { AnimatePresence, motion } from 'framer-motion'
@@ -15,7 +15,7 @@ import useSidebarItemContextMenu from '../useSidebarItemContextMenu'
 import useSidebarItemDrag from '../useSidebarItemDrag'
 import { ISidebarItem } from './type'
 import SidebarObjectItem from './SidebarObjectItem'
-import { metaObjectsAtom } from '@/stores/meta.store'
+import { metaObjectsAtom } from '@/api/stores/meta.store'
 import FontSize from '@/consts/font'
 
 const SidebarCollectionItem: FC<ISidebarItem> = memo(

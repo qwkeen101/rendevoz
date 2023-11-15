@@ -1,4 +1,4 @@
-import { ObjectStore } from '@/stores'
+import { ObjectStore } from '@/api/stores'
 import { useState } from 'react'
 import { Modal } from '@/components'
 import QueryPanel from '@/core/group/hooks/queryLibrary/QueryPanel'

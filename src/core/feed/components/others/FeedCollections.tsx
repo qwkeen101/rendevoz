@@ -1,6 +1,6 @@
 import { Content } from '@/components'
 import { useEffect, useState } from 'react'
-import { ObjectStore } from '@/stores'
+import { ObjectStore } from '@/api/stores'
 
 type Feed = {
   category: string

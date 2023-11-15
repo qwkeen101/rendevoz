@@ -1,6 +1,6 @@
 import { toast } from 'react-hot-toast'
 import FeedParser from '@/core/feed/utils/parser'
-import { ObjectStore } from '@/stores'
+import { ObjectStore } from '@/api/stores'
 import { FeedItem } from '~/typings'
 
 export default async (feedUrl: string, type: FeedItem['feedType'] = 'webpage') => {

@@ -1,5 +1,5 @@
 import { IGroupRow } from './types'
-import { MetaStore, ObjectStore } from '@/stores'
+import { MetaStore, ObjectStore } from '@/api/stores'
 import useMetaWithGroup from '@/core/group/hooks/useMetaWithGroup'
 import { useSelectAtomValue } from '@/hooks'
 import { TableStateAtom } from '@/core/group/hooks/useTableState'

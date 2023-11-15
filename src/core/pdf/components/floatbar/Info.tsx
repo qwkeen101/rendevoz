@@ -1,6 +1,6 @@
 import { Content } from "@/components";
 import { AttachmentWrapper } from "@/core";
-import { MetaStore } from "@/stores";
+import { MetaStore } from "@/api/stores";
 import ClassName from "@/styles/classNames";
 import { memo } from "react";
 import FontSize from "@/consts/font";

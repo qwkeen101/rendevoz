@@ -1,4 +1,4 @@
-import { globalStore } from "@/stores";
+import { globalStore } from "@/api/stores";
 import { SettingAtom } from ".";
 
 export default () => {

@@ -1,5 +1,5 @@
 import { Button, Content } from '@/components'
-import { ObjectStore } from '@/stores'
+import { ObjectStore } from '@/api/stores'
 import { forwardRef, useLayoutEffect, useRef, useState } from 'react'
 import { atom, Provider } from 'jotai'
 import CanvasManager from '@/components/base/canvas/CanvasManager'

@@ -1,4 +1,4 @@
-import KeyvalueStore from '@/stores/keyvalue.store'
+import KeyvalueStore from '@/api/stores/keyvalue.store'
 import { ButtonChooser, CheckBox, Content, Icon } from '@/components'
 import { Reorder } from 'framer-motion'
 import { ClassName } from 'rendevoz'

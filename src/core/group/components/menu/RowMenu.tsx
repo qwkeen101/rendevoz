@@ -1,7 +1,7 @@
 import { MetaGroupChild } from '~/typings'
 import { AnimatePopover, Button, Content, WithBorder } from '@/components'
 import { useGroupInstance } from '@/core/group/hooks/useGroupInstance'
-import { MetaStore } from '@/stores'
+import { MetaStore } from '@/api/stores'
 import { ReactElement } from 'react'
 import NewRowMenu from '@/core/group/components/menu/NewRowMenu'
 import { Colors } from '@/consts'

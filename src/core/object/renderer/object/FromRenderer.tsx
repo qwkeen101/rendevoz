@@ -1,6 +1,6 @@
 import { IconNameItem } from '@/components/layout/sidebar/SidebarCollection'
 import Colors from '@/consts/colors'
-import { globalStore, MetaStore } from '@/stores'
+import { globalStore, MetaStore } from '@/api/stores'
 import { CSSProperties, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { MetaObject } from '~/typings'
@@ -12,7 +12,7 @@ import ClassName from '@/styles/classNames'
 import { PAGE_SPACING } from '../../../pdf/core/layouts/Layout'
 import { Rendevoz } from '../../../rendevoz'
 import { normalizeSecondsToTime } from '../../../media/utils'
-import { metaObjectsAtom } from '@/stores/meta.store'
+import { metaObjectsAtom } from '@/api/stores/meta.store'
 
 export type FromRendererProps = {
   style?: CSSProperties

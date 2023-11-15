@@ -2,7 +2,7 @@ import { IWhiteboardNode } from '~/typings'
 import SyncedBlockEditor from '@/core/editor/SyncedBlockEditor'
 import { useEffect } from 'react'
 import { useFlow } from '@/core/whiteboard/hooks'
-import { MetaStore, ObjectStore } from '@/stores'
+import { MetaStore, ObjectStore } from '@/api/stores'
 import { pushNumberIntoUnrepeatableArray } from '@/utils'
 import { useWhiteboardInstance } from '@/core/whiteboard/hooks/useWhiteboardInstance'
 

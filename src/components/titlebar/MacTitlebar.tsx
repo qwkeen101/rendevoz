@@ -24,7 +24,7 @@ const MacTitlebar = () => {
       fullWidth
       style={{
         height: isFullscreen ? 0 : 30,
-        '-webkit-app-region': 'drag',
+        WebkitAppRegion: 'drag',
         borderBottom: `1px solid ${Colors.Background.Border}`,
         display: isFullscreen ? 'none' : 'flex',
         justifyContent: 'center',

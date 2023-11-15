@@ -6,7 +6,7 @@ import { FC, useLayoutEffect, useState } from 'react'
 import styles from './index.module.less'
 import categoriesJson from '@/assets/categories.json?raw'
 import { ClassName } from 'rendevoz'
-import KeyvalueStore from '@/stores/keyvalue.store'
+import KeyvalueStore from '@/api/stores/keyvalue.store'
 import { Colors } from '@/consts'
 
 type ICategory = Record<string, string[]>

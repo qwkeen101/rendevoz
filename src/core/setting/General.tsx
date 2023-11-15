@@ -1,11 +1,11 @@
 import { useToggle } from '@/hooks'
 import useLatest from '@/hooks/utils/useLatest'
-import { CollectionStore, MetaStore } from '@/stores'
+import { CollectionStore, MetaStore } from '@/api/stores'
 import ClassName from '@/styles/classNames'
 import { exportRendevozDb, importRendevozDb } from '@/utils/db'
 import { useEffect, useRef, useState } from 'react'
 import { toast } from 'react-hot-toast'
-import { Button, Content, Form, Switch } from '../../components/base'
+import { Button, Content, FileUploader, Form, Image, Slider, Switch } from '../../components/base'
 import Modal from '../../components/base/Modal'
 import useFileUpload from '../../components/base/useFileUpload'
 import SettingItem, { ISettingItem } from './SettingItem'
@@ -22,10 +22,13 @@ import Colors from '@/consts/colors'
 import BorderInput from '@/components/base/BorderInput'
 import FontSize from '@/consts/font'
 import { isValidHttpUrl } from '../webpage/utils'
-import { changeFilePath, getSelectedFolderPath, openDatabaseFolder } from '@/utils/file'
+import { changeFilePath, openDatabaseFolder } from '@/utils/file'
 import SettingGroup from '@/core/setting/SettingGroup'
-import { DateFormat } from '@/utils'
+import { DateFormat, saveImageLocally } from '@/utils'
 import { getAppState } from '@/core/rendevoz/appState'
+import FileSystem from '@/api/fileSystem'
+import { Icon } from '@/components'
+import { css } from '@emotion/css/dist/emotion-css.cjs'
 
 const languageOptions: SelectOptionProps[] = [
   {
@@ -83,7 +86,14 @@ const GeneralSetting = () => {
     }
   }
   const { renderUploader, upload } = useFileUpload(file => handleImportData(file), 'application/JSON')
-
+  const Moon = () => (
+    <svg width="32" height="32" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <path
+        fill={'currentColor'}
+        d="M23.4884 22.2366C23.6204 22.0993 23.4932 21.8783 23.3046 21.9057C22.8787 21.9675 22.4431 21.9995 22 21.9995C17.0294 21.9995 13 17.9701 13 12.9995C13 10.9978 13.6535 9.1486 14.7589 7.65382C14.8722 7.50063 14.7373 7.28425 14.554 7.33592C10.7721 8.40154 8 11.8768 8 15.9995C8 20.9701 12.0294 24.9995 17 24.9995C19.5492 24.9995 21.8509 23.9397 23.4884 22.2366Z"
+      ></path>
+    </svg>
+  )
   const checkCanUpdate = () => {
     if (APP_VERSION && updateInfo?.version) {
       if (semver.gt(updateInfo.version, APP_VERSION)) {
@@ -155,6 +165,104 @@ const GeneralSetting = () => {
         >
           {t('settings.download and install')}
         </div>
+      )
+    }
+  ]
+
+  const currentMode = setting.general.darkMode
+  const followSystem = setting.general.followSystemTheme
+  const ThemeItems: ISettingItem[] = [
+    {
+      title: t('settings.Application theme'),
+      column: true,
+      children: (
+        <Content flex gap={18}>
+          <Content flex column alignItems={'center'} gap={4}>
+            <Content
+              flex
+              alignItems={'center'}
+              justifyContent={'center'}
+              onClick={() => {
+                setSetting(s => ({
+                  ...s,
+                  general: {
+                    ...s.general,
+                    darkMode: false,
+                    followSystemTheme: false
+                  }
+                }))
+              }}
+              style={{
+                width: 90,
+                height: 60,
+                background: 'white',
+                borderRadius: 8,
+                cursor: 'pointer',
+                boxShadow: followSystem ? undefined : currentMode ? undefined : '0 0 0 2px var(--select-color)'
+              }}
+            >
+              <Icon size={24} name={'park-sun'} containerStyle={{ color: 'black' }} />
+            </Content>
+            <div style={{ color: Colors.Font.Transparent, fontSize: 12 }}>Light</div>
+          </Content>
+          <Content flex column alignItems={'center'} gap={4}>
+            <Content
+              flex
+              onClick={() => {
+                setSetting(s => ({
+                  ...s,
+                  general: {
+                    ...s.general,
+                    darkMode: true,
+                    followSystemTheme: false
+                  }
+                }))
+              }}
+              alignItems={'center'}
+              justifyContent={'center'}
+              style={{
+                width: 90,
+                height: 60,
+                background: '#343333',
+                borderRadius: 8,
+                color: 'white',
+                cursor: 'pointer',
+                boxShadow: followSystem ? undefined : currentMode ? '0 0 0 2px var(--select-color)' : undefined
+              }}
+            >
+              <Moon />
+            </Content>
+            <div style={{ color: Colors.Font.Transparent, fontSize: 12 }}>Dark</div>
+          </Content>
+          <Content flex column alignItems={'center'} gap={4}>
+            <Content
+              flex
+              onClick={() => {
+                setSetting(s => ({
+                  ...s,
+                  general: {
+                    ...s.general,
+                    followSystemTheme: !s.general.followSystemTheme
+                  }
+                }))
+              }}
+              alignItems={'center'}
+              justifyContent={'center'}
+              style={{
+                width: 90,
+                height: 60,
+                background: 'linear-gradient(60deg, #dedede 10%, #198ccd 110%)',
+                borderRadius: 8,
+                color: 'white',
+                cursor: 'pointer',
+                boxShadow: followSystem ? '0 0 0 2px var(--select-color)' : undefined
+              }}
+            >
+              <Icon size={24} name={'park-system'} theme={"filled"}/>
+            </Content>
+            <div style={{ color: Colors.Font.Transparent, fontSize: 12 }}>System</div>
+          </Content>
+        </Content>
       )
     }
   ]
@@ -334,7 +442,7 @@ const GeneralSetting = () => {
             )}
             <Button.IconButton
               onClick={() =>
-                getSelectedFolderPath().then(path =>
+                FileSystem.fs.selectDir().then(path =>
                   setSetting(
                     produce(setting, s => {
                       s.general.userFilePath = path
@@ -465,6 +573,7 @@ const GeneralSetting = () => {
   return (
     <>
       <SettingGroup title={t('settings.Application details')} layout={VersionItems} />
+      <SettingGroup title={t('settings.Theme')} layout={ThemeItems} />
       <SettingGroup title={t('settings.language')} layout={LanguageItems} />
       <SettingGroup title={t('settings.File and data')} layout={FileItems} />
       <SettingGroup title={t('settings.others')} layout={OthersItems} />

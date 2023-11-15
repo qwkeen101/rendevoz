@@ -1,5 +1,5 @@
-import { initializePdfDocument } from '@/stores/document.store'
-import { ObjectStore } from '@/stores'
+import { initializePdfDocument } from '@/api/stores/document.store'
+import { ObjectStore } from '@/api/stores'
 
 const importpdf = async (file: File) => {
   const doc = await initializePdfDocument(file)

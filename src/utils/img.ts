@@ -1,87 +1,13 @@
 import { ipcInstance } from '@/plugins'
 import { Size, XYPosition } from '~/typings'
 import ColorThief from 'colorthief'
-import { saveBlobLocally } from '@/utils/file'
-import Id from '@/utils/id'
-
+import FileSystem from '@/api/fileSystem'
 const colorThief = new ColorThief()
+
 /**
  * Return: saved local path of img
  */
-export const saveImageLocally = async (
-  imgData: string | Blob,
-  options: {
-    imgName?: string
-    compress: boolean
-  } = {
-    compress: true
-  }
-): Promise<string> => {
-  const data = imgData
-  const { compress, imgName } = options
-  if (imgData instanceof Blob) {
-    if (imgData.type === 'image/svg+xml') {
-      const res = await saveBlobLocally(imgData, `${options.imgName || Id.getId()}`)
-      console.log(res)
-      if (res) {
-        return res
-      }
-      return Promise.reject()
-    }
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader()
-      if (!compress) {
-        reader.readAsDataURL(imgData)
-        reader.onload = () => {
-          ipcInstance.send('saveImage', imgName, reader.result).then(data => resolve(data.data))
-        }
-        return
-      }
-      reader.readAsArrayBuffer(imgData)
-      reader.onload = () => {
-        if (reader.result) {
-          const blob = new Blob([reader.result as ArrayBuffer])
-          const blobUrl = window.URL.createObjectURL(blob)
-          const image = new Image()
-          image.src = blobUrl
-          image.onload = () => {
-            const canvas = document.createElement('canvas')
-            let width = image.width
-            let height = image.height
-            const max_height = 720
-            const max_width = 1280
-            if (width > height) {
-              if (width > max_width) {
-                //height *= max_width / width;
-                height = Math.round((height *= max_width / width))
-                width = max_width
-              }
-            } else {
-              if (height > max_height) {
-                //width *= max_height / height;
-                width = Math.round((width *= max_height / height))
-                height = max_height
-              }
-            }
-            canvas.width = width
-            canvas.height = height
-            canvas.getContext('2d')?.drawImage(image, 0, 0, width, height)
-            const newImageUrl = canvas.toDataURL('image/webp', 1)
-
-            ipcInstance.send('saveImage', imgName, newImageUrl).then(data => resolve(data.data))
-          }
-        }
-      }
-      reader.onerror = () => {
-        reject()
-      }
-    })
-  }
-  if (typeof imgData === 'string') {
-    return (await ipcInstance.send('saveImage', imgName, data)).data
-  }
-  return (await ipcInstance.send('saveImage', imgName, imgData)).data
-}
+export const saveImageLocally = FileSystem.saveImage
 
 /**
  * Return: DataUrl of captured webpage image
@@ -105,17 +31,7 @@ export const imageToDataUrl = (img: HTMLImageElement) => {
 /**
  * Return: local img path
  */
-export const fetchRemoteImageAndSaveLocally = async (remoteImageUrl: string): Promise<string> => {
-  const imageBlob = await (
-    await fetch(remoteImageUrl, {
-      method: 'GET',
-      referrer: ''
-    })
-  ).blob()
-
-  const data = await saveImageLocally(imageBlob, { compress: true, imgName: remoteImageUrl.replaceAll('/', '_').replaceAll('\\', '_') })
-  return data
-}
+export const fetchRemoteImageAndSaveLocally = FileSystem.fetchRemoteImageAndSaveLocally
 
 export const downloadImg = async (imageUrl: string, imageName?: string) => {
   const data = await (await fetch(imageUrl, { method: 'GET', referrer: '' })).blob()

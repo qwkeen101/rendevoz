@@ -3,6 +3,7 @@ import { Colors } from '@/consts'
 import { Rendevoz } from '@/core/rendevoz'
 import { ClassName } from 'rendevoz'
 import { useState } from 'react'
+import FileSystem from '@/api/fileSystem'
 
 export default ({ onUpload, accept }: { onUpload: (filePath: string) => void; accept?: string }) => {
   const [input, setInput] = useState('')
@@ -20,7 +21,7 @@ export default ({ onUpload, accept }: { onUpload: (filePath: string) => void; ac
             onClick={() => {
               Rendevoz.Actions.Utils.uploadFile({ accept }).then(res => {
                 if (res instanceof File) {
-                  Rendevoz.Actions.Utils.saveFile(res).then(p => {
+                  FileSystem.fs.writeFile(res, `/files/${res.name}`).then(p => {
                     if (p) {
                       onUpload(p)
                     }

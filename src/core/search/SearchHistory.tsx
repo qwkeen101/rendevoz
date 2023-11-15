@@ -1,4 +1,4 @@
-import KeyvalueStore from '@/stores/keyvalue.store'
+import KeyvalueStore from '@/api/stores/keyvalue.store'
 import { Content, Icon } from '@/components'
 import { ClassName } from 'rendevoz'
 import FontSize from '@/consts/font'
@@ -17,6 +17,7 @@ const SearchHistory = ({ onClick }: SearchHistoryProps) => {
       <div style={{ fontSize: 12, paddingLeft: 6, marginBottom: 4 }}>{t('general.Search history')}</div>
       {searchHistory.map((i, index) => (
         <HistoryItem
+          key={i}
           name={i}
           onClick={() => onClick(i)}
           onDelete={() => {

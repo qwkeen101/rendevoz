@@ -1,4 +1,4 @@
-import { saveFileLocally } from '@/utils'
+import FileSystem from '@/api/fileSystem'
 
 const useDropInsertMedia = () => {
   const dropHandler = async (e: DragEvent) => {
@@ -6,8 +6,8 @@ const useDropInsertMedia = () => {
     if (files?.length) {
       const firstFile = files[0]
       if (firstFile.type.startsWith('image')) {
-        const res = await saveFileLocally(firstFile.path, firstFile.name)
-        const filepath = res.data
+        const res = await FileSystem.copyFile(firstFile.path, firstFile.name)
+        const filepath = res
         if (filepath) {
           return {
             path: filepath,

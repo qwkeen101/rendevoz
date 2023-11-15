@@ -4,7 +4,7 @@ import Id from '@/utils/id'
 import { useMemo, useState } from 'react'
 import { GlobalInstances, INote, MetaObject } from '~/typings'
 import { transformMarkdown } from '../editor/plugins/deserializeMarkdown'
-import { CollectionStore, NoteStore, ObjectStore } from '@/stores'
+import { CollectionStore, NoteStore, ObjectStore } from '@/api/stores'
 import { getFilenameWithoutExtension } from '@/utils/file'
 import { createPortal } from 'react-dom'
 import ClassName from '@/styles/classNames'
@@ -20,11 +20,6 @@ import importpdf from '@/core/global/imports/importpdf'
 import importvideo from '@/core/global/imports/importvideo'
 
 export const GlobalImporterInstance: GlobalInstances.NoteImporterInstance = {}
-
-const fetchSubtitleOfVideo = async (path: string) => {
-  const res = await ipcInstance.send('getVideoSubtitle')
-  return res.data
-}
 
 const getFileType = (file: File) => {
   const { name, type } = file

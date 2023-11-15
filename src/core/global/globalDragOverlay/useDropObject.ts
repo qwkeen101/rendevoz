@@ -1,12 +1,10 @@
-
-import { MetaStore, ObjectStore } from '@/stores'
-import { fetchRemoteImageAndSaveLocally, saveImageLocally } from '@/utils/img'
+import { MetaStore, ObjectStore } from '@/api/stores'
 import { useEffect } from 'react'
 import { MetaObject } from '~/typings'
 import { transformTextContentToNameAndDescription } from './utils'
 import { getFilenameWithoutExtension } from '@/utils/file'
 import { Regexp } from '@/utils'
-import { Rendevoz } from '@/core/rendevoz'
+import FileSystem from '@/api/fileSystem'
 
 function isUrlImage(url: string) {
   return fetch(url, { method: 'HEAD' }).then(res => {
@@ -61,9 +59,6 @@ export const checkDropCanBeMeta = (e: DragEvent) => {
     const item = e.dataTransfer.items[0]
     const file = item.getAsFile()
     if (!file) return false
-    // if (file.type.startsWith('image')) {
-    //   return true
-    // }
   }
   return false
 }
@@ -78,7 +73,7 @@ export const fetchHead = async (url: string) => {
   const metas = Array.from(head.querySelectorAll('meta').values())
   const descriptionMeta = metas.find(i => i.name === 'description' || i.getAttribute('property') === 'og:description')?.content
   const imageMeta = metas.find(i => i.getAttribute('property') === 'og:image')?.content
-  const coverImgSrc = imageMeta && (await fetchRemoteImageAndSaveLocally(imageMeta))
+  const coverImgSrc = imageMeta && (await FileSystem.fetchRemoteImageAndSaveLocally(imageMeta))
   return {
     title,
     description: descriptionMeta,
@@ -96,13 +91,12 @@ export const fetchHeadAndUpdateWebpage = async (url: string, webpageId: number) 
     .find(i => i.rel.includes('icon'))
     ?.href.replace('http://localhost:7777', '')
   const urlRoot = new URL(url).host
-  console.log(urlRoot)
   const realIcon = icon ? (Regexp.isValidWebUrl(icon) ? icon : `https://${urlRoot}${icon}`) : undefined
   const metas = Array.from(head.querySelectorAll('meta').values())
   const descriptionMeta = metas.find(i => i.name === 'description' || i.getAttribute('property') === 'og:description')?.content
   const imageMeta = metas.find(i => i.getAttribute('property') === 'og:image')?.content
-  const coverImgSrc = imageMeta && (await fetchRemoteImageAndSaveLocally(imageMeta))
-  const iconSrc = realIcon && (await fetchRemoteImageAndSaveLocally(realIcon))
+  const coverImgSrc = imageMeta && (await FileSystem.fetchRemoteImageAndSaveLocally(imageMeta))
+  const iconSrc = realIcon && (await FileSystem.fetchRemoteImageAndSaveLocally(realIcon))
   ObjectStore('webpage').updateOne({ id: webpageId, favicon: iconSrc, title })
   setTimeout(() => {
     const webpageMeta = MetaStore.getMetaObjectByObjectId(webpageId)
@@ -166,7 +160,7 @@ const useDropObject = () => {
             })
           ).blob()
 
-          const imageFilePath = await saveImageLocally(imageBlob, {
+          const imageFilePath = await FileSystem.saveImage(imageBlob, {
             compress: false
           })
 
@@ -263,7 +257,7 @@ const useDropObject = () => {
       const file = item.getAsFile()
       if (!file) return
       if (file.type.startsWith('image')) {
-        const imageFilePath = await saveImageLocally(file, { compress: false })
+        const imageFilePath = await FileSystem.saveImage(file, { compress: false })
         const imageObject = await ObjectStore('image').addOne({
           imageUrl: imageFilePath
         })

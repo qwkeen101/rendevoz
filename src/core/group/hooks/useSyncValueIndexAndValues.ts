@@ -1,7 +1,7 @@
 import useGroupState from '@/core/group/hooks/useGroupState'
 import { useGroupInstance } from '@/core/group/hooks/useGroupInstance'
 import { useEffect } from 'react'
-import { MetaStore } from '@/stores'
+import { MetaStore } from '@/api/stores'
 
 export default () => {
   const [groupState, setGroupState] = useGroupState()

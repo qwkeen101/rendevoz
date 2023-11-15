@@ -1,13 +1,13 @@
 import { IMediaState } from '~/typings'
 import { IMediaEvent } from '~/typings/components/media/event'
 import turnIntoMeta from '@/core/media/wrappers/turnIntoMeta'
-import { saveBlobLocally } from '@/utils'
 import Id from '@/utils/id'
-import { MetaStore, ObjectStore } from '@/stores'
+import { MetaStore, ObjectStore } from '@/api/stores'
 import { GlobalInstance } from '@/hooks'
 import useMediaLabelChapter from '@/core/media/wrappers/labelChapter'
 import { normalizeSecondsToTime } from '@/core/media/utils'
 import _ from 'lodash'
+import FileSystem from '@/api/fileSystem'
 
 const useMediaEventHandlerWrapper = (options: {
   mediaState: Partial<IMediaState>
@@ -39,7 +39,7 @@ const useMediaEventHandlerWrapper = (options: {
     switch (e.type) {
       case 'transcribeFinished': {
         if (object) {
-          const path = await saveBlobLocally(e.vttText, `subtitle_${Id.getStrId()}.vtt`, undefined, 'files')
+          const path = await FileSystem.fs.writeFile(e.vttText, `/files/subtitle_${Id.getStrId()}.vtt`)
           if (path) {
             await ObjectStore(type).updateOne({
               id: object.id,

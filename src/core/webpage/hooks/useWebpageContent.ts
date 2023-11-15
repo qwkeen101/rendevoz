@@ -1,4 +1,4 @@
-import { globalStore, MetaStore, NoteStore, ObjectStore } from '@/stores'
+import { globalStore, MetaStore, NoteStore, ObjectStore } from '@/api/stores'
 import { useEffect } from 'react'
 import useWebpageState, { IWebpageState } from '@/core/webpage/hooks/useWebpageState'
 import fetchUrlAndParseNote from '@/core/webpage/utils/fetchUrlAndParseNote'

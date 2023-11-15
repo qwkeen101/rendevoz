@@ -1,5 +1,5 @@
 import { MetaObject } from '~/typings'
-import { MetaStore } from '@/stores'
+import { MetaStore } from '@/api/stores'
 import { Content, Image } from '@/components'
 import { ClassName } from 'rendevoz'
 import { Rendevoz } from '@/core/rendevoz'

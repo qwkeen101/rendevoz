@@ -1,6 +1,6 @@
 import { IGroupInstance, MetaGroupChild } from '~/typings'
 import { Path } from 'slate'
-import { GroupStore, MetaStore } from '@/stores'
+import { GroupStore, MetaStore } from '@/api/stores'
 /**
  * 在树中移动多个元素
  * 1. 首先删除要移动的元素

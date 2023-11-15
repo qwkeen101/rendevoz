@@ -4,11 +4,11 @@ import { atom } from 'jotai'
 import { Content } from '@/components'
 import SidebarPanel from '@/components/layout/sidebar/SidebarPanel'
 import { KeyToRegisteredSidebarElement } from '@/core/plugin/RegisterMap'
-import KeyvalueStore from '@/stores/keyvalue.store'
+import KeyvalueStore from '@/api/stores/keyvalue.store'
 import { RegisteredSidebarItem } from '~/typings/registered'
 import { Rendevoz } from '@/core/rendevoz'
 import { t } from 'i18next'
-import { globalStore } from '@/stores'
+import { globalStore } from '@/api/stores'
 import { GlobalScreenshotInstance } from '@/core/global/globalScreenShot'
 import { GlobalTextSearchInstance } from '@/core/global/GlobalTextSearch'
 import SidebarDatabase from '@/components/layout/sidebar/SidebarDatabase'
@@ -131,15 +131,13 @@ export const Sidebar = ({ direction = 'right' }: { direction: 'left' | 'right' }
     ...allItems.filter(i => !usedItems.has(i.key))
   )
 
-  const hasBgImg = useSelectGlobalAtomValue(SettingAtom, s => s.background.backgroundImage)
-  const notTransp = (useSelectGlobalAtomValue(SettingAtom, s => s.background.backgroundOpacity) || 0) > 0
   return (
     <Content
       flex
       style={{
         zIndex: 1000,
         flexDirection: direction === 'right' ? 'row' : 'row-reverse',
-        background: hasBgImg && notTransp ? undefined : Colors.Background.Secondary
+        background: Colors.Background.Secondary
       }}
     >
       <SidebarIcons

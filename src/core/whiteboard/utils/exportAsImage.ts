@@ -1,17 +1,11 @@
-import FlowManager from '@/core/whiteboard/FlowManager'
 import { Box, IWhiteboardNode } from '~/typings'
 import { getBoxOfNodes } from '@/core/whiteboard/utils'
 import { toPng, toSvg } from 'html-to-image'
+import tinycolor from 'tinycolor2'
 
 const imageWidth = 1920
 const imageHeight = 1080
-function downloadImage(dataUrl) {
-  const a = document.createElement('a')
 
-  a.setAttribute('download', 'reactflow.png')
-  a.setAttribute('href', dataUrl)
-  a.click()
-}
 const getTransformForBounds = (bounds: Box, width: number, height: number, minZoom: number, maxZoom: number, padding = 0.1) => {
   const xZoom = width / (bounds.width * (1 + padding))
   const yZoom = height / (bounds.height * (1 + padding))
@@ -26,17 +20,21 @@ const getTransformForBounds = (bounds: Box, width: number, height: number, minZo
 }
 const clamp = (val: number, min = 0, max = 1): number => Math.min(Math.max(val, min), max)
 
-export const exportWhiteboardAsImage = async (allNodes: IWhiteboardNode[], node: HTMLElement) => {
+export const exportWhiteboardAsImage = async (allNodes: IWhiteboardNode[], node: HTMLElement, type: 'svg' | 'png' = 'png') => {
   const box = getBoxOfNodes(allNodes)
   const transform = getTransformForBounds(box, imageWidth, imageHeight, 0, 200)
-  const res = await toPng(node, {
+  const background = window.getComputedStyle(document.body).getPropertyValue('--global-background')
+  const rgb = tinycolor(background).toRgbString()
+  const config = {
     width: imageWidth,
     height: imageHeight,
+    backgroundColor: rgb,
     style: {
       width: imageWidth,
       height: imageHeight,
       transform: `translate(${transform[0]}px, ${transform[1]}px) scale(${transform[2]})`
     }
-  })
+  }
+  const res = await (type === 'svg' ? toSvg(node, config) : toPng(node, config))
   return res
 }

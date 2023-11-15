@@ -6,7 +6,7 @@ import ImageCell from '@/core/group/components/table/cells/ImageCell'
 import TypeCell from '@/core/group/components/table/cells/TypeCell'
 import ParentItemCell from '@/core/group/components/table/cells/ParentItemCell'
 import LabelsCell from '@/core/group/components/table/cells/LabelsCell'
-import { MetaStore, ObjectStore } from '@/stores'
+import { MetaStore, ObjectStore } from '@/api/stores'
 import { memo } from 'react'
 
 const CellWrapper = memo(

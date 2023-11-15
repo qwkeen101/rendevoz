@@ -1,4 +1,4 @@
-import { ObjectStore } from '@/stores'
+import { ObjectStore } from '@/api/stores'
 import useEditorInstance from '../hooks/useEditorInstance'
 import { Content, VirtualList } from '@/components'
 import { memo, useEffect } from 'react'

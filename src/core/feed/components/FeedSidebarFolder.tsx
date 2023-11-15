@@ -1,4 +1,4 @@
-import { ObjectStore } from '@/stores'
+import { ObjectStore } from '@/api/stores'
 import { AnimatePopover, Button, Content, Icon, WithBorder } from '@/components'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import FeedSidebarItem from '@/core/feed/components/FeedSidebarItem'

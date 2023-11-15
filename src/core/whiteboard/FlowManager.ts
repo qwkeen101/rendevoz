@@ -1,4 +1,4 @@
-import { globalStore, ObjectStore } from '@/stores'
+import { globalStore, ObjectStore } from '@/api/stores'
 import { Position } from '@/types'
 import produce, { Draft, Patch, produceWithPatches } from 'immer'
 import { PanZoom } from 'panzoom'

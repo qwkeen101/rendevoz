@@ -1,6 +1,6 @@
 import { useToggle, useSelectGlobalAtomValue } from '@/hooks'
-import { tagToMetaObjectIdsMapAtom } from '@/stores/meta.store'
-import { globalStore, ObjectStore } from '@/stores'
+import { tagToMetaObjectIdsMapAtom } from '@/api/stores/meta.store'
+import { globalStore, ObjectStore } from '@/api/stores'
 import ClassName from '@/styles/classNames'
 import { useAtomValue } from 'jotai/react'
 import { CSSProperties, MouseEventHandler, useEffect, useMemo } from 'react'

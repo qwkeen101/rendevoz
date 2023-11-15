@@ -1,6 +1,6 @@
 import { useObjectFilter } from '@/core'
-import { globalStore } from '@/stores'
-import { relatedMetaObjectsMapAtom } from '@/stores/meta.store'
+import { globalStore } from '@/api/stores'
+import { relatedMetaObjectsMapAtom } from '@/api/stores/meta.store'
 import produce from 'immer'
 import { atom, useAtom, useAtomValue, useSetAtom, useStore } from 'jotai'
 import { useEffect, useMemo, useRef } from 'react'

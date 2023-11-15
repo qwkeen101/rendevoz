@@ -2,24 +2,23 @@ import Id from '@/utils/id'
 import { FC, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ILocalFile, IVideo, MetaObject } from 'rendevoz'
-import { GlobalGraphInstance, TypeToTypeName } from '@/core'
 import { IForm } from './types'
 import useFlipForm from './useFlipForm'
-import { MetaStore, ObjectStore } from '@/stores'
-import { ObjectFamily } from '@/stores/object.store'
+import { MetaStore, ObjectStore } from '@/api/stores'
+import { ObjectFamily } from '@/api/stores/object.store'
 import { useDebounceEffect, useGlobalAtomValue } from '@/hooks'
-import OcrService from '@/services/ocr.service'
+import OcrService from '@/api/services/ocr.service'
 import ClassName from '@/styles/classNames'
 import { Button } from '../base'
 import { transformTextContentToNameAndDescription } from '@/core/global/globalDragOverlay/utils'
 import { toast } from 'react-hot-toast'
-import { getFilenameWithoutExtension, saveFileLocally } from '@/utils/file'
+import { getFilenameWithoutExtension } from '@/utils/file'
 import { generateVideoThumbnail } from '@/core/media/utils'
-import { saveImageLocally } from '@/utils/img'
-import { TypeToRegisteredMetaObject } from '@/stores/meta.store'
+import { TypeToRegisteredMetaObject } from '@/api/stores/meta.store'
 import { fetchHead } from '@/core/global/globalDragOverlay/useDropObject'
 import { IPdfDocument, MetaFormLayoutItem } from '~/typings'
-import { initializePdfDocument } from '@/stores/document.store'
+import { initializePdfDocument } from '@/api/stores/document.store'
+import FileSystem from '@/api/fileSystem'
 
 const ObjectForm: FC<
   IForm<MetaObject> & {
@@ -126,25 +125,18 @@ const ObjectForm: FC<
           enableWeb: true,
           enableBaidudisk: true,
           baidudiskCategory: 1,
-          filePath: (targetObject as IVideo)?.videoUrl,
-          onChange: details => {
-            if (details.type === 'local') {
-              saveFileLocally(details.filePath, details.fileName).then(p => {
-                object.objectId &&
-                  ObjectStore('video').updateOne({
-                    id: object.objectId,
-                    videoUrl: p.data
-                  })
-                generateVideoThumbnail(details.file).then(s => {
-                  saveImageLocally(s, { compress: false }).then(data => {
-                    setObject(o => ({ ...o, coverImgSrc: data }))
-                  })
-                })
-                setObject(o => ({
-                  ...o,
-                  name: getFilenameWithoutExtension(details.fileName)
+          filePath: (targetObject as IVideo)?.url,
+          onChange: async details => {
+            if (details.type === 'local' && details.filePath && details.fileName && details.file) {
+              const localFilePath = await FileSystem.copyFile(details.filePath, details.fileName)
+              object.objectId &&
+                (await ObjectStore('video').updateOne({
+                  id: object.objectId,
+                  url: localFilePath
                 }))
-              })
+              const image = await generateVideoThumbnail(details.file)
+              const imageUrl = await FileSystem.saveImage(image)
+              setObject(o => ({ ...o, coverImgSrc: imageUrl, name: getFilenameWithoutExtension(details.fileName) }))
               return
             } else if (details.type === 'web') {
               setObject(o => ({ ...o, name: details.url }))
@@ -163,18 +155,18 @@ const ObjectForm: FC<
                     )
                   }
                 })
-                ObjectStore('video').updateOne({ id: object.objectId, videoUrl: details.url })
+                ObjectStore('video').updateOne({ id: object.objectId, url: details.url })
               }
             } else if (details.type === 'baidudisk') {
               setObject(o => ({ ...o, name: details.name }))
               if (object.objectId) {
-                ObjectStore('video').updateOne({ id: object.objectId, videoUrl: `baidudisk${details.url}` })
+                ObjectStore('video').updateOne({ id: object.objectId, url: `baidudisk${details.url}` })
               }
             } else if (details.type === 'clear') {
               object.objectId &&
                 ObjectStore('video').updateOne({
                   id: object.objectId,
-                  videoUrl: undefined
+                  url: undefined
                 })
               setObject(o => ({
                 ...o,

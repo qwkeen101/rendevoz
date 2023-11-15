@@ -1,6 +1,6 @@
 import { IGroupInstance } from '~/typings'
 import { assignProperties } from '@/utils'
-import { MetaStore } from '@/stores'
+import { MetaStore } from '@/api/stores'
 
 const useAssignMetaOps = (instance: IGroupInstance) => {
   assignProperties(instance, {

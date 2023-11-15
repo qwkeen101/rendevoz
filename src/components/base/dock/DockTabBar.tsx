@@ -15,6 +15,8 @@ import { replacePanel } from './Algorithm'
 import { LayoutIdToTabMap } from '@/components/layout'
 import { useSetting } from '@/core'
 import { getOS } from '@/App'
+import { Rendevoz } from '@/core/rendevoz'
+import { MetaStore } from '@/api/stores'
 
 interface DockTabBarProps {
   TabNavList: TabNavListProps
@@ -100,8 +102,8 @@ const TabItem = ({ onClick, isSelected, item, onDragStart, isLast }) => {
   const [contextMenuVisible, toggleContextMenuVisible] = useToggle(false)
   const { t } = useTranslation()
   const dockContext = useContext(DockContextType)
-  const [setting] = useSetting()
   const tabRef = useRef<HTMLDivElement>(null)
+  const [currentTabMetaId, setCurrentTabMetaId] = useState<number>()
   const renderTabContextMenu = () => (
     <WithBorder style={{ padding: 4, display: 'flex', flexDirection: 'column', gap: 4 }}>
       <div
@@ -156,6 +158,17 @@ const TabItem = ({ onClick, isSelected, item, onDragStart, isLast }) => {
       >
         {t('dock.close right side tabs')}
       </div>
+      {currentTabMetaId && (
+        <div
+          className={ClassName.flatButton()}
+          onClick={e => {
+            toggleContextMenuVisible()
+            Rendevoz.Actions.Open.Meta.openEditMetaDialog(currentTabMetaId)
+          }}
+        >
+          {t('general.edit')}
+        </div>
+      )}
     </WithBorder>
   )
   useEffect(() => {
@@ -180,7 +193,19 @@ const TabItem = ({ onClick, isSelected, item, onDragStart, isLast }) => {
       visible={contextMenuVisible}
     >
       <Reorder.Item
-        onContextMenu={toggleContextMenuVisible}
+        onContextMenu={() => {
+          toggleContextMenuVisible()
+          const tab = Rendevoz.Actions.Layout.getTabById(item.key)
+          if (tab) {
+            const objectId = tab.objectId
+            if (objectId) {
+              const meta = MetaStore.getMetaObjectByObjectId(objectId)
+              if (meta) {
+                setCurrentTabMetaId(meta.id)
+              }
+            }
+          }
+        }}
         onDragStart={onDragStart}
         // exit={{ opacity: 0, transition: { duration: 0.3 } }}
         onClick={onClick}
@@ -190,12 +215,7 @@ const TabItem = ({ onClick, isSelected, item, onDragStart, isLast }) => {
         aria-label="tab-reorder-item"
         as="div"
         id={item.key}
-        className={classNames(
-          styles.tab,
-          isSelected && styles.active,
-          isLast && styles.isLast,
-          setting.background.backgroundImage && setting.background.backgroundOpacity && styles.hasBg
-        )}
+        className={classNames(styles.tab, isSelected && styles.active, isLast && styles.isLast)}
         style={{
           paddingRight: isLastAndHasGlobalExtra ? 40 : undefined
         }}

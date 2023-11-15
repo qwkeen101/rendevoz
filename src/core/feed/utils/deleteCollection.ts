@@ -1,4 +1,4 @@
-import { ObjectStore } from '@/stores'
+import { ObjectStore } from '@/api/stores'
 
 export default async (collectionId: number) => {
   const feedCollection = await ObjectStore('feedCollection').getOneById(collectionId)

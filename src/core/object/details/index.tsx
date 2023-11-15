@@ -1,4 +1,4 @@
-import { MetaStore } from '@/stores'
+import { MetaStore } from '@/api/stores'
 import { assignProperties } from '@/utils'
 import { GlobalInstance } from '@/hooks'
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
@@ -49,7 +49,7 @@ const ObjectDetails = ({
         alignItems={'center'}
         justifyContent={'space-between'}
         style={{
-          padding: '4px 12px',
+          padding: '1px 12px',
           fontWeight: 600,
           width: '100%',
           cursor: 'grab',
@@ -161,7 +161,7 @@ export const GlobalObjectDetails = () => {
       if (node) {
         node.style.opacity = '0'
         rndRef.current?.updateSize({
-          width: Math.max(node.clientWidth, 660),
+          width: Math.max(node.clientWidth, 560),
           height: 'auto'
         })
         setTimeout(() => {

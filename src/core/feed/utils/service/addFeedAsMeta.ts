@@ -1,4 +1,4 @@
-import { ObjectStore } from '@/stores'
+import { ObjectStore } from '@/api/stores'
 import transformFeedItemIntoWebpage from '@/core/feed/utils/transformFeedItemIntoWebpage'
 
 export default async (itemId: number) => {

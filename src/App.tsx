@@ -1,10 +1,9 @@
 import '@icon-park/react/styles/index.less'
-import './common.less'
-import TitleBar from './components/titlebar'
+import './styles/common.less'
 import Initializer from './Initializer'
-import './global.less'
-import './font.less'
-import { GlobalCreateObject, GlobalDragOverlay, GlobalGraph, GlobalObjectPanel, GlobalScreenShot, SettingAtom } from '@/core'
+import './styles/global.less'
+import './styles/font.less'
+import { GlobalCreateObject, GlobalDragOverlay, GlobalGraph, GlobalScreenShot, SettingAtom } from '@/core'
 import Notification from './components/NotificationCenter'
 import '@/core/editor/dock.less'
 import SvgMarker from './components/svg/Marker'
@@ -38,20 +37,12 @@ import createCache from '@emotion/cache'
 import { BuiltInDraggableElement, BuiltInDropOn, BuiltInMetaObjectTypes, BuiltInObjectTypes, BuiltInTabTypes } from '~/typings'
 import { GlobalBaidudisk } from '@/components/fileImporter/baidudisk/BaidudiskDisplayer'
 import { useSelectGlobalAtomValue } from '@/hooks'
-import registerTabs from '@/lifycycle/startup/registerTabs'
-import { ipcInstance } from '@/plugins'
+import registerTabs from '@/api/lifycycle/startup/registerTabs'
 import GlobalCollection from '@/core/global/GlobalCollection'
 import { GlobalObjectDetails } from '@/core/object/details'
 import GlobalPreviewPanel from '@/core/global/GlobalPreviewPanel'
-import { ObjectStore } from '@/stores'
-import channelScraper from '@/core/feed/utils/youtube/channelScraper'
 import GlobalObjectCreator from '@/core/global/GlobalObjectCreator'
-import Id from '@/utils/id'
-import { DEFAULT_GROUP_PROPERTIES } from '@/core/group/consts/defaultProperties'
 
-// import { startDrive } from '@/driver'
-// import ReviewManager from '@/core/review/components/ReviewManager'
-// import TimelineManager from '@/core/database/TimelineManager'
 export function getOS() {
   const userAgent = window.navigator.userAgent.toLowerCase(),
     macosPlatforms = /(macintosh|macintel|macppc|mac68k|macos)/i,
@@ -137,7 +128,6 @@ const App = () => {
           <GlobalGraph />
           <GlobalScreenShot />
           <GlobalPreviewPanel />
-          <GlobalObjectPanel />
           <GlobalBaidudisk />
           <GlobalSearchPanel />
           <GlobalCollection />

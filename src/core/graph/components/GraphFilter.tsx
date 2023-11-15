@@ -17,7 +17,7 @@ import { Colors } from '@/consts'
 import BetterFilter from '@/core/object/filter/BetterFilter'
 import { MetaFilterGroup, MetaObject } from '~/typings'
 import { calculateFilterObjects } from '@/core/object/filter/useBetterFilter'
-import { MetaStore } from '@/stores'
+import { MetaStore } from '@/api/stores'
 const GraphFilter = () => {
   const [nodes, setNodes] = useGraphNodes()
   const setGraphFilterIds = useSetAtom(GraphFilterNodesIdsAtom)

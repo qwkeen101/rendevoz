@@ -1,4 +1,4 @@
-import { globalStore } from '@/stores'
+import { globalStore } from '@/api/stores'
 import { PrimitiveAtom, useAtom, useAtomValue, useSetAtom } from 'jotai'
 import { selectAtom } from 'jotai/utils'
 import { useMemo } from 'react'

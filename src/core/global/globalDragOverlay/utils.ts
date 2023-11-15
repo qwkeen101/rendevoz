@@ -1,6 +1,6 @@
 import { intersectionOfMultipleSets } from '@/core/object'
-import { globalStore, MetaStore } from '@/stores'
-import { indexedMetaLinksAtom } from '@/stores/meta.store'
+import { globalStore, MetaStore } from '@/api/stores'
+import { indexedMetaLinksAtom } from '@/api/stores/meta.store'
 import { PartialWithId } from '@/types'
 import Id from '@/utils/id'
 import { MetaLink, MetaObject } from '~/typings'

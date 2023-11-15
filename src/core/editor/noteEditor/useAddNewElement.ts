@@ -1,4 +1,4 @@
-import { MetaStore, ObjectStore } from '@/stores'
+import { MetaStore, ObjectStore } from '@/api/stores'
 import { CustomElement } from '~/typings'
 import Id from '@/utils/id'
 

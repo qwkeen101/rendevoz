@@ -54,6 +54,7 @@ declare const Layout: {
    */
   getVisibleTabs: () => ILayoutTab[]
   makeTabActive: (tabId: string) => void
+  getTabById: (id: string) => ILayoutTab | undefined
 }
 
 /**
@@ -125,21 +126,6 @@ declare const Notification: {
 
 declare const ActionUtils: {
   uploadFile: (options?: { accept?: string; multiple?: boolean; dir?: boolean }) => Promise<File | File[]>
-
-  /**
-   * Return local image path of saved image
-   */
-  saveImage: (
-    imageData: string | Blob,
-    options?: {
-      imgName?: string
-      compress: boolean
-    }
-  ) => Promise<string | undefined>
-  /**
-   * Return local image path of saved file
-   */
-  saveFile: (blob: Blob, name?: string, path?: string, saveAt?: 'files' | 'imgs' | 'backup') => Promise<string | undefined>
 }
 /**
  * Actions Api

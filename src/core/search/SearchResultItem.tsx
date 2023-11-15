@@ -1,6 +1,6 @@
 import { Content, Icon, Image } from "@/components";
-import { globalStore, MetaStore } from "@/stores";
-import { metaObjectsAtom } from "@/stores/meta.store";
+import { globalStore, MetaStore } from "@/api/stores";
+import { metaObjectsAtom } from "@/api/stores/meta.store";
 import { Fragment, memo } from "react";
 import { useRenderObject } from "../object";
 import { GlobalSearchInputAtom, SearchGroup } from "./SearchDialog";

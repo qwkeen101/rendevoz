@@ -1,11 +1,11 @@
 import { Content } from '@/components/base'
-import { globalStore } from '@/stores'
+import { globalStore } from '@/api/stores'
 import ClassName from '@/styles/classNames'
 import { css } from '@emotion/css'
 import { useAtom } from 'jotai/react'
 import { atomWithStorage } from 'jotai/vanilla/utils'
 import _ from 'lodash'
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import AppearanceSetting from './Appearance'
 import ComponentSetting from './Component'
@@ -14,9 +14,8 @@ import NotificationSetting from './Notification'
 import ObjectsAndLinksSetting from './ObjectsAndLinks'
 import ShortCutSetting from './ShortCut'
 import SettingSidebarItem from './SidebarItem'
-import AboutSetting from './About'
 import UsageSetting from './Usage'
-import { useUser } from '@/services/login.service'
+import { useUser } from '@/api/services/login.service'
 import { KeyToRegisterdSettings } from '@/core/plugin/RegisterMap'
 import SettingItem from '@/core/setting/SettingItem'
 import {
@@ -25,8 +24,7 @@ import {
   IGeneralSetting,
   IObjectsAndLinkSetting,
   IComponentSetting,
-  IAppearanceSetting,
-  IWorkspaceSetting
+  IAppearanceSetting
 } from './types'
 import WorkspaceSetting from '@/core/setting/Workspace'
 import EditorSetting from '@/core/setting/Editor'
@@ -34,7 +32,6 @@ import { Colors } from '@/consts'
 
 enum Settings {
   'general',
-  'appearance',
   'components',
   'editor',
   'workspace',
@@ -102,7 +99,8 @@ const defaultSetting: Setting = {
     objectAutoBecomeInline: true
   },
   object: {
-    deleteFileWhenDeleteObject: true
+    deleteFileWhenDeleteObject: true,
+    autoHideLabelObject: false
   },
   translate: {
     autoGotoHoverText: true,

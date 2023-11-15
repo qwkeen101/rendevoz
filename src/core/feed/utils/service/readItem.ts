@@ -1,5 +1,5 @@
-import keyvalueStore from '@/stores/keyvalue.store'
-import { ObjectStore } from '@/stores'
+import keyvalueStore from '@/api/stores/keyvalue.store'
+import { ObjectStore } from '@/api/stores'
 
 export default async (itemId: number, collectionId?: number) => {
   const recentlyRead = ((await keyvalueStore.getOne('feedRecentlyReadIds')) || []).filter(i => i !== itemId)

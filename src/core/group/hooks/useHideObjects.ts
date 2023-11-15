@@ -1,7 +1,7 @@
 import { useSelectAtomValue } from '@/hooks'
 import { GroupStateAtom } from '@/core/group/hooks/useGroupState'
 import { useEffect } from 'react'
-import { MetaStore } from '@/stores'
+import { MetaStore } from '@/api/stores'
 import Node from '@/core/group/utils/node'
 import { useSetAtom } from 'jotai'
 

@@ -1,10 +1,10 @@
 import usePdfState from '@/core/pdf/hooks/usePdfState'
-import { globalStore, ObjectStore } from '@/stores'
+import { globalStore, ObjectStore } from '@/api/stores'
 import { AnimatePopover, WithBorder } from '@/components'
 import LabelToolbar from '@/core/pdf/components/toolbar/LabelToolbar'
 import { defaultBgColor } from '@/components/picker/colorPicker'
 import { Rendevoz } from '@/core/rendevoz'
-import { objectIdToMetaObjectIdMapAtom } from '@/stores/meta.store'
+import { objectIdToMetaObjectIdMapAtom } from '@/api/stores/meta.store'
 import { GlobalSearchInstance } from '@/core/global/GlobalSearchPanel'
 import usePdfInstance from '@/core/pdf/hooks/usePdfInstance'
 

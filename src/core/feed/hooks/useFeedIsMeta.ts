@@ -1,4 +1,4 @@
-import { MetaStore, ObjectStore } from '@/stores'
+import { MetaStore, ObjectStore } from '@/api/stores'
 import { useEffect, useState } from 'react'
 import { useGlobalAtomValue } from '@/hooks'
 import { UrlToWebpageMap } from '@/core/webpage/hooks/useWebpageContent'

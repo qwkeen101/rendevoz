@@ -4,7 +4,7 @@ import SidebarObjectItem from '@/components/layout/sidebar/items/SidebarObjectIt
 import SidebarCollectionItem from '@/components/layout/sidebar/items/SidebarCollectionItem'
 import { useTranslation } from 'react-i18next'
 import { useToggle } from '@/hooks'
-import { MetaStore, ObjectStore } from '@/stores'
+import { MetaStore, ObjectStore } from '@/api/stores'
 import { useState } from 'react'
 import { ClassName } from 'rendevoz'
 import { css } from '@emotion/css'

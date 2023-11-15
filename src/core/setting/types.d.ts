@@ -80,6 +80,7 @@ export type IObjectsAndLinkSetting = {
   }
   object: {
     deleteFileWhenDeleteObject: boolean
+    autoHideLabelObject: boolean
   }
 }
 

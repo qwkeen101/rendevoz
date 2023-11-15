@@ -1,47 +1,20 @@
-import Zindexes from '@/consts/zindex'
-import { useGlobalAtomValue, useMergedRef, useShortcut, useToggle, useDebounceFn } from '@/hooks'
-import { metaObjectsAtom, relatedMetaObjectsMapAtom, undeletedMetaObjectsAtom } from '@/stores/meta.store'
-import { globalStore, MetaStore } from '@/stores'
+import { useGlobalAtomValue, useMergedRef, useDebounceFn } from '@/hooks'
+import { undeletedMetaObjectsAtom } from '@/api/stores/meta.store'
+import { MetaStore } from '@/api/stores'
 import ClassName from '@/styles/classNames'
-import { Position } from '@/types'
 import { css } from '@emotion/css'
-import { useVirtualizer } from '@tanstack/react-virtual'
-import { useAtom, useAtomValue, useStore } from 'jotai/react'
-import React, { forwardRef, memo, ReactElement, useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { createPortal } from 'react-dom'
+import { useAtom } from 'jotai/react'
+import React, { forwardRef, memo, useEffect, useMemo, useRef, useState } from 'react'
 import { MetaFilterGroup, MetaObject } from '~/typings/data'
-import { AnimatePopover, Button, CheckBox, Content, Icon, Image, Tooltip, WithBorder, VirtualList } from '@/components'
-import {
-  AttachmentWrapper,
-  CurrentFocusFilterAtom,
-  DatabaseFilter,
-  DraggableElement,
-  FilterNameSearchAtom,
-  FilterRelatedIdsAtom,
-  FiltersAtom,
-  GlobalDragOverlayInstance,
-  GlobalGraphInstance,
-  ObjectActionPopover,
-  useDropObjectArea,
-  useGlobalIsDragging,
-  useObjectFilter,
-  useRenderObject
-} from '@/core'
-import { selectAtom } from 'jotai/utils'
-import produce from 'immer'
+import { AnimatePopover, Button, Content, Icon, Tooltip, WithBorder, VirtualList } from '@/components'
+import { DraggableElement, useDropObjectArea, useRenderObject } from '@/core'
 import { atom } from 'jotai'
 import { useTranslation } from 'react-i18next'
-import { GlobalEventEmitter, useEventHandler } from '@/events'
 import { LeftTopPosition } from '~/typings'
 import Colors from '@/consts/colors'
 import FontSize from '@/consts/font'
-import ResizeAndDrag from '@/components/base/ResizeAndDrag'
 import { Rendevoz } from '../rendevoz'
-import _ from 'lodash'
-import HoverObjectDetails from '@/core/object/HoverObjectDetails'
-import { toast } from 'react-hot-toast'
 import { GlobalLayout } from '@/components/layout'
-import { DateFormat } from '@/utils'
 import { calculateFilterObjects } from '@/core/object/filter/useBetterFilter'
 import BetterFilter from '@/core/object/filter/BetterFilter'
 import BetterSorter, { calculateSortObjects, SorterGroup } from '@/core/object/filter/BetterSorter'
@@ -53,166 +26,6 @@ export const GlobalObjectPanelInstance: {
   open?: (position?: LeftTopPosition) => void
   close?: VoidFunction
 } = {}
-export const GlobalObjectPanel = () => {
-  const [panelState, setPanelState] = useState<
-    Partial<{
-      visible: boolean
-      position: Position
-      size: { width: number; height: number }
-    }>
-  >({
-    visible: false,
-    position: {
-      left: Math.min(window.innerWidth * 0.2, 200),
-      top: Math.min(window.innerHeight * 0.1, 100)
-    },
-    size: {
-      width: Math.min(window.innerWidth * 0.4, 400),
-      height: Math.min(window.innerHeight * 0.8, 500)
-    }
-  })
-  Object.assign(GlobalObjectPanelInstance, {
-    open: (position: LeftTopPosition) => {
-      if (position) {
-        const maxTop = window.innerHeight - panelState.size!.height - 20
-        const maxLeft = window.innerWidth - panelState.size!.width - 20
-        setPanelState(s => ({
-          ...s,
-          position: {
-            top: Math.min(maxTop, position.top),
-            left: Math.min(maxLeft, position.left)
-          },
-          visible: true
-        }))
-      } else {
-        setPanelState(s => ({ ...s, visible: true }))
-      }
-    },
-    close: () => setPanelState(s => ({ ...s, visible: false }))
-  } as typeof GlobalObjectPanelInstance)
-  const eventHandler = useEventHandler('global')
-  const [isGlobalDragging] = useGlobalIsDragging()
-  const [isAddingObject, toggleIsAddingObject] = useToggle(false)
-  const promiseRef = useRef<{
-    res?: any
-    rej?: any
-  }>()
-  useEffect(() => {
-    if (!panelState.visible) {
-      promiseRef.current = undefined
-      toggleIsAddingObject(false)
-    }
-  }, [panelState.visible])
-
-  eventHandler.on('globalChooseMetaObject', (data, res, rej) => {
-    toggleIsAddingObject(true)
-    promiseRef.current = {
-      res,
-      rej
-    }
-  })
-
-  useEffect(() => {
-    GlobalEventEmitter().addListener('global', eventHandler)
-    return () => {
-      GlobalEventEmitter().removeListener('global', eventHandler)
-    }
-  }, [])
-
-  useShortcut('openObjectPanel', () => {
-    setPanelState(s => ({ ...s, visible: !s.visible }))
-  })
-
-  const handleAddObject = useCallback((id: number) => {
-    promiseRef.current?.res(id)
-    promiseRef.current = undefined
-    GlobalObjectPanelInstance.close?.()
-    toggleIsAddingObject(false)
-  }, [])
-  return createPortal(
-    <div
-      style={{
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        width: '100%',
-        height: '100%',
-        overflow: 'hidden',
-        zIndex: Zindexes.ObjectPanel,
-        pointerEvents: 'none'
-      }}
-      id="global-object-panel"
-    >
-      {panelState.visible && (
-        <ResizeAndDrag
-          style={{
-            boxShadow: 'rgba(100, 100, 111, 0.2) 0px 7px 29px 0px',
-            display: 'flex',
-            flexDirection: 'column',
-            fontFamily: 'Muli',
-            pointerEvents: isGlobalDragging ? 'none' : 'auto',
-            opacity: isGlobalDragging ? 0.1 : 1,
-            transition: 'opacity 0.3s ease',
-            position: 'relative',
-            paddingBottom: 0,
-            borderRadius: 8,
-            overflow: 'hidden'
-          }}
-          dragHandleClassName="global-drag-panel"
-          size={panelState.size}
-          position={{
-            x: panelState.position?.left,
-            y: panelState.position?.top
-          }}
-          onResizeStop={(e, dir, ele, delta, pos) => {
-            const bound = ele.getBoundingClientRect()
-            setPanelState({
-              ...panelState,
-              size: {
-                width: bound.width,
-                height: bound.height
-              },
-              position: {
-                left: pos.x,
-                top: pos.y
-              }
-            })
-          }}
-          onDragStop={(e, data) => {
-            setPanelState({
-              ...panelState,
-              position: {
-                left: data.x,
-                top: data.y
-              }
-            })
-          }}
-        >
-          <div
-            style={{
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              width: '100%',
-              height: '100%',
-              zIndex: -1
-            }}
-            className={ClassName.Background.blurBackground}
-          ></div>
-          <ObjectPanel
-            onClose={() => {
-              setPanelState(s => ({ ...s, visible: false }))
-            }}
-            isAddingObject={isAddingObject}
-            handleAddObject={handleAddObject}
-          />
-        </ResizeAndDrag>
-      )}
-    </div>,
-    document.body,
-    'object-panel'
-  )
-}
 
 type ObjectPanelProps = {
   onClose?: VoidFunction
@@ -505,8 +318,7 @@ export const ObjectPanel = memo(
         ></VirtualList>
       </>
     )
-  },
-  (prev, curr) => prev.isAddingObject === curr.isAddingObject && prev.showObjectDetails === curr.showObjectDetails
+  }
 )
 
 export const SimpleObject = memo(

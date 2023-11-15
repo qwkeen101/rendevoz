@@ -1,6 +1,6 @@
 import { useGroupInstance } from '@/core/group/hooks/useGroupInstance'
 import { useEffect, useLayoutEffect, useMemo } from 'react'
-import { MetaStore, ObjectStore } from '@/stores'
+import { MetaStore, ObjectStore } from '@/api/stores'
 import { useSetAtom } from 'jotai/index'
 import { GroupStateAtom } from '@/core/group/hooks/useGroupState'
 import { assignProperties } from '@/utils'

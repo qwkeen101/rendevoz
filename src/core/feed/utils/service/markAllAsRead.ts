@@ -1,5 +1,5 @@
-import KeyvalueStore from '@/stores/keyvalue.store'
-import { ObjectStore } from '@/stores'
+import KeyvalueStore from '@/api/stores/keyvalue.store'
+import { ObjectStore } from '@/api/stores'
 
 export default async (itemIds: number[], collectionId?: number) => {
   const currentReadIds = (await KeyvalueStore.getOne('feedReadIds')) || []

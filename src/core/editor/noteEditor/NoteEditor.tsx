@@ -1,4 +1,4 @@
-import { MetaStore, ObjectStore } from '@/stores'
+import { MetaStore, ObjectStore } from '@/api/stores'
 import { Editor } from '@/core/editor/Editor'
 import { useMemo, useState } from 'react'
 import Id from '@/utils/id'

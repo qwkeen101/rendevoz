@@ -4,7 +4,7 @@ import { Size, XYPosition } from "~/typings";
 import { IpcWebpageEvent } from "./webpageIpcEvent";
 import { AnimatePopover, Button, WithBorder } from "@/components";
 import { useTranslation } from "react-i18next";
-import { MetaStore, ObjectStore } from "@/stores";
+import { MetaStore, ObjectStore } from "@/api/stores";
 import { ObjectDragState } from "@/core/global/globalDragOverlay/useDropObject";
 import { GlobalTranslateInstance } from "../global/translate/GlobalTranslatePanel";
 import { GlobalSearchInstance } from "../global/GlobalSearchPanel";

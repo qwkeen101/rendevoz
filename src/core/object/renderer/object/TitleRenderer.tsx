@@ -3,7 +3,7 @@ import ClassName from '@/styles/classNames'
 import { CSSProperties, useState } from 'react'
 import { MetaObject } from '~/typings'
 import { ContentEditor } from '@/components'
-import { MetaStore } from '@/stores'
+import { MetaStore } from '@/api/stores'
 import { GlobalInstance } from '@/hooks'
 import Colors from '../../../../consts/colors'
 import { DefaultObjectTitleRenderClazzName, keyboard } from '@/core/object/useRenderObject'
@@ -18,6 +18,8 @@ export type TitleRendererProps = {
   metaObject?: MetaObject
   originalTextStyle?: CSSProperties
   showAddNote?: boolean
+  clickToEdit?: boolean
+  clickOriginToEdit?: boolean
 }
 export default ({
   ellipsisLine = 2,
@@ -27,14 +29,22 @@ export default ({
   originalText,
   metaObject,
   originalTextStyle,
+  clickOriginToEdit = false,
+  clickToEdit = false,
   showAddNote = true
 }: TitleRendererProps) => {
   const [isEditing, setIsEditing] = useState(false)
-  const showLabelName = originalText ? metaObject?.name !== 'Unnamed Label' : true
+  const showLabelName = metaObject?.name !== 'Unnamed Label'
   return (
     <>
       {originalText && metaObject && (
-        <OriginalTextRenderer onClick={onTitleClick} objectId={metaObject.objectId} type={metaObject.type} style={originalTextStyle} />
+        <OriginalTextRenderer
+          clickToEdit={clickOriginToEdit}
+          onClick={onTitleClick}
+          objectId={metaObject.objectId}
+          type={metaObject.type}
+          style={originalTextStyle}
+        />
       )}
       {isEditing ? (
         <ContentEditor
@@ -60,6 +70,10 @@ export default ({
             <div
               onContextMenu={() => setIsEditing(!isEditing)}
               onClick={e => {
+                if (clickToEdit) {
+                  setIsEditing(!isEditing)
+                  return
+                }
                 if (keyboard.ctrl && metaObject) {
                   GlobalInstance.metaOps?.copyLink(metaObject.id)
                 } else {
@@ -72,7 +86,7 @@ export default ({
               {metaObject?.name}
             </div>
           ) : null}
-          {originalText && showAddNote && metaObject?.name === 'Unnamed Label' && (
+          { showAddNote && metaObject?.name === 'Unnamed Label' && (
             <div onClick={() => setIsEditing(!isEditing)} style={{ fontSize: 13, color: Colors.Font.Transparent, cursor: 'pointer' }}>
               Add note...
             </div>

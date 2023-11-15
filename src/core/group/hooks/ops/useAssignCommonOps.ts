@@ -3,7 +3,7 @@ import { assignProperties } from '@/utils'
 import useGroupState from '@/core/group/hooks/useGroupState'
 import { GlobalInstance } from '@/hooks'
 import { Rendevoz } from '@/core/rendevoz'
-import { ObjectStore } from '@/stores'
+import { ObjectStore } from '@/api/stores'
 import produce from 'immer'
 
 export default (instance: IGroupInstance, groupId: number) => {

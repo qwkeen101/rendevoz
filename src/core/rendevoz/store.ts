@@ -1,4 +1,4 @@
-import { NoteStore } from '@/stores'
+import { NoteStore } from '@/api/stores'
 
 const Store = {
   NoteStore: () => NoteStore

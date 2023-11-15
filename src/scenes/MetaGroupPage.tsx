@@ -1,6 +1,6 @@
 import { Content } from '@/components'
 import MetaGroupInner from '@/core/group/MetaGroup'
-import { MetaStore } from '@/stores'
+import { MetaStore } from '@/api/stores'
 import { TabTitle } from '@/core/rendevoz/components'
 
 const MetaGroupPage = ({ groupId = 0 }: { groupId?: number }) => {

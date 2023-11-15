@@ -7,6 +7,7 @@ import GroupTableHeader from '@/core/group/components/table/headers/TableHeader'
 import useTableHeaders from '@/core/group/hooks/useTableHeaders'
 import { useSelectAtomValue } from '@/hooks'
 import { GroupStateAtom } from '@/core/group/hooks/useGroupState'
+import GalleryRenderer from '@/core/group/components/gallery/GalleryRenderer'
 
 export const GroupRenderer = memo(() => {
   const displayValues = useSelectAtomValue(GroupStateAtom, s => s.viewValues)
@@ -18,9 +19,8 @@ export const GroupRenderer = memo(() => {
   return (
     <Content ref={containerRef} flex column fullHeight style={{ minWidth: 'fit-content', width: '100%' }}>
       {/*{currentView === 'table' && <TableRenderer value={filterValues || displayValues} />}*/}
-      {/*{currentView === 'gallery' && <TableRenderer value={filterValues || displayValues} />}*/}
+      {/*{currentView === 'gallery' && <GalleryRenderer values={filterValues || displayValues} />}*/}
       <TableRenderer value={filterValues || displayValues} />
-      {/*{currentView === 'gallery' && <TableRenderer value={filterValues || displayValues} />}*/}
     </Content>
   )
 })

@@ -8,7 +8,7 @@ import { useLatest } from 'react-use'
 import useWebpageInstance from './hooks/useWebpageInstance'
 import { assignProperties } from '@/utils'
 import useWebpageState from './hooks/useWebpageState'
-import { ObjectStore } from '@/stores'
+import { ObjectStore } from '@/api/stores'
 
 export const DEFAULT_USER_AGENT =
   'Chrome/114.0.0.0 Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Safari/537.36'

@@ -114,21 +114,6 @@ const Layout = () => {
     <Container
       auto
       column
-      className={css({
-        '::before': {
-          content: '""',
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          width: '100%',
-          height: '100%',
-          backgroundImage: `url(${setting.background.backgroundImage})`,
-          backgroundRepeat: 'no-repeat',
-          backgroundSize: 'cover',
-          opacity: setting.background.backgroundOpacity ?? 0.1,
-          filter: setting.background.backgroundBlur ? `blur(${setting.background.backgroundBlur}px)` : undefined
-        }
-      })}
       style={{ height: '100vh', overflowY: 'auto' }}
     >
       <Helmet>

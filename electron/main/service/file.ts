@@ -2,6 +2,7 @@ import * as path from 'path'
 import fs from 'fs'
 import { shell } from 'electron'
 import { digestBuffer } from '../utils'
+import { join } from 'path'
 
 const DEFAULT_USER_DATA_PATH =
   process.env.APPDATA || (process.platform == 'darwin' ? process.env.HOME + '/Library/Preferences' : process.env.HOME + '/.local/share')
@@ -28,6 +29,7 @@ const checkFileFolderGenerated = () => {
     fs.mkdirSync(backupPath, {})
   }
 }
+
 const transformRendefileToLocalFilePath = (rendefile: string) => {
   if (rendefile.startsWith('rendefile')) {
     const rendevozDatabaseFilePath = path.resolve(process.env.FILE_PATH || DefaultRendevozDataPath)
@@ -49,6 +51,30 @@ const deleteFile = async (filePath: string) => {
 const openLocalFile = async (filePath: string) => {
   const realPath = transformRendefileToLocalFilePath(filePath)
   await shell.openPath(realPath)
+}
+
+const writeFile = async (data: string, filePath: string, type?: 'base64' | 'utf8') => {
+  checkFileFolderGenerated()
+  const folderPath = getRendeFileFolderPath()
+  const absolutePath = path.join(folderPath, filePath)
+  const protocolPath = 'rendefile://' + filePath
+  return new Promise(resolve => {
+    fs.writeFile(absolutePath, data, { encoding: type }, () => {
+      resolve(protocolPath)
+    })
+  })
+}
+
+const copyFile = async (from: string, to: string) => {
+  checkFileFolderGenerated()
+  const folderPath = getRendeFileFolderPath()
+  const absolutePath = path.join(folderPath, to)
+  const protocolPath = 'rendefile://' + to
+  return new Promise(resolve => {
+    fs.copyFile(from, absolutePath, () => {
+      resolve(protocolPath)
+    })
+  })
 }
 
 const saveBuffer = async (
@@ -129,12 +155,47 @@ const openFolder = async (folderPath: string) => {
   shell.showItemInFolder(folderPath)
 }
 
+// read imgs, files, backup or root
+const readDir = async (directoryPath: string) => {
+  checkFileFolderGenerated()
+  const dirPath = path.join(getRendeFileFolderPath(), directoryPath)
+  return new Promise(res => {
+    fs.readdir(dirPath, (err, files) => {
+      Promise.all(
+        files.map(f => {
+          return new Promise(res => {
+            const filePath = join(dirPath, f)
+            fs.stat(filePath, (err, data) => {
+              res({
+                mtime: data.mtime.getTime(),
+                ctime: data.ctime.getTime(),
+                size: data.size,
+                name: f
+              })
+            })
+          })
+        })
+      ).then(data =>
+        res({
+          dirState: {
+            totalSize: data.reduce((prev, curr) => prev + curr.size, 0)
+          },
+          files: data
+        })
+      )
+    })
+  })
+}
+
 const FileService = {
   deleteFile,
   openLocalFile,
   saveFile,
+  readDir,
   saveBuffer,
+  copyFile,
   saveImage,
+  writeFile,
   openFolder,
   getRendeFileFolderPath
 }

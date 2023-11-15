@@ -1,4 +1,4 @@
-import { MetaStore } from '@/stores'
+import { MetaStore } from '@/api/stores'
 import { useEffect, useState } from 'react'
 import { Rendevoz } from '@/core/rendevoz'
 import { Content, Icon } from '@/components'

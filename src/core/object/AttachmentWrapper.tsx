@@ -1,4 +1,4 @@
-import { MetaStore } from '@/stores'
+import { MetaStore } from '@/api/stores'
 import AttachmentList, { AttachmentListProps } from './AttachmentList'
 import { memo } from 'react'
 

@@ -1,7 +1,7 @@
 import { BuiltInDraggableElement, CustomElement, IEditorEvent, MetaObject } from '~/typings'
 import { Rendevoz } from '@/core/rendevoz'
 import { getSetting, GlobalDragOverlayInstance } from '@/core'
-import { MetaStore, ObjectStore } from '@/stores'
+import { MetaStore, ObjectStore } from '@/api/stores'
 import { pushNumberIntoUnrepeatableArray } from '@/utils'
 import Id from '@/utils/id'
 import { checkDropCanBeMeta } from '@/core/global/globalDragOverlay/useDropObject'

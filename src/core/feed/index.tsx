@@ -1,4 +1,4 @@
-import { ObjectStore } from '@/stores'
+import { ObjectStore } from '@/api/stores'
 import { useGlobalAtomValue } from '@/hooks'
 import { Content } from '@/components'
 import { useState } from 'react'

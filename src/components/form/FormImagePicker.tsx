@@ -1,15 +1,14 @@
 import ClassName from '@/styles/classNames'
-import { saveImageLocally } from '@/utils/img'
 import { useTranslation } from 'react-i18next'
 import { Content, Icon, Image, Modal } from '../base'
 import useFileUpload from '../base/useFileUpload'
 import { useToggle } from '@/hooks'
 import FormWebImagePicker from './FormWebImagePicker'
-import { css } from '@emotion/css'
+import FileSystem from '@/api/fileSystem'
 
 const FormImagePicker = ({ imageUrl, onChange, name }: { imageUrl?: string; onChange?: (v: string | undefined) => void; name: string }) => {
   const { upload, renderUploader } = useFileUpload(file => {
-    saveImageLocally(file).then(data => {
+    FileSystem.saveImage(file).then(data => {
       onChange?.(data)
     })
   }, 'image/*')

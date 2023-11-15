@@ -1,4 +1,4 @@
-import { MetaStore, ObjectStore } from '@/stores'
+import { MetaStore, ObjectStore } from '@/api/stores'
 import Media, { MediaProps } from '../index'
 import useRealId from '@/core/media/wrappers/useRealId'
 import useMediaEventHandlerWrapper from '@/core/media/wrappers/eventHandler'

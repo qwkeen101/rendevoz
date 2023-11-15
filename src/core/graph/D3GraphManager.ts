@@ -9,7 +9,7 @@ import { getRadius } from './components/node/Node'
 import { SetStateAction } from 'react'
 import produce from 'immer'
 import createPanZoom, { PanZoom } from 'panzoom'
-import { TypeToRegisteredMetaObject } from '@/stores/meta.store'
+import { TypeToRegisteredMetaObject } from '@/api/stores/meta.store'
 import { Viewport } from 'pixi-viewport'
 import { Container, DisplayObject } from 'pixi.js'
 import { XYPosition } from 'rendevoz'
@@ -333,8 +333,8 @@ class D3GraphManager {
         // canvas mode
         this.originNodes.forEach(node => {
           const n = this.ID_TO_PIXI_NODE_MAP.get(node.id)
-          const bound = n.children[0].getLocalBounds()
-          if (n) {
+          const bound = n?.children[0].getLocalBounds()
+          if (n && bound) {
             n.x = node.x + bound.width / 2
             n.y = node.y + bound.height / 2
           }

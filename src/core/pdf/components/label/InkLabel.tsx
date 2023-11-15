@@ -1,4 +1,4 @@
-import { ObjectStore } from '@/stores'
+import { ObjectStore } from '@/api/stores'
 import { ILabel, XYPosition } from '~/typings'
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { drawQuadraticBezierCurve } from '@/components/base/canvas/draw'

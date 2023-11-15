@@ -1,7 +1,7 @@
 import { useGlobalAtomValue } from '@/hooks'
 import { UrlToWebpageMap } from '@/core/webpage/hooks/useWebpageContent'
 import { useMemo } from 'react'
-import { ObjectStore } from '@/stores'
+import { ObjectStore } from '@/api/stores'
 
 const useWebpageIsMeta = (url: string) => {
   const urlMap = useGlobalAtomValue(UrlToWebpageMap)

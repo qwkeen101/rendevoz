@@ -1,4 +1,4 @@
-import { ObjectStore } from '@/stores'
+import { ObjectStore } from '@/api/stores'
 import { NavigationEvent } from '../WebpageNavigation'
 import useWebpageInstance from './useWebpageInstance'
 import useWebpageState from './useWebpageState'

@@ -5,7 +5,7 @@ import { EdgePosition, IWhiteboard, IWhiteboardEdge, IWhiteboardNode } from '~/t
 import { Box } from '~/typings'
 import { selectAtom } from 'jotai/utils'
 import { ICollectionItem } from '~/typings/data'
-import { ObjectStore } from '@/stores'
+import { ObjectStore } from '@/api/stores'
 
 const WhiteboardNodesAtom = atom(
   get => {

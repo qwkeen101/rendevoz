@@ -1,4 +1,4 @@
-import { MetaStore } from '@/stores'
+import { MetaStore } from '@/api/stores'
 import { Content, Icon } from '@/components'
 import { useRef } from 'react'
 import usePopoverCell from '@/core/group/hooks/usePopoverCell'

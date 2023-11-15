@@ -1,12 +1,12 @@
 import { useMemoizedFn } from '@/hooks'
-import { globalStore, MetaStore, ObjectStore } from '@/stores'
+import { globalStore, MetaStore, ObjectStore } from '@/api/stores'
 import { saveFileLocally } from '@/utils/file'
 import Id from '@/utils/id'
 import { useEffect, useState } from 'react'
 import { IWhiteboardNode, MetaObject } from '~/typings/data'
 import { useFlow } from '../../hooks'
 import { isPointerOnContainer, transformXY } from '../../utils'
-import { metaObjectsAtom, objectIdToMetaObjectIdMapAtom } from '@/stores/meta.store'
+import { metaObjectsAtom, objectIdToMetaObjectIdMapAtom } from '@/api/stores/meta.store'
 import { useEventHandler } from '@/events'
 import { Rendevoz } from '../../../rendevoz'
 import { getSetting } from '@/core'
@@ -101,21 +101,21 @@ const useWhiteboardDrop = () => {
         if (file.type.startsWith('image')) {
           whiteboardNode = {
             type: 'image',
-            imageUrl: res.data,
+            imageUrl: res,
             name
           }
         }
         if (file.type.startsWith('audio')) {
           whiteboardNode = {
             type: 'audio',
-            audioUrl: res.data,
+            audioUrl: res,
             name
           }
         }
         if (file.type.startsWith('video')) {
           whiteboardNode = {
             type: 'video',
-            videoUrl: res.data,
+            videoUrl: res,
             name
           }
         }

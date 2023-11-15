@@ -1,4 +1,4 @@
-import { MetaStore, ObjectStore } from '@/stores'
+import { MetaStore, ObjectStore } from '@/api/stores'
 import Media, { MediaProps } from '@/core/media'
 import { saveImageLocally } from '@/utils'
 import { normalizeSecondsToTime } from '@/core/media/utils'

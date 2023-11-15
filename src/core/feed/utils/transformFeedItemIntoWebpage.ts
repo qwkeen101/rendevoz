@@ -1,5 +1,5 @@
 import { FeedItem } from '@/core/feed/types'
-import { NoteStore, ObjectStore } from '@/stores'
+import { NoteStore, ObjectStore } from '@/api/stores'
 import { fetchRemoteImageAndSaveLocally } from '@/utils'
 
 export default async (item: FeedItem) => {

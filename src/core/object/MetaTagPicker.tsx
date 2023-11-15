@@ -1,4 +1,4 @@
-import { globalStore, MetaStore, ObjectStore } from '@/stores'
+import { globalStore, MetaStore, ObjectStore } from '@/api/stores'
 import { Content, Icon, IconWithPopover, VirtualList, WithBorder } from '@/components'
 import Tag from '@/core/object/ObjectTag'
 import { ClassName } from 'rendevoz'

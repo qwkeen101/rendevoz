@@ -1,4 +1,4 @@
-import { ObjectStore } from '@/stores'
+import { ObjectStore } from '@/api/stores'
 import { getCurrentGroupVisibleProps } from '@/core/group/consts/currentVisibleProps'
 
 const useGroupSettings = (groupId: number) => {

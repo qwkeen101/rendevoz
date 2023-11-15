@@ -18,7 +18,7 @@ import { Rnd } from "react-rnd";
 import StringLabel from "./StringLabel";
 import ImageLabel from "./ImageLabel";
 import { Descendant } from "slate";
-import { ObjectStore } from "@/stores";
+import { ObjectStore } from "@/api/stores";
 import { IThoughtLabel } from "~/typings/data";
 
 interface ThoughtLabelProps {

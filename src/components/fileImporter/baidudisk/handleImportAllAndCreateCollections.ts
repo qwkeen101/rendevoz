@@ -1,6 +1,6 @@
 // 导入文件并创建收藏夹
 import { request } from '@/utils/request'
-import { CollectionStore, ObjectStore } from '@/stores'
+import { CollectionStore, ObjectStore } from '@/api/stores'
 
 export const handleImportAllAndCreateCollections = async (
   currentFolder = '/',

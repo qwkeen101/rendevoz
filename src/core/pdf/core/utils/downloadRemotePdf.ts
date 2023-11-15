@@ -1,12 +1,9 @@
 import { ErrorMaker } from '@/consts'
 import { request } from '@/utils/request'
-import { saveBlobLocally } from '@/utils'
 import fetchProcess, { DownloadProgress } from '@/utils/fetchProcess'
+import FileSystem from '@/api/fileSystem'
 
-const downloadRemotePdf = async (
-  remotePdfUrl: string,
-  onProgress?: (progress: DownloadProgress) => void
-) => {
+const downloadRemotePdf = async (remotePdfUrl: string, onProgress?: (progress: DownloadProgress) => void) => {
   if (remotePdfUrl.startsWith('baidudisk')) {
     const fsid = Number(remotePdfUrl.replace('baidudisk/', ''))
     const access = localStorage.getItem('bda')
@@ -29,8 +26,7 @@ const downloadRemotePdf = async (
           method: 'get'
         }).then(
           fetchProcess({
-            onProgress: p =>
-              onProgress?.(p)
+            onProgress: p => onProgress?.(p)
           })
         )
         if (downloadResult.status > 400) {
@@ -38,7 +34,7 @@ const downloadRemotePdf = async (
         }
         const buf = await downloadResult.arrayBuffer()
         if (buf) {
-          const filepath = await saveBlobLocally(new Blob([buf], { type: 'application/pdf' }), fileMetas.filename, undefined, 'files')
+          const filepath = await FileSystem.fs.writeFile(new Blob([buf], { type: 'application/pdf' }), `/files/${fileMetas.filename}`)
           if (filepath) {
             return filepath
           }

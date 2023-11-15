@@ -6,14 +6,13 @@ import { useTranslation } from 'react-i18next'
 import { Rendevoz } from '@/core/rendevoz'
 import requestVideoSubtitle from '@/components/fileImporter/baidudisk/requestVideoSubtitle'
 import toWebVTT from 'srt-webvtt'
-import { saveBlobLocally, saveFileLocally } from '@/utils'
 import Id from '@/utils/id'
-import { ObjectStore } from '@/stores'
 import { toast } from 'react-hot-toast'
 import { ClassName } from 'rendevoz'
 import FontSize from '@/consts/font'
 import { Colors } from '@/consts'
 import { useMediaInstance } from '@/core/media/hooks/useMediaInstance'
+import FileSystem from '@/api/fileSystem'
 
 type Props = {
   visible: boolean
@@ -51,7 +50,7 @@ export const parseSubtitleInfo = async (info: string) => {
         const file = await (await fetch(i.url)).blob()
         const vttFileUrl = await toWebVTT(file)
         const blob = await (await fetch(vttFileUrl)).blob()
-        const result = await saveBlobLocally(blob, `subtitles_${Id.getId()}`)
+        const result = await FileSystem.fs.writeFile(blob, `/files/subtitles_${Id.getId()}`)
         return {
           lang: i.lang,
           url: result
@@ -74,7 +73,7 @@ const MediaSubtitleImporter = ({ visible, onChange }: Props) => {
       if (file.name.endsWith('srt')) {
         const vttFileUrl = await toWebVTT(file)
         const blob = await (await fetch(vttFileUrl)).blob()
-        const filepath = await saveBlobLocally(blob, `subtitles_${Id.getId()}`)
+        const filepath = await FileSystem.fs.writeFile(blob, `/files/subtitles_${Id.getId()}`)
         console.log(filepath)
         if (filepath) {
           instance.on?.({
@@ -92,7 +91,7 @@ const MediaSubtitleImporter = ({ visible, onChange }: Props) => {
         }
       }
       if (file.name.endsWith('vtt')) {
-        const path = (await saveFileLocally(file.path, file.name)).data
+        const path = await FileSystem.copyFile(file.path, file.name)
         instance.on?.({
           type: 'subtitleUpdated',
           subtitleList: [

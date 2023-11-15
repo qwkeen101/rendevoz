@@ -1,5 +1,5 @@
 import { FeedItem, IFeedCollection } from '~/typings'
-import { ObjectStore } from '@/stores'
+import { ObjectStore } from '@/api/stores'
 
 export default async (items: FeedItem[], collection: Partial<IFeedCollection>) => {
   const results = await Promise.all(items.map(i => ObjectStore('feed').addOne({ ...i })))

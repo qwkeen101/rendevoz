@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { atom, useAtom } from 'jotai'
 import { LinkFilterRule, MetaFilterGroup, MetaFilterRule, MetaObject } from '~/typings'
-import { MetaStore } from '@/stores'
+import { MetaStore } from '@/api/stores'
 import stringFilter from '@/core/object/filter/stringFilter'
 import dateFilter from '@/core/object/filter/dateFilter'
 import linkFilter from '@/core/object/filter/linkFilter'

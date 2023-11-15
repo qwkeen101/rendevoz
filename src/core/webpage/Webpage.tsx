@@ -7,7 +7,7 @@ import useWebpageState, { IWebpageState } from './hooks/useWebpageState'
 import useWebpageContent from '@/core/webpage/hooks/useWebpageContent'
 import WebpageContentRenderer from '@/core/webpage/WebpageContentRenderer'
 import { TabTitle } from '@/core/rendevoz/components'
-import { MetaStore } from '@/stores'
+import { MetaStore } from '@/api/stores'
 
 /**
  * Webpage can be a controlled or uncontrolled component

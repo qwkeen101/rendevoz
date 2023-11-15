@@ -1,4 +1,4 @@
-import { ObjectStore } from '@/stores'
+import { ObjectStore } from '@/api/stores'
 import { INote, INoteLabel } from '~/typings'
 
 const useLabel = (note?: INote) => {

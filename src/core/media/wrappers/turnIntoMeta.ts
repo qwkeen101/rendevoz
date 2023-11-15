@@ -1,5 +1,5 @@
 import { MediaProps } from '@/core'
-import { ObjectStore } from '@/stores'
+import { ObjectStore } from '@/api/stores'
 
 export default async (mediaState: MediaProps['mediaState'], type: 'audio' | 'video') => {
   if (!mediaState) return

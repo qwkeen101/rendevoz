@@ -13,14 +13,14 @@ import {
   metaLinksAtom,
   metaObjectsAtom,
   relatedMetaObjectsMapAtom
-} from '@/stores/meta.store'
+} from '@/api/stores/meta.store'
 import Modal from '@/components/base/Modal'
 import useCardDrag from './useCardDrag'
 import { AttachmentWrapper, DraggableElement, GlobalGraphInstance, ObjectTag, useRenderObject } from '@/core'
 import MetaNoteCard from './NoteCard'
 import MetaDocumentCard from './DocumentCard'
 import { Flipped, spring } from 'react-flip-toolkit'
-import { globalStore, MetaStore } from '@/stores'
+import { globalStore, MetaStore } from '@/api/stores'
 import { MetaObject } from 'rendevoz'
 import { MetaDatabaseCardProps } from './types'
 import MetaObjectCard from './ObjectCard'

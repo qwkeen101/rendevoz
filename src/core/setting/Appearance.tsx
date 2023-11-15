@@ -210,7 +210,7 @@ const AppearanceSetting = () => {
   return (
     <>
       <SettingGroup title={t('settings.Theme')} layout={ThemeItems} />
-      <SettingGroup title={t('settings.Background')} layout={BackgroundItems} />
+      {/*<SettingGroup title={t('settings.Background')} layout={BackgroundItems} />*/}
     </>
   )
 }

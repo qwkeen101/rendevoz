@@ -1,25 +1,19 @@
 import React, { Fragment, useEffect, useRef, useState } from 'react'
-import ThoughtLabel from '../label/Label'
 import { AnimatePopover, Button, WithBorder } from '@/components'
 import { IPdfLabel, RenderPageProps, TextSelectEvent } from '~/typings'
 import TextSelectionToolbar from '../toolbar/TextSelectionToolbar'
 import HighlightLabel from '../label/HighlightLabel'
 import useCleanMode from '../../hooks/useCleanMode'
-import { globalStore, ObjectStore } from '@/stores'
-import ObjectLabel from '../label/ObjectLabel'
-import usePdfDraw from '../../hooks/usePdfDraw'
-import produce from 'immer'
-import { loadFromBlob } from '@excalidraw/excalidraw'
+import { globalStore, ObjectStore } from '@/api/stores'
 import usePdfViewer from '../../core/hooks/useViewer'
-import { getTextContent, PAGE_INDEX_TO_CANVAS_LAYER } from '../../core/weakMaps'
+import { getTextContent } from '../../core/weakMaps'
 import { GlobalTranslateInstance } from '@/core/global/translate/GlobalTranslatePanel'
 import { GlobalSearchInstance } from '@/core/global/GlobalSearchPanel'
-import { objectIdToMetaObjectIdMapAtom } from '@/stores/meta.store'
+import { objectIdToMetaObjectIdMapAtom } from '@/api/stores/meta.store'
 import { useContextmenu } from '@/hooks'
 import { useTranslation } from 'react-i18next'
 import { Rendevoz } from '@/core/rendevoz'
 import usePdfInstance from '../../hooks/usePdfInstance'
-import InkLabel from '@/core/pdf/components/label/InkLabel'
 import CropLabel from '@/core/pdf/components/label/CropLabel'
 
 interface PdfPageProps extends RenderPageProps {
@@ -58,40 +52,6 @@ const PdfPage: React.FC<PdfPageProps> = ({
 
   const instance = usePdfInstance()
 
-  const { renderModal, open, save, drawOnPdf } = usePdfDraw({
-    onClose: async () => {
-      const pdf = await ObjectStore('pdf').getOneById(pdfId)
-      save()
-        .then(res => {
-          const savedBlobUrl = res
-          if (savedBlobUrl && pdf) {
-            const newPageAnnotations = produce(pdf.pageAnnotations || {}, draft => {
-              draft[pageIndex] = {
-                dataUrl: savedBlobUrl
-              }
-            })
-            ObjectStore('pdf').updateOne({
-              id: pdfId,
-              pageAnnotations: newPageAnnotations
-            })
-          }
-        })
-        .finally(async () => {
-          const pdf = await ObjectStore('pdf').getOneById(pdfId)
-          const annotation = pdf?.pageAnnotations?.[pageIndex]
-          if (annotation && viewer) {
-            const canvas = PAGE_INDEX_TO_CANVAS_LAYER.get(viewer)?.get(pageIndex)
-            if (annotation.dataUrl && canvas && canvas.getCanvasEle()) {
-              const data = await fetch(annotation.dataUrl)
-              const blob = await data.blob()
-              const state = await loadFromBlob(blob, null, null)
-              drawOnPdf(state.elements, state.appState, state.files, canvas, true)
-            }
-          }
-        })
-    }
-  })
-
   const { contextMenuState, closeContextmenu } = useContextmenu(containerRef.current)
 
   if (pageFunctionRef.current) {
@@ -111,25 +71,11 @@ const PdfPage: React.FC<PdfPageProps> = ({
         color: 'rgba(39, 158, 255)'
       })
     }
-    pageFunctionRef.current.onCanvasRendered = async () => {
-      const pdf = await ObjectStore('pdf').getOneById(pdfId)
-      const annotation = pdf?.pageAnnotations?.[pageIndex]
-      if (annotation && viewer) {
-        const canvas = PAGE_INDEX_TO_CANVAS_LAYER.get(viewer)?.get(pageIndex)
-        if (annotation.dataUrl && canvas && canvas.getCanvasEle()) {
-          const data = await fetch(annotation.dataUrl.replace('rendefile', 'file'))
-          const blob = await data.blob()
-          const state = await loadFromBlob(blob, null, null)
-          drawOnPdf(state.elements, state.appState, state.files, canvas, false)
-        }
-      }
-    }
   }
 
   const { t } = useTranslation()
   return (
     <>
-      {renderModal()}
       {canvasLayer}
       {textLayer}
       {annotationLayer}

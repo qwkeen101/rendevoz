@@ -1,7 +1,7 @@
 import { DraggableElement, DraggingElement } from '@/core'
 import { useMergedRef, useSelectAtomValue } from '@/hooks'
 import { PageSize } from '~/typings'
-import { ObjectStore } from '@/stores'
+import { ObjectStore } from '@/api/stores'
 import { CSSProperties, FC, forwardRef, memo, useEffect, useMemo, useRef, useState } from 'react'
 import { ILabel } from '~/typings/data'
 import usePdfViewer from '@/core/pdf/core/hooks/useViewer'

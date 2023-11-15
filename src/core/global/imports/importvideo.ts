@@ -1,17 +1,18 @@
-import { getFilenameWithoutExtension, saveFileLocally, saveImageLocally } from '@/utils'
-import { ObjectStore } from '@/stores'
+import { getFilenameWithoutExtension } from '@/utils'
+import { ObjectStore } from '@/api/stores'
 import { generateVideoThumbnail } from '@/core/media/utils'
+import FileSystem from '@/api/fileSystem'
 
 const importvideo = async (file: File) => {
   const name = getFilenameWithoutExtension(file.name)
   const path = file.path
 
-  const filePath = await saveFileLocally(path, name)
+  const filePath = await FileSystem.copyFile(path, name)
   const cover = await generateVideoThumbnail(file)
-  const imagePath = await saveImageLocally(cover, { compress: false })
-  if(filePath){
+  const imagePath = await FileSystem.saveImage(cover)
+  if (filePath) {
     const res = await ObjectStore('video').addOneWithMeta(
-      { videoUrl: filePath.data },
+      { url: filePath },
       {
         currentMeta: {
           name: name,

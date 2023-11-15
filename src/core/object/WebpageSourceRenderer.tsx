@@ -1,6 +1,6 @@
 import { IconNameItem } from '@/components/layout/sidebar/SidebarCollection'
 import FontSize from '@/consts/font'
-import { ObjectStore } from '@/stores'
+import { ObjectStore } from '@/api/stores'
 import ClassName from '@/styles/classNames'
 import { css } from '@emotion/css'
 import { Regexp } from '@/utils'

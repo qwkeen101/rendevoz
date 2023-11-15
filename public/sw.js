@@ -4,5 +4,5 @@ self.addEventListener('activate', function (event) {
 })
 
 self.addEventListener('fetch', e => {
-  // console.log(e.request.url)
+  console.log(e.request.url)
 })

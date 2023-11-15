@@ -1,4 +1,4 @@
-import { MetaStore, ObjectStore } from '@/stores'
+import { MetaStore, ObjectStore } from '@/api/stores'
 import { useEffect, useState } from 'react'
 import { Content } from '@/components'
 import { useSetAtom } from 'jotai'

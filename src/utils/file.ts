@@ -1,30 +1,7 @@
 import { ipcInstance } from '@/plugins'
-import Id from './id'
-import { getSetting } from '@/core'
+import FileSystem from '@/api/fileSystem'
 
-export const saveFileLocally = (filePath: string, fileName: string): Promise<{ data: string }> => {
-  const setting = getSetting()
-  if (setting.general.copyFileWhenImport) {
-    return ipcInstance.send('saveFile', filePath, fileName)
-  } else {
-    return new Promise(res => {
-      res({
-        data: `file://${filePath}`
-      })
-    })
-  }
-}
-
-export const saveBlobLocally = async (
-  blob: Blob,
-  name = Id.getStrId(),
-  path?: string,
-  savePath?: 'files' | 'imgs' | 'backup' | 'root'
-): Promise<string | undefined> => {
-  const arrBuff = await blob.arrayBuffer()
-  const res = await ipcInstance.send('saveBuffer', arrBuff, name, path, savePath)
-  return res.data
-}
+export const saveFileLocally = (...args) => FileSystem.copyFile(...args)
 
 export const getFilenameWithoutExtension = (name: string) => {
   return name.substr(0, name.lastIndexOf('.'))
@@ -32,11 +9,6 @@ export const getFilenameWithoutExtension = (name: string) => {
 
 export const getDefaultUserFilePath = async (): Promise<string> => {
   const result = await ipcInstance.send('getUserFilePath')
-  return result.data
-}
-
-export const getSelectedFolderPath = async (): Promise<string> => {
-  const result = await ipcInstance.send('getSelectedFolderPath')
   return result.data
 }
 

@@ -1,4 +1,4 @@
-import { ObjectStore } from '@/stores'
+import { ObjectStore } from '@/api/stores'
 import { FeedItem, IFeedCollection } from '~/typings'
 
 export default async (folderId: number) => {

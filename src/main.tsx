@@ -11,6 +11,7 @@ import jsonWorker from 'monaco-editor/esm/vs/language/json/json.worker?worker'
 import cssWorker from 'monaco-editor/esm/vs/language/css/css.worker?worker'
 import htmlWorker from 'monaco-editor/esm/vs/language/html/html.worker?worker'
 import tsWorker from 'monaco-editor/esm/vs/language/typescript/ts.worker?worker'
+
 PIXI.Assets.load(PIXIFontUrl)
 enableMapSet()
 enablePatches()
@@ -37,29 +38,15 @@ document.addEventListener(
 //       })
 //   })
 //
-//   const { get, set } = Object.getOwnPropertyDescriptor(Image.prototype, 'src')!
-//   Object.defineProperty(Image.prototype, 'src', {
-//     set(newVal) {
-//       if (newVal.startsWith('rendefile')) {
-//         const replaced = newVal.replace('rendefile:///imgs/', '')
-//         fileHandle?.getDirectoryHandle('imgs').then(i => {
-//           i.getFileHandle(replaced)
-//             .then(h => h.getFile())
-//             .then(file => {
-//               const url = URL.createObjectURL(file)
-//               set.call(this, url)
-//               // console.log(file)
-//             })
-//         })
-//
-//         return set.call(this, replaced)
-//       }
-//       return set.call(this, newVal)
-//     },
-//     get() {
-//       return get.call(this)
-//     }
-//   })
+// fileHandle?.getDirectoryHandle('imgs').then(i => {
+//   i.getFileHandle(replaced)
+//     .then(h => h.getFile())
+//     .then(file => {
+//       const url = URL.createObjectURL(file)
+//       set.call(this, url)
+//       // console.log(file)
+//     })
+// })
 // }
 
 self.MonacoEnvironment = {

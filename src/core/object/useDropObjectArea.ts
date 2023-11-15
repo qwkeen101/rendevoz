@@ -4,9 +4,9 @@ import { RefObject, useEffect, useRef, useState } from 'react'
 import { IDraggableElement } from 'rendevoz/typings/globalInstances/dragDrop'
 import { Rendevoz } from '../rendevoz'
 import { useGlobalIsDragging } from '@/core'
-import { globalStore } from '@/stores'
-import { objectIdToMetaObjectIdMapAtom } from '@/stores/meta.store'
-import { TypeToRegisteredObject } from '@/stores/object.store'
+import { globalStore } from '@/api/stores'
+import { objectIdToMetaObjectIdMapAtom } from '@/api/stores/meta.store'
+import { TypeToRegisteredObject } from '@/api/stores/object.store'
 import { BuiltInDraggableElement } from '~/typings'
 
 const useDropObjectArea = (

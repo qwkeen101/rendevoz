@@ -12,7 +12,7 @@ import { useState } from 'react'
 import { css } from '@emotion/css'
 import MediaActionsMenu from '@/core/media/components/MediaActionsMenu'
 import { AttachmentWrapper } from '@/core'
-import { MetaStore } from '@/stores'
+import { MetaStore } from '@/api/stores'
 
 const clazz = css({
   borderRadius: `999px !important`,

@@ -6,8 +6,8 @@ import { css } from "@emotion/css";
 import { useSlate } from "../../slate-react";
 import ClassName from "@/styles/classNames";
 import { CustomElement } from "../../../../../typings/editor/types";
-import { metaObjectsAtom } from "@/stores/meta.store";
-import { globalStore } from "@/stores";
+import { metaObjectsAtom } from "@/api/stores/meta.store";
+import { globalStore } from "@/api/stores";
 import { atom } from "jotai/vanilla";
 import { useAtomValue } from "jotai/react";
 

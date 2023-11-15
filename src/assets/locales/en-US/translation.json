@@ -466,6 +466,7 @@
   "settings": {
     "appearance": "Appearance",
     "Background": "Background",
+    "auto hide label object": "Auto hide label objects",
     "Theme": "Theme",
     "Application theme": "Application theme",
     "background image": "Background image",

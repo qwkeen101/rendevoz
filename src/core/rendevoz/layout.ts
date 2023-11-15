@@ -162,6 +162,9 @@ const Layout = {
   hasTargetTab,
   makeTabActive,
   initializeOneTab,
+  getTabById: id => {
+    return LayoutIdToTabMap.get(id)
+  },
   getTab,
   getVisibleTabs,
   restoreSavedTab,

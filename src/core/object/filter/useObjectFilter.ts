@@ -3,8 +3,8 @@ import {
   relatedMetaObjectsMapAtom,
   tagToMetaObjectIdsMapAtom,
   undeletedMetaObjectsAtom,
-} from "@/stores/meta.store";
-import { globalStore } from "@/stores";
+} from "@/api/stores/meta.store";
+import { globalStore } from "@/api/stores";
 import { isWithinInterval } from "date-fns";
 import fuzzysort from "fuzzysort";
 import { useAtomValue, useStore } from "jotai/react";

@@ -11,8 +11,9 @@ export type OriginalTextRendererProps = {
   ellipis?: boolean
   onClick?: VoidFunction
   editorStyle?: CSSProperties
+  clickToEdit?: boolean
 }
-export default memo(({ objectId, style, showEdit, ellipis, editorStyle, type, name, onClick }: OriginalTextRendererProps) => {
+export default memo(({ objectId, style, showEdit, ellipis, editorStyle, type, name, onClick, clickToEdit }: OriginalTextRendererProps) => {
   const { renderOriginalText, label } = useRenderLabel({ objectId: objectId, type })
   if (!label?.selectedText || label.selectedText === name) return null
   return renderOriginalText({
@@ -20,6 +21,7 @@ export default memo(({ objectId, style, showEdit, ellipis, editorStyle, type, na
     style,
     onClick,
     showEdit,
+    clickToEdit,
     ellipis,
     editorStyle
   })

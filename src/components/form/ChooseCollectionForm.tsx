@@ -1,6 +1,6 @@
 import SidebarCollection from '@/components/layout/sidebar/SidebarCollection'
 import { ICollection } from '~/typings'
-import { CollectionStore } from '@/stores'
+import { CollectionStore } from '@/api/stores'
 import { useState } from 'react'
 import { Content, Footer } from '@/components'
 import { ClassName } from 'rendevoz'

@@ -1,15 +1,11 @@
-import { useRef, useState } from 'react'
-import { MetaStore } from '@/stores'
-import { AnimatePopover, Button, Content, ContentEditor, IconWithPopover, Image, WithBorder } from '@/components'
+import { MetaStore } from '@/api/stores'
+import { Button, Content, IconWithPopover, Image, WithBorder } from '@/components'
 import { useTranslation } from 'react-i18next'
-import { GlobalGraphInstance, TypeToTypeName, useRenderObject } from '@/core'
+import { GlobalGraphInstance, useRenderObject } from '@/core'
 import ClassName from '@/styles/classNames'
 import { css } from '@emotion/css'
 import { Colors } from '@/consts'
 import { Rendevoz } from '@/core/rendevoz'
-import { DateFormat } from '@/utils'
-import { toast } from 'react-hot-toast'
-import { RENDEVOZ_DEFAULT_TABS } from '@/lifycycle/startup/registerTabs'
 import { GlobalInstance } from '@/hooks'
 
 const flatButton = css([
@@ -27,33 +23,12 @@ const flatButton = css([
   }
 ])
 
-const MetaMainDetails = ({
-  metaId,
-  onOpenTag,
-  onViewLinks,
-  onViewAtt,
-  onPreview
-}: {
-  onViewAtt: VoidFunction
-  onPreview: VoidFunction
-  metaId: number
-  onOpenTag: VoidFunction
-  onViewLinks: VoidFunction
-}) => {
+const MetaMainDetails = ({ metaId, onViewLinks, onViewAtt }: { onViewAtt: VoidFunction; metaId: number; onViewLinks: VoidFunction }) => {
   const object = MetaStore.useValue(metaId)
-  const [mainState, setMainState] = useState<{
-    editName: boolean
-    editImage: boolean
-    editDesciption: boolean
-  }>({
-    editImage: false,
-    editDesciption: false,
-    editName: false
-  })
-  const { renderTags, renderFrom, renderOriginalText } = useRenderObject({ metaObjectId: metaId })
+  const { renderWhole } = useRenderObject({ metaObjectId: metaId })
   const { t } = useTranslation()
   if (!object) return null
-  const { editName, editDesciption } = mainState
+
   return (
     <Content flex column fullHeight>
       <Content flex gap={12}>
@@ -70,65 +45,15 @@ const MetaMainDetails = ({
           />
         )}
         <Content flex column auto gap={5} justifyContent={'center'}>
-          {renderTags({})}
-          {editName ? (
-            <ContentEditor
-              style={{
-                maxHeight: 240,
-                overflowY: 'auto',
-                width: '100%'
-              }}
-              onChange={v => {
-                setMainState(s => ({ ...s, editName: false }))
-                if (v) {
-                  MetaStore.updateMetaObject({ id: metaId, name: v }, true)
-                }
-              }}
-              value={object.name}
-            />
-          ) : (
-            <div
-              style={{ fontWeight: 500, cursor: 'pointer', fontSize: 14 }}
-              onClick={() => {
-                if (!window.getSelection()?.toString()) {
-                  setMainState(s => ({ ...s, editName: true }))
-                }
-              }}
-            >
-              {object.name}
-            </div>
-          )}
-          {editDesciption ? (
-            <ContentEditor
-              style={{
-                maxHeight: 240,
-                width: '100%',
-                overflowY: 'auto'
-              }}
-              onChange={v => {
-                setMainState(s => ({ ...s, editDesciption: false }))
-                if (v) {
-                  MetaStore.updateMetaObject({ id: metaId, description: v }, true)
-                }
-              }}
-              value={object.description}
-            />
-          ) : (
-            object.description && (
-              <div
-                style={{ fontWeight: 400, color: Colors.Font.Transparent, fontSize: 13, cursor: 'pointer', whiteSpace: 'pre-wrap' }}
-                onClick={() => {
-                  if (!window.getSelection()?.toString()) {
-                    setMainState(s => ({ ...s, editDesciption: true }))
-                  }
-                }}
-              >
-                {object.description}
-              </div>
-            )
-          )}
-          {renderOriginalText()}
-          {renderFrom({})}
+          {renderWhole({
+            renderOptions: {
+              renderImage: false
+            },
+            titleOptions: {
+              clickToEdit: true,
+              clickOriginToEdit: true
+            }
+          })}
         </Content>
       </Content>
       <Content style={{ paddingTop: 12, flexWrap: 'wrap' }} flex gap={8}>
@@ -180,7 +105,7 @@ const MetaMainDetails = ({
         <IconWithPopover
           closeOnContentClick={true}
           content={
-            <WithBorder padding={6} style={{ fontSize: 14 }} width={180}>
+            <WithBorder padding={6} style={{ fontSize: 14 }} width={140}>
               <Button.IconButton
                 text={t('general.Copy link')}
                 onClick={() => {
@@ -188,40 +113,8 @@ const MetaMainDetails = ({
                 }}
                 icon={'park-link'}
               />
-              {!object.coverImgSrc ? (
-                <Button.IconButton
-                  text={'Upload image'}
-                  icon={'park-add-picture'}
-                  onClick={() => {
-                    Rendevoz.Actions.Utils.uploadFile({ accept: 'image/*' }).then(res => {
-                      if (!Array.isArray(res)) {
-                        Rendevoz.Actions.Utils.saveFile(res, res.name, undefined, 'imgs').then(pa => {
-                          MetaStore.updateMetaObject({ id: metaId, coverImgSrc: pa }, true)
-                        })
-                      }
-                    })
-                  }}
-                />
-              ) : (
-                <Button.IconButton
-                  text={'Delete image'}
-                  icon={'park-error-picture'}
-                  onClick={() => {
-                    MetaStore.updateMetaObject({ id: metaId, coverImgSrc: undefined }, true)
-                  }}
-                />
-              )}
-              {!editDesciption && !object.description && (
-                <Button.IconButton
-                  text={'Add description'}
-                  icon={'park-edit'}
-                  onClick={() => {
-                    setMainState(s => ({ ...s, editDesciption: true }))
-                  }}
-                ></Button.IconButton>
-              )}
               <Button.IconButton
-                text={'Delete object'}
+                text={t('general.delete')}
                 icon={'park-delete'}
                 dangerous={true}
                 onClick={() => {

@@ -1,5 +1,5 @@
 import { RenderElementProps } from 'slate-react'
-import { MetaStore, ObjectStore } from '@/stores'
+import { MetaStore, ObjectStore } from '@/api/stores'
 import { SyncedBlockElement } from '~/typings/components/editor/outerElements'
 import { useEffect, useRef } from 'react'
 import { Editor, Transforms } from 'slate'

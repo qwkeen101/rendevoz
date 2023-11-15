@@ -1,7 +1,7 @@
 import { Content, Icon, Image } from '@/components'
 import { useMergedRef, useSelectAtomValue } from '@/hooks'
 import { MediaStateAtom } from '../../hooks/useMediaState'
-import { ObjectStore } from '@/stores'
+import { ObjectStore } from '@/api/stores'
 import { useMediaInstance } from '../../hooks/useMediaInstance'
 import { useEffect, useRef, useState } from 'react'
 import { IMediaLabel, IVideoLabel } from '~/typings'

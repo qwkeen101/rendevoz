@@ -1,4 +1,4 @@
-import { MetaStore } from '@/stores'
+import { MetaStore } from '@/api/stores'
 import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { MetaLink, MetaObject } from '~/typings/data'

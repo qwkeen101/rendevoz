@@ -1,6 +1,6 @@
 import { FeedItem } from '@/core/feed/types'
-import keyvalueStore from '@/stores/keyvalue.store'
-import { ObjectStore } from '@/stores'
+import keyvalueStore from '@/api/stores/keyvalue.store'
+import { ObjectStore } from '@/api/stores'
 import { useGlobalAtomValue } from '@/hooks'
 import { UrlToWebpageMap } from '@/core/webpage/hooks/useWebpageContent'
 import CardFeedItem from '@/core/feed/components/items/CardFeedItem'

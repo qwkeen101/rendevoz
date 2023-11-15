@@ -156,6 +156,7 @@ const MetaObjectNode: FC<InnerNodeProps> = ({ node: n, setPopoverElements, setNo
           fontSize: FontSize['14px'],
           whiteSpace: 'pre-wrap'
         },
+        showAddNote: false,
         ellipsisLine: 0
       },
       descriptionOptions: {
@@ -202,7 +203,13 @@ const MetaObjectNode: FC<InnerNodeProps> = ({ node: n, setPopoverElements, setNo
           objectFit: 'cover',
           flex: 1,
           overflow: 'hidden',
-          borderRadius: '8px 8px 0px 0px'
+          borderRadius: '8px 8px 0px 0px',
+          cursor: 'pointer'
+        }}
+        onClick={() => {
+          if (metaObject) {
+            Rendevoz.Actions.Open.Meta.openMetaObject(metaObject.id)
+          }
         }}
       />
       <div

@@ -1,5 +1,5 @@
 import { MetaGroupChild } from '~/typings'
-import { MetaStore } from '@/stores'
+import { MetaStore } from '@/api/stores'
 import { Content } from '@/components'
 import ImageItem from '@/core/group/components/gallery/items/ImageItem'
 

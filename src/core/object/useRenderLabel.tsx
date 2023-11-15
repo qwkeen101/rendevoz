@@ -1,5 +1,5 @@
 import { AnimatePopover, Content, Icon, IconWithPopover, Tooltip, WithBorder, ContentEditor } from '@/components'
-import { MetaStore, ObjectStore } from '@/stores'
+import { MetaStore, ObjectStore } from '@/api/stores'
 import { CSSProperties, useState } from 'react'
 import { DraggableElement } from '../global'
 import ClassName from '@/styles/classNames'
@@ -11,7 +11,7 @@ import { useTranslation } from 'react-i18next'
 import { IDraggableElement } from '~/typings/globalInstances/dragDrop'
 import { Colors } from '@/consts'
 import { GlobalInstance, useGlobalAtomValue, useIsIn, useSelectGlobalAtomValue } from '@/hooks'
-import { relatedMetaObjectsMapAtom } from '@/stores/meta.store'
+import { relatedMetaObjectsMapAtom } from '@/api/stores/meta.store'
 import { SettingAtom } from '@/core'
 import { getColor } from '@/consts/targetColor'
 import { Rendevoz } from '@/core/rendevoz'
@@ -49,7 +49,6 @@ const useRenderLabel = (opts: {
   const currentLabelHasName = label && label.name && label.name !== DEFAULT_LABEL_NAME
   const relatedMap = useGlobalAtomValue(relatedMetaObjectsMapAtom)
   const metaRelated = labelMeta && relatedMap.get(labelMeta.id)
-  const shouldShouldOriginal = useSelectGlobalAtomValue(SettingAtom, s => s.label.showOriginalText)
   const customBackground = useSelectGlobalAtomValue(SettingAtom, s => s.label.customTextBackground)
   const renderName = ({ onNameClick }: { onNameClick?: (name?: string) => void }) => {
     return (
@@ -255,10 +254,8 @@ const useRenderLabel = (opts: {
     ellipis?: boolean
     editorStyle?: CSSProperties
     onClick?: VoidFunction
+    clickToEdit?: boolean
   }) => {
-    if (!shouldShouldOriginal) {
-      return null
-    }
     if (labelState.editingOrigin) {
       return (
         <ContentEditor
@@ -290,6 +287,10 @@ const useRenderLabel = (opts: {
         }}
         onClick={e => {
           if (!window.getSelection()?.toString()) {
+            if (opts.clickToEdit) {
+              setLabelState(s => ({ ...s, editingOrigin: true }))
+              return
+            }
             if (opts.onClick) {
               opts.onClick()
               return

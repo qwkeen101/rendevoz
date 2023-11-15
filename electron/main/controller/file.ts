@@ -16,8 +16,20 @@ callback('deleteRendefile', async (filePath: string) => {
   return await FileService.deleteFile(filePath)
 })
 
+callback('deleteFile', async (filePath: string) => {
+  return await FileService.deleteFile(filePath)
+})
+
+callback('copyFile', async (from: string, to: string) => {
+  return await FileService.copyFile(from, to)
+})
+
 callback('saveBuffer', async (...args: Parameters<typeof FileService.saveBuffer>) => {
   return await FileService.saveBuffer(...args)
+})
+
+callback('writeFile', async (...args: Parameters<typeof FileService.writeFile>) => {
+  return await FileService.writeFile(...args)
 })
 
 callback('saveFile', async (...args: Parameters<typeof FileService.saveFile>) => {
@@ -35,6 +47,9 @@ callback('openDatabaseFolder', async () => {
   return
 })
 
+callback('readDir', async dirPath => {
+  return await FileService.readDir(dirPath)
+})
 callback('getUserFilePath', async () => {
   return DefaultRendevozDataPath
 })

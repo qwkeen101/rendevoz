@@ -2,10 +2,10 @@ import { PluginApi as PluginApiType } from '~/typings'
 import { Rendevoz } from '../rendevoz'
 import { css } from '@emotion/css'
 import { LayoutIdToTabMap } from '@/components/layout'
-import { globalStore, MetaStore, ObjectStore } from '@/stores'
+import { globalStore, MetaStore, ObjectStore } from '@/api/stores'
 import { EditorTypeToElementMap } from '../editor/maps'
-import createObjectStore, { storeMap, TypeToRegisteredObject } from '@/stores/object.store'
-import { TypeToRegisteredMetaObject } from '@/stores/meta.store'
+import createObjectStore, { storeMap, TypeToRegisteredObject } from '@/api/stores/object.store'
+import { TypeToRegisteredMetaObject } from '@/api/stores/meta.store'
 import i18next from 'i18next'
 import { TypeToTypeName } from '../object'
 import { getSetting, SettingAtom } from '..'
@@ -16,7 +16,7 @@ import {
   KeyToRegisteredSidebarElement
 } from './RegisterMap'
 import { GlobalPluginManager } from '@/App'
-import { userAtom } from '@/services/login.service'
+import { userAtom } from '@/api/services/login.service'
 
 export class PluginApi {
   public name: string | undefined = undefined

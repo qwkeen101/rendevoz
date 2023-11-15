@@ -8,6 +8,7 @@ export type ImageRenderProps = Size & {
   minWidth?: number
   borderRadius?: number
   style?: CSSProperties
+  onImageClick?: React.MouseEventHandler
 }
 export default ({
   width = 50,
@@ -16,6 +17,7 @@ export default ({
   borderRadius = 4,
   style,
   minWidth,
+  onImageClick,
   imageSrc,
   onSizeChange
 }: ImageRenderProps & {
@@ -33,6 +35,7 @@ export default ({
           flexShrink: 0,
           ...style
         }}
+        onClick={onImageClick}
         onLoad={e => {
           const img = e.currentTarget
           onSizeChange?.({

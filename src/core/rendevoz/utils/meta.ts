@@ -2,34 +2,23 @@ import { findPathsBetweenTwoMetaObjects } from '@/core/graph/utils/findPathsBetw
 import { t } from 'i18next'
 import { TypeToTypeName } from '@/core'
 import { getFilenameWithoutExtension, saveFileLocally, saveImageLocally } from '@/utils'
-import { MetaStore, ObjectStore } from '@/stores'
+import { MetaStore, ObjectStore } from '@/api/stores'
 import { generateVideoThumbnail } from '@/core/media/utils'
-import { initializePdfDocument } from '@/stores/document.store'
+import { initializePdfDocument } from '@/api/stores/document.store'
+import importpdf from '@/core/global/imports/importpdf'
+import importvideo from '@/core/global/imports/importvideo'
+import importimage from '@/core/global/imports/importimage'
 
 // supports PDF, video, image only
 const addMetaObjectFromFile = async (file: File) => {
-  const name = getFilenameWithoutExtension(file.name)
   if (file.type === 'application/pdf') {
-    const pdf = await initializePdfDocument(file)
-    if (!pdf) return
-    const obj = await ObjectStore('pdf').addOne({ ...pdf })
-    const meta = await MetaStore.addMetaObject({ type: 'pdf', objectId: obj.id, name: pdf.name, coverImgSrc: pdf.metadata?.coverUrl })
-    return meta
+    return await importpdf(file)
   }
   if (file.type.startsWith('image')) {
-    const imgSrc = await saveImageLocally(file, { compress: false })
-    const image = await ObjectStore('image').addOne({ imageUrl: imgSrc })
-    const meta = await MetaStore.addMetaObject({ type: 'image', objectId: image.id, coverImgSrc: imgSrc, name })
-    return meta
+    return await importimage(file)
   }
   if (file.type.startsWith('video')) {
-    const result = await saveFileLocally(file.path, file.name)
-    if (!result) return
-    const image = await generateVideoThumbnail(file)
-    const coverImgSrc = await saveImageLocally(image, { compress: false })
-    const video = await ObjectStore('video').addOne({ videoUrl: result.data })
-    const meta = await MetaStore.addMetaObject({ type: 'video', objectId: video.id, coverImgSrc, name })
-    return meta
+    return await importvideo(file)
   }
 }
 

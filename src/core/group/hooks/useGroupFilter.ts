@@ -1,4 +1,4 @@
-import { globalStore, MetaStore, ObjectStore } from '@/stores'
+import { globalStore, MetaStore, ObjectStore } from '@/api/stores'
 import { useEffect, useLayoutEffect, useMemo } from 'react'
 import { MetaGroup, MetaObject } from '~/typings'
 import { calculateFilterObjects } from '@/core/object/filter/useBetterFilter'

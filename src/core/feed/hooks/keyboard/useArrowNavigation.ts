@@ -5,7 +5,7 @@ import { KEY } from '@/consts'
 import useFeedInstance from '@/core/feed/hooks/useFeedInstance'
 import { assignProperties } from '@/utils'
 import readItem from '@/core/feed/utils/service/readItem'
-import { ObjectStore } from '@/stores'
+import { ObjectStore } from '@/api/stores'
 import fetchUrlAndParseNote from '@/core/webpage/utils/fetchUrlAndParseNote'
 
 const useArrowNavigation = () => {

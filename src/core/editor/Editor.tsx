@@ -32,8 +32,8 @@ import EditorHeader from '@/core/editor/EditorHeader'
 import withColumns from '@/core/editor/plugins/withColumns'
 import EditorClasses from '@/core/editor/consts/classes'
 import useReadOnlyEditor from '@/core/editor/hooks/useReadOnly'
-import KeyvalueStore from '@/stores/keyvalue.store'
-import { DefaultEditorSettings } from '@/lifycycle/startup/initializeSettings'
+import KeyvalueStore from '@/api/stores/keyvalue.store'
+import { DefaultEditorSettings } from '@/api/lifycycle/startup/initializeSettings'
 import { default as Cla } from 'classnames'
 
 // function, get unique id everytime

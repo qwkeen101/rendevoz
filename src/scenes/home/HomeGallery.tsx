@@ -1,5 +1,5 @@
-import KeyvalueStore from '@/stores/keyvalue.store'
-import { MetaStore } from '@/stores'
+import KeyvalueStore from '@/api/stores/keyvalue.store'
+import { MetaStore } from '@/api/stores'
 import { useEffect, useState } from 'react'
 import { AnimatePopover, Content, Icon, WithBorder } from '@/components'
 import GalleryItem from '@/scenes/home/GalleryItem'

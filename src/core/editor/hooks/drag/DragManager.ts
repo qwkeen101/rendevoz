@@ -9,7 +9,7 @@ import moveSingleElement from '../../utils/moveSingleElement'
 import { getDistanceBetweenPointAndScrollableElement } from '../../utils/scroll'
 import { ID_TO_ELEMENTS_MAP, ID_TO_PATH_MAP } from '../../weakMaps'
 import { checkDropCanBeMeta } from '@/core/global/globalDragOverlay/useDropObject'
-import { TypeToRegisteredObject } from '@/stores/object.store'
+import { TypeToRegisteredObject } from '@/api/stores/object.store'
 
 type Indicator = {
   direction: 'top' | 'left' | 'bottom' | 'right'

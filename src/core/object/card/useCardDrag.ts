@@ -1,6 +1,6 @@
 import { GlobalDragOverlayInstance, useGlobalIsDragging } from "@/core";
 import { useMemoizedFn } from "@/hooks";
-import { MetaStore } from "@/stores";
+import { MetaStore } from "@/api/stores";
 import { RefObject, useEffect, useRef, useState } from "react";
 import { MetaObject } from "~/typings/data";
 

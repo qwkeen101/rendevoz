@@ -1,8 +1,8 @@
 import useFeedState from '@/core/feed/hooks/useFeedState'
-import { globalStore, ObjectStore } from '@/stores'
+import { globalStore, ObjectStore } from '@/api/stores'
 import { useEffect } from 'react'
 import useFetchFeeds from '@/core/feed/hooks/useFetchFeeds'
-import KeyvalueStore from '@/stores/keyvalue.store'
+import KeyvalueStore from '@/api/stores/keyvalue.store'
 
 /**
  * Retrieve and update state

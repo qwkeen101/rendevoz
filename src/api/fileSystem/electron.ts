@@ -1,0 +1,25 @@
+import { IFileSystem } from '~/typings/fs'
+import { ipcInstance } from '@/plugins'
+
+export default {
+  readdir: async path => {
+    return await ipcInstance.send('readDir', path).then(res => res.data)
+  },
+  openFile: async path => {
+    ipcInstance.send('openLocalFile', path)
+  },
+  readFile: path => {},
+  selectDir: async () => {
+    return ipcInstance.send('getSelectedFolderPath').then(res => res.data)
+  },
+  deleteFile: async path => {
+    ipcInstance.send('deleteFile', path)
+  },
+  copyFile: async (from, to) => {
+    return await ipcInstance.send('copyFile', from, to).then(res => res.data)
+  },
+  writeFile: async (data, path, type) => {
+    const binaryData = data instanceof Blob ? await data.text() : data
+    return await ipcInstance.send('writeFile', binaryData, path, type).then(res => res.data)
+  }
+} as IFileSystem

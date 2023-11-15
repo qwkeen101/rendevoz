@@ -3,7 +3,7 @@ import { Modal } from '@/components'
 import { assignProperties } from '@/utils'
 import { GlobalInstance } from '@/hooks'
 import ChooseCollectionForm from '@/components/form/ChooseCollectionForm'
-import { CollectionStore } from '@/stores'
+import { CollectionStore } from '@/api/stores'
 
 export default () => {
   const [collectionState, setCollectionState] = useState<{

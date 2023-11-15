@@ -2,7 +2,7 @@ import { Descendant } from 'slate'
 import { IEditorInstance, OperationAppliedEvent } from '~/typings'
 import { useEffect, useRef } from 'react'
 import { useDebounceFn, useMemoizedFn } from '@/hooks'
-import { NoteStore, ObjectStore } from '@/stores'
+import { NoteStore, ObjectStore } from '@/api/stores'
 import { Rendevoz } from '@/core/rendevoz'
 import { isEqual } from 'lodash'
 

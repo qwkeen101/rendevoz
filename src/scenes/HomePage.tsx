@@ -5,7 +5,7 @@ import { GlobalInstance, useGlobalAtomValue, useToggle } from '@/hooks'
 import { useTranslation } from 'react-i18next'
 import TabTitle from '@/components/layout/TabTitle'
 import { ClassName } from 'rendevoz'
-import { TypeToRegisteredMetaObject, undeletedMetaObjectsAtom } from '@/stores/meta.store'
+import { TypeToRegisteredMetaObject, undeletedMetaObjectsAtom } from '@/api/stores/meta.store'
 import { MetaObject } from '~/typings'
 import Select from '@/components/base/select'
 import DateFormat from '@/utils/dateFormat'
@@ -19,9 +19,9 @@ import fuzzysort from 'fuzzysort'
 import { Rendevoz } from '@/core/rendevoz'
 import FileImporter from '@/components/fileImporter'
 import HomeGallery from '@/scenes/home/HomeGallery'
-import KeyvalueStore from '@/stores/keyvalue.store'
+import KeyvalueStore from '@/api/stores/keyvalue.store'
 import GalleryConfig from '@/scenes/home/GalleryConfig'
-import { MetaStore } from '@/stores'
+import { MetaStore } from '@/api/stores'
 
 const { Content } = Components
 const HomeSearchAtom = atom<string | undefined>(undefined)
@@ -333,6 +333,7 @@ const Recent = () => {
               key={i.id}
               className={css([
                 {
+                  height: 49,
                   borderTop: `1px solid ${Colors.Background.Border}`,
                   userSelect: 'none',
                   td: {

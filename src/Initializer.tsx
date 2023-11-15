@@ -8,14 +8,12 @@ import { loginStateAtom } from './components/Login'
 import { SettingAtom } from './core'
 import { useGlobalAtom, useGlobalAtomValue, useGlobalSetAtom } from '@/hooks'
 import { ipcInstance } from './plugins'
-import LoginService, { userAtom } from './services/login.service'
-import { CollectionStore, globalStore, MetaStore, ObjectStore } from './stores'
-import { changeFilePath, getDefaultUserFilePath } from '@/utils'
+import LoginService, { userAtom } from './api/services/login.service'
+import { CollectionStore, globalStore, MetaStore } from './api/stores'
+import { getDefaultUserFilePath } from '@/utils'
 import { Rendevoz } from '@/core/rendevoz'
-import { GlobalPluginManager } from '@/App'
-import initializeWorkspace from '@/lifycycle/startup/initializeWorkspace'
-import '@/lifycycle/close/close'
-import initializeApp from '@/lifycycle/startup/initializeApp'
+import '@/api/lifycycle/close/close'
+import initializeApp from '@/api/lifycycle/startup/initializeApp'
 export const initializedAtom = atom(false)
 export const updateInfoAtom = atom<
   | {
@@ -36,8 +34,6 @@ const DownloadInfoAtom = atom<{
 const Initializer = () => {
   const [loginState] = useGlobalAtom(loginStateAtom)
   const [, setUser] = useGlobalAtom(userAtom)
-  const { getAllMetaObjects, getAllMetaLinks } = MetaStore
-  const { getAllCollections } = CollectionStore
   const setIntialized = useGlobalSetAtom(initializedAtom)
   const { t } = useTranslation()
   const setSetting = useGlobalSetAtom(SettingAtom)

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { MetaStore } from '@/stores'
+import { MetaStore } from '@/api/stores'
 import { useRenderObject } from '@/core'
 import { Content, Icon } from '@/components'
 import { useIsIn } from '@/hooks'

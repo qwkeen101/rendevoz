@@ -2,7 +2,7 @@ import { BuiltInDraggableElement, ILabel, MetaLink, MetaObject } from '~/typings
 import { PartialWithId } from '@/types'
 import { getSetting } from '@/core'
 import Id from '@/utils/id'
-import { MetaStore, ObjectStore } from '@/stores'
+import { MetaStore, ObjectStore } from '@/api/stores'
 import { addLinkBetweenTwoMetaObject, createLink, transformTextContentToNameAndDescription } from '@/core/global/globalDragOverlay/utils'
 import { Node } from 'slate'
 import { useDb } from '@/hooks'

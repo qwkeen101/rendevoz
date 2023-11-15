@@ -1,6 +1,6 @@
 import { Content, VirtualList, Button, AnimatePopover, WithBorder } from '@/components'
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { MetaStore, ObjectStore } from '@/stores'
+import { MetaStore, ObjectStore } from '@/api/stores'
 import { TypeToTypeName, useRenderObject } from '@/core'
 import { Rendevoz } from '@/core/rendevoz'
 import { ClassName } from 'rendevoz'

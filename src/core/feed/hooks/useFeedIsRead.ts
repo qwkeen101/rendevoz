@@ -1,4 +1,4 @@
-import KeyvalueStore from '@/stores/keyvalue.store'
+import KeyvalueStore from '@/api/stores/keyvalue.store'
 
 export default (feedItemId: number) => {
   const allReadIds = KeyvalueStore.useValue('feedReadIds') || []

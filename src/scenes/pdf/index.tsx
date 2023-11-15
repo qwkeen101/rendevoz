@@ -2,7 +2,7 @@ import { FC, memo } from 'react'
 import { Container } from '@/components'
 import TabTitle from '@/components/layout/TabTitle'
 import { IPdfInstance } from '~/typings'
-import { ObjectStore } from '@/stores'
+import { ObjectStore } from '@/api/stores'
 import Pdf from '@/core/pdf'
 import { Rendevoz } from '@/core/rendevoz'
 

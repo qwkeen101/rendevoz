@@ -1,4 +1,4 @@
-import { MetaStore } from '@/stores'
+import { MetaStore } from '@/api/stores'
 import { memo, useMemo, useState } from 'react'
 import { DateFormat } from '@/utils'
 import HeatMap from '@uiw/react-heat-map'

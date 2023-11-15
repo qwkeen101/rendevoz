@@ -12,7 +12,7 @@ import FontSize from '@/consts/font'
 import { ClassName } from 'rendevoz'
 import isHotkey from 'is-hotkey'
 import { KEY } from '@/consts'
-import { MetaStore } from '@/stores'
+import { MetaStore } from '@/api/stores'
 
 const EditorLinkForm = ({ editor, manager }: { editor: CustomEditor; manager: EditorOverlayManager }) => {
   const [link, setLink] = useState('')

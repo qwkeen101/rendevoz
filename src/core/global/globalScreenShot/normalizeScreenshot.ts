@@ -1,5 +1,5 @@
 import { LayoutIdToTabMap } from '@/components/layout'
-import { MetaStore, ObjectStore } from '@/stores'
+import { MetaStore, ObjectStore } from '@/api/stores'
 import { boxContain, boxesIntersect, getRelativeBoxSize } from '@/utils'
 import { Box, IImage, ILayoutTab, IMediaInstance, MetaObject } from '~/typings'
 

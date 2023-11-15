@@ -1,4 +1,4 @@
-import { AnimatePopover, Button, Content, Icon, Tooltip, WithBorder } from '@/components'
+import { AnimatePopover, Button, Content, Icon, Modal, Tooltip, WithBorder } from '@/components'
 import { useSetting } from '@/core'
 import produce from 'immer'
 import { ClassName } from 'rendevoz'
@@ -7,12 +7,15 @@ import { useFlow, useWhiteboardNodes, WhiteboardAtom } from '@/core/whiteboard/h
 import { exportWhiteboardAsImage } from '@/core/whiteboard/utils/exportAsImage'
 import { useSelectAtomValue, useToggle } from '@/hooks'
 import { useSetAtom } from 'jotai'
-import { ObjectStore } from '@/stores'
+import { ObjectStore } from '@/api/stores'
+import { Colors } from '@/consts'
+import ExportPanel from '@/core/whiteboard/toolbars/ExportPanel'
+import { downloadImg } from '@/utils'
 
 const WhiteboardSettings = () => {
   const [setting, setSetting] = useSetting()
   const { t } = useTranslation()
-  const allNodes = useWhiteboardNodes()
+  const [allNodes] = useWhiteboardNodes()
   const flow = useFlow()
   const [exportModalVisible, toggleExportModalVisible] = useToggle(false)
   const whiteboardLineType = useSelectAtomValue(WhiteboardAtom, s => s?.lineType)
@@ -42,6 +45,13 @@ const WhiteboardSettings = () => {
   const buttonClazz = ClassName.flatButton(4, '2px 6px')
   return (
     <Content flex column gap={6} style={{ position: 'absolute', right: 20, top: 15 }}>
+      <Modal visible={exportModalVisible} onClose={() => toggleExportModalVisible(false)}>
+        <ExportPanel
+          onBack={() => {
+            toggleExportModalVisible(false)
+          }}
+        />
+      </Modal>
       <AnimatePopover
         padding={10}
         closeOnClickOutside={true}
@@ -53,19 +63,6 @@ const WhiteboardSettings = () => {
               fontSize: '0.95rem'
             }}
           >
-            {/*<Button.IconButton*/}
-            {/*  icon="park-full-screen-play"*/}
-            {/*  text={t('settings.enable whiteboard minimap')}*/}
-            {/*  className={buttonClazz}*/}
-            {/*  onClick={() => {*/}
-            {/*    setSetting(s =>*/}
-            {/*      produce(s, draft => {*/}
-            {/*        draft.whiteboard.enableMinimap = !draft.whiteboard.enableMinimap*/}
-            {/*      })*/}
-            {/*    )*/}
-            {/*  }}*/}
-            {/*  enabled={setting.whiteboard.enableMinimap}*/}
-            {/*/>*/}
             <Button.IconButton
               icon="park-zoom-internal"
               text={t('settings.keep ratio when resizing image')}
@@ -140,21 +137,23 @@ const WhiteboardSettings = () => {
               onClick={() => setBackgroundType('line')}
               text={t('general.Line')}
             />
+            <div style={{ width: '100%', height: '1px', margin: '4px 0px', background: Colors.Background.Border }}></div>
+            <Button.IconButton
+              className={buttonClazz}
+              icon="park-export"
+              onClick={() => {
+                exportWhiteboardAsImage(Array.from(allNodes.values()), flow.containerEle, 'png').then(res => {
+                  downloadImg(res, 'exported-image')
+                })
+              }}
+              text={t('general.export')}
+            />
           </WithBorder>
         }
         positions={['left']}
       >
         <Icon className={ClassName.circleButton(4, 4)} size={20} name="park-setting" />
       </AnimatePopover>
-      {/*<Icon*/}
-      {/*  className={ClassName.circleButton(4, 4)}*/}
-      {/*  name={'park-export'}*/}
-      {/*  size={20}*/}
-      {/*  onClick={() => {*/}
-      {/*    const nodes = Array.from(allNodes.values())*/}
-      {/*    exportWhiteboardAsImage(nodes, flow.containerEle)*/}
-      {/*  }}*/}
-      {/*/>*/}
     </Content>
   )
 }

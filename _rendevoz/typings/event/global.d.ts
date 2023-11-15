@@ -2,7 +2,7 @@ import { CustomTypes, Event, MetaObject, Position } from "..";
 import { IDraggableElement } from "../globalInstances/dragDrop";
 import { Patch } from 'immer'
 import { PrimitiveAtom } from 'jotai'
-import { LocalDatabaseAction } from '../../../src/stores/types'
+import { LocalDatabaseAction } from '../../../src/api/stores/types'
 
 type DragDropEvent = {
   dropPosition: Position;

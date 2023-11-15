@@ -1,4 +1,4 @@
-import { ObjectStore } from '@/stores'
+import { ObjectStore } from '@/api/stores'
 import { MetaGroup } from '~/typings'
 import { Content } from '@/components'
 import BetterFilter from '@/core/object/filter/BetterFilter'

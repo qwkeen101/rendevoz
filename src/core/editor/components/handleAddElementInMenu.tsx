@@ -3,14 +3,10 @@ import { BaseSelection, Editor, Element, Path, Range, Transforms } from 'slate'
 import { CustomEditor, CustomElement, DefaultAddElementHandler } from '~/typings'
 import { ReactEditor } from '../slate-react'
 import { Rendevoz } from '@/core/rendevoz'
-import { saveImageLocally } from '@/utils/img'
 import getCursorPosition from '../utils/getCursorPosition'
-import { GlobalObjectPanelInstance } from '@/core/global'
-import { GlobalEventEmitter } from '@/events'
 import { waitFor } from '@/utils/functions'
 import { ID_TO_ELEMENT_FUNCTION_MAP } from '../weakMaps'
-import { MetaStore, ObjectStore } from '@/stores'
-import { saveFileLocally } from '@/utils'
+import FileSystem from '@/api/fileSystem'
 
 export const defaultHandler: DefaultAddElementHandler = (type, instance, mode, opts) => {
   let addElementPath: Path = []
@@ -94,9 +90,8 @@ export const defaultHandler: DefaultAddElementHandler = (type, instance, mode, o
       Rendevoz.Actions.Utils.uploadFile().then(files => {
         const firstFile = files as File
         if (firstFile && firstFile.type.startsWith('image')) {
-          saveImageLocally(firstFile, { compress: false }).then(data => {
+          FileSystem.saveImage(firstFile, { compress: false }).then(data => {
             instance.getOverlayManager?.().close()
-            console.log(data)
             Transforms.insertNodes(
               editor,
               {

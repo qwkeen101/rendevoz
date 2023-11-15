@@ -1,4 +1,4 @@
-import { MetaStore } from '@/stores'
+import { MetaStore } from '@/api/stores'
 import { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Button, Content } from '@/components'

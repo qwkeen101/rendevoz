@@ -1,6 +1,6 @@
 import { useDebounceFn, useToggle } from '@/hooks'
-import { relatedMetaObjectsMapAtom, undeletedMetaObjectsAtom } from '@/stores/meta.store'
-import { globalStore } from '@/stores'
+import { relatedMetaObjectsMapAtom, undeletedMetaObjectsAtom } from '@/api/stores/meta.store'
+import { globalStore } from '@/api/stores'
 import ClassName from '@/styles/classNames'
 import { css } from '@emotion/css'
 import { Provider, useAtomValue, useSetAtom } from 'jotai/react'

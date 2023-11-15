@@ -1,4 +1,4 @@
-import { MetaStore, ObjectStore } from '@/stores'
+import { MetaStore, ObjectStore } from '@/api/stores'
 import { IPdfLabel, PageSize } from '~/typings'
 import { ResizeAndDrag } from '@/components'
 import { deleteLocalFile } from '@/utils'

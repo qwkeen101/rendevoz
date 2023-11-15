@@ -1,6 +1,6 @@
 import { useMemoizedFn } from '@/hooks'
-import { metaObjectsAtom, relatedMetaObjectsMapAtom, undeletedMetaLinksAtom } from '@/stores/meta.store'
-import { globalStore } from '@/stores'
+import { metaObjectsAtom, relatedMetaObjectsMapAtom, undeletedMetaLinksAtom } from '@/api/stores/meta.store'
+import { globalStore } from '@/api/stores'
 import { useState } from 'react'
 import { MetaObject } from '~/typings/data'
 import GraphContainer from './components/GraphContainer'

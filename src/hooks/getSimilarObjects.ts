@@ -1,4 +1,4 @@
-import { CollectionStore, globalStore, MetaStore, ObjectStore } from '@/stores'
+import { CollectionStore, globalStore, MetaStore, ObjectStore } from '@/api/stores'
 import { MetaObject } from '~/typings'
 
 export type ISimilarObjects = {

@@ -1,5 +1,5 @@
 import { atom } from 'jotai'
-import { globalStore, ObjectStore } from '@/stores'
+import { globalStore, ObjectStore } from '@/api/stores'
 import { useSelectGlobalAtomValue } from '@/hooks'
 
 export const urlToAudioMapAtom = atom(new Map<string, number>())

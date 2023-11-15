@@ -1,10 +1,10 @@
 import { AnimatePopover, Button, Content, Icon, IconWithPopover, WithBorder } from '@/components'
-import { ObjectStore } from '@/stores'
+import { ObjectStore } from '@/api/stores'
 import { MetaGroup } from '~/typings'
 import BetterFilter from '@/core/object/filter/BetterFilter'
-import { memo, useEffect, useRef, useState } from 'react'
+import { memo, useRef, useState } from 'react'
 import { ClassName } from 'rendevoz'
-import { useDebounceEffect, useDebounceFn, useSelectAtomValue } from '@/hooks'
+import { useDebounceFn, useSelectAtomValue } from '@/hooks'
 import { Colors } from '@/consts'
 import GroupSettingMenu from '@/core/group/components/menu/GroupSettingMenu'
 import { GroupStateAtom } from '@/core/group/hooks/useGroupState'
@@ -12,7 +12,6 @@ import useGroupQueryLibrary from '@/core/group/hooks/queryLibrary/useGroupQueryL
 import { assignProperties } from '@/utils'
 import { useGroupInstance } from '@/core/group/hooks/useGroupInstance'
 import BetterSorter from '@/core/object/filter/BetterSorter'
-import { useSetAtom } from 'jotai'
 import Id from '@/utils/id'
 import { DEFAULT_GROUP_PROPERTIES } from '@/core/group/consts/defaultProperties'
 import EmojiWithPicker from '@/components/EmojiWithPicker'
@@ -85,11 +84,12 @@ const GroupActions = memo(({ groupId }: { groupId: number }) => {
             views: [
               ...s.views,
               {
-                type: 'gallery',
+                type: 'table',
                 unToggledIds: [],
                 id: Id.getId(),
-                name: 'Gallery',
+                name: 'Table',
                 options: {
+                  wrapColumns: false,
                   properties: DEFAULT_GROUP_PROPERTIES
                 },
                 valueIndex: []

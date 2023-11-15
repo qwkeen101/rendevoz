@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { FeedItem } from '~/typings'
-import { globalStore, ObjectStore } from '@/stores'
+import { globalStore, ObjectStore } from '@/api/stores'
 import useFeedState from '@/core/feed/hooks/useFeedState'
 import { Content } from '@/components'
 

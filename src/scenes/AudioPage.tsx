@@ -1,4 +1,4 @@
-import { MetaStore } from '@/stores'
+import { MetaStore } from '@/api/stores'
 import { Content } from '@/components'
 import TabTitle from '@/components/layout/TabTitle'
 import { Rendevoz } from '@/core/rendevoz'

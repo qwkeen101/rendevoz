@@ -16,14 +16,14 @@ import FontSize from '@/consts/font'
 import { useState } from 'react'
 import { assignProperties, fetchRemoteImageAndSaveLocally } from '@/utils'
 import { BaidudiskInstance } from '@/components/fileImporter/baidudisk/BaidudiskDisplayer'
-import { ObjectStore } from '@/stores'
+import { ObjectStore } from '@/api/stores'
 import { Rendevoz } from '@/core/rendevoz'
 import { GlobalImporterInstance } from '@/core/global/GlobalImporter'
 import loginBaidudisk from '@/components/fileImporter/baidudisk/loginBaidudisk'
 import { toast } from 'react-hot-toast'
 import { useSetting } from '@/core'
 import { MetaObject } from '~/typings'
-import GroupStore from '@/stores/group.store'
+import GroupStore from '@/api/stores/group.store'
 
 export const GlobalFileImporterInstance = {}
 const FileImporter = ({

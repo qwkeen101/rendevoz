@@ -3,7 +3,7 @@ import { Editor, Element as SlateElement, Path, Point, Range, Transforms } from 
 import { ReactEditor } from 'slate-react'
 import { CustomEditor, CustomElement } from '~/typings'
 import { Positions } from '../utils/positions'
-import { MetaStore, ObjectStore } from '@/stores'
+import { MetaStore, ObjectStore } from '@/api/stores'
 
 const softBlockTypes: CustomElement['type'][] = ['highlight-block', 'block-quote']
 

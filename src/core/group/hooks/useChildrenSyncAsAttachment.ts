@@ -1,6 +1,6 @@
 import { IMetaAttachment, MetaGroupChild, MetaObject } from '~/typings'
 import { useEffect, useRef } from 'react'
-import { MetaStore } from '@/stores'
+import { MetaStore } from '@/api/stores'
 import Id from '@/utils/id'
 
 export default (metaObject?: MetaObject, children?: MetaGroupChild[]) => {

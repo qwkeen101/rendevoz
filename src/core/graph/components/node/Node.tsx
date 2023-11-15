@@ -11,13 +11,13 @@ import { Content } from '@/components/base'
 import { MetaObject } from '~/typings/data'
 import { useAtomValue, useSetAtom } from 'jotai'
 import EmojiNode from './EmojiNode'
-import { MetaStore } from '@/stores'
+import { MetaStore } from '@/api/stores'
 import { GraphPathFilterAtom } from '../GraphPathFilter'
 import { GraphPinNodesIdsAtom } from '../../hooks/useGraphFilter'
 import SvgIconRenderer from '../icons/SvgIconRenderer'
 import { GraphModeAtom } from '../../hooks/useGraphMode'
 import Colors from '@/consts/colors'
-import { TypeToRegisteredMetaObject } from '@/stores/meta.store'
+import { TypeToRegisteredMetaObject } from '@/api/stores/meta.store'
 
 export interface NodeProps {
   node: GraphNode

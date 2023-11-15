@@ -1,5 +1,5 @@
 import { Editor, Node, Path, Transforms } from 'slate'
-import TranslateService from '@/services/translate.service'
+import TranslateService from '@/api/services/translate.service'
 import { CustomEditor, IEditorInstance } from '~/typings'
 import Id from '@/utils/id'
 import { franc } from 'franc'

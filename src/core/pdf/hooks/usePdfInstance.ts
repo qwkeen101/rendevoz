@@ -1,5 +1,5 @@
 import { transformTextContentToNameAndDescription } from '@/core/global/globalDragOverlay/utils'
-import { ObjectStore } from '@/stores'
+import { ObjectStore } from '@/api/stores'
 import { assignProperties } from '@/utils'
 import { atom, useAtomValue } from 'jotai'
 import { IPdfInstance } from '~/typings'

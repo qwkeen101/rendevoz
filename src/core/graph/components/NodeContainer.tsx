@@ -1,5 +1,5 @@
 import { useMemoizedFn } from '@/hooks'
-import { MetaStore } from '@/stores'
+import { MetaStore } from '@/api/stores'
 import Id from '@/utils/id'
 import { css } from '@emotion/css'
 import { memo, MouseEvent, useEffect } from 'react'

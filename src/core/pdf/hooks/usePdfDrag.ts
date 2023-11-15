@@ -2,7 +2,7 @@ import { getDistanceBetweenPointAndElement } from "@/utils";
 import { GlobalDragOverlayInstance, useGlobalIsDragging } from "@/core";
 import { GlobalEventHandler } from "@/events/globalEvent";
 import { useMemoizedFn } from "@/hooks";
-import { ObjectStore } from "@/stores";
+import { ObjectStore } from "@/api/stores";
 import Id from "@/utils/id";
 import { useEffect, useState } from "react";
 import { ILabel, IObjectLabel, IShapeLabel, MetaObject } from "~/typings/data";

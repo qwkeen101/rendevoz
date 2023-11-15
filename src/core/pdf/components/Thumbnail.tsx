@@ -8,7 +8,7 @@ import { PdfBarStateAtom } from '../hooks/usePdfBarState'
 import { useLatest } from 'react-use'
 import useThrottleFn from '@/hooks/utils/useThrottleFn'
 import usePdfState from '@/core/pdf/hooks/usePdfState'
-import { ObjectStore } from '@/stores'
+import { ObjectStore } from '@/api/stores'
 import { Virtualizer } from '@tanstack/react-virtual'
 
 const PdfThumbnail = () => {

@@ -4,7 +4,7 @@ import { Content } from '@/components'
 import MetaTagPicker from '@/core/object/MetaTagPicker'
 import { Colors } from '@/consts'
 import Tag from '@/core/object/ObjectTag'
-import { MetaStore } from '@/stores'
+import { MetaStore } from '@/api/stores'
 import { useGroupInstance } from '@/core/group/hooks/useGroupInstance'
 
 const TagCell = ({ value = [], metaId, wrap }: { value: number[]; metaId: number; wrap?: boolean }) => {

@@ -1,7 +1,7 @@
 import { Content } from '@/components'
 import TabTitle from '@/components/layout/TabTitle'
 import { Rendevoz } from '@/core/rendevoz'
-import { MetaStore } from '@/stores'
+import { MetaStore } from '@/api/stores'
 import Video from '@/core/media/wrappers/Video'
 import { IMediaInstance } from '~/typings'
 

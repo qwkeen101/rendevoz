@@ -1,9 +1,9 @@
 import useFeedState from '@/core/feed/hooks/useFeedState'
-import { ObjectStore } from '@/stores'
+import { ObjectStore } from '@/api/stores'
 import Video from '@/core/media/wrappers/Video'
 import { Content } from '@/components'
 import { Colors } from '@/consts'
-import KeyvalueStore from '@/stores/keyvalue.store'
+import KeyvalueStore from '@/api/stores/keyvalue.store'
 
 export default () => {
   const [feedState] = useFeedState()

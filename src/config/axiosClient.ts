@@ -1,5 +1,5 @@
-import LoginService, { getUser, userAtom } from "@/services/login.service";
-import { globalStore } from "@/stores";
+import LoginService, { getUser, userAtom } from "@/api/services/login.service";
+import { globalStore } from "@/api/stores";
 import axios from "axios";
 import jwt_decode from "jwt-decode";
 import { toast } from "react-hot-toast";

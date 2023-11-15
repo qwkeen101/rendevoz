@@ -1,5 +1,5 @@
 import { useGlobalAtomValue, useSelectGlobalAtomValue } from '@/hooks/jotai'
-import { metaObjectsAtom, relatedMetaObjectsMapAtom } from '@/stores/meta.store'
+import { metaObjectsAtom, relatedMetaObjectsMapAtom } from '@/api/stores/meta.store'
 import ClassName from '@/styles/classNames'
 import Id from '@/utils/id'
 import { css } from '@emotion/css'
@@ -23,7 +23,7 @@ import { useUpdate } from 'react-use'
 import Pdf from '@/core/pdf'
 import isHotkey from 'is-hotkey'
 import { KEY } from '@/consts'
-import { MetaStore, ObjectStore } from '@/stores'
+import { MetaStore, ObjectStore } from '@/api/stores'
 import FontSize from '@/consts/font'
 import AutosizeTextarea from '@/components/custom/input/autosizeTextarea'
 import { toast } from 'react-hot-toast'
@@ -106,7 +106,7 @@ const useRenderObject = (options: { metaObjectId: number }) => {
     <DescriptionRenderer {...options} description={metaObject?.description} />
   )
 
-  const renderWhole = (options?: WholeRendererProps) => (
+  const renderWhole = (options?: WholeRendererProps['options']) => (
     <WholeRenderer options={options} metaObject={metaObject} relatedNum={relatedSet?.size} />
   )
   const renderInline = (options: InlineRendererProps) => <InlineRenderer {...options} metaObject={metaObject} />

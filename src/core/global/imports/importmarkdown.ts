@@ -1,6 +1,6 @@
 import { transformMarkdown } from '@/core/editor/plugins/deserializeMarkdown'
 import { INote, MetaObject } from '~/typings'
-import { NoteStore, ObjectStore } from '@/stores'
+import { NoteStore, ObjectStore } from '@/api/stores'
 import { getFilenameWithoutExtension } from '@/utils'
 
 const importmarkdown = async (file: File) => {

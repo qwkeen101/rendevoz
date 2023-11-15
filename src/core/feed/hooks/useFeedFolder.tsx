@@ -8,7 +8,7 @@ import { Content, Modal } from '@/components'
 import { Colors } from '@/consts'
 import { ClassName } from 'rendevoz'
 import { useTranslation } from 'react-i18next'
-import { ObjectStore } from '@/stores'
+import { ObjectStore } from '@/api/stores'
 
 export default () => {
   const instance = useFeedInstance()

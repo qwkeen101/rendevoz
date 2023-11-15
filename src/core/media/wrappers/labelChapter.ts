@@ -1,4 +1,4 @@
-import { ObjectStore } from '@/stores'
+import { ObjectStore } from '@/api/stores'
 import { IMediaEvent } from '~/typings/components/media/event'
 import { IMediaChapter, IMediaLabel } from '~/typings'
 import { MediaProps } from '@/core'

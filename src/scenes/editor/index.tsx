@@ -2,10 +2,10 @@ import { Content } from '@/components'
 import { EditorProps } from '~/typings'
 import TabTitle from '@/components/layout/TabTitle'
 import { FC } from 'react'
-import { globalStore, MetaStore } from '@/stores'
+import { globalStore, MetaStore } from '@/api/stores'
 import { GlobalTranslateInstance } from '@/core/global/translate/GlobalTranslatePanel'
 import { GlobalSearchInstance } from '@/core/global/GlobalSearchPanel'
-import { objectIdToMetaObjectIdMapAtom } from '@/stores/meta.store'
+import { objectIdToMetaObjectIdMapAtom } from '@/api/stores/meta.store'
 import NoteEditor from '@/core/editor/noteEditor/NoteEditor'
 
 const EditorPage: FC<

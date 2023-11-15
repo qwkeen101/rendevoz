@@ -3,7 +3,7 @@ import { assignProperties } from '@/utils'
 import { useEffect, useRef } from 'react'
 import { Rendevoz } from '@/core/rendevoz'
 import isHotkey from 'is-hotkey'
-import { applyPatchesOnAtom } from '@/stores/history.store'
+import { applyPatchesOnAtom } from '@/api/stores/history.store'
 
 /**
  * 组历史有两种情况：1.对objectstore或metasore更改，2.更改组属性

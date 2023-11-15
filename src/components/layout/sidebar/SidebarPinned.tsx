@@ -2,10 +2,10 @@
 //@ts-nocheck
 import { Content } from '@/components/base'
 import { useGlobalAtomValue } from '@/hooks/jotai'
-import { pinnedMetaObjectsAtom } from '@/stores/meta.store'
+import { pinnedMetaObjectsAtom } from '@/api/stores/meta.store'
 import { memo } from 'react'
 import SidebarObjectItem from './items/SidebarObjectItem'
-import { pinnedCollectionsAtom } from '@/stores/collection.store'
+import { pinnedCollectionsAtom } from '@/api/stores/collection.store'
 import SidebarCollectionItem from './items/SidebarCollectionItem'
 import { useToggle } from '@/hooks'
 import { useTranslation } from 'react-i18next'

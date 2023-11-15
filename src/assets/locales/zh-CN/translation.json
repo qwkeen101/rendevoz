@@ -474,6 +474,7 @@
     "File and data": "文件与数据",
     "others": "其他",
     "label settings": "标注设置",
+    "auto hide label object": "自动隐藏标注实体",
     "show original text": "显示原文",
     "auto copy file when import": "自动复制导入的文件",
     "auto save layout": "自动保存布局",

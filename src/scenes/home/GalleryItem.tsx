@@ -1,4 +1,4 @@
-import { CollectionStore, MetaStore } from '@/stores'
+import { CollectionStore, MetaStore } from '@/api/stores'
 import { Content, Icon, WithBorder } from '@/components'
 import { Rendevoz } from '@/core/rendevoz'
 import { Colors } from '@/consts'

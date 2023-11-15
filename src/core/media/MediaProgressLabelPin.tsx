@@ -1,4 +1,4 @@
-import { ObjectStore } from '@/stores'
+import { ObjectStore } from '@/api/stores'
 import { MediaStateAtom } from './hooks/useMediaState'
 import { useSelectAtomValue } from '@/hooks'
 import { Icon } from '@/components'

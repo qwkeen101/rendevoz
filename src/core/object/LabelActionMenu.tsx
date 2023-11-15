@@ -1,5 +1,5 @@
 import { Button, WithBorder } from '@/components'
-import { MetaStore, ObjectStore } from '@/stores'
+import { MetaStore, ObjectStore } from '@/api/stores'
 import { useTranslation } from 'react-i18next'
 import { MetaObject } from '~/typings'
 import { transformTextContentToNameAndDescription } from '../global/globalDragOverlay/utils'

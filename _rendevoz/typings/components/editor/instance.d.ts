@@ -1,7 +1,7 @@
 import { Descendant, NodeEntry, Operation, Path, PathRef } from 'slate'
 import { CustomEditor, CustomElement, ElementFunctions, INoteLabel } from '.'
 import { CustomText, EmptyText } from '.'
-import { EditorOverlayManager } from '../../../../src/core/editor/components/overlay/useEditorOverlay'
+import { EditorOverlayManager } from '../../../../src/core/components/editor/components/overlay/useEditorOverlay'
 
 export type IEditorInstance = Partial<{
   getTitle: () => string

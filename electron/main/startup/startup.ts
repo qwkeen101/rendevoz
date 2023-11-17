@@ -109,7 +109,7 @@ const startElectron = async () => {
 
   app.on('web-contents-created', (createEvent, contents) => {
     contents.setWindowOpenHandler(({ url }) => {
-      console.log(url, 'abcdefg')
+
       if (url.includes('printer.html')) return { action: 'allow' }
       if (url.includes('blank')) return { action: 'allow' }
       if (url.includes('index.html')) return { action: 'allow' }
@@ -159,6 +159,7 @@ const startElectron = async () => {
   })
   win.webContents.on('did-attach-webview', (_, contents) => {
     contents.setWindowOpenHandler(details => {
+      console.log(details)
       contents.loadURL(details.url)
       return { action: 'deny' }
     })

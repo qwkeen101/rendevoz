@@ -3,7 +3,7 @@ import { debounce } from 'lodash'
 import { MetaGroup, MetaGroupChild } from '~/typings'
 import Id from '@/utils/id'
 import { atom } from 'jotai'
-import { DEFAULT_GROUP_PROPERTIES } from '@/core/group/consts/defaultProperties'
+import { DEFAULT_GROUP_PROPERTIES } from '@/core/components/group/consts/defaultProperties'
 
 export const GroupToBelongsMetaIdMapAtom = atom(new Map())
 

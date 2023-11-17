@@ -1,6 +1,6 @@
 import { getFilenameWithoutExtension } from '@/utils'
 import { ObjectStore } from '@/api/stores'
-import { generateVideoThumbnail } from '@/core/media/utils'
+import { generateVideoThumbnail } from '@/core/components/media/utils'
 import FileSystem from '@/api/fileSystem'
 
 const importvideo = async (file: File) => {

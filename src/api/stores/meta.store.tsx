@@ -19,7 +19,7 @@ import { RegisteredMetaObject } from 'rendevoz'
 import SearchHelper from '@/api/textSearch/SearchHelper'
 import KeyvalueStore from '@/api/stores/keyvalue.store'
 import { calculateFilterObjects } from '@/core/object/filter/useBetterFilter'
-import Node from '@/core/group/utils/node'
+import Node from '@/core/components/group/utils/node'
 
 export const metaObjectsAtom = atom<Map<number, MetaObject>>(new Map())
 

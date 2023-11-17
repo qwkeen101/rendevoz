@@ -4,12 +4,12 @@ import { DefaultEditorSettings } from '@/api/lifycycle/startup/initializeSetting
 import { useTranslation } from 'react-i18next'
 import { ClassName } from 'rendevoz'
 import { ButtonChooser, Icon } from '@/components'
-import { allBuiltInTypefaces } from '@/core/editor/components/setting/TypefaceSetting'
+import { allBuiltInTypefaces } from '@/core/components/editor/components/setting/TypefaceSetting'
 import { useEffect, useRef } from 'react'
 import { useUpdate } from 'react-use'
 import { ISettingItem } from '@/core/setting/SettingItem'
 import SettingGroup from '@/core/setting/SettingGroup'
-import { editorPageWidth, fontSizes, lineSpacings } from '@/core/editor/components/setting/PageSetting'
+import { editorPageWidth, fontSizes, lineSpacings } from '@/core/components/editor/components/setting/PageSetting'
 
 const EditorSetting = () => {
   const { t } = useTranslation()

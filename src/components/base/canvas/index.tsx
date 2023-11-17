@@ -2,7 +2,7 @@ import { Context } from 'konva/lib/Context'
 import { CSSProperties, FC, RefObject, useEffect, useMemo, useRef } from 'react'
 import CanvasManager from './CanvasManager'
 import { useStore } from 'jotai'
-import { CanvasManagerAtom } from '@/core/image/ImageDisplayer'
+import { CanvasManagerAtom } from '@/core/components/image/ImageDisplayer'
 
 interface CanvasProps {
   width: number

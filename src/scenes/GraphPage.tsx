@@ -1,16 +1,16 @@
 import { Content, Icon } from '@/components'
 import { TabTitle } from '@/core/rendevoz/components'
-import GraphContainer from '@/core/graph/components/GraphContainer'
+import GraphContainer from '@/core/components/graph/components/GraphContainer'
 import { useEffect, useState } from 'react'
 import { globalStore } from '@/api/stores'
 import { metaObjectsAtom } from '@/api/stores/meta.store'
 import { getAllEdgesOfNodes } from '@/core'
-import { GraphEdge } from '@/core/graph/types/edge'
-import { GraphNode } from '@/core/graph/types/node'
+import { GraphEdge } from '@/core/components/graph/types/edge'
+import { GraphNode } from '@/core/components/graph/types/node'
 import { atom } from 'jotai'
 import { useGlobalAtom } from '@/hooks'
 import { useTranslation } from 'react-i18next'
-import { renderPageInNormalMode } from '@/core/pdf/core/utils/renderer'
+import { renderPageInNormalMode } from '@/core/components/pdf/core/utils/renderer'
 
 export const GlobalGraphAtom = atom<
   | {

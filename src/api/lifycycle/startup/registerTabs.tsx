@@ -1,11 +1,11 @@
 import { ILayoutTab, TabData } from 'rendevoz'
 import Id from '@/utils/id'
-import Webpage from '@/core/webpage/Webpage'
+import Webpage from '@/core/components/webpage/Webpage'
 import { ObjectTimeline } from '@/core'
 import SyncedBlockPage from '@/scenes/SyncedBlockPage'
 import { EditorPage, HomePage, PdfPage, WhiteboardPage, ImagePage, VideoPage, GraphPage, MetaGroupPage, DatabasePage } from '@/scenes'
 import { Rendevoz } from '@/core/rendevoz'
-import FeedViewer from '@/core/feed'
+import FeedViewer from '@/core/components/feed'
 import AudioPage from '@/scenes/AudioPage'
 
 export const RENDEVOZ_DEFAULT_TABS: TabData[ILayoutTab['type']][] = [

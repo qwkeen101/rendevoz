@@ -1,6 +1,6 @@
 import { Content } from "@/components";
 import TabTitle from "@/components/layout/TabTitle";
-import ImageDisplayer from "@/core/image/ImageDisplayer";
+import ImageDisplayer from "@/core/components/image/ImageDisplayer";
 import { Rendevoz } from "@/core/rendevoz";
 import { MetaStore } from "@/api/stores";
 

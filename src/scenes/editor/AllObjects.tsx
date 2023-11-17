@@ -5,7 +5,7 @@ import { memo } from 'react'
 import { EditorObjectsAtom } from './useEditorFilter'
 import { CustomEditor } from '~/typings'
 import { useMemoizedFn } from '@/hooks'
-import { goToBlock, highlightMeta } from '@/core/editor/utils'
+import { goToBlock, highlightMeta } from '@/core/components/editor/utils'
 import FontSize from '@/consts/font'
 
 const AllObjects = ({ editor }: { editor: CustomEditor }) => {

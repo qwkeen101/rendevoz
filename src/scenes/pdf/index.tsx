@@ -3,7 +3,7 @@ import { Container } from '@/components'
 import TabTitle from '@/components/layout/TabTitle'
 import { IPdfInstance } from '~/typings'
 import { ObjectStore } from '@/api/stores'
-import Pdf from '@/core/pdf'
+import Pdf from '@/core/components/pdf'
 import { Rendevoz } from '@/core/rendevoz'
 
 const PdfPage: FC<{

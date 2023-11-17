@@ -1,6 +1,6 @@
 import { useRef, useState } from "react";
 import { AnimatePopover, Content, Footer, Icon } from "../base";
-import Webpage from "@/core/webpage/Webpage";
+import Webpage from "@/core/components/webpage/Webpage";
 import FontSize from "@/consts/font";
 import { Zindexes } from "@/consts";
 import { useTranslation } from "react-i18next";

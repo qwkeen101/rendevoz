@@ -1,5 +1,5 @@
 import { Content } from '@/components'
-import MetaGroupInner from '@/core/group/MetaGroup'
+import MetaGroupInner from '@/core/components/group/MetaGroup'
 import { MetaStore } from '@/api/stores'
 import { TabTitle } from '@/core/rendevoz/components'
 

@@ -54,7 +54,6 @@ export const saveImageLocally = async (
           canvas.height = height
           canvas.getContext('2d')?.drawImage(image, 0, 0, width, height)
           const newImageUrl = canvas.toDataURL('image/png')
-          console.log(newImageUrl)
           res(newImageUrl)
         }
       })

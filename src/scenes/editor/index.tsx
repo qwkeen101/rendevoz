@@ -6,7 +6,7 @@ import { globalStore, MetaStore } from '@/api/stores'
 import { GlobalTranslateInstance } from '@/core/global/translate/GlobalTranslatePanel'
 import { GlobalSearchInstance } from '@/core/global/GlobalSearchPanel'
 import { objectIdToMetaObjectIdMapAtom } from '@/api/stores/meta.store'
-import NoteEditor from '@/core/editor/noteEditor/NoteEditor'
+import NoteEditor from '@/core/components/editor/noteEditor/NoteEditor'
 
 const EditorPage: FC<
   {

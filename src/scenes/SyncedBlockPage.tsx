@@ -1,5 +1,5 @@
 import { Content } from '@/components'
-import SyncedBlockEditor from '@/core/editor/SyncedBlockEditor'
+import SyncedBlockEditor from '@/core/components/editor/SyncedBlockEditor'
 
 const SyncedBlockPage = ({ metaId }: { metaId: number }) => {
   return (

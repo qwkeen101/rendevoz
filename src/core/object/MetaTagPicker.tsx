@@ -7,7 +7,7 @@ import isHotkey from 'is-hotkey'
 import { Colors, KEY } from '@/consts'
 import { useGlobalAtomValue } from '@/hooks'
 import fuzzysort from 'fuzzysort'
-import BlockColorPicker from '@/core/editor/components/BlockColorPicker'
+import BlockColorPicker from '@/core/components/editor/components/BlockColorPicker'
 import FontSize from '@/consts/font'
 import { Virtualizer } from '@tanstack/react-virtual'
 

@@ -1,4 +1,4 @@
-import Outliner, { HeadingTreeNode } from '@/core/editor/utils/outline/outliner'
+import Outliner, { HeadingTreeNode } from '@/core/components/editor/utils/outline/outliner'
 import { useDebounceFn } from '@/hooks'
 import { atom, useSetAtom } from 'jotai'
 import _ from 'lodash'

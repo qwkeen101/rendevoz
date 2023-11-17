@@ -9,9 +9,9 @@ import FontSize from '@/consts/font'
 import { css } from '@emotion/css'
 import { Content, Tooltip } from '@/components'
 import ClassName from '@/styles/classNames'
-import { PAGE_SPACING } from '../../../pdf/core/layouts/Layout'
+import { PAGE_SPACING } from '../../../components/pdf/core/layouts/Layout'
 import { Rendevoz } from '../../../rendevoz'
-import { normalizeSecondsToTime } from '../../../media/utils'
+import { normalizeSecondsToTime } from '../../../components/media/utils'
 import { metaObjectsAtom } from '@/api/stores/meta.store'
 
 export type FromRendererProps = {

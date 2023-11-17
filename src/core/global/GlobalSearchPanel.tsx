@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { GlobalInstances, IWebpage, IWebpageInstance, MetaObject, XYPosition } from '~/typings'
-import Webpage from '../webpage/Webpage'
+import Webpage from '../components/webpage/Webpage'
 import { Rnd } from 'react-rnd'
 import { atom } from 'jotai'
 import { useGlobalAtom, useShortcut } from '@/hooks'
@@ -10,11 +10,11 @@ import FontSize from '@/consts/font'
 import { css } from '@emotion/css'
 import { getPanelPosition } from './utils'
 import { ObjectStore } from '@/api/stores'
-import { searchToUrl } from '../webpage/utils'
+import { searchToUrl } from '../components/webpage/utils'
 import { Rendevoz } from '../rendevoz'
 import { setPanelState as setSidebarPanelState } from '@/components/layout/sidebar'
-import WebviewWepbage from '@/core/webpage/WebviewWepbage'
-import addWebpageAsMeta from '@/core/webpage/utils/addWebpageAsMeta'
+import WebviewWepbage from '@/core/components/webpage/WebviewWepbage'
+import addWebpageAsMeta from '@/core/components/webpage/utils/addWebpageAsMeta'
 
 export const GlobalSearchInstance: Partial<GlobalInstances.WebSearchInstance> = {}
 
@@ -133,7 +133,7 @@ export const SearchPanel = () => {
             )
           }}
           userAgent={
-            'Mozilla/5.0 (Linux; Android 9.0; SAMSUNG SM-F900U Build/PPR1.180610.011) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/113.0.0.0 Mobile Safari/537.36'
+            'Mozilla/5.0 (iPhone; CPU iPhone OS 13_2_3 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/13.0.3 Mobile/15E148 Safari/604.1'
           }
           url={panelState.url || 'https://google.com'}
         />

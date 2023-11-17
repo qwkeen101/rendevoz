@@ -1,7 +1,7 @@
 import React, { CSSProperties, FC, ReactElement, ReactNode, RefObject, SetStateAction } from 'react'
 import { MetaObject, IDraggableElement, Size, IEditorInstance, CustomEditor } from '..'
 import { TFunction } from 'i18next'
-import { EditorProps } from '../../src/core/editor/Editor'
+import { EditorProps } from '../../src/core/components/editor/Editor'
 
 declare const InnerComponents: {
   /**

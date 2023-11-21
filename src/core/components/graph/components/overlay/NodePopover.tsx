@@ -55,7 +55,7 @@ const NodePopover = ({ metaId, nodeId, onClose }: { metaId: number; nodeId: numb
 
         descriptionOptions: {
           style: {
-            fontSize: FontSize['13px']
+            fontSize: 13
           },
           ellipsisLine: 8
         },

@@ -10,23 +10,23 @@ const UsageSetting = () => {
   const [user] = useUser()
   const isPro = user?.premiumEndDate && user.premiumEndDate > Date.now()
   const usageItems: SettingItem[] = [
-    {
-      title: t('settings.translation usage'),
-      column: true,
-      children: (
-        <Content fullWidth flex column gap={5}>
-          <div className={ClassName.description()}>
-            {`${user?.monthlyTranslateUsed || 0} / ${isPro ? 10000 : 50}`} {`(${t('settings.reset every month')})`}
-          </div>
-          <Line
-            trailColor={'var(--border-background)'}
-            strokeColor="var(--select-color)"
-            style={{ flex: '1' }}
-            percent={((user?.monthlyTranslateUsed || 0) / (isPro ? 10000 : 50)) * 100}
-          />
-        </Content>
-      )
-    },
+    // {
+    //   title: t('settings.translation usage'),
+    //   column: true,
+    //   children: (
+    //     <Content fullWidth flex column gap={5}>
+    //       <div className={ClassName.description()}>
+    //         {`${user?.monthlyTranslateUsed || 0} / ${isPro ? 10000 : 50}`} {`(${t('settings.reset every month')})`}
+    //       </div>
+    //       <Line
+    //         trailColor={'var(--border-background)'}
+    //         strokeColor="var(--select-color)"
+    //         style={{ flex: '1' }}
+    //         percent={((user?.monthlyTranslateUsed || 0) / (isPro ? 10000 : 50)) * 100}
+    //       />
+    //     </Content>
+    //   )
+    // },
     {
       title: t('settings.ocr usage'),
       column: true,

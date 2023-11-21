@@ -8,6 +8,7 @@ import { Editor, Node, Transforms } from 'slate'
 import FontSize from '@/consts/font'
 import { css } from '@emotion/css'
 import { Colors } from '@/consts'
+import useEditorInstance from '@/core/components/editor/hooks/useEditorInstance'
 const InlineChromiumBugfix = () => (
   <span
     contentEditable={false}
@@ -20,6 +21,7 @@ const InlineChromiumBugfix = () => (
 )
 const Link = ({ element, attributes, children }: RenderElementProps) => {
   const editor = useSlateStatic()
+
   const [linkTarget, setLinkTarget] = useState()
   useEffect(() => {
     const url = element.url
@@ -98,6 +100,18 @@ const Link = ({ element, attributes, children }: RenderElementProps) => {
             {linkTarget.url}
           </Content>
           <Content flex gap={6} style={{ fontSize: 16, color: Colors.Font.Transparent, justifyContent: 'flex-end' }}>
+            {linkTarget.url?.startsWith('http') && (
+              <Icon
+                onClick={() => {
+                  editor.on({
+                    type: 'linkAddAsValue',
+                    url: linkTarget.url
+                  })
+                }}
+                name="park-share-one"
+                className={ClassName.circleButton()}
+              />
+            )}
             <Icon
               onClick={() => {
                 navigator.clipboard.writeText(element.url)

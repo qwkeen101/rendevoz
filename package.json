@@ -2,7 +2,7 @@
   "name": "rendevoz-app",
   "productName": "Rendevoz",
   "private": true,
-  "version": "0.5.6",
+  "version": "0.5.7",
   "author": "Rendevoz Team",
   "main": "dist-electron/main/index.js",
   "debug": {
@@ -118,7 +118,7 @@
     "rehype-parse": "^8.0.4",
     "remark-parse": "^10.0.2",
     "remark-slate": "^1.8.6",
-    "rendevoz": "^0.4.20",
+    "rendevoz": "^0.4.21",
     "rss-parser": "^3.13.0",
     "rxjs": "^7.5.5",
     "segmentit": "^2.0.3",

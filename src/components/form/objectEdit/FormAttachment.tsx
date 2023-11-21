@@ -1,10 +1,10 @@
 import { AttachmentList } from '@/core'
 import { useEffect, useRef } from 'react'
 import { IMetaAttachment, MetaObject } from '~/typings'
-import { Content, Icon } from '../base'
+import { Content, Icon } from '../../base'
 import ClassName from '@/styles/classNames'
 import { useTranslation } from 'react-i18next'
-import { groupClassName, hoverLabelClassName } from './useFlipForm'
+import { groupClassName, hoverLabelClassName } from '../useFlipForm'
 
 export const FormAttachmentManager = ({
   attachments,

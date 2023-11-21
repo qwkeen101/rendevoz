@@ -421,12 +421,28 @@ export const ObjectActionPopover: FC<
         />
       )}
       <Button.IconButton
+        text={t('general.Open')}
+        icon="park-share"
+        onClick={() => {
+          onClose?.()
+          Rendevoz.Actions.Open.Meta.openMetaObject(metaObjectId)
+        }}
+      />
+      <Button.IconButton
         text={t('general.show object info')}
         icon="park-info"
         onClick={() => {
           onClose?.()
           Rendevoz.Actions.Open.openSidebarObjectDetails(metaObjectId)
         }}
+      />
+      <Button.IconButton
+        onClick={() => {
+          GlobalInstance.metaOps?.quickAdd(metaObjectId)
+          onClose?.()
+        }}
+        icon="park-corner-up-right"
+        text={t('general.Move to')}
       />
       <Button.IconButton
         text={t('general.edit')}
@@ -445,14 +461,6 @@ export const ObjectActionPopover: FC<
         }}
         icon="park-like"
         text={metaObject.pinned ? t('general.unpin') : t('general.pin')}
-      />
-      <Button.IconButton
-        onClick={() => {
-          GlobalInstance.collectionOps?.addMetaIntoCollection(metaObjectId)
-          onClose?.()
-        }}
-        icon="park-folder-close"
-        text={t('general.Assign to collection')}
       />
       {metaObject.attachments?.length || metaAttToMetaIds?.get(metaObjectId)?.size ? (
         <AnimatePopover

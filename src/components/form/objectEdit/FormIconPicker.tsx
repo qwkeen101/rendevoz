@@ -1,7 +1,7 @@
 import ClassName from '@/styles/classNames'
 import { useTranslation } from 'react-i18next'
-import { Content, Icon } from '..'
-import EmojiPicker from '../picker/emojiPicker'
+import { Content, Icon } from '../../index'
+import EmojiPicker from '../../picker/emojiPicker'
 
 const FormIconPicker = ({ onPick, onClose }: { onPick: (icon: string) => void; onClose: VoidFunction }) => {
   const { t } = useTranslation()

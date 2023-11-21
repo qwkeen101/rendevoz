@@ -30,7 +30,7 @@ const MetaObject: FC<RenderElementProps> = memo(({ children, element }) => {
         style={{
           flex: '4 1 180px',
           overflow: 'hidden',
-          padding: '12px 14px 12px',
+          padding: '8px 12px 8px',
           display: 'flex',
           flexDirection: 'column',
           justifyContent: 'center'

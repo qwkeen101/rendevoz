@@ -1,5 +1,5 @@
 import { Content, VirtualList, Button, AnimatePopover, WithBorder } from '@/components'
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { CSSProperties, useEffect, useMemo, useRef, useState } from 'react'
 import { MetaStore, ObjectStore } from '@/api/stores'
 import { TypeToTypeName, useRenderObject } from '@/core'
 import { Rendevoz } from '@/core/rendevoz'
@@ -16,13 +16,14 @@ interface MetaFiltererProps {
   autoFocus?: boolean
   onChange?: (metaId?: number) => void
   currentInput?: string
+  style?: CSSProperties
   showCreate?: {
     note?: boolean
     whiteboard?: boolean
   }
 }
 
-const MetaFilterer = ({ withInput = true, autoFocus, onChange, currentInput, showCreate }: MetaFiltererProps) => {
+const MetaFilterer = ({ withInput = true, style, autoFocus, onChange, currentInput, showCreate }: MetaFiltererProps) => {
   const [filtererState, setFiltererState] = useState<{
     currentSelectType?: string
     currentTypeItems?: any[]
@@ -116,7 +117,7 @@ const MetaFilterer = ({ withInput = true, autoFocus, onChange, currentInput, sho
   }
 
   return (
-    <Content style={{ width: 300, height: 200, display: 'flex', flexDirection: 'column' }}>
+    <Content style={{ width: 300, height: 200, display: 'flex', flexDirection: 'column', ...style }}>
       {withInput && filtererState.currentTypeItems && (
         <input
           style={{

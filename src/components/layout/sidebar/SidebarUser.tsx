@@ -3,7 +3,7 @@ import UpgradePlan from '@/components/UpgradePlan'
 import Zindexes from '@/consts/zindex'
 import { useToggle } from '@/hooks'
 import LoginService, { useUser } from '@/api/services/login.service'
-import ClassName from '@/styles/classNames'
+import { ClassName } from 'rendevoz'
 import DateFormat from '@/utils/dateFormat'
 import { css } from '@emotion/css'
 import { memo, useEffect, useState } from 'react'
@@ -21,7 +21,9 @@ const SidebarUser = memo(() => {
   const [updateUserVisible, toggleUpdateUserVisible] = useToggle(false)
   const [upgradePlanVisible, toggleUpgradPlanVisible] = useToggle(false)
   const [loginVisible, toggleLoginVisible] = useToggle(false)
-  const isPremium = user?.premiumEndDate && user?.premiumEndDate > Date.now()
+
+  const islifetime = user?.lifetimePro === true
+  const isPremium = (user?.premiumEndDate && user?.premiumEndDate > Date.now()) || islifetime
   useEffect(() => {
     if (user && loginVisible) {
       toggleLoginVisible(false)
@@ -37,11 +39,11 @@ const SidebarUser = memo(() => {
       <Content auto>
         {user ? (
           <>
-            <Modal showClose noStyle visible={upgradePlanVisible} onClose={toggleUpgradPlanVisible}>
+            <Modal noStyle visible={upgradePlanVisible} onClose={toggleUpgradPlanVisible}>
               <UpgradePlan />
             </Modal>
             <Modal noStyle visible={updateUserVisible} onClose={toggleUpdateUserVisible}>
-              <UpdateUser />
+              <UpdateUser onClose={toggleUpdateUserVisible} />
             </Modal>
             <AnimatePopover
               containerStyle={{
@@ -53,6 +55,7 @@ const SidebarUser = memo(() => {
               positions={['bottom']}
               boundaryElement={document.body}
               boundaryInset={18}
+              align={'end'}
               boundaryTolerance={18}
             >
               <Content flex onClick={togglePopoverVisible} alignItems="center" style={{ cursor: 'pointer' }}>
@@ -109,23 +112,23 @@ const UserPopover = ({ onUpgradePlan, onUpdateUser }: { onUpgradePlan: VoidFunct
   const [user, setUser] = useUser()
   const { t } = useTranslation()
   const isPremium = user?.premiumEndDate && user?.premiumEndDate > Date.now()
+  const islifetime = user?.lifetimePro === true
   return (
     <WithBorder
       style={{
         padding: 12,
         display: 'flex',
         flexDirection: 'column',
-        fontFamily: 'Muli',
         minWidth: 220
       }}
     >
-      <div style={{ padding: '0 8px', textTransform: 'none' }} className={ClassName.description()}>
+      <div style={{ padding: '0 8px', textTransform: 'none', fontSize: 13 }} className={ClassName.description()}>
         Email: {user?.email || 'Unknown Email'}
       </div>
-      <div style={{ padding: '0 8px', textTransform: 'none' }} className={ClassName.description()}>
+      <div style={{ padding: '0 8px', textTransform: 'none', fontSize: 13 }} className={ClassName.description()}>
         UID: {user?.uid || 'Unknown UID'}
       </div>
-      <Content style={{ padding: '12px 8px 12px' }} flex column gap={6}>
+      <Content style={{ padding: '12px 8px 12px' }} flex column gap={4}>
         <Content flex alignItems="center" gap={8}>
           {user?.photoURL && <Image width={25} src={user.photoURL} className={css({ borderRadius: 4 })} />}
           <div
@@ -137,9 +140,24 @@ const UserPopover = ({ onUpgradePlan, onUpdateUser }: { onUpgradePlan: VoidFunct
             {user?.displayName || 'Unnamed User'}
           </div>
           <Tooltip content={isPremium ? 'You are premium user' : 'You are not premium user'}>
-            <Icon theme="filled" fill={isPremium ? 'rgb(255,215,0)' : 'rgb(218,223,225)'} name="park-vip" />
+            <Icon theme="filled" fill={isPremium || islifetime ? Colors.Emphasis.Emphasis : 'rgb(218,223,225)'} name="park-vip" />
           </Tooltip>
         </Content>
+        {islifetime && (
+          <Content
+            flex
+            alignItems={'center'}
+            gap={8}
+            style={{
+              fontWeight: 600,
+              fontSize: 13,
+              color: Colors.Emphasis.Emphasis
+            }}
+          >
+            <Icon size={15} name={'park-vip-one'} />
+            <div>{t('general.Lifetime Pro')}</div>
+          </Content>
+        )}
         {user?.premiumStartDate && user.premiumEndDate && (
           <div className={ClassName.description('12px')}>
             {t('general.premium end date')}: {DateFormat.format(user?.premiumEndDate, DateFormat.Formats.default)}
@@ -148,7 +166,7 @@ const UserPopover = ({ onUpgradePlan, onUpdateUser }: { onUpgradePlan: VoidFunct
       </Content>
 
       <Content flex gap={10} className={ClassName.flatButton()} onClick={onUpgradePlan}>
-        <Icon size={16} name="park-arrow-circle-up" />
+        <Icon size={16} name="park-vip" theme={'filled'} />
         {t('sidebar.upgrade plan')}
       </Content>
       <Content flex gap={10} className={ClassName.flatButton()} onClick={onUpdateUser}>
@@ -170,7 +188,7 @@ const UserPopover = ({ onUpgradePlan, onUpdateUser }: { onUpgradePlan: VoidFunct
   )
 }
 
-const UpdateUser = () => {
+const UpdateUser = ({ onClose }: { onClose: VoidFunction }) => {
   const [user, setUser] = useUser()
   const [innerUser, setInnerUser] = useState<IUser>({
     displayName: user?.displayName,
@@ -183,11 +201,14 @@ const UpdateUser = () => {
   }>({
     mainVisible: true
   })
+
+  const { t } = useTranslation()
   const handleConfirm = () => {
     LoginService.updateUserDetails(innerUser)
       .then(us => {
         setUser(u => ({ ...u, ...us.data }))
         toast.success('Successfully update user details!')
+        onClose()
       })
       .catch(e => toast.error('Failed to update user details!'))
   }
@@ -224,14 +245,14 @@ const UpdateUser = () => {
         />
       </div>
       <Content
-        className={ClassName.flatButton()}
+        className={ClassName.selectButton()}
         style={{ border: `1px solid ${Colors.Background.Border}` }}
         flex
         alignItems="center"
         justifyContent="center"
         onClick={handleConfirm}
       >
-        Confirm
+        {t('general.OK')}
       </Content>
       {/* <Content>
         <div className={ClassName.description()}>More</div>
@@ -281,13 +302,7 @@ const UpdateUser = () => {
     </Content>
   )
   return (
-    <Content
-      flex
-      column
-      gap={16}
-      style={{ fontFamily: 'Muli', width: 400, padding: 20, borderRadius: 10 }}
-      className={ClassName.Background.pseudoBlurContrastBackground}
-    >
+    <Content flex column gap={16} style={{ width: 400, padding: 20, borderRadius: 10 }}>
       {formState.mainVisible && renderMain()}
       {formState.emailVisible && renderEmail()}
     </Content>

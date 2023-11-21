@@ -28,12 +28,21 @@ const GlobalPdfPrinter = () => {
         case 'note': {
           setChildren(
             <Editor
+              state={{
+                fontSize: 15,
+                lineSpacing: 1.4
+              }}
+              styles={{
+                containerHeight: 'initial',
+                outestContainerStyle: {
+                  height: 'unset'
+                }
+              }}
               readOnly={true}
               defaultValue={printable.value}
               layout={{
                 showBlockHandle: false,
                 showToolbar: false,
-                showBottomPadding: false,
                 showHeader: false
               }}
               stringTitle={printable.title}
@@ -55,18 +64,18 @@ const GlobalPdfPrinter = () => {
   useEffect(() => {
     if (modalVisible) {
       const center = {
-        x: window.screen.width / 2 - 400,
+        x: window.screen.width / 2 - 550,
         y: window.screen.height / 2 - 400
       }
-      const externalWindow = window.open('printer.html', '', `width=800,height=800,left=${center.x},top=${center.y}`)
+      const externalWindow = window.open('printer.html', '', `width=1100,height=800,left=${center.x},top=${center.y}`)
       setTimeout(() => {
         if (externalWindow) {
           Array.from(document.head.children)
             .filter(i => i.nodeName === 'LINK')
             .forEach(i => externalWindow.document.head.appendChild(i.cloneNode(true)))
           externalWindow.document.documentElement.setAttribute('theme', 'light')
-          externalWindow.document.body.style.height = 'auto'
           externalWindow.document.documentElement.style.width = '100vw'
+          externalWindow.document.documentElement.style.height = 'initial'
           externalWindow.document.body.style.background = 'white'
           externalWindow.document.body.style.width = '100%'
           externalWindow.document.title = 'Export as PDF'
@@ -90,7 +99,6 @@ const GlobalPdfPrinter = () => {
           // Object.entries(sheet.tags).forEach(i => {
           //   externalWindow.document.head.appendChild(i[1].cloneNode(true))
           // })
-          externalWindow.document.documentElement.style.height = 'auto'
           externalWindow.document.documentElement.style.overflowY = 'auto'
           externalWindow.document.body.appendChild(containerEle)
           containerEle.style.width = '100%'
@@ -119,12 +127,11 @@ const GlobalPdfPrinter = () => {
             }}
             ref={containerRef}
             className={css({
-              '*': {
-                height: 'unset !important',
-                pointerEvents: 'none'
+              math: {
+                display: 'none'
               },
-              div: {
-                breakInside: 'avoid'
+              '*': {
+                pointerEvents: 'none'
               },
               width: '100%'
             })}

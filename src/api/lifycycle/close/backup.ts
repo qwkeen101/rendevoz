@@ -38,7 +38,7 @@ const backup = async () => {
     }
     if (shouldBackup) {
       const blob = await exportRendevozDb()
-      await FileSystem.fs.writeFile(blob, `/backup/rendevoz_data_backup_${DateFormat.format(Date.now(), 'Y_M_d_H_mm')}.json`)
+      await FileSystem.fs.writeFile(blob, `/backup/rendevoz_data_backup_${DateFormat.format(Date.now(), 'Y_M_d_H_mm')}.json`, 'utf8')
       setAppState({
         lastBackupDate: Date.now()
       })

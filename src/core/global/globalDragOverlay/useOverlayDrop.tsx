@@ -102,7 +102,7 @@ const useOverlayDrop = () => {
       preLinks = []
     }
     let postLink: PartialWithId<MetaLink>[] = []
-    if (!normalizedMetaObject) return
+    if (!normalizedMetaObject || !normalizedMetaObject.type) return
     if (dropOn && normalizedMetaObject) {
       postLink = [...((await customGetDropOnLinks(dropOn, normalizedMetaObject)) || [])]
     }

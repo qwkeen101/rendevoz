@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { AnimatePopover, Button, Content, Icon } from '@/components'
+import { AnimatePopover, Button, Content, Icon, WithBorder } from '@/components'
 import ButtonSelect from '@/components/base/ButtonSelect'
 import useGroupState from '@/core/components/group/hooks/useGroupState'
 import { useGroupInstance } from '@/core/components/group/hooks/useGroupInstance'
@@ -11,8 +11,6 @@ import EmojiPicker from '@/components/picker/emojiPicker'
 import { css } from '@emotion/css'
 import { Colors } from '@/consts'
 import { useTranslation } from 'react-i18next'
-
-
 
 export default ({ onClose }: { onClose: VoidFunction }) => {
   const [currentView, setCurrentView] = useState<'main' | 'properties'>('main')
@@ -78,11 +76,18 @@ export default ({ onClose }: { onClose: VoidFunction }) => {
                   withClickCover={true}
                   positions={['bottom']}
                   content={
-                    <EmojiPicker
-                      onPick={v => {
-                        instance.updateCurrentView?.(s => ({ ...s, icon: v }))
+                    <WithBorder
+                      style={{
+                        width: 400,
+                        height: 400
                       }}
-                    />
+                    >
+                      <EmojiPicker
+                        onPick={v => {
+                          instance.updateCurrentView?.(s => ({ ...s, icon: v }))
+                        }}
+                      />
+                    </WithBorder>
                   }
                 >
                   <Icon className={ClassName.flatButton(4, '3px')} name={'park-table-file'} />
@@ -113,6 +118,24 @@ export default ({ onClose }: { onClose: VoidFunction }) => {
               onSelect={v => {
                 instance.updateGroupData?.(s => ({ ...s, openIn: v[0] }))
               }}
+            />
+            <ButtonSelect
+              closeOnSelect={true}
+              name={t('general.Add from outside to')}
+              onSelect={v => {
+                instance.updateGroupData?.(s => ({ ...s, autoAddto: v[0] }))
+              }}
+              value={groupState.data?.autoAddto || 'first'}
+              options={[
+                {
+                  value: 'first',
+                  children: t('general.First')
+                },
+                {
+                  value: 'last',
+                  children: t('general.Last')
+                }
+              ]}
             />
             <ButtonSwitch
               onChange={v => {

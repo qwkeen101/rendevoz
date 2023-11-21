@@ -10,12 +10,14 @@ import { useAtomValue } from 'jotai'
 import { MediaLayoutAtom } from '@/core/components/media/hooks/useVideoLayout'
 import { useSelectAtomValue } from '@/hooks'
 import { MediaStateAtom } from '@/core/components/media/hooks/useMediaState'
+import { useTranslation } from 'react-i18next'
 
 const MediaSidebar = memo(() => {
   const [sidebarState, setSidebarState] = useMediaSidebarState()
   const column = useAtomValue(MediaLayoutAtom)
   const labelType = useSelectAtomValue(MediaStateAtom, s => s.labelType)
   const labelIds = useSelectAtomValue(MediaStateAtom, s => s.labels)
+  const { t } = useTranslation()
   return (
     <Resizable
       size={{
@@ -48,7 +50,7 @@ const MediaSidebar = memo(() => {
       }
       style={{
         display: 'flex',
-        borderRadius: 6,
+        borderRadius: column ? 6 : 0,
         flexDirection: 'column',
         opacity: sidebarState.rightBarVisible ? 1 : 0,
         visibility: sidebarState.rightBarVisible ? 'visible' : 'hidden',
@@ -60,13 +62,13 @@ const MediaSidebar = memo(() => {
       }}
     >
       <Tabs activeKey={sidebarState.rightBarActive}>
-        <TabPane tab={'Labels'} key="label">
+        <TabPane tab={t('general.labels')} key="label">
           <MediaLabelController labelType={labelType} labelIds={labelIds} />
         </TabPane>
-        <TabPane tab={'Chapters'} key="chapter">
+        <TabPane tab={t('general.chapters')} key="chapter">
           <MediaChapterController />
         </TabPane>
-        <TabPane tab={'Subtitles'} key="subtitle">
+        <TabPane tab={t('general.subtitles')} key="subtitle">
           <MediaSubtitleSidebar />
         </TabPane>
       </Tabs>

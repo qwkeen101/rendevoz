@@ -15,6 +15,10 @@ export type IEditorEvent =
       value: string
     }
   | {
+      type: 'linkAddAsValue'
+      url: string
+    }
+  | {
       type: 'highlight'
       highlightId: number
       labelId: number

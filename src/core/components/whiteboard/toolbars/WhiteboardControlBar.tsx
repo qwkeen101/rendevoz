@@ -30,6 +30,7 @@ const WhiteboardControlBar = () => {
       flex
       gap={10}
       style={{
+        zIndex: 10,
         position: 'absolute',
         alignItems: 'center',
         right: 24,

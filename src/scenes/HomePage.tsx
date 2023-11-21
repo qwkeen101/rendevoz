@@ -5,7 +5,7 @@ import { GlobalInstance, useGlobalAtomValue, useToggle } from '@/hooks'
 import { useTranslation } from 'react-i18next'
 import TabTitle from '@/components/layout/TabTitle'
 import { ClassName } from 'rendevoz'
-import { TypeToRegisteredMetaObject, undeletedMetaObjectsAtom } from '@/api/stores/meta.store'
+import { undeletedMetaObjectsAtom } from '@/api/stores/meta.store'
 import { MetaObject } from '~/typings'
 import Select from '@/components/base/select'
 import DateFormat from '@/utils/dateFormat'
@@ -17,11 +17,10 @@ import Colors from '@/consts/colors'
 import { atom, useAtomValue } from 'jotai'
 import fuzzysort from 'fuzzysort'
 import { Rendevoz } from '@/core/rendevoz'
-import FileImporter from '@/components/fileImporter'
 import HomeGallery from '@/scenes/home/HomeGallery'
 import KeyvalueStore from '@/api/stores/keyvalue.store'
 import GalleryConfig from '@/scenes/home/GalleryConfig'
-import { MetaStore } from '@/api/stores'
+import { CollectionStore, MetaStore } from '@/api/stores'
 
 const { Content } = Components
 const HomeSearchAtom = atom<string | undefined>(undefined)
@@ -29,6 +28,7 @@ export const HomePage: FC = () => {
   const { t } = useTranslation()
   const currentWorkspace = KeyvalueStore.useValue('currentWorkspace') || 'default'
   const homeMode = KeyvalueStore.useValue('homeDisplayMode') || 'gallery'
+  const allWorkspaces = KeyvalueStore.useValue('allWorkspaces') || []
   return (
     <Content fullHeight fullWidth style={{ overflowY: 'auto' }}>
       <Content
@@ -43,17 +43,44 @@ export const HomePage: FC = () => {
         }}
       >
         <TabTitle title={t('general.home')} icon="park-home" />
-        <Content flex alignItems="center" justifyContent="space-between" style={{ margin: '16px 0px' }}>
+        <Content flex alignItems="center" gap={10} justifyContent="space-between" style={{ margin: '16px 0px' }}>
           <div>
-            <div style={{ fontSize: 13, color: Colors.Font.Transparent }}>{t('settings.workspace')}</div>
-            <div
-              style={{
-                fontSize: 22,
-                fontWeight: 600
-              }}
+            <div style={{ fontSize: 13, color: Colors.Font.Transparent, paddingLeft: 8 }}>{t('settings.workspace')}</div>
+            <AnimatePopover
+              align={'start'}
+              content={setV => (
+                <WithBorder padding={6} style={{ maxHeight: 260, overflowY: 'auto', maxWidth: 200, overflowX: 'hidden' }}>
+                  {allWorkspaces.map(i => (
+                    <div
+                      key={i.createdAt}
+                      onClick={async () => {
+                        setV(false)
+                        await KeyvalueStore.updateOne('currentWorkspace', i.name)
+                        setTimeout(() => {
+                          MetaStore.switchWorkspace(i.name)
+                          CollectionStore.switchWorkspace()
+                        })
+                      }}
+                      className={css([ClassName.flatButton(), ClassName.ellipsisFont(1)])}
+                    >
+                      {i.name}
+                    </div>
+                  ))}
+                </WithBorder>
+              )}
+              positions={['bottom']}
             >
-              {currentWorkspace === 'default' ? 'Default workspace' : currentWorkspace}
-            </div>
+              <div
+                style={{
+                  fontSize: 22,
+                  fontWeight: 600,
+                  padding: '0px 8px'
+                }}
+                className={css([ClassName.flatButton(), ClassName.ellipsisFont(1)])}
+              >
+                {currentWorkspace === 'default' ? 'Default workspace' : currentWorkspace}
+              </div>
+            </AnimatePopover>
           </div>
           <Content flex gap={8} alignItems={'center'}>
             <Icon
@@ -102,7 +129,7 @@ export const HomePage: FC = () => {
                 })
               }
               className={ClassName.selectButton(4, '1px 8px')}
-              style={{ fontSize: 14, fontWeight: 600, color: 'white', marginLeft: 12 }}
+              style={{ fontSize: 14, fontWeight: 600, color: 'white', marginLeft: 6 }}
             >
               {t('general.New')}
             </div>

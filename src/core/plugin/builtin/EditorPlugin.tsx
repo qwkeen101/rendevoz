@@ -319,7 +319,7 @@ const BuiltinTypeToRegistered: Record<CustomElement['type'], RegisterdEditorElem
     renderElement: props => <InlineMetaPicker {...props} />,
     type: 'inline-metapicker',
     isInline: true,
-    isVoid: false
+    isVoid: true
   }
 }
 

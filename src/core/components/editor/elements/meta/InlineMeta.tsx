@@ -11,6 +11,8 @@ import { Content, Image } from '@/components'
 import { Rendevoz } from '@/core/rendevoz'
 import HoverAttachment from '@/core/object/HoverAttachment'
 import { Colors } from '@/consts'
+import { useSelectAtomValue } from '@/hooks'
+import { EditorStateAtom } from '@/core/components/editor/hooks/useEditorState'
 
 const clazzName = css({
   cursor: 'pointer',
@@ -49,6 +51,7 @@ const imageClassName = css({
 const InlineMetaElement: FC<RenderElementProps> = ({ element, children, attributes }) => {
   const metaObject = MetaStore.useValue((element as InlineMetaObjectElement).originId)
   const { t } = useTranslation()
+  const showDetails = useSelectAtomValue(EditorStateAtom, s => s.layout?.showHoverObjectDetails) ?? true
   const targetObject = ObjectStore(metaObject?.type).useValue(metaObject?.objectId)
   const showOriginalText = metaObject?.name === 'Unnamed Label' && targetObject?.selectedText
   if (metaObject?.coverImgSrc) {
@@ -86,7 +89,7 @@ const InlineMetaElement: FC<RenderElementProps> = ({ element, children, attribut
                 </HoverAttachment>
               ) : null}
             </Content>
-            <HoverObjectDetails metaObjectId={(element as InlineMetaObjectElement).originId}>
+            <HoverObjectDetails disable={!showDetails} metaObjectId={(element as InlineMetaObjectElement).originId}>
               <span
                 className={clazzName}
                 data-meta
@@ -114,7 +117,7 @@ const InlineMetaElement: FC<RenderElementProps> = ({ element, children, attribut
     <span {...attributes} data-meta-id={element.id} style={{ margin: '0 6px 0px 2px', position: 'relative' }}>
       <span>
         <>
-          <HoverObjectDetails metaObjectId={(element as InlineMetaObjectElement).originId}>
+          <HoverObjectDetails disable={!showDetails} metaObjectId={(element as InlineMetaObjectElement).originId}>
             <span
               className={clazzName}
               data-meta

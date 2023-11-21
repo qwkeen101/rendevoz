@@ -525,7 +525,7 @@ const TypeFilter = ({
           onChange({ ...rule, value: v })
         }}
         value={rule.value}
-        placeholder={'Select one type'}
+        placeholder={t('general.Select type')}
         options={existedTypes.map(i => ({ value: i, children: Rendevoz.Utils.Meta.getTypeName(i) }))}
       />
     </Content>
@@ -670,7 +670,7 @@ const TagFilter = ({ rule, onChange }: { rule: TagFieldFilterRule; onChange: (ne
             </WithBorder>
           }
         >
-          <div style={commonStyle}>{rule.tagIds?.length ? `${rule.tagIds.length} tags` : 'Select tags'}</div>
+          <div style={commonStyle}>{rule.tagIds?.length ? `${rule.tagIds.length} ${t('general.tags')}` : t('general.Select tags')}</div>
         </AnimatePopover>
       )}
     </Content>

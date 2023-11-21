@@ -39,19 +39,19 @@ export default () => {
             className={clazz}
             onClick={() => instance.on?.({ type: 'pin' })}
             style={{ color: mediaState.isPinned ? Colors.Common.Red : undefined, transition: 'all 0.2s ease', padding: '4px 12px' }}
-            text={mediaState.isPinned ? 'Unpin' : 'Pin'}
+            text={mediaState.isPinned ? t('general.unpin') : t('general.pin')}
             icon={'park-like'}
           />
           <Button.IconButton
             className={clazz}
-            text={'Assign to collection'}
+            text={t('general.Move to')}
             style={{ padding: '4px 12px' }}
             onClick={() => instance.on?.({ type: 'assignToNewCollection' })}
-            icon={'park-folder-close'}
+            icon={'park-corner-up-right'}
           />
           <Button.IconButton
             className={clazz}
-            text={'Open sidebar'}
+            text={sidebarState.rightBarVisible ? t('general.Close sidebar') : t('general.Open sidebar')}
             onClick={() => {
               setSidebarState(s => ({ ...s, rightBarVisible: !s.rightBarVisible }))
             }}

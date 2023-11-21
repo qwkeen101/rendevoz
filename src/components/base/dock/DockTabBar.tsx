@@ -7,7 +7,7 @@ import { Reorder } from 'framer-motion'
 import { TabNavListProps } from '../tabs'
 import classNames from 'classnames'
 import AnimatePopover from '../AnimatePopover'
-import { useToggle } from '@/hooks'
+import { GlobalInstance, useToggle } from '@/hooks'
 import WithBorder from '../WithBorder'
 import ClassName from '@/styles/classNames'
 import { useTranslation } from 'react-i18next'
@@ -163,10 +163,32 @@ const TabItem = ({ onClick, isSelected, item, onDragStart, isLast }) => {
           className={ClassName.flatButton()}
           onClick={e => {
             toggleContextMenuVisible()
+            GlobalInstance.metaOps?.openDetails(currentTabMetaId)
+          }}
+        >
+          {t('general.View details')}
+        </div>
+      )}
+      {currentTabMetaId && (
+        <div
+          className={ClassName.flatButton()}
+          onClick={e => {
+            toggleContextMenuVisible()
             Rendevoz.Actions.Open.Meta.openEditMetaDialog(currentTabMetaId)
           }}
         >
           {t('general.edit')}
+        </div>
+      )}
+      {currentTabMetaId && (
+        <div
+          className={ClassName.flatButton()}
+          onClick={e => {
+            toggleContextMenuVisible()
+            GlobalInstance.metaOps?.quickAdd(currentTabMetaId)
+          }}
+        >
+          {t('general.Move to')}
         </div>
       )}
     </WithBorder>

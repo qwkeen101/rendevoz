@@ -1,10 +1,11 @@
 import useDb from '@/hooks/stores/useDb'
 import Id from '@/utils/id'
 import { Descendant, Node } from 'slate'
-import { INote } from '~/typings'
+import { IEditorInstance, ILayoutTab, INote } from '~/typings'
 import SearchHelper from '@/api/textSearch/SearchHelper'
 import { MetaStore, ObjectStore } from '@/api/stores/index'
 import FileSystem from '@/api/fileSystem'
+import { Rendevoz } from '@/core/rendevoz'
 
 const createNoteStore = () => {
   const blobDb = useDb('blobs')
@@ -67,11 +68,48 @@ const createNoteStore = () => {
     await ObjectStore('note').updateOne({ id: note.id, contentId })
     return note
   }
+  const addElementIntoNote = async (
+    element: Descendant[],
+    noteId: number,
+    options?: {
+      position?: 'last' | 'first'
+    }
+  ) => {
+    const note = await ObjectStore('note').getOneById(noteId)
+    if (note && note.contentId) {
+      const value = await getNoteValue(note.contentId)
+      if (value) {
+        const newValue = options?.position === 'first' ? [...element, ...value] : [...value, ...element]
+        saveNoteAsBuffer(newValue, note.contentId)
+        saveNoteAsSearch(newValue, noteId)
+      }
+    }
+  }
+  // should update opened notes
+  const updateNoteValue = async (newValue: Descendant[] | ((currentValue: Descendant[]) => Descendant[]), noteId: number) => {
+    const note = await ObjectStore('note').getOneById(noteId)
+    if (note && note.contentId) {
+      const currValue = (await getNoteValue(note.contentId)) || []
+      const nextValue = typeof newValue === 'function' ? newValue(currValue) : newValue
+      await saveNoteAsBuffer(nextValue, note.contentId)
+      const openNote = Rendevoz.Actions.Layout.getTab({
+        type: 'note',
+        objectId: noteId
+      })
+      if (openNote) {
+        const instance = openNote.instance as IEditorInstance
+        instance.replaceChildren?.(nextValue)
+      }
+      saveNoteAsSearch(nextValue, noteId)
+    }
+  }
   return {
     saveNoteAsBuffer,
     getNoteValue,
     saveNoteAsSearch,
-    initializeNoteWithValue
+    initializeNoteWithValue,
+    addElementIntoNote,
+    updateNoteValue
   }
 }
 

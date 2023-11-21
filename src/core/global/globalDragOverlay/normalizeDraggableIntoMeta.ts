@@ -26,8 +26,7 @@ export default async (
   const { enableDragFromEditorLink, enableAll } = setting.objectAndLink
   const normalizedLinks: PartialWithId<MetaLink>[] = []
   const normalizedMetaObject: PartialWithId<MetaObject & { noteId: number }> = {
-    id: Id.getId(),
-    type: 'normal'
+    id: Id.getId()
   }
   let alreadyHasMeta = false
   let shouldOpenEditMetaModal = true
@@ -230,7 +229,7 @@ const normalizeLabel = async (
         return {
           normalizedMetaObject: {
             id,
-            name: label.name,
+            name: label.name || 'Unnamed Label',
             description: label.description,
             coverImgSrc: label.imageUrl,
             objectId: labelId,

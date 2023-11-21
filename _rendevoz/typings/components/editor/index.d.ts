@@ -120,6 +120,7 @@ export interface EditorProps {
     showToolbar?: boolean
     showBlockHandle: boolean
     showBottomPadding?: boolean
+    showHoverObjectDetails?: boolean
   }
   title?: {
     customTitleRenderer?: (realTitle: string) => ReactElement
@@ -132,6 +133,8 @@ export interface EditorProps {
   styles?: {
     editorContainerStyle?: CSSProperties
     pageMinPadding?: string | number
+    containerHeight?: number | string
+    outestContainerStyle?: CSSProperties
   }
   header?: {
     boxShadow?: boolean

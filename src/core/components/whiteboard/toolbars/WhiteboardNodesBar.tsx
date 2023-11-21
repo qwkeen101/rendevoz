@@ -17,7 +17,8 @@ const WhiteboardNodesBar = () => {
         position: 'absolute',
         left: 20,
         top: '50%',
-        transform: 'translateY(-50%)'
+        transform: 'translateY(-50%)',
+        zIndex: 10
       }}
     >
       <Toolbar disableDefaultStyle={true} direction={'vertical'} itemSize={20} itemSpace={10}>

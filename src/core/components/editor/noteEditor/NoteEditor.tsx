@@ -61,7 +61,7 @@ const NoteEditor = ({ noteId, labelIds, on, ...rest }: { noteId?: number } & Edi
               fontSize: note?.fontSize,
               lastSavedAt: note?.lastSavedAt,
               typeface: note?.typeface,
-              saveImgLocally: true,
+              saveImgLocally: false,
               lineSpacing: note?.lineSpacing
             }
           : rest.state
@@ -93,6 +93,24 @@ const NoteEditor = ({ noteId, labelIds, on, ...rest }: { noteId?: number } & Edi
             return await handleAddNewElementFromMenu(e.newElementType)
           case 'drop': {
             return await handleDrop(e)
+          }
+          case 'linkAddAsValue': {
+            ObjectStore('webpage').addOneWithMeta(
+              { url: e.url },
+              {
+                currentMeta: {
+                  name: 'Unnamed webpage',
+                  fromObject: noteMeta
+                    ? {
+                        type: 'note',
+                        metaId: noteMeta.id
+                      }
+                    : undefined
+                },
+                showMetaModal: true
+              }
+            )
+            return
           }
           case 'search': {
             GlobalSearchInstance.open({

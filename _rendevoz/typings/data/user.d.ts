@@ -16,6 +16,7 @@ export interface IUser {
   premiumStartDate?: number
   premiumEndDate?: number
   jwtToken?: any
+  lifetimePro?: boolean
   idToken?: string
   refreshToken?: string
   // 本月翻译使用次数

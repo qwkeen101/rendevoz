@@ -48,6 +48,7 @@ const MediaLabelController = ({ labelType, labelIds }: { labelType: string; labe
     >
       <Select
         closeOnSelect
+        align={'start'}
         value={sortMode}
         className={ClassName.description()}
         onSelect={v => typeof v[0] === 'string' && setSortMode(v[0])}

@@ -1,9 +1,11 @@
 export default (node: HTMLElement) => {
   const textContent = node.textContent
   if (textContent) {
-    const replaced = textContent.replace(/(?:\r\n|\r|\n|\t)/g, '')
-    const trimed = trimNode(node, replaced)
-    return trimed
+    // const replaced = textContent.replace(/(?:\r\n|\r|\n|\t)/g, '')
+    const trimed = trimNode(node, textContent)
+    if (trimed.length) {
+      return trimed
+    }
   }
 }
 

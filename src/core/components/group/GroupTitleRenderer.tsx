@@ -45,26 +45,6 @@ const GroupTitleRenderer = memo(({ groupId }: { groupId: number }) => {
             {t('general.Set rules to automatically add objects into this group')}.
             <div>Tip: Too many automations or rules may slow down application.</div>
           </div>
-          <ButtonSelect
-            containerStyle={{
-              margin: '12px -8px 12px -8px'
-            }}
-            name={'Add to'}
-            onSelect={v => {
-              instance.updateGroupData?.(s => ({ ...s, autoAddto: v[0] }))
-            }}
-            value={group?.autoAddto || 'first'}
-            options={[
-              {
-                value: 'first',
-                children: 'First row'
-              },
-              {
-                value: 'last',
-                children: 'Last row'
-              }
-            ]}
-          />
           <div style={{ fontSize: 13, color: Colors.Font.Transparent }}>Rules</div>
           <InnerFilterer groupId={groupId} />
         </Content>

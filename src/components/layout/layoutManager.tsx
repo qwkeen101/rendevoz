@@ -13,7 +13,7 @@ class LayoutManager {
 
   public registerNewTab = (tab: TabData) => {
     if (this.layout) {
-      const currentFocusedPanelId = this.layout.global.currentFocusedPanelId
+      const currentFocusedPanelId = this.layout.global.currentFocusedPanelId || this.layout.dockbox?.children[0]?.id
       if (currentFocusedPanelId) {
         const currentPanel = (Algorithm.find(this.layout, currentFocusedPanelId) || this.layout.dockbox.children[0]) as PanelData
         this.layout = Algorithm.addTabToPanel(this.layout, tab, currentPanel)

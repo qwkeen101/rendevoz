@@ -33,7 +33,7 @@ const Background = () => {
         top: 0,
         left: 0,
         pointerEvents: 'none',
-        zIndex: -1
+        zIndex: 0
       }}
     >
       <pattern

@@ -33,7 +33,6 @@ const AppearanceSetting = () => {
   const followSystem = setting.general.followSystemTheme
   const ThemeItems: ISettingItem[] = [
     {
-      title: t('settings.Application theme'),
       column: true,
       children: (
         <Content flex gap={18}>

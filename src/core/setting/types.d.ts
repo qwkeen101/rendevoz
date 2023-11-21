@@ -30,6 +30,20 @@ export type IGeneralSetting = {
   }
 }
 
+export type IQuickAddSettings = {
+  quickAdd: {
+    addIntoNote: 'first' | 'last'
+    noteMetaType: 'block' | 'inline'
+    addIntoNoteHideObject: boolean
+    addIntoGroup: 'first' | 'last'
+    addIntoGroupHideObject: boolean
+    addIntoWhiteboardHideObject: boolean
+    addIntoGroupAutoOpen: boolean
+    addIntoNoteAutoOpen: boolean
+    addIntoWhiteboardAutoOpen: boolean
+  }
+}
+
 export type INotificationSetting = {
   notification: {
     enabled: boolean

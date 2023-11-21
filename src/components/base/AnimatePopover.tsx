@@ -172,7 +172,9 @@ const AnimatePopover: FC<PropsWithChildren<AnimatePopoverProps>> = ({
         if (position !== 'top' && position !== 'bottom') {
           origin.y = 1
         } else {
-          origin.x = 1
+          if (position !== 'bottom') {
+            origin.x = 1
+          }
         }
         break
     }

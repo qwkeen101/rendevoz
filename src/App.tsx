@@ -42,6 +42,7 @@ import GlobalCollection from '@/core/global/GlobalCollection'
 import { GlobalObjectDetails } from '@/core/object/details'
 import GlobalPreviewPanel from '@/core/global/GlobalPreviewPanel'
 import GlobalObjectCreator from '@/core/global/GlobalObjectCreator'
+import GlobalQuickAdd from '@/components/form/quickAdd/GlobalQuickAdd'
 
 export function getOS() {
   const userAgent = window.navigator.userAgent.toLowerCase(),
@@ -85,7 +86,7 @@ declare module 'rendevoz' {
         }
   }
 }
-export const cache = createCache({ key: 'external', speedy: false })
+const cache = createCache({ key: 'external', speedy: false })
 const App = () => {
   Rendevoz.InnerHooks = InnerHookz
   Rendevoz.InnerComponents = InnerComponentz
@@ -128,6 +129,7 @@ const App = () => {
           <GlobalGraph />
           <GlobalScreenShot />
           <GlobalPreviewPanel />
+          <GlobalQuickAdd />
           <GlobalBaidudisk />
           <GlobalSearchPanel />
           <GlobalCollection />

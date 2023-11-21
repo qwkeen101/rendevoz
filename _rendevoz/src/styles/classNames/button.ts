@@ -26,6 +26,7 @@ export const selectButton = (borderRadius = 4, padding = '3px 8px') => {
     padding,
     cursor: 'pointer',
     userSelect: 'none',
+    flexShrink: 0,
     background: 'rgb(35, 131, 226)',
     color: 'white',
     boxShadow: 'inset 0 0 0 1px var(--border-background)',

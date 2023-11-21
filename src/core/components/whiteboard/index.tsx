@@ -12,15 +12,19 @@ import useWhiteboardAutoPan from './useWhiteboardAutoPan'
 import useWhiteboardDrop from './hooks/drop/useWhiteboardDrop'
 import { globalStore, MetaStore, ObjectStore } from '@/api/stores'
 import FlowManager from './FlowManager'
-import { IWhiteboard } from '~/typings/data'
+import { IWhiteboard, IWhiteboardProps } from '~/typings/data'
 import { Content } from '@/components'
-import { useCapturePreviewImage, useDebounceEffect, useDebounceFn, useGlobalAtomValue } from '@/hooks'
+import { useCapturePreviewImage, useDebounceFn, useGlobalAtomValue } from '@/hooks'
 import useWhiteboardSidebar from './useWhiteboardSidebar'
 import { Rendevoz } from '../../rendevoz'
 import useSnapDrag from '@/core/components/whiteboard/hooks/useSnapDrag'
 import { useSetAtom } from 'jotai'
 import { WhiteboardStateAtom } from '@/core/components/whiteboard/hooks/useWhiteboardState'
-import { useAssignWhiteboardInstance, useWhiteboardInstance, WhiteboardInstanceAtom } from '@/core/components/whiteboard/hooks/useWhiteboardInstance'
+import {
+  useAssignWhiteboardInstance,
+  useWhiteboardInstance,
+  WhiteboardInstanceAtom
+} from '@/core/components/whiteboard/hooks/useWhiteboardInstance'
 import { IWhiteboardInstance } from '~/typings'
 import { waitFor } from '@/utils'
 import WhiteboardSettings from '@/core/components/whiteboard/WhiteboardSettings'
@@ -38,298 +42,245 @@ import WhiteboardNodesBar from '@/core/components/whiteboard/toolbars/Whiteboard
 import WhiteboardPenToolsBar from '@/core/components/whiteboard/toolbars/WhiteboardPenToolsBar'
 import useWhiteboardShortcut from '@/core/components/whiteboard/hooks/useWhiteboardShortcut'
 import { css } from '@emotion/css'
-import { exportWhiteboardAsImage } from '@/core/components/whiteboard/utils/exportAsImage'
 
-const WhiteboardInner = memo(
-  ({ id, onInstanceInitialized }: { id: number; enableMiniMap?: boolean; onInstanceInitialized?: (i: IWhiteboardInstance) => void }) => {
-    const containerRef = useRef<HTMLDivElement>(null)
-    const flow = useFlow()
-    const panzoomRef = useRef<PanZoom>()
-    const emitter = Rendevoz.Events.Emit.GlobalEventEmitter
-    const handler = useMemo(() => new GlobalEventHandler(), [])
-    const scopedEmitter = useScopedEventEmitter()
-    const whiteboard = useAtomValue(WhiteboardAtom)
-    const { render } = useWhiteboardSidebar()
-    const { renderSnapLayer } = useSnapDrag()
-    useWhiteboardShortcut()
-    useWhiteboardHistory()
-    useAssignWhiteboardInstance()
-    const setWhiteboardTransform = useSetAtom(WhiteboardTransformAtom)
-    const instance = useWhiteboardInstance()
-    useEffect(() => {
-      waitFor(
-        () => !!instance.openTabInSidebar,
-        () => {
-          onInstanceInitialized?.(instance)
-        }
-      )
-    }, [])
-    const setWhiteboardState = useSetAtom(WhiteboardStateAtom)
-    const debounceSetZoom = useDebounceFn(
-      (zoom: number) => {
-        containerRef.current?.style.setProperty('--zoom-level', String(zoom))
-      },
-      { wait: 200 }
+const WhiteboardInner = memo(({ id, onInstanceInitialized, layout, enableMiniMap }: IWhiteboardProps) => {
+  const containerRef = useRef<HTMLDivElement>(null)
+  const flow = useFlow()
+  const panzoomRef = useRef<PanZoom>()
+  const emitter = Rendevoz.Events.Emit.GlobalEventEmitter
+  const handler = useMemo(() => new GlobalEventHandler(), [])
+  const scopedEmitter = useScopedEventEmitter()
+  const whiteboard = useAtomValue(WhiteboardAtom)
+  const { render } = useWhiteboardSidebar()
+  const { renderSnapLayer } = useSnapDrag()
+  useWhiteboardShortcut()
+  useWhiteboardHistory()
+  useAssignWhiteboardInstance()
+  const setWhiteboardTransform = useSetAtom(WhiteboardTransformAtom)
+  const instance = useWhiteboardInstance()
+  useEffect(() => {
+    waitFor(
+      () => !!instance.openTabInSidebar,
+      () => {
+        onInstanceInitialized?.(instance)
+      }
     )
-    useLayoutEffect(() => {
-      if (flow && containerRef.current) {
-        emitter.addListener('global', handler)
-        flow.containerEle = containerRef.current
-        flow.parentContainerEle = flow.containerEle.parentElement as HTMLElement
-        containerRef.current?.style.setProperty('--zoom-level', '1')
-        const panzoom = createPanZoom(containerRef.current, {
-          smoothScroll: false,
-          maxZoom: 5,
-          minZoom: 0.05,
-          filterKey: () => {
-            return true
-          },
-          onTouch: e => {
-            e.preventDefault()
+  }, [])
+  const setWhiteboardState = useSetAtom(WhiteboardStateAtom)
+  const debounceSetZoom = useDebounceFn(
+    (zoom: number) => {
+      containerRef.current?.style.setProperty('--zoom-level', String(zoom))
+    },
+    { wait: 200 }
+  )
+  useLayoutEffect(() => {
+    if (flow && containerRef.current) {
+      emitter.addListener('global', handler)
+      flow.containerEle = containerRef.current
+      flow.parentContainerEle = flow.containerEle.parentElement as HTMLElement
+      containerRef.current?.style.setProperty('--zoom-level', '1')
+      const panzoom = createPanZoom(containerRef.current, {
+        smoothScroll: false,
+        maxZoom: 5,
+        minZoom: 0.05,
+        filterKey: () => {
+          return true
+        },
+        onTouch: e => {
+          e.preventDefault()
+          return false
+        },
+        zoomDoubleClickSpeed: 1,
+        beforeMouseDown: e => {
+          const pointerMode = flow.parentContainerEle?.getAttribute('data-pointer-mode')
+          if (pointerMode === 'pan') {
             return false
-          },
-          zoomDoubleClickSpeed: 1,
-          beforeMouseDown: e => {
-            const pointerMode = flow.parentContainerEle?.getAttribute('data-pointer-mode')
-            if (pointerMode === 'pan') {
-              return false
-            }
-            if (e.button === 1) {
-              return false
-            }
-            if (!(e.target as HTMLElement).hasAttribute('role')) return true
-            if ((e.target as HTMLElement).hasAttribute('role')) {
-              const role = (e.target as HTMLElement).getAttribute('role')
-              if (role === 'modal' || role === 'data-container') return false
-              return true
-            }
-            if (e.defaultPrevented) {
-              return true
-            } else {
-              return false
-            }
-          },
-          beforeWheel: e => {
-            const pointerMode = flow.parentContainerEle?.getAttribute('data-pointer-mode')
-            if (e.defaultPrevented) {
-              return true
-            }
-            if (pointerMode === 'pan') {
-              return false
-            }
-
-            if (e.ctrlKey || e.metaKey) {
-              return false
-            }
-            const curr = panzoom.getTransform()
-            if (e.deltaX !== 0 && e.deltaY !== 0) {
-              panzoom.moveTo(curr.x - e.deltaX, curr.y - e.deltaY)
-              return true
-            }
-            if (e.shiftKey) {
-              panzoom.moveTo(curr.x - (e.deltaY || e.deltaX), curr.y)
-            } else {
-              panzoom.moveTo(curr.x, curr.y - e.deltaY)
-            }
+          }
+          if (e.button === 1) {
+            return false
+          }
+          if (!(e.target as HTMLElement).hasAttribute('role')) return true
+          if ((e.target as HTMLElement).hasAttribute('role')) {
+            const role = (e.target as HTMLElement).getAttribute('role')
+            if (role === 'modal' || role === 'data-container') return false
             return true
+          }
+          if (e.defaultPrevented) {
+            return true
+          } else {
+            return false
+          }
+        },
+        beforeWheel: e => {
+          const pointerMode = flow.parentContainerEle?.getAttribute('data-pointer-mode')
+          if (e.defaultPrevented) {
+            return true
+          }
+          if (pointerMode === 'pan') {
+            return false
+          }
+
+          if (e.ctrlKey || e.metaKey) {
+            return false
+          }
+          const curr = panzoom.getTransform()
+          if (e.deltaX !== 0 && e.deltaY !== 0) {
+            panzoom.moveTo(curr.x - e.deltaX, curr.y - e.deltaY)
+            return true
+          }
+          if (e.shiftKey) {
+            panzoom.moveTo(curr.x - (e.deltaY || e.deltaX), curr.y)
+          } else {
+            panzoom.moveTo(curr.x, curr.y - e.deltaY)
+          }
+          return true
+        },
+        disableKeyboardInteraction: true
+      })
+      panzoomRef.current = panzoom
+      panzoom.on('pan', e => {
+        scopedEmitter.emit('whiteboard', {
+          type: 'panChange'
+        })
+        const t = panzoom.getTransform()
+        setWhiteboardTransform([t.x, t.y, t.scale])
+      })
+      panzoom.on('zoom', e => {
+        const { scale, x, y } = panzoom.getTransform()
+        flow.containerTransformScale = scale
+        setWhiteboardTransform([x, y, scale])
+        const zoomMultipler = Math.sqrt(1 / scale)
+        scopedEmitter.emit('whiteboard', {
+          type: 'zoomChange',
+          data: {
+            zoomLevel: scale,
+            zoomMultiplier: zoomMultipler
+          }
+        })
+        setWhiteboardState(s => ({ ...s, zoom: scale }))
+        debounceSetZoom.run(zoomMultipler)
+      })
+      flow.panzoom = panzoom
+      return () => {
+        const transform = panzoom.getTransform()
+        flow.dispose()
+        ObjectStore('whiteboard').updateOne(
+          {
+            id,
+            lastViewport: transform
           },
-          disableKeyboardInteraction: true
-        })
-        panzoomRef.current = panzoom
-        panzoom.on('pan', e => {
-          scopedEmitter.emit('whiteboard', {
-            type: 'panChange'
-          })
-          const t = panzoom.getTransform()
-          if (excalidrawRef.current) {
-            const { x, y, scale } = t
-            const ex = excalidrawRef.current
-            console.log(ex.getAppState())
-            const exScroll = {
-              x: x / scale,
-              y: y / scale
-            }
-            ex.updateScene({
-              elements: ex.getSceneElements(),
-              appState: { ...ex.getAppState(), scrollY: exScroll.y, scrollX: exScroll.x, zoom: { value: scale } }
-            })
-          }
-          // excalidrawRef.current?.updateScene({
-          //   appState: {
-          //     scrollY: t.y,
-          //     scrollX: t.x,
-          //     zoom: t.scale
-          //   }
-          // })
-          setWhiteboardTransform([t.x, t.y, t.scale])
-        })
-        panzoom.on('zoom', e => {
-          const { scale, x, y } = panzoom.getTransform()
-          flow.containerTransformScale = scale
-          setWhiteboardTransform([x, y, scale])
-          if (excalidrawRef.current) {
-            const ex = excalidrawRef.current
-            console.log(ex.getAppState())
-            const exScroll = {
-              x: x / scale,
-              y: y / scale
-            }
-            ex.updateScene({
-              elements: ex.getSceneElements(),
-              appState: { ...ex.getAppState(), scrollY: exScroll.y, scrollX: exScroll.x, zoom: { value: scale } }
-            })
-          }
-
-          console.log(scale)
-
-          const zoomMultipler = Math.sqrt(1 / scale)
-          scopedEmitter.emit('whiteboard', {
-            type: 'zoomChange',
-            data: {
-              zoomLevel: scale,
-              zoomMultiplier: zoomMultipler
-            }
-          })
-          setWhiteboardState(s => ({ ...s, zoom: scale }))
-          debounceSetZoom.run(zoomMultipler)
-        })
-        flow.panzoom = panzoom
-        return () => {
-          const transform = panzoom.getTransform()
-          flow.dispose()
-          ObjectStore('whiteboard').updateOne(
-            {
-              id,
-              lastViewport: transform
-            },
-            { silent: true }
-          )
-          panzoom.dispose()
-          emitter.removeListener('global', handler)
-        }
-      }
-    }, [])
-    useEffect(() => {
-      if (whiteboard?.lastViewport) {
-        const lastViewport = whiteboard.lastViewport
-        const panzoom = panzoomRef.current
-        setWhiteboardTransform([lastViewport.x, lastViewport.y, lastViewport.scale])
-        panzoom?.zoomTo(0, 0, lastViewport.scale)
-        panzoom?.moveTo(lastViewport.x, lastViewport.y)
-      } else {
-        setWhiteboardTransform([0, 0, 1])
-      }
-    }, [whiteboard?.lastViewport])
-    flow.onNodeFocus = async node => {
-      switch (node.type) {
-        case 'metaObject': {
-          if (node.metaObjectId) {
-            const obj = await MetaStore.getMetaObjectById(node.metaObjectId)
-            if (obj?.objectId) {
-              instance.openTabInSidebar?.(obj.type, obj.objectId)
-            }
-          }
-
-          break
-        }
+          { silent: true }
+        )
+        panzoom.dispose()
+        emitter.removeListener('global', handler)
       }
     }
-    const setNodes = useSetWhiteboardNodes()
-    flow.setNodes = setNodes
-    const { renderSelect } = useWhiteboardSelect(containerRef)
-    useWhiteboardAutoPan()
-    useWhiteboardDrop()
-    useWhiteboardErase()
-    const { renderFreehands, renderDrawLayer } = useFreeHand()
-    const { containerCursor } = useWhiteboardPanzoom()
-    const excalidrawRef = useRef<ExcalidrawImperativeAPI>(null)
-    const whiteboardMeta = MetaStore.useObjectToMetaValue(whiteboard?.id)
-    const { updatePreview } = useCapturePreviewImage(whiteboardMeta?.id)
-    const isExporting = useRef(false)
-    // useDebounceEffect(
-    //   () => {
-    //     if (whiteboard?.nodes && !isExporting.current && containerRef.current) {
-    //       isExporting.current = true
-    //       requestIdleCallback(() => {
-    //         exportWhiteboardAsImage(Array.from(whiteboard.nodes.values()), containerRef.current).then(res => {
-    //           updatePreview(res)
-    //           isExporting.current = false
-    //         })
-    //       })
-    //     }
-    //   },
-    //   [whiteboard?.nodes, whiteboard?.edges],
-    //   { wait: 5000 }
-    // )
-    return (
-      <Content
-        fullHeight
-        fullWidth
-        role="data-container"
-        ref={node => {
-          if (node) {
-            flow.parentContainerEle = node
+  }, [])
+  useEffect(() => {
+    if (whiteboard?.lastViewport) {
+      const lastViewport = whiteboard.lastViewport
+      const panzoom = panzoomRef.current
+      setWhiteboardTransform([lastViewport.x, lastViewport.y, lastViewport.scale])
+      panzoom?.zoomTo(0, 0, lastViewport.scale)
+      panzoom?.moveTo(lastViewport.x, lastViewport.y)
+    } else {
+      setWhiteboardTransform([0, 0, 1])
+    }
+  }, [whiteboard?.lastViewport])
+  flow.onNodeFocus = async node => {
+    switch (node.type) {
+      case 'metaObject': {
+        if (node.metaObjectId) {
+          const obj = await MetaStore.getMetaObjectById(node.metaObjectId)
+          if (obj?.objectId) {
+            instance.openTabInSidebar?.(obj.type, obj.objectId)
           }
-        }}
-        className={css({
-          '*': {
-            touchAction: 'none'
-          }
-        })}
-        tabIndex={0}
-        onClick={() => {
-          flow.focused = true
-        }}
-        onBlur={() => {
-          flow.focused = false
-        }}
-        style={{ cursor: containerCursor, touchAction: 'none' }}
-      >
-        <div
-          ref={containerRef}
-          role="data-container"
-          style={{
-            position: 'absolute',
-            width: '100%',
-            height: '100%',
-            top: 0,
-            left: 0,
-            background: 'transparent',
-            pointerEvents: 'none'
-          }}
-        >
-          <TreeEdgeContainer />
-          <TreeNodeContainer />
-          {renderSelect()}
-          {renderSnapLayer()}
-          {renderFreehands()}
-          <WhiteboardEmptyIndicator />
-        </div>
-        {renderDrawLayer()}
-        <Background />
+        }
 
-        <div style={{ position: 'absolute', right: 0, top: 0, bottom: 0 }}>{render()}</div>
-        <WhiteboardNodesBar />
-        <WhiteboardSettings />
-        <WhiteboardPenToolsBar />
-        <WhiteboardControlBar />
-      </Content>
-    )
+        break
+      }
+    }
   }
-)
+  const setNodes = useSetWhiteboardNodes()
+  flow.setNodes = setNodes
+  const { renderSelect } = useWhiteboardSelect(containerRef)
+  useWhiteboardAutoPan()
+  useWhiteboardDrop()
+  useWhiteboardErase()
+  const { renderFreehands, renderDrawLayer } = useFreeHand()
+  const { containerCursor } = useWhiteboardPanzoom()
+
+  return (
+    <Content
+      fullHeight
+      fullWidth
+      role="data-container"
+      ref={node => {
+        if (node) {
+          flow.parentContainerEle = node
+        }
+      }}
+      className={css({
+        '*': {
+          touchAction: 'none'
+        }
+      })}
+      tabIndex={0}
+      onClick={() => {
+        flow.focused = true
+      }}
+      onBlur={() => {
+        flow.focused = false
+      }}
+      style={{ cursor: containerCursor, touchAction: 'none' }}
+    >
+      <div
+        ref={containerRef}
+        role="data-container"
+        style={{
+          position: 'absolute',
+          width: '100%',
+          height: '100%',
+          top: 0,
+          left: 0,
+          zIndex: 1,
+          background: 'transparent',
+          pointerEvents: 'none'
+        }}
+      >
+        <TreeEdgeContainer />
+        <TreeNodeContainer />
+        {renderSelect()}
+        {renderSnapLayer()}
+        {renderFreehands()}
+        <WhiteboardEmptyIndicator />
+      </div>
+      {renderDrawLayer()}
+      <Background />
+
+      {layout?.showObjectSidebar !== false && (
+        <div style={{ position: 'absolute', right: 0, top: 0, bottom: 0, zIndex: 15 }}>{render()}</div>
+      )}
+      {layout?.showLeftToolbar !== false && <WhiteboardNodesBar />}
+      {layout?.showSetting !== false && <WhiteboardSettings />}
+      {layout?.showPencilToolbar !== false && layout?.showLeftToolbar !== false && <WhiteboardPenToolsBar />}
+      {layout?.showControlBar !== false && <WhiteboardControlBar />}
+    </Content>
+  )
+})
 
 export const Whiteboard = memo(
   ({
     whiteboardId,
     onTabTitleChange,
     enableMiniMap,
-    onInstanceInitialized
+    onInstanceInitialized,
+    layout
   }: {
     whiteboardId: number
     onInstanceInitialized?: (i: IWhiteboardInstance) => void
     onTabTitleChange?: (s?: string) => void
-    enableMiniMap?: boolean
-  }) => {
+  } & Omit<IWhiteboardProps, 'id'>) => {
     const previousWhiteboard = useRef<IWhiteboard>()
     const whiteboardAtom = ObjectStore('whiteboard').createAtom(whiteboardId)
     const whiteboard = useGlobalAtomValue(whiteboardAtom)
@@ -372,7 +323,9 @@ export const Whiteboard = memo(
     }, [whiteboard?.id])
     return (
       <Provider store={store}>
-        {whiteboardId && <WhiteboardInner onInstanceInitialized={onInstanceInitialized} id={whiteboardId} enableMiniMap={enableMiniMap} />}
+        {whiteboardId && (
+          <WhiteboardInner onInstanceInitialized={onInstanceInitialized} id={whiteboardId} layout={layout} enableMiniMap={enableMiniMap} />
+        )}
       </Provider>
     )
   }

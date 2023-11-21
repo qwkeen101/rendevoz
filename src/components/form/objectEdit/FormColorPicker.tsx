@@ -1,7 +1,7 @@
 import ClassName from '@/styles/classNames'
 import { useTranslation } from 'react-i18next'
-import { Icon } from '..'
-import ColorPicker from '../picker/colorPicker'
+import { Icon } from '../../index'
+import ColorPicker from '../../picker/colorPicker'
 
 const FormColorPicker = ({
   onPick,

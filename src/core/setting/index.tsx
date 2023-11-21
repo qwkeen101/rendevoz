@@ -24,7 +24,8 @@ import {
   IGeneralSetting,
   IObjectsAndLinkSetting,
   IComponentSetting,
-  IAppearanceSetting
+  IAppearanceSetting,
+  IQuickAddSettings
 } from './types'
 import WorkspaceSetting from '@/core/setting/Workspace'
 import EditorSetting from '@/core/setting/Editor'
@@ -47,6 +48,7 @@ type Setting = INotificationSetting &
   IGeneralSetting &
   IObjectsAndLinkSetting &
   IComponentSetting &
+  IQuickAddSettings &
   IAppearanceSetting & {
     sidebarVisibleItems: string[]
   }
@@ -65,11 +67,22 @@ const defaultSetting: Setting = {
     link: true
   },
   shortcut: {},
+  quickAdd: {
+    noteMetaType: 'block',
+    addIntoNote: 'last',
+    addIntoGroup: 'last',
+    addIntoGroupHideObject: false,
+    addIntoNoteHideObject: false,
+    addIntoWhiteboardHideObject: false,
+    addIntoGroupAutoOpen: false,
+    addIntoNoteAutoOpen: false,
+    addIntoWhiteboardAutoOpen: false
+  },
   general: {
     autoSaveLayout: false,
     defaultLanguage: 'en-US',
     openNewTab: 'open existing tab',
-    darkMode: true,
+    darkMode: false,
     copyFileWhenImport: true,
     defaultSearchEngine: 'google',
     defaultImageSearchEngine: 'bing',

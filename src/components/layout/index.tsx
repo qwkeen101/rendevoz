@@ -13,7 +13,8 @@ import { getOS } from '@/App'
 import TitleBar from '@/components/titlebar'
 import MacTitlebar from '@/components/titlebar/MacTitlebar'
 import * as Serializer from '../base/dock/Serializer'
-import { GlobalInstance } from '@/hooks'
+import { GlobalInstance, useGlobalAtomValue, useGlobalSetAtom } from '@/hooks'
+import { initializedAtom } from '@/Initializer'
 
 const initialLayout: LayoutData = {
   global: {
@@ -29,7 +30,8 @@ const initialLayout: LayoutData = {
     ]
   }
 }
-
+let recovered = false
+const firstLayout = localStorage.getItem('layout')
 export const LayoutIdToTabMap = new Map<string, ILayoutTab>()
 export let GlobalLayout: LayoutManager | null = null
 const Layout = () => {
@@ -74,27 +76,34 @@ const Layout = () => {
   layoutManager.makeTabActive = id => layoutRef.current?.updateTab(id, null, true)
 
   GlobalLayout = layoutManager
-
+  const initialized = useGlobalAtomValue(initializedAtom)
   useEffect(() => {
-    const setting = getSetting()
-    if (setting.general.autoSaveLayout) {
-      const savedLayout = localStorage.getItem('layout')
-      if (savedLayout) {
-        const parsed = JSON.parse(savedLayout)
-        const after = {
-          ...defaultLayout,
-          ...Serializer.loadLayoutData(parsed, defaultLayout, loadTab)
-        }
+    if (initialized) {
+      if (!recovered) {
+        recovered = true
+        const setting = getSetting()
+        if (setting.general.autoSaveLayout) {
+          LayoutIdToTabMap.clear()
+          const savedLayout = firstLayout
+          if (savedLayout) {
+            const parsed = JSON.parse(savedLayout)
+            const after = {
+              ...defaultLayout,
+              ...Serializer.loadLayoutData(parsed, defaultLayout, loadTab)
+            }
 
-        setLayout(after)
-        layoutManager.registerLayout(after)
-        layoutManager.onLayoutChange(layout => {
-          setLayout(layout)
-        })
-        return
+            setLayout(after)
+            layoutManager.registerLayout(after)
+            layoutManager.onLayoutChange(layout => {
+              setLayout(layout)
+            })
+            return
+          }
+        }
       }
     }
-
+  }, [initialized])
+  useEffect(() => {
     layoutManager.registerLayout(defaultLayout)
     layoutManager.onLayoutChange(layout => {
       setLayout(layout)
@@ -111,11 +120,7 @@ const Layout = () => {
 
   const os = getOS()
   return (
-    <Container
-      auto
-      column
-      style={{ height: '100vh', overflowY: 'auto' }}
-    >
+    <Container auto column style={{ height: '100vh', overflowY: 'auto' }}>
       <Helmet>
         <title>Rendevoz</title>
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />

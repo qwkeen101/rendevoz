@@ -101,50 +101,56 @@ const SidebarCollection = ({
           onBack={() => setNewCollectionVisible(false)}
         />
       </Modal>
-      {showHeader !== false && (
-        <AnimatePopover
-          visible={dropVisible}
-          positions={['top']}
-          padding={10}
-          containerStyle={{ zIndex: String(Zindexes.PopupMenu) }}
-          content={
-            <div
-              style={{
-                color: 'white',
-                background: 'rgba(0,0,0,0.8)',
-                padding: '2px 4px',
-                borderRadius: 4,
-                fontSize: '0.857rem'
-              }}
-            >
-              Move collection to root
-            </div>
-          }
-          innerRef={containerRef}
-        >
-          <Content
-            flex
-            alignItems="center"
-            justifyContent="space-between"
-            className={dropVisible ? ClassName.Drag.droppableItemHovered(true) : undefined}
-            style={{ transition: 'all 0.3s ease', color: Colors.Font.Transparent, fontSize: 13 }}
+      <AnimatePopover
+        visible={showHeader !== false && dropVisible}
+        positions={['top']}
+        padding={10}
+        containerStyle={{ zIndex: String(Zindexes.PopupMenu) }}
+        content={
+          <div
+            style={{
+              color: 'white',
+              background: 'rgba(0,0,0,0.8)',
+              padding: '2px 4px',
+              borderRadius: 4,
+              fontSize: '0.857rem'
+            }}
           >
-            <div style={{ cursor: 'pointer' }} onClick={toggleCollapsed}>
-              {t('sidebar.collections')}
-            </div>
-            <Tooltip position="top" content={t('sidebar.create new collection')}>
-              <Icon
-                name="park-plus"
-                size={14}
-                onClick={() => {
-                  setNewCollectionVisible(true)
-                }}
-                className={ClassName.circleButton(2, 4)}
-              />
-            </Tooltip>
-          </Content>
-        </AnimatePopover>
-      )}
+            Move collection to root
+          </div>
+        }
+        innerRef={containerRef}
+      >
+        <Content
+          flex
+          alignItems="center"
+          justifyContent="space-between"
+          className={dropVisible ? ClassName.Drag.droppableItemHovered(true) : undefined}
+          style={{ transition: 'all 0.3s ease', color: Colors.Font.Transparent, fontSize: 13 }}
+        >
+          <div
+            style={{ cursor: 'pointer' }}
+            onClick={() => {
+              if (showHeader !== false) {
+                toggleCollapsed
+              }
+            }}
+          >
+            {t('sidebar.collections')}
+          </div>
+          <Tooltip position="top" content={t('sidebar.create new collection')}>
+            <Icon
+              name="park-plus"
+              size={14}
+              onClick={() => {
+                setNewCollectionVisible(true)
+              }}
+              className={ClassName.circleButton(2, 4)}
+            />
+          </Tooltip>
+        </Content>
+      </AnimatePopover>
+
       {!collapsed && (
         <Content
           flex
@@ -200,15 +206,7 @@ export const IconNameItem = memo(
       const linearColors = color && linearFontColor && linearToSvg(color)
 
       return (
-        <Content
-          flex
-          alignItems="center"
-          gap="0.5em"
-          style={{  ...style }}
-          className={className}
-          onClick={onClick}
-          ref={ref}
-        >
+        <Content flex alignItems="center" gap="0.5em" style={{ ...style }} className={className} onClick={onClick} ref={ref}>
           {emoji ? (
             <img
               src="data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw=="

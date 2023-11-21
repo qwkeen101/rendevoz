@@ -1,4 +1,3 @@
-import { Notification } from '@/components'
 import useDb from '@/hooks/stores/useDb'
 import Id from '@/utils/id'
 import { atom } from 'jotai/vanilla'
@@ -6,7 +5,6 @@ import { toast } from 'react-hot-toast'
 import { MetaGroup, MetaGroupChild, MetaLink, MetaObject } from '~/typings'
 import BaseStore, { initializeLocalStore } from './base.store'
 import { findChangedProperties, globalStore, GroupStore, MetaStore, ObjectStore } from './index'
-import { SimpleObject } from '@/core'
 import { IStoreDeprecated } from './types'
 import getSetting from '@/core/setting/getSetting'
 import { createDraft, finishDraft } from 'immer'
@@ -20,7 +18,7 @@ import SearchHelper from '@/api/textSearch/SearchHelper'
 import KeyvalueStore from '@/api/stores/keyvalue.store'
 import { calculateFilterObjects } from '@/core/object/filter/useBetterFilter'
 import Node from '@/core/components/group/utils/node'
-
+import { t } from 'i18next'
 export const metaObjectsAtom = atom<Map<number, MetaObject>>(new Map())
 
 export const metaLinksAtom = atom<Map<number, MetaLink>>(new Map())
@@ -161,6 +159,9 @@ export const handleMetaObjectsChange = () => {
     pinnedMetaObjectsSet.delete(v)
     v.objectId && objectIdToMetaObjectMap.delete(v.objectId)
     typeToMetaObjectIdsMap.get(v.type)?.delete(id)
+    if (typeToMetaObjectIdsMap.get(v.type)?.size === 0) {
+      typeToMetaObjectIdsMap.delete(v.type)
+    }
     v.tags?.forEach(tag => {
       tagToMetaObjectIdsMap.get(tag)?.delete(v.id)
     })
@@ -374,9 +375,9 @@ const createMetaStore = () => {
       const user = getUser()
       const setting = getSetting()
       const allMetaNum = globalStore.get(undeletedMetaObjectsAtom).length
-      if ((!user || !user.premiumEndDate || user.premiumEndDate < Date.now()) && allMetaNum > MAX_META_NUMBER) {
+      if ((!user || !user.premiumEndDate || user.premiumEndDate < Date.now()) && !user?.lifetimePro && allMetaNum > MAX_META_NUMBER) {
         if (Date.now() - lastWarned > 1000) {
-          toast.error('Exceeding maximum number of objects limit!')
+          toast.error(t('general.Over max objects limit'))
           lastWarned = Date.now()
         }
         return Promise.reject()
@@ -490,7 +491,6 @@ const createMetaStore = () => {
 
   const initializedLinkStore = initializeLocalStore(metaLinksAtom, metaLinkDb)
 
-
   const localLinkStore: Pick<IStoreDeprecated<MetaLink>, 'addOne' | 'updateOne' | 'deleteOneById' | 'getAll'> = {
     addOne: (one, silent) => {
       if (one.sourceId === one.targetId) return Promise.reject()
@@ -499,17 +499,14 @@ const createMetaStore = () => {
       if (existed) {
         return Promise.resolve(existed)
       }
-      return initializedLinkStore.addOne(() => {
-      })(one, silent)
+      return initializedLinkStore.addOne(() => {})(one, silent)
     },
     getAll: initializedLinkStore.getAll(),
     deleteOneById: (one, silent, force = true) => {
-      return initializedLinkStore.deleteOneById(() => {
-      })(one, silent, force)
+      return initializedLinkStore.deleteOneById(() => {})(one, silent, force)
     },
     updateOne: (one, silent) => {
-      return initializedLinkStore.updateOne(() => {
-      })(one, silent)
+      return initializedLinkStore.updateOne(() => {})(one, silent)
     }
   }
 

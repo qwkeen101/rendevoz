@@ -44,7 +44,7 @@ const WhiteboardSettings = () => {
   }
   const buttonClazz = ClassName.flatButton(4, '2px 6px')
   return (
-    <Content flex column gap={6} style={{ position: 'absolute', right: 20, top: 15 }}>
+    <Content flex column gap={6} style={{ position: 'absolute', right: 20, top: 15, zIndex: 10 }}>
       <Modal visible={exportModalVisible} onClose={() => toggleExportModalVisible(false)}>
         <ExportPanel
           onBack={() => {

@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Modal } from '@/components'
 import { assignProperties } from '@/utils'
 import { GlobalInstance } from '@/hooks'
-import ChooseCollectionForm from '@/components/form/ChooseCollectionForm'
+import ChooseCollectionForm from '@/components/form/quickAdd/ChooseCollectionForm'
 import { CollectionStore } from '@/api/stores'
 
 export default () => {

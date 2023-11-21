@@ -10,6 +10,7 @@ import fuzzysort from 'fuzzysort'
 import BlockColorPicker from '@/core/components/editor/components/BlockColorPicker'
 import FontSize from '@/consts/font'
 import { Virtualizer } from '@tanstack/react-virtual'
+import { useTranslation } from 'react-i18next'
 
 const MetaTagPicker = forwardRef(
   (
@@ -88,6 +89,7 @@ const MetaTagPicker = forwardRef(
       [alreadyTags]
     )
     const virtualizer = useRef<Virtualizer<any, any>>()
+    const { t } = useTranslation()
     if (!result) return null
     return (
       <Content flex column style={style} ref={ref}>
@@ -114,7 +116,7 @@ const MetaTagPicker = forwardRef(
             />
           ))}
           <input
-            placeholder={!alreadyTags.length ? 'Search for one tag' : undefined}
+            placeholder={!alreadyTags.length ? t('general.Type to search') + '...' : undefined}
             value={search}
             onChange={e => setSearch(e.target.value)}
             className={ClassName.noStyleInput}
@@ -123,7 +125,7 @@ const MetaTagPicker = forwardRef(
           />
         </Content>
         <div style={{ padding: '4px 12px 2px', color: Colors.Font.Secondary, fontSize: 12, fontWeight: 600 }}>
-          {selectMode ? 'Select tags' : 'Select tags or create one'}
+          {selectMode ? t('general.Select tags') : t('general.Select tags or create one')}
         </div>
         <VirtualList
           estimateSize={26}
@@ -170,7 +172,7 @@ const TagRenderer = memo(
           className={ClassName.flatButton(4, '3px 6px')}
           style={{
             lineHeight: '20px',
-            fontSize: FontSize['12px'],
+            fontSize: '13px',
             transition: 'none',
             background: selected ? Colors.Background.ButtonHover : 'transparent'
           }}

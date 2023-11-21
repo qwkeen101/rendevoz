@@ -72,7 +72,7 @@ const useMediaEventHandlerWrapper = (options: {
         return await handleLabelChapter(e, id)
       case 'assignToNewCollection':
         if (!metaId) return
-        return await GlobalInstance.collectionOps?.addMetaIntoCollection(metaId)
+        return await GlobalInstance.metaOps?.quickAdd(metaId)
       case 'pin': {
         console.log(metaId)
         if (!metaId) return

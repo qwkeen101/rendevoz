@@ -86,7 +86,7 @@ export default ({
               {metaObject?.name}
             </div>
           ) : null}
-          { showAddNote && metaObject?.name === 'Unnamed Label' && (
+          {(!originalText || showAddNote) && metaObject?.name === 'Unnamed Label' && (
             <div onClick={() => setIsEditing(!isEditing)} style={{ fontSize: 13, color: Colors.Font.Transparent, cursor: 'pointer' }}>
               Add note...
             </div>

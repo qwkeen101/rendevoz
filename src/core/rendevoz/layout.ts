@@ -73,6 +73,7 @@ const openNewTab = ({ data }) => {
     const id = Id.getStrId()
     LayoutIdToTabMap.set(id, layoutTab)
     tabData.onTabActive?.()
+    console.log(initializedTab)
     GlobalLayout?.registerNewTab({
       content: layoutTab.tabContent,
       id,
@@ -112,7 +113,7 @@ const initializeOneTab = (tabData, openTabData) => {
 
 const hasTargetTab = tabData => {
   const { type, objectId } = tabData
-
+  console.log(LayoutIdToTabMap)
   const target = Array.from(LayoutIdToTabMap.entries()).find(([k, v]) => {
     if (type === v.type) {
       console.log(v)

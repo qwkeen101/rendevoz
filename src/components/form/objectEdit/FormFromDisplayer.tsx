@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react'
 import { MetaObject } from '~/typings'
-import { groupClassName, hoverLabelClassName } from './useFlipForm'
+import { groupClassName, hoverLabelClassName } from '../useFlipForm'
 import { useTranslation } from 'react-i18next'
-import { IconNameItem } from '../layout/sidebar/SidebarCollection'
+import { IconNameItem } from '../../layout/sidebar/SidebarCollection'
 import { MetaStore } from '@/api/stores'
-import { Icon } from '../base'
+import { Icon } from '../../base'
 import ClassName from '@/styles/classNames'
 import { Rendevoz } from '@/core/rendevoz'
 

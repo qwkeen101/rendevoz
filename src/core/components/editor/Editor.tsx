@@ -241,9 +241,9 @@ export const EditorV1: FC<EditorProps> = memo(
     //   // }
     // }, [])
     return (
-      <Content fullWidth fullHeight flex column>
+      <Content fullWidth fullHeight flex column style={styles?.outestContainerStyle}>
         {layout?.showHeader !== false && <EditorHeader title={stringTitle} editor={editor} />}
-        <Content flex fullWidth auto style={{ height: 0 }}>
+        <Content flex fullWidth auto style={{ height: styles?.containerHeight ?? 0 }}>
           {layout?.showHeader !== false && <SidebarToolbar editor={editor} />}
           <div className={EditorClasses.Editor} role="editor-container">
             <div

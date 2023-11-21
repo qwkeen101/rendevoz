@@ -4,7 +4,7 @@ import { Atom, atom, PrimitiveAtom } from 'jotai'
 import { atomFamily, selectAtom } from 'jotai/utils'
 import { useMemo } from 'react'
 import { IRegisterdObject, IWhiteboard, IWhiteboardEdge, IWhiteboardNode, MetaObject } from '~/typings'
-import { globalStore, MetaStore, ObjectStore } from './index'
+import { globalStore, GroupStore, MetaStore, ObjectStore } from './index'
 import BaseStore, { initializeLocalStore } from './base.store'
 import { metaObjectsAtom, objectIdToMetaObjectIdMapAtom, tagToMetaObjectIdsMapAtom, TypeToRegisteredMetaObject } from './meta.store'
 import { IStore } from './types'
@@ -318,6 +318,8 @@ export const objectStore = <T extends keyof ObjectFamily>(
   } else {
     const getStore = () => {
       switch (type) {
+        case 'group':
+          return createGroupStore()
         case 'webpage':
           return createWebpageStore()
         case 'note':
@@ -448,6 +450,15 @@ const createTagStore = () => {
   })
 }
 
+const createGroupStore = () => {
+  return createObjectStore('group', {
+    beforeAddProcess: async o => {
+      const initialized = GroupStore.initializeGroup()
+      Object.assign(o, initialized, o)
+      return true
+    }
+  })
+}
 export const getObjectById = <T extends keyof ObjectFamily>(id: number): Promise<ObjectFamily[T]> => {
   const objectsDb = useDb('objects')
   return objectsDb.get(id)

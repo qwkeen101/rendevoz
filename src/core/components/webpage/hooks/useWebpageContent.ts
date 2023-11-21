@@ -72,6 +72,7 @@ const useWebpageContent = (options: {
           }
           if (res) {
             const { noteValue, author, domain, title, favicon } = res
+            console.log(res)
             if (webpageState.currentWebpageId && !currentWebpage?.noteId) {
               const note = await NoteStore.initializeNoteWithValue(noteValue)
               if (note) {

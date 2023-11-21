@@ -121,7 +121,7 @@ export const ObjectPanel = memo(
         }
       }
     })
-    console.log('rerender')
+
     return (
       <>
         <div
@@ -160,27 +160,6 @@ export const ObjectPanel = memo(
                 shouldDisplayObjects.length
               }`}</span>
             </div>
-            {visiblility.showCurrentTabObject && (
-              <Tooltip content={t("general.show current tab's object")}>
-                <Icon
-                  containerStyle={{ marginRight: 8 }}
-                  name="park-hamburger-button"
-                  className={ClassName.circleButton()}
-                  onClick={() => {
-                    const currentActiveTab = GlobalLayout?.getCurrentActiveTab()
-                    if (currentActiveTab) {
-                      const tab = currentActiveTab.tab
-                      if (tab.objectId) {
-                        const meta = MetaStore.getMetaObjectByObjectId(tab.objectId)
-                        if (meta) {
-                          Rendevoz.Actions.Open.openSidebarObjectDetails(meta.id)
-                        }
-                      }
-                    }
-                  }}
-                />
-              </Tooltip>
-            )}
             {/*{visiblility.showOpenInTab && (*/}
             {/*  <Tooltip content={'Open Database In New Tab'}>*/}
             {/*    <Icon name="park-efferent-four" className={ClassName.circleButton()} onClick={onOpenInTab} />*/}
@@ -293,6 +272,17 @@ export const ObjectPanel = memo(
                 suffixStr={filterSort.sorter?.sorters.length || undefined}
               />
             </AnimatePopover>
+            {/*<AnimatePopover content={}>*/}
+            {/*  <Icon*/}
+            {/*    name={'park-more'}*/}
+            {/*    style={{*/}
+            {/*      fontSize: 12,*/}
+            {/*      padding: '2px 6px',*/}
+            {/*      border: `1px solid ${Colors.Background.Border}`*/}
+            {/*    }}*/}
+            {/*    className={ClassName.flatButton()}*/}
+            {/*  />*/}
+            {/*</AnimatePopover>*/}
           </Content>
         </Content>
         <VirtualList
@@ -389,6 +379,7 @@ export const SimpleObject = memo(
         }),
         [metaObjectId]
       )
+      if (!metaObject) return null
       return (
         <DraggableElement
           dragHandleClassName={titleClassName}

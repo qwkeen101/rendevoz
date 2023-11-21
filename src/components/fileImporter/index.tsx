@@ -11,7 +11,6 @@ import baidudisk from '@/assets/images/baidudisk.png?url'
 import folder from '@/assets/images/folder.png?url'
 import markdown from '@/assets/images/markdown.png?url'
 
-import { Colors } from '@/consts'
 import FontSize from '@/consts/font'
 import { useState } from 'react'
 import { assignProperties, fetchRemoteImageAndSaveLocally } from '@/utils'
@@ -205,7 +204,14 @@ const FileImporter = ({
   }
   const renderer = (details: { name: string; desc: string; image: string; onClick?: VoidFunction }) => {
     return (
-      <Content flex gap={16} alignItems={'center'} className={ClassName.flatButton(6, '8px 12px')} onClick={details.onClick}>
+      <Content
+        flex
+        gap={16}
+        style={{ width: '100%' }}
+        alignItems={'center'}
+        className={ClassName.flatButton(4, '4px 12px')}
+        onClick={details.onClick}
+      >
         <div
           style={{
             background: 'white',
@@ -216,8 +222,8 @@ const FileImporter = ({
           <img
             src={details.image}
             style={{
-              width: 40,
-              height: 40,
+              width: 32,
+              height: 32,
               objectFit: 'cover'
             }}
           />
@@ -232,26 +238,26 @@ const FileImporter = ({
     )
   }
   return (
-    <Content flex column style={{ maxWidth: `min(960px, 60vw)`, maxHeight: 'min(800px, 80vh)', padding: 16, overflowY: 'auto' }} gap={12}>
-      <div style={{ paddingLeft: 8, marginBottom: 20 }} className={ClassName.title('20px')}>
+    <Content flex column style={{ maxWidth: `min(620px, 90vw)`, maxHeight: 'min(800px, 80vh)', padding: 16, overflowY: 'auto' }} gap={8}>
+      <div style={{ paddingLeft: 8, marginBottom: 8 }} className={ClassName.title('20px')}>
         {t('general.Create new object')}
       </div>
-      <div style={{ paddingLeft: 8 }} className={ClassName.title()}>
+      <div style={{ paddingLeft: 8 }} className={ClassName.title('1rem')}>
         {t('general.Organize your ideas')}
       </div>
-      <Content flex gap={24} style={{ marginBottom: 20, flexWrap: 'wrap' }}>
+      <Content flex gap={6} style={{ marginBottom: 8, flexWrap: 'wrap' }}>
         {records.map(r => renderer(r))}
       </Content>
-      <div style={{ paddingLeft: 8 }} className={ClassName.title()}>
+      <div style={{ paddingLeft: 8 }} className={ClassName.title('1rem')}>
         {t('general.Learning new things')}
       </div>
-      <Content flex gap={24} style={{ marginBottom: 20, flexWrap: 'wrap' }}>
+      <Content flex gap={6} style={{ marginBottom: 8, flexWrap: 'wrap' }}>
         {files.map(f => renderer(f))}
       </Content>
-      <div style={{ paddingLeft: 8 }} className={ClassName.title()}>
+      <div style={{ paddingLeft: 8 }} className={ClassName.title('1rem')}>
         {t('general.Others')}
       </div>
-      <Content flex gap={24} style={{ marginBottom: 20, flexWrap: 'wrap' }}>
+      <Content flex gap={6} style={{ marginBottom: 8, flexWrap: 'wrap' }}>
         {others.map(o => renderer(o))}
       </Content>
     </Content>

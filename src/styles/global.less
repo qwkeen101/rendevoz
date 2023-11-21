@@ -7,6 +7,31 @@ body {
   background: var(--global-background);
 }
 
+@property --var1 {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: transparent;
+}
+.on-scrollbar{
+  --var1: var(--scroll-bar);
+  transition: --var1 .25s;
+}
+.hide-scrollbar{
+  --var1: transparent;
+  transition: --var1 .25s;
+}
+.on-scrollbar::-webkit-scrollbar-thumb:horizontal {
+  background-color: var(--var1);
+}
+.hide-scrollbar::-webkit-scrollbar-thumb:horizontal {
+  background-color: var(--var1);
+}
+.on-scrollbar::-webkit-scrollbar-thumb {
+  background-color: var(--var1);
+}
+.hide-scrollbar::-webkit-scrollbar-thumb {
+  background-color: var(--var1);
+}
 input::-ms-clear,
 input::-ms-reveal {
   display: none;
@@ -40,7 +65,7 @@ input::-webkit-inner-spin-button {
   }
   &::-webkit-scrollbar-thumb {
     cursor: pointer;
-    background: var(--scroll-bar);
+    background: var(--var1);
     border-radius: 6px;
   }
   &::-webkit-scrollbar:horizontal {
@@ -49,7 +74,7 @@ input::-webkit-inner-spin-button {
   }
   &::-webkit-scrollbar-thumb:horizontal {
     cursor: pointer;
-    background: var(--scroll-bar);
+    background: transparent;
     border-radius: 6px;
   }
 }
@@ -159,7 +184,8 @@ blockquote {
   font-style: italic;
   font-size: 1.3em;
   &::before {
-    font-size: 3.5em;
+    font-size: 2em;
+    color: var(--font-transparent);
     margin-right: 16px;
     margin-left: -0.2em;
     vertical-align: -0.4em;

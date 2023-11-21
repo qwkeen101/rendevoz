@@ -6,7 +6,7 @@ import Video from '@/core/components/media/wrappers/Video'
 import { IMediaInstance } from '~/typings'
 
 const VideoPage = ({ videoId, onInstanceInitialized }: { videoId: number; onInstanceInitialized: (i: IMediaInstance) => void }) => {
-  const video = MetaStore.getMetaObjectByObjectId(videoId)
+  const video = MetaStore.useObjectToMetaValue(videoId)
   return (
     <Content fullWidth fullHeight>
       <TabTitle title={video?.name || 'Unnamed Video'} icon={Rendevoz.Utils.Object.getMetaObjectIcon('video')} />

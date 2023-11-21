@@ -59,15 +59,24 @@ export default ({ details, onClose }: { details: MetaGroupChild; onClose: VoidFu
                     GlobalInstance.metaOps?.openDetails(details.id)
                   }
                 },
-              {
-                text: t('general.edit'),
-                icon: 'park-edit',
-                type: 'button',
-                onClick: () => {
-                  onClose()
-                  Rendevoz.Actions.Open.Meta.openEditMetaDialog(details.id)
-                }
-              },
+                {
+                  text: t('general.edit'),
+                  icon: 'park-edit',
+                  type: 'button',
+                  onClick: () => {
+                    onClose()
+                    Rendevoz.Actions.Open.Meta.openEditMetaDialog(details.id)
+                  }
+                },
+                {
+                  text: t('general.Move to'),
+                  icon: 'park-corner-up-right',
+                  type: 'button',
+                  onClick: () => {
+                    onClose()
+                    GlobalInstance.metaOps?.quickAdd(details.id)
+                  }
+                },
                 {
                   text: t('general.Copy link'),
                   icon: 'park-link',

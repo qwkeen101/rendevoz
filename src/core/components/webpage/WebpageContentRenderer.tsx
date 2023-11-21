@@ -172,6 +172,24 @@ const WebpageContentRenderer = ({
       }
     }
     switch (e.type) {
+      case 'linkAddAsValue': {
+        ObjectStore('webpage').addOneWithMeta(
+          { url: e.url },
+          {
+            currentMeta: {
+              name: 'Unnamed webpage',
+              fromObject: webpageMeta
+                ? {
+                    type: 'webpage',
+                    metaId: webpageMeta.id
+                  }
+                : undefined
+            },
+            showMetaModal: true
+          }
+        )
+        return true
+      }
       case 'search': {
         GlobalSearchInstance.open({
           query: e.searchedText,

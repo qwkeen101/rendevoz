@@ -8,9 +8,8 @@ import LabelActionMenu, { LabelActionEvent } from './LabelActionMenu'
 import { AttachmentWrapper, useRenderObject } from '.'
 import BorderInput from '@/components/base/BorderInput'
 import { useTranslation } from 'react-i18next'
-import { IDraggableElement } from '~/typings/globalInstances/dragDrop'
 import { Colors } from '@/consts'
-import { GlobalInstance, useGlobalAtomValue, useIsIn, useSelectGlobalAtomValue } from '@/hooks'
+import { useGlobalAtomValue, useIsIn, useSelectGlobalAtomValue } from '@/hooks'
 import { relatedMetaObjectsMapAtom } from '@/api/stores/meta.store'
 import { SettingAtom } from '@/core'
 import { getColor } from '@/consts/targetColor'
@@ -28,6 +27,7 @@ const useRenderLabel = (opts: {
   if (label && !label.parentObjectId && (label.webpageId || label.videoId || label.pdfId || label.noteId)) {
     ObjectStore(type).updateOne({ id: objectId, parentObjectId: label.webpageId || label.videoId || label.pdfId || label.noteId })
   }
+  const parentMeta = MetaStore.useObjectToMetaValue(label?.parentObjectId)
   const labelMeta = MetaStore.useObjectToMetaValue(opts.objectId)
   const { t } = useTranslation()
   const [labelState, setLabelState] = useState<{
@@ -49,6 +49,10 @@ const useRenderLabel = (opts: {
   const currentLabelHasName = label && label.name && label.name !== DEFAULT_LABEL_NAME
   const relatedMap = useGlobalAtomValue(relatedMetaObjectsMapAtom)
   const metaRelated = labelMeta && relatedMap.get(labelMeta.id)
+  const realRelated = new Set(metaRelated)
+  if (parentMeta) {
+    realRelated.delete(parentMeta.id)
+  }
   const customBackground = useSelectGlobalAtomValue(SettingAtom, s => s.label.customTextBackground)
   const renderName = ({ onNameClick }: { onNameClick?: (name?: string) => void }) => {
     return (
@@ -70,15 +74,15 @@ const useRenderLabel = (opts: {
                 width: 'fit-content',
                 whiteSpace: 'pre-wrap',
                 fontSize: FontSize['13px'],
-                color: labelMeta ? labelMeta.color || Colors.Font.Link : undefined
+                color: labelMeta ? labelMeta.color || Colors.Common.SelectColor : undefined
               }}
             >
-              {metaRelated && (
+              {realRelated.size > 0 && (
                 <AnimatePopover
                   content={
                     <WithBorder style={{ fontSize: '0.85rem', maxWidth: 400 }} padding={6}>
                       <div className={ClassName.description()}>{t('general.related objects')}</div>
-                      {Array.from(metaRelated.values()).map(i => (
+                      {Array.from(realRelated.values()).map(i => (
                         <LabelRelatedItem metaId={i} key={i} />
                       ))}
                     </WithBorder>
@@ -91,14 +95,18 @@ const useRenderLabel = (opts: {
                       }}
                       style={{ padding: '2px 4px', borderRadius: 4, marginRight: 4, background: Colors.Background.Border }}
                     >
-                      {metaRelated.size}
+                      {realRelated.size}
                     </span>
                   </Tooltip>
                 </AnimatePopover>
               )}
               <span
                 style={{
-                  color: currentLabelHasName ? undefined : Colors.Font.Tertiary,
+                  color: labelMeta
+                    ? labelMeta.color || Colors.Common.SelectColor
+                    : currentLabelHasName
+                    ? undefined
+                    : Colors.Font.Transparent,
                   fontWeight: 500,
                   wordBreak: 'break-word'
                 }}

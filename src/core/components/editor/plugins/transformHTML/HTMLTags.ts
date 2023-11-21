@@ -2,7 +2,7 @@ import Id from '@/utils/id'
 
 export const ELEMENT_TAGS: Record<string, (el: HTMLElement) => any> = {
   A: el => ({ type: 'link', url: el.getAttribute('href'), id: Id.getId() }),
-  BLOCKQUOTE: () => ({ type: 'quote', id: Id.getId() }),
+  BLOCKQUOTE: () => ({ type: 'block-quote', id: Id.getId() }),
   H1: () => ({ type: 'heading-one', id: Id.getId() }),
   H2: () => ({ type: 'heading-two', id: Id.getId() }),
   H3: () => ({ type: 'heading-three', id: Id.getId() }),

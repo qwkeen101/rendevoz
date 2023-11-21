@@ -115,7 +115,7 @@ const WhiteboardPenToolsBar = () => {
     return (
       <WithBorder
         padding={6}
-        style={{ position: 'absolute', bottom: 20, left: '50%', transform: 'translateX(-50%)', background: Colors.Background.Secondary }}
+        style={{ position: 'absolute', bottom: 20, left: '50%', transform: 'translateX(-50%)', background: Colors.Background.Secondary, zIndex: 10 }}
       >
         <Toolbar itemSpace={6} disableDefaultStyle={true}>
           <Toolbar.Item iconName={'custom-ballpen'} onClick={() => changePenType('ballpen')} isActive={penType === 'ballpen'} />

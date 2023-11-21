@@ -96,13 +96,11 @@ const useCollectionStore = () => {
   const store = initializeLocalStore<ICollection>(collectionsAtom, database)
   const localStore: Pick<IStoreDeprecated<ICollection>, 'addOne' | 'deleteOneById' | 'getAll' | 'getOneById' | 'updateOne'> = {
     addOne: store.addOne((obj, silent) => {
-      !silent && shouldToast(silent) && toast.success('Collection successfully added!')
     }),
     updateOne: store.updateOne((obj, silent) => {
       // !silent && shouldToast(silent) && toast.success('Collection successfully updated!')
     }),
     deleteOneById: store.deleteOneById(silent => {
-      !silent && shouldToast(silent) && toast.success('Collection successfully deleted!')
     }),
     getAll: store.getAll(i => i.workspace === KeyvalueStore.getOne('currentWorkspace')),
     getOneById: store.getOneById()

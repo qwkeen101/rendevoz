@@ -12,6 +12,37 @@ import cssWorker from 'monaco-editor/esm/vs/language/css/css.worker?worker'
 import htmlWorker from 'monaco-editor/esm/vs/language/html/html.worker?worker'
 import tsWorker from 'monaco-editor/esm/vs/language/typescript/ts.worker?worker'
 
+function debounce(func, timeout = 600) {
+  let timer
+  return (...args) => {
+    clearTimeout(timer)
+    timer = setTimeout(() => {
+      func.apply(this, args)
+    }, timeout)
+  }
+}
+
+window.addEventListener(
+  'scroll',
+  e => {
+    e.target.classList.add('on-scrollbar')
+    e.target.classList.remove('hide-scrollbar')
+  },
+  true
+)
+window.addEventListener(
+  'scroll',
+  debounce(e => {
+    e.target.classList.remove('on-scrollbar')
+    e.target.classList.add('hide-scrollbar')
+    setTimeout(() => {
+      if(!e.target.classList.contains('on-scrollbar')){
+        e.target.classList.remove('hide-scrollbar')
+      }
+    },250)
+  }),
+  true
+)
 PIXI.Assets.load(PIXIFontUrl)
 enableMapSet()
 enablePatches()

@@ -1,5 +1,6 @@
 import { IBase } from '../../data/base'
 import { ICollectionItem } from '../../data/collection'
+import { IWhiteboardInstance } from '~/typings'
 
 export type IWhiteboardEdge = {
   id: number
@@ -12,6 +13,19 @@ export type IWhiteboardEdge = {
   color?: string
   lineType?: 'straight' | 'polyline' | 'curve'
   lineStyle?: 'straight' | 'dash' | 'animatedDash'
+}
+
+export type IWhiteboardProps = {
+  id: number
+  enableMiniMap?: boolean
+  onInstanceInitialized?: (i: IWhiteboardInstance) => void
+  layout?: {
+    showControlBar?: boolean
+    showPencilToolbar?: boolean
+    showLeftToolbar?: boolean
+    showObjectSidebar?: boolean
+    showSetting?: boolean
+  }
 }
 
 export type EdgePosition = 'top' | 'right' | 'left' | 'bottom'

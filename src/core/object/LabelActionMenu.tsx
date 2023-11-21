@@ -74,15 +74,19 @@ const LabelActionMenu = ({ on, objectId, type }: Props) => {
         ></Button.IconButton>
       )}
       <Button.IconButton
-        icon={'park-folder-close'}
-        text={t('general.Assign to collection')}
-        onClick={() => {
-          GlobalInstance.metaOps
-            ?.addDraggableAsMeta({
+        icon={'park-corner-up-right'}
+        text={t('general.Move to')}
+        onClick={async () => {
+          let m = meta
+          if (!m) {
+            m = await GlobalInstance.metaOps?.addDraggableAsMeta({
               type,
               labelId: objectId
             })
-            .then(res => GlobalInstance.collectionOps?.addMetaIntoCollection(res.id))
+          }
+          if(m){
+            GlobalInstance.metaOps?.quickAdd(m.id)
+          }
         }}
       />
       <Button.IconButton

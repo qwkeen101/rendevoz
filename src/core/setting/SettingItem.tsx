@@ -5,7 +5,7 @@ import { CSSProperties, FC, ReactNode } from 'react'
 
 export type ISettingItem = {
   children?: ReactNode
-  title: string
+  title?: string
   description?: string
   column?: boolean
   titleSize?: number
@@ -46,14 +46,16 @@ const SettingItem: FC<ISettingItem> = ({
       })}
     >
       <div>
-        <div
-          style={{
-            fontWeight: 500,
-            fontSize: titleSize
-          }}
-        >
-          {title}
-        </div>
+        {title && (
+          <div
+            style={{
+              fontWeight: 500,
+              fontSize: titleSize
+            }}
+          >
+            {title}
+          </div>
+        )}
         {description && <div className={ClassName.description('12px')}>{description}</div>}
       </div>
       <Content flex centered={!column} style={{ fontSize: 14, flexShrink: 0, ...childrenContainerStyle }}>

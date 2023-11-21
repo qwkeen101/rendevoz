@@ -92,6 +92,6 @@ export const fetchRemoteImageAndSaveLocally = async (remoteImageUrl: string): Pr
     })
   ).blob()
 
-  const data = await saveImageLocally(imageBlob, { compress: true, imgName: remoteImageUrl.replaceAll('/', '_').replaceAll('\\', '_') })
+  const data = await saveImageLocally(imageBlob)
   return data
 }

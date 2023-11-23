@@ -78,6 +78,7 @@ const assignToggle = (instance: IEditorInstance, editor: CustomEditor) => {
     if (Editor.hasPath(editor, nextPath)) {
       next = Editor.node(editor, nextPath)
     }
+    console.log(currentHeadingNode, next)
     let loop = 0
     while (next) {
       loop += 1
@@ -89,7 +90,7 @@ const assignToggle = (instance: IEditorInstance, editor: CustomEditor) => {
         const nextHeadingLevel = HeadingToLevel[next[0].type] || 1
         if (nextHeadingLevel <= headingLevel) {
           next = undefined
-          return
+          return underNodes
         }
       }
       underNodes.push(next)
@@ -111,6 +112,7 @@ const assignToggle = (instance: IEditorInstance, editor: CustomEditor) => {
           return
         }
         const allUnderNodes = findAllUnderNodes(path)
+        console.log(allUnderNodes)
         Transforms.setNodes(
           editor,
           {

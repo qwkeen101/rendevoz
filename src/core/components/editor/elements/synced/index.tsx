@@ -22,6 +22,12 @@ const SyncedBlock = ({ element, children }: RenderElementProps) => {
   const blockDetails = ObjectStore('syncedBlock').useValue(syncMeta?.objectId)
   const { t } = useTranslation()
   useCheckSyncInWhere(syncElement.originId)
+  const handleDelete = () => {
+    const path = ReactEditor.findPath(editor, element)
+    Transforms.removeNodes(editor, {
+      at: path
+    })
+  }
   const memoizedReplace = useMemoizedFn(() => {
     if (blockDetails && blockDetails.syncVersion > syncElement.syncVersion) {
       console.log('trigger sync to block')
@@ -163,7 +169,7 @@ const SyncedBlock = ({ element, children }: RenderElementProps) => {
               content={
                 <WithBorder padding={6}>
                   <Button.IconButton icon={'park-unlink'} onClick={handleUnsync} text={t('editor.unsync in this note')} />
-                  <Button.IconButton icon={'park-delete'} text={t('general.delete')} dangerous />
+                  <Button.IconButton icon={'park-delete'} text={t('general.delete')} onClick={handleDelete} dangerous />
                 </WithBorder>
               }
               name={'park-more'}

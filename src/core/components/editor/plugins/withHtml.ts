@@ -3,6 +3,7 @@ import { ReactEditor } from 'slate-react'
 import { CustomEditor } from '~/typings'
 import { deserializeHTML, normalize } from './deserializeHtml'
 import Id from '@/utils/id'
+import FileSystem from '@/api/fileSystem'
 
 const withHtml = (editor: CustomEditor) => {
   const { insertData } = editor
@@ -12,11 +13,31 @@ const withHtml = (editor: CustomEditor) => {
     const slateFragment = data.getData('application/x-slate-fragment')
     const plainText = data.getData('text/plain')
     console.log(plainText, slateFragment, data)
-    const image = Array.from(data.files).find(i => i.type.startsWith('image'))
-    if (image && image.path) {
+    const imageItem = Array.from(data.items).find(i => i.type.startsWith('image'))
+    if (imageItem) {
+      const blob = imageItem.getAsFile()
+      const reader = new FileReader()
+      reader.onload = () => {
+        const result = reader.result
+        if (result) {
+          FileSystem.saveImage(result).then(p => {
+            Transforms.insertNodes(editor, {
+              type: 'image',
+              url: p,
+              id: Id.getId(),
+              children: [{ text: '' }]
+            })
+          })
+        }
+      }
+      reader.readAsDataURL(blob)
+      return
+    }
+    const imageFile = Array.from(data.files).find(i => i.type.startsWith('image'))
+    if (imageFile && imageFile.path) {
       Transforms.insertNodes(editor, {
         type: 'image',
-        url: `file://${image.path}`,
+        url: `file://${imageFile.path}`,
         id: Id.getId(),
         children: [{ text: '' }]
       })

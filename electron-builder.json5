@@ -1,11 +1,10 @@
 {
   appId: "rendevoz",
   productName: "Rendevoz",
-  copyright: "Copyright © 2022 RealRong",
+  copyright: "Copyright © 2023 Rendevoz",
   asar: true,
   directories: {
-    output: "release/${version}",
-    buildResources: "electron/resources",
+    output: "release/${version}"
   },
   publish: {
       provider: "github",
@@ -41,7 +40,7 @@
   },
   nodeGypRebuild: false,
   npmRebuild: false,
-  afterSign: "electron-builder-notarize",
+//  afterSign: "electron-builder-notarize",
   mac: {
     target: ["default"],
     artifactName: "Rendevoz-MacOS-Setup.${ext}",
@@ -51,8 +50,7 @@
     gatekeeperAssess: false
   },
   linux: {
-    icon: "electron/resources/iconset",
-    target: ["AppImage", "deb"],
-    artifactName: "${productName}-Linux-${version}.${ext}",
+    target: ["AppImage"],
+    artifactName: "Rendevoz-Linux-Setup.${ext}",
   },
 }

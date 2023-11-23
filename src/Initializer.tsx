@@ -1,4 +1,3 @@
-import { ProgressInfo } from 'electron-updater'
 import produce from 'immer'
 import { atom } from 'jotai'
 import { useEffect } from 'react'
@@ -9,7 +8,7 @@ import { SettingAtom } from './core'
 import { useGlobalAtom, useGlobalAtomValue, useGlobalSetAtom } from '@/hooks'
 import { ipcInstance } from './plugins'
 import LoginService, { userAtom } from './api/services/login.service'
-import { CollectionStore, globalStore, MetaStore } from './api/stores'
+import { globalStore } from './api/stores'
 import { getDefaultUserFilePath } from '@/utils'
 import { Rendevoz } from '@/core/rendevoz'
 import '@/api/lifycycle/close/close'
@@ -23,13 +22,6 @@ export const updateInfoAtom = atom<
 >(undefined)
 let autoLogined = false
 
-const DownloadInfoAtom = atom<{
-  beginDownload: boolean
-  downloadProgress?: number
-  downloadSpeed?: number
-}>({
-  beginDownload: false
-})
 
 const Initializer = () => {
   const [loginState] = useGlobalAtom(loginStateAtom)
@@ -53,18 +45,7 @@ const Initializer = () => {
       // })
     }
   }, [setting.general.userFilePath])
-  const setDownloadInfo = useGlobalSetAtom(DownloadInfoAtom)
   useEffect(() => {
-    const downloadListener = (e: ProgressInfo) => {
-      console.log(e)
-      setDownloadInfo(s => ({
-        ...s,
-        beginDownload: true,
-        downloadProgress: e.percent,
-        downloadSpeed: e.bytesPerSecond
-      }))
-    }
-    ipcInstance.on('download', downloadListener)
     ipcInstance.on('openObject', data => {
       if (data.url) {
         Rendevoz.Actions.Open.openRendevozLink(data.url)
@@ -118,6 +99,7 @@ const Initializer = () => {
     })
 
     ipcInstance.send('getUpdateDetails').then(res => {
+      console.log(res)
       globalStore.set(updateInfoAtom, {
         version: res.data.version
       })

@@ -113,7 +113,8 @@ const defaultSetting: Setting = {
   },
   object: {
     deleteFileWhenDeleteObject: true,
-    autoHideLabelObject: false
+    autoHideLabelObject: false,
+    linkType: 'text'
   },
   translate: {
     autoGotoHoverText: true,

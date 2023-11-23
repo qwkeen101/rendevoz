@@ -32,9 +32,9 @@ const downloadRemotePdf = async (remotePdfUrl: string, onProgress?: (progress: D
         if (downloadResult.status > 400) {
           throw new Error(ErrorMaker.createError('WEB_REQUEST_ERROR'))
         }
-        const buf = await downloadResult.arrayBuffer()
+        const buf = await downloadResult.blob()
         if (buf) {
-          const filepath = await FileSystem.fs.writeFile(new Blob([buf], { type: 'application/pdf' }), `/files/${fileMetas.filename}`)
+          const filepath = await FileSystem.fs.writeFile(buf, `/files/${fileMetas.filename}`, 'binary')
           if (filepath) {
             return filepath
           }

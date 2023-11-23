@@ -1,17 +1,16 @@
 import { useToggle } from '@/hooks'
 import useLatest from '@/hooks/utils/useLatest'
 import { CollectionStore, MetaStore } from '@/api/stores'
-import ClassName from '@/styles/classNames'
+import { ClassName } from 'rendevoz'
 import { exportRendevozDb, importRendevozDb } from '@/utils/db'
 import { useEffect, useRef, useState } from 'react'
 import { toast } from 'react-hot-toast'
-import { Button, Content, FileUploader, Form, Image, Slider, Switch } from '../../components/base'
-import Modal from '../../components/base/Modal'
+import { Button, Content, Form, Switch, Modal, Icon } from '@/components'
 import useFileUpload from '../../components/base/useFileUpload'
-import SettingItem, { ISettingItem } from './SettingItem'
+import { ISettingItem } from './SettingItem'
 import { useTranslation } from 'react-i18next'
 import { useSetting } from '.'
-import Select from '../../components/base/select'
+import Select from '@/components/base/select'
 import { SelectOptionProps } from '../../components/base/select/SelectOption'
 import produce from 'immer'
 import { useGlobalAtomValue } from '@/hooks/jotai'
@@ -24,11 +23,9 @@ import FontSize from '@/consts/font'
 import { isValidHttpUrl } from '../components/webpage/utils'
 import { changeFilePath, openDatabaseFolder } from '@/utils/file'
 import SettingGroup from '@/core/setting/SettingGroup'
-import { DateFormat, saveImageLocally } from '@/utils'
+import { DateFormat } from '@/utils'
 import { getAppState } from '@/core/rendevoz/appState'
 import FileSystem from '@/api/fileSystem'
-import { Icon } from '@/components'
-import { css } from '@emotion/css/dist/emotion-css.cjs'
 
 const languageOptions: SelectOptionProps[] = [
   {
@@ -54,16 +51,7 @@ const GeneralSetting = () => {
   const { t } = useTranslation()
   const [setting, setSetting] = useSetting()
   const [validCustomSearchEngine, setValidSearchEngine] = useState(false)
-  const newTabOptions: SelectOptionProps[] = [
-    {
-      value: 'always open new tab',
-      children: t('settings.always open new tab')
-    },
-    {
-      value: 'open existing tab',
-      children: t('settings.open existing tab')
-    }
-  ]
+
   const handleImportData = async (file?: File) => {
     toggleIsImporting(true)
     try {
@@ -85,6 +73,7 @@ const GeneralSetting = () => {
       toast.error('Fail to import data! (Some errors happened)')
     }
   }
+
   const { renderUploader, upload } = useFileUpload(file => handleImportData(file), 'application/JSON')
   const Moon = () => (
     <svg width="32" height="32" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
@@ -94,6 +83,7 @@ const GeneralSetting = () => {
       ></path>
     </svg>
   )
+
   const checkCanUpdate = () => {
     if (APP_VERSION && updateInfo?.version) {
       if (semver.gt(updateInfo.version, APP_VERSION)) {
@@ -102,6 +92,7 @@ const GeneralSetting = () => {
     }
     return false
   }
+
   useEffect(() => {
     if (isExporting) {
       const hasex = hasExporting.current
@@ -144,26 +135,15 @@ const GeneralSetting = () => {
     },
     {
       title: t('settings.latest version'),
-      description: `Beta ${updateInfo?.version || 'Unknown'} ${!checkCanUpdate() ? '(Latest)' : ''}`,
+      description: `Beta ${updateInfo?.version || 'Unknown'} ${!checkCanUpdate() ? `(${t('settings.Latest')})` : ''}`,
       children: checkCanUpdate() && (
         <div
           onClick={() => {
-            toast.success('Begin Download Update, Update will be installed after quit.')
-            ipcInstance
-              .send('updateAndInstall')
-              .then(data => {
-                toast.success('Successfully Downloaded!')
-              })
-              .catch(e => {
-                toast.error('Failed to download.')
-              })
+            ipcInstance.send('downloadApp')
           }}
-          style={{
-            border: '1px solid rgba(31, 34, 39, 0.06)'
-          }}
-          className={ClassName.flatButton()}
+          className={ClassName.selectButton()}
         >
-          {t('settings.download and install')}
+          {t('settings.Download update')}
         </div>
       )
     }
@@ -257,7 +237,7 @@ const GeneralSetting = () => {
                 boxShadow: followSystem ? '0 0 0 2px var(--select-color)' : undefined
               }}
             >
-              <Icon size={24} name={'park-system'} theme={"filled"}/>
+              <Icon size={24} name={'park-system'} theme={'filled'} />
             </Content>
             <div style={{ color: Colors.Font.Transparent, fontSize: 12 }}>System</div>
           </Content>

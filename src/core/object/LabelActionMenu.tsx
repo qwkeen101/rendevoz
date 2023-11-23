@@ -1,10 +1,11 @@
 import { Button, WithBorder } from '@/components'
 import { MetaStore, ObjectStore } from '@/api/stores'
 import { useTranslation } from 'react-i18next'
-import { MetaObject } from '~/typings'
+import { ILabel, MetaObject } from '~/typings'
 import { transformTextContentToNameAndDescription } from '../global/globalDragOverlay/utils'
 import { Rendevoz } from '@/core/rendevoz'
 import { GlobalInstance } from '@/hooks'
+import OcrService from '@/api/services/ocr.service'
 
 export type LabelActionEvent =
   | {
@@ -22,6 +23,9 @@ export type LabelActionEvent =
   | {
       type: 'editOriginal'
     }
+  | {
+      type: 'textToImage'
+    }
 type Props = {
   on: (action: LabelActionEvent) => void
   objectId: number
@@ -31,7 +35,7 @@ type Props = {
 const LabelActionMenu = ({ on, objectId, type }: Props) => {
   const { t } = useTranslation()
   const meta = MetaStore.getMetaObjectByObjectId(objectId)
-  const label = ObjectStore(type).useValue(objectId)
+  const label = ObjectStore(type).useValue(objectId) as ILabel | undefined
   const checkObjectIsMeta = async () => {
     await GlobalInstance.metaOps?.addDraggableAsMeta({
       type,
@@ -73,6 +77,22 @@ const LabelActionMenu = ({ on, objectId, type }: Props) => {
           onClick={() => on({ type: 'editOriginal' })}
         ></Button.IconButton>
       )}
+      {label && label.imageUrl && (
+        <Button.IconButton
+          icon="park-scanning-two"
+          text={t('general.Image to text')}
+          onClick={async () => {
+            on({ type: 'textToImage' })
+            const blob = await fetch(label!.imageUrl!).then(res => res.blob())
+            if (blob) {
+              const res = await OcrService.ocrImage(blob)
+              if (res) {
+                ObjectStore(type).updateOne({ id: objectId, description: res.result.map(i => i.words).join(' ') })
+              }
+            }
+          }}
+        ></Button.IconButton>
+      )}
       <Button.IconButton
         icon={'park-corner-up-right'}
         text={t('general.Move to')}
@@ -84,17 +104,22 @@ const LabelActionMenu = ({ on, objectId, type }: Props) => {
               labelId: objectId
             })
           }
-          if(m){
+          if (m) {
             GlobalInstance.metaOps?.quickAdd(m.id)
           }
         }}
       />
       <Button.IconButton
         icon="park-link"
-        text={t('general.add attachment')}
-        onClick={() => {
-          on({ type: 'addAttachment' })
-          checkObjectIsMeta()
+        text={t('general.Copy link')}
+        onClick={async () => {
+          let m = meta
+          if (!m) {
+            m = await GlobalInstance.metaOps?.addDraggableAsMeta({ type, labelId: objectId })
+          }
+          if (m) {
+            GlobalInstance.metaOps?.copyLink(m.id)
+          }
         }}
       ></Button.IconButton>
       <Button.IconButton dangerous icon="park-delete" text={t('general.delete')} onClick={() => on({ type: 'delete' })}></Button.IconButton>

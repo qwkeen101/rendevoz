@@ -5,6 +5,7 @@ import { Switch } from '../../components/base'
 import SettingItem from './SettingItem'
 import { IObjectsAndLinkSetting, useSetting } from '.'
 import SettingGroup from '@/core/setting/SettingGroup'
+import Select from '@/components/base/select'
 
 const ObjectsAndLinksSetting = () => {
   const { t } = useTranslation()
@@ -47,6 +48,36 @@ const ObjectsAndLinksSetting = () => {
             setSetting(s =>
               produce(s, draft => {
                 draft.object.autoHideLabelObject = !draft.object.autoHideLabelObject
+              })
+            )
+          }
+        />
+      )
+    },
+    {
+      title: t('settings.Object link type'),
+      children: (
+        <Select
+          closeOnSelect={true}
+          value={setting.object.linkType}
+          options={[
+            {
+              value: 'text',
+              children: t('settings.Text')
+            },
+            {
+              value: 'url',
+              children: t('settings.URL')
+            },
+            {
+              value: 'markdown',
+              children: t('settings.Markdown')
+            }
+          ]}
+          onSelect={v =>
+            setSetting(s =>
+              produce(s, draft => {
+                draft.object.linkType = v[0]
               })
             )
           }

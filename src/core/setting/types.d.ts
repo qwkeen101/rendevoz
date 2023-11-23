@@ -95,6 +95,7 @@ export type IObjectsAndLinkSetting = {
   object: {
     deleteFileWhenDeleteObject: boolean
     autoHideLabelObject: boolean
+    linkType: 'text' | 'url' | 'markdown'
   }
 }
 

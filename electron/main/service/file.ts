@@ -53,7 +53,7 @@ const openLocalFile = async (filePath: string) => {
   await shell.openPath(realPath)
 }
 
-const writeFile = async (data: string, filePath: string, type?: 'base64' | 'utf8') => {
+const writeFile = async (data: string, filePath: string, type?: 'base64' | 'utf8' | 'binary') => {
   checkFileFolderGenerated()
   const folderPath = getRendeFileFolderPath()
   const absolutePath = path.join(folderPath, filePath)

@@ -2,6 +2,9 @@
   "general": {
     "home": "Home",
     "database": "Database",
+    "Downloading update": "Downloading update",
+    "Update downloaded": "Update downloaded",
+    "Install": "Install",
     "note": "Document",
     "Quick add": "Quick add",
     "Organize object with one click": "Organize object with one click.",
@@ -11,6 +14,7 @@
     "OK": "OK",
     "Selected object": "Selected object",
     "Selected group": "Selected group",
+    "Image to text": "Image to text",
     "Select tags or create one": "Select tags or create one",
     "Auto open": "Auto open after adding",
     "Type to search": "Type to search",
@@ -495,6 +499,12 @@
     "code-block": "Code block"
   },
   "settings": {
+    "Object link type": "Object link format",
+    "Markdown": "Markdown",
+    "Text": "Text",
+    "Latest": "Latest",
+    "Download update": "Download update",
+    "URL": "URL",
     "appearance": "Appearance",
     "Background": "Background",
     "auto hide label object": "Auto hide label objects",

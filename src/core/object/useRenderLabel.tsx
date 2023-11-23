@@ -27,6 +27,7 @@ const useRenderLabel = (opts: {
   if (label && !label.parentObjectId && (label.webpageId || label.videoId || label.pdfId || label.noteId)) {
     ObjectStore(type).updateOne({ id: objectId, parentObjectId: label.webpageId || label.videoId || label.pdfId || label.noteId })
   }
+
   const parentMeta = MetaStore.useObjectToMetaValue(label?.parentObjectId)
   const labelMeta = MetaStore.useObjectToMetaValue(opts.objectId)
   const { t } = useTranslation()

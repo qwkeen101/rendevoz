@@ -34,31 +34,30 @@ const startElectron = async () => {
   if (!fs.existsSync(defaultRendevozDataPath)) {
     fs.mkdirSync(defaultRendevozDataPath)
   }
-  autoUpdater.autoDownload = true
+  autoUpdater.autoDownload = false
   autoUpdater.autoInstallOnAppQuit = true
-  autoUpdater.autoRunAppAfterInstall = false
+  autoUpdater.autoRunAppAfterInstall = true
   let updateAvailable = false
   autoUpdater.setFeedURL({
     provider: 'generic',
     url: 'https://rendevoz.com/download'
   })
   autoUpdater.forceDevUpdateConfig = true
-  autoUpdater.on('update-not-available', info => {
-    console.log(info)
-  })
+
   autoUpdater.on('update-available', info => {
     updateAvailable = true
+    win.webContents.send('updateAvailable')
     console.log(info)
   })
+
   autoUpdater.on('update-downloaded', () => {
-    if (process.env.USER_CALL_UPDATE === 'true') {
-      win.webContents.send('update downloaded')
-      setTimeout(() => {
-        autoUpdater.quitAndInstall(true, true)
-      }, 6000)
-    }
+    win.webContents.send('updateDownloaded')
+    process.env.IS_DOWNLOADING = 'false'
   })
 
+  autoUpdater.on('error', () => {
+    process.env.IS_DOWNLOADING = 'false'
+  })
   app.setAsDefaultProtocolClient('rendevoz')
   // autoUpdater.autoInstallOnAppQuit = true
   app.on('window-all-closed', () => {
@@ -70,10 +69,6 @@ const startElectron = async () => {
   app.on('will-quit', () => {
     session.defaultSession.clearCache()
     session.defaultSession.clearCodeCaches({ urls: [] })
-    const os = process.platform
-    if (os === 'win32' && updateAvailable) {
-      autoUpdater.quitAndInstall(true, false)
-    }
   })
 
   if (isDev) {
@@ -109,7 +104,6 @@ const startElectron = async () => {
 
   app.on('web-contents-created', (createEvent, contents) => {
     contents.setWindowOpenHandler(({ url }) => {
-
       if (url.includes('printer.html')) return { action: 'allow' }
       if (url.includes('blank')) return { action: 'allow' }
       if (url.includes('index.html')) return { action: 'allow' }

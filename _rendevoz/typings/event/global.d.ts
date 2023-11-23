@@ -71,6 +71,7 @@ export interface GlobalEventMap {
   globalNeedEditMetaObject: GlobalNeedEditMetaObjectEvent
   globalChooseMetaObject: GlobalChooseMetaObjectEvent
   globalValueChange: GlobalValueChangeEvent
+  startDownloadUpdate: VoidFunction
 }
 
 export type GlobalEvent = Event<GlobalEventMap, keyof GlobalEventMap>

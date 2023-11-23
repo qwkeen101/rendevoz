@@ -43,6 +43,7 @@ import { GlobalObjectDetails } from '@/core/object/details'
 import GlobalPreviewPanel from '@/core/global/GlobalPreviewPanel'
 import GlobalObjectCreator from '@/core/global/GlobalObjectCreator'
 import GlobalQuickAdd from '@/components/form/quickAdd/GlobalQuickAdd'
+import GlobalDownloadIndicator from '@/core/global/DownloadIndicator'
 
 export function getOS() {
   const userAgent = window.navigator.userAgent.toLowerCase(),
@@ -124,6 +125,7 @@ const App = () => {
         <ThemeSwitcher />
         <Notification />
         <>
+          <GlobalDownloadIndicator />
           <Initializer />
           <GlobalTextSearch />
           <GlobalGraph />

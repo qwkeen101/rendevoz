@@ -12,7 +12,7 @@ export type IFileSystem = {
   /**
    * @return the uri where the file was written into
    */
-  writeFile: (data: string | Blob, path: string, type?: 'base64' | 'utf8') => Promise<string>
+  writeFile: (data: string | Blob, path: string, type?: 'base64' | 'utf8' | 'binary') => Promise<string>
   deleteFile: (path: string) => Promise<void>
   readdir: (path: string) => Promise<{
     dirState: {

@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { Content } from '../base'
 import Icon from '../base/Icon'
 import styles from './index.module.less'
+import close from '@/api/lifycycle/close/close'
 
 const TitleBar = () => {
   const [isFullScreen, setIsFullScreen] = useState(false)
@@ -38,7 +39,14 @@ const TitleBar = () => {
           maximizeWindow()
         }}
       />
-      <Icon name="park-close" className={styles.icon} cursor="pointer" onClick={() => ipcInstance.send('close')} />
+      <Icon
+        name="park-close"
+        className={styles.icon}
+        cursor="pointer"
+        onClick={() => {
+          close()
+        }}
+      />
     </Content>
   )
 }

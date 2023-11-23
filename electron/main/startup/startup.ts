@@ -160,6 +160,7 @@ const startElectron = async () => {
   })
   process.env.SHOULD_CLOSE = 'false'
   win.on('close', e => {
+    console.log(process.env.SHOULD_CLOSE)
     if (process.env.SHOULD_CLOSE === 'false') {
       win.webContents.send('unload')
       e.preventDefault()

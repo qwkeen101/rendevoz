@@ -1,33 +1,20 @@
-import { useGlobalAtomValue, useSelectGlobalAtomValue } from '@/hooks/jotai'
-import { metaObjectsAtom, relatedMetaObjectsMapAtom } from '@/api/stores/meta.store'
+import { useGlobalAtomValue } from '@/hooks/jotai'
+import { relatedMetaObjectsMapAtom } from '@/api/stores/meta.store'
 import ClassName from '@/styles/classNames'
 import Id from '@/utils/id'
 import { css } from '@emotion/css'
 import { selectAtom } from 'jotai/utils'
-import { CSSProperties, memo, ReactNode, useEffect, useMemo, useRef, useState } from 'react'
+import { CSSProperties, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Content, ContentEditor, Icon, IconWithPopover, Image, WithBorder } from '@/components'
+import { IconWithPopover } from '@/components'
 import { Editor } from '../components/editor/Editor'
-import { ObjectActionPopover, TypeToTypeName } from './card/DatabaseCard'
-import { ObjectTag, SettingAtom, useRenderLabel, Whiteboard } from '@/core'
-import DateFormat from '@/utils/dateFormat'
+import { ObjectActionPopover } from './card/DatabaseCard'
+import { Whiteboard } from '@/core'
 import FromRenderer, { FromRendererProps } from './renderer/object/FromRenderer'
-import WebpageSourceRenderer from './WebpageSourceRenderer'
 import Colors from '@/consts/colors'
-import { TFunction } from 'i18next'
-import { MetaObject, Size } from '~/typings'
 import { Rendevoz } from '../rendevoz'
-import HoverAttachment from './HoverAttachment'
-import HoverObjectDetails from './HoverObjectDetails'
-import { useUpdate } from 'react-use'
 import Pdf from '@/core/components/pdf'
-import isHotkey from 'is-hotkey'
-import { KEY } from '@/consts'
-import { MetaStore, ObjectStore } from '@/api/stores'
-import FontSize from '@/consts/font'
-import AutosizeTextarea from '@/components/custom/input/autosizeTextarea'
-import { toast } from 'react-hot-toast'
-import { GlobalInstance } from '@/hooks'
+import { MetaStore } from '@/api/stores'
 import TagRenderer, { TagRendererProps } from '@/core/object/renderer/object/TagRenderer'
 import TitleRenderer, { TitleRendererProps } from '@/core/object/renderer/object/TitleRenderer'
 import DescriptionRenderer, { DescriptionRendererProps } from '@/core/object/renderer/object/DescriptionRenderer'
@@ -49,20 +36,19 @@ window.addEventListener('DOMContentLoaded', () => {
     keyboard.ctrl = false
   })
 })
-export const DefaultObjectTitleRenderClazzName = css([
-  ClassName.title('14px'),
-  {
-    position: 'relative',
-    width: 'fit-content',
-    lineHeight: '18px',
-    maxWidth: '100%',
-    ':hover': {
-      color: Colors.Common.SelectColor
-    },
-    transition: 'color 0.2s ease',
-    cursor: 'pointer'
-  }
-])
+export const DefaultObjectTitleRenderClazzName = css({
+  fontWeight: 500,
+  fontSize: 14,
+  position: 'relative',
+  width: 'fit-content',
+  lineHeight: '18px',
+  maxWidth: '100%',
+  ':hover': {
+    color: Colors.Common.SelectColor
+  },
+  transition: 'color 0.2s ease',
+  cursor: 'pointer'
+})
 
 const defaultRenderWholeOptions = {
   columnGap: 3,
@@ -143,6 +129,7 @@ const useRenderObject = (options: { metaObjectId: number }) => {
   } & Partial<Parameters<typeof ObjectActionPopover>[0]>) => {
     return (
       <IconWithPopover
+        withClickCover={true}
         content={<ObjectActionPopover {...rest} metaObjectId={metaObjectId} />}
         name={icon}
         align={align}

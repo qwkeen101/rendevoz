@@ -1,12 +1,12 @@
-import { globalStore, ObjectStore } from '@/api/stores'
-import { Position } from '@/types'
+import { ObjectStore } from '@/api/stores'
 import produce, { Draft, Patch, produceWithPatches } from 'immer'
 import { PanZoom } from 'panzoom'
-import { IWhiteboard, IWhiteboardNode } from '~/typings/data'
+import { IWhiteboard, IWhiteboardInstance, IWhiteboardNode } from '~/typings/data'
 import { Box, Point, Size, XYPosition } from '~/typings'
 import { transformXY } from '@/core/components/whiteboard/utils'
-import { useSetWhiteboardNodes } from '@/core/components/whiteboard/hooks'
+import { useSetWhiteboardNodes } from '@/core/components/whiteboard/StateHooks'
 import { debounce } from 'lodash'
+import { trimNumber } from '@/utils'
 
 type HistoryItem = {
   patches: Patch[]
@@ -18,7 +18,8 @@ class FlowManager {
   private intervalId: ReturnType<typeof setInterval> | undefined
   public focused = false
   public clearSelectBox?: VoidFunction
-  constructor() {
+  private instance: IWhiteboardInstance
+  constructor(instance: IWhiteboardInstance) {
     // loop to avoid nodes without width & height
     this.intervalId = setInterval(() => {
       const nodesToUpdate = []
@@ -47,6 +48,7 @@ class FlowManager {
         )
       }
     }, 1000)
+    this.instance = instance
   }
   public ID_TO_NODE_ELEMENT_MAP = new Map<
     number,
@@ -89,20 +91,11 @@ class FlowManager {
     this.updates = []
     this.history.redos = []
   }, 50)
-  public ID_TO_EDGE_MAP = new Map<
-    number,
-    {
-      element?: SVGPathElement | null
-      drawPath: VoidFunction
-    }
-  >()
 
   public history = {
     redos: [] as HistoryItem[],
     undos: [] as HistoryItem[]
   }
-
-  public NODE_TO_EDGE_MAP = new Map<number, Set<number>>()
 
   public containerEle?: HTMLElement
 
@@ -113,8 +106,6 @@ class FlowManager {
   public isAddingEdge = false
 
   public isDraggingNode = false
-
-  public selectable = false
 
   public selectStartPoint?: Point
 
@@ -134,42 +125,38 @@ class FlowManager {
   public cachedUpdatesRequest = []
 
   public resizeObserver = new ResizeObserver(entries => {
-    if (this.whiteboardId) {
-      for (const entry of entries) {
-        const target = entry.target
-        const nodeId = Number(target.getAttribute('data-node-id'))
-        if (this.ID_TO_NODE_ELEMENT_MAP.get(nodeId)?.sizeAlreadyDefined()) {
-          return
+    // do not update values if resizing using selection box
+    if (this.instance.values.isResizingSelectionBox) return
+    const batchNewSize: { id: number; width?: number; height?: number }[] = []
+    for (const entry of entries) {
+      const target = entry.target
+      const nodeId = Number(target.getAttribute('data-node-id'))
+      if (this.instance.values.ID_TO_NODE_MAP.get(nodeId)?.sizeAlreadyDefined()) {
+        return
+      }
+      const node = this.instance.getNode?.(nodeId)
+      if (node) {
+        const box = entry.contentRect
+        const newSize = {
+          width: trimNumber(node.width || node.expanded ? box.width : Math.min(box.width, 500)),
+          height: trimNumber(box.height)
         }
-        const whiteboard = globalStore.get(ObjectStore('whiteboard').objectMapAtom).get(this.whiteboardId)
-        const node = whiteboard?.nodes?.get(nodeId)
-        if (node) {
-          const box = entry.contentRect
-          const hasWidth = node.width !== undefined && node.width > 0
-          const newSize = {
-            width: hasWidth ? node.width : Math.min(box.width, 450),
-            height: hasWidth ? box.height : undefined
-          }
-          const style = (target as HTMLElement).style
-          style.width = `${newSize.width}px`
-          style.height = `${newSize.height}px`
-          const newWhiteboard = produce(whiteboard, draft => {
-            draft?.nodes?.set(nodeId, {
-              ...node,
-              width: newSize.width,
-              height: newSize.height
-            })
-          })
-
-          ObjectStore('whiteboard').updateOne(newWhiteboard, { silent: true })
-        }
+        batchNewSize.push({ ...newSize, id: nodeId })
       }
     }
+    if (batchNewSize.length) {
+      setTimeout(() => {
+        this.instance.updateWhiteboard?.(w => {
+          batchNewSize.forEach(s => {
+            const o = w.nodes?.get(s.id)
+            if (o) {
+              w.nodes?.set(s.id, { ...o, ...s })
+            }
+          })
+        }, false)
+      })
+    }
   })
-
-  public isSelecting = false
-
-  public hasMultiSelectBox = false
 
   public isMovingMultiSelectBox = false
 

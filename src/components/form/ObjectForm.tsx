@@ -1,24 +1,20 @@
 import Id from '@/utils/id'
-import { FC, useState } from 'react'
+import { FC, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { ILocalFile, IVideo, MetaObject } from 'rendevoz'
+import { MetaObject } from 'rendevoz'
 import { IForm } from './types'
 import useFlipForm from './useFlipForm'
-import { MetaStore, ObjectStore } from '@/api/stores'
+import { ObjectStore } from '@/api/stores'
 import { ObjectFamily } from '@/api/stores/object.store'
-import { useDebounceEffect, useGlobalAtomValue } from '@/hooks'
+import { useGlobalAtomValue } from '@/hooks'
 import OcrService from '@/api/services/ocr.service'
 import ClassName from '@/styles/classNames'
 import { Button } from '../base'
 import { transformTextContentToNameAndDescription } from '@/core/global/globalDragOverlay/utils'
 import { toast } from 'react-hot-toast'
-import { getFilenameWithoutExtension } from '@/utils/file'
-import { generateVideoThumbnail } from '@/core/components/media/utils'
 import { TypeToRegisteredMetaObject } from '@/api/stores/meta.store'
-import { fetchHead } from '@/core/global/globalDragOverlay/useDropObject'
-import { IPdfDocument, MetaFormLayoutItem } from '~/typings'
-import { initializePdfDocument } from '@/api/stores/document.store'
-import FileSystem from '@/api/fileSystem'
+import { IFile, MetaFormLayoutItem } from '~/typings'
+import { Rendevoz } from '@/core/rendevoz'
 
 const ObjectForm: FC<
   IForm<MetaObject> & {
@@ -33,28 +29,57 @@ const ObjectForm: FC<
       ? ObjectStore(initialObject.type as keyof ObjectFamily).createAtom(initialObject.objectId)
       : undefined
   const targetObject = objectAtom && useGlobalAtomValue(objectAtom)
-  useDebounceEffect(
-    () => {
-      if (targetObject) {
-        if (targetObject.specType === 'webpage' && targetObject.url) {
-          if (!object.name || object.name === 'Unnamed webpage') {
-            fetchHead(targetObject.url).then(res => {
-              setObject(s => ({ ...s, name: res.title, coverImgSrc: res.coverImgSrc, description: res.description }))
-            })
-          }
-        }
-      }
-    },
-    [targetObject],
-    { wait: 200 }
-  )
+  const [originObject, setOriginObject] = useState<any>()
+  useEffect(() => {
+    if (object.objectId) {
+      ObjectStore(object.type)
+        .getOneById(object.objectId)
+        .then(o => setOriginObject(o))
+    }
+  }, [object.objectId])
+
+  let fileAccept = ''
+  switch (object.type) {
+    case 'video': {
+      fileAccept = 'video/*,.flv'
+      break
+    }
+    case 'audio': {
+      fileAccept = 'audio/*'
+      break
+    }
+    case 'image': {
+      fileAccept = 'image/*'
+      break
+    }
+    case 'localFile': {
+      fileAccept = '*'
+      break
+    }
+    case 'pdf': {
+      fileAccept = 'application/pdf'
+      break
+    }
+  }
+
   const defaultLayout: MetaFormLayoutItem[] = [
-    targetObject && 'url' in targetObject && targetObject.specType === 'webpage'
+    originObject && 'url' in originObject && object.type === 'webpage'
       ? {
           type: 'input',
           text: t('general.url'),
-          value: targetObject.url,
-          onChange: v => ObjectStore(targetObject.specType).updateOne({ id: targetObject.id, url: v }, { silent: true })
+          value: originObject.url,
+          onChange: async v => {
+            setOriginObject(o => ({ ...o, url: v }))
+            if (v) {
+              try {
+                new URL(v)
+              } catch (e) {
+                return
+              }
+              const result = await Rendevoz.Utils.Web.fetchDetails(v)
+              setObject(s => ({ ...s, name: result.title, coverImgSrc: result.image, description: result.description }))
+            }
+          }
         }
       : undefined,
     {
@@ -79,103 +104,47 @@ const ObjectForm: FC<
           }
         }
       : undefined,
-    object?.type === 'localFile'
+    object?.type && ['localFile', 'pdf', 'video', 'audio', 'image'].includes(object.type)
       ? {
           type: 'filePathPicker',
-          filePath: (targetObject as ILocalFile)?.fileUrl,
-          onChange: details => {
-            if (details.type !== 'local') return
-            object.objectId &&
-              details.type === 'local' &&
-              ObjectStore('localFile').updateOne({
-                id: object.objectId,
-                fileUrl: details.filePath
-              })
-            setObject(o => ({
-              ...o,
-              name: getFilenameWithoutExtension(details.fileName || '')
-            }))
-          }
-        }
-      : undefined,
-    object?.type === 'pdf'
-      ? {
-          type: 'filePathPicker',
-          filePath: (targetObject as IPdfDocument)?.fileUrl || '',
-          accept: 'application/pdf',
-          onChange: details => {
-            if (object.objectId && details.type === 'local' && details.file) {
-              initializePdfDocument(details.file).then(doc => {
-                ObjectStore('pdf')
-                  .updateOne({ id: object.objectId, ...doc })
-                  .then(one => {
-                    setObject({ ...object, name: details.fileName, coverImgSrc: one?.metadata?.coverUrl })
-                  })
-              })
-            }
-            if (object.objectId && details.type === 'clear') {
-              ObjectStore('pdf').updateOne({ id: object.objectId, fileUrl: undefined })
-            }
-          }
-        }
-      : undefined,
-    object?.type === 'video'
-      ? {
-          type: 'filePathPicker',
-          enableWeb: true,
-          enableBaidudisk: true,
-          baidudiskCategory: 1,
-          filePath: (targetObject as IVideo)?.url,
+          accept: fileAccept,
+          filePath: (originObject as IFile)?.url,
+          enableWeb: ['video', 'audio'].includes(object.type),
+          enableBaidudisk: ['video'].includes(object.type),
           onChange: async details => {
-            if (details.type === 'local' && details.filePath && details.fileName && details.file) {
-              const localFilePath = await FileSystem.copyFile(details.filePath, details.fileName)
-              object.objectId &&
-                (await ObjectStore('video').updateOne({
-                  id: object.objectId,
-                  url: localFilePath
-                }))
-              const image = await generateVideoThumbnail(details.file)
-              const imageUrl = await FileSystem.saveImage(image)
-              setObject(o => ({ ...o, coverImgSrc: imageUrl, name: getFilenameWithoutExtension(details.fileName) }))
-              return
-            } else if (details.type === 'web') {
-              setObject(o => ({ ...o, name: details.url }))
-              if (object.objectId) {
-                fetchHead(details.url).then(res => {
-                  setObject(o => ({ ...o, name: res.title || details.url, coverImgSrc: res.coverImgSrc }))
-                  if (MetaStore.getMetaObjectsMap().has(object.id)) {
-                    const meta = MetaStore.getMetaObjectsMap().get(object.id)
-                    MetaStore.updateMetaObject(
-                      {
-                        id: object.id,
-                        coverImgSrc: res.coverImgSrc || meta?.coverImgSrc,
-                        name: res.title || meta?.name
-                      },
-                      true
-                    )
-                  }
+            if (details.type === 'local' && details.file) {
+              try {
+                const result = await Rendevoz.Utils.Meta.normalizeLocalFileToMeta(details.file, {
+                  limitType: object.type !== 'localFile'
                 })
-                ObjectStore('video').updateOne({ id: object.objectId, url: details.url })
+                setObject(o => ({ ...o, ...result.meta }))
+                if (originObject) {
+                  setOriginObject(i => ({ ...i, ...result.object }))
+                }
+              } catch (e) {
+                toast.error(Rendevoz.Consts.Errors.NotSupportedFile())
+                console.error(e)
               }
-            } else if (details.type === 'baidudisk') {
-              setObject(o => ({ ...o, name: details.name }))
-              if (object.objectId) {
-                ObjectStore('video').updateOne({ id: object.objectId, url: `baidudisk${details.url}` })
-              }
-            } else if (details.type === 'clear') {
-              object.objectId &&
-                ObjectStore('video').updateOne({
-                  id: object.objectId,
-                  url: undefined
-                })
-              setObject(o => ({
-                ...o,
-                name: undefined,
-                coverImgSrc: undefined
-              }))
             }
-          },
-          accept: 'video/*,.flv'
+            if (details.type === 'baidudisk') {
+              setObject(o => ({ ...o, name: details.name }))
+              if (originObject) {
+                setOriginObject(o => ({ ...o, url: `baidudisk${details.url}` }))
+              }
+            }
+            if (details.type === 'web') {
+              const result = await Rendevoz.Utils.Meta.normalizeWebFileToMeta(details.url, object.type)
+              setObject(o => ({ ...o, ...result.meta }))
+              if (originObject) {
+                setOriginObject(i => ({ ...i, ...result.object }))
+              }
+            }
+            if (details.type === 'clear') {
+              if (originObject) {
+                setOriginObject(i => ({ ...i, url: undefined }))
+              }
+            }
+          }
         }
       : undefined,
     object.attachments?.length ? { type: 'attachmentDisplayer', attachments: object.attachments } : undefined,
@@ -245,7 +214,12 @@ const ObjectForm: FC<
   const { renderForm } = useFlipForm({
     layout: customizedLayout || defaultLayout,
     onBack,
-    onSubmit: () => onSubmit?.(object),
+    onSubmit: () => {
+      onSubmit?.(object)
+      if (originObject) {
+        ObjectStore(object.type).updateOne({ id: originObject.id, ...originObject })
+      }
+    },
     formTitle: initialObject?.id
       ? t('form.update item details', { item: t('general.object') })
       : t('form.create new item', { item: t('general.object') }),

@@ -57,7 +57,6 @@ export class TabCache {
   onCloseClick = (e: React.MouseEvent) => {
     this.context.dockMove(this.data, null, 'remove')
     LayoutIdToTabMap.delete(this.data.id)
-    console.log(LayoutIdToTabMap)
     this.context.getGlobal().onTabClose?.(this.data)
     e.stopPropagation()
   }
@@ -71,10 +70,12 @@ export class TabCache {
     e.startDrag(this._ref.parentElement, this._ref.parentElement)
   }
   onDragOver = (e: DragManager.DragState) => {
+    // console.log(e, this)
     const dockId = this.context.getDockId()
     const tab: TabData = DragManager.DragState.getData('tab', dockId)
     let panel: PanelData = DragManager.DragState.getData('panel', dockId)
     let group: string
+    console.log(tab, this)
     if (tab) {
       panel = tab.parent
       group = tab.group
@@ -93,14 +94,12 @@ export class TabCache {
 
     if (group !== this.data.group) {
       e.reject()
-    } else if (tabGroup?.floatable === 'singleTab' && this.data.parent?.parent?.mode === 'float') {
-      e.reject()
     } else if (tab && tab !== this.data) {
-      const direction = this.getDropDirection(e)
-      // only show drop rect in different panels
-      if (tab.parent !== this.data.parent) {
-        this.context.setDropRect(this._hitAreaRef, direction, this)
-      }
+      // const direction = this.getDropDirection(e)
+      // // only show drop rect in different panels
+      // if (tab.parent !== this.data.parent) {
+      //   this.context.setDropRect(this._hitAreaRef, direction, this)
+      // }
       e.accept('')
     } else if (panel && panel !== this.data.parent) {
       const direction = this.getDropDirection(e)

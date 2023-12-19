@@ -11,8 +11,8 @@ const saveExcalidraw = async (api: ExcalidrawImperativeAPI, url?: string) => {
   const blob = new Blob([serializedJsonData], {
     type: MIME_TYPES.excalidraw
   })
-
-  return await FileSystem.fs.writeFile(blob, `/files/excalidraw_data_${url ?? Id.getStrId()}`)
+  const id = url ? url.replace('rendefile:///files/excalidraw_data_', '') : Id.getStrId()
+  return await FileSystem.fs.writeFile(blob, `/files/excalidraw_data_${id}`)
 }
 
 export default saveExcalidraw

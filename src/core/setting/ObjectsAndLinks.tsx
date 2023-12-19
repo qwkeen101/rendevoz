@@ -72,6 +72,10 @@ const ObjectsAndLinksSetting = () => {
             {
               value: 'markdown',
               children: t('settings.Markdown')
+            },
+            {
+              value: 'html',
+              children: 'HTML'
             }
           ]}
           onSelect={v =>

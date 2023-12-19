@@ -1,5 +1,5 @@
 import { useStore } from 'jotai'
-import { useFlow, WhiteboardAtom } from '@/core/components/whiteboard/hooks'
+import { useFlow, WhiteboardAtom } from '@/core/components/whiteboard/StateHooks'
 import { IWhiteboard } from '~/typings'
 import { Draft } from 'immer'
 

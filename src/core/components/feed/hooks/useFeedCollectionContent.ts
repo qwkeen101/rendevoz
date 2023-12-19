@@ -71,13 +71,17 @@ export default () => {
       const unreadCount = feedCollection.items.filter(i => !readIdSet.has(i)).length
       ObjectStore('feedCollection').updateOne({ id: feedCollection.id, unreadCount })
       if (readRule === 'all') {
-        setFeedState(s => ({ ...s, allFeedItems: feedCollection.items, filteredFeedItems: undefined }))
+        Promise.all(feedCollection.items.map(async i => await ObjectStore('feed').getOneById(i))).then(() => {
+          setFeedState(s => ({ ...s, allFeedItems: feedCollection.items, filteredFeedItems: undefined }))
+        })
       } else {
-        setFeedState(s => ({
-          ...s,
-          allFeedItems: feedCollection.items,
-          filteredFeedItems: feedCollection.items.filter(i => !readIdSet.has(i))
-        }))
+        Promise.all(feedCollection.items.map(async i => await ObjectStore('feed').getOneById(i))).then(() => {
+          setFeedState(s => ({
+            ...s,
+            allFeedItems: feedCollection.items,
+            filteredFeedItems: feedCollection.items.filter(i => !readIdSet.has(i))
+          }))
+        })
       }
     }
   }, [feedCollection?.items, readRule])

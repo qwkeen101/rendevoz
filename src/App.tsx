@@ -5,7 +5,7 @@ import './styles/global.less'
 import './styles/font.less'
 import { GlobalCreateObject, GlobalDragOverlay, GlobalGraph, GlobalScreenShot, SettingAtom } from '@/core'
 import Notification from './components/NotificationCenter'
-import '@/core/components/editor/dock.less'
+import '@/styles/dock.less'
 import SvgMarker from './components/svg/Marker'
 import { Fragment, useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -44,6 +44,7 @@ import GlobalPreviewPanel from '@/core/global/GlobalPreviewPanel'
 import GlobalObjectCreator from '@/core/global/GlobalObjectCreator'
 import GlobalQuickAdd from '@/components/form/quickAdd/GlobalQuickAdd'
 import GlobalDownloadIndicator from '@/core/global/DownloadIndicator'
+import getAllItemsInChannel from '@/core/components/feed/utils/youtube/getAllItemsInChannel'
 
 export function getOS() {
   const userAgent = window.navigator.userAgent.toLowerCase(),
@@ -92,6 +93,7 @@ const App = () => {
   Rendevoz.InnerHooks = InnerHookz
   Rendevoz.InnerComponents = InnerComponentz
   const PdfJs = window['pdfjs-dist/build/pdf']
+
   PdfJs.GlobalWorkerOptions.workerSrc = PdfJsUrl
   const lang = useSelectGlobalAtomValue(SettingAtom, s => s.general.language)
   const { i18n } = useTranslation()

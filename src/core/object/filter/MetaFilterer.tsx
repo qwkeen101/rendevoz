@@ -1,11 +1,9 @@
-import { Content, VirtualList, Button, AnimatePopover, WithBorder } from '@/components'
+import { Content, VirtualList, Button } from '@/components'
 import { CSSProperties, useEffect, useMemo, useRef, useState } from 'react'
 import { MetaStore, ObjectStore } from '@/api/stores'
-import { TypeToTypeName, useRenderObject } from '@/core'
 import { Rendevoz } from '@/core/rendevoz'
 import { ClassName } from 'rendevoz'
 import { MetaObject } from '~/typings'
-import FontSize from '@/consts/font'
 import fuzzysort from 'fuzzysort'
 import { Virtualizer } from '@tanstack/react-virtual'
 import { Colors, KEY } from '@/consts'
@@ -184,7 +182,7 @@ const MetaFilterer = ({ withInput = true, style, autoFocus, onChange, currentInp
 }
 
 const ButtonItem = ({ onClick, item, selected }: { item: MetaObject; selected: boolean; onClick: VoidFunction }) => {
-  let text = item.name
+  let text = item.name || item.placeholderName
   let icon = Rendevoz.Utils.Object.getMetaObjectIcon(item.type)
   if (item.type === 'createNote') {
     text = `Create note "${text}"`

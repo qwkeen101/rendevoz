@@ -38,7 +38,6 @@ const TabNavList: FC<TabNavListProps> = ({ navs, onTabClick, defaultActiveKey, e
             style={{
               userSelect: 'none',
               padding: '2px 8px',
-              fontWeight: 600,
               fontSize: FontSize['13px'],
               background: nav.key === selectedTabKey ? Colors.Background.ButtonHover : undefined,
               ...style
@@ -91,11 +90,9 @@ const TabPanesList: FC<TabPanesListProps> = memo(({ activeKey, tabPanes, disable
   )
 })
 
-interface TabsProps {
-  defaultActiveKey: string
+type TabsProps = {
   children: ReactElement<TabPaneProps> | (ReactElement<TabPaneProps> | null)[] | null
   extra?: ReactNode
-  activeKey?: string
   onTabClick?: (key: string, e: MouseEvent) => void
   renderTabNav?: (defaultTabNav: TabNavListProps) => ReactNode
   disableInnerPanes?: boolean
@@ -103,7 +100,18 @@ interface TabsProps {
   disableAnimation?: boolean
   tabNavStyle?: CSSProperties
   tabNavContainerStyle?: CSSProperties
-}
+} & (
+  | {
+      defaultActiveKey: string
+    }
+  | {
+      activeKey?: string
+    }
+  | {
+      activeKey?: string
+      defaultActiveKey?: string
+    }
+)
 export const Tabs: FC<TabsProps> = memo(
   ({
     children,
@@ -182,7 +190,7 @@ export const Tabs: FC<TabsProps> = memo(
 interface TabPaneProps {
   onClick?: MouseEventHandler
   children: ReactNode
-  tab: string | ReactElement
+  tab?: string | ReactElement | null
   innerKey?: string
   style?: CSSProperties
   active?: boolean

@@ -10,12 +10,14 @@ export const Font = {
   Caption: '--font-caption',
   Description: '--font-tertiary',
   Link: '--font-link',
+  SuperTransparent: '--font-s-transparent',
   Transparent: '--font-transparent'
 }
 
 export const Background = {
   Global: '--global-background',
   Light: '--light-background-color',
+  PopoverBoxShadow: '--popover-box-shadow',
   LightSecondary: '--light-background-color-secondary',
   Dark: '--dark-background-color',
   DarkSecondary: '--dark-background-color-secondary',
@@ -28,6 +30,7 @@ export const Background = {
   DarkButtonActive: '--dark-button-active-background',
   LightButtonActive: '--light-button-active-background',
   Linear: '--linear-background',
+  Popover: '--popover-background',
   Secondary: '--background-secondary',
   DarkBorder: '--dark-border',
   Border: '--border-background',

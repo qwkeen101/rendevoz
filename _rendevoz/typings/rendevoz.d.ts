@@ -3,17 +3,15 @@
  */
 
 import { ReactElement } from 'react'
-import { IEditorInstance } from '.'
 import { GlobalInstances } from './globalInstances'
 import { ILayoutTab, TabData } from './layout'
-import { IPdfInstance } from './pdf'
-import { IVideoInstance } from './video'
-import { IWebpageInstance } from './webpage'
+import { IWebpageInstance, IVideoInstance, IPdfInstance, IEditorInstance } from './components'
 import { EditorEventMap, GlobalEventMap, IEventEmitter, IEventHandler, PdfEventMap } from './event'
 import { NoteStore } from './stores'
 import { SearchStore } from './stores/search.store'
 import { MetaObject } from './data'
 import { InnerComponents, InnerHooks } from './inner'
+import { Descendant } from 'slate'
 
 export type IRendevoz = {
   Actions: typeof Action
@@ -21,6 +19,7 @@ export type IRendevoz = {
   Events: typeof Events
   InnerHooks: typeof InnerHooks
   InnerComponents: typeof InnerComponents
+  Consts: typeof Consts
 }
 
 export type OpenTabOptions<K extends ILayoutTab['type']> = {
@@ -182,15 +181,60 @@ declare const Events: {
 declare const Utils: {
   Object: typeof ObjectUtils
   Meta: typeof MetaUtils
+  Web: typeof WebUtils
+  File: typeof FileUtils
 }
 
+declare const Consts: {
+  Errors: {
+    NotSupportedFile: () => string
+  }
+}
 declare const ObjectUtils: {
   getMetaObjectIcon: (type?: MetaObject['type'], metaObject?: MetaObject) => string
 }
 
+export type IImportResult<T> = {
+  object: Partial<T>
+  meta: Partial<MetaObject>
+}
+
 declare const MetaUtils: {
+  normalizeLocalFileToMeta: (
+    file: File,
+    options?: {
+      limitType?: boolean
+    }
+  ) => Promise<IImportResult>
+  normalizeBaiduDiskFileToMeta: () => IImportResult
+  normalizeWebFileToMeta: (url: string, type: string) => IImportResult
   findPathsBetweenTwoMetaObjects: (sourceMetaId: number, targetMetaId: number) => number[][]
   getTypeName: (type: MetaObject['type']) => string
+  getTypeRadius: (type: MetaObject['type']) => number
+  fetchWebpageAndParseAsMeta: (url: string) => void
+}
+
+declare const FileUtils: {}
+
+declare const WebUtils: {
+  fetchDetails: (url: string) => Promise<{
+    title: string
+    description?: string
+    image?: string
+  }>
+  // parse webpage as editor content
+  parseWebpage: (
+    url: string,
+    html?: string
+  ) => Promise<{
+    title: string
+    description?: string
+    image?: string
+    content: Descendant[]
+    author?: string
+    domain?: string
+    favicon?: string
+  }>
 }
 
 declare const Store: {

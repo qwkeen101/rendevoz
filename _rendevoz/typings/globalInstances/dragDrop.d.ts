@@ -52,6 +52,10 @@ export type BuiltInDraggableElement =
       type: 'webpageLabel' | 'videoLabel' | 'noteLabel' | 'pdfLabel'
       labelId: number
     }
+  | {
+      type: 'question'
+      objectId: number
+    }
 export type IDraggableElement = CustomTypes['DraggableElement']
 
 export interface IGlobalDragDropInstance {

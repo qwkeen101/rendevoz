@@ -1,11 +1,10 @@
 import { assignProperties } from '@/utils'
 import { GlobalInstance } from '@/hooks'
-import { useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { useLayoutEffect, useRef, useState } from 'react'
 import { MetaStore } from '@/api/stores'
 import { RENDEVOZ_DEFAULT_TABS } from '@/api/lifycycle/startup/registerTabs'
 import { createPortal } from 'react-dom'
-import { Content, Icon, ResizeAndDrag } from '@/components'
-import { ClassName } from 'rendevoz'
+import { ResizeAndDrag } from '@/components'
 import { Colors } from '@/consts'
 import { Rnd } from 'react-rnd'
 
@@ -79,6 +78,7 @@ export default () => {
           onDragStart={() => {
             setPState(s => ({ ...s, showCover: false }))
           }}
+          disableDragging={true}
           style={{
             background: Colors.Background.Global,
             boxShadow: Colors.Background.BoxShadow,
@@ -89,30 +89,6 @@ export default () => {
           }}
           dragHandleClassName={'dh'}
         >
-          <Content
-            className={'dh'}
-            style={{
-              fontSize: 13,
-              background: Colors.Background.Secondary,
-              borderBottom: `1px solid ${Colors.Background.Border}`,
-              padding: '4px 12px',
-              borderRadius: '12px 12px 0px 0px',
-              cursor: 'grab',
-              fontWeight: 600
-            }}
-            flex
-            justifyContent={'space-between'}
-          >
-            <div className={ClassName.ellipsisFont(1)}>{meta.name}</div>
-            <Icon
-              size={15}
-              className={ClassName.circleButton()}
-              name={'park-close'}
-              onClick={() => {
-                setPState({ visible: false })
-              }}
-            />
-          </Content>
           <div style={{ width: '100%', overflow: 'hidden', height: 0, flex: 1 }}>{page.content({ objectId: meta.objectId })}</div>
         </ResizeAndDrag>
       </>,

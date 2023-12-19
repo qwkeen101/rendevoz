@@ -1,86 +1,70 @@
-import { FC, MouseEvent, MouseEventHandler } from "react";
-import Content from "../Content";
-import styles from "./index.module.less";
-import { css } from "@emotion/css";
-import { Colors } from "@/consts";
-import ClassName from "@/styles/classNames";
+import { FC, MouseEvent, PointerEventHandler, useState } from 'react'
+import { IMenuLayoutItem, NavigationMenu } from '@/components/base/menu/index'
+import { AnimatePopover, Button, WithBorder } from '@/components'
 
-export interface MenuItemProps {
-  onClick?: MouseEventHandler;
-  onDoubleClick?: MouseEventHandler;
-  onContextMenu?: MouseEventHandler;
-  icon?: React.ReactNode;
-  type: "button" | "link" | "separator";
-  children: React.ReactNode;
-  selected?: boolean;
-  id?: number | string;
-  gap?: number;
-  disabled?: boolean;
+type MenuItemWithProps = IMenuLayoutItem & {
+  selectedKey: string[]
+  onSelect?: () => void
+  onPointerMove: PointerEventHandler
+  onClick: (item: IMenuLayoutItem, e: MouseEvent) => void
 }
-const MenuItem: FC<MenuItemProps> = ({
-  type,
-  icon,
-  onClick,
-  onDoubleClick,
-  onContextMenu,
-  children,
-  selected,
-  id,
-  gap = 10,
-  disabled = false
-}) => {
-  return (
-    <>
-      {type === 'button' && (
-        <Item
-          gap={gap}
-          id={id}
-          selected={selected}
-          children={children}
-          icon={icon}
-          onClick={onClick}
-          disabled={disabled}
-          onDoubleClick={onDoubleClick}
-          onContextMenu={onContextMenu}
-        />
-      )}
-    </>
-  )
-}
-
-const MenuItemClazzName = css({
-  display: 'flex',
-  cursor: 'pointer',
-  width: '100%',
-  alignItems: 'center',
-  minHeight: 32,
-  justifyContent: 'left',
-  padding: '4px 12px'
-})
-const Item: FC<Omit<MenuItemProps, 'type'>> = ({ icon, children, onClick, onDoubleClick, onContextMenu, selected, id, gap, disabled }) => {
-  const handleInternalClick = (e: MouseEvent) => {
-    !disabled && onClick?.(e)
+const MenuItem: FC<MenuItemWithProps> = ({ type, ...rest }) => {
+  switch (type) {
+    case 'custom':
+      return <CustomMenuItem type={type} {...rest} />
+    case 'item':
+      return <ButtonMenuItem type={type} {...rest} />
+    case 'separator':
+      return <SeparatorMenuItem type={type} {...rest} />
   }
-  return (
-    <Content
-      gap={gap}
-      flex
-      id={String(id)}
-      className={css([ClassName.flatButton(), MenuItemClazzName])}
-      onContextMenuCapture={onContextMenu}
-      onPointerDown={e => e.preventDefault()}
-      onDoubleClick={onDoubleClick}
-      onClick={handleInternalClick}
-      style={{
-        position: 'relative',
-        cursor: disabled ? 'default' : undefined,
-        background: disabled ? 'transparent' : selected ? Colors.Background.ButtonHover : undefined
-      }}
-    >
-      {icon && <div className={styles.icon}>{icon}</div>}
-      <div className={styles.text}>{children}</div>
-    </Content>
-  )
 }
+
+const CustomMenuItem: FC<MenuItemWithProps & { type: 'custom' }> = () => {}
+
+const ButtonMenuItem: FC<MenuItemWithProps & { type: 'item' }> = ({
+  subMenu,
+  hoverOpenSubMenu,
+  icon,
+  text,
+  dangerous,
+  disabled,
+  name,
+  onClick,
+  selectedKey,
+  key,
+  onPointerMove
+}) => {
+  const ButtonRenderer = () => (
+    <Button.IconButton
+      suffixIcon={subMenu ? 'park-right' : undefined}
+      onPointerMove={onPointerMove}
+      icon={icon}
+      selected={selectedKey.includes(key)}
+      text={typeof text === 'string' ? text : text?.()}
+      dangerous={dangerous}
+      onClick={onClick}
+    />
+  )
+  if (subMenu) {
+    const subMenuKeys = selectedKey.slice(selectedKey.findIndex(i => i === key))
+    return (
+      <AnimatePopover
+        visible={subMenu.some(i => 'key' in i && selectedKey.includes(i.key))}
+        hoverOpen={hoverOpenSubMenu}
+        content={
+          <WithBorder padding={5}>
+            <NavigationMenu layout={subMenu} selectedKeys={subMenuKeys} />
+          </WithBorder>
+        }
+        positions={['right', 'left', 'bottom']}
+      >
+        <ButtonRenderer />
+      </AnimatePopover>
+    )
+  }
+  return <ButtonRenderer />
+}
+
+const SeparatorMenuItem: FC<IMenuLayoutItem & { type: 'separator' }> = () => {}
 
 export default MenuItem

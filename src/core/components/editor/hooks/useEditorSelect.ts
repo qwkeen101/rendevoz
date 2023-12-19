@@ -1,9 +1,8 @@
-import { getElementId } from '@/utils'
+import { assignProperties, getElementId } from '@/utils'
 import { useMemoizedFn, useRafFn } from '@/hooks'
 import { Position } from '@/types'
 import _ from 'lodash'
 import { useEffect, useLayoutEffect, useMemo, useRef } from 'react'
-import { EditorOverlayManager } from '../components/overlay/useEditorOverlay'
 import ScrollManager from '../ScrollManager'
 import { CustomEditor } from '~/typings'
 import { searchBlock } from '../utils/algorithm'
@@ -15,7 +14,7 @@ import isHotkey from 'is-hotkey'
 import { KEY } from '@/consts'
 import useReadOnlyEditor from '@/core/components/editor/hooks/useReadOnly'
 
-const useEditorSelect = (editor: CustomEditor, overlayManager: EditorOverlayManager, scrollElement?: HTMLElement | null) => {
+const useEditorSelect = (editor: CustomEditor, scrollElement?: HTMLElement | null) => {
   const scrollManager = useMemo(() => new ScrollManager(), [])
   const blockElementsArrayRef = useRef<any[]>([])
   const blockElementsMapRef = useRef<Map<any, any>>(new Map())
@@ -126,8 +125,7 @@ const useEditorSelect = (editor: CustomEditor, overlayManager: EditorOverlayMana
         bottom: Math.min(startPoint.top, endPoint.top) + Math.abs(endPoint.top - startPoint.top)
       }
       SELECT_AREA_MAP.set(editor, currRect)
-      overlayManager.setContent('selectArea')
-      overlayManager.open()
+      instance.overlayOps?.open('selectArea', { x: 0, y: 0 })
       // start search selected blocks
       const firstBlock = blockElementsArrayRef.current[0]
       const lastBlock = blockElementsArrayRef.current[blockElementsArrayRef.current.length - 1]
@@ -187,7 +185,7 @@ const useEditorSelect = (editor: CustomEditor, overlayManager: EditorOverlayMana
     if (readonly) return
     isPressed.current = false
     if (isSelecting) {
-      overlayManager.close()
+      instance.overlayOps?.close()
       document.body.style.cursor = 'auto'
       setTimeout(() => {
         setIsSelecting(false)
@@ -218,6 +216,26 @@ const useEditorSelect = (editor: CustomEditor, overlayManager: EditorOverlayMana
       prepareSelect()
     }
   }, [isSelecting])
+
+  assignProperties(instance, {
+    selectOps: {
+      deselectAll: () => {
+        if (instance.values.selectedBlocks.size > 0) {
+          instance.values.selectingAll = false
+          const selected = instance.values.selectedBlocks
+          selected.forEach(i => i.removeSelectedState?.())
+          selected.clear()
+        }
+      },
+      selectBlock: blockId => {
+        const idArr = Array.isArray(blockId) ? blockId : [blockId]
+        idArr.forEach(id => {
+          instance.values.selectedBlocks.set(id, {})
+          ID_TO_ELEMENTS_MAP.get(editor)?.get(id)?.selectBlock()
+        })
+      }
+    }
+  })
   const prepareSelect = () => {
     blockElementsMapRef.current.clear()
     blockElementsArrayRef.current = []

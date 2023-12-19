@@ -17,6 +17,7 @@ import produce, { Draft } from 'immer'
 import { Colors } from '@/consts'
 import { useSelectGlobalAtomValue } from '@/hooks'
 import { SettingAtom } from '@/core'
+import { LayoutIdToTabMap } from '@/components/layout'
 
 export const setPanelState = (updater: (panelState: Draft<SidebarPanelState>) => void) => {
   const panelState = globalStore.get(SidebarPanelStateAtom)
@@ -83,7 +84,7 @@ export const BuiltInSidebarItems: Record<string, RegisteredSidebarItem> = {
   },
   feeds: {
     key: 'feeds',
-    text: () => 'Feeds',
+    text: () => t('general.Feeds'),
     icon: 'park-broadcast',
     onClick: () => {
       Rendevoz.Actions.Layout.openNewTab({ data: { type: 'feeds' } })
@@ -134,6 +135,7 @@ export const Sidebar = ({ direction = 'right' }: { direction: 'left' | 'right' }
   return (
     <Content
       flex
+      onClick={() => console.log(LayoutIdToTabMap)}
       style={{
         zIndex: 1000,
         flexDirection: direction === 'right' ? 'row' : 'row-reverse',

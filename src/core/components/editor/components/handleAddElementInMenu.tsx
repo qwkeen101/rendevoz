@@ -7,64 +7,85 @@ import getCursorPosition from '../utils/getCursorPosition'
 import { waitFor } from '@/utils/functions'
 import { ID_TO_ELEMENT_FUNCTION_MAP } from '../weakMaps'
 import FileSystem from '@/api/fileSystem'
+import { EditorTypeToElementMap } from '@/core/components/editor/maps'
 
 export const defaultHandler: DefaultAddElementHandler = (type, instance, mode, opts) => {
-  let addElementPath: Path = []
   // let isCurrentElementEmpty = false
   const editor = instance.getSlateEditor?.()
   if (!editor) return
-  const { currentAddClickElement } = editor
-  if (currentAddClickElement) {
-    addElementPath = ReactEditor.findPath(editor, currentAddClickElement)
-    addElementPath = Path.next(addElementPath)
-  }
-  if (mode === 'slash' && editor.selection && Range.isCollapsed(editor.selection)) {
-    checkNeedRemoveSlash(type, editor)
-    const currentBlock = Editor.above(editor, {
-      match: n => Element.isElement(n)
-    })
-    if (currentBlock) {
-      const [ele, path] = currentBlock
-      const isEmpty = Editor.isEmpty(editor, ele)
-      if (isEmpty) {
-        addElementPath = path
-      } else {
-        addElementPath = Path.next(path)
-      }
+  const addElement = editor.currentAddClickElement
+  const selectionBlock = instance.blockOps?.getAboveBlock()
+  if (!selectionBlock) throw new Error('No selected node!')
+  console.log(selectionBlock)
+  let isCurrentBlockEmpty = false
+  const searchFilterValue = '/' + (instance.overlayOps?.getState().currentFilterValue ?? '')
+  if (selectionBlock[0].type === 'paragraph' && selectionBlock[0].children.length === 1) {
+    const firstText = selectionBlock[0].children[0].text as string
+    if (firstText === '') {
+      isCurrentBlockEmpty = true
+    }
+    if (firstText === searchFilterValue) {
+      isCurrentBlockEmpty = true
     }
   }
-  if (!addElementPath.length) return
+  console.log(isCurrentBlockEmpty, searchFilterValue)
+  let addElementPath = selectionBlock[1]
+  const isInline = EditorTypeToElementMap.get(type)?.isInline
+  if (isCurrentBlockEmpty) {
+    Transforms.removeNodes(editor, {
+      at: selectionBlock[1]
+    })
+
+    if (isInline) {
+      Transforms.insertNodes(editor, {
+        type: 'paragraph',
+        children: [{ text: '' }],
+        id: Id.getId()
+      })
+      Transforms.select(editor, selectionBlock[1])
+    }
+  }
+  // remove filter value
+  else {
+    Transforms.delete(editor, {
+      distance: searchFilterValue.length,
+      unit: 'character',
+      reverse: true
+    })
+    addElementPath = Path.next(addElementPath)
+  }
+
   switch (type) {
     case 'table':
       // add two columns three rows table
       handleAddTableAtPath(addElementPath, editor)
       break
     case 'link': {
-      setTimeout(() => {
-        const cursorPosition = getCursorPosition(editor)
-        if (cursorPosition) {
-          editor.overlayManager?.setContent('linkForm')
-          editor.overlayManager?.open()
-          editor.overlayManager?.setPosition({
-            left: cursorPosition.x,
-            top: cursorPosition.y + 5
-          })
-        }
-      })
+      const pos = instance.blockOps?.getCurrentCursorBlockBounding()
+      if (pos) {
+        instance.overlayOps?.open('linkForm', {
+          x: pos.x,
+          y: pos.bottom - 10
+        })
+      }
       break
     }
     case 'synced':
       handleAddSyncedBlock(addElementPath, editor)
       break
-    case 'emoji':
+    case 'emoji': {
+      instance.overlayOps?.close()
       setTimeout(() => {
-        const overlayManager = instance.getOverlayManager?.()
-        if (overlayManager) {
-          overlayManager.setContent('emojiPicker')
-          overlayManager.open()
+        const pos = instance.blockOps?.getCurrentCursorBlockBounding()
+        if (pos) {
+          instance.overlayOps?.open('emojiPicker', {
+            x: pos.x,
+            y: pos.y + pos.height / 2
+          })
         }
-      }, 50)
+      }, 350)
       return
+    }
     case 'math': {
       const mathId = Id.getId()
       Transforms.insertNodes(editor, {
@@ -122,30 +143,8 @@ export const defaultHandler: DefaultAddElementHandler = (type, instance, mode, o
       )
       Transforms.select(editor, addElementPath)
   }
-  instance.getOverlayManager?.().close()
+  instance.overlayOps?.close()
   ReactEditor.focus(editor)
-}
-
-const checkNeedRemoveSlash = (elementType: CustomElement['type'], editor: CustomEditor) => {
-  let needRemove = true
-  switch (elementType) {
-    case 'inline-metaObject':
-      needRemove = false
-  }
-  if (needRemove) {
-    removeSlash(editor.selection, editor)
-  }
-}
-
-const removeSlash = (selection: BaseSelection, editor: CustomEditor) => {
-  if (selection) {
-    Transforms.delete(editor, {
-      at: selection,
-      reverse: true,
-      unit: 'character',
-      distance: 1
-    })
-  }
 }
 
 const handleAddSyncedBlock = async (path: Path, editor: CustomEditor) => {

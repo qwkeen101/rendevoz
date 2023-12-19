@@ -1,5 +1,5 @@
 import { CSSProperties } from 'react'
-import { IWhiteboardNode } from '~/typings'
+import { IWhiteboardInstance, IWhiteboardNode } from '~/typings'
 import { NodeInnerState } from '@/core/components/whiteboard/node/WrapperNode'
 import Colors from '../../../../consts/colors'
 import { getSetting } from '@/core'
@@ -8,6 +8,7 @@ const transparentBackgroundNodes = ['text', 'freehand']
 const getNodeStyle = (
   node: IWhiteboardNode,
   nodeState: NodeInnerState,
+  instance: IWhiteboardInstance,
   opts: {
     displayCover?: boolean
     groupEnablePointer: boolean
@@ -16,7 +17,7 @@ const getNodeStyle = (
     panPointerMode?: boolean
     background: {
       opacityBackground: string
-      darkenSecondBackground: string
+      darkenBackground: string
     }
   }
 ): CSSProperties => {
@@ -28,20 +29,12 @@ const getNodeStyle = (
     if (transparentBackgroundNodes.includes(node.type)) {
       return undefined
     }
-    return isDarkMode
-      ? 'var(--box-shadow)'
-      : 'rgba(15, 15, 15, 0.05) 0px 0px 0px 1px, rgba(15,15,15, 0.1) 0px 3px 6px, rgba(15,15,15,0.1) 0px 9px 24px'
+    if(!isDarkMode){
+      return 'var(--border-box-shadow)'
+    }
+    return undefined
   }
   let pointerEvents: CSSProperties['pointerEvents'] = 'auto'
-  if (node.type === 'group')
-    if (
-      (nodeState.popoverVisible || nodeState.focused || nodeState.locked || nodeState.selected || opts.displayCover) &&
-      opts?.groupEnablePointer
-    ) {
-      pointerEvents = 'auto'
-    } else {
-      pointerEvents = 'none'
-    }
   if (node.type === 'freehand' || node.type === 'text') {
     if (
       !(nodeState.popoverVisible || nodeState.selected || nodeState.focused || nodeState.locked || opts.displayCover) &&
@@ -50,25 +43,61 @@ const getNodeStyle = (
       pointerEvents = 'none'
     }
   }
-  if(opts.panPointerMode){
+  if (opts.panPointerMode) {
     pointerEvents = 'none'
   }
 
+  let cursor: CSSProperties['cursor'] = 'auto'
+
+  if (opts.displayCover) {
+    cursor = 'pointer'
+  }
+  if (node.type === 'group') {
+    if (!nodeState.selected && !nodeState.focused) {
+      if (!node.name) {
+        cursor = 'pointer'
+      } else {
+        cursor = 'auto'
+      }
+    } else {
+      cursor = 'grab'
+    }
+  } else {
+    if (nodeState.focused || nodeState.locked) {
+      cursor = 'auto'
+    } else {
+      cursor = 'grab'
+    }
+  }
+  if (opts.isErasing) {
+    cursor = 'crosshair'
+  }
+  let zIndex: number | undefined = node.z
+  if (nodeState.expanded) {
+    zIndex = 1000 + (node.z ?? 0)
+  }
+  if (node.type === 'group') {
+    zIndex = -10000
+    const parentGroups = instance.groupOps?.getParentGroupsOfNode(node.id) ?? []
+    zIndex += parentGroups?.length
+  }
   return {
     boxShadow: getNodeBoxShadow(),
     opacity: opts.isErased ? 0.2 : 1,
     borderRadius: nodeState.selected ? 4 : 6,
-    zIndex: node.type === 'group' ? -10000 : nodeState.expanded ? 1000 : undefined,
+    zIndex,
     userSelect: nodeState.focused || nodeState.focused ? 'auto' : 'none',
     background:
       node.type === 'group'
         ? opts.background.opacityBackground
         : node.background
-        ? opts.background.darkenSecondBackground
+        ? opts.background.darkenBackground
         : transparentBackgroundNodes.includes(node.type)
         ? 'transparent'
-        : Colors.Background.Secondary,
-    cursor: opts.isErasing ? 'crosshair' : opts.displayCover ? 'pointer' : nodeState.focused || nodeState.locked ? 'auto' : 'grab',
+        : isDarkMode
+        ? Colors.Background.Secondary
+        : 'white',
+    cursor,
     pointerEvents
   }
 }

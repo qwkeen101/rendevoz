@@ -49,7 +49,7 @@ const useRenderLabel = (opts: {
   const { ref, isIn } = useIsIn()
   const currentLabelHasName = label && label.name && label.name !== DEFAULT_LABEL_NAME
   const relatedMap = useGlobalAtomValue(relatedMetaObjectsMapAtom)
-  const metaRelated = labelMeta && relatedMap.get(labelMeta.id)
+  const metaRelated = labelMeta && !labelMeta.hidden ? relatedMap.get(labelMeta.id) : []
   const realRelated = new Set(metaRelated)
   if (parentMeta) {
     realRelated.delete(parentMeta.id)
@@ -63,7 +63,7 @@ const useRenderLabel = (opts: {
             placeholder={t('general.Add note for label')}
             value={currentLabelHasName ? label?.name : undefined}
             onChange={v => {
-              ObjectStore(type).updateOne({ id: objectId, name: v || DEFAULT_LABEL_NAME })
+              ObjectStore(type).updateOne({ id: objectId, name: v })
               setLabelState(s => ({ ...s, editingName: false }))
             }}
           />
@@ -103,11 +103,12 @@ const useRenderLabel = (opts: {
               )}
               <span
                 style={{
-                  color: labelMeta
-                    ? labelMeta.color || Colors.Common.SelectColor
-                    : currentLabelHasName
-                    ? undefined
-                    : Colors.Font.Transparent,
+                  color:
+                    labelMeta && !labelMeta.hidden
+                      ? labelMeta.color || Colors.Common.SelectColor
+                      : currentLabelHasName
+                      ? undefined
+                      : Colors.Font.Transparent,
                   fontWeight: 500,
                   wordBreak: 'break-word'
                 }}
@@ -123,7 +124,7 @@ const useRenderLabel = (opts: {
       </Content>
     )
   }
-  const renderPopover = ({ on }: { on?: (e: LabelActionEvent) => void }) => {
+  const renderPopover = ({ on, style }: { on?: (e: LabelActionEvent) => void; style?: CSSProperties }) => {
     if (labelState.editingName) return null
     return (
       <Content
@@ -136,9 +137,10 @@ const useRenderLabel = (opts: {
           right: 0,
           top: 0,
           padding: '3px 5px',
-          background: Colors.Background.Secondary,
+          background: Colors.Background.Global,
           borderRadius: 999,
-          border: `1px solid ${Colors.Background.Border}`
+          border: `1px solid ${Colors.Background.Border}`,
+          ...style
         }}
       >
         <Icon
@@ -231,32 +233,24 @@ const useRenderLabel = (opts: {
           </div>
         )}
         {labelState.addingDescription && (
-          <BorderInput
-            textarea
-            onKeyDown={e => {
-              e.stopPropagation()
-            }}
-            minRows={3}
-            maxRows={8}
-            placeholder={t('general.edit description')}
-            defaultValue={label?.description}
-            containerStyle={style}
-            style={{
-              fontSize: FontSize['12px'],
-              padding: '8px 12px'
-            }}
-            withSubmit
-            onSubmit={(v: string) => {
+          <ContentEditor
+            onChange={v => {
               setLabelState(s => ({ ...s, addingDescription: false }))
+              if (labelMeta) {
+                MetaStore.updateMetaObject({ id: labelMeta.id, description: v }, true)
+                return
+              }
               ObjectStore(type).updateOne({ id: objectId, description: v })
             }}
+            value={labelMeta?.description || label?.description}
+            placeholder={'Add description...'}
           />
         )}
       </>
     )
   }
 
-  const renderOriginalText = (opts: {
+  const renderOriginalText = (options: {
     text: string
     style?: CSSProperties
     showEdit?: boolean
@@ -268,8 +262,8 @@ const useRenderLabel = (opts: {
     if (labelState.editingOrigin) {
       return (
         <ContentEditor
-          style={opts.editorStyle}
-          value={opts.text}
+          style={options.editorStyle}
+          value={options.text}
           onChange={v => {
             setLabelState(s => ({ ...s, editingOrigin: false }))
             ObjectStore(type).updateOne({ id: label?.id, selectedText: v })
@@ -289,21 +283,19 @@ const useRenderLabel = (opts: {
               ? getColor(label.color)
               : Colors.Background.ButtonHover
             : Colors.Background.ButtonHover,
-          ...opts.style
-        }}
-        onContextMenu={() => {
-          setLabelState(s => ({ ...s, editingOrigin: true }))
+          ...options.style
         }}
         onClick={e => {
           if (!window.getSelection()?.toString()) {
-            if (opts.clickToEdit) {
+            if (options.clickToEdit) {
               setLabelState(s => ({ ...s, editingOrigin: true }))
               return
             }
-            if (opts.onClick) {
-              opts.onClick()
+            if (options.onClick) {
+              options.onClick()
               return
             }
+            opts.onNavigate?.()
           }
         }}
       >
@@ -313,7 +305,7 @@ const useRenderLabel = (opts: {
             wordBreak: 'break-word'
           }}
         >
-          {opts.text}
+          {options.text}
         </div>
       </div>
     )

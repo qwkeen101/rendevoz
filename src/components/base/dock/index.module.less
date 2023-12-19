@@ -11,9 +11,10 @@ body{
   flex-wrap: nowrap;
   margin: 0;
   flex-shrink: 1;
-  overflow: hidden;
+  //overflow: hidden;
   padding-left: 0px;
   height: 32px;
+  z-index: 99;
   margin-bottom: -1px;
   padding-right: 0px;
   &::after {
@@ -27,21 +28,15 @@ body{
   -webkit-app-region: no-drag;
   max-width: 240px;
   width: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: flex-start;
   user-select: none;
   flex: 100;
   min-width: 0;
-  letter-spacing: -0.04px;
-  font-weight: 600;
   height: 100%;
-  position: relative;
-  padding: 2px 8px;
   cursor: pointer;
   z-index: 1000 !important;
   background: @backgroundColor;
   color: var(--font-transparent);
+  position: relative;
   &.isLast {
     &::after {
       right: 32px;
@@ -57,7 +52,7 @@ body{
     border-right: 1px solid var(--highlight-border);
   }
   &.active {
-    background: transparent !important;
+    background: var(--global-background) !important;
     z-index: 1001 !important;
     color: var(--font-primary);
     &::after {
@@ -87,6 +82,12 @@ body{
   white-space: nowrap;
   display: block;
   min-width: 0;
+  width: 100%;
+  letter-spacing: -0.04px;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  padding: 2px 8px;
   // ???
   // mask-image: linear-gradient(to left, transparent 20px, #fff 40px);
   position: relative;
@@ -103,6 +104,7 @@ body{
   justify-content: flex-end;
   .closeButton {
     transition: all 0.2s ease-in-out;
+    margin-right: 8px;
   }
   &:hover {
     .closeButton {

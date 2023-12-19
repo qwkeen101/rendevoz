@@ -45,7 +45,7 @@ import { useAndroidInputManager } from '../hooks/android-input-manager/use-andro
 import { useTrackUserInput } from '../hooks/use-track-user-input'
 import { CustomText } from '~/typings/editor/baseTypes'
 import VirtualChildren from './virtual-children'
-import Id from '@/utils/id'
+import { atom, useAtom, useAtomValue } from 'jotai'
 
 type DeferredOperation = () => void
 
@@ -105,6 +105,9 @@ export type EditableProps = {
  * Editable.
  */
 
+const EditorComposingAtom = atom(false)
+
+export const useEditorComposing = () => useAtomValue(EditorComposingAtom)
 export const Editable = memo(
   (props: EditableProps) => {
     const {
@@ -124,8 +127,9 @@ export const Editable = memo(
       ...attributes
     } = props
     const editor = useSlate()
+
     // Rerender editor when composition status changed
-    const [isComposing, setIsComposing] = useState(false)
+    const [isComposing, setIsComposing] = useAtom(EditorComposingAtom)
     const ref = useRef<HTMLDivElement>(null)
     const deferredOperations = useRef<DeferredOperation[]>([])
 
@@ -189,6 +193,12 @@ export const Editable = memo(
             const { anchorNode } = domSelection
             if (anchorNode) {
               if (ReactEditor.hasEditableTarget(editor, anchorNode)) {
+                // set block as selected
+                const outerBlock = (isDOMElement(anchorNode) ? anchorNode : anchorNode.parentElement)?.closest('[data-type="block"]')
+                if (outerBlock) {
+                  el.querySelector('[data-selected="true"]')?.removeAttribute('data-selected')
+                  outerBlock.setAttribute('data-selected', 'true')
+                }
                 const node = ReactEditor.toSlateNode(editor, anchorNode)
                 if (node?.type === 'table') {
                   ;(domSelection as Selection).empty()
@@ -225,9 +235,9 @@ export const Editable = memo(
           }
 
           // Deselect the editor if the dom selection is not selectable in readonly mode
-          if (readOnly && (!anchorNodeSelectable || !focusNodeSelectable)) {
-            Transforms.deselect(editor)
-          }
+          // if (readOnly && (!anchorNodeSelectable || !focusNodeSelectable)) {
+          //   Transforms.deselect(editor)
+          // }
         }
       }, 100),
       [readOnly, editor, state]
@@ -524,7 +534,9 @@ export const Editable = memo(
           if (isCompositionChange) {
             return
           }
-
+          if (event.target.closest('.cm-editor')) {
+            return
+          }
           if (!native) {
             event.preventDefault()
           }
@@ -765,8 +777,6 @@ export const Editable = memo(
             <Component
               role={readOnly ? undefined : 'textbox'}
               aria-multiline={readOnly ? undefined : true}
-              what-is-this="forked from slate and i did some changes(actually many)"
-              tips="contact me if u wanna learn how to develop a rich text editor"
               {...attributes}
               // COMPAT: Certain browsers don't support the `beforeinput` event, so we'd
               // have to use hacks to make these replacement-based features work.
@@ -788,8 +798,6 @@ export const Editable = memo(
               suppressContentEditableWarning
               ref={ref}
               style={{
-                // height: virtualizer.getTotalSize() + firstOffset,
-                contentVisibilty: readOnly ? 'auto' : 'visible',
                 flexShrink: 0,
                 ...style
               }}
@@ -993,7 +1001,6 @@ export const Editable = memo(
                 (event: React.CompositionEvent<HTMLDivElement>) => {
                   if (ReactEditor.hasSelectableTarget(editor, event.target)) {
                     androidInputManager?.handleCompositionStart(event)
-
                     if (isEventHandled(event, attributes.onCompositionStart) || IS_ANDROID) {
                       return
                     }
@@ -1006,23 +1013,6 @@ export const Editable = memo(
                         Editor.deleteFragment(editor)
                         return
                       }
-                      // remove these codes for preventing lose focus of inline elements when use
-                      // const inline = Editor.above(editor, {
-                      //   match: (n) => Editor.isInline(editor, n),
-                      //   mode: "highest",
-                      // });
-                      // if (inline) {
-                      //   const [, inlinePath] = inline;
-                      //   if (
-                      //     Editor.isEnd(editor, selection.anchor, inlinePath)
-                      //   ) {
-                      //     const point = Editor.after(editor, inlinePath)!;
-                      //     Transforms.setSelection(editor, {
-                      //       anchor: point,
-                      //       focus: point,
-                      //     });
-                      //   }
-                      // }
                     }
                   }
                 },
@@ -1476,8 +1466,7 @@ export const Editable = memo(
     prev.renderElement === curr.renderElement &&
     prev.renderLeaf === curr.renderLeaf &&
     prev.className === curr.className &&
-    prev.scrollElementRef === curr.scrollElementRef &&
-    prev.style === curr.style
+    prev.scrollElementRef === curr.scrollElementRef
 )
 
 /**
@@ -1523,6 +1512,7 @@ const defaultScrollSelectionIntoView = (editor: ReactEditor, domRange: DOMRange)
   if (!editor.selection || (editor.selection && Range.isCollapsed(editor.selection))) {
     const leafEl = domRange.startContainer.parentElement!
     leafEl.getBoundingClientRect = domRange.getBoundingClientRect.bind(domRange)
+    console.log('scrolling!!!!')
     scrollIntoView(leafEl, {
       scrollMode: 'if-needed',
       block: 'nearest'

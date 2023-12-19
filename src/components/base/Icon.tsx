@@ -30,7 +30,6 @@ const Icon = forwardRef<HTMLDivElement, IconProps>(
     const style: React.CSSProperties = {
       cursor: cursor,
       userSelect: 'none',
-      pointerEvents: 'auto',
       ...rest.style
     }
     const renderIcon = (name: string) => {
@@ -51,7 +50,7 @@ const Icon = forwardRef<HTMLDivElement, IconProps>(
         )
       }
       if (name.startsWith('custom')) {
-        return <CustomIcon {...rest} style={style} className={className} type={name.slice(7)} theme={theme} size={size} />
+        return <CustomIcon {...rest} style={style} className={className} type={name.slice(7)} theme={theme} size={size} strokeWidth={strokeWidth}/>
       }
     }
     return (

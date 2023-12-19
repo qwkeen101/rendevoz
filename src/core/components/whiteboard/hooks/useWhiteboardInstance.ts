@@ -1,41 +1,59 @@
-import { atom, useAtomValue } from 'jotai'
+import { atom, useAtomValue, useStore } from 'jotai'
 import { IWhiteboardEdge, IWhiteboardInstance, IWhiteboardNode } from '~/typings'
 import useUpdateWhiteboard from '@/core/components/whiteboard/hooks/useUpdateWhiteboard'
 import { assignProperties } from '@/utils'
-import { useFlow } from '@/core/components/whiteboard/hooks'
+import { WhiteboardAtom } from '@/core/components/whiteboard/StateHooks'
 import Id from '@/utils/id'
+import assignLayoutOps from '@/core/components/whiteboard/hooks/ops/layout'
+import assignNodeOps from '@/core/components/whiteboard/hooks/ops/node'
+import assignCoordOps from '@/core/components/whiteboard/hooks/ops/coord'
+import assignContainerOps from '@/core/components/whiteboard/hooks/ops/container'
+import assignGroupOps from '@/core/components/whiteboard/hooks/ops/group'
+import assignLineOps from '@/core/components/whiteboard/hooks/ops/line'
+import useWhiteboardHighlight from '@/core/components/whiteboard/hooks/useWhiteboardHighlight'
+import assignContentOps from '@/core/components/whiteboard/hooks/ops/content'
 
-export const WhiteboardInstanceAtom = atom<Partial<IWhiteboardInstance>>({})
+export const WhiteboardInstanceAtom = atom<IWhiteboardInstance>({})
 
 export const useWhiteboardInstance = () => useAtomValue(WhiteboardInstanceAtom)
 
 export const useAssignWhiteboardInstance = () => {
   const updateWhiteboard = useUpdateWhiteboard()
-  const flow = useFlow()
   const instance = useWhiteboardInstance()
+  const store = useStore()
   assignProperties(instance, {
     deleteNode: id => {
       updateWhiteboard(w => {
         w.nodes?.delete(id)
-        flow.NODE_TO_EDGE_MAP.get(id)?.forEach(l => {
+        instance.values.NODE_TO_EDGE_MAP.get(id)?.forEach(l => {
           w.edges?.delete(l)
         })
       }, true)
+    },
+    getNode: id => {
+      const n = store.get(WhiteboardAtom)?.nodes?.get(id)
+      if (!n) {
+        throw new Error('Can not find whiteboard node with id: ' + id)
+      }
+      return n
     },
     deleteEdge: id => {
       updateWhiteboard(w => {
         w.edges?.delete(id)
       }, true)
     },
+    updateWhiteboard: updateWhiteboard,
     insertNode: async node => {
-      console.log(node)
       if (!node.type || node.x === undefined || node.y === undefined) return Promise.reject()
       const newNode = {
         ...node,
         id: node.id || Id.getId()
       } as Required<IWhiteboardNode>
       await updateWhiteboard(w => {
-        w.nodes?.set(newNode.id, newNode)
+        if (w.nodes) {
+          w.nodes?.set(newNode.id, { ...newNode, z: w.nodes?.size })
+          newNode.z = w.nodes?.size
+        }
       }, true)
       return newNode
     },
@@ -85,11 +103,19 @@ export const useAssignWhiteboardInstance = () => {
       updateWhiteboard(w => {
         ids.forEach(i => {
           w.nodes?.delete(i)
-          flow.NODE_TO_EDGE_MAP.get(i)?.forEach(l => {
+          instance.values.NODE_TO_EDGE_MAP.get(i)?.forEach(l => {
             w.edges?.delete(l)
           })
         })
       }, true)
     }
   })
+  assignLayoutOps(instance)
+  assignNodeOps(instance)
+  assignCoordOps(instance)
+  useWhiteboardHighlight()
+  assignContainerOps(instance)
+  assignLineOps(instance)
+  assignGroupOps(instance)
+  assignContentOps(instance)
 }

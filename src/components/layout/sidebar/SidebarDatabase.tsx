@@ -2,7 +2,7 @@ import { AnimatePopover, Icon } from '@/components'
 import { useGlobalIsDragging } from '@/core'
 import { useMemoizedFn } from '@/hooks'
 import { objectIdToMetaObjectIdMapAtom } from '@/api/stores/meta.store'
-import { globalStore } from '@/api/stores'
+import { globalStore, ObjectStore } from '@/api/stores'
 import ClassName from '@/styles/classNames'
 import { css } from '@emotion/css'
 import { memo, useEffect, useRef, useState } from 'react'
@@ -11,6 +11,7 @@ import { useTranslation } from 'react-i18next'
 import { Rendevoz } from '@/core/rendevoz'
 import { TypeToRegisteredObject } from '@/api/stores/object.store'
 import { setPanelState } from '@/components/layout/sidebar/index'
+import toast from 'react-hot-toast'
 
 const SidebarDatabase = memo(() => {
   const { t } = useTranslation()
@@ -22,7 +23,7 @@ const SidebarDatabase = memo(() => {
     visible: false,
     alreadyExist: false
   })
-  const dragHandler = useMemoizedFn((e: DragEvent) => {
+  const dragHandler = useMemoizedFn(async (e: DragEvent) => {
     if (e.type === 'dragover') {
       e.preventDefault()
       setDraggingHovered({
@@ -38,19 +39,13 @@ const SidebarDatabase = memo(() => {
       setDraggingHovered(s => ({ ...s, visible: false }))
       e.preventDefault()
       if (e.dataTransfer?.files[0]) {
-        Rendevoz.Utils.Meta.addMetaObjectFromFile(e.dataTransfer.files[0]).then(res => {
-          if (!res) {
-            emitter.emit('global', {
-              type: 'globalDropNeedFurtherProcess',
-              data: {
-                dropOn: {
-                  dropOn: 'database'
-                },
-                e
-              }
-            })
-          }
-        })
+        try {
+          const result = await Rendevoz.Utils.Meta.normalizeLocalFileToMeta(e.dataTransfer.files[0])
+          ObjectStore(result.meta.type).addOneWithMeta({ ...result.object }, { currentMeta: { ...result.meta }, silent: true })
+        } catch (e) {
+          console.error(e)
+          toast.error(Rendevoz.Consts.Errors.NotSupportedFile())
+        }
       } else {
         emitter.emit('global', {
           type: 'globalDropNeedFurtherProcess',

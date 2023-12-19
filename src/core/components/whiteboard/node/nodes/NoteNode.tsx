@@ -1,0 +1,61 @@
+import { FC, memo, useRef } from 'react'
+import { IWhiteboardNode } from '~/typings/data'
+import { InnerNodeProps } from '../WrapperNode'
+import { css } from '@emotion/css'
+import NoteEditor from '@/core/components/editor/noteEditor/NoteEditor'
+import { IEditorInstance } from '~/typings'
+
+const NoteNode: FC<InnerNodeProps> = ({ node: n, onNameChange }) => {
+  const node = n as IWhiteboardNode & { type: 'note' }
+  const instance = useRef<IEditorInstance>()
+  return (
+    <NoteEditor
+      onInstanceInitialized={i => (instance.current = i)}
+      on={event => {
+        if (event.type === 'titleChange') {
+          onNameChange?.(event.value)
+        }
+      }}
+      layout={{
+        showHeader: false,
+        showBottomPadding: true,
+        showBlockHandleAdd: false
+      }}
+      title={{
+        titleContainerStyle: {
+          padding: '30px 0px 5px',
+          maxWidth: '100%',
+          width: '100%'
+        },
+        titleStyle: {
+          fontSize: '2rem'
+        }
+      }}
+      styles={{
+        bottomPadding: 30,
+        pageMinPadding: '0px 30px 0px',
+        containerHeight: 'auto',
+        containerMaxHeight: '100%',
+        containerStyle: {
+          width: '520px',
+          minHeight: 'max(100%, 50px)',
+          maxWidth: '100%',
+          minWidth: '100%'
+        }
+      }}
+      state={{
+        fontSize: 17,
+        pageWidth: 'Max'
+      }}
+      classNames={{
+        editorContainerClassName: css({
+          fontSize: '1em',
+          width: '100% !important'
+        })
+      }}
+      noteId={node.noteId}
+    />
+  )
+}
+
+export default memo(NoteNode, (prev, curr) => prev.node.noteId === curr.node.noteId)

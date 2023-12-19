@@ -54,85 +54,97 @@ const Link = ({ element, attributes, children }: RenderElementProps) => {
     })
     Transforms.insertText(editor, text, { at: point })
   }
-
+  const instance = useEditorInstance()
   const handleEdit = () => {
     const path = ReactEditor.findPath(editor, element)
     const selection = Editor.range(editor, path)
     Transforms.select(editor, selection)
-    editor.overlayManager?.setContent('linkForm')
-    editor.overlayManager?.open()
     const nodePos = ReactEditor.toDOMNode(editor, element).getBoundingClientRect()
-    editor.overlayManager?.setPosition({
-      left: nodePos.left,
-      top: nodePos.top + 5
+    instance.overlayOps?.open('linkForm', {
+      x: nodePos.x,
+      y: nodePos.y
     })
     setTimeout(() => {
       editor.overlayManager?.setCurrentLink?.(element.url)
     }, 100)
   }
-  const renderPopover = () => {
+  const renderPopover = (close: VoidFunction) => {
     if (linkTarget) {
       if (linkTarget.type === 'meta' && linkTarget.metaId) {
         return (
           <div>
-            <LinkObjectRenderer metaId={linkTarget.metaId} onRemove={handleRemoveLink} onEdit={handleEdit} />
+            <LinkObjectRenderer
+              url={element.url}
+              metaId={linkTarget.metaId}
+              onNavi={() => close()}
+              onRemove={handleRemoveLink}
+              onEdit={handleEdit}
+            />
           </div>
         )
       }
       return (
-        <WithBorder style={{ fontSize: FontSize['13px'], padding: '6px', maxWidth: 400 }}>
-          <Content
-            flex
-            gap={6}
-            onClick={() => {
-              window.open(linkTarget.url)
-            }}
-            className={css({
-              ':hover': {
-                color: Colors.Font.Link
-              },
-              cursor: 'pointer',
-              transition: 'all 0.2s ease',
-              wordBreak: 'break-all',
-              whiteSpace: 'pre-wrap'
-            })}
-          >
-            {linkTarget.url}
-          </Content>
-          <Content flex gap={6} style={{ fontSize: 16, color: Colors.Font.Transparent, justifyContent: 'flex-end' }}>
-            {linkTarget.url?.startsWith('http') && (
-              <Icon
-                onClick={() => {
-                  editor.on({
-                    type: 'linkAddAsValue',
-                    url: linkTarget.url
-                  })
-                }}
-                name="park-share-one"
-                className={ClassName.circleButton()}
-              />
-            )}
-            <Icon
+        <WithBorder style={{ fontSize: 13, height: 28 }}>
+          <Content flex>
+            <div
               onClick={() => {
-                navigator.clipboard.writeText(element.url)
+                window.open(linkTarget.url)
+                close()
               }}
-              name="park-copy-link"
-              className={ClassName.circleButton()}
-            />
-            <Icon
-              onClick={() => {
-                handleEdit()
-              }}
-              name="park-edit"
-              className={ClassName.circleButton()}
-            />
-            <Icon
-              onClick={() => {
-                handleRemoveLink()
-              }}
-              name="park-delete"
-              className={ClassName.circleButton()}
-            />
+              className={css([
+                {
+                  ':hover': {
+                    color: Colors.Font.Link
+                  },
+                  padding: '4px 6px',
+                  borderRight: '1px solid var(--border-background)',
+                  maxWidth: 250,
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease'
+                },
+                ClassName.ellipsisFont(1)
+              ])}
+            >
+              {linkTarget.url}
+            </div>
+            <Content flex style={{ fontSize: 16, color: Colors.Font.Transparent, justifyContent: 'flex-end' }}>
+              <Tooltip content={'Copy'}>
+                <Icon
+                  onClick={() => {
+                    navigator.clipboard.writeText(element.url)
+                  }}
+                  name="park-copy"
+                  className={ClassName.flatButton(0, '6px 6px')}
+                  containerStyle={{
+                    height: 28
+                  }}
+                />
+              </Tooltip>
+              <Tooltip content={'Edit'}>
+                <Icon
+                  onClick={() => {
+                    handleEdit()
+                  }}
+                  name="park-edit"
+                  containerStyle={{
+                    height: 28
+                  }}
+                  className={ClassName.flatButton(0, '6px 6px')}
+                />
+              </Tooltip>
+              <Tooltip content={'Delete'}>
+                <Icon
+                  onClick={() => {
+                    handleRemoveLink()
+                  }}
+                  name="park-delete"
+                  containerStyle={{
+                    height: 28
+                  }}
+                  className={ClassName.flatButton(0, '6px 6px')}
+                />
+              </Tooltip>
+            </Content>
           </Content>
         </WithBorder>
       )
@@ -141,25 +153,21 @@ const Link = ({ element, attributes, children }: RenderElementProps) => {
   }
   return (
     <span {...attributes} style={{ margin: '0 0.01em' }}>
-      <Tooltip padding={5} contentTouchable={true} delay={500} content={renderPopover()} disableDefaultContent={true}>
+      <Tooltip
+        padding={5}
+        contentTouchable={true}
+        delay={500}
+        content={setV => renderPopover(() => setV(false))}
+        disableDefaultContent={true}
+      >
         <a
-          target="_blank"
           onClick={e => {
+            window.open(element.url)
             editor.on({
               type: 'linkClick',
               e
             })
-            setTimeout(() => {
-              if (e.defaultPrevented) {
-                return
-              }
-              if (navigator.userAgent.indexOf('Electron') >= 0) {
-                window.open(element.url)
-                e.preventDefault()
-              }
-            })
           }}
-          href={element.url}
         >
           <InlineChromiumBugfix />
           {children}
@@ -169,13 +177,29 @@ const Link = ({ element, attributes, children }: RenderElementProps) => {
     </span>
   )
 }
-const LinkObjectRenderer = ({ metaId, onRemove, onEdit }: { metaId: number; onRemove: VoidFunction; onEdit: VoidFunction }) => {
+const LinkObjectRenderer = ({
+  metaId,
+  onRemove,
+  onEdit,
+  url,
+  onNavi
+}: {
+  metaId: number
+  onRemove: VoidFunction
+  onEdit: VoidFunction
+  onNavi: VoidFunction
+  url: string
+}) => {
   const { renderInline } = useRenderObject({ metaObjectId: metaId })
   return (
     <WithBorder style={{ display: 'flex', gap: 16, fontSize: FontSize['13px'], padding: '6px 8px 6px 12px', maxWidth: 600 }}>
       {renderInline({
         showCircle: false,
-        ellipsisLine: 100
+        ellipsisLine: 100,
+        onClick: () => {
+          window.open(url)
+          onNavi()
+        }
       })}
       <Icon
         onClick={() => {

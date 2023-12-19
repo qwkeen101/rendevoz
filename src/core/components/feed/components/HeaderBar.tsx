@@ -51,21 +51,24 @@ const FeedHeaderBar = () => {
       fullWidth
       gap={20}
       style={{
-        padding: '8px 24px 8px 20px',
+        padding: '8px 24px 8px 10px',
         zIndex: 99,
         borderBottom: `1px solid ${Colors.Background.Border}`
       }}
     >
-      <Content flex gap={16} alignItems={'center'}>
+      <Content flex gap={12} alignItems={'center'}>
         <Icon
           name={'custom-left-bar'}
-          className={ClassName.circleButton(4, 4)}
+          size={16}
+          className={ClassName.circleButton(6, 4)}
           onClick={() => {
             setFeedState(s => ({ ...s, sidebarCollapsed: !s.sidebarCollapsed }))
           }}
         />
-        {currentCollection?.icon && <img src={currentCollection.icon} height={32} style={{ borderRadius: 4, objectFit: 'cover' }} />}
-        <div className={ClassName.ellipsisFont(1)} style={{ fontSize: 18, fontWeight: 600, flexShrink: 1 }}>
+        {currentCollection?.icon && (
+          <img src={currentCollection.icon} height={24} style={{ borderRadius: 4, marginLeft: 6, objectFit: 'cover' }} />
+        )}
+        <div className={ClassName.ellipsisFont(1)} style={{ fontSize: 16, fontWeight: 600, flexShrink: 1 }}>
           {currentCollection?.name || feedState.headerName}
         </div>
       </Content>
@@ -76,26 +79,26 @@ const FeedHeaderBar = () => {
               markAllAsRead(feedState.allFeedItems, feedState.currentCollectionId)
             }}
             icon={'park-check'}
-            text={'Mark all as read'}
+            text={t('general.Mark all as read')}
             className={ClassName.selectButton()}
-            style={{ fontSize: 14, fontWeight: 600 }}
+            style={{ fontSize: 14, fontWeight: 600, marginRight: 12 }}
           />
         )}
         <Icon
-          size={20}
           name={'park-up'}
           onClick={() => {
             instance.navigateOps?.back()
           }}
-          className={ClassName.circleButton(4, 4)}
+          size={16}
+          className={ClassName.circleButton(6, 4)}
         />
         <Icon
-          size={20}
           name={'park-down'}
           onClick={() => {
             instance.navigateOps?.forward()
           }}
-          className={ClassName.circleButton(4, 4)}
+          size={16}
+          className={ClassName.circleButton(6, 4)}
         />
         <AnimatePopover
           positions={['bottom']}
@@ -183,7 +186,7 @@ const FeedHeaderBar = () => {
             </WithBorder>
           }
         >
-          <Icon size={20} name={'park-preview-open'} className={ClassName.circleButton(4, 4)} />
+          <Icon name={'park-preview-open'} size={16} className={ClassName.circleButton(6, 4)} />
         </AnimatePopover>
       </Content>
     </Content>

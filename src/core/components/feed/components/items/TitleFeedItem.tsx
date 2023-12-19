@@ -19,16 +19,17 @@ export default ({
   }
   onClick?: React.MouseEventHandler
 }) => {
-  const { titleSize = 14, titleWeight = 600 } = styles || {}
+  const { titleSize = 15, titleWeight = 600 } = styles || {}
   const item = ObjectStore('feed').useValue(id)
   const isRead = useFeedIsRead(id)
   if (!item) return null
   return (
     <Content
       flex
+      alignItems={"center"}
       onClick={onClick}
       style={{
-        padding: '6px 6px',
+        padding: '4px 6px',
         cursor: 'pointer',
         color: isRead ? Colors.Font.Transparent : undefined
       }}

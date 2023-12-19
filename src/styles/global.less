@@ -43,7 +43,7 @@ input::-webkit-inner-spin-button {
 }
 
 *::placeholder {
-  color: var(--font-tertiary);
+  color: var(--font-s-transparent);
 }
 * {
   touch-action: none;
@@ -55,6 +55,9 @@ input::-webkit-inner-spin-button {
 }
 
 * {
+  &::-webkit-scrollbar-corner {
+    background: transparent;
+  }
   &::-webkit-scrollbar {
     width: 4px;
     border-radius: 6px;
@@ -174,24 +177,12 @@ dd {
 }
 blockquote {
   margin: 0;
-  border-left: 4px solid var(--font-secondary);
+  border-left: 3px solid var(--font-transparent);
   background: var(
     --block-rgb-bg,
     var(--block-linear-bg, var(--button-hover-background))
   );
-  quotes: "\201C""\201D""\201C""\201D";
-  padding: 10px 19px;
-  font-style: italic;
-  font-size: 1.3em;
-  &::before {
-    font-size: 2em;
-    color: var(--font-transparent);
-    margin-right: 16px;
-    margin-left: -0.2em;
-    vertical-align: -0.4em;
-    line-height: 0.1em;
-    content: open-quote;
-  }
+  padding: 4px 8px;
 }
 
 dfn {

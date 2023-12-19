@@ -27,7 +27,8 @@ const SidebarPanel = ({ direction, items }: { direction: 'right' | 'left'; items
         borderRight: direction === 'right' ? `1px solid ${Colors.Background.Border}` : undefined,
         borderLeft: direction === 'left' ? `1px solid ${Colors.Background.Border}` : undefined,
         visibility: realOpen ? 'visible' : 'hidden',
-        pointerEvents: realOpen ? 'auto' : 'none'
+        pointerEvents: realOpen ? 'auto' : 'none',
+        background: Colors.Background.Global
       }}
     >
       <Provider store={store}>
@@ -47,7 +48,7 @@ const SidebarPanel = ({ direction, items }: { direction: 'right' | 'left'; items
                 <Provider store={store}>
                   <ObjectPanel
                     renderFilterOnParent={false}
-                    padding={'8px 8px 0px'}
+                    padding={'8px 8px 4px'}
                     onOpenInTab={() => {
                       Rendevoz.Actions.Open.openDatabase()
                     }}

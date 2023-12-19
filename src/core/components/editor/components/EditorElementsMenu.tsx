@@ -1,20 +1,24 @@
-import { css } from '@emotion/css'
-import { MouseEventHandler, ReactNode, useMemo } from 'react'
+import { useMemo, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Button, Content, Icon, Menu, Tooltip } from '@/components'
-import FontSize from '@/consts/font'
+import { Content, Menu } from '@/components'
 import { EditorTypeToElementMap } from '../maps'
-import { RegisterdEditorElement } from '~/typings'
-import ClassName from '@/styles/classNames'
+import { RegisteredEditorElement } from '~/typings'
+import { IMenuLayoutItem } from '@/components/base/menu'
+import { useAtomValue } from 'jotai'
+import { EditorOverlayStateAtom } from '@/core/components/editor/components/overlay/useEditorOverlay'
+import useEditorInstance from '@/core/components/editor/hooks/useEditorInstance'
 
 const EditorElementsMenu = (props: { onAddElement: (blockName: string) => void }) => {
   const { onAddElement } = props
   const { t } = useTranslation()
-  const { block, basic, inline, media } = useMemo(() => {
-    const basic: RegisterdEditorElement[] = [],
-      inline: RegisterdEditorElement[] = [],
-      block: RegisterdEditorElement[] = [],
-      media: RegisterdEditorElement[] = []
+  const instance = useEditorInstance()
+  const overlayState = useAtomValue(EditorOverlayStateAtom)
+  const noResultTime = useRef(0)
+  const menuItems = useMemo(() => {
+    const basic: RegisteredEditorElement[] = [],
+      inline: RegisteredEditorElement[] = [],
+      block: RegisteredEditorElement[] = [],
+      media: RegisteredEditorElement[] = []
 
     EditorTypeToElementMap.forEach(item => {
       if (item.registerInMenu?.addMenu) {
@@ -34,186 +38,118 @@ const EditorElementsMenu = (props: { onAddElement: (blockName: string) => void }
         }
       }
     })
-    return {
-      block,
-      basic,
-      inline,
-      media
+    const lowerer = overlayState.currentFilterValue?.toLocaleLowerCase()
+    // /hooks/useTypeFilterBlocks
+    let menuItems: IMenuLayoutItem[] = []
+    const transformElementToMenuItem = (item: RegisteredEditorElement): IMenuLayoutItem | undefined => {
+      const displayName = typeof item.name === 'string' ? item.name : item.name?.()
+      if (displayName) {
+        if (lowerer) {
+          if (displayName.toLocaleLowerCase().includes(lowerer) || item.type.includes(lowerer)) {
+            return {
+              key: item.type,
+              text: displayName,
+              icon: item.registerInMenu?.icon,
+              type: 'item'
+            } as IMenuLayoutItem
+          }
+          return
+        }
+        return {
+          key: item.type,
+          text: displayName,
+          icon: item.registerInMenu?.icon,
+          type: 'item'
+        } as IMenuLayoutItem
+      }
     }
-  }, [])
+    const basicItems = basic.map(i => transformElementToMenuItem(i)).filter(i => i) as IMenuLayoutItem[]
+    const blockItems = block.map(i => transformElementToMenuItem(i)).filter(i => i) as IMenuLayoutItem[]
+    const inlineItems = inline.map(i => transformElementToMenuItem(i)).filter(i => i) as IMenuLayoutItem[]
+    const mediaItems = media.map(i => transformElementToMenuItem(i)).filter(i => i) as IMenuLayoutItem[]
+    if (basicItems.length) {
+      menuItems = [
+        {
+          type: 'title',
+          name: 'Basic'
+        },
+        ...basicItems
+      ]
+    }
+    if (blockItems.length) {
+      menuItems = [
+        ...menuItems,
+        {
+          type: 'title',
+          name: 'Block'
+        },
+        ...blockItems
+      ]
+    }
+    if (inlineItems.length) {
+      menuItems = [
+        ...menuItems,
+        {
+          type: 'title',
+          name: 'Inline'
+        },
+        ...inlineItems
+      ]
+    }
+    if (mediaItems.length) {
+      menuItems = [
+        ...menuItems,
+        {
+          type: 'title',
+          name: 'Media'
+        },
+        ...mediaItems
+      ]
+    }
+    if (menuItems.length === 0) {
+      noResultTime.current += 1
+    } else {
+      noResultTime.current = 0
+    }
+    if (noResultTime.current > 4) {
+      instance.overlayOps?.close()
+    }
+    return menuItems
+  }, [overlayState.currentFilterValue])
   return (
     <Content
       column
       flex
       style={{
-        padding: '8px 12px'
+        padding: '0.25rem 0',
+        minWidth: 240,
+        maxHeight: '40vh',
+        overflowY: 'auto'
       }}
     >
-      <Title>{t('editor.basic')}</Title>
-      <Content
-        className={css({
-          gap: 10,
-          display: 'grid !important',
-          gridTemplateColumns: 'repeat(6,24px)',
-          justifyContent: 'space-between'
-        })}
-      >
-        {basic.map(b => (
-          <IconItem key={b.type} onClick={() => onAddElement(b.type)} tooltip={b.registerInMenu?.tooltip} icon={b.registerInMenu?.icon} />
-        ))}
-      </Content>
-      <Title>{t('editor.inline')}</Title>
-      {inline.map(i => (
-        <Item key={i.type} onClick={() => onAddElement(i.type)} {...i} tooltip={i.registerInMenu?.tooltip} icon={i.registerInMenu?.icon} />
-      ))}
-      <Title>{t('editor.block')}</Title>
-      {block.map(i => (
-        <Item key={i.type} onClick={() => onAddElement(i.type)} {...i} tooltip={i.registerInMenu?.tooltip} icon={i.registerInMenu?.icon} />
-      ))}
-      <Title>{t('editor.media')}</Title>
-      {media.map(i => (
-        <Item key={i.type} onClick={() => onAddElement(i.type)} {...i} tooltip={i.registerInMenu?.tooltip} icon={i.registerInMenu?.icon} />
-      ))}
+      {menuItems.length ? (
+        <Menu.NavigationMenu
+          onSelect={e => {
+            if (e.type === 'item') {
+              const key = e.key
+              onAddElement?.(key)
+            }
+          }}
+          layout={menuItems}
+        />
+      ) : (
+        <div
+          style={{
+            padding: '4px 8px',
+            fontWeight: 600,
+            color: 'var(--font-transparent)'
+          }}
+        >
+          No results
+        </div>
+      )}
     </Content>
   )
 }
-type LayoutItem = Parameters<typeof Menu.NavigationMenu>[0]['layout'][0]
-export const EditorSlashElementsMenu: typeof EditorElementsMenu = ({ onAddElement }) => {
-  const { t } = useTranslation()
-  const { basic, block, inline, media } = useMemo(() => {
-    const values = Array.from(EditorTypeToElementMap.values()).filter(i => i.registerInMenu?.slashMenu)
-    const basic: RegisterdEditorElement[] = [],
-      block: RegisterdEditorElement[] = [],
-      inline: RegisterdEditorElement[] = [],
-      media: RegisterdEditorElement[] = []
-    values.forEach(i => {
-      switch (i.registerInMenu?.menuType) {
-        case 'basic':
-          basic.push(i)
-          break
-        case 'block':
-          block.push(i)
-          break
-        case 'inline':
-          inline.push(i)
-          break
-        case 'media':
-          media.push(i)
-      }
-    })
-    return {
-      basic,
-      block,
-      inline,
-      media
-    }
-  }, [])
-  return (
-    <Menu.NavigationMenu
-      style={{
-        display: 'flex',
-        flexDirection: 'column',
-        padding: 10,
-        maxHeight: 480,
-        overflowY: 'auto',
-        width: 220
-      }}
-      onClick={name => onAddElement(name)}
-      layout={[
-        {
-          type: 'custom',
-          children: <Title>{t('editor.basic')}</Title>
-        },
-        ...basic.map(
-          b =>
-            ({
-              type: 'item',
-              icon: b.registerInMenu!.icon,
-              text: b.name,
-              name: b.type
-            } as LayoutItem)
-        ),
-        {
-          type: 'custom',
-          children: <Title>{t('editor.inline')}</Title>
-        },
-        ...inline.map(
-          i =>
-            ({
-              type: 'item',
-              icon: i.registerInMenu!.icon,
-              text: i.name,
-              name: i.type
-            } as LayoutItem)
-        ),
-        {
-          type: 'custom',
-          children: <Title>{t('editor.block')}</Title>
-        },
-        ...block.map(
-          i =>
-            ({
-              type: 'item',
-              icon: i.registerInMenu?.icon,
-              text: i.name,
-              name: i.type
-            } as LayoutItem)
-        ),
-        {
-          type: 'custom',
-          children: <Title>{t('editor.media')}</Title>
-        },
-        ...media.map(
-          i =>
-            ({
-              type: 'item',
-              icon: i.registerInMenu?.icon,
-              text: i.name,
-              name: i.type
-            } as LayoutItem)
-        )
-      ]}
-    />
-  )
-}
-const Title = ({ children }: { children: ReactNode }) => {
-  return (
-    <div
-      className={css({
-        userSelect: 'none',
-        fontSize: FontSize['13px'],
-        fontWeight: 600,
-        marginBottom: 8,
-        ':not(:first-child)': {
-          marginTop: 8
-        }
-      })}
-    >
-      {children}
-    </div>
-  )
-}
-const IconItem = ({ icon, tooltip, onClick }: { icon?: string; tooltip?: string; iconColor?: string; onClick: MouseEventHandler }) => {
-  if (!icon) return null
-  return (
-    <Tooltip position="top" content={tooltip}>
-      <Content onClick={onClick} className={ClassName.flatButton()}>
-        <Icon name={icon} size={18} />
-      </Content>
-    </Tooltip>
-  )
-}
-const Item = ({
-  name,
-  icon,
-  onClick
-}: {
-  name?: string | (() => string)
-  icon?: string
-  tooltip?: string
-  iconColor?: string
-  onClick?: MouseEventHandler
-}) => {
-  return <Button.IconButton onClick={onClick} text={typeof name === 'string' ? name : name?.()} icon={icon} />
-}
+
 export default EditorElementsMenu

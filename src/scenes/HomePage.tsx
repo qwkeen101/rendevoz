@@ -1,4 +1,4 @@
-import { AnimatePopover, Button, Icon, IconWithPopover, Modal, WithBorder } from '@/components'
+import { AnimatePopover, Button, Icon, IconWithPopover, Menu, WithBorder } from '@/components'
 import { FC, useMemo, useState } from 'react'
 import { Components } from 'rendevoz'
 import { GlobalInstance, useGlobalAtomValue, useToggle } from '@/hooks'
@@ -11,7 +11,7 @@ import Select from '@/components/base/select'
 import DateFormat from '@/utils/dateFormat'
 import { css } from '@emotion/css'
 import { motion } from 'framer-motion'
-import { DraggableElement, ObjectActionPopover, TypeToTypeName } from '@/core'
+import { DraggableElement, ObjectActionPopover } from '@/core'
 import { Zindexes } from '@/consts'
 import Colors from '@/consts/colors'
 import { atom, useAtomValue } from 'jotai'
@@ -43,6 +43,44 @@ export const HomePage: FC = () => {
         }}
       >
         <TabTitle title={t('general.home')} icon="park-home" />
+        {/*<Menu.NavigationMenu*/}
+        {/*  style={{*/}
+        {/*    width: 200*/}
+        {/*  }}*/}
+        {/*  layout={[*/}
+        {/*    {*/}
+        {/*      type: 'item',*/}
+        {/*      key: 'first',*/}
+        {/*      text: 'asdsasad',*/}
+        {/*      subMenu: [*/}
+        {/*        {*/}
+        {/*          type: 'item',*/}
+        {/*          key: 'first-first',*/}
+        {/*          text: 'asdsasad',*/}
+        {/*          subMenu: [*/}
+        {/*            {*/}
+        {/*              type: 'item',*/}
+        {/*              key: 'first-first-second',*/}
+        {/*              text: 'asdsasad'*/}
+        {/*            }*/}
+        {/*          ]*/}
+        {/*        },*/}
+        {/*        {*/}
+        {/*          type: 'item',*/}
+        {/*          key: 'first-second',*/}
+        {/*          text: 'asdsasad',*/}
+        {/*          subMenu: [*/}
+        {/*            {*/}
+        {/*              type: 'item',*/}
+        {/*              key: 'first-second-first',*/}
+        {/*              text: 'asdsasad'*/}
+        {/*            }*/}
+        {/*          ]*/}
+        {/*        }*/}
+        {/*      ]*/}
+        {/*    }*/}
+        {/*  ]}*/}
+        {/*/>*/}
         <Content flex alignItems="center" gap={10} justifyContent="space-between" style={{ margin: '16px 0px' }}>
           <div>
             <div style={{ fontSize: 13, color: Colors.Font.Transparent, paddingLeft: 8 }}>{t('settings.workspace')}</div>
@@ -129,7 +167,7 @@ export const HomePage: FC = () => {
                 })
               }
               className={ClassName.selectButton(4, '1px 8px')}
-              style={{ fontSize: 14, fontWeight: 600, color: 'white', marginLeft: 6 }}
+              style={{ fontSize: 14, fontWeight: 500, color: 'white', marginLeft: 6 }}
             >
               {t('general.New')}
             </div>
@@ -142,7 +180,7 @@ export const HomePage: FC = () => {
   )
 }
 
-const VisibleTypes: MetaObject['type'][] = ['note', 'video', 'pdf', 'whiteboard', 'webpage', 'localFile', 'image', 'audio', 'group']
+const VisibleTypes: MetaObject['type'][] = ['note', 'video', 'pdf', 'whiteboard', 'webpage', 'localFile', 'image', 'audio', 'group', 'code']
 
 const ColWidthState = {
   nameWidth: '100%',
@@ -150,7 +188,7 @@ const ColWidthState = {
   createWidth: '200px'
 }
 const Recent = () => {
-  const all = useGlobalAtomValue(undeletedMetaObjectsAtom)
+  const all = useGlobalAtomValue(undeletedMetaObjectsAtom) as MetaObject[]
   const { t } = useTranslation()
   const [type, setType] = useState<MetaObject['type'] | 'all'>('all')
   const [showResizer, toggleShowResizer] = useToggle(false)
@@ -164,6 +202,8 @@ const Recent = () => {
     switch (type) {
       case 'all':
         return all.filter(i => allVisibleTypes.includes(i.type))
+      case 'pin':
+        return all.filter(i => allVisibleTypes.includes(i.type) && i.pinned)
       default: {
         if (allVisibleTypes.includes(type)) {
           return all.filter(i => i.type === type)
@@ -229,9 +269,14 @@ const Recent = () => {
                 children: t('general.all'),
                 icon: 'park-all-application'
               },
+              {
+                value: 'pin',
+                children: t('general.pinned'),
+                icon: 'park-star'
+              },
               ...allVisibleTypes.map(type => ({
                 value: type,
-                children: t(`general.${TypeToTypeName[type]}`),
+                children: Rendevoz.Utils.Meta.getTypeName(type),
                 icon: getIcon(type)
               }))
             ]}
@@ -349,7 +394,11 @@ const Recent = () => {
           <col style={{ minWidth: 50 }} />
         </colgroup>
 
-        <tbody>
+        <tbody
+          style={{
+            borderTop: '1px solid var(--border-background)'
+          }}
+        >
           {items?.slice(0, 100)?.map(i => (
             <tr
               onClick={e => {
@@ -360,19 +409,11 @@ const Recent = () => {
               key={i.id}
               className={css([
                 {
-                  height: 49,
-                  borderTop: `1px solid ${Colors.Background.Border}`,
                   userSelect: 'none',
                   td: {
                     padding: '6px 8px',
-                    fontWeight: 600,
+                    fontWeight: 500,
                     fontSize: 14
-                  },
-                  ':hover': {
-                    borderColor: 'transparent',
-                    '+ tr': {
-                      borderColor: 'transparent'
-                    }
                   }
                 },
                 ClassName.flatButton()

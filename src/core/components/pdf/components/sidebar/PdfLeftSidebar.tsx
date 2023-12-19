@@ -35,7 +35,8 @@ const PdfLeftSidebar = () => {
         zIndex: pdfBarState.showLeftBar ? 20 : -1,
         padding: 10,
         marginRight: 5,
-        background: Colors.Background.Secondary,
+        background: Colors.Background.Global,
+        borderRight: '1px solid var(--border-background)',
         visibility: pdfBarState.showLeftBar ? 'visible' : 'hidden'
       }}
     >

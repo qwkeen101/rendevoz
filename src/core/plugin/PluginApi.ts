@@ -7,7 +7,6 @@ import { EditorTypeToElementMap } from '../components/editor/maps'
 import createObjectStore, { storeMap, TypeToRegisteredObject } from '@/api/stores/object.store'
 import { TypeToRegisteredMetaObject } from '@/api/stores/meta.store'
 import i18next from 'i18next'
-import { TypeToTypeName } from '../object'
 import { getSetting, SettingAtom } from '..'
 import {
   KeyToRegisterdSettings,
@@ -37,7 +36,6 @@ export class PluginApi {
     registerMetaObject: (type, opts) => {
       if (!type || !opts.i18nKey || !opts.icon || !opts.onNavigate) return
       TypeToRegisteredMetaObject.set(type, { ...opts, type })
-      TypeToTypeName[type] = opts.i18nKey
       this.registeredMaps.registeredMetaObjects.set(type, { ...opts, type })
     },
     registerI18N: (lng, resource) => {

@@ -6,29 +6,35 @@ import useFeedInstance from '@/core/components/feed/hooks/useFeedInstance'
 import { assignProperties } from '@/utils'
 import readItem from '@/core/components/feed/utils/service/readItem'
 import { ObjectStore } from '@/api/stores'
-import fetchUrlAndParseNote from '@/core/components/webpage/utils/fetchUrlAndParseNote'
+import { FEED_CONTENT_CACHE } from '@/core/components/feed/contentCache'
+import { Rendevoz } from '@/core/rendevoz'
 
 const useArrowNavigation = () => {
   const [feedState, setFeedState] = useFeedState()
   const instance = useFeedInstance()
   const prepareContent = async (feedItemId: number) => {
     const feed = await ObjectStore('feed').getOneById(feedItemId)
-    if (feed && !feed.state?.content) {
-      const result = await fetchUrlAndParseNote(feed.link)
-      if (result) {
-        console.log(result)
-        ObjectStore('feed').updateOne({
-          id: feed.id,
-          image: result.image,
-          state: {
-            title: result.title,
-            author: result.author,
-            domain: result.domain,
-            image: result.image,
-            favicon: result.favicon,
-            content: result.noteValue
+    if (feed && !FEED_CONTENT_CACHE.has(feed.id)) {
+      try {
+        const result = await Rendevoz.Utils.Web.parseWebpage(feed.link)
+        if (result) {
+          FEED_CONTENT_CACHE.set(feed.id, result.content)
+          if (!feed.state || (!feed.image && result.image)) {
+            ObjectStore('feed').updateOne({
+              id: feed.id,
+              image: result.image,
+              state: {
+                title: result.title,
+                author: result.author,
+                domain: result.domain,
+                image: result.image,
+                favicon: result.favicon
+              }
+            })
           }
-        })
+        }
+      } catch (e) {
+        console.error(e)
       }
     }
   }

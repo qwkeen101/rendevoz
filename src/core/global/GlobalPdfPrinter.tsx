@@ -33,10 +33,7 @@ const GlobalPdfPrinter = () => {
                 lineSpacing: 1.4
               }}
               styles={{
-                containerHeight: 'initial',
-                outestContainerStyle: {
-                  height: 'unset'
-                }
+                containerHeight: 'unset'
               }}
               readOnly={true}
               defaultValue={printable.value}

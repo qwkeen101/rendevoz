@@ -1,18 +1,21 @@
 import { MetaStore } from '@/api/stores'
-import { Button, Content, IconWithPopover, Image, WithBorder } from '@/components'
+import { AnimatePopover, Button, Content, Icon, IconWithPopover, Image, WithBorder } from '@/components'
 import { useTranslation } from 'react-i18next'
-import { GlobalGraphInstance, useRenderObject } from '@/core'
+import { AttachmentWrapper, GlobalGraphInstance, useRenderObject } from '@/core'
 import ClassName from '@/styles/classNames'
 import { css } from '@emotion/css'
 import { Colors } from '@/consts'
 import { Rendevoz } from '@/core/rendevoz'
 import { GlobalInstance } from '@/hooks'
+import { RelatedPanel } from '@/core/object/details/Related'
+import MetaTagPicker from '@/core/object/MetaTagPicker'
+import Tag from '@/core/object/ObjectTag'
 
 const flatButton = css([
   ClassName.flatButton(999, '3px 10px '),
   {
     backgroundColor: Colors.Background.ButtonHover,
-    fontWeight: 600,
+    // fontWeight: 600,
     borderRadius: '999px !important',
     fontSize: 13,
     gap: 4,
@@ -46,17 +49,21 @@ const MetaMainDetails = ({ metaId, onViewLinks, onViewAtt }: { onViewAtt: VoidFu
         )}
         <Content flex column auto gap={5} justifyContent={'center'}>
           {renderWhole({
-            renderOptions: {
-              renderImage: false
-            },
+            columnGap: 3,
             titleOptions: {
-              clickToEdit: true,
-              clickOriginToEdit: true
+              style: {
+                maxWidth: 'calc(100% - 16px)',
+                zIndex: 30
+              }
+            },
+            renderOptions: {
+              renderTags: false,
+              renderImage: false
             }
           })}
         </Content>
       </Content>
-      <Content style={{ paddingTop: 12, flexWrap: 'wrap' }} flex gap={8}>
+      <Content style={{ paddingTop: 16, flexWrap: 'wrap' }} flex gap={8}>
         <Button.IconButton
           text={t('general.Open')}
           icon={'park-share'}
@@ -85,15 +92,6 @@ const MetaMainDetails = ({ metaId, onViewLinks, onViewAtt }: { onViewAtt: VoidFu
           icon={'park-like'}
           className={flatButton}
         ></Button.IconButton>
-        <Button.IconButton onClick={onViewLinks} text={t('general.Links')} icon={'park-link'} className={flatButton}></Button.IconButton>
-        <Button.IconButton
-          onClick={() => {
-            onViewAtt()
-          }}
-          text={t('general.attachments')}
-          icon={'park-link-one'}
-          className={flatButton}
-        ></Button.IconButton>
         <Button.IconButton
           onClick={() => {
             GlobalGraphInstance.open?.({ id: metaId }, true)
@@ -102,32 +100,157 @@ const MetaMainDetails = ({ metaId, onViewLinks, onViewAtt }: { onViewAtt: VoidFu
           icon={'park-share-one'}
           className={flatButton}
         ></Button.IconButton>
-        <IconWithPopover
-          closeOnContentClick={true}
-          content={
-            <WithBorder padding={6} style={{ fontSize: 14 }} width={140}>
-              <Button.IconButton
-                text={t('general.Copy link')}
-                onClick={() => {
-                  GlobalInstance.metaOps?.copyLink(metaId)
-                }}
-                icon={'park-link'}
-              />
-              <Button.IconButton
-                text={t('general.delete')}
-                icon={'park-delete'}
-                dangerous={true}
-                onClick={() => {
-                  MetaStore.deleteMetaObject(metaId, true)
-                }}
-              ></Button.IconButton>
-            </WithBorder>
-          }
-          style={{ padding: '4px' }}
-          name={'park-more'}
+        <Button.IconButton
+          text={t('general.Copy link')}
+          onClick={() => {
+            GlobalInstance.metaOps?.copyLink(metaId)
+          }}
+          icon={'park-link'}
           className={flatButton}
         />
+        <Button.IconButton
+          text={t('general.delete')}
+          icon={'park-delete'}
+          dangerous={true}
+          style={{ borderRadius: 999, padding: '3px 10px', fontSize: 13 }}
+          onClick={() => {
+            GlobalInstance.metaOps?.closeDetails()
+            MetaStore.deleteMetaObject(metaId, true)
+          }}
+        ></Button.IconButton>
       </Content>
+      <Content
+        flex
+        alignItems={'center'}
+        gap={12}
+        style={{
+          fontWeight: 500,
+          fontSize: 14,
+          margin: '16px 0 12px'
+        }}
+      >
+        <Icon
+          name={'park-tag-one'}
+          size={16}
+          containerStyle={{
+            background: 'linear-gradient(rgb(255 133 109) 0%, rgb(221 50 126) 140%)',
+            color: 'white',
+            borderRadius: 6,
+            padding: 4
+          }}
+        />
+        {t('general.Tags')}
+      </Content>
+      <AnimatePopover
+        positions={['bottom', 'top']}
+        reposition
+        align={'start'}
+        withClickCover
+        content={
+          <WithBorder width={360}>
+            <MetaTagPicker
+              style={{
+                flexShrink: 0,
+                borderRadius: 8
+              }}
+              alreadyTags={object?.tags || []}
+              onChange={tags => {
+                MetaStore.updateMetaObject({ id: metaId, tags }, true)
+              }}
+            />
+          </WithBorder>
+        }
+      >
+        <Content
+          flex
+          gap={6}
+          style={{
+            flexWrap: 'wrap',
+            cursor: 'pointer',
+            border: '1px solid var(--border-background)',
+            borderRadius: 8,
+            padding: '8px',
+            width: '100%'
+          }}
+        >
+          {object.tags?.length ? (
+            object.tags?.map(i => <Tag square hideDelete hideSize tag={i} key={i} />)
+          ) : (
+            <div
+              style={{
+                fontSize: 12,
+                padding: 6,
+                color: Colors.Font.SuperTransparent
+              }}
+            >
+              {t('general.Add tags')}...
+            </div>
+          )}
+        </Content>
+      </AnimatePopover>
+      <Content
+        flex
+        alignItems={'center'}
+        gap={12}
+        style={{
+          fontWeight: 500,
+          fontSize: 14,
+          margin: '12px 0'
+        }}
+      >
+        <Icon
+          name={'park-share-one'}
+          size={16}
+          containerStyle={{
+            background: 'linear-gradient(rgb(117 166 219) 0%, rgb(122 0 255) 140%)',
+            color: 'white',
+            borderRadius: 6,
+            padding: 4
+          }}
+        />
+        {t('general.Linked objects')}
+      </Content>
+      <RelatedPanel
+        style={{
+          minHeight: 240,
+          borderRadius: 8,
+          padding: '6px',
+          border: '1px solid var(--border-background)'
+        }}
+        metaId={metaId}
+      />
+      <Content
+        flex
+        alignItems={'center'}
+        gap={12}
+        style={{
+          fontWeight: 500,
+          fontSize: 14,
+          margin: '12px 0 16px'
+        }}
+      >
+        <Icon
+          name={'park-link-three'}
+          size={16}
+          containerStyle={{
+            background: 'linear-gradient(rgb(84 193 170) 0%, rgb(28 150 153) 140%)',
+            color: 'white',
+            borderRadius: 6,
+            padding: 4
+          }}
+        />
+        {t('general.Attachments')}
+      </Content>
+      <AttachmentWrapper
+        innerContainerStyle={{
+          justifyContent: 'space-between',
+          height: '100%',
+          overflowY: 'auto'
+        }}
+        visible={true}
+        maxVisibleAttachments={10}
+        metaId={metaId}
+      />
     </Content>
   )
 }

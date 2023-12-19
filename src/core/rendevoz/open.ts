@@ -9,8 +9,7 @@ import { GlobalTextSearchInstance } from '../global/GlobalTextSearch'
 import { GlobalTranslateInstance } from '../global/translate/GlobalTranslatePanel'
 import { Rendevoz } from '.'
 import { GlobalSearchInstance } from '../global/GlobalSearchPanel'
-import { setPanelState } from '@/components/layout/sidebar'
-import { GlobalInstance } from '@/hooks'
+import { GlobalInstance, useDb } from '@/hooks'
 
 const openMetaObject = async (metaObjectId: number) => {
   const metaObject = globalStore.get(metaObjectsAtom).get(metaObjectId)
@@ -40,11 +39,13 @@ const openMetaObject = async (metaObjectId: number) => {
     case 'noteBlock':
     case 'image':
     case 'videoLabel':
+    case 'code':
     case 'video':
     case 'audio':
     case 'audioLabel':
     case 'syncedBlock':
     case 'group':
+    case 'question':
     case 'whiteboard': {
       const one = await ObjectStore(metaObject.type).getOneById(objectId)
       if (!one) {
@@ -52,51 +53,54 @@ const openMetaObject = async (metaObjectId: number) => {
       }
       break
     }
-    case 'normal': {
-      const note = await ObjectStore('note').getOneById(objectId)
-      if (!note) {
-        hasTarget = false
-      }
-      break
-    }
   }
   if (hasTarget === false) {
-    toast.error('Target Item Not Exist!')
+    toast.error('Failed to open object!')
     return
   }
   updateViewAt(objectId)
-  switch (metaObject.type) {
-    case 'noteBlock':
-      return openNoteBlock(objectId)
-    case 'note':
-    case 'normal':
-      return openEditor(objectId)
-    case 'pdf':
-      return openPdf(objectId)
-    case 'pdfLabel':
-      return openPdfLabel(objectId)
-    case 'whiteboard':
-      return openWhiteboard(objectId)
-    case 'webpage':
-      return openWebpage(objectId)
-    case 'webpageLabel':
-      return openWebpageLabel(objectId)
-    case 'noteLabel':
-      return openNoteLabel(objectId)
-    case 'image':
-      return openImage(objectId)
-    case 'localFile':
-      return openLocalFile(objectId)
-    case 'audio':
-      return openAudio(objectId)
-    case 'video':
-      return openVideo(objectId)
-    case 'videoLabel':
-      return openVideoLabel(objectId)
-    case 'audioLabel':
-      return openAudioLabel(objectId)
-    case 'group':
-      return openGroup(objectId)
+  openObject(metaObject.objectId)
+}
+
+const openObject = async (objectId: number) => {
+  const db = useDb('objects')
+  const one = await db.get(objectId)
+  if (one) {
+    switch (one.specType) {
+      case 'noteBlock':
+        return openNoteBlock(objectId)
+      case 'note':
+      case 'normal':
+        return openEditor(objectId)
+      case 'pdf':
+        return openPdf(objectId)
+      case 'pdfLabel':
+        return openPdfLabel(objectId)
+      case 'whiteboard':
+        return openWhiteboard(objectId)
+      case 'webpage':
+        return openWebpage(objectId)
+      case 'webpageLabel':
+        return openWebpageLabel(objectId)
+      case 'noteLabel':
+        return openNoteLabel(objectId)
+      case 'image':
+        return openImage(objectId)
+      case 'localFile':
+        return openLocalFile(objectId)
+      case 'audio':
+        return openAudio(objectId)
+      case 'video':
+        return openVideo(objectId)
+      case 'videoLabel':
+        return openVideoLabel(objectId)
+      case 'audioLabel':
+        return openAudioLabel(objectId)
+      case 'group':
+        return openGroup(objectId)
+      default:
+        return openPage({ type: one.specType, objectId })
+    }
   }
 }
 
@@ -108,6 +112,25 @@ const openGroup = async (objectId: number) => {
         objectId: objectId
       }
     })
+    res(null)
+  })
+}
+
+const openPage = async (opts: { type: string; objectId?: number; onInstanceInitialized?: VoidFunction }) => {
+  const { type, objectId, onInstanceInitialized } = opts
+  return new Promise(res => {
+    Rendevoz.Actions.Layout.openNewTab({
+      data: {
+        type: type,
+        objectId: objectId,
+        onInstanceInitialized: onInstanceInitialized
+      }
+    })
+    if (objectId) {
+      setTimeout(() => {
+        updateViewAt(objectId)
+      })
+    }
     res(null)
   })
 }
@@ -127,7 +150,7 @@ const openRendevozLink = async (link: string) => {
     const query = url.searchParams
     const pathname = url.pathname
     const metaId = parseInt(pathname.replace('//object/', ''))
-    console.log(metaId)
+    console.log(metaId, query.get('blockid'))
     if (!metaId || metaId.toString().length !== 14) {
       return
     }
@@ -135,6 +158,28 @@ const openRendevozLink = async (link: string) => {
       const mediaObject = await MetaStore.getMetaObjectById(metaId)
       if (!mediaObject || !mediaObject.objectId) return
       await openMediaAtTime(mediaObject.objectId, mediaObject.type, parseInt(query.get('t')))
+    } else if (query.has('blockid')) {
+      const object = await MetaStore.getMetaObjectById(metaId)
+      if (object && object.objectId) {
+        const blockId = parseInt(query.get('blockid'))
+        if (object.type === 'webpage') {
+          await openWebpage(object.objectId).then(
+            i =>
+              i.editorInstance?.selectBlock?.({
+                blockId: blockId
+              })
+          )
+        }
+        if (object.type === 'note') {
+          console.log(blockId)
+          await openEditor(object.objectId).then(
+            i =>
+              i.selectBlock?.({
+                blockId: blockId
+              })
+          )
+        }
+      }
     } else {
       await openMetaObject(metaId)
     }
@@ -341,11 +386,12 @@ const openNoteLabel = async (labelId: number) => {
 }
 
 const updateViewAt = (objectId: number) => {
-  const metaId = globalStore.get(objectIdToMetaObjectIdMapAtom)?.get(objectId)
-
-  if (metaId) {
-    MetaStore.updateMetaObject({ id: metaId, viewAt: Date.now() }, true)
-  }
+  setTimeout(() => {
+    const metaId = globalStore.get(objectIdToMetaObjectIdMapAtom)?.get(objectId)
+    if (metaId) {
+      MetaStore.updateMetaObject({ id: metaId, viewAt: Date.now() }, true)
+    }
+  }, 1000)
 }
 
 const openTextSearch = (opts?: Parameters<GlobalInstances.TextSearchInstance['open']>[0]) => {

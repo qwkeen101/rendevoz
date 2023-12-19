@@ -106,6 +106,7 @@ const Layout = () => {
   useEffect(() => {
     layoutManager.registerLayout(defaultLayout)
     layoutManager.onLayoutChange(layout => {
+      console.log(layout)
       setLayout(layout)
     })
     setTimeout(() => {
@@ -120,7 +121,7 @@ const Layout = () => {
 
   const os = getOS()
   return (
-    <Container auto column style={{ height: '100vh', overflowY: 'auto' }}>
+    <Container onClick={() => console.log(layout)} auto column style={{ height: '100vh', overflow: 'hidden' }}>
       <Helmet>
         <title>Rendevoz</title>
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />

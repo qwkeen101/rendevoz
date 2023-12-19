@@ -60,8 +60,7 @@ const MediaActionsMenu = ({ onClose }: { onClose?: VoidFunction }) => {
         icon="park-pin"
         onClick={() => {
           instance.insertLabel?.({
-            time: currentTime,
-            name: 'Unnamed Label'
+            time: currentTime
           })
         }}
         text={t('general.add label')}

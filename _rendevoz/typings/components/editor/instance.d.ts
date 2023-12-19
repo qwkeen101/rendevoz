@@ -2,20 +2,28 @@ import { Descendant, NodeEntry, Operation, Path, PathRef } from 'slate'
 import { CustomEditor, CustomElement, ElementFunctions, INoteLabel } from '.'
 import { CustomText, EmptyText } from '.'
 import { EditorOverlayManager } from '../../../../src/core/components/editor/components/overlay/useEditorOverlay'
+import { XYPosition } from '~/typings'
 
+export type IEditorOverlayContent = 'emojiPicker' | 'blockHandleMenu' | 'blockDetailsMenu' | 'selectArea' | 'slashMenu' | 'linkForm' | 'transformMenu'
 export type IEditorInstance = Partial<{
   getTitle: () => string
-  scrollToBlock: (options: { blockId?: number }) => Promise<void>
+  scrollToBlock: (options: { blockId?: number; highlight?: boolean }) => Promise<void>
   selectBlock: (options: { blockId?: number }) => Promise<void>
   scrollToHighlight: (options: { highlightId: number }) => Promise<void>
   getSlateEditor: () => CustomEditor
   isSelectionCollapsed?: () => boolean
   indexPath: VoidFunction
+  dragManager: any
   getScrollPosition: () => number
   scrollToPosition: (offset: number) => void
   // trigger change index without triggering onChange
   handleChange: VoidFunction
   blockOps: {
+    isBlockEmpty: (customElement: CustomElement) => boolean
+    copyLink: VoidFunction
+    duplicateSelectedBlocks: VoidFunction
+    getCurrentCursorBlockBounding: () => DOMRect | undefined
+    getCurrentCursorBlockText: () => string | undefined
     // if has selected, delete selected, else delete target path
     deleteBlock: (path?: Path) => void
     getAboveBlock: () => [CustomElement, Path] | undefined
@@ -23,6 +31,16 @@ export type IEditorInstance = Partial<{
     insertBlockIndent: (path: Path, recursive?: boolean) => void
     minusBlockIndent: (path: Path, recursive?: boolean) => void
     transformBlockType: (path: Path, newType: string) => void
+  }
+  overlayOps: {
+    open: (content: IEditorOverlayContent, position: XYPosition) => void
+    close: VoidFunction
+    getState: () => {
+      visible: boolean
+      content?: IEditorOverlayContent
+      position?: XYPosition
+      currentFilterValue?: string
+    }
   }
   toggleOps: {
     haveToggledChildren: (path: Path) => boolean
@@ -36,11 +54,16 @@ export type IEditorInstance = Partial<{
     getFoldedOffsetPath: (path: Path) => Path
     extendElements: (elements: CustomElement | CustomElement[]) => [CustomElement, Path][]
   }
+  selectOps: {
+    deselectAll: VoidFunction
+    selectBlock: (blockId: number | number[]) => void
+  }
   textOps: {
     // get text before selection anchor
     getBeforeText: (distance: number, unit?: 'character' | 'word') => string | undefined
   }
   labelOps: {
+    openLabelInSidebar: (labelId: number) => void
     addLabel: (label: Partial<INoteLabel>) => Promise<INoteLabel | void>
     deleteLabel: (id: number) => Promise<void>
     toggleLabel: VoidFunction

@@ -1,4 +1,4 @@
-import { MetaStore, ObjectStore } from '@/api/stores'
+import { AIStore, MetaStore, ObjectStore } from '@/api/stores'
 import { Editor } from '@/core/components/editor/Editor'
 import { useMemo, useState } from 'react'
 import Id from '@/utils/id'
@@ -11,6 +11,7 @@ import useAddNewElement from '@/core/components/editor/noteEditor/useAddNewEleme
 import useLabel from '@/core/components/editor/noteEditor/useLabel'
 import { GlobalInstance } from '@/hooks'
 import { GlobalSearchInstance } from '@/core/global/GlobalSearchPanel'
+import produce from 'immer'
 
 /**
  *  基于笔记的编辑器
@@ -54,6 +55,12 @@ const NoteEditor = ({ noteId, labelIds, on, ...rest }: { noteId?: number } & Edi
           rest.onInstanceInitialized?.(i)
         }
       }}
+      ai={
+        rest.ai || {
+          summary: noteMeta?.properties?.['AI summary']?.value,
+          questions: noteMeta?.properties?.['AI questions']?.value
+        }
+      }
       state={
         note
           ? {
@@ -61,8 +68,9 @@ const NoteEditor = ({ noteId, labelIds, on, ...rest }: { noteId?: number } & Edi
               fontSize: note?.fontSize,
               lastSavedAt: note?.lastSavedAt,
               typeface: note?.typeface,
-              saveImgLocally: false,
-              lineSpacing: note?.lineSpacing
+              saveImgLocally: true,
+              lineSpacing: note?.lineSpacing,
+              ...rest.state
             }
           : rest.state
       }
@@ -83,6 +91,20 @@ const NoteEditor = ({ noteId, labelIds, on, ...rest }: { noteId?: number } & Edi
             saveValueToNote(e.value)
             return
           }
+          case 'copyLink': {
+            if (noteMeta) {
+              const links = e.blocks.map(i => `rendevoz://object/${noteMeta.id}?blockId=${i.id}`).join('\n')
+              const html = e.blocks.map(i => `<p><a href="rendevoz://object/${noteMeta.id}?blockid=${i.id}">${i.text}</a></p>`).join('')
+              const content = [
+                new ClipboardItem({
+                  'text/html': new Blob([html], { type: 'text/html' }),
+                  'text/plain': new Blob([links], { type: 'text/plain' })
+                })
+              ]
+              navigator.clipboard.write(content)
+            }
+            return
+          }
           case 'deleteLabel': {
             return await handleDeleteLable(e.labelId)
           }
@@ -93,6 +115,19 @@ const NoteEditor = ({ noteId, labelIds, on, ...rest }: { noteId?: number } & Edi
             return await handleAddNewElementFromMenu(e.newElementType)
           case 'drop': {
             return await handleDrop(e)
+          }
+          case 'AI summarize': {
+            if (noteMeta) {
+              const objId = noteId
+              const questions = await Promise.all(
+                e.questions.map(async i => await ObjectStore('question').addOne({ ...i, parentObjectId: objId }))
+              )
+              AIStore.updateMetaAI(noteMeta.id, {
+                summary: e.summary,
+                questions: questions
+              })
+            }
+            return
           }
           case 'linkAddAsValue': {
             ObjectStore('webpage').addOneWithMeta(
@@ -113,11 +148,11 @@ const NoteEditor = ({ noteId, labelIds, on, ...rest }: { noteId?: number } & Edi
             return
           }
           case 'search': {
-            GlobalSearchInstance.open({
+            GlobalSearchInstance.open?.({
               query: e.searchedText,
               from: {
                 type: 'note',
-                metaId: noteMeta.id
+                metaId: noteMeta?.id
               }
             })
             return
@@ -155,7 +190,6 @@ const NoteEditor = ({ noteId, labelIds, on, ...rest }: { noteId?: number } & Edi
             break
           }
           case 'titleChange': {
-            console.log(e.value, noteMeta)
             if (noteMeta) {
               const newTitle = e.value
               MetaStore.updateMetaObject({ id: noteMeta.id, name: newTitle }, true)

@@ -130,11 +130,12 @@ const AttachmentList = ({
         {attachments.length === 0 && (
           <div
             style={{
-              padding: '24px',
+              padding: '48px',
               textAlign: 'center',
-              margin: 'auto'
+              margin: 'auto',
+              color: Colors.Font.Transparent,
+              fontSize: 13
             }}
-            className={ClassName.description()}
           >
             {t('general.drag object here to add attachment')}
           </div>

@@ -19,6 +19,7 @@ export type IWebpageState = {
   }
   loaded: boolean
   isLoading: boolean
+  failLoading?: boolean
   currentParsedContent?: import('slate').Descendant[]
   currentWebpageId?: number
   currentUrl?: string
@@ -27,7 +28,7 @@ export type IWebpageState = {
 
 const WebpageStateAtom = atom<IWebpageState>({
   loaded: false,
-  isLoading: true
+  isLoading: false
 })
 
 const useWebpageState = () => useAtom(WebpageStateAtom)

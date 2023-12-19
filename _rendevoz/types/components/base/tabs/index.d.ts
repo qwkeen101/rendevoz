@@ -1,19 +1,12 @@
-import {
-  CSSProperties,
-  FC,
-  MouseEventHandler,
-  ReactElement,
-  ReactNode,
-} from "react";
-
+import { CSSProperties, FC, MouseEventHandler, ReactElement, ReactNode } from "react";
 export interface TabNavListProps {
-  defaultActiveKey: string;
-  navs: {
-    tab: string | ReactElement;
-    key: string;
-  }[];
-  onTabClick: (key: string, e: MouseEvent) => void;
-  extra?: ReactNode;
+    defaultActiveKey: string;
+    navs: {
+        tab: string | ReactElement;
+        key: string;
+    }[];
+    onTabClick: (key: string, e: MouseEvent) => void;
+    extra?: ReactNode;
 }
 interface TabsProps {
     defaultActiveKey: string;

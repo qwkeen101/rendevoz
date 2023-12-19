@@ -20,6 +20,7 @@ export type TitleRendererProps = {
   showAddNote?: boolean
   clickToEdit?: boolean
   clickOriginToEdit?: boolean
+  showEditBoxShadow?: boolean
 }
 export default ({
   ellipsisLine = 2,
@@ -31,10 +32,13 @@ export default ({
   originalTextStyle,
   clickOriginToEdit = false,
   clickToEdit = false,
-  showAddNote = true
+  showEditBoxShadow,
+  showAddNote
 }: TitleRendererProps) => {
   const [isEditing, setIsEditing] = useState(false)
-  const showLabelName = metaObject?.name !== 'Unnamed Label'
+  console.log(isEditing)
+  const enableAddNote = showAddNote && !metaObject?.name
+  const name = metaObject?.name || (!originalText ? metaObject?.placeholderName : showAddNote ? 'Add note...' : null)
   return (
     <>
       {originalText && metaObject && (
@@ -48,51 +52,35 @@ export default ({
       )}
       {isEditing ? (
         <ContentEditor
-          style={{ marginTop: 8 }}
+          style={{ marginTop: 8, boxShadow: showEditBoxShadow === false ? 'none' : undefined }}
           onChange={v => {
             setIsEditing(false)
-            if (!v) {
-              if (originalText && metaObject?.id) {
-                MetaStore.updateMetaObject({ id: metaObject.id, name: 'Unnamed Label' }, true)
-              }
-              return
-            }
             if (v !== metaObject?.name && metaObject?.id) {
               MetaStore.updateMetaObject({ id: metaObject.id, name: v }, true)
             }
           }}
           placeholder={originalText ? 'Add note...' : undefined}
-          value={metaObject?.name === 'Unnamed Label' ? '' : metaObject?.name}
+          value={metaObject?.name}
         />
-      ) : (
-        <>
-          {showLabelName ? (
-            <div
-              onContextMenu={() => setIsEditing(!isEditing)}
-              onClick={e => {
-                if (clickToEdit) {
-                  setIsEditing(!isEditing)
-                  return
-                }
-                if (keyboard.ctrl && metaObject) {
-                  GlobalInstance.metaOps?.copyLink(metaObject.id)
-                } else {
-                  onTitleClick?.(e)
-                }
-              }}
-              style={{ color: metaObject?.color, ...style }}
-              className={titleClassName}
-            >
-              {metaObject?.name}
-            </div>
-          ) : null}
-          {(!originalText || showAddNote) && metaObject?.name === 'Unnamed Label' && (
-            <div onClick={() => setIsEditing(!isEditing)} style={{ fontSize: 13, color: Colors.Font.Transparent, cursor: 'pointer' }}>
-              Add note...
-            </div>
-          )}
-        </>
-      )}
+      ) : name ? (
+        <div
+          onClick={e => {
+            if (clickToEdit || enableAddNote) {
+              setIsEditing(!isEditing)
+              return
+            }
+            onTitleClick?.(e)
+          }}
+          style={{
+            color: enableAddNote ? Colors.Font.SuperTransparent : metaObject?.color,
+            fontWeight: enableAddNote ? 400 : style?.fontWeight,
+            ...style
+          }}
+          className={titleClassName}
+        >
+          {name}
+        </div>
+      ) : null}
     </>
   )
 }

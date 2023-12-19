@@ -17,10 +17,8 @@ export const useAssignPdfInstance = (pdfId: number) => {
   assignProperties(instance, {
     getPdfId: () => pdfId,
     insertLabel: async label => {
-      const name = 'Unnamed Label'
       await ObjectStore('pdfLabel')
         .addOne({
-          name,
           parentObjectId: pdfId,
           ...label
         })

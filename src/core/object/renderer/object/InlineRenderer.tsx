@@ -110,7 +110,7 @@ export default (
             textDecoration: showUnderline === false ? 'none' : undefined
           }}
         >
-          {metaObject?.name || 'Deleted Object'}
+          {metaObject?.name || metaObject?.placeholderName || 'Unnamed object'}
         </span>
       </HoverObjectDetails>
       <div

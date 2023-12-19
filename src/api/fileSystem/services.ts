@@ -64,7 +64,9 @@ export const saveImageLocally = async (
     data = imgData
   }
   if (data.length) {
-    return await fs.writeFile(data.replace(/^data:image\/png;base64,/, ''), `/imgs/${imgName ?? md5(data)}.png`, 'base64')
+    const striped = data.replace(/^data:image\/[a-z]+;base64,/, '')
+    console.log(striped)
+    return await fs.writeFile(striped, `/imgs/${imgName ?? md5(data)}.png`, 'base64')
   }
   throw new Error('Failed to save image!')
 }

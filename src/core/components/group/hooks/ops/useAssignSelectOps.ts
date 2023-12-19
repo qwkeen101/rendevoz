@@ -42,6 +42,7 @@ export default (instance: IGroupInstance) => {
       selectAll: () => {
         const elements = instance.valueOps?.getVisibleValues()
         if (elements) {
+          console.log(elements)
           instance.values.inViewRowFuncs.forEach(v => v.select())
           elements.forEach(([e, p]) => {
             instance.values.selectedRowIdSet.add(e.rowId)

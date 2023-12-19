@@ -38,7 +38,6 @@ export type CustomEditor = BaseEditor &
     goToHighlight?: (highlightId: number) => void
     titleEle?: HTMLElement | null
     on: (event: IEditorEvent) => Promise<any>
-    type?: 'note' | 'webpage'
     editorMode?: 'note' | 'webpage' | 'syncedBlock'
     labelIds?: number[]
     instance: IEditorInstance
@@ -118,9 +117,15 @@ export interface EditorProps {
     showHeader?: boolean
     showTitle?: boolean
     showToolbar?: boolean
-    showBlockHandle: boolean
+    showBlockHandle?: boolean
+    showLastSave?: boolean
     showBottomPadding?: boolean
     showHoverObjectDetails?: boolean
+    showBlockHandleAdd?: boolean
+  }
+  ai?: {
+    summary?: string
+    questions?: number[]
   }
   title?: {
     customTitleRenderer?: (realTitle: string) => ReactElement
@@ -133,8 +138,10 @@ export interface EditorProps {
   styles?: {
     editorContainerStyle?: CSSProperties
     pageMinPadding?: string | number
+    bottomPadding?: number
     containerHeight?: number | string
-    outestContainerStyle?: CSSProperties
+    containerMaxHeight?: number | string
+    containerStyle?: CSSProperties
   }
   header?: {
     boxShadow?: boolean

@@ -1,4 +1,4 @@
-import { useWhiteboardNodes } from '@/core/components/whiteboard/hooks'
+import { useWhiteboardNodes } from '@/core/components/whiteboard/StateHooks'
 import { useEffect, useState } from 'react'
 import { Colors } from '@/consts'
 import { useTranslation } from 'react-i18next'

@@ -1,11 +1,15 @@
 import { useWhiteboardState } from '@/core/components/whiteboard/hooks/useWhiteboardState'
-import { Button, Content, Icon, IconWithPopover, WithBorder } from '@/components'
+import { Content, Icon, Tooltip, WithBorder } from '@/components'
 import { Colors } from '@/consts'
 import { ClassName } from 'rendevoz'
 import FontSize from '@/consts/font'
-import { useFlow } from '@/core/components/whiteboard/hooks'
+import { useFlow } from '@/core/components/whiteboard/StateHooks'
 import WhiteboardMinimap from '@/core/components/whiteboard/minimap/WhiteboardMinimap'
 import { useEffect, useState } from 'react'
+import { useWhiteboardInstance } from '@/core/components/whiteboard/hooks'
+import { getBoxOfNodes } from '@/core/components/whiteboard/utils'
+import TooltipWithCmd from '@/core/components/whiteboard/TooltipWithCmd'
+import { useTranslation } from 'react-i18next'
 
 const WhiteboardControlBar = () => {
   const [whiteboardState, setWhiteboardState] = useWhiteboardState()
@@ -14,6 +18,7 @@ const WhiteboardControlBar = () => {
     redo: false,
     undo: false
   })
+  const instance = useWhiteboardInstance()
   useEffect(() => {
     const interval = setInterval(() => {
       setHistoryState(s => ({
@@ -25,6 +30,9 @@ const WhiteboardControlBar = () => {
       clearInterval(interval)
     }
   }, [])
+  const transformHistory = instance.values.transformHistory
+  const { t } = useTranslation()
+  const showUndo = transformHistory.undos.length > 0
   return (
     <Content
       flex
@@ -37,25 +45,57 @@ const WhiteboardControlBar = () => {
         bottom: 20
       }}
     >
-      <WithBorder
-        onClick={() => console.log(flow.history)}
-        padding={6}
-        style={{ background: Colors.Background.Secondary, display: 'flex', alignItems: 'center', gap: 8 }}
-      >
-        <Icon
-          className={ClassName.circleButton(6, 6)}
-          name={'park-back'}
-          onClick={() => flow.undo?.()}
-          style={{ color: historyState.undo ? undefined : Colors.Background.Border, cursor: historyState.undo ? undefined : 'not-allowed' }}
-        />
-        <Icon
-          className={ClassName.circleButton(6, 6)}
-          name={'park-share-two'}
-          onClick={() => flow.redo?.()}
-          style={{ color: historyState.redo ? undefined : Colors.Background.Border, cursor: historyState.redo ? undefined : 'not-allowed' }}
-        />
+      {(showUndo || transformHistory.redos.length > 0) && (
+        <WithBorder padding={6} style={{ background: Colors.Background.Popover, display: 'flex', alignItems: 'center', gap: 8 }}>
+          {showUndo && (
+            <Tooltip content={<TooltipWithCmd cmd={'Shift+E'} name={t('whiteboard.Undo view change')} />}>
+              <Icon
+                className={ClassName.circleButton(6, 6)}
+                name={'park-back-one'}
+                onClick={() => {
+                  instance.containerOps?.undoTransform()
+                }}
+              />
+            </Tooltip>
+          )}
+          {transformHistory.redos.length > 0 && (
+            <Tooltip content={<TooltipWithCmd cmd={'Shift+Q'} name={'Redo view change'} />}>
+              <Icon
+                className={ClassName.circleButton(6, 6)}
+                name={'park-go-ahead'}
+                onClick={() => {
+                  instance.containerOps?.redoTransform()
+                }}
+              />
+            </Tooltip>
+          )}
+        </WithBorder>
+      )}
+      <WithBorder padding={6} style={{ background: Colors.Background.Popover, display: 'flex', alignItems: 'center', gap: 8 }}>
+        <Tooltip content={<TooltipWithCmd cmd={'Cmd+Z'} name={t('general.Undo')} />}>
+          <Icon
+            className={ClassName.circleButton(6, 6)}
+            name={'park-back'}
+            onClick={() => flow.undo?.()}
+            style={{
+              color: historyState.undo ? undefined : Colors.Background.Border,
+              cursor: historyState.undo ? undefined : 'not-allowed'
+            }}
+          />
+        </Tooltip>
+        <Tooltip content={<TooltipWithCmd cmd={'Cmd+Y'} name={t('general.Redo')} />}>
+          <Icon
+            className={ClassName.circleButton(6, 6)}
+            name={'park-share-two'}
+            onClick={() => flow.redo?.()}
+            style={{
+              color: historyState.redo ? undefined : Colors.Background.Border,
+              cursor: historyState.redo ? undefined : 'not-allowed'
+            }}
+          />
+        </Tooltip>
       </WithBorder>
-      <WithBorder padding={6} style={{ background: Colors.Background.Secondary, display: 'flex', alignItems: 'center', gap: 8 }}>
+      <WithBorder padding={6} style={{ background: Colors.Background.Popover, display: 'flex', alignItems: 'center', gap: 8 }}>
         <Icon
           onClick={() => {
             setWhiteboardState(s => ({
@@ -89,9 +129,18 @@ const WhiteboardControlBar = () => {
         />
         <div
           onClick={() => {
-            console.log('click here')
+            const allNodes = instance.getAllNode?.()
+            if (allNodes?.length) {
+              const box = getBoxOfNodes(allNodes)
+              if (box) {
+                instance.containerOps?.fitTo(box)
+                return
+              }
+            }
             const bounding = flow.parentContainerEle?.getBoundingClientRect()
-            flow.panzoom?.smoothZoomAbs(bounding.width / 2, bounding.height / 2, 1)
+            if (bounding) {
+              flow.panzoom?.smoothZoomAbs(bounding.width / 2, bounding.height / 2, 1)
+            }
           }}
           style={{ fontSize: FontSize['12px'], fontWeight: 600, fontFamily: 'Muli', cursor: 'pointer' }}
         >

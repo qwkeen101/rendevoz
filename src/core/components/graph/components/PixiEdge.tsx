@@ -3,7 +3,7 @@ import { GraphEdge } from '../types/edge'
 import { MarkerColor } from '@/consts'
 import useGraph from '../hooks/useGraph'
 import { useMemoizedFn } from '@/hooks'
-import { getRadius } from './node/Node'
+
 import { NodeFakeHiddenOpacity } from '../consts/opacity'
 import { useStore } from 'jotai'
 import { Container, Graphics, Sprite, Text } from '@pixi/react'
@@ -12,11 +12,12 @@ import { BLEND_MODES, Graphics as _Graphics, Polygon, Text as _Text } from 'pixi
 import { fontStyle } from '@/core/components/graph/components/node/PixiIconNode'
 import { oppositeEdgesMapAtom } from '@/core/components/graph/hooks/useEdges'
 import arrowSvg from '@/assets/upSvg.svg'
+import { Rendevoz } from '@/core/rendevoz'
 
 interface EdgeProps {
   edge: GraphEdge
 }
-
+const getRadius = Rendevoz.Utils.Meta.getTypeRadius
 const PixiEdge: FC<EdgeProps> = memo(({ edge }) => {
   const graph = useGraph()
 

@@ -31,42 +31,6 @@ const EditorPage: FC<
         <NoteEditor
           {...rest}
           noteId={noteId}
-          on={event => {
-            if (rest.on) {
-              rest.on(event)
-              return
-            }
-            switch (event.type) {
-              case 'search': {
-                GlobalSearchInstance.open?.({
-                  e: event.e,
-                  query: event.searchedText,
-                  from: {
-                    type: 'note',
-                    metaId: globalStore.get(objectIdToMetaObjectIdMapAtom)?.get(event.editor.noteId),
-                    selectedText: event.searchedText,
-                    blockId: event.blockId
-                  }
-                })
-                break
-              }
-              case 'highlight': {
-                break
-              }
-              case 'translate': {
-                GlobalTranslateInstance.open?.({
-                  e: event.e,
-                  query: event.translatedText,
-                  source: {
-                    type: 'note',
-                    objectId: event.editor.noteId!,
-                    blockId: id
-                  }
-                })
-                break
-              }
-            }
-          }}
           onInstanceInitialized={i => {
             onInstanceInitialized?.(i)
           }}

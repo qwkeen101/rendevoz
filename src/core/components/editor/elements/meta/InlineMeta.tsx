@@ -1,4 +1,3 @@
-import { TypeToTypeName } from '@/core/object'
 import { ClassName } from 'rendevoz'
 import { css } from '@emotion/css'
 import { FC } from 'react'
@@ -16,7 +15,6 @@ import { EditorStateAtom } from '@/core/components/editor/hooks/useEditorState'
 
 const clazzName = css({
   cursor: 'pointer',
-  fontWeight: 500,
   transition: 'color 0.2s ease',
   ':hover': {
     color: Colors.Common.SelectColor
@@ -26,7 +24,7 @@ const nameClassName = css([
   ClassName.objectTag,
   {
     pointerEvents: 'none',
-    fontSize: '0.78em',
+    fontSize: '0.8em',
     whiteSpace: 'nowrap',
     lineHeight: 1,
     padding: '0.2em 0.6em !important',
@@ -53,7 +51,7 @@ const InlineMetaElement: FC<RenderElementProps> = ({ element, children, attribut
   const { t } = useTranslation()
   const showDetails = useSelectAtomValue(EditorStateAtom, s => s.layout?.showHoverObjectDetails) ?? true
   const targetObject = ObjectStore(metaObject?.type).useValue(metaObject?.objectId)
-  const showOriginalText = metaObject?.name === 'Unnamed Label' && targetObject?.selectedText
+  const showOriginalText = !metaObject?.name && targetObject?.selectedText
   if (metaObject?.coverImgSrc) {
     return (
       <span {...attributes} data-meta-id={element.id} style={{ margin: '0 6px 0px 2px', position: 'relative' }}>

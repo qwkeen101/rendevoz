@@ -13,7 +13,7 @@ const Zindexes = {
   ModalBackdrop: 20001,
   GraphPopup: 20002,
   Notification: 20003,
-  EditorSelectionToolbar: 22005,
+  EditorSelectionToolbar: 22000,
   Tooltip: 30102,
   ImagePreview: 32004,
 };

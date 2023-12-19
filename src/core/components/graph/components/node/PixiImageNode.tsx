@@ -1,12 +1,11 @@
 import { GraphNode } from '@/core/components/graph/types/node'
-import { getRadius } from '@/core/components/graph/components/node/Node'
 import { Graphics as RGrahpics, Sprite, Text } from '@pixi/react'
-import { BLEND_MODES, Graphics, Rectangle, Texture } from 'pixi.js'
-import { useCallback, useEffect, useMemo, useState } from 'react'
-import { fontStyle } from '@/core/components/graph/components/node/PixiIconNode'
-import { loopProcess } from '@/utils'
+import { Graphics } from 'pixi.js'
+import { useCallback, useEffect, useState } from 'react'
 import { Queue } from 'async-await-queue'
+import { Rendevoz } from '@/core/rendevoz'
 
+const getRadius = Rendevoz.Utils.Meta.getTypeRadius
 function getObjectFitSize(width: number, height: number) {
   const scaledSize = width > height ? height : width
   const x = width / 2 - scaledSize / 2

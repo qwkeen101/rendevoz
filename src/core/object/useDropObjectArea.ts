@@ -30,6 +30,7 @@ const useDropObjectArea = (
     droppable: true,
     existed: false
   })
+  const [isDragOver, setIsDragOver] = useState(false)
   const [isDragging] = useGlobalIsDragging()
   const rafCheck = useRafFn((e: PointerEvent | DragEvent, draggingElement: IDraggableElement) => {
     if (!startDragRef.current) return
@@ -97,9 +98,11 @@ const useDropObjectArea = (
     }
     if (!e) return
     if (area?.contains(e.target)) {
+      setIsDragOver(true)
       callback?.onDragOver?.(draggingElement)
     } else {
       callback?.onDragLeave?.()
+      setIsDragOver(false)
     }
   })
   handler.on('globalDragPointerUp', data => {
@@ -142,7 +145,8 @@ const useDropObjectArea = (
   }, [isDragging])
   return {
     isDragging,
-    canDropAsMeta
+    canDropAsMeta,
+    isDragOver
   }
 }
 

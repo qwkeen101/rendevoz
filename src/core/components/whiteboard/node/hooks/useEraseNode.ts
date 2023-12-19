@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useMemoizedFn, useSelectAtomValue } from '@/hooks'
 import { WhiteboardStateAtom } from '@/core/components/whiteboard/hooks/useWhiteboardState'
-import { useFlow } from '@/core/components/whiteboard/hooks'
+import { useFlow } from '@/core/components/whiteboard/StateHooks'
 
 const useEraseNode = (nodeId: number) => {
   const isErasing = useSelectAtomValue(WhiteboardStateAtom, s => s.erasing)

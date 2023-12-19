@@ -124,7 +124,7 @@ const MetaTagPicker = forwardRef(
             style={{ flex: '1 1 100px', overflow: 'hidden', fontSize: '13px', lineHeight: '20px' }}
           />
         </Content>
-        <div style={{ padding: '4px 12px 2px', color: Colors.Font.Secondary, fontSize: 12, fontWeight: 600 }}>
+        <div style={{ padding: '4px 8px 2px', color: Colors.Font.Secondary, fontSize: 12, fontWeight: 600 }}>
           {selectMode ? t('general.Select tags') : t('general.Select tags or create one')}
         </div>
         <VirtualList
@@ -218,7 +218,7 @@ const TagRenderer = memo(
             withClickCover={true}
             content={
               <WithBorder
-                style={{ background: Colors.Background.Secondary }}
+                style={{ background: Colors.Background.Global }}
                 onClick={e => e.stopPropagation()}
                 onKeyDown={e => e.stopPropagation()}
                 padding={10}

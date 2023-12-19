@@ -50,12 +50,14 @@ const MediaSidebar = memo(() => {
       }
       style={{
         display: 'flex',
-        borderRadius: column ? 6 : 0,
+        borderRadius: column ? 12 : 0,
         flexDirection: 'column',
+        borderWidth: column ? '1px' : '0px 0px 0px 1px',
+        borderColor: 'var(--border-background)',
+        borderStyle: 'solid',
         opacity: sidebarState.rightBarVisible ? 1 : 0,
         visibility: sidebarState.rightBarVisible ? 'visible' : 'hidden',
         position: sidebarState.rightBarVisible ? 'relative' : 'absolute',
-        background: Colors.Background.Secondary,
         marginBottom: column ? 24 : 0,
         padding: '12px',
         overflow: 'hidden'

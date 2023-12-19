@@ -21,7 +21,7 @@ export function getUpdatedObject(obj: any): any {
   return obj
 }
 
-function clearObjectCache() {
+export function clearObjectCache() {
   _watchObjectChange = new WeakMap()
 }
 
@@ -215,19 +215,23 @@ export function converToPanel(source: TabData | PanelData): PanelData {
 
 export function dockPanelToPanel(layout: LayoutData, newPanel: PanelData, panel: PanelData, direction: DropDirection): LayoutData {
   const box = panel.parent
+
   const dockMode: DockMode = direction === 'left' || direction === 'right' ? 'horizontal' : 'vertical'
   const afterPanel = direction === 'bottom' || direction === 'right'
 
   let pos = box.children.indexOf(panel)
   if (pos >= 0) {
     const newBox = clone(box)
+
     if (dockMode === box.mode) {
       if (afterPanel) {
         ++pos
       }
-      panel.size *= 0.5
+      // panel.size *= 0.5
       newPanel.size = panel.size
+
       newBox.children.splice(pos, 0, newPanel)
+
     } else {
       const newChildBox: BoxData = { mode: dockMode, children: [] }
       newChildBox.size = panel.size
@@ -243,7 +247,8 @@ export function dockPanelToPanel(layout: LayoutData, newPanel: PanelData, panel:
       newBox.children[pos] = newChildBox
       newChildBox.parent = newBox
     }
-    return replaceBox(layout, box, newBox)
+    layout.dockbox = newBox
+    return layout
   }
   return layout
 }
@@ -383,6 +388,7 @@ function removeTab(layout: LayoutData, tab: TabData): LayoutData {
           newPanel.activeId = newPanel.tabs[0].id
         }
       }
+
       return replacePanel(layout, panel, newPanel)
     }
   }
@@ -675,28 +681,7 @@ export function fixLayoutData(layout: LayoutData, groups?: { [key: string]: TabG
     return box
   }
 
-  if (layout.floatbox) {
-    layout.floatbox.mode = 'float'
-  } else {
-    layout.floatbox = { mode: 'float', children: [], size: 1 }
-  }
-
-  if (layout.windowbox) {
-    layout.windowbox.mode = 'window'
-  } else {
-    layout.windowbox = { mode: 'window', children: [], size: 1 }
-  }
-
-  if (layout.maxbox) {
-    layout.maxbox.mode = 'maximize'
-  } else {
-    layout.maxbox = { mode: 'maximize', children: [], size: 1 }
-  }
-
   fixBoxData(layout.dockbox)
-  fixBoxData(layout.floatbox)
-  fixBoxData(layout.windowbox)
-  fixBoxData(layout.maxbox)
 
   if (layout.dockbox.children.length === 0) {
     // add place holder panel when root box is empty

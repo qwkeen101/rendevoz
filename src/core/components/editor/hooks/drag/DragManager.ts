@@ -1,15 +1,10 @@
 import EventEmitter from '@/events/eventEmitter'
-import Id from '@/utils/id'
-import { Transforms } from 'slate'
 import { getDistanceBetweenPointAndElement, getElementId } from '@/utils'
 import { GlobalDragOverlayInstance, ReactEditor } from '@/core'
 import { CustomEditor, CustomElement } from '~/typings'
 import { searchBlock } from '../../utils/algorithm'
-import moveSingleElement from '../../utils/moveSingleElement'
 import { getDistanceBetweenPointAndScrollableElement } from '../../utils/scroll'
 import { ID_TO_ELEMENTS_MAP, ID_TO_PATH_MAP } from '../../weakMaps'
-import { checkDropCanBeMeta } from '@/core/global/globalDragOverlay/useDropObject'
-import { TypeToRegisteredObject } from '@/api/stores/object.store'
 
 type Indicator = {
   direction: 'top' | 'left' | 'bottom' | 'right'
@@ -57,8 +52,6 @@ class DragManager {
   prepareDragging = () => {
     if (!this.scrollElement || !this.editor) return
     const editorNode = ReactEditor.toDOMNode(this.editor, this.editor)
-    const firstChild = editorNode.children[0]
-    if (this.blockElementsArray[0] === firstChild) return
     // document.body.style.cursor = 'grabbing'
     this.blockElementsArray = []
     this.blockElementsMap.clear()
@@ -76,7 +69,7 @@ class DragManager {
           left: distance.left,
           top: distance.top,
           width,
-          height: height + marginBottom
+          height: height + marginTop + marginBottom
         })
       })
   }
@@ -139,9 +132,15 @@ class DragManager {
     if (this.checkIsDraggingInNestedBlock(e)) {
       return this.dragInNestedColumnLike(e)
     }
+    const editorNode = ReactEditor.toDOMNode(this.editor, this.editor)
     const dragResult = this.dragResult
     const distanceToScrollElement = getDistanceBetweenPointAndScrollableElement({ x: e.clientX, y: e.clientY }, this.scrollElement)
+    // const currentBlock = Array.from(editorNode.children).find(i => e.clientY > i.clientTop && e.clientY < i.cl)
+    //   Array.from(this.blockElementsMap.entries()).find(
+    //     i => distanceToScrollElement.top > i[1].top && distanceToScrollElement.top < i[1].top + i[1].height
+    //   )?.[0] || -1
     const currentBlock = searchBlock(Array.from(this.blockElementsMap.entries()), distanceToScrollElement.top)
+
     if (currentBlock === -1) {
       // right now we need to check if dragging over the toppest / bottomest
       const firstBlock = this.blockElementsArray[0]

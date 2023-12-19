@@ -5,9 +5,10 @@ import Zindexes from '@/consts/zindex'
 import { waitFor } from '@/utils/functions'
 import { AnimatePopoverProps } from './AnimatePopover'
 import FontSize from '@/consts/font'
+import { Colors } from '@/consts'
 
 interface ToolTipProps {
-  content?: string | ReactNode
+  content?: string | ReactNode | ((s: (v: boolean) => void) => ReactNode)
   position?: 'top' | 'bottom' | 'right' | 'left'
   style?: CSSProperties
   delay?: number
@@ -28,11 +29,11 @@ const ToolTip: FC<PropsWithChildren<ToolTipProps>> = (
   {
     content,
     children,
-    align,
+    align = 'center',
     delay = 300,
     disable,
     positions,
-    boundaryInset = 20,
+    boundaryInset = 10,
     disableDefaultContent,
     contentTouchable,
     zIndex,
@@ -40,7 +41,7 @@ const ToolTip: FC<PropsWithChildren<ToolTipProps>> = (
     onVisibleChange,
     parentElement,
     position,
-    padding = 10
+    padding = 6
   },
   ref
 ) => {
@@ -132,9 +133,9 @@ const ToolTip: FC<PropsWithChildren<ToolTipProps>> = (
     }
     return <div></div>
   }
-  const renderContent = () => {
+  const renderContent = (setV: VoidFunction) => {
     if (disableDefaultContent) {
-      return cloneElement(content, {
+      return cloneElement(typeof content === 'function' ? content(setV) : content, {
         ref: node => (contentRef.current = node)
       })
     }
@@ -142,15 +143,16 @@ const ToolTip: FC<PropsWithChildren<ToolTipProps>> = (
       <div
         ref={contentRef}
         style={{
-          background: 'rgba(0,0,0,0.6)',
+          background: 'rgba(0,0,0,0.8)',
           color: 'white',
           borderRadius: 4,
           lineHeight: 1.2,
-          padding: '2px 4px 2px',
-          fontSize: FontSize['13px']
+          fontWeight: 500,
+          padding: '3px 5px',
+          fontSize: 13
         }}
       >
-        {content}
+        {typeof content === 'function' ? content(setV) : content}
       </div>
     )
   }
@@ -200,7 +202,7 @@ const ToolTip: FC<PropsWithChildren<ToolTipProps>> = (
         }}
         padding={padding}
         align={align}
-        content={renderContent()}
+        content={setV => renderContent(setV)}
         boundaryElement={document.body}
         reposition={true}
         boundaryInset={boundaryInset}

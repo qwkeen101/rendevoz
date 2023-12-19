@@ -11,7 +11,21 @@ interface TextSelectionToolbarProps {
 }
 const TextSelectionToolbar: FC<TextSelectionToolbarProps> = ({ textSelect, onHighlight, onTranslate, onSearch }) => {
   return (
-    <Toolbar>
+    <Toolbar
+      itemRadius={0}
+      style={{
+        gap: 0,
+        height: '32px',
+        overflow: 'hidden',
+        borderRadius: 5
+      }}
+      itemStyle={{
+        padding: '0px 8px',
+        height: '100%'
+      }}
+      itemClickPreventDefault
+      itemSize={16}
+    >
       <Toolbar.Item
         iconName="park-copy-one"
         onClick={e => textSelect?.selectedText && navigator.clipboard.writeText(textSelect?.selectedText)}

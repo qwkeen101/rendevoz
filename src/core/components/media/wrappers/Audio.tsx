@@ -17,6 +17,7 @@ export default ({ audioId, ...rest }: { audioId?: number } & MediaProps) => {
     isPinned: audioMeta?.pinned,
     mode: 'audio',
     metaId: audioMeta?.id,
+    onlyCore: rest.onlyCore,
     ...rest.mediaState
   }
 

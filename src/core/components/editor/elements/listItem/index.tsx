@@ -1,13 +1,11 @@
 import { useEventHandler, useScopedEventEmitter } from '@/events'
-import { css } from '@emotion/css'
 import { useEffect, useMemo } from 'react'
 import { useUpdate } from 'react-use'
 import { Editor, Path } from 'slate'
 import { RenderElementProps } from 'slate-react'
 import { CustomElement } from '~/typings'
-import { ReactEditor, useSlateStatic } from '../../slate-react'
+import { ReactEditor, useSlate, useSlateStatic } from '../../slate-react'
 import styles from './index.module.less'
-import useEditorInstance from '@/core/components/editor/hooks/useEditorInstance'
 import useToggleList from '@/core/components/editor/elements/listItem/useToggleList'
 import { Colors } from '@/consts'
 
@@ -35,7 +33,7 @@ const BorderIndent = ({ index }: { index: number }) => {
 export const ListItem = ({ children, element }: RenderElementProps) => {
   const { containerRef, canToggle, toggle } = useToggleList(element)
   return (
-    <div className={styles.wrapper} ref={containerRef}>
+    <div style={{ display: 'flex' }} ref={containerRef}>
       {element.level && element.level > 0 ? (
         <div contentEditable={false}>
           {Array.from(Array(element.level)).map((i, index) => (
@@ -43,24 +41,29 @@ export const ListItem = ({ children, element }: RenderElementProps) => {
           ))}
         </div>
       ) : null}
-      <div style={{ display: 'flex', alignItems: 'center', marginRight: 1 }} contentEditable={false}>
-        <div contentEditable={false} role="list-item-marker" data-level={element.level} className={styles.markerWrapper}>
-          <div
-            contentEditable={false}
-            onClick={() => {
-              if (canToggle) {
-                toggle()
-              }
-            }}
-            className={styles.marker}
-            data-collapse={canToggle}
-            data-folded={element.folded}
-            data-level={element.level}
-            style={{ marginLeft: 0 }}
-          ></div>
-        </div>
-      </div>
-      <span role="list-item-line-wrapper" style={{ minWidth: 2 }}>
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          marginRight: '0.6em',
+          height: '1lh',
+          justifyContent: 'center',
+          paddingTop: '0.1em'
+        }}
+        role="list-item-marker"
+        data-level={element.level}
+        contentEditable={false}
+        data-collapse={canToggle}
+        data-folded={element.folded}
+        className={styles.marker}
+        onPointerDown={e => e.preventDefault()}
+        onClick={() => {
+          if (canToggle) {
+            toggle()
+          }
+        }}
+      ></div>
+      <span role="list-item-line-wrapper" style={{ minWidth: 2, flex: 'auto', position: 'relative' }}>
         {children}
       </span>
     </div>
@@ -156,27 +159,10 @@ const intToRoman = (num: number) => {
   return result
 }
 export const OrderListItem = ({ children, element }: RenderElementProps) => {
-  const editor = useSlateStatic()
-  const scopedEmitter = useScopedEventEmitter()
-  const handler = useEventHandler('editor')
+  const editor = useSlate()
   const { containerRef, canToggle, toggle } = useToggleList(element)
-  useEffect(() => {
-    scopedEmitter.addListener('editor', handler)
-    return () => {
-      scopedEmitter.removeListener('editor', handler)
-    }
-  }, [])
 
   const path = ReactEditor.findPath(editor, element)
-
-  const forceUpdate = useUpdate()
-  handler.on('valueChange', () => {
-    setTimeout(() => {
-      if (!Path.equals(path, ReactEditor.findPath(editor, element))) {
-        forceUpdate()
-      }
-    })
-  })
 
   const loopGetNumber = () => {
     if (!Path.hasPrevious(path)) return 1
@@ -255,7 +241,13 @@ export const OrderListItem = ({ children, element }: RenderElementProps) => {
       >
         {prefix}.{' '}
       </div>
-      <span role="list-item-line-wrapper" className={css({ width: '100%' })}>
+      <span
+        role="list-item-line-wrapper"
+        style={{
+          flex: 'auto',
+          position: 'relative'
+        }}
+      >
         {children}
       </span>
     </div>

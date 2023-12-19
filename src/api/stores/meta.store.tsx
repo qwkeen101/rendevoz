@@ -347,7 +347,7 @@ const createMetaStore = () => {
     updateOne: (one, silent) => {
       const currentOne = globalStore.get(metaObjectsAtom).get(one.id)
       return initializeObjectStore.updateOne(async obj => {
-        if (obj.objectId && one.name) {
+        if (obj.objectId) {
           const targetObject = await ObjectStore(obj.type).getOneById(obj.objectId)
           if (targetObject) {
             ObjectStore(obj.type).updateOne(
@@ -413,7 +413,7 @@ const createMetaStore = () => {
       }
       initedMetaObject.workspace = KeyvalueStore.getOne('currentWorkspace')
       if (!initedMetaObject.name) {
-        let initedName = 'Unnamed Object'
+        let initedName = ''
         switch (initedMetaObject.type) {
           case 'note':
             initedName = 'Untitled'
@@ -556,7 +556,7 @@ const createMetaStore = () => {
         objectId: opts.objectId,
         type: opts.type,
         attachments: [],
-        name: opts.name || 'Unnamed Object'
+        name: opts.name
       },
       true
     )

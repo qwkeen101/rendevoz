@@ -36,7 +36,8 @@ const PdfRightSidebar = () => {
         zIndex: 20,
         padding: 10,
         marginLeft: 5,
-        background: Colors.Background.Secondary,
+        background: Colors.Background.Global,
+        borderLeft: '1px solid var(--border-background)',
         display: pdfBarState.showRightBar ? undefined : 'none'
       }}
     >

@@ -32,14 +32,6 @@ export const DockTabPane: FC<DockTabPaneProps> = memo(({ cached, cacheId, childr
   const ref = useRef<HTMLDivElement>(null)
   const cacheRef = useRef<TabPaneCache | null>(null)
   const symbol = useMemo(() => Symbol(), [])
-  const recursivelyScrollTop = (root: HTMLElement) => {
-    const rootScrollTop = root.scrollTop
-    if (rootScrollTop) {
-      cacheRef.current?.scrollPreserver.set(root, rootScrollTop)
-      return
-    }
-    root.childNodes.forEach(n => recursivelyScrollTop(n))
-  }
   const updateCache = () => {
     const cache = cacheRef.current
     if (cache) {
@@ -50,16 +42,9 @@ export const DockTabPane: FC<DockTabPaneProps> = memo(({ cached, cacheId, childr
     }
     if (cached && ref.current && cacheId) {
       cacheRef.current = context.getTabCache(cacheId, symbol)
-      Array.from(cacheRef.current.scrollPreserver.entries()).forEach(([k, v]) => {
-        k.scrollTop === 0 && (k.scrollTop = v)
-      })
 
-      recursivelyScrollTop(cacheRef.current.div)
       if (!ref.current.contains(cacheRef.current.div)) {
         ref.current.appendChild(cacheRef.current.div)
-        Array.from(cacheRef.current.scrollPreserver.entries()).forEach(([k, v]) => {
-          k.scrollTop === 0 && (k.scrollTop = v)
-        })
       }
       context.updateTabCache(cacheId, children)
     }
@@ -71,7 +56,6 @@ export const DockTabPane: FC<DockTabPaneProps> = memo(({ cached, cacheId, childr
   useLayoutEffect(() => {
     return () => {
       if (cacheRef.current) {
-        recursivelyScrollTop(cacheRef.current.div)
         context.removeTabCache(cacheRef.current.id, symbol)
       }
     }
@@ -89,9 +73,9 @@ export const DockTabPane: FC<DockTabPaneProps> = memo(({ cached, cacheId, childr
     top: active ? undefined : 36,
     width: '100%',
     height: 'calc( 100% - 33px )',
-    // display: active ? undefined : 'none'
     contentVisibility: active ? 'visible' : 'hidden',
-    pointerEvents: active ? undefined : 'none'
+    pointerEvents: active ? undefined : 'none',
+    zIndex: active ? 1 : -10
   }
   return (
     <div
@@ -105,10 +89,6 @@ export const DockTabPane: FC<DockTabPaneProps> = memo(({ cached, cacheId, childr
         }
       }}
       id={cacheId}
-      // initial={{ opacity: 0 }}
-      // animate={active ? 'visible' : 'hidden'}
-      // variants={variants}
-      // transition={{ duration: 0.3, type: 'tween' }}
       role="tabpane"
       style={mergedStyle}
     >

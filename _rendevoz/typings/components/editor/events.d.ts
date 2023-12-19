@@ -1,6 +1,7 @@
 import { Descendant } from 'slate'
 import React from 'react'
 import { CustomElement, EditorProps, IDraggableElement, INoteBlock, INoteLabel } from '~/typings'
+import { AISummarizeEvent } from '../../../../src/core/ai/components/AskAIPanel'
 
 export type IEditorEvent =
   | {
@@ -26,6 +27,13 @@ export type IEditorEvent =
   | {
       type: 'highlightDrag'
       highlightId: number
+    }
+  | {
+      type: 'copyLink'
+      blocks: {
+        id: number
+        text: string
+      }[]
     }
   | {
       type: 'highlightRemove'
@@ -104,3 +112,6 @@ export type IEditorEvent =
       type: 'save'
       value: Descendant[]
     }
+  | ({
+      type: 'AI summarize'
+    } & AISummarizeEvent)

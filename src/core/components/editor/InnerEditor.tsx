@@ -32,6 +32,8 @@ import useEditorSaveKey from '@/core/components/editor/hooks/keyboards/useEditor
 import useReadOnlyEditor from '@/core/components/editor/hooks/useReadOnly'
 import EditorClasses from '@/core/components/editor/consts/classes'
 import { assignProperties } from '@/utils'
+import { Colors } from '@/consts'
+import { EditorStateAtom } from '@/core/components/editor/hooks/useEditorState'
 
 const ReadOnlyEditorClassName = css({
   table: {
@@ -47,8 +49,8 @@ const ReadOnlyEditorClassName = css({
       }
     }
   },
-  'img,p,pre,blockquote,iframe': {
-    marginBottom: 'calc((var(--font-size) / 16 * 1rem) - 6px)'
+  '.ParagraphBlock': {
+    marginBottom: 'calc((var(--font-size) / 16 * 1rem) - 3px)'
   },
   tbody: {
     tr: {
@@ -74,24 +76,11 @@ export type InnerEditorProps = {
   onBlockMouseEnter: (e: PointerEvent, element: CustomElement) => void
   onBlockMouseLeave: (e: PointerEvent, element: CustomElement) => void
   onBlockMouseMove?: (e: PointerEvent, element: CustomElement) => void
-  readonly?: boolean
-  compact?: boolean
-  onPointerLeave?: PointerEventHandler
   editorClassName?: string
 }
 
 const InnerEditor: FC<InnerEditorProps> = memo(
-  ({
-    editor,
-    defaultValue,
-    onBlockMouseEnter,
-    onBlockMouseLeave,
-    onBlockMouseMove,
-    onChange,
-    scrollElementRef,
-    editorClassName,
-    onPointerLeave
-  }) => {
+  ({ editor, defaultValue, onBlockMouseEnter, onBlockMouseLeave, onBlockMouseMove, onChange, scrollElementRef, editorClassName }) => {
     const scrollElement = scrollElementRef?.current
     const renderInnerElement = useCallback((props: RenderElementProps) => <Element {...props} />, [])
     const renderLeaf = useCallback((props: RenderLeafProps) => <Leaf {...props} />, [])
@@ -99,9 +88,11 @@ const InnerEditor: FC<InnerEditorProps> = memo(
     const scopedEmitter = useScopedEventEmitter()
     const previousValue = useRef<Descendant[]>()
     const readOnly = useReadOnlyEditor()
-    const { handleSlashKeyDown } = useEditorSlashMenu(editor)
+
+    const editorVersion = useSelectAtomValue(EditorStateAtom, s => s.editorVersion) ?? 0
     const { handleMentionKey } = useEditorMention(editor)
     const instance = useEditorInstance()
+    const { handleSlashKeyDown } = useEditorSlashMenu(instance)
     const handleDeleteKey = useEditorDeleteKey(instance)
     const handleArrowKey = useEditorArrowKey(instance)
     const handleCopyKey = useEditorCopyKey(instance)
@@ -255,8 +246,9 @@ const InnerEditor: FC<InnerEditorProps> = memo(
         document.removeEventListener('keydown', globalKeydownHandler)
       }
     }, [])
-
+    console.log(`editor version: ${editorVersion}`)
     const handleKeydown = useMemoizedFn((e: KeyboardEvent) => {
+      console.log(e)
       handleMentionKey(e)
       handleSlashKeyDown(e)
       handleDeleteKey(e)
@@ -279,7 +271,7 @@ const InnerEditor: FC<InnerEditorProps> = memo(
       <Slate editor={editor} onChange={handleChange} value={defaultValue}>
         <EditorToolbar
           scrollElement={scrollElement}
-          on={async event => {
+          on={useMemoizedFn(async event => {
             switch (event.action) {
               case 'bold':
               case 'code':
@@ -307,6 +299,7 @@ const InnerEditor: FC<InnerEditorProps> = memo(
                     if (!label) {
                       Editor.removeMark(editor, 'highlight')
                     }
+                    return highlightId
                   }
                 }
                 break
@@ -335,32 +328,22 @@ const InnerEditor: FC<InnerEditorProps> = memo(
                 break
               case 'link':
                 {
-                  const cursorPosition = getCursorPosition(editor)
-                  if (cursorPosition) {
-                    editor.overlayManager?.setContent('linkForm')
-                    editor.overlayManager?.open()
-                    editor.overlayManager?.setPosition({
-                      left: cursorPosition.x,
-                      top: cursorPosition.y + 5
+                  const blockPos = instance.blockOps?.getCurrentCursorBlockBounding()
+                  if (blockPos) {
+                    instance.overlayOps?.open('linkForm', {
+                      x: blockPos.x,
+                      y: blockPos.y
                     })
                   }
                 }
                 break
             }
-          }}
+          })}
         />
         <Editable
-          innerRef={editableRef}
           readOnly={readOnly}
           suppressContentEditableWarning={true}
           spellCheck="false"
-          onPointerLeave={onPointerLeave}
-          onCompositionStart={useCallback(() => {
-            scopedEmitter.emit('editor', { type: 'compositionStart' })
-          }, [])}
-          onCompositionEnd={useCallback(() => {
-            scopedEmitter.emit('editor', { type: 'compositionEnd' })
-          }, [])}
           onCopy={useCallback(() => {
             editor.currentCopyElement = undefined
             editor.currentCopyElements = undefined
@@ -398,24 +381,12 @@ const InnerEditor: FC<InnerEditorProps> = memo(
             readOnly && ReadOnlyEditorClassName,
             editorClassName
           )}
-          onKeyDownCapture={e => {
-            if (isHotkey(KEY.ArrowUp, e) || isHotkey(KEY.ArrowDown, e) || isHotkey(KEY.ArrowRight, e) || isHotkey(KEY.ArrowLeft, e)) {
-              e.stopPropagation()
-            }
-          }}
           scrollElementRef={scrollElementRef}
-          style={useMemo(
-            () => ({
-              paddingBottom: readOnly || editor.noBottomPadding ? 0 : undefined,
-              display: 'flex',
-              flexDirection: 'column'
-            }),
-            [readOnly]
-          )}
         ></Editable>
       </Slate>
     )
-  }
+  },
+  (prev, curr) => prev.defaultValue === curr.defaultValue
 )
 const toggleMark = (editor: CustomEditor, mark: string) => {
   const isActive = isMarkActive(editor, mark)
@@ -471,11 +442,12 @@ const isMarkActive = (editor: CustomEditor, mark: string) => {
 const TextHighlightClassName = css({
   backgroundImage: `linear-gradient(
      0deg,
-     rgb(247, 219, 106) 0%,
-     rgb(247, 219, 106) 2px,
-     rgba(247, 219, 106, 0.3) 2px,
+     ${Colors.Emphasis.Emphasis} 0%,
+     ${Colors.Emphasis.Emphasis} 1.5px,
+     rgba(247, 219, 106, 0.3) 1.5px,
      rgba(247, 219, 106, 0.3) 100%
    )`,
+  transition: 'background-color 0.5s ease',
   backgroundRepeat: 'no-repeat !important',
   backgroundSize: '100% 90% !important',
   backgroundPosition: '0 75% !important',
@@ -489,23 +461,6 @@ export const Leaf = (props: RenderLeafProps) => {
   if (leaf.sup) {
     children = <sup>{children}</sup>
   }
-
-  if (leaf.bold) {
-    children = <strong>{children}</strong>
-  }
-
-  if (leaf.code) {
-    children = <code>{children}</code>
-  }
-
-  if (leaf.italic) {
-    children = <em>{children}</em>
-  }
-
-  if (leaf.underline) {
-    children = <u>{children}</u>
-  }
-
   if (leaf.highlight) {
     return (
       <DraggableElement
@@ -515,16 +470,20 @@ export const Leaf = (props: RenderLeafProps) => {
         <span
           {...attributes}
           onClick={() => {
-            if (leaf.highlight) {
-              editor.onHighlightClick?.(leaf.highlight as number)
-            }
+            editor.onHighlightClick?.(leaf.highlight)
           }}
-          data-highlight={leaf.highlight ? String(leaf.highlight) : undefined}
+          data-highlight={leaf.highlight}
           className={classNames(leaf.highlight && TextHighlightClassName)}
           style={{
-            fontSize: leaf.fontSize || '1em',
+            fontWeight: leaf.bold ? 'bold' : undefined,
+            fontStyle: leaf.italic ? 'italic' : undefined,
+            padding: leaf.code ? '0.2em 0.4em' : undefined,
+            color: leaf.code ? '#EB5757' : undefined,
+            borderRadius: leaf.code ? 4 : undefined,
+            textDecoration: leaf.underline ? 'underline' : undefined,
+            fontSize: leaf.fontSize || leaf.code ? '0.85em' : '1em',
             '--block-font-color': leaf.fontColor,
-            background: leaf.backgroundColor
+            background: leaf.code ? 'rgba(135,131,120,0.15)' : leaf.backgroundColor
           }}
         >
           {children}
@@ -536,9 +495,15 @@ export const Leaf = (props: RenderLeafProps) => {
     <span
       {...attributes}
       style={{
-        fontSize: leaf.fontSize || '1em',
+        fontWeight: leaf.bold ? 'bold' : undefined,
+        fontStyle: leaf.italic ? 'italic' : undefined,
+        padding: leaf.code ? '0.2em 0.4em' : undefined,
+        color: leaf.code ? '#EB5757' : undefined,
+        borderRadius: leaf.code ? 4 : undefined,
+        textDecoration: leaf.underline ? 'underline' : undefined,
+        fontSize: leaf.fontSize || leaf.code ? '0.85em' : '1em',
         '--block-font-color': leaf.fontColor,
-        background: leaf.backgroundColor
+        background: leaf.code ? 'rgba(135,131,120,0.15)' : leaf.backgroundColor
       }}
     >
       {children}

@@ -4,6 +4,8 @@ import { useDebounceFn } from '@/hooks'
 import { EDITOR_TO_CHANGED } from '@/core'
 import { Transforms } from 'slate'
 import Id from '@/utils/id'
+import { useSetAtom } from 'jotai'
+import { EditorStateAtom } from '@/core/components/editor/hooks/useEditorState'
 const normalizeFirstLayer = (editor: CustomEditor) => {
   const firstLayerIdSet = new Set<number>()
   editor.children.forEach((i, idx) => {
@@ -14,6 +16,7 @@ const normalizeFirstLayer = (editor: CustomEditor) => {
   })
 }
 const assignValueOps = (instance: IEditorInstance, editor: CustomEditor) => {
+  const setEditorState = useSetAtom(EditorStateAtom)
   const changeEditor = () => {
     editor.onChange()
     editor.operations = []
@@ -36,7 +39,6 @@ const assignValueOps = (instance: IEditorInstance, editor: CustomEditor) => {
       }
     },
     replaceChildren: (newValue, restoreScrollPosition) => {
-      const currentScroll = instance.getScrollPosition?.()
       editor.children = newValue
       editor.selection = null
       normalizeFirstLayer(editor)
@@ -46,6 +48,7 @@ const assignValueOps = (instance: IEditorInstance, editor: CustomEditor) => {
         redos: [],
         undos: []
       }
+      setEditorState(s => ({ ...s, editorVersion: (s.editorVersion || 0) + 1 }))
       editor.onChange()
     }
   })

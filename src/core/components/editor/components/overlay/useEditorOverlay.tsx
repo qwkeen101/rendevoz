@@ -1,7 +1,7 @@
 import { Noop } from '@/common/types'
 import { AnimatePopover } from '@/components/base'
 import { useCallback, useEffect, useState } from 'react'
-import { CustomEditor, LeftTopPosition } from '~/typings'
+import { CustomEditor, IEditorOverlayContent, LeftTopPosition, XYPosition } from '~/typings'
 import EditorOverlayElements from './components/EditorOverlayElements'
 import { PopoverPosition } from 'react-tiny-popover'
 import EditorEmojiPicker from './components/EditorEmojiPicker'
@@ -11,6 +11,10 @@ import EditorLinkForm from './components/EditorLinkForm'
 import { KEY, Zindexes } from '@/consts'
 import isHotkey from 'is-hotkey'
 import { useUpdate } from 'react-use'
+import { atom, useAtom } from 'jotai'
+import { assignProperties } from '@/utils'
+import useEditorInstance from '@/core/components/editor/hooks/useEditorInstance'
+import EditorTransformMenu from '@/core/components/editor/components/overlay/components/EditorTransformMenu'
 
 const AvalibleOverlayComponents = {
   emojiPicker: 'emojiPicker',
@@ -30,19 +34,43 @@ export interface EditorOverlayManager {
   isOpen: () => boolean
   setCurrentLink?: (link: string) => void
 }
+export const EditorOverlayStateAtom = atom<{
+  visible: boolean
+  position?: XYPosition
+  content?: IEditorOverlayContent
+  currentFilterValue?: string
+}>({
+  visible: false
+})
 const useEditorOverlay = (editor: CustomEditor, scrollElement?: HTMLDivElement | null) => {
+  const [overlayState, setOverlayState] = useAtom(EditorOverlayStateAtom)
   const [popoverVisible, setPopoverVisible] = useState(false)
-  const [popoverPosition, setPopoverPosition] = useState<LeftTopPosition>()
-  const [overlayContent, setOverlayContent] = useState<keyof typeof AvalibleOverlayComponents>()
+  const instance = useEditorInstance()
+  assignProperties(instance, {
+    overlayOps: {
+      open: (content, position) => {
+        // @ts-ignore
+        setOverlayState(s => ({
+          visible: true,
+          position: position,
+          content,
+          currentFilterValue: undefined
+        }))
+      },
+      getState: () => overlayState,
+      close: () => {
+        setOverlayState(s => ({ ...s, visible: false }))
+      }
+    }
+  })
   const overlayManager: EditorOverlayManager = {
     open: () => setPopoverVisible(true),
     close: () => setPopoverVisible(false),
-    setContent: (content: AvalibleOverlayComponents) => setOverlayContent(content),
-    setPosition: (position: LeftTopPosition) => setPopoverPosition(position),
     getContent: () => overlayContent,
     isOpen: () => popoverVisible
   }
-  const update = useUpdate()
+
+  const overlayContent = overlayState.content
   const renderOverlayContent = () => {
     switch (overlayContent) {
       case 'selectArea':
@@ -50,36 +78,39 @@ const useEditorOverlay = (editor: CustomEditor, scrollElement?: HTMLDivElement |
       case 'emojiPicker':
         return <EditorEmojiPicker editor={editor} manager={overlayManager} />
       case 'blockHandleMenu':
-        return <EditorOverlayElements editor={editor} manager={overlayManager} mode="block" />
+        return <EditorOverlayElements editor={editor} mode="block" />
       case 'blockDetailsMenu':
         return <EditorBlockDetails editor={editor} manager={overlayManager} />
       case 'slashMenu':
-        return <EditorOverlayElements editor={editor} manager={overlayManager} mode="slash" />
+        return <EditorOverlayElements editor={editor} mode="slash" />
       case 'linkForm':
         return <EditorLinkForm editor={editor} manager={overlayManager} />
+      case 'transformMenu':
+        return <EditorTransformMenu />
     }
-  }
-  const renderAnimatedOverlay = () => {
-    return renderOverlayContent()
   }
   const positions = (): PopoverPosition[] => {
     switch (overlayContent) {
-      case 'blockHandleMenu':
-        return ['left', 'right']
       case 'blockDetailsMenu':
         return ['left', 'right']
       case 'emojiPicker':
         return ['bottom', 'top']
-      case 'slashMenu':
-        return ['right', 'top']
+      case 'blockHandleMenu':
+      case 'slashMenu': {
+        const height = window.innerHeight * 0.4
+        if ((overlayState.position?.y ?? 0) + height + 20 > window.innerHeight) {
+          return ['top', 'bottom']
+        }
+        return ['bottom', 'top']
+      }
       default:
-        return ['bottom']
+        return ['bottom', 'top']
     }
   }
   useEffect(() => {
     const keydownHandler = (e: KeyboardEvent) => {
       if (isHotkey(KEY.Escape, e)) {
-        overlayManager.close()
+        instance.overlayOps?.close()
       }
     }
     document.addEventListener('keydown', keydownHandler)
@@ -89,39 +120,37 @@ const useEditorOverlay = (editor: CustomEditor, scrollElement?: HTMLDivElement |
   }, [])
   const align = () => {
     switch (overlayContent) {
+      case 'transformMenu':
+        return 'center'
       case 'emojiPicker':
         return 'start'
+      case 'blockHandleMenu':
+        return 'start'
       case 'slashMenu':
-        return 'center'
+        return 'start'
       default:
         return 'start'
     }
   }
-  useEffect(() => {
-    if (overlayContent === 'emojiPicker') {
-      setTimeout(() => {
-        update()
-      })
-    }
-  }, [overlayContent, popoverVisible])
+
   const renderOverlay = () => (
     <AnimatePopover
-      containerStyle={{ zIndex: String(Zindexes.EditorSelectionToolbar) }}
-      onClickOutside={useCallback(() => {
-        setPopoverVisible(false)
-      }, [])}
+      containerStyle={{ zIndex: String(Zindexes.EditorSelectionToolbar + 5) }}
+      onClickOutside={() => {
+        setOverlayState(s => ({ ...s, visible: false }))
+      }}
+      withClickCover={overlayContent !== 'selectArea'}
       positions={positions()}
       align={align()}
-      visible={popoverVisible}
+      visible={overlayState.visible}
       padding={20}
       reposition
-      disableNudge={overlayContent === 'emojiPicker' || overlayContent === 'blockHandleMenu' || overlayContent === 'slashMenu'}
       boundaryElement={document.body}
       boundaryInset={20}
-      content={renderAnimatedOverlay()}
+      content={renderOverlayContent()}
       position={{
-        left: popoverPosition?.left,
-        top: popoverPosition?.top
+        left: overlayState.position?.x,
+        top: overlayState.position?.y
       }}
     ></AnimatePopover>
   )

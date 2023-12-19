@@ -8,7 +8,7 @@ import Content from '../Content'
 import Colors from '@/consts/colors'
 
 const DangerousButtonClassName = css({
-  color: '#FD8A8A'
+  color: Colors.Common.Red
 })
 
 const IconButton = forwardRef(
@@ -32,6 +32,7 @@ const IconButton = forwardRef(
       enabled,
       theme,
       onSuffixIconClick,
+      iconColor,
       suffixIcon,
       size,
       ...rest
@@ -56,6 +57,7 @@ const IconButton = forwardRef(
       tooltip?: string
       spin?: boolean
       onPointerEnter?: React.PointerEventHandler
+      iconColor?: string
     } & React.HTMLProps<HTMLDivElement>,
     ref
   ) => {
@@ -84,7 +86,7 @@ const IconButton = forwardRef(
             background:
               selected === true
                 ? dangerous
-                  ? 'rgb(253, 138, 138, 0.2)'
+                  ? 'rgb(253, 138, 138, 0.4)'
                   : Colors.Background.ButtonHover
                 : selected === false
                 ? 'none'
@@ -93,18 +95,27 @@ const IconButton = forwardRef(
           }}
           className={classNames(
             className,
-            ClassName.flatButton(undefined, undefined, dangerous ? 'rgb(253, 138, 138, 0.2)' : undefined),
+            ClassName.flatButton(undefined, '3px 8px', dangerous ? 'rgb(253, 138, 138, 0.2)' : undefined),
             dangerous && DangerousButtonClassName
           )}
         >
-          {icon && <Icon theme={theme} spin={spin} name={icon} size={size} />}
+          {icon && (
+            <Icon
+              style={{
+                color: iconColor,
+                fontSize: '1.1em'
+              }}
+              theme={theme}
+              spin={spin}
+              name={icon}
+              size={size}
+            />
+          )}
           {text && <div className={ClassName.ellipsisFont(1)}>{text}</div>}
           {enabled && <Icon name="park-check-small" containerStyle={{ marginLeft: 'auto' }} />}
-          {suffixIcon && <Icon onClick={onSuffixIconClick} name={suffixIcon} containerStyle={{ marginLeft: 'auto' }} />}
-          {suffixStr && (
-            <span className={ClassName.description()} style={{ fontSize: 'inherit' }}>
-              {suffixStr}
-            </span>
+          {suffixStr && <span style={{ fontSize: '12px', color: Colors.Font.SuperTransparent, marginLeft: 'auto' }}>{suffixStr}</span>}
+          {suffixIcon && (
+            <Icon onClick={onSuffixIconClick} name={suffixIcon} containerStyle={{ marginLeft: 'auto', color: Colors.Font.Transparent }} />
           )}
         </Content>
       </Tooltip>

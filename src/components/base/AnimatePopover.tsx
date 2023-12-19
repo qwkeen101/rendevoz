@@ -1,17 +1,36 @@
-import React, { Dispatch, FC, memo, PropsWithChildren, ReactNode, RefObject, useEffect, useRef, useState } from 'react'
+import React, { Dispatch, FC, forwardRef, memo, PropsWithChildren, ReactNode, RefObject, useEffect, useRef, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { Popover, PopoverProps } from 'react-tiny-popover'
 import useUnmount from '@/hooks/utils/useUnmount'
 import _ from 'lodash'
 import { useMergedRef } from '@/hooks'
-import ClassName from '@/styles/classNames'
-import { Zindexes } from '@/consts'
+import { Colors, Zindexes } from '@/consts'
 import { Position } from '~/typings'
-import { PosHelper } from '../contextMenu'
 import { SetStateAction } from 'jotai'
 import { createPortal } from 'react-dom'
-import zindex from '@/consts/zindex'
 
+interface PosHelperProps {
+  top?: number
+  left?: number
+  children?: ReactNode
+}
+const PosHelper = forwardRef<HTMLDivElement, PosHelperProps>(({ top, left, children }, ref) => {
+  return createPortal(
+    <div
+      ref={ref}
+      style={{
+        position: 'absolute',
+        top: top,
+        left: left,
+        width: 1,
+        height: 1
+      }}
+    >
+      {children}
+    </div>,
+    document.body
+  )
+})
 export interface AnimatePopoverProps extends Omit<PopoverProps, 'content' | 'isOpen' | 'children'> {
   animate?: boolean
   visible?: boolean
@@ -28,6 +47,8 @@ export interface AnimatePopoverProps extends Omit<PopoverProps, 'content' | 'isO
   closeOnClickOutside?: boolean
   withClickCover?: boolean
   borderRadius?: number
+  duration?: number
+  hoverOpen?: boolean
 }
 
 const AnimatePopover: FC<PropsWithChildren<AnimatePopoverProps>> = ({
@@ -44,18 +65,19 @@ const AnimatePopover: FC<PropsWithChildren<AnimatePopoverProps>> = ({
   boundaryInset = 40,
   innerRef,
   contentDraggable,
+  duration = 0.16,
   clickOutsideCapture = true,
   containerStyle: _containerStyle = {
     borderRadius: '8px',
     zIndex: String(Zindexes.PopupMenu)
   },
   onVisiblityChange,
-  backdropFilter = true,
   onClickOutside,
   closeOnClickOutside,
   withClickCover,
   ...rest
 }) => {
+  const timeoutRef = useRef<NodeJS.Timeout>()
   const [isOpen, setIsOpen] = useState(false)
   const [innerVisible, setInnerVisible] = useState(false)
   const [hasPosHelperPopoverVisible, setHasPosHelperPopoverVisible] = useState(false)
@@ -67,18 +89,25 @@ const AnimatePopover: FC<PropsWithChildren<AnimatePopoverProps>> = ({
   useEffect(() => {
     if (visible === undefined) {
       intersectionRef?.current?.addEventListener('click', () => {
-        setIsOpen(s => true)
+        setIsOpen(true)
         setInnerVisible(s => !s)
       })
     }
   }, [])
+
   useUnmount(() => {
     setIsOpen(false)
     nudgedRef.current = undefined
   })
+  const contentHoverRef = useRef(false)
   useEffect(() => {
     // if open
     if (visible) {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current)
+        timeoutRef.current = undefined
+      }
+
       if (position) {
         setHasPosHelperPopoverVisible(true)
       }
@@ -125,28 +154,26 @@ const AnimatePopover: FC<PropsWithChildren<AnimatePopoverProps>> = ({
   const handleClickOutside = (e: MouseEvent) => {
     console.log(e)
     let clickOnCover = false
-    if (withClickCover) {
-      if (e.target instanceof HTMLElement && e.target.getAttribute('role') === 'click-cover') {
-        clickOnCover = true
-      } else {
-        return
-      }
+    if (e.target instanceof HTMLElement && e.target.getAttribute('role') === 'click-cover') {
+      clickOnCover = true
     }
-    if (!clickOnCover && document.body.querySelector('[role="click-cover"]')) {
-      if (isOpen) {
-        return
-      }
-    }
-    if (e.path?.some(i => i instanceof HTMLElement && i.getAttribute('data-disable-close-popover') === 'true')) {
+    // have click cover but not click on cover, return here
+    if (!clickOnCover && withClickCover) {
       return
     }
+    // click on another popover's cover, return here
+    if (clickOnCover && !withClickCover) {
+      return
+    }
+    // if (e.path?.some(i => i instanceof HTMLElement && i.getAttribute('data-disable-close-popover') === 'true')) {
+    //   return
+    // }
 
     setTimeout(() => {
-      console.log(e)
       if (e.defaultPrevented) return
       onClickOutside?.(e)
       if (closeOnClickOutside) {
-        setTimeout(() => setIsOpen(false), 300)
+        timeoutRef.current = setTimeout(() => setIsOpen(false), duration * 1000)
       }
       if (visible === undefined) {
         setInnerVisible(false)
@@ -228,78 +255,61 @@ const AnimatePopover: FC<PropsWithChildren<AnimatePopoverProps>> = ({
               top: undefined
             }
             return (
-              <motion.div
-                drag={contentDraggable}
-                dragElastic={0}
-                dragMomentum={false}
-                style={{
-                  position: 'relative',
-                  left: left,
-                  top: top,
-                  borderRadius: containerStyle?.borderRadius,
-                  // overflow: 'hidden',
-                  display: 'block'
-                }}
-              >
-                {withClickCover &&
-                  createPortal(
-                    <div
-                      role={'click-cover'}
-                      style={{
-                        position: 'fixed',
-                        top: 0,
-                        left: 0,
-                        width: '100%',
-                        height: '100%',
-                        zIndex: Number(containerStyle?.zIndex || '9999') - 1
-                      }}
-                      onClick={e => {
-                        e.stopPropagation()
-                        handleClickOutside(e)
-                      }}
-                    ></div>,
-                    document.body
-                  )}
-                <AnimatePresence onExitComplete={() => setIsOpen(false)}>
-                  {innerVisible && (
-                    <>
-                      {backdropFilter && (
-                        <motion.div
-                          key={1}
-                          initial={{ opacity: 0.6, scale: 0.95 }}
-                          animate={{ opacity: 1, scale: 1 }}
-                          exit={{ opacity: 0 }}
+              <AnimatePresence onExitComplete={() => setIsOpen(false)}>
+                {innerVisible && (
+                  <motion.div
+                    onPointerEnter={() => (contentHoverRef.current = true)}
+                    onPointerLeave={() => {
+                      contentHoverRef.current = false
+                    }}
+                    drag={contentDraggable}
+                    dragElastic={0}
+                    dragMomentum={false}
+                    initial={{ opacity: 0, visibility: 'hidden' }}
+                    animate={{ opacity: 1, visibility: 'visible' }}
+                    exit={{ opacity: 0 }}
+                    transition={{
+                      delay: 0.05,
+                      duration
+                    }}
+                    style={{
+                      position: 'relative',
+                      left: left,
+                      top: top,
+                      originX: origin.x,
+                      originY: origin.y,
+                      borderRadius: containerStyle?.borderRadius,
+                      display: 'block'
+                    }}
+                  >
+                    {withClickCover &&
+                      createPortal(
+                        <div
+                          role={'click-cover'}
                           style={{
-                            position: 'absolute',
-                            inset: 0,
-                            zIndex: -1,
-                            borderRadius: 'inherit',
-                            originX: origin.x,
-                            originY: origin.y
+                            position: 'fixed',
+                            top: 0,
+                            left: 0,
+                            width: '100%',
+                            height: '100%',
+                            zIndex: Number(containerStyle?.zIndex || '9999') - 1
                           }}
-                          className={ClassName.Background.blurBackground}
-                        ></motion.div>
+                          onClick={e => {
+                            e.stopPropagation()
+                            handleClickOutside(e)
+                          }}
+                        ></div>,
+                        document.body
                       )}
-                      <motion.div
-                        key={2}
-                        style={{
-                          originX: origin.x,
-                          originY: origin.y
-                        }}
-                        initial={{ opacity: 0.6, scale: 0.95 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        exit={{ opacity: 0 }}
-                      >
-                        {React.isValidElement(content) ? content : typeof content === 'function' ? content(setInnerVisible) : null}
-                      </motion.div>
-                    </>
-                  )}
-                </AnimatePresence>
-              </motion.div>
+
+                    {React.isValidElement(content) ? content : typeof content === 'function' ? content(setInnerVisible) : null}
+                  </motion.div>
+                )}
+              </AnimatePresence>
             )
           }}
         >
-          <PosHelper left={position.x || position.left} top={position.top || position.y} />
+          <PosHelper left={position.x ?? position.left} top={position.top ?? position.y} />
         </Popover>
       )
     ) : (
@@ -328,73 +338,56 @@ const AnimatePopover: FC<PropsWithChildren<AnimatePopoverProps>> = ({
             top: undefined
           }
           return (
-            <motion.div
-              dragElastic={0}
-              dragMomentum={false}
-              drag={contentDraggable}
-              style={{
-                position: 'relative',
-                left: left,
-                top: top,
-                borderRadius: containerStyle.borderRadius,
-                display: 'block'
-              }}
-            >
-              {withClickCover &&
-                createPortal(
-                  <div
-                    role={'click-cover'}
-                    style={{
-                      position: 'fixed',
-                      top: 0,
-                      left: 0,
-                      width: '100%',
-                      height: '100%',
-                      zIndex: Number(containerStyle?.zIndex || '9999') - 1
-                    }}
-                    onClick={e => {
-                      e.stopPropagation()
-                      handleClickOutside(e)
-                    }}
-                  ></div>,
-                  document.body
-                )}
-              <AnimatePresence onExitComplete={() => setIsOpen(false)}>
-                {innerVisible && (
-                  <>
-                    {backdropFilter && (
-                      <motion.div
-                        key={1}
-                        initial={{ opacity: 0.6, scale: 0.95 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        exit={{ opacity: 0 }}
+            <AnimatePresence onExitComplete={() => setIsOpen(false)}>
+              {innerVisible && (
+                <motion.div
+                  dragElastic={0}
+                  dragMomentum={false}
+                  onPointerEnter={() => (contentHoverRef.current = true)}
+                  onPointerLeave={e => {
+                    contentHoverRef.current = false
+                  }}
+                  initial={{ opacity: 0, visibility: 'hidden' }}
+                  animate={{ opacity: 1, visibility: 'visible' }}
+                  exit={{ opacity: 0 }}
+                  transition={{
+                    delay: 0.05,
+                    duration
+                  }}
+                  drag={contentDraggable}
+                  style={{
+                    position: 'relative',
+                    left: left,
+                    top: top,
+                    borderRadius: containerStyle.borderRadius,
+                    display: 'block',
+                    originX: origin.x,
+                    originY: origin.y
+                  }}
+                >
+                  {withClickCover &&
+                    createPortal(
+                      <div
+                        role={'click-cover'}
                         style={{
-                          position: 'absolute',
-                          inset: 0,
-                          borderRadius: 'inherit',
-                          zIndex: -1,
-                          originX: origin.x,
-                          originY: origin.y
+                          position: 'fixed',
+                          top: 0,
+                          left: 0,
+                          width: '100%',
+                          height: '100%',
+                          zIndex: Number(containerStyle?.zIndex || '9999') - 1
                         }}
-                        className={ClassName.Background.blurBackground}
-                      ></motion.div>
+                        onClick={e => {
+                          e.stopPropagation()
+                          handleClickOutside(e)
+                        }}
+                      ></div>,
+                      document.body
                     )}
-                    <motion.div
-                      key={2}
-                      initial={{ opacity: 0.6, scale: 0.95 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      exit={{ opacity: 0 }}
-                      style={{
-                        originX: origin.x,
-                        originY: origin.y
-                      }}
-                    >
-                      {React.isValidElement(content) ? content : typeof content === 'function' ? content(setInnerVisible) : null}
-                    </motion.div>
-                  </>
-                )}
-              </AnimatePresence>
-            </motion.div>
+                  {React.isValidElement(content) ? content : typeof content === 'function' ? content(setInnerVisible) : null}
+                </motion.div>
+              )}
+            </AnimatePresence>
           )
         }}
       >

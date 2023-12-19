@@ -1,5 +1,5 @@
 import React, { useMemo, useState, useRef } from 'react'
-import { useFlow } from '@/core/components/whiteboard/hooks'
+import { useFlow } from '@/core/components/whiteboard/StateHooks'
 import { getStroke } from 'perfect-freehand'
 import { getBoxOfPoints } from '@/core/components/whiteboard/utils'
 import { useRafFn, useSelectAtomValue } from '@/hooks'
@@ -96,6 +96,7 @@ const useFreeHand = () => {
   const handlePointerDown: React.PointerEventHandler<SVGSVGElement> = e => {
     if (whiteboardState.isPanning) return
     if (whiteboardState.pointerMode === 'pan') return
+    if (e.button !== 0) return
     if (e.isPrimary) {
       e.preventDefault()
       isPressed.current = true

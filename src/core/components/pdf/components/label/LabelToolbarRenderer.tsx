@@ -31,10 +31,10 @@ const LabelToolbarRenderer = () => {
         left: pdfState.currentFocusedLabel?.position.x,
         top: pdfState.currentFocusedLabel?.position.y
       }}
-      borderRadius={999}
+      borderRadius={5}
       content={
         currentLabel && (
-          <WithBorder padding={'0px 12px'} borderRadius={999}>
+          <WithBorder padding={0} borderRadius={5}>
             <LabelToolbar
               onColorChange={c => {
                 if (c === defaultBgColor) {

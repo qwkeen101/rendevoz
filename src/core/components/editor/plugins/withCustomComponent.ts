@@ -92,6 +92,12 @@ const withCustomComponent = (editor: CustomEditor) => {
       }
       if (match) {
         const [block, path] = match
+        if (block.type === 'code-block') {
+          setTimeout(() => {
+            editor.instance.selectOps?.selectBlock(block.id)
+          })
+          return
+        }
         const start = Editor.start(editor, path)
         const currentPrevious = Editor.previous(editor, { at: path })
         if (currentPrevious && Point.equals(selection.anchor, start)) {

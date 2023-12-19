@@ -120,7 +120,8 @@ export default () => {
         <div style={{ width: '100%', marginTop: 25 }}>
           <MediaBottomBar />
         </div>
-        {!floated && <MediaToolbar />}
+
+        {!floated && mediaState.onlyCore !== true && <MediaToolbar />}
         <audio
           onLoadedData={() => {
             setMediaState(s => ({ ...s, loaded: true }))

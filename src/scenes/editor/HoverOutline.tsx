@@ -1,4 +1,4 @@
-import { Content, Icon, TabPane, Tabs } from '@/components'
+import { Content, Icon, TabPane, Tabs, Tooltip } from '@/components'
 import Outliner from '@/core/components/editor/utils/outline/outliner'
 import { useSelectAtomValue, useToggle } from '@/hooks'
 import ClassName from '@/styles/classNames'
@@ -23,80 +23,69 @@ const SidebarToolbar = ({ editor }: { editor: CustomEditor }) => {
   const value = useEditorValue()
   useEditorFilter(editor)
   const sidebarRef = useRef<HTMLDivElement>(null)
-  const { t } = useTranslation()
   const collapsed = !editorBarState.showLeftBar
+  const headingTree = useAtomValue(EditorHeadingTreeAtom)
+  if (!headingTree?.children.length) return null
   return (
-    <Resizable
-      enable={{ right: true }}
-      minWidth={200}
-      maxWidth={500}
-      defaultSize={{
-        width: '300px',
-        height: '100%'
-      }}
-      ref={sidebarRef}
-      style={{
-        position: collapsed ? 'absolute' : 'relative',
-        left: 0,
-        top: 0,
-        zIndex: 10,
-        display: 'flex',
-        flexDirection: 'column',
-        transition: 'transform 0.2s ease',
-        padding: '12px 8px 6px 12px',
-        gap: 10,
-        height: '100%',
-        pointerEvents: collapsed ? 'none' : 'auto',
-        transform: collapsed ? 'translateX(-100%) translateX(-10px)' : 'translateX(0px)',
-        visibility: collapsed ? 'hidden' : 'visible',
-        background: Colors.Background.Secondary,
-        borderRight: `1px solid ${Colors.Background.Border}`
-      }}
-    >
-      <Tabs
-        defaultActiveKey="1"
-        extra={
+    <>
+      {editorBarState.showLeftBar === false && (
+        <Tooltip content={'Show contents'}>
           <Icon
+            name={'park-align-text-left'}
             size={18}
-            name="park-left"
             containerStyle={{
-              width: 'fit-content'
+              position: 'absolute',
+              top: 58,
+              left: 10,
+              zIndex: 99
             }}
-            onClick={() => setEditorBarState(s => ({ ...s, showLeftBar: false }))}
-            className={ClassName.circleButton()}
+            onClick={() => setEditorBarState(s => ({ ...s, showLeftBar: true }))}
+            className={ClassName.flatButton(4, '4px')}
           />
-        }
+        </Tooltip>
+      )}
+      <Resizable
+        enable={{ right: true }}
+        minWidth={120}
+        maxWidth={500}
+        defaultSize={{
+          width: '300px',
+          height: 'auto'
+        }}
+        ref={sidebarRef}
+        style={{
+          position: 'absolute',
+          left: 0,
+          top: 50,
+          zIndex: 999,
+          display: 'flex',
+          flexDirection: 'column',
+          transition: 'transform 0.27s ease, opacity 0.27s ease',
+          padding: '8px',
+          gap: 4,
+          height: '100%',
+          background: Colors.Background.Global,
+          pointerEvents: collapsed ? 'none' : 'auto',
+          transform: collapsed ? 'translateX(-100%)' : 'translateX(0px)',
+          opacity: collapsed ? 0 : 1,
+          // background: Colors.Background.Secondary,
+          boxShadow: Colors.Background.BoxShadow,
+          minHeight: 120,
+          alignItems: 'flex-start',
+          borderRadius: '0px 8px 8px 0px',
+          paddingBottom: 60,
+          fontSize: 14
+        }}
       >
-        <TabPane
-          key="1"
-          tab={
-            <Content alignItems="center" flex gap={6}>
-              <Icon name="park-mindmap-list" />
-              {t('general.outline')}
-            </Content>
-          }
-          style={{
-            paddingTop: 10
-          }}
-        >
-          <HeadingTree value={value} editor={editor} />
-        </TabPane>
-        <TabPane
-          key="3"
-          tab={
-            <Content alignItems="center" flex gap={6}>
-              <Icon name="park-share-one" />
-              {t('general.object')}
-            </Content>
-          }
-          style={{
-            paddingTop: 10
-          }}
-        >
-          <AllObjects editor={editor} />
-        </TabPane>
-      </Tabs>
-    </Resizable>
+        <Icon
+          size={18}
+          name={'park-double-left'}
+          className={ClassName.flatButton(4, '4px')}
+          onClick={() => setEditorBarState(s => ({ ...s, showLeftBar: false }))}
+        />
+        <HeadingTree value={value} editor={editor} />
+      </Resizable>
+    </>
   )
 }
 
@@ -157,7 +146,7 @@ const HeadingItem = ({ item, onClick }: { item: IHeadingTreeNode; onClick: (head
           }}
           style={{
             textTransform: 'none',
-            fontWeight: 600,
+            fontWeight: 500,
             transition: 'color 0.2s ease',
             color: currentActiveHeadingId === item.id ? Colors.Common.SelectColor : undefined
           }}

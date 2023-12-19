@@ -8,7 +8,7 @@ const useGroupQueryLibrary = (groupId: number) => {
 
   const renderPanel = () => {
     return (
-      <Modal visible={visible} onClose={() => setVisible(false)}>
+      <Modal zIndex={5000} visible={visible} onClose={() => setVisible(false)}>
         <QueryPanel onClose={() => setVisible(false)} groupId={groupId} />
       </Modal>
     )

@@ -74,12 +74,13 @@ const FeedSidebar = () => {
         flexDirection: 'column',
         paddingTop: 8,
         zIndex: 10,
+        opacity: feedState.sidebarCollapsed ? 0 : 1,
         borderRight: `1px solid ${Colors.Background.Border}`,
         transform: feedState.sidebarCollapsed ? 'translateX(-100%)' : 'unset',
         position: feedState.sidebarCollapsed ? 'absolute' : 'relative',
         top: 0,
         left: 0,
-        transition: 'transform 0.25s ease'
+        transition: 'transform 0.25s ease, opacity 0.25s ease'
       }}
     >
       <Content flex column gap={4} style={{ padding: '6px 6px' }}>

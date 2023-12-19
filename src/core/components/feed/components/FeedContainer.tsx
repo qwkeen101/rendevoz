@@ -29,6 +29,9 @@ const FeedContainer = () => {
           zIndex={8000}
           enableClickEvent={true}
           visible={feedState.modalOpen}
+          style={{
+            background: Colors.Background.Global
+          }}
           onClose={() => setFeedState(s => ({ ...s, modalOpen: false }))}
         >
           <Resizable
@@ -105,9 +108,9 @@ const FeedContainer = () => {
           }}
           defaultSize={{
             height: '100%',
-            width: 800
+            width: '50%'
           }}
-          minWidth={400}
+          minWidth={'30%'}
         >
           <FeedContentRenderer />
         </Resizable>
@@ -128,7 +131,7 @@ const FeedContainer = () => {
             transform: !feedState.modalOpen ? 'translateX(100%)' : undefined,
             boxShadow: Colors.Background.BoxShadow,
             zIndex: 100,
-            background: Colors.Background.Secondary
+            background: Colors.Background.Global
           }}
         >
           <FeedContentRenderer />

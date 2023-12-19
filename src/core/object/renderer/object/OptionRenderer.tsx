@@ -10,6 +10,8 @@ export type OptionRendererProps = {
   iconName?: string
   renderOnParent?: boolean
   zIndex?: number
+  iconSize?: number
+  iconStyle?: CSSProperties
   onClickOutside?: (e: MouseEvent, setVisible: React.Dispatch<React.SetStateAction<boolean>>) => void
 }
 export default ({
@@ -19,7 +21,9 @@ export default ({
   renderOnParent,
   onClickOutside,
   zIndex,
-  metaId
+  metaId,
+  iconSize,
+  iconStyle
 }: OptionRendererProps & { metaId: number }) => {
   return (
     <IconWithPopover
@@ -31,6 +35,8 @@ export default ({
         zIndex: 10,
         ...style
       }}
+      style={iconStyle}
+      size={iconSize}
       onClickOutside={onClickOutside}
       closeOnContentClick
       placement={['right', 'left']}
@@ -38,6 +44,7 @@ export default ({
       zIndex={zIndex}
       padding={0}
       name={iconName}
+      onClick={e => e.stopPropagation()}
       className={ClassName.circleButton(2)}
       disableIntersection
       content={

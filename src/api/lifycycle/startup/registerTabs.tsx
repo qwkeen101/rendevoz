@@ -7,6 +7,8 @@ import { EditorPage, HomePage, PdfPage, WhiteboardPage, ImagePage, VideoPage, Gr
 import { Rendevoz } from '@/core/rendevoz'
 import FeedViewer from '@/core/components/feed'
 import AudioPage from '@/scenes/AudioPage'
+import QuestionPage from '@/scenes/QuestionPage'
+import CodePage from '@/scenes/CodePage'
 
 export const RENDEVOZ_DEFAULT_TABS: TabData[ILayoutTab['type']][] = [
   {
@@ -21,12 +23,20 @@ export const RENDEVOZ_DEFAULT_TABS: TabData[ILayoutTab['type']][] = [
     content: opts => opts.objectId && <ImagePage imageId={opts.objectId} />
   },
   {
+    type: 'code',
+    content: opts => opts.objectId && <CodePage id={opts.objectId} />
+  },
+  {
     type: 'pdf',
     content: opts => opts.objectId && <PdfPage pdfId={opts.objectId} onInstanceInitialized={opts.onInstanceInitialized} />
   },
   {
     type: 'video',
     content: opts => opts.objectId && <VideoPage videoId={opts.objectId} onInstanceInitialized={opts.onInstanceInitialized} />
+  },
+  {
+    type: 'question',
+    content: opts => opts.objectId && <QuestionPage id={opts.objectId} />
   },
   {
     type: 'audio',

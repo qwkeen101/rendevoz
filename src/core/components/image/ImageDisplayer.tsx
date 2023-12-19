@@ -58,7 +58,7 @@ const ImageDisplayer = forwardRef<
   useLayoutEffect(() => {
     if (image) {
       const action = async () => {
-        const imageUrl = image.imageUrl
+        const imageUrl = image.url
         const img = new Image()
         const excalidrawData = image.excalidrawUrl && (await transformUrlToData(image.excalidrawUrl))
         img.src = imageUrl

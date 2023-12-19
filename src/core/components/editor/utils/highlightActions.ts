@@ -3,6 +3,7 @@ import { goToBlock } from './blockActions'
 import { CustomEditor, CustomElement } from '~/typings'
 import { css, keyframes } from '@emotion/css'
 import { ReactEditor } from '../slate-react'
+import { Colors } from '@/consts'
 
 const animationKeyframes = keyframes({
   '0%': {
@@ -13,10 +14,7 @@ const animationKeyframes = keyframes({
   }
 })
 export const blinkBg = css({
-  animation: `${animationKeyframes} 0.8s infinite`,
-  backgroundImage: 'none !important',
-  animationDirection: 'alternate',
-  transition: 'all 0.3s ease'
+  backgroundColor: `${Colors.Emphasis.Emphasis}`
 })
 
 export const blinkHighlights = (containerEle: HTMLElement, highlightId: number) => {
@@ -28,7 +26,7 @@ export const blinkHighlights = (containerEle: HTMLElement, highlightId: number) 
     highlights.forEach(i => {
       i.classList.remove(blinkBg)
     })
-  }, 5600)
+  }, 3000)
 }
 
 export const goToTextHighlight = (highlightId: number, editor: CustomEditor) => {

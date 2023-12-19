@@ -36,15 +36,10 @@ const LabelActionMenu = ({ on, objectId, type }: Props) => {
   const { t } = useTranslation()
   const meta = MetaStore.getMetaObjectByObjectId(objectId)
   const label = ObjectStore(type).useValue(objectId) as ILabel | undefined
-  const checkObjectIsMeta = async () => {
-    await GlobalInstance.metaOps?.addDraggableAsMeta({
-      type,
-      labelId: objectId
-    })
-  }
+
   return (
     <WithBorder padding={6} width={160}>
-      {meta && (
+      {meta && !meta.hidden && (
         <Button.IconButton
           icon="park-info"
           text={t('general.show object info')}
@@ -53,7 +48,7 @@ const LabelActionMenu = ({ on, objectId, type }: Props) => {
           }}
         />
       )}
-      {!meta && (
+      {(!meta || meta.hidden) && (
         <Button.IconButton
           icon={'park-share-one'}
           text={t('general.add as object')}
@@ -115,7 +110,7 @@ const LabelActionMenu = ({ on, objectId, type }: Props) => {
         onClick={async () => {
           let m = meta
           if (!m) {
-            m = await GlobalInstance.metaOps?.addDraggableAsMeta({ type, labelId: objectId })
+            m = await GlobalInstance.metaOps?.addDraggableAsMeta({ type, labelId: objectId }, true)
           }
           if (m) {
             GlobalInstance.metaOps?.copyLink(m.id)

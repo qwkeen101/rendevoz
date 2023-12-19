@@ -35,7 +35,7 @@ const LayoutWrapper: FC<LayoutWrapperProps> = ({ defaultScale = 1, doc, children
   const initializedRef = useRef(false)
   useIsomorphicLayoutEffect(() => {
     initializedRef.current = false
-    getPage(doc, 0).then(page => {
+    getPage(doc, 1).then(page => {
       const viewport = page.getViewport({ scale: 1 })
       const vw = viewport.width,
         vh = viewport.height
@@ -54,7 +54,7 @@ const LayoutWrapper: FC<LayoutWrapperProps> = ({ defaultScale = 1, doc, children
         let scale = defaultScale
         scrollMode === 'vertical' && (scale = scaleOfWidth)
         scrollMode === 'horizontal' && (scale = Math.min(scaleOfHeight, scaleOfWidth))
-        console.log(scale)
+
         setPageSize({
           height: vh,
           width: vw,
@@ -99,14 +99,13 @@ const LayoutWrapper: FC<LayoutWrapperProps> = ({ defaultScale = 1, doc, children
   }, [flooredWidth])
 
   return pageSize.width === 0 ? (
-    <div aria-label="layout-wrapper" ref={layoutWrapperRef} style={{ width: '100%', height: '100%', maxWidth: 1500 }}>
+    <div aria-label="layout-wrapper" ref={layoutWrapperRef} style={{ width: '100%', height: '100%' }}>
       <Spinner size={50} />
     </div>
   ) : (
     <div
       style={{
         width: '100%',
-        maxWidth: 1500,
         height: '100%',
         overflow: 'hidden'
       }}

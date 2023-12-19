@@ -1,10 +1,9 @@
-import { globalStore, MetaStore, NoteStore, ObjectStore } from '@/api/stores'
+import { globalStore, NoteStore, ObjectStore } from '@/api/stores'
 import { useEffect } from 'react'
 import useWebpageState, { IWebpageState } from '@/core/components/webpage/hooks/useWebpageState'
-import fetchUrlAndParseNote from '@/core/components/webpage/utils/fetchUrlAndParseNote'
 import { atom } from 'jotai'
-import { Descendant } from 'slate'
 import { useMemoizedFn } from '@/hooks'
+import { Rendevoz } from '@/core/rendevoz'
 
 export const UrlToWebpageMap = atom(new Map<string, number>())
 
@@ -37,11 +36,14 @@ const useWebpageContent = (options: {
         ...s,
         currentParsedContent: webpageState.externalState?.content,
         loaded: true,
+        isLoading: false,
+        failLoading: false,
         currentWebpage: webpageState.externalState
       }))
       options.onEndLoad?.()
       return
     }
+    console.log(webpageState)
     if (webpageState.currentUrl) {
       const url = webpageState.currentUrl
       if (!webpageState.currentWebpageId || (webpageState.currentWebpageId && !webpageState.currentWebpageNoteId)) {
@@ -52,45 +54,45 @@ const useWebpageContent = (options: {
           const wp = await ObjectStore('webpage').getOneById(id)
           if (wp && wp.noteId) {
             options.onEndLoad?.()
-            setWebpageState(s => ({ ...s, currentWebpageId: wp.id, loaded: true }))
+            setWebpageState(s => ({ ...s, currentWebpageId: wp.id, loaded: true, isLoading: false, failLoading: false }))
             return
           }
         }
       }
       if (webpageState.currentWebpageNoteId) {
-        setWebpageState(s => ({ ...s, loaded: true }))
+        setWebpageState(s => ({ ...s, loaded: true, isLoading: false, failLoading: false }))
         options.onEndLoad?.()
         return
       }
-      setWebpageState(s => ({ ...s, loaded: false }))
+      setWebpageState(s => ({ ...s, loaded: false, isLoading: true, failLoading: false }))
       options.onStartLoad?.()
-      fetchUrlAndParseNote(url)
+      Rendevoz.Utils.Web.parseWebpage(url)
         .then(async res => {
           options.onEndLoad?.()
           if (webpageState.externalState?.content) {
             return
           }
           if (res) {
-            const { noteValue, author, domain, title, favicon } = res
-            console.log(res)
+            const { content, author, domain, title, favicon } = res
             if (webpageState.currentWebpageId && !currentWebpage?.noteId) {
-              const note = await NoteStore.initializeNoteWithValue(noteValue)
+              const note = await NoteStore.initializeNoteWithValue(content)
               if (note) {
                 await ObjectStore('webpage').updateOne({
                   id: webpageState.currentWebpageId,
                   noteId: note.id,
                   author,
                   domain,
-                  title,
+                  name: title,
                   favicon
                 })
-                return
               }
             }
             setWebpageState(s => ({
               ...s,
-              currentParsedContent: noteValue,
+              currentParsedContent: content,
               loaded: true,
+              isLoading: false,
+              failLoading: false,
               currentWebpage: {
                 author,
                 domain,
@@ -105,17 +107,20 @@ const useWebpageContent = (options: {
               favicon,
               domain,
               link: url,
-              content: noteValue,
+              content,
               image: res.image
             })
+            return
           }
         })
         .catch(e => {
           console.error(e)
           if (webpageState.externalState?.content) {
             options.onEndLoad?.()
+            setWebpageState(s => ({ ...s, loaded: true, isLoading: false, failLoading: false }))
             return
           }
+          setWebpageState(s => ({ ...s, loaded: false, isLoading: false, failLoading: true }))
           options.onFailLoad?.()
         })
     }

@@ -6,13 +6,11 @@ const EditorWrapper = css({
   maxWidth: '100%',
   minWidth: 0,
   width: 'var(--editor-max-width)',
-  position: 'relative',
   outline: 'none',
   whiteSpace: 'pre-wrap',
   wordWrap: 'break-word',
   height: 0,
-  flex: 1,
-  paddingBottom: 100
+  flex: 1
 })
 
 const Editor = css({
@@ -21,13 +19,7 @@ const Editor = css({
   flex: 1,
   display: 'flex',
   flexDirection: 'column',
-  height: '100%',
-  '::highlight(secondary-highlight)': {
-    backgroundColor: 'rgba(209, 146, 56, 0.7)'
-  },
-  '::highlight(primary-highlight)': {
-    backgroundColor: 'rgba(255, 230, 148, 0.7)'
-  }
+  height: '100%'
 })
 
 const DefaultContentClass = css({
@@ -39,19 +31,19 @@ const DefaultContentClass = css({
     margin: 0
   },
   h1: {
-    fontSize: '2em'
+    fontSize: '1.875em'
   },
   h2: {
-    fontSize: '1.8em'
+    fontSize: '1.5em'
   },
   h3: {
-    fontSize: '1.6em'
+    fontSize: '1.25em'
   },
   h4: {
-    fontSize: '1.4em'
+    fontSize: '1.15em'
   },
   'h5,h6': {
-    fontSize: '1.2em'
+    fontSize: '1.1em'
   },
   img: {
     borderRadius: 6,
@@ -70,8 +62,6 @@ const DefaultContentClass = css({
 const TextBoxClass = css({
   maxWidth: '100%',
   width: '100%',
-  height: 0,
-  flex: 1,
   display: 'flex',
   flexDirection: 'column',
   alignItems: 'center',
@@ -91,7 +81,14 @@ const ScrollWrapperClass = css({
   position: 'relative',
   display: 'flex',
   flexDirection: 'column',
-  alignItems: 'center'
+  transition: 'width 0.27s ease',
+  alignItems: 'center',
+  '::highlight(secondary-highlight)': {
+    backgroundColor: 'rgba(209, 146, 56, 0.7)'
+  },
+  '::highlight(primary-highlight)': {
+    backgroundColor: 'rgba(255, 230, 148, 0.7)'
+  }
 })
 
 const DividerClass = css({

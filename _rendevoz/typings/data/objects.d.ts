@@ -23,11 +23,19 @@ export interface ILabel extends IBase {
   imageUrl?: string
   color?: string
   selectedText?: string
+  time?: number
 }
+
+export interface ICode extends IBase {
+  specType: 'code'
+  content: string
+  language?: string
+}
+
 export interface IWebpage extends IBase {
   specType: 'webpage'
   url?: string
-  title: string
+  name: string
   favicon?: string
   //clipped note
   noteId?: number
@@ -92,8 +100,9 @@ export interface IWebpageLabel extends ILabel {
   selectedText?: string
 }
 
-export interface IImage extends IBase {
+export interface IImage extends IFile {
   specType: 'image'
+  url?: string
   imageUrl: string
   ocrResult?: string
   excalidrawUrl?: string
@@ -106,6 +115,12 @@ export interface INoteBlock extends IBase {
   noteId: number
   specType: 'noteBlock'
 }
+
+export type IFile = {
+  url: string
+  // legacy
+  fileUrl?: string
+} & IBase
 
 export type IMediaChapter = {
   id: number
@@ -126,10 +141,10 @@ export interface IVideoLabel extends IMediaLabel {
 export interface IAudioLabel extends IMediaLabel {
   specType: 'audioLabel'
 }
-export interface ILocalFile extends IBase {
+export interface ILocalFile extends IFile {
   specType: 'localFile'
-  fileUrl: string
-  fileName: string
+  url?: string
+  name?: string
 }
 
 export interface ISyncedBlock extends IBase {
@@ -140,3 +155,60 @@ export interface ISyncedBlock extends IBase {
   syncedMetaIds: number[]
   lastCheckTime?: number
 }
+
+export type IAI = {
+  summary?: string
+  questions?: number[]
+}
+
+export type IQuestion = IBase & {
+  specType: 'question'
+  // where this question is from
+  parentObjectId?: number
+  description?: string
+  answer?: string
+  name?: string
+  // related question ids
+  relatedQuestions?: number[]
+  explanation?: string
+  prompt?: string
+} & {
+  // points to some specific objects, like blocks in document or pages in pdfs or time in media
+  answerType: 'pointer'
+  answerPointers: ((
+    | {
+        pointerType: 'documentBlock'
+        blockId: number
+        blockStr?: string
+      }
+    | {
+        pointerType: 'pdfPage'
+        page: number
+        // truncated str, maybe 100 words?
+        pageStr?: string
+      }
+  ) & { id: number })[]
+} & ( // sAnswer is AI suggested answer, answer is user provided answer
+    | {
+        questionType: 'text'
+        sAnswer: string
+        answer?: string
+      }
+    | {
+        questionType: 'singleSelect'
+        choices: string[]
+        sAnswer: string
+        answer?: string
+      }
+    | {
+        questionType: 'multiSelect'
+        choices: string[]
+        sAnswer: string[]
+        answer?: string[]
+      }
+    | {
+        questionType: 'trueOrFalse'
+        sAnswer: boolean
+        answer?: boolean
+      }
+  )

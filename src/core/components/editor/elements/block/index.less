@@ -17,6 +17,9 @@
     margin-top: 4px;
     margin-bottom: 4px;
   }
+  &[data-spec-type="block-quote"]{
+    border-radius: 0px;
+  }
 }
 .BlockCommon {
   > * {
@@ -40,6 +43,22 @@
   flex-shrink: 0;
   overflow: hidden;
   pointer-events: auto;
+  &:is([data-selected="true"],[data-spec-type*="heading"]){
+    &[data-empty="true"]{
+      span[data-slate-zero-width] {
+        &::before{
+          float: left;
+          height: 0;
+          pointer-events: none;
+          //position: absolute;
+          //top: 0;
+          //left: 4px;
+          color: var(--font-s-transparent);
+          content: var(--placeholder);
+        }
+      }
+    }
+  }
 }
 .HeadingBlock {
   width: 100%;

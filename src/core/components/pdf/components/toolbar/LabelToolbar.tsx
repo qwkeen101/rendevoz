@@ -3,6 +3,7 @@ import { IconPicker, IconWithPopover, Toolbar, WithBorder } from '@/components'
 import BlockColorPicker from '@/core/components/editor/components/BlockColorPicker'
 import { FC, memo } from 'react'
 import { IHighlightLabel } from '~/typings'
+import { useTranslation } from 'react-i18next'
 
 type Layout =
   | 'colorPicker'
@@ -62,8 +63,9 @@ const LabelToolbar: FC<LabelToolbarProps> = ({
   movable = false,
   layout = ['colorPicker', 'iconPicker', 'contentInput', 'separator', 'addToEditorButton', 'movableToggle', 'direction', 'delete']
 }) => {
+  const { t } = useTranslation()
   const ColorPickerItem = (
-    <Toolbar.Item key="colorPicker">
+    <Toolbar.Item tooltip={t('general.Background color')} key="colorPicker">
       <IconWithPopover
         disableNudge
         name="park-background-color"
@@ -99,12 +101,17 @@ const LabelToolbar: FC<LabelToolbarProps> = ({
 
   const Separator = <Toolbar.Separator key="separator" />
 
-  const TranslatorItem = <Toolbar.Item key="translate" iconName="park-translate" onClick={onTranslate}></Toolbar.Item>
+  const TranslatorItem = (
+    <Toolbar.Item tooltip={t('general.Translate')} key="translate" iconName="park-translate" onClick={onTranslate}></Toolbar.Item>
+  )
 
-  const SearcherItem = <Toolbar.Item key="search" iconName="park-search" onClick={onSearch}></Toolbar.Item>
+  const SearcherItem = (
+    <Toolbar.Item tooltip={t('general.Search online')} key="search" iconName="park-search" onClick={onSearch}></Toolbar.Item>
+  )
   const CopyItem = (
     <Toolbar.Item
       key="copy"
+      tooltip={t('general.Copy')}
       iconName="park-copy-one"
       onClick={() => {
         if (selectedText) {
@@ -116,13 +123,14 @@ const LabelToolbar: FC<LabelToolbarProps> = ({
   const RightBarItem = (
     <Toolbar.Item
       key="rightBar"
-      iconName="park-right-bar"
+      tooltip={t('general.Open in sidebar')}
+      iconName="park-arrow-right-up"
       onClick={() => {
         onOpenInSidebar?.()
       }}
     ></Toolbar.Item>
   )
-  const DeleteItem = <Toolbar.Item key="delete" iconName="park-delete" onClick={onDelete}></Toolbar.Item>
+  const DeleteItem = <Toolbar.Item key="delete" tooltip={t('general.delete')} iconName="park-delete" onClick={onDelete}></Toolbar.Item>
   const toolbarRenderer = () => {
     return layout.map(i => {
       switch (i) {
@@ -147,7 +155,25 @@ const LabelToolbar: FC<LabelToolbarProps> = ({
       }
     })
   }
-  return <Toolbar>{toolbarRenderer()}</Toolbar>
+  return (
+    <Toolbar
+      itemRadius={0}
+      style={{
+        gap: 0,
+        height: '32px',
+        overflow: 'hidden',
+        borderRadius: 5
+      }}
+      itemStyle={{
+        padding: '0px 8px',
+        height: '100%'
+      }}
+      itemClickPreventDefault
+      itemSize={16}
+    >
+      {toolbarRenderer()}
+    </Toolbar>
+  )
 }
 
 export default memo(LabelToolbar)

@@ -17,7 +17,7 @@ export const GroupRenderer = memo(() => {
   useTableHeaders()
 
   return (
-    <Content ref={containerRef} flex column fullHeight style={{ minWidth: 'fit-content', width: '100%' }}>
+    <Content role={"renderer-container"} ref={containerRef} flex column fullHeight style={{ minWidth: 'fit-content', width: '100%' }}>
       {/*{currentView === 'table' && <TableRenderer value={filterValues || displayValues} />}*/}
       {/*{currentView === 'gallery' && <GalleryRenderer values={filterValues || displayValues} />}*/}
       <TableRenderer value={filterValues || displayValues} />
@@ -33,7 +33,7 @@ const TableRenderer = memo(({ value }: { value?: MetaGroupChild[] }) => {
         <GroupTableHeader key={currentViewId} />
         <TableBodyRenderer value={value} />
       </Content>
-      <div style={{ height: 500, width: 1, flexShrink: 0 }}></div>
+      {/*<div style={{ height: 500, width: 1, flexShrink: 0 }}></div>*/}
     </Content>
   )
 })

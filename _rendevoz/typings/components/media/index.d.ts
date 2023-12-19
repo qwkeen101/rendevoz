@@ -9,6 +9,7 @@ export type IMediaState = {
   jumpTime?: number
   subtitleUrl?: string
   videoId?: number
+  onlyCore?: boolean
 } & Partial<IMedia> &
   IMediaInternalState &
   IMediaExternalState

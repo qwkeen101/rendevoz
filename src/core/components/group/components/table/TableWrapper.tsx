@@ -9,15 +9,17 @@ import PlaceholderRow from '@/core/components/group/components/table/Placeholder
 const TableWrapper = memo(({ value = [] }: { value: MetaGroupChild[] }) => {
   const ref = useRef<HTMLDivElement>(null)
   const instance = useGroupInstance()
+  instance.getScrollMargin = () => ref.current?.closest('[role="renderer-container"]')?.offsetTop ?? 0
+  const m = instance.getScrollMargin?.() ?? 0
   const virtualizer = useVirtualizer({
-    overscan: 5,
+    overscan: 7,
     getScrollElement: () => instance.values.pageContainer,
     estimateSize: () => 30,
     debug: true,
-    count: value.length
+    count: value.length,
+    scrollMargin: m
   })
 
-  instance.getScrollMargin = () => ref.current?.parentElement?.parentElement?.parentElement?.offsetTop ?? 0
   instance.virtualizer = virtualizer
   const items = virtualizer.getVirtualItems()
   // root layer, path is the first index
@@ -46,7 +48,7 @@ const TableWrapper = memo(({ value = [] }: { value: MetaGroupChild[] }) => {
             top: 0,
             left: 0,
             width: '100%',
-            transform: `translateY(${items[0]?.start ?? 0}px)`
+            transform: `translateY(${(items[0]?.start ?? 0) - m}px)`
           }}
         >
           {items.map(i => (

@@ -51,7 +51,10 @@ const Image: FC<
             />
             {preview && (
               <div
-                onClick={() => GlobalImagePreviewerInstance.open?.(rest.src)}
+                onClick={e => {
+                  e.preventDefault()
+                  GlobalImagePreviewerInstance.open?.(rest.src)
+                }}
                 className={css({
                   position: 'absolute',
                   zIndex: 10,
@@ -106,7 +109,10 @@ const Image: FC<
             />
             {preview && (
               <div
-                onClick={() => GlobalImagePreviewerInstance.open?.(rest.src)}
+                onClick={(e) => {
+                  e.preventDefault()
+                  GlobalImagePreviewerInstance.open?.(rest.src)
+                }}
                 className={css({
                   position: 'absolute',
                   zIndex: 10,

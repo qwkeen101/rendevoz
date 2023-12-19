@@ -5,7 +5,7 @@ import { ClassName } from 'rendevoz'
 import { exportRendevozDb, importRendevozDb } from '@/utils/db'
 import { useEffect, useRef, useState } from 'react'
 import { toast } from 'react-hot-toast'
-import { Button, Content, Form, Switch, Modal, Icon } from '@/components'
+import { Button, Content, Form, Switch, Modal, Icon, ButtonChooser } from '@/components'
 import useFileUpload from '../../components/base/useFileUpload'
 import { ISettingItem } from './SettingItem'
 import { useTranslation } from 'react-i18next'
@@ -26,6 +26,7 @@ import SettingGroup from '@/core/setting/SettingGroup'
 import { DateFormat } from '@/utils'
 import { getAppState } from '@/core/rendevoz/appState'
 import FileSystem from '@/api/fileSystem'
+const arrayRange = (start, stop, step) => Array.from({ length: (stop - start) / step + 1 }, (value, index) => start + index * step)
 
 const languageOptions: SelectOptionProps[] = [
   {
@@ -390,6 +391,48 @@ const GeneralSetting = () => {
                 }}
               ></BorderInput>
             </Content>
+          )
+        }
+      : undefined,
+    {
+      title: 'Youtube API key',
+      column: true,
+      children: (
+        <input
+          style={{
+            borderBottom: '1px solid var(--border-background)',
+            width: '100%'
+          }}
+          spellCheck={'false'}
+          placeholder={'Type your API key here...'}
+          defaultValue={setting.general.youtubeApiKey}
+          onBlur={e => {
+            setSetting(s =>
+              produce(s, draft => {
+                draft.general.youtubeApiKey = e.target.value
+              })
+            )
+          }}
+          className={ClassName.noStyleInput}
+        />
+      )
+    },
+    setting.general.youtubeApiKey
+      ? {
+          title: 'Youtube max results',
+          description: 'Max results you will get from a channel/playlist.',
+          children: (
+            <ButtonChooser
+              value={setting.general.youtubeMaxItems ? String(setting.general.youtubeMaxItems) : '100'}
+              onChange={v => {
+                setSetting(s =>
+                  produce(s, draft => {
+                    draft.general.youtubeMaxItems = Number(v)
+                  })
+                )
+              }}
+              options={arrayRange(50, 1000, 50).map(i => i.toString())}
+            />
           )
         }
       : undefined

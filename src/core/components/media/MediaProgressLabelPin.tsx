@@ -7,12 +7,12 @@ import { useSetAtom } from 'jotai'
 import { useMediaInstance } from './hooks/useMediaInstance'
 import { memo } from 'react'
 import { Colors } from '@/consts'
+import { DraggableElement } from '@/core'
 
 const MediaProgressLabelPin = memo(({ labelId }: { labelId: number }) => {
   const labelType = useSelectAtomValue(MediaStateAtom, s => s.labelType)
   const mediaLabel = ObjectStore(labelType).useValue(labelId)
   const instance = useMediaInstance()
-  const floated = useSelectAtomValue(MediaStateAtom, s => s.floated)
   const totalTime = useSelectAtomValue(MediaStateAtom, s => s.totalTime)
   const sortedChapters = useSelectAtomValue(MediaStateAtom, s => s.sortedChapters)
   const currentHoverLabelId = useSelectAtomValue(MediaToolbarStateAtom, s => s.currentHoverLabelId)
@@ -65,7 +65,9 @@ const MediaProgressLabelPin = memo(({ labelId }: { labelId: number }) => {
         opacity: currentHoverLabelId === labelId ? 0.2 : 1
       }}
     >
-      <Icon name="park-pushpin" fill={Colors.Common.SelectColor} theme="filled" size={12} />
+      <DraggableElement draggingDetails={{ labelId: labelId, labelType, type: labelType }}>
+        <Icon name="park-pushpin" fill={Colors.Common.SelectColor} theme="filled" size={12} />
+      </DraggableElement>
     </div>
   )
 })

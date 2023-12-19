@@ -38,6 +38,7 @@ export { metaStore as MetaStore } from './meta.store'
 export { collectionStore as CollectionStore } from './collection.store'
 export { objectStore as ObjectStore } from './object.store'
 export { default as GroupStore } from './group.store'
+export { default as AIStore } from './AI.store'
 export * from '@/api/textSearch/createSearchIndex'
 export * as StoreUtils from './utils.store'
 window.addEventListener('DOMContentLoaded', () => {

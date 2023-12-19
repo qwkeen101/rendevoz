@@ -1,6 +1,8 @@
 import { CustomEditor, CustomElement, IEditorInstance } from '~/typings'
 import { assignProperties } from '@/utils'
-import { Editor, Element, Transforms } from 'slate'
+import { Editor, Element, Node, Path, Transforms } from 'slate'
+import Id from '@/utils/id'
+import { ReactEditor } from '@/core'
 
 const MAX_INDENT = 6
 export const transformableTargetType = [
@@ -8,6 +10,8 @@ export const transformableTargetType = [
   'heading-one',
   'heading-two',
   'heading-three',
+  'heading-four',
+  'block-quote',
   'order-list-item',
   'list-item',
   'to-do',
@@ -18,6 +22,72 @@ const untransformableOriginalType = ['table', 'metaObject', 'synced']
 const assignBlockOps = (instance: IEditorInstance, editor: CustomEditor) => {
   assignProperties(instance, {
     blockOps: {
+      isBlockEmpty: el => {
+        if (editor.isVoid(el)) {
+          return false
+        }
+        if (el.hide) {
+          return true
+        }
+        return el.children.length === 1 && el.children[0].text === ''
+      },
+      copyLink: () => {
+        const selected = instance.getSelectedElements?.()
+        if (selected?.length) {
+          editor.on?.({
+            type: 'copyLink',
+            blocks: selected.map(i => ({
+              id: i.id,
+              text: Node.string(i) || i.content || ''
+            }))
+          })
+        }
+      },
+      duplicateSelectedBlocks: () => {
+        const selected = instance.getSelectedElements?.()
+        if (selected?.length) {
+          // use structure clone to avoid pointer issue
+          const newElements = selected.map(i => ({ ...structuredClone(i), id: Id.getId() }))
+          const lastPath = instance.getElementPathById?.(selected[selected.length - 1].id)
+          if (lastPath) {
+            Transforms.insertNodes(editor, newElements, {
+              at: Path.next(lastPath)
+            })
+            instance.selectOps?.deselectAll()
+            instance.indexPath?.()
+            setTimeout(() => {
+              // select new elements and scroll to first
+              const firstId = newElements[0].id
+              instance.selectOps?.selectBlock(newElements.map(i => i.id))
+              instance.scrollToBlock?.({
+                blockId: firstId
+              })
+            })
+          }
+        }
+      },
+      getCurrentCursorBlockText: () => {
+        const selection = editor.selection
+        if (selection) {
+          const block = Editor.node(editor, selection)
+          if (block) {
+            return Node.string(block[0])
+          }
+        }
+      },
+      getCurrentCursorBlockBounding: () => {
+        const block = instance.blockOps?.getAboveBlock()
+        if (block) {
+          try {
+            const node = ReactEditor.toDOMNode(editor, block[0])
+            if (node) {
+              return node.getBoundingClientRect()
+            }
+          } catch (e) {
+            console.error(e)
+          }
+        }
+      },
       deleteBlock: path => {
         const selected = instance.values.selectedBlocks
         if (selected.size > 0) {
@@ -77,6 +147,15 @@ const assignBlockOps = (instance: IEditorInstance, editor: CustomEditor) => {
               })
             })
           }
+        }
+        if (!editor.children.length) {
+          Transforms.insertNodes(editor, {
+            type: 'paragraph',
+            id: Id.getId(),
+            children: [{ text: '' }]
+          })
+          Transforms.select(editor, [0])
+          ReactEditor.focus(editor)
         }
       },
       isIndentableBlock: type => {

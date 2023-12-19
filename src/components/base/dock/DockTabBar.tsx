@@ -13,7 +13,6 @@ import ClassName from '@/styles/classNames'
 import { useTranslation } from 'react-i18next'
 import { replacePanel } from './Algorithm'
 import { LayoutIdToTabMap } from '@/components/layout'
-import { useSetting } from '@/core'
 import { getOS } from '@/App'
 import { Rendevoz } from '@/core/rendevoz'
 import { MetaStore } from '@/api/stores'
@@ -33,8 +32,9 @@ export const DockTabBar = memo((props: DockTabBarProps) => {
     ref.current = div
   }
   const selectedTabKey = TabNavList.defaultActiveKey
-
+  const [isDragging, setIsDragging] = useState(false)
   const navs = TabNavList.navs
+  const dragInsideRef = useRef(false)
   const currentMoveTabId = useRef<string>()
   const [isTopRight, setIsTopRight] = useState(false)
 
@@ -51,7 +51,6 @@ export const DockTabBar = memo((props: DockTabBarProps) => {
       }
     }
   })
-
   const os = getOS()
   return (
     <DragDropDiv
@@ -60,14 +59,6 @@ export const DockTabBar = memo((props: DockTabBarProps) => {
       getRef={getRef}
       tabIndex={-1}
     >
-      <div
-        style={{
-          display: 'none',
-          width: '80px',
-          height: '100%',
-          background: 'rgba(0,0,0,0.12)'
-        }}
-      ></div>
       <Reorder.Group
         onReorder={r => {
           const currIndex = r.findIndex(i => i.key === currentMoveTabId.current)
@@ -76,8 +67,11 @@ export const DockTabBar = memo((props: DockTabBarProps) => {
           onReorder(currentMoveTabId.current, navs[currIndex].key, direction)
         }}
         className={styles.tabs}
+        style={{
+          background: isDragging ? 'var(--tabs-bg)' : undefined
+        }}
+        axis={'x'}
         values={navs}
-        axis="x"
       >
         {navs.map((i, idx) => (
           <TabItem
@@ -85,7 +79,13 @@ export const DockTabBar = memo((props: DockTabBarProps) => {
             key={i.key}
             onDragStart={() => {
               currentMoveTabId.current = i.key
+              setIsDragging(true)
             }}
+            onDragEnd={() => {
+              dragInsideRef.current = false
+              setIsDragging(false)
+            }}
+            isDragging={isDragging}
             isSelected={selectedTabKey === i.key}
             onClick={e => {
               TabNavList.onTabClick(i.key, e)
@@ -98,14 +98,14 @@ export const DockTabBar = memo((props: DockTabBarProps) => {
   )
 })
 
-const TabItem = ({ onClick, isSelected, item, onDragStart, isLast }) => {
+const TabItem = ({ onClick, isSelected, item, onDragStart, isLast, onDragEnd, isDragging, onDrag }) => {
   const [contextMenuVisible, toggleContextMenuVisible] = useToggle(false)
   const { t } = useTranslation()
   const dockContext = useContext(DockContextType)
   const tabRef = useRef<HTMLDivElement>(null)
   const [currentTabMetaId, setCurrentTabMetaId] = useState<number>()
   const renderTabContextMenu = () => (
-    <WithBorder style={{ padding: 4, display: 'flex', flexDirection: 'column', gap: 4 }}>
+    <WithBorder width={170} style={{ padding: 4, display: 'flex', flexDirection: 'column', gap: 4 }}>
       <div
         className={ClassName.flatButton()}
         onClick={e => {
@@ -204,7 +204,8 @@ const TabItem = ({ onClick, isSelected, item, onDragStart, isLast }) => {
       }
     }
   }, [isSelected])
-  const isLastAndHasGlobalExtra = isLast && dockContext.getLayout().global.globalPanelExtra
+
+  const isLastAndHasGlobalExtra = isLast && dockContext.getLayout().global.globalPanelExtra && !isDragging
   return (
     <AnimatePopover
       positions={['bottom']}
@@ -228,18 +229,28 @@ const TabItem = ({ onClick, isSelected, item, onDragStart, isLast }) => {
             }
           }
         }}
-        onDragStart={onDragStart}
+        onDragEnd={() => {
+          onDragEnd()
+        }}
+        onDragStart={e => {
+          onDragStart?.(e)
+        }}
+        onDrag={onDrag}
+        whileDrag={{
+          boxShadow: '0 0 0 2px var(--select-color)',
+          borderRadius: 4,
+          pointerEvents: 'none'
+        }}
         // exit={{ opacity: 0, transition: { duration: 0.3 } }}
         onClick={onClick}
         value={item}
         drag={true}
-        whileDrag={{ opacity: 0, transition: { duration: 0 } }}
         aria-label="tab-reorder-item"
         as="div"
         id={item.key}
         className={classNames(styles.tab, isSelected && styles.active, isLast && styles.isLast)}
         style={{
-          paddingRight: isLastAndHasGlobalExtra ? 40 : undefined
+          paddingRight: isLastAndHasGlobalExtra ? 30 : undefined
         }}
       >
         <div className={styles.tabContent}>{item.tab}</div>

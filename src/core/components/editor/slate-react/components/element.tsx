@@ -135,6 +135,7 @@ const MemoizedElement = React.memo(Element, (prev, next) => {
     prev.element === next.element &&
     prev.renderElement === next.renderElement &&
     prev.renderLeaf === next.renderLeaf &&
+    prev.index === next.index &&
     isDecoratorRangeListEqual(prev.decorations, next.decorations) &&
     (prev.selection === next.selection || (!!prev.selection && !!next.selection && Range.equals(prev.selection, next.selection)))
   )

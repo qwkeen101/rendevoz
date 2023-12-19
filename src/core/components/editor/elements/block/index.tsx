@@ -6,15 +6,17 @@ import { CustomElement } from '~/typings'
 import { AnimatePresence, motion } from 'framer-motion'
 import styles from './index.module.less'
 import './index.less'
+import { t } from 'i18next'
 import { ID_TO_ELEMENTS_MAP } from '../../weakMaps'
 import { css } from '@emotion/css'
 import { hexToRgb } from '@/utils/color'
 import { useGlobalIsDragging } from '@/core'
-import { Editor, Range, Transforms } from 'slate'
+import { Editor, Node, Range, Transforms } from 'slate'
 import { NODE_TO_PARENT } from '../../slate-react/utils/weak-maps'
 import useBlockContentSearch from '@/core/components/editor/elements/block/useBlockContentSearch'
 import useEditorInstance from '@/core/components/editor/hooks/useEditorInstance'
 import useBlockSelect from '@/core/components/editor/elements/block/useBlockSelect'
+import { useEditorComposing } from '@/core/components/editor/slate-react/components/editable'
 
 type BlockProps = {
   blockId: number
@@ -40,6 +42,7 @@ const Block: FC<React.DetailedHTMLProps<React.HTMLAttributes<HTMLDivElement>, HT
 
     const instance = useEditorInstance()
     useBlockContentSearch(element, instance)
+    const isComposing = useEditorComposing()
     const { isSelected, handleCollisionSelectBlock, selectBlock } = useBlockSelect({
       element,
       instance,
@@ -154,15 +157,20 @@ const Block: FC<React.DetailedHTMLProps<React.HTMLAttributes<HTMLDivElement>, HT
     )
 
     const { background, color, align, cardType } = element
-    const linearBg = background && (background as string).startsWith('linear-gradient')
     const rgbaBg = background && hexToRgb(background)
-    const linearFont = color && (color as string).startsWith('linear-gradient')
     const nestedBlocks = ['table']
+    let isBlockEmpty = instance.blockOps?.isBlockEmpty(element)
+    if (isComposing) {
+      if (blockRef.current?.hasAttribute('data-selected')) {
+        isBlockEmpty = false
+      }
+    }
     const renderChildren = () => (
       <div
         key={blockId}
         {...attributes}
         ref={mergedChildrenRef}
+        data-empty={isBlockEmpty}
         onPointerEnter={handleMouseEnter}
         onPointerLeave={handleMouseLeave}
         onPointerMove={handleMouseMove}
@@ -170,11 +178,9 @@ const Block: FC<React.DetailedHTMLProps<React.HTMLAttributes<HTMLDivElement>, HT
         data-level={element?.level}
         style={{
           textAlign: align,
-          '--block-linear-font': linearFont ? color : undefined,
-          '--text-fill': linearFont ? 'transparent' : undefined,
-          '--block-rgb-bg': !linearBg && rgbaBg && !nestedBlocks.includes(type) ? `${rgbaBg.r},${rgbaBg.g},${rgbaBg.b}` : undefined,
-          '--block-linear-bg': linearBg ? background : undefined,
-          '--block-font-color': linearFont ? undefined : color,
+          '--block-rgb-bg': rgbaBg && !nestedBlocks.includes(type) ? `${rgbaBg.r},${rgbaBg.g},${rgbaBg.b}` : undefined,
+          '--block-font-color': color,
+          '--placeholder': `"${t('editor.Type for commands')}"`,
           color: 'var(--block-font-color)',
           background: nestedBlocks.includes(type) && rgbaBg ? `rgba(${rgbaBg.r},${rgbaBg.g},${rgbaBg.b},0.6)` : undefined,
           overflow: disableOverflowTypes.includes(type) ? 'visible' : 'hidden',

@@ -36,9 +36,6 @@ export function createLayoutCache(defaultLayout: LayoutData | BoxData): DefaultL
       if ('dockbox' in defaultLayout) {
         addBoxToCache(defaultLayout.dockbox, cache)
       }
-      if ('floatbox' in defaultLayout) {
-        addBoxToCache(defaultLayout.floatbox, cache)
-      }
     }
   }
 
@@ -94,9 +91,6 @@ export function saveLayoutData(
 
   return {
     dockbox: saveBoxData(layout.dockbox),
-    floatbox: saveBoxData(layout.floatbox),
-    windowbox: saveBoxData(layout.windowbox),
-    maxbox: saveBoxData(layout.maxbox),
     global: layout.global
   }
 }
@@ -163,9 +157,6 @@ export function loadLayoutData(
   }
 
   return {
-    dockbox: loadBoxData(savedLayout.dockbox),
-    floatbox: loadBoxData(savedLayout.floatbox ?? { mode: 'float', children: [], size: 0 }),
-    windowbox: loadBoxData(savedLayout.windowbox ?? { mode: 'window', children: [], size: 0 }),
-    maxbox: loadBoxData(savedLayout.maxbox ?? { mode: 'maximize', children: [], size: 1 })
+    dockbox: loadBoxData(savedLayout.dockbox)
   }
 }

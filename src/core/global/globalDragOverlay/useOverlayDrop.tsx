@@ -1,21 +1,17 @@
 import { GlobalInstance, useToggle } from '@/hooks'
-import { indexedMetaLinksAtom } from '@/api/stores/meta.store'
-import { globalStore, MetaStore, ObjectStore } from '@/api/stores'
+import { MetaStore, ObjectStore } from '@/api/stores'
 import { PartialWithId } from '@/types'
 import Id from '@/utils/id'
 import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { Node } from 'slate'
 import { FormType, Modal } from '@/components'
-import { getSetting, intersectionOfMultipleSets } from '@/core'
-import { BuiltInDraggableElement, DropOn, GlobalDraggingDetails, MetaLink, MetaObject } from '~/typings'
+import { getSetting } from '@/core'
+import { DropOn, MetaLink, MetaObject } from '~/typings'
 import { useEventHandler } from '@/events'
 import useDropObject, { clearDragState } from './useDropObject'
-import { addLinkBetweenTwoMetaObject, createLink, transformTextContentToNameAndDescription } from './utils'
 import { Rendevoz } from '@/core/rendevoz'
 import { TypeToRegisteredObject } from '@/api/stores/object.store'
 import { KeyToRegisteredDropOnProcessor } from '@/core/plugin/RegisterMap'
-import { truncate } from 'lodash'
 import { assignProperties } from '@/utils'
 import normalizeDraggableIntoMeta from '@/core/global/globalDragOverlay/normalizeDraggableIntoMeta'
 
@@ -36,13 +32,21 @@ const useOverlayDrop = () => {
   assignProperties(GlobalInstance, {
     metaOps: {
       ...GlobalInstance.metaOps,
-      addDraggableAsMeta: async d => {
-        const res = await emitter.emitWithCallback('global', {
+      addDraggableAsMeta: async (d, hidden) => {
+        const currentKeys = new Set(MetaStore.getMetaObjectsMap().keys())
+        const res = (await emitter.emitWithCallback('global', {
           type: 'globalDropNeedFurtherProcess',
           data: {
             draggingElement: d
           }
-        })
+        })) as MetaObject
+        const isNewlyCreated = !currentKeys.has(res.id)
+        if (res.hidden && hidden !== true) {
+          await MetaStore.updateMetaObject({ id: res.id, hidden: false }, true)
+        }
+        if (hidden && isNewlyCreated) {
+          await MetaStore.updateMetaObject?.({ id: res.id, hidden: true }, true)
+        }
         return res
       }
     }
@@ -150,12 +154,12 @@ const useOverlayDrop = () => {
         Array.isArray(i)
       ) as MetaLink[][]
     ).flatMap(i => i)
+    console.log(dropOn)
     switch (dropOn.dropOn) {
       case 'database': {
         break
       }
       case 'editor': {
-        if (!enableDropOnEditorLink) break
         const note = await ObjectStore('note').getOneById(dropOn.noteId)
         if (note?.metaId) {
           const noteTargetMeta = await getMetaObjectById(note.metaId)
@@ -207,10 +211,6 @@ const useOverlayDrop = () => {
     }
     return allLinks
   }
-
-
-
-
 
   const renderMetaForm = () => {
     return (

@@ -59,6 +59,11 @@ export type IGroupTab = {
   instance: never
   objectId: number
 }
+export type ICodeTab = {
+  type: 'code'
+  instance: never
+  objectId: number
+}
 export type BuiltInTabTypes =
   | IVideoTab
   | IWhiteboardTab
@@ -70,6 +75,7 @@ export type BuiltInTabTypes =
   | IHomeTab
   | IGraphTab
   | IGroupTab
+  | ICodeTab
 
 export type ILayoutTab = CustomTypes['Tab'] & {
   tabContent: ReactElement

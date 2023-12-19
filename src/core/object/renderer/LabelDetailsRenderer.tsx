@@ -2,17 +2,17 @@
 import { MetaStore, ObjectStore } from '@/api/stores'
 import { Content, Icon, Tooltip } from '@/components'
 import { memo, useEffect, useMemo, useRef, useState } from 'react'
-import TimeRenderer from '@/core/object/renderer/object/TimeRenderer'
-import OriginalTextRenderer from '@/core/object/renderer/object/OriginalTextRenderer'
 import { ILabel } from '~/typings'
 import AutosizeTextarea from '@/components/custom/input/autosizeTextarea'
 import { ClassName } from 'rendevoz'
 import { Rendevoz } from '@/core/rendevoz'
 import { normalizeSecondsToTime } from '@/core/components/media/utils'
 import { Colors } from '@/consts'
+import { useTranslation } from 'react-i18next'
 
 export default memo(({ metaId }: { metaId: number }) => {
   const metaObject = MetaStore.useValue(metaId)
+  const { t } = useTranslation()
   const label = ObjectStore(metaObject?.type).useValue(metaObject?.objectId) as ILabel | undefined
   const from = useMemo(() => {
     if (metaObject?.fromObject) {
@@ -107,7 +107,7 @@ export default memo(({ metaId }: { metaId: number }) => {
             padding: '8px 12px'
           }}
           defaultValue={metaObject?.name}
-          placeholder={'Add note...'}
+          placeholder={t('general.Add note')}
           className={ClassName.noStyleInput}
         />
       </Content>

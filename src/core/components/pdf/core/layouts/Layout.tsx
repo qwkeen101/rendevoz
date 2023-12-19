@@ -502,7 +502,7 @@ const Layout: FC<LayoutProps> = ({
   }
 
   return (
-    <div className={className} ref={pagesRef} style={{ height: '100%', width: '100%', overflow: 'auto', maxWidth: 1500 }}>
+    <div className={className} ref={pagesRef} style={{ height: '100%', width: '100%', overflow: 'auto' }}>
       <PanHelper enablePan={enablePan} containerEle={pagesRef.current} />
       <div
         style={{

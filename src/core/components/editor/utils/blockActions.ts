@@ -6,7 +6,8 @@ import { ReactEditor } from '../slate-react'
 import { EDITOR_TO_KEY_TO_ELEMENT } from '../slate-react/utils/weak-maps'
 import { css, keyframes } from '@emotion/css'
 import { waitFor } from '@/utils/functions'
-import { HeadingToLevel } from '@/core/components/editor/elements/heading'
+import { HeadingToLevel } from '@/core/components/editor/elements/Heading'
+import { Colors } from '@/consts'
 
 export const goToBlock = async (blockId: number, editor: CustomEditor) => {
   return new Promise(res => {
@@ -41,9 +42,11 @@ export const goToBlock = async (blockId: number, editor: CustomEditor) => {
     setTimeout(() => {
       const visibleBlocks = editor.children.filter(i => !(i as CustomElement).hide)
       const blockIndex = visibleBlocks.findIndex(i => (i as CustomElement).id === outermostBlock.id)
-      editor.virtualizer.scrollToIndex(blockIndex, { align: 'start' })
-
-      alignBlockAtCenter(outermostBlock.id, editor).then(() => res(null))
+      console.log('scrolling')
+      editor.virtualizer.scrollToIndex(blockIndex, { align: 'center' })
+      setTimeout(() => {
+        res(null)
+      })
     })
   })
 }
@@ -57,49 +60,19 @@ export const waitForEditorContentInitialized = (editor: CustomEditor) => {
   })
 }
 
-export const alignBlockAtCenter = (blockId: number, editor: CustomEditor) => {
-  return new Promise(res => {
-    const currTime = Date.now()
-    const editorNode = ReactEditor.toDOMNode(editor, editor)
-    const KEY_TO_ELEMENT = EDITOR_TO_KEY_TO_ELEMENT.get(editor)
-    const loop = () => {
-      // timeout: 3s
-      if (Date.now() - currTime > 3000) return
-      const blockPath = ID_TO_PATH_MAP.get(editor)?.get(blockId)
-      if (!blockPath) {
-        requestIdleCallback(loop)
-        return
-      }
-      const block = Editor.node(editor, blockPath)
-
-      const blockNode = KEY_TO_ELEMENT?.get(ReactEditor.findKey(editor, block[0])) as HTMLElement | undefined
-      const scrollWrapper = editorNode.parentElement?.parentElement
-      if (blockNode && scrollWrapper) {
-        const offset =
-          blockNode.offsetTop + (editor.titleEle?.getBoundingClientRect().height || 0) - scrollWrapper.getBoundingClientRect().height / 2
-        editor.virtualizer.scrollToOffset(offset)
-        console.log(offset)
-        res(null)
-      } else {
-        requestIdleCallback(loop)
-      }
-    }
-    loop()
-  })
-}
-
 export const selectBlock = (blockId: number, instance: IEditorInstance) => {
   const editor = instance.getSlateEditor?.()
   if (!editor) return
+  console.log(blockId)
   goToBlock(blockId, editor).then(() => {
-    instance.values.selectedBlocks.set(blockId, null)
+    instance.values.selectedBlocks.set(blockId, {})
     ID_TO_ELEMENTS_MAP.get(editor)?.get(blockId)?.selectBlock()
   })
 }
 
 export const highlightClassName = css({
   background: '#f3e99f2e',
-  outline: '3px solid #F3E99F',
+  outline: `3px solid ${Colors.Emphasis.Emphasis}`,
   borderRadius: 4
 })
 export const highlightBlock = (blockId: number, editor: CustomEditor) => {

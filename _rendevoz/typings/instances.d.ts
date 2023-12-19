@@ -1,38 +1,12 @@
 import { WebpageInnerRef } from '@/core/webpage/WebpageCore'
 import { CustomEditor } from './editor'
-import {
-  BuiltInDraggableElement,
-  ICollection,
-  ILayoutTab,
-  IWhiteboardEdge,
-  IWhiteboardNode,
-  MetaObject,
-  PartialWithId
-} from '..'
+import { BuiltInDraggableElement, ICollection, ILayoutTab, IWhiteboardEdge, IWhiteboardNode, MetaObject, PartialWithId } from '..'
 
 export interface WebpageInstance {
   transformToNote: () => Promise<CustomEditor>
   editor?: CustomEditor
   changeUrl: (url: string) => void
   webview?: WebpageInnerRef
-}
-
-export interface IWhiteboardInstance {
-  openTabInSidebar?: (type: string, objectId?: number) => void
-  deleteNode: (nodeId: number) => void
-  deleteEdge: (edgeId: number) => void
-  deleteNodes: (nodeIds: number[]) => void
-  insertNode: (node: Partial<IWhiteboardNode>) => Promise<IWhiteboardNode>
-  updateEdge: (
-    obj: PartialWithId<IWhiteboardEdge> | number,
-    updater?: (curr: IWhiteboardEdge) => IWhiteboardEdge,
-    withUndo?: boolean
-  ) => Promise<void>
-  updateNode: (
-    obj: PartialWithId<IWhiteboardNode> | number,
-    updater?: (curr: IWhiteboardNode) => IWhiteboardNode,
-    withUndo?: boolean
-  ) => Promise<void>
 }
 
 export type IReviewInstance = Partial<{
@@ -53,12 +27,19 @@ export type IGlobalInstance = Partial<{
     addMetaIntoCollection: (metaId: number) => Promise<void>
   }
   metaOps: {
+    getLink: (nodeId: number) => Promise<{
+      link: string
+      htmlLink: string
+      markdown: string
+      html: string
+    }>
+    closeDetails: VoidFunction
     quickAdd: (metaId: number) => void
     canPreview: (metaObject: MetaObject) => boolean
     openDetails: (id: number) => void
     preview: (id: number) => void
     createObject: (type?: string) => Promise<MetaObject>
-    copyLink: (id: number) => void
-    addDraggableAsMeta: (d: BuiltInDraggableElement) => Promise<MetaObject>
+    copyLink: (id: number | number[]) => void
+    addDraggableAsMeta: (d: BuiltInDraggableElement, hidden?: boolean) => Promise<MetaObject>
   }
 }>

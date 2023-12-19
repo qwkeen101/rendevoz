@@ -1,14 +1,14 @@
 import { IEditorInstance } from '~/typings'
 import isHotkey from 'is-hotkey'
 import { Editor, Path, Range, Transforms } from 'slate'
+import { KEY } from '@/consts'
 
 const useEditorArrowKey = (instance: IEditorInstance) => {
   const editor = instance.getSlateEditor?.()
   const handleArrowKey = (e: KeyboardEvent) => {
     if (!editor) return
     if (editor.selection && Range.isCollapsed(editor.selection)) {
-      if (isHotkey('left', e)) {
-        e.preventDefault()
+      if (isHotkey(KEY.ArrowLeft, e)) {
         const selection = editor.selection
         if (!selection) return
         const path = selection.anchor.path
@@ -33,16 +33,18 @@ const useEditorArrowKey = (instance: IEditorInstance) => {
             distance = 2
           }
         }
+        if (distance > 1) {
+          e.preventDefault()
+          Transforms.move(editor, {
+            unit: 'offset',
+            reverse: true,
+            distance
+          })
+        }
 
-        Transforms.move(editor, {
-          unit: 'offset',
-          reverse: true,
-          distance
-        })
         return
       }
-      if (isHotkey('right', e)) {
-        e.preventDefault()
+      if (isHotkey(KEY.ArrowRight, e)) {
         const selection = editor.selection
         if (!selection) return
         const path = selection.anchor.path
@@ -69,7 +71,11 @@ const useEditorArrowKey = (instance: IEditorInstance) => {
             distance = 2
           }
         }
-        Transforms.move(editor, { unit: 'offset', distance })
+        if (distance > 1) {
+          e.preventDefault()
+          Transforms.move(editor, { unit: 'offset', distance })
+        }
+
         return
       }
     }

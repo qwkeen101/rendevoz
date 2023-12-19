@@ -101,7 +101,7 @@ export function createPanZoom(domElement, options) {
     // which makes scroll smoothing.
     smoothScroll = kinetic(getPoint, scroll, options.smoothScroll)
   }
-
+  let showRectangleAnimation
   let moveByAnimation
   let zoomToAnimation
 
@@ -114,6 +114,7 @@ export function createPanZoom(domElement, options) {
     dispose: dispose,
     moveBy: internalMoveBy,
     moveTo: moveTo,
+    setTransform: setTransform,
     smoothMoveTo: smoothMoveTo,
     centerOn: centerOn,
     zoomTo: publicZoomTo,
@@ -186,6 +187,31 @@ export function createPanZoom(domElement, options) {
     transform.x = -(rect.left + rectWidth / 2) * scale + size.x / 2
     transform.y = -(rect.top + rectHeight / 2) * scale + size.y / 2
     transform.scale = scale
+  }
+  function setTransform(nextTransform: any, duration: number = 500) {
+    cancelZoomAnimation()
+    let to = nextTransform
+    // get rect from current transform
+    let from = transform
+    let p = new Promise(resolve => {
+      showRectangleAnimation = animate(from, to, {
+        duration,
+        step: function (nextTransform) {
+          transform.x = nextTransform.x
+          transform.y = nextTransform.y
+          transform.scale = nextTransform.scale
+          triggerEvent('zoom')
+          makeDirty()
+        },
+        done: () => {
+          triggerZoomEnd()
+          triggerPanEnd()
+          resolve(true)
+        }
+      })
+    })
+
+    return p
   }
 
   function transformToScreen(x, y) {
@@ -454,6 +480,7 @@ export function createPanZoom(domElement, options) {
 
     let from = { x: 0, y: 0 }
     let to = { x: dx, y: dy }
+
     let lastX = 0
     let lastY = 0
 

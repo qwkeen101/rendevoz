@@ -85,7 +85,8 @@ const MediaBottomBar = () => {
         disableNudge
         backdropFilter={false}
         containerStyle={{
-          pointerEvents: 'none'
+          pointerEvents: 'none',
+          zIndex: '500'
         }}
         content={
           <Content flex column alignItems="center" style={{ opacity }}>

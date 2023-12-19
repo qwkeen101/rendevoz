@@ -96,6 +96,7 @@ const createNoteStore = () => {
         type: 'note',
         objectId: noteId
       })
+      console.log(openNote)
       if (openNote) {
         const instance = openNote.instance as IEditorInstance
         instance.replaceChildren?.(nextValue)

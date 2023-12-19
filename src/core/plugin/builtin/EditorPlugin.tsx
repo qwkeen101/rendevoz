@@ -1,4 +1,4 @@
-import { CustomElement, RegisterdEditorElement } from '~/typings'
+import { CustomElement, RegisteredEditorElement } from '~/typings'
 import PluginApi from '../PluginApi'
 import { Heading, Paragraph } from '@/core/components/editor/elements'
 import ListItem, { OrderListItem } from '@/core/components/editor/elements/listItem'
@@ -56,6 +56,8 @@ const BuiltinTypeToRegistered: Record<CustomElement['type'], RegisterdEditorElem
   math: {
     renderElement: props => <MathElement {...props} />,
     type: 'math',
+    isInline: true,
+    isVoid: true,
     registerInMenu: {
       icon: 'park-formula',
       slashMenu: true,
@@ -144,6 +146,7 @@ const BuiltinTypeToRegistered: Record<CustomElement['type'], RegisterdEditorElem
       tooltip: 'Code Editor',
       menuType: 'block'
     },
+    isVoid: true,
     name: () => t('editor.code-block')
   },
   divider: {
@@ -307,6 +310,8 @@ const BuiltinTypeToRegistered: Record<CustomElement['type'], RegisterdEditorElem
   emoji: {
     renderElement: props => <Emoji {...props} />,
     type: 'emoji',
+    isInline: true,
+    isVoid: true,
     name: () => t('editor.emoji'),
     registerInMenu: {
       addMenu: true,

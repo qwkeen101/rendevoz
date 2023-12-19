@@ -6,11 +6,11 @@ import * as PIXI from 'pixi.js'
 import PIXIFontUrl from '@/assets/font.xml?url'
 import { Provider } from 'jotai'
 import { Hooks } from 'rendevoz'
-import editorWorker from 'monaco-editor/esm/vs/editor/editor.worker?worker'
-import jsonWorker from 'monaco-editor/esm/vs/language/json/json.worker?worker'
-import cssWorker from 'monaco-editor/esm/vs/language/css/css.worker?worker'
-import htmlWorker from 'monaco-editor/esm/vs/language/html/html.worker?worker'
-import tsWorker from 'monaco-editor/esm/vs/language/typescript/ts.worker?worker'
+// import editorWorker from 'monaco-editor/esm/vs/editor/editor.worker?worker'
+// import jsonWorker from 'monaco-editor/esm/vs/language/json/json.worker?worker'
+// import cssWorker from 'monaco-editor/esm/vs/language/css/css.worker?worker'
+// import htmlWorker from 'monaco-editor/esm/vs/language/html/html.worker?worker'
+// import tsWorker from 'monaco-editor/esm/vs/language/typescript/ts.worker?worker'
 
 function debounce(func, timeout = 600) {
   let timer
@@ -25,8 +25,12 @@ function debounce(func, timeout = 600) {
 window.addEventListener(
   'scroll',
   e => {
-    e.target.classList.add('on-scrollbar')
-    e.target.classList.remove('hide-scrollbar')
+    if (e.target instanceof Element) {
+      if (!e.target.classList.contains('on-scrollbar')) {
+        e.target.classList.add('on-scrollbar')
+        e.target.classList.remove('hide-scrollbar')
+      }
+    }
   },
   true
 )
@@ -36,10 +40,10 @@ window.addEventListener(
     e.target.classList.remove('on-scrollbar')
     e.target.classList.add('hide-scrollbar')
     setTimeout(() => {
-      if(!e.target.classList.contains('on-scrollbar')){
+      if (!e.target.classList.contains('on-scrollbar')) {
         e.target.classList.remove('hide-scrollbar')
       }
-    },250)
+    }, 250)
   }),
   true
 )
@@ -80,23 +84,23 @@ document.addEventListener(
 // })
 // }
 
-self.MonacoEnvironment = {
-  getWorker: function (_, label) {
-    if (label === 'json') {
-      return new jsonWorker()
-    }
-    if (label === 'css' || label === 'scss' || label === 'less') {
-      return new cssWorker()
-    }
-    if (label === 'html' || label === 'handlebars' || label === 'razor') {
-      return new htmlWorker()
-    }
-    if (label === 'typescript' || label === 'javascript') {
-      return new tsWorker()
-    }
-    return new editorWorker()
-  }
-}
+// self.MonacoEnvironment = {
+//   getWorker: function (_, label) {
+//     if (label === 'json') {
+//       return new jsonWorker()
+//     }
+//     if (label === 'css' || label === 'scss' || label === 'less') {
+//       return new cssWorker()
+//     }
+//     if (label === 'html' || label === 'handlebars' || label === 'razor') {
+//       return new htmlWorker()
+//     }
+//     if (label === 'typescript' || label === 'javascript') {
+//       return new tsWorker()
+//     }
+//     return new editorWorker()
+//   }
+// }
 
 const root = createRoot(document.getElementById('root')!)
 

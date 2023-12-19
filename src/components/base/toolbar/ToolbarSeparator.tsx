@@ -8,8 +8,7 @@ interface ToolbarSeparatorProps {
 const ToolbarSeparator: FC<ToolbarSeparatorProps> = ({ direction }) => {
   const verticalSeparator: CSSProperties = {
     width: '1px',
-    height: '20px',
-    margin: '0px 6px',
+    height: '100%',
     background: Colors.Background.Border
   }
   const horizontalSeparator: CSSProperties = {

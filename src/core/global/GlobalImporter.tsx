@@ -15,9 +15,9 @@ import { Rendevoz } from '../rendevoz'
 import Colors from '@/consts/colors'
 import { css } from '@emotion/css'
 import { ipcInstance } from '@/plugins'
-import importmarkdown from '@/core/global/imports/importmarkdown'
-import importpdf from '@/core/global/imports/importpdf'
-import importvideo from '@/core/global/imports/importvideo'
+import importMarkdown from '@/core/rendevoz/utils/localImport/importMarkdown'
+import importPDF from '@/core/rendevoz/utils/localImport/importPDF'
+import importVideo from '@/core/rendevoz/utils/localImport/importVideo'
 
 export const GlobalImporterInstance: GlobalInstances.NoteImporterInstance = {}
 
@@ -77,13 +77,13 @@ const GlobalImporter = () => {
             if (type) {
               switch (type) {
                 case 'markdown':
-                  result = await importmarkdown(file)
+                  result = await importMarkdown(file)
                   break
                 case 'pdf':
-                  result = await importpdf(file)
+                  result = await importPDF(file)
                   break
                 case 'video':
-                  result = await importvideo(file)
+                  result = await importVideo(file)
                   break
               }
             }

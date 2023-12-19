@@ -1,29 +1,18 @@
 import { useMemoizedFn } from '@/hooks'
 import { MetaStore } from '@/api/stores'
 import Id from '@/utils/id'
-import { css } from '@emotion/css'
 import { memo, MouseEvent, useEffect } from 'react'
 import { MetaLink } from '~/typings/data'
 import useEdges from '../hooks/useEdges'
 import useGraph from '../hooks/useGraph'
 import useGraphNodes from '../hooks/useGraphNodes'
 import { GraphNode } from '../types/node'
-import Node from './node/Node'
 import useGraphFilter from '../hooks/useGraphFilter'
 import { Container, useApp } from '@pixi/react'
 import PixiNode from '@/core/components/graph/components/node/PixiNode'
 
 export type NodeMouseEventHandler = (e: MouseEvent, node: GraphNode) => void
 
-const svgContainerClassName = css({
-  position: 'absolute',
-  left: 0,
-  top: 0,
-  width: '100%',
-  height: '100%',
-  overflow: 'visible',
-  pointerEvents: 'none'
-})
 export const NodeFakeHiddenOpacity = 0.1
 export const NodeFullVisibleOpacity = 1
 const NodeContainer = memo(({ type }: { type: 'canvas' | 'svg' }) => {
@@ -107,46 +96,18 @@ const NodeContainer = memo(({ type }: { type: 'canvas' | 'svg' }) => {
       }
     }
   }, [app])
-  if (type === 'svg') {
-    return (
-      <svg className={svgContainerClassName}>
-        <defs>
-          <clipPath id="circleClip">
-            <circle r={20} cx={20} cy={20}></circle>
-          </clipPath>
-          <clipPath id="roundRectClip">
-            <rect width={20} height={20} rx={5}></rect>
-          </clipPath>
-        </defs>
-
-        {nodes
-          // ?.filter(i => !i.hidden)
-          ?.map(node => (
-            <Node
-              onContextMenu={nodeContextMenuHandler}
-              onMouseEnter={nodeMouseEnterHandler}
-              onMouseLeave={nodeMouseLeaveHandler}
-              onClick={nodeClickHandler}
-              node={node}
-              key={node.id}
-            />
-          ))}
-      </svg>
-    )
-  } else {
-    return (
-      <Container position={[0, 0]}>
-        {nodes?.map(node => (
-          <PixiNode
-            node={node}
-            key={node.id}
-            onMouseEnter={nodeMouseEnterHandler}
-            onMouseLeave={nodeMouseLeaveHandler}
-            onClick={nodeClickHandler}
-          />
-        ))}
-      </Container>
-    )
-  }
+  return (
+    <Container position={[0, 0]}>
+      {nodes?.map(node => (
+        <PixiNode
+          node={node}
+          key={node.id}
+          onMouseEnter={nodeMouseEnterHandler}
+          onMouseLeave={nodeMouseLeaveHandler}
+          onClick={nodeClickHandler}
+        />
+      ))}
+    </Container>
+  )
 })
 export default NodeContainer

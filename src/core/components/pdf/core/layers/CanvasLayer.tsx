@@ -36,11 +36,11 @@ const CanvasLayer: FC<CanvasLayerProps> = ({ page, width, height, viewport, tran
   const renderCanvas = useMemoizedFn((canvasEle?: HTMLCanvasElement, onRendered?: VoidFunction) => {
     renderTaskRef.current?.cancel()
     if (canvasEle && viewer) {
-      const outputScale = window.devicePixelRatio || 1
+      const outputScale = Math.max(window.devicePixelRatio || 2, 2)
       const maxScale = Math.sqrt(MAX_CANVAS_SIZE / (height * width))
       const shouldRescale = outputScale > maxScale
       shouldRescale ? (canvasEle.style.transform = 'scale(1, 1)') : canvasEle?.style.removeProperty('transform')
-      console.info(transformScale)
+
       const finalScale = Math.min(maxScale, outputScale)
 
       const ctx = canvasEle.getContext('2d', { alpha: false })

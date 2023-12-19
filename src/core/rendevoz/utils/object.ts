@@ -21,6 +21,10 @@ export const getMetaObjectIcon = (type?: MetaObject['type'], metaObject?: MetaOb
       return 'park-music'
     case 'webpage':
       return 'park-web-page'
+    case 'question':
+      return 'park-comments'
+    case 'code':
+      return 'park-code'
     case 'video':
       return 'park-play-two'
     case 'webpageLabel':

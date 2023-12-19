@@ -79,6 +79,7 @@ const BorderInput = ({
     <fieldset
       className={css({
         border: '1px solid var(--border-background)',
+        transition: 'border-color 0.25s ease',
         ':focus-within': {
           border: '1px solid var(--select-color)'
         }
@@ -100,7 +101,6 @@ const BorderInput = ({
               marginBottom: 0,
               color: Colors.Font.Secondary,
               fontWeight: 600,
-              fontFamily: 'Muli',
               lineHeight: 1,
               padding: '0px 2px'
             })}
@@ -157,15 +157,6 @@ const BorderInput = ({
           disabled={disable}
           className={inputClassName}
         ></input>
-      )}
-      {withSubmit && (
-        <div
-          onClick={onSubmit}
-          style={{ cursor: 'pointer', position: 'absolute', bottom: 3, right: 12 }}
-          className={ClassName.description(FontSize['12px'])}
-        >
-          {t('footer.submit')}
-        </div>
       )}
     </fieldset>
   )

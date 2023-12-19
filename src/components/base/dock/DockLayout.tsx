@@ -24,6 +24,8 @@ import { DockPanel } from './DockPanel'
 import * as Algorithm from './Algorithm'
 import * as Serializer from './Serializer'
 import * as DragManager from './dragdrop/DragManager'
+import { clearObjectCache } from './Algorithm'
+import { LayoutIdToTabMap } from '@/components/layout'
 
 export interface LayoutProps {
   /**
@@ -220,13 +222,28 @@ export class DockLayout extends DockPortalManager implements DockContext {
    */
   dockMove(source: TabData | PanelData, target: string | TabData | PanelData | BoxData | null, direction: DropDirection) {
     let layout = this.getLayout()
-
+    console.log('trigger move!')
+    if (!source) return
+    // source and target all tabs
+    if ('content' in source && typeof target === 'object' && target && 'content' in target) {
+      if (source.parent === target.parent) {
+        const sourceIdx = source.parent?.tabs.indexOf(source) ?? -1
+        const targetIdx = target.parent?.tabs.indexOf(target) ?? -1
+        if (direction === 'before-tab') {
+          // already before
+          if (sourceIdx < targetIdx) return
+        }
+        if (direction === 'after-tab') {
+          // already after
+          if (sourceIdx > targetIdx) return
+        }
+      }
+    }
     layout = Algorithm.removeFromLayout(layout, source)
-
     if (typeof target === 'string') {
       target = this.find(target, Algorithm.Filter.All)
-    } else {
-      target = Algorithm.getUpdatedObject(target) // target might change during removeTab
+    } else if (target) {
+      target = Algorithm.find(layout, target.id) // target might change during removeTab
     }
     if (target) {
       if ('tabs' in (target as PanelData)) {
@@ -246,6 +263,7 @@ export class DockLayout extends DockPortalManager implements DockContext {
         layout = Algorithm.addNextToTab(layout, source, target as TabData, direction)
       }
     }
+
     if (layout !== this.getLayout()) {
       layout = Algorithm.fixLayoutData(layout, this.props.groups)
       let currentTabId: string = null
@@ -258,7 +276,7 @@ export class DockLayout extends DockPortalManager implements DockContext {
         const newParentPanel = Algorithm.find(layout, parentPanel.id) as PanelData
         const isActive = parentPanel.activeId === s.id
         if (isActive && newParentPanel) {
-          const idx = parentPanel.tabs.findIndex(i => i === s)
+          const idx = parentPanel.tabs.findIndex(i => i.id === s.id)
           const isLast = idx === parentPanel.tabs.length - 1
           const nextIdx = idx
           const nextActiveId = isLast ? newParentPanel.tabs[newParentPanel.tabs.length - 1]?.id || null : newParentPanel.tabs[nextIdx].id
@@ -267,6 +285,17 @@ export class DockLayout extends DockPortalManager implements DockContext {
         }
       }
       this.changeLayout(layout, currentTabId, direction)
+      const idSet = new Set<string>()
+      layout.dockbox.children.forEach((i: PanelData) => {
+        i.tabs?.forEach(tab => {
+          tab.id && idSet.add(tab.id)
+        })
+      })
+      LayoutIdToTabMap.forEach((value, key, map) => {
+        if (!idSet.has(key)) {
+          map.delete(key)
+        }
+      })
     }
     this.onDragStateChange(false)
   }
@@ -468,7 +497,7 @@ export class DockLayout extends DockPortalManager implements DockContext {
         width = 4
         break
       case 'before-tab':
-        left -= 15
+        // left -= 15
         width = 4
         break
     }
@@ -492,7 +521,7 @@ export class DockLayout extends DockPortalManager implements DockContext {
         dropRectStyle.transition = 'none'
       }
       if (direction === 'after-tab' || direction === 'before-tab') {
-        dropRectStyle.background = '#8590aea8'
+        dropRectStyle.background = 'var(--select-color)'
         dropRectStyle.boxShadow = 'none'
         dropRectStyle.opacity = 1
         dropRectStyle.borderRadius = '2px'

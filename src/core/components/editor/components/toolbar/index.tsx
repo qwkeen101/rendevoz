@@ -1,23 +1,20 @@
-import { AnimatePopover, Toolbar, WithBorder } from '@/components/base'
-import Select from '@/components/base/select'
+import { AnimatePopover, Button, Toolbar, WithBorder, Content } from '@/components'
 import IconWithPopover from '@/components/base/IconWithPopover'
-import { CSSProperties, FC, useEffect, useMemo, useRef, useState } from 'react'
+import { CSSProperties, FC, useEffect, useMemo, useRef, useState, memo } from 'react'
 import { Editor, Element, Range, Transforms } from 'slate'
 import { ReactEditor, useSlate } from '../../slate-react'
-import styles from './index.module.less'
 import { useTranslation } from 'react-i18next'
-import classNames from 'classnames'
 import { createPortal } from 'react-dom'
-import { AnimatePresence, motion } from 'framer-motion'
+import { motion } from 'framer-motion'
 import BlockColorPicker from '../BlockColorPicker'
 import { useMemoizedFn, useSelectAtomValue } from '@/hooks'
 import { css } from '@emotion/css'
-import ClassName from '@/styles/classNames'
 import { Colors, Zindexes } from '@/consts'
 import useEditorInstance from '../../hooks/useEditorInstance'
-import { EditorProps } from '~/typings'
 import { EditorStateAtom } from '@/core/components/editor/hooks/useEditorState'
 import useReadOnlyEditor from '@/core/components/editor/hooks/useReadOnly'
+import { EditorTypeToElementMap } from '@/core/components/editor/maps'
+import { Icon } from '@/components'
 
 type EditorToolbarEvents =
   | {
@@ -37,16 +34,16 @@ type EditorToolbarEvents =
     }
 interface EditorToolbarProps {
   scrollElement?: HTMLElement | null
-  on: (event: EditorToolbarEvents) => void
+  on: (event: EditorToolbarEvents) => Promise<any>
   style?: CSSProperties
 }
 const MAX_TOLERANT_DISTANCE = 15
 const EditorToolbar: FC<EditorToolbarProps> = ({ scrollElement, style, on }) => {
   const showToolbar = useSelectAtomValue(EditorStateAtom, s => s.layout?.showToolbar)
   const toolbarOptions = useSelectAtomValue(EditorStateAtom, s => s.toolbar)
+  const enableShowRightBar = useSelectAtomValue(EditorStateAtom, s => s.layout?.showHeader) !== false
   const { t } = useTranslation()
   const editor = useSlate()
-  const { selection } = editor
   const toolbarRef = useRef<HTMLElement>(null)
   const position = 'float'
   const [floatPosition, setFloatPosition] = useState<{
@@ -54,6 +51,7 @@ const EditorToolbar: FC<EditorToolbarProps> = ({ scrollElement, style, on }) => 
     left: number
     direction: 'top' | 'bottom'
     visible: boolean
+    highlightId?: number
   }>()
   const isOnHighlightRef = useRef(false)
   const instance = useEditorInstance()
@@ -71,10 +69,11 @@ const EditorToolbar: FC<EditorToolbarProps> = ({ scrollElement, style, on }) => 
   }, [floatPosition?.visible])
   let currentElement
   try {
-    currentElement = selection ? Editor.node(editor, selection?.anchor?.path, { depth: 1 }) : null
+    currentElement = instance.blockOps?.getAboveBlock()
   } catch (e) {
     console.error(e)
   }
+  const currentElementName = EditorTypeToElementMap.get(currentElement?.[0]?.type)?.name
   editor.onHighlightClick = id => {
     const location = instance.getHighlightLocation?.(id)
     if (location?.length) {
@@ -82,31 +81,38 @@ const EditorToolbar: FC<EditorToolbarProps> = ({ scrollElement, style, on }) => 
       const last = location[location.length - 1]
       const range = Editor.range(editor, first[1], last[1])
       if (range) {
-        const domRange = ReactEditor.toDOMRange(editor, range)
+        const domRange = ReactEditor.toDOMNode(editor, first[0])
         const bounding = domRange.getBoundingClientRect()
         Transforms.setSelection(editor, range)
         editor.selection = range
-
+        selectionRef.current = range
         isOnHighlightRef.current = true
-        setFloatPosition({
-          direction: 'top',
-          left: bounding.left + bounding.width / 2,
-          top: bounding.top,
-          visible: true
-        })
+        setTimeout(
+          () => {
+            setFloatPosition({
+              direction: 'top',
+              left: bounding.left + bounding.width / 2,
+              top: bounding.top,
+              visible: true,
+              highlightId: id
+            })
+          },
+          clickCloseToolbar.current ? 200 : 0
+        )
       }
     }
   }
+  const clickCloseToolbar = useRef(false)
   const handleMouseUp = useMemoizedFn((e: MouseEvent) => {
     const { selection } = editor
     const windowSelection = window.getSelection()
-    if (!ReactEditor.toDOMNode(editor, editor).contains(e.target)) return
+    if (!ReactEditor.toDOMNode(editor, editor).closest('[role="editor-container"]')?.contains(e.target)) return
     if (
       showToolbar !== false &&
       selection &&
       windowSelection &&
       (ReactEditor.isFocused(editor) || readOnly) &&
-      windowSelection.toString().length > 0 &&
+      windowSelection.toString().trim().length > 0 &&
       !Range.isCollapsed(selection) &&
       !toolbarRef.current?.contains(e.target)
     ) {
@@ -136,31 +142,31 @@ const EditorToolbar: FC<EditorToolbarProps> = ({ scrollElement, style, on }) => 
       })
     }
   })
-
   const handleMouseDown = (e: MouseEvent) => {
-    if (!toolbarRef.current?.contains(e.target)) {
-      window.getSelection()?.empty()
-      setFloatPosition(s => ({ ...s, visible: false }))
-      isOnHighlightRef.current = false
-    } else {
-      if (isOnHighlightRef.current === false) {
-        window.getSelection()?.removeAllRanges()
-        window.getSelection()?.addRange(ReactEditor.toDOMRange(editor, editor.selection))
+    if (floatPosition?.visible) {
+      if (!toolbarRef.current?.contains(e.target)) {
+        if (document.querySelector('[role="click-cover"]')) {
+          e.preventDefault()
+          return
+        }
+        window.getSelection()?.empty()
+        setFloatPosition(s => ({ ...s, visible: false }))
+        clickCloseToolbar.current = true
+        setTimeout(() => {
+          clickCloseToolbar.current = false
+        }, 100)
+        isOnHighlightRef.current = false
+      } else {
+        e.preventDefault()
       }
     }
   }
+
+  const selectionRef = useRef<typeof editor.selection>()
   const handleScroll = e => {
     setFloatPosition(s => ({ ...s, visible: false }))
   }
   useEffect(() => {
-    if (floatPosition?.visible && editor.selection && !isOnHighlightRef.current) {
-      window.getSelection()?.removeAllRanges()
-      try {
-        window.getSelection()?.addRange(ReactEditor.toDOMRange(editor, editor.selection))
-      } catch (e) {
-        console.error(e)
-      }
-    }
     if (position === 'float') {
       document.addEventListener('pointerup', handleMouseUp)
       document.addEventListener('pointerdown', handleMouseDown)
@@ -172,6 +178,15 @@ const EditorToolbar: FC<EditorToolbarProps> = ({ scrollElement, style, on }) => 
       }
     }
   })
+
+  useEffect(() => {
+    if (floatPosition?.visible) {
+      selectionRef.current = editor.selection
+    }
+    return () => {
+      selectionRef.current = undefined
+    }
+  }, [floatPosition?.visible])
   const isMarkActive = format => {
     try {
       const marks = Editor.marks(editor)
@@ -191,61 +206,195 @@ const EditorToolbar: FC<EditorToolbarProps> = ({ scrollElement, style, on }) => 
   }
 
   const renderToolbar = () => (
-    <Toolbar innerRef={toolbarRef} className={classNames(styles.toolbar, styles.float)} style={style} itemClickPreventDefault itemSize={16}>
+    <Toolbar
+      itemRadius={0}
+      innerRef={toolbarRef}
+      style={{
+        ...style,
+        gap: 0,
+        height: '32px',
+        overflow: 'hidden',
+        borderRadius: 5
+      }}
+      itemStyle={{
+        padding: '0px 8px',
+        height: '100%'
+      }}
+      itemClickPreventDefault
+      itemSize={12}
+    >
+      {/*{toolbarOptions?.extra !== false && (*/}
+      {/*  <>*/}
+      {/*    <Toolbar.Item*/}
+      {/*      style={{*/}
+      {/*        borderRight: '1px solid var(--border-background)'*/}
+      {/*      }}*/}
+      {/*      onClick={e => {*/}
+      {/*        if (editor.selection) {*/}
+      {/*          const str = Editor.string(editor, editor.selection)*/}
+      {/*          if (str) {*/}
+      {/*            const block = Editor.above(editor, {*/}
+      {/*              match: n => Element.isElement(n) && 'id' in n,*/}
+      {/*              at: editor.selection.anchor*/}
+      {/*            })?.[0]*/}
+      {/*            if (!block?.id) return*/}
+      {/*            editor.on({*/}
+      {/*              type: 'search',*/}
+      {/*              searchedText: str*/}
+      {/*            })*/}
+      {/*          }*/}
+      {/*        }*/}
+      {/*      }}*/}
+      {/*    >*/}
+      {/*      <Button.IconButton*/}
+      {/*        style={{*/}
+      {/*          background: 'unset',*/}
+      {/*          padding: '0px'*/}
+      {/*        }}*/}
+      {/*        icon={'park-search'}*/}
+      {/*        text={t('general.search')}*/}
+      {/*      />*/}
+      {/*    </Toolbar.Item>*/}
+      {/*  </>*/}
+      {/*)}*/}
+      {currentElementName && !readOnly && (
+        <Toolbar.Item
+          style={{
+            paddingLeft: 12,
+            borderRight: '1px solid var(--border-background)'
+          }}
+          onClick={e => {
+            const bounding = e.currentTarget.getBoundingClientRect()
+            if (bounding) {
+              instance.overlayOps?.open('transformMenu', {
+                x: bounding.left + bounding.width / 2,
+                y: bounding.bottom - 20
+              })
+            }
+          }}
+        >
+          <Content flex gap={4} alignItems={'center'}>
+            <div style={{ fontSize: 14, marginRight: 6 }}>
+              {typeof currentElementName === 'string' ? currentElementName : currentElementName()}
+            </div>
+            <Icon name={'park-down'} style={{ color: 'var(--font-transparent)' }} />
+          </Content>
+        </Toolbar.Item>
+      )}
       {toolbarOptions?.highlight !== false && !disableShowHighlight && (
         <Toolbar.Item
-          tooltip={t('general.highlight')}
-          iconName="park-high-light"
-          onClick={() => on({ action: 'highlight' })}
-          isActive={isMarkActive('highlight')}
-        />
-      )}
-
-      <Toolbar.Item
-        tooltip={t('editor.bold')}
-        isActive={isMarkActive('bold')}
-        iconName="park-text-bold"
-        onClick={() => on({ action: 'bold' })}
-      />
-      <Toolbar.Item
-        tooltip={t('editor.italic')}
-        isActive={isMarkActive('italic')}
-        iconName="park-text-italic"
-        onClick={() => on({ action: 'italic' })}
-      />
-      <Toolbar.Item
-        tooltip={t('editor.underline')}
-        isActive={isMarkActive('underline')}
-        iconName="park-text-underline"
-        onClick={() => on({ action: 'underline' })}
-      />
-      <>
-        <Toolbar.Item
-          tooltip={t('editor.link')}
-          iconName="park-link"
-          onClick={() => {
-            on({ action: 'link' })
+          style={{
+            borderRight: '1px solid var(--border-background)',
+            padding: '0px 12px 0 10px'
+          }}
+          onClick={async () => {
+            const marks = Editor.marks(editor)
+            if (marks['highlight']) {
+              isOnHighlightRef.current = false
+            } else {
+              isOnHighlightRef.current = true
+            }
+            on({ action: 'highlight' })
             setFloatPosition(s => ({ ...s, visible: false }))
+            window.getSelection()?.empty()
+            ReactEditor.blur(editor)
+            setTimeout(() => {
+              Transforms.deselect(editor)
+            }, 150)
+          }}
+        >
+          <Button.IconButton
+            style={{
+              background: 'unset',
+              padding: '0px'
+            }}
+            iconColor={floatPosition?.highlightId ? Colors.Emphasis.Emphasis : undefined}
+            theme={floatPosition?.highlightId ? 'filled' : undefined}
+            icon={'park-high-light'}
+            text={floatPosition?.highlightId ? t('general.remove highlight') : t('general.highlight')}
+          />
+        </Toolbar.Item>
+      )}
+      {floatPosition?.highlightId && enableShowRightBar && (
+        // sometimes we hide sidebar, so don't need this
+        <Toolbar.Item
+          iconName="park-arrow-right-up"
+          style={{
+            borderRight: '1px solid var(--border-background)',
+            padding: '0px 6px'
+          }}
+          tooltip={t('general.Open in sidebar')}
+          onClick={e => {
+            instance.labelOps?.openLabelInSidebar(floatPosition.highlightId)
           }}
         />
-        <Toolbar.Item
-          tooltip={t('editor.code')}
-          isActive={isMarkActive('code')}
-          iconName="park-code"
-          onClick={() => on({ action: 'code' })}
-        />
-      </>
-      <Toolbar.Item tooltip={t('editor.font color')}>
+      )}
+      <Toolbar.Item
+        tooltip={t('editor.bold')}
+        style={{
+          color: isMarkActive('bold') ? Colors.Common.SelectColor : undefined
+        }}
+        onClick={() => on({ action: 'bold' })}
+      >
+        <span
+          style={{
+            fontWeight: 600
+          }}
+        >
+          B
+        </span>
+      </Toolbar.Item>
+      <Toolbar.Item
+        tooltip={t('editor.italic')}
+        style={{
+          color: isMarkActive('italic') ? Colors.Common.SelectColor : undefined
+        }}
+        onClick={() => on({ action: 'italic' })}
+      >
+        <span style={{ fontStyle: 'italic', fontWeight: 600 }}>i</span>
+      </Toolbar.Item>
+      <Toolbar.Item
+        tooltip={t('editor.underline')}
+        style={{
+          color: isMarkActive('underline') ? Colors.Common.SelectColor : undefined
+        }}
+        onClick={() => on({ action: 'underline' })}
+      >
+        <span style={{ textDecoration: 'underline', fontWeight: 600 }}>U</span>
+      </Toolbar.Item>
+      <Toolbar.Item
+        tooltip={t('editor.link')}
+        iconName="park-link-one"
+        onClick={() => {
+          on({ action: 'link' })
+          setFloatPosition(s => ({ ...s, visible: false }))
+        }}
+        style={{
+          padding: '0px 6px'
+        }}
+        size={13}
+      />
+      <Toolbar.Item
+        tooltip={t('editor.code')}
+        iconName="park-code"
+        size={13}
+        style={{
+          padding: '0px 6px',
+          color: isMarkActive('code') ? Colors.Common.SelectColor : undefined
+        }}
+        onClick={() => on({ action: 'code' })}
+      />
+      <Toolbar.Item style={{ padding: '0px 6px' }} tooltip={t('editor.font color')}>
         <IconWithPopover
+          withClickCover={true}
           placement={['bottom']}
+          renderOnParent={false}
           align="start"
-          zIndex={Zindexes.EditorSelectionToolbar}
-          size={16}
+          zIndex={Zindexes.EditorSelectionToolbar + 10}
+          size={15}
           style={{
             color: getMark('fontColor'),
-            background: getMark('backgroundColor'),
-            borderRadius: 4,
-            padding: 2
+            background: getMark('backgroundColor')
           }}
           content={
             <BlockColorPicker
@@ -256,60 +405,39 @@ const EditorToolbar: FC<EditorToolbarProps> = ({ scrollElement, style, on }) => 
           name="park-font-size-two"
         ></IconWithPopover>
       </Toolbar.Item>
-      {toolbarOptions?.extra !== false && (
-        <>
-          <Toolbar.Separator direction="horizontal" />
-          {/*<Toolbar.Item*/}
-          {/*  iconName="park-translate"*/}
-          {/*  tooltip={t('general.translate')}*/}
-          {/*  onClick={e => {*/}
-          {/*    if (editor.selection) {*/}
-          {/*      const str = Editor.string(editor, editor.selection)*/}
-          {/*      if (str) {*/}
-          {/*        const block = Editor.above(editor, {*/}
-          {/*          match: n => Element.isElement(n) && 'id' in n,*/}
-          {/*          at: editor.selection.anchor*/}
-          {/*        })?.[0]*/}
-          {/*        if (!block?.id) return*/}
-          {/*        editor.on({*/}
-          {/*          type: 'translate',*/}
-          {/*          translatedText: str,*/}
-          {/*          blockId: block.id as number,*/}
-          {/*          e*/}
-          {/*        })*/}
-          {/*      }*/}
-          {/*    }*/}
-          {/*  }}*/}
-          {/*/>*/}
-          <Toolbar.Item
-            iconName="park-search"
-            tooltip={t('general.search')}
-            onClick={e => {
-              if (editor.selection) {
-                const str = Editor.string(editor, editor.selection)
-                if (str) {
-                  const block = Editor.above(editor, {
-                    match: n => Element.isElement(n) && 'id' in n,
-                    at: editor.selection.anchor
-                  })?.[0]
-                  if (!block?.id) return
-                  editor.on({
-                    type: 'search',
-                    searchedText: str
-                  })
-                }
-              }
-            }}
-          />
-        </>
-      )}
+      <Toolbar.Item
+        tooltip={'Search online'}
+        style={{
+          padding: '0px 8px',
+
+          borderLeft: '1px solid var(--border-background)'
+        }}
+        size={13}
+        iconName={'park-search'}
+        onClick={e => {
+          if (editor.selection) {
+            const str = Editor.string(editor, editor.selection)
+            if (str) {
+              const block = Editor.above(editor, {
+                match: n => Element.isElement(n) && 'id' in n,
+                at: editor.selection.anchor
+              })?.[0]
+              if (!block?.id) return
+              editor.on({
+                type: 'search',
+                searchedText: str
+              })
+            }
+          }
+        }}
+      />
     </Toolbar>
   )
   // only render when have noteid
   const renderFloatToolbar = () =>
     createPortal(
       <AnimatePopover
-        borderRadius={999}
+        borderRadius={5}
         padding={10}
         visible={!!(floatPosition?.visible && showToolbar !== false)}
         position={{
@@ -317,11 +445,10 @@ const EditorToolbar: FC<EditorToolbarProps> = ({ scrollElement, style, on }) => 
           top: floatPosition?.top
         }}
         positions={[floatPosition?.direction || 'top']}
-        containerStyle={{ zIndex: String(Zindexes.EditorSelectionToolbar), borderRadius: '999px' }}
+        containerStyle={{ zIndex: String(Zindexes.EditorSelectionToolbar), borderRadius: 5 }}
         content={
           <WithBorder
-            borderRadius={999}
-            padding="0px 12px"
+            borderRadius={5}
             className={css({
               width: 'fit-content'
             })}
@@ -337,4 +464,4 @@ const EditorToolbar: FC<EditorToolbarProps> = ({ scrollElement, style, on }) => 
   return renderFloatToolbar()
 }
 
-export default EditorToolbar
+export default memo(EditorToolbar)

@@ -40,6 +40,7 @@ const MediaInner = ({ onInstanceInitialized, onlyCore, on, disableTabTitle = tru
   const [playIconVisible, setPlayIconVisible] = useState(false)
   const [, setToolbarState] = useMediaToolbarState()
   const [mediaState, setMediaState] = useMediaState()
+
   const outerContainerRef = useRef<HTMLDivElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
   const { width = 0 } = useMeasure(outerContainerRef)
@@ -386,6 +387,7 @@ const Media = (props: MediaProps) => {
       chapters = [],
       subtitleFollow,
       metaId,
+      onlyCore,
       collectionName
     } = props.mediaState
     console.log(props.mediaState, currentState)
@@ -395,6 +397,7 @@ const Media = (props: MediaProps) => {
       isPinned,
       metaId,
       subtitleMode,
+      onlyCore,
       collectionName,
       subtitleLang: subtitleLang || currentState.subtitleLang,
       subtitleList: subtitleList || currentState.subtitleList,

@@ -1,9 +1,10 @@
-import { useFlow } from '@/core/components/whiteboard/hooks'
+import { useFlow } from '@/core/components/whiteboard/StateHooks'
 import { useEffect } from 'react'
 import { useWhiteboardState } from '@/core/components/whiteboard/hooks/useWhiteboardState'
 import isHotkey from 'is-hotkey'
 import { KEY } from '@/consts'
 import eraserImage from '@/assets/images/eraser.svg'
+import { useWhiteboardInstance } from '@/core/components/whiteboard/hooks/useWhiteboardInstance'
 
 const useWhiteboardPanzoom = () => {
   const flow = useFlow()
@@ -21,6 +22,7 @@ const useWhiteboardPanzoom = () => {
       containerCursor = 'grab'
     }
   }
+  const instance = useWhiteboardInstance()
   useEffect(() => {
     const container = flow.parentContainerEle
     // middle button can move the whiteboard whatever state it is
@@ -43,9 +45,11 @@ const useWhiteboardPanzoom = () => {
       }
     }
     const pointerDownUpHandler = (e: PointerEvent) => {
-      if (e.type === 'pointerdown' && e.button === 1) {
-        setWhiteboardState(s => ({ ...s, isPanning: true, pointerMode: 'pan' }))
-        middleButtonPressed.current = true
+      if (e.type === 'pointermove' && (e.buttons === 2 || e.buttons === 4)) {
+        if (middleButtonPressed.current === false) {
+          setWhiteboardState(s => ({ ...s, isPanning: true, pointerMode: 'pan', panStartTransform: instance.getTransform?.() }))
+          middleButtonPressed.current = true
+        }
       }
       if (e.type === 'pointerup') {
         middleButtonPressed.current = false
@@ -55,8 +59,14 @@ const useWhiteboardPanzoom = () => {
     if (container) {
       document.addEventListener('keydown', keyHandler)
       document.addEventListener('keyup', keyHandler)
-      container.addEventListener('pointerdown', pointerDownUpHandler)
+      container.addEventListener('pointermove', pointerDownUpHandler)
       container.addEventListener('pointerup', pointerDownUpHandler)
+      return () => {
+        document.removeEventListener('keydown', keyHandler)
+        document.removeEventListener('keyup', keyHandler)
+        container.removeEventListener('pointermove', pointerDownUpHandler)
+        container.removeEventListener('pointerup', pointerDownUpHandler)
+      }
     }
   }, [])
 

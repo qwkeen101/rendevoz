@@ -1,5 +1,5 @@
 import { Content, Footer } from '@/components'
-import { useFlow, useWhiteboardNodes } from '@/core/components/whiteboard/hooks'
+import { useFlow, useWhiteboardNodes } from '@/core/components/whiteboard/StateHooks'
 import { exportWhiteboardAsImage } from '@/core/components/whiteboard/utils/exportAsImage'
 import { downloadImg } from '@/utils'
 

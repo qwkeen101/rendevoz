@@ -5,18 +5,16 @@ import { GlobalInstance, useToggle } from '@/hooks'
 import MetaKnowledgeCard from './KnowledgeCard'
 import classNames from 'classnames'
 import ClassName from '@/styles/classNames'
-import { AnimatePopover, Button, Content, Icon, Panel, TabPane, Tabs, Tooltip, WithBorder } from '@/components'
+import { AnimatePopover, Button, Content, Icon, WithBorder } from '@/components'
 import DateFormat from '@/utils/dateFormat'
 import {
-  indexedMetaLinksAtom,
   indexedMetaObjectsAtom,
-  metaLinksAtom,
   metaObjectsAtom,
   relatedMetaObjectsMapAtom
 } from '@/api/stores/meta.store'
 import Modal from '@/components/base/Modal'
 import useCardDrag from './useCardDrag'
-import { AttachmentWrapper, DraggableElement, GlobalGraphInstance, ObjectTag, useRenderObject } from '@/core'
+import { AttachmentWrapper, ObjectTag, useRenderObject } from '@/core'
 import MetaNoteCard from './NoteCard'
 import MetaDocumentCard from './DocumentCard'
 import { Flipped, spring } from 'react-flip-toolkit'
@@ -29,39 +27,13 @@ import { useGlobalAtomValue } from '@/hooks/jotai'
 import ObjectForm from '@/components/form/ObjectForm'
 import { PartialWithId } from '@/types'
 import { useTranslation } from 'react-i18next'
-import { GlobalEventEmitter } from '@/events'
 import Colors from '@/consts/colors'
 import { Zindexes } from '@/consts'
 import FontSize from '@/consts/font'
 import { GlobalImagePreviewerInstance } from '@/core/global/GlobalImagePreviewer'
 import FromRenderer from '../renderer/object/FromRenderer'
-import _ from 'lodash'
 import { Rendevoz } from '@/core/rendevoz'
-import { toast } from 'react-hot-toast'
-import HoverObjectDetails from '@/core/object/HoverObjectDetails'
-import Select from '@/components/base/select'
 
-export const TypeToTypeName: {
-  [key in MetaObject['type']]?: string
-} = {
-  pdfLabel: 'pdf label',
-  note: 'note',
-  pdf: 'pdf',
-  image: 'image',
-  normal: 'object',
-  whiteboard: 'whiteboard',
-  video: 'video',
-  audio: 'audio',
-  webpage: 'webpage',
-  noteLabel: 'note label',
-  noteBlock: 'note block',
-  webpageLabel: 'webpage label',
-  localFile: 'local file',
-  videoLabel: 'video label',
-  syncedBlock: 'syncedBlock',
-  audioLabel: 'audioLabel',
-  group: 'group'
-}
 export const DatabaseCard: FC<{
   index?: number
   metaObject: MetaObject
@@ -316,7 +288,7 @@ export const DatabaseCard: FC<{
                   textTransform: 'uppercase'
                 }}
               >
-                <span>{t(`general.${TypeToTypeName[metaObject.type] || 'object'}`)}</span>
+                <span>{Rendevoz.Utils.Meta.getTypeName(metaObject.type)}</span>
                 <span
                   style={{
                     display: 'flex',
@@ -391,7 +363,7 @@ export const ObjectActionPopover: FC<
   const of = metaAttToMetaIds?.get(metaObjectId)?.size
   if (!metaObject) return null
   return (
-    <Content flex column style={{ padding: 4, fontWeight: 500, width: 180, fontSize: 14 }} ref={containerRef} role="object-popover-panel">
+    <Content flex column style={{ padding: 4, width: 180, fontSize: 14, fontWeight: 400 }} ref={containerRef} role="object-popover-panel">
       {visibility?.jumpToVisible && <Button.IconButton onClick={onJump} text="Focus" icon="park-share-two" />}
       {visibility?.graphPinVisible && (
         <Button.IconButton

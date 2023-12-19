@@ -21,7 +21,19 @@ export default ({ details, onClose }: { details: MetaGroupChild; onClose: VoidFu
   const actions: (
     | { text: string; icon: string; onClick: VoidFunction; subMenu?: ReactElement; type: 'button'; dangerous?: boolean }
     | { type: 'separator' }
+    | undefined
   )[] = [
+    selected?.length && selected.length > 1
+      ? {
+          text: t('general.Copy links to all'),
+          icon: 'park-link',
+          type: 'button',
+          onClick: () => {
+            onClose()
+            GlobalInstance.metaOps?.copyLink(selected?.map(i => i[0].id))
+          }
+        }
+      : undefined,
     {
       text: t('general.delete'),
       icon: 'park-delete',
@@ -162,9 +174,9 @@ export default ({ details, onClose }: { details: MetaGroupChild; onClose: VoidFu
             subMenu: <NewRowMenu onClose={() => onClose()} currentRowId={details.rowId} direction={'below'} />
           }
         ])
-  ]
+  ].filter(i => i)
   return (
-    <Content flex column style={{ minWidth: 200 }}>
+    <Content flex column style={{ minWidth: 180 }}>
       {actions.map(i =>
         i.type === 'separator' ? (
           <div

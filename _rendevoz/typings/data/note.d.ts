@@ -7,7 +7,7 @@ export interface INote extends IBase {
   color?: string
   coverImgSrc?: string
   parentNoteId?: number
-  title: string
+  name: string
   metaId?: number
   coverPosition?: number
   contentId: number
@@ -18,7 +18,7 @@ export interface INote extends IBase {
   typeface?: 'Inter' | 'Roboto' | 'Source Serif' | 'Merriweather' | 'Open Sans' | 'Muli' | 'Lato'
   // synced blocks meta ids
   syncedBlocks?: number[]
-  pageWidth?: 'X-Small' | 'Small' | 'Medium' | 'Large' | 'X-Large'
+  pageWidth?: 'X-Small' | 'Small' | 'Medium' | 'Large' | 'X-Large' | 'Max'
   lastSavedAt?: number
 }
 

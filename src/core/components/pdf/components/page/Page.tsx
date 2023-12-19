@@ -142,11 +142,11 @@ const PdfPage: React.FC<PdfPageProps> = ({
       />
       <AnimatePopover
         padding={10}
-        borderRadius={999}
+        borderRadius={5}
         visible={textSelectionToolbarVisible}
-        containerStyle={{ zIndex: '9999', borderRadius: '999px' }}
+        containerStyle={{ zIndex: '9999', borderRadius: '5px' }}
         content={
-          <WithBorder borderRadius={999} padding="0px 12px">
+          <WithBorder borderRadius={5}>
             <TextSelectionToolbar
               onSearch={e => {
                 const pdfMetaId = globalStore.get(objectIdToMetaObjectIdMapAtom)?.get(pdfId)

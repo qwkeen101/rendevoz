@@ -5,6 +5,8 @@ import { transformTextContentToNameAndDescription } from './utils'
 import { getFilenameWithoutExtension } from '@/utils/file'
 import { Regexp } from '@/utils'
 import FileSystem from '@/api/fileSystem'
+import { Rendevoz } from '@/core/rendevoz'
+import toast from 'react-hot-toast'
 
 function isUrlImage(url: string) {
   return fetch(url, { method: 'HEAD' }).then(res => {
@@ -141,12 +143,6 @@ const useDropObject = () => {
       if (allStrings.some(i => i.startsWith('http'))) {
         plainLinkData = allStrings.find(i => i.startsWith('http'))
       }
-      console.log({
-        html: htmlData,
-        uri: uriData,
-        text: textData,
-        plain: plainLinkData
-      })
       if (htmlData) {
         const parser = new DOMParser()
         const doc = parser.parseFromString(htmlData, 'text/html')
@@ -182,7 +178,7 @@ const useDropObject = () => {
               return normalizedMetaObject
             } else {
               const imageObject = await ObjectStore('image').addOne({
-                imageUrl: imageFilePath
+                url: imageFilePath
               })
               const imageName = imgEle.alt || uriData || 'Unnamed Image'
               Object.assign(normalizedMetaObject, {
@@ -256,19 +252,18 @@ const useDropObject = () => {
       const item = e.dataTransfer.items[0]
       const file = item.getAsFile()
       if (!file) return
-      if (file.type.startsWith('image')) {
-        const imageFilePath = await FileSystem.saveImage(file, { compress: false })
-        const imageObject = await ObjectStore('image').addOne({
-          imageUrl: imageFilePath
-        })
+      try {
+        const meta = await Rendevoz.Utils.Meta.normalizeLocalFileToMeta(file)
+        const obj = await ObjectStore(meta.type).addOne({ ...meta.object })
         Object.assign(normalizedMetaObject, {
-          coverImgSrc: imageFilePath,
           fromObject: from,
-          type: 'image',
-          objectId: imageObject.id,
-          name: getFilenameWithoutExtension(file.name) || 'Unnamed Image'
+          objectId: obj.id,
+          ...meta.meta
         } as MetaObject)
         return normalizedMetaObject
+      } catch (e) {
+        toast.error(Rendevoz.Consts.Errors.NotSupportedFile())
+        console.error(e)
       }
     }
   }

@@ -8,7 +8,7 @@ import deserializeText from './deserialize/deserializeText'
 import { ELEMENT_TAGS } from '@/core/components/editor/plugins/transformHTML/HTMLTags'
 import normalizeText from '@/core/components/editor/plugins/transformHTML/deserialize/normalizeText'
 
-const NoNestedNodeNames = ['A', 'H1', 'H2', 'H3', 'H4', 'H5', 'H6', 'PRE', 'SUP', 'FIGCAPTION']
+const NoNestedNodeNames = ['A', 'H1', 'H2', 'H3', 'H4', 'H5', 'H6', 'PRE', 'SUP', 'FIGCAPTION', 'BLOCKQUOTE']
 
 const deserializeHTML = (root: HTMLElement) => {
   // deserialize text node

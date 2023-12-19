@@ -175,19 +175,19 @@ const EditorSearchPanel = () => {
       .slice(0, currentOccurIdx || 0)
       .reduce((prev, curr) => prev + curr, 0) + (editorSearchState.currentOccurrence?.idx || 0)
   return (
-    <Content fullHeight fullWidth flex column gap={10}>
+    <Content fullHeight fullWidth flex column gap={6} style={{ padding: '8px 8px' }}>
       <BorderInput
         value={searchInput}
         onChange={v => typeof v === 'string' && setSearchInput(v)}
         textarea={false}
         placeholder={t('general.search')}
         containerStyle={{ borderRadius: 6 }}
-        style={{ padding: '6px 12px' }}
+        style={{ padding: '4px 8px' }}
       ></BorderInput>
       <Content flex gap={8} className={ClassName.description()} alignItems="center" style={{ flexWrap: 'wrap' }}>
         <div style={{ marginRight: 'auto' }}>{`${totalOccur ? currentOccur + 1 : 0} / ${totalOccur}`}</div>
         <Button.IconButton
-          className={ClassName.circleButton()}
+          className={ClassName.flatButton(4, '2px 6px')}
           icon="park-repair"
           selected={searchState.replaceVisible === true ? true : undefined}
           text={t('general.replace')}
@@ -201,6 +201,7 @@ const EditorSearchPanel = () => {
         <Icon
           className={ClassName.circleButton()}
           name="park-down"
+          size={16}
           onClick={() => {
             handleChangeOccur('down')
           }}
@@ -208,6 +209,7 @@ const EditorSearchPanel = () => {
         <Icon
           className={ClassName.circleButton()}
           name="park-up"
+          size={16}
           onClick={() => {
             handleChangeOccur('up')
           }}
@@ -221,7 +223,7 @@ const EditorSearchPanel = () => {
             onChange={v => typeof v === 'string' && setSearchState(s => ({ ...s, replaceInput: v }))}
             value={searchState.replaceInput}
             containerStyle={{ borderRadius: 6 }}
-            style={{ padding: '6px 12px' }}
+            style={{ padding: '4px 8px' }}
           ></BorderInput>
           <Content flex gap={10} className={ClassName.description()}>
             <div
@@ -288,7 +290,8 @@ const ResultItem = ({
         className={css({
           emphasis: {
             color: Colors.Common.SelectColor
-          }
+          },
+          fontSize: 14
         })}
         dangerouslySetInnerHTML={{ __html: replacedHTML }}
       ></div>

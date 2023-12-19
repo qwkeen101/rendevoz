@@ -66,6 +66,7 @@ export const observeElementRect = <T extends Element>(instance: Virtualizer<T, a
   }
 
   const handler = (rect: Rect) => {
+    console.log(element, rect)
     const { width, height } = rect
     cb({ width: Math.round(width), height: Math.round(height) })
   }
@@ -117,7 +118,8 @@ export const observeElementOffset = <T extends Element>(instance: Virtualizer<T,
     return
   }
 
-  const handler = () => {
+  const handler = (e) => {
+    console.log(e)
     cb(element[instance.options.horizontal ? 'scrollLeft' : 'scrollTop'])
   }
   handler()
@@ -365,6 +367,7 @@ export class Virtualizer<TScrollElement extends Element | Window, TItemElement e
 
       this.unsubs.push(
         this.options.observeElementRect(this, rect => {
+          console.log(rect)
           this.scrollRect = rect
           this.maybeNotify()
         })
@@ -372,6 +375,7 @@ export class Virtualizer<TScrollElement extends Element | Window, TItemElement e
 
       this.unsubs.push(
         this.options.observeElementOffset(this, offset => {
+          console.log(offset)
           this.scrollAdjustments = 0
 
           if (this.scrollOffset === offset) {

@@ -23,7 +23,7 @@ const useAssignBodyOps = (instance: IGroupInstance, bodyRef: RefObject<HTMLEleme
         if (movement.x !== 0 && movement.x !== undefined) {
           const s = instance.getScrollElement?.()
           if (s) {
-            s.scrollBy(movement.x, 0)
+            s.scrollLeft += movement.x
           }
         }
       },

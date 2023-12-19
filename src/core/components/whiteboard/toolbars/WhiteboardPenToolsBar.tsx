@@ -10,7 +10,7 @@ import { defaultBgColor } from '@/components/picker/colorPicker'
 import UseDebounceEffect from '@/hooks/utils/useDebounceEffect'
 import { useTranslation } from 'react-i18next'
 import { useSelectAtomValue } from '@/hooks'
-import { WhiteboardAtom } from '@/core/components/whiteboard/hooks'
+import { WhiteboardAtom } from '@/core/components/whiteboard/StateHooks'
 import useUpdateWhiteboard from '@/core/components/whiteboard/hooks/useUpdateWhiteboard'
 
 const PenStyleAtom = atom({
@@ -115,7 +115,14 @@ const WhiteboardPenToolsBar = () => {
     return (
       <WithBorder
         padding={6}
-        style={{ position: 'absolute', bottom: 20, left: '50%', transform: 'translateX(-50%)', background: Colors.Background.Secondary, zIndex: 10 }}
+        style={{
+          position: 'absolute',
+          bottom: 20,
+          left: '50%',
+          transform: 'translateX(-50%)',
+          background: Colors.Background.Popover,
+          zIndex: 10
+        }}
       >
         <Toolbar itemSpace={6} disableDefaultStyle={true}>
           <Toolbar.Item iconName={'custom-ballpen'} onClick={() => changePenType('ballpen')} isActive={penType === 'ballpen'} />
@@ -248,6 +255,22 @@ const PenStyleMenu = ({ style, onChange }: { onChange: (newStyle: IPenStyle) => 
           width: 'calc(100% - 4px)'
         }}
         onChange={v => onChange({ ...style, width: v })}
+        className={css({
+          '.rc-slider-handle': {
+            border: `1px solid ${Colors.Background.Border}`,
+            cursor: 'grabbing',
+            backgroundColor: 'white !important',
+            opacity: 1,
+            ':hover': {
+              borderColor: Colors.Background.Border
+            },
+            boxShadow: 'rgb(255,255,255) 0px 0px 0px 0px, rgba(0,0,0, 0.2) 0px 0px 0px 1px !important',
+            ':active': {
+              borderColor: `${Colors.Background.Border} !important`,
+              boxShadow: 'rgb(255,255,255) 0px 0px 0px 0px, rgba(0,0,0, 0.2) 0px 0px 0px 1px !important'
+            }
+          }
+        })}
       />
       <div>{t('general.Brush opacity')}</div>
       <Slider

@@ -2,7 +2,7 @@ import { assignProperties } from '@/utils'
 import { atom, useAtomValue } from 'jotai'
 import { RefObject } from 'react'
 import { CustomEditor, IEditorInstance } from '~/typings'
-import { goToBlock, goToTextHighlight, selectBlock, waitForEditorContentInitialized } from '../utils'
+import { goToBlock, goToTextHighlight, highlightBlock, selectBlock, waitForEditorContentInitialized } from '../utils'
 import { Node, Range } from 'slate'
 import { ID_TO_ELEMENTS_MAP, ID_TO_PATH_MAP } from '../weakMaps'
 import useEditorBarState from './useEditorBarState'
@@ -47,7 +47,11 @@ export const useAssignEditorInstance = (editor: CustomEditor, scrollElementRef: 
   assignProperties(instance, {
     scrollToBlock: async opts => {
       if (opts.blockId !== undefined) {
+        console.log(opts)
         await goToBlock(opts.blockId, editor)
+        if (opts.highlight) {
+          highlightBlock(opts.blockId, editor)
+        }
       }
     },
     isSelectionCollapsed: () => {
@@ -71,7 +75,7 @@ export const useAssignEditorInstance = (editor: CustomEditor, scrollElementRef: 
       })),
     selectBlock: async opts => {
       if (opts.blockId !== undefined) {
-        await selectBlock(opts.blockId, editor)
+        await selectBlock(opts.blockId, instance)
       }
     },
     scrollToHighlight: async opts => {

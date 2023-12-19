@@ -21,19 +21,6 @@ const parseYoutubeFeed = (item: {
   if (!videoId) {
     return item
   }
-  const noteValue = [
-    {
-      id: Id.getId(),
-      type: 'iframe',
-      url: `https://www.youtube.com/embed/${videoId}`,
-      children: [{ text: '' }]
-    },
-    ...item['media:group']['media:description'].map(i => ({
-      id: Id.getId(),
-      type: 'paragraph',
-      children: [{ text: i }]
-    }))
-  ]
   return {
     id: item.id,
     title: item.title,

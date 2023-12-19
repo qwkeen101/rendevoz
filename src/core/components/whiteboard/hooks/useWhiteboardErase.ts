@@ -1,10 +1,11 @@
 import { useSelectAtomValue } from '@/hooks'
 import { useWhiteboardState, WhiteboardStateAtom } from '@/core/components/whiteboard/hooks/useWhiteboardState'
 import { useEffect, useRef } from 'react'
-import { useFlow } from '@/core/components/whiteboard/hooks'
+import { useFlow } from '@/core/components/whiteboard/StateHooks'
 import isHotkey from 'is-hotkey'
 import { KEY } from '@/consts'
 import UseUpdateWhiteboard from '@/core/components/whiteboard/hooks/useUpdateWhiteboard'
+import { useWhiteboardInstance } from '@/core/components/whiteboard/hooks/useWhiteboardInstance'
 
 const useWhiteboardErase = () => {
   const currentTool = useSelectAtomValue(WhiteboardStateAtom, s => s.currentTool)
@@ -15,6 +16,7 @@ const useWhiteboardErase = () => {
     current: false,
     whiteboardErasing: false
   })
+  const instance = useWhiteboardInstance()
   useEffect(() => {
     const container = flow.parentContainerEle
     if (container && currentTool === 'erase') {
@@ -54,7 +56,7 @@ const useWhiteboardErase = () => {
             flow.erasedNodeIds.clear()
             erasedNodeIds.forEach(id => {
               w.nodes?.delete(id)
-              flow.NODE_TO_EDGE_MAP.get(id)?.forEach(i => w.edges?.delete(i))
+              instance.values.NODE_TO_EDGE_MAP.get(id)?.forEach(i => w.edges?.delete(i))
             })
           }
           if (erasedEdgeIds.length > 0) {

@@ -1,0 +1,119 @@
+import { useWhiteboardInstance } from '@/core/components/whiteboard/hooks'
+import { useEffect, useState } from 'react'
+import isHotkey from 'is-hotkey'
+import { WhiteboardDefaultKeyboardShortcut } from '@/core/components/whiteboard/hooks/keyboard/DefaultWhiteboardShortcuts'
+import { useMemoizedFn } from '@/hooks'
+import { useWhiteboardState } from '@/core/components/whiteboard/hooks/useWhiteboardState'
+import { KEY } from '@/consts'
+import handleKeyboardNavigation from '@/core/components/whiteboard/hooks/keyboard/handleKeyboardNavigation'
+import { mousePos } from '@/hooks/utils/useMousePositionRef'
+
+export default () => {
+  const instance = useWhiteboardInstance()
+  const includeShortcuts = (e: KeyboardEvent, keys: string[]) => {
+    return keys.some(k => isHotkey(k, e))
+  }
+  const [whiteboardState, setWhiteboardState] = useWhiteboardState()
+  const keydownHandler = useMemoizedFn((e: KeyboardEvent) => {
+    if (!instance.isFocused?.()) return
+    if (instance.getOutestContainerNode?.() !== document.activeElement && document.activeElement !== document.body) return
+    if (e.defaultPrevented) return
+    handleKeyboardNavigation(e, instance)
+    if (isHotkey(KEY.Escape, e)) {
+      if (whiteboardState.highlightedIds) {
+        setWhiteboardState(s => ({ ...s, highlightedIds: undefined }))
+      }
+      instance.edgeOps?.endAction()
+    }
+    // undo fit transform
+    if (isHotkey('shift+e', e)) {
+      instance.containerOps?.undoTransform()
+    }
+    // redo fit transform
+    if (isHotkey('shift+q', e)) {
+      instance.containerOps?.redoTransform()
+    }
+    if (includeShortcuts(e, WhiteboardDefaultKeyboardShortcut.Expand.key)) {
+      const selected = instance.selectOps?.getSelectedNodes()
+      if (selected?.length) {
+        const canExpandOrFold = selected.some(i => instance.nodeOps?.canExpand(i))
+        if (!canExpandOrFold) return
+        const showExpandIcon = selected.some(i => instance.nodeOps?.canExpand(i) && !i.expanded)
+        const selectedIds = selected.map(i => i.id)
+        if (showExpandIcon) {
+          instance.nodeOps?.expand(selectedIds)
+        } else {
+          instance.nodeOps?.fold(selectedIds)
+        }
+        setTimeout(() => {
+          instance.selectOps?.resetSelectionBox()
+        }, 100)
+        instance.toolbarOps?.closeToolbar()
+      }
+    }
+    if (includeShortcuts(e, WhiteboardDefaultKeyboardShortcut.FitIntoView.key)) {
+      instance.containerOps?.fitToSelected()
+      instance.toolbarOps?.closeToolbar()
+    }
+    if (includeShortcuts(e, WhiteboardDefaultKeyboardShortcut.DrawLine.key)) {
+      const selected = instance.selectOps?.getSelectedNodes()
+      if (selected?.length === 1) {
+        instance.edgeOps?.startDrawEdge(selected[0].id)
+        instance.toolbarOps?.closeToolbar()
+      }
+    }
+    if (includeShortcuts(e, WhiteboardDefaultKeyboardShortcut.Group.key)) {
+      const selected = instance.selectOps?.getSelectedNodes()
+      if (selected?.length && selected.length > 1) {
+        instance.groupOps?.groupNodes(selected.map(i => i.id))
+        instance.toolbarOps?.closeToolbar()
+      }
+    }
+    if (includeShortcuts(e, WhiteboardDefaultKeyboardShortcut.Copy.key)) {
+      const selected = instance.selectOps?.getSelectedNodes()
+      if (selected?.length) {
+        instance.nodeOps?.copy(instance.nodeOps?.extendNodes(selected).map(i => i.id))
+        instance.toolbarOps?.closeToolbar()
+      }
+    }
+    if (includeShortcuts(e, WhiteboardDefaultKeyboardShortcut.Paste.key)) {
+      const currentMousePos = mousePos.current
+      const transformed = instance.coordOps?.transformWindowPositionToPosition({ x: currentMousePos[0], y: currentMousePos[1] })
+      if (transformed) {
+        instance.nodeOps?.paste({
+          x: transformed.x,
+          y: transformed.y
+        })
+        instance.toolbarOps?.closeToolbar()
+      }
+    }
+    if (includeShortcuts(e, WhiteboardDefaultKeyboardShortcut.Delete.key)) {
+      const selected = instance.selectOps?.getSelectedNodes()
+
+      if (selected?.length) {
+        instance.nodeOps?.deleteNode(selected?.map(i => i.id))
+        instance.toolbarOps?.closeToolbar()
+      }
+    }
+    if (includeShortcuts(e, WhiteboardDefaultKeyboardShortcut.HighlightRelated.key)) {
+      const selected = instance.selectOps?.getSelectedNodes()
+      if (selected?.length) {
+        instance.nodeOps?.highlightRelatedEdgesAndNodes(selected?.map(i => i.id))
+        instance.toolbarOps?.closeToolbar()
+      }
+    }
+    if (includeShortcuts(e, WhiteboardDefaultKeyboardShortcut.FitToContent.key)) {
+      const selected = instance.selectOps?.getSelectedNodes()
+      if (selected?.length) {
+        instance.nodeOps?.fitContent(selected.map(i => i.id))
+        instance.toolbarOps?.closeToolbar()
+      }
+    }
+  })
+  useEffect(() => {
+    document.addEventListener('keydown', keydownHandler)
+    return () => {
+      document.removeEventListener('keydown', keydownHandler)
+    }
+  }, [])
+}

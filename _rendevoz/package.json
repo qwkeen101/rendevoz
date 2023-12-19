@@ -1,7 +1,7 @@
 {
   "name": "rendevoz",
   "productName": "Rendevoz",
-  "version": "0.4.21",
+  "version": "0.4.38",
   "author": "Rendevoz Team",
   "main": "dist/index.mjs",
   "scripts": {
@@ -15,12 +15,11 @@
   "devDependencies": {
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
-    "typescript": "^5.1.6",
+    "typescript": "latest",
     "@emotion/css": "^11.9.0",
     "@icon-park/react": "^1.4.2",
     "@mozilla/readability": "^0.4.2",
     "@tanstack/react-virtual": "^3.0.0-beta.52",
-    "@uiw/react-monacoeditor": "^3.5.8",
     "classnames": "^2.3.1",
     "colorthief": "^2.4.0",
     "cross-env": "7.0.3",
@@ -45,8 +44,6 @@
     "lodash.throttle": "4.1.1",
     "material-colors": "^1.2.6",
     "mathjax": "^3.2.2",
-    "meilisearch": "^0.32.3",
-    "monaco-editor": "^0.38.0",
     "optics-ts": "^2.3.0",
     "panzoom": "^9.4.3",
     "pica": "^9.0.1",

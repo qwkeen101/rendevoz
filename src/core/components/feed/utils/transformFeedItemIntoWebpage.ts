@@ -30,8 +30,5 @@ export default async (item: FeedItem) => {
       }
     }
   )
-  const contentNote = await NoteStore.initializeNoteWithValue(item.state.content, {
-    metaId: webpageMeta.id
-  })
-  await ObjectStore('webpage').updateOne({ id: webpage.id, noteId: contentNote.id })
+  return webpageMeta
 }

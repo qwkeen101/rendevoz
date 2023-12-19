@@ -21,6 +21,12 @@ export default ({ onUpload, accept }: { onUpload: (filePath: string) => void; ac
             onClick={() => {
               Rendevoz.Actions.Utils.uploadFile({ accept }).then(res => {
                 if (res instanceof File) {
+                  if (res.type.startsWith('image')) {
+                    FileSystem.saveImage(res).then(p => {
+                      onUpload(p)
+                    })
+                    return
+                  }
                   FileSystem.fs.writeFile(res, `/files/${res.name}`).then(p => {
                     if (p) {
                       onUpload(p)

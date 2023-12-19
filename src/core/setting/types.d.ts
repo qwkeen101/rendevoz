@@ -1,3 +1,5 @@
+import { IQuestion } from '~/typings'
+
 export type IGeneralSetting = {
   general: {
     language?: AvaliableLanguages
@@ -12,6 +14,8 @@ export type IGeneralSetting = {
     defaultFilePath?: string
     defaultLanguage: string
     autoSaveLayout: boolean
+    youtubeApiKey?: string
+    youtubeMaxItems?: number
     dataBackup: 'whenClose' | 'every day' | 'every week' | 'every month' | 'never'
     defaultSearchEngine:
       | 'custom'
@@ -30,6 +34,13 @@ export type IGeneralSetting = {
   }
 }
 
+export type IAISettings = {
+  question: {
+    autoGenerate: boolean
+    generateType: IQuestion['questionType']
+    generateNum: number
+  }
+}
 export type IQuickAddSettings = {
   quickAdd: {
     addIntoNote: 'first' | 'last'
@@ -95,7 +106,7 @@ export type IObjectsAndLinkSetting = {
   object: {
     deleteFileWhenDeleteObject: boolean
     autoHideLabelObject: boolean
-    linkType: 'text' | 'url' | 'markdown'
+    linkType: 'text' | 'url' | 'markdown' | 'html'
   }
 }
 

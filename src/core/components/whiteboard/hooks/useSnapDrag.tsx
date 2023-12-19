@@ -1,10 +1,11 @@
-import { useFlow, useWhiteboardNodes } from '@/core/components/whiteboard/hooks'
+import { useFlow, useWhiteboardNodes } from '@/core/components/whiteboard/StateHooks'
 import { useEventHandler, useScopedEventEmitter } from '@/events'
 import { useEffect, useRef, useState } from 'react'
 import { IWhiteboardNode, XYPosition } from '~/typings'
 import _ from 'lodash'
 import { useSelectGlobalAtomValue } from '@/hooks'
 import { SettingAtom } from '@/core'
+import { Colors } from '@/consts'
 
 type ISnapState = {
   circles: { x: number; y: number }[]
@@ -409,26 +410,23 @@ const useSnapDrag = () => {
         circles: recalculatePoints,
         lines
       })
-      console.log(lines)
       throw ''
     } else {
       setSnapState(undefined)
     }
   })
   handler.on('nodeResize', data => {
-    const { resizingNode, nodeElement, rnd } = data
+    const { resizingNode, rnd, originalBox, pointerBox, realtimeBox, resizeDir } = data
     if (!resizingNode.width || !resizingNode.height) return
-    const scale = flow.panzoom?.getTransform().scale || 1
+    const scale = flow.containerTransformScale || 1
+    // 需要node真实的box和mouse的box
     // mouse move box
     const mouseBox = {
-      left: resizingNode.mouseX,
-      top: resizingNode.mouseY,
-      right: resizingNode.mouseX + resizingNode.mouseWidth,
-      bottom: resizingNode.mouseY + resizingNode.mouseHeight,
-      centerX: resizingNode.mouseX + resizingNode.mouseWidth / 2,
-      centerY: resizingNode.mouseY + resizingNode.mouseHeight / 2,
-      width: resizingNode.mouseWidth,
-      height: resizingNode.mouseHeight
+      ...pointerBox,
+      centerX: pointerBox.left + pointerBox.width / 2,
+      centerY: pointerBox.top + pointerBox.height / 2,
+      right: pointerBox.left + pointerBox.width,
+      bottom: pointerBox.top + pointerBox.height
     }
     const points: XYPosition & { type: 'centerX' | 'centerY' | 'top' | 'left' | 'right' | 'bottom' }[] = []
     const lines: {
@@ -554,36 +552,33 @@ const useSnapDrag = () => {
         if (p.type === 'left') {
           if (Math.abs(p.y - mouseBox.centerY) > MAX_DISTANCE + mouseBox.height / 2) return false
           nextBox.left = p.x
-          console.log('left')
         }
         // right, resize right top / right bottom, change width
         if (p.type === 'right') {
           if (Math.abs(p.y - mouseBox.centerY) > MAX_DISTANCE + mouseBox.height / 2) return false
           nextBox.width = p.x - nextBox.left
-          console.log('right')
         }
         // bottom, resize left bottom / right bottom, change height
         if (p.type === 'bottom') {
           if (Math.abs(p.x - mouseBox.centerX) > MAX_DISTANCE + mouseBox.width / 2) return false
           nextBox.height = p.y - nextBox.top
-          console.log('bottom')
         }
         // top, resize left top / right top, change top
         if (p.type === 'top') {
           if (Math.abs(p.x - mouseBox.centerX) > MAX_DISTANCE + mouseBox.width / 2) return false
           nextBox.top = p.y
-          console.log('top')
         }
         return true
       })
       const topDelta = nextBox.top - mouseBox.top
       const leftDelta = nextBox.left - mouseBox.left
-      console.log(topDelta)
-      rnd.resizable.setState({ width: nextBox.width - leftDelta, height: nextBox.height - topDelta })
+      rnd.resizable.setState({
+        width: nextBox.width - leftDelta,
+        height: resizingNode.resized || !['left', 'right'].includes(resizeDir) ? nextBox.height - topDelta : 'auto'
+      })
+
       rnd.draggable.setState({ x: nextBox.left, y: nextBox.top })
       rnd.updateOffsetFromParent()
-      // nodeElement.style.width = `${nextBox.width - leftDelta}px`
-      // nodeElement.style.height = `${nextBox.height - topDelta}px`
 
       mouseBox.left = nextBox.left
       mouseBox.top = nextBox.top
@@ -728,15 +723,11 @@ const useSnapDrag = () => {
           pointerEvents: 'none',
           overflow: 'visible',
           zIndex: 100,
-          opacity: 0.6
+          opacity: 0.4
         }}
       >
-        {snapState?.circles.map(i => (
-          <circle r={4} transform={`translate(${i.x},${i.y})`} fill="green"></circle>
-        ))}
-        {snapState?.lines?.map(i => (
-          <line strokeWidth={2} stroke="green" x1={i.startX} y1={i.startY} x2={i.endX} y2={i.endY} />
-        ))}
+        {snapState?.circles.map(i => <circle r={4} transform={`translate(${i.x},${i.y})`} fill={Colors.Common.SelectColor}></circle>)}
+        {snapState?.lines?.map(i => <line strokeWidth={2} stroke={Colors.Common.SelectColor} x1={i.startX} y1={i.startY} x2={i.endX} y2={i.endY} />)}
       </svg>
     )
   }

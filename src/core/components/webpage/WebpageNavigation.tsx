@@ -10,8 +10,8 @@ import { CSSProperties, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useSetting } from '../../setting'
 import { searchToUrl } from './utils'
-import { TypeToTypeName } from '../../object'
 import { useLatest } from 'react-use'
+import { Rendevoz } from '@/core/rendevoz'
 
 export type NavigationEvent =
   | {
@@ -197,7 +197,7 @@ const WebpageNavigation = ({
           {canSave && (
             <Tooltip
               content={t('general.save as object', {
-                type: t(`general.${TypeToTypeName['webpage']}`)
+                type: Rendevoz.Utils.Meta.getTypeName('webpage')
               })}
             >
               <Icon

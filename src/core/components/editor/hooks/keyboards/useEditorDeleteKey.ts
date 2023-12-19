@@ -8,17 +8,17 @@ import { IEditorInstance } from '~/typings'
  */
 const useEditorDeleteKey = (instance: IEditorInstance) => {
   const deleteKeyHandler = (e: KeyboardEvent) => {
-    const editor = instance.getSlateEditor?.()
-    if (!editor) return
     if (isHotkey(KEY.Delete, e) || isHotkey(KEY.Backspace, e)) {
-      const overlayOpen = editor.overlayManager?.isOpen?.()
-      if (overlayOpen) {
+      const overlayState = instance.overlayOps?.getState()
+      if (overlayState?.content === 'slashMenu') {
+        const editor = instance.getSlateEditor?.()
+        if (!editor) return
         const beforeText = instance.textOps?.getBeforeText(1)
         if (beforeText === '/') {
           e.preventDefault()
           // delete /
           Transforms.delete(editor, { distance: 1, reverse: true })
-          editor.overlayManager?.close()
+          instance.overlayOps?.close()
         }
       }
     }

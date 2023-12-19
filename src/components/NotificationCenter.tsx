@@ -82,7 +82,7 @@ const Notification = () => {
                 fontWeight: 500,
                 minWidth: 180,
                 boxShadow: Colors.Background.BoxShadow,
-                background: Colors.Background.Secondary,
+                background: Colors.Background.Popover,
                 display: 'flex',
                 gap: 16,
                 alignItems: 'center'

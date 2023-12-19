@@ -5,15 +5,15 @@ import { GraphEdge } from './types/edge'
 import { getMarkerId } from './utils/getMarkerId'
 import { MarkerColor } from '@/consts'
 import { GraphOverlayManager } from './components/overlay/useGraphOverlay'
-import { getRadius } from './components/node/Node'
 import { SetStateAction } from 'react'
 import produce from 'immer'
-import createPanZoom, { PanZoom } from 'panzoom'
+import { PanZoom } from 'panzoom'
 import { TypeToRegisteredMetaObject } from '@/api/stores/meta.store'
 import { Viewport } from 'pixi-viewport'
 import { Container, DisplayObject } from 'pixi.js'
 import { XYPosition } from 'rendevoz'
-
+import { Rendevoz } from '@/core/rendevoz'
+const getRadius = Rendevoz.Utils.Meta.getTypeRadius
 class D3GraphManager {
   public isChoosingNode: false | 'start' | 'end' = false
   public container: d3.Selection<HTMLElement, unknown, null, any> | null = null

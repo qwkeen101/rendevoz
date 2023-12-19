@@ -10,7 +10,9 @@ import youtube from '@/assets/images/youtube.png?url'
 import baidudisk from '@/assets/images/baidudisk.png?url'
 import folder from '@/assets/images/folder.png?url'
 import markdown from '@/assets/images/markdown.png?url'
-
+import picture from '@/assets/images/picture.png?url'
+import code from '@/assets/images/code.png?url'
+import music from '@/assets/images/music.png?url'
 import FontSize from '@/consts/font'
 import { useState } from 'react'
 import { assignProperties, fetchRemoteImageAndSaveLocally } from '@/utils'
@@ -79,6 +81,23 @@ const FileImporter = ({
           .then(handleAfterCreate)
         onClose?.()
       }
+    },
+    {
+      name: t('general.code'),
+      image: code,
+      onClick: () => {
+        ObjectStore('code')
+          .addOneWithMeta(
+            { content: '' },
+            {
+              currentMeta: {
+                name: 'Unnamed code'
+              }
+            }
+          )
+          .then(handleAfterCreate)
+        onClose?.()
+      }
     }
   ]
 
@@ -94,25 +113,6 @@ const FileImporter = ({
             {
               currentMeta: {
                 name: 'Unnamed PDF'
-              },
-              showMetaModal: true
-            }
-          )
-          .then(handleAfterCreate)
-        onClose?.()
-      }
-    },
-    {
-      name: t('general.video'),
-      desc: t('general.Watching and learning local or online videos'),
-      image: youtube,
-      onClick: () => {
-        ObjectStore('video')
-          .addOneWithMeta(
-            {},
-            {
-              currentMeta: {
-                name: 'Unnamed video'
               },
               showMetaModal: true
             }
@@ -139,12 +139,68 @@ const FileImporter = ({
           .then(handleAfterCreate)
         onClose?.()
       }
+    },
+    {
+      name: Rendevoz.Utils.Meta.getTypeName('video'),
+      desc: t('general.Watching and learning local or online videos'),
+      image: youtube,
+      onClick: () => {
+        ObjectStore('video')
+          .addOneWithMeta(
+            {},
+            {
+              currentMeta: {
+                name: 'Unnamed video'
+              },
+              showMetaModal: true
+            }
+          )
+          .then(handleAfterCreate)
+        onClose?.()
+      }
+    },
+    {
+      name: Rendevoz.Utils.Meta.getTypeName('audio'),
+      image: music,
+      onClick: () => {
+        ObjectStore('audio')
+          .addOneWithMeta(
+            {},
+            {
+              currentMeta: {
+                name: 'Unnamed audio'
+              },
+              showMetaModal: true
+            }
+          )
+          .then(handleAfterCreate)
+        onClose?.()
+      }
+    },
+    {
+      name: Rendevoz.Utils.Meta.getTypeName('image'),
+      desc: t('general.Edit your image'),
+      image: picture,
+      onClick: () => {
+        ObjectStore('image')
+          .addOneWithMeta(
+            {},
+            {
+              currentMeta: {
+                name: 'Unnamed image'
+              },
+              showMetaModal: true
+            }
+          )
+          .then(handleAfterCreate)
+        onClose?.()
+      }
     }
   ]
 
   const others = [
     {
-      name: t('general.Markdown'),
+      name: t('general.Import from Markdown'),
       desc: t('general.Import from Markdown'),
       image: markdown,
       onClick: () => {
@@ -159,7 +215,7 @@ const FileImporter = ({
       }
     },
     {
-      name: t('general.Folder'),
+      name: t('general.Import all files from folder'),
       desc: t('general.Import all files from folder'),
       image: folder,
       onClick: () => {
@@ -174,7 +230,7 @@ const FileImporter = ({
   ]
   if (isChinese) {
     others.push({
-      name: t('general.Baidudisk'),
+      name: t('general.Import from Baidudisk'),
       desc: t('general.Import from Baidudisk'),
       image: baidudisk,
       onClick: () => {
@@ -206,58 +262,58 @@ const FileImporter = ({
     return (
       <Content
         flex
-        gap={16}
+        gap={12}
         style={{ width: '100%' }}
         alignItems={'center'}
-        className={ClassName.flatButton(4, '4px 12px')}
+        className={ClassName.flatButton(4, '4px 8px')}
         onClick={details.onClick}
       >
         <div
           style={{
             background: 'white',
             borderRadius: 4,
-            padding: 6
+            padding: '4px 4px'
           }}
         >
           <img
             src={details.image}
             style={{
-              width: 32,
-              height: 32,
+              width: 26,
+              height: 26,
               objectFit: 'cover'
             }}
           />
         </div>
-        <Content style={{ lineHeight: 1.1, fontWeight: 500 }}>
+        <Content style={{ fontSize: 15, fontWeight: 500 }}>
           <div>{details.name}</div>
-          <div style={{ marginTop: 4 }} className={ClassName.description(FontSize['12px'])}>
-            {details.desc}
-          </div>
+          {/*<div style={{ marginTop: 4 }} className={ClassName.description(FontSize['12px'])}>*/}
+          {/*  {details.desc}*/}
+          {/*</div>*/}
         </Content>
       </Content>
     )
   }
   return (
-    <Content flex column style={{ maxWidth: `min(620px, 90vw)`, maxHeight: 'min(800px, 80vh)', padding: 16, overflowY: 'auto' }} gap={8}>
+    <Content flex column style={{ width: `min(620px, 90vw)`, maxHeight: 'min(800px, 80vh)', padding: 16, overflowY: 'auto' }}>
       <div style={{ paddingLeft: 8, marginBottom: 8 }} className={ClassName.title('20px')}>
         {t('general.Create new object')}
       </div>
-      <div style={{ paddingLeft: 8 }} className={ClassName.title('1rem')}>
+      <div style={{ paddingLeft: 8, margin: '8px 0px' }} className={ClassName.title('1rem')}>
         {t('general.Organize your ideas')}
       </div>
-      <Content flex gap={6} style={{ marginBottom: 8, flexWrap: 'wrap' }}>
+      <Content>
         {records.map(r => renderer(r))}
       </Content>
-      <div style={{ paddingLeft: 8 }} className={ClassName.title('1rem')}>
+      <div style={{ paddingLeft: 8, margin: '8px 0px' }} className={ClassName.title('1rem')}>
         {t('general.Learning new things')}
       </div>
-      <Content flex gap={6} style={{ marginBottom: 8, flexWrap: 'wrap' }}>
+      <Content>
         {files.map(f => renderer(f))}
       </Content>
-      <div style={{ paddingLeft: 8 }} className={ClassName.title('1rem')}>
+      <div style={{ paddingLeft: 8, margin: '8px 0px' }} className={ClassName.title('1rem')}>
         {t('general.Others')}
       </div>
-      <Content flex gap={6} style={{ marginBottom: 8, flexWrap: 'wrap' }}>
+      <Content>
         {others.map(o => renderer(o))}
       </Content>
     </Content>

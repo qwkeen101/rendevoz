@@ -46,6 +46,7 @@ const GroupSelectBox = ({
       setGroupState(s => ({ ...s, isSelecting: true }))
       setedRef.current = true
     }
+    if (!selectContainer) return
     setSelectBox(s => {
       if (s) {
         const { startPoint } = s
@@ -54,6 +55,7 @@ const GroupSelectBox = ({
           x: distance.left,
           y: distance.top
         }
+        const selectContainerRect = selectContainer?.getBoundingClientRect()
         const box = calculateSelectionBox({ startPoint, endPoint })
         instance.values.inViewRowFuncs.forEach((f, key) => {
           const intersected = f.checkIntersected?.(box)
@@ -66,7 +68,10 @@ const GroupSelectBox = ({
         return {
           startPoint,
           endPoint,
-          ...box
+          left: selectContainerRect.left + box.left,
+          top: selectContainerRect.top + box.top - selectContainer.scrollTop,
+          width: box.width,
+          height: box.height
         }
       }
       return undefined
@@ -85,6 +90,7 @@ const GroupSelectBox = ({
   useEffect(() => {
     if (selectContainer && scrollContainer) {
       const pointerDownHandler = (e: PointerEvent) => {
+        if (e.target instanceof HTMLElement && e.target.closest('[role="group-drag-handle"]')) return
         if (e.target instanceof HTMLElement && !e.target.closest('[role="table-wrapper"') && !e.target.closest('input,textarea')) {
           window.getSelection()?.empty()
           document.activeElement?.blur?.()
@@ -118,8 +124,25 @@ const GroupSelectBox = ({
     selectContainer &&
     selectBox &&
     createPortal(
-      <div style={{ position: 'absolute', ...selectBox, background: Colors.Common.SelectColorTransparent, zIndex: 10000 }}></div>,
-      selectContainer
+      <div
+        style={{
+          position: 'fixed',
+          inset: 0,
+          zIndex: 9999,
+          pointerEvents: 'none',
+          overflow: 'hidden'
+        }}
+      >
+        <div
+          style={{
+            ...selectBox,
+            background: 'rgba(39, 158, 255, 0.2)',
+            position: 'absolute',
+            borderRadius: 0
+          }}
+        ></div>
+      </div>,
+      document.body
     )
   )
 }

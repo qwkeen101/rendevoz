@@ -1,6 +1,6 @@
 import { Descendant } from 'slate'
 import { IEditorInstance, OperationAppliedEvent } from '~/typings'
-import { useEffect, useRef } from 'react'
+import { useEffect, useLayoutEffect, useRef } from 'react'
 import { useDebounceFn, useMemoizedFn } from '@/hooks'
 import { NoteStore, ObjectStore } from '@/api/stores'
 import { Rendevoz } from '@/core/rendevoz'
@@ -45,7 +45,6 @@ const useStoreValue = (options: {
   )
 
   const handleOperationApplied = (e: OperationAppliedEvent) => {
-    console.log(e)
     if (e.noteId === noteId) {
       shouldSaveRef.current = true
       debounceSaveValue.run()
@@ -63,7 +62,6 @@ const useStoreValue = (options: {
       const noteValue = await getNoteValue(note.contentId)
       if (noteValue) {
         onContentLoaded?.()
-        console.log(noteValue)
         const currentValue = instance?.getSlateEditor?.().children
         if (!isEqual(currentValue, noteValue)) {
           instance?.replaceChildren?.(noteValue)
@@ -71,7 +69,7 @@ const useStoreValue = (options: {
       }
     }
   })
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (note?.contentId && instance) {
       fetchValue()
     }

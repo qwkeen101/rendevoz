@@ -1,24 +1,22 @@
 import React from 'react'
-import { CustomEditor } from '~/typings'
-import getCursorPosition from '../utils/getCursorPosition'
+import { IEditorInstance } from '~/typings'
+import { Transforms } from 'slate'
 
-const useEditorSlashMenu = (editor: CustomEditor) => {
+const useEditorSlashMenu = (instance: IEditorInstance) => {
   const handleSlashKeyDown: React.KeyboardEventHandler = e => {
     if (e.code === 'Slash' && !e.altKey && !e.ctrlKey && !e.shiftKey && !e.metaKey) {
-      const cursorPosition = getCursorPosition(editor)
-      if (cursorPosition) {
-        editor.overlayManager?.setPosition({
-          left: cursorPosition.x + 20,
-          top: cursorPosition.y + 20
+      e.preventDefault()
+      const editor = instance.getSlateEditor?.()
+      if (!editor) return
+      Transforms.insertText(editor, '/')
+      const currentBlockRect = instance.blockOps?.getCurrentCursorBlockBounding()
+      if (currentBlockRect) {
+        instance.overlayOps?.open('slashMenu', {
+          x: currentBlockRect.left,
+          y: currentBlockRect.top + currentBlockRect.height / 2
         })
-        console.log(cursorPosition)
-        editor.overlayManager?.setContent('slashMenu')
-        editor.overlayManager?.open()
         return
       }
-    }
-    if (editor.overlayManager?.isOpen() && editor.overlayManager.getContent() === 'slashMenu') {
-      editor.overlayManager.close()
     }
     return
   }

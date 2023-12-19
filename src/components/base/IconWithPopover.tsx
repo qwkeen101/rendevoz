@@ -134,6 +134,8 @@ const IconWithPopover: FC<Props> = (
             containerStyle={iconContainerStyle}
             cursor="pointer"
             size={size}
+            role={'icon'}
+            data-active={visible}
             strokeWidth={strokeWidth}
             className={className}
             onClick={e => {

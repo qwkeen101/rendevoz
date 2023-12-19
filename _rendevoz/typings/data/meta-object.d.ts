@@ -53,6 +53,19 @@ export interface MetaObject extends IBase {
   // hidden by group
   hidden?: boolean
   attachments?: IMetaAttachment[]
+  // placeholder name mainly for labels, like original text
+  placeholderName?: string
+  properties?: Record<
+    'AI summary' | 'AI questions' | string,
+    | {
+        propType: 'string'
+        value?: string
+      }
+    | {
+        propType: 'number array'
+        value?: number[]
+      }
+  >
   fromObject?:
     | {
         type: 'pdf'

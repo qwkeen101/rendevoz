@@ -48,6 +48,7 @@ const Initializer = () => {
   useEffect(() => {
     ipcInstance.on('openObject', data => {
       if (data.url) {
+        console.log(data.url)
         Rendevoz.Actions.Open.openRendevozLink(data.url)
       }
     })

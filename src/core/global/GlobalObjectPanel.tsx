@@ -1,13 +1,13 @@
 import { useGlobalAtomValue, useMergedRef, useDebounceFn } from '@/hooks'
 import { undeletedMetaObjectsAtom } from '@/api/stores/meta.store'
-import { MetaStore } from '@/api/stores'
+import { MetaStore, ObjectStore } from '@/api/stores'
 import ClassName from '@/styles/classNames'
 import { css } from '@emotion/css'
 import { useAtom } from 'jotai/react'
 import React, { forwardRef, memo, useEffect, useMemo, useRef, useState } from 'react'
 import { MetaFilterGroup, MetaObject } from '~/typings/data'
-import { AnimatePopover, Button, Content, Icon, Tooltip, WithBorder, VirtualList } from '@/components'
-import { DraggableElement, useDropObjectArea, useRenderObject } from '@/core'
+import { AnimatePopover, Button, Content, Icon, Tooltip, WithBorder, VirtualList, Image, IconWithPopover } from '@/components'
+import { DraggableElement, ObjectActionPopover, useDropObjectArea, useRenderObject } from '@/core'
 import { atom } from 'jotai'
 import { useTranslation } from 'react-i18next'
 import { LeftTopPosition } from '~/typings'
@@ -21,6 +21,7 @@ import BetterSorter, { calculateSortObjects, SorterGroup } from '@/core/object/f
 import { go } from 'fuzzysort'
 import isHotkey from 'is-hotkey'
 import { KEY } from '@/consts'
+import Select from '@/components/base/select'
 
 export const GlobalObjectPanelInstance: {
   open?: (position?: LeftTopPosition) => void
@@ -69,11 +70,10 @@ export const ObjectPanel = memo(
     const { t } = useTranslation()
     const [filterSort, setFilterSort] = useAtom(ObjectPanelFilterSortAtom)
     const [shouldDisplayObjects, setShouldDisplayObjects] = useState<MetaObject[]>(undeleteObjects)
-
+    const [sortMode, setSortMode] = useState<'create' | 'recent'>('create')
     useEffect(() => {
       if (
         filterSort.filterVisible === false &&
-        filterSort.sorterVisible === false &&
         (filterSort.filter?.rules.length || filterSort.sorter?.sorters.length || filterSort.searchInput)
       ) {
         const afterFilter =
@@ -85,19 +85,42 @@ export const ObjectPanel = memo(
               }).values()
             ).map(i => i.obj)
           : afterFilter
-        const afterSort = filterSort.sorter?.sorters.length ? calculateSortObjects(afterSearch, filterSort.sorter) : afterSearch
+        const afterSort = calculateSortObjects(afterSearch, {
+          sorters: [
+            sortMode === 'create'
+              ? {
+                  field: 'createdAt',
+                  id: 1,
+                  type: 'descending'
+                }
+              : {
+                  field: 'viewAt',
+                  id: 2,
+                  type: 'descending'
+                }
+          ]
+        })
         setShouldDisplayObjects(afterSort)
       }
-      if (
-        filterSort.filterVisible === false &&
-        filterSort.sorterVisible === false &&
-        !filterSort.filter?.rules.length &&
-        !filterSort.sorter?.sorters.length &&
-        !filterSort.searchInput
-      ) {
-        setShouldDisplayObjects(undeleteObjects)
+      if (filterSort.filterVisible === false && !filterSort.filter?.rules.length && !filterSort.searchInput) {
+        const afterSort = calculateSortObjects(undeleteObjects, {
+          sorters: [
+            sortMode === 'create'
+              ? {
+                  field: 'createdAt',
+                  id: 1,
+                  type: 'descending'
+                }
+              : {
+                  field: 'viewAt',
+                  id: 2,
+                  type: 'descending'
+                }
+          ]
+        })
+        setShouldDisplayObjects(afterSort)
       }
-    }, [filterSort.filterVisible, undeleteObjects, filterSort.sorterVisible, filterSort.searchInput])
+    }, [filterSort.filterVisible, undeleteObjects, filterSort.searchInput, sortMode])
 
     const debounceSet = useDebounceFn(
       v => {
@@ -139,7 +162,7 @@ export const ObjectPanel = memo(
         <Content
           flex
           column
-          gap={8}
+          gap={6}
           style={{
             padding
           }}
@@ -147,12 +170,10 @@ export const ObjectPanel = memo(
           <Content
             flex
             justifyContent="space-between"
-            style={{
-              borderBottom: `1px solid ${Colors.Background.Border}`,
-              cursor: 'grab',
-              padding: '0px 0px 8px'
-            }}
             className="global-drag-panel"
+            style={{
+              paddingLeft: 6
+            }}
           >
             <div style={{ marginRight: 'auto' }} className={ClassName.title('1rem')}>
               {t('general.object library')}
@@ -160,11 +181,6 @@ export const ObjectPanel = memo(
                 shouldDisplayObjects.length
               }`}</span>
             </div>
-            {/*{visiblility.showOpenInTab && (*/}
-            {/*  <Tooltip content={'Open Database In New Tab'}>*/}
-            {/*    <Icon name="park-efferent-four" className={ClassName.circleButton()} onClick={onOpenInTab} />*/}
-            {/*  </Tooltip>*/}
-            {/*)}*/}
             {visiblility.showClose && <Icon name="park-close" className={ClassName.circleButton()} onClick={onClose} />}
           </Content>
           {filterSort.searchVisible && (
@@ -189,7 +205,7 @@ export const ObjectPanel = memo(
                 onChange={e => {
                   debounceSet.run(e.target.value)
                 }}
-                placeholder="Search content"
+                placeholder={t('general.Type to search') + '...'}
                 defaultValue={filterSort.searchInput}
                 onKeyDown={e => {
                   if (isHotkey(KEY.Enter, e)) {
@@ -210,12 +226,33 @@ export const ObjectPanel = memo(
             </Content>
           )}
           <Content flex gap={6}>
+            <Select
+              value={sortMode}
+              style={{
+                fontSize: 12,
+                padding: '2px 6px',
+                height: 'auto',
+                marginRight: 'auto'
+              }}
+              closeOnSelect={true}
+              align={'start'}
+              onSelect={v => setSortMode(v[0])}
+              options={[
+                {
+                  value: 'create',
+                  children: t('general.recentlyCreated')
+                },
+                {
+                  value: 'recent',
+                  children: t('general.recentlyViewed')
+                }
+              ]}
+            />
             <Button.IconButton
               gap={6}
               style={{
                 fontSize: 12,
-                padding: '2px 6px',
-                border: `1px solid ${Colors.Background.Border}`
+                padding: '2px 6px'
               }}
               onClick={() => setFilterSort(s => ({ ...s, searchVisible: !s.searchVisible }))}
               text={t('general.search')}
@@ -224,6 +261,8 @@ export const ObjectPanel = memo(
             <AnimatePopover
               padding={6}
               align="start"
+              reposition
+              withClickCover={true}
               onVisiblityChange={v => [setFilterSort(s => ({ ...s, filterVisible: v }))]}
               positions={['bottom']}
               content={
@@ -241,69 +280,23 @@ export const ObjectPanel = memo(
                 gap={6}
                 style={{
                   fontSize: 12,
-                  padding: '2px 6px',
-                  border: `1px solid ${Colors.Background.Border}`
+                  padding: '2px 6px'
                 }}
                 text={t('filter.Filter')}
                 icon="park-filter"
                 suffixStr={filterSort.filter?.rules.length || undefined}
               />
             </AnimatePopover>
-            <AnimatePopover
-              padding={6}
-              align="start"
-              onVisiblityChange={v => [setFilterSort(s => ({ ...s, sorterVisible: v }))]}
-              positions={['bottom']}
-              content={
-                <WithBorder padding={8}>
-                  <BetterSorter root={filterSort.sorter} onChange={o => setFilterSort(s => ({ ...s, sorter: o }))} />
-                </WithBorder>
-              }
-            >
-              <Button.IconButton
-                gap={6}
-                style={{
-                  fontSize: 12,
-                  padding: '2px 6px',
-                  border: `1px solid ${Colors.Background.Border}`
-                }}
-                text={t('filter.Sort')}
-                icon="park-sort-one"
-                suffixStr={filterSort.sorter?.sorters.length || undefined}
-              />
-            </AnimatePopover>
-            {/*<AnimatePopover content={}>*/}
-            {/*  <Icon*/}
-            {/*    name={'park-more'}*/}
-            {/*    style={{*/}
-            {/*      fontSize: 12,*/}
-            {/*      padding: '2px 6px',*/}
-            {/*      border: `1px solid ${Colors.Background.Border}`*/}
-            {/*    }}*/}
-            {/*    className={ClassName.flatButton()}*/}
-            {/*  />*/}
-            {/*</AnimatePopover>*/}
           </Content>
         </Content>
         <VirtualList
-          itemContainerClassname={css({
-            '>': {
-              ':not(:last-child)': {
-                borderBottom: `1px solid ${Colors.Background.Border}`
-              }
-            }
-          })}
-          itemStyle={{
-            paddingTop: 8,
-            paddingBottom: 8
-          }}
           items={shouldDisplayObjects}
           renderItem={item => <SimpleObject metaObjectId={item.id} isAddingObject={isAddingObject} onAddObject={handleAddObject} />}
           estimateSize={40}
           style={{
             width: '100%',
             height: '100%',
-            padding: '0px 8px'
+            padding: '0px 2px 0px 6px'
           }}
         ></VirtualList>
       </>
@@ -316,69 +309,20 @@ export const SimpleObject = memo(
     (
       {
         metaObjectId,
-        descriptionClassName = css([ClassName.description(), ClassName.ellipsisFont(2)]),
-        onNavigate,
-        renderFrom = true,
-        renderDescription = false
+        onNavigate
       }: {
         metaObjectId: number
         descriptionClassName?: string
         onNavigate?: VoidFunction
-        renderDescription?: boolean
-        renderFrom?: boolean
       },
       ref
     ) => {
       const containerRef = useRef<HTMLDivElement>(null)
       const mergedRef = useMergedRef(containerRef, ref)
-      const { renderWhole, metaObject } = useRenderObject({
+      const { renderOptions, metaObject } = useRenderObject({
         metaObjectId: metaObjectId
       })
-      const renderOptions = useMemo(
-        () => ({
-          tagAboveImage: true,
-          renderOptions: {
-            renderFrom,
-            renderDescription,
-            renderOption: true,
-            renderOriginalText: true
-          },
-          optionOptions: {
-            style: {
-              right: 0,
-              top: -1
-            },
-            renderOnParent: false
-          },
-          containerStyle: {
-            width: '100%'
-          },
-          mainContainerStyle: {
-            flex: 1,
-            width: 0
-          },
-          titleOptions: {
-            showAddNote: false,
-            style: {
-              fontSize: '14px',
-              lineHeight: 1.3
-            },
-            titleClassName,
-            onTitleClick: () => {
-              Rendevoz.Actions.Open.Meta.openMetaObject(metaObjectId)
-              onNavigate?.()
-            }
-          },
-          rowGap: 10,
-          descriptionOptions: {
-            style: {
-              fontSize: FontSize['12px']
-            },
-            descriptionClassName
-          }
-        }),
-        [metaObjectId]
-      )
+      const [popoveropen, setpopoveropen] = useState(false)
       if (!metaObject) return null
       return (
         <DraggableElement
@@ -389,10 +333,81 @@ export const SimpleObject = memo(
             metaId: metaObjectId
           }}
         >
-          <Content flex alignItems="center" gap={4}>
-            <Content fullWidth fullHeight flex={!metaObject?.coverImgSrc}>
-              {renderWhole(renderOptions)}
-            </Content>
+          <Content
+            onClick={e => {
+              if (!e.defaultPrevented) {
+                Rendevoz.Actions.Open.Meta.openMetaObject(metaObjectId)
+              }
+            }}
+            fullWidth
+            flex
+            alignItems={'center'}
+            gap={10}
+            onContextMenu={() => setpopoveropen(true)}
+            className={css([
+              ClassName.flatButton(6, '6px'),
+              {
+                height: 32,
+                '[role="icon"]': {
+                  ':not([data-active="true"])': {
+                    opacity: 0,
+                    width: 0
+                  }
+                },
+                ':hover': {
+                  '[role="icon"]': {
+                    opacity: 1,
+                    width: 'auto'
+                  }
+                }
+              }
+            ])}
+          >
+            {metaObject.coverImgSrc ? (
+              <Image src={metaObject.coverImgSrc} preview width={28} style={{ borderRadius: 6 }} />
+            ) : (
+              <Icon name={Rendevoz.Utils.Object.getMetaObjectIcon(metaObject.type)} size={16} />
+            )}
+            <div
+              style={{
+                fontSize: 12,
+                fontWeight: 500
+              }}
+              className={ClassName.ellipsisFont(1)}
+            >
+              {metaObject.name || metaObject.placeholderName}
+            </div>
+            <AnimatePopover
+              onClickOutside={() => setpopoveropen(false)}
+              visible={popoveropen}
+              positions={['right', 'left']}
+              align="start"
+              padding={0}
+              content={setV => (
+                <WithBorder
+                  onClick={e => {
+                    e.stopPropagation()
+                    setpopoveropen(false)
+                  }}
+                >
+                  <ObjectActionPopover metaObjectId={metaObjectId} />
+                </WithBorder>
+              )}
+            >
+              <Icon
+                onClick={e => {
+                  setpopoveropen(true)
+                  e.stopPropagation()
+                }}
+                containerStyle={{
+                  zIndex: 10,
+                  marginLeft: 'auto'
+                }}
+                size={20}
+                name={'park-more'}
+                className={ClassName.flatButton(4, '2px')}
+              />
+            </AnimatePopover>
           </Content>
         </DraggableElement>
       )
@@ -400,14 +415,4 @@ export const SimpleObject = memo(
   )
 )
 
-const titleClassName = css([
-  ClassName.ellipsisFont(3),
-  ClassName.title(FontSize['14px']),
-  {
-    cursor: 'pointer',
-    transition: 'color 0.16s ease',
-    ':hover': {
-      color: Colors.Common.SelectColor
-    }
-  }
-])
+const titleClassName = css([ClassName.ellipsisFont(3), ClassName.title(FontSize['14px'])])

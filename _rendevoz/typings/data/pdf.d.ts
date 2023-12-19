@@ -1,7 +1,8 @@
 import { IBase } from './base'
 import { IHighlightLabel, IThoughtLabel } from './label'
+import { IFile } from '~/typings'
 
-export interface IPdfDocument extends IBase {
+export interface IPdfDocument extends IFile {
   name?: string
   description?: string
   metadata?: IPdfMetadata
@@ -10,25 +11,14 @@ export interface IPdfDocument extends IBase {
   totalReadTime?: number
   readProgress?: number
   totalPageNum?: number
-  noteIds: number[]
   totalNoteNumber?: number
   deletedAt?: number
   starred?: boolean
-  fileUrl?: string
   color?: string
   icon?: string
   labels?: number[]
   // online pdf documents
   webFileUrl?: string
-  pageAnnotations?: Record<
-    number,
-    {
-      // fetch from remote
-      dataUrl?: string
-      // fetch from blob db
-      dataId?: number
-    }
-  >
 }
 export type CustomLabel = IHighlightLabel | IThoughtLabel
 export interface PdfNoteData {

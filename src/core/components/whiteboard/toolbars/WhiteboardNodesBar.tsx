@@ -1,19 +1,14 @@
-import { Icon, Toolbar, Tooltip, WithBorder } from '@/components'
+import { Toolbar, WithBorder } from '@/components'
 import { Colors } from '@/consts'
-import { ClassName } from 'rendevoz'
-import { DraggableElement, DraggingElement } from '@/core'
-import Id from '@/utils/id'
 import { useWhiteboardState } from '@/core/components/whiteboard/hooks/useWhiteboardState'
-import { useFlow } from '@/core/components/whiteboard/hooks'
 
 const WhiteboardNodesBar = () => {
   const [whiteboardState, setWhiteboardState] = useWhiteboardState()
-  const flow = useFlow()
   return (
     <WithBorder
       padding={6}
       style={{
-        background: Colors.Background.Secondary,
+        background: Colors.Background.Popover,
         position: 'absolute',
         left: 20,
         top: '50%',
@@ -46,29 +41,6 @@ const WhiteboardNodesBar = () => {
           iconName="custom-eraser"
           isActive={whiteboardState?.currentTool === 'erase'}
         />
-        <DraggableElement
-          draggingDetails={{
-            type: 'whiteboard-text'
-          }}
-          shouldPress={0}
-          hoverElement={<DraggingElement text="Drop to add text" />}
-        >
-          <Tooltip content="Drag To Add text" position="top">
-            <Icon className={ClassName.circleButton(undefined, 4)} size={20} name="park-text" />
-          </Tooltip>
-        </DraggableElement>
-        <DraggableElement
-          shouldPress={0}
-          draggingDetails={{
-            type: 'note',
-            noteId: Id.getId()
-          }}
-          hoverElement={<DraggingElement text="Drop to add note" />}
-        >
-          <Tooltip content="Drag To Add Note" position="top">
-            <Icon className={ClassName.circleButton(undefined, 4)} size={20} name="park-notes" />
-          </Tooltip>
-        </DraggableElement>
       </Toolbar>
     </WithBorder>
   )

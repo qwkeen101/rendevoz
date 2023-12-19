@@ -8,12 +8,13 @@ import { ReactEditor, useSlateStatic } from '../slate-react'
 import { Transforms } from 'slate'
 import ClassName from '@/styles/classNames'
 import tinycolor from 'tinycolor2'
+import { Colors } from '@/consts'
 
 const HighlightBlock = ({ element, children }: RenderElementProps) => {
   const highlightBlockEle = element as CustomElement & {
     type: 'highlight-block'
   }
-  const emoji = useMemo(() => getEmoji(highlightBlockEle.icon || 'blush'), [highlightBlockEle.icon])
+  const emoji = useMemo(() => getEmoji(highlightBlockEle.icon || 'bulb'), [highlightBlockEle.icon])
   const editor = useSlateStatic()
   const alphaBorder = useMemo(() => {
     if (highlightBlockEle.borderColor) {
@@ -29,8 +30,7 @@ const HighlightBlock = ({ element, children }: RenderElementProps) => {
       style={{
         padding: 12,
         border: highlightBlockEle.borderColor ? `2px solid ${highlightBlockEle.borderColor}` : '2px solid transparent',
-        backgroundColor: 'rgba(var(--block-rgb-bg, 241, 242, 228), 0.6)',
-        backgroundImage: 'var(--block-linear-bg)',
+        backgroundColor: element.background ? 'rgba(var(--block-rgb-bg), 0.6)' : Colors.Background.ButtonHover,
         borderRadius: 8,
         margin: highlightBlockEle.borderColor ? 2 : 0,
         boxShadow: highlightBlockEle.borderColor ? `0 0 0 4px #${alphaBorder}` : undefined

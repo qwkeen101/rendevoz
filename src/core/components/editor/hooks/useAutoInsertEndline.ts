@@ -1,7 +1,9 @@
 import Id from '@/utils/id'
 import { RefObject, useEffect } from 'react'
-import { Transforms } from 'slate'
+import { Editor, Transforms } from 'slate'
 import { CustomEditor } from '~/typings'
+import { ReactEditor } from '@/core'
+import useEditorInstance from '@/core/components/editor/hooks/useEditorInstance'
 
 const useAutoInsertEndline = (scrollElementRef: RefObject<HTMLElement>, editor: CustomEditor) => {
   useEffect(() => {
@@ -11,24 +13,35 @@ const useAutoInsertEndline = (scrollElementRef: RefObject<HTMLElement>, editor: 
         if (editor.editorMode === 'syncedBlock') return
         const textbox = scrollElementRef.current?.querySelector('[role="textbox"]')
         const lastEleRect = textbox?.lastElementChild?.getBoundingClientRect()
+        const lastEle = editor.children[editor.children.length - 1]
+        const shouldInsertRow =
+          lastEle.hide || !(lastEle.type === 'paragraph' && lastEle.children.length === 1 && lastEle.children[0].text === '')
+
         if (lastEleRect && e.clientY > lastEleRect.bottom) {
-          Transforms.insertNodes(
-            editor,
-            {
-              type: 'paragraph',
-              children: [{ text: '' }],
-              id: Id.getId()
-            },
-            {
-              at: [editor.children.length]
-            }
-          )
-          Transforms.select(editor, [editor.children.length - 1])
+          if (shouldInsertRow) {
+            Transforms.insertNodes(
+              editor,
+              {
+                type: 'paragraph',
+                children: [{ text: '' }],
+                id: Id.getId()
+              },
+              {
+                at: [editor.children.length]
+              }
+            )
+          }
+          e.preventDefault()
+
+          setTimeout(() => {
+            Transforms.select(editor, Editor.start(editor, [editor.children.length - 1]))
+            ReactEditor.focus(editor)
+          })
         }
       }
-      scrollElement.addEventListener('click', clickHandler)
+      scrollElement.addEventListener('pointerdown', clickHandler)
       return () => {
-        scrollElement.removeEventListener('click', clickHandler)
+        scrollElement.removeEventListener('pointerdown', clickHandler)
       }
     }
   }, [])

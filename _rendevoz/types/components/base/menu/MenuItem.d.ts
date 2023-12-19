@@ -1,16 +1,10 @@
-import { FC, MouseEventHandler } from "react";
-
-export interface MenuItemProps {
-  onClick?: MouseEventHandler;
-  onDoubleClick?: MouseEventHandler;
-  onContextMenu?: MouseEventHandler;
-  icon?: React.ReactNode;
-  type: "button" | "link" | "separator";
-  children: React.ReactNode;
-  selected?: boolean;
-  id?: number | string;
-  gap?: number;
-  disabled?: boolean;
-}
-declare const MenuItem: FC<MenuItemProps>;
+import { FC, MouseEvent, PointerEventHandler } from 'react';
+import { IMenuLayoutItem } from '@/components/base/menu/index';
+type MenuItemWithProps = IMenuLayoutItem & {
+    selectedKey: string[];
+    onSelect?: () => void;
+    onPointerMove: PointerEventHandler;
+    onClick: (item: IMenuLayoutItem, e: MouseEvent) => void;
+};
+declare const MenuItem: FC<MenuItemWithProps>;
 export default MenuItem;

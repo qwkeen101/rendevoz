@@ -4,8 +4,8 @@ import WebpageNavigation from '@/core/components/webpage/WebpageNavigation'
 import { useEffect, useRef, useState } from 'react'
 import { useGlobalAtomValue } from '@/hooks'
 import { UrlToWebpageMap } from '@/core/components/webpage/hooks/useWebpageContent'
-import parseHTMLasWebpageMeta from '@/core/components/webpage/utils/parseHTMLasWebpageMeta'
 import { GlobalSearchInstance } from '@/core/global/GlobalSearchPanel'
+import { Rendevoz } from '@/core/rendevoz'
 
 export default ({
   url,
@@ -76,7 +76,7 @@ export default ({
     }
     gethtml();`
                 ).then(async html => {
-                  const result = await parseHTMLasWebpageMeta(html, currentUrl)
+                  const result = await Rendevoz.Utils.Web.parseWebpage(url, html)
                   if (result) {
                     onAddAsMeta?.({
                       ...result,

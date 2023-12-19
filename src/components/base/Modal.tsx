@@ -116,7 +116,7 @@ const Modal: FC<ModalProps> = ({
         style={{
           position: 'fixed',
           inset: 0,
-          zIndex: zIndex || Zindexes.ModalBackdrop,
+          zIndex: visible ? zIndex || Zindexes.ModalBackdrop : -1,
           // opacity: visible ? 1 : 0,
           pointerEvents: visible ? 'auto' : 'none'
           // transition: 'opacity 0.3s ease'
@@ -143,7 +143,7 @@ const Modal: FC<ModalProps> = ({
             role={enableClickEvent ? undefined : 'modal'}
             style={{
               position: 'relative',
-              background: Colors.Background.Secondary,
+              background: Colors.Background.Popover,
               boxShadow: Colors.Background.BoxShadow,
               minWidth,
               minHeight,
@@ -226,7 +226,7 @@ const Modal: FC<ModalProps> = ({
                 role={enableClickEvent ? undefined : 'modal'}
                 style={{
                   position: 'relative',
-                  background: Colors.Background.Secondary,
+                  background: Colors.Background.Popover,
                   boxShadow: Colors.Background.BoxShadow,
                   minWidth,
                   minHeight,

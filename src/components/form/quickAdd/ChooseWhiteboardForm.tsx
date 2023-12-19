@@ -61,7 +61,7 @@ export default ({ onBack, onClose, metaId }: { onBack: VoidFunction; onClose: Vo
 
   return (
     <Content flex style={{ width: '90vw', height: '90vh', minWidth: 800, fontSize: 14 }}>
-      <Content flex column style={{ padding: 12, width: 400 }}>
+      <Content flex column style={{ padding: '12px 12px 12px 6px', width: 400, borderRight: '1px solid var(--border-background)' }}>
         <Content flex gap={12} className={ClassName.title()} style={{ marginBottom: 8 }}>
           <Icon name={'park-left'} className={ClassName.circleButton()} onClick={onBack} />
           <div>{t('general.Select a whiteboard')}</div>
@@ -155,10 +155,10 @@ export default ({ onBack, onClose, metaId }: { onBack: VoidFunction; onClose: Vo
         </Content>
         <div
           style={{
-            height: 0,
-            flex: 'auto',
+            height: '100%',
             overflow: 'hidden',
-            width: '100%'
+            width: '100%',
+            position: 'relative'
           }}
         >
           {currentWhiteboard && <Whiteboard key={currentWhiteboard.id} whiteboardId={currentWhiteboard.id} />}

@@ -29,7 +29,7 @@ const CardFeedItem = ({
       flex
       column
       gap={4}
-      style={{ width: 'calc(100% / var(--items-per-row) - 30px)', cursor: 'pointer', color: isRead ? Colors.Font.Transparent : undefined }}
+      style={{ width: 'calc(100% / var(--items-per-row) - 24px)', cursor: 'pointer', color: isRead ? Colors.Font.Transparent : undefined }}
       onClick={onClick}
     >
       {item.image ? (

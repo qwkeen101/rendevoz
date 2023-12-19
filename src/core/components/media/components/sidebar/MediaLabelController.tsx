@@ -1,4 +1,4 @@
-import { Content, Icon, Image } from '@/components'
+import { Button, Content, Icon, Image } from '@/components'
 import { useMergedRef, useSelectAtomValue } from '@/hooks'
 import { MediaStateAtom } from '../../hooks/useMediaState'
 import { ObjectStore } from '@/api/stores'
@@ -13,9 +13,9 @@ import Colors from '@/consts/colors'
 import { MediaToolbarStateAtom } from '../../hooks/useMediaToolbarState'
 import { useSetAtom } from 'jotai'
 import Select from '@/components/base/select'
-import { VideoSidebarStateAtom } from '../../hooks/useMediaSidebarState'
 import { useTranslation } from 'react-i18next'
 import { useRenderLabel } from '@/core'
+import LabelStore from '@/api/stores/label.store'
 
 const MediaLabelController = ({ labelType, labelIds }: { labelType: string; labelIds?: number[] }) => {
   const [sortedLabels, setSortedLabels] = useState<number[]>()
@@ -46,23 +46,38 @@ const MediaLabelController = ({ labelType, labelIds }: { labelType: string; labe
         paddingTop: 12
       }}
     >
-      <Select
-        closeOnSelect
-        align={'start'}
-        value={sortMode}
-        className={ClassName.description()}
-        onSelect={v => typeof v[0] === 'string' && setSortMode(v[0])}
-        options={[
-          {
-            value: 'videoTime',
-            children: t('general.sort by video time')
-          },
-          {
-            value: 'createTime',
-            children: t('general.sort by create time')
-          }
-        ]}
-      ></Select>
+      {labelIds?.length ? (
+        <Content flex alignItems={'center'} justifyContent={'space-between'}>
+          <Select
+            closeOnSelect
+            align={'start'}
+            value={sortMode}
+            className={ClassName.description()}
+            onSelect={v => typeof v[0] === 'string' && setSortMode(v[0])}
+            options={[
+              {
+                value: 'videoTime',
+                children: t('general.sort by video time')
+              },
+              {
+                value: 'createTime',
+                children: t('general.sort by create time')
+              }
+            ]}
+          ></Select>
+          <Button.IconButton
+            style={{
+              fontSize: 13,
+              color: Colors.Font.Transparent
+            }}
+            onClick={() => {
+              labelIds && LabelStore.exportLabels(labelIds, labelType)
+            }}
+            text={t('general.Export all labels')}
+            icon={'park-efferent-three'}
+          />
+        </Content>
+      ) : undefined}
       <Content
         flex
         column

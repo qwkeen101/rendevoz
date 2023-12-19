@@ -22,9 +22,10 @@ const WithBorder: FC<PropsWithChildren<WithBorderProps>> = (
   ref
 ) => {
   const DefaultBorder: CSSProperties = {
-    boxShadow: Colors.Background.BoxShadow,
+    boxShadow: Colors.Background.PopoverBoxShadow,
     // border: '1px solid rgba(0,0,0,0.1)',
     borderRadius: borderRadius,
+    background: Colors.Background.Popover,
     padding,
     minWidth: width,
     fontSize: 14,

@@ -1,4 +1,4 @@
-import { useAddingEdges, useFlow } from '@/core/components/whiteboard/hooks'
+import { useAddingEdges, useFlow } from '@/core/components/whiteboard/StateHooks'
 import { useEffect, useRef } from 'react'
 import { IWhiteboardNode } from '~/typings'
 import { getRelativeHandlePosition } from '@/core/components/whiteboard/utils'

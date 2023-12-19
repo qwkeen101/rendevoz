@@ -76,21 +76,21 @@ const DraggableElement = forwardRef<
       if (node && node instanceof HTMLElement) {
         node.addEventListener('pointerdown', pointerHandler)
         node.addEventListener('pointermove', pointerHandler)
-        document.addEventListener('pointerup', pointerHandler)
+        document.addEventListener('pointerup', pointerHandler, true)
         return () => {
           node.removeEventListener('pointerdown', pointerHandler)
           node.removeEventListener('pointermove', pointerHandler)
-          document.removeEventListener('pointerup', pointerHandler)
+          document.removeEventListener('pointerup', pointerHandler, true)
         }
       }
     }
     childRef.current?.addEventListener('pointerdown', pointerHandler)
     childRef.current?.addEventListener('pointermove', pointerHandler)
-    document.addEventListener('pointerup', pointerHandler)
+    document.addEventListener('pointerup', pointerHandler, true)
     return () => {
       childRef.current?.removeEventListener('pointerdown', pointerHandler)
       childRef.current?.removeEventListener('pointermove', pointerHandler)
-      document.removeEventListener('pointerup', pointerHandler)
+      document.removeEventListener('pointerup', pointerHandler, true)
     }
   })
   const renderChild = () =>

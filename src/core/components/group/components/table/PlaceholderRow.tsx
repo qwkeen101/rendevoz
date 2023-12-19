@@ -28,6 +28,7 @@ const PlaceholderRow = () => {
         className={ClassName.flatButton(0)}
         style={{
           height: 32,
+          marginBottom: 68,
           paddingLeft: 12,
           alignItems: 'center',
           borderBottom: `1px solid ${Colors.Background.Border}`

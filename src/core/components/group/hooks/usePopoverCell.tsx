@@ -62,18 +62,16 @@ const usePopoverCell = (opts: {
 
       const currentbox = opts?.targetRef?.current?.getBoundingClientRect()
       if (currentbox) {
-        if (currentbox.top < 0) {
-          setCellState(s => ({
-            ...s,
-            visible: true,
-            box: {
-              left: currentbox.left,
-              top: 20,
-              width: currentbox.width,
-              height: currentbox.height
-            }
-          }))
-        }
+        setCellState(s => ({
+          ...s,
+          visible: true,
+          box: {
+            left: Math.min(window.innerWidth - currentbox.width - 120, currentbox.left),
+            top: Math.max(20, currentbox.top),
+            width: currentbox.width,
+            height: currentbox.height
+          }
+        }))
       }
       window.addEventListener('wheel', h, { passive: false })
       // document.addEventListener('click', c)
@@ -99,7 +97,13 @@ const usePopoverCell = (opts: {
               }
             }
           }}
-          style={withCover ? { position: 'fixed', left: 0, top: 0, width: '100%', height: '100%', zIndex: 9990 } : undefined}
+          style={
+            withCover
+              ? { position: 'fixed', left: 0, top: 0, width: '100%', height: '100%', zIndex: 999 }
+              : {
+                  zIndex: 99
+                }
+          }
         >
           {renderer(cellState.box)}
         </div>,

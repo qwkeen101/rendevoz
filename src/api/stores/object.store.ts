@@ -4,18 +4,16 @@ import { Atom, atom, PrimitiveAtom } from 'jotai'
 import { atomFamily, selectAtom } from 'jotai/utils'
 import { useMemo } from 'react'
 import { IRegisterdObject, IWhiteboard, IWhiteboardEdge, IWhiteboardNode, MetaObject } from '~/typings'
-import { globalStore, GroupStore, MetaStore, ObjectStore } from './index'
+import { globalStore, GroupStore, MetaStore, NoteStore, ObjectStore } from './index'
 import BaseStore, { initializeLocalStore } from './base.store'
 import { metaObjectsAtom, objectIdToMetaObjectIdMapAtom, tagToMetaObjectIdsMapAtom, TypeToRegisteredMetaObject } from './meta.store'
 import { IStore } from './types'
 import { useGlobalAtomValue } from '@/hooks'
 import Id from '@/utils/id'
-import { INotificationSetting } from '@/core'
 import { CustomTypes } from 'rendevoz'
 import { deleteRendefile } from '@/utils'
 import { DEFAULT_BACKGROUND_COLORS } from '@/components/picker/colorPicker'
 import _ from 'lodash'
-
 export type ObjectFamily = CustomTypes['Object']
 
 export const ObjectFamilyAtom = atomFamily(() => atom(new Map<number, ObjectFamily[keyof ObjectFamily]>()))
@@ -124,7 +122,7 @@ const createObjectStore = <T extends keyof ObjectFamily, V extends ObjectFamily[
               currentObject: {
                 type: obj.specType,
                 objectId: obj.id,
-                name: n.name || n.title || registeredDefaultName || 'Unnamed Object',
+                name: n.name || registeredDefaultName,
                 ...opts.currentMeta
               }
             }
@@ -144,16 +142,16 @@ const createObjectStore = <T extends keyof ObjectFamily, V extends ObjectFamily[
       options?.beforeUpdateProcess?.(n, opts)
       return initializedLocalStore.updateOne(
         (obj, silent) => {
-          setTimeout(() => {
-            const meta = Array.from(globalStore.get(metaObjectsAtom).values()).find(i => i.objectId === obj.id)
-
-            if (meta && 'name' in obj && meta.name !== obj.name && 'name' in n) {
-              MetaStore.updateMetaObject({ id: meta.id, name: obj.name }, true)
-            }
-            if (meta && 'description' in obj && meta.description !== obj.description && 'description' in n) {
-              MetaStore.updateMetaObject({ id: meta.id, description: obj.description }, true)
-            }
-          }, 0)
+          // setTimeout(() => {
+          //   const meta = Array.from(globalStore.get(metaObjectsAtom).values()).find(i => i.objectId === obj.id)
+          //
+          //   if (meta && 'name' in obj && meta.name !== obj.name && 'name' in n) {
+          //     MetaStore.updateMetaObject({ id: meta.id, name: obj.name }, true)
+          //   }
+          //   if (meta && 'description' in obj && meta.description !== obj.description && 'description' in n) {
+          //     MetaStore.updateMetaObject({ id: meta.id, description: obj.description }, true)
+          //   }
+          // }, 0)
           options?.afterUpdateProcess?.onSuccess?.(obj, silent)
         },
         silent => {
@@ -343,33 +341,27 @@ const createNoteStore = () => {
     beforeAddProcess: async n => {
       if (n.contentId === undefined) {
         n.contentId = Id.getId()
+        await NoteStore.saveNoteAsBuffer(
+          [
+            {
+              type: 'paragraph',
+              id: Id.getId(),
+              children: [{ text: '' }]
+            }
+          ],
+          n.contentId
+        )
       }
       if (n.labels === undefined) {
         n.labels = []
+      }
+      if (!n.name) {
+        n.name = 'Untitled'
       }
     },
     afterDeleteProcess: obj => {
       const blobDb = useDb('blobs')
       blobDb.delete(obj.contentId)
-    },
-    beforeUpdateProcess: n => {
-      if (n.title) {
-        n.name = n.title
-        const metaId = globalStore.get(objectIdToMetaObjectIdMapAtom)?.get(n.id)
-        if (metaId) {
-          const meta = globalStore.get(metaObjectsAtom).get(metaId)
-          if (meta && meta.name !== n.title) {
-            MetaStore.updateMetaObject({ id: metaId, name: n.title }, true)
-          }
-        }
-      }
-    },
-    afterUpdateProcess: {
-      onSuccess: obj => {
-        if (obj.name && obj.name !== obj.title) {
-          ObjectStore('note').updateOne({ id: obj.id, title: obj.name })
-        }
-      }
     }
   })
 }
@@ -385,16 +377,12 @@ const createWebpageStore = () => {
       if (!o.url?.startsWith('http://') && !o.url?.startsWith('https://') && o.url?.length) {
         o.url = 'https://' + o.url
       }
-    },
-    afterUpdateProcess: {
-      onSuccess: obj => {
-        if (obj.title) {
-          const webpageMeta = MetaStore.getMetaObjectByObjectId(obj.id)
-          if (webpageMeta && webpageMeta.name !== obj.title && webpageMeta.name === 'Unknown webpage') {
-            MetaStore.updateMetaObject({ id: webpageMeta.id, name: obj.title }, true)
-          }
+      try {
+        if (o.url) {
+          new URL(o.url)
+          o.noteId = undefined
         }
-      }
+      } catch (e) {}
     }
   })
 }

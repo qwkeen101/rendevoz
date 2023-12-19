@@ -1,4 +1,4 @@
-import { useFlow } from '@/core/components/whiteboard/hooks'
+import { useFlow } from '@/core/components/whiteboard/StateHooks'
 import { useEffect } from 'react'
 import isHotkey from 'is-hotkey'
 import { KEY } from '@/consts'

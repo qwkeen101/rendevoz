@@ -4,6 +4,7 @@ import ToolbarItem from './ToolbarItem'
 import ToolbarSeparator from './ToolbarSeparator'
 import styles from './index.module.less'
 import classNames from 'classnames'
+import flattenChildren from '@/utils/array'
 
 export interface ToolbarProps extends React.DetailedHTMLProps<React.HTMLAttributes<HTMLDivElement>, HTMLDivElement> {
   direction?: 'vertical' | 'horizontal'
@@ -12,6 +13,8 @@ export interface ToolbarProps extends React.DetailedHTMLProps<React.HTMLAttribut
   itemClassName?: string
   itemSpace?: number
   itemSize?: number
+  itemRadius?: number
+  itemStyle?: CSSProperties
   itemClickPreventDefault?: boolean
   style?: CSSProperties
   innerRef?: Ref<HTMLDivElement>
@@ -25,19 +28,21 @@ const Toolbar: IToolbar = ({
   className,
   children,
   direction = 'horizontal',
+  itemRadius = 4,
   itemSpace = 6,
   itemSize,
   itemClickPreventDefault = false,
   style,
   itemClassName,
   innerRef,
+  itemStyle,
   disableDefaultStyle,
   ...rest
 }) => {
   let tools
 
   if (children) {
-    tools = Children.toArray(children).map((element, index) => {
+    tools = flattenChildren(children).map((element, index) => {
       if (!element) {
         return element
       }
@@ -48,7 +53,13 @@ const Toolbar: IToolbar = ({
           space: itemSpace,
           size: itemSize,
           clickPreventDefault: itemClickPreventDefault,
-          className: itemClassName
+          className: itemClassName,
+          radius: itemRadius,
+          ...element.props,
+          style: {
+            ...itemStyle,
+            ...element.props.style
+          },
         })
       }
       return element
@@ -60,7 +71,7 @@ const Toolbar: IToolbar = ({
       {...rest}
       ref={innerRef}
       style={style}
-      gap={style?.gap || 4}
+      gap={style?.gap ?? 5}
       flex
       centered
       className={classNames(!disableDefaultStyle && styles.toolbar, className)}

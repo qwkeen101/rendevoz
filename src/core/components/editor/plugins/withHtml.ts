@@ -12,6 +12,9 @@ const withHtml = (editor: CustomEditor) => {
     const html = data.getData('text/html')
     const slateFragment = data.getData('application/x-slate-fragment')
     const plainText = data.getData('text/plain')
+    const url = data.getData('text/uri-list')
+    console.log(data.types)
+    console.log(url)
     console.log(plainText, slateFragment, data)
     const imageItem = Array.from(data.items).find(i => i.type.startsWith('image'))
     if (imageItem) {
@@ -53,6 +56,34 @@ const withHtml = (editor: CustomEditor) => {
       console.log(deserialized)
       const normalized = normalize(deserialized)
       Transforms.insertFragment(editor, normalized)
+      return
+    }
+
+    const linkPattern =
+      /(^|[\s\n]|<[A-Za-z]*\/?>)((?:https?|ftp):\/\/[\-A-Z0-9+\u0026\u2019@#\/%?=()~_|!:,.]*[\-A-Z0-9+\u0026@#\/%=~()_|])/gi
+
+    if (plainText) {
+      const paragraphs = plainText.split(/\r?\n/)
+      const texts = paragraphs
+        .filter(i => i)
+        .map(p => {
+          const matched = p.match(linkPattern)
+          if (matched?.length) {
+            console.log(matched)
+            return {
+              type: 'paragraph',
+              id: Id.getId(),
+              children: matched.map(i => ({ type: 'link', url: i, children: [{ text: i }] }))
+            }
+          } else {
+            return {
+              type: 'paragraph',
+              id: Id.getId(),
+              children: [{ text: p }]
+            }
+          }
+        })
+      Transforms.insertFragment(editor, texts)
       return
     }
     insertData(data)

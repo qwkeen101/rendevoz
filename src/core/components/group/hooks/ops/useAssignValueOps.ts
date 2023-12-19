@@ -248,7 +248,7 @@ const useAssignValueOps = (instance: IGroupInstance) => {
       getVisibleValues: () => {
         return Node.elements(
           { children: filterValue || displayValue },
-          { match: (n, path, parent) => (parent ? unToggledSet.has(parent.id) : true) }
+          { match: (n, path, parent) => (parent ? unToggledSet.has(parent.rowId) : true) }
         )
       },
       removeByPaths: paths => {

@@ -1,7 +1,7 @@
 import { CustomEditor, CustomElement, HeadingElement, IEditorInstance } from '~/typings'
 import { assignProperties } from '@/utils'
 import { Editor, Element, Path, Transforms } from 'slate'
-import { HeadingToLevel } from '@/core/components/editor/elements/heading'
+import { HeadingToLevel } from '@/core/components/editor/elements/Heading'
 import { ID_TO_PATH_MAP } from '@/core'
 
 /**

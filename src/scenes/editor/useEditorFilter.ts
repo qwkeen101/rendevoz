@@ -31,7 +31,7 @@ export const useEditorFilter = (editor: CustomEditor) => {
       setObjects(objects)
       setHeadingTree(headingTree)
     },
-    { wait: 1000 }
+    { wait: 500 }
   )
   useEffect(() => {
     debouncedUpdateIndex()

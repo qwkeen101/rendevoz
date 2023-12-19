@@ -6,12 +6,12 @@ import { MarkerColor } from '@/consts'
 import useGraph from '../hooks/useGraph'
 import { select } from 'd3'
 import { useMemoizedFn } from '@/hooks'
-import { getRadius } from './node/Node'
 import { NodeFakeHiddenOpacity } from '../consts/opacity'
 import { oppositeEdgesMapAtom } from '../hooks/useEdges'
 import { useStore } from 'jotai'
 import Colors from '@/consts/colors'
 import FontSize from '@/consts/font'
+import { Rendevoz } from '@/core/rendevoz'
 
 interface EdgeProps {
   edge: GraphEdge
@@ -83,8 +83,8 @@ const Edge: FC<EdgeProps> = memo(({ edge }) => {
     const sourceX = sourceNode?.x
     const sourceY = sourceNode?.y
     if (!targetNode || !sourceNode) return
-    const TARGET_CIRCLE_RADIUS = getRadius(targetNode.type)
-    const SOURCE_CIRCLE_RADIUS = getRadius(sourceNode?.type)
+    const TARGET_CIRCLE_RADIUS = Rendevoz.Utils.Meta.getTypeRadius(targetNode.type)
+    const SOURCE_CIRCLE_RADIUS = Rendevoz.Utils.Meta.getTypeRadius(sourceNode?.type)
     const yOffset = 18
     const targetCircleCenterX = targetX + TARGET_CIRCLE_RADIUS
     const targetCircleCenterY = targetY + TARGET_CIRCLE_RADIUS + yOffset

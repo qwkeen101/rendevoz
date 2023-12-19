@@ -1,20 +1,12 @@
 import { WithBorder } from '@/components/base'
 import { CustomEditor } from '~/typings'
-import EditorElementsMenu, { EditorSlashElementsMenu } from '@/core/components/editor/components/EditorElementsMenu'
+import EditorElementsMenu from '@/core/components/editor/components/EditorElementsMenu'
 import { EditorOverlayManager } from '../useEditorOverlay'
 import { defaultHandler } from '../../handleAddElementInMenu'
 import useEditorInstance from '@/core/components/editor/hooks/useEditorInstance'
 import { EditorTypeToElementMap } from '@/core/components/editor/maps'
 
-const EditorOverlayElements = ({
-  editor,
-  manager,
-  mode
-}: {
-  editor: CustomEditor
-  manager: EditorOverlayManager
-  mode: 'block' | 'slash'
-}) => {
+const EditorOverlayElements = ({ editor, mode }: { editor: CustomEditor; mode: 'block' | 'slash' }) => {
   const instance = useEditorInstance()
 
   const handleElementAdd = (type: string) => {
@@ -29,18 +21,13 @@ const EditorOverlayElements = ({
         return
       }
     }
+
     defaultHandler(type, instance, mode)
   }
   return (
-    <>
-      <WithBorder>
-        {mode === 'block' ? (
-          <EditorElementsMenu onAddElement={handleElementAdd} />
-        ) : (
-          <EditorSlashElementsMenu onAddElement={handleElementAdd} />
-        )}
-      </WithBorder>
-    </>
+    <WithBorder>
+      <EditorElementsMenu onAddElement={handleElementAdd} />
+    </WithBorder>
   )
 }
 

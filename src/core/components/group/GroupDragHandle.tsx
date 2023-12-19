@@ -14,12 +14,14 @@ import { mousePos } from '@/hooks/utils/useMousePositionRef'
 import RowMenu from '@/core/components/group/components/menu/RowMenu'
 import { useSelectAtomValue } from '@/hooks'
 import { GroupStateAtom } from '@/core/components/group/hooks/useGroupState'
+import { Colors } from '@/consts'
 
 const GroupDragHandle = ({ bodyRef, groupId }: { bodyRef: RefObject<HTMLElement>; groupId: number }) => {
   const emitter = Rendevoz.Events.Emit.GlobalEventEmitter
   const handler = Rendevoz.Events.Emit.useEventHandler('global')
   const [isDragging, setIsDragging] = useState(false)
   const [globalDragging] = useGlobalIsDragging()
+  const isPressed = useRef(false)
   const isSelecting = useSelectAtomValue(GroupStateAtom, s => s.isSelecting)
   const [dragHandle, setDragHandle] = useState<{
     position: XYPosition
@@ -91,15 +93,18 @@ const GroupDragHandle = ({ bodyRef, groupId }: { bodyRef: RefObject<HTMLElement>
       setDragHandle: details => {
         if (globalDragging) return
         if (isSelecting) return
+        if (!bodyRef.current) return
+        const containerRect = bodyRef.current.getBoundingClientRect()
         const box = details.node.getBoundingClientRect()
         if (dragHandle?.visible) {
           if (details.value === dragHandle?.value) return
           if (box.top === dragHandle?.position?.y) return
         }
+        const scale = box.width / details.node.offsetWidth
         const { left, top, height } = box
         const position = {
-          x: left - 24,
-          y: top + 15
+          x: (left - containerRect.left) / scale - 24,
+          y: (top - containerRect.top) / scale + 15
         }
         setDragHandle({ position, value: details.value, node: details.node.cloneNode(true), visible: true })
       },
@@ -115,6 +120,7 @@ const GroupDragHandle = ({ bodyRef, groupId }: { bodyRef: RefObject<HTMLElement>
   })
   handler.on('globalDragPointerUp', data => {
     setIsDragging(false)
+    isPressed.current = false
     isDraggingRef.current = false
     instance.bodyOps?.endDetectAutoScroll?.()
     const target = data.event.target
@@ -176,7 +182,7 @@ const GroupDragHandle = ({ bodyRef, groupId }: { bodyRef: RefObject<HTMLElement>
     }
   }, [])
 
-  if (dragHandle && !globalDragging) {
+  if (dragHandle && !globalDragging && bodyRef.current) {
     return createPortal(
       <AnimatePopover
         positions={['right']}
@@ -195,17 +201,27 @@ const GroupDragHandle = ({ bodyRef, groupId }: { bodyRef: RefObject<HTMLElement>
             pointerEvents: 'auto',
             top: dragHandle.position?.y ?? 0,
             opacity: dragHandle.visible ? 1 : 0,
-            transition: 'all 0.16s ease'
+            transition: 'all 0.16s ease',
+            zIndex: 99,
+            color: Colors.Font.SuperTransparent
+          }}
+          onPointerDown={e => {
+            if (e.button === 0) {
+              isPressed.current = true
+            }
+          }}
+          onPointerUp={() => {
+            isPressed.current = false
           }}
           onPointerMove={e => {
             if (isSelecting) return
-            if (e.buttons === 1) {
-              if (dragHandle.value) {
-                instance.dragOps?.startDrag?.({
-                  value: dragHandle.value,
-                  node: dragHandle.node
-                })
-              }
+            if (!isPressed.current) return
+
+            if (dragHandle.value) {
+              instance.dragOps?.startDrag?.({
+                value: dragHandle.value,
+                node: dragHandle.node
+              })
             }
           }}
           onPointerEnter={event => {
@@ -216,10 +232,10 @@ const GroupDragHandle = ({ bodyRef, groupId }: { bodyRef: RefObject<HTMLElement>
             instance.dragOps?.removeDragHandle?.()
           }}
         >
-          <Icon className={ClassName.circleButton(3, 4)} name={'park-drag'} />
+          <Icon role={"group-drag-handle"} className={ClassName.circleButton(3, 4)} size={18} name={'park-drag'} />
         </div>
       </AnimatePopover>,
-      document.body
+      bodyRef.current
     )
   }
   return null

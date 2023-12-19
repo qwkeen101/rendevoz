@@ -3,7 +3,7 @@ import { useSetting } from '@/core'
 import produce from 'immer'
 import { ClassName } from 'rendevoz'
 import { useTranslation } from 'react-i18next'
-import { useFlow, useWhiteboardNodes, WhiteboardAtom } from '@/core/components/whiteboard/hooks'
+import { useFlow, useWhiteboardNodes, WhiteboardAtom } from '@/core/components/whiteboard/StateHooks'
 import { exportWhiteboardAsImage } from '@/core/components/whiteboard/utils/exportAsImage'
 import { useSelectAtomValue, useToggle } from '@/hooks'
 import { useSetAtom } from 'jotai'
@@ -44,7 +44,7 @@ const WhiteboardSettings = () => {
   }
   const buttonClazz = ClassName.flatButton(4, '2px 6px')
   return (
-    <Content flex column gap={6} style={{ position: 'absolute', right: 20, top: 15, zIndex: 10 }}>
+    <>
       <Modal visible={exportModalVisible} onClose={() => toggleExportModalVisible(false)}>
         <ExportPanel
           onBack={() => {
@@ -152,9 +152,18 @@ const WhiteboardSettings = () => {
         }
         positions={['left']}
       >
-        <Icon className={ClassName.circleButton(4, 4)} size={20} name="park-setting" />
+        <Tooltip content={'Settings'} align={'end'}>
+          <Icon
+            className={ClassName.circleButton(5, 4)}
+            size={18}
+            name="park-more"
+            containerStyle={{
+              pointerEvents: 'auto'
+            }}
+          />
+        </Tooltip>
       </AnimatePopover>
-    </Content>
+    </>
   )
 }
 

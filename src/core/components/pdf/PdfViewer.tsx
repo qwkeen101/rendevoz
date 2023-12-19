@@ -52,11 +52,11 @@ export const PdfViewer: FC<PdfViewerProps> = memo(({ documentId, transformScale,
   }, [documentMeta])
   usePdfDrag(viewboxRef.current, documentId)
   useEffect(() => {
-    if (document?.webFileUrl && !document.fileUrl) {
+    if (document?.webFileUrl && !document.url) {
       DownloadRemotePdf(document.webFileUrl, p => {
         setDownloadState(p)
       }).then(data => {
-        ObjectStore('pdf').updateOne({ id: documentId, fileUrl: data })
+        ObjectStore('pdf').updateOne({ id: documentId, url: data })
         setDownloadState(undefined)
       })
     }
@@ -143,7 +143,7 @@ export const PdfViewer: FC<PdfViewerProps> = memo(({ documentId, transformScale,
           <div>Remaining: {formatBytes(downloadState.remaining, 0)}</div>
         </Content>
       )}
-      {document?.fileUrl && (
+      {document?.url && (
         <Viewer
           onDocumentLoaded={doc => {
             documentRef.current = doc
@@ -151,7 +151,7 @@ export const PdfViewer: FC<PdfViewerProps> = memo(({ documentId, transformScale,
           }}
           layoutClassName={styles.viewerLayout}
           innerRef={mergedRef}
-          fileUrl={document.fileUrl}
+          fileUrl={document.url}
           renderPage={renderPage}
           renderAnnotation={renderAnnotation}
           onRangeChange={handleRangeChange}

@@ -1,11 +1,11 @@
-import useFeedState from '@/core/components/feed/hooks/useFeedState'
+import useFeedState, { FeedStateAtom } from '@/core/components/feed/hooks/useFeedState'
 import Webpage from '@/core/components/webpage/Webpage'
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState, memo, useLayoutEffect, useRef } from 'react'
 import { Content, Icon, Tooltip } from '@/components'
 import { Colors } from '@/consts'
 import KeyvalueStore from '@/api/stores/keyvalue.store'
 import { ClassName } from 'rendevoz'
-import { useGlobalAtomValue, useMemoizedFn } from '@/hooks'
+import { useGlobalAtomValue, useMemoizedFn, useSelectAtomValue } from '@/hooks'
 import { UrlToWebpageMap } from '@/core/components/webpage/hooks/useWebpageContent'
 import { TransformGoogleNewsLinkToRealLink } from '@/core/components/feed/utils/googleNewsScraper'
 import moveToReadLater from '@/core/components/feed/utils/moveToReadLater'
@@ -14,35 +14,59 @@ import FeedPodcastRenderer from '@/core/components/feed/components/FeedPodcastRe
 import { ObjectStore } from '@/api/stores'
 import FeedYoutubeRenderer from '@/core/components/feed/components/FeedYoutubeRenderer'
 import addFeedAsMeta from '@/core/components/feed/utils/service/addFeedAsMeta'
+import { FEED_CONTENT_CACHE } from '@/core/components/feed/contentCache'
+import { useUpdate } from 'react-use'
+import { useSetAtom } from 'jotai'
 
 const FeedContentRenderer = () => {
-  const [feedState, setFeedState] = useFeedState()
+  console.log('rerender')
+  const currentFocusedFeedItemId = useSelectAtomValue(FeedStateAtom, s => s.currentFocusedFeedItemId)
+  const modalOpen = useSelectAtomValue(FeedStateAtom, s => s.modalOpen)
+  const setFeedState = useSetAtom(FeedStateAtom)
   const displayMode = KeyvalueStore.useValue('feedOpenMode')
-  const currentItem = ObjectStore('feed').useValue(feedState.currentFocusedFeedItemId)
+  const currentItem = ObjectStore('feed').useValue(currentFocusedFeedItemId)
   const alreadySaved = useGlobalAtomValue(UrlToWebpageMap).get(currentItem?.link || '')
   const readLaters = KeyvalueStore.useValue('feedReadLaterIds') || []
   const alreadyReadLater = currentItem && readLaters.includes(currentItem.id)
   const [isLoading, setIsLoading] = useState(false)
   const [failLoading, setFailLoading] = useState(false)
-  useEffect(() => {
+  const contentCache = currentItem && FEED_CONTENT_CACHE.get(currentItem.id)
+  const fakeLoad = useRef(false)
+  useLayoutEffect(() => {
     if (currentItem?.link.includes('news.google.com')) {
       TransformGoogleNewsLinkToRealLink(currentItem.link).then(res => {
         ObjectStore('feed').updateOne({ id: currentItem.id, link: res })
       })
+    }
+    if (contentCache) {
+      fakeLoad.current = true
+      setIsLoading(true)
+      setTimeout(() => {
+        setIsLoading(false)
+        fakeLoad.current = false
+      }, 400)
     }
   }, [currentItem?.link])
   if (currentItem?.state && !currentItem.lastRead) {
     ObjectStore('feed').updateOne({ id: currentItem.id, lastRead: Date.now() })
   }
   const memoedContent = useMemo(() => {
-    return currentItem?.state?.content
+    return contentCache
   }, [currentItem?.link])
+  const update = useUpdate()
   const memoparse = useMemoizedFn(p => {
     const item = structuredClone(currentItem)
-    console.log(p, item)
+    console.log(p)
+    const content = p.content
+    if (item) {
+      FEED_CONTENT_CACHE.set(item.id, structuredClone(content))
+    }
+    delete p.content
+
     if (p?.link === item.link && !item?.state) {
       ObjectStore('feed').updateOne({ id: item.id, image: item.image || p?.image, state: p, lastRead: Date.now() })
     }
+    update()
   })
   if (currentItem?.feedType === 'youtube') {
     return (
@@ -54,7 +78,7 @@ const FeedContentRenderer = () => {
       >
         {displayMode === 'sidePeek' && (
           <Icon
-            name={feedState.modalOpen ? 'park-right' : 'park-left'}
+            name={modalOpen ? 'park-right' : 'park-left'}
             className={ClassName.circleButton()}
             size={24}
             onClick={() => {
@@ -83,7 +107,7 @@ const FeedContentRenderer = () => {
       >
         {displayMode === 'sidePeek' && (
           <Icon
-            name={feedState.modalOpen ? 'park-right' : 'park-left'}
+            name={modalOpen ? 'park-right' : 'park-left'}
             className={ClassName.circleButton()}
             size={24}
             onClick={() => {
@@ -114,17 +138,11 @@ const FeedContentRenderer = () => {
           borderLeft: displayMode !== 'center' ? `1px solid ${Colors.Background.Border}` : undefined
         }}
       >
-        <Content
-          fullHeight
-          fullWidth
-          style={{
-            opacity: isLoading ? 0 : 1
-          }}
-        >
+        <Content fullHeight fullWidth>
           <Webpage
             initialWebpageId={alreadySaved}
             onFailLoad={() => {
-              if (!currentItem?.state?.content) {
+              if (contentCache) {
                 setFailLoading(true)
               }
             }}
@@ -132,8 +150,7 @@ const FeedContentRenderer = () => {
             editorOptions={{
               on: async e => {
                 if (e.type === 'valueChange') {
-                  console.log(e.value, currentItem)
-                  ObjectStore('feed').updateOne({ id: currentItem.id, state: { ...currentItem.state, content: e.value } })
+                  FEED_CONTENT_CACHE.set(currentItem.id, e.value)
                 }
                 if (e.type === 'titleChange') {
                   ObjectStore('feed').updateOne({ id: currentItem.id, title: e.value, state: { ...currentItem?.state, title: e.value } })
@@ -194,7 +211,10 @@ const FeedContentRenderer = () => {
               setFailLoading(false)
             }}
             onEndLoad={() => {
-              setIsLoading(false)
+              if (isLoading && !fakeLoad.current) {
+                setIsLoading(false)
+              }
+
               setFailLoading(false)
             }}
             onWebpageParsed={memoparse}
@@ -202,52 +222,26 @@ const FeedContentRenderer = () => {
             state={currentItem.state ? { ...currentItem.state, content: memoedContent } : undefined}
           />
         </Content>
-        {(isLoading || failLoading) && (
-          <Content
-            style={{ margin: 'auto', zIndex: 100, position: 'absolute', inset: 0 }}
-            flex
-            column
-            alignItems={'center'}
-            justifyContent={'center'}
-            gap={10}
-            fullWidth
-          >
-            {failLoading ? (
-              <>
-                <Icon name={'park-error'} theme={'filled'} style={{ color: Colors.Common.Red }} size={48} />
-                <Content flex column alignItems={'center'} justifyContent={'center'} gap={4}>
-                  <div style={{ color: Colors.Font.Transparent, fontSize: 13, maxWidth: '60%', wordBreak: 'break-word' }}>
-                    Failed to load webpage
-                  </div>
-                  <div style={{ color: Colors.Font.Transparent, fontSize: 13, maxWidth: '80%', wordBreak: 'break-word' }}>
-                    {currentItem.link}
-                  </div>
-                </Content>
-              </>
-            ) : (
-              <>
-                <Icon name={'park-loading-four'} spin size={48} />
-                <Content flex column fullWidth alignItems={'center'} justifyContent={'center'} gap={4}>
-                  <div style={{ color: Colors.Font.Transparent, fontSize: 13, maxWidth: '60%', wordBreak: 'break-word' }}>
-                    Loading and parsing webpage
-                  </div>
-                  <div style={{ color: Colors.Font.Transparent, fontSize: 13, maxWidth: '80%', wordBreak: 'break-all' }}>
-                    {currentItem.link}
-                  </div>
-                </Content>
-              </>
-            )}
-          </Content>
-        )}
       </Content>
     )
   }
 
-  return (
-    <Content fullHeight fullWidth flex centered style={{ background: Colors.Background.Secondary }}>
-      <div className={ClassName.title()}>No article selected</div>
-    </Content>
-  )
+  if (!currentItem) {
+    return (
+      <Content
+        fullHeight
+        fullWidth
+        flex
+        centered
+        style={{
+          background: Colors.Background.Global,
+          borderLeft: displayMode === 'rightBar' ? '1px solid var(--border-background)' : undefined
+        }}
+      >
+        <div className={ClassName.title()}>No article selected</div>
+      </Content>
+    )
+  }
 }
 
-export default FeedContentRenderer
+export default memo(FeedContentRenderer)

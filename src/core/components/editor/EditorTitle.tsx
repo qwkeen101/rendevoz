@@ -8,6 +8,7 @@ import { Content } from '@/components'
 import { ForwardRefComponent } from 'framer-motion'
 import { CustomEditor, EditorProps } from '~/typings'
 import useReadOnlyEditor from './hooks/useReadOnly'
+import { Colors } from '@/consts'
 
 type EditorTitleProps = EditorProps['title'] & {
   editor: CustomEditor
@@ -32,7 +33,7 @@ export const EditorTitleClassName = css({
   minHeight: '1em',
   outline: 'none',
   ':empty': {
-    WebkitTextFillColor: 'rgba(55,53,47,0.15)',
+    WebkitTextFillColor: Colors.Font.SuperTransparent,
     ':after': {
       content: 'attr(placeholder)'
     }
@@ -42,7 +43,7 @@ const EditorTitle: ForwardRefComponent<HTMLDivElement, EditorTitleProps> = forwa
   ({ titleEditable = true, titleContainerStyle, customTitleRenderer, titleStyle, stringTitle, editor }, ref) => {
     const { run: debouncedUpdateNote } = useDebounceFn(
       (update: string) => {
-        editor.on({ type: 'titleChange', value: update })
+        editor.on({ type: 'titleChange', value: update || 'Untitled' })
       },
       { wait: 200 }
     )
@@ -52,7 +53,7 @@ const EditorTitle: ForwardRefComponent<HTMLDivElement, EditorTitleProps> = forwa
     useEffect(() => {
       if (titleRef.current) {
         if (document.activeElement !== titleRef.current) {
-          titleRef.current.textContent = stringTitle || ''
+          titleRef.current.textContent = stringTitle === 'Untitled' ? '' : stringTitle || ''
         }
       }
     }, [stringTitle])
@@ -79,11 +80,6 @@ const EditorTitle: ForwardRefComponent<HTMLDivElement, EditorTitleProps> = forwa
             onInput={e => {
               const text = (e.target as HTMLDivElement).textContent
               debouncedUpdateNote(text || '')
-            }}
-            onBlur={() => {
-              if (titleRef.current?.textContent === '') {
-                titleRef.current && (titleRef.current.textContent = t('general.untitled'))
-              }
             }}
             onKeyDown={e => {
               if (isHotkey(KEY.Enter, e)) {

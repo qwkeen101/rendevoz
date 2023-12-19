@@ -17,7 +17,7 @@ import {
   MetaLink,
   MetaObject,
   ISyncedBlock,
-  MetaGroup, IFeed
+  MetaGroup, IFeed, IQuestion, ICode
 } from '.'
 import { PartialWithId } from './common'
 import { CustomTypes } from './custom'
@@ -44,6 +44,8 @@ export type BuiltInObjectTypes = {
   group: MetaGroup
   feedCollection: IFeedCollection
   feedFolder: IFeedFolder
+  question: IQuestion
+  code: ICode
 }
 
 export type ObjectFamily = CustomTypes['Object']

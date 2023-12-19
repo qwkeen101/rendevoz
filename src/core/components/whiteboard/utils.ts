@@ -1,13 +1,13 @@
 import FlowManager from './FlowManager'
 import * as d3 from 'd3'
-import { MetaLink } from '~/typings/data'
+import { IWhiteboardInstance, MetaLink } from '~/typings/data'
 import { globalStore } from '@/api/stores'
 import { metaObjectsAtom, undeletedMetaLinksAtom } from '@/api/stores/meta.store'
 import { EdgePosition, IWhiteboardEdge, IWhiteboardNode, Box } from '~/typings'
 import Id from '@/utils/id'
 import { Position } from '@/types'
 
-export const getNodeData = (nodeId: number, flow: FlowManager) => {
+export const getNodeData = (nodeId: number, instance: IWhiteboardInstance) => {
   const nodeEle = flow.ID_TO_NODE_ELEMENT_MAP.get(nodeId)?.element
   if (nodeEle) {
     const bound = nodeEle.getBoundingClientRect()
@@ -24,25 +24,31 @@ export const getEdgeData = (
   targetNodeId: number,
   sourcePosition: EdgePosition,
   targetPosition: EdgePosition,
-  flow: FlowManager
+  instance: IWhiteboardInstance
 ) => {
-  const sourceXY = getHandlePosition(sourceNodeId, sourcePosition, flow)
-  const targetXY = getHandlePosition(targetNodeId, targetPosition, flow)
-  if (sourceXY && targetXY) {
-    const sourceX = sourceXY.x
-    const sourceY = sourceXY.y
-    const targetX = targetXY.x
-    const targetY = targetXY.y
-    return {
-      sourceX,
-      sourceY,
-      targetX,
-      targetY
-    }
+  const sourceXY = getHandlePosition(sourceNodeId, sourcePosition, instance)
+  const targetXY = getHandlePosition(targetNodeId, targetPosition, instance)
+  if (!sourceXY || !targetXY) {
+    throw new Error('Can not get edge data!')
+  }
+  return {
+    sourceXY,
+    targetXY
   }
 }
-export const isPointerOnContainer = (e: PointerEvent | MouseEvent) => {
+export const isPointerOnContainer = (e: PointerEvent | MouseEvent, instance: IWhiteboardInstance) => {
   const target = e.target as HTMLElement
+  const targetNodeId = target.getAttribute('data-node-id')
+  if (targetNodeId) {
+    const targetNode = instance.getNode?.(Number(targetNodeId))
+    if (targetNode) {
+      if (targetNode.type === 'group') {
+        const nodeState = instance.nodeOps?.getNodeFuncs(targetNode.id)?.getNodeState()
+        if (nodeState?.focused || nodeState?.selected) return false
+        return true
+      }
+    }
+  }
   if (!target.hasAttribute('role')) return false
 
   const role = (e.target as HTMLElement).getAttribute('role')
@@ -50,31 +56,36 @@ export const isPointerOnContainer = (e: PointerEvent | MouseEvent) => {
   return false
 }
 const handleOffset = 4
-export const getHandlePosition = (nodeId: number, handlePosition: EdgePosition, flow: FlowManager) => {
-  const nodeData = getNodeData(nodeId, flow)
-  if (!nodeData) return
-  const { x, y, width, height } = nodeData.bound
-  const handleOffsetAfterScale = handleOffset * flow.containerTransformScale
+export const getHandlePosition = (nodeId: number, handlePosition: EdgePosition, instance: IWhiteboardInstance) => {
+  const realtimeNodeBox = instance.values.ID_TO_NODE_MAP.get(nodeId)?.getRealtimeBox()
+  if (!realtimeNodeBox) {
+    throw new Error('Can not find node: ' + nodeId)
+  }
+  const transform = instance.getTransform?.()
+  if (!transform) {
+    throw new Error('Can not get container transform!')
+  }
+  const { left, top, width, height } = realtimeNodeBox
   switch (handlePosition) {
     case 'top':
       return {
-        x: x + width / 2,
-        y: y - handleOffsetAfterScale
+        x: left + width / 2,
+        y: top - handleOffset
       }
     case 'left':
       return {
-        x: x - handleOffsetAfterScale,
-        y: y + height / 2
+        x: left - handleOffset,
+        y: top + height / 2
       }
     case 'right':
       return {
-        x: x + width + handleOffsetAfterScale,
-        y: y + height / 2
+        x: left + width + handleOffset,
+        y: top + height / 2
       }
     case 'bottom':
       return {
-        x: x + width / 2,
-        y: y + height + handleOffsetAfterScale
+        x: left + width / 2,
+        y: top + height + handleOffset
       }
   }
 }
@@ -99,8 +110,8 @@ export const getRelativeHandlePosition = (
   return 'top'
 }
 
-export const transformXY = (containerRect?: DOMRect, posX: number, posY: number, scale: number) => {
-  if (!containerRect) return
+export const transformXY = (containerRect: DOMRect, posX: number, posY: number, scale: number) => {
+  if (!containerRect) throw new Error('No whiteboard container bounding!')
   return {
     x: (posX - containerRect.x) / scale,
     y: (posY - containerRect.y) / scale

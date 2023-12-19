@@ -24,6 +24,13 @@ export type TagRendererProps = {
   metaObject?: MetaObject
   t: TFunction<'translation', undefined, 'translation'>
 }
+
+const defaultTagsClass = css({
+  '> *': {
+    fontSize: '12px !important',
+    lineHeight: '1.5 !important'
+  }
+})
 export default ({
   gap = 4,
   flexWrap = 'wrap',
@@ -32,12 +39,7 @@ export default ({
   showUpdatedAt,
   showViewAt,
   showAttachments,
-  containerClassName = css({
-    '> *': {
-      fontSize: '12px !important',
-      lineHeight: '1.5 !important'
-    }
-  }),
+  containerClassName = defaultTagsClass,
   relatedNum,
   metaObject,
   t

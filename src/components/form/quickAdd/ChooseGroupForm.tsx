@@ -47,9 +47,9 @@ export default memo(({ onBack, metaId, onClose }: { onBack: VoidFunction; metaId
     if (selectedGroup) {
       const groupId = selectedGroup.objectId
       if (groupId) {
-        if (hideObject) {
-          MetaStore.updateMetaObject({ id: metaId, hidden: true }, true)
-        }
+        // if (hideObject) {
+        //   MetaStore.updateMetaObject({ id: metaId, hidden: true }, true)
+        // }
         GroupStore.insertMetaIntoGroup(metaId, groupId)
         const groupMeta = MetaStore.getMetaObjectByObjectId(groupId)
         if (groupMeta) {
@@ -87,17 +87,17 @@ export default memo(({ onBack, metaId, onClose }: { onBack: VoidFunction; metaId
         <Icon name={'park-left'} className={ClassName.circleButton()} onClick={onBack} />
         <div className={ClassName.title()}>{t('general.Select a group')}</div>
       </Content>
-      <ButtonSwitch
-        value={hideObject}
-        name={t('general.Hide object')}
-        onChange={v => {
-          setSetting(s =>
-            produce(s, draft => {
-              draft.quickAdd.addIntoGroupHideObject = v
-            })
-          )
-        }}
-      />
+      {/*<ButtonSwitch*/}
+      {/*  value={hideObject}*/}
+      {/*  name={t('general.Hide object')}*/}
+      {/*  onChange={v => {*/}
+      {/*    setSetting(s =>*/}
+      {/*      produce(s, draft => {*/}
+      {/*        draft.quickAdd.addIntoGroupHideObject = v*/}
+      {/*      })*/}
+      {/*    )*/}
+      {/*  }}*/}
+      {/*/>*/}
       <ButtonSwitch
         value={setting.quickAdd.addIntoGroupAutoOpen}
         name={t('general.Auto open')}

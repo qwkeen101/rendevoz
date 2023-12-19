@@ -1,21 +1,14 @@
-import { useMergedRef } from "@/hooks";
-import ClassName from "@/styles/classNames";
-import { css } from "@emotion/css";
-import classNames from "classnames";
-import React, {
-  CSSProperties,
-  forwardRef,
-  MouseEventHandler,
-  useLayoutEffect,
-  useRef,
-} from "react";
-import { Icon, Tooltip } from "..";
-import Content from "../Content";
-import Colors from "@/consts/colors";
+import { useMergedRef } from '@/hooks'
+import ClassName from '@/styles/classNames'
+import { css } from '@emotion/css'
+import classNames from 'classnames'
+import React, { CSSProperties, forwardRef, MouseEventHandler, useLayoutEffect, useRef } from 'react'
+import { Icon, Tooltip, Content } from '..'
+import Colors from '@/consts/colors'
 
 const DangerousButtonClassName = css({
-  color: "#FD8A8A",
-});
+  color: Colors.Common.Red
+})
 
 const IconButton = forwardRef(
   (
@@ -34,12 +27,20 @@ const IconButton = forwardRef(
       style,
       tooltip,
       spin,
+      suffixStr,
+      enabled,
+      theme,
+      onSuffixIconClick,
+      suffixIcon,
+      size,
       ...rest
     }: {
       icon?: string
       onClick?: MouseEventHandler
       gap?: number
       text?: string
+      theme?: string
+      enabled?: boolean
       className?: string
       dangerous?: boolean
       reverse?: boolean
@@ -47,6 +48,10 @@ const IconButton = forwardRef(
       tabIndex?: number
       selected?: boolean
       style?: CSSProperties
+      suffixIcon?: string
+      onSuffixIconClick?: React.MouseEventHandler
+      size?: number
+      suffixStr?: string | number
       tooltip?: string
       spin?: boolean
       onPointerEnter?: React.PointerEventHandler
@@ -78,7 +83,7 @@ const IconButton = forwardRef(
             background:
               selected === true
                 ? dangerous
-                  ? 'rgb(253, 138, 138, 0.2)'
+                  ? 'rgb(253, 138, 138, 0.4)'
                   : Colors.Background.ButtonHover
                 : selected === false
                 ? 'none'
@@ -87,12 +92,21 @@ const IconButton = forwardRef(
           }}
           className={classNames(
             className,
-            ClassName.flatButton(undefined, undefined, dangerous ? 'rgb(253, 138, 138, 0.2)' : undefined),
+            ClassName.flatButton(undefined, '2px 8px', dangerous ? 'rgb(253, 138, 138, 0.2)' : undefined),
             dangerous && DangerousButtonClassName
           )}
         >
-          {icon && <Icon spin={spin} name={icon} />}
-          {text && <div>{text}</div>}
+          {icon && <Icon theme={theme} spin={spin} name={icon} size={size} />}
+          {text && <div className={ClassName.ellipsisFont(1)}>{text}</div>}
+          {enabled && <Icon name="park-check-small" containerStyle={{ marginLeft: 'auto' }} />}
+          {suffixIcon && (
+            <Icon onClick={onSuffixIconClick} name={suffixIcon} containerStyle={{ marginLeft: 'auto', color: Colors.Font.Transparent }} />
+          )}
+          {suffixStr && (
+            <span className={ClassName.description()} style={{ fontSize: 'inherit' }}>
+              {suffixStr}
+            </span>
+          )}
         </Content>
       </Tooltip>
     )

@@ -38,7 +38,7 @@ export const initializePdfDocument = async (file: File): Promise<Partial<IPdfDoc
       coverUrl: imageResult
     }
     const pdfResult = result[1]
-    pdfDocument.fileUrl = pdfResult
+    pdfDocument.url = pdfResult
     return pdfDocument
   }
 }

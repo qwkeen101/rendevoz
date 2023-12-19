@@ -15,10 +15,12 @@ interface ToolbarItemProps {
   style?: CSSProperties
   iconName?: string
   space?: number
+  strokeWidth?: number
   isActive?: boolean
   disabled?: boolean
   clickPreventDefault?: boolean
   tooltip?: string
+  radius?: number
 }
 
 const ToolbarItem: FC<ToolbarItemProps> = forwardRef(
@@ -35,13 +37,17 @@ const ToolbarItem: FC<ToolbarItemProps> = forwardRef(
       clickPreventDefault = false,
       isActive = false,
       tooltip,
-      disabled
+      disabled,
+      strokeWidth = 4,
+      radius
     },
     ref
   ) => {
     const renderItem = () => {
       if (iconName) {
-        return <Icon cursor={disabled ? 'inherit' : 'pointer'} className={iconClassName} size={size} name={iconName} />
+        return (
+          <Icon strokeWidth={strokeWidth} cursor={disabled ? 'inherit' : 'pointer'} className={iconClassName} size={size} name={iconName} />
+        )
       }
       if (title) {
         return <div className={styles.title}>{title}</div>
@@ -54,23 +60,29 @@ const ToolbarItem: FC<ToolbarItemProps> = forwardRef(
       }
       onClick?.(e)
     }
-    return cloneElement(
-      createElement('div'),
-      {
-        key: iconName,
-        'data-active': isActive,
-        'data-disabled': disabled,
-        ref,
-        className: classNames(className, ClassName.circleButton(undefined, 4)),
-        style: {
-          ...style,
-          cursor: disabled ? 'not-allowed' : style?.cursor
-        },
-        onPointerDown: clickPreventDefault ? e => e.preventDefault() : undefined,
-        onPointerUp: clickPreventDefault ? e => e.preventDefault() : undefined,
-        onClick: handleClick
-      },
-      <Tooltip content={tooltip}>{renderItem()}</Tooltip>
+    return (
+      <Tooltip content={tooltip}>
+        {cloneElement(
+          createElement('div'),
+          {
+            key: iconName,
+            'data-active': isActive,
+            'data-disabled': disabled,
+            ref,
+            className: classNames(ClassName.circleButton(3, radius), className),
+            style: {
+              ...style,
+              display: 'flex',
+              alignItems: 'center',
+              cursor: disabled ? 'not-allowed' : style?.cursor
+            },
+            onPointerDown: clickPreventDefault ? e => e.preventDefault() : undefined,
+            onPointerUp: clickPreventDefault ? e => e.preventDefault() : undefined,
+            onClick: handleClick
+          },
+          renderItem()
+        )}
+      </Tooltip>
     )
   }
 )

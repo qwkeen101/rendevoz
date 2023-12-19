@@ -3,15 +3,12 @@ import { relatedMetaObjectsMapAtom, undeletedMetaObjectsAtom } from '@/api/store
 import { globalStore } from '@/api/stores'
 import ClassName from '@/styles/classNames'
 import { css } from '@emotion/css'
-import { Provider, useAtomValue, useSetAtom } from 'jotai/react'
-import { createStore } from 'jotai/vanilla'
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { Provider, useAtomValue } from 'jotai/react'
+import { useEffect, useRef, useState } from 'react'
 import { Flipper } from 'react-flip-toolkit'
 import { MetaObject } from '~/typings/data'
 import { Content, Icon } from '@/components'
 import { DatabaseCard } from './card/DatabaseCard'
-import { DatabaseFilter } from './filter'
-import { FilterNameSearchAtom, useObjectFilter } from './filter/useObjectFilter'
 import DatabaseListItem from './ListItem'
 import Select from '@/components/base/select'
 import { useTranslation } from 'react-i18next'
@@ -34,31 +31,9 @@ export const Database = () => {
   }>({
     renderMode: 'detail card'
   })
-  const DatabaseStore = useMemo(() => createStore(), [])
-  const setSearch = useSetAtom(FilterNameSearchAtom, { store: DatabaseStore })
 
   const [sortMode, setSortMode] = useState<'new create' | 'old create' | 'new view' | 'old view' | 'most related'>('new create')
 
-  useObjectFilter(ids => {
-    const shouldDisplay = undeletedMetaObjects.filter(i => ids.has(i.id))
-    const getSortMethod = (): ((a: MetaObject, b: MetaObject) => number) => {
-      switch (sortMode) {
-        case 'old create':
-          return (a, b) => a.createdAt - b.createdAt
-        case 'old view':
-          return (a, b) => (a.viewAt || 0) - (b.viewAt || 0)
-        case 'new create':
-          return (a, b) => b.createdAt - a.createdAt
-        case 'new view':
-          return (a, b) => (b.viewAt || 0) - (a.viewAt || 0)
-        default:
-          return (a, b) => a.createdAt - b.createdAt
-      }
-    }
-    const sort = getSortMethod()
-    shouldDisplay.sort(sort)
-    setDisplayObjects(shouldDisplay)
-  }, DatabaseStore)
   useEffect(() => {
     const relatedMap = globalStore.get(relatedMetaObjectsMapAtom)
     const getSortMethod = (): ((a: MetaObject, b: MetaObject) => number) => {
@@ -198,7 +173,6 @@ export const Database = () => {
           onChange={e => debouncedSetSearch(e.target.value)}
           className={css([ClassName.input(), { borderRadius: 8 }])}
         />
-        <DatabaseFilter />
         <Content flex alignItems="center" justifyContent="space-between">
           <Content className={ClassName.description()} flex alignItems="center" gap={30}>
             <Select
@@ -320,7 +294,6 @@ export const Database = () => {
 
 export { default as useRenderObject } from './useRenderObject'
 
-export * from './filter'
 export * from './card/DatabaseCard'
 export { default as useDropObjectArea } from './useDropObjectArea'
 export { default as AttachmentObject } from './AttachmentObject'
@@ -329,3 +302,12 @@ export { default as AttachmentWrapper } from './AttachmentWrapper'
 export { default as useRenderLabel } from './useRenderLabel'
 export * from './ObjectTimeline'
 export { default as IconNameRenderer } from './IconNameRenderer'
+export const intersectionOfMultipleSets = (set1: Set<number>, set2: Set<number>) => {
+  const ans = new Set()
+  for (let i of set2) {
+    if (set1.has(i)) {
+      ans.add(i)
+    }
+  }
+  return ans
+}

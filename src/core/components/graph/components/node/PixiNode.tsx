@@ -1,19 +1,21 @@
 import { FC, memo, MouseEventHandler, useCallback, useEffect, useMemo, useRef } from 'react'
 import useGraph from '@/core/components/graph/hooks/useGraph'
 import { useAtomValue, useSetAtom } from 'jotai'
-import { FilterSelectedTagsAtom, ObjectTag } from '@/core'
 import { MetaStore } from '@/api/stores'
 import { GraphPathFilterAtom } from '@/core/components/graph/components/GraphPathFilter'
 import { GraphModeAtom } from '@/core/components/graph/hooks/useGraphMode'
 import { GraphNode } from '@/core/components/graph/types/node'
-import { getRadius, NodeProps, sliceLabel } from '@/core/components/graph/components/node/Node'
 import PixiImageNode from '@/core/components/graph/components/node/PixiImageNode'
 import { Container, Text } from '@pixi/react'
-import { DisplayObject, FederatedPointerEvent, Container as PContainer, AlphaFilter } from 'pixi.js'
+import { DisplayObject, FederatedPointerEvent, Container as PContainer } from 'pixi.js'
 import { useMemoizedFn, usePrevious } from '@/hooks'
 import PixiIconNode, { fontStyle } from '@/core/components/graph/components/node/PixiIconNode'
 import { animate } from 'framer-motion'
+import { Rendevoz } from '@/core/rendevoz'
+import _ from 'lodash'
 
+const getRadius = Rendevoz.Utils.Meta.getTypeRadius
+const sliceLabel = (l: string) => l.slice(0, 40)
 const PixiNode: FC<NodeProps> = memo(({ node, onMouseEnter, onMouseLeave, onContextMenu, onClick }) => {
   const nodeRef = useRef<PContainer<DisplayObject>>(null)
   const graph = useGraph()
@@ -39,7 +41,7 @@ const PixiNode: FC<NodeProps> = memo(({ node, onMouseEnter, onMouseLeave, onCont
   const realNode = useMemo(() => {
     return {
       ...node,
-      label: sliceLabel(meta?.name),
+      label: sliceLabel(meta?.name || meta?.placeholderName || ''),
       coverImgSrc: meta?.coverImgSrc,
       icon: meta?.icon
     } as Partial<GraphNode>

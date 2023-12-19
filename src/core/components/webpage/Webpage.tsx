@@ -59,16 +59,14 @@ const WebpageInner = ({
   }, [state])
   const webpageMeta = MetaStore.useObjectToMetaValue(webpageState.currentWebpageId)
   return (
-    <Content flex column fullHeight fullWidth>
+    <Content fullHeight fullWidth>
       {!disableTabTitle && (
         <TabTitle
           icon={<Icon size={16} name={'park-web-page'} />}
           title={webpageMeta?.name || webpageState.externalState?.title || webpageState.currentWebpage?.title}
         />
       )}
-      <div style={{ height: 0, flex: 1, width: '100%' }}>
-        <WebpageContentRenderer onInstanceInitialized={onInstanceInitialized} editorOptions={editorOptions} />
-      </div>
+      <WebpageContentRenderer onInstanceInitialized={onInstanceInitialized} editorOptions={editorOptions} />
     </Content>
   )
 }

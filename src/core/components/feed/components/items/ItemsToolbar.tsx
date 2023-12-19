@@ -1,5 +1,5 @@
 import { FeedItem } from '@/core/components/feed/types'
-import { Content, Icon } from '@/components'
+import { Button, Content, Icon, IconWithPopover, WithBorder } from '@/components'
 import { MetaStore, ObjectStore } from '@/api/stores'
 import KeyvalueStore from '@/api/stores/keyvalue.store'
 import { DateFormat } from '@/utils'
@@ -11,6 +11,8 @@ import unreadItem from '@/core/components/feed/utils/service/unreadItem'
 import useFeedState from '@/core/components/feed/hooks/useFeedState'
 import readItem from '@/core/components/feed/utils/service/readItem'
 import addFeedAsMeta from '@/core/components/feed/utils/service/addFeedAsMeta'
+import { useTranslation } from 'react-i18next'
+import { GlobalInstance } from '@/hooks'
 
 const ItemsToolbar = ({ itemId }: { itemId: number }) => {
   const item = ObjectStore('feed').useValue(itemId)
@@ -19,12 +21,13 @@ const ItemsToolbar = ({ itemId }: { itemId: number }) => {
   const currentRead = KeyvalueStore.useValue('feedReadIds') || []
   const currentCollectionId = useFeedState()[0].currentCollectionId
   const { isMeta, metaId } = useFeedIsMeta(itemId)
+  const { t } = useTranslation()
   const isRead = useFeedIsRead(itemId)
   if (!item) return null
   return (
     <Content gap={10} flex justifyContent={'space-between'} style={{ color: Colors.Font.Transparent, fontSize: 13 }}>
       {item.date && DateFormat.formatDistanceToNowStrict(item.date)}
-      <Content flex gap={6}>
+      <Content flex alignItems={'center'} gap={4}>
         <Icon
           className={ClassName.flatButton(4, '3px')}
           name={'park-star'}
@@ -74,6 +77,52 @@ const ItemsToolbar = ({ itemId }: { itemId: number }) => {
           className={ClassName.flatButton(4, '3px')}
           name={'park-share-one'}
         />
+        <IconWithPopover
+          name={'park-more'}
+          size={13}
+          renderOnParent={false}
+          onClick={e => e.stopPropagation()}
+          className={ClassName.flatButton(4, '3px')}
+          content={setV => (
+            <WithBorder onClick={e => e.stopPropagation()} padding={4} width={140}>
+              {[
+                {
+                  icon: 'park-corner-up-right',
+                  text: t('general.Move to'),
+                  onClick: async () => {
+                    setV(false)
+                    if (!isMeta) {
+                      const m = await addFeedAsMeta(itemId)
+                      if (m) {
+                        GlobalInstance.metaOps?.quickAdd(m.id)
+                      }
+                    } else {
+                      if (metaId) {
+                        GlobalInstance.metaOps?.quickAdd(metaId)
+                      }
+                    }
+                  }
+                },
+                {
+                  icon: 'park-link',
+                  text: t('general.Copy link'),
+                  onClick: async () => {
+                    setV(false)
+                    navigator.clipboard.writeText(item?.link)
+                  }
+                }
+              ].map(i => (
+                <Button.IconButton
+                  style={{
+                    padding: '2px 8px'
+                  }}
+                  {...i}
+                  key={i.icon}
+                />
+              ))}
+            </WithBorder>
+          )}
+        ></IconWithPopover>
       </Content>
     </Content>
   )

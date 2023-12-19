@@ -7,6 +7,8 @@ import { addLinkBetweenTwoMetaObject, createLink, transformTextContentToNameAndD
 import { Node } from 'slate'
 import { useDb } from '@/hooks'
 import { Rendevoz } from '@/core/rendevoz'
+import { normalizeSecondsToTime } from '@/core/components/media/utils'
+import { truncate } from 'lodash'
 
 const retrieveMetaObjectByObjectId = async (objectId: number, type: MetaObject['type']) => {
   const { addMetaObject, getMetaObjectByObjectId } = MetaStore
@@ -40,7 +42,14 @@ export default async (
     }
     case 'pdf': {
       const pdfMeta =
-        (await getMetaObjectByObjectId(dragElement.pdfId)) || (await addMetaObject({ type: 'pdf', objectId: dragElement.pdfId }, true))
+        (await getMetaObjectByObjectId(dragElement.pdfId)) ||
+        (await addMetaObject(
+          {
+            type: 'pdf',
+            objectId: dragElement.pdfId
+          },
+          true
+        ))
       Object.assign(normalizedMetaObject, pdfMeta)
       alreadyHasMeta = true
       shouldOpenEditMetaModal = false
@@ -60,7 +69,14 @@ export default async (
     }
     case 'note': {
       const noteMeta =
-        (await getMetaObjectByObjectId(dragElement.noteId)) || (await addMetaObject({ type: 'note', objectId: dragElement.noteId }, true))
+        (await getMetaObjectByObjectId(dragElement.noteId)) ||
+        (await addMetaObject(
+          {
+            type: 'note',
+            objectId: dragElement.noteId
+          },
+          true
+        ))
       Object.assign(normalizedMetaObject, noteMeta)
       alreadyHasMeta = true
       shouldOpenEditMetaModal = false
@@ -92,7 +108,6 @@ export default async (
           {
             silent: true,
             currentMeta: {
-              name: 'Untitled block',
               fromObject: {
                 type: 'note',
                 metaId: noteMeta.id
@@ -186,6 +201,35 @@ export default async (
       }
       break
     }
+    case 'question': {
+      const obj = await ObjectStore(dragElement.type).getOneById(dragElement.objectId)
+      if (obj) {
+        alreadyHasMeta = !!MetaStore.getMetaObjectByObjectId(obj?.id)
+        shouldOpenEditMetaModal = !alreadyHasMeta
+
+        const parentMeta = obj.parentObjectId && MetaStore.getMetaObjectByObjectId(obj.parentObjectId)
+        const questionMeta =
+          (await getMetaObjectByObjectId(dragElement.objectId)) ||
+          (await addMetaObject(
+            {
+              type: dragElement.type,
+              objectId: dragElement.objectId,
+              name: obj.name,
+              description: obj.description,
+              fromObject: parentMeta ? { type: parentMeta.type, metaId: parentMeta.id } : undefined
+            },
+            true
+          ))
+        Object.assign(normalizedMetaObject, questionMeta)
+        if (parentMeta) {
+          normalizedLinks.push({
+            id: Id.getId(),
+            sourceId: parentMeta.id,
+            targetId: questionMeta.id
+          })
+        }
+      }
+    }
   }
   return {
     normalizedMetaObject,
@@ -226,10 +270,18 @@ const normalizeLabel = async (
         }
       } else {
         const id = Id.getId()
+        let placeholderName = undefined
+        if ('selectedText' in label) {
+          placeholderName = label.selectedText
+        }
+        if ('time' in label && label.time) {
+          placeholderName = truncate(parentMeta.name, { length: 15 }) + ' - ' + normalizeSecondsToTime(label.time)
+        }
         return {
           normalizedMetaObject: {
             id,
-            name: label.name || 'Unnamed Label',
+            name: label.name,
+            placeholderName,
             description: label.description,
             coverImgSrc: label.imageUrl,
             objectId: labelId,

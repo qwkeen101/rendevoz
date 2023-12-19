@@ -7,6 +7,8 @@ export const EditorStateAtom = atom<
       currentActiveHeadingId: number
       readOnly?: boolean
       isDraggingDivider?: boolean
+      // for replace children scroll bug
+      editorVersion?: number
     }
   >
 >({})

@@ -11,6 +11,7 @@ import { isArray } from 'lodash'
 import ClassName from '@/styles/classNames'
 import { css } from '@emotion/css'
 import { Button } from '../button'
+import { Menu } from '@/components'
 
 export interface SelectProps {
   multiple?: boolean
@@ -28,6 +29,7 @@ export interface SelectProps {
   menuPosition?: 'top' | 'bottom'
   options: SelectOptionProps[]
   gap?: number
+  padding?: number
   containerStyle?: CSSProperties
   align?: 'start' | 'center' | 'end'
 }
@@ -39,6 +41,7 @@ const Select: ISelect = ({
   multiple,
   closeOnSelect,
   onSelect,
+  padding = 10,
   placeholder,
   style,
   menuStyle,
@@ -144,15 +147,15 @@ const Select: ISelect = ({
         visible={menuVisible}
         positions={[menuPosition]}
         onClickOutside={() => setMenuVisible(false)}
-        padding={10}
+        padding={padding}
         disableIntersection
-        containerStyle={{ zIndex: '10000' }}
-        parentElement={containerRef.current}
+        containerStyle={{ zIndex: '50000' }}
+        // parentElement={containerRef.current}
         align={align}
         boundaryElement={document.body}
         boundaryInset={20}
         content={
-          <WithBorder borderRadius={5} style={{ fontSize: '0.94rem', lineHeight: 1.3 }}>
+          <WithBorder padding={'0.25rem 0'} style={{ fontSize: 13 }}>
             <SelectMenu
               style={menuStyle}
               menuItems={menuItems}
@@ -223,32 +226,26 @@ const SelectMenu: FC<{
   selectedItems: string[]
 }> = ({ menuItems, onDeSelect, onSelect, selectedItems, style }) => {
   return (
-    <div
+    <Menu.NavigationMenu
       style={style}
       className={css({
-        padding: 8,
-        minWidth: 180,
+        minWidth: 140,
         display: 'flex',
         flexDirection: 'column',
         gap: 4
       })}
-    >
-      {menuItems?.map(item => (
-        <Button.IconButton
-          text={item.name}
-          onClick={() => {
-            if (selectedItems.some(i => i === item.value)) {
-              onDeSelect(item.value)
-            } else {
-              onSelect(item.value)
-            }
-          }}
-          key={item.value}
-          icon={item.icon}
-          selected={selectedItems.some(i => i === item.value) || undefined}
-        />
-      ))}
-    </div>
+      onSelect={v => {
+        onSelect(v.key)
+      }}
+      layout={
+        menuItems?.map(i => ({
+          type: 'item',
+          key: i.value,
+          text: i.name,
+          icon: i.icon
+        })) || []
+      }
+    />
   )
 }
 const Tag: FC<{

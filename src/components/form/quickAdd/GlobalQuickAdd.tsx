@@ -30,6 +30,7 @@ export default memo(() => {
       onClose={() => {
         setQuickAddState(s => ({ ...s, visible: false }))
       }}
+      enableClickEvent={true}
     >
       {quickAddState.metaId && (
         <QuickAddForm onClose={() => setQuickAddState(s => ({ ...s, visible: false }))} currentMetaId={quickAddState.metaId} />

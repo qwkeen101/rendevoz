@@ -1,9 +1,8 @@
 import { GraphNode } from '../../types/node'
-import { getRadius } from './Node'
 import { Rendevoz } from '@/core/rendevoz'
 import { PixiComponent, Sprite, useApp } from '@pixi/react'
 import { useMemo } from 'react'
-import { BLEND_MODES, Graphics as _Graphics, TextStyle } from 'pixi.js'
+import { Graphics as _Graphics, TextStyle } from 'pixi.js'
 import * as Icons from '@icon-park/svg'
 import _ from 'lodash'
 import { SVGScene } from '@pixi-essentials/svg'
@@ -25,16 +24,17 @@ const GraphicsBg = PixiComponent('gbg', {
 })
 export const fontStyle = new TextStyle({
   fontWeight: '400',
-  fontSize: 10,
+  fontSize: 8,
   align: 'center',
   fill: 'white',
+  wordWrapWidth: 240,
   breakWords: true,
-  fontFamily: ['sans-serif'],
+  fontFamily: ['Inter'],
   wordWrap: false
 })
 
 const PixiIconNode = ({ node, label }: { node: GraphNode; label?: string }) => {
-  const radius = getRadius(node.type)
+  const radius = Rendevoz.Utils.Meta.getTypeRadius(node.type)
   const d = radius * 2
 
   const primaryFontColor = getComputedStyle(document.body).getPropertyValue('--font-primary')

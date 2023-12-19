@@ -50,19 +50,19 @@ const FormFilePathPicker = ({
   const selectOptions = [
     {
       value: 'local',
-      children: 'Local file'
+      children: t('general.Local file')
     }
   ]
   if (enableWeb) {
     selectOptions.push({
       value: 'web',
-      children: 'Web file'
+      children: t('general.Web file')
     })
   }
   if (enableBaidudisk && i18n.language === 'zh-CN') {
     selectOptions.push({
       value: 'baidudisk',
-      children: 'Baidu disk file'
+      children: t('general.Baidudisk file')
     })
   }
   return (
@@ -70,6 +70,8 @@ const FormFilePathPicker = ({
       <div className={hoverLabelClassName}>{t('general.file path')}</div>
       {(enableWeb || enableBaidudisk) && (
         <Select
+          align={"start"}
+          padding={4}
           gap={6}
           onSelect={v => setChooser(v[0])}
           options={selectOptions}

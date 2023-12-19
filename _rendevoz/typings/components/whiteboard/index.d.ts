@@ -6,13 +6,13 @@ export type IWhiteboardEdge = {
   id: number
   sourceId: number
   targetId: number
-  sourcePosition?: EdgePosition
-  targetPosition?: EdgePosition
+  sourcePosition: EdgePosition
+  targetPosition: EdgePosition
   metaLinkId?: number
   label?: string
   color?: string
   lineType?: 'straight' | 'polyline' | 'curve'
-  lineStyle?: 'straight' | 'dash' | 'animatedDash'
+  lineStyle?: 'straight' | 'regular' | 'thick' | 'dash' | 'animatedDash'
 }
 
 export type IWhiteboardProps = {
@@ -39,6 +39,8 @@ export type IWhiteboardNode = {
   background?: string
   width?: number
   height?: number
+  resized?: boolean
+  z: number
 } & (
   | {
       type: 'metaObject'
@@ -126,3 +128,15 @@ export interface IWhiteboard extends IBase {
     marker: MultiplePenStyles
   }
 }
+
+export type IWhiteboardOutline = {
+  nodeId: number
+  name: string
+  children?: IWhiteboardOutline[]
+}
+
+
+export type IWhiteboardAlignment = 'left' | 'top' | 'right' | 'bottom' | 'horizontallyCenter' | 'verticallyCenter'
+export type IWhiteboardLayout = 'horizontallySpacing' | 'verticallySpacing' | 'auto' | 'byType'
+
+export * from './instance'

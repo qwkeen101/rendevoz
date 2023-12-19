@@ -1,5 +1,5 @@
 import { useVirtualizer, Virtualizer } from '@tanstack/react-virtual'
-import { CSSProperties, forwardRef, memo, ReactElement, useEffect, useImperativeHandle, useRef, useState } from 'react'
+import { CSSProperties, forwardRef, memo, ReactElement, useCallback, useEffect, useImperativeHandle, useRef, useState } from 'react'
 import isHotkey from 'is-hotkey'
 import { KEY } from '@/consts'
 import { useUpdateEffect } from '@/hooks'
@@ -44,7 +44,7 @@ function VirtualList<T>(
     const contentRef = useRef<HTMLDivElement>(null)
     const virtualizer = useVirtualizer({
       count: items.length,
-      estimateSize: () => estimateSize,
+      estimateSize: useCallback(() => estimateSize, [estimateSize]),
       getScrollElement: () => contentRef.current,
       overscan,
       paddingEnd
@@ -61,6 +61,7 @@ function VirtualList<T>(
     itemzRef.current = items
     const itemz = virtualizer.getVirtualItems()
     const length = items.length
+
     useEffect(() => {
       if (withKeyboardNavigation) {
         const keyboardEvent = (e: KeyboardEvent) => {

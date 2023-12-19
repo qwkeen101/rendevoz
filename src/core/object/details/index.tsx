@@ -10,6 +10,7 @@ import { RelatedPanel } from './Related'
 import { AttachmentWrapper } from '@/core'
 import MetaTagPicker from '@/core/object/MetaTagPicker'
 import { Rnd } from 'react-rnd'
+import { useTranslation } from 'react-i18next'
 
 const ObjectDetails = ({
   metaId,
@@ -22,12 +23,12 @@ const ObjectDetails = ({
   onPeek: VoidFunction
   onAuto: VoidFunction
 }) => {
-  const meta = MetaStore.useValue(metaId)
   const [currentDisplay, setCurrentDisplay] = useState<{
     visible: 'main' | 'tags' | 'links' | 'attachments' | 'preview'
   }>({
     visible: 'main'
   })
+  const { t } = useTranslation()
   useEffect(() => {
     setCurrentDisplay({ visible: 'main' })
   }, [metaId])
@@ -38,42 +39,25 @@ const ObjectDetails = ({
       fullHeight
       fullWidth
       style={{
-        maxHeight: '90vh',
-        boxShadow: Colors.Background.BoxShadow,
-        borderRadius: 12,
-        background: currentDisplay.visible === 'preview' ? Colors.Background.Global : undefined
+        overflowY: 'auto',
+        maxHeight: '80vh'
       }}
     >
       <Content
-        flex
-        alignItems={'center'}
-        justifyContent={'space-between'}
+        className={'d-h-g'}
         style={{
-          padding: '1px 12px',
-          fontWeight: 600,
-          width: '100%',
+          display: 'flex',
+          position: 'sticky',
+          top: 0,
+          background: Colors.Background.Popover,
+          justifyContent: 'space-between',
+          padding: '6px 8px 4px 16px',
           cursor: 'grab',
-          borderBottom: `1px solid ${Colors.Background.Border}`
+          width: '100%',
+          zIndex: 9999
         }}
-        className={'o-d-h'}
       >
-        {currentDisplay.visible === 'main' ? (
-          <div className={ClassName.ellipsisFont(1)} style={{ maxWidth: '90%', fontSize: 13 }}>
-            {meta?.name}
-          </div>
-        ) : (
-          <Content flex gap={12}>
-            <Icon
-              className={ClassName.circleButton()}
-              name={'park-back'}
-              onClick={() => {
-                onAuto()
-                setCurrentDisplay({ visible: 'main' })
-              }}
-            />
-            Back
-          </Content>
-        )}
+        <div style={{ fontWeight: 600 }}>{t('general.Object info')}</div>
         <Icon
           name={'park-close'}
           onClick={() => {
@@ -85,11 +69,7 @@ const ObjectDetails = ({
       <Content
         fullWidth
         style={{
-          height: 0,
-          flex: 1,
-          overflowY: 'auto',
-          overflowX: 'hidden',
-          padding: currentDisplay.visible !== 'tags' && currentDisplay.visible !== 'preview' ? 12 : 0
+          padding: '8px 16px 16px'
         }}
       >
         {currentDisplay.visible === 'main' && (
@@ -110,30 +90,6 @@ const ObjectDetails = ({
             metaId={metaId}
           />
         )}
-        {currentDisplay.visible === 'attachments' && (
-          <AttachmentWrapper
-            style={{ height: '100%' }}
-            innerContainerStyle={{
-              justifyContent: 'space-between',
-              height: '100%',
-              overflowY: 'auto'
-            }}
-            visible={true}
-            maxVisibleAttachments={10}
-            metaId={metaId}
-          />
-        )}
-        {currentDisplay.visible === 'tags' && (
-          <MetaTagPicker
-            style={{
-              minHeight: 240
-            }}
-            alreadyTags={meta?.tags || []}
-            onChange={tags => {
-              MetaStore.updateMetaObject({ id: metaId, tags }, true)
-            }}
-          />
-        )}
         {currentDisplay.visible === 'links' && <RelatedPanel metaId={metaId} />}
       </Content>
     </Content>
@@ -152,6 +108,9 @@ export const GlobalObjectDetails = () => {
       ...GlobalInstance.metaOps,
       openDetails: id => {
         setGState({ visible: true, metaId: id })
+      },
+      closeDetails: () => {
+        setGState(s => ({ ...s, visible: false }))
       }
     }
   })
@@ -182,18 +141,24 @@ export const GlobalObjectDetails = () => {
     <ResizeAndDrag
       minWidth={240}
       ref={rndRef}
+      enableResizing={{
+        left: true,
+        right: true
+      }}
       style={{
         opacity: gState.visible ? 1 : 0,
         pointerEvents: gState.visible ? 'auto' : 'none',
-        zIndex: 1000,
-        background: Colors.Background.Secondary,
-        borderRadius: 12
+        zIndex: gState.visible ? 1000 : -1,
+        background: Colors.Background.Popover,
+        borderRadius: 12,
+        overflow: 'hidden',
+        boxShadow: Colors.Background.PopoverBoxShadow
       }}
       default={{
         width: 600,
         height: 'auto'
       }}
-      dragHandleClassName={'o-d-h'}
+      dragHandleClassName={'d-h-g'}
     >
       <Content style={{ width: '100%', height: '100%' }}>
         {gState.metaId && (

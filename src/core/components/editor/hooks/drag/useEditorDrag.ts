@@ -17,6 +17,7 @@ import useToggleDrag from '@/core/components/editor/hooks/drag/useToggleDrag'
 import useDropToNoteElements from '@/core/components/editor/hooks/drag/useDropToNoteElements'
 import useMoveElements from '@/core/components/editor/hooks/drag/useMoveElements'
 import useReadOnlyEditor from '@/core/components/editor/hooks/useReadOnly'
+import { MetaStore } from '@/api/stores'
 
 export const normalizeEditorDragBlocksToGlobalDraggingDetails = async (instance: IEditorInstance) => {
   let normalizedGlobalDraggingDetails: Partial<AvaliableGlobalDraggingElements> = {}
@@ -136,6 +137,7 @@ const useEditorDrag = (editor: CustomEditor, scrollElement?: HTMLElement | null)
     }
 
     const indicator = dragManager.drag(e)
+    console.log(indicator)
     const targetPath = indicator?.path
     if (!targetPath) return
 
@@ -149,10 +151,13 @@ const useEditorDrag = (editor: CustomEditor, scrollElement?: HTMLElement | null)
           return
         }
       }
-
+      // disable drag sync into sync
       if (draggingElement.element.type === 'synced' && e.target instanceof HTMLElement && e.target.closest('[data-spec-type="synced"]')) {
-        if (indicator.element.type === 'synced' && (indicator.direction === 'top' || indicator.direction === 'bottom')) {
-        } else {
+        return
+      }
+      if(draggingElement.element.type === 'metaElement'){
+        const type = MetaStore.getMetaObjectsMap().get(draggingElement.metaId)?.type
+        if(type === 'syncedBlock' && e.target instanceof HTMLElement && e.target.closest('[data-spec-type="synced"]')){
           return
         }
       }

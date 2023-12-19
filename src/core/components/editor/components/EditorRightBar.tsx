@@ -6,18 +6,24 @@ import { Resizable } from 're-resizable'
 import ClassName from '@/styles/classNames'
 import EditorLabelController from './EditorLabelController'
 import Colors from '@/consts/colors'
-import { useEffect } from 'react'
+import { useEffect, useState, memo } from 'react'
 import { useSetAtom } from 'jotai'
 import { EditorSearchAtom } from '../hooks/useEditorSearch'
 import { useSelectAtomValue } from '@/hooks'
 import { EditorStateAtom } from '@/core/components/editor/hooks/useEditorState'
+import AskAIPanel from '@/core/ai/components/AskAIPanel'
+import useEditorInstance from '@/core/components/editor/hooks/useEditorInstance'
+import normalizeAsAi from '@/core/components/editor/utils/normalizeAsAi'
+import { Editor, Node } from 'slate'
 
 const EditorRightBar = () => {
   const [barState, setBarState] = useEditorBarState()
   const { t } = useTranslation()
+  const instance = useEditorInstance()
   const labels = useSelectAtomValue(EditorStateAtom, s => s.labelIds)
   const labelType = useSelectAtomValue(EditorStateAtom, s => s.labelType) || 'noteLabel'
   const setEditorSearch = useSetAtom(EditorSearchAtom)
+  const ai = useSelectAtomValue(EditorStateAtom, s => s.ai)
   useEffect(() => {
     if (!barState.showRightBar || barState.rightBarActive !== 'search') {
       setEditorSearch(s => ({ ...s, isSearching: false }))
@@ -25,6 +31,9 @@ const EditorRightBar = () => {
       setEditorSearch(s => ({ ...s, isSearching: true }))
     }
   }, [barState])
+  const e = instance.getSlateEditor?.()?.children || []
+  const normalized = normalizeAsAi(e)
+  const editor = instance.getSlateEditor?.()
 
   return (
     <Resizable
@@ -42,24 +51,42 @@ const EditorRightBar = () => {
           left: 0
         }
       }}
+      onResizeStop={(e, d, ele, delta) => {
+        setBarState(s => ({ ...s, rightBarWidth: ele.offsetWidth }))
+      }}
       style={{
         transform: barState.showRightBar ? 'unset' : 'translateX(100%)',
-        transition: 'transform 0.2s ease',
-        position: barState.showRightBar ? 'relative' : 'absolute',
+        background: Colors.Background.Global,
+        transition: 'transform 0.27s ease, opacity 0.27s ease',
+        position: 'absolute',
         pointerEvents: barState.showRightBar ? 'auto' : 'none',
-        padding: '6px 12px',
         borderLeft: `1px solid ${Colors.Background.Border}`,
-        background: Colors.Background.Secondary,
+        opacity: barState.showRightBar ? 1 : 0,
+        paddingTop: 32,
+        // background: Colors.Background.Secondary,
         right: 0,
         top: 0
       }}
     >
+      <Icon
+        className={ClassName.flatButton(4, '3px')}
+        name={'park-double-right'}
+        size={18}
+        onClick={() => setBarState(s => ({ ...s, showRightBar: false }))}
+        containerStyle={{
+          zIndex: 99,
+          position: 'absolute',
+          left: 5,
+          top: 5
+        }}
+      />
       <Tabs
         tabNavContainerStyle={{
-          padding: '8px 0px 4px'
+          padding: '6px 8px',
+          display: 'none'
         }}
         extra={
-          <Icon name="park-close" className={ClassName.circleButton()} onClick={() => setBarState(s => ({ ...s, showRightBar: false }))} />
+          <Icon name="park-right" className={ClassName.circleButton()} onClick={() => setBarState(s => ({ ...s, showRightBar: false }))} />
         }
         defaultActiveKey="search"
         onTabClick={key => setBarState(s => ({ ...s, rightBarActive: key }))}
@@ -67,12 +94,9 @@ const EditorRightBar = () => {
       >
         <TabPane
           key="search"
-          style={{
-            paddingTop: 12
-          }}
           tab={
             <Content alignItems="center" flex gap={6}>
-              <Icon name="park-search" />
+              <Icon name="park-find" />
               {t('general.search')}
             </Content>
           }
@@ -90,9 +114,67 @@ const EditorRightBar = () => {
         >
           <EditorLabelController labelType={labelType} labelIds={labels} />
         </TabPane>
+        {/*<TabPane*/}
+        {/*  key="ai"*/}
+        {/*  tab={*/}
+        {/*    <Content alignItems="center" flex gap={6}>*/}
+        {/*      <Icon name="custom-magic" />*/}
+        {/*      {t('Ask AI')}*/}
+        {/*    </Content>*/}
+        {/*  }*/}
+        {/*>*/}
+        {/*  <AskAIPanel*/}
+        {/*    questions={ai?.questions}*/}
+        {/*    summary={ai?.summary}*/}
+        {/*    onSummarized={e => {*/}
+        {/*      if (!editor) return*/}
+        {/*      const getBlockStr = (id: number) => {*/}
+        {/*        const path = instance.getElementPathById?.(id)*/}
+        {/*        if (path) {*/}
+        {/*          const n = Editor.node(editor, path)[0]*/}
+        {/*          return Node.string(n)*/}
+        {/*        }*/}
+        {/*      }*/}
+        {/*      e.questions = e.questions.map(i => {*/}
+        {/*        if (i.answerType === 'pointer') {*/}
+        {/*          i.answerPointers = i.answerPointers.map(p =>*/}
+        {/*            p.pointerType === 'documentBlock' ? { ...p, blockStr: getBlockStr(p.blockId) } : p*/}
+        {/*          )*/}
+        {/*        }*/}
+        {/*        return i*/}
+        {/*      })*/}
+        {/*      editor?.on?.({*/}
+        {/*        type: 'AI summarize',*/}
+        {/*        ...e*/}
+        {/*      })*/}
+        {/*    }}*/}
+        {/*    on={e => {*/}
+        {/*      switch (e.type) {*/}
+        {/*        case 'questionGotoOriginalPlace': {*/}
+        {/*          instance.scrollToBlock?.({*/}
+        {/*            blockId: e.originalId,*/}
+        {/*            highlight: true*/}
+        {/*          })*/}
+        {/*          return true*/}
+        {/*        }*/}
+        {/*        case 'getOriginalText': {*/}
+        {/*          const editor = instance.getSlateEditor?.()*/}
+        {/*          const path = instance.getElementPathById?.(e.originalId)*/}
+        {/*          if (path && editor) {*/}
+        {/*            const node = Editor.node(editor, path)*/}
+        {/*            if (node) {*/}
+        {/*              return Node.string(node[0])*/}
+        {/*            }*/}
+        {/*          }*/}
+        {/*        }*/}
+        {/*      }*/}
+        {/*    }}*/}
+        {/*    content={JSON.stringify(normalized)}*/}
+        {/*  />*/}
+        {/*</TabPane>*/}
       </Tabs>
     </Resizable>
   )
 }
 
-export default EditorRightBar
+export default memo(EditorRightBar)

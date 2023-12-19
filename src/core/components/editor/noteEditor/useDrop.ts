@@ -45,21 +45,18 @@ const useDrop = (noteId?: number) => {
     console.log(draggableElement)
     const autoBecomeInline = getSetting().editor.objectAutoBecomeInline
     const id = Id.getId()
-    const metaId =
-      draggableElement.type === 'metaElement'
-        ? draggableElement.metaId
-        : (
-            (await Rendevoz.Events.Emit.GlobalEventEmitter.emitWithCallback('global', {
-              type: 'globalDropNeedFurtherProcess',
-              data: {
-                dropOn: {
-                  dropOn: 'editor',
-                  noteId: noteId
-                },
-                draggingElement: GlobalDragOverlayInstance.draggingDetails
-              }
-            })) as MetaObject
-          ).id
+    const metaId = (
+      await Rendevoz.Events.Emit.GlobalEventEmitter.emitWithCallback('global', {
+        type: 'globalDropNeedFurtherProcess',
+        data: {
+          dropOn: {
+            dropOn: 'editor',
+            noteId: noteId
+          },
+          draggingElement: GlobalDragOverlayInstance.draggingDetails
+        }
+      })
+    ).id
     let element: CustomElement | undefined = undefined
     const targetMeta = await MetaStore.getMetaObjectById(metaId)
     if (targetMeta?.type === 'syncedBlock') {

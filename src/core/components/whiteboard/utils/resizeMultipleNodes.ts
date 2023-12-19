@@ -1,9 +1,9 @@
-import { IWhiteboardNode, Size, XYPosition } from '~/typings'
+import { IWhiteboardInstance, IWhiteboardNode, Size, XYPosition } from '~/typings'
 import { getBoxOfNodes } from '@/core/components/whiteboard/utils'
 import FlowManager from '@/core/components/whiteboard/FlowManager'
 
 const resizeMultipleNodes = (
-  flow: FlowManager,
+  instance: IWhiteboardInstance,
   // original nodes when resize begin, we don't update their states when resizing, only update when resize ends
   // mutate its size by using ref
   selectedNodes: IWhiteboardNode[],
@@ -33,9 +33,15 @@ const resizeMultipleNodes = (
     }
 
     const currentNodes = selectedNodes.map(n => {
+      const realTimeBox = instance.nodeOps?.getNodeFuncs(n.id)?.getRealtimeBox()
+      if (!realTimeBox)
+        throw new Error(`Failed to resize nodes! Reason: DOM of node with id: ${n.id} not found. Node details: ${JSON.stringify(n)}`)
       const latest = {
         ...n,
-        ...flow.getLatestNodeSize(n.id)
+        x: realTimeBox.left,
+        y: realTimeBox.top,
+        width: realTimeBox.width,
+        height: realTimeBox.height
       }
       return {
         origin: n,
@@ -83,12 +89,8 @@ const resizeMultipleNodes = (
     }
 
     newNodesToUpdate.forEach(n => {
-      flow.updateNodeSize(n.id, {
-        x: n.x,
-        y: n.y,
-        width: n.width,
-        height: n.height
-      })
+      console.log(n)
+      instance.nodeOps?.getNodeFuncs(n.id)?.updateNodeBox({ left: n.x, top: n.y, width: n.width, height: n.height })
     })
     return newNodesToUpdate
   }

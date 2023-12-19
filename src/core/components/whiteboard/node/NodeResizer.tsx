@@ -1,7 +1,7 @@
 import { CSSProperties, memo, useEffect, useMemo, useRef } from 'react'
 import { EdgePosition } from '~/typings'
 import { useToggle } from '@/hooks'
-import { useAddingEdges } from '@/core/components/whiteboard/hooks'
+import { useAddingEdges } from '@/core/components/whiteboard/StateHooks'
 import { AnimatePresence, motion } from 'framer-motion'
 import { css } from '@emotion/css'
 

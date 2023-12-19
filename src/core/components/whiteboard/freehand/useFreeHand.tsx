@@ -7,6 +7,7 @@ import { useWhiteboardState, WhiteboardStateAtom } from '@/core/components/white
 import { Colors } from '@/consts'
 import { IWhiteboardNode, IPenStyle } from '~/typings'
 import { useWhiteboardInstance } from '@/core/components/whiteboard/hooks/useWhiteboardInstance'
+import { trimNumber } from '@/utils'
 
 // [x, y, pressure]
 type Points = [number, number, number][]
@@ -102,19 +103,25 @@ const useFreeHand = () => {
       isPressed.current = true
     }
     ;(e.target as SVGSVGElement).setPointerCapture(e.pointerId)
-    const transformedXY = flow.transformPointer(e)
+    const transformedXY = instance.coordOps?.transformWindowPositionToPosition({
+      x: e.clientX,
+      y: e.clientY
+    })
     if (transformedXY) {
-      setPoints([[Number(transformedXY.x.toFixed(4)), Number(transformedXY.y.toFixed(4)), e.pressure]])
+      setPoints([[transformedXY.x, transformedXY.y, e.pressure]])
       setWhiteboardState(s => ({ ...s, freeDrawing: true }))
     }
   }
 
   const handlePointerMove: React.PointerEventHandler<SVGSVGElement> = e => {
     if (!isPressed.current || whiteboardState.isPanning) return
-    const transformedXY = flow.transformPointer(e)
+    const transformedXY = instance.coordOps?.transformWindowPositionToPosition({
+      x: e.clientX,
+      y: e.clientY
+    })
     if (transformedXY && points) {
       e.preventDefault()
-      points.push([Number(transformedXY.x.toFixed(4)), Number(transformedXY.y.toFixed(4)), e.pressure])
+      points.push([transformedXY.x, transformedXY.y, e.pressure])
       setPoints([...points])
     }
   }
@@ -125,12 +132,13 @@ const useFreeHand = () => {
     setWhiteboardState(s => ({ ...s, freeDrawing: false }))
     if (points) {
       const bounds = getBoxOfPoints(points)
-      const newPoints = points.map(p => [p[0] - bounds.left, p[1] - bounds.top, p[2]])
+      const newPoints = points.map(p => [trimNumber(p[0] - bounds.left, 2), trimNumber(p[1] - bounds.top, 2), p[2]])
+      console.log(newPoints, points, bounds)
       instance.insertNode?.({
         x: bounds.left,
         y: bounds.top,
-        width: bounds.width,
-        height: bounds.height,
+        width: trimNumber(bounds.width, 2),
+        height: trimNumber(bounds.height, 2),
         points: newPoints,
         type: 'freehand',
         penType: whiteboardState.freeHandConfig.type || 'ballpen',

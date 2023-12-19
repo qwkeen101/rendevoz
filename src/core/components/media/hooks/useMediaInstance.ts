@@ -54,7 +54,8 @@ export const useAssignMediaInstance = (containerRef: RefObject<HTMLElement>) => 
       const one = await mediaInstance.on?.({
         type: 'addLabel',
         currentLabel: {
-          ...label,
+          time,
+          selectedText: label.name,
           imageUrl: imgPath
         }
       })

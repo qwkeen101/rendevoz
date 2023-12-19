@@ -61,8 +61,7 @@ export default defineConfig(() => ({
   ],
   server: {
     host: '127.0.0.1',
-    port: 7777,
-    hmr: false
+    port: 7777
   },
   clearScreen: false
 }))

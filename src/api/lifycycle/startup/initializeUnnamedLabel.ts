@@ -5,7 +5,7 @@ import { normalizeSecondsToTime } from '@/core/components/media/utils'
 
 export default async () => {
   const appVersion = APP_VERSION
-  if (appVersion !== '0.6.1') {
+  if (semver.lt(appVersion, '0.6.1')) {
     return
   }
   if (localStorage.getItem('LABEL_UPDATED')) return

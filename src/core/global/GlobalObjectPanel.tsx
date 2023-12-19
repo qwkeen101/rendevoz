@@ -14,10 +14,9 @@ import { LeftTopPosition } from '~/typings'
 import Colors from '@/consts/colors'
 import FontSize from '@/consts/font'
 import { Rendevoz } from '../rendevoz'
-import { GlobalLayout } from '@/components/layout'
 import { calculateFilterObjects } from '@/core/object/filter/useBetterFilter'
 import BetterFilter from '@/core/object/filter/BetterFilter'
-import BetterSorter, { calculateSortObjects, SorterGroup } from '@/core/object/filter/BetterSorter'
+import { calculateSortObjects, SorterGroup } from '@/core/object/filter/BetterSorter'
 import { go } from 'fuzzysort'
 import isHotkey from 'is-hotkey'
 import { KEY } from '@/consts'
@@ -231,8 +230,7 @@ export const ObjectPanel = memo(
               style={{
                 fontSize: 12,
                 padding: '2px 6px',
-                height: 'auto',
-                marginRight: 'auto'
+                height: 'auto'
               }}
               closeOnSelect={true}
               align={'start'}
@@ -252,10 +250,10 @@ export const ObjectPanel = memo(
               gap={6}
               style={{
                 fontSize: 12,
-                padding: '2px 6px'
+                padding: '2px 6px',
+                marginLeft: 'auto'
               }}
               onClick={() => setFilterSort(s => ({ ...s, searchVisible: !s.searchVisible }))}
-              text={t('general.search')}
               icon="park-search"
             />
             <AnimatePopover
@@ -282,7 +280,6 @@ export const ObjectPanel = memo(
                   fontSize: 12,
                   padding: '2px 6px'
                 }}
-                text={t('filter.Filter')}
                 icon="park-filter"
                 suffixStr={filterSort.filter?.rules.length || undefined}
               />

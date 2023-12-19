@@ -71,7 +71,7 @@ const resizeMultipleNodes = (
       const offsetY = origin.y - anchorY
       const x = anchorX + offsetX * scale
       const y = anchorY + offsetY * scale
-      if (width < 160) {
+      if (width < 160 && origin.type !== 'freehand') {
         newNodesToUpdate.push({
           ...origin,
           x,

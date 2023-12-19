@@ -352,7 +352,7 @@ const WrapperNode = ({ node }: { node: IWhiteboardNode }) => {
         '--global-background': nodeStyle.background,
         pointerEvents: hasEraseOrDrawTool === 'freehand' ? 'none' : nodeStyle.pointerEvents
       }}
-      minWidth={160}
+      minWidth={type === 'freehand' ? undefined : 160}
       lockAspectRatio={(lockResizeElements.includes(type) || nodeState.keepRatioResize) && shouldKeepRatio}
       disableDragging={
         hasEraseOrDrawTool ||

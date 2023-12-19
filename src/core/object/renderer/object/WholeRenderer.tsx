@@ -14,7 +14,6 @@ import OptionRenderer, { OptionRendererProps } from '@/core/object/renderer/obje
 import ImageRenderer, { ImageRenderProps } from '@/core/object/renderer/object/ImageRenderer'
 import TitleRenderer, { TitleRendererProps } from '@/core/object/renderer/object/TitleRenderer'
 import FromRenderer, { FromRendererProps } from '@/core/object/renderer/object/FromRenderer'
-import { Colors } from '@/consts'
 
 export type WholeRendererProps = {
   options?: {

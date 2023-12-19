@@ -1,14 +1,11 @@
 import { IWhiteboardNode } from '~/typings/data'
 import { Content } from '@/components/base'
-import ClassName from '@/styles/classNames'
 import { FC, memo, useEffect, useMemo, useRef } from 'react'
 import { InnerNodeProps } from '../WrapperNode'
 import PdfNode from './PdfNode'
 import NoteNode from './NoteNode'
 import { useRenderObject } from '@/core'
-import FontSize from '@/consts/font'
 import WebpageNode from '@/core/components/whiteboard/node/nodes/WebpageNode'
-import { Rendevoz } from '@/core/rendevoz'
 import { useWhiteboardInstance } from '@/core/components/whiteboard/hooks/useWhiteboardInstance'
 import SyncedBlockNode from '@/core/components/whiteboard/node/nodes/SyncedBlockNode'
 import Video from '@/core/components/media/wrappers/Video'
@@ -17,6 +14,7 @@ import { MetaGroupPage } from '@/scenes'
 import { DockTabPaneContext } from '@/components/base/dock/DockTabPane'
 import Code from '@/core/components/code'
 import { css } from '@emotion/css'
+import LabelDetailsRenderer from '@/core/object/renderer/LabelDetailsRenderer'
 
 const tagsClass = css({
   '> *': {
@@ -127,10 +125,6 @@ const MetaObjectNode: FC<InnerNodeProps> = ({ node: n, setNodeState, nodeState }
       </div>
     </Content>
   )
-  let width = node.width || 350
-  if (!metaObject?.type.includes('Label') && !node.width) {
-    width = Math.min(getTextWidth(metaObject?.name || 'Default Name') + 50, 500)
-  }
 
   const commonRenderer = () =>
     renderWhole({
@@ -159,15 +153,12 @@ const MetaObjectNode: FC<InnerNodeProps> = ({ node: n, setNodeState, nodeState }
           fontSize: 14,
           marginTop: 3
         },
-        showEditBoxShadow: false,
         ellipsisLine: 0,
         style: {
           fontSize: 17,
           lineHeight: 1.4,
           whiteSpace: 'pre-wrap'
-        },
-        clickToEdit: metaObject?.type?.includes('Label'),
-        showAddNote: nodeState?.focused ? true : false
+        }
       },
       descriptionOptions: {
         ellipsisLine: 0
@@ -244,6 +235,10 @@ const MetaObjectNode: FC<InnerNodeProps> = ({ node: n, setNodeState, nodeState }
         }
       }
     }
+  }
+
+  if (metaObject.type.includes('Label')) {
+    return <LabelDetailsRenderer metaId={metaObjectId} />
   }
   return expanded ? (
     <DockTabPaneContext.Provider value={{ currentTabId: '' }}>{renderExpanded()}</DockTabPaneContext.Provider>

@@ -6,6 +6,7 @@ import { metaObjectsAtom, undeletedMetaLinksAtom } from '@/api/stores/meta.store
 import { EdgePosition, IWhiteboardEdge, IWhiteboardNode, Box } from '~/typings'
 import Id from '@/utils/id'
 import { Position } from '@/types'
+import { trimNumber } from '@/utils'
 
 export const getNodeData = (nodeId: number, instance: IWhiteboardInstance) => {
   const nodeEle = flow.ID_TO_NODE_ELEMENT_MAP.get(nodeId)?.element
@@ -113,8 +114,8 @@ export const getRelativeHandlePosition = (
 export const transformXY = (containerRect: DOMRect, posX: number, posY: number, scale: number) => {
   if (!containerRect) throw new Error('No whiteboard container bounding!')
   return {
-    x: (posX - containerRect.x) / scale,
-    y: (posY - containerRect.y) / scale
+    x: trimNumber((posX - containerRect.x) / scale, 2),
+    y: trimNumber((posY - containerRect.y) / scale, 2)
   }
 }
 

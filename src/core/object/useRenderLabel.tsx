@@ -63,8 +63,12 @@ const useRenderLabel = (opts: {
             placeholder={t('general.Add note for label')}
             value={currentLabelHasName ? label?.name : undefined}
             onChange={v => {
-              ObjectStore(type).updateOne({ id: objectId, name: v })
               setLabelState(s => ({ ...s, editingName: false }))
+              if (labelMeta) {
+                MetaStore.updateMetaObject({ id: labelMeta.id, name: v }, true)
+                return
+              }
+              ObjectStore(type).updateOne({ id: objectId, name: v })
             }}
           />
         ) : (

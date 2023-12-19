@@ -34,6 +34,8 @@ const useSubtitleSelectAsLabel = (currentSubtitles?: Required<IMediaState>['subt
             const anchorIndex = (anchor as HTMLElement).closest('[data-subtitle-index]')?.getAttribute('data-subtitle-index')
             const focusIndex = (focus as HTMLElement).closest('[data-subtitle-index]')?.getAttribute('data-subtitle-index')
             if (anchorIndex && focusIndex) {
+              const subtitleContainer = (anchor as HTMLElement).closest('[role="subtitle-container"]')
+              if (!subtitleContainer) return
               const bounding = selection.getRangeAt(0).getBoundingClientRect()
               const aI = Number(anchorIndex)
               const fI = Number(focusIndex)
@@ -44,7 +46,7 @@ const useSubtitleSelectAsLabel = (currentSubtitles?: Required<IMediaState>['subt
                     visible: true,
                     position: {
                       x: bounding.x + bounding.width / 2,
-                      y: bounding.top
+                      y: Math.max(bounding.top, subtitleContainer.getBoundingClientRect().top)
                     },
                     anchorSubtitle: currentSubtitles[aI],
                     focusSubtitle: currentSubtitles[fI],
@@ -93,7 +95,7 @@ const useSubtitleSelectAsLabel = (currentSubtitles?: Required<IMediaState>['subt
                 window.getSelection()?.empty()
                 instance.insertLabel?.(
                   {
-                    name: addLabelState.text || 'Unnamed',
+                    name: addLabelState.text,
                     time: addLabelState.anchorSubtitle.startTime
                   },
                   false,

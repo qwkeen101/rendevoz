@@ -17,7 +17,6 @@ export type TitleRendererProps = {
   originalText?: string
   metaObject?: MetaObject
   originalTextStyle?: CSSProperties
-  showAddNote?: boolean
   clickToEdit?: boolean
   clickOriginToEdit?: boolean
   showEditBoxShadow?: boolean
@@ -32,13 +31,11 @@ export default ({
   originalTextStyle,
   clickOriginToEdit = false,
   clickToEdit = false,
-  showEditBoxShadow,
-  showAddNote
+  showEditBoxShadow
 }: TitleRendererProps) => {
   const [isEditing, setIsEditing] = useState(false)
   console.log(isEditing)
-  const enableAddNote = showAddNote && !metaObject?.name
-  const name = metaObject?.name || (!originalText ? metaObject?.placeholderName : showAddNote ? 'Add note...' : null)
+  const name = metaObject?.name || metaObject?.placeholderName
   return (
     <>
       {originalText && metaObject && (
@@ -65,15 +62,14 @@ export default ({
       ) : name ? (
         <div
           onClick={e => {
-            if (clickToEdit || enableAddNote) {
+            if (clickToEdit) {
               setIsEditing(!isEditing)
               return
             }
             onTitleClick?.(e)
           }}
           style={{
-            color: enableAddNote ? Colors.Font.SuperTransparent : metaObject?.color,
-            fontWeight: enableAddNote ? 400 : style?.fontWeight,
+            color: metaObject?.color,
             ...style
           }}
           className={titleClassName}

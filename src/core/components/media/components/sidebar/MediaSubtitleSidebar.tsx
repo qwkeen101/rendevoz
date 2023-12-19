@@ -155,13 +155,13 @@ const MediaSubtitleSidebar = memo(() => {
           placement={['bottom']}
         />
       </Content>
-      <Content fullHeight fullWidth ref={mergedRef} style={{ height: 0, flex: 1 }}>
+      <Content fullHeight fullWidth ref={mergedRef} style={{ height: 0, flex: 1 }} role={"subtitle-container"}>
         {subtitleMode === 'list' ? (
           <VirtualList
             style={{ width: '100%', height: '100%', paddingRight: 10 }}
             estimateSize={30}
             items={currentSubtitles}
-            overscan={30}
+            overscan={currentSubtitles.length}
             ref={virtualizerRef}
             renderItem={(s, idx) => (
               <SubtitleItem currentTime={currentTime} index={idx} subtitle={s} key={s.id} selected={idx === currentSelectedIndex} />

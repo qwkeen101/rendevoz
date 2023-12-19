@@ -107,23 +107,24 @@ const Label = ({ id, type }: { id: number; type: string }) => {
   const setToolbarState = useSetAtom(MediaToolbarStateAtom)
   const instance = useMediaInstance()
 
-  const { renderName, renderAttachment, renderDescription, renderPopover, setDraggingDetails, label, ref } = useRenderLabel({
-    objectId: id,
-    type,
-    draggable: true,
-    onNavigate: () => {
-      if (mediaLabel) {
-        instance.actionOps?.jumpTo(mediaLabel.time)
-        instance.closeThumbnail?.()
+  const { renderName, renderAttachment, renderDescription, renderOriginalText, renderPopover, setDraggingDetails, label, ref } =
+    useRenderLabel({
+      objectId: id,
+      type,
+      draggable: true,
+      onNavigate: () => {
+        if (mediaLabel) {
+          instance.actionOps?.jumpTo(mediaLabel.time)
+          instance.closeThumbnail?.()
+        }
+      },
+      onDragStart: () => {
+        setDraggingDetails({
+          type,
+          labelId: id
+        })
       }
-    },
-    onDragStart: () => {
-      setDraggingDetails({
-        type,
-        labelId: id
-      })
-    }
-  })
+    })
   const mediaLabel = label as IMediaLabel
   const mergedRef = useMergedRef(containerRef, ref)
   useEffect(() => {
@@ -163,8 +164,15 @@ const Label = ({ id, type }: { id: number; type: string }) => {
           ></Image>
         )}
         <Content flex column auto style={{ margin: 'auto' }}>
+          {label.selectedText &&
+            renderOriginalText({
+              text: label.selectedText,
+              style: {
+                marginBottom: 8
+              }
+            })}
           {renderName({})}
-          <div style={{ flexShrink: 0 }} className={ClassName.description(FontSize['11px'])}>
+          <div style={{ flexShrink: 0, marginTop: 4 }} className={ClassName.description(FontSize['11px'])}>
             {`${normalizeSecondsToTime(mediaLabel.time)}${chapter ? '  ——  ' + chapter?.name : ''}`}
           </div>
         </Content>

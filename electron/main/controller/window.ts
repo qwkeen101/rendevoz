@@ -29,6 +29,10 @@ callback('close', async () => {
   BrowserWindow.getAllWindows().forEach(i => i.close())
 })
 
+callback('hide', async () => {
+  BrowserWindow.getFocusedWindow().hide()
+})
+
 callback('captureWebpage', async (webviewId: number) => {
   if (!webviewId) {
     const image = await BrowserWindow.getFocusedWindow().capturePage()

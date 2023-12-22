@@ -6,6 +6,7 @@
     "Add tags": "添加标签",
     "Drop object here to add link": "拖拽实体到此处以添加关联",
     "Linked objects": "关联的实体",
+    "Open in float": "在悬浮面板中打开",
     "code": "代码",
     "Attachments": "附件",
     "Tags": "标签",
@@ -831,6 +832,7 @@
   },
   "whiteboard": {
     "Text": "文本",
+    "Turn into document card": "转为文档卡片",
     "Document": "文档卡片",
     "Draw connection": "划连接线",
     "Rename group": "重命名组",

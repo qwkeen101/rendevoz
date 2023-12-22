@@ -366,10 +366,10 @@ const openWhiteboard = (whiteboardId: number) => {
     Rendevoz.Actions.Layout.openNewTab({
       data: {
         type: 'whiteboard',
-        objectId: whiteboardId
+        objectId: whiteboardId,
+        onInstanceInitialized: i => res(i)
       }
     })
-    res(null)
     updateViewAt(whiteboardId)
   })
 }

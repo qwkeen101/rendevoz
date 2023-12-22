@@ -9,9 +9,10 @@ import assignNodeOps from '@/core/components/whiteboard/hooks/ops/node'
 import assignCoordOps from '@/core/components/whiteboard/hooks/ops/coord'
 import assignContainerOps from '@/core/components/whiteboard/hooks/ops/container'
 import assignGroupOps from '@/core/components/whiteboard/hooks/ops/group'
-import assignLineOps from '@/core/components/whiteboard/hooks/ops/line'
 import useWhiteboardHighlight from '@/core/components/whiteboard/hooks/useWhiteboardHighlight'
 import assignContentOps from '@/core/components/whiteboard/hooks/ops/content'
+import { getSetting } from '@/core'
+import { MetaStore } from '@/api/stores'
 
 export const WhiteboardInstanceAtom = atom<IWhiteboardInstance>({})
 
@@ -22,14 +23,6 @@ export const useAssignWhiteboardInstance = () => {
   const instance = useWhiteboardInstance()
   const store = useStore()
   assignProperties(instance, {
-    deleteNode: id => {
-      updateWhiteboard(w => {
-        w.nodes?.delete(id)
-        instance.values.NODE_TO_EDGE_MAP.get(id)?.forEach(l => {
-          w.edges?.delete(l)
-        })
-      }, true)
-    },
     getNode: id => {
       const n = store.get(WhiteboardAtom)?.nodes?.get(id)
       if (!n) {
@@ -37,7 +30,42 @@ export const useAssignWhiteboardInstance = () => {
       }
       return n
     },
+    deleteNode: id => {
+      const origin = instance.getNode?.(id)
+      if (origin) {
+        const whiteboardId = store.get(WhiteboardAtom)?.id
+        if (origin.type === 'metaObject' && whiteboardId) {
+          const whiteboardMeta = MetaStore.getMetaObjectByObjectId(whiteboardId)
+          if (whiteboardMeta) {
+            const link = MetaStore.getMetaLinkBySourceAndTarget(origin.metaObjectId, whiteboardMeta.id)
+            if (link) {
+              MetaStore.deleteMetaLink(link, true)
+            }
+          }
+        }
+      }
+      updateWhiteboard(w => {
+        w.nodes?.delete(id)
+        instance.values.NODE_TO_EDGE_MAP.get(id)?.forEach(l => {
+          w.edges?.delete(l)
+        })
+      }, true)
+    },
     deleteEdge: id => {
+      const setting = getSetting()
+      if (setting.whiteboard.enableAddLinkBetweenObjectsWhenConnect) {
+        const e = instance.getEdge?.(id)
+        if (e) {
+          const sourceNode = instance.getNode?.(e.sourceId)
+          const targetNode = instance.getNode?.(e.targetId)
+          if (sourceNode?.type === 'metaObject' && targetNode?.type === 'metaObject') {
+            const metaLink = MetaStore.getMetaLinkBySourceAndTarget(sourceNode.metaObjectId, targetNode.metaObjectId)
+            if (metaLink) {
+              MetaStore.deleteMetaLink(metaLink, true)
+            }
+          }
+        }
+      }
       updateWhiteboard(w => {
         w.edges?.delete(id)
       }, true)
@@ -51,8 +79,10 @@ export const useAssignWhiteboardInstance = () => {
       } as Required<IWhiteboardNode>
       await updateWhiteboard(w => {
         if (w.nodes) {
-          w.nodes?.set(newNode.id, { ...newNode, z: w.nodes?.size })
-          newNode.z = w.nodes?.size
+          const maxZ = Math.max(...Array.from(w.nodes.values()).map(i => i.z))
+          w.nodes?.set(newNode.id, { ...newNode, z: maxZ + 1 })
+
+          newNode.z = maxZ
         }
       }, true)
       return newNode
@@ -115,7 +145,6 @@ export const useAssignWhiteboardInstance = () => {
   assignCoordOps(instance)
   useWhiteboardHighlight()
   assignContainerOps(instance)
-  assignLineOps(instance)
   assignGroupOps(instance)
   assignContentOps(instance)
 }

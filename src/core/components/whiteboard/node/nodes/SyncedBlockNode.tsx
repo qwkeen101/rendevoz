@@ -39,12 +39,9 @@ const SyncedBlockNode = ({ node }: { node: IWhiteboardNode }) => {
       style={{
         minWidth: '100%',
         width: '30rem',
-        height: '40rem',
         minHeight: '100%',
         maxWidth: '100%',
-        overflow: 'hidden',
-        maxHeight: '100%',
-        padding: '0px 0px 4px 8px'
+        maxHeight: '100%'
       }}
     >
       <SyncedBlockEditor syncedBlockMetaId={node.metaObjectId} />

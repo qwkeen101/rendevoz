@@ -13,6 +13,9 @@ const useMediaShortcut = (containerRef: RefObject<HTMLElement>) => {
     const setting = getSetting()
     const shortcut = setting.shortcut.makeVideoLabel
     const timestampShortcut = setting.shortcut.copyVideoTimestamp
+    if (e.target instanceof Element && e.target.closest('input,textarea')) {
+      return
+    }
     if (
       timestampShortcut &&
       e.key === timestampShortcut.key &&

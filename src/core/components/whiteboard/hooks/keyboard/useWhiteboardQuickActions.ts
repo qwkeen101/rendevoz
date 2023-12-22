@@ -2,7 +2,7 @@ import { useWhiteboardInstance } from '@/core/components/whiteboard/hooks'
 import { useEffect, useState } from 'react'
 import isHotkey from 'is-hotkey'
 import { WhiteboardDefaultKeyboardShortcut } from '@/core/components/whiteboard/hooks/keyboard/DefaultWhiteboardShortcuts'
-import { useMemoizedFn } from '@/hooks'
+import { GlobalInstance, useMemoizedFn } from '@/hooks'
 import { useWhiteboardState } from '@/core/components/whiteboard/hooks/useWhiteboardState'
 import { KEY } from '@/consts'
 import handleKeyboardNavigation from '@/core/components/whiteboard/hooks/keyboard/handleKeyboardNavigation'
@@ -92,6 +92,17 @@ export default () => {
 
       if (selected?.length) {
         instance.nodeOps?.deleteNode(selected?.map(i => i.id))
+        instance.selectOps?.deselectAll()
+        instance.toolbarOps?.closeToolbar()
+      }
+    }
+    if (includeShortcuts(e, WhiteboardDefaultKeyboardShortcut.ViewDetails.key)) {
+      const selected = instance.selectOps?.getSelectedNodes()
+      if (selected?.length && selected.length === 1) {
+        const s = selected[0]
+        if (s.type === 'metaObject') {
+          GlobalInstance.metaOps?.openDetails(s.metaObjectId)
+        }
         instance.toolbarOps?.closeToolbar()
       }
     }

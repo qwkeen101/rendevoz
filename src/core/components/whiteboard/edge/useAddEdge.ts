@@ -3,6 +3,8 @@ import { EdgeOverlayStateAtom } from './EdgeOverlay'
 import { useEffect } from 'react'
 import { EdgePosition, IWhiteboardInstance, XYBox, XYPosition } from '~/typings'
 import { useMemoizedFn, useRafFn } from '@/hooks'
+import { getSetting } from '@/core'
+import { MetaStore } from '@/api/stores'
 
 const checkPosition = (nodeBox: XYBox, currentPos: XYPosition): EdgePosition => {
   if (currentPos.x <= nodeBox.x) {
@@ -36,6 +38,7 @@ const checkAttachPosition = (nodeBox: XYBox, currentPos: XYPosition): EdgePositi
     }
   }
 }
+
 export default (instance: IWhiteboardInstance) => {
   const [overlayState, setOverlayState] = useAtom(EdgeOverlayStateAtom)
   const pointerMoveHandler = useMemoizedFn((e: PointerEvent) => {

@@ -44,7 +44,6 @@ import GlobalPreviewPanel from '@/core/global/GlobalPreviewPanel'
 import GlobalObjectCreator from '@/core/global/GlobalObjectCreator'
 import GlobalQuickAdd from '@/components/form/quickAdd/GlobalQuickAdd'
 import GlobalDownloadIndicator from '@/core/global/DownloadIndicator'
-import getAllItemsInChannel from '@/core/components/feed/utils/youtube/getAllItemsInChannel'
 
 export function getOS() {
   const userAgent = window.navigator.userAgent.toLowerCase(),
@@ -71,7 +70,7 @@ export function getOS() {
 export const GlobalPluginManager = new PluginManager()
 declare module 'rendevoz' {
   export interface CustomTypes {
-    MetaObject: BuiltInMetaObjectTypes | 'customEle' | 'task' | 'collection'
+    MetaObject: BuiltInMetaObjectTypes
     Object: BuiltInObjectTypes & {
       task: {
         specType: 'task'

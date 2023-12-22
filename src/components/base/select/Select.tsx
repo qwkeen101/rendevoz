@@ -228,6 +228,7 @@ const SelectMenu: FC<{
   return (
     <Menu.NavigationMenu
       style={style}
+      defaultSelected={[selectedItems[0]]}
       className={css({
         minWidth: 140,
         display: 'flex',

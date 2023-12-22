@@ -10,6 +10,7 @@ const TreeEdgeContainer = () => {
   const flow = useFlow()
   const instance = useWhiteboardInstance()
   const container = flow.parentContainerEle?.getBoundingClientRect()
+  console.log('i m here')
   useEffect(() => {
     instance.buildNodeToEdgeIndex?.()
   }, [treeEdges])

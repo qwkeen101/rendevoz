@@ -48,6 +48,7 @@ const DraggableElement = forwardRef<
         if (dragStartTriggered.current === false) {
           onDragStart?.()
         }
+        e.preventDefault()
         dragStartTriggered.current = true
       }
     }

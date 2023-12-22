@@ -20,7 +20,9 @@ export default function assignContentOps(instance: IWhiteboardInstance) {
             inGroupNodes.forEach(n => inGroupNodeIds.add(n.id))
           }
         })
-        const notInGroupNodes: IWhiteboardNode[] = allNodes.filter(i => !inGroupNodeIds.has(i.id) && i.type !== 'group') as IWhiteboardNode[]
+        const notInGroupNodes: IWhiteboardNode[] = allNodes.filter(
+          i => !inGroupNodeIds.has(i.id) && i.type !== 'group'
+        ) as IWhiteboardNode[]
         const metaMap = MetaStore.getMetaObjectsMap()
         const transformCommonNodeToOutlineName = (nodeId: number): string => {
           const node = instance.getNode?.(nodeId)
@@ -39,7 +41,7 @@ export default function assignContentOps(instance: IWhiteboardInstance) {
               return typeof node.content === 'string'
                 ? node.content
                 : node.content
-                ? Node.string({ children: node.content })
+                ? Node.string({ children: node.content }) || 'Unnamed text'
                 : 'Unnamed text'
             }
             default:
@@ -48,6 +50,7 @@ export default function assignContentOps(instance: IWhiteboardInstance) {
         }
         const transformGroupToOutline = (groupId: number): IWhiteboardOutline => {
           const inGroupNodes = groupToNodesMap.get(groupId)
+          groupToNodesMap.delete(groupId)
           const group = instance.getNode?.(groupId)
           if (!group) throw 'Failed to get group node!'
           if (inGroupNodes?.length) {

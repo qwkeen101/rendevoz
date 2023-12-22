@@ -263,6 +263,7 @@ export const ObjectPanel = memo(
               withClickCover={true}
               onVisiblityChange={v => [setFilterSort(s => ({ ...s, filterVisible: v }))]}
               positions={['bottom']}
+              disableNudge
               content={
                 <WithBorder padding={8}>
                   <BetterFilter
@@ -290,6 +291,7 @@ export const ObjectPanel = memo(
           items={shouldDisplayObjects}
           renderItem={item => <SimpleObject metaObjectId={item.id} isAddingObject={isAddingObject} onAddObject={handleAddObject} />}
           estimateSize={40}
+          paddingEnd={200}
           style={{
             width: '100%',
             height: '100%',

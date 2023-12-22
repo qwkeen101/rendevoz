@@ -1,6 +1,6 @@
 import { useFlow, useWhiteboardNodes } from '@/core/components/whiteboard/StateHooks'
 import { useEventHandler, useScopedEventEmitter } from '@/events'
-import { useEffect, useRef, useState } from 'react'
+import { memo, useEffect, useRef, useState } from 'react'
 import { IWhiteboardNode, XYPosition } from '~/typings'
 import _ from 'lodash'
 import { useSelectGlobalAtomValue } from '@/hooks'
@@ -30,7 +30,7 @@ const getMinMaxOfArray = (arr: number[]) => {
   }
 }
 
-const useSnapDrag = () => {
+const SnapDragLayer = memo(() => {
   const allNodes = useWhiteboardNodes()
   const scopedEmitter = useScopedEventEmitter()
   const [snapState, setSnapState] = useState<ISnapState>()
@@ -711,29 +711,27 @@ const useSnapDrag = () => {
       setSnapState(undefined)
     }
   })
-  const renderSnapLayer = () => {
-    return (
-      <svg
-        style={{
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          width: '100%',
-          height: '100%',
-          pointerEvents: 'none',
-          overflow: 'visible',
-          zIndex: 100,
-          opacity: 0.4
-        }}
-      >
-        {snapState?.circles.map(i => <circle r={4} transform={`translate(${i.x},${i.y})`} fill={Colors.Common.SelectColor}></circle>)}
-        {snapState?.lines?.map(i => <line strokeWidth={2} stroke={Colors.Common.SelectColor} x1={i.startX} y1={i.startY} x2={i.endX} y2={i.endY} />)}
-      </svg>
-    )
-  }
-  return {
-    renderSnapLayer
-  }
-}
 
-export default useSnapDrag
+  return (
+    <svg
+      style={{
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        width: '100%',
+        height: '100%',
+        pointerEvents: 'none',
+        overflow: 'visible',
+        zIndex: 100,
+        opacity: 0.4
+      }}
+    >
+      {snapState?.circles.map(i => <circle r={4} transform={`translate(${i.x},${i.y})`} fill={Colors.Common.SelectColor}></circle>)}
+      {snapState?.lines?.map(i => (
+        <line strokeWidth={2} stroke={Colors.Common.SelectColor} x1={i.startX} y1={i.startY} x2={i.endX} y2={i.endY} />
+      ))}
+    </svg>
+  )
+})
+
+export default SnapDragLayer

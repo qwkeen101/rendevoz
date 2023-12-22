@@ -154,7 +154,7 @@ export default (
                       background: v === defaultBgColor ? undefined : v
                     })
                   })
-                })
+                }, true)
               }
             }}
           />
@@ -332,7 +332,6 @@ export default (
           type: 'item',
           key: 'move-to',
           text: t('general.Move to'),
-          suffix: WhiteboardDefaultKeyboardShortcut.ViewDetails.text,
           icon: 'park-corner-up-right',
           onSelect: () => {
             const item = selected[0].type === 'metaObject' && selected[0].metaObjectId
@@ -383,7 +382,7 @@ export default (
         instance.toolbarOps?.closeToolbar()
       }
     },
-    ...(selected.length === 1
+    ...(selected.length === 1 && selected.every(i => i.type === 'metaObject')
       ? [
           {
             type: 'separator'
@@ -406,6 +405,16 @@ export default (
                   icon: '',
                   onSelect: () => {
                     instance.nodeOps?.open(selected[0].id, 'center')
+                    instance.toolbarOps?.closeToolbar()
+                  }
+                },
+                {
+                  type: 'item',
+                  key: 'open-in-float',
+                  text: t('general.Open in float'),
+                  icon: '',
+                  onSelect: () => {
+                    instance.nodeOps?.open(selected[0].id, 'float')
                     instance.toolbarOps?.closeToolbar()
                   }
                 }

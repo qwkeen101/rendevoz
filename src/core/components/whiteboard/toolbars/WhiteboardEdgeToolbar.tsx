@@ -110,6 +110,9 @@ export default ({ edgeId }: { edgeId: number }) => {
       <AnimatePopover
         borderRadius={4}
         padding={4}
+        onClickOutside={e => {
+          console.log(e)
+        }}
         content={setV => (
           <WithBorder borderRadius={4}>
             <Toolbar

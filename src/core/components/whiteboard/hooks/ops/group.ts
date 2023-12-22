@@ -10,6 +10,7 @@ export const enlargeBox = (currentBox: Box, enlarge: number = 24) => {
     height: currentBox.height + 2 * enlarge
   }
 }
+const near = (a?: number, b?: number) => a !== undefined && b !== undefined && Math.abs(a - b) < 1
 const assignGroupOps = (instance: IWhiteboardInstance) => {
   assignProperties(instance, {
     groupOps: {
@@ -69,7 +70,17 @@ const assignGroupOps = (instance: IWhiteboardInstance) => {
           const box = getBoxOfNodes(nodes)
           if (box) {
             const enlarged = enlargeBox(box)
-            console.log(enlarged)
+            const ifAlreadyHasGroup = instance
+              .getAllNode?.()
+              .some(
+                i =>
+                  i.type === 'group' &&
+                  near(i.x, enlarged.left) &&
+                  near(i.y, enlarged.top) &&
+                  near(i.width, enlarged.width) &&
+                  near(i.height, enlarged.height)
+              )
+            if (ifAlreadyHasGroup) return
             instance.insertNode?.({
               type: 'group',
               x: enlarged.left,

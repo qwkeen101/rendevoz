@@ -1,9 +1,10 @@
 import { globalStore, NoteStore, ObjectStore } from '@/api/stores'
-import { useEffect } from 'react'
+import { useEffect, useMemo } from 'react'
 import useWebpageState, { IWebpageState } from '@/core/components/webpage/hooks/useWebpageState'
 import { atom } from 'jotai'
 import { useMemoizedFn } from '@/hooks'
 import { Rendevoz } from '@/core/rendevoz'
+import { useLatest } from 'react-use'
 
 export const UrlToWebpageMap = atom(new Map<string, number>())
 
@@ -30,7 +31,9 @@ const useWebpageContent = (options: {
 }) => {
   const [webpageState, setWebpageState] = useWebpageState()
   const currentWebpage = ObjectStore('webpage').useValue(webpageState.currentWebpageId)
+  const latestUrl = useLatest(webpageState.currentUrl)
   const memoedLoadUrl = useMemoizedFn(async () => {
+    const startUrl = latestUrl.current
     if (webpageState.externalState?.content) {
       setWebpageState(s => ({
         ...s,
@@ -70,6 +73,11 @@ const useWebpageContent = (options: {
         .then(async res => {
           options.onEndLoad?.()
           if (webpageState.externalState?.content) {
+            return
+          }
+          const currentUrl = latestUrl.current
+          console.log(currentUrl, startUrl)
+          if (currentUrl !== startUrl) {
             return
           }
           if (res) {

@@ -19,6 +19,7 @@ import KeyvalueStore from '@/api/stores/keyvalue.store'
 import { calculateFilterObjects } from '@/core/object/filter/useBetterFilter'
 import Node from '@/core/components/group/utils/node'
 import { t } from 'i18next'
+import { intersectionOfMultipleSets } from '@/core'
 export const metaObjectsAtom = atom<Map<number, MetaObject>>(new Map())
 
 export const metaLinksAtom = atom<Map<number, MetaLink>>(new Map())
@@ -593,6 +594,17 @@ const createMetaStore = () => {
     globalStore.set(metaObjectsAtom, new Map())
     realStore.getAllMetaObjects()
   }
+
+  const getMetaLinkBySourceAndTarget = (sourceMetaId: number, targetMetaId: number): number | undefined => {
+    const index = getIndexedMetaLinks()
+    if (index) {
+      const sourceRelated = index.sourceIdToLinkIdsMap.get(sourceMetaId)
+      const targetRelated = index.targetIdToLinkIdMap.get(targetMetaId)
+      if (sourceRelated && targetRelated) {
+        return Array.from(intersectionOfMultipleSets(sourceRelated, targetRelated).values())[0]
+      }
+    }
+  }
   return {
     getMetaObjectById,
     getMetaObjectByObjectId,
@@ -608,6 +620,7 @@ const createMetaStore = () => {
     getIndexedMetaLinks,
     useIndexedMetaLinks,
     switchWorkspace,
+    getMetaLinkBySourceAndTarget,
     ...realStore
   }
 }

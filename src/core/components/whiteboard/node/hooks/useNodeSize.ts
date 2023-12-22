@@ -1,7 +1,9 @@
-import { useEffect, useLayoutEffect } from 'react'
+import { useLayoutEffect } from 'react'
 import { useFlow } from '@/core/components/whiteboard/StateHooks'
 import { IWhiteboardInstance, IWhiteboardNode } from '~/typings'
 
+const DEFAULT_NODE_WIDTH = 250
+export const DEFAULT_NODE_PADDING = 40
 const useNodeSize = (container: HTMLElement | undefined, node: IWhiteboardNode, instance: IWhiteboardInstance) => {
   const flow = useFlow()
   useLayoutEffect(() => {
@@ -10,16 +12,25 @@ const useNodeSize = (container: HTMLElement | undefined, node: IWhiteboardNode, 
         const bounding = container.getBoundingClientRect()
         const transform = instance.getTransform?.()
         if (transform) {
-          const w = bounding.width / transform.scale
-          instance.updateNode?.(node.id, n => ({
-            ...n,
-            width: node.expanded ? w : Math.min(w, 500),
-            height: bounding.height / transform.scale
-          }))
-          container.style.width = `${node.expanded ? w : Math.min(w, 500)}px`
+          const w = Math.max(DEFAULT_NODE_WIDTH, (bounding.width / transform.scale) + DEFAULT_NODE_PADDING)
+          const width = node.expanded ? w : Math.min(w, 500)
+
+          container.style.width = `${width}px`
+
+          setTimeout(() => {
+            instance.updateNode?.(node.id, n => ({
+              ...n,
+              width,
+              height: bounding.height / transform.scale
+            }))
+            setTimeout(() => {
+              flow.resizeObserver.observe(container)
+            })
+          })
         }
+      } else {
+        flow.resizeObserver.observe(container)
       }
-      flow.resizeObserver.observe(container)
       return () => {
         flow.resizeObserver.unobserve(container)
       }

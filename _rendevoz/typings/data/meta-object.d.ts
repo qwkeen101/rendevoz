@@ -1,5 +1,5 @@
 import { Box } from '../common'
-import { CustomTypes } from '../custom'
+import { CustomTypes } from '..'
 import { IBase } from './base'
 import { ObjectFamily } from 'rendevoz'
 import { MetaFormLayoutItem } from '~/typings'
@@ -35,10 +35,12 @@ export type BuiltInMetaObjectTypes =
   | 'videoLabel'
   | 'group'
   | 'syncedBlock'
+  | 'code'
+  | 'question'
 
 // sourceType: note / metaObject / pdf document
 export interface MetaObject extends IBase {
-  type: CustomTypes['MetaObject']
+  type: BuiltInMetaObjectTypes
   workspace: string
   name?: string
   description?: string

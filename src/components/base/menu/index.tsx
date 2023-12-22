@@ -64,6 +64,7 @@ interface NavigationMenuProps {
   keyboardNavigation?: boolean
   style?: CSSProperties
   className?: string
+  defaultSelected?: string[]
   onSelect?: (item: IMenuLayoutItem) => void
   // select key change
   onSelectChange?: (keys: string[]) => void
@@ -77,14 +78,15 @@ export const NavigationMenu: FC<NavigationMenuProps> = ({
   onClick,
   selectedKeys,
   onSelect,
-  onSelectChange
+  onSelectChange,
+  defaultSelected
 }) => {
   const menuContainerRef = useRef<HTMLDivElement>(null)
   const layoutCount = layout.length
 
-  const [currentSelect, setCurrentSelect] = useState<string[]>([layout.find(i => 'key' in i && i.key)?.key])
+  const [currentSelect, setCurrentSelect] = useState<string[]>(defaultSelected || [layout.find(i => 'key' in i && i.key)?.key])
   useEffect(() => {
-    setCurrentSelect([layout.find(i => 'key' in i && i.key)?.key])
+    setCurrentSelect(defaultSelected || [layout.find(i => 'key' in i && i.key)?.key])
   }, [layout.length])
 
   const handleSelectItem = (currentItem: IMenuLayoutItem) => {

@@ -19,15 +19,6 @@ const useWhiteboardShortcut = () => {
         ) {
           return
         }
-        setTimeout(() => {
-          if (!e.defaultPrevented) {
-            if (flow.selectedNodeIds.size) {
-              instance.deleteNodes?.(Array.from(flow.selectedNodeIds.values()))
-              flow.selectedNodeIds.clear()
-            }
-            flow.clearSelectBox?.()
-          }
-        })
       }
       if (isHotkey(KEY.Tab, e)) {
         const target = e.target

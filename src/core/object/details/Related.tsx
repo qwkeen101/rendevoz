@@ -285,7 +285,7 @@ const RelatedItem = ({ metaId, linkId }: { metaId: number; linkId: number }) => 
           name={'park-more'}
           closeOnContentClick={true}
           renderOnParent={false}
-          content={
+          content={setV => (
             <WithBorder
               onPointerEnter={e => e.stopPropagation()}
               onPointerMove={e => e.stopPropagation()}
@@ -320,11 +320,14 @@ const RelatedItem = ({ metaId, linkId }: { metaId: number; linkId: number }) => 
                 icon={'park-delete'}
                 dangerous
                 onClick={() => {
-                  setEditName(true)
+                  setV(false)
+                  setTimeout(() => {
+                    MetaStore.deleteMetaObject(metaId, true)
+                  }, 300)
                 }}
               />
             </WithBorder>
-          }
+          )}
         ></IconWithPopover>
       </Content>
 

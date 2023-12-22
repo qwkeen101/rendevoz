@@ -61,14 +61,13 @@ const ToolbarItem: FC<ToolbarItemProps> = forwardRef(
       onClick?.(e)
     }
     return (
-      <Tooltip content={tooltip}>
+      <Tooltip ref={ref} content={tooltip}>
         {cloneElement(
           createElement('div'),
           {
             key: iconName,
             'data-active': isActive,
             'data-disabled': disabled,
-            ref,
             className: classNames(ClassName.circleButton(3, radius), className),
             style: {
               ...style,

@@ -13,6 +13,7 @@ import { useSelectAtomValue } from '@/hooks'
 import { EditorStateAtom } from '@/core/components/editor/hooks/useEditorState'
 import useEditorInstance from '@/core/components/editor/hooks/useEditorInstance'
 import { assignProperties } from '@/utils'
+import { useUpdate } from 'react-use'
 
 /**
  * Children.
@@ -30,17 +31,16 @@ const VirtualChildren = memo(
     readOnly?: boolean
     parentElement?: RefObject<HTMLElement | null>
   }) => {
-    console.log('updated')
     const { decorations, renderElement, renderPlaceholder, renderLeaf, selection, children, scrollElement, readOnly, parentElement } = props
 
     const editor = useSlateStatic()
-
+    const update = useUpdate()
     // sometimes children rerendered earlier than onChange, idk why but we need to trigger onChange to reindex here.
     // TODO: fix this earlier rerender triggered in editable
     if (EDITOR_TO_CHANGED.get(editor) !== true) {
       editor.onChange?.()
+      update()
     }
-
     const visibleChildren = useMemo(() => {
       return children.filter(i => !i.hide)
     }, [children])
@@ -53,7 +53,6 @@ const VirtualChildren = memo(
       },
       scrollToPosition: offset => {
         if (offset === 0) {
-          console.log(virtualizer.scrollOffset)
           virtualizer.scrollToOffset(0, { align: 'auto', behavior: 'auto' })
           return
         }
@@ -62,7 +61,7 @@ const VirtualChildren = memo(
     })
     let rangeExtractor: ((r: VirtualRange) => number[]) | undefined = undefined
     const firstLayerMap = ID_TO_FIRST_LAYER_EXCEPET_HIDEN_MAP.get(editor)!
-    if (ReactEditor.isFocused(editor) && selection && window.getSelection()?.toString()) {
+    if (ReactEditor.isFocused(editor) && selection && window.getSelection()?.toString() && !Range.isCollapsed(selection)) {
       const startIndex = selection.anchor.path[0]
       // maybe have hiden nodes
       const startNodeRealIndex = firstLayerMap.get(editor.children[startIndex].id) || startIndex
@@ -87,10 +86,10 @@ const VirtualChildren = memo(
     const bottomPadding = useSelectAtomValue(EditorStateAtom, s => s.styles?.bottomPadding)
     const virtualizer = useVirtualizer({
       count: visibleChildren.length,
-      estimateSize: () => 30,
-      getScrollElement: () => scrollElement?.current || document.body,
-      overscan: overscan,
-      paddingEnd: showPaddingBottom !== false ? bottomPadding || 300 : 0,
+      estimateSize: () => 100,
+      getScrollElement: () => scrollElement?.current,
+      overscan: 5,
+      paddingEnd: showPaddingBottom !== false ? bottomPadding || 200 : 0,
       // paddingStart: titleHeight,
       rangeExtractor: rangeExtractor || defaultRangeExtractor,
       scrollMargin: titleHeight,
@@ -100,11 +99,11 @@ const VirtualChildren = memo(
           const marginTop = parseInt(window.getComputedStyle(ele).marginTop)
           const marginBottom = parseInt(window.getComputedStyle(ele).marginBottom)
           const totalSize = size + marginTop + marginBottom
-          return totalSize
+          return Math.round(totalSize)
         }
         const index = instance.indexFromElement(ele)
         const item = instance.measurementsCache[index]
-        return item ? item.size : ele.getBoundingClientRect().height
+        return item ? item.size : Math.round(ele.getBoundingClientRect().height)
       }
     })
 
@@ -125,11 +124,16 @@ const VirtualChildren = memo(
         parentEle.style.position = 'absolute'
         parentEle.style.width = '100%'
         parentEle.style.left = '0px'
+        parentEle.style.top = '0px'
         if (first) {
-          parentEle.style.top = `${first.start - titleHeight}px`
+          parentEle.style.transform = `translateY(${first.start - titleHeight}px)`
         }
       }
     }, [totalSize, first?.start])
+
+    useEffect(() => {
+      update()
+    }, [])
 
     return (
       <>
@@ -185,7 +189,6 @@ const VirtualItem = memo(
   }) => {
     const editor = useSlateStatic()
     // const decorate = useDecorate()
-
     if (element.hide || !element.id) {
       return null
     }

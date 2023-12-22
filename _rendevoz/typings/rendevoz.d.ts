@@ -5,7 +5,7 @@
 import { ReactElement } from 'react'
 import { GlobalInstances } from './globalInstances'
 import { ILayoutTab, TabData } from './layout'
-import { IWebpageInstance, IVideoInstance, IPdfInstance, IEditorInstance } from './components'
+import { IWebpageInstance, IVideoInstance, IPdfInstance, IEditorInstance, IWhiteboardInstance } from './components'
 import { EditorEventMap, GlobalEventMap, IEventEmitter, IEventHandler, PdfEventMap } from './event'
 import { NoteStore } from './stores'
 import { SearchStore } from './stores/search.store'
@@ -92,7 +92,7 @@ declare const Open: {
     openNoteLabel: (id: number) => Promise<void>
   }
   Whiteboard: {
-    openWhiteboard: (id: number) => Promise<void>
+    openWhiteboard: (id: number) => Promise<IWhiteboardInstance>
   }
   Meta: {
     openMetaObject: (id: number) => Promise<unknown>

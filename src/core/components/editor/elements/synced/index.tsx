@@ -23,6 +23,7 @@ const SyncedBlock = ({ element, children }: RenderElementProps) => {
   const blockDetails = ObjectStore('syncedBlock').useValue(syncMeta?.objectId)
   const { t } = useTranslation()
   useCheckSyncInWhere(syncElement.originId)
+  console.log(element, syncMeta)
   const handleDelete = () => {
     const path = ReactEditor.findPath(editor, element)
     Transforms.removeNodes(editor, {
@@ -51,17 +52,6 @@ const SyncedBlock = ({ element, children }: RenderElementProps) => {
             at: path
           }
         )
-      })
-      setTimeout(() => {
-        try {
-          if (focused) {
-            // console.log('select')
-            // Transforms.select(editor, prevSelection)
-            // ReactEditor.focus(editor)
-          }
-        } catch (e) {
-          console.error(e)
-        }
       })
     }
   })

@@ -1,4 +1,4 @@
-import { ILayoutTab, TabData } from 'rendevoz'
+import { ILayoutTab, TabData } from '~/typings'
 import Id from '@/utils/id'
 import Webpage from '@/core/components/webpage/Webpage'
 import { ObjectTimeline } from '@/core'
@@ -17,6 +17,10 @@ export const RENDEVOZ_DEFAULT_TABS: TabData[ILayoutTab['type']][] = [
       opts.objectId && (
         <EditorPage type="note" noteId={opts.objectId} id={Id.getStrId()} onInstanceInitialized={opts.onInstanceInitialized} />
       )
+  },
+  {
+    type: 'syncedBlock',
+    content: opts => opts.objectId && <SyncedBlockPage id={opts.objectId} />
   },
   {
     type: 'image',

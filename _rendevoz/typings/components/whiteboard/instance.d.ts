@@ -103,7 +103,7 @@ export type IWhiteboardInstance = Partial<{
   updateWhiteboard: (updater: (curr: IWhiteboard) => void, withUndo?: boolean) => Promise<void>
   insertNode: (node: Partial<IWhiteboardNode>) => Promise<IWhiteboardNode>
   getContainerNode: () => HTMLElement
-  getOutestContainerNode: () => HTMLElement
+  getOutestContainerNode: () => HTMLElement | null | undefined
   buildNodeToEdgeIndex: VoidFunction
   getTransform: () => {
     x: number
@@ -144,6 +144,9 @@ export type IWhiteboardInstance = Partial<{
     undoTransform: VoidFunction
     redoTransform: VoidFunction
   }
+  floatOps: {
+    openNode: (nodeId: number) => void
+  }
   contentOps: {
     transformToOutline: () => IWhiteboardOutline[]
   }
@@ -167,7 +170,7 @@ export type IWhiteboardInstance = Partial<{
     fold: (nodeId: number | number[]) => void
     canExpand: (node: IWhiteboardNode) => node is IWhiteboardNode & { type: 'metaObject' }
     canOpenInSidePeekOrCenter: (nodeId: number) => boolean
-    open: (nodeId: number, type: 'center' | 'sidePeek' | 'newTab') => void
+    open: (nodeId: number, type: 'center' | 'sidePeek' | 'newTab' | 'float') => void
   }
   updateEdge: (
     obj: PartialWithId<IWhiteboardEdge> | number,

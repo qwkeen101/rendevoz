@@ -46,7 +46,7 @@ export const goToBlock = async (blockId: number, editor: CustomEditor) => {
       editor.virtualizer.scrollToIndex(blockIndex, { align: 'center' })
       setTimeout(() => {
         res(null)
-      })
+      }, 100)
     })
   })
 }

@@ -3,8 +3,7 @@ import useEditorInstance from '../hooks/useEditorInstance'
 import { Button, Content, VirtualList } from '@/components'
 import { memo, useEffect, useRef } from 'react'
 import { useRenderLabel } from '@/core/object'
-import { EditorHighlightsAtom } from '@/scenes/editor/useEditorFilter'
-import { usePrevious, useSelectAtomValue } from '@/hooks'
+import { useSelectAtomValue } from '@/hooks'
 import Colors from '@/consts/colors'
 import { css } from '@emotion/css'
 import { Transforms } from 'slate'
@@ -62,7 +61,7 @@ const EditorLabelController = memo(({ labelIds, labelType }: { labelIds?: number
           paddingEnd={300}
           ref={virtualizerRef}
           renderItem={item => <Label labelId={item} type={labelType} />}
-          style={{ width: '100%', height: '100%', paddingRight: 4, paddingLeft: 4 }}
+          style={{ width: '100%', height: '100%', paddingRight: 4, paddingLeft: 4, paddingTop: 2 }}
           items={labelIds}
         ></VirtualList>
       )}

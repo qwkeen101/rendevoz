@@ -1,13 +1,13 @@
 import { useSelectGlobalAtomValue } from '@/hooks'
 import Id from '@/utils/id'
-import { useEffect, useState } from 'react'
+import { memo, useEffect, useState } from 'react'
 import { getMarkerId } from '../../graph/utils/getMarkerId'
 import { MarkerColor } from '@/consts'
 import { EdgePosition, IEdgeOverlayState, IWhiteboardEdge, XYPosition } from '~/typings'
 import { getBezierPath, getHandlePosition } from '../utils'
 import { useAtom } from 'jotai'
 import { getSmoothPolyPath } from '@/core/components/whiteboard/utils/getSmoothPoly'
-import { SettingAtom } from '@/core'
+import { getSetting, SettingAtom } from '@/core'
 import { animatedEdgeClazz, dashEdgeClazz } from '@/core/components/whiteboard/edge/Edge'
 import { useWhiteboardInstance } from '@/core/components/whiteboard/hooks'
 import { assignProperties } from '@/utils'
@@ -15,6 +15,7 @@ import { atom } from 'jotai'
 import useAddEdge from '@/core/components/whiteboard/edge/useAddEdge'
 import useRepositionEdge from '@/core/components/whiteboard/edge/useRepositionEdge'
 import Colors from '../../../../consts/colors'
+import { MetaStore } from '@/api/stores'
 
 const revertPos = (currentPos: EdgePosition) => {
   switch (currentPos) {
@@ -35,12 +36,12 @@ const revertPos = (currentPos: EdgePosition) => {
 
 export const EdgeOverlayStateAtom = atom<IEdgeOverlayState>({})
 
-const EdgeOverlay = () => {
+const EdgeOverlay = memo(() => {
   const [overlayState, setOverlayState] = useAtom(EdgeOverlayStateAtom)
   const [path, setPath] = useState<string>()
   const instance = useWhiteboardInstance()
   const currentEdge = overlayState.currentEdgeId ? instance.getEdge?.(overlayState.currentEdgeId) : undefined
-
+  console.log('here to')
   useAddEdge(instance)
   useRepositionEdge(instance)
 
@@ -51,6 +52,21 @@ const EdgeOverlay = () => {
         return instance.values.ID_TO_EDGE_MAP.get(edgeId)
       },
       insertEdge: e => {
+        if (!e.sourceId || !e.targetId) return
+        const setting = getSetting()
+        if (setting.whiteboard.enableAddLinkBetweenObjectsWhenConnect) {
+          const sourceNode = instance.getNode?.(e.sourceId)
+          const targetNode = instance.getNode?.(e.targetId)
+          if (sourceNode?.type === 'metaObject' && targetNode?.type === 'metaObject') {
+            MetaStore.addMetaLink(
+              {
+                sourceId: sourceNode.metaObjectId,
+                targetId: targetNode.metaObjectId
+              },
+              true
+            )
+          }
+        }
         const newE = { id: Id.getId(), ...e }
         instance.updateWhiteboard?.(w => {
           w.edges?.set(newE.id, newE)
@@ -191,6 +207,6 @@ const EdgeOverlay = () => {
       ></path>
     </g>
   )
-}
+})
 
 export default EdgeOverlay

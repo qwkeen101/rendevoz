@@ -13,6 +13,7 @@ class ScrollManager {
   }
   startScroll = (e: MouseEvent) => {
     if (!this.scrollElement) return
+    if (e.defaultPrevented) return
     const distance = getDistanceBetweenPointAndElement(e, this.scrollElement)
     const scrollableSpace = Math.max(this.scrollElement.clientHeight * 0.1, 100)
     if (distance.top < scrollableSpace && distance.top > 0 && isFullyScrolled(this.scrollElement) !== 'top') {

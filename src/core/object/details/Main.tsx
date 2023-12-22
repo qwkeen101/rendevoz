@@ -10,6 +10,7 @@ import { GlobalInstance } from '@/hooks'
 import { RelatedPanel } from '@/core/object/details/Related'
 import MetaTagPicker from '@/core/object/MetaTagPicker'
 import Tag from '@/core/object/ObjectTag'
+import LabelDetailsRenderer from '@/core/object/renderer/LabelDetailsRenderer'
 
 const flatButton = css([
   ClassName.flatButton(999, '3px 10px '),
@@ -28,7 +29,7 @@ const flatButton = css([
 
 const MetaMainDetails = ({ metaId, onViewLinks, onViewAtt }: { onViewAtt: VoidFunction; metaId: number; onViewLinks: VoidFunction }) => {
   const object = MetaStore.useValue(metaId)
-  const { renderWhole } = useRenderObject({ metaObjectId: metaId })
+  const { renderWhole, metaObject } = useRenderObject({ metaObjectId: metaId })
   const { t } = useTranslation()
   if (!object) return null
 
@@ -48,19 +49,30 @@ const MetaMainDetails = ({ metaId, onViewLinks, onViewAtt }: { onViewAtt: VoidFu
           />
         )}
         <Content flex column auto gap={5} justifyContent={'center'}>
-          {renderWhole({
-            columnGap: 3,
-            titleOptions: {
-              style: {
-                maxWidth: 'calc(100% - 16px)',
-                zIndex: 30
+          {metaObject?.type?.includes('Label') ? (
+            <LabelDetailsRenderer
+              showImage={false}
+              metaId={metaId}
+              style={{
+                border: '1px solid var(--border-background)',
+                borderRadius: 8
+              }}
+            />
+          ) : (
+            renderWhole({
+              columnGap: 3,
+              titleOptions: {
+                style: {
+                  maxWidth: 'calc(100% - 16px)',
+                  zIndex: 30
+                }
+              },
+              renderOptions: {
+                renderTags: false,
+                renderImage: false
               }
-            },
-            renderOptions: {
-              renderTags: false,
-              renderImage: false
-            }
-          })}
+            })
+          )}
         </Content>
       </Content>
       <Content style={{ paddingTop: 16, flexWrap: 'wrap' }} flex gap={8}>

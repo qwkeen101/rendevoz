@@ -6,6 +6,7 @@ import { useRenderObject } from '@/core'
 import { Content } from '@/components'
 import { Colors } from '@/consts'
 import FontSize from '@/consts/font'
+import LabelDetailsRenderer from '@/core/object/renderer/LabelDetailsRenderer'
 
 const MetaObject: FC<RenderElementProps> = memo(({ children, element }) => {
   const metaEle = element as MetaObjectElement
@@ -88,6 +89,20 @@ const MetaObject: FC<RenderElementProps> = memo(({ children, element }) => {
       )}
     </Content>
   )
+  if (metaObject?.type?.includes('Label')) {
+    return (
+      <>
+        {children}
+        <LabelDetailsRenderer
+          style={{
+            border: '1px solid var(--border-background)',
+            borderRadius: 8
+          }}
+          metaId={metaObject.id}
+        />
+      </>
+    )
+  }
   return (
     <NoteCard
       pictureUrl={metaObject?.coverImgSrc}

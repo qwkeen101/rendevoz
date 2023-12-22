@@ -7,6 +7,7 @@ import { transformXY } from '@/core/components/whiteboard/utils'
 import { useSetWhiteboardNodes } from '@/core/components/whiteboard/StateHooks'
 import { debounce } from 'lodash'
 import { trimNumber } from '@/utils'
+import { DEFAULT_NODE_PADDING } from '@/core/components/whiteboard/node/hooks/useNodeSize'
 
 type HistoryItem = {
   patches: Patch[]
@@ -138,8 +139,11 @@ class FlowManager {
       if (node) {
         const box = entry.contentRect
         const newSize = {
-          width: trimNumber(node.width || node.expanded ? box.width : Math.min(box.width, 500)),
+          width: trimNumber(node.width || (node.expanded ? box.width : Math.min(Math.max(box.width + DEFAULT_NODE_PADDING, 250), 500))),
           height: trimNumber(box.height)
+        }
+        if (newSize.width !== box.width && entry.target instanceof HTMLElement) {
+          entry.target.style.width = `${newSize.width}px`
         }
         batchNewSize.push({ ...newSize, id: nodeId })
       }
@@ -221,6 +225,7 @@ class FlowManager {
         commonRequests.push(r)
       }
     })
+
     let afterRequestState =
       commonRequests.length > 0
         ? produce(currentState, draft => {

@@ -49,7 +49,7 @@ const MetaGroupInner = ({ groupId }: { groupId: number }) => {
             instance.values.isFocused = true
           }
         }}
-        style={{ overflow: 'auto' }}
+        style={{ overflow: 'auto', overflowAnchor: 'none' }}
         fullHeight
         ref={containerRef}
         fullWidth

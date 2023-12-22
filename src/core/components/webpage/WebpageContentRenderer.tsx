@@ -32,7 +32,7 @@ const WebpageTitle = ({
     <Content flex column>
       <div
         style={{
-          fontSize: 28,
+          fontSize: 26,
           fontWeight: 600,
           hyphens: 'auto'
         }}
@@ -282,8 +282,6 @@ const WebpageContentRenderer = ({
 
   useLayoutEffect(() => {
     if (webpageState.loaded) {
-      console.log(webpageState)
-
       editorInstanceRef.current?.scrollToPosition?.(0)
     }
   }, [webpageState.currentUrl, webpageState.loaded])
@@ -315,7 +313,8 @@ const WebpageContentRenderer = ({
             id={editorId}
             noteId={webpageState.currentWebpageNoteId}
             layout={{
-              showLastSave: false
+              showLastSave: false,
+              ...editorOptions?.layout
             }}
             state={{
               lineSpacing:
@@ -400,7 +399,7 @@ const WebpageContentRenderer = ({
                       textAlign: 'center'
                     }}
                   >
-                    {webpageMeta?.name || webpageState.currentWebpage?.title || webpageState.externalState?.title}
+                    {webpageMeta?.name || webpageState.externalState?.title || webpageState.currentWebpage?.title}
                   </div>
                   <div
                     style={{

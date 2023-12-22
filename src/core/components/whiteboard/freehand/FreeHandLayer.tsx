@@ -1,5 +1,4 @@
-import React, { useMemo, useState, useRef } from 'react'
-import { useFlow } from '@/core/components/whiteboard/StateHooks'
+import React, { useMemo, useState, useRef, memo } from 'react'
 import { getStroke } from 'perfect-freehand'
 import { getBoxOfPoints } from '@/core/components/whiteboard/utils'
 import { useRafFn, useSelectAtomValue } from '@/hooks'
@@ -8,6 +7,7 @@ import { Colors } from '@/consts'
 import { IWhiteboardNode, IPenStyle } from '~/typings'
 import { useWhiteboardInstance } from '@/core/components/whiteboard/hooks/useWhiteboardInstance'
 import { trimNumber } from '@/utils'
+import { createPortal } from 'react-dom'
 
 // [x, y, pressure]
 type Points = [number, number, number][]
@@ -88,9 +88,8 @@ export function getSvgPathFromStroke(points, closed = true) {
   return result
 }
 
-const useFreeHand = () => {
+const FreeHandLayer = () => {
   const [points, setPoints] = useState<Points>()
-  const flow = useFlow()
   const currentTool = useSelectAtomValue(WhiteboardStateAtom, s => s.currentTool)
   const [whiteboardState, setWhiteboardState] = useWhiteboardState()
   const isPressed = useRef(false)
@@ -161,6 +160,7 @@ const useFreeHand = () => {
         style={{
           position: 'absolute',
           top: 0,
+          zIndex: 5,
           left: 0,
           width: '100%',
           height: '100%',
@@ -194,10 +194,13 @@ const useFreeHand = () => {
       </svg>
     )
   }
-  return {
-    renderDrawLayer,
-    renderFreehands
-  }
+  const outestContainer = instance.getOutestContainerNode?.()
+  return (
+    <>
+      {renderFreehands()}
+      {outestContainer && createPortal(renderDrawLayer(), outestContainer)}
+    </>
+  )
 }
 export const getPenConfig = (type?: (IWhiteboardNode & { type: 'freehand' })['penType']) => {
   switch (type) {
@@ -228,4 +231,4 @@ const Path = ({
   }, [points])
   return <path fill={color} stroke={color} d={path} opacity={style?.opacity} />
 }
-export default useFreeHand
+export default memo(FreeHandLayer)

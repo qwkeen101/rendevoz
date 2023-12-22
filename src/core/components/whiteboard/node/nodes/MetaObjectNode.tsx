@@ -15,10 +15,11 @@ import { DockTabPaneContext } from '@/components/base/dock/DockTabPane'
 import Code from '@/core/components/code'
 import { css } from '@emotion/css'
 import LabelDetailsRenderer from '@/core/object/renderer/LabelDetailsRenderer'
+import WhiteboardNode from '@/core/components/whiteboard/node/nodes/WhiteboardNode'
 
 const tagsClass = css({
   '> *': {
-    fontSize: '13px !important',
+    fontSize: '15px !important',
     lineHeight: '1.5 !important',
     color: 'var(--font-primary)'
   }
@@ -58,8 +59,8 @@ const MetaObjectNode: FC<InnerNodeProps> = ({ node: n, setNodeState, nodeState }
       },
       titleOptions: {
         style: {
-          fontSize: 18,
-          lineHeight: 1.55,
+          fontSize: 20,
+          lineHeight: 1.4,
           whiteSpace: 'pre-wrap'
         },
         originalTextStyle: {
@@ -79,7 +80,7 @@ const MetaObjectNode: FC<InnerNodeProps> = ({ node: n, setNodeState, nodeState }
       },
       fromOptions: {
         style: {
-          fontSize: 13,
+          fontSize: 14,
           gap: '0.3rem'
         }
       }
@@ -144,7 +145,8 @@ const MetaObjectNode: FC<InnerNodeProps> = ({ node: n, setNodeState, nodeState }
       },
       fromOptions: {
         style: {
-          fontSize: 14
+          fontSize: 14,
+          gap: '0.3rem'
         }
       },
       columnGap: 6,
@@ -155,13 +157,16 @@ const MetaObjectNode: FC<InnerNodeProps> = ({ node: n, setNodeState, nodeState }
         },
         ellipsisLine: 0,
         style: {
-          fontSize: 17,
+          fontSize: 22,
           lineHeight: 1.4,
           whiteSpace: 'pre-wrap'
         }
       },
       descriptionOptions: {
-        ellipsisLine: 0
+        ellipsisLine: 0,
+        style: {
+          fontSize: 14
+        }
       },
       containerStyle: {
         padding: 12,
@@ -228,6 +233,8 @@ const MetaObjectNode: FC<InnerNodeProps> = ({ node: n, setNodeState, nodeState }
               <Code id={metaObject.objectId} />
             </div>
           )
+        case 'whiteboard':
+          return <WhiteboardNode metaId={metaObjectId} />
         case 'syncedBlock':
           return <SyncedBlockNode node={node} />
         default: {
@@ -237,9 +244,10 @@ const MetaObjectNode: FC<InnerNodeProps> = ({ node: n, setNodeState, nodeState }
     }
   }
 
-  if (metaObject.type.includes('Label')) {
+  if (metaObject?.type.includes('Label')) {
     return <LabelDetailsRenderer metaId={metaObjectId} />
   }
+
   return expanded ? (
     <DockTabPaneContext.Provider value={{ currentTabId: '' }}>{renderExpanded()}</DockTabPaneContext.Provider>
   ) : hasImage ? (

@@ -46,7 +46,7 @@ const fetchGoogleNews = async (options: {
     })
   )
   return {
-    items: items.filter(i => i.link),
+    items: items.filter(i => i.link && !i.link.includes('reuters') && !i.link.includes('wsj.com')),
     url
   }
 }

@@ -1,5 +1,5 @@
 import { ReactElement } from 'react'
-import { CustomTypes, IEditorInstance, IPdfInstance, IMediaInstance, IWebpageInstance } from '.'
+import { CustomTypes, IEditorInstance, IPdfInstance, IMediaInstance, IWebpageInstance, IWhiteboardInstance } from '.'
 
 export type IVideoTab = {
   type: 'video'
@@ -9,7 +9,7 @@ export type IVideoTab = {
 
 export type IWhiteboardTab = {
   type: 'whiteboard'
-  instance: never
+  instance: IWhiteboardInstance
   objectId: number
 }
 

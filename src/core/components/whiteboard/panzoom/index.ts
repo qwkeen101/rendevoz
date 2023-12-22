@@ -188,8 +188,18 @@ export function createPanZoom(domElement, options) {
     transform.y = -(rect.top + rectHeight / 2) * scale + size.y / 2
     transform.scale = scale
   }
-  function setTransform(nextTransform: any, duration: number = 500) {
+  function setTransform(nextTransform: any, duration: number = 500, skipAnimation?: boolean) {
     cancelZoomAnimation()
+    if (skipAnimation) {
+      transform.x = nextTransform.x
+      transform.y = nextTransform.y
+      transform.scale = nextTransform.scale
+      triggerEvent('zoom')
+      triggerEvent('pan')
+      makeDirty()
+      return
+    }
+
     let to = nextTransform
     // get rect from current transform
     let from = transform

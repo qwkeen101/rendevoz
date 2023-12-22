@@ -30,6 +30,7 @@ interface ModalProps {
   notUnmount?: boolean
   disableAnimation?: boolean
   enableClickEvent?: boolean
+  hideBackground?: boolean
 }
 const Backdrop = ({ children, onMouseDown, disableAnimation, enableClickEvent }) => {
   const darkMode = useSelectGlobalAtomValue(SettingAtom, s => s.general.darkMode)
@@ -83,7 +84,8 @@ const Modal: FC<ModalProps> = ({
   showClose = false,
   notUnmount,
   disableAnimation,
-  enableClickEvent
+  enableClickEvent,
+  hideBackground
 }) => {
   useEffect(() => {
     const keyDownHandler = (e: KeyboardEvent) => {
@@ -143,8 +145,8 @@ const Modal: FC<ModalProps> = ({
             role={enableClickEvent ? undefined : 'modal'}
             style={{
               position: 'relative',
-              background: Colors.Background.Popover,
-              boxShadow: Colors.Background.BoxShadow,
+              background: hideBackground ? undefined : Colors.Background.Popover,
+              boxShadow: hideBackground ? undefined : Colors.Background.BoxShadow,
               minWidth,
               minHeight,
               maxHeight,
@@ -226,8 +228,8 @@ const Modal: FC<ModalProps> = ({
                 role={enableClickEvent ? undefined : 'modal'}
                 style={{
                   position: 'relative',
-                  background: Colors.Background.Popover,
-                  boxShadow: Colors.Background.BoxShadow,
+                  background: hideBackground ? undefined : Colors.Background.Popover,
+                  boxShadow: hideBackground ? undefined : Colors.Background.BoxShadow,
                   minWidth,
                   minHeight,
                   maxHeight,

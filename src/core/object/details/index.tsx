@@ -7,21 +7,28 @@ import Main from '@/core/object/details/Main'
 import { Colors } from '@/consts'
 import { ClassName } from 'rendevoz'
 import { RelatedPanel } from './Related'
-import { AttachmentWrapper } from '@/core'
-import MetaTagPicker from '@/core/object/MetaTagPicker'
 import { Rnd } from 'react-rnd'
 import { useTranslation } from 'react-i18next'
+import Id from '@/utils/id'
 
 const ObjectDetails = ({
   metaId,
   onClose,
-  onPeek,
-  onAuto
+  canBackward,
+  canForward,
+  onAuto,
+  onBackward,
+  onForward,
+  onPeek
 }: {
   metaId: number
   onClose?: VoidFunction
   onPeek: VoidFunction
   onAuto: VoidFunction
+  canForward: boolean
+  canBackward: boolean
+  onForward: VoidFunction
+  onBackward: VoidFunction
 }) => {
   const [currentDisplay, setCurrentDisplay] = useState<{
     visible: 'main' | 'tags' | 'links' | 'attachments' | 'preview'
@@ -58,13 +65,39 @@ const ObjectDetails = ({
         }}
       >
         <div style={{ fontWeight: 600 }}>{t('general.Object info')}</div>
-        <Icon
-          name={'park-close'}
-          onClick={() => {
-            onClose?.()
-          }}
-          className={ClassName.circleButton()}
-        />
+        <Content flex gap={4}>
+          <Icon
+            name={'park-arrow-left'}
+            onClick={() => {
+              if (canBackward) {
+                onBackward()
+              }
+            }}
+            style={{
+              color: canBackward ? Colors.Font.Primary : Colors.Font.SuperTransparent
+            }}
+            className={ClassName.flatButton(4, '4px')}
+          />
+          <Icon
+            name={'park-arrow-right'}
+            onClick={() => {
+              if (canForward) {
+                onForward()
+              }
+            }}
+            style={{
+              color: canForward ? Colors.Font.Primary : Colors.Font.SuperTransparent
+            }}
+            className={ClassName.flatButton(4, '4px')}
+          />
+          <Icon
+            name={'park-close'}
+            onClick={() => {
+              onClose?.()
+            }}
+            className={ClassName.flatButton(4, '4px')}
+          />
+        </Content>
       </Content>
       <Content
         fullWidth
@@ -100,14 +133,26 @@ export const GlobalObjectDetails = () => {
   const [gState, setGState] = useState<{
     visible: boolean
     metaId?: number
+    id?: number
   }>({
     visible: false
   })
+  const metaHistory = useRef<
+    {
+      metaId: number
+      id: number
+    }[]
+  >([])
   assignProperties(GlobalInstance, {
     metaOps: {
       ...GlobalInstance.metaOps,
       openDetails: id => {
-        setGState({ visible: true, metaId: id })
+        const openId = Id.getId()
+        metaHistory.current.push({
+          metaId: id,
+          id: openId
+        })
+        setGState({ visible: true, metaId: id, id: openId })
       },
       closeDetails: () => {
         setGState(s => ({ ...s, visible: false }))
@@ -134,25 +179,18 @@ export const GlobalObjectDetails = () => {
         })
       }
     }
-  }, [gState.visible, gState.metaId])
+  }, [gState.visible])
   const rndRef = useRef<Rnd>()
   const prev = useRef()
+  const currentMetaHistoryIndex = gState.metaId ? metaHistory.current.findIndex(i => i.id === gState.id) : -1
   return (
     <ResizeAndDrag
       minWidth={240}
       ref={rndRef}
-      enableResizing={{
-        left: true,
-        right: true
-      }}
       style={{
         opacity: gState.visible ? 1 : 0,
         pointerEvents: gState.visible ? 'auto' : 'none',
-        zIndex: gState.visible ? 1000 : -1,
-        background: Colors.Background.Popover,
-        borderRadius: 12,
-        overflow: 'hidden',
-        boxShadow: Colors.Background.PopoverBoxShadow
+        zIndex: gState.visible ? 1001 : -1
       }}
       default={{
         width: 600,
@@ -160,9 +198,26 @@ export const GlobalObjectDetails = () => {
       }}
       dragHandleClassName={'d-h-g'}
     >
-      <Content style={{ width: '100%', height: '100%' }}>
+      <Content
+        style={{
+          width: '100%',
+          height: '100%',
+          borderRadius: 12,
+          overflow: 'hidden',
+          background: Colors.Background.Popover,
+          boxShadow: Colors.Background.PopoverBoxShadow
+        }}
+      >
         {gState.metaId && (
           <ObjectDetails
+            canForward={currentMetaHistoryIndex >= 0 && metaHistory.current.length - 1 > currentMetaHistoryIndex}
+            canBackward={currentMetaHistoryIndex > 0}
+            onBackward={() => {
+              setGState(s => ({ ...s, ...metaHistory.current[currentMetaHistoryIndex - 1] }))
+            }}
+            onForward={() => {
+              setGState(s => ({ ...s, ...metaHistory.current[currentMetaHistoryIndex + 1] }))
+            }}
             onAuto={() => {
               if (prev.current) {
                 rndRef.current?.updatePosition({

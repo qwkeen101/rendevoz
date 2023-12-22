@@ -1,7 +1,7 @@
 import { ObjectStore } from '@/api/stores'
 import { useState } from 'react'
 import { Modal } from '@/components'
-import QueryPanel from '@/core/components/group/hooks/queryLibrary/QueryPanel'
+import QueryPanel from '@/core/components/group/components/queryLibrary/QueryPanel'
 
 const useGroupQueryLibrary = (groupId: number) => {
   const [visible, setVisible] = useState(false)

@@ -1,5 +1,5 @@
 import { Editor } from '@/core'
-import { useMemo } from 'react'
+import { CSSProperties, useMemo } from 'react'
 import Id from '@/utils/id'
 import { IEditorInstance } from '~/typings'
 
@@ -7,9 +7,10 @@ type SimpleEditorProps = {
   value?: string
   onChange?: (v: import('slate').Descendant[]) => void
   onInstanceInitialized: (i: IEditorInstance) => void
+  containerStyle?: CSSProperties
 }
 
-const SimpleEditor = ({ value, onChange, onInstanceInitialized }: SimpleEditorProps) => {
+const SimpleEditor = ({ value, onChange, onInstanceInitialized, containerStyle }: SimpleEditorProps) => {
   const id = useMemo(() => Id.getStrId(), [])
   const initialValue = useMemo(() => {
     if (value) {
@@ -41,25 +42,10 @@ const SimpleEditor = ({ value, onChange, onInstanceInitialized }: SimpleEditorPr
         type: 'paragraph',
         id: Id.getId(),
         children: [{ text: 'Input something' }]
-      },
-      {
-        type: 'paragraph',
-        id: Id.getId(),
-        children: [{ text: 'Input something' }]
-      },
-      {
-        type: 'paragraph',
-        id: Id.getId(),
-        children: [{ text: 'Input something' }]
-      },
-      {
-        type: 'paragraph',
-        id: Id.getId(),
-        children: [{ text: 'Input something' }]
       }
     ]
   }, [])
-
+  console.log(initialValue)
   return (
     <Editor
       id={id}
@@ -75,7 +61,8 @@ const SimpleEditor = ({ value, onChange, onInstanceInitialized }: SimpleEditorPr
         containerMaxHeight: '100%',
         containerStyle: {
           maxWidth: '100%',
-          minWidth: '100%'
+          minWidth: '100%',
+          ...containerStyle
         }
       }}
       state={{

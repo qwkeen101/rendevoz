@@ -37,8 +37,8 @@ const WebpageNode = ({ node }: { node: IWhiteboardNode & { type: 'webpage' } }) 
           },
 
           styles: {
-            bottomPadding: 30,
-            pageMinPadding: '0px 30px 0px',
+            bottomPadding: 100,
+            pageMinPadding: '0px 48px 0px',
             containerHeight: 'auto',
             containerMaxHeight: '100%'
           },

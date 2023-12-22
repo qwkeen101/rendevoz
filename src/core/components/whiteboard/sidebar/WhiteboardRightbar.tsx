@@ -1,7 +1,6 @@
 import { Icon, TabPane, Tabs } from '@/components'
-import { useToggle } from '@/hooks'
 import ClassName from '@/styles/classNames'
-import { useLayoutEffect, useState } from 'react'
+import { memo } from 'react'
 import { Resizable } from 're-resizable'
 import { useWhiteboardInstance } from '@/core/components/whiteboard/hooks/useWhiteboardInstance'
 import { assignProperties } from '@/utils'
@@ -135,4 +134,4 @@ const WhiteboardRightbar = () => {
   )
 }
 
-export default WhiteboardRightbar
+export default memo(WhiteboardRightbar)

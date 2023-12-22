@@ -1,6 +1,6 @@
 import { IWhiteboardInstance, IWhiteboardNode } from '~/typings'
 import { assignProperties, boxContain, boxesIntersect } from '@/utils'
-import { useFlow } from '@/core/components/whiteboard/StateHooks'
+import { useFlow, WhiteboardAtom } from '@/core/components/whiteboard/StateHooks'
 import { getBoxOfNodes } from '@/core/components/whiteboard/utils'
 import Id from '@/utils/id'
 import useUpdateWhiteboard from '@/core/components/whiteboard/hooks/useUpdateWhiteboard'
@@ -8,9 +8,11 @@ import { MetaStore } from '@/api/stores'
 import { enlargeBox } from '@/core/components/whiteboard/hooks/ops/group'
 import { Rendevoz } from '@/core/rendevoz'
 import { GlobalInstance } from '@/hooks'
+import { useStore } from 'jotai'
 
 const assignNodeOps = (instance: IWhiteboardInstance) => {
   const updateWhiteboard = useUpdateWhiteboard()
+  const store = useStore()
   const metaMap = MetaStore.getMetaObjectsMap()
   assignProperties(instance, {
     nodeOps: {
@@ -49,6 +51,21 @@ const assignNodeOps = (instance: IWhiteboardInstance) => {
       },
       deleteNode: (nodeId, redo = true) => {
         const idArr = Array.isArray(nodeId) ? nodeId : [nodeId]
+        idArr.forEach(id => {
+          const origin = instance.getNode?.(id)
+          if (origin) {
+            const whiteboardId = store.get(WhiteboardAtom)?.id
+            if (origin.type === 'metaObject' && whiteboardId) {
+              const whiteboardMeta = MetaStore.getMetaObjectByObjectId(whiteboardId)
+              if (whiteboardMeta) {
+                const link = MetaStore.getMetaLinkBySourceAndTarget(origin.metaObjectId, whiteboardMeta.id)
+                if (link) {
+                  MetaStore.deleteMetaLink(link, true)
+                }
+              }
+            }
+          }
+        })
         updateWhiteboard(w => {
           idArr.forEach(i => {
             w.nodes?.delete(i)
@@ -127,7 +144,9 @@ const assignNodeOps = (instance: IWhiteboardInstance) => {
           case 'video':
           case 'webpage':
           case 'audio':
+          case 'whiteboard':
           case 'group':
+          case 'syncedBlock':
           case 'code':
             return true
         }
@@ -184,6 +203,10 @@ const assignNodeOps = (instance: IWhiteboardInstance) => {
           }
           case 'center': {
             GlobalInstance.metaOps?.preview(node.metaObjectId)
+            return
+          }
+          case 'float': {
+            instance.floatOps?.openNode(nodeId)
             return
           }
         }

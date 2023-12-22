@@ -34,6 +34,7 @@ const GroupTitleRenderer = memo(({ groupId }: { groupId: number }) => {
   return (
     <Content ref={ref} column flex style={{ padding: `24px ${padding}px 0px`, position: 'sticky', left: 0, marginBottom: 8 }}>
       <Modal
+        zIndex={5000}
         visible={ruleVisible}
         onClose={() => {
           setRuleVisible(false)

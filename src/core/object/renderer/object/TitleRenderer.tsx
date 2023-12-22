@@ -34,8 +34,7 @@ export default ({
   showEditBoxShadow
 }: TitleRendererProps) => {
   const [isEditing, setIsEditing] = useState(false)
-  console.log(isEditing)
-  const name = metaObject?.name || metaObject?.placeholderName
+  const name = metaObject?.name || (originalText ? '' : metaObject?.placeholderName)
   return (
     <>
       {originalText && metaObject && (

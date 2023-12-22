@@ -128,7 +128,7 @@ const InnerEditor: FC<InnerEditorProps> = memo(
       EDITOR_TO_CHANGED.set(editor, true)
       if (!(editor.operations.length === 1 && editor.operations[0].type === 'set_selection')) {
         const firstLayerIdSet = new Set<number>()
-        const firstLayerMap = ID_TO_FIRST_LAYER_MAP.get(editor) || new Map<number, Path>()
+        const firstLayerMap = new Map<number, Path>()
 
         ID_TO_FIRST_LAYER_MAP.set(editor, firstLayerMap)
 
@@ -237,16 +237,10 @@ const InnerEditor: FC<InnerEditorProps> = memo(
       [scrollElement]
     )
 
-    useLayoutEffect(() => {
-      EDITOR_TO_CHANGED.set(editor, false)
-      handleChange(defaultValue)
-      index()
-      document.addEventListener('keydown', globalKeydownHandler)
-      return () => {
-        document.removeEventListener('keydown', globalKeydownHandler)
-      }
-    }, [])
-    console.log(`editor version: ${editorVersion}`)
+    const globalKeydownHandler = useMemoizedFn((e: KeyboardEvent) => {
+      handleTabKey(e)
+    })
+
     const handleKeydown = useMemoizedFn((e: KeyboardEvent) => {
       console.log(e)
       handleMentionKey(e)
@@ -264,9 +258,18 @@ const InnerEditor: FC<InnerEditorProps> = memo(
         }
       }
     })
-    const globalKeydownHandler = useMemoizedFn((e: KeyboardEvent) => {
-      handleTabKey(e)
-    })
+
+    useLayoutEffect(() => {
+      EDITOR_TO_CHANGED.set(editor, false)
+      handleChange(defaultValue)
+      index()
+      document.addEventListener('keydown', globalKeydownHandler)
+      return () => {
+        document.removeEventListener('keydown', globalKeydownHandler)
+      }
+    }, [])
+    console.log(`editor version: ${editorVersion}`)
+
     return (
       <Slate editor={editor} onChange={handleChange} value={defaultValue}>
         <EditorToolbar

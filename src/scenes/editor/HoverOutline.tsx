@@ -1,4 +1,4 @@
-import { Content, Icon, TabPane, Tabs, Tooltip } from '@/components'
+import { Content, Icon, Tooltip } from '@/components'
 import Outliner from '@/core/components/editor/utils/outline/outliner'
 import { useSelectAtomValue, useToggle } from '@/hooks'
 import ClassName from '@/styles/classNames'
@@ -6,11 +6,9 @@ import { css } from '@emotion/css'
 import { useRef } from 'react'
 import { Descendant } from 'slate'
 import { CustomEditor } from '~/typings'
-import AllObjects from './AllObjects'
 import { EditorHeadingTreeAtom, useEditorFilter } from './useEditorFilter'
 import { useAtomValue, useSetAtom } from 'jotai'
 import { goToBlock, highlightBlock } from '@/core/components/editor/utils'
-import { useTranslation } from 'react-i18next'
 import { Resizable } from 're-resizable'
 import Colors from '@/consts/colors'
 import useEditorValue from '@/core/components/editor/hooks/useEditorValue'
@@ -49,9 +47,10 @@ const SidebarToolbar = ({ editor }: { editor: CustomEditor }) => {
         minWidth={120}
         maxWidth={500}
         defaultSize={{
-          width: '300px',
+          width: '250px',
           height: 'auto'
         }}
+        maxHeight={"80%"}
         ref={sidebarRef}
         style={{
           position: 'absolute',
@@ -64,7 +63,8 @@ const SidebarToolbar = ({ editor }: { editor: CustomEditor }) => {
           padding: '8px',
           gap: 4,
           height: '100%',
-          background: Colors.Background.Global,
+          background: Colors.Background.Popover,
+          overflow: 'hidden auto',
           pointerEvents: collapsed ? 'none' : 'auto',
           transform: collapsed ? 'translateX(-100%)' : 'translateX(0px)',
           opacity: collapsed ? 0 : 1,
@@ -100,8 +100,7 @@ const HeadingTree = ({ editor }: { value: Descendant[]; editor: CustomEditor }) 
           gap={4}
           style={{
             height: '100%',
-            overflowY: 'auto',
-            overflowX: 'hidden',
+            width: '100%',
             paddingRight: 10
           }}
         >

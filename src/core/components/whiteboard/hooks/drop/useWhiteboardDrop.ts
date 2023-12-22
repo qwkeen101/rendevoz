@@ -2,11 +2,11 @@ import { useMemoizedFn } from '@/hooks'
 import { globalStore, MetaStore, ObjectStore } from '@/api/stores'
 import { saveFileLocally } from '@/utils/file'
 import Id from '@/utils/id'
-import { useEffect, useState } from 'react'
+import { useEffect } from 'react'
 import { IWhiteboardNode, MetaObject } from '~/typings/data'
 import { useFlow } from '../../StateHooks'
-import { isPointerOnContainer, transformXY } from '../../utils'
-import { metaObjectsAtom, objectIdToMetaObjectIdMapAtom } from '@/api/stores/meta.store'
+import { isPointerOnContainer } from '../../utils'
+import { metaObjectsAtom } from '@/api/stores/meta.store'
 import { useEventHandler } from '@/events'
 import { Rendevoz } from '../../../../rendevoz'
 import { getSetting } from '@/core'
@@ -135,7 +135,11 @@ const useWhiteboardDrop = () => {
     }
   })
   const insertMetaObjectAtPointer = (e: PointerEvent, metaId: number, expanded = false) => {
-    const transformedXY = flow.transformPointer(e)
+    const transformedXY = instance.coordOps?.transformWindowPositionToPosition({
+      x: e.clientX,
+      y: e.clientY
+    })
+    console.log(transformedXY)
     const targetMeta = globalStore.get(metaObjectsAtom).get(metaId)
     const whiteboardMeta = MetaStore.getMetaObjectByObjectId(flow.whiteboardId)
     if (targetMeta?.type === 'syncedBlock' && whiteboardMeta) {

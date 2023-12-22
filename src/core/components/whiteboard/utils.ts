@@ -38,6 +38,9 @@ export const getEdgeData = (
   }
 }
 export const isPointerOnContainer = (e: PointerEvent | MouseEvent, instance: IWhiteboardInstance) => {
+  const parentContainer = instance.getOutestContainerNode?.()
+  if (!parentContainer) return false
+  if (!parentContainer.contains(e.target)) return false
   const target = e.target as HTMLElement
   const targetNodeId = target.getAttribute('data-node-id')
   if (targetNodeId) {

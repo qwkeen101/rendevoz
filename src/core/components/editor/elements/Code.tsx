@@ -1,22 +1,20 @@
-import { FC, useRef, useState } from 'react'
+import { FC } from 'react'
 import { ReactEditor, RenderElementProps, useSlateStatic } from '../slate-react'
-import { CodeLanguageData } from '@/components/base/CodeBlock'
 import { CustomElement } from '~/typings'
 import { Transforms } from 'slate'
-import { RefEditorInstance } from '@uiw/react-monacoeditor'
-import { useSetting } from '@/core/setting'
-import Colors from '@/consts/colors'
-import { Content, Icon } from '@/components'
+import { Content } from '@/components'
 import Select from '@/components/base/select'
 import { capitalize } from 'lodash'
 import FontSize from '@/consts/font'
 import useReadOnlyEditor from '../hooks/useReadOnly'
 import CodeEditor from '@/core/components/code/CodeEditor'
-import { CodeLangs} from '@/core/components/code/CodeHeader'
+import { CodeLangs } from '@/core/components/code/CodeHeader'
+import { ClassName } from 'rendevoz'
 
 const Code: FC<RenderElementProps> = ({ element, attributes, children }) => {
   const codeEle = element as CustomElement & { type: 'code-block' }
   const editor = useSlateStatic()
+  const readOnly = useReadOnlyEditor()
   return (
     <div
       className="editor-disable-format"
@@ -27,50 +25,83 @@ const Code: FC<RenderElementProps> = ({ element, attributes, children }) => {
       }}
       contentEditable={false}
     >
+      {children}
       <Content
         flex
         alignItems="center"
         justifyContent="space-between"
         gap={20}
         style={{
-          padding: '5px 5px 0px'
+          padding: '5px 5px 0px',
+          fontSize: 14
         }}
         onClick={() => ReactEditor.blur(editor)}
       >
-        <Content gap={10} flex alignItems="center" style={{ fontSize: FontSize['13px'] }}>
-          <Select
-            closeOnSelect
-            value={codeEle.language || 'typescript'}
-            menuStyle={{
-              overflowY: 'auto',
-              maxHeight: 300
-            }}
-            options={CodeLangs.sort().map(i => ({
-              value: i,
-              children: capitalize(i)
-            }))}
-            align={"center"}
-            onSelect={v =>
-              Transforms.setNodes(
-                editor,
-                {
-                  language: v[0]
-                },
-                {
-                  at: ReactEditor.findPath(editor, element)
-                }
-              )
-            }
-          ></Select>
-        </Content>
+        <input
+          className={ClassName.noStyleInput}
+          placeholder={'Add title...'}
+          defaultValue={codeEle.title}
+          style={{
+            width: '100%',
+            paddingLeft: 4
+          }}
+          onBlur={e => {
+            Transforms.setNodes(
+              editor,
+              {
+                title: e.target.value
+              },
+              {
+                at: ReactEditor.findPath(editor, editor)
+              }
+            )
+          }}
+        />
+        <Select
+          closeOnSelect
+          value={codeEle.language || 'typescript'}
+          menuStyle={{
+            overflowY: 'auto',
+            maxHeight: 300
+          }}
+          options={CodeLangs.sort().map(i => ({
+            value: i,
+            children: capitalize(i)
+          }))}
+          containerStyle={{
+            flexShrink: 0
+          }}
+          align={'center'}
+          onSelect={v =>
+            Transforms.setNodes(
+              editor,
+              {
+                language: v[0]
+              },
+              {
+                at: ReactEditor.findPath(editor, element)
+              }
+            )
+          }
+        ></Select>
       </Content>
-      <div style={{ width: '100%', minHeight: 50 }}>
+      <div
+        onKeyDown={e => {
+          e.stopPropagation()
+        }}
+        onCopy={e => {
+          e.stopPropagation()
+        }}
+        onPaste={e => {
+          e.stopPropagation()
+        }}
+        style={{ width: '100%', minHeight: 50 }}
+      >
         <CodeEditor
-          // editable={!readonly}
+          editable={!readOnly}
           language={codeEle.language}
           value={codeEle.content}
           onChange={v => {
-            console.log(v)
             Transforms.setNodes(
               editor,
               {
@@ -83,7 +114,6 @@ const Code: FC<RenderElementProps> = ({ element, attributes, children }) => {
           }}
         />
       </div>
-      {children}
     </div>
   )
 }

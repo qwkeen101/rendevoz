@@ -44,7 +44,7 @@ export type IWhiteboardNode = {
 } & (
   | {
       type: 'metaObject'
-      metaObjectId?: number
+      metaObjectId: number
       expanded?: boolean
     }
   | {

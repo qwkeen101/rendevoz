@@ -1,5 +1,5 @@
 import { useMemoizedFn, useRafFn } from '@/hooks'
-import { MutableRefObject, useEffect, useRef, useState } from 'react'
+import { memo, MutableRefObject, useEffect, useRef, useState } from 'react'
 import { DraggableData, Rnd } from 'react-rnd'
 import { IWhiteboardNode, XYPosition } from '~/typings'
 import { Box } from '~/typings'
@@ -20,7 +20,7 @@ const cursorClass = css({
     cursor: 'default !important'
   }
 })
-const useWhiteboardSelect = (containerRef: MutableRefObject<HTMLElement | null>) => {
+const WhiteboardSelect = memo(({ containerRef }: { containerRef: MutableRefObject<HTMLElement | null> }) => {
   const [multiSelectedBox, setMultiSelectedBox] = useState<Box>()
 
   const selectedOffsetRef = useRef(new Map())
@@ -28,7 +28,6 @@ const useWhiteboardSelect = (containerRef: MutableRefObject<HTMLElement | null>)
   const selectedNodeIdsRef = useRef(new Set<number>())
   const flow = useFlow()
   const multiSelectBoxRef = useRef<HTMLDivElement>()
-  const idToBoxMapRef = useRef<idToBoxMap>(new Map())
   const latestUpdateResizeNodes = useRef<Partial<IWhiteboardNode[]>>([])
   const [whiteboardState, setWhiteboardState] = useWhiteboardState()
   const scale = whiteboardState.zoom
@@ -44,6 +43,7 @@ const useWhiteboardSelect = (containerRef: MutableRefObject<HTMLElement | null>)
         return selectedNodeIdsRef.current.size > 0
       },
       selectNode: (nodeId, setState = true) => {
+        console.log(nodeId)
         const idArr = Array.isArray(nodeId) ? nodeId : [nodeId]
         idArr.forEach(id => {
           if (setState) {
@@ -65,7 +65,16 @@ const useWhiteboardSelect = (containerRef: MutableRefObject<HTMLElement | null>)
         if (!instance.getNode) {
           throw new Error('Failed to initialize whiteboard!')
         }
-        return ids.map(id => instance.getNode?.(id)).filter(i => i) as IWhiteboardNode[]
+        return ids
+          .map(id => {
+            try {
+              return instance.getNode?.(id)
+            } catch (e) {
+              console.log('Node:' + id + 'is deleted!')
+              return null
+            }
+          })
+          .filter(i => i) as IWhiteboardNode[]
       },
       removeSelectionBox: () => {
         selectStartPointRef.current = undefined
@@ -120,7 +129,6 @@ const useWhiteboardSelect = (containerRef: MutableRefObject<HTMLElement | null>)
       if (e.type === 'pointerdown' && e.button === 0) {
         // only allows pointer on container to select
         if (!isPointerOnContainer(e, instance)) return
-        idToBoxMapRef.current.clear()
         // e.preventDefault()
         const transformedXY = instance.coordOps?.transformWindowPositionToPosition({ x: e.clientX, y: e.clientY })
         transformedXY && (selectStartPointRef.current = transformedXY)
@@ -269,12 +277,6 @@ const useWhiteboardSelect = (containerRef: MutableRefObject<HTMLElement | null>)
           x: data.x + offset.left,
           y: data.y + offset.top
         }
-        idToBoxMapRef.current.set(id, {
-          left: newNode.x,
-          top: newNode.y,
-          width: newNode.width!,
-          height: newNode.height!
-        })
         w.nodes?.set(id, newNode)
       })
     }, true)
@@ -302,7 +304,6 @@ const useWhiteboardSelect = (containerRef: MutableRefObject<HTMLElement | null>)
     if (multiSelectedBox) {
       const { left, top, width, height } = multiSelectedBox
       const windowPos = instance.coordOps?.transformWhiteboardPositionToWindowPosition({ x: left, y: top })
-      console.log(windowPos)
       return (
         <>
           <Rnd
@@ -471,53 +472,48 @@ const useWhiteboardSelect = (containerRef: MutableRefObject<HTMLElement | null>)
     }
   }
 
-  const renderSelect = () => {
-    const windowPos =
-      multiSelectedBox &&
-      instance.coordOps?.transformWhiteboardPositionToWindowPosition({ x: multiSelectedBox.left, y: multiSelectedBox.top })
-    return (
-      <>
-        {renderSelectBox()}
-        {renderMultiSelectBox()}
-        <AnimatePopover
-          borderRadius={999}
-          positions={['top', 'bottom']}
-          visible={!!windowPos && !isDraggingSelectionBox && !whiteboardState.isSelecting}
-          content={
-            <WithBorder borderRadius={999}>
-              <Icon
-                onClick={event => {
-                  if (multiSelectedBox) {
-                    const pos = instance.coordOps?.transformWindowPositionToPosition?.({
-                      x: event.clientX + 10,
-                      y: event.clientY
-                    })
-                    if (pos) {
-                      const toolbarState = instance.toolbarOps?.getToolbarState()
-                      if (toolbarState?.visible && toolbarState.type === 'select') {
-                        instance.toolbarOps?.closeToolbar()
-                      } else {
-                        instance.toolbarOps?.openSelectToolbar?.(pos)
-                      }
+  const windowPos =
+    multiSelectedBox &&
+    instance.coordOps?.transformWhiteboardPositionToWindowPosition({ x: multiSelectedBox.left, y: multiSelectedBox.top })
+  return (
+    <>
+      {renderSelectBox()}
+      {renderMultiSelectBox()}
+      <AnimatePopover
+        borderRadius={999}
+        positions={['top', 'bottom']}
+        visible={!!windowPos && !isDraggingSelectionBox && !whiteboardState.isSelecting}
+        content={
+          <WithBorder borderRadius={999}>
+            <Icon
+              onClick={event => {
+                if (multiSelectedBox) {
+                  const pos = instance.coordOps?.transformWindowPositionToPosition?.({
+                    x: event.clientX + 10,
+                    y: event.clientY
+                  })
+                  if (pos) {
+                    const toolbarState = instance.toolbarOps?.getToolbarState()
+                    if (toolbarState?.visible && toolbarState.type === 'select') {
+                      instance.toolbarOps?.closeToolbar()
+                    } else {
+                      instance.toolbarOps?.openSelectToolbar?.(pos)
                     }
                   }
-                }}
-                name={'park-more'}
-                className={ClassName.circleButton(6)}
-                size={20}
-              />
-            </WithBorder>
-          }
-          padding={10}
-          position={{ left: windowPos?.x, top: windowPos?.y }}
-        ></AnimatePopover>
-      </>
-    )
-  }
-  return {
-    renderSelect
-  }
-}
+                }
+              }}
+              name={'park-more'}
+              className={ClassName.circleButton(6)}
+              size={20}
+            />
+          </WithBorder>
+        }
+        padding={10}
+        position={{ left: windowPos?.x, top: windowPos?.y }}
+      ></AnimatePopover>
+    </>
+  )
+})
 
 const SelectionGroupResizer = () => {
   return (
@@ -534,4 +530,4 @@ const SelectionGroupResizer = () => {
     ></div>
   )
 }
-export default useWhiteboardSelect
+export default WhiteboardSelect

@@ -12,7 +12,7 @@ import Id from '@/utils/id'
 import { InlineElements } from './consts/elements'
 import { EDITOR_TO_CHANGED, ID_TO_FIRST_LAYER_EXCEPET_HIDEN_MAP, ID_TO_FIRST_LAYER_MAP, ID_TO_PATH_MAP } from './weakMaps'
 import useScopedEventEmitter from '@/events/useEventEmitter'
-import { EditableProps } from './slate-react/components/editable'
+import { defaultScrollSelectionIntoView, EditableProps } from './slate-react/components/editable'
 import { css } from '@emotion/css'
 import ClassName from '@/styles/classNames'
 import classNames from 'classnames'
@@ -99,6 +99,7 @@ const InnerEditor: FC<InnerEditorProps> = memo(
     const handleSaveKey = useEditorSaveKey(instance)
     const handleSelectAllKey = useEditorSelectAllKey(instance)
     const handleTabKey = useEditorTabKey(instance)
+    const canScrollIntoView = useSelectAtomValue(EditorStateAtom, s => s.layout?.canScrollIntoView) ?? true
     editor.innerRef = editableRef
     const index = () => {
       const map = new Map<number, Path>()
@@ -384,6 +385,11 @@ const InnerEditor: FC<InnerEditorProps> = memo(
           renderElement={renderElement}
           renderLeaf={renderLeaf}
           onKeyDown={handleKeydown}
+          scrollSelectionIntoView={(editor, domRange) => {
+            if (canScrollIntoView) {
+              defaultScrollSelectionIntoView(editor, domRange)
+            }
+          }}
           className={classNames(
             EditorClasses.TextBoxClass,
             EditorClasses.DefaultContentClass,
@@ -480,7 +486,7 @@ export const Leaf = (props: RenderLeafProps) => {
     cursor: leaf.cloze ? 'pointer' : undefined,
     boxShadow: leaf.cloze && disableCloze ? '0 0 0 1px var(--emphasis)' : undefined
   }
-  const handleClick = (e) => {
+  const handleClick = e => {
     if (leaf.highlight) {
       e.preventDefault()
       editor.onHighlightClick?.(leaf.highlight)

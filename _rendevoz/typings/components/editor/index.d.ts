@@ -127,6 +127,7 @@ export interface EditorProps {
     alwaysShowPlaceholder?: boolean
     showPlaceholderInFirstLine?: boolean
     propsMetaId?: number
+    canScrollIntoView?: boolean
   }
   ai?: {
     summary?: string

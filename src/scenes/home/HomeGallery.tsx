@@ -1,12 +1,11 @@
 import KeyvalueStore from '@/api/stores/keyvalue.store'
 import { MetaStore } from '@/api/stores'
 import { useEffect, useState } from 'react'
-import { AnimatePopover, Content, Icon, WithBorder } from '@/components'
+import { Content, Icon } from '@/components'
 import GalleryItem from '@/scenes/home/GalleryItem'
 import { useMeasure } from 'react-use'
 import { Colors } from '@/consts'
 import { ClassName } from 'rendevoz'
-import GalleryConfig from '@/scenes/home/GalleryConfig'
 import { useTranslation } from 'react-i18next'
 
 const HomeGallery = () => {

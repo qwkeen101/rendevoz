@@ -163,8 +163,10 @@ const MetaObjectNode: FC<InnerNodeProps> = ({ node: n, setNodeState, nodeState }
             <NoteNode
               nodeState={nodeState}
               node={{
+                ...node,
                 noteId: metaObject.objectId
               }}
+              metaId={metaObject.id}
             />
           )
         }

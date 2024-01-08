@@ -1509,7 +1509,7 @@ export const defaultDecorate: (entry: NodeEntry) => Range[] = () => []
  * A default implement to scroll dom range into view.
  */
 
-const defaultScrollSelectionIntoView = (editor: ReactEditor, domRange: DOMRange) => {
+export const defaultScrollSelectionIntoView = (editor: ReactEditor, domRange: DOMRange) => {
   // This was affecting the selection of multiple blocks and dragging behavior,
   // so enabled only if the selection has been collapsed.
   if (!editor.selection || (editor.selection && Range.isCollapsed(editor.selection))) {

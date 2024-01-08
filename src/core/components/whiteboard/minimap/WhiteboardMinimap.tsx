@@ -27,7 +27,7 @@ const WhiteboardMiniMap: FC<MinimapProps> = memo(({ width = DEFAULT_MINIMAP_WIDT
   const scopedEmitter = useScopedEventEmitter()
   const transform = instance.getTransform?.()
   const containerBounding = flow.containerEle?.getBoundingClientRect()
-  console.log(nodes, transform, containerBounding, flow)
+
   const viewBox: Box | null =
     transform && containerBounding
       ? {

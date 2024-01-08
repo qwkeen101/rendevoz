@@ -41,6 +41,12 @@ const VirtualChildren = memo(
       editor.onChange?.()
       update()
     }
+    if (children.length !== ID_TO_FIRST_LAYER_MAP.get(editor)?.size) {
+      editor.onChange?.()
+      update()
+      console.log('update')
+    }
+
     const visibleChildren = useMemo(() => {
       return children.filter(i => !i.hide)
     }, [children])
@@ -116,7 +122,7 @@ const VirtualChildren = memo(
     const virtualItems = virtualizer.getVirtualItems()
 
     const first = virtualItems[0]
-
+    console.log(children, ID_TO_FIRST_LAYER_MAP.get(editor), virtualItems)
     useEffect(() => {
       if (!disableVirtualizer) {
         const size = totalSize
@@ -131,9 +137,26 @@ const VirtualChildren = memo(
           if (first) {
             parentEle.style.transform = `translateY(${first.start - titleHeight}px)`
           }
+          return () => {
+            parentEle.parentElement?.style.removeProperty('height')
+            parentEle.parentElement?.style.removeProperty('min-height')
+            parentEle.style.removeProperty('transform')
+            parentEle.style.removeProperty('position')
+          }
+        }
+      } else {
+        const parentEle = parentElement?.current
+        if (parentEle) {
+          const paddingEnd = showPaddingBottom !== false ? bottomPadding || 200 : 0
+          if (paddingEnd) {
+            parentEle.style.paddingBottom = `${paddingEnd}px`
+            return () => {
+              parentEle.style.removeProperty('padding-bottom')
+            }
+          }
         }
       }
-    }, [totalSize, first?.start])
+    }, [totalSize, first?.start, disableVirtualizer])
 
     useEffect(() => {
       update()

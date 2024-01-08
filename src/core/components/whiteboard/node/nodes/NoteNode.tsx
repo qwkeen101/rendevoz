@@ -5,11 +5,12 @@ import { css } from '@emotion/css'
 import NoteEditor from '@/core/components/editor/noteEditor/NoteEditor'
 import { IEditorInstance } from '~/typings'
 
-const NoteNode: FC<InnerNodeProps> = ({ node: n, onNameChange }) => {
+const NoteNode: FC<InnerNodeProps> = ({ node: n, onNameChange, metaId }) => {
   const node = n as IWhiteboardNode & { type: 'note' }
   const instance = useRef<IEditorInstance>()
   return (
     <NoteEditor
+      metaId={metaId}
       onInstanceInitialized={i => (instance.current = i)}
       on={event => {
         if (event.type === 'titleChange') {
@@ -17,9 +18,11 @@ const NoteNode: FC<InnerNodeProps> = ({ node: n, onNameChange }) => {
         }
       }}
       layout={{
+        virtualizer: node.resized ? true : false,
         showHeader: false,
         showBottomPadding: true,
-        showBlockHandleAdd: false
+        showBlockHandleAdd: false,
+        canScrollIntoView: false
       }}
       title={{
         titleContainerStyle: {
@@ -58,4 +61,4 @@ const NoteNode: FC<InnerNodeProps> = ({ node: n, onNameChange }) => {
   )
 }
 
-export default memo(NoteNode, (prev, curr) => prev.node.noteId === curr.node.noteId)
+export default memo(NoteNode, (prev, curr) => prev.node === curr.node)

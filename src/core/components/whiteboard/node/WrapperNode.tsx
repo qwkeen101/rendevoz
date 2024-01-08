@@ -39,6 +39,7 @@ export interface InnerNodeProps {
   setNodeState?: Dispatch<SetStateAction<NodeInnerState>>
   onNameChange?: (name: string) => void
   nodeState?: NodeInnerState
+  metaId?: number
 }
 
 const lockResizeElements = ['image', 'video']

@@ -10,7 +10,9 @@ import { GlobalTranslateInstance } from '../global/translate/GlobalTranslatePane
 import { Rendevoz } from '.'
 import { GlobalSearchInstance } from '../global/GlobalSearchPanel'
 import { GlobalInstance, useDb } from '@/hooks'
-
+import KeyvalueStore from '@/api/stores/keyvalue.store'
+import Workspace from '@/api/common/workspace'
+import { t } from 'i18next'
 const openMetaObject = async (metaObjectId: number) => {
   const metaObject = globalStore.get(metaObjectsAtom).get(metaObjectId)
   console.log(metaObjectId, metaObject)
@@ -154,6 +156,23 @@ const openRendevozLink = async (link: string) => {
     if (!metaId || metaId.toString().length !== 14) {
       return
     }
+    const meta = await MetaStore.getMetaObjectById(metaId)
+    // switch workspace
+    const currentWorkspace = await KeyvalueStore.getOne('currentWorkspace')
+    console.log(currentWorkspace, meta?.workspace)
+    if (meta?.workspace && meta?.workspace !== currentWorkspace) {
+      const hasWorkspace = await Workspace.hasWorkspace(meta.workspace)
+      if (!hasWorkspace) {
+        toast.error('Target workspace not exist!')
+        return
+      }
+      const res = await GlobalInstance.dialogOps?.confirm(t('general.Confirm switch workspace'))
+      if (res) {
+        await Workspace.switchWorkspace(meta.workspace)
+      } else {
+        return
+      }
+    }
     if (query.has('t')) {
       const mediaObject = await MetaStore.getMetaObjectById(metaId)
       if (!mediaObject || !mediaObject.objectId) return
@@ -171,7 +190,6 @@ const openRendevozLink = async (link: string) => {
           )
         }
         if (object.type === 'note') {
-          console.log(blockId)
           await openEditor(object.objectId).then(
             i =>
               i.selectBlock?.({
@@ -317,7 +335,6 @@ const openPdfLabel = async (labelId: number) => {
     }
   }
 }
-
 
 const openHome = () => {
   return new Promise(res => {

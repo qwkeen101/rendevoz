@@ -18,6 +18,8 @@ type SimpleEditorProps = {
   changeOnBlur?: boolean
   metaId?: number
   replaceValueOnChange?: boolean
+  disableScrollIntoView?: boolean
+  virtualizer?: boolean
 }
 
 const textAreaClassname = css({
@@ -38,8 +40,10 @@ const SimpleEditor = ({
   replaceValueOnChange = false,
   readOnly = false,
   changeOnBlur = false,
+  disableScrollIntoView,
   textareaMode,
   placeholder,
+  virtualizer = false,
   metaId
 }: SimpleEditorProps) => {
   const initialValue = useMemo(() => {
@@ -136,9 +140,10 @@ const SimpleEditor = ({
       layout={{
         showTitle: false,
         showBlockHandle: false,
-        virtualizer: false,
+        virtualizer: virtualizer,
         showHeader: false,
         showBottomPadding: false,
+        canScrollIntoView: !disableScrollIntoView,
         alwaysShowPlaceholder: !!placeholder
       }}
     />

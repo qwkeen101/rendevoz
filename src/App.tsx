@@ -48,6 +48,7 @@ import { useAtomValue } from 'jotai'
 import './styles/util.less'
 import Loading from '@/components/Loading'
 import './styles/loading.less'
+import GlobalDialog from '@/core/global/GlobalDialog'
 export function getOS() {
   const userAgent = window.navigator.userAgent.toLowerCase(),
     macosPlatforms = /(macintosh|macintel|macppc|mac68k|macos)/i,
@@ -138,6 +139,7 @@ const App = () => {
           <GlobalQuickAdd />
           <GlobalBaidudisk />
           <GlobalSearchPanel />
+          <GlobalDialog />
           <GlobalCollection />
           <GlobalObjectCreator />
           <GlobalObjectDetails />

@@ -247,6 +247,7 @@ export const Whiteboard = memo(
       store.set(WhiteboardAtom, whiteboard)
       const instance: IWhiteboardInstance = {
         values: {
+          id: whiteboardId,
           copiedElements: [],
           ID_TO_NODE_MAP: new Map(),
           ID_TO_EDGE_MAP: new Map(),

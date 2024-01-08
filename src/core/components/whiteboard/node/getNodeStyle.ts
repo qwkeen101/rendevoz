@@ -34,7 +34,7 @@ const getNodeStyle = (
     return undefined
   }
   let pointerEvents: CSSProperties['pointerEvents'] = 'auto'
-  if (node.type === 'freehand' || node.type === 'text') {
+  if (node.type === 'freehand') {
     if (
       !(nodeState.popoverVisible || nodeState.selected || nodeState.focused || nodeState.locked || opts.displayCover) &&
       !node.background

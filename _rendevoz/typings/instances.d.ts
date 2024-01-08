@@ -31,6 +31,12 @@ export type IGlobalInstance = Partial<{
     // from: meta id
     askQuestion: (query: string, from?: number) => void
   }
+  dialogOps: {
+    confirm: (message: string) => Promise<boolean>
+  }
+  commonOps: {
+    addExtraSvgArrows: (color: string) => void
+  }
   metaOps: {
     getLink: (nodeId: number) => Promise<{
       link: string

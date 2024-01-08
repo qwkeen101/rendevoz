@@ -1,20 +1,31 @@
 import { Colors, MarkerColor } from '@/consts'
-import { memo } from 'react'
-import { useSelectAtomValue } from '@/hooks'
+import { memo, useState } from 'react'
+import { GlobalInstance, useSelectAtomValue } from '@/hooks'
 import { SettingAtom } from '@/core'
+import { assignProperties } from '@/utils'
 function getMarkerId(direction: 'end' | 'start', color: string) {
   return `${direction}-arrow-${color}`
 }
 
 const SvgMarker = () => {
   const darkMode = useSelectAtomValue(SettingAtom, s => s.general.darkMode)
+  const [extraColors, setExtraColors] = useState<string[]>([])
+  assignProperties(GlobalInstance, {
+    commonOps: {
+      ...GlobalInstance.commonOps,
+      addExtraSvgArrows: color => {
+        if (extraColors.includes(color)) return
+        setExtraColors([...extraColors, color])
+      }
+    }
+  })
   return (
     <defs>
       <linearGradient id="mygradient" x1="80.86%" x2="19.14%" y1="0%" y2="100%">
         <stop offset="0%" stopColor="#9100ef" />
         <stop offset="100%" stopColor="#5f5ffd" />
       </linearGradient>
-      {(Object.values(MarkerColor) as string[]).map(color =>
+      {[...(Object.values(MarkerColor) as string[]), ...extraColors].map(color =>
         color === MarkerColor.PRIMARY ? (
           <marker
             refX={0}

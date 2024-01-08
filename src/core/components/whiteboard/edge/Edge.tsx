@@ -1,31 +1,18 @@
-import { FC, memo, MouseEventHandler, useEffect, useMemo, useRef, useState } from 'react'
+import { FC, memo, MouseEventHandler, useEffect, useRef, useState } from 'react'
 import { IWhiteboardEdge, XYPosition } from '~/typings'
-import { useFlow, WhiteboardAtom } from '../StateHooks'
+import { WhiteboardAtom } from '../StateHooks'
 import { getBezierPath, getEdgeData } from '../utils'
 import { getMarkerId } from '../../graph/utils/getMarkerId'
 import { MarkerColor } from '@/consts'
-import { motion } from 'framer-motion'
-import { Position } from '@/types'
-import { AnimatePopover, Content, Icon, IconWithPopover, Tooltip, WithBorder } from '@/components'
-import Zindexes from '@/consts/zindex'
 import { useSelectAtomValue, useToggle, useUpdateEffect } from '@/hooks'
-import BlockColorPicker from '../../editor/components/BlockColorPicker'
-import { defaultBgColor } from '@/components/picker/colorPicker'
-import ClassName from '@/styles/classNames'
-import { createPortal } from 'react-dom'
-import { hexToRgb } from '@/utils/color'
-import useClickOutside from '@/hooks/utils/useClickOutside'
-import { throttle } from 'lodash'
 import Colors from '@/consts/colors'
 import { css, keyframes } from '@emotion/css'
 import FontSize from '@/consts/font'
 import { getSmoothPolyPath } from '@/core/components/whiteboard/utils/getSmoothPoly'
-import { useTranslation } from 'react-i18next'
 import useEraseEdge from '@/core/components/whiteboard/edge/useEraseEdge'
 import { useWhiteboardInstance } from '@/core/components/whiteboard/hooks/useWhiteboardInstance'
 import { EdgeOverlayStateAtom } from '@/core/components/whiteboard/edge/EdgeOverlay'
 import { WhiteboardStateAtom } from '@/core/components/whiteboard/hooks/useWhiteboardState'
-import { calculateSelectionBox } from '@/utils'
 
 const keyframe = keyframes({
   '0%': {
@@ -221,8 +208,8 @@ const TreeEdge: FC<{
         pointerEvents="none"
         ref={edgeRef}
         fill="none"
-        markerEnd={`url(#${getMarkerId('end', edge?.color || MarkerColor.PRIMARY)})`}
-        stroke={edge?.color || Colors.Font.Primary}
+        markerEnd={`url(#${getMarkerId('end', Colors.getAdaptColor(edge?.color) || MarkerColor.PRIMARY)})`}
+        stroke={Colors.getAdaptColor(edge?.color) || Colors.Font.Primary}
         strokeWidth={lineStyle === 'animatedDash' || lineStyle === 'dash' ? 4 : lineStyle === 'regular' ? 4 : lineStyle === 'thick' ? 6 : 2}
       ></path>
       <path

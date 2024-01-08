@@ -3,7 +3,7 @@ import { TFunction } from 'i18next'
 import { IMenuLayoutItem } from '@/components/base/menu'
 import { WhiteboardDefaultKeyboardShortcut } from '@/core/components/whiteboard/hooks/keyboard/DefaultWhiteboardShortcuts'
 import Id from '@/utils/id'
-import { ObjectStore } from '@/api/stores'
+import { MetaStore, ObjectStore } from '@/api/stores'
 import { Rendevoz } from '@/core/rendevoz'
 
 export default (instance: IWhiteboardInstance, t: TFunction<'translation', undefined, 'translation'>) => {
@@ -23,6 +23,13 @@ export default (instance: IWhiteboardInstance, t: TFunction<'translation', undef
       instance.toolbarOps?.closeToolbar()
       const id = Id.getId()
       const meta = (await ObjectStore(metaType).addOneWithMeta({}, { silent: true, showMetaModal: opts?.showMetaModal })).meta
+      const whiteboardObjId = instance.values.id
+      if (whiteboardObjId) {
+        const whiteboardMeta = MetaStore.getMetaObjectByObjectId(whiteboardObjId)
+        if (whiteboardMeta) {
+          MetaStore.addMetaLink({ sourceId: meta.id, targetId: whiteboardMeta.id })
+        }
+      }
       instance.insertNode?.({
         x: toolbarState.originX,
         y: toolbarState.originY,

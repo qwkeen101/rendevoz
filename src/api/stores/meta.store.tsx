@@ -592,9 +592,9 @@ const createMetaStore = () => {
     return useGlobalAtomValue(indexedMetaLinksAtom)
   }
 
-  const switchWorkspace = (newWorkspace: string) => {
+  const switchWorkspace = async () => {
     globalStore.set(metaObjectsAtom, new Map())
-    realStore.getAllMetaObjects()
+    await realStore.getAllMetaObjects()
   }
   const addAIForMeta = async (
     metaId: number,

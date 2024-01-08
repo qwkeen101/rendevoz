@@ -12,6 +12,7 @@ import { useDb } from '@/hooks'
 import isHotkey from 'is-hotkey'
 import Id from '@/utils/id'
 import { toast } from 'react-hot-toast'
+import Workspace from '@/api/common/workspace'
 
 const WorkspaceSetting = () => {
   const currentWorkspace = KeyvalueStore.useValue('currentWorkspace')
@@ -37,19 +38,7 @@ const WorkspaceSetting = () => {
   const { t } = useTranslation()
   const canDelete = (allWorkspaces?.length || 0) > 1
   const handleDeleteCurrentWorkspace = () => {
-    const allMetaIds = Array.from(MetaStore.getMetaObjectsMap().keys())
-    allMetaIds.forEach(id => MetaStore.deleteMetaObject(id, true, true))
-    if (allWorkspaces) {
-      KeyvalueStore.updateOne(
-        'allWorkspaces',
-        produce(allWorkspaces, s => {
-          s.splice(
-            s.findIndex(o => o.name === currentWorkspace),
-            1
-          )
-        })
-      )
-    }
+    Workspace.deleteCurrentWorkspace()
   }
   const handleDeleteWorkspace = async (name: string) => {
     if (name === currentWorkspace) {
@@ -81,9 +70,9 @@ const WorkspaceSetting = () => {
     ])
   }
 
-  const handleSwitchWorkspace = (name: string) => {
-    KeyvalueStore.updateOne('currentWorkspace', name)
-    MetaStore.switchWorkspace(name)
+  const handleSwitchWorkspace = async (name: string) => {
+    await KeyvalueStore.updateOne('currentWorkspace', name)
+    MetaStore.switchWorkspace()
     CollectionStore.switchWorkspace()
   }
 
@@ -91,7 +80,7 @@ const WorkspaceSetting = () => {
     if (!edit || !allWorkspaces) return
     if (edit.valid) {
       const currName = allWorkspaces[edit.idx].name
-      if (edit.currentValue === currName){
+      if (edit.currentValue === currName) {
         setEdit(undefined)
         return
       }

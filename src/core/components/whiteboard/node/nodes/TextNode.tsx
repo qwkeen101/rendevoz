@@ -10,20 +10,20 @@ const TextNode = ({ node, onClick, nodeState }: InnerNodeProps & { onClick: Void
   const textNode = node as IWhiteboardNode & { type: 'text' }
   const instance = useWhiteboardInstance()
   const i = useRef<IEditorInstance>()
-  useEffect(() => {
-    if (nodeState?.focused) {
-      const editorI = i.current
-      if (editorI) {
-        const editor = editorI.getSlateEditor?.()
-        if (editor) {
-          if (!editor.selection) {
-            Transforms.select(editor, Editor.start(editor, [0]))
-          }
-          ReactEditor.focus(editor)
-        }
-      }
-    }
-  }, [nodeState?.focused])
+  // useEffect(() => {
+  //   if (nodeState?.focused) {
+  //     const editorI = i.current
+  //     if (editorI) {
+  //       const editor = editorI.getSlateEditor?.()
+  //       if (editor) {
+  //         if (!editor.selection) {
+  //           Transforms.select(editor, Editor.start(editor, [0]))
+  //         }
+  //         ReactEditor.focus(editor)
+  //       }
+  //     }
+  //   }
+  // }, [nodeState?.focused])
 
   const handleChangeValue = (newValue: string) => {
     instance.updateNode?.(textNode.id, n => ({ ...n, content: newValue }), false)
@@ -55,6 +55,7 @@ const TextNode = ({ node, onClick, nodeState }: InnerNodeProps & { onClick: Void
         width: '200px',
         minWidth: '100%',
         maxWidth: '100%',
+        height: '100%',
         minHeight: '100%',
         maxHeight: '100%',
         padding: '0px 0px 0px 4px',
@@ -65,7 +66,9 @@ const TextNode = ({ node, onClick, nodeState }: InnerNodeProps & { onClick: Void
       onClick={onClick}
     >
       <SimpleEditor
+        disableScrollIntoView
         textareaMode={true}
+        virtualizer={node.resized}
         onInstanceInitialized={ins => (i.current = ins)}
         value={textNode.content}
         onChange={v => {
@@ -78,5 +81,5 @@ const TextNode = ({ node, onClick, nodeState }: InnerNodeProps & { onClick: Void
 
 export default memo(
   TextNode,
-  (curr, prev) => curr.node.content === prev.node.content && prev.nodeState?.focused === curr.nodeState?.focused
+  (curr, prev) => curr.node.content === prev.node.content && prev.nodeState?.focused === curr.nodeState?.focused && prev.node.resized === curr.node.resized
 )

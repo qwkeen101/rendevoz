@@ -225,6 +225,7 @@ export type IWhiteboardInstance = Partial<{
 }> & {
   eventEmitter: IEventEmitter
   values: {
+    id?: number
     // need this to prevent resizeobserver update height loop.
     isResizingSelectionBox?: boolean
     currentDraggingNodeId?: number

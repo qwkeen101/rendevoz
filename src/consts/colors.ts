@@ -80,7 +80,7 @@ const getAdaptColor = (c?: string) => {
   if (!c) return undefined
   if (GlobalTheme.isDark) {
     if (DarkColorCache[c]) return DarkColorCache[c]
-    const transformed = tinycolor(c).darken(45).desaturate(10).toRgbString()
+    const transformed = tinycolor(c).darken(45).desaturate(10).toHexString()
     DarkColorCache[c] = transformed
     return transformed
   }
@@ -91,7 +91,7 @@ const getAdaptFontColor = (bg?: string) => {
   if (!bg) return undefined
   if (GlobalTheme.isDark) return undefined
   if (FontColorCache[bg]) return FontColorCache[bg]
-  const t = tinycolor(bg).darken(60).toRgbString()
+  const t = tinycolor(bg).darken(60).toHexString()
   FontColorCache[bg] = t
 
   return t

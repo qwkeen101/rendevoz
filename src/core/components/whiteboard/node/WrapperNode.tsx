@@ -24,7 +24,7 @@ import FreehandNode from '@/core/components/whiteboard/node/nodes/FreehandNode'
 import useNodeColor from '@/core/components/whiteboard/node/hooks/useNodeColor'
 import getNodeStyle from '@/core/components/whiteboard/node/getNodeStyle'
 import useEraseNode from '@/core/components/whiteboard/node/hooks/useEraseNode'
-import useNodeSize from '@/core/components/whiteboard/node/hooks/useNodeSize'
+import useNodeSize, { DEFAULT_NODE_WIDTH } from '@/core/components/whiteboard/node/hooks/useNodeSize'
 import { useWhiteboardInstance } from '@/core/components/whiteboard/hooks/useWhiteboardInstance'
 import { WhiteboardStateAtom } from '@/core/components/whiteboard/hooks/useWhiteboardState'
 import eventHandlers from '@/core/components/whiteboard/node/hooks/eventHandlers'
@@ -264,7 +264,7 @@ const WrapperNode = ({ node }: { node: IWhiteboardNode }) => {
   const { stringColor, darkenBackground, lightenDefaultColor, opacityBackground } = useNodeColor(background, node.type)
 
   const rndRef = useRef<Rnd>()
-  const { handlePointerEvent, isTouched, isErasing } = useEraseNode(node.id)
+  const { handlePointerEvent, isTouched, isErasing } = useEraseNode(node)
   useEffect(() => {
     const pointerHandler = (e: PointerEvent) => {
       handlePointerEvent(e)
@@ -314,8 +314,7 @@ const WrapperNode = ({ node }: { node: IWhiteboardNode }) => {
     isErasing,
     panPointerMode,
     background: {
-      opacityBackground,
-      darkenBackground
+      opacityBackground
     }
   })
 
@@ -352,7 +351,7 @@ const WrapperNode = ({ node }: { node: IWhiteboardNode }) => {
         '--global-background': nodeStyle.background,
         pointerEvents: hasEraseOrDrawTool === 'freehand' ? 'none' : nodeStyle.pointerEvents
       }}
-      minWidth={type === 'freehand' ? undefined : 160}
+      minWidth={type === 'freehand' ? undefined : DEFAULT_NODE_WIDTH}
       lockAspectRatio={(lockResizeElements.includes(type) || nodeState.keepRatioResize) && shouldKeepRatio}
       disableDragging={
         hasEraseOrDrawTool ||
@@ -384,7 +383,8 @@ const WrapperNode = ({ node }: { node: IWhiteboardNode }) => {
         setTimeout(() => {
           isResizingRef.current = false
         })
-        const resizeDir = ['top', 'bottom'].includes(dir)
+        const resizeDir = delta.height !== 0
+        // const resizeDir = ['top', 'bottom'].includes(dir)
         updateWhiteboard?.(w => {
           const origin = w.nodes?.get(id)
           if (origin) {

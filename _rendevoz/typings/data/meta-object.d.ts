@@ -38,6 +38,69 @@ export type BuiltInMetaObjectTypes =
   | 'code'
   | 'question'
 
+export type IMetaSelectOption = {
+  name: string
+  color: string
+  parentPropName: string
+  order?: number
+} & IBase
+
+export type IMetaProperty = (
+  | {
+      propType: 'string'
+      value?: string
+    }
+  | {
+      propType: 'AI summary'
+      value?: string
+    }
+  | {
+      propType: 'AI questions'
+      value?: number[]
+    }
+  | {
+      propType: 'file'
+      value?: {
+        type: string
+        name: string
+        path: string
+      }[]
+    }
+  | {
+      propType: 'number'
+      value?: number
+    }
+  | {
+      propType: 'checkbox'
+      value?: boolean
+    }
+  | {
+      propType: 'number array'
+      value?: number[]
+    }
+  | {
+      propType: 'singleSelect'
+      // id
+      value?: number
+    }
+  | {
+      propType: 'multiSelect'
+      // id array
+      value?: number[]
+    }
+  | {
+      propType: 'URL'
+      value?: string
+    }
+  | {
+      propType: 'date'
+      // milliseconds, Date.now
+      value?: number
+    }
+) & {
+  icon?: string
+}
+
 // sourceType: note / metaObject / pdf document
 export interface MetaObject extends IBase {
   type: BuiltInMetaObjectTypes
@@ -57,17 +120,8 @@ export interface MetaObject extends IBase {
   attachments?: IMetaAttachment[]
   // placeholder name mainly for labels, like original text
   placeholderName?: string
-  properties?: Record<
-    'AI summary' | 'AI questions' | string,
-    | {
-        propType: 'string'
-        value?: string
-      }
-    | {
-        propType: 'number array'
-        value?: number[]
-      }
-  >
+  // id to prop
+  properties?: Record<number | string, IMetaProperty>
   fromObject?:
     | {
         type: 'pdf'
@@ -169,6 +223,7 @@ export type DateFieldFilterRule = {
 }
 type TagFieldFilterRule = {
   type: 'contains' | 'not contains' | 'empty' | 'not empty' | 'is' | 'is not'
+  value?: number[]
   tagIds?: number[]
 }
 
@@ -191,6 +246,16 @@ export type FromFieldFilterRule = {
   type: 'is'
 } & MetaFilterer
 
+export type SingleSelectFilterRule = {
+  type: 'empty' | 'not empty' | 'is' | 'is not'
+  value?: number
+}
+
+export type MultiSelectFilterRule = {
+  type: 'contains' | 'not contains' | 'empty' | 'not empty'
+  value?: number[]
+}
+
 export type MetaFilterGroup = {
   groupType: 'and' | 'or'
   rules: MetaFilterRule[]
@@ -201,6 +266,39 @@ export type LinkFilterRule = {
   type: 'source' | 'target' | 'related'
   ruleType: 'contains' | 'not contains' | 'is' | 'is not'
 } & MetaFilterer
+
+export type NumberFieldFilterRule = {
+  value?: number
+  type: 'is' | 'is not' | 'gt' | 'gte' | 'lt' | 'lte' | 'empty' | 'not empty'
+}
+
+export type CheckboxFilterRule = {
+  value?: boolean
+  type: 'is' | 'is not'
+}
+export type PropertyFilterRule = {
+  filterType: 'rule'
+  field: string
+} & (
+  | ({
+      propType: 'checkbox'
+    } & CheckboxFilterRule)
+  | ({
+      propType: 'singleSelect'
+    } & SingleSelectFilterRule)
+  | ({
+      propType: 'multiSelect'
+    } & MultiSelectFilterRule)
+  | ({
+      propType: 'string' | 'URL' | 'AI summary'
+    } & StringFieldFilterRule)
+  | ({
+      propType: 'number'
+    } & NumberFieldFilterRule)
+  | ({
+      propType: 'date'
+    } & DateFieldFilterRule)
+)
 
 export type MetaFilterRule = (
   | ({
@@ -226,6 +324,7 @@ export type MetaFilterRule = (
   | ({ filterType: 'rule'; field: 'type' } & TypeFieldFilterRule)
   | LinkFilterRule
   | MetaFilterGroup
+  | PropertyFilterRule
 ) & {
   id: number
 }

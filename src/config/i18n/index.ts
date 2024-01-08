@@ -1,7 +1,7 @@
 import i18n from 'i18next'
 import { initReactI18next } from 'react-i18next'
-import zhCN from '@/assets/locales/zh-CN/translation.json'
-import enUS from '@/assets/locales/en-US/translation.json'
+import zhCN from '@/assets/locales/zh-CN.json'
+import enUS from '@/assets/locales/en-US.json'
 
 const initI18n = (defaultLang = 'zh-CN') => {
   i18n.use(initReactI18next).init({

@@ -4,13 +4,12 @@ import PdfPage from './components/page/Page'
 import styles from './index.module.less'
 import { IAnnotation, IPdfInstance, IPdfViewer, RenderPageProps } from '~/typings'
 import { PDFDocumentProxy } from 'pdfjs-dist'
-import { useMemoizedFn, useMergedRef } from '@/hooks'
+import { useMemoizedFn } from '@/hooks'
 import { Range } from '@tanstack/react-virtual'
 import Link from './components/annotation/Link'
 import usePdfDrag from './hooks/usePdfDrag'
 import { useGlobalAtomValue } from '@/hooks/jotai'
 import { ID_TO_LABEL_MAP } from './weakMaps'
-import usePdfViewer from './core/hooks/useViewer'
 import { MetaStore, ObjectStore } from '@/api/stores'
 import { waitFor } from '@/utils/functions'
 import DownloadRemotePdf from '@/core/components/pdf/core/utils/downloadRemotePdf'
@@ -19,6 +18,8 @@ import { Content } from '@/components'
 import { Colors } from '@/consts'
 import PdfHeader from '@/core/components/pdf/components/PdfHeader'
 import LabelToolbarRenderer from '@/core/components/pdf/components/label/LabelToolbarRenderer'
+import usePdfInstance from '@/core/components/pdf/hooks/usePdfInstance'
+import PDFOpsAssigner from '@/core/components/pdf/hooks/ops/Assigner'
 
 export interface PdfViewerProps {
   documentId: number
@@ -30,11 +31,8 @@ export const PdfViewer: FC<PdfViewerProps> = memo(({ documentId, transformScale,
   const documentAtom = ObjectStore('pdf').createAtom(documentId)
   const document = useGlobalAtomValue(documentAtom)
   const documentMeta = MetaStore.useObjectToMetaValue(documentId)
-  const viewerRef = useRef()
-  const viewer = usePdfViewer()
-  const mergedRef = useMergedRef(viewerRef)
+  const viewer = usePdfInstance()
   const [downloadState, setDownloadState] = useState<DownloadProgress>()
-  const [contextMenuVisible, setContextMenuVisible] = useState(false)
 
   // ref to store pdf viewer instance
   const viewboxRef = useRef<HTMLDivElement>(null)
@@ -62,7 +60,7 @@ export const PdfViewer: FC<PdfViewerProps> = memo(({ documentId, transformScale,
     }
     ID_TO_LABEL_MAP.set(viewer, new Map())
     waitFor(
-      () => !!viewer.jumpToLabel,
+      () => !!viewer.navigateOps?.jumpToOffset,
       () => {
         if (documentMeta && !documentMeta.coverImgSrc) {
           setTimeout(() => {
@@ -78,7 +76,6 @@ export const PdfViewer: FC<PdfViewerProps> = memo(({ documentId, transformScale,
 
   const handleOpenMenu = useCallback(e => {
     e.preventDefault()
-    setContextMenuVisible(true)
   }, [])
 
   useEffect(() => {
@@ -113,11 +110,10 @@ export const PdfViewer: FC<PdfViewerProps> = memo(({ documentId, transformScale,
         return (
           <Link
             onClick={() => {
-              console.log(annotation)
               if (annotation.url) {
                 window.open(annotation.url)
               }
-              annotation.dest && viewer.jumpToDest?.(annotation.dest)
+              annotation.dest && viewer.navigateOps?.jumpToDest(annotation.dest)
             }}
           />
         )
@@ -150,7 +146,6 @@ export const PdfViewer: FC<PdfViewerProps> = memo(({ documentId, transformScale,
             ObjectStore('pdf').updateOne({ id: documentId, totalPageNum: doc.numPages })
           }}
           layoutClassName={styles.viewerLayout}
-          innerRef={mergedRef}
           fileUrl={document.url}
           renderPage={renderPage}
           renderAnnotation={renderAnnotation}

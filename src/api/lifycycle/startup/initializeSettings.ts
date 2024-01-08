@@ -1,18 +1,15 @@
-import { useDb } from '@/hooks'
-import { CurrentKeyValues } from '@/api/stores/keyvalue.store'
-
-const putIfNotExist = async (key: string, value: any) => {
-  const db = useDb('keypairs')
-  const existed = await db.get(key)
-  if (existed) return
-  await db.put(key, value)
-}
+import KeyvalueStore, { CurrentKeyValues } from '@/api/stores/keyvalue.store'
+import { globalStore } from '@/api/stores'
+import { defaultSetting, SettingAtom } from '@/core'
+import _ from 'lodash'
+import { getDefaultUserFilePath } from '@/utils'
+import produce from 'immer'
 
 export const DefaultEditorSettings: CurrentKeyValues['editorSettings'] = {
   editMode: {
     typeface: 'Inter',
     fontSize: 15,
-    lineSpacing: 1.3,
+    lineSpacing: 1.4,
     pageWidth: 'Medium'
   },
   readerMode: {
@@ -22,6 +19,30 @@ export const DefaultEditorSettings: CurrentKeyValues['editorSettings'] = {
     lineSpacing: 1.6
   }
 }
+const subSettingChange = () =>
+  globalStore.sub(SettingAtom, () => {
+    KeyvalueStore.updateOne('userSetting', globalStore.get(SettingAtom))
+  })
 export default async () => {
-  await putIfNotExist('editorSettings', DefaultEditorSettings)
+  const settingInLocalStorage = localStorage.getItem('setting')
+  if (settingInLocalStorage) {
+    await KeyvalueStore.updateOne('userSetting', JSON.parse(settingInLocalStorage))
+    localStorage.removeItem('setting')
+  }
+  const inDatabaseSetting = await KeyvalueStore.getOne('userSetting')
+  console.log(inDatabaseSetting)
+  if (!inDatabaseSetting) {
+    await KeyvalueStore.updateOne('userSetting', defaultSetting)
+  }
+  const mergedSetting = _.merge(structuredClone(defaultSetting), inDatabaseSetting)
+  if (!mergedSetting.general.userFilePath) {
+    const path = await getDefaultUserFilePath()
+    mergedSetting.general.defaultFilePath = path
+    if (mergedSetting.general.userFilePath === undefined) {
+      mergedSetting.general.userFilePath = path
+    }
+  }
+  globalStore.set(SettingAtom, mergedSetting)
+  await KeyvalueStore.updateOne('userSetting', mergedSetting)
+  subSettingChange()
 }

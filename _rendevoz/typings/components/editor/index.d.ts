@@ -114,14 +114,19 @@ export interface EditorProps {
     }
   ) => void
   layout?: {
+    virtualizer?: boolean
     showHeader?: boolean
     showTitle?: boolean
     showToolbar?: boolean
     showBlockHandle?: boolean
     showLastSave?: boolean
+    showProps?: boolean
     showBottomPadding?: boolean
     showHoverObjectDetails?: boolean
     showBlockHandleAdd?: boolean
+    alwaysShowPlaceholder?: boolean
+    showPlaceholderInFirstLine?: boolean
+    propsMetaId?: number
   }
   ai?: {
     summary?: string
@@ -192,6 +197,7 @@ export interface EditorProps {
   onOperationApplied?: (operation: Operation) => void
   // not controlled
   defaultReadOnly?: boolean
+  placeholder?: string
   onInstanceInitialized?: (instance: IEditorInstance) => void
 }
 

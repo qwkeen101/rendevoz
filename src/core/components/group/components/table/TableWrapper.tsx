@@ -5,17 +5,20 @@ import { MetaGroupChild } from '~/typings'
 import { RowWrapper } from '@/core/components/group/components/table/RowWrapper'
 import { useGroupInstance } from '@/core/components/group/hooks/useGroupInstance'
 import PlaceholderRow from '@/core/components/group/components/table/PlaceholderRow'
+import { useSelectAtomValue } from '@/hooks'
+import { GroupStateAtom } from '@/core/components/group/hooks/useGroupState'
 
 const TableWrapper = memo(({ value = [] }: { value: MetaGroupChild[] }) => {
   const ref = useRef<HTMLDivElement>(null)
   const instance = useGroupInstance()
   instance.getScrollMargin = () => ref.current?.closest('[role="renderer-container"]')?.offsetTop ?? 0
+
   const m = instance.getScrollMargin?.() ?? 0
+  const columns = useSelectAtomValue(GroupStateAtom, s => s.headerColumn)
   const virtualizer = useVirtualizer({
-    overscan: 7,
+    overscan: 5,
     getScrollElement: () => instance.values.pageContainer,
     estimateSize: () => 30,
-    debug: true,
     count: value.length,
     scrollMargin: m
   })
@@ -36,7 +39,8 @@ const TableWrapper = memo(({ value = [] }: { value: MetaGroupChild[] }) => {
     >
       <div
         style={{
-          height: virtualizer.getTotalSize(),
+          height: value.length ? virtualizer.getTotalSize() : 0,
+          '--table-columns': columns,
           width: '100%',
           position: 'relative',
           flexShrink: 0
@@ -52,7 +56,7 @@ const TableWrapper = memo(({ value = [] }: { value: MetaGroupChild[] }) => {
           }}
         >
           {items.map(i => (
-            <div key={i.key} data-index={i.index} ref={virtualizer.measureElement}>
+            <div key={value[i.index].rowId} data-index={i.index} ref={virtualizer.measureElement}>
               <RowWrapper rowDetails={value[i.index]} path={[i.index]} />
             </div>
           ))}

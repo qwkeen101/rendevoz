@@ -9,6 +9,8 @@ import { Icon } from '@/components'
 import { useMemoizedFn, useSelectAtomValue } from '@/hooks'
 import _ from 'lodash'
 import { useStore } from 'jotai'
+import normalizeViewProperties from '@/core/components/group/utils/normalizeViewProperties'
+import useGroupGetPropFromMeta from '@/core/components/group/hooks/useGroupGetPropFromMeta'
 
 export default ({ groupId }: { groupId: number }) => {
   const instance = useGroupInstance()
@@ -31,6 +33,7 @@ export default ({ groupId }: { groupId: number }) => {
   })
   useMemo(() => {
     if (groupValue) {
+      normalizeViewProperties(groupValue)
       setGroupState(s => ({ ...s, data: groupValue }))
     }
   }, [groupValue])
@@ -51,10 +54,11 @@ export default ({ groupId }: { groupId: number }) => {
       }
     }
   })
+  useGroupGetPropFromMeta(instance)
   useLayoutEffect(() => {
     setTimeout(() => {
       compares()
     })
   }, [groupValue?.views])
-  return <TabTitle icon={<Icon name={'park-form'} />} title={groupMeta?.name || 'Unnamed group'} />
+  return <TabTitle icon={<Icon name={'park-form'} />} title={groupMeta?.name || groupMeta?.placeholderName || 'Unnamed group'} />
 }

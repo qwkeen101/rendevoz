@@ -1,8 +1,19 @@
-import { Box, MetaGroupChild, MetaObject, PartialWithId, MetaGroup } from '../..'
+import {
+  Box,
+  MetaGroupChild,
+  MetaObject,
+  PartialWithId,
+  MetaGroup,
+  IMetaProperty,
+  MetaGroupProperty,
+  MetaGroupViewProperty,
+  IMetaProp
+} from '../..'
 import { PrimitiveAtom } from 'jotai/esm'
 import { Patch } from 'immer'
 import { Path, PathRef } from 'slate'
 import { Virtualizer } from '@tanstack/react-virtual'
+import { XYPosition } from 'rendevoz'
 
 export * from './group'
 
@@ -43,13 +54,40 @@ type GroupPathOps = {
 type GroupMetaOps = {
   updateMeta: (nextMeta: PartialWithId<MetaObject>) => Promise<void>
   hasMetaInGroup: (metaId: number) => boolean
+  updateMetaProperty: (field: string, nextValue: any, id?: number) => Promise<void>
 }
 
 export type GroupValueEntry = [MetaGroupChild, Path]
 
 type GroupValueOps = {
+  getPrevMeta: (
+    rowId: number,
+    opts?: {
+      loop?: boolean
+      canPreview?: boolean
+    }
+  ) =>
+    | {
+        metaId: number
+        rowId: number
+      }
+    | undefined
+  getNextMeta: (
+    rowId: number,
+    opts?: {
+      loop?: boolean
+      canPreview?: boolean
+    }
+  ) =>
+    | {
+        metaId: number
+        rowId: number
+      }
+    | undefined
   getValueById: (id: number) => MetaGroupChild | undefined
   getValueByPath: (path: Path) => MetaGroupChild | undefined
+  // visible and invisible
+  getAllMetasInGroup: () => MetaObject[]
   isParent: (maybeParent: MetaGroupChild, child: MetaGroupChild) => boolean
   updateValueByPath: (value: Partial<MetaGroupChild>, path: Path) => void
   // if no path, insert at end of group
@@ -62,6 +100,7 @@ type GroupValueOps = {
 }
 
 type GroupSelectOps = {
+  selectItem: (id: number, removeOtherIfOnlyOneSelected?: boolean) => void
   clearAllSelect: VoidFunction
   selectAll: VoidFunction
   getSelectedItems: () => [MetaGroupChild, Path][]
@@ -72,6 +111,42 @@ type GroupSidebarOps = {
   open: (details: { type: 'preview'; metaId: number } | { type: 'labels'; objectId: number; objectType: string }) => void
 }
 
+type GroupCenterOps = {
+  open: (metaId: number, rowId: number) => void
+}
+
+type GroupViewOps = {
+  getVisibleProperties: () => MetaGroupProperty[] | undefined
+  useViewProperties: () => MetaGroupProperty[] | undefined
+  changePropertyName: (id: number, newName: string) => Promise<void>
+  updateProperty: (id: number, newProp: Partial<MetaGroupViewProperty>) => Promise<void>
+  addNewProperty: (prop: Partial<IMetaProp>) => void
+  deleteCustomProperty: (id: number) => Promise<void>
+  tableOps?: {
+    deselectCell: VoidFunction
+    useSelectedCell: (rowId: number, index: number) => boolean
+    selectCell: (rowId: number, index: number) => void
+    getCurrentSelectedCell: () =>
+      | {
+          rowId: number
+          index: number
+        }
+      | undefined
+    // navigate to next cell
+    navigateCell: (direction: 'up' | 'down' | 'right' | 'left') => void
+  }
+}
+
+export type GroupOverlayAvaibleContents = {
+  type: 'itemContextMenu'
+  details: MetaGroupChild
+  align?: 'start' | 'center'
+}
+
+type GroupOverlayOps = {
+  open: (content: GroupOverlayAvaibleContents, position: XYPosition) => void
+}
+
 export type IGroupInstance = Partial<{
   bodyOps: GroupBodyOps
   dragOps: GroupDragOps
@@ -80,16 +155,22 @@ export type IGroupInstance = Partial<{
   metaOps: GroupMetaOps
   selectOps: GroupSelectOps
   sidebarOps: GroupSidebarOps
-  openObject: (metaId: number) => void
+  centerOps: GroupCenterOps
+  overlayOps: GroupOverlayOps
+  openObject: (metaId: number, rowId: number) => void
   triggerChange: VoidFunction
   openFilterPanel: VoidFunction
   getOuterContainer: () => HTMLElement
   getScrollElement: () => HTMLElement
   getScrollMargin: () => number
+  viewOps: GroupViewOps
   deleteView: (viewId: number) => void
   updateCurrentView: (updater: (currentView: MetaGroup['views'][0]) => MetaGroup['views'][0]) => void
   updateGroupData: (updater: (currentData: MetaGroup) => MetaGroup) => Promise<MetaGroup>
+  getCurrentView: () => MetaGroup['views'][0] | undefined
+  getGroupData: () => MetaGroup | undefined
   virtualizer: Virtualizer<any, any>
+  buildIndex: VoidFunction
 }> & {
   values: {
     redos: GroupHistoryItem[]
@@ -106,7 +187,7 @@ export type IGroupInstance = Partial<{
     selectedRowIdSet: Set<number>
     currentValueIndex?: Record<number, number>
     currentIndex?: number[]
-    currentValue: MetaGroupChild[]
+    currentValue?: MetaGroupChild[]
     pageContainer?: HTMLElement
     // for shift multiple select
     lastSelectRowId?: number

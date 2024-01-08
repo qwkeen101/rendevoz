@@ -14,6 +14,7 @@ import useWebpageInstance from '@/core/components/webpage/hooks/useWebpageInstan
 import { IWebpageProps } from '@/core/components/webpage/Webpage'
 import { ClassName } from 'rendevoz'
 import { GlobalSearchInstance } from '@/core/global/GlobalSearchPanel'
+import { AI_QUESTION_PROP_ID, AI_SUMMARY_PROP_ID } from '@/api/stores/meta.store'
 
 const WebpageTitle = ({
   title = 'Untitled',
@@ -218,7 +219,6 @@ const WebpageContentRenderer = ({
           { url: e.url },
           {
             currentMeta: {
-              name: 'Unnamed webpage',
               fromObject: webpageMeta
                 ? {
                     type: 'webpage',
@@ -306,14 +306,16 @@ const WebpageContentRenderer = ({
               onInstanceInitialized?.(webpageInstance)
             }}
             ai={{
-              summary: webpageMeta?.properties?.['AI summary']?.value,
-              questions: webpageMeta?.properties?.['AI questions']?.value
+              summary: webpageMeta?.properties?.[AI_SUMMARY_PROP_ID]?.value,
+              questions: webpageMeta?.properties?.[AI_QUESTION_PROP_ID]?.value
             }}
             defaultValue={webpageState.externalState?.content || webpageState.currentParsedContent}
             id={editorId}
             noteId={webpageState.currentWebpageNoteId}
             layout={{
               showLastSave: false,
+              showProps: !!webpageMeta,
+              propsMetaId: webpageMeta?.id,
               ...editorOptions?.layout
             }}
             state={{
@@ -343,6 +345,7 @@ const WebpageContentRenderer = ({
                 </>
               )
             }}
+            metaId={webpageMeta?.id}
             labelIds={currentWepbage?.labels || []}
             on={webpageEditorOnHandler}
             stringTitle={webpageMeta?.name || webpageState.externalState?.title || webpageState.currentWebpage?.title || 'Untitled'}

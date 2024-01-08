@@ -9,14 +9,16 @@ const useEditorSlashMenu = (instance: IEditorInstance) => {
       const editor = instance.getSlateEditor?.()
       if (!editor) return
       Transforms.insertText(editor, '/')
-      const currentBlockRect = instance.blockOps?.getCurrentCursorBlockBounding()
-      if (currentBlockRect) {
-        instance.overlayOps?.open('slashMenu', {
-          x: currentBlockRect.left,
-          y: currentBlockRect.top + currentBlockRect.height / 2
-        })
-        return
-      }
+      setTimeout(() => {
+        const currentBlockRect = instance.blockOps?.getCurrentCursorBounding()
+        if (currentBlockRect) {
+          instance.overlayOps?.open('slashMenu', {
+            x: currentBlockRect.left,
+            y: currentBlockRect.top + currentBlockRect.height / 2
+          })
+          return
+        }
+      })
     }
     return
   }

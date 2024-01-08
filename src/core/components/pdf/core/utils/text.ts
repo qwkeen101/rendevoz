@@ -126,6 +126,7 @@ export const getTargetTextBound = (
     }
   const resultChars = []
   let rx = 0
+
   for (let i = 0; i < chars.length; i += 1) {
     if (!chars[i].transform) {
       resultChars.push(chars[i])
@@ -133,16 +134,19 @@ export const getTargetTextBound = (
     }
     const transformedCharPoint = getCharPoint(viewport, chars[i].transform),
       charRelX = getCoordAfterTrans(transformedCharPoint, bound.offset.trans).x - boundCoord.x
+
     if (include) {
       if (charRelX >= relX) break
       resultChars.push(chars[i]), (rx = charRelX)
     } else if ((resultChars.push(chars[i]), (rx = charRelX), charRelX >= relX)) break
   }
+
   const lastChar = resultChars[resultChars.length - 1]
   if (lastChar)
     return {
       text: lastChar.str,
-      width: rx
+      width: rx,
+      chars: resultChars
     }
   ctx.font = `${bound.style.fontSize} ${bound.style.fontFamily}`
   const fontWidth = bound.offset.size[0] / ctx.measureText(bound.str).width
@@ -171,6 +175,17 @@ export const getStartTextRect = (bound: TextContentBound, ctx: CanvasRenderingCo
     textBound = getTargetTextBound(bound, point, true, viewport, ctx)
   let targetStr = str.substring(textBound.text.length)
   bound.textItem.hasEOL && (targetStr += ` `)
+  let width = bound.offset.size[0] - textBound.width
+  let x = offset.left + textBound.width
+  if (targetStr.startsWith(' ') && textBound.chars) {
+    ctx.font = `${bound.style.fontSize} ${bound.style.fontFamily}`
+    const fontWidth = bound.offset.size[0] / ctx.measureText(bound.str).width
+    const whitespaceWidth = ctx.measureText(' ').width * fontWidth
+    x += whitespaceWidth
+    width -= whitespaceWidth
+    targetStr = targetStr.trimStart()
+  }
+  console.log(targetStr)
   return trans
     ? {
         x: trans[4],
@@ -185,9 +200,9 @@ export const getStartTextRect = (bound: TextContentBound, ctx: CanvasRenderingCo
         text: targetStr
       }
     : {
-        x: offset.left + textBound.width,
+        x,
         y: offset.top,
-        width: bound.offset.size[0] - textBound.width,
+        width,
         height: bound.offset.size[1],
         text: targetStr
       }
@@ -230,14 +245,24 @@ export const getTextRect = (bound: TextContentBound, ctx: CanvasRenderingContext
       endPointCoord = getCoordAfterTrans(endPoint, offset.trans),
       [realStart, realEnd] = startPointCoord.x >= endPointCoord.x ? [endPoint, startPoint] : [startPoint, endPoint],
       startTextBound = getTargetTextBound(bound, realStart, true, viewport, ctx),
-      endTextBound = getTargetTextBound(bound, realEnd, undefined, viewport, ctx),
-      targetText = str.substring(startTextBound.text.length, endTextBound.text.length)
-
+      endTextBound = getTargetTextBound(bound, realEnd, false, viewport, ctx)
+    let targetText = str.substring(startTextBound.text.length, endTextBound.text.length)
+    // process select extra whitespace here
+    let width = endTextBound.width - startTextBound.width
+    let x = offset.left + startTextBound.width
+    if (targetText.startsWith(' ') && startTextBound.chars && endTextBound.chars) {
+      ctx.font = `${bound.style.fontSize} ${bound.style.fontFamily}`
+      const fontWidth = bound.offset.size[0] / ctx.measureText(bound.str).width
+      const whitespaceWidth = ctx.measureText(' ').width * fontWidth
+      x += whitespaceWidth
+      width -= whitespaceWidth
+      targetText = targetText.trimStart()
+    }
     return trans
       ? {
           x: trans[4],
           y: trans[5],
-          width: endTextBound.width - startTextBound.width,
+          width,
           height: offset.size[1],
           offset: {
             angle: offset.angle,
@@ -247,9 +272,9 @@ export const getTextRect = (bound: TextContentBound, ctx: CanvasRenderingContext
           text: targetText
         }
       : {
-          x: offset.left + startTextBound.width,
+          x,
           y: offset.top,
-          width: endTextBound.width - startTextBound.width,
+          width,
           height: offset.size[1],
           text: targetText
         }

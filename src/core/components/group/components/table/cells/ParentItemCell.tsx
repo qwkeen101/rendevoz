@@ -2,7 +2,6 @@ import { MetaStore } from '@/api/stores'
 import { useEffect, useState } from 'react'
 import { Rendevoz } from '@/core/rendevoz'
 import { Content, Icon } from '@/components'
-import { ClassName } from 'rendevoz'
 
 export default ({ metaId }: { metaId: number }) => {
   const map = MetaStore.useIndexedMetaObjects()?.metaAttachmentIdToMetaIdsMap
@@ -29,7 +28,7 @@ export default ({ metaId }: { metaId: number }) => {
   }, [parentItemsMap?.size])
   if (!parentItems?.length) return null
   return (
-    <Content flex gap={6} style={{ overflow: 'hidden' }}>
+    <Content flex gap={6} style={{ overflow: 'hidden', flexWrap: 'inherit' }}>
       {parentItems.map(i => (
         <Content flex gap={4} key={i.id}>
           <Icon name={i.icon} />

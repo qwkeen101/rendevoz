@@ -3,7 +3,7 @@ import { atom, useAtomValue } from 'jotai'
 import { RefObject } from 'react'
 import { CustomEditor, IEditorInstance } from '~/typings'
 import { goToBlock, goToTextHighlight, highlightBlock, selectBlock, waitForEditorContentInitialized } from '../utils'
-import { Node, Range } from 'slate'
+import { Editor, Node, Range } from 'slate'
 import { ID_TO_ELEMENTS_MAP, ID_TO_PATH_MAP } from '../weakMaps'
 import useEditorBarState from './useEditorBarState'
 import assignBlockOps from '@/core/components/editor/hooks/instance/assignBlockOps'
@@ -62,6 +62,24 @@ export const useAssignEditorInstance = (editor: CustomEditor, scrollElementRef: 
     },
     save: () => {
       editor.on({ type: 'save', value: editor.children })
+    },
+    getInsideMetas: () => {
+      const eles = Node.elements(editor)
+      const ids: Set<number> = new Set()
+      Array.from(eles).forEach(i => {
+        const b = i[0]
+        if (b.type === 'metaObject' || b.type === 'inline-metaObject') {
+          ids.add(b.originId)
+        }
+        if (b.type === 'link') {
+          if (b.url?.startsWith('rendevoz://object/')) {
+            const u = new URL(b.url)
+            const id = parseInt(u.pathname.replace('//object/', ''))
+            ids.add(id)
+          }
+        }
+      })
+      return Array.from(ids.values())
     },
     getHighlightLocation,
     getScrollElement: () => scrollElementRef.current,

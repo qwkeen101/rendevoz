@@ -8,6 +8,7 @@ import fuzzysort from 'fuzzysort'
 import { Virtualizer } from '@tanstack/react-virtual'
 import { Colors, KEY } from '@/consts'
 import isHotkey from 'is-hotkey'
+import { isValidHttpUrl } from '@/core/components/webpage/utils'
 
 interface MetaFiltererProps {
   withInput?: boolean
@@ -15,13 +16,30 @@ interface MetaFiltererProps {
   onChange?: (metaId?: number) => void
   currentInput?: string
   style?: CSSProperties
+  mode?: 'recentlyCreate' | 'recentlyView' | 'type'
+  onInputLink?: (l: string) => void
   showCreate?: {
     note?: boolean
     whiteboard?: boolean
+    linkToWeb?: boolean
+    linkToWebMeta?: boolean
   }
 }
 
-const MetaFilterer = ({ withInput = true, style, autoFocus, onChange, currentInput, showCreate }: MetaFiltererProps) => {
+export const isValidUrl = urlString => {
+  let urlPattern = new RegExp('^(?:https?://|s?ftps?://)?(?!www | www\\.)[A-Za-z0-9_-]+\\.+[A-Za-z0-9.\\/%&=\\?_:;-]+$') // validate fragment locator
+  return !!urlPattern.test(urlString)
+}
+const MetaFilterer = ({
+  withInput = true,
+  style,
+  autoFocus,
+  onChange,
+  currentInput,
+  showCreate,
+  mode = 'type',
+  onInputLink
+}: MetaFiltererProps) => {
   const [filtererState, setFiltererState] = useState<{
     currentSelectType?: string
     currentTypeItems?: any[]
@@ -56,7 +74,9 @@ const MetaFilterer = ({ withInput = true, style, autoFocus, onChange, currentInp
     const keydownHandler = (e: KeyboardEvent) => {
       if (!currentInput) {
         if (isHotkey(KEY.Backspace, e)) {
-          setFiltererState(s => ({ ...s, currentSelectType: undefined, currentVisibleItems: undefined, currentTypeItems: undefined }))
+          if (mode === 'type') {
+            setFiltererState(s => ({ ...s, currentSelectType: undefined, currentVisibleItems: undefined, currentTypeItems: undefined }))
+          }
         }
       }
     }
@@ -68,7 +88,9 @@ const MetaFilterer = ({ withInput = true, style, autoFocus, onChange, currentInp
   useEffect(() => {
     if (filtererState.currentInput?.length) {
       const map = MetaStore.getMetaObjectsMap()
-      const searched = fuzzysort.go(filtererState.currentInput, filtererState.currentTypeItems || Array.from(map.values()), { key: 'name' })
+      const searched = fuzzysort.go(filtererState.currentInput, filtererState.currentTypeItems || Array.from(map.values()), {
+        keys: ['name', 'placeholderName']
+      })
       const addedCreate = []
       if (showCreate?.note && (filtererState.currentSelectType === undefined || filtererState.currentSelectType === 'note')) {
         addedCreate.push({
@@ -83,14 +105,38 @@ const MetaFilterer = ({ withInput = true, style, autoFocus, onChange, currentInp
         })
       }
       const visible = [...Array.from(searched.values()).map(i => i.obj), ...addedCreate]
-      setFiltererState(s => ({ ...s, currentVisibleItems: visible }))
-      if (visible.length) {
-        virtualizerRef.current?.setFocus?.(0)
+      if (showCreate?.linkToWeb) {
+        // add to first
+        visible.unshift({
+          type: 'createLinkWeb',
+          name: filtererState.currentInput
+        })
       }
+      if (showCreate?.linkToWebMeta && isValidUrl(filtererState.currentInput)) {
+        // add to first
+        visible.unshift({
+          type: 'createLinkWebMeta',
+          name: filtererState.currentInput
+        })
+      }
+      setFiltererState(s => ({ ...s, currentVisibleItems: visible }))
     } else {
+      if (mode === 'recentlyCreate') {
+        setFiltererState(s => ({ ...s, currentVisibleItems: MetaStore.getMetaObjects('create') }))
+        return
+      }
+      if (mode === 'recentlyView') {
+        setFiltererState(s => ({ ...s, currentVisibleItems: MetaStore.getMetaObjects('view') }))
+        return
+      }
       setFiltererState(s => ({ ...s, currentVisibleItems: s.currentTypeItems }))
     }
-  }, [filtererState.currentInput, filtererState.currentTypeItems])
+  }, [filtererState.currentInput, filtererState.currentTypeItems, mode])
+  useEffect(() => {
+    if (filtererState.currentVisibleItems) {
+      virtualizerRef.current?.setFocus?.(0)
+    }
+  }, [filtererState.currentVisibleItems])
   const iscompo = useRef(false)
 
   const handleSelectItem = async item => {
@@ -108,6 +154,18 @@ const MetaFilterer = ({ withInput = true, style, autoFocus, onChange, currentInp
       onChange?.(whiteboardMeta.meta.id)
       return
     }
+    if (item.type === 'createLinkWeb') {
+      onInputLink?.(item.name)
+      return
+    }
+    if (item.type === 'createLinkWebMeta') {
+      let url = item.name as string
+      if (!url.startsWith('http://')) {
+        url = 'http://' + url
+      }
+      const webpageMeta = await ObjectStore('webpage').addOneWithMeta({ url })
+      onChange?.(webpageMeta.meta.id)
+    }
     if (item.id) {
       onChange?.(item.id)
       return
@@ -115,12 +173,12 @@ const MetaFilterer = ({ withInput = true, style, autoFocus, onChange, currentInp
   }
 
   return (
-    <Content style={{ width: 300, height: 200, display: 'flex', flexDirection: 'column', ...style }}>
-      {withInput && filtererState.currentTypeItems && (
+    <Content style={{ width: 440, height: 200, display: 'flex', flexDirection: 'column', ...style }}>
+      {withInput && mode === 'type' && filtererState.currentTypeItems && (
         <input
           style={{
             width: '100%',
-            fontSize: 12,
+            fontSize: 14,
             padding: '2px 6px',
             borderBottom: `1px solid ${Colors.Background.Border}`,
             marginBottom: 3
@@ -146,7 +204,7 @@ const MetaFilterer = ({ withInput = true, style, autoFocus, onChange, currentInp
           ref={virtualizerRef}
           estimateSize={30}
           withKeyboardNavigation={true}
-          onEnter={item => {
+          onSelect={item => {
             handleSelectItem(item)
           }}
           items={filtererState.currentVisibleItems || filtererState.currentTypeItems || []}
@@ -158,14 +216,14 @@ const MetaFilterer = ({ withInput = true, style, autoFocus, onChange, currentInp
           withKeyboardNavigation={true}
           estimateSize={30}
           items={visibleTypes}
-          onEnter={item => {
+          onSelect={item => {
             setFiltererState({ currentSelectType: item.type })
           }}
           renderItem={(item, idx, selected) => (
             <Button.IconButton
               style={{
                 lineHeight: 1.3,
-                fontSize: '13px'
+                fontSize: '14px'
               }}
               onClick={() => setFiltererState({ currentSelectType: item.type })}
               icon={Rendevoz.Utils.Object.getMetaObjectIcon(item.type)}
@@ -192,11 +250,24 @@ const ButtonItem = ({ onClick, item, selected }: { item: MetaObject; selected: b
     text = `Create whiteboard "${text}"`
     icon = Rendevoz.Utils.Object.getMetaObjectIcon('whiteboard')
   }
+  if (item.type === 'createLinkWeb') {
+    icon = 'park-earth'
+    if (!isValidUrl(item.name)) {
+      text = `Type a complete link: ${text}`
+      selected = false
+    } else {
+      text = `Link to: ${text}`
+    }
+  }
+  if (item.type === 'createLinkWebMeta') {
+    icon = 'park-link'
+    text = `Create web page: ${text}`
+  }
   return (
     <Button.IconButton
       style={{
-        lineHeight: 1.3,
-        fontSize: '13px'
+        fontSize: '14px',
+        padding: '2px 6px'
       }}
       onClick={onClick}
       icon={icon}

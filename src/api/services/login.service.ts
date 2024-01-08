@@ -1,4 +1,4 @@
-import { useGlobalAtom } from '@/hooks/jotai'
+import { useGlobalAtom, useGlobalAtomValue } from '@/hooks/jotai'
 import { globalStore } from '@/api/stores'
 import { request } from '@/utils/request'
 import { atom } from 'jotai'
@@ -26,6 +26,14 @@ export const userAtom = atom<IUser | null>(
 )
 
 export const useUser = () => useGlobalAtom(userAtom)
+
+export const useIsUserPro = (includeLifetime?: boolean) => {
+  const u = useGlobalAtomValue(userAtom)
+  if (!u) return false
+  if (includeLifetime && u.lifetimePro) return true
+  if (u.premiumEndDate && u.premiumEndDate > Date.now()) return true
+  return false
+}
 export const getUser = () => {
   const user = globalStore.get(userAtom)
   return user

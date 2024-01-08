@@ -26,7 +26,6 @@ const useEditorMention = (editor: CustomEditor) => {
 
       if (prev) {
         const prevChar = Editor.string(editor, { anchor: prev, focus: editor.selection.focus })
-        console.log(prevChar)
         if (prevChar === '[') {
           e.preventDefault()
           Editor.deleteBackward(editor, { unit: 'character' })

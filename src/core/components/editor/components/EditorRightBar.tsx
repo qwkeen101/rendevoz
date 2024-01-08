@@ -1,12 +1,12 @@
 import { Content, Icon, TabPane, Tabs } from '@/components'
-import EditorSearchPanel from '@/scenes/editor/Search'
+import EditorSearchPanel from '@/core/components/editor/components/EditorSearchPanel'
 import { useTranslation } from 'react-i18next'
 import useEditorBarState from '../hooks/useEditorBarState'
 import { Resizable } from 're-resizable'
 import ClassName from '@/styles/classNames'
 import EditorLabelController from './EditorLabelController'
 import Colors from '@/consts/colors'
-import { useEffect, useState, memo } from 'react'
+import { useEffect, useState, memo, useMemo } from 'react'
 import { useSetAtom } from 'jotai'
 import { EditorSearchAtom } from '../hooks/useEditorSearch'
 import { useSelectAtomValue } from '@/hooks'
@@ -15,6 +15,8 @@ import AskAIPanel from '@/core/ai/components/AskAIPanel'
 import useEditorInstance from '@/core/components/editor/hooks/useEditorInstance'
 import normalizeAsAi from '@/core/components/editor/utils/normalizeAsAi'
 import { Editor, Node } from 'slate'
+import { IQuestion } from '~/typings'
+import Id from '@/utils/id'
 
 const EditorRightBar = () => {
   const [barState, setBarState] = useEditorBarState()
@@ -31,8 +33,12 @@ const EditorRightBar = () => {
       setEditorSearch(s => ({ ...s, isSearching: true }))
     }
   }, [barState])
-  const e = instance.getSlateEditor?.()?.children || []
-  const normalized = normalizeAsAi(e)
+  const e = instance.getSlateEditor?.()?.children
+  const normalized = useMemo(() => {
+    if (e) {
+      return JSON.stringify(normalizeAsAi(e))
+    }
+  }, [e])
   const editor = instance.getSlateEditor?.()
 
   return (
@@ -41,11 +47,11 @@ const EditorRightBar = () => {
         left: true
       }}
       defaultSize={{
-        width: 340,
+        width: 380,
         height: '100%'
       }}
-      minWidth={300}
-      maxWidth={600}
+      minWidth={380}
+      maxWidth={'50%'}
       handleStyles={{
         left: {
           left: 0
@@ -114,64 +120,73 @@ const EditorRightBar = () => {
         >
           <EditorLabelController labelType={labelType} labelIds={labels} />
         </TabPane>
-        {/*<TabPane*/}
-        {/*  key="ai"*/}
-        {/*  tab={*/}
-        {/*    <Content alignItems="center" flex gap={6}>*/}
-        {/*      <Icon name="custom-magic" />*/}
-        {/*      {t('Ask AI')}*/}
-        {/*    </Content>*/}
-        {/*  }*/}
-        {/*>*/}
-        {/*  <AskAIPanel*/}
-        {/*    questions={ai?.questions}*/}
-        {/*    summary={ai?.summary}*/}
-        {/*    onSummarized={e => {*/}
-        {/*      if (!editor) return*/}
-        {/*      const getBlockStr = (id: number) => {*/}
-        {/*        const path = instance.getElementPathById?.(id)*/}
-        {/*        if (path) {*/}
-        {/*          const n = Editor.node(editor, path)[0]*/}
-        {/*          return Node.string(n)*/}
-        {/*        }*/}
-        {/*      }*/}
-        {/*      e.questions = e.questions.map(i => {*/}
-        {/*        if (i.answerType === 'pointer') {*/}
-        {/*          i.answerPointers = i.answerPointers.map(p =>*/}
-        {/*            p.pointerType === 'documentBlock' ? { ...p, blockStr: getBlockStr(p.blockId) } : p*/}
-        {/*          )*/}
-        {/*        }*/}
-        {/*        return i*/}
-        {/*      })*/}
-        {/*      editor?.on?.({*/}
-        {/*        type: 'AI summarize',*/}
-        {/*        ...e*/}
-        {/*      })*/}
-        {/*    }}*/}
-        {/*    on={e => {*/}
-        {/*      switch (e.type) {*/}
-        {/*        case 'questionGotoOriginalPlace': {*/}
-        {/*          instance.scrollToBlock?.({*/}
-        {/*            blockId: e.originalId,*/}
-        {/*            highlight: true*/}
-        {/*          })*/}
-        {/*          return true*/}
-        {/*        }*/}
-        {/*        case 'getOriginalText': {*/}
-        {/*          const editor = instance.getSlateEditor?.()*/}
-        {/*          const path = instance.getElementPathById?.(e.originalId)*/}
-        {/*          if (path && editor) {*/}
-        {/*            const node = Editor.node(editor, path)*/}
-        {/*            if (node) {*/}
-        {/*              return Node.string(node[0])*/}
-        {/*            }*/}
-        {/*          }*/}
-        {/*        }*/}
-        {/*      }*/}
-        {/*    }}*/}
-        {/*    content={JSON.stringify(normalized)}*/}
-        {/*  />*/}
-        {/*</TabPane>*/}
+        <TabPane
+          key="ai"
+          tab={
+            <Content alignItems="center" flex gap={6}>
+              <Icon name="custom-magic" />
+              {t('Ask AI')}
+            </Content>
+          }
+        >
+          <AskAIPanel
+            questions={ai?.questions}
+            summary={ai?.summary}
+            onSummarized={e => {
+              if (!editor) return
+              const getBlockStr = (id: number) => {
+                const path = instance.getElementPathById?.(id)
+                if (path) {
+                  const n = Editor.node(editor, path)[0]
+                  return Node.string(n)
+                }
+              }
+              const questions: Partial<IQuestion>[] = e.questions
+                .map(i => {
+                  if (i.answerType === 'pointer') {
+                    return {
+                      ...i,
+                      answerPointers: i.answerPointers.map(id => ({
+                        pointerType: 'documentBlock',
+                        blockId: id,
+                        blockStr: getBlockStr(id),
+                        id: Id.getId()
+                      }))
+                    } as Partial<IQuestion>
+                  }
+                })
+                .filter(i => i) as Partial<IQuestion>[]
+              console.log(e, questions)
+              editor?.on?.({
+                type: 'AI summarize',
+                ...e,
+                questions
+              })
+            }}
+            on={e => {
+              switch (e.type) {
+                case 'questionGotoOriginalPlace': {
+                  instance.scrollToBlock?.({
+                    blockId: e.originalId,
+                    highlight: true
+                  })
+                  return true
+                }
+                case 'getOriginalText': {
+                  const editor = instance.getSlateEditor?.()
+                  const path = instance.getElementPathById?.(e.originalId)
+                  if (path && editor) {
+                    const node = Editor.node(editor, path)
+                    if (node) {
+                      return Node.string(node[0])
+                    }
+                  }
+                }
+              }
+            }}
+            content={normalized}
+          />
+        </TabPane>
       </Tabs>
     </Resizable>
   )

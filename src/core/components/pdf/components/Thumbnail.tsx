@@ -74,7 +74,7 @@ const PdfThumbnail = () => {
             alignItems={'center'}
             key={idx}
             onClick={() => {
-              viewer?.jumpToPage?.(idx)
+              viewer?.navigateOps?.jumpToPage?.(idx)
             }}
             style={{
               width: '100%'

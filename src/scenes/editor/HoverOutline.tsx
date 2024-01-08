@@ -64,7 +64,6 @@ const SidebarToolbar = ({ editor }: { editor: CustomEditor }) => {
           gap: 4,
           height: '100%',
           background: Colors.Background.Popover,
-          overflow: 'hidden auto',
           pointerEvents: collapsed ? 'none' : 'auto',
           transform: collapsed ? 'translateX(-100%)' : 'translateX(0px)',
           opacity: collapsed ? 0 : 1,
@@ -73,7 +72,6 @@ const SidebarToolbar = ({ editor }: { editor: CustomEditor }) => {
           minHeight: 120,
           alignItems: 'flex-start',
           borderRadius: '0px 8px 8px 0px',
-          paddingBottom: 60,
           fontSize: 14
         }}
       >
@@ -101,7 +99,9 @@ const HeadingTree = ({ editor }: { value: Descendant[]; editor: CustomEditor }) 
           style={{
             height: '100%',
             width: '100%',
-            paddingRight: 10
+            paddingRight: 10,
+            overflow: 'hidden auto',
+            paddingBottom: 20
           }}
         >
           {headingTree.children.map(i => (

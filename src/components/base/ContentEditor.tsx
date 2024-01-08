@@ -7,17 +7,21 @@ import { CSSProperties, useRef, useState } from 'react'
 import AutosizeTextarea from '@/components/custom/input/autosizeTextarea'
 import { useTranslation } from 'react-i18next'
 import FontSize from '@/consts/font'
+import NoteEditor from '@/core/components/editor/noteEditor/NoteEditor'
+import SimpleEditor from '@/core/components/editor/SimpleEditor'
 
 const NameEditor = ({
   value,
   onChange,
   style,
+  contentMode = 'textarea',
   placeholder = 'Edit content...'
 }: {
   value?: string
   onChange: (v: string) => void
   style?: CSSProperties
   placeholder?: string
+  contentMode?: 'textarea' | 'editor'
 }) => {
   const inputRef = useRef<HTMLInputElement>(null)
   const [innerValue, setInnerValue] = useState(value)
@@ -34,29 +38,33 @@ const NameEditor = ({
         ...style
       }}
     >
-      <AutosizeTextarea
-        autoFocus
-        className={ClassName.noStyleInput}
-        ref={inputRef}
-        minRows={2}
-        maxRows={999}
-        spellCheck="false"
-        style={{
-          resize: 'none',
-          fontWeight: 500,
-          padding: 0,
-          width: '100%',
-          fontSize: FontSize['13px']
-        }}
-        onKeyDown={e => {
-          if (isHotkey(KEY.Escape, e)) {
-            onChange(value)
-          }
-        }}
-        placeholder={placeholder}
-        defaultValue={value}
-        onChange={e => setInnerValue(e.target.value)}
-      ></AutosizeTextarea>
+      {contentMode === 'textarea' ? (
+        <AutosizeTextarea
+          autoFocus
+          className={ClassName.noStyleInput}
+          ref={inputRef}
+          minRows={2}
+          maxRows={999}
+          spellCheck="false"
+          style={{
+            resize: 'none',
+            fontWeight: 400,
+            padding: 0,
+            width: '100%',
+            fontSize: FontSize['13px']
+          }}
+          onKeyDown={e => {
+            if (isHotkey(KEY.Escape, e)) {
+              onChange(value)
+            }
+          }}
+          placeholder={placeholder}
+          defaultValue={value}
+          onChange={e => setInnerValue(e.target.value)}
+        ></AutosizeTextarea>
+      ) : (
+        <SimpleEditor fontSize={14} textareaMode={true} placeholder={placeholder} value={value} onChange={e => setInnerValue(e)} />
+      )}
       <Content flex gap={12} justifyContent={'flex-end'} alignItems={'center'} style={{ fontWeight: '500', fontSize: 12, lineHeight: 1 }}>
         <div
           style={{

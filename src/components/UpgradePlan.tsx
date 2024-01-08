@@ -12,7 +12,8 @@ import { css } from '@emotion/css'
 import UpgradeService from '@/api/services/upgrade.service'
 import QRCode from 'qrcode'
 import { toast } from 'react-hot-toast'
-import DateFormat from '@/utils/dateFormat'
+import WeixinPay from '@/components/WeixinPay'
+import UserService from '@/api/services/user.service'
 
 const FreePlanIncludes = [
   '最多创建100个实体',
@@ -24,9 +25,9 @@ const FreePlanIncludes = [
 const ProPlanIncludes = [
   '解锁全部本地功能，无限制使用',
   '不限额网页，文档与PDF翻译',
-  '图片文字识别',
+  '每月免费使用200次图片文字识别',
   '优先体验云端同步与AI功能',
-  '每月附赠AI额度',
+  '每月免费使用2000AI点数',
   '优先客户支持'
 ]
 const LifetimePlanIncludes = [
@@ -60,7 +61,7 @@ const UpgradePlan = () => {
       return count * 15
     }
     if (method === 'yearly') {
-      return count * 108
+      return user?.lifetimePro ? count * 108 : count * 158
     }
   }
   useEffect(() => {
@@ -84,245 +85,206 @@ const UpgradePlan = () => {
   }, [upgradeModalVisible])
 
   return (
-    <Content flex gap={30} style={{ borderRadius: 12, overflow: 'hidden', padding: 32 }}>
-      <Content flex column style={{ paddingRight: 30, borderRight: `1px solid ${Colors.Background.Border}` }}>
-        <Content
-          flex
-          alignItems="center"
-          justifyContent="space-between"
-          gap={40}
-          style={{
-            paddingBottom: 40,
-            borderBottom: `1px solid ${Colors.Background.Border}`
-          }}
-        >
-          <Content flex column gap={10}>
-            <div className={ClassName.title()}>免费账户</div>
-            <div className={ClassName.description()}>￥0 / 月</div>
+    <>
+      <Content flex gap={30} style={{ borderRadius: 12, overflow: 'hidden', padding: 32 }}>
+        <Content flex column style={{ paddingRight: 30, borderRight: `1px solid ${Colors.Background.Border}` }}>
+          <Content
+            flex
+            alignItems="center"
+            justifyContent="space-between"
+            gap={40}
+            style={{
+              paddingBottom: 40,
+              borderBottom: `1px solid ${Colors.Background.Border}`
+            }}
+          >
+            <Content flex column gap={10}>
+              <div className={ClassName.title()}>免费账户</div>
+              <div className={ClassName.description()}>￥0 / 月</div>
+            </Content>
+            <Content flex column gap={6} style={{ width: 250, fontSize: 14 }}>
+              {FreePlanIncludes.map(i => (
+                <Content flex gap={6} key={i}>
+                  <Icon fill={'rgb(34,197,94)'} name="park-check" />
+                  <div>{i}</div>
+                </Content>
+              ))}
+            </Content>
           </Content>
-          <Content flex column gap={6} style={{ width: 250, fontSize: 14 }}>
-            {FreePlanIncludes.map(i => (
-              <Content flex gap={6} key={i}>
-                <Icon fill={'rgb(34,197,94)'} name="park-check" />
-                <div>{i}</div>
-              </Content>
-            ))}
-          </Content>
-        </Content>
 
-        <Content
-          flex
-          gap={40}
-          alignItems="center"
-          justifyContent="space-between"
-          style={{ paddingTop: 40, borderBottom: `1px solid ${Colors.Background.Border}`, paddingBottom: 40 }}
-        >
-          <Content flex column gap={10}>
-            <div className={ClassName.title()}>标准账户</div>
-            <Content className={ClassName.description()}>
-              <div>￥15 / 月</div>
-              <div>
-                <span style={{ textDecoration: 'line-through', marginRight: 6 }}>￥158</span>
-                ￥108{' (早鸟特惠) '} / 年{' '}
-              </div>
+          <Content
+            flex
+            gap={40}
+            alignItems="center"
+            justifyContent="space-between"
+            style={{ paddingTop: 40, borderBottom: `1px solid ${Colors.Background.Border}`, paddingBottom: 40 }}
+          >
+            <Content flex column gap={10}>
+              <div className={ClassName.title()}>标准账户</div>
+              <Content className={ClassName.description()}>
+                <div style={{ marginBottom: 4 }}>￥15 / 月</div>
+                <div style={{ marginBottom: 4 }}>￥158 / 年</div>
+                <div>￥108 / 年 (永久会员优惠价)</div>
+              </Content>
+            </Content>
+            <Content flex column gap={6} style={{ width: 250, fontSize: 14 }}>
+              {ProPlanIncludes.map(i => (
+                <Content flex gap={6} key={i}>
+                  <Icon fill={'rgb(34,197,94)'} name="park-check" />
+                  <div>{i}</div>
+                </Content>
+              ))}
             </Content>
           </Content>
-          <Content flex column gap={6} style={{ width: 250, fontSize: 14 }}>
-            {ProPlanIncludes.map(i => (
-              <Content flex gap={6} key={i}>
-                <Icon fill={'rgb(34,197,94)'} name="park-check" />
-                <div>{i}</div>
+          <Content flex gap={40} alignItems="center" justifyContent="space-between" style={{ paddingTop: 40 }}>
+            <Content flex column gap={10}>
+              <div className={ClassName.title()}>永久账户</div>
+              <Content className={ClassName.description()}>
+                <div>解锁永久账户，终生使用。</div>
+                <div>(不包含云端服务)</div>
               </Content>
-            ))}
+              <Content className={ClassName.description()}>
+                <div>￥238</div>
+              </Content>
+            </Content>
+            <Content flex column gap={6} style={{ width: 250, fontSize: 14 }}>
+              {LifetimePlanIncludes.map(i => (
+                <Content flex gap={6} key={i}>
+                  <Icon fill={'rgb(34,197,94)'} name="park-check" />
+                  <div>{i}</div>
+                </Content>
+              ))}
+            </Content>
           </Content>
         </Content>
-        <Content flex gap={40} alignItems="center" justifyContent="space-between" style={{ paddingTop: 40 }}>
-          <Content flex column gap={10}>
-            <div className={ClassName.title()}>永久账户</div>
-            <Content className={ClassName.description()}>
-              <div>解锁永久账户，终生使用。</div>
-              <div>(限时提供,不包含云端服务)</div>
-            </Content>
-            <Content className={ClassName.description()}>
-              <div>￥238</div>
-            </Content>
-          </Content>
-          <Content flex column gap={6} style={{ width: 250, fontSize: 14 }}>
-            {LifetimePlanIncludes.map(i => (
-              <Content flex gap={6} key={i}>
-                <Icon fill={'rgb(34,197,94)'} name="park-check" />
-                <div>{i}</div>
-              </Content>
-            ))}
-          </Content>
-        </Content>
-      </Content>
-      <Content>
-        {upgradeDetails.qrcodeStr ? (
-          <Content flex column justifyContent={'center'} gap={10}>
-            <img
-              style={{
-                width: '240px',
-                border: `1px solid ${Colors.Background.Border}`
-              }}
-              src={upgradeDetails.qrcodeImgData}
+        <Content flex column gap={10}>
+          <div className={ClassName.title(FontSize['15px'])}>升级为会员</div>
+          <div className={ClassName.description()}>订阅方式</div>
+          <Content flex gap={6}>
+            <Button.IconButton
+              style={{ fontWeight: 600 }}
+              onClick={() => setUpgradeDetails(s => ({ ...s, method: 'lifetime' }))}
+              selected={upgradeDetails?.method === 'lifetime' || undefined}
+              text="永久"
             />
-            <Content
-              flex
-              justifyContent="center"
-              className={ClassName.flatButton()}
-              onClick={() => {
-                if (user && user.email && user.password) {
+            <Button.IconButton
+              style={{ fontWeight: 600 }}
+              onClick={() => setUpgradeDetails(s => ({ ...s, method: 'yearly' }))}
+              selected={upgradeDetails?.method === 'yearly' || undefined}
+              text="年付"
+            />
+            <Button.IconButton
+              onClick={() => setUpgradeDetails(s => ({ ...s, method: 'monthly' }))}
+              selected={upgradeDetails?.method === 'monthly' || undefined}
+              text="月付"
+            />
+          </Content>
+          {upgradeDetails.method !== 'lifetime' && (
+            <>
+              <div className={ClassName.description()}>
+                订阅价格:
+                {upgradeDetails.method === 'monthly' && ' 15元 / 月'}
+                {upgradeDetails.method === 'yearly' && <span> {user?.lifetimePro ? 108 : 158}元 / 年</span>}
+              </div>
+              <div className={ClassName.description()}>订阅时长 {upgradeDetails?.method === 'monthly' ? '(月)' : '(年)'}</div>
+              <BorderInput
+                textarea={false}
+                value={upgradeDetails.count}
+                onChange={v => {
                   setUpgradeDetails(s => ({
                     ...s,
-                    loading: 'loadUserDetails'
+                    count: Number.isSafeInteger(Number(v)) ? Number(v) : s.count
                   }))
-                  LoginService.login(user.email, user.password)
-                    .then(data => {
-                      LoginService.getUserDetails(user.email, data.data.token).then(data => {
-                        setUser({ ...user, ...data.data })
-                        const isPremium =
-                          data.data.lifetimePro || (data.data.premiumEndDate && new Date(data.data.premiumEndDate).getTime() > Date.now())
-
-                        if (isPremium) {
-                          toast.success(`升级成功！感谢您的支持！`)
-                        } else {
-                          toast.error('您现在还不是会员！')
-                        }
-
-                        toggleUpgradeModalVisible(false)
-                      })
-                    })
-                    .catch(e => {
-                      toast.error('获取用户资料失败，请重新登录！')
-                    })
-                } else {
-                  toast.error('缺失用户信息，请重试！')
-                }
-              }}
-              gap={10}
-              style={{
-                border: `1px solid ${Colors.Background.Border}`,
-                textAlign: 'center',
-                fontWeight: 600
-              }}
-            >
-              <div>付款完成后请点击我</div>
-              {upgradeDetails.loading === 'loadUserDetails' && <Icon name="park-loading-four" spin />}
-            </Content>
-          </Content>
-        ) : (
-          <Content flex column gap={10}>
-            <div className={ClassName.title(FontSize['15px'])}>升级为会员</div>
-            <div className={ClassName.description()}>订阅方式</div>
-            <Content flex gap={6}>
-              <Button.IconButton
-                style={{ fontWeight: 600 }}
-                onClick={() => setUpgradeDetails(s => ({ ...s, method: 'lifetime' }))}
-                selected={upgradeDetails?.method === 'lifetime' || undefined}
-                text="永久"
-              />
-              <Button.IconButton
-                style={{ fontWeight: 600 }}
-                onClick={() => setUpgradeDetails(s => ({ ...s, method: 'yearly' }))}
-                selected={upgradeDetails?.method === 'yearly' || undefined}
-                text="年付 (-40%)"
-              />
-              <Button.IconButton
-                onClick={() => setUpgradeDetails(s => ({ ...s, method: 'monthly' }))}
-                selected={upgradeDetails?.method === 'monthly' || undefined}
-                text="月付"
-              />
-            </Content>
-            {upgradeDetails.method !== 'lifetime' && (
-              <>
-                <div className={ClassName.description()}>
-                  订阅价格:
-                  {upgradeDetails.method === 'monthly' && ' 15元 / 月'}
-                  {upgradeDetails.method === 'yearly' && <span> 108元 / 年 {'(早鸟特惠)'}</span>}
-                </div>
-                <div className={ClassName.description()}>订阅时长 {upgradeDetails?.method === 'monthly' ? '(月)' : '(年)'}</div>
-                <BorderInput
-                  textarea={false}
-                  value={upgradeDetails.count}
-                  onChange={v => {
+                }}
+                style={{ padding: '6px 12px' }}
+              ></BorderInput>
+            </>
+          )}
+          <div className={ClassName.description()}>总计费用：{getPrice()}元</div>
+          <Content
+            flex
+            gap={10}
+            alignItems="center"
+            onClick={() => {
+              const price = getPrice() || 0
+              if (price <= 0) {
+                toast.error('价格不能等于0！')
+                return
+              }
+              if (price > 999) {
+                toast.error('请选择合适的价格！')
+                return
+              }
+              setUpgradeDetails(s => ({ ...s, loading: 'getQrcode' }))
+              UpgradeService.upgradeSub(
+                upgradeDetails.method,
+                upgradeDetails.method === 'monthly' || upgradeDetails.method === 'lifetime'
+                  ? upgradeDetails.count
+                  : upgradeDetails.count * 12
+              )
+                .then(res => {
+                  if (res) {
                     setUpgradeDetails(s => ({
                       ...s,
-                      count: Number.isSafeInteger(Number(v)) ? Number(v) : s.count
+                      qrcodeStr: res,
+                      loading: 'none'
                     }))
-                  }}
-                  style={{ padding: '6px 12px' }}
-                ></BorderInput>
-              </>
-            )}
-            <div className={ClassName.description()}>总计费用：{getPrice()}元</div>
-            <Content
-              flex
-              gap={10}
-              alignItems="center"
-              onClick={() => {
-                const price = getPrice() || 0
-                if (price <= 0) {
-                  toast.error('价格不能等于0！')
-                  return
-                }
-                if (price > 999) {
-                  toast.error('请选择合适的价格！')
-                  return
-                }
-                setUpgradeDetails(s => ({ ...s, loading: 'getQrcode' }))
-                UpgradeService.upgradeSub(
-                  upgradeDetails.method,
-                  upgradeDetails.method === 'monthly' || upgradeDetails.method === 'lifetime'
-                    ? upgradeDetails.count
-                    : upgradeDetails.count * 12
-                )
-                  .then(res => {
-                    if (res) {
-                      setUpgradeDetails(s => ({
-                        ...s,
-                        qrcodeStr: res,
-                        loading: 'none'
-                      }))
-                    } else {
-                      setUpgradeDetails(s => ({ ...s, loading: 'none' }))
-                      toast.error('获取微信支付失败！')
-                    }
-                  })
-                  .catch(e => {
+                  } else {
                     setUpgradeDetails(s => ({ ...s, loading: 'none' }))
                     toast.error('获取微信支付失败！')
-                  })
-              }}
-              style={{ border: `1px solid ${Colors.Background.Border}` }}
-              className={ClassName.flatButton(undefined, '6px 12px')}
-            >
-              <img style={{ height: '20px' }} src={wechatpay}></img>
-              <div>微信支付</div>
-              {upgradeDetails.loading === 'getQrcode' && <Icon name="park-loading-four" spin />}
-            </Content>
-            <div style={{ fontWeight: 600, marginTop: 16 }} className={ClassName.description()}>
-              若您选择升级，则代表您同意了我们的
-              <a
-                className={css({
-                  color: Colors.Common.SelectColor
-                })}
-                href="https://rendevoz.com/zh/terms"
-                target="_blank"
-              >
-                使用条款
-              </a>
-            </div>
-            <div style={{ fontWeight: 600 }} className={ClassName.description()}>
-              如您成功升级账户，则不予退款。
-            </div>
-            <div style={{ fontWeight: 600 }} className={ClassName.description()}>
-              更多问题，请加入官方QQ群：704637839
-            </div>
+                  }
+                })
+                .catch(e => {
+                  setUpgradeDetails(s => ({ ...s, loading: 'none' }))
+                  toast.error('获取微信支付失败！')
+                })
+            }}
+            style={{ border: `1px solid ${Colors.Background.Border}` }}
+            className={ClassName.flatButton(undefined, '6px 12px')}
+          >
+            <img style={{ height: '20px' }} src={wechatpay}></img>
+            <div>微信支付</div>
+            {upgradeDetails.loading === 'getQrcode' && <Icon name="park-loading-four" spin />}
           </Content>
-        )}
+          <div style={{ fontWeight: 600, marginTop: 16 }} className={ClassName.description()}>
+            若您选择升级，则代表您同意了我们的
+            <a
+              className={css({
+                color: Colors.Common.SelectColor
+              })}
+              href="https://rendevoz.com/zh/terms"
+              target="_blank"
+            >
+              使用条款
+            </a>
+          </div>
+          <div style={{ fontWeight: 600 }} className={ClassName.description()}>
+            如您成功升级账户，则不予退款。
+          </div>
+          <div style={{ fontWeight: 600 }} className={ClassName.description()}>
+            更多问题，请加入官方QQ群：704637839
+          </div>
+        </Content>
       </Content>
-    </Content>
+      <WeixinPay
+        code={upgradeDetails.qrcodeImgData}
+        visible={!!upgradeDetails.qrcodeImgData}
+        onSubmit={async () => {
+          setUpgradeDetails({ count: 1, method: 'lifetime' })
+          toggleUpgradeModalVisible()
+          UserService.getUserDetails().then(res => {
+            if (res.lifetimePro || (res.premiumEndDate ?? 0) > Date.now()) {
+              toast.success('You are Pro now!')
+            } else {
+              toast.error('Failed to upgrade.')
+            }
+          })
+        }}
+        onClose={() => {
+          setUpgradeDetails({ method: 'lifetime', count: 1 })
+        }}
+      />
+    </>
   )
 }
 

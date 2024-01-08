@@ -15,9 +15,6 @@ import SidebarDatabase from '@/components/layout/sidebar/SidebarDatabase'
 import SidebarSetting from '@/components/layout/sidebar/SidebarSetting'
 import produce, { Draft } from 'immer'
 import { Colors } from '@/consts'
-import { useSelectGlobalAtomValue } from '@/hooks'
-import { SettingAtom } from '@/core'
-import { LayoutIdToTabMap } from '@/components/layout'
 
 export const setPanelState = (updater: (panelState: Draft<SidebarPanelState>) => void) => {
   const panelState = globalStore.get(SidebarPanelStateAtom)
@@ -135,7 +132,6 @@ export const Sidebar = ({ direction = 'right' }: { direction: 'left' | 'right' }
   return (
     <Content
       flex
-      onClick={() => console.log(LayoutIdToTabMap)}
       style={{
         zIndex: 1000,
         flexDirection: direction === 'right' ? 'row' : 'row-reverse',

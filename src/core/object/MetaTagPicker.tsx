@@ -1,5 +1,5 @@
 import { globalStore, MetaStore, ObjectStore } from '@/api/stores'
-import { Content, Icon, IconWithPopover, VirtualList, WithBorder } from '@/components'
+import { Content, Icon, IconWithPopover, Selector, VirtualList, WithBorder } from '@/components'
 import Tag from '@/core/object/ObjectTag'
 import { ClassName } from 'rendevoz'
 import { CSSProperties, forwardRef, memo, useCallback, useEffect, useMemo, useRef, useState } from 'react'
@@ -22,254 +22,31 @@ const MetaTagPicker = forwardRef(
     }: { style?: CSSProperties; selectMode?: boolean; alreadyTags?: number[]; onChange?: (tags: number[]) => void },
     ref
   ) => {
-    const index = MetaStore.useIndexedMetaObjects()?.tagToMetaObjectIdsMap
-    const allTags = useGlobalAtomValue(ObjectStore('tag').objectMapAtom)
-    const [search, setSearch] = useState('')
-    const result = useMemo(() => {
-      const tagsIds = new Set([...alreadyTags])
-      const leftTags = Array.from(allTags.values())
-        .filter(i => !tagsIds.has(i.id))
-        .map(i => i.id)
-      return {
-        leftTags
-      }
-    }, [allTags, alreadyTags])
-
+    const allTags = ObjectStore('tag').useAll()
+    const selectedTags = ObjectStore('tag').useMultiple(alreadyTags)
     const sortedTags = useMemo(() => {
-      if (!result?.leftTags) return
-      const { leftTags } = result
-      const map = allTags
-      const copyed = leftTags.map(i => map.get(i)!)
-      if (selectMode) {
-        copyed.sort((b, a) => {
-          const bnum = index?.get(b.id)?.size || 0
-          const anum = index?.get(a.id)?.size || 0
-          return anum - bnum
-        })
-      } else {
-        copyed.sort((b, a) => a.createdAt - b.createdAt)
+      if (allTags) {
+        return allTags.slice().sort((b, a) => (b.order ?? -1) - (a.order ?? -1))
       }
-
-      return copyed.map(i => i.id)
-    }, [allTags, result?.leftTags])
-    const [displayTags, setDisplayTags] = useState<number[]>()
-    useEffect(() => {
-      if (!search || !sortedTags) {
-        setDisplayTags(undefined)
-      } else {
-        const map = globalStore.get(ObjectStore('tag').objectMapAtom)
-        const tags = sortedTags.map(i => map.get(i))
-        const result = fuzzysort.go(search, Array.from(tags.values()), { key: 'name' })
-        const trimed = search.trim()
-        const alreadyHasName = Array.from(allTags.values()).some(i => i.name === trimed) || selectMode
-        const arr = [...Array.from(result.values()).map(i => i.obj.id)]
-        if (!alreadyHasName) {
-          arr.push(search)
-        }
-        setDisplayTags(arr)
-        setTimeout(() => {
-          virtualizer.current?.setFocus(0)
-        })
-      }
-    }, [search, sortedTags])
-
-    const handleSelected = useCallback(
-      (tag: number | string) => {
-        if (typeof tag === 'number') {
-          onChange?.([...alreadyTags, tag])
-        } else {
-          setSearch('')
-          ObjectStore('tag')
-            .addOne({ name: tag })
-            .then(one => {
-              onChange?.([...alreadyTags, one.id])
-            })
-        }
-      },
-      [alreadyTags]
-    )
-    const virtualizer = useRef<Virtualizer<any, any>>()
-    const { t } = useTranslation()
-    if (!result) return null
+    }, [allTags])
     return (
-      <Content flex column style={style} ref={ref}>
-        <Content
-          flex
-          gap={6}
-          style={{
-            flexWrap: 'wrap',
-            padding: '8px 9px 4px',
-            borderBottom: `1px solid ${Colors.Background.Border}`,
-            maxHeight: 200,
-            overflowY: 'auto'
-          }}
-        >
-          {alreadyTags.map(i => (
-            <Tag
-              onDelete={() => {
-                onChange?.(alreadyTags?.filter(o => o !== i) || [])
-              }}
-              square
-              hideSize
-              tag={i}
-              key={i}
-            />
-          ))}
-          <input
-            placeholder={!alreadyTags.length ? t('general.Type to search') + '...' : undefined}
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-            className={ClassName.noStyleInput}
-            autoFocus
-            style={{ flex: '1 1 100px', overflow: 'hidden', fontSize: '13px', lineHeight: '20px' }}
-          />
-        </Content>
-        <div style={{ padding: '4px 8px 2px', color: Colors.Font.Secondary, fontSize: 12, fontWeight: 600 }}>
-          {selectMode ? t('general.Select tags') : t('general.Select tags or create one')}
-        </div>
-        <VirtualList
-          estimateSize={26}
-          withKeyboardNavigation={true}
-          items={displayTags || sortedTags}
-          ref={virtualizer}
-          onEnter={handleSelected}
-          style={{ width: '100%', minHeight: 100, padding: '0px 6px 8px 6px', maxHeight: 260 }}
-          renderItem={(item, idx, selected) => (
-            <TagRenderer showSize={selectMode} tag={item} selected={selected} onChoose={handleSelected} />
-          )}
-        ></VirtualList>
-      </Content>
-    )
-  }
-)
-
-const TagRenderer = memo(
-  ({
-    tag,
-    selected,
-    onChoose,
-    showSize = false
-  }: {
-    tag: number | string
-    selected: boolean
-    onChoose: (tag: number) => void
-    showSize?: boolean
-  }) => {
-    const defaultName = ObjectStore('tag').useValue(tag)?.name
-    const [newName, setNewName] = useState(defaultName)
-    const inputRef = useRef<HTMLInputElement>(null)
-    useEffect(() => {
-      setNewName(defaultName)
-    }, [defaultName])
-    if (typeof tag === 'string') {
-      return (
-        <Content
-          flex
-          gap={9}
-          alignItems={'center'}
-          justifyContent={'flex-start'}
-          onClick={() => onChoose(tag)}
-          className={ClassName.flatButton(4, '3px 6px')}
-          style={{
-            lineHeight: '20px',
-            fontSize: '13px',
-            transition: 'none',
-            background: selected ? Colors.Background.ButtonHover : 'transparent'
-          }}
-        >
-          Create{' '}
-          <span
-            style={{
-              borderRadius: 4,
-              padding: '0px 6px',
-              background: Colors.Background.Border
-            }}
-          >
-            {tag}
-          </span>
-        </Content>
-      )
-    }
-    return (
-      <Content
-        flex
-        alignItems={'center'}
-        justifyContent={'space-between'}
-        onClick={() => onChoose(tag)}
-        className={ClassName.flatButton(4, '3px 6px')}
-        style={{
-          background: selected ? Colors.Background.ButtonHover : 'transparent'
-        }}
-      >
-        <Tag hideAdd={true} hideSize={!showSize} square hideDelete tag={tag} />
-        {selected && !showSize && (
-          <IconWithPopover
-            name="park-more"
-            placement={['bottom', 'right', 'left']}
-            onClick={e => {
-              e.stopPropagation()
-              setTimeout(() => inputRef.current?.focus(), 100)
-            }}
-            onClickOutside={() => {
-              ObjectStore('tag').updateOne({ id: tag, name: newName })
-            }}
-            className={ClassName.circleButton(0, 4)}
-            renderOnParent={false}
-            withClickCover={true}
-            content={
-              <WithBorder
-                style={{ background: Colors.Background.Global }}
-                onClick={e => e.stopPropagation()}
-                onKeyDown={e => e.stopPropagation()}
-                padding={10}
-              >
-                <Content flex gap={10} style={{ marginBottom: 10 }}>
-                  <input
-                    placeholder={'New name for this tag'}
-                    autoFocus
-                    value={newName}
-                    onKeyDown={e => {
-                      if (isHotkey(KEY.Enter, e)) {
-                        document.body.firstElementChild?.click?.()
-                      }
-                    }}
-                    onChange={v => setNewName(v.target.value)}
-                    className={ClassName.noStyleInput}
-                    ref={inputRef}
-                    style={{
-                      border: `1px solid ${Colors.Background.Border}`,
-                      flex: 1,
-                      borderRadius: 4,
-                      padding: '2px 6px',
-                      fontSize: FontSize['13px']
-                    }}
-                  />
-
-                  <Icon
-                    name={'park-delete'}
-                    onClick={() => {
-                      ObjectStore('tag').deleteOneById(tag, { force: true })
-                      document.body.firstElementChild?.click?.()
-                    }}
-                    className={ClassName.circleButton()}
-                  />
-                </Content>
-                <BlockColorPicker
-                  style={{
-                    padding: 0,
-                    boxShadow: 'none',
-                    border: 'none'
-                  }}
-                  bgBackDefault={false}
-                  showFont={false}
-                  onPickBackgroundColor={c => {
-                    ObjectStore('tag').updateOne({ id: tag, color: c })
-                  }}
-                />
-              </WithBorder>
+      <Content flex column style={{ ...style, maxWidth: 'min(90vw, 480px)' }} ref={ref}>
+        <Selector
+          selectMode={selectMode}
+          selectedItems={selectedTags}
+          items={sortedTags}
+          mode={'multi'}
+          onSelect={items => {
+            if (items.length) {
+              onChange?.(items.map(i => i.id))
+            } else {
+              onChange?.([])
             }
-          ></IconWithPopover>
-        )}
+          }}
+          onCreateItem={(name, color) => ObjectStore('tag').addOne({ name, color })}
+          onItemDelete={t => ObjectStore('tag').deleteOneById(t)}
+          onItemUpdate={t => ObjectStore('tag').updateOne(t)}
+        />
       </Content>
     )
   }

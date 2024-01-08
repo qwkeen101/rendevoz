@@ -10,9 +10,9 @@ const PlaceholderRow = () => {
     <AnimatePopover
       positions={['top']}
       align={'start'}
-      padding={10}
+      padding={0}
       content={setV => (
-        <WithBorder padding={6}>
+        <WithBorder padding={4} width={160}>
           <NewRowMenu
             onClose={() => {
               setV(false)
@@ -28,7 +28,6 @@ const PlaceholderRow = () => {
         className={ClassName.flatButton(0)}
         style={{
           height: 32,
-          marginBottom: 68,
           paddingLeft: 12,
           alignItems: 'center',
           borderBottom: `1px solid ${Colors.Background.Border}`

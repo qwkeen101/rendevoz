@@ -15,7 +15,7 @@ const LabelNoteRenderer = ({
   style?: CSSProperties
 }) => {
   const { label, renderName, renderDescription } = useRenderLabel({ objectId: labelId, type: 'pdfLabel' })
-
+  if (!label?.name) return null
   return (
     <AnimatePopover
       positions={['top', 'right']}
@@ -28,7 +28,7 @@ const LabelNoteRenderer = ({
     >
       <Icon
         name={'park-info'}
-        containerStyle={{ ...style, cursor: 'pointer', pointerEvents: 'auto', zIndex: 10, color: Colors.Common.SelectColor }}
+        style={{ ...style, cursor: 'pointer', pointerEvents: 'auto', zIndex: 10, color: Colors.Common.SelectColor }}
         onClick={e => {
           e.preventDefault()
           e.stopPropagation()

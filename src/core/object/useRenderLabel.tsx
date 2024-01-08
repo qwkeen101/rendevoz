@@ -9,11 +9,10 @@ import { AttachmentWrapper, useRenderObject } from '.'
 import BorderInput from '@/components/base/BorderInput'
 import { useTranslation } from 'react-i18next'
 import { Colors } from '@/consts'
-import { useGlobalAtomValue, useIsIn, useSelectGlobalAtomValue } from '@/hooks'
+import { GlobalInstance, useGlobalAtomValue, useIsIn } from '@/hooks'
 import { relatedMetaObjectsMapAtom } from '@/api/stores/meta.store'
-import { SettingAtom } from '@/core'
-import { getColor } from '@/consts/targetColor'
 import { Rendevoz } from '@/core/rendevoz'
+import { ILabel } from '~/typings'
 const DEFAULT_LABEL_NAME = 'Unnamed Label'
 const useRenderLabel = (opts: {
   objectId: number
@@ -23,11 +22,7 @@ const useRenderLabel = (opts: {
   onNavigate?: VoidFunction
 }) => {
   const { objectId, type, draggable } = opts
-  const label = ObjectStore(opts.type).useValue(opts.objectId)
-  if (label && !label.parentObjectId && (label.webpageId || label.videoId || label.pdfId || label.noteId)) {
-    ObjectStore(type).updateOne({ id: objectId, parentObjectId: label.webpageId || label.videoId || label.pdfId || label.noteId })
-  }
-
+  const label = ObjectStore(opts.type).useValue(opts.objectId) as ILabel | undefined
   const parentMeta = MetaStore.useObjectToMetaValue(label?.parentObjectId)
   const labelMeta = MetaStore.useObjectToMetaValue(opts.objectId)
   const { t } = useTranslation()
@@ -54,7 +49,8 @@ const useRenderLabel = (opts: {
   if (parentMeta) {
     realRelated.delete(parentMeta.id)
   }
-  const customBackground = useSelectGlobalAtomValue(SettingAtom, s => s.label.customTextBackground)
+  const customBackground = true
+  // const customBackground = useSelectGlobalAtomValue(SettingAtom, s => s.label.customTextBackground)
   const renderName = ({ onNameClick }: { onNameClick?: (name?: string) => void }) => {
     return (
       <Content flex column auto>
@@ -80,6 +76,9 @@ const useRenderLabel = (opts: {
                 whiteSpace: 'pre-wrap',
                 fontSize: FontSize['13px'],
                 color: labelMeta ? labelMeta.color || Colors.Common.SelectColor : undefined
+              }}
+              onClick={() => {
+                setLabelState(s => ({ ...s, editingName: true }))
               }}
             >
               {realRelated.size > 0 && (
@@ -113,11 +112,8 @@ const useRenderLabel = (opts: {
                       : currentLabelHasName
                       ? undefined
                       : Colors.Font.Transparent,
-                  fontWeight: 500,
+                  fontWeight: 400,
                   wordBreak: 'break-word'
-                }}
-                onClick={() => {
-                  setLabelState(s => ({ ...s, editingName: true }))
                 }}
               >
                 {currentLabelHasName ? label?.name : t('general.Click to add note')}
@@ -169,6 +165,7 @@ const useRenderLabel = (opts: {
                 on?.(event)
                 switch (event.type) {
                   case 'addAttachment':
+                    await GlobalInstance.metaOps?.addDraggableAsMeta({ type, labelId: objectId })
                     setLabelState(s => ({ ...s, addingAttachment: true }))
                     break
                   case 'editOriginal': {
@@ -280,13 +277,10 @@ const useRenderLabel = (opts: {
         style={{
           fontSize: 13,
           padding: '4px 8px',
-          borderRadius: 4,
           cursor: 'pointer',
-          background: customBackground
-            ? label?.color
-              ? getColor(label.color)
-              : Colors.Background.ButtonHover
-            : Colors.Background.ButtonHover,
+          borderLeft:
+            customBackground && label?.color ? `3px solid ${Colors.getAdaptColor(label.color)}` : `3px solid ${Colors.Emphasis.Emphasis}`,
+          background: Colors.Background.ButtonHover,
           ...options.style
         }}
         onClick={e => {

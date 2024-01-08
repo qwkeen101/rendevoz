@@ -21,7 +21,7 @@ const MediaChapterController = () => {
       style={{
         overflow: 'hidden',
         height: '100%',
-        paddingTop: 12
+        padding: 12
       }}
     >
       <Content flex column style={{ overflowY: 'auto', paddingRight: 8 }}>

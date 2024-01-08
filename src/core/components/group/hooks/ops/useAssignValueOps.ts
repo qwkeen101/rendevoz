@@ -1,4 +1,4 @@
-import { IGroupInstance, MetaGroupChild } from '~/typings'
+import { IGroupInstance, MetaGroupChild, MetaObject } from '~/typings'
 import { assignProperties } from '@/utils'
 import { Group } from '@/core/components/group/hooks/weakmaps'
 import Node from '@/core/components/group/utils/node'
@@ -9,7 +9,7 @@ import Id from '@/utils/id'
 import { useEffect, useRef } from 'react'
 import { useSetAtom } from 'jotai/index'
 import { GroupStateAtom } from '@/core/components/group/hooks/useGroupState'
-import { useSelectAtomValue } from '@/hooks'
+import { GlobalInstance, useSelectAtomValue } from '@/hooks'
 
 type GroupUpdateEvent =
   | {
@@ -53,6 +53,7 @@ const useAssignValueOps = (instance: IGroupInstance) => {
   }, [displayValue])
 
   const applyEvent = (e: GroupUpdateEvent) => {
+    if (!instance.values.currentValue) return
     instance.triggerChange?.()
     const op = {
       type: TypeToSlateType[e.type],
@@ -163,6 +164,83 @@ const useAssignValueOps = (instance: IGroupInstance) => {
 
   assignProperties(instance, {
     valueOps: {
+      getPrevMeta: (
+        rowId,
+        opts = {
+          loop: true,
+          canPreview: true
+        }
+      ) => {
+        const map = MetaStore.getMetaObjectsMap()
+        const all = instance.valueOps?.getVisibleValues()
+        const currIndex = all?.findIndex(i => i[0].rowId === rowId) ?? -1
+
+        const nextMeta = all?.findLast((i, idx) => {
+          if (idx < currIndex) {
+            const m = map.get(i[0].id)
+            return m && (opts.canPreview ? GlobalInstance.metaOps?.canPreview(m) : true)
+          }
+          return false
+        })
+        if (nextMeta) {
+          return {
+            metaId: nextMeta[0].id,
+            rowId: nextMeta[0].rowId
+          }
+        } else {
+          if (opts.loop) {
+            const first = all?.findLast(i => {
+              const m = map.get(i[0].id)
+              return m && (opts.canPreview ? GlobalInstance.metaOps?.canPreview(m) : true)
+            })
+            if (first) {
+              return {
+                rowId: first[0].rowId,
+                metaId: first[0].id
+              }
+            }
+          }
+        }
+      },
+      getNextMeta: (
+        rowId,
+        opts = {
+          loop: true,
+          canPreview: true
+        }
+      ) => {
+        const map = MetaStore.getMetaObjectsMap()
+        const all = instance.valueOps?.getVisibleValues()
+        const currIndex = all?.findIndex(i => i[0].rowId === rowId) ?? -1
+        if (currIndex >= 0) {
+          const nextMeta = all?.find((i, idx) => {
+            if (idx > currIndex) {
+              const m = map.get(i[0].id)
+              return m && (opts.canPreview ? GlobalInstance.metaOps?.canPreview(m) : true)
+            }
+            return false
+          })
+          if (nextMeta) {
+            return {
+              metaId: nextMeta[0].id,
+              rowId: nextMeta[0].rowId
+            }
+          } else {
+            if (opts.loop) {
+              const first = all?.find(i => {
+                const m = map.get(i[0].id)
+                return m && (opts.canPreview ? GlobalInstance.metaOps?.canPreview(m) : true)
+              })
+              if (first) {
+                return {
+                  rowId: first[0].rowId,
+                  metaId: first[0].id
+                }
+              }
+            }
+          }
+        }
+      },
       getValueById: id => Group.ID_TO_VALUE_MAP.get(instance)?.get(id),
       handleToggle: (rowId, toggled) => {
         console.log(rowId, toggled)
@@ -171,7 +249,25 @@ const useAssignValueOps = (instance: IGroupInstance) => {
           unToggledIds: toggled ? s.unToggledIds.filter(i => i !== rowId) : Array.from(new Set([...(s.unToggledIds || []), rowId]).values())
         }))
       },
+      getAllMetasInGroup: () => {
+        if (!instance.values.currentValue) return []
+        const metaIds = new Set<number>(
+          Node.elements(
+            { children: instance.values.currentValue },
+            {
+              match: r => {
+                return r.type === 'metaObject'
+              }
+            }
+          ).map(i => i[0].id)
+        )
+        const map = MetaStore.getMetaObjectsMap()
+        return Array.from(metaIds.values())
+          .map(i => map.get(i))
+          .filter(i => i) as MetaObject[]
+      },
       getValueByPath: path => {
+        if (!instance.values.currentValue) return undefined
         return Node.get({ children: instance.values.currentValue }, path)
       },
       isParent: (maybeParent, child) => {

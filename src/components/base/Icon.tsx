@@ -1,6 +1,6 @@
-import React, { CSSProperties, DetailedHTMLProps, forwardRef, HTMLAttributes } from 'react'
+import React, { cloneElement, CSSProperties, DetailedHTMLProps, forwardRef, HTMLAttributes } from 'react'
 import { Property } from 'csstype'
-import { default as IconPark } from '@icon-park/react/es/all'
+import { default as IconPark, IconRender } from '@icon-park/react/es/all'
 import { Content } from '.'
 import CustomIcon from '../custom/icons/CustomIcon'
 import classNames from 'classnames'
@@ -25,12 +25,17 @@ export interface IconProps extends DetailedHTMLProps<HTMLAttributes<HTMLDivEleme
   onPointerUp?: React.PointerEventHandler
   draggable?: boolean
 }
+const disableSvg = css({
+  svg: {
+    pointerEvents: 'none'
+  }
+})
 const Icon = forwardRef<HTMLDivElement, IconProps>(
-  ({ name, size, strokeWidth, fill, spin, theme, className, cursor, color, onClick, containerClassName, containerStyle, ...rest }, ref) => {
-    const style: React.CSSProperties = {
+  ({ name, size, strokeWidth, fill, spin, theme, className, cursor, color, onClick, containerStyle, style, ...rest }, ref) => {
+    const s: React.CSSProperties = {
       cursor: cursor,
       userSelect: 'none',
-      ...rest.style
+      ...style
     }
     const renderIcon = (name: string) => {
       if (name.startsWith('park')) {
@@ -39,9 +44,7 @@ const Icon = forwardRef<HTMLDivElement, IconProps>(
             color={color}
             fill={fill}
             {...rest}
-            style={style}
             strokeWidth={strokeWidth}
-            className={className}
             type={name.slice(5)}
             theme={theme}
             spin={spin}
@@ -50,27 +53,15 @@ const Icon = forwardRef<HTMLDivElement, IconProps>(
         )
       }
       if (name.startsWith('custom')) {
-        return <CustomIcon {...rest} style={style} className={className} type={name.slice(7)} theme={theme} size={size} strokeWidth={strokeWidth}/>
+        return <CustomIcon {...rest} type={name.slice(7)} theme={theme} size={size} strokeWidth={strokeWidth} />
       }
     }
+    const ele = renderIcon(name)
+    if (!ele) return null
+
     return (
-      <Content
-        {...rest}
-        style={containerStyle}
-        className={classNames(
-          containerClassName,
-          css({
-            svg: {
-              pointerEvents: 'none'
-            }
-          })
-        )}
-        onClick={onClick}
-        flex
-        centered
-        ref={ref}
-      >
-        {renderIcon(name)}
+      <Content {...rest} style={{ ...containerStyle, ...s }} className={classNames(className, disableSvg)} onClick={onClick} flex centered ref={ref}>
+        {ele}
       </Content>
     )
   }

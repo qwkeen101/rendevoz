@@ -19,10 +19,16 @@ const reorderDragItems = async (opts: {
     if (!targetPath) return
     const targetPathRef = instance.pathOps?.pathRef(targetPath)
     if (!opts.insert) {
+      // disable drag selected items into self
+
       items.sort((b, a) => (Path.isAfter(getPath(b.rowId)!, getPath(a.rowId)!) ? 1 : -1))
       const endPath = getPath(items[items.length - 1]?.rowId)
       const startPath = getPath(items[0]?.rowId)
       if (!endPath?.length || !startPath?.length) return
+
+      if (Path.equals(startPath, targetPath) || Path.equals(endPath, targetPath)) return
+      if (Path.isAfter(targetPath, startPath) && Path.isBefore(targetPath, endPath)) return
+
       const itemsWithPathref = items.map(i => ({ ...i, pathRef: instance.pathOps?.pathRef(getPath(i.rowId)) }))
       itemsWithPathref.forEach(i => {
         const path = i.pathRef?.unref()

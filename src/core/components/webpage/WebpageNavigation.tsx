@@ -1,4 +1,4 @@
-import { AnimatePopover, Content, Icon, Menu, Tooltip } from '@/components'
+import { AnimatePopover, Content, Icon, Menu, Tooltip, WithBorder } from '@/components'
 import { KEY, Zindexes } from '@/consts'
 import Colors from '@/consts/colors'
 import FontSize from '@/consts/font'
@@ -142,24 +142,26 @@ const WebpageNavigation = ({
         visible={!!allSuggestResults?.length && setting.webpage.enableSearchAutoSuggestion}
         containerStyle={{ zIndex: String(Zindexes.SearchPanel + 1) }}
         content={
-          <Menu.NavigationMenu
-            style={{
-              width: containerRef.current?.getBoundingClientRect().width,
-              padding: allSuggestResults?.length ? 10 : 0
-            }}
-            layout={allSuggestResults?.map(i => ({
-              type: 'item',
-              text: i,
-              name: i
-            }))}
-            onClick={i => {
-              setAutoSuggestResults([])
-              on({
-                action: 'loadUrl',
-                url: searchToUrl(i)
-              })
-            }}
-          ></Menu.NavigationMenu>
+          <WithBorder padding={allSuggestResults?.length ? '0.25rem 0' : 0}>
+            <Menu.NavigationMenu
+              style={{
+                width: containerRef.current?.getBoundingClientRect().width
+              }}
+              layout={allSuggestResults?.map(i => ({
+                type: 'item',
+                text: i,
+                name: i,
+                key: i
+              }))}
+              onSelect={i => {
+                setAutoSuggestResults([])
+                on({
+                  action: 'loadUrl',
+                  url: searchToUrl(i.name)
+                })
+              }}
+            ></Menu.NavigationMenu>
+          </WithBorder>
         }
       >
         <Content

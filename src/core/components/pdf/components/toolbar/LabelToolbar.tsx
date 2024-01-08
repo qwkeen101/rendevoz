@@ -70,7 +70,16 @@ const LabelToolbar: FC<LabelToolbarProps> = ({
         disableNudge
         name="park-background-color"
         color={color}
-        content={<BlockColorPicker bgBackDefault={false} showFont={false} onPickBackgroundColor={onColorChange} />}
+        content={setV => (
+          <BlockColorPicker
+            bgBackDefault={false}
+            showFont={false}
+            onPickBackgroundColor={c => {
+              onColorChange?.(c)
+              setV(false)
+            }}
+          />
+        )}
       ></IconWithPopover>
     </Toolbar.Item>
   )

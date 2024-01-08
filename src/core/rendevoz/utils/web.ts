@@ -10,6 +10,11 @@ const WebUtils: (typeof Utils)['Web'] = {
   fetchDetails: async url => {
     const res = await fetch(url)
     const text = await res.text()
+    function isHTML(str: string) {
+      const regexForHTML = /<([A-Za-z][A-Za-z0-9]*)\b[^>]*>(.*?)<\/\1>/;
+      return regexForHTML.test(str)
+    }
+    if (!isHTML(text)) throw 'Not HTML web!'
     const parser = new DOMParser()
     const dom = parser.parseFromString(text, 'text/html')
     const head = dom.head

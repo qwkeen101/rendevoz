@@ -17,7 +17,12 @@ import {
   MetaLink,
   MetaObject,
   ISyncedBlock,
-  MetaGroup, IFeed, IQuestion, ICode
+  MetaGroup,
+  IFeed,
+  IQuestion,
+  ICode,
+  IMetaSelectOption,
+  IMetaProp, IPdfLabel, IPDFLabel
 } from '.'
 import { PartialWithId } from './common'
 import { CustomTypes } from './custom'
@@ -32,7 +37,7 @@ export type BuiltInObjectTypes = {
   webpageLabel: IWebpageLabel
   pdf: { specType: 'pdf' } & IPdfDocument
   whiteboard: { specType: 'whiteboard' } & IWhiteboard
-  pdfLabel: ILabel & { specType: 'pdfLabel' }
+  pdfLabel: IPDFLabel
   tag: ITag & { specType: 'tag' }
   image: IImage
   localFile: ILocalFile
@@ -46,6 +51,8 @@ export type BuiltInObjectTypes = {
   feedFolder: IFeedFolder
   question: IQuestion
   code: ICode
+  metaPropSelectOption: IMetaSelectOption
+  metaProp: IMetaProp
 }
 
 export type ObjectFamily = CustomTypes['Object']

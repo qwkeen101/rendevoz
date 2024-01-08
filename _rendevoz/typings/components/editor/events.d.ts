@@ -1,9 +1,17 @@
 import { Descendant } from 'slate'
 import React from 'react'
-import { CustomElement, EditorProps, IDraggableElement, INoteBlock, INoteLabel } from '~/typings'
+import { CustomElement, EditorProps, IDraggableElement, INoteBlock, INoteLabel, IQuestion } from '~/typings'
 import { AISummarizeEvent } from '../../../../src/core/ai/components/AskAIPanel'
 
 export type IEditorEvent =
+  | {
+      type: 'linkToMeta'
+      targetMetaId: number
+    }
+  | {
+      type: 'metaToLink'
+      sourceMetaId: number
+    }
   | {
       type: 'valueChange'
       value: Descendant[]
@@ -109,9 +117,14 @@ export type IEditorEvent =
       type: 'blockDragged'
     }
   | {
+      type: 'blur'
+    }
+  | {
       type: 'save'
       value: Descendant[]
     }
-  | ({
+  | {
       type: 'AI summarize'
-    } & AISummarizeEvent)
+      summary?: string
+      questions?: Partial<IQuestion>[]
+    }

@@ -55,15 +55,20 @@ const MediaSidebar = memo(() => {
         borderWidth: column ? '1px' : '0px 0px 0px 1px',
         borderColor: 'var(--border-background)',
         borderStyle: 'solid',
+        flexGrow: 1,
         opacity: sidebarState.rightBarVisible ? 1 : 0,
         visibility: sidebarState.rightBarVisible ? 'visible' : 'hidden',
         position: sidebarState.rightBarVisible ? 'relative' : 'absolute',
         marginBottom: column ? 24 : 0,
-        padding: '12px',
         overflow: 'hidden'
       }}
     >
-      <Tabs activeKey={sidebarState.rightBarActive}>
+      <Tabs
+        activeKey={sidebarState.rightBarActive}
+        tabNavContainerStyle={{
+          padding: '12px 12px 0px'
+        }}
+      >
         <TabPane tab={t('general.labels')} key="label">
           <MediaLabelController labelType={labelType} labelIds={labelIds} />
         </TabPane>

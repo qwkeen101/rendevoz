@@ -1,17 +1,19 @@
 import { Box } from '~/typings'
-import { CSSProperties, ReactNode } from 'react'
+import { CSSProperties, forwardRef, ReactNode } from 'react'
 import { Colors } from '@/consts'
 
-const PopupWrapper = ({ box, children, style }: { box: Box; children: ReactNode; style?: CSSProperties }) => {
+const PopupWrapper = forwardRef(({ box, children, style }: { box: Box; children: ReactNode; style?: CSSProperties }, ref) => {
   return (
     <div
+      ref={ref}
+      role={'popup-wrapper'}
       style={{
         position: 'fixed',
         top: box.top,
         left: box.left,
         width: box.width,
-        background: Colors.Background.Secondary,
-        boxShadow: Colors.Background.BoxShadow,
+        background: Colors.Background.Popover,
+        boxShadow: Colors.Background.PopoverBoxShadow,
         borderRadius: 4,
         ...style
       }}
@@ -19,6 +21,5 @@ const PopupWrapper = ({ box, children, style }: { box: Box; children: ReactNode;
       {children}
     </div>
   )
-}
-
+})
 export default PopupWrapper

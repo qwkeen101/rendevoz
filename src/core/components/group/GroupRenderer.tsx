@@ -17,7 +17,7 @@ export const GroupRenderer = memo(() => {
   useTableHeaders()
 
   return (
-    <Content role={"renderer-container"} ref={containerRef} flex column fullHeight style={{ minWidth: 'fit-content', width: '100%' }}>
+    <Content role={'renderer-container'} ref={containerRef} flex column fullHeight style={{ minWidth: 'fit-content', width: '100%' }}>
       {/*{currentView === 'table' && <TableRenderer value={filterValues || displayValues} />}*/}
       {/*{currentView === 'gallery' && <GalleryRenderer values={filterValues || displayValues} />}*/}
       <TableRenderer value={filterValues || displayValues} />
@@ -29,7 +29,7 @@ const TableRenderer = memo(({ value }: { value?: MetaGroupChild[] }) => {
   const currentViewId = useSelectAtomValue(GroupStateAtom, s => s.currentView?.id)
   return (
     <Content flex column style={{ height: 0, flex: 1, padding: '0px 60px', width: '100%' }}>
-      <Content role={'table-wrapper'} style={{ width: '100%', height: 'auto' }}>
+      <Content role={'table-wrapper'} style={{ width: '100%', height: 'auto', marginBottom: 68 }}>
         <GroupTableHeader key={currentViewId} />
         <TableBodyRenderer value={value} />
       </Content>

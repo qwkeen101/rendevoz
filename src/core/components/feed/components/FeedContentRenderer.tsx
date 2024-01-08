@@ -32,6 +32,7 @@ const FeedContentRenderer = () => {
   const [failLoading, setFailLoading] = useState(false)
   const contentCache = currentItem && FEED_CONTENT_CACHE.get(currentItem.id)
   const fakeLoad = useRef(false)
+  console.log(displayMode)
   useLayoutEffect(() => {
     if (currentItem?.link.includes('news.google.com')) {
       TransformGoogleNewsLinkToRealLink(currentItem.link).then(res => {

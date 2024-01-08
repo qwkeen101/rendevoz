@@ -151,7 +151,7 @@ const ButtonMenuItem: FC<MenuItemWithProps & { type: 'item' }> = ({
       style={{
         marginLeft: '0.25rem',
         marginRight: '0.25rem',
-        height: '2rem',
+        height: '2em',
         padding: '0px 0.5rem',
         fontSize: 14,
         lineHeight: '20px',

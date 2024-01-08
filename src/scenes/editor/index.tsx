@@ -31,6 +31,12 @@ const EditorPage: FC<
         <NoteEditor
           {...rest}
           noteId={noteId}
+          metaId={note?.id}
+          layout={{
+            ...rest.layout,
+            showProps: true,
+            propsMetaId: note?.id
+          }}
           onInstanceInitialized={i => {
             onInstanceInitialized?.(i)
           }}

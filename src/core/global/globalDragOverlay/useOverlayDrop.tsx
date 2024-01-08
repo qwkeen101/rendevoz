@@ -160,6 +160,7 @@ const useOverlayDrop = () => {
         break
       }
       case 'editor': {
+        if (!dropOn.noteId) break
         const note = await ObjectStore('note').getOneById(dropOn.noteId)
         if (note?.metaId) {
           const noteTargetMeta = await getMetaObjectById(note.metaId)

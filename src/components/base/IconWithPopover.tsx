@@ -65,7 +65,7 @@ const IconWithPopover: FC<Props> = (
     onClick,
     tooltipPosition = 'top',
     closeOnContentClick,
-    renderOnParent = true
+    renderOnParent = false
   },
   ref
 ) => {

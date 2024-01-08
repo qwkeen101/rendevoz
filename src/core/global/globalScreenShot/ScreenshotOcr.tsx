@@ -38,8 +38,7 @@ const ScreenShotOcr = ({ draggable, onToggleDraggable }: { draggable: boolean; o
         maxWidth: 500,
         color: Colors.Font.Primary,
         userSelect: draggable ? 'none' : 'text',
-        textTransform: 'none',
-        background: Colors.Background.ButtonHover
+        textTransform: 'none'
       }}
     >
       {ocrResult && ocrResult !== 'loading' && (

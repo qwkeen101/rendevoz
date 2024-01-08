@@ -1,4 +1,4 @@
-import { Colors } from "@/components/picker/colorPicker";
+import { Colors } from "@/components/picker";
 
 const ColorPickerColors = Colors.map((i) => i[4]);
 

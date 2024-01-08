@@ -8,25 +8,7 @@ import { DEFAULT_GROUP_PROPERTIES } from '@/core/components/group/consts/default
 export const GroupToBelongsMetaIdMapAtom = atom(new Map())
 
 export const MetaIdToGroupAtom = atom(new Map<number, number>())
-// document.addEventListener('DOMContentLoaded', () => {
-//   const GroupsAtom = ObjectStore('group').objectMapAtom
-//   const debouncedFn = debounce(() => {
-//     const GroupToBelongsMetaIdMap = globalStore.get(GroupToBelongsMetaIdMapAtom)
-//     const MetaIdToGroup = globalStore.get(MetaIdToGroupAtom)
-//     GroupToBelongsMetaIdMap.clear()
-//     MetaIdToGroup.clear()
-//     const allGroups = Array.from(globalStore.get(GroupsAtom).values())
-//     allGroups.forEach(g => {
-//       if (g.belongsTo) {
-//         GroupToBelongsMetaIdMap.set(g.id, g.belongsTo)
-//         MetaIdToGroup.set(g.belongsTo, g.id)
-//       }
-//     })
-//     globalStore.set(MetaIdToGroupAtom, new Map(MetaIdToGroup))
-//     globalStore.set(GroupToBelongsMetaIdMapAtom, new Map(GroupToBelongsMetaIdMap))
-//   }, 500)
-//   globalStore.sub(GroupsAtom, () => debouncedFn())
-// })
+
 const GroupStore = {
   getGroupByMetaId: (id: number) =>
     globalStore.get(ObjectStore('group').objectMapAtom).get(globalStore.get(MetaIdToGroupAtom).get(id) || 0),
@@ -58,6 +40,7 @@ const GroupStore = {
       id: Id.getId(),
       createdAt: Date.now(),
       updatedAt: Date.now(),
+      properties: DEFAULT_GROUP_PROPERTIES,
       values: [],
       rootFilterGroup: {
         groupType: 'and',
@@ -73,11 +56,22 @@ const GroupStore = {
           unToggledIds: [],
           valueIndex: [],
           options: {
-            properties: DEFAULT_GROUP_PROPERTIES
+            properties: Object.fromEntries(
+              DEFAULT_GROUP_PROPERTIES.map((i, idx) => [
+                i.id,
+                {
+                  width: 150,
+                  visible: i.visible,
+                  order: idx
+                }
+              ])
+            )
           }
         }
       ],
-      syncVersion: 1
+      syncVersion: 1,
+      hideGroupsInside: false,
+      hideObjectsInside: true
     } as MetaGroup
   }
 }

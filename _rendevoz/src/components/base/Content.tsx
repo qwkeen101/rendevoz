@@ -1,14 +1,11 @@
-import { DetailedHTMLProps, forwardRef, HTMLAttributes, memo } from 'react'
-import { Property } from 'csstype'
-import { css } from '@emotion/css'
-import classNames from 'classnames'
+import React, { CSSProperties, forwardRef, ForwardRefExoticComponent, PropsWithoutRef, RefAttributes } from 'react'
 
-interface ContentProps extends DetailedHTMLProps<HTMLAttributes<HTMLDivElement>, HTMLDivElement> {
-  position?: 'absolute' | 'relative' | 'fixed'
+type ContentProps = React.JSX.IntrinsicElements['div'] & {
+  position?: CSSProperties['position']
   flex?: boolean
   column?: boolean
-  alignItems?: Property.AlignItems
-  justifyContent?: Property.JustifyContent
+  alignItems?: CSSProperties['alignItems']
+  justifyContent?: CSSProperties['justifyContent']
   gap?: number | string
   centered?: boolean
   children?: React.ReactNode
@@ -17,7 +14,8 @@ interface ContentProps extends DetailedHTMLProps<HTMLAttributes<HTMLDivElement>,
   fullHeight?: boolean
   auto?: boolean
 }
-const Content = forwardRef<HTMLDivElement, ContentProps>(
+
+const Content = forwardRef<HTMLDivElement>(
   (
     {
       style,
@@ -34,28 +32,24 @@ const Content = forwardRef<HTMLDivElement, ContentProps>(
       fullHeight,
       children,
       ...rest
-    },
+    }: ContentProps,
     ref
   ) => {
     return (
       <div
         ref={ref}
-        className={classNames(
-          css({
-            position: position,
-            display: flex ? 'flex' : 'block',
-            flexDirection: flex && column ? 'column' : 'row',
-            justifyContent: centered ? 'center' : justifyContent,
-            alignItems: centered ? 'center' : alignItems,
-            flex: auto ? 'auto' : undefined,
-            width: fullWidth ? '100%' : undefined,
-            height: fullHeight ? '100%' : undefined
-          }),
-          className
-        )}
+        className={className}
         style={{
           ...style,
-          gap
+          position: style?.position ?? position,
+          display: style?.display ?? (flex ? 'flex' : undefined),
+          flexDirection: style?.flexDirection ?? (column ? 'column' : 'row'),
+          justifyContent: style?.justifyContent ?? (centered ? 'center' : justifyContent),
+          alignItems: style?.alignItems ?? (centered ? 'center' : alignItems),
+          flex: style?.flex ?? (auto ? 'auto' : undefined),
+          width: fullWidth ? '100%' : style?.width,
+          height: fullHeight ? '100%' : style?.height,
+          gap: style?.gap || gap
         }}
         {...rest}
       >
@@ -65,4 +59,4 @@ const Content = forwardRef<HTMLDivElement, ContentProps>(
   }
 )
 
-export default memo(Content)
+export default Content as React.ForwardRefExoticComponent<PropsWithoutRef<ContentProps> & RefAttributes<HTMLDivElement>>

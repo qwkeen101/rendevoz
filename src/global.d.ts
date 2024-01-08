@@ -8,6 +8,10 @@ declare global {
     ipcRenderer: import('electron').IpcRenderer
     removeLoading: () => void
   }
+  interface Array<T> {
+    findLastIndex(predicate: (value: T, index: number, obj: T[]) => boolean | undefined, thisArg?: any): number
+    findLast(predicate: (value: T, index: number, obj: T[]) => boolean | undefined, thisArg?: any): T
+  }
 }
 declare module 'i18next' {
   interface CustomTypeOptions {

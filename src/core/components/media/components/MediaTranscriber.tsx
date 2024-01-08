@@ -1,8 +1,7 @@
-import { SessionManager, AvailableModels, InferenceSession } from 'whisper-turbo'
+import { SessionManager, AvailableModels, InferenceSession, DecodingOptionsBuilder, initialize } from 'whisper-turbo'
 import { useEffect, useRef, useState } from 'react'
 import { useMediaInstance } from '@/core/components/media/hooks/useMediaInstance'
-import Dexie from 'dexie'
-import { Button, Content, Icon, Modal } from '@/components'
+import { Button, Content, Modal } from '@/components'
 import Select from '@/components/base/select'
 import { Colors } from '@/consts'
 import { toast } from 'react-hot-toast'
@@ -10,6 +9,7 @@ import { assignProperties } from '@/utils'
 import useMediaState from '@/core/components/media/hooks/useMediaState'
 import useMediaSidebarState from '@/core/components/media/hooks/useMediaSidebarState'
 import toWebVTT from 'srt-webvtt'
+import { useTranslation } from 'react-i18next'
 
 const deleteModel = async (name: AvailableModels) => {
   const request = window.indexedDB.open('models')
@@ -73,6 +73,7 @@ export default () => {
   })
   const instance = useMediaInstance()
   const [, setSidebarState] = useMediaSidebarState()
+  const { t } = useTranslation()
   assignProperties(instance, {
     transcribe: () => {
       setTranscribeState(s => ({ ...s, visible: true }))
@@ -114,7 +115,11 @@ export default () => {
     const loadResult = await manager.loadModel(
       transcribeState.selectedModel,
       () => {
-        console.log('loaded')
+        getAvailableModels().then(res => {
+          if (res && res.length) {
+            setTranscribeState(s => ({ ...s, availableModels: res, selectedModel: s.selectedModel }))
+          }
+        })
         setTranscribeState(s => ({
           ...s,
           loaded: true,
@@ -127,7 +132,7 @@ export default () => {
       }
     )
     if (loadResult.isErr) {
-      toast.error('Failed to load model')
+      toast.error(t('media.Failed to load model'))
     } else {
       session.current = loadResult.value
     }
@@ -174,8 +179,11 @@ export default () => {
           setMediaState(s => ({ ...s, isTranscribing: false }))
         }
         setMediaState(s => ({ ...s, isTranscribing: true, subtitles: !s.subtitleLang ? [] : s.subtitles }))
+        await initialize()
+        let options = new DecodingOptionsBuilder().setTask('transcribe').build()
+        console.log(options)
         session.current
-          ?.transcribe(new Uint8Array(bf), s => {
+          ?.transcribe(new Uint8Array(bf), false, options, s => {
             lastProcessDate = Date.now()
             console.log(s)
             // if 15s not making new transcription, throw error
@@ -209,7 +217,11 @@ export default () => {
             setMediaState(s => ({ ...s, isTranscribing: false }))
           })
           .catch(e => {
-            toast.error('Failed to transcribe.')
+            console.log(e)
+            toast.error(t('media.Failed to load model'))
+          })
+          .finally(() => {
+            setMediaState(s => ({ ...s, isTranscribing: false }))
           })
       }
     }
@@ -217,21 +229,12 @@ export default () => {
   return (
     <Modal visible={transcribeState.visible} onClose={() => setTranscribeState(s => ({ ...s, visible: false }))}>
       <Content flex column style={{ padding: 16, width: 400 }}>
-        <div style={{ fontWeight: 600, fontSize: 20 }}>Transcribe video/audio</div>
-        <div style={{ fontSize: 12, color: Colors.Font.Transparent, marginBottom: 24 }}>
-          <div>
-            Tips: For non-english languages, small and medium models perform better. You may stuck when transcribing, please restart.
-          </div>
-          <div>
-            More info:{' '}
-            <a target={'_blank'} href={'https://github.com/openai/whisper'}>
-              Whisper
-            </a>
-          </div>
-        </div>
+        <div style={{ fontWeight: 600, fontSize: 20 }}>{t('media.Transcribe audio')}</div>
+        <div style={{ fontSize: 12, color: Colors.Font.Transparent, marginBottom: 24 }}>{t('media.Transcribe tips')}</div>
         <Content flex justifyContent={'space-between'}>
-          <div>Select one model</div>
+          <div>{t('media.Select one model')}</div>
           <Select
+            defaultValue={AvailableModels.WHISPER_BASE}
             placeholder={'Select'}
             value={transcribeState.selectedModel}
             closeOnSelect={true}
@@ -239,19 +242,19 @@ export default () => {
             options={[
               {
                 value: AvailableModels.WHISPER_TINY,
-                children: 'Tiny - 157MB'
+                children: 'Tiny - 51MB'
               },
               {
                 value: AvailableModels.WHISPER_BASE,
-                children: 'Base - 293MB'
+                children: 'Base - 96MB'
               },
               {
                 value: AvailableModels.WHISPER_SMALL,
-                children: 'Small - 680MB'
+                children: 'Small - 310MB'
               },
               {
                 value: AvailableModels.WHISPER_MEDIUM,
-                children: 'Medium - 1.9GB'
+                children: 'Medium - 970MB'
               }
             ]}
           />
@@ -262,7 +265,7 @@ export default () => {
             <>
               <Button.IconButton
                 style={{ border: `1px solid ${Colors.Background.Border}` }}
-                text={'Load'}
+                text={t('general.Load')}
                 spin={transcribeState.loading}
                 icon={transcribeState.loading ? 'park-loading-four' : 'park-tool'}
                 onClick={() => {
@@ -271,7 +274,7 @@ export default () => {
               ></Button.IconButton>
               <Button.IconButton
                 style={{ border: `1px solid ${Colors.Background.Border}` }}
-                text={'Delete'}
+                text={t('general.delete')}
                 onClick={() => {
                   deleteModel(transcribeState.selectedModel)
                   setTimeout(() => {
@@ -286,7 +289,7 @@ export default () => {
                     width: 'fit-content',
                     border: `1px solid ${Colors.Background.Border}`
                   }}
-                  text={'Transcribe'}
+                  text={t('media.Transcribe')}
                   onClick={() => runSession()}
                 />
               )}
@@ -295,7 +298,7 @@ export default () => {
             <>
               <Button.IconButton
                 style={{ border: `1px solid ${Colors.Background.Border}` }}
-                text={'Download model'}
+                text={t('media.Download model')}
                 onClick={() => {
                   loadModel()
                 }}

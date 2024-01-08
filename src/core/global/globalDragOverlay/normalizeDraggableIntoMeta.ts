@@ -92,10 +92,8 @@ export default async (
           break
         }
       }
-      const note = await ObjectStore('note').getOneById(dragElement.noteId)
-      if (!note?.metaId) break
-      const noteMeta = await MetaStore.getMetaObjectById(note.metaId)
-      if (!noteMeta) break
+      const fromMeta = dragElement.fromMetaId ? await MetaStore.getMetaObjectById(dragElement.fromMetaId) : undefined
+      if (!fromMeta) break
       // turn in sync block when drag blocks from one note to another note or whiteboard
       const elements = dragElement.elements ? dragElement.elements : [dragElement.element]
       const syncBlockMeta = (
@@ -103,14 +101,14 @@ export default async (
           {
             blockChildren: elements,
             syncVersion: 1,
-            syncedMetaIds: [noteMeta.id]
+            syncedMetaIds: [fromMeta.id]
           },
           {
             silent: true,
             currentMeta: {
               fromObject: {
-                type: 'note',
-                metaId: noteMeta.id
+                type: fromMeta.type,
+                metaId: fromMeta.id
               }
             }
           }
@@ -126,48 +124,12 @@ export default async (
       Object.assign(normalizedMetaObject, { ...syncBlockMeta })
       if (enableDragFromEditorLink && enableAll) {
         const metaLink: PartialWithId<MetaLink> = {
-          sourceId: noteMeta.id,
+          sourceId: fromMeta.id,
           targetId: normalizedMetaObject.id,
           id: Id.getId()
         }
         normalizedLinks.push(metaLink)
       }
-      break
-      const noteBlockMeta = getMetaObjectByObjectId(dragElement.blockId)
-      if (noteBlockMeta) {
-        alreadyHasMeta = true
-        shouldOpenEditMetaModal = false
-        if (enableDragFromEditorLink && enableAll) {
-          addLinkBetweenTwoMetaObject(noteMeta, noteBlockMeta)
-        }
-        Object.assign(normalizedMetaObject, noteBlockMeta)
-      } else {
-        const block = await ObjectStore('noteBlock').addOne(
-          {
-            blockId: dragElement.blockId,
-            noteId: dragElement.noteId,
-            id: dragElement.blockId
-          },
-          { silent: true }
-        )
-        normalizedMetaObject.type = 'noteBlock'
-        normalizedMetaObject.objectId = block.id
-        const content = dragElement.elements ? dragElement.elements.map(n => Node.string(n)).join('\r\n') : Node.string(dragElement.element)
-        console.log(dragElement.element, content)
-        const { name, description } = transformTextContentToNameAndDescription(content)
-        normalizedMetaObject.name = name || 'Unnamed object'
-        normalizedMetaObject.description = description
-        normalizedMetaObject.noteId = dragElement.noteId
-        if (enableDragFromEditorLink && enableAll) {
-          const metaLink: PartialWithId<MetaLink> = {
-            sourceId: noteMeta.id,
-            targetId: normalizedMetaObject.id,
-            id: Id.getId()
-          }
-          normalizedLinks.push(metaLink)
-        }
-      }
-
       break
     }
     case 'metaElement': {
@@ -271,12 +233,12 @@ const normalizeLabel = async (
       } else {
         const id = Id.getId()
         let placeholderName = undefined
-        if ('selectedText' in label) {
+        if ('selectedText' in label && label.selectedText?.length) {
           placeholderName = label.selectedText
+        } else if ('time' in label && label.time) {
+          placeholderName = parentMeta.name + ' - ' + normalizeSecondsToTime(label.time)
         }
-        if ('time' in label && label.time) {
-          placeholderName = truncate(parentMeta.name, { length: 15 }) + ' - ' + normalizeSecondsToTime(label.time)
-        }
+
         return {
           normalizedMetaObject: {
             id,

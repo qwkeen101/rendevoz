@@ -6,11 +6,9 @@ import { useIsIn } from '@/hooks'
 import { Content, Icon } from '@/components'
 
 export default ({ value, onChange }: { value: string; onChange: (filePath?: string) => void }) => {
-  const ref = useRef(null)
   const { openPopover, renderPopover, closePopover } = usePopoverCell({
     onClose: () => {},
-    onOpen: () => {},
-    targetRef: ref
+    onOpen: () => {}
   })
 
   return (
@@ -18,9 +16,10 @@ export default ({ value, onChange }: { value: string; onChange: (filePath?: stri
       <Content
         flex
         justifyContent={'space-between'}
-        ref={ref}
+        role={'prop-container'}
         onClick={e => {
           const parent = e.currentTarget.parentElement
+          console.log(parent)
           if (parent) {
             openPopover(parent)
           }

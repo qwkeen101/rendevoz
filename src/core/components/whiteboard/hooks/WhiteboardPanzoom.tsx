@@ -115,6 +115,13 @@ const WhiteboardPanzoom = memo(() => {
         debounceSetZoom.run(zoomMultipler)
       })
       flow.panzoom = panzoom
+      assignProperties(instance, {
+        getTransform: () => {
+          const t = panzoomRef.current?.getTransform()
+          if (!t) throw 'Failed to get transform!'
+          return t
+        }
+      })
       return () => {
         const transform = panzoom.getTransform()
         flow.dispose()
@@ -161,13 +168,15 @@ const WhiteboardPanzoom = memo(() => {
 
   const instance = useWhiteboardInstance()
 
-  assignProperties(instance, {
-    getTransform: () => {
-      const t = panzoomRef.current?.getTransform()
-      if (!t) throw 'Failed to get transform!'
-      return t
-    }
-  })
+  if (panzoomRef.current) {
+    assignProperties(instance, {
+      getTransform: () => {
+        const t = panzoomRef.current?.getTransform()
+        if (!t) throw 'Failed to get transform!'
+        return t
+      }
+    })
+  }
   const debounceSetZoom = useDebounceFn(
     (zoom: number) => {
       const container = instance.getContainerNode?.()

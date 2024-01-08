@@ -12,12 +12,13 @@ export default () => {
       if (e.type === 'keydown') {
         if (instance.values.isFocused) {
           if (isHotkey('mod+a', e)) {
+            if (e.target instanceof Element && e.target.closest('input,textarea,[contenteditable="true"]')) return
             instance.selectOps?.selectAll()
             e.preventDefault()
           }
-          if (e.shiftKey) {
-            setGroupState(s => ({ ...s, shiftPressed: true }))
-          }
+        }
+        if (e.shiftKey) {
+          setGroupState(s => ({ ...s, shiftPressed: true }))
           document.addEventListener('keyup', s)
         }
       }

@@ -12,11 +12,13 @@ export interface IPdfDocument extends IFile {
   readProgress?: number
   totalPageNum?: number
   totalNoteNumber?: number
+  doublePage?: boolean
   deletedAt?: number
   starred?: boolean
   color?: string
   icon?: string
   labels?: number[]
+  scale?: number
   // online pdf documents
   webFileUrl?: string
 }

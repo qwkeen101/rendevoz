@@ -18,7 +18,7 @@ export default ({
   iconName = 'park-more',
   style,
   customNode,
-  renderOnParent,
+  renderOnParent = false,
   onClickOutside,
   zIndex,
   metaId,

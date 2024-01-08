@@ -1,6 +1,7 @@
-import { IBase } from "./base";
+import { IBase } from './base'
 
 export interface ITag extends IBase {
-  color?: string;
-  name?: string;
+  color?: string
+  name?: string
+  order?: number
 }

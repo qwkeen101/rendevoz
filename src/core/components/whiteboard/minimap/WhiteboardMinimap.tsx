@@ -11,6 +11,8 @@ import { getBoxOfBoxes, getBoxOfNodes } from '../utils'
 import tinycolor from 'tinycolor2'
 import { WithBorder } from '@/components'
 import { Colors } from '@/consts'
+import { useWhiteboardInstance } from '@/core/components/whiteboard/hooks'
+import { getSetting } from '@/core'
 
 interface MinimapProps {
   width?: number
@@ -21,10 +23,11 @@ const DEFAULT_MINIMAP_HEIGHT = 150
 const WhiteboardMiniMap: FC<MinimapProps> = memo(({ width = DEFAULT_MINIMAP_WIDTH, height = DEFAULT_MINIMAP_HEIGHT }) => {
   const nodes = useWhiteboardNodes()
   const flow = useFlow()
+  const instance = useWhiteboardInstance()
   const scopedEmitter = useScopedEventEmitter()
-  const transform = flow.panzoom?.getTransform()
+  const transform = instance.getTransform?.()
   const containerBounding = flow.containerEle?.getBoundingClientRect()
-
+  console.log(nodes, transform, containerBounding, flow)
   const viewBox: Box | null =
     transform && containerBounding
       ? {
@@ -156,13 +159,15 @@ const WhiteboardMiniMap: FC<MinimapProps> = memo(({ width = DEFAULT_MINIMAP_WIDT
 })
 
 const MinimapNode: FC<IWhiteboardNode> = ({ x, y, width, height, name, background, id, type }) => {
+  const isDark = getSetting().general.darkMode
+  const defaultColor = isDark ? 'black' : 'white'
   const lightenbG = useMemo(() => {
     if (type === 'group') {
-      const color = new tinycolor(background || 'rgb(143,153,180)')
+      const color = new tinycolor(background || defaultColor)
       color.setAlpha(0.3)
       return color.toRgbString()
     } else {
-      return background || 'rgb(143,153,180)'
+      return background || defaultColor
     }
   }, [type, background])
   return (
@@ -174,7 +179,7 @@ const MinimapNode: FC<IWhiteboardNode> = ({ x, y, width, height, name, backgroun
       height={height}
       className={miniNodeClassName}
       fill={lightenbG}
-      stroke={type === 'group' ? background || 'rgba(143,153,180)' : undefined}
+      stroke={type === 'group' ? background || defaultColor : undefined}
     />
   )
 }

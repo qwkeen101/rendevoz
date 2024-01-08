@@ -13,6 +13,7 @@ import useHideObjects from '@/core/components/group/hooks/useHideObjects'
 import useGroupFilter from '@/core/components/group/hooks/useGroupFilter'
 import { useGroupInstance } from '@/core/components/group/hooks/useGroupInstance'
 import useAssignBodyOps from '@/core/components/group/hooks/ops/useAssignBodyOps'
+import assignViewOps from '@/core/components/group/hooks/ops/view/view'
 
 export default memo(({ groupId, bodyRef }: { bodyRef: RefObject<HTMLElement>; groupId: number }) => {
   const instance = useGroupInstance()
@@ -26,7 +27,8 @@ export default memo(({ groupId, bodyRef }: { bodyRef: RefObject<HTMLElement>; gr
   useAssignSidebarOps(instance)
   useSyncValueIndexAndValues()
   useAssignCommonOps(instance, groupId)
-  useHideObjects()
+  assignViewOps(instance)
+  useHideObjects(groupId)
   useGroupFilter(groupId)
   useAssignBodyOps(instance, bodyRef)
   return null

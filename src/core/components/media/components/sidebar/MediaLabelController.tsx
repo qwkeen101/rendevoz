@@ -47,7 +47,13 @@ const MediaLabelController = ({ labelType, labelIds }: { labelType: string; labe
       }}
     >
       {labelIds?.length ? (
-        <Content flex alignItems={'center'} justifyContent={'space-between'}>
+        <Content
+          flex
+          alignItems={'center'}
+          justifyContent={'space-between'}
+          className={'font-size-14 border-bottom'}
+          style={{ padding: '0px 6px 6px 6px' }}
+        >
           <Select
             closeOnSelect
             align={'start'}
@@ -66,10 +72,7 @@ const MediaLabelController = ({ labelType, labelIds }: { labelType: string; labe
             ]}
           ></Select>
           <Button.IconButton
-            style={{
-              fontSize: 13,
-              color: Colors.Font.Transparent
-            }}
+            className={'transparent-font'}
             onClick={() => {
               labelIds && LabelStore.exportLabels(labelIds, labelType)
             }}
@@ -82,7 +85,6 @@ const MediaLabelController = ({ labelType, labelIds }: { labelType: string; labe
         flex
         column
         style={{
-          paddingRight: 12,
           overflowY: 'auto',
           height: '100%'
         }}
@@ -131,13 +133,11 @@ const Label = ({ id, type }: { id: number; type: string }) => {
     if (id === currentFocusLabelId) {
       const container = containerRef.current
       if (container) {
-        container.scrollIntoView({ block: 'center' })
-        container.style.borderRadius = '8px'
-        container.style.outline = `1px solid ${Colors.Emphasis.Emphasis}`
+        container.style.background = Colors.Common.SelectColorTransparent
+        container.scrollIntoView({ block: 'center', behavior: 'auto' })
         setTimeout(() => {
           setToolbarState(s => ({ ...s, currentFocusLabelId: undefined }))
-          container.style.removeProperty('outline')
-          container.style.removeProperty('border-radius')
+          container.style.removeProperty('background')
         }, 1500)
       }
     }
@@ -150,7 +150,7 @@ const Label = ({ id, type }: { id: number; type: string }) => {
   if (!label) return null
   const chapter = sortedChapters?.findLast(i => i.startTime < mediaLabel.time)
   return (
-    <Content ref={mergedRef} flex column gap={8} style={{ padding: '10px 0px 10px 6px' }}>
+    <Content ref={mergedRef} flex column gap={12} style={{ padding: '12px', transition: 'background 0.25s ease' }}>
       <Content flex gap={12} alignItems="flex-start">
         {mediaLabel?.imageUrl && (
           <Image
@@ -163,7 +163,7 @@ const Label = ({ id, type }: { id: number; type: string }) => {
             src={mediaLabel.imageUrl}
           ></Image>
         )}
-        <Content flex column auto style={{ margin: 'auto' }}>
+        <Content flex column gap={2} auto style={{ margin: 'auto' }}>
           {label.selectedText &&
             renderOriginalText({
               text: label.selectedText,
@@ -171,18 +171,20 @@ const Label = ({ id, type }: { id: number; type: string }) => {
                 marginBottom: 8
               }
             })}
-          {renderName({})}
+          <Content>
+            {renderName({})}
+            {renderPopover({
+              on: e => {
+                if (e.type === 'delete') {
+                  instance.deleteLabel?.(id)
+                }
+              }
+            })}
+          </Content>
           <div style={{ flexShrink: 0, marginTop: 4 }} className={ClassName.description(FontSize['11px'])}>
             {`${normalizeSecondsToTime(mediaLabel.time)}${chapter ? '  ——  ' + chapter?.name : ''}`}
           </div>
         </Content>
-        {renderPopover({
-          on: e => {
-            if (e.type === 'delete') {
-              instance.deleteLabel?.(id)
-            }
-          }
-        })}
       </Content>
       {renderDescription({})}
       {renderAttachment({})}

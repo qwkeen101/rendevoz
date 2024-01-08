@@ -1,6 +1,6 @@
-import Colors from "@/consts/colors";
-import FontSize from "@/consts/font";
-import { css } from "@emotion/css";
+import Colors from '@/consts/colors'
+import FontSize from '@/consts/font'
+import { css } from '@emotion/css'
 
 export const input = () =>
   css({

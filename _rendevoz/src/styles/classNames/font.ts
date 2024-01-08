@@ -13,8 +13,7 @@ export const ellipsisFont = (line: number) =>
 
 export const defaultFont = (fontSize = FontSize['14px'], fontWeight = 400) =>
   css({
-    fontFamily: 'Inter, OpenSans, Muli, sans-serif',
-    WebkitFontSmoothing: 'antialiased',
+    fontFamily: 'Inter, Muli, sans-serif',
     fontVariantNumeric: 'lining-nums',
     fontFeatureSettings: 'lnum',
     fontWeight,
@@ -55,11 +54,11 @@ export const animatedBorderBottom = (bottom = 0, left = 0, height = 1, backgroun
     }
   })
 
-export const description = (fontSize = FontSize['13px'], fontWeight = 500, color?: string) => {
+export const description = (fontSize = FontSize['13px'], fontWeight = 400, color?: string) => {
   return css({
     fontSize,
     fontWeight,
-    color: color || Colors.Font.Description
+    color: color || Colors.Font.Transparent
   })
 }
 export const disableAllTextTransform = css({})

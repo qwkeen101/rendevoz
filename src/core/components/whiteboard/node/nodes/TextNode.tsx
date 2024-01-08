@@ -24,7 +24,7 @@ const TextNode = ({ node, onClick, nodeState }: InnerNodeProps & { onClick: Void
       }
     }
   }, [nodeState?.focused])
-  const firstChanged = useRef(false)
+
   const handleChangeValue = (newValue: string) => {
     instance.updateNode?.(textNode.id, n => ({ ...n, content: newValue }), false)
   }
@@ -65,14 +65,11 @@ const TextNode = ({ node, onClick, nodeState }: InnerNodeProps & { onClick: Void
       onClick={onClick}
     >
       <SimpleEditor
+        textareaMode={true}
         onInstanceInitialized={ins => (i.current = ins)}
         value={textNode.content}
         onChange={v => {
-          if (firstChanged.current) {
-            handleChangeValue(v)
-            return
-          }
-          firstChanged.current = true
+          handleChangeValue(v)
         }}
       />
     </div>

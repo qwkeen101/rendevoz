@@ -3,7 +3,7 @@ import { AnimatePopover, Button, Content, Icon, WithBorder } from '@/components'
 import ButtonSelect from '@/components/base/ButtonSelect'
 import useGroupState from '@/core/components/group/hooks/useGroupState'
 import { useGroupInstance } from '@/core/components/group/hooks/useGroupInstance'
-import PropertiesMenu from '@/core/components/group/components/menu/table/PropertiesMenu'
+import PropertiesMenu from '@/core/components/group/components/menu/PropertiesMenu'
 import { ClassName } from 'rendevoz'
 import ButtonSwitch from '@/components/base/ButtonSwitch'
 import EmojiWithPicker from '@/components/EmojiWithPicker'
@@ -209,7 +209,9 @@ export default ({ onClose }: { onClose: VoidFunction }) => {
               setCurrentView('main')
             }}
           ></Icon>
-          <div style={{ fontWeight: 600, textTransform: 'capitalize' }}>{currentView}</div>
+          <div style={{ fontWeight: 600, textTransform: 'capitalize' }}>
+            {currentView === 'properties' ? t('group.Properties') : undefined}
+          </div>
         </Content>
       )}
       {renderMain()}

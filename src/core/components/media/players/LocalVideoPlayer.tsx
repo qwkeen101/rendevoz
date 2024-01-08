@@ -51,6 +51,11 @@ const LocalVideoPlayer = () => {
     }
   }, [loaded, jumpTime])
   useEffect(() => {
+    if (loaded && v && mediaState.currentTime !== undefined) {
+      v.currentTime = mediaState.currentTime
+    }
+  }, [loaded])
+  useEffect(() => {
     if (loaded && v) {
       v.volume = volume
     }

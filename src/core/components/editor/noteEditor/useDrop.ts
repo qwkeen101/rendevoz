@@ -7,14 +7,12 @@ import Id from '@/utils/id'
 import { checkDropCanBeMeta } from '@/core/global/globalDragOverlay/useDropObject'
 import useDropInsertMedia from '@/core/components/editor/hooks/drag/useDropInsertMedia'
 
-const useDrop = (noteId?: number) => {
+const useDrop = (noteId?: number, metaId?: number) => {
   const note = ObjectStore('note').useValue(noteId)
-  const noteMeta = MetaStore.useValue(note?.metaId || 0)
+  const noteMeta = MetaStore.useValue(metaId || note?.metaId)
   const handleDropMedia = useDropInsertMedia()
   const handlePointerDropToNoteEditor = async (event: PointerEvent, draggableElement: BuiltInDraggableElement) => {
-    console.log(noteMeta)
-    if (!noteMeta) return
-    if (draggableElement.type === 'noteBlock') {
+    if (draggableElement.type === 'noteBlock' && noteMeta) {
       if (draggableElement.noteId !== noteId) {
         const syncBlockMeta = (await Rendevoz.Events.Emit.GlobalEventEmitter.emitWithCallback('global', {
           type: 'globalDropNeedFurtherProcess',
@@ -42,7 +40,6 @@ const useDrop = (noteId?: number) => {
       }
       return
     }
-    console.log(draggableElement)
     const autoBecomeInline = getSetting().editor.objectAutoBecomeInline
     const id = Id.getId()
     const metaId = (
@@ -68,7 +65,7 @@ const useDrop = (noteId?: number) => {
         id: Id.getId()
       }
       const originSyncBlock = await ObjectStore('syncedBlock').getOneById(targetMeta.objectId)
-      if (originSyncBlock && noteMeta.id) {
+      if (originSyncBlock && noteMeta?.id) {
         ObjectStore('syncedBlock').updateOne({
           id: originSyncBlock.id,
           syncedMetaIds: pushNumberIntoUnrepeatableArray(noteMeta.id, originSyncBlock.syncedMetaIds)
@@ -95,6 +92,7 @@ const useDrop = (noteId?: number) => {
             children: [{ text: '' }]
           }
     }
+    console.log(element)
     return element
   }
   const handleDropDropToNoteEditor = async (event: DragEvent) => {

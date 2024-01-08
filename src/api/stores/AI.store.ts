@@ -19,27 +19,10 @@ const AIStore = {
     }
   },
   updateMetaAI: async (metaId: number, e: AISummarizeEvent) => {
-    const currentMeta = await MetaStore.getMetaObjectById(metaId)
-    if (currentMeta) {
-      const newMeta = produce(currentMeta, draft => {
-        draft.properties = {
-          ...draft.properties
-        }
-        if (e.summary) {
-          draft.properties['AI summary'] = {
-            propType: 'string',
-            value: e.summary
-          }
-        }
-        if (e.questions) {
-          draft.properties['AI questions'] = {
-            propType: 'number array',
-            value: e.questions.map(i => i.id)
-          }
-        }
-      })
-      return await MetaStore.updateMetaObject(newMeta, true)
-    }
+    return await MetaStore.addAIForMeta(metaId, {
+      questions: e.questions.map(i => i.id),
+      summary: e.summary
+    })
   },
   updateMetaQuestions: async (metaId: number, questionIds: number[]) => {
     const currentMeta = await MetaStore.getMetaObjectById(metaId)

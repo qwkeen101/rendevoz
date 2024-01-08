@@ -1,17 +1,17 @@
 import { request } from '@/utils/request'
+import { IWebRequest } from '~/typings'
+import Interface from '@/api/services/interface'
 
-const localTranslateInterface = 'http://localhost:9000/pay'
-const remoteTranslateInterface = 'https://api.rendevoz.com/pay'
 const UpgradeService = {
   upgradeSub: async (method: 'monthly' | 'yearly' | 'lifetime', duration: number) => {
-    const result = await request<string>(remoteTranslateInterface, {
+    const result = await request<IWebRequest<{ code: string }>>(Interface.Upgrade(), {
       params: {
         payType: 'subscription',
         duration,
         method
       }
     })
-    return result.data
+    return result.data.result.code
   }
 }
 

@@ -64,6 +64,11 @@ const LabelActionMenu = ({ on, objectId, type }: Props) => {
         text={t('general.edit description')}
         onClick={() => on({ type: 'addDescription' })}
       ></Button.IconButton>
+      <Button.IconButton
+        icon="park-link"
+        text={t('general.add attachment')}
+        onClick={() => on({ type: 'addAttachment' })}
+      ></Button.IconButton>
       {label && 'selectedText' in label && (
         <Button.IconButton
           icon="park-text"
@@ -81,7 +86,7 @@ const LabelActionMenu = ({ on, objectId, type }: Props) => {
             if (blob) {
               const res = await OcrService.ocrImage(blob)
               if (res) {
-                ObjectStore(type).updateOne({ id: objectId, description: res.result.map(i => i.words).join(' ') })
+                ObjectStore(type).updateOne({ id: objectId, selectedText: res.result.map(i => i.words).join(' ') })
               }
             }
           }}

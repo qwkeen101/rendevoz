@@ -44,7 +44,8 @@ const VirtualChildren = memo(
     const visibleChildren = useMemo(() => {
       return children.filter(i => !i.hide)
     }, [children])
-    const overscan = readOnly ? editor.children.length : 5
+    const disableVirtualizer = useSelectAtomValue(EditorStateAtom, s => s.layout?.virtualizer) === false
+    const overscan = readOnly || disableVirtualizer ? editor.children.length : 5
     const instance = useEditorInstance()
 
     assignProperties(instance, {
@@ -84,11 +85,12 @@ const VirtualChildren = memo(
     const titleHeight = editor.titleEle?.getBoundingClientRect().height || 0
     const showPaddingBottom = useSelectAtomValue(EditorStateAtom, s => s.layout?.showBottomPadding)
     const bottomPadding = useSelectAtomValue(EditorStateAtom, s => s.styles?.bottomPadding)
+
     const virtualizer = useVirtualizer({
       count: visibleChildren.length,
-      estimateSize: () => 100,
+      estimateSize: () => 30,
       getScrollElement: () => scrollElement?.current,
-      overscan: 5,
+      overscan,
       paddingEnd: showPaddingBottom !== false ? bottomPadding || 200 : 0,
       // paddingStart: titleHeight,
       rangeExtractor: rangeExtractor || defaultRangeExtractor,
@@ -116,17 +118,19 @@ const VirtualChildren = memo(
     const first = virtualItems[0]
 
     useEffect(() => {
-      const size = totalSize
-      const parentEle = parentElement?.current
-      if (parentEle) {
-        parentEle.parentElement!.style.height = `${size}px`
-        parentEle.parentElement!.style.minHeight = `${size}px`
-        parentEle.style.position = 'absolute'
-        parentEle.style.width = '100%'
-        parentEle.style.left = '0px'
-        parentEle.style.top = '0px'
-        if (first) {
-          parentEle.style.transform = `translateY(${first.start - titleHeight}px)`
+      if (!disableVirtualizer) {
+        const size = totalSize
+        const parentEle = parentElement?.current
+        if (parentEle) {
+          parentEle.parentElement!.style.height = `${size}px`
+          parentEle.parentElement!.style.minHeight = `${size}px`
+          parentEle.style.position = 'absolute'
+          parentEle.style.width = '100%'
+          parentEle.style.left = '0px'
+          parentEle.style.top = '0px'
+          if (first) {
+            parentEle.style.transform = `translateY(${first.start - titleHeight}px)`
+          }
         }
       }
     }, [totalSize, first?.start])
@@ -138,24 +142,38 @@ const VirtualChildren = memo(
     return (
       <>
         {/*<div role="virtual-placeholder" contentEditable={false} style={{ height: first?.start - titleHeight, width: '100%' }}></div>*/}
-        {virtualItems.map(row => {
-          if (!row) return null
-          const { index } = row
-          const element = visibleChildren[index]
-          return (
-            <VirtualItem
-              key={element.id}
-              renderPlaceholder={renderPlaceholder}
-              renderElement={renderElement}
-              renderLeaf={renderLeaf}
-              index={index}
-              measureElement={virtualizer.measureElement}
-              decorations={decorations}
-              element={element}
-              selection={selection}
-            />
-          )
-        })}
+        {!disableVirtualizer
+          ? virtualItems.map(row => {
+              if (!row) return null
+              const { index } = row
+              const element = visibleChildren[index]
+              return (
+                <VirtualItem
+                  key={element.id}
+                  renderPlaceholder={renderPlaceholder}
+                  renderElement={renderElement}
+                  renderLeaf={renderLeaf}
+                  index={index}
+                  measureElement={virtualizer.measureElement}
+                  decorations={decorations}
+                  element={element}
+                  selection={selection}
+                />
+              )
+            })
+          : visibleChildren.map((i, idx) => (
+              <VirtualItem
+                key={i.id}
+                renderPlaceholder={renderPlaceholder}
+                renderElement={renderElement}
+                renderLeaf={renderLeaf}
+                index={idx}
+                measureElement={virtualizer.measureElement}
+                decorations={decorations}
+                element={i}
+                selection={selection}
+              />
+            ))}
       </>
     )
   },

@@ -58,11 +58,11 @@ export const animatedBorderBottom = (bottom = 0, left = 0, height = 1, backgroun
     }
   })
 
-export const description = (fontSize = FontSize['13px'], fontWeight = 500, color?: string) => {
+export const description = (fontSize = FontSize['13px'], fontWeight = 400, color?: string) => {
   return css({
     fontSize,
     fontWeight,
-    color: color || Colors.Font.Description
+    color: color || Colors.Font.Transparent
   })
 }
 export const disableAllTextTransform = css({})

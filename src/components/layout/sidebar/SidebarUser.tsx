@@ -14,6 +14,7 @@ import { toast } from 'react-hot-toast'
 import { useTranslation } from 'react-i18next'
 import FontSize from '@/consts/font'
 import Colors from '@/consts/colors'
+import UserService from '@/api/services/user.service'
 
 const SidebarUser = memo(() => {
   const [user] = useUser()
@@ -69,7 +70,8 @@ const SidebarUser = memo(() => {
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    fontWeight: 600,
+                    fontWeight: 500,
+                    fontSize: '12px',
                     backgroundColor: Colors.Background.ButtonHover
                   }}
                 >
@@ -179,6 +181,16 @@ const UserPopover = ({ onUpgradePlan, onUpdateUser }: { onUpgradePlan: VoidFunct
         className={ClassName.flatButton()}
         onClick={() => {
           setUser(null)
+          const loginState = localStorage.getItem('loginState')
+          if (loginState) {
+            localStorage.setItem(
+              'loginState',
+              JSON.stringify({
+                ...JSON.parse(loginState),
+                autoLogin: false
+              })
+            )
+          }
         }}
       >
         <Icon size={16} name="park-logout" />
@@ -241,8 +253,18 @@ const UpdateUser = ({ onClose }: { onClose: VoidFunction }) => {
           className={loginInputClassName}
           value={innerUser.displayName}
           onChange={e => setInnerUser({ ...innerUser, displayName: e.target.value })}
-          placeholder="Input your name"
+          placeholder="Type your name..."
         />
+      </div>
+      <div
+        style={{
+          color: Colors.Common.SelectColor,
+          width: 'fit-content'
+        }}
+        onClick={() => setFormState({ passwordVisible: true })}
+        className={ClassName.link()}
+      >
+        Reset password
       </div>
       <Content
         className={ClassName.selectButton()}
@@ -254,24 +276,6 @@ const UpdateUser = ({ onClose }: { onClose: VoidFunction }) => {
       >
         {t('general.OK')}
       </Content>
-      {/* <Content>
-        <div className={ClassName.description()}>More</div>
-        <Content
-          onClick={() => setFormState({ emailVisible: true })}
-          className={ClassName.flatButton()}
-          style={{ margin: '0px -8px' }}
-          flex
-          alignItems="center"
-          justifyContent="space-between"
-        >
-          Change Email
-          <Icon name="park-right" />
-        </Content>
-        <Content className={ClassName.flatButton()} style={{ margin: '0px -8px' }} flex alignItems="center" justifyContent="space-between">
-          Change Password
-          <Icon name="park-right" />
-        </Content>
-      </Content> */}
     </>
   )
   const renderEmail = () => (
@@ -301,10 +305,54 @@ const UpdateUser = ({ onClose }: { onClose: VoidFunction }) => {
       </Content>
     </Content>
   )
+  const renderPassword = () => (
+    <>
+      <input
+        style={{
+          background: 'transparent'
+        }}
+        className={loginInputClassName}
+        defaultValue={''}
+        onChange={e => setInnerUser({ ...innerUser, password: e.target.value })}
+        placeholder="Type your new password..."
+      />
+      <Content
+        className={ClassName.selectButton()}
+        style={{ border: `1px solid ${Colors.Background.Border}` }}
+        flex
+        alignItems="center"
+        justifyContent="center"
+        onClick={() => {
+          if (innerUser.password) {
+            UserService.resetPassword(innerUser.password).then(() => {
+              toast.success('Reset password successfully!')
+              onClose?.()
+              setUser(s => ({ ...s, password: innerUser.password }))
+              const loginState = localStorage.getItem('loginState')
+              if (loginState) {
+                localStorage.setItem(
+                  'loginState',
+                  JSON.stringify({
+                    ...JSON.parse(loginState),
+                    password: innerUser.password
+                  })
+                )
+              }
+            })
+          } else {
+            toast.error('Password cannot be empty!')
+          }
+        }}
+      >
+        {t('general.OK')}
+      </Content>
+    </>
+  )
   return (
     <Content flex column gap={16} style={{ width: 400, padding: 20, borderRadius: 10 }}>
       {formState.mainVisible && renderMain()}
       {formState.emailVisible && renderEmail()}
+      {formState.passwordVisible && renderPassword()}
     </Content>
   )
 }

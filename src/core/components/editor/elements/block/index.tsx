@@ -1,22 +1,22 @@
-import { useMergedRef } from '@/hooks'
+import { useMergedRef, useSelectAtomValue } from '@/hooks'
 import classNames from 'classnames'
-import React, { cloneElement, FC, memo, MouseEvent, RefObject, useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
+import React, { cloneElement, FC, memo, MouseEvent, RefObject, useCallback, useEffect, useLayoutEffect, useRef } from 'react'
 import { ReactEditor, RenderElementProps, useSlateStatic } from '../../slate-react'
 import { CustomElement } from '~/typings'
 import { AnimatePresence, motion } from 'framer-motion'
 import styles from './index.module.less'
 import './index.less'
-import { t } from 'i18next'
 import { ID_TO_ELEMENTS_MAP } from '../../weakMaps'
 import { css } from '@emotion/css'
-import { hexToRgb } from '@/utils/color'
 import { useGlobalIsDragging } from '@/core'
-import { Editor, Node, Range, Transforms } from 'slate'
+import { Editor, Range, Transforms } from 'slate'
 import { NODE_TO_PARENT } from '../../slate-react/utils/weak-maps'
 import useBlockContentSearch from '@/core/components/editor/elements/block/useBlockContentSearch'
 import useEditorInstance from '@/core/components/editor/hooks/useEditorInstance'
 import useBlockSelect from '@/core/components/editor/elements/block/useBlockSelect'
 import { useEditorComposing } from '@/core/components/editor/slate-react/components/editable'
+import { EditorStateAtom } from '@/core/components/editor/hooks/useEditorState'
+import { Colors } from '@/consts'
 
 type BlockProps = {
   blockId: number
@@ -30,7 +30,7 @@ type BlockProps = {
 }
 
 const CardBlocks = ['pdf', 'book-highlight', 'note']
-const disableOverflowTypes = ['list-item', 'order-list-item', 'table', 'synced', 'column', 'columnList']
+const disableOverflowTypes = ['list-item', 'order-list-item', 'table', 'synced', 'column', 'columnList', 'code-block']
 const Block: FC<React.DetailedHTMLProps<React.HTMLAttributes<HTMLDivElement>, HTMLDivElement> & BlockProps & RenderElementProps> = memo(
   ({ scrollElementRef, blockId, children, ratio, type, attributes, element, onMouseEnter, onMouseLeave, onMouseMove, ...rest }) => {
     const blockRef = useRef<HTMLDivElement>(null)
@@ -39,8 +39,9 @@ const Block: FC<React.DetailedHTMLProps<React.HTMLAttributes<HTMLDivElement>, HT
     const map = ID_TO_ELEMENTS_MAP.get(editor)
     const mergedChildrenRef = useMergedRef(blockRef, attributes.ref)
     const [isGlobalDragging] = useGlobalIsDragging()
-
     const instance = useEditorInstance()
+    const path = ReactEditor.findPath(editor, element)
+    const alwaysShowPlaceholder = useSelectAtomValue(EditorStateAtom, s => s.layout?.alwaysShowPlaceholder)
     useBlockContentSearch(element, instance)
     const isComposing = useEditorComposing()
     const { isSelected, handleCollisionSelectBlock, selectBlock } = useBlockSelect({
@@ -157,20 +158,27 @@ const Block: FC<React.DetailedHTMLProps<React.HTMLAttributes<HTMLDivElement>, HT
     )
 
     const { background, color, align, cardType } = element
-    const rgbaBg = background && hexToRgb(background)
     const nestedBlocks = ['table']
     let isBlockEmpty = instance.blockOps?.isBlockEmpty(element)
+
     if (isComposing) {
       if (blockRef.current?.hasAttribute('data-selected')) {
         isBlockEmpty = false
       }
     }
+
     const renderChildren = () => (
       <div
         key={blockId}
         {...attributes}
         ref={mergedChildrenRef}
         data-empty={isBlockEmpty}
+        data-show-placeholder={
+          alwaysShowPlaceholder &&
+          path.length === 1 &&
+          path[0] === 0 &&
+          (editor.selection ? Range.isCollapsed(editor.selection) && Range.includes(editor.selection, path) : true)
+        }
         onPointerEnter={handleMouseEnter}
         onPointerLeave={handleMouseLeave}
         onPointerMove={handleMouseMove}
@@ -178,12 +186,12 @@ const Block: FC<React.DetailedHTMLProps<React.HTMLAttributes<HTMLDivElement>, HT
         data-level={element?.level}
         style={{
           textAlign: align,
-          '--block-rgb-bg': rgbaBg && !nestedBlocks.includes(type) ? `${rgbaBg.r},${rgbaBg.g},${rgbaBg.b}` : undefined,
+          '--block-bg': Colors.getAdaptColor(background),
           '--block-font-color': color,
-          '--placeholder': `"${t('editor.Type for commands')}"`,
           color: 'var(--block-font-color)',
-          background: nestedBlocks.includes(type) && rgbaBg ? `rgba(${rgbaBg.r},${rgbaBg.g},${rgbaBg.b},0.6)` : undefined,
+          background: nestedBlocks.includes(type) && background ? `var(--block-bg)` : undefined,
           overflow: disableOverflowTypes.includes(type) ? 'visible' : 'hidden',
+          pointerEvents: isGlobalDragging ? 'none' : undefined,
           ...rest.style
         }}
         className={classNames(
@@ -191,15 +199,7 @@ const Block: FC<React.DetailedHTMLProps<React.HTMLAttributes<HTMLDivElement>, HT
           type === 'columnList' && styles.ColumnListBlock,
           type === 'column' && styles.ColumnBlock,
           type?.startsWith('heading') && styles.HeadingBlock,
-          type === 'block-quote' && styles.BlockquoteBlock,
-          cardType === 'slim' && styles.SlimCardBlock,
-          cardType === 'line' && styles.LineCardBlock,
-          (cardType === 'wide' || (CardBlocks.includes(type) && cardType === undefined)) && styles.WideCardBlock,
-          type !== 'column' && type !== 'columnList' && !type?.startsWith('heading') && 'ParagraphBlock',
-          isGlobalDragging &&
-            css({
-              pointerEvents: 'auto'
-            })
+          type !== 'column' && type !== 'columnList' && !type?.startsWith('heading') && 'ParagraphBlock'
         )}
         {...rest}
       >
@@ -212,7 +212,7 @@ const Block: FC<React.DetailedHTMLProps<React.HTMLAttributes<HTMLDivElement>, HT
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className={styles.Selected}
+              className={'SelectedBlock'}
             ></motion.div>
           )}
         </AnimatePresence>

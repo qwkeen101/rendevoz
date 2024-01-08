@@ -1,7 +1,6 @@
 import { RefObject, useEffect, useState } from 'react'
 import { useGlobalIsDragging } from '@/core'
 import checkDragInLinks from '@/core/components/group/hooks/drag/checkDragInLinks'
-import { useTableInstance } from '@/core/components/group/hooks/useTableInstance'
 import { Colors } from '@/consts'
 import { useGroupInstance } from '@/core/components/group/hooks/useGroupInstance'
 import { MetaGroupChild } from '~/typings'

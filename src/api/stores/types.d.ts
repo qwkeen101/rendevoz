@@ -16,6 +16,7 @@ export interface IStore<T> {
   getAll: () => Promise<boolean>
   getAllData: () => Promise<T[]>
   getOneById: (id: number) => Promise<T | undefined>
+  getMultipleByIds: (id: number[], cache?: boolean) => Promise<T[]>
   deleteOneById: (
     id: number,
     options?: {
@@ -39,7 +40,7 @@ export interface IStore<T> {
       : {})
   ) => Promise<T>
   addOneWithMeta: (
-    one: Parameters<IStore<T>['addOne']>['0'],
+    one?: Parameters<IStore<T>['addOne']>['0'],
     options?: Parameters<IStore<T>['addOne']>['1'] & {
       showMetaModal?: boolean
       currentMeta?: Partial<MetaObject>

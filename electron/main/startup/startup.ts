@@ -6,7 +6,7 @@ import openUrlHandler from '../global/openUrlHandler'
 import requestIntercepter from '../global/requestIntercepter'
 import HttpsProxyAgent from 'https-proxy-agent'
 import axios from 'axios'
-import { app, BrowserWindow, protocol, session, shell } from 'electron'
+import { app, BrowserWindow, protocol, session, shell, Menu } from 'electron'
 import path from 'path'
 import '../controller/app'
 import '../controller/file'
@@ -110,7 +110,14 @@ const startElectron = async () => {
       if (url.startsWith('https://rendevoz.firebaseapp.com/')) {
         return { action: 'allow' }
       }
-      shell.openExternal(url)
+      if (url.startsWith('rendefile://')) {
+        const FILE_PATH = process.env.FILE_PATH || DefaultRendevozDataPath
+        const u = FILE_PATH + url.replace(FILE_PATH, '').slice(slicedLength)
+        console.log(u)
+        shell.openExternal('file://' + u)
+      } else {
+        shell.openExternal(url)
+      }
       // win.webContents.send('newPage', url)
       return { action: 'deny' }
     })

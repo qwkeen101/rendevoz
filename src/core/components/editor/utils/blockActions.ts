@@ -3,8 +3,7 @@ import { CustomEditor, CustomElement, IEditorInstance } from '~/typings'
 import { ID_TO_ELEMENTS_MAP, ID_TO_PATH_MAP } from '../weakMaps'
 import { Editor, Node, Transforms } from 'slate'
 import { ReactEditor } from '../slate-react'
-import { EDITOR_TO_KEY_TO_ELEMENT } from '../slate-react/utils/weak-maps'
-import { css, keyframes } from '@emotion/css'
+import { css } from '@emotion/css'
 import { waitFor } from '@/utils/functions'
 import { HeadingToLevel } from '@/core/components/editor/elements/Heading'
 import { Colors } from '@/consts'
@@ -73,7 +72,7 @@ export const selectBlock = (blockId: number, instance: IEditorInstance) => {
 export const highlightClassName = css({
   background: '#f3e99f2e',
   outline: `3px solid ${Colors.Emphasis.Emphasis}`,
-  borderRadius: 4
+  borderRadius: '4px !important'
 })
 export const highlightBlock = (blockId: number, editor: CustomEditor) => {
   const editorNode = ReactEditor.toDOMNode(editor, editor)

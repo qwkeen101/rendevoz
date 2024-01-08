@@ -12,6 +12,7 @@ import { Colors } from '@/consts'
 import ContextMenu from '@/components/contextMenu'
 import MediaActionsMenu from '@/core/components/media/components/MediaActionsMenu'
 import AudioPlayer from '@/core/components/media/players/AudioPlayer'
+import { useTranslation } from 'react-i18next'
 
 export const MEDIA_PLAYER_DEFAULT_BORDER_RADIUS = 12
 
@@ -98,6 +99,7 @@ const MediaCore = memo(() => {
 
 const LoadingAnimation = () => {
   const [dots, setDotsNum] = useState(0)
+  const { t } = useTranslation()
   useEffect(() => {
     const interval = setInterval(() => {
       setDotsNum(s => {
@@ -124,7 +126,7 @@ const LoadingAnimation = () => {
         <div className="loading_wave"></div>
       </Content>
       <div style={{ fontSize: 18, color: Colors.Font.Description, marginTop: 20 }}>
-        Loading video {Array.from(Array(dots).keys()).map(i => `.`)}
+        {t('general.Loading')} {Array.from(Array(dots).keys()).map(i => `.`)}
       </div>
     </div>
   )

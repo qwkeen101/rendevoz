@@ -2,16 +2,16 @@ import useDb from '@/hooks/stores/useDb'
 import Id from '@/utils/id'
 import { atom } from 'jotai/vanilla'
 import { toast } from 'react-hot-toast'
-import { MetaGroup, MetaGroupChild, MetaLink, MetaObject } from '~/typings'
+import { IMetaProp, IMetaProperty, MetaGroup, MetaGroupChild, MetaLink, MetaObject } from '~/typings'
 import BaseStore, { initializeLocalStore } from './base.store'
 import { findChangedProperties, globalStore, GroupStore, MetaStore, ObjectStore } from './index'
 import { IStoreDeprecated } from './types'
 import getSetting from '@/core/setting/getSetting'
-import { createDraft, finishDraft } from 'immer'
+import produce, { createDraft, finishDraft } from 'immer'
 import { debounce } from 'lodash'
 import { useMemo } from 'react'
 import { selectAtom } from 'jotai/utils'
-import { useGlobalAtomValue } from '@/hooks'
+import { useGlobalAtomValue, useSelectGlobalAtomValue } from '@/hooks'
 import { getUser } from '@/api/services/login.service'
 import { RegisteredMetaObject } from 'rendevoz'
 import SearchHelper from '@/api/textSearch/SearchHelper'
@@ -20,6 +20,12 @@ import { calculateFilterObjects } from '@/core/object/filter/useBetterFilter'
 import Node from '@/core/components/group/utils/node'
 import { t } from 'i18next'
 import { intersectionOfMultipleSets } from '@/core'
+import { calculateSortObjects } from '@/core/object/filter/BetterSorter'
+import { Rendevoz } from '@/core/rendevoz'
+
+export const AI_SUMMARY_PROP_ID = 1001
+export const AI_QUESTION_PROP_ID = 1002
+
 export const metaObjectsAtom = atom<Map<number, MetaObject>>(new Map())
 
 export const metaLinksAtom = atom<Map<number, MetaLink>>(new Map())
@@ -29,7 +35,6 @@ const { orderedData, orderedArray } = BaseStore
 let lastWarned = Date.now()
 
 export const handleMetaGroupRules = () => {
-  console.log('getting')
   const unhiddenMetasz = Array.from(MetaStore.getMetaObjectsMap().values()).filter(i => !i.hidden)
   const groupMetas = new Set(unhiddenMetasz.filter(i => i.type === 'group').map(i => i.objectId))
   const unhiddenMetas = unhiddenMetasz.map(i => i.id)
@@ -205,6 +210,9 @@ export const handleMetaObjectDelete = (id: number) => {
   }
 }
 
+export const handleMetaOptionChange = () => {
+  MetaStore.calculatePropertyOptionCache()
+}
 export const indexedMetaObjectsAtom = atom<
   | {
       undeletedMetaObjectsSet: Set<MetaObject>
@@ -319,6 +327,8 @@ export const indexedMetaLinksAtom = atom<
   | undefined
 >(undefined)
 
+export const propNameToOptionsAtom = atom<Record<string, Set<number>>>({})
+
 export const orderedMetaObjectsAtom = atom(get => orderedData(get(metaObjectsAtom)))
 
 export const undeletedMetaObjectsAtom = atom(get => orderedArray(Array.from(get(indexedMetaObjectsAtom)?.undeletedMetaObjectsSet || [])))
@@ -361,7 +371,7 @@ const createMetaStore = () => {
         }
         SearchHelper.insertDocument({
           docType: 'metaObject',
-          name: obj.name,
+          name: obj.name || obj.placeholderName,
           description: obj.description,
           metaType: obj.type,
           metaId: obj.id,
@@ -419,14 +429,6 @@ const createMetaStore = () => {
           case 'note':
             initedName = 'Untitled'
             break
-          case 'pdf':
-            initedName = 'Unnamed PDF'
-            break
-          case 'whiteboard':
-            initedName = 'Unnamed Whiteboard'
-            break
-          case 'webpage':
-            initedName = 'Unnamed Webpage'
         }
         const registeredDefaultName = TypeToRegisteredMetaObject.get(initedMetaObject.type)?.defaultName
 
@@ -454,7 +456,7 @@ const createMetaStore = () => {
         }
         SearchHelper.insertDocument({
           docType: 'metaObject',
-          name: obj.name,
+          name: obj.name || obj.placeholderName,
           description: obj.description,
           metaType: obj.type,
           metaId: obj.id,
@@ -594,7 +596,50 @@ const createMetaStore = () => {
     globalStore.set(metaObjectsAtom, new Map())
     realStore.getAllMetaObjects()
   }
-
+  const addAIForMeta = async (
+    metaId: number,
+    details: {
+      summary?: string
+      questions?: number[]
+    }
+  ) => {
+    const sumProp = MetaStore.getPropDetails(AI_SUMMARY_PROP_ID)
+    if (!sumProp) {
+      await ObjectStore('metaProp').addOne({
+        id: AI_SUMMARY_PROP_ID,
+        propType: 'AI summary',
+        icon: 'custom-magic',
+        name: t('general.AI summary')
+      })
+    }
+    const quesProp = MetaStore.getPropDetails(AI_QUESTION_PROP_ID)
+    if (!quesProp) {
+      await ObjectStore('metaProp').addOne({
+        id: AI_QUESTION_PROP_ID,
+        propType: 'AI questions',
+        name: t('general.AI questions'),
+        icon: Rendevoz.Utils.Object.getMetaObjectIcon('question')
+      })
+    }
+    const currMeta = await MetaStore.getMetaObjectById(metaId)
+    if (currMeta) {
+      const nextProp = produce(currMeta.properties || {}, draft => {
+        if (details.questions) {
+          draft[AI_QUESTION_PROP_ID] = {
+            ...draft[AI_QUESTION_PROP_ID],
+            value: details.questions
+          }
+        }
+        if (details.summary) {
+          draft[AI_SUMMARY_PROP_ID] = {
+            ...draft[AI_SUMMARY_PROP_ID],
+            value: details.summary
+          }
+        }
+      })
+      await MetaStore.updateMetaObject({ id: metaId, properties: nextProp }, true)
+    }
+  }
   const getMetaLinkBySourceAndTarget = (sourceMetaId: number, targetMetaId: number): number | undefined => {
     const index = getIndexedMetaLinks()
     if (index) {
@@ -605,14 +650,116 @@ const createMetaStore = () => {
       }
     }
   }
+  const getMetaObjects = (sort: 'view' | 'create') => {
+    const all = Array.from(MetaStore.getMetaObjectsMap().values())
+    if (sort === 'view') {
+      return calculateSortObjects(all, {
+        sorters: [
+          {
+            type: 'descending',
+            field: 'viewAt',
+            id: 1
+          }
+        ]
+      })
+    }
+    if (sort === 'create') {
+      return calculateSortObjects(all, {
+        sorters: [
+          {
+            type: 'descending',
+            field: 'createdAt',
+            id: 1
+          }
+        ]
+      })
+    }
+    return all
+  }
+  const updateProperty = async (id: number | number[], propId: number | string, newValue: any) => {
+    const idArr = Array.isArray(id) ? id : [id]
+    const map = MetaStore.getMetaObjectsMap()
+    await Promise.all(
+      idArr.map(async id => {
+        const meta = map.get(id)
+        if (meta) {
+          const newProp = produce(meta.properties || {}, draft => {
+            draft[propId] = {
+              ...draft[propId],
+              ...newValue
+            }
+          })
+          await MetaStore.updateMetaObject({ id, properties: newProp }, true)
+        }
+      })
+    )
+  }
+  const deleteProperty = async (propId: number) => {
+    await ObjectStore('metaProp').deleteOneById(propId)
+    const options = globalStore.get(propNameToOptionsAtom)[propId]
+    if (options) {
+      options.forEach(id => {
+        ObjectStore('metaPropSelectOption').deleteOneById(id)
+      })
+    }
+  }
+  const changePropertyName = async (propId: number, newName: string) => {
+    await ObjectStore('metaProp').updateOne({ id: propId, name: newName })
+  }
+  // property name to option id set cache
+  const calculatePropertyOptionCache = (): Record<string, Set<number>> => {
+    const optionCacheObj: Record<string, Set<number>> = {}
+    const allOptions = Array.from(globalStore.get(ObjectStore('metaPropSelectOption').objectMapAtom).values())
+    allOptions.forEach(option => {
+      const cache = optionCacheObj[option.parentPropName] || new Set<number>()
+      cache.add(option.id)
+      optionCacheObj[option.parentPropName] = cache
+    })
+    globalStore.set(propNameToOptionsAtom, optionCacheObj)
+    return optionCacheObj
+  }
+  const getPropDetails = (id: number | string) => {
+    return globalStore.get(ObjectStore('metaProp').objectMapAtom).get(Number(id))
+  }
+  const usePropOptions = (propId: number | string): number[] => {
+    const optionMap = globalStore.get(ObjectStore('metaPropSelectOption').objectMapAtom)
+    const obj = useSelectGlobalAtomValue(propNameToOptionsAtom, s => s[propId])
+    const arr = useMemo(() => {
+      const arr = Array.from(obj || [])
+      arr.sort((b, a) => (optionMap.get(b)?.order ?? 0) - (optionMap.get(a)?.order ?? 0))
+      return arr
+    }, [obj])
+    return arr
+  }
+  const getPropOptions = (): Record<string, Set<number>> => {
+    const obj = globalStore.get(propNameToOptionsAtom)
+    return obj
+  }
+  const getNewPropName = (currName?: string) => {
+    return currName || 'Unnamed property'
+  }
+
+  const addNewProp = async (prop: Partial<IMetaProp>) => {
+    return await ObjectStore('metaProp').addOne(prop)
+  }
   return {
+    addNewProp,
     getMetaObjectById,
+    calculatePropertyOptionCache,
+    getPropDetails,
+    getNewPropName,
     getMetaObjectByObjectId,
+    deleteProperty,
     useValue,
+    updateProperty,
+    addAIForMeta,
+    changePropertyName,
     useObjectToMetaValue,
+    getPropOptions,
     addObjectAsMeta,
     getMetaObjectsMap,
     getMetaLinksMap,
+    usePropOptions,
     useMetaObjectsMap,
     useMetaLinksMap,
     getIndexedMetaObjects,
@@ -620,6 +767,7 @@ const createMetaStore = () => {
     getIndexedMetaLinks,
     useIndexedMetaLinks,
     switchWorkspace,
+    getMetaObjects,
     getMetaLinkBySourceAndTarget,
     ...realStore
   }

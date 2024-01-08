@@ -13,6 +13,7 @@ export type BuiltInDraggableElement =
       noteId: number
       editorId: string
       metaId?: number
+      fromMetaId?: number
     }
   // something inside pdf, not pdf itself
   | ({

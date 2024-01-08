@@ -6,7 +6,6 @@ import PdfNode from './PdfNode'
 import NoteNode from './NoteNode'
 import { useRenderObject } from '@/core'
 import WebpageNode from '@/core/components/whiteboard/node/nodes/WebpageNode'
-import { useWhiteboardInstance } from '@/core/components/whiteboard/hooks/useWhiteboardInstance'
 import SyncedBlockNode from '@/core/components/whiteboard/node/nodes/SyncedBlockNode'
 import Video from '@/core/components/media/wrappers/Video'
 import Audio from '@/core/components/media/wrappers/Audio'
@@ -16,7 +15,11 @@ import Code from '@/core/components/code'
 import { css } from '@emotion/css'
 import LabelDetailsRenderer from '@/core/object/renderer/LabelDetailsRenderer'
 import WhiteboardNode from '@/core/components/whiteboard/node/nodes/WhiteboardNode'
-
+import { Rendevoz } from '@/core/rendevoz'
+import { ClassName } from 'rendevoz'
+import { Icon } from '@/components'
+import { useWhiteboardInstance } from '@/core/components/whiteboard/hooks'
+import QuestionCard from '@/core/ai/components/question/QuestionCard'
 const tagsClass = css({
   '> *': {
     fontSize: '15px !important',
@@ -28,15 +31,15 @@ const MetaObjectNode: FC<InnerNodeProps> = ({ node: n, setNodeState, nodeState }
   const node = n as IWhiteboardNode & { type: 'metaObject' }
   const { expanded } = node
   const { metaObjectId } = node
-  const instance = useWhiteboardInstance()
+
   const { renderWhole, metaObject } = useRenderObject({
     metaObjectId: metaObjectId!
   })
 
-  const hasSize = node.width && node.height
   const imageRef = useRef<HTMLImageElement>(null)
   const wholeContainerRef = useRef<HTMLDivElement>(null)
-  const hasImage = metaObject?.coverImgSrc !== undefined
+  const hasImage = !!metaObject?.coverImgSrc
+
   useEffect(() => {
     if (hasImage) {
       setNodeState?.(s => ({ ...s, keepRatioResize: true }))
@@ -44,6 +47,7 @@ const MetaObjectNode: FC<InnerNodeProps> = ({ node: n, setNodeState, nodeState }
       setNodeState?.(s => ({ ...s, keepRatioResize: false }))
     }
   }, [hasImage])
+
   const renderOptions = useMemo(
     () => ({
       renderOptions: {
@@ -67,9 +71,6 @@ const MetaObjectNode: FC<InnerNodeProps> = ({ node: n, setNodeState, nodeState }
           marginTop: 3,
           fontSize: 14
         },
-        showEditBoxShadow: false,
-        clickToEdit: metaObject?.type?.includes('Label'),
-        showAddNote: nodeState?.focused ? true : false,
         ellipsisLine: 0
       },
       descriptionOptions: {
@@ -85,20 +86,8 @@ const MetaObjectNode: FC<InnerNodeProps> = ({ node: n, setNodeState, nodeState }
         }
       }
     }),
-    [hasSize, hasImage]
+    [hasImage]
   )
-  useEffect(() => {
-    if (hasImage) {
-      const img = imageRef.current
-      if (img && node.height) {
-        const ratio = img.naturalHeight / img.naturalWidth
-        const realHeight = ratio * img.clientWidth
-        const currentHeight = img.clientHeight
-        const heightOffset = realHeight - currentHeight
-        instance.updateNode?.(node.id, n => (n.height ? { ...n, height: n.height + heightOffset } : n), false)
-      }
-    }
-  }, [hasImage])
   const hasImageRenderer = () => (
     <Content fullWidth flex column style={{ width: 500, minHeight: '100%', maxHeight: '100%', minWidth: '100%', maxWidth: '100%' }}>
       <img
@@ -126,54 +115,6 @@ const MetaObjectNode: FC<InnerNodeProps> = ({ node: n, setNodeState, nodeState }
       </div>
     </Content>
   )
-
-  const commonRenderer = () =>
-    renderWhole({
-      renderOptions: {
-        renderDescription: true,
-        renderOption: false,
-        renderTags: true,
-        renderOriginalText: true
-      },
-      originalTextOptions: {
-        showEdit: false,
-        clickToEdit: false
-      },
-      tagsOptions: {
-        gap: 6,
-        containerClassName: tagsClass
-      },
-      fromOptions: {
-        style: {
-          fontSize: 14,
-          gap: '0.3rem'
-        }
-      },
-      columnGap: 6,
-      titleOptions: {
-        originalTextStyle: {
-          fontSize: 14,
-          marginTop: 3
-        },
-        ellipsisLine: 0,
-        style: {
-          fontSize: 22,
-          lineHeight: 1.4,
-          whiteSpace: 'pre-wrap'
-        }
-      },
-      descriptionOptions: {
-        ellipsisLine: 0,
-        style: {
-          fontSize: 14
-        }
-      },
-      containerStyle: {
-        padding: 12,
-        width: '100%',
-        height: 'auto'
-      }
-    })
 
   const renderExpanded = () => {
     if (metaObject?.objectId) {
@@ -233,19 +174,79 @@ const MetaObjectNode: FC<InnerNodeProps> = ({ node: n, setNodeState, nodeState }
               <Code id={metaObject.objectId} />
             </div>
           )
+        case 'question':
+          return (
+            <QuestionCard
+              containerStyle={{
+                maxWidth: '100%',
+                minWidth: '100%',
+                minHeight: '100%',
+                maxHeight: '100%',
+                padding: 24
+              }}
+              id={metaObject.objectId}
+              display={{
+                from: true,
+                pointers: true
+              }}
+            />
+          )
         case 'whiteboard':
           return <WhiteboardNode metaId={metaObjectId} />
         case 'syncedBlock':
           return <SyncedBlockNode node={node} />
         default: {
-          return hasImage ? hasImageRenderer() : commonRenderer()
+          return hasImage ? hasImageRenderer() : titleRenderer()
         }
       }
     }
   }
-
+  const instance = useWhiteboardInstance()
   if (metaObject?.type.includes('Label')) {
     return <LabelDetailsRenderer metaId={metaObjectId} />
+  }
+
+  const titleRenderer = () => {
+    if (!metaObject) return null
+    return (
+      <Content alignItems={'center'} flex gap={12} style={{ width: '100%', padding: '14px' }}>
+        {instance.nodeOps?.canExpand(node) && (
+          <Icon
+            size={18}
+            name={'park-right'}
+            className={ClassName.flatButton(4, '3px')}
+            onClick={() => {
+              instance.nodeOps?.expand(node.id)
+            }}
+            style={{
+              opacity: nodeState?.focused ? 1 : 0
+            }}
+          />
+        )}
+        <Content alignItems={'center'} flex gap={16} justifyContent={'center'} style={{ width: '100%', fontSize: 17 }}>
+          <Icon name={Rendevoz.Utils.Object.getMetaObjectIcon(metaObject.type)} />
+          <div
+            style={{
+              fontWeight: 600
+            }}
+            className={ClassName.ellipsisFont(1)}
+          >
+            {metaObject.name || metaObject.placeholderName}
+          </div>
+        </Content>
+        <Icon
+          onClick={() => {
+            instance.nodeOps?.open(node.id, 'sidePeek')
+          }}
+          size={18}
+          name={'custom-right-bar'}
+          className={ClassName.flatButton(4, '3px')}
+          style={{
+            opacity: nodeState?.focused ? 1 : 0
+          }}
+        />
+      </Content>
+    )
   }
 
   return expanded ? (
@@ -253,7 +254,7 @@ const MetaObjectNode: FC<InnerNodeProps> = ({ node: n, setNodeState, nodeState }
   ) : hasImage ? (
     hasImageRenderer()
   ) : (
-    commonRenderer()
+    titleRenderer()
   )
 }
 

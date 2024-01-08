@@ -53,15 +53,10 @@ const GlobalImporter = () => {
       const arrFiles = (Array.isArray(files) ? files : [files]) as (File & {
         id: number
       })[]
-      const filtered = arrFiles.filter(file => {
-        const filetype = getFileType(file)
-        if (filetype) return true
-        return false
-      })
-      filtered.forEach(file => Object.assign(file, { id: Id.getId() }))
+      arrFiles.forEach(file => Object.assign(file, { id: Id.getId() }))
       setNotes(n => [
         ...n,
-        ...filtered.map(file => ({
+        ...arrFiles.map(file => ({
           id: file.id,
           name: file.name,
           completed: false
@@ -69,25 +64,13 @@ const GlobalImporter = () => {
       ])
       const groupedDir: number[] = []
       loopProcess(
-        filtered,
+        arrFiles,
         async (file, index) => {
           try {
-            const type = getFileType(file)
-            let result: MetaObject | undefined = undefined
-            if (type) {
-              switch (type) {
-                case 'markdown':
-                  result = await importMarkdown(file)
-                  break
-                case 'pdf':
-                  result = await importPDF(file)
-                  break
-                case 'video':
-                  result = await importVideo(file)
-                  break
-              }
-            }
-            if (result) {
+            const res = await Rendevoz.Utils.Meta.normalizeLocalFileToMeta(file, { limitType: false })
+            if (res) {
+              const result = (await ObjectStore(res.meta.type).addOneWithMeta(res.object, { currentMeta: res.meta })).meta
+              if (!result) throw ''
               groupedDir.push(result.id)
               setNotes(s => {
                 const noteIdx = s.findIndex(i => i.id === file.id)
@@ -100,7 +83,9 @@ const GlobalImporter = () => {
                 })
                 return [...s]
               })
+              return
             }
+            throw ''
           } catch (e) {
             setNotes(s => {
               const noteIdx = s.findIndex(i => i.id === file.id)

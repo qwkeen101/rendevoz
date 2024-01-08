@@ -1,10 +1,10 @@
-import { CSSProperties, FC, ReactNode } from "react";
+import { CSSProperties, FC, ReactNode } from 'react';
 type FormItemConditionalProps = {
     disable?: boolean;
 } & ({
     onChange?: (value: string) => void;
     text: string;
-    type: "input" | "textarea";
+    type: 'input' | 'textarea';
     onUpload?: never;
     children?: never;
     value?: string;
@@ -14,21 +14,21 @@ type FormItemConditionalProps = {
     minLength?: number;
     autoFocus?: boolean;
 } | {
-    type: "file";
+    type: 'file';
     onChange?: never;
     text?: never;
     onUpload: (file: File) => void;
     children?: never;
     value?: string;
 } | {
-    type: "colorPicker";
+    type: 'colorPicker';
     onChange?: (color: string) => void;
     text?: string;
     onUpload?: never;
     children?: never;
     value?: string;
 } | {
-    type: "component";
+    type: 'component';
     onChange?: never;
     text?: string;
     onUpload?: never;

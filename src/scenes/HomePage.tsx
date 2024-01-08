@@ -43,44 +43,6 @@ export const HomePage: FC = () => {
         }}
       >
         <TabTitle title={t('general.home')} icon="park-home" />
-        {/*<Menu.NavigationMenu*/}
-        {/*  style={{*/}
-        {/*    width: 200*/}
-        {/*  }}*/}
-        {/*  layout={[*/}
-        {/*    {*/}
-        {/*      type: 'item',*/}
-        {/*      key: 'first',*/}
-        {/*      text: 'asdsasad',*/}
-        {/*      subMenu: [*/}
-        {/*        {*/}
-        {/*          type: 'item',*/}
-        {/*          key: 'first-first',*/}
-        {/*          text: 'asdsasad',*/}
-        {/*          subMenu: [*/}
-        {/*            {*/}
-        {/*              type: 'item',*/}
-        {/*              key: 'first-first-second',*/}
-        {/*              text: 'asdsasad'*/}
-        {/*            }*/}
-        {/*          ]*/}
-        {/*        },*/}
-        {/*        {*/}
-        {/*          type: 'item',*/}
-        {/*          key: 'first-second',*/}
-        {/*          text: 'asdsasad',*/}
-        {/*          subMenu: [*/}
-        {/*            {*/}
-        {/*              type: 'item',*/}
-        {/*              key: 'first-second-first',*/}
-        {/*              text: 'asdsasad'*/}
-        {/*            }*/}
-        {/*          ]*/}
-        {/*        }*/}
-        {/*      ]*/}
-        {/*    }*/}
-        {/*  ]}*/}
-        {/*/>*/}
         <Content flex alignItems="center" gap={10} justifyContent="space-between" style={{ margin: '16px 0px' }}>
           <div>
             <div style={{ fontSize: 13, color: Colors.Font.Transparent, paddingLeft: 8 }}>{t('settings.workspace')}</div>
@@ -162,7 +124,9 @@ export const HomePage: FC = () => {
               onClick={() =>
                 GlobalInstance.metaOps?.createObject().then(res => {
                   if (res) {
-                    Rendevoz.Actions.Open.Meta.openMetaObject(res.id)
+                    setTimeout(() => {
+                      Rendevoz.Actions.Open.Meta.openMetaObject(res.id)
+                    }, 300)
                   }
                 })
               }
@@ -180,7 +144,19 @@ export const HomePage: FC = () => {
   )
 }
 
-const VisibleTypes: MetaObject['type'][] = ['note', 'video', 'pdf', 'whiteboard', 'webpage', 'localFile', 'image', 'audio', 'group', 'code']
+const VisibleTypes: MetaObject['type'][] = [
+  'note',
+  'video',
+  'pdf',
+  'whiteboard',
+  'webpage',
+  'localFile',
+  'image',
+  'audio',
+  'group',
+  'code',
+  'question'
+]
 
 const ColWidthState = {
   nameWidth: '100%',
@@ -432,7 +408,7 @@ const Recent = () => {
                     ) : (
                       <Icon size={18} name={getIcon(i.type)} />
                     )}
-                    <div className={ClassName.ellipsisFont(1)}>{i.name}</div>
+                    <div className={ClassName.ellipsisFont(1)}>{i.name || i.placeholderName}</div>
                   </Content>
                 </DraggableElement>
               </td>

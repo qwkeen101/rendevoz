@@ -15,6 +15,7 @@ import RowMenu from '@/core/components/group/components/menu/RowMenu'
 import { useSelectAtomValue } from '@/hooks'
 import { GroupStateAtom } from '@/core/components/group/hooks/useGroupState'
 import { Colors } from '@/consts'
+import { useStore } from 'jotai'
 
 const GroupDragHandle = ({ bodyRef, groupId }: { bodyRef: RefObject<HTMLElement>; groupId: number }) => {
   const emitter = Rendevoz.Events.Emit.GlobalEventEmitter
@@ -22,7 +23,9 @@ const GroupDragHandle = ({ bodyRef, groupId }: { bodyRef: RefObject<HTMLElement>
   const [isDragging, setIsDragging] = useState(false)
   const [globalDragging] = useGlobalIsDragging()
   const isPressed = useRef(false)
+  const store = useStore()
   const isSelecting = useSelectAtomValue(GroupStateAtom, s => s.isSelecting)
+  const isScrolling = useSelectAtomValue(GroupStateAtom, s => s.isScrollingBody)
   const [dragHandle, setDragHandle] = useState<{
     position: XYPosition
     value: MetaGroupChild
@@ -36,6 +39,7 @@ const GroupDragHandle = ({ bodyRef, groupId }: { bodyRef: RefObject<HTMLElement>
   const instance = useGroupInstance()
   const isInHandleRef = useRef(false)
   const isDraggingRef = useRef(false)
+
   assignProperties(instance, {
     dragOps: {
       startDrag: details => {
@@ -70,7 +74,12 @@ const GroupDragHandle = ({ bodyRef, groupId }: { bodyRef: RefObject<HTMLElement>
               .filter(i => i) as MetaGroupChild[]
           })
         } else {
-          Rendevoz.Actions.State.Drag.addDragElements(node.cloneNode(true) as HTMLElement)
+          console.log(node, node.offsetHeight, node.clientHeight, node.getBoundingClientRect())
+          const n = node.cloneNode(true) as HTMLElement
+          n.style.height = `${node.clientHeight}px`
+          n.style.setProperty('--table-columns', `${store.get(GroupStateAtom).headerColumn}`)
+          n.style.borderTop = Colors.Consts.Border
+          Rendevoz.Actions.State.Drag.addDragElements(n)
           Rendevoz.Actions.State.Drag.setDraggingDetails({
             type: 'groupItem',
             groupId: groupId,
@@ -94,6 +103,7 @@ const GroupDragHandle = ({ bodyRef, groupId }: { bodyRef: RefObject<HTMLElement>
         if (globalDragging) return
         if (isSelecting) return
         if (!bodyRef.current) return
+        if (isScrolling) return
         const containerRect = bodyRef.current.getBoundingClientRect()
         const box = details.node.getBoundingClientRect()
         if (dragHandle?.visible) {
@@ -104,16 +114,17 @@ const GroupDragHandle = ({ bodyRef, groupId }: { bodyRef: RefObject<HTMLElement>
         const { left, top, height } = box
         const position = {
           x: (left - containerRect.left) / scale - 24,
-          y: (top - containerRect.top) / scale + 15
+          y: (top - containerRect.top) / scale + 15 + bodyRef.current.scrollTop
         }
-        setDragHandle({ position, value: details.value, node: details.node.cloneNode(true), visible: true })
+        setDragHandle({ position, value: details.value, node: details.node, visible: true })
       },
       removeDragHandle: () => {
         if (isInHandleRef.current) return
         if (!dragHandle?.visible) return
+        if (isScrolling) return
+        console.log('removing')
         const [x, y] = mousePos.current
         if (document.elementFromPoint(x, y)?.closest('[data-group-item]')) return
-        console.log('set here')
         setDragHandle(s => ({ ...s, visible: false }))
       }
     }
@@ -184,57 +195,60 @@ const GroupDragHandle = ({ bodyRef, groupId }: { bodyRef: RefObject<HTMLElement>
 
   if (dragHandle && !globalDragging && bodyRef.current) {
     return createPortal(
-      <AnimatePopover
-        positions={['right']}
-        withClickCover={true}
-        content={setV => (
-          <WithBorder padding={6}>
-            <RowMenu details={dragHandle.value} onClose={() => setV(false)} />
-          </WithBorder>
-        )}
-      >
-        <div
-          style={{
-            position: 'absolute',
-            transform: `translateY(-50%)`,
-            left: dragHandle.position?.x ?? 0,
-            pointerEvents: 'auto',
-            top: dragHandle.position?.y ?? 0,
-            opacity: dragHandle.visible ? 1 : 0,
-            transition: 'all 0.16s ease',
-            zIndex: 99,
-            color: Colors.Font.SuperTransparent
-          }}
-          onPointerDown={e => {
-            if (e.button === 0) {
-              isPressed.current = true
+      <div
+        style={{
+          position: 'absolute',
+          transform: `translateY(-50%)`,
+          left: dragHandle.position?.x ?? 0,
+          pointerEvents: 'auto',
+          top: dragHandle.position?.y ?? 0,
+          opacity: dragHandle.visible ? 1 : 0,
+          transition: 'all 0.16s ease',
+          zIndex: 99,
+          color: Colors.Font.SuperTransparent
+        }}
+        onPointerDown={e => {
+          if (e.button === 0) {
+            isPressed.current = true
+          }
+        }}
+        onPointerUp={() => {
+          isPressed.current = false
+        }}
+        onClick={event => {
+          instance.selectOps?.selectItem(dragHandle.value.rowId, true)
+          instance.overlayOps?.open(
+            {
+              type: 'itemContextMenu',
+              details: dragHandle.value
+            },
+            {
+              x: event.clientX,
+              y: event.clientY
             }
-          }}
-          onPointerUp={() => {
-            isPressed.current = false
-          }}
-          onPointerMove={e => {
-            if (isSelecting) return
-            if (!isPressed.current) return
+          )
+        }}
+        onPointerMove={e => {
+          if (isSelecting) return
+          if (!isPressed.current) return
 
-            if (dragHandle.value) {
-              instance.dragOps?.startDrag?.({
-                value: dragHandle.value,
-                node: dragHandle.node
-              })
-            }
-          }}
-          onPointerEnter={event => {
-            isInHandleRef.current = true
-          }}
-          onPointerLeave={() => {
-            isInHandleRef.current = false
-            instance.dragOps?.removeDragHandle?.()
-          }}
-        >
-          <Icon role={"group-drag-handle"} className={ClassName.circleButton(3, 4)} size={18} name={'park-drag'} />
-        </div>
-      </AnimatePopover>,
+          if (dragHandle.value) {
+            instance.dragOps?.startDrag?.({
+              value: dragHandle.value,
+              node: dragHandle.node
+            })
+          }
+        }}
+        onPointerEnter={event => {
+          isInHandleRef.current = true
+        }}
+        onPointerLeave={() => {
+          isInHandleRef.current = false
+          instance.dragOps?.removeDragHandle?.()
+        }}
+      >
+        <Icon role={'group-drag-handle'} className={ClassName.circleButton(3, 4)} size={18} name={'park-drag'} />
+      </div>,
       bodyRef.current
     )
   }

@@ -1,10 +1,7 @@
 import { Content } from '@/components/base'
 import { globalStore } from '@/api/stores'
-import ClassName from '@/styles/classNames'
 import { css } from '@emotion/css'
 import { useAtom } from 'jotai/react'
-import { atomWithStorage } from 'jotai/vanilla/utils'
-import _ from 'lodash'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import AppearanceSetting from './Appearance'
@@ -15,6 +12,7 @@ import ObjectsAndLinksSetting from './ObjectsAndLinks'
 import ShortCutSetting from './ShortCut'
 import SettingSidebarItem from './SidebarItem'
 import UsageSetting from './Usage'
+import AISetting from './AI'
 import { useUser } from '@/api/services/login.service'
 import { KeyToRegisterdSettings } from '@/core/plugin/RegisterMap'
 import SettingItem from '@/core/setting/SettingItem'
@@ -25,14 +23,18 @@ import {
   IObjectsAndLinkSetting,
   IComponentSetting,
   IAppearanceSetting,
-  IQuickAddSettings
+  IQuickAddSettings,
+  IAISettings
 } from './types'
 import WorkspaceSetting from '@/core/setting/Workspace'
 import EditorSetting from '@/core/setting/Editor'
 import { Colors } from '@/consts'
+import { atom } from 'jotai'
+import { useSelectGlobalAtomValue } from '@/hooks'
 
 enum Settings {
   'general',
+  'AI',
   'components',
   'editor',
   'workspace',
@@ -43,20 +45,16 @@ enum Settings {
   // 'about'
 }
 type AvaliableLanguages = 'en-US' | 'zh-CN'
-type Setting = INotificationSetting &
+export type Setting = INotificationSetting &
   IShortCutSetting &
   IGeneralSetting &
   IObjectsAndLinkSetting &
+  IAISettings &
   IComponentSetting &
   IQuickAddSettings &
-  IAppearanceSetting & {
-    sidebarVisibleItems: string[]
-  }
-const localSetting = JSON.parse(localStorage.getItem('setting'))
-localStorage.removeItem('setting')
+  IAppearanceSetting
 
-const defaultSetting: Setting = {
-  sidebarVisibleItems: ['home', 'database', 'collections', 'search', 'graph', 'settings'],
+export const defaultSetting: Setting = {
   notification: {
     enabled: true,
     pdf: true,
@@ -65,6 +63,12 @@ const defaultSetting: Setting = {
     editor: true,
     object: true,
     link: true
+  },
+  AI: {
+    autoGenerateQuestionAfterSummarizing: true,
+    questionGenerateNum: 5,
+    questionGenerateType: 'text',
+    outputLanguage: 'zh-CN'
   },
   shortcut: {},
   quickAdd: {
@@ -80,7 +84,7 @@ const defaultSetting: Setting = {
   },
   general: {
     autoSaveLayout: false,
-    defaultLanguage: 'en-US',
+    defaultLanguage: navigator.language === 'zh-CN' ? 'zh-CN' : 'en-US',
     openNewTab: 'open existing tab',
     darkMode: false,
     copyFileWhenImport: true,
@@ -106,7 +110,8 @@ const defaultSetting: Setting = {
     snapToObject: true,
     dropFileAutoObject: true,
     defaultLineType: 'curve',
-    defaultBackgroundType: 'dot'
+    defaultBackgroundType: 'dot',
+    onlyEraseFreeDraw: true
   },
   editor: {
     objectAutoBecomeInline: true
@@ -114,7 +119,8 @@ const defaultSetting: Setting = {
   object: {
     deleteFileWhenDeleteObject: true,
     autoHideLabelObject: false,
-    linkType: 'text'
+    linkType: 'text',
+    showPropertiesInComponentPage: true
   },
   translate: {
     autoGotoHoverText: true,
@@ -135,13 +141,11 @@ const defaultSetting: Setting = {
     enableSearchAutoSuggestion: true
   }
 }
-_.merge(defaultSetting, localSetting)
-defaultSetting.sidebarVisibleItems = localSetting?.sidebarVisibleItems || defaultSetting.sidebarVisibleItems
-localStorage.setItem('setting', JSON.stringify(defaultSetting))
-export const SettingAtom = atomWithStorage<Setting>('setting', defaultSetting)
+
+export const SettingAtom = atom<Setting>(defaultSetting)
 
 export const useSetting = () => useAtom(SettingAtom, { store: globalStore })
-
+export const useSelectSetting = <T, Slice>(selector: (s: Setting) => Slice) => useSelectGlobalAtomValue(SettingAtom, selector)
 const SettingDialog = ({ onClose }: { onClose: VoidFunction }) => {
   const { t } = useTranslation()
   const [currentSettingPanel, setCurrentSettingPanel] = useState<keyof typeof Settings>('general')
@@ -152,6 +156,8 @@ const SettingDialog = ({ onClose }: { onClose: VoidFunction }) => {
     switch (currentSettingPanel) {
       case 'general':
         return <GeneralSetting />
+      case 'AI':
+        return <AISetting />
       case 'notification':
         return <NotificationSetting />
       case 'shortcuts':
@@ -200,7 +206,7 @@ const SettingDialog = ({ onClose }: { onClose: VoidFunction }) => {
           width: '200px',
           padding: '36px 12px 0px',
           overflowY: 'auto',
-          fontWeight: 600
+          fontWeight: 500
         })}
         flex
         column

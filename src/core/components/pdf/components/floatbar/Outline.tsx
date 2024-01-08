@@ -54,12 +54,12 @@ const PdfOutline = () => {
 const OutlineItem = ({ item }: { item: Outline[number] }) => {
   const [hide, toggleHide] = useToggle(true)
   const hasChildren = item.items.length > 0
-  const viewer = usePdfViewer()
+  const viewer = usePdfInstance()
   return (
     <div>
       <div
         onClick={() => {
-          item.dest && viewer?.jumpToDest?.(item.dest)
+          item.dest && viewer.navigateOps?.jumpToDest(item.dest)
         }}
         style={{ marginRight: 6 }}
         className={css([ClassName.flatButton(), ClassName.flexLayout('center', 'flex-start')])}

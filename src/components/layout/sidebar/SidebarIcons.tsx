@@ -123,9 +123,8 @@ const SidebarIcons = ({
             height: '100%',
             transition: 'all 0.2s ease',
             background: dragInto ? Colors.Common.SelectColorTransparent : undefined,
-            minWidth: dragInto ? 44 : undefined,
-            borderRight: direction === 'right' ? `1px solid ${Colors.Background.Border}` : undefined,
-            borderLeft: direction === 'left' ? `1px solid ${Colors.Background.Border}` : undefined,
+            minWidth: dragInto ? 44 : 1,
+            boxShadow: direction === 'right' ? Colors.Consts.BoxShadowBorderRight : Colors.Consts.BoxShadowBorderLeft,
             padding: direction === 'left' && items.length === 0 ? 0 : undefined
           }}
           className={classNames(

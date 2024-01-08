@@ -9,16 +9,17 @@ import { motion } from 'framer-motion'
 import BlockColorPicker from '../BlockColorPicker'
 import { useMemoizedFn, useSelectAtomValue } from '@/hooks'
 import { css } from '@emotion/css'
-import { Colors, Zindexes } from '@/consts'
+import { Colors, KEY, Zindexes } from '@/consts'
 import useEditorInstance from '../../hooks/useEditorInstance'
 import { EditorStateAtom } from '@/core/components/editor/hooks/useEditorState'
 import useReadOnlyEditor from '@/core/components/editor/hooks/useReadOnly'
 import { EditorTypeToElementMap } from '@/core/components/editor/maps'
 import { Icon } from '@/components'
+import isHotkey from 'is-hotkey'
 
 type EditorToolbarEvents =
   | {
-      action: 'redo' | 'undo' | 'bold' | 'italic' | 'underline' | 'code' | 'link' | 'highlight'
+      action: 'redo' | 'undo' | 'bold' | 'italic' | 'underline' | 'code' | 'link' | 'highlight' | 'cloze'
     }
   | {
       action: 'changeFontSize'
@@ -104,43 +105,46 @@ const EditorToolbar: FC<EditorToolbarProps> = ({ scrollElement, style, on }) => 
   }
   const clickCloseToolbar = useRef(false)
   const handleMouseUp = useMemoizedFn((e: MouseEvent) => {
-    const { selection } = editor
-    const windowSelection = window.getSelection()
-    if (!ReactEditor.toDOMNode(editor, editor).closest('[role="editor-container"]')?.contains(e.target)) return
-    if (
-      showToolbar !== false &&
-      selection &&
-      windowSelection &&
-      (ReactEditor.isFocused(editor) || readOnly) &&
-      windowSelection.toString().trim().length > 0 &&
-      !Range.isCollapsed(selection) &&
-      !toolbarRef.current?.contains(e.target)
-    ) {
-      const targetNode = Editor.node(editor, selection)
-      if (Editor.isVoid(editor, targetNode)) {
-        return
+    // set timeout here to detect if clear selection mouseup
+    setTimeout(() => {
+      const { selection } = editor
+      const windowSelection = window.getSelection()
+      if (!ReactEditor.toDOMNode(editor, editor).closest('[role="editor-container"]')?.contains(e.target)) return
+      if (
+        showToolbar !== false &&
+        selection &&
+        windowSelection &&
+        (ReactEditor.isFocused(editor) || readOnly) &&
+        windowSelection.toString().trim().length > 0 &&
+        !Range.isCollapsed(selection) &&
+        !toolbarRef.current?.contains(e.target)
+      ) {
+        const targetNode = Editor.node(editor, selection)
+        if (Editor.isVoid(editor, targetNode)) {
+          return
+        }
+        const anchorPoint = ReactEditor.toDOMPoint(editor, selection.anchor)
+        const focusPoint = ReactEditor.toDOMPoint(editor, selection.focus)
+        const anchorRange = document.createRange()
+        anchorRange.setStart(anchorPoint[0], anchorPoint[1])
+        anchorRange.setEnd(anchorPoint[0], anchorPoint[1])
+        const anchorRect = anchorRange.getBoundingClientRect()
+        const focusRange = document.createRange()
+        focusRange.setStart(focusPoint[0], focusPoint[1])
+        focusRange.setEnd(focusPoint[0], focusPoint[1])
+        const focusRect = focusRange.getBoundingClientRect()
+        let direction = 'top'
+        if (anchorRect.bottom < focusRect.bottom && Math.abs(anchorRect.bottom - focusRect.bottom) > MAX_TOLERANT_DISTANCE) {
+          direction = 'bottom'
+        }
+        setFloatPosition({
+          left: focusRect.left + focusRect.width / 2,
+          top: direction === 'top' ? focusRect.top : focusRect.bottom,
+          direction,
+          visible: true
+        })
       }
-      const anchorPoint = ReactEditor.toDOMPoint(editor, selection.anchor)
-      const focusPoint = ReactEditor.toDOMPoint(editor, selection.focus)
-      const anchorRange = document.createRange()
-      anchorRange.setStart(anchorPoint[0], anchorPoint[1])
-      anchorRange.setEnd(anchorPoint[0], anchorPoint[1])
-      const anchorRect = anchorRange.getBoundingClientRect()
-      const focusRange = document.createRange()
-      focusRange.setStart(focusPoint[0], focusPoint[1])
-      focusRange.setEnd(focusPoint[0], focusPoint[1])
-      const focusRect = focusRange.getBoundingClientRect()
-      let direction = 'top'
-      if (anchorRect.bottom < focusRect.bottom && Math.abs(anchorRect.bottom - focusRect.bottom) > MAX_TOLERANT_DISTANCE) {
-        direction = 'bottom'
-      }
-      setFloatPosition({
-        left: focusRect.left + focusRect.width / 2,
-        top: direction === 'top' ? focusRect.top : focusRect.bottom,
-        direction,
-        visible: true
-      })
-    }
+    })
   })
   const handleMouseDown = (e: MouseEvent) => {
     if (floatPosition?.visible) {
@@ -166,6 +170,7 @@ const EditorToolbar: FC<EditorToolbarProps> = ({ scrollElement, style, on }) => 
   const handleScroll = e => {
     setFloatPosition(s => ({ ...s, visible: false }))
   }
+
   useEffect(() => {
     if (position === 'float') {
       document.addEventListener('pointerup', handleMouseUp)
@@ -180,10 +185,17 @@ const EditorToolbar: FC<EditorToolbarProps> = ({ scrollElement, style, on }) => 
   })
 
   useEffect(() => {
+    const handleKeydown = (e: KeyboardEvent) => {
+      if (isHotkey(KEY.Escape, e) || isHotkey(KEY.Delete, e) || isHotkey(KEY.Backspace, e)) {
+        setFloatPosition(s => ({ ...s, visible: false }))
+      }
+    }
     if (floatPosition?.visible) {
       selectionRef.current = editor.selection
+      document.addEventListener('keydown', handleKeydown)
     }
     return () => {
+      document.removeEventListener('keydown', handleKeydown)
       selectionRef.current = undefined
     }
   }, [floatPosition?.visible])
@@ -330,6 +342,25 @@ const EditorToolbar: FC<EditorToolbarProps> = ({ scrollElement, style, on }) => 
         />
       )}
       <Toolbar.Item
+        onClick={() => {
+          on({ action: 'link' })
+          setFloatPosition(s => ({ ...s, visible: false }))
+        }}
+        style={{
+          padding: '0px 8px',
+          borderRight: '1px solid var(--border-background)'
+        }}
+      >
+        <Button.IconButton
+          style={{
+            background: 'unset',
+            padding: '0px'
+          }}
+          icon={'park-link-one'}
+          text={t('editor.link')}
+        />
+      </Toolbar.Item>
+      <Toolbar.Item
         tooltip={t('editor.bold')}
         style={{
           color: isMarkActive('bold') ? Colors.Common.SelectColor : undefined
@@ -363,18 +394,6 @@ const EditorToolbar: FC<EditorToolbarProps> = ({ scrollElement, style, on }) => 
         <span style={{ textDecoration: 'underline', fontWeight: 600 }}>U</span>
       </Toolbar.Item>
       <Toolbar.Item
-        tooltip={t('editor.link')}
-        iconName="park-link-one"
-        onClick={() => {
-          on({ action: 'link' })
-          setFloatPosition(s => ({ ...s, visible: false }))
-        }}
-        style={{
-          padding: '0px 6px'
-        }}
-        size={13}
-      />
-      <Toolbar.Item
         tooltip={t('editor.code')}
         iconName="park-code"
         size={13}
@@ -394,7 +413,8 @@ const EditorToolbar: FC<EditorToolbarProps> = ({ scrollElement, style, on }) => 
           size={15}
           style={{
             color: getMark('fontColor'),
-            background: getMark('backgroundColor')
+            background: getMark('backgroundColor'),
+            borderRadius: 2
           }}
           content={
             <BlockColorPicker
@@ -406,11 +426,24 @@ const EditorToolbar: FC<EditorToolbarProps> = ({ scrollElement, style, on }) => 
         ></IconWithPopover>
       </Toolbar.Item>
       <Toolbar.Item
-        tooltip={'Search online'}
+        tooltip={'Cloze'}
         style={{
           padding: '0px 8px',
-
+          color: isMarkActive('cloze') ? Colors.Common.SelectColor : undefined,
           borderLeft: '1px solid var(--border-background)'
+        }}
+        size={13}
+        iconName={'park-code-brackets'}
+        onClick={e => {
+          if (editor.selection) {
+            on({ action: 'cloze' })
+          }
+        }}
+      />
+      <Toolbar.Item
+        tooltip={'Search online'}
+        style={{
+          padding: '0px 8px'
         }}
         size={13}
         iconName={'park-search'}

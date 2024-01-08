@@ -61,7 +61,7 @@ export default ({ onBack, onClose, metaId }: { onBack: VoidFunction; onClose: Vo
 
   return (
     <Content flex style={{ width: '90vw', height: '90vh', minWidth: 800, fontSize: 14 }}>
-      <Content flex column style={{ padding: '12px 12px 12px 6px', width: 400, borderRight: '1px solid var(--border-background)' }}>
+      <Content flex column style={{ padding: '12px 12px 12px 6px', width: 400, boxShadow: Colors.Consts.BoxShadowBorderRight }}>
         <Content flex gap={12} className={ClassName.title()} style={{ marginBottom: 8 }}>
           <Icon name={'park-left'} className={ClassName.circleButton()} onClick={onBack} />
           <div>{t('general.Select a whiteboard')}</div>
@@ -90,7 +90,7 @@ export default ({ onBack, onClose, metaId }: { onBack: VoidFunction; onClose: Vo
             gap={12}
           >
             <Icon name={'park-drag'} size={16} />
-            <div className={ClassName.ellipsisFont(2)}>{currentMeta?.name}</div>
+            <div className={ClassName.ellipsisFont(2)}>{currentMeta?.name || currentMeta?.placeholderName || 'Unnamed object'}</div>
           </Content>
         </DraggableElement>
         <ButtonSwitch
@@ -134,6 +134,7 @@ export default ({ onBack, onClose, metaId }: { onBack: VoidFunction; onClose: Vo
               className={ClassName.flatButton()}
               onClick={() => setCurrentWhiteboard({ id: i.objectId, name: i.name })}
               {...i}
+              name={i.name || i.placeholderName}
               icon={i.icon || Rendevoz.Utils.Object.getMetaObjectIcon(i.type)}
               key={i.id}
             />

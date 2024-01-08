@@ -1,58 +1,51 @@
-import { AnimatePopover } from "@/components";
-import ColorPicker from "@/components/picker/colorPicker";
-import {
-  CSSProperties,
-  FC,
-  ReactNode,
-  useEffect,
-  useRef,
-  useState,
-} from "react";
-import { useTranslation } from "react-i18next";
-import BorderInput from "../BorderInput";
-import Content from "../Content";
-import WithBorder from "../WithBorder";
-import { useCanSubmit } from "./useCanSubmit";
+import { AnimatePopover } from '@/components'
+import { ColorPicker } from '@/components/picker'
+import { CSSProperties, FC, ReactNode, useEffect, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
+import BorderInput from '../BorderInput'
+import Content from '../Content'
+import WithBorder from '../WithBorder'
+import { useCanSubmit } from './useCanSubmit'
 
 type FormItemConditionalProps = { disable?: boolean } & (
   | {
-      onChange?: (value: string) => void;
-      text: string;
-      type: "input" | "textarea";
-      onUpload?: never;
-      children?: never;
-      value?: string;
-      maxRows?: number;
-      maxLength?: number;
-      minRows?: number;
-      minLength?: number;
-      autoFocus?: boolean;
+      onChange?: (value: string) => void
+      text: string
+      type: 'input' | 'textarea'
+      onUpload?: never
+      children?: never
+      value?: string
+      maxRows?: number
+      maxLength?: number
+      minRows?: number
+      minLength?: number
+      autoFocus?: boolean
     }
   | {
-      type: "file";
-      onChange?: never;
-      text?: never;
-      onUpload: (file: File) => void;
-      children?: never;
-      value?: string;
+      type: 'file'
+      onChange?: never
+      text?: never
+      onUpload: (file: File) => void
+      children?: never
+      value?: string
     }
   | {
-      type: "colorPicker";
-      onChange?: (color: string) => void;
-      text?: string;
-      onUpload?: never;
-      children?: never;
-      value?: string;
+      type: 'colorPicker'
+      onChange?: (color: string) => void
+      text?: string
+      onUpload?: never
+      children?: never
+      value?: string
     }
   | {
-      type: "component";
-      onChange?: never;
-      text?: string;
-      onUpload?: never;
-      children: ReactNode;
-      value?: string;
+      type: 'component'
+      onChange?: never
+      text?: string
+      onUpload?: never
+      children: ReactNode
+      value?: string
     }
-);
+)
 interface FormItemCommonProps {
   type: 'input' | 'textarea' | 'file' | 'colorPicker' | 'component'
   requireMessage?: string

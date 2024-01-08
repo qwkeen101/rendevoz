@@ -1,6 +1,6 @@
 import '@icon-park/react/styles/index.less'
 import './styles/common.less'
-import Initializer from './Initializer'
+import Initializer, { initializedAtom } from './Initializer'
 import './styles/global.less'
 import './styles/font.less'
 import { GlobalCreateObject, GlobalDragOverlay, GlobalGraph, GlobalScreenShot, SettingAtom } from '@/core'
@@ -44,7 +44,10 @@ import GlobalPreviewPanel from '@/core/global/GlobalPreviewPanel'
 import GlobalObjectCreator from '@/core/global/GlobalObjectCreator'
 import GlobalQuickAdd from '@/components/form/quickAdd/GlobalQuickAdd'
 import GlobalDownloadIndicator from '@/core/global/DownloadIndicator'
-
+import { useAtomValue } from 'jotai'
+import './styles/util.less'
+import Loading from '@/components/Loading'
+import './styles/loading.less'
 export function getOS() {
   const userAgent = window.navigator.userAgent.toLowerCase(),
     macosPlatforms = /(macintosh|macintel|macppc|mac68k|macos)/i,
@@ -103,7 +106,7 @@ const App = () => {
     executed.current = true
     // channelScraper()
   }
-
+  const initialized = useAtomValue(initializedAtom)
   useEffect(() => {
     i18n.changeLanguage(lang)
   }, [lang])
@@ -123,11 +126,11 @@ const App = () => {
           )}
           style={{ display: 'none' }}
         ></div>
+        <Initializer />
         <ThemeSwitcher />
         <Notification />
         <>
           <GlobalDownloadIndicator />
-          <Initializer />
           <GlobalTextSearch />
           <GlobalGraph />
           <GlobalScreenShot />
@@ -140,7 +143,7 @@ const App = () => {
           <GlobalObjectDetails />
           <GlobalCreateObject />
           <GlobalTranslateResult />
-          <AuthenticatedLayout />
+          {initialized ? <AuthenticatedLayout /> : <Loading />}
           <GlobalDragOverlay />
           <GlobalImagePreviewer />
           <GlobalImporter />

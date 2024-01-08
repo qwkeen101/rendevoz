@@ -53,7 +53,7 @@ const withHtml = (editor: CustomEditor) => {
     if (html) {
       const parsed = new DOMParser().parseFromString(html, 'text/html')
       const deserialized = deserializeHTML(parsed.body)
-      console.log(deserialized)
+      console.log(deserialized, parsed)
       const normalized = normalize(deserialized)
       Transforms.insertFragment(editor, normalized)
       return
@@ -63,7 +63,8 @@ const withHtml = (editor: CustomEditor) => {
       /(^|[\s\n]|<[A-Za-z]*\/?>)((?:https?|ftp):\/\/[\-A-Z0-9+\u0026\u2019@#\/%?=()~_|!:,.]*[\-A-Z0-9+\u0026@#\/%=~()_|])/gi
 
     if (plainText) {
-      const paragraphs = plainText.split(/\r?\n/)
+      const paragraphs = plainText.split(/[\r\n]+/)
+      console.log(paragraphs)
       const texts = paragraphs
         .filter(i => i)
         .map(p => {

@@ -205,7 +205,7 @@ const PDFExportSettings = ({ onExport }: { onExport: (setting: { pageSize: strin
           '> div': {
             ':not(:last-child)': {
               paddingBottom: 10,
-              borderBottom: `1px solid ${Consts.Colors.Background.Border}`
+              borderBottom: Colors.Consts.Border
             }
           }
         })}

@@ -162,11 +162,13 @@ const Link = ({ element, attributes, children }: RenderElementProps) => {
       >
         <a
           onClick={e => {
-            window.open(element.url)
-            editor.on({
-              type: 'linkClick',
-              e
-            })
+            if (!e.defaultPrevented) {
+              window.open(element.url)
+              editor.on({
+                type: 'linkClick',
+                e
+              })
+            }
           }}
         >
           <InlineChromiumBugfix />
@@ -192,13 +194,17 @@ const LinkObjectRenderer = ({
 }) => {
   const { renderInline } = useRenderObject({ metaObjectId: metaId })
   return (
-    <WithBorder style={{ display: 'flex', gap: 16, fontSize: FontSize['13px'], padding: '6px 8px 6px 12px', maxWidth: 600 }}>
+    <WithBorder style={{ display: 'flex', fontSize: 14, maxWidth: 500, alignItems: 'center', overflow: 'hidden' }}>
       {renderInline({
         showCircle: false,
-        ellipsisLine: 100,
+        ellipsisLine: 1,
         onClick: () => {
           window.open(url)
           onNavi()
+        },
+        containerStyle: {
+          padding: '2px 8px',
+          borderRight: '1px solid var(--border-background)'
         }
       })}
       <Icon
@@ -206,14 +212,20 @@ const LinkObjectRenderer = ({
           onEdit()
         }}
         name="park-edit"
-        className={ClassName.circleButton()}
+        containerStyle={{
+          height: 28
+        }}
+        className={ClassName.flatButton(0, '6px 6px')}
       />
       <Icon
         onClick={() => {
           onRemove()
         }}
         name="park-delete"
-        className={ClassName.circleButton()}
+        containerStyle={{
+          height: 28
+        }}
+        className={ClassName.flatButton(0, '6px 6px')}
       />
     </WithBorder>
   )

@@ -1,5 +1,5 @@
 import { IQuestion } from '~/typings'
-import { Content, Icon } from '@/components'
+import { Content, Icon, Tooltip } from '@/components'
 import { SelectOptionClass } from '@/core/ai/components/question/classes'
 import { Colors } from '@/consts'
 import { ObjectStore } from '@/api/stores'
@@ -7,18 +7,18 @@ import { IAIEvent } from '@/core/ai/components/AskAIPanel'
 import { ClassName } from 'rendevoz'
 import produce from 'immer'
 import { css } from '@emotion/css'
+import { useTranslation } from 'react-i18next'
 
 export default ({
   question,
   showAnswer = false,
-  on,
   isEditing = false
 }: {
   question: IQuestion & { questionType: 'multiSelect' }
   showAnswer?: boolean
-  on?: (e: IAIEvent) => void
   isEditing?: boolean
 }) => {
+  const { t } = useTranslation()
   const suggestedAnswer = question.sAnswer
   const getBoxShadow = (i: string) => {
     if (showAnswer) {
@@ -41,12 +41,9 @@ export default ({
     <Content
       flex
       column
-      gap={6}
-      style={{
-        marginTop: 6
-      }}
+      gap={8}
     >
-      {question.choices.map((i, idx) => (
+      {question.choices?.map((i, idx) => (
         <Content
           className={SelectOptionClass}
           key={idx}
@@ -78,10 +75,7 @@ export default ({
                 className={ClassName.noStyleInput}
                 defaultValue={i}
                 onBlur={e => {
-                  const v = e.target.value
-                  if (question.choices.some(i => i === v)) {
-                    return
-                  } else {
+                  if (e.target.value !== i) {
                     const newChoices = produce(question.choices, draft => {
                       draft[idx] = e.target.value
                     })
@@ -94,45 +88,46 @@ export default ({
                   marginRight: 6
                 }}
               />
-              <Icon
-                className={ClassName.circleButton()}
-                style={{
-                  color: question.sAnswer.includes(i) ? Colors.Common.Red : Colors.Common.Green
-                }}
-                onClick={() => {
-                  const newSAnswers = produce(question.sAnswer || [], draft => {
-                    if (draft.some(o => o === i)) {
-                      draft.splice(
-                        draft.findIndex(o => o === i),
-                        1
-                      )
-                    } else {
-                      draft.push(i)
-                    }
-                  })
-                  ObjectStore('question').updateOne({ id: question.id, sAnswer: newSAnswers })
-                }}
-                name={question.sAnswer.includes(i) ? 'park-close' : 'park-check'}
-              />
-              <Icon
-                name={'park-delete'}
-                className={ClassName.circleButton()}
-                style={{
-                  color: Colors.Common.Red
-                }}
-                onClick={() => {
-                  const newChoices = produce(question.choices, draft => {
-                    draft.splice(idx, 1)
-                  })
-                  ObjectStore('question').updateOne({ id: question.id, choices: newChoices })
-                }}
-              />
+              <Tooltip content={question.sAnswer?.includes(i) ? t('general.Remove right answer') : t('general.Set as right answer')}>
+                <Icon
+                  className={ClassName.circleButton()}
+                  style={{
+                    color: question.sAnswer?.includes(i) ? Colors.Common.Red : Colors.Common.Green
+                  }}
+                  onClick={() => {
+                    const newSAnswers = produce(question.sAnswer || [], draft => {
+                      if (draft.some(o => o === i)) {
+                        draft.splice(
+                          draft.findIndex(o => o === i),
+                          1
+                        )
+                      } else {
+                        draft.push(i)
+                      }
+                    })
+                    ObjectStore('question').updateOne({ id: question.id, sAnswer: newSAnswers })
+                  }}
+                  name={question.sAnswer?.includes(i) ? 'park-close' : 'park-check'}
+                />
+              </Tooltip>
+              <Tooltip content={t('general.delete')}>
+                <Icon
+                  name={'park-delete'}
+                  className={ClassName.circleButton()}
+                  style={{
+                    color: Colors.Common.Red
+                  }}
+                  onClick={() => {
+                    const newChoices = produce(question.choices, draft => {
+                      draft.splice(idx, 1)
+                    })
+                    ObjectStore('question').updateOne({ id: question.id, choices: newChoices })
+                  }}
+                />
+              </Tooltip>
             </Content>
           ) : (
             i
-          )}
-          {showAnswer && !isEditing && question.answer?.includes(i) && (
-            <span style={{ marginLeft: 12, color: Colors.Font.Transparent }}>您的选择</span>
           )}
         </Content>
       ))}
@@ -140,6 +135,9 @@ export default ({
         <Content
           onClick={() => {
             ObjectStore('question').updateOne({ id: question.id, choices: [...question.choices, ''] })
+          }}
+          style={{
+            cursor: 'pointer'
           }}
           className={SelectOptionClass}
           flex
@@ -153,7 +151,7 @@ export default ({
             })}
             name={'park-plus'}
           />
-          <div>Add new option</div>
+          <div>{t('general.Add new option')}</div>
         </Content>
       )}
     </Content>

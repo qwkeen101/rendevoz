@@ -23,15 +23,14 @@ const MetaObject: FC<RenderElementProps> = memo(({ children, element }) => {
         borderRadius: 6,
         alignItems: 'stretch',
         overflow: 'hidden',
-        border: `1px solid ${Colors.Background.Border}`,
-        minHeight: 80
+        border: `1px solid ${Colors.Background.Border}`
       }}
     >
       <div
         style={{
           flex: '4 1 180px',
           overflow: 'hidden',
-          padding: '8px 12px 8px',
+          padding: '16px',
           display: 'flex',
           flexDirection: 'column',
           justifyContent: 'center'
@@ -42,13 +41,15 @@ const MetaObject: FC<RenderElementProps> = memo(({ children, element }) => {
             style: {
               top: -5,
               right: 0
-            }
+            },
+            renderOnParent: false
           },
+          columnGap: 4,
           titleOptions: {
-            showAddNote: false,
             style: {
-              fontSize: 14
-            }
+              fontSize: 15
+            },
+            ellipsisLine: 0
           },
           descriptionOptions: {
             style: {

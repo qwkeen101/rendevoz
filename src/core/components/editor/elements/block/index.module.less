@@ -19,12 +19,7 @@
   textarea {
     &:not([data-highlight]) {
       color: var(--block-font-color);
-      background: var(--block-linear-font);
-      -webkit-background-clip: text;
-      background-clip: text;
-      -webkit-text-fill-color: var(--text-fill);
     }
-    // white-space: normal;
   }
   overflow: hidden;
   pointer-events: auto;
@@ -34,23 +29,20 @@
   width: min(100%, 21rem);
   border-radius: 8px;
   > div {
-    background: rgba(var(--block-rgb-bg));
-    background-image: var(--block-linear-bg);
+    background: var(--block-bg);
     transition: background 0.3s ease;
   }
 }
 .WideCardBlock {
   border-radius: 8px;
   > div {
-    background: rgba(var(--block-rgb-bg));
-    background-image: var(--block-linear-bg);
+    background: var(--block-bg);
     transition: background 0.3s ease;
   }
 }
 .LineCardBlock {
   > div {
-    background: rgba(var(--block-rgb-bg));
-    background-image: var(--block-linear-bg);
+    background: var(--block-bg);
     transition: background 0.3s ease;
   }
 }
@@ -65,8 +57,7 @@
   &:first-child {
     margin-top: 0;
   }
-  background: rgba(var(--block-rgb-bg));
-  background-image: var(--block-linear-bg);
+  background: var(--block-bg);
 }
 .ColumnBlock {
   position: relative;

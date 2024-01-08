@@ -6,17 +6,21 @@ import SingleSelectQuestionCard from '@/core/ai/components/question/SingleSelect
 import MultiSelectQuestionCard from '@/core/ai/components/question/MultiSelectQuestionCard'
 import TextQuestionCard from '@/core/ai/components/question/TextQuestionCard'
 import { ClassName } from 'rendevoz'
-import { Content, Icon, IconWithPopover, WithBorder } from '@/components'
+import { Content, Icon, IconWithPopover, MentionInput, WithBorder } from '@/components'
 import { Colors } from '@/consts'
 import { css } from '@emotion/css'
 import { useTranslation } from 'react-i18next'
 import produce from 'immer'
 import QuestionActionMenu from '@/core/ai/components/question/QuestionActionMenu'
 import goToQuestionPointer from '@/core/ai/components/question/goToQuestionPointer'
-import { IconNameRenderer } from '@/core'
+import { DraggableElement, IconNameRenderer } from '@/core'
 import { Rendevoz } from '@/core/rendevoz'
-import { useEffectOnce } from 'react-use'
 import AutosizeTextarea from '@/components/custom/input/autosizeTextarea'
+import Select from '@/components/base/select'
+import QuestionStore from '@/api/stores/question.store'
+import SimpleEditor from '@/core/components/editor/SimpleEditor'
+import ClozeQuestion from '@/core/ai/components/question/ClozeQuestion'
+import QuestionPointer from '@/core/ai/components/question/QuestionPointer'
 export default ({
   id,
   on,
@@ -36,6 +40,7 @@ export default ({
   }
 }) => {
   const question = ObjectStore('question').useValue(id)
+  const questionMeta = MetaStore.useObjectToMetaValue(id)
   const [showInnerAnswer, setShowInnerAnswer] = useState(false)
   const [isEditing, setIsEditing] = useState(false)
   const parentMeta = MetaStore.useObjectToMetaValue(question?.parentObjectId)
@@ -66,19 +71,22 @@ export default ({
     if (!question) return null
     switch (question?.questionType) {
       case 'text':
-        return <TextQuestionCard question={question} />
+        return <TextQuestionCard question={question} metaId={questionMeta?.id} />
       case 'multiSelect':
         return <MultiSelectQuestionCard question={question} isEditing={isEditing} on={on} showAnswer={showAnswer || showInnerAnswer} />
       case 'singleSelect':
         return <SingleSelectQuestionCard isEditing={isEditing} on={on} showAnswer={showAnswer || showInnerAnswer} question={question} />
       case 'trueOrFalse':
         return <TrueOrFalseQuestionCard on={on} showAnswer={showAnswer || showInnerAnswer} question={question} />
+      case 'cloze':
+        return <ClozeQuestion question={question} metaId={questionMeta?.id} />
     }
   }
   if (!question) return null
   return (
     <div
       style={{
+        padding: '6px 12px 24px',
         ...(isEditing
           ? {
               padding: 12,
@@ -89,9 +97,24 @@ export default ({
         ...containerStyle
       }}
     >
-      <Content flex justifyContent={'space-between'} style={{ fontSize: 13, color: Colors.Font.Transparent, marginBottom: 4 }}>
-        <div>{t(`general.${question?.questionType} question`)}</div>
-        <Content flex gap={4}>
+      <Content flex justifyContent={'space-between'} style={{ fontSize: 13, color: Colors.Font.Transparent, marginBottom: 6 }}>
+        <Select
+          closeOnSelect
+          style={{
+            marginLeft: '-4px',
+            padding: '2px 4px',
+            height: 'auto'
+          }}
+          options={['text', 'cloze', 'singleSelect', 'multiSelect', 'trueOrFalse'].map(i => ({
+            value: i,
+            children: t(`general.${i} question`)
+          }))}
+          onSelect={v => {
+            QuestionStore.resetQuestionType(id, v[0])
+          }}
+          value={question?.questionType}
+        ></Select>
+        <Content flex gap={4} style={{ fontSize: 15 }}>
           <Icon
             className={ClassName.circleButton()}
             name={showAnswer || showInnerAnswer ? 'park-preview-open' : 'park-preview-close'}
@@ -99,24 +122,11 @@ export default ({
               setShowInnerAnswer(!showInnerAnswer)
             }}
           />
-          {!isEditing && <Icon onClick={() => setIsEditing(true)} className={ClassName.circleButton()} name={'park-edit'} />}
-          <Icon
-            className={ClassName.circleButton()}
-            name={'park-share-two'}
-            onClick={() => {
-              const res = on?.({
-                type: 'questionGotoOriginalPlace',
-                originalId: question?.answerPointers[0].blockId
-              })
-              if (!res) {
-                goToQuestionPointer(question.id, question?.answerPointers[0].id)
-              }
-            }}
-          />
+          <Icon onClick={() => setIsEditing(!isEditing)} className={ClassName.circleButton()} name={'park-edit'} />
           <IconWithPopover
             className={ClassName.circleButton()}
             name={'park-more'}
-            size={14}
+            size={15}
             placement={['right', 'left']}
             boundaryInset={10}
             renderOnParent={false}
@@ -129,86 +139,86 @@ export default ({
           ></IconWithPopover>
         </Content>
       </Content>
-      {isEditing ? (
+      <DraggableElement
+        draggingDetails={{
+          type: 'question',
+          objectId: id
+        }}
+        draggable={!isEditing}
+      >
         <AutosizeTextarea
           style={{
             fontWeight: 500,
             width: '100%',
             fontSize: 15,
             resize: 'none',
-            display: 'block'
+            userSelect: isEditing ? 'auto' : 'none',
+            display: 'block',
+            marginBottom: 12,
+            cursor: isEditing ? 'text' : 'grab'
           }}
+          disabled={!isEditing}
           className={ClassName.noStyleInput}
           defaultValue={question.name}
-          onBlur={e => ObjectStore('question').updateOne({ id: question.id, name: e.target.value })}
+          placeholder={'Untitled'}
+          onBlur={e => {
+            if (questionMeta) {
+              MetaStore.updateMetaObject({ id: questionMeta.id, name: e.target.value })
+            } else {
+              ObjectStore('question').updateOne({ id: question.id, name: e.target.value })
+            }
+          }}
         />
-      ) : (
-        <div className={ClassName.title('15px')}>{question?.name}</div>
-      )}
-      {(showAnswer || showInnerAnswer || isEditing) &&
-        (isEditing ? (
-          <AutosizeTextarea
-            className={ClassName.noStyleInput}
-            style={{
-              resize: 'none',
-              width: '100%',
-              fontSize: 14,
-              display: 'block'
-            }}
-            placeholder={'输入答案解析...'}
-            defaultValue={question.explanation}
-            onBlur={e => ObjectStore('question').updateOne({ id: question.id, explanation: e.target.value })}
-          />
-        ) : (
-          <div style={{ fontSize: 14 }}>答案解析：{question?.explanation || '暂无解析'}</div>
-        ))}
+      </DraggableElement>
       {renderContent()}
+      {(showAnswer || showInnerAnswer || isEditing) && (
+        <>
+          <div style={{ fontSize: 13, color: Colors.Font.Transparent, marginTop: 12, marginBottom: 4 }}>{t('general.Explanation')}</div>
+          <SimpleEditor
+            metaId={questionMeta?.id}
+            fontSize={14}
+            changeOnBlur={true}
+            textareaMode={true}
+            value={question.explanation}
+            onChange={v => {
+              ObjectStore('question').updateOne({ id: question.id, explanation: v })
+            }}
+          />
+        </>
+      )}
       {question.answerPointers?.length > 0 && (
         <Content flex column gap={4} style={{ fontSize: 13, color: Colors.Font.Transparent, marginTop: 12 }}>
-          <div>相关段落</div>
-          {question.answerPointers?.map(
-            (i, idx) =>
-              i.pointerType === 'documentBlock' && (
-                <div
-                  onClick={() => {
-                    if (isEditing && question?.answerPointerIds) {
-                      const newOriginals = produce(question.answerPointerIds, draft => {
-                        draft.splice(
-                          draft.findIndex(o => o === i.id),
-                          1
-                        )
-                      })
-                      ObjectStore('question').updateOne({ id: question.id, answerPointerIds: newOriginals })
-                    } else {
-                      if (
-                        !on?.({
-                          type: 'questionGotoOriginalPlace',
-                          originalId: i.blockId
-                        })
-                      ) {
-                        goToQuestionPointer(question.id, i.id)
-                      }
-                    }
-                  }}
-                  key={i.id}
-                  className={css([
-                    pointerEllipsis > 0 && ClassName.ellipsisFont(pointerEllipsis),
-                    {
-                      ':hover': {
-                        color: isEditing ? Colors.Common.Red : Colors.Common.SelectColor
-                      },
-                      letterSpacing: '-0.04px',
-                      cursor: 'pointer',
-                      transition: 'color 0.2s ease',
-                      color: Colors.Font.Primary
-                    }
-                  ])}
-                >
-                  {question?.answerPointers.length > 1 && `${idx + 1}. `}
-                  {i.blockStr}
-                </div>
-              )
-          )}
+          <div>{t('general.Relevant paragraphs')}</div>
+          {question.answerPointers?.map((i, idx) => (
+            <QuestionPointer
+              isEditing={isEditing}
+              ellipsis={pointerEllipsis}
+              idx={idx}
+              onGotoOriginal={() => {
+                if (
+                  !on?.({
+                    type: 'questionGotoOriginalPlace',
+                    originalId: i.blockId || i.page
+                  })
+                ) {
+                  goToQuestionPointer(question.id, i.id)
+                }
+              }}
+              onDelete={() => {
+                if (question?.answerPointers) {
+                  const newOriginals = produce(question.answerPointers, draft => {
+                    draft.splice(
+                      draft.findIndex(o => o.id === i.id),
+                      1
+                    )
+                  })
+                  ObjectStore('question').updateOne({ id: question.id, answerPointers: newOriginals })
+                }
+              }}
+              key={i.id}
+              pointer={i}
+            />
+          ))}
         </Content>
       )}
       {display?.from && !isEditing && parentMeta && (

@@ -19,7 +19,6 @@ import {
   deleteTextContent,
   getTextContent,
   PAGE_INDEX_TO_PAGE_FUNCTION,
-  PAGE_INDEX_TO_TEXT_CONTENT,
   PAGE_INDEX_TO_TEXT_LAYER,
   PDF_IS_SELECTING
 } from '../weakMaps'
@@ -64,7 +63,7 @@ const TextLayer: FC<TextLayerProps> = ({ scale, rotation, width, height, pageInd
       emptyTextLayer()
       if (item) {
         innerEmitter.removeInterval()
-        viewer?.scrollBy?.(item.offset.top - 300)
+
         paint(
           {
             x: item.offset.left,
@@ -267,7 +266,6 @@ const TextLayer: FC<TextLayerProps> = ({ scale, rotation, width, height, pageInd
   useUnMount(() => {
     if (viewer) {
       deleteTextContent(viewer, pageIndex)
-      console.log(PAGE_INDEX_TO_TEXT_CONTENT.get(viewer))
       pageFunctionRef.current = undefined
       renderTaskRef.current = undefined
     }
@@ -331,14 +329,6 @@ const TextLayer: FC<TextLayerProps> = ({ scale, rotation, width, height, pageInd
       const lastCharPoint = getCharPoint(viewport, lastChar.transform)
       selectText(firstCharPoint, lastCharPoint, DEFAULT_DISTANCE_TOLERANCE, false, '#FBF719')
     })
-    if (first !== undefined) {
-      const pageSize = viewer?.getPageSize?.()
-      if (pageSize) {
-        const offset = pageIndex * (pageSize.height * pageSize.scale) + first.y + PAGE_SPACING * pageIndex
-
-        viewer?.scrollToOffset?.(offset)
-      }
-    }
   })
   useIsomorphicLayoutEffect(() => {
     renderTaskRef.current = new TextLayerRenderTask(viewport)

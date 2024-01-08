@@ -9,10 +9,14 @@ import { ForwardRefComponent } from 'framer-motion'
 import { CustomEditor, EditorProps } from '~/typings'
 import useReadOnlyEditor from './hooks/useReadOnly'
 import { Colors } from '@/consts'
+import MetaPropDisplayer from '@/core/object/renderer/properties/MetaPropDisplayer'
+import { useSelectSetting } from '@/core'
 
 type EditorTitleProps = EditorProps['title'] & {
   editor: CustomEditor
   stringTitle?: string
+  showProps?: boolean
+  propsMetaId?: number
 }
 export const editorTitleWrapperClassName = css({
   maxWidth: '100%',
@@ -40,7 +44,10 @@ export const EditorTitleClassName = css({
   }
 })
 const EditorTitle: ForwardRefComponent<HTMLDivElement, EditorTitleProps> = forwardRef(
-  ({ titleEditable = true, titleContainerStyle, customTitleRenderer, titleStyle, stringTitle, editor }, ref) => {
+  (
+    { titleEditable = true, titleContainerStyle, customTitleRenderer, titleStyle, stringTitle, editor, showProps = false, propsMetaId },
+    ref
+  ) => {
     const { run: debouncedUpdateNote } = useDebounceFn(
       (update: string) => {
         editor.on({ type: 'titleChange', value: update || 'Untitled' })
@@ -50,6 +57,7 @@ const EditorTitle: ForwardRefComponent<HTMLDivElement, EditorTitleProps> = forwa
     const { t } = useTranslation()
     const readOnly = useReadOnlyEditor()
     const titleRef = useRef<HTMLDivElement>(null)
+    const showCustomProps = useSelectSetting(s => s.object.showPropertiesInComponentPage)
     useEffect(() => {
       if (titleRef.current) {
         if (document.activeElement !== titleRef.current) {
@@ -93,6 +101,7 @@ const EditorTitle: ForwardRefComponent<HTMLDivElement, EditorTitleProps> = forwa
             suppressContentEditableWarning={true}
           />
         )}
+        {showProps && showCustomProps && propsMetaId && <MetaPropDisplayer style={{ marginTop: 12 }} metaId={propsMetaId} />}
       </Content>
     )
   }

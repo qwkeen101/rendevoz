@@ -1,5 +1,5 @@
 import { MetaStore, ObjectStore } from '@/api/stores'
-import { Content, Icon } from '@/components'
+import { Content, Icon, Tooltip } from '@/components'
 import { ClassName } from 'rendevoz'
 import usePdfBarState from '@/core/components/pdf/hooks/usePdfBarState'
 import usePdfInstance from '@/core/components/pdf/hooks/usePdfInstance'
@@ -9,6 +9,7 @@ import { useEffect, useState } from 'react'
 import isHotkey from 'is-hotkey'
 import { useMeasure } from 'react-use'
 import usePdfState from '@/core/components/pdf/hooks/usePdfState'
+import TooltipWithCmd from '@/components/TooltipWithCmd'
 
 const PdfHeader = ({ documentId }: { documentId: number }) => {
   const pdf = ObjectStore('pdf').useValue(documentId)
@@ -21,16 +22,17 @@ const PdfHeader = ({ documentId }: { documentId: number }) => {
   const { ref: pagesRef, isIn: isInPages } = useIsIn()
   const handleJump = () => {
     if (pageValue >= 0) {
-      instance.jumpToPage?.(pageValue - 1)
+      instance.navigateOps?.jumpToPage?.(pageValue - 1)
     } else {
       setPageValue(1)
-      instance.jumpToPage?.(0)
+      instance.navigateOps?.jumpToPage?.(0)
     }
   }
   const [ref, { width }] = useMeasure()
   useEffect(() => {
     setPageValue((pdf?.lastReadPage || 0) + 1)
   }, [pdf?.lastReadPage])
+  const history = instance.navigateOps?.useHistory()
   if (pdfMeta) {
     return (
       <Content
@@ -119,7 +121,7 @@ const PdfHeader = ({ documentId }: { documentId: number }) => {
               className={ClassName.flatButton(4, '4px')}
               onClick={() => {
                 const next = Math.min(pageValue + 1, pdf?.totalPageNum || 1)
-                instance.jumpToPage?.(next - 1)
+                instance.navigateOps?.jumpToPage?.(next - 1)
                 setPageValue(next)
               }}
             />
@@ -128,64 +130,137 @@ const PdfHeader = ({ documentId }: { documentId: number }) => {
               className={ClassName.flatButton(4, '4px')}
               onClick={() => {
                 const next = Math.max(pageValue - 1, 1)
-                instance.jumpToPage?.(next - 1)
+                instance.navigateOps?.jumpToPage?.(next - 1)
                 setPageValue(next)
               }}
             />
           </Content>
         </Content>
         <Content flex gap={8} style={{ flexShrink: 0 }}>
+          {(history?.canBack || history?.canForward) && (
+            <>
+              {history.canBack && (
+                <Tooltip content={<TooltipWithCmd name={'Navigate back'} cmd={'Alt+←'} />}>
+                  <Icon
+                    size={16}
+                    className={ClassName.flatButton(6, '5px')}
+                    name={'park-arrow-left'}
+                    onClick={() => {
+                      instance.navigateOps?.back()
+                    }}
+                  />
+                </Tooltip>
+              )}
+              {history.canForward && (
+                <Tooltip content={<TooltipWithCmd name={'Navigate forward'} cmd={'Alt+→'} />}>
+                  <Icon
+                    size={16}
+                    className={ClassName.flatButton(6, '5px')}
+                    name={'park-arrow-right'}
+                    onClick={() => {
+                      instance.navigateOps?.forward()
+                    }}
+                  />
+                </Tooltip>
+              )}
+              <div style={{ height: '20px', margin: 'auto 0', background: Colors.Background.Border, width: 1 }}></div>
+            </>
+          )}
+          <Tooltip content={<TooltipWithCmd name={'Drag mode'} cmd={'Cmd+D'} />}>
+            <Icon
+              onClick={() => {
+                setPdfState(s => ({ ...s, handDrag: !s.handDrag }))
+              }}
+              size={16}
+              containerStyle={{
+                background: pdfState.handDrag ? Colors.Common.SelectColorTransparent : undefined
+              }}
+              className={ClassName.flatButton(6, '5px')}
+              name={'park-hand-drag'}
+            />
+          </Tooltip>
           <Icon
-            size={16}
-            className={ClassName.flatButton(6, '5px')}
-            name={'park-auto-width'}
             onClick={() => {
-              instance.autoFit?.()
+              if (pdf) {
+                ObjectStore('pdf').updateOne({ id: pdf.id, doublePage: !pdf?.doublePage })
+              }
             }}
-          />
-          <Icon
             size={16}
-            className={ClassName.flatButton(6, '5px')}
-            name={'park-zoom-in'}
-            onClick={() => {
-              instance.zoomIn?.()
+            containerStyle={{
+              background: pdf?.doublePage ? Colors.Common.SelectColorTransparent : undefined
             }}
-          />
-          <Icon
-            size={16}
             className={ClassName.flatButton(6, '5px')}
-            name={'park-zoom-out'}
-            onClick={() => {
-              instance.zoomOut?.()
-            }}
+            name={'custom-double-column'}
           />
-          <div style={{ height: '20px', margin: 'auto 0', background: Colors.Background.Border, width: 1 }}></div>
+          <Tooltip content={<TooltipWithCmd name={'Fit width'} cmd={'Shift+F'} />}>
+            <Icon
+              size={16}
+              className={ClassName.flatButton(6, '5px')}
+              name={'park-auto-width'}
+              onClick={() => {
+                instance.actionOps?.fitWidth()
+              }}
+            />
+          </Tooltip>
+          <Tooltip content={<TooltipWithCmd name={'Zoom in'} cmd={'Cmd+='} />}>
+            <Icon
+              size={16}
+              className={ClassName.flatButton(6, '5px')}
+              name={'park-zoom-in'}
+              onClick={() => {
+                instance.actionOps?.zoomIn()
+              }}
+            />
+          </Tooltip>
+          <Tooltip content={<TooltipWithCmd name={'Zoom out'} cmd={'Cmd+-'} />}>
+            <Icon
+              size={16}
+              className={ClassName.flatButton(6, '5px')}
+              name={'park-zoom-out'}
+              onClick={() => {
+                instance.actionOps?.zoomOut()
+              }}
+            />
+          </Tooltip>
           <Icon
             size={16}
             className={ClassName.flatButton(6, '5px')}
             name={'park-screenshot'}
-            style={{
+            containerStyle={{
               background: pdfState.croppingImage ? Colors.Common.SelectColorTransparent : undefined
             }}
             onClick={() => {
               setPdfState(s => ({ ...s, croppingImage: !s.croppingImage }))
             }}
           />
+          <div style={{ height: '20px', margin: 'auto 0', background: Colors.Background.Border, width: 1 }}></div>
+          <Tooltip content={<TooltipWithCmd name={'Search'} cmd={'Cmd+F'} />}>
+            <Icon
+              size={16}
+              className={ClassName.flatButton(6, '5px')}
+              name={'park-search'}
+              onClick={() => {
+                setBarState(s => ({ ...s, rightBarActive: 'search', showRightBar: true }))
+              }}
+            />
+          </Tooltip>
+          <Tooltip content={<TooltipWithCmd name={'Labels'} cmd={'Cmd+L'} />}>
+            <Icon
+              size={16}
+              className={ClassName.flatButton(6, '5px')}
+              name={'park-label'}
+              onClick={() => {
+                setBarState(s => ({ ...s, rightBarActive: 'label', showRightBar: true }))
+              }}
+            />
+          </Tooltip>
           <Icon
+            name={'custom-magic'}
+            onClick={() => {
+              setBarState(s => ({ ...s, rightBarActive: 'ai', showRightBar: true }))
+            }}
             size={16}
             className={ClassName.flatButton(6, '5px')}
-            name={'park-search'}
-            onClick={() => {
-              setBarState(s => ({ ...s, rightBarActive: 'search', showRightBar: true }))
-            }}
-          />
-          <Icon
-            size={16}
-            className={ClassName.flatButton(6, '5px')}
-            name={'park-label'}
-            onClick={() => {
-              setBarState(s => ({ ...s, rightBarActive: 'label', showRightBar: true }))
-            }}
           />
         </Content>
       </Content>

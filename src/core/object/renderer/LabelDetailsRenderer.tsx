@@ -10,7 +10,7 @@ import { normalizeSecondsToTime } from '@/core/components/media/utils'
 import { Colors } from '@/consts'
 import { useTranslation } from 'react-i18next'
 
-export default memo(({ metaId, style, showImage }: { metaId: number; style?: CSSProperties; showImage?: boolean }) => {
+export default memo(({ metaId, style, showImage }: { metaId: number; style?: CSSProperties; showImage?: boolean}) => {
   const metaObject = MetaStore.useValue(metaId)
   const { t } = useTranslation()
   const label = ObjectStore(metaObject?.type).useValue(metaObject?.objectId) as ILabel | undefined
@@ -39,11 +39,13 @@ export default memo(({ metaId, style, showImage }: { metaId: number; style?: CSS
   }, [metaObject?.name])
   return (
     <Content
+      contentEditable={false}
       onPointerLeave={() => setShowToolbar(false)}
       onPointerEnter={() => {
         setShowToolbar(true)
       }}
       style={style}
+      fullWidth
       onPointerMove={() => !showToolbar && setShowToolbar(true)}
     >
       {metaObject?.coverImgSrc && showImage !== false && <img src={metaObject.coverImgSrc} width={'100%'} />}
@@ -89,9 +91,9 @@ export default memo(({ metaId, style, showImage }: { metaId: number; style?: CSS
         <div
           style={{
             padding: '4px 10px 4px 10px',
-            borderLeft: '2px solid var(--select-color)',
+            borderLeft: `2px solid ${Colors.getAdaptColor(label.color) || 'var(--emphasis)'}`,
             marginTop: 8,
-            background: label.color || Colors.Background.ButtonHover
+            background: Colors.Background.ButtonHover
           }}
         >
           {label.selectedText}

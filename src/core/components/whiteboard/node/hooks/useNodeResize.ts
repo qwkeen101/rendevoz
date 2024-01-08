@@ -3,6 +3,7 @@ import { ResizableDelta, Rnd, RndResizeCallback } from 'react-rnd'
 import { ResizeDirection } from 're-resizable'
 import { useRef } from 'react'
 import { calculateSelectionBox } from '@/utils'
+import { DEFAULT_NODE_WIDTH } from '@/core/components/whiteboard/node/hooks/useNodeSize'
 
 export default (node: IWhiteboardNode, instance: IWhiteboardInstance) => {
   const startPoint = useRef<XYPosition>()
@@ -42,7 +43,6 @@ export default (node: IWhiteboardNode, instance: IWhiteboardInstance) => {
     }
 
     const direction = ['top', 'bottom'].includes(dir) ? 'y' : ['left', 'right'].includes(dir) ? 'x' : 'both'
-    instance.nodeOps?.updateRelatedEdges(node.id)
     const mousePosition = instance.coordOps?.transformWindowPositionToPosition({
       x: e.clientX,
       y: e.clientY
@@ -110,6 +110,7 @@ export default (node: IWhiteboardNode, instance: IWhiteboardInstance) => {
             },
         endPoint: endPoint
       })
+      selectionBox.width = Math.max(DEFAULT_NODE_WIDTH, selectionBox.width)
       instance.eventEmitter.emit('whiteboard', {
         type: 'nodeResize',
         data: {

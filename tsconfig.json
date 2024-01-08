@@ -1,14 +1,14 @@
 {
   "compilerOptions": {
-		"baseUrl": ".",
+    "baseUrl": ".",
     "target": "ESNext",
     "useDefineForClassFields": true,
     "lib": ["DOM", "DOM.Iterable", "ESNext"],
-		"paths": {
-			"@/*": ["src/*"],
+    "paths": {
+      "@/*": ["src/*"],
       "styles/*": ["src/assets/styles/*"],
       "~/*" : ["./_rendevoz/*"]
-		},
+    },
     "allowJs": false,
     "declaration": false,
     "skipLibCheck": true,

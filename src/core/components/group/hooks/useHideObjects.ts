@@ -5,7 +5,7 @@ import { MetaStore } from '@/api/stores'
 import Node from '@/core/components/group/utils/node'
 import { useSetAtom } from 'jotai'
 
-export default () => {
+export default (groupId: number) => {
   const hideObjects = useSelectAtomValue(GroupStateAtom, s => s.data?.hideObjectsInside)
   const hideGroups = useSelectAtomValue(GroupStateAtom, s => s.data?.hideGroupsInside)
   const values = useSelectAtomValue(GroupStateAtom, s => s.data?.values)
@@ -27,9 +27,14 @@ export default () => {
             if (m.type === 'group' && hideGroups !== true) {
               return
             }
+            // can not hide self
+            if (m.objectId === groupId) return
             unhidden.push(m.id)
           } else {
             if (m.type === 'group' && hideGroups !== true) {
+              hiddenGroups.push(m.id)
+            }
+            if (m.objectId === groupId && m.hidden) {
               hiddenGroups.push(m.id)
             }
           }

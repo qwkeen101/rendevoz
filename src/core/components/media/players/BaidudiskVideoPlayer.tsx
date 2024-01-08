@@ -107,7 +107,6 @@ const BaidudiskVideoPlayer = () => {
     player?.dispose()
   })
   useEffect(() => {
-    console.log(mediaState.subtitleUrl)
     if (mediaState.loaded && mediaState.subtitleUrl && mediaState.showSubtitle) {
       const track = document.createElement('track')
       track.src = mediaState.subtitleUrl
@@ -138,6 +137,11 @@ const BaidudiskVideoPlayer = () => {
       }
     }
   }, [mediaState.jumpTime, mediaState.loaded])
+  useEffect(() => {
+    if (mediaState.loaded && mediaState.currentTime !== undefined && player) {
+      player.currentTime(mediaState.currentTime)
+    }
+  }, [mediaState.loaded])
   return (
     <div
       onClick={() => {

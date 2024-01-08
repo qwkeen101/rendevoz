@@ -1,3 +1,7 @@
+import tinycolor from 'tinycolor2'
+export const GlobalTheme = {
+  isDark: false
+}
 export const Font = {
   White: '--font-white',
   Silver: '--font-silver',
@@ -10,15 +14,19 @@ export const Font = {
   Caption: '--font-caption',
   Description: '--font-tertiary',
   Link: '--font-link',
-  Transparent: '--font-transparent'
+  SuperTransparent: '--font-s-transparent',
+  Transparent: '--font-transparent',
+  Blank: '#000000'
 }
 
 export const Background = {
+  Blank: '#ffffff',
+  BoxShadowBorder: '--box-shadow-border',
   Global: '--global-background',
   Light: '--light-background-color',
+  PopoverBoxShadow: '--popover-box-shadow',
   LightSecondary: '--light-background-color-secondary',
   Dark: '--dark-background-color',
-  PopoverBoxShadow: '--popover-box-shadow',
   DarkSecondary: '--dark-background-color-secondary',
   DarkLinear: '--dark-linear-gradient-background',
   LightLinear: '--light-linear-gradient-background',
@@ -47,18 +55,52 @@ export const Background = {
   DarkRadialGradient: '--dark-radial-gradient-background',
   RadialGradient: '--radial-gradient-background'
 }
+
 export const Emphasis = {
   DarkEmphasis: '--dark-emphasis',
   LightEmphasis: '--light-emphasis',
   Emphasis: '--emphasis'
 }
+
 export const Common = {
   Green: '--green',
   Red: '--red',
   SelectColorTransparent: '--select-color-transparent',
   SelectColor: '--select-color'
 }
+
+const Consts = {
+  BoxShadowBorderRight: 'var(--box-shadow-border) -1px 0px 0px 0px inset',
+  BoxShadowBorderLeft: 'var(--box-shadow-border) 1px 0px 0px 0px inset',
+  Border: '1px solid var(--border-background)'
+}
+
+const DarkColorCache: Record<string, string> = {}
+const getAdaptColor = (c?: string) => {
+  if (!c) return undefined
+  console.log(c, GlobalTheme)
+  if (GlobalTheme.isDark) {
+    if (DarkColorCache[c]) return DarkColorCache[c]
+    const transformed = tinycolor(c).darken(30).desaturate(10).toRgbString()
+    DarkColorCache[c] = transformed
+    return transformed
+  }
+  return c
+}
+const FontColorCache: Record<string, string> = {}
+const getAdaptFontColor = (bg?: string) => {
+  if (!bg) return undefined
+  if (GlobalTheme.isDark) return undefined
+  if (FontColorCache[bg]) return FontColorCache[bg]
+  const t = tinycolor(bg).darken(20).toRgbString()
+  FontColorCache[bg] = t
+
+  return t
+}
 const Colors = {
+  Consts,
+  getAdaptColor,
+  getAdaptFontColor,
   Font: Object.fromEntries(Object.entries(Font).map(i => [i[0], `var(${i[1]})`])) as Record<keyof typeof Font, string>,
   Background: Object.fromEntries(Object.entries(Background).map(i => [i[0], `var(${i[1]})`])) as Record<keyof typeof Background, string>,
   Emphasis: Object.fromEntries(Object.entries(Emphasis).map(i => [i[0], `var(${i[1]})`])) as Record<keyof typeof Emphasis, string>,

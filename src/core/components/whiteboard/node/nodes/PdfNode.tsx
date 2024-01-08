@@ -34,7 +34,7 @@ const PdfNode: FC<InnerNodeProps> = memo(
           minWidth: '100%',
           width: '35rem',
           maxWidth: '100%',
-          height: '45rem',
+          height: '1000px',
           minHeight: '100%',
           maxHeight: '100%',
           overflow: 'hidden'

@@ -11,7 +11,7 @@ import { Colors } from '@/consts'
 import { CustomEditor } from '~/typings'
 import EditorSetting from '@/core/components/editor/components/setting/EditorSetting'
 
-const EditorHeader = ({ title, editor }: { editor: CustomEditor; title: string }) => {
+const EditorHeader = ({ title, editor, maxTitleWidth }: { editor: CustomEditor; title: string; maxTitleWidth?: number | string }) => {
   const instance = useEditorInstance()
   const [barState, setEditorBarState] = UseEditorBarState()
   const [editorState, setEditorState] = useEditorState()
@@ -33,7 +33,14 @@ const EditorHeader = ({ title, editor }: { editor: CustomEditor; title: string }
       gap={30}
       justifyContent="space-between"
     >
-      <Content flex alignItems={'center'} gap={8}>
+      <Content
+        flex
+        alignItems={'center'}
+        gap={8}
+        style={{
+          maxWidth: maxTitleWidth
+        }}
+      >
         {header?.leftExtra}
         {header?.display?.title !== false && (
           <div style={{ textTransform: 'none', marginLeft: 4 }} className={css([ClassName.title('14px'), ClassName.ellipsisFont(1)])}>
@@ -72,18 +79,18 @@ const EditorHeader = ({ title, editor }: { editor: CustomEditor; title: string }
             className={ClassName.flatButton(4, '4px')}
           />
         )}
-        {/*<Icon*/}
-        {/*  data-active={barState.rightBarActive === 'ai' && barState.showRightBar === true}*/}
-        {/*  name={'custom-magic'}*/}
-        {/*  onClick={() => {*/}
-        {/*    setEditorBarState(s => ({*/}
-        {/*      ...s,*/}
-        {/*      rightBarActive: 'ai',*/}
-        {/*      showRightBar: s.rightBarActive === 'ai' ? !s.showRightBar : true*/}
-        {/*    }))*/}
-        {/*  }}*/}
-        {/*  className={ClassName.flatButton(4, '4px')}*/}
-        {/*/>*/}
+        <Icon
+          data-active={barState.rightBarActive === 'ai' && barState.showRightBar === true}
+          name={'custom-magic'}
+          onClick={() => {
+            setEditorBarState(s => ({
+              ...s,
+              rightBarActive: 'ai',
+              showRightBar: s.rightBarActive === 'ai' ? !s.showRightBar : true
+            }))
+          }}
+          className={ClassName.flatButton(4, '4px')}
+        />
         <IconWithPopover
           disableNudge={true}
           padding={10}

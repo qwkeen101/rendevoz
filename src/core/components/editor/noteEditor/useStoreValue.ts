@@ -91,7 +91,8 @@ const useStoreValue = (options: {
   }, [])
 
   return {
-    saveValueToNote
+    saveValueToNote,
+    fetchValue
   }
 }
 

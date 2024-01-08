@@ -3,21 +3,54 @@ import { PDFDocumentProxy } from 'pdfjs-dist'
 import { ITextLayerInstance } from './core/layer'
 import { Box, IPdfLabel } from '~/typings'
 import { PageSize } from './core/page'
+import { Virtualizer } from '@tanstack/react-virtual'
+
+type NavigateOps = {
+  back: VoidFunction
+  forward: VoidFunction
+  insertHistory: (offset: number) => void
+  jumpToPage: (pageIndex: number) => void
+  jumpToLabel: (labelId: number) => Promise<void>
+  jumpToDest: (dest: string | any[]) => Promise<void>
+  jumpToOffset: (
+    offset: number,
+    opts?: {
+      align?: 'start' | 'center' | 'end'
+      ignoreDoublePage?: boolean
+      canBack?: boolean
+    }
+  ) => void
+  useHistory: () => {
+    canBack: boolean
+    canForward: boolean
+  }
+  getHistory: () => {
+    canBack: boolean
+    canForward: boolean
+  }
+}
+
+type ActionsOps = {
+  zoomIn: VoidFunction
+  zoomOut: VoidFunction
+  setScale: (s: number) => void
+  fitWidth: VoidFunction
+}
 
 export type IPdfInstance = Partial<{
+  navigateOps: NavigateOps
+  actionOps: ActionsOps
   currentFocusLabelId: number
   getPdfId: () => number
-  jumpToPage: (pageIndex: number) => void
+  isFocused?: boolean
+  getTextOfPages: () => { page: number; str: string; id: number }[]
+  virtualizer: Virtualizer<HTMLDivElement, Element>
   search: (word: string) =>
     | {
         searchText: string
         pageIndex: number
       }[]
     | undefined
-  zoomIn: VoidFunction
-  zoomOut: VoidFunction
-  autoFit: VoidFunction
-  togglePan: VoidFunction
   // image path, box: relative rect
   capturePageImage: (pageIndex: number, box?: Box) => Promise<string>
   jumpToLabelInSidebar: (labelId: number) => void
@@ -27,12 +60,8 @@ export type IPdfInstance = Partial<{
     // all percentage
     rect: Box
   ) => Promise<void>
-  jumpToDest: (dest: string | any[]) => void
-  jumpToOffset: (offset: number) => void
-  jumpToLabel: (labelId: number) => Promise<void>
-  jumpToArea: (page: number, area: Box) => void
   scrollBy: (offset: number) => void
-  scrollToOffset: (offset: number) => void
+  scrollToOffset: (offset: number, canBack?: boolean) => void
   getPageSize: () => PageSize & { pageSizeScale: number }
   getOutline: () => Promise<
     {

@@ -17,7 +17,6 @@ const getNodeStyle = (
     panPointerMode?: boolean
     background: {
       opacityBackground: string
-      darkenBackground: string
     }
   }
 ): CSSProperties => {
@@ -29,7 +28,7 @@ const getNodeStyle = (
     if (transparentBackgroundNodes.includes(node.type)) {
       return undefined
     }
-    if(!isDarkMode){
+    if (!isDarkMode) {
       return 'var(--border-box-shadow)'
     }
     return undefined
@@ -91,7 +90,7 @@ const getNodeStyle = (
       node.type === 'group'
         ? opts.background.opacityBackground
         : node.background
-        ? opts.background.darkenBackground
+        ? Colors.getAdaptColor(node.background)
         : transparentBackgroundNodes.includes(node.type)
         ? 'transparent'
         : isDarkMode

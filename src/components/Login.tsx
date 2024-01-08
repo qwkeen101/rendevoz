@@ -208,7 +208,12 @@ const Login = () => {
               <Icon
                 onClick={togglePreviewPassword}
                 name={previewPassword ? 'park-preview-close' : 'park-preview-open'}
-                className={css([{ position: 'absolute', right: 0, bottom: 2 }, ClassName.circleButton()])}
+                style={{
+                  position: 'absolute',
+                  right: 0,
+                  bottom: 2
+                }}
+                className={ClassName.circleButton()}
               />
             </div>
             <Content flex alignItems={'center'} gap={10}>

@@ -1,26 +1,37 @@
-import { ReactElement, RefObject, useLayoutEffect, useRef, useState } from 'react'
+import { cloneElement, ReactElement, RefObject, useLayoutEffect, useRef, useState } from 'react'
 import { Box } from '~/typings'
 import { createPortal } from 'react-dom'
 import { useGroupInstance } from '@/core/components/group/hooks/useGroupInstance'
+import isHotkey from 'is-hotkey'
+import { KEY } from '@/consts'
+import { useSetAtom } from 'jotai'
+import { GroupStateAtom } from '@/core/components/group/hooks/useGroupState'
 
-const usePopoverCell = (opts: {
-  onOpen?: VoidFunction
-  onClose?: VoidFunction
-  targetRef?: RefObject<HTMLElement>
-  closeWhenClickoutside?: boolean
-}) => {
+const usePopoverCell = (
+  opts: {
+    onOpen?: VoidFunction
+    onClose?: VoidFunction
+    targetRef?: RefObject<HTMLElement>
+    closeWhenClickoutside?: boolean
+  } = {}
+) => {
   const [cellState, setCellState] = useState<{
     box?: Box
     visible: boolean
+    realVisible?: boolean
   }>({
     visible: false
   })
   const containerRef = useRef<HTMLElement>()
   const instance = useGroupInstance()
   const popoverRef = useRef<HTMLDivElement>(null)
+  const setGroupState = useSetAtom(GroupStateAtom)
+  // for inner popover content
+  const popoverContentRef = useRef<HTMLElement>(null)
   const openPopover = (box: HTMLElement) => {
     containerRef.current = box
     const bounding = box.getBoundingClientRect()
+
     if (bounding.left < 100) {
       instance.bodyOps?.scrollBody({ x: bounding.left - 100 })
     }
@@ -34,6 +45,7 @@ const usePopoverCell = (opts: {
       })
     }
     const newBounding = box.getBoundingClientRect()
+    console.log(box, bounding, newBounding)
     setCellState({
       visible: true,
       box: {
@@ -47,35 +59,58 @@ const usePopoverCell = (opts: {
 
   useLayoutEffect(() => {
     if (cellState.visible) {
+      setGroupState(s => ({ ...s, popoverVisible: true }))
       opts.onOpen?.()
       const h = (e: WheelEvent) => {
-        if (!opts.targetRef?.current?.contains(e.target)) {
+        const c = opts.targetRef?.current || popoverContentRef.current
+        if (c && !c.contains(e.target)) {
           e.preventDefault()
         }
       }
-      // const c = (e: MouseEvent) => {
-      //   if (opts.closeWhenClickoutside === false) return
-      //   if (!popoverRef.current?.contains(e.target)) {
-      //     setCellState({ visible: false })
-      //   }
-      // }
-
-      const currentbox = opts?.targetRef?.current?.getBoundingClientRect()
-      if (currentbox) {
+      const k = (e: KeyboardEvent) => {
+        if (isHotkey(KEY.Escape, e)) {
+          e.preventDefault()
+          setCellState({ visible: false })
+        }
+      }
+      const currentEle = opts.targetRef?.current || popoverContentRef.current
+      const resizeObserver = new ResizeObserver(cb => {
+        const currentbox = cb[0].target.getBoundingClientRect()
         setCellState(s => ({
           ...s,
-          visible: true,
           box: {
-            left: Math.min(window.innerWidth - currentbox.width - 120, currentbox.left),
-            top: Math.max(20, currentbox.top),
+            left: Math.min(window.innerWidth - currentbox.width - 20, currentbox.left),
+            top: currentbox.bottom > window.innerHeight ? window.innerHeight - currentbox.height - 20 : Math.max(20, currentbox.top),
             width: currentbox.width,
             height: currentbox.height
           }
         }))
+      })
+      if (currentEle) {
+        resizeObserver.observe(currentEle)
+        const currentbox = currentEle.getBoundingClientRect()
+        if (currentbox) {
+          setCellState(s => ({
+            ...s,
+            box: {
+              left: Math.min(window.innerWidth - currentbox.width - 20, currentbox.left),
+              top: currentbox.bottom > window.innerHeight ? window.innerHeight - currentbox.height - 20 : Math.max(20, currentbox.top),
+              width: currentbox.width,
+              height: currentbox.height
+            }
+          }))
+        }
       }
+      setTimeout(() => {
+        setCellState(s => ({ ...s, realVisible: true }))
+      }, 10)
       window.addEventListener('wheel', h, { passive: false })
+      document.addEventListener('keydown', k)
       // document.addEventListener('click', c)
       return () => {
+        resizeObserver.disconnect()
+        setGroupState(s => ({ ...s, popoverVisible: false }))
+        document.removeEventListener('keydown', k)
         window.removeEventListener('wheel', h)
         // document.removeEventListener('click', c)
         opts?.onClose?.()
@@ -84,7 +119,7 @@ const usePopoverCell = (opts: {
   }, [cellState.visible])
 
   const renderPopover = (renderer: (box: Box) => ReactElement, withCover = true) => {
-    if (cellState.box) {
+    if (cellState.box && cellState.visible) {
       return createPortal(
         <div
           ref={popoverRef}
@@ -93,19 +128,20 @@ const usePopoverCell = (opts: {
               console.log(e.target, e.currentTarget)
               if (e.target === e.currentTarget) {
                 setCellState({ visible: false })
-                console.log('set here')
               }
             }
           }}
           style={
             withCover
-              ? { position: 'fixed', left: 0, top: 0, width: '100%', height: '100%', zIndex: 999 }
+              ? { position: 'fixed', left: 0, top: 0, width: '100%', height: '100%', zIndex: 1002, opacity: cellState.realVisible ? 1 : 0 }
               : {
                   zIndex: 99
                 }
           }
         >
-          {renderer(cellState.box)}
+          {cloneElement(renderer(cellState.box), {
+            ref: popoverContentRef
+          })}
         </div>,
         document.body
       )

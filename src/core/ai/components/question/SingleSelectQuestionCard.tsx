@@ -1,5 +1,5 @@
 import { IQuestion } from '~/typings'
-import { Content, Icon } from '@/components'
+import { Content, Icon, Tooltip } from '@/components'
 import { SelectOptionClass } from '@/core/ai/components/question/classes'
 import { Colors } from '@/consts'
 import { ObjectStore } from '@/api/stores'
@@ -7,18 +7,18 @@ import { IAIEvent } from '@/core/ai/components/AskAIPanel'
 import { ClassName } from 'rendevoz'
 import produce from 'immer'
 import { css } from '@emotion/css'
+import { useTranslation } from 'react-i18next'
 
 export default ({
   question,
   showAnswer = false,
-  on,
   isEditing = false
 }: {
   question: IQuestion & { questionType: 'singleSelect' }
   showAnswer?: boolean
-  on?: (e: IAIEvent) => void
   isEditing?: boolean
 }) => {
+  const { t } = useTranslation()
   const suggestedAnswer = question.sAnswer
   const getBoxShadow = (i: string) => {
     if (isEditing) return
@@ -38,15 +38,8 @@ export default ({
     }
   }
   return (
-    <Content
-      flex
-      column
-      gap={6}
-      style={{
-        marginTop: 6
-      }}
-    >
-      {question.choices.map((i, idx) => (
+    <Content flex column gap={8}>
+      {question.choices?.map((i, idx) => (
         <Content
           className={SelectOptionClass}
           key={idx}
@@ -56,21 +49,19 @@ export default ({
             minHeight: '32px'
           }}
           onClick={() => {
-            if (i) {
-              ObjectStore('question').updateOne({ id: question.id, answer: i })
+            if (!isEditing) {
+              ObjectStore('question').updateOne({ id: question.id, answer: question.answer === i ? undefined : i })
             }
           }}
         >
           {isEditing ? (
-            <Content flex gap={12} alignItems={'center'}>
+            <Content flex gap={6} alignItems={'center'}>
               <input
                 className={ClassName.noStyleInput}
                 defaultValue={i}
                 onBlur={e => {
                   const v = e.target.value
-                  if (question.choices.some(i => i === v)) {
-                    return
-                  } else {
+                  if (v !== i) {
                     const newChoices = produce(question.choices, draft => {
                       draft[idx] = e.target.value
                     })
@@ -82,25 +73,36 @@ export default ({
                   fontWeight: 500
                 }}
               />
-              <Icon
-                name={'park-delete'}
-                className={ClassName.circleButton()}
-                style={{
-                  color: Colors.Common.Red
-                }}
-                onClick={() => {
-                  const newChoices = produce(question.choices, draft => {
-                    draft.splice(idx, 1)
-                  })
-                  ObjectStore('question').updateOne({ id: question.id, choices: newChoices })
-                }}
-              />
+              <Tooltip content={question.sAnswer === i ? t('general.Remove right answer') : t('general.Set as right answer')}>
+                <Icon
+                  className={ClassName.circleButton()}
+                  style={{
+                    color: question.sAnswer === i ? Colors.Common.Red : Colors.Common.Green
+                  }}
+                  onClick={() => {
+                    ObjectStore('question').updateOne({ id: question.id, sAnswer: question.sAnswer === i ? undefined : i })
+                  }}
+                  name={question.sAnswer === i ? 'park-close' : 'park-check'}
+                />
+              </Tooltip>
+              <Tooltip content={t('general.delete')}>
+                <Icon
+                  name={'park-delete'}
+                  className={ClassName.circleButton()}
+                  style={{
+                    color: Colors.Common.Red
+                  }}
+                  onClick={() => {
+                    const newChoices = produce(question.choices, draft => {
+                      draft.splice(idx, 1)
+                    })
+                    ObjectStore('question').updateOne({ id: question.id, choices: newChoices })
+                  }}
+                />
+              </Tooltip>
             </Content>
           ) : (
             i
-          )}
-          {showAnswer && !isEditing && i === question.answer && (
-            <span style={{ marginLeft: 12, color: Colors.Font.Transparent }}>您的选择</span>
           )}
         </Content>
       ))}
@@ -111,6 +113,9 @@ export default ({
           }}
           className={SelectOptionClass}
           flex
+          style={{
+            cursor: 'pointer'
+          }}
           gap={6}
         >
           <Icon
@@ -121,7 +126,7 @@ export default ({
             })}
             name={'park-plus'}
           />
-          <div>Add new option</div>
+          <div>{t('general.Add new option')}</div>
         </Content>
       )}
     </Content>

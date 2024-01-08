@@ -1,8 +1,9 @@
 // TODO: Migrate all object types to IObject: PDF, PDFLABEL, NOTE, WHITEBOARD....
-import { MetaLink, MetaObject, PartialWithId } from '..'
+import { IMetaProperty, MetaLink, MetaObject, PartialWithId } from '..'
 import { IDraggableElement } from '../globalInstances/dragDrop'
 import { IBase } from './base'
 import { IPDFLabel as _IPdfLabel } from './label'
+import { Descendant } from 'slate'
 
 export type IRegisterdObject = {
   type: string
@@ -24,6 +25,7 @@ export interface ILabel extends IBase {
   color?: string
   selectedText?: string
   time?: number
+  labelNote?: Descendant[]
 }
 
 export interface ICode extends IBase {
@@ -69,6 +71,12 @@ export interface IMedia extends IBase {
       text: number
     }[]
   }[]
+}
+
+export interface IMetaProp extends IBase {
+  propType: IMetaProperty['propType']
+  icon: string
+  name: string
 }
 
 export interface IMediaLabel extends ILabel {
@@ -166,11 +174,10 @@ export type IQuestion = IBase & {
   // where this question is from
   parentObjectId?: number
   description?: string
-  answer?: string
   name?: string
   // related question ids
   relatedQuestions?: number[]
-  explanation?: string
+  explanation?: Descendant[]
   prompt?: string
 } & {
   // points to some specific objects, like blocks in document or pages in pdfs or time in media
@@ -191,24 +198,29 @@ export type IQuestion = IBase & {
 } & ( // sAnswer is AI suggested answer, answer is user provided answer
     | {
         questionType: 'text'
-        sAnswer: string
-        answer?: string
+        sAnswer?: string
+        answer?: Descendant[]
       }
     | {
         questionType: 'singleSelect'
         choices: string[]
-        sAnswer: string
+        sAnswer?: string
         answer?: string
       }
     | {
         questionType: 'multiSelect'
         choices: string[]
-        sAnswer: string[]
+        sAnswer?: string[]
         answer?: string[]
       }
     | {
         questionType: 'trueOrFalse'
-        sAnswer: boolean
+        sAnswer?: boolean
         answer?: boolean
+      }
+    | {
+        questionType: 'cloze'
+        text?: Descendant[]
+        answer?: Descendant[]
       }
   )

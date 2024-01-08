@@ -3,7 +3,6 @@ import { Helmet } from 'react-helmet'
 import { Container, Icon } from '../base'
 import DockLayout, { LayoutData } from '../base/dock'
 import LayoutManager from './layoutManager'
-import { css } from '@emotion/css'
 import { getSetting, useSetting } from '@/core'
 import { Sidebar } from './sidebar'
 import ClassName from '@/styles/classNames'
@@ -13,7 +12,7 @@ import { getOS } from '@/App'
 import TitleBar from '@/components/titlebar'
 import MacTitlebar from '@/components/titlebar/MacTitlebar'
 import * as Serializer from '../base/dock/Serializer'
-import { GlobalInstance, useGlobalAtomValue, useGlobalSetAtom } from '@/hooks'
+import { GlobalInstance, useGlobalAtomValue } from '@/hooks'
 import { initializedAtom } from '@/Initializer'
 
 const initialLayout: LayoutData = {
@@ -57,7 +56,9 @@ const Layout = () => {
             onClick={e => {
               e.stopPropagation()
               GlobalInstance.metaOps?.createObject().then(meta => {
-                Rendevoz.Actions.Open.Meta.openMetaObject(meta.id)
+                setTimeout(() => {
+                  Rendevoz.Actions.Open.Meta.openMetaObject(meta.id)
+                }, 300)
               })
             }}
           />
@@ -121,14 +122,14 @@ const Layout = () => {
 
   const os = getOS()
   return (
-    <Container onClick={() => console.log(layout)} auto column style={{ height: '100vh', overflow: 'hidden' }}>
+    <Container auto column style={{ height: '100vh', overflow: 'hidden' }}>
       <Helmet>
         <title>Rendevoz</title>
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
       </Helmet>
       {os === 'windows' && <TitleBar />}
       {os === 'macos' && <MacTitlebar />}
-      <Container auto style={{ height: 0 }}>
+      <Container role={'body-container'} auto style={{ height: 0 }}>
         <Sidebar direction={'right'} />
         <Container auto>
           {layout && (

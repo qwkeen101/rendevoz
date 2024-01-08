@@ -6,7 +6,7 @@ import { useMemo } from 'react'
 import { IRegisterdObject, IWhiteboard, IWhiteboardEdge, IWhiteboardNode, MetaObject } from '~/typings'
 import { globalStore, GroupStore, MetaStore, NoteStore, ObjectStore } from './index'
 import BaseStore, { initializeLocalStore } from './base.store'
-import { metaObjectsAtom, objectIdToMetaObjectIdMapAtom, tagToMetaObjectIdsMapAtom, TypeToRegisteredMetaObject } from './meta.store'
+import { objectIdToMetaObjectIdMapAtom, tagToMetaObjectIdsMapAtom, TypeToRegisteredMetaObject } from './meta.store'
 import { IStore } from './types'
 import { useGlobalAtomValue } from '@/hooks'
 import Id from '@/utils/id'
@@ -14,6 +14,8 @@ import { CustomTypes } from 'rendevoz'
 import { deleteRendefile } from '@/utils'
 import { DEFAULT_BACKGROUND_COLORS } from '@/components/picker/colorPicker'
 import _ from 'lodash'
+import { Rendevoz } from '@/core/rendevoz'
+import WebpageStore from '@/api/stores/webpage.store'
 export type ObjectFamily = CustomTypes['Object']
 
 export const ObjectFamilyAtom = atomFamily(() => atom(new Map<number, ObjectFamily[keyof ObjectFamily]>()))
@@ -25,12 +27,16 @@ const createObjectStore = <T extends keyof ObjectFamily, V extends ObjectFamily[
   options?: {
     toastEnabled?: keyof INotificationSetting['notification']
     beforeAddProcess?: (o: Partial<V>, opts: Parameters<S['addOne']>[1]) => Promise<boolean | void>
+    beforeAddMetaProcss?: (obj: Partial<V>, currentMeta?: Partial<MetaObject>) => Promise<MetaObject | undefined>
     beforeUpdateProcess?: (o: Partial<V>, opts: Parameters<S['updateOne']>[1]) => void
     beforeDeleteProcess?: (id: number, opts: Parameters<S['deleteOneById']>[1]) => Promise<boolean | void>
     beforeGetOneProcess?: () => void
     afterAddProcess?: {
       onSuccess?: (obj: V, opts: Parameters<S['addOne']>[1]) => void
       onFail?: (opts: Parameters<S['addOne']>[1]) => void
+    }
+    afterAddMetaProcess?: {
+      onSuccess?: (obj: V, meta: MetaObject) => void
     }
     afterUpdateProcess?: {
       onSuccess?: (obj: V, silent: boolean) => void
@@ -52,7 +58,9 @@ const createObjectStore = <T extends keyof ObjectFamily, V extends ObjectFamily[
   const objectsDb = useDb('objects')
   const objectMapAtom = ObjectFamilyAtom(type) as unknown as PrimitiveAtom<Map<number, V>>
   const initializedLocalStore = initializeLocalStore(objectMapAtom, objectsDb)
-
+  // To prevent race condition
+  // For example: delete one by id, delete from atom, but useValue get it again because right now data in database still not deleted
+  const forcedRemoveIds = new Set<number>()
   const localStore: IStore<V> = {
     getAll: async () => {
       const count = await objectsDb.where('specType').equals(type).count()
@@ -63,6 +71,9 @@ const createObjectStore = <T extends keyof ObjectFamily, V extends ObjectFamily[
     },
     getAllData: async () => {
       return await initializedLocalStore.getAllData(s => s.specType === type)()
+    },
+    getMultipleByIds: async (id, cache) => {
+      return (await initializedLocalStore.getMultipleByIds()(id, cache)).filter(i => i)
     },
     getOneById: async id => {
       try {
@@ -106,30 +117,45 @@ const createObjectStore = <T extends keyof ObjectFamily, V extends ObjectFamily[
       )(inited, opts?.silent, opts?.overPremium)
     },
     addOneWithMeta: async (n, opts) => {
+      const result = await options?.beforeAddMetaProcss?.(n || {}, opts?.currentMeta)
+      if (result) {
+        const obj = result.objectId && (await ObjectStore(result.type).getOneById(result.objectId))
+        return {
+          one: obj,
+          meta: result
+        }
+      }
       // right here we add meta manually
-      const obj = await localStore.addOne(n, {
+      const obj = await localStore.addOne(n || {}, {
         ...opts,
         preventAddMeta: true,
-        silent: true
+        silent: true,
+        isAddingMeta: true
       })
       let meta: MetaObject
       try {
+        const registeredDefaultName = TypeToRegisteredMetaObject.get(obj.specType)?.defaultName
+        const placeholderName = obj.specType ? `Unnamed ${obj.specType}` : undefined
         if (opts?.showMetaModal) {
-          const registeredDefaultName = TypeToRegisteredMetaObject.get(obj.specType)?.defaultName
           meta = (await GlobalEventEmitter().emitWithCallback('global', {
             type: 'globalNeedAddMetaObject',
             data: {
               currentObject: {
                 type: obj.specType,
                 objectId: obj.id,
-                name: n.name || registeredDefaultName,
+                name: obj.name || registeredDefaultName,
+                placeholderName,
                 ...opts.currentMeta
               }
             }
           })) as MetaObject
         } else {
-          meta = await MetaStore.addMetaObject({ type: obj.specType, objectId: obj.id, ...opts?.currentMeta }, opts?.silent)
+          meta = await MetaStore.addMetaObject(
+            { type: obj.specType, objectId: obj.id, name: obj.name || registeredDefaultName, placeholderName, ...opts?.currentMeta },
+            opts?.silent
+          )
         }
+        options?.afterAddMetaProcess?.onSuccess?.(obj, meta)
         return {
           one: obj,
           meta
@@ -160,6 +186,9 @@ const createObjectStore = <T extends keyof ObjectFamily, V extends ObjectFamily[
       )(n, opts?.silent)
     },
     deleteOneById: async (id, opts) => {
+      if (opts?.force !== false) {
+        forcedRemoveIds.add(id)
+      }
       const result = await options?.beforeDeleteProcess?.(id, opts)
       if (result === false) {
         return Promise.reject()
@@ -264,13 +293,14 @@ const createObjectStore = <T extends keyof ObjectFamily, V extends ObjectFamily[
     getAll: adaptStore().getAll,
     fetchOneById: adaptStore().fetchOneById,
     addOneWithMeta: adaptStore().addOneWithMeta,
-    getAllData: adaptStore().getAllData
+    getAllData: adaptStore().getAllData,
+    getMultipleByIds: adaptStore().getMultipleByIds
   }
 
   const createAtom = (id?: number) => {
     const memoAtom = useMemo(() => {
       if (!id) return atom(undefined)
-      const exist = globalStore.get(objectMapAtom).has(id)
+      const exist = globalStore.get(objectMapAtom).has(id) || forcedRemoveIds.has(id)
       if (!exist) {
         realStore.getOneById(id)
       }
@@ -286,7 +316,25 @@ const createObjectStore = <T extends keyof ObjectFamily, V extends ObjectFamily[
   }
   const useAll = () => {
     const all = useGlobalAtomValue(objectMapAtom)
-    return all
+    const memoedArr = useMemo(() => {
+      return Array.from(all.values())
+    }, [all])
+    return memoedArr
+  }
+
+  const useMultiple = (ids?: Iterable<number>): T[] => {
+    const a = useMemo(() => {
+      if (!ids) return atom([])
+      const idArr = Array.from(ids)
+      realStore.getMultipleByIds(idArr)
+      const selected = selectAtom(
+        objectMapAtom,
+        map => idArr.map(id => map.get(id)).filter(i => i) as unknown as T[],
+        (prev, curr) => prev.every((i, idx) => curr[idx] === i)
+      )
+      return selected
+    }, [ids])
+    return useGlobalAtomValue(a)
   }
   return {
     objectMapAtom,
@@ -295,6 +343,7 @@ const createObjectStore = <T extends keyof ObjectFamily, V extends ObjectFamily[
     createAtom,
     useValue,
     useAll,
+    useMultiple,
     ...realStore
   }
 }
@@ -309,6 +358,8 @@ export const objectStore = <T extends keyof ObjectFamily>(
   adaptStore: () => IStore<ObjectFamily[T]>
   createAtom: (id?: number) => Atom<ObjectFamily[T] | undefined>
   useValue: (id?: number) => Awaited<ObjectFamily[T]> | undefined
+  useMultiple: (ids?: Iterable<number>) => Awaited<ObjectFamily[T]>[]
+  useAll: () => Awaited<ObjectFamily[T]>[]
 } & IStore<ObjectFamily[T]> => {
   const store = storeMap.get(type)
   if (store) {
@@ -316,6 +367,8 @@ export const objectStore = <T extends keyof ObjectFamily>(
   } else {
     const getStore = () => {
       switch (type) {
+        case 'question':
+          return createQuestionStore()
         case 'group':
           return createGroupStore()
         case 'webpage':
@@ -324,6 +377,8 @@ export const objectStore = <T extends keyof ObjectFamily>(
           return createNoteStore()
         case 'tag':
           return createTagStore()
+        case 'metaPropSelectOption':
+          return createOptionStore()
         case 'whiteboard':
           return createWhiteboardStore()
         default:
@@ -334,6 +389,26 @@ export const objectStore = <T extends keyof ObjectFamily>(
     storeMap.set(type, store)
     return store
   }
+}
+const createOptionStore = () => {
+  return createObjectStore('metaPropSelectOption', {
+    beforeAddProcess: async o => {
+      if (o.parentPropName) {
+        const map = globalStore.get(ObjectStore('metaPropSelectOption').objectMapAtom)
+        const allOptions = MetaStore.getPropOptions()[o.parentPropName]
+        o.order = Math.max(...Array.from(allOptions?.values() || []).map(i => map.get(i)?.order ?? -1)) + 1
+      }
+    }
+  })
+}
+const createQuestionStore = () => {
+  return createObjectStore('question', {
+    beforeAddProcess: async n => {
+      if (!n.questionType) {
+        n.questionType = 'text'
+      }
+    }
+  })
 }
 
 const createNoteStore = () => {
@@ -368,9 +443,33 @@ const createNoteStore = () => {
 
 const createWebpageStore = () => {
   return createObjectStore('webpage', {
+    beforeAddMetaProcss: async obj => {
+      if (obj.url) {
+        const already = WebpageStore.getWebpageByUrl(obj.url)
+        if (already) {
+          const meta = MetaStore.getMetaObjectByObjectId(already.id)
+          if (meta) {
+            return meta
+          }
+        }
+      }
+    },
     beforeAddProcess: async o => {
       if (!('url' in o)) {
         o.url = ''
+      }
+    },
+    afterAddMetaProcess: {
+      onSuccess: async (obj, meta) => {
+        if (!meta.name) {
+          if (obj.url) {
+            const result = await Rendevoz.Utils.Web.parseWebpage(obj.url)
+            await MetaStore.updateMetaObject(
+              { id: meta.id, coverImgSrc: result.image, name: result.title, description: result.description },
+              true
+            )
+          }
+        }
       }
     },
     beforeUpdateProcess: o => {
@@ -415,6 +514,8 @@ const createTagStore = () => {
       if (!o.color) {
         o.color = _.sample(DEFAULT_BACKGROUND_COLORS)
       }
+      const allOrders = Array.from(globalStore.get(ObjectStore('tag').objectMapAtom).values()).map(i => i.order ?? -1)
+      o.order = Math.max(...allOrders) + 1
       return true
     },
     beforeDeleteProcess: async id => {

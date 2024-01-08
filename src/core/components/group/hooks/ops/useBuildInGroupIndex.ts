@@ -112,8 +112,7 @@ const useBuildInGroupIndex = () => {
   }, [filterValues, triggered])
   useEffect(() => {
     if (unToggled) {
-      console.log(unToggled,filterValues)
-      setGroupState(s => ({ ...s, unToggledIdSet: new Set(unToggled) }))
+      setGroupState(s => ({ ...s, unToggledIdSet: new Set(unToggled), triggered: s.triggered + 1 }))
     }
   }, [unToggled])
 }

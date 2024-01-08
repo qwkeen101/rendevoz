@@ -2,17 +2,38 @@ import { useEffect, useState } from 'react'
 import { atom, useAtom } from 'jotai'
 import { LinkFilterRule, MetaFilterGroup, MetaFilterRule, MetaObject } from '~/typings'
 import { MetaStore } from '@/api/stores'
-import stringFilter from '@/core/object/filter/stringFilter'
-import dateFilter from '@/core/object/filter/dateFilter'
-import linkFilter from '@/core/object/filter/linkFilter'
-import typeFilter from '@/core/object/filter/typeFilter'
-import tagFilter from '@/core/object/filter/tagFilter'
+import stringFilter from '@/core/object/filter/calculator/stringFilter'
+import dateFilter from '@/core/object/filter/calculator/dateFilter'
+import linkFilter from '@/core/object/filter/calculator/linkFilter'
+import typeFilter from '@/core/object/filter/calculator/typeFilter'
+import tagFilter from '@/core/object/filter/calculator/tagFilter'
+import optionFilter from '@/core/object/filter/calculator/optionFilter'
+import numberFilter from '@/core/object/filter/calculator/numberFilter'
+import checkboxFilter from '@/core/object/filter/calculator/checkboxFilter'
 
 const transformRules = (rules: MetaFilterRule[]) => {
   const finalRuleFilter = (rules.filter(i => i.filterType === 'rule') as (MetaFilterRule & { filterType: 'rule' })[])
     .map(rule => {
+      if ('propType' in rule) {
+        switch (rule.propType) {
+          case 'string':
+          case 'URL':
+          case 'AI summary':
+            return stringFilter(rule, o => o['properties']?.[rule.field]?.value as string | undefined)
+          case 'checkbox':
+            return checkboxFilter(rule, o => o['properties']?.[rule.field]?.value as boolean | undefined)
+          case 'number':
+            return numberFilter(rule, o => o['properties']?.[rule.field]?.value as number | undefined)
+          case 'singleSelect':
+          case 'multiSelect':
+            return optionFilter(rule, o => o['properties']?.[rule.field]?.value as number | number[] | undefined)
+          case 'date':
+            return dateFilter(rule, o => o['properties']?.[rule.field]?.value as number | undefined)
+        }
+      }
       switch (rule.field) {
         case 'name':
+          return stringFilter(rule, o => o.name || o.placeholderName)
         case 'description':
           return stringFilter(rule.field, rule.value, rule.type)
         case 'type':
@@ -22,7 +43,7 @@ const transformRules = (rules: MetaFilterRule[]) => {
         case 'createdAt':
         case 'viewAt':
         case 'updatedAt':
-          return dateFilter(rule)
+          return dateFilter(rule, o => o[rule.field])
       }
     })
     .filter(i => i) as ((meta: MetaObject) => boolean)[]

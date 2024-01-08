@@ -32,6 +32,7 @@ export interface SelectProps {
   padding?: number
   containerStyle?: CSSProperties
   align?: 'start' | 'center' | 'end'
+  reposition?: boolean
 }
 interface ISelect extends FC<SelectProps> {
   Option: typeof SelectOption
@@ -50,10 +51,11 @@ const Select: ISelect = ({
   defaultValue,
   deselectable,
   containerStyle,
-  align = 'end',
+  align = 'center',
   gap = 12,
   menuPosition = 'bottom',
   options,
+  reposition = true,
   displayRenderer
 }) => {
   let d = []
@@ -148,10 +150,10 @@ const Select: ISelect = ({
         positions={[menuPosition]}
         onClickOutside={() => setMenuVisible(false)}
         padding={padding}
-        disableIntersection
         containerStyle={{ zIndex: '50000' }}
         // parentElement={containerRef.current}
         align={align}
+        reposition={reposition}
         boundaryElement={document.body}
         boundaryInset={20}
         content={

@@ -84,7 +84,6 @@ declare const Open: {
     openPdf: (id: number) => Promise<IPdfInstance>
     openPdfLabel: (id: number) => Promise<void>
     openPdfPage: (pageIndex: number, id: number) => Promise<void>
-    openPdfSearchedText: (text: string, pageIndex: number, pdfId: number) => Promise<void>
   }
   Editor: {
     openEditor: (id: number) => Promise<IEditorInstance>

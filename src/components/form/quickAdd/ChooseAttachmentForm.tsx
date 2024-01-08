@@ -33,7 +33,7 @@ export default memo(({ onBack, metaId, onClose }: { onBack: VoidFunction; onClos
         <Content style={{ marginTop: 8 }}>
           <div style={{ color: Colors.Font.Transparent, fontSize: 13 }}>{t('general.Selected object')}</div>
           <Content flex gap={12} justifyContent={'space-between'}>
-            <div className={ClassName.ellipsisFont(1)}>{selectedMeta.name}</div>
+            <div className={ClassName.ellipsisFont(1)}>{selectedMeta.name || selectedMeta.placeholderName}</div>
             <div
               onClick={async () => {
                 onClose()

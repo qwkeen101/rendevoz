@@ -393,6 +393,7 @@ export default (
                   type: 'item',
                   key: 'open-in-side-peek',
                   text: t('general.Open in side peek'),
+                  suffix: WhiteboardDefaultKeyboardShortcut.OpenInSidebar.text,
                   onSelect: () => {
                     instance.nodeOps?.open(selected[0].id, 'sidePeek')
                     instance.toolbarOps?.closeToolbar()
@@ -402,7 +403,7 @@ export default (
                   type: 'item',
                   key: 'open-in-center',
                   text: t('general.Open in center'),
-                  icon: '',
+                  suffix: WhiteboardDefaultKeyboardShortcut.OpenInCenter.text,
                   onSelect: () => {
                     instance.nodeOps?.open(selected[0].id, 'center')
                     instance.toolbarOps?.closeToolbar()
@@ -412,7 +413,7 @@ export default (
                   type: 'item',
                   key: 'open-in-float',
                   text: t('general.Open in float'),
-                  icon: '',
+                  suffix: WhiteboardDefaultKeyboardShortcut.OpenInFloat.text,
                   onSelect: () => {
                     instance.nodeOps?.open(selected[0].id, 'float')
                     instance.toolbarOps?.closeToolbar()
@@ -424,6 +425,7 @@ export default (
             type: 'item',
             key: 'open-in-new-tab',
             text: t('general.Open in new tab'),
+            suffix: WhiteboardDefaultKeyboardShortcut.OpenInNewTabs.text,
             onSelect: () => {
               instance.nodeOps?.open(selected[0].id, 'newTab')
               instance.toolbarOps?.closeToolbar()

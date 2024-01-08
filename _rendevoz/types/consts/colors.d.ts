@@ -1,3 +1,6 @@
+export declare const GlobalTheme: {
+    isDark: boolean;
+};
 export declare const Font: {
     White: string;
     Silver: string;
@@ -10,14 +13,18 @@ export declare const Font: {
     Caption: string;
     Description: string;
     Link: string;
+    SuperTransparent: string;
     Transparent: string;
+    Blank: string;
 };
 export declare const Background: {
+    Blank: string;
+    BoxShadowBorder: string;
     Global: string;
     Light: string;
+    PopoverBoxShadow: string;
     LightSecondary: string;
     Dark: string;
-    PopoverBoxShadow: string;
     DarkSecondary: string;
     DarkLinear: string;
     LightLinear: string;
@@ -58,8 +65,15 @@ export declare const Common: {
     SelectColor: string;
 };
 declare const Colors: {
-    Font: Record<"Link" | "White" | "Silver" | "SilverSecond" | "Black" | "SilverBlue" | "Primary" | "Secondary" | "Tertiary" | "Caption" | "Description" | "Transparent", string>;
-    Background: Record<"Scrollbar" | "Light" | "Secondary" | "Global" | "LightSecondary" | "Dark" | "DarkSecondary" | "DarkLinear" | "LightLinear" | "LightButtonHover" | "DarkButtonHover" | "ButtonHover" | "ButtonActive" | "DarkButtonActive" | "LightButtonActive" | "Linear" | "DarkBorder" | "Border" | "LightHighContrast" | "DarkHighContrast" | "HighContrast" | "HighlightBorder" | "LightHighlightBorder" | "DarkHighlightBorder" | "LightScrollBar" | "DarkScrollBar" | "Popover" | "BoxShadow" | "LightRadialGradient" | "DarkRadialGradient" | "RadialGradient" | "PopoverBoxShadow", string>;
+    Consts: {
+        BoxShadowBorderRight: string;
+        BoxShadowBorderLeft: string;
+        Border: string;
+    };
+    getAdaptColor: (c?: string) => any;
+    getAdaptFontColor: (bg?: string) => any;
+    Font: Record<"Link" | "White" | "Silver" | "SilverSecond" | "Black" | "SilverBlue" | "Primary" | "Secondary" | "Tertiary" | "Caption" | "Description" | "Transparent" | "SuperTransparent" | "Blank", string>;
+    Background: Record<"Scrollbar" | "Light" | "Secondary" | "Blank" | "Global" | "LightSecondary" | "Dark" | "DarkSecondary" | "DarkLinear" | "LightLinear" | "LightButtonHover" | "DarkButtonHover" | "ButtonHover" | "ButtonActive" | "DarkButtonActive" | "LightButtonActive" | "Linear" | "DarkBorder" | "Border" | "LightHighContrast" | "DarkHighContrast" | "HighContrast" | "HighlightBorder" | "LightHighlightBorder" | "DarkHighlightBorder" | "LightScrollBar" | "DarkScrollBar" | "Popover" | "BoxShadow" | "LightRadialGradient" | "DarkRadialGradient" | "RadialGradient" | "PopoverBoxShadow" | "BoxShadowBorder", string>;
     Emphasis: Record<"DarkEmphasis" | "LightEmphasis" | "Emphasis", string>;
     Common: Record<"Green" | "Red" | "SelectColorTransparent" | "SelectColor", string>;
 };

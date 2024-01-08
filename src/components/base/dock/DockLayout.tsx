@@ -567,13 +567,13 @@ export class DockLayout extends DockPortalManager implements DockContext {
    * move focus to panelToFocus
    */
   componentDidUpdate(prevProps: Readonly<LayoutProps>, prevState: Readonly<LayoutState>, snapshot?: any) {
-    if (this.panelToFocus) {
-      const panel = this._ref.querySelector(`.dock-panel[data-dockid="${this.panelToFocus}"]`) as HTMLElement
-      if (panel && !panel.contains(this._ref.ownerDocument.activeElement)) {
-        ;(panel.querySelector('.dock-bar') as HTMLElement)?.focus()
-      }
-      this.panelToFocus = null
-    }
+    // if (this.panelToFocus) {
+    //   const panel = this._ref.querySelector(`.dock-panel[data-dockid="${this.panelToFocus}"]`) as HTMLElement
+    //   if (panel && !panel.contains(this._ref.ownerDocument.activeElement)) {
+    //     ;(panel.querySelector('.dock-bar') as HTMLElement)?.focus()
+    //   }
+    //   this.panelToFocus = null
+    // }
   }
 
   /** @ignore */

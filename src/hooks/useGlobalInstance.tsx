@@ -15,18 +15,13 @@ assignProperties(GlobalInstance, {
       const object = MetaStore.getMetaObjectsMap().get(id)
       if (!object) throw 'No object!'
       const fromMeta = object.fromObject ? MetaStore.getMetaObjectsMap().get(object.fromObject.metaId) : undefined
-      const name = object
-        ? `${t('general.type')}: ${Rendevoz.Utils.Meta.getTypeName(object.type)}${
-            fromMeta && fromMeta.name ? '\n' + t('general.from') + ': ' + `${fromMeta.name}` : ''
-          }: \n${object.name || object.placeholderName || ''}`
-        : 'Unnamed object'
       const link = `rendevoz://object/${id}`
       const transparentFont = 'rgba(31, 34, 37, 0.65)'
       const blackFont = '#131722'
       return {
         link: link,
-        htmlLink: `<a href="${link}">${name}</a>`,
-        markdown: `[${name}](${link})`,
+        htmlLink: `<a href="${link}">${object.name || object.placeholderName || ''}</a>`,
+        markdown: `[${object.name || object.placeholderName || ''}](${link})`,
         html: renderToStaticMarkup(
           <div style={{ color: blackFont }}>
             <div>

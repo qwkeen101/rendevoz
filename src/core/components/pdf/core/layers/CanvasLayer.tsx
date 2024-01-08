@@ -77,7 +77,7 @@ const CanvasLayer: FC<CanvasLayerProps> = ({ page, width, height, viewport, tran
         }, 100)
       })
     },
-    { wait: 500, trailing: true, leading: true }
+    { wait: 200, trailing: true, leading: true }
   )
   useIsomorphicLayoutEffect(() => {
     const task = renderTaskRef.current

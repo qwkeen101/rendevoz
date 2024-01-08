@@ -19,10 +19,10 @@ const TagCell = ({ value = [], metaId, wrap }: { value: number[]; metaId: number
       <Content
         fullWidth
         fullHeight
+        role={'prop-container'}
         onClick={e => {
           const parent = e.currentTarget.parentElement
           if (parent) {
-            console.log('open here')
             openPopover(parent)
           }
         }}
@@ -31,7 +31,7 @@ const TagCell = ({ value = [], metaId, wrap }: { value: number[]; metaId: number
           flex
           fullWidth
           gap={4}
-          style={{ flexWrap: wrap ? 'wrap' : 'nowrap', overflow: 'hidden', height: 'fit-content', minHeight: 24 }}
+          style={{ flexWrap: wrap ? 'wrap' : 'nowrap', overflow: 'hidden', height: 'fit-content', minHeight: 22 }}
           alignItems="flex-start"
         >
           {value.map(i => (
@@ -43,8 +43,8 @@ const TagCell = ({ value = [], metaId, wrap }: { value: number[]; metaId: number
         <MetaTagPicker
           ref={tagRef}
           style={{
-            boxShadow: Colors.Background.BoxShadow,
-            background: Colors.Background.Secondary,
+            boxShadow: Colors.Background.PopoverBoxShadow,
+            background: Colors.Background.Popover,
             borderRadius: 4,
             left: box?.left,
             top: box?.top,

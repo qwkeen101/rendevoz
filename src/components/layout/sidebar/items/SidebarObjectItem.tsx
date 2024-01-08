@@ -86,7 +86,7 @@ const SidebarObjectItem: FC<ISidebarItem> = ({ parentId, parentType, id, draggab
           <IconNameItem
             style={{ fontSize: FontSize['12px'] }}
             icon={metaObject?.icon || icon}
-            name={metaObject?.name}
+            name={metaObject?.name || metaObject?.placeholderName}
             color={metaObject?.color}
           />
         </Content>

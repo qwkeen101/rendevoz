@@ -1,4 +1,4 @@
-import usePdfInstance from "../../hooks/usePdfInstance";
+import usePdfInstance from '../../hooks/usePdfInstance'
 
 const usePdfViewer = () => usePdfInstance();
 

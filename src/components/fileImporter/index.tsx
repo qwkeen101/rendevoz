@@ -13,7 +13,7 @@ import markdown from '@/assets/images/markdown.png?url'
 import picture from '@/assets/images/picture.png?url'
 import code from '@/assets/images/code.png?url'
 import music from '@/assets/images/music.png?url'
-import FontSize from '@/consts/font'
+import question from '@/assets/images/question.png?url'
 import { useState } from 'react'
 import { assignProperties, fetchRemoteImageAndSaveLocally } from '@/utils'
 import { BaidudiskInstance } from '@/components/fileImporter/baidudisk/BaidudiskDisplayer'
@@ -72,13 +72,7 @@ const FileImporter = ({
       desc: t('general.Manage objects with powerful groups'),
       image: group,
       onClick: () => {
-        ObjectStore('group')
-          .addOneWithMeta(GroupStore.initializeGroup(), {
-            currentMeta: {
-              name: 'Unnamed group'
-            }
-          })
-          .then(handleAfterCreate)
+        ObjectStore('group').addOneWithMeta(GroupStore.initializeGroup()).then(handleAfterCreate)
         onClose?.()
       }
     },
@@ -96,6 +90,14 @@ const FileImporter = ({
             }
           )
           .then(handleAfterCreate)
+        onClose?.()
+      }
+    },
+    {
+      name: t('general.question'),
+      image: question,
+      onClick: () => {
+        ObjectStore('question').addOneWithMeta().then(handleAfterCreate)
         onClose?.()
       }
     }
@@ -130,9 +132,6 @@ const FileImporter = ({
           .addOneWithMeta(
             {},
             {
-              currentMeta: {
-                name: 'Unnamed webpage'
-              },
               showMetaModal: true
             }
           )
@@ -301,21 +300,15 @@ const FileImporter = ({
       <div style={{ paddingLeft: 8, margin: '8px 0px' }} className={ClassName.title('1rem')}>
         {t('general.Organize your ideas')}
       </div>
-      <Content>
-        {records.map(r => renderer(r))}
-      </Content>
+      <Content>{records.map(r => renderer(r))}</Content>
       <div style={{ paddingLeft: 8, margin: '8px 0px' }} className={ClassName.title('1rem')}>
         {t('general.Learning new things')}
       </div>
-      <Content>
-        {files.map(f => renderer(f))}
-      </Content>
+      <Content>{files.map(f => renderer(f))}</Content>
       <div style={{ paddingLeft: 8, margin: '8px 0px' }} className={ClassName.title('1rem')}>
         {t('general.Others')}
       </div>
-      <Content>
-        {others.map(o => renderer(o))}
-      </Content>
+      <Content>{others.map(o => renderer(o))}</Content>
     </Content>
   )
 }

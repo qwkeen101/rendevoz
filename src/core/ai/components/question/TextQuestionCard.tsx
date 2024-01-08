@@ -1,43 +1,33 @@
 import { IQuestion } from '~/typings'
-import AutosizeTextarea from '@/components/custom/input/autosizeTextarea'
 import { ObjectStore } from '@/api/stores'
-import { memo, useState } from 'react'
-import { ClassName } from 'rendevoz'
-import { ContentEditor } from '@/components'
+import { memo } from 'react'
 import { Colors } from '@/consts'
+import SimpleEditor from '@/core/components/editor/SimpleEditor'
+import { useTranslation } from 'react-i18next'
 
-export default memo(({ question }: { question: IQuestion & { questionType: 'text' } }) => {
-  const [editAnswer, setEditAnswer] = useState(false)
+export default memo(({ question, metaId }: { question: IQuestion & { questionType: 'text' }; metaId?: number }) => {
+  const { t } = useTranslation()
   return (
-    <div style={{ width: '100%', cursor: 'pointer' }} onClick={() => setEditAnswer(true)}>
-      <div style={{ fontSize: 13, color: Colors.Font.Transparent, marginTop: 6 }}>我的回答</div>
-      {editAnswer ? (
-        <ContentEditor
-          placeholder={'输入答案...'}
-          style={{
-            marginTop: 4
-          }}
-          value={question.answer}
-          onChange={v => {
-            ObjectStore('question').updateOne({ id: question.id, answer: v })
-            setEditAnswer(false)
-          }}
-        />
-      ) : (
-        <div
-          style={{
-            fontSize: 14,
-            whiteSpace: 'pre-wrap',
-            minHeight: 82,
-            boxShadow: `0 0 0 1px ${Colors.Background.Border}`,
-            marginTop: 3,
-            borderRadius: 6,
-            padding: '1px 6px'
-          }}
-        >
-          {question.answer}
-        </div>
-      )}
+    <div style={{ width: '100%' }}>
+      <div style={{ fontSize: 13, color: Colors.Font.Transparent, marginTop: 6 }}>{t('general.My answer')}</div>
+      <SimpleEditor
+        metaId={metaId}
+        textareaMode={true}
+        containerStyle={{
+          minHeight: 110,
+          cursor: 'text',
+          borderRadius: 6,
+          marginTop: 4,
+          padding: 6,
+          border: '1px solid var(--border-background)'
+        }}
+        changeOnBlur={true}
+        fontSize={14}
+        value={question.answer}
+        onChange={v => {
+          ObjectStore('question').updateOne({ id: question.id, answer: v })
+        }}
+      />
     </div>
   )
 })

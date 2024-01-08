@@ -26,7 +26,7 @@ export default defineConfig(() => ({
   },
   base: './',
   optimizeDeps: {
-    include: ['retry'],
+    include: ['retry', 'fix-webm-duration'],
     exclude: ['canvas', 'whisper-turbo']
   },
   build: {

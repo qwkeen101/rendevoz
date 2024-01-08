@@ -1,5 +1,5 @@
 import { toast } from 'react-hot-toast'
-import { GlobalInstances, IEditorInstance, IPdfViewer, IMediaInstance, IWebpageInstance } from '~/typings'
+import { GlobalInstances, IEditorInstance, IPdfViewer, IMediaInstance, IWebpageInstance, IPdfInstance } from '~/typings'
 import { ID_TO_LABEL_MAP } from '@/core'
 import { globalStore, MetaStore, ObjectStore } from '../../api/stores'
 import { metaObjectsAtom, objectIdToMetaObjectIdMapAtom, TypeToRegisteredMetaObject } from '../../api/stores/meta.store'
@@ -273,13 +273,13 @@ const openNoteBlock = async (blockId: number) => {
   }
 }
 
-const openPdf = (pdfId: number): Promise<IPdfViewer> => {
+const openPdf = (pdfId: number): Promise<IPdfInstance> => {
   return new Promise(res => {
     Rendevoz.Actions.Layout.openNewTab?.({
       data: {
         type: 'pdf',
         objectId: pdfId,
-        onInstanceInitialized: (i: IPdfViewer) => res(i)
+        onInstanceInitialized: (i: IPdfInstance) => res(i)
       }
     })
     updateViewAt(pdfId)
@@ -301,7 +301,7 @@ const openImage = (imageId: number) => {
 
 const openPdfPage = async (page: number, pdfId: number) => {
   const pdf = await openPdf(pdfId)
-  pdf.jumpToPage?.(page)
+  pdf.navigateOps?.jumpToPage?.(page)
 }
 
 const openPdfLabel = async (labelId: number) => {
@@ -312,34 +312,12 @@ const openPdfLabel = async (labelId: number) => {
     if (pdfId) {
       const viewer = await openPdf(pdfId)
       setTimeout(() => {
-        viewer.jumpToLabel?.(labelId)
+        viewer.navigateOps?.jumpToLabel?.(labelId)
       }, 100)
-      if (ID_TO_LABEL_MAP.get(viewer)?.has(labelId)) {
-        ID_TO_LABEL_MAP.get(viewer)?.get(labelId)?.focus()
-      } else {
-        viewer.onLabelRendered = l => {
-          if (l === labelId) {
-            ID_TO_LABEL_MAP.get(viewer)?.get(labelId)?.focus()
-          }
-        }
-      }
     }
   }
 }
 
-const openPdfSearchedText = async (text: string, pageIndex: number, pdfId: number) => {
-  const pdf = await openPdf(pdfId)
-
-  if (pdf) {
-    waitFor(
-      () => !!(pdf.jumpToPage && pdf.highlightText),
-      () => {
-        pdf.jumpToPage?.(pageIndex)
-        pdf.highlightText?.(text, pageIndex)
-      }
-    )
-  }
-}
 
 const openHome = () => {
   return new Promise(res => {
@@ -456,8 +434,7 @@ const Open: typeof Rendevoz.Actions.Open = {
   Pdf: {
     openPdf,
     openPdfLabel,
-    openPdfPage,
-    openPdfSearchedText
+    openPdfPage
   },
   Editor: {
     openEditor,

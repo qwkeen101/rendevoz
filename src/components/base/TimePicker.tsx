@@ -2,6 +2,7 @@ import ClassName from '@/styles/classNames'
 import { css } from '@emotion/css'
 import { format } from 'date-fns'
 import Calendar from 'react-calendar'
+import { Colors } from '@/consts'
 
 const TimePicker = ({
   className,
@@ -31,17 +32,24 @@ const TimePicker = ({
                 cursor: 'not-allowed'
               }
             },
-            ClassName.flatButton()
+            ClassName.flatButton(3, '2px 8px')
           ],
+          fontSize: 14,
           abbr: {
             textDecoration: 'none !important',
             cursor: 'inherit !important'
           },
-          '.react-calendar__month-view__weekdays': [ClassName.description()],
+          '.react-calendar__month-view__weekdays': {
+            fontSize: 14
+          },
           '.react-calendar__navigation': {
             display: 'flex',
             justifyContent: 'center',
-            fontWeight: 600
+            fontWeight: 600,
+            padding: '4px 4px 0px'
+          },
+          '.react-calendar__viewContainer': {
+            padding: 4
           },
           '.react-calendar__navigation__label': {
             fontWeight: 'inherit'
@@ -55,13 +63,10 @@ const TimePicker = ({
             justifyContent: 'center'
           },
           '.react-calendar__month-view__days__day--neighboringMonth': {
-            color: 'rgba(31,34,39,0.3)'
-          },
-          '.react-calendar__month-view__days__day': {
-            fontWeight: 600
+            color: Colors.Background.ButtonActive
           },
           '.react-calendar__tile--active': {
-            background: 'rgba(31, 34, 37, 0.06)'
+            background: Colors.Background.ButtonActive
           }
         },
         className

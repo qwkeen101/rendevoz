@@ -13,10 +13,7 @@ export default ({ value, onDelete, onChange }: { value: string; onDelete?: VoidF
               position: 'absolute',
               top: 6,
               right: 6,
-              color: 'white'
-            }}
-            style={{
-              background: 'rgba(255,0,0,0.7)'
+              color: Colors.Common.Red
             }}
             size={16}
             className={ClassName.circleButton()}

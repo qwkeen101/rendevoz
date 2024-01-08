@@ -7,6 +7,7 @@ export const circleButton = (padding = 4, borderRadius = 999) => {
     padding,
     cursor: 'pointer',
     borderRadius,
+    height: 'fit-content',
     '&[data-active="true"]': {
       background: `${Colors.Background.ButtonHover}`
     },
@@ -24,12 +25,14 @@ export const selectButton = (borderRadius = 4, padding = '3px 8px') => {
     transition: 'all 0.2s ease',
     borderRadius,
     padding,
+    height: 'fit-content',
     cursor: 'pointer',
     userSelect: 'none',
     flexShrink: 0,
     background: 'rgb(35, 131, 226)',
+    fontWeight: 500,
     color: 'white',
-    boxShadow: 'inset 0 0 0 1px var(--border-background)',
+    boxShadow: 'var(--border-background) 0px 0px 0px 1px inset, var(--border-background) 0px 1px 2px',
     '&[data-active="true"]': {
       background: `rgb(0,107,199)`
     },
@@ -48,6 +51,7 @@ export const flatButton = (borderRadius = 4, padding = '3px 8px', background = C
     padding,
     cursor: 'pointer',
     userSelect: 'none',
+    height: 'fit-content',
     border: border ? `1px solid ${Colors.Background.Border}` : undefined,
     '&[data-active="true"]': {
       background: `${background}`

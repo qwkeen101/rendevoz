@@ -1,17 +1,47 @@
 import { Editor } from '@/core'
-import { CSSProperties, useMemo } from 'react'
+import { CSSProperties, useMemo, useRef, useState } from 'react'
 import Id from '@/utils/id'
 import { IEditorInstance } from '~/typings'
+import { css } from '@emotion/css'
+import NoteEditor from '@/core/components/editor/noteEditor/NoteEditor'
+import { useUpdateEffect } from '@/hooks'
 
 type SimpleEditorProps = {
-  value?: string
+  value?: string | import('slate').Descendant[]
   onChange?: (v: import('slate').Descendant[]) => void
-  onInstanceInitialized: (i: IEditorInstance) => void
+  onInstanceInitialized?: (i: IEditorInstance) => void
   containerStyle?: CSSProperties
+  placeholder?: string
+  fontSize?: number
+  readOnly?: boolean
+  textareaMode?: boolean
+  changeOnBlur?: boolean
+  metaId?: number
+  replaceValueOnChange?: boolean
 }
 
-const SimpleEditor = ({ value, onChange, onInstanceInitialized, containerStyle }: SimpleEditorProps) => {
-  const id = useMemo(() => Id.getStrId(), [])
+const textAreaClassname = css({
+  p: {
+    padding: 0
+  },
+  '.ParagraphBlock': {
+    margin: '1px 0px !important',
+    borderRadius: 0
+  }
+})
+const SimpleEditor = ({
+  value,
+  onChange,
+  onInstanceInitialized,
+  containerStyle,
+  fontSize = 17,
+  replaceValueOnChange = false,
+  readOnly = false,
+  changeOnBlur = false,
+  textareaMode,
+  placeholder,
+  metaId
+}: SimpleEditorProps) => {
   const initialValue = useMemo(() => {
     if (value) {
       if (typeof value === 'string') {
@@ -41,17 +71,37 @@ const SimpleEditor = ({ value, onChange, onInstanceInitialized, containerStyle }
       {
         type: 'paragraph',
         id: Id.getId(),
-        children: [{ text: 'Input something' }]
+        children: [{ text: '' }]
       }
     ]
   }, [])
-  console.log(initialValue)
+  const [innerValue, setInnerValue] = useState(initialValue)
+  const ins = useRef<IEditorInstance>()
+  useUpdateEffect(() => {
+    if (replaceValueOnChange) {
+      if (Array.isArray(value) || value === undefined) {
+        setInnerValue(value)
+        ins.current?.replaceChildren?.(value || [{ type: 'paragraph', children: [{ text: '' }], id: Id.getId() }])
+      }
+    }
+  }, [value])
   return (
-    <Editor
-      id={id}
+    <NoteEditor
+      metaId={metaId}
+      placeholder={placeholder}
       on={e => {
         if (e.type === 'valueChange') {
-          onChange?.(e.value)
+          setInnerValue(e.value)
+          if (!changeOnBlur) {
+            onChange?.(e.value)
+          }
+        }
+        if (e.type === 'blur') {
+          if (changeOnBlur) {
+            if (innerValue !== value) {
+              onChange?.(innerValue)
+            }
+          }
         }
       }}
       defaultValue={initialValue}
@@ -65,20 +115,31 @@ const SimpleEditor = ({ value, onChange, onInstanceInitialized, containerStyle }
           ...containerStyle
         }
       }}
+      readOnly={readOnly}
       state={{
-        fontSize: 17,
+        fontSize,
         pageWidth: 'Max',
-        showSyncBlockShadow: false
+        showSyncBlockShadow: false,
+        typeface: 'Inter',
+        lineSpacing: 1.57
       }}
-      onInstanceInitialized={onInstanceInitialized}
+      classNames={{
+        editorContainerClassName: textareaMode ? textAreaClassname : undefined
+      }}
+      onInstanceInitialized={i => {
+        onInstanceInitialized?.(i)
+        ins.current = i
+      }}
       toolbar={{
         highlight: false
       }}
       layout={{
         showTitle: false,
         showBlockHandle: false,
+        virtualizer: false,
         showHeader: false,
-        showBottomPadding: false
+        showBottomPadding: false,
+        alwaysShowPlaceholder: !!placeholder
       }}
     />
   )

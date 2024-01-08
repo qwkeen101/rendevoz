@@ -42,6 +42,10 @@ const ComponentSetting = () => {
     {
       title: t('settings.drop file auto object'),
       children: <Switch value={setting.whiteboard.dropFileAutoObject} onChange={() => toggleSetting('whiteboard', 'dropFileAutoObject')} />
+    },
+    {
+      title: t('settings.Only erase hand draw'),
+      children: <Switch value={setting.whiteboard.onlyEraseFreeDraw} onChange={() => toggleSetting('whiteboard', 'onlyEraseFreeDraw')} />
     }
   ]
 
@@ -204,10 +208,10 @@ const ComponentSetting = () => {
   ]
   return (
     <>
-      <SettingGroup title={t('settings.label settings')} layout={labelSettingItems} />
+      {/*<SettingGroup title={t('settings.label settings')} layout={labelSettingItems} />*/}
       <SettingGroup title={t('settings.whiteboard settings')} layout={whiteboardSettingItems} />
       <SettingGroup title={t('settings.editor settings')} layout={editorSettingItems} />
-      <SettingGroup title={t('settings.translate settings')} layout={translateSettingItems} />
+      {/*<SettingGroup title={t('settings.translate settings')} layout={translateSettingItems} />*/}
       <SettingGroup title={t('settings.webpage settings')} layout={webpageSettingItems} />
       <SettingGroup title={t('settings.pdf settings')} layout={pdfSettingItems} />
       <SettingGroup title={t('settings.video settings')} layout={videoSettingItems} />

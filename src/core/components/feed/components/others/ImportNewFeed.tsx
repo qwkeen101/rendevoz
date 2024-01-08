@@ -20,27 +20,26 @@ export default () => {
     () => {
       if (newFeedUrl) {
         if (!feedDetails?.isLoading) {
-          transformFeedUrl(newFeedUrl)
-            .then(url => {
-              if (url) {
-                setFeedDetails({ isLoading: true, details: undefined })
-                fetch(url)
-                  .then(res => res.text())
-                  .then(text => parser.parseString(text))
-                  .then(res => {
-                    setFeedDetails({
-                      isLoading: false,
-                      details: { title: res.title, thumbnail: res.image?.url, description: res.description }
-                    })
+          transformFeedUrl(newFeedUrl).then(url => {
+            if (url) {
+              setFeedDetails({ isLoading: true, details: undefined })
+              fetch(url)
+                .then(res => res.text())
+                .then(text => parser.parseString(text))
+                .then(res => {
+                  setFeedDetails({
+                    isLoading: false,
+                    details: { title: res.title, thumbnail: res.image?.url, description: res.description }
                   })
-                  .catch(e => {
-                    toast.error('Failed to get feed!')
-                  })
-                  .finally(() => {
-                    setFeedDetails(s => ({ ...s, isLoading: false }))
-                  })
-              }
-            })
+                })
+                .catch(e => {
+                  toast.error('Failed to get feed!')
+                })
+                .finally(() => {
+                  setFeedDetails(s => ({ ...s, isLoading: false }))
+                })
+            }
+          })
         }
       } else {
         setFeedDetails({ isLoading: false })

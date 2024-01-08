@@ -45,6 +45,7 @@ const handleQueue = () => {
     const draft = createDraft(atomValue)
     v.forEach(i => {
       const { type, data, onSuccess, onFail } = i
+      console.log(type, data)
       switch (type) {
         case 'add':
           draft.set(data.id, data)
@@ -182,6 +183,7 @@ type ILocalStore<T> = {
   getAll: (filterer?: (obj: T) => boolean) => IStoreDeprecated<T>['getAll']
   getAllData: (filterer?: (obj: T) => boolean) => IStoreDeprecated<T>['getAllData']
   getOneById: () => IStoreDeprecated<T>['getOneById']
+  getMultipleByIds: () => (ids: number[], cache?: boolean) => Promise<T[]>
   updateOne: (onSuccess?: (obj: T, silent: boolean) => void, onFail?: (silent: boolean) => void) => IStoreDeprecated<T>['updateOne']
 }
 export function initializeLocalStore<T>(atom: PrimitiveAtom<Map<number, T>>, database: Table) {
@@ -232,6 +234,20 @@ export function initializeLocalStore<T>(atom: PrimitiveAtom<Map<number, T>>, dat
       const arr = await (filterer ? database.filter(filterer).toArray() : database.toArray())
       return arr
     },
+    getMultipleByIds:
+      () =>
+      async (ids, cache = true) => {
+        const map = globalStore.get(atom)
+        const allInCache = ids.every(id => map.has(id))
+        if (allInCache) {
+          return ids.map(id => map.get(id)) as T[]
+        }
+        const arr = await database.bulkGet(ids)
+        if (cache) {
+          globalStore.set(atom, bulkAdd(arr, globalStore.get(atom)))
+        }
+        return arr as T[]
+      },
     getOneById: () => id => {
       return new Promise(res => {
         const atomOne = globalStore.get(atom).get(id)

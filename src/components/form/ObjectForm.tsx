@@ -134,6 +134,7 @@ const ObjectForm: FC<
             }
             if (details.type === 'web') {
               const result = await Rendevoz.Utils.Meta.normalizeWebFileToMeta(details.url, object.type)
+              console.log(result)
               setObject(o => ({ ...o, ...result.meta }))
               if (originObject) {
                 setOriginObject(i => ({ ...i, ...result.object }))
@@ -164,12 +165,11 @@ const ObjectForm: FC<
                     if (ocrLoading) return
                     toggleOcrLoading(true)
                     try {
-                      const fileUrl = initialObject.coverImgSrc!
+                      const fileUrl = object.coverImgSrc!
                       const image = await fetch(fileUrl).then(res => res.blob())
                       const result = await OcrService.ocrImage(image)
                       const desc = result?.result.map(i => i.words).join(' ')
-                      const { name, description } = transformTextContentToNameAndDescription(desc)
-                      setObject(s => ({ ...s, name, description }))
+                      setObject(s => ({ ...s, description: desc }))
                     } catch (e) {
                       toast.error('Failed to recognize text!')
                     } finally {

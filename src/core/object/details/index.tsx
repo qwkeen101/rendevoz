@@ -61,6 +61,7 @@ const ObjectDetails = ({
           padding: '6px 8px 4px 16px',
           cursor: 'grab',
           width: '100%',
+          borderRadius: 12,
           zIndex: 9999
         }}
       >
@@ -203,7 +204,6 @@ export const GlobalObjectDetails = () => {
           width: '100%',
           height: '100%',
           borderRadius: 12,
-          overflow: 'hidden',
           background: Colors.Background.Popover,
           boxShadow: Colors.Background.PopoverBoxShadow
         }}

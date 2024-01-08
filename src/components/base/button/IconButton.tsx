@@ -78,6 +78,7 @@ const IconButton = forwardRef(
           gap={gap}
           flex
           tabIndex={tabIndex}
+          alignItems={'center'}
           onPointerEnter={onPointerEnter}
           {...rest}
           style={{

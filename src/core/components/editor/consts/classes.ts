@@ -64,18 +64,13 @@ const TextBoxClass = css({
   width: '100%',
   display: 'flex',
   flexDirection: 'column',
-  alignItems: 'center',
-  '*': {
-    '::selection': {
-      color: 'unset',
-      background: 'var(--select-color-transparent)'
-    }
-  }
+  alignItems: 'center'
 })
 
 const ScrollWrapperClass = css({
   height: '100%',
   width: '100%',
+  minHeight: 'inherit',
   overflowX: 'hidden',
   overflowY: 'auto',
   position: 'relative',

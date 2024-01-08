@@ -20,8 +20,7 @@ const Code: FC<RenderElementProps> = ({ element, attributes, children }) => {
       className="editor-disable-format"
       style={{
         border: '1px solid var(--border-background)',
-        borderRadius: 8,
-        overflow: 'hidden'
+        borderRadius: 8
       }}
       contentEditable={false}
     >

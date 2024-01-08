@@ -13,7 +13,7 @@ import { useTranslation } from 'react-i18next'
 export default ({ details, onClose }: { details: MetaGroupChild; onClose: VoidFunction }) => {
   const instance = useGroupInstance()
   const selected = instance.selectOps?.getSelectedItems()
-  const hasSelected = selected?.length
+  const hasSelected = selected?.length && selected.length > 1
   const groupState = useGroupState()[0]
   const { t } = useTranslation()
   const meta = MetaStore.useValue(details.id)

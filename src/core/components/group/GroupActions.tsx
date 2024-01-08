@@ -1,5 +1,5 @@
 import { AnimatePopover, Button, Content, Icon, IconWithPopover, WithBorder } from '@/components'
-import { ObjectStore } from '@/api/stores'
+import { MetaStore, ObjectStore } from '@/api/stores'
 import { MetaGroup } from '~/typings'
 import BetterFilter from '@/core/object/filter/BetterFilter'
 import { memo, useRef, useState } from 'react'
@@ -32,6 +32,7 @@ const GroupActions = memo(({ groupId }: { groupId: number }) => {
     instance.updateCurrentView?.(s => ({ ...s, search: v }))
   }
   const padding = useSelectAtomValue(GroupStateAtom, s => s.pagePadding)
+  const visibleProps = useSelectAtomValue(GroupStateAtom, s => s.visibleHeaders)
   const visibleTypes = useSelectAtomValue(GroupStateAtom, s => s.visibleTypes)
   const [showSearch, setShowSearch] = useState(!!search)
   const isCompo = useRef(false)
@@ -39,7 +40,7 @@ const GroupActions = memo(({ groupId }: { groupId: number }) => {
   const existedFilterLength = currentView?.filter?.rules.length ?? 0
   const existedSortLength = currentView?.sort?.sorters.length ?? 0
   const { t } = useTranslation()
-
+  const allHeaders = instance.viewOps?.useViewProperties()
   if (!groupData) return null
   return (
     <Content
@@ -103,14 +104,31 @@ const GroupActions = memo(({ groupId }: { groupId: number }) => {
           positions={['bottom']}
           align="end"
           padding={8}
+          withClickCover={true}
+          containerStyle={{
+            zIndex: '9996'
+          }}
           onVisiblityChange={v => {
             if (v === false) {
+              console.log(innerFilter)
               instance.updateCurrentView?.(s => ({ ...s, filter: innerFilter }))
             }
           }}
           content={
             <WithBorder padding={8}>
-              <BetterFilter visibleTypes={visibleTypes} root={currentView?.filter} onChange={v => setInnerFilter(v)} />
+              <BetterFilter
+                visibleFields={visibleProps.map(i => (i.type === 'custom' ? MetaStore.getPropDetails(i.id)?.name ?? '' : i.name))}
+                extraFields={
+                  allHeaders
+                    ?.filter(i => i.type === 'custom')
+                    .map(i => MetaStore.getPropDetails(i.id))
+                    .filter(i => i)
+                    .map(i => ({ ...i, value: i.id })) || []
+                }
+                visibleTypes={visibleTypes}
+                root={currentView?.filter}
+                onChange={v => setInnerFilter(v)}
+              />
             </WithBorder>
           }
         >
@@ -133,6 +151,7 @@ const GroupActions = memo(({ groupId }: { groupId: number }) => {
               instance.updateCurrentView?.(s => ({ ...s, sort: innerSort }))
             }
           }}
+          withClickCover={true}
           content={
             <WithBorder padding={8} width={200}>
               <BetterSorter root={currentView?.sort} onChange={v => setInnerSort(v)} />
@@ -207,9 +226,7 @@ const GroupActions = memo(({ groupId }: { groupId: number }) => {
             color: 'white',
             background: Colors.Common.SelectColor
           }}
-        >
-          Add
-        </Button.IconButton>
+        ></Button.IconButton>
       </Content>
     </Content>
   )

@@ -26,13 +26,13 @@ const QueryPanel = ({ groupId, onClose }: { groupId: number; onClose: VoidFuncti
     if (queryRule?.rules?.length) {
       const filterFunc = transformFilterGroupToFilterArray(queryRule)
       if (filterFunc !== undefined) {
-        const allObjects = Array.from(MetaStore.getIndexedMetaObjects()?.undeletedMetaObjectsSet.values() || [])
+        const allObjects = MetaStore.getMetaObjects('create').filter(i => !i.hidden)
         const leftObjects = allObjects.filter(filterFunc)
         const finalObjects = showInGroup ? leftObjects : leftObjects.filter(i => !existedMetas.has(i.id))
         setQueryResult(finalObjects.map(i => ({ metaId: i.id, selected: false })))
       }
     } else {
-      const allObjects = Array.from(MetaStore.getIndexedMetaObjects()?.undeletedMetaObjectsSet.values() || [])
+      const allObjects = MetaStore.getMetaObjects('create').filter(i => !i.hidden)
       const finalObjects = showInGroup ? allObjects : allObjects.filter(i => !existedMetas.has(i.id))
       setQueryResult(finalObjects.map(i => ({ metaId: i.id, selected: false })))
     }

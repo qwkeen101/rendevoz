@@ -6,6 +6,7 @@ import NameEditor from '../../components/base/ContentEditor'
 import { useToggle } from '@/hooks'
 import ClassName from '@/styles/classNames'
 import { useTranslation } from 'react-i18next'
+import AutosizeTextarea from '@/components/custom/input/autosizeTextarea'
 
 const AttachmentObject = ({
   showHoverObject = true,
@@ -57,8 +58,6 @@ const AttachmentObject = ({
       </Content>
     )
   } else {
-    const [showText, toggleShowText] = useToggle(true)
-    const { t } = useTranslation()
     return (
       <Content
         flex
@@ -75,20 +74,17 @@ const AttachmentObject = ({
         }}
       >
         {showSelect && <CheckBox style={{ width: 14, height: 14, fontSize: 12, borderRadius: 2 }} checked={selected}></CheckBox>}
-        {showText ? (
-          <div style={{ textTransform: 'none' }} onDoubleClick={toggleShowText}>
-            {attachment.text || t('general.double click to edit text')}
-          </div>
-        ) : (
-          <NameEditor
-            style={{ width: '100%' }}
-            value={attachment.text}
-            onChange={v => {
-              onChange({ ...attachment, text: v })
-              toggleShowText(true)
-            }}
-          />
-        )}
+        <AutosizeTextarea
+          placeholder={'Edit text...'}
+          onBlur={e => {
+            onChange({ ...attachment, text: e.target.value })
+          }}
+          onClick={e => e.stopPropagation()}
+          defaultValue={attachment.text}
+          className={ClassName.noStyleInput}
+          style={{ padding: 0, width: '100%', resize: 'none' }}
+          spellCheck={'false'}
+        ></AutosizeTextarea>
       </Content>
     )
   }

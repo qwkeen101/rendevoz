@@ -1,7 +1,9 @@
-import { useEffect } from 'react'
+import { useEffect, useLayoutEffect } from 'react'
 import { useMount } from './hooks'
 import ClassName from './styles/classNames'
 import { useSetting } from './core'
+import { GlobalTheme } from '@/consts'
+
 
 const ThemeSwitcher = () => {
   const [setting, setSetting] = useSetting()
@@ -43,7 +45,8 @@ const ThemeSwitcher = () => {
       }
     }
   }, [setting.general.followSystemTheme])
-  useEffect(() => {
+  useLayoutEffect(() => {
+    GlobalTheme.isDark = setting.general.darkMode
     if (!setting.general.darkMode) {
       document.documentElement.setAttribute('theme', 'light')
     } else {

@@ -6,11 +6,11 @@ export default ({ value }: { value: string }) => {
   return (
     <div
       style={{
-        borderRadius: 4,
+        borderRadius: 2,
         fontSize: 14,
         width: 'fit-content',
         wordBreak: 'break-word',
-        padding: '1px 6px'
+        padding: '0px 6px'
       }}
       className={ClassName.objectTag}
     >

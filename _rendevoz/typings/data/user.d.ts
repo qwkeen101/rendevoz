@@ -31,4 +31,7 @@ export interface IUser {
   monthlyOcrUsed?: number
   // 全部ocr次数
   totalOcrUsed?: number
+  // 充值的ai点数
+  availableAICredit?: number
+  monthlyFreeAICreditUsed?: number
 }

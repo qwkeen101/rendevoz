@@ -90,7 +90,6 @@ export default memo(() => {
             }}
             style={{
               pointerEvents: 'auto',
-              overflow: 'hidden',
               padding: '28px 8px 8px'
             }}
             dragHandleClassName={'handle'}

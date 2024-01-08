@@ -15,6 +15,7 @@ import MediaScrubber from './components/MediaScrubber'
 import { useSetAtom } from 'jotai'
 import { VideoSidebarStateAtom } from './hooks/useMediaSidebarState'
 import MediaActionsMenu from '@/core/components/media/components/MediaActionsMenu'
+import { useTranslation } from 'react-i18next'
 
 const playerControlMask = css({
   backgroundImage:
@@ -47,6 +48,7 @@ const MediaBottomBar = () => {
     }
   }, [totalTime, currentTime])
   const audioMode = mode === 'audio'
+  const { t } = useTranslation()
   const containerRef = useRef<HTMLDivElement>(null)
   const opacity = audioMode || toolbarState.visible || chooseTime || toolbarState.currentHoverLabelId || paused || draggingScrubber ? 1 : 0
   return (
@@ -86,7 +88,7 @@ const MediaBottomBar = () => {
         backdropFilter={false}
         containerStyle={{
           pointerEvents: 'none',
-          zIndex: '500'
+          zIndex: '9999'
         }}
         content={
           <Content flex column alignItems="center" style={{ opacity }}>
@@ -135,6 +137,7 @@ const MediaBottomBar = () => {
           left: thumbnailPosition?.x,
           top: thumbnailPosition?.y
         }}
+        keepAlign
         positions={['top']}
       ></AnimatePopover>
       <div
@@ -262,12 +265,12 @@ const MediaBottomBar = () => {
           ) : (
             <Content flex gap={10} style={{ fontWeight: 600 }}>
               <Icon name={'park-loading-four'} spin />
-              <div>Loading...</div>
+              <div>{t('general.Loading')}...</div>
             </Content>
           )}
         </Content>
         <Content flex fullHeight alignItems="center" role="right-toolbar" gap={16} style={{ flexShrink: 0 }}>
-          {mediaState.subtitleList?.length ? (
+          {mediaState.subtitleList?.length && mediaState.mode !== 'audio' ? (
             <Icon
               onClick={() => {
                 setMediaState(s => ({ ...s, showSubtitle: !s.showSubtitle }))

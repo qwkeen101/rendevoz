@@ -1,5 +1,5 @@
-import { DraggableElement, DraggingElement } from '@/core'
-import { useMergedRef, useSelectAtomValue } from '@/hooks'
+import { DraggableElement, DraggingElement, SettingAtom } from '@/core'
+import { useMergedRef, useSelectAtomValue, useSelectGlobalAtomValue } from '@/hooks'
 import { PageSize } from '~/typings'
 import { ObjectStore } from '@/api/stores'
 import { CSSProperties, FC, forwardRef, memo, useEffect, useMemo, useRef, useState } from 'react'
@@ -13,6 +13,7 @@ import usePdfSelectMode from '../../hooks/useSelectMode'
 import { useSetAtom } from 'jotai'
 import { PdfStateAtom } from '@/core/components/pdf/hooks/usePdfState'
 import LabelNoteRenderer from '@/core/components/pdf/components/label/LabelNoteRenderer'
+import { Colors } from '@/consts'
 
 interface HighlightLabelProps {
   labelId: number
@@ -76,6 +77,7 @@ const Highlights = forwardRef((props, ref) => {
   const mergedRef = useMergedRef(highlightRef, innerRef, ref)
   const [selectMode] = usePdfSelectMode()
   const [focused, setFocused] = useState(false)
+  const darkMode = useSelectGlobalAtomValue(SettingAtom, s => s.general.darkMode)
   useClickOutside(() => setFocused(false), highlightRef, focused)
   const containerRectRef = useRef<Rect>()
   const setPdfState = useSetAtom(PdfStateAtom)
@@ -145,12 +147,7 @@ const Highlights = forwardRef((props, ref) => {
       }, 1500)
     }
   }, [currentHighlightLabelId])
-  const { darkenColor, transparentColor } = useMemo(() => {
-    const color = tinycolor(highlight.color || '#8590ae')
-    const darkenColor = color.clone().darken(20).toString('rgb')
-    const transparentColor = color.clone().setAlpha(0.4)
-    return { darkenColor, transparentColor }
-  }, [highlight.color])
+
   const highlightStyle: CSSProperties =
     highlight.specHighlightType === 'underline'
       ? {
@@ -160,14 +157,13 @@ const Highlights = forwardRef((props, ref) => {
           backgroundRepeat: 'repeat-x'
         }
       : {
-          background: highlight.color
+          background: Colors.getAdaptColor(highlight.color)
         }
   return (
     <div
       style={{
         pointerEvents: 'none',
-        outline: focused ? `2px solid ${darkenColor}` : undefined,
-        background: focused ? transparentColor : undefined,
+        outline: focused ? `2px solid ${Colors.getAdaptColor(highlight.color)}` : undefined,
         borderRadius: 4
       }}
       ref={mergedRef}
@@ -182,7 +178,7 @@ const Highlights = forwardRef((props, ref) => {
             position: 'absolute',
             cursor: 'pointer',
             pointerEvents: selectMode ? 'none' : 'auto',
-            opacity: highlight.specHighlightType === 'underline' ? 1 : 0.4,
+            opacity: highlight.specHighlightType === 'underline' ? 1 : darkMode ? 0.4 : 0.5,
             ...highlightStyle
           }}
         ></div>

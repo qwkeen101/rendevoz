@@ -403,7 +403,6 @@ const Media = (props: MediaProps) => {
       subtitleList: subtitleList || currentState.subtitleList,
       subtitleFollow,
       chapters,
-      volume: volume || currentState.volume,
       mode: mode || getMediaMode(url),
       sortedChapters: (props.mediaState.chapters || currentState.chapters)?.slice().sort((b, a) => b.startTime - a.startTime) || [],
       labelType,

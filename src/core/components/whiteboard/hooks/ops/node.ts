@@ -20,7 +20,7 @@ const assignNodeOps = (instance: IWhiteboardInstance) => {
         const allNodes = instance.getAllNode?.()
         if (!allNodes) throw 'Failed to get nodes'
         const zs = allNodes.map(i => i.z).filter(i => i !== undefined) as number[]
-        return Math.max(...zs) || 1
+        return Math.max(...zs, 0)
       },
       updateAfterZ: currentNodeId => {
         const n = instance.getNode?.(currentNodeId)
@@ -29,7 +29,7 @@ const assignNodeOps = (instance: IWhiteboardInstance) => {
           if (allNodes) {
             const afterZNodes = allNodes.filter(no => no.z > n.z)
             if (afterZNodes.length) {
-              const maxZ = Math.max(...afterZNodes.map(i => i.z))
+              const maxZ = Math.max(...afterZNodes.map(i => i.z), 0)
               instance.updateWhiteboard?.(w => {
                 afterZNodes.forEach(n => {
                   w.nodes?.set(n.id, { ...n, z: n.z - 1 })
@@ -88,7 +88,7 @@ const assignNodeOps = (instance: IWhiteboardInstance) => {
           idArr.forEach(id => {
             const origin = w.nodes?.get(id)
             if (origin && origin.width) {
-              w.nodes?.set(id, { ...origin, expanded: true, width: undefined, height: undefined, resized: false })
+              w.nodes?.set(id, { ...origin, expanded: true, height: undefined, resized: false })
             }
           })
         }, true)
@@ -101,7 +101,7 @@ const assignNodeOps = (instance: IWhiteboardInstance) => {
         updateWhiteboard(w => {
           idArr.forEach(id => {
             w.nodes?.has(id) &&
-              w.nodes?.set(id, { ...w.nodes!.get(id)!, expanded: false, width: undefined, height: undefined, resized: false })
+              w.nodes?.set(id, { ...w.nodes!.get(id)!, expanded: false, height: undefined, resized: false })
           })
         }, true)
         setTimeout(() => {

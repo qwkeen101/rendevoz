@@ -11,7 +11,7 @@ const SettingGroup = ({ title, layout }: { title: string; layout: ISettingItem[]
         style={{
           marginBottom: 10,
           paddingBottom: 8,
-          fontWeight: 800,
+          fontWeight: 600,
           borderBottom: `1px solid ${Colors.Background.Border}`
         }}
       >

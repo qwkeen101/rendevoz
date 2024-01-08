@@ -1,4 +1,5 @@
 import { IQuestion } from '~/typings'
+import langs from '@/consts/langs'
 
 export type IGeneralSetting = {
   general: {
@@ -35,10 +36,11 @@ export type IGeneralSetting = {
 }
 
 export type IAISettings = {
-  question: {
-    autoGenerate: boolean
-    generateType: IQuestion['questionType']
-    generateNum: number
+  AI: {
+    autoGenerateQuestionAfterSummarizing: boolean
+    questionGenerateType: IQuestion['questionType']
+    questionGenerateNum: number
+    outputLanguage: keyof typeof langs
   }
 }
 export type IQuickAddSettings = {
@@ -106,6 +108,7 @@ export type IObjectsAndLinkSetting = {
   object: {
     deleteFileWhenDeleteObject: boolean
     autoHideLabelObject: boolean
+    showPropertiesInComponentPage: boolean
     linkType: 'text' | 'url' | 'markdown' | 'html'
   }
 }
@@ -120,6 +123,7 @@ export type IComponentSetting = {
     enableAddLinkBetweenObjectsWhenConnect: boolean
     snapToObject: boolean
     imageResizeKeepRatio: boolean
+    onlyEraseFreeDraw: boolean
     dropFileAutoObject: boolean
     defaultLineType: 'straight' | 'polyline' | 'curve'
     defaultBackgroundType: 'none' | 'dot' | 'line'

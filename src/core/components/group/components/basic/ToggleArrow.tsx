@@ -5,7 +5,7 @@ import { useGroupInstance } from '@/core/components/group/hooks/useGroupInstance
 const ToggleArrow = ({ rowId, toggled }: { rowId: number; toggled: boolean }) => {
   const instance = useGroupInstance()
   return (
-    <Content flex alignItems={'center'}>
+    <Content flex alignItems={'start'}>
       <div className={ClassName.circleButton(3, 4)}>
         <Icon
           onClick={e => {

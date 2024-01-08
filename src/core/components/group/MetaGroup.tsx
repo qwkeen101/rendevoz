@@ -5,17 +5,22 @@ import GroupActions from '@/core/components/group/GroupActions'
 import { useEffect, useMemo, useRef } from 'react'
 import { Provider, createStore, useSetAtom } from 'jotai'
 import { Group, PATH_TO_ELEMENT_MAP } from '@/core/components/group/hooks/weakmaps'
-import { GroupInstanceAtom, useGroupInstance } from '@/core/components/group/hooks/useGroupInstance'
+import { GroupInstanceAtom, useAssignGroupInstance, useGroupInstance } from '@/core/components/group/hooks/useGroupInstance'
 import { IGroupInstance } from '~/typings'
 import GroupSidebarPeek from '@/core/components/group/components/basic/GroupSidebarPeek'
 import GroupDragHandle from '@/core/components/group/GroupDragHandle'
 import GroupSelectBox from '@/core/components/group/GroupSelectBox'
 import GroupOpsAssigner from '@/core/components/group/GroupOpsAssigner'
 import GroupDataProcessor from '@/core/components/group/GroupDataProcessor'
+import GroupCenterRenderer from '@/core/components/group/GroupCenterRenderer'
+import { useDebounceFn } from '@/hooks'
+import { GroupStateAtom } from '@/core/components/group/hooks/useGroupState'
+import GroupOverlay from '@/core/components/group/components/overlay/GroupOverlay'
 const MetaGroupInner = ({ groupId }: { groupId: number }) => {
   const instance = useGroupInstance()
   const containerRef = useRef<HTMLDivElement>(null)
-
+  useAssignGroupInstance(instance)
+  const setGroupState = useSetAtom(GroupStateAtom)
   useEffect(() => {
     if (instance) {
       if (containerRef.current) {
@@ -33,9 +38,15 @@ const MetaGroupInner = ({ groupId }: { groupId: number }) => {
     instance.values.pageContainer = container
     instance.getScrollElement = () => container
   }
-
+  const debounceCancelScrolling = useDebounceFn(
+    () => {
+      setGroupState(s => ({ ...s, isScrollingBody: false }))
+    },
+    { wait: 200 }
+  )
   return (
     <>
+      <GroupOpsAssigner bodyRef={containerRef} groupId={groupId} />
       <Content
         tabIndex={0}
         onBlur={() => {
@@ -43,6 +54,10 @@ const MetaGroupInner = ({ groupId }: { groupId: number }) => {
         }}
         onClick={() => {
           instance.values.isFocused = true
+        }}
+        onScroll={() => {
+          setGroupState(s => (s.isScrollingBody ? s : { ...s, isScrollingBody: true }))
+          debounceCancelScrolling.run()
         }}
         onFocus={e => {
           if (e.target === e.currentTarget) {
@@ -60,10 +75,11 @@ const MetaGroupInner = ({ groupId }: { groupId: number }) => {
         <GroupActions groupId={groupId} />
         <GroupRenderer />
       </Content>
-      <GroupOpsAssigner bodyRef={containerRef} groupId={groupId} />
       <GroupSidebarPeek />
+      <GroupCenterRenderer />
       <GroupDataProcessor groupId={groupId} />
       <GroupDragHandle bodyRef={containerRef} groupId={groupId} />
+      <GroupOverlay />
       <GroupSelectBox scrollContainerRef={containerRef} selectContainerRef={containerRef} />
     </>
   )

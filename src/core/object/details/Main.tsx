@@ -11,6 +11,7 @@ import { RelatedPanel } from '@/core/object/details/Related'
 import MetaTagPicker from '@/core/object/MetaTagPicker'
 import Tag from '@/core/object/ObjectTag'
 import LabelDetailsRenderer from '@/core/object/renderer/LabelDetailsRenderer'
+import MetaPropDisplayer from '@/core/object/renderer/properties/MetaPropDisplayer'
 
 const flatButton = css([
   ClassName.flatButton(999, '3px 10px '),
@@ -55,7 +56,8 @@ const MetaMainDetails = ({ metaId, onViewLinks, onViewAtt }: { onViewAtt: VoidFu
               metaId={metaId}
               style={{
                 border: '1px solid var(--border-background)',
-                borderRadius: 8
+                borderRadius: 8,
+                fontSize: 14
               }}
             />
           ) : (
@@ -75,7 +77,7 @@ const MetaMainDetails = ({ metaId, onViewLinks, onViewAtt }: { onViewAtt: VoidFu
           )}
         </Content>
       </Content>
-      <Content style={{ paddingTop: 16, flexWrap: 'wrap' }} flex gap={8}>
+      <Content style={{ paddingTop: 12, flexWrap: 'wrap' }} flex gap={8}>
         <Button.IconButton
           text={t('general.Open')}
           icon={'park-share'}
@@ -200,6 +202,38 @@ const MetaMainDetails = ({ metaId, onViewLinks, onViewAtt }: { onViewAtt: VoidFu
           )}
         </Content>
       </AnimatePopover>
+      <Content
+        flex
+        alignItems={'center'}
+        gap={12}
+        style={{
+          fontWeight: 500,
+          fontSize: 14,
+          margin: '16px 0 12px'
+        }}
+      >
+        <Icon
+          name={'custom-property'}
+          size={16}
+          containerStyle={{
+            background: 'linear-gradient(rgb(213 112 171) 0%, rgb(227 42 124) 140%)',
+            color: 'white',
+            borderRadius: 6,
+            padding: 4
+          }}
+        />
+        {t('general.Properties')}
+      </Content>
+      <Content
+        style={{
+          padding: 8,
+          width: '100%',
+          borderRadius: 8,
+          border: Colors.Consts.Border
+        }}
+      >
+        <MetaPropDisplayer metaId={metaId} showAddPropPlaceholder={true} />
+      </Content>
       <Content
         flex
         alignItems={'center'}

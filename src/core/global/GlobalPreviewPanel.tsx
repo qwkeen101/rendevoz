@@ -89,7 +89,9 @@ export default () => {
           }}
           dragHandleClassName={'dh'}
         >
-          <div style={{ width: '100%', overflow: 'hidden', height: 0, flex: 1 }}>{page.content({ objectId: meta.objectId })}</div>
+          <div style={{ width: '100%', overflow: 'hidden', height: 0, flex: 1 }}>
+            {page.content({ objectId: meta.objectId, metaId: meta.id })}
+          </div>
         </ResizeAndDrag>
       </>,
       document.body

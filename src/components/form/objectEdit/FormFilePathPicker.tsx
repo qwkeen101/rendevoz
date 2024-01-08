@@ -43,7 +43,7 @@ const FormFilePathPicker = ({
     if (filePath?.startsWith('baidudisk')) {
       setChooser('baidudisk')
     }
-    if ((filePath?.includes('youtube') || filePath?.includes('bilibili')) && Regexp.isValidWebUrl(filePath)) {
+    if (Regexp.isValidWebUrl(filePath)) {
       setValidUrl(true)
     }
   }, [filePath])
@@ -70,7 +70,7 @@ const FormFilePathPicker = ({
       <div className={hoverLabelClassName}>{t('general.file path')}</div>
       {(enableWeb || enableBaidudisk) && (
         <Select
-          align={"start"}
+          align={'start'}
           padding={4}
           gap={6}
           onSelect={v => setChooser(v[0])}
@@ -105,10 +105,7 @@ const FormFilePathPicker = ({
         <>
           <div>
             {!validUrl && (
-              <Content flex gap={6} style={{ color: Colors.Common.Red, fontSize: '13px' }}>
-                <Tooltip content="Only supports Youtube and Bilibili">
-                  <Icon name={'park-info'} />
-                </Tooltip>
+              <Content flex gap={6} style={{ color: Colors.Common.Red, fontSize: '13px', paddingLeft: 2 }}>
                 <span>Invalid URL</span>
               </Content>
             )}
@@ -123,7 +120,7 @@ const FormFilePathPicker = ({
               defaultValue={filePath}
               onChange={v => {
                 const value = v.target.value
-                if (Regexp.isValidWebUrl(value) && (value?.includes('youtube') || value?.includes('bilibili'))) {
+                if (Regexp.isValidWebUrl(value)) {
                   setValidUrl(true)
                 } else {
                   setValidUrl(false)

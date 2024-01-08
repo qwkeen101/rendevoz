@@ -8,6 +8,16 @@ export default (instance: IGroupInstance) => {
   const store = useStore()
   assignProperties(instance, {
     selectOps: {
+      selectItem: (id, removeOtherIfOnlyOneSelected) => {
+        if (removeOtherIfOnlyOneSelected) {
+          const currSelect = instance.values.selectedRowIdSet.size === 1
+          if (currSelect) {
+            instance.selectOps?.clearAllSelect()
+          }
+        }
+        instance.values.inViewRowFuncs.get(id)?.select()
+        instance.values.selectedRowIdSet.add(id)
+      },
       clearAllSelect: () => {
         instance.values.inViewRowFuncs.forEach(v => v.clearSelectState())
         instance.values.selectedRowIdSet.clear()

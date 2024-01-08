@@ -2,6 +2,7 @@ import { atom } from 'jotai'
 import { useDb, useSelectGlobalAtomValue } from '@/hooks'
 import { globalStore } from '@/api/stores/index'
 import { useEffect } from 'react'
+import { Setting } from '@/core'
 
 export type CurrentKeyValues = {
   currentWorkspace: string
@@ -10,6 +11,19 @@ export type CurrentKeyValues = {
     name: string
     createdAt: number
   }[]
+  // id to history obj
+  AIChatHistory: Record<
+    number,
+    {
+      id: number
+      // meta id
+      from?: number
+      chats: {
+        role: 'system' | 'user' | 'assistant'
+        message: string
+      }[]
+    }
+  >
   homeDisplayMode: 'gallery' | 'table'
   homeGallery: {
     visibleLists: {
@@ -19,6 +33,7 @@ export type CurrentKeyValues = {
       collectionId?: number
     }[]
   }
+  userSetting: Setting
   recentlyUsedIcons: string[]
   webpageShowOriginal: boolean
   rightBarItems: string[]
@@ -57,17 +72,17 @@ const createKeyvalueStore = () => {
   return {
     getAll: async () => {
       const map = new Map(globalStore.get(keyvalueAtom))
-      keyvalueDb.each((obj, key) => {
+      await keyvalueDb.each((obj, key) => {
         map.set(key.key, obj)
       })
       globalStore.set(keyvalueAtom, map)
     },
-    updateOne: <T extends keyof CurrentKeyValues>(key: T, value: CurrentKeyValues[T]) => {
+    updateOne: async <T extends keyof CurrentKeyValues>(key: T, value: CurrentKeyValues[T]) => {
       const map = new Map(globalStore.get(keyvalueAtom))
       const newValue = value
       map.set(key, newValue)
       globalStore.set(keyvalueAtom, map)
-      keyvalueDb.put(newValue, key)
+      await keyvalueDb.put(newValue, key)
     },
     getOne: <T extends keyof CurrentKeyValues>(key: T): CurrentKeyValues[T] | undefined => {
       return globalStore.get(keyvalueAtom).get(key)

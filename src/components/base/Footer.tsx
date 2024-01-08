@@ -1,5 +1,50 @@
-import { Components } from 'rendevoz'
+import { Noop } from '@/common/types'
+import { Button } from '@/components/base/button'
+import { CSSProperties, FC } from 'react'
+import { useTranslation } from 'react-i18next'
+import Content from './Content'
+import { ClassName } from 'rendevoz'
 
-const Footer = Components.Footer
+interface FooterProps {
+  submitText?: string
+  backText?: string
+  onSubmit?: Noop
+  onBack?: Noop
+  buttonStyle?: CSSProperties
+}
+const Footer: FC<FooterProps> = ({ onBack, onSubmit, submitText = 'submit', backText = 'back', buttonStyle }) => {
+  const { t } = useTranslation()
+  return (
+    <Content flex alignItems="center" justifyContent="space-between">
+      <div
+        className={ClassName.flatButton()}
+        style={{
+          padding: '3px 12px',
+          boxShadow: 'none',
+          marginRight: 30,
+          fontWeight: 600,
+          border: '1px solid var(--button-hover-background)',
+          ...buttonStyle
+        }}
+        onClick={onBack}
+      >
+        {t(`footer.${backText}`)}
+      </div>
+      <div
+        className={ClassName.selectButton()}
+        style={{
+          boxShadow: 'none',
+          padding: '3px 12px',
+          fontWeight: 600,
+          borderRadius: 6,
+          ...buttonStyle
+        }}
+        onClick={onSubmit}
+      >
+        {t(`footer.${submitText}`)}
+      </div>
+    </Content>
+  )
+}
 
 export default Footer

@@ -10,12 +10,12 @@ export default (instance: IGroupInstance, groupId: number) => {
   const [groupState, setGroupState] = useGroupState()
   const groupData = ObjectStore('group').useValue(groupId)
   assignProperties(instance, {
-    openObject: id => {
+    openObject: (id, rowId) => {
       if (!groupState.data?.openIn || groupState.data.openIn === 'newTab') {
         Rendevoz.Actions.Open.Meta.openMetaObject(id)
       }
       if (groupState.data?.openIn === 'center') {
-        GlobalInstance.metaOps?.preview(id)
+        instance.centerOps?.open(id, rowId)
       }
       if (groupState.data?.openIn === 'sidePeek') {
         instance.sidebarOps?.open({ type: 'preview', metaId: id })
@@ -29,9 +29,16 @@ export default (instance: IGroupInstance, groupId: number) => {
         instance.updateGroupData?.(s => ({ ...s, views: afterViews, lastViewId: isCurrent ? afterViews[prevView]?.id : s.lastViewId }))
       }
     },
+    getCurrentView: () => {
+      return groupState.currentView
+    },
+    getGroupData: () => {
+      return groupData
+    },
     updateCurrentView: updater => {
       if (groupState.currentView && groupData) {
         const newCurrentView = updater(groupState.currentView)
+        console.log(newCurrentView)
         setGroupState(s => ({ ...s, currentView: newCurrentView }))
         const newData = produce(groupData, draft => {
           const index = draft.views.findIndex(i => i.id === newCurrentView.id)

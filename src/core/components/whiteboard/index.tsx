@@ -80,7 +80,7 @@ const WhiteboardInner = memo(({ onInstanceInitialized, layout }: IWhiteboardProp
     )
   }, [])
 
-  useMemo(() => {
+  useEffect(() => {
     if (flow && containerRef.current) {
       emitter.addListener('global', handler)
       flow.containerEle = containerRef.current

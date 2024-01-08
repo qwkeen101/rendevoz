@@ -1,5 +1,13 @@
 import { useEffect, useRef, useState } from 'react'
-import { MetaFilterGroup, MetaFilterRule, StringFieldFilterRule, TagFieldFilterRule, TypeFieldFilterRule } from '~/typings'
+import {
+  IMetaProp,
+  IMetaProperty,
+  MetaFilterGroup,
+  MetaFilterRule,
+  StringFieldFilterRule,
+  TagFieldFilterRule,
+  TypeFieldFilterRule
+} from '~/typings'
 import { AnimatePopover, Button, Content, Icon, TimePicker, WithBorder } from '@/components'
 import Select from '@/components/base/select'
 import { ClassName } from 'rendevoz'
@@ -8,7 +16,7 @@ import { useMemoizedFn } from '@/hooks'
 import produce from 'immer'
 import { MetaStore } from '@/api/stores'
 import Id from '@/utils/id'
-import {  useDropObjectArea } from '@/core'
+import { useDropObjectArea } from '@/core'
 import { SelectOptionProps } from '@/components/base/select/SelectOption'
 import { Colors } from '@/consts'
 import MetaFilterer from '@/core/object/filter/MetaFilterer'
@@ -17,8 +25,12 @@ import FontSize from '@/consts/font'
 import MetaTagPicker from '@/core/object/MetaTagPicker'
 import { Rendevoz } from '@/core/rendevoz'
 import { DateFormat } from '@/utils'
+import SingleOptionFilter from '@/core/object/filter/renderer/SingleOption'
+import MultiOptionFilter from '@/core/object/filter/renderer/MultiOption'
+import NumberFilter from '@/core/object/filter/renderer/Number'
+import CheckboxFilter from '@/core/object/filter/renderer/Checkbox'
 
-const commonStyle = {
+export const commonStyle = {
   cursor: 'pointer',
   lineHeight: '1.2',
   height: 'auto',
@@ -39,6 +51,8 @@ export const FilterSelect = ({
 }) => {
   return (
     <Select
+      align={'center'}
+      reposition={false}
       closeOnSelect={true}
       menuStyle={{
         minWidth: 150
@@ -53,16 +67,29 @@ export const FilterSelect = ({
   )
 }
 
+type ExtraFields = {
+  icon: string
+  // display text
+  name: string
+  // id
+  value: number
+  propType: string
+}
 const BetterFilter = ({
   root,
   onChange,
   disableAddGroup,
-  visibleTypes
+  visibleTypes,
+  extraFields,
+  visibleFields
 }: {
   disableAddGroup?: boolean
   root?: MetaFilterGroup
   visibleTypes?: string[]
+  visibleFields?: string[]
   onChange?: (root: MetaFilterGroup) => void
+  // custom property
+  extraFields?: ExtraFields[]
 }) => {
   const [filterRoot, setFilterRoot] = useState<MetaFilterGroup>(
     root || {
@@ -99,9 +126,7 @@ const BetterFilter = ({
       column={true}
       className={css({
         minWidth: 200,
-        '*': {
-          fontSize: FontSize['12px']
-        }
+        fontSize: 13
       })}
     >
       {filterRoot.rules.map((i, idx) => (
@@ -110,7 +135,9 @@ const BetterFilter = ({
           onChangeGroupType={v => {
             setFilterRoot({ ...filterRoot, groupType: v })
           }}
+          extraFields={extraFields}
           index={idx}
+          visibleFields={visibleFields}
           onDelete={handleDelete}
           groupType={filterRoot.groupType}
           rule={i}
@@ -125,7 +152,9 @@ const BetterFilter = ({
           style={{
             border: `1px solid ${Colors.Background.Border}`,
             padding: '2px 6px 2px 4px',
-            borderRadius: 6
+            borderRadius: 6,
+            fontSize: 13,
+            lineHeight: '18px'
           }}
           onClick={() => {
             setFilterRoot(s =>
@@ -150,7 +179,9 @@ const BetterFilter = ({
             style={{
               border: `1px solid ${Colors.Background.Border}`,
               padding: '2px 6px 2px 4px',
-              borderRadius: 6
+              borderRadius: 6,
+              fontSize: 13,
+              lineHeight: '18px'
             }}
             onClick={() => {
               setFilterRoot(s =>
@@ -188,19 +219,23 @@ const FilterItem = ({
   onDelete,
   index,
   onChangeGroupType,
-  visibleTypes
+  visibleTypes,
+  visibleFields,
+  extraFields = []
 }: {
   rule: MetaFilterRule
   groupType: 'and' | 'or'
+  visibleFields?: string[]
   onChange: (newRule: MetaFilterRule) => void
   onDelete: (id: number) => void
   index: number
   onChangeGroupType: (t: 'and' | 'or') => void
   visibleTypes?: string[]
+  extraFields?: ExtraFields[]
 }) => {
   const filterType = rule.filterType
   const { t } = useTranslation()
-  const availableFilters = [
+  let availableFilters = [
     {
       value: 'type',
       children: t('filter.Type'),
@@ -240,10 +275,57 @@ const FilterItem = ({
       value: 'updatedAt',
       children: t('filter.Last updated'),
       icon: 'park-redo'
-    }
+    },
+    ...extraFields.map(i => ({
+      value: i.name,
+      id: i.value,
+      propType: i.propType,
+      children: i.name,
+      icon: i.icon,
+      type: 'custom'
+    }))
   ]
+  if (visibleFields) {
+    const set = new Set(visibleFields)
+    availableFilters = availableFilters.filter(i => set.has(i.value))
+  }
+  const filterableCustomProps: IMetaProp['propType'][] = [
+    'string',
+    'date',
+    'number',
+    'singleSelect',
+    'multiSelect',
+    'URL',
+    'checkbox',
+    'AI summary'
+  ]
+  const propSet = new Set(filterableCustomProps)
+  availableFilters = availableFilters.filter(i => (i.type === 'custom' ? propSet.has(i.propType) : true))
+  availableFilters = availableFilters.map(i =>
+    i.type === 'custom' ? { value: `props$$${i.propType}$$${i.id}`, icon: i.icon, children: i.children } : i
+  )
   const renderOptions = () => {
     if (filterType === 'rule') {
+      if ('propType' in rule) {
+        console.log(rule)
+        switch (rule.propType) {
+          case 'number':
+            return <NumberFilter rule={rule} onChange={onChange} />
+          case 'URL':
+          case 'string':
+          case 'AI summary':
+            return <StringFilter rule={rule} onChange={onChange} />
+          case 'singleSelect':
+            return <SingleOptionFilter rule={rule} onChange={onChange} />
+          case 'multiSelect':
+            return <MultiOptionFilter rule={rule} onChange={onChange} />
+          case 'checkbox':
+            return <CheckboxFilter rule={rule} onChange={onChange} />
+          case 'date':
+            return <DateFilter rule={rule} onChange={onChange} />
+        }
+      }
+
       switch (rule.field) {
         case 'name':
         case 'description':
@@ -263,7 +345,7 @@ const FilterItem = ({
     }
     if (filterType === 'group') {
       return (
-        <div style={{ border: `1px solid ${Colors.Background.Border}`, minWidth: 240, padding: 6, borderRadius: 6 }}>
+        <div className={'border'} style={{ minWidth: 240, padding: 6, borderRadius: 6 }}>
           <BetterFilter root={rule} disableAddGroup={true} onChange={r => onChange(r)} />
         </div>
       )
@@ -297,12 +379,46 @@ const FilterItem = ({
     }
   }
   return (
-    <Content flex gap={8}>
+    <Content flex alignItems={'center'} gap={8}>
       <div style={{ width: '4.5rem', paddingLeft: index === 1 ? 0 : '6px' }}>{renderPrefix()}</div>
       {rule.filterType !== 'group' && (
         <FilterSelect
-          value={filterType === 'rule' ? rule.field : filterType === 'link' ? 'relationship' : undefined}
+          value={
+            filterType === 'rule'
+              ? rule.propType
+                ? `props$$${rule.propType}$$${rule.field}`
+                : rule.field
+              : filterType === 'link'
+              ? 'relationship'
+              : undefined
+          }
           onSelect={v => {
+            if (v.startsWith('props$$')) {
+              const split = v.split('$$')
+              const propType = split[1] as IMetaProperty['propType']
+              const field = split[2]
+              let type: string | undefined = undefined
+              switch (propType) {
+                case 'multiSelect':
+                  type = 'contains'
+                  break
+                case 'singleSelect':
+                case 'date':
+                  type = 'is'
+                  break
+                case 'URL':
+                case 'string':
+                case 'AI summary':
+                  type = 'contains'
+                  break
+                case 'checkbox':
+                case 'number':
+                  type = 'is'
+                  break
+              }
+              onChange?.({ id: rule.id, filterType: 'rule', propType, field, type })
+              return
+            }
             switch (v) {
               case 'relationship':
                 onChange?.({ id: rule.id, filterType: 'link', ruleType: 'is', metaType: 'spec', field: undefined, type: 'related' })
@@ -327,7 +443,12 @@ const FilterItem = ({
         />
       )}
       {renderOptions()}
-      <Icon name="park-close" className={ClassName.circleButton()} onClick={() => onDelete(rule.id)} />
+      <Icon
+        name="park-close"
+        className={ClassName.circleButton()}
+        containerStyle={{ height: 'fit-content' }}
+        onClick={() => onDelete(rule.id)}
+      />
     </Content>
   )
 }

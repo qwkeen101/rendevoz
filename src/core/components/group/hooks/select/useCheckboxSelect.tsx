@@ -11,34 +11,43 @@ const useCheckboxSelect = (selected: boolean, onChange: (selected: boolean) => v
         ref={ref}
         flex
         justifyContent={'center'}
-        alignItems={'center'}
         style={{
           opacity: isIn || selected ? 1 : 0,
           width: 32,
-          height: 32,
           transition: 'opacity 0.25s ease',
           flexShrink: 0,
           position: 'sticky',
           left: 0,
-          zIndex: 20
+          zIndex: 20,
+          cursor: 'pointer'
+        }}
+        onClick={e => {
+          onChange(!selected)
+          e.currentTarget.blur()
+          instance.getOuterContainer?.()?.focus()
         }}
       >
-        <input
+        <div
           style={{
-            width: 14,
-            height: 14,
-            border: 'none',
-            outline: 'none',
-            cursor: 'pointer'
+            width: 32,
+            height: 32,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center'
           }}
-          onChange={e => {
-            onChange(!selected)
-            e.currentTarget.blur()
-            instance.getOuterContainer?.()?.focus()
-          }}
-          type={'checkbox'}
-          checked={selected}
-        />
+        >
+          <input
+            style={{
+              width: 14,
+              height: 14,
+              border: 'none',
+              outline: 'none',
+              pointerEvents: 'none'
+            }}
+            type={'checkbox'}
+            checked={selected}
+          />
+        </div>
       </Content>
     )
   }

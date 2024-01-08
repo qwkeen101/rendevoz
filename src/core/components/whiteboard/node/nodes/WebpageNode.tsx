@@ -23,7 +23,8 @@ const WebpageNode = ({ node }: { node: IWhiteboardNode & { type: 'webpage' } }) 
           layout: {
             showHeader: false,
             showBottomPadding: true,
-            showBlockHandleAdd: false
+            showBlockHandleAdd: false,
+            showProps: false
           },
           title: {
             titleStyle: {
@@ -38,7 +39,7 @@ const WebpageNode = ({ node }: { node: IWhiteboardNode & { type: 'webpage' } }) 
 
           styles: {
             bottomPadding: 100,
-            pageMinPadding: '0px 48px 0px',
+            pageMinPadding: '0px 28px 0px',
             containerHeight: 'auto',
             containerMaxHeight: '100%'
           },

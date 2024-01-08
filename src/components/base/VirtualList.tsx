@@ -1,9 +1,9 @@
 import { useVirtualizer, Virtualizer } from '@tanstack/react-virtual'
 import { CSSProperties, forwardRef, memo, ReactElement, useCallback, useEffect, useImperativeHandle, useRef, useState } from 'react'
 import isHotkey from 'is-hotkey'
-import { KEY } from '@/consts'
+import { Colors, KEY } from '@/consts'
 import { useUpdateEffect } from '@/hooks'
-
+import { Reorder } from 'framer-motion'
 type Props<T> = {
   items: T[]
   renderItem: (item: T, idx: number, selected?: boolean) => ReactElement
@@ -12,12 +12,15 @@ type Props<T> = {
   overscan?: number
   childrenContainerClassname?: string
   withKeyboardNavigation?: boolean
-  onEnter?: (item: T, idex: number) => void
+  onSelect?: (item: T, idex: number) => void
   onKeydown?: (e: KeyboardEvent) => void
   paddingEnd?: number
   itemClassname?: string
   itemStyle?: CSSProperties
   itemContainerClassname?: string
+  reorder?: boolean
+  canReorder?: boolean
+  onReorder?: (items: T[]) => void
 }
 
 type VirtualListRef = Virtualizer<Element, Element> & {
@@ -25,15 +28,19 @@ type VirtualListRef = Virtualizer<Element, Element> & {
 }
 function VirtualList<T>(
   {
-    items,
+    items = [],
     renderItem,
     overscan,
-    onEnter,
+    onSelect,
     itemStyle,
     itemClassname,
     itemContainerClassname,
     estimateSize,
     style,
+    reorder,
+    canReorder = true,
+    onKeydown,
+    onReorder,
     childrenContainerClassname,
     withKeyboardNavigation,
     paddingEnd
@@ -44,9 +51,9 @@ function VirtualList<T>(
     const contentRef = useRef<HTMLDivElement>(null)
     const virtualizer = useVirtualizer({
       count: items.length,
-      estimateSize: useCallback(() => estimateSize, [estimateSize]),
+      estimateSize: () => estimateSize,
       getScrollElement: () => contentRef.current,
-      overscan,
+      overscan: reorder ? items.length : overscan,
       paddingEnd
     })
     const [currentFocusIndex, setCurrentFocusIndex] = useState(0)
@@ -68,7 +75,7 @@ function VirtualList<T>(
           if (isHotkey(KEY.Enter, e) && withKeyboardNavigation) {
             e.stopPropagation()
             e.preventDefault()
-            onEnter?.(itemzRef.current[currentFocusIndex], currentFocusIndex)
+            onSelect?.(itemzRef.current[currentFocusIndex], currentFocusIndex)
           }
           if (isHotkey(KEY.ArrowUp, e)) {
             e.stopPropagation()
@@ -104,57 +111,127 @@ function VirtualList<T>(
           document.removeEventListener('keydown', keyboardEvent, true)
         }
       }
-    }, [withKeyboardNavigation, length, currentFocusIndex, onEnter])
-
-    return (
-      <div
-        ref={contentRef}
-        style={{
-          overflowY: 'auto',
-          overflowX: 'hidden',
-          ...style
-        }}
-      >
-        <div
-          style={{
-            height: virtualizer.getTotalSize(),
-            width: '100%',
-            position: 'relative'
-          }}
-          className={childrenContainerClassname}
-        >
-          <div
-            style={{
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              width: '100%',
-              transform: `translateY(${itemz[0]?.start || 0}px)`
+    }, [withKeyboardNavigation, length, currentFocusIndex, onSelect])
+    const [isReorder, setIsReorder] = useState(false)
+    const [innerItems, setInnerItems] = useState(items)
+    useEffect(() => {
+      setInnerItems(items)
+    }, [items])
+    const renderChildren = () => {
+      if (reorder) {
+        return (
+          <Reorder.Group
+            as={'div'}
+            axis={'y'}
+            className={childrenContainerClassname}
+            onReorder={itemz => {
+              if (!canReorder) return
+              setInnerItems(itemz)
+              setCurrentFocusIndex(itemz.findIndex(i => i === innerItems[currentFocusIndex]))
             }}
-            className={itemContainerClassname}
+            values={innerItems}
+            ref={contentRef}
+            layoutScroll={true}
+            style={{
+              overflowY: 'auto',
+              overflowX: 'hidden',
+              ...style
+            }}
           >
-            {itemz.map(i => (
-              <div
-                key={i.key}
-                data-index={i.index}
-                data-selected={currentFocusIndex === i.index}
+            {innerItems.map((i, idx) => (
+              <Reorder.Item
+                transition={{
+                  duration: isReorder ? undefined : 0
+                }}
+                onDragStart={() => {
+                  setIsReorder(true)
+                }}
+                onDragEnd={() => {
+                  setTimeout(() => {
+                    setIsReorder(false)
+                  })
+                  onReorder?.(innerItems)
+                }}
+                drag={canReorder ? 'y' : false}
+                as={'div'}
+                key={i.id || JSON.stringify(i)}
+                data-index={idx}
+                data-selected={currentFocusIndex === idx}
                 ref={virtualizer.measureElement}
                 className={itemClassname}
                 onPointerEnter={() => {
-                  if (withKeyboardNavigation) {
-                    setCurrentFocusIndex(i.index)
+                  if (withKeyboardNavigation && !isReorder) {
+                    setCurrentFocusIndex(idx)
                   }
+                }}
+                onClick={() => {
+                  if (isReorder) return
+                  onSelect?.(i, idx)
                 }}
                 style={itemStyle}
                 tabIndex={0}
+                value={i}
               >
-                {renderItem(items[i.index], i.index, currentFocusIndex === i.index)}
-              </div>
+                {renderItem(i, idx, currentFocusIndex === idx)}
+              </Reorder.Item>
             ))}
+          </Reorder.Group>
+        )
+      }
+      return (
+        <div
+          ref={contentRef}
+          style={{
+            overflowY: 'auto',
+            overflowX: 'hidden',
+            ...style
+          }}
+        >
+          <div
+            style={{
+              height: virtualizer.getTotalSize(),
+              width: '100%',
+              position: 'relative'
+            }}
+            className={childrenContainerClassname}
+          >
+            <div
+              style={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                width: '100%',
+                transform: `translateY(${itemz[0]?.start || 0}px)`
+              }}
+              className={itemContainerClassname}
+            >
+              {itemz.map(i => (
+                <div
+                  key={i.key}
+                  data-index={i.index}
+                  data-selected={currentFocusIndex === i.index}
+                  ref={virtualizer.measureElement}
+                  className={itemClassname}
+                  onPointerEnter={() => {
+                    if (withKeyboardNavigation) {
+                      setCurrentFocusIndex(i.index)
+                    }
+                  }}
+                  onClick={() => {
+                    onSelect?.(items[i.index], i.index)
+                  }}
+                  style={itemStyle}
+                  tabIndex={0}
+                >
+                  {renderItem(items[i.index], i.index, currentFocusIndex === i.index)}
+                </div>
+              ))}
+            </div>
           </div>
         </div>
-      </div>
-    )
+      )
+    }
+    return renderChildren()
   } catch (e) {
     console.error(e)
   }

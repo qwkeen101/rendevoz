@@ -1,9 +1,6 @@
 import { IGroupRow } from './types'
 import { MetaStore, ObjectStore } from '@/api/stores'
-import useMetaWithGroup from '@/core/components/group/hooks/useMetaWithGroup'
 import { useSelectAtomValue } from '@/hooks'
-import { TableStateAtom } from '@/core/components/group/hooks/useTableState'
-import { Rendevoz } from '@/core/rendevoz'
 import { Colors } from '@/consts'
 import CellWrapper from '@/core/components/group/components/table/CellWrapper'
 import { Content } from '@/components'
@@ -23,11 +20,10 @@ export const Container = ({ children, hasChildren }: { children: ReactNode; hasC
 const MetaRow = ({ rowDetails, path, rowRef, renderIndicator, isSelected, renderCheckbox }: IGroupRow) => {
   const metaId = rowDetails.id
   const headers = useSelectAtomValue(GroupStateAtom, s => s.visibleHeaders)
-  const columns = useSelectAtomValue(GroupStateAtom, s => s.headerColumn)
+  const showOriginal = useSelectAtomValue(GroupStateAtom, s => s.showOriginalText)
   const toggled = !useSelectAtomValue(GroupStateAtom, s => s.unToggledIdSet).has(rowDetails.rowId)
   const metaObject = MetaStore.useValue(metaId)
   const hasChildren = !!rowDetails.children?.length
-  const targetObject = ObjectStore(metaObject?.type).useValue(metaObject?.objectId)
   useChildrenSyncAsAttachment(metaObject, rowDetails.children)
   const wrap = useSelectAtomValue(GroupStateAtom, s => s.currentView?.options.wrapColumns)
   const shiftKeyPressed = useSelectAtomValue(GroupStateAtom, s => s.shiftPressed)
@@ -37,6 +33,21 @@ const MetaRow = ({ rowDetails, path, rowRef, renderIndicator, isSelected, render
   return (
     <Container hasChildren={hasChildren}>
       <Content
+        onContextMenu={e => {
+          e.preventDefault()
+          instance.selectOps?.selectItem(rowDetails.rowId, true)
+          instance.overlayOps?.open(
+            {
+              type: 'itemContextMenu',
+              details: rowDetails,
+              align: 'start'
+            },
+            {
+              x: e.clientX,
+              y: e.clientY
+            }
+          )
+        }}
         style={{
           position: 'relative',
           background: isSelected ? Colors.Common.SelectColorTransparent : undefined,
@@ -44,13 +55,13 @@ const MetaRow = ({ rowDetails, path, rowRef, renderIndicator, isSelected, render
           transition: 'background 0.15s ease'
         }}
         flex
-        alignItems={'center'}
+        alignItems={'stretch'}
         ref={rowRef}
       >
         {renderCheckbox()}
         {renderIndicator()}
         <Content
-          onClickCapture={e => {
+          onPointerDown={e => {
             if (shiftKeyPressed) {
               e.preventDefault()
               window.getSelection()?.empty()
@@ -59,8 +70,13 @@ const MetaRow = ({ rowDetails, path, rowRef, renderIndicator, isSelected, render
                 instance.values.inViewRowFuncs.get(rowDetails.rowId)?.clearSelectState()
                 instance.values.lastSelectRowId = undefined
               } else {
-                const lastSelected = instance.values.lastSelectRowId
+                let lastSelected = instance.values.lastSelectRowId
                 instance.values.lastSelectRowId = rowDetails.rowId
+                if (!lastSelected) {
+                  if (instance.values.selectedRowIdSet.size === 1) {
+                    lastSelected = instance.values.selectedRowIdSet.keys().next().value
+                  }
+                }
                 if (lastSelected) {
                   const lastSelectedPath = instance.pathOps?.getPathById(lastSelected, true)
                   if (lastSelectedPath) {
@@ -75,24 +91,43 @@ const MetaRow = ({ rowDetails, path, rowRef, renderIndicator, isSelected, render
               }
             }
           }}
+          onClickCapture={e => {
+            if (shiftKeyPressed) {
+              e.stopPropagation()
+            }
+          }}
           style={{
             display: 'grid',
             position: 'relative',
-            gridTemplateColumns: columns
+            gridTemplateColumns: 'var(--table-columns)'
           }}
         >
-          {headers.map(i => {
+          {headers.map((i, idx) => {
             let fieldValue = metaObject[i.name]
-            if (i.name === 'originalText') {
-              if (targetObject && 'selectedText' in targetObject) {
-                fieldValue = targetObject.selectedText || null
+            let field = i.name
+            if (i.type === 'custom') {
+              const prop = metaObject.properties?.[i.id]
+              if (!prop) {
+                MetaStore.updateProperty(metaId, i.id, {
+                  value: undefined
+                })
               }
+              field = i.id
+              fieldValue = metaObject.properties?.[i.id]?.value
             }
             return (
               <CellWrapper
+                type={i.type}
                 rowId={rowDetails.rowId}
-                field={i.name}
+                placeholder={
+                  metaObject.type.includes('Label') && !showOriginal
+                    ? metaObject.placeholderName
+                    : undefined
+                }
+                index={idx}
+                field={field}
                 value={fieldValue}
+                metaObject={metaObject}
                 key={i.name}
                 metaId={metaId}
                 wrap={wrap}

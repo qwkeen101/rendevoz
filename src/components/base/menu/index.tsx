@@ -69,6 +69,7 @@ interface NavigationMenuProps {
   // select key change
   onSelectChange?: (keys: string[]) => void
   selectedKeys?: string[]
+  defaultSelectFirst?: boolean
 }
 export const NavigationMenu: FC<NavigationMenuProps> = ({
   layout,
@@ -79,14 +80,17 @@ export const NavigationMenu: FC<NavigationMenuProps> = ({
   selectedKeys,
   onSelect,
   onSelectChange,
-  defaultSelected
+  defaultSelected,
+  defaultSelectFirst = true
 }) => {
   const menuContainerRef = useRef<HTMLDivElement>(null)
   const layoutCount = layout.length
 
-  const [currentSelect, setCurrentSelect] = useState<string[]>(defaultSelected || [layout.find(i => 'key' in i && i.key)?.key])
+  const [currentSelect, setCurrentSelect] = useState<string[]>(
+    defaultSelected || (defaultSelectFirst ? [layout.find(i => 'key' in i && i.key)?.key] : [])
+  )
   useEffect(() => {
-    setCurrentSelect(defaultSelected || [layout.find(i => 'key' in i && i.key)?.key])
+    setCurrentSelect(defaultSelected || (defaultSelectFirst ? [layout.find(i => 'key' in i && i.key)?.key] : []))
   }, [layout.length])
 
   const handleSelectItem = (currentItem: IMenuLayoutItem) => {
@@ -178,9 +182,14 @@ export const NavigationMenu: FC<NavigationMenuProps> = ({
           keyNavigatedRef.current = false
         })
         setCurrentSelect(s => {
+          const currentList = getCurrentItemList()
+          if (s.length === 0) {
+            const k = currentList.find(i => i.type === 'item' && i.key)?.key
+            return k ? [k] : []
+          }
           const newS = [...s]
           const last = newS[newS.length - 1]
-          const currentList = getCurrentItemList()
+
           const currentIndex = currentList.findIndex(i => 'key' in i && i.key === last)
           if (currentIndex < 0) {
             return s

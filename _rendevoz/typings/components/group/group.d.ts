@@ -1,14 +1,23 @@
-import { IBase, MetaFilterGroup } from '~/typings'
+import { IBase, IMetaProperty, MetaFilterGroup } from '~/typings'
 import { SorterGroup } from '../../../../src/core/object/filter/BetterSorter'
 
-export type MetaGroupProperty = {
-  type: 'basic' | 'custom'
+export type MetaGroupProperty = (
+  | {
+      type: 'basic'
+      // translation key
+      display: string
+    }
+  | {
+      type: 'custom'
+      propType: IMetaProperty['propType']
+    }
+) & {
   editable: boolean
   name: string
-  // translation key
-  display: string
   icon: string
   visible: boolean
+  id: number
+  width?: number
 }
 export type MetaGroupChild = {
   rowId: number
@@ -24,24 +33,34 @@ export type MetaGroupPropertyOption = {
   width: string
 }
 
+export type MetaGroupViewProperty = {
+  visible: boolean
+  order: number
+  width?: number
+}
 export interface MetaGroup extends IBase {
   belongsTo?: number
   // value id - index dict
   values: MetaGroupChild[]
+  properties?: MetaGroupProperty[]
   views: ((
     | {
         type: 'table'
         options: {
           wrapColumns?: boolean
-          properties?: (MetaGroupProperty & {
-            width: number
-          })[]
+          properties?: Record<
+            number,
+            MetaGroupViewProperty & {
+              width: number
+            }
+          >
         }
       }
     | {
         type: 'gallery'
         options: {
-          properties?: MetaGroupProperty[]
+          wrapColumns?: boolean
+          properties?: Record<number, MetaGroupViewProperty>
         }
       }
   ) & {
@@ -64,4 +83,5 @@ export interface MetaGroup extends IBase {
   lastViewId?: number
   hideGroupsInside?: boolean
   hideObjectsInside?: boolean
+  onlyShowCustomProperties?: boolean
 }

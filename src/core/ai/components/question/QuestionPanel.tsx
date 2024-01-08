@@ -7,26 +7,28 @@ import { IAIEvent } from '@/core/ai/components/AskAIPanel'
 import Select from '@/components/base/select'
 import { ObjectStore } from '@/api/stores'
 import { css } from '@emotion/css'
+import { useTranslation } from 'react-i18next'
 export default memo(({ questions, on }: { questions?: number[]; on?: (e: IAIEvent) => any }) => {
   const [submitted, setSubmitted] = useState(false)
+  const { t } = useTranslation()
   return (
     <Content>
       <div
         style={{
           color: Colors.Font.Transparent,
           fontSize: 13,
-          marginBottom: 4
+          padding: '0px 12px'
         }}
       >
-        Questions
+        {t('general.Questions')}
       </div>
       <Content
         flex
         column
-        gap={16}
+        gap={24}
         className={css({
           '> div': {
-            paddingBottom: 16,
+            paddingBottom: 24,
             ':not(:last-child)': {
               borderBottom: '1px solid var(--border-background)'
             }
@@ -35,7 +37,7 @@ export default memo(({ questions, on }: { questions?: number[]; on?: (e: IAIEven
       >
         {questions?.map(i => <QuestionCard showAnswer={submitted} id={i} key={i} on={on} />)}
       </Content>
-      <Content flex gap={16} style={{ marginTop: 12 }}>
+      <Content flex gap={16} style={{ padding: '0px 12px 36px' }}>
         <div
           onClick={() => {
             setSubmitted(!submitted)
@@ -45,49 +47,40 @@ export default memo(({ questions, on }: { questions?: number[]; on?: (e: IAIEven
           }}
           className={ClassName.selectButton()}
         >
-          {submitted ? '隐藏答案' : '提交'}
+          {submitted ? t('general.Hide answers') : t('general.Show answers')}
         </div>
-        <AnimatePopover
-          content={
-            <WithBorder width={140} padding={6}>
-              {[
-                {
-                  value: 'multiSelect',
-                  children: '多选题'
-                },
-                {
-                  value: 'singleSelect',
-                  children: '单选题'
-                },
-                {
-                  value: 'text',
-                  children: '简答题'
-                },
-                {
-                  value: 'trueOrFalse',
-                  children: '判断题'
-                }
-              ].map(i => (
-                <div
-                  key={i.value}
-                  onClick={() => {
-                    const type = i.value
-                    ObjectStore('question')
-                      .addOne({ questionType: type, name: 'New question', choices: [] })
-                      .then(o => {
-                        on?.({ type: 'createQuestion', newQuestionId: o.id })
-                      })
-                  }}
-                  className={ClassName.flatButton()}
-                >
-                  {i.children}
-                </div>
-              ))}
-            </WithBorder>
-          }
-        >
-          <Button.IconButton icon={'park-plus'} text={'创建问题'} />
-        </AnimatePopover>
+        {/*<AnimatePopover*/}
+        {/*  content={*/}
+        {/*    <WithBorder width={140} padding={6}>*/}
+        {/*      {['multiSelect', 'singleSelect', 'text', 'trueOrFalse', 'cloze']*/}
+        {/*        .map(i => ({ value: i, children: t(`general.${i} question`) }))*/}
+        {/*        .map(i => (*/}
+        {/*          <div*/}
+        {/*            key={i.value}*/}
+        {/*            onClick={() => {*/}
+        {/*              const type = i.value*/}
+        {/*              ObjectStore('question')*/}
+        {/*                .addOne({ questionType: type, name: 'New question', choices: [] })*/}
+        {/*                .then(o => {*/}
+        {/*                  on?.({ type: 'createQuestion', newQuestionId: o.id })*/}
+        {/*                })*/}
+        {/*            }}*/}
+        {/*            className={ClassName.flatButton()}*/}
+        {/*          >*/}
+        {/*            {i.children}*/}
+        {/*          </div>*/}
+        {/*        ))}*/}
+        {/*    </WithBorder>*/}
+        {/*  }*/}
+        {/*>*/}
+        {/*  <Button.IconButton*/}
+        {/*    style={{*/}
+        {/*      border: Colors.Consts.Border*/}
+        {/*    }}*/}
+        {/*    icon={'park-plus'}*/}
+        {/*    text={t('general.Create question')}*/}
+        {/*  />*/}
+        {/*</AnimatePopover>*/}
       </Content>
     </Content>
   )

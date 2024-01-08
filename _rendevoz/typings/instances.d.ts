@@ -26,6 +26,11 @@ export type IGlobalInstance = Partial<{
     selectCollection: () => Promise<ICollection>
     addMetaIntoCollection: (metaId: number) => Promise<void>
   }
+  aiOps: {
+    // open sidebar ai panel
+    // from: meta id
+    askQuestion: (query: string, from?: number) => void
+  }
   metaOps: {
     getLink: (nodeId: number) => Promise<{
       link: string

@@ -49,32 +49,16 @@ const Tag = ({
   style?: CSSProperties
 }) => {
   const tagMap = !hideSize ? useAtomValue(tagToMetaObjectIdsMapAtom, { store: globalStore }) : undefined
-
   const tagToObjectsSet = tagMap?.get(tag)
   const tagObject = ObjectStore('tag').useValue(tag)
-
   const size = tagToObjectsSet?.size
   const [pointerInTag, togglePointerInTag] = useToggle(false)
-
   const [isEditing, toggleIsEditing] = useToggle(false)
-
-  const darkMode = useSelectGlobalAtomValue(SettingAtom, s => s.general.darkMode)
-
-  const realBg = useMemo(() => {
-    if (darkMode) {
-      const c = tinycolor(tagObject?.color || 'rgba(221, 212, 224, 0.08)')
-      c.darken(40).desaturate(40)
-      return c.toRgbString()
-    } else {
-      return tagObject?.color
-    }
-  }, [darkMode, tagObject])
   useEffect(() => {
     if (tagObject?.deleted) {
       onDelete?.()
     }
   }, [tagObject?.deleted])
-
   if (tagObject?.deleted || !tagObject) return null
   return (
     <Content
@@ -85,7 +69,7 @@ const Tag = ({
       onPointerEnter={() => togglePointerInTag(true)}
       onPointerLeave={() => togglePointerInTag(false)}
       style={{
-        background: realBg || Colors.Background.ButtonHover,
+        background: Colors.getAdaptColor(tagObject.color) || Colors.Background.ButtonHover,
         borderRadius: square ? 3 : 999,
         lineHeight: square ? '20px' : undefined,
         height: 'fit-content',
@@ -93,7 +77,7 @@ const Tag = ({
         fontFamily: 'Muli',
         width: 'fit-content',
         justifyContent: 'space-between',
-        fontSize: small || square ? FontSize['12px'] : FontSize['14px'],
+        fontSize: 14,
         cursor,
         whiteSpace: 'nowrap',
         ...style

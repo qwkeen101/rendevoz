@@ -55,6 +55,21 @@ const ObjectsAndLinksSetting = () => {
       )
     },
     {
+      title: t('settings.Show custom properties in pages'),
+      children: (
+        <Switch
+          value={setting.object.showPropertiesInComponentPage}
+          onChange={() =>
+            setSetting(s =>
+              produce(s, draft => {
+                draft.object.showPropertiesInComponentPage = !draft.object.showPropertiesInComponentPage
+              })
+            )
+          }
+        />
+      )
+    },
+    {
       title: t('settings.Object link type'),
       children: (
         <Select

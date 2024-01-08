@@ -7,11 +7,12 @@ import { PdfStateAtom } from './hooks/usePdfState'
 import { globalStore, ObjectStore } from '@/api/stores'
 import { IPdfInstance } from '~/typings'
 import PdfLeftSidebar from './components/sidebar/PdfLeftSidebar'
-import { PdfInstanceAtom, useAssignPdfInstance } from './hooks/usePdfInstance'
+import usePdfInstance, { PdfInstanceAtom, useAssignPdfInstance } from './hooks/usePdfInstance'
 import { getAllLabelsOfDocument } from '@/api/stores/document.store'
 import usePdfSelectMode from './hooks/useSelectMode'
 import isHotkey from 'is-hotkey'
 import { KEY } from '@/consts'
+import PDFOpsAssigner from '@/core/components/pdf/hooks/ops/Assigner'
 
 type PdfProps = {
   pdfId: number
@@ -38,12 +39,26 @@ const PdfInner = ({ pdfId, onInstanceInitialized, transformScale }: PdfProps) =>
       document.removeEventListener('keyup', keyupHandler)
     }
   }, [])
+  const instance = usePdfInstance()
   return (
-    <Content flex column fullHeight fullWidth>
+    <Content
+      flex
+      column
+      fullHeight
+      fullWidth
+      tabIndex={0}
+      onClick={() => {
+        instance.isFocused = true
+      }}
+      onBlur={() => {
+        instance.isFocused = false
+      }}
+    >
+      <PDFOpsAssigner />
       <Content flex centered auto style={{ height: 0 }}>
         <PdfLeftSidebar />
         <PdfViewer documentId={pdfId} transformScale={transformScale} onInstanceInitialized={onInstanceInitialized} />
-        <PdfRightSidebar />
+        <PdfRightSidebar pdfId={pdfId} />
       </Content>
     </Content>
   )

@@ -19,6 +19,7 @@ export default ({ metaId }: { metaId: number }) => {
     <Content
       fullWidth
       fullHeight
+      role={'prop-container'}
       onClick={event => {
         if (labelCount > 0 && meta) {
           setGroupState(s => ({

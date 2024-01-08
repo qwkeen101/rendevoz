@@ -125,7 +125,7 @@ export default memo(({ onBack, metaId, onClose }: { onBack: VoidFunction; metaId
             {t('general.Selected group')}
           </div>
           <Content flex alignItems={'center'} justifyContent={'space-between'} gap={12} style={{ padding: '0px 8px', marginBottom: 8 }}>
-            <div className={ClassName.ellipsisFont(1)}>{selectedGroup.name}</div>
+            <div className={ClassName.ellipsisFont(1)}>{selectedGroup.name || selectedGroup.placeholderName}</div>
             <div className={ClassName.selectButton(4, '1px 12px')} style={{ flexShrink: 0 }} onClick={() => handleInsertMetaIntoGroup()}>
               {t('general.OK')}
             </div>
@@ -139,9 +139,6 @@ export default memo(({ onBack, metaId, onClose }: { onBack: VoidFunction; metaId
             ObjectStore('group').addOneWithMeta(
               {},
               {
-                currentMeta: {
-                  name: 'Unnamed group'
-                },
                 showMetaModal: true
               }
             )
@@ -160,7 +157,7 @@ export default memo(({ onBack, metaId, onClose }: { onBack: VoidFunction; metaId
                 color={i.color}
                 key={i.id}
                 icon={i.icon || Rendevoz.Utils.Object.getMetaObjectIcon(i.type)}
-                name={i.name || 'Unnamed group'}
+                name={i.name || i.placeholderName}
               />
             )
         )}

@@ -1,41 +1,83 @@
-import { globalStore } from "@/api/stores";
-import { request } from "@/utils/request";
-import { userAtom } from "./login.service";
+import { globalStore } from '@/api/stores'
+import { request } from '@/utils/request'
+import { userAtom } from './login.service'
+import { IWebRequest } from '~/typings'
+import toast from 'react-hot-toast'
+import Interface from '@/api/services/interface'
 
-const localTranslateInterface = "http://localhost:9000/translate";
-const remoteTranslateInterface = "https://api.rendevoz.com/translate";
 const TranslateService = {
-  translate: async (query: string, to = "zh", from?: string) => {
-    const result = await request<{
-      result: {
-        trans: string;
-        orig: string;
-      }[];
-      monthlyTranslateNum: number;
-      totalTranslateNum: number;
-      monthlyTranslateUsed: number;
-      totalTranslateUsed: number;
-    }>(remoteTranslateInterface, {
+  // return original text and translated text
+  translate: async (query: string, to = 'zh', from?: string) => {
+    const result = await request<
+      IWebRequest<{
+        result: {
+          trans: string
+          orig: string
+        }[]
+        monthlyTranslateNum: number
+        totalTranslateNum: number
+        monthlyTranslateUsed: number
+        totalTranslateUsed: number
+      }>
+    >(Interface.Translate('common'), {
       params: {
         query,
         to,
-        from,
+        from
       },
-      method: "GET",
-    });
-    const user = globalStore.get(userAtom);
+      method: 'GET'
+    })
+    if (result.data.status === 'ERROR') {
+      toast.error(result.data.message || '')
+      throw result.data.message
+    }
+    const user = globalStore.get(userAtom)
     if (user) {
-      const d = result.data;
+      const d = result.data.result
       globalStore.set(userAtom, {
         ...user,
         totalTranslateNum: d.totalTranslateNum,
         monthlyTranslateNum: d.monthlyTranslateNum,
         monthlyTranslateUsed: d.monthlyTranslateUsed,
-        totalTranslateUsed: d.totalTranslateUsed,
-      });
+        totalTranslateUsed: d.totalTranslateUsed
+      })
     }
-    return result.data;
+    return result.data.result
   },
-};
+  textTranslate: async (query: string, to = 'zh', from?: string) => {
+    const result = await request<
+      IWebRequest<{
+        result: string
+        monthlyTranslateNum: number
+        totalTranslateNum: number
+        monthlyTranslateUsed: number
+        totalTranslateUsed: number
+      }>
+    >(Interface.Translate('text'), {
+      params: {
+        query,
+        to,
+        from
+      },
+      method: 'GET'
+    })
+    if (result.data.status === 'ERROR') {
+      toast.error(result.data.message || '')
+      throw result.data.message
+    }
+    const user = globalStore.get(userAtom)
+    if (user) {
+      const d = result.data.result
+      globalStore.set(userAtom, {
+        ...user,
+        totalTranslateNum: d.totalTranslateNum,
+        monthlyTranslateNum: d.monthlyTranslateNum,
+        monthlyTranslateUsed: d.monthlyTranslateUsed,
+        totalTranslateUsed: d.totalTranslateUsed
+      })
+    }
+    return result.data.result.result
+  }
+}
 
-export default TranslateService;
+export default TranslateService

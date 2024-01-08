@@ -49,7 +49,11 @@ export default () => {
       }
     }
   }, [loaded, jumpTime])
-
+  useEffect(() => {
+    if (a && loaded) {
+      a.currentTime = currentTime
+    }
+  }, [loaded])
   useEffect(() => {
     if (a) {
       a.volume = volume
@@ -99,18 +103,17 @@ export default () => {
             <Icon size={120} name={'park-music'} theme={'filled'} />
           </Content>
         ))}
-      <Content flex column style={{ width: '100%', maxWidth: columnLayout ? '100%' : 800, padding: floated ? '12px 16px 4px' : 0 }}>
+      <Content flex column style={{ width: '100%', maxWidth: columnLayout ? '100%' : 800, padding: floated ? '16px 24px 0px 16px' : 0 }}>
         <div
           className={'video-drag-handle'}
           style={{
             fontWeight: 600,
             fontSize: floated ? 14 : columnMode ? 18 : 30,
-            marginBottom: floated ? 20 : 0,
             cursor: floated ? 'grab' : 'unset',
             width: 'fit-content'
           }}
         >
-          {mediaState.name}
+          <div className={floated ? 'ellipsis-font-1' : undefined}>{mediaState.name}</div>
         </div>
         {!floated && !(columnLayout && sidebarOpen) && (
           <div className={ClassName.ellipsisFont(5)} style={{ fontSize: 14, color: Colors.Font.Transparent }}>

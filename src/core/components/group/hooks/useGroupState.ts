@@ -1,5 +1,5 @@
 import { atom, useAtom } from 'jotai'
-import { Box, MetaGroup, MetaGroupChild, MetaGroupProperty } from '~/typings'
+import { Box, IMetaProp, MetaGroup, MetaGroupChild, MetaGroupProperty } from '~/typings'
 
 export const GroupStateAtom = atom<
   {
@@ -8,6 +8,7 @@ export const GroupStateAtom = atom<
     selectedCount: number
     unToggledSelectedCount: number
     triggered: number
+    popoverVisible?: boolean
     headerColumn?: string
     tableWidth?: number
     sidebarWidth: number
@@ -15,6 +16,8 @@ export const GroupStateAtom = atom<
     shiftPressed: boolean
     visibleTypes: string[]
     unToggledIdSet: Set<number>
+    isScrollingBody?: boolean
+    availableNewProps?: IMetaProp[]
     sidebarState?:
       | {
           type: 'preview'
@@ -32,6 +35,7 @@ export const GroupStateAtom = atom<
     // after filter/sort values
     filterValues?: MetaGroupChild[]
     visibleHeaders: MetaGroupProperty[]
+    showOriginalText?: boolean
     horizontallyScrolled: boolean
   } & {
     data?: MetaGroup

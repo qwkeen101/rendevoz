@@ -41,7 +41,7 @@ const TextSelectionToolbar: FC<TextSelectionToolbarProps> = ({ textSelect, onHig
       <Toolbar.Item
         iconName="park-background-color"
         onClick={() => {
-          onHighlight?.('#ffecb3')
+          onHighlight?.('#ffe082')
         }}
       ></Toolbar.Item>
     </Toolbar>

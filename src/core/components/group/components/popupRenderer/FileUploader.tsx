@@ -5,38 +5,41 @@ import { ClassName } from 'rendevoz'
 import { useState } from 'react'
 import FileSystem from '@/api/fileSystem'
 
-export default ({ onUpload, accept }: { onUpload: (filePath: string) => void; accept?: string }) => {
+export default ({ onUpload, accept }: { onUpload: (filePath: string, fileType: string, fileName: string) => void; accept?: string }) => {
   const [input, setInput] = useState('')
   return (
-    <Content style={{ padding: 6 }}>
-      <Tabs defaultActiveKey={'upload'}>
-        <TabPane tab={'Upload'} key="upload" style={{ padding: '16px 8px' }}>
+    <Content style={{ width: '100%' }}>
+      <Tabs
+        defaultActiveKey={'upload'}
+        tabNavContainerStyle={{
+          padding: '8px',
+          borderBottom: '1px solid var(--border-background)'
+        }}
+      >
+        <TabPane tab={'Upload'} key="upload" style={{ padding: '12px 9px' }}>
           <Button.IconButton
             style={{
-              background: Colors.Common.SelectColor,
-              color: 'white',
-              fontWeight: 600,
               justifyContent: 'center'
             }}
+            className={ClassName.selectButton()}
             onClick={() => {
               Rendevoz.Actions.Utils.uploadFile({ accept }).then(res => {
                 if (res instanceof File) {
                   if (res.type.startsWith('image')) {
                     FileSystem.saveImage(res).then(p => {
-                      onUpload(p)
+                      onUpload(p, res.type, res.name)
                     })
                     return
                   }
                   FileSystem.fs.writeFile(res, `/files/${res.name}`).then(p => {
                     if (p) {
-                      onUpload(p)
+                      onUpload(p, res.type, res.name)
                     }
                   })
                 }
               })
             }}
-            text={'Upload a file'}
-            icon={'park-upload'}
+            text={'Choose a file'}
           />
         </TabPane>
         <TabPane tab={'Embed link'} key={'link'} style={{ padding: '16px 8px' }}>
@@ -54,18 +57,15 @@ export default ({ onUpload, accept }: { onUpload: (filePath: string) => void; ac
           />
           <Button.IconButton
             style={{
-              background: Colors.Common.SelectColor,
-              color: 'white',
-              fontWeight: 600,
               justifyContent: 'center'
             }}
+            className={ClassName.selectButton()}
             onClick={() => {
               if (input) {
-                onUpload(input)
+                onUpload(input, '', input)
               }
             }}
             text={'Embed a link'}
-            icon={'park-link'}
           />
         </TabPane>
       </Tabs>

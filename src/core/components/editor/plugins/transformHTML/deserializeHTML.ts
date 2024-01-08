@@ -27,7 +27,7 @@ const deserializeHTML = (root: HTMLElement) => {
     case 'SPAN':
       return deserializeSpan(root)
     case 'BR':
-      return null
+      return jsx('text', {}, '\n')
     // TODO
     case 'TABLE':
       return null

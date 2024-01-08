@@ -7,14 +7,10 @@ import classNames from 'classnames'
 import ClassName from '@/styles/classNames'
 import { AnimatePopover, Button, Content, Icon, WithBorder } from '@/components'
 import DateFormat from '@/utils/dateFormat'
-import {
-  indexedMetaObjectsAtom,
-  metaObjectsAtom,
-  relatedMetaObjectsMapAtom
-} from '@/api/stores/meta.store'
+import { indexedMetaObjectsAtom, metaObjectsAtom, relatedMetaObjectsMapAtom } from '@/api/stores/meta.store'
 import Modal from '@/components/base/Modal'
 import useCardDrag from './useCardDrag'
-import { AttachmentWrapper, ObjectTag, useRenderObject } from '@/core'
+import { ObjectTag } from '@/core'
 import MetaNoteCard from './NoteCard'
 import MetaDocumentCard from './DocumentCard'
 import { Flipped, spring } from 'react-flip-toolkit'
@@ -145,7 +141,7 @@ export const DatabaseCard: FC<{
   const renderTitleAndDescription: MetaDatabaseCardProps['renderTitleAndDescription'] = ({ title, description, onTitleClick }) => {
     return (
       <Content flex column>
-        <Content className={TitleWrapperClassName}>
+        <Content>
           <div className={TitleClassName} onClick={onTitleClick} style={{ textTransform: 'none' }}>
             {title}
           </div>
@@ -356,11 +352,8 @@ export const ObjectActionPopover: FC<
 > = ({ onClose, onEdit, onPin, onGraph, onDelete, metaObjectId, visibility, onJump, onGraphPin, onShowRelated }) => {
   const { updateMetaObject, deleteMetaObject } = MetaStore
   const { t } = useTranslation()
-  const [attachmentVisible, toggleAttachmentVisible] = useToggle(false)
   const metaObject = MetaStore.useValue(metaObjectId)
-  const metaAttToMetaIds = globalStore.get(indexedMetaObjectsAtom)?.metaAttachmentIdToMetaIdsMap
   const containerRef = useRef<HTMLDivElement>(null)
-  const of = metaAttToMetaIds?.get(metaObjectId)?.size
   if (!metaObject) return null
   return (
     <Content flex column style={{ padding: 4, width: 180, fontSize: 14, fontWeight: 400 }} ref={containerRef} role="object-popover-panel">
@@ -434,48 +427,6 @@ export const ObjectActionPopover: FC<
         icon="park-like"
         text={metaObject.pinned ? t('general.unpin') : t('general.pin')}
       />
-      {metaObject.attachments?.length || metaAttToMetaIds?.get(metaObjectId)?.size ? (
-        <AnimatePopover
-          positions={['right', 'left']}
-          visible={attachmentVisible}
-          onClickOutside={toggleAttachmentVisible}
-          boundaryInset={20}
-          padding={10}
-          containerStyle={{
-            zIndex: String(Zindexes.Tooltip)
-          }}
-          reposition
-          boundaryElement={document.body}
-          parentElement={containerRef.current}
-          content={
-            <WithBorder
-              onClick={e => e.stopPropagation()}
-              padding={8}
-              style={{
-                width: 320
-              }}
-            >
-              <AttachmentPanel metaId={metaObjectId} />
-            </WithBorder>
-          }
-        >
-          <Button.IconButton
-            text={`${
-              metaObject.attachments?.length
-                ? t('general.with attachment', {
-                    with: metaObject.attachments.length
-                  }) + (of ? ', ' : '')
-                : ''
-            }${of ? t('general.of attachment', { of }) : ''}`}
-            icon="park-link"
-            onClick={e => {
-              toggleAttachmentVisible()
-              e.preventDefault()
-              e.stopPropagation()
-            }}
-          ></Button.IconButton>
-        </AnimatePopover>
-      ) : null}
       <Button.IconButton
         text={t('general.generate link')}
         onClick={() => {
@@ -497,58 +448,6 @@ export const ObjectActionPopover: FC<
   )
 }
 
-const AttachmentPanel = memo(({ metaId }: { metaId: number }) => {
-  const metaAttToMetaIds = globalStore.get(indexedMetaObjectsAtom)?.metaAttachmentIdToMetaIdsMap.get(metaId)
-  const metaObject = MetaStore.useValue(metaId)
-  const { t } = useTranslation()
-  return (
-    <Content flex column gap={8}>
-      {metaObject?.attachments?.length ? (
-        <>
-          <div className={ClassName.description(FontSize['12px'])}>
-            {t('general.with attachment', {
-              with: metaObject?.attachments?.length
-            })}
-          </div>
-          <AttachmentWrapper
-            style={{ marginTop: 6 }}
-            renderAttOnParent
-            visible
-            maxVisibleAttachments={5}
-            metaId={metaId}
-            parentMetaId={metaId}
-          />
-        </>
-      ) : null}
-      {metaAttToMetaIds?.size ? (
-        <>
-          <div className={ClassName.description(FontSize['12px'])}>{t('general.of attachment', { of: metaAttToMetaIds.size })}</div>
-          <div style={{ marginTop: -4 }}>
-            {Array.from(metaAttToMetaIds.values()).map(i => (
-              <AttachmentObject metaId={i} key={i} />
-            ))}
-          </div>
-        </>
-      ) : null}
-    </Content>
-  )
-})
-
-const AttachmentObject = memo(({ metaId }: { metaId: number }) => {
-  const { renderInline } = useRenderObject({ metaObjectId: metaId })
-  return renderInline({
-    showHoverObjectDetails: true,
-    showCircle: false,
-    showUnderline: true,
-    ellipsisLine: 1,
-    renderAttOnParent: true,
-    containerStyle: {
-      width: 'fit-content',
-      fontSize: FontSize['12px']
-    }
-  })
-})
-
 export const TitleClassName = classNames(
   css({
     fontWeight: 600,
@@ -558,6 +457,3 @@ export const TitleClassName = classNames(
   }),
   ClassName.ellipsisFont(2)
 )
-export const TitleWrapperClassName = css({
-  // padding: '8px 12px 0px'
-})

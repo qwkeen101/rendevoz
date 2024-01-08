@@ -86,7 +86,7 @@ const SearchResult = ({ result, onClose, enableOpen }: { result: ISearchResult; 
           <VirtualList
             ref={virtualizerRef}
             withKeyboardNavigation={true}
-            onEnter={item => {
+            onSelect={item => {
               handleOpenResult(item.metaId)
             }}
             style={{ width: '100%', height: '100%', marginTop: 6, marginBottom: 6, padding: '0px 6px' }}

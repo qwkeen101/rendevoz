@@ -95,10 +95,10 @@ const MediaSubtitleSidebar = memo(() => {
       </Content>
     )
   return (
-    <Content fullWidth fullHeight style={{ minHeight: 240, paddingLeft: 8 }} flex column>
+    <Content fullWidth fullHeight style={{ minHeight: 240, padding: '0px 12px 12px' }} flex column>
       {renderPopover()}
-      <Content flex gap={20} style={{ margin: '6px 0px' }}>
-        <div style={{ fontWeight: 600 }}>Current subtitle: {subtitleLang || 'Unselected'}</div>
+      <Content flex gap={12} style={{ margin: '6px 0px', paddingLeft: 8 }}>
+        <div style={{ fontWeight: 600 }}>{subtitleLang || 'Unselected subtitle'}</div>
         <IconWithPopover
           className={ClassName.circleButton()}
           name={'park-more'}
@@ -155,10 +155,10 @@ const MediaSubtitleSidebar = memo(() => {
           placement={['bottom']}
         />
       </Content>
-      <Content fullHeight fullWidth ref={mergedRef} style={{ height: 0, flex: 1 }} role={"subtitle-container"}>
+      <Content fullHeight fullWidth ref={mergedRef} style={{ height: 0, flex: 1 }} role={'subtitle-container'}>
         {subtitleMode === 'list' ? (
           <VirtualList
-            style={{ width: '100%', height: '100%', paddingRight: 10 }}
+            style={{ width: '100%', height: '100%' }}
             estimateSize={30}
             items={currentSubtitles}
             overscan={currentSubtitles.length}
@@ -168,7 +168,7 @@ const MediaSubtitleSidebar = memo(() => {
             )}
           />
         ) : (
-          <Content style={{ height: '100%', overflowY: 'auto', paddingRight: 10 }}>
+          <Content style={{ height: '100%', overflowY: 'auto' }}>
             {currentSubtitles?.map((i, idx) => (
               <ArticleSubtitleItem index={idx} scrollable={subtitleFollow && !isIn} subtitle={i} selected={idx === currentSelectedIndex} />
             ))}

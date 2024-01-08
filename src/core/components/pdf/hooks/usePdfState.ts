@@ -4,8 +4,10 @@ import { IPdfDocument, XYPosition } from '~/typings'
 type IPdfState = {
   pdfId?: number
   document?: IPdfDocument
+  handDrag?: boolean
   autoFitWhenResize?: boolean
   croppingImage?: boolean
+  viewportFitScale?: number
   currentFocusedLabel?: {
     labelId?: number
     position: XYPosition

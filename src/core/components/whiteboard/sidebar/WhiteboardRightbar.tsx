@@ -28,6 +28,7 @@ const WhiteboardRightbar = () => {
           onWheelCapture={e => {
             e.stopPropagation()
           }}
+          key={objectId}
           style={{ width: '100%', height: '100%' }}
         >
           <DockTabPaneContext.Provider value={{ currentTabId: '' }}>{page({ objectId })}</DockTabPaneContext.Provider>

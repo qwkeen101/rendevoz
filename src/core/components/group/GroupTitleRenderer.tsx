@@ -9,7 +9,6 @@ import { MetaGroup } from '~/typings'
 import { useIsIn, useSelectAtomValue } from '@/hooks'
 import { GroupStateAtom } from '@/core/components/group/hooks/useGroupState'
 import InnerFilterer from '@/core/components/group/InnerFilterer'
-import ButtonSelect from '@/components/base/ButtonSelect'
 import { useGroupInstance } from '@/core/components/group/hooks/useGroupInstance'
 import isHotkey from 'is-hotkey'
 import { useTranslation } from 'react-i18next'
@@ -21,7 +20,6 @@ const GroupTitleRenderer = memo(({ groupId }: { groupId: number }) => {
   const padding = useSelectAtomValue(GroupStateAtom, s => s.pagePadding)
   const { ref, isIn } = useIsIn()
   const [showDescription, setShowDescription] = useState(false)
-  const instance = useGroupInstance()
   const { t } = useTranslation()
   useEffect(() => {
     if (groupMeta) {
@@ -64,14 +62,14 @@ const GroupTitleRenderer = memo(({ groupId }: { groupId: number }) => {
         }}
       >
         <Button.IconButton
-          text={showDescription ? 'Hide description' : 'Add description'}
+          text={showDescription ? t('group.Hide description') : t('group.Add description')}
           icon={'park-info'}
           onClick={() => {
             setShowDescription(!showDescription)
           }}
         />
         <Button.IconButton
-          text={group?.rootFilterGroup.rules.length ? `${group.rootFilterGroup.rules.length} rules` : 'Add rules'}
+          text={group?.rootFilterGroup.rules.length ? `${group.rootFilterGroup.rules.length} rules` : t('group.Add rules')}
           icon={'park-filter'}
           onClick={() => {
             setRuleVisible(true)

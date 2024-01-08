@@ -1,20 +1,22 @@
 import { GroupStateAtom } from '@/core/components/group/hooks/useGroupState'
 import { useSetAtom } from 'jotai'
 import { useLayoutEffect } from 'react'
-import { useSelectAtomValue } from '@/hooks'
+import { useGroupInstance } from '@/core/components/group/hooks/useGroupInstance'
 
 export default () => {
-  const properties = useSelectAtomValue(GroupStateAtom, s => s.currentView?.options.properties)
+  const instance = useGroupInstance()
+  const properties = instance.viewOps?.useViewProperties()
   const setGroupState = useSetAtom(GroupStateAtom)
 
   useLayoutEffect(() => {
     if (properties) {
-      const visible = properties.filter(i => i.visible)
+      const visible = properties.filter(i => i.visible && i.width)
       setGroupState(s => ({
         ...s,
         visibleHeaders: visible,
-        headerColumn: visible.map(i => `${i.width + 1}px`).join(' '),
-        tableWidth: visible.reduce((prev, curr) => prev + curr.width, 0) + 35
+        showOriginalText: visible.some(i => i.name === 'originalText'),
+        headerColumn: visible.map(i => `${i.width! + 1}px`).join(' '),
+        tableWidth: visible.reduce((prev, curr) => prev + curr.width!, 0) + 35
       }))
     }
   }, [properties])

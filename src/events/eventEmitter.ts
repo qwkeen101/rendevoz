@@ -83,4 +83,5 @@ export default class EventEmitter {
 }
 export const GlobalEventEmitter = new EventEmitter();
 
-export const eventEmitter = atom(new EventEmitter());
+export const scopeEmitter = new EventEmitter()
+export const eventEmitter = atom(scopeEmitter);

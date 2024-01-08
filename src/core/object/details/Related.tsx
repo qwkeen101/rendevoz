@@ -115,7 +115,8 @@ export const RelatedPanel = memo(({ metaId, style }: { metaId: number; style?: C
       style={{
         ...style,
         boxShadow: isDragOver ? '0 0 0 2px var(--select-color)' : style?.boxShadow,
-        transition: 'box-shadow 0.36s ease'
+        transition: 'box-shadow 0.36s ease',
+        borderRadius: isDragOver ? 4 : style?.borderRadius
       }}
       className={css({
         height: '100%',

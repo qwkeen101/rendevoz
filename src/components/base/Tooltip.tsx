@@ -71,6 +71,7 @@ const ToolTip: FC<PropsWithChildren<ToolTipProps>> = (
       setOpen(false)
     }
     if (e.type === 'pointerenter') {
+      console.log(e)
       if (e.target !== e.currentTarget) return
       isInRef.current = true
       if (delay) {

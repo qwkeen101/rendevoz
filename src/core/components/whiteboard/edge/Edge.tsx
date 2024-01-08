@@ -54,7 +54,6 @@ const TreeEdge: FC<{
   const labelContainerRef = useRef<SVGGElement>(null)
   const isReposition = useSelectAtomValue(EdgeOverlayStateAtom, s => s.isReposition)
   const currentEdgeId = useSelectAtomValue(EdgeOverlayStateAtom, s => s.currentEdgeId)
-  const flow = useFlow()
   const { handlePointerEvent, isTouched, isErasing } = useEraseEdge(id)
   const edgeRef = useRef<SVGPathElement>(null)
   const instance = useWhiteboardInstance()

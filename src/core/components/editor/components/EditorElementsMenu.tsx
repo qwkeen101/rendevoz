@@ -123,7 +123,7 @@ const EditorElementsMenu = (props: { onAddElement: (blockName: string) => void }
       style={{
         padding: '0.25rem 0',
         minWidth: 240,
-        maxHeight: '40vh',
+        maxHeight: 'max(300px, 30vh)',
         overflowY: 'auto'
       }}
     >

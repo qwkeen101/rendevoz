@@ -16,17 +16,54 @@ const useGroupFilter = (groupId: number) => {
   const searchable = useMemo(() => {
     const map = metaMap
     const tagMap = globalStore.get(ObjectStore('tag').objectMapAtom)
+    const optionMap = globalStore.get(ObjectStore('metaPropSelectOption').objectMapAtom)
     return groupData?.values
       ?.map(i => {
         const meta = map.get(i.id)
         if (!meta) return
-        const tags = meta.tags?.map(i => tagMap.get(i)?.name || '').join('$')
-        const from = meta.fromObject ? map.get(meta.fromObject.metaId)?.name : undefined
+        let search = `${meta.name}, ${meta.description}`
+        const tags = meta.tags?.map(i => tagMap.get(i)?.name || '').join(',')
+        search += `,${tags}`
+        if (meta.properties) {
+          Object.entries(meta.properties).forEach(([k, i]) => {
+            const propDetails = MetaStore.getPropDetails(k)
+            if (propDetails) {
+              switch (propDetails.propType) {
+                case 'string':
+                case 'AI summary':
+                  if (i.value) {
+                    search += ',' + i.value
+                  }
+                  break
+                case 'number':
+                  if (i.value !== undefined) {
+                    search += ',' + i.value
+                  }
+                  break
+                case 'URL':
+                  if (i.value !== undefined) {
+                    search += ',' + i.value
+                  }
+                  break
+                case 'singleSelect':
+                  if (i.value) {
+                    search += ',' + optionMap.get(i.value)?.name
+                  }
+                  break
+                case 'multiSelect':
+                  if (i.value?.length) {
+                    i.value.forEach(id => {
+                      search += ',' + optionMap.get(id)?.name
+                    })
+                  }
+                  break
+              }
+            }
+          })
+        }
         return {
           name: meta.name,
-          description: meta.description,
-          tags,
-          from,
+          searchable: search,
           rowId: i.rowId
         }
       })
@@ -65,17 +102,20 @@ const useGroupFilter = (groupId: number) => {
       let afterSearchValue = afterFilterRows
 
       if (currentView.search && searchable) {
-        const result = fuzzysort.go(
-          currentView.search,
-          searchable.filter(i => afterFilterRowIds.has(i.rowId)),
-          {
-            keys: ['name', 'description', 'tags', 'from'],
-            threshold: -400000
-          }
-        )
-        // todo: search rank
-        const afterSearchRowIds = new Set(Array.from(result.values()).map(i => i.obj.rowId))
-        afterSearchValue = afterFilterRows.filter(i => afterSearchRowIds.has(i.rowId))
+        const replaced = currentView?.search.replaceAll(',', '')
+        if (replaced) {
+          const result = fuzzysort.go(
+            currentView.search,
+            searchable.filter(i => afterFilterRowIds.has(i.rowId)),
+            {
+              key: 'searchable',
+              threshold: -400000
+            }
+          )
+          // todo: search rank
+          const afterSearchRowIds = new Set(Array.from(result.values()).map(i => i.obj.rowId))
+          afterSearchValue = afterFilterRows.filter(i => afterSearchRowIds.has(i.rowId))
+        }
       }
       if (currentView.sort?.sorters.length) {
         const allMetas = afterSearchValue.map(i => i.type === 'metaObject' && map.get(i.id)).filter(i => i) as MetaObject[]

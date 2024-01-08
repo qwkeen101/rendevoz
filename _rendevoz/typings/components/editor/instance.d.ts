@@ -4,7 +4,14 @@ import { CustomText, EmptyText } from '.'
 import { EditorOverlayManager } from '../../../../src/core/components/editor/components/overlay/useEditorOverlay'
 import { XYPosition } from '~/typings'
 
-export type IEditorOverlayContent = 'emojiPicker' | 'blockHandleMenu' | 'blockDetailsMenu' | 'selectArea' | 'slashMenu' | 'linkForm' | 'transformMenu'
+export type IEditorOverlayContent =
+  | 'emojiPicker'
+  | 'blockHandleMenu'
+  | 'blockDetailsMenu'
+  | 'selectArea'
+  | 'slashMenu'
+  | 'linkForm'
+  | 'transformMenu'
 export type IEditorInstance = Partial<{
   getTitle: () => string
   scrollToBlock: (options: { blockId?: number; highlight?: boolean }) => Promise<void>
@@ -18,10 +25,13 @@ export type IEditorInstance = Partial<{
   scrollToPosition: (offset: number) => void
   // trigger change index without triggering onChange
   handleChange: VoidFunction
+  // inside meta ids
+  getInsideMetas: () => number[]
   blockOps: {
     isBlockEmpty: (customElement: CustomElement) => boolean
     copyLink: VoidFunction
     duplicateSelectedBlocks: VoidFunction
+    getCurrentCursorBounding: () => DOMRect | undefined
     getCurrentCursorBlockBounding: () => DOMRect | undefined
     getCurrentCursorBlockText: () => string | undefined
     // if has selected, delete selected, else delete target path

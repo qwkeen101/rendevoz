@@ -32,6 +32,7 @@ export default async (questionId: number, pointerId: number) => {
           break
         }
         case 'pdfPage': {
+          await Rendevoz.Actions.Open.Pdf.openPdfPage(p.page, q.parentObjectId)
           break
         }
       }

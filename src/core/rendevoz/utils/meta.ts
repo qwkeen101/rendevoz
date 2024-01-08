@@ -42,10 +42,12 @@ const normalizeLocalFileToMeta = async (
   if (options?.limitType === false) {
     return {
       object: {
+        specType: 'localFile',
         url: file.path
       },
       meta: {
-        name: file.name
+        name: file.name,
+        type: 'localFile'
       }
     }
   }
@@ -54,6 +56,7 @@ const normalizeLocalFileToMeta = async (
 
 const normalizeWebFileToMeta = async (url: string, type: string): Promise<IImportResult<any>> => {
   const details = await Rendevoz.Utils.Web.fetchDetails(url)
+  console.log(details)
   return {
     meta: {
       name: details.title,
@@ -68,10 +71,12 @@ const normalizeWebFileToMeta = async (url: string, type: string): Promise<IImpor
   }
 }
 
-
 const Meta = {
   findPathsBetweenTwoMetaObjects,
   getTypeName: (type: string) => {
+    if (!type) {
+      return 'Unknown'
+    }
     return t(`general.${type}`)
   },
   getTypeRadius: (type: string) => {

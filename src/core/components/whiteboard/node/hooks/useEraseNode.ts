@@ -2,8 +2,10 @@ import { useEffect, useState } from 'react'
 import { useMemoizedFn, useSelectAtomValue } from '@/hooks'
 import { WhiteboardStateAtom } from '@/core/components/whiteboard/hooks/useWhiteboardState'
 import { useFlow } from '@/core/components/whiteboard/StateHooks'
+import { IWhiteboardNode } from '~/typings'
+import { getSetting } from '@/core'
 
-const useEraseNode = (nodeId: number) => {
+const useEraseNode = (node: IWhiteboardNode) => {
   const isErasing = useSelectAtomValue(WhiteboardStateAtom, s => s.erasing)
   const flow = useFlow()
   const [isTouched, setIsTouched] = useState(false)
@@ -12,7 +14,16 @@ const useEraseNode = (nodeId: number) => {
       return
     }
     if (e.type === 'pointerenter') {
-      flow.erasedNodeIds.add(nodeId)
+      const setting = getSetting()
+      if (setting.whiteboard.onlyEraseFreeDraw) {
+        if (node.type === 'freehand') {
+          flow.erasedNodeIds.add(node.id)
+          setIsTouched(true)
+        }
+
+        return
+      }
+      flow.erasedNodeIds.add(node.id)
       setIsTouched(true)
     }
   })

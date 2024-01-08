@@ -97,6 +97,11 @@ const WebVideoPlayer = () => {
       }
     }
   }, [mediaState.jumpTime, mediaState.loaded])
+  useEffect(() => {
+    if (mediaState.currentTime !== undefined && mediaState.loaded && web) {
+      web.send('videoEvent', { type: 'jump', time: mediaState.currentTime })
+    }
+  }, [mediaState.loaded])
   if (mediaState.loaded && web) {
     assignProperties(instance, {
       imageOps: {

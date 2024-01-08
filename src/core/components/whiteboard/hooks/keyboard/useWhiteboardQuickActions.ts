@@ -33,6 +33,42 @@ export default () => {
     if (isHotkey('shift+q', e)) {
       instance.containerOps?.redoTransform()
     }
+    if (includeShortcuts(e, WhiteboardDefaultKeyboardShortcut.OpenInCenter.key)) {
+      const selected = instance.selectOps?.getSelectedNodes()
+      if (selected?.length === 1) {
+        if (instance.nodeOps?.canExpand(selected[0])) {
+          instance.nodeOps?.open(selected[0].id, 'center')
+          instance.toolbarOps?.closeToolbar()
+        }
+      }
+    }
+    if (includeShortcuts(e, WhiteboardDefaultKeyboardShortcut.OpenInNewTabs.key)) {
+      const selected = instance.selectOps?.getSelectedNodes()
+      if (selected?.length === 1) {
+        if (instance.nodeOps?.canExpand(selected[0])) {
+          instance.nodeOps?.open(selected[0].id, 'newTab')
+          instance.toolbarOps?.closeToolbar()
+        }
+      }
+    }
+    if (includeShortcuts(e, WhiteboardDefaultKeyboardShortcut.OpenInFloat.key)) {
+      const selected = instance.selectOps?.getSelectedNodes()
+      if (selected?.length === 1) {
+        if (instance.nodeOps?.canExpand(selected[0])) {
+          instance.nodeOps?.open(selected[0].id, 'float')
+          instance.toolbarOps?.closeToolbar()
+        }
+      }
+    }
+    if (includeShortcuts(e, WhiteboardDefaultKeyboardShortcut.OpenInSidebar.key)) {
+      const selected = instance.selectOps?.getSelectedNodes()
+      if (selected?.length === 1) {
+        if (instance.nodeOps?.canExpand(selected[0])) {
+          instance.nodeOps?.open(selected[0].id, 'sidePeek')
+          instance.toolbarOps?.closeToolbar()
+        }
+      }
+    }
     if (includeShortcuts(e, WhiteboardDefaultKeyboardShortcut.Expand.key)) {
       const selected = instance.selectOps?.getSelectedNodes()
       if (selected?.length) {

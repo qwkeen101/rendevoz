@@ -8,7 +8,7 @@ import WhiteboardMinimap from '@/core/components/whiteboard/minimap/WhiteboardMi
 import { useEffect, useState } from 'react'
 import { useWhiteboardInstance } from '@/core/components/whiteboard/hooks'
 import { getBoxOfNodes } from '@/core/components/whiteboard/utils'
-import TooltipWithCmd from '@/core/components/whiteboard/TooltipWithCmd'
+import TooltipWithCmd from '@/components/TooltipWithCmd'
 import { useTranslation } from 'react-i18next'
 
 const WhiteboardControlBar = () => {

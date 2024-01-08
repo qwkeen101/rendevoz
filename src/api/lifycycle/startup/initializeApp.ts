@@ -6,8 +6,13 @@ import initializeFolder from '@/api/lifycycle/startup/initializeFolder'
 import { initializeSearch } from '@/api/textSearch/SearchHelper'
 import initializeUnnamedLabel from '@/api/lifycycle/startup/initializeUnnamedLabel'
 import initializeUrlProp from '@/api/lifycycle/startup/initializeUrlProp'
+import initializeSettings from '@/api/lifycycle/startup/initializeSettings'
+import initializeDefaultKeyvalues from '@/api/lifycycle/startup/initializeDefaultKeyvalues'
 
 export default async () => {
+  await initializeDefaultKeyvalues()
+  await KeyvalueStore.getAll()
+  await initializeSettings()
   await initializeFolder()
   await initializeUnnamedLabel()
   await initializeUrlProp()
@@ -15,7 +20,8 @@ export default async () => {
   await MetaStore.getAllMetaLinks()
   await MetaStore.getAllMetaObjects()
   await CollectionStore.getAllCollections()
-  await KeyvalueStore.getAll()
+  await ObjectStore('metaProp').getAll()
+  await ObjectStore('metaPropSelectOption').getAll()
   await ObjectStore('tag').getAll()
   await initializeSearch()
   ipcInstance.send('appOk')

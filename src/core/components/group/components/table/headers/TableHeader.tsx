@@ -1,25 +1,26 @@
-import { useAtom, useSetAtom } from 'jotai'
-import { TableStateAtom } from '@/core/components/group/hooks/useTableState'
-import { memo, useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { useSetAtom } from 'jotai'
+import { memo, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { Reorder } from 'framer-motion'
 import { Colors } from '@/consts'
 import GroupHeaderItem from '@/core/components/group/components/table/headers/HeaderItem'
-import { Content } from '@/components'
+import { Content, IconWithPopover } from '@/components'
 import { GroupStateAtom } from '@/core/components/group/hooks/useGroupState'
 import { useGroupInstance } from '@/core/components/group/hooks/useGroupInstance'
 import produce from 'immer'
 import { useIsIn, useSelectAtomValue } from '@/hooks'
+import NewPropertyMenu from '@/core/object/renderer/properties/NewPropertyMenu'
+import { MetaGroupProperty } from '~/typings'
+import { ClassName } from 'rendevoz'
 
 const GroupTableHeader = memo(() => {
   const setGroupState = useSetAtom(GroupStateAtom)
   const unToggledSelectedCount = useSelectAtomValue(GroupStateAtom, s => s.unToggledSelectedCount)
   const unToggledValueCount = useSelectAtomValue(GroupStateAtom, s => s.unToggledValueCount)
   const selectedCount = useSelectAtomValue(GroupStateAtom, s => s.selectedCount)
-  const currentView = useSelectAtomValue(GroupStateAtom, s => s.currentView)
-  const allHeaders = currentView?.options.properties || []
-  const visibleHeaders = currentView?.options.properties?.filter(i => i.visible) || []
   const instance = useGroupInstance()
-  const [innerItems, setInnerItems] = useState(visibleHeaders)
+  const visibleHeaders = useSelectAtomValue(GroupStateAtom, s => s.visibleHeaders)
+
+  const [innerItems, setInnerItems] = useState<(MetaGroupProperty & { width: number })[]>([])
   const { ref: checkboxRef, isIn } = useIsIn()
   const handleSelectVisibleItems = () => {
     const elements = instance.valueOps?.getVisibleValues()
@@ -38,14 +39,12 @@ const GroupTableHeader = memo(() => {
       instance.selectOps?.clearAllSelect()
     }
   }
-  console.log({
-    selectedCount,
-    unToggledSelectedCount,
-    unToggledValueCount
-  })
+
   useLayoutEffect(() => {
-    setInnerItems(visibleHeaders)
-  }, [currentView?.options.properties])
+    if (visibleHeaders) {
+      setInnerItems(visibleHeaders)
+    }
+  }, [visibleHeaders])
   useLayoutEffect(() => {
     if (!checkboxRef.current) return
     if (unToggledSelectedCount > 0 && unToggledSelectedCount < unToggledValueCount) {
@@ -55,6 +54,7 @@ const GroupTableHeader = memo(() => {
     }
   }, [unToggledSelectedCount, unToggledValueCount])
 
+  const hK = useMemo(() => visibleHeaders.map(i => i.id).join(''), [visibleHeaders])
   return (
     <Content
       flex
@@ -90,30 +90,43 @@ const GroupTableHeader = memo(() => {
       <Reorder.Group
         axis="x"
         as={'div'}
-        layoutScroll={true}
         style={{ display: 'flex' }}
         values={innerItems}
         onReorder={items => {
           setInnerItems(items)
         }}
       >
-        {innerItems.map((i, idx) => (
+        {innerItems?.map((i, idx) => (
           <GroupHeaderItem
             item={i}
-            key={i.name}
+            key={`${i.id}_${hK}`}
             onDragEnd={() => {
-              instance.updateCurrentView?.(s => ({
-                ...s,
-                options: {
-                  ...s.options,
-                  properties: [...innerItems, ...(allHeaders.filter(i => i.visible === false) || [])]
-                }
-              }))
+              const currProps = instance.getCurrentView?.()?.options.properties
+              if (currProps) {
+                const newProps = produce(currProps, draft => {
+                  innerItems.forEach((i, idx) => {
+                    draft[i.id].order = idx
+                  })
+                })
+                instance.updateCurrentView?.(s => ({
+                  ...s,
+                  options: {
+                    ...s.options,
+                    properties: newProps
+                  }
+                }))
+              }
             }}
             onResize={newItem => {
+              if (!visibleHeaders) return
               const idx = visibleHeaders.findIndex(i => i.name === newItem.name)
               const newVisibleHeaders = [...visibleHeaders]
               newVisibleHeaders[idx] = newItem
+              setInnerItems(
+                produce(innerItems, s => {
+                  s[idx] = newItem
+                })
+              )
               setGroupState(s => ({
                 ...s,
                 headerColumn: newVisibleHeaders.map(i => `${i.width + 1}px`).join(' '),
@@ -121,21 +134,32 @@ const GroupTableHeader = memo(() => {
               }))
             }}
             onResizeEnd={newItem => {
-              const idx = allHeaders.findIndex(i => i.name === newItem.name)
-              const newHeaders = produce(allHeaders, s => {
-                s[idx] = newItem
+              instance.viewOps?.updateProperty(newItem.id, {
+                width: newItem.width
               })
-              instance.updateCurrentView?.(s => ({
-                ...s,
-                options: {
-                  ...s.options,
-                  properties: newHeaders
-                }
-              }))
             }}
           />
         ))}
       </Reorder.Group>
+      <IconWithPopover
+        padding={4}
+        className={ClassName.flatButton(0, '8px')}
+        style={{
+          color: Colors.Font.Transparent
+        }}
+        size={16}
+        placement={['bottom']}
+        renderOnParent={false}
+        content={setV => (
+          <NewPropertyMenu
+            onAddProp={p => {
+              instance.viewOps?.addNewProperty(p)
+            }}
+            onClose={() => setV(false)}
+          />
+        )}
+        name={'park-plus'}
+      />
     </Content>
   )
 })

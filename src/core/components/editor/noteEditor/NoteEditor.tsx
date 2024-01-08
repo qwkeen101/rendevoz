@@ -9,23 +9,21 @@ import useStoreValue from '@/core/components/editor/noteEditor/useStoreValue'
 import useDrop from '@/core/components/editor/noteEditor/useDrop'
 import useAddNewElement from '@/core/components/editor/noteEditor/useAddNewElement'
 import useLabel from '@/core/components/editor/noteEditor/useLabel'
-import { GlobalInstance } from '@/hooks'
 import { GlobalSearchInstance } from '@/core/global/GlobalSearchPanel'
-import produce from 'immer'
+import useCheckInsideMeta from '@/core/components/editor/noteEditor/useCheckInsideMeta'
+import { AI_QUESTION_PROP_ID, AI_SUMMARY_PROP_ID } from '@/api/stores/meta.store'
 
 /**
  *  基于笔记的编辑器
  *  支持多编辑器数据同步，保存到本地等
  */
-const NoteEditor = ({ noteId, labelIds, on, ...rest }: { noteId?: number } & EditorProps) => {
+const NoteEditor = ({ noteId, labelIds, on, metaId, ...rest }: { noteId?: number; metaId?: number } & Omit<EditorProps, 'id'>) => {
   const note = ObjectStore('note').useValue(noteId)
-  const noteMeta = MetaStore.useObjectToMetaValue(noteId || 0)
-  if (noteMeta && note && !note?.metaId) {
-    ObjectStore('note').updateOne({ id: note.id, metaId: noteMeta.id })
-  }
+  const noteMeta = MetaStore.useValue(metaId)
+
   const editorId = useMemo(() => Id.getStrId(), [])
   const [instance, setInstance] = useState<IEditorInstance>()
-  const handleDrop = useDrop(noteId)
+  const handleDrop = useDrop(noteId, metaId)
   const handleAddNewElementFromMenu = useAddNewElement(noteId)
   useSyncValue(editorId, noteId, instance)
   const { saveValueToNote } = useStoreValue({
@@ -42,7 +40,7 @@ const NoteEditor = ({ noteId, labelIds, on, ...rest }: { noteId?: number } & Edi
   const { handleDeleteLable, handleAddLabel } = useLabel(note)
   const emitter = Rendevoz.Events.Emit.GlobalEventEmitter
   const updater = ObjectStore('note').updateOne
-
+  useCheckInsideMeta(instance, metaId)
   return (
     <Editor
       {...rest}
@@ -57,8 +55,8 @@ const NoteEditor = ({ noteId, labelIds, on, ...rest }: { noteId?: number } & Edi
       }}
       ai={
         rest.ai || {
-          summary: noteMeta?.properties?.['AI summary']?.value,
-          questions: noteMeta?.properties?.['AI questions']?.value
+          summary: noteMeta?.properties?.[AI_SUMMARY_PROP_ID]?.value,
+          questions: noteMeta?.properties?.[AI_QUESTION_PROP_ID]?.value
         }
       }
       state={
@@ -84,7 +82,8 @@ const NoteEditor = ({ noteId, labelIds, on, ...rest }: { noteId?: number } & Edi
         switch (e.type) {
           case 'blockDragged': {
             return {
-              noteId
+              noteId,
+              fromMetaId: noteMeta?.id
             }
           }
           case 'save': {
@@ -105,6 +104,18 @@ const NoteEditor = ({ noteId, labelIds, on, ...rest }: { noteId?: number } & Edi
             }
             return
           }
+          case 'linkToMeta': {
+            if (metaId) {
+              return await MetaStore.addMetaLink(
+                {
+                  sourceId: metaId,
+                  targetId: e.targetMetaId
+                },
+                true
+              )
+            }
+            break
+          }
           case 'deleteLabel': {
             return await handleDeleteLable(e.labelId)
           }
@@ -118,7 +129,7 @@ const NoteEditor = ({ noteId, labelIds, on, ...rest }: { noteId?: number } & Edi
           }
           case 'AI summarize': {
             if (noteMeta) {
-              const objId = noteId
+              const objId = noteMeta.objectId
               const questions = await Promise.all(
                 e.questions.map(async i => await ObjectStore('question').addOne({ ...i, parentObjectId: objId }))
               )
@@ -134,7 +145,6 @@ const NoteEditor = ({ noteId, labelIds, on, ...rest }: { noteId?: number } & Edi
               { url: e.url },
               {
                 currentMeta: {
-                  name: 'Unnamed webpage',
                   fromObject: noteMeta
                     ? {
                         type: 'note',

@@ -50,12 +50,14 @@ const PdfSearch = () => {
         display: 'flex',
         flexDirection: 'column',
         gap: 6,
-        height: '100%'
+        height: '100%',
+        padding: 12
       }}
     >
-      <BorderInput
+      <input
+        className={ClassName.noStyleInput}
         onChange={e => {
-          const value = e
+          const value = e.target.value
           if (typeof value !== 'string') return
           setSearchStr(value)
           if (value.length) {
@@ -80,12 +82,13 @@ const PdfSearch = () => {
         }}
         value={searchStr}
         placeholder={t('general.search')}
-        style={{ padding: '6px 12px' }}
-        textarea={false}
-      ></BorderInput>
-      <div className={ClassName.description()} style={{ marginLeft: 8, userSelect: 'none' }}>
-        {t('general.find results', { num: result.total })}
-      </div>
+        style={{ padding: '6px 12px', border: Colors.Consts.Border, borderRadius: 4 }}
+      ></input>
+      {searchStr && (
+        <div className={ClassName.description()} style={{ userSelect: 'none' }}>
+          {t('general.find results', { num: result.total })}
+        </div>
+      )}
       <div
         style={{
           overflowY: 'auto',
@@ -103,14 +106,17 @@ const PdfSearch = () => {
         <VirtualList
           style={{ width: '100%', height: '100%' }}
           estimateSize={100}
+          childrenContainerClassname={'font-size-14'}
           items={result.resultList || []}
+          paddingEnd={200}
           renderItem={i => (
             <ResultPanel
               pageIndex={i.pageIndex}
               results={i.results}
               key={i.pageIndex}
               onClick={() => {
-                viewer?.jumpToPage?.(i.pageIndex)
+                console.log(i.pageIndex)
+                viewer?.navigateOps?.jumpToPage?.(i.pageIndex)
                 viewer?.highlightText?.(searchStr, i.pageIndex)
               }}
             />
@@ -142,7 +148,7 @@ const ResultPanel = memo(({ pageIndex, results, onClick }: { pageIndex: number; 
           }}
           className={dividerClazz}
         >
-          {pageIndex}
+          {pageIndex + 1}
         </span>
       </div>
       {results.map(i => (

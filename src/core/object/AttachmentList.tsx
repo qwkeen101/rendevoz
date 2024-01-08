@@ -24,6 +24,7 @@ export interface AttachmentListProps {
   parentMetaId: number
   renderAttOnParent?: boolean
   renderObjectDetailsOnParent?: boolean
+  showField?: boolean
 }
 
 const legendClazz = css({
@@ -47,6 +48,7 @@ const AttachmentList = ({
   parentMetaId,
   style,
   innerContainerStyle,
+  showField = true,
   closeIcon,
   onClose,
   renderAttOnParent,
@@ -113,10 +115,10 @@ const AttachmentList = ({
           name="park-close"
           onClick={onClose}
           containerStyle={{ position: 'absolute', top: -8, right: 8 }}
-          containerClassName={ClassName.circleButton(3)}
+          className={ClassName.circleButton(3)}
         />
       )}
-      <legend className={legendClazz}>{parentName || t('general.attachments')}</legend>
+      {showField && <legend className={legendClazz}>{parentName || t('general.attachments')}</legend>}
       <div
         style={{
           width: '100%',

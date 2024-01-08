@@ -22,6 +22,13 @@ const untransformableOriginalType = ['table', 'metaObject', 'synced']
 const assignBlockOps = (instance: IEditorInstance, editor: CustomEditor) => {
   assignProperties(instance, {
     blockOps: {
+      getCurrentCursorBounding: () => {
+        const selection = editor.selection
+        if (selection) {
+          const domRange = ReactEditor.toDOMRange(editor, selection)
+          return domRange.getBoundingClientRect()
+        }
+      },
       isBlockEmpty: el => {
         if (editor.isVoid(el)) {
           return false

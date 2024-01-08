@@ -1,36 +1,21 @@
 import React, { Dispatch, FC, forwardRef, memo, PropsWithChildren, ReactNode, RefObject, useEffect, useRef, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
-import { Popover, PopoverProps } from 'react-tiny-popover'
+import { PopoverProps } from 'react-tiny-popover'
+import { Popover } from './popover/Popover'
 import useUnmount from '@/hooks/utils/useUnmount'
-import _ from 'lodash'
 import { useMergedRef } from '@/hooks'
-import { Colors, Zindexes } from '@/consts'
-import { Position } from '~/typings'
+import { KEY, Zindexes } from '@/consts'
+import { LeftTopPosition, Position } from '~/typings'
 import { SetStateAction } from 'jotai'
 import { createPortal } from 'react-dom'
+import isHotkey from 'is-hotkey'
 
 interface PosHelperProps {
   top?: number
   left?: number
   children?: ReactNode
 }
-const PosHelper = forwardRef<HTMLDivElement, PosHelperProps>(({ top, left, children }, ref) => {
-  return createPortal(
-    <div
-      ref={ref}
-      style={{
-        position: 'absolute',
-        top: top,
-        left: left,
-        width: 1,
-        height: 1
-      }}
-    >
-      {children}
-    </div>,
-    document.body
-  )
-})
+
 export interface AnimatePopoverProps extends Omit<PopoverProps, 'content' | 'isOpen' | 'children'> {
   animate?: boolean
   visible?: boolean
@@ -41,25 +26,31 @@ export interface AnimatePopoverProps extends Omit<PopoverProps, 'content' | 'isO
   innerRef?: RefObject<HTMLElement>
   parentElement?: HTMLElement | null
   backdropFilter?: boolean
-  position?: Position
+  position?: LeftTopPosition
   children?: ReactNode
   contentDraggable?: boolean
   closeOnClickOutside?: boolean
   withClickCover?: boolean
   borderRadius?: number
+  openOnClickCapture?: boolean
   duration?: number
+  openOnContextMenu?: boolean
   hoverOpen?: boolean
+  keepAlign?: boolean
 }
 
 const AnimatePopover: FC<PropsWithChildren<AnimatePopoverProps>> = ({
   animate = true,
   content,
   children,
+  openOnContextMenu,
   visible,
   borderRadius = 8,
   reposition = false,
+  keepAlign = false,
   disableNudge = false,
   position,
+  openOnClickCapture = false,
   parentElement = document.body,
   boundaryElement = document.body,
   boundaryInset = 40,
@@ -80,18 +71,25 @@ const AnimatePopover: FC<PropsWithChildren<AnimatePopoverProps>> = ({
   const timeoutRef = useRef<NodeJS.Timeout>()
   const [isOpen, setIsOpen] = useState(false)
   const [innerVisible, setInnerVisible] = useState(false)
-  const [hasPosHelperPopoverVisible, setHasPosHelperPopoverVisible] = useState(false)
   const intersectionRef = useRef<HTMLElement>(null)
-
-  const popoverRef = useRef(null)
   const nudgedRef = useRef()
   const mergedRef = useMergedRef(intersectionRef, innerRef)
   useEffect(() => {
     if (visible === undefined) {
-      intersectionRef?.current?.addEventListener('click', () => {
-        setIsOpen(true)
-        setInnerVisible(s => !s)
-      })
+      const l = (e: MouseEvent) => {
+        if (!e.defaultPrevented) {
+          setIsOpen(true)
+          setInnerVisible(s => !s)
+        }
+      }
+      intersectionRef?.current?.addEventListener('click', l, openOnClickCapture)
+      if (openOnContextMenu) {
+        intersectionRef?.current?.addEventListener('contextmenu', l)
+      }
+      return () => {
+        intersectionRef.current?.removeEventListener('click', l, openOnClickCapture)
+        intersectionRef?.current?.removeEventListener('contextmenu', l)
+      }
     }
   }, [])
 
@@ -107,10 +105,6 @@ const AnimatePopover: FC<PropsWithChildren<AnimatePopoverProps>> = ({
         clearTimeout(timeoutRef.current)
         timeoutRef.current = undefined
       }
-
-      if (position) {
-        setHasPosHelperPopoverVisible(true)
-      }
       setIsOpen(true)
       setInnerVisible(true)
     }
@@ -123,7 +117,19 @@ const AnimatePopover: FC<PropsWithChildren<AnimatePopoverProps>> = ({
 
   useEffect(() => {
     onVisiblityChange?.(isOpen)
+    const keydownHandler = (e: KeyboardEvent) => {
+      if (isHotkey(KEY.Escape, e)) {
+        e.preventDefault()
+        e.stopPropagation()
+        onClickOutside?.(e)
+        timeoutRef.current = setTimeout(() => setIsOpen(false), duration * 1000)
+        if (visible === undefined) {
+          setInnerVisible(false)
+        }
+      }
+    }
     if (isOpen) {
+      document.addEventListener('keydown', keydownHandler, true)
       const containerDockPane = intersectionRef.current?.closest(`[role='tabpane']`)
       if (containerDockPane) {
         const visiblityWatcher = new MutationObserver(cb => {
@@ -141,34 +147,23 @@ const AnimatePopover: FC<PropsWithChildren<AnimatePopoverProps>> = ({
           attributeFilter: ['style']
         })
         return () => {
+          document.removeEventListener('keydown', keydownHandler, true)
           visiblityWatcher.disconnect()
         }
       }
     }
-    if (position) {
-      if (isOpen === false) {
-        setHasPosHelperPopoverVisible(false)
-      }
+    return () => {
+      document.removeEventListener('keydown', keydownHandler, true)
     }
   }, [isOpen])
-  const handleClickOutside = (e: MouseEvent) => {
-    console.log(e)
-    let clickOnCover = false
-    if (e.target instanceof HTMLElement && e.target.getAttribute('role') === 'click-cover') {
-      clickOnCover = true
-    }
-    // have click cover but not click on cover, return here
-    if (!clickOnCover && withClickCover) {
-      return
-    }
-    // click on another popover's cover, return here
-    if (clickOnCover && !withClickCover) {
-      return
-    }
-    // if (e.path?.some(i => i instanceof HTMLElement && i.getAttribute('data-disable-close-popover') === 'true')) {
-    //   return
-    // }
 
+  const handleClickOutside = (e: MouseEvent) => {
+    if (withClickCover) {
+      return
+    }
+    if (e.target instanceof HTMLElement && e.target.getAttribute('role') === 'click-cover') {
+      return
+    }
     setTimeout(() => {
       if (e.defaultPrevented) return
       onClickOutside?.(e)
@@ -225,184 +220,106 @@ const AnimatePopover: FC<PropsWithChildren<AnimatePopoverProps>> = ({
     ..._containerStyle,
     borderRadius
   }
-  if (animate) {
-    return position ? (
-      hasPosHelperPopoverVisible && (
-        <Popover
-          clickOutsideCapture={clickOutsideCapture}
-          {...rest}
-          containerStyle={containerStyle}
-          parentElement={realParent}
-          onClickOutside={handleClickOutside}
-          reposition={reposition}
-          isOpen={isOpen}
-          boundaryElement={boundaryElement}
-          boundaryInset={boundaryInset}
-          ref={mergedRef}
-          content={({ nudgedLeft, nudgedTop, position, align }) => {
-            const origin = getTransformOrigin(position, align)
-            if (!disableNudge) {
-              nudgedRef.current = {
-                left: nudgedLeft,
-                top: nudgedTop
-              }
-            } else {
-              nudgedRef.current = undefined
-            }
 
-            const { left, top } = nudgedRef.current || {
-              left: undefined,
-              top: undefined
-            }
-            return (
-              <AnimatePresence onExitComplete={() => setIsOpen(false)}>
-                {innerVisible && (
-                  <motion.div
-                    onPointerEnter={() => (contentHoverRef.current = true)}
-                    onPointerLeave={() => {
-                      contentHoverRef.current = false
-                    }}
-                    drag={contentDraggable}
-                    dragElastic={0}
-                    dragMomentum={false}
-                    initial={{ opacity: 0, visibility: 'hidden' }}
-                    animate={{ opacity: 1, visibility: 'visible' }}
-                    exit={{ opacity: 0 }}
-                    transition={{
-                      delay: 0.05,
-                      duration
-                    }}
-                    style={{
-                      position: 'relative',
-                      left: left,
-                      top: top,
-                      originX: origin.x,
-                      originY: origin.y,
-                      borderRadius: containerStyle?.borderRadius,
-                      display: 'block'
-                    }}
-                  >
-                    {withClickCover &&
-                      createPortal(
-                        <div
-                          role={'click-cover'}
-                          style={{
-                            position: 'fixed',
-                            top: 0,
-                            left: 0,
-                            width: '100%',
-                            height: '100%',
-                            zIndex: Number(containerStyle?.zIndex || '9999') - 1
-                          }}
-                          onClick={e => {
-                            e.stopPropagation()
-                            handleClickOutside(e)
-                          }}
-                        ></div>,
-                        document.body
-                      )}
+  const contentRenderer = ({ nudgedLeft, nudgedTop, position, align }) => {
+    const origin = getTransformOrigin(position, align)
+    if (!disableNudge) {
+      nudgedRef.current = {
+        left: nudgedLeft,
+        top: nudgedTop
+      }
+    } else {
+      nudgedRef.current = undefined
+    }
 
-                    {React.isValidElement(content) ? content : typeof content === 'function' ? content(setInnerVisible) : null}
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            )
-          }}
-        >
-          <PosHelper left={position.x ?? position.left} top={position.top ?? position.y} />
-        </Popover>
-      )
-    ) : (
-      <Popover
-        {...rest}
-        boundaryElement={boundaryElement}
-        boundaryInset={boundaryInset}
-        containerStyle={containerStyle}
-        parentElement={realParent}
-        onClickOutside={handleClickOutside}
-        clickOutsideCapture={clickOutsideCapture}
-        reposition={reposition}
-        isOpen={isOpen}
-        ref={mergedRef}
-        content={({ nudgedLeft, nudgedTop, position, align }) => {
-          const origin = getTransformOrigin(position, align)
-          if ((!nudgedRef.current || _.isEqual(nudgedRef.current, { left: 0, top: 0 })) && !disableNudge) {
-            nudgedRef.current = {
-              left: nudgedLeft,
-              top: nudgedTop
-            }
-          }
-
-          const { left, top } = nudgedRef.current || {
-            left: undefined,
-            top: undefined
-          }
-          return (
-            <AnimatePresence onExitComplete={() => setIsOpen(false)}>
-              {innerVisible && (
-                <motion.div
-                  dragElastic={0}
-                  dragMomentum={false}
-                  onPointerEnter={() => (contentHoverRef.current = true)}
-                  onPointerLeave={e => {
-                    contentHoverRef.current = false
-                  }}
-                  initial={{ opacity: 0, visibility: 'hidden' }}
-                  animate={{ opacity: 1, visibility: 'visible' }}
-                  exit={{ opacity: 0 }}
-                  transition={{
-                    delay: 0.05,
-                    duration
-                  }}
-                  drag={contentDraggable}
+    const { left, top } = nudgedRef.current || {
+      left: undefined,
+      top: undefined
+    }
+    return (
+      <AnimatePresence onExitComplete={() => setIsOpen(false)}>
+        {innerVisible && (
+          <motion.div
+            onPointerEnter={() => (contentHoverRef.current = true)}
+            onPointerLeave={() => {
+              contentHoverRef.current = false
+            }}
+            drag={contentDraggable}
+            dragElastic={0}
+            dragMomentum={false}
+            initial={{ opacity: 0, visibility: 'hidden' }}
+            animate={{ opacity: 1, visibility: 'visible' }}
+            exit={{ opacity: 0 }}
+            transition={{
+              delay: 0.05,
+              duration: animate ? duration : 0
+            }}
+            style={{
+              position: 'relative',
+              left: left,
+              top: top,
+              originX: origin.x,
+              originY: origin.y,
+              borderRadius: containerStyle?.borderRadius,
+              display: 'block'
+            }}
+          >
+            {withClickCover &&
+              createPortal(
+                <div
+                  role={'click-cover'}
                   style={{
-                    position: 'relative',
-                    left: left,
-                    top: top,
-                    borderRadius: containerStyle.borderRadius,
-                    display: 'block',
-                    originX: origin.x,
-                    originY: origin.y
+                    position: 'fixed',
+                    top: 0,
+                    left: 0,
+                    width: '100%',
+                    height: '100%',
+                    zIndex: Number(containerStyle?.zIndex || '9999') - 1
                   }}
-                >
-                  {withClickCover &&
-                    createPortal(
-                      <div
-                        role={'click-cover'}
-                        style={{
-                          position: 'fixed',
-                          top: 0,
-                          left: 0,
-                          width: '100%',
-                          height: '100%',
-                          zIndex: Number(containerStyle?.zIndex || '9999') - 1
-                        }}
-                        onClick={e => {
-                          e.stopPropagation()
-                          handleClickOutside(e)
-                        }}
-                      ></div>,
-                      document.body
-                    )}
-                  {React.isValidElement(content) ? content : typeof content === 'function' ? content(setInnerVisible) : null}
-                </motion.div>
+                  onClick={e => {
+                    e.stopPropagation()
+                    onClickOutside?.(e)
+                    if (visible === undefined) {
+                      setInnerVisible(false)
+                    }
+                  }}
+                ></div>,
+                document.body
               )}
-            </AnimatePresence>
-          )
-        }}
-      >
-        {children}
-      </Popover>
+
+            {React.isValidElement(content) ? content : typeof content === 'function' ? content(setInnerVisible) : null}
+          </motion.div>
+        )}
+      </AnimatePresence>
     )
   }
+
   return (
     <Popover
-      ref={popoverRef}
-      isOpen={visible}
-      content={content}
-      boundaryInset={rest.boundaryInset}
+      {...rest}
+      boundaryElement={boundaryElement}
+      boundaryInset={boundaryInset}
+      containerStyle={containerStyle}
       parentElement={realParent}
-      reposition={false}
+      keepTracking={keepAlign}
+      childRect={
+        position
+          ? {
+              left: position.left ?? position.x ?? 0,
+              top: position.top ?? position.y ?? 0,
+              width: 0,
+              height: 0,
+              right: position.left ?? position.x ?? 0,
+              bottom: position.top ?? position.y ?? 0
+            }
+          : undefined
+      }
+      onClickOutside={handleClickOutside}
+      clickOutsideCapture={clickOutsideCapture}
+      reposition={reposition}
+      isOpen={isOpen}
+      ref={mergedRef}
+      content={props => contentRenderer(props)}
     >
       {children}
     </Popover>

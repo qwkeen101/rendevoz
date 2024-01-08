@@ -6,9 +6,7 @@ import { Colors, KEY } from '@/consts'
 import MetaFilterer from '@/core/object/filter/MetaFilterer'
 import { Editor, Path, Transforms } from 'slate'
 import { ReactEditor, useSlateStatic } from '@/core'
-import Id from '@/utils/id'
 import { useMemoizedFn } from '@/hooks'
-import { Rendevoz } from '@/core/rendevoz'
 import { ClassName } from 'rendevoz'
 
 const InlineMetaPicker = ({ element, children, attributes }: RenderElementProps) => {
@@ -27,18 +25,9 @@ const InlineMetaPicker = ({ element, children, attributes }: RenderElementProps)
           at: path
         }
       )
-      Rendevoz.Events.Emit.GlobalEventEmitter.emit('global', {
-        type: 'globalDropNeedFurtherProcess',
-        data: {
-          draggingElement: {
-            type: 'metaElement',
-            metaId: id
-          },
-          dropOn: {
-            dropOn: 'editor',
-            noteId: editor.noteId
-          }
-        }
+      editor.on({
+        type: 'linkToMeta',
+        targetMetaId: id
       })
     } else {
       const text = value
@@ -65,9 +54,7 @@ const InlineMetaPicker = ({ element, children, attributes }: RenderElementProps)
     return () => {
       const path = Path.parent(ReactEditor.findPath(editor, element))
       const hasCurrent = Editor.hasPath(editor, path)
-      console.log(hasCurrent)
       const end = Editor.end(editor, hasCurrent ? path : Path.previous(path))
-      console.log(end)
       ReactEditor.focus(editor)
       Transforms.select(editor, end)
       document.removeEventListener('keydown', existHandler, true)
@@ -82,7 +69,7 @@ const InlineMetaPicker = ({ element, children, attributes }: RenderElementProps)
         positions={['top', 'bottom']}
         padding={4}
         content={
-          <WithBorder padding={6} style={{}}>
+          <WithBorder padding={4}>
             <MetaFilterer
               showCreate={{
                 whiteboard: true,

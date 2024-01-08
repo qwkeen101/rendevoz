@@ -1,11 +1,7 @@
-import { transformTextContentToNameAndDescription } from '@/core/global/globalDragOverlay/utils'
 import { ObjectStore } from '@/api/stores'
 import { assignProperties } from '@/utils'
 import { atom, useAtomValue } from 'jotai'
 import { IPdfInstance } from '~/typings'
-import { getSetting } from '@/core'
-import { truncate } from 'lodash'
-import { truncateString } from '@/utils/text'
 
 export const PdfInstanceAtom = atom<IPdfInstance>({})
 

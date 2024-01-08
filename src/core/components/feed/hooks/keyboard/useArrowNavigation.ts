@@ -14,7 +14,7 @@ const useArrowNavigation = () => {
   const instance = useFeedInstance()
   const prepareContent = async (feedItemId: number) => {
     const feed = await ObjectStore('feed').getOneById(feedItemId)
-    if (feed && !FEED_CONTENT_CACHE.has(feed.id)) {
+    if (feed && (feed.feedType === 'webpage' || !feed?.feedType) && !FEED_CONTENT_CACHE.has(feed.id)) {
       try {
         const result = await Rendevoz.Utils.Web.parseWebpage(feed.link)
         if (result) {

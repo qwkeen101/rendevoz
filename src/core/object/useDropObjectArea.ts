@@ -108,6 +108,9 @@ const useDropObjectArea = (
   handler.on('globalDragPointerUp', data => {
     startDragRef.current = false
     setTimeout(() => {
+      setIsDragOver(false)
+    })
+    setTimeout(() => {
       setCanDropAsMeta({
         droppable: false,
         existed: false

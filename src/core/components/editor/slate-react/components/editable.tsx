@@ -194,10 +194,12 @@ export const Editable = memo(
             if (anchorNode) {
               if (ReactEditor.hasEditableTarget(editor, anchorNode)) {
                 // set block as selected
-                const outerBlock = (isDOMElement(anchorNode) ? anchorNode : anchorNode.parentElement)?.closest('[data-type="block"]')
-                if (outerBlock) {
-                  el.querySelector('[data-selected="true"]')?.removeAttribute('data-selected')
-                  outerBlock.setAttribute('data-selected', 'true')
+                if (!readOnly) {
+                  const outerBlock = (isDOMElement(anchorNode) ? anchorNode : anchorNode.parentElement)?.closest('[data-type="block"]')
+                  if (outerBlock) {
+                    el.querySelector('[data-selected="true"]')?.removeAttribute('data-selected')
+                    outerBlock.setAttribute('data-selected', 'true')
+                  }
                 }
                 const node = ReactEditor.toSlateNode(editor, anchorNode)
                 if (node?.type === 'table') {
@@ -838,6 +840,7 @@ export const Editable = memo(
               }, [])}
               onBlur={useCallback(
                 (event: React.FocusEvent<HTMLDivElement>) => {
+                  event.currentTarget.querySelector('[data-selected="true"]')?.removeAttribute('data-selected')
                   if (
                     readOnly ||
                     state.isUpdatingSelection ||

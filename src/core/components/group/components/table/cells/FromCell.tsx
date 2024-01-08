@@ -12,6 +12,7 @@ const FromCell = ({ value }: { value: MetaObject['fromObject'] }) => {
       flex
       gap={6}
       alignItems="center"
+      role={'prop-container'}
       onClick={() => {
         Rendevoz.Actions.Open.Meta.openMetaObject(meta.id)
       }}

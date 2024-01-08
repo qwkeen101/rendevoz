@@ -9,6 +9,7 @@ import FeedViewer from '@/core/components/feed'
 import AudioPage from '@/scenes/AudioPage'
 import QuestionPage from '@/scenes/QuestionPage'
 import CodePage from '@/scenes/CodePage'
+import LabelDetailsRenderer from '@/core/object/renderer/LabelDetailsRenderer'
 
 export const RENDEVOZ_DEFAULT_TABS: TabData[ILayoutTab['type']][] = [
   {
@@ -88,6 +89,14 @@ export const RENDEVOZ_DEFAULT_TABS: TabData[ILayoutTab['type']][] = [
   }
 ]
 
+const labels = ['pdfLabel', 'webpageLabel', 'noteLabel', 'videoLabel', 'audioLabel']
+
+labels.forEach(l => {
+  RENDEVOZ_DEFAULT_TABS.push({
+    type: l,
+    content: opts => opts.metaId && <LabelDetailsRenderer metaId={opts.metaId} />
+  })
+})
 const registerTabs = () => {
   RENDEVOZ_DEFAULT_TABS.forEach(i => Rendevoz.Actions.Layout.registerTabData(i))
 }

@@ -26,23 +26,20 @@ const EditorLabelController = memo(({ labelIds, labelType }: { labelIds?: number
   const { t } = useTranslation()
   return (
     <Content fullHeight fullWidth>
-      <Content flex alignItems={'center'} style={{ padding: '4px 6px 0px', lineHeight: 1.3 }} justifyContent={'space-between'}>
-        <div
-          style={{
-            fontSize: 14
-          }}
-        >
-          {t('general.labels')}
-        </div>
+      <Content
+        flex
+        alignItems={'center'}
+        style={{ padding: '6px 12px' }}
+        justifyContent={'space-between'}
+        className={'border-bottom font-size-14'}
+      >
+        <div className={'normal-font'}>{t('general.labels')}</div>
         {labelIds?.length ? (
           <Button.IconButton
-            style={{
-              fontSize: 13,
-              color: Colors.Font.Transparent
-            }}
             onClick={() => {
               labelIds && LabelStore.exportLabels(labelIds, labelType)
             }}
+            className={'transparent-font'}
             text={t('general.Export all labels')}
             icon={'park-efferent-three'}
           />
@@ -61,7 +58,7 @@ const EditorLabelController = memo(({ labelIds, labelType }: { labelIds?: number
           paddingEnd={300}
           ref={virtualizerRef}
           renderItem={item => <Label labelId={item} type={labelType} />}
-          style={{ width: '100%', height: '100%', paddingRight: 4, paddingLeft: 4, paddingTop: 2 }}
+          style={{ width: '100%', height: '100%', paddingRight: 4, paddingTop: 2 }}
           items={labelIds}
         ></VirtualList>
       )}
@@ -97,10 +94,9 @@ const Label = memo(({ labelId, type }: { labelId: number; type: string }) => {
       flex
       column
       style={{
-        padding: '6px 4px',
-        borderRadius: 6,
-        transition: 'box-shadow 0.35s ease',
-        boxShadow: currentActive === labelId ? `0 0 0 2px ${Colors.Common.SelectColor}` : undefined
+        padding: '12px',
+        transition: 'background 0.35s ease',
+        background: currentActive === labelId ? Colors.Common.SelectColorTransparent : undefined
       }}
       gap={8}
     >

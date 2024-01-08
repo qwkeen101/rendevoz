@@ -22,7 +22,6 @@ export const updateInfoAtom = atom<
 >(undefined)
 let autoLogined = false
 
-
 const Initializer = () => {
   const [loginState] = useGlobalAtom(loginStateAtom)
   const [, setUser] = useGlobalAtom(userAtom)
@@ -74,29 +73,12 @@ const Initializer = () => {
           })
       }
     }
-    getDefaultUserFilePath().then(path => {
-      setSetting(s =>
-        produce(s, s => {
-          if (s.general.language === undefined) {
-            if (navigator.language.includes('zh')) {
-              s.general.language = 'zh-CN'
-            } else {
-              s.general.language = 'en-US'
-            }
-            console.log(s.general.language)
-          }
-          s.general.defaultFilePath = path
-          if (s.general.userFilePath === undefined) {
-            s.general.userFilePath = path
-            return
-          }
-          const pluginsFolder = `${s.general.userFilePath}/plugins`
-        })
-      )
-    })
 
     initializeApp().then(() => {
-      setIntialized(true)
+      setTimeout(() => {
+        postMessage({ payload: 'removeLoading' }, '*')
+        setIntialized(true)
+      }, 500)
     })
 
     ipcInstance.send('getUpdateDetails').then(res => {

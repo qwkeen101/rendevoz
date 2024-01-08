@@ -79,7 +79,7 @@ export const useAssignWhiteboardInstance = () => {
       } as Required<IWhiteboardNode>
       await updateWhiteboard(w => {
         if (w.nodes) {
-          const maxZ = Math.max(...Array.from(w.nodes.values()).map(i => i.z))
+          const maxZ = Math.max(...Array.from(w.nodes.values()).map(i => i.z), 0)
           w.nodes?.set(newNode.id, { ...newNode, z: maxZ + 1 })
 
           newNode.z = maxZ

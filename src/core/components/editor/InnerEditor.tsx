@@ -1,6 +1,6 @@
 import { useDebounceFn, useMemoizedFn, useSelectAtomValue } from '@/hooks'
 import isHotkey from 'is-hotkey'
-import { FC, memo, PointerEventHandler, RefObject, useCallback, useLayoutEffect, useMemo, useRef } from 'react'
+import { CSSProperties, FC, memo, RefObject, useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { Descendant, Editor, Node, Path, Transforms } from 'slate'
 import { Editable, ReactEditor, RenderElementProps, RenderLeafProps, Slate, useSlateStatic } from './slate-react'
 import EditorToolbar from './components/toolbar'
@@ -10,7 +10,6 @@ import Divider from './Divider'
 import { Block } from './elements'
 import Id from '@/utils/id'
 import { InlineElements } from './consts/elements'
-import { KEY } from '@/consts/key'
 import { EDITOR_TO_CHANGED, ID_TO_FIRST_LAYER_EXCEPET_HIDEN_MAP, ID_TO_FIRST_LAYER_MAP, ID_TO_PATH_MAP } from './weakMaps'
 import useScopedEventEmitter from '@/events/useEventEmitter'
 import { EditableProps } from './slate-react/components/editable'
@@ -18,7 +17,6 @@ import { css } from '@emotion/css'
 import ClassName from '@/styles/classNames'
 import classNames from 'classnames'
 import useEditorSlashMenu from './hooks/useEditorSlashMenu'
-import getCursorPosition from './utils/getCursorPosition'
 import { DraggableElement, DraggingElement } from '../../global'
 import { Element } from './renderer/renderElement'
 import useEditorInstance from './hooks/useEditorInstance'
@@ -50,7 +48,9 @@ const ReadOnlyEditorClassName = css({
     }
   },
   '.ParagraphBlock': {
-    marginBottom: 'calc((var(--font-size) / 16 * 1rem) - 3px)'
+    marginBottom: 'calc((var(--font-size) / 16 * 1rem) - 3px)',
+    borderRadius: 0,
+    paddingLeft: 0
   },
   tbody: {
     tr: {
@@ -280,6 +280,7 @@ const InnerEditor: FC<InnerEditorProps> = memo(
               case 'code':
               case 'italic':
               case 'underline':
+              case 'cloze':
                 toggleMark(editor, event.action)
                 break
               case 'highlight':
@@ -331,7 +332,7 @@ const InnerEditor: FC<InnerEditorProps> = memo(
                 break
               case 'link':
                 {
-                  const blockPos = instance.blockOps?.getCurrentCursorBlockBounding()
+                  const blockPos = instance.blockOps?.getCurrentCursorBounding()
                   if (blockPos) {
                     instance.overlayOps?.open('linkForm', {
                       x: blockPos.x,
@@ -352,6 +353,11 @@ const InnerEditor: FC<InnerEditorProps> = memo(
             editor.currentCopyElements = undefined
             return false
           }, [])}
+          onBlur={() => {
+            editor.on({
+              type: 'blur'
+            })
+          }}
           onPaste={useCallback(e => {
             const copyElement = editor.currentCopyElement
             const copyElements = editor.currentCopyElements
@@ -459,8 +465,31 @@ const TextHighlightClassName = css({
 })
 export const Leaf = (props: RenderLeafProps) => {
   const editor = useSlateStatic()
+  const [disableCloze, setDisableCloze] = useState(false)
   let { leaf, attributes, children } = props
-
+  const style: CSSProperties = {
+    fontWeight: leaf.bold ? 'bold' : undefined,
+    fontStyle: leaf.italic ? 'italic' : undefined,
+    padding: leaf.code ? '0.2em 0.4em' : undefined,
+    color: leaf.cloze && !disableCloze ? 'transparent' : leaf.code ? '#EB5757' : undefined,
+    borderRadius: leaf.code ? 4 : undefined,
+    textDecoration: leaf.underline ? 'underline' : undefined,
+    fontSize: leaf.fontSize || leaf.code ? '0.85em' : '1em',
+    '--block-font-color': leaf.fontColor,
+    background: leaf.cloze && !disableCloze ? 'var(--emphasis)' : leaf.code ? 'rgba(135,131,120,0.15)' : leaf.backgroundColor,
+    cursor: leaf.cloze ? 'pointer' : undefined,
+    boxShadow: leaf.cloze && disableCloze ? '0 0 0 1px var(--emphasis)' : undefined
+  }
+  const handleClick = (e) => {
+    if (leaf.highlight) {
+      e.preventDefault()
+      editor.onHighlightClick?.(leaf.highlight)
+    }
+    if (leaf.cloze) {
+      e.preventDefault()
+      setDisableCloze(!disableCloze)
+    }
+  }
   if (leaf.sup) {
     children = <sup>{children}</sup>
   }
@@ -472,22 +501,10 @@ export const Leaf = (props: RenderLeafProps) => {
       >
         <span
           {...attributes}
-          onClick={() => {
-            editor.onHighlightClick?.(leaf.highlight)
-          }}
+          onClick={handleClick}
           data-highlight={leaf.highlight}
           className={classNames(leaf.highlight && TextHighlightClassName)}
-          style={{
-            fontWeight: leaf.bold ? 'bold' : undefined,
-            fontStyle: leaf.italic ? 'italic' : undefined,
-            padding: leaf.code ? '0.2em 0.4em' : undefined,
-            color: leaf.code ? '#EB5757' : undefined,
-            borderRadius: leaf.code ? 4 : undefined,
-            textDecoration: leaf.underline ? 'underline' : undefined,
-            fontSize: leaf.fontSize || leaf.code ? '0.85em' : '1em',
-            '--block-font-color': leaf.fontColor,
-            background: leaf.code ? 'rgba(135,131,120,0.15)' : leaf.backgroundColor
-          }}
+          style={style}
         >
           {children}
         </span>
@@ -495,20 +512,7 @@ export const Leaf = (props: RenderLeafProps) => {
     )
   }
   return (
-    <span
-      {...attributes}
-      style={{
-        fontWeight: leaf.bold ? 'bold' : undefined,
-        fontStyle: leaf.italic ? 'italic' : undefined,
-        padding: leaf.code ? '0.2em 0.4em' : undefined,
-        color: leaf.code ? '#EB5757' : undefined,
-        borderRadius: leaf.code ? 4 : undefined,
-        textDecoration: leaf.underline ? 'underline' : undefined,
-        fontSize: leaf.fontSize || leaf.code ? '0.85em' : '1em',
-        '--block-font-color': leaf.fontColor,
-        background: leaf.code ? 'rgba(135,131,120,0.15)' : leaf.backgroundColor
-      }}
-    >
+    <span {...attributes} onClick={handleClick} style={style}>
       {children}
     </span>
   )

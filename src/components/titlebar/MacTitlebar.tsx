@@ -4,21 +4,7 @@ import { useEffect, useState } from 'react'
 import { ipcInstance } from '@/plugins'
 
 const MacTitlebar = () => {
-  const [isFullscreen, setIsFullScreen] = useState(false)
-  useEffect(() => {
-    const mh = () => {
-      setIsFullScreen(true)
-    }
-    const umh = () => {
-      setIsFullScreen(false)
-    }
-    ipcInstance.on('fullScreen', mh)
-    ipcInstance.on('leaveFullScreen', umh)
-    return () => {
-      ipcInstance.off('fullScreen')
-      ipcInstance.off('leaveFullScreen')
-    }
-  }, [])
+
   return (
     <Content
       fullWidth

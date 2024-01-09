@@ -72,8 +72,8 @@ declare const Colors: {
     };
     getAdaptColor: (c?: string) => any;
     getAdaptFontColor: (bg?: string) => any;
-    Font: Record<"Link" | "White" | "Silver" | "SilverSecond" | "Black" | "SilverBlue" | "Primary" | "Secondary" | "Tertiary" | "Caption" | "Description" | "Transparent" | "SuperTransparent" | "Blank", string>;
-    Background: Record<"Scrollbar" | "Light" | "Secondary" | "Blank" | "Global" | "LightSecondary" | "Dark" | "DarkSecondary" | "DarkLinear" | "LightLinear" | "LightButtonHover" | "DarkButtonHover" | "ButtonHover" | "ButtonActive" | "DarkButtonActive" | "LightButtonActive" | "Linear" | "DarkBorder" | "Border" | "LightHighContrast" | "DarkHighContrast" | "HighContrast" | "HighlightBorder" | "LightHighlightBorder" | "DarkHighlightBorder" | "LightScrollBar" | "DarkScrollBar" | "Popover" | "BoxShadow" | "LightRadialGradient" | "DarkRadialGradient" | "RadialGradient" | "PopoverBoxShadow" | "BoxShadowBorder", string>;
+    Font: Record<"Link" | "White" | "Silver" | "SilverSecond" | "Black" | "SilverBlue" | "Primary" | "Secondary" | "Tertiary" | "Caption" | "Description" | "SuperTransparent" | "Transparent" | "Blank", string>;
+    Background: Record<"Scrollbar" | "Light" | "Secondary" | "Blank" | "BoxShadowBorder" | "Global" | "PopoverBoxShadow" | "LightSecondary" | "Dark" | "DarkSecondary" | "DarkLinear" | "LightLinear" | "LightButtonHover" | "DarkButtonHover" | "ButtonHover" | "ButtonActive" | "DarkButtonActive" | "LightButtonActive" | "Linear" | "Popover" | "DarkBorder" | "Border" | "LightHighContrast" | "DarkHighContrast" | "HighContrast" | "HighlightBorder" | "LightHighlightBorder" | "DarkHighlightBorder" | "LightScrollBar" | "DarkScrollBar" | "BoxShadow" | "LightRadialGradient" | "DarkRadialGradient" | "RadialGradient", string>;
     Emphasis: Record<"DarkEmphasis" | "LightEmphasis" | "Emphasis", string>;
     Common: Record<"Green" | "Red" | "SelectColorTransparent" | "SelectColor", string>;
 };

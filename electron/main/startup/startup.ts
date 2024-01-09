@@ -136,8 +136,8 @@ const startElectron = async () => {
     autoHideMenuBar: true,
     titleBarStyle: 'hidden',
     trafficLightPosition: {
-      x: 10,
-      y: 8
+      x: 16,
+      y: 12
     }
   })
 

@@ -14,26 +14,34 @@ export default () => {
       if (instance.isFocused) {
         if (isHotkey('alt+arrowleft', e)) {
           instance.navigateOps?.back()
+          e.preventDefault()
         }
         if (isHotkey('alt+arrowright', e)) {
           instance.navigateOps?.forward()
+          e.preventDefault()
         }
         if (isHotkey('cmd+=', e)) {
           instance.actionOps?.zoomIn()
+          e.preventDefault()
         }
         if (isHotkey('cmd+-', e)) {
           instance.actionOps?.zoomOut()
+          e.preventDefault()
         }
         if (isHotkey('cmd+f', e)) {
+          e.preventDefault()
           setBarState(s => ({ ...s, rightBarActive: 'search', showRightBar: s.rightBarActive === 'search' ? !s.showRightBar : true }))
         }
         if (isHotkey('cmd+l', e)) {
+          e.preventDefault()
           setBarState(s => ({ ...s, rightBarActive: 'label', showRightBar: s.rightBarActive === 'label' ? !s.showRightBar : true }))
         }
         if (isHotkey('shift+f', e)) {
+          e.preventDefault()
           instance.actionOps?.fitWidth()
         }
         if (isHotkey('cmd+d', e)) {
+          e.preventDefault()
           setPdfState(s => ({ ...s, handDrag: !s.handDrag }))
         }
       }

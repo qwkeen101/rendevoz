@@ -21,7 +21,7 @@ export default function assignViewOps(instance: IGroupInstance) {
           })
         })
       },
-      deleteCustomProperty: async propertyName => {
+      deleteCustomProperty: async (propertyName, deleteMetaProp = true) => {
         await instance.updateGroupData?.(data => {
           return produce(data, draft => {
             draft.properties = draft.properties?.filter(i => i.id !== propertyName)
@@ -30,7 +30,9 @@ export default function assignViewOps(instance: IGroupInstance) {
             })
           })
         })
-        await MetaStore.deleteProperty(propertyName)
+        if (deleteMetaProp) {
+          await MetaStore.deleteProperty(propertyName)
+        }
         return
       },
       getVisibleProperties: () => {

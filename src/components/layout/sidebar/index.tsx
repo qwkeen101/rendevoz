@@ -1,7 +1,7 @@
 import React from 'react'
 import SidebarIcons from './SidebarIcons'
 import { atom } from 'jotai'
-import { Content } from '@/components'
+import { Content, Icon } from '@/components'
 import SidebarPanel from '@/components/layout/sidebar/SidebarPanel'
 import { KeyToRegisteredSidebarElement } from '@/core/plugin/RegisterMap'
 import KeyvalueStore from '@/api/stores/keyvalue.store'
@@ -15,6 +15,7 @@ import SidebarDatabase from '@/components/layout/sidebar/SidebarDatabase'
 import SidebarSetting from '@/components/layout/sidebar/SidebarSetting'
 import produce, { Draft } from 'immer'
 import { Colors } from '@/consts'
+import { ClassName } from 'rendevoz'
 
 export const setPanelState = (updater: (panelState: Draft<SidebarPanelState>) => void) => {
   const panelState = globalStore.get(SidebarPanelStateAtom)
@@ -32,16 +33,16 @@ export const BuiltInSidebarItems: Record<string, RegisteredSidebarItem> = {
     },
     text: () => t('general.home')
   },
-  collections: {
-    key: 'collections',
-    icon: 'park-folder-close',
-    onClick: () => {
-      setPanelState(s => {
-        s.visible.has('collections') ? s.visible.delete('collections') : s.visible.add('collections')
-      })
-    },
-    text: () => t('general.collection')
-  },
+  // collections: {
+  //   key: 'collections',
+  //   icon: 'park-folder-close',
+  //   onClick: () => {
+  //     setPanelState(s => {
+  //       s.visible.has('collections') ? s.visible.delete('collections') : s.visible.add('collections')
+  //     })
+  //   },
+  //   text: () => t('general.collection')
+  // },
   screenshot: {
     key: 'screenshot',
     icon: 'park-screenshot-one',
@@ -66,13 +67,13 @@ export const BuiltInSidebarItems: Record<string, RegisteredSidebarItem> = {
       Rendevoz.Actions.Layout.openNewTab({ data: { type: 'graph' } })
     }
   },
-  database: {
-    key: 'database',
-    text: () => t('general.object library'),
-    tooltip: () => t('general.drop here to add object'),
-    element: <SidebarDatabase />,
-    icon: 'park-data'
-  },
+  // database: {
+  //   key: 'database',
+  //   text: () => t('general.object library'),
+  //   tooltip: () => t('general.drop here to add object'),
+  //   element: <SidebarDatabase />,
+  //   icon: 'park-data'
+  // },
   settings: {
     key: 'settings',
     text: () => t('general.settings'),
@@ -103,6 +104,7 @@ export type ISidebarPanelVisibleItems = 'database' | 'collections' | 'webSearch'
 
 type SidebarPanelState = {
   visible: Set<ISidebarPanelVisibleItems>
+  leftOpen?: boolean
   showObjectDetails?: {
     id: number
     visible: boolean
@@ -128,7 +130,6 @@ export const Sidebar = ({ direction = 'right' }: { direction: 'left' | 'right' }
   const leftItems = [...(items.map(key => allItemsMap.get(key)).filter(o => o) as RegisteredSidebarItem[])].concat(
     ...allItems.filter(i => !usedItems.has(i.key))
   )
-
   return (
     <Content
       flex
@@ -147,7 +148,8 @@ export const Sidebar = ({ direction = 'right' }: { direction: 'left' | 'right' }
           KeyvalueStore.updateOne(key, v)
         }}
       ></SidebarIcons>
-      <SidebarPanel items={items} direction={direction} />
+
+      <SidebarPanel direction={direction} />
     </Content>
   )
 }

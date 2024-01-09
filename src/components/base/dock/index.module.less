@@ -12,9 +12,12 @@ body{
   margin: 0;
   flex-shrink: 1;
   width: 100%;
+  margin-right: -3px;
   //overflow: hidden;
   padding-left: 0px;
-  height: 32px;
+  height: 38px;
+  background: var(--tabs-bg);
+  padding-top: 8px;
   z-index: 99;
   margin-bottom: -1px;
   padding-right: 0px;
@@ -39,13 +42,12 @@ body{
   color: var(--font-transparent);
   position: relative;
   &.active {
-    background: var(--global-background) !important;
-    z-index: 1001 !important;
-    color: var(--font-primary);
+    z-index: 1002 !important;
   }
 }
+
 .title {
-  padding-right: 0.9rem;
+  padding-right: 1rem;
   font-size: 0.9rem;
   > div {
     text-align: left;
@@ -66,10 +68,33 @@ body{
   height: 100%;
   display: flex;
   align-items: center;
-  padding: 2px 8px;
-  // ???
-  // mask-image: linear-gradient(to left, transparent 20px, #fff 40px);
+  padding: 2px 8px 2px 10px;
   position: relative;
+  border-radius: 8px;
+  &.active {
+    border-radius: 8px 8px 0px 0px;
+    background: var(--global-background) !important;
+    z-index: 1001 !important;
+    color: var(--font-primary);
+    --curve: 8px;
+    &::before{
+      left: calc(var(--curve) * -2);
+      clip-path: inset(50% calc(var(--curve) * -1) 0 50%);
+    }
+    &::after{
+      right: calc(var(--curve) * -2);
+      clip-path: inset(50% 50% 0 calc(var(--curve) * -1));
+    }
+    &::before,&::after{
+      position: absolute;
+      bottom: 0;
+      content: '';
+      width: calc(var(--curve) * 2);
+      height: calc(var(--curve) * 2);
+      border-radius: 100%;
+      box-shadow: inset 0 0 0 1px var(--tabs-bg), 0 0 0 calc(var(--curve) * 4) var(--global-background);
+    }
+  }
 }
 
 .closeButtonWrapper {

@@ -68,7 +68,8 @@ export default ({
                 key: 'delete',
                 icon: 'park-delete',
                 onSelect: async () => {
-                  instance.viewOps?.deleteCustomProperty?.(property.id)
+                  instance.viewOps?.deleteCustomProperty?.(property.id, false)
+                  MetaStore.deleteProperty(property.id)
                 }
               }
             : undefined,

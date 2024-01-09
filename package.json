@@ -117,7 +117,7 @@
     "rehype-parse": "^8.0.4",
     "remark-parse": "^10.0.2",
     "remark-slate": "^1.8.6",
-    "rendevoz": "^0.4.55",
+    "rendevoz": "^0.4.56",
     "rss-parser": "^3.13.0",
     "rxjs": "^7.5.5",
     "segmentit": "^2.0.3",

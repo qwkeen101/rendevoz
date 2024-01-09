@@ -446,19 +446,25 @@ body.dock-dragging iframe {
 }
 .dock-divider {
   box-sizing: border-box;
-  flex: 0 0 3px;
-  transition: all 0.2s ease;
-  background: rgba(0, 0, 0, 0.1);
+  background: transparent;
+  transition: background 0.2s ease;
+  &:hover{
+    background: var(--select-color);
+  }
   z-index: 1;
 }
 .dock-hbox > .dock-divider {
+  flex: 0 0 3px;
+  border-right: 1px solid var(--border-background);
   cursor: ew-resize;
 }
 .dock-vbox {
   flex-direction: column;
 }
 .dock-vbox > .dock-divider {
+  flex: 0 0 3px;
   cursor: ns-resize;
+  border-bottom: 1px solid var(--border-background);
 }
 .dock-fbox {
   pointer-events: none;

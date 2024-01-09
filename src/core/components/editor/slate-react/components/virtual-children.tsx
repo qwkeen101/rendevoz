@@ -41,11 +41,6 @@ const VirtualChildren = memo(
       editor.onChange?.()
       update()
     }
-    if (children.length !== ID_TO_FIRST_LAYER_MAP.get(editor)?.size) {
-      editor.onChange?.()
-      update()
-      console.log('update')
-    }
 
     const visibleChildren = useMemo(() => {
       return children.filter(i => !i.hide)

@@ -121,7 +121,7 @@ type GroupViewOps = {
   changePropertyName: (id: number, newName: string) => Promise<void>
   updateProperty: (id: number, newProp: Partial<MetaGroupViewProperty>) => Promise<void>
   addNewProperty: (prop: Partial<IMetaProp>) => void
-  deleteCustomProperty: (id: number) => Promise<void>
+  deleteCustomProperty: (id: number, deleteMetaProp?: boolean) => Promise<void>
   tableOps?: {
     deselectCell: VoidFunction
     useSelectedCell: (rowId: number, index: number) => boolean

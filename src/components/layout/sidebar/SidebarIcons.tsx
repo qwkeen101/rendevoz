@@ -42,6 +42,9 @@ const SidebarIcons = ({
   const [panelState, setPanelState] = useGlobalAtom(SidebarPanelStateAtom)
   const selectedItem = panelState.visible
   const [sidebarIconDraggingState, setSidebarIconDraggingState] = useGlobalAtom(SidebarIconDraggingAtom)
+  const hasItem = (k: string) => {
+    return BuiltInSidebarItems[k] || KeyToRegisteredSidebarElement.has(k)
+  }
   const renderSidebarItem = (k: string) => {
     const buildIn = BuiltInSidebarItems[k] || KeyToRegisteredSidebarElement.get(k)
     if (buildIn) {
@@ -121,11 +124,13 @@ const SidebarIcons = ({
           style={{
             width: '100%',
             height: '100%',
-            transition: 'all 0.2s ease',
-            background: dragInto ? Colors.Common.SelectColorTransparent : undefined,
+            color: Colors.Font.Transparent,
+            borderTop: panelState.leftOpen ? `1px solid ${Colors.Background.BoxShadowBorder}` : '1px solid transparent',
+            background: dragInto ? Colors.Common.SelectColorTransparent : panelState.leftOpen ? 'var(--tabs-bg)' : Colors.Background.Global,
             minWidth: dragInto ? 44 : 1,
             boxShadow: direction === 'right' ? Colors.Consts.BoxShadowBorderRight : Colors.Consts.BoxShadowBorderLeft,
-            padding: direction === 'left' && items.length === 0 ? 0 : undefined
+            padding: direction === 'left' && items.length === 0 ? 0 : undefined,
+            marginTop: direction === 'right' ? 38 : undefined
           }}
           className={classNames(
             styles.list,
@@ -143,12 +148,13 @@ const SidebarIcons = ({
           onReorder={v => {
             onChange(v)
           }}
-          values={items}
+          values={items.filter(o => hasItem(o))}
         >
           {showUser && <SidebarUser />}
           {items.map(
             i =>
-              i && (
+              i &&
+              hasItem(i) && (
                 <Reorder.Item
                   drag={true}
                   id={`sidebar-${i}`}

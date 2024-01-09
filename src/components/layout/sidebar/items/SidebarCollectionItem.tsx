@@ -4,9 +4,7 @@ import useCollectionStore, { collectionsAtom } from '@/api/stores/collection.sto
 import { CollectionStore, globalStore, MetaStore } from '@/api/stores'
 import ClassName from '@/styles/classNames'
 import { css } from '@emotion/css'
-import { AnimatePresence, motion } from 'framer-motion'
-import { useAtomValue } from 'jotai'
-import { selectAtom } from 'jotai/utils'
+import { AnimatePresence } from 'framer-motion'
 import { FC, memo, useMemo, useRef } from 'react'
 import { useGlobalAtomValue, useSelectGlobalAtomValue, useToggle } from '@/hooks'
 import { ICollectionItem } from '~/typings/data'
@@ -162,11 +160,11 @@ const SidebarCollectionItem: FC<ISidebarItem> = memo(
                   e.stopPropagation()
                   CollectionStore.updateCollection({ ...collection, toggled: !collection.toggled }, true)
                 }}
-                className={css({
+                style={{
                   transform: !hideChildren ? 'rotate(90deg)' : undefined,
                   transition: 'all 0.2s ease',
                   transformOrigin: 'center'
-                })}
+                }}
                 size={14}
                 theme="filled"
                 name="park-right-one"

@@ -1,7 +1,7 @@
 {
   "name": "rendevoz",
   "productName": "Rendevoz",
-  "version": "0.4.55",
+  "version": "0.4.59",
   "author": "Rendevoz Team",
   "main": "dist/index.mjs",
   "scripts": {

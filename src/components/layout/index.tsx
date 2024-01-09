@@ -127,8 +127,8 @@ const Layout = () => {
         <title>Rendevoz</title>
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
       </Helmet>
-      {os === 'windows' && <TitleBar />}
-      {os === 'macos' && <MacTitlebar />}
+      {/*{os === 'windows' && <TitleBar />}*/}
+      {/*{os === 'macos' && <MacTitlebar />}*/}
       <Container role={'body-container'} auto style={{ height: 0 }}>
         <Sidebar direction={'right'} />
         <Container auto>
@@ -145,7 +145,6 @@ const Layout = () => {
             ></DockLayout>
           )}
         </Container>
-        <Sidebar direction={'left'} />
       </Container>
     </Container>
   )

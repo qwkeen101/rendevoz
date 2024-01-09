@@ -30,7 +30,8 @@ export const fontStyle = new TextStyle({
   wordWrapWidth: 240,
   breakWords: true,
   fontFamily: ['Inter'],
-  wordWrap: false
+  wordWrap: true,
+  whiteSpace: 'normal'
 })
 
 const PixiIconNode = ({ node, label }: { node: GraphNode; label?: string }) => {

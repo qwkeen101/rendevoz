@@ -393,8 +393,9 @@ const Layout: FC<LayoutProps> = ({
       <div
         style={{
           height: virtualizer.getTotalSize(),
-          width: '100%',
-          position: 'relative'
+          width: doublePage ? result.width * 2 + 20: '100%',
+          position: 'relative',
+          margin: doublePage ? '0 auto' : undefined
         }}
       >
         <div
@@ -402,7 +403,7 @@ const Layout: FC<LayoutProps> = ({
             position: 'absolute',
             top: 0,
             left: doublePage ? '50%' : 0,
-            width: doublePage ? (result.width + 15) * 2 : '100%',
+            width: '100%',
             transform: virtualItems?.[0] ? `translateY(${virtualItems[0].start}px) ${doublePage ? `translateX(-50%)` : ''}` : undefined
           }}
         >

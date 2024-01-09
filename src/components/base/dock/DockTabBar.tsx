@@ -7,7 +7,7 @@ import { Reorder } from 'framer-motion'
 import { TabNavListProps } from '../tabs'
 import classNames from 'classnames'
 import AnimatePopover from '../AnimatePopover'
-import { GlobalInstance, useToggle } from '@/hooks'
+import { GlobalInstance, useGlobalAtom, useGlobalSetAtom, useToggle } from '@/hooks'
 import WithBorder from '../WithBorder'
 import ClassName from '@/styles/classNames'
 import { useTranslation } from 'react-i18next'
@@ -16,6 +16,12 @@ import { LayoutIdToTabMap } from '@/components/layout'
 import { getOS } from '@/App'
 import { Rendevoz } from '@/core/rendevoz'
 import { MetaStore } from '@/api/stores'
+import { Content, Icon } from '@/components'
+import { SidebarPanelStateAtom } from '@/components/layout/sidebar'
+import produce from 'immer'
+import { Colors } from '@/consts'
+import { ipcInstance } from '@/plugins'
+import useIsFullscreen from '@/hooks/utils/useIsFullscreen'
 
 interface DockTabBarProps {
   TabNavList: TabNavListProps
@@ -37,17 +43,31 @@ export const DockTabBar = memo((props: DockTabBarProps) => {
   const dragInsideRef = useRef(false)
   const currentMoveTabId = useRef<string>()
   const [isTopRight, setIsTopRight] = useState(false)
-
+  const [isTopLeft, setIsTopLeft] = useState(false)
+  const [isTop, setIsTop] = useState(false)
+  const isFullscreen = useIsFullscreen(true)
+  const [panelState, setPanelState] = useGlobalAtom(SidebarPanelStateAtom)
   useLayoutEffect(() => {
     const bar = ref.current
     const bounding = bar?.getBoundingClientRect()
-    if (bounding) {
-      const { top, right, left } = bounding
-      const windowWidth = window.innerWidth
-      if (Math.abs(right - windowWidth) < 10 && top < 10) {
+    const layoutContainer = bar?.closest('.dock-layout')
+    const containerBouding = layoutContainer?.getBoundingClientRect()
+    if (bounding && containerBouding) {
+      const { top, left } = bounding
+      if (top - containerBouding.top < 10) {
+        setIsTop(true)
+      } else {
+        setIsTop(false)
+      }
+      if (containerBouding.right - bounding.right < 10 && top < 10) {
         setIsTopRight(true)
       } else {
         setIsTopRight(false)
+      }
+      if (top < 10 && left - containerBouding.left < 10) {
+        setIsTopLeft(true)
+      } else {
+        setIsTopLeft(false)
       }
     }
   })
@@ -58,7 +78,42 @@ export const DockTabBar = memo((props: DockTabBarProps) => {
       className={classNames('dock-bar', isTopRight && os !== 'macos' && 'top-right')}
       getRef={getRef}
       tabIndex={-1}
+      style={{
+        paddingLeft: isTopLeft ? (panelState.leftOpen ? 8 : os === 'macos' && !isFullscreen ? 36 : 8) : 8,
+        background: 'var(--tabs-bg)',
+        zIndex: 9999,
+        marginLeft: isTopLeft && os === 'macos' && !panelState.leftOpen && isFullscreen ? -48 : undefined
+      }}
     >
+      {isTopLeft && !panelState.leftOpen && (
+        <Content
+          flex
+          gap={4}
+          style={{
+            background: 'var(--tabs-bg)',
+            height: 38,
+            paddingTop: 5,
+            paddingRight: 12,
+            fontSize: 18,
+            paddingLeft: os === 'macos' ? 6 : 0,
+            color: Colors.Font.Transparent
+          }}
+          alignItems={'center'}
+        >
+          <Icon
+            onClick={() => {
+              setPanelState(s =>
+                produce(s, draft => {
+                  draft.leftOpen = true
+                  draft.visible.size === 0 && draft.visible.add('database')
+                })
+              )
+            }}
+            name={'custom-left-bar'}
+            className={ClassName.flatButton(4, '4px 6px')}
+          />
+        </Content>
+      )}
       <Reorder.Group
         onReorder={r => {
           const currIndex = r.findIndex(i => i.key === currentMoveTabId.current)
@@ -68,7 +123,8 @@ export const DockTabBar = memo((props: DockTabBarProps) => {
         }}
         className={styles.tabs}
         style={{
-          background: isDragging ? 'var(--tabs-bg)' : undefined
+          background: isDragging ? 'var(--tabs-bg)' : undefined,
+          paddingTop: isTop ? 8 : 6
         }}
         axis={'x'}
         values={navs}
@@ -239,7 +295,8 @@ const TabItem = ({ onClick, isSelected, item, onDragStart, isLast, onDragEnd, is
         whileDrag={{
           boxShadow: '0 0 0 2px var(--select-color)',
           borderRadius: 4,
-          pointerEvents: 'none'
+          pointerEvents: 'none',
+          overflow: 'hidden'
         }}
         // exit={{ opacity: 0, transition: { duration: 0.3 } }}
         onClick={onClick}
@@ -253,7 +310,7 @@ const TabItem = ({ onClick, isSelected, item, onDragStart, isLast, onDragEnd, is
           paddingRight: isLastAndHasGlobalExtra ? 30 : undefined
         }}
       >
-        <div className={styles.tabContent}>{item.tab}</div>
+        <div className={classNames(styles.tabContent, isSelected && styles.active)}>{item.tab}</div>
         {isLastAndHasGlobalExtra && (
           <div
             style={{

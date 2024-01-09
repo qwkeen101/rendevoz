@@ -3,16 +3,16 @@
   -webkit-user-select: none;
   user-select: none;
   z-index: 100000;
-  height: 32px;
+  height: 38px;
+  position: fixed;
   padding-right: 10px;
-  width: 100%;
+  width: fit-content;
   pointer-events: none;
-  border-bottom: 1px solid var(--border-background);
   display: flex;
   align-items: center;
   top: 0;
   right: 0;
-  background: rgba(0, 0, 0, 0.12);
+  background: transparent;
   > div {
     -webkit-app-region: no-drag;
   }
@@ -23,6 +23,6 @@
   pointer-events: auto;
   transition: background 0.3s ease;
   &:hover {
-    background: rgba(0, 0, 0, 0.08);
+    background: var(--button-hover-background);
   }
 }

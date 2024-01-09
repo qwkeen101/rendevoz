@@ -20,19 +20,19 @@ export default () => {
           instance.navigateOps?.forward()
           e.preventDefault()
         }
-        if (isHotkey('cmd+=', e)) {
+        if (isHotkey('mod+=', e)) {
           instance.actionOps?.zoomIn()
           e.preventDefault()
         }
-        if (isHotkey('cmd+-', e)) {
+        if (isHotkey('mod+-', e)) {
           instance.actionOps?.zoomOut()
           e.preventDefault()
         }
-        if (isHotkey('cmd+f', e)) {
+        if (isHotkey('mod+f', e)) {
           e.preventDefault()
           setBarState(s => ({ ...s, rightBarActive: 'search', showRightBar: s.rightBarActive === 'search' ? !s.showRightBar : true }))
         }
-        if (isHotkey('cmd+l', e)) {
+        if (isHotkey('mod+l', e)) {
           e.preventDefault()
           setBarState(s => ({ ...s, rightBarActive: 'label', showRightBar: s.rightBarActive === 'label' ? !s.showRightBar : true }))
         }
@@ -40,7 +40,7 @@ export default () => {
           e.preventDefault()
           instance.actionOps?.fitWidth()
         }
-        if (isHotkey('cmd+d', e)) {
+        if (isHotkey('mod+d', e)) {
           e.preventDefault()
           setPdfState(s => ({ ...s, handDrag: !s.handDrag }))
         }

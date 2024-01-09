@@ -6,8 +6,9 @@ callback('reload', async () => {
 })
 
 callback('maximizeWindow', async () => {
-  if (maxed) {
+  if (BrowserWindow.getFocusedWindow()?.isMaximized()) {
     BrowserWindow.getFocusedWindow()?.unmaximize()
+    maxed = false
   } else {
     maxed = true
     BrowserWindow.getFocusedWindow()?.maximize()
@@ -19,7 +20,6 @@ callback('isFullScreen', async () => {
 })
 callback('minimizeWindow', async () => {
   BrowserWindow.getFocusedWindow()?.minimize()
-  maxed = false
   return
 })
 

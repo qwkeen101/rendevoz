@@ -59,12 +59,12 @@ export const DockTabBar = memo((props: DockTabBarProps) => {
       } else {
         setIsTop(false)
       }
-      if (containerBouding.right - bounding.right < 10 && top < 10) {
+      if (bounding.right - containerBouding.right < 10 && top - containerBouding.top < 10) {
         setIsTopRight(true)
       } else {
         setIsTopRight(false)
       }
-      if (top < 10 && left - containerBouding.left < 10) {
+      if (top - containerBouding.top < 10 && left - containerBouding.left < 10) {
         setIsTopLeft(true)
       } else {
         setIsTopLeft(false)
@@ -81,8 +81,8 @@ export const DockTabBar = memo((props: DockTabBarProps) => {
       style={{
         paddingLeft: isTopLeft ? (panelState.leftOpen ? 8 : os === 'macos' && !isFullscreen ? 36 : 8) : 8,
         background: 'var(--tabs-bg)',
-        zIndex: 9999,
-        marginLeft: isTopLeft && os === 'macos' && !panelState.leftOpen && isFullscreen ? -48 : undefined
+        zIndex: 102,
+        marginLeft: isTopLeft && !panelState.leftOpen && (isFullscreen || os === 'windows') ? -48 : undefined
       }}
     >
       {isTopLeft && !panelState.leftOpen && (
@@ -95,7 +95,7 @@ export const DockTabBar = memo((props: DockTabBarProps) => {
             paddingTop: 5,
             paddingRight: 12,
             fontSize: 18,
-            paddingLeft: os === 'macos' ? 6 : 0,
+            paddingLeft: 6,
             color: Colors.Font.Transparent
           }}
           alignItems={'center'}

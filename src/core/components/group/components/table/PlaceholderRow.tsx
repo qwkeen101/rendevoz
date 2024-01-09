@@ -30,6 +30,7 @@ const PlaceholderRow = () => {
           height: 32,
           paddingLeft: 12,
           alignItems: 'center',
+          marginBottom: 100,
           borderBottom: `1px solid ${Colors.Background.Border}`
         }}
       >

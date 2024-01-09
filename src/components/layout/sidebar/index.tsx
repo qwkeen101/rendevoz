@@ -134,7 +134,7 @@ export const Sidebar = ({ direction = 'right' }: { direction: 'left' | 'right' }
     <Content
       flex
       style={{
-        zIndex: 1000,
+        zIndex: 100,
         flexDirection: direction === 'right' ? 'row' : 'row-reverse',
         background: Colors.Background.Secondary
       }}

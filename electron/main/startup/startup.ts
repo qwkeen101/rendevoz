@@ -168,14 +168,13 @@ const startElectron = async () => {
   process.env.SHOULD_CLOSE = 'false'
   let tray = null
   function createTray() {
-    const appIcon = new Tray(nativeImage.createFromPath(join(process.env.PUBLIC, 'iconTemplate.png')))
+    const appIcon = new Tray(nativeImage.createFromPath(join(process.env.PUBLIC, 'icon.png')))
     const lang = app.getLocale()
     const contextMenu = Menu.buildFromTemplate([
       {
         label: lang === 'zh-CN' ? '显示' : 'Show',
         click: () => {
           win.show()
-          appIcon.destroy()
         }
       },
       {
@@ -186,18 +185,13 @@ const startElectron = async () => {
         }
       }
     ])
-    appIcon.on('double-click', () => {
+    appIcon.on('click', () => {
       win.show()
     })
     appIcon.setContextMenu(contextMenu)
     return appIcon
   }
-  win.on('restore', () => {
-    console.log('resotre')
-    if (tray) {
-      tray.destroy()
-    }
-  })
+ 
   win.on('close', e => {
     if (process.env.MINIMIZE_TO_TRAY === 'true' && process.platform === 'win32') {
       e.preventDefault()

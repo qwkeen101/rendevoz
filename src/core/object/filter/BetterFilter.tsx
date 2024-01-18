@@ -646,9 +646,8 @@ const TypeFilter = ({
 }) => {
   const { t } = useTranslation()
   const existedTypes =
-    visibleTypes || showHiddenMetas
-      ? Array.from(MetaStore.getIndexedMetaObjects()?.typeToMetaObjectIdsMap.keys() || [])
-      : MetaStore.getVisibleMetaTypes()
+    visibleTypes ||
+    (showHiddenMetas ? Array.from(MetaStore.getIndexedMetaObjects()?.typeToMetaObjectIdsMap.keys() || []) : MetaStore.getVisibleMetaTypes())
   const options = [
     {
       value: 'is',

@@ -15,7 +15,7 @@ export default (groupId?: number) => {
   useEffect(() => {
     const map = MetaStore.getMetaObjectsMap()
     const disableHideFunction = instance.getGroupState?.().state?.canHideObjectsInside === false
-    if (disableHideFunction) return
+
     if (!values) return
     const typesSet = new Set<string>()
     const elements = Node.elements({ children: values })
@@ -44,8 +44,10 @@ export default (groupId?: number) => {
           }
         }
       })
-      hiddenGroups.forEach(id => MetaStore.updateMetaObject({ id: id, hidden: false }))
-      unhidden.forEach(id => MetaStore.updateMetaObject({ id: id, hidden: true }))
+      if (!disableHideFunction) {
+        hiddenGroups.forEach(id => MetaStore.updateMetaObject({ id: id, hidden: false }))
+        unhidden.forEach(id => MetaStore.updateMetaObject({ id: id, hidden: true }))
+      }
     } else {
       const hidden: number[] = []
       elements.forEach(e => {
@@ -58,7 +60,9 @@ export default (groupId?: number) => {
           }
         }
       })
-      hidden.forEach(id => MetaStore.updateMetaObject({ id: id, hidden: false }))
+      if (!disableHideFunction) {
+        hidden.forEach(id => MetaStore.updateMetaObject({ id: id, hidden: false }))
+      }
     }
     setGroupState(s => ({ ...s, visibleTypes: Array.from(typesSet.values()) }))
   }, [values, hideObjects, hideGroups])

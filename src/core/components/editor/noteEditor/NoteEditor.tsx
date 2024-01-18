@@ -51,6 +51,7 @@ const NoteEditor = ({ noteId, labelIds, on, metaId, ...rest }: { noteId?: number
         instanceRef.current = i
         if (fetchedValue) {
           i.replaceChildren?.(fetchedValue)
+          rest.onInstanceInitialized?.(i)
         }
         if (!noteId) {
           rest.onInstanceInitialized?.(i)

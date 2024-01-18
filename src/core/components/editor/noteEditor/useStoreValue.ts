@@ -63,7 +63,6 @@ const useStoreValue = (options: {
     if (note?.contentId) {
       const noteValue = await getNoteValue(note.contentId)
       if (noteValue) {
-        onContentLoaded?.()
         setFetchedValue(noteValue)
       }
     }
@@ -80,6 +79,7 @@ const useStoreValue = (options: {
       if (!isEqual(currentValue, fetchedValue)) {
         instance?.replaceChildren?.(fetchedValue)
       }
+      onContentLoaded?.()
     }
   }, [fetchedValue])
   useEffect(() => {

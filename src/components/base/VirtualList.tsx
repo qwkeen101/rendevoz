@@ -76,7 +76,6 @@ function VirtualList<T>(
       if (withKeyboardNavigation) {
         const keyboardEvent = (e: KeyboardEvent) => {
           if (isHotkey(KEY.Enter, e) && withKeyboardNavigation) {
-            if (e.target instanceof HTMLElement && e.target.closest('input,textarea')) return
             e.stopPropagation()
             e.preventDefault()
             onSelect?.(itemzRef.current[currentFocusIndex], currentFocusIndex)

@@ -44,22 +44,24 @@ const usePopoverCell = (
         y: minYView - window.innerHeight
       })
     }
-    const newBounding = box.getBoundingClientRect()
-    console.log(box, bounding, newBounding)
-    setCellState({
-      visible: true,
-      box: {
-        left: newBounding.left - 2,
-        top: newBounding.top - 2,
-        width: Math.max(newBounding.width + 4, 280),
-        height: newBounding.height + 4
-      }
+    setGroupState(s => ({ ...s, popoverVisible: true }))
+    setTimeout(() => {
+      const newBounding = box.getBoundingClientRect()
+      console.log(box, bounding, newBounding)
+      setCellState({
+        visible: true,
+        box: {
+          left: newBounding.left - 2,
+          top: newBounding.top - 2,
+          width: Math.max(newBounding.width + 4, 280),
+          height: newBounding.height + 4
+        }
+      })
     })
   }
 
   useLayoutEffect(() => {
     if (cellState.visible) {
-      setGroupState(s => ({ ...s, popoverVisible: true }))
       opts.onOpen?.()
       const h = (e: WheelEvent) => {
         const c = opts.targetRef?.current || popoverContentRef.current

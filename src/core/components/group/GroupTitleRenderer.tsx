@@ -104,7 +104,7 @@ const GroupTitleRenderer = memo(
           ) : null}
           <AutosizeTextarea
             disabled={groupTitleSetting?.titleEditable === false}
-            placeholder={'Untitled'}
+            placeholder={t('general.untitled')}
             className={ClassName.noStyleInput}
             onKeyDown={e => {
               if (isHotkey(KEY.Enter, e)) {

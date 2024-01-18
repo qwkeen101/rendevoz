@@ -14,6 +14,7 @@ import { Patch } from 'immer'
 import { Path, PathRef } from 'slate'
 import { Virtualizer } from '@tanstack/react-virtual'
 import { XYPosition } from 'rendevoz'
+import { IGroupEvent } from '~/typings/components/group/events'
 
 export * from './group'
 
@@ -28,6 +29,8 @@ type GroupRowFunctions = {
   checkIntersected: (box: Box) => boolean
   clearSelectState: VoidFunction
   select: VoidFunction
+  edit?: VoidFunction
+  unedit?: VoidFunction
 }
 
 // auto scroll when dragging / selecting
@@ -52,7 +55,9 @@ type GroupPathOps = {
 }
 
 type GroupMetaOps = {
-  updateMeta: (nextMeta: PartialWithId<MetaObject>) => Promise<void>
+  deleteMeta: (id: number | number[]) => void
+  createMeta: VoidFunction
+  updateMeta: (nextMeta: Partial<MetaObject>) => Promise<void>
   hasMetaInGroup: (metaId: number) => boolean
   updateMetaProperty: (field: string, nextValue: any, id?: number) => Promise<void>
 }
@@ -97,6 +102,13 @@ type GroupValueOps = {
   buildIndex: VoidFunction
   removeByPaths: (paths: Path[]) => void
   handleToggle: (rowId: number, toggled: boolean) => void
+  // row id
+  deleteItems: (
+    id: number | number[],
+    opts?: {
+      deleteMeta?: boolean
+    }
+  ) => void
 }
 
 type GroupSelectOps = {
@@ -108,7 +120,7 @@ type GroupSelectOps = {
 }
 
 type GroupSidebarOps = {
-  open: (details: { type: 'preview'; metaId: number } | { type: 'labels'; objectId: number; objectType: string }) => void
+  open: (details: { type: 'preview'; metaId: number; rowId: number } | { type: 'labels'; objectId: number; objectType: string }) => void
 }
 
 type GroupCenterOps = {
@@ -116,12 +128,18 @@ type GroupCenterOps = {
 }
 
 type GroupViewOps = {
+  getInvisibleViewPropertyIds: () => Set<number>
+  addNewView: (viewType: 'table' | 'gallery' | 'list') => Promise<void>
   getVisibleProperties: () => MetaGroupProperty[] | undefined
   useViewProperties: () => MetaGroupProperty[] | undefined
   changePropertyName: (id: number, newName: string) => Promise<void>
   updateProperty: (id: number, newProp: Partial<MetaGroupViewProperty>) => Promise<void>
   addNewProperty: (prop: Partial<IMetaProp>) => void
   deleteCustomProperty: (id: number, deleteMetaProp?: boolean) => Promise<void>
+  galleryOps?: {
+    editItem: (rowId: number) => void
+    uneditItem: (rowId: number) => void
+  }
   tableOps?: {
     deselectCell: VoidFunction
     useSelectedCell: (rowId: number, index: number) => boolean
@@ -164,6 +182,7 @@ export type IGroupInstance = Partial<{
   getScrollElement: () => HTMLElement
   getScrollMargin: () => number
   viewOps: GroupViewOps
+  on: (e: IGroupEvent) => void
   deleteView: (viewId: number) => void
   updateCurrentView: (updater: (currentView: MetaGroup['views'][0]) => MetaGroup['views'][0]) => void
   updateGroupData: (updater: (currentData: MetaGroup) => MetaGroup) => Promise<MetaGroup>
@@ -188,7 +207,7 @@ export type IGroupInstance = Partial<{
     currentValueIndex?: Record<number, number>
     currentIndex?: number[]
     currentValue?: MetaGroupChild[]
-    pageContainer?: HTMLElement
+    pageContainer: HTMLElement
     // for shift multiple select
     lastSelectRowId?: number
     rowIdToRowMap: Map<number, MetaGroupChild & { path: Path }>

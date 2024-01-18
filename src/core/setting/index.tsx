@@ -92,6 +92,7 @@ export const defaultSetting: Setting = {
     defaultImageSearchEngine: 'bing',
     autoBackup: 'never',
     dataBackup: 'never',
+    minimizeToTray: false,
     followSystemTheme: false
   },
   objectAndLink: {
@@ -105,6 +106,7 @@ export const defaultSetting: Setting = {
   },
   whiteboard: {
     enableMinimap: false,
+    scrollModeInSelect: 'pan',
     enableAddLinkBetweenObjectsWhenConnect: false,
     imageResizeKeepRatio: false,
     snapToObject: true,

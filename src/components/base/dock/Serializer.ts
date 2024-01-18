@@ -51,7 +51,7 @@ export function saveLayoutData(
     if (saveTab) {
       return saveTab(tabData)
     }
-    return { id: tabData.id, objectId: tabData.objectId, type: tabData.type }
+    return { id: tabData.id, objectId: tabData.objectId, type: tabData.type, metaType: tabData.metaType }
   }
 
   function savePanelData(panelData: PanelData): PanelBase {

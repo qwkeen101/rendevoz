@@ -82,6 +82,7 @@ export const saveFileLocally = async (filePath: string, fileName: string): Promi
 }
 
 export const deleteFileLocally = async (filePath: string) => {
+  if (!filePath.startsWith('rendefile')) return
   const fs = FileSystemAdapter()
   return await fs.deleteFile(filePath)
 }

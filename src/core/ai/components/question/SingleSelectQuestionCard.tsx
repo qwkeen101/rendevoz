@@ -12,11 +12,17 @@ import { useTranslation } from 'react-i18next'
 export default ({
   question,
   showAnswer = false,
-  isEditing = false
+  isEditing = false,
+  styles
 }: {
   question: IQuestion & { questionType: 'singleSelect' }
   showAnswer?: boolean
   isEditing?: boolean
+  styles?: {
+    smallFontSize?: number
+    contentFontSize?: number
+    titleFontSize?: number
+  }
 }) => {
   const { t } = useTranslation()
   const suggestedAnswer = question.sAnswer
@@ -46,7 +52,8 @@ export default ({
           style={{
             boxShadow: getBoxShadow(i),
             cursor: isEditing ? 'text' : 'pointer',
-            minHeight: '32px'
+            minHeight: '2em',
+            fontSize: styles?.contentFontSize
           }}
           onClick={() => {
             if (!isEditing) {

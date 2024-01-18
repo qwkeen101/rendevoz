@@ -17,8 +17,8 @@ export const DEFAULT_MEDIA_STATE = {
   mode: 'web',
   name: 'Unnamed media',
   labelType: 'videoLabel'
-}
-export const MediaStateAtom = atom<I>(DEFAULT_MEDIA_STATE)
+} as IMediaState
+export const MediaStateAtom = atom<IMediaState>(DEFAULT_MEDIA_STATE)
 
 const useMediaState = () => useAtom(MediaStateAtom)
 

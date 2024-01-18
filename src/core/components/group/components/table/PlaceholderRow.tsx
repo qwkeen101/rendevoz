@@ -1,43 +1,30 @@
-import { AnimatePopover, Content, Icon, WithBorder } from '@/components'
+import { Content, Icon } from '@/components'
 import { ClassName } from 'rendevoz'
-import NewRowMenu from '@/core/components/group/components/menu/NewRowMenu'
 import { Colors } from '@/consts'
 import { useTranslation } from 'react-i18next'
+import { useGroupInstance } from '@/core/components/group/hooks/useGroupInstance'
 
 const PlaceholderRow = () => {
   const { t } = useTranslation()
+  const instance = useGroupInstance()
   return (
-    <AnimatePopover
-      positions={['top']}
-      align={'start'}
-      padding={0}
-      content={setV => (
-        <WithBorder padding={4} width={160}>
-          <NewRowMenu
-            onClose={() => {
-              setV(false)
-            }}
-            direction={'below'}
-          />
-        </WithBorder>
-      )}
+    <Content
+      flex
+      gap={6}
+      onClick={() => {
+        instance.metaOps?.createMeta()
+      }}
+      className={ClassName.flatButton(0)}
+      style={{
+        height: 32,
+        paddingLeft: 12,
+        alignItems: 'center',
+        borderBottom: `1px solid ${Colors.Background.Border}`
+      }}
     >
-      <Content
-        flex
-        gap={6}
-        className={ClassName.flatButton(0)}
-        style={{
-          height: 32,
-          paddingLeft: 12,
-          alignItems: 'center',
-          marginBottom: 100,
-          borderBottom: `1px solid ${Colors.Background.Border}`
-        }}
-      >
-        <Icon name={'park-plus'} />
-        {t('general.New')}
-      </Content>
-    </AnimatePopover>
+      <Icon name={'park-plus'} />
+      {t('general.New')}
+    </Content>
   )
 }
 

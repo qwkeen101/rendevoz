@@ -1,11 +1,11 @@
-import { AnimatePopover, Button, Icon, IconWithPopover, Menu, WithBorder } from '@/components'
+import { AnimatePopover, Button, Icon, IconWithPopover, WithBorder } from '@/components'
 import { FC, useMemo, useState } from 'react'
 import { Components } from 'rendevoz'
 import { GlobalInstance, useGlobalAtomValue, useToggle } from '@/hooks'
 import { useTranslation } from 'react-i18next'
 import TabTitle from '@/components/layout/TabTitle'
 import { ClassName } from 'rendevoz'
-import { undeletedMetaObjectsAtom } from '@/api/stores/meta.store'
+import { undeletedMetaObjectsAtom } from '@/api/stores/meta/meta.store'
 import { MetaObject } from '~/typings'
 import Select from '@/components/base/select'
 import DateFormat from '@/utils/dateFormat'
@@ -21,12 +21,14 @@ import HomeGallery from '@/scenes/home/HomeGallery'
 import KeyvalueStore from '@/api/stores/keyvalue.store'
 import GalleryConfig from '@/scenes/home/GalleryConfig'
 import { CollectionStore, MetaStore } from '@/api/stores'
+import RecycleBin from '@/core/components/recycleBin'
+import Workspace from '@/api/common/workspace'
 
 const { Content } = Components
 const HomeSearchAtom = atom<string | undefined>(undefined)
 export const HomePage: FC = () => {
   const { t } = useTranslation()
-  const currentWorkspace = KeyvalueStore.useValue('currentWorkspace') || 'default'
+  const currentWorkspace = KeyvalueStore.useValue('currentWorkspace')
   const homeMode = KeyvalueStore.useValue('homeDisplayMode') || 'gallery'
   const allWorkspaces = KeyvalueStore.useValue('allWorkspaces') || []
   return (
@@ -55,10 +57,9 @@ export const HomePage: FC = () => {
                       key={i.createdAt}
                       onClick={async () => {
                         setV(false)
-                        await KeyvalueStore.updateOne('currentWorkspace', i.name)
+                        await KeyvalueStore.updateOne('currentWorkspace', i)
                         setTimeout(() => {
-                          MetaStore.switchWorkspace(i.name)
-                          CollectionStore.switchWorkspace()
+                          Workspace.switchWorkspace(i.id)
                         })
                       }}
                       className={css([ClassName.flatButton(), ClassName.ellipsisFont(1)])}
@@ -78,7 +79,7 @@ export const HomePage: FC = () => {
                 }}
                 className={css([ClassName.flatButton(), ClassName.ellipsisFont(1)])}
               >
-                {currentWorkspace === 'default' ? 'Default workspace' : currentWorkspace}
+                {currentWorkspace?.name === 'default' ? 'Default workspace' : currentWorkspace?.name || 'Unnamed workspace'}
               </div>
             </AnimatePopover>
           </div>
@@ -170,19 +171,19 @@ const Recent = () => {
   const [showResizer, toggleShowResizer] = useToggle(false)
   const search = useAtomValue(HomeSearchAtom)
   const getIcon = Rendevoz.Utils.Object.getMetaObjectIcon
-  const allVisibleTypes = Array.from(MetaStore.useIndexedMetaObjects()?.typeToMetaObjectIdsMap.keys() || []).filter(i =>
-    VisibleTypes.includes(i)
-  )
+  const allVisibleTypes = useMemo(() => {
+    return MetaStore.getVisibleMetaTypes().filter(i => VisibleTypes.includes(i))
+  }, [all.length])
   const [sortMode, setSortMode] = useState<'viewDesc' | 'viewAsc' | 'createDesc' | 'createAsc'>('viewDesc')
   const filteredItems = () => {
     switch (type) {
       case 'all':
-        return all.filter(i => allVisibleTypes.includes(i.type))
+        return all.filter(i => allVisibleTypes.includes(i.type) && MetaStore.isVisibleMetaObject(i))
       case 'pin':
-        return all.filter(i => allVisibleTypes.includes(i.type) && i.pinned)
+        return all.filter(i => allVisibleTypes.includes(i.type) && i.pinned && MetaStore.isVisibleMetaObject(i))
       default: {
         if (allVisibleTypes.includes(type)) {
-          return all.filter(i => i.type === type)
+          return all.filter(i => i.type === type && MetaStore.isVisibleMetaObject(i))
         }
       }
     }

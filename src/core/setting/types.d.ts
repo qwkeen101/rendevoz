@@ -8,6 +8,7 @@ export type IGeneralSetting = {
     darkMode: boolean
     copyFileWhenImport: boolean
     customSearchEngineUrl?: string
+    minimizeToTray?: boolean
     followSystemTheme?: boolean
     userFilePath?: string
     autoBackup: 'never' | 'every day' | '3 days' | 'one week' | 'one month' | 'whenClose'
@@ -117,6 +118,7 @@ export type IComponentSetting = {
   label: {
     showOriginalText: boolean
     customTextBackground: boolean
+    autoAddAsObject: boolean
   }
   whiteboard: {
     enableMinimap: boolean
@@ -127,6 +129,7 @@ export type IComponentSetting = {
     dropFileAutoObject: boolean
     defaultLineType: 'straight' | 'polyline' | 'curve'
     defaultBackgroundType: 'none' | 'dot' | 'line'
+    scrollModeInSelect: 'pan' | 'zoom'
   }
   editor: {
     objectAutoBecomeInline: boolean

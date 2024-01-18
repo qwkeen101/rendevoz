@@ -5,7 +5,7 @@ import { Colors } from '@/consts'
 import { useGroupInstance } from '@/core/components/group/hooks/useGroupInstance'
 import { MetaGroupChild } from '~/typings'
 import { motion } from 'framer-motion'
-const useDragInRow = (opts: { rowRef: RefObject<HTMLElement>; value: MetaGroupChild }) => {
+const useDragInRow = (opts: { rowRef: RefObject<HTMLElement>; value: MetaGroupChild; canInner?: boolean }) => {
   const { rowRef } = opts
   const [draggingIndicator, setDraggingIndicator] = useState<{
     inLink?: 'in' | 'out'
@@ -31,6 +31,9 @@ const useDragInRow = (opts: { rowRef: RefObject<HTMLElement>; value: MetaGroupCh
             } else {
               position = 'inner'
             }
+          }
+          if ( position === 'inner') {
+            return
           }
           instance.dragOps?.setCurrentDragDetails?.({
             value: opts.value,

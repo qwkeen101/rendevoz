@@ -3,7 +3,7 @@ import { AnimatePopover, Button, Content, Icon, WithBorder } from '@/components'
 import ButtonSelect from '@/components/base/ButtonSelect'
 import useGroupState from '@/core/components/group/hooks/useGroupState'
 import { useGroupInstance } from '@/core/components/group/hooks/useGroupInstance'
-import PropertiesMenu from '@/core/components/group/components/menu/PropertiesMenu'
+import PropertiesMenu from '@/core/components/group/components/menu/setting/PropertiesMenu'
 import { ClassName } from 'rendevoz'
 import ButtonSwitch from '@/components/base/ButtonSwitch'
 import EmojiWithPicker from '@/components/EmojiWithPicker'
@@ -11,14 +11,17 @@ import EmojiPicker from '@/components/picker/emojiPicker'
 import { css } from '@emotion/css'
 import { Colors } from '@/consts'
 import { useTranslation } from 'react-i18next'
+import ViewSettingMenu from '@/core/components/group/components/menu/setting/ViewSettingMenu'
 
 export default ({ onClose }: { onClose: VoidFunction }) => {
-  const [currentView, setCurrentView] = useState<'main' | 'properties'>('main')
+  const [currentView, setCurrentView] = useState<'main' | 'properties' | 'view'>('main')
   const [groupState, setGroupState] = useGroupState()
   const { t } = useTranslation()
   const currentGroupView = groupState.currentView
   const instance = useGroupInstance()
   const inputRef = useRef<HTMLInputElement>()
+  const groupStateState = groupState.state
+  const groupLayout = groupState.layout
   const openInOptions = [
     {
       value: 'newTab',
@@ -58,7 +61,7 @@ export default ({ onClose }: { onClose: VoidFunction }) => {
                 boxShadow: '0 0 0 1px var(--border-background)'
               })}
             >
-              {currentGroupView?.icon ? (
+              {currentGroupView?.icon && !(currentGroupView.icon.startsWith('park') || currentGroupView.icon.startsWith('custom')) ? (
                 <EmojiWithPicker
                   showPicker={true}
                   size={{
@@ -90,7 +93,7 @@ export default ({ onClose }: { onClose: VoidFunction }) => {
                     </WithBorder>
                   }
                 >
-                  <Icon className={ClassName.flatButton(4, '3px')} name={'park-table-file'} />
+                  <Icon className={ClassName.flatButton(4, '3px')} name={currentGroupView?.icon || 'park-table-file'} />
                 </AnimatePopover>
               )}
               <input
@@ -110,6 +113,14 @@ export default ({ onClose }: { onClose: VoidFunction }) => {
                 setCurrentView('properties')
               }}
             />
+            <Button.IconButton
+              icon={'park-list-view'}
+              text={t('general.View')}
+              suffixIcon={'park-right'}
+              onClick={() => {
+                setCurrentView('view')
+              }}
+            />
             <ButtonSelect
               name={t('general.Open object in')}
               closeOnSelect={true}
@@ -119,59 +130,53 @@ export default ({ onClose }: { onClose: VoidFunction }) => {
                 instance.updateGroupData?.(s => ({ ...s, openIn: v[0] }))
               }}
             />
-            <ButtonSelect
-              closeOnSelect={true}
-              name={t('general.Add from outside to')}
-              onSelect={v => {
-                instance.updateGroupData?.(s => ({ ...s, autoAddto: v[0] }))
-              }}
-              value={groupState.data?.autoAddto || 'first'}
-              options={[
-                {
-                  value: 'first',
-                  children: t('general.First')
-                },
-                {
-                  value: 'last',
-                  children: t('general.Last')
-                }
-              ]}
-            />
-            <ButtonSwitch
-              onChange={v => {
-                instance.updateCurrentView?.(s => ({
-                  ...s,
-                  options: {
-                    ...s.options,
-                    wrapColumns: v
+            {groupLayout?.showAddObjectIntoSetting !== false && (
+              <ButtonSelect
+                closeOnSelect={true}
+                name={t('general.Add from outside to')}
+                onSelect={v => {
+                  instance.updateGroupData?.(s => ({ ...s, autoAddto: v[0] }))
+                }}
+                value={groupState.data?.autoAddto || 'first'}
+                options={[
+                  {
+                    value: 'first',
+                    children: t('general.First')
+                  },
+                  {
+                    value: 'last',
+                    children: t('general.Last')
                   }
-                }))
-              }}
-              name={t('general.Wrap columns')}
-              value={!!currentGroupView?.options.wrapColumns}
-            ></ButtonSwitch>
-            <ButtonSwitch
-              onChange={v => {
-                instance.updateGroupData?.(s => ({
-                  ...s,
-                  hideObjectsInside: v
-                }))
-              }}
-              name={t('general.Hide objects')}
-              value={!!groupState.data?.hideObjectsInside}
-            ></ButtonSwitch>
-            {groupState.data?.hideObjectsInside && (
+                ]}
+              />
+            )}
+
+            {groupStateState?.canHideObjectsInside !== false && (
               <ButtonSwitch
                 onChange={v => {
                   instance.updateGroupData?.(s => ({
                     ...s,
-                    hideGroupsInside: v
+                    hideObjectsInside: v
                   }))
                 }}
-                name={t('general.Hide groups')}
-                value={!!groupState.data?.hideGroupsInside}
+                name={t('general.Hide objects')}
+                value={!!groupState.data?.hideObjectsInside}
               ></ButtonSwitch>
             )}
+            {groupState.data?.hideObjectsInside &&
+              groupStateState?.canHideObjectsInside !== false &&
+              groupStateState?.canHideGroupsInside !== false && (
+                <ButtonSwitch
+                  onChange={v => {
+                    instance.updateGroupData?.(s => ({
+                      ...s,
+                      hideGroupsInside: v
+                    }))
+                  }}
+                  name={t('general.Hide groups')}
+                  value={!!groupState.data?.hideGroupsInside}
+                ></ButtonSwitch>
+              )}
             <div
               style={{
                 width: '100%',
@@ -196,6 +201,8 @@ export default ({ onClose }: { onClose: VoidFunction }) => {
       }
       case 'properties':
         return <PropertiesMenu />
+      case 'view':
+        return <ViewSettingMenu />
     }
   }
   return (
@@ -210,7 +217,8 @@ export default ({ onClose }: { onClose: VoidFunction }) => {
             }}
           ></Icon>
           <div style={{ fontWeight: 600, textTransform: 'capitalize' }}>
-            {currentView === 'properties' ? t('group.Properties') : undefined}
+            {currentView === 'properties' ? t('general.Properties') : undefined}
+            {currentView === 'view' ? t('general.View') : undefined}
           </div>
         </Content>
       )}

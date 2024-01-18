@@ -1,7 +1,7 @@
 import { Rendevoz } from '@/core/rendevoz'
 import { DateFormat } from '@/utils'
 
-const DisplayCell = ({ value, type }: { value: any; type: 'type' | 'createdAt' | 'viewAt' | 'updatedAt' }) => {
+const DisplayCell = ({ value, type }: { value: any; type: 'type' | 'createdAt' | 'viewAt' | 'updatedAt' | 'deletedAt' }) => {
   if (!value) return null
   const displayed = () => {
     switch (type) {
@@ -10,6 +10,7 @@ const DisplayCell = ({ value, type }: { value: any; type: 'type' | 'createdAt' |
       case 'viewAt':
       case 'createdAt':
       case 'updatedAt':
+      case 'deletedAt':
         return DateFormat.format(value, DateFormat.Formats.withMinute)
     }
   }

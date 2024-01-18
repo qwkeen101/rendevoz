@@ -37,7 +37,7 @@ export default (
             instance.selectOps?.deselectAll()
             const currentText = selected[0] as IWhiteboardNode & { type: 'text' }
             const note = await NoteStore.initializeNoteWithValue(currentText.content)
-            const noteMeta = await MetaStore.addMetaObject({ name: 'Untitled', objectId: note.id, type: 'note' }, true)
+            const noteMeta = await MetaStore.addMetaObject({ name: 'Untitled', objectId: note.id, type: 'note' })
             instance.deleteNode?.(selected[0].id)
             instance.insertNode?.({
               x: selected[0].x,

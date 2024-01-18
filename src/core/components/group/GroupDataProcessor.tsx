@@ -1,28 +1,39 @@
 import { useGroupInstance } from '@/core/components/group/hooks/useGroupInstance'
-import { useEffect, useLayoutEffect, useMemo } from 'react'
-import { MetaStore, ObjectStore } from '@/api/stores'
+import { useLayoutEffect, useMemo } from 'react'
 import { useSetAtom } from 'jotai/index'
 import { GroupStateAtom } from '@/core/components/group/hooks/useGroupState'
 import { assignProperties } from '@/utils'
-import { TabTitle } from '@/core/rendevoz/components'
-import { Icon } from '@/components'
 import { useMemoizedFn, useSelectAtomValue } from '@/hooks'
 import _ from 'lodash'
 import { useStore } from 'jotai'
 import normalizeViewProperties from '@/core/components/group/utils/normalizeViewProperties'
 import useGroupGetPropFromMeta from '@/core/components/group/hooks/useGroupGetPropFromMeta'
+import { MetaGroup } from '~/typings'
+import propertyIndexHelper from '@/core/components/group/hooks/dataTracker'
 
-export default ({ groupId }: { groupId: number }) => {
+export default ({ groupValue }: { groupValue?: MetaGroup }) => {
   const instance = useGroupInstance()
-  const groupValue = ObjectStore('group').useValue(groupId)
-  const groupMeta = MetaStore.useObjectToMetaValue(groupId)
   const store = useStore()
   const setGroupState = useSetAtom(GroupStateAtom)
+  const extraProperties = useSelectAtomValue(GroupStateAtom, s => s.state?.extraProperties)
+  propertyIndexHelper()
   assignProperties(instance, {
     updateGroupData: async data => {
+      console.log('updated')
       if (groupValue) {
         const nextValue = data(groupValue)
-        const res = await ObjectStore('group').updateOne({ ...nextValue })
+        setGroupState(s => ({
+          ...s,
+          data: nextValue,
+          currentView: nextValue.views?.find(i => i.id === nextValue.lastViewId) || nextValue.views?.[0]
+        }))
+        const res = await new Promise(res => {
+          instance.on?.({
+            type: 'groupDataChange',
+            value: nextValue,
+            onChange: g => res(g)
+          })
+        })
         if (!res) {
           throw new Error()
         }
@@ -31,18 +42,14 @@ export default ({ groupId }: { groupId: number }) => {
       throw new Error()
     }
   })
+
   useMemo(() => {
     if (groupValue) {
-      normalizeViewProperties(groupValue)
+      normalizeViewProperties(groupValue, instance, extraProperties)
       setGroupState(s => ({ ...s, data: groupValue }))
     }
   }, [groupValue])
-  useLayoutEffect(() => {
-    setGroupState(s => ({
-      ...s,
-      currentView: groupValue?.lastViewId ? groupValue.views.find(i => i.id === groupValue.lastViewId) : groupValue?.views[0]
-    }))
-  }, [groupValue?.lastViewId])
+
   const compares = useMemoizedFn(() => {
     const currentView = store.get(GroupStateAtom).currentView
     if (groupValue?.views && currentView) {
@@ -54,11 +61,12 @@ export default ({ groupId }: { groupId: number }) => {
       }
     }
   })
+
   useGroupGetPropFromMeta(instance)
   useLayoutEffect(() => {
     setTimeout(() => {
       compares()
     })
   }, [groupValue?.views])
-  return <TabTitle icon={<Icon name={'park-form'} />} title={groupMeta?.name || groupMeta?.placeholderName || 'Unnamed group'} />
+  return null
 }

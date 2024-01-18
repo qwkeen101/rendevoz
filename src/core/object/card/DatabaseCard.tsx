@@ -7,7 +7,7 @@ import classNames from 'classnames'
 import ClassName from '@/styles/classNames'
 import { AnimatePopover, Button, Content, Icon, WithBorder } from '@/components'
 import DateFormat from '@/utils/dateFormat'
-import { indexedMetaObjectsAtom, metaObjectsAtom, relatedMetaObjectsMapAtom } from '@/api/stores/meta.store'
+import { indexedMetaObjectsAtom, metaObjectsAtom, relatedMetaObjectsMapAtom } from '@/api/stores/meta/meta.store'
 import Modal from '@/components/base/Modal'
 import useCardDrag from './useCardDrag'
 import { ObjectTag } from '@/core'
@@ -438,7 +438,7 @@ export const ObjectActionPopover: FC<
         text={t('general.delete')}
         dangerous
         onClick={() => {
-          deleteMetaObject(metaObject.id, false, true)
+          deleteMetaObject(metaObject.id)
           onDelete?.()
           onClose?.()
         }}

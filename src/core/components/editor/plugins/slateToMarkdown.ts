@@ -1,7 +1,7 @@
 import { CustomElement } from 'rendevoz'
 import { Element, Node, Text } from 'slate'
 import { globalStore } from '@/api/stores'
-import { metaObjectsAtom } from '@/api/stores/meta.store'
+import { metaObjectsAtom } from '@/api/stores/meta/meta.store'
 import { getSetting } from '@/core'
 
 export const slateToMarkdown = (value: CustomElement[]) => {

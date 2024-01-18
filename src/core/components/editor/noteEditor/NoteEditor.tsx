@@ -1,6 +1,6 @@
 import { AIStore, MetaStore, ObjectStore } from '@/api/stores'
 import { Editor } from '@/core/components/editor/Editor'
-import { useMemo, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import Id from '@/utils/id'
 import useSyncValue from '@/core/components/editor/noteEditor/useSyncValue'
 import { EditorProps, IEditorInstance } from '~/typings'
@@ -11,7 +11,7 @@ import useAddNewElement from '@/core/components/editor/noteEditor/useAddNewEleme
 import useLabel from '@/core/components/editor/noteEditor/useLabel'
 import { GlobalSearchInstance } from '@/core/global/GlobalSearchPanel'
 import useCheckInsideMeta from '@/core/components/editor/noteEditor/useCheckInsideMeta'
-import { AI_QUESTION_PROP_ID, AI_SUMMARY_PROP_ID } from '@/api/stores/meta.store'
+import { AI_QUESTION_PROP_ID, AI_SUMMARY_PROP_ID } from '@/api/stores/meta/meta.store'
 
 /**
  *  基于笔记的编辑器
@@ -20,19 +20,17 @@ import { AI_QUESTION_PROP_ID, AI_SUMMARY_PROP_ID } from '@/api/stores/meta.store
 const NoteEditor = ({ noteId, labelIds, on, metaId, ...rest }: { noteId?: number; metaId?: number } & Omit<EditorProps, 'id'>) => {
   const note = ObjectStore('note').useValue(noteId)
   const noteMeta = MetaStore.useValue(metaId)
-
   const editorId = useMemo(() => Id.getStrId(), [])
-  const [instance, setInstance] = useState<IEditorInstance>()
+  const instanceRef = useRef<IEditorInstance>()
   const handleDrop = useDrop(noteId, metaId)
-  const handleAddNewElementFromMenu = useAddNewElement(noteId)
-  useSyncValue(editorId, noteId, instance)
-  const { saveValueToNote } = useStoreValue({
-    editorId,
+  const handleAddNewElementFromMenu = useAddNewElement(metaId)
+  useSyncValue(editorId, noteId, instanceRef)
+  const { saveValueToNote, fetchedValue } = useStoreValue({
     noteId,
-    instance,
+    instanceRef,
     onContentLoaded: () => {
-      if (instance) {
-        rest.onInstanceInitialized?.(instance)
+      if (instanceRef.current) {
+        rest.onInstanceInitialized?.(instanceRef.current)
       }
     },
     defaultValue: rest.defaultValue
@@ -40,15 +38,20 @@ const NoteEditor = ({ noteId, labelIds, on, metaId, ...rest }: { noteId?: number
   const { handleDeleteLable, handleAddLabel } = useLabel(note)
   const emitter = Rendevoz.Events.Emit.GlobalEventEmitter
   const updater = ObjectStore('note').updateOne
-  useCheckInsideMeta(instance, metaId)
+  useCheckInsideMeta(instanceRef, metaId)
+
   return (
     <Editor
       {...rest}
+      defaultValue={fetchedValue || rest.defaultValue}
       labelIds={labelIds || note?.labels}
       id={rest.id || editorId}
       stringTitle={noteMeta?.name || rest.stringTitle || 'Untitled'}
       onInstanceInitialized={i => {
-        setInstance(i)
+        instanceRef.current = i
+        if (fetchedValue) {
+          i.replaceChildren?.(fetchedValue)
+        }
         if (!noteId) {
           rest.onInstanceInitialized?.(i)
         }
@@ -202,7 +205,7 @@ const NoteEditor = ({ noteId, labelIds, on, metaId, ...rest }: { noteId?: number
           case 'titleChange': {
             if (noteMeta) {
               const newTitle = e.value
-              MetaStore.updateMetaObject({ id: noteMeta.id, name: newTitle }, true)
+              MetaStore.updateMetaObject({ id: noteMeta.id, name: newTitle })
             }
             return
           }

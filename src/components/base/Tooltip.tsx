@@ -37,6 +37,7 @@ const ToolTip: FC<PropsWithChildren<ToolTipProps>> = (
     disableDefaultContent,
     contentTouchable,
     zIndex,
+    style,
     visible,
     onVisibleChange,
     parentElement,
@@ -150,7 +151,8 @@ const ToolTip: FC<PropsWithChildren<ToolTipProps>> = (
           lineHeight: 1.2,
           fontWeight: 500,
           padding: '3px 5px',
-          fontSize: 13
+          fontSize: 13,
+          ...style
         }}
       >
         {typeof content === 'function' ? content(setV) : content}

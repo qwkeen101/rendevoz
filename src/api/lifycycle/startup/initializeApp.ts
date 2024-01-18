@@ -11,12 +11,12 @@ import initializeDefaultKeyvalues from '@/api/lifycycle/startup/initializeDefaul
 
 export default async () => {
   await initializeDefaultKeyvalues()
+  await initializeWorkspace()
   await KeyvalueStore.getAll()
   await initializeSettings()
   await initializeFolder()
   await initializeUnnamedLabel()
   await initializeUrlProp()
-  await initializeWorkspace()
   await MetaStore.getAllMetaLinks()
   await MetaStore.getAllMetaObjects()
   await CollectionStore.getAllCollections()

@@ -23,10 +23,11 @@ export type IRendevoz = {
 }
 
 export type OpenTabOptions<K extends ILayoutTab['type']> = {
-  data: { objectId?: number; onInstanceInitialized?: (instance: Extract<ILayoutTab, { type: K }>['instance']) => void } & Omit<
-    TabData[K],
-    'content'
-  >
+  data: {
+    objectId?: number
+    metaType?: MetaObject['type']
+    onInstanceInitialized?: (instance: Extract<ILayoutTab, { type: K }>['instance']) => void
+  } & Omit<TabData[K], 'content'>
 }
 
 /**
@@ -79,6 +80,11 @@ declare const Open: {
   openHome: VoidFunction
   openDatabase: VoidFunction
   openImage: (id: number) => void
+  openRecycleBin: VoidFunction
+  Group: {
+    openTypeGroup: (type: MetaObject['type']) => void
+    openTagGroup: (tag: number) => void
+  }
   openSidebarObjectDetails: (metaId: number) => void
   Pdf: {
     openPdf: (id: number) => Promise<IPdfInstance>

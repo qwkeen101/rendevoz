@@ -18,9 +18,9 @@ const GroupTableHeader = memo(() => {
   const unToggledValueCount = useSelectAtomValue(GroupStateAtom, s => s.unToggledValueCount)
   const selectedCount = useSelectAtomValue(GroupStateAtom, s => s.selectedCount)
   const instance = useGroupInstance()
-  const visibleHeaders = useSelectAtomValue(GroupStateAtom, s => s.visibleHeaders)
+  const visibleHeaders = useSelectAtomValue(GroupStateAtom, s => s.visibleProperties)
 
-  const [innerItems, setInnerItems] = useState<(MetaGroupProperty & { width: number })[]>([])
+  const [innerItems, setInnerItems] = useState<(MetaGroupProperty & { width: number })[]>(visibleHeaders ?? [])
   const { ref: checkboxRef, isIn } = useIsIn()
   const handleSelectVisibleItems = () => {
     const elements = instance.valueOps?.getVisibleValues()
@@ -42,6 +42,7 @@ const GroupTableHeader = memo(() => {
 
   useLayoutEffect(() => {
     if (visibleHeaders) {
+      console.log(visibleHeaders)
       setInnerItems(visibleHeaders)
     }
   }, [visibleHeaders])
@@ -55,8 +56,12 @@ const GroupTableHeader = memo(() => {
   }, [unToggledSelectedCount, unToggledValueCount])
 
   const hK = useMemo(() => visibleHeaders.map(i => i.id).join(''), [visibleHeaders])
+
+  const [isReorder, setIsReorder] = useState(false)
+  const reorderRef = useRef<HTMLDivElement>(null)
   return (
     <Content
+      role={'table-wrapper'}
       flex
       alignItems={'center'}
       style={{
@@ -88,6 +93,7 @@ const GroupTableHeader = memo(() => {
         type={'checkbox'}
       />
       <Reorder.Group
+        ref={reorderRef}
         axis="x"
         as={'div'}
         style={{ display: 'flex' }}
@@ -98,9 +104,15 @@ const GroupTableHeader = memo(() => {
       >
         {innerItems?.map((i, idx) => (
           <GroupHeaderItem
+            onDragStart={() => {
+              setIsReorder(true)
+            }}
             item={i}
+            constrainRef={reorderRef}
             key={`${i.id}_${hK}`}
+            isReorder={isReorder}
             onDragEnd={() => {
+              setIsReorder(false)
               const currProps = instance.getCurrentView?.()?.options.properties
               if (currProps) {
                 const newProps = produce(currProps, draft => {

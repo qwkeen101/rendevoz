@@ -3,7 +3,7 @@ import { Rendevoz } from '@/core/rendevoz'
 import { assignProperties } from '@/utils'
 import { BuiltInDraggableElement, GlobalDragPointerUpEvent, MetaGroupChild, XYPosition } from '~/typings'
 import { createPortal } from 'react-dom'
-import { AnimatePopover, Icon, WithBorder } from '@/components'
+import { Icon } from '@/components'
 import { ClassName } from 'rendevoz'
 import { useGlobalIsDragging } from '@/core'
 import Id from '@/utils/id'
@@ -11,21 +11,22 @@ import { Path } from 'slate'
 import { useGroupInstance } from '@/core/components/group/hooks/useGroupInstance'
 import reorderDragItems from '@/core/components/group/hooks/drag/reorderItems'
 import { mousePos } from '@/hooks/utils/useMousePositionRef'
-import RowMenu from '@/core/components/group/components/menu/RowMenu'
 import { useSelectAtomValue } from '@/hooks'
 import { GroupStateAtom } from '@/core/components/group/hooks/useGroupState'
 import { Colors } from '@/consts'
 import { useStore } from 'jotai'
 
-const GroupDragHandle = ({ bodyRef, groupId }: { bodyRef: RefObject<HTMLElement>; groupId: number }) => {
+const GroupDragHandle = ({ bodyRef, groupId }: { bodyRef: RefObject<HTMLElement>; groupId?: number }) => {
   const emitter = Rendevoz.Events.Emit.GlobalEventEmitter
   const handler = Rendevoz.Events.Emit.useEventHandler('global')
   const [isDragging, setIsDragging] = useState(false)
   const [globalDragging] = useGlobalIsDragging()
   const isPressed = useRef(false)
   const store = useStore()
+  const canDrag = useSelectAtomValue(GroupStateAtom, s => s.state?.canDrag) ?? true
   const isSelecting = useSelectAtomValue(GroupStateAtom, s => s.isSelecting)
   const isScrolling = useSelectAtomValue(GroupStateAtom, s => s.isScrollingBody)
+  const currentView = useSelectAtomValue(GroupStateAtom, s => s.currentView?.type)
   const [dragHandle, setDragHandle] = useState<{
     position: XYPosition
     value: MetaGroupChild
@@ -77,6 +78,7 @@ const GroupDragHandle = ({ bodyRef, groupId }: { bodyRef: RefObject<HTMLElement>
           console.log(node, node.offsetHeight, node.clientHeight, node.getBoundingClientRect())
           const n = node.cloneNode(true) as HTMLElement
           n.style.height = `${node.clientHeight}px`
+          n.style.width = `${node.clientWidth}px`
           n.style.setProperty('--table-columns', `${store.get(GroupStateAtom).headerColumn}`)
           n.style.borderTop = Colors.Consts.Border
           Rendevoz.Actions.State.Drag.addDragElements(n)
@@ -136,12 +138,14 @@ const GroupDragHandle = ({ bodyRef, groupId }: { bodyRef: RefObject<HTMLElement>
     instance.bodyOps?.endDetectAutoScroll?.()
     const target = data.event.target
     const body = bodyRef.current
+    console.log('dropped')
     if (body) {
       // drop on table, if table row dragging is true, we are reordering items in table
       // or we are dragging new items to add into table
       if (target instanceof HTMLElement && body?.contains(target)) {
         const element = data.draggingElement as BuiltInDraggableElement
         if (element.type === 'groupItem' && element.groupId === groupId && element.value.length) {
+          console.log(element)
           reorderDragItems({
             items: element.value,
             groupId: groupId,
@@ -150,6 +154,8 @@ const GroupDragHandle = ({ bodyRef, groupId }: { bodyRef: RefObject<HTMLElement>
             targetValue: dragDetailsRef.current?.value
           })
         } else {
+          const canDragInside = instance.getGroupState?.().state?.canDragInside ?? true
+          if (canDragInside === false) return
           handleInsertItem(data)
         }
       }
@@ -169,6 +175,10 @@ const GroupDragHandle = ({ bodyRef, groupId }: { bodyRef: RefObject<HTMLElement>
       }
     }).then(meta => {
       if (meta) {
+        instance.on?.({
+          type: 'metaDragInside',
+          ids: [meta.id]
+        })
         if (dragDetailsRef.current) {
           newItem.type = 'metaObject'
           newItem.id = meta.id
@@ -193,7 +203,7 @@ const GroupDragHandle = ({ bodyRef, groupId }: { bodyRef: RefObject<HTMLElement>
     }
   }, [])
 
-  if (dragHandle && !globalDragging && bodyRef.current) {
+  if (dragHandle && (currentView === 'table' || currentView === 'list') && !globalDragging && bodyRef.current) {
     return createPortal(
       <div
         style={{
@@ -231,7 +241,7 @@ const GroupDragHandle = ({ bodyRef, groupId }: { bodyRef: RefObject<HTMLElement>
         onPointerMove={e => {
           if (isSelecting) return
           if (!isPressed.current) return
-
+          if (!canDrag) return
           if (dragHandle.value) {
             instance.dragOps?.startDrag?.({
               value: dragHandle.value,

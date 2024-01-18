@@ -3,10 +3,22 @@ import { Colors } from '@/consts'
 import SimpleEditor from '@/core/components/editor/SimpleEditor'
 import { ObjectStore } from '@/api/stores'
 
-export default ({ question, metaId }: { question: IQuestion & { questionType: 'singleSelect' }; metaId?: number }) => {
+export default ({
+  question,
+  metaId,
+  styles
+}: {
+  question: IQuestion & { questionType: 'singleSelect' }
+  metaId?: number
+  styles?: {
+    smallFontSize?: number
+    contentFontSize?: number
+    titleFontSize?: number
+  }
+}) => {
   return (
     <div style={{ width: '100%' }}>
-      <div style={{ fontSize: 13, color: Colors.Font.Transparent, marginTop: 6 }}>输入题目</div>
+      <div style={{ fontSize: styles?.smallFontSize, color: Colors.Font.Transparent, marginTop: 6 }}>输入题目</div>
       <SimpleEditor
         metaId={metaId}
         textareaMode={true}
@@ -19,14 +31,14 @@ export default ({ question, metaId }: { question: IQuestion & { questionType: 's
           border: '1px solid var(--border-background)'
         }}
         changeOnBlur={true}
-        fontSize={15}
+        fontSize={styles?.contentFontSize}
         value={question.text}
         onChange={v => {
           ObjectStore('question').updateOne({ id: question.id, text: v })
         }}
       />
 
-      <div style={{ fontSize: 13, color: Colors.Font.Transparent, marginTop: 6 }}>输入回答</div>
+      <div style={{ fontSize: styles?.smallFontSize, color: Colors.Font.Transparent, marginTop: 6 }}>输入回答</div>
       <SimpleEditor
         metaId={metaId}
         textareaMode={true}
@@ -39,7 +51,7 @@ export default ({ question, metaId }: { question: IQuestion & { questionType: 's
           border: '1px solid var(--border-background)'
         }}
         changeOnBlur={true}
-        fontSize={15}
+        fontSize={styles?.contentFontSize}
         value={question.answer}
         onChange={v => {
           ObjectStore('question').updateOne({ id: question.id, answer: v })

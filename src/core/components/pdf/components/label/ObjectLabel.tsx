@@ -8,7 +8,7 @@ import { GlobalGraphInstance, useRenderObject } from "@/core";
 import { useToggle } from "@/hooks";
 import { PageSize } from "~/typings";
 import { globalStore, ObjectStore } from "@/api/stores";
-import { metaObjectsAtom } from "@/api/stores/meta.store";
+import { metaObjectsAtom } from "@/api/stores/meta/meta.store";
 import { memo, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Rnd } from "react-rnd";
 import { IObjectLabel } from "~/typings/data";

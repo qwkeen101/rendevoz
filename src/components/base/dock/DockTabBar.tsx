@@ -7,12 +7,12 @@ import { Reorder } from 'framer-motion'
 import { TabNavListProps } from '../tabs'
 import classNames from 'classnames'
 import AnimatePopover from '../AnimatePopover'
-import { GlobalInstance, useGlobalAtom, useGlobalSetAtom, useToggle } from '@/hooks'
+import { GlobalInstance, useGlobalAtom, useGlobalAtomValue, useGlobalSetAtom, useToggle } from '@/hooks'
 import WithBorder from '../WithBorder'
 import ClassName from '@/styles/classNames'
 import { useTranslation } from 'react-i18next'
 import { replacePanel } from './Algorithm'
-import { LayoutIdToTabMap } from '@/components/layout'
+import { GlobalLayoutAtom, LayoutIdToTabMap } from '@/components/layout'
 import { getOS } from '@/App'
 import { Rendevoz } from '@/core/rendevoz'
 import { MetaStore } from '@/api/stores'
@@ -20,12 +20,12 @@ import { Content, Icon } from '@/components'
 import { SidebarPanelStateAtom } from '@/components/layout/sidebar'
 import produce from 'immer'
 import { Colors } from '@/consts'
-import { ipcInstance } from '@/plugins'
 import useIsFullscreen from '@/hooks/utils/useIsFullscreen'
+import { useUpdate } from 'react-use'
 
 interface DockTabBarProps {
   TabNavList: TabNavListProps
-  onReorder: (sourceId: string, destId: string, direction: 'after' | 'before') => void
+  onReorder: (tabs: any[]) => void
   panelData: PanelData
   extraArea: React.ReactNode
 }
@@ -37,6 +37,7 @@ export const DockTabBar = memo((props: DockTabBarProps) => {
   const getRef = (div: HTMLDivElement) => {
     ref.current = div
   }
+  const layout = useGlobalAtomValue(GlobalLayoutAtom)
   const selectedTabKey = TabNavList.defaultActiveKey
   const [isDragging, setIsDragging] = useState(false)
   const navs = TabNavList.navs
@@ -44,9 +45,10 @@ export const DockTabBar = memo((props: DockTabBarProps) => {
   const currentMoveTabId = useRef<string>()
   const [isTopRight, setIsTopRight] = useState(false)
   const [isTopLeft, setIsTopLeft] = useState(false)
-  const [isTop, setIsTop] = useState(false)
   const isFullscreen = useIsFullscreen(true)
   const [panelState, setPanelState] = useGlobalAtom(SidebarPanelStateAtom)
+  const [innerTabs, setInnerTabs] = useState<any[]>(navs)
+
   useLayoutEffect(() => {
     const bar = ref.current
     const bounding = bar?.getBoundingClientRect()
@@ -54,11 +56,6 @@ export const DockTabBar = memo((props: DockTabBarProps) => {
     const containerBouding = layoutContainer?.getBoundingClientRect()
     if (bounding && containerBouding) {
       const { top, left } = bounding
-      if (top - containerBouding.top < 10) {
-        setIsTop(true)
-      } else {
-        setIsTop(false)
-      }
       if (bounding.right - containerBouding.right < 10 && top - containerBouding.top < 10) {
         setIsTopRight(true)
       } else {
@@ -70,7 +67,10 @@ export const DockTabBar = memo((props: DockTabBarProps) => {
         setIsTopLeft(false)
       }
     }
-  })
+  }, [layout.dockbox])
+  useLayoutEffect(() => {
+    setInnerTabs(navs)
+  }, [navs])
   const os = getOS()
   return (
     <DragDropDiv
@@ -116,20 +116,21 @@ export const DockTabBar = memo((props: DockTabBarProps) => {
       )}
       <Reorder.Group
         onReorder={r => {
-          const currIndex = r.findIndex(i => i.key === currentMoveTabId.current)
-          const prevIndex = navs.findIndex(i => i.key === currentMoveTabId.current)
-          const direction = currIndex > prevIndex ? 'after-tab' : 'before-tab'
-          onReorder(currentMoveTabId.current, navs[currIndex].key, direction)
+          setInnerTabs(r)
+          // const currIndex = r.findIndex(i => i.key === currentMoveTabId.current)
+          // const prevIndex = navs.findIndex(i => i.key === currentMoveTabId.current)
+          // const direction = currIndex > prevIndex ? 'after-tab' : 'before-tab'
+          // onReorder(currentMoveTabId.current, navs[currIndex].key, direction)
         }}
         className={styles.tabs}
         style={{
           background: isDragging ? 'var(--tabs-bg)' : undefined,
-          paddingTop: isTop ? 8 : 6
+          paddingTop: 6
         }}
         axis={'x'}
-        values={navs}
+        values={innerTabs}
       >
-        {navs.map((i, idx) => (
+        {innerTabs.map((i, idx) => (
           <TabItem
             item={i}
             key={i.key}
@@ -137,9 +138,12 @@ export const DockTabBar = memo((props: DockTabBarProps) => {
               currentMoveTabId.current = i.key
               setIsDragging(true)
             }}
-            onDragEnd={() => {
+            onDragEnd={e => {
               dragInsideRef.current = false
               setIsDragging(false)
+              if (e.currentTarget?.contains(e.target)) {
+                onReorder(innerTabs)
+              }
             }}
             isDragging={isDragging}
             isSelected={selectedTabKey === i.key}
@@ -285,13 +289,16 @@ const TabItem = ({ onClick, isSelected, item, onDragStart, isLast, onDragEnd, is
             }
           }
         }}
-        onDragEnd={() => {
-          onDragEnd()
+        onDragEnd={event => {
+          onDragEnd(event)
         }}
         onDragStart={e => {
           onDragStart?.(e)
         }}
         onDrag={onDrag}
+        transition={{
+          duration: isDragging ? 0.2 : 0
+        }}
         whileDrag={{
           boxShadow: '0 0 0 2px var(--select-color)',
           borderRadius: 4,

@@ -4,7 +4,7 @@ import { Colors } from '@/consts'
 import { Resizable } from 're-resizable'
 import { AnimatePopover, Content, Icon } from '@/components'
 import { useTranslation } from 'react-i18next'
-import { useRef, useState } from 'react'
+import { RefObject, useRef, useState } from 'react'
 import { useIsIn } from '@/hooks'
 import { ClassName } from 'rendevoz'
 import ColumnMenu from '@/core/object/renderer/properties/PropertyMenu'
@@ -15,10 +15,16 @@ const GroupHeaderItem = ({
   item,
   onDragEnd,
   onResizeEnd,
-  onResize
+  onResize,
+  constrainRef,
+  onDragStart,
+  isReorder
 }: {
   item: MetaGroupProperty
   onDragEnd: VoidFunction
+  onDragStart: VoidFunction
+  constrainRef: RefObject<HTMLDivElement>
+  isReorder: boolean
   onResize: (currItem: MetaGroupProperty & { width: number }) => void
   onResizeEnd: (currItem: MetaGroupProperty & { width: number }) => void
 }) => {
@@ -35,6 +41,8 @@ const GroupHeaderItem = ({
   }
   return (
     <Reorder.Item
+      dragConstraints={constrainRef}
+      dragElastic={false}
       onDragEnd={() => {
         onDragEnd?.()
         setIsDragging(false)
@@ -43,6 +51,9 @@ const GroupHeaderItem = ({
       dragControls={controls}
       as={'div'}
       value={item}
+      transition={{
+        duration: isDragging || isReorder ? 0.25 : 0
+      }}
       style={{
         borderRight: Colors.Consts.Border,
         color: Colors.Font.Transparent,
@@ -55,6 +66,7 @@ const GroupHeaderItem = ({
         flexShrink: 0
       }}
       onDragStart={() => {
+        onDragStart()
         setIsDragging(true)
       }}
     >

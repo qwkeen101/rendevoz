@@ -24,7 +24,7 @@ const GlobalCreateObject = () => {
     if (data) {
       const { fromMetas, currentObject } = data
       const shouldAddObject = { id: Id.getId(), ...currentObject }
-      MetaStore.addMetaObject(shouldAddObject, true)
+      MetaStore.addMetaObject(shouldAddObject)
       setInnerMeta(shouldAddObject)
       if (fromMetas) {
         const links = fromMetas.map(
@@ -78,7 +78,11 @@ const GlobalCreateObject = () => {
     promiseRef.current?.rej?.(null)
     promiseRef.current = undefined
     if (currentModeRef.current === 'add') {
-      innerMeta?.id && MetaStore.deleteMetaObject(innerMeta?.id, true, true)
+      innerMeta?.id &&
+        MetaStore.deleteMetaObject(innerMeta?.id, {
+          force: true,
+          silent: true
+        })
       pendingLinks?.forEach(i => {
         if (i.id) {
           MetaStore.deleteMetaLink(i.id, true, true)

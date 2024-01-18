@@ -34,13 +34,18 @@ export default () => {
       column
       fullWidth
       style={{
-        minWidth: 280
+        minWidth: 280,
+        maxHeight: '70vh',
+        overflowY: 'auto'
       }}
     >
       <Reorder.Group
         as={'div'}
         onReorder={v => {
           setInnerAll(v)
+        }}
+        transition={{
+          duration: 0
         }}
         values={values}
       >

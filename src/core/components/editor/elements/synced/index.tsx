@@ -23,7 +23,6 @@ const SyncedBlock = ({ element, children }: RenderElementProps) => {
   const blockDetails = ObjectStore('syncedBlock').useValue(syncMeta?.objectId)
   const { t } = useTranslation()
   useCheckSyncInWhere(syncElement.originId)
-  console.log(element, syncMeta)
   const handleDelete = () => {
     const path = ReactEditor.findPath(editor, element)
     Transforms.removeNodes(editor, {
@@ -32,11 +31,7 @@ const SyncedBlock = ({ element, children }: RenderElementProps) => {
   }
   const memoizedReplace = useMemoizedFn(() => {
     if (blockDetails && blockDetails.syncVersion > syncElement.syncVersion) {
-      console.log('trigger sync to block')
-
       const path = ReactEditor.findPath(editor, element)
-      const focused = ReactEditor.isFocused(editor)
-      const prevSelection = editor.selection
       Editor.withoutNormalizing(editor, () => {
         Transforms.removeNodes(editor, {
           at: path
@@ -75,12 +70,14 @@ const SyncedBlock = ({ element, children }: RenderElementProps) => {
             }
           )
         })
-        syncMeta && MetaStore.updateMetaObject?.({ id: syncMeta.id, placeholderName: Node.string(syncElement) }, true)
-        ObjectStore('syncedBlock').updateOne({
-          id: blockDetails.id,
-          blockChildren: structuredClone(syncElement.children),
-          syncVersion: nextVersion
-        })
+        syncMeta && MetaStore.updateMetaObject?.({ id: syncMeta.id, placeholderName: Node.string(syncElement) })
+        setTimeout(() => {
+          ObjectStore('syncedBlock').updateOne({
+            id: blockDetails.id,
+            blockChildren: structuredClone(syncElement.children),
+            syncVersion: nextVersion
+          })
+        }, 100)
       }
     },
     [syncElement.children],

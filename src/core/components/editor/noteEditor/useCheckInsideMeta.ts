@@ -1,10 +1,11 @@
 import { IEditorInstance } from '~/typings'
-import { useEffect, useRef } from 'react'
+import { RefObject, useEffect, useRef } from 'react'
 import { MetaStore } from '@/api/stores'
 
-export default (instance?: IEditorInstance, metaId?: number) => {
+export default (instanceRef?: RefObject<IEditorInstance | undefined>, metaId?: number) => {
   const prevMetas = useRef<Set<number>>(new Set())
   useEffect(() => {
+    const instance = instanceRef?.current
     if (instance && metaId) {
       const i = setInterval(() => {
         requestIdleCallback(() => {
@@ -28,5 +29,5 @@ export default (instance?: IEditorInstance, metaId?: number) => {
         clearTimeout(i)
       }
     }
-  }, [instance, metaId])
+  }, [metaId])
 }

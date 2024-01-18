@@ -14,7 +14,7 @@ import useWebpageInstance from '@/core/components/webpage/hooks/useWebpageInstan
 import { IWebpageProps } from '@/core/components/webpage/Webpage'
 import { ClassName } from 'rendevoz'
 import { GlobalSearchInstance } from '@/core/global/GlobalSearchPanel'
-import { AI_QUESTION_PROP_ID, AI_SUMMARY_PROP_ID } from '@/api/stores/meta.store'
+import { AI_QUESTION_PROP_ID, AI_SUMMARY_PROP_ID } from '@/api/stores/meta/meta.store'
 
 const WebpageTitle = ({
   title = 'Untitled',
@@ -274,7 +274,7 @@ const WebpageContentRenderer = ({
           ObjectStore('webpage').updateOne({ id: currentWepbage.id, title: e.value })
         }
         if (webpageMeta) {
-          MetaStore.updateMetaObject({ id: webpageMeta.id, name: e.value }, true)
+          MetaStore.updateMetaObject({ id: webpageMeta.id, name: e.value })
         }
       }
     }

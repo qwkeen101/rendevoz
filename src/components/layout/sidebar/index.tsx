@@ -16,6 +16,7 @@ import SidebarSetting from '@/components/layout/sidebar/SidebarSetting'
 import produce, { Draft } from 'immer'
 import { Colors } from '@/consts'
 import { ClassName } from 'rendevoz'
+import { useSelectGlobalAtomValue } from '@/hooks'
 
 export const setPanelState = (updater: (panelState: Draft<SidebarPanelState>) => void) => {
   const panelState = globalStore.get(SidebarPanelStateAtom)
@@ -59,6 +60,14 @@ export const BuiltInSidebarItems: Record<string, RegisteredSidebarItem> = {
     },
     text: () => t('general.search')
   },
+  recycleBin: {
+    key: 'recycleBin',
+    icon: 'park-recycling',
+    text: () => t('general.Trash'),
+    onClick: () => {
+      Rendevoz.Actions.Open.openRecycleBin()
+    }
+  },
   graph: {
     key: 'graph',
     icon: 'park-share-one',
@@ -87,20 +96,20 @@ export const BuiltInSidebarItems: Record<string, RegisteredSidebarItem> = {
     onClick: () => {
       Rendevoz.Actions.Layout.openNewTab({ data: { type: 'feeds' } })
     }
-  },
-  webSearch: {
-    key: 'webSearch',
-    text: () => t('general.web search'),
-    icon: 'park-google',
-    onClick: () => {
-      setPanelState(s => {
-        s.visible.has('webSearch') ? s.visible.delete('webSearch') : s.visible.add('webSearch')
-      })
-    }
   }
+  // webSearch: {
+  //   key: 'webSearch',
+  //   text: () => t('general.web search'),
+  //   icon: 'park-google',
+  //   onClick: () => {
+  //     setPanelState(s => {
+  //       s.visible.has('webSearch') ? s.visible.delete('webSearch') : s.visible.add('webSearch')
+  //     })
+  //   }
+  // }
 }
 
-export type ISidebarPanelVisibleItems = 'database' | 'collections' | 'webSearch'
+export type ISidebarPanelVisibleItems = 'database' | 'collections' | 'webSearch' | 'category'
 
 type SidebarPanelState = {
   visible: Set<ISidebarPanelVisibleItems>
@@ -130,24 +139,35 @@ export const Sidebar = ({ direction = 'right' }: { direction: 'left' | 'right' }
   const leftItems = [...(items.map(key => allItemsMap.get(key)).filter(o => o) as RegisteredSidebarItem[])].concat(
     ...allItems.filter(i => !usedItems.has(i.key))
   )
+  const panelOpen = useSelectGlobalAtomValue(SidebarPanelStateAtom, s => s.leftOpen)
   return (
     <Content
       flex
       style={{
         zIndex: 100,
         flexDirection: direction === 'right' ? 'row' : 'row-reverse',
-        background: Colors.Background.Secondary
+        background: 'var(--tabs-bg)'
       }}
     >
-      <SidebarIcons
-        items={items}
-        direction={direction}
-        showUser={direction === 'right'}
-        leftItems={leftItems}
-        onChange={v => {
-          KeyvalueStore.updateOne(key, v)
-        }}
-      ></SidebarIcons>
+      <Content flex column>
+        <div
+          style={{
+            width: '100%',
+            height: '38px',
+            borderBottom: `1px solid ${panelOpen ? 'var(--box-shadow-border)' : 'transparent'}`,
+            flexShrink: 0
+          }}
+        ></div>
+        <SidebarIcons
+          items={items}
+          direction={direction}
+          showUser={direction === 'right'}
+          leftItems={leftItems}
+          onChange={v => {
+            KeyvalueStore.updateOne(key, v)
+          }}
+        ></SidebarIcons>
+      </Content>
 
       <SidebarPanel direction={direction} />
     </Content>

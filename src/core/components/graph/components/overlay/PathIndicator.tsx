@@ -5,7 +5,7 @@ import { findPathsBetweenTwoMetaObjects } from '../../utils/findPathsBetweenTwoN
 import { Content, Icon } from '@/components'
 import { useTranslation } from 'react-i18next'
 import { globalStore } from '@/api/stores'
-import { metaObjectsAtom } from '@/api/stores/meta.store'
+import { metaObjectsAtom } from '@/api/stores/meta/meta.store'
 import ClassName from '@/styles/classNames'
 import FontSize from '@/consts/font'
 

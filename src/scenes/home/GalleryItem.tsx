@@ -6,16 +6,14 @@ import { ClassName } from 'rendevoz'
 import { DateFormat } from '@/utils'
 import { css } from '@emotion/css'
 import { memo } from 'react'
-import { useIsIn } from '@/hooks'
 import ContextMenu from '@/components/contextMenu'
 import { ObjectActionPopover } from '@/core'
 
 const GalleryItem = memo(({ metaId }: { metaId: number }) => {
   const collections = CollectionStore.useMetaCollections(metaId)
   const meta = MetaStore.useValue(metaId)
-  const { isIn, ref } = useIsIn()
   const hasCollection = collections.length > 0
-  if (!meta) return null
+  if (!MetaStore.isVisibleMetaObject(meta)) return null
   return (
     <ContextMenu
       content={setV => (
@@ -35,7 +33,6 @@ const GalleryItem = memo(({ metaId }: { metaId: number }) => {
             }
           }
         })}
-        ref={ref}
         onClick={() => Rendevoz.Actions.Open.Meta.openMetaObject(metaId)}
       >
         <div

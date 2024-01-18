@@ -108,6 +108,8 @@ export default function assignViewTableOps(instance: IGroupInstance) {
         },
         getCurrentSelectedCell: () => tableCellState,
         selectCell: (rowId, index) => {
+          const viewType = instance.getCurrentView?.()?.type
+          if (viewType !== 'table') return
           setTableCellState({ rowId, index })
         }
       }

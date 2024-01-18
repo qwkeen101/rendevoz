@@ -55,7 +55,8 @@ export const Background = {
   BoxShadow: '--box-shadow',
   LightRadialGradient: '--light-radial-gradient-background',
   DarkRadialGradient: '--dark-radial-gradient-background',
-  RadialGradient: '--radial-gradient-background'
+  RadialGradient: '--radial-gradient-background',
+  BorderBoxShadow: '--border-box-shadow'
 }
 export const Emphasis = {
   DarkEmphasis: '--dark-emphasis',
@@ -64,6 +65,7 @@ export const Emphasis = {
 }
 export const Common = {
   Green: '--green',
+  FocusBoxShadow: '--focus-box-shadow',
   Red: '--red',
   SelectColorTransparent: '--select-color-transparent',
   SelectColor: '--select-color'
@@ -91,7 +93,7 @@ const getAdaptFontColor = (bg?: string) => {
   if (!bg) return undefined
   if (GlobalTheme.isDark) return undefined
   if (FontColorCache[bg]) return FontColorCache[bg]
-  const t = tinycolor(bg).darken(60).toHexString()
+  const t = tinycolor(bg).darken(45).desaturate(10).toHexString()
   FontColorCache[bg] = t
 
   return t

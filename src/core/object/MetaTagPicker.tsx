@@ -44,7 +44,7 @@ const MetaTagPicker = forwardRef(
             }
           }}
           onCreateItem={(name, color) => ObjectStore('tag').addOne({ name, color })}
-          onItemDelete={t => ObjectStore('tag').deleteOneById(t)}
+          onItemDelete={t => ObjectStore('tag').deleteOneById(t, { force: true })}
           onItemUpdate={t => ObjectStore('tag').updateOne(t)}
         />
       </Content>

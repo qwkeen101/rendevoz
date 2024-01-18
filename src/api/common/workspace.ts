@@ -13,7 +13,12 @@ export default {
   },
   deleteCurrentWorkspace: async () => {
     const allMetaIds = Array.from(MetaStore.getMetaObjectsMap().keys())
-    allMetaIds.forEach(id => MetaStore.deleteMetaObject(id, true, true))
+    allMetaIds.forEach(id =>
+      MetaStore.deleteMetaObject(id, {
+        silent: true,
+        force: true
+      })
+    )
     const allWorkspaces = await KeyvalueStore.getOne('allWorkspaces')
     const currentWorkspace = await KeyvalueStore.getOne('currentWorkspace')
     if (allWorkspaces && currentWorkspace) {
@@ -21,16 +26,19 @@ export default {
         'allWorkspaces',
         produce(allWorkspaces, s => {
           s.splice(
-            s.findIndex(o => o.name === currentWorkspace),
+            s.findIndex(o => o.id === currentWorkspace.id),
             1
           )
         })
       )
     }
   },
-  switchWorkspace: async (targetWorkspace: string) => {
-    await KeyvalueStore.updateOne('currentWorkspace', targetWorkspace)
-    await MetaStore.switchWorkspace()
-    await CollectionStore.switchWorkspace()
+  switchWorkspace: async (targetWorkspaceId: number) => {
+    const targetWorkspace = (await KeyvalueStore.getOne('allWorkspaces'))?.find(i => i.id === targetWorkspaceId)
+    if (targetWorkspace) {
+      await KeyvalueStore.updateOne('currentWorkspace', targetWorkspace)
+      await MetaStore.switchWorkspace()
+      await CollectionStore.switchWorkspace()
+    }
   }
 }

@@ -24,7 +24,7 @@ export default ({ onBack, onClose, metaId }: { onBack: VoidFunction; onClose: Vo
   useEffect(() => {
     const whiteboards = Array.from(MetaStore.getIndexedMetaObjects()?.typeToMetaObjectIdsMap.get('whiteboard')?.values() || [])
       .map(i => MetaStore.getMetaObjectsMap().get(i))
-      .filter(i => i) as MetaObject[]
+      .filter(i => MetaStore.isVisibleMetaObject(i)) as MetaObject[]
     whiteboards.sort((a, b) => b.createdAt - a.createdAt)
     setAllWhiteboards(whiteboards)
   }, [index])
@@ -35,7 +35,7 @@ export default ({ onBack, onClose, metaId }: { onBack: VoidFunction; onClose: Vo
   handler.on('globalDropNeedFurtherProcess', e => {
     if (setting.quickAdd.addIntoWhiteboardHideObject) {
       if (e.dropOn?.dropOn === 'whiteboard' && e.dropOn?.whiteboardId == currentWhiteboard?.id) {
-        MetaStore.updateMetaObject({ id: metaId, hidden: true }, true)
+        MetaStore.updateMetaObject({ id: metaId, hidden: true })
       }
     }
   })

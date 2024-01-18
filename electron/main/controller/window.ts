@@ -1,6 +1,7 @@
 import callback from './callback'
 import { BrowserWindow } from 'electron'
 let maxed = false
+let shouldMinimizeToTray = false
 callback('reload', async () => {
   BrowserWindow.getFocusedWindow().reload()
 })
@@ -25,6 +26,10 @@ callback('minimizeWindow', async () => {
 
 callback('sourceId', async () => {
   return BrowserWindow.getFocusedWindow().getMediaSourceId()
+})
+
+callback('minimizeToTray', async (should: boolean) => {
+  process.env.MINIMIZE_TO_TRAY = should ? 'true' : 'false'
 })
 
 callback('close', async () => {

@@ -1,5 +1,5 @@
 import { useGlobalAtomValue, useMergedRef, useDebounceFn } from '@/hooks'
-import { undeletedMetaObjectsAtom } from '@/api/stores/meta.store'
+import { undeletedMetaObjectsAtom } from '@/api/stores/meta/meta.store'
 import { MetaStore, ObjectStore } from '@/api/stores'
 import ClassName from '@/styles/classNames'
 import { css } from '@emotion/css'
@@ -80,7 +80,7 @@ export const ObjectPanel = memo(
         const afterSearch = filterSort.searchInput
           ? Array.from(
               go(filterSort.searchInput, afterFilter, {
-                keys: ['name', 'description']
+                keys: ['name', 'description', 'placeholderName']
               }).values()
             ).map(i => i.obj)
           : afterFilter
@@ -224,7 +224,7 @@ export const ObjectPanel = memo(
               />
             </Content>
           )}
-          <Content flex gap={6}>
+          <Content flex gap={6} alignItems={'center'}>
             <Select
               value={sortMode}
               style={{
@@ -250,8 +250,9 @@ export const ObjectPanel = memo(
               gap={6}
               style={{
                 fontSize: 12,
-                padding: '2px 6px',
-                marginLeft: 'auto'
+                padding: '4px',
+                marginLeft: 'auto',
+                lineHeight: '14px'
               }}
               onClick={() => setFilterSort(s => ({ ...s, searchVisible: !s.searchVisible }))}
               icon="park-search"
@@ -279,7 +280,8 @@ export const ObjectPanel = memo(
                 gap={6}
                 style={{
                   fontSize: 12,
-                  padding: '2px 6px'
+                  padding: '4px',
+                  lineHeight: '14px'
                 }}
                 icon="park-filter"
                 suffixStr={filterSort.filter?.rules.length || undefined}

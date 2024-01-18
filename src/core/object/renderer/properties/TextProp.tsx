@@ -6,6 +6,18 @@ import { ClassName } from 'rendevoz'
 import isHotkey from 'is-hotkey'
 import { Colors, KEY } from '@/consts'
 
+const extractNum = (s: string) => {
+  if (!s) return 0
+  let isNegetive = false
+  if (s.indexOf('-') == 0) isNegetive = true
+
+  s = s.replace(/[^\d.]*/g, '')
+
+  let n = isNaN(parseFloat(s)) ? 0 : parseFloat(s)
+
+  if (isNegetive) n = 0 - n
+  return n
+}
 export default ({
   value,
   onChange,
@@ -15,23 +27,22 @@ export default ({
   placeholder
 }: {
   value: string
-  onChange?: (v: string) => void
-  mode?: 'text' | 'number'
   style?: CSSProperties
   popoverElement?: HTMLElement | null
   placeholder?: string
-}) => {
-  const [height, setHeight] = useState(0)
+} & ({ onChange?: (v: string) => void; mode?: 'text' } | { onChange?: (v: number) => void; mode?: 'number' })) => {
+  console.log(value)
   const { openPopover, renderPopover, closePopover } = usePopoverCell({
     onClose: () => {
       if (valueRef.current !== value) {
         if (mode === 'number') {
-          if (/^\d+$/.test(valueRef.current) || valueRef.current === '') {
-            onChange?.(valueRef.current)
-          }
+          const extracted = extractNum(valueRef.current ?? '')
+          if (Number.isNaN(extracted)) return
+          onChange?.(extracted === 0 ? '' : extracted)
           return
+        } else {
+          onChange?.(valueRef.current)
         }
-        onChange?.(valueRef.current)
       }
       valueRef.current = ''
     },
@@ -47,6 +58,7 @@ export default ({
         style={{ width: '100%', height: '100%', color: placeholder && !value ? Colors.Font.Transparent : style?.color, ...style }}
         onClick={e => {
           const parent = e.currentTarget.parentElement
+          console.log(parent)
           if (!parent && !popoverElement) return
           openPopover(popoverElement || parent)
         }}
@@ -54,9 +66,8 @@ export default ({
         {value || placeholder}
       </div>
       {renderPopover(box => (
-        <PopupWrapper box={box} style={{ height }}>
+        <PopupWrapper box={box}>
           <AutosizeTextarea
-            onHeightChange={h => setHeight(h)}
             autoFocus={true}
             minRows={1}
             maxRows={20}
@@ -72,7 +83,9 @@ export default ({
             style={{
               padding: '6px 6px',
               resize: 'none',
-              width: '100%'
+              width: '100%',
+              fontSize: 14,
+              display: 'block'
             }}
             defaultValue={value}
           />

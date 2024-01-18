@@ -8,7 +8,7 @@ export interface ICollection extends IBase {
   color?: string
   icon?: string
   toggled?: boolean
-  workspace?: string
+  workspace?: number
 }
 
 export interface ICollectionItem {

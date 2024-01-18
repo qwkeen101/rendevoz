@@ -33,6 +33,7 @@ const Image: FC<
       <div
         style={{
           width,
+          overflow: 'hidden',
           minWidth: minWidth || width,
           ...containerStyle
         }}

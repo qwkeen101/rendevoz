@@ -40,7 +40,7 @@ interface ISelect extends FC<SelectProps> {
 const Select: ISelect = ({
   disabled,
   multiple,
-  closeOnSelect,
+  closeOnSelect = true,
   onSelect,
   padding = 10,
   placeholder,
@@ -62,8 +62,6 @@ const Select: ISelect = ({
   if (defaultValue) {
     d = [defaultValue]
   }
-  const containerRef = useRef<HTMLDivElement>(null)
-  const [selected, setSelected] = useState<string[]>(d)
   let v = null
   if (value) {
     if (isArray(value)) {
@@ -71,7 +69,13 @@ const Select: ISelect = ({
     } else {
       v = [value]
     }
+    if (v) {
+      d = v
+    }
   }
+  const containerRef = useRef<HTMLDivElement>(null)
+  const [selected, setSelected] = useState<string[]>(d)
+
   const [menuVisible, setMenuVisible] = useState(false)
   const menuItems = options
     .filter(i => i)
@@ -154,6 +158,7 @@ const Select: ISelect = ({
         // parentElement={containerRef.current}
         align={align}
         reposition={reposition}
+        withClickCover={true}
         boundaryElement={document.body}
         boundaryInset={20}
         content={

@@ -7,9 +7,9 @@ import { calculateSortObjects } from '@/core/object/filter/BetterSorter'
 import { useSetAtom } from 'jotai'
 import { GroupStateAtom } from '@/core/components/group/hooks/useGroupState'
 import { useSelectAtomValue } from '@/hooks'
+import { useGroupInstance } from '@/core/components/group/hooks/useGroupInstance'
 
-const useGroupFilter = (groupId: number) => {
-  const groupData = ObjectStore('group').useValue(groupId) as MetaGroup | undefined
+const useGroupFilter = (groupData?: MetaGroup) => {
   const metaMap = MetaStore.useMetaObjectsMap()
   const setGroupState = useSetAtom(GroupStateAtom)
   const currentView = useSelectAtomValue(GroupStateAtom, s => s.currentView)
@@ -69,6 +69,8 @@ const useGroupFilter = (groupId: number) => {
       })
       .filter(i => i) as any[]
   }, [groupData?.values, metaMap])
+
+
   useLayoutEffect(() => {
     if (groupData?.values) {
       // display by value index
@@ -77,7 +79,7 @@ const useGroupFilter = (groupId: number) => {
       index.forEach((i, idx) => {
         itemPos[i] = idx
       })
-      const viewValues = groupData.values.slice()
+      let viewValues = groupData.values.slice()
       viewValues.sort((a, b) => itemPos[a.rowId] - itemPos[b.rowId])
       if (!currentView?.filter?.rules.length && !currentView?.search?.length && !currentView?.sort?.sorters.length) {
         setGroupState(s => ({ ...s, viewValues: viewValues, filterValues: undefined }))
@@ -132,11 +134,11 @@ const useGroupFilter = (groupId: number) => {
       afterSearchValue.forEach((c, idx) => {
         itemPosition[c.rowId] = idx
       })
-      const copyed = groupData.values.filter(i => itemPosition[i.rowId] !== undefined)
+      let copyed = groupData.values.filter(i => itemPosition[i.rowId] !== undefined)
       copyed.sort((a, b) => itemPosition[a.rowId] - itemPosition[b.rowId])
       setGroupState(s => ({ ...s, filterValues: copyed, viewValues: viewValues }))
     }
-  }, [currentView?.filter, currentView?.search, currentView?.sort, currentView?.valueIndex])
+  }, [currentView?.filter, currentView?.search, currentView?.sort, currentView?.valueIndex, groupData?.values])
 }
 
 export default useGroupFilter

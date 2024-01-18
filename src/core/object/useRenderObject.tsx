@@ -1,5 +1,5 @@
 import { useGlobalAtomValue } from '@/hooks/jotai'
-import { relatedMetaObjectsMapAtom } from '@/api/stores/meta.store'
+import { relatedMetaObjectsMapAtom } from '@/api/stores/meta/meta.store'
 import ClassName from '@/styles/classNames'
 import Id from '@/utils/id'
 import { css } from '@emotion/css'

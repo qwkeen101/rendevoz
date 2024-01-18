@@ -3,7 +3,7 @@ import { GlobalSearchResultsAtom } from "./SearchDialog";
 import { useEffect, useState } from "react";
 import { Content } from "@/components";
 import { globalStore, ObjectStore } from "@/api/stores";
-import { metaObjectsAtom } from "@/api/stores/meta.store";
+import { metaObjectsAtom } from "@/api/stores/meta/meta.store";
 
 const SearchAnalysis = () => {
   const searchResults = useGlobalAtomValue(GlobalSearchResultsAtom);

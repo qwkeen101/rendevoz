@@ -1,8 +1,6 @@
 @backgroundColor: var(--tabs-bg);
 
-body{
-  --tabs-bg: var(--background-secondary);
-}
+
 .tabs {
   flex-grow: 1;
   display: flex;
@@ -27,6 +25,7 @@ body{
     height: 100%;
     -webkit-app-region: drag;
     background: @backgroundColor;
+    min-width: 40px;
   }
 }
 .tab {

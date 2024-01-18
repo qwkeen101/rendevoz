@@ -5,9 +5,11 @@ import { MetaObject } from '~/typings'
 
 export default async (webpageState: WebpageState, value: import('slate').Descendant[], meta?: Partial<MetaObject>) => {
   const note = await NoteStore.initializeNoteWithValue(value)
+  const removeDeleted = { ...webpageState }
+  delete removeDeleted.content
   const webpage = await ObjectStore('webpage').addOneWithMeta(
     {
-      ...webpageState,
+      ...removeDeleted,
       noteId: note.id
     },
     {

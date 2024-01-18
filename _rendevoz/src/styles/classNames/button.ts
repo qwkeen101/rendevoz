@@ -34,13 +34,13 @@ export const selectButton = (borderRadius = 4, padding = '3px 8px') => {
     color: 'white',
     boxShadow: 'var(--border-background) 0px 0px 0px 1px inset, var(--border-background) 0px 1px 2px',
     '&[data-active="true"]': {
-      background: `rgb(0,107,199)`
+      background: `rgb(0,107,199) !important`
     },
     ':hover': {
-      background: `rgb(0,119,212)`
+      background: `rgb(0,119,212) !important`
     },
     ':active': {
-      background: `rgb(0,107,199)`
+      background: `rgb(0,107,199) !important`
     }
   })
 }

@@ -19,16 +19,19 @@ export const Container = ({ children, hasChildren }: { children: ReactNode; hasC
   )
 const MetaRow = ({ rowDetails, path, rowRef, renderIndicator, isSelected, renderCheckbox }: IGroupRow) => {
   const metaId = rowDetails.id
-  const headers = useSelectAtomValue(GroupStateAtom, s => s.visibleHeaders)
+  const tableColumns = useSelectAtomValue(GroupStateAtom, s => s.headerColumn)
+  const headers = useSelectAtomValue(GroupStateAtom, s => s.visibleProperties)
   const showOriginal = useSelectAtomValue(GroupStateAtom, s => s.showOriginalText)
   const toggled = !useSelectAtomValue(GroupStateAtom, s => s.unToggledIdSet).has(rowDetails.rowId)
   const metaObject = MetaStore.useValue(metaId)
   const hasChildren = !!rowDetails.children?.length
+  const showDeleted = useSelectAtomValue(GroupStateAtom, s => s.layout?.showDeletedMetas)
   useChildrenSyncAsAttachment(metaObject, rowDetails.children)
   const wrap = useSelectAtomValue(GroupStateAtom, s => s.currentView?.options.wrapColumns)
   const shiftKeyPressed = useSelectAtomValue(GroupStateAtom, s => s.shiftPressed)
   const instance = useGroupInstance()
   if (!metaObject) return null
+  if (metaObject.deleted && showDeleted !== true) return null
 
   return (
     <Container hasChildren={hasChildren}>
@@ -99,12 +102,13 @@ const MetaRow = ({ rowDetails, path, rowRef, renderIndicator, isSelected, render
           style={{
             display: 'grid',
             position: 'relative',
-            gridTemplateColumns: 'var(--table-columns)'
+            gridTemplateColumns: tableColumns
           }}
         >
           {headers.map((i, idx) => {
             let fieldValue = metaObject[i.name]
             let field = i.name
+
             if (i.type === 'custom') {
               const prop = metaObject.properties?.[i.id]
               if (!prop) {
@@ -119,11 +123,7 @@ const MetaRow = ({ rowDetails, path, rowRef, renderIndicator, isSelected, render
               <CellWrapper
                 type={i.type}
                 rowId={rowDetails.rowId}
-                placeholder={
-                  metaObject.type.includes('Label') && !showOriginal
-                    ? metaObject.placeholderName
-                    : undefined
-                }
+                placeholder={metaObject.type.includes('Label') && !showOriginal ? metaObject.placeholderName : undefined}
                 index={idx}
                 field={field}
                 value={fieldValue}

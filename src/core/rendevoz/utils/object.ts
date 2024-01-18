@@ -1,4 +1,4 @@
-import { TypeToRegisteredMetaObject } from '@/api/stores/meta.store'
+import { TypeToRegisteredMetaObject } from '@/api/stores/meta/meta.store'
 import { MetaObject } from '~/typings'
 
 export const getMetaObjectIcon = (type?: MetaObject['type'], metaObject?: MetaObject) => {

@@ -61,6 +61,17 @@ export interface MetaGroup extends IBase {
         options: {
           wrapColumns?: boolean
           properties?: Record<number, MetaGroupViewProperty>
+          cardSize?: 'small' | 'medium' | 'large'
+          fitImage?: boolean
+          cardCover?: 'cover' | 'none' | 'content'
+          hideCoverIfEmpty?: boolean
+        }
+      }
+    | {
+        type: 'list'
+        options: {
+          wrapColumns?: boolean
+          properties?: Record<number, MetaGroupViewProperty>
         }
       }
   ) & {

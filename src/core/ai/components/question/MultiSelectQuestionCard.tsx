@@ -12,11 +12,17 @@ import { useTranslation } from 'react-i18next'
 export default ({
   question,
   showAnswer = false,
-  isEditing = false
+  isEditing = false,
+  styles
 }: {
   question: IQuestion & { questionType: 'multiSelect' }
   showAnswer?: boolean
   isEditing?: boolean
+  styles?: {
+    smallFontSize?: number
+    contentFontSize?: number
+    titleFontSize?: number
+  }
 }) => {
   const { t } = useTranslation()
   const suggestedAnswer = question.sAnswer
@@ -38,19 +44,16 @@ export default ({
     }
   }
   return (
-    <Content
-      flex
-      column
-      gap={8}
-    >
+    <Content flex column gap={8}>
       {question.choices?.map((i, idx) => (
         <Content
           className={SelectOptionClass}
           key={idx}
           style={{
+            fontSize: styles?.contentFontSize,
             boxShadow: getBoxShadow(i),
             cursor: isEditing ? 'text' : 'pointer',
-            minHeight: '32px'
+            minHeight: '2em'
           }}
           onClick={() => {
             if (isEditing) return

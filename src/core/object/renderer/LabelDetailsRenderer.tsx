@@ -10,7 +10,7 @@ import { normalizeSecondsToTime } from '@/core/components/media/utils'
 import { Colors } from '@/consts'
 import { useTranslation } from 'react-i18next'
 
-export default memo(({ metaId, style, showImage }: { metaId: number; style?: CSSProperties; showImage?: boolean}) => {
+export default memo(({ metaId, style, showImage }: { metaId: number; style?: CSSProperties; showImage?: boolean }) => {
   const metaObject = MetaStore.useValue(metaId)
   const { t } = useTranslation()
   const label = ObjectStore(metaObject?.type).useValue(metaObject?.objectId) as ILabel | undefined
@@ -88,16 +88,23 @@ export default memo(({ metaId, style, showImage }: { metaId: number; style?: CSS
         )}
       </Content>
       {label?.selectedText && metaObject && (
-        <div
+        <AutosizeTextarea
+          className={ClassName.noStyleInput}
+          defaultValue={label.selectedText}
+          onBlur={e => {
+            ObjectStore(label.specType).updateOne({ id: label.id, selectedText: e.target.value })
+            MetaStore.updateMetaObject({ id: metaId, placeholderName: e.target.value })
+          }}
           style={{
+            width: '100%',
+            display: 'block',
             padding: '4px 10px 4px 10px',
+            resize: 'none',
             borderLeft: `2px solid ${Colors.getAdaptColor(label.color) || 'var(--emphasis)'}`,
             marginTop: 8,
             background: Colors.Background.ButtonHover
           }}
-        >
-          {label.selectedText}
-        </div>
+        ></AutosizeTextarea>
       )}
       <AutosizeTextarea
         ref={inputRef}

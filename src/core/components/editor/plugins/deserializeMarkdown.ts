@@ -179,14 +179,16 @@ export const transformMarkdown = async (file: File): Promise<Descendant[] | unde
 }
 export function unifiedMarkdownPlugin(opts?: OptionType) {
   const compiler = (node: { children: Array<MdastNode> }) => {
-    const result = node.children.flatMap(c => {
-      const result = deserializeMarkdown(c, opts)
-      if (Array.isArray(result)) {
-        return [...result]
-      } else {
-        return [result]
-      }
-    })
+    const result = node.children
+      .map(c => {
+        const result = deserializeMarkdown(c, opts)
+        if (Array.isArray(result)) {
+          return [...result]
+        } else {
+          return [result]
+        }
+      })
+      .flat(1)
     console.log(result, node)
     return result
   }

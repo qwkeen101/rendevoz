@@ -89,9 +89,7 @@ const PropPairDisplayer = ({ k, v, metaId }: { k: number; v: IMetaProperty; meta
               wordBreak: 'break-word',
               whiteSpace: 'pre-wrap'
             }}
-            onChange={v => {
-              handleChange(propType === 'string' || propType === 'AI summary' ? v : Number(v))
-            }}
+            onChange={handleChange}
           />
         )
       case 'AI questions':

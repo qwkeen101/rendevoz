@@ -79,16 +79,17 @@ const FeedContentRenderer = () => {
       >
         {displayMode === 'sidePeek' && (
           <Icon
-            name={modalOpen ? 'park-right' : 'park-left'}
-            className={ClassName.circleButton()}
-            size={24}
+            name={modalOpen ? 'park-double-right' : 'park-double-left'}
+            className={ClassName.flatButton(4, '6px')}
+            size={20}
             onClick={() => {
               setFeedState(s => ({ ...s, modalOpen: !s.modalOpen }))
             }}
             containerStyle={{
               position: 'absolute',
+              color: Colors.Font.Transparent,
               left: -40,
-              top: '50%',
+              top: '20px',
               transform: 'translateY(-50%)',
               zIndex: 15
             }}
@@ -108,16 +109,17 @@ const FeedContentRenderer = () => {
       >
         {displayMode === 'sidePeek' && (
           <Icon
-            name={modalOpen ? 'park-right' : 'park-left'}
-            className={ClassName.circleButton()}
-            size={24}
+            name={modalOpen ? 'park-double-right' : 'park-double-left'}
+            className={ClassName.flatButton(4, '6px')}
+            size={20}
             onClick={() => {
               setFeedState(s => ({ ...s, modalOpen: !s.modalOpen }))
             }}
             containerStyle={{
               position: 'absolute',
+              color: Colors.Font.Transparent,
               left: -40,
-              top: '50%',
+              top: '20px',
               transform: 'translateY(-50%)',
               zIndex: 15
             }}

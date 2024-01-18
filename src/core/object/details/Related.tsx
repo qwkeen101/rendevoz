@@ -1,6 +1,6 @@
 import { CSSProperties, memo, useMemo, useRef, useState } from 'react'
 import { GlobalInstance, useGlobalAtomValue } from '@/hooks'
-import { indexedMetaLinksAtom, metaLinksAtom, metaObjectsAtom } from '@/api/stores/meta.store'
+import { indexedMetaLinksAtom, metaLinksAtom, metaObjectsAtom } from '@/api/stores/meta/meta.store'
 import { useTranslation } from 'react-i18next'
 import { globalStore, MetaStore } from '@/api/stores'
 import { AnimatePopover, Button, Content, ContentEditor, Icon, IconWithPopover, TabPane, Tabs, WithBorder } from '@/components'
@@ -244,7 +244,7 @@ const RelatedGroup = ({ linkIds, rootMetaId, groupType }: { linkIds: number[]; r
           height: '100%',
           transition: 'all 0.2s ease',
           padding: '8px 6px 0px 4px',
-          minHeight: '200px'
+          minHeight: '100px'
         }}
       >
         {groupedMetas.map(i => (
@@ -323,7 +323,7 @@ const RelatedItem = ({ metaId, linkId }: { metaId: number; linkId: number }) => 
                 onClick={() => {
                   setV(false)
                   setTimeout(() => {
-                    MetaStore.deleteMetaObject(metaId, true)
+                    MetaStore.deleteMetaObject(metaId)
                   }, 300)
                 }}
               />

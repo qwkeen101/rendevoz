@@ -24,8 +24,7 @@ const AttachmentWrapper = ({
             {
               id: metaObject.id,
               attachments: atts
-            },
-            true
+            }
           )
         }
       />

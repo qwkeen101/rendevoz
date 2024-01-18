@@ -5,8 +5,8 @@ import { IDraggableElement } from 'rendevoz/typings/globalInstances/dragDrop'
 import { Rendevoz } from '../rendevoz'
 import { useGlobalIsDragging } from '@/core'
 import { globalStore } from '@/api/stores'
-import { objectIdToMetaObjectIdMapAtom } from '@/api/stores/meta.store'
-import { TypeToRegisteredObject } from '@/api/stores/object.store'
+import { objectIdToMetaObjectIdMapAtom } from '@/api/stores/meta/meta.store'
+import { TypeToRegisteredObject } from '@/api/stores/object/object.store'
 import { BuiltInDraggableElement } from '~/typings'
 
 const useDropObjectArea = (

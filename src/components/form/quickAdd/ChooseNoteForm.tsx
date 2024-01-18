@@ -67,7 +67,7 @@ export default memo(({ metaId, onBack, onClose }: { metaId: number; onBack: Void
   }, [currentSelectId, notePosition, metaType])
   useEffect(() => {
     const allNotesIds = Array.from(MetaStore.getIndexedMetaObjects()?.typeToMetaObjectIdsMap.get('note')?.values() || [])
-    const all = allNotesIds.map(i => MetaStore.getMetaObjectsMap().get(i)).filter(i => i) as MetaObject[]
+    const all = allNotesIds.map(i => MetaStore.getMetaObjectsMap().get(i)).filter(i => MetaStore.isVisibleMetaObject(i)) as MetaObject[]
     all.sort((a, b) => b.createdAt - a.createdAt)
     setAllNotes(all)
   }, [])

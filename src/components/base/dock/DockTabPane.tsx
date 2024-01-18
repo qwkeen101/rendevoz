@@ -70,9 +70,9 @@ export const DockTabPane: FC<DockTabPaneProps> = memo(({ cached, cacheId, childr
   const mergedStyle: React.CSSProperties = {
     ...style,
     position: active ? 'relative' : 'absolute',
-    top: active ? undefined : 36,
+    top: active ? undefined : 38,
     width: '100%',
-    height: 'calc( 100% - 33px )',
+    height: 'calc( 100% - 38px )',
     contentVisibility: active ? 'visible' : 'hidden',
     pointerEvents: active ? undefined : 'none',
     zIndex: active ? 1 : -10

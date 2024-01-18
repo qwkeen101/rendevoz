@@ -16,7 +16,7 @@ export type SorterGroup = {
 }
 
 export type MetaSorter = {
-  field: 'name' | 'description' | 'createdAt' | 'viewAt' | 'updatedAt'
+  field: 'name' | 'description' | 'createdAt' | 'viewAt' | 'updatedAt' | 'deletedAt'
   type: 'ascending' | 'descending'
   id: number
 }

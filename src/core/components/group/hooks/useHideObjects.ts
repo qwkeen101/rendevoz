@@ -4,14 +4,18 @@ import { useEffect } from 'react'
 import { MetaStore } from '@/api/stores'
 import Node from '@/core/components/group/utils/node'
 import { useSetAtom } from 'jotai'
+import { useGroupInstance } from '@/core/components/group/hooks/useGroupInstance'
 
-export default (groupId: number) => {
+export default (groupId?: number) => {
   const hideObjects = useSelectAtomValue(GroupStateAtom, s => s.data?.hideObjectsInside)
   const hideGroups = useSelectAtomValue(GroupStateAtom, s => s.data?.hideGroupsInside)
   const values = useSelectAtomValue(GroupStateAtom, s => s.data?.values)
   const setGroupState = useSetAtom(GroupStateAtom)
+  const instance = useGroupInstance()
   useEffect(() => {
     const map = MetaStore.getMetaObjectsMap()
+    const disableHideFunction = instance.getGroupState?.().state?.canHideObjectsInside === false
+    if (disableHideFunction) return
     if (!values) return
     const typesSet = new Set<string>()
     const elements = Node.elements({ children: values })
@@ -40,8 +44,8 @@ export default (groupId: number) => {
           }
         }
       })
-      hiddenGroups.forEach(id => MetaStore.updateMetaObject({ id: id, hidden: false }, true))
-      unhidden.forEach(id => MetaStore.updateMetaObject({ id: id, hidden: true }, true))
+      hiddenGroups.forEach(id => MetaStore.updateMetaObject({ id: id, hidden: false }))
+      unhidden.forEach(id => MetaStore.updateMetaObject({ id: id, hidden: true }))
     } else {
       const hidden: number[] = []
       elements.forEach(e => {
@@ -54,7 +58,7 @@ export default (groupId: number) => {
           }
         }
       })
-      hidden.forEach(id => MetaStore.updateMetaObject({ id: id, hidden: false }, true))
+      hidden.forEach(id => MetaStore.updateMetaObject({ id: id, hidden: false }))
     }
     setGroupState(s => ({ ...s, visibleTypes: Array.from(typesSet.values()) }))
   }, [values, hideObjects, hideGroups])

@@ -354,6 +354,23 @@ export class DockLayout extends DockPortalManager implements DockContext {
     return false
   }
 
+  updatePanel(id: string, newPanel: PanelData | null) {
+    const panel = this.find(id, Algorithm.Filter.AnyPanel) as PanelData
+    if (panel) {
+      let boxData = panel.parent
+      const idx = boxData?.children.indexOf(panel)
+      if (idx >= 0) {
+        let layout = this.getLayout()
+        if (newPanel) {
+          layout = Algorithm.replacePanel(layout, panel, newPanel)
+        }
+        layout = Algorithm.fixLayoutData(layout, this.props.groups)
+        this.changeLayout(layout, id, 'update')
+        return true
+      }
+    }
+    return false
+  }
   /** @inheritDoc */
   navigateToPanel(fromElement?: HTMLElement, direction?: string) {
     if (!direction) {

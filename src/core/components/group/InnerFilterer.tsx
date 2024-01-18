@@ -1,11 +1,11 @@
-import { ObjectStore } from '@/api/stores'
-import { MetaGroup } from '~/typings'
+import { MetaFilterGroup } from '~/typings'
 import { Content } from '@/components'
 import BetterFilter from '@/core/object/filter/BetterFilter'
 import { Colors } from '@/consts'
+import { useGroupInstance } from '@/core/components/group/hooks/useGroupInstance'
 
-const InnerFilterer = ({ groupId }: { groupId: number }) => {
-  const groupData = ObjectStore('group').useValue(groupId) as MetaGroup | undefined
+const InnerFilterer = ({ filterGroup }: { filterGroup?: MetaFilterGroup }) => {
+  const instance = useGroupInstance()
   return (
     <Content
       flex
@@ -17,12 +17,14 @@ const InnerFilterer = ({ groupId }: { groupId: number }) => {
         margin: '6px 0px'
       }}
     >
-      {groupData?.rootFilterGroup && (
+      {filterGroup && (
         <BetterFilter
-          root={groupData.rootFilterGroup}
+          root={filterGroup}
+          showHiddenMetas={true}
           onChange={r => {
-            if (r !== groupData?.rootFilterGroup) {
-              ObjectStore('group').updateOne({ id: groupId, rootFilterGroup: r })
+            console.log(r)
+            if (r !== filterGroup) {
+              instance.updateGroupData?.(w => ({ ...w, rootFilterGroup: r }))
             }
           }}
         />

@@ -1,8 +1,8 @@
 import { toast } from 'react-hot-toast'
-import { GlobalInstances, IEditorInstance, IPdfViewer, IMediaInstance, IWebpageInstance, IPdfInstance } from '~/typings'
+import { GlobalInstances, IEditorInstance, IPdfViewer, IMediaInstance, IWebpageInstance, IPdfInstance, MetaObject } from '~/typings'
 import { ID_TO_LABEL_MAP } from '@/core'
 import { globalStore, MetaStore, ObjectStore } from '../../api/stores'
-import { metaObjectsAtom, objectIdToMetaObjectIdMapAtom, TypeToRegisteredMetaObject } from '../../api/stores/meta.store'
+import { metaObjectsAtom, objectIdToMetaObjectIdMapAtom, TypeToRegisteredMetaObject } from '../../api/stores/meta/meta.store'
 import { ipcInstance } from '@/plugins'
 import { waitFor } from '@/utils/functions'
 import { GlobalTextSearchInstance } from '../global/GlobalTextSearch'
@@ -232,7 +232,7 @@ const openSyncedEditor = (syncMetaId: number) => {
         objectId: syncMetaId
       }
     })
-    MetaStore.updateMetaObject({ id: syncMetaId, viewAt: Date.now() }, true)
+    MetaStore.updateMetaObject({ id: syncMetaId, viewAt: Date.now() })
   })
 }
 const openAudio = async (audioId: number): Promise<IMediaInstance> => {
@@ -245,6 +245,24 @@ const openAudio = async (audioId: number): Promise<IMediaInstance> => {
       }
     })
     updateViewAt(audioId)
+  })
+}
+
+const openTypeGroup = (type: MetaObject['type']) => {
+  Rendevoz.Actions.Layout.openNewTab?.({
+    data: {
+      type: 'typeGroup',
+      metaType: type
+    }
+  })
+}
+
+const openTagGroup = (tag: number) => {
+  Rendevoz.Actions.Layout.openNewTab?.({
+    data: {
+      type: 'tagGroup',
+      objectId: tag
+    }
   })
 }
 const openEditor = (noteId: number): Promise<IEditorInstance> => {
@@ -384,7 +402,7 @@ const updateViewAt = (objectId: number) => {
   setTimeout(() => {
     const metaId = globalStore.get(objectIdToMetaObjectIdMapAtom)?.get(objectId)
     if (metaId) {
-      MetaStore.updateMetaObject({ id: metaId, viewAt: Date.now() }, true)
+      MetaStore.updateMetaObject({ id: metaId, viewAt: Date.now() })
     }
   }, 1000)
 }
@@ -481,10 +499,21 @@ const Open: typeof Rendevoz.Actions.Open = {
   Translate: {
     openTranslate
   },
+  Group: {
+    openTypeGroup,
+    openTagGroup
+  },
   openHome,
   openDatabase,
   openImage,
   openRendevozLink,
+  openRecycleBin: () => {
+    Rendevoz.Actions.Layout.openNewTab?.({
+      data: {
+        type: 'recycleBin'
+      }
+    })
+  },
   openSidebarObjectDetails: id => {
     console.log(id)
     GlobalInstance.metaOps?.openDetails(id)

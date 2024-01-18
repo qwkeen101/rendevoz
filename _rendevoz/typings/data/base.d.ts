@@ -5,6 +5,7 @@ export type IBase = {
   viewAt?: number
   deleted?: boolean
   pinned?: boolean
+  deletedAt?: number
 }
 
 export type IWebRequest<T> = {

@@ -1,5 +1,5 @@
 import { globalStore } from "@/api/stores";
-import { indexedMetaLinksAtom } from "@/api/stores/meta.store";
+import { indexedMetaLinksAtom } from "@/api/stores/meta/meta.store";
 
 export const findPathsBetweenTwoMetaObjects = (
   sourceMetaId: number,

@@ -76,7 +76,7 @@ const useMediaEventHandlerWrapper = (options: {
       case 'pin': {
         console.log(metaId)
         if (!metaId) return
-        return await MetaStore.updateMetaObject({ id: metaId, pinned: meta ? !meta.pinned : true }, true)
+        return await MetaStore.updateMetaObject({ id: metaId, pinned: meta ? !meta.pinned : true })
       }
       case 'externalStateChange': {
         if (object) {

@@ -12,6 +12,7 @@ import MetaTagPicker from '@/core/object/MetaTagPicker'
 import Tag from '@/core/object/ObjectTag'
 import LabelDetailsRenderer from '@/core/object/renderer/LabelDetailsRenderer'
 import MetaPropDisplayer from '@/core/object/renderer/properties/MetaPropDisplayer'
+import ParentItems from '@/core/object/details/ParentItems'
 
 const flatButton = css([
   ClassName.flatButton(999, '3px 10px '),
@@ -28,7 +29,7 @@ const flatButton = css([
   }
 ])
 
-const MetaMainDetails = ({ metaId, onViewLinks, onViewAtt }: { onViewAtt: VoidFunction; metaId: number; onViewLinks: VoidFunction }) => {
+const MetaMainDetails = ({ metaId }: { metaId: number }) => {
   const object = MetaStore.useValue(metaId)
   const { renderWhole, metaObject } = useRenderObject({ metaObjectId: metaId })
   const { t } = useTranslation()
@@ -96,7 +97,7 @@ const MetaMainDetails = ({ metaId, onViewLinks, onViewAtt }: { onViewAtt: VoidFu
         ></Button.IconButton>
         <Button.IconButton
           onClick={() => {
-            MetaStore.updateMetaObject({ id: metaId, pinned: !object.pinned }, true)
+            MetaStore.updateMetaObject({ id: metaId, pinned: !object.pinned })
           }}
           theme={object.pinned ? 'filled' : undefined}
           style={{
@@ -129,7 +130,7 @@ const MetaMainDetails = ({ metaId, onViewLinks, onViewAtt }: { onViewAtt: VoidFu
           style={{ borderRadius: 999, padding: '3px 10px', fontSize: 13 }}
           onClick={() => {
             GlobalInstance.metaOps?.closeDetails()
-            MetaStore.deleteMetaObject(metaId, true)
+            MetaStore.deleteMetaObject(metaId)
           }}
         ></Button.IconButton>
       </Content>
@@ -169,7 +170,7 @@ const MetaMainDetails = ({ metaId, onViewLinks, onViewAtt }: { onViewAtt: VoidFu
               }}
               alreadyTags={object?.tags || []}
               onChange={tags => {
-                MetaStore.updateMetaObject({ id: metaId, tags }, true)
+                MetaStore.updateMetaObject({ id: metaId, tags })
               }}
             />
           </WithBorder>
@@ -258,13 +259,16 @@ const MetaMainDetails = ({ metaId, onViewLinks, onViewAtt }: { onViewAtt: VoidFu
       </Content>
       <RelatedPanel
         style={{
-          minHeight: 240,
+          minHeight: 140,
           borderRadius: 8,
+          maxHeight: 400,
+          overflowY: 'auto',
           padding: '6px',
           border: '1px solid var(--border-background)'
         }}
         metaId={metaId}
       />
+      <ParentItems metaId={metaId} />
       <Content
         flex
         alignItems={'center'}

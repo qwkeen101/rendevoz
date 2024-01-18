@@ -28,29 +28,24 @@ const HomeGallery = () => {
   }
   useEffect(() => {
     if (objectIndex) {
-      if (objectIndex.typeToMetaObjectIdsMap) {
-        const map = objectIndex.typeToMetaObjectIdsMap
-        const metaMap = MetaStore.getMetaObjectsMap()
-        if (map.size) {
-          const allTypes = new Set(map.keys())
-          let newVisibleList = gallerySettings.visibleLists.filter(i => {
-            if (['recentlyViewed', 'recentlyCreated', 'pinned'].includes(i.name)) return true
-            if (!allTypes.has(i.name)) return false
-            if (!Array.from(map.get(i.name)?.values() || []).filter(i => metaMap.has(i) && !metaMap.get(i)?.hidden).length) {
-              allTypes.delete(i.name)
-              return false
-            }
-            if (allTypes.has(i.name)) {
-              allTypes.delete(i.name)
-              return true
-            }
-          })
-          newVisibleList = newVisibleList.concat(Array.from(allTypes.values()).map(i => ({ visible: true, name: i })))
-          KeyvalueStore.updateOne('homeGallery', {
-            ...gallerySettings,
-            visibleLists: newVisibleList
-          })
-        }
+      const visibleTypes = new Set(MetaStore.getVisibleMetaTypes())
+      if (visibleTypes) {
+        const allTypes = visibleTypes
+        let newVisibleList = gallerySettings.visibleLists.filter(i => {
+          if (['recentlyViewed', 'recentlyCreated', 'pinned'].includes(i.name)) return true
+          if (!allTypes.has(i.name)) {
+            return false
+          }
+          if (allTypes.has(i.name)) {
+            allTypes.delete(i.name)
+            return true
+          }
+        })
+        newVisibleList = newVisibleList.concat(Array.from(allTypes.values()).map(i => ({ visible: true, name: i })))
+        KeyvalueStore.updateOne('homeGallery', {
+          ...gallerySettings,
+          visibleLists: newVisibleList
+        })
       }
     }
   }, [objectIndex])
@@ -98,7 +93,9 @@ const GalleryPanel = ({ panelName, count }: { panelName: string; count: number }
       setDisplayMetaIds(created.map(i => i.id))
       return
     }
-    const objects = Array.from(index?.typeToMetaObjectIdsMap?.get(panelName)?.values() || []).filter(i => map.has(i)) as number[]
+    const objects = Array.from(index?.typeToMetaObjectIdsMap?.get(panelName)?.values() || []).filter(
+      i => map.has(i) && MetaStore.isVisibleMetaObject(map.get(i))
+    ) as number[]
     objects.sort((b, a) => map.get(a)!.createdAt - map.get(b)!.createdAt)
     setDisplayMetaIds(objects)
   }, [panelName, allObjects, index])

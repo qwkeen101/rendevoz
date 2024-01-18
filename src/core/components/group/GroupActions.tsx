@@ -1,27 +1,26 @@
 import { AnimatePopover, Button, Content, Icon, IconWithPopover, WithBorder } from '@/components'
-import { MetaStore, ObjectStore } from '@/api/stores'
+import { MetaStore } from '@/api/stores'
 import { MetaGroup } from '~/typings'
 import BetterFilter from '@/core/object/filter/BetterFilter'
-import { memo, useRef, useState } from 'react'
+import { memo, useLayoutEffect, useRef, useState } from 'react'
 import { ClassName } from 'rendevoz'
 import { useDebounceFn, useSelectAtomValue } from '@/hooks'
 import { Colors } from '@/consts'
-import GroupSettingMenu from '@/core/components/group/components/menu/GroupSettingMenu'
+import GroupSettingMenu from '@/core/components/group/components/menu/setting/GroupSettingMenu'
 import { GroupStateAtom } from '@/core/components/group/hooks/useGroupState'
 import useGroupQueryLibrary from '@/core/components/group/components/queryLibrary/useGroupQueryLibrary'
 import { assignProperties } from '@/utils'
 import { useGroupInstance } from '@/core/components/group/hooks/useGroupInstance'
 import BetterSorter from '@/core/object/filter/BetterSorter'
-import Id from '@/utils/id'
-import { DEFAULT_GROUP_PROPERTIES } from '@/core/components/group/consts/defaultProperties'
 import EmojiWithPicker from '@/components/EmojiWithPicker'
 import { useTranslation } from 'react-i18next'
-const GroupActions = memo(({ groupId }: { groupId: number }) => {
-  const groupData = ObjectStore('group').useValue(groupId) as MetaGroup | undefined
+import { Reorder } from 'framer-motion'
+const GroupActions = memo(({ groupValue }: { groupValue?: MetaGroup }) => {
+  const groupData = groupValue
   const currentView = useSelectAtomValue(GroupStateAtom, s => s.currentView)
   const [innerFilter, setInnerFilter] = useState(currentView?.filter)
   const [innerSort, setInnerSort] = useState(currentView?.sort)
-  const { renderPanel, open } = useGroupQueryLibrary(groupId)
+  const { renderPanel, open } = useGroupQueryLibrary(groupValue)
 
   const instance = useGroupInstance()
   assignProperties(instance, {
@@ -32,8 +31,10 @@ const GroupActions = memo(({ groupId }: { groupId: number }) => {
     instance.updateCurrentView?.(s => ({ ...s, search: v }))
   }
   const padding = useSelectAtomValue(GroupStateAtom, s => s.pagePadding)
-  const visibleProps = useSelectAtomValue(GroupStateAtom, s => s.visibleHeaders)
+  const visibleProps = useSelectAtomValue(GroupStateAtom, s => s.visibleProperties)
   const visibleTypes = useSelectAtomValue(GroupStateAtom, s => s.visibleTypes)
+  const showViews = useSelectAtomValue(GroupStateAtom, s => s.layout?.showMultipleViews)
+  const showImport = useSelectAtomValue(GroupStateAtom, s => s.layout?.showImport)
   const [showSearch, setShowSearch] = useState(!!search)
   const isCompo = useRef(false)
   const debounceSet = useDebounceFn(v => setSearch(v), { wait: 500 })
@@ -41,7 +42,25 @@ const GroupActions = memo(({ groupId }: { groupId: number }) => {
   const existedSortLength = currentView?.sort?.sorters.length ?? 0
   const { t } = useTranslation()
   const allHeaders = instance.viewOps?.useViewProperties()
+  const [innerViews, setInnerViews] = useState(groupData?.views || [])
+  const [isReorder, setIsReorder] = useState(false)
+  const reorderRef = useRef<HTMLElement>(null)
+  const searchInputRef = useRef<HTMLInputElement>(null)
+  useLayoutEffect(() => {
+    if (showSearch) {
+      searchInputRef.current?.focus()
+    } else {
+      searchInputRef.current?.blur()
+    }
+  }, [showSearch])
+  useLayoutEffect(() => {
+    if (groupValue?.views) {
+      setInnerViews(groupValue.views)
+    }
+  }, [groupValue?.views])
+
   if (!groupData) return null
+
   return (
     <Content
       flex
@@ -54,51 +73,119 @@ const GroupActions = memo(({ groupId }: { groupId: number }) => {
       }}
     >
       {renderPanel()}
-      <Content flex gap={4} style={{ overflowX: 'auto', marginRight: 4 }}>
-        {groupData.views.map(i => (
-          <Content
-            flex
-            alignItems={'center'}
-            key={i.id}
-            gap={8}
-            style={{
-              color: i.id === currentView?.id ? Colors.Font.Primary : Colors.Font.Transparent,
-              background: i.id === currentView?.id ? Colors.Background.ButtonHover : undefined,
-              flexShrink: 0
-            }}
-            onClick={() => {
-              instance.updateGroupData?.(s => ({ ...s, lastViewId: i.id }))
-            }}
-            className={ClassName.flatButton()}
-          >
-            {i.icon ? <EmojiWithPicker emoji={i.icon} style={{ padding: 0 }} /> : <Icon name={'park-table-file'} />}
-            <div>{i.name || 'Unnamed view'}</div>
-          </Content>
-        ))}
-      </Content>
-      <Icon
-        name={'park-plus'}
-        className={ClassName.flatButton(4, '6px')}
-        onClick={() => {
-          instance.updateGroupData?.(s => ({
-            ...s,
-            views: [
-              ...s.views,
-              {
-                type: 'table',
-                unToggledIds: [],
-                id: Id.getId(),
-                name: 'Table',
-                options: {
-                  wrapColumns: false,
-                  properties: DEFAULT_GROUP_PROPERTIES
-                },
-                valueIndex: []
-              }
-            ]
-          }))
-        }}
-      />
+      {showViews !== false && (
+        <Reorder.Group
+          ref={reorderRef}
+          values={innerViews}
+          onReorder={v => {
+            setInnerViews(v)
+          }}
+          layoutScroll={true}
+          as={'div'}
+          axis={'x'}
+          style={{ overflowX: 'auto', marginRight: 4, display: 'flex', gap: 4 }}
+        >
+          {innerViews.map(i => (
+            <Reorder.Item
+              dragElastic={false}
+              dragConstraints={isReorder ? reorderRef : undefined}
+              role={'reorder-view'}
+              value={i}
+              as={'div'}
+              key={i.id}
+              transition={{
+                duration: isReorder ? 0.15 : 0
+              }}
+              style={{
+                flexShrink: 0
+              }}
+              onDragStart={() => {
+                setIsReorder(true)
+              }}
+              onDragEnd={() => {
+                setIsReorder(false)
+                instance.updateGroupData?.(w => ({ ...w, views: innerViews }))
+              }}
+            >
+              <div
+                className={ClassName.flatButton()}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 8,
+                  color: i.id === currentView?.id ? Colors.Font.Primary : Colors.Font.Transparent,
+                  background: i.id === currentView?.id ? Colors.Background.ButtonHover : undefined,
+                  flexShrink: 0
+                }}
+                onClick={() => {
+                  if (isReorder) return
+                  instance.updateGroupData?.(s => ({ ...s, lastViewId: i.id }))
+                }}
+              >
+                {i.icon ? (
+                  i.icon.startsWith('park') || i.icon.startsWith('custom') ? (
+                    <Icon name={i.icon} />
+                  ) : (
+                    <EmojiWithPicker emoji={i.icon} style={{ padding: 0 }} />
+                  )
+                ) : (
+                  <Icon name={'park-table-file'} />
+                )}
+                <div>{i.name || 'Unnamed view'}</div>
+              </div>
+            </Reorder.Item>
+          ))}
+        </Reorder.Group>
+      )}
+      {showViews !== false && (
+        <IconWithPopover
+          placement={['bottom']}
+          padding={4}
+          content={setV => (
+            <WithBorder padding={4} width={180}>
+              <div
+                className={'transparent-font font-size-13'}
+                style={{
+                  padding: '4px 8px'
+                }}
+              >
+                {t('group.Create new view')}
+              </div>
+              <Button.IconButton
+                text={t('general.Table')}
+                icon={'park-table-file'}
+                onClick={() => {
+                  instance.viewOps?.addNewView('table')
+                  setV(false)
+                }}
+              />
+              <Button.IconButton
+                text={t('general.Gallery')}
+                icon={'park-all-application'}
+                onClick={() => {
+                  instance.viewOps?.addNewView('gallery')
+                  setV(false)
+                }}
+              />
+              <Button.IconButton
+                text={t('general.List')}
+                icon={'custom-list'}
+                onClick={() => {
+                  instance.viewOps?.addNewView('list')
+                  setV(false)
+                }}
+              />
+            </WithBorder>
+          )}
+          name={'park-plus'}
+          className={ClassName.flatButton(4, '6px')}
+          style={{
+            color: Colors.Font.Transparent
+          }}
+          size={14}
+          onClick={() => {}}
+        />
+      )}
       <Content flex alignItems="center" style={{ flexShrink: 0, marginLeft: 'auto', paddingLeft: 10 }}>
         <AnimatePopover
           positions={['bottom']}
@@ -186,6 +273,7 @@ const GroupActions = memo(({ groupId }: { groupId: number }) => {
               debounceSet.run(e.target.value)
             }
           }}
+          ref={searchInputRef}
           onBlur={e => {
             if (e.currentTarget.value === '') {
               setShowSearch(false)
@@ -193,7 +281,6 @@ const GroupActions = memo(({ groupId }: { groupId: number }) => {
               e.currentTarget.value = ''
             }
           }}
-          autoFocus={true}
           placeholder={'Search in group...'}
           onCompositionStart={() => (isCompo.current = true)}
           onCompositionEnd={e => {
@@ -215,18 +302,20 @@ const GroupActions = memo(({ groupId }: { groupId: number }) => {
             </WithBorder>
           )}
         />
-        <Button.IconButton
-          text={t('general.Add')}
-          onClick={() => {
-            open()
-          }}
-          style={{
-            marginLeft: 8,
-            padding: '2px 8px',
-            color: 'white',
-            background: Colors.Common.SelectColor
-          }}
-        ></Button.IconButton>
+        {showImport !== false && (
+          <Button.IconButton
+            text={t('general.Add')}
+            onClick={() => {
+              open()
+            }}
+            style={{
+              marginLeft: 8,
+              padding: '2px 8px',
+              color: 'white',
+              background: Colors.Common.SelectColor
+            }}
+          ></Button.IconButton>
+        )}
       </Content>
     </Content>
   )

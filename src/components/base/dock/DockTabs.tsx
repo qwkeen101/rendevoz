@@ -257,8 +257,10 @@ export class DockTabs extends React.PureComponent<Props, any> {
     }
     return (
       <DockTabBar
-        onReorder={(sourceId, destId, direction) => {
-          this.context.dockMove(this.context.find(sourceId), this.context.find(destId), direction)
+        onReorder={tabs => {
+          console.log(tabs, panelData)
+          const sortedTabs = tabs.map(i => panelData.tabs.find(o => o.id === i.key))
+          this.context.updatePanel(panelData.id, { ...panelData, tabs: sortedTabs })
         }}
         TabNavList={defaultTabNav}
         panelData={panelData}

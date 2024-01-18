@@ -9,7 +9,16 @@ export default ({ id }: { id: number }) => {
   return (
     <Content flex column>
       {[
-        !questionMeta || questionMeta.hidden
+        questionMeta?.hidden
+          ? {
+              name: t('general.Unhide object'),
+              icon: 'park-preview-open',
+              onClick: async () => {
+                MetaStore.updateMetaObject({ id: questionMeta.id, hidden: false })
+              }
+            }
+          : undefined,
+        !questionMeta
           ? {
               name: t('general.add as object'),
               icon: 'park-share-one',

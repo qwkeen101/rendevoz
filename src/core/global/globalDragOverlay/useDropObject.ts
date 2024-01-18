@@ -109,8 +109,7 @@ export const fetchHeadAndUpdateWebpage = async (url: string, webpageId: number) 
           description: webpageMeta.description || descriptionMeta,
           coverImgSrc: webpageMeta.coverImgSrc || coverImgSrc,
           name: title || webpageMeta.name
-        },
-        true
+        }
       )
     }
   }, 1000)

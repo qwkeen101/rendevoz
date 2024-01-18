@@ -1,7 +1,7 @@
 import { Tooltip, WithBorder } from '@/components'
 import { useGlobalAtomValue, useMergedRef, useToggle, useUpdateEffect } from '@/hooks'
 
-import { objectIdToMetaObjectIdMapAtom } from '@/api/stores/meta.store'
+import { objectIdToMetaObjectIdMapAtom } from '@/api/stores/meta/meta.store'
 import { cloneElement, forwardRef, memo, ReactElement, RefObject, useEffect, useRef, useState } from 'react'
 import useRenderObject from './useRenderObject'
 import FontSize from '@/consts/font'

@@ -27,7 +27,6 @@ const Initializer = () => {
   const [, setUser] = useGlobalAtom(userAtom)
   const setIntialized = useGlobalSetAtom(initializedAtom)
   const { t } = useTranslation()
-  const setSetting = useGlobalSetAtom(SettingAtom)
   const setting = useGlobalAtomValue(SettingAtom)
   useEffect(() => {
     if (setting.general.userFilePath) {
@@ -44,6 +43,9 @@ const Initializer = () => {
       // })
     }
   }, [setting.general.userFilePath])
+  useEffect(() => {
+    ipcInstance.send('minimizeToTray', setting.general.minimizeToTray)
+  }, [setting.general.minimizeToTray])
   useEffect(() => {
     ipcInstance.on('openObject', data => {
       if (data.url) {

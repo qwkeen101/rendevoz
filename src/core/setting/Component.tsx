@@ -23,9 +23,13 @@ const ComponentSetting = () => {
     )
   }
   const labelSettingItems: ISettingItem[] = [
+    // {
+    //   title: t('settings.custom original text background'),
+    //   children: <Switch value={setting.label.customTextBackground} onChange={() => toggleSetting('label', 'customTextBackground')} />
+    // }
     {
-      title: t('settings.custom original text background'),
-      children: <Switch value={setting.label.customTextBackground} onChange={() => toggleSetting('label', 'customTextBackground')} />
+      title: t('settings.Automatically add label as object'),
+      children: <Switch value={setting.label.autoAddAsObject} onChange={() => toggleSetting('label', 'autoAddAsObject')} />
     }
   ]
 
@@ -46,6 +50,25 @@ const ComponentSetting = () => {
     {
       title: t('settings.Only erase hand draw'),
       children: <Switch value={setting.whiteboard.onlyEraseFreeDraw} onChange={() => toggleSetting('whiteboard', 'onlyEraseFreeDraw')} />
+    },
+    {
+      title: t('settings.Scroll behavior in select mode'),
+      children: (
+        <Select
+          onSelect={v => {
+            setSetting(s =>
+              produce(s, s => {
+                s.whiteboard.scrollModeInSelect = v[0]
+              })
+            )
+          }}
+          value={setting.whiteboard.scrollModeInSelect}
+          options={[
+            { value: 'zoom', children: t('settings.Zoom') },
+            { value: 'pan', children: t('settings.Pan') }
+          ]}
+        />
+      )
     }
   ]
 
@@ -208,7 +231,7 @@ const ComponentSetting = () => {
   ]
   return (
     <>
-      {/*<SettingGroup title={t('settings.label settings')} layout={labelSettingItems} />*/}
+      <SettingGroup title={t('settings.label settings')} layout={labelSettingItems} />
       <SettingGroup title={t('settings.whiteboard settings')} layout={whiteboardSettingItems} />
       <SettingGroup title={t('settings.editor settings')} layout={editorSettingItems} />
       {/*<SettingGroup title={t('settings.translate settings')} layout={translateSettingItems} />*/}

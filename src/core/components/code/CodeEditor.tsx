@@ -5,17 +5,20 @@ import lightCodeTheme from '@/core/components/code/lightCodeTheme'
 import { langs } from '@uiw/codemirror-extensions-langs'
 import { useSelectAtomValue, useSelectGlobalAtomValue } from '@/hooks'
 import { SettingAtom } from '@/core'
+import { CSSProperties } from 'react'
 
 export default ({
   value,
   onChange,
   editable,
-  language
+  language,
+  style
 }: {
   value?: string
   onChange?: (v: string) => void
   language?: string
   editable?: boolean
+  style?: CSSProperties
 }) => {
   const darkMode = useSelectGlobalAtomValue(SettingAtom, s => s.general.darkMode)
   return (
@@ -33,7 +36,8 @@ export default ({
       basicSetup={true}
       value={value}
       style={{
-        outline: 'none'
+        outline: 'none',
+        ...style
       }}
       extensions={[langs[language ?? 'typescript']()]}
       onChange={onChange}

@@ -40,9 +40,14 @@ export default (instance: IGroupInstance) => {
       e.preventDefault()
       instance.selectOps?.clearAllSelect()
       instance.viewOps?.tableOps?.selectCell(currentRowId, 0)
+      instance.viewOps?.galleryOps?.editItem(currentRowId)
     }
-    if(isHotkey(KEY.Escape,e)){
+    if (isHotkey(KEY.Escape, e)) {
       e.preventDefault()
+      const currentRowId = instance.values.selectedRowIdSet.keys().next().value as number | undefined
+      if (currentRowId) {
+        instance.viewOps?.galleryOps?.uneditItem(currentRowId)
+      }
       instance.selectOps?.clearAllSelect()
     }
   }

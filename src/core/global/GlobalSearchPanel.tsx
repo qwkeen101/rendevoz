@@ -76,6 +76,7 @@ const GlobalSearchPanel = () => {
         setSidebarPanelState(s => {
           s.visible.clear()
           s.visible.add('webSearch')
+          s.leftOpen = true
         })
         setPanelState(s => ({
           ...s,
@@ -117,18 +118,14 @@ export const SearchPanel = () => {
             setPanelState(d => ({ ...d, url: s }))
           }}
           onAddAsMeta={result => {
-            addWebpageAsMeta(
+            ObjectStore('webpage').addOneWithMeta(
               {
-                title: result.title,
-                author: result.author,
-                domain: result.domain,
-                image: result.image,
-                url: result.url,
-                favicon: result.favicon
+                url: result.url
               },
-              result.noteValue,
               {
-                fromObject: from
+                currentMeta: {
+                  fromObject: from
+                }
               }
             )
           }}

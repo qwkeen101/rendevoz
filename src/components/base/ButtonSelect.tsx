@@ -17,7 +17,9 @@ export default (
         height: 'auto',
         ...props.style
       }}
+      align={props?.align || 'end'}
       closeOnSelect={true}
+      padding={props?.padding || 0}
       displayRenderer={(value, children) => (
         <Content fullWidth flex style={{ fontSize: 14 }} justifyContent={'space-between'} alignItems={'center'}>
           <div>{props.name}</div>

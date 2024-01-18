@@ -10,5 +10,6 @@ declare namespace NodeJS {
     FILE_PATH?: string
     SHOULD_CLOSE?: string
     IS_DOWNLOADING?: 'true' | 'false'
+    MINIMIZE_TO_TRAY: 'true' | 'false'
   }
 }

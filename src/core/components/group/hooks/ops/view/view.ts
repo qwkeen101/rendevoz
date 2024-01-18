@@ -3,23 +3,137 @@ import { assignProperties } from '@/utils'
 import { MetaStore, ObjectStore } from '@/api/stores'
 import { useSelectAtomValue } from '@/hooks'
 import { GroupStateAtom } from '@/core/components/group/hooks/useGroupState'
-import { useMemo } from 'react'
+import { t } from 'i18next'
 import produce from 'immer'
 import Id from '@/utils/id'
 import assignViewTableOps from '@/core/components/group/hooks/ops/view/table'
+import { DEFAULT_GROUP_PROPERTIES } from '@/core/components/group/consts/defaultProperties'
+import { useStore } from 'jotai'
+import assignGalleryOps from '@/core/components/group/hooks/ops/view/gallery'
 
+const VIEW_INVISIBLE_PROPS = {
+  gallery: [2, 5, 7, 8, 9, 11, 12, 13],
+  list: [2, 3, 5, 7, 8, 14, 9, 10, 11, 12, 13]
+}
 export default function assignViewOps(instance: IGroupInstance) {
+  const store = useStore()
   assignProperties(instance, {
     viewOps: {
+      addNewView: async viewType => {
+        const groupState = store.get(GroupStateAtom)
+        if (!groupState) return
+        const newViewId = Id.getId()
+        if (viewType === 'gallery') {
+          await instance.updateGroupData?.(s => ({
+            ...s,
+            lastViewId: newViewId,
+            views: [
+              ...s.views,
+              {
+                type: 'gallery',
+                unToggledIds: [],
+                id: newViewId,
+                name: t('general.Gallery'),
+                icon: 'park-all-application',
+                options: {
+                  cardSize: 'medium',
+                  wrapColumns: false,
+                  fitImage: false,
+                  properties: Object.fromEntries(
+                    [...DEFAULT_GROUP_PROPERTIES, ...(groupState.state?.extraProperties || [])].map((i, idx) => [
+                      i.id,
+                      {
+                        width: i.width ?? 150,
+                        visible: i.visible,
+                        order: idx
+                      }
+                    ])
+                  )
+                },
+                valueIndex: []
+              }
+            ]
+          }))
+        }
+        if (viewType === 'table') {
+          instance.updateGroupData?.(s => ({
+            ...s,
+            lastViewId: newViewId,
+            views: [
+              ...s.views,
+              {
+                type: 'table',
+                unToggledIds: [],
+                id: newViewId,
+                icon: 'park-table-file',
+                name: t('general.Table'),
+                options: {
+                  cardSize: 'medium',
+                  wrapColumns: false,
+                  properties: Object.fromEntries(
+                    [...DEFAULT_GROUP_PROPERTIES, ...(groupState.state?.extraProperties || [])].map((i, idx) => [
+                      i.id,
+                      {
+                        width: i.width ?? 150,
+                        visible: i.visible,
+                        order: idx
+                      }
+                    ])
+                  )
+                },
+                valueIndex: []
+              }
+            ]
+          }))
+        }
+        if (viewType === 'list') {
+          instance.updateGroupData?.(s => ({
+            ...s,
+            lastViewId: newViewId,
+            views: [
+              ...s.views,
+              {
+                type: 'list',
+                unToggledIds: [],
+                id: newViewId,
+                icon: 'custom-list',
+                name: t('general.List'),
+                options: {
+                  wrapColumns: false,
+                  properties: Object.fromEntries(
+                    [...DEFAULT_GROUP_PROPERTIES, ...(groupState.state?.extraProperties || [])].map((i, idx) => [
+                      i.id,
+                      {
+                        width: i.width ?? 150,
+                        visible: i.visible,
+                        order: idx
+                      }
+                    ])
+                  )
+                },
+                valueIndex: []
+              }
+            ]
+          }))
+        }
+      },
       updateProperty: async (id, newProp) => {
-        instance.updateCurrentView?.(w => {
-          return produce(w, draft => {
-            const origin = draft.options.properties?.[id]
-            if (origin) {
-              draft.options.properties![id] = { ...origin, ...newProp }
-            }
+        const currentView = instance.getCurrentView?.()
+        if (!currentView) return
+        instance.updateGroupData?.(w =>
+          produce(w, draft => {
+            draft.properties = draft.properties?.map(i => (i.id === id ? { ...i, ...newProp } : i))
+            draft.views = draft.views.map(v => {
+              if (v.id === currentView.id) {
+                const origin = v.options.properties?.[id]
+                if (origin) {
+                  v.options.properties![id] = { ...origin, ...newProp }
+                }
+              }
+              return v
+            })
           })
-        })
+        )
       },
       deleteCustomProperty: async (propertyName, deleteMetaProp = true) => {
         await instance.updateGroupData?.(data => {
@@ -35,12 +149,23 @@ export default function assignViewOps(instance: IGroupInstance) {
         }
         return
       },
+      getInvisibleViewPropertyIds: () => {
+        const currentViewType = instance.getCurrentView?.()?.type
+        const invisiblePropIds = new Set([
+          ...(store.get(GroupStateAtom).state?.invisibleProperties ?? []),
+          ...(currentViewType ? VIEW_INVISIBLE_PROPS[currentViewType] ?? [] : [])
+        ])
+        return invisiblePropIds
+      },
       getVisibleProperties: () => {
+        const invisiblePropIds = instance.viewOps?.getInvisibleViewPropertyIds()
         const currentView = instance.getCurrentView?.()?.options.properties
         const allProperties = instance.getGroupData?.()?.properties
         const onlyShowCustom = instance.getGroupData?.()?.onlyShowCustomProperties
+
         if (!currentView || !allProperties) return
         return allProperties.filter(i => {
+          if (invisiblePropIds?.has(i.id)) return false
           if (onlyShowCustom) {
             if (i.name === 'name' || i.name === 'type' || i.type === 'custom') {
               return currentView[i.id]?.visible ?? false
@@ -51,18 +176,8 @@ export default function assignViewOps(instance: IGroupInstance) {
         })
       },
       useViewProperties: () => {
-        const currentView = useSelectAtomValue(GroupStateAtom, s => s.currentView?.options.properties)
-        const allProperties = useSelectAtomValue(GroupStateAtom, s => s.data?.properties)
-        const onlyShowCustom = useSelectAtomValue(GroupStateAtom, s => s.data?.onlyShowCustomProperties)
-        const sortedProps = useMemo(() => {
-          if (!currentView || !allProperties) return
-          const visibleProps = new Set(instance.viewOps?.getVisibleProperties()?.map(i => i.id))
-          return allProperties
-            .slice()
-            .map(i => ({ ...i, width: currentView[i.id]?.width ?? 150, visible: visibleProps.has(i.id) }))
-            .sort((a, b) => currentView[a.id]?.order - currentView[b.id]?.order)
-        }, [currentView, allProperties, onlyShowCustom])
-        return sortedProps
+        const props = useSelectAtomValue(GroupStateAtom, s => s.currentViewProperties)
+        return props
       },
       addNewProperty: async prop => {
         const currentView = instance.getCurrentView?.()
@@ -117,4 +232,5 @@ export default function assignViewOps(instance: IGroupInstance) {
     }
   })
   assignViewTableOps(instance)
+  assignGalleryOps(instance)
 }

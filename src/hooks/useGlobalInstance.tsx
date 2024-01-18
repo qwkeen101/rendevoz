@@ -7,10 +7,26 @@ import { MetaStore, ObjectStore } from '@/api/stores'
 import { Rendevoz } from '@/core/rendevoz'
 import { useDb } from '@/hooks/stores'
 import { renderToStaticMarkup } from 'react-dom/server'
+import { ObjectCreateHandler } from '@/core/global/GlobalObjectCreator'
 const GlobalInstance: Partial<IGlobalInstance> = {}
 
 assignProperties(GlobalInstance, {
+  objectOps: {
+    isLabel: o => {
+      if (!o) return false
+      if ('specType' in o) {
+        if (['pdfLabel', 'webpageLabel', 'noteLabel', 'videoLabel', 'audioLabel'].includes(o.specType)) {
+          return true
+        }
+      }
+      return false
+    }
+  },
   metaOps: {
+    canCreateDirectly: type => {
+      if (ObjectCreateHandler[type]) return true
+      return false
+    },
     getLink: async id => {
       const object = MetaStore.getMetaObjectsMap().get(id)
       if (!object) throw 'No object!'

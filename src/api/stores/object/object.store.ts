@@ -4,10 +4,10 @@ import { Atom, atom, PrimitiveAtom } from 'jotai'
 import { atomFamily, selectAtom } from 'jotai/utils'
 import { useMemo } from 'react'
 import { IRegisterdObject, IWhiteboard, IWhiteboardEdge, IWhiteboardNode, MetaObject } from '~/typings'
-import { globalStore, GroupStore, MetaStore, NoteStore, ObjectStore } from './index'
-import BaseStore, { initializeLocalStore } from './base.store'
-import { objectIdToMetaObjectIdMapAtom, tagToMetaObjectIdsMapAtom, TypeToRegisteredMetaObject } from './meta.store'
-import { IStore } from './types'
+import { globalStore, GroupStore, MetaStore, NoteStore, ObjectStore } from '../index'
+import BaseStore, { initializeLocalStore } from '../base.store'
+import { objectIdToMetaObjectIdMapAtom, tagToMetaObjectIdsMapAtom, TypeToRegisteredMetaObject } from '../meta/meta.store'
+import { IStore } from '../types'
 import { useGlobalAtomValue } from '@/hooks'
 import Id from '@/utils/id'
 import { CustomTypes } from 'rendevoz'
@@ -16,6 +16,8 @@ import { DEFAULT_BACKGROUND_COLORS } from '@/components/picker/colorPicker'
 import _ from 'lodash'
 import { Rendevoz } from '@/core/rendevoz'
 import WebpageStore from '@/api/stores/webpage.store'
+import deleteCallback from '@/api/stores/object/deleteCallback'
+import addCallback from '@/api/stores/object/addCallback'
 export type ObjectFamily = CustomTypes['Object']
 
 export const ObjectFamilyAtom = atomFamily(() => atom(new Map<number, ObjectFamily[keyof ObjectFamily]>()))
@@ -79,16 +81,6 @@ const createObjectStore = <T extends keyof ObjectFamily, V extends ObjectFamily[
       try {
         const result = await initializedLocalStore.getOneById()(id)
         if (result) {
-          if (
-            result.specType?.includes('Label') &&
-            !result.parentObjectId &&
-            (result.webpageId || result.videoId || result.noteId || result.pdfId || result.documentId)
-          ) {
-            ObjectStore(result.specType).updateOne({
-              id,
-              parentObjectId: result.webpageId || result.videoId || result.noteId || result.pdfId || result.documentId
-            })
-          }
           options?.afterGetOneProcess?.onSuccess?.(result, true)
         }
         return result
@@ -106,15 +98,13 @@ const createObjectStore = <T extends keyof ObjectFamily, V extends ObjectFamily[
       inited.specType = type
       return initializedLocalStore.addOne(
         obj => {
-          // if (shouldToast(opts?.silent)) {
-          //   toast.success(t('toast.successfully add', { item: t(`general.${type}`) }))
-          // }
+          addCallback(obj)
           options?.afterAddProcess?.onSuccess?.(obj, opts)
         },
         () => {
           options?.afterAddProcess?.onFail?.(opts)
         }
-      )(inited, opts?.silent, opts?.overPremium)
+      )(inited, opts)
     },
     addOneWithMeta: async (n, opts) => {
       const result = await options?.beforeAddMetaProcss?.(n || {}, opts?.currentMeta)
@@ -135,7 +125,10 @@ const createObjectStore = <T extends keyof ObjectFamily, V extends ObjectFamily[
       let meta: MetaObject
       try {
         const registeredDefaultName = TypeToRegisteredMetaObject.get(obj.specType)?.defaultName
-        const placeholderName = obj.specType ? `Unnamed ${obj.specType}` : undefined
+        let placeholderName = obj.specType ? `Unnamed ${obj.specType}` : undefined
+        if (obj.specType === 'note') {
+          placeholderName = 'Untitled'
+        }
         if (opts?.showMetaModal) {
           meta = (await GlobalEventEmitter().emitWithCallback('global', {
             type: 'globalNeedAddMetaObject',
@@ -152,7 +145,9 @@ const createObjectStore = <T extends keyof ObjectFamily, V extends ObjectFamily[
         } else {
           meta = await MetaStore.addMetaObject(
             { type: obj.specType, objectId: obj.id, name: obj.name || registeredDefaultName, placeholderName, ...opts?.currentMeta },
-            opts?.silent
+            {
+              silent: opts?.silent
+            }
           )
         }
         options?.afterAddMetaProcess?.onSuccess?.(obj, meta)
@@ -183,9 +178,13 @@ const createObjectStore = <T extends keyof ObjectFamily, V extends ObjectFamily[
         silent => {
           options?.afterUpdateProcess?.onFail?.(silent)
         }
-      )(n, opts?.silent)
+      )(n, opts)
     },
     deleteOneById: async (id, opts) => {
+      let force = true
+      if (opts?.force === false) {
+        force = false
+      }
       if (opts?.force !== false) {
         forcedRemoveIds.add(id)
       }
@@ -194,77 +193,9 @@ const createObjectStore = <T extends keyof ObjectFamily, V extends ObjectFamily[
         return Promise.reject()
       }
       const one = await realStore.getOneById(id)
-      const handleRemoveNote = async (noteId: number) => {
-        const note = await ObjectStore('note').getOneById(noteId)
-        if (note) {
-          const contentId = note.contentId
-          const blobDb = useDb('blobs')
-          const url = await blobDb.get(contentId)
-          if (url?.fileUrl.startsWith('rendefile')) {
-            await deleteRendefile(url.fileUrl)
-          }
-        }
-      }
       if (one) {
-        switch (one.specType) {
-          case 'webpage': {
-            if (one.noteId) {
-              await handleRemoveNote(one.noteId)
-            }
-            break
-          }
-          case 'video': {
-            if (one.videoUrl?.startsWith('rendefile')) {
-              deleteRendefile(one.videoUrl)
-            }
-            break
-          }
-          case 'pdf': {
-            if (one.fileUrl?.startsWith('rendefile')) {
-              deleteRendefile(one.fileUrl)
-            }
-            break
-          }
-          case 'image': {
-            if (one.imageUrl?.startsWith('rendefile')) {
-              deleteRendefile(one.imageUrl)
-            }
-            break
-          }
-          case 'note': {
-            await handleRemoveNote(one.id)
-            break
-          }
-        }
         return initializedLocalStore.deleteOneById(() => {
-          // delete all labels
-          if ('labels' in one && one.labels) {
-            let store = undefined
-            const allLabels = one.labels
-            switch (one.specType) {
-              case 'webpage': {
-                store = ObjectStore('webpageLabel')
-                break
-              }
-              case 'video': {
-                store = ObjectStore('videoLabel')
-                break
-              }
-              case 'note': {
-                store = ObjectStore('noteLabel')
-                break
-              }
-              case 'pdf': {
-                store = ObjectStore('pdfLabel')
-                break
-              }
-            }
-            if (store) {
-              allLabels.forEach(i => {
-                store.deleteOneById(i)
-              })
-            }
-          }
+          deleteCallback(one, force)
           options?.afterDeleteProcess?.(one)
           const objectIdToMetaObjectIdMap = globalStore.get(objectIdToMetaObjectIdMapAtom)
           const targetMeta = objectIdToMetaObjectIdMap?.get(id)
@@ -272,10 +203,13 @@ const createObjectStore = <T extends keyof ObjectFamily, V extends ObjectFamily[
           if (targetMeta) {
             const includesMeta = MetaStore.getMetaObjectsMap().get(targetMeta)
             if (includesMeta) {
-              MetaStore.deleteMetaObject(targetMeta, true, true)
+              MetaStore.deleteMetaObject(targetMeta, {
+                silent: true,
+                force: true
+              })
             }
           }
-        })(id, opts?.silent, opts?.force ?? true)
+        })(id, { ...opts, force })
       }
       return Promise.reject()
     }
@@ -430,9 +364,6 @@ const createNoteStore = () => {
       if (n.labels === undefined) {
         n.labels = []
       }
-      if (!n.name) {
-        n.name = 'Untitled'
-      }
     },
     afterDeleteProcess: obj => {
       const blobDb = useDb('blobs')
@@ -458,16 +389,31 @@ const createWebpageStore = () => {
       if (!('url' in o)) {
         o.url = ''
       }
+      if (!o.noteId) {
+        o.noteId = 123456
+      }
     },
     afterAddMetaProcess: {
       onSuccess: async (obj, meta) => {
-        if (!meta.name) {
-          if (obj.url) {
-            const result = await Rendevoz.Utils.Web.parseWebpage(obj.url)
+        if (obj.url) {
+          const result = await Rendevoz.Utils.Web.parseWebpage(obj.url)
+          if (!meta.name) {
             await MetaStore.updateMetaObject(
               { id: meta.id, coverImgSrc: result.image, name: result.title, description: result.description },
-              true
+              {
+                silent: true
+              }
             )
+          }
+
+          if (obj.noteId === 123456) {
+            const note = await NoteStore.initializeNoteWithValue(result.content)
+            if (note) {
+              await ObjectStore('webpage').updateOne({
+                id: obj.id,
+                noteId: note.id
+              })
+            }
           }
         }
       }
@@ -531,7 +477,7 @@ const createTagStore = () => {
                 id: metaId,
                 tags: metaObject?.tags?.filter(i => i !== tag.name)
               },
-              true
+              { silent: true }
             )
           })
       }

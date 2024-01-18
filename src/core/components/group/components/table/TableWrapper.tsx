@@ -12,15 +12,15 @@ const TableWrapper = memo(({ value = [] }: { value: MetaGroupChild[] }) => {
   const ref = useRef<HTMLDivElement>(null)
   const instance = useGroupInstance()
   instance.getScrollMargin = () => ref.current?.closest('[role="renderer-container"]')?.offsetTop ?? 0
-
+  const showAddMore = useSelectAtomValue(GroupStateAtom, s => s.layout?.showAddNew)
   const m = instance.getScrollMargin?.() ?? 0
-  const columns = useSelectAtomValue(GroupStateAtom, s => s.headerColumn)
   const virtualizer = useVirtualizer({
     overscan: 5,
     getScrollElement: () => instance.values.pageContainer,
     estimateSize: () => 30,
     count: value.length,
-    scrollMargin: m
+    scrollMargin: m,
+    paddingEnd: 200
   })
 
   instance.virtualizer = virtualizer
@@ -40,19 +40,19 @@ const TableWrapper = memo(({ value = [] }: { value: MetaGroupChild[] }) => {
       <div
         style={{
           height: value.length ? virtualizer.getTotalSize() : 0,
-          '--table-columns': columns,
           width: '100%',
           position: 'relative',
           flexShrink: 0
         }}
       >
         <div
+          role={'table-wrapper'}
           style={{
             position: 'absolute',
             top: 0,
             left: 0,
             width: '100%',
-            transform: `translateY(${(items[0]?.start ?? 0) - m}px)`
+            transform: items.length ? `translateY(${(items[0]?.start ?? 0) - m}px)` : undefined
           }}
         >
           {items.map(i => (
@@ -60,9 +60,9 @@ const TableWrapper = memo(({ value = [] }: { value: MetaGroupChild[] }) => {
               <RowWrapper rowDetails={value[i.index]} path={[i.index]} />
             </div>
           ))}
+          {(items[items.length - 1]?.index === value.length - 1 || value.length === 0) && showAddMore !== false && <PlaceholderRow />}
         </div>
       </div>
-      <PlaceholderRow />
     </Content>
   )
 })

@@ -1,5 +1,5 @@
 import { globalStore } from '@/api/stores'
-import { relatedMetaObjectsMapAtom } from '@/api/stores/meta.store'
+import { relatedMetaObjectsMapAtom } from '@/api/stores/meta/meta.store'
 import produce from 'immer'
 import { atom, useAtom, useAtomValue, useSetAtom } from 'jotai'
 import { useEffect, useRef } from 'react'

@@ -52,7 +52,7 @@ export default ({
           onChange={v => {
             setIsEditing(false)
             if (v !== metaObject?.name && metaObject?.id) {
-              MetaStore.updateMetaObject({ id: metaObject.id, name: v }, true)
+              MetaStore.updateMetaObject({ id: metaObject.id, name: v })
             }
           }}
           placeholder={originalText ? 'Add note...' : undefined}

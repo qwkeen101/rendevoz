@@ -7,6 +7,7 @@ export type IPDFLabel = IBase & {
   color?: string
   name?: string
   page: number
+  specType: 'pdfLabel'
 } & (ICropLabel | IHighlightLabel)
 
 export type ICropLabel = {

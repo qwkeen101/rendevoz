@@ -18,7 +18,7 @@ const FromCell = ({ value }: { value: MetaObject['fromObject'] }) => {
       }}
     >
       {meta.coverImgSrc && <img src={meta.coverImgSrc} width={24} height={24} style={{ borderRadius: 4, objectFit: 'cover' }} />}
-      <div style={{ fontWeight: 600 }}>{meta.name}</div>
+      <div style={{ fontWeight: 500 }}>{meta.name}</div>
     </Content>
   )
 }

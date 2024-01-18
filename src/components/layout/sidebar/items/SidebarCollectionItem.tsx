@@ -13,7 +13,7 @@ import useSidebarItemContextMenu from '../useSidebarItemContextMenu'
 import useSidebarItemDrag from '../useSidebarItemDrag'
 import { ISidebarItem } from './type'
 import SidebarObjectItem from './SidebarObjectItem'
-import { metaObjectsAtom } from '@/api/stores/meta.store'
+import { metaObjectsAtom } from '@/api/stores/meta/meta.store'
 import FontSize from '@/consts/font'
 
 const SidebarCollectionItem: FC<ISidebarItem> = memo(
@@ -53,7 +53,7 @@ const SidebarCollectionItem: FC<ISidebarItem> = memo(
       }
     }, [items])
 
-    const allMetas = useGlobalAtomValue(metaObjectsAtom)
+    const allMetas = MetaStore.useMetaObjectsMap()
     const allCollections = useGlobalAtomValue(collectionsAtom)
 
     const childrenCollectionsSize = childrenCollections.filter(u => !allCollections.get(u.id)?.deleted).length

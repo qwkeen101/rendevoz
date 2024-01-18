@@ -1,5 +1,5 @@
 import { useDebounceFn, useToggle } from '@/hooks'
-import { relatedMetaObjectsMapAtom, undeletedMetaObjectsAtom } from '@/api/stores/meta.store'
+import { relatedMetaObjectsMapAtom, undeletedMetaObjectsAtom } from '@/api/stores/meta/meta.store'
 import { globalStore } from '@/api/stores'
 import ClassName from '@/styles/classNames'
 import { css } from '@emotion/css'

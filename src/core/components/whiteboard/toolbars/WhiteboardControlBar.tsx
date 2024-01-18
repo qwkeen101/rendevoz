@@ -46,7 +46,7 @@ const WhiteboardControlBar = () => {
       }}
     >
       {(showUndo || transformHistory.redos.length > 0) && (
-        <WithBorder padding={6} style={{ background: Colors.Background.Popover, display: 'flex', alignItems: 'center', gap: 8 }}>
+        <WithBorder borderBoxShadow padding={6} style={{ background: Colors.Background.Popover, display: 'flex', alignItems: 'center', gap: 8 }}>
           {showUndo && (
             <Tooltip content={<TooltipWithCmd cmd={'Shift+E'} name={t('whiteboard.Undo view change')} />}>
               <Icon
@@ -71,7 +71,7 @@ const WhiteboardControlBar = () => {
           )}
         </WithBorder>
       )}
-      <WithBorder padding={6} style={{ background: Colors.Background.Popover, display: 'flex', alignItems: 'center', gap: 8 }}>
+      <WithBorder borderBoxShadow padding={6} style={{ background: Colors.Background.Popover, display: 'flex', alignItems: 'center', gap: 8 }}>
         <Tooltip content={<TooltipWithCmd cmd={'Cmd+Z'} name={t('general.Undo')} />}>
           <Icon
             className={ClassName.circleButton(6, 6)}
@@ -95,7 +95,7 @@ const WhiteboardControlBar = () => {
           />
         </Tooltip>
       </WithBorder>
-      <WithBorder padding={6} style={{ background: Colors.Background.Popover, display: 'flex', alignItems: 'center', gap: 8 }}>
+      <WithBorder borderBoxShadow padding={6} style={{ background: Colors.Background.Popover, display: 'flex', alignItems: 'center', gap: 8 }}>
         <Icon
           onClick={() => {
             setWhiteboardState(s => ({

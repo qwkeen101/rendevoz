@@ -12,7 +12,7 @@ import ClassName from '@/styles/classNames'
 import { PAGE_SPACING } from '../../../components/pdf/core/layouts/Layout'
 import { Rendevoz } from '../../../rendevoz'
 import { normalizeSecondsToTime } from '../../../components/media/utils'
-import { metaObjectsAtom } from '@/api/stores/meta.store'
+import { metaObjectsAtom } from '@/api/stores/meta/meta.store'
 
 export type FromRendererProps = {
   style?: CSSProperties

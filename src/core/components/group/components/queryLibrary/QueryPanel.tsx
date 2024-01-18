@@ -10,29 +10,32 @@ import Id from '@/utils/id'
 import { Colors } from '@/consts'
 import BetterFilter from '@/core/object/filter/BetterFilter'
 import { useTranslation } from 'react-i18next'
+import { useGroupInstance } from '@/core/components/group/hooks/useGroupInstance'
+import { MetaGroup } from '~/typings'
 
 type QueryResult = {
   metaId: number
   selected: boolean
 }
-const QueryPanel = ({ groupId, onClose }: { groupId: number; onClose: VoidFunction }) => {
+const QueryPanel = ({ onClose, groupValue }: { onClose: VoidFunction; groupValue?: MetaGroup }) => {
   const [queryResult, setQueryResult] = useState<QueryResult[]>([])
   const [queryRule, setQueryRule] = useState()
   const [showInGroup, setShowInGroup] = useState(false)
-  const groupData = ObjectStore('group').useValue(groupId)
+  const groupData = groupValue
+  const instance = useGroupInstance()
   const { t } = useTranslation()
   useEffect(() => {
     const existedMetas = getAllMetasInTable(groupData?.values)
     if (queryRule?.rules?.length) {
       const filterFunc = transformFilterGroupToFilterArray(queryRule)
       if (filterFunc !== undefined) {
-        const allObjects = MetaStore.getMetaObjects('create').filter(i => !i.hidden)
+        const allObjects = MetaStore.getMetaObjects('create').filter(i => MetaStore.isVisibleMetaObject(i))
         const leftObjects = allObjects.filter(filterFunc)
         const finalObjects = showInGroup ? leftObjects : leftObjects.filter(i => !existedMetas.has(i.id))
         setQueryResult(finalObjects.map(i => ({ metaId: i.id, selected: false })))
       }
     } else {
-      const allObjects = MetaStore.getMetaObjects('create').filter(i => !i.hidden)
+      const allObjects = MetaStore.getMetaObjects('create').filter(i => MetaStore.isVisibleMetaObject(i))
       const finalObjects = showInGroup ? allObjects : allObjects.filter(i => !existedMetas.has(i.id))
       setQueryResult(finalObjects.map(i => ({ metaId: i.id, selected: false })))
     }
@@ -126,8 +129,9 @@ const QueryPanel = ({ groupId, onClose }: { groupId: number; onClose: VoidFuncti
                 onClick={() => {
                   if (!groupData) return
                   const selected = queryResult.filter(i => i.selected)
-                  ObjectStore('group').updateOne({
-                    id: groupId,
+                  console.log(selected)
+                  instance.updateGroupData?.(s => ({
+                    ...s,
                     values: [
                       ...(groupData.values || []),
                       ...selected.map(i => ({
@@ -136,7 +140,7 @@ const QueryPanel = ({ groupId, onClose }: { groupId: number; onClose: VoidFuncti
                         rowId: Id.getId()
                       }))
                     ]
-                  })
+                  }))
                   onClose()
                 }}
               >

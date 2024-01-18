@@ -17,7 +17,7 @@ import { globalStore } from '@/api/stores'
 import { Container, Stage } from '@pixi/react'
 import PixiViewport from '@/core/components/graph/components/PixiViewport'
 import PixiRenderer from '@/core/components/graph/components/PixiRenderer'
-import { metaLinksAtom, metaObjectsAtom } from '@/api/stores/meta.store'
+import { metaLinksAtom, metaObjectsAtom } from '@/api/stores/meta/meta.store'
 import { useGlobalAtomValue, usePrevious, useUpdateEffect } from '@/hooks'
 import { getAllEdgesOfNodes, getRelatedNodesOfNode } from '@/core'
 

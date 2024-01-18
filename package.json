@@ -2,7 +2,7 @@
   "name": "rendevoz-app",
   "productName": "Rendevoz",
   "private": true,
-  "version": "0.7.4",
+  "version": "0.7.5",
   "author": {
     "name": "Rendevoz Team",
     "email": "rendevoz@rendevoz.com"
@@ -62,7 +62,7 @@
     "driver.js": "^1.2.1",
     "electron-updater": "^6.1.7",
     "events": "^3.3.0",
-    "framer-motion": "^10.17.0-alpha.0",
+    "framer-motion": "^10.18.0",
     "franc": "^6.1.0",
     "fuzzysort": "^2.0.1",
     "he": "^1.2.0",
@@ -117,7 +117,7 @@
     "rehype-parse": "^8.0.4",
     "remark-parse": "^10.0.2",
     "remark-slate": "^1.8.6",
-    "rendevoz": "^0.4.56",
+    "rendevoz": "^0.4.60",
     "rss-parser": "^3.13.0",
     "rxjs": "^7.5.5",
     "segmentit": "^2.0.3",

@@ -3,11 +3,17 @@ import { useDb, useSelectGlobalAtomValue } from '@/hooks'
 import { globalStore } from '@/api/stores/index'
 import { useEffect } from 'react'
 import { Setting } from '@/core'
+import { MetaGroup, MetaObject } from '~/typings'
 
 export type CurrentKeyValues = {
-  currentWorkspace: string
+  currentWorkspace: {
+    id: number
+    name: string
+    createdAt: number
+  }
   searchHistory: string[]
   allWorkspaces: {
+    id: number
     name: string
     createdAt: number
   }[]
@@ -38,6 +44,7 @@ export type CurrentKeyValues = {
   webpageShowOriginal: boolean
   rightBarItems: string[]
   leftBarItems: string[]
+  recycleBinGroup?: MetaGroup
   feedCardView: 'magazine' | 'card' | 'details' | 'title'
   feedOpenMode: 'rightBar' | 'center' | 'sidePeek'
   feedReadRule: 'all' | 'unread'
@@ -63,7 +70,9 @@ export type CurrentKeyValues = {
       lineSpacing: number
     }
   }
-}
+  // string is workspace
+} & Record<`${MetaObject['type']}_${string}_group`, MetaGroup> &
+  Record<`tag_${number}_${string}_group`, MetaGroup>
 
 const keyvalueAtom = atom<Map<string, any>>(new Map())
 
@@ -86,6 +95,9 @@ const createKeyvalueStore = () => {
     },
     getOne: <T extends keyof CurrentKeyValues>(key: T): CurrentKeyValues[T] | undefined => {
       return globalStore.get(keyvalueAtom).get(key)
+    },
+    deleteOne: <T extends keyof CurrentKeyValues>(key: T) => {
+      return keyvalueDb.delete(key)
     },
     useValue: <T extends keyof CurrentKeyValues>(key: T): CurrentKeyValues[T] | undefined => {
       const v = useSelectGlobalAtomValue(keyvalueAtom, s => s.get(key))

@@ -1,6 +1,4 @@
-import { GoogleNewsResultItem } from '@/core/components/feed/types'
-import Parser from 'rss-parser'
-import FeedParser from '@/core/components/feed/utils/parser'
+import universalFeedFetcher from '@/core/components/feed/utils/universalFeedFetcher'
 const DParser = new DOMParser()
 const buildQueryString = (query: object) => {
   if (!query || typeof query !== 'object' || Object.keys(query).length === 0) {
@@ -33,20 +31,11 @@ const fetchGoogleNews = async (options: {
   } = options
   const queryOptions = queryVars ? buildQueryString(queryVars) : ''
   const url = `https://news.google.com/rss/search?${queryOptions}&q=${query}`
-  const res = await fetch(url).then(res => res.text())
-  const result = await FeedParser(res)
+  const result = await universalFeedFetcher(url, 'webpage')
+  if (!result) return
   const items = result.items.slice(0, 50)
-  await Promise.all(
-    items.map(async i => {
-      try {
-        i.link = await TransformGoogleNewsLinkToRealLink(i.link)
-      } catch (e) {
-        i.link = null
-      }
-    })
-  )
   return {
-    items: items.filter(i => i.link && !i.link.includes('reuters') && !i.link.includes('wsj.com')),
+    items,
     url
   }
 }

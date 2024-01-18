@@ -26,6 +26,7 @@ import SettingGroup from '@/core/setting/SettingGroup'
 import { DateFormat } from '@/utils'
 import { getAppState } from '@/core/rendevoz/appState'
 import FileSystem from '@/api/fileSystem'
+import { getOS } from '@/App'
 const arrayRange = (start, stop, step) => Array.from({ length: (stop - start) / step + 1 }, (value, index) => start + index * step)
 
 const languageOptions: SelectOptionProps[] = [
@@ -40,6 +41,7 @@ const languageOptions: SelectOptionProps[] = [
 ]
 
 const GeneralSetting = () => {
+  const os = getOS()
   const [isExporting, toggleIsExporting] = useToggle(false)
   const [isImporting, toggleIsImporting] = useToggle(false)
   const [alertVisible, toggleAlertVisible] = useToggle(false)
@@ -267,6 +269,23 @@ const GeneralSetting = () => {
     }
   ]
   const OthersItems: ISettingItem[] = [
+    os === 'windows'
+      ? {
+          title: t('settings.Minimize to tray when close'),
+          children: (
+            <Switch
+              value={setting.general.minimizeToTray}
+              onChange={v =>
+                setSetting(
+                  produce(setting, draft => {
+                    draft.general.minimizeToTray = !setting.general.minimizeToTray
+                  })
+                )
+              }
+            />
+          )
+        }
+      : undefined,
     {
       title: t('settings.auto save layout'),
       description: t('settings.Save layout desc'),

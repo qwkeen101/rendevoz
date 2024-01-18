@@ -1,7 +1,6 @@
 import useGroupState from '@/core/components/group/hooks/useGroupState'
 import { useGroupInstance } from '@/core/components/group/hooks/useGroupInstance'
 import { useEffect } from 'react'
-import { MetaStore } from '@/api/stores'
 
 export default () => {
   const [groupState, setGroupState] = useGroupState()
@@ -9,21 +8,24 @@ export default () => {
 
   useEffect(() => {
     if (groupState.data?.values && groupState.currentView) {
-      const currentViewIndex = groupState.data.views.find(i => i.id === groupState.currentView?.id)?.valueIndex
+      const latestGroupState = instance.getGroupState?.()
+      const currentViewIndex = latestGroupState?.data?.views.find(i => i.id === groupState.currentView?.id)?.valueIndex
+      console.log(currentViewIndex)
       if (!currentViewIndex) return
-      const values = groupState.data.values
-
+      const values = latestGroupState?.data?.values
+      if (!values) return
       if (currentViewIndex.length !== values.length) {
+        console.log('trigging')
         const valuesIdSet = new Set(values.map(i => i.rowId))
         const afterFilterIndex = currentViewIndex.filter(i => valuesIdSet.has(i))
         const afterFilterIndexSet = new Set([...afterFilterIndex])
         const newValues = values.filter(i => !afterFilterIndexSet.has(i.rowId))
         const newIndex =
           groupState.data.autoAddto === 'first'
-            ? [...newValues.map(i => i.rowId), ...afterFilterIndex]
-            : [...afterFilterIndex, ...newValues.map(i => i.rowId)]
+            ? [...newValues.map(i => i.rowId), ...Array.from(afterFilterIndexSet.values())]
+            : [...Array.from(afterFilterIndexSet.values()), ...newValues.map(i => i.rowId)]
         instance.updateCurrentView?.(s => ({ ...s, valueIndex: newIndex }))
       }
     }
-  }, [groupState.data?.values])
+  }, [groupState.data?.values, groupState.currentView])
 }

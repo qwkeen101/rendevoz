@@ -12,12 +12,14 @@ export default ({
   value,
   style,
   onChange,
-  className
+  className,
+  optionStyle
 }: {
   value?: FileValue
   style?: CSSProperties
   className?: string
   onChange?: (file: FileValue) => void
+  optionStyle?: CSSProperties
 }) => {
   const currFiles = value
   const { openPopover, closePopover, renderPopover } = usePopoverCell()
@@ -49,12 +51,13 @@ export default ({
                 background: Colors.Background.Secondary,
                 borderRadius: 4,
                 padding: '0px 6px',
-                height: 24,
-                lineHeight: '24px',
+                height: 22,
+                lineHeight: '22px',
                 whiteSpace: 'nowrap',
                 overflow: 'hidden',
                 textOverflow: 'ellipsis',
-                fontSize: 14
+                fontSize: 14,
+                ...optionStyle
               }}
               key={i.path}
             >

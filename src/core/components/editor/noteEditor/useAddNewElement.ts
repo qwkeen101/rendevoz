@@ -2,18 +2,15 @@ import { MetaStore, ObjectStore } from '@/api/stores'
 import { CustomElement } from '~/typings'
 import Id from '@/utils/id'
 
-const useAddNewElement = (noteId?: number) => {
-  const note = ObjectStore('note').useValue(noteId)
-  const noteMeta = MetaStore.useValue(note?.metaId || 0)
+const useAddNewElement = (metaId?: number) => {
   const handleAddNewElement = async (elementType: CustomElement['type']) => {
-    if (!noteId) return
     if (elementType === 'sync') {
-      if (!noteMeta) return
+      if (!metaId) return
       const syncedBlockMeta = (
         await ObjectStore('syncedBlock').addOneWithMeta(
           {
             syncVersion: 1,
-            syncedMetaIds: [noteMeta.id],
+            syncedMetaIds: [metaId],
             blockChildren: [{ type: 'paragraph', id: Id.getId(), children: [{ text: '' }] }]
           },
           { silent: true }

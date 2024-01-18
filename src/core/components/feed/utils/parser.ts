@@ -14,7 +14,14 @@ const parser = new Parser({
   }
 })
 const DParser = new DOMParser()
-const FeedParser = async (str: string, transformGoogle?: boolean) => {
+const FeedParser = async (
+  str: string,
+  opts?: {
+    transformGoogle?: boolean
+    urlFilterRule?: (s: string) => boolean
+  }
+) => {
+  const { transformGoogle, urlFilterRule } = opts || {}
   const result = await parser.parseString(str)
   const feedItemResults = result.items
     .map(i => {
@@ -29,6 +36,11 @@ const FeedParser = async (str: string, transformGoogle?: boolean) => {
       }
       if (newItem.link.includes('www.youtube.com/watch')) {
         Object.assign(newItem, parseYoutubeFeed(i))
+      }
+      if (urlFilterRule) {
+        if (!urlFilterRule(newItem.link)) {
+          return
+        }
       }
       if (i.image) {
         if (i.image.$) {

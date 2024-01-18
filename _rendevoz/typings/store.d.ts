@@ -80,7 +80,7 @@ export type IStoreOptions<T extends keyof ObjectFamily, V extends ObjectFamily[T
 
 export interface IStore<T> {
   fetchOneById: (id: number) => Promise<T | undefined>
-  getAll: () => Promise<boolean>
+  getAll: () => Promise<T[]>
   getOneById: (id: number) => Promise<T | undefined>
   deleteOneById: (
     id: number,
@@ -88,6 +88,7 @@ export interface IStore<T> {
       silent?: boolean
       force?: boolean
       deleteMeta?: boolean
+      clearCache?: boolean
     }
   ) => Promise<boolean>
   addOne: (

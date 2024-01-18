@@ -1,4 +1,4 @@
-import { memo, useEffect, useLayoutEffect, useState } from 'react'
+import { memo, useLayoutEffect, useState } from 'react'
 import { MetaObject } from '~/typings'
 import { GroupStore, MetaStore, ObjectStore } from '@/api/stores'
 import { Content, Icon } from '@/components'
@@ -7,25 +7,23 @@ import { Rendevoz } from '@/core/rendevoz'
 import { ClassName } from 'rendevoz'
 import ButtonSwitch from '@/components/base/ButtonSwitch'
 import produce from 'immer'
-import ButtonSelect from '@/components/base/ButtonSelect'
 import { useDebounceEffect } from '@/hooks'
 import fuzzysort from 'fuzzysort'
 import { Colors } from '@/consts'
 import { useTranslation } from 'react-i18next'
 
 export default memo(({ onBack, metaId, onClose }: { onBack: VoidFunction; metaId: number; onClose: VoidFunction }) => {
-  const [allGroups, setAllGroups] = useState<(MetaObject & {})[]>([])
+  const [allGroups, setAllGroups] = useState<(MetaObject)[]>([])
   const [setting, setSetting] = useSetting()
   const [search, setSearch] = useState('')
-  const hideObject = setting.quickAdd.addIntoGroupHideObject
-  const [displayGroups, setDisplayGroups] = useState<(MetaObject & {})[]>([])
-  const [selectedGroup, setSelectedGroup] = useState<MetaObject & {}>()
+  const [displayGroups, setDisplayGroups] = useState<(MetaObject)[]>([])
+  const [selectedGroup, setSelectedGroup] = useState<MetaObject>()
   const index = MetaStore.useMetaObjectsMap()
   const { t } = useTranslation()
   useLayoutEffect(() => {
     const groups = Array.from(MetaStore.getIndexedMetaObjects()?.typeToMetaObjectIdsMap.get('group')?.values() || [])
     if (groups.length) {
-      const all = groups.map(i => MetaStore.getMetaObjectsMap().get(i) as MetaObject)
+      const all = groups.map(i => MetaStore.getMetaObjectsMap().get(i) as MetaObject).filter(i => MetaStore.isVisibleMetaObject(i))
       all.sort((a, b) => b.createdAt - a.createdAt)
       setAllGroups(all)
     }
@@ -121,9 +119,7 @@ export default memo(({ onBack, metaId, onClose }: { onBack: VoidFunction; metaId
       />
       {selectedGroup && (
         <>
-          <div style={{ fontSize: 13, color: Colors.Font.Transparent, padding: '0px 8px' }}>
-            {t('general.Selected group')}
-          </div>
+          <div style={{ fontSize: 13, color: Colors.Font.Transparent, padding: '0px 8px' }}>{t('general.Selected group')}</div>
           <Content flex alignItems={'center'} justifyContent={'space-between'} gap={12} style={{ padding: '0px 8px', marginBottom: 8 }}>
             <div className={ClassName.ellipsisFont(1)}>{selectedGroup.name || selectedGroup.placeholderName}</div>
             <div className={ClassName.selectButton(4, '1px 12px')} style={{ flexShrink: 0 }} onClick={() => handleInsertMetaIntoGroup()}>

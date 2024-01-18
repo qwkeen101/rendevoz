@@ -1,5 +1,5 @@
 import { useMemoizedFn } from '@/hooks'
-import { metaObjectsAtom, relatedMetaObjectsMapAtom, undeletedMetaLinksAtom } from '@/api/stores/meta.store'
+import { metaObjectsAtom, relatedMetaObjectsMapAtom, undeletedMetaLinksAtom } from '@/api/stores/meta/meta.store'
 import { globalStore } from '@/api/stores'
 import { useState } from 'react'
 import { MetaObject } from '~/typings/data'

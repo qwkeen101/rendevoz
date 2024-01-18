@@ -15,7 +15,8 @@ export const DEFAULT_GROUP_PROPERTIES = [
     visible: true,
     type: 'basic',
     editable: false,
-    id: 2
+    id: 2,
+    width: 300
   },
   {
     name: 'description',

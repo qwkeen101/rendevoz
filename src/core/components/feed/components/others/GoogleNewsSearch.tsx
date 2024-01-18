@@ -35,6 +35,7 @@ const GoogleNewsSearch = () => {
                 }
         })
           .then(res => {
+            console.log(res)
             setSearchResults({
               items: res.items,
               url: res.url

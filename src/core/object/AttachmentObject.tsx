@@ -49,6 +49,11 @@ const AttachmentObject = ({
         {renderInline({
           ellipsisLine: 1,
           renderAttOnParent,
+          onClick: showSelect
+            ? () => {
+                onSelect?.(!selected)
+              }
+            : undefined,
           showCircle: false,
           showUnderline: showHoverObject ? true : false,
           showHoverObjectDetails: showHoverObject,

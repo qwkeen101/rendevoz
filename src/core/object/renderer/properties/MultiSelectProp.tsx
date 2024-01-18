@@ -12,13 +12,15 @@ export default ({
   style,
   onChange,
   value,
-  className
+  className,
+  optionStyle
 }: {
   metaId: number
   fieldName: string
   value?: number[]
   style?: CSSProperties
   className?: string
+  optionStyle?: CSSProperties
   onChange?: (ids: number[]) => void
 }) => {
   const allOptionIds = MetaStore.usePropOptions(fieldName)
@@ -61,7 +63,8 @@ export default ({
               height: 'fit-content',
               whiteSpace: 'pre-wrap',
               color: Colors.getAdaptFontColor(selectedOption.color),
-              background: Colors.getAdaptColor(selectedOption?.color) || Colors.Background.ButtonHover
+              background: Colors.getAdaptColor(selectedOption?.color) || Colors.Background.ButtonHover,
+              ...optionStyle
             }}
           >
             {selectedOption?.name}

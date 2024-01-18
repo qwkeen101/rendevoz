@@ -6,18 +6,25 @@ export default ({
   value,
   style,
   onChange,
-  className
+  className,
+  name,
+  checkBoxSize = 16
 }: {
   value?: boolean
   style?: CSSProperties
   className?: string
+  name?: string
+  checkBoxSize?: number
   onChange?: (date: boolean) => void
 }) => {
   return (
     <>
       <Content
+        flex
+        alignItems={'center'}
         className={className}
         role={'prop-container'}
+        gap={10}
         style={{
           width: '100%',
           ...style
@@ -28,11 +35,12 @@ export default ({
       >
         <CheckBox
           style={{
-            width: 16,
-            height: 16
+            width: checkBoxSize,
+            height: checkBoxSize
           }}
           checked={value}
         ></CheckBox>
+        {name}
       </Content>
     </>
   )

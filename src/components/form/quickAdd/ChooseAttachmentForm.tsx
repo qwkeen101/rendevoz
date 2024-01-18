@@ -40,13 +40,18 @@ export default memo(({ onBack, metaId, onClose }: { onBack: VoidFunction; onClos
                 const currentMeta = await MetaStore.getMetaObjectById(metaId)
                 if (selectedMeta && currentMeta) {
                   if (selectedMeta.attachments?.some(i => i.id === metaId)) return
-                  MetaStore.updateMetaObject({
-                    id: selectedMeta.id,
-                    attachments: [
-                      ...(selectedMeta.attachments || []),
-                      { type: currentMeta.type, id: currentMeta.id, createdAt: Date.now() }
-                    ]
-                  })
+                  MetaStore.updateMetaObject(
+                    {
+                      id: selectedMeta.id,
+                      attachments: [
+                        ...(selectedMeta.attachments || []),
+                        { type: currentMeta.type, id: currentMeta.id, createdAt: Date.now() }
+                      ]
+                    },
+                    {
+                      silent: true
+                    }
+                  )
                 }
               }}
               style={{ flexShrink: 0 }}

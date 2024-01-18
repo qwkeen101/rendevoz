@@ -12,11 +12,13 @@ export default ({
   onChange,
   className,
   fieldName,
-  metaId
+  metaId,
+  optionStyle
 }: {
   fieldName: string
   value?: number
   style?: CSSProperties
+  optionStyle?: CSSProperties
   className?: string
   onChange?: (id: number | undefined) => void
   metaId: number
@@ -54,7 +56,8 @@ export default ({
               height: 'fit-content',
               whiteSpace: 'pre-wrap',
               color: Colors.getAdaptFontColor(selectedOption?.color),
-              background: Colors.getAdaptColor(selectedOption?.color) || Colors.Background.ButtonHover
+              background: Colors.getAdaptColor(selectedOption?.color) || Colors.Background.ButtonHover,
+              ...optionStyle
             }}
             className={ClassName.ellipsisFont(1)}
           >

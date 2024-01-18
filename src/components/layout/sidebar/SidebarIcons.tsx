@@ -18,6 +18,7 @@ import { ClassName } from 'rendevoz'
 import SidebarUser from '@/components/layout/sidebar/SidebarUser'
 import { useUpdate } from 'react-use'
 import { atom } from 'jotai'
+import { panels } from '@uiw/react-codemirror'
 
 const SidebarIconDraggingAtom = atom<{
   isDragging: boolean
@@ -125,12 +126,16 @@ const SidebarIcons = ({
             width: '100%',
             height: '100%',
             color: Colors.Font.Transparent,
-            borderTop: panelState.leftOpen ? `1px solid ${Colors.Background.BoxShadowBorder}` : '1px solid transparent',
-            background: dragInto ? Colors.Common.SelectColorTransparent : panelState.leftOpen ? 'var(--tabs-bg)' : Colors.Background.Global,
+            // borderTop: panelState.leftOpen ? `1px solid ${Colors.Background.BoxShadowBorder}` : '1px solid transparent',
+            background: dragInto
+              ? Colors.Common.SelectColorTransparent
+              : panelState.leftOpen
+              ? Colors.Background.Secondary
+              : Colors.Background.Global,
             minWidth: dragInto ? 44 : 1,
             boxShadow: direction === 'right' ? Colors.Consts.BoxShadowBorderRight : Colors.Consts.BoxShadowBorderLeft,
             padding: direction === 'left' && items.length === 0 ? 0 : undefined,
-            marginTop: direction === 'right' ? 38 : undefined
+            // marginTop: direction === 'right' ? 38 : undefined
           }}
           className={classNames(
             styles.list,

@@ -15,7 +15,7 @@ const AIStore = {
           }
         }
       })
-      return await MetaStore.updateMetaObject(newMeta, true)
+      return await MetaStore.updateMetaObject(newMeta, { silent: true })
     }
   },
   updateMetaAI: async (metaId: number, e: AISummarizeEvent) => {
@@ -45,7 +45,7 @@ const AIStore = {
           }
         }
       })
-      MetaStore.updateMetaObject(newMeta, true)
+      MetaStore.updateMetaObject(newMeta, { silent: true })
     }
   }
 }

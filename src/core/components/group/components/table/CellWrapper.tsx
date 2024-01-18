@@ -52,7 +52,6 @@ const CellWrapper = memo(
     const instance = useGroupInstance()
     const showToggle = field === 'name' && !!hasChildren
     const selected = instance.viewOps?.tableOps?.useSelectedCell(rowId, index)
-
     const renderer = () => {
       if (type === 'custom') {
         const propType = MetaStore.getPropDetails(field)?.propType
@@ -75,9 +74,7 @@ const CellWrapper = memo(
               <TextProp
                 mode={propType === 'string' || propType === 'AI summary' ? 'text' : 'number'}
                 value={value}
-                onChange={v => {
-                  handleChange(propType === 'string' || propType === 'AI summary' ? v : Number(v))
-                }}
+                onChange={handleChange}
               />
             )
           case 'AI questions':
@@ -189,6 +186,7 @@ const CellWrapper = memo(
         case 'viewAt':
         case 'updatedAt':
         case 'createdAt':
+        case 'deletedAt':
           return <DisplayCell value={value} type={field} />
         case 'related':
           return <RelatedCell metaId={metaId} />

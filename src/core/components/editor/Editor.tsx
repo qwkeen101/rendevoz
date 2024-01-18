@@ -296,7 +296,8 @@ export const EditorV1: FC<EditorProps> = memo(
               '--editable-line-height': editorState.lineSpacing,
               fontFamily: editorState.typeface || 'Inter',
               padding: styles?.pageMinPadding ?? '0px 40px 0px 60px',
-              width: barState.showRightBar ? `calc(100% - ${barState.rightBarWidth || 380}px` : undefined
+              width: barState.showRightBar ? `calc(100% - ${barState.rightBarWidth || 380}px` : undefined,
+              ...styles?.editorContainerStyle
             }}
           >
             {layout?.showTitle !== false && <EditorTitle showProps={layout?.showProps} propsMetaId={layout?.propsMetaId} stringTitle={stringTitle} {...title} editor={editor} />}

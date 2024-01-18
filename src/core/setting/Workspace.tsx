@@ -17,42 +17,30 @@ import Workspace from '@/api/common/workspace'
 const WorkspaceSetting = () => {
   const currentWorkspace = KeyvalueStore.useValue('currentWorkspace')
   const allWorkspaces = KeyvalueStore.useValue('allWorkspaces')
-  const [setting, setSetting] = useSetting()
   const [edit, setEdit] = useState<{
     idx: number
     currentValue: string
     valid: boolean
   }>()
-  useEffect(() => {
-    if (currentWorkspace && allWorkspaces) {
-      setSetting(s =>
-        produce(setting, s => {
-          s.workspace = {
-            currentSpace: currentWorkspace,
-            allSpaces: allWorkspaces
-          }
-        })
-      )
-    }
-  }, [currentWorkspace, allWorkspaces])
+
   const { t } = useTranslation()
   const canDelete = (allWorkspaces?.length || 0) > 1
   const handleDeleteCurrentWorkspace = () => {
     Workspace.deleteCurrentWorkspace()
   }
-  const handleDeleteWorkspace = async (name: string) => {
-    if (name === currentWorkspace) {
+  const handleDeleteWorkspace = async (id: number) => {
+    if (id === currentWorkspace?.id) {
       handleDeleteCurrentWorkspace()
     } else {
       const metaDb = useDb('metaObjects')
-      const ids = await metaDb.filter(i => i.workspace === name).keys()
+      const ids = await metaDb.filter(i => i.workspace === id).keys()
       metaDb.bulkDelete(ids)
       if (allWorkspaces) {
         KeyvalueStore.updateOne(
           'allWorkspaces',
           produce(allWorkspaces, s => {
             s.splice(
-              s.findIndex(o => o.name === name),
+              s.findIndex(o => o.id === id),
               1
             )
           })
@@ -65,15 +53,14 @@ const WorkspaceSetting = () => {
       ...(allWorkspaces || []),
       {
         createdAt: Date.now(),
-        name
+        name,
+        id: Id.getId()
       }
     ])
   }
 
-  const handleSwitchWorkspace = async (name: string) => {
-    await KeyvalueStore.updateOne('currentWorkspace', name)
-    MetaStore.switchWorkspace()
-    CollectionStore.switchWorkspace()
+  const handleSwitchWorkspace = async (id: number) => {
+    Workspace.switchWorkspace(id)
   }
 
   const handleRenameWorkspace = () => {
@@ -84,26 +71,29 @@ const WorkspaceSetting = () => {
         setEdit(undefined)
         return
       }
-      if (currName === currentWorkspace) {
-        KeyvalueStore.updateOne('currentWorkspace', edit.currentValue)
-        MetaStore.getMetaObjectsMap().forEach((v, k) => {
-          MetaStore.updateMetaObject({ id: k, workspace: edit.currentValue }, true)
-        })
+      if (currName === currentWorkspace?.name) {
+        const newWorkspace = {
+          ...currentWorkspace,
+          name: edit.currentValue
+        }
+        KeyvalueStore.updateOne('currentWorkspace', newWorkspace)
+        KeyvalueStore.updateOne(
+          'allWorkspaces',
+          produce(allWorkspaces, draft => {
+            const t = draft.find(i => i.id === currentWorkspace.id)
+            if (t) {
+              t.name = edit.currentValue
+            }
+          })
+        )
+      } else {
+        KeyvalueStore.updateOne(
+          'allWorkspaces',
+          produce(allWorkspaces, s => {
+            s[edit.idx].name = edit.currentValue
+          })
+        )
       }
-      const metadb = useDb('metaObjects')
-      console.log(currName)
-      metadb
-        .filter(o => o.workspace === currName)
-        .toArray()
-        .then(arr => {
-          metadb.bulkPut(arr.map(i => ({ ...i, workspace: edit.currentValue })))
-        })
-      KeyvalueStore.updateOne(
-        'allWorkspaces',
-        produce(allWorkspaces, s => {
-          s[edit.idx].name = edit.currentValue
-        })
-      )
       setEdit(undefined)
     } else {
       toast.error(t('settings.Workspace name must be unique') + '!', { duration: 2000 })
@@ -113,7 +103,7 @@ const WorkspaceSetting = () => {
   return (
     <Content flex column gap={9}>
       <div className={ClassName.title(FontSize['16px'])}>{t('settings.Current workspace')}</div>
-      <div>{currentWorkspace}</div>
+      <div>{currentWorkspace?.name}</div>
       <div style={{ marginTop: 10 }} className={ClassName.title(FontSize['16px'])}>
         {t('settings.All workspaces')}
       </div>
@@ -147,7 +137,7 @@ const WorkspaceSetting = () => {
                     setEdit(s => ({
                       ...s,
                       currentValue: v,
-                      valid: !allWorkspaces?.some(o => o.createdAt !== i.createdAt && o.name === v)
+                      valid: !allWorkspaces?.some(o => o.id !== i.id && o.name === v)
                     }))
                   }}
                 />
@@ -177,7 +167,7 @@ const WorkspaceSetting = () => {
                     icon={'park-switch'}
                     text={t('general.Switch workspace')}
                     onClick={() => {
-                      handleSwitchWorkspace(i.name)
+                      handleSwitchWorkspace(i.id)
                     }}
                   />
                   <Button.IconButton
@@ -194,7 +184,7 @@ const WorkspaceSetting = () => {
                     text={t('general.delete')}
                     onClick={() => {
                       if (canDelete) {
-                        handleDeleteWorkspace(i.name)
+                        handleDeleteWorkspace(i.id)
                       }
                     }}
                   />

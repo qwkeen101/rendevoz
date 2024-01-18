@@ -1,25 +1,17 @@
-import { globalStore, MetaStore, ObjectStore } from '@/api/stores/index'
-import { debounce } from 'lodash'
+import { MetaStore, ObjectStore } from '@/api/stores/index'
 import { MetaGroup, MetaGroupChild } from '~/typings'
 import Id from '@/utils/id'
-import { atom } from 'jotai'
 import { DEFAULT_GROUP_PROPERTIES } from '@/core/components/group/consts/defaultProperties'
-
-export const GroupToBelongsMetaIdMapAtom = atom(new Map())
-
-export const MetaIdToGroupAtom = atom(new Map<number, number>())
+import { t } from 'i18next'
 
 const GroupStore = {
-  getGroupByMetaId: (id: number) =>
-    globalStore.get(ObjectStore('group').objectMapAtom).get(globalStore.get(MetaIdToGroupAtom).get(id) || 0),
-  getMetaByGroupId: (id: number) => MetaStore.getMetaObjectsMap().get(globalStore.get(GroupToBelongsMetaIdMapAtom).get(id)),
   insertMetaIntoGroup: async (metaId: number | number[], groupId: number) => {
     const group = await ObjectStore('group').getOneById(groupId)
     if (!group) return
     const metaIds = Array.isArray(metaId) ? metaId : [metaId]
     if (group.hideObjectsInside) {
       metaIds.forEach(id => {
-        MetaStore.updateMetaObject({ id: id, hidden: true }, true)
+        MetaStore.updateMetaObject({ id: id, hidden: true }, { silent: true })
       })
     }
     ObjectStore('group').updateOne({
@@ -42,6 +34,7 @@ const GroupStore = {
       updatedAt: Date.now(),
       properties: DEFAULT_GROUP_PROPERTIES,
       values: [],
+      openIn: 'sidePeek',
       rootFilterGroup: {
         groupType: 'and',
         rules: [],
@@ -52,7 +45,7 @@ const GroupStore = {
         {
           type: 'table',
           id: Id.getId(),
-          name: 'Table',
+          name: t('general.Table'),
           unToggledIds: [],
           valueIndex: [],
           options: {
@@ -60,7 +53,7 @@ const GroupStore = {
               DEFAULT_GROUP_PROPERTIES.map((i, idx) => [
                 i.id,
                 {
-                  width: 150,
+                  width: i.width ?? 150,
                   visible: i.visible,
                   order: idx
                 }

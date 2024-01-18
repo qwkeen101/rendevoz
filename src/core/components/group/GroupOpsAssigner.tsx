@@ -14,9 +14,11 @@ import useGroupFilter from '@/core/components/group/hooks/useGroupFilter'
 import { useGroupInstance } from '@/core/components/group/hooks/useGroupInstance'
 import useAssignBodyOps from '@/core/components/group/hooks/ops/useAssignBodyOps'
 import assignViewOps from '@/core/components/group/hooks/ops/view/view'
+import { MetaGroup } from '~/typings'
 
-export default memo(({ groupId, bodyRef }: { bodyRef: RefObject<HTMLElement>; groupId: number }) => {
+export default memo(({ groupId, bodyRef, groupValue }: { bodyRef: RefObject<HTMLElement>; groupId?: number; groupValue?: MetaGroup }) => {
   const instance = useGroupInstance()
+  // need group id to track data change
   useGroupHistory(groupId)
   useBuildInGroupIndex()
   useAssignValueOps(instance)
@@ -26,10 +28,10 @@ export default memo(({ groupId, bodyRef }: { bodyRef: RefObject<HTMLElement>; gr
   useGroupGlobalKey()
   useAssignSidebarOps(instance)
   useSyncValueIndexAndValues()
-  useAssignCommonOps(instance, groupId)
+  useAssignCommonOps(instance, groupValue)
   assignViewOps(instance)
   useHideObjects(groupId)
-  useGroupFilter(groupId)
+  useGroupFilter(groupValue)
   useAssignBodyOps(instance, bodyRef)
   return null
 })

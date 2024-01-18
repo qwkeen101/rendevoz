@@ -24,17 +24,19 @@ import loginBaidudisk from '@/components/fileImporter/baidudisk/loginBaidudisk'
 import { toast } from 'react-hot-toast'
 import { useSetting } from '@/core'
 import { MetaObject } from '~/typings'
-import GroupStore from '@/api/stores/group.store'
+import { ObjectCreateHandler } from '@/core/global/GlobalObjectCreator'
 
 export const GlobalFileImporterInstance = {}
 const FileImporter = ({
   onClose,
   onCreate,
-  autoOpen = true
+  autoOpen = true,
+  type
 }: {
   onClose: VoidFunction
   onCreate?: (object: MetaObject) => void
   autoOpen: boolean
+  type?: MetaObject['type']
 }) => {
   const { t } = useTranslation()
   const [visible, toggleVisible] = useState(false)
@@ -48,14 +50,18 @@ const FileImporter = ({
     open: () => toggleVisible(true),
     close: () => toggleVisible(false)
   })
+
+  const handleCreate = (type: MetaObject['type']) => {
+    onClose?.()
+    ObjectCreateHandler[type]?.().then(handleAfterCreate)
+  }
   const records = [
     {
       name: t('general.note'),
       desc: t('general.Capture ideas with a wysiwyg editor'),
       image: note,
       onClick: () => {
-        onClose?.()
-        ObjectStore('note').addOneWithMeta({}).then(handleAfterCreate)
+        handleCreate('note')
       }
     },
     {
@@ -63,8 +69,7 @@ const FileImporter = ({
       desc: t('general.Present your brilliant ideas on whiteboards'),
       image: whiteboard,
       onClick: () => {
-        ObjectStore('whiteboard').addOneWithMeta({}).then(handleAfterCreate)
-        onClose?.()
+        handleCreate('whiteboard')
       }
     },
     {
@@ -72,33 +77,21 @@ const FileImporter = ({
       desc: t('general.Manage objects with powerful groups'),
       image: group,
       onClick: () => {
-        ObjectStore('group').addOneWithMeta(GroupStore.initializeGroup()).then(handleAfterCreate)
-        onClose?.()
+        handleCreate('group')
       }
     },
     {
       name: t('general.code'),
       image: code,
       onClick: () => {
-        ObjectStore('code')
-          .addOneWithMeta(
-            { content: '' },
-            {
-              currentMeta: {
-                name: 'Unnamed code'
-              }
-            }
-          )
-          .then(handleAfterCreate)
-        onClose?.()
+        handleCreate('code')
       }
     },
     {
       name: t('general.question'),
       image: question,
       onClick: () => {
-        ObjectStore('question').addOneWithMeta().then(handleAfterCreate)
-        onClose?.()
+        handleCreate('question')
       }
     }
   ]
@@ -109,18 +102,7 @@ const FileImporter = ({
       desc: t('general.Reading PDFs and making labels'),
       image: PDF,
       onClick: () => {
-        ObjectStore('pdf')
-          .addOneWithMeta(
-            {},
-            {
-              currentMeta: {
-                name: 'Unnamed PDF'
-              },
-              showMetaModal: true
-            }
-          )
-          .then(handleAfterCreate)
-        onClose?.()
+        handleCreate('pdf')
       }
     },
     {
@@ -128,15 +110,7 @@ const FileImporter = ({
       desc: t('general.Get distraction-free webpages with one-click'),
       image: chrome,
       onClick: () => {
-        ObjectStore('webpage')
-          .addOneWithMeta(
-            {},
-            {
-              showMetaModal: true
-            }
-          )
-          .then(handleAfterCreate)
-        onClose?.()
+        handleCreate('webpage')
       }
     },
     {
@@ -144,36 +118,14 @@ const FileImporter = ({
       desc: t('general.Watching and learning local or online videos'),
       image: youtube,
       onClick: () => {
-        ObjectStore('video')
-          .addOneWithMeta(
-            {},
-            {
-              currentMeta: {
-                name: 'Unnamed video'
-              },
-              showMetaModal: true
-            }
-          )
-          .then(handleAfterCreate)
-        onClose?.()
+        handleCreate('video')
       }
     },
     {
       name: Rendevoz.Utils.Meta.getTypeName('audio'),
       image: music,
       onClick: () => {
-        ObjectStore('audio')
-          .addOneWithMeta(
-            {},
-            {
-              currentMeta: {
-                name: 'Unnamed audio'
-              },
-              showMetaModal: true
-            }
-          )
-          .then(handleAfterCreate)
-        onClose?.()
+        handleCreate('audio')
       }
     },
     {
@@ -181,18 +133,7 @@ const FileImporter = ({
       desc: t('general.Edit your image'),
       image: picture,
       onClick: () => {
-        ObjectStore('image')
-          .addOneWithMeta(
-            {},
-            {
-              currentMeta: {
-                name: 'Unnamed image'
-              },
-              showMetaModal: true
-            }
-          )
-          .then(handleAfterCreate)
-        onClose?.()
+        handleCreate('image')
       }
     }
   ]
@@ -200,7 +141,6 @@ const FileImporter = ({
   const others = [
     {
       name: t('general.Import from Markdown'),
-      desc: t('general.Import from Markdown'),
       image: markdown,
       onClick: () => {
         onClose?.()
@@ -215,7 +155,6 @@ const FileImporter = ({
     },
     {
       name: t('general.Import all files from folder'),
-      desc: t('general.Import all files from folder'),
       image: folder,
       onClick: () => {
         Rendevoz.Actions.Utils.uploadFile({

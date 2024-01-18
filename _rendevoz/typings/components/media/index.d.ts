@@ -38,6 +38,23 @@ export type IMediaExternalState = {
   }
 }
 
+export type IMediaSubtitle = {
+  alignment: string
+  direction: 'vertical' | 'horizontal'
+  endTime: number
+  startTime: number
+  id: string
+  lineAlign: string
+  pauseOnExit: false
+  positionAlign: string
+  size: number
+  snapToLines: boolean
+  text: string
+  translation?: string
+  hideTrans?: boolean
+  textPosition: string
+}
+
 export type IMediaInternalState = {
   floated?: boolean
   progressbarHovering: boolean
@@ -51,20 +68,7 @@ export type IMediaInternalState = {
   paused: boolean
   sortedChapters?: IMediaChapter[]
   showSubtitle?: boolean
-  subtitles?: {
-    alignment: string
-    direction: 'vertical' | 'horizontal'
-    endTime: number
-    startTime: number
-    id: string
-    lineAlign: string
-    pauseOnExit: false
-    positionAlign: string
-    size: number
-    snapToLines: boolean
-    text: string
-    textPosition: string
-  }[]
+  subtitles?: IMediaSubtitle[]
   labelWithTime?: {
     time: number
     id: number

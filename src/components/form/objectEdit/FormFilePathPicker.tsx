@@ -152,6 +152,7 @@ const FormFilePathPicker = ({
               alignItems: 'center'
             }}
             onClick={upload}
+            className={'ellipsis-font-1'}
           >
             {filePath ? (
               filePath.replace('rendefile://', userFilePath || defaultFilePath || '')

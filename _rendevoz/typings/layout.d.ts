@@ -1,5 +1,6 @@
 import { ReactElement } from 'react'
 import { CustomTypes, IEditorInstance, IPdfInstance, IMediaInstance, IWebpageInstance, IWhiteboardInstance } from '.'
+import { MetaObject } from '.'
 
 export type IVideoTab = {
   type: 'video'
@@ -64,6 +65,12 @@ export type ICodeTab = {
   instance: never
   objectId: number
 }
+export type IRecycleBinTab = {
+  type: 'recycleBin'
+}
+export type ITypeGroupTab = {
+  type: 'typeGroup'
+}
 export type BuiltInTabTypes =
   | IVideoTab
   | IWhiteboardTab
@@ -75,7 +82,9 @@ export type BuiltInTabTypes =
   | IHomeTab
   | IGraphTab
   | IGroupTab
+  | ITypeGroupTab
   | ICodeTab
+  | IRecycleBinTab
 
 export type ILayoutTab = CustomTypes['Tab'] & {
   tabContent: ReactElement
@@ -89,6 +98,7 @@ export type TabData = {
       tab?: ILayoutTab
       objectId?: number
       metaId?: number
+      metaType?: MetaObject['type']
       onInstanceInitialized?: (instance: Extract<ILayoutTab, { type: K }>['instance']) => void
     }) => ReactElement | undefined | false | 0
     onTabActive?: () => void

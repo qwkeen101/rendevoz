@@ -119,6 +119,7 @@ export interface EditorProps {
     showTitle?: boolean
     showToolbar?: boolean
     showBlockHandle?: boolean
+    disableOverscanInReadOnly?: boolean
     showLastSave?: boolean
     showProps?: boolean
     showBottomPadding?: boolean

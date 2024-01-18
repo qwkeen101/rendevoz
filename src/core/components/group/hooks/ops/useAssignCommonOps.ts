@@ -1,16 +1,16 @@
-import { IGroupInstance } from '~/typings'
+import { IGroupInstance, MetaGroup } from '~/typings'
 import { assignProperties } from '@/utils'
-import useGroupState from '@/core/components/group/hooks/useGroupState'
-import { GlobalInstance } from '@/hooks'
+import { GroupStateAtom } from '@/core/components/group/hooks/useGroupState'
 import { Rendevoz } from '@/core/rendevoz'
-import { ObjectStore } from '@/api/stores'
 import produce from 'immer'
+import { useSetAtom, useStore } from 'jotai'
 
-export default (instance: IGroupInstance, groupId: number) => {
-  const [groupState, setGroupState] = useGroupState()
-  const groupData = ObjectStore('group').useValue(groupId)
+export default (instance: IGroupInstance, groupValue?: MetaGroup) => {
+  const setGroupState = useSetAtom(GroupStateAtom)
+  const store = useStore()
   assignProperties(instance, {
     openObject: (id, rowId) => {
+      const groupState = store.get(GroupStateAtom)
       if (!groupState.data?.openIn || groupState.data.openIn === 'newTab') {
         Rendevoz.Actions.Open.Meta.openMetaObject(id)
       }
@@ -18,35 +18,37 @@ export default (instance: IGroupInstance, groupId: number) => {
         instance.centerOps?.open(id, rowId)
       }
       if (groupState.data?.openIn === 'sidePeek') {
-        instance.sidebarOps?.open({ type: 'preview', metaId: id })
+        instance.sidebarOps?.open({ type: 'preview', metaId: id, rowId })
       }
     },
     deleteView: viewId => {
+      const groupState = store.get(GroupStateAtom)
       const isCurrent = viewId === groupState.currentView?.id
-      if (groupData) {
-        const prevView = Math.max(0, groupData?.views.findIndex(i => i.id === viewId) - 1)
-        const afterViews = groupData.views.filter(i => i.id !== viewId)
+      if (groupValue) {
+        const prevView = Math.max(0, groupValue?.views.findIndex(i => i.id === viewId) - 1)
+        const afterViews = groupValue.views.filter(i => i.id !== viewId)
         instance.updateGroupData?.(s => ({ ...s, views: afterViews, lastViewId: isCurrent ? afterViews[prevView]?.id : s.lastViewId }))
       }
     },
     getCurrentView: () => {
-      return groupState.currentView
+      return store.get(GroupStateAtom).currentView
     },
     getGroupData: () => {
-      return groupData
+      return store.get(GroupStateAtom).data
     },
     updateCurrentView: updater => {
-      if (groupState.currentView && groupData) {
+      const groupState = store.get(GroupStateAtom)
+      const groupValue = groupState.data
+      if (groupState.currentView && groupValue) {
         const newCurrentView = updater(groupState.currentView)
-        console.log(newCurrentView)
         setGroupState(s => ({ ...s, currentView: newCurrentView }))
-        const newData = produce(groupData, draft => {
+        const newData = produce(groupValue, draft => {
           const index = draft.views.findIndex(i => i.id === newCurrentView.id)
           if (index >= 0) {
             draft.views[index] = newCurrentView
           }
         })
-        ObjectStore('group').updateOne({ ...newData })
+        instance.updateGroupData?.(() => ({ ...newData }))
       }
     }
   })

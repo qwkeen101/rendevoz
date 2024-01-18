@@ -1,6 +1,6 @@
 import { intersectionOfMultipleSets } from '@/core'
 import { usePrevious } from '@/hooks'
-import { indexedMetaLinksAtom } from '@/api/stores/meta.store'
+import { indexedMetaLinksAtom } from '@/api/stores/meta/meta.store'
 import { globalStore } from '@/api/stores'
 import { css } from '@emotion/css'
 import produce from 'immer'

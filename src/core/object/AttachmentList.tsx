@@ -1,4 +1,4 @@
-import { Content, Icon } from '@/components'
+import { Button, Content, Icon } from '@/components'
 import AttachmentObject from './AttachmentObject'
 import { CSSProperties, useRef, useState } from 'react'
 import { css } from '@emotion/css'
@@ -11,6 +11,8 @@ import { MetaObject } from '~/typings'
 import { useTranslation } from 'react-i18next'
 import Id from '@/utils/id'
 import { Rendevoz } from '../rendevoz'
+import { GlobalInstance } from '@/hooks'
+import { MetaStore } from '@/api/stores'
 
 export interface AttachmentListProps {
   attachments?: MetaObject['attachments']
@@ -130,17 +132,32 @@ const AttachmentList = ({
         }}
       >
         {attachments.length === 0 && (
-          <div
+          <Content
+            flex
+            column
+            alignItems={'center'}
             style={{
               padding: '48px',
               textAlign: 'center',
-              margin: 'auto',
-              color: Colors.Font.Transparent,
-              fontSize: 13
+              margin: 'auto'
             }}
+            className={'transparent-font font-size-13'}
           >
-            {t('general.drag object here to add attachment')}
-          </div>
+            <div>{t('general.drag object here to add attachment')}</div>
+            <Button.IconButton
+              icon={'park-plus'}
+              text={t('general.New')}
+              style={{
+                width: 'fit-content',
+                marginTop: '6px'
+              }}
+              onClick={() => {
+                GlobalInstance.metaOps?.createObject().then(o => {
+                  MetaStore.addMetaAsAttachment(o.id, parentMetaId)
+                })
+              }}
+            />
+          </Content>
         )}
         <Reorder.Group
           as="div"
@@ -216,6 +233,15 @@ const AttachmentList = ({
               flex
               gap={6}
             >
+              <div
+                onClick={() => {
+                  GlobalInstance.metaOps?.createObject().then(o => {
+                    MetaStore.addMetaAsAttachment(o.id, parentMetaId)
+                  })
+                }}
+              >
+                {t('general.New')}
+              </div>
               {selected.size > 0 && (
                 <div
                   onClick={() => {

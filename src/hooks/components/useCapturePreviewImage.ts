@@ -27,7 +27,7 @@ const useCapturePreviewImage = () => {
     })
     console.log(res)
     const path = await saveImageLocally(res)
-    await MetaStore.updateMetaObject({ id: metaId, coverImgSrc: path }, true)
+    await MetaStore.updateMetaObject({ id: metaId, coverImgSrc: path })
   }
 
   const updatePreview = async (dataURL: string) => {

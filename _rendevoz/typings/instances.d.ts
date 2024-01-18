@@ -1,6 +1,15 @@
 import { WebpageInnerRef } from '@/core/webpage/WebpageCore'
 import { CustomEditor } from './editor'
-import { BuiltInDraggableElement, ICollection, ILayoutTab, IWhiteboardEdge, IWhiteboardNode, MetaObject, PartialWithId } from '..'
+import {
+  BuiltInDraggableElement,
+  ICollection,
+  ILabel,
+  ILayoutTab,
+  IWhiteboardEdge,
+  IWhiteboardNode,
+  MetaObject,
+  PartialWithId
+} from '..'
 
 export interface WebpageInstance {
   transformToNote: () => Promise<CustomEditor>
@@ -26,6 +35,9 @@ export type IGlobalInstance = Partial<{
     selectCollection: () => Promise<ICollection>
     addMetaIntoCollection: (metaId: number) => Promise<void>
   }
+  objectOps: {
+    isLabel: (o?: any) => boolean
+  }
   aiOps: {
     // open sidebar ai panel
     // from: meta id
@@ -38,6 +50,7 @@ export type IGlobalInstance = Partial<{
     addExtraSvgArrows: (color: string) => void
   }
   metaOps: {
+    canCreateDirectly: (type: MetaObject['type']) => boolean
     getLink: (nodeId: number) => Promise<{
       link: string
       htmlLink: string
@@ -49,7 +62,7 @@ export type IGlobalInstance = Partial<{
     canPreview: (metaObject: MetaObject) => boolean
     openDetails: (id: number) => void
     preview: (id: number) => void
-    createObject: (type?: string) => Promise<MetaObject>
+    createObject: (type?: MetaObject['type']) => Promise<MetaObject>
     copyLink: (id: number | number[]) => void
     addDraggableAsMeta: (d: BuiltInDraggableElement, hidden?: boolean) => Promise<MetaObject>
   }

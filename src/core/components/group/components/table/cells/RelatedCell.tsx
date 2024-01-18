@@ -5,33 +5,56 @@ import { PopupWrapper } from '@/core/components/group/components'
 import { RelatedPanel } from '@/core/object/details/Related'
 import { ClassName } from 'rendevoz'
 import { Colors } from '@/consts'
+import { CSSProperties } from 'react'
 
-const RelatedCell = ({ metaId }: { metaId: number }) => {
+const RelatedCell = ({
+  metaId,
+  nullIfNoRelated,
+  optionStyle
+}: {
+  metaId: number
+  nullIfNoRelated?: boolean
+  optionStyle?: CSSProperties
+}) => {
   const index = MetaStore.useIndexedMetaLinks()
   const relatedMap = index?.relatedIdsMap
-  const size = relatedMap?.get(metaId)?.size || 0
+  const related = relatedMap?.get(metaId)
+  const relatedMetas = MetaStore.useMultipleObjects(Array.from(related?.values() || []))
   const { openPopover, renderPopover, closePopover } = usePopoverCell({
     onClose: () => {
       closePopover()
     },
     onOpen: () => {}
   })
+  if (nullIfNoRelated && (!related || related?.size === 0)) {
+    return null
+  }
   return (
     <>
       <Content
+        role={'prop-container'}
         onClick={e => {
           const parent = e.currentTarget.parentElement
           if (parent) {
             openPopover(parent)
           }
         }}
+        flex
+        gap={4}
         style={{
-          fontWeight: 600,
           width: '100%',
-          height: '100%'
+          height: '100%',
+          flexWrap: 'inherit'
         }}
       >
-        {size}
+        {relatedMetas.map(meta => (
+          <span
+            className={'object-name-item'}
+            style={optionStyle}
+          >
+            {meta.name || meta.placeholderName}
+          </span>
+        ))}
       </Content>
       {renderPopover(
         box => (

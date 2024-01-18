@@ -7,6 +7,35 @@
 .select-color-font {
   color: var(--select-color);
 }
+.bg-secondary{
+  background: var(--background-secondary);
+}
+.bg-popover{
+  background: var(--popover-background);
+}
+.light-hover{
+  &:hover{
+    background: var(--light-hover-background);
+  }
+}
+.hover-link{
+  cursor: pointer;
+  transition: color 0.25s ease;
+  &:hover{
+    color: var(--select-color);
+  }
+}
+.object-name-item{
+  background: var(--background-secondary);
+  border-radius: 4px;
+  padding: 0px 6px;
+  height: 22px;
+  line-height: 22px;
+  white-space: nowrap;
+  overflow:  hidden;
+  text-overflow: ellipsis;
+  font-size: 14px;
+}
 .font-size-14 {
   font-size: 14px;
 }
@@ -15,6 +44,11 @@
 }
 .slim-font {
   font-weight: 400;
+}
+.hover {
+  &:hover{
+    background: var(--button-hover-background);
+  }
 }
 .ellipsis-font-1 {
   text-overflow: ellipsis;

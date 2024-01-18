@@ -2,7 +2,7 @@
 //@ts-nocheck
 import { Content } from '@/components/base'
 import { useGlobalAtomValue } from '@/hooks/jotai'
-import { pinnedMetaObjectsAtom } from '@/api/stores/meta.store'
+import { pinnedMetaObjectsAtom } from '@/api/stores/meta/meta.store'
 import { memo } from 'react'
 import SidebarObjectItem from './items/SidebarObjectItem'
 import { pinnedCollectionsAtom } from '@/api/stores/collection.store'

@@ -1,5 +1,5 @@
 import { MetaStore } from '@/api/stores'
-import { AI_QUESTION_PROP_ID } from '@/api/stores/meta.store'
+import { AI_QUESTION_PROP_ID } from '@/api/stores/meta/meta.store'
 import usePopoverCell from '@/core/components/group/hooks/usePopoverCell'
 import { PopupWrapper } from '@/core/components/group/components'
 import { CSSProperties } from 'react'

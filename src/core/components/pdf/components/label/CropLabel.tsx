@@ -46,7 +46,7 @@ const CropLabel = ({ labelId, pageSize }: { labelId: number; pageSize: PageSize 
     setTimeout(() => {
       ObjectStore('pdfLabel').updateOne({ id: labelId, imageUrl: newImage })
       if (labelMeta) {
-        MetaStore.updateMetaObject({ id: labelMeta.id, coverImgSrc: newImage }, true)
+        MetaStore.updateMetaObject({ id: labelMeta.id, coverImgSrc: newImage })
       }
     })
   }

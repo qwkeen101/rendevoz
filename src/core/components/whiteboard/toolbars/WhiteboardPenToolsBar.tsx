@@ -114,6 +114,7 @@ const WhiteboardPenToolsBar = () => {
   if (whiteboardState.currentTool === 'freehand' && penStyles[penType]) {
     return (
       <WithBorder
+        borderBoxShadow
         padding={6}
         style={{
           position: 'absolute',

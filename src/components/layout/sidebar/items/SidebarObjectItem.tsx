@@ -2,7 +2,7 @@ import { Content } from '@/components'
 import { GlobalEventEmitter } from '@/events'
 import { useGlobalAtomValue } from '@/hooks'
 import { CollectionStore, MetaStore } from '@/api/stores'
-import { metaObjectsAtom } from '@/api/stores/meta.store'
+import { metaObjectsAtom } from '@/api/stores/meta/meta.store'
 import { selectAtom } from 'jotai/utils'
 import { FC, useMemo, useRef } from 'react'
 import { IconNameItem } from '../SidebarCollection'
@@ -60,7 +60,7 @@ const SidebarObjectItem: FC<ISidebarItem> = ({ parentId, parentType, id, draggab
           }
         }),
       onPin: () => {
-        metaObject && MetaStore.updateMetaObject({ id, pinned: !metaObject.pinned }, true)
+        metaObject && MetaStore.updateMetaObject({ id, pinned: !metaObject.pinned })
       },
       onDelete: () => metaObject && MetaStore.deleteMetaObject(id)
     }

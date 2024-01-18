@@ -187,9 +187,6 @@ function Item<T extends { name?: string; color?: string; id: number }>({
 }) {
   const [newName, setNewName] = useState(item.name)
   const inputRef = useRef<HTMLInputElement>(null)
-  useEffect(() => {
-    setNewName(item.name)
-  }, [item.name])
   return (
     <Content
       flex
@@ -233,13 +230,14 @@ function Item<T extends { name?: string; color?: string; id: number }>({
                 <input
                   ref={inputRef}
                   autoFocus
-                  value={newName}
+                  defaultValue={item.name}
                   onKeyDown={e => {
                     if (isHotkey(KEY.Enter, e)) {
-                      setV(false)
+                      e.currentTarget.blur()
+                      e.preventDefault()
                     }
                   }}
-                  onChange={e => {
+                  onBlur={e => {
                     onItemUpdate?.({ ...item, name: e.target.value })
                   }}
                   className={ClassName.noStyleInput}

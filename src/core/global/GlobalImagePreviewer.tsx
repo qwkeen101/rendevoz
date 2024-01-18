@@ -28,7 +28,6 @@ const GlobalImagePreviewer = () => {
   GlobalImagePreviewerInstance.open = src => setPreviewerState({ imgSrc: src, visible: true })
   return (
     <Modal
-      showClose
       visible={visible}
       onClose={() => setPreviewerState(s => ({ ...s, visible: false }))}
       hideBackground

@@ -1,25 +1,42 @@
 import { useRef } from 'react'
 import usePopoverCell from '@/core/components/group/hooks/usePopoverCell'
-import { Content } from '@/components'
+import { Button, Content, AnimatePopover, WithBorder } from '@/components'
 import { PopupWrapper } from '@/core/components/group/components'
 import ImageRenderer from '@/core/components/group/components/popupRenderer/ImageRenderer'
+import { useSelectAtomValue } from '@/hooks'
+import { GroupStateAtom } from '@/core/components/group/hooks/useGroupState'
+import FileUploader from '@/core/components/group/components/popupRenderer/FileUploader'
+import { useTranslation } from 'react-i18next'
 
-export default ({ value, onChange }: { value?: string; onChange: (filePath?: string) => void }) => {
+export default ({
+  value,
+  onChange,
+  onClick,
+  isEditing
+}: {
+  value?: string
+  onChange: (filePath?: string) => void
+  onClick?: React.MouseEventHandler
+  isEditing?: boolean
+}) => {
   const ref = useRef(null)
+  const fitImage = useSelectAtomValue(GroupStateAtom, s => s.currentView?.options.fitImage) ?? false
   const { openPopover, renderPopover, closePopover } = usePopoverCell({
     onClose: () => {},
     onOpen: () => {},
     targetRef: ref
   })
+  const { t } = useTranslation()
   return (
     <>
       <Content
         flex
         justifyContent={'space-between'}
-        ref={ref}
         onClick={e => {
+          onClick?.(e)
+          if (e.defaultPrevented) return
           const parent = e.currentTarget.parentElement
-          if (parent) {
+          if (parent && value) {
             openPopover(parent)
           }
         }}
@@ -33,20 +50,63 @@ export default ({ value, onChange }: { value?: string; onChange: (filePath?: str
           <img
             loading={'lazy'}
             style={{
-              objectFit: 'cover',
-              maxWidth: '100%',
-              borderRadius: 4,
+              objectFit: fitImage ? 'contain' : 'cover',
+              width: '100%',
+              height: '100%',
               position: 'absolute',
               top: 0,
-              left: 0,
-              maxHeight: '100%'
+              left: 0
             }}
+            className={'border-bottom'}
             src={value}
           />
         )}
+        {!value && isEditing && (
+          <div
+            style={{
+              width: '100%',
+              height: '100%',
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}
+            className={'border-bottom'}
+          >
+            <AnimatePopover
+              reposition
+              positions={['bottom', 'top']}
+              content={setV => (
+                <WithBorder width={280}>
+                  <FileUploader
+                    accept={'image/*'}
+                    onUpload={filePath => {
+                      setV(false)
+                      console.log(filePath)
+                      onChange?.(filePath)
+                    }}
+                  />
+                </WithBorder>
+              )}
+              withClickCover={true}
+            >
+              <Button.IconButton
+                ref={ref}
+                className={'transparent-font'}
+                text={t('general.Upload an image')}
+                icon={'park-upload-picture'}
+                style={{
+                  margin: 'auto'
+                }}
+              />
+            </AnimatePopover>
+          </div>
+        )}
       </Content>
       {renderPopover(box => (
-        <PopupWrapper box={{ ...box, width: Math.max(300, box.width) }}>
+        <PopupWrapper box={{ ...box, width: Math.max(600, Math.min(box.width, 400)) }}>
           <ImageRenderer
             value={value}
             onDelete={() => {

@@ -13,6 +13,10 @@ import { VideoSidebarStateAtom } from '@/core/components/media/hooks/useMediaSid
 import { WebVTTParser } from 'webvtt-parser'
 import { Virtualizer } from '@tanstack/react-virtual'
 import useSubtitleSelectAsLabel from '@/core/components/media/hooks/useSubtitleSelectAsLabel'
+import translateSubtitle from '@/core/components/media/components/sidebar/translateSubtitle'
+import produce from 'immer'
+import { IMediaSubtitle } from '~/typings'
+import ButtonSwitch from '@/components/base/ButtonSwitch'
 const SelectButton: typeof Button.IconButton = props => {
   return <Button.IconButton {...props} style={{ padding: '3px 6px', lineHeight: 1.2, fontSize: '0.957rem' }} />
 }
@@ -55,18 +59,28 @@ const MediaSubtitleSidebar = memo(() => {
           return
         }
         if (targetFile.url) {
-          fetch(targetFile.url).then(file => {
-            file.text().then(text => {
-              const parser = new WebVTTParser()
-              const tree = parser.parse(text, 'metadata')
-              console.log(tree)
+          fetch(targetFile.url).then(async file => {
+            try {
+              const text = await file.json()
               setMediaState(s => ({
                 ...s,
-                subtitles: tree.cues,
+                subtitles: text,
                 subtitleLang: subtitleLang || subtitles[0].lang,
                 subtitleUrl: targetFile.url
               }))
-            })
+            } catch (e) {
+              file.text().then(text => {
+                const parser = new WebVTTParser()
+                const tree = parser.parse(text, 'metadata')
+                console.log(tree)
+                setMediaState(s => ({
+                  ...s,
+                  subtitles: tree.cues,
+                  subtitleLang: subtitleLang || subtitles[0].lang,
+                  subtitleUrl: targetFile.url
+                }))
+              })
+            }
           })
         }
       }
@@ -85,9 +99,10 @@ const MediaSubtitleSidebar = memo(() => {
     }
   }, [currentSelectedIndex, subtitleMode])
   const instance = useMediaInstance()
-  const { renderPopover, containerRef } = useSubtitleSelectAsLabel(currentSubtitles)
+  const { renderPopover, containerRef, rangeExtractor } = useSubtitleSelectAsLabel(currentSubtitles)
   const mergedRef = useMergedRef(containerRef, ref)
-
+  const { t } = useTranslation()
+  const [showTranslation, setShowTranslation] = useState(true)
   if (!currentSubtitles.length && !subtitles.length)
     return (
       <Content flex centered fullWidth fullHeight style={{ minHeight: 240 }}>
@@ -98,7 +113,9 @@ const MediaSubtitleSidebar = memo(() => {
     <Content fullWidth fullHeight style={{ minHeight: 240, padding: '0px 12px 12px' }} flex column>
       {renderPopover()}
       <Content flex gap={12} style={{ margin: '6px 0px', paddingLeft: 8 }}>
-        <div style={{ fontWeight: 600 }}>{subtitleLang || 'Unselected subtitle'}</div>
+        <div style={{ fontWeight: 600 }} className={'ellipsis-font-1'}>
+          {subtitleLang || 'Unselected subtitle'}
+        </div>
         <IconWithPopover
           className={ClassName.circleButton()}
           name={'park-more'}
@@ -154,17 +171,52 @@ const MediaSubtitleSidebar = memo(() => {
           }
           placement={['bottom']}
         />
+        {currentSubtitles.some(i => i.translation) ? (
+          <ButtonSwitch
+            style={{
+              gap: 6,
+              marginLeft: 'auto',
+              flexShrink: 0
+            }}
+            className={'font-size-13 transparent-font'}
+            name={'Show translation'}
+            value={showTranslation}
+            onChange={v => setShowTranslation(v)}
+          ></ButtonSwitch>
+        ) : (
+          <Button.IconButton
+            text={t('general.translate')}
+            icon={'park-translate'}
+            className={'font-size-13'}
+            style={{
+              marginLeft: 'auto',
+              flexShrink: 0
+            }}
+            onClick={() => {
+              translateSubtitle(currentSubtitles).then(texts => {
+                setMediaState(s =>
+                  produce(s, draft => {
+                    draft.subtitles?.forEach((s, idx) => {
+                      s.translation = texts[idx]
+                    })
+                  })
+                )
+              })
+            }}
+          ></Button.IconButton>
+        )}
       </Content>
       <Content fullHeight fullWidth ref={mergedRef} style={{ height: 0, flex: 1 }} role={'subtitle-container'}>
         {subtitleMode === 'list' ? (
           <VirtualList
+            rangeExtractor={r => rangeExtractor(r)}
+            paddingEnd={200}
             style={{ width: '100%', height: '100%' }}
             estimateSize={30}
             items={currentSubtitles}
-            overscan={currentSubtitles.length}
             ref={virtualizerRef}
             renderItem={(s, idx) => (
-              <SubtitleItem currentTime={currentTime} index={idx} subtitle={s} key={s.id} selected={idx === currentSelectedIndex} />
+              <SubtitleItem showTrans={showTranslation} currentTime={currentTime} index={idx} subtitle={s} key={s.id} selected={idx === currentSelectedIndex} />
             )}
           />
         ) : (
@@ -218,7 +270,7 @@ const ArticleSubtitleItem = memo(
 )
 
 const SubtitleItem = memo(
-  ({ subtitle, selected, index }: { subtitle: Required<IMediaState>['subtitles'][0]; selected: boolean; index: number }) => {
+  ({ subtitle, selected, index, showTrans }: { subtitle: IMediaSubtitle; selected: boolean; index: number; showTrans?: boolean }) => {
     const instance = useMediaInstance()
     const [hovered, setHovered] = useState(false)
     return (
@@ -239,11 +291,14 @@ const SubtitleItem = memo(
         }}
         alignItems="center"
       >
-        <Content flex gap={10} alignItems={'center'}>
-          <div className={ClassName.description(FontSize['11px'])} style={{ lineHeight: 1, userSelect: 'none' }}>
+        <Content flex gap={10} alignItems={'start'}>
+          <div className={ClassName.description(FontSize['11px'])} style={{ lineHeight: '22px', userSelect: 'none' }}>
             {normalizeSecondsToTime(subtitle.startTime)}
           </div>
-          <div style={{ userSelect: 'text', fontSize: FontSize['13px'], whiteSpace: 'pre-wrap' }}>{subtitle.text}</div>
+          <div style={{ userSelect: 'text', fontSize: FontSize['13px'], whiteSpace: 'pre-wrap' }}>
+            {subtitle.text}
+            {subtitle.translation && showTrans && <div style={{ userSelect: 'none' }}>{subtitle.translation}</div>}
+          </div>
         </Content>
         <Tooltip content={'Add as label'}>
           <Icon

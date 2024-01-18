@@ -45,8 +45,9 @@ const VirtualChildren = memo(
     const visibleChildren = useMemo(() => {
       return children.filter(i => !i.hide)
     }, [children])
+    const disableOverscanInReadOnly = useSelectAtomValue(EditorStateAtom, s => s.layout?.disableOverscanInReadOnly) ?? true
     const disableVirtualizer = useSelectAtomValue(EditorStateAtom, s => s.layout?.virtualizer) === false
-    const overscan = readOnly || disableVirtualizer ? editor.children.length : 5
+    const overscan = disableVirtualizer || (readOnly && disableOverscanInReadOnly) ? editor.children.length : 5
     const instance = useEditorInstance()
 
     assignProperties(instance, {
@@ -63,23 +64,25 @@ const VirtualChildren = memo(
     })
     let rangeExtractor: ((r: VirtualRange) => number[]) | undefined = undefined
     const firstLayerMap = ID_TO_FIRST_LAYER_EXCEPET_HIDEN_MAP.get(editor)!
-    if (ReactEditor.isFocused(editor) && selection && window.getSelection()?.toString() && !Range.isCollapsed(selection)) {
-      const startIndex = selection.anchor.path[0]
+
+    if (selection && !Range.isCollapsed(selection)) {
+      const start = Range.start(selection)
+      const end = Range.end(selection)
+      const startIndex = start.path[0]
       // maybe have hiden nodes
       const startNodeRealIndex = firstLayerMap.get(editor.children[startIndex].id) || startIndex
-      const endIndex = selection.focus.path[0]
+      const endIndex = end.path[0]
       const endNodeRealIndex = firstLayerMap.get(editor.children[endIndex].id) || endIndex
+      console.log(endNodeRealIndex, startNodeRealIndex)
       rangeExtractor = r => {
         const s = Math.max(Math.min(startNodeRealIndex - overscan, r.startIndex - overscan), 0)
         const e = Math.min(Math.max(endNodeRealIndex + overscan, r.endIndex + overscan), editor.children.length)
-        if (e > r.endIndex || s < r.startIndex) {
-          const arr = []
-          for (let i = s; i <= e; i++) {
-            arr.push(i)
-          }
-          return arr
+
+        const arr = []
+        for (let i = s; i <= e; i++) {
+          arr.push(i)
         }
-        return defaultRangeExtractor(r)
+        return arr
       }
     }
 
@@ -117,7 +120,7 @@ const VirtualChildren = memo(
     const virtualItems = virtualizer.getVirtualItems()
 
     const first = virtualItems[0]
-    console.log(children, ID_TO_FIRST_LAYER_MAP.get(editor), virtualItems)
+
     useEffect(() => {
       if (!disableVirtualizer) {
         const size = totalSize

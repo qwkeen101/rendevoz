@@ -25,6 +25,7 @@ const AttCell = ({ metaId }: { metaId: number }) => {
             openPopover(parent)
           }
         }}
+        role={'prop-container'}
         style={{
           width: '100%',
           height: '100%'

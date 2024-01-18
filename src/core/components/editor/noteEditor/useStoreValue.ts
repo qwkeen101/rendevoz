@@ -1,6 +1,6 @@
 import { Descendant } from 'slate'
 import { IEditorInstance, OperationAppliedEvent } from '~/typings'
-import { useEffect, useLayoutEffect, useRef } from 'react'
+import { RefObject, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { useDebounceFn, useMemoizedFn } from '@/hooks'
 import { NoteStore, ObjectStore } from '@/api/stores'
 import { Rendevoz } from '@/core/rendevoz'
@@ -8,15 +8,15 @@ import { isEqual } from 'lodash'
 
 const useStoreValue = (options: {
   onContentLoaded?: VoidFunction
-  editorId: string
   noteId?: number
-  instance?: IEditorInstance
   defaultValue?: Descendant[]
+  instanceRef: RefObject<IEditorInstance | undefined>
 }) => {
   const shouldSaveRef = useRef(false)
-  const { noteId, editorId, instance, defaultValue, onContentLoaded } = options
+  const { noteId, instanceRef, defaultValue, onContentLoaded } = options
   const { saveNoteAsBuffer, getNoteValue, saveNoteAsSearch } = NoteStore
   const note = ObjectStore('note').useValue(noteId)
+  const [fetchedValue, setFetchedValue] = useState<Descendant[]>()
   const globalEmitter = Rendevoz.Events.Emit.GlobalEventEmitter
   const handler = Rendevoz.Events.Emit.useEventHandler('editor')
   const saveValueToNote = (value: Descendant[]) => {
@@ -36,6 +36,8 @@ const useStoreValue = (options: {
   }
   const debounceSaveValue = useDebounceFn(
     () => {
+      const instance = instanceRef.current
+      if (!instance) return
       const value = instance?.getSlateEditor?.().children
       if (value) {
         saveValueToNote(value)
@@ -62,27 +64,35 @@ const useStoreValue = (options: {
       const noteValue = await getNoteValue(note.contentId)
       if (noteValue) {
         onContentLoaded?.()
-        const currentValue = instance?.getSlateEditor?.().children
-        if (!isEqual(currentValue, noteValue)) {
-          instance?.replaceChildren?.(noteValue)
-        }
+        setFetchedValue(noteValue)
       }
     }
   })
   useLayoutEffect(() => {
-    if (note?.contentId && instance) {
+    if (note?.contentId) {
       fetchValue()
     }
-  }, [note?.contentId, instance])
+  }, [note?.contentId])
+  useLayoutEffect(() => {
+    const instance = instanceRef.current
+    if (instance && fetchedValue) {
+      const currentValue = instance?.getSlateEditor?.().children
+      if (!isEqual(currentValue, fetchedValue)) {
+        instance?.replaceChildren?.(fetchedValue)
+      }
+    }
+  }, [fetchedValue])
   useEffect(() => {
+    const instance = instanceRef.current
     if (defaultValue && !note?.contentId) {
       instance?.replaceChildren?.(defaultValue)
     }
-  }, [defaultValue, instance, note?.contentId])
+  }, [defaultValue, note?.contentId])
   useEffect(() => {
     globalEmitter.addListener('editor', handler)
     return () => {
       globalEmitter.removeListener('editor', handler)
+      const instance = instanceRef.current
       const value = instance?.getSlateEditor?.().children
       if (value) {
         saveValueToNote(value)
@@ -92,7 +102,8 @@ const useStoreValue = (options: {
 
   return {
     saveValueToNote,
-    fetchValue
+    fetchValue,
+    fetchedValue
   }
 }
 

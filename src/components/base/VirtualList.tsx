@@ -1,4 +1,4 @@
-import { useVirtualizer, Virtualizer } from '@tanstack/react-virtual'
+import { defaultRangeExtractor, useVirtualizer, Virtualizer } from '@tanstack/react-virtual'
 import { CSSProperties, forwardRef, memo, ReactElement, useCallback, useEffect, useImperativeHandle, useRef, useState } from 'react'
 import isHotkey from 'is-hotkey'
 import { Colors, KEY } from '@/consts'
@@ -18,6 +18,7 @@ type Props<T> = {
   itemClassname?: string
   itemStyle?: CSSProperties
   itemContainerClassname?: string
+  rangeExtractor?: Virtualizer<any, any>['options']['rangeExtractor']
   reorder?: boolean
   canReorder?: boolean
   onReorder?: (items: T[]) => void
@@ -37,6 +38,7 @@ function VirtualList<T>(
     itemContainerClassname,
     estimateSize,
     style,
+    rangeExtractor,
     reorder,
     canReorder = true,
     onKeydown,
@@ -54,7 +56,8 @@ function VirtualList<T>(
       estimateSize: () => estimateSize,
       getScrollElement: () => contentRef.current,
       overscan: reorder ? items.length : overscan,
-      paddingEnd
+      paddingEnd,
+      rangeExtractor: rangeExtractor || defaultRangeExtractor
     })
     const [currentFocusIndex, setCurrentFocusIndex] = useState(0)
     useImperativeHandle(ref, () => ({
@@ -73,6 +76,7 @@ function VirtualList<T>(
       if (withKeyboardNavigation) {
         const keyboardEvent = (e: KeyboardEvent) => {
           if (isHotkey(KEY.Enter, e) && withKeyboardNavigation) {
+            if (e.target instanceof HTMLElement && e.target.closest('input,textarea')) return
             e.stopPropagation()
             e.preventDefault()
             onSelect?.(itemzRef.current[currentFocusIndex], currentFocusIndex)

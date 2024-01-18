@@ -1,12 +1,13 @@
 import useFeedState from '@/core/components/feed/hooks/useFeedState'
 import { globalStore, ObjectStore } from '@/api/stores'
 import { useEffect } from 'react'
-import useFetchFeeds from '@/core/components/feed/hooks/useFetchFeeds'
 import KeyvalueStore from '@/api/stores/keyvalue.store'
+import universalFeedFetcher from '@/core/components/feed/utils/universalFeedFetcher'
 
 /**
  * Retrieve and update state
  */
+
 export default () => {
   const [feedState, setFeedState] = useFeedState()
   const lastFetched = KeyvalueStore.useValue('feedLastSyncTime')
@@ -36,7 +37,6 @@ export default () => {
     }
   }, [lastFetched])
   const feedCollection = ObjectStore('feedCollection').useValue(feedState.currentCollectionId)
-  const { fetchFeeds } = useFetchFeeds()
   const updateAllFeeds = async () => {
     await ObjectStore('feedCollection').getAll()
     const allFeedCollections = Array.from(globalStore.get(ObjectStore('feedCollection').objectMapAtom).values())
@@ -49,7 +49,8 @@ export default () => {
   const fetchMoreItemsForCollection = async (collectionId: number) => {
     let collection = await ObjectStore('feedCollection').getOneById(collectionId)
     if (collection && collection.feedUrl) {
-      const res = await fetchFeeds(collection.feedUrl, collection.collectionType)
+      const res = await universalFeedFetcher(collection.feedUrl, collection.collectionType)
+      if(!res) return
       collection = await ObjectStore('feedCollection').getOneById(collectionId)
       if (collection) {
         const allItemUrls = await Promise.all(collection.items.map(async id => await ObjectStore('feed').getOneById(id)))

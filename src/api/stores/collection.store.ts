@@ -10,7 +10,7 @@ import { globalStore, MetaStore, ObjectStore } from './index'
 import getSetting from '@/core/setting/getSetting'
 import { useMemo } from 'react'
 import { useSelectGlobalAtomValue } from '@/hooks'
-import { metaObjectsAtom } from '@/api/stores/meta.store'
+import { metaObjectsAtom } from '@/api/stores/meta/meta.store'
 import KeyvalueStore from '@/api/stores/keyvalue.store'
 
 const { orderedData } = BaseStore
@@ -102,7 +102,7 @@ const useCollectionStore = () => {
     }),
     deleteOneById: store.deleteOneById(silent => {
     }),
-    getAll: store.getAll(i => i.workspace === KeyvalueStore.getOne('currentWorkspace')),
+    getAll: store.getAll(i => i.workspace === KeyvalueStore.getOne('currentWorkspace')?.id),
     getOneById: store.getOneById()
   }
   const findNestedCollections = (
@@ -142,7 +142,7 @@ const useCollectionStore = () => {
     })
     if (deleteMeta) {
       metas.forEach(id => {
-        MetaStore.deleteMetaObject(id, true)
+        MetaStore.deleteMetaObject(id)
       })
     }
   }

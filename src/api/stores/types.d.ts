@@ -23,6 +23,7 @@ export interface IStore<T> {
       silent?: boolean
       force?: boolean
       deleteMeta?: boolean
+      clearCache?: boolean
     }
   ) => Promise<boolean>
   addOne: (

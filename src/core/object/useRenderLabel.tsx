@@ -1,16 +1,15 @@
 import { AnimatePopover, Content, Icon, IconWithPopover, Tooltip, WithBorder, ContentEditor } from '@/components'
 import { MetaStore, ObjectStore } from '@/api/stores'
-import { CSSProperties, useState } from 'react'
+import { CSSProperties, useEffect, useState } from 'react'
 import { DraggableElement } from '../global'
 import ClassName from '@/styles/classNames'
 import FontSize from '@/consts/font'
 import LabelActionMenu, { LabelActionEvent } from './LabelActionMenu'
 import { AttachmentWrapper, useRenderObject } from '.'
-import BorderInput from '@/components/base/BorderInput'
 import { useTranslation } from 'react-i18next'
 import { Colors } from '@/consts'
 import { GlobalInstance, useGlobalAtomValue, useIsIn } from '@/hooks'
-import { relatedMetaObjectsMapAtom } from '@/api/stores/meta.store'
+import { relatedMetaObjectsMapAtom } from '@/api/stores/meta/meta.store'
 import { Rendevoz } from '@/core/rendevoz'
 import { ILabel } from '~/typings'
 const DEFAULT_LABEL_NAME = 'Unnamed Label'
@@ -61,7 +60,7 @@ const useRenderLabel = (opts: {
             onChange={v => {
               setLabelState(s => ({ ...s, editingName: false }))
               if (labelMeta) {
-                MetaStore.updateMetaObject({ id: labelMeta.id, name: v }, true)
+                MetaStore.updateMetaObject({ id: labelMeta.id, name: v })
                 return
               }
               ObjectStore(type).updateOne({ id: objectId, name: v })
@@ -209,7 +208,7 @@ const useRenderLabel = (opts: {
         visible
         closeIcon={labelState.addingAttachment && !labelMeta.attachments?.length}
         onClose={() => setLabelState(s => ({ ...s, addingAttachment: false }))}
-        onAttachmentsChange={atts => MetaStore.updateMetaObject({ id: labelMeta.id, attachments: atts }, true)}
+        onAttachmentsChange={atts => MetaStore.updateMetaObject({ id: labelMeta.id, attachments: atts })}
         attachments={labelMeta?.attachments}
         renderObjectDetailsOnParent={renderObjectDetailsOnParent}
         renderAttOnParent={renderAttOnParent}
@@ -238,7 +237,7 @@ const useRenderLabel = (opts: {
             onChange={v => {
               setLabelState(s => ({ ...s, addingDescription: false }))
               if (labelMeta) {
-                MetaStore.updateMetaObject({ id: labelMeta.id, description: v }, true)
+                MetaStore.updateMetaObject({ id: labelMeta.id, description: v })
                 return
               }
               ObjectStore(type).updateOne({ id: objectId, description: v })

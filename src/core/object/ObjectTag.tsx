@@ -1,5 +1,5 @@
 import { useToggle, useSelectGlobalAtomValue } from '@/hooks'
-import { tagToMetaObjectIdsMapAtom } from '@/api/stores/meta.store'
+import { tagToMetaObjectIdsMapAtom } from '@/api/stores/meta/meta.store'
 import { globalStore, ObjectStore } from '@/api/stores'
 import ClassName from '@/styles/classNames'
 import { useAtomValue } from 'jotai/react'
@@ -76,6 +76,7 @@ const Tag = ({
         padding: square ? '0px 6px' : small ? '0px 8px 0px' : '3px 6px 3px 10px',
         fontFamily: 'Muli',
         width: 'fit-content',
+        color: Colors.getAdaptFontColor(tagObject.color),
         justifyContent: 'space-between',
         fontSize: 14,
         cursor,

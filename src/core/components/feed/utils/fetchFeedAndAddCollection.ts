@@ -1,18 +1,18 @@
 import { toast } from 'react-hot-toast'
-import FeedParser from '@/core/components/feed/utils/parser'
 import { ObjectStore } from '@/api/stores'
 import { FeedItem } from '~/typings'
 import getAllItemsInChannel from '@/core/components/feed/utils/youtube/getAllItemsInChannel'
 import { getSetting } from '@/core'
 import getAllItemsInPlaylist from '@/core/components/feed/utils/youtube/getAllItemsInPlaylist'
+import universalFeedFetcher from '@/core/components/feed/utils/universalFeedFetcher'
 
 export default async (feedUrl: string, type: FeedItem['feedType'] = 'webpage') => {
   try {
     feedUrl = await transformFeedUrl(feedUrl)
     if (!feedUrl) return
     let items: FeedItem[] = []
-    const text = await fetch(feedUrl).then(res => res.text())
-    const res = await FeedParser(text, true)
+    const res = await universalFeedFetcher(feedUrl, type)
+    if (!res) return
     let collectionDetails = {
       name: '',
       icon: ''
@@ -53,21 +53,13 @@ export default async (feedUrl: string, type: FeedItem['feedType'] = 'webpage') =
         return
       }
     } else {
-      items = await Promise.all(
-        res.items.map(async i => {
-          if (!i.feedType) {
-            i.feedType = type
-          }
-          return await ObjectStore('feed').addOne(i)
-        })
-      )
+      items = await Promise.all(res.items.map(i => ObjectStore('feed').addOne(i)))
       collectionDetails = {
         name: res.title,
         icon: res.image?.url
       }
     }
 
-    console.log(items)
     await ObjectStore('feedCollection').addOne({
       items: items.map(i => i.id),
       lastFetchedAt: Date.now(),

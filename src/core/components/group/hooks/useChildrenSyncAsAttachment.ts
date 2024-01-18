@@ -35,11 +35,11 @@ export default (metaObject?: MetaObject, children?: MetaGroupChild[]) => {
     if (children?.length) {
       if (children.length !== atts.length) {
         const normalizedAttachment = normalizeChildrenToAttachments(children)
-        MetaStore.updateMetaObject({ id: metaObject.id, attachments: normalizedAttachment }, true)
+        MetaStore.updateMetaObject({ id: metaObject.id, attachments: normalizedAttachment })
       }
     } else {
       if (atts.length > 0) {
-        MetaStore.updateMetaObject({ id: metaObject.id, attachments: [] }, true)
+        MetaStore.updateMetaObject({ id: metaObject.id, attachments: [] })
       }
     }
   }, [children])

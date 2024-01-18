@@ -164,6 +164,7 @@ const AnimatePopover: FC<PropsWithChildren<AnimatePopoverProps>> = ({
     if (e.target instanceof HTMLElement && e.target.getAttribute('role') === 'click-cover') {
       return
     }
+    if (document.querySelector('[role="click-cover"]')) return
     setTimeout(() => {
       if (e.defaultPrevented) return
       onClickOutside?.(e)

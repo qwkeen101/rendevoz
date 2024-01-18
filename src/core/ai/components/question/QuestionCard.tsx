@@ -27,16 +27,28 @@ export default ({
   showAnswer = false,
   pointerEllipsis = 2,
   containerStyle,
-  display
+  display,
+  styles = {
+    contentFontSize: 14,
+    smallFontSize: 13,
+    titleFontSize: 15
+  }
 }: {
   id: number
   on?: (e: IAIEvent) => any
   showAnswer?: boolean
   pointerEllipsis?: number
   containerStyle?: CSSProperties
+  styles?: {
+    smallFontSize?: number
+    contentFontSize?: number
+    titleFontSize?: number
+  }
   display?: {
     from?: boolean
     pointers?: boolean
+    title?: boolean
+    headBar?: boolean
   }
 }) => {
   const question = ObjectStore('question').useValue(id)
@@ -71,15 +83,31 @@ export default ({
     if (!question) return null
     switch (question?.questionType) {
       case 'text':
-        return <TextQuestionCard question={question} metaId={questionMeta?.id} />
+        return <TextQuestionCard question={question} metaId={questionMeta?.id} styles={styles} />
       case 'multiSelect':
-        return <MultiSelectQuestionCard question={question} isEditing={isEditing} on={on} showAnswer={showAnswer || showInnerAnswer} />
+        return (
+          <MultiSelectQuestionCard
+            styles={styles}
+            question={question}
+            isEditing={isEditing}
+            on={on}
+            showAnswer={showAnswer || showInnerAnswer}
+          />
+        )
       case 'singleSelect':
-        return <SingleSelectQuestionCard isEditing={isEditing} on={on} showAnswer={showAnswer || showInnerAnswer} question={question} />
+        return (
+          <SingleSelectQuestionCard
+            styles={styles}
+            isEditing={isEditing}
+            on={on}
+            showAnswer={showAnswer || showInnerAnswer}
+            question={question}
+          />
+        )
       case 'trueOrFalse':
-        return <TrueOrFalseQuestionCard on={on} showAnswer={showAnswer || showInnerAnswer} question={question} />
+        return <TrueOrFalseQuestionCard styles={styles} on={on} showAnswer={showAnswer || showInnerAnswer} question={question} />
       case 'cloze':
-        return <ClozeQuestion question={question} metaId={questionMeta?.id} />
+        return <ClozeQuestion styles={styles} question={question} metaId={questionMeta?.id} />
     }
   }
   if (!question) return null
@@ -97,86 +125,96 @@ export default ({
         ...containerStyle
       }}
     >
-      <Content flex justifyContent={'space-between'} style={{ fontSize: 13, color: Colors.Font.Transparent, marginBottom: 6 }}>
-        <Select
-          closeOnSelect
-          style={{
-            marginLeft: '-4px',
-            padding: '2px 4px',
-            height: 'auto'
+      {display?.headBar !== false && (
+        <Content
+          flex
+          justifyContent={'space-between'}
+          style={{ fontSize: styles.smallFontSize, color: Colors.Font.Transparent, marginBottom: 6, height: 24 }}
+        >
+          <Select
+            closeOnSelect
+            style={{
+              marginLeft: '-4px',
+              padding: '2px 4px',
+              height: 'auto'
+            }}
+            options={['text', 'cloze', 'singleSelect', 'multiSelect', 'trueOrFalse'].map(i => ({
+              value: i,
+              children: t(`general.${i} question`)
+            }))}
+            onSelect={v => {
+              QuestionStore.resetQuestionType(id, v[0])
+            }}
+            value={question?.questionType}
+          ></Select>
+          <Content flex gap={4} style={{ fontSize: 15 }}>
+            <Icon
+              className={ClassName.circleButton()}
+              name={showAnswer || showInnerAnswer ? 'park-preview-open' : 'park-preview-close'}
+              onClick={() => {
+                setShowInnerAnswer(!showInnerAnswer)
+              }}
+            />
+            <Icon onClick={() => setIsEditing(!isEditing)} className={ClassName.circleButton()} name={'park-edit'} />
+            <IconWithPopover
+              className={ClassName.circleButton()}
+              name={'park-more'}
+              size={15}
+              placement={['right', 'left']}
+              boundaryInset={10}
+              renderOnParent={false}
+              closeOnContentClick={true}
+              content={
+                <WithBorder padding={6} width={140}>
+                  <QuestionActionMenu id={question.id} />
+                </WithBorder>
+              }
+            ></IconWithPopover>
+          </Content>
+        </Content>
+      )}
+      {display?.title !== false && (
+        <DraggableElement
+          draggingDetails={{
+            type: 'question',
+            objectId: id
           }}
-          options={['text', 'cloze', 'singleSelect', 'multiSelect', 'trueOrFalse'].map(i => ({
-            value: i,
-            children: t(`general.${i} question`)
-          }))}
-          onSelect={v => {
-            QuestionStore.resetQuestionType(id, v[0])
-          }}
-          value={question?.questionType}
-        ></Select>
-        <Content flex gap={4} style={{ fontSize: 15 }}>
-          <Icon
-            className={ClassName.circleButton()}
-            name={showAnswer || showInnerAnswer ? 'park-preview-open' : 'park-preview-close'}
-            onClick={() => {
-              setShowInnerAnswer(!showInnerAnswer)
+          draggable={!isEditing}
+        >
+          <AutosizeTextarea
+            style={{
+              fontWeight: 500,
+              width: '100%',
+              fontSize: styles.contentFontSize,
+              resize: 'none',
+              userSelect: isEditing ? 'auto' : 'none',
+              display: 'block',
+              marginBottom: 12,
+              cursor: isEditing ? 'text' : 'grab'
+            }}
+            disabled={!isEditing}
+            className={ClassName.noStyleInput}
+            defaultValue={question.name}
+            placeholder={'Untitled'}
+            onBlur={e => {
+              if (questionMeta) {
+                MetaStore.updateMetaObject({ id: questionMeta.id, name: e.target.value })
+              } else {
+                ObjectStore('question').updateOne({ id: question.id, name: e.target.value })
+              }
             }}
           />
-          <Icon onClick={() => setIsEditing(!isEditing)} className={ClassName.circleButton()} name={'park-edit'} />
-          <IconWithPopover
-            className={ClassName.circleButton()}
-            name={'park-more'}
-            size={15}
-            placement={['right', 'left']}
-            boundaryInset={10}
-            renderOnParent={false}
-            closeOnContentClick={true}
-            content={
-              <WithBorder padding={6} width={140}>
-                <QuestionActionMenu id={question.id} />
-              </WithBorder>
-            }
-          ></IconWithPopover>
-        </Content>
-      </Content>
-      <DraggableElement
-        draggingDetails={{
-          type: 'question',
-          objectId: id
-        }}
-        draggable={!isEditing}
-      >
-        <AutosizeTextarea
-          style={{
-            fontWeight: 500,
-            width: '100%',
-            fontSize: 15,
-            resize: 'none',
-            userSelect: isEditing ? 'auto' : 'none',
-            display: 'block',
-            marginBottom: 12,
-            cursor: isEditing ? 'text' : 'grab'
-          }}
-          disabled={!isEditing}
-          className={ClassName.noStyleInput}
-          defaultValue={question.name}
-          placeholder={'Untitled'}
-          onBlur={e => {
-            if (questionMeta) {
-              MetaStore.updateMetaObject({ id: questionMeta.id, name: e.target.value })
-            } else {
-              ObjectStore('question').updateOne({ id: question.id, name: e.target.value })
-            }
-          }}
-        />
-      </DraggableElement>
+        </DraggableElement>
+      )}
       {renderContent()}
       {(showAnswer || showInnerAnswer || isEditing) && (
         <>
-          <div style={{ fontSize: 13, color: Colors.Font.Transparent, marginTop: 12, marginBottom: 4 }}>{t('general.Explanation')}</div>
+          <div style={{ fontSize: styles.smallFontSize, color: Colors.Font.Transparent, marginTop: 12, marginBottom: 4 }}>
+            {t('general.Explanation')}
+          </div>
           <SimpleEditor
             metaId={questionMeta?.id}
-            fontSize={14}
+            fontSize={styles.contentFontSize}
             changeOnBlur={true}
             textareaMode={true}
             value={question.explanation}
@@ -187,7 +225,7 @@ export default ({
         </>
       )}
       {question.answerPointers?.length > 0 && (
-        <Content flex column gap={4} style={{ fontSize: 13, color: Colors.Font.Transparent, marginTop: 12 }}>
+        <Content flex column gap={4} style={{ fontSize: styles.smallFontSize, color: Colors.Font.Transparent, marginTop: 12 }}>
           <div>{t('general.Relevant paragraphs')}</div>
           {question.answerPointers?.map((i, idx) => (
             <QuestionPointer
@@ -224,13 +262,13 @@ export default ({
       {display?.from && !isEditing && parentMeta && (
         <Content
           style={{
-            fontSize: 14,
+            fontSize: styles.contentFontSize,
             marginTop: 12
           }}
         >
           <div
             style={{
-              fontSize: 13,
+              fontSize: styles.smallFontSize,
               color: Colors.Font.Transparent
             }}
           >

@@ -1,4 +1,4 @@
-import { useRef } from 'react'
+import { CSSProperties, useRef } from 'react'
 import usePopoverCell from '@/core/components/group/hooks/usePopoverCell'
 import { Content } from '@/components'
 import MetaTagPicker from '@/core/object/MetaTagPicker'
@@ -7,7 +7,15 @@ import Tag from '@/core/object/ObjectTag'
 import { MetaStore } from '@/api/stores'
 import { useGroupInstance } from '@/core/components/group/hooks/useGroupInstance'
 
-const TagCell = ({ value = [], metaId, wrap }: { value: number[]; metaId: number; wrap?: boolean }) => {
+const TagCell = ({
+  value = [],
+  metaId,
+  optionStyle
+}: {
+  value: number[]
+  metaId: number
+  optionStyle?: CSSProperties
+}) => {
   const tagRef = useRef<HTMLDivElement>(null)
   const { openPopover, renderPopover } = usePopoverCell({
     targetRef: tagRef
@@ -19,6 +27,7 @@ const TagCell = ({ value = [], metaId, wrap }: { value: number[]; metaId: number
       <Content
         fullWidth
         fullHeight
+        flex
         role={'prop-container'}
         onClick={e => {
           const parent = e.currentTarget.parentElement
@@ -26,18 +35,13 @@ const TagCell = ({ value = [], metaId, wrap }: { value: number[]; metaId: number
             openPopover(parent)
           }
         }}
+        gap={4}
+        style={{ flexWrap: 'inherit', height: 'fit-content' }}
+        alignItems="flex-start"
       >
-        <Content
-          flex
-          fullWidth
-          gap={4}
-          style={{ flexWrap: wrap ? 'wrap' : 'nowrap', overflow: 'hidden', height: 'fit-content', minHeight: 22 }}
-          alignItems="flex-start"
-        >
-          {value.map(i => (
-            <Tag hideDelete square hideSize tag={i} key={i} style={{ margin: 'auto 0' }} />
-          ))}
-        </Content>
+        {value.map(i => (
+          <Tag hideDelete square hideSize tag={i} key={i} style={{ margin: 'auto 0', ...optionStyle }} />
+        ))}
       </Content>
       {renderPopover(box => (
         <MetaTagPicker

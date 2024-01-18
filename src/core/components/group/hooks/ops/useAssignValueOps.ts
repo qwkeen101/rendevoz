@@ -10,6 +10,7 @@ import { useEffect, useRef } from 'react'
 import { useSetAtom } from 'jotai/index'
 import { GroupStateAtom } from '@/core/components/group/hooks/useGroupState'
 import { GlobalInstance, useSelectAtomValue } from '@/hooks'
+import { InnerGroupInstance } from '@/core/components/group/hooks/useGroupInstance'
 
 type GroupUpdateEvent =
   | {
@@ -34,7 +35,7 @@ const TypeToSlateType = {
 type RootNode = {
   children: MetaGroupChild[]
 }
-const useAssignValueOps = (instance: IGroupInstance) => {
+const useAssignValueOps = (instance: InnerGroupInstance) => {
   const value = useSelectAtomValue(GroupStateAtom, s => s.data?.values)
   const filterValue = useSelectAtomValue(GroupStateAtom, s => s.filterValues)
   const displayValue = useSelectAtomValue(GroupStateAtom, s => s.viewValues)
@@ -100,7 +101,7 @@ const useAssignValueOps = (instance: IGroupInstance) => {
         // 100ms timeout to prevent history
         setTimeout(() => {
           flushUnhiddenMetas.current.forEach(id => {
-            MetaStore.updateMetaObject({ id: id, hidden: false }, true)
+            MetaStore.updateMetaObject({ id: id, hidden: false })
           })
           flushUnhiddenMetas.current = []
         }, 100)
@@ -109,28 +110,25 @@ const useAssignValueOps = (instance: IGroupInstance) => {
         value?.forEach((i, idx) => {
           originalPlace[i.rowId] = idx
         })
-        const copyed = instance.values.currentValue.slice()
+        const copyed = instance.values.currentValue?.slice()
+
+        if (!copyed) return
+
         copyed.sort((b, a) => originalPlace[b.rowId] - originalPlace[a.rowId])
 
-        instance
-          .updateGroupData?.(s =>
-            produce(s, draft => {
-              draft.values = copyed
-              console.log(instance.values.currentIndex)
-              const v = draft.views.find(i => i.id === currentView?.id)
-              if (v && instance.values.currentIndex) {
-                v.valueIndex = instance.values.currentIndex
-              }
-            })
-          )
-          .then(() => {
-            setGroupState(s => ({ ...s, currentView: { ...s.currentView, valueIndex: instance.values.currentIndex } }))
+        instance.updateGroupData?.(s =>
+          produce(s, draft => {
+            draft.values = copyed
+            const v = draft.views.find(i => i.id === currentView?.id)
+            if (v && instance.values.currentIndex) {
+              v.valueIndex = instance.values.currentIndex
+            }
           })
+        )
       })
     }
   }
 
-  const setGroupState = useSetAtom(GroupStateAtom)
   const handleAdd = (v: Partial<MetaGroupChild>, path: Path, draft: RootNode) => {
     const parent = Node.get(draft, Path.parent(path))
     if (parent) {
@@ -164,6 +162,36 @@ const useAssignValueOps = (instance: IGroupInstance) => {
 
   assignProperties(instance, {
     valueOps: {
+      deleteItems: (id, opts) => {
+        const idArr = Array.isArray(id) ? id : [id]
+        const paths: Path[] = []
+        instance.triggerChange?.()
+        idArr.forEach(id => {
+          const path = instance.pathOps?.getPathById(id)
+          if (path) {
+            const value = instance.valueOps?.getValueByPath(path)
+            paths.push(path)
+            if (value) {
+              if (opts?.deleteMeta) {
+                instance.on?.({
+                  type: 'deleteMeta',
+                  rowId: id,
+                  metaId: value.id
+                })
+                MetaStore.deleteMetaObject(value.id)
+              } else {
+                instance.on?.({
+                  type: 'deleteRow',
+                  rowId: id,
+                  metaId: value.id
+                })
+              }
+            }
+          }
+        })
+        console.log(id, opts, paths)
+        instance.valueOps?.removeByPaths(paths)
+      },
       getPrevMeta: (
         rowId,
         opts = {
@@ -243,7 +271,6 @@ const useAssignValueOps = (instance: IGroupInstance) => {
       },
       getValueById: id => Group.ID_TO_VALUE_MAP.get(instance)?.get(id),
       handleToggle: (rowId, toggled) => {
-        console.log(rowId, toggled)
         instance.updateCurrentView?.(s => ({
           ...s,
           unToggledIds: toggled ? s.unToggledIds.filter(i => i !== rowId) : Array.from(new Set([...(s.unToggledIds || []), rowId]).values())

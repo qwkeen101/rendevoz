@@ -30,7 +30,7 @@ export default async () => {
     localStorage.removeItem('setting')
   }
   const inDatabaseSetting = await KeyvalueStore.getOne('userSetting')
-  console.log(inDatabaseSetting)
+
   if (!inDatabaseSetting) {
     await KeyvalueStore.updateOne('userSetting', defaultSetting)
   }

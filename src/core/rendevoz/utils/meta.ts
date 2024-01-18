@@ -7,6 +7,7 @@ import { IImportResult } from '~/typings/rendevoz'
 import importImage from '@/core/rendevoz/utils/localImport/importImage'
 import importAudio from '@/core/rendevoz/utils/localImport/importAudio'
 import { Rendevoz } from '@/core/rendevoz'
+import importMarkdown from '@/core/rendevoz/utils/localImport/importMarkdown'
 
 // supports PDF, video, image only
 const addMetaObjectFromFile = async (file: File) => {
@@ -27,6 +28,9 @@ const normalizeLocalFileToMeta = async (
     limitType?: boolean
   }
 ): Promise<IImportResult<any>> => {
+  if (file.name.endsWith('.md')) {
+    return await importMarkdown(file)
+  }
   if (file.type === 'application/pdf') {
     return await importPDF(file)
   }

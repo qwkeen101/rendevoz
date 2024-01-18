@@ -104,7 +104,7 @@ export type IMetaProperty = (
 // sourceType: note / metaObject / pdf document
 export interface MetaObject extends IBase {
   type: BuiltInMetaObjectTypes
-  workspace: string
+  workspace: number
   name?: string
   description?: string
   coverImgSrc?: string

@@ -13,7 +13,6 @@ const useAssignBodyOps = (instance: IGroupInstance, bodyRef: RefObject<HTMLEleme
   assignProperties(instance, {
     bodyOps: {
       scrollBody: movement => {
-        console.log('scroll')
         if (movement.y !== 0 && movement.y !== undefined) {
           const virtualizer = instance.virtualizer
           if (virtualizer) {

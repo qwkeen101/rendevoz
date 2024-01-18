@@ -7,6 +7,7 @@ const WhiteboardNodesBar = () => {
   return (
     <WithBorder
       padding={6}
+      borderBoxShadow
       style={{
         background: Colors.Background.Popover,
         position: 'absolute',

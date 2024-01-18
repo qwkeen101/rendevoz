@@ -10,7 +10,7 @@ import { DropOn, MetaLink, MetaObject } from '~/typings'
 import { useEventHandler } from '@/events'
 import useDropObject, { clearDragState } from './useDropObject'
 import { Rendevoz } from '@/core/rendevoz'
-import { TypeToRegisteredObject } from '@/api/stores/object.store'
+import { TypeToRegisteredObject } from '@/api/stores/object/object.store'
 import { KeyToRegisteredDropOnProcessor } from '@/core/plugin/RegisterMap'
 import { assignProperties } from '@/utils'
 import normalizeDraggableIntoMeta from '@/core/global/globalDragOverlay/normalizeDraggableIntoMeta'
@@ -42,10 +42,10 @@ const useOverlayDrop = () => {
         })) as MetaObject
         const isNewlyCreated = !currentKeys.has(res.id)
         if (res.hidden && hidden !== true) {
-          await MetaStore.updateMetaObject({ id: res.id, hidden: false }, true)
+          await MetaStore.updateMetaObject({ id: res.id, hidden: false })
         }
         if (hidden && isNewlyCreated) {
-          await MetaStore.updateMetaObject?.({ id: res.id, hidden: true }, true)
+          await MetaStore.updateMetaObject?.({ id: res.id, hidden: true })
         }
         return res
       }
@@ -135,7 +135,7 @@ const useOverlayDrop = () => {
     }
     allPendingLinks.forEach(i => addMetaLink(i, true))
     setPendingLinks(allPendingLinks)
-    addMetaObject(normalizedMetaObject, true).then(m => {
+    addMetaObject(normalizedMetaObject).then(m => {
       setMetaObject(m)
       toggleEditMetaVisible(true)
     })
@@ -171,7 +171,7 @@ const useOverlayDrop = () => {
         }
         const noteMeta =
           (await getMetaObjectByObjectId(dropOn.noteId)) ||
-          (await addMetaObject({ id: Id.getId(), objectId: dropOn.noteId, type: 'note' }, true))
+          (await addMetaObject({ id: Id.getId(), objectId: dropOn.noteId, type: 'note' }))
 
         link.targetId = noteMeta.id
         break
@@ -180,7 +180,7 @@ const useOverlayDrop = () => {
         if (!enableDropOnPDFLink) break
         const pdfMeta =
           (await getMetaObjectByObjectId(dropOn.pdfId)) ||
-          (await addMetaObject({ id: Id.getId(), objectId: dropOn.pdfId, type: 'pdf' }, true))
+          (await addMetaObject({ id: Id.getId(), objectId: dropOn.pdfId, type: 'pdf' }))
         link.targetId = pdfMeta.id
         break
       }
@@ -193,8 +193,7 @@ const useOverlayDrop = () => {
               id: Id.getId(),
               objectId: dropOn.whiteboardId,
               type: 'whiteboard'
-            },
-            true
+            }
           ))
         link.targetId = whiteboardMeta.id
         break
@@ -223,7 +222,10 @@ const useOverlayDrop = () => {
             l.id && deleteMetaLink(l.id, true, true)
           })
 
-          metaObject?.id && deleteMetaObject(metaObject?.id, true, true)
+          metaObject?.id && deleteMetaObject(metaObject?.id, {
+            silent: true,
+            force: true
+          })
           if (promise) {
             promise.rej?.(null)
           }

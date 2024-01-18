@@ -1,4 +1,15 @@
-import { cloneElement, CSSProperties, FC, memo, MouseEventHandler, ReactElement, ReactNode, useEffect, useState } from 'react'
+import {
+  cloneElement,
+  CSSProperties,
+  FC,
+  memo,
+  MouseEventHandler,
+  ReactElement,
+  ReactNode,
+  useEffect,
+  useLayoutEffect,
+  useState
+} from 'react'
 import Content from '../Content'
 import { AnimatePresence, motion } from 'framer-motion'
 import styles from './index.module.less'
@@ -152,7 +163,7 @@ export const Tabs: FC<TabsProps> = memo(
         })
       )
     }
-    useEffect(() => {
+    useLayoutEffect(() => {
       if (outActiveKey) {
         setActiveKey(outActiveKey)
       }

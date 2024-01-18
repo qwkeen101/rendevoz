@@ -6,7 +6,7 @@ import openUrlHandler from '../global/openUrlHandler'
 import requestIntercepter from '../global/requestIntercepter'
 import HttpsProxyAgent from 'https-proxy-agent'
 import axios from 'axios'
-import { app, BrowserWindow, protocol, session, shell, Menu } from 'electron'
+import { app, BrowserWindow, protocol, session, shell, Menu, Tray, nativeImage } from 'electron'
 import path from 'path'
 import '../controller/app'
 import '../controller/file'
@@ -166,8 +166,47 @@ const startElectron = async () => {
     })
   })
   process.env.SHOULD_CLOSE = 'false'
+  let tray = null
+  function createTray() {
+    const appIcon = new Tray(nativeImage.createFromPath(join(process.env.PUBLIC, 'iconTemplate.png')))
+    const lang = app.getLocale()
+    const contextMenu = Menu.buildFromTemplate([
+      {
+        label: lang === 'zh-CN' ? '显示' : 'Show',
+        click: () => {
+          win.show()
+          appIcon.destroy()
+        }
+      },
+      {
+        label: lang === 'zh-CN' ? '退出' : 'Exit',
+        click: () => {
+          process.env.MINIMIZE_TO_TRAY = 'false'
+          win.close()
+        }
+      }
+    ])
+    appIcon.on('double-click', () => {
+      win.show()
+    })
+    appIcon.setContextMenu(contextMenu)
+    return appIcon
+  }
+  win.on('restore', () => {
+    console.log('resotre')
+    if (tray) {
+      tray.destroy()
+    }
+  })
   win.on('close', e => {
-    console.log(process.env.SHOULD_CLOSE)
+    if (process.env.MINIMIZE_TO_TRAY === 'true' && process.platform === 'win32') {
+      e.preventDefault()
+      win.hide()
+      if (!tray) {
+        tray = createTray()
+      }
+      return
+    }
     if (process.env.SHOULD_CLOSE === 'false') {
       win.webContents.send('unload')
       e.preventDefault()
@@ -232,4 +271,6 @@ const startElectron = async () => {
   })
 }
 
+const base64AppIcon =
+  'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAQAAAAAYLlVAAAAIGNIUk0AAHomAACAhAAA+gAAAIDoAAB1MAAA6mAAADqYAAAXcJy6UTwAAAACYktHRAD/h4/MvwAAAAd0SU1FB+gBEgo7NZYlKyYAAANhSURBVGje7ZlPSBVBHMc/q2b+QRRLCiPBgiRNkIpIoYTAyoLMgx0irKCggjpGUNC5Y4eCsMKDUNa5SwVlaWhlQZJ6KS0iLUhfVv5JfdNh9718O7vPmXnP9eJvTjM7M9/Pzp/f/HYWlmzJFtmsOM+WsZNSchAIAAQQBgSCsFMinHIRzY8zxAcGmU4UbTNdCMP0mx6uUctyc/nVfHE6C3skVZD3nCXTDOCij7ROsiG62WEC8DAJABGICU74C6X4lKeZz16MCQQZNHFKF6ArSQA2BFxnt16jYkK+S9BsKgbJ9xJK9QEI0U0l+ViGSbY84LFcHM8R5bKPcrKiAykII5h1VnfE+di9REQFGZSwnfyY53adUcoYSuLUxrE1XGZSmkDBuWDkbathzIUgeBIkABxzLWPBGGuDRXjjAhDUuqukmPSrbA9icgIoDRagG/c+CxhgXCqRzsaFBajE7Q2+BgmQSUNM3gL6FvSFXdYgbcMwW4OTT+WV5IgGyA5KfiUtHq74tlxRNfDIJIswArBIIcXZXJGumfMkmyJqaKTY1YMFtModW8xnG9lPNRvIYdZZ0W4A4cjjAOQB7tUPFi+pYlZvIAtoYsIgLPeODWv1xKGEvqRFRYKbuvJ59CYtJBN0kqMLcCWJgflrCnXlCxhJ2qfJPVboysPhhGffFu+nMb6Qnx+oRg4q9WyGTpq5z5gZwHqpZJhJUhHR6DeCNxdTIJjlB/285SnvVDj9AGLPbYtp6ukhbV4ACDOhM1B+APKAh/ij07Gq+cUDlpRPXwh59YBESL49YAAWH2CBTP0iQscPbKGBQnq5wydTsBeuaO4vm5TbXmDS8YPfOW4K0OECmKJMsWXNHCcuEJyOX91vDZgvuTNzWtuXMydNAEwtmwrpRW5wNBkAamMyw5TUzuKW6xPFAMBSrDnFIw/0VFqoU35VANqNd0ER3zwiCcE4exIZAXU/8JlD/JRqCzJppVwdQJ5xdUfURh2jHgi5XEoEIKwMAG0cIOSBvE2OjdVPQx0AaOegx0Skq19QuO82JghpAdijMOZCGGRUFaDdle9hWBMAnlHPr+gdqgXcVf+R8/+PiZ32asvbtouP0T6aydBpWsFzp+EARwzlAVZxnhau+n2axttcFlWsI0QHIwkALNmSzWP/AC0CviZUxM+xAAAAJXRFWHRkYXRlOmNyZWF0ZQAyMDI0LTAxLTE4VDEwOjU5OjUyKzAwOjAwvFhYFQAAACV0RVh0ZGF0ZTptb2RpZnkAMjAyNC0wMS0xOFQxMDo1OTo1MiswMDowMM0F4KkAAAAodEVYdGRhdGU6dGltZXN0YW1wADIwMjQtMDEtMThUMTA6NTk6NTMrMDA6MDA8Z8rCAAAAAElFTkSuQmCC'
 export default startElectron

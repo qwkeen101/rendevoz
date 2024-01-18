@@ -33,7 +33,7 @@ export interface IFeedCollection extends IBase {
   items: number[]
   lastFetchedAt?: number
   unreadCount?: number
-  collectionType: 'podcast' | 'webpage'
+  collectionType: FeedItem['feedType']
 }
 
 export interface IFeedFolder extends IBase {

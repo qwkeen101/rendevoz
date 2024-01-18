@@ -22,7 +22,6 @@ export const LocalMicrosoftTranslate = async (query: string) => {
     }
   ).then(res => res.json())
   return result[0].translations[0].text
-  console.log(result)
 }
 const translateWholePage = async (editor: CustomEditor, instance: IEditorInstance) => {
   const value = editor.children

@@ -38,7 +38,7 @@ const LabelActionMenu = ({ on, objectId, type }: Props) => {
 
   return (
     <WithBorder padding={6} width={160}>
-      {meta && !meta.hidden && (
+      {meta && (
         <Button.IconButton
           icon="park-info"
           text={t('general.show object info')}
@@ -47,7 +47,7 @@ const LabelActionMenu = ({ on, objectId, type }: Props) => {
           }}
         />
       )}
-      {(!meta || meta.hidden) && (
+      {!meta && (
         <Button.IconButton
           icon={'park-share-one'}
           text={t('general.add as object')}
@@ -56,6 +56,15 @@ const LabelActionMenu = ({ on, objectId, type }: Props) => {
               type,
               labelId: objectId
             })
+          }}
+        />
+      )}
+      {meta?.hidden && (
+        <Button.IconButton
+          icon={'park-preview-open'}
+          text={t('general.Unhide object')}
+          onClick={() => {
+            MetaStore.updateMetaObject({ id: meta.id, hidden: false })
           }}
         />
       )}

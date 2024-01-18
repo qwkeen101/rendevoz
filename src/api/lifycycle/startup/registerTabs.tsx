@@ -10,14 +10,29 @@ import AudioPage from '@/scenes/AudioPage'
 import QuestionPage from '@/scenes/QuestionPage'
 import CodePage from '@/scenes/CodePage'
 import LabelDetailsRenderer from '@/core/object/renderer/LabelDetailsRenderer'
+import RecycleBin from '@/core/components/recycleBin'
+import TypeGroup from '@/core/components/category/type'
+import TagGroup from '@/core/components/category/tag'
 
 export const RENDEVOZ_DEFAULT_TABS: TabData[ILayoutTab['type']][] = [
+  {
+    type: 'typeGroup',
+    content: opts => opts.metaType && <TypeGroup type={opts.metaType} />
+  },
+  {
+    type: 'tagGroup',
+    content: opts => opts.objectId && <TagGroup id={opts.objectId} />
+  },
   {
     type: 'note',
     content: opts =>
       opts.objectId && (
         <EditorPage type="note" noteId={opts.objectId} id={Id.getStrId()} onInstanceInitialized={opts.onInstanceInitialized} />
       )
+  },
+  {
+    type: 'recycleBin',
+    content: () => <RecycleBin />
   },
   {
     type: 'syncedBlock',

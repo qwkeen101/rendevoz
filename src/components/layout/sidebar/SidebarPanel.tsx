@@ -13,6 +13,7 @@ import produce from 'immer'
 import { getOS } from '@/App'
 import ClassName from '@/styles/classNames'
 import useIsFullscreen from '@/hooks/utils/useIsFullscreen'
+import SidebarCategory from '@/components/layout/sidebar/SidebarCategory'
 const SidebarPanel = ({ direction }: { direction: 'right' | 'left' }) => {
   const [panelState, setPanelState] = useGlobalAtom(SidebarPanelStateAtom)
   const store = useMemo(() => createStore(), [])
@@ -36,7 +37,7 @@ const SidebarPanel = ({ direction }: { direction: 'right' | 'left' }) => {
         borderLeft: direction === 'left' ? `1px solid ${Colors.Background.Border}` : undefined,
         visibility: realOpen ? 'visible' : 'hidden',
         pointerEvents: realOpen ? 'auto' : 'none',
-        background: 'var(--tabs-bg)'
+        background: Colors.Background.Secondary
       }}
     >
       <Content
@@ -44,7 +45,7 @@ const SidebarPanel = ({ direction }: { direction: 'right' | 'left' }) => {
         gap={6}
         style={{
           background: 'var(--tabs-bg)',
-          height: 39,
+          height: 38,
           paddingTop: 3,
           paddingRight: 12,
           paddingLeft: os === 'macos' && !fullScreen ? 40 : 8,
@@ -57,6 +58,7 @@ const SidebarPanel = ({ direction }: { direction: 'right' | 'left' }) => {
       >
         <Icon
           name={'park-data'}
+          data-active={panelState.visible.has('database')}
           onClick={() => {
             setPanelState(s =>
               produce(s, draft => {
@@ -69,11 +71,38 @@ const SidebarPanel = ({ direction }: { direction: 'right' | 'left' }) => {
         />
         <Icon
           name={'park-folder-close'}
+          data-active={panelState.visible.has('collections')}
           onClick={() => {
             setPanelState(s =>
               produce(s, draft => {
                 draft.visible.clear()
                 draft.visible.add('collections')
+              })
+            )
+          }}
+          className={ClassName.flatButton(4, '4px 6px')}
+        />
+        <Icon
+          name={'park-category-management'}
+          data-active={panelState.visible.has('category')}
+          onClick={() => {
+            setPanelState(s =>
+              produce(s, draft => {
+                draft.visible.clear()
+                draft.visible.add('category')
+              })
+            )
+          }}
+          className={ClassName.flatButton(4, '4px 6px')}
+        />
+        <Icon
+          name={'park-google'}
+          data-active={panelState.visible.has('webSearch')}
+          onClick={() => {
+            setPanelState(s =>
+              produce(s, draft => {
+                draft.visible.clear()
+                draft.visible.add('webSearch')
               })
             )
           }}
@@ -141,6 +170,9 @@ const SidebarPanel = ({ direction }: { direction: 'right' | 'left' }) => {
           </TabPane>
           <TabPane tab={null} key="webSearch">
             <SearchPanel />
+          </TabPane>
+          <TabPane tab={null} key="category">
+            <SidebarCategory />
           </TabPane>
         </Tabs>
       </Provider>

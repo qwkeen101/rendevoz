@@ -11,6 +11,7 @@ import { WhiteboardTransformAtom } from '@/core/components/whiteboard/hooks/useW
 import { createPanZoom } from '@/core/components/whiteboard/panzoom'
 import { ObjectStore } from '@/api/stores'
 import { assignProperties } from '@/utils'
+import { getSetting } from '@/core'
 
 const WhiteboardPanzoom = memo(() => {
   const flow = useFlow()
@@ -57,6 +58,7 @@ const WhiteboardPanzoom = memo(() => {
           }
         },
         beforeWheel: e => {
+          const setting = getSetting()
           const pointerMode = flow.parentContainerEle?.getAttribute('data-pointer-mode')
           if (e.defaultPrevented) {
             return true
@@ -64,7 +66,9 @@ const WhiteboardPanzoom = memo(() => {
           if (pointerMode === 'pan') {
             return false
           }
-
+          if (setting.whiteboard.scrollModeInSelect === 'zoom') {
+            return false
+          }
           if (e.ctrlKey || e.metaKey) {
             return false
           }

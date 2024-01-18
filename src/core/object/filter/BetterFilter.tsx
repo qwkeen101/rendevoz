@@ -80,11 +80,13 @@ const BetterFilter = ({
   onChange,
   disableAddGroup,
   visibleTypes,
+  showHiddenMetas,
   extraFields,
   visibleFields
 }: {
   disableAddGroup?: boolean
   root?: MetaFilterGroup
+  showHiddenMetas?: boolean
   visibleTypes?: string[]
   visibleFields?: string[]
   onChange?: (root: MetaFilterGroup) => void
@@ -142,6 +144,7 @@ const BetterFilter = ({
           groupType={filterRoot.groupType}
           rule={i}
           key={idx}
+          showHiddenMetas={showHiddenMetas}
           onChange={handleChange}
         />
       ))}
@@ -159,6 +162,26 @@ const BetterFilter = ({
           onClick={() => {
             setFilterRoot(s =>
               produce(s, draft => {
+                if (visibleFields) {
+                  if (visibleFields.includes('type')) {
+                    draft.rules.push({
+                      filterType: 'rule',
+                      field: 'type',
+                      value: '',
+                      type: 'is',
+                      id: Id.getId()
+                    })
+                  } else {
+                    draft.rules.push({
+                      filterType: 'rule',
+                      field: 'name',
+                      value: '',
+                      type: 'contains',
+                      id: Id.getId()
+                    })
+                  }
+                  return
+                }
                 draft.rules.push({
                   filterType: 'rule',
                   field: 'type',
@@ -221,7 +244,8 @@ const FilterItem = ({
   onChangeGroupType,
   visibleTypes,
   visibleFields,
-  extraFields = []
+  extraFields = [],
+  showHiddenMetas
 }: {
   rule: MetaFilterRule
   groupType: 'and' | 'or'
@@ -232,6 +256,7 @@ const FilterItem = ({
   onChangeGroupType: (t: 'and' | 'or') => void
   visibleTypes?: string[]
   extraFields?: ExtraFields[]
+  showHiddenMetas?: boolean
 }) => {
   const filterType = rule.filterType
   const { t } = useTranslation()
@@ -331,7 +356,7 @@ const FilterItem = ({
         case 'description':
           return <StringFilter rule={rule} onChange={onChange} />
         case 'type':
-          return <TypeFilter visibleTypes={visibleTypes} rule={rule} onChange={onChange} />
+          return <TypeFilter showHiddenMetas={showHiddenMetas} visibleTypes={visibleTypes} rule={rule} onChange={onChange} />
         case 'updatedAt':
         case 'viewAt':
         case 'createdAt':
@@ -611,14 +636,19 @@ const StringFilter = ({ rule, onChange }: { rule: StringFieldFilterRule; onChang
 const TypeFilter = ({
   rule,
   onChange,
-  visibleTypes
+  visibleTypes,
+  showHiddenMetas
 }: {
   rule: TypeFieldFilterRule
   onChange: (newRule: MetaFilterRule) => void
   visibleTypes?: string[]
+  showHiddenMetas?: boolean
 }) => {
   const { t } = useTranslation()
-  const existedTypes = visibleTypes || Array.from(MetaStore.useIndexedMetaObjects()?.typeToMetaObjectIdsMap.keys() || [])
+  const existedTypes =
+    visibleTypes || showHiddenMetas
+      ? Array.from(MetaStore.getIndexedMetaObjects()?.typeToMetaObjectIdsMap.keys() || [])
+      : MetaStore.getVisibleMetaTypes()
   const options = [
     {
       value: 'is',

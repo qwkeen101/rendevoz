@@ -12,7 +12,7 @@ import { truncate } from 'lodash'
 
 const retrieveMetaObjectByObjectId = async (objectId: number, type: MetaObject['type']) => {
   const { addMetaObject, getMetaObjectByObjectId } = MetaStore
-  return (await getMetaObjectByObjectId(objectId)) || (await addMetaObject({ type, objectId }, true))
+  return (await getMetaObjectByObjectId(objectId)) || (await addMetaObject({ type, objectId }))
 }
 
 export default async (
@@ -47,8 +47,7 @@ export default async (
           {
             type: 'pdf',
             objectId: dragElement.pdfId
-          },
-          true
+          }
         ))
       Object.assign(normalizedMetaObject, pdfMeta)
       alreadyHasMeta = true
@@ -74,8 +73,7 @@ export default async (
           {
             type: 'note',
             objectId: dragElement.noteId
-          },
-          true
+          }
         ))
       Object.assign(normalizedMetaObject, noteMeta)
       alreadyHasMeta = true
@@ -143,7 +141,7 @@ export default async (
     case 'whiteboard': {
       const whiteboardMeta =
         (await getMetaObjectByObjectId(dragElement.whiteboardId)) ||
-        (await addMetaObject({ type: 'whiteboard', objectId: dragElement.whiteboardId }, true))
+        (await addMetaObject({ type: 'whiteboard', objectId: dragElement.whiteboardId }))
       Object.assign(normalizedMetaObject, whiteboardMeta)
       alreadyHasMeta = true
       shouldOpenEditMetaModal = false
@@ -179,8 +177,7 @@ export default async (
               name: obj.name,
               description: obj.description,
               fromObject: parentMeta ? { type: parentMeta.type, metaId: parentMeta.id } : undefined
-            },
-            true
+            }
           ))
         Object.assign(normalizedMetaObject, questionMeta)
         if (parentMeta) {

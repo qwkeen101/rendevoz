@@ -21,7 +21,7 @@ export default ({ metaId, onBack }: { metaId: number; onBack: VoidFunction }) =>
         <Icon name={'park-left'} className={ClassName.circleButton()} onClick={onBack} />
         {t('general.Select tags')}
       </Content>
-      <MetaTagPicker alreadyTags={obj?.tags || []} onChange={v => MetaStore.updateMetaObject({ id: metaId, tags: v }, true)} />
+      <MetaTagPicker alreadyTags={obj?.tags || []} onChange={v => MetaStore.updateMetaObject({ id: metaId, tags: v })} />
     </Content>
   )
 }

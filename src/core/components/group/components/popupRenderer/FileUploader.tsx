@@ -4,9 +4,11 @@ import { Rendevoz } from '@/core/rendevoz'
 import { ClassName } from 'rendevoz'
 import { useState } from 'react'
 import FileSystem from '@/api/fileSystem'
+import { useTranslation } from 'react-i18next'
 
 export default ({ onUpload, accept }: { onUpload: (filePath: string, fileType: string, fileName: string) => void; accept?: string }) => {
   const [input, setInput] = useState('')
+  const { t } = useTranslation()
   return (
     <Content style={{ width: '100%' }}>
       <Tabs
@@ -16,7 +18,7 @@ export default ({ onUpload, accept }: { onUpload: (filePath: string, fileType: s
           borderBottom: '1px solid var(--border-background)'
         }}
       >
-        <TabPane tab={'Upload'} key="upload" style={{ padding: '12px 9px' }}>
+        <TabPane tab={t('general.Upload')} key="upload" style={{ padding: '12px 9px' }}>
           <Button.IconButton
             style={{
               justifyContent: 'center'
@@ -39,14 +41,14 @@ export default ({ onUpload, accept }: { onUpload: (filePath: string, fileType: s
                 }
               })
             }}
-            text={'Choose a file'}
+            text={t('general.Choose a file')}
           />
         </TabPane>
-        <TabPane tab={'Embed link'} key={'link'} style={{ padding: '16px 8px' }}>
+        <TabPane tab={t('general.Embed link')} key={'link'} style={{ padding: '16px 8px' }}>
           <input
             className={ClassName.noStyleInput}
             value={input}
-            placeholder={'Embed a link like https://....'}
+            placeholder={t('general.Embed a link like') + ' https://....'}
             style={{
               fontSize: 14,
               marginBottom: 12,
@@ -65,7 +67,7 @@ export default ({ onUpload, accept }: { onUpload: (filePath: string, fileType: s
                 onUpload(input, '', input)
               }
             }}
-            text={'Embed a link'}
+            text={t('general.Embed a link')}
           />
         </TabPane>
       </Tabs>

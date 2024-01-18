@@ -1,17 +1,21 @@
 import useGroupState from '@/core/components/group/hooks/useGroupState'
 import { Resizable } from 're-resizable'
 import MediaLabelController from '@/core/components/media/components/sidebar/MediaLabelController'
-import { useEffect, useState } from 'react'
+import { memo, useEffect, useState } from 'react'
 import { MetaStore, ObjectStore } from '@/api/stores'
 import EditorLabelController from '@/core/components/editor/components/EditorLabelController'
 import PdfLabelController from '@/core/components/pdf/components/sidebar/PdfLabelController'
 import { RENDEVOZ_DEFAULT_TABS } from '@/api/lifycycle/startup/registerTabs'
-import { Colors } from '@/consts'
+import { Colors, KEY } from '@/consts'
 import { Icon } from '@/components'
 import { ClassName } from 'rendevoz'
 import { DockTabPaneContext } from '@/components/base/dock/DockTabPane'
+import { Rendevoz } from '@/core/rendevoz'
+import { useMemoizedFn } from '@/hooks'
+import isHotkey from 'is-hotkey'
+import { useGroupInstance } from '@/core/components/group/hooks/useGroupInstance'
 
-export default () => {
+export default memo(() => {
   const [groupState, setGroupState] = useGroupState()
   const [labelIds, setLabelIds] = useState([])
   const [labelType, setLabelType] = useState('')
@@ -29,15 +33,60 @@ export default () => {
         })
     }
   }, [groupState.sidebarState?.type, groupState.sidebarState?.objectType, groupState.sidebarState?.objectId])
+  const sidebarState = groupState.sidebarState
+  const instance = useGroupInstance()
+  const handleNavigateLeft = () => {
+    if (sidebarState?.type === 'preview' && sidebarState.rowId) {
+      const prev = instance.valueOps?.getPrevMeta(sidebarState.rowId)
+      prev &&
+        instance.sidebarOps?.open({
+          metaId: prev.metaId,
+          rowId: prev.rowId,
+          type: 'preview'
+        })
+    }
+  }
+  const handleNavigateRight = () => {
+    if (sidebarState?.type === 'preview' && sidebarState.rowId) {
+      const next = instance.valueOps?.getNextMeta(sidebarState.rowId)
+      next &&
+        instance.sidebarOps?.open({
+          metaId: next.metaId,
+          rowId: next.rowId,
+          type: 'preview'
+        })
+    }
+  }
+  const keydownHandler = useMemoizedFn((e: KeyboardEvent) => {
+    if (e.defaultPrevented) return
+    if (!instance.values.isFocused) return
+    if (e.target instanceof Element && e.target.closest('input, textarea, [contenteditable="true"]')) return
+    if (isHotkey(KEY.ArrowLeft, e)) {
+      handleNavigateLeft()
+      e.preventDefault()
+    }
+    if (isHotkey(KEY.ArrowRight, e)) {
+      handleNavigateRight()
+      e.preventDefault()
+    }
+  })
+  useEffect(() => {
+    if (groupState.sidebarVisible && sidebarState?.type === 'preview') {
+      document.addEventListener('keydown', keydownHandler)
+      return () => {
+        document.removeEventListener('keydown', keydownHandler)
+      }
+    }
+  }, [groupState.sidebarVisible, sidebarState?.type])
   const renderer = () => {
     if (groupState.sidebarVisible) {
       if (groupState.sidebarState?.type === 'preview') {
         if (groupState.sidebarState.metaId && peekMeta) {
-          const page = RENDEVOZ_DEFAULT_TABS.find(i => i.type === peekMeta.type)
+          const page = Rendevoz.Actions.Layout.getRegisteredTabContent(peekMeta.type)
           if (page) {
             return (
               <DockTabPaneContext.Provider key={peekMeta.id} value={{ currentTabId: '' }}>
-                {page.content({ objectId: peekMeta.objectId })}
+                {page({ objectId: peekMeta.objectId, metaId: peekMeta.id })}
               </DockTabPaneContext.Provider>
             )
           }
@@ -66,7 +115,7 @@ export default () => {
       style={{
         position: 'absolute',
         zIndex: 50,
-        background: Colors.Background.Global,
+        background: Colors.Background.Popover,
         right: 0,
         boxShadow: Colors.Background.BoxShadow,
         opacity: groupState.sidebarVisible ? 1 : 0,
@@ -77,16 +126,17 @@ export default () => {
       enable={{ left: true }}
     >
       <Icon
-        name={'park-right'}
-        className={ClassName.circleButton()}
-        size={24}
+        name={'park-double-right'}
+        className={ClassName.flatButton(4, '6px')}
+        size={20}
         onClick={() => {
           setGroupState(s => ({ ...s, sidebarVisible: false }))
         }}
         containerStyle={{
           position: 'absolute',
           left: -38,
-          top: '50%',
+          color: Colors.Font.Transparent,
+          top: '20px',
           transform: 'translateY(-50%)'
         }}
       />
@@ -95,11 +145,14 @@ export default () => {
           width: '100%',
           height: '100%',
           padding: groupState.sidebarState?.type === 'labels' ? 12 : 0,
-          overflow: 'hidden'
+          overflow: 'hidden',
+          display: 'flex',
+          alignItems: 'center',
+          '--global-background': '--background-secondary'
         }}
       >
         {renderer()}
       </div>
     </Resizable>
   )
-}
+})

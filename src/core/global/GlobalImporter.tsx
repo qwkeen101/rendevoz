@@ -8,7 +8,7 @@ import { CollectionStore, NoteStore, ObjectStore } from '@/api/stores'
 import { getFilenameWithoutExtension } from '@/utils/file'
 import { createPortal } from 'react-dom'
 import ClassName from '@/styles/classNames'
-import { Content, Icon } from '@/components'
+import { Content, Icon, WithBorder } from '@/components'
 import { useTranslation } from 'react-i18next'
 import FontSize from '@/consts/font'
 import { Rendevoz } from '../rendevoz'
@@ -123,7 +123,7 @@ const GlobalImporter = () => {
   }, [notes])
   return createPortal(
     visible && (
-      <div
+      <WithBorder
         style={{
           position: 'fixed',
           zIndex: 100,
@@ -134,7 +134,6 @@ const GlobalImporter = () => {
           minWidth: 300,
           maxWidth: 400
         }}
-        className={ClassName.Background.pseudoBlubBackground}
       >
         <Content flex alignItems="center" fullWidth gap={12} style={{ padding: '6px 8px' }} className={ClassName.title(FontSize['15px'])}>
           {completed ? <Icon name="park-check" /> : <Icon name="park-loading-four" spin />}
@@ -186,7 +185,7 @@ const GlobalImporter = () => {
             )
           })}
         </Content>
-      </div>
+      </WithBorder>
     ),
     document.body
   )

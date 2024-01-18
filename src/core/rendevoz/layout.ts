@@ -24,11 +24,11 @@ const openTabInWhiteboard = (data: ILayoutTab) => {
   return false
 }
 
-const restoreSavedTab = (tab: { type: string; objectId: number; id: string }) => {
-  const { type, objectId, id } = tab
+const restoreSavedTab = (tab: { type: string; objectId?: number; id: string; metaType?: string }) => {
+  const { type, objectId, id, metaType } = tab
   const tabData = TabDataMap.get(type)
   if (!tabData) return
-  const initialized = initializeOneTab(tabData, { type, objectId })
+  const initialized = initializeOneTab(tabData, { type, objectId, metaType })
   if (initialized) {
     const { layoutTab } = initialized
     LayoutIdToTabMap.set(id, layoutTab)
@@ -37,7 +37,8 @@ const restoreSavedTab = (tab: { type: string; objectId: number; id: string }) =>
       id,
       title: 'New Tab',
       type,
-      objectId
+      objectId,
+      metaType
     }
   }
 }
@@ -79,7 +80,8 @@ const openNewTab = ({ data }) => {
       id,
       title: 'New Tab',
       type: layoutTab.type,
-      objectId: layoutTab.objectId
+      objectId: layoutTab.objectId,
+      metaType: data.metaType
     })
   }
 }
@@ -94,14 +96,15 @@ const initializeOneTab = (tabData, openTabData) => {
   }
   const layoutTab: Partial<ILayoutTab> = {
     type: openTabData.type,
-    objectId: openTabData.objectId
+    objectId: openTabData.objectId,
+    metaType: openTabData.metaType
   }
   // get rendered element
-
   const contentElement = tabData.content({
     tab: layoutTab,
     objectId: openTabData.objectId,
-    onInstanceInitialized: newInitializedFunction
+    onInstanceInitialized: newInitializedFunction,
+    metaType: openTabData.metaType
   })
   if (!contentElement) return
   layoutTab.tabContent = contentElement
@@ -112,13 +115,19 @@ const initializeOneTab = (tabData, openTabData) => {
 }
 
 const hasTargetTab = tabData => {
-  const { type, objectId } = tabData
+  const { type, objectId, metaType } = tabData
   console.log(LayoutIdToTabMap)
   const target = Array.from(LayoutIdToTabMap.entries()).find(([k, v]) => {
     if (type === v.type) {
       console.log(v)
       if ('objectId' in v && objectId) {
         if (v.objectId === objectId) {
+          return k
+        }
+        return
+      }
+      if ('metaType' in v && metaType) {
+        if (v.metaType === metaType) {
           return k
         }
         return

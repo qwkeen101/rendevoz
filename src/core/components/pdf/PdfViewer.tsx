@@ -43,7 +43,7 @@ export const PdfViewer: FC<PdfViewerProps> = memo(({ documentId, transformScale,
     if (documentMeta && !documentMeta.coverImgSrc) {
       setTimeout(() => {
         viewer.capturePageImage?.(0).then(s => {
-          MetaStore.updateMetaObject({ id: documentMeta.id, coverImgSrc: s }, true)
+          MetaStore.updateMetaObject({ id: documentMeta.id, coverImgSrc: s })
         })
       }, 100)
     }
@@ -65,7 +65,7 @@ export const PdfViewer: FC<PdfViewerProps> = memo(({ documentId, transformScale,
         if (documentMeta && !documentMeta.coverImgSrc) {
           setTimeout(() => {
             viewer.capturePageImage?.(0).then(s => {
-              MetaStore.updateMetaObject({ id: documentMeta.id, coverImgSrc: s }, true)
+              MetaStore.updateMetaObject({ id: documentMeta.id, coverImgSrc: s })
             })
           }, 100)
         }

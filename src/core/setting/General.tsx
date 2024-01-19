@@ -62,11 +62,7 @@ const GeneralSetting = () => {
       toggleIsImporting(false)
       if (result) {
         toast.success('Successfully import data!')
-        setTimeout(() => {
-          getAllMetaLinks()
-          getAllMetaObjects()
-          getAllCollections()
-        })
+        ipcInstance.send('reload')
       } else {
         toast.error('Fail to import data! (Unaccepted data type)')
       }

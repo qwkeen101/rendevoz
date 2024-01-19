@@ -196,7 +196,7 @@ const createMetaStore = () => {
       if (setting.object.autoHideLabelObject && initedMetaObject.type?.includes('Label')) {
         initedMetaObject.hidden = true
       }
-      initedMetaObject.workspace = KeyvalueStore.getOne('currentWorkspace')
+      initedMetaObject.workspace = KeyvalueStore.getOne('currentWorkspace')?.id
       if (!initedMetaObject.name) {
         let initedName = ''
         const registeredDefaultName = TypeToRegisteredMetaObject.get(initedMetaObject.type)?.defaultName

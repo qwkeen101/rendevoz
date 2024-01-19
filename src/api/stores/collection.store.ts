@@ -6,7 +6,7 @@ import BaseStore, { initializeLocalStore } from './base.store'
 import produce from 'immer'
 import { IStoreDeprecated } from './types'
 import { toast } from 'react-hot-toast'
-import { globalStore, MetaStore, ObjectStore } from './index'
+import { CollectionStore, globalStore, MetaStore, ObjectStore } from './index'
 import getSetting from '@/core/setting/getSetting'
 import { useMemo } from 'react'
 import { useSelectGlobalAtomValue } from '@/hooks'
@@ -96,12 +96,14 @@ const useCollectionStore = () => {
   const store = initializeLocalStore<ICollection>(collectionsAtom, database)
   const localStore: Pick<IStoreDeprecated<ICollection>, 'addOne' | 'deleteOneById' | 'getAll' | 'getOneById' | 'updateOne'> = {
     addOne: store.addOne((obj, silent) => {
+      if (!obj.workspace) {
+        CollectionStore.updateCollection({ id: obj.id, workspace: KeyvalueStore.getOne('currentWorkspace')?.id })
+      }
     }),
     updateOne: store.updateOne((obj, silent) => {
       // !silent && shouldToast(silent) && toast.success('Collection successfully updated!')
     }),
-    deleteOneById: store.deleteOneById(silent => {
-    }),
+    deleteOneById: store.deleteOneById(silent => {}),
     getAll: store.getAll(i => i.workspace === KeyvalueStore.getOne('currentWorkspace')?.id),
     getOneById: store.getOneById()
   }

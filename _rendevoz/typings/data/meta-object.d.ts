@@ -122,36 +122,7 @@ export interface MetaObject extends IBase {
   placeholderName?: string
   // id to prop
   properties?: Record<number | string, IMetaProperty>
-  fromObject?:
-    | {
-        type: 'pdf'
-        metaId: number
-        pages?: number[]
-        rect?: Box
-        selectedText?: string
-      }
-    | {
-        type: 'note'
-        metaId: number
-        blockId?: number
-        selectedText?: string
-      }
-    | {
-        type: 'webpage'
-        metaId: number
-        blockId?: number
-        selectedText?: string
-      }
-    | {
-        type: 'whiteboard'
-        metaId: number
-      }
-    | {
-        type: 'video'
-        metaId: number
-        time?: number
-      }
-  temp?: boolean
+  fromObject?: { metaId: number; type: MetaObject['type'] }
 }
 
 export type RegisteredMetaObject<T = MetaObject['type']> = {

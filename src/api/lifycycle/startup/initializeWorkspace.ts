@@ -18,8 +18,8 @@ const initializeWorkspace = async () => {
   allWorkspace.forEach(i => {
     if (!i.id) {
       i.id = Id.getId()
-      workspaceNameToId[i.name] = i.id
     }
+    workspaceNameToId[i.name] = i.id
   })
 
   if (typeof currentWorkspace === 'string') {

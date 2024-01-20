@@ -7,6 +7,7 @@ import { useSelectAtomValue } from '@/hooks'
 import { GroupStateAtom } from '@/core/components/group/hooks/useGroupState'
 import GalleryRenderer from '@/core/components/group/components/gallery/GalleryRenderer'
 import ListRenderer from '@/core/components/group/components/list/ListRenderer'
+import GroupGrouperRenderer from '@/core/components/group/components/group/multipleGroupRenderer'
 
 export const GroupRenderer = memo(() => {
   const displayValues = useSelectAtomValue(GroupStateAtom, s => s.viewValues)
@@ -19,6 +20,7 @@ export const GroupRenderer = memo(() => {
       {currentView === 'table' && <TableRenderer value={filterValues || displayValues} />}
       {currentView === 'gallery' && <GalleryRenderer value={filterValues || displayValues} />}
       {currentView === 'list' && <ListRenderer value={filterValues || displayValues} />}
+      {/*<GroupGrouperRenderer />*/}
     </Content>
   )
 })

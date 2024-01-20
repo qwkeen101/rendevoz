@@ -13,6 +13,9 @@ export default async (url: string, feedType: FeedItem['feedType']) => {
         return true
       }
     })
+    if (url.includes('youtube.com')) {
+      feedType = 'youtube'
+    }
     const initialItems = initialRes.items.map(i => ({ ...i, feedType: feedType }))
     return {
       ...initialRes,

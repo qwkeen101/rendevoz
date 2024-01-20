@@ -21,6 +21,7 @@ import { go } from 'fuzzysort'
 import isHotkey from 'is-hotkey'
 import { KEY } from '@/consts'
 import Select from '@/components/base/select'
+import KeyvalueStore from '@/api/stores/keyvalue.store'
 
 export const GlobalObjectPanelInstance: {
   open?: (position?: LeftTopPosition) => void
@@ -68,8 +69,12 @@ export const ObjectPanel = memo(
 
     const { t } = useTranslation()
     const [filterSort, setFilterSort] = useAtom(ObjectPanelFilterSortAtom)
-    const [shouldDisplayObjects, setShouldDisplayObjects] = useState<MetaObject[]>(undeleteObjects)
+
+    const showHiddenMetasInObjectPanel = KeyvalueStore.useValue('showHiddenMetasInSidebar') ?? false
     const [sortMode, setSortMode] = useState<'create' | 'recent'>('create')
+    const [shouldDisplayObjects, setShouldDisplayObjects] = useState<MetaObject[]>(
+      showHiddenMetasInObjectPanel ? undeleteObjects : undeleteObjects.filter(i => MetaStore.isVisibleMetaObject(i))
+    )
     useEffect(() => {
       if (
         filterSort.filterVisible === false &&
@@ -99,7 +104,7 @@ export const ObjectPanel = memo(
                 }
           ]
         })
-        setShouldDisplayObjects(afterSort)
+        setShouldDisplayObjects(showHiddenMetasInObjectPanel ? afterSort : afterSort.filter(i => MetaStore.isVisibleMetaObject(i)))
       }
       if (filterSort.filterVisible === false && !filterSort.filter?.rules.length && !filterSort.searchInput) {
         const afterSort = calculateSortObjects(undeleteObjects, {
@@ -117,9 +122,9 @@ export const ObjectPanel = memo(
                 }
           ]
         })
-        setShouldDisplayObjects(afterSort)
+        setShouldDisplayObjects(showHiddenMetasInObjectPanel ? afterSort : afterSort.filter(i => MetaStore.isVisibleMetaObject(i)))
       }
-    }, [filterSort.filterVisible, undeleteObjects, filterSort.searchInput, sortMode])
+    }, [filterSort.filterVisible, undeleteObjects, filterSort.searchInput, sortMode, showHiddenMetasInObjectPanel])
 
     const debounceSet = useDebounceFn(
       v => {
@@ -287,6 +292,20 @@ export const ObjectPanel = memo(
                 suffixStr={filterSort.filter?.rules.length || undefined}
               />
             </AnimatePopover>
+            <Tooltip delay={200} content={t('general.Show hidden objects')}>
+              <Icon
+                onClick={() => {
+                  KeyvalueStore.updateOne('showHiddenMetasInSidebar', !showHiddenMetasInObjectPanel)
+                }}
+                style={{
+                  fontSize: 12,
+                  padding: '4px',
+                  lineHeight: '14px'
+                }}
+                className={ClassName.flatButton()}
+                name={showHiddenMetasInObjectPanel ? 'park-preview-open' : 'park-preview-close'}
+              />
+            </Tooltip>
           </Content>
         </Content>
         <VirtualList

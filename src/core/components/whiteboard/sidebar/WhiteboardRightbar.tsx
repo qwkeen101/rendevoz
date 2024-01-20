@@ -111,7 +111,7 @@ const WhiteboardRightbar = () => {
       {visible && (
         <Icon
           size={18}
-          containerStyle={{
+          style={{
             position: 'absolute',
             top: 8,
             left: 8

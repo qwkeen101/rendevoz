@@ -11,6 +11,7 @@ export type CurrentKeyValues = {
     name: string
     createdAt: number
   }
+  showHiddenMetasInSidebar?: boolean
   searchHistory: string[]
   allWorkspaces: {
     id: number

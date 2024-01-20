@@ -28,6 +28,9 @@ export interface IconProps extends DetailedHTMLProps<HTMLAttributes<HTMLDivEleme
 const disableSvg = css({
   svg: {
     pointerEvents: 'none'
+  },
+  span: {
+    pointerEvents: 'none'
   }
 })
 const Icon = forwardRef<HTMLDivElement, IconProps>(
@@ -60,7 +63,15 @@ const Icon = forwardRef<HTMLDivElement, IconProps>(
     if (!ele) return null
 
     return (
-      <Content {...rest} style={{ ...containerStyle, ...s }} className={classNames(className, disableSvg)} onClick={onClick} flex centered ref={ref}>
+      <Content
+        {...rest}
+        style={{ ...containerStyle, ...s }}
+        className={classNames(className, disableSvg)}
+        onClick={onClick}
+        flex
+        centered
+        ref={ref}
+      >
         {ele}
       </Content>
     )

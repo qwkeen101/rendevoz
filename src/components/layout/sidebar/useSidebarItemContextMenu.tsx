@@ -22,12 +22,14 @@ const useSidebarItemContextMenu = (
     onEdit,
     onAddNewSubItem,
     onRemoveFromCollection,
+    onViewDetails,
     onDeleteWithMeta,
     pinned
   }: {
     onPin?: VoidFunction
     onDelete?: VoidFunction
     onEdit?: VoidFunction
+    onViewDetails?: VoidFunction
     onDeleteWithMeta?: VoidFunction
     onRemoveFromCollection?: VoidFunction
     pinned?: boolean
@@ -107,8 +109,7 @@ const useSidebarItemContextMenu = (
               })
             }
           }}
-          className={ClassName.defaultFont(13, 600)}
-          padding={6}
+          padding={4}
           width={150}
           onClick={e => {
             if (e.target !== e.currentTarget) {
@@ -150,6 +151,20 @@ const useSidebarItemContextMenu = (
                 icon="park-plus"
               />
             </>
+          )}
+          {item.type === 'meta' && (
+            <Button.IconButton
+              text={t('general.View details')}
+              icon="park-info"
+              onClick={e => {
+                e.stopPropagation()
+                onViewDetails?.()
+                setContextMenuState({
+                  ...contextMenuState,
+                  contextMenuVisible: false
+                })
+              }}
+            />
           )}
           <Button.IconButton
             text={t('general.edit')}

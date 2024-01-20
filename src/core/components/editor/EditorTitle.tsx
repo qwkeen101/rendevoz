@@ -73,7 +73,7 @@ const EditorTitle: ForwardRefComponent<HTMLDivElement, EditorTitleProps> = forwa
         gap={10}
         style={{
           width: 'var(--editor-max-width)',
-          padding: '40px 0px 20px',
+          padding: '25px 0px 20px',
           ...titleContainerStyle
         }}
         ref={node => (editor.titleEle = node)}

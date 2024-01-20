@@ -30,6 +30,7 @@ export interface AnimatePopoverProps extends Omit<PopoverProps, 'content' | 'isO
   children?: ReactNode
   contentDraggable?: boolean
   closeOnClickOutside?: boolean
+  openOnClick?: boolean
   withClickCover?: boolean
   borderRadius?: number
   openOnClickCapture?: boolean
@@ -50,6 +51,7 @@ const AnimatePopover: FC<PropsWithChildren<AnimatePopoverProps>> = ({
   keepAlign = false,
   disableNudge = false,
   position,
+  openOnClick = true,
   openOnClickCapture = false,
   parentElement = document.body,
   boundaryElement = document.body,

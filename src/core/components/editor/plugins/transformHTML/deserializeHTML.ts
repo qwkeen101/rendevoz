@@ -7,23 +7,28 @@ import deserializeParagraph from './deserialize/deserializeParagraph'
 import deserializeText from './deserialize/deserializeText'
 import { ELEMENT_TAGS } from '@/core/components/editor/plugins/transformHTML/HTMLTags'
 import normalizeText from '@/core/components/editor/plugins/transformHTML/deserialize/normalizeText'
+import deserializeLi from '@/core/components/editor/plugins/transformHTML/deserialize/deserializeLi'
+import { Text } from 'slate'
 
-const NoNestedNodeNames = ['A', 'H1', 'H2', 'H3', 'H4', 'H5', 'H6', 'PRE', 'SUP', 'FIGCAPTION', 'BLOCKQUOTE']
+const NoNestedNodeNames = ['A', 'H1', 'H2', 'H3', 'LI', 'H4', 'H5', 'H6', 'PRE', 'SUP', 'FIGCAPTION', 'BLOCKQUOTE']
 
 const deserializeHTML = (root: HTMLElement) => {
   // deserialize text node
   if (root.nodeType === Node.TEXT_NODE) {
-    return deserializeTextNode(root)
+    return deserializeText(root)
   }
   // if not text node or element node, return null
   if (root.nodeType !== Node.ELEMENT_NODE) return null
   if (WrapperNodeNames.includes(root.nodeName)) {
-    return jsx('fragment', {}, deserializeHTMLChildren(root))
+    const c = deserializeHTMLChildren(root).filter(i => !Text.isText(i))
+    return jsx('fragment', {}, c)
   }
   switch (root.nodeName) {
     case 'DIV':
     case 'P':
       return deserializeParagraph(root)
+    case 'LI':
+      return deserializeLi(root)
     case 'SPAN':
       return deserializeSpan(root)
     case 'BR':

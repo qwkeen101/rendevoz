@@ -1,5 +1,6 @@
 import { IBase, IMetaProperty, MetaFilterGroup } from '~/typings'
 import { SorterGroup } from '../../../../src/core/object/filter/BetterSorter'
+import { DateGroupRule, IGroupRule, StringGroupRule } from '~/typings/components/group/property-group'
 
 export type MetaGroupProperty = (
   | {
@@ -38,6 +39,12 @@ export type MetaGroupViewProperty = {
   order: number
   width?: number
 }
+
+export type IMetaGroupGrouper = {
+  propertyId: number
+  propertyGroupType: 'basic' | 'custom'
+} & IGroupRule
+
 export interface MetaGroup extends IBase {
   belongsTo?: number
   // value id - index dict
@@ -86,6 +93,7 @@ export interface MetaGroup extends IBase {
     filter?: MetaFilterGroup
     sort?: SorterGroup
     search?: string
+    group?: IMetaGroupGrouper
   })[]
   rootFilterGroup: MetaFilterGroup
   autoAddto: 'first' | 'last'

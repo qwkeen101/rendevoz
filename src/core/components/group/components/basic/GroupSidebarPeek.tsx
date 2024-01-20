@@ -127,16 +127,18 @@ export default memo(() => {
     >
       <Icon
         name={'park-double-right'}
-        className={ClassName.flatButton(4, '6px')}
-        size={20}
+        className={ClassName.flatButton(4, '5px')}
+        size={18}
         onClick={() => {
           setGroupState(s => ({ ...s, sidebarVisible: false }))
         }}
-        containerStyle={{
+        style={{
+          background: Colors.Background.Global,
           position: 'absolute',
-          left: -38,
+          left: -36,
           color: Colors.Font.Transparent,
           top: '20px',
+          boxShadow: Colors.Background.BorderBoxShadow,
           transform: 'translateY(-50%)'
         }}
       />

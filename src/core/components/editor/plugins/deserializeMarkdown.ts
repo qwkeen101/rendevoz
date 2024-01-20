@@ -19,6 +19,10 @@ import { unified } from 'unified'
 import markdown from 'remark-parse'
 import { Descendant, Node } from 'slate'
 import Id from '@/utils/id'
+import showdown from 'showdown'
+import { deserializeHTML } from '@/core/components/editor/plugins/deserializeHtml'
+
+const markdownToHTMLConverter = new showdown.Converter()
 
 export function deserializeMarkdown<T extends InputNodeTypes>(node: MdastNode, opts?: OptionType<T>) {
   const types = {
@@ -161,21 +165,42 @@ export function deserializeMarkdown<T extends InputNodeTypes>(node: MdastNode, o
       return { text: node.value || '' }
   }
 }
-
+function textNodesUnder(el: HTMLElement) {
+  const children = [] // Type: Node[]
+  const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT)
+  while (walker.nextNode()) {
+    children.push(walker.currentNode)
+  }
+  return children
+}
 export const transformMarkdown = async (file: File): Promise<Descendant[] | undefined> => {
-  console.log(file)
   if (!file.name.endsWith('md')) {
     throw new Error('Wrong file type!')
   }
-  const buffer = await file.text()
-  return new Promise(res => {
-    unified()
-      .use(markdown)
-      .use(unifiedMarkdownPlugin)
-      .process(buffer, (err, file) => {
-        res(file?.result)
-      })
+  const text = await file.text()
+  const html = markdownToHTMLConverter.makeHtml(text)
+  const parsed = new DOMParser().parseFromString(html, 'text/html')
+  const textNodes = textNodesUnder(parsed.body)
+  // wrap text nodes in span, equal to html parser behavior
+  textNodes.forEach(node => {
+    const span = document.createElement('span')
+    node.after(span)
+    if (node.textContent) {
+      node.textContent = node.textContent.trim()
+    }
+    span.appendChild(node)
   })
+  const deserialized = deserializeHTML(parsed.body)
+  return deserialized
+  // return new Promise(res => {
+  //   unified()
+  //     .use(markdown)
+  //     .use(unifiedMarkdownPlugin)
+  //     .process(buffer, (err, file) => {
+  //       console.log(file)
+  //       res(file?.result)
+  //     })
+  // })
 }
 export function unifiedMarkdownPlugin(opts?: OptionType) {
   const compiler = (node: { children: Array<MdastNode> }) => {

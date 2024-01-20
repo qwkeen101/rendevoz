@@ -1,6 +1,6 @@
 import { Content } from '@/components'
 import { GlobalEventEmitter } from '@/events'
-import { useGlobalAtomValue } from '@/hooks'
+import { GlobalInstance, useGlobalAtomValue } from '@/hooks'
 import { CollectionStore, MetaStore } from '@/api/stores'
 import { metaObjectsAtom } from '@/api/stores/meta/meta.store'
 import { selectAtom } from 'jotai/utils'
@@ -36,6 +36,9 @@ const SidebarObjectItem: FC<ISidebarItem> = ({ parentId, parentType, id, draggab
     { type: 'meta', id },
     {
       pinned: metaObject?.pinned,
+      onViewDetails: () => {
+        metaObject && GlobalInstance.metaOps?.openDetails(metaObject.id)
+      },
       onRemoveFromCollection: () => {
         if (parentType === 'whiteboard') {
           toast.error('You can not remove from whiteboard!')
@@ -74,23 +77,20 @@ const SidebarObjectItem: FC<ISidebarItem> = ({ parentId, parentType, id, draggab
         metaId: metaObject.id
       }}
     >
-      <HoverObjectDetails metaObjectId={metaObject.id} positions={['right']}>
-        <Content
-          flex
-          ref={ref}
-          gap={10}
-          onClick={() => Rendevoz.Actions.Open.Meta.openMetaObject(id)}
-          className={ClassName.flatButton(4, '3px 8px')}
-        >
-          {contextMenuPortal}
-          <IconNameItem
-            style={{ fontSize: FontSize['12px'] }}
-            icon={metaObject?.icon || icon}
-            name={metaObject?.name || metaObject?.placeholderName}
-            color={metaObject?.color}
-          />
-        </Content>
-      </HoverObjectDetails>
+      <Content
+        flex
+        gap={10}
+        onClick={() => Rendevoz.Actions.Open.Meta.openMetaObject(id)}
+        className={ClassName.flatButton(4, '3px 8px')}
+      >
+        {contextMenuPortal}
+        <IconNameItem
+          style={{ fontSize: FontSize['12px'] }}
+          icon={metaObject?.icon || icon}
+          name={metaObject?.name || metaObject?.placeholderName}
+          color={metaObject?.color}
+        />
+      </Content>
     </DraggableElement>
   )
 }

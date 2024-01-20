@@ -6,13 +6,14 @@ import { deserializeHTMLChildren } from '@/core/components/editor/plugins/transf
 import { ElementsAvailableInParagraph } from '@/core/components/editor/plugins/transformHTML/consts'
 import deserializeSpan from '@/core/components/editor/plugins/transformHTML/deserialize/deserializeSpan'
 import normalizeText from '@/core/components/editor/plugins/transformHTML/deserialize/normalizeText'
+import { Text } from 'slate'
 
 export default (node: HTMLElement) => {
   let shouldBeFragment = true
   // 如果内部有text node就不是fragment，不然就是fragment
   for (const n of node.childNodes) {
     // if children nodes has div or p, be fragment
-    if (['DIV', 'P'].includes(n.nodeName)) {
+    if (['DIV', 'P', 'IMG', 'IFRAME'].includes(n.nodeName)) {
       shouldBeFragment = true
       break
     }
@@ -36,7 +37,23 @@ export default (node: HTMLElement) => {
   }
   // normalize div/p into fragment
   if (shouldBeFragment) {
-    return jsx('fragment', {}, deserializeHTMLChildren(node))
+    const children = deserializeHTMLChildren(node)
+    const newChildren = children
+      .map(i => {
+        if (Text.isText(i)) {
+          if (i.text.replace(/\n|\r/g, '').trim().length) {
+            return {
+              type: 'paragraph',
+              id: Id.getId(),
+              children: [{ text: i.text }]
+            }
+          }
+          return
+        }
+        return i
+      })
+      .filter(i => i)
+    return jsx('fragment', {}, newChildren)
   }
   // normalize div/p into paragraph
   else {

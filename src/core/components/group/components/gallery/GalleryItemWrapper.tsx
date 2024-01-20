@@ -403,6 +403,10 @@ export default memo(({ rowDetails, path }: { rowDetails: MetaGroupChild & { type
             }}
             hideCoverIfEmpty={hideCoverIfEmpty}
             metaId={meta.id}
+            isEditing={isEditing}
+            onChange={v => {
+              instance.metaOps?.updateMeta({ id: meta.id, coverImgSrc: v })
+            }}
           />
         )}
         {showCover === 'cover' && (isEditing || !hideCoverIfEmpty || meta.coverImgSrc) && (

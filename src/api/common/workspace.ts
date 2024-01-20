@@ -4,9 +4,9 @@ import produce from 'immer'
 import { toast } from 'react-hot-toast'
 
 export default {
-  hasWorkspace: async (name: string) => {
+  hasWorkspace: async (id: number) => {
     const allWorkspaces = await KeyvalueStore.getOne('allWorkspaces')
-    if (allWorkspaces?.some(o => o.name === name)) {
+    if (allWorkspaces?.some(o => o.id === id)) {
       return true
     }
     return false

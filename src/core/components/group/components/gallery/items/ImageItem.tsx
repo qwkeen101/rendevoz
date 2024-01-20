@@ -12,12 +12,14 @@ export default ({
   value,
   onChange,
   onClick,
+  paddingBottom = '50%',
   isEditing
 }: {
   value?: string
   onChange: (filePath?: string) => void
   onClick?: React.MouseEventHandler
   isEditing?: boolean
+  paddingBottom?: string
 }) => {
   const ref = useRef(null)
   const fitImage = useSelectAtomValue(GroupStateAtom, s => s.currentView?.options.fitImage) ?? false
@@ -42,7 +44,7 @@ export default ({
         }}
         style={{
           width: '100%',
-          paddingBottom: '50%',
+          paddingBottom: paddingBottom,
           position: 'relative'
         }}
       >

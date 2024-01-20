@@ -36,7 +36,7 @@ const GalleryRenderer = memo(({ value = [] }: { value?: MetaGroupChild[] }) => {
   }
   if (showDeleted === false) {
     const metaMap = MetaStore.getMetaObjectsMap()
-    value = value.filter(i => !metaMap.get(i.id)?.deleted)
+    value = value.filter(i => metaMap.has(i.id) && !metaMap.get(i.id)?.deleted)
   }
   const itemsPerRow = Math.floor(width / size) || 1
   const rows = Math.ceil((value.length + (showAddMore ? 1 : 0)) / itemsPerRow) || 0

@@ -129,8 +129,6 @@ const FeedContainer = () => {
             top: 0,
             right: 0,
             transform: !feedState.modalOpen ? 'translateX(100%)' : undefined,
-            borderLeft: Colors.Consts.Border,
-            boxShadow: Colors.Consts.BoxShadowBorderLeft,
             zIndex: 100,
             background: Colors.Background.Global
           }}

@@ -26,3 +26,5 @@ export type NumberGroupRule = {
   groupEvery: number
   sort: 'asc' | 'desc'
 }
+
+export type IGroupRule = SelectGroupRule | NumberGroupRule | StringGroupRule | DateGroupRule | CheckboxGroupRule

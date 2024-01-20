@@ -10,6 +10,7 @@ import normalizeViewProperties from '@/core/components/group/utils/normalizeView
 import useGroupGetPropFromMeta from '@/core/components/group/hooks/useGroupGetPropFromMeta'
 import { MetaGroup } from '~/typings'
 import propertyIndexHelper from '@/core/components/group/hooks/dataTracker'
+import useBuildGrouper from '@/core/components/group/hooks/grouper/useBuildGrouper'
 
 export default ({ groupValue }: { groupValue?: MetaGroup }) => {
   const instance = useGroupInstance()
@@ -17,6 +18,7 @@ export default ({ groupValue }: { groupValue?: MetaGroup }) => {
   const setGroupState = useSetAtom(GroupStateAtom)
   const extraProperties = useSelectAtomValue(GroupStateAtom, s => s.state?.extraProperties)
   propertyIndexHelper()
+  // useBuildGrouper()
   assignProperties(instance, {
     updateGroupData: async data => {
       console.log('updated')

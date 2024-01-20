@@ -60,10 +60,6 @@ const ReadOnlyEditorClassName = css({
       padding: '0.5em'
     }
   },
-  blockquote: {
-    fontStyle: 'italic',
-    fontSize: '1.15rem'
-  },
   cite: ClassName.description()
 })
 

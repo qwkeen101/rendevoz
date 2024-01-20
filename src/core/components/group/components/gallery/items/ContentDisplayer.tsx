@@ -6,7 +6,11 @@ import { INote, IWebpage } from '~/typings'
 import WhiteboardDisplayer from '@/core/object/renderer/contentDisplayer/Whiteboard'
 import QuestionDisplayer from '@/core/object/renderer/contentDisplayer/Question'
 import CodeDisplayer from '@/core/object/renderer/contentDisplayer/Code'
+import ImageItem from '@/core/components/group/components/gallery/items/ImageItem'
+import { useSelectAtomValue } from '@/hooks'
+import { GroupStateAtom } from '@/core/components/group/hooks/useGroupState'
 
+// @ts-ignore
 const nonNullClass = css({
   ':is(:not(:has(> :empty)):not(:empty),[data-show-cover="true"])': {
     paddingBottom: '75%',
@@ -19,6 +23,7 @@ const nonNullClass = css({
 export default memo(
   ({ metaId, hideCoverIfEmpty, onClick }: { metaId: number; hideCoverIfEmpty?: boolean; onClick: React.MouseEventHandler }) => {
     const meta = MetaStore.useValue(metaId)
+    const fitImage = useSelectAtomValue(GroupStateAtom, s => s.currentView?.options.fitImage) ?? false
     const obj = ObjectStore(meta.type).useValue(meta?.objectId)
     let id: number | undefined = undefined
     if (obj && 'specType' in obj) {
@@ -50,7 +55,7 @@ export default memo(
         onClick={onClick}
         className={nonNullClass}
       >
-        {id && (
+        {(id || meta?.coverImgSrc) && (
           <div
             style={{
               position: 'absolute',
@@ -61,10 +66,24 @@ export default memo(
               pointerEvents: 'none'
             }}
           >
-            {(meta?.type === 'note' || meta?.type === 'webpage') && <NoteContentDisplayer id={id} />}
-            {meta?.type === 'whiteboard' && <WhiteboardDisplayer id={id} />}
-            {meta?.type === 'question' && <QuestionDisplayer id={id} />}
-            {meta?.type === 'code' && <CodeDisplayer id={id} />}
+            {id && (
+              <>
+                {(meta?.type === 'note' || meta?.type === 'webpage') && <NoteContentDisplayer id={id} />}
+                {meta?.type === 'whiteboard' && <WhiteboardDisplayer id={id} />}
+                {meta?.type === 'question' && <QuestionDisplayer id={id} />}
+                {meta?.type === 'code' && <CodeDisplayer id={id} />}
+              </>
+            )}
+            {!id && meta?.coverImgSrc && (
+              <img
+                src={meta.coverImgSrc}
+                style={{
+                  width: '100%',
+                  height: '100%',
+                  objectFit: fitImage ? 'contain' : 'cover'
+                }}
+              />
+            )}
           </div>
         )}
       </div>

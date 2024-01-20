@@ -160,7 +160,7 @@ const openRendevozLink = async (link: string) => {
     // switch workspace
     const currentWorkspace = await KeyvalueStore.getOne('currentWorkspace')
     console.log(currentWorkspace, meta?.workspace)
-    if (meta?.workspace && meta?.workspace !== currentWorkspace) {
+    if (meta?.workspace && meta?.workspace !== currentWorkspace?.id) {
       const hasWorkspace = await Workspace.hasWorkspace(meta.workspace)
       if (!hasWorkspace) {
         toast.error('Target workspace not exist!')

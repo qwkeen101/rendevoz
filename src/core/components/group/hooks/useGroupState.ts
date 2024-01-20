@@ -2,6 +2,11 @@ import { atom, useAtom } from 'jotai'
 import { Box, IMetaProp, MetaGroup, MetaGroupChild, MetaGroupProperty } from '~/typings'
 import { IMetaGroupProps } from '@/core/components/group/MetaGroup'
 
+export type IGroupGrouper = {
+  id: number
+  values: number[]
+  name: string
+}
 export type IGroupState = {
   isSelecting: boolean
   unToggledValueCount: number
@@ -21,6 +26,7 @@ export type IGroupState = {
   layout?: IMetaGroupProps['layout']
   title?: IMetaGroupProps['title']
   state?: IMetaGroupProps['state']
+  groups?: IGroupGrouper[]
   sidebarState?:
     | {
         type: 'preview'

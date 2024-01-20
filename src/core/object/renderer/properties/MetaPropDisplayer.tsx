@@ -28,6 +28,7 @@ export default ({
   const meta = MetaStore.useValue(metaId)
   const properties = meta?.properties
   const { t } = useTranslation()
+  if (!Object.keys(properties || {}).length && showAddPropPlaceholder === false) return null
   return (
     <Content flex column gap={4} style={{ fontSize: 14, ...style }}>
       {properties && Object.entries(properties).map(i => <PropPairDisplayer key={i[0]} k={Number(i[0])} v={i[1]} metaId={metaId} />)}

@@ -12,6 +12,7 @@ import { css } from '@emotion/css'
 import { Colors } from '@/consts'
 import { useTranslation } from 'react-i18next'
 import ViewSettingMenu from '@/core/components/group/components/menu/setting/ViewSettingMenu'
+import GroupGrouperMenu from '@/core/components/group/components/group'
 
 export default ({ onClose }: { onClose: VoidFunction }) => {
   const [currentView, setCurrentView] = useState<'main' | 'properties' | 'view'>('main')
@@ -61,6 +62,7 @@ export default ({ onClose }: { onClose: VoidFunction }) => {
                 boxShadow: '0 0 0 1px var(--border-background)'
               })}
             >
+              {/*<GroupGrouperMenu />*/}
               {currentGroupView?.icon && !(currentGroupView.icon.startsWith('park') || currentGroupView.icon.startsWith('custom')) ? (
                 <EmojiWithPicker
                   showPicker={true}

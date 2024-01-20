@@ -15,7 +15,7 @@ export default (groupId?: number) => {
   useEffect(() => {
     const map = MetaStore.getMetaObjectsMap()
     const disableHideFunction = instance.getGroupState?.().state?.canHideObjectsInside === false
-
+    console.log(hideObjects, disableHideFunction)
     if (!values) return
     const typesSet = new Set<string>()
     const elements = Node.elements({ children: values })
@@ -45,6 +45,7 @@ export default (groupId?: number) => {
         }
       })
       if (!disableHideFunction) {
+        console.log(unhidden)
         hiddenGroups.forEach(id => MetaStore.updateMetaObject({ id: id, hidden: false }))
         unhidden.forEach(id => MetaStore.updateMetaObject({ id: id, hidden: true }))
       }

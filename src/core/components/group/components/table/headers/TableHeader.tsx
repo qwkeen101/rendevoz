@@ -39,7 +39,7 @@ const GroupTableHeader = memo(() => {
       instance.selectOps?.clearAllSelect()
     }
   }
-
+  console.log(visibleHeaders, innerItems)
   useLayoutEffect(() => {
     if (visibleHeaders) {
       console.log(visibleHeaders)
@@ -56,7 +56,7 @@ const GroupTableHeader = memo(() => {
   }, [unToggledSelectedCount, unToggledValueCount])
 
   const hK = useMemo(() => visibleHeaders.map(i => i.id).join(''), [visibleHeaders])
-
+  const isResizing = useRef(false)
   const [isReorder, setIsReorder] = useState(false)
   const reorderRef = useRef<HTMLDivElement>(null)
   return (
@@ -99,11 +99,16 @@ const GroupTableHeader = memo(() => {
         style={{ display: 'flex' }}
         values={innerItems}
         onReorder={items => {
+          console.log(items, isResizing.current)
+          if (isResizing.current) return
           setInnerItems(items)
         }}
       >
         {innerItems?.map((i, idx) => (
           <GroupHeaderItem
+            onResizeStart={() => {
+              isResizing.current = true
+            }}
             onDragStart={() => {
               setIsReorder(true)
             }}
@@ -131,7 +136,7 @@ const GroupTableHeader = memo(() => {
             }}
             onResize={newItem => {
               if (!visibleHeaders) return
-              const idx = visibleHeaders.findIndex(i => i.name === newItem.name)
+              const idx = visibleHeaders.findIndex(i => i.id === newItem.id)
               const newVisibleHeaders = [...visibleHeaders]
               newVisibleHeaders[idx] = newItem
               setInnerItems(
@@ -149,6 +154,9 @@ const GroupTableHeader = memo(() => {
               instance.viewOps?.updateProperty(newItem.id, {
                 width: newItem.width
               })
+              setTimeout(() => {
+                isResizing.current = false
+              }, 200)
             }}
           />
         ))}

@@ -58,7 +58,7 @@ const RelatedCell = ({
       </Content>
       {renderPopover(
         box => (
-          <PopupWrapper box={{ ...box, width: 'min(480px, 90vw)' }}>
+          <PopupWrapper box={{ ...box, width: 'min(340px, 90vw)' }}>
             <div
               style={{
                 padding: 8,

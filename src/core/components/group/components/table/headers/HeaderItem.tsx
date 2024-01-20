@@ -16,6 +16,7 @@ const GroupHeaderItem = ({
   onDragEnd,
   onResizeEnd,
   onResize,
+  onResizeStart,
   constrainRef,
   onDragStart,
   isReorder
@@ -23,6 +24,7 @@ const GroupHeaderItem = ({
   item: MetaGroupProperty
   onDragEnd: VoidFunction
   onDragStart: VoidFunction
+  onResizeStart?:VoidFunction
   constrainRef: RefObject<HTMLDivElement>
   isReorder: boolean
   onResize: (currItem: MetaGroupProperty & { width: number }) => void
@@ -84,6 +86,7 @@ const GroupHeaderItem = ({
         }}
         onResizeStart={() => {
           setIsResizing(true)
+          onResizeStart?.()
         }}
         onResizeStop={(event, direction, elementRef) => {
           const newItem = { ...item, width: elementRef.clientWidth }

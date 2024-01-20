@@ -36,7 +36,7 @@ export default ({
           padding: '12px'
         }}
       >
-        <Icon name={property.icon} />
+        {property.icon && <Icon name={property.icon} />}
         <input
           style={{
             padding: '3px 6px',

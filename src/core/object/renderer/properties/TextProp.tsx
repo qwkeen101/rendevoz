@@ -31,7 +31,6 @@ export default ({
   popoverElement?: HTMLElement | null
   placeholder?: string
 } & ({ onChange?: (v: string) => void; mode?: 'text' } | { onChange?: (v: number) => void; mode?: 'number' })) => {
-  console.log(value)
   const { openPopover, renderPopover, closePopover } = usePopoverCell({
     onClose: () => {
       if (valueRef.current !== value) {

@@ -10,141 +10,225 @@ import GalleryItemWrapper from '@/core/components/group/components/gallery/Galle
 import { Colors } from '@/consts'
 import { useTranslation } from 'react-i18next'
 import { MetaStore } from '@/api/stores'
-const GalleryRenderer = memo(({ value = [] }: { value?: MetaGroupChild[] }) => {
-  const ref = useRef<HTMLDivElement>(null)
-  const instance = useGroupInstance()
-  const showDeleted = useSelectAtomValue(GroupStateAtom, s => s.layout?.showDeletedMetas) ?? false
-  instance.getScrollMargin = () => ref.current?.closest('[role="renderer-container"]')?.offsetTop ?? 0
-  const showAddMore = useSelectAtomValue(GroupStateAtom, s => s.layout?.showAddNew) ?? true
-  const cardSize = useSelectAtomValue(GroupStateAtom, s => s.currentView?.options.cardSize)
-  const m = instance.getScrollMargin?.() ?? 0
-  const [measureRef, { width }] = useMeasure()
-  let size = 280
-  switch (cardSize) {
-    case 'small': {
-      size = 220
-      break
+const GalleryRenderer = memo(
+  ({
+    value = [],
+    enableVirtualizer = true,
+    grouperId,
+    showAddMore: outShowAddMore
+  }: {
+    value?: MetaGroupChild[]
+    enableVirtualizer?: boolean
+    grouperId?: number
+    showAddMore?: boolean
+  }) => {
+    const ref = useRef<HTMLDivElement>(null)
+    const instance = useGroupInstance()
+    const visibleProps = useSelectAtomValue(GroupStateAtom, s => s.visibleProperties)
+    const showOriginalText = useSelectAtomValue(GroupStateAtom, s => s.showOriginalText) ?? false
+    const wrapContent = useSelectAtomValue(GroupStateAtom, s => s.currentView?.options.wrapColumns) ?? false
+    const showDeleted = useSelectAtomValue(GroupStateAtom, s => s.layout?.showDeletedMetas) ?? false
+    const showAddMore = useSelectAtomValue(GroupStateAtom, s => s.layout?.showAddNew) ?? true
+    const cardSize = useSelectAtomValue(GroupStateAtom, s => s.currentView?.options.cardSize)
+    const showCover = useSelectAtomValue(GroupStateAtom, s => s.currentView?.options.cardCover) ?? 'cover'
+    const hideCoverIfEmpty = useSelectAtomValue(GroupStateAtom, s => s.currentView?.options.hideCoverIfEmpty) ?? false
+    let size = 280
+    switch (cardSize) {
+      case 'small': {
+        size = 220
+        break
+      }
+      case 'medium': {
+        size = 280
+        break
+      }
+      case 'large': {
+        size = 360
+        break
+      }
     }
-    case 'medium': {
-      size = 280
-      break
+    if (showDeleted === false) {
+      const metaMap = MetaStore.getMetaObjectsMap()
+      value = value.filter(i => metaMap.has(i.id) && !metaMap.get(i.id)?.deleted)
     }
-    case 'large': {
-      size = 360
-      break
-    }
-  }
-  if (showDeleted === false) {
-    const metaMap = MetaStore.getMetaObjectsMap()
-    value = value.filter(i => metaMap.has(i.id) && !metaMap.get(i.id)?.deleted)
-  }
-  const itemsPerRow = Math.floor(width / size) || 1
-  const rows = Math.ceil((value.length + (showAddMore ? 1 : 0)) / itemsPerRow) || 0
-  const virtualizer = useVirtualizer({
-    overscan: 3,
-    getScrollElement: () => instance.values.pageContainer,
-    estimateSize: () => 300,
-    count: rows,
-    scrollMargin: m,
-    paddingEnd: 200
-  })
+    const { t } = useTranslation()
+    if (enableVirtualizer) {
+      instance.getScrollMargin = () => ref.current?.closest('[role="renderer-container"]')?.offsetTop ?? 0
 
-  const { t } = useTranslation()
+      const m = instance.getScrollMargin?.() ?? 0
+      const [measureRef, { width }] = useMeasure()
 
-  instance.virtualizer = virtualizer
-  const items = virtualizer.getVirtualItems()
+      const itemsPerRow = Math.floor(width / size) || 1
+      const rows = Math.ceil((value.length + (showAddMore ? 1 : 0)) / itemsPerRow) || 0
+      const virtualizer = useVirtualizer({
+        overscan: 3,
+        getScrollElement: () => instance.values.pageContainer,
+        estimateSize: () => 300,
+        count: rows,
+        scrollMargin: m,
+        paddingEnd: 200
+      })
 
-  const arr = Array.from(Array(itemsPerRow))
-  return (
-    <Content flex column style={{ height: 0, flex: 1, padding: '0px 50px 0px', width: '100%' }}>
-      <Content ref={measureRef} role={'gallery-wrapper'} style={{ width: '100%', height: 'auto' }}>
-        <Content
-          flex
-          column
-          ref={ref}
-          style={{
-            width: '100%',
-            fontSize: 14,
-            height: 'auto'
-          }}
-        >
-          <div
-            style={{
-              height: value.length ? virtualizer.getTotalSize() : 0,
-              width: '100%',
-              position: 'relative',
-              flexShrink: 0
-            }}
-          >
-            {width ? (
+      instance.virtualizer = virtualizer
+      const items = virtualizer.getVirtualItems()
+
+      const arr = Array.from(Array(itemsPerRow))
+      return (
+        <Content flex column style={{ height: 0, flex: 1, padding: '0px 50px 0px', width: '100%' }}>
+          <Content ref={measureRef} role={'gallery-wrapper'} style={{ width: '100%', height: 'auto' }}>
+            <Content
+              flex
+              column
+              ref={ref}
+              style={{
+                width: '100%',
+                fontSize: 14,
+                height: 'auto'
+              }}
+            >
               <div
                 style={{
-                  position: 'absolute',
-                  top: 0,
-                  left: 0,
+                  height: value.length ? virtualizer.getTotalSize() : 0,
                   width: '100%',
-                  transform: items.length ? `translateY(${(items[0]?.start ?? 0) - m}px)` : undefined,
-                  display: 'flex',
-                  flexDirection: 'column'
+                  position: 'relative',
+                  flexShrink: 0
                 }}
               >
-                {items.map(i => {
-                  const start = i.index * itemsPerRow
-                  return (
-                    <div
-                      style={{
-                        display: 'grid',
-                        gap: 0,
-                        gridTemplateColumns: `repeat(auto-fill, minmax(${size}px, 1fr))`
-                      }}
-                      key={i.index}
-                      data-index={i.index}
-                      ref={virtualizer.measureElement}
-                    >
-                      {arr.map((i, idx) => {
-                        const v = value[start + idx]
-                        if (v) {
-                          return <GalleryItemWrapper rowDetails={v} key={v.rowId} />
-                        }
-                      })}
-                      {i.index === rows - 1 && showAddMore && (
-                        <div style={{ width: '100%', height: '100%', padding: 10 }}>
-                          <div
-                            onClick={() => {
-                              instance.metaOps?.createMeta()
-                            }}
-                            style={{
-                              width: '100%',
-                              height: '100%',
-                              minHeight: 180,
-                              cursor: 'pointer',
-                              borderRadius: 3,
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              fontWeight: 500,
-                              transition: 'background 0.25s ease',
-                              boxShadow: Colors.Background.BorderBoxShadow
-                            }}
-                            className={'bg-popover light-hover'}
-                          >
-                            <Content flex alignItems={'center'} gap={8}>
-                              <Icon name={'park-plus'} />
-                              {t('general.New')}
-                            </Content>
-                          </div>
+                {width ? (
+                  <div
+                    style={{
+                      position: 'absolute',
+                      top: 0,
+                      left: 0,
+                      width: '100%',
+                      transform: items.length ? `translateY(${(items[0]?.start ?? 0) - m}px)` : undefined,
+                      display: 'flex',
+                      flexDirection: 'column'
+                    }}
+                  >
+                    {items.map(i => {
+                      const start = i.index * itemsPerRow
+                      return (
+                        <div
+                          style={{
+                            display: 'grid',
+                            gap: 0,
+                            gridTemplateColumns: `repeat(auto-fill, minmax(${size}px, 1fr))`
+                          }}
+                          key={i.index}
+                          data-index={i.index}
+                          ref={virtualizer.measureElement}
+                        >
+                          {arr.map((i, idx) => {
+                            const v = value[start + idx]
+                            if (v) {
+                              return (
+                                <GalleryItemWrapper
+                                  showCover={showCover}
+                                  showOriginalText={showOriginalText}
+                                  hideCoverIfEmpty={hideCoverIfEmpty}
+                                  visibleProps={visibleProps}
+                                  wrapContent={wrapContent}
+                                  rowDetails={v}
+                                  showDeleted={showDeleted}
+                                  key={v.rowId}
+                                />
+                              )
+                            }
+                          })}
+                          {i.index === rows - 1 && showAddMore && (
+                            <div style={{ width: '100%', height: '100%', padding: 10 }}>
+                              <div
+                                onClick={() => {
+                                  instance.metaOps?.createMeta()
+                                }}
+                                style={{
+                                  width: '100%',
+                                  height: '100%',
+                                  minHeight: 180,
+                                  cursor: 'pointer',
+                                  borderRadius: 3,
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  fontWeight: 500,
+                                  transition: 'background 0.25s ease',
+                                  boxShadow: Colors.Background.BorderBoxShadow
+                                }}
+                                className={'bg-popover light-hover transparent-font'}
+                              >
+                                <Content flex alignItems={'center'} gap={8}>
+                                  <Icon name={'park-plus'} />
+                                  {t('general.New')}
+                                </Content>
+                              </div>
+                            </div>
+                          )}
                         </div>
-                      )}
-                    </div>
-                  )
-                })}
+                      )
+                    })}
+                  </div>
+                ) : null}
               </div>
-            ) : null}
+            </Content>
+          </Content>
+        </Content>
+      )
+    } else {
+      return (
+        <Content flex column style={{ height: 'auto', flex: 1, padding: '0px 50px 0px', width: '100%' }}>
+          <div
+            style={{
+              display: 'grid',
+              gap: 0,
+              gridTemplateColumns: `repeat(auto-fill, minmax(${size}px, 1fr))`
+            }}
+          >
+            {value.map(v => (
+              <GalleryItemWrapper
+                showCover={showCover}
+                hideCoverIfEmpty={hideCoverIfEmpty}
+                visibleProps={visibleProps}
+                wrapContent={wrapContent}
+                showDeleted={showDeleted}
+                showOriginalText={showOriginalText}
+                rowDetails={v}
+                key={v.rowId}
+              />
+            ))}
+            {outShowAddMore && showAddMore && (
+              <div style={{ width: '100%', height: '100%', padding: 10 }}>
+                <div
+                  onClick={() => {
+                    instance.metaOps?.createMeta(grouperId)
+                  }}
+                  style={{
+                    width: '100%',
+                    height: '100%',
+                    minHeight: 180,
+                    cursor: 'pointer',
+                    borderRadius: 3,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontWeight: 500,
+                    transition: 'background 0.25s ease',
+                    boxShadow: Colors.Background.BorderBoxShadow
+                  }}
+                  className={'bg-popover light-hover transparent-font'}
+                >
+                  <Content flex alignItems={'center'} gap={8}>
+                    <Icon name={'park-plus'} />
+                    {t('general.New')}
+                  </Content>
+                </div>
+              </div>
+            )}
           </div>
         </Content>
-      </Content>
-    </Content>
-  )
-})
+      )
+    }
+  }
+)
 
 export default GalleryRenderer

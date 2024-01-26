@@ -1,6 +1,7 @@
 import { IGroupInstance, MetaGroupChild } from '~/typings'
 import { Path } from 'slate'
 import { GroupStore, MetaStore } from '@/api/stores'
+import handleDragInGrouper from '@/core/components/group/components/grouper/handlers/handleDragInGrouper'
 /**
  * 在树中移动多个元素
  * 1. 首先删除要移动的元素
@@ -15,6 +16,11 @@ const reorderDragItems = async (opts: {
   const { towards, items, instance, targetValue } = opts
   const getPath = instance.pathOps?.getPathById
   if (getPath) {
+    handleDragInGrouper(
+      items.map(i => i.id),
+      targetValue,
+      instance
+    )
     const targetPath = getPath(targetValue.rowId)
     if (!targetPath) return
     const targetPathRef = instance.pathOps?.pathRef(targetPath)

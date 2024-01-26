@@ -19,7 +19,6 @@ const TagCell = ({ value, metaId, optionStyle }: { value: number[]; metaId: numb
     <>
       <Content
         fullWidth
-        fullHeight
         flex
         role={'prop-container'}
         onClick={e => {

@@ -107,28 +107,29 @@ const GlobalCreateObject = () => {
           onBack={handleCancelCreate}
           key={innerMeta?.id}
           onSubmit={obj => {
-            setPendingLinks(undefined)
-            if (currentModeRef.current === 'add') {
-              if (innerMeta?.id) {
-                MetaStore.updateMetaObject(obj).then(obj => {
-                  promiseRef.current?.res?.(obj)
-                  promiseRef.current = undefined
-                })
-              } else {
-                MetaStore.addMetaObject(obj).then(obj => {
+            toggleModalVisible(false)
+            setTimeout(() => {
+              if (currentModeRef.current === 'add') {
+                if (innerMeta?.id) {
+                  MetaStore.updateMetaObject(obj).then(obj => {
+                    promiseRef.current?.res?.(obj)
+                    promiseRef.current = undefined
+                  })
+                } else {
+                  MetaStore.addMetaObject(obj).then(obj => {
+                    promiseRef.current?.res?.(obj)
+                    promiseRef.current = undefined
+                  })
+                }
+              }
+              if (currentModeRef.current === 'edit') {
+                MetaStore.updateMetaObject({ ...obj }).then(obj => {
                   promiseRef.current?.res?.(obj)
                   promiseRef.current = undefined
                 })
               }
-            }
-            if (currentModeRef.current === 'edit') {
-              MetaStore.updateMetaObject({ ...obj }).then(obj => {
-                promiseRef.current?.res?.(obj)
-                promiseRef.current = undefined
-              })
-            }
-            setPendingLinks(undefined)
-            toggleModalVisible(false)
+              setPendingLinks(undefined)
+            }, 300)
           }}
         />
       </Modal>

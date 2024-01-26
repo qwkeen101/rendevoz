@@ -37,6 +37,7 @@ type RootNode = {
 }
 const useAssignValueOps = (instance: InnerGroupInstance) => {
   const value = useSelectAtomValue(GroupStateAtom, s => s.data?.values)
+  const groupedValue = useSelectAtomValue(GroupStateAtom, s => s.groupedValues)
   const filterValue = useSelectAtomValue(GroupStateAtom, s => s.filterValues)
   const displayValue = useSelectAtomValue(GroupStateAtom, s => s.viewValues)
   const currentView = useSelectAtomValue(GroupStateAtom, s => s.currentView)
@@ -81,6 +82,7 @@ const useAssignValueOps = (instance: InnerGroupInstance) => {
       const rootNode = {
         children: draft
       }
+
       switch (e.type) {
         case 'add':
           handleAdd(e.value, e.path, rootNode)
@@ -118,7 +120,14 @@ const useAssignValueOps = (instance: InnerGroupInstance) => {
 
         instance.updateGroupData?.(s =>
           produce(s, draft => {
-            draft.values = copyed
+            draft.values = copyed.map(o => {
+              if (o.tempRowId) {
+                const copied = { ...o }
+                delete copied['tempRowId']
+                return copied
+              }
+              return o
+            })
             const v = draft.views.find(i => i.id === currentView?.id)
             if (v && instance.values.currentIndex) {
               v.valueIndex = instance.values.currentIndex
@@ -201,7 +210,7 @@ const useAssignValueOps = (instance: InnerGroupInstance) => {
       ) => {
         const map = MetaStore.getMetaObjectsMap()
         const all = instance.valueOps?.getVisibleValues()
-        const currIndex = all?.findIndex(i => i[0].rowId === rowId) ?? -1
+        const currIndex = all?.findIndex(i => (i[0].tempRowId || i[0].rowId) === rowId) ?? -1
 
         const nextMeta = all?.findLast((i, idx) => {
           if (idx < currIndex) {
@@ -213,7 +222,7 @@ const useAssignValueOps = (instance: InnerGroupInstance) => {
         if (nextMeta) {
           return {
             metaId: nextMeta[0].id,
-            rowId: nextMeta[0].rowId
+            rowId: nextMeta[0].tempRowId || nextMeta[0].rowId
           }
         } else {
           if (opts.loop) {
@@ -223,7 +232,7 @@ const useAssignValueOps = (instance: InnerGroupInstance) => {
             })
             if (first) {
               return {
-                rowId: first[0].rowId,
+                rowId: first[0].tempRowId || first[0].rowId,
                 metaId: first[0].id
               }
             }
@@ -239,7 +248,7 @@ const useAssignValueOps = (instance: InnerGroupInstance) => {
       ) => {
         const map = MetaStore.getMetaObjectsMap()
         const all = instance.valueOps?.getVisibleValues()
-        const currIndex = all?.findIndex(i => i[0].rowId === rowId) ?? -1
+        const currIndex = all?.findIndex(i => (i[0].tempRowId || i[0].rowId) === rowId) ?? -1
         if (currIndex >= 0) {
           const nextMeta = all?.find((i, idx) => {
             if (idx > currIndex) {
@@ -251,7 +260,7 @@ const useAssignValueOps = (instance: InnerGroupInstance) => {
           if (nextMeta) {
             return {
               metaId: nextMeta[0].id,
-              rowId: nextMeta[0].rowId
+              rowId: nextMeta[0].tempRowId || nextMeta[0].rowId
             }
           } else {
             if (opts.loop) {
@@ -261,7 +270,7 @@ const useAssignValueOps = (instance: InnerGroupInstance) => {
               })
               if (first) {
                 return {
-                  rowId: first[0].rowId,
+                  rowId: first[0].tempRowId || first[0].rowId,
                   metaId: first[0].id
                 }
               }
@@ -269,12 +278,22 @@ const useAssignValueOps = (instance: InnerGroupInstance) => {
           }
         }
       },
-      getValueById: id => Group.ID_TO_VALUE_MAP.get(instance)?.get(id),
+      getValueById: id => {
+        const realRowId = instance.getRealRowId?.(id)
+        if (realRowId) {
+          return Group.ID_TO_VALUE_MAP.get(instance)?.get(realRowId)
+        }
+      },
       handleToggle: (rowId, toggled) => {
-        instance.updateCurrentView?.(s => ({
-          ...s,
-          unToggledIds: toggled ? s.unToggledIds.filter(i => i !== rowId) : Array.from(new Set([...(s.unToggledIds || []), rowId]).values())
-        }))
+        const realRowId = instance.getRealRowId?.(rowId)
+        if (realRowId) {
+          instance.updateCurrentView?.(s => ({
+            ...s,
+            unToggledIds: toggled
+              ? s.unToggledIds.filter(i => i !== realRowId)
+              : Array.from(new Set([...(s.unToggledIds || []), realRowId]).values())
+          }))
+        }
       },
       getAllMetasInGroup: () => {
         if (!instance.values.currentValue) return []
@@ -329,7 +348,9 @@ const useAssignValueOps = (instance: InnerGroupInstance) => {
               if (!o.rowId) {
                 o.rowId = Id.getId()
               }
-              return o
+              const copied = { ...o }
+              delete copied['tempRowId']
+              return copied
             })
           let parentNode: MetaGroupChild | undefined = undefined
           if (finalPath.length !== 1) {
@@ -370,7 +391,7 @@ const useAssignValueOps = (instance: InnerGroupInstance) => {
       },
       getVisibleValues: () => {
         return Node.elements(
-          { children: filterValue || displayValue },
+          { children: groupedValue || filterValue || displayValue },
           { match: (n, path, parent) => (parent ? unToggledSet.has(parent.rowId) : true) }
         )
       },

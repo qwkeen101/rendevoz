@@ -11,7 +11,7 @@ import { useState } from 'react'
 import { Container } from '@/core/components/group/components/table/rows/MetaRow'
 import ToggleArrow from '@/core/components/group/components/basic/ToggleArrow'
 
-const TextRow = ({ rowDetails, path, rowRef, renderIndicator, isSelected, renderCheckbox }: IGroupRow) => {
+const TextRow = ({ rowDetails, rowRef, renderIndicator, isSelected, renderCheckbox }: IGroupRow) => {
   const textRowDetails = rowDetails as MetaGroupChild & { type: 'text' }
   const hasChildren = !!textRowDetails.children?.length
   const instance = useGroupInstance()

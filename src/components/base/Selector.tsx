@@ -109,6 +109,7 @@ function Selector<T extends { name?: string; color?: string; id: number }>(
             }}
             flex
             gap={4}
+            key={i.id}
           >
             <div className={ClassName.ellipsisFont(1)}>{i.name}</div>
             <Icon cursor={'pointer'} size={12} name={'park-close'} onClick={() => onSelect?.(selectedItems.filter(o => o.id !== i.id))} />

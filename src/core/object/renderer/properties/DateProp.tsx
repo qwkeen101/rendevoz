@@ -33,7 +33,7 @@ export default ({
           }
         }}
       >
-        {currDate && DateFormat.format(currDate, DateFormat.Formats.default)}
+        {currDate && DateFormat.format(currDate, DateFormat.Formats.yearMonthDays)}
       </Content>
       {renderPopover(box => (
         <PopupWrapper box={box}>

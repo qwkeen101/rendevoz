@@ -4,8 +4,12 @@ import { IMetaGroupProps } from '@/core/components/group/MetaGroup'
 
 export type IGroupGrouper = {
   id: number
-  values: number[]
+  values: MetaGroupChild[]
+  // toggled
+  visible?: boolean
   name: string
+  // visible in view
+  hidden?: boolean
 }
 export type IGroupState = {
   isSelecting: boolean
@@ -44,10 +48,14 @@ export type IGroupState = {
   viewValues?: MetaGroupChild[]
   // after filter/sort values
   filterValues?: MetaGroupChild[]
+  // after grouper values
+  groupedValues?: MetaGroupChild[]
+  unToggledSelectedRowIds?: Set<number>
   visibleProperties: MetaGroupProperty[]
   showOriginalText?: boolean
   currentViewProperties?: MetaGroupProperty[]
   horizontallyScrolled: boolean
+  metaChanged?: number
 } & {
   data?: MetaGroup
 }

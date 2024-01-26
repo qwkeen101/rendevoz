@@ -31,6 +31,7 @@ type GroupRowFunctions = {
   select: VoidFunction
   edit?: VoidFunction
   unedit?: VoidFunction
+  scrollIntoView: VoidFunction
 }
 
 // auto scroll when dragging / selecting
@@ -56,10 +57,11 @@ type GroupPathOps = {
 
 type GroupMetaOps = {
   deleteMeta: (id: number | number[]) => void
-  createMeta: VoidFunction
+  createMeta: (grouperId?: number) => void
   updateMeta: (nextMeta: Partial<MetaObject>) => Promise<void>
   hasMetaInGroup: (metaId: number) => boolean
   updateMetaProperty: (field: string, nextValue: any, id?: number) => Promise<void>
+  getAllMetas: () => MetaObject[]
 }
 
 export type GroupValueEntry = [MetaGroupChild, Path]
@@ -112,6 +114,7 @@ type GroupValueOps = {
 }
 
 type GroupSelectOps = {
+  deselectItem: (id: number) => void
   selectItem: (id: number, removeOtherIfOnlyOneSelected?: boolean) => void
   clearAllSelect: VoidFunction
   selectAll: VoidFunction
@@ -129,7 +132,7 @@ type GroupCenterOps = {
 
 type GroupViewOps = {
   getInvisibleViewPropertyIds: () => Set<number>
-  addNewView: (viewType: 'table' | 'gallery' | 'list') => Promise<void>
+  addNewView: (viewType: MetaGroup['views'][0]['type']) => Promise<void>
   getVisibleProperties: () => MetaGroupProperty[] | undefined
   useViewProperties: () => MetaGroupProperty[] | undefined
   changePropertyName: (id: number, newName: string) => Promise<void>
@@ -181,6 +184,7 @@ export type IGroupInstance = Partial<{
   getOuterContainer: () => HTMLElement
   getScrollElement: () => HTMLElement
   getScrollMargin: () => number
+  getRealRowId: (rowId: number) => number | undefined
   viewOps: GroupViewOps
   on: (e: IGroupEvent) => void
   deleteView: (viewId: number) => void
@@ -211,5 +215,6 @@ export type IGroupInstance = Partial<{
     // for shift multiple select
     lastSelectRowId?: number
     rowIdToRowMap: Map<number, MetaGroupChild & { path: Path }>
+    tempRowIdToRowIdMap: Map<number, number>
   }
 }

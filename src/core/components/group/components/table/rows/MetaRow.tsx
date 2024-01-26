@@ -1,6 +1,5 @@
-import { IGroupRow } from './types'
-import { MetaStore, ObjectStore } from '@/api/stores'
-import { useSelectAtomValue } from '@/hooks'
+import { IGroupRow, IGroupRowStateProps } from './types'
+import { MetaStore } from '@/api/stores'
 import { Colors } from '@/consts'
 import CellWrapper from '@/core/components/group/components/table/CellWrapper'
 import { Content } from '@/components'
@@ -8,7 +7,6 @@ import { useGroupInstance } from '@/core/components/group/hooks/useGroupInstance
 import { RowWrapper } from '@/core/components/group/components/table/RowWrapper'
 import { ReactNode } from 'react'
 import useChildrenSyncAsAttachment from '@/core/components/group/hooks/useChildrenSyncAsAttachment'
-import { GroupStateAtom } from '@/core/components/group/hooks/useGroupState'
 export const Container = ({ children, hasChildren }: { children: ReactNode; hasChildren: boolean }) =>
   hasChildren ? (
     <Content flex column>
@@ -17,28 +15,36 @@ export const Container = ({ children, hasChildren }: { children: ReactNode; hasC
   ) : (
     <>{children}</>
   )
-const MetaRow = ({ rowDetails, path, rowRef, renderIndicator, isSelected, renderCheckbox }: IGroupRow) => {
+const MetaRow = ({
+  rowDetails,
+  rowRef,
+  renderIndicator,
+  isSelected,
+  renderCheckbox,
+  untoggledIdSet,
+  showOriginalText: showOriginal,
+  headerColumns: tableColumns,
+  headers,
+  showDeletedMeta: showDeleted,
+  wrapContent: wrap,
+  shiftKeyPressed
+}: IGroupRow & IGroupRowStateProps) => {
   const metaId = rowDetails.id
-  const tableColumns = useSelectAtomValue(GroupStateAtom, s => s.headerColumn)
-  const headers = useSelectAtomValue(GroupStateAtom, s => s.visibleProperties)
-  const showOriginal = useSelectAtomValue(GroupStateAtom, s => s.showOriginalText)
-  const toggled = !useSelectAtomValue(GroupStateAtom, s => s.unToggledIdSet).has(rowDetails.rowId)
+  const toggled = !untoggledIdSet?.has(rowDetails.rowId)
   const metaObject = MetaStore.useValue(metaId)
   const hasChildren = !!rowDetails.children?.length
-  const showDeleted = useSelectAtomValue(GroupStateAtom, s => s.layout?.showDeletedMetas)
   useChildrenSyncAsAttachment(metaObject, rowDetails.children)
-  const wrap = useSelectAtomValue(GroupStateAtom, s => s.currentView?.options.wrapColumns)
-  const shiftKeyPressed = useSelectAtomValue(GroupStateAtom, s => s.shiftPressed)
   const instance = useGroupInstance()
+  const rowId = rowDetails.tempRowId || rowDetails.rowId
   if (!metaObject) return null
   if (metaObject.deleted && showDeleted !== true) return null
-
+  const path = instance.pathOps?.getPathById(rowId)
   return (
     <Container hasChildren={hasChildren}>
       <Content
         onContextMenu={e => {
           e.preventDefault()
-          instance.selectOps?.selectItem(rowDetails.rowId, true)
+          instance.selectOps?.selectItem(rowId, true)
           instance.overlayOps?.open(
             {
               type: 'itemContextMenu',
@@ -69,12 +75,12 @@ const MetaRow = ({ rowDetails, path, rowRef, renderIndicator, isSelected, render
               e.preventDefault()
               window.getSelection()?.empty()
               e.stopPropagation()
-              if (instance.values.selectedRowIdSet.has(rowDetails.rowId)) {
-                instance.values.inViewRowFuncs.get(rowDetails.rowId)?.clearSelectState()
+              if (instance.values.selectedRowIdSet.has(rowId)) {
+                instance.values.inViewRowFuncs.get(rowId)?.clearSelectState()
                 instance.values.lastSelectRowId = undefined
               } else {
                 let lastSelected = instance.values.lastSelectRowId
-                instance.values.lastSelectRowId = rowDetails.rowId
+                instance.values.lastSelectRowId = rowId
                 if (!lastSelected) {
                   if (instance.values.selectedRowIdSet.size === 1) {
                     lastSelected = instance.values.selectedRowIdSet.keys().next().value
@@ -83,14 +89,14 @@ const MetaRow = ({ rowDetails, path, rowRef, renderIndicator, isSelected, render
                 if (lastSelected) {
                   const lastSelectedPath = instance.pathOps?.getPathById(lastSelected, true)
                   if (lastSelectedPath) {
-                    const currentPath = instance.pathOps?.getPathById(rowDetails.rowId, true)
+                    const currentPath = instance.pathOps?.getPathById(rowId, true)
                     if (currentPath) {
                       instance.selectOps?.selectBetweenPath(currentPath, lastSelectedPath)
                       return
                     }
                   }
                 }
-                instance.values.inViewRowFuncs.get(rowDetails.rowId)?.select()
+                instance.values.inViewRowFuncs.get(rowId)?.select()
               }
             }
           }}
@@ -122,25 +128,38 @@ const MetaRow = ({ rowDetails, path, rowRef, renderIndicator, isSelected, render
             return (
               <CellWrapper
                 type={i.type}
-                rowId={rowDetails.rowId}
+                rowId={rowId}
                 placeholder={metaObject.type.includes('Label') && !showOriginal ? metaObject.placeholderName : undefined}
                 index={idx}
                 field={field}
                 value={fieldValue}
                 metaObject={metaObject}
                 key={i.name}
+                indent={(path?.length ?? 1) - 1}
                 metaId={metaId}
                 wrap={wrap}
-                indent={path.length - 1}
                 hasChildren={hasChildren}
                 toggled={toggled}
-                path={path}
               />
             )
           })}
         </Content>
       </Content>
-      {hasChildren && !toggled && rowDetails.children?.map((i, idx) => <RowWrapper key={i.rowId} rowDetails={i} path={[...path, idx]} />)}
+      {hasChildren &&
+        !toggled &&
+        rowDetails.children?.map(i => (
+          <RowWrapper
+            key={i.rowId}
+            headerColumns={tableColumns}
+            shiftKeyPressed={shiftKeyPressed}
+            rowDetails={i}
+            untoggledIdSet={untoggledIdSet}
+            headers={headers}
+            showDeletedMeta={showDeleted}
+            wrapContent={wrap}
+            showOriginalText={showOriginal}
+          />
+        ))}
     </Container>
   )
 }

@@ -1,12 +1,11 @@
 import { Colors } from '@/consts'
 import { RelatedCell, FromCell, DisplayCell, EditableCell, TagCell } from './cells'
 import { useGroupInstance } from '@/core/components/group/hooks/useGroupInstance'
-import { Path } from 'slate'
 import ImageCell from '@/core/components/group/components/table/cells/ImageCell'
 import TypeCell from '@/core/components/group/components/table/cells/TypeCell'
 import ParentItemCell from '@/core/components/group/components/table/cells/ParentItemCell'
 import LabelsCell from '@/core/components/group/components/table/cells/LabelsCell'
-import { MetaStore, ObjectStore } from '@/api/stores'
+import { MetaStore } from '@/api/stores'
 import { memo } from 'react'
 import { MetaObject } from '~/typings'
 import TextProp from '@/core/object/renderer/properties/TextProp'
@@ -45,7 +44,6 @@ const CellWrapper = memo(
     metaObject: MetaObject
     indent?: number
     toggled?: boolean
-    path: Path
     type: 'custom' | 'basic'
     placeholder?: string
   }) => {

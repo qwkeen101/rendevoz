@@ -93,10 +93,13 @@ export default () => {
       <FileImporter
         onClose={() => setVisible(false)}
         onCreate={object => {
-          callbackRef.current?.resolve(object)
+          setVisible(false)
           setTimeout(() => {
-            callbackRef.current = undefined
-          })
+            callbackRef.current?.resolve(object)
+            setTimeout(() => {
+              callbackRef.current = undefined
+            })
+          }, 350)
         }}
         autoOpen={false}
       />

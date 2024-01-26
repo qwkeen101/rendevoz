@@ -20,10 +20,10 @@ const useItemDrag = (
   useEffect(() => {
     const pointerHandler = (e: PointerEvent) => {
       const pDown = pDownRef.current
-      if (e.type === 'pointermove') {
+      if (e.type === 'pointermove' || e.type === 'pointerenter') {
         const currView = instance.getCurrentView?.()
         // can not drag if have filter/sort/search
-        if (currView?.search || currView?.sort?.sorters.length || currView?.filter?.rules.length) return
+        if (currView?.sort?.sorters.length) return
         instance.dragOps?.setDragHandle({
           value,
           node: containerRef.current
@@ -61,6 +61,7 @@ const useItemDrag = (
       container.addEventListener('pointermove', pointerHandler)
       container.addEventListener('pointerleave', pointerHandler)
       container.addEventListener('pointerup', pointerHandler)
+      container.addEventListener('pointerenter', pointerHandler)
       if (options?.clickDrag) {
         container.addEventListener('pointerdown', pointerHandler)
       }
@@ -70,6 +71,7 @@ const useItemDrag = (
         container.removeEventListener('pointermove', pointerHandler)
         container.removeEventListener('pointerleave', pointerHandler)
         container.removeEventListener('pointerdown', pointerHandler)
+        container.removeEventListener('pointerenter', pointerHandler)
       }
     }
   }, [options?.draggable])

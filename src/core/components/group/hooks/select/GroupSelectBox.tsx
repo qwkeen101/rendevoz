@@ -68,7 +68,7 @@ const GroupSelectBox = ({
         return {
           startPoint,
           endPoint,
-          left: selectContainerRect.left + box.left,
+          left: selectContainerRect.left + box.left - selectContainer.scrollLeft,
           top: selectContainerRect.top + box.top - selectContainer.scrollTop,
           width: box.width,
           height: box.height

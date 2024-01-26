@@ -4,9 +4,15 @@ import checkDragInLinks from '@/core/components/group/hooks/drag/checkDragInLink
 import { Colors } from '@/consts'
 import { useGroupInstance } from '@/core/components/group/hooks/useGroupInstance'
 import { MetaGroupChild } from '~/typings'
-import { motion } from 'framer-motion'
-const useDragInRow = (opts: { rowRef: RefObject<HTMLElement>; value: MetaGroupChild; canInner?: boolean }) => {
-  const { rowRef } = opts
+import { AnimatePresence, motion } from 'framer-motion'
+const useDragInRow = (opts: {
+  rowRef: RefObject<HTMLElement>
+  value: MetaGroupChild
+  canInner?: boolean
+  top?: string
+  toptop?: string
+}) => {
+  const { rowRef, top = 'calc( 100% + 1px )', toptop = '0px' } = opts
   const [draggingIndicator, setDraggingIndicator] = useState<{
     inLink?: 'in' | 'out'
     position?: 'inner' | 'top' | 'bottom'
@@ -32,7 +38,7 @@ const useDragInRow = (opts: { rowRef: RefObject<HTMLElement>; value: MetaGroupCh
               position = 'inner'
             }
           }
-          if ( position === 'inner') {
+          if (position === 'inner') {
             return
           }
           instance.dragOps?.setCurrentDragDetails?.({
@@ -60,20 +66,30 @@ const useDragInRow = (opts: { rowRef: RefObject<HTMLElement>; value: MetaGroupCh
   }, [globalDragging])
 
   const renderIndicator = () => {
-    if (draggingIndicator?.position) {
-      const pos = draggingIndicator.position
-      return (
-        <motion.div
-          style={{ position: 'absolute', background: Colors.Common.SelectColorTransparent, pointerEvents: 'none', left: 0 }}
-          initial={{ opacity: 1, width: '100%', top: pos === 'top' ? 0 : pos === 'bottom' ? 'calc(100% + 1px)' : 0, height: 4 }}
-          transition={{ damping: 0, duration: 0.15 }}
-          animate={{ height: pos === 'inner' ? '100%' : 4, top: pos === 'top' ? 0 : pos === 'bottom' ? 'calc(100% + 1px)' : 0 }}
-          exit={{ opacity: 0 }}
-        ></motion.div>
-      )
-    } else {
-      return null
-    }
+    const pos = draggingIndicator?.position
+    return (
+      <AnimatePresence>
+        {pos && (
+          <motion.div
+            style={{
+              position: 'absolute',
+              background: Colors.Common.SelectColorTransparent,
+              pointerEvents: 'none',
+              left: 0,
+              width: '100%',
+              borderRadius: 4,
+              height: pos === 'inner' ? '100%' : 4,
+              top: pos === 'top' ? toptop : pos === 'bottom' ? top : 0
+            }}
+            key={pos}
+            initial={{ opacity: 0 }}
+            transition={{ damping: 0, duration: 0.15 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+          ></motion.div>
+        )}
+      </AnimatePresence>
+    )
   }
 
   return {

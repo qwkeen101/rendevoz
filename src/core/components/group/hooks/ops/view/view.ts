@@ -13,6 +13,7 @@ import assignGalleryOps from '@/core/components/group/hooks/ops/view/gallery'
 
 const VIEW_INVISIBLE_PROPS = {
   gallery: [2, 5, 7, 8, 9, 11, 12, 13],
+  kanban: [2, 5, 7, 8, 9, 11, 12, 13],
   list: [2, 3, 5, 7, 8, 14, 9, 10, 11, 12, 13]
 }
 export default function assignViewOps(instance: IGroupInstance) {
@@ -116,6 +117,43 @@ export default function assignViewOps(instance: IGroupInstance) {
             ]
           }))
         }
+        if (viewType === 'kanban') {
+          instance.updateGroupData?.(s => ({
+            ...s,
+            lastViewId: newViewId,
+            views: [
+              ...s.views,
+              {
+                type: 'kanban',
+                unToggledIds: [],
+                id: newViewId,
+                icon: 'custom-kanban',
+                name: t('general.Kanban'),
+                options: {
+                  wrapColumns: false,
+                  properties: Object.fromEntries(
+                    [...DEFAULT_GROUP_PROPERTIES, ...(groupState.state?.extraProperties || [])].map((i, idx) => [
+                      i.id,
+                      {
+                        width: i.width ?? 150,
+                        visible: i.visible,
+                        order: idx
+                      }
+                    ])
+                  )
+                },
+                valueIndex: [],
+                group: {
+                  fieldType: 'string',
+                  propertyGroupType: 'basic',
+                  propertyId: 2,
+                  textBy: 'alphabetical',
+                  sort: 'manual'
+                }
+              }
+            ]
+          }))
+        }
       },
       updateProperty: async (id, newProp) => {
         const currentView = instance.getCurrentView?.()
@@ -167,7 +205,7 @@ export default function assignViewOps(instance: IGroupInstance) {
         return allProperties.filter(i => {
           if (invisiblePropIds?.has(i.id)) return false
           if (onlyShowCustom) {
-            if (i.name === 'name' || i.name === 'type' || i.type === 'custom') {
+            if (i.name === 'name' || i.name === 'type' || i.type === 'custom' || i.name === 'tags') {
               return currentView[i.id]?.visible ?? false
             }
             return false

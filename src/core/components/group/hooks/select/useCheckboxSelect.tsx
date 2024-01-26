@@ -44,6 +44,7 @@ const useCheckboxSelect = (selected: boolean, onChange: (selected: boolean) => v
               outline: 'none',
               pointerEvents: 'none'
             }}
+            readOnly
             type={'checkbox'}
             checked={selected}
           />

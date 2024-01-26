@@ -20,6 +20,7 @@ type Props<T> = {
   itemContainerClassname?: string
   rangeExtractor?: Virtualizer<any, any>['options']['rangeExtractor']
   reorder?: boolean
+  scrollMargin?: number
   canReorder?: boolean
   onReorder?: (items: T[]) => void
 }

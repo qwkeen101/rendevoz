@@ -13,14 +13,12 @@ const useAssignBodyOps = (instance: IGroupInstance, bodyRef: RefObject<HTMLEleme
   assignProperties(instance, {
     bodyOps: {
       scrollBody: movement => {
+        const s = instance.getScrollElement?.()
+        if (!s) return
         if (movement.y !== 0 && movement.y !== undefined) {
-          const virtualizer = instance.virtualizer
-          if (virtualizer) {
-            virtualizer.scrollBy(movement.y, { behavior: 'auto' })
-          }
+          s.scrollBy(0, movement.y)
         }
         if (movement.x !== 0 && movement.x !== undefined) {
-          const s = instance.getScrollElement?.()
           if (s) {
             s.scrollLeft += movement.x
           }

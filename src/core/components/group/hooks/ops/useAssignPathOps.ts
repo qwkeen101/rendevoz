@@ -2,14 +2,21 @@ import { IGroupInstance } from '~/typings'
 import { assignProperties } from '@/utils'
 import { Group } from '../weakmaps'
 import { PathRef } from 'slate'
-const useAssignPathOps = (instance: IGroupInstance) => {
+import { InnerGroupInstance } from '@/core/components/group/hooks/useGroupInstance'
+const useAssignPathOps = (instance: InnerGroupInstance) => {
   assignProperties(instance, {
     pathOps: {
       getPathById: (id, afterFilter) => {
+        const realRowId = instance.getRealRowId?.(id)
+        const groupedValue = instance.getGroupState?.().groupedValues
+        if (!realRowId) return
         if (afterFilter) {
-          return Group.ID_TO_FILTER_PATH_MAP.get(instance)?.get(id) || Group.ID_TO_PATH_MAP.get(instance)?.get(id)
+          if (groupedValue) {
+            return Group.ID_TO_GROUP_PATH_MAP.get(instance)?.get(id)
+          }
+          return Group.ID_TO_FILTER_PATH_MAP.get(instance)?.get(realRowId) || Group.ID_TO_PATH_MAP.get(instance)?.get(realRowId)
         } else {
-          return Group.ID_TO_PATH_MAP.get(instance)?.get(id)
+          return Group.ID_TO_PATH_MAP.get(instance)?.get(realRowId)
         }
       },
       pathRef: path => {

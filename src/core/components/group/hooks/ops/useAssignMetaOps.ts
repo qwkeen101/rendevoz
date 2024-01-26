@@ -4,21 +4,41 @@ import { MetaStore } from '@/api/stores'
 import { useStore } from 'jotai'
 import { GroupStateAtom } from '@/core/components/group/hooks/useGroupState'
 import { GlobalInstance } from '@/hooks'
+import handleCreateInGrouper from '@/core/components/group/components/grouper/handlers/handleCreateInGrouper'
+import { InnerGroupInstance } from '@/core/components/group/hooks/useGroupInstance'
 
-const useAssignMetaOps = (instance: IGroupInstance) => {
+const useAssignMetaOps = (instance: InnerGroupInstance) => {
   const store = useStore()
   assignProperties(instance, {
     metaOps: {
-      createMeta: async () => {
-        const onlyCreate = store.get(GroupStateAtom).state?.onlyCreateType
+      createMeta: async grouperId => {
+        const currentGroupRule = instance.getGroupState?.().currentView?.group
+        let onlyCreate = store.get(GroupStateAtom).state?.onlyCreateType
+        if (currentGroupRule?.fieldType === 'metaType' && grouperId) {
+          const grouper = instance.getGroupState?.().groups?.find(i => i.id === grouperId)
+          if (grouper?.name) {
+            onlyCreate = grouper.name
+          }
+        }
+
         const meta = await GlobalInstance.metaOps?.createObject(onlyCreate)
         MetaStore.triggerObjectIndex()
         // we do not add into group if have only create, add by parent type group
         if (meta) {
-          instance.valueOps?.insertValueByPath({
-            type: 'metaObject',
-            id: meta.id
-          })
+          if (grouperId) {
+            handleCreateInGrouper(meta.id, grouperId, instance)
+            setTimeout(() => {
+              instance.valueOps?.insertValueByPath({
+                type: 'metaObject',
+                id: meta.id
+              })
+            }, 10)
+          } else {
+            instance.valueOps?.insertValueByPath({
+              type: 'metaObject',
+              id: meta.id
+            })
+          }
         }
       },
       updateMetaProperty: async (field, nextValue, id?: number) => {

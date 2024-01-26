@@ -3,6 +3,8 @@ import { MetaStore } from '@/api/stores'
 import { StringGroupRule } from '~/typings/components/group/property-group'
 import { IGroupGrouper } from '@/core/components/group/hooks/useGroupState'
 import Id from '@/utils/id'
+import groupBy from '@/core/components/group/hooks/grouper/calculator/groupBy'
+import { EMPTY_GROUPER_NAME } from '@/core/components/group/hooks/grouper/useBuildGrouper'
 
 export default function stringGroupCalculator(
   values: MetaGroupChild[],
@@ -20,47 +22,37 @@ export default function stringGroupCalculator(
     .filter(i => i.meta)
   let result: Record<string, { value: MetaGroupChild; meta: MetaObject; property: string }[]> = {}
   if (rule.textBy === 'exact') {
-    result = valueWithMetas.reduce(
-      (r, e) => {
-        const v = e.property
-        if (!r[v]) {
-          r[v] = [e]
-        } else {
-          r[v].push(e)
-        }
-        return r
-      },
-      {} as Record<string, any[]>
-    )
+    result = groupBy(valueWithMetas, v => {
+      return v.property
+    })
   }
   if (rule.textBy === 'alphabetical') {
-    result = valueWithMetas.reduce(
-      (r, e) => {
-        const firstLetter = (e.property as string)[0]
-        if (!r[firstLetter]) {
-          r[firstLetter] = [e]
-        } else {
-          r[firstLetter].push(e)
-        }
-        return r
-      },
-      {} as Record<string, any[]>
-    )
+    result = groupBy(valueWithMetas, v => {
+      return v.property === EMPTY_GROUPER_NAME ? EMPTY_GROUPER_NAME : v.property[0]
+    })
   }
-  const existed = existedGroupers ? Object.fromEntries(existedGroupers, i => [i.name, i]) : {}
-  const final: IGroupGrouper[] = []
-  Object.entries(result).forEach(value => {
-    if (existed[value[0]]) {
-      const existGroup = existed[value[0]]
-      existGroup.values = value[1].map(i => i.value.rowId)
-      final.push(existGroup)
-    } else {
-      final.push({
-        id: Id.getId(),
-        name: value[0],
-        values: value[1].map(i => i.value.rowId)
-      })
-    }
-  })
-  return final
+  const existed = existedGroupers && Object.fromEntries(existedGroupers.map(i => [i.name, i]))
+  const final: IGroupGrouper[] = Object.entries(result).map(i => ({
+    id: Id.getId(),
+    name: i[0],
+    visible: true,
+    values: i[1].map(i => i.value)
+  }))
+  if (existed) {
+    final.forEach(i => {
+      if (existed[i.name]) {
+        existed[i.name].values = i.values
+      } else {
+        existed[i.name] = i
+      }
+    })
+    Object.keys(existed).forEach(k => {
+      if (!final.some(o => o.name === k)) {
+        delete existed[k]
+      }
+    })
+    return Object.values(existed)
+  } else {
+    return final
+  }
 }

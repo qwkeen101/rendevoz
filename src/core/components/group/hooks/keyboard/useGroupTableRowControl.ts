@@ -14,25 +14,19 @@ export default (instance: IGroupInstance) => {
     if (isHotkey(KEY.ArrowUp, e)) {
       const currentRowId = instance.values.selectedRowIdSet.keys().next().value as number
       e.preventDefault()
-      const currVisible = instance.valueOps?.getVisibleValues()
-      if (currVisible) {
-        const currIdx = currVisible.findIndex(i => i[0].rowId === currentRowId)
-        if (currIdx >= 1) {
-          const nextRow = currVisible[currIdx - 1][0].rowId
-          instance.selectOps?.selectItem(nextRow, true)
-        }
+      const prevMeta = instance.valueOps?.getPrevMeta(currentRowId, { loop: false, canPreview: false })
+      if (prevMeta) {
+        instance.selectOps?.selectItem(prevMeta.rowId, true)
+        instance.values.inViewRowFuncs.get(prevMeta.rowId)?.scrollIntoView()
       }
     }
     if (isHotkey(KEY.ArrowDown, e)) {
       const currentRowId = instance.values.selectedRowIdSet.keys().next().value as number
       e.preventDefault()
-      const currVisible = instance.valueOps?.getVisibleValues()
-      if (currVisible) {
-        const currIdx = currVisible.findIndex(i => i[0].rowId === currentRowId)
-        if (currIdx < currVisible.length - 1 && currIdx >= 0) {
-          const nextRow = currVisible[currIdx + 1][0].rowId
-          instance.selectOps?.selectItem(nextRow, true)
-        }
+      const nextMeta = instance.valueOps?.getNextMeta(currentRowId, { loop: false, canPreview: false })
+      if (nextMeta) {
+        instance.selectOps?.selectItem(nextMeta.rowId, true)
+        instance.values.inViewRowFuncs.get(nextMeta.rowId)?.scrollIntoView()
       }
     }
     if (isHotkey(KEY.Enter, e)) {

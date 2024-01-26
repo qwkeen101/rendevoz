@@ -133,7 +133,7 @@ export default memo(() => {
           setGroupState(s => ({ ...s, sidebarVisible: false }))
         }}
         style={{
-          background: Colors.Background.Global,
+          background: Colors.Background.Popover,
           position: 'absolute',
           left: -36,
           color: Colors.Font.Transparent,

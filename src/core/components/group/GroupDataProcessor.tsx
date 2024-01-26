@@ -18,7 +18,7 @@ export default ({ groupValue }: { groupValue?: MetaGroup }) => {
   const setGroupState = useSetAtom(GroupStateAtom)
   const extraProperties = useSelectAtomValue(GroupStateAtom, s => s.state?.extraProperties)
   propertyIndexHelper()
-  // useBuildGrouper()
+  useBuildGrouper()
   assignProperties(instance, {
     updateGroupData: async data => {
       console.log('updated')
@@ -47,8 +47,10 @@ export default ({ groupValue }: { groupValue?: MetaGroup }) => {
 
   useMemo(() => {
     if (groupValue) {
-      normalizeViewProperties(groupValue, instance, extraProperties)
-      setGroupState(s => ({ ...s, data: groupValue }))
+      if (groupValue !== store.get(GroupStateAtom).data) {
+        normalizeViewProperties(groupValue, instance, extraProperties)
+        setGroupState(s => ({ ...s, data: groupValue }))
+      }
     }
   }, [groupValue])
 

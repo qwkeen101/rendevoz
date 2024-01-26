@@ -1,16 +1,6 @@
-import { globalStore, MetaStore, ObjectStore } from '@/api/stores'
-import { Content, Icon, IconWithPopover, Selector, VirtualList, WithBorder } from '@/components'
-import Tag from '@/core/object/ObjectTag'
-import { ClassName } from 'rendevoz'
-import { CSSProperties, forwardRef, memo, useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import isHotkey from 'is-hotkey'
-import { Colors, KEY } from '@/consts'
-import { useGlobalAtomValue } from '@/hooks'
-import fuzzysort from 'fuzzysort'
-import BlockColorPicker from '@/core/components/editor/components/BlockColorPicker'
-import FontSize from '@/consts/font'
-import { Virtualizer } from '@tanstack/react-virtual'
-import { useTranslation } from 'react-i18next'
+import { ObjectStore } from '@/api/stores'
+import { Content, Selector } from '@/components'
+import { CSSProperties, forwardRef, useMemo } from 'react'
 
 const MetaTagPicker = forwardRef(
   (
@@ -43,7 +33,11 @@ const MetaTagPicker = forwardRef(
               onChange?.([])
             }
           }}
-          onCreateItem={(name, color) => ObjectStore('tag').addOne({ name, color })}
+          onCreateItem={(name, color) =>
+            ObjectStore('tag')
+              .addOne({ name, color })
+              .then(i => onChange?.([...alreadyTags, i.id]))
+          }
           onItemDelete={t => ObjectStore('tag').deleteOneById(t, { force: true })}
           onItemUpdate={t => ObjectStore('tag').updateOne(t)}
         />

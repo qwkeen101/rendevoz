@@ -49,6 +49,7 @@ import './styles/util.less'
 import Loading from '@/components/Loading'
 import './styles/loading.less'
 import GlobalDialog from '@/core/global/GlobalDialog'
+import { ChineseFormats, DateFormat, EnglishFormats } from '@/utils'
 export function getOS() {
   const userAgent = window.navigator.userAgent.toLowerCase(),
     macosPlatforms = /(macintosh|macintel|macppc|mac68k|macos)/i,
@@ -110,6 +111,18 @@ const App = () => {
   const initialized = useAtomValue(initializedAtom)
   useEffect(() => {
     i18n.changeLanguage(lang)
+    const currentLang = i18n.language
+    if (currentLang === 'zh-CN') {
+      DateFormat.Formats = {
+        ...DateFormat.Formats,
+        ...ChineseFormats
+      }
+    } else {
+      DateFormat.Formats = {
+        ...DateFormat.Formats,
+        ...EnglishFormats
+      }
+    }
   }, [lang])
 
   const registeredGlobalElements = Array.from(KeyToRegisteredGlobalElements.entries())

@@ -1,4 +1,4 @@
-export default function <T>(arr: T[], keyFunc: (o: T) => number | string | number[] | string[]): Record<string, T[]> {
+export default function <T>(arr: T[], keyFunc: (o: T) => number | string | number[] | string[] | boolean): Record<string, T[]> {
   const r = {}
   arr.forEach(i => {
     const key = keyFunc(i)

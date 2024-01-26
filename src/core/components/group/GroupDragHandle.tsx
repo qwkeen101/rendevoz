@@ -15,7 +15,7 @@ import { useSelectAtomValue } from '@/hooks'
 import { GroupStateAtom } from '@/core/components/group/hooks/useGroupState'
 import { Colors } from '@/consts'
 import { useStore } from 'jotai'
-
+import { motion } from 'framer-motion'
 const GroupDragHandle = ({ bodyRef, groupId }: { bodyRef: RefObject<HTMLElement>; groupId?: number }) => {
   const emitter = Rendevoz.Events.Emit.GlobalEventEmitter
   const handler = Rendevoz.Events.Emit.useEventHandler('global')
@@ -27,6 +27,7 @@ const GroupDragHandle = ({ bodyRef, groupId }: { bodyRef: RefObject<HTMLElement>
   const isSelecting = useSelectAtomValue(GroupStateAtom, s => s.isSelecting)
   const isScrolling = useSelectAtomValue(GroupStateAtom, s => s.isScrollingBody)
   const currentView = useSelectAtomValue(GroupStateAtom, s => s.currentView?.type)
+  const currentViewSort = useSelectAtomValue(GroupStateAtom, s => s.currentView?.sort)
   const [dragHandle, setDragHandle] = useState<{
     position: XYPosition
     value: MetaGroupChild
@@ -109,7 +110,6 @@ const GroupDragHandle = ({ bodyRef, groupId }: { bodyRef: RefObject<HTMLElement>
         const containerRect = bodyRef.current.getBoundingClientRect()
         const box = details.node.getBoundingClientRect()
         if (dragHandle?.visible) {
-          if (details.value === dragHandle?.value) return
           if (box.top === dragHandle?.position?.y) return
         }
         const scale = box.width / details.node.offsetWidth
@@ -144,6 +144,7 @@ const GroupDragHandle = ({ bodyRef, groupId }: { bodyRef: RefObject<HTMLElement>
       // or we are dragging new items to add into table
       if (target instanceof HTMLElement && body?.contains(target)) {
         const element = data.draggingElement as BuiltInDraggableElement
+        setDragHandle(undefined)
         if (element.type === 'groupItem' && element.groupId === groupId && element.value.length) {
           console.log(element)
           reorderDragItems({
@@ -203,16 +204,25 @@ const GroupDragHandle = ({ bodyRef, groupId }: { bodyRef: RefObject<HTMLElement>
     }
   }, [])
 
-  if (dragHandle && (currentView === 'table' || currentView === 'list') && !globalDragging && bodyRef.current) {
+  if (
+    dragHandle &&
+    !currentViewSort?.sorters.length &&
+    (currentView === 'table' || currentView === 'list') &&
+    !globalDragging &&
+    bodyRef.current
+  ) {
     return createPortal(
-      <div
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{
+          opacity: dragHandle.visible ? 1 : 0
+        }}
         style={{
           position: 'absolute',
           transform: `translateY(-50%)`,
           left: dragHandle.position?.x ?? 0,
           pointerEvents: 'auto',
           top: dragHandle.position?.y ?? 0,
-          opacity: dragHandle.visible ? 1 : 0,
           transition: 'all 0.16s ease',
           zIndex: 99,
           color: Colors.Font.SuperTransparent
@@ -226,7 +236,7 @@ const GroupDragHandle = ({ bodyRef, groupId }: { bodyRef: RefObject<HTMLElement>
           isPressed.current = false
         }}
         onClick={event => {
-          instance.selectOps?.selectItem(dragHandle.value.rowId, true)
+          instance.selectOps?.selectItem(dragHandle.value.tempRowId || dragHandle.value.rowId, true)
           instance.overlayOps?.open(
             {
               type: 'itemContextMenu',
@@ -258,7 +268,7 @@ const GroupDragHandle = ({ bodyRef, groupId }: { bodyRef: RefObject<HTMLElement>
         }}
       >
         <Icon role={'group-drag-handle'} className={ClassName.circleButton(3, 4)} size={18} name={'park-drag'} />
-      </div>,
+      </motion.div>,
       bodyRef.current
     )
   }

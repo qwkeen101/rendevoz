@@ -88,7 +88,7 @@ const FeedContentRenderer = () => {
             containerStyle={{
               position: 'absolute',
               color: Colors.Font.Transparent,
-              background: Colors.Background.Global,
+              background: Colors.Background.Popover,
               boxShadow: Colors.Background.BorderBoxShadow,
               left: -40,
               top: '20px',
@@ -119,7 +119,7 @@ const FeedContentRenderer = () => {
             }}
             containerStyle={{
               position: 'absolute',
-              background: Colors.Background.Global,
+              background: Colors.Background.Popover,
               boxShadow: Colors.Background.BorderBoxShadow,
               color: Colors.Font.Transparent,
               left: -40,

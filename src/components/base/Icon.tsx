@@ -23,6 +23,7 @@ export interface IconProps extends DetailedHTMLProps<HTMLAttributes<HTMLDivEleme
   onPointerDown?: React.PointerEventHandler
   onPointerMove?: React.PointerEventHandler
   onPointerUp?: React.PointerEventHandler
+  iconStyle?: CSSProperties
   draggable?: boolean
 }
 const disableSvg = css({
@@ -34,7 +35,7 @@ const disableSvg = css({
   }
 })
 const Icon = forwardRef<HTMLDivElement, IconProps>(
-  ({ name, size, strokeWidth, fill, spin, theme, className, cursor, color, onClick, containerStyle, style, ...rest }, ref) => {
+  ({ name, size, strokeWidth, fill, spin, theme, className, iconStyle, cursor, color, onClick, containerStyle, style, ...rest }, ref) => {
     const s: React.CSSProperties = {
       cursor: cursor,
       userSelect: 'none',
@@ -47,6 +48,7 @@ const Icon = forwardRef<HTMLDivElement, IconProps>(
             color={color}
             fill={fill}
             {...rest}
+            style={iconStyle}
             strokeWidth={strokeWidth}
             type={name.slice(5)}
             theme={theme}

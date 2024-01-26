@@ -6,7 +6,8 @@ export const DEFAULT_GROUP_PROPERTIES = [
     visible: true,
     type: 'basic',
     editable: false,
-    id: 1
+    id: 1,
+    propType: 'metaType'
   },
   {
     name: 'name',
@@ -16,6 +17,7 @@ export const DEFAULT_GROUP_PROPERTIES = [
     type: 'basic',
     editable: false,
     id: 2,
+    propType: 'string',
     width: 300
   },
   {
@@ -23,6 +25,7 @@ export const DEFAULT_GROUP_PROPERTIES = [
     icon: 'park-info',
     display: 'general.description',
     visible: false,
+    propType: 'string',
     type: 'basic',
     editable: false,
     id: 3
@@ -34,6 +37,7 @@ export const DEFAULT_GROUP_PROPERTIES = [
     visible: true,
     type: 'basic',
     editable: false,
+    propType: 'multiSelect',
     id: 4
   },
   {
@@ -104,6 +108,7 @@ export const DEFAULT_GROUP_PROPERTIES = [
     display: 'general.createdAt',
     visible: false,
     type: 'basic',
+    propType: 'date',
     editable: false,
     id: 11
   },
@@ -114,6 +119,7 @@ export const DEFAULT_GROUP_PROPERTIES = [
     visible: false,
     type: 'basic',
     editable: false,
+    propType: 'date',
     id: 12
   },
   {
@@ -123,6 +129,9 @@ export const DEFAULT_GROUP_PROPERTIES = [
     visible: false,
     type: 'basic',
     editable: false,
+    propType: 'date',
     id: 13
   }
 ]
+
+export const DEFAULT_GROUP_PROPERTY_OBJ = Object.fromEntries(DEFAULT_GROUP_PROPERTIES.map(i => [i.id, i]))

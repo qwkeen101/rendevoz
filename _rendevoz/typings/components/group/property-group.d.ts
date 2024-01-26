@@ -1,5 +1,6 @@
 type StringSort = 'alphabetical' | 'reverseAlphabetical' | 'manual'
 type DateSort = 'oldestFirst' | 'newestFirst'
+type NumberSort = 'ascending' | 'descending'
 export type StringGroupRule = {
   fieldType: 'string'
   textBy: 'alphabetical' | 'exact'
@@ -14,7 +15,7 @@ export type CheckboxGroupRule = {
   fieldType: 'checkbox'
 }
 export type SelectGroupRule = {
-  fieldType: 'select'
+  fieldType: 'singleSelect' | 'multiSelect'
   sort: StringSort
 }
 export type NumberGroupRule = {
@@ -24,7 +25,12 @@ export type NumberGroupRule = {
     to: number
   }
   groupEvery: number
-  sort: 'asc' | 'desc'
+  sort: NumberSort
 }
 
-export type IGroupRule = SelectGroupRule | NumberGroupRule | StringGroupRule | DateGroupRule | CheckboxGroupRule
+export type MetaTypeGroupRule = {
+  fieldType: 'metaType'
+  sort: 'manual'
+}
+
+export type IGroupRule = SelectGroupRule | NumberGroupRule | StringGroupRule | DateGroupRule | CheckboxGroupRule | MetaTypeGroupRule

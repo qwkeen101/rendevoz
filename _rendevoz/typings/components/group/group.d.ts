@@ -20,11 +20,24 @@ export type MetaGroupProperty = (
   id: number
   width?: number
 }
+
+export type IGroupGrouper = {
+  id: number
+  values: MetaGroupChild[]
+  // toggled
+  visible?: boolean
+  name: string
+  // visible in view
+  hidden?: boolean
+}
+
 export type MetaGroupChild = {
   rowId: number
   children?: MetaGroupChild[]
   syncVersion?: number
   toggled?: boolean
+  // when have grouper, there maybe two same rowId item appear at the same time
+  tempRowId?: number
 } & { type: 'metaObject'; id: number }
 
 export type MetaGroupPropertyOption = {
@@ -51,6 +64,13 @@ export interface MetaGroup extends IBase {
   values: MetaGroupChild[]
   properties?: MetaGroupProperty[]
   views: ((
+    | {
+        type: 'kanban'
+        options: {
+          wrapColumns?: boolean
+          properties?: Record<number, MetaGroupViewProperty>
+        }
+      }
     | {
         type: 'table'
         options: {
@@ -94,6 +114,7 @@ export interface MetaGroup extends IBase {
     sort?: SorterGroup
     search?: string
     group?: IMetaGroupGrouper
+    storedGroups?: IGroupGrouper[]
   })[]
   rootFilterGroup: MetaFilterGroup
   autoAddto: 'first' | 'last'

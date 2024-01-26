@@ -51,13 +51,14 @@ export default function assignViewTableOps(instance: IGroupInstance) {
           const currentViewVisibleValues = instance.valueOps?.getVisibleValues()
           if (!currentViewVisibleValues) return
           const maxIndex = (instance.viewOps?.getVisibleProperties() ?? []).length - 1
-          const rowIndex = currentViewVisibleValues.findIndex(i => i[0].rowId === tableCellState.rowId)
+          const rowIndex = currentViewVisibleValues.findIndex(i => (i[0].tempRowId || i[0].rowId) === tableCellState.rowId)
           const canUp = rowIndex >= 1
           const canDown = rowIndex >= 0 && rowIndex < currentViewVisibleValues.length - 1
           switch (direction) {
             case 'down': {
               if (!canDown) return
-              const nextRow = currentViewVisibleValues[rowIndex + 1][0].rowId
+              const next = currentViewVisibleValues[rowIndex + 1][0]
+              const nextRow = next.tempRowId || next.rowId
               setTableCellState({ rowId: nextRow, index: tableCellState.index })
               break
             }
@@ -65,7 +66,8 @@ export default function assignViewTableOps(instance: IGroupInstance) {
               // navigate up
               if (tableCellState.index === 0) {
                 if (canUp) {
-                  const prevRow = currentViewVisibleValues[rowIndex - 1][0].rowId
+                  const prev = currentViewVisibleValues[rowIndex - 1][0]
+                  const prevRow = prev.tempRowId || prev.rowId
                   setTableCellState({ rowId: prevRow, index: maxIndex })
                 }
               } else {
@@ -77,7 +79,8 @@ export default function assignViewTableOps(instance: IGroupInstance) {
               //  navigate down
               if (tableCellState.index >= maxIndex) {
                 if (canDown) {
-                  const nextRow = currentViewVisibleValues[rowIndex + 1][0].rowId
+                  const next = currentViewVisibleValues[rowIndex + 1][0]
+                  const nextRow = next.tempRowId || next.rowId
                   setTableCellState({ rowId: nextRow, index: 0 })
                 }
               } else {
@@ -87,7 +90,8 @@ export default function assignViewTableOps(instance: IGroupInstance) {
             }
             case 'up': {
               if (!canUp) return
-              const prevRow = currentViewVisibleValues[rowIndex - 1][0].rowId
+              const prev = currentViewVisibleValues[rowIndex - 1][0]
+              const prevRow = prev.tempRowId || prev.rowId
               setTableCellState({ rowId: prevRow, index: tableCellState.index })
               break
             }

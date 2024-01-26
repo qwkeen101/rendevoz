@@ -11,14 +11,15 @@ export default () => {
   const { t } = useTranslation()
   const instance = useGroupInstance()
   const currentGroupView = groupState.currentView
+  const showCardSetting = currentGroupView?.type === 'gallery' || currentGroupView?.type === 'kanban'
   return (
     <>
       <Content
-        flex
         gap={12}
         style={{
-          padding: 8,
-          marginBottom: 8
+          display: 'grid',
+          gridTemplateColumns: '75px 75px 75px',
+          padding: '8px 10px'
         }}
       >
         {[
@@ -39,14 +40,20 @@ export default () => {
             icon: 'custom-list',
             type: 'list',
             selected: currentGroupView?.type === 'list'
+          },
+          {
+            name: t('general.Kanban'),
+            icon: 'custom-kanban',
+            type: 'kanban',
+            selected: currentGroupView?.type === 'kanban'
           }
         ].map(i => (
           <Content
             onClick={() => {
               instance.updateCurrentView?.(w => ({ ...w, type: i.type }))
             }}
-            flex
             column
+            flex
             className={'transparent-font'}
             key={i.icon}
             style={{
@@ -67,99 +74,101 @@ export default () => {
           </Content>
         ))}
       </Content>
-      {currentGroupView?.type === 'gallery' && (
-        <ButtonSwitch
-          onChange={v => {
-            instance.updateCurrentView?.(s => ({
-              ...s,
-              options: {
-                ...s.options,
-                fitImage: v
+      <div style={{ padding: 4 }}>
+        {showCardSetting && (
+          <ButtonSwitch
+            onChange={v => {
+              instance.updateCurrentView?.(s => ({
+                ...s,
+                options: {
+                  ...s.options,
+                  fitImage: v
+                }
+              }))
+            }}
+            name={t('general.Fit image')}
+            value={!!currentGroupView?.options.fitImage}
+          ></ButtonSwitch>
+        )}
+        {showCardSetting && (
+          <ButtonSelect
+            closeOnSelect={true}
+            name={t('general.Card size')}
+            onSelect={v => {
+              instance.updateCurrentView?.(s => ({ ...s, options: { ...s.options, cardSize: v[0] } }))
+            }}
+            value={currentGroupView.options.cardSize || 'medium'}
+            options={[
+              {
+                value: 'small',
+                children: t('general.Small')
+              },
+              {
+                value: 'medium',
+                children: t('general.Medium')
+              },
+              {
+                value: 'large',
+                children: t('general.Large')
               }
-            }))
-          }}
-          name={t('general.Fit image')}
-          value={!!currentGroupView?.options.fitImage}
-        ></ButtonSwitch>
-      )}
-      {currentGroupView?.type === 'gallery' && (
-        <ButtonSelect
-          closeOnSelect={true}
-          name={t('general.Card size')}
-          onSelect={v => {
-            instance.updateCurrentView?.(s => ({ ...s, options: { ...s.options, cardSize: v[0] } }))
-          }}
-          value={currentGroupView.options.cardSize || 'medium'}
-          options={[
-            {
-              value: 'small',
-              children: t('general.Small')
-            },
-            {
-              value: 'medium',
-              children: t('general.Medium')
-            },
-            {
-              value: 'large',
-              children: t('general.Large')
-            }
-          ]}
-        />
-      )}
-      {currentGroupView?.type === 'gallery' && (
-        <ButtonSelect
-          closeOnSelect={true}
-          name={t('general.Card cover')}
-          onSelect={v => {
-            instance.updateCurrentView?.(s => ({ ...s, options: { ...s.options, cardCover: v[0] } }))
-          }}
-          value={currentGroupView.options.cardCover || 'cover'}
-          options={[
-            {
-              value: 'cover',
-              children: t('general.Cover image')
-            },
-            {
-              value: 'content',
-              children: t('general.Card content')
-            },
-            {
-              value: 'none',
-              children: t('general.None')
-            }
-          ]}
-        />
-      )}
-      {currentGroupView?.type === 'gallery' && (
-        <ButtonSwitch
-          onChange={v => {
-            instance.updateCurrentView?.(s => ({
-              ...s,
-              options: {
-                ...s.options,
-                hideCoverIfEmpty: v
+            ]}
+          />
+        )}
+        {showCardSetting && (
+          <ButtonSelect
+            closeOnSelect={true}
+            name={t('general.Card cover')}
+            onSelect={v => {
+              instance.updateCurrentView?.(s => ({ ...s, options: { ...s.options, cardCover: v[0] } }))
+            }}
+            value={currentGroupView.options.cardCover || 'cover'}
+            options={[
+              {
+                value: 'cover',
+                children: t('general.Cover image')
+              },
+              {
+                value: 'content',
+                children: t('general.Card content')
+              },
+              {
+                value: 'none',
+                children: t('general.None')
               }
-            }))
-          }}
-          name={t('general.Hide cover if empty')}
-          value={!!currentGroupView?.options.hideCoverIfEmpty}
-        ></ButtonSwitch>
-      )}
-      {currentGroupView?.type !== 'list' && (
-        <ButtonSwitch
-          onChange={v => {
-            instance.updateCurrentView?.(s => ({
-              ...s,
-              options: {
-                ...s.options,
-                wrapColumns: v
-              }
-            }))
-          }}
-          name={t('general.Wrap columns')}
-          value={!!currentGroupView?.options.wrapColumns}
-        ></ButtonSwitch>
-      )}
+            ]}
+          />
+        )}
+        {currentGroupView?.type === 'gallery' && (
+          <ButtonSwitch
+            onChange={v => {
+              instance.updateCurrentView?.(s => ({
+                ...s,
+                options: {
+                  ...s.options,
+                  hideCoverIfEmpty: v
+                }
+              }))
+            }}
+            name={t('general.Hide cover if empty')}
+            value={!!currentGroupView?.options.hideCoverIfEmpty}
+          ></ButtonSwitch>
+        )}
+        {currentGroupView?.type !== 'list' && (
+          <ButtonSwitch
+            onChange={v => {
+              instance.updateCurrentView?.(s => ({
+                ...s,
+                options: {
+                  ...s.options,
+                  wrapColumns: v
+                }
+              }))
+            }}
+            name={t('general.Wrap columns')}
+            value={!!currentGroupView?.options.wrapColumns}
+          ></ButtonSwitch>
+        )}
+      </div>
     </>
   )
 }

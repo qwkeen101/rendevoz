@@ -12,10 +12,22 @@ import { css } from '@emotion/css'
 import { Colors } from '@/consts'
 import { useTranslation } from 'react-i18next'
 import ViewSettingMenu from '@/core/components/group/components/menu/setting/ViewSettingMenu'
-import GroupGrouperMenu from '@/core/components/group/components/group'
+import GroupGrouperMenu from '@/core/components/group/components/grouper/menus'
+import { usePrevious } from '@/hooks'
+import classnames from 'classnames'
 
 export default ({ onClose }: { onClose: VoidFunction }) => {
-  const [currentView, setCurrentView] = useState<'main' | 'properties' | 'view'>('main')
+  const [currentView, setCurrentView] = useState<
+    | 'main'
+    | 'properties'
+    | 'view'
+    | 'grouper'
+    | {
+        type: 'subMenu'
+        name: string
+        previousView: string
+      }
+  >('main')
   const [groupState, setGroupState] = useGroupState()
   const { t } = useTranslation()
   const currentGroupView = groupState.currentView
@@ -43,6 +55,7 @@ export default ({ onClose }: { onClose: VoidFunction }) => {
       i.value = currentGroupView.name
     }
   }, [currentGroupView?.name])
+
   const renderMain = () => {
     switch (currentView) {
       case 'main': {
@@ -52,17 +65,16 @@ export default ({ onClose }: { onClose: VoidFunction }) => {
               flex
               gap={6}
               alignItems={'center'}
-              className={css({
-                margin: '0px 8px 6px',
-                borderRadius: 4,
-                padding: '4px',
-                ':focus-within': {
-                  boxShadow: '0 0 0 2px var(--select-color)'
-                },
-                boxShadow: '0 0 0 1px var(--border-background)'
-              })}
+              className={classnames(
+                css({
+                  margin: '0px 6px 6px',
+                  borderRadius: 4,
+                  padding: '4px',
+                  boxShadow: '0 0 0 1px var(--border-background)'
+                }),
+                'focus-within-input'
+              )}
             >
-              {/*<GroupGrouperMenu />*/}
               {currentGroupView?.icon && !(currentGroupView.icon.startsWith('park') || currentGroupView.icon.startsWith('custom')) ? (
                 <EmojiWithPicker
                   showPicker={true}
@@ -101,95 +113,110 @@ export default ({ onClose }: { onClose: VoidFunction }) => {
               <input
                 defaultValue={currentGroupView?.name}
                 placeholder={'View name'}
-                className={ClassName.noStyleInput}
                 onBlur={e => {
                   instance.updateCurrentView?.(s => ({ ...s, name: e.target.value }))
                 }}
               />
             </Content>
-            <Button.IconButton
-              icon={'park-mindmap-list'}
-              text={t('general.Properties')}
-              suffixIcon={'park-right'}
-              onClick={() => {
-                setCurrentView('properties')
+            <div
+              style={{
+                padding: '0px 4px'
               }}
-            />
-            <Button.IconButton
-              icon={'park-list-view'}
-              text={t('general.View')}
-              suffixIcon={'park-right'}
-              onClick={() => {
-                setCurrentView('view')
-              }}
-            />
-            <ButtonSelect
-              name={t('general.Open object in')}
-              closeOnSelect={true}
-              value={groupState.data?.openIn || 'newTab'}
-              options={openInOptions}
-              onSelect={v => {
-                instance.updateGroupData?.(s => ({ ...s, openIn: v[0] }))
-              }}
-            />
-            {groupLayout?.showAddObjectIntoSetting !== false && (
-              <ButtonSelect
-                closeOnSelect={true}
-                name={t('general.Add from outside to')}
-                onSelect={v => {
-                  instance.updateGroupData?.(s => ({ ...s, autoAddto: v[0] }))
+            >
+              <Button.IconButton
+                icon={'park-mindmap-list'}
+                text={t('general.Properties')}
+                suffixIcon={'park-right'}
+                onClick={() => {
+                  setCurrentView('properties')
                 }}
-                value={groupState.data?.autoAddto || 'first'}
-                options={[
-                  {
-                    value: 'first',
-                    children: t('general.First')
-                  },
-                  {
-                    value: 'last',
-                    children: t('general.Last')
-                  }
-                ]}
               />
-            )}
-
-            {groupStateState?.canHideObjectsInside !== false && (
-              <ButtonSwitch
-                onChange={v => {
-                  instance.updateGroupData?.(s => ({
-                    ...s,
-                    hideObjectsInside: v
-                  }))
+              <Button.IconButton
+                icon={'park-list-view'}
+                text={t('general.View')}
+                suffixIcon={'park-right'}
+                onClick={() => {
+                  setCurrentView('view')
                 }}
-                name={t('general.Hide objects')}
-                value={!!groupState.data?.hideObjectsInside}
-              ></ButtonSwitch>
-            )}
-            {groupState.data?.hideObjectsInside &&
-              groupStateState?.canHideObjectsInside !== false &&
-              groupStateState?.canHideGroupsInside !== false && (
+              />
+              <Button.IconButton
+                icon={'park-adjacent-item'}
+                text={t('general.Grouper')}
+                suffixIcon={'park-right'}
+                onClick={() => {
+                  setCurrentView('grouper')
+                }}
+              />
+              <ButtonSelect
+                name={t('general.Open object in')}
+                closeOnSelect={true}
+                value={groupState.data?.openIn || 'newTab'}
+                options={openInOptions}
+                onSelect={v => {
+                  instance.updateGroupData?.(s => ({ ...s, openIn: v[0] }))
+                }}
+              />
+              {groupLayout?.showAddObjectIntoSetting !== false && (
+                <ButtonSelect
+                  closeOnSelect={true}
+                  name={t('general.Add from outside to')}
+                  onSelect={v => {
+                    instance.updateGroupData?.(s => ({ ...s, autoAddto: v[0] }))
+                  }}
+                  value={groupState.data?.autoAddto || 'first'}
+                  options={[
+                    {
+                      value: 'first',
+                      children: t('general.First')
+                    },
+                    {
+                      value: 'last',
+                      children: t('general.Last')
+                    }
+                  ]}
+                />
+              )}
+              {groupStateState?.canHideObjectsInside !== false && (
                 <ButtonSwitch
                   onChange={v => {
                     instance.updateGroupData?.(s => ({
                       ...s,
-                      hideGroupsInside: v
+                      hideObjectsInside: v
                     }))
                   }}
-                  name={t('general.Hide groups')}
-                  value={!!groupState.data?.hideGroupsInside}
+                  name={t('general.Hide objects')}
+                  value={!!groupState.data?.hideObjectsInside}
                 ></ButtonSwitch>
               )}
+              {groupState.data?.hideObjectsInside &&
+                groupStateState?.canHideObjectsInside !== false &&
+                groupStateState?.canHideGroupsInside !== false && (
+                  <ButtonSwitch
+                    onChange={v => {
+                      instance.updateGroupData?.(s => ({
+                        ...s,
+                        hideGroupsInside: v
+                      }))
+                    }}
+                    name={t('general.Hide groups')}
+                    value={!!groupState.data?.hideGroupsInside}
+                  ></ButtonSwitch>
+                )}
+            </div>
             <div
               style={{
                 width: '100%',
                 height: 1,
                 background: Colors.Background.Border,
-                margin: '6px 0px'
+                margin: '4px 0px'
               }}
             ></div>
             <Button.IconButton
               icon={'park-delete'}
               dangerous
+              style={{
+                margin: '0px 4px 4px'
+              }}
               onClick={() => {
                 if (groupState.currentView?.id) {
                   onClose()
@@ -206,21 +233,37 @@ export default ({ onClose }: { onClose: VoidFunction }) => {
       case 'view':
         return <ViewSettingMenu />
     }
+    if (currentView === 'grouper' || currentView.previousView === 'grouper') {
+      return (
+        <GroupGrouperMenu
+          onBack={() => setCurrentView('grouper')}
+          currentSub={currentView?.name}
+          onSubMenu={v => setCurrentView({ name: v, type: 'subMenu', previousView: 'grouper' })}
+        />
+      )
+    }
   }
+
   return (
     <Content flex column style={{ fontSize: 14, padding: '6px 0px 0px' }}>
       {currentView !== 'main' && (
-        <Content flex gap={10} style={{ marginBottom: 10 }}>
+        <Content flex gap={10} style={{ marginBottom: 10, padding: '6px 6px 0px 8px' }}>
           <Icon
-            className={ClassName.circleButton()}
-            name={'park-left'}
+            className={ClassName.flatButton(3, '4px')}
+            name={'park-arrow-left'}
             onClick={() => {
-              setCurrentView('main')
+              if (typeof currentView === 'object') {
+                setCurrentView(currentView.previousView || 'main')
+              } else {
+                setCurrentView('main')
+              }
             }}
           ></Icon>
           <div style={{ fontWeight: 600, textTransform: 'capitalize' }}>
             {currentView === 'properties' ? t('general.Properties') : undefined}
             {currentView === 'view' ? t('general.View') : undefined}
+            {currentView === 'grouper' ? t('general.Grouper') : undefined}
+            {typeof currentView === 'object' && t(`general.${currentView.name}`)}
           </div>
         </Content>
       )}

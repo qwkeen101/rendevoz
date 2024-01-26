@@ -52,7 +52,6 @@ const FileImporter = ({
   })
 
   const handleCreate = (type: MetaObject['type']) => {
-    onClose?.()
     ObjectCreateHandler[type]?.().then(handleAfterCreate)
   }
   const records = [

@@ -8,6 +8,10 @@ export default (instance: IGroupInstance) => {
   const store = useStore()
   assignProperties(instance, {
     selectOps: {
+      deselectItem: id => {
+        instance.values.inViewRowFuncs.get(id)?.clearSelectState()
+        instance.values.selectedRowIdSet.delete(id)
+      },
       selectItem: (id, removeOtherIfOnlyOneSelected) => {
         if (removeOtherIfOnlyOneSelected) {
           const currSelect = instance.values.selectedRowIdSet.size === 1
@@ -19,20 +23,21 @@ export default (instance: IGroupInstance) => {
         instance.values.selectedRowIdSet.add(id)
       },
       clearAllSelect: () => {
+        console.log('clear herere er')
         instance.values.inViewRowFuncs.forEach(v => v.clearSelectState())
         instance.values.selectedRowIdSet.clear()
         instance.values.lastSelectRowId = undefined
       },
       selectBetweenPath: (startPath, endPath) => {
         const groupState = store.get(GroupStateAtom)
-        const values = groupState.filterValues || groupState.viewValues || []
+        const values = groupState.groupedValues || groupState.filterValues || groupState.viewValues || []
         const elements = Node.fragment({ children: values }, startPath, endPath)
         const visible = instance.valueOps?.getVisibleValues()
-        const visibleIds = new Set(visible?.map(i => i[0].rowId))
+        const visibleIds = new Set(visible?.map(i => i[0].tempRowId || i[0].rowId))
         elements.forEach(i => {
-          if (visibleIds.has(i[0].rowId)) {
-            instance.values.inViewRowFuncs.get(i[0].rowId)?.select()
-            instance.values.selectedRowIdSet.add(i[0].rowId)
+          if (visibleIds.has(i[0].tempRowId || i[0].rowId)) {
+            instance.values.inViewRowFuncs.get(i[0].tempRowId || i[0].rowId)?.select()
+            instance.values.selectedRowIdSet.add(i[0].tempRowId || i[0].rowId)
           }
         })
       },

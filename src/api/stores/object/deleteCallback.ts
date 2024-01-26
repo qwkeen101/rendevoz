@@ -1,9 +1,9 @@
 import { ObjectFamily } from '@/api/stores/object/object.store'
 import FileSystem from '@/api/fileSystem'
-import { ObjectStore } from '@/api/stores'
+import { MetaStore, ObjectStore } from '@/api/stores'
 import useDb from '../../../hooks/stores/useDb'
 import { deleteRendefile } from '@/utils'
-import { INote } from '~/typings'
+import { INote, MetaGroup } from '~/typings'
 
 export default async (o: ObjectFamily[keyof ObjectFamily], force: boolean) => {
   if ('specType' in o) {
@@ -41,6 +41,16 @@ export default async (o: ObjectFamily[keyof ObjectFamily], force: boolean) => {
       case 'webpage': {
         o.noteId && ObjectStore('note').deleteOneById(o.noteId)
         break
+      }
+      case 'group': {
+        {
+          const g = o as MetaGroup
+          const metaMap = MetaStore.getMetaObjectsMap()
+          const allMetaIds = Array.from(new Set(g.values.map(i => i.id)).values())
+          const allHiddenMetas = allMetaIds.map(i => metaMap.get(i)).filter(i => i?.hidden)
+          allHiddenMetas.forEach(m => m && MetaStore.updateMetaObject({ id: m.id, hidden: false }))
+          break
+        }
       }
     }
   }

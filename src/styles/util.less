@@ -18,11 +18,27 @@
     background: var(--light-hover-background);
   }
 }
+.border-box-shadow{
+  box-shadow: 0 0 0 1px var(--border-background);
+}
 .hover-link{
   cursor: pointer;
   transition: color 0.25s ease;
   &:hover{
     color: var(--select-color);
+  }
+}
+.font-size-12{
+  font-size: 12px;
+}
+.focus-input{
+  &:focus{
+    box-shadow: var(--focus-box-shadow);
+  }
+}
+.focus-within-input{
+  &:focus-within{
+    box-shadow: var(--focus-box-shadow);
   }
 }
 .object-name-item{

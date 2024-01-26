@@ -175,6 +175,14 @@ const GroupActions = memo(({ groupValue }: { groupValue?: MetaGroup }) => {
                   setV(false)
                 }}
               />
+              <Button.IconButton
+                text={t('general.Kanban')}
+                icon={'custom-kanban'}
+                onClick={() => {
+                  instance.viewOps?.addNewView('kanban')
+                  setV(false)
+                }}
+              />
             </WithBorder>
           )}
           name={'park-plus'}
@@ -297,7 +305,7 @@ const GroupActions = memo(({ groupValue }: { groupValue?: MetaGroup }) => {
           className={ClassName.circleButton(5, 4)}
           placement={['bottom']}
           content={setV => (
-            <WithBorder padding={6} width={240}>
+            <WithBorder width={240}>
               <GroupSettingMenu onClose={() => setV(false)} />
             </WithBorder>
           )}

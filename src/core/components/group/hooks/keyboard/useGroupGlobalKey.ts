@@ -3,16 +3,19 @@ import { useEffect } from 'react'
 import useGroupDeleteKey from '@/core/components/group/hooks/keyboard/useGroupDeleteKey'
 import useGroupTableControlCell from '@/core/components/group/hooks/keyboard/useGroupTableControlCell'
 import useGroupTableRowControl from '@/core/components/group/hooks/keyboard/useGroupTableRowControl'
+import useGroupEscKey from '@/core/components/group/hooks/keyboard/useGroupEscKey'
 
 const useGroupGlobalKey = () => {
   const instance = useGroupInstance()
   const handleDeleteKey = useGroupDeleteKey(instance)
   const handleTableCellControlKey = useGroupTableControlCell(instance)
   const handleTableRowControlKey = useGroupTableRowControl(instance)
+  const handleEscKey = useGroupEscKey(instance)
   useEffect(() => {
     const keyboardHandler = (e: KeyboardEvent) => {
       handleTableCellControlKey(e)
       handleTableRowControlKey(e)
+      handleEscKey(e)
       if (!instance.values.isFocused) return
       handleDeleteKey(e)
     }

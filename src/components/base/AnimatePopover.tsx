@@ -3,7 +3,7 @@ import { AnimatePresence, motion } from 'framer-motion'
 import { PopoverProps } from 'react-tiny-popover'
 import { Popover } from './popover/Popover'
 import useUnmount from '@/hooks/utils/useUnmount'
-import { useMergedRef } from '@/hooks'
+import { useMergedRef, useUpdateEffect } from '@/hooks'
 import { KEY, Zindexes } from '@/consts'
 import { LeftTopPosition, Position } from '~/typings'
 import { SetStateAction } from 'jotai'
@@ -117,7 +117,7 @@ const AnimatePopover: FC<PropsWithChildren<AnimatePopoverProps>> = ({
     }
   }, [visible])
 
-  useEffect(() => {
+  useUpdateEffect(() => {
     onVisiblityChange?.(isOpen)
     const keydownHandler = (e: KeyboardEvent) => {
       if (isHotkey(KEY.Escape, e)) {

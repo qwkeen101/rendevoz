@@ -80,15 +80,11 @@ const MetaGroupInner = ({ value, groupId, layout, title, on, state }: IMetaGroup
   const setGroupState = useSetAtom(GroupStateAtom)
   instance.on = on
   instance.getGroupState = () => store.get(GroupStateAtom)
+
   useMemo(() => {
     setGroupState(s => ({ ...s, layout, title, state }))
   }, [layout, title, state])
-  useMemo(() => {
-    const innerState = instance.getGroupState?.()
-    if (innerState?.data !== value) {
-      setGroupState(s => ({ ...s, data: value }))
-    }
-  }, [value])
+
   useEffect(() => {
     if (instance) {
       if (containerRef.current) {
@@ -105,6 +101,13 @@ const MetaGroupInner = ({ value, groupId, layout, title, on, state }: IMetaGroup
   if (container) {
     instance.values.pageContainer = container
     instance.getScrollElement = () => container
+  }
+  instance.getRealRowId = rowId => {
+    const innerGroups = instance.getGroupState?.().groups
+    if (innerGroups) {
+      return instance.values.tempRowIdToRowIdMap.get(rowId) || rowId
+    }
+    return rowId
   }
   const v = value
   const debounceCancelScrolling = useDebounceFn(
@@ -151,7 +154,7 @@ const MetaGroupInner = ({ value, groupId, layout, title, on, state }: IMetaGroup
             instance.values.isFocused = true
           }
         }}
-        style={{ overflow: 'auto', overflowAnchor: 'none' }}
+        style={{ overflow: 'auto', overflowAnchor: 'none', scrollMargin: '30px', scrollPadding: '30px' }}
         fullHeight
         ref={containerRef}
         fullWidth
@@ -184,7 +187,8 @@ const MetaGroup = (props: IMetaGroupProps) => {
         selectedRowIdSet: new Set(),
         rowIdToPathMap: new Map(),
         inViewRowFuncs: new Map(),
-        pathRefs: new Set()
+        pathRefs: new Set(),
+        tempRowIdToRowIdMap: new Map()
       }
     } as IGroupInstance)
     return store

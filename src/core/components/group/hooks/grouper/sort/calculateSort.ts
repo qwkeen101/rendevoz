@@ -1,7 +1,15 @@
 import { IGroupGrouper } from '@/core/components/group/hooks/useGroupState'
-import { DateGroupRule, DateSort, NumberGroupRule, StringGroupRule, StringSort } from '~/typings/components/group/property-group'
+import {
+  DateGroupRule,
+  DateSort,
+  IGroupRule,
+  NumberGroupRule,
+  StringGroupRule,
+  StringSort
+} from '~/typings/components/group/property-group'
 import { relativeDates } from '@/core/components/group/hooks/grouper/calculator/date'
 import { EMPTY_GROUPER_NAME } from '@/core/components/group/hooks/grouper/useBuildGrouper'
+import { globalStore, ObjectStore } from '@/api/stores'
 
 const relativeToDate = (r: relativeDates, sort: DateSort) => {
   const now = new Date()
@@ -42,7 +50,7 @@ const relativeToDate = (r: relativeDates, sort: DateSort) => {
   }
 }
 
-export default (groups: IGroupGrouper[], rule: StringGroupRule | DateGroupRule | NumberGroupRule) => {
+export default (groups: IGroupGrouper[], rule: IGroupRule) => {
   const sort = rule.sort
   switch (sort) {
     case 'newestFirst': {
@@ -57,26 +65,54 @@ export default (groups: IGroupGrouper[], rule: StringGroupRule | DateGroupRule |
       break
     }
     case 'alphabetical': {
+      const tagMap = globalStore.get(ObjectStore('tag').objectMapAtom)
+      const optionMap = globalStore.get(ObjectStore('metaPropSelectOption').objectMapAtom)
+      let getName = o => o.name
+      if (rule.fieldType === 'singleSelect' || rule.fieldType === 'multiSelect') {
+        getName = o => {
+          const num = Number(o.name)
+          if (!Number.isNaN(num)) {
+            return tagMap.get(num)?.name || optionMap.get(num)?.name || ''
+          }
+          return o.name
+        }
+      }
       groups.sort((a, b) => {
-        if (b.name === EMPTY_GROUPER_NAME) {
+        const bName = getName(b)
+        const aName = getName(a)
+        if (bName === EMPTY_GROUPER_NAME) {
           return -1
         }
-        if (a.name === EMPTY_GROUPER_NAME) {
+        if (aName === EMPTY_GROUPER_NAME) {
           return 1
         }
-        return a.name.localeCompare(b.name)
+        return aName.localeCompare(bName)
       })
       break
     }
     case 'reverseAlphabetical': {
+      const tagMap = globalStore.get(ObjectStore('tag').objectMapAtom)
+      const optionMap = globalStore.get(ObjectStore('metaPropSelectOption').objectMapAtom)
+      let getName = o => o.name
+      if (rule.fieldType === 'singleSelect' || rule.fieldType === 'multiSelect') {
+        getName = o => {
+          const num = Number(o.name)
+          if (!Number.isNaN(num)) {
+            return tagMap.get(num)?.name || optionMap.get(num)?.name || ''
+          }
+          return o.name
+        }
+      }
       groups.sort((a, b) => {
-        if (b.name === EMPTY_GROUPER_NAME) {
+        const bName = getName(b)
+        const aName = getName(a)
+        if (bName === EMPTY_GROUPER_NAME) {
           return -1
         }
-        if (a.name === EMPTY_GROUPER_NAME) {
+        if (aName === EMPTY_GROUPER_NAME) {
           return 1
         }
-        return -a.name.localeCompare(b.name)
+        return -aName.localeCompare(bName)
       })
       break
     }

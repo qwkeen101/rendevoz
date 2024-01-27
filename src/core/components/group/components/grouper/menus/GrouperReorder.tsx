@@ -26,7 +26,7 @@ export default () => {
   if (currentGroupRule && 'sort' in currentGroupRule && currentGroupRule.sort === 'manual') {
     reorderable = true
   }
-  if (currentGroupRule?.fieldType && ['checkbox', 'metaType', 'singleSelect', 'multiSelect'].includes(currentGroupRule?.fieldType)) {
+  if (currentGroupRule?.fieldType && ['checkbox', 'metaType'].includes(currentGroupRule?.fieldType)) {
     reorderable = true
   }
   useLayoutEffect(() => {
@@ -65,6 +65,7 @@ export default () => {
                 }}
                 dragConstraints={reorderRef}
                 dragElastic={0}
+                dragMomentum={false}
                 drag={reorderable ? 'y' : false}
                 as={'div'}
                 transition={{

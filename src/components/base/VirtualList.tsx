@@ -145,8 +145,11 @@ function VirtualList<T>(
             {innerItems.map((i, idx) => (
               <Reorder.Item
                 transition={{
-                  duration: isReorder ? undefined : 0
+                  duration: isReorder ? 0.18 : 0
                 }}
+                dragConstraints={contentRef}
+                dragElastic={0}
+                dragMomentum={false}
                 onDragStart={() => {
                   setIsReorder(true)
                 }}

@@ -13,6 +13,8 @@ export default ({ onBack }: { onBack: VoidFunction }) => {
     return null
   }
   switch (currentGrouper.fieldType) {
+    case 'multiSelect':
+    case 'singleSelect':
     case 'string': {
       const sorts: StringSort[] = ['manual', 'alphabetical', 'reverseAlphabetical']
       return (

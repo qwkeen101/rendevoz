@@ -166,6 +166,7 @@ function Item({ value, onStop, onVisibleChange, isDragging, bound, onDragStart }
       onDragEnd={onStop}
       onDragStart={onDragStart}
       value={value}
+      dragMomentum={false}
       dragListener={false}
       dragControls={controls}
     >

@@ -67,7 +67,7 @@ export default function GroupGrouperMenu({
   }, [visibleProperties])
 
   console.log(groupableProperties, currentSub)
-  const sortableGroups = ['string', 'date', 'number']
+  const sortableGroups = ['string', 'date', 'number', 'singleSelect', 'multiSelect']
   if (!currentGroupRule?.propertyId || currentSub === 'Group by') {
     return (
       <Content style={{ padding: '0px 4px 4px', maxHeight: 450, overflowY: 'auto' }}>
@@ -82,8 +82,8 @@ export default function GroupGrouperMenu({
                   if ('propType' in i) {
                     switch (i.propType) {
                       case 'string':
-                        // case 'singleSelect':
-                      // case 'multiSelect':
+                      case 'singleSelect':
+                      case 'multiSelect':
                         sort = 'alphabetical'
                         break
                       case 'date':

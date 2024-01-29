@@ -150,7 +150,7 @@ export default memo(() => {
           overflow: 'hidden',
           display: 'flex',
           alignItems: 'center',
-          '--global-background': '--background-secondary'
+          '--global-background': 'var(--background-secondary)'
         }}
       >
         {renderer()}

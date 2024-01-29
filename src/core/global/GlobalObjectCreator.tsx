@@ -99,7 +99,7 @@ export default () => {
             setTimeout(() => {
               callbackRef.current = undefined
             })
-          }, 350)
+          }, 200)
         }}
         autoOpen={false}
       />

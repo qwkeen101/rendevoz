@@ -1,4 +1,4 @@
-import { CollectionStore, MetaStore } from '@/api/stores'
+import { CollectionStore, MetaStore, ObjectStore } from '@/api/stores'
 import KeyvalueStore from '@/api/stores/keyvalue.store'
 import produce from 'immer'
 import { toast } from 'react-hot-toast'
@@ -38,6 +38,7 @@ export default {
     if (targetWorkspace) {
       await KeyvalueStore.updateOne('currentWorkspace', targetWorkspace)
       await MetaStore.switchWorkspace()
+      await ObjectStore('tag').getAll()
       await CollectionStore.switchWorkspace()
     }
   }

@@ -1,15 +1,6 @@
 import { WebpageInnerRef } from '@/core/webpage/WebpageCore'
 import { CustomEditor } from './editor'
-import {
-  BuiltInDraggableElement,
-  ICollection,
-  ILabel,
-  ILayoutTab,
-  IWhiteboardEdge,
-  IWhiteboardNode,
-  MetaObject,
-  PartialWithId
-} from '..'
+import { BuiltInDraggableElement, ICollection, ILabel, ILayoutTab, IWhiteboardEdge, IWhiteboardNode, MetaObject, PartialWithId } from '..'
 
 export interface WebpageInstance {
   transformToNote: () => Promise<CustomEditor>
@@ -61,7 +52,11 @@ export type IGlobalInstance = Partial<{
     quickAdd: (metaId: number) => void
     canPreview: (metaObject: MetaObject) => boolean
     openDetails: (id: number) => void
+    openGraph: (id: number) => void
     preview: (id: number) => void
+    // bad api design, alternative for create object
+    // TODO: replace all create object with this api
+    createObjects: (type?: MetaObject['type'], onMetaCreated?: (meta: MetaObject) => void) => void
     createObject: (type?: MetaObject['type']) => Promise<MetaObject>
     copyLink: (id: number | number[]) => void
     addDraggableAsMeta: (d: BuiltInDraggableElement, hidden?: boolean) => Promise<MetaObject>

@@ -32,6 +32,7 @@ import EditorClasses from '@/core/components/editor/consts/classes'
 import { assignProperties } from '@/utils'
 import { Colors } from '@/consts'
 import { EditorStateAtom } from '@/core/components/editor/hooks/useEditorState'
+import { DEFAULT_BACKGROUND_COLORS } from '@/components/picker/colorPicker'
 
 const ReadOnlyEditorClassName = css({
   table: {
@@ -311,14 +312,14 @@ const InnerEditor: FC<InnerEditorProps> = memo(
                 editor.undo()
                 break
               case 'changeBackgroundColor':
-                if (event.backgroundColor === '#ffffff') {
+                if (event.backgroundColor === Colors.Background.Blank) {
                   Editor.removeMark(editor, 'backgroundColor')
                 } else {
                   Editor.addMark(editor, 'backgroundColor', event.backgroundColor)
                 }
                 break
               case 'changeFontColor':
-                if (event.fontColor === '#000000') {
+                if (event.fontColor === Colors.Font.Blank) {
                   Editor.removeMark(editor, 'fontColor')
                 } else {
                   Editor.addMark(editor, 'fontColor', event.fontColor)
@@ -478,7 +479,8 @@ export const Leaf = (props: RenderLeafProps) => {
     textDecoration: leaf.underline ? 'underline' : undefined,
     fontSize: leaf.fontSize || leaf.code ? '0.85em' : '1em',
     '--block-font-color': leaf.fontColor,
-    background: leaf.cloze && !disableCloze ? 'var(--emphasis)' : leaf.code ? 'rgba(135,131,120,0.15)' : leaf.backgroundColor,
+    background:
+      leaf.cloze && !disableCloze ? 'var(--emphasis)' : leaf.code ? 'rgba(135,131,120,0.15)' : Colors.getAdaptColor(leaf.backgroundColor),
     cursor: leaf.cloze ? 'pointer' : undefined,
     boxShadow: leaf.cloze && disableCloze ? '0 0 0 1px var(--emphasis)' : undefined
   }

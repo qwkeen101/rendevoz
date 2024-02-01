@@ -87,7 +87,7 @@ const PdfRightSidebar = ({ pdfId }: { pdfId: number }) => {
         transition: 'opacity 0.3s ease',
         opacity: pdfBarState.showRightBar ? 1 : 0,
         pointerEvents: pdfBarState.showRightBar ? 'auto' : 'none',
-        zIndex: pdfBarState.showRightBar ? 20 : -1,
+        zIndex: pdfBarState.showRightBar ? 40 : -1,
         background: Colors.Background.Global,
         borderLeft: '1px solid var(--border-background)'
       }}

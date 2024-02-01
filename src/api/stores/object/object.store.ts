@@ -11,13 +11,13 @@ import { IStore } from '../types'
 import { useGlobalAtomValue } from '@/hooks'
 import Id from '@/utils/id'
 import { CustomTypes } from 'rendevoz'
-import { deleteRendefile } from '@/utils'
 import { DEFAULT_BACKGROUND_COLORS } from '@/components/picker/colorPicker'
 import _ from 'lodash'
 import { Rendevoz } from '@/core/rendevoz'
 import WebpageStore from '@/api/stores/webpage.store'
 import deleteCallback from '@/api/stores/object/deleteCallback'
 import addCallback from '@/api/stores/object/addCallback'
+import KeyvalueStore from '@/api/stores/keyvalue.store'
 export type ObjectFamily = CustomTypes['Object']
 
 export const ObjectFamilyAtom = atomFamily(() => atom(new Map<number, ObjectFamily[keyof ObjectFamily]>()))
@@ -33,6 +33,7 @@ const createObjectStore = <T extends keyof ObjectFamily, V extends ObjectFamily[
     beforeUpdateProcess?: (o: Partial<V>, opts: Parameters<S['updateOne']>[1]) => void
     beforeDeleteProcess?: (id: number, opts: Parameters<S['deleteOneById']>[1]) => Promise<boolean | void>
     beforeGetOneProcess?: () => void
+    afterGetAllProcess?: (all: V[]) => V[]
     afterAddProcess?: {
       onSuccess?: (obj: V, opts: Parameters<S['addOne']>[1]) => void
       onFail?: (opts: Parameters<S['addOne']>[1]) => void
@@ -46,6 +47,7 @@ const createObjectStore = <T extends keyof ObjectFamily, V extends ObjectFamily[
     }
     afterDeleteProcess?: (obj: V) => void
     afterGetOneProcess?: {
+      onBeforeCache?: (obj: V) => V | undefined
       onSuccess?: (obj: V, silent: boolean) => void
       onFail?: (silent: boolean) => void
     }
@@ -65,10 +67,11 @@ const createObjectStore = <T extends keyof ObjectFamily, V extends ObjectFamily[
   const forcedRemoveIds = new Set<number>()
   const localStore: IStore<V> = {
     getAll: async () => {
-      const count = await objectsDb.where('specType').equals(type).count()
-      if (count === globalStore.get(objectMapAtom).size) return true
-      const data = await objectsDb.where('specType').equals(type).toArray()
-      globalStore.set(objectMapAtom, BaseStore.bulkAdd(data, globalStore.get(objectMapAtom)))
+      let data = await objectsDb.where('specType').equals(type).toArray()
+      if (options?.afterGetAllProcess) {
+        data = options.afterGetAllProcess(data)
+      }
+      globalStore.set(objectMapAtom, BaseStore.bulkAdd(data, new Map()))
       return true
     },
     getAllData: async () => {
@@ -79,7 +82,9 @@ const createObjectStore = <T extends keyof ObjectFamily, V extends ObjectFamily[
     },
     getOneById: async id => {
       try {
-        const result = await initializedLocalStore.getOneById()(id)
+        const result = await initializedLocalStore.getOneById({
+          onBeforeCache: options?.afterGetOneProcess?.onBeforeCache
+        })(id)
         if (result) {
           options?.afterGetOneProcess?.onSuccess?.(result, true)
         }
@@ -456,13 +461,39 @@ const createWhiteboardStore = () => {
 
 const createTagStore = () => {
   return createObjectStore('tag', {
+    afterGetAllProcess: all => {
+      const currentWorkspace = KeyvalueStore.getOne('currentWorkspace')
+      if (currentWorkspace) {
+        console.log(all.filter(i => !i.workspace || currentWorkspace.id === i.workspace))
+        return all.filter(i => !i.workspace || currentWorkspace.id === i.workspace)
+      }
+      return all
+    },
     beforeAddProcess: async o => {
       if (!o.color) {
         o.color = _.sample(DEFAULT_BACKGROUND_COLORS)
       }
+      if (!o.workspace) {
+        const currentWorkspace = KeyvalueStore.getOne('currentWorkspace')
+        if (currentWorkspace) {
+          o.workspace = currentWorkspace.id
+        }
+      }
       const allOrders = Array.from(globalStore.get(ObjectStore('tag').objectMapAtom).values()).map(i => i.order ?? -1)
       o.order = Math.max(...allOrders) + 1
       return true
+    },
+    afterGetOneProcess: {
+      onBeforeCache: obj => {
+        const currWorkspace = KeyvalueStore.getOne('currentWorkspace')
+        if (currWorkspace) {
+          if (!obj.workspace || obj.workspace === currWorkspace.id) {
+            return obj
+          }
+          return
+        }
+        return obj
+      }
     },
     beforeDeleteProcess: async id => {
       const tag = await ObjectStore('tag').getOneById(id)

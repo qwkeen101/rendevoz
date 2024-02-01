@@ -10,6 +10,7 @@
     "Upload": "上传",
     "Embed link": "嵌入链接",
     "Embed a link": "嵌入一个链接",
+    "Show original webpage": "显示原网页",
     "Embed a link like": "嵌入如下所示的链接",
     "Grouper": "分组",
     "Choose a file": "选择文件",
@@ -626,6 +627,7 @@
     "code-block": "代码块"
   },
   "settings": {
+    "Auto recover from latest backup file": "自动从最新的备份恢复数据",
     "Scroll behavior in select mode": "选择模式下滚轮行为",
     "Automatically add label as object": "自动将新标注转变为实体",
     "Pan": "移动",
@@ -635,6 +637,7 @@
     "Monthly free AI credits": "每月免费AI点数",
     "Available AI credits": "可用AI点数",
     "Buy credits": "购买点数",
+    "Default PDF label color": "默认PDF标注颜色",
     "Minimize to tray when close": "关闭时最小化到托盘",
     "Output language": "输出语言",
     "Latest": "最新",

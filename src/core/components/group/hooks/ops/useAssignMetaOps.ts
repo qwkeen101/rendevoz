@@ -21,25 +21,29 @@ const useAssignMetaOps = (instance: InnerGroupInstance) => {
           }
         }
 
-        const meta = await GlobalInstance.metaOps?.createObject(onlyCreate)
-        MetaStore.triggerObjectIndex()
-        // we do not add into group if have only create, add by parent type group
-        if (meta) {
-          if (grouperId) {
-            handleCreateInGrouper(meta.id, grouperId, instance)
-            setTimeout(() => {
-              instance.valueOps?.insertValueByPath({
-                type: 'metaObject',
-                id: meta.id
-              })
-            }, 10)
-          } else {
-            instance.valueOps?.insertValueByPath({
-              type: 'metaObject',
-              id: meta.id
-            })
-          }
-        }
+        GlobalInstance.metaOps?.createObjects(onlyCreate, meta => {
+          console.log(meta)
+          setTimeout(() => {
+            MetaStore.triggerObjectIndex()
+            // we do not add into group if have only create, add by parent type group
+            if (meta) {
+              if (grouperId) {
+                handleCreateInGrouper(meta.id, grouperId, instance)
+                setTimeout(() => {
+                  instance.valueOps?.insertValueByPath({
+                    type: 'metaObject',
+                    id: meta.id
+                  })
+                }, 10)
+              } else {
+                instance.valueOps?.insertValueByPath({
+                  type: 'metaObject',
+                  id: meta.id
+                })
+              }
+            }
+          }, 200)
+        })
       },
       updateMetaProperty: async (field, nextValue, id?: number) => {
         const selected = instance.values.selectedRowIdSet

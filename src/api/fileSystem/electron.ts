@@ -2,6 +2,9 @@ import { IFileSystem } from '~/typings/fs'
 import { ipcInstance } from '@/plugins'
 
 export default {
+  getLatestBackup: async lastUpdated => {
+    return await ipcInstance.send('getLatestBackup', lastUpdated).then(res => res.data)
+  },
   readdir: async path => {
     return await ipcInstance.send('readDir', path).then(res => res.data)
   },

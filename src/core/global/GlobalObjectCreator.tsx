@@ -65,9 +65,20 @@ export default () => {
     resolve: typeof Promise.resolve
     reject: typeof Promise.reject
   }>()
+  const createHandlerRef = useRef()
   assignProperties(GlobalInstance, {
     metaOps: {
       ...GlobalInstance.metaOps,
+      createObjects: (type, onMetaCreated) => {
+        createHandlerRef.current = onMetaCreated
+        if (type) {
+          if (ObjectCreateHandler[type]) {
+            ObjectCreateHandler[type]?.().then(o => onMetaCreated?.(o.meta))
+          }
+          return
+        }
+        setVisible(true)
+      },
       createObject: type => {
         if (type) {
           if (ObjectCreateHandler[type]) {
@@ -91,6 +102,7 @@ export default () => {
   return (
     <Modal visible={visible} onClose={() => setVisible(false)}>
       <FileImporter
+        createHandler={createHandlerRef.current}
         onClose={() => setVisible(false)}
         onCreate={object => {
           setVisible(false)

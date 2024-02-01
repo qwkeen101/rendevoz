@@ -85,6 +85,11 @@ const EditorTitle: ForwardRefComponent<HTMLDivElement, EditorTitleProps> = forwa
             contentEditable={titleEditable && !readOnly}
             style={titleStyle}
             ref={titleRef}
+            onPaste={e => {
+              e.preventDefault()
+              const text = e.clipboardData.getData('text/plain')
+              document.execCommand('insertText', false, text)
+            }}
             onInput={e => {
               const text = (e.target as HTMLDivElement).textContent
               debouncedUpdateNote(text || '')

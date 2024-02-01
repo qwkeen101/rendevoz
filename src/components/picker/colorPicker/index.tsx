@@ -160,6 +160,9 @@ const ColorPicker: FC<ColorPickerProps> = ({
           padding: 1,
           gap: 4
         })}
+        style={{
+          height: !enableMore ? 'auto' : 56
+        }}
       >
         {displayColors.map(i => renderItem(i))}
       </Content>

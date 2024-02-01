@@ -80,6 +80,9 @@ db.version(17).stores({
   keypairs: '',
   keyvalues: null
 })
+Dexie.on('storagemutated', () => {
+  localStorage.setItem('DB_LAST_UPDATE', `${Date.now()}`)
+})
 export const exportRendevozDb = async () => {
   const blob = (await exportDB(db)) as Blob
   return blob

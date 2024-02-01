@@ -69,11 +69,11 @@ const PdfHeader = ({ documentId }: { documentId: number }) => {
           )}
         </Content>
 
-        <Content
-          flex
-          alignItems={'center'}
+        <div
           ref={pagesRef}
           style={{
+            display: 'flex',
+            alignItems: 'center',
             flexShrink: 0,
             boxShadow: focused ? `0 0 0 2px ${Colors.Common.SelectColor}` : isInPages ? `0 0 0 1px ${Colors.Background.Border}` : undefined,
             padding: '2px 6px',
@@ -135,7 +135,7 @@ const PdfHeader = ({ documentId }: { documentId: number }) => {
               }}
             />
           </Content>
-        </Content>
+        </div>
         <Content flex gap={8} style={{ flexShrink: 0 }}>
           {(history?.canBack || history?.canForward) && (
             <>

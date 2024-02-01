@@ -49,8 +49,6 @@ const GeneralSetting = () => {
   const latestIsExporting = useLatest(isExporting)
   const hasExporting = useRef(false)
   const lastBackUp = getAppState().lastBackupDate
-  const { getAllMetaObjects, getAllMetaLinks } = MetaStore
-  const { getAllCollections } = CollectionStore
   const { t } = useTranslation()
   const [setting, setSetting] = useSetting()
   const [validCustomSearchEngine, setValidSearchEngine] = useState(false)
@@ -603,6 +601,21 @@ const GeneralSetting = () => {
             text={t('settings.open backup folder')}
           />
         </Content>
+      )
+    },
+    {
+      title: t('settings.Auto recover from latest backup file'),
+      children: (
+        <Switch
+          value={setting.general.autoRecoverFromBackup}
+          onChange={v =>
+            setSetting(s =>
+              produce(s, draft => {
+                draft.general.autoRecoverFromBackup = v
+              })
+            )
+          }
+        />
       )
     }
   ]

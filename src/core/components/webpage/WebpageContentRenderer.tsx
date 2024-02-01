@@ -15,6 +15,7 @@ import { IWebpageProps } from '@/core/components/webpage/Webpage'
 import { ClassName } from 'rendevoz'
 import { GlobalSearchInstance } from '@/core/global/GlobalSearchPanel'
 import { AI_QUESTION_PROP_ID, AI_SUMMARY_PROP_ID } from '@/api/stores/meta/meta.store'
+import { useTranslation } from 'react-i18next'
 
 const WebpageTitle = ({
   title = 'Untitled',
@@ -83,6 +84,7 @@ const WebpageContentRenderer = ({
   const webpageInstance = useWebpageInstance()
   const webpageMeta = MetaStore.useObjectToMetaValue(webpageState.currentWebpageId)
   const [showOriginal, setShowOriginal] = useState(false)
+  const realShowOriginal = currentWepbage?.showOriginal ?? showOriginal
   const isLoading = webpageState.isLoading
   const failLoading = webpageState.failLoading
 
@@ -279,7 +281,7 @@ const WebpageContentRenderer = ({
       }
     }
   }
-
+  const { t } = useTranslation()
   useLayoutEffect(() => {
     if (webpageState.loaded) {
       editorInstanceRef.current?.scrollToPosition?.(0)
@@ -333,11 +335,14 @@ const WebpageContentRenderer = ({
               rightExtra: (
                 <>
                   {editorOptions?.header?.rightExtra}
-                  <Tooltip content={'Show original website'}>
+                  <Tooltip content={t('general.Show original webpage')}>
                     <Icon
                       className={ClassName.flatButton(4, '4px')}
                       onClick={() => {
-                        setShowOriginal(!showOriginal)
+                        if (currentWepbage) {
+                          ObjectStore('webpage').updateOne({ id: currentWepbage.id, showOriginal: !realShowOriginal })
+                        }
+                        setShowOriginal(!realShowOriginal)
                       }}
                       name={'park-web-page'}
                     />
@@ -427,7 +432,7 @@ const WebpageContentRenderer = ({
   }
   return (
     <>
-      {showOriginal && (
+      {realShowOriginal && (
         <Icon
           name={'park-close'}
           containerStyle={{
@@ -442,11 +447,18 @@ const WebpageContentRenderer = ({
             background: 'rgba(0,0,0,0.7)'
           }}
           onClick={() => {
-            setShowOriginal(false)
+            if (currentWepbage) {
+              ObjectStore('webpage').updateOne({ id: currentWepbage.id, showOriginal: !realShowOriginal })
+            }
+            setShowOriginal(!realShowOriginal)
           }}
         />
       )}
-      {showOriginal ? <webview src={webpageState.currentUrl} style={{ width: '100%', height: '100%', background: 'white' }} /> : renderer()}
+      {realShowOriginal ? (
+        <webview src={webpageState.currentUrl} style={{ width: '100%', height: '100%', background: 'white' }} />
+      ) : (
+        renderer()
+      )}
     </>
   )
 }

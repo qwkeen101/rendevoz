@@ -8,13 +8,16 @@ import initializeUnnamedLabel from '@/api/lifycycle/startup/initializeUnnamedLab
 import initializeUrlProp from '@/api/lifycycle/startup/initializeUrlProp'
 import initializeSettings from '@/api/lifycycle/startup/initializeSettings'
 import initializeDefaultKeyvalues from '@/api/lifycycle/startup/initializeDefaultKeyvalues'
+import FileSystem from '@/api/fileSystem'
+import recoverFromBackup from '@/api/lifycycle/startup/recoverFromBackup'
 
 export default async () => {
+  await initializeFolder()
+  await recoverFromBackup()
   await initializeDefaultKeyvalues()
   await initializeWorkspace()
   await KeyvalueStore.getAll()
   await initializeSettings()
-  await initializeFolder()
   await initializeUnnamedLabel()
   await initializeUrlProp()
   await MetaStore.getAllMetaLinks()

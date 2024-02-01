@@ -8,6 +8,7 @@ export type ISystemFile = {
 }
 
 export type IFileSystem = {
+  getLatestBackup: (lastUpdated?: string) => Promise<string>
   readFile: (filePath: string) => Promise<string>
   /**
    * @return the uri where the file was written into

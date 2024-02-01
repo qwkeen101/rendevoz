@@ -1,10 +1,10 @@
 import { RenderElementProps } from 'slate-react'
 import { MetaStore, ObjectStore } from '@/api/stores'
 import { SyncedBlockElement } from '~/typings/components/editor/outerElements'
-import { useEffect, useRef } from 'react'
+import { useEffect, useLayoutEffect, useRef } from 'react'
 import { Editor, Node, Transforms } from 'slate'
 import { ReactEditor, useRenderObject, useSlateStatic } from '@/core'
-import { useDebounceEffect, useMemoizedFn, useSelectAtomValue } from '@/hooks'
+import { GlobalInstance, useDebounceEffect, useMemoizedFn, useSelectAtomValue } from '@/hooks'
 import { Colors } from '@/consts'
 import { AnimatePopover, Button, Content, Icon, IconWithPopover, WithBorder } from '@/components'
 import { ClassName } from 'rendevoz'
@@ -32,32 +32,38 @@ const SyncedBlock = ({ element, children }: RenderElementProps) => {
   const memoizedReplace = useMemoizedFn(() => {
     if (blockDetails && blockDetails.syncVersion > syncElement.syncVersion) {
       const path = ReactEditor.findPath(editor, element)
-      Editor.withoutNormalizing(editor, () => {
-        Transforms.removeNodes(editor, {
-          at: path
-        })
-        Transforms.insertNodes(
-          editor,
-          {
-            ...element,
-            children: structuredClone(blockDetails.blockChildren),
-            syncVersion: blockDetails.syncVersion
-          },
-          {
+      Promise.resolve().then(() => {
+        Editor.withoutNormalizing(editor, () => {
+          Transforms.removeNodes(editor, {
             at: path
-          }
-        )
+          })
+          Transforms.insertNodes(
+            editor,
+            {
+              ...element,
+              children: structuredClone(blockDetails.blockChildren),
+              syncVersion: blockDetails.syncVersion
+            },
+            {
+              at: path
+            }
+          )
+        })
       })
     }
   })
-  useEffect(() => {
+  useLayoutEffect(() => {
     memoizedReplace()
   }, [blockDetails?.syncVersion])
-  // sync debounce 1s
+
   useDebounceEffect(
     () => {
-      if (blockDetails && !_.isEqual(blockDetails.blockChildren, syncElement.children)) {
-        console.log('block to sync')
+      if (
+        blockDetails &&
+        syncElement.syncVersion >= blockDetails.syncVersion &&
+        !_.isEqual(blockDetails.blockChildren, syncElement.children)
+      ) {
+        console.log('block to sync', syncElement, blockDetails)
         const nextVersion = blockDetails.syncVersion + 1
         HistoryEditor.withoutSaving(editor, () => {
           Transforms.setNodes(
@@ -83,6 +89,7 @@ const SyncedBlock = ({ element, children }: RenderElementProps) => {
     [syncElement.children],
     { wait: 250 }
   )
+
   const handleUnsync = () => {
     const path = ReactEditor.findPath(editor, element)
     Transforms.unwrapNodes(editor, {
@@ -152,12 +159,25 @@ const SyncedBlock = ({ element, children }: RenderElementProps) => {
         }}
         className={ClassName.description(FontSize['12px'])}
       >
-        <Content flex gap={6} style={{ fontSize: 13, marginLeft: 'auto', marginBottom: '-4px' }} alignItems={'center'}>
+        <Content
+          flex
+          gap={4}
+          style={{
+            fontSize: 12,
+            background: Colors.Background.Global,
+            border: Colors.Consts.Border,
+            marginLeft: 'auto',
+            marginBottom: '-4px',
+            padding: '3px 3px 3px 6px',
+            borderRadius: 4
+          }}
+          alignItems={'center'}
+        >
           <AnimatePopover
             withClickCover={true}
             positions={['bottom', 'top']}
             content={
-              <WithBorder style={{ fontSize: 14 }} padding={4} width={140}>
+              <WithBorder style={{ fontSize: 14, maxWidth: 300 }} padding={'4px 8px'} width={140}>
                 {blockDetails?.syncedMetaIds.map(i => <InlinePageRenderer metaId={i} />)}
               </WithBorder>
             }
@@ -166,12 +186,10 @@ const SyncedBlock = ({ element, children }: RenderElementProps) => {
               flex
               gap={6}
               style={{
-                background: Colors.Background.Global,
-                pointerEvents: 'auto'
+                pointerEvents: 'auto',
+                cursor: 'pointer'
               }}
-              className={ClassName.flatButton(4, '2px 6px')}
             >
-              <Icon name={'park-transfer-data'} />
               {t('editor.sync in objects', { num: blockDetails?.syncedMetaIds.length })}
             </Content>
           </AnimatePopover>
@@ -182,6 +200,13 @@ const SyncedBlock = ({ element, children }: RenderElementProps) => {
               withClickCover={true}
               content={
                 <WithBorder padding={6}>
+                  <Button.IconButton
+                    icon={'park-info'}
+                    text={t('general.View details')}
+                    onClick={() => {
+                      GlobalInstance.metaOps?.openDetails(syncMeta.id)
+                    }}
+                  />
                   <Button.IconButton icon={'park-unlink'} onClick={handleUnsync} text={t('editor.unsync in this note')} />
                   <Button.IconButton icon={'park-delete'} text={t('general.delete')} onClick={handleDelete} dangerous />
                 </WithBorder>
@@ -191,7 +216,7 @@ const SyncedBlock = ({ element, children }: RenderElementProps) => {
                 background: Colors.Background.Global,
                 pointerEvents: 'auto'
               }}
-              className={ClassName.flatButton(4, '2px 6px')}
+              className={ClassName.flatButton(3, '1px 2px')}
             />
           )}
         </Content>
@@ -203,6 +228,6 @@ const SyncedBlock = ({ element, children }: RenderElementProps) => {
 
 const InlinePageRenderer = ({ metaId }: { metaId: number }) => {
   const { renderInline } = useRenderObject({ metaObjectId: metaId })
-  return renderInline({})
+  return renderInline({ ellipsisLine: 1, containerStyle: { fontSize: 13 } })
 }
 export default SyncedBlock

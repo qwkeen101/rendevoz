@@ -27,9 +27,6 @@ const useCheckSyncInWhere = (metaId: number) => {
                 if (noteValue) {
                   let hasThis = false
                   for (const [element, path] of Node.elements({ children: noteValue })) {
-                    if (element.type === 'synced') {
-                      console.log(element, metaId)
-                    }
                     if (element.originId === metaId) {
                       hasThis = true
                       break

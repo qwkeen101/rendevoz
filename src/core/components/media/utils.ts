@@ -77,9 +77,9 @@ const zeroPad = (num: number) => String(num).padStart(2, '0')
 export const normalizeSecondsToTime = (seconds: number) => {
   try {
     const duration = intervalToDuration({ start: 0, end: seconds * 1000 })
-    return `${duration.hours ? duration.hours + ':' : ''}${duration.hours ? zeroPad(duration.minutes || 0) : duration.minutes}:${zeroPad(
-      duration.seconds || 0
-    )}`
+    return `${duration.hours ? duration.hours + ':' : ''}${
+      duration.hours ? zeroPad(duration.minutes || 0) : duration.minutes || 0
+    }:${zeroPad(duration.seconds || 0)}`
   } catch (e) {
     return '00:00'
   }

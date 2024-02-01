@@ -21,16 +21,6 @@ import importVideo from '@/core/rendevoz/utils/localImport/importVideo'
 
 export const GlobalImporterInstance: GlobalInstances.NoteImporterInstance = {}
 
-const getFileType = (file: File) => {
-  const { name, type } = file
-  if (type.startsWith('video')) return 'video'
-  if (type.endsWith('pdf')) return 'pdf'
-  const ext = name.split('.').pop()
-  switch (ext) {
-    case 'md':
-      return 'markdown'
-  }
-}
 const GlobalImporter = () => {
   const { t } = useTranslation()
   const [notes, setNotes] = useState<
@@ -65,12 +55,13 @@ const GlobalImporter = () => {
       const groupedDir: number[] = []
       loopProcess(
         arrFiles,
-        async (file, index) => {
+        async file => {
           try {
             const res = await Rendevoz.Utils.Meta.normalizeLocalFileToMeta(file, { limitType: false })
             if (res) {
               const result = (await ObjectStore(res.meta.type).addOneWithMeta(res.object, { currentMeta: res.meta })).meta
               if (!result) throw ''
+              opts?.onImport?.(result)
               groupedDir.push(result.id)
               setNotes(s => {
                 const noteIdx = s.findIndex(i => i.id === file.id)

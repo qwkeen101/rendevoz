@@ -2,6 +2,7 @@ import { IconWithPopover, Toolbar } from '@/components'
 import BlockColorPicker from '@/core/components/editor/components/BlockColorPicker'
 import { TextSelectEvent } from '~/typings/event'
 import { FC } from 'react'
+import { getSetting } from '@/core'
 
 interface TextSelectionToolbarProps {
   textSelect?: TextSelectEvent
@@ -10,6 +11,7 @@ interface TextSelectionToolbarProps {
   onSearch?: (e: React.MouseEvent) => void
 }
 const TextSelectionToolbar: FC<TextSelectionToolbarProps> = ({ textSelect, onHighlight, onTranslate, onSearch }) => {
+  const defaultLabelColor = getSetting().pdf.defaultLabelColor || '#ffe082'
   return (
     <Toolbar
       itemRadius={0}
@@ -35,13 +37,13 @@ const TextSelectionToolbar: FC<TextSelectionToolbarProps> = ({ textSelect, onHig
       <Toolbar.Item
         iconName="park-text-underline"
         onClick={() => {
-          onHighlight?.('#ffecb3', 'underline')
+          onHighlight?.(defaultLabelColor, 'underline')
         }}
       ></Toolbar.Item>
       <Toolbar.Item
         iconName="park-background-color"
         onClick={() => {
-          onHighlight?.('#ffe082')
+          onHighlight?.(defaultLabelColor)
         }}
       ></Toolbar.Item>
     </Toolbar>

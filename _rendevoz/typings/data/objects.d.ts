@@ -46,6 +46,7 @@ export interface IWebpage extends IBase {
   domain?: string
   image?: string
   labels?: number[]
+  showOriginal?: boolean
 }
 
 export interface IMedia extends IBase {

@@ -55,10 +55,10 @@ function TypeGroup({ type }: { type: MetaObject['type'] }) {
         )}
         state={useMemo(
           () => ({
-            canHideGroupsInside: false,
+            canHideGroupsInside: type === 'group',
             invisibleProperties: [1],
             canDrag: true,
-            canHideObjectsInside: false,
+            canHideObjectsInside: true,
             onlyCreateType: type,
             deleteMetaWhenDeleteItem: true,
             canDragInside: false

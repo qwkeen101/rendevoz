@@ -66,9 +66,9 @@ function TagGroup({ id }: { id: number }) {
         )}
         state={useMemo(
           () => ({
-            canHideGroupsInside: false,
+            canHideGroupsInside: true,
             canDrag: true,
-            canHideObjectsInside: false,
+            canHideObjectsInside: true,
             canDragInside: true
           }),
           []

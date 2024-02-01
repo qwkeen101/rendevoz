@@ -19,7 +19,6 @@ import { Colors } from '@/consts'
 import PdfHeader from '@/core/components/pdf/components/PdfHeader'
 import LabelToolbarRenderer from '@/core/components/pdf/components/label/LabelToolbarRenderer'
 import usePdfInstance from '@/core/components/pdf/hooks/usePdfInstance'
-import PDFOpsAssigner from '@/core/components/pdf/hooks/ops/Assigner'
 
 export interface PdfViewerProps {
   documentId: number
@@ -60,7 +59,7 @@ export const PdfViewer: FC<PdfViewerProps> = memo(({ documentId, transformScale,
     }
     ID_TO_LABEL_MAP.set(viewer, new Map())
     waitFor(
-      () => !!viewer.navigateOps?.jumpToOffset,
+      () => !!viewer.getPageSize,
       () => {
         if (documentMeta && !documentMeta.coverImgSrc) {
           setTimeout(() => {
@@ -86,8 +85,9 @@ export const PdfViewer: FC<PdfViewerProps> = memo(({ documentId, transformScale,
   })
 
   const renderPage = useCallback(
-    (props: RenderPageProps) => (documentId ? <PdfPage pdfId={documentId} key={props.pageIndex} {...props} /> : null),
-    [documentId]
+    (props: RenderPageProps) =>
+      documentId ? <PdfPage transformScale={transformScale} pdfId={documentId} key={props.pageIndex} {...props} /> : null,
+    [documentId, transformScale]
   )
   const handleRangeChange = useMemoizedFn((range?: Range & { progress: number; currentIndex: number }) => {
     if (range) {

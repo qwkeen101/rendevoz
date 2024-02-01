@@ -43,12 +43,10 @@ export default async (
     case 'pdf': {
       const pdfMeta =
         (await getMetaObjectByObjectId(dragElement.pdfId)) ||
-        (await addMetaObject(
-          {
-            type: 'pdf',
-            objectId: dragElement.pdfId
-          }
-        ))
+        (await addMetaObject({
+          type: 'pdf',
+          objectId: dragElement.pdfId
+        }))
       Object.assign(normalizedMetaObject, pdfMeta)
       alreadyHasMeta = true
       shouldOpenEditMetaModal = false
@@ -69,12 +67,10 @@ export default async (
     case 'note': {
       const noteMeta =
         (await getMetaObjectByObjectId(dragElement.noteId)) ||
-        (await addMetaObject(
-          {
-            type: 'note',
-            objectId: dragElement.noteId
-          }
-        ))
+        (await addMetaObject({
+          type: 'note',
+          objectId: dragElement.noteId
+        }))
       Object.assign(normalizedMetaObject, noteMeta)
       alreadyHasMeta = true
       shouldOpenEditMetaModal = false
@@ -104,6 +100,7 @@ export default async (
           {
             silent: true,
             currentMeta: {
+              name: Node.string({ children: elements }),
               fromObject: {
                 type: fromMeta.type,
                 metaId: fromMeta.id
@@ -170,15 +167,13 @@ export default async (
         const parentMeta = obj.parentObjectId && MetaStore.getMetaObjectByObjectId(obj.parentObjectId)
         const questionMeta =
           (await getMetaObjectByObjectId(dragElement.objectId)) ||
-          (await addMetaObject(
-            {
-              type: dragElement.type,
-              objectId: dragElement.objectId,
-              name: obj.name,
-              description: obj.description,
-              fromObject: parentMeta ? { type: parentMeta.type, metaId: parentMeta.id } : undefined
-            }
-          ))
+          (await addMetaObject({
+            type: dragElement.type,
+            objectId: dragElement.objectId,
+            name: obj.name,
+            description: obj.description,
+            fromObject: parentMeta ? { type: parentMeta.type, metaId: parentMeta.id } : undefined
+          }))
         Object.assign(normalizedMetaObject, questionMeta)
         if (parentMeta) {
           normalizedLinks.push({

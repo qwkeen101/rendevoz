@@ -109,7 +109,7 @@ const MetaMainDetails = ({ metaId }: { metaId: number }) => {
         ></Button.IconButton>
         <Button.IconButton
           onClick={() => {
-            GlobalGraphInstance.open?.({ id: metaId }, true)
+            GlobalInstance.metaOps?.openGraph(metaId)
           }}
           text={t('general.graph')}
           icon={'park-share-one'}

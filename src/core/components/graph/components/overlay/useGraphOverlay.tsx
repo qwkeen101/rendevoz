@@ -84,11 +84,8 @@ const useGraphOverlay = () => {
       <Portal>
         <AnimatePopover
           align="center"
-          disableIntersection
           reposition
-          containerStyle={{
-            zIndex: String(Zindexes.GraphPopup)
-          }}
+          keepAlign={true}
           position={{
             left: overlayState.position?.left,
             top: overlayState.position?.top

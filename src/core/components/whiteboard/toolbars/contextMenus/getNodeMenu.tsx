@@ -8,7 +8,7 @@ import { TFunction } from 'i18next'
 import getContextMenu from '@/core/components/whiteboard/toolbars/contextMenus/getContextMenu'
 import { getBoxOfNodes } from '@/core/components/whiteboard/utils'
 import { Rendevoz } from '@/core/rendevoz'
-import { MetaStore, NoteStore } from '@/api/stores'
+import { MetaStore, NoteStore, ObjectStore } from '@/api/stores'
 import Id from '@/utils/id'
 
 export default (
@@ -24,8 +24,28 @@ export default (
   const selectedIds = selected.map(i => i.id)
   // click on group head
   const ifContextMenuOnSingleGroup = selected.length === 1 && selected[0].type === 'group'
+  const metaMap = MetaStore.getMetaObjectsMap()
+  const hasWebpageMetas = selected.some(i => i.type === 'metaObject' && i.expanded && metaMap.get(i.metaObjectId)?.type === 'webpage')
   const commonTools: (IMenuLayoutItem | undefined)[] = [
     ...(ifContextMenuOnSingleGroup && toolbarType !== 'click' ? [...getContextMenu(instance, t), { type: 'separator' }] : []),
+    hasWebpageMetas
+      ? {
+          type: 'item',
+          key: 'show-original-webpage',
+          icon: Rendevoz.Utils.Object.getMetaObjectIcon('webpage'),
+          text: t('general.Show original webpage'),
+          onSelect: async () => {
+            instance.toolbarOps?.closeToolbar()
+            instance.selectOps?.deselectAll()
+            const allWebpages = selected
+              .filter(i => i.type === 'metaObject' && metaMap.get(i.metaObjectId)?.type === 'webpage')
+              .map(i => metaMap.get(i.metaObjectId))
+              .map(i => i?.objectId)
+              .filter(i => i) as number[]
+            allWebpages.forEach(i => ObjectStore('webpage').updateOne({ id: i, showOriginal: true }))
+          }
+        }
+      : undefined,
     selected.length === 1 && selected[0].type === 'text'
       ? {
           type: 'item',

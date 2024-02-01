@@ -11,7 +11,7 @@ import { useSelectAtomValue } from '@/hooks'
 import { Colors } from '@/consts'
 import LabelNoteRenderer from '@/core/components/pdf/components/label/LabelNoteRenderer'
 
-const CropLabel = ({ labelId, pageSize }: { labelId: number; pageSize: PageSize }) => {
+const CropLabel = ({ labelId, pageSize, scale }: { labelId: number; pageSize: PageSize; scale?: number }) => {
   const label = ObjectStore('pdfLabel').useValue(labelId) as (IPdfLabel & { type: 'crop' }) | undefined
   const instance = usePdfInstance()
   const labelMeta = MetaStore.useObjectToMetaValue(labelId)
@@ -68,6 +68,7 @@ const CropLabel = ({ labelId, pageSize }: { labelId: number; pageSize: PageSize 
             y: data.y
           }
         }}
+        scale={scale}
         onDragStop={(e, data) => {
           const { x, y } = data
           if (Math.abs(x - dragInitPos.current.x) > 5 || Math.abs(y - dragInitPos.current.y) > 5) {

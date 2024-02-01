@@ -11,6 +11,8 @@ import { useUpdate } from 'react-use'
 import { NumberInput } from '@/components'
 import { IComponentSetting } from '@/core/setting/types'
 import SettingGroup from '@/core/setting/SettingGroup'
+import BlockColorPicker from '@/core/components/editor/components/BlockColorPicker'
+import { Colors } from '@/consts'
 
 const ComponentSetting = () => {
   const { t } = useTranslation()
@@ -101,6 +103,38 @@ const ComponentSetting = () => {
     }
   }, [setting.pdf.renderMode])
   const pdfSettingItems: (ISettingItem | undefined)[] = [
+    {
+      title: t('settings.Default PDF label color'),
+      children: (
+        <AnimatePopover
+          content={setV => (
+            <BlockColorPicker
+              bgBackDefault={false}
+              showBg={true}
+              showFont={false}
+              onPickBackgroundColor={v => {
+                setV(false)
+                setSetting(
+                  produce(setting, draft => {
+                    draft.pdf.defaultLabelColor = v
+                  })
+                )
+              }}
+            />
+          )}
+        >
+          <div
+            style={{
+              width: 24,
+              cursor: 'pointer',
+              height: 24,
+              borderRadius: 3,
+              background: Colors.getAdaptColor(setting.pdf.defaultLabelColor)
+            }}
+          ></div>
+        </AnimatePopover>
+      )
+    },
     {
       title: t('settings.pdf render mode'),
       children: (

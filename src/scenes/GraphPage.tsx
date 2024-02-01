@@ -25,14 +25,16 @@ const GraphPage = () => {
   renderPageInNormalMode()
   useEffect(() => {
     if (!globalGraph) {
-      const allNodes = Array.from(globalStore.get(metaObjectsAtom).values()).map(i => ({
-        id: i.id,
-        label: i.name,
-        coverImgSrc: i.coverImgSrc,
-        type: i.type,
-        icon: i.icon,
-        objectId: i.objectId
-      }))
+      const allNodes = Array.from(globalStore.get(metaObjectsAtom).values())
+        .filter(i => !i.deleted && !i.hidden)
+        .map(i => ({
+          id: i.id,
+          label: i.name,
+          coverImgSrc: i.coverImgSrc,
+          type: i.type,
+          icon: i.icon,
+          objectId: i.objectId
+        }))
       const edgez = getAllEdgesOfNodes(new Set(allNodes.map(i => i.id)))
       setGlobalGraph({
         edges: edgez,

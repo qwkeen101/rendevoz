@@ -17,7 +17,7 @@ interface LayoutWrapperProps {
 }
 
 const RESERVED_HEIGHT = 30
-const RESERVED_WIDTH = 60
+const RESERVED_WIDTH = 30
 const LayoutWrapper: FC<LayoutWrapperProps> = ({ defaultScale = 1, doc, children }) => {
   const [scrollMode] = useScrollMode()
   const layoutWrapperRef = useRef<HTMLDivElement>(null)

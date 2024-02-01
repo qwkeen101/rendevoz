@@ -29,7 +29,8 @@ const PdfPage: React.FC<PdfPageProps> = ({
   annotationLayer,
   pageFunctionRef,
   pageSize,
-  pdfId
+  pdfId,
+  transformScale
 }) => {
   const labelContainerRef = useRef<HTMLDivElement>(null)
   const [cleanMode] = useCleanMode()
@@ -72,7 +73,7 @@ const PdfPage: React.FC<PdfPageProps> = ({
       })
     }
   }
-
+  console.log(transformScale)
   const { t } = useTranslation()
   return (
     <>
@@ -98,7 +99,7 @@ const PdfPage: React.FC<PdfPageProps> = ({
               i.id && (
                 <Fragment key={i.id}>
                   {i.type === 'highlight' && <HighlightLabel documentId={pdfId} labelId={i.id} key={i.id} pageSize={pageSize} />}
-                  {i.type === 'crop' && <CropLabel labelId={i.id} pageSize={pageSize} />}
+                  {i.type === 'crop' && <CropLabel labelId={i.id} pageSize={pageSize} scale={transformScale} />}
                 </Fragment>
               )
           )}

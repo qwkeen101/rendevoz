@@ -1,6 +1,6 @@
 import { css } from '@emotion/css'
 import { createStore, Provider } from 'jotai'
-import { FC, useCallback, useEffect, useMemo, useRef, WheelEventHandler } from 'react'
+import { FC, useEffect, useMemo, useRef } from 'react'
 import D3GraphManager from '../D3GraphManager'
 import useEdges from '../hooks/useEdges'
 import useGraph, { graphAtom } from '../hooks/useGraph'
@@ -11,14 +11,12 @@ import { GraphNode } from '../types/node'
 import EdgeContainer from './EdgeContainer'
 import NodeContainer from './NodeContainer'
 import GraphSettingPanel from './setting'
-import { useAtomValue } from 'jotai/react'
-import { globalGraphMinimizedAtom } from '../GraphThumbnail'
 import { globalStore } from '@/api/stores'
-import { Container, Stage } from '@pixi/react'
+import { Stage } from '@pixi/react'
 import PixiViewport from '@/core/components/graph/components/PixiViewport'
 import PixiRenderer from '@/core/components/graph/components/PixiRenderer'
 import { metaLinksAtom, metaObjectsAtom } from '@/api/stores/meta/meta.store'
-import { useGlobalAtomValue, usePrevious, useUpdateEffect } from '@/hooks'
+import { useGlobalAtomValue, useUpdateEffect } from '@/hooks'
 import { getAllEdgesOfNodes, getRelatedNodesOfNode } from '@/core'
 
 interface GraphContainerProps {
@@ -78,9 +76,6 @@ const GraphInner: FC<GraphContainerProps> = ({ edges, nodes, type, store }) => {
   const { graphOverlayManager, renderPortal } = useGraphOverlay()
   graph && (graph.overlayManager = graphOverlayManager)
   graph && (graph.setEdges = setEdges)
-  const isMinimized = useAtomValue(globalGraphMinimizedAtom, {
-    store: globalStore
-  })
 
   useEffect(() => {
     if (graph && nodes && edges) {
@@ -115,18 +110,17 @@ const GraphInner: FC<GraphContainerProps> = ({ edges, nodes, type, store }) => {
   const outerContainerRef = useRef<HTMLElement>(null)
   return (
     <>
-      {!isMinimized && (
-        <div
-          style={{
-            position: 'absolute',
-            top: 20,
-            left: 20,
-            zIndex: 10
-          }}
-        >
-          <GraphSettingPanel />
-        </div>
-      )}
+      <div
+        style={{
+          position: 'absolute',
+          top: 20,
+          left: 20,
+          zIndex: 10
+        }}
+      >
+        <GraphSettingPanel />
+      </div>
+
       <div style={{ width: '100%', height: '100%', position: 'relative' }} ref={outerContainerRef}>
         {type === 'svg' ? (
           <div

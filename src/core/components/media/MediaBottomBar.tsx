@@ -38,6 +38,7 @@ const MediaBottomBar = () => {
   const { totalTime = 0, currentTime = 0, paused, volume, muted, mode, floated } = mediaState
   const { showVolume, chooseTime, thumbnailUrl, thumbnailVisible, thumbnailPosition, currentHoverTime, draggingScrubber } = toolbarState
   const { currDuration, totalDuration, currentChapter } = useMemo(() => {
+    console.log(currentTime)
     setToolbarState(s => (s.draggingScrubber ? s : { ...s, currentScrubberTime: currentTime }))
     const currentChapter = mediaState.sortedChapters?.findLast(i => i.startTime < currentTime)
     return {

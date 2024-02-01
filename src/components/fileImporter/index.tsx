@@ -14,42 +14,41 @@ import picture from '@/assets/images/picture.png?url'
 import code from '@/assets/images/code.png?url'
 import music from '@/assets/images/music.png?url'
 import question from '@/assets/images/question.png?url'
-import { useState } from 'react'
-import { assignProperties, fetchRemoteImageAndSaveLocally } from '@/utils'
+import { fetchRemoteImageAndSaveLocally } from '@/utils'
 import { BaidudiskInstance } from '@/components/fileImporter/baidudisk/BaidudiskDisplayer'
 import { ObjectStore } from '@/api/stores'
 import { Rendevoz } from '@/core/rendevoz'
 import { GlobalImporterInstance } from '@/core/global/GlobalImporter'
 import loginBaidudisk from '@/components/fileImporter/baidudisk/loginBaidudisk'
 import { toast } from 'react-hot-toast'
-import { useSetting } from '@/core'
 import { MetaObject } from '~/typings'
 import { ObjectCreateHandler } from '@/core/global/GlobalObjectCreator'
+import { Utils } from 'rendevoz'
+import { useMemoizedFn } from '@/hooks'
+import { useCallback } from 'react'
 
-export const GlobalFileImporterInstance = {}
 const FileImporter = ({
   onClose,
   onCreate,
   autoOpen = true,
-  type
+  type,
+  createHandler
 }: {
   onClose: VoidFunction
   onCreate?: (object: MetaObject) => void
   autoOpen: boolean
+  createHandler?: (obj: MetaObject) => void
   type?: MetaObject['type']
 }) => {
   const { t } = useTranslation()
-  const [visible, toggleVisible] = useState(false)
-  const isChinese = useSetting()[0].general.language === 'zh-CN'
-
-  const handleAfterCreate = (one: { meta: MetaObject }) => {
+  const isChinese = Utils.Navigator.getDefaultLanguage() === 'zh-CN'
+  console.log(createHandler)
+  const handleAfterCreate = useCallback((one: { meta: MetaObject }) => {
     autoOpen && Rendevoz.Actions.Open.Meta.openMetaObject(one.meta.id)
+    console.log(createHandler, one)
     onCreate?.(one.meta)
-  }
-  assignProperties(GlobalFileImporterInstance, {
-    open: () => toggleVisible(true),
-    close: () => toggleVisible(false)
-  })
+    createHandler?.(one.meta)
+  },[])
 
   const handleCreate = (type: MetaObject['type']) => {
     onClose?.()
@@ -149,7 +148,9 @@ const FileImporter = ({
           multiple: true
         }).then(file => {
           const files = Array.isArray(file) ? file : [file]
-          GlobalImporterInstance.import?.(files)
+          GlobalImporterInstance.import?.(files, {
+            onImport: createHandler
+          })
         })
       }
     },
@@ -161,7 +162,7 @@ const FileImporter = ({
           dir: true
         }).then(files => {
           const dirname = files[0].webkitRelativePath.split('/')[0]
-          GlobalImporterInstance.import?.(files, { isDir: true, dirName: dirname })
+          GlobalImporterInstance.import?.(files, { isDir: true, dirName: dirname, onImport: createHandler })
         })
       }
     }
@@ -169,9 +170,9 @@ const FileImporter = ({
   if (isChinese) {
     others.push({
       name: t('general.Import from Baidudisk'),
-      desc: t('general.Import from Baidudisk'),
       image: baidudisk,
       onClick: () => {
+        onClose?.()
         if (!localStorage.getItem('bda')) {
           toast.error('请先在网盘中授权！')
           loginBaidudisk()
@@ -224,9 +225,6 @@ const FileImporter = ({
         </div>
         <Content style={{ fontSize: 15, fontWeight: 500 }}>
           <div>{details.name}</div>
-          {/*<div style={{ marginTop: 4 }} className={ClassName.description(FontSize['12px'])}>*/}
-          {/*  {details.desc}*/}
-          {/*</div>*/}
         </Content>
       </Content>
     )

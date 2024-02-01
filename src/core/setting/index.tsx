@@ -130,7 +130,8 @@ export const defaultSetting: Setting = {
   },
   background: {},
   pdf: {
-    renderMode: 'followTheme'
+    renderMode: 'followTheme',
+    defaultLabelColor: '#ffe082'
   },
   label: {
     showOriginalText: true

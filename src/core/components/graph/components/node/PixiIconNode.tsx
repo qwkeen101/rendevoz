@@ -65,7 +65,7 @@ const PixiIconNode = ({ node, label }: { node: GraphNode; label?: string }) => {
   return (
     <>
       <GraphicsBg d={d} />
-      <Sprite name={'sprite'} texture={texture} width={d - 6} height={d - 6} x={3} y={3} tint={primaryFontColor}/>
+      {texture && <Sprite name={'sprite'} texture={texture} width={d - 6} height={d - 6} x={3} y={3} tint={primaryFontColor}/>}
     </>
   )
 }

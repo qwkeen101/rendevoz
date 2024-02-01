@@ -10,6 +10,7 @@ export type IGeneralSetting = {
     customSearchEngineUrl?: string
     minimizeToTray?: boolean
     followSystemTheme?: boolean
+    autoRecoverFromBackup?: boolean
     userFilePath?: string
     autoBackup: 'never' | 'every day' | '3 days' | 'one week' | 'one month' | 'whenClose'
     backUpPath?: string
@@ -145,6 +146,7 @@ export type IComponentSetting = {
     renderMode: 'followTheme' | 'custom' | 'default'
     customRenderBackground?: string
     customRenderFont?: string
+    defaultLabelColor: string
   }
   video: {
     loop: boolean

@@ -24,10 +24,12 @@ const PdfNode: FC<InnerNodeProps> = memo(
         debouncedForceRender()
       })
       emitter.addListener('whiteboard', handler)
+      forceRender()
       return () => {
         emitter.removeListener('whiteboard', handler)
       }
     }, [])
+    console.log(flow.containerTransformScale)
     return (
       <div
         style={{

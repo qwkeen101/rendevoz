@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { memo, useEffect, useRef, useState } from 'react'
 import getAllFilesAndFolders from '@/components/fileImporter/baidudisk/getAllFilesAndFolders'
 import { Button, Content, Icon, IconWithPopover, Modal, WithBorder } from '@/components'
 import { ClassName } from 'rendevoz'
@@ -96,7 +96,7 @@ const BaidudiskDisplayer = ({
   if (dirState || searchResults) {
     return (
       <>
-        <Content flex column style={{ height: '100%', width: '100%', borderRadius: 16, overflow: 'hidden' }}>
+        <Content flex column style={{ height: '100%', width: '100%', borderRadius: 16, overflow: 'hidden', padding: '16px 0px' }}>
           <div style={{ padding: '4px 24px' }} className={ClassName.title()}>
             选取文件
           </div>
@@ -261,7 +261,7 @@ const FileItemRenderer = ({ file, onClick }: { file: BaiduFile; onClick: VoidFun
   )
 }
 
-export const GlobalBaidudisk = () => {
+export const GlobalBaidudisk = memo(() => {
   const [visible, setVisible] = useState(false)
   const [category, setCategory] = useState<number>()
   const shouldClose = useRef(false)
@@ -283,6 +283,7 @@ export const GlobalBaidudisk = () => {
   }
   return (
     <Modal
+      zIndex={5000}
       visible={visible}
       style={{
         width: 'min(60vw, 800px)',
@@ -313,6 +314,6 @@ export const GlobalBaidudisk = () => {
       />
     </Modal>
   )
-}
+})
 
 export default BaidudiskDisplayer

@@ -3,7 +3,7 @@ import './styles/common.less'
 import Initializer, { initializedAtom } from './Initializer'
 import './styles/global.less'
 import './styles/font.less'
-import { GlobalCreateObject, GlobalDragOverlay, GlobalGraph, GlobalScreenShot, SettingAtom } from '@/core'
+import { GlobalCreateObject, GlobalDragOverlay, GlobalScreenShot, SettingAtom } from '@/core'
 import Notification from './components/NotificationCenter'
 import '@/styles/dock.less'
 import SvgMarker from './components/svg/Marker'
@@ -146,7 +146,6 @@ const App = () => {
         <>
           <GlobalDownloadIndicator />
           <GlobalTextSearch />
-          <GlobalGraph />
           <GlobalScreenShot />
           <GlobalPreviewPanel />
           <GlobalQuickAdd />

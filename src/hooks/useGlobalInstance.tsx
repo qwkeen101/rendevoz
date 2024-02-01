@@ -2,12 +2,12 @@ import { IGlobalInstance } from '~/typings'
 import { assignProperties } from '@/utils'
 import { toast } from 'react-hot-toast'
 import { t } from 'i18next'
-import { getSetting } from '@/core'
-import { MetaStore, ObjectStore } from '@/api/stores'
+import { getSetting, traverseGetRelatedNodeIds } from '@/core'
+import { globalStore, MetaStore } from '@/api/stores'
 import { Rendevoz } from '@/core/rendevoz'
-import { useDb } from '@/hooks/stores'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { ObjectCreateHandler } from '@/core/global/GlobalObjectCreator'
+import { GlobalGraphAtom } from '@/scenes/GraphPage'
 const GlobalInstance: Partial<IGlobalInstance> = {}
 
 assignProperties(GlobalInstance, {
@@ -54,6 +54,34 @@ assignProperties(GlobalInstance, {
           </div>
         )
       }
+    },
+    openGraph: id => {
+      const metaObjectsMap = MetaStore.getMetaObjectsMap()
+      const allMetaLinks = Array.from(MetaStore.getMetaLinksMap().values())
+      // setVisible(true)
+      const nodeIds = new Set<number>()
+      traverseGetRelatedNodeIds(id, nodeIds, true)
+
+      const nodes = Array.from(nodeIds.values())
+        .map(nodeId => metaObjectsMap.get(nodeId))
+        .filter(i => i)
+        .map(i => ({
+          id: i.id,
+          label: i.name,
+          coverImgSrc: i.coverImgSrc,
+          type: i.type,
+          isCenter: i.id === id,
+          icon: i.icon,
+          objectId: i.objectId
+        }))
+      const existedNodeIds = new Set()
+      nodes.forEach(n => existedNodeIds.add(n.id))
+      const edges = allMetaLinks.filter(i => existedNodeIds.has(i.sourceId) && existedNodeIds.has(i.targetId))
+      globalStore.set(GlobalGraphAtom, {
+        edges: [...edges],
+        nodes: [...nodes]
+      })
+      Rendevoz.Actions.Layout.openNewTab({ data: { type: 'graph' } })
     },
     copyLink: async id => {
       const idArr = Array.isArray(id) ? id : [id]

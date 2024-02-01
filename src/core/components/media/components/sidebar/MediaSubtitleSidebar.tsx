@@ -17,6 +17,7 @@ import translateSubtitle from '@/core/components/media/components/sidebar/transl
 import produce from 'immer'
 import { IMediaSubtitle } from '~/typings'
 import ButtonSwitch from '@/components/base/ButtonSwitch'
+import scrollIntoView from 'scroll-into-view-if-needed'
 const SelectButton: typeof Button.IconButton = props => {
   return <Button.IconButton {...props} style={{ padding: '3px 6px', lineHeight: 1.2, fontSize: '0.957rem' }} />
 }
@@ -60,26 +61,25 @@ const MediaSubtitleSidebar = memo(() => {
         }
         if (targetFile.url) {
           fetch(targetFile.url).then(async file => {
+            const text = await file.text()
             try {
-              const text = await file.json()
+              const json = JSON.parse(text)
               setMediaState(s => ({
                 ...s,
-                subtitles: text,
+                subtitles: json,
                 subtitleLang: subtitleLang || subtitles[0].lang,
                 subtitleUrl: targetFile.url
               }))
             } catch (e) {
-              file.text().then(text => {
-                const parser = new WebVTTParser()
-                const tree = parser.parse(text, 'metadata')
-                console.log(tree)
-                setMediaState(s => ({
-                  ...s,
-                  subtitles: tree.cues,
-                  subtitleLang: subtitleLang || subtitles[0].lang,
-                  subtitleUrl: targetFile.url
-                }))
-              })
+              const parser = new WebVTTParser()
+              const tree = parser.parse(text, 'metadata')
+              console.log(tree)
+              setMediaState(s => ({
+                ...s,
+                subtitles: tree.cues,
+                subtitleLang: subtitleLang || subtitles[0].lang,
+                subtitleUrl: targetFile.url
+              }))
             }
           })
         }
@@ -87,6 +87,7 @@ const MediaSubtitleSidebar = memo(() => {
     }
   }, [subtitleLang])
   useEffect(() => {
+    if (isIn || !subtitleFollow) return
     if (subtitleMode === 'list') {
       const virtualizer = virtualizerRef.current
       if (virtualizer && !isIn && subtitleFollow) {
@@ -95,6 +96,12 @@ const MediaSubtitleSidebar = memo(() => {
             align: 'center'
           })
         )
+      }
+    }
+    if (subtitleMode === 'article') {
+      const el = containerRef.current?.querySelector(`[data-subtitle-index="${currentSelectedIndex}"]`) as HTMLElement | undefined
+      if (el) {
+        el.parentElement.scrollTop = el.offsetTop - el.parentElement.clientHeight / 2 + el.offsetHeight / 2
       }
     }
   }, [currentSelectedIndex, subtitleMode])
@@ -216,11 +223,18 @@ const MediaSubtitleSidebar = memo(() => {
             items={currentSubtitles}
             ref={virtualizerRef}
             renderItem={(s, idx) => (
-              <SubtitleItem showTrans={showTranslation} currentTime={currentTime} index={idx} subtitle={s} key={s.id} selected={idx === currentSelectedIndex} />
+              <SubtitleItem
+                showTrans={showTranslation}
+                currentTime={currentTime}
+                index={idx}
+                subtitle={s}
+                key={s.id}
+                selected={idx === currentSelectedIndex}
+              />
             )}
           />
         ) : (
-          <Content style={{ height: '100%', overflowY: 'auto' }}>
+          <Content style={{ height: '100%', overflowY: 'auto', paddingBottom: 100 }}>
             {currentSubtitles?.map((i, idx) => (
               <ArticleSubtitleItem index={idx} scrollable={subtitleFollow && !isIn} subtitle={i} selected={idx === currentSelectedIndex} />
             ))}

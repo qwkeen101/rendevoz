@@ -1,4 +1,4 @@
-import { memo, RefObject, useEffect, useMemo, useState } from 'react'
+import { memo, RefObject, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { Descendant, Editor, Element as SlateElement, Range, Selection } from 'slate'
 
 import ElementComponent from './element'
@@ -62,6 +62,7 @@ const VirtualChildren = memo(
         virtualizer.scrollToOffset(offset)
       }
     })
+
     let rangeExtractor: ((r: VirtualRange) => number[]) | undefined = undefined
     const firstLayerMap = ID_TO_FIRST_LAYER_EXCEPET_HIDEN_MAP.get(editor)!
 
@@ -121,6 +122,16 @@ const VirtualChildren = memo(
 
     const first = virtualItems[0]
 
+    const prevChildren = useRef(children)
+    useLayoutEffect(() => {
+      const prev = prevChildren.current
+      prevChildren.current = children
+      if (prev) {
+        if (prev.length !== children.length) {
+          virtualizer.measure()
+        }
+      }
+    }, [children])
     useEffect(() => {
       if (!disableVirtualizer) {
         const size = totalSize

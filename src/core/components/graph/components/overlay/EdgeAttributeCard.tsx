@@ -10,6 +10,7 @@ import useEdges, { oppositeEdgesMapAtom } from '../../hooks/useEdges'
 import { GraphEdge } from '../../types/edge'
 import { useStore } from 'jotai'
 import useGraph from '@/core/components/graph/hooks/useGraph'
+import { useTranslation } from 'react-i18next'
 
 const EdgeAttributeCard = ({ currentEdge }: { currentEdge?: GraphEdge }) => {
   const [edges, setEdges] = useEdges()
@@ -51,34 +52,37 @@ const EdgeAttributeCard = ({ currentEdge }: { currentEdge?: GraphEdge }) => {
   const { run: debouncedUpdateLink } = useDebounceFn(updateMetaLink, {
     wait: 200
   })
+  const { t } = useTranslation()
   return (
-    <Toolbar style={{
-      padding: '0px 6px'
-    }}>
+    <Toolbar
+      style={{
+        padding: '0px 4px'
+      }}
+    >
       <Toolbar.Item>
         <IconWithPopover
           name="park-edit"
+          renderOnParent={true}
           content={
-            <WithBorder style={{ width: 200 }}>
-              <BorderInput
-                style={{ height: 40 }}
-                onChange={e => {
-                  updateEdge({ label: e })
-                }}
-                placeholder="Edge label"
-              ></BorderInput>
-            </WithBorder>
+            <input
+              spellCheck={'false'}
+              defaultValue={currentEdge?.label}
+              className={'focus-input border-box-shadow'}
+              style={{ padding: '4px 12px', borderRadius: 4, width: '200px' }}
+              onChange={e => {
+                updateEdge({ label: e.target.value })
+              }}
+              placeholder={'Type new label'}
+            ></input>
           }
         ></IconWithPopover>
       </Toolbar.Item>
       <Toolbar.Item>
         <IconWithPopover
+          renderOnParent={true}
           name="park-background-color"
           content={
-            <WithBorder style={{ width: 240, padding: 4 }}>
-              <div className={ClassName.description()} style={{ marginBottom: 4, marginLeft: 4 }}>
-                Choose edge color
-              </div>
+            <WithBorder style={{ width: 240, padding: '4px 4px 0px' }}>
               <ColorPicker
                 enableDefault={false}
                 enableMore

@@ -208,22 +208,14 @@ sub {
 sup {
   top: -0.5em;
 }
-a {
-  color: var(--font-link) !important;
+a{
   background-color: transparent;
   text-decoration: none;
   outline: none;
   cursor: pointer;
-  -webkit-text-decoration-skip: objects;
+  color: var(--font-link);
 }
 a:active,
-a:hover {
-  outline: 0;
-  text-decoration: underline !important;
-}
-a:focus {
-  outline: 0;
-}
 a[disabled] {
   color: rgba(0, 0, 0, 0.25);
   cursor: not-allowed;

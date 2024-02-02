@@ -13,11 +13,16 @@ import LabelDetailsRenderer from '@/core/object/renderer/LabelDetailsRenderer'
 import RecycleBin from '@/core/components/recycleBin'
 import TypeGroup from '@/core/components/category/type'
 import TagGroup from '@/core/components/category/tag'
+import TweetPage from '@/scenes/TweetPage'
 
 export const RENDEVOZ_DEFAULT_TABS: TabData[ILayoutTab['type']][] = [
   {
     type: 'typeGroup',
     content: opts => opts.metaType && <TypeGroup type={opts.metaType} />
+  },
+  {
+    type: 'tweet',
+    content: opts => opts.objectId && <TweetPage id={opts.objectId} />
   },
   {
     type: 'tagGroup',

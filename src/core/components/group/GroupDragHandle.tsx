@@ -206,7 +206,6 @@ const GroupDragHandle = ({ bodyRef, groupId }: { bodyRef: RefObject<HTMLElement>
 
   if (
     dragHandle &&
-    !currentViewSort?.sorters.length &&
     (currentView === 'table' || currentView === 'list') &&
     !globalDragging &&
     bodyRef.current

@@ -113,6 +113,7 @@ export default memo(({ metaId, style, showImage }: { metaId: number; style?: CSS
         }}
         style={{
           resize: 'none',
+          display: 'block',
           width: '100%',
           padding: '8px 12px'
         }}

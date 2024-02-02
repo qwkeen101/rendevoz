@@ -67,6 +67,7 @@ export const Common = {
   Green: '--green',
   FocusBoxShadow: '--focus-box-shadow',
   Red: '--red',
+  Pink: '--pink',
   SelectColorTransparent: '--select-color-transparent',
   SelectColor: '--select-color'
 }
@@ -93,7 +94,7 @@ const getAdaptFontColor = (bg?: string) => {
   if (!bg) return undefined
   if (GlobalTheme.isDark) return undefined
   if (FontColorCache[bg]) return FontColorCache[bg]
-  const t = tinycolor(bg).darken(45).desaturate(10).toHexString()
+  const t = tinycolor(bg).darken(50).desaturate(10).toHexString()
   FontColorCache[bg] = t
 
   return t

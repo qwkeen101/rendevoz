@@ -4,7 +4,7 @@ import { IDraggableElement } from '../globalInstances/dragDrop'
 import { IBase } from './base'
 import { IPDFLabel as _IPdfLabel } from './label'
 import { Descendant } from 'slate'
-
+import { Tweet } from 'react-tweet/api'
 export type IRegisterdObject = {
   type: string
   allowDropOnEditor?: boolean
@@ -28,6 +28,11 @@ export interface ILabel extends IBase {
   labelNote?: Descendant[]
 }
 
+export interface ITweet extends IBase {
+  specType: 'tweet'
+  url: string
+  tweet?: Tweet
+}
 export interface ICode extends IBase {
   specType: 'code'
   content: string

@@ -66,7 +66,7 @@ const usePopoverCell = (
       const h = (e: WheelEvent) => {
         const c = opts.targetRef?.current || popoverContentRef.current
         if (c && !c.contains(e.target)) {
-          e.preventDefault()
+          opts.onClose?.()
         }
       }
       const k = (e: KeyboardEvent) => {

@@ -17,7 +17,7 @@ import ParentItems from '@/core/object/details/ParentItems'
 const flatButton = css([
   ClassName.flatButton(999, '3px 10px '),
   {
-    backgroundColor: Colors.Background.ButtonHover,
+    // backgroundColor: Colors.Background.ButtonHover,
     // fontWeight: 600,
     borderRadius: '999px !important',
     fontSize: 13,
@@ -78,7 +78,7 @@ const MetaMainDetails = ({ metaId }: { metaId: number }) => {
           )}
         </Content>
       </Content>
-      <Content style={{ paddingTop: 12, flexWrap: 'wrap' }} flex gap={8}>
+      <Content style={{ paddingTop: 12, flexWrap: 'wrap', marginLeft: -8 }} flex gap={4}>
         <Button.IconButton
           text={t('general.Open')}
           icon={'park-share'}
@@ -100,9 +100,7 @@ const MetaMainDetails = ({ metaId }: { metaId: number }) => {
             MetaStore.updateMetaObject({ id: metaId, pinned: !object.pinned })
           }}
           theme={object.pinned ? 'filled' : undefined}
-          style={{
-            color: object.pinned ? Colors.Common.Red : undefined
-          }}
+          iconColor={object.pinned ? Colors.Common.Pink : undefined}
           text={object.pinned ? t('general.unpin') : t('general.pin')}
           icon={'park-like'}
           className={flatButton}

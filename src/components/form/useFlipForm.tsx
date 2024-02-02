@@ -104,6 +104,7 @@ const useFlipForm = (options: useFlipFormOptions) => {
             style={{
               padding: '12px 10px'
             }}
+            autoFocus={i.autoFocus}
             text={capitalize(i.text)}
             disable={i.disabled}
             type="input"
@@ -114,7 +115,7 @@ const useFlipForm = (options: useFlipFormOptions) => {
       case 'nameInput':
         return (
           <Form.Item
-            autoFocus
+            autoFocus={i.autoFocus}
             text={capitalize(t('general.name'))}
             disable={i.disabled}
             type="textarea"

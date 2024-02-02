@@ -85,5 +85,5 @@ export default () => {
         })
       }
     }
-  }, [feedCollection?.items, readRule])
+  }, [feedCollection?.id, readRule])
 }

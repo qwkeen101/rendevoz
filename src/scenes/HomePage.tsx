@@ -156,6 +156,7 @@ const VisibleTypes: MetaObject['type'][] = [
   'audio',
   'group',
   'code',
+  'tweet',
   'question'
 ]
 
@@ -361,7 +362,7 @@ const Recent = () => {
           height: 0,
           flex: 1,
           margin: '0px -24px',
-          padding: '0px 24px'
+          padding: '0px 24px 50px'
         }}
       >
         <colgroup>

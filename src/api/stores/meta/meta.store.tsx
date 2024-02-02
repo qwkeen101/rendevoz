@@ -325,10 +325,12 @@ const createMetaStore = () => {
   const getMetaObjectByObjectId = (objId: number) => {
     const metaObjectId = globalStore.get(objectIdToMetaObjectIdMapAtom)?.get(objId)
     if (metaObjectId) {
-      return globalStore.get(metaObjectsAtom).get(metaObjectId)
+      const one = globalStore.get(metaObjectsAtom).get(metaObjectId)
+      return one
     }
     const allMetas = Array.from(globalStore.get(metaObjectsAtom).values())
-    return allMetas.find(i => i.objectId === objId)
+    const one = allMetas.find(i => i.objectId === objId)
+    return one
   }
   const useObjectToMetaValue = (objectId?: number) => {
     const objectIdToMetaObjectIdAtom = useMemo(() => selectAtom(objectIdToMetaObjectIdMapAtom, m => m?.get(objectId || 0)), [objectId])
@@ -376,7 +378,7 @@ const createMetaStore = () => {
 
   function isVisibleMetaObject(o?: Partial<MetaObject>): o is MetaObject {
     if (!o) return false
-    if (o.deleted || o.hidden) return false
+    if (o.deleted || o.hidden || o.temp) return false
 
     return true
   }

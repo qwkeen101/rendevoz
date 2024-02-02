@@ -24,6 +24,27 @@ export default async (itemId: number) => {
         )
       ).meta
     }
+    if (feed.feedType === 'tweet') {
+      const splitted = feed.link.split('/')
+      const idx = splitted.findIndex(i => i === 'status') + 1
+      const id = splitted[idx]
+      if (id) {
+        return (
+          await ObjectStore('tweet').addOneWithMeta(
+            {
+              url: feed.link
+            },
+            {
+              currentMeta: {
+                coverImgSrc: feed.image,
+                name: feed.title,
+                description: feed.description
+              }
+            }
+          )
+        ).meta
+      }
+    }
     if (feed.feedType === 'podcast') {
       return (
         await ObjectStore('audio').addOneWithMeta(

@@ -48,6 +48,9 @@ export default ({ metaId }: { metaId: number }) => {
             <Content gap={8} flex alignItems={'center'} key={i.id}>
               <AnimatePopover
                 withClickCover
+                positions={['right', 'left']}
+                align={'start'}
+                padding={10}
                 content={setV => (
                   <WithBorder>
                     <ObjectActionPopover onClose={() => setV(false)} metaObjectId={i.id} />
@@ -56,11 +59,11 @@ export default ({ metaId }: { metaId: number }) => {
               >
                 <div className={'ellipsis-font-1 hover-link'}>{i.name || i.placeholderName}</div>
               </AnimatePopover>
-              <div style={{ fontSize: 12 }} className={ClassName.objectTag}>
+              <div style={{ fontSize: 12, flexShrink: 0 }} className={ClassName.objectTag}>
                 {Rendevoz.Utils.Meta.getTypeName(i.type)}
               </div>
               {i.attachments?.length ? (
-                <div style={{ fontSize: 12 }} className={ClassName.objectTag}>
+                <div style={{ fontSize: 12, flexShrink: 0 }} className={ClassName.objectTag}>
                   {i.attachments.length} {t('general.att')}
                 </div>
               ) : null}

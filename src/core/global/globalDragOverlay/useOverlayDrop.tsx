@@ -32,7 +32,7 @@ const useOverlayDrop = () => {
   assignProperties(GlobalInstance, {
     metaOps: {
       ...GlobalInstance.metaOps,
-      addDraggableAsMeta: async (d, hidden) => {
+      addDraggableAsMeta: async (d, temp) => {
         const currentKeys = new Set(MetaStore.getMetaObjectsMap().keys())
         const res = (await emitter.emitWithCallback('global', {
           type: 'globalDropNeedFurtherProcess',
@@ -41,11 +41,11 @@ const useOverlayDrop = () => {
           }
         })) as MetaObject
         const isNewlyCreated = !currentKeys.has(res.id)
-        if (res.hidden && hidden !== true) {
-          await MetaStore.updateMetaObject({ id: res.id, hidden: false })
+        if (res.temp && temp !== true) {
+          await MetaStore.updateMetaObject({ id: res.id, temp: false })
         }
-        if (hidden && isNewlyCreated) {
-          await MetaStore.updateMetaObject?.({ id: res.id, hidden: true })
+        if (temp && isNewlyCreated) {
+          await MetaStore.updateMetaObject?.({ id: res.id, temp: true })
         }
         return res
       }
@@ -170,8 +170,7 @@ const useOverlayDrop = () => {
           break
         }
         const noteMeta =
-          (await getMetaObjectByObjectId(dropOn.noteId)) ||
-          (await addMetaObject({ id: Id.getId(), objectId: dropOn.noteId, type: 'note' }))
+          (await getMetaObjectByObjectId(dropOn.noteId)) || (await addMetaObject({ id: Id.getId(), objectId: dropOn.noteId, type: 'note' }))
 
         link.targetId = noteMeta.id
         break
@@ -179,8 +178,7 @@ const useOverlayDrop = () => {
       case 'pdf': {
         if (!enableDropOnPDFLink) break
         const pdfMeta =
-          (await getMetaObjectByObjectId(dropOn.pdfId)) ||
-          (await addMetaObject({ id: Id.getId(), objectId: dropOn.pdfId, type: 'pdf' }))
+          (await getMetaObjectByObjectId(dropOn.pdfId)) || (await addMetaObject({ id: Id.getId(), objectId: dropOn.pdfId, type: 'pdf' }))
         link.targetId = pdfMeta.id
         break
       }
@@ -188,13 +186,11 @@ const useOverlayDrop = () => {
         if (!enableDropOnWhiteboardLink) break
         const whiteboardMeta =
           (await getMetaObjectByObjectId(dropOn.whiteboardId)) ||
-          (await addMetaObject(
-            {
-              id: Id.getId(),
-              objectId: dropOn.whiteboardId,
-              type: 'whiteboard'
-            }
-          ))
+          (await addMetaObject({
+            id: Id.getId(),
+            objectId: dropOn.whiteboardId,
+            type: 'whiteboard'
+          }))
         link.targetId = whiteboardMeta.id
         break
       }
@@ -222,10 +218,11 @@ const useOverlayDrop = () => {
             l.id && deleteMetaLink(l.id, true, true)
           })
 
-          metaObject?.id && deleteMetaObject(metaObject?.id, {
-            silent: true,
-            force: true
-          })
+          metaObject?.id &&
+            deleteMetaObject(metaObject?.id, {
+              silent: true,
+              force: true
+            })
           if (promise) {
             promise.rej?.(null)
           }

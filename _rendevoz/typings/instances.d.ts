@@ -19,6 +19,7 @@ export type IBaidudiskInstance = Partial<{
   // choose file, return file path or undefined
   chooseFile: (category?: number, closeAfterChoose?: boolean) => Promise<any | undefined>
   onChooseFile: (file: any) => void
+  onCreateMeta: (m: MetaObject) => void
 }>
 
 export type IGlobalInstance = Partial<{
@@ -59,6 +60,6 @@ export type IGlobalInstance = Partial<{
     createObjects: (type?: MetaObject['type'], onMetaCreated?: (meta: MetaObject) => void) => void
     createObject: (type?: MetaObject['type']) => Promise<MetaObject>
     copyLink: (id: number | number[]) => void
-    addDraggableAsMeta: (d: BuiltInDraggableElement, hidden?: boolean) => Promise<MetaObject>
+    addDraggableAsMeta: (d: BuiltInDraggableElement, temp?: boolean) => Promise<MetaObject>
   }
 }>

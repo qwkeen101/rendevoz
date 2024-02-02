@@ -17,6 +17,8 @@ import addFeedAsMeta from '@/core/components/feed/utils/service/addFeedAsMeta'
 import { FEED_CONTENT_CACHE } from '@/core/components/feed/contentCache'
 import { useUpdate } from 'react-use'
 import { useSetAtom } from 'jotai'
+import { Tweet } from 'react-tweet'
+import TweetRenderer from '@/core/components/tweet/TweetRenderer'
 
 const FeedContentRenderer = () => {
   console.log('rerender')
@@ -133,7 +135,34 @@ const FeedContentRenderer = () => {
       </Content>
     )
   }
-
+  if (currentItem?.feedType === 'tweet') {
+    const splitted = currentItem.link.split('/')
+    const statusIdx = splitted.findIndex(i => i === 'status')
+    const id = splitted[statusIdx + 1]
+    return (
+      <Content
+        style={{
+          height: '100%',
+          width: '100%',
+          borderRadius: displayMode === 'center' ? 12 : 0,
+          borderLeft: displayMode !== 'center' ? `1px solid ${Colors.Background.Border}` : undefined,
+          overflow: 'hidden'
+        }}
+      >
+        <div
+          style={{
+            padding: 24,
+            height: '100%',
+            width: '100%',
+            overflowY: 'auto',
+            display: 'flex'
+          }}
+        >
+          <TweetRenderer tweetId={id} />
+        </div>
+      </Content>
+    )
+  }
   if (currentItem && !currentItem.link.includes('news.google.com')) {
     return (
       <Content

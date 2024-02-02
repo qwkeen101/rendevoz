@@ -20,6 +20,7 @@ import { ClassName } from 'rendevoz'
 import { Icon } from '@/components'
 import { useWhiteboardInstance } from '@/core/components/whiteboard/hooks'
 import QuestionCard from '@/core/ai/components/question/QuestionCard'
+import Tweet from '@/core/components/tweet'
 const tagsClass = css({
   '> *': {
     fontSize: '15px !important',
@@ -176,6 +177,8 @@ const MetaObjectNode: FC<InnerNodeProps> = ({ node: n, setNodeState, nodeState }
               <Code id={metaObject.objectId} />
             </div>
           )
+        case 'tweet':
+          return <Tweet id={metaObject.objectId} layout={{ showBorder: false }} />
         case 'question':
           return (
             <QuestionCard

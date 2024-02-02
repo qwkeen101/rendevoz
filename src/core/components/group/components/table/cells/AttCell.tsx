@@ -1,6 +1,6 @@
 import { MetaStore } from '@/api/stores'
 import { Content, Icon } from '@/components'
-import { useRef } from 'react'
+import { useMemo, useRef } from 'react'
 import usePopoverCell from '@/core/components/group/hooks/usePopoverCell'
 import { PopupWrapper } from '@/core/components/group/components'
 import { RelatedPanel } from '@/core/object/details/Related'
@@ -10,12 +10,19 @@ import { AttachmentWrapper } from '@/core'
 
 const AttCell = ({ metaId }: { metaId: number }) => {
   const meta = MetaStore.useValue(metaId)
-  const { openPopover, renderPopover, closePopover } = usePopoverCell({
-    onClose: () => {
-      closePopover()
-    },
-    onOpen: () => {}
-  })
+  const { openPopover, renderPopover, closePopover } = usePopoverCell()
+  const atts = useMemo(() => {
+    const map = MetaStore.getMetaObjectsMap()
+    return meta?.attachments
+      ?.map(i => {
+        if (i.type === 'attachmentText') {
+          return i.text
+        }
+        const one = map.get(i.id)
+        return one?.name || one?.placeholderName
+      })
+      .filter(i => i) as string[] | undefined
+  }, [meta?.attachments])
   return (
     <>
       <Content
@@ -28,10 +35,17 @@ const AttCell = ({ metaId }: { metaId: number }) => {
         role={'prop-container'}
         style={{
           width: '100%',
-          height: '100%'
+          height: '100%',
+          flexWrap: 'inherit'
         }}
+        flex
+        gap={4}
       >
-        {meta?.attachments?.length || ''}
+        {atts?.map(i => (
+          <span className={'object-name-item'} key={i}>
+            {i}
+          </span>
+        ))}
       </Content>
       {renderPopover(
         box => (

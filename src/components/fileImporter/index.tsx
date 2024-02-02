@@ -14,6 +14,7 @@ import picture from '@/assets/images/picture.png?url'
 import code from '@/assets/images/code.png?url'
 import music from '@/assets/images/music.png?url'
 import question from '@/assets/images/question.png?url'
+import twitter from '@/assets/images/twitter.png?url'
 import { fetchRemoteImageAndSaveLocally } from '@/utils'
 import { BaidudiskInstance } from '@/components/fileImporter/baidudisk/BaidudiskDisplayer'
 import { ObjectStore } from '@/api/stores'
@@ -48,7 +49,7 @@ const FileImporter = ({
     console.log(createHandler, one)
     onCreate?.(one.meta)
     createHandler?.(one.meta)
-  },[])
+  }, [])
 
   const handleCreate = (type: MetaObject['type']) => {
     onClose?.()
@@ -110,6 +111,13 @@ const FileImporter = ({
       image: chrome,
       onClick: () => {
         handleCreate('webpage')
+      }
+    },
+    {
+      name: t('general.tweet'),
+      image: twitter,
+      onClick: () => {
+        handleCreate('tweet')
       }
     },
     {
@@ -179,6 +187,9 @@ const FileImporter = ({
           return
         }
         BaidudiskInstance.chooseFile?.(1)
+        BaidudiskInstance.onCreateMeta = m => {
+          handleAfterCreate({ meta: m })
+        }
         BaidudiskInstance.onChooseFile = async file => {
           const thumb = await fetchRemoteImageAndSaveLocally(file.thumbs.url3)
           if (file.category === 1) {

@@ -33,7 +33,7 @@ const MetaRow = ({
   const toggled = !untoggledIdSet?.has(rowDetails.rowId)
   const metaObject = MetaStore.useValue(metaId)
   const hasChildren = !!rowDetails.children?.length
-  useChildrenSyncAsAttachment(metaObject, rowDetails.children)
+  // useChildrenSyncAsAttachment(metaObject, rowDetails.children)
   const instance = useGroupInstance()
   const rowId = rowDetails.tempRowId || rowDetails.rowId
   if (!metaObject) return null

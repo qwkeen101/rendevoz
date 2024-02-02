@@ -11,7 +11,7 @@ export interface FeedItem extends IBase {
   description?: string
   date?: number
   lastRead?: number
-  feedType: 'webpage' | 'podcast' | 'youtube'
+  feedType: 'webpage' | 'podcast' | 'youtube' | 'tweet'
   enclosure?: {
     url: string
     length?: number

@@ -67,6 +67,7 @@ const createObjectStore = <T extends keyof ObjectFamily, V extends ObjectFamily[
   const forcedRemoveIds = new Set<number>()
   const localStore: IStore<V> = {
     getAll: async () => {
+      console.log('getting all')
       let data = await objectsDb.where('specType').equals(type).toArray()
       if (options?.afterGetAllProcess) {
         data = options.afterGetAllProcess(data)

@@ -22,6 +22,7 @@ export default () => {
         if (!feedDetails?.isLoading) {
           transformFeedUrl(newFeedUrl).then(url => {
             if (url) {
+              console.log(url)
               setFeedDetails({ isLoading: true, details: undefined })
               fetch(url)
                 .then(res => res.text())
@@ -38,6 +39,8 @@ export default () => {
                 .finally(() => {
                   setFeedDetails(s => ({ ...s, isLoading: false }))
                 })
+            } else {
+              toast.error('Invalid feed!')
             }
           })
         }
@@ -62,8 +65,9 @@ export default () => {
             </a>{' '}
             in setting-general-others to get all videos in playlist/channel.
           </div>
-          <div>3. Some feeds may not return correct thumbnail / content.</div>
-          <div>4. Websites require subscriptions may not return correct content.</div>
+          <div>3. Twitter user tweets and search results are supported. (e.g. https://twitter.com/elonmusk)</div>
+          <div>4. Some feeds may not return correct thumbnail / content.</div>
+          <div>5. Websites require subscriptions may not return correct content.</div>
         </Content>
       </Content>
       <input

@@ -236,7 +236,7 @@ const RelatedGroup = ({ linkIds, rootMetaId, groupType }: { linkIds: number[]; r
       <Content
         flex
         column
-        gap={8}
+        gap={4}
         ref={ref}
         style={{
           flex: 1,
@@ -276,7 +276,7 @@ const RelatedItem = ({ metaId, linkId }: { metaId: number; linkId: number }) => 
         <HoverObjectDetails metaObjectId={metaId}>
           {renderInline({
             containerStyle: {
-              fontSize: 14
+              fontSize: 13
             },
             ellipsisLine: 1
           })}

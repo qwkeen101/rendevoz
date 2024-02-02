@@ -79,10 +79,12 @@ const AnimatePopover: FC<PropsWithChildren<AnimatePopoverProps>> = ({
   useEffect(() => {
     if (visible === undefined) {
       const l = (e: MouseEvent) => {
-        if (!e.defaultPrevented) {
-          setIsOpen(true)
-          setInnerVisible(s => !s)
-        }
+        setTimeout(() => {
+          if (!e.defaultPrevented) {
+            setIsOpen(true)
+            setInnerVisible(s => !s)
+          }
+        })
       }
       intersectionRef?.current?.addEventListener('click', l, openOnClickCapture)
       if (openOnContextMenu) {

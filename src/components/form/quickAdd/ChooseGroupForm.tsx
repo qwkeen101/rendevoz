@@ -13,12 +13,12 @@ import { Colors } from '@/consts'
 import { useTranslation } from 'react-i18next'
 
 export default memo(({ onBack, metaId, onClose }: { onBack: VoidFunction; metaId: number; onClose: VoidFunction }) => {
-  const [allGroups, setAllGroups] = useState<(MetaObject)[]>([])
+  const [allGroups, setAllGroups] = useState<MetaObject[]>([])
   const [setting, setSetting] = useSetting()
   const [search, setSearch] = useState('')
-  const [displayGroups, setDisplayGroups] = useState<(MetaObject)[]>([])
+  const [displayGroups, setDisplayGroups] = useState<MetaObject[]>([])
   const [selectedGroup, setSelectedGroup] = useState<MetaObject>()
-  const index = MetaStore.useMetaObjectsMap()
+  const index = MetaStore.useIndexedMetaObjects()
   const { t } = useTranslation()
   useLayoutEffect(() => {
     const groups = Array.from(MetaStore.getIndexedMetaObjects()?.typeToMetaObjectIdsMap.get('group')?.values() || [])

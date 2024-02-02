@@ -5,7 +5,7 @@ import { ClassName } from 'rendevoz'
 import FontSize from '@/consts/font'
 import { assignProperties, DateFormat } from '@/utils'
 import { Colors } from '@/consts'
-import { IBaidudiskInstance } from '~/typings'
+import { IBaidudiskInstance, MetaObject } from '~/typings'
 import searchFiles from '@/components/fileImporter/baidudisk/searchFiles'
 import { useDebounceEffect } from '@/hooks'
 import {
@@ -30,10 +30,12 @@ export const BaidudiskInstance: IBaidudiskInstance = {}
 const BaidudiskDisplayer = ({
   onChooseFolder,
   onChooseFile,
-  onlyVisibleCategory
+  onlyVisibleCategory,
+  onCreateMeta
 }: {
   onChooseFolder?: (folder: BaiduFile) => void
   onChooseFile?: (file: BaiduFile) => void
+  onCreateMeta?: (m: MetaObject) => void
   onlyVisibleCategory?: number
 }) => {
   const [currentDir, setCurrentDir] = useState('')
@@ -297,6 +299,9 @@ export const GlobalBaidudisk = memo(() => {
     >
       <BaidudiskDisplayer
         onlyVisibleCategory={category}
+        onCreateMeta={v => {
+          BaidudiskInstance.onCreateMeta?.(v)
+        }}
         onChooseFile={file => {
           BaidudiskInstance.onChooseFile?.(file)
           if (shouldClose.current) {

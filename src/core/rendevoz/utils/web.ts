@@ -5,13 +5,38 @@ import { Node } from 'slate'
 import { getFavicon } from '@/core/components/webpage/utils/previewWebUrl'
 import { default as PostlightParser } from '@postlight/parser'
 const domParser = new DOMParser()
-
+import { getTweet } from 'react-tweet/api'
+const tweetRegexp = /https:\/\/twitter\.com\/\w+\/status\/\d+/gm
 const WebUtils: (typeof Utils)['Web'] = {
   fetchDetails: async url => {
+    // is tweet
+    const reg = new RegExp(tweetRegexp)
+    if (reg.test(url)) {
+      const id = url.split('/').pop() as string
+      const result = await getTweet(id)
+      if (result) {
+        let image: string | undefined = undefined
+        if (result.photos?.length) {
+          image = result.photos[0].url
+        }
+        if (result.mediaDetails?.length) {
+          const img = result.mediaDetails.find(i => i.type === 'photo')
+          if (img) {
+            image = img.media_url_https
+          }
+        }
+        console.log(result)
+        return {
+          title: result.text,
+          image
+        }
+      }
+      return
+    }
     const res = await fetch(url)
     const text = await res.text()
     function isHTML(str: string) {
-      const regexForHTML = /<([A-Za-z][A-Za-z0-9]*)\b[^>]*>(.*?)<\/\1>/;
+      const regexForHTML = /<([A-Za-z][A-Za-z0-9]*)\b[^>]*>(.*?)<\/\1>/
       return regexForHTML.test(str)
     }
     if (!isHTML(text)) throw 'Not HTML web!'

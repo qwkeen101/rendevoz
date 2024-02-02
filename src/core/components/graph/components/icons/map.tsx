@@ -5,6 +5,7 @@ import {
   NotesIcon,
   PdfIcon,
   PinnedIcon,
+  TwitterIcon,
   UnknownIcon,
   VideoIcon,
   WebpageIcon,
@@ -23,5 +24,6 @@ export const NAME_TO_ICON: Record<ReturnType<typeof Rendevoz.Utils.Object.getMet
   'park-log': <LocalFileIcon />,
   'park-file-question': <UnknownIcon />,
   'park-pin': <PinnedIcon />,
-  'park-play-two': <VideoIcon />
+  'park-play-two': <VideoIcon />,
+  'custom-twitter': <TwitterIcon />
 }

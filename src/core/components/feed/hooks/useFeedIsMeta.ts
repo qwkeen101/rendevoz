@@ -2,7 +2,7 @@ import { MetaStore, ObjectStore } from '@/api/stores'
 import { useEffect, useState } from 'react'
 import { useGlobalAtomValue } from '@/hooks'
 import { UrlToWebpageMap } from '@/core/components/webpage/hooks/useWebpageContent'
-import { urlToAudioMapAtom, urlToVideoMapAtom } from '@/core/components/media/wrappers/useRealId'
+import { urlToAudioMapAtom, urlToTweetMapAtom, urlToVideoMapAtom } from '@/core/components/media/wrappers/useRealId'
 
 export default (feedItemId: number) => {
   const item = ObjectStore('feed').useValue(feedItemId)
@@ -11,6 +11,7 @@ export default (feedItemId: number) => {
   const urlToWebpage = useGlobalAtomValue(UrlToWebpageMap)
   const urlToAudio = useGlobalAtomValue(urlToAudioMapAtom)
   const urlToVideo = useGlobalAtomValue(urlToVideoMapAtom)
+  const urlToTweet = useGlobalAtomValue(urlToTweetMapAtom)
   const objectMap = MetaStore.useIndexedMetaObjects()?.objectIdToMetaObjectMap
   useEffect(() => {
     if (!item?.link) {
@@ -18,13 +19,12 @@ export default (feedItemId: number) => {
       setMetaId(undefined)
       return
     }
-    if (urlToAudio.has(item.link) || urlToVideo.has(item.link) || urlToWebpage.has(item.link)) {
+    console.log(urlToTweet, item.link)
+    if (urlToAudio.has(item.link) || urlToTweet.has(item.link) || urlToVideo.has(item.link) || urlToWebpage.has(item.link)) {
       setIsMeta(true)
-      const objectId = urlToWebpage.get(item.link) || urlToVideo.get(item.link) || urlToAudio.get(item.link)
+      const objectId = urlToWebpage.get(item.link) || urlToTweet.get(item.link) || urlToVideo.get(item.link) || urlToAudio.get(item.link)
       if (objectId) {
-        console.log(objectId)
         const meta = MetaStore.getMetaObjectByObjectId(objectId)
-        console.log(meta)
         if (meta) {
           setMetaId(meta.id)
         }

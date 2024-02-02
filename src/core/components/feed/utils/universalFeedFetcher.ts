@@ -5,7 +5,9 @@ import FeedParser from '@/core/components/feed/utils/parser'
 
 export default async (url: string, feedType: FeedItem['feedType']) => {
   try {
-    const text = await fetch(url).then(res => res.text())
+    const text = await fetch(url, {
+      cache: 'no-cache'
+    }).then(res => res.text())
     const initialRes = await FeedParser(text, {
       transformGoogle: true,
       urlFilterRule: s => {
@@ -15,6 +17,9 @@ export default async (url: string, feedType: FeedItem['feedType']) => {
     })
     if (url.includes('youtube.com')) {
       feedType = 'youtube'
+    }
+    if (url.includes('twitter')) {
+      feedType = 'tweet'
     }
     const initialItems = initialRes.items.map(i => ({ ...i, feedType: feedType }))
     return {

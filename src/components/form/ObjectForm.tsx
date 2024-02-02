@@ -1,7 +1,6 @@
 import Id from '@/utils/id'
 import { FC, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { MetaObject } from 'rendevoz'
 import { IForm } from './types'
 import useFlipForm from './useFlipForm'
 import { ObjectStore } from '@/api/stores'
@@ -13,7 +12,7 @@ import { Button } from '../base'
 import { transformTextContentToNameAndDescription } from '@/core/global/globalDragOverlay/utils'
 import { toast } from 'react-hot-toast'
 import { TypeToRegisteredMetaObject } from '@/api/stores/meta/meta.store'
-import { IFile, MetaFormLayoutItem } from '~/typings'
+import { IFile, MetaFormLayoutItem, MetaObject } from '~/typings'
 import { Rendevoz } from '@/core/rendevoz'
 
 const ObjectForm: FC<
@@ -61,11 +60,22 @@ const ObjectForm: FC<
       break
     }
   }
-
+  let showUrl = false
+  if (originObject) {
+    if (object.type === 'webpage') {
+      if ('url' in originObject) {
+        showUrl = true
+      }
+    }
+    if (object.type === 'tweet') {
+      showUrl = true
+    }
+  }
   const defaultLayout: MetaFormLayoutItem[] = [
-    originObject && 'url' in originObject && object.type === 'webpage'
+    showUrl
       ? {
           type: 'input',
+          autoFocus: true,
           text: t('general.url'),
           value: originObject.url,
           onChange: async v => {
@@ -84,6 +94,7 @@ const ObjectForm: FC<
       : undefined,
     {
       type: 'nameInput',
+      autoFocus: !showUrl,
       value: object.name,
       onChange: v => setObject({ ...object, name: v })
     },

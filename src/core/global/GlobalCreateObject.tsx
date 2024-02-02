@@ -23,7 +23,7 @@ const GlobalCreateObject = () => {
     }
     if (data) {
       const { fromMetas, currentObject } = data
-      const shouldAddObject = { id: Id.getId(), ...currentObject }
+      const shouldAddObject = { id: Id.getId(), ...currentObject, temp: true }
       MetaStore.addMetaObject(shouldAddObject)
       setInnerMeta(shouldAddObject)
       if (fromMetas) {
@@ -109,21 +109,22 @@ const GlobalCreateObject = () => {
           onSubmit={obj => {
             toggleModalVisible(false)
             setTimeout(() => {
+              const newObj = { ...obj, temp: false }
               if (currentModeRef.current === 'add') {
                 if (innerMeta?.id) {
-                  MetaStore.updateMetaObject(obj).then(obj => {
+                  MetaStore.updateMetaObject(newObj).then(obj => {
                     promiseRef.current?.res?.(obj)
                     promiseRef.current = undefined
                   })
                 } else {
-                  MetaStore.addMetaObject(obj).then(obj => {
+                  MetaStore.addMetaObject(newObj).then(obj => {
                     promiseRef.current?.res?.(obj)
                     promiseRef.current = undefined
                   })
                 }
               }
               if (currentModeRef.current === 'edit') {
-                MetaStore.updateMetaObject({ ...obj }).then(obj => {
+                MetaStore.updateMetaObject(newObj).then(obj => {
                   promiseRef.current?.res?.(obj)
                   promiseRef.current = undefined
                 })

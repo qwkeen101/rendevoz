@@ -14,6 +14,7 @@ export type MetaFormLayoutItem =
       disabled?: boolean
       onChange: (v: string) => void
       value?: string
+      autoFocus?: boolean
     }
   | {
       type: 'input'
@@ -21,6 +22,7 @@ export type MetaFormLayoutItem =
       onChange?: (v: string) => void
       value?: string
       text?: string
+      autoFocus?: boolean
     }
   | {
       type: 'descriptionInput'

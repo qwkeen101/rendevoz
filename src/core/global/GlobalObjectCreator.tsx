@@ -21,6 +21,13 @@ export const ObjectCreateHandler: Partial<
   group: () => ObjectStore('group').addOneWithMeta(GroupStore.initializeGroup()),
   code: () => ObjectStore('code').addOneWithMeta({ content: '' }),
   question: () => ObjectStore('question').addOneWithMeta(),
+  tweet: () =>
+    ObjectStore('tweet').addOneWithMeta(
+      {},
+      {
+        showMetaModal: true
+      }
+    ),
   video: () =>
     ObjectStore('video').addOneWithMeta(
       {},
@@ -80,6 +87,7 @@ export default () => {
         setVisible(true)
       },
       createObject: type => {
+        createHandlerRef.current = undefined
         if (type) {
           if (ObjectCreateHandler[type]) {
             return new Promise(res => {

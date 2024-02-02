@@ -152,7 +152,7 @@ const AttachmentList = ({
                 marginTop: '6px'
               }}
               onClick={() => {
-                GlobalInstance.metaOps?.createObject().then(o => {
+                GlobalInstance.metaOps?.createObjects(undefined, o => {
                   MetaStore.addMetaAsAttachment(o.id, parentMetaId)
                 })
               }}

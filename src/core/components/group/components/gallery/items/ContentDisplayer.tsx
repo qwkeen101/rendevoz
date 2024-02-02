@@ -9,6 +9,7 @@ import CodeDisplayer from '@/core/object/renderer/contentDisplayer/Code'
 import ImageItem from '@/core/components/group/components/gallery/items/ImageItem'
 import { useSelectAtomValue } from '@/hooks'
 import { GroupStateAtom } from '@/core/components/group/hooks/useGroupState'
+import Tweet from '@/core/components/tweet'
 
 // @ts-ignore
 const nonNullClass = css({
@@ -20,6 +21,17 @@ const nonNullClass = css({
     pointerEvents: 'none !important'
   }
 })
+
+const tweetStyles = {
+  bodyFontSize: '13px',
+  border: 'transparent',
+  titleFontSize: '13px',
+  imageSize: 40,
+  infoFontSize: '13px',
+  bodyStyles: {
+    width: '100%'
+  }
+}
 export default memo(
   ({ metaId, hideCoverIfEmpty, onClick }: { metaId: number; hideCoverIfEmpty?: boolean; onClick: React.MouseEventHandler }) => {
     const meta = MetaStore.useValue(metaId)
@@ -40,6 +52,9 @@ export default memo(
         id = obj.id
       }
       if (obj.specType === 'code') {
+        id = obj.id
+      }
+      if (obj.specType === 'tweet') {
         id = obj.id
       }
     }
@@ -72,6 +87,7 @@ export default memo(
                 {meta?.type === 'whiteboard' && <WhiteboardDisplayer id={id} />}
                 {meta?.type === 'question' && <QuestionDisplayer id={id} />}
                 {meta?.type === 'code' && <CodeDisplayer id={id} />}
+                {meta?.type === 'tweet' && <Tweet styles={tweetStyles} id={id} />}
               </>
             )}
             {!id && meta?.coverImgSrc && (

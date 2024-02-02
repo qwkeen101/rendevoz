@@ -20,12 +20,7 @@ const RelatedCell = ({
   const relatedMap = index?.relatedIdsMap
   const related = relatedMap?.get(metaId)
   const relatedMetas = MetaStore.useMultipleObjects(Array.from(related?.values() || []))
-  const { openPopover, renderPopover, closePopover } = usePopoverCell({
-    onClose: () => {
-      closePopover()
-    },
-    onOpen: () => {}
-  })
+  const { openPopover, renderPopover, closePopover } = usePopoverCell()
   if (nullIfNoRelated && (!related || related?.size === 0)) {
     return null
   }
@@ -48,17 +43,14 @@ const RelatedCell = ({
         }}
       >
         {relatedMetas.map(meta => (
-          <span
-            className={'object-name-item'}
-            style={optionStyle}
-          >
+          <span className={'object-name-item'} style={optionStyle}>
             {meta.name || meta.placeholderName}
           </span>
         ))}
       </Content>
       {renderPopover(
         box => (
-          <PopupWrapper box={{ ...box, width: 'min(340px, 90vw)' }}>
+          <PopupWrapper box={{ ...box, width: 'min(400px, 90vw)' }}>
             <div
               style={{
                 padding: 8,

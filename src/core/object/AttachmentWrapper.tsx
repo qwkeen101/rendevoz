@@ -12,6 +12,7 @@ const AttachmentWrapper = ({
   visible?: boolean
 } & Omit<AttachmentListProps, 'parentMetaId'>) => {
   const metaObject = MetaStore.useValue(metaId)
+  console.log(metaObject)
   if (metaObject && visible && metaId) {
     return (
       <AttachmentList
@@ -19,14 +20,13 @@ const AttachmentWrapper = ({
         parentMetaId={metaId}
         maxVisibleAttachments={maxVisibleAttachments}
         attachments={metaObject.attachments}
-        onAttachmentsChange={atts =>
-          MetaStore.updateMetaObject(
-            {
-              id: metaObject.id,
-              attachments: atts
-            }
-          )
-        }
+        onAttachmentsChange={atts => {
+          console.log(atts)
+          MetaStore.updateMetaObject({
+            id: metaObject.id,
+            attachments: atts
+          })
+        }}
       />
     )
   }

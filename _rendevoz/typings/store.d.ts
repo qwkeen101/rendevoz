@@ -6,6 +6,7 @@ import {
   INote,
   INoteBlock,
   INoteLabel,
+  ITweet,
   IPdfDocument,
   ITag,
   IVideo,
@@ -22,7 +23,9 @@ import {
   IQuestion,
   ICode,
   IMetaSelectOption,
-  IMetaProp, IPdfLabel, IPDFLabel
+  IMetaProp,
+  IPdfLabel,
+  IPDFLabel
 } from '.'
 import { PartialWithId } from './common'
 import { CustomTypes } from './custom'
@@ -53,6 +56,7 @@ export type BuiltInObjectTypes = {
   code: ICode
   metaPropSelectOption: IMetaSelectOption
   metaProp: IMetaProp
+  tweet: ITweet
 }
 
 export type ObjectFamily = CustomTypes['Object']

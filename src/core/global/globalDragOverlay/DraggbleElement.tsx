@@ -20,6 +20,7 @@ const DraggableElement = forwardRef<
   const childRef = useRef<HTMLElement | undefined>()
   const dragStartTriggered = useRef(false)
   const pointerHandler = useMemoizedFn((e: PointerEvent) => {
+    if (draggable === false) return
     if (e.type === 'pointerdown') {
       if (e.button !== 0) return
       ;(e.target as Element).releasePointerCapture(e.pointerId)

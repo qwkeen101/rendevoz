@@ -1,6 +1,8 @@
 // 导入文件并创建收藏夹
 import { request } from '@/utils/request'
 import { CollectionStore, ObjectStore } from '@/api/stores'
+import { MetaObject } from '~/typings'
+import { BaidudiskInstance } from '@/components/fileImporter/baidudisk/BaidudiskDisplayer'
 
 export const handleImportAllAndCreateCollections = async (
   currentFolder = '/',
@@ -76,6 +78,7 @@ export const normalizeGroupToCollections = async (group: any) => {
               { videoUrl: `baidudisk${v.path}` },
               { currentMeta: { name: v.server_filename }, silent: true }
             )
+            BaidudiskInstance.onCreateMeta?.(meta.meta)
             await CollectionStore.addItemToCollection({ type: 'meta', id: meta.meta.id }, parentCollectionId)
           }
           if (v.category === 4 && v.server_filename.endsWith('pdf')) {
@@ -83,6 +86,7 @@ export const normalizeGroupToCollections = async (group: any) => {
               { webFileUrl: `baidudisk/${v.fs_id}` },
               { currentMeta: { name: v.server_filename }, silent: true }
             )
+            BaidudiskInstance.onCreateMeta?.(meta.meta)
             await CollectionStore.addItemToCollection({ type: 'meta', id: meta.meta.id }, parentCollectionId)
           }
         }

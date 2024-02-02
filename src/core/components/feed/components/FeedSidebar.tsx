@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Button, Content } from '@/components'
 import KeyvalueStore from '@/api/stores/keyvalue.store'
 import { ObjectStore } from '@/api/stores'
@@ -12,8 +12,6 @@ import FeedSidebarFolder from '@/core/components/feed/components/FeedSidebarFold
 
 const FeedSidebar = () => {
   const [feedState, setFeedState] = useFeedState()
-  ObjectStore('feedCollection').getAll()
-  ObjectStore('feedFolder').getAll()
   const allCollections = useGlobalAtomValue(ObjectStore('feedCollection').objectMapAtom)
   const allFolders = useGlobalAtomValue(ObjectStore('feedFolder').objectMapAtom)
   const { rootCollections, rootFolders, rootPodcasts } = useMemo(() => {
@@ -46,7 +44,10 @@ const FeedSidebar = () => {
       headerName: t('general.Read later')
     }))
   }
-
+  useEffect(() => {
+    ObjectStore('feedCollection').getAll()
+    ObjectStore('feedFolder').getAll()
+  }, [])
   const handleSetHistory = async () => {
     const history = await KeyvalueStore.getOne('feedRecentlyReadIds')
     setFeedState(s => ({
@@ -59,12 +60,9 @@ const FeedSidebar = () => {
     }))
   }
   const { t } = useTranslation()
-  const [isResizing, setIsResizing] = useState(false)
 
   return (
     <Resizable
-      onResizeStart={() => setIsResizing(true)}
-      onResizeStop={() => setIsResizing(false)}
       defaultSize={{ width: 240, height: '100%' }}
       enable={{ right: true }}
       style={{

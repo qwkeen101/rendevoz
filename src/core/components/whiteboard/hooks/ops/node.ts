@@ -144,6 +144,7 @@ const assignNodeOps = (instance: IWhiteboardInstance) => {
           case 'video':
           case 'webpage':
           case 'audio':
+          case 'tweet':
           case 'whiteboard':
           case 'group':
           case 'syncedBlock':

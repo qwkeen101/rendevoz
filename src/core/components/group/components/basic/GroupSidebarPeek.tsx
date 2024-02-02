@@ -115,7 +115,7 @@ export default memo(() => {
       style={{
         position: 'absolute',
         zIndex: 50,
-        background: Colors.Background.Popover,
+        background: Colors.Background.Global,
         right: 0,
         boxShadow: Colors.Background.BoxShadow,
         opacity: groupState.sidebarVisible ? 1 : 0,
@@ -149,8 +149,7 @@ export default memo(() => {
           padding: groupState.sidebarState?.type === 'labels' ? 12 : 0,
           overflow: 'hidden',
           display: 'flex',
-          alignItems: 'center',
-          '--global-background': 'var(--background-secondary)'
+          alignItems: 'center'
         }}
       >
         {renderer()}

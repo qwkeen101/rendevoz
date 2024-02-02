@@ -11,6 +11,9 @@ export default async (feedUrl: string, type: FeedItem['feedType'] = 'webpage') =
     feedUrl = await transformFeedUrl(feedUrl)
     if (!feedUrl) return
     let items: FeedItem[] = []
+    if (feedUrl.includes('twitter/user')) {
+      type = 'tweet'
+    }
     const res = await universalFeedFetcher(feedUrl, type)
     if (!res) return
     let collectionDetails = {
@@ -92,6 +95,20 @@ export const transformFeedUrl = async (url: string) => {
         ?.getAttribute('content')
       if (channelId) {
         url = 'https://www.youtube.com/feeds/videos.xml?channel_id=' + channelId
+      }
+    }
+    if (url.includes('twitter.com')) {
+      if (urlz.pathname === '/search') {
+        const q = urlz.searchParams.get('q')?.replace('#', '')
+        if (q) {
+          url = 'https://rsshub.app/twitter/keyword/' + encodeURI(q)
+        }
+      } else {
+        const splitted = url.split('/')
+        if (splitted[splitted.length - 2] === 'twitter.com') {
+          const username = splitted[splitted.length - 1]
+          url = 'https://rsshub.app/twitter/user/' + username
+        }
       }
     }
     return url

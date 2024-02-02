@@ -37,6 +37,7 @@ export type BuiltInMetaObjectTypes =
   | 'syncedBlock'
   | 'code'
   | 'question'
+  | 'tweet'
 
 export type IMetaSelectOption = {
   name: string
@@ -117,6 +118,8 @@ export interface MetaObject extends IBase {
   color?: string
   // hidden by group
   hidden?: boolean
+  // needed when exported as link, not real meta object
+  temp?: boolean
   attachments?: IMetaAttachment[]
   // placeholder name mainly for labels, like original text
   placeholderName?: string

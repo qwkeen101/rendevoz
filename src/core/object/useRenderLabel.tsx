@@ -74,7 +74,7 @@ const useRenderLabel = (opts: {
                 width: 'fit-content',
                 whiteSpace: 'pre-wrap',
                 fontSize: FontSize['13px'],
-                color: labelMeta ? labelMeta.color || Colors.Common.SelectColor : undefined
+                color: labelMeta && !labelMeta.temp && !labelMeta.hidden ? labelMeta.color || Colors.Common.SelectColor : undefined
               }}
               onClick={() => {
                 setLabelState(s => ({ ...s, editingName: true }))
@@ -106,7 +106,7 @@ const useRenderLabel = (opts: {
               <span
                 style={{
                   color:
-                    labelMeta && !labelMeta.hidden
+                    labelMeta && !labelMeta.temp && !labelMeta.hidden
                       ? labelMeta.color || Colors.Common.SelectColor
                       : currentLabelHasName
                       ? undefined

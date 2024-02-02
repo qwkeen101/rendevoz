@@ -13,6 +13,8 @@ export const getMetaObjectIcon = (type?: MetaObject['type'], metaObject?: MetaOb
     if (registered?.icon) return registered.icon
   }
   switch (type) {
+    case 'tweet':
+      return 'custom-twitter'
     case 'note':
       return 'park-notes'
     case 'pdf':

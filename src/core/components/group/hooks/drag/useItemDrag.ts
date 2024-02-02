@@ -21,9 +21,6 @@ const useItemDrag = (
     const pointerHandler = (e: PointerEvent) => {
       const pDown = pDownRef.current
       if (e.type === 'pointermove' || e.type === 'pointerenter') {
-        const currView = instance.getCurrentView?.()
-        // can not drag if have filter/sort/search
-        if (currView?.sort?.sorters.length) return
         instance.dragOps?.setDragHandle({
           value,
           node: containerRef.current

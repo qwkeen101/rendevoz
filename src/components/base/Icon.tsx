@@ -58,7 +58,7 @@ const Icon = forwardRef<HTMLDivElement, IconProps>(
         )
       }
       if (name.startsWith('custom')) {
-        return <CustomIcon {...rest} type={name.slice(7)} theme={theme} size={size} strokeWidth={strokeWidth} />
+        return <CustomIcon {...rest} color={color} type={name.slice(7)} theme={theme} fill={fill} size={size} strokeWidth={strokeWidth} />
       }
     }
     const ele = renderIcon(name)

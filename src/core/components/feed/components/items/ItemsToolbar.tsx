@@ -18,7 +18,6 @@ const ItemsToolbar = ({ itemId }: { itemId: number }) => {
   const item = ObjectStore('feed').useValue(itemId)
   const currentReadLater = KeyvalueStore.useValue('feedReadLaterIds') || []
   const isReadLater = currentReadLater?.includes(itemId)
-  const currentRead = KeyvalueStore.useValue('feedReadIds') || []
   const currentCollectionId = useFeedState()[0].currentCollectionId
   const { isMeta, metaId } = useFeedIsMeta(itemId)
   const { t } = useTranslation()

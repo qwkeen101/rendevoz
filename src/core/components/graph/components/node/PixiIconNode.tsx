@@ -2,12 +2,14 @@ import { GraphNode } from '../../types/node'
 import { Rendevoz } from '@/core/rendevoz'
 import { PixiComponent, Sprite, useApp } from '@pixi/react'
 import { useMemo } from 'react'
+import { createRoot } from 'react-dom/client'
 import { Graphics as _Graphics, TextStyle } from 'pixi.js'
 import * as Icons from '@icon-park/svg'
 import _ from 'lodash'
 import { SVGScene } from '@pixi-essentials/svg'
 import useGraph from '@/core/components/graph/hooks/useGraph'
-
+import { Icon } from '@/components'
+import { useUpdate } from 'react-use'
 const GraphicsBg = PixiComponent('gbg', {
   create: props => {
     const b = getComputedStyle(document.body).getPropertyValue('--global-background')
@@ -33,39 +35,53 @@ export const fontStyle = new TextStyle({
   wordWrap: true,
   whiteSpace: 'normal'
 })
-
-const PixiIconNode = ({ node, label }: { node: GraphNode; label?: string }) => {
+const IS_LOADING_MAP = new Map<string, Set<VoidFunction>>()
+const PixiIconNode = ({ node }: { node: GraphNode }) => {
   const radius = Rendevoz.Utils.Meta.getTypeRadius(node.type)
   const d = radius * 2
 
   const primaryFontColor = getComputedStyle(document.body).getPropertyValue('--font-primary')
   const app = useApp()
   const graph = useGraph()
+  const update = useUpdate()
   useMemo(() => {
     const iconz = Rendevoz.Utils.Object.getMetaObjectIcon(node.type)
     if (graph?.CACHED_ICON_TEXTURE.has(iconz)) return
-    if (iconz.startsWith('park')) {
-      const replaced = iconz
-        .replace('park-', '')
-        .split('-')
-        .map(i => _.capitalize(i))
-        .join('')
-      const icon = Icons[replaced]
-      if (icon) {
-        const str = icon({ theme: 'outline', size: d - 12, fill: 'white' }).replace('<?xml version="1.0" encoding="UTF-8"?>', '')
-        const svgEle = new DOMParser().parseFromString(str, 'image/svg+xml')
-        const e = svgEle.documentElement
-        const scene = new SVGScene(e)
-        const t = app.renderer.generateTexture(scene, { resolution: window.devicePixelRatio + 2 })
-        graph?.CACHED_ICON_TEXTURE.set(iconz, t)
-      }
+    if (IS_LOADING_MAP.has(iconz)) {
+      IS_LOADING_MAP.get(iconz)?.add(() => {
+        update()
+      })
+      return
     }
+    IS_LOADING_MAP.set(iconz, new Set())
+    const ele = document.createElement('div')
+    const root = createRoot(ele)
+    root.render(
+      <Icon
+        name={iconz}
+        ref={n => {
+          console.log(n)
+          const svg = n?.querySelector('svg')
+          if (svg) {
+            const scene = new SVGScene(svg)
+            const t = app.renderer?.generateTexture(scene, { resolution: window.devicePixelRatio + 2 })
+            if (t) {
+              graph?.CACHED_ICON_TEXTURE.set(iconz, t)
+              update()
+              IS_LOADING_MAP.get(iconz)?.forEach(i => i())
+              IS_LOADING_MAP.delete(iconz)
+            }
+          }
+        }}
+        size={d - 12}
+      />
+    )
   }, [])
   const texture = graph?.CACHED_ICON_TEXTURE.get(Rendevoz.Utils.Object.getMetaObjectIcon(node.type))
   return (
     <>
       <GraphicsBg d={d} />
-      {texture && <Sprite name={'sprite'} texture={texture} width={d - 6} height={d - 6} x={3} y={3} tint={primaryFontColor}/>}
+      {texture && <Sprite name={'sprite'} texture={texture} width={d - 6} height={d - 6} x={3} y={3} tint={primaryFontColor} />}
     </>
   )
 }

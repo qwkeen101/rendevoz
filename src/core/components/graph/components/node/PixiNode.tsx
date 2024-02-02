@@ -27,7 +27,6 @@ const PixiNode: FC<NodeProps> = memo(({ node, onMouseEnter, onMouseLeave, onCont
   const d = radius * 2
   const originNode = graph?.nodesMap?.get(node.id)
   const previousAlpha = usePrevious(node.opacity)
-  console.log(meta, node)
   useEffect(() => {
     const nodee = nodeRef.current
     if (nodee && previousAlpha !== undefined && node.opacity !== undefined) {

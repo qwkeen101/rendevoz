@@ -82,6 +82,9 @@ export default (
       )}
       <AnimatePopover
         withClickCover={true}
+        positions={['right', 'left']}
+        padding={10}
+        align={'start'}
         content={setV => (
           <WithBorder>
             <ObjectActionPopover onClose={() => setV(false)} metaObjectId={metaObject.id} />
@@ -94,6 +97,7 @@ export default (
           onClick={e => {
             if (onClick) {
               onClick(e)
+              e.preventDefault()
               return
             }
           }}

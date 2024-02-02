@@ -128,16 +128,6 @@ export default () => {
           />
         </Content>
       </Content>
-      {mediaState.metaId && (
-        <AttachmentWrapper
-          closeIcon={true}
-          visible={!!(barState?.addingAttachment || attachmentLength)}
-          onClose={() => {
-            setBarState(s => ({ ...s, addingAttachment: false }))
-          }}
-          metaId={mediaState.metaId}
-        />
-      )}
     </>
   )
 }

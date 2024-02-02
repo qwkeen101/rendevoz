@@ -23,6 +23,7 @@ const FeedParser = async (
 ) => {
   const { transformGoogle, urlFilterRule } = opts || {}
   const result = await parser.parseString(str)
+  console.log(result)
   const feedItemResults = result.items
     .map(i => {
       if (!i.title || !i.link) return

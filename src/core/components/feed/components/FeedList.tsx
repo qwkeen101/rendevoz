@@ -35,12 +35,12 @@ const FeedList = () => {
     }))
   }
   const currentCollection = ObjectStore('feedCollection').useValue(currentCollectionId)
-
+  console.log(currentCollectionId)
   const [ref, { width }] = useMeasure()
 
   const items = filtererdItems || allItems
   const cardItemsPerRow = Math.round(width / 360)
-  console.log(width)
+
   const [cardPag, setCardPag] = useState({
     currentPage: 0
   })

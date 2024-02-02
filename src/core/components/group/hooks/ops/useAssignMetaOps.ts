@@ -29,17 +29,21 @@ const useAssignMetaOps = (instance: InnerGroupInstance) => {
             if (meta) {
               if (grouperId) {
                 handleCreateInGrouper(meta.id, grouperId, instance)
-                setTimeout(() => {
+                if (!onlyCreate) {
+                  setTimeout(() => {
+                    instance.valueOps?.insertValueByPath({
+                      type: 'metaObject',
+                      id: meta.id
+                    })
+                  }, 10)
+                }
+              } else {
+                if (!onlyCreate) {
                   instance.valueOps?.insertValueByPath({
                     type: 'metaObject',
                     id: meta.id
                   })
-                }, 10)
-              } else {
-                instance.valueOps?.insertValueByPath({
-                  type: 'metaObject',
-                  id: meta.id
-                })
+                }
               }
             }
           }, 200)

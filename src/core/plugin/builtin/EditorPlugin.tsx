@@ -75,8 +75,10 @@ const BuiltinTypeToRegistered: Record<CustomElement['type'], RegisterdEditorElem
       icon: 'park-link',
       slashMenu: true,
       tooltip: 'Link',
-      menuType: 'inline'
-    }
+      menuType: 'inline',
+      addMenu: true
+    },
+    isInline: true
   },
   figcaption: {
     renderElement: props => <figcaption>{props.children}</figcaption>,

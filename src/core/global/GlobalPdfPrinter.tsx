@@ -14,6 +14,7 @@ import { Content, Switch } from '@/components'
 import { useTranslation } from 'react-i18next'
 import Select from '@/components/base/select'
 import { Colors } from '@/consts'
+import { useUpdate } from 'react-use'
 
 export const GlobalPdfPrinterInstance: GlobalInstances.PdfPrinterInstance = {}
 
@@ -179,11 +180,17 @@ const PDFExportSettings = ({ onExport }: { onExport: (setting: { pageSize: strin
     horizontal: false,
     margin: 'default'
   })
+  const ref = useRef(null)
+  const update = useUpdate()
+  useEffect(() => {
+    update()
+  }, [])
   const { t } = useTranslation()
   return (
     <Components.Content
       flex
       column
+      ref={ref}
       style={{
         width: '260px',
         right: 0,
@@ -217,6 +224,7 @@ const PDFExportSettings = ({ onExport }: { onExport: (setting: { pageSize: strin
         <Components.Content flex alignItems="center" justifyContent="space-between">
           <div>{t('general.page size')}</div>
           <Select
+            parentElement={ref.current}
             closeOnSelect
             value={exportState.pageSize}
             onSelect={v => setExportState(s => ({ ...s, pageSize: v[0] }))}
@@ -248,6 +256,7 @@ const PDFExportSettings = ({ onExport }: { onExport: (setting: { pageSize: strin
           <div>{t('general.margin')}</div>
           <Select
             closeOnSelect
+            parentElement={ref.current}
             value={exportState.margin}
             onSelect={v => setExportState(s => ({ ...s, margin: v[0] }))}
             options={[

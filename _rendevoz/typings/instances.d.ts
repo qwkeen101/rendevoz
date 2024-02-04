@@ -50,14 +50,20 @@ export type IGlobalInstance = Partial<{
       html: string
     }>
     closeDetails: VoidFunction
-    quickAdd: (metaId: number) => void
+    quickAdd: (metaId: number | number[]) => void
     canPreview: (metaObject: MetaObject) => boolean
     openDetails: (id: number) => void
     openGraph: (id: number) => void
     preview: (id: number) => void
     // bad api design, alternative for create object
     // TODO: replace all create object with this api
-    createObjects: (type?: MetaObject['type'], onMetaCreated?: (meta: MetaObject) => void) => void
+    createObjects: (
+      type?: MetaObject['type'],
+      onMetaCreated?: (meta: MetaObject) => void,
+      opts?: {
+        parentCollectionId?: number
+      }
+    ) => void
     createObject: (type?: MetaObject['type']) => Promise<MetaObject>
     copyLink: (id: number | number[]) => void
     addDraggableAsMeta: (d: BuiltInDraggableElement, temp?: boolean) => Promise<MetaObject>

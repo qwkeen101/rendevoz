@@ -3,9 +3,19 @@ import MetaTagPicker from '@/core/object/MetaTagPicker'
 import { MetaStore } from '@/api/stores'
 import { ClassName } from 'rendevoz'
 import { useTranslation } from 'react-i18next'
+import { useMemo } from 'react'
 
-export default ({ metaId, onBack }: { metaId: number; onBack: VoidFunction }) => {
-  const obj = MetaStore.useValue(metaId)
+export default ({ metaId, onBack }: { metaId: number[]; onBack: VoidFunction }) => {
+  const obj = MetaStore.useMultipleObjects(metaId)
+  const tags = useMemo(() => {
+    const set = new Set<number>()
+    obj.forEach(i => {
+      i.tags?.forEach(t => {
+        set.add(t)
+      })
+    })
+    return Array.from(set.values())
+  }, [obj])
   const { t } = useTranslation()
   return (
     <Content
@@ -21,7 +31,14 @@ export default ({ metaId, onBack }: { metaId: number; onBack: VoidFunction }) =>
         <Icon name={'park-left'} className={ClassName.circleButton()} onClick={onBack} />
         {t('general.Select tags')}
       </Content>
-      <MetaTagPicker alreadyTags={obj?.tags || []} onChange={v => MetaStore.updateMetaObject({ id: metaId, tags: v })} />
+      <MetaTagPicker
+        alreadyTags={tags || []}
+        onChange={v => {
+          metaId.forEach(id => {
+            MetaStore.updateMetaObject({ id, tags: v })
+          })
+        }}
+      />
     </Content>
   )
 }

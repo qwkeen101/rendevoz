@@ -7,6 +7,8 @@ export type IGlobalNoteImporterInstance = Partial<{
       isDir?: boolean
       dirName?: string
       onImport?: (meta: MetaObject) => void
+      parentCollectionId?: number
+      onEnd?: (result?: { collectionId?: number }) => void
     }
   ) => void
 }>

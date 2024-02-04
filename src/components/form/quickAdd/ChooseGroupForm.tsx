@@ -12,7 +12,7 @@ import fuzzysort from 'fuzzysort'
 import { Colors } from '@/consts'
 import { useTranslation } from 'react-i18next'
 
-export default memo(({ onBack, metaId, onClose }: { onBack: VoidFunction; metaId: number; onClose: VoidFunction }) => {
+export default memo(({ onBack, metaId, onClose }: { onBack: VoidFunction; metaId: number[]; onClose: VoidFunction }) => {
   const [allGroups, setAllGroups] = useState<MetaObject[]>([])
   const [setting, setSetting] = useSetting()
   const [search, setSearch] = useState('')
@@ -45,9 +45,6 @@ export default memo(({ onBack, metaId, onClose }: { onBack: VoidFunction; metaId
     if (selectedGroup) {
       const groupId = selectedGroup.objectId
       if (groupId) {
-        // if (hideObject) {
-        //   MetaStore.updateMetaObject({ id: metaId, hidden: true }, true)
-        // }
         GroupStore.insertMetaIntoGroup(metaId, groupId)
         const groupMeta = MetaStore.getMetaObjectByObjectId(groupId)
         if (groupMeta) {
@@ -56,13 +53,15 @@ export default memo(({ onBack, metaId, onClose }: { onBack: VoidFunction; metaId
               Rendevoz.Actions.Open.Meta.openMetaObject(groupMeta.id)
             }, 100)
           }
-          MetaStore.addMetaLink(
-            {
-              sourceId: metaId,
-              targetId: groupMeta.id
-            },
-            true
-          )
+          metaId.forEach(id => {
+            MetaStore.addMetaLink(
+              {
+                sourceId: id,
+                targetId: groupMeta.id
+              },
+              true
+            )
+          })
         }
       }
     }

@@ -140,12 +140,16 @@ const useSidebarItemContextMenu = (
               />
               <Button.IconButton
                 onClick={() => {
-                  GlobalInstance.metaOps?.createObject().then(res => {
-                    if (res) {
-                      addItemToCollection({ type: 'meta', id: res.id }, item.id)
+                  GlobalInstance.metaOps?.createObjects(
+                    undefined,
+                    m => {
+                      CollectionStore.addItemToCollection({ id: m.id, type: 'meta' }, item.id)
                       onAddNewSubItem?.()
+                    },
+                    {
+                      parentCollectionId: item.id
                     }
-                  })
+                  )
                 }}
                 text={t('general.create')}
                 icon="park-plus"

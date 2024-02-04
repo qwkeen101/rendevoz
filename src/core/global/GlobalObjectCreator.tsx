@@ -73,11 +73,13 @@ export default () => {
     reject: typeof Promise.reject
   }>()
   const createHandlerRef = useRef()
+  const parentCollectionRef = useRef()
   assignProperties(GlobalInstance, {
     metaOps: {
       ...GlobalInstance.metaOps,
-      createObjects: (type, onMetaCreated) => {
+      createObjects: (type, onMetaCreated, opts) => {
         createHandlerRef.current = onMetaCreated
+        parentCollectionRef.current = opts?.parentCollectionId
         if (type) {
           if (ObjectCreateHandler[type]) {
             ObjectCreateHandler[type]?.().then(o => onMetaCreated?.(o.meta))
@@ -88,6 +90,7 @@ export default () => {
       },
       createObject: type => {
         createHandlerRef.current = undefined
+        parentCollectionRef.current = undefined
         if (type) {
           if (ObjectCreateHandler[type]) {
             return new Promise(res => {
@@ -112,6 +115,7 @@ export default () => {
       <FileImporter
         createHandler={createHandlerRef.current}
         onClose={() => setVisible(false)}
+        parentCollectionId={parentCollectionRef.current}
         onCreate={object => {
           setVisible(false)
           setTimeout(() => {

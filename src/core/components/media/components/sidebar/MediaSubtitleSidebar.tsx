@@ -212,6 +212,15 @@ const MediaSubtitleSidebar = memo(() => {
             }}
           ></Button.IconButton>
         )}
+        {/*<div*/}
+        {/*  onClick={() => {*/}
+        {/* Summarize the subtitles with an overview and summarization with timestamp, return in json format: {overview: string, summarizations: [{startTime: number, endTime: number, summarization: string }]}, time should be represented in seconds.*/}
+        {/*    const tracked = currentSubtitles.map(i => `${normalizeSecondsToTime(i.startTime)} ${i.text}`).join('\n')*/}
+        {/*    console.log(tracked)*/}
+        {/*  }}*/}
+        {/*>*/}
+        {/*  summarize*/}
+        {/*</div>*/}
       </Content>
       <Content fullHeight fullWidth ref={mergedRef} style={{ height: 0, flex: 1 }} role={'subtitle-container'}>
         {subtitleMode === 'list' ? (

@@ -73,7 +73,8 @@ export type CurrentKeyValues = {
   }
   // string is workspace
 } & Record<`${MetaObject['type']}_${string}_group`, MetaGroup> &
-  Record<`tag_${number}_${string}_group`, MetaGroup>
+  Record<`tag_${number}_${string}_group`, MetaGroup> &
+  Record<`collection_${number}_group`, MetaGroup>
 
 const keyvalueAtom = atom<Map<string, any>>(new Map())
 

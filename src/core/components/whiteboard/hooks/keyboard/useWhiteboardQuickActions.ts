@@ -7,6 +7,7 @@ import { useWhiteboardState } from '@/core/components/whiteboard/hooks/useWhiteb
 import { KEY } from '@/consts'
 import handleKeyboardNavigation from '@/core/components/whiteboard/hooks/keyboard/handleKeyboardNavigation'
 import { mousePos } from '@/hooks/utils/useMousePositionRef'
+import handleKeyboardPaste from '@/core/components/whiteboard/hooks/keyboard/handleKeyboardPaste'
 
 export default () => {
   const instance = useWhiteboardInstance()
@@ -18,6 +19,7 @@ export default () => {
     if (!instance.isFocused?.()) return
     if (instance.getOutestContainerNode?.() !== document.activeElement && document.activeElement !== document.body) return
     if (e.defaultPrevented) return
+    handleKeyboardPaste(e, instance)
     handleKeyboardNavigation(e, instance)
     if (isHotkey(KEY.Escape, e)) {
       if (whiteboardState.highlightedIds) {

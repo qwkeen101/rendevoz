@@ -48,7 +48,7 @@ function TagGroup({ id }: { id: number }) {
       .getOneById(id)
       .then(res => {
         if (!res) {
-          KeyvalueStore.deleteOne(`tag_${id}_group`)
+          KeyvalueStore.deleteOne(`tag_${id}_${workspace}_group`)
         }
       })
   }

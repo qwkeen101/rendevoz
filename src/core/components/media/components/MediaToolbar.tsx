@@ -104,7 +104,7 @@ export default () => {
                   text={t('general.add attachment')}
                   onClick={() => setBarState(s => ({ ...s, addingAttachment: true }))}
                 ></Button.IconButton>
-                {mediaState.mode === 'audio' && (
+                {(mediaState.mode === 'audio' || mediaState.mode === 'video') && (
                   <Button.IconButton
                     icon="park-voice"
                     text={t('general.Transcribe audio')}

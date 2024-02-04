@@ -100,8 +100,9 @@ export type IWhiteboardInstance = Partial<{
   deleteNode: (nodeId: number) => void
   deleteEdge: (edgeId: number) => void
   deleteNodes: (nodeIds: number[]) => void
+  insertMetasAtPointer: (e: PointerEvent, metas: number[]) => void
   updateWhiteboard: (updater: (curr: IWhiteboard) => void, withUndo?: boolean) => Promise<void>
-  insertNode: (node: Partial<IWhiteboardNode>) => Promise<IWhiteboardNode>
+  insertNode: (node: Partial<IWhiteboardNode> | Partial<IWhiteboardNode>[]) => Promise<IWhiteboardNode[]>
   getContainerNode: () => HTMLElement
   getOutestContainerNode: () => HTMLElement | null | undefined
   buildNodeToEdgeIndex: VoidFunction

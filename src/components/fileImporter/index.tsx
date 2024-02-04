@@ -25,19 +25,21 @@ import { toast } from 'react-hot-toast'
 import { MetaObject } from '~/typings'
 import { ObjectCreateHandler } from '@/core/global/GlobalObjectCreator'
 import { Utils } from 'rendevoz'
-import { useMemoizedFn } from '@/hooks'
 import { useCallback } from 'react'
+import handleImportNestedCollections from '@/components/fileImporter/handleImportNestedCollections'
 
 const FileImporter = ({
   onClose,
   onCreate,
   autoOpen = true,
   type,
-  createHandler
+  createHandler,
+  parentCollectionId
 }: {
   onClose: VoidFunction
   onCreate?: (object: MetaObject) => void
   autoOpen: boolean
+  parentCollectionId?: number
   createHandler?: (obj: MetaObject) => void
   type?: MetaObject['type']
 }) => {
@@ -169,8 +171,7 @@ const FileImporter = ({
         Rendevoz.Actions.Utils.uploadFile({
           dir: true
         }).then(files => {
-          const dirname = files[0].webkitRelativePath.split('/')[0]
-          GlobalImporterInstance.import?.(files, { isDir: true, dirName: dirname, onImport: createHandler })
+          handleImportNestedCollections(files, onCreate, parentCollectionId)
         })
       }
     }

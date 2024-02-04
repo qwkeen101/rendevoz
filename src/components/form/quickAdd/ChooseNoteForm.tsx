@@ -14,18 +14,18 @@ import { useDebounceEffect } from '@/hooks'
 import ButtonSwitch from '@/components/base/ButtonSwitch'
 import { useTranslation } from 'react-i18next'
 
-export default memo(({ metaId, onBack, onClose }: { metaId: number; onBack: VoidFunction; onClose: VoidFunction }) => {
+export default memo(({ metaId, onBack, onClose }: { metaId: number[]; onBack: VoidFunction; onClose: VoidFunction }) => {
   const [setting, setSetting] = useSetting()
   const notePosition = setting.quickAdd.addIntoNote
   const metaType = setting.quickAdd.noteMetaType
   const hideObject = setting.quickAdd.addIntoNoteHideObject
-  const [allNotes, setAllNotes] = useState<(MetaObject & {})[]>([])
+  const [allNotes, setAllNotes] = useState<MetaObject[]>([])
   const [currentSelectId, setCurrentSelectId] = useState<number>()
   const [currentValue, setCurrentValue] = useState<import('slate').Descendant[]>([])
   const [currentTitle, setCurrentTitle] = useState('')
   const id = useMemo(() => Id.getStrId(), [])
   const instanceRef = useRef<IEditorInstance>()
-  const [displayNotes, setDisplayNotes] = useState<(MetaObject & {})[]>([])
+  const [displayNotes, setDisplayNotes] = useState<MetaObject[]>([])
   const [search, setSearch] = useState('')
   const { t } = useTranslation()
   const [isLoading, setIsLoading] = useState(false)
@@ -34,21 +34,18 @@ export default memo(({ metaId, onBack, onClose }: { metaId: number; onBack: Void
       setIsLoading(true)
       const element =
         metaType === 'inline'
-          ? {
-              type: 'paragraph',
-              id: Id.getId(),
-              children: [
-                { text: '' },
-                { type: 'inline-metaObject', id: Id.getId(), children: [{ text: '' }], originId: metaId },
-                { text: '' }
-              ]
-            }
-          : {
-              type: 'metaObject',
-              id: Id.getId(),
-              children: [{ text: '' }],
-              originId: metaId
-            }
+          ? [
+              {
+                type: 'paragraph',
+                id: Id.getId(),
+                children: [
+                  { text: '' },
+                  ...metaId.map(i => ({ type: 'inline-metaObject', id: Id.getId(), children: [{ text: '' }], originId: i })),
+                  { text: '' }
+                ]
+              }
+            ]
+          : [...metaId.map(i => ({ type: 'metaObject', id: Id.getId(), children: [{ text: '' }], originId: i }))]
       ObjectStore('note')
         .getOneById(currentSelectId)
         .then(note => {
@@ -56,10 +53,10 @@ export default memo(({ metaId, onBack, onClose }: { metaId: number; onBack: Void
             NoteStore.getNoteValue(note.contentId)
               .then(value => {
                 const noteValue = value || []
-                setCurrentValue(notePosition === 'first' ? [element, ...noteValue] : [...noteValue, element])
+                setCurrentValue(notePosition === 'first' ? [...element, ...noteValue] : [...noteValue, ...element])
               })
               .catch(e => {
-                setCurrentValue([element])
+                setCurrentValue([...element])
               })
           }
         })
@@ -111,13 +108,15 @@ export default memo(({ metaId, onBack, onClose }: { metaId: number; onBack: Void
             Rendevoz.Actions.Open.Meta.openMetaObject(noteMeta.id)
           }
         })
-        MetaStore.addMetaLink(
-          {
-            sourceId: metaId,
-            targetId: noteMeta.id
-          },
-          true
-        )
+        metaId.forEach(id => {
+          MetaStore.addMetaLink(
+            {
+              sourceId: id,
+              targetId: noteMeta.id
+            },
+            true
+          )
+        })
       }
     }
   }
@@ -216,7 +215,7 @@ export default memo(({ metaId, onBack, onClose }: { metaId: number; onBack: Void
         <Content flex column style={{ overflowY: 'auto', borderTop: `1px solid ${Colors.Background.Border}`, marginTop: 4, paddingTop: 4 }}>
           {(displayNotes.length ? displayNotes : allNotes).map(i => (
             <IconNameRenderer
-              name={i.name}
+              name={i.name || i.placeholderName}
               className={ClassName.flatButton()}
               icon={i.icon || Rendevoz.Utils.Object.getMetaObjectIcon(i.type)}
               key={i.id}

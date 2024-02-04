@@ -63,9 +63,11 @@ export const defaultHandler: DefaultAddElementHandler = (type, instance, mode, o
     case 'link': {
       const pos = instance.blockOps?.getCurrentCursorBlockBounding()
       if (pos) {
-        instance.overlayOps?.open('linkForm', {
-          x: pos.x,
-          y: pos.bottom - 10
+        setTimeout(() => {
+          instance.overlayOps?.open('linkForm', {
+            x: pos.x,
+            y: pos.bottom - 10
+          })
         })
       }
       break

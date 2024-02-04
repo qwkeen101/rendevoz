@@ -270,7 +270,7 @@ const MediaInner = ({ onInstanceInitialized, onlyCore, on, disableTabTitle = tru
             width: '100%',
             height: columnLayout ? 'fit-content' : '100%',
             overflowY: columnLayout ? undefined : 'auto',
-            padding: '16px 16px 12px',
+            padding: '24px 16px 12px',
             display: 'flex'
           }}
         >

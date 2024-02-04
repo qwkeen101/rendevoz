@@ -2,10 +2,8 @@ import { assignProperties } from '@/utils'
 import { loopProcess } from '@/utils/functions'
 import Id from '@/utils/id'
 import { useMemo, useState } from 'react'
-import { GlobalInstances, INote, MetaObject } from '~/typings'
-import { transformMarkdown } from '../components/editor/plugins/deserializeMarkdown'
-import { CollectionStore, NoteStore, ObjectStore } from '@/api/stores'
-import { getFilenameWithoutExtension } from '@/utils/file'
+import { GlobalInstances } from '~/typings'
+import { CollectionStore, ObjectStore } from '@/api/stores'
 import { createPortal } from 'react-dom'
 import ClassName from '@/styles/classNames'
 import { Content, Icon, WithBorder } from '@/components'
@@ -14,11 +12,6 @@ import FontSize from '@/consts/font'
 import { Rendevoz } from '../rendevoz'
 import Colors from '@/consts/colors'
 import { css } from '@emotion/css'
-import { ipcInstance } from '@/plugins'
-import importMarkdown from '@/core/rendevoz/utils/localImport/importMarkdown'
-import importPDF from '@/core/rendevoz/utils/localImport/importPDF'
-import importVideo from '@/core/rendevoz/utils/localImport/importVideo'
-
 export const GlobalImporterInstance: GlobalInstances.NoteImporterInstance = {}
 
 const GlobalImporter = () => {
@@ -97,8 +90,13 @@ const GlobalImporter = () => {
             if (opts?.isDir) {
               CollectionStore.addCollection({
                 name: opts?.dirName || 'Unnamed Collection',
-                parentId: 0,
+                parentId: opts?.parentCollectionId || 0,
                 items: groupedDir.map(i => ({ type: 'meta', id: i }))
+              }).then(id => {
+                if (opts?.parentCollectionId) {
+                  CollectionStore.addItemToCollection({ id: id.id, type: 'collection' }, opts.parentCollectionId)
+                }
+                opts?.onEnd?.({ collectionId: id.id })
               })
             }
           }

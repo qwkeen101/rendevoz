@@ -189,7 +189,7 @@ const startElectron = async () => {
     appIcon.setContextMenu(contextMenu)
     return appIcon
   }
- 
+
   win.on('close', e => {
     if (process.env.MINIMIZE_TO_TRAY === 'true' && process.platform === 'win32') {
       e.preventDefault()

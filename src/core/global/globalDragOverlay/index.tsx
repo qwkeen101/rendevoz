@@ -4,14 +4,14 @@ import { atom } from 'jotai/vanilla'
 import { useAtom } from 'jotai/react'
 import React, { memo, ReactElement, useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { GlobalDraggingDetails, GlobalInstances } from '~/typings'
+import { GlobalInstances, IDraggableElement } from '~/typings'
 import useOverlayDrop from './useOverlayDrop'
 import { globalStore } from '@/api/stores'
 import ClassName from '@/styles/classNames'
 import { Rendevoz } from '@/core/rendevoz'
 import { assignProperties } from '@/utils'
 
-export type AvaliableGlobalDraggingElements = GlobalDraggingDetails
+export type AvaliableGlobalDraggingElements = IDraggableElement
 
 export const GlobalDragOverlayInstance: Partial<GlobalInstances.DragDropInstance> = {}
 

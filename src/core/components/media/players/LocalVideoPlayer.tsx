@@ -3,6 +3,7 @@ import { useEffect, useRef } from 'react'
 import { useMediaInstance } from '@/core/components/media/hooks/useMediaInstance'
 import { assignProperties } from '@/utils'
 import { captureVideoFrame } from '@/core/components/media/utils'
+import audioBufferToWav from '@/core/components/media/players/audioBufferToWav'
 
 const LocalVideoPlayer = () => {
   const [mediaState, setMediaState] = useMediaState()
@@ -21,6 +22,13 @@ const LocalVideoPlayer = () => {
   }, [url])
 
   assignProperties(instance, {
+    getAudioFile: async () => {
+      const res = await fetch(mediaState.url).then(res => res.arrayBuffer())
+      const audioCtx = new AudioContext()
+      const audio = await audioCtx.decodeAudioData(res)
+      const blob = audioBufferToWav(audio)
+      return new Blob([blob], { type: 'audio/wav' })
+    },
     imageOps: {
       captureImage: async (time, size) => {
         const v = offscreenVideoRef.current

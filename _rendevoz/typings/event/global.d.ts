@@ -1,15 +1,13 @@
-import { CustomTypes, Event, MetaObject, Position } from "..";
-import { IDraggableElement } from "../globalInstances/dragDrop";
+import { BuiltInDraggableElement, CustomTypes, Event, MetaObject, Position, IDraggableElement } from '..'
 import { Patch } from 'immer'
 import { PrimitiveAtom } from 'jotai'
-import { LocalDatabaseAction } from '../../../src/api/stores/types'
 
 type DragDropEvent = {
-  dropPosition: Position;
-  target: EventTarget;
-  dragElement: IDraggableElement;
-  dragFrom: "editor" | "pdf" | "database";
-} & DropOn;
+  dropPosition: Position
+  target: EventTarget
+  dragElement: IDraggableElement
+  dragFrom: 'editor' | 'pdf' | 'database'
+} & DropOn
 
 export type BuiltInDropOn =
   | {
@@ -41,7 +39,7 @@ type GlobalDropNeedFurtherProcessEvent = {
 }
 type GlobalDragPointerUpEvent = {
   event: PointerEvent
-  draggingElement: IDraggableElement
+  draggingElement: BuiltInDraggableElement
 }
 type GlobalDragPointerMoveEvent = {
   event: PointerEvent

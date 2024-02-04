@@ -69,6 +69,7 @@ export type IMetaGroupProps = {
     invisibleProperties?: number[]
     onlyCreateType?: MetaObject['type']
     canDragInside?: boolean
+    addAfterCreateMeta?: boolean
     extraProperties?: MetaGroupProperty[]
   }
 }

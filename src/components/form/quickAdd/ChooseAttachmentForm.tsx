@@ -7,7 +7,7 @@ import { useTranslation } from 'react-i18next'
 import { MetaObject } from '~/typings'
 import { Colors } from '@/consts'
 
-export default memo(({ onBack, metaId, onClose }: { onBack: VoidFunction; onClose: VoidFunction; metaId: number }) => {
+export default memo(({ onBack, metaId, onClose }: { onBack: VoidFunction; onClose: VoidFunction; metaId: number[] }) => {
   const { t } = useTranslation()
   const [selectedMeta, setSelectedMeta] = useState<MetaObject>()
   return (
@@ -37,15 +37,22 @@ export default memo(({ onBack, metaId, onClose }: { onBack: VoidFunction; onClos
             <div
               onClick={async () => {
                 onClose()
-                const currentMeta = await MetaStore.getMetaObjectById(metaId)
-                if (selectedMeta && currentMeta) {
-                  if (selectedMeta.attachments?.some(i => i.id === metaId)) return
+                const metaMap = MetaStore.getMetaObjectsMap()
+                const currentMeta = await Promise.all(metaId.map(i => MetaStore.getMetaObjectById(i)))
+                if (selectedMeta && currentMeta.length) {
+                  const currentMetaIds = new Set<number>(currentMeta.filter(i => i).map(i => i.id) as number[])
+                  const forbidden = new Set<number>(selectedMeta.attachments?.map(i => i.id))
+                  const filtered = Array.from(currentMetaIds.values()).filter(i => !forbidden.has(i)).map(i => metaMap.get(i)).filter(i => i) as MetaObject[]
                   MetaStore.updateMetaObject(
                     {
                       id: selectedMeta.id,
                       attachments: [
                         ...(selectedMeta.attachments || []),
-                        { type: currentMeta.type, id: currentMeta.id, createdAt: Date.now() }
+                        ...filtered.map(i => ({
+                          type: i.type,
+                          id: i.id,
+                          createdAt: Date.now()
+                        }))
                       ]
                     },
                     {

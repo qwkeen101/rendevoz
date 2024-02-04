@@ -4,6 +4,10 @@ import { CustomElement, CustomTypes, IVideoLabel, MetaGroupChild } from '..'
 
 export type BuiltInDraggableElement =
   | {
+      type: 'metaObjects'
+      ids: number[]
+    }
+  | {
       type: 'noteBlock'
       blockId: number
       element: CustomElement

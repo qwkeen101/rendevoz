@@ -14,6 +14,7 @@ import RecycleBin from '@/core/components/recycleBin'
 import TypeGroup from '@/core/components/category/type'
 import TagGroup from '@/core/components/category/tag'
 import TweetPage from '@/scenes/TweetPage'
+import CollectionGroup from '@/core/components/category/CollectionGroup'
 
 export const RENDEVOZ_DEFAULT_TABS: TabData[ILayoutTab['type']][] = [
   {
@@ -27,6 +28,10 @@ export const RENDEVOZ_DEFAULT_TABS: TabData[ILayoutTab['type']][] = [
   {
     type: 'tagGroup',
     content: opts => opts.objectId && <TagGroup id={opts.objectId} />
+  },
+  {
+    type: 'collectionGroup',
+    content: opts => opts.objectId && <CollectionGroup id={opts.objectId} />
   },
   {
     type: 'note',

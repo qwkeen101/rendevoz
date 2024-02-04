@@ -61,7 +61,8 @@ function TypeGroup({ type }: { type: MetaObject['type'] }) {
             canHideObjectsInside: true,
             onlyCreateType: type,
             deleteMetaWhenDeleteItem: true,
-            canDragInside: false
+            canDragInside: false,
+            addAfterCreateMeta: false
           }),
           []
         )}

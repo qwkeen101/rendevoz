@@ -5,7 +5,7 @@ import Id from '@/utils/id'
 import Node from '@/core/components/group/utils/node'
 
 export default () => {
-  const unhiddenMetasz = Array.from(MetaStore.getMetaObjectsMap().values()).filter(i => !i.hidden)
+  const unhiddenMetasz = Array.from(MetaStore.getMetaObjectsMap().values()).filter(i => !i.hidden && !i.temp)
   const groupMetas = new Set(unhiddenMetasz.filter(i => i.type === 'group').map(i => i.objectId))
   const unhiddenMetas = unhiddenMetasz.map(i => i.id)
   ObjectStore('group')

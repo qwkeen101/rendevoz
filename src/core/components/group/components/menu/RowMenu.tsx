@@ -107,7 +107,8 @@ export default memo(
         type: 'button',
         onClick: () => {
           onClose()
-          GlobalInstance.metaOps?.quickAdd(details.id)
+          const allIds = new Set(selected?.map(i => i[0].id))
+          GlobalInstance.metaOps?.quickAdd(Array.from(allIds.values()))
         }
       },
       copyLink: {
@@ -179,6 +180,7 @@ export default memo(
     })
     const actions: ((typeof layoutItems)[keyof typeof layoutItems] | undefined)[] = [
       selected?.length && selected.length > 1 ? layoutItems['copyLinkToAll'] : undefined,
+      layoutItems['moveTo'],
       layoutItems['deleteInGroup'],
       ...(details.type === 'metaObject'
         ? [
@@ -188,7 +190,6 @@ export default memo(
                   layoutItems['separator'],
                   layoutItems['viewDetails'],
                   layoutItems['edit'],
-                  layoutItems['moveTo'],
                   layoutItems['copyLink'],
                   layoutItems['openInNewTab'],
                   ...(canPreview ? [layoutItems['openInSidePeek']] : [])

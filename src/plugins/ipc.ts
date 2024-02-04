@@ -18,7 +18,7 @@ export const ipcInstance: IpcInstance = {
     const payloads: any[] = args.map(e => e)
     const response: IpcResponse<T> = await ipcRenderer?.invoke(target, ...payloads)
     /* eslint-disable-next-line no-useless-call */
-    if (response.hasOwnProperty.call(response, 'error')) throw response.error
+    if (response?.hasOwnProperty.call(response, 'error')) throw response.error
 
     return response
   },

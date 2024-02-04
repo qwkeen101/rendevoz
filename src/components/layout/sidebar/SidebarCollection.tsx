@@ -35,9 +35,23 @@ const SidebarCollection = ({
   const rootCollections = useAtomValue(rootCollectionsAtom, {
     store: globalStore
   })
-  const sortedCollections = rootCollections
-    .slice()
-    .sort((a, b) => (a.name || '1').localeCompare(b.name || '1', undefined, { numeric: true, sensitivity: 'base' }))
+  const prevCollections = useRef(rootCollections)
+  const [updated, setUpdated] = useState(0)
+  useEffect(() => {
+    const prev = prevCollections.current
+    if (!prev) {
+      setUpdated(s => s + 1)
+    }
+    if (prev.length !== rootCollections.length || !prev.every((i, idx) => rootCollections[idx].name === i.name)) {
+      setUpdated(s => s + 1)
+    }
+    prevCollections.current = rootCollections
+  }, [rootCollections])
+  const sortedCollections = useMemo(() => {
+    return rootCollections
+      .slice()
+      .sort((a, b) => (a.name || '1').localeCompare(b.name || '1', undefined, { numeric: true, sensitivity: 'base' }))
+  }, [updated])
   const [newCollectionVisible, setNewCollectionVisible] = useState(false)
   const [globalIsDragging] = useGlobalIsDragging()
   const containerRef = useRef<HTMLDivElement>(null)

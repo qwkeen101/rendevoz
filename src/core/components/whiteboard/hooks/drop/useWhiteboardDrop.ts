@@ -11,7 +11,7 @@ import { useEventHandler } from '@/events'
 import { Rendevoz } from '../../../../rendevoz'
 import { getSetting } from '@/core'
 import { useWhiteboardInstance } from '@/core/components/whiteboard/hooks/useWhiteboardInstance'
-import { pushNumberIntoUnrepeatableArray } from '@/utils'
+import { pushNumberIntoUnrepeatableArray, waitFor } from '@/utils'
 import toast from 'react-hot-toast'
 
 const useWhiteboardDrop = () => {
@@ -25,6 +25,9 @@ const useWhiteboardDrop = () => {
 
     if (!isPointerOnContainer(event, instance)) return
     event.preventDefault()
+    if (draggingElement.type === 'metaObjects') {
+      insertMetasAtPointer(event, draggingElement.ids)
+    }
     emitter
       .emitWithCallback('global', {
         type: 'globalDropNeedFurtherProcess',
@@ -180,7 +183,62 @@ const useWhiteboardDrop = () => {
       })
     }
   }
+  const insertMetasAtPointer = (e: PointerEvent, metaId: number[]) => {
+    const transformedXY = instance.coordOps?.transformWindowPositionToPosition({
+      x: e.clientX,
+      y: e.clientY
+    })
+    if (!transformedXY) return
+    const metaMap = MetaStore.getMetaObjectsMap()
+    const whiteboardMeta = MetaStore.getMetaObjectByObjectId(flow.whiteboardId)
+    const nodes: Partial<IWhiteboardNode>[] = []
+    metaId.forEach(id => {
+      const m = metaMap.get(id)
+      if (m?.type === 'syncedBlock' && whiteboardMeta) {
+        if (m.objectId) {
+          ObjectStore('syncedBlock')
+            .getOneById(m.objectId)
+            .then(o => {
+              if (o) {
+                ObjectStore('syncedBlock').updateOne({
+                  id: m.objectId,
+                  syncedMetaIds: pushNumberIntoUnrepeatableArray(whiteboardMeta.id, o.syncedMetaIds)
+                })
+              }
+            })
+        }
+      }
+      nodes.push({
+        x: transformedXY.x,
+        y: transformedXY.y,
+        metaObjectId: id,
+        type: 'metaObject',
+        name: '',
+        expanded: false
+      })
+    })
 
+    if (transformedXY) {
+      instance.insertNode?.(nodes).then(nodes => {
+        waitFor(
+          () => {
+            const ids = new Set(nodes.map(i => i.id))
+            const allNodes = instance.getAllNode?.().filter(i => ids.has(i.id))
+            if (allNodes && allNodes?.every(i => i.width !== undefined && i.height !== undefined)) {
+              return true
+            }
+            return false
+          },
+          () => {
+            const ids = new Set(nodes.map(i => i.id))
+            const allNodes = instance.getAllNode?.().filter(i => ids.has(i.id)) as IWhiteboardNode[]
+            instance.layoutOps?.packNodes(allNodes)
+          }
+        )
+      })
+    }
+  }
+  instance.insertMetasAtPointer = insertMetasAtPointer
   useEffect(() => {
     const dragOverHandler = (e: DragEvent) => {
       e.preventDefault()

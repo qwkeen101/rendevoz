@@ -256,7 +256,14 @@ const openTypeGroup = (type: MetaObject['type']) => {
     }
   })
 }
-
+const openCollectionGroup = (collection: number) => {
+  Rendevoz.Actions.Layout.openNewTab?.({
+    data: {
+      type: 'collectionGroup',
+      objectId: collection
+    }
+  })
+}
 const openTagGroup = (tag: number) => {
   Rendevoz.Actions.Layout.openNewTab?.({
     data: {
@@ -265,6 +272,7 @@ const openTagGroup = (tag: number) => {
     }
   })
 }
+
 const openEditor = (noteId: number): Promise<IEditorInstance> => {
   return new Promise(res => {
     Rendevoz.Actions.Layout.openNewTab?.({
@@ -501,7 +509,8 @@ const Open: typeof Rendevoz.Actions.Open = {
   },
   Group: {
     openTypeGroup,
-    openTagGroup
+    openTagGroup,
+    openCollectionGroup
   },
   openHome,
   openDatabase,

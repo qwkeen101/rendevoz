@@ -15,6 +15,7 @@ import { ISidebarItem } from './type'
 import SidebarObjectItem from './SidebarObjectItem'
 import { metaObjectsAtom } from '@/api/stores/meta/meta.store'
 import FontSize from '@/consts/font'
+import { Rendevoz } from '@/core/rendevoz'
 
 const SidebarCollectionItem: FC<ISidebarItem> = memo(
   ({ id, parentId, parentType, draggable = true, onClick, onlyCollection, selectMode }) => {
@@ -171,7 +172,9 @@ const SidebarCollectionItem: FC<ISidebarItem> = memo(
               />
               {collection && (
                 <IconNameItem
-                  onClick={e => {}}
+                  onClick={e => {
+                    Rendevoz.Actions.Open.Group.openCollectionGroup(collection.id)
+                  }}
                   style={{ fontSize: FontSize['13px'] }}
                   name={collection.name || 'Unnamed Collection'}
                   color={collection.color}

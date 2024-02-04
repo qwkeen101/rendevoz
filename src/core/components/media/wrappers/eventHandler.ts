@@ -45,6 +45,7 @@ const useMediaEventHandlerWrapper = (options: {
               id: object.id,
               subtitleList: [{ lang: 'Transcription', url: path }, ...(object.subtitleList || [])]
             })
+            return path
           }
         }
 

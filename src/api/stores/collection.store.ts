@@ -156,12 +156,23 @@ const useCollectionStore = () => {
     getCollectionById: localStore.getOneById
   }
 
-  const addItemToCollection = (item: ICollectionItem, collectionId: number) => {
+  const addItemToCollection = async (item: ICollectionItem | ICollectionItem[], collectionId: number) => {
     console.log(item, collectionId)
+
+    const items = Array.isArray(item) ? item : [item]
+    const collectionGroup = await KeyvalueStore.getOne(`collection_${collectionId}_group`)
+    if (collectionGroup) {
+      if (collectionGroup.hideObjectsInside) {
+        const metas = items.filter(i => i.type === 'meta').map(i => i.id)
+        metas.forEach(id => id && MetaStore.updateMetaObject({ id: id, hidden: true }, { silent: true }))
+      }
+    }
     const origin = structuredClone(globalStore.get(collectionsAtom).get(collectionId)) as ICollection
     origin.items = origin.items || []
-    if (origin.items.some(i => i.id === item.id)) return
-    origin.items.push(item)
+    if (origin.items.some(i => items.some(o => o.id === i.id))) return
+    items.forEach(item => {
+      origin.items?.push(item)
+    })
     console.log(origin)
     realStore.updateCollection(origin, true)
   }

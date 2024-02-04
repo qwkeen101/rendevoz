@@ -213,8 +213,8 @@ export default () => {
           .then(async () => {
             const vttFileUrl = await toWebVTT(new Blob([str]))
             const blob = await (await fetch(vttFileUrl)).blob()
-            instance.on?.({ type: 'transcribeFinished', vttText: blob })
-            setMediaState(s => ({ ...s, isTranscribing: false }))
+            const path = await instance.on?.({ type: 'transcribeFinished', vttText: blob })
+            setMediaState(s => ({ ...s, isTranscribing: false, subtitleUrl: path }))
           })
           .catch(e => {
             console.log(e)

@@ -12,13 +12,12 @@ import produce from 'immer'
 import { useDebounceEffect } from '@/hooks'
 import fuzzysort from 'fuzzysort'
 
-export default ({ onBack, onClose, metaId }: { onBack: VoidFunction; onClose: VoidFunction; metaId: number }) => {
+export default ({ onBack, onClose, metaId }: { onBack: VoidFunction; onClose: VoidFunction; metaId: number[] }) => {
   const [allWhiteboards, setAllWhiteboards] = useState<MetaObject[]>([])
   const [currentWhiteboard, setCurrentWhiteboard] = useState<{
     id: number
     name: string
   }>()
-  const currentMeta = MetaStore.useValue(metaId)
   const [setting, setSetting] = useSetting()
   const index = MetaStore.useMetaObjectsMap()
   useEffect(() => {
@@ -35,7 +34,9 @@ export default ({ onBack, onClose, metaId }: { onBack: VoidFunction; onClose: Vo
   handler.on('globalDropNeedFurtherProcess', e => {
     if (setting.quickAdd.addIntoWhiteboardHideObject) {
       if (e.dropOn?.dropOn === 'whiteboard' && e.dropOn?.whiteboardId == currentWhiteboard?.id) {
-        MetaStore.updateMetaObject({ id: metaId, hidden: true })
+        metaId.forEach(id => {
+          MetaStore.updateMetaObject({ id, hidden: true })
+        })
       }
     }
   })
@@ -71,8 +72,8 @@ export default ({ onBack, onClose, metaId }: { onBack: VoidFunction; onClose: Vo
         </div>
         <DraggableElement
           draggingDetails={{
-            type: 'metaElement',
-            metaId: metaId
+            type: 'metaObjects',
+            ids: metaId
           }}
         >
           <Content
@@ -90,7 +91,7 @@ export default ({ onBack, onClose, metaId }: { onBack: VoidFunction; onClose: Vo
             gap={12}
           >
             <Icon name={'park-drag'} size={16} />
-            <div className={ClassName.ellipsisFont(2)}>{currentMeta?.name || currentMeta?.placeholderName || 'Unnamed object'}</div>
+            <div className={ClassName.ellipsisFont(2)}>Drag {metaId.length} items to whiteboard</div>
           </Content>
         </DraggableElement>
         <ButtonSwitch

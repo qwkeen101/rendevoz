@@ -33,6 +33,7 @@ export interface SelectProps {
   containerStyle?: CSSProperties
   align?: 'start' | 'center' | 'end'
   reposition?: boolean
+  parentElement?: HTMLElement
 }
 interface ISelect extends FC<SelectProps> {
   Option: typeof SelectOption
@@ -56,6 +57,7 @@ const Select: ISelect = ({
   menuPosition = 'bottom',
   options,
   reposition = true,
+  parentElement,
   displayRenderer
 }) => {
   let d = []
@@ -154,12 +156,13 @@ const Select: ISelect = ({
         positions={[menuPosition]}
         onClickOutside={() => setMenuVisible(false)}
         padding={padding}
+        parentElement={parentElement}
         containerStyle={{ zIndex: '50000' }}
         // parentElement={containerRef.current}
         align={align}
         reposition={reposition}
         withClickCover={true}
-        boundaryElement={document.body}
+        boundaryElement={parentElement || document.body}
         boundaryInset={20}
         content={
           <WithBorder padding={'0.25rem 0'} style={{ fontSize: 13 }}>

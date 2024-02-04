@@ -72,20 +72,26 @@ export const useAssignWhiteboardInstance = () => {
     },
     updateWhiteboard: updateWhiteboard,
     insertNode: async node => {
-      if (!node.type || node.x === undefined || node.y === undefined) return Promise.reject()
-      const newNode = {
-        ...node,
-        id: node.id || Id.getId()
-      } as Required<IWhiteboardNode>
+      const nodes = Array.isArray(node) ? node : [node]
+      if (nodes.some(i => !i.type || i.x === undefined || i.y === undefined)) return Promise.reject()
+      const newNodes = nodes.map(
+        node =>
+          ({
+            ...node,
+            id: node.id || Id.getId()
+          }) as Required<IWhiteboardNode>
+      )
       await updateWhiteboard(w => {
         if (w.nodes) {
           const maxZ = Math.max(...Array.from(w.nodes.values()).map(i => i.z), 0)
-          w.nodes?.set(newNode.id, { ...newNode, z: maxZ + 1 })
-
-          newNode.z = maxZ
+          newNodes.forEach((n, idx) => {
+            const targetZ = maxZ + idx
+            w.nodes?.set(n.id, { ...n, z: targetZ + 1 })
+            n.z = targetZ
+          })
         }
       }, true)
-      return newNode
+      return newNodes
     },
     updateEdge: async (obj, updater, withUndo = true) => {
       let id: number | undefined = undefined

@@ -89,6 +89,10 @@ const getAdaptColor = (c?: string) => {
   }
   return c
 }
+const getAlphaColor = (c: string | undefined, alpha: number) => {
+  if (!c) return undefined
+  return tinycolor(c).setAlpha(alpha).toRgbString()
+}
 const FontColorCache: Record<string, string> = {}
 const getAdaptFontColor = (bg?: string) => {
   if (!bg) return undefined
@@ -103,6 +107,7 @@ const Colors = {
   Consts,
   getAdaptColor,
   getAdaptFontColor,
+  getAlphaColor,
   Font: Object.fromEntries(Object.entries(Font).map(i => [i[0], `var(${i[1]})`])) as Record<keyof typeof Font, string>,
   Background: Object.fromEntries(Object.entries(Background).map(i => [i[0], `var(${i[1]})`])) as Record<keyof typeof Background, string>,
   Emphasis: Object.fromEntries(Object.entries(Emphasis).map(i => [i[0], `var(${i[1]})`])) as Record<keyof typeof Emphasis, string>,

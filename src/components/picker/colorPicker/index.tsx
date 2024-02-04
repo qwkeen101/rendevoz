@@ -114,6 +114,8 @@ const ColorPicker: FC<ColorPickerProps> = ({
               ? 'white'
               : color === defaultFontColor || color === defaultBgColor
               ? ConstColors.Background.Secondary
+              : enableMore === false
+              ? color
               : ConstColors.getAdaptColor(color),
             color: isFont ? color : undefined,
             boxShadow: 'rgb(15 15 15 / 10%) 0px 0px 0px 1px inset'

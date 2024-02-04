@@ -90,7 +90,12 @@ assignProperties(GlobalInstance, {
       const setting = getSetting()
       switch (setting.object.linkType) {
         case 'text': {
-          navigator.clipboard.writeText(ls.map(i => i.link).join('\n'))
+          const content = [
+            new ClipboardItem({
+              'text/plain': new Blob([ls.map(i => i.link).join('\n')], { type: 'text/plain' })
+            })
+          ]
+          navigator.clipboard.write(content)
           break
         }
         case 'url': {

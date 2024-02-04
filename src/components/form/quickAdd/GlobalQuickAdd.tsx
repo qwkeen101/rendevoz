@@ -7,7 +7,7 @@ import QuickAddForm from '@/components/form/quickAdd/QuickAddForm'
 export default memo(() => {
   const [quickAddState, setQuickAddState] = useState<{
     visible: boolean
-    metaId?: number
+    metaId?: number[]
   }>({
     visible: false
   })
@@ -15,9 +15,10 @@ export default memo(() => {
     metaOps: {
       ...GlobalInstance.metaOps,
       quickAdd: metaId => {
+        const idArr = Array.isArray(metaId) ? metaId : [metaId]
         setQuickAddState({
           visible: true,
-          metaId
+          metaId: idArr
         })
       }
     }

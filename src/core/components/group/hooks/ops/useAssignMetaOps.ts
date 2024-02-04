@@ -12,6 +12,7 @@ const useAssignMetaOps = (instance: InnerGroupInstance) => {
   assignProperties(instance, {
     metaOps: {
       createMeta: async grouperId => {
+        const addAfterCreate = instance.getGroupState?.().state?.addAfterCreateMeta
         const currentGroupRule = instance.getGroupState?.().currentView?.group
         let onlyCreate = store.get(GroupStateAtom).state?.onlyCreateType
         if (currentGroupRule?.fieldType === 'metaType' && grouperId) {
@@ -29,7 +30,7 @@ const useAssignMetaOps = (instance: InnerGroupInstance) => {
             if (meta) {
               if (grouperId) {
                 handleCreateInGrouper(meta.id, grouperId, instance)
-                if (!onlyCreate) {
+                if (addAfterCreate !== false) {
                   setTimeout(() => {
                     instance.valueOps?.insertValueByPath({
                       type: 'metaObject',
@@ -38,7 +39,7 @@ const useAssignMetaOps = (instance: InnerGroupInstance) => {
                   }, 10)
                 }
               } else {
-                if (!onlyCreate) {
+                if (addAfterCreate !== false) {
                   instance.valueOps?.insertValueByPath({
                     type: 'metaObject',
                     id: meta.id

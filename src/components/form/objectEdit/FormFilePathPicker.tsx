@@ -4,7 +4,7 @@ import { groupClassName, hoverLabelClassName } from '../useFlipForm'
 import useFileUpload from '../../base/useFileUpload'
 import { useTranslation } from 'react-i18next'
 import Colors from '@/consts/colors'
-import { useSelectGlobalAtomValue, useToggle } from '@/hooks'
+import { useDebounceFn, useSelectGlobalAtomValue, useToggle } from '@/hooks'
 import { SettingAtom } from '@/core'
 import { useEffect, useRef, useState } from 'react'
 import { Regexp } from '@/utils'
@@ -36,6 +36,12 @@ const FormFilePathPicker = ({
   const [chooser, setChooser] = useState<'web' | 'local' | 'baidudisk'>('local')
   const [validUrl, setValidUrl] = useState(Regexp.isValidWebUrl(filePath))
   const inputRef = useRef<HTMLInputElement>(null)
+  const deboucedChange = useDebounceFn(
+    v => {
+      onChange?.(v)
+    },
+    { wait: 200 }
+  )
   useEffect(() => {
     if (filePath?.startsWith('http')) {
       setChooser('web')
@@ -122,16 +128,12 @@ const FormFilePathPicker = ({
                 const value = v.target.value
                 if (Regexp.isValidWebUrl(value)) {
                   setValidUrl(true)
+                  deboucedChange.run({
+                    type: 'web',
+                    url: value
+                  })
                 } else {
                   setValidUrl(false)
-                }
-              }}
-              onBlur={e => {
-                if (validUrl) {
-                  onChange({
-                    type: 'web',
-                    url: e.target.value
-                  })
                 }
               }}
               placeholder={t('general.Input video url')}

@@ -17,7 +17,7 @@ import whiteboard from '@/assets/images/whiteboard.png?url'
 import { Colors } from '@/consts'
 import ChooseWhiteboardForm from '@/components/form/quickAdd/ChooseWhiteboardForm'
 
-export default ({ currentMetaId, onClose }: { currentMetaId: number; onClose: VoidFunction }) => {
+export default ({ currentMetaId, onClose }: { currentMetaId: number[]; onClose: VoidFunction }) => {
   const [visible, setVisible] = useState<'tags' | 'collections' | 'groups' | 'attachments' | 'main' | 'note' | 'whiteboard'>('main')
   const { t } = useTranslation()
   const options = [
@@ -102,10 +102,10 @@ export default ({ currentMetaId, onClose }: { currentMetaId: number; onClose: Vo
             onChoose={s => {
               onClose()
               CollectionStore.addItemToCollection(
-                {
+                currentMetaId.map(id => ({
                   type: 'meta',
-                  id: currentMetaId
-                },
+                  id: id
+                })),
                 s.id
               )
             }}

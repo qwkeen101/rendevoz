@@ -30,7 +30,9 @@ const HighlightBlock = ({ element, children }: RenderElementProps) => {
       style={{
         padding: 12,
         border: highlightBlockEle.borderColor ? `2px solid ${highlightBlockEle.borderColor}` : '2px solid transparent',
-        backgroundColor: element.background ? 'rgba(var(--block-rgb-bg), 0.6)' : Colors.Background.ButtonHover,
+        backgroundColor: element.background
+          ? Colors.getAlphaColor(Colors.getAdaptColor(element.background), 0.6)
+          : Colors.Background.ButtonHover,
         borderRadius: 8,
         margin: highlightBlockEle.borderColor ? 2 : 0,
         boxShadow: highlightBlockEle.borderColor ? `0 0 0 4px #${alphaBorder}` : undefined
@@ -59,7 +61,11 @@ const HighlightBlock = ({ element, children }: RenderElementProps) => {
           </WithBorder>
         }
       >
-        <div contentEditable={false} className={ClassName.circleButton(4, 4)} style={{ lineHeight: 1, height: 'fit-content' }}>
+        <div
+          contentEditable={false}
+          className={ClassName.circleButton(4, 4)}
+          style={{ lineHeight: 1, flexShrink: 0, height: 'fit-content' }}
+        >
           <img
             src="data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw=="
             style={{

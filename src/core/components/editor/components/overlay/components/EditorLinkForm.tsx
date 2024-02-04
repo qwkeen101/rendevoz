@@ -9,6 +9,7 @@ import isHotkey from 'is-hotkey'
 import { KEY } from '@/consts'
 import useEditorInstance from '@/core/components/editor/hooks/useEditorInstance'
 import MetaFilterer, { isValidUrl } from '@/core/object/filter/MetaFilterer'
+import { MetaStore } from '@/api/stores'
 
 const EditorLinkForm = ({ editor, manager }: { editor: CustomEditor; manager: EditorOverlayManager }) => {
   const [link, setLink] = useState('')
@@ -60,13 +61,26 @@ const EditorLinkForm = ({ editor, manager }: { editor: CustomEditor; manager: Ed
       if (!((before === undefined || Text.isText(before[0])) && parent[0].type !== 'link')) {
         path = Editor.after(editor, editor.selection)
       }
-
+      console.log(path, before, parent)
+      let linkName = link
+      if (finalLink.startsWith('rendevoz://object/')) {
+        const metaId = Number(finalLink.replace('rendevoz://object/', ''))
+        if (!Number.isNaN(metaId)) {
+          const meta = MetaStore.getMetaObjectsMap().get(metaId)
+          if (meta) {
+            linkName = meta.name || meta.placeholderName
+          }
+        }
+      }
+      if (!linkName) {
+        linkName = finalLink
+      }
       Transforms.insertNodes(
         editor,
         {
           type: 'link',
           url: finalLink,
-          children: [{ text: link }]
+          children: [{ text: linkName }]
         },
         {
           at: path

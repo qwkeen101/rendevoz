@@ -73,7 +73,7 @@ function TypeGroup({ type }: { type: MetaObject['type'] }) {
             showDeletedMetas: false,
             showDescription: false,
             showTitleActions: false,
-            hideContextMenuItems: ['deleteCompleted', 'deleteObject', 'addRowAbove', 'addRowBelow']
+            hideContextMenuItems: ['deleteCompleted', 'deleteInGroup', 'addRowAbove', 'addRowBelow']
           }),
           []
         )}

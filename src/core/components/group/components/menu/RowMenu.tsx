@@ -66,7 +66,7 @@ export default memo(
         }
       },
       deleteInGroup: {
-        text: t('general.delete'),
+        text: t('general.Delete from group'),
         icon: 'park-delete',
         type: 'button',
         dangerous: true,
@@ -182,6 +182,7 @@ export default memo(
       selected?.length && selected.length > 1 ? layoutItems['copyLinkToAll'] : undefined,
       layoutItems['moveTo'],
       layoutItems['deleteInGroup'],
+      layoutItems['deleteObject'],
       ...(details.type === 'metaObject'
         ? [
             ...(hasSelected
@@ -193,8 +194,7 @@ export default memo(
                   layoutItems['copyLink'],
                   layoutItems['openInNewTab'],
                   ...(canPreview ? [layoutItems['openInSidePeek']] : [])
-                ]),
-            layoutItems['deleteObject']
+                ])
           ]
         : []),
       ...(currentView?.filter?.rules.length || hasSelected || currentView?.sort?.sorters.length || currentView?.search

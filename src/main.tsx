@@ -7,6 +7,7 @@ import PIXIFontUrl from '@/assets/font.xml?url'
 import { Provider } from 'jotai'
 import { Hooks, Utils } from 'rendevoz'
 import getWbiKeys from '@/api/services/bilibili/getWbi'
+import autoArrangeLayout from '@/core/components/whiteboard/node/mindmap/autoArrangeLayout'
 function debounce(func, timeout = 600) {
   let timer
   return (...args) => {
@@ -16,7 +17,7 @@ function debounce(func, timeout = 600) {
     }, timeout)
   }
 }
-
+autoArrangeLayout()
 window.addEventListener(
   'scroll',
   e => {

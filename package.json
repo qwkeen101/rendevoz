@@ -2,7 +2,7 @@
   "name": "rendevoz-app",
   "productName": "Rendevoz",
   "private": true,
-  "version": "0.8.5",
+  "version": "0.8.6",
   "author": {
     "name": "Rendevoz Team",
     "email": "rendevoz@rendevoz.com"
@@ -56,6 +56,7 @@
     "colorthief": "^2.4.0",
     "cross-env": "7.0.3",
     "d3": "^7.6.1",
+    "d3-flextree": "^2.1.2",
     "date-fns": "latest",
     "dexie": "^3.2.1",
     "dexie-export-import": "^4.0.5",
@@ -146,6 +147,7 @@
     "@rollup/plugin-commonjs": "^25.0.4",
     "@rollup/plugin-node-resolve": "^15.2.1",
     "@types/d3": "^7.4.0",
+    "@types/d3-flextree": "^2.1.4",
     "@types/dom-mediacapture-transform": "^0.1.5",
     "@types/dom-speech-recognition": "^0.0.1",
     "@types/dom-webcodecs": "^0.1.7",

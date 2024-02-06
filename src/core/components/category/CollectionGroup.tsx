@@ -46,36 +46,28 @@ export default ({ id }: { id: number }) => {
     }
   }, [collection?.items])
   const metaRef = useRef<number[]>([])
+
   if (!collection || collection.deleted) return null
   return (
     <Content fullHeight fullWidth>
       <TabTitle title={collection?.name || 'Unnamed collection'} icon={<Icon name={'park-folder-close'} />} />
       <MetaGroup
-        title={useMemo(
-          () => ({
-            title: collection?.name || 'Unnamed collection',
-            icon: collection.icon || 'park-folder-close',
-            titleEditable: true
-          }),
-          [collection]
-        )}
-        state={useMemo(
-          () => ({
-            canHideGroupsInside: true,
-            canDrag: true,
-            canHideObjectsInside: true,
-            canDragInside: true
-          }),
-          []
-        )}
-        layout={useMemo(
-          () => ({
-            showDeletedMetas: false,
-            showDescription: false,
-            showTitleActions: false
-          }),
-          []
-        )}
+        title={{
+          title: collection?.name || 'Unnamed collection',
+          icon: collection?.icon || 'park-folder-close',
+          titleEditable: true
+        }}
+        state={{
+          canHideGroupsInside: true,
+          canDrag: true,
+          canHideObjectsInside: true,
+          canDragInside: true
+        }}
+        layout={{
+          showDeletedMetas: false,
+          showDescription: false,
+          showTitleActions: false
+        }}
         value={data}
         on={v => {
           if (v.type === 'groupDataChange') {

@@ -40,6 +40,10 @@ export type IWhiteboardNode = {
   width?: number
   height?: number
   resized?: boolean
+  // nested in mindmap
+  nested?: boolean
+  // mindmap side
+  side?: 'left' | 'right'
   z: number
 } & (
   | {
@@ -54,6 +58,11 @@ export type IWhiteboardNode = {
   | {
       type: 'video'
       videoUrl: string
+    }
+  | {
+      type: 'mindmap'
+      rightChildren?: IWhiteboardMindmap[]
+      leftChildren?: IWhiteboardMindmap[]
     }
   | {
       type: 'webpage'
@@ -107,6 +116,11 @@ type MultiplePenStyles = {
   second: IPenStyle
   third: IPenStyle
 }
+
+export type IWhiteboardMindmap = {
+  root: number
+  children: IWhiteboardMindmap[]
+}
 export interface IWhiteboard extends IBase {
   name?: string
   nodes?: Map<number, IWhiteboardNode>
@@ -114,7 +128,6 @@ export interface IWhiteboard extends IBase {
   items?: ICollectionItem[]
   color?: string
   icon?: string
-  groups?: any[]
   backgroundType?: 'dot' | 'line' | 'none'
   lineType: 'straight' | 'polyline' | 'curve'
   lastViewport?: {
@@ -134,7 +147,6 @@ export type IWhiteboardOutline = {
   name: string
   children?: IWhiteboardOutline[]
 }
-
 
 export type IWhiteboardAlignment = 'left' | 'top' | 'right' | 'bottom' | 'horizontallyCenter' | 'verticallyCenter'
 export type IWhiteboardLayout = 'horizontallySpacing' | 'verticallySpacing' | 'auto' | 'byType'

@@ -6,12 +6,15 @@ import { BaidudiskInstance } from '@/components/fileImporter/baidudisk/Baidudisk
 
 export default async (files: File[], onCreate?: (m: MetaObject) => void, parentCollectionId?: number) => {
   const dirname = files[0].webkitRelativePath.split('/')[0]
-  const curr = files[0].path.indexOf(dirname)
-  const sliced = files[0].path.slice(0, curr) + dirname
+  const normalizedPath = files[0].path.replaceAll('\\', '/')
+  const curr = normalizedPath.indexOf(dirname)
+  const sliced = normalizedPath.slice(0, curr) + dirname
+    console.log(normalizedPath, dirname, sliced)
   const categorized = categorizeFilesByPath(files, sliced)
   const rootKey = Object.keys(categorized)[0]
   const outParent = parentCollectionId
   const rootFiles = Array.from(Object.values(categorized[rootKey])).filter(i => typeof i === 'object' && i instanceof File)
+
   GlobalImporterInstance.import?.(rootFiles, {
     isDir: true,
     dirName: rootKey,

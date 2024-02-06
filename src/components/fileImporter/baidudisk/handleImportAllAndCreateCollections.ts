@@ -45,7 +45,7 @@ export const categorizeFilesByPath = (fileList: any[], currentFolder: string) =>
   const group = {}
   const currfol = currentFolder.split('/')
   fileList.forEach(i => {
-    const realPath = i.path.replace(currentFolder, `/${currfol[currfol.length - 1]}`)
+    const realPath = i.path.replaceAll('\\', '/').replace(currentFolder, `/${currfol[currfol.length - 1]}`)
     const splited = realPath.split('/') as string[]
     let target = group
     while (splited.length) {

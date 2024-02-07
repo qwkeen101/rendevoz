@@ -37,7 +37,7 @@ const NoteNode: FC<InnerNodeProps> = ({ node: n, onNameChange, metaId }) => {
       styles={{
         bottomPadding: 30,
         pageMinPadding: '0px 30px 0px',
-        containerHeight: 'auto',
+        containerHeight: '100%',
         containerMaxHeight: '100%',
         containerStyle: {
           width: '520px',

@@ -74,7 +74,6 @@ const VirtualChildren = memo(
       const startNodeRealIndex = firstLayerMap.get(editor.children[startIndex].id) || startIndex
       const endIndex = end.path[0]
       const endNodeRealIndex = firstLayerMap.get(editor.children[endIndex].id) || endIndex
-      console.log(endNodeRealIndex, startNodeRealIndex)
       rangeExtractor = r => {
         const s = Math.max(Math.min(startNodeRealIndex - overscan, r.startIndex - overscan), 0)
         const e = Math.min(Math.max(endNodeRealIndex + overscan, r.endIndex + overscan), editor.children.length)
@@ -100,6 +99,10 @@ const VirtualChildren = memo(
       // paddingStart: titleHeight,
       rangeExtractor: rangeExtractor || defaultRangeExtractor,
       scrollMargin: titleHeight,
+      getItemKey: index => {
+        const item = visibleChildren[index]
+        return item.id
+      },
       measureElement: (ele, entry, instance) => {
         if (entry) {
           const size = entry.borderBoxSize[0].blockSize
@@ -108,9 +111,7 @@ const VirtualChildren = memo(
           const totalSize = size + marginTop + marginBottom
           return Math.round(totalSize)
         }
-        const index = instance.indexFromElement(ele)
-        const item = instance.measurementsCache[index]
-        return item ? item.size : Math.round(ele.getBoundingClientRect().height)
+        return Math.round(ele.getBoundingClientRect().height)
       }
     })
 
@@ -123,15 +124,7 @@ const VirtualChildren = memo(
     const first = virtualItems[0]
 
     const prevChildren = useRef(children)
-    useLayoutEffect(() => {
-      const prev = prevChildren.current
-      prevChildren.current = children
-      if (prev) {
-        if (prev.length !== children.length) {
-          virtualizer.measure()
-        }
-      }
-    }, [children])
+
     useEffect(() => {
       if (!disableVirtualizer) {
         const size = totalSize
@@ -170,7 +163,7 @@ const VirtualChildren = memo(
     useEffect(() => {
       update()
     }, [])
-
+    console.log(virtualItems)
     return (
       <>
         {/*<div role="virtual-placeholder" contentEditable={false} style={{ height: first?.start - titleHeight, width: '100%' }}></div>*/}

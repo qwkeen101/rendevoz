@@ -6,7 +6,7 @@ import ClassName from '@/styles/classNames'
 import { useTranslation } from 'react-i18next'
 import { Rendevoz } from '@/core/rendevoz'
 
-const ScreenShotOcr = ({ draggable, onToggleDraggable }: { draggable: boolean; onToggleDraggable: VoidFunction }) => {
+const ScreenShotOcr = () => {
   const ocrResult = useGlobalAtomValue(GlobalScreenShotOcrResult)
   const { t } = useTranslation()
 
@@ -37,15 +37,13 @@ const ScreenShotOcr = ({ draggable, onToggleDraggable }: { draggable: boolean; o
         width: 'max-content',
         maxWidth: 500,
         color: Colors.Font.Primary,
-        userSelect: draggable ? 'none' : 'text',
         textTransform: 'none'
       }}
     >
       {ocrResult && ocrResult !== 'loading' && (
         <Content flex column fullWidth gap={6}>
           <div className={ClassName.title('1rem')}>{t('general.text recognition result')}</div>
-          <Content fullWidth flex gap={6}>
-            <Button.IconButton icon="park-move-one" selected={draggable} onClick={onToggleDraggable} text={t('general.move')} />
+          <Content fullWidth flex gap={6} style={{ marginLeft: -6 }}>
             {ocrResult && (
               <Button.IconButton
                 onClick={e => {

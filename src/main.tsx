@@ -6,8 +6,6 @@ import * as PIXI from 'pixi.js'
 import PIXIFontUrl from '@/assets/font.xml?url'
 import { Provider } from 'jotai'
 import { Hooks, Utils } from 'rendevoz'
-import getWbiKeys from '@/api/services/bilibili/getWbi'
-import autoArrangeLayout from '@/core/components/whiteboard/node/mindmap/autoArrangeLayout'
 function debounce(func, timeout = 600) {
   let timer
   return (...args) => {
@@ -17,7 +15,6 @@ function debounce(func, timeout = 600) {
     }, timeout)
   }
 }
-autoArrangeLayout()
 window.addEventListener(
   'scroll',
   e => {
@@ -30,7 +27,7 @@ window.addEventListener(
   },
   true
 )
-console.log(navigator.languages, navigator.language)
+
 window.addEventListener(
   'scroll',
   debounce(e => {
@@ -80,13 +77,7 @@ document.addEventListener(
 //     })
 // })
 // }
-const dm_rand = 'ABCDEFGHIJK'
-getWbiKeys({
-  mid: 1940623777
-}).then(i =>
-  fetch('https://api.bilibili.com/x/space/wbi/arc/search?' + i
-  )
-)
+
 const root = createRoot(document.getElementById('root')!)
 
 root.render(

@@ -13,6 +13,7 @@ import { Menu } from '@/components'
 import GetEditorTransformMenu from '@/core/components/editor/components/overlay/components/getEditorTransformMenu'
 import { IMenuLayoutItem } from '@/components/base/menu'
 import toast from 'react-hot-toast'
+import { Colors } from '@/consts'
 
 const EditorBlockDetails = ({ editor, manager }: { editor: CustomEditor; manager: EditorOverlayManager }) => {
   const { t } = useTranslation()
@@ -151,19 +152,10 @@ const EditorBlockDetails = ({ editor, manager }: { editor: CustomEditor; manager
                           handleMutateProps({ borderColor: c === defaultBgColor ? undefined : c })
                         }}
                         onPickFontColor={c => {
-                          handleMutateProps({ color: c === '#000000' ? undefined : c })
-                          Transforms.setNodes(
-                            editor,
-                            {
-                              color: c === '#000000' ? undefined : c
-                            },
-                            {
-                              at: currentElePath
-                            }
-                          )
+                          handleMutateProps({ color: c === Colors.Font.Blank ? undefined : c })
                         }}
                         onPickBackgroundColor={c => {
-                          handleMutateProps({ background: c === '#ffffff' ? undefined : c })
+                          handleMutateProps({ background: c === Colors.Background.Blank ? undefined : c })
                         }}
                       />
                     )

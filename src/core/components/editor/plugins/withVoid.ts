@@ -24,7 +24,7 @@ const withVoid = (editor: CustomEditor) => {
       case 'image':
       case 'thought':
       case 'divider':
-      case 'inline-metaObject':
+      // case 'inline-metaObject':
       case 'subPage':
       case 'code-block':
       case 'math':

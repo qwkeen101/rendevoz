@@ -22,32 +22,32 @@ const EditorSetting = ({ editor }: { editor: CustomEditor }) => {
   }, [])
   return (
     <Content ref={parentRef} style={{ fontSize: 14 }}>
-      <AnimatePopover
-        padding={10}
-        parentElement={parentRef.current}
-        content={
-          <WithBorder padding={6}>
-            <TypefaceSetting editor={editor} />
-          </WithBorder>
-        }
-        align={'start'}
-        positions={['left', 'right']}
-      >
-        <Button.IconButton text={t('general.Typeface')} icon={'park-add-text'} />
-      </AnimatePopover>
-      <AnimatePopover
-        padding={10}
-        parentElement={parentRef.current}
-        content={
-          <WithBorder padding={6}>
-            <PageSetting editor={editor} />
-          </WithBorder>
-        }
-        align={'start'}
-        positions={['left', 'right']}
-      >
-        <Button.IconButton text={t('general.Page style')} icon={'park-format'} />
-      </AnimatePopover>
+      {/*<AnimatePopover*/}
+      {/*  padding={10}*/}
+      {/*  parentElement={parentRef.current}*/}
+      {/*  content={*/}
+      {/*    <WithBorder padding={6}>*/}
+      {/*      <TypefaceSetting editor={editor} />*/}
+      {/*    </WithBorder>*/}
+      {/*  }*/}
+      {/*  align={'start'}*/}
+      {/*  positions={['left', 'right']}*/}
+      {/*>*/}
+      {/*  <Button.IconButton text={t('general.Typeface')} icon={'park-add-text'} />*/}
+      {/*</AnimatePopover>*/}
+      {/*<AnimatePopover*/}
+      {/*  padding={10}*/}
+      {/*  parentElement={parentRef.current}*/}
+      {/*  content={*/}
+      {/*    <WithBorder padding={6}>*/}
+      {/*      <PageSetting editor={editor} />*/}
+      {/*    </WithBorder>*/}
+      {/*  }*/}
+      {/*  align={'start'}*/}
+      {/*  positions={['left', 'right']}*/}
+      {/*>*/}
+      {/*  <Button.IconButton text={t('general.Page style')} icon={'park-format'} />*/}
+      {/*</AnimatePopover>*/}
       {editorState?.header?.display?.translate !== false && (
         <Button.IconButton
           text={t('general.Translate document')}

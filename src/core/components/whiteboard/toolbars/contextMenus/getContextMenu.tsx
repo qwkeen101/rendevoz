@@ -123,6 +123,25 @@ export default (instance: IWhiteboardInstance, t: TFunction<'translation', undef
         }
       }
     },
+    // {
+    //   type: 'item',
+    //   key: 'mindmap',
+    //   icon: 'park-mindmap-map',
+    //   text: t('whiteboard.Create mindmap'),
+    //   onSelect: async () => {
+    //     const toolbarState = instance.toolbarOps?.getToolbarState()
+    //     const nodeId = Id.getId()
+    //     instance.insertNode?.({
+    //       x: toolbarState.originX,
+    //       y: toolbarState.originY,
+    //       type: 'mindmap',
+    //       width: 350,
+    //       id: nodeId,
+    //       rightChildren: [],
+    //       leftChildren: []
+    //     })
+    //   }
+    // },
     {
       type: 'item',
       key: 'card',

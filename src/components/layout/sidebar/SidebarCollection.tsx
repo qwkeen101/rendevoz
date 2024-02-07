@@ -140,13 +140,13 @@ const SidebarCollection = ({
           alignItems="center"
           justifyContent="space-between"
           className={dropVisible ? ClassName.Drag.droppableItemHovered(true) : undefined}
-          style={{ transition: 'all 0.3s ease', color: Colors.Font.Transparent, fontSize: 13 }}
+          style={{ transition: 'all 0.3s ease', color: Colors.Font.Transparent, fontSize: 13, paddingRight: 2 }}
         >
           <div
-            style={{ cursor: 'pointer' }}
+            style={{ cursor: 'pointer', userSelect: 'none' }}
             onClick={() => {
               if (showHeader !== false) {
-                toggleCollapsed
+                toggleCollapsed()
               }
             }}
           >
@@ -171,7 +171,7 @@ const SidebarCollection = ({
           column
           gap={2}
           style={{
-            margin: '0 -8px',
+            margin: '0 -10px 0px -12px',
             padding: '2px 8px 2px 8px'
           }}
         >

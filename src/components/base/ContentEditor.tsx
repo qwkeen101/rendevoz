@@ -76,7 +76,7 @@ const NameEditor = ({
         </div>
         <div
           style={{
-            color: '#76b2ed',
+            color: 'var(--select-color)',
             padding: '6px 10px',
             background: Colors.Background.ButtonActive,
             cursor: 'pointer',

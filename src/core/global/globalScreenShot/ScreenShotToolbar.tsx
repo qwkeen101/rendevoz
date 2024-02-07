@@ -28,19 +28,18 @@ const ScreenShotToolbar = ({ on }: { on: (event: ToolbarOnEvent) => void }) => {
     <Toolbar>
       <Toolbar.Item>
         <IconWithPopover
-          renderOnParent={false}
+          renderOnParent={true}
           tooltip={t('general.ocr')}
-          placement={['top']}
+          placement={['top', 'bottom']}
           name="park-scanning"
-          disableNudge
-          disableIntersection
+          disableCloseOutside
           boundaryInset={20}
           contentDraggable={draggable}
           zIndex={19999}
           onClick={() => on({ type: 'ocr' })}
           content={
             <WithBorder>
-              <ScreenShotOcr draggable={draggable} onToggleDraggable={toggleDraggble} />
+              <ScreenShotOcr/>
             </WithBorder>
           }
         ></IconWithPopover>

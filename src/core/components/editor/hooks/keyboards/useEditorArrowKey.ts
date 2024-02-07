@@ -29,7 +29,7 @@ const useEditorArrowKey = (instance: IEditorInstance) => {
           distance = 2
         if (Path.hasPrevious(path) && Editor.isStart(editor, selection.anchor, selection.anchor.path)) {
           const prevNode = Editor.node(editor, Path.previous(path))[0]
-          if (['emoji', 'link'].includes(prevNode.type) || Editor.isVoid(editor, prevNode)) {
+          if (['emoji', 'link'].includes(prevNode.type) || Editor.isVoid(editor, prevNode) || Editor.isElementReadOnly(editor, prevNode)) {
             distance = 2
           }
         }
@@ -67,7 +67,7 @@ const useEditorArrowKey = (instance: IEditorInstance) => {
         }
         if (Editor.hasPath(editor, Path.next(path)) && Editor.isEnd(editor, selection.anchor, selection.anchor.path)) {
           const nextNode = Editor.node(editor, Path.next(path))[0]
-          if (['emoji', 'link'].includes(nextNode.type) || Editor.isVoid(editor, nextNode)) {
+          if (['emoji', 'link'].includes(nextNode.type) || Editor.isVoid(editor, nextNode) || Editor.isElementReadOnly(editor, nextNode)) {
             distance = 2
           }
         }

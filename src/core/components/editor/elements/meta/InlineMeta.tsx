@@ -1,20 +1,26 @@
 import { ClassName } from 'rendevoz'
 import { css } from '@emotion/css'
-import { FC } from 'react'
-import { RenderElementProps } from '../../slate-react'
+import { FC, useEffect } from 'react'
+import { ReactEditor, RenderElementProps, useSlateStatic } from '../../slate-react'
 import { MetaStore } from '@/api/stores'
 import { AnimatePopover, WithBorder } from '@/components'
 import { Rendevoz } from '@/core/rendevoz'
 import { Colors } from '@/consts'
 import { ObjectActionPopover } from '@/core'
+import classnames from 'classnames'
+import { Editor, Transforms } from 'slate'
+import { HistoryEditor } from 'slate-history'
 
-const clazzName = css({
-  cursor: 'pointer',
-  transition: 'color 0.2s ease',
-  ':hover': {
-    color: Colors.Common.SelectColor
-  }
-})
+const clazzName = classnames(
+  css({
+    cursor: 'pointer',
+    transition: 'color 0.2s ease',
+    ':hover': {
+      color: Colors.Common.SelectColor
+    }
+  }),
+  'border-bottom'
+)
 const inlineClassName = css([
   ClassName.objectTag,
   {
@@ -28,8 +34,36 @@ const inlineClassName = css([
 ])
 const InlineMetaElement: FC<RenderElementProps> = ({ element, children, attributes }) => {
   const metaObject = MetaStore.useValue(element.originId)
+  const childrenText = element.children[0].text
+  const editor = useSlateStatic()
+  console.log(childrenText)
+  useEffect(() => {
+    const n = metaObject?.name || metaObject?.placeholderName || 'Deleted object'
+    if (n !== childrenText) {
+      const path = ReactEditor.findPath(editor, element)
+      if (path) {
+        HistoryEditor.withoutSaving(editor, () => {
+          Editor.withoutNormalizing(editor, () => {
+            Transforms.removeNodes(editor, { at: path })
+            Transforms.insertNodes(
+              editor,
+              { ...element, children: [{ text: n }] },
+              {
+                at: path
+              }
+            )
+          })
+        })
+      }
+    }
+  }, [metaObject?.name, metaObject?.placeholderName, childrenText])
   return (
-    <span {...attributes} data-meta-id={element.id} style={{ marginRight: 6, position: 'relative' }}>
+    <span
+      {...attributes}
+      contentEditable={'false'}
+      data-meta-id={element.id}
+      style={{ marginRight: 6, position: 'relative' }}
+    >
       <span>
         <>
           <AnimatePopover
@@ -50,7 +84,7 @@ const InlineMetaElement: FC<RenderElementProps> = ({ element, children, attribut
                 color: metaObject?.color
               }}
             >
-              {metaObject?.name || metaObject?.placeholderName || 'Deleted Object'}
+              {children}
             </span>
           </AnimatePopover>
 
@@ -68,7 +102,7 @@ const InlineMetaElement: FC<RenderElementProps> = ({ element, children, attribut
           )}
         </>
       </span>
-      {children}
+      {/*{children}*/}
     </span>
   )
 }

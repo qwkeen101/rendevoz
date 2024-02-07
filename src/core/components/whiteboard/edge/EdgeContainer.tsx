@@ -2,13 +2,15 @@ import { css } from '@emotion/css'
 import EdgeOverlay from './EdgeOverlay'
 import TreeEdge from './Edge'
 import { useFlow, useWhiteboardEdges } from '../StateHooks'
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 import { useWhiteboardInstance } from '@/core/components/whiteboard/hooks'
 
 const TreeEdgeContainer = () => {
   const treeEdges = useWhiteboardEdges()
   const flow = useFlow()
   const instance = useWhiteboardInstance()
+  const edgeLayerRef = useRef<SVGGElement>(null)
+  instance.getEdgeLayer = () => edgeLayerRef.current
   const container = flow.parentContainerEle?.getBoundingClientRect()
   console.log('i m here')
   useEffect(() => {
@@ -29,7 +31,7 @@ const TreeEdgeContainer = () => {
       height={container?.height}
       role="data-container"
     >
-      <g>
+      <g ref={edgeLayerRef}>
         {Array.from(treeEdges.values()).map(edge => {
           return <TreeEdge key={edge.id} edge={edge} />
         })}

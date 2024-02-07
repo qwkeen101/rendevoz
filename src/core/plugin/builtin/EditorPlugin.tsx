@@ -153,8 +153,8 @@ const BuiltinTypeToRegistered: Record<CustomElement['type'], RegisterdEditorElem
   },
   divider: {
     renderElement: props => (
-      <div contentEditable={false} className={dividerClassName}>
-        {props.children}
+      <div contentEditable={false} style={{ width: '100%', padding: '10px 0px' }}>
+        <div className={dividerClassName}>{props.children}</div>
       </div>
     ),
     type: 'divider'

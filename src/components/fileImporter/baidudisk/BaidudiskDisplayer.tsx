@@ -285,7 +285,7 @@ export const GlobalBaidudisk = memo(() => {
   }
   return (
     <Modal
-      zIndex={5000}
+      zIndex={10000}
       visible={visible}
       style={{
         width: 'min(60vw, 800px)',

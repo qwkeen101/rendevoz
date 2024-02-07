@@ -21,13 +21,23 @@ const SidebarPanel = ({ direction }: { direction: 'right' | 'left' }) => {
   const os = getOS()
   const [width, setWidth] = useState(240)
   const fullScreen = useIsFullscreen(true)
+  const [isResizing, setIsResizing] = useState(false)
   return (
     <Resizable
       defaultSize={{ width: 260, height: '100%' }}
+      onResizeStart={() => setIsResizing(true)}
       size={{ width: realOpen ? width : 0, height: '100%' }}
       minWidth={realOpen ? 240 : 0}
       onResizeStop={(event, direction, elementRef, delta) => {
         setWidth(elementRef.clientWidth)
+        setIsResizing(false)
+      }}
+      handleStyles={{
+        right: {
+          transition: 'background 0.2s ease',
+          backgroundColor: isResizing ? 'var(--select-color)' : undefined,
+          width: 5
+        }
       }}
       enable={{ right: direction === 'right', left: direction === 'left' }}
       style={{

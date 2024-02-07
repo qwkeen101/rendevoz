@@ -15,6 +15,7 @@ const withShortcut = (editor: CustomEditor) => {
       const block = Editor.above(editor, {
         match: n => Editor.isBlock(editor, n)
       })
+      if (!block) return
       const path = block ? block[1] : []
       const start = Editor.start(editor, path)
       const range = { anchor, focus: start }
@@ -30,7 +31,7 @@ const withShortcut = (editor: CustomEditor) => {
             id: Id.getId()
           }
           Transforms.setNodes<SlateElement>(editor, newProperties, {
-            match: n => Editor.isBlock(editor, n)
+            at: path
           })
           const end = Editor.end(editor, path)
           setTimeout(() => {
@@ -46,7 +47,7 @@ const withShortcut = (editor: CustomEditor) => {
           type
         }
         Transforms.setNodes<SlateElement>(editor, newProperties, {
-          match: n => Editor.isBlock(editor, n)
+          at: path
         })
         const end = Editor.end(editor, path)
         console.log(end)

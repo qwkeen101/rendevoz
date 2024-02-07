@@ -61,16 +61,17 @@ export const defaultHandler: DefaultAddElementHandler = (type, instance, mode, o
       handleAddTableAtPath(addElementPath, editor)
       break
     case 'link': {
-      const pos = instance.blockOps?.getCurrentCursorBlockBounding()
-      if (pos) {
-        setTimeout(() => {
+      instance.overlayOps?.close()
+      setTimeout(() => {
+        const pos = instance.blockOps?.getCurrentCursorBounding()
+        if (pos) {
           instance.overlayOps?.open('linkForm', {
             x: pos.x,
-            y: pos.bottom - 10
+            y: pos.y + pos.height / 2
           })
-        })
-      }
-      break
+        }
+      }, 350)
+      return
     }
     case 'synced':
       handleAddSyncedBlock(addElementPath, editor)
@@ -78,7 +79,7 @@ export const defaultHandler: DefaultAddElementHandler = (type, instance, mode, o
     case 'emoji': {
       instance.overlayOps?.close()
       setTimeout(() => {
-        const pos = instance.blockOps?.getCurrentCursorBlockBounding()
+        const pos = instance.blockOps?.getCurrentCursorBounding()
         if (pos) {
           instance.overlayOps?.open('emojiPicker', {
             x: pos.x,

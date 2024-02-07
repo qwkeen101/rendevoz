@@ -63,13 +63,14 @@ const InlineMetaPicker = ({ element, children, attributes }: RenderElementProps)
   return (
     <span
       {...attributes}
-      style={{ background: Colors.Background.ButtonActive, padding: '2px 4px', margin: '0px 4px', borderRadius: 4, fontSize: '0.9em' }}
+      style={{ background: Colors.Background.ButtonActive, padding: '2px 4px', borderRadius: 4, fontSize: '0.9em' }}
     >
       <AnimatePopover
         positions={['top', 'bottom']}
         padding={4}
+        reposition
         content={
-          <WithBorder padding={4}>
+          <WithBorder>
             <MetaFilterer
               showCreate={{
                 whiteboard: true,

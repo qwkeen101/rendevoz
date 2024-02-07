@@ -15,7 +15,7 @@ import { captureWebpage, saveImageLocally } from '@/utils/img'
 import { PanZoom } from 'panzoom'
 import { GlobalEventEmitter } from '@/events'
 import { normalizeScreenshot } from './normalizeScreenshot'
-import { ObjectStore } from '@/api/stores'
+import { MetaStore, ObjectStore } from '@/api/stores'
 import { useTranslation } from 'react-i18next'
 import { atom } from 'jotai'
 import ScreenShotStatus from './ScreenShotStatus'
@@ -61,8 +61,6 @@ const GlobalScreenShot = () => {
   const panzoomRef = useRef<PanZoom>()
   const isPressed = useRef(false)
   const framerId = useRef(0)
-  const controls = useAnimationControls()
-  const { t } = useTranslation()
   const pointerHandler = useMemoizedFn((e: PointerEvent) => {
     if (toolbarRef.current?.contains(e.target)) {
       selectionBoxState?.visible && setSelectionBoxState({ visible: false })
@@ -523,13 +521,6 @@ const GlobalScreenShot = () => {
       const root = document.getElementById('root')
       if (root) {
         document.body.style.overflow = 'hidden'
-        // const instance = panzoom(root, {
-        //   beforeMouseDown: e => {
-        //     return true
-        //   },
-        //   zoomSpeed: 0.05
-        // })
-        // panzoomRef.current = instance
       }
       document.addEventListener('pointerup', pointerHandler, true)
       document.addEventListener('pointerdown', pointerHandler, true)
@@ -604,43 +595,6 @@ const GlobalScreenShot = () => {
     })
     return blob
   })
-
-  useEffect(() => {
-    if (previewState?.visible) {
-      controls.set({
-        x: rect?.left,
-        y: rect?.top,
-        width: rect?.width,
-        height: rect?.height,
-        boxShadow: 'rgba(0, 0, 0, 0.35) 0px 5px 30px',
-        position: 'absolute'
-      })
-      setTimeout(async () => {
-        const galleryRect = GlobalPocketInstance?.getRect()
-        if (galleryRect) {
-          console.log(galleryRect)
-          await controls.start({
-            y: galleryRect.top - 50,
-            x: galleryRect.left,
-            width: 30,
-            height: 30,
-            scale: 1,
-            transition: { duration: 1 }
-          })
-          await controls.start({
-            y: galleryRect.top + 10,
-            opacity: 0,
-            transition: { duration: 0.5 }
-          })
-        }
-        GlobalPocketInstance?.addObject({
-          type: 'image',
-          url: previewState.src
-        })
-        setPreviewState({ visible: false })
-      }, 1300)
-    }
-  }, [previewState?.visible])
   const startPos = selectionBoxState?.startPosition
   const endPos = selectionBoxState?.endPosition
   const rect = selectionBoxState?.rect
@@ -775,22 +729,29 @@ const GlobalScreenShot = () => {
                       if (!normalizedImageMeta) {
                         return
                       }
-                      const one = await ObjectStore('image').addOne({
-                        ...normalizedImage,
-                        imageUrl: imgPath
-                      })
-                      GlobalEventEmitter().emit('global', {
-                        type: 'globalNeedAddMetaObject',
-                        data: {
-                          currentObject: {
+                      const one = await ObjectStore('image').addOneWithMeta(
+                        {
+                          ...normalizedImage,
+                          url: imgPath
+                        },
+                        {
+                          showMetaModal: true,
+                          currentMeta: {
                             type: 'image',
                             coverImgSrc: imgPath,
-                            objectId: one.id,
                             description: ocrResult,
                             ...normalizedImageMeta
-                          },
-                          fromMetas: relatedMeta
+                          }
                         }
+                      )
+                      relatedMeta.forEach(v => {
+                        MetaStore.addMetaLink(
+                          {
+                            sourceId: v.id,
+                            targetId: one.meta.id
+                          },
+                          true
+                        )
                       })
                     }
                     break
@@ -841,11 +802,9 @@ const GlobalScreenShot = () => {
       )}
     </div>
   )
-  const renderPreview = () => <motion.img animate={controls} src={previewState?.src} style={{ position: 'absolute', zIndex: 1100 }} />
   return createPortal(
     <>
       {screenShotLayerVisible && renderScreenShotLayer()}
-      {previewState?.visible && renderPreview()}
     </>,
     document.body,
     'screen-shot-layer'

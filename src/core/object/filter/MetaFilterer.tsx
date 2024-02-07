@@ -1,5 +1,5 @@
 import { Content, VirtualList, Button } from '@/components'
-import { CSSProperties, useEffect, useMemo, useRef, useState } from 'react'
+import { CSSProperties, useEffect, useMemo, useRef, useState, memo } from 'react'
 import { MetaStore, ObjectStore } from '@/api/stores'
 import { Rendevoz } from '@/core/rendevoz'
 import { ClassName } from 'rendevoz'
@@ -8,7 +8,7 @@ import fuzzysort from 'fuzzysort'
 import { Virtualizer } from '@tanstack/react-virtual'
 import { Colors, KEY } from '@/consts'
 import isHotkey from 'is-hotkey'
-import { isValidHttpUrl } from '@/core/components/webpage/utils'
+import ContentDisplayer from '@/core/components/group/components/gallery/items/ContentDisplayer'
 
 interface MetaFiltererProps {
   withInput?: boolean
@@ -18,6 +18,7 @@ interface MetaFiltererProps {
   style?: CSSProperties
   mode?: 'recentlyCreate' | 'recentlyView' | 'type'
   onInputLink?: (l: string) => void
+  enablePreview?: boolean
   showCreate?: {
     note?: boolean
     whiteboard?: boolean
@@ -58,6 +59,7 @@ const MetaFilterer = ({
     arr.sort((b, a) => a.count - b.count)
     return arr
   }, [])
+  const [previewMetaId, setPreviewMetaId] = useState<number>()
   useEffect(() => {
     setFiltererState(s => ({ ...s, currentInput }))
   }, [currentInput])
@@ -165,6 +167,7 @@ const MetaFilterer = ({
       }
       const webpageMeta = await ObjectStore('webpage').addOneWithMeta({ url })
       onChange?.(webpageMeta.meta.id)
+      return
     }
     if (item.id) {
       onChange?.(item.id)
@@ -173,73 +176,98 @@ const MetaFilterer = ({
   }
 
   return (
-    <Content style={{ width: 440, height: 200, display: 'flex', flexDirection: 'column', ...style }}>
-      {withInput && mode === 'type' && filtererState.currentTypeItems && (
-        <input
-          style={{
-            width: '100%',
-            fontSize: 14,
-            padding: '2px 6px',
-            borderBottom: `1px solid ${Colors.Background.Border}`,
-            marginBottom: 3
-          }}
-          placeholder="Search one object"
-          defaultValue={filtererState.currentInput}
-          onCompositionEnd={e => {
-            iscompo.current = false
-            setFiltererState(s => ({ ...s, currentInput: e.target.value }))
-          }}
-          onCompositionStart={() => (iscompo.current = true)}
-          onChange={v => {
-            if (!iscompo.current) {
-              setFiltererState(s => ({ ...s, currentInput: v.target.value }))
-            }
-          }}
-          autoFocus={true}
-          className={ClassName.noStyleInput}
-        />
-      )}
-      {filtererState.currentVisibleItems || filtererState.currentTypeItems ? (
-        <VirtualList
-          ref={virtualizerRef}
-          estimateSize={30}
-          withKeyboardNavigation={true}
-          onSelect={item => {
-            handleSelectItem(item)
-          }}
-          items={filtererState.currentVisibleItems || filtererState.currentTypeItems || []}
-          renderItem={(item, idx, selected) => <ButtonItem onClick={() => handleSelectItem(item)} item={item} selected={!!selected} />}
-          style={{ width: '100%', height: '100%' }}
-        />
-      ) : visibleTypes?.length ? (
-        <VirtualList
-          withKeyboardNavigation={true}
-          estimateSize={30}
-          items={visibleTypes}
-          onSelect={item => {
-            setFiltererState({ currentSelectType: item.type })
-          }}
-          renderItem={(item, idx, selected) => (
-            <Button.IconButton
-              style={{
-                lineHeight: 1.3,
-                fontSize: '14px'
-              }}
-              onClick={() => setFiltererState({ currentSelectType: item.type })}
-              icon={Rendevoz.Utils.Object.getMetaObjectIcon(item.type)}
-              text={Rendevoz.Utils.Meta.getTypeName(item.type)}
-              selected={selected || undefined}
-              suffixStr={item.count}
-            />
-          )}
-          style={{ width: '100%', height: '100%' }}
-        />
-      ) : null}
+    <Content flex>
+      <Content style={{ width: 440, height: 200, display: 'flex', flexDirection: 'column', ...style }}>
+        {withInput && mode === 'type' && filtererState.currentTypeItems && (
+          <input
+            style={{
+              width: '100%',
+              fontSize: 14,
+              padding: '2px 6px',
+              borderBottom: `1px solid ${Colors.Background.Border}`,
+              marginBottom: 3
+            }}
+            placeholder="Search one object"
+            defaultValue={filtererState.currentInput}
+            onCompositionEnd={e => {
+              iscompo.current = false
+              setFiltererState(s => ({ ...s, currentInput: e.target.value }))
+            }}
+            onCompositionStart={() => (iscompo.current = true)}
+            onChange={v => {
+              if (!iscompo.current) {
+                setFiltererState(s => ({ ...s, currentInput: v.target.value }))
+              }
+            }}
+            autoFocus={true}
+            className={ClassName.noStyleInput}
+          />
+        )}
+        {filtererState.currentVisibleItems || filtererState.currentTypeItems ? (
+          <VirtualList
+            ref={virtualizerRef}
+            estimateSize={30}
+            withKeyboardNavigation={true}
+            onSelect={item => {
+              handleSelectItem(item)
+            }}
+            items={filtererState.currentVisibleItems || filtererState.currentTypeItems || []}
+            renderItem={(item, idx, selected) => (
+              <ButtonItem
+                onPointerEnter={() => {
+                  console.log(item)
+                  if ('createdAt' in item) {
+                    setPreviewMetaId(item.id)
+                  }
+                }}
+                item={item}
+                selected={!!selected}
+              />
+            )}
+            style={{ width: '100%', height: '100%', padding: '6px 0px' }}
+          />
+        ) : visibleTypes?.length ? (
+          <VirtualList
+            withKeyboardNavigation={true}
+            estimateSize={30}
+            items={visibleTypes}
+            onSelect={item => {
+              setFiltererState({ currentSelectType: item.type })
+            }}
+            renderItem={(item, idx, selected) => (
+              <Button.IconButton
+                style={{
+                  lineHeight: 1.3,
+                  fontSize: '14px',
+                  margin: '0px 4px'
+                }}
+                onClick={() => setFiltererState({ currentSelectType: item.type })}
+                icon={Rendevoz.Utils.Object.getMetaObjectIcon(item.type)}
+                text={Rendevoz.Utils.Meta.getTypeName(item.type)}
+                selected={selected || undefined}
+                suffixStr={item.count}
+              />
+            )}
+            style={{ width: '100%', height: '100%', padding: '6px 0px' }}
+          />
+        ) : null}
+      </Content>
+      {/*{previewMetaId && <ContentDisplayer metaId={previewMetaId} />}*/}
     </Content>
   )
 }
 
-const ButtonItem = ({ onClick, item, selected }: { item: MetaObject; selected: boolean; onClick: VoidFunction }) => {
+const ButtonItem = ({
+  onClick,
+  item,
+  selected,
+  onPointerEnter
+}: {
+  item: MetaObject
+  selected: boolean
+  onClick: VoidFunction
+  onPointerEnter?: VoidFunction
+}) => {
   let text = item.name || item.placeholderName
   let icon = Rendevoz.Utils.Object.getMetaObjectIcon(item.type)
   if (item.type === 'createNote') {
@@ -265,9 +293,11 @@ const ButtonItem = ({ onClick, item, selected }: { item: MetaObject; selected: b
   }
   return (
     <Button.IconButton
+      onPointerEnter={onPointerEnter}
       style={{
         fontSize: '14px',
-        padding: '2px 6px'
+        padding: '2px 6px',
+        margin: '0px 4px'
       }}
       onClick={onClick}
       icon={icon}
@@ -276,4 +306,4 @@ const ButtonItem = ({ onClick, item, selected }: { item: MetaObject; selected: b
     />
   )
 }
-export default MetaFilterer
+export default memo(MetaFilterer)

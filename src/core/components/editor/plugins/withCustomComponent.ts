@@ -1,5 +1,5 @@
 import Id from '@/utils/id'
-import { Editor, Element as SlateElement, Path, Point, Range, Transforms } from 'slate'
+import { Editor, Element as SlateElement, Node, Path, Point, Range, Transforms } from 'slate'
 import { ReactEditor } from 'slate-react'
 import { CustomEditor, CustomElement } from '~/typings'
 import { Positions } from '../utils/positions'
@@ -72,6 +72,21 @@ const withCustomComponent = (editor: CustomEditor) => {
     insertText(text)
   }
 
+  editor.isElementReadOnly = e => {
+    if (e.type === 'inline-metaObject') {
+      return true
+    }
+    return false
+  }
+  // editor.isSelectable = e => {
+  //   if (e.type === 'inline-metaObject') {
+  //     return false
+  //   }
+  //   if (editor.isVoid(e)) {
+  //     return false
+  //   }
+  //   return true
+  // }
   editor.deleteBackward = (...args) => {
     const { selection } = editor
 
@@ -91,6 +106,7 @@ const withCustomComponent = (editor: CustomEditor) => {
         }
       }
       if (match) {
+        console.log(match)
         const [block, path] = match
         if (block.type === 'code-block') {
           setTimeout(() => {
@@ -100,11 +116,14 @@ const withCustomComponent = (editor: CustomEditor) => {
         }
         const start = Editor.start(editor, path)
         const currentPrevious = Editor.previous(editor, { at: path })
+        let selectPrevious = false
         if (currentPrevious && Point.equals(selection.anchor, start)) {
-          const [block] = currentPrevious
+          const [block, path] = currentPrevious
           if (Editor.isVoid(editor, block)) {
             Transforms.removeNodes(editor, { at: path })
             return
+          } else {
+            selectPrevious = true
           }
         }
         if (block.level > 0 && Editor.isStart(editor, selection.anchor, path)) {
@@ -123,18 +142,14 @@ const withCustomComponent = (editor: CustomEditor) => {
             type: 'paragraph'
           }
           Transforms.setNodes(editor, newProperties)
-
-          if (block.type === 'list-item') {
-            Transforms.unwrapNodes(editor, {
-              match: n => !Editor.isEditor(n) && SlateElement.isElement(n) && n.type === 'bulleted-list',
-              split: true
-            })
-          }
-
+          return
+        }
+        if (selectPrevious && currentPrevious) {
+          deleteBackward(...args)
+          Transforms.select(editor, Editor.end(editor, currentPrevious[1]))
           return
         }
       }
-
       deleteBackward(...args)
     }
   }
@@ -169,7 +184,6 @@ const withCustomComponent = (editor: CustomEditor) => {
           editor.insertSoftBreak()
           return
         }
-
         const leaf = Editor.leaf(editor, selection)[0]
         const offset = selection.anchor.offset as number
         if (leaf.text[offset] === '\n') {
@@ -202,18 +216,47 @@ const withCustomComponent = (editor: CustomEditor) => {
           Transforms.splitNodes(editor, {
             always: true
           })
+          // remove marks in new line
+          // https://github.com/Rendevoz/Rendevoz/issues/89
+          const nextLinePath = Path.next(path)
+          const nextLineEle = Editor.node(editor, nextLinePath)[0]
+          console.log(nextLineEle)
+          if ('type' in nextLineEle) {
+            // empty text paragraph
+            if (nextLineEle.children.length === 1 && nextLineEle.children[0].text === '') {
+              Transforms.select(editor, nextLinePath)
+              // remove all marks in new line
+              const marks = Editor.marks(editor)
+              console.log(marks)
+              if (marks) {
+                Object.keys(marks).forEach(mark => {
+                  Editor.removeMark(editor, mark)
+                  Transforms.setNodes(
+                    editor,
+                    {
+                      [mark]: undefined
+                    },
+                    {
+                      at: [...nextLinePath, 0]
+                    }
+                  )
+                })
+              }
+            }
+          }
           if ('type' in block && block.type.startsWith('heading')) {
             Transforms.setNodes(
               editor,
               { id: Id.getId(), type: 'paragraph', background: undefined, color: undefined },
-              { at: Path.next(path) }
+              { at: nextLinePath }
             )
           } else {
-            Transforms.setNodes(editor, { id: Id.getId(), background: undefined, color: undefined, folded: false }, { at: Path.next(path) })
+            Transforms.setNodes(editor, { id: Id.getId(), background: undefined, color: undefined, folded: false }, { at: nextLinePath })
           }
+
           if (offsetPath && offsetPath !== path) {
             Transforms.moveNodes(editor, {
-              at: Path.next(path),
+              at: nextLinePath,
               to: offsetPath
             })
           }

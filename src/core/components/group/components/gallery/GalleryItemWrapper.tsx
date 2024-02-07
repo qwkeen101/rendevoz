@@ -493,6 +493,7 @@ export default memo(
                     overflow: 'hidden',
                     resize: 'none',
                     cursor: 'pointer',
+                    wordBreak: 'break-word',
                     fontSize: 14,
                     pointerEvents: 'none'
                   }}

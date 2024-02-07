@@ -30,11 +30,13 @@ export const dashEdgeClazz = css({
 
 const TreeEdge: FC<{
   edge: IWhiteboardEdge
-}> = memo(({ edge }) => {
+  lineType?: IWhiteboardEdge['lineType']
+  hideArrow?: boolean
+}> = memo(({ edge, lineType: outLineType, hideArrow = false }) => {
   const { id, sourceId, targetId, targetPosition = 'left', sourcePosition = 'right', metaLinkId, lineType, lineStyle = 'straight' } = edge
   const [innerLink, setInnerLink] = useState<Partial<IWhiteboardEdge>>(edge)
   const [isEditingLabel, toggleIsEditingLabel] = useToggle(false)
-  const defaultLineType = useSelectAtomValue(WhiteboardAtom, s => s?.lineType)
+  const defaultLineType = outLineType ?? useSelectAtomValue(WhiteboardAtom, s => s?.lineType)
   const currentHighlight = useSelectAtomValue(WhiteboardStateAtom, s => s.highlightedIds)
   const realLineType = lineType || defaultLineType
   const labelRef = useRef<HTMLDivElement>(null)
@@ -91,6 +93,7 @@ const TreeEdge: FC<{
       labelContainerRef.current?.setAttribute('transform', `translate(${labelX} ${labelY})`)
     }
   }
+
   instance.values.ID_TO_EDGE_MAP.set(id, {
     drawPath,
     edit: () => toggleIsEditingLabel(true)
@@ -208,7 +211,7 @@ const TreeEdge: FC<{
         pointerEvents="none"
         ref={edgeRef}
         fill="none"
-        markerEnd={`url(#${getMarkerId('end', Colors.getAdaptColor(edge?.color) || MarkerColor.PRIMARY)})`}
+        markerEnd={hideArrow ? undefined : `url(#${getMarkerId('end', Colors.getAdaptColor(edge?.color) || MarkerColor.PRIMARY)})`}
         stroke={Colors.getAdaptColor(edge?.color) || Colors.Font.Primary}
         strokeWidth={lineStyle === 'animatedDash' || lineStyle === 'dash' ? 4 : lineStyle === 'regular' ? 4 : lineStyle === 'thick' ? 6 : 2}
       ></path>

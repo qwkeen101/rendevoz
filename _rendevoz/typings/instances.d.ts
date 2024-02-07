@@ -48,6 +48,7 @@ export type IGlobalInstance = Partial<{
       htmlLink: string
       markdown: string
       html: string
+      name: string
     }>
     closeDetails: VoidFunction
     quickAdd: (metaId: number | number[]) => void

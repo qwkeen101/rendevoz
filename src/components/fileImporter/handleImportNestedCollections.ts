@@ -1,15 +1,13 @@
 import { categorizeFilesByPath } from '@/components/fileImporter/baidudisk/handleImportAllAndCreateCollections'
 import { GlobalImporterInstance } from '@/core/global/GlobalImporter'
 import { MetaObject } from '~/typings'
-import { CollectionStore, ObjectStore } from '@/api/stores'
-import { BaidudiskInstance } from '@/components/fileImporter/baidudisk/BaidudiskDisplayer'
 
 export default async (files: File[], onCreate?: (m: MetaObject) => void, parentCollectionId?: number) => {
   const dirname = files[0].webkitRelativePath.split('/')[0]
   const normalizedPath = files[0].path.replaceAll('\\', '/')
   const curr = normalizedPath.indexOf(dirname)
   const sliced = normalizedPath.slice(0, curr) + dirname
-    console.log(normalizedPath, dirname, sliced)
+
   const categorized = categorizeFilesByPath(files, sliced)
   const rootKey = Object.keys(categorized)[0]
   const outParent = parentCollectionId

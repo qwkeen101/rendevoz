@@ -85,6 +85,19 @@ export type INodeInnerFuncs = {
   updateNodeBox: (newBox: Box) => void
   getNodeDOM: () => HTMLElement
   setNodeState: Dispatch<SetStateAction<INodeInnerState>>
+  checkMindmapDrag?: (
+    targetNode:
+      | {
+          node: IWhiteboardNode
+          direction: 'right' | 'left'
+        }
+      | undefined,
+    dragNode: IWhiteboardNode
+  ) => void
+  onSomeNodeSizeChange?: (node: IWhiteboardNode) => void
+  endDragNode?: (dragNode: IWhiteboardNode) => void
+  hasTempMindmapLink?: () => boolean
+  onAddSubNode?: (sourceNodeId: number, newNode: IWhiteboardNode, idx: number, direction: 'right' | 'left') => void
 }
 export type IEdgeInnerFuncs = {
   edit: VoidFunction
@@ -97,6 +110,11 @@ export type IWhiteboardInstance = Partial<{
   getAllNode: () => IWhiteboardNode[]
   getAllEdge: () => IWhiteboardEdge[]
   getEdge: (edgeId: number) => IWhiteboardEdge
+  mindmapOps: {
+    getFakeNodeBox: (nodeId: number) => Box | undefined
+    startDragMindmapChild: (nodeId: number, e: PointerEvent) => void
+  }
+  getEdgeLayer: () => SVGGElement | null | undefined
   deleteNode: (nodeId: number) => void
   deleteEdge: (edgeId: number) => void
   deleteNodes: (nodeIds: number[]) => void

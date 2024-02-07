@@ -45,7 +45,6 @@ const useWhiteboardAutoPan = () => {
 
   const autoPan = useMemoizedFn(() => {
     const container = flow.containerEle
-    console.log(whiteboardState.isSelecting, whiteboardState.erasing, whiteboardState.freeDrawing, flow.isDraggingNode, flow.isAddingEdge)
     if (!container || !canDrag) {
       autoPanId.current = undefined
       return

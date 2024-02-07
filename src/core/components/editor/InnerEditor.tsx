@@ -312,6 +312,7 @@ const InnerEditor: FC<InnerEditorProps> = memo(
                 editor.undo()
                 break
               case 'changeBackgroundColor':
+                console.log(event.backgroundColor, Colors.Background.Blank)
                 if (event.backgroundColor === Colors.Background.Blank) {
                   Editor.removeMark(editor, 'backgroundColor')
                 } else {

@@ -1,4 +1,4 @@
-import { Button, Content, Icon, Tooltip } from '@/components'
+import { Button, Content, Icon, Tooltip, WithBorder } from '@/components'
 import { IconNameItem } from '@/components/layout/sidebar/SidebarCollection'
 import { Zindexes } from '@/consts'
 import Colors from '@/consts/colors'
@@ -120,7 +120,7 @@ const GlobalTranslateResult = () => {
       } as TranslateResult
       setTranslateState(s => ({ ...s, loading: true }))
       try {
-        const result = await TranslateService.textTranslate(query, to, from)
+        const result = await TranslateService.localTranslate(query, to, from)
         // newResult.translatedText = normalizeTranslateResult(result.result)
         newResult.translatedText = [
           {
@@ -166,7 +166,7 @@ const TranslatePanel = () => {
         auto
         column
         gap={6}
-        style={{ overflowY: 'auto', textTransform: 'none' }}
+        style={{ overflowY: 'auto', textTransform: 'none', padding: '0px 12px 12px' }}
         className={css({
           '> div': {
             ':not(:first-child)': {
@@ -228,20 +228,7 @@ const TranslatePanel = () => {
       )
     }
     return (
-      <Content
-        ref={panelRef}
-        flex
-        auto
-        column
-        gap={8}
-        style={{ overflowY: 'auto', textTransform: 'none', paddingRight: 12 }}
-        // @ts-ignore
-        className={css({
-          '*': {
-            textTransform: 'none !important'
-          }
-        })}
-      >
+      <Content ref={panelRef} flex auto column gap={8} style={{ overflowY: 'auto', padding: '0px 12px 12px' }}>
         {translateState.currentResult?.source && <SourceRenderer source={translateState.currentResult.source} />}
         {panelState.doubleRowLayout ? (
           <>
@@ -326,10 +313,7 @@ const TranslatePanel = () => {
       }}
       default={PanelDefaultSize}
       style={{
-        background: Colors.Background.Popover,
-        padding: '6px 12px',
         borderRadius: 8,
-        boxShadow: Colors.Background.PopoverBoxShadow,
         zIndex: Zindexes.TranslatePanel
       }}
       position={panelState.currentPosition}
@@ -354,24 +338,36 @@ const TranslatePanel = () => {
           }
         }))
       }}
-      className={ClassName.Background.pseudoBlubBackground}
       dragHandleClassName="drag-handle"
     >
-      <Content flex column fullWidth fullHeight gap={10}>
-        {/* toolbar */}
+      <WithBorder
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          width: '100%',
+          height: '100%',
+          gap: 6
+        }}
+      >
         <Content
           flex
           gap={10}
           alignItems="center"
           justifyContent="space-between"
-          className={classnames(ClassName.title(FontSize['16px']), 'drag-handle')}
+          className={classnames(
+            ClassName.title(FontSize['16px']),
+            'drag-handle',
+            css({
+              flexShrink: 0
+            })
+          )}
           style={{
             overflowX: 'auto',
             whiteSpace: 'nowrap',
-            padding: '4px 0px',
             cursor: 'grab',
             flexShrink: 0,
-            overflowY: 'hidden'
+            overflowY: 'hidden',
+            padding: '12px'
           }}
         >
           <div>{t('translate.translate panel')}</div>
@@ -379,42 +375,50 @@ const TranslatePanel = () => {
             {!panelState.showHistory && (
               <>
                 {!panelState.doubleRowLayout && (
-                  <Button.IconButton
-                    selected={panelState.showOrigin || undefined}
+                  <Icon
+                    className={ClassName.flatButton(4, '4px')}
+                    size={15}
+                    data-active={panelState.showOrigin || undefined}
                     onClick={() => {
                       setPanelState(s => ({
                         ...s,
                         showOrigin: !s.showOrigin
                       }))
                     }}
-                    icon="park-switch"
+                    name="park-switch"
                     tooltip={t('translate.show original')}
                   />
                 )}
-                <Button.IconButton
-                  selected={panelState.doubleRowLayout || undefined}
+                <Icon
+                  className={ClassName.flatButton(4, '4px')}
+                  size={15}
+                  data-active={panelState.doubleRowLayout || undefined}
                   onClick={() => {
                     setPanelState(s => ({
                       ...s,
                       doubleRowLayout: !s.doubleRowLayout
                     }))
                   }}
-                  icon="park-layout-two"
+                  name="park-layout-two"
                   tooltip={t('translate.double row layout')}
                 />
               </>
             )}
 
-            <Button.IconButton
-              selected={panelState.showHistory || undefined}
-              icon="park-history"
+            <Icon
+              className={ClassName.flatButton(4, '4px')}
+              size={15}
+              data-active={panelState.showHistory || undefined}
+              name="park-history"
               tooltip={t('translate.history')}
               onClick={() => {
                 setPanelState(s => ({ ...s, showHistory: !s.showHistory }))
               }}
             />
-            <Button.IconButton
-              icon="park-close"
+            <Icon
+              className={ClassName.flatButton(4, '4px')}
+              size={15}
+              name="park-close"
               tooltip={t('general.close')}
               onClick={() => {
                 GlobalTranslateInstance.close?.()
@@ -423,7 +427,7 @@ const TranslatePanel = () => {
           </Content>
         </Content>
         {panelState.showHistory ? renderHistory() : renderPanel()}
-      </Content>
+      </WithBorder>
     </ResizeAndDrag>
   )
 }

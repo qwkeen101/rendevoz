@@ -40,8 +40,8 @@ export type IWhiteboardNode = {
   width?: number
   height?: number
   resized?: boolean
-  // nested in mindmap
-  nested?: boolean
+  // mindmap root id
+  rootId?: number
   // mindmap side
   side?: 'left' | 'right'
   z: number
@@ -61,6 +61,7 @@ export type IWhiteboardNode = {
     }
   | {
       type: 'mindmap'
+      nodeType: 'text' | 'card'
       rightChildren?: IWhiteboardMindmap[]
       leftChildren?: IWhiteboardMindmap[]
     }

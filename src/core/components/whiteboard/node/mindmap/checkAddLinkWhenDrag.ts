@@ -1,10 +1,49 @@
 import { IWhiteboardInstance, IWhiteboardNode } from '~/typings'
 import produce from 'immer'
 import { getBoxOfNodes } from '@/core/components/whiteboard/utils'
+import { findSubChildren } from '@/core/components/whiteboard/node/mindmap/handleNodeDragEnd'
 
 const middleSpacing = 100
 const xSpacing = 200
-const columnSpacing = 10
+// 垂直方向的间隔
+const columnSpacing = 25
+// 脑图父节点和子节点之间的间隔, 水平的
+const parentChildSpacing = 100
+const checkY = (midY: number, node: IWhiteboardNode) => {
+  if (midY >= node.y - columnSpacing && midY <= node.y + node.height + columnSpacing) {
+    return true
+  }
+  return false
+}
+
+const checkX = (direction: 'right' | 'left', dragNode: IWhiteboardNode, node: IWhiteboardNode & { type: 'mindmap' }) => {
+  if (direction === 'right') {
+    // 有右子节点，需要小于parentChildSpacing
+    if (node.rightChildren?.length) {
+      if (dragNode.x - (node.x + node.width!) <= parentChildSpacing) {
+        return true
+      }
+      return false
+    }
+    // 无右子节点，小于xSpacing即可
+    if (dragNode.x - (node.x + node.width!) <= xSpacing) {
+      return true
+    }
+    return false
+  }
+  if (direction === 'left') {
+    if (node.leftChildren?.length) {
+      if (Math.abs(dragNode.x + dragNode.width! - node.x) <= parentChildSpacing) {
+        return true
+      }
+      return false
+    }
+    if (Math.abs(dragNode.x + dragNode.width! - node.x) <= xSpacing) {
+      return true
+    }
+    return false
+  }
+}
 export default (currentNode: IWhiteboardNode, instance: IWhiteboardInstance, e: PointerEvent) => {
   const transformed = instance.coordOps?.transformWindowPositionToPosition({ x: e.clientX, y: e.clientY })
   if (currentNode.width === undefined || currentNode.height === undefined) return
@@ -12,7 +51,7 @@ export default (currentNode: IWhiteboardNode, instance: IWhiteboardInstance, e: 
     const allNodes = instance.getAllNode?.()
     const nodesMap = new Map(allNodes?.map(i => [i.id, i]))
     const nestedNodes = allNodes?.filter(
-      i => (i.type === 'mindmap' || i.nested) && i.id !== currentNode.id && i.width !== undefined && i.height !== undefined
+      i => (i.type === 'mindmap' || i.rootId) && i.id !== currentNode.id && i.width !== undefined && i.height !== undefined
     )
     const midX = currentNode.x + currentNode.width / 2
     const midY = currentNode.y + currentNode.height / 2
@@ -22,24 +61,57 @@ export default (currentNode: IWhiteboardNode, instance: IWhiteboardInstance, e: 
       const expanded = produce(nestedNodes, draft => {
         draft.forEach(n => {
           // todo: should get all nested subchildren
-          if (n.type === 'mindmap' && (n.rightChildren?.length || n.leftChildren?.length)) {
+          if ((n.type === 'mindmap' && (n.rightChildren?.length || n.leftChildren?.length)) || n.rootId) {
             let rightBox = undefined
             let leftBox = undefined
-            if (n.rightChildren?.length) {
-              rightBox = getBoxOfNodes(
-                n.rightChildren
-                  .map(i => i.root)
-                  .map(id => nodesMap.get(id))
-                  .filter(i => i) as IWhiteboardNode[]
-              )
+            if (n.type === 'mindmap') {
+              if (n.rightChildren?.length) {
+                rightBox = getBoxOfNodes(
+                  n.rightChildren
+                    .map(i => i.root)
+                    .map(id => nodesMap.get(id))
+                    .filter(i => i) as IWhiteboardNode[]
+                )
+              }
+              if (n.leftChildren?.length) {
+                leftBox = getBoxOfNodes(
+                  n.leftChildren
+                    .map(i => i.root)
+                    .map(id => nodesMap.get(id))
+                    .filter(i => i) as IWhiteboardNode[]
+                )
+              }
             }
-            if (n.leftChildren?.length) {
-              leftBox = getBoxOfNodes(
-                n.leftChildren
-                  .map(i => i.root)
-                  .map(id => nodesMap.get(id))
-                  .filter(i => i) as IWhiteboardNode[]
-              )
+            if (n.rootId) {
+              try {
+                const rootMindmap = instance.getNode?.(n.rootId) as (IWhiteboardNode & { type: 'mindmap' }) | undefined
+                if (rootMindmap) {
+                  const children = findSubChildren(
+                    n.side === 'right' ? rootMindmap.rightChildren || [] : rootMindmap.leftChildren || [],
+                    n.id
+                  )
+                  if (children && children.length) {
+                    if (n.side === 'right') {
+                      rightBox = getBoxOfNodes(
+                        children
+                          .map(i => i.root)
+                          .map(id => nodesMap.get(id))
+                          .filter(i => i) as IWhiteboardNode[]
+                      )
+                    }
+                    if (n.side === 'left') {
+                      leftBox = getBoxOfNodes(
+                        children
+                          .map(i => i.root)
+                          .map(id => nodesMap.get(id))
+                          .filter(i => i) as IWhiteboardNode[]
+                      )
+                    }
+                  }
+                }
+              } catch (e) {
+                console.error(e)
+              }
             }
             if (leftBox || rightBox) {
               const minY = Math.min(leftBox?.top ?? Number.MAX_SAFE_INTEGER, rightBox?.top ?? Number.MAX_SAFE_INTEGER)
@@ -64,92 +136,70 @@ export default (currentNode: IWhiteboardNode, instance: IWhiteboardInstance, e: 
       // sort by x, from left to right
       yAvailableNodes.sort((b, a) => b.x - a.x)
       // 可用节点的x值
-      let availableNode:
-        | {
-            node: IWhiteboardNode
-            direction: 'left' | 'right'
-          }
-        | undefined = undefined
-      // 这是判断右树，判断左树应该还有一套
-      yAvailableNodes.find((n, idx, arr) => {
-        const prev = arr[idx - 1]
-        const next = arr[idx + 1]
-        const nRight = n.x + n.width!
-        // 如果有前一个节点，就只能添加到右边
-        if (prev) {
-          if (Math.abs(n.x - right) > xSpacing) {
-            return false
-          }
-          availableNode = {
-            node: n,
-            direction: n.side || 'right'
-          }
-          return true
-        } else {
-          // first, check if left
-          if (midX < n.x + n.width! / 2) {
-            if (right < n.x) {
-              // x超出范围
-              if (Math.abs(n.x - right) > xSpacing) {
-                return false
+      const xAvailableNodes: {
+        node: IWhiteboardNode
+        direction: 'left' | 'right'
+      }[] = []
+      // 这里判断在x上符合的节点，分两种，根节点和子节点，根节点可以有左右，子节点只能在它那个方向创建
+      yAvailableNodes.forEach((n, idx, arr) => {
+        const nRight = n.width! + n.x
+        // 子节点
+        if ('side' in n) {
+          if (n.side === 'right') {
+            // 拖动节点的左边要在本节点的右边的右侧
+            if (currentNode.x >= nRight) {
+              if (checkX('right', currentNode, n)) {
+                xAvailableNodes.push({
+                  node: n,
+                  direction: 'right'
+                })
               }
             }
-            // is left
-            availableNode = {
-              node: n,
-              direction: 'left'
-            }
-            return true
           }
-
-          // 如果有后一个节点，判定是否拖动的节点的left在后一个节点midx以前
-          if (next) {
-            if (currentNode.x <= next.x + next.width! / 2) {
-              // 就算有后一个节点，也不能超出范围
-              if (currentNode.x > nRight) {
-                if (Math.abs(currentNode.x - nRight) > xSpacing) {
-                  return false
-                }
+          if (n.side === 'left') {
+            // 拖动节点的右边要在本节点的左边的左侧
+            if (right <= n.x) {
+              if (checkX('left', currentNode, n)) {
+                xAvailableNodes.push({
+                  node: n,
+                  direction: 'left'
+                })
               }
-              availableNode = {
+            }
+          }
+        }
+        // 根节点
+        else {
+          if (midX >= n.x + n.width! / 2) {
+            if (checkX('right', currentNode, n)) {
+              xAvailableNodes.push({
                 node: n,
                 direction: 'right'
-              }
-              return true
+              })
             }
-            // 向后一个节点判定
-            return false
           } else {
-            if (currentNode.x > nRight) {
-              if (Math.abs(currentNode.x - nRight) > xSpacing) {
-                return false
-              }
+            if (checkX('left', currentNode, n)) {
+              xAvailableNodes.push({
+                node: n,
+                direction: 'left'
+              })
             }
-            availableNode = {
-              node: n,
-              direction: 'right'
-            }
-            return true
-            // 没有后一个节点，判定是否在x的范围内
           }
         }
       })
-      if (availableNode !== undefined) {
-        const availableX = availableNode.node.x as number
-        // 一列节点中寻找
-        const columnNodes = yAvailableNodes.filter(i => i.x === availableX)
-        if (columnNodes.length === 1) {
-          return columnNodes[0]
-        }
-        // 按照从上到下排列
-        columnNodes.sort((b, a) => b.y - a.y)
-        const finalNode = columnNodes.find(i => {
-          if (midY >= i.y - columnSpacing && midY <= i.y + i.height + columnSpacing) {
+
+      if (xAvailableNodes.length) {
+        //从上到下排列
+        xAvailableNodes.sort((b, a) => b.node.y - a.node.y)
+        const target = xAvailableNodes.find(i => {
+          if (checkY(midY, i.node)) {
             return true
           }
           return false
         })
-        return finalNode
+        if (target) {
+          return target
+        }
       }
     }
   }

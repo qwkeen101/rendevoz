@@ -1,4 +1,4 @@
-import { FC } from 'react'
+import { FC, useState } from 'react'
 import { ReactEditor, RenderElementProps, useSlateStatic } from '../slate-react'
 import { CustomElement } from '~/typings'
 import { Transforms } from 'slate'
@@ -10,18 +10,24 @@ import useReadOnlyEditor from '../hooks/useReadOnly'
 import CodeEditor from '@/core/components/code/CodeEditor'
 import { CodeLangs } from '@/core/components/code/CodeHeader'
 import { ClassName } from 'rendevoz'
+import { Colors } from '@/consts'
+import { useIsIn } from '@/hooks'
 
 const Code: FC<RenderElementProps> = ({ element, attributes, children }) => {
   const codeEle = element as CustomElement & { type: 'code-block' }
   const editor = useSlateStatic()
   const readOnly = useReadOnlyEditor()
+  const { ref, isIn } = useIsIn()
+
   return (
     <div
       className="editor-disable-format"
       style={{
         border: '1px solid var(--border-background)',
-        borderRadius: 8
+        borderRadius: 8,
+        paddingBottom: 24
       }}
+      ref={ref}
       contentEditable={false}
     >
       {children}
@@ -30,6 +36,7 @@ const Code: FC<RenderElementProps> = ({ element, attributes, children }) => {
         alignItems="center"
         justifyContent="space-between"
         gap={20}
+        className={'font-size-13 transparent-font'}
         style={{
           padding: '5px 5px 0px',
           fontSize: 14
@@ -37,11 +44,12 @@ const Code: FC<RenderElementProps> = ({ element, attributes, children }) => {
         onClick={() => ReactEditor.blur(editor)}
       >
         <input
-          className={ClassName.noStyleInput}
           placeholder={'Add title...'}
           defaultValue={codeEle.title}
           style={{
             width: '100%',
+            opacity: codeEle.title ? 1 : isIn ? 1 : 0,
+            transition: 'opacity 0.2s ease',
             paddingLeft: 4
           }}
           onBlur={e => {

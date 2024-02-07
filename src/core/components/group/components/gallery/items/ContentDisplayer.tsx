@@ -33,7 +33,7 @@ const tweetStyles = {
   }
 }
 export default memo(
-  ({ metaId, hideCoverIfEmpty, onClick }: { metaId: number; hideCoverIfEmpty?: boolean; onClick: React.MouseEventHandler }) => {
+  ({ metaId, hideCoverIfEmpty, onClick }: { metaId: number; hideCoverIfEmpty?: boolean; onClick?: React.MouseEventHandler }) => {
     const meta = MetaStore.useValue(metaId)
     const fitImage = useSelectAtomValue(GroupStateAtom, s => s.currentView?.options.fitImage) ?? false
     const obj = ObjectStore(meta.type).useValue(meta?.objectId)

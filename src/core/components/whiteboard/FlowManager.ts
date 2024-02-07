@@ -140,7 +140,9 @@ class FlowManager {
       if (node) {
         const box = entry.contentRect
         const newSize = {
-          width: trimNumber(node.width || (node.expanded ? box.width : Math.min(Math.max(box.width + DEFAULT_NODE_PADDING, DEFAULT_NODE_WIDTH), 500))),
+          width: trimNumber(
+            node.width || (node.expanded ? box.width : Math.min(Math.max(box.width + DEFAULT_NODE_PADDING, DEFAULT_NODE_WIDTH), 500))
+          ),
           height: trimNumber(box.height)
         }
         if (newSize.width !== box.width && entry.target instanceof HTMLElement) {
@@ -151,11 +153,21 @@ class FlowManager {
     }
     if (batchNewSize.length) {
       setTimeout(() => {
+        const nodeFuncArr = Array.from(this.instance.values.ID_TO_NODE_MAP.values())
         this.instance.updateWhiteboard?.(w => {
           batchNewSize.forEach(s => {
             const o = w.nodes?.get(s.id)
             if (o) {
-              w.nodes?.set(s.id, { ...o, ...s })
+              const newNode = { ...o, ...s }
+              setTimeout(() => {
+                nodeFuncArr.forEach(i => {
+                  const n = this.instance.getNode?.(s.id)
+                  if (n) {
+                    i.onSomeNodeSizeChange?.(n)
+                  }
+                })
+              })
+              w.nodes?.set(s.id, newNode)
             }
           })
         }, false)
@@ -244,8 +256,8 @@ class FlowManager {
         inversePatches
       })
     }
-    await ObjectStore('whiteboard').updateOne(afterRequestState)
     this.cachedRequest = []
+    await ObjectStore('whiteboard').updateOne(afterRequestState)
   }
 }
 

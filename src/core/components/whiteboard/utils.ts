@@ -61,7 +61,7 @@ export const isPointerOnContainer = (e: PointerEvent | MouseEvent, instance: IWh
 }
 const handleOffset = 4
 export const getHandlePosition = (nodeId: number, handlePosition: EdgePosition, instance: IWhiteboardInstance) => {
-  const realtimeNodeBox = instance.values.ID_TO_NODE_MAP.get(nodeId)?.getRealtimeBox()
+  const realtimeNodeBox = instance.mindmapOps?.getFakeNodeBox(nodeId) || instance.values.ID_TO_NODE_MAP.get(nodeId)?.getRealtimeBox()
   if (!realtimeNodeBox) {
     throw new Error('Can not find node: ' + nodeId)
   }

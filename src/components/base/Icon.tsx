@@ -1,7 +1,7 @@
-import React, { cloneElement, CSSProperties, DetailedHTMLProps, forwardRef, HTMLAttributes } from 'react'
+import React, { cloneElement, CSSProperties, DetailedHTMLProps, forwardRef, HTMLAttributes, ReactElement } from 'react'
 import { Property } from 'csstype'
 import { default as IconPark, IconRender } from '@icon-park/react/es/all'
-import { Content } from '.'
+import { Content, Tooltip } from '.'
 import CustomIcon from '../custom/icons/CustomIcon'
 import classNames from 'classnames'
 import { css } from '@emotion/css'
@@ -25,6 +25,7 @@ export interface IconProps extends DetailedHTMLProps<HTMLAttributes<HTMLDivEleme
   onPointerUp?: React.PointerEventHandler
   iconStyle?: CSSProperties
   draggable?: boolean
+  tooltip?: string | ReactElement
 }
 const disableSvg = css({
   svg: {
@@ -35,7 +36,10 @@ const disableSvg = css({
   }
 })
 const Icon = forwardRef<HTMLDivElement, IconProps>(
-  ({ name, size, strokeWidth, fill, spin, theme, className, iconStyle, cursor, color, onClick, containerStyle, style, ...rest }, ref) => {
+  (
+    { name, tooltip, size, strokeWidth, fill, spin, theme, className, iconStyle, cursor, color, onClick, containerStyle, style, ...rest },
+    ref
+  ) => {
     const s: React.CSSProperties = {
       cursor: cursor,
       userSelect: 'none',
@@ -63,7 +67,22 @@ const Icon = forwardRef<HTMLDivElement, IconProps>(
     }
     const ele = renderIcon(name)
     if (!ele) return null
-
+    if (tooltip) {
+      return (
+        <Tooltip content={tooltip} ref={ref}>
+          <Content
+            {...rest}
+            style={{ ...containerStyle, ...s }}
+            className={classNames(className, disableSvg)}
+            onClick={onClick}
+            flex
+            centered
+          >
+            {ele}
+          </Content>
+        </Tooltip>
+      )
+    }
     return (
       <Content
         {...rest}

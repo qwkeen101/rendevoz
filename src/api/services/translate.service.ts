@@ -77,7 +77,29 @@ const TranslateService = {
       })
     }
     return result.data.result.result
+  },
+  localTranslate: async (query: string, to = 'zh', from?: string) => {
+    authCu.token = await fetch('https://edge.microsoft.com/translate/auth').then(res => res.text())
+    return await MicrosoftTranslate(query)
   }
+}
+const authCu = {
+  token: '',
+  fetched: Date.now()
+}
+const MicrosoftTranslate = async (query: string) => {
+  const result = await fetch(
+    'https://api-edge.cognitive.microsofttranslator.com/translate?from=&to=zh-Hans&api-version=3.0&includeSentenceLength=true',
+    {
+      method: 'POST',
+      body: JSON.stringify([{ Text: query }]),
+      headers: {
+        'Content-type': 'application/json',
+        Authorization: `Bearer ${authCu.token}`
+      }
+    }
+  ).then(res => res.json())
+  return result[0].translations[0].text
 }
 
 export default TranslateService

@@ -38,6 +38,7 @@ assignProperties(GlobalInstance, {
         link: link,
         htmlLink: `<a href="${link}">${object.name || object.placeholderName || ''}</a>`,
         markdown: `[${object.name || object.placeholderName || ''}](${link})`,
+        name: object.name || object.placeholderName,
         html: renderToStaticMarkup(
           <div style={{ color: blackFont }}>
             <div>
@@ -92,7 +93,7 @@ assignProperties(GlobalInstance, {
         case 'text': {
           const content = [
             new ClipboardItem({
-              'text/plain': new Blob([ls.map(i => i.link).join('\n')], { type: 'text/plain' })
+              'text/plain': new Blob([ls.map(i => i.name).join('\n')], { type: 'text/plain' })
             })
           ]
           navigator.clipboard.write(content)

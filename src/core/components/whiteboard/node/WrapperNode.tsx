@@ -31,6 +31,8 @@ import eventHandlers from '@/core/components/whiteboard/node/hooks/eventHandlers
 import useNodeResize from '@/core/components/whiteboard/node/hooks/useNodeResize'
 import useNodeDrag from '@/core/components/whiteboard/node/hooks/useNodeDrag'
 import { useSetAtom } from 'jotai'
+import MindmapNode from '@/core/components/whiteboard/node/mindmap/MindmapNode'
+import AddSubMindmapIndicator from '@/core/components/whiteboard/node/mindmap/AddSubMindmapIndicator'
 
 export type NodeInnerState = INodeInnerState
 export interface InnerNodeProps {
@@ -239,7 +241,8 @@ const WrapperNode = ({ node }: { node: IWhiteboardNode }) => {
             }}
           />
         )
-
+      case 'mindmap':
+        return <MindmapNode parentNodeRef={containerRef} node={node} />
       case 'webpage':
         return <WebpageNode node={node} />
       case 'note':
@@ -349,12 +352,12 @@ const WrapperNode = ({ node }: { node: IWhiteboardNode }) => {
         opacity: currentHighlight ? (currentHighlight.nodeIds.has(id) ? 1 : 0.2) : nodeStyle.opacity,
         '--darken-node-color': darkenBackground,
         cursor: hasEraseOrDrawTool ? 'crosshair' : nodeStyle.cursor,
-        '--global-background': nodeStyle.background,
         pointerEvents: hasEraseOrDrawTool === 'freehand' ? 'none' : nodeStyle.pointerEvents
       }}
-      minWidth={type === 'freehand' ? undefined : DEFAULT_NODE_WIDTH}
+      minWidth={type === 'freehand' ? undefined : type === 'text' ? 100 : DEFAULT_NODE_WIDTH}
       lockAspectRatio={(lockResizeElements.includes(type) || nodeState.keepRatioResize) && shouldKeepRatio}
       disableDragging={
+        !!node.rootId ||
         hasEraseOrDrawTool ||
         (nodeState.focused && node.type !== 'group') ||
         nodeState.isEditingName ||
@@ -400,7 +403,7 @@ const WrapperNode = ({ node }: { node: IWhiteboardNode }) => {
           }
         }, true)
       }}
-      onDragStart={() => {
+      onDragStart={e => {
         instance.nodeOps?.updateAfterZ?.(id)
         setWhiteboardState(s => ({ ...s, isDraggingNode: true }))
         handleDragStart()
@@ -434,6 +437,11 @@ const WrapperNode = ({ node }: { node: IWhiteboardNode }) => {
               })
             }
           }, true)
+        }
+      }}
+      onMouseDown={e => {
+        if (node.rootId) {
+          instance.mindmapOps?.startDragMindmapChild(node.id, e)
         }
       }}
       size={{
@@ -492,6 +500,7 @@ const WrapperNode = ({ node }: { node: IWhiteboardNode }) => {
           role={'scroll-container'}
           style={{
             maxHeight: '100%',
+            '--global-background': nodeStyle.background,
             borderRadius: 6,
             ...containerOverflow
           }}
@@ -517,6 +526,7 @@ const WrapperNode = ({ node }: { node: IWhiteboardNode }) => {
           {renderInnerNode()}
         </Content>
       )}
+      <AddSubMindmapIndicator node={node} />
     </Rnd>
   )
 }

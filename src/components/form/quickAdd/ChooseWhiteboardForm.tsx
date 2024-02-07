@@ -19,7 +19,7 @@ export default ({ onBack, onClose, metaId }: { onBack: VoidFunction; onClose: Vo
     name: string
   }>()
   const [setting, setSetting] = useSetting()
-  const index = MetaStore.useMetaObjectsMap()
+  const index = MetaStore.useIndexedMetaObjects()
   useEffect(() => {
     const whiteboards = Array.from(MetaStore.getIndexedMetaObjects()?.typeToMetaObjectIdsMap.get('whiteboard')?.values() || [])
       .map(i => MetaStore.getMetaObjectsMap().get(i))

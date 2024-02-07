@@ -5,6 +5,7 @@ import { DraggableData } from 'react-rnd'
 import { useRef } from 'react'
 import { boxContain, pointInBox } from '@/utils'
 import { getBoxOfNodes } from '@/core/components/whiteboard/utils'
+import checkAddLinkWhenDrag from '@/core/components/whiteboard/node/mindmap/checkAddLinkWhenDrag'
 
 const defaultEnlarge = 24
 export default (node: IWhiteboardNode, instance: IWhiteboardInstance) => {
@@ -27,6 +28,11 @@ export default (node: IWhiteboardNode, instance: IWhiteboardInstance) => {
 
   const handleDrag = (e: DraggableEvent, data: DraggableData, sendEvent?: boolean) => {
     instance.nodeOps?.updateRelatedEdges(node.id)
+    const targetMindmapNode = checkAddLinkWhenDrag({ ...node, x: data.x, y: data.y }, instance, e)
+    console.log(targetMindmapNode)
+    Array.from(instance.values.ID_TO_NODE_MAP.values()).forEach(
+      i => i.checkMindmapDrag?.(targetMindmapNode, { ...node, x: data.x, y: data.y })
+    )
     const transformedWhiteboardPoint = instance.coordOps?.transformWindowPositionToPosition({
       x: e.clientX,
       y: e.clientY
@@ -75,6 +81,7 @@ export default (node: IWhiteboardNode, instance: IWhiteboardInstance) => {
 
   const handleDragEnd = (e: DraggableEvent, data: DraggableData): Box | undefined => {
     cachedGroupNodes.current = undefined
+    Array.from(instance.values.ID_TO_NODE_MAP.values()).forEach(i => i.endDragNode?.({ ...node, x: data.x, y: data.y }))
     const currentBox = instance.values.ID_TO_NODE_MAP.get(node.id)?.getRealtimeBox()
     if (draggedIntoGroups.current?.length && currentBox) {
       const newGroups = draggedIntoGroups.current

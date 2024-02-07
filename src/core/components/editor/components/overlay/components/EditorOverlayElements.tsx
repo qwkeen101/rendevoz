@@ -1,7 +1,6 @@
 import { WithBorder } from '@/components/base'
 import { CustomEditor } from '~/typings'
 import EditorElementsMenu from '@/core/components/editor/components/EditorElementsMenu'
-import { EditorOverlayManager } from '../useEditorOverlay'
 import { defaultHandler } from '../../handleAddElementInMenu'
 import useEditorInstance from '@/core/components/editor/hooks/useEditorInstance'
 import { EditorTypeToElementMap } from '@/core/components/editor/maps'

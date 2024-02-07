@@ -1,4 +1,4 @@
-import { useCapturePreviewImage, useClickOutside, useMemoizedFn, useSelectAtomValue } from '@/hooks'
+import { useClickOutside, useMemoizedFn, useSelectAtomValue } from '@/hooks'
 import Id from '@/utils/id'
 import { FC, memo, MouseEventHandler, useCallback, useEffect, useLayoutEffect, useMemo, useRef } from 'react'
 import { createEditor, Editor as SlateEditor, Path, Transforms } from 'slate'
@@ -296,6 +296,7 @@ export const EditorV1: FC<EditorProps> = memo(
               '--editable-line-height': editorState.lineSpacing,
               fontFamily: editorState.typeface || 'Inter',
               padding: styles?.pageMinPadding ?? '0px 40px 0px 60px',
+              '--font-size': editorState.fontSize,
               width: barState.showRightBar ? `calc(100% - ${barState.rightBarWidth || 380}px` : undefined,
               ...styles?.editorContainerStyle
             }}
@@ -305,9 +306,7 @@ export const EditorV1: FC<EditorProps> = memo(
               role="inner-editor"
               className={Cla(EditorClasses.EditorWrapper, classNames?.editorContainerClassName)}
               style={{
-                // paddingBottom: layout?.showBottomPadding === false ? 0 : undefined,
                 '--block-bg': realReadOnly ? 'none' : undefined,
-                '--font-size': editorState.fontSize,
                 fontSize: editorState.fontSize,
                 position: 'relative'
               }}

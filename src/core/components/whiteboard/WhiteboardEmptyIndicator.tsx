@@ -25,15 +25,13 @@ const WhiteboardEmptyIndicator = () => {
         transform: 'translateX(-50%) translateY(-50%)',
         pointerEvents: 'none',
         opacity: showIndicator ? 1 : 0,
-        padding: '36px 48px',
-        borderRadius: 16,
+        color: Colors.Font.Transparent,
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
         transition: 'opacity 0.3s ease',
         fontWeight: 500,
         fontSize: 18,
-        background: Colors.Background.ButtonHover,
         gap: 10
       }}
     >

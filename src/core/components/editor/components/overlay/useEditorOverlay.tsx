@@ -59,6 +59,7 @@ const useEditorOverlay = (editor: CustomEditor, scrollElement?: HTMLDivElement |
       },
       getState: () => overlayState,
       close: () => {
+        console.log('close')
         setOverlayState(s => ({ ...s, visible: false }))
       }
     }

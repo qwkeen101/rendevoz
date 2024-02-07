@@ -33,6 +33,7 @@ import { useStore } from 'jotai'
 import WhiteboardFloatNodesLayer from '@/core/components/whiteboard/WhiteboardFloatNodesLayer'
 import WhiteboardHookContainer from '@/core/components/whiteboard/WhiteboardHookContainer'
 import SnapDragLayer from '@/core/components/whiteboard/hooks/SnapDragLayer'
+import FakeMindmapDragLayer from '@/core/components/whiteboard/node/mindmap/FakeMindmapDragLayer'
 
 const WhiteboardInner = memo(({ onInstanceInitialized, layout }: IWhiteboardProps) => {
   const containerRef = useRef<HTMLDivElement>(null)
@@ -211,6 +212,7 @@ const WhiteboardInner = memo(({ onInstanceInitialized, layout }: IWhiteboardProp
       <WhiteboardHeader />
       <WhiteboardFloatNodesLayer />
       <WhiteboardRightbar />
+      <FakeMindmapDragLayer />
     </>
   )
 })

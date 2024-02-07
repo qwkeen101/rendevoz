@@ -1,0 +1,128 @@
+import { memo, useEffect, useRef, useState } from 'react'
+import { IWhiteboardNode, XYPosition } from '~/typings'
+import { useWhiteboardInstance } from '@/core/components/whiteboard/hooks'
+import { assignProperties } from '@/utils'
+import { Rnd } from 'react-rnd'
+import checkAddLinkWhenDrag from '@/core/components/whiteboard/node/mindmap/checkAddLinkWhenDrag'
+import { debounce } from 'lodash'
+
+export default memo(() => {
+  const [fakeMindmapNode, setFakeMindmapNode] = useState<{
+    element: HTMLElement
+    node: IWhiteboardNode
+    // element from pointer offset
+    offset: XYPosition
+    initialPointer: XYPosition
+  }>()
+  const instance = useWhiteboardInstance()
+  const overlayRef = useRef<HTMLElement>(null)
+  useEffect(() => {
+    const overlay = overlayRef.current
+    if (fakeMindmapNode && overlay) {
+      overlay.appendChild(fakeMindmapNode.element)
+      const { offset, initialPointer, node } = fakeMindmapNode
+      const scale = instance.getTransform?.().scale
+      const realScale = scale
+      fakeMindmapNode.element.style.boxShadow = '0px 0px 0px 3px var(--select-color)'
+      fakeMindmapNode.element.style.transformOrigin = 'left top'
+      fakeMindmapNode.element.style.transform = `translate(${initialPointer.x + offset.x}px, ${
+        initialPointer.y + offset.y
+      }px) scale(${realScale})`
+      const debounced = debounce((e: PointerEvent) => {
+        const windowPos = {
+          x: e.clientX + offset.x,
+          y: e.clientY + offset.y
+        }
+        const transformed = instance.coordOps?.transformWindowPositionToPosition(windowPos)
+        if (transformed) {
+          const targetMindmapNode = checkAddLinkWhenDrag({ ...node, x: transformed.x, y: transformed.y }, instance, e)
+          console.log(targetMindmapNode)
+          Array.from(instance.values.ID_TO_NODE_MAP.values()).forEach(
+            i => i.checkMindmapDrag?.(targetMindmapNode, { ...node, x: transformed.x, y: transformed.y })
+          )
+        }
+      }, 0)
+      const pointerHandler = (e: PointerEvent) => {
+        if (e.type === 'pointermove') {
+          debounced(e)
+
+          fakeMindmapNode.element.style.transform = `translate(${e.clientX + offset.x}px, ${e.clientY + offset.y}px) scale(${realScale})`
+        }
+        if (e.type === 'pointerup') {
+          setFakeMindmapNode(undefined)
+        }
+      }
+      document.addEventListener('pointermove', pointerHandler)
+      document.addEventListener('pointerup', pointerHandler)
+      return () => {
+        document.removeEventListener('pointermove', pointerHandler)
+        document.removeEventListener('pointerup', pointerHandler)
+      }
+    }
+  }, [fakeMindmapNode])
+  assignProperties(instance, {
+    mindmapOps: {
+      ...instance.mindmapOps,
+      startDragMindmapChild: (nodeId, e) => {
+        const nodeDOM = instance.nodeOps?.getNodeDOM(nodeId)
+        const node = instance.getNode?.(nodeId)
+        if (nodeDOM && node) {
+          const cloned = nodeDOM.cloneNode(true)
+          const nodeBounding = nodeDOM.getBoundingClientRect()
+          const pointerXY = {
+            x: e.clientX,
+            y: e.clientY
+          }
+          setFakeMindmapNode({
+            element: cloned,
+            initialPointer: pointerXY,
+            node,
+            offset: {
+              x: nodeBounding.x - pointerXY.x,
+              y: nodeBounding.y - pointerXY.y
+            }
+          })
+        }
+      },
+      getFakeNodeBox: nodeId => {
+        if (fakeMindmapNode) {
+          if (fakeMindmapNode.node.id === nodeId) {
+            const bounding = fakeMindmapNode.element.getBoundingClientRect()
+            console.log(bounding)
+            const transformedXY = instance.coordOps?.transformWindowPositionToPosition({
+              x: bounding.x,
+              y: bounding.y
+            })
+            if (!transformedXY) return
+            console.log(transformedXY)
+            return {
+              top: transformedXY.y,
+              left: transformedXY.x,
+              width: fakeMindmapNode.node.width!,
+              height: fakeMindmapNode.node.height!
+            }
+          }
+        }
+      }
+    }
+  })
+
+  if (fakeMindmapNode) {
+    return (
+      <div
+        ref={overlayRef}
+        style={{
+          pointerEvents: 'none',
+          position: 'fixed',
+          inset: 0,
+          width: '100%',
+          height: '100%',
+          zIndex: 999,
+          opacity: 0.8
+        }}
+      ></div>
+    )
+  }
+
+  return null
+})

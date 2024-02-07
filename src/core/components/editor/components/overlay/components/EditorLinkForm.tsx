@@ -20,6 +20,7 @@ const EditorLinkForm = ({ editor, manager }: { editor: CustomEditor; manager: Ed
   }
   const inputRef = useRef()
   useEffect(() => {
+    console.log('mount')
     setTimeout(() => {
       inputRef.current?.focus()
     }, 100)
@@ -41,7 +42,7 @@ const EditorLinkForm = ({ editor, manager }: { editor: CustomEditor; manager: Ed
       )
       return
     }
-
+    console.log(selected)
     if (selected?.length) {
       CustomTransforms.replaceSelectedNode(editor, {
         type: 'link',
@@ -129,6 +130,7 @@ const EditorLinkForm = ({ editor, manager }: { editor: CustomEditor; manager: Ed
         withInput={false}
         mode={'recentlyCreate'}
         onInputLink={l => {
+          console.log(l)
           if (isValidUrl(l)) {
             handlerInsertLink(l.startsWith('http://') ? l : 'http://' + l)
             return

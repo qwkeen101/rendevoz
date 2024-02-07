@@ -21,7 +21,7 @@ const SidebarPinned = memo(() => {
   return (
     <Content flex column style={{ marginBottom: 10 }}>
       <Content flex alignItems="center" justifyContent="space-between" style={{ fontSize: 13, color: Colors.Font.Transparent }}>
-        <div style={{ cursor: 'pointer' }} onClick={toggleCollapsed}>
+        <div style={{ cursor: 'pointer', userSelect: 'none' }} onClick={toggleCollapsed}>
           {t('sidebar.pinned')}
         </div>
         {totalPinned > 0 ? totalPinned : undefined}

@@ -171,7 +171,7 @@ const FileImporter = ({
         Rendevoz.Actions.Utils.uploadFile({
           dir: true
         }).then(files => {
-          handleImportNestedCollections(files, onCreate, parentCollectionId)
+          handleImportNestedCollections(files, createHandler, parentCollectionId)
         })
       }
     }
@@ -189,7 +189,7 @@ const FileImporter = ({
         }
         BaidudiskInstance.chooseFile?.(1)
         BaidudiskInstance.onCreateMeta = m => {
-          handleAfterCreate({ meta: m })
+          createHandler?.(m)
         }
         BaidudiskInstance.onChooseFile = async file => {
           const thumb = await fetchRemoteImageAndSaveLocally(file.thumbs.url3)
@@ -197,13 +197,13 @@ const FileImporter = ({
             if (file) {
               ObjectStore('video')
                 .addOneWithMeta({ videoUrl: `baidudisk${file.path}` }, { currentMeta: { name: file.filename, coverImgSrc: thumb } })
-                .then(handleAfterCreate)
+                .then(o => createHandler?.(o.meta))
             }
           }
           if (file.category === 4) {
             ObjectStore('pdf')
               .addOneWithMeta({ webFileUrl: `baidudisk/${file.fs_id}` }, { currentMeta: { name: file.filename, coverImgSrc: thumb } })
-              .then(handleAfterCreate)
+              .then(o => createHandler?.(o.meta))
           }
         }
       }

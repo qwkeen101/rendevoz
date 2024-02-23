@@ -116,13 +116,6 @@ const FileImporter = ({
       }
     },
     {
-      name: t('general.tweet'),
-      image: twitter,
-      onClick: () => {
-        handleCreate('tweet')
-      }
-    },
-    {
       name: Rendevoz.Utils.Meta.getTypeName('video'),
       desc: t('general.Watching and learning local or online videos'),
       image: youtube,
@@ -143,6 +136,13 @@ const FileImporter = ({
       image: picture,
       onClick: () => {
         handleCreate('image')
+      }
+    },
+    {
+      name: t('general.tweet'),
+      image: twitter,
+      onClick: () => {
+        handleCreate('tweet')
       }
     }
   ]
@@ -247,30 +247,36 @@ const FileImporter = ({
         {t('general.Create new object')}
       </div>
       <Content
-        gap={24}
+        gap={6}
         style={{
           display: 'flex',
           flexWrap: 'wrap'
         }}
       >
-        <div style={{ minWidth: 200 }}>
+        <Content style={{ minWidth: 240, flex: 'auto' }}>
           <div style={{ paddingLeft: 8, margin: '8px 0px' }} className={ClassName.title('1rem')}>
             {t('general.Organize your ideas')}
           </div>
-          <Content>{records.map(r => renderer(r))}</Content>
-        </div>
-        <div style={{ minWidth: 200 }}>
+          <Content flex column gap={4}>
+            {records.map(r => renderer(r))}
+          </Content>
+        </Content>
+        <Content style={{ minWidth: 240, flex: 'auto' }}>
           <div style={{ paddingLeft: 8, margin: '8px 0px' }} className={ClassName.title('1rem')}>
             {t('general.Learning new things')}
           </div>
-          <Content>{files.map(f => renderer(f))}</Content>
-        </div>
-        <div style={{ minWidth: 280 }}>
+          <Content flex column gap={4}>
+            {files.map(f => renderer(f))}
+          </Content>
+        </Content>
+        <Content style={{ minWidth: 280, flex: 'auto' }}>
           <div style={{ paddingLeft: 8, margin: '8px 0px' }} className={ClassName.title('1rem')}>
             {t('general.Others')}
           </div>
-          <Content>{others.map(o => renderer(o))}</Content>
-        </div>
+          <Content flex column gap={4}>
+            {others.map(o => renderer(o))}
+          </Content>
+        </Content>
       </Content>
     </Content>
   )

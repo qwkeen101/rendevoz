@@ -1,5 +1,5 @@
 import { globalStore, NoteStore, ObjectStore } from '@/api/stores'
-import { useEffect, useMemo } from 'react'
+import { useEffect, useLayoutEffect, useMemo } from 'react'
 import useWebpageState, { IWebpageState } from '@/core/components/webpage/hooks/useWebpageState'
 import { atom } from 'jotai'
 import { useMemoizedFn } from '@/hooks'
@@ -133,7 +133,7 @@ const useWebpageContent = (options: {
         })
     }
   })
-  useEffect(() => {
+  useLayoutEffect(() => {
     memoedLoadUrl()
   }, [webpageState.currentUrl])
   useEffect(() => {

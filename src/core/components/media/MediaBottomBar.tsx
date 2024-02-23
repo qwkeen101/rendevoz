@@ -32,13 +32,13 @@ const playerControlMask = css({
 })
 const playSpeed: number[] = [2, 1.5, 1.25, 1, 0.75, 0.5]
 const MediaBottomBar = () => {
+  const instance = useMediaInstance()
   const [mediaState, setMediaState] = useMediaState()
   const [toolbarState, setToolbarState] = useMediaToolbarState()
   const setSidebarState = useSetAtom(VideoSidebarStateAtom)
   const { totalTime = 0, currentTime = 0, paused, volume, muted, mode, floated } = mediaState
   const { showVolume, chooseTime, thumbnailUrl, thumbnailVisible, thumbnailPosition, currentHoverTime, draggingScrubber } = toolbarState
   const { currDuration, totalDuration, currentChapter } = useMemo(() => {
-    console.log(currentTime)
     setToolbarState(s => (s.draggingScrubber ? s : { ...s, currentScrubberTime: currentTime }))
     const currentChapter = mediaState.sortedChapters?.findLast(i => i.startTime < currentTime)
     return {
@@ -51,7 +51,12 @@ const MediaBottomBar = () => {
   const audioMode = mode === 'audio'
   const { t } = useTranslation()
   const containerRef = useRef<HTMLDivElement>(null)
-  const opacity = audioMode || toolbarState.visible || chooseTime || toolbarState.currentHoverLabelId || paused || draggingScrubber ? 1 : 0
+  const playerContainer = instance.getPlayerElement?.()
+  const opacity =
+    (!mediaState.labelPopoverVisible || audioMode) &&
+    (audioMode || toolbarState.visible || chooseTime || toolbarState.currentHoverLabelId || paused || draggingScrubber)
+      ? 1
+      : 0
   return (
     <Content
       flex
@@ -91,6 +96,7 @@ const MediaBottomBar = () => {
           pointerEvents: 'none',
           zIndex: '9999'
         }}
+        parentElement={mediaState.fullScreen ? playerContainer : undefined}
         content={
           <Content flex column alignItems="center" style={{ opacity }}>
             <img width={200} src={thumbnailUrl} style={{ borderRadius: 10 }} />
@@ -270,7 +276,7 @@ const MediaBottomBar = () => {
             </Content>
           )}
         </Content>
-        <Content flex fullHeight alignItems="center" role="right-toolbar" gap={16} style={{ flexShrink: 0 }}>
+        <Content flex fullHeight alignItems="center" role="right-toolbar" gap={10} style={{ flexShrink: 0 }}>
           {mediaState.subtitleList?.length && mediaState.mode !== 'audio' ? (
             <Icon
               onClick={() => {
@@ -302,19 +308,20 @@ const MediaBottomBar = () => {
             />
           ) : null}
           <AnimatePopover
+            parentElement={mediaState.fullScreen ? playerContainer : undefined}
             padding={10}
             content={setState => (
               <WithBorder
                 className={css({
                   width: 140,
-                  padding: 8,
+                  padding: 6,
                   display: 'flex',
                   gap: 4,
                   flexDirection: 'column',
                   alignItems: 'center'
                 })}
               >
-                <div className={ClassName.description(FontSize['12px'])}>Playback Speed</div>
+                <div className={'font-size-12 transparent-font'}>Playback Speed</div>
                 {playSpeed.map(i => (
                   <Button.IconButton
                     text={`${i}`}
@@ -336,15 +343,37 @@ const MediaBottomBar = () => {
               </WithBorder>
             )}
           >
-            <div style={{ fontWeight: 600, cursor: 'pointer', userSelect: 'none' }}>{mediaState.speed}X</div>
+            <div className={ClassName.flatButton()} style={{ fontWeight: 600, cursor: 'pointer', userSelect: 'none' }}>
+              {mediaState.speed}X
+            </div>
           </AnimatePopover>
+          <Button.IconButton
+            onClick={() => {
+              instance.insertLabel?.({
+                time: mediaState.currentTime
+              })
+            }}
+            style={{ height: 30, fontWeight: 500 }}
+            text={t('general.add label')}
+          ></Button.IconButton>
           <IconWithPopover
             padding={0}
-            renderOnParent={false}
+            renderOnParent={mediaState.fullScreen}
             content={setState => <MediaActionsMenu onClose={() => setState(false)} />}
-            name="park-tool"
-            className={ClassName.circleButton()}
+            name="park-more-four"
+            size={20}
+            className={ClassName.flatButton(4, '5px')}
           ></IconWithPopover>
+          {!audioMode && !mediaState.floated && (
+            <Icon
+              className={ClassName.flatButton(4, '5px')}
+              size={20}
+              onClick={() => {
+                instance.actionOps?.fullScreen()
+              }}
+              name={mediaState.fullScreen ? 'park-off-screen' : 'park-full-screen'}
+            />
+          )}
         </Content>
       </Content>
     </Content>

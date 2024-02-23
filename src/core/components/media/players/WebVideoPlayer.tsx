@@ -119,7 +119,8 @@ const WebVideoPlayer = () => {
             web.addEventListener('ipc-message', handler)
           })
         }
-      }
+      },
+      getMediaContainer: () => webviewRef.current
     })
   }
   return (

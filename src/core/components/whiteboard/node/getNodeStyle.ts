@@ -3,6 +3,7 @@ import { IWhiteboardInstance, IWhiteboardNode } from '~/typings'
 import { NodeInnerState } from '@/core/components/whiteboard/node/WrapperNode'
 import Colors from '../../../../consts/colors'
 import { getSetting } from '@/core'
+import tinycolor from 'tinycolor2'
 
 const transparentBackgroundNodes = ['text', 'freehand']
 const getNodeStyle = (
@@ -21,13 +22,21 @@ const getNodeStyle = (
   }
 ): CSSProperties => {
   const isDarkMode = getSetting().general.darkMode
+  let mindmapTransparent = false
+  if (node.type === 'mindmap') {
+    if (!node.nodeType || transparentBackgroundNodes.includes(node.nodeType)) {
+      mindmapTransparent = true
+    }
+  }
   const getNodeBoxShadow = () => {
     if (nodeState.selected || nodeState.popoverVisible || nodeState.focused || nodeState.locked) {
       return `0 0 0 calc(2px * var(--zoom-level)) #279EFF`
     }
-    if (transparentBackgroundNodes.includes(node.type)) {
+    if ((node.rootId || node.type === 'mindmap') && node.borderType === 'underline') return undefined
+    if (transparentBackgroundNodes.includes(node.type) || showBorder) {
       return undefined
     }
+    if (mindmapTransparent) return undefined
     if (!isDarkMode) {
       return 'var(--border-box-shadow)'
     }
@@ -80,18 +89,43 @@ const getNodeStyle = (
     const parentGroups = instance.groupOps?.getParentGroupsOfNode(node.id) ?? []
     zIndex += parentGroups?.length
   }
+  let borderRadius = 4
+  switch (node.borderType) {
+    case 'rect':
+      borderRadius = 0
+      break
+    case 'round':
+      borderRadius = 20
+      break
+    case 'roundRect':
+      borderRadius = 8
+      break
+  }
+
+  let showBorder = false
+
+  if (node.rootId || node.type === 'mindmap') {
+    showBorder = true
+  }
+  if (node.borderType === 'underline') {
+    showBorder = false
+  }
+  if (!node.border) {
+    showBorder = false
+  }
   return {
     boxShadow: getNodeBoxShadow(),
     opacity: opts.isErased ? 0.2 : 1,
-    borderRadius: nodeState.selected ? 4 : 6,
+    borderRadius: borderRadius,
     zIndex,
+    border: showBorder ? `3px solid ${tinycolor(node.border).darken(30).toHexString()}` : undefined,
     userSelect: nodeState.focused || nodeState.focused ? 'auto' : 'none',
     background:
       node.type === 'group'
         ? opts.background.opacityBackground
         : node.background
         ? Colors.getAdaptColor(node.background)
-        : transparentBackgroundNodes.includes(node.type)
+        : transparentBackgroundNodes.includes(node.type) || mindmapTransparent
         ? 'transparent'
         : isDarkMode
         ? Colors.Background.Secondary

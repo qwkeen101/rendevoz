@@ -31,6 +31,9 @@ export interface WhiteboardEventMap {
   nodeResizeStart: {
     resizingNode: IWhiteboardNode
   }
+  nodesSizeChange: {
+    changedNodes: IWhiteboardNode[]
+  }
 }
 
 export type WhiteboardEvent = Event<WhiteboardEventMap, keyof WhiteboardEventMap>

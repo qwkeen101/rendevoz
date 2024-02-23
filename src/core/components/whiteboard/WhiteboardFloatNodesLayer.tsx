@@ -22,6 +22,7 @@ export default memo(() => {
   assignProperties(instance, {
     floatOps: {
       openNode: nodeId => {
+        console.log('trigger here')
         if (currentFloatNodes.some(i => i.nodeId === nodeId)) return
         const n = instance.getNode?.(nodeId)
         if (n) {

@@ -242,22 +242,36 @@ const FileImporter = ({
     )
   }
   return (
-    <Content flex column style={{ width: `min(620px, 90vw)`, maxHeight: 'min(800px, 80vh)', padding: 16, overflowY: 'auto' }}>
-      <div style={{ paddingLeft: 8, marginBottom: 8 }} className={ClassName.title('20px')}>
+    <Content flex column style={{ maxWidth: '90vw', maxHeight: 'min(800px, 80vh)', padding: 24, overflowY: 'auto' }}>
+      <div style={{ paddingLeft: 8, marginBottom: 18 }} className={ClassName.title('20px')}>
         {t('general.Create new object')}
       </div>
-      <div style={{ paddingLeft: 8, margin: '8px 0px' }} className={ClassName.title('1rem')}>
-        {t('general.Organize your ideas')}
-      </div>
-      <Content>{records.map(r => renderer(r))}</Content>
-      <div style={{ paddingLeft: 8, margin: '8px 0px' }} className={ClassName.title('1rem')}>
-        {t('general.Learning new things')}
-      </div>
-      <Content>{files.map(f => renderer(f))}</Content>
-      <div style={{ paddingLeft: 8, margin: '8px 0px' }} className={ClassName.title('1rem')}>
-        {t('general.Others')}
-      </div>
-      <Content>{others.map(o => renderer(o))}</Content>
+      <Content
+        gap={24}
+        style={{
+          display: 'flex',
+          flexWrap: 'wrap'
+        }}
+      >
+        <div style={{ minWidth: 200 }}>
+          <div style={{ paddingLeft: 8, margin: '8px 0px' }} className={ClassName.title('1rem')}>
+            {t('general.Organize your ideas')}
+          </div>
+          <Content>{records.map(r => renderer(r))}</Content>
+        </div>
+        <div style={{ minWidth: 200 }}>
+          <div style={{ paddingLeft: 8, margin: '8px 0px' }} className={ClassName.title('1rem')}>
+            {t('general.Learning new things')}
+          </div>
+          <Content>{files.map(f => renderer(f))}</Content>
+        </div>
+        <div style={{ minWidth: 280 }}>
+          <div style={{ paddingLeft: 8, margin: '8px 0px' }} className={ClassName.title('1rem')}>
+            {t('general.Others')}
+          </div>
+          <Content>{others.map(o => renderer(o))}</Content>
+        </div>
+      </Content>
     </Content>
   )
 }

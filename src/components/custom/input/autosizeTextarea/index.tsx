@@ -2,7 +2,7 @@ import * as React from 'react'
 import calculateNodeHeight from './calculateNodeHeight'
 import getSizingData, { noop, SizingData } from './getSizingData'
 import useComposedRef, { useWindowResizeListener } from './hooks'
-import { CSSProperties } from 'react'
+import { CSSProperties, useEffect } from 'react'
 
 type TextareaProps = React.TextareaHTMLAttributes<HTMLTextAreaElement>
 
@@ -65,7 +65,13 @@ const TextareaAutosize: React.ForwardRefRenderFunction<HTMLTextAreaElement, Text
       }
     }
   }
-
+  useEffect(() => {
+    if (props.autoFocus) {
+      setTimeout(() => {
+        libRef.current?.focus()
+      }, 100)
+    }
+  }, [])
   const handleChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
     if (!isControlled) {
       resizeTextarea()
@@ -88,7 +94,7 @@ const TextareaAutosize: React.ForwardRefRenderFunction<HTMLTextAreaElement, Text
       {...props}
       onChange={handleChange}
       ref={ref}
-      spellCheck={"false"}
+      spellCheck={'false'}
     />
   )
 }

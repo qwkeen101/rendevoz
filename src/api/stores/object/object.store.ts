@@ -321,6 +321,10 @@ export const objectStore = <T extends keyof ObjectFamily>(
           return createOptionStore()
         case 'whiteboard':
           return createWhiteboardStore()
+        case 'feedCollection':
+          return createFeedCollectionStore()
+        case 'feedFolder':
+          return createFeedFolderStore()
         default:
           return createObjectStore(type)
       }
@@ -438,6 +442,40 @@ const createWebpageStore = () => {
   })
 }
 
+const createFeedCollectionStore = () => {
+  return createObjectStore('feedCollection', {
+    beforeAddProcess: async o => {
+      if (!o.workspace) {
+        const currWorkspace = KeyvalueStore.getOne('currentWorkspace')
+        currWorkspace && (o.workspace = currWorkspace.id)
+      }
+    },
+    afterGetAllProcess: all => {
+      const currWorkspace = KeyvalueStore.getOne('currentWorkspace')
+      if (currWorkspace) {
+        return all.filter(i => !i.workspace || i.workspace === currWorkspace.id)
+      }
+      return all
+    }
+  })
+}
+const createFeedFolderStore = () => {
+  return createObjectStore('feedFolder', {
+    beforeAddProcess: async o => {
+      if (!o.workspace) {
+        const currWorkspace = KeyvalueStore.getOne('currentWorkspace')
+        currWorkspace && (o.workspace = currWorkspace.id)
+      }
+    },
+    afterGetAllProcess: all => {
+      const currWorkspace = KeyvalueStore.getOne('currentWorkspace')
+      if (currWorkspace) {
+        return all.filter(i => !i.workspace || i.workspace === currWorkspace.id)
+      }
+      return all
+    }
+  })
+}
 const createWhiteboardStore = () => {
   return createObjectStore('whiteboard', {
     afterGetOneProcess: {

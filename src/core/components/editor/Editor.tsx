@@ -291,7 +291,7 @@ export const EditorV1: FC<EditorProps> = memo(
             className={EditorClasses.ScrollWrapperClass}
             role="editor-container"
             style={{
-              '--placeholder': `"${placeholder || t('editor.Type for commands')}"`,
+              '--placeholder': `"${placeholder ?? t('editor.Type for commands')}"`,
               '--editor-max-width': pageWidthToSize[editorState.pageWidth] || '800px',
               '--editable-line-height': editorState.lineSpacing,
               fontFamily: editorState.typeface || 'Inter',

@@ -4,8 +4,9 @@ import { DraggableEvent } from 'react-draggable'
 import { DraggableData } from 'react-rnd'
 import { useRef } from 'react'
 import { boxContain, pointInBox } from '@/utils'
-import { getBoxOfNodes } from '@/core/components/whiteboard/utils'
-import checkAddLinkWhenDrag from '@/core/components/whiteboard/node/mindmap/checkAddLinkWhenDrag'
+import { getBoxOfBoxes, getBoxOfNodes } from '@/core/components/whiteboard/utils'
+import checkAddLinkWhenDrag from '@/core/components/whiteboard/node/mindmap/drag/getClosestNodeLink'
+import dragSingleNodeToEnlargeGroup from '@/core/components/whiteboard/node/hooks/drag/dragSingleNodeToEnlargeGroup'
 
 const defaultEnlarge = 24
 export default (node: IWhiteboardNode, instance: IWhiteboardInstance) => {
@@ -37,7 +38,12 @@ export default (node: IWhiteboardNode, instance: IWhiteboardInstance) => {
       x: e.clientX,
       y: e.clientY
     })
-    const myBox = instance.values.ID_TO_NODE_MAP.get(node.id)?.getRealtimeBox()
+    let myBox = instance.values.ID_TO_NODE_MAP.get(node.id)?.getRealtimeBox()
+    if (node.type === 'mindmap') {
+      const allNodes = [node, ...(instance.mindmapOps?.expandMindmap(node) || [])]
+      const allBoxes = allNodes.map(i => instance.nodeOps?.getNodeFuncs(i.id)?.getRealtimeBox()).filter(i => i) as Box[]
+      myBox = getBoxOfBoxes(allBoxes)
+    }
     if (!myBox) return
     draggedIntoGroups.current = []
     // check if dragging into group
@@ -57,13 +63,17 @@ export default (node: IWhiteboardNode, instance: IWhiteboardInstance) => {
         } else {
           instance.values.ID_TO_NODE_MAP.get(i.id)?.deselect()
         }
+      }else{
+        instance.values.ID_TO_NODE_MAP.get(i.id)?.deselect()
       }
     })
+    console.log(draggedIntoGroups.current)
     if (node.type === 'group') {
       handleGroupMove(data, data.node)
       throw new Error('')
     } else {
-      if (sendEvent) {
+      // 如果链接到导图上，则不snap
+      if (sendEvent && !targetMindmapNode) {
         instance.eventEmitter.emit('whiteboard', {
           type: 'nodeDrag',
           data: {
@@ -82,60 +92,9 @@ export default (node: IWhiteboardNode, instance: IWhiteboardInstance) => {
   const handleDragEnd = (e: DraggableEvent, data: DraggableData): Box | undefined => {
     cachedGroupNodes.current = undefined
     Array.from(instance.values.ID_TO_NODE_MAP.values()).forEach(i => i.endDragNode?.({ ...node, x: data.x, y: data.y }))
-    const currentBox = instance.values.ID_TO_NODE_MAP.get(node.id)?.getRealtimeBox()
-    if (draggedIntoGroups.current?.length && currentBox) {
-      const newGroups = draggedIntoGroups.current
-        ?.map(g => {
-          const inGroupNodes = instance.groupOps?.getNodesInGroup(g.id, true) || []
-          const newBounding = getBoxOfNodes([
-            ...inGroupNodes,
-            {
-              ...node,
-              x: currentBox.left,
-              y: currentBox.top,
-              height: currentBox.height,
-              width: currentBox.width
-            }
-          ])
-          if (newBounding) {
-            if (newBounding.left + newBounding.width > g.x + g.width) {
-              newBounding.width += defaultEnlarge
-            }
-            if (newBounding.top + newBounding.height > g.y + g.height) {
-              newBounding.height += defaultEnlarge
-            }
-            if (newBounding.left < g.x) {
-              newBounding.left -= defaultEnlarge
-              newBounding.width += 2 * defaultEnlarge
-            }
-            if (newBounding.top < g.y) {
-              newBounding.top -= defaultEnlarge
-              newBounding.height += 2 * defaultEnlarge
-            }
-
-            return {
-              enlarged: newBounding,
-              id: g.id
-            }
-          }
-        })
-        .filter(i => i)
-      if (newGroups.length) {
-        instance.updateWhiteboard?.(w => {
-          newGroups.forEach(g => {
-            const origin = w.nodes?.get(g.id)
-            if (origin) {
-              w.nodes?.set(g.id, {
-                ...origin,
-                x: g.enlarged.left,
-                y: g.enlarged.top,
-                width: g.enlarged.width,
-                height: g.enlarged.height
-              })
-            }
-          })
-        }, true)
-      }
+    const availableGroups = draggedIntoGroups.current
+    if (availableGroups) {
+      dragSingleNodeToEnlargeGroup(node, instance, availableGroups)
       draggedIntoGroups.current = undefined
     }
     instance.eventEmitter.emit('whiteboard', {

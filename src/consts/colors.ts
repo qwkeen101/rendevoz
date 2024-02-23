@@ -1,6 +1,7 @@
 import { Consts } from 'rendevoz'
 
 import tinycolor from 'tinycolor2'
+import { DEFAULT_BACKGROUND_COLORS } from '@/components/picker/colorPicker'
 export const GlobalTheme = {
   isDark: false
 }
@@ -103,11 +104,16 @@ const getAdaptFontColor = (bg?: string) => {
 
   return t
 }
+
+const getRandomColor = (): string => {
+  return DEFAULT_BACKGROUND_COLORS[Math.floor(Math.random() * DEFAULT_BACKGROUND_COLORS.length)]
+}
 const Colors = {
   Consts,
   getAdaptColor,
   getAdaptFontColor,
   getAlphaColor,
+  getRandomColor,
   Font: Object.fromEntries(Object.entries(Font).map(i => [i[0], `var(${i[1]})`])) as Record<keyof typeof Font, string>,
   Background: Object.fromEntries(Object.entries(Background).map(i => [i[0], `var(${i[1]})`])) as Record<keyof typeof Background, string>,
   Emphasis: Object.fromEntries(Object.entries(Emphasis).map(i => [i[0], `var(${i[1]})`])) as Record<keyof typeof Emphasis, string>,

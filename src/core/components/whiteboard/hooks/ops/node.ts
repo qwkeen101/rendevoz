@@ -1,4 +1,4 @@
-import { IWhiteboardInstance, IWhiteboardNode } from '~/typings'
+import { Box, IWhiteboardInstance, IWhiteboardNode } from '~/typings'
 import { assignProperties, boxContain, boxesIntersect } from '@/utils'
 import { useFlow, WhiteboardAtom } from '@/core/components/whiteboard/StateHooks'
 import { getBoxOfNodes } from '@/core/components/whiteboard/utils'
@@ -9,6 +9,8 @@ import { enlargeBox } from '@/core/components/whiteboard/hooks/ops/group'
 import { Rendevoz } from '@/core/rendevoz'
 import { GlobalInstance } from '@/hooks'
 import { useStore } from 'jotai'
+import { getChildrenOfNode, getFlattenChildrenOfNode } from '@/core/components/whiteboard/node/mindmap/utils/tree'
+import { canCloneMindmap, cloneMindmap } from '@/core/components/whiteboard/node/mindmap/utils/cloneMindmap'
 
 const assignNodeOps = (instance: IWhiteboardInstance) => {
   const updateWhiteboard = useUpdateWhiteboard()
@@ -50,7 +52,28 @@ const assignNodeOps = (instance: IWhiteboardInstance) => {
         })
       },
       deleteNode: (nodeId, redo = true) => {
-        const idArr = Array.isArray(nodeId) ? nodeId : [nodeId]
+        const idArrSet = new Set(Array.isArray(nodeId) ? nodeId : [nodeId])
+        idArrSet.forEach(id => {
+          const n = instance.getNode?.(id)
+          if (n) {
+            if (n.type === 'mindmap') {
+              getFlattenChildrenOfNode(n, instance, 'right')?.forEach(r => {
+                idArrSet.add(r.root)
+              })
+              getFlattenChildrenOfNode(n, instance, 'left')?.forEach(r => {
+                idArrSet.add(r.root)
+              })
+            } else if (n.rootId) {
+              getFlattenChildrenOfNode(n, instance, n.side)?.forEach(r => {
+                idArrSet.add(r.root)
+              })
+            }
+          }
+        })
+        const idArr = Array.from(idArrSet.values())
+        Array.from(instance.values.ID_TO_NODE_MAP.values()).forEach(i => {
+          i.onNodesDelete?.(idArr)
+        })
         idArr.forEach(id => {
           const origin = instance.getNode?.(id)
           if (origin) {
@@ -96,12 +119,19 @@ const assignNodeOps = (instance: IWhiteboardInstance) => {
           instance.selectOps?.resetSelectionBox()
         }, 50)
       },
+      getDOMBoxOfNodes: ids => {
+        const idArr = Array.isArray(ids) ? ids : [ids]
+        const boxes = idArr.map(i => ({ id: i, box: instance.nodeOps?.getNodeFuncs(i)?.getRealtimeBox() })).filter(i => i.box) as {
+          id: number
+          box: Box
+        }[]
+        return Object.fromEntries(boxes.map(i => [i.id, i.box]))
+      },
       fold: nodeId => {
         const idArr = Array.isArray(nodeId) ? nodeId : [nodeId]
         updateWhiteboard(w => {
           idArr.forEach(id => {
-            w.nodes?.has(id) &&
-              w.nodes?.set(id, { ...w.nodes!.get(id)!, expanded: false, height: undefined, resized: false })
+            w.nodes?.has(id) && w.nodes?.set(id, { ...w.nodes!.get(id)!, expanded: false, height: undefined, resized: false })
           })
         }, true)
         setTimeout(() => {
@@ -111,23 +141,12 @@ const assignNodeOps = (instance: IWhiteboardInstance) => {
       intersectWith: (nodeId, box) => {
         const node = instance.getNode?.(nodeId)
         if (!node) return false
+        const nodeBox = instance.nodeOps?.getNodeFuncs(nodeId)?.getRealtimeBox()
+        if (!nodeBox) return false
         if (node.type === 'group') {
-          return boxContain(box, {
-            left: node.x,
-            top: node.y,
-            width: node.width ?? 0,
-            height: node.height ?? 0
-          })
+          return boxContain(box, nodeBox)
         }
-        return boxesIntersect(
-          {
-            left: node.x,
-            top: node.y,
-            width: node.width ?? 0,
-            height: node.height ?? 0
-          },
-          box
-        )
+        return boxesIntersect(nodeBox, box)
       },
       canExpand: node => {
         if (node.type !== 'metaObject' || !node.metaObjectId) {
@@ -166,7 +185,22 @@ const assignNodeOps = (instance: IWhiteboardInstance) => {
       paste: position => {
         const currentCopied = instance.values.copiedElements
         if (currentCopied.length) {
-          const pasteElements = currentCopied.map(n => ({ ...n, id: Id.getId(), x: n.x + position.x, y: n.y + position.y }))
+          const slicedCopied = currentCopied.slice()
+          const elements: IWhiteboardNode[] = []
+          slicedCopied.forEach(ele => {
+            if (canCloneMindmap(ele, instance)) {
+              const inserted = cloneMindmap(ele, instance)
+              if (inserted) {
+                inserted.insertNewNodes.forEach(n => elements.push({ ...n, x: n.x + position.x, y: n.y + position.y }))
+                elements.push({ ...inserted.newMindmap, id: Id.getId(), x: ele.x + position.x, y: ele.y + position.y })
+                return
+              }
+            } else {
+              elements.push({ ...ele, id: Id.getId(), x: ele.x + position.x, y: ele.y + position.y })
+            }
+          })
+          const pasteElements = elements
+          console.log(pasteElements, slicedCopied)
           updateWhiteboard(w => {
             pasteElements.forEach(n => {
               w.nodes?.set(n.id, n)

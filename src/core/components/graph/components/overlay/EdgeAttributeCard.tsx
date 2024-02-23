@@ -85,7 +85,7 @@ const EdgeAttributeCard = ({ currentEdge }: { currentEdge?: GraphEdge }) => {
             <WithBorder style={{ width: 240, padding: '4px 4px 0px' }}>
               <ColorPicker
                 enableDefault={false}
-                enableMore
+                showLess
                 onPick={e =>
                   updateEdge({
                     color: e

@@ -153,4 +153,7 @@ export type IComponentSetting = {
     autoPlay: boolean
     goBackWhenMakingLabel?: number
   }
+  media: {
+    openPopoverWhenHighlight?: boolean
+  }
 }

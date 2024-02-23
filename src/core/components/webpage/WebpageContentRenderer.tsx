@@ -69,9 +69,11 @@ const WebpageTitle = ({
 
 const WebpageContentRenderer = ({
   editorOptions,
-  onInstanceInitialized
+  onInstanceInitialized,
+  initialHeight
 }: {
   editorOptions?: EditorProps
+  initialHeight?: number
   onInstanceInitialized: IWebpageProps['onInstanceInitialized']
 }) => {
   const editorId = useMemo(() => Id.getStrId(), [])
@@ -301,6 +303,7 @@ const WebpageContentRenderer = ({
         <div style={{ width: '100%', height: '100%', opacity: isLoading || (failLoading && !webpageState.externalState?.content) ? 0 : 1 }}>
           <NoteEditor
             {...editorOptions}
+            initialHeight={initialHeight}
             labelType={'webpageLabel'}
             onInstanceInitialized={i => {
               editorInstanceRef.current = i

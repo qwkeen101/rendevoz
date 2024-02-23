@@ -15,6 +15,10 @@ export const WhiteboardDefaultKeyboardShortcut = {
     key: ['f'],
     text: 'F'
   },
+  ViewDetails: {
+    key: ['v'],
+    text: 'V'
+  },
   OpenInSidebar: {
     text: 'Shift+S',
     key: ['shift+s']
@@ -42,10 +46,6 @@ export const WhiteboardDefaultKeyboardShortcut = {
   Copy: {
     key: ['mod+c'],
     text: 'Cmd+C'
-  },
-  ViewDetails: {
-    key: ['mod+i'],
-    text: 'Cmd+I'
   },
   Delete: {
     key: ['delete', 'backspace'],

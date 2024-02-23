@@ -17,7 +17,15 @@ import { AI_QUESTION_PROP_ID, AI_SUMMARY_PROP_ID } from '@/api/stores/meta/meta.
  *  基于笔记的编辑器
  *  支持多编辑器数据同步，保存到本地等
  */
-const NoteEditor = ({ noteId, labelIds, on, metaId, ...rest }: { noteId?: number; metaId?: number } & Omit<EditorProps, 'id'>) => {
+// initial height: 在内容没加载出来时的placeholder高度
+const NoteEditor = ({
+  noteId,
+  labelIds,
+  initialHeight,
+  on,
+  metaId,
+  ...rest
+}: { noteId?: number; metaId?: number; initialHeight?: number } & Omit<EditorProps, 'id'>) => {
   const note = ObjectStore('note').useValue(noteId)
   const noteMeta = MetaStore.useValue(metaId)
   const editorId = useMemo(() => Id.getStrId(), [])
@@ -43,6 +51,11 @@ const NoteEditor = ({ noteId, labelIds, on, metaId, ...rest }: { noteId?: number
   return (
     <Editor
       {...rest}
+      styles={{
+        ...rest.styles,
+        containerHeight:
+          initialHeight !== undefined ? (!fetchedValue ? initialHeight : rest.styles?.containerHeight) : rest.styles?.containerHeight
+      }}
       defaultValue={fetchedValue || rest.defaultValue}
       labelIds={labelIds || note?.labels}
       id={rest.id || editorId}

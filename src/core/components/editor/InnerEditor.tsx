@@ -33,6 +33,7 @@ import { assignProperties } from '@/utils'
 import { Colors } from '@/consts'
 import { EditorStateAtom } from '@/core/components/editor/hooks/useEditorState'
 import { DEFAULT_BACKGROUND_COLORS } from '@/components/picker/colorPicker'
+import useGlobalKey from '@/core/components/editor/hooks/keyboards/useGlobalKey'
 
 const ReadOnlyEditorClassName = css({
   table: {
@@ -85,8 +86,6 @@ const InnerEditor: FC<InnerEditorProps> = memo(
     const scopedEmitter = useScopedEventEmitter()
     const previousValue = useRef<Descendant[]>()
     const readOnly = useReadOnlyEditor()
-
-    const editorVersion = useSelectAtomValue(EditorStateAtom, s => s.editorVersion) ?? 0
     const { handleMentionKey } = useEditorMention(editor)
     const instance = useEditorInstance()
     const { handleSlashKeyDown } = useEditorSlashMenu(instance)
@@ -97,6 +96,7 @@ const InnerEditor: FC<InnerEditorProps> = memo(
     const handleSelectAllKey = useEditorSelectAllKey(instance)
     const handleTabKey = useEditorTabKey(instance)
     const canScrollIntoView = useSelectAtomValue(EditorStateAtom, s => s.layout?.canScrollIntoView) ?? true
+    useGlobalKey()
     editor.innerRef = editableRef
     const index = () => {
       const map = new Map<number, Path>()
@@ -240,7 +240,6 @@ const InnerEditor: FC<InnerEditorProps> = memo(
     })
 
     const handleKeydown = useMemoizedFn((e: KeyboardEvent) => {
-      console.log(e)
       handleMentionKey(e)
       handleSlashKeyDown(e)
       handleDeleteKey(e)
@@ -266,7 +265,6 @@ const InnerEditor: FC<InnerEditorProps> = memo(
         document.removeEventListener('keydown', globalKeydownHandler)
       }
     }, [])
-    console.log(`editor version: ${editorVersion}`)
 
     return (
       <Slate editor={editor} onChange={handleChange} value={defaultValue}>
@@ -312,7 +310,6 @@ const InnerEditor: FC<InnerEditorProps> = memo(
                 editor.undo()
                 break
               case 'changeBackgroundColor':
-                console.log(event.backgroundColor, Colors.Background.Blank)
                 if (event.backgroundColor === Colors.Background.Blank) {
                   Editor.removeMark(editor, 'backgroundColor')
                 } else {
@@ -360,6 +357,7 @@ const InnerEditor: FC<InnerEditorProps> = memo(
           onPaste={useCallback(e => {
             const copyElement = editor.currentCopyElement
             const copyElements = editor.currentCopyElements
+            console.log(copyElement, copyElements)
             if (copyElement) {
               const newEle = {
                 ...copyElement,

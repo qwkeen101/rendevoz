@@ -6,7 +6,9 @@ import { getFavicon } from '@/core/components/webpage/utils/previewWebUrl'
 import { default as PostlightParser } from '@postlight/parser'
 const domParser = new DOMParser()
 import { getTweet } from 'react-tweet/api'
+import processGithubIssue from '@/core/rendevoz/utils/webProcessor/githubIssue'
 const tweetRegexp = /https:\/\/twitter\.com\/\w+\/status\/\d+/gm
+
 const WebUtils: (typeof Utils)['Web'] = {
   fetchDetails: async url => {
     // is tweet
@@ -54,11 +56,16 @@ const WebUtils: (typeof Utils)['Web'] = {
     }
   },
   parseWebpage: async (url, html) => {
+    let prefetchedHTML = html || (await fetch(url).then(r => r.text()))
+    if (!prefetchedHTML) throw 'Failed to parse webpage!'
+    prefetchedHTML = processGithubIssue(url, prefetchedHTML)
+    console.log(prefetchedHTML)
     const res = await PostlightParser.parse(url, {
-      html
+      html: prefetchedHTML
     })
     if (res) {
       const parsedDoc = domParser.parseFromString(res.content, 'text/html')
+      console.log(parsedDoc)
       const result = deserializeHTML(parsedDoc.body)
       result.forEach(i => (i.id = Id.getId()))
       const normalized = normalize(result).filter(i => 'type' in i)

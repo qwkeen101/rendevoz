@@ -28,7 +28,7 @@ export type IWebpageState = {
 
 const WebpageStateAtom = atom<IWebpageState>({
   loaded: false,
-  isLoading: false
+  isLoading: true
 })
 
 const useWebpageState = () => useAtom(WebpageStateAtom)

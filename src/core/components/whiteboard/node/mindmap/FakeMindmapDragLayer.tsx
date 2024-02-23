@@ -3,7 +3,7 @@ import { IWhiteboardNode, XYPosition } from '~/typings'
 import { useWhiteboardInstance } from '@/core/components/whiteboard/hooks'
 import { assignProperties } from '@/utils'
 import { Rnd } from 'react-rnd'
-import checkAddLinkWhenDrag from '@/core/components/whiteboard/node/mindmap/checkAddLinkWhenDrag'
+import checkAddLinkWhenDrag from '@/core/components/whiteboard/node/mindmap/drag/getClosestNodeLink'
 import { debounce } from 'lodash'
 
 export default memo(() => {
@@ -16,18 +16,12 @@ export default memo(() => {
   }>()
   const instance = useWhiteboardInstance()
   const overlayRef = useRef<HTMLElement>(null)
+  const moved = useRef(false)
   useEffect(() => {
     const overlay = overlayRef.current
     if (fakeMindmapNode && overlay) {
-      overlay.appendChild(fakeMindmapNode.element)
       const { offset, initialPointer, node } = fakeMindmapNode
-      const scale = instance.getTransform?.().scale
-      const realScale = scale
-      fakeMindmapNode.element.style.boxShadow = '0px 0px 0px 3px var(--select-color)'
-      fakeMindmapNode.element.style.transformOrigin = 'left top'
-      fakeMindmapNode.element.style.transform = `translate(${initialPointer.x + offset.x}px, ${
-        initialPointer.y + offset.y
-      }px) scale(${realScale})`
+
       const debounced = debounce((e: PointerEvent) => {
         const windowPos = {
           x: e.clientX + offset.x,
@@ -44,12 +38,48 @@ export default memo(() => {
       }, 0)
       const pointerHandler = (e: PointerEvent) => {
         if (e.type === 'pointermove') {
+          const scale = instance.getTransform?.().scale
+          const realScale = scale
+          if (moved.current === false && (Math.abs(e.clientX - initialPointer.x) > 2 || Math.abs(e.clientY - initialPointer.y) > 2)) {
+            moved.current = true
+            overlay.style.pointerEvents = 'auto'
+            overlay.appendChild(fakeMindmapNode.element)
+            fakeMindmapNode.element.style.boxShadow = '0px 0px 0px 3px var(--select-color)'
+            fakeMindmapNode.element.style.transformOrigin = 'left top'
+            fakeMindmapNode.element.style.transform = `translate(${initialPointer.x + offset.x}px, ${
+              initialPointer.y + offset.y
+            }px) scale(${realScale})`
+          }
+          if (!moved.current) return
           debounced(e)
-
           fakeMindmapNode.element.style.transform = `translate(${e.clientX + offset.x}px, ${e.clientY + offset.y}px) scale(${realScale})`
         }
         if (e.type === 'pointerup') {
           setFakeMindmapNode(undefined)
+          if (moved.current) {
+            const windowPos = {
+              x: e.clientX + offset.x,
+              y: e.clientY + offset.y
+            }
+            const transformed = instance.coordOps?.transformWindowPositionToPosition(windowPos)
+            if (transformed) {
+              // not attach to any mindmap, remove it from mindmap
+              if (
+                !Array.from(instance.values.ID_TO_NODE_MAP.values()).some(
+                  i => i.endDragNode?.({ ...node, x: transformed.x, y: transformed.y })
+                )
+              ) {
+                instance.updateNode?.(fakeMindmapNode.node.id, w => ({
+                  ...w,
+                  rootId: undefined,
+                  side: undefined,
+                  x: transformed.x,
+                  y: transformed.y
+                }))
+              }
+            }
+          }
+          moved.current = false
         }
       }
       document.addEventListener('pointermove', pointerHandler)
@@ -64,6 +94,7 @@ export default memo(() => {
     mindmapOps: {
       ...instance.mindmapOps,
       startDragMindmapChild: (nodeId, e) => {
+        if (e.target instanceof HTMLElement && e.target.closest('[data-disable-add-sub]')) return
         const nodeDOM = instance.nodeOps?.getNodeDOM(nodeId)
         const node = instance.getNode?.(nodeId)
         if (nodeDOM && node) {
@@ -85,10 +116,10 @@ export default memo(() => {
         }
       },
       getFakeNodeBox: nodeId => {
-        if (fakeMindmapNode) {
+        if (fakeMindmapNode && moved.current) {
           if (fakeMindmapNode.node.id === nodeId) {
             const bounding = fakeMindmapNode.element.getBoundingClientRect()
-            console.log(bounding)
+            console.log(bounding, fakeMindmapNode)
             const transformedXY = instance.coordOps?.transformWindowPositionToPosition({
               x: bounding.x,
               y: bounding.y
@@ -115,6 +146,7 @@ export default memo(() => {
           pointerEvents: 'none',
           position: 'fixed',
           inset: 0,
+          cursor: 'grab',
           width: '100%',
           height: '100%',
           zIndex: 999,

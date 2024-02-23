@@ -6,7 +6,7 @@ import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { FormType, Modal } from '@/components'
 import { getSetting } from '@/core'
-import { DropOn, MetaLink, MetaObject } from '~/typings'
+import { BuiltInDropOn, DropOn, MetaLink, MetaObject } from '~/typings'
 import { useEventHandler } from '@/events'
 import useDropObject, { clearDragState } from './useDropObject'
 import { Rendevoz } from '@/core/rendevoz'
@@ -141,12 +141,12 @@ const useOverlayDrop = () => {
     })
   })
 
-  const getDropOnPostLinks = async (dropOn: DropOn, metaObject: MetaObject) => {
+  const getDropOnPostLinks = async (dropOn: BuiltInDropOn, metaObject: MetaObject) => {
     const link: PartialWithId<MetaLink> = {
       id: Id.getId(),
       sourceId: metaObject.id
     }
-    const { enableAll, enableDropOnEditorLink, enableDropOnPDFLink, enableDropOnWhiteboardLink } = getSetting().objectAndLink
+    const { enableAll } = getSetting().objectAndLink
     if (!enableAll) return
     const registeredDropOnProcessor = Array.from(KeyToRegisteredDropOnProcessor.values())
     const processedLinks = (
@@ -154,7 +154,6 @@ const useOverlayDrop = () => {
         Array.isArray(i)
       ) as MetaLink[][]
     ).flatMap(i => i)
-    console.log(dropOn)
     switch (dropOn.dropOn) {
       case 'database': {
         break
@@ -176,14 +175,12 @@ const useOverlayDrop = () => {
         break
       }
       case 'pdf': {
-        if (!enableDropOnPDFLink) break
         const pdfMeta =
           (await getMetaObjectByObjectId(dropOn.pdfId)) || (await addMetaObject({ id: Id.getId(), objectId: dropOn.pdfId, type: 'pdf' }))
         link.targetId = pdfMeta.id
         break
       }
       case 'whiteboard': {
-        if (!enableDropOnWhiteboardLink) break
         const whiteboardMeta =
           (await getMetaObjectByObjectId(dropOn.whiteboardId)) ||
           (await addMetaObject({

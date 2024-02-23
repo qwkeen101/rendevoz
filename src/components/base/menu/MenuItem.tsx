@@ -105,6 +105,8 @@ const ButtonMenuItem: FC<MenuItemWithProps & { type: 'item' }> = ({
             </WithBorder>
           ))
         }
+        keepAlign={true}
+        reposition
         positions={['right', 'left', 'bottom']}
       >
         <Button.IconButton

@@ -4,6 +4,7 @@ import { IWhiteboardMindmap, IWhiteboardNode } from '~/typings'
 import autoArrangeLayout from '@/core/components/whiteboard/node/mindmap/autoArrangeLayout'
 import { useWhiteboardInstance } from '@/core/components/whiteboard/hooks'
 import { useMemoizedFn } from '@/hooks'
+import { deleteChildsFromTree } from '@/core/components/whiteboard/node/mindmap/utils/tree'
 
 const loop = (nodes: IWhiteboardMindmap[], onLoop: (n: IWhiteboardMindmap) => void) => {
   nodes.forEach(n => {
@@ -30,29 +31,36 @@ export default (
   })
   const instance = useWhiteboardInstance()
   const layoutCache = useRef<Record<number, { x: number; y: number }>>({})
-  const handleRightTreeChange = useMemoizedFn((rightTree: IWhiteboardMindmap[]) => {
-    loop(rightTree, n => allSubNodeIds.current.right.add(n.root))
-    const layout = autoArrangeLayout(node, instance, 'right')
+  const handleTreeChange = (tree: IWhiteboardMindmap[], direction: 'left' | 'right') => {
+    allSubNodeIds.current[direction].clear()
+    loop(tree, n => allSubNodeIds.current[direction].add(n.root))
+    allSubNodeIds.current[direction].forEach(i => {
+      delete layoutCache.current[i]
+    })
+    const layout = autoArrangeLayout(node, instance, direction)
+
     if (layout) {
-      const updateQueue: { id: number; x: number; y: number }[] = []
+      const currBox = instance.nodeOps?.getNodeFuncs(node.id)?.getRealtimeBox()
+      if (!currBox) return
+      const updateQueue: { id: number; x: number; y: number; width: number; height: number }[] = []
+
       layout.forEach(n => {
         if (n.id === node.id) return
         const target = instance.getNode?.(n.id)
         if (!target) return
-        if (target.width === undefined || target.height === undefined) return
+        if (target.collapse) return
         if (n.x === null || n.y === null) return
-        layoutCache.current[n.id] = n
-        const box = instance.getNode?.(n.id)
+        layoutCache.current[n.id] = { ...n, side: direction }
+        const box = instance.nodeOps?.getNodeFuncs?.(n.id)?.getRealtimeBox()
         if (box) {
-          const propBox = {
-            x: node.x + n.x,
-            y: node.y + node.height / 2 + n.y - box.height / 2
-          }
-          if (box.x !== propBox.x || box.y !== propBox.y) {
+          const propBox = { x: currBox.left + n.x, y: currBox.top + n.y }
+          if (box.left !== propBox.x || box.top !== propBox.y) {
             updateQueue.push({
               id: n.id,
               x: propBox.x,
-              y: propBox.y
+              y: propBox.y,
+              width: box.width,
+              height: box.height
             })
           }
         }
@@ -62,49 +70,110 @@ export default (
           updateQueue.forEach(q => {
             const origin = w.nodes?.get(q.id)
             if (origin) {
+              instance.nodeOps?.getNodeFuncs(origin.id)?.setStyle({
+                transform: `translate(${q.x}px,${q.y}px)`
+              })
               w.nodes?.set(origin.id, {
                 ...origin,
                 x: q.x,
-                y: q.y
+                y: q.y,
+                width: q.width,
+                height: q.height
               })
             }
           })
         })
       }
-
-      setTimeout(() => {
-        opts.getEdges(new Set(Object.keys(layoutCache.current).map(i => Number(i))))
+    }
+  }
+  const handleRightTreeChange = useMemoizedFn((rightTree?: IWhiteboardMindmap[]) => {
+    const rightT = rightTree || node.rightChildren
+    if (rightT) {
+      handleTreeChange(rightT, 'right')
+      Promise.resolve().then(() => {
+        opts.getEdges(new Set([...allSubNodeIds.current.left, ...allSubNodeIds.current.right]))
         opts.drawEdges()
       })
     }
   })
 
-  const handleLeftTreeChange = (leftTree: IWhiteboardMindmap[]) => {
-    loop(leftTree, n => allSubNodeIds.current.left.add(n.root))
-    const layout = autoArrangeLayout(node, instance, 'left')
-    if (layout) {
-      layoutCache.current = { ...layoutCache.current, ...Object.fromEntries(layout.map(i => [i.id, i])) }
+  const handleLeftTreeChange = useMemoizedFn((leftTree?: IWhiteboardMindmap[]) => {
+    const leftT = leftTree || node.leftChildren
+    if (leftT) {
+      handleTreeChange(leftT, 'left')
+      Promise.resolve().then(() => {
+        opts.getEdges(new Set([...allSubNodeIds.current.left, ...allSubNodeIds.current.right]))
+        opts.drawEdges()
+      })
     }
-  }
-  const handleNodeSizeChange = (n: IWhiteboardNode) => {
+  })
+  const handleBothTreeChange = useMemoizedFn(() => {
+    const leftT = node.leftChildren
+    const rightT = node.rightChildren
+    rightT && handleTreeChange(rightT, 'right')
+    leftT && handleTreeChange(leftT, 'left')
+
+    Promise.resolve().then(() => {
+      opts.getEdges(new Set([...allSubNodeIds.current.left, ...allSubNodeIds.current.right]))
+      opts.drawEdges()
+    })
+  })
+  const handleNodeSizeChange = (n: IWhiteboardNode | IWhiteboardNode[]) => {
+    const nArr = Array.isArray(n) ? n : [n]
     const subIds = allSubNodeIds.current
-    if (n.rootId === node.id && (subIds.left.has(n.id) || subIds.right.has(n.id))) {
-      if (subIds.right.has(n.id)) {
-        handleRightTreeChange(node.rightChildren!)
+    let rightChange = false,
+      leftChange = false
+    nArr.forEach(i => {
+      if (i.id === node.id) {
+        leftChange = true
+        rightChange = true
       }
-      if (subIds.left.has(n.id)) {
+      if (i.rootId === node.id) {
+        if (subIds.left.has(i.id)) {
+          leftChange = true
+        }
+        if (subIds.right.has(i.id)) {
+          rightChange = true
+        }
       }
+    })
+    leftChange && node.leftChildren && handleLeftTreeChange(node.leftChildren!)
+    rightChange && node.rightChildren && handleRightTreeChange(node.rightChildren)
+  }
+
+  const handleNodesDelete = (deletedIds: number[]) => {
+    const subs = allSubNodeIds.current
+    if (deletedIds.some(id => subs.right.has(id) || subs.left.has(id))) {
+      const newRightTree = deleteChildsFromTree(node.rightChildren || [], deletedIds).result
+      const newLeftTree = deleteChildsFromTree(node.leftChildren || [], deletedIds).result
+      instance.updateNode?.(node.id, n => ({ ...n, rightChildren: newRightTree, leftChildren: newLeftTree }), true)
     }
   }
 
   const nodeFuncs = instance.values.ID_TO_NODE_MAP.get(node.id)
   if (nodeFuncs) {
     nodeFuncs.onSomeNodeSizeChange = handleNodeSizeChange
+    nodeFuncs.onNodesDelete = handleNodesDelete
+    nodeFuncs.onNodeCollapse = nodeIds => {
+      console.log(nodeIds)
+      if (nodeIds.some(id => node.id === id)) {
+        node.rightChildren && handleRightTreeChange(node.rightChildren)
+        node.leftChildren && handleLeftTreeChange(node.leftChildren)
+        return
+      }
+      if (nodeIds.some(id => allSubNodeIds.current.right.has(id))) {
+        node.rightChildren && handleRightTreeChange(node.rightChildren)
+      }
+      if (nodeIds.some(id => allSubNodeIds.current.left.has(id))) {
+        node.leftChildren && handleLeftTreeChange(node.leftChildren)
+      }
+    }
   }
   return {
     handleRightTreeChange,
     handleLeftTreeChange,
     layoutCache,
-    allSubNodeIds
+    allSubNodeIds,
+    handleBothTreeChange
   }
 }

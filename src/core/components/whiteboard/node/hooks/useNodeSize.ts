@@ -8,7 +8,7 @@ const useNodeSize = (container: HTMLElement | undefined, node: IWhiteboardNode, 
   const flow = useFlow()
   useLayoutEffect(() => {
     if (container) {
-      if (!node.width || !node.height) {
+      if (!node.width) {
         const bounding = container.getBoundingClientRect()
         const transform = instance.getTransform?.()
         if (transform) {

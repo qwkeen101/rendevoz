@@ -32,10 +32,10 @@ import WhiteboardHeader from '@/core/components/whiteboard/WhiteboardHeader'
 import { useStore } from 'jotai'
 import WhiteboardFloatNodesLayer from '@/core/components/whiteboard/WhiteboardFloatNodesLayer'
 import WhiteboardHookContainer from '@/core/components/whiteboard/WhiteboardHookContainer'
-import SnapDragLayer from '@/core/components/whiteboard/hooks/SnapDragLayer'
+import SnapDragLayer from '@/core/components/whiteboard/snap/SnapDragLayer'
 import FakeMindmapDragLayer from '@/core/components/whiteboard/node/mindmap/FakeMindmapDragLayer'
 
-const WhiteboardInner = memo(({ onInstanceInitialized, layout }: IWhiteboardProps) => {
+const WhiteboardInner = memo(({ onInstanceInitialized, layout, id }: IWhiteboardProps) => {
   const containerRef = useRef<HTMLDivElement>(null)
   const flow = useFlow()
   const emitter = Rendevoz.Events.Emit.GlobalEventEmitter
@@ -127,7 +127,7 @@ const WhiteboardInner = memo(({ onInstanceInitialized, layout }: IWhiteboardProp
   return (
     <>
       <WhiteboardPanzoom />
-      <WhiteboardHookContainer />
+      <WhiteboardHookContainer whiteboardId={id}/>
       <Content
         fullHeight
         fullWidth
@@ -199,8 +199,8 @@ const WhiteboardInner = memo(({ onInstanceInitialized, layout }: IWhiteboardProp
           <WhiteboardSelect containerRef={containerRef} />
           <SnapDragLayer />
           <FreeHandLayer />
-          <WhiteboardEmptyIndicator />
         </div>
+        <WhiteboardEmptyIndicator />
         <Background />
         <WhiteboardFloatBar />
         <WhiteboardLint />

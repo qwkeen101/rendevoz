@@ -34,11 +34,13 @@ export interface IFeedCollection extends IBase {
   lastFetchedAt?: number
   unreadCount?: number
   collectionType: FeedItem['feedType']
+  workspace?: number
 }
 
 export interface IFeedFolder extends IBase {
   name: string
   collections: number[]
+  workspace?: number
   folded?: boolean
 }
 
@@ -46,9 +48,7 @@ export type IFeedInstance = Partial<{
   navigateOps: {
     back: VoidFunction
     forward: VoidFunction
-    prepareContent: (
-      feedItemId: number
-    ) => void
+    prepareContent: (feedItemId: number) => void
   }
   folderOps: {
     createFolder: (currentFolder?: Partial<IFeedFolder>) => Promise<IFeedFolder>

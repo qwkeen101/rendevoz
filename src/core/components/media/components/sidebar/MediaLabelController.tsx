@@ -86,7 +86,8 @@ const MediaLabelController = ({ labelType, labelIds }: { labelType: string; labe
         column
         style={{
           overflowY: 'auto',
-          height: '100%'
+          height: '100%',
+          paddingBottom: 100
         }}
         className={css({
           '>': {

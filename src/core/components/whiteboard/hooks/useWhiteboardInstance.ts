@@ -13,6 +13,7 @@ import useWhiteboardHighlight from '@/core/components/whiteboard/hooks/useWhiteb
 import assignContentOps from '@/core/components/whiteboard/hooks/ops/content'
 import { getSetting } from '@/core'
 import { MetaStore } from '@/api/stores'
+import assignMindmapOps from '@/core/components/whiteboard/hooks/ops/mindmap'
 
 export const WhiteboardInstanceAtom = atom<IWhiteboardInstance>({})
 
@@ -136,6 +137,9 @@ export const useAssignWhiteboardInstance = () => {
       }, withUndo)
     },
     deleteNodes: ids => {
+      Array.from(instance.values.ID_TO_NODE_MAP.values()).forEach(i => {
+        i.onNodesDelete?.(ids)
+      })
       updateWhiteboard(w => {
         ids.forEach(i => {
           w.nodes?.delete(i)
@@ -152,5 +156,6 @@ export const useAssignWhiteboardInstance = () => {
   useWhiteboardHighlight()
   assignContainerOps(instance)
   assignGroupOps(instance)
+  assignMindmapOps(instance)
   assignContentOps(instance)
 }

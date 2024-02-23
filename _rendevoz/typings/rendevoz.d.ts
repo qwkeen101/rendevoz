@@ -6,7 +6,7 @@ import { ReactElement } from 'react'
 import { GlobalInstances } from './globalInstances'
 import { ILayoutTab, TabData } from './layout'
 import { IWebpageInstance, IVideoInstance, IPdfInstance, IEditorInstance, IWhiteboardInstance } from './components'
-import { EditorEventMap, GlobalEventMap, IEventEmitter, IEventHandler, PdfEventMap } from './event'
+import { EditorEventMap, GlobalEventMap, IEventEmitter, IEventHandler, PdfEventMap, WhiteboardEventMap } from './event'
 import { NoteStore } from './stores'
 import { SearchStore } from './stores/search.store'
 import { MetaObject } from './data'
@@ -34,6 +34,7 @@ export type OpenTabOptions<K extends ILayoutTab['type']> = {
  * Layout actions Api
  */
 declare const Layout: {
+  closeAllTabs: (keepHome?: boolean) => void
   registerTabData: <K extends ILayoutTab['type']>(data: TabData[K]) => void
   getRegisteredTabContent: <K extends ILayoutTab['type']>(type: K) => TabData[K]['content'] | undefined
   openNewTab: <T extends ILayoutTab['type']>({ data }: OpenTabOptions<T>) => void
@@ -148,6 +149,7 @@ type TypeToEventMap = {
   editor: EditorEventMap
   global: GlobalEventMap
   pdf: PdfEventMap
+  whiteboard: WhiteboardEventMap
 }
 
 /**

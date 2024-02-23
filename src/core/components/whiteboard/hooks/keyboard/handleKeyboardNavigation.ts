@@ -1,6 +1,7 @@
 import isHotkey from 'is-hotkey'
 import { KEY } from '@/consts'
 import { IWhiteboardInstance, IWhiteboardNode, XYBox, XYPosition } from '~/typings'
+import handleMindmapNavigate from '@/core/components/whiteboard/hooks/keyboard/handleMindmapNavigate'
 
 const getNextNodeByBox = (
   currentBox: XYBox,
@@ -89,6 +90,29 @@ const getNextNodeByPoint = (
   }
 }
 
+const isInView = (node: IWhiteboardNode, instance: IWhiteboardInstance) => {
+  const windowRect = instance.coordOps?.transformWhiteboardRectToWindowRect({
+    left: node.x,
+    top: node.y,
+    width: node.width ?? 0,
+    height: node.height ?? 0
+  })
+  if (!windowRect) return false
+  const right = windowRect.left + windowRect.width
+  const bottom = windowRect.top + windowRect.height
+  const { left, top } = windowRect
+  const containerBounding = instance.getOutestContainerNode?.()?.getBoundingClientRect()
+  if (!containerBounding) return false
+  if (
+    left < containerBounding.left ||
+    top < containerBounding.top ||
+    right > containerBounding.right ||
+    bottom > containerBounding.bottom
+  ) {
+    return false
+  }
+  return true
+}
 const fitTo = (instance: IWhiteboardInstance, direction: 'top' | 'right' | 'bottom' | 'left') => {
   const currentSelectNodes = instance.selectOps?.getSelectedNodes()
   const inViewNodes = instance.containerOps?.getInViewNodes()
@@ -99,12 +123,14 @@ const fitTo = (instance: IWhiteboardInstance, direction: 'top' | 'right' | 'bott
     instance.selectOps?.deselectAll()
     setTimeout(() => {
       instance.selectOps?.selectNode(node.id)
-      instance.containerOps?.fitTo(
-        { left: node.x, top: node.y, width: node.width, height: node.height },
-        {
-          changeScale: false
-        }
-      )
+      if (!isInView(node, instance)) {
+        instance.containerOps?.fitTo(
+          { left: node.x, top: node.y, width: node.width, height: node.height },
+          {
+            changeScale: false
+          }
+        )
+      }
     })
   }
   // if only one in view node and no selected, select it
@@ -122,6 +148,11 @@ const fitTo = (instance: IWhiteboardInstance, direction: 'top' | 'right' | 'bott
   }
   // have one selected node
   else {
+    const mindmapNavigate = handleMindmapNavigate(currentSelectNodes[0], instance, direction)
+    if (mindmapNavigate) {
+      deselectAllAndFitToNode(mindmapNavigate)
+      return
+    }
     const selected = currentSelectNodes[0]
     const next = getNextNodeByBox(selected, direction, inViewNodes, allNodes, selected.id)
     console.log(selected, next)

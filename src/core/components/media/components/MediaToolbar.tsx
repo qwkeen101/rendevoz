@@ -16,8 +16,11 @@ import { MetaStore } from '@/api/stores'
 
 const clazz = css({
   borderRadius: `999px !important`,
-  backgroundColor: Colors.Background.Secondary,
-  fontWeight: 600
+  backgroundColor: Colors.Background.ButtonHover,
+  fontWeight: 600,
+  ':hover': {
+    backgroundColor: `${Colors.Background.ButtonActive} !important`
+  }
 })
 export default () => {
   const [mediaState, setMediaState] = useMediaState()
@@ -25,12 +28,25 @@ export default () => {
   const instance = useMediaInstance()
   const { t } = useTranslation()
   const [subtitleImporterVisible, setSubtitleImporterVisible] = useState(false)
-  const [barState, setBarState] = useState<{
-    addingAttachment: boolean
-  }>()
-  const attachmentLength = MetaStore.useValue(mediaState.metaId)?.attachments?.length
   return (
-    <>
+    <Content flex column gap={10} fullWidth>
+      {mediaState.mode === 'web' && (
+        <div style={{ width: '100%', display: 'flex', gap: 4, alignItems: 'center' }} className={'transparent-font font-size-13'}>
+          <Icon name={'park-link-one'} />
+          <a
+            className={css({
+              ':hover': {
+                textDecoration: 'underline'
+              },
+              color: 'inherit'
+            })}
+            target={'_blank'}
+            href={mediaState.url}
+          >
+            {mediaState.url}
+          </a>
+        </div>
+      )}
       <Content flex fullWidth alignItems={'center'} justifyContent={'space-between'} gap={30}>
         <MediaSubtitleImporter visible={subtitleImporterVisible} onChange={() => setSubtitleImporterVisible(false)} />
         <Content flex gap={8}>
@@ -42,13 +58,19 @@ export default () => {
             text={mediaState.isPinned ? t('general.unpin') : t('general.pin')}
             icon={'park-like'}
           />
-          <Button.IconButton
-            className={clazz}
-            text={t('general.Move to')}
-            style={{ padding: '4px 12px' }}
-            onClick={() => instance.on?.({ type: 'assignToNewCollection' })}
-            icon={'park-corner-up-right'}
-          />
+          {mediaState.mode === 'web' && mediaState.currentTime && (
+            <Button.IconButton
+              icon="park-pin"
+              className={clazz}
+              style={{ padding: '4px 12px' }}
+              onClick={() => {
+                instance.insertLabel?.({
+                  time: mediaState.currentTime
+                })
+              }}
+              text={t('general.add label')}
+            ></Button.IconButton>
+          )}
           <Button.IconButton
             className={clazz}
             text={sidebarState.rightBarVisible ? t('general.Close sidebar') : t('general.Open sidebar')}
@@ -72,12 +94,13 @@ export default () => {
               />
             </Tooltip>
           )}
+
           {mediaState.mode === 'web' && (
             <IconWithPopover
               padding={10}
               renderOnParent={false}
               content={setState => <MediaActionsMenu onClose={() => setState(false)} />}
-              name="park-tool"
+              name="park-more-four"
               className={css([ClassName.flatButton(), clazz])}
               size={20}
               style={{
@@ -87,7 +110,6 @@ export default () => {
             ></IconWithPopover>
           )}
           <IconWithPopover
-            placement={['bottom', 'top']}
             padding={10}
             closeOnContentClick
             disableNudge={true}
@@ -99,11 +121,6 @@ export default () => {
                   text={mediaState.floated ? t('general.normal video') : t('general.windowed video')}
                   onClick={() => setMediaState(s => ({ ...s, floated: !s.floated }))}
                 />
-                <Button.IconButton
-                  icon="park-plus"
-                  text={t('general.add attachment')}
-                  onClick={() => setBarState(s => ({ ...s, addingAttachment: true }))}
-                ></Button.IconButton>
                 {(mediaState.mode === 'audio' || mediaState.mode === 'video') && (
                   <Button.IconButton
                     icon="park-voice"
@@ -116,6 +133,11 @@ export default () => {
                   text={t('general.import subtitles')}
                   onClick={() => setSubtitleImporterVisible(true)}
                 ></Button.IconButton>
+                <Button.IconButton
+                  text={t('general.Move to')}
+                  onClick={() => instance.on?.({ type: 'assignToNewCollection' })}
+                  icon={'park-corner-up-right'}
+                />
               </WithBorder>
             }
             name="park-more"
@@ -128,6 +150,6 @@ export default () => {
           />
         </Content>
       </Content>
-    </>
+    </Content>
   )
 }

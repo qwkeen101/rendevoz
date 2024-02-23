@@ -6,6 +6,8 @@ import { saveImageLocally } from '@/utils'
 import { useTranslation } from 'react-i18next'
 import useMediaState from '@/core/components/media/hooks/useMediaState'
 import { useMediaInstance } from '@/core/components/media/hooks/useMediaInstance'
+import { Colors } from '@/consts'
+import { css } from '@emotion/css'
 
 const MediaActionsMenu = ({ onClose }: { onClose?: VoidFunction }) => {
   const { t } = useTranslation()
@@ -13,7 +15,16 @@ const MediaActionsMenu = ({ onClose }: { onClose?: VoidFunction }) => {
   const instance = useMediaInstance()
   const { currentTime } = mediaState
   return (
-    <WithBorder onClick={e => Rendevoz.Events.DOM.hasButton(e) && onClose?.()} padding={8} style={{ borderRadius: 8 }}>
+    <WithBorder
+      onClick={e => Rendevoz.Events.DOM.hasButton(e) && onClose?.()}
+      padding={6}
+      className={css({
+        '*': {
+          color: Colors.Font.Primary
+        }
+      })}
+      style={{ borderRadius: 8 }}
+    >
       {mediaState.mode !== 'audio' && (
         <>
           <Button.IconButton
@@ -56,15 +67,7 @@ const MediaActionsMenu = ({ onClose }: { onClose?: VoidFunction }) => {
         text={t('general.add chapter')}
         icon="park-link"
       ></Button.IconButton>
-      <Button.IconButton
-        icon="park-pin"
-        onClick={() => {
-          instance.insertLabel?.({
-            time: currentTime
-          })
-        }}
-        text={t('general.add label')}
-      ></Button.IconButton>
+
       <Button.IconButton
         icon="park-time"
         text={t('general.Copy timestamp as link')}

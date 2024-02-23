@@ -29,6 +29,9 @@ const LocalVideoPlayer = () => {
       const blob = audioBufferToWav(audio)
       return new Blob([blob], { type: 'audio/wav' })
     },
+    getMediaContainer: () => {
+      return ref.current || undefined
+    },
     imageOps: {
       captureImage: async (time, size) => {
         const v = offscreenVideoRef.current

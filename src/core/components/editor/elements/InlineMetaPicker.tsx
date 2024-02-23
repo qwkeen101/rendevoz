@@ -8,6 +8,7 @@ import { Editor, Path, Transforms } from 'slate'
 import { ReactEditor, useSlateStatic } from '@/core'
 import { useMemoizedFn } from '@/hooks'
 import { ClassName } from 'rendevoz'
+import { HistoryEditor } from 'slate-history'
 
 const InlineMetaPicker = ({ element, children, attributes }: RenderElementProps) => {
   const editor = useSlateStatic()
@@ -31,11 +32,14 @@ const InlineMetaPicker = ({ element, children, attributes }: RenderElementProps)
       })
     } else {
       const text = value
-      Transforms.removeNodes(editor, {
-        at: path
+      HistoryEditor.withoutSaving(editor, () => {
+        Transforms.removeNodes(editor, {
+          at: path
+        })
       })
       const prev = element.isAt ? `@` : `[[`
       Transforms.insertText(editor, `${prev}${text}`)
+      ReactEditor.focus(editor)
     }
   })
   const ref = useRef<HTMLElement>(null)
@@ -52,19 +56,11 @@ const InlineMetaPicker = ({ element, children, attributes }: RenderElementProps)
     }
     document.addEventListener('keydown', existHandler, true)
     return () => {
-      const path = Path.parent(ReactEditor.findPath(editor, element))
-      const hasCurrent = Editor.hasPath(editor, path)
-      const end = Editor.end(editor, hasCurrent ? path : Path.previous(path))
-      ReactEditor.focus(editor)
-      Transforms.select(editor, end)
       document.removeEventListener('keydown', existHandler, true)
     }
   }, [])
   return (
-    <span
-      {...attributes}
-      style={{ background: Colors.Background.ButtonActive, padding: '2px 4px', borderRadius: 4, fontSize: '0.9em' }}
-    >
+    <span {...attributes} style={{ background: Colors.Background.ButtonActive, padding: '2px 4px', borderRadius: 4, fontSize: '0.9em' }}>
       <AnimatePopover
         positions={['top', 'bottom']}
         padding={4}

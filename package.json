@@ -27,6 +27,7 @@
     "node": ">=18"
   },
   "dependencies": {
+    "@antv/hierarchy": "^0.6.11",
     "@codemirror/autocomplete": "^6.11.1",
     "@codemirror/language-data": "^6.3.1",
     "@dagrejs/dagre": "^1.0.2",

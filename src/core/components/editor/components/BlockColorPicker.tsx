@@ -46,7 +46,7 @@ const BlockColorPicker = ({
         padding: 6,
         display: 'flex',
         flexDirection: 'column',
-        gap: 6,
+        gap: 8,
         '> div': {
           width: 275
         }
@@ -56,8 +56,8 @@ const BlockColorPicker = ({
       }}
     >
       {showFont && (
-        <>
-          <Content flex alignItems="center" justifyContent="space-between" className={ClassName.description()}>
+        <Content flex column gap={3}>
+          <Content flex alignItems="center" justifyContent="space-between" className={'font-size-12 transparent-font'}>
             <span>{t('editor.font color')}</span>
             {showMoreFontOption && (
               <span onClick={toggleShowMoreFontColor} className={ClassName.flatButton(3, '0px 3px')}>
@@ -65,20 +65,18 @@ const BlockColorPicker = ({
               </span>
             )}
           </Content>
-          <ColorPicker enableDefault={fontBackDefault} isFont enableMore={!showMoreColor && !showMoreFont} onPick={onPickFontColor} />
-        </>
+          <ColorPicker enableDefault={fontBackDefault} isFont showLess={!showMoreColor && !showMoreFont} onPick={onPickFontColor} />
+        </Content>
       )}
       {showBorder && (
-        <>
-          <Content flex alignItems="center" justifyContent="space-between" className={ClassName.description()}>
-            <span>{t('editor.border color')}</span>
-          </Content>
-          <ColorPicker enableDefault={borderBackDefault} enableMore={true} onPick={onPickBorderColor} />
-        </>
+        <Content flex column gap={3}>
+          <div className={'font-size-12 transparent-font'}>{t('editor.border color')}</div>
+          <ColorPicker enableDefault={borderBackDefault} showLess={true} onPick={onPickBorderColor} />
+        </Content>
       )}
       {showBg && (
-        <>
-          <Content flex alignItems="center" justifyContent="space-between" className={ClassName.description()}>
+        <Content flex column gap={3}>
+          <Content flex alignItems="center" justifyContent="space-between" className={'font-size-12 transparent-font'}>
             <span>{t('editor.background color')}</span>
             {showMoreBgOption && (
               <span onClick={toggleShowMoreBackground} className={ClassName.flatButton(3, '0px 3px')}>
@@ -86,8 +84,8 @@ const BlockColorPicker = ({
               </span>
             )}
           </Content>
-          <ColorPicker enableDefault={bgBackDefault} enableMore={!showMoreBackground && !showMoreBg} onPick={onPickBackgroundColor} />
-        </>
+          <ColorPicker enableDefault={bgBackDefault} showLess={!showMoreBackground && !showMoreBg} onPick={onPickBackgroundColor} />
+        </Content>
       )}
     </WithBorder>
   )

@@ -4,7 +4,7 @@ import { LayoutIdToTabMap } from '@/components/layout/index'
 
 class LayoutManager {
   private layout: LayoutData | null = null
-  private changeHandler: ((layout: LayoutData) => void) | null = null
+  public changeHandler: ((layout: LayoutData) => void) | null = null
 
   public registerLayout = (layout: LayoutData) => {
     this.layout = layout

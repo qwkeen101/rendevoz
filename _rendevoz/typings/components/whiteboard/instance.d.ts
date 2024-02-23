@@ -85,6 +85,7 @@ export type INodeInnerFuncs = {
   updateNodeBox: (newBox: Box) => void
   getNodeDOM: () => HTMLElement
   setNodeState: Dispatch<SetStateAction<INodeInnerState>>
+  drawMindmapEdges?: VoidFunction
   checkMindmapDrag?: (
     targetNode:
       | {
@@ -94,9 +95,12 @@ export type INodeInnerFuncs = {
       | undefined,
     dragNode: IWhiteboardNode
   ) => void
-  onSomeNodeSizeChange?: (node: IWhiteboardNode) => void
-  endDragNode?: (dragNode: IWhiteboardNode) => void
+  onNodesDelete?: (nodeIds: number[]) => void
+  onSomeNodeSizeChange?: (node: IWhiteboardNode | IWhiteboardNode[]) => void
+  // return true or false here, check whether attached to a mindmap
+  endDragNode?: (dragNode: IWhiteboardNode) => boolean
   hasTempMindmapLink?: () => boolean
+  onNodeCollapse?: (nodeIds: number[], collapse: boolean) => void
   onAddSubNode?: (sourceNodeId: number, newNode: IWhiteboardNode, idx: number, direction: 'right' | 'left') => void
 }
 export type IEdgeInnerFuncs = {
@@ -112,6 +116,8 @@ export type IWhiteboardInstance = Partial<{
   getEdge: (edgeId: number) => IWhiteboardEdge
   mindmapOps: {
     getFakeNodeBox: (nodeId: number) => Box | undefined
+    updateMindmapEdges: (nodeId: number) => void
+    expandMindmap: (node: IWhiteboardNode & { type: 'mindmap' }) => IWhiteboardNode[]
     startDragMindmapChild: (nodeId: number, e: PointerEvent) => void
   }
   getEdgeLayer: () => SVGGElement | null | undefined
@@ -170,6 +176,7 @@ export type IWhiteboardInstance = Partial<{
     transformToOutline: () => IWhiteboardOutline[]
   }
   nodeOps: {
+    getDOMBoxOfNodes: (ids: number | number[]) => Record<number, Box>
     getMaxZindex: () => number
     updateAfterZ: (currentNodeId: number) => void
     // return related nodes
@@ -210,6 +217,7 @@ export type IWhiteboardInstance = Partial<{
   coordOps: {
     transformWindowPositionToPosition: (winPosition: XYPosition) => XYPosition
     transformWhiteboardPositionToWindowPosition: (position: XYPosition) => XYPosition
+    transformWhiteboardRectToWindowRect: (box: Box) => Box
   }
   toolbarOps: {
     getToolbarState: () => IWhiteboardToolbarState

@@ -127,7 +127,7 @@ const useEditorDrag = (editor: CustomEditor, scrollElement?: HTMLElement | null)
     if (!isDraggingInsideEditor) {
       setIsDragging(true)
     }
-    e.preventDefault()
+
     if (scrollManager.isScrolling()) {
       scrollManager.endScroll()
     }
@@ -135,9 +135,7 @@ const useEditorDrag = (editor: CustomEditor, scrollElement?: HTMLElement | null)
       scrollManager.startScroll(e)
       dragManager.prepareDragging()
     }
-
     const indicator = dragManager.drag(e)
-    console.log(indicator)
     const targetPath = indicator?.path
     if (!targetPath) return
 

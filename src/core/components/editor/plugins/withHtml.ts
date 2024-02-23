@@ -10,12 +10,10 @@ const withHtml = (editor: CustomEditor) => {
 
   editor.insertData = data => {
     const html = data.getData('text/html')
-    const slateFragment = data.getData('application/x-slate-fragment')
+    const slateFragment = data.getData('application/x-rendevoz-slate-fragment')
     const plainText = data.getData('text/plain')
     const url = data.getData('text/uri-list')
-    console.log(data.types)
-    console.log(url)
-    console.log(plainText, slateFragment, data)
+    console.log({ plainText, slateFragment, data, url, html })
     const imageItem = Array.from(data.items).find(i => i.type.startsWith('image'))
     if (imageItem) {
       const blob = imageItem.getAsFile()
@@ -46,25 +44,26 @@ const withHtml = (editor: CustomEditor) => {
       })
       return
     }
-    if (slateFragment) {
-      ReactEditor.insertFragmentData(editor, data)
-      return
-    }
+
     if (html) {
       const parsed = new DOMParser().parseFromString(html, 'text/html')
       const deserialized = deserializeHTML(parsed.body)
       console.log(deserialized, parsed)
-      const normalized = normalize(deserialized)
-      Transforms.insertFragment(editor, normalized)
+      if (deserialized.length) {
+        const normalized = normalize(deserialized)
+        Transforms.insertFragment(editor, normalized)
+        return
+      }
+    }
+    if (slateFragment) {
+      ReactEditor.insertFragmentData(editor, data)
       return
     }
-
     const linkPattern =
       /(^|[\s\n]|<[A-Za-z]*\/?>)((?:https?|ftp):\/\/[\-A-Z0-9+\u0026\u2019@#\/%?=()~_|!:,.]*[\-A-Z0-9+\u0026@#\/%=~()_|])/gi
 
     if (plainText) {
       const paragraphs = plainText.split(/[\r\n]+/)
-      console.log(paragraphs)
       const texts = paragraphs
         .filter(i => i)
         .map(p => {

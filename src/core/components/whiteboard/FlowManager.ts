@@ -7,7 +7,6 @@ import { transformXY } from '@/core/components/whiteboard/utils'
 import { useSetWhiteboardNodes } from '@/core/components/whiteboard/StateHooks'
 import { debounce } from 'lodash'
 import { trimNumber } from '@/utils'
-import { DEFAULT_NODE_PADDING, DEFAULT_NODE_WIDTH } from '@/core/components/whiteboard/node/hooks/useNodeSize'
 
 type HistoryItem = {
   patches: Patch[]
@@ -18,7 +17,6 @@ class FlowManager {
   public whiteboardId?: number
   private intervalId: ReturnType<typeof setInterval> | undefined
   public focused = false
-  public clearSelectBox?: VoidFunction
   private instance: IWhiteboardInstance
   constructor(instance: IWhiteboardInstance) {
     // loop to avoid nodes without width & height
@@ -129,44 +127,56 @@ class FlowManager {
     // do not update values if resizing using selection box
     if (this.instance.values.isResizingSelectionBox) return
     const batchNewSize: { id: number; width?: number; height?: number }[] = []
+    console.log(entries)
+    const nodeSizeChange: { id: number; width?: number; height?: number }[] = []
     for (const entry of entries) {
       const target = entry.target
       const nodeId = Number(target.getAttribute('data-node-id'))
-      if (this.instance.values.ID_TO_NODE_MAP.get(nodeId)?.sizeAlreadyDefined()) {
-        return
-      }
       const node = this.instance.getNode?.(nodeId)
-      this.instance.nodeOps?.updateRelatedEdges(nodeId)
+      console.log(node, entry)
       if (node) {
-        const box = entry.contentRect
+        const box = {
+          width: entry.borderBoxSize[0].inlineSize,
+          height: entry.borderBoxSize[0].blockSize
+        }
         const newSize = {
-          width: trimNumber(
-            node.width || (node.expanded ? box.width : Math.min(Math.max(box.width + DEFAULT_NODE_PADDING, DEFAULT_NODE_WIDTH), 500))
-          ),
+          width: trimNumber(box.width),
           height: trimNumber(box.height)
         }
-        if (newSize.width !== box.width && entry.target instanceof HTMLElement) {
-          entry.target.style.width = `${newSize.width}px`
+        if (newSize.width === 0 && newSize.height === 0) return
+        if (newSize.width !== node.width || newSize.height !== node.height) {
+          this.instance.nodeOps?.updateRelatedEdges(nodeId)
+          nodeSizeChange.push({ ...newSize, id: nodeId })
+          if (!this.instance.nodeOps?.getNodeFuncs(nodeId)?.sizeAlreadyDefined()) {
+            batchNewSize.push({ ...newSize, id: nodeId })
+          }
         }
-        batchNewSize.push({ ...newSize, id: nodeId })
       }
     }
-    if (batchNewSize.length) {
+    console.log(nodeSizeChange)
+    const nodeFuncArr = Array.from(this.instance.values.ID_TO_NODE_MAP.values())
+    if (nodeSizeChange.length) {
+      const sizeChanged = nodeSizeChange.map(i => ({ ...this.instance.getNode?.(i.id), ...i }))
       setTimeout(() => {
-        const nodeFuncArr = Array.from(this.instance.values.ID_TO_NODE_MAP.values())
+        this.instance.eventEmitter.emit('whiteboard', {
+          type: 'nodesSizeChange',
+          data: {
+            changedNodes: sizeChanged
+          }
+        })
+      })
+      nodeFuncArr.forEach(i => {
+        i.onSomeNodeSizeChange?.(sizeChanged)
+      })
+    }
+    if (batchNewSize.length) {
+      console.log(batchNewSize)
+      setTimeout(() => {
         this.instance.updateWhiteboard?.(w => {
           batchNewSize.forEach(s => {
             const o = w.nodes?.get(s.id)
             if (o) {
               const newNode = { ...o, ...s }
-              setTimeout(() => {
-                nodeFuncArr.forEach(i => {
-                  const n = this.instance.getNode?.(s.id)
-                  if (n) {
-                    i.onSomeNodeSizeChange?.(n)
-                  }
-                })
-              })
               w.nodes?.set(s.id, newNode)
             }
           })

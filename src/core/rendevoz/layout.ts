@@ -1,8 +1,9 @@
 import { ILayoutTab, TabData } from '~/typings'
 import getSetting from '../setting/getSetting'
-import { GlobalLayout, LayoutIdToTabMap } from '@/components/layout'
+import { defaultLayout, GlobalLayout, LayoutIdToTabMap } from '@/components/layout'
 import Id from '@/utils/id'
 import { ReactElement } from 'react'
+import { Rendevoz } from '@/core/rendevoz/index'
 
 const TabDataMap = new Map<ILayoutTab['type'], TabData[ILayoutTab['type']]>()
 
@@ -166,6 +167,14 @@ const tabToInstanceMap = new WeakMap<ILayoutTab, any>()
 
 const makeTabActive = tabId => GlobalLayout?.makeTabActive?.(tabId)
 
+const closeAllTabs = (keepHome?: boolean) => {
+  LayoutIdToTabMap.clear()
+  GlobalLayout?.registerLayout(defaultLayout)
+  GlobalLayout?.changeHandler?.(defaultLayout)
+  if (keepHome) {
+    Rendevoz.Actions.Open.openHome()
+  }
+}
 const Layout = {
   registerTabData,
   openNewTab,
@@ -176,6 +185,7 @@ const Layout = {
     return LayoutIdToTabMap.get(id)
   },
   getTab,
+  closeAllTabs,
   getVisibleTabs,
   restoreSavedTab,
   getRegisteredTabContent

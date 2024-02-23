@@ -224,6 +224,7 @@ const PdfHeader = ({ documentId }: { documentId: number }) => {
           </Tooltip>
           <Icon
             size={16}
+            tooltip={<TooltipWithCmd name={'Clip'} cmd={'Cmd+Alt+A'}></TooltipWithCmd>}
             className={ClassName.flatButton(6, '5px')}
             name={'park-screenshot'}
             containerStyle={{

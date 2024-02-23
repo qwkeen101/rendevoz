@@ -67,7 +67,7 @@ const WhiteboardRightbar = () => {
     openTabInSidebar: (type, objectId) => {}
   })
   const { active, visible, width } = rightBarState
-  console.log(width)
+
   // @ts-ignore
   return (
     <Resizable

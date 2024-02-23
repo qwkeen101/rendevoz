@@ -28,6 +28,7 @@ import { TabTitle } from '@/core/rendevoz/components'
 import MediaToolbar from '@/core/components/media/components/MediaToolbar'
 import _ from 'lodash'
 import useMediaSidebarState from '@/core/components/media/hooks/useMediaSidebarState'
+import QuickLabelPopover from '@/core/components/media/components/QuickLabelPopover'
 export interface MediaProps {
   onInstanceInitialized?: (instance: Partial<IMediaInstance>) => void
   onlyCore?: boolean
@@ -43,7 +44,6 @@ const MediaInner = ({ onInstanceInitialized, onlyCore, on, disableTabTitle = tru
 
   const outerContainerRef = useRef<HTMLDivElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
-  const { width = 0 } = useMeasure(outerContainerRef)
   const instance = useMediaInstance()
   instance.on = on
   const showIcon = mediaState.mode !== 'audio' && playIconVisible && mediaState.loaded
@@ -77,7 +77,17 @@ const MediaInner = ({ onInstanceInitialized, onlyCore, on, disableTabTitle = tru
   useUpdateEffect(() => {
     setPlayIconVisible(true)
   }, [mediaState.paused])
-
+  useEffect(() => {
+    if (mediaState.fullScreen) {
+      const c = containerRef.current
+      if (c) {
+        c.requestFullscreen()
+        return () => {
+          document.exitFullscreen()
+        }
+      }
+    }
+  }, [mediaState.fullScreen])
   useEffect(() => {
     if (mediaState.jumpIndicator || mediaState.volumeIndicator) {
       setPlayIconVisible(true)
@@ -89,7 +99,6 @@ const MediaInner = ({ onInstanceInitialized, onlyCore, on, disableTabTitle = tru
   }, [mediaState.muted, mediaState.volume, mediaState.loop, mediaState.currentTime, mediaState.totalPlayedTime, mediaState.totalTime])
   useMediaShortcut(outerContainerRef)
   useAssignMediaInstance(containerRef)
-  const sidebarState = useMediaSidebarState()[0]
   const latestVideoLoaded = useLatest(mediaState.loaded)
 
   useEffect(() => {
@@ -105,7 +114,7 @@ const MediaInner = ({ onInstanceInitialized, onlyCore, on, disableTabTitle = tru
       }
     )
   }, [])
-
+  const lastMovedRef = useRef(0)
   const renderCore = () => {
     return (
       <Content
@@ -121,6 +130,15 @@ const MediaInner = ({ onInstanceInitialized, onlyCore, on, disableTabTitle = tru
         }}
         fullWidth
         onPointerMove={e => {
+          lastMovedRef.current = Date.now()
+          if (mediaState.fullScreen) {
+            setTimeout(() => {
+              const n = Date.now()
+              if (n - lastMovedRef.current > 1400) {
+                setToolbarState(s => ({ ...s, visible: false }))
+              }
+            }, 1500)
+          }
           setToolbarState(s => {
             if (s.visible) return s
             else return { ...s, visible: true }
@@ -251,6 +269,7 @@ const MediaInner = ({ onInstanceInitialized, onlyCore, on, disableTabTitle = tru
   return (
     <Content fullWidth fullHeight ref={outerContainerRef}>
       <MediaTranscriber />
+      <QuickLabelPopover />
       {!disableTabTitle && <TabTitle title={mediaState.name} icon={<Icon name={'park-video'} />} />}
       <Content
         style={{
@@ -259,7 +278,8 @@ const MediaInner = ({ onInstanceInitialized, onlyCore, on, disableTabTitle = tru
           height: '100%',
           flexDirection: columnLayout ? 'column' : 'row',
           justifyContent: columnLayout && !audioMode ? 'unset' : 'center',
-          alignItems: 'center'
+          alignItems: 'center',
+          overflowY: 'auto'
         }}
         tabIndex={0}
         fullHeight
@@ -278,7 +298,7 @@ const MediaInner = ({ onInstanceInitialized, onlyCore, on, disableTabTitle = tru
             flex
             centered
             column
-            gap={8}
+            gap={10}
             style={{
               width: '100%',
               maxWidth: 'calc((100vh - 260px) * (1/0.6))',
@@ -288,7 +308,7 @@ const MediaInner = ({ onInstanceInitialized, onlyCore, on, disableTabTitle = tru
             }}
           >
             {mediaState.floated ? renderFloated() : renderCore()}
-            {!audioMode && <div style={{ fontWeight: 600, fontSize: 16, width: '100%' }}>{mediaState.name}</div>}
+            {!audioMode && <div style={{ fontWeight: 500, fontSize: 18, width: '100%', lineHeight: 1.4 }}>{mediaState.name}</div>}
             {!audioMode && <MediaToolbar />}
           </Content>
         </Content>

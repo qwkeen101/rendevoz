@@ -61,6 +61,8 @@ export type IMediaInternalState = {
   sticky?: boolean
   fullScreen: boolean
   isTranscribing?: boolean
+  fullScreen?: boolean
+  labelPopoverVisible?: boolean
   windowed: boolean
   jumpIndicator?: 'back' | 'forward'
   volumeIndicator?: 'up' | 'down'
@@ -79,6 +81,7 @@ export type IMediaInstance = Partial<{
   actionOps: {
     play: VoidFunction
     pause: VoidFunction
+    fullScreen: VoidFunction
     // second
     jumpTo: (time: number) => void
     mute: VoidFunction
@@ -98,10 +101,12 @@ export type IMediaInstance = Partial<{
   on: (event: IMediaEvent) => any
   getUrl: () => string | undefined
   getVideoId: () => number
+  getMediaContainer: () => HTMLElement | undefined
   getVideoElement: () => HTMLVideoElement | undefined
   getPlayerElement: () => HTMLElement | undefined | null
   getOffscreenVideo: () => HTMLVideoElement | undefined
   getVideoState: () => VideoState
+  openLabelPopover: (labelId: number) => void
   openThumbnailAtTime: (
     time: number,
     options?: {

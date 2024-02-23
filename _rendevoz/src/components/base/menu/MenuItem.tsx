@@ -56,6 +56,7 @@ const ButtonMenuItem: FC<MenuItemWithProps & { type: 'item' }> = ({
             <NavigationMenu layout={subMenu} selectedKeys={subMenuKeys} />
           </WithBorder>
         }
+        keepAlign={true}
         positions={['right', 'left', 'bottom']}
       >
         <ButtonRenderer />

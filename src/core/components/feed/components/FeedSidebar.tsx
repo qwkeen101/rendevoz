@@ -44,10 +44,20 @@ const FeedSidebar = () => {
       headerName: t('general.Read later')
     }))
   }
+  const workspace = KeyvalueStore.useValue('currentWorkspace')
   useEffect(() => {
+    setFeedState({
+      allFeedItems: [],
+      modalOpen: false,
+      isSyncing: false,
+      sidebarCollapsed: false,
+      openLeftBar: false,
+      sidePeekOpen: false,
+      currentVisiblePage: 'home'
+    })
     ObjectStore('feedCollection').getAll()
     ObjectStore('feedFolder').getAll()
-  }, [])
+  }, [workspace?.id])
   const handleSetHistory = async () => {
     const history = await KeyvalueStore.getOne('feedRecentlyReadIds')
     setFeedState(s => ({

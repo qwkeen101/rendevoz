@@ -8,27 +8,16 @@ import Id from '@/utils/id'
 import { Position } from '@/types'
 import { trimNumber } from '@/utils'
 
-export const getNodeData = (nodeId: number, instance: IWhiteboardInstance) => {
-  const nodeEle = flow.ID_TO_NODE_ELEMENT_MAP.get(nodeId)?.element
-  if (nodeEle) {
-    const bound = nodeEle.getBoundingClientRect()
-    const transformedXY = transformXY(flow.containerEle?.getBoundingClientRect(), bound.x, bound.y, flow.containerTransformScale)
-    return {
-      bound,
-      transformedXY
-    }
-  }
-}
-
 export const getEdgeData = (
   sourceNodeId: number,
   targetNodeId: number,
   sourcePosition: EdgePosition,
   targetPosition: EdgePosition,
-  instance: IWhiteboardInstance
+  instance: IWhiteboardInstance,
+  isMindmap = false
 ) => {
-  const sourceXY = getHandlePosition(sourceNodeId, sourcePosition, instance)
-  const targetXY = getHandlePosition(targetNodeId, targetPosition, instance)
+  const sourceXY = getHandlePosition(sourceNodeId, sourcePosition, instance, isMindmap)
+  const targetXY = getHandlePosition(targetNodeId, targetPosition, instance, isMindmap)
   if (!sourceXY || !targetXY) {
     throw new Error('Can not get edge data!')
   }
@@ -59,9 +48,14 @@ export const isPointerOnContainer = (e: PointerEvent | MouseEvent, instance: IWh
   if (role === 'modal' || role === 'data-container') return true
   return false
 }
-const handleOffset = 4
-export const getHandlePosition = (nodeId: number, handlePosition: EdgePosition, instance: IWhiteboardInstance) => {
+
+export const getHandlePosition = (nodeId: number, handlePosition: EdgePosition, instance: IWhiteboardInstance, isMindmap: boolean) => {
   const realtimeNodeBox = instance.mindmapOps?.getFakeNodeBox(nodeId) || instance.values.ID_TO_NODE_MAP.get(nodeId)?.getRealtimeBox()
+  const node = instance.getNode?.(nodeId)
+  let handleOffset = 4
+  if (isMindmap) {
+    handleOffset = 0
+  }
   if (!realtimeNodeBox) {
     throw new Error('Can not find node: ' + nodeId)
   }
@@ -70,6 +64,20 @@ export const getHandlePosition = (nodeId: number, handlePosition: EdgePosition, 
     throw new Error('Can not get container transform!')
   }
   const { left, top, width, height } = realtimeNodeBox
+  if (node?.borderType === 'underline') {
+    if (isMindmap && handlePosition === 'left') {
+      return {
+        x: left,
+        y: top + height
+      }
+    }
+    if (isMindmap && handlePosition === 'right') {
+      return {
+        x: left + width,
+        y: top + height
+      }
+    }
+  }
   switch (handlePosition) {
     case 'top':
       return {

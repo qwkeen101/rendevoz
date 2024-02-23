@@ -8,23 +8,27 @@ import { ReactEditor, useSlate, useSlateStatic } from '../../slate-react'
 import styles from './index.module.less'
 import useToggleList from '@/core/components/editor/elements/listItem/useToggleList'
 import { Colors } from '@/consts'
+import { css } from '@emotion/css'
 
+const indentClazz = css({
+  position: 'absolute',
+  top: -3,
+  bottom: -3,
+  userSelect: 'none',
+  pointerEvents: 'none',
+  width: 1,
+  transform: 'translateX(calc(0.2em))',
+  background: Colors.Background.Border
+})
 const BorderIndent = ({ index }: { index: number }) => {
   // 20: initial margin left, 15: indent
   const offset = 24 * (index + 1)
   return (
     <div
       contentEditable={false}
+      className={indentClazz}
       style={{
-        position: 'absolute',
-        top: -3,
-        bottom: -3,
-        left: -offset,
-        userSelect: 'none',
-        pointerEvents: 'none',
-        width: 1,
-        transform: 'translateX(calc(0.2em))',
-        background: Colors.Background.Border
+        left: -offset
       }}
     ></div>
   )
@@ -71,7 +75,7 @@ export const ListItem = ({ children, element }: RenderElementProps) => {
 }
 
 function getDictionary() {
-  return validateDictionary('ABCDEFGHIJKLMNOPQRSTUVWXYZ')
+  return validateDictionary('abcdefghijklmnopqrstuvwxyz')
 
   function validateDictionary(dictionary) {
     for (let i = 0; i < dictionary.length; i++) {
@@ -170,10 +174,7 @@ export const OrderListItem = ({ children, element }: RenderElementProps) => {
     try {
       let previous = Editor.node(editor, previousPath)
       let num = 1
-      while (
-        previous &&
-        ((previous[0] as CustomElement).type === 'list-item' || (previous[0] as CustomElement).type === 'order-list-item')
-      ) {
+      while (previous && (previous[0] as CustomElement).type === 'order-list-item') {
         const el = previous[0] as CustomElement
         if ((el.level || 0) < (element.level || 0)) break
         if ((el.level || 0) !== (element.level || 0)) {
@@ -218,29 +219,25 @@ export const OrderListItem = ({ children, element }: RenderElementProps) => {
           ))}
         </div>
       ) : null}
-      <div
+      <span
         contentEditable={false}
         onClick={() => {
           if (canToggle) {
             toggle()
           }
         }}
-        data-level={element.level}
         role="list-item-marker"
         style={{
-          whiteSpace: 'nowrap',
-          textTransform: 'lowercase',
-          fontFamily: 'Muli',
           padding: '0 2px',
           marginRight: 6,
           minWidth: 18,
-          fontWeight: 500,
+          userSelect: 'none',
           cursor: 'pointer',
           color: element.folded ? Colors.Common.SelectColor : undefined
         }}
       >
         {prefix}.{' '}
-      </div>
+      </span>
       <span
         role="list-item-line-wrapper"
         style={{

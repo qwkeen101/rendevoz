@@ -1,4 +1,4 @@
-import { FC, memo, useRef } from 'react'
+import { FC, memo, useMemo, useRef } from 'react'
 import { IWhiteboardNode } from '~/typings/data'
 import { InnerNodeProps } from '../WrapperNode'
 import { css } from '@emotion/css'
@@ -8,6 +8,7 @@ import { IEditorInstance } from '~/typings'
 const NoteNode: FC<InnerNodeProps> = ({ node: n, onNameChange, metaId }) => {
   const node = n as IWhiteboardNode & { type: 'note' }
   const instance = useRef<IEditorInstance>()
+
   return (
     <NoteEditor
       metaId={metaId}
@@ -17,6 +18,7 @@ const NoteNode: FC<InnerNodeProps> = ({ node: n, onNameChange, metaId }) => {
           onNameChange?.(event.value)
         }
       }}
+      initialHeight={useMemo(() => node.height, [])}
       layout={{
         virtualizer: node.resized ? true : false,
         showHeader: false,

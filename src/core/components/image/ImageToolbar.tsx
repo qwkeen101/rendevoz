@@ -61,7 +61,7 @@ const ImageToolbar = () => {
               <WithBorder padding={10} style={{ width: 240 }}>
                 <div>{t("image.draw color")}</div>
                 <ColorPicker
-                  enableMore
+                  showLess
                   disableLinear
                   onPick={(c) => {
                     if (c === defaultBgColor) {

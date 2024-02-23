@@ -103,14 +103,12 @@ export const fetchHeadAndUpdateWebpage = async (url: string, webpageId: number) 
   setTimeout(() => {
     const webpageMeta = MetaStore.getMetaObjectByObjectId(webpageId)
     if (webpageMeta) {
-      MetaStore.updateMetaObject(
-        {
-          id: webpageMeta.id,
-          description: webpageMeta.description || descriptionMeta,
-          coverImgSrc: webpageMeta.coverImgSrc || coverImgSrc,
-          name: title || webpageMeta.name
-        }
-      )
+      MetaStore.updateMetaObject({
+        id: webpageMeta.id,
+        description: webpageMeta.description || descriptionMeta,
+        coverImgSrc: webpageMeta.coverImgSrc || coverImgSrc,
+        name: title || webpageMeta.name
+      })
     }
   }, 1000)
 }
@@ -130,23 +128,38 @@ const useDropObject = () => {
             metaId: metaId
           }
         : undefined
-    const allStrings = (await Promise.all(
-      Array.from(e.dataTransfer?.items || []).map(i => new Promise(res => i.getAsString(s => res(s))))
-    )) as string[]
-    const html = Array.from(e.dataTransfer?.items || []).find(i => i.type === 'text/html') || allStrings.some(i => i.startsWith('http'))
+    if (e.dataTransfer?.items.length === 1) {
+      const item = e.dataTransfer.items[0]
+      const file = item.getAsFile()
+      if (!file) return
+      try {
+        const meta = await Rendevoz.Utils.Meta.normalizeLocalFileToMeta(file)
+        const obj = await ObjectStore(meta.type).addOne({ ...meta.object })
+        Object.assign(normalizedMetaObject, {
+          fromObject: from,
+          objectId: obj.id,
+          ...meta.meta
+        } as MetaObject)
+        return normalizedMetaObject
+      } catch (e) {
+        toast.error(Rendevoz.Consts.Errors.NotSupportedFile())
+        console.error(e)
+      }
+    }
+    const html = e.dataTransfer?.getData('text/html')
+
     if (html) {
       const htmlData = e.dataTransfer?.getData('text/html')
+
       const uriData = e.dataTransfer?.getData('text/uri-list')
       const textData = e.dataTransfer?.getData('text/plain').startsWith('http') ? undefined : e.dataTransfer?.getData('text/plain')
       let plainLinkData = e.dataTransfer?.getData('text/plain').startsWith('http') ? e.dataTransfer?.getData('text/plain') : undefined
-      if (allStrings.some(i => i.startsWith('http'))) {
-        plainLinkData = allStrings.find(i => i.startsWith('http'))
-      }
       if (htmlData) {
         const parser = new DOMParser()
         const doc = parser.parseFromString(htmlData, 'text/html')
         const imgEle = doc.querySelector('img')
         const linkEle = doc.querySelector('a')
+        console.log(doc)
         if (imgEle && imgEle.src) {
           const imageBlob = await (
             await fetch(imgEle.src, {
@@ -159,37 +172,18 @@ const useDropObject = () => {
             compress: false
           })
 
-          if (uriData) {
-            // if dropped img uri not img
-            if (!(await isUrlImage(uriData))) {
-              const webpageObject = await ObjectStore('webpage').addOne({
-                title: uriData,
-                url: uriData
-              })
-              fetchHeadAndUpdateWebpage(uriData, webpageObject.id)
-              Object.assign(normalizedMetaObject, {
-                coverImgSrc: imageFilePath,
-                fromObject: from,
-                type: 'webpage',
-                objectId: webpageObject.id,
-                name: webpageObject.title
-              } as MetaObject)
-              return normalizedMetaObject
-            } else {
-              const imageObject = await ObjectStore('image').addOne({
-                url: imageFilePath
-              })
-              const imageName = imgEle.alt || uriData || 'Unnamed Image'
-              Object.assign(normalizedMetaObject, {
-                coverImgSrc: imageFilePath,
-                fromObject: from,
-                type: 'image',
-                objectId: imageObject.id,
-                name: imageName
-              } as MetaObject)
-              return normalizedMetaObject
-            }
-          }
+          const imageObject = await ObjectStore('image').addOne({
+            url: imageFilePath
+          })
+          const imageName = imgEle.alt || uriData || 'Unnamed Image'
+          Object.assign(normalizedMetaObject, {
+            coverImgSrc: imageFilePath,
+            fromObject: from,
+            type: 'image',
+            objectId: imageObject.id,
+            name: imageName
+          } as MetaObject)
+          return normalizedMetaObject
         }
         if (linkEle && linkEle.href && uriData) {
           const link = linkEle.href
@@ -245,24 +239,6 @@ const useDropObject = () => {
           name: webpageObject.title
         } as MetaObject)
         return normalizedMetaObject
-      }
-    }
-    if (e.dataTransfer?.items.length === 1) {
-      const item = e.dataTransfer.items[0]
-      const file = item.getAsFile()
-      if (!file) return
-      try {
-        const meta = await Rendevoz.Utils.Meta.normalizeLocalFileToMeta(file)
-        const obj = await ObjectStore(meta.type).addOne({ ...meta.object })
-        Object.assign(normalizedMetaObject, {
-          fromObject: from,
-          objectId: obj.id,
-          ...meta.meta
-        } as MetaObject)
-        return normalizedMetaObject
-      } catch (e) {
-        toast.error(Rendevoz.Consts.Errors.NotSupportedFile())
-        console.error(e)
       }
     }
   }

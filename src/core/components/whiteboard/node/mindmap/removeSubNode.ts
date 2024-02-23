@@ -1,6 +1,6 @@
 import { IWhiteboardMindmap, IWhiteboardNode } from '~/typings'
 import produce from 'immer'
-import { removeFromTree } from '@/core/components/whiteboard/node/mindmap/handleNodeDragEnd'
+import { removeFromTree } from '@/core/components/whiteboard/node/mindmap/drag/handleNodeDragEnd'
 
 export default (result: { node: IWhiteboardNode & { type: 'mindmap' }; targetNodeId: number; side: 'left' | 'right' }) => {
   const { node, targetNodeId, side } = result

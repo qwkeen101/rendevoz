@@ -2,6 +2,7 @@ import { CollectionStore, MetaStore, ObjectStore } from '@/api/stores'
 import KeyvalueStore from '@/api/stores/keyvalue.store'
 import produce from 'immer'
 import { toast } from 'react-hot-toast'
+import { Rendevoz } from '@/core/rendevoz'
 
 export default {
   hasWorkspace: async (id: number) => {
@@ -36,6 +37,7 @@ export default {
   switchWorkspace: async (targetWorkspaceId: number) => {
     const targetWorkspace = (await KeyvalueStore.getOne('allWorkspaces'))?.find(i => i.id === targetWorkspaceId)
     if (targetWorkspace) {
+      Rendevoz.Actions.Layout.closeAllTabs(true)
       await KeyvalueStore.updateOne('currentWorkspace', targetWorkspace)
       await MetaStore.switchWorkspace()
       await ObjectStore('tag').getAll()

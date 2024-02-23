@@ -25,12 +25,14 @@ export type IWebpageProps = {
   onStartLoad?: VoidFunction
   onEndLoad?: VoidFunction
   onFailLoad?: VoidFunction
+  initialHeight?: number
   editorOptions?: Omit<EditorProps, 'id'>
 }
 
 const WebpageInner = ({
   initialWebpageId,
   disableTabTitle,
+  initialHeight,
   onWebpageParsed,
   initialUrl: externalInitialUrl,
   webpageFrom,
@@ -66,7 +68,7 @@ const WebpageInner = ({
           title={webpageMeta?.name || webpageState.externalState?.title || webpageState.currentWebpage?.title}
         />
       )}
-      <WebpageContentRenderer onInstanceInitialized={onInstanceInitialized} editorOptions={editorOptions} />
+      <WebpageContentRenderer initialHeight={initialHeight} onInstanceInitialized={onInstanceInitialized} editorOptions={editorOptions} />
     </Content>
   )
 }

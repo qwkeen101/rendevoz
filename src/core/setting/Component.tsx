@@ -261,6 +261,21 @@ const ComponentSetting = () => {
           }}
         />
       )
+    },
+    {
+      title: t('settings.Open popover when highlight media'),
+      children: (
+        <Switch
+          value={setting.media.openPopoverWhenHighlight}
+          onChange={v => {
+            setSetting(
+              produce(setting, draft => {
+                draft.media.openPopoverWhenHighlight = v
+              })
+            )
+          }}
+        />
+      )
     }
   ]
   return (

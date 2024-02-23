@@ -3,6 +3,7 @@ import { CustomEditor } from '~/typings'
 import getCursorPosition from '@/core/components/editor/utils/getCursorPosition'
 import { Editor, Range, Text, Transforms } from 'slate'
 import Id from '@/utils/id'
+import { HistoryEditor } from 'slate-history'
 
 const useEditorMention = (editor: CustomEditor) => {
   const handleMentionKey = (e: KeyboardEvent) => {
@@ -11,11 +12,13 @@ const useEditorMention = (editor: CustomEditor) => {
     if (curr[0].type === 'inline-metapicker') return
     if (e.key === '@') {
       e.preventDefault()
-      Transforms.insertNodes(editor, {
-        type: 'inline-metapicker',
-        children: [{ text: '' }],
-        id: Id.getId(),
-        isAt: true
+      HistoryEditor.withoutSaving(editor, () => {
+        Transforms.insertNodes(editor, {
+          type: 'inline-metapicker',
+          children: [{ text: '' }],
+          id: Id.getId(),
+          isAt: true
+        })
       })
     }
     if (e.key === '[' && editor.selection && Range.isCollapsed(editor.selection)) {
@@ -37,7 +40,6 @@ const useEditorMention = (editor: CustomEditor) => {
           })
         }
       }
-      // console.log(prev)
     }
   }
   return {

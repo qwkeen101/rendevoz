@@ -10,6 +10,7 @@ import { Text } from 'slate'
 
 export default (node: HTMLElement) => {
   let shouldBeFragment = true
+  const parentOL = node.parentNode?.nodeName === 'OL'
   // 如果内部有text node就不是fragment，不然就是fragment
   for (const n of node.childNodes) {
     // if children nodes has div or p, be fragment
@@ -55,7 +56,7 @@ export default (node: HTMLElement) => {
       .filter(i => i)
     newChildren.forEach(i => {
       if (i.type === 'paragraph') {
-        i.type = 'list-item'
+        i.type = parentOL ? 'order-list-item' : 'list-item'
       }
     })
     return jsx('fragment', {}, newChildren)
@@ -88,7 +89,7 @@ export default (node: HTMLElement) => {
     return jsx(
       'element',
       {
-        type: 'list-item',
+        type: parentOL ? 'order-list-item' : 'list-item',
         id: Id.getId()
       },
       children

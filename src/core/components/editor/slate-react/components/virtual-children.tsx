@@ -104,14 +104,11 @@ const VirtualChildren = memo(
         return item.id
       },
       measureElement: (ele, entry, instance) => {
-        if (entry) {
-          const size = entry.borderBoxSize[0].blockSize
-          const marginTop = parseInt(window.getComputedStyle(ele).marginTop)
-          const marginBottom = parseInt(window.getComputedStyle(ele).marginBottom)
-          const totalSize = size + marginTop + marginBottom
-          return Math.round(totalSize)
-        }
-        return Math.round(ele.getBoundingClientRect().height)
+        const size = ele.clientHeight
+        const marginTop = parseInt(window.getComputedStyle(ele).marginTop)
+        const marginBottom = parseInt(window.getComputedStyle(ele).marginBottom)
+        const totalSize = size + marginTop + marginBottom
+        return Math.round(totalSize)
       }
     })
 
@@ -123,47 +120,39 @@ const VirtualChildren = memo(
 
     const first = virtualItems[0]
 
-    const prevChildren = useRef(children)
-
-    useEffect(() => {
-      if (!disableVirtualizer) {
-        const size = totalSize
-        const parentEle = parentElement?.current
-        if (parentEle) {
-          parentEle.parentElement!.style.height = `${size}px`
-          parentEle.parentElement!.style.minHeight = `${size}px`
-          parentEle.style.position = 'absolute'
-          parentEle.style.width = '100%'
-          parentEle.style.left = '0px'
-          parentEle.style.top = '0px'
-          if (first) {
-            parentEle.style.transform = `translateY(${first.start - titleHeight}px)`
-          }
-          return () => {
-            parentEle.parentElement?.style.removeProperty('height')
-            parentEle.parentElement?.style.removeProperty('min-height')
-            parentEle.style.removeProperty('transform')
-            parentEle.style.removeProperty('position')
-          }
-        }
-      } else {
-        const parentEle = parentElement?.current
-        if (parentEle) {
-          const paddingEnd = showPaddingBottom !== false ? bottomPadding || 200 : 0
-          if (paddingEnd) {
-            parentEle.style.paddingBottom = `${paddingEnd}px`
-            return () => {
-              parentEle.style.removeProperty('padding-bottom')
-            }
-          }
+    if (!disableVirtualizer) {
+      const size = totalSize
+      const parentEle = parentElement?.current
+      if (parentEle) {
+        parentEle.style.removeProperty('padding-bottom')
+        parentEle.parentElement!.style.height = `${size}px`
+        parentEle.parentElement!.style.minHeight = `${size}px`
+        parentEle.style.position = 'absolute'
+        parentEle.style.width = '100%'
+        parentEle.style.left = '0px'
+        parentEle.style.top = '0px'
+        if (first) {
+          parentEle.style.transform = `translateY(${first.start - titleHeight}px)`
         }
       }
-    }, [totalSize, first?.start, disableVirtualizer])
+    } else {
+      const parentEle = parentElement?.current
+      if (parentEle) {
+        parentEle.parentElement?.style.removeProperty('height')
+        parentEle.parentElement?.style.removeProperty('min-height')
+        parentEle.style.removeProperty('transform')
+        parentEle.style.removeProperty('position')
+        const paddingEnd = showPaddingBottom !== false ? bottomPadding || 200 : 0
+        if (paddingEnd) {
+          parentEle.style.paddingBottom = `${paddingEnd}px`
+        }
+      }
+    }
 
     useEffect(() => {
       update()
     }, [])
-    console.log(virtualItems)
+
     return (
       <>
         {/*<div role="virtual-placeholder" contentEditable={false} style={{ height: first?.start - titleHeight, width: '100%' }}></div>*/}

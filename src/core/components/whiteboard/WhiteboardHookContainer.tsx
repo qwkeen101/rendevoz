@@ -1,5 +1,5 @@
 import useWhiteboardAutoPan from '@/core/components/whiteboard/hooks/useWhiteboardAutoPan'
-import useWhiteboardDrop from '@/core/components/whiteboard/hooks/drop/useWhiteboardDrop'
+import useWhiteboardDrop from '@/core/components/whiteboard/hooks/useWhiteboardDrop'
 import useWhiteboardErase from '@/core/components/whiteboard/hooks/useWhiteboardErase'
 import useWhiteboardShortcut from '@/core/components/whiteboard/hooks/useWhiteboardShortcut'
 import useWhiteboardHistory from '@/core/components/whiteboard/hooks/useWhiteboardHistory'
@@ -8,10 +8,10 @@ import useWhiteboardQuickActions from '@/core/components/whiteboard/hooks/keyboa
 import { useUpdate } from 'react-use'
 import { useEffect } from 'react'
 
-export default () => {
+export default ({ whiteboardId }: { whiteboardId: number }) => {
   const update = useUpdate()
   useWhiteboardAutoPan()
-  useWhiteboardDrop()
+  useWhiteboardDrop(whiteboardId)
   useWhiteboardErase()
   useWhiteboardShortcut()
   useWhiteboardHistory()

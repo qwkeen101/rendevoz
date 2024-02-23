@@ -35,74 +35,76 @@ const useDropObjectArea = (
   const rafCheck = useRafFn((e: PointerEvent | DragEvent, draggingElement: IDraggableElement) => {
     if (!startDragRef.current) return
     const area = dropArea instanceof HTMLElement ? dropArea : dropArea.current
-    let droppable = false
-    const draggingEle = Rendevoz.Actions.State.Drag.getDraggingDetails() as BuiltInDraggableElement | undefined
-    const objectIdToMetaObjectIdMap = globalStore.get(objectIdToMetaObjectIdMapAtom)
-    let objectId: number | undefined = undefined
-    let alreadyExist = false
-    let metaId: number | undefined = undefined
-    if (draggingEle) {
-      if (draggingEle.type && TypeToRegisteredObject.has(draggingEle.type)) {
-        const { getObjectIdFromDraggingEle } = TypeToRegisteredObject.get(draggingEle.type)!
-        objectId = getObjectIdFromDraggingEle?.(draggingEle)
-      }
-      switch (draggingEle.type) {
-        case 'noteBlock':
-          objectId = draggingEle.blockId
-          break
-        case 'noteLabel':
-        case 'videoLabel':
-        case 'audioLabel':
-        case 'pdfLabel':
-        case 'webpageLabel':
-          objectId = draggingEle.labelId
-          break
-        case 'pdf':
-          objectId = draggingEle.pdfId
-          break
-        case 'note':
-          objectId = draggingEle.noteId
-          break
-        case 'whiteboard':
-          objectId = draggingEle.whiteboardId
-          break
-        case 'image':
-          droppable = true
-          break
-        default:
-          droppable = false
-      }
-      if (objectId !== undefined && !objectIdToMetaObjectIdMap?.has(objectId)) droppable = true
-      if (objectId && objectIdToMetaObjectIdMap?.has(objectId)) {
-        alreadyExist = true
-        metaId = objectIdToMetaObjectIdMap?.get(objectId)
-      }
-      if (draggingEle.type === 'metaElement') {
-        alreadyExist = true
-        metaId = draggingEle.metaId
-      }
-      if (draggingEle.type === 'groupItem') {
-        if (draggingEle.value.length) {
-          const meta = draggingEle.value.find(i => i.type === 'metaObject' && i.id)
-          if (meta) {
-            alreadyExist = true
-            metaId = meta.id
-          }
-        }
-      }
-      setCanDropAsMeta({
-        droppable,
-        existed: alreadyExist,
-        metaId
-      })
-    }
     if (!e) return
     if (area?.contains(e.target)) {
+      let droppable = false
+      const draggingEle = Rendevoz.Actions.State.Drag.getDraggingDetails() as BuiltInDraggableElement | undefined
+      const objectIdToMetaObjectIdMap = globalStore.get(objectIdToMetaObjectIdMapAtom)
+      let objectId: number | undefined = undefined
+      let alreadyExist = false
+      let metaId: number | undefined = undefined
+      if (draggingEle) {
+        if (draggingEle.type && TypeToRegisteredObject.has(draggingEle.type)) {
+          const { getObjectIdFromDraggingEle } = TypeToRegisteredObject.get(draggingEle.type)!
+          objectId = getObjectIdFromDraggingEle?.(draggingEle)
+        }
+        switch (draggingEle.type) {
+          case 'noteBlock':
+            objectId = draggingEle.blockId
+            break
+          case 'noteLabel':
+          case 'videoLabel':
+          case 'audioLabel':
+          case 'pdfLabel':
+          case 'webpageLabel':
+            objectId = draggingEle.labelId
+            break
+          case 'pdf':
+            objectId = draggingEle.pdfId
+            break
+          case 'note':
+            objectId = draggingEle.noteId
+            break
+          case 'whiteboard':
+            objectId = draggingEle.whiteboardId
+            break
+          case 'image':
+            droppable = true
+            break
+          default:
+            droppable = false
+        }
+        if (objectId !== undefined && !objectIdToMetaObjectIdMap?.has(objectId)) droppable = true
+        if (objectId && objectIdToMetaObjectIdMap?.has(objectId)) {
+          alreadyExist = true
+          metaId = objectIdToMetaObjectIdMap?.get(objectId)
+        }
+        if (draggingEle.type === 'metaElement') {
+          alreadyExist = true
+          metaId = draggingEle.metaId
+        }
+        if (draggingEle.type === 'groupItem') {
+          if (draggingEle.value.length) {
+            const meta = draggingEle.value.find(i => i.type === 'metaObject' && i.id)
+            if (meta) {
+              alreadyExist = true
+              metaId = meta.id
+            }
+          }
+        }
+        setCanDropAsMeta({
+          droppable,
+          existed: alreadyExist,
+          metaId
+        })
+      }
       setIsDragOver(true)
       callback?.onDragOver?.(draggingElement)
     } else {
-      callback?.onDragLeave?.()
-      setIsDragOver(false)
+      if (isDragOver) {
+        callback?.onDragLeave?.()
+        setIsDragOver(false)
+      }
     }
   })
   handler.on('globalDragPointerUp', data => {

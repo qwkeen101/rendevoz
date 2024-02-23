@@ -2,8 +2,9 @@ import { Content } from '@/components/base'
 import { IWhiteboardNode } from '~/typings/data'
 import Webpage from '@/core/components/webpage/Webpage'
 import { css } from '@emotion/css'
+import { useMemo } from 'react'
 
-const WebpageNode = ({ node }: { node: IWhiteboardNode & { type: 'webpage' } }) => {
+const WebpageNode = ({ node, webpageId }: { node: IWhiteboardNode; webpageId: number }) => {
   return (
     <Content
       style={{
@@ -18,7 +19,8 @@ const WebpageNode = ({ node }: { node: IWhiteboardNode & { type: 'webpage' } }) 
     >
       <Webpage
         disableTabTitle={true}
-        initialWebpageId={node.webpageId}
+        initialHeight={useMemo(() => node.height, [])}
+        initialWebpageId={webpageId}
         editorOptions={{
           layout: {
             showHeader: false,

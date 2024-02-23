@@ -94,8 +94,9 @@ export const NavigationMenu: FC<NavigationMenuProps> = ({
   }, [layout.length])
 
   const handleSelectItem = (currentItem: IMenuLayoutItem) => {
-    if ('onSelect' in currentItem) {
+    if ('onSelect' in currentItem && currentItem.onSelect) {
       currentItem.onSelect?.()
+      return
     }
     onSelect?.(currentItem)
   }

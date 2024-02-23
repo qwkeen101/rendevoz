@@ -5,7 +5,7 @@ import { IWhiteboardNode, XYPosition } from '~/typings'
 import { Box } from '~/typings'
 import { assignProperties, calculateSelectionBox } from '@/utils'
 import { useFlow } from '../StateHooks'
-import { getBoxOfNodes, isPointerOnContainer } from '../utils'
+import { getBoxOfBoxes, getBoxOfNodes, isPointerOnContainer } from '../utils'
 import { useWhiteboardState } from '@/core/components/whiteboard/hooks/useWhiteboardState'
 import _ from 'lodash'
 import resizeMultipleNodes from '@/core/components/whiteboard/utils/resizeMultipleNodes'
@@ -14,6 +14,7 @@ import { useWhiteboardInstance } from '@/core/components/whiteboard/hooks/useWhi
 import { css } from '@emotion/css'
 import { AnimatePopover, Icon, WithBorder } from '@/components'
 import { ClassName } from 'rendevoz'
+import { Rendevoz } from '@/core/rendevoz'
 
 const cursorClass = css({
   '*': {
@@ -36,6 +37,13 @@ const WhiteboardSelect = memo(({ containerRef }: { containerRef: MutableRefObjec
   const selectStartPointRef = useRef<XYPosition>()
   const selectEndPointRef = useRef<XYPosition>()
   const [isDraggingSelectionBox, setIsDraggingSelectionBox] = useState(false)
+  const scopedEmitter = Rendevoz.Events.Emit.useScopedEventEmitter()
+  const scopedEventHandler = Rendevoz.Events.Emit.useEventHandler('whiteboard')
+  scopedEventHandler.on('nodesSizeChange', e => {
+    if (e.changedNodes.some(i => selectedNodeIdsRef.current.has(i.id))) {
+      instance.selectOps?.resetSelectionBox()
+    }
+  })
   assignProperties(instance, {
     selectOps: {
       isSelecting: () => whiteboardState.isSelecting,
@@ -86,7 +94,11 @@ const WhiteboardSelect = memo(({ containerRef }: { containerRef: MutableRefObjec
         if (multiSelectedBox) {
           const allSelectedNodes = instance.selectOps?.getSelectedNodes()
           if (allSelectedNodes) {
-            setMultiSelectedBox(getBoxOfNodes(allSelectedNodes))
+            const realtimeBoxes = instance.nodeOps?.getDOMBoxOfNodes(allSelectedNodes.map(i => i.id))
+            if(realtimeBoxes){
+              console.log(realtimeBoxes)
+              setMultiSelectedBox(getBoxOfBoxes(Array.from(Object.values(realtimeBoxes))))
+            }
           } else {
             instance.selectOps?.deselectAll()
           }
@@ -106,12 +118,7 @@ const WhiteboardSelect = memo(({ containerRef }: { containerRef: MutableRefObjec
       }
     }
   })
-  flow.clearSelectBox = () => {
-    setMultiSelectedBox(undefined)
-    selectedNodeIdsRef.current.clear()
-    flow.selectedNodeIds.clear()
-    setWhiteboardState(s => ({ ...s, isSelecting: false }))
-  }
+
   const pointerHandler = useMemoizedFn((e: PointerEvent) => {
     // if have pointer draw selection box
     if (multiSelectedBox) {
@@ -123,13 +130,12 @@ const WhiteboardSelect = memo(({ containerRef }: { containerRef: MutableRefObjec
     }
     if (
       !whiteboardState.isPanning &&
-      !['erase', 'freehand'].includes(whiteboardState.currentTool) &&
+      !['erase', 'freehand'].includes(whiteboardState.currentTool || '') &&
       whiteboardState.pointerMode === 'select'
     ) {
       if (e.type === 'pointerdown' && e.button === 0) {
         // only allows pointer on container to select
         if (!isPointerOnContainer(e, instance)) return
-        // e.preventDefault()
         const transformedXY = instance.coordOps?.transformWindowPositionToPosition({ x: e.clientX, y: e.clientY })
         transformedXY && (selectStartPointRef.current = transformedXY)
         flow.parentContainerEle?.classList.add(cursorClass)
@@ -237,12 +243,14 @@ const WhiteboardSelect = memo(({ containerRef }: { containerRef: MutableRefObjec
   useEffect(() => {
     const container = containerRef.current
     const parent = container?.parentElement
+    scopedEmitter.addListener('whiteboard', scopedEventHandler)
     if (parent) {
       parent.addEventListener('pointerdown', pointerHandler)
       document.addEventListener('pointermove', pointerHandler)
       document.addEventListener('pointerup', pointerHandler)
     }
     return () => {
+      scopedEmitter.removeListener('whiteboard', scopedEventHandler)
       parent?.removeEventListener('pointerdown', pointerHandler)
       document.removeEventListener('pointermove', pointerHandler)
       document.removeEventListener('pointerup', pointerHandler)
@@ -300,10 +308,21 @@ const WhiteboardSelect = memo(({ containerRef }: { containerRef: MutableRefObjec
   const rafUpdateMultiStyle = useRafFn(updateMultiStyle)
   const rndRef = useRef<Rnd>()
   const [isResizing, setIsResizing] = useState(false)
+
   const renderMultiSelectBox = () => {
     if (multiSelectedBox) {
       const { left, top, width, height } = multiSelectedBox
-      const windowPos = instance.coordOps?.transformWhiteboardPositionToWindowPosition({ x: left, y: top })
+      let canDrag = true,
+        canResize = true
+      selectedNodeIdsRef.current.forEach(i => {
+        const n = instance.getNode?.(i)
+        if (n) {
+          if (n.type === 'mindmap' || n.rootId) {
+            canDrag = false
+            canResize = false
+          }
+        }
+      })
       return (
         <>
           <Rnd
@@ -313,12 +332,17 @@ const WhiteboardSelect = memo(({ containerRef }: { containerRef: MutableRefObjec
                 rndRef.current = node
               }
             }}
-            enableResizing={{
-              topLeft: true,
-              topRight: true,
-              bottomLeft: true,
-              bottomRight: true
-            }}
+            enableResizing={
+              canResize
+                ? {
+                    topLeft: true,
+                    topRight: true,
+                    bottomLeft: true,
+                    bottomRight: true
+                  }
+                : false
+            }
+            disableDragging={!canDrag}
             size={{ width, height }}
             position={{ x: left, y: top }}
             onResizeStart={() => {

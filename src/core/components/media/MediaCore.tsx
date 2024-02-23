@@ -51,7 +51,10 @@ const MediaCore = memo(() => {
       play: () => setMediaState(s => ({ ...s, paused: false })),
       loop: () => setMediaState(s => ({ ...s, loop: true })),
       unloop: () => setMediaState(s => ({ ...s, loop: false })),
-      jumpTo: t => setMediaState(s => ({ ...s, jumpTime: t }))
+      jumpTo: t => setMediaState(s => ({ ...s, jumpTime: t })),
+      fullScreen: () => {
+        setMediaState(s => ({ ...s, fullScreen: !s.fullScreen }))
+      }
     }
   })
 
@@ -78,10 +81,14 @@ const MediaCore = memo(() => {
           width: '100%',
           paddingBottom: '56.25%',
           height: 0,
-          borderRadius: mediaState.floated
+          position: mediaState.fullScreen ? 'unset' : 'relative',
+          borderRadius: mediaState.fullScreen
+            ? 0
+            : mediaState.floated
             ? `0px 0px ${MEDIA_PLAYER_DEFAULT_BORDER_RADIUS}px ${MEDIA_PLAYER_DEFAULT_BORDER_RADIUS}px`
             : MEDIA_PLAYER_DEFAULT_BORDER_RADIUS,
-          overflow: 'hidden'
+          overflow: 'hidden',
+          inset: 0
         }}
       >
         {!mediaState.loaded && (

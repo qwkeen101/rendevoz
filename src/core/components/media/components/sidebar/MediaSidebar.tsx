@@ -48,6 +48,7 @@ const MediaSidebar = memo(() => {
               left: true
             }
       }
+      minHeight={column ? 360 : undefined}
       style={{
         display: 'flex',
         borderRadius: column ? 12 : 0,

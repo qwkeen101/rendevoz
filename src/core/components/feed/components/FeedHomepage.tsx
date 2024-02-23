@@ -13,8 +13,8 @@ const FeedHomepage = () => {
       <Content
         style={{
           height: '100%',
-          width: '840px',
-          maxWidth: '100%',
+          width: '100%',
+          maxWidth: '840px',
           padding: '40px 20px'
         }}
         flex

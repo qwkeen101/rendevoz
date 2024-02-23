@@ -56,6 +56,9 @@ const SnapDragLayer = memo(() => {
     cachedNodesXBoxMap.current.clear()
     nodes.forEach(n => {
       if (n.id === data.draggingNode.id) return
+      // ignore mindmap and mindmap sub children
+      if (n.type === 'mindmap') return
+      if (n.rootId) return
       if (n.y !== undefined && n.height) {
         const firstYSet = cachedNodesYBoxMap.current.get(n.y) || new Set()
         firstYSet.add(n)
@@ -84,6 +87,8 @@ const SnapDragLayer = memo(() => {
     const nodes = Array.from(allNodes.values())
     nodes.forEach(n => {
       if (n.id === data.resizingNode.id) return
+      if (n.type === 'mindmap') return
+      if (n.rootId) return
       if (n.y !== undefined && n.height) {
         const firstYSet = cachedNodesYBoxMap.current.get(n.y) || new Set()
         firstYSet.add(n)
@@ -417,6 +422,8 @@ const SnapDragLayer = memo(() => {
   })
   handler.on('nodeResize', data => {
     const { resizingNode, rnd, originalBox, pointerBox, realtimeBox, resizeDir } = data
+    // 导图或子节点不能snap
+    if (resizingNode.type === 'mindmap' || resizingNode.rootId) return
     if (!resizingNode.width || !resizingNode.height) return
     const scale = flow.containerTransformScale || 1
     // 需要node真实的box和mouse的box

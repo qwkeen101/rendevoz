@@ -104,11 +104,22 @@ const createNoteStore = () => {
       saveNoteAsSearch(nextValue, noteId)
     }
   }
+  const getNoteIdValue = async (noteId: number) => {
+    const note = await ObjectStore('note').getOneById(noteId)
+    if (note) {
+      const contentId = note.contentId
+      if (contentId) {
+        const value = await getNoteValue(contentId)
+        return value
+      }
+    }
+  }
   return {
     saveNoteAsBuffer,
     getNoteValue,
     saveNoteAsSearch,
     initializeNoteWithValue,
+    getNoteIdValue,
     addElementIntoNote,
     updateNoteValue
   }

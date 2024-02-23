@@ -7,7 +7,7 @@ import { default as ConstColors } from '@/consts/colors'
 interface ColorPickerProps {
   colors?: string[][]
   onPick: (color: string) => void
-  enableMore?: boolean
+  showLess?: boolean
   isFont?: boolean
   enableDefault?: boolean
   disableLinear?: boolean
@@ -59,13 +59,13 @@ export const DEFAULT_DARKEN_BACKGROUND_COLORS = Colors.map(i => i[3])
 const ColorPicker: FC<ColorPickerProps> = ({
   onPick,
   colors = Colors,
-  enableMore = false,
+  showLess = true,
   isFont = false,
   enableDefault = true,
   disableLinear,
   text
 }) => {
-  let displayColors = enableMore ? (isFont ? [...DEFAULT_FONT_COLORS] : [...DEFAULT_BACKGROUND_COLORS]) : colors.flat(1)
+  let displayColors = showLess ? (isFont ? [...DEFAULT_FONT_COLORS] : [...DEFAULT_BACKGROUND_COLORS]) : colors.flat(1)
   if (disableLinear) {
     displayColors = displayColors.filter(i => !i.startsWith('linear'))
   }
@@ -114,7 +114,7 @@ const ColorPicker: FC<ColorPickerProps> = ({
               ? 'white'
               : color === defaultFontColor || color === defaultBgColor
               ? ConstColors.Background.Secondary
-              : enableMore === false
+              : showLess === false
               ? color
               : ConstColors.getAdaptColor(color),
             color: isFont ? color : undefined,
@@ -157,13 +157,13 @@ const ColorPicker: FC<ColorPickerProps> = ({
           gridTemplateColumns: 'repeat(auto-fill, minmax(24px, 1fr))',
           display: 'grid !important',
           gridTemplateRows: 'auto auto',
-          gridAutoRows: enableMore ? '0px' : undefined,
+          gridAutoRows: showLess ? '0px' : undefined,
           overflow: 'hidden',
           padding: 1,
           gap: 4
         })}
         style={{
-          height: !enableMore ? 'auto' : 56
+          height: !showLess ? 'auto' : 56
         }}
       >
         {displayColors.map(i => renderItem(i))}

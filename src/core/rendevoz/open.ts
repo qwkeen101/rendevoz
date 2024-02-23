@@ -1,6 +1,5 @@
 import { toast } from 'react-hot-toast'
-import { GlobalInstances, IEditorInstance, IPdfViewer, IMediaInstance, IWebpageInstance, IPdfInstance, MetaObject } from '~/typings'
-import { ID_TO_LABEL_MAP } from '@/core'
+import { GlobalInstances, IEditorInstance, IMediaInstance, IWebpageInstance, IPdfInstance, MetaObject } from '~/typings'
 import { globalStore, MetaStore, ObjectStore } from '../../api/stores'
 import { metaObjectsAtom, objectIdToMetaObjectIdMapAtom, TypeToRegisteredMetaObject } from '../../api/stores/meta/meta.store'
 import { ipcInstance } from '@/plugins'

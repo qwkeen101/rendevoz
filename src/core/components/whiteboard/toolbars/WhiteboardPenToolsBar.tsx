@@ -9,7 +9,7 @@ import { useEffect, useState } from 'react'
 import { defaultBgColor } from '@/components/picker/colorPicker'
 import UseDebounceEffect from '@/hooks/utils/useDebounceEffect'
 import { useTranslation } from 'react-i18next'
-import { useSelectAtomValue } from '@/hooks'
+import { useDebounceFn, useSelectAtomValue, useUpdateEffect } from '@/hooks'
 import { WhiteboardAtom } from '@/core/components/whiteboard/StateHooks'
 import useUpdateWhiteboard from '@/core/components/whiteboard/hooks/useUpdateWhiteboard'
 
@@ -85,15 +85,12 @@ const WhiteboardPenToolsBar = () => {
       setPenStyles(whiteboardPenStyles)
     }
   }, [])
-  UseDebounceEffect(
-    () => {
-      update(d => {
-        d.penStyles = penStyles
-      }, false)
-    },
-    [penStyles],
-    { wait: 300 }
-  )
+  const debounceUpdate = useDebounceFn(update)
+  useUpdateEffect(() => {
+    debounceUpdate.run(d => {
+      d.penStyles = penStyles
+    }, false)
+  }, [penStyles])
   UseDebounceEffect(
     () => {
       const selected = penStyles[penType][selectedPenStyle]
@@ -319,7 +316,7 @@ const PenStyleMenu = ({ style, onChange }: { onChange: (newStyle: IPenStyle) => 
         }}
         isFont={false}
         enableDefault={true}
-        enableMore={false}
+        showLess={false}
       />
     </Content>
   )

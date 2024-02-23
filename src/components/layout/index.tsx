@@ -34,7 +34,7 @@ const initialLayout: LayoutData = {
 const firstLayout = localStorage.getItem('layout')
 export const LayoutIdToTabMap = new Map<string, ILayoutTab>()
 export let GlobalLayout: LayoutManager | null = null
-const defaultLayout = {
+export const defaultLayout = {
   ...initialLayout,
   global: {
     currentFocusedPanelId: 'panel1',

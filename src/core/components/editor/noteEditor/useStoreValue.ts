@@ -1,6 +1,6 @@
 import { Descendant } from 'slate'
 import { IEditorInstance, OperationAppliedEvent } from '~/typings'
-import { RefObject, useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { RefObject, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { useDebounceFn, useMemoizedFn } from '@/hooks'
 import { NoteStore, ObjectStore } from '@/api/stores'
 import { Rendevoz } from '@/core/rendevoz'
@@ -67,14 +67,14 @@ const useStoreValue = (options: {
       }
     }
   })
-  useLayoutEffect(() => {
+  useMemo(() => {
     if (note?.contentId) {
       fetchValue()
     }
   }, [note?.contentId])
   useLayoutEffect(() => {
     const instance = instanceRef.current
-    if (instance && fetchedValue) {
+    if (fetchedValue) {
       const currentValue = instance?.getSlateEditor?.().children
       if (!isEqual(currentValue, fetchedValue)) {
         instance?.replaceChildren?.(fetchedValue)
@@ -82,9 +82,9 @@ const useStoreValue = (options: {
       onContentLoaded?.()
     }
   }, [fetchedValue])
-  useEffect(() => {
+  useMemo(() => {
     const instance = instanceRef.current
-    if (defaultValue && !note?.contentId) {
+    if (defaultValue && (noteId ? !note?.contentId : true)) {
       instance?.replaceChildren?.(defaultValue)
     }
   }, [defaultValue, note?.contentId])

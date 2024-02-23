@@ -31,14 +31,18 @@ const BaidudiskVideoPlayer = () => {
             return image
           }
         }
+      },
+      getMediaContainer: () => {
+        return videoContainerRef.current || undefined
       }
     })
   }
   useEffect(() => {
     if (player) {
+      player.muted(mediaState.muted)
       player.volume(mediaState.volume)
     }
-  }, [mediaState.volume, mediaState.loaded])
+  }, [mediaState.volume, mediaState.loaded, mediaState.muted])
 
   useEffect(() => {
     if (mediaState.loaded) {

@@ -115,7 +115,7 @@ const IconButton = forwardRef(
           )}
           {text && <div className={ClassName.ellipsisFont(1)}>{text}</div>}
           {(enabled || suffixIcon || suffixStr) && (
-            <Content flex gap={4} style={{ marginLeft: 'auto' }}>
+            <Content flex gap={4} style={{ marginLeft: 'auto', paddingLeft: 18 }}>
               {enabled && <Icon name="park-check-small" />}
               {suffixStr && <span style={{ fontSize: '12px', color: Colors.Font.Transparent }}>{suffixStr}</span>}
               {suffixIcon && <Icon onClick={onSuffixIconClick} name={suffixIcon} containerStyle={{ color: Colors.Font.Transparent }} />}

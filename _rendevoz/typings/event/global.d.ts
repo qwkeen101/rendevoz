@@ -29,6 +29,10 @@ export type BuiltInDropOn =
       dropOn: 'attachment'
       parentMetaId: number
     }
+  | {
+      dropOn: 'metaObject'
+      metaId: number
+    }
 
 export type DropOn = CustomTypes['DropOn']
 

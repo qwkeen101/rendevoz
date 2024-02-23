@@ -76,9 +76,6 @@ const useRenderLabel = (opts: {
                 fontSize: FontSize['13px'],
                 color: labelMeta && !labelMeta.temp && !labelMeta.hidden ? labelMeta.color || Colors.Common.SelectColor : undefined
               }}
-              onClick={() => {
-                setLabelState(s => ({ ...s, editingName: true }))
-              }}
             >
               {realRelated.size > 0 && (
                 <AnimatePopover
@@ -104,6 +101,9 @@ const useRenderLabel = (opts: {
                 </AnimatePopover>
               )}
               <span
+                onClick={() => {
+                  setLabelState(s => ({ ...s, editingName: true }))
+                }}
                 style={{
                   color:
                     labelMeta && !labelMeta.temp && !labelMeta.hidden

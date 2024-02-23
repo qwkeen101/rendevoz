@@ -15,6 +15,7 @@ const GlobalUtils = () => {
       if (currentUploadPromiseRef.current) {
         currentUploadPromiseRef.current(files)
         currentUploadPromiseRef.current = undefined
+        removeFile()
       }
     },
     uploadOptions?.accept,

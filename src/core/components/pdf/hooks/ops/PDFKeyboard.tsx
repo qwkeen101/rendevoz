@@ -4,6 +4,7 @@ import isHotkey from 'is-hotkey'
 import { useSetAtom } from 'jotai'
 import { PdfBarStateAtom } from '@/core/components/pdf/hooks/usePdfBarState'
 import { PdfStateAtom } from '@/core/components/pdf/hooks/usePdfState'
+import { KEY } from '@/consts'
 
 export default () => {
   const instance = usePdfInstance()
@@ -15,6 +16,10 @@ export default () => {
         if (isHotkey('alt+arrowleft', e)) {
           instance.navigateOps?.back()
           e.preventDefault()
+        }
+        if (isHotkey('mod+alt+a', e)) {
+          e.preventDefault()
+          setPdfState(s => ({ ...s, croppingImage: !s.croppingImage }))
         }
         if (isHotkey('alt+arrowright', e)) {
           instance.navigateOps?.forward()
@@ -43,6 +48,18 @@ export default () => {
         if (isHotkey('mod+d', e)) {
           e.preventDefault()
           setPdfState(s => ({ ...s, handDrag: !s.handDrag }))
+        }
+        if (isHotkey(KEY.Escape, e)) {
+          setPdfState(s => {
+            if (s.croppingImage) {
+              e.preventDefault()
+              return {
+                ...s,
+                croppingImage: false
+              }
+            }
+            return s
+          })
         }
       }
     }

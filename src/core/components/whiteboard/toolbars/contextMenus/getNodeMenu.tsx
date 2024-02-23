@@ -10,6 +10,9 @@ import { getBoxOfNodes } from '@/core/components/whiteboard/utils'
 import { Rendevoz } from '@/core/rendevoz'
 import { MetaStore, NoteStore, ObjectStore } from '@/api/stores'
 import Id from '@/utils/id'
+import getVisibleNodeMenuItems from '@/core/components/whiteboard/toolbars/contextMenus/getVisibleNodeMenuItems'
+import { ColorPicker, WithBorder } from '@/components'
+import { WhiteboardNodeMenuItems } from '@/core/components/whiteboard/toolbars/contextMenus/items'
 
 export default (
   instance: IWhiteboardInstance,
@@ -21,10 +24,12 @@ export default (
   const canExpandOrFold = selected?.length && selected.some(i => instance.nodeOps?.canExpand(i))
   const showExpandIcon = selected?.length && selected.some(i => instance.nodeOps?.canExpand(i) && !i.expanded)
   if (!selected?.length) return null
+  const menuItem = WhiteboardNodeMenuItems(instance, selected)
   const selectedIds = selected.map(i => i.id)
   // click on group head
   const ifContextMenuOnSingleGroup = selected.length === 1 && selected[0].type === 'group'
   const metaMap = MetaStore.getMetaObjectsMap()
+  const menuItems = getVisibleNodeMenuItems(selected)
   const hasWebpageMetas = selected.some(i => i.type === 'metaObject' && i.expanded && metaMap.get(i.metaObjectId)?.type === 'webpage')
   const commonTools: (IMenuLayoutItem | undefined)[] = [
     ...(ifContextMenuOnSingleGroup && toolbarType !== 'click' ? [...getContextMenu(instance, t), { type: 'separator' }] : []),
@@ -46,7 +51,7 @@ export default (
           }
         }
       : undefined,
-    selected.length === 1 && selected[0].type === 'text'
+    menuItems.isText
       ? {
           type: 'item',
           key: 'turn-into-document',
@@ -58,15 +63,15 @@ export default (
             const currentText = selected[0] as IWhiteboardNode & { type: 'text' }
             const note = await NoteStore.initializeNoteWithValue(currentText.content)
             const noteMeta = await MetaStore.addMetaObject({ name: 'Untitled', objectId: note.id, type: 'note' })
-            instance.deleteNode?.(selected[0].id)
-            instance.insertNode?.({
+            // instance.deleteNode?.(selected[0].id)
+            instance.updateNode?.(selected[0].id, s => ({
+              ...s,
               x: selected[0].x,
               y: selected[0].y,
-              id: Id.getId(),
               type: 'metaObject',
               metaObjectId: noteMeta.id,
               expanded: true
-            })
+            }))
           }
         }
       : undefined,
@@ -181,7 +186,9 @@ export default (
         )
       }
     },
-    ...(selected.length > 1
+    menuItems.showMindmapConnection ? menuItem.MindmapLineOptions : undefined,
+    menuItems.showBorderType ? menuItem.BorderOptions : undefined,
+    ...(menuItems.showGroupOptions
       ? [
           {
             type: 'separator'
@@ -199,82 +206,193 @@ export default (
               instance.toolbarOps?.closeToolbar()
             }
           },
+          menuItems.showAlignPackOptions
+            ? {
+                type: 'item',
+                key: 'align',
+                text: t('whiteboard.Align cards'),
+                icon: 'park-left-alignment',
+                subMenu: [
+                  {
+                    icon: 'park-align-horizontally',
+                    key: 'horizontallyCenter',
+                    type: 'item',
+                    text: t('whiteboard.Align horizontally center'),
+                    onSelect: () => {
+                      if (selected?.length) {
+                        instance.layoutOps?.alignNodes(selected, 'horizontallyCenter')
+                      }
+                      instance.toolbarOps?.closeToolbar()
+                    }
+                  },
+                  {
+                    icon: 'park-align-vertically',
+                    key: 'verticallyCenter',
+                    type: 'item',
+                    text: t('whiteboard.Align vertically center'),
+                    onSelect: () => {
+                      if (selected?.length) {
+                        instance.layoutOps?.alignNodes(selected, 'verticallyCenter')
+                      }
+                      instance.toolbarOps?.closeToolbar()
+                    }
+                  },
+                  {
+                    icon: 'park-align-left',
+                    key: 'left',
+                    type: 'item',
+                    text: t('whiteboard.Align left'),
+                    onSelect: () => {
+                      if (selected?.length) {
+                        instance.layoutOps?.alignNodes(selected, 'left')
+                      }
+                      instance.toolbarOps?.closeToolbar()
+                    }
+                  },
+
+                  {
+                    icon: 'park-align-right',
+                    key: 'right',
+                    type: 'item',
+                    text: t('whiteboard.Align right'),
+                    onSelect: () => {
+                      if (selected?.length) {
+                        instance.layoutOps?.alignNodes(selected, 'right')
+                      }
+                      instance.toolbarOps?.closeToolbar()
+                    }
+                  },
+                  {
+                    icon: 'park-align-top',
+                    key: 'top',
+                    type: 'item',
+                    text: t('whiteboard.Align top'),
+                    onSelect: () => {
+                      if (selected?.length) {
+                        instance.layoutOps?.alignNodes(selected, 'top')
+                      }
+                      instance.toolbarOps?.closeToolbar()
+                    }
+                  },
+                  {
+                    icon: 'park-align-bottom',
+                    key: 'bottom',
+                    type: 'item',
+                    text: t('whiteboard.Align bottom'),
+                    onSelect: () => {
+                      if (selected?.length) {
+                        instance.layoutOps?.alignNodes(selected, 'bottom')
+                      }
+                      instance.toolbarOps?.closeToolbar()
+                    }
+                  }
+                ]
+              }
+            : undefined,
+          menuItems.showAlignPackOptions
+            ? {
+                type: 'item',
+                key: 'arrange',
+                text: t('whiteboard.Distribute cards'),
+                icon: 'park-waterfalls-v',
+                subMenu: [
+                  {
+                    icon: 'park-horizontal-tidy-up',
+                    key: 'horizontallySpacing',
+                    text: t('whiteboard.Distribute horizontally'),
+                    type: 'item',
+                    onSelect: () => {
+                      if (selected?.length) {
+                        instance.layoutOps?.layoutNodes(selected, 'horizontallySpacing')
+                      }
+                      instance.toolbarOps?.closeToolbar()
+                    }
+                  },
+                  {
+                    icon: 'park-vertical-tidy-up',
+                    key: 'verticallySpacing',
+                    text: t('whiteboard.Distribute vertically'),
+                    type: 'item',
+                    onSelect: () => {
+                      if (selected?.length) {
+                        instance.layoutOps?.layoutNodes(selected, 'verticallySpacing')
+                      }
+                      instance.toolbarOps?.closeToolbar()
+                    }
+                  },
+                  {
+                    icon: 'park-waterfalls-h',
+                    key: 'pack',
+                    text: t('whiteboard.Pack layout'),
+                    type: 'item',
+                    onSelect: () => {
+                      if (selected?.length) {
+                        instance.layoutOps?.packNodes(selected)
+                      }
+                      instance.toolbarOps?.closeToolbar()
+                    }
+                  },
+                  {
+                    icon: 'park-grid-nine',
+                    key: 'auto'
+                  }
+                ]
+              }
+            : undefined
+        ].filter(i => i)
+      : []),
+    {
+      type: 'separator'
+    },
+    ...(menuItems.showMetaOptions
+      ? [
           {
             type: 'item',
-            key: 'align',
-            text: t('whiteboard.Align cards'),
-            icon: 'park-left-alignment',
+            key: 'open-in',
+            icon: 'park-efferent-three',
+            text: t('general.Open in'),
             subMenu: [
+              ...(instance.nodeOps?.canExpand(selected[0])
+                ? [
+                    {
+                      type: 'item',
+                      key: 'open-in-side-peek',
+                      text: t('general.Open in side peek'),
+                      suffix: WhiteboardDefaultKeyboardShortcut.OpenInSidebar.text,
+                      onSelect: () => {
+                        instance.nodeOps?.open(selected[0].id, 'sidePeek')
+                        instance.toolbarOps?.closeToolbar()
+                      }
+                    },
+                    {
+                      type: 'item',
+                      key: 'open-in-center',
+                      text: t('general.Open in center'),
+                      suffix: WhiteboardDefaultKeyboardShortcut.OpenInCenter.text,
+                      onSelect: () => {
+                        instance.nodeOps?.open(selected[0].id, 'center')
+                        instance.toolbarOps?.closeToolbar()
+                      }
+                    },
+                    {
+                      type: 'item',
+                      key: 'open-in-float',
+                      text: t('general.Open in float'),
+                      suffix: WhiteboardDefaultKeyboardShortcut.OpenInFloat.text,
+                      onSelect: () => {
+                        instance.nodeOps?.open(selected[0].id, 'float')
+                        instance.toolbarOps?.closeToolbar()
+                      }
+                    }
+                  ]
+                : []),
               {
-                icon: 'park-align-horizontally',
-                key: 'horizontallyCenter',
                 type: 'item',
-                text: t('whiteboard.Align horizontally center'),
+                key: 'open-in-new-tab',
+                text: t('general.Open in new tab'),
+                suffix: WhiteboardDefaultKeyboardShortcut.OpenInNewTabs.text,
                 onSelect: () => {
-                  if (selected?.length) {
-                    instance.layoutOps?.alignNodes(selected, 'horizontallyCenter')
-                  }
-                  instance.toolbarOps?.closeToolbar()
-                }
-              },
-              {
-                icon: 'park-align-vertically',
-                key: 'verticallyCenter',
-                type: 'item',
-                text: t('whiteboard.Align vertically center'),
-                onSelect: () => {
-                  if (selected?.length) {
-                    instance.layoutOps?.alignNodes(selected, 'verticallyCenter')
-                  }
-                  instance.toolbarOps?.closeToolbar()
-                }
-              },
-              {
-                icon: 'park-align-left',
-                key: 'left',
-                type: 'item',
-                text: t('whiteboard.Align left'),
-                onSelect: () => {
-                  if (selected?.length) {
-                    instance.layoutOps?.alignNodes(selected, 'left')
-                  }
-                  instance.toolbarOps?.closeToolbar()
-                }
-              },
-
-              {
-                icon: 'park-align-right',
-                key: 'right',
-                type: 'item',
-                text: t('whiteboard.Align right'),
-                onSelect: () => {
-                  if (selected?.length) {
-                    instance.layoutOps?.alignNodes(selected, 'right')
-                  }
-                  instance.toolbarOps?.closeToolbar()
-                }
-              },
-              {
-                icon: 'park-align-top',
-                key: 'top',
-                type: 'item',
-                text: t('whiteboard.Align top'),
-                onSelect: () => {
-                  if (selected?.length) {
-                    instance.layoutOps?.alignNodes(selected, 'top')
-                  }
-                  instance.toolbarOps?.closeToolbar()
-                }
-              },
-              {
-                icon: 'park-align-bottom',
-                key: 'bottom',
-                type: 'item',
-                text: t('whiteboard.Align bottom'),
-                onSelect: () => {
-                  if (selected?.length) {
-                    instance.layoutOps?.alignNodes(selected, 'bottom')
-                  }
+                  instance.nodeOps?.open(selected[0].id, 'newTab')
                   instance.toolbarOps?.closeToolbar()
                 }
               }
@@ -282,97 +400,40 @@ export default (
           },
           {
             type: 'item',
-            key: 'arrange',
-            text: t('whiteboard.Distribute cards'),
-            icon: 'park-waterfalls-v',
-            subMenu: [
-              {
-                icon: 'park-horizontal-tidy-up',
-                key: 'horizontallySpacing',
-                text: t('whiteboard.Distribute horizontally'),
-                type: 'item',
-                onSelect: () => {
-                  if (selected?.length) {
-                    instance.layoutOps?.layoutNodes(selected, 'horizontallySpacing')
-                  }
-                  instance.toolbarOps?.closeToolbar()
-                }
-              },
-              {
-                icon: 'park-vertical-tidy-up',
-                key: 'verticallySpacing',
-                text: t('whiteboard.Distribute vertically'),
-                type: 'item',
-                onSelect: () => {
-                  if (selected?.length) {
-                    instance.layoutOps?.layoutNodes(selected, 'verticallySpacing')
-                  }
-                  instance.toolbarOps?.closeToolbar()
-                }
-              },
-              {
-                icon: 'park-waterfalls-h',
-                key: 'pack',
-                text: t('whiteboard.Pack layout'),
-                type: 'item',
-                onSelect: () => {
-                  if (selected?.length) {
-                    instance.layoutOps?.packNodes(selected)
-                  }
-                  instance.toolbarOps?.closeToolbar()
-                }
-              },
-              {
-                icon: 'park-grid-nine',
-                key: 'auto'
-              }
-            ]
+            key: 'view-details',
+            text: t('general.View details'),
+            suffix: WhiteboardDefaultKeyboardShortcut.ViewDetails.text,
+            icon: 'park-info',
+            onSelect: () => {
+              const item = selected[0].type === 'metaObject' && selected[0].metaObjectId
+              item && GlobalInstance.metaOps?.openDetails(item)
+              instance.toolbarOps?.closeToolbar()
+            }
+          },
+          {
+            type: 'item',
+            key: 'move-to',
+            text: t('general.Move to'),
+            icon: 'park-corner-up-right',
+            onSelect: () => {
+              const item = selected[0].type === 'metaObject' && selected[0].metaObjectId
+              item && GlobalInstance.metaOps?.quickAdd(item)
+              instance.toolbarOps?.closeToolbar()
+            }
+          },
+          {
+            type: 'item',
+            key: 'edit-meta',
+            text: t('general.edit'),
+            icon: 'park-edit',
+            onSelect: () => {
+              const item = selected[0].type === 'metaObject' && selected[0].metaObjectId
+              item && Rendevoz.Actions.Open.Meta.openEditMetaDialog(item)
+              instance.toolbarOps?.closeToolbar()
+            }
           }
         ]
       : []),
-    {
-      type: 'separator'
-    },
-    selected.length === 1 && selected[0]?.type === 'metaObject'
-      ? {
-          type: 'item',
-          key: 'view-details',
-          text: t('general.View details'),
-          suffix: WhiteboardDefaultKeyboardShortcut.ViewDetails.text,
-          icon: 'park-info',
-          onSelect: () => {
-            const item = selected[0].type === 'metaObject' && selected[0].metaObjectId
-            item && GlobalInstance.metaOps?.openDetails(item)
-            instance.toolbarOps?.closeToolbar()
-          }
-        }
-      : undefined,
-    selected.length === 1 && selected[0]?.type === 'metaObject'
-      ? {
-          type: 'item',
-          key: 'move-to',
-          text: t('general.Move to'),
-          icon: 'park-corner-up-right',
-          onSelect: () => {
-            const item = selected[0].type === 'metaObject' && selected[0].metaObjectId
-            item && GlobalInstance.metaOps?.quickAdd(item)
-            instance.toolbarOps?.closeToolbar()
-          }
-        }
-      : undefined,
-    selected.length === 1 && selected[0]?.type === 'metaObject'
-      ? {
-          type: 'item',
-          key: 'edit-meta',
-          text: t('general.edit'),
-          icon: 'park-edit',
-          onSelect: () => {
-            const item = selected[0].type === 'metaObject' && selected[0].metaObjectId
-            item && Rendevoz.Actions.Open.Meta.openEditMetaDialog(item)
-            instance.toolbarOps?.closeToolbar()
-          }
-        }
-      : undefined,
     {
       type: 'item',
       key: 'copy',
@@ -401,58 +462,7 @@ export default (
         }
         instance.toolbarOps?.closeToolbar()
       }
-    },
-    ...(selected.length === 1 && selected.every(i => i.type === 'metaObject')
-      ? [
-          {
-            type: 'separator'
-          },
-          ...(instance.nodeOps?.canExpand(selected[0])
-            ? [
-                {
-                  type: 'item',
-                  key: 'open-in-side-peek',
-                  text: t('general.Open in side peek'),
-                  suffix: WhiteboardDefaultKeyboardShortcut.OpenInSidebar.text,
-                  onSelect: () => {
-                    instance.nodeOps?.open(selected[0].id, 'sidePeek')
-                    instance.toolbarOps?.closeToolbar()
-                  }
-                },
-                {
-                  type: 'item',
-                  key: 'open-in-center',
-                  text: t('general.Open in center'),
-                  suffix: WhiteboardDefaultKeyboardShortcut.OpenInCenter.text,
-                  onSelect: () => {
-                    instance.nodeOps?.open(selected[0].id, 'center')
-                    instance.toolbarOps?.closeToolbar()
-                  }
-                },
-                {
-                  type: 'item',
-                  key: 'open-in-float',
-                  text: t('general.Open in float'),
-                  suffix: WhiteboardDefaultKeyboardShortcut.OpenInFloat.text,
-                  onSelect: () => {
-                    instance.nodeOps?.open(selected[0].id, 'float')
-                    instance.toolbarOps?.closeToolbar()
-                  }
-                }
-              ]
-            : []),
-          {
-            type: 'item',
-            key: 'open-in-new-tab',
-            text: t('general.Open in new tab'),
-            suffix: WhiteboardDefaultKeyboardShortcut.OpenInNewTabs.text,
-            onSelect: () => {
-              instance.nodeOps?.open(selected[0].id, 'newTab')
-              instance.toolbarOps?.closeToolbar()
-            }
-          }
-        ]
-      : [])
+    }
   ].filter(i => i)
   return commonTools
 }

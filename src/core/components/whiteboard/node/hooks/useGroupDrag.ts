@@ -20,7 +20,14 @@ const useGroupDrag = (node: IWhiteboardNode, instance: IWhiteboardInstance) => {
   const handleGetInGroupNodes = () => {
     const inGroupNodes = instance.groupOps?.getNodesInGroup(node.id)
     if (!inGroupNodes?.length) return
-    const inGroupNodesIds: number[] = inGroupNodes.map(i => i.id)
+    inGroupNodes.forEach(n => {
+      if (n.type === 'mindmap') {
+        const expanded = instance.mindmapOps?.expandMindmap(n)
+        console.log(expanded)
+        expanded?.forEach(o => inGroupNodes.push(o))
+      }
+    })
+    const inGroupNodesIds: number[] = Array.from(new Set(inGroupNodes.map(i => i.id)).values())
     const inGroupNodesOffsetMap = inGroupNodesOffsetMapRef.current
     inGroupNodes.forEach(n => {
       const offset: Position = {
@@ -38,6 +45,12 @@ const useGroupDrag = (node: IWhiteboardNode, instance: IWhiteboardInstance) => {
     const map = inGroupNodesOffsetMapRef.current
     container.style.setProperty('transform', `translate(${data.x}px,${data.y}px)`)
     inGroupNodeIdsRef.current.forEach(id => {
+      const node = instance.getNode?.(id)
+      if (!node) return
+      if (node.rootId && !inGroupNodesOffsetMapRef.current.has(node.rootId)) return
+      if (node.type === 'mindmap') {
+        instance.mindmapOps?.updateMindmapEdges(node.id)
+      }
       const offset = map.get(id)
       if (offset?.top !== undefined && offset.left !== undefined) {
         const nodeFunc = instance.values.ID_TO_NODE_MAP.get(id)
@@ -56,6 +69,8 @@ const useGroupDrag = (node: IWhiteboardNode, instance: IWhiteboardInstance) => {
     instance.updateWhiteboard?.(w => {
       inGroupNodeIdsRef.current.forEach(id => {
         const node = w.nodes?.get(id)
+        if (!node) return
+        if (node.rootId && !inGroupNodesOffsetMapRef.current.has(node.rootId)) return
         if (node) {
           const offset = map.get(id)
           if (offset) {

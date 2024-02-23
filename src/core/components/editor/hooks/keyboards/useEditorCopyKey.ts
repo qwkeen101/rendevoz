@@ -14,7 +14,7 @@ const useEditorCopyKey = (instance: IEditorInstance) => {
         navigator.clipboard.writeText(string)
         const extended = instance.toggleOps?.extendElements(selectedElements).map(i => i[0])
         if (editor && extended) {
-          editor.currentCopyElements = extended
+          editor.currentCopyElements = structuredClone(extended)
         }
       }
     }

@@ -178,7 +178,7 @@ const SyncedBlock = ({ element, children }: RenderElementProps) => {
             positions={['bottom', 'top']}
             content={
               <WithBorder style={{ fontSize: 14, maxWidth: 300 }} padding={'4px 8px'} width={140}>
-                {blockDetails?.syncedMetaIds.map(i => <InlinePageRenderer metaId={i} />)}
+                {blockDetails?.syncedMetaIds.map(i => <InlinePageRenderer syncMetaId={syncMeta.id} metaId={i} />)}
               </WithBorder>
             }
           >
@@ -226,8 +226,14 @@ const SyncedBlock = ({ element, children }: RenderElementProps) => {
   )
 }
 
-const InlinePageRenderer = ({ metaId }: { metaId: number }) => {
+const InlinePageRenderer = ({ metaId, syncMetaId }: { metaId: number; syncMetaId: number }) => {
   const { renderInline } = useRenderObject({ metaObjectId: metaId })
-  return renderInline({ ellipsisLine: 1, containerStyle: { fontSize: 13 } })
+  return renderInline({
+    ellipsisLine: 1,
+    containerStyle: { fontSize: 13 },
+    onClick: () => {
+      GlobalInstance.goBackOps?.goBackToSyncBlock(syncMetaId, metaId)
+    }
+  })
 }
 export default SyncedBlock

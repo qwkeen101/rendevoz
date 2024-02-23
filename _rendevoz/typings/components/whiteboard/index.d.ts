@@ -11,7 +11,8 @@ export type IWhiteboardEdge = {
   metaLinkId?: number
   label?: string
   color?: string
-  lineType?: 'straight' | 'polyline' | 'curve'
+  // tight curve: straight -> curve -> straight
+  lineType?: 'straight' | 'polyline' | 'curve' | 'tightCurve'
   lineStyle?: 'straight' | 'regular' | 'thick' | 'dash' | 'animatedDash'
 }
 
@@ -40,6 +41,13 @@ export type IWhiteboardNode = {
   width?: number
   height?: number
   resized?: boolean
+  widthResized?: boolean
+  // collapse by node
+  collapse?: number | false
+  borderType?: 'rect' | 'roundRect' | 'round' | 'underline'
+  // border color
+  border?: string
+  collapseChildren?: boolean
   // mindmap root id
   rootId?: number
   // mindmap side
@@ -61,9 +69,14 @@ export type IWhiteboardNode = {
     }
   | {
       type: 'mindmap'
-      nodeType: 'text' | 'card'
+      // default node type: 'text'
+      nodeType?: IWhiteboardNode['type']
       rightChildren?: IWhiteboardMindmap[]
       leftChildren?: IWhiteboardMindmap[]
+      rightCollapse?: boolean
+      leftCollapse?: boolean
+      edgeColor?: string
+      edgeType?: IWhiteboardEdge['lineType']
     }
   | {
       type: 'webpage'
@@ -120,6 +133,7 @@ type MultiplePenStyles = {
 
 export type IWhiteboardMindmap = {
   root: number
+  label?: string
   children: IWhiteboardMindmap[]
 }
 export interface IWhiteboard extends IBase {

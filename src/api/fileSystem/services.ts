@@ -28,6 +28,9 @@ export const saveImageLocally = async (
   let data = ''
   const { compress, imgName } = options
   if (imgData instanceof Blob) {
+    if (imgData.type.includes('gif')) {
+      return await fs.writeFile(imgData, `/imgs/${imgName ?? md5(imgData.toString())}.gif`, 'binary')
+    }
     if (compress) {
       const blobUrl = window.URL.createObjectURL(imgData)
       const image = new Image()

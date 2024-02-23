@@ -32,244 +32,312 @@ const TreeEdge: FC<{
   edge: IWhiteboardEdge
   lineType?: IWhiteboardEdge['lineType']
   hideArrow?: boolean
-}> = memo(({ edge, lineType: outLineType, hideArrow = false }) => {
-  const { id, sourceId, targetId, targetPosition = 'left', sourcePosition = 'right', metaLinkId, lineType, lineStyle = 'straight' } = edge
-  const [innerLink, setInnerLink] = useState<Partial<IWhiteboardEdge>>(edge)
-  const [isEditingLabel, toggleIsEditingLabel] = useToggle(false)
-  const defaultLineType = outLineType ?? useSelectAtomValue(WhiteboardAtom, s => s?.lineType)
-  const currentHighlight = useSelectAtomValue(WhiteboardStateAtom, s => s.highlightedIds)
-  const realLineType = lineType || defaultLineType
-  const labelRef = useRef<HTMLDivElement>(null)
-  const labelContainerRef = useRef<SVGGElement>(null)
-  const isReposition = useSelectAtomValue(EdgeOverlayStateAtom, s => s.isReposition)
-  const currentEdgeId = useSelectAtomValue(EdgeOverlayStateAtom, s => s.currentEdgeId)
-  const { handlePointerEvent, isTouched, isErasing } = useEraseEdge(id)
-  const edgeRef = useRef<SVGPathElement>(null)
-  const instance = useWhiteboardInstance()
-  const pathRef = useRef<string>()
-  const labelPosRef = useRef<XYPosition>()
-  const underEdgeRef = useRef<SVGPathElement>(null)
-
-  const drawPath = () => {
-    const edgeData = getEdgeData(sourceId, targetId, sourcePosition, targetPosition, instance)
-    if (edgeData) {
-      const { sourceXY, targetXY } = edgeData
-      let path = ''
-      let labelX = 0
-      let labelY = 0
-      if (realLineType === 'curve') {
-        ;[path, labelX, labelY] = getBezierPath({
-          sourceX: sourceXY.x,
-          sourceY: sourceXY.y,
-          targetX: targetXY.x,
-          targetY: targetXY.y,
-          sourcePosition,
-          targetPosition
-        })
-      }
-      if (realLineType === 'straight') {
-        path = `M ${sourceXY.x},${sourceXY.y} L ${targetXY.x},${targetXY.y}`
-        labelX = (sourceXY.x + targetXY.x) / 2
-        labelY = (sourceXY.y + targetXY.y) / 2
-      }
-      if (realLineType === 'polyline') {
-        ;[path, labelX, labelY] = getSmoothPolyPath({
-          sourceX: sourceXY.x,
-          sourceY: sourceXY.y,
-          sourcePosition,
-          targetPosition,
-          targetX: targetXY.x,
-          targetY: targetXY.y,
-          borderRadius: 4
-        })
-      }
-      edgeRef.current?.setAttribute('d', path)
-      underEdgeRef.current?.setAttribute('d', path)
-      pathRef.current = path
-      labelPosRef.current = {
-        x: labelX,
-        y: labelY
-      }
-      labelContainerRef.current?.setAttribute('transform', `translate(${labelX} ${labelY})`)
-    }
-  }
-
-  instance.values.ID_TO_EDGE_MAP.set(id, {
-    drawPath,
-    edit: () => toggleIsEditingLabel(true)
-  })
-
-  useEffect(() => {
-    drawPath()
-  }, [sourceId, targetId])
-
-  const clickHandler: MouseEventHandler = e => {
-    const pos = instance.coordOps?.transformWindowPositionToPosition({ x: e.clientX, y: e.clientY })
-    if (pos) {
-      instance.toolbarOps?.openEdgeToolbar(edge.id, pos)
-    }
-  }
-
-  useEffect(() => {
-    if (labelRef.current) {
-      labelRef.current.textContent = edge.label || ''
-    }
-  }, [edge?.label])
-
-  const handlePointerDown = (e: PointerEvent) => {
-    e.preventDefault()
-    const node = e.currentTarget as SVGElement
-    const nextPointerHandler = (e: PointerEvent) => {
-      if (e.type === 'pointerup') {
-        node.removeEventListener('pointermove', nextPointerHandler)
-        document.removeEventListener('pointerup', nextPointerHandler)
-      }
-      if (e.type === 'pointermove') {
-        if (Math.abs(e.movementX) >= 1 || Math.abs(e.movementY) >= 1) {
-          const node = e.currentTarget as SVGElement
-          const bounding = node.getBoundingClientRect()
-          const { sourceXY, targetXY } = getEdgeData(sourceId, targetId, sourcePosition, targetPosition, instance)
-          const center = bounding.left + bounding.width / 2
-          let drag: 'source' | 'target' = 'source'
-
-          if (e.clientX < center) {
-            if (sourceXY.x > targetXY.x) {
-              drag = 'target'
-            }
-          } else {
-            if (sourceXY.x < targetXY.x) {
-              drag = 'target'
+  disablePopover?: boolean
+  disableReposition?: boolean
+  disablePointer?: boolean
+  clickEditLabel?: boolean
+  strokeWidth?: string | number
+  onLabelChange?: (value: string) => void
+  isMindmapConnection?: boolean
+}> = memo(
+  ({
+    edge,
+    lineType: outLineType,
+    onLabelChange,
+    clickEditLabel,
+    hideArrow = false,
+    disablePopover = false,
+    strokeWidth,
+    disablePointer,
+    disableReposition = false,
+    isMindmapConnection
+  }) => {
+    const { id, sourceId, targetId, targetPosition = 'left', sourcePosition = 'right', metaLinkId, lineType, lineStyle = 'straight' } = edge
+    const [innerLink, setInnerLink] = useState<Partial<IWhiteboardEdge>>(edge)
+    const [isEditingLabel, toggleIsEditingLabel] = useToggle(false)
+    const defaultLineType = outLineType ?? useSelectAtomValue(WhiteboardAtom, s => s?.lineType)
+    const currentHighlight = useSelectAtomValue(WhiteboardStateAtom, s => s.highlightedIds)
+    const realLineType = lineType || defaultLineType
+    const labelRef = useRef<HTMLDivElement>(null)
+    const labelContainerRef = useRef<SVGGElement>(null)
+    const isReposition = useSelectAtomValue(EdgeOverlayStateAtom, s => s.isReposition)
+    const currentEdgeId = useSelectAtomValue(EdgeOverlayStateAtom, s => s.currentEdgeId)
+    const { handlePointerEvent, isTouched, isErasing } = useEraseEdge(id)
+    const underlineRef = useRef<SVGPathElement>(null)
+    const edgeRef = useRef<SVGPathElement>(null)
+    const instance = useWhiteboardInstance()
+    const pathRef = useRef<string>()
+    const labelPosRef = useRef<XYPosition>()
+    const underEdgeRef = useRef<SVGPathElement>(null)
+    const targetNode = useSelectAtomValue(WhiteboardAtom, s => s?.nodes?.get(targetId))
+    const targetBorderColor = targetNode?.border
+    const targetBorderType = targetNode?.borderType
+    const drawPath = () => {
+      try {
+        const edgeData = getEdgeData(sourceId, targetId, sourcePosition, targetPosition, instance, isMindmapConnection)
+        if (edgeData) {
+          if (isMindmapConnection) {
+            const target = instance.getNode?.(targetId)
+            const targetUnderline = target?.borderType === 'underline'
+            if (targetUnderline) {
+              const targetPos = instance.nodeOps?.getNodeFuncs(targetId)?.getRealtimeBox()
+              if (targetPos && targetUnderline) {
+                underlineRef.current?.setAttribute(
+                  'd',
+                  `M ${targetPos.left},${targetPos.top + targetPos.height} L ${targetPos.left + targetPos.width},${
+                    targetPos.top + targetPos.height
+                  }`
+                )
+              }
+            } else {
+              underlineRef.current?.removeAttribute('d')
             }
           }
-          const mousePos = instance.coordOps?.transformWindowPositionToPosition({ x: e.clientX, y: e.clientY })
-          if (mousePos) {
-            instance.edgeOps?.repositionEdge(edge.id, drag, mousePos)
+          const { sourceXY, targetXY } = edgeData
+          let path = ''
+          let labelX = 0
+          let labelY = 0
+          if (realLineType === 'curve') {
+            ;[path, labelX, labelY] = getBezierPath({
+              sourceX: sourceXY.x,
+              sourceY: sourceXY.y,
+              targetX: targetXY.x,
+              targetY: targetXY.y,
+              sourcePosition,
+              targetPosition
+            })
+          }
+          if (realLineType === 'straight') {
+            path = `M ${sourceXY.x},${sourceXY.y} L ${targetXY.x},${targetXY.y}`
+            labelX = (sourceXY.x + targetXY.x) / 2
+            labelY = (sourceXY.y + targetXY.y) / 2
+          }
+          if (realLineType === 'tightCurve') {
+            ;[path, labelX, labelY] = getSmoothPolyPath({
+              sourceX: sourceXY.x,
+              sourceY: sourceXY.y,
+              sourcePosition,
+              targetPosition,
+              targetX: targetXY.x,
+              targetY: targetXY.y,
+              borderRadius: 40,
+              bendOnlyLast: true
+            })
+          }
+          if (realLineType === 'polyline') {
+            ;[path, labelX, labelY] = getSmoothPolyPath({
+              sourceX: sourceXY.x,
+              sourceY: sourceXY.y,
+              sourcePosition,
+              targetPosition,
+              targetX: targetXY.x,
+              targetY: targetXY.y,
+              borderRadius: 4
+            })
+          }
+          edgeRef.current?.setAttribute('d', path)
+          underEdgeRef.current?.setAttribute('d', path)
+          pathRef.current = path
+          labelPosRef.current = {
+            x: labelX,
+            y: labelY
+          }
+          labelContainerRef.current?.setAttribute('transform', `translate(${labelX} ${labelY})`)
+        }
+      } catch (e) {
+        console.error(e)
+      }
+    }
+
+    instance.values.ID_TO_EDGE_MAP.set(id, {
+      drawPath,
+      edit: () => toggleIsEditingLabel(true)
+    })
+    const clickHandler: MouseEventHandler = e => {
+      if (disablePopover) return
+      const pos = instance.coordOps?.transformWindowPositionToPosition({ x: e.clientX, y: e.clientY })
+      if (pos) {
+        instance.toolbarOps?.openEdgeToolbar(edge.id, pos)
+      }
+    }
+
+    useEffect(() => {
+      if (labelRef.current) {
+        labelRef.current.textContent = edge.label || ''
+      }
+    }, [edge?.label])
+
+    const handlePointerDown = (e: PointerEvent) => {
+      if (disableReposition) return
+      e.preventDefault()
+      const node = e.currentTarget as SVGElement
+      const nextPointerHandler = (e: PointerEvent) => {
+        if (e.type === 'pointerup') {
+          node.removeEventListener('pointermove', nextPointerHandler)
+          document.removeEventListener('pointerup', nextPointerHandler)
+        }
+        if (e.type === 'pointermove') {
+          if (Math.abs(e.movementX) >= 1 || Math.abs(e.movementY) >= 1) {
+            const node = e.currentTarget as SVGElement
+            const bounding = node.getBoundingClientRect()
+            const { sourceXY, targetXY } = getEdgeData(sourceId, targetId, sourcePosition, targetPosition, instance)
+            const center = bounding.left + bounding.width / 2
+            let drag: 'source' | 'target' = 'source'
+
+            if (e.clientX < center) {
+              if (sourceXY.x > targetXY.x) {
+                drag = 'target'
+              }
+            } else {
+              if (sourceXY.x < targetXY.x) {
+                drag = 'target'
+              }
+            }
+            const mousePos = instance.coordOps?.transformWindowPositionToPosition({ x: e.clientX, y: e.clientY })
+            if (mousePos) {
+              instance.edgeOps?.repositionEdge(edge.id, drag, mousePos)
+            }
           }
         }
       }
-    }
 
-    if (e.button === 0) {
-      node.addEventListener('pointermove', nextPointerHandler)
-      document.addEventListener('pointerup', nextPointerHandler)
-    }
+      if (e.button === 0) {
+        node.addEventListener('pointermove', nextPointerHandler)
+        document.addEventListener('pointerup', nextPointerHandler)
+      }
 
-    // right to left
-  }
-  useUpdateEffect(() => {
-    if (isEditingLabel) {
-      const bounding = labelRef.current?.getBoundingClientRect()
-      const transform = instance.getTransform?.()
-      if (bounding && transform && labelPosRef.current) {
-        const width = bounding.width / transform.scale
-        const height = bounding.height / transform.scale
-        const labelBox = {
-          left: labelPosRef.current.x - width * 0.5,
-          top: labelPosRef.current.y - height * 0.5,
-          width,
-          height
+      // right to left
+    }
+    useUpdateEffect(() => {
+      if (isEditingLabel) {
+        const bounding = labelRef.current?.getBoundingClientRect()
+        const transform = instance.getTransform?.()
+        if (bounding && transform && labelPosRef.current) {
+          const width = bounding.width / transform.scale
+          const height = bounding.height / transform.scale
+          const labelBox = {
+            left: labelPosRef.current.x - width * 0.5,
+            top: labelPosRef.current.y - height * 0.5,
+            width,
+            height
+          }
+          instance.containerOps?.fitTo(labelBox, { maxScale: 1 })
         }
-        instance.containerOps?.fitTo(labelBox, { maxScale: 1 })
+        const keydownHandler = (e: KeyboardEvent) => {
+          e.stopPropagation()
+        }
+        document.addEventListener('keydown', keydownHandler, true)
+        drawPath()
+        labelRef.current?.focus()
+        return () => {
+          document.removeEventListener('keydown', keydownHandler, true)
+        }
+      } else {
+        if (innerLink.label !== undefined && innerLink.label !== edge.label) {
+          updateEdge({ label: innerLink.label })
+        }
       }
-      const keydownHandler = (e: KeyboardEvent) => {
-        e.stopPropagation()
-      }
-      document.addEventListener('keydown', keydownHandler, true)
+    }, [isEditingLabel])
+
+    const updateEdge = (edge: Partial<IWhiteboardEdge>) => {
+      instance.updateEdge?.(id, e => ({ ...e, ...edge }))
+    }
+
+    useEffect(() => {
       drawPath()
-      labelRef.current?.focus()
-      return () => {
-        document.removeEventListener('keydown', keydownHandler, true)
-      }
-    } else {
-      if (innerLink.label !== undefined && innerLink.label !== edge.label) {
-        updateEdge({ label: innerLink.label })
-      }
-    }
-  }, [isEditingLabel])
+    }, [sourceId, sourcePosition, targetPosition, targetId, realLineType, targetBorderType, targetBorderColor])
 
-  const updateEdge = (edge: Partial<IWhiteboardEdge>) => {
-    instance.updateEdge?.(id, e => ({ ...e, ...edge }))
-  }
-
-  useEffect(() => {
-    drawPath()
-  }, [sourceId, sourcePosition, targetPosition, targetId, realLineType])
-
-  return (
-    <g
-      onClick={clickHandler}
-      onPointerDown={handlePointerDown}
-      style={{
-        pointerEvents: 'none',
-        cursor: isErasing ? 'crosshair' : 'pointer',
-        opacity: isTouched ? 0.3 : currentHighlight ? (currentHighlight.edgeIds.has(edge.id) ? 1 : 0.2) : 1,
-        display: isReposition && currentEdgeId === edge.id ? 'none' : 'unset'
-      }}
-    >
-      <path
-        className={lineStyle === 'animatedDash' ? animatedEdgeClazz : lineStyle === 'dash' ? dashEdgeClazz : undefined}
-        pointerEvents="none"
-        ref={edgeRef}
-        fill="none"
-        markerEnd={hideArrow ? undefined : `url(#${getMarkerId('end', Colors.getAdaptColor(edge?.color) || MarkerColor.PRIMARY)})`}
-        stroke={Colors.getAdaptColor(edge?.color) || Colors.Font.Primary}
-        strokeWidth={lineStyle === 'animatedDash' || lineStyle === 'dash' ? 4 : lineStyle === 'regular' ? 4 : lineStyle === 'thick' ? 6 : 2}
-      ></path>
-      <path
-        onPointerEnter={e => {
-          handlePointerEvent(e)
+    return (
+      <g
+        onClick={clickHandler}
+        onPointerDown={handlePointerDown}
+        style={{
+          pointerEvents: 'none',
+          cursor: isErasing ? 'crosshair' : 'pointer',
+          opacity: isTouched ? 0.3 : currentHighlight ? (currentHighlight.edgeIds.has(edge.id) ? 1 : 0.2) : 1,
+          display: isReposition && currentEdgeId === edge.id ? 'none' : 'unset'
         }}
-        ref={underEdgeRef}
-        pointerEvents="auto"
-        stroke={'transparent'}
-        strokeWidth={'calc(20 * var(--zoom-level)'}
-        fill="none"
-        cursor={isErasing ? 'crosshair' : 'pointer'}
-      />
-      {(innerLink?.label || isEditingLabel || edge.label) && (
-        <foreignObject
-          ref={labelContainerRef}
-          width={1}
-          height={1}
-          style={{ overflow: 'visible', pointerEvents: 'auto' }}
-          onPointerDown={e => e.stopPropagation()}
-        >
-          <div
-            onClick={e => e.stopPropagation()}
-            style={{
-              width: 'max-content',
-              height: 'fit-content',
-              pointerEvents: 'none'
+      >
+        <path
+          className={lineStyle === 'animatedDash' ? animatedEdgeClazz : lineStyle === 'dash' ? dashEdgeClazz : undefined}
+          pointerEvents="none"
+          ref={edgeRef}
+          fill="none"
+          markerEnd={hideArrow ? undefined : `url(#${getMarkerId('end', Colors.getAdaptColor(edge?.color) || MarkerColor.PRIMARY)})`}
+          stroke={Colors.getAdaptColor(edge?.color) || Colors.Font.Primary}
+          strokeWidth={
+            strokeWidth ??
+            (lineStyle === 'animatedDash' || lineStyle === 'dash' ? 4 : lineStyle === 'regular' ? 4 : lineStyle === 'thick' ? 6 : 2)
+          }
+        ></path>
+        {isMindmapConnection && (
+          <path
+            ref={underlineRef}
+            stroke={targetBorderColor ? Colors.getAdaptColor(targetBorderColor) : Colors.getAdaptColor(edge?.color) || Colors.Font.Primary}
+            strokeWidth={
+              strokeWidth ??
+              (lineStyle === 'animatedDash' || lineStyle === 'dash' ? 4 : lineStyle === 'regular' ? 4 : lineStyle === 'thick' ? 6 : 2)
+            }
+          />
+        )}
+        {!disableReposition && !disablePopover && (
+          <path
+            onPointerEnter={e => {
+              handlePointerEvent(e)
             }}
+            ref={underEdgeRef}
+            pointerEvents="auto"
+            stroke={'transparent'}
+            strokeWidth={'calc(20 * var(--zoom-level)'}
+            fill="none"
+            cursor={isErasing ? 'crosshair' : 'pointer'}
+          />
+        )}
+        {(innerLink?.label || isEditingLabel || edge.label) && (
+          <foreignObject
+            ref={labelContainerRef}
+            width={1}
+            height={1}
+            style={{ overflow: 'visible', pointerEvents: 'auto' }}
+            onPointerDown={e => e.stopPropagation()}
           >
             <div
-              ref={labelRef}
-              contentEditable={true}
-              spellCheck="false"
-              className={EdgeClassName}
-              onBlur={() => {
-                toggleIsEditingLabel(false)
-              }}
-              onClick={() => setTimeout(() => toggleIsEditingLabel(true))}
+              onClick={e => e.stopPropagation()}
               style={{
-                maxWidth: '16em',
-                fontSize: FontSize['14px'],
-                padding: '6px',
-                minWidth: 1
+                width: 'max-content',
+                height: 'fit-content',
+                pointerEvents: 'none'
               }}
-              onInput={e => {
-                setInnerLink({
-                  ...innerLink,
-                  label: e.currentTarget.innerText || ''
-                })
-              }}
-            ></div>
-          </div>
-        </foreignObject>
-      )}
-    </g>
-  )
-})
+            >
+              <div
+                ref={labelRef}
+                contentEditable={true}
+                spellCheck="false"
+                className={EdgeClassName}
+                onBlur={() => {
+                  toggleIsEditingLabel(false)
+                }}
+                onClick={() => setTimeout(() => toggleIsEditingLabel(true))}
+                style={{
+                  maxWidth: '16em',
+                  fontSize: FontSize['14px'],
+                  padding: '6px',
+                  minWidth: 1
+                }}
+                onInput={e => {
+                  setInnerLink({
+                    ...innerLink,
+                    label: e.currentTarget.innerText || ''
+                  })
+                }}
+              ></div>
+            </div>
+          </foreignObject>
+        )}
+      </g>
+    )
+  }
+)
 
 const EdgeClassName = css({
   transform: 'translateX(-50%) translateY(-50%)',

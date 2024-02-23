@@ -59,6 +59,11 @@ export const useAssignMediaInstance = (containerRef: RefObject<HTMLElement>) => 
           imageUrl: imgPath
         }
       })
+
+      if (setting.media.openPopoverWhenHighlight) {
+        mediaInstance.openLabelPopover?.(one.id)
+      }
+
       return one
     },
     getMarkerContainer: () => {

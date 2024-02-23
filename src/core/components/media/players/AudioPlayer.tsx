@@ -10,7 +10,7 @@ import MediaToolbar from '@/core/components/media/components/MediaToolbar'
 import { useAtomValue } from 'jotai'
 import { MediaLayoutAtom } from '@/core/components/media/hooks/useVideoLayout'
 import { ClassName } from 'rendevoz'
-import { useSelectAtomValue } from '@/hooks'
+import { useMergedRef, useSelectAtomValue } from '@/hooks'
 import useMediaSidebarState from '@/core/components/media/hooks/useMediaSidebarState'
 
 const IMG = 'https://i.ytimg.com/vi/-N-ij9aPGVY/hqdefault.jpg?s…AFwAcABBg==&rs=AOn4CLADUEmOZGoF82oTlcqi2FQFxks28g'
@@ -23,10 +23,15 @@ export default () => {
   const columnLayout = useAtomValue(MediaLayoutAtom)
   const sidebarOpen = useMediaSidebarState()[0].rightBarVisible
   const instance = useMediaInstance()
+  const containerRef = useRef<HTMLElement>(null)
+  const [ref, { width }] = useMeasure()
   assignProperties(instance, {
     getAudioFile: async () => {
       const res = await fetch(mediaState.url).then(res => res.blob())
       return res
+    },
+    getMediaContainer: () => {
+      return containerRef.current || undefined
     }
   })
   useEffect(() => {
@@ -67,7 +72,7 @@ export default () => {
       a.playbackRate = speed
     }
   }, [speed, loaded])
-  const [ref, { width }] = useMeasure()
+
   const columnMode = width < 800
   const floated = mediaState.floated
   return (
@@ -120,7 +125,7 @@ export default () => {
             {mediaState.description}
           </div>
         )}
-        <div style={{ width: '100%', marginTop: 25 }}>
+        <div ref={containerRef} style={{ width: '100%', marginTop: 25 }}>
           <MediaBottomBar />
         </div>
 

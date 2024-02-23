@@ -95,6 +95,9 @@ export const defaultSetting: Setting = {
     minimizeToTray: false,
     followSystemTheme: false
   },
+  media: {
+    openPopoverWhenHighlight: true
+  },
   objectAndLink: {
     enableAll: true,
     enableDropOnEditorLink: true,

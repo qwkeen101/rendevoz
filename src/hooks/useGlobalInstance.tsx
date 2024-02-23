@@ -8,9 +8,13 @@ import { Rendevoz } from '@/core/rendevoz'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { ObjectCreateHandler } from '@/core/global/GlobalObjectCreator'
 import { GlobalGraphAtom } from '@/scenes/GraphPage'
+import jumpBackToSyncBlock from '@/core/object/jumpBack/jumpBackToSyncBlock'
 const GlobalInstance: Partial<IGlobalInstance> = {}
 
 assignProperties(GlobalInstance, {
+  goBackOps: {
+    goBackToSyncBlock: jumpBackToSyncBlock
+  },
   objectOps: {
     isLabel: o => {
       if (!o) return false

@@ -21,6 +21,7 @@ import { Icon } from '@/components'
 import { useWhiteboardInstance } from '@/core/components/whiteboard/hooks'
 import QuestionCard from '@/core/ai/components/question/QuestionCard'
 import Tweet from '@/core/components/tweet'
+import { Colors } from '@/consts'
 const tagsClass = css({
   '> *': {
     fontSize: '15px !important',
@@ -33,7 +34,7 @@ const MetaObjectNode: FC<InnerNodeProps> = ({ node: n, setNodeState, nodeState }
   const { expanded } = node
   const { metaObjectId } = node
 
-  const { renderWhole, metaObject } = useRenderObject({
+  const { metaObject } = useRenderObject({
     metaObjectId: metaObjectId!
   })
 
@@ -49,73 +50,65 @@ const MetaObjectNode: FC<InnerNodeProps> = ({ node: n, setNodeState, nodeState }
     }
   }, [hasImage])
 
-  const renderOptions = useMemo(
-    () => ({
-      renderOptions: {
-        renderImage: false,
-        renderFrom: true,
-        renderDescription: true,
-        renderOriginalText: true
-      },
-      columnGap: 6,
-      tagsOptions: {
-        gap: 6,
-        containerClassName: tagsClass
-      },
-      titleOptions: {
-        style: {
-          fontSize: 20,
-          lineHeight: 1.4,
-          whiteSpace: 'pre-wrap'
-        },
-        originalTextStyle: {
-          marginTop: 3,
-          fontSize: 14
-        },
-        ellipsisLine: 0
-      },
-      descriptionOptions: {
-        style: {
-          fontSize: 14
-        },
-        ellipsisLine: 0
-      },
-      fromOptions: {
-        style: {
-          fontSize: 14,
-          gap: '0.3rem'
-        }
-      }
-    }),
-    [hasImage]
-  )
-  const hasImageRenderer = () => (
-    <Content fullWidth flex column style={{ width: 500, minHeight: '100%', maxHeight: '100%', minWidth: '100%', maxWidth: '100%' }}>
-      <img
-        draggable={true}
-        ref={imageRef}
-        src={metaObject?.coverImgSrc}
-        style={{
-          position: 'relative',
-          width: '100%',
-          objectFit: 'cover',
-          flex: 1,
-          overflow: 'hidden',
-          borderRadius: '8px 8px 0px 0px'
-        }}
-      />
-      <div
-        ref={wholeContainerRef}
-        style={{
-          padding: '16px',
-          width: '100%',
-          height: 'auto'
-        }}
-      >
-        {renderWhole(renderOptions)}
-      </div>
-    </Content>
-  )
+  const hasImageRenderer = () =>
+    metaObject && (
+      <Content fullWidth flex column style={{ width: 500, minHeight: '100%', maxHeight: '100%', minWidth: '100%', maxWidth: '100%' }}>
+        <img
+          draggable={true}
+          ref={imageRef}
+          src={metaObject?.coverImgSrc}
+          style={{
+            position: 'relative',
+            width: '100%',
+            objectFit: 'cover',
+            flex: 1,
+            overflow: 'hidden',
+            borderRadius: '8px 8px 0px 0px'
+          }}
+        />
+        <div
+          ref={wholeContainerRef}
+          style={{
+            padding: '8px',
+            width: '100%',
+            height: 'auto',
+            position: 'absolute',
+            bottom: 0,
+            left: 0,
+            display: 'flex',
+            gap: 6,
+            paddingRight: 24
+          }}
+        >
+          <div
+            className={ClassName.ellipsisFont(1)}
+            style={{
+              padding: '1px 6px',
+              borderRadius: 4,
+              fontSize: 12,
+              // lineHeight: 1,
+              background: 'rgba(0,0,0,0.7)',
+              color: 'white',
+              flexShrink: 1
+            }}
+          >
+            {metaObject?.name || metaObject?.placeholderName}
+          </div>
+          <div
+            style={{
+              padding: '1px 6px',
+              borderRadius: 4,
+              fontSize: 12,
+              background: 'rgba(0,0,0,0.7)',
+              color: 'white',
+              flexShrink: 0
+            }}
+          >
+            {Rendevoz.Utils.Meta.getTypeName(metaObject.type)}
+          </div>
+        </div>
+      </Content>
+    )
 
   const renderExpanded = () => {
     if (metaObject?.objectId) {
@@ -152,7 +145,7 @@ const MetaObjectNode: FC<InnerNodeProps> = ({ node: n, setNodeState, nodeState }
           )
         }
         case 'webpage':
-          return <WebpageNode node={{ webpageId: metaObject.objectId }} />
+          return <WebpageNode node={node} webpageId={metaObject.objectId} />
         case 'video':
           return (
             <div style={{ width: '800px', maxWidth: '100%', minWidth: '100%', minHeight: '100%', maxHeight: '100%' }}>
@@ -253,7 +246,24 @@ const MetaObjectNode: FC<InnerNodeProps> = ({ node: n, setNodeState, nodeState }
       </Content>
     )
   }
-
+  if (!metaObject || metaObject.deleted) {
+    return (
+      <div
+        className={'transparent-font'}
+        style={{
+          width: node.width,
+          height: node.height,
+          border: Colors.Consts.Border,
+          borderRadius: 4,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center'
+        }}
+      >
+        Deleted object
+      </div>
+    )
+  }
   return expanded ? (
     <DockTabPaneContext.Provider value={{ currentTabId: '' }}>{renderExpanded()}</DockTabPaneContext.Provider>
   ) : hasImage ? (
@@ -263,10 +273,4 @@ const MetaObjectNode: FC<InnerNodeProps> = ({ node: n, setNodeState, nodeState }
   )
 }
 
-const measureTextCanvas = document.createElement('canvas')
-const ctx = measureTextCanvas.getContext('2d')!
-ctx.font = '17px Inter'
-const getTextWidth = (str: string) => {
-  return ctx.measureText(str).width
-}
 export default memo(MetaObjectNode)

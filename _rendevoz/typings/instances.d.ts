@@ -41,6 +41,9 @@ export type IGlobalInstance = Partial<{
   commonOps: {
     addExtraSvgArrows: (color: string) => void
   }
+  goBackOps: {
+    goBackToSyncBlock: (syncBlockMetaId: number, targetMetaId: number) => Promise<void>
+  }
   metaOps: {
     canCreateDirectly: (type: MetaObject['type']) => boolean
     getLink: (nodeId: number) => Promise<{

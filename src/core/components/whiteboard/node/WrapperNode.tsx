@@ -1,7 +1,7 @@
 import { CSSProperties, Dispatch, memo, ReactNode, SetStateAction, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { useFlow } from '../StateHooks'
 import { INodeInnerState, IWhiteboardNode } from '~/typings'
-import { useMemoizedFn, useRafFn, useSelectAtomValue, useSelectGlobalAtomValue } from '@/hooks'
+import { useDebounceEffect, useIsIn, useMemoizedFn, useRafFn, useSelectAtomValue, useSelectGlobalAtomValue } from '@/hooks'
 import { Content } from '@/components'
 import { Rnd } from 'react-rnd'
 import { NodeResizer } from './NodeResizer'
@@ -14,7 +14,7 @@ import WebpageNode from './nodes/WebpageNode'
 import NoteNode from './nodes/NoteNode'
 import PdfNode from './nodes/PdfNode'
 import { useUpdate } from 'react-use'
-import { nodeClassName, nodeNameClassName } from './nodeClasses'
+import { nodeClassName } from './nodeClasses'
 import TextNode from '@/core/components/whiteboard/node/nodes/TextNode'
 import { SettingAtom } from '@/core'
 import useAddingEdgeInsideNode from '@/core/components/whiteboard/hooks/useAddingEdgeInsideNode'
@@ -24,7 +24,7 @@ import FreehandNode from '@/core/components/whiteboard/node/nodes/FreehandNode'
 import useNodeColor from '@/core/components/whiteboard/node/hooks/useNodeColor'
 import getNodeStyle from '@/core/components/whiteboard/node/getNodeStyle'
 import useEraseNode from '@/core/components/whiteboard/node/hooks/useEraseNode'
-import useNodeSize, { DEFAULT_NODE_WIDTH } from '@/core/components/whiteboard/node/hooks/useNodeSize'
+import useNodeSize from '@/core/components/whiteboard/node/hooks/useNodeSize'
 import { useWhiteboardInstance } from '@/core/components/whiteboard/hooks/useWhiteboardInstance'
 import { WhiteboardStateAtom } from '@/core/components/whiteboard/hooks/useWhiteboardState'
 import eventHandlers from '@/core/components/whiteboard/node/hooks/eventHandlers'
@@ -33,6 +33,10 @@ import useNodeDrag from '@/core/components/whiteboard/node/hooks/useNodeDrag'
 import { useSetAtom } from 'jotai'
 import MindmapNode from '@/core/components/whiteboard/node/mindmap/MindmapNode'
 import AddSubMindmapIndicator from '@/core/components/whiteboard/node/mindmap/AddSubMindmapIndicator'
+import getNodeSize from '@/core/components/whiteboard/node/getNodeSize'
+import getNodeClassname from '@/core/components/whiteboard/node/getNodeClassname'
+import classnames from 'classnames'
+import { Colors } from '@/consts'
 
 export type NodeInnerState = INodeInnerState
 export interface InnerNodeProps {
@@ -48,12 +52,12 @@ const lockResizeElements = ['image', 'video']
 
 const WrapperNode = ({ node }: { node: IWhiteboardNode }) => {
   const { x, y, type, name, id, background, width, height, z } = node
-  const containerRef = useRef<HTMLDivElement>(null)
   const eventHandlerRef = useRef<NodeEventHandler>()
   const flow = useFlow()
 
   const isDraggingRef = useRef(false)
   const isResizingRef = useRef(false)
+  const { isIn, ref: containerRef } = useIsIn()
   const [nodeState, setNodeState] = useState<NodeInnerState>({
     popoverVisible: false,
     expanded: false,
@@ -158,12 +162,19 @@ const WrapperNode = ({ node }: { node: IWhiteboardNode }) => {
     )
   })
 
+  useLayoutEffect(() => {
+    return () => {
+      instance.values.ID_TO_NODE_MAP.delete(node.id)
+    }
+  }, [])
   const rafUpdateEdge = useRafFn(() => {
     instance.nodeOps?.updateRelatedEdges(node.id)
   })
-  useEffect(() => {
+  useLayoutEffect(() => {
     rafUpdateEdge()
+    rndRef.current?.updateOffsetFromParent()
   }, [node.x, node.y, node.width, node.height])
+
   useEffect(() => {
     const element = containerRef.current
     if (element) {
@@ -223,7 +234,7 @@ const WrapperNode = ({ node }: { node: IWhiteboardNode }) => {
 
   const forceRender = useUpdate()
 
-  const renderInnerNode = () => {
+  const renderInnerNode = (type: IWhiteboardNode['type']) => {
     switch (type) {
       case 'metaObject':
         return <MetaObjectNode onNameChange={handleNameChange} nodeState={nodeState} setNodeState={setNodeState} node={node} />
@@ -242,9 +253,9 @@ const WrapperNode = ({ node }: { node: IWhiteboardNode }) => {
           />
         )
       case 'mindmap':
-        return <MindmapNode parentNodeRef={containerRef} node={node} />
+        return <MindmapNode nodeRenderer={renderInnerNode} parentNodeRef={containerRef} node={node} />
       case 'webpage':
-        return <WebpageNode node={node} />
+        return <WebpageNode webpageId={node.webpageId} node={node} />
       case 'note':
         return <NoteNode nodeState={nodeState} onNameChange={handleNameChange} node={node} />
       case 'pdf':
@@ -295,6 +306,8 @@ const WrapperNode = ({ node }: { node: IWhiteboardNode }) => {
       }
     }
   })
+
+  if (node.collapse) return null
   const handleClick = (e: MouseEvent) => {
     if (isDraggingRef.current || panPointerMode) return
     const edgeOverlayState = instance.edgeOps?.getEdgeOverlayState()
@@ -330,7 +343,8 @@ const WrapperNode = ({ node }: { node: IWhiteboardNode }) => {
   if (node.type === 'freehand' && !node.background) {
     showCover = false
   }
-
+  const clazz = getNodeClassname(node)
+  const { width: nodeWidth, height: nodeHeight, minWidth, maxWidth } = getNodeSize(node)
   return (
     <Rnd
       ref={node => {
@@ -354,7 +368,8 @@ const WrapperNode = ({ node }: { node: IWhiteboardNode }) => {
         cursor: hasEraseOrDrawTool ? 'crosshair' : nodeStyle.cursor,
         pointerEvents: hasEraseOrDrawTool === 'freehand' ? 'none' : nodeStyle.pointerEvents
       }}
-      minWidth={type === 'freehand' ? undefined : type === 'text' ? 100 : DEFAULT_NODE_WIDTH}
+      minWidth={minWidth}
+      maxWidth={maxWidth}
       lockAspectRatio={(lockResizeElements.includes(type) || nodeState.keepRatioResize) && shouldKeepRatio}
       disableDragging={
         !!node.rootId ||
@@ -365,7 +380,7 @@ const WrapperNode = ({ node }: { node: IWhiteboardNode }) => {
         panPointerMode ||
         (node.type === 'group' && !nodeState.selected)
       }
-      className={nodeClassName}
+      className={classnames(nodeClassName, clazz)}
       onResizeStart={e => {
         handleResizeStart(e)
       }}
@@ -375,28 +390,38 @@ const WrapperNode = ({ node }: { node: IWhiteboardNode }) => {
         }
         const { box, direction } = handleResize(e, dir, ele, delta, rndRef.current)
         isResizingRef.current = true
-        eventHandler?.({
-          type: 'resize',
-          direction,
-          newBox: box
-        })
+        if (node.type !== 'mindmap') {
+          eventHandler?.({
+            type: 'resize',
+            direction,
+            newBox: box
+          })
+        }
       }}
       resizeHandleWrapperStyle={{ pointerEvents: 'inherit' }}
       onResizeStop={(e, dir, ele, delta, pos) => {
         const box = handleResizeEnd()
+        rndRef.current!.offsetFromParent = {
+          top: 0,
+          left: 0
+        }
         setTimeout(() => {
           isResizingRef.current = false
         })
-        const resizeDir = delta.height !== 0
-        // const resizeDir = ['top', 'bottom'].includes(dir)
+
         updateWhiteboard?.(w => {
           const origin = w.nodes?.get(id)
           if (origin) {
             w.nodes?.set(id, {
               ...origin,
-              x: pos.x,
-              y: pos.y,
-              resized: origin.resized || resizeDir ? true : false,
+              x: box.left,
+              y: box.top,
+              widthResized:
+                origin.widthResized ||
+                (['left', 'right', 'topRight', 'topLeft', 'bottomRight', 'bottomLeft'].includes(dir) && delta.width !== 0),
+              resized:
+                origin.resized ||
+                (['top', 'bottom', 'topRight', 'topLeft', 'bottomRight', 'bottomLeft'].includes(dir) && delta.height !== 0),
               height: box.height,
               width: box.width
             })
@@ -415,7 +440,7 @@ const WrapperNode = ({ node }: { node: IWhiteboardNode }) => {
         if (Math.abs(data.deltaX) > 2 || Math.abs(data.deltaY) > 2) {
           isDraggingRef.current = true
         }
-        handleDrag(e, data, isDraggingRef.current)
+        handleDrag(e, data, node.type === 'mindmap' ? false : isDraggingRef.current)
       }}
       onDragStop={(e, data) => {
         instance.values.currentDraggingNodeId = undefined
@@ -440,16 +465,28 @@ const WrapperNode = ({ node }: { node: IWhiteboardNode }) => {
         }
       }}
       onMouseDown={e => {
-        if (node.rootId) {
+        if (node.rootId && !nodeState.selected && !nodeState.focused && e.button === 0) {
           instance.mindmapOps?.startDragMindmapChild(node.id, e)
         }
       }}
       size={{
-        height: node.resized || type === 'group' || type === 'freehand' ? height || 'auto' : 'auto',
-        width: width || 'auto'
+        height: nodeHeight,
+        width: nodeWidth
       }}
       scale={flow.containerTransformScale}
     >
+      {node.borderType === 'underline' && node.type === 'mindmap' && (node.border || node.edgeColor) && (
+        <div
+          style={{
+            position: 'absolute',
+            bottom: -2,
+            height: 4,
+            backgroundColor: node.border || node.edgeColor,
+            width: '100%',
+            zIndex: -100
+          }}
+        ></div>
+      )}
       {showCover && (
         <div
           data-cover-id={node.id}
@@ -523,10 +560,10 @@ const WrapperNode = ({ node }: { node: IWhiteboardNode }) => {
             }
           }}
         >
-          {renderInnerNode()}
+          {renderInnerNode(node.type)}
         </Content>
       )}
-      <AddSubMindmapIndicator node={node} />
+      <AddSubMindmapIndicator node={node} isIn={isIn} />
     </Rnd>
   )
 }

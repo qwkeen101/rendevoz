@@ -5,6 +5,7 @@ import { WhiteboardDefaultKeyboardShortcut } from '@/core/components/whiteboard/
 import Id from '@/utils/id'
 import { MetaStore, ObjectStore } from '@/api/stores'
 import { Rendevoz } from '@/core/rendevoz'
+import { Colors } from '@/consts'
 
 export default (instance: IWhiteboardInstance, t: TFunction<'translation', undefined, 'translation'>) => {
   const copiedElements = instance.values.copiedElements
@@ -85,6 +86,10 @@ export default (instance: IWhiteboardInstance, t: TFunction<'translation', undef
         ]
       : []),
     {
+      type: 'title',
+      name: t('whiteboard.Create new card')
+    },
+    {
       type: 'item',
       key: 'text',
       icon: 'park-text',
@@ -123,25 +128,6 @@ export default (instance: IWhiteboardInstance, t: TFunction<'translation', undef
         }
       }
     },
-    // {
-    //   type: 'item',
-    //   key: 'mindmap',
-    //   icon: 'park-mindmap-map',
-    //   text: t('whiteboard.Create mindmap'),
-    //   onSelect: async () => {
-    //     const toolbarState = instance.toolbarOps?.getToolbarState()
-    //     const nodeId = Id.getId()
-    //     instance.insertNode?.({
-    //       x: toolbarState.originX,
-    //       y: toolbarState.originY,
-    //       type: 'mindmap',
-    //       width: 350,
-    //       id: nodeId,
-    //       rightChildren: [],
-    //       leftChildren: []
-    //     })
-    //   }
-    // },
     {
       type: 'item',
       key: 'card',
@@ -149,6 +135,40 @@ export default (instance: IWhiteboardInstance, t: TFunction<'translation', undef
       text: t('whiteboard.Create document card'),
       onSelect: async () => {
         await handleAddMetaObjectAtToolbarPoint('note')
+      }
+    },
+    {
+      type: 'item',
+      key: 'mindmap',
+      icon: 'park-mindmap-map',
+      text: t('whiteboard.Create mindmap'),
+      onSelect: async () => {
+        const toolbarState = instance.toolbarOps?.getToolbarState()
+        if (!toolbarState) return
+        const randomColor = Colors.getRandomColor()
+        const nodeId = Id.getId()
+        instance.insertNode?.({
+          x: toolbarState.originX,
+          y: toolbarState.originY,
+          type: 'mindmap',
+          width: 350,
+          id: nodeId,
+          rightChildren: [],
+          leftChildren: [],
+          edgeType: 'curve',
+          edgeColor: randomColor,
+          borderType: 'round',
+          border: randomColor,
+          nodeType: 'text',
+          content: [{ type: 'paragraph', children: [{ text: 'Mindmap' }], id: Id.getId() }]
+        })
+        instance.containerOps?.fitTo({
+          left: toolbarState.originX,
+          top: toolbarState.originY,
+          width: 200,
+          height: 30
+        })
+        instance.toolbarOps?.closeToolbar()
       }
     },
     {

@@ -224,7 +224,8 @@ export function getSmoothPolyPath({
   borderRadius = 5,
   centerX,
   centerY,
-  offset = 50
+  offset = 50,
+  bendOnlyLast = false
 }: {
   sourceX: number
   sourceY: number
@@ -236,6 +237,7 @@ export function getSmoothPolyPath({
   centerX?: number
   centerY?: number
   offset?: number
+  bendOnlyLast?: boolean
 }): [path: string, labelX: number, labelY: number, offsetX: number, offsetY: number, points] {
   const [points, labelX, labelY, offsetX, offsetY] = getPoints({
     source: { x: sourceX, y: sourceY },
@@ -250,7 +252,15 @@ export function getSmoothPolyPath({
     let segment = ''
 
     if (i > 0 && i < points.length - 1) {
-      segment = getBend(points[i - 1], p, points[i + 1], borderRadius)
+      if (bendOnlyLast) {
+        if (i === points.length - 3) {
+          segment = getBend(points[i - 1], p, points[i + 1], borderRadius)
+        } else {
+          segment = `${i === 0 ? 'M' : 'L'}${p.x} ${p.y}`
+        }
+      } else {
+        segment = getBend(points[i - 1], p, points[i + 1], borderRadius)
+      }
     } else {
       segment = `${i === 0 ? 'M' : 'L'}${p.x} ${p.y}`
     }

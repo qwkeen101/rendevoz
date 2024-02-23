@@ -1,53 +1,43 @@
-import { useMemoizedFn } from '@/hooks'
+import { GlobalInstance, useMemoizedFn } from '@/hooks'
 import { globalStore, MetaStore, ObjectStore } from '@/api/stores'
 import { saveFileLocally } from '@/utils/file'
 import Id from '@/utils/id'
 import { useEffect } from 'react'
-import { IWhiteboardNode, MetaObject } from '~/typings/data'
-import { useFlow } from '../../StateHooks'
-import { isPointerOnContainer } from '../../utils'
+import { IWhiteboardNode } from '~/typings/data'
+import { useFlow } from '../StateHooks'
+import { isPointerOnContainer } from '../utils'
 import { metaObjectsAtom } from '@/api/stores/meta/meta.store'
 import { useEventHandler } from '@/events'
-import { Rendevoz } from '../../../../rendevoz'
+import { Rendevoz } from '@/core/rendevoz'
 import { getSetting } from '@/core'
 import { useWhiteboardInstance } from '@/core/components/whiteboard/hooks/useWhiteboardInstance'
 import { pushNumberIntoUnrepeatableArray, waitFor } from '@/utils'
 import toast from 'react-hot-toast'
 
-const useWhiteboardDrop = () => {
+const useWhiteboardDrop = (whiteboardId: number) => {
+  const whiteboardMeta = MetaStore.useObjectToMetaValue(whiteboardId)
   const emitter = Rendevoz.Events.Emit.GlobalEventEmitter
   const handler = useEventHandler('global')
   const flow = useFlow()
   const instance = useWhiteboardInstance()
   handler.on('globalDragPointerUp', async data => {
     const { draggingElement, event } = data
-    console.log(draggingElement, event)
-
     if (!isPointerOnContainer(event, instance)) return
     event.preventDefault()
     if (draggingElement.type === 'metaObjects') {
       insertMetasAtPointer(event, draggingElement.ids)
     }
-    emitter
-      .emitWithCallback('global', {
-        type: 'globalDropNeedFurtherProcess',
-        data: {
-          dropOn: {
-            dropOn: 'whiteboard',
-            whiteboardId: flow.whiteboardId!
-          },
-          draggingElement
-        }
-      })
-      .then((obj: MetaObject) => {
-        console.log(obj)
-        insertMetaObjectAtPointer(event, obj.id, false)
-      })
+    GlobalInstance.metaOps?.addDraggableAsMeta(draggingElement).then(m => {
+      insertMetaObjectAtPointer(event, m.id, false)
+      if (whiteboardMeta) {
+        MetaStore.addMetaLink({ sourceId: m.id, targetId: whiteboardMeta.id })
+      }
+    })
   })
 
   const dropHandler = useMemoizedFn(async (e: DragEvent) => {
-    e.preventDefault()
     if (!isPointerOnContainer(e, instance)) return
+    e.preventDefault()
     const { clientX, clientY } = e
     const transformedXY = instance.coordOps?.transformWindowPositionToPosition({ x: clientX, y: clientY })
     if (e.dataTransfer?.items.length) {
@@ -191,8 +181,13 @@ const useWhiteboardDrop = () => {
     if (!transformedXY) return
     const metaMap = MetaStore.getMetaObjectsMap()
     const whiteboardMeta = MetaStore.getMetaObjectByObjectId(flow.whiteboardId)
+    if (!whiteboardMeta) return
     const nodes: Partial<IWhiteboardNode>[] = []
     metaId.forEach(id => {
+      MetaStore.addMetaLink({
+        sourceId: id,
+        targetId: whiteboardMeta.id
+      })
       const m = metaMap.get(id)
       if (m?.type === 'syncedBlock' && whiteboardMeta) {
         if (m.objectId) {

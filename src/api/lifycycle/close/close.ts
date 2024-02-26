@@ -7,11 +7,13 @@ ipcInstance.on('unload', () => {
 })
 
 const close = async () => {
+  console.log('closing')
   ipcInstance.send('hide')
   try {
     await SearchHelper.saveSearchIndexLocally()
     await backup()
   } finally {
+    console.log('zzz')
     ipcInstance.send('close')
   }
 }

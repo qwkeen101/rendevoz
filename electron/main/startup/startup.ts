@@ -59,13 +59,6 @@ const startElectron = async () => {
   // autoUpdater.autoInstallOnAppQuit = true
   app.on('window-all-closed', () => {
     app.quit()
-    session.defaultSession.clearCache()
-    session.defaultSession.clearAuthCache()
-    session.defaultSession.clearCodeCaches({ urls: [] })
-  })
-  app.on('will-quit', () => {
-    session.defaultSession.clearCache()
-    session.defaultSession.clearCodeCaches({ urls: [] })
   })
 
   if (isDev) {
@@ -199,6 +192,7 @@ const startElectron = async () => {
       }
       return
     }
+    console.log(process.env.SHOULD_CLOSE)
     if (process.env.SHOULD_CLOSE === 'false') {
       win.webContents.send('unload')
       e.preventDefault()

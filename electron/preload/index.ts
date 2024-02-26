@@ -14,9 +14,9 @@ function domReady(condition: DocumentReadyState[] = ['complete', 'interactive'])
   })
 }
 contextBridge.exposeInMainWorld('ipcRenderer', {
-  on: ipcRenderer.on,
-  invoke: ipcRenderer.invoke,
-  removeAllListeners: ipcRenderer.removeAllListeners
+  on: (c, h) => ipcRenderer.on(c, h),
+  invoke: (c, ...args) => ipcRenderer.invoke(c, ...args),
+  removeAllListeners: c => ipcRenderer.removeAllListeners(c)
 })
 
 const safeDOM = {

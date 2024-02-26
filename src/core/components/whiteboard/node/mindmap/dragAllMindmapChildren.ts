@@ -1,4 +1,5 @@
 import { IWhiteboardInstance, IWhiteboardNode } from '~/typings'
+import { getFlattenChildrenOfNode } from '@/core/components/whiteboard/node/mindmap/utils/tree'
 
 // update by cache
 export default (
@@ -7,7 +8,10 @@ export default (
   layoutCache: Record<number, { x: number; y: number; side: 'right' | 'left' }>,
   linkIds: string[]
 ) => {
-  const allSubNodes = Object.keys(layoutCache).map(i => Number(i))
+  const allSubNodes = [
+    ...(getFlattenChildrenOfNode(currentNode, instance, 'left') || []),
+    ...(getFlattenChildrenOfNode(currentNode, instance, 'right') || [])
+  ].map(i => i.root)
   console.log(layoutCache)
   instance.nodeOps?.updateRelatedEdges(allSubNodes)
   allSubNodes.forEach(id => {

@@ -56,7 +56,7 @@ callback('getUserFilePath', async () => {
 callback('changeToNewFilePath', async (curr: string) => {
   const originalAppPath =
     process.env.APPDATA || (process.platform == 'darwin' ? process.env.HOME + '/Library/Preferences' : process.env.HOME + '/.local/share')
-  if (curr === originalAppPath) {
+  if (path.relative(originalAppPath, curr) === '') {
     return true
   }
   return false

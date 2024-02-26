@@ -17,11 +17,7 @@ import '../controller/pdf'
 import restoreWindowSize from './restoreWindowSize'
 import shortcuts from './shortcuts'
 import replaceFilePosition from './replaceFilePosition'
-
-export const DEFAULT_USER_DATA_PATH =
-  process.env.APPDATA || (process.platform == 'darwin' ? process.env.HOME + '/Library/Preferences' : process.env.HOME + '/.local/share')
-
-export const DefaultRendevozDataPath = path.join(DEFAULT_USER_DATA_PATH, 'rendevoz')
+import { DefaultRendevozDataPath } from '../service/file'
 process.env.ELECTRON_DISABLE_SECURITY_WARNINGS = 'true'
 process.env.DIST_ELECTRON = join(__dirname, '../..')
 process.env.DIST = join(process.env.DIST_ELECTRON, './dist')
@@ -33,7 +29,7 @@ const startElectron = async () => {
   const preload = join(__dirname, '../preload/index.js')
   const url = 'http://localhost:7777'
   const indexHtml = join(process.env.DIST, 'index.html')
-  const defaultRendevozDataPath = join(DEFAULT_USER_DATA_PATH, 'rendevoz')
+  const defaultRendevozDataPath = DefaultRendevozDataPath
   if (!fs.existsSync(defaultRendevozDataPath)) {
     fs.mkdirSync(defaultRendevozDataPath)
   }

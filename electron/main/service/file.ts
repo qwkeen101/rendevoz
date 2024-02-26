@@ -6,7 +6,7 @@ import { join } from 'path'
 
 const DEFAULT_USER_DATA_PATH = app.getPath('documents')
 
-export const DefaultRendevozDataPath = path.join(DEFAULT_USER_DATA_PATH, 'rendevoz')
+export const DefaultRendevozDataPath = path.join(DEFAULT_USER_DATA_PATH, 'Rendevoz')
 
 const getRendeFileFolderPath = () => {
   return path.resolve(process.env.FILE_PATH || DefaultRendevozDataPath)

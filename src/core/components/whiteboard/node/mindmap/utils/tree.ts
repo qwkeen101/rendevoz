@@ -26,6 +26,31 @@ export const deleteChildsFromTree = (tree: IWhiteboardMindmap[], deleteNodeIds: 
   }
 }
 
+export const isSubChild = (one: number, maybeParent: number, instance: IWhiteboardInstance): boolean => {
+  const sourceNode = instance.getNode?.(one)
+  const targetNode = instance.getNode?.(maybeParent)
+  if (!sourceNode || !targetNode) {
+    return false
+  }
+  if (targetNode.type !== 'mindmap' && !targetNode.rootId) {
+    return false
+  }
+  if (targetNode.type === 'mindmap') {
+    const leftChildren = getFlattenChildrenOfNode(targetNode, instance, 'left')
+    const rightChildren = getFlattenChildrenOfNode(targetNode, instance, 'right')
+    if (leftChildren?.some(i => i.root === one) || rightChildren?.some(i => i.root === one)) {
+      return true
+    }
+    return false
+  }
+  if (targetNode.rootId) {
+    const children = getFlattenChildrenOfNode(targetNode, instance, targetNode.side)
+    if (children?.some(i => i.root === one)) {
+      return true
+    }
+    return false
+  }
+}
 export const getSubChildren = (root: IWhiteboardMindmap, id: number): IWhiteboardMindmap[] | undefined => {
   if (root.root === id) return root.children
   for (const c of root.children) {

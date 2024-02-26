@@ -69,13 +69,17 @@ export default memo(() => {
                   i => i.endDragNode?.({ ...node, x: transformed.x, y: transformed.y })
                 )
               ) {
-                instance.updateNode?.(fakeMindmapNode.node.id, w => ({
-                  ...w,
-                  rootId: undefined,
-                  side: undefined,
-                  x: transformed.x,
-                  y: transformed.y
-                }))
+                instance.updateNode?.(
+                  fakeMindmapNode.node.id,
+                  w => ({
+                    ...w,
+                    rootId: undefined,
+                    side: undefined,
+                    x: transformed.x,
+                    y: transformed.y
+                  }),
+                  true
+                )
               }
             }
           }

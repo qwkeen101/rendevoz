@@ -149,7 +149,7 @@ export default (
                 }
               }
             }
-          })
+          }, true)
         }
       }
       return false

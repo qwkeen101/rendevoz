@@ -1,7 +1,7 @@
 import { IWhiteboardInstance, IWhiteboardMindmap, IWhiteboardNode } from '~/typings'
 import produce from 'immer'
 import { getBoxOfBoxes, getBoxOfNodes } from '@/core/components/whiteboard/utils'
-import { getSubChildren, getChildrenOfNode } from '../utils/tree'
+import { getSubChildren, getChildrenOfNode, isSubChild } from '../utils/tree'
 const middleSpacing = 100
 const xSpacing = 300
 // 垂直方向的间隔
@@ -244,6 +244,9 @@ export default (currentNode: IWhiteboardNode, instance: IWhiteboardInstance, e: 
           return false
         })
         if (target) {
+          if (isSubChild(target.node.id, currentNode.id, instance)) {
+            return
+          }
           return target
         }
       }

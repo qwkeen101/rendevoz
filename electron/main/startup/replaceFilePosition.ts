@@ -14,13 +14,13 @@ export default (app: Electron.App) => {
   if (!fs.existsSync(documentsP)) {
     fs.mkdirSync(documentsP)
   }
-  if (fs.existsSync(path.resolve(p, 'files'))) {
+  if (fs.existsSync(path.resolve(p, 'files')) && !fs.existsSync(path.resolve(documentsP, 'files'))) {
     fs.renameSync(path.resolve(p, 'files'), path.resolve(documentsP, 'files'))
   }
-  if (fs.existsSync(path.resolve(p, 'backup'))) {
+  if (fs.existsSync(path.resolve(p, 'backup')) && !fs.existsSync(path.resolve(documentsP, 'backup'))) {
     fs.renameSync(path.resolve(p, 'backup'), path.resolve(documentsP, 'backup'))
   }
-  if (fs.existsSync(path.resolve(p, 'imgs'))) {
+  if (fs.existsSync(path.resolve(p, 'imgs')) && !fs.existsSync(path.resolve(documentsP, 'imgs'))) {
     fs.renameSync(path.resolve(p, 'imgs'), path.resolve(documentsP, 'imgs'))
   }
 }

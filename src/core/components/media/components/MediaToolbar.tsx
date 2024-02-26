@@ -5,16 +5,11 @@ import { useMediaInstance } from '@/core/components/media/hooks/useMediaInstance
 import { ClassName } from 'rendevoz'
 import { Colors } from '@/consts'
 import FontSize from '@/consts/font'
-import produce from 'immer'
 import { useTranslation } from 'react-i18next'
 import MediaSubtitleImporter from '@/core/components/media/components/MediaSubtitleImporter'
 import { useState } from 'react'
 import { css } from '@emotion/css'
 import MediaActionsMenu from '@/core/components/media/components/MediaActionsMenu'
-import { AttachmentWrapper } from '@/core'
-import { MetaStore } from '@/api/stores'
-import clipMedia from '@/core/components/media/utils/clipMedia'
-import FileSystem from '@/api/fileSystem'
 
 const clazz = css({
   borderRadius: `999px !important`,
@@ -60,7 +55,7 @@ export default () => {
             text={mediaState.isPinned ? t('general.unpin') : t('general.pin')}
             icon={'park-like'}
           />
-          {mediaState.mode === 'web' && mediaState.currentTime && (
+          {mediaState.mode === 'web' && mediaState.currentTime !== undefined && (
             <Button.IconButton
               icon="park-pin"
               className={clazz}

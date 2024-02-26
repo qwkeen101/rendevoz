@@ -35,13 +35,13 @@ export default async () => {
     await KeyvalueStore.updateOne('userSetting', defaultSetting)
   }
   const mergedSetting = _.merge(structuredClone(defaultSetting), inDatabaseSetting)
-  if (!mergedSetting.general.userFilePath) {
-    const path = await getDefaultUserFilePath()
-    mergedSetting.general.defaultFilePath = path
-    if (mergedSetting.general.userFilePath === undefined) {
-      mergedSetting.general.userFilePath = path
-    }
+
+  const path = await getDefaultUserFilePath()
+  mergedSetting.general.defaultFilePath = path
+  if (mergedSetting.general.userFilePath === undefined) {
+    mergedSetting.general.userFilePath = path
   }
+
   globalStore.set(SettingAtom, mergedSetting)
   await KeyvalueStore.updateOne('userSetting', mergedSetting)
   subSettingChange()

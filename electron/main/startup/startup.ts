@@ -16,6 +16,7 @@ import '../controller/plugin'
 import '../controller/pdf'
 import restoreWindowSize from './restoreWindowSize'
 import shortcuts from './shortcuts'
+import replaceFilePosition from './replaceFilePosition'
 
 export const DEFAULT_USER_DATA_PATH =
   process.env.APPDATA || (process.platform == 'darwin' ? process.env.HOME + '/Library/Preferences' : process.env.HOME + '/.local/share')
@@ -143,7 +144,7 @@ const startElectron = async () => {
   })
   restoreWindowSize(win, app)
   openUrlHandler(app, win)
-
+  replaceFilePosition(app)
   autoUpdater.on('download-progress', e => {
     win.webContents.send('download', e)
   })

@@ -1,11 +1,11 @@
 import * as path from 'path'
 import fs from 'fs'
-import { shell } from 'electron'
+import { app, shell } from 'electron'
 import { digestBuffer } from '../utils'
 import { join } from 'path'
 
-const DEFAULT_USER_DATA_PATH =
-  process.env.APPDATA || (process.platform == 'darwin' ? process.env.HOME + '/Library/Preferences' : process.env.HOME + '/.local/share')
+const DEFAULT_USER_DATA_PATH = app.getPath('documents')
+
 export const DefaultRendevozDataPath = path.join(DEFAULT_USER_DATA_PATH, 'rendevoz')
 
 const getRendeFileFolderPath = () => {

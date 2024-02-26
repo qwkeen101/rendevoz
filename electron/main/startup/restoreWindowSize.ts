@@ -30,8 +30,12 @@ export default (win: BrowserWindow, app: Electron.App) => {
     win.setFullScreen(true)
   }
   const writeConfig = (config: any) => {
-    const p = path.resolve(__dirname, 'windowConfig.json')
-    fs.writeFileSync(p, JSON.stringify(config), 'utf8')
+    try {
+      const p = path.resolve(app.getAppPath(), 'windowConfig.json')
+      fs.writeFileSync(p, JSON.stringify(config), 'utf8')
+    } catch (e) {
+      console.log(e)
+    }
   }
   win.on('move', () => {
     const currConfig = getConfig()

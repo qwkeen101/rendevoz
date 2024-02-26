@@ -56,7 +56,11 @@ callback('getUserFilePath', async () => {
 callback('changeToNewFilePath', async (curr: string) => {
   const originalAppPath =
     process.env.APPDATA || (process.platform == 'darwin' ? process.env.HOME + '/Library/Preferences' : process.env.HOME + '/.local/share')
-  if (path.relative(originalAppPath, curr) === '') {
+  console.log(originalAppPath, curr)
+  if (
+    path.relative(path.resolve(originalAppPath, 'rendevoz'), curr) === '' ||
+    path.relative(path.resolve(originalAppPath, 'Rendevoz'), curr) === ''
+  ) {
     return true
   }
   return false
@@ -73,13 +77,13 @@ callback('changeFilePath', async (newPath: string) => {
   const targetImgsPath = path.join(newPath, 'imgs')
   const targetBackupPath = path.join(newPath, 'backup')
   if (!fs.existsSync(targetFilesPath)) {
-    fs.rename(path.join(FileService.getRendeFileFolderPath(), 'files'), path.join(newPath, 'files'), () => {})
+    fs.mkdirSync(targetFilesPath)
   }
   if (!fs.existsSync(targetImgsPath)) {
-    fs.rename(path.join(FileService.getRendeFileFolderPath(), 'imgs'), path.join(newPath, 'imgs'), () => {})
+    fs.mkdirSync(targetImgsPath)
   }
   if (!fs.existsSync(targetBackupPath)) {
-    fs.rename(path.join(FileService.getRendeFileFolderPath(), 'backup'), path.join(newPath, 'backup'), () => {})
+    fs.mkdirSync(targetBackupPath)
   }
   process.env.FILE_PATH = newPath
 })

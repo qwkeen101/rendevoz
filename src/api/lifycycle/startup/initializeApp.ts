@@ -10,8 +10,10 @@ import initializeSettings from '@/api/lifycycle/startup/initializeSettings'
 import initializeDefaultKeyvalues from '@/api/lifycycle/startup/initializeDefaultKeyvalues'
 import FileSystem from '@/api/fileSystem'
 import recoverFromBackup from '@/api/lifycycle/startup/recoverFromBackup'
+import initializeFilePath from './initializeFilePath'
 
 export default async () => {
+  await initializeFilePath()
   await initializeFolder()
   await recoverFromBackup()
   await initializeDefaultKeyvalues()

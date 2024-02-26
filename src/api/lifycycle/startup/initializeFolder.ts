@@ -1,5 +1,5 @@
 import { getSetting } from '@/core'
-import { changeFilePath } from '@/utils'
+import { changeFilePath, getDefaultUserFilePath } from '@/utils'
 import KeyvalueStore from '@/api/stores/keyvalue.store'
 
 export default async () => {

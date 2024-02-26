@@ -1,9 +1,9 @@
 import { BrowserWindow } from 'electron'
 import path from 'path'
 import fs from 'fs'
-export default (win: BrowserWindow) => {
+export default (win: BrowserWindow, app: Electron.App) => {
   const getConfig = () => {
-    const p = path.resolve(__dirname, 'windowConfig.json')
+    const p = path.resolve(app.getAppPath(), 'windowConfig.json')
     const hasFile = fs.existsSync(p)
     if (!hasFile) {
       return {}

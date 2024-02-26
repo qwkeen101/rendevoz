@@ -3,7 +3,7 @@ import path from 'path'
 import fs from 'fs'
 export default (win: BrowserWindow, app: Electron.App) => {
   const getConfig = () => {
-    const p = path.resolve(app.getAppPath(), 'windowConfig.json')
+    const p = path.resolve(app.getPath('userData'), 'windowConfig.json')
     const hasFile = fs.existsSync(p)
     if (!hasFile) {
       return {}
@@ -31,7 +31,7 @@ export default (win: BrowserWindow, app: Electron.App) => {
   }
   const writeConfig = (config: any) => {
     try {
-      const p = path.resolve(app.getAppPath(), 'windowConfig.json')
+      const p = path.resolve(app.getPath('userData'), 'windowConfig.json')
       fs.writeFileSync(p, JSON.stringify(config), 'utf8')
     } catch (e) {
       console.log(e)

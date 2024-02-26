@@ -42,7 +42,7 @@ export default (
     if (layout) {
       const currBox = instance.nodeOps?.getNodeFuncs(node.id)?.getRealtimeBox()
       if (!currBox) return
-      const updateQueue: { id: number; x: number; y: number; width: number; height: number }[] = []
+      const updateQueue: { id: number; x: number; y: number }[] = []
 
       layout.forEach(n => {
         if (n.id === node.id) return
@@ -58,9 +58,7 @@ export default (
             updateQueue.push({
               id: n.id,
               x: propBox.x,
-              y: propBox.y,
-              width: box.width,
-              height: box.height
+              y: propBox.y
             })
           }
         }
@@ -76,9 +74,7 @@ export default (
               w.nodes?.set(origin.id, {
                 ...origin,
                 x: q.x,
-                y: q.y,
-                width: q.width,
-                height: q.height
+                y: q.y
               })
             }
           })

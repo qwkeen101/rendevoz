@@ -97,7 +97,7 @@ export default ({
   useLayoutEffect(() => {
     console.log('trigger')
 
-    Promise.resolve().then(() => {
+    setTimeout(() => {
       handleBothTreeChange()
     })
   }, [node.rightChildren, node.leftChildren, node.leftCollapse, node.rightCollapse, node.borderType, node.border])

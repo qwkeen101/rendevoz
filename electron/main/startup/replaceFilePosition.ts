@@ -8,7 +8,10 @@ export default (app: Electron.App) => {
     process.env.APPDATA || (process.platform == 'darwin' ? process.env.HOME + '/Library/Preferences' : process.env.HOME + '/.local/share')
 
   const p = path.resolve(originalAppPath, 'rendevoz')
-  const documentsP = path.resolve(app.getPath('documents'), 'rendevoz')
+  const documentsP = path.resolve(app.getPath('documents'), 'Rendevoz')
+  if (!fs.existsSync(documentsP)) {
+    fs.mkdirSync(documentsP)
+  }
   if (fs.existsSync(path.resolve(p, 'files'))) {
     fs.renameSync(path.resolve(p, 'files'), path.resolve(documentsP, 'files'))
   }

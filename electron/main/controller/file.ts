@@ -53,7 +53,14 @@ callback('readDir', async dirPath => {
 callback('getUserFilePath', async () => {
   return DefaultRendevozDataPath
 })
-
+callback('changeToNewFilePath', async (curr: string) => {
+  const originalAppPath =
+    process.env.APPDATA || (process.platform == 'darwin' ? process.env.HOME + '/Library/Preferences' : process.env.HOME + '/.local/share')
+  if (curr === originalAppPath) {
+    return true
+  }
+  return false
+})
 callback('getSelectedFolderPath', async () => {
   const path = await dialog.showOpenDialog({
     properties: ['openDirectory', 'createDirectory']

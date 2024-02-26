@@ -12,6 +12,9 @@ export const getDefaultUserFilePath = async (): Promise<string> => {
   return result.data
 }
 
+export const shouldChangeToNewDefaultUserFilePath = async (curr: string): Promise<boolean> => {
+  return await ipcInstance.send('changeToNewFilePath', curr).then(i => i.data)
+}
 export const changeFilePath = async (newPath: string) => {
   ipcInstance.send('changeFilePath', newPath)
 }

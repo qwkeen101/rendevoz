@@ -2,7 +2,7 @@ import KeyvalueStore, { CurrentKeyValues } from '@/api/stores/keyvalue.store'
 import { globalStore } from '@/api/stores'
 import { defaultSetting, SettingAtom } from '@/core'
 import _ from 'lodash'
-import { getDefaultUserFilePath } from '@/utils'
+import { getDefaultUserFilePath, shouldChangeToNewDefaultUserFilePath } from '@/utils'
 import produce from 'immer'
 
 export const DefaultEditorSettings: CurrentKeyValues['editorSettings'] = {
@@ -37,8 +37,12 @@ export default async () => {
   const mergedSetting = _.merge(structuredClone(defaultSetting), inDatabaseSetting)
 
   const path = await getDefaultUserFilePath()
+  let changeToNewDefault = false
+  if (mergedSetting.general.userFilePath) {
+    changeToNewDefault = await shouldChangeToNewDefaultUserFilePath(mergedSetting.general.userFilePath)
+  }
   mergedSetting.general.defaultFilePath = path
-  if (mergedSetting.general.userFilePath === undefined) {
+  if (mergedSetting.general.userFilePath === undefined || changeToNewDefault) {
     mergedSetting.general.userFilePath = path
   }
 

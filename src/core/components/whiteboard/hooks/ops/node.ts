@@ -44,11 +44,15 @@ const assignNodeOps = (instance: IWhiteboardInstance) => {
       },
       updateRelatedEdges: nodeId => {
         const idArr = Array.isArray(nodeId) ? nodeId : [nodeId]
+        const edgeIdSet = new Set<number>()
         idArr.forEach(id => {
           const relatedEdges = instance.values.NODE_TO_EDGE_MAP.get(id)
           relatedEdges?.forEach(edgeId => {
-            instance.values.ID_TO_EDGE_MAP.get(edgeId)?.drawPath()
+            edgeIdSet.add(edgeId)
           })
+        })
+        edgeIdSet.forEach(id => {
+          instance.values.ID_TO_EDGE_MAP.get(id)?.drawPath()
         })
       },
       deleteNode: (nodeId, redo = true) => {

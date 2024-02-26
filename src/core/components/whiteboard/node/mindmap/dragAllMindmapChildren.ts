@@ -5,16 +5,12 @@ import { getFlattenChildrenOfNode } from '@/core/components/whiteboard/node/mind
 export default (
   currentNode: IWhiteboardNode,
   instance: IWhiteboardInstance,
+  subIds: number[],
   layoutCache: Record<number, { x: number; y: number; side: 'right' | 'left' }>,
   linkIds: string[]
 ) => {
-  const allSubNodes = [
-    ...(getFlattenChildrenOfNode(currentNode, instance, 'left') || []),
-    ...(getFlattenChildrenOfNode(currentNode, instance, 'right') || [])
-  ].map(i => i.root)
-  console.log(layoutCache)
-  instance.nodeOps?.updateRelatedEdges(allSubNodes)
-  allSubNodes.forEach(id => {
+  instance.nodeOps?.updateRelatedEdges(subIds)
+  subIds.forEach(id => {
     const nodeFuncs = instance.nodeOps?.getNodeFuncs(id)
     if (nodeFuncs) {
       const result = {

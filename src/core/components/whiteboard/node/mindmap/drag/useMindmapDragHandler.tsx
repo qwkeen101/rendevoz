@@ -42,7 +42,7 @@ export default (
     fakeNode?: HTMLElement
   }>()
   const nodeFunc = instance.values.ID_TO_NODE_MAP.get(node.id)
-  const raftDragMindmapChildren = useRafFn(dragAllMindmapChildren)
+  const rafDragMindmapChildren = useRafFn(dragAllMindmapChildren)
   if (nodeFunc) {
     nodeFunc.hasTempMindmapLink = () => {
       if (tempLink) return true
@@ -53,9 +53,10 @@ export default (
       if (dragNode.id === node.id) {
         if (layoutCache?.current) {
           console.log(layoutCache.current)
-          raftDragMindmapChildren(
+          rafDragMindmapChildren(
             dragNode,
             instance,
+            [...subNodeIds.current.left, ...subNodeIds.current.right],
             layoutCache.current,
             links.map(link => `${mindmapCoreId}_${link.sourceId}_${link.targetId}`)
           )

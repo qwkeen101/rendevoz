@@ -81,7 +81,16 @@ const BuiltinTypeToRegistered: Record<CustomElement['type'], RegisterdEditorElem
     isInline: true
   },
   figcaption: {
-    renderElement: props => <figcaption>{props.children}</figcaption>,
+    renderElement: props => (
+      <figcaption
+        style={{
+          flexWrap: 'wrap',
+          wordBreak: 'break-all'
+        }}
+      >
+        {props.children}
+      </figcaption>
+    ),
     type: 'figcaption'
   },
   pre: {

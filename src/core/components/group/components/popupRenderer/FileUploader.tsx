@@ -26,6 +26,7 @@ export default ({ onUpload, accept }: { onUpload: (filePath: string, fileType: s
             className={ClassName.selectButton()}
             onClick={() => {
               Rendevoz.Actions.Utils.uploadFile({ accept }).then(res => {
+                console.log(res)
                 if (res instanceof File) {
                   if (res.type.startsWith('image')) {
                     FileSystem.saveImage(res).then(p => {

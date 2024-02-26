@@ -25,10 +25,12 @@ export default async (syncBlockMetaId: number, targetMetaId: number) => {
         )
 
         Rendevoz.Actions.Open.Whiteboard.openWhiteboard(targetWhiteboard.id).then(i => {
-          if (syncNode) {
-            i.containerOps?.fitToNode(syncNode.id)
-            i.selectOps?.selectNode(syncNode.id)
-          }
+          // if (syncNode) {
+          //   setTimeout(() => {
+          //     i.containerOps?.fitToNode(syncNode.id)
+          //     i.selectOps?.selectNode(syncNode.id)
+          //   }, 200)
+          // }
         })
       }
     }

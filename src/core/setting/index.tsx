@@ -144,6 +144,7 @@ export const defaultSetting: Setting = {
     loop: true
   },
   webpage: {
+    saveImageLocally: false,
     enableSearchAutoSuggestion: true
   }
 }

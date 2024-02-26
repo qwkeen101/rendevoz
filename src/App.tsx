@@ -50,6 +50,7 @@ import Loading from '@/components/Loading'
 import './styles/loading.less'
 import GlobalDialog from '@/core/global/GlobalDialog'
 import { ChineseFormats, DateFormat, EnglishFormats } from '@/utils'
+import GlobalMediaPreviewer from '@/core/global/MediaPreviewer'
 export function getOS() {
   const userAgent = window.navigator.userAgent.toLowerCase(),
     macosPlatforms = /(macintosh|macintel|macppc|mac68k|macos)/i,
@@ -153,6 +154,7 @@ const App = () => {
           <GlobalSearchPanel />
           <GlobalDialog />
           <GlobalCollection />
+          <GlobalMediaPreviewer />
           <GlobalObjectCreator />
           <GlobalObjectDetails />
           <GlobalCreateObject />

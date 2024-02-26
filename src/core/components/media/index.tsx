@@ -17,9 +17,7 @@ import ResizeAndDrag from '@/components/base/ResizeAndDrag'
 import { createPortal } from 'react-dom'
 import ClassName from '@/styles/classNames'
 import { Rendevoz } from '../../rendevoz'
-import useMeasure from '@/hooks/utils/useMeasure'
 import { Zindexes } from '@/consts'
-import MediaSubtitleSidebar from '@/core/components/media/components/sidebar/MediaSubtitleSidebar'
 import { useLatest } from 'react-use'
 import useChangeVideoLayout, { MediaLayoutAtom } from '@/core/components/media/hooks/useVideoLayout'
 import { IMediaEvent } from '~/typings/components/media/event'
@@ -27,8 +25,8 @@ import MediaTranscriber from '@/core/components/media/components/MediaTranscribe
 import { TabTitle } from '@/core/rendevoz/components'
 import MediaToolbar from '@/core/components/media/components/MediaToolbar'
 import _ from 'lodash'
-import useMediaSidebarState from '@/core/components/media/hooks/useMediaSidebarState'
 import QuickLabelPopover from '@/core/components/media/components/QuickLabelPopover'
+import MediaClipper from '@/core/components/media/components/MediaClipper'
 export interface MediaProps {
   onInstanceInitialized?: (instance: Partial<IMediaInstance>) => void
   onlyCore?: boolean
@@ -77,6 +75,7 @@ const MediaInner = ({ onInstanceInitialized, onlyCore, on, disableTabTitle = tru
   useUpdateEffect(() => {
     setPlayIconVisible(true)
   }, [mediaState.paused])
+
   useEffect(() => {
     if (mediaState.fullScreen) {
       const c = containerRef.current
@@ -270,6 +269,7 @@ const MediaInner = ({ onInstanceInitialized, onlyCore, on, disableTabTitle = tru
     <Content fullWidth fullHeight ref={outerContainerRef}>
       <MediaTranscriber />
       <QuickLabelPopover />
+      <MediaClipper />
       {!disableTabTitle && <TabTitle title={mediaState.name} icon={<Icon name={'park-video'} />} />}
       <Content
         style={{
@@ -341,7 +341,10 @@ const Media = (props: MediaProps) => {
     if (url.startsWith('baidudisk')) {
       return 'baidudisk'
     }
-    return 'web'
+    if (url.includes('youtube.com') || url.includes('bilibili.com')) {
+      return 'web'
+    }
+    return 'video'
   }
   const store = useMemo(() => {
     const store = createStore()

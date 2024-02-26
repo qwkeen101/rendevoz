@@ -61,9 +61,13 @@ export const getChildrenOfNode = (node: IWhiteboardNode, instance: IWhiteboardIn
     return node.leftChildren
   }
   if (node.rootId) {
-    const root = instance.getNode?.(node.rootId)
-    if (root && root.type === 'mindmap') {
-      return getSubChildren({ root: root.id, children: root[node.side === 'left' ? 'leftChildren' : 'rightChildren'] || [] }, node.id)
+    try {
+      const root = instance.getNode?.(node.rootId)
+      if (root && root.type === 'mindmap') {
+        return getSubChildren({ root: root.id, children: root[node.side === 'left' ? 'leftChildren' : 'rightChildren'] || [] }, node.id)
+      }
+    } catch (e) {
+      console.log(e)
     }
   }
 }

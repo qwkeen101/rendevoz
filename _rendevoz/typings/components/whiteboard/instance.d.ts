@@ -110,7 +110,7 @@ export type IEdgeInnerFuncs = {
 
 export type IWhiteboardInstance = Partial<{
   openTabInSidebar?: (type: string, objectId?: number) => void
-  getNode: (nodeId: number) => IWhiteboardNode
+  getNode: (nodeId: number) => IWhiteboardNode | undefined
   getAllNode: () => IWhiteboardNode[]
   getAllEdge: () => IWhiteboardEdge[]
   getEdge: (edgeId: number) => IWhiteboardEdge

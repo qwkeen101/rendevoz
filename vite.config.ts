@@ -4,6 +4,7 @@ import electron from 'vite-plugin-electron/simple'
 import react from '@vitejs/plugin-react'
 
 // https://vitejs.dev/config/
+// @ts-ignore
 export default defineConfig(() => ({
   css: {
     preprocessorOptions: {
@@ -11,6 +12,9 @@ export default defineConfig(() => ({
         javascriptEnabled: true
       }
     }
+  },
+  worker: {
+    format: 'es'
   },
   define: {
     APP_VERSION: JSON.stringify(process.env.npm_package_version),
@@ -27,7 +31,7 @@ export default defineConfig(() => ({
   base: './',
   optimizeDeps: {
     include: ['retry', 'fix-webm-duration'],
-    exclude: ['canvas', 'whisper-turbo']
+    exclude: ['canvas', 'whisper-turbo', '@ffmpeg', '@ffmpeg/ffmpeg']
   },
   build: {
     sourcemap: false,

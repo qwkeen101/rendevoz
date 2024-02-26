@@ -10,6 +10,9 @@ const useMediaShortcut = (containerRef: RefObject<HTMLElement>) => {
   const [mediaState, setMediaState] = useMediaState()
   const instance = useMediaInstance()
   const keydownHandler = useMemoizedFn((e: KeyboardEvent) => {
+    if (!containerRef.current?.contains(e.target)) {
+      return
+    }
     const setting = getSetting()
     const shortcut = setting.shortcut.makeVideoLabel
     const timestampShortcut = setting.shortcut.copyVideoTimestamp
@@ -97,9 +100,9 @@ const useMediaShortcut = (containerRef: RefObject<HTMLElement>) => {
   useEffect(() => {
     const container = containerRef.current
     if (container) {
-      container.addEventListener('keydown', keydownHandler)
+      document.addEventListener('keydown', keydownHandler)
       return () => {
-        container.removeEventListener('keydown', keydownHandler)
+        document.removeEventListener('keydown', keydownHandler)
       }
     }
   }, [containerRef])

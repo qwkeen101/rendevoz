@@ -17,7 +17,7 @@ const MediaScrubber = memo(() => {
   const [isDragging, setIsDragging] = useState(false)
   const { run: debounceGetThumbnail } = useThrottleFn(
     (time: number) => {
-      instance.imageOps?.captureImage(time).then(dataUrl => {
+      instance.imageOps?.captureImage?.(time).then(dataUrl => {
         if (dataUrl) {
           setToolbarState(g => ({ ...g, thumbnailUrl: dataUrl }))
         }
@@ -105,10 +105,9 @@ const MediaScrubber = memo(() => {
         onDragEnd={() => {
           setIsDragging(false)
           setToolbarState(s => {
-            setMediaState(b => ({
-              ...b,
-              currentTime: s.currentScrubberTime
-            }))
+            if (s.currentScrubberTime !== undefined) {
+              setMediaState(b => ({ ...b, currentTime: s.currentScrubberTime - 1.5, jumpTime: s.currentScrubberTime }))
+            }
             return { ...s, draggingScrubber: false, thumbnailVisible: false }
           })
         }}

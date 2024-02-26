@@ -88,6 +88,8 @@ export type IMediaInstance = Partial<{
     unmute: VoidFunction
     loop: VoidFunction
     unloop: VoidFunction
+    // return clipped file path, duration: seconds
+    clip?: (duration: { start: number; end: number }) => Promise<string | undefined>
   }
   imageOps: {
     captureCurrentImage: () => Promise<string | undefined>

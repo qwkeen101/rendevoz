@@ -631,6 +631,7 @@
     "code-block": "代码块"
   },
   "settings": {
+    "Save image locally": "自动保存图片到本地",
     "Auto recover from latest backup file": "自动从最新的备份恢复数据",
     "Scroll behavior in select mode": "选择模式下滚轮行为",
     "Automatically add label as object": "自动将新标注转变为实体",

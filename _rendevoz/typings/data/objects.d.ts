@@ -89,6 +89,7 @@ export interface IMediaLabel extends ILabel {
   // seconds
   imageUrl?: string
   time: number
+  clipUrl?: string
 }
 
 export interface IVideo extends IMedia {

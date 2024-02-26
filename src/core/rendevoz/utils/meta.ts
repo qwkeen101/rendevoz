@@ -59,6 +59,20 @@ const normalizeLocalFileToMeta = async (
 }
 
 const normalizeWebFileToMeta = async (url: string, type: string): Promise<IImportResult<any>> => {
+  const headers = await fetch(url, { method: 'HEAD' }).then(i => i.headers)
+  if (!headers.get('Content-Type')?.includes('text/html')) {
+    const arr = url.split('/')
+    return {
+      meta: {
+        name: arr[arr.length - 1],
+        type
+      },
+      object: {
+        url,
+        specType: type
+      }
+    }
+  }
   const details = await Rendevoz.Utils.Web.fetchDetails(url)
   console.log(details)
   return {

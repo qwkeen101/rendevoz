@@ -635,6 +635,7 @@
     "code-block": "Code block"
   },
   "settings": {
+    "Save image locally": "Save image locally",
     "Show custom properties in pages": "Show custom properties in pages",
     "Only erase hand draw": "Only erase hand draw",
     "Auto recover from latest backup file": "Automatically recover data from latest backup",

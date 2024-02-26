@@ -14,6 +14,8 @@ import '../controller/window'
 import '../controller/baidu'
 import '../controller/plugin'
 import '../controller/pdf'
+import restoreWindowSize from './restoreWindowSize'
+import shortcuts from './shortcuts'
 
 export const DEFAULT_USER_DATA_PATH =
   process.env.APPDATA || (process.platform == 'darwin' ? process.env.HOME + '/Library/Preferences' : process.env.HOME + '/.local/share')
@@ -91,6 +93,7 @@ const startElectron = async () => {
       }
     }
   ])
+  shortcuts(app)
   await app.whenReady()
 
   protocol.registerFileProtocol('rendefile', (req, callback) => {
@@ -138,7 +141,7 @@ const startElectron = async () => {
       y: 12
     }
   })
-
+  restoreWindowSize(win)
   openUrlHandler(app, win)
 
   autoUpdater.on('download-progress', e => {
@@ -236,22 +239,22 @@ const startElectron = async () => {
 
   // 下面的代码会尝试解析代理配置，如果用户配置了系统代理，
   // 并且代理规则没有排除 www.google.com，那我们就可以读取到代理信息
-  win.webContents.session.resolveProxy('https://www.google.com').then(proxyUrl => {
-    // DIRECT 表示没有配置代理
-    if (proxyUrl !== 'DIRECT') {
-      // proxyUrl 是这种格式: 'PROXY 127.0.0.1:6152'
-      const hostAndPort = proxyUrl.split(' ')[1]
-      const [proxyHost, proxyPort] = hostAndPort.split(':')
-
-      // 到这里就拿到代理服务器的信息了，这里我用 https-proxy-agent 这个 npm 包让 Axios 的默认请求强制走系统代理
-      // @ts-ignore
-      const agent = new HttpsProxyAgent({
-        host: proxyHost,
-        port: proxyPort
-      })
-      axios.defaults.httpsAgent = agent
-    }
-  })
+  // win.webContents.session.resolveProxy('https://www.google.com').then(proxyUrl => {
+  //   // DIRECT 表示没有配置代理
+  //   if (proxyUrl !== 'DIRECT') {
+  //     // proxyUrl 是这种格式: 'PROXY 127.0.0.1:6152'
+  //     const hostAndPort = proxyUrl.split(' ')[1]
+  //     const [proxyHost, proxyPort] = hostAndPort.split(':')
+  //
+  //     // 到这里就拿到代理服务器的信息了，这里我用 https-proxy-agent 这个 npm 包让 Axios 的默认请求强制走系统代理
+  //     // @ts-ignore
+  //     const agent = new HttpsProxyAgent({
+  //       host: proxyHost,
+  //       port: proxyPort
+  //     })
+  //     axios.defaults.httpsAgent = agent
+  //   }
+  // })
   if (app.isPackaged) {
     win.loadFile(indexHtml)
   } else {

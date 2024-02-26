@@ -13,6 +13,8 @@ import { css } from '@emotion/css'
 import MediaActionsMenu from '@/core/components/media/components/MediaActionsMenu'
 import { AttachmentWrapper } from '@/core'
 import { MetaStore } from '@/api/stores'
+import clipMedia from '@/core/components/media/utils/clipMedia'
+import FileSystem from '@/api/fileSystem'
 
 const clazz = css({
   borderRadius: `999px !important`,

@@ -39,7 +39,8 @@ export type IGlobalInstance = Partial<{
     confirm: (message: string) => Promise<boolean>
   }
   commonOps: {
-    addExtraSvgArrows: (color: string) => void
+    addExtraSvgArrows?: (color: string) => void
+    previewMedia?: (path: string) => void
   }
   goBackOps: {
     goBackToSyncBlock: (syncBlockMetaId: number, targetMetaId: number) => Promise<void>

@@ -241,7 +241,16 @@ const ComponentSetting = () => {
           onChange={() => toggleSetting('webpage', 'enableSearchAutoSuggestion')}
         />
       )
-    }
+    },
+    // {
+    //   title: t('settings.Save image locally'),
+    //   children: (
+    //     <Switch
+    //       value={setting.webpage.saveImageLocally}
+    //       onChange={() => toggleSetting('webpage', 'saveImageLocally')}
+    //     />
+    //   )
+    // }
   ]
 
   const videoSettingItems: ISettingItem[] = [

@@ -20,6 +20,7 @@ const Image = ({ element, children }: RenderElementProps) => {
   const editor = useSlateStatic()
   const { ref, isIn } = useIsIn()
   const shouldSaveImageLocally = useSelectAtomValue(EditorStateAtom, s => s.state?.saveImgLocally) ?? false
+  console.log(shouldSaveImageLocally)
   useEffect(() => {
     if (imageEle.url?.startsWith('http')) {
       // if remote can be touched, don't save and remove

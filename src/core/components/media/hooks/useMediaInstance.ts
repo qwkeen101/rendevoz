@@ -1,5 +1,5 @@
 import { atom, useAtomValue, useSetAtom } from 'jotai'
-import { IMediaInstance } from '~/typings'
+import { IMediaInstance, IMediaLabel } from '~/typings'
 import { captureVideoFrame, captureVideoFrameBlob } from '../utils'
 import { saveImageLocally } from '@/utils/img'
 import { ObjectStore } from '@/api/stores'
@@ -51,15 +51,22 @@ export const useAssignMediaInstance = (containerRef: RefObject<HTMLElement>) => 
           imgPath = await saveImageLocally(img)
         }
       }
-      const one = await mediaInstance.on?.({
+      const one = (await mediaInstance.on?.({
         type: 'addLabel',
         currentLabel: {
           time,
           selectedText: label.name,
           imageUrl: imgPath
         }
-      })
-
+      })) as IMediaLabel
+      mediaInstance.actionOps
+        ?.clip?.({
+          start: Math.max(0, time - 5),
+          end: time + 5
+        })
+        .then(p => {
+          ObjectStore(one.specType).updateOne({ id: one.id, clipUrl: p })
+        })
       if (setting.media.openPopoverWhenHighlight) {
         mediaInstance.openLabelPopover?.(one.id)
       }

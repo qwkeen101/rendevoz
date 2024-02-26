@@ -1,5 +1,5 @@
 import { Button, Content, Icon, Image } from '@/components'
-import { useMergedRef, useSelectAtomValue } from '@/hooks'
+import { GlobalInstance, useMergedRef, useSelectAtomValue } from '@/hooks'
 import { MediaStateAtom } from '../../hooks/useMediaState'
 import { ObjectStore } from '@/api/stores'
 import { useMediaInstance } from '../../hooks/useMediaInstance'
@@ -161,6 +161,11 @@ const Label = ({ id, type }: { id: number; type: string }) => {
             containerStyle={{
               borderRadius: 8
             }}
+            // onClick={() => {
+            //   if (mediaLabel.clipUrl) {
+            //     GlobalInstance.commonOps?.previewMedia?.(mediaLabel.clipUrl)
+            //   }
+            // }}
             src={mediaLabel.imageUrl}
           ></Image>
         )}

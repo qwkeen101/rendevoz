@@ -52,9 +52,6 @@ const captureVideoFrame = (
   })
 }
 
-const hideAll = () => {
-  window.document.body.style.display = 'none'
-}
 const showAll = () => {
   window.document.body.style.display = 'block'
 }
@@ -67,6 +64,11 @@ window.addEventListener('DOMContentLoaded', () => {
     }
     const currentUrl = window.location.href
     if (!currentUrl.includes('bilibili') && !currentUrl.includes('youtube')) {
+      videoElement = window.document.body.querySelector('video')
+      if(videoElement){
+        wrapperElement = videoElement.parentElement
+        videoLoaded = true
+      }
       return
     }
     let isBili = false

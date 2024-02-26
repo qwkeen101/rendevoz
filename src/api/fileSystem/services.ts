@@ -16,7 +16,7 @@ const turnImageIntoBase64 = (imageBlob: Blob): Promise<string> => {
 }
 
 export const saveImageLocally = async (
-  imgData: string | Blob,
+  imgData: string | Blob | File,
   options: {
     imgName?: string
     compress: boolean
@@ -29,7 +29,7 @@ export const saveImageLocally = async (
   const { compress, imgName } = options
   if (imgData instanceof Blob) {
     if (imgData.type.includes('gif')) {
-      return await fs.writeFile(imgData, `/imgs/${imgName ?? md5(imgData.toString())}.gif`, 'binary')
+      return await fs.writeFile(imgData, `/imgs/${imgName ?? imgData.name ?? `${Id.getId()}.gif`}`, 'binary')
     }
     if (compress) {
       const blobUrl = window.URL.createObjectURL(imgData)

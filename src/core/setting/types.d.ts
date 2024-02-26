@@ -140,6 +140,7 @@ export type IComponentSetting = {
     showOrigWhenHoverText: boolean
   }
   webpage: {
+    saveImageLocally: boolean
     enableSearchAutoSuggestion: boolean
   }
   pdf: {
@@ -155,5 +156,6 @@ export type IComponentSetting = {
   }
   media: {
     openPopoverWhenHighlight?: boolean
+    clipWhenHighlight?: boolean
   }
 }

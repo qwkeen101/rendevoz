@@ -95,7 +95,7 @@ const WhiteboardSelect = memo(({ containerRef }: { containerRef: MutableRefObjec
           const allSelectedNodes = instance.selectOps?.getSelectedNodes()
           if (allSelectedNodes) {
             const realtimeBoxes = instance.nodeOps?.getDOMBoxOfNodes(allSelectedNodes.map(i => i.id))
-            if(realtimeBoxes){
+            if (realtimeBoxes) {
               console.log(realtimeBoxes)
               setMultiSelectedBox(getBoxOfBoxes(Array.from(Object.values(realtimeBoxes))))
             }
@@ -314,15 +314,20 @@ const WhiteboardSelect = memo(({ containerRef }: { containerRef: MutableRefObjec
       const { left, top, width, height } = multiSelectedBox
       let canDrag = true,
         canResize = true
-      selectedNodeIdsRef.current.forEach(i => {
-        const n = instance.getNode?.(i)
-        if (n) {
-          if (n.type === 'mindmap' || n.rootId) {
-            canDrag = false
-            canResize = false
+      try {
+        selectedNodeIdsRef.current.forEach(i => {
+          const n = instance.getNode?.(i)
+          if (n) {
+            if (n.type === 'mindmap' || n.rootId) {
+              canDrag = false
+              canResize = false
+            }
           }
-        }
-      })
+        })
+      } catch (e) {
+        instance.selectOps?.deselectAll()
+        return
+      }
       return (
         <>
           <Rnd

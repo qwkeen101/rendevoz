@@ -27,7 +27,9 @@ export const useAssignWhiteboardInstance = () => {
     getNode: id => {
       const n = store.get(WhiteboardAtom)?.nodes?.get(id)
       if (!n) {
-        throw new Error('Can not find whiteboard node with id: ' + id)
+        if (import.meta.env.DEV) {
+          throw new Error('Can not find whiteboard node with id: ' + id)
+        }
       }
       return n
     },

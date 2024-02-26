@@ -10,10 +10,7 @@ import MediaToolbar from '@/core/components/media/components/MediaToolbar'
 import { useAtomValue } from 'jotai'
 import { MediaLayoutAtom } from '@/core/components/media/hooks/useVideoLayout'
 import { ClassName } from 'rendevoz'
-import { useMergedRef, useSelectAtomValue } from '@/hooks'
 import useMediaSidebarState from '@/core/components/media/hooks/useMediaSidebarState'
-
-const IMG = 'https://i.ytimg.com/vi/-N-ij9aPGVY/hqdefault.jpg?s…AFwAcABBg==&rs=AOn4CLADUEmOZGoF82oTlcqi2FQFxks28g'
 
 export default () => {
   const [mediaState, setMediaState] = useMediaState()

@@ -124,7 +124,7 @@ const Layout = () => {
 
   const os = getOS()
   return (
-    <Container auto column style={{ height: '100vh', overflow: 'hidden' }}>
+    <Container onClick={() => { console.log(layout)}}auto column style={{ height: '100vh', overflow: 'hidden' }}>
       <Helmet>
         <title>Rendevoz</title>
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />

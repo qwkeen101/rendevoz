@@ -75,7 +75,6 @@ export class TabCache {
     const tab: TabData = DragManager.DragState.getData('tab', dockId)
     let panel: PanelData = DragManager.DragState.getData('panel', dockId)
     let group: string
-    console.log(tab, this)
     if (tab) {
       panel = tab.parent
       group = tab.group
@@ -260,6 +259,7 @@ export class DockTabs extends React.PureComponent<Props, any> {
         onReorder={tabs => {
           console.log(tabs, panelData)
           const sortedTabs = tabs.map(i => panelData.tabs.find(o => o.id === i.key))
+          console.log(sortedTabs)
           this.context.updatePanel(panelData.id, { ...panelData, tabs: sortedTabs })
         }}
         TabNavList={defaultTabNav}

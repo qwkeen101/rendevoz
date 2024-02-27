@@ -131,9 +131,13 @@ const startElectron = async () => {
       y: 12
     }
   })
-  restoreWindowSize(win, app)
-  openUrlHandler(app, win)
-  replaceFilePosition(app)
+  try {
+    restoreWindowSize(win, app)
+    openUrlHandler(app, win)
+    replaceFilePosition(app)
+  } catch (e) {
+    console.log(e)
+  }
   autoUpdater.on('download-progress', e => {
     win.webContents.send('download', e)
   })

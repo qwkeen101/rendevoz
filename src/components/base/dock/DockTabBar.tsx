@@ -48,7 +48,7 @@ export const DockTabBar = memo((props: DockTabBarProps) => {
   const isFullscreen = useIsFullscreen(true)
   const [panelState, setPanelState] = useGlobalAtom(SidebarPanelStateAtom)
   const [innerTabs, setInnerTabs] = useState<any[]>(navs)
-
+  const reorderRef = useRef<HTMLElement>()
   useLayoutEffect(() => {
     const bar = ref.current
     const bounding = bar?.getBoundingClientRect()
@@ -115,6 +115,7 @@ export const DockTabBar = memo((props: DockTabBarProps) => {
         </Content>
       )}
       <Reorder.Group
+        ref={reorderRef}
         onReorder={r => {
           setInnerTabs(r)
           // const currIndex = r.findIndex(i => i.key === currentMoveTabId.current)
@@ -139,9 +140,10 @@ export const DockTabBar = memo((props: DockTabBarProps) => {
               setIsDragging(true)
             }}
             onDragEnd={e => {
+              console.log('end', e.target, e.currentTarget)
               dragInsideRef.current = false
               setIsDragging(false)
-              if (e.currentTarget?.contains(e.target)) {
+              if (reorderRef.current?.contains(e.target)) {
                 onReorder(innerTabs)
               }
             }}

@@ -10,15 +10,12 @@ import { EditorEventMap, GlobalEventMap, IEventEmitter, IEventHandler, PdfEventM
 import { NoteStore } from './stores'
 import { SearchStore } from './stores/search.store'
 import { MetaObject } from './data'
-import { InnerComponents, InnerHooks } from './inner'
 import { Descendant } from 'slate'
 
 export type IRendevoz = {
   Actions: typeof Action
   Utils: typeof Utils
   Events: typeof Events
-  InnerHooks: typeof InnerHooks
-  InnerComponents: typeof InnerComponents
   Consts: typeof Consts
 }
 export type ITabData = {

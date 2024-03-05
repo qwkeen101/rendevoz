@@ -93,12 +93,6 @@ declare module 'rendevoz' {
 }
 const cache = createCache({ key: 'external', speedy: false })
 const App = () => {
-  import('@/core/rendevoz/hooks').then(i => {
-    Rendevoz.InnerHooks = i
-  })
-  import('@/core/rendevoz/components').then(i => {
-    Rendevoz.InnerComponents = i
-  })
   const PdfJs = window['pdfjs-dist/build/pdf']
 
   PdfJs.GlobalWorkerOptions.workerSrc = PdfJsUrl

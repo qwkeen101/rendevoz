@@ -2,11 +2,13 @@ import { Utils } from '~/typings/rendevoz'
 import { deserializeHTML, normalize } from '@/core/components/editor/plugins/deserializeHtml'
 import Id from '@/utils/id'
 import { Node } from 'slate'
-import { getFavicon } from '@/core/components/webpage/utils/previewWebUrl'
+import { getFavicon, getImg } from '@/core/components/webpage/utils/previewWebUrl'
 import { default as PostlightParser } from '@postlight/parser'
+import { Readability } from '@mozilla/readability'
 const domParser = new DOMParser()
 import { getTweet } from 'react-tweet/api'
 import processGithubIssue from '@/core/rendevoz/utils/webProcessor/githubIssue'
+import { normalizeResult } from '@/core/components/editor/plugins/transformHTML/deserializeHTML'
 const tweetRegexp = /https:\/\/twitter\.com\/\w+\/status\/\d+/gm
 
 const WebUtils: (typeof Utils)['Web'] = {
@@ -60,34 +62,40 @@ const WebUtils: (typeof Utils)['Web'] = {
     if (!prefetchedHTML) throw 'Failed to parse webpage!'
     prefetchedHTML = processGithubIssue(url, prefetchedHTML)
     console.log(prefetchedHTML)
-    const res = await PostlightParser.parse(url, {
-      html: prefetchedHTML
-    })
-    if (res) {
-      const parsedDoc = domParser.parseFromString(res.content, 'text/html')
+    // const res = await PostlightParser.parse(url, {
+    //   html: prefetchedHTML
+    // })
+    const r = new Readability(domParser.parseFromString(prefetchedHTML, 'text/html')).parse()
+    if (r) {
+      const parsedDoc = domParser.parseFromString(r.content, 'text/html')
       console.log(parsedDoc)
       const result = deserializeHTML(parsedDoc.body)
-      result.forEach(i => (i.id = Id.getId()))
-      const normalized = normalize(result).filter(i => 'type' in i)
-      if (res.lead_image_url) {
-        if (!Array.from(Node.elements({ children: normalized })).some(i => i[0].type === 'image' && i[0].url === res.lead_image_url)) {
-          normalized.unshift({
-            id: Id.getId(),
-            type: 'image',
-            url: res.lead_image_url,
-            children: [{ text: '' }]
-          })
-        }
-      }
+      console.log(result)
+      const normalized = normalizeResult(result, url)
+      console.log(normalized)
       const doc = domParser.parseFromString(await fetch(url).then(res => res.text()), 'text/html')
       const favicon = await getFavicon(doc, url)
+      const image = await getImg(doc, url)
+      if ((!normalized.length || normalized[0].type !== 'image') && image) {
+        normalized.unshift({
+          id: Id.getId(),
+          type: 'image',
+          url: image,
+          children: [{ text: '' }]
+        })
+      }
+      let domain = 'Unknown'
+      try {
+        const u = new URL(url)
+        domain = u.hostname.replace('www.', '')
+      } catch (e) {}
       return {
         content: normalized,
-        title: res.title,
+        title: r.title,
         favicon,
-        image: res.lead_image_url,
-        author: res.author,
-        domain: res.domain || 'Unknown'
+        image: image,
+        author: r.byline,
+        domain: domain || 'Unknown'
       }
     }
     throw 'Failed to parse webpage!'

@@ -20,7 +20,12 @@ const normalizeMetaToDoc = (meta: MetaObject) => {
   }
 }
 export const initializeSearch = async () => {
-  fetch('rendefile:///meta-search-index.json')
+  worker.postMessage({
+    event: 'initialize'
+  })
+  fetch('rendefile:///meta-search-index.json', {
+    cache: 'no-cache'
+  })
     .then(res => {
       console.log(res)
       if (res.ok) {

@@ -4,7 +4,6 @@ import { useMemoizedFn, useRafFn } from '@/hooks'
 import { useCallback, useEffect, useMemo, useRef } from 'react'
 import { Editor, Path, Transforms } from 'slate'
 import useDragIndicator from '../../components/useDragIndicator'
-import DragManager from './DragManager'
 import ScrollManager from '../../ScrollManager'
 import { ReactEditor } from '../../slate-react'
 import { BuiltInDraggableElement, CustomEditor, CustomElement, IEditorInstance } from '~/typings'
@@ -13,11 +12,11 @@ import { ID_TO_ELEMENTS_MAP, ID_TO_PATH_MAP } from '../../weakMaps'
 import useIsDragging from '../useIsDragging'
 import { Rendevoz } from '@/core/rendevoz'
 import useEditorInstance from '@/core/components/editor/hooks/useEditorInstance'
-import useToggleDrag from '@/core/components/editor/hooks/drag/useToggleDrag'
 import useDropToNoteElements from '@/core/components/editor/hooks/drag/useDropToNoteElements'
 import useMoveElements from '@/core/components/editor/hooks/drag/useMoveElements'
 import useReadOnlyEditor from '@/core/components/editor/hooks/useReadOnly'
 import { MetaStore } from '@/api/stores'
+import dragInColumnLike from '@/core/components/editor/hooks/drag/indicator/dragInColumnLike'
 
 export const normalizeEditorDragBlocksToGlobalDraggingDetails = async (instance: IEditorInstance) => {
   let normalizedGlobalDraggingDetails: Partial<AvaliableGlobalDraggingElements> = {}
@@ -41,6 +40,12 @@ export const normalizeEditorDragBlocksToGlobalDraggingDetails = async (instance:
     const elements = Array.from(selected.values())
       .map(i => i.element)
       .filter(i => i.type !== 'column' && i.type !== 'columnList')
+    elements.sort((b, a) => {
+      const bPath = instance.getElementPathById?.(b.id) ?? []
+      const aPath = instance.getElementPathById?.(a.id) ?? []
+      return Path.isBefore(bPath, aPath) ? -1 : 1
+    })
+    console.log(elements)
     normalizedGlobalDraggingDetails.elements = elements
   }
   if (normalizedGlobalDraggingDetails.elements?.length) {
@@ -82,10 +87,7 @@ const useEditorDrag = (editor: CustomEditor, scrollElement?: HTMLElement | null)
   const [globalIsDragging] = useGlobalIsDragging()
   const emitter = Rendevoz.Events.Emit.GlobalEventEmitter
   const readonly = useReadOnlyEditor()
-  // default is false
-  const dragManager = useMemo(() => new DragManager(), [])
   const scrollManager = useMemo(() => new ScrollManager(), [])
-  editor.dragManager = dragManager
   const preventLastMouseMoveRef = useRef(false)
   const { renderIndicator, indicatorManager } = useDragIndicator()
   const instance = useEditorInstance()
@@ -120,8 +122,6 @@ const useEditorDrag = (editor: CustomEditor, scrollElement?: HTMLElement | null)
     }
   }
 
-  dragManager.eventEmitter = emitter
-
   const mouseMoveHandler = useMemoizedFn((e: MouseEvent) => {
     if (readonly) return
     if (!isDraggingInsideEditor) {
@@ -133,9 +133,10 @@ const useEditorDrag = (editor: CustomEditor, scrollElement?: HTMLElement | null)
     }
     if (scrollManager.canScroll()) {
       scrollManager.startScroll(e)
-      dragManager.prepareDragging()
     }
-    const indicator = dragManager.drag(e)
+    const editorNode = ReactEditor.toDOMNode(editor, editor)
+    const indicator = dragInColumnLike(e, editorNode, { instance, editor })
+    console.log(indicator)
     const targetPath = indicator?.path
     if (!targetPath) return
 
@@ -153,9 +154,9 @@ const useEditorDrag = (editor: CustomEditor, scrollElement?: HTMLElement | null)
       if (draggingElement.element.type === 'synced' && e.target instanceof HTMLElement && e.target.closest('[data-spec-type="synced"]')) {
         return
       }
-      if(draggingElement.element.type === 'metaElement'){
+      if (draggingElement.element.type === 'metaElement') {
         const type = MetaStore.getMetaObjectsMap().get(draggingElement.metaId)?.type
-        if(type === 'syncedBlock' && e.target instanceof HTMLElement && e.target.closest('[data-spec-type="synced"]')){
+        if (type === 'syncedBlock' && e.target instanceof HTMLElement && e.target.closest('[data-spec-type="synced"]')) {
           return
         }
       }
@@ -165,7 +166,6 @@ const useEditorDrag = (editor: CustomEditor, scrollElement?: HTMLElement | null)
         instance.values.indicator = indicator
       }
 
-      dragManager.changeIndicator(indicator)
       if (indicator.direction) {
         const indicatorPosition = ID_TO_ELEMENTS_MAP.get(editor)?.get(indicator.id)?.getIndicatorPosition(indicator.direction)
 
@@ -190,11 +190,7 @@ const useEditorDrag = (editor: CustomEditor, scrollElement?: HTMLElement | null)
     throttledMouseMove(e)
   }, [])
   useEffect(() => {
-    dragManager.registerEditor(editor)
-  }, [editor])
-  useEffect(() => {
     if (scrollElement) {
-      dragManager.registerScrollElement(scrollElement)
       scrollManager.registerScrollElement(scrollElement)
       scrollElement.addEventListener('pointerleave', pointerLeaveAndEnterHandler)
       scrollElement.addEventListener('pointerenter', pointerLeaveAndEnterHandler)
@@ -221,8 +217,6 @@ const useEditorDrag = (editor: CustomEditor, scrollElement?: HTMLElement | null)
   useEffect(() => {
     if (readonly) return
     if (isDraggingInsideEditor && editor.currentEnterElement) {
-      dragManager.prepareDragging()
-
       if (GlobalDragOverlayInstance.draggingDetails === undefined) {
         const normalized = normalizeEditorDragBlocksToGlobalDraggingDetails(instance)
         Rendevoz.Actions.State.Drag.setDraggingDetails(normalized)
@@ -236,7 +230,6 @@ const useEditorDrag = (editor: CustomEditor, scrollElement?: HTMLElement | null)
   useEffect(() => {
     if (readonly) return
     if (globalIsDragging) {
-      dragManager.prepareDragging()
       preventLastMouseMoveRef.current = false
       scrollElement?.addEventListener('pointermove', realMouseMoveHandler)
       const textBox = scrollElement?.querySelector('[role="textbox"]') as HTMLElement | undefined
@@ -272,7 +265,7 @@ const useEditorDrag = (editor: CustomEditor, scrollElement?: HTMLElement | null)
     }
   }, [scrollElement])
 
-  return { dragManager, renderIndicator }
+  return { renderIndicator }
 }
 
 export default useEditorDrag

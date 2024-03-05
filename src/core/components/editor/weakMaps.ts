@@ -1,19 +1,8 @@
 import { Noop } from '@/common/types'
 import { Position } from '@/types'
 import { Element, Path } from 'slate'
-import { CustomEditor } from '~/typings'
+import { CustomEditor, ElementFunctions } from '~/typings'
 
-export interface ElementFunctions {
-  selectBlock: Noop
-  collisionSelectBlock: Noop
-  getElement: () => Element
-  removeSelf: Noop
-  getPath: () => Path
-  getClientBound: () => DOMRect | undefined
-  getIndicatorPosition: (
-    direction: 'top' | 'bottom' | 'left' | 'right'
-  ) => { left: number; top: number; width: number; height: number } | undefined
-}
 export const ID_TO_ELEMENTS_MAP = new WeakMap<CustomEditor, Map<number, ElementFunctions>>()
 
 export interface EditorSelectArea {
@@ -33,7 +22,6 @@ export const ID_TO_FIRST_LAYER_MAP = new WeakMap<CustomEditor, Map<number, Path>
 export interface ElementFunction {
   openMathForm?: VoidFunction
 }
-export const ID_TO_ELEMENT_FUNCTION_MAP = new WeakMap<CustomEditor, Map<number, ElementFunction>>()
 
 export const EDITOR_TO_CHANGED = new WeakMap<CustomEditor, boolean>()
 

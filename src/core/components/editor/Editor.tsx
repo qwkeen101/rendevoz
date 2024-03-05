@@ -2,7 +2,7 @@ import { useClickOutside, useMemoizedFn, useSelectAtomValue } from '@/hooks'
 import Id from '@/utils/id'
 import { FC, memo, MouseEventHandler, useCallback, useEffect, useLayoutEffect, useMemo, useRef } from 'react'
 import { createEditor, Editor as SlateEditor, Path, Transforms } from 'slate'
-import { withHistory } from 'slate-history'
+import { HistoryEditor, withHistory } from 'slate-history'
 import { ReactEditor, withReact } from './slate-react'
 import { CustomElement, EditorProps } from '~/typings'
 import InnerEditor from './InnerEditor'
@@ -17,7 +17,7 @@ import { createStore } from 'jotai/vanilla'
 import { Provider, useSetAtom } from 'jotai/react'
 import EditorTitle from './EditorTitle'
 import rebuildDragSelect from './utils/rebuildDragSelect'
-import useEditorInstance, { EditorInstanceAtom } from './hooks/useEditorInstance'
+import useEditorInstance, { EditorInstanceAtom, EditorStoreContext } from './hooks/useEditorInstance'
 import { Rendevoz } from '../../rendevoz'
 import { Content } from '@/components'
 import EditorRightBar from './components/EditorRightBar'
@@ -27,7 +27,7 @@ import { EditorBlockHandleAtom } from './hooks/useBlockHandle'
 import useThrottleFn from '@/hooks/utils/useThrottleFn'
 import { GlobalPdfPrinterInstance } from '@/core/global/GlobalPdfPrinter'
 import EditorHeader from '@/core/components/editor/EditorHeader'
-import withColumns from '@/core/components/editor/plugins/withColumns'
+import withNormalize from '@/core/components/editor/plugins/withNormalize'
 import EditorClasses from '@/core/components/editor/consts/classes'
 import useReadOnlyEditor from '@/core/components/editor/hooks/useReadOnly'
 import KeyvalueStore from '@/api/stores/keyvalue.store'
@@ -37,6 +37,7 @@ import { EditorBarStateAtom } from '@/core/components/editor/hooks/useEditorBarS
 import { useAtomValue } from 'jotai'
 import EditorPluginHooks from './hooks/EditorPluginHooks'
 import { t } from 'i18next'
+import GetEditorBlockHandle from '@/core/components/editor/hooks/getEditorBlockHandle'
 
 // function, get unique id everytime
 const defaultSlateValue = () => [
@@ -89,12 +90,25 @@ export const EditorV1: FC<EditorProps> = memo(
     const isDraggingDivider = useSelectAtomValue(EditorStateAtom, s => s.isDraggingDivider)
     const instance = useEditorInstance()
     useLayoutEffect(() => {
+      const scrollEle = scrollElementRef.current
+      const resizeObserver = new ResizeObserver(c => {
+        const entry = c[0]
+        if (scrollEle) {
+          scrollEle.style.setProperty('--editor-padding-left', window.getComputedStyle(scrollEle)?.paddingLeft)
+        }
+        scrollElementRef.current?.style.setProperty('--editor-width', `${entry.borderBoxSize[0].inlineSize}px`)
+      })
+
+      if (scrollEle) {
+        resizeObserver.observe(scrollEle)
+      }
       const keyDownHandler = () => {
         setBlockHandle(s => (s.visible ? { ...s, visible: false } : s))
       }
       setEditorState(s => ({ ...s, readOnly: defaultReadOnly }))
       document.addEventListener('keydown', keyDownHandler)
       return () => {
+        resizeObserver.disconnect()
         document.removeEventListener('keydown', keyDownHandler)
       }
     }, [])
@@ -134,7 +148,7 @@ export const EditorV1: FC<EditorProps> = memo(
     }
     const editor = useMemo(() => {
       const editor = withVoid(
-        withHtml(withCustomComponent(withShortcuts(withInstance(withColumns(withHistory(withReact(createEditor())))))))
+        withHtml(withCustomComponent(withShortcuts(withInstance(withNormalize(withHistory(withReact(createEditor())))))))
       )
       ID_TO_ELEMENTS_MAP.set(editor, new Map())
       onInstanceInitialized?.(instance)
@@ -158,62 +172,63 @@ export const EditorV1: FC<EditorProps> = memo(
     instance.getTitle = () => {
       return stringTitle
     }
-    const handleBlockMouseMove = useMemoizedFn((e: MouseEvent, element: CustomElement) => {
+    const handleContainerPointerMove = useMemoizedFn((e: PointerEvent) => {
       if (!globalIsDragging && !isDraggingDivider) {
         if (!e.currentTarget) return
-        if (element.type === 'synced') return
-        if (element.type === 'table' && !(e.target as HTMLElement).hasAttribute('data-table-slot')) return
-        e.stopPropagation()
+        if (!scrollElementRef.current?.contains(e.target)) {
+          setBlockHandle(s => ({ ...s, visible: false }))
+          return
+        }
+        const result = GetEditorBlockHandle(e, instance, editor)
+        if (!result) {
+          setBlockHandle(s => ({ ...s, visible: false }))
+          return
+        }
+        console.log(result)
+        const element = result.element
         editor.currentEnterElement = element
-        editor.currentDragElement = e.currentTarget as HTMLElement
-        instance.dragManager.registerDragHtmlElement(e.currentTarget as HTMLElement)
+        const targetEle =
+          (result.node.classList.contains('selectable') ? result.node : result.node.querySelector('.selectable')) || result.node
+        if (!targetEle) return
         setBlockHandle(s => {
-          if (s.targetId !== element.id || s.visible === false) {
-            const scrollEle = scrollElementRef.current!
-            const scrollBounding = scrollEle.getBoundingClientRect()
-            const scrollElementRect = {
-              left: scrollEle.offsetLeft,
-              top: scrollEle.offsetTop,
-              width: scrollEle.offsetWidth,
-              height: scrollEle.offsetHeight
-            }
-            const targetEle = e.currentTarget as HTMLElement
-            const targetBounding = targetEle.getBoundingClientRect()
-            const targetRect = {
-              left: targetEle.offsetLeft,
-              top: targetEle.offsetTop,
-              width: targetEle.offsetWidth,
-              height: targetEle.offsetHeight
-            }
-            const targetLeft = ((targetBounding.x - scrollBounding.x) / scrollBounding.width) * scrollElementRect.width
-            const targetTop = ((targetBounding.y - scrollBounding.y) / scrollBounding.height) * scrollElementRect.height
-            let left = targetLeft - 4
-            let top = targetTop
-            const targetLineHeight = parseInt(window.getComputedStyle(targetEle.firstElementChild).lineHeight)
-            if (element.type.startsWith('heading')) {
-              left -= 20
-            }
-            if (element.type === 'table') {
-              left -= 12
-            }
-            top += (targetLineHeight - 24) / 2
-            return {
-              ...s,
-              left,
-              top,
-              targetId: element.id,
-              targetHeight: targetRect.height,
-              visible: true,
-              showAdd: layout?.showBlockHandleAdd !== false
-            }
-          } else {
-            return s
+          const scrollEle = scrollElementRef.current!
+          const scrollBounding = scrollEle.getBoundingClientRect()
+          const scrollElementRect = {
+            left: scrollEle.offsetLeft,
+            top: scrollEle.offsetTop,
+            width: scrollEle.offsetWidth,
+            height: scrollEle.offsetHeight
+          }
+          const targetBounding = targetEle.getBoundingClientRect()
+          const targetRect = {
+            left: targetEle.offsetLeft,
+            top: targetEle.offsetTop,
+            width: targetEle.offsetWidth,
+            height: targetEle.offsetHeight
+          }
+          const targetLeft = ((targetBounding.x - scrollBounding.x) / scrollBounding.width) * scrollElementRect.width
+          const targetTop = ((targetBounding.y - scrollBounding.y) / scrollBounding.height) * scrollElementRect.height
+          let left = targetLeft - 4
+          let top = targetTop
+          const targetLineHeight = parseInt(window.getComputedStyle(targetEle.firstElementChild).lineHeight)
+          if (element.type.startsWith('heading')) {
+            left -= 20
+          }
+          top += (targetLineHeight - 24) / 2
+          return {
+            ...s,
+            left,
+            top,
+            targetId: element.id,
+            targetHeight: targetRect.height,
+            visible: true,
+            showAdd: layout?.showBlockHandleAdd !== false
           }
         })
       }
     })
 
-    const throttleBlockMove = useThrottleFn(handleBlockMouseMove, { wait: 10 })
+    const throttleBlockMove = useThrottleFn(handleContainerPointerMove, { wait: 10 })
 
     const handleBlockHandleMenu: MouseEventHandler = e => {
       editor.currentAddClickElement = editor.currentEnterElement
@@ -249,14 +264,16 @@ export const EditorV1: FC<EditorProps> = memo(
     }
 
     const handleMenuClick: MouseEventHandler = e => {
-      ID_TO_ELEMENTS_MAP.get(editor)?.get(editor.currentEnterElement!.id)?.selectBlock()
-      editor.currentAddClickElement = editor.currentEnterElement
-      setIsDragging(false)
-      const rect = e.currentTarget.getBoundingClientRect()
-      instance.overlayOps?.open('blockDetailsMenu', {
-        x: rect.left + 15,
-        y: rect.top
-      })
+      if (editor.currentEnterElement) {
+        instance.selectOps?.selectBlock(editor.currentEnterElement.id)
+        editor.currentAddClickElement = editor.currentEnterElement
+        setIsDragging(false)
+        const rect = e.currentTarget.getBoundingClientRect()
+        instance.overlayOps?.open('blockDetailsMenu', {
+          x: rect.left + 15,
+          y: rect.top
+        })
+      }
     }
 
     useClickOutside(() => {
@@ -271,6 +288,7 @@ export const EditorV1: FC<EditorProps> = memo(
           flex
           fullWidth
           auto
+          onClick={() => console.log(instance.values.selectedBlocks)}
           column
           style={{
             height: styles?.containerHeight ?? '100%',
@@ -288,6 +306,9 @@ export const EditorV1: FC<EditorProps> = memo(
           {layout?.showHeader !== false && <SidebarToolbar editor={editor} />}
           <div
             ref={scrollElementRef}
+            onPointerMove={e => {
+              throttleBlockMove.run(e)
+            }}
             className={EditorClasses.ScrollWrapperClass}
             role="editor-container"
             style={{
@@ -295,13 +316,22 @@ export const EditorV1: FC<EditorProps> = memo(
               '--editor-max-width': pageWidthToSize[editorState.pageWidth] || '800px',
               '--editable-line-height': editorState.lineSpacing,
               fontFamily: editorState.typeface || 'Inter',
-              padding: styles?.pageMinPadding ?? '0px 40px 0px 60px',
+              '--page-padding': styles?.pageMinPadding ?? '0px 40px 0px 60px',
+              padding: 'var(--page-padding)',
               '--font-size': editorState.fontSize,
               width: barState.showRightBar ? `calc(100% - ${barState.rightBarWidth || 380}px` : undefined,
               ...styles?.editorContainerStyle
             }}
           >
-            {layout?.showTitle !== false && <EditorTitle showProps={layout?.showProps} propsMetaId={layout?.propsMetaId} stringTitle={stringTitle} {...title} editor={editor} />}
+            {layout?.showTitle !== false && (
+              <EditorTitle
+                showProps={layout?.showProps}
+                propsMetaId={layout?.propsMetaId}
+                stringTitle={stringTitle}
+                {...title}
+                editor={editor}
+              />
+            )}
             <div
               role="inner-editor"
               className={Cla(EditorClasses.EditorWrapper, classNames?.editorContainerClassName)}
@@ -316,15 +346,6 @@ export const EditorV1: FC<EditorProps> = memo(
                 scrollElementRef={scrollElementRef}
                 editor={editor}
                 onChange={useMemoizedFn(v => editor.on({ type: 'valueChange', value: v }))}
-                onBlockMouseMove={useMemoizedFn((e, element) => {
-                  throttleBlockMove.run(e, element)
-                })}
-                onBlockMouseLeave={useMemoizedFn(e => {
-                  if (e.pointerType === 'touch') {
-                    return
-                  }
-                  setBlockHandle(s => ({ ...s, visible: false }))
-                })}
               />
             </div>
           </div>
@@ -335,16 +356,20 @@ export const EditorV1: FC<EditorProps> = memo(
               onAddClick={handleBlockHandleMenu}
               onDragClick={useCallback(
                 e => {
+                  HistoryEditor.withoutSaving(editor, () => {
+                    Transforms.deselect(editor)
+                  })
                   if (instance.values.selectedBlocks.size > 0) {
                     const rebuild = rebuildDragSelect(instance, e)
                     if (rebuild) {
                       DragState.addDragElements?.(rebuild)
                     }
                   } else {
-                    const dragHTMLElement = editor.currentDragElement
-                    if (dragHTMLElement) {
-                      const cloned = dragHTMLElement.cloneNode(true)
-                      const rect = dragHTMLElement.getBoundingClientRect()
+                    const dragElement = editor.currentEnterElement
+                    if (dragElement) {
+                      const dragDOM = ReactEditor.toDOMNode(editor, dragElement)
+                      const cloned = dragDOM.cloneNode(true)
+                      const rect = dragDOM.getBoundingClientRect()
                       const wrapper = document.createElement('div')
                       wrapper.style.width = `${rect.width}px`
                       wrapper.style.height = `${rect.height}px`
@@ -375,7 +400,8 @@ export const Editor: FC<EditorProps> = memo(props => {
     const store = createStore()
     store.set(EditorInstanceAtom, {
       values: {
-        selectedBlocks: new Map()
+        selectedBlocks: new Map(),
+        editorLevelStore: store
       }
     })
     store.set(EditorStateAtom, { ...props })
@@ -387,7 +413,9 @@ export const Editor: FC<EditorProps> = memo(props => {
   }, [props])
   return (
     <Provider store={store}>
-      <EditorV1 {...props} />
+      <EditorStoreContext.Provider value={store}>
+        <EditorV1 {...props} />
+      </EditorStoreContext.Provider>
     </Provider>
   )
 })

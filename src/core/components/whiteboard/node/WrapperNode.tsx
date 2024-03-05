@@ -1,12 +1,9 @@
 import { CSSProperties, Dispatch, memo, ReactNode, SetStateAction, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { useFlow } from '../StateHooks'
 import { INodeInnerState, IWhiteboardNode } from '~/typings'
-import { useDebounceEffect, useIsIn, useMemoizedFn, useRafFn, useSelectAtomValue, useSelectGlobalAtomValue } from '@/hooks'
+import { useIsIn, useMemoizedFn, useRafFn, useSelectAtomValue, useSelectGlobalAtomValue } from '@/hooks'
 import { Content } from '@/components'
 import { Rnd } from 'react-rnd'
-import { NodeResizer } from './NodeResizer'
-import { boxesIntersect, pointInBox } from '@/utils'
-import { Box } from '~/typings'
 import MetaObjectNode from './nodes/MetaObjectNode'
 import ImageNode from './nodes/ImageNode'
 import VideoNode from './nodes/VideoNode'
@@ -429,6 +426,10 @@ const WrapperNode = ({ node }: { node: IWhiteboardNode }) => {
         }, true)
       }}
       onDragStart={e => {
+        if (!e.currentTarget.contains(e.target)) {
+          throw ''
+        }
+        console.log(e)
         instance.nodeOps?.updateAfterZ?.(id)
         setWhiteboardState(s => ({ ...s, isDraggingNode: true }))
         handleDragStart()
@@ -552,11 +553,6 @@ const WrapperNode = ({ node }: { node: IWhiteboardNode }) => {
               if (nodeState.focused || nodeState.locked) {
                 e.stopPropagation()
               }
-            }
-          }}
-          onKeyDown={e => {
-            if (e.key === 'Tab') {
-              e.preventDefault()
             }
           }}
         >

@@ -1,4 +1,4 @@
-import { ipcInstance } from '@/plugins'
+import { ipcInstance } from '@/electron'
 import { maximizeWindow, minimizeWindow } from '@/utils/window'
 import { useEffect, useState } from 'react'
 import { Content } from '../base'

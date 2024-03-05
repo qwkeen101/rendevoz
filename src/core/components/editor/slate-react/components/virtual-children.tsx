@@ -46,7 +46,9 @@ const VirtualChildren = memo(
       return children.filter(i => !i.hide)
     }, [children])
     const disableOverscanInReadOnly = useSelectAtomValue(EditorStateAtom, s => s.layout?.disableOverscanInReadOnly) ?? true
-    const disableVirtualizer = useSelectAtomValue(EditorStateAtom, s => s.layout?.virtualizer) === false
+    const v = useSelectAtomValue(EditorStateAtom, s => s.layout?.virtualizer)
+    const disableVirtualizer = v === false
+    console.log(v, disableVirtualizer)
     const overscan = disableVirtualizer || (readOnly && disableOverscanInReadOnly) ? editor.children.length : 5
     const instance = useEditorInstance()
 

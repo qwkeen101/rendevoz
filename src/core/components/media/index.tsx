@@ -147,6 +147,7 @@ const MediaInner = ({ onInstanceInitialized, onlyCore, on, disableTabTitle = tru
           setToolbarState(s => ({ ...s, visible: false }))
         }}
       >
+        <QuickLabelPopover />
         <AnimatePresence>
           {showIcon && (
             <motion.div
@@ -268,7 +269,6 @@ const MediaInner = ({ onInstanceInitialized, onlyCore, on, disableTabTitle = tru
   return (
     <Content fullWidth fullHeight ref={outerContainerRef}>
       <MediaTranscriber />
-      <QuickLabelPopover />
       <MediaClipper />
       {!disableTabTitle && <TabTitle title={mediaState.name} icon={<Icon name={'park-video'} />} />}
       <Content
@@ -364,7 +364,9 @@ const Media = (props: MediaProps) => {
       volume,
       subtitleFollow,
       collectionName,
-      metaId
+      metaId,
+      layout,
+      styles
     } = props.mediaState || {}
     store.set(MediaInstanceAtom, {})
     console.log(subtitleList, subtitleLang, DEFAULT_MEDIA_STATE)
@@ -373,6 +375,7 @@ const Media = (props: MediaProps) => {
         thumbnail,
         isPinned,
         collectionName,
+        styles,
         jumpTime: lastPlayedTime,
         labels,
         subtitleMode,
@@ -383,7 +386,8 @@ const Media = (props: MediaProps) => {
         description,
         subtitleLang,
         subtitleList,
-        subtitleFollow
+        subtitleFollow,
+        layout
       }),
       url: transformUrl(url),
       mode: mode || getMediaMode(url)
@@ -411,7 +415,9 @@ const Media = (props: MediaProps) => {
       subtitleFollow,
       metaId,
       onlyCore,
-      collectionName
+      layout,
+      collectionName,
+      styles
     } = props.mediaState
     console.log(props.mediaState, currentState)
     store.set(MediaStateAtom, {
@@ -420,11 +426,13 @@ const Media = (props: MediaProps) => {
       isPinned,
       metaId,
       subtitleMode,
+      styles,
       onlyCore,
       collectionName,
       subtitleLang: subtitleLang || currentState.subtitleLang,
       subtitleList: subtitleList || currentState.subtitleList,
       subtitleFollow,
+      layout,
       chapters,
       mode: mode || getMediaMode(url),
       sortedChapters: (props.mediaState.chapters || currentState.chapters)?.slice().sort((b, a) => b.startTime - a.startTime) || [],

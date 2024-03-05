@@ -7,6 +7,7 @@ import { useGroupInstance } from '@/core/components/group/hooks/useGroupInstance
 import PlaceholderRow from '@/core/components/group/components/table/PlaceholderRow'
 import { useSelectAtomValue } from '@/hooks'
 import { GroupStateAtom } from '@/core/components/group/hooks/useGroupState'
+import { isEqual } from 'lodash'
 
 const TableWrapper = memo(
   ({
@@ -22,24 +23,43 @@ const TableWrapper = memo(
   }) => {
     const ref = useRef<HTMLDivElement>(null)
     const instance = useGroupInstance()
-    const showAddMore = useSelectAtomValue(GroupStateAtom, s => s.layout?.showAddNew) ?? true
-    const tableColumns = useSelectAtomValue(GroupStateAtom, s => s.headerColumn)
-    const headers = useSelectAtomValue(GroupStateAtom, s => s.visibleProperties)
-    const showOriginal = useSelectAtomValue(GroupStateAtom, s => s.showOriginalText)
-    const showDeleted = useSelectAtomValue(GroupStateAtom, s => s.layout?.showDeletedMetas)
-    const wrap = useSelectAtomValue(GroupStateAtom, s => s.currentView?.options.wrapColumns)
-    const unToggledIdSet = useSelectAtomValue(GroupStateAtom, s => s.unToggledIdSet)
-    const shiftKeyPressed = useSelectAtomValue(GroupStateAtom, s => s.shiftPressed)
+    const {
+      showAddMore = true,
+      tableColumns,
+      headers,
+      showOriginal,
+      showDeleted,
+      wrap,
+      unToggledIdSet,
+      bottomPadding,
+      shiftKeyPressed
+    } = useSelectAtomValue(
+      GroupStateAtom,
+      s => ({
+        showAddMore: s.layout?.showAddNew,
+        tableColumns: s.headerColumn,
+        headers: s.visibleProperties,
+        showOriginal: s.showOriginalText,
+        showDeleted: s.layout?.showDeletedMetas,
+        wrap: s.currentView?.options.wrapColumns,
+        unToggledIdSet: s.unToggledIdSet,
+        shiftKeyPressed: s.shiftPressed,
+        bottomPadding: s.styles?.bottomPadding
+      }),
+      {
+        compare: (prev, curr) => isEqual(prev, curr)
+      }
+    )
     if (enableVirtualizer) {
       instance.getScrollMargin = () => ref.current?.closest('[role="renderer-container"]')?.offsetTop ?? 0
       const m = instance.getScrollMargin?.() ?? 0
       const virtualizer = useVirtualizer({
-        overscan: enableVirtualizer ? 5 : value.length,
+        overscan: 5,
         getScrollElement: () => instance.values.pageContainer,
         estimateSize: () => 30,
         count: value.length,
-        scrollMargin: enableVirtualizer ? m : 0,
-        paddingEnd: enableVirtualizer ? 200 : 0
+        scrollMargin: m,
+        paddingEnd: bottomPadding ?? 200
       })
 
       const items = virtualizer.getVirtualItems()

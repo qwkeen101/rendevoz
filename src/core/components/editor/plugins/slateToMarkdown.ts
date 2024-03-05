@@ -28,7 +28,7 @@ const parseNode = (idx: number, eles: CustomElement[]) => {
     return str
   }
 
-  if (ele.type.startsWith('heading')) {
+  if (ele.type?.startsWith('heading')) {
     switch (ele.type) {
       case 'heading-one':
         str += '# '
@@ -91,31 +91,30 @@ const parseNode = (idx: number, eles: CustomElement[]) => {
     const order = getOrderOfNode(idx, eles)
     str += `${order}. `
   }
+  if (ele.type === 'link') {
+    str += `[${Node.string(ele)}](${ele.url})`
+  }
+  if (ele.type === 'inline-metaObject') {
+    if (ele.originId) {
+      const meta = globalStore.get(metaObjectsAtom).get(ele.originId)
+      if (meta) {
+        str += `[${meta.name}](rendevoz://object/${ele.originId})`
+      }
+    }
+  }
+  if (Text.isText(ele)) {
+    let text = Node.string(ele)
+    if (ele.bold) {
+      text = `**${text}**`
+    }
+    if (ele.italic) {
+      text = `*${text}*`
+    }
+    str += text
+  }
   if ('children' in ele && Array.isArray(ele.children)) {
-    ele.children.forEach(c => {
-      if (Element.isElement(c)) {
-        if (c.type === 'link') {
-          str += `[${Node.string(c)}](${c.url})`
-        }
-        if (c.type === 'inline-metaObject') {
-          if (c.originId) {
-            const meta = globalStore.get(metaObjectsAtom).get(c.originId)
-            if (meta) {
-              str += `[${meta.name}](rendevoz://object/${c.originId})`
-            }
-          }
-        }
-      }
-      if (Text.isText(c)) {
-        let text = Node.string(c)
-        if (c.bold) {
-          text = `**${text}**`
-        }
-        if (c.italic) {
-          text = `*${text}*`
-        }
-        str += text
-      }
+    ele.children.forEach((c, idx) => {
+      str += parseNode(idx, ele.children)
     })
   }
   return str + '\n'

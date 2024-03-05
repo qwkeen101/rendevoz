@@ -1,6 +1,6 @@
 import SearchHelper from '@/api/textSearch/SearchHelper'
 import backup from '@/api/lifycycle/close/backup'
-import { ipcInstance } from '@/plugins'
+import { ipcInstance } from '@/electron'
 
 ipcInstance.on('unload', () => {
   close()

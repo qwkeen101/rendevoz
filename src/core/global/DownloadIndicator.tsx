@@ -1,5 +1,5 @@
 import { memo, useEffect, useState } from 'react'
-import { ipcInstance } from '@/plugins'
+import { ipcInstance } from '@/electron'
 import { createPortal } from 'react-dom'
 import { Content, WithBorder } from '@/components'
 import { Line } from 'rc-progress'

@@ -1,7 +1,5 @@
-import isHotkey from 'is-hotkey'
 import { CustomEditor } from '~/typings'
-import getCursorPosition from '@/core/components/editor/utils/getCursorPosition'
-import { Editor, Range, Text, Transforms } from 'slate'
+import { Editor, Range, Transforms } from 'slate'
 import Id from '@/utils/id'
 import { HistoryEditor } from 'slate-history'
 

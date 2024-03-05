@@ -21,8 +21,10 @@ const defaultData = {
     showWelcomeScreen: false,
     openSidebar: null,
     showStats: false,
+    viewModeEnabled: true,
     viewBackgroundColor: 'transparent'
-  }
+  },
+  scrollToContent: true
 }
 export const CanvasManagerAtom = atom<CanvasManager | undefined>(undefined)
 const ImageDisplayer = forwardRef<
@@ -93,13 +95,19 @@ const ImageDisplayer = forwardRef<
             id: 'initial_image'
           }
           if (excalidrawData) {
-            excalidrawData.appState
+            excalidrawData.appState = {
+              ...excalidrawData.appState,
+              scrollX: undefined,
+              scrollY: undefined,
+              viewModeEnabled: true
+            }
           }
           const elements = excalidrawData ? [...excalidrawData.elements] : [imageEle]
           setInitialData({
             appState: excalidrawData ? excalidrawData.appState : defaultData.appState,
             files,
-            elements
+            elements,
+            scrollToContent: true
           })
         }
       }
@@ -157,7 +165,8 @@ const ImageDisplayer = forwardRef<
   }, [image, outerImageUrl, initialData])
 
   const langToLangCode = () => {
-    const lang = setting.general.language
+    const lang = setting.general.language || setting.general.defaultLanguage
+    console.log(lang)
     switch (lang) {
       case 'en-US':
         return 'en'
@@ -167,7 +176,7 @@ const ImageDisplayer = forwardRef<
         return 'en'
     }
   }
-
+  console.log(langToLangCode())
   return (
     <Content
       ref={containerRef}
@@ -218,8 +227,7 @@ const ImageDisplayer = forwardRef<
         {excalidrawInitialData && (
           <>
             <Button.IconButton
-              text={t('general.save locally')}
-              style={{ position: 'absolute', top: 30, right: 30, zIndex: 20 }}
+              style={{ position: 'absolute', top: 30, right: 30, zIndex: 20, padding: '6px' }}
               icon="park-download"
               onClick={async () => {
                 const api = excalidrawRef.current
@@ -248,7 +256,14 @@ const ImageDisplayer = forwardRef<
                 })
               }
               langCode={langToLangCode()}
-              initialData={excalidrawInitialData}
+              initialData={{
+                ...excalidrawInitialData,
+                appState: {
+                  ...excalidrawInitialData,
+                  viewModeEnabled: true,
+                  viewBackgroundColor: 'transparent'
+                }
+              }}
             />
           </>
         )}

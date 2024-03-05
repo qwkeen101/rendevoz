@@ -1,4 +1,4 @@
-import { ipcInstance } from '@/plugins'
+import { ipcInstance } from '@/electron'
 import FileSystem from '@/api/fileSystem'
 
 export const saveFileLocally = (...args) => FileSystem.copyFile(...args)

@@ -7,7 +7,7 @@ export default async (itemId: number) => {
     if (!feed.feedType || feed.feedType === 'webpage') {
       return await transformFeedItemIntoWebpage(feed)
     }
-    if (feed.feedType === 'youtube') {
+    if (feed.feedType === 'youtube' || feed.feedType === 'bilibili') {
       return (
         await ObjectStore('video').addOneWithMeta(
           {

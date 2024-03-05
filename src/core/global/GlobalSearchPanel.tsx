@@ -1,20 +1,14 @@
-import { useEffect, useRef, useState } from 'react'
-import { GlobalInstances, IWebpage, IWebpageInstance, MetaObject, XYPosition } from '~/typings'
-import Webpage from '../components/webpage/Webpage'
+import { useEffect, useRef } from 'react'
+import { GlobalInstances, MetaObject, XYPosition } from '~/typings'
 import { Rnd } from 'react-rnd'
 import { atom } from 'jotai'
 import { useGlobalAtom, useShortcut } from '@/hooks'
-import ClassName from '@/styles/classNames'
-import { Button, Content } from '@/components'
-import FontSize from '@/consts/font'
-import { css } from '@emotion/css'
+import { Content } from '@/components'
 import { getPanelPosition } from './utils'
 import { ObjectStore } from '@/api/stores'
 import { searchToUrl } from '../components/webpage/utils'
-import { Rendevoz } from '../rendevoz'
 import { setPanelState as setSidebarPanelState } from '@/components/layout/sidebar'
 import WebviewWepbage from '@/core/components/webpage/WebviewWepbage'
-import addWebpageAsMeta from '@/core/components/webpage/utils/addWebpageAsMeta'
 
 export const GlobalSearchInstance: Partial<GlobalInstances.WebSearchInstance> = {}
 
@@ -97,7 +91,6 @@ const GlobalSearchPanel = () => {
     })
     setPanelState(s => ({ ...s, visible: !s.visible }))
   })
-  // return createPortal(<SearchPanel />, document.body)
 }
 
 export const SearchPanel = () => {

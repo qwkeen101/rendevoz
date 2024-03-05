@@ -18,7 +18,10 @@ const shortCutNameToTitle = {
     openScreenShot: 'open screen shot',
     openTranslatePanel: 'open translate panel',
     openSearchPanel: 'open web search panel',
-    openGlobalSearch: 'open global text search'
+    openGlobalSearch: 'open global text search',
+    closeCurrentTab: 'Close current focused tab',
+    switchToPrevTab: 'Switch to previous tab',
+    switchToNextTab: 'Switch to next tab'
   },
   video: {
     makeVideoLabel: 'make video label',
@@ -48,16 +51,19 @@ const ShortCutItem = memo(({ shortCutName }: { shortCutName: keyof IShortCutSett
   const [setting, setSetting] = useSetting()
   const shortCut = setting.shortcut?.[shortCutName]
   const [isSelected, setIsSelected] = useState(false)
-  const [conflictState, setConflictState] = useState<Partial<{
-    isConflicted: boolean
-    conflictWith: string[]
-  }>>({
+  const [conflictState, setConflictState] = useState<
+    Partial<{
+      isConflicted: boolean
+      conflictWith: string[]
+    }>
+  >({
     isConflicted: false
   })
   const containerRef = useRef<HTMLDivElement>(null)
   useEffect(() => {
     if (isSelected) {
       const keyDownHandler = (e: KeyboardEvent) => {
+        console.log(e)
         e.preventDefault()
         e.stopPropagation()
         if (isHotkey(KEY.Enter, e)) {
@@ -130,12 +136,10 @@ const ShortCutItem = memo(({ shortCutName }: { shortCutName: keyof IShortCutSett
     if (!shortCut) return 'Not Set'
     const { ctrlKey, altKey, shiftKey, key, metaKey, displayKey } = shortCut
 
-    return `${ctrlKey ? 'Ctrl + ' : ''}${metaKey ? 'Meta + ' : ''}${altKey ? 'Alt + ' : ''}${shiftKey ? 'Shift + ' : ''}${
-      displayKey ? displayKey?.charAt(0).toUpperCase() + displayKey?.slice(1) : ''
-    }`
+    return `${ctrlKey ? 'Ctrl + ' : ''}${metaKey ? 'Meta + ' : ''}${altKey ? 'Alt + ' : ''}${shiftKey ? 'Shift + ' : ''}${key ? key : ''}`
   }
   return (
-    <Content flex gap={10} ref={containerRef} alignItems='center'>
+    <Content flex gap={10} ref={containerRef} alignItems="center">
       {conflictState.isConflicted && conflictState.conflictWith && (
         <div style={{ display: 'flex', gap: 10 }} className={ClassName.description()}>
           <span>Conflict with :</span>
@@ -161,7 +165,7 @@ const ShortCutItem = memo(({ shortCutName }: { shortCutName: keyof IShortCutSett
       {isSelected && (
         <Icon
           className={ClassName.circleButton()}
-          name='park-delete'
+          name="park-delete"
           onClick={() => {
             setSetting(s =>
               produce(s, draft => {

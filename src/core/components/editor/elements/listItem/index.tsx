@@ -174,7 +174,10 @@ export const OrderListItem = ({ children, element }: RenderElementProps) => {
     try {
       let previous = Editor.node(editor, previousPath)
       let num = 1
-      while (previous && (previous[0] as CustomElement).type === 'order-list-item') {
+      while (
+        (previous && (previous[0] as CustomElement).type === 'order-list-item') ||
+        (previous[0].type !== 'list-item' && previous[0].level !== undefined && previous[0].level >= 0)
+      ) {
         const el = previous[0] as CustomElement
         if ((el.level || 0) < (element.level || 0)) break
         if ((el.level || 0) !== (element.level || 0)) {
@@ -228,11 +231,10 @@ export const OrderListItem = ({ children, element }: RenderElementProps) => {
         }}
         role="list-item-marker"
         style={{
-          padding: '0 2px',
-          marginRight: 6,
-          minWidth: 18,
+          marginRight: 4,
           userSelect: 'none',
           cursor: 'pointer',
+          flexShrink: 0,
           color: element.folded ? Colors.Common.SelectColor : undefined
         }}
       >

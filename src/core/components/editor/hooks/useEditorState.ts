@@ -9,6 +9,7 @@ export const EditorStateAtom = atom<
       isDraggingDivider?: boolean
       // for replace children scroll bug
       editorVersion?: number
+      selectedBlockIdSet?: Set<number>
     }
   >
 >({})

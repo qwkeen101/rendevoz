@@ -13,7 +13,7 @@ import { Viewport } from 'pixi-viewport'
 import { Container, DisplayObject } from 'pixi.js'
 import { XYPosition } from 'rendevoz'
 import { Rendevoz } from '@/core/rendevoz'
-const getRadius = Rendevoz.Utils.Meta.getTypeRadius
+const getRadius = t => Rendevoz.Utils.Meta.getTypeRadius(t)
 class D3GraphManager {
   public isChoosingNode: false | 'start' | 'end' = false
   public container: d3.Selection<HTMLElement, unknown, null, any> | null = null

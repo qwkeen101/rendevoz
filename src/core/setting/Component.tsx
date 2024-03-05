@@ -13,6 +13,8 @@ import { IComponentSetting } from '@/core/setting/types'
 import SettingGroup from '@/core/setting/SettingGroup'
 import BlockColorPicker from '@/core/components/editor/components/BlockColorPicker'
 import { Colors } from '@/consts'
+import { CodeLangs } from '@/core/components/code/CodeHeader'
+import { ObjectStore } from '@/api/stores'
 
 const ComponentSetting = () => {
   const { t } = useTranslation()
@@ -78,6 +80,37 @@ const ComponentSetting = () => {
     {
       title: t('settings.object auto become inline when dragged into editor'),
       children: <Switch value={setting.editor.objectAutoBecomeInline} onChange={() => toggleSetting('editor', 'objectAutoBecomeInline')} />
+    }
+  ]
+
+  const codeSettingItems: ISettingItem[] = [
+    {
+      title: t('settings.Default programming language'),
+      children: (
+        <Select
+          onSelect={v => {
+            setSetting(
+              produce(setting, draft => {
+                draft.code.defaultLanguage = v[0]
+              })
+            )
+          }}
+          value={setting.code?.defaultLanguage}
+          menuStyle={{
+            textTransform: 'capitalize',
+            maxHeight: 300,
+            overflowY: 'auto'
+          }}
+          style={{
+            textTransform: 'capitalize'
+          }}
+          closeOnSelect={true}
+          options={CodeLangs.sort().map(i => ({
+            value: i,
+            children: i
+          }))}
+        />
+      )
     }
   ]
   const translateSettingItems: ISettingItem[] = [
@@ -241,7 +274,7 @@ const ComponentSetting = () => {
           onChange={() => toggleSetting('webpage', 'enableSearchAutoSuggestion')}
         />
       )
-    },
+    }
     // {
     //   title: t('settings.Save image locally'),
     //   children: (
@@ -292,6 +325,7 @@ const ComponentSetting = () => {
       <SettingGroup title={t('settings.label settings')} layout={labelSettingItems} />
       <SettingGroup title={t('settings.whiteboard settings')} layout={whiteboardSettingItems} />
       <SettingGroup title={t('settings.editor settings')} layout={editorSettingItems} />
+      <SettingGroup title={t('settings.code settings')} layout={codeSettingItems} />
       {/*<SettingGroup title={t('settings.translate settings')} layout={translateSettingItems} />*/}
       <SettingGroup title={t('settings.webpage settings')} layout={webpageSettingItems} />
       <SettingGroup title={t('settings.pdf settings')} layout={pdfSettingItems} />

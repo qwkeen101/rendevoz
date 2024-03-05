@@ -14,6 +14,7 @@ import { IMetaGroupAvailableContextMenuItems } from '@/core/components/group/Met
 export default memo(
   ({ details, onClose }: { details: MetaGroupChild; onClose: VoidFunction }) => {
     const instance = useGroupInstance()
+    const onlyOpenIn = instance.getGroupState?.().state?.onlyOpenIn
     const selected = instance.selectOps?.getSelectedItems()
     const hasSelected = selected?.length && selected.length > 1
     const currentView = instance.getCurrentView?.()
@@ -38,6 +39,18 @@ export default memo(
             deleted: false
           })
           instance.selectOps?.clearAllSelect()
+        }
+      },
+      open: {
+        text: t('general.Open'),
+        icon: 'park-arrow-right-up',
+        type: 'button',
+        onClick: () => {
+          onClose()
+          const first = selected?.[0][0]
+          if (first) {
+            instance.openObject?.(first.id, first.rowId)
+          }
         }
       },
       deleteCompleted: {
@@ -189,11 +202,12 @@ export default memo(
               ? []
               : [
                   layoutItems['separator'],
+                  ...(onlyOpenIn
+                    ? [layoutItems['open']]
+                    : [layoutItems['openInNewTab'], ...(canPreview ? [layoutItems['openInSidePeek']] : [])]),
                   layoutItems['viewDetails'],
                   layoutItems['edit'],
-                  layoutItems['copyLink'],
-                  layoutItems['openInNewTab'],
-                  ...(canPreview ? [layoutItems['openInSidePeek']] : [])
+                  layoutItems['copyLink']
                 ])
           ]
         : []),

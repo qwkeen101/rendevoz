@@ -14,7 +14,7 @@ import { animate } from 'framer-motion'
 import { Rendevoz } from '@/core/rendevoz'
 import _ from 'lodash'
 
-const getRadius = Rendevoz.Utils.Meta.getTypeRadius
+const getRadius = t => Rendevoz.Utils.Meta.getTypeRadius(t)
 const sliceLabel = (l: string) => l.slice(0, 40)
 const PixiNode: FC<NodeProps> = memo(({ node, onMouseEnter, onMouseLeave, onContextMenu, onClick }) => {
   const nodeRef = useRef<PContainer<DisplayObject>>(null)

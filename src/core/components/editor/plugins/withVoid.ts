@@ -19,13 +19,10 @@ const withVoid = (editor: CustomEditor) => {
       case 'book-highlight':
       case 'emoji':
       case 'metaObject':
-      case 'pdf':
-      case 'note':
       case 'image':
       case 'thought':
       case 'divider':
       // case 'inline-metaObject':
-      case 'subPage':
       case 'code-block':
       case 'math':
         return true

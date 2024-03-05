@@ -151,17 +151,6 @@ const moveSingleElement = (details: {
       })
     }
   }
-  // if (changeLevel && targetElement.type !== 'list-item' && targetElement.type !== 'order-list-item' && targetLevel === undefined) {
-  //   Transforms.setNodes(
-  //     editor,
-  //     {
-  //       level: undefined
-  //     },
-  //     {
-  //       at: currPathRef.current
-  //     }
-  //   )
-  // }
   if (currParentPathRef.current) {
     const afterInsertCurrentParent = Editor.node(editor, currParentPathRef.current)
     if (Text.isText(afterInsertCurrentParent[0].children[0]) && currParentElement[0].type === 'tableCell') {
@@ -204,7 +193,7 @@ const moveSingleElement = (details: {
         return
       }
     }
-    Transforms.removeNodes(editor, { at: afterMoveCurrParent[1] })
+    // Transforms.removeNodes(editor, { at: afterMoveCurrParent[1] })
   }
 }
 

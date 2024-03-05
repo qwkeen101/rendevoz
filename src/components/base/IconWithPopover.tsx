@@ -27,6 +27,7 @@ interface Props {
   onClick?: MouseEventHandler
   tooltipPosition?: 'top' | 'bottom'
   closeOnContentClick?: boolean | string
+  onVisiblityChange?: AnimatePopoverProps['onVisiblityChange']
   contentDraggable?: boolean
   iconContainerStyle?: CSSProperties
   onContentClick?: MouseEventHandler
@@ -44,6 +45,7 @@ const IconWithPopover: FC<Props> = (
     color,
     align,
     size = 18,
+    onVisiblityChange,
     defaultOpen = false,
     placement = ['top', 'right'],
     className,
@@ -81,6 +83,9 @@ const IconWithPopover: FC<Props> = (
       setVisible(true)
     }
   }, [])
+  useEffect(() => {
+    onVisiblityChange?.(visible)
+  },[visible])
   return (
     <Content
       ref={mergedRef}

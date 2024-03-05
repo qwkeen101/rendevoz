@@ -7,18 +7,36 @@ import { useGroupInstance } from '@/core/components/group/hooks/useGroupInstance
 import { useSelectAtomValue } from '@/hooks'
 import { GroupStateAtom } from '@/core/components/group/hooks/useGroupState'
 import { useTranslation } from 'react-i18next'
+import { isEqual } from 'lodash'
 
 export default memo(
   ({ values, grouperId, showAddMore: outShowAddMore }: { values: MetaGroupChild[]; grouperId?: number; showAddMore?: boolean }) => {
     const containerRef = useRef<HTMLDivElement>(null)
     const instance = useGroupInstance()
     const { t } = useTranslation()
-    const showAddMore = useSelectAtomValue(GroupStateAtom, s => s.layout?.showAddNew) ?? true
-    const visibleProps = useSelectAtomValue(GroupStateAtom, s => s.visibleProperties)
-    const showOriginalText = useSelectAtomValue(GroupStateAtom, s => s.showOriginalText) ?? false
-    const wrapContent = useSelectAtomValue(GroupStateAtom, s => s.currentView?.options.wrapColumns) ?? false
-    const showDeleted = useSelectAtomValue(GroupStateAtom, s => s.layout?.showDeletedMetas) ?? false
-    const showCover = useSelectAtomValue(GroupStateAtom, s => s.currentView?.options.cardCover) ?? 'cover'
+    const {
+      showAddMore = true,
+      visibleProps,
+      wrapContent = false,
+      showOriginalText = false,
+      showDeleted = false,
+      showCover = 'cover',
+      bottomPadding
+    } = useSelectAtomValue(
+      GroupStateAtom,
+      s => ({
+        showAddMore: s.layout?.showAddNew,
+        visibleProps: s.visibleProperties,
+        showOriginalText: s.showOriginalText,
+        wrapContent: s.currentView?.options.wrapColumns,
+        showDeleted: s.layout?.showDeletedMetas,
+        showCover: s.currentView?.options.cardCover,
+        bottomPadding: s.styles?.bottomPadding
+      }),
+      {
+        compare: (prev, curr) => isEqual(prev, curr)
+      }
+    )
     const m = containerRef.current?.closest('[role="renderer-container"]')?.offsetTop ?? 0
     const virtualier = useVirtualizer({
       count: values.length,
@@ -26,11 +44,14 @@ export default memo(
       estimateSize: () => 200,
       getScrollElement: () => instance.values.pageContainer,
       scrollMargin: m,
-      paddingEnd: 200
+      paddingEnd: bottomPadding ?? 200
     })
     const items = virtualier.getVirtualItems()
     return (
-      <Content style={{ width: '100%', height: virtualier.getTotalSize() }} ref={containerRef}>
+      <Content
+        style={{ width: '100%', height: virtualier.getTotalSize(), marginBottom: showAddMore && outShowAddMore ? 28 : 0 }}
+        ref={containerRef}
+      >
         <div
           style={{
             position: 'absolute',

@@ -11,6 +11,7 @@ export default (
 ) => {
   instance.nodeOps?.updateRelatedEdges(subIds)
   subIds.forEach(id => {
+    if (!layoutCache[id]) return
     const nodeFuncs = instance.nodeOps?.getNodeFuncs(id)
     if (nodeFuncs) {
       const result = {

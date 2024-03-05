@@ -116,7 +116,7 @@ export default memo(({ node, isIn }: { node: IWhiteboardNode; isIn?: boolean }) 
             })
           }
         }
-      }, true)
+      })
     }
     if (node.rootId) {
       const allSubs = getFlattenChildrenOfNode(node, instance, node.side)
@@ -141,7 +141,7 @@ export default memo(({ node, isIn }: { node: IWhiteboardNode; isIn?: boolean }) 
             })
           }
         }
-      }, true)
+      })
     }
   }
   const renderCollapse = (direction: direction) => {

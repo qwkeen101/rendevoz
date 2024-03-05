@@ -1,7 +1,7 @@
 import { Content } from '@/components'
 import { Colors } from '@/consts'
 import { useEffect, useState } from 'react'
-import { ipcInstance } from '@/plugins'
+import { ipcInstance } from '@/electron'
 
 const MacTitlebar = () => {
 

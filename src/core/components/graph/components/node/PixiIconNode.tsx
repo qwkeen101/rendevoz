@@ -59,6 +59,7 @@ const PixiIconNode = ({ node }: { node: GraphNode }) => {
     root.render(
       <Icon
         name={iconz}
+        fill={primaryFontColor}
         ref={n => {
           console.log(n)
           const svg = n?.querySelector('svg')

@@ -4,11 +4,12 @@ import { ReactEditor } from 'slate-react'
 import { CustomEditor, CustomElement } from '~/typings'
 import { Positions } from '../utils/positions'
 import { MetaStore, ObjectStore } from '@/api/stores'
+import EditorSettings from '@/core/components/editor/consts/settings'
 
-const softBlockTypes: CustomElement['type'][] = ['highlight-block', 'block-quote']
+const softBlockTypes: CustomElement['type'][] = []
 
 const withCustomComponent = (editor: CustomEditor) => {
-  const { deleteBackward, insertText, insertBreak, deleteForward, insertNode, insertFragment, apply, instance } = editor
+  const { deleteBackward, insertText, insertBreak, insertNodes, deleteForward, insertNode, insertFragment, apply, instance } = editor
   editor.insertSoftBreak = () => {
     editor.insertText('\n')
   }
@@ -20,15 +21,6 @@ const withCustomComponent = (editor: CustomEditor) => {
     node.id = Id.getId()
     // node.children[0].fontSize = fontSize
     let nextPath = null
-    // check if insert inside hole or spacer
-    if (Positions.isStartSpacer(editor) || Positions.isEndSpacer(editor) || Positions.outermostBlock(editor)?.[0]?.type === 'hole') {
-      const wrapper = Positions.outermostBlock(editor)
-      if (Positions.isStartSpacer(editor)) {
-        nextPath = wrapper[1]
-      } else {
-        nextPath = Path.next(wrapper[1])
-      }
-    }
     if (Positions.isInsideCommonBlock(editor)) {
       let finalInsertPath
       const nextRowPath = Positions.nextRowOfCurrentSelection(editor)
@@ -68,25 +60,36 @@ const withCustomComponent = (editor: CustomEditor) => {
       insertNode(node)
     }
   }
+  editor.insertNodes = (nodes, options) => {
+    const path = options?.at || editor.selection
+    const isAllNodesBlock = (Array.isArray(nodes) ? nodes : [nodes]).every(i => Editor.isBlock(editor, i))
+    if (isAllNodesBlock && path && Editor.hasPath(editor, Editor.path(editor, path))) {
+      const emptyParagraph = Editor.above(editor, {
+        at: path,
+        match: currElement => currElement.type === 'paragraph' && currElement.children.length === 1 && currElement.children[0].text === ''
+      })
+      if (emptyParagraph) {
+        Transforms.removeNodes(editor, { at: emptyParagraph[1] })
+      }
+    }
+    insertNodes(nodes, options)
+  }
   editor.insertText = (text: string) => {
     insertText(text)
   }
 
   editor.isElementReadOnly = e => {
-    if (e.type === 'inline-metaObject') {
+    if (EditorSettings.ReadOnlyTypes.has(e.type)) {
       return true
     }
     return false
   }
-  // editor.isSelectable = e => {
-  //   if (e.type === 'inline-metaObject') {
-  //     return false
-  //   }
-  //   if (editor.isVoid(e)) {
-  //     return false
-  //   }
-  //   return true
-  // }
+  editor.isSelectable = e => {
+    if (Editor.isVoid(editor, e) && !Editor.isInline(editor, e)) {
+      return false
+    }
+    return true
+  }
   editor.deleteBackward = (...args) => {
     const { selection } = editor
 
@@ -94,14 +97,25 @@ const withCustomComponent = (editor: CustomEditor) => {
       const match = Editor.above(editor, {
         match: n => Editor.isBlock(editor, n)
       })
-      const [cell] = Editor.nodes(editor, {
-        match: n => !Editor.isEditor(n) && SlateElement.isElement(n) && n.type === 'tableCell'
+      const [nestedParent] = Editor.nodes(editor, {
+        match: n => !Editor.isEditor(n) && SlateElement.isElement(n) && ['tableCell', 'synced'].includes(n.type)
       })
-      if (cell) {
-        const [, cellPath] = cell
-        const start = Editor.start(editor, cellPath)
+      if (nestedParent) {
+        const [nestedParentBlock, nestParentPath] = nestedParent
+        const start = Editor.start(editor, nestParentPath)
 
         if (Point.equals(selection.anchor, start)) {
+          if (nestedParentBlock.children[0].type !== 'paragprah') {
+            Transforms.setNodes(
+              editor,
+              {
+                type: 'paragraph'
+              },
+              {
+                at: [...nestParentPath, 0]
+              }
+            )
+          }
           return
         }
       }
@@ -116,16 +130,7 @@ const withCustomComponent = (editor: CustomEditor) => {
         }
         const start = Editor.start(editor, path)
         const currentPrevious = Editor.previous(editor, { at: path })
-        let selectPrevious = false
-        if (currentPrevious && Point.equals(selection.anchor, start)) {
-          const [block, path] = currentPrevious
-          if (Editor.isVoid(editor, block)) {
-            Transforms.removeNodes(editor, { at: path })
-            return
-          } else {
-            selectPrevious = true
-          }
-        }
+
         if (block.level > 0 && Editor.isStart(editor, selection.anchor, path)) {
           Transforms.setNodes(editor, {
             level: block.level - 1 > 0 ? block.level - 1 : undefined
@@ -144,9 +149,30 @@ const withCustomComponent = (editor: CustomEditor) => {
           Transforms.setNodes(editor, newProperties)
           return
         }
+        let selectPrevious = false
+        if (currentPrevious && Point.equals(selection.anchor, start)) {
+          const [block] = currentPrevious
+          if (Editor.isVoid(editor, block)) {
+            editor.instance.selectOps?.selectBlock(block.id)
+            Transforms.deselect(editor)
+            Transforms.removeNodes(editor, {
+              at: path
+            })
+            return
+          } else {
+            selectPrevious = true
+          }
+        }
+
         if (selectPrevious && currentPrevious) {
+          const end = Editor.end(editor, currentPrevious[1])
           deleteBackward(...args)
-          Transforms.select(editor, Editor.end(editor, currentPrevious[1]))
+          // 当上方为空的同步块，下方为空的行，在下方删除，会导致blur
+          // timeout以后再选择可以避免
+          setTimeout(() => {
+            Transforms.select(editor, end)
+            ReactEditor.focus(editor)
+          }, 0)
           return
         }
       }
@@ -155,7 +181,7 @@ const withCustomComponent = (editor: CustomEditor) => {
   }
   editor.deleteForward = (...args) => {
     const { selection } = editor
-
+    console.log('delete here')
     if (selection && Range.isCollapsed(selection)) {
       const [cell] = Editor.nodes(editor, {
         match: n => !Editor.isEditor(n) && SlateElement.isElement(n) && n.type === 'tableCell'
@@ -244,7 +270,7 @@ const withCustomComponent = (editor: CustomEditor) => {
               }
             }
           }
-          if ('type' in block && block.type.startsWith('heading')) {
+          if (('type' in block && block.type.startsWith('heading')) || ['highlight-block', 'block-quote'].includes(block.type)) {
             Transforms.setNodes(
               editor,
               { id: Id.getId(), type: 'paragraph', background: undefined, color: undefined },
@@ -268,6 +294,7 @@ const withCustomComponent = (editor: CustomEditor) => {
     insertBreak()
   }
   editor.apply = op => {
+    console.log(op)
     if (op.type !== 'set_selection') {
       editor.onOperationApplied?.(op)
     }

@@ -2,7 +2,7 @@ import { CustomEditor, CustomElement, IEditorInstance } from '~/typings'
 import { assignProperties } from '@/utils'
 import { Editor, Element, Node, Path, Transforms } from 'slate'
 import Id from '@/utils/id'
-import { ReactEditor } from '@/core'
+import { ID_TO_ELEMENTS_MAP, ReactEditor } from '@/core'
 
 const MAX_INDENT = 6
 export const transformableTargetType = [
@@ -22,6 +22,39 @@ const untransformableOriginalType = ['table', 'metaObject', 'synced']
 const assignBlockOps = (instance: IEditorInstance, editor: CustomEditor) => {
   assignProperties(instance, {
     blockOps: {
+      setBlockFuncs: (blockId, funcs) => {
+        const f = ID_TO_ELEMENTS_MAP.get(editor)?.get(blockId) || {}
+
+        const finalF = Object.assign({}, f, funcs)
+        console.log(f, funcs, finalF,blockId)
+        ID_TO_ELEMENTS_MAP.get(editor)?.set(blockId, finalF)
+      },
+      removeBlockFuncs: blockId => {
+        ID_TO_ELEMENTS_MAP.get(editor)?.delete(blockId)
+        return
+      },
+      getBlockFuncs: blockId => {
+        return ID_TO_ELEMENTS_MAP.get(editor)?.get(blockId)
+      },
+      getClosestOutestBlock: (windowPoint, container) => {
+        const elementBlocks = (container || ReactEditor.toDOMNode(editor, editor)).children
+        const targetBlock = Array.from(elementBlocks).find(b => {
+          const selectable = b.classList.contains('selectable') ? b : b.querySelector('.selectable')
+          if (!selectable) return false
+          const bounding = selectable.getBoundingClientRect()
+          if (
+            windowPoint.y >= bounding.top &&
+            windowPoint.y <= bounding.bottom &&
+            windowPoint.x >= bounding.left - 200 &&
+            windowPoint.x <= bounding.right
+          ) {
+            return b
+          }
+        })
+        if (targetBlock) {
+          return ReactEditor.toSlateNode(editor, targetBlock) as CustomElement
+        }
+      },
       getCurrentCursorBounding: () => {
         const selection = editor.selection
         if (selection) {

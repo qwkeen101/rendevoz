@@ -17,14 +17,11 @@ const EditorPluginHooks = ({ editor, scrollElementRef }: { editor: CustomEditor;
 
   useAssignEditorInstance(editor, scrollElementRef)
 
-  const { dragManager, renderIndicator } = useEditorDrag(editor, scrollElementRef.current)
+  const { renderIndicator } = useEditorDrag(editor, scrollElementRef.current)
 
   const { renderOverlay, overlayManager } = useEditorOverlay(editor, scrollElementRef.current)
   useEditorSelect(editor, scrollElementRef.current)
-  editor.overlayManager = overlayManager
-  editor.dragManager = dragManager
   instance.getOverlayManager = () => overlayManager
-  instance.dragManager = dragManager
   const setEditorState = useSetAtom(EditorStateAtom)
   useTypeFilterBlocks()
   useEffect(() => {

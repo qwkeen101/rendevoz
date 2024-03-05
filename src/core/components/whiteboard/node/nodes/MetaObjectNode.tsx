@@ -22,13 +22,7 @@ import { useWhiteboardInstance } from '@/core/components/whiteboard/hooks'
 import QuestionCard from '@/core/ai/components/question/QuestionCard'
 import Tweet from '@/core/components/tweet'
 import { Colors } from '@/consts'
-const tagsClass = css({
-  '> *': {
-    fontSize: '15px !important',
-    lineHeight: '1.5 !important',
-    color: 'var(--font-primary)'
-  }
-})
+
 const MetaObjectNode: FC<InnerNodeProps> = ({ node: n, setNodeState, nodeState }) => {
   const node = n as IWhiteboardNode & { type: 'metaObject' }
   const { expanded } = node

@@ -1,4 +1,6 @@
 import { atom, useAtom } from 'jotai'
+import { CustomElement } from '~/typings'
+import useEditorInstance from '@/core/components/editor/hooks/useEditorInstance'
 
 type DragHandleProps = {
   left?: number
@@ -12,6 +14,10 @@ export const EditorBlockHandleAtom = atom<DragHandleProps>({
   visible: false
 })
 
-const useEditorBlockHandle = () => useAtom(EditorBlockHandleAtom)
+const useEditorBlockHandle = () => {
+  const instance = useEditorInstance()
+  const store = instance.values.editorLevelStore
+  return useAtom(EditorBlockHandleAtom, { store })
+}
 
 export default useEditorBlockHandle

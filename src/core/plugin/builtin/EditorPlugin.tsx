@@ -2,7 +2,7 @@ import { CustomElement, RegisteredEditorElement } from '~/typings'
 import PluginApi from '../PluginApi'
 import { Heading, Paragraph } from '@/core/components/editor/elements'
 import ListItem, { OrderListItem } from '@/core/components/editor/elements/listItem'
-import MathElement from '@/core/components/editor/elements/Math'
+import MathElement from '@/core/components/editor/elements/math/Math'
 import Link from '@/core/components/editor/elements/Link'
 import Table from '@/core/components/editor/elements/table/Table'
 import TableCell from '@/core/components/editor/elements/table/Cell'
@@ -19,6 +19,8 @@ import Emoji from '@/core/components/editor/elements/Emoji'
 import { t } from 'i18next'
 import InlineMetaPicker from '@/core/components/editor/elements/InlineMetaPicker'
 import Synced from '@/core/components/editor/elements/synced'
+import Embeded from '@/core/components/editor/elements/Embeded'
+import MathBlock from '@/core/components/editor/elements/math/MathBlock'
 
 const dividerClassName = css({
   width: '100%',
@@ -117,6 +119,18 @@ const BuiltinTypeToRegistered: Record<CustomElement['type'], RegisterdEditorElem
       slashMenu: true,
       menuType: 'block',
       icon: 'park-transfer-data'
+    }
+  },
+  mathBlock: {
+    type: 'math-block',
+    name: () => t('editor.math-block'),
+    isVoid: true,
+    renderElement: props => <MathBlock {...props} />,
+    registerInMenu: {
+      addMenu: true,
+      slashMenu: true,
+      menuType: 'block',
+      icon: 'custom-equation'
     }
   },
   tableCell: {
@@ -262,6 +276,17 @@ const BuiltinTypeToRegistered: Record<CustomElement['type'], RegisterdEditorElem
       icon: 'park-high-light'
     }
   },
+  embeded: {
+    renderElement: props => <Embeded {...props} />,
+    type: 'embeded',
+    name: () => t('editor.embeded')
+    // registerInMenu: {
+    //   addMenu: true,
+    //   slashMenu: true,
+    //   menuType: 'block',
+    //   icon: 'park-high-light'
+    // }
+  },
   metaObject: {
     renderElement: props => <MetaObject {...props} />,
     type: 'metaObject',
@@ -270,6 +295,7 @@ const BuiltinTypeToRegistered: Record<CustomElement['type'], RegisterdEditorElem
   image: {
     renderElement: props => <Image {...props} />,
     type: 'image',
+    isVoid: true,
     name: () => t('editor.image'),
     registerInMenu: {
       menuType: 'media',
@@ -279,22 +305,16 @@ const BuiltinTypeToRegistered: Record<CustomElement['type'], RegisterdEditorElem
     }
   },
   iframe: {
-    renderElement: props => (
-      <div
-        onClick={e => {
-          console.log(e.currentTarget.querySelector('iframe')?.getIframe?.())
-        }}
-        style={{ width: '100%', position: 'relative', paddingBottom: '56.25%', boxShadow: 'var(--box-shadow)' }}
-      >
-        <iframe
-          style={{ width: '100%', height: '100%', position: 'absolute', inset: 0, border: 'none' }}
-          src={`${props.element.url}?enablejsapi=1`}
-        />
-        {props.children}
-      </div>
-    ),
+    renderElement: props => <Embeded {...props} />,
     type: 'iframe',
-    isVoid: true
+    isVoid: true,
+    name: () => t('editor.iframe'),
+    registerInMenu: {
+      addMenu: true,
+      slashMenu: true,
+      menuType: 'block',
+      icon: 'park-web-page'
+    }
   },
   'to-do': {
     renderElement: props => <ToDo {...props} />,

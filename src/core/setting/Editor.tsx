@@ -3,18 +3,21 @@ import KeyvalueStore from '@/api/stores/keyvalue.store'
 import { DefaultEditorSettings } from '@/api/lifycycle/startup/initializeSettings'
 import { useTranslation } from 'react-i18next'
 import { ClassName } from 'rendevoz'
-import { ButtonChooser, Icon } from '@/components'
+import { ButtonChooser, Icon, Switch } from '@/components'
 import { allBuiltInTypefaces } from '@/core/components/editor/components/setting/TypefaceSetting'
 import { useEffect, useRef } from 'react'
 import { useUpdate } from 'react-use'
 import { ISettingItem } from '@/core/setting/SettingItem'
 import SettingGroup from '@/core/setting/SettingGroup'
 import { editorPageWidth, fontSizes, lineSpacings } from '@/core/components/editor/components/setting/PageSetting'
+import { useSetting } from '@/core'
+import produce from 'immer'
 
 const EditorSetting = () => {
   const { t } = useTranslation()
   const editorSetting = KeyvalueStore.useValue('editorSettings') || DefaultEditorSettings
   const parentRef = useRef<HTMLElement>(null)
+  const [setting, setSetting] = useSetting()
   const update = useUpdate()
   useEffect(() => {
     update()
@@ -111,12 +114,29 @@ const EditorSetting = () => {
     <Content flex column ref={parentRef} gap={36}>
       <SettingGroup
         title={t('general.Reader mode')}
-        layout={renderOptions(editorSetting.readerMode, o =>
-          KeyvalueStore.updateOne('editorSettings', {
-            ...editorSetting,
-            readerMode: o
-          })
-        )}
+        layout={[
+          ...renderOptions(editorSetting.readerMode, o =>
+            KeyvalueStore.updateOne('editorSettings', {
+              ...editorSetting,
+              readerMode: o
+            })
+          ),
+          {
+            title: t('settings.Add paragraph spacing'),
+            children: (
+              <Switch
+                value={setting.editor.addSpacingInReaderMode}
+                onChange={v => {
+                  setSetting(
+                    produce(setting, draft => {
+                      draft.editor.addSpacingInReaderMode = v
+                    })
+                  )
+                }}
+              />
+            )
+          }
+        ]}
       />
       <SettingGroup
         title={t('general.Edit mode')}

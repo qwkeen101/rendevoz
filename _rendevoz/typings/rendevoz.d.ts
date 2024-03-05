@@ -4,7 +4,7 @@
 
 import { ReactElement } from 'react'
 import { GlobalInstances } from './globalInstances'
-import { ILayoutTab, TabData } from './layout'
+import { ILayoutTab, OpenTabOptions, TabData } from './layout'
 import { IWebpageInstance, IVideoInstance, IPdfInstance, IEditorInstance, IWhiteboardInstance } from './components'
 import { EditorEventMap, GlobalEventMap, IEventEmitter, IEventHandler, PdfEventMap, WhiteboardEventMap } from './event'
 import { NoteStore } from './stores'
@@ -21,40 +21,28 @@ export type IRendevoz = {
   InnerComponents: typeof InnerComponents
   Consts: typeof Consts
 }
-
-export type OpenTabOptions<K extends ILayoutTab['type']> = {
-  data: {
-    objectId?: number
-    metaType?: MetaObject['type']
-    onInstanceInitialized?: (instance: Extract<ILayoutTab, { type: K }>['instance']) => void
-  } & Omit<TabData[K], 'content'>
+export type ITabData = {
+  id: string
 }
-
 /**
  * Layout actions Api
  */
 declare const Layout: {
   closeAllTabs: (keepHome?: boolean) => void
-  registerTabData: <K extends ILayoutTab['type']>(data: TabData[K]) => void
-  getRegisteredTabContent: <K extends ILayoutTab['type']>(type: K) => TabData[K]['content'] | undefined
-  openNewTab: <T extends ILayoutTab['type']>({ data }: OpenTabOptions<T>) => void
-  /**
-   * get layoutTab from tabData and openTabData
-   */
-  initializeOneTab: <T extends ILayoutTab['type']>(
-    tabData: TabData[T],
-    openTabData: OpenTabOptions<T>['data']
-  ) => { layoutTab: ILayoutTab } | undefined
+  openNewTab: <T extends ILayoutTab['type']>({ data }: { data: OpenTabOptions<T> }) => void
+  closeTab: (tabId: string) => void
+  getFocusedTab: () => ITabData | undefined
   /**
    * Return tab id or undefined
    */
-  hasTargetTab: <T extends ILayoutTab['type']>(tabData: OpenTabOptions<T>['data']) => string | undefined
+  hasTargetTab: <T extends ILayoutTab['type']>(tabData: OpenTabOptions<T>) => string | undefined
   getTab: <T extends ILayoutTab['type']>(opts: { objectId?: number; type: T }) => ILayoutTab | undefined
   /**
    * get all tabs whose content visiblity is not hidden
    */
   getVisibleTabs: () => ILayoutTab[]
   makeTabActive: (tabId: string) => void
+  getRegisteredTabContent: <K extends ILayoutTab['type']>(type: K) => TabData[K]['content'] | undefined
   getTabById: (id: string) => ILayoutTab | undefined
 }
 

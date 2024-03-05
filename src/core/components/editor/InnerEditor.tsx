@@ -1,9 +1,9 @@
-import { useDebounceFn, useMemoizedFn, useSelectAtomValue } from '@/hooks'
+import { useDebounceFn, useMemoizedFn, useSelectAtomValue, useSelectGlobalAtomValue } from '@/hooks'
 import isHotkey from 'is-hotkey'
 import { CSSProperties, FC, memo, RefObject, useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { Descendant, Editor, Node, Path, Transforms } from 'slate'
 import { Editable, ReactEditor, RenderElementProps, RenderLeafProps, Slate, useSlateStatic } from './slate-react'
-import EditorToolbar from './components/toolbar'
+import EditorToolbar from './components/EditorSelectionToolbar'
 import HOTKEYS from './consts/hotkeys'
 import { CustomEditor, CustomElement } from '~/typings'
 import Divider from './Divider'
@@ -34,51 +34,45 @@ import { Colors } from '@/consts'
 import { EditorStateAtom } from '@/core/components/editor/hooks/useEditorState'
 import { DEFAULT_BACKGROUND_COLORS } from '@/components/picker/colorPicker'
 import useGlobalKey from '@/core/components/editor/hooks/keyboards/useGlobalKey'
+import { SettingAtom } from '@/core'
 
 const ReadOnlyEditorClassName = css({
   table: {
     width: '100%',
     borderSpacing: 0,
-    table: {
-      border: 'none',
-      tr: {
-        border: 'none'
-      },
-      td: {
-        border: 'none'
-      }
-    }
-  },
-  '.ParagraphBlock': {
-    marginBottom: 'calc((var(--font-size) / 16 * 1rem) - 3px)',
-    borderRadius: 0,
-    paddingLeft: 0
-  },
-  tbody: {
+    border: 'none',
     tr: {
-      borderBottom: '1px solid rgba(40,49,59,0.12)'
+      border: 'none'
     },
     td: {
+      '.ParagraphBlock': {
+        marginBottom: 2
+      },
       padding: '0.5em'
     }
   },
+  '.ParagraphBlock': {
+    borderRadius: 0,
+    paddingLeft: 0
+  },
   cite: ClassName.description()
 })
-
+const AddSpacingClassName = css({
+  '.ParagraphBlock': {
+    marginBottom: 'calc((var(--font-size) / 16 * 1rem) - 3px)'
+  }
+})
 export type InnerEditorProps = {
   editor: CustomEditor
   defaultValue: Descendant[]
   scrollElementRef?: RefObject<HTMLDivElement | null>
   onChange?: (value: Descendant[]) => void
   showToolbar?: boolean
-  onBlockMouseEnter: (e: PointerEvent, element: CustomElement) => void
-  onBlockMouseLeave: (e: PointerEvent, element: CustomElement) => void
-  onBlockMouseMove?: (e: PointerEvent, element: CustomElement) => void
   editorClassName?: string
 }
 
 const InnerEditor: FC<InnerEditorProps> = memo(
-  ({ editor, defaultValue, onBlockMouseEnter, onBlockMouseLeave, onBlockMouseMove, onChange, scrollElementRef, editorClassName }) => {
+  ({ editor, defaultValue, onChange, scrollElementRef, editorClassName }) => {
     const scrollElement = scrollElementRef?.current
     const renderInnerElement = useCallback((props: RenderElementProps) => <Element {...props} />, [])
     const renderLeaf = useCallback((props: RenderLeafProps) => <Leaf {...props} />, [])
@@ -218,9 +212,6 @@ const InnerEditor: FC<InnerEditorProps> = memo(
               key={element.id}
               id={String(element.id)}
               element={element}
-              onMouseEnter={onBlockMouseEnter}
-              onMouseLeave={onBlockMouseLeave}
-              onMouseMove={onBlockMouseMove}
               attributes={attributes}
               type={element.type}
               scrollElementRef={scrollElementRef}
@@ -234,7 +225,7 @@ const InnerEditor: FC<InnerEditorProps> = memo(
       },
       [scrollElement]
     )
-
+    const addParagraphSpacing = useSelectGlobalAtomValue(SettingAtom, s => s.editor.addSpacingInReaderMode)
     const globalKeydownHandler = useMemoizedFn((e: KeyboardEvent) => {
       handleTabKey(e)
     })
@@ -390,7 +381,8 @@ const InnerEditor: FC<InnerEditorProps> = memo(
             EditorClasses.TextBoxClass,
             EditorClasses.DefaultContentClass,
             readOnly && ReadOnlyEditorClassName,
-            editorClassName
+            editorClassName,
+            readOnly && addParagraphSpacing && AddSpacingClassName
           )}
           scrollElementRef={scrollElementRef}
         ></Editable>

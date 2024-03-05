@@ -13,6 +13,9 @@ import useEditorInstance from '@/core/components/editor/hooks/useEditorInstance'
 import isHotkey from 'is-hotkey'
 import { KEY } from '@/consts'
 import useReadOnlyEditor from '@/core/components/editor/hooks/useReadOnly'
+import { useSetAtom } from 'jotai'
+import { EditorStateAtom } from '@/core/components/editor/hooks/useEditorState'
+import { ReactEditor } from '@/core'
 
 const useEditorSelect = (editor: CustomEditor, scrollElement?: HTMLElement | null) => {
   const scrollManager = useMemo(() => new ScrollManager(), [])
@@ -29,35 +32,28 @@ const useEditorSelect = (editor: CustomEditor, scrollElement?: HTMLElement | nul
     if (target.getAttribute('role') === 'inner-editor') {
       isPressed.current = true
     }
-    if (instance.values.selectedBlocks.size > 0) {
-      instance.values.selectingAll = false
-      const selected = instance.values.selectedBlocks
-      if (e.target instanceof HTMLElement) {
-        const closestBlock = e.target.closest('[data-type="block"]')
-        if (closestBlock) {
-          const id = getElementId(closestBlock)
-          if (id) {
-            const originSelected = selected.get(id)
-            selected.delete(id)
-            selected.forEach(i => {
-              i.removeSelectedState?.()
-            })
-            selected.clear()
-            if (originSelected) {
-              selected.set(id, originSelected)
-            }
-          }
-        } else {
-          selected.forEach(i => i.removeSelectedState?.())
-          selected.clear()
+    let deselectAll = true
+
+    instance.values.selectingAll = false
+    if (instance.values.selectedBlocks.size === 1 && e.target instanceof HTMLElement) {
+      const closestBlock = e.target.closest('.selectable')?.closest('[data-type="block"]')
+      if (closestBlock) {
+        const element = ReactEditor.toSlateNode(editor, closestBlock)
+        const onlyOneSelected = instance.values.selectedBlocks.keys().next().value
+        if (element.id === onlyOneSelected) {
+          deselectAll = false
         }
-      } else {
-        selected.forEach(i => i.removeSelectedState?.())
-        selected.clear()
       }
     }
+    if (deselectAll) {
+      instance.selectOps?.deselectAll()
+    }
+
     // target is self
     if (target === e.currentTarget) {
+      isPressed.current = true
+    }
+    if (!target.closest('.selectable')) {
       isPressed.current = true
     }
   }
@@ -223,14 +219,17 @@ const useEditorSelect = (editor: CustomEditor, scrollElement?: HTMLElement | nul
         if (instance.values.selectedBlocks.size > 0) {
           instance.values.selectingAll = false
           const selected = instance.values.selectedBlocks
-          selected.forEach(i => i.removeSelectedState?.())
+          selected.forEach(i => {
+            i.removeSelectedState?.()
+            i.pathRef?.unref()
+          })
           selected.clear()
         }
       },
       selectBlock: blockId => {
         const idArr = Array.isArray(blockId) ? blockId : [blockId]
         idArr.forEach(id => {
-          instance.values.selectedBlocks.set(id, {})
+          instance.values.selectedBlocks.set(id, instance.values.selectedBlocks.get(id) || {})
           ID_TO_ELEMENTS_MAP.get(editor)?.get(id)?.selectBlock()
         })
       }

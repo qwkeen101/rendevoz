@@ -2,7 +2,7 @@ import { toast } from 'react-hot-toast'
 import { GlobalInstances, IEditorInstance, IMediaInstance, IWebpageInstance, IPdfInstance, MetaObject } from '~/typings'
 import { globalStore, MetaStore, ObjectStore } from '../../api/stores'
 import { metaObjectsAtom, objectIdToMetaObjectIdMapAtom, TypeToRegisteredMetaObject } from '../../api/stores/meta/meta.store'
-import { ipcInstance } from '@/plugins'
+import { ipcInstance } from '@/electron'
 import { waitFor } from '@/utils/functions'
 import { GlobalTextSearchInstance } from '../global/GlobalTextSearch'
 import { GlobalTranslateInstance } from '../global/translate/GlobalTranslatePanel'
@@ -278,7 +278,12 @@ const openEditor = (noteId: number): Promise<IEditorInstance> => {
       data: {
         type: 'note',
         objectId: noteId,
-        onInstanceInitialized: (i: IEditorInstance) => res(i)
+        onInstanceInitialized: (i: IEditorInstance) => {
+          setTimeout(() => {
+            i.focusTitle?.(true)
+          }, 100)
+          res(i)
+        }
       }
     })
     updateViewAt(noteId)

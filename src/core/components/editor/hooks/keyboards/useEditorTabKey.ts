@@ -34,7 +34,7 @@ const useEditorTabKey = (instance: IEditorInstance) => {
         })
       } else {
         // indent or de indent current block
-        if (instance.isSelectionCollapsed?.()) {
+        if (instance.isSelectionCollapsed?.() && ReactEditor.isFocused(editor)) {
           const currentBlock = blockOps.getAboveBlock?.()
           if (currentBlock) {
             if (blockOps.isIndentableBlock?.(currentBlock[0].type)) {

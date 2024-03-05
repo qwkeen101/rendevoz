@@ -3,6 +3,7 @@ import { CustomEditor, CustomElement, ElementFunctions, INoteLabel } from '.'
 import { CustomText, EmptyText } from '.'
 import { EditorOverlayManager } from '../../../../src/core/components/editor/components/overlay/useEditorOverlay'
 import { XYPosition } from '~/typings'
+import { createStore } from 'jotai'
 
 export type IEditorOverlayContent =
   | 'emojiPicker'
@@ -13,6 +14,7 @@ export type IEditorOverlayContent =
   | 'linkForm'
   | 'transformMenu'
 export type IEditorInstance = Partial<{
+  focusTitle: (onlyWhenEmpty?: boolean) => void
   getTitle: () => string
   scrollToBlock: (options: { blockId?: number; highlight?: boolean }) => Promise<void>
   selectBlock: (options: { blockId?: number }) => Promise<void>
@@ -28,8 +30,11 @@ export type IEditorInstance = Partial<{
   // inside meta ids
   getInsideMetas: () => number[]
   blockOps: {
+    getClosestOutestBlock: (windowPoint: XYPosition, container?: HTMLElement) => CustomElement | undefined
     isBlockEmpty: (customElement: CustomElement) => boolean
     copyLink: VoidFunction
+    setBlockFuncs: (blockId: number, funcs: Partial<ElementFunctions>) => void
+    removeBlockFuncs: (blockId: number) => void
     duplicateSelectedBlocks: VoidFunction
     getCurrentCursorBounding: () => DOMRect | undefined
     getCurrentCursorBlockBounding: () => DOMRect | undefined
@@ -41,6 +46,7 @@ export type IEditorInstance = Partial<{
     insertBlockIndent: (path: Path, recursive?: boolean) => void
     minusBlockIndent: (path: Path, recursive?: boolean) => void
     transformBlockType: (path: Path, newType: string) => void
+    getBlockFuncs: (blockId: number) => ElementFunctions | undefined
   }
   overlayOps: {
     open: (content: IEditorOverlayContent, position: XYPosition) => void
@@ -108,6 +114,7 @@ export type IEditorInstance = Partial<{
   getElementFunctionById: (id: number) => ElementFunctions | undefined
 }> & {
   values: {
+    editorLevelStore: ReturnType<typeof createStore>
     selectingAll?: boolean
     // indicator's path and element are safe to use
     indicator?: {

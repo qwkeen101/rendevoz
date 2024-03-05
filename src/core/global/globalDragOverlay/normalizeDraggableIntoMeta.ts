@@ -90,33 +90,42 @@ export default async (
       if (!fromMeta) break
       // turn in sync block when drag blocks from one note to another note or whiteboard
       const elements = dragElement.elements ? dragElement.elements : [dragElement.element]
-      const syncBlockMeta = (
-        await ObjectStore('syncedBlock').addOneWithMeta(
-          {
-            blockChildren: elements,
-            syncVersion: 1,
-            syncedMetaIds: [fromMeta.id]
-          },
-          {
-            silent: true,
-            currentMeta: {
-              name: Node.string({ children: elements }),
-              fromObject: {
-                type: fromMeta.type,
-                metaId: fromMeta.id
+      let syncMeta: MetaObject | undefined = undefined
+      if (elements.length > 1 && elements.some(i => i.type === 'synced')) {
+        break
+      }
+      if (elements.length === 1 && elements[0].type === 'synced') {
+        syncMeta = await MetaStore.getMetaObjectById(elements[0].originId)
+      } else {
+        syncMeta = (
+          await ObjectStore('syncedBlock').addOneWithMeta(
+            {
+              blockChildren: elements,
+              syncVersion: 1,
+              syncedMetaIds: [fromMeta.id]
+            },
+            {
+              silent: true,
+              currentMeta: {
+                name: Node.string({ children: elements }),
+                fromObject: {
+                  type: fromMeta.type,
+                  metaId: fromMeta.id
+                }
               }
             }
-          }
-        )
-      ).meta
+          )
+        ).meta
+      }
+      if (!syncMeta) break
       Rendevoz.Events.Emit.GlobalEventEmitter.emit('editor', {
         type: 'turnElementsToSyncBlock',
         data: {
-          syncBlockMetaId: syncBlockMeta.id,
+          syncBlockMetaId: syncMeta.id,
           draggingDetails: dragElement
         }
       })
-      Object.assign(normalizedMetaObject, { ...syncBlockMeta })
+      Object.assign(normalizedMetaObject, { ...syncMeta })
       if (enableDragFromEditorLink && enableAll) {
         const metaLink: PartialWithId<MetaLink> = {
           sourceId: fromMeta.id,

@@ -1,50 +1,51 @@
 import { useMergedRef, useSelectAtomValue } from '@/hooks'
 import classNames from 'classnames'
-import React, { cloneElement, FC, memo, MouseEvent, RefObject, useCallback, useEffect, useLayoutEffect, useRef } from 'react'
+import React, { cloneElement, FC, memo, MouseEvent, RefObject, useCallback, useLayoutEffect, useRef } from 'react'
 import { ReactEditor, RenderElementProps, useSlateStatic } from '../../slate-react'
 import { CustomElement } from '~/typings'
 import { AnimatePresence, motion } from 'framer-motion'
 import styles from './index.module.less'
 import './index.less'
 import { ID_TO_ELEMENTS_MAP } from '../../weakMaps'
-import { css } from '@emotion/css'
 import { useGlobalIsDragging } from '@/core'
 import { Editor, Range, Transforms } from 'slate'
-import { NODE_TO_PARENT } from '../../slate-react/utils/weak-maps'
 import useBlockContentSearch from '@/core/components/editor/elements/block/useBlockContentSearch'
 import useEditorInstance from '@/core/components/editor/hooks/useEditorInstance'
 import useBlockSelect from '@/core/components/editor/elements/block/useBlockSelect'
 import { useEditorComposing } from '@/core/components/editor/slate-react/components/editable'
 import { EditorStateAtom } from '@/core/components/editor/hooks/useEditorState'
 import { Colors } from '@/consts'
+import useBlockOverflow from '@/core/components/editor/elements/block/useBlockOverflow'
+import useBlockWidth from '@/core/components/editor/elements/block/useBlockWidth'
+import BlockSelectionRenderer from '@/core/components/editor/elements/block/BlockSelectionRenderer'
+import { useUnmount } from 'react-use'
+import useBlockSelectable from '@/core/components/editor/elements/block/useBlockSelectable'
+import useBlockPadding from '@/core/components/editor/elements/block/useBlockPadding'
+import EditorSettings from '@/core/components/editor/consts/settings'
 
 type BlockProps = {
   blockId: number
   type?: string
   ratio?: number
-  onMouseEnter?: (e: MouseEvent, element: CustomElement) => void
-  onMouseLeave?: (e: MouseEvent, element: CustomElement) => void
-  onMouseMove?: (e: MouseEvent, element: CustomElement) => void
   element?: CustomElement
   scrollElementRef: RefObject<HTMLElement>
 }
 
-const CardBlocks = ['pdf', 'book-highlight', 'note']
-const disableOverflowTypes = ['list-item', 'order-list-item', 'table', 'synced', 'column', 'columnList', 'code-block']
 const Block: FC<React.DetailedHTMLProps<React.HTMLAttributes<HTMLDivElement>, HTMLDivElement> & BlockProps & RenderElementProps> = memo(
-  ({ scrollElementRef, blockId, children, ratio, type, attributes, element, onMouseEnter, onMouseLeave, onMouseMove, ...rest }) => {
+  ({ scrollElementRef, blockId, children, ratio, type, attributes, element, ...rest }) => {
     const blockRef = useRef<HTMLDivElement>(null)
     const columnRef = useRef<HTMLDivElement>(null)
     const editor = useSlateStatic()
-    const map = ID_TO_ELEMENTS_MAP.get(editor)
     const mergedChildrenRef = useMergedRef(blockRef, attributes.ref)
     const [isGlobalDragging] = useGlobalIsDragging()
     const instance = useEditorInstance()
     const path = ReactEditor.findPath(editor, element)
     const alwaysShowPlaceholder = useSelectAtomValue(EditorStateAtom, s => s.layout?.alwaysShowPlaceholder)
     useBlockContentSearch(element, instance)
+    const blockWidth = useBlockWidth(element, editor)
+    const blockOverflow = useBlockOverflow(element)
     const isComposing = useEditorComposing()
-    const { isSelected, handleCollisionSelectBlock, selectBlock } = useBlockSelect({
+    const { handleCollisionSelectBlock, selectBlock, isSelected } = useBlockSelect({
       element,
       instance,
       blockRef,
@@ -78,7 +79,10 @@ const Block: FC<React.DetailedHTMLProps<React.HTMLAttributes<HTMLDivElement>, HT
           height: number
         }
       | undefined => {
-      const blockBound = blockRef.current?.getBoundingClientRect()
+      const block = blockRef.current
+      if (!block) return
+      const selectable = block.classList.contains('selectable') ? block : block.querySelector('.selectable')
+      const blockBound = selectable?.getBoundingClientRect()
       if (blockBound) {
         const { left: bleft, top: btop, width: bwidth, height: bheight } = blockBound
         switch (direction) {
@@ -114,7 +118,7 @@ const Block: FC<React.DetailedHTMLProps<React.HTMLAttributes<HTMLDivElement>, HT
       }
     }
 
-    useEffect(() => {
+    useLayoutEffect(() => {
       if (element.type === 'column') {
         const width = `calc(( 100% - ${
           46 * ((columnRef.current?.parentElement?.querySelectorAll("[data-type='column']").length || 2) - 1)
@@ -126,7 +130,7 @@ const Block: FC<React.DetailedHTMLProps<React.HTMLAttributes<HTMLDivElement>, HT
     }, [ratio])
 
     useLayoutEffect(() => {
-      map?.set(blockId, {
+      instance.blockOps?.setBlockFuncs(blockId, {
         selectBlock,
         collisionSelectBlock: handleCollisionSelectBlock,
         getElement: () => element,
@@ -140,23 +144,10 @@ const Block: FC<React.DetailedHTMLProps<React.HTMLAttributes<HTMLDivElement>, HT
         },
         getPath: () => ReactEditor.findPath(editor, element)
       })
-      return () => {
-        map?.delete(blockId)
-      }
     })
-
-    const handleMouseEnter = useCallback(e => onMouseEnter?.(e, element), [onMouseEnter, element])
-    const handleMouseLeave = useCallback(e => onMouseLeave?.(e, element), [onMouseLeave, element])
-    const handleMouseMove = useCallback(
-      e => {
-        if (NODE_TO_PARENT.get(element)?.type === 'tableCell') {
-          e.stopPropagation()
-        }
-        onMouseMove?.(e, element)
-      },
-      [onMouseMove, element]
-    )
-
+    useUnmount(() => {
+      instance.blockOps?.removeBlockFuncs(blockId)
+    })
     const { background, color, align, cardType } = element
     const nestedBlocks = ['table']
     let isBlockEmpty = instance.blockOps?.isBlockEmpty(element)
@@ -166,8 +157,10 @@ const Block: FC<React.DetailedHTMLProps<React.HTMLAttributes<HTMLDivElement>, HT
         isBlockEmpty = false
       }
     }
-
+    const isSelectable = useBlockSelectable(element)
+    const scrollPadding = useBlockPadding(element, editor)
     const renderChildren = () => (
+      // @ts-ignore
       <div
         key={blockId}
         {...attributes}
@@ -179,43 +172,41 @@ const Block: FC<React.DetailedHTMLProps<React.HTMLAttributes<HTMLDivElement>, HT
           path[0] === 0 &&
           (editor.selection ? Range.isCollapsed(editor.selection) && Range.includes(editor.selection, path) : true)
         }
-        onPointerEnter={handleMouseEnter}
-        onPointerLeave={handleMouseLeave}
-        onPointerMove={handleMouseMove}
         suppressContentEditableWarning
         data-level={element?.level}
+        contentEditable={Editor.isVoid(editor, element) ? 'false' : undefined}
         style={{
+          ...rest.style,
           textAlign: align,
-          '--block-bg': Colors.getAdaptColor(background),
+          '--block-bg': EditorSettings.NoBackgroundTypes.has(element.type) ? undefined : Colors.getAdaptColor(background),
           '--block-font-color': color,
+          width: blockWidth,
+          maxWidth: blockWidth,
           color: 'var(--block-font-color)',
-          background: nestedBlocks.includes(type) && background ? `var(--block-bg)` : undefined,
-          overflow: disableOverflowTypes.includes(type) ? 'visible' : 'hidden',
+          overflow: blockOverflow,
           pointerEvents: isGlobalDragging ? 'none' : undefined,
-          ...rest.style
+          '--editor-scroll-padding': scrollPadding
+            ? scrollPadding === 'column-table' || scrollPadding === 'group-in-column'
+              ? '8px 18px 18px 8px'
+              : '8px max(calc((var(--editor-width) - var(--editor-max-width))/2), var(--editor-padding-left)) 18px'
+            : undefined,
+          padding:
+            scrollPadding && scrollPadding !== 'group-in-column' && scrollPadding !== 'group'
+              ? 'var(--editor-scroll-padding)'
+              : rest.style?.padding
         }}
         className={classNames(
           'BlockCommon',
           type === 'columnList' && styles.ColumnListBlock,
           type === 'column' && styles.ColumnBlock,
           type?.startsWith('heading') && styles.HeadingBlock,
-          type !== 'column' && type !== 'columnList' && !type?.startsWith('heading') && 'ParagraphBlock'
+          type !== 'column' && type !== 'columnList' && !type?.startsWith('heading') && 'ParagraphBlock',
+          isSelectable && 'selectable'
         )}
         {...rest}
       >
         {children}
-        <AnimatePresence>
-          {isSelected && (
-            <motion.div
-              transition={{ duration: 0.2 }}
-              key="selected"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className={'SelectedBlock'}
-            ></motion.div>
-          )}
-        </AnimatePresence>
+        <BlockSelectionRenderer element={element} blockRef={blockRef} selected={isSelected} />
       </div>
     )
 

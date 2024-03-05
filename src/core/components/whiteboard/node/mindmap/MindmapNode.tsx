@@ -9,6 +9,7 @@ import handleAddSubNode from '@/core/components/whiteboard/node/mindmap/handleAd
 import Id from '@/utils/id'
 import useMindmapDragHandler from '@/core/components/whiteboard/node/mindmap/drag/useMindmapDragHandler'
 import { Colors } from '@/consts'
+import { updateTree } from '@/core/components/whiteboard/node/mindmap/utils/tree'
 
 // calculate position based on root
 export default ({
@@ -24,6 +25,7 @@ export default ({
   const [links, setLinks] = useState<
     {
       sourceId: number
+      label?: string
       targetId: number
       direction: 'left' | 'right'
     }[]
@@ -48,7 +50,8 @@ export default ({
           linkz.push({
             sourceId: node.root,
             targetId: c.root,
-            direction
+            direction,
+            label: c.label
           })
         }
         traverse(c, direction)
@@ -62,6 +65,7 @@ export default ({
         linkz.push({
           sourceId: node.id,
           targetId: n.root,
+          label: n.label,
           direction: 'right'
         })
         traverse(n, 'right')
@@ -122,6 +126,20 @@ export default ({
     }
     nodeFunc.drawMindmapEdges = drawAllEdges
   }
+  const updateEdgeLabel = (direction: 'right' | 'left', sourceId: number, targetId: number, newLabel: string) => {
+    if (direction === 'right' && node.rightChildren) {
+      const newRight = updateTree(node.rightChildren, sourceId, targetId, {
+        label: newLabel
+      })
+      instance.updateNode?.(node.id, w => ({ ...w, rightChildren: newRight }), true)
+    }
+    if (direction === 'left' && node.leftChildren) {
+      const newLeft = updateTree(node.leftChildren, sourceId, targetId, {
+        label: newLabel
+      })
+      instance.updateNode?.(node.id, w => ({ ...w, leftChildren: newLeft }), true)
+    }
+  }
   return (
     <>
       {nodeRenderer(node.nodeType || 'text')}
@@ -131,6 +149,8 @@ export default ({
         createPortal(
           links.map(link => (
             <Edge
+              clickEditLabel
+              onLabelChange={v => updateEdgeLabel(link.direction, link.sourceId, link.targetId, v)}
               isMindmapConnection={true}
               strokeWidth={3}
               disableReposition
@@ -141,6 +161,7 @@ export default ({
                 id: `${mindmapCoreId}_${link.sourceId}_${link.targetId}`,
                 sourceId: link.sourceId,
                 targetId: link.targetId,
+                label: link.label,
                 sourcePosition: link.direction === 'right' ? 'right' : 'left',
                 targetPosition: link.direction === 'right' ? 'left' : 'right',
                 color: node.edgeColor || Colors.Font.Primary

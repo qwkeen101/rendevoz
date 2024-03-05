@@ -23,7 +23,10 @@ const useWhiteboardShortcut = () => {
       if (isHotkey(KEY.Tab, e)) {
         const target = e.target
         if (flow.parentContainerEle?.contains(target)) {
-          e.preventDefault()
+          if (!target.closest?.('input,textarea,[contenteditable]')) {
+            console.log('prevent')
+            e.preventDefault()
+          }
         }
       }
       if (isHotkey(KEY.Escape, e)) {

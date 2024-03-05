@@ -51,31 +51,6 @@ const useSidebarItemDrag = (options: {
       setHovered(false)
     },
     onDragOver: async element => {
-      if (isPressedRef.current) {
-        DragState.startDrag?.()
-        sidebarDraggingState.current = {
-          draggingItemId: id,
-          draggingItemType: type,
-          sourceFromId: parentId,
-          sourceFromType: parentType,
-          itemIsInRoot: isInRoot
-        }
-        switch (type) {
-          case 'collection': {
-            DragState.setDraggingDetails({
-              type: 'collection',
-              collectionId: id
-            })
-            break
-          }
-          case 'meta': {
-            DragState.setDraggingDetails({
-              type: 'metaElement',
-              metaId: id
-            })
-          }
-        }
-      }
       if (id !== sidebarDraggingState.current?.draggingItemId) {
         setHovered(true)
       }
@@ -97,6 +72,7 @@ const useSidebarItemDrag = (options: {
       if (prevDraggingState?.draggingItemId === id) return
       if (!droppable || !id || !type) return
       if (isDroppableItem(type)) {
+        console.log('yes')
         if (prevDraggingState) {
           moveItems({
             targetToType: type,
@@ -133,7 +109,6 @@ const useSidebarItemDrag = (options: {
       }
     },
     onDragEnd: () => {
-      isPressedRef.current = false
       setTimeout(() => {
         setDroppable(false)
         setHovered(false)

@@ -193,13 +193,6 @@ export interface TabData extends TabBase, DockDataBase {
    * - when value is undefined: content is rendered normally as react component
    */
   cached?: boolean
-  /**
-   * @deprecated no longer needed
-   */
-  cacheContext?: React.Context<any>
-
-  noteId?: number
-
   icon?: ReactNode
 }
 

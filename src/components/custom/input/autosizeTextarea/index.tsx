@@ -66,6 +66,7 @@ const TextareaAutosize: React.ForwardRefRenderFunction<HTMLTextAreaElement, Text
     }
   }
   useEffect(() => {
+    resizeTextarea()
     if (props.autoFocus) {
       setTimeout(() => {
         libRef.current?.focus()

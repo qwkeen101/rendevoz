@@ -1,6 +1,6 @@
 import { assignProperties } from '@/utils'
-import { atom, useAtomValue } from 'jotai'
-import { RefObject } from 'react'
+import { atom, createStore, useAtomValue } from 'jotai'
+import { createContext, RefObject, useContext } from 'react'
 import { CustomEditor, IEditorInstance } from '~/typings'
 import { goToBlock, goToTextHighlight, highlightBlock, selectBlock, waitForEditorContentInitialized } from '../utils'
 import { Editor, Node, Range } from 'slate'
@@ -14,8 +14,11 @@ import assignSearchOps from '@/core/components/editor/hooks/instance/assignSearc
 import assignLabelOps from '@/core/components/editor/hooks/instance/assignLabelOps'
 
 export const EditorInstanceAtom = atom<IEditorInstance>({})
-
-const useEditorInstance = () => useAtomValue(EditorInstanceAtom)
+export const EditorStoreContext = createContext<ReturnType<typeof createStore> | null>(null)
+const useEditorInstance = () => {
+  const store = useContext(EditorStoreContext)
+  return useAtomValue(EditorInstanceAtom, { store: store })
+}
 
 export const useAssignEditorInstance = (editor: CustomEditor, scrollElementRef: RefObject<HTMLElement>) => {
   const instance = useEditorInstance()
@@ -93,7 +96,7 @@ export const useAssignEditorInstance = (editor: CustomEditor, scrollElementRef: 
       })),
     selectBlock: async opts => {
       if (opts.blockId !== undefined) {
-        await selectBlock(opts.blockId, instance)
+        instance.selectOps?.selectBlock(opts.blockId)
       }
     },
     scrollToHighlight: async opts => {

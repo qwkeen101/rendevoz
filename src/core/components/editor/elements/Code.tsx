@@ -2,7 +2,7 @@ import { FC, useState } from 'react'
 import { ReactEditor, RenderElementProps, useSlateStatic } from '../slate-react'
 import { CustomElement } from '~/typings'
 import { Transforms } from 'slate'
-import { Content } from '@/components'
+import { Content, Icon } from '@/components'
 import Select from '@/components/base/select'
 import { capitalize } from 'lodash'
 import FontSize from '@/consts/font'
@@ -11,10 +11,12 @@ import CodeEditor from '@/core/components/code/CodeEditor'
 import { CodeLangs } from '@/core/components/code/CodeHeader'
 import { ClassName } from 'rendevoz'
 import { Colors } from '@/consts'
-import { useIsIn } from '@/hooks'
+import { useIsIn, useSelectGlobalAtomValue } from '@/hooks'
+import { SettingAtom } from '@/core'
 
 const Code: FC<RenderElementProps> = ({ element, attributes, children }) => {
   const codeEle = element as CustomElement & { type: 'code-block' }
+  const defaultLang = useSelectGlobalAtomValue(SettingAtom, s => s.code.defaultLanguage)
   const editor = useSlateStatic()
   const readOnly = useReadOnlyEditor()
   const { ref, isIn } = useIsIn()
@@ -47,10 +49,10 @@ const Code: FC<RenderElementProps> = ({ element, attributes, children }) => {
           placeholder={'Add title...'}
           defaultValue={codeEle.title}
           style={{
-            width: '100%',
             opacity: codeEle.title ? 1 : isIn ? 1 : 0,
             transition: 'opacity 0.2s ease',
-            paddingLeft: 4
+            paddingLeft: 4,
+            flex: 1
           }}
           onBlur={e => {
             Transforms.setNodes(
@@ -64,33 +66,47 @@ const Code: FC<RenderElementProps> = ({ element, attributes, children }) => {
             )
           }}
         />
-        <Select
-          closeOnSelect
-          value={codeEle.language || 'typescript'}
-          menuStyle={{
-            overflowY: 'auto',
-            maxHeight: 300
-          }}
-          options={CodeLangs.sort().map(i => ({
-            value: i,
-            children: capitalize(i)
-          }))}
-          containerStyle={{
-            flexShrink: 0
-          }}
-          align={'center'}
-          onSelect={v =>
-            Transforms.setNodes(
-              editor,
-              {
-                language: v[0]
-              },
-              {
-                at: ReactEditor.findPath(editor, element)
-              }
-            )
-          }
-        ></Select>
+        <Content flex alignItems={'center'} gap={6} style={{ flexShrink: 0 }}>
+          <Icon
+            size={16}
+            name={'park-copy-one'}
+            tooltip={'Copy'}
+            style={{
+              opacity: isIn ? 1 : 0
+            }}
+            onClick={() => {
+              codeEle.content && navigator.clipboard.writeText(codeEle.content)
+            }}
+            className={ClassName.flatButton(3, '4px')}
+          />
+          <Select
+            closeOnSelect
+            value={codeEle.language || defaultLang || 'typescript'}
+            menuStyle={{
+              overflowY: 'auto',
+              maxHeight: 300
+            }}
+            options={CodeLangs.sort().map(i => ({
+              value: i,
+              children: capitalize(i)
+            }))}
+            containerStyle={{
+              flexShrink: 0
+            }}
+            align={'center'}
+            onSelect={v =>
+              Transforms.setNodes(
+                editor,
+                {
+                  language: v[0]
+                },
+                {
+                  at: ReactEditor.findPath(editor, element)
+                }
+              )
+            }
+          ></Select>
+        </Content>
       </Content>
       <div
         onKeyDown={e => {

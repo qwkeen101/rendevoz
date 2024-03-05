@@ -28,7 +28,7 @@ export default memo(() => {
     }
   }
   return (
-    <Content flex gap={2} style={{ padding: '0px 50px' }}>
+    <Content flex gap={2} style={{ padding: '0px var(--page-padding-right) 0px var(--page-padding-right)' }}>
       {currentViewGroups.map(i => {
         if (i.hidden) return null
         let showAddMore = true

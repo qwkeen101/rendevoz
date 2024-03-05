@@ -87,6 +87,9 @@ export type IAppearanceSetting = {
 }
 export type IShortCutSetting = {
   shortcut: Partial<{
+    switchToPrevTab: ShortCut | null
+    switchToNextTab: ShortCut | null
+    closeCurrentTab: ShortCut | null
     openObjectPanel: ShortCut | null
     openScreenShot: ShortCut | null
     quickCreateObject: ShortCut | null
@@ -134,6 +137,7 @@ export type IComponentSetting = {
   }
   editor: {
     objectAutoBecomeInline: boolean
+    addSpacingInReaderMode?: boolean
   }
   translate: {
     autoGotoHoverText: boolean
@@ -148,6 +152,9 @@ export type IComponentSetting = {
     customRenderBackground?: string
     customRenderFont?: string
     defaultLabelColor: string
+  }
+  code: {
+    defaultLanguage?: string
   }
   video: {
     loop: boolean

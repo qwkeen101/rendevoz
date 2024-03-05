@@ -38,10 +38,13 @@ const WhiteboardPanzoom = memo(() => {
         },
         zoomDoubleClickSpeed: 1,
         beforeMouseDown: e => {
+          console.log(e)
           const pointerMode = flow.parentContainerEle?.getAttribute('data-pointer-mode')
           if (pointerMode === 'pan') {
             return false
           }
+
+          if (e.target?.closest('textarea,input,[contenteditable]')) return true
           if (e.button === 1) {
             return false
           }

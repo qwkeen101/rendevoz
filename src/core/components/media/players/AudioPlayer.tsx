@@ -83,6 +83,7 @@ export default () => {
       column={columnMode}
     >
       {!floated &&
+        mediaState.layout?.showAudioThumbnail !== false &&
         !(columnLayout && sidebarOpen) &&
         (mediaState.thumbnail ? (
           <img
@@ -112,13 +113,17 @@ export default () => {
             fontWeight: 600,
             fontSize: floated ? 14 : columnMode ? 18 : 30,
             cursor: floated ? 'grab' : 'unset',
-            width: 'fit-content'
+            width: 'fit-content',
+            ...mediaState.styles?.titleStyle
           }}
         >
           <div className={floated ? 'ellipsis-font-1' : undefined}>{mediaState.name}</div>
         </div>
         {!floated && !(columnLayout && sidebarOpen) && (
-          <div className={ClassName.ellipsisFont(5)} style={{ fontSize: 14, color: Colors.Font.Transparent }}>
+          <div
+            className={mediaState.styles?.descriptionEllispsis ? ClassName.ellipsisFont(mediaState.styles.descriptionEllispsis) : undefined}
+            style={{ fontSize: 14, color: Colors.Font.Transparent, ...mediaState.styles?.descriptionStyle }}
+          >
             {mediaState.description}
           </div>
         )}

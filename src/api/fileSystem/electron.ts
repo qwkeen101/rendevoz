@@ -1,5 +1,5 @@
 import { IFileSystem } from '~/typings/fs'
-import { ipcInstance } from '@/plugins'
+import { ipcInstance } from '@/electron'
 
 export default {
   getLatestBackup: async lastUpdated => {
@@ -16,7 +16,8 @@ export default {
     return ipcInstance.send('getSelectedFolderPath').then(res => res.data)
   },
   deleteFile: async path => {
-    ipcInstance.send('deleteFile', path)
+    await ipcInstance.send('deleteFile', path)
+    return
   },
   copyFile: async (from, to) => {
     return await ipcInstance.send('copyFile', from, to).then(res => res.data)

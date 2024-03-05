@@ -86,11 +86,19 @@ export type BuiltInTabTypes =
   | ICodeTab
   | IRecycleBinTab
 
-export type ILayoutTab = CustomTypes['Tab'] & {
+export type ILayoutTab = BuiltInTabTypes & {
   tabContent: ReactElement
   tabElement: HTMLElement
+  metaType?: MetaObject['type']
 }
 
+export type OpenTabOptions<K> = {
+  objectId?: number
+  metaId?: number
+  metaType?: MetaObject['type']
+  type: K
+  onInstanceInitialized?: (instance: BuiltInTabTypes[K]['instance']) => void
+}
 export type TabData = {
   [K in ILayoutTab['type']]: {
     type: K

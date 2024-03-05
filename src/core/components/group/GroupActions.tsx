@@ -15,6 +15,7 @@ import BetterSorter from '@/core/object/filter/BetterSorter'
 import EmojiWithPicker from '@/components/EmojiWithPicker'
 import { useTranslation } from 'react-i18next'
 import { Reorder } from 'framer-motion'
+import { isEqual } from 'lodash'
 const GroupActions = memo(({ groupValue }: { groupValue?: MetaGroup }) => {
   const groupData = groupValue
   const currentView = useSelectAtomValue(GroupStateAtom, s => s.currentView)
@@ -30,11 +31,20 @@ const GroupActions = memo(({ groupValue }: { groupValue?: MetaGroup }) => {
   const setSearch = (v: string) => {
     instance.updateCurrentView?.(s => ({ ...s, search: v }))
   }
-  const padding = useSelectAtomValue(GroupStateAtom, s => s.pagePadding)
-  const visibleProps = useSelectAtomValue(GroupStateAtom, s => s.visibleProperties)
-  const visibleTypes = useSelectAtomValue(GroupStateAtom, s => s.visibleTypes)
-  const showViews = useSelectAtomValue(GroupStateAtom, s => s.layout?.showMultipleViews)
-  const showImport = useSelectAtomValue(GroupStateAtom, s => s.layout?.showImport)
+  const { paddingTop = 8, visibleTypes, visibleProps, showImport, showViews } = useSelectAtomValue(
+    GroupStateAtom,
+    s => ({
+      paddingTop: s.styles?.actionPaddingTop,
+      visibleProps: s.visibleProperties,
+      visibleTypes: s.visibleTypes,
+      showViews: s.layout?.showMultipleViews,
+      showImport: s.layout?.showImport
+    }),
+    {
+      compare: (prev, curr) => isEqual(prev, curr)
+    }
+  )
+
   const [showSearch, setShowSearch] = useState(!!search)
   const isCompo = useRef(false)
   const debounceSet = useDebounceFn(v => setSearch(v), { wait: 500 })
@@ -64,8 +74,9 @@ const GroupActions = memo(({ groupValue }: { groupValue?: MetaGroup }) => {
   return (
     <Content
       flex
+      role={'group-action-container'}
       style={{
-        padding: `8px ${padding}px`,
+        padding: `${paddingTop}px var(--page-padding-right) 8px var(--page-padding-left)`,
         position: 'sticky',
         left: 0,
         fontWeight: 600,

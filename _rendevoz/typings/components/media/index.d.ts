@@ -3,6 +3,7 @@ import { IMedia, IMediaChapter, IMediaLabel, IMetaAttachment, IVideoLabel } from
 import { VideoState } from '@/core/video/hooks/useVideoState'
 import { Size } from '../common'
 import { IMediaEvent } from '~/typings/components/media/event'
+import { CSSProperties } from 'react'
 
 export type IMediaState = {
   loaded: boolean
@@ -32,6 +33,14 @@ export type IMediaExternalState = {
   collectionName?: string
   // for attachments
   metaId?: number
+  layout?: {
+    showAudioThumbnail?: boolean
+  }
+  styles?: {
+    titleStyle?: CSSProperties
+    descriptionStyle?: CSSProperties
+    descriptionEllispsis?: number
+  }
   toolbar?: {
     pin?: boolean
     assignToCollection?: boolean

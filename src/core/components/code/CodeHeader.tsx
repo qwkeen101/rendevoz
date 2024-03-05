@@ -1,10 +1,12 @@
 import { MetaStore, ObjectStore } from '@/api/stores'
-import { Content } from '@/components'
+import { Content, Icon } from '@/components'
 import Select from '@/components/base/select'
 import { langs } from '@uiw/codemirror-extensions-langs'
 import { ClassName } from 'rendevoz'
 import isHotkey from 'is-hotkey'
 import { KEY } from '@/consts'
+import { useSelectGlobalAtomValue } from '@/hooks'
+import { SettingAtom } from '@/core'
 
 export const CodeLangs: (keyof typeof langs)[] = [
   'angular',
@@ -51,7 +53,8 @@ export const CodeLangs: (keyof typeof langs)[] = [
 ]
 export default ({ id }: { id: number }) => {
   const code = ObjectStore('code').useValue(id)
-  const language = code?.language || 'typescript'
+  const defaultLang = useSelectGlobalAtomValue(SettingAtom, s => s.code.defaultLanguage)
+  const language = code?.language || defaultLang || 'typescript'
   const codeMeta = MetaStore.useObjectToMetaValue(id)
   return (
     <Content
@@ -83,26 +86,37 @@ export default ({ id }: { id: number }) => {
         }}
         placeholder={'Unnamed code'}
       ></input>
-      <Select
-        align={'center'}
-        onSelect={v => {
-          ObjectStore('code').updateOne({ id, language: v[0] })
-        }}
-        value={language}
-        menuStyle={{
-          textTransform: 'capitalize',
-          maxHeight: 300,
-          overflowY: 'auto'
-        }}
-        style={{
-          textTransform: 'capitalize'
-        }}
-        closeOnSelect={true}
-        options={CodeLangs.sort().map(i => ({
-          value: i,
-          children: i
-        }))}
-      />
+      <Content flex gap={8} alignItems={'center'}>
+        <Icon
+          onClick={() => {
+            code?.content && navigator.clipboard.writeText(code.content)
+          }}
+          tooltip={'Copy'}
+          name={'park-copy-one'}
+          size={16}
+          className={ClassName.flatButton(3, '4px')}
+        />
+        <Select
+          align={'center'}
+          onSelect={v => {
+            ObjectStore('code').updateOne({ id, language: v[0] })
+          }}
+          value={language}
+          menuStyle={{
+            textTransform: 'capitalize',
+            maxHeight: 300,
+            overflowY: 'auto'
+          }}
+          style={{
+            textTransform: 'capitalize'
+          }}
+          closeOnSelect={true}
+          options={CodeLangs.sort().map(i => ({
+            value: i,
+            children: i
+          }))}
+        />
+      </Content>
     </Content>
   )
 }

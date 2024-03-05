@@ -121,6 +121,7 @@ export type IWhiteboardInstance = Partial<{
     startDragMindmapChild: (nodeId: number, e: PointerEvent) => void
   }
   getEdgeLayer: () => SVGGElement | null | undefined
+  getEdgeLabelLayer: () => SVGGElement | null | undefined
   deleteNode: (nodeId: number) => void
   deleteEdge: (edgeId: number) => void
   deleteNodes: (nodeIds: number[]) => void

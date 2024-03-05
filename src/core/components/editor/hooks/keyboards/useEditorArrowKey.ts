@@ -2,12 +2,13 @@ import { IEditorInstance } from '~/typings'
 import isHotkey from 'is-hotkey'
 import { Editor, Path, Range, Transforms } from 'slate'
 import { KEY } from '@/consts'
+import { ReactEditor } from '@/core'
 
 const useEditorArrowKey = (instance: IEditorInstance) => {
   const editor = instance.getSlateEditor?.()
   const handleArrowKey = (e: KeyboardEvent) => {
     if (!editor) return
-    if (editor.selection && Range.isCollapsed(editor.selection)) {
+    if (editor.selection && Range.isCollapsed(editor.selection) && ReactEditor.isFocused(editor)) {
       if (isHotkey(KEY.ArrowLeft, e)) {
         const selection = editor.selection
         if (!selection) return
@@ -29,11 +30,12 @@ const useEditorArrowKey = (instance: IEditorInstance) => {
           distance = 2
         if (Path.hasPrevious(path) && Editor.isStart(editor, selection.anchor, selection.anchor.path)) {
           const prevNode = Editor.node(editor, Path.previous(path))[0]
-          if (['emoji', 'link'].includes(prevNode.type) || Editor.isVoid(editor, prevNode) || Editor.isElementReadOnly(editor, prevNode)) {
+          if (Editor.isElementReadOnly(editor, prevNode)) {
             distance = 2
           }
         }
         if (distance > 1) {
+          console.log('prevented')
           e.preventDefault()
           Transforms.move(editor, {
             unit: 'offset',
@@ -67,7 +69,7 @@ const useEditorArrowKey = (instance: IEditorInstance) => {
         }
         if (Editor.hasPath(editor, Path.next(path)) && Editor.isEnd(editor, selection.anchor, selection.anchor.path)) {
           const nextNode = Editor.node(editor, Path.next(path))[0]
-          if (['emoji', 'link'].includes(nextNode.type) || Editor.isVoid(editor, nextNode) || Editor.isElementReadOnly(editor, nextNode)) {
+          if (Editor.isElementReadOnly(editor, nextNode)) {
             distance = 2
           }
         }

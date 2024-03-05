@@ -22,8 +22,6 @@ export type CustomEditor = BaseEditor &
     currentAddClickElement?: Element
     currentCopyElement?: Element
     currentCopyElements?: Element[]
-    currentDragElement?: HTMLElement
-    dragManager?: DragManager
     overlayManager?: EditorOverlayManager
   } & {
     emitter?: EventEmitter
@@ -46,13 +44,13 @@ export type CustomEditor = BaseEditor &
     initialScrollOffset?: number
   }
 
-export type CustomElement = (CommonElement | OuterElement | CustomTypes['SlateElements']) & {
+export type CustomElement = (CommonElement | OuterElement) & {
   hide?: boolean
   id: number
   color?: string
   background?: string
   align?: string
-  cardType?: string
+  cardType?: 'embeded' | 'block'
   collapsed?: boolean
   level?: number
   folded?: boolean
@@ -73,6 +71,8 @@ export interface ElementFunctions {
   removeSelf: VoidFunction
   getPath: () => Path
   getClientBound: () => DOMRect | undefined
+  openMathForm?: VoidFunction
+  openTypeUrlForm?: VoidFunction
   getIndicatorPosition: (
     direction: 'top' | 'bottom' | 'left' | 'right'
   ) => { left: number; top: number; width: number; height: number } | undefined

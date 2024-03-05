@@ -5,7 +5,7 @@ import { useMemoizedFn, useMount, useUpdateEffect } from '@/hooks'
 import { ReactEditor, SELECT_AREA_MAP } from '@/core'
 import { isRectsCollision } from '@/core/components/editor/utils/positions/collision'
 import { getDistanceBetweenElementAndScrollableElement } from '@/core/components/editor/utils/scroll'
-import { Editor } from 'slate'
+import { Editor, Range } from 'slate'
 
 /**
  * Nested blocks can't be selected
@@ -21,9 +21,10 @@ const useBlockSelect = (opts: {
   const { element, instance, blockRef, scrollElementRef } = opts
   const [isSelecting] = useIsSelecting()
   const [isSelected, setIsSelected] = useState(false)
-  const { type } = element
-
   const editor = instance.getSlateEditor?.()
+  if (isSelected) {
+    console.log(element, instance.values.selectedBlocks)
+  }
   const distanceToScrollElementRef = useRef<{
     left: number
     top: number
@@ -33,12 +34,25 @@ const useBlockSelect = (opts: {
   const checkCanBeSelected = () => {
     const blockContainer = blockRef.current?.parentElement
     if (!blockContainer) return false
-    if (
-      blockContainer.closest('[data-spec-type="table"]') ||
-      blockContainer.closest('[data-spec-type="synced"]') ||
-      element.type === 'column' ||
-      element.type === 'columnList'
-    ) {
+    if (blockContainer.closest('[data-spec-type="table"]') || element.type === 'column' || element.type === 'columnList') {
+      return false
+    }
+    const sync = blockRef.current?.closest('[data-spec-type="synced"]')
+    if (sync && editor) {
+      const syncRange = Editor.range(editor, ReactEditor.findPath(editor, ReactEditor.toSlateNode(editor, sync)))
+      const syncFocused =
+        editor.selection &&
+        syncRange &&
+        Range.includes(syncRange, Range.start(editor.selection)) &&
+        Range.includes(syncRange, Range.end(editor.selection))
+      if (syncFocused) {
+        if (element.type === 'synced') {
+          return false
+        }
+        return true
+      } else if (element.type === 'synced') {
+        return true
+      }
       return false
     }
     return true
@@ -64,7 +78,10 @@ const useBlockSelect = (opts: {
     if (isSelecting) {
       const block = blockRef.current
       if (block && scrollElementRef?.current) {
-        distanceToScrollElementRef.current = getDistanceBetweenElementAndScrollableElement(block, scrollElementRef.current)
+        const selectable = block.classList.contains('selectable') ? block : block.querySelector('.selectable')
+        if (selectable) {
+          distanceToScrollElementRef.current = getDistanceBetweenElementAndScrollableElement(selectable, scrollElementRef.current)
+        }
       }
       return () => {
         distanceToScrollElementRef.current = undefined

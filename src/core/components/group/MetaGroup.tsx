@@ -2,7 +2,7 @@ import { Content } from '@/components'
 import { GroupRenderer } from '@/core/components/group/GroupRenderer'
 import GroupTitleRenderer from '@/core/components/group/GroupTitleRenderer'
 import GroupActions from '@/core/components/group/GroupActions'
-import { useEffect, useLayoutEffect, useMemo, useRef } from 'react'
+import { CSSProperties, useEffect, useLayoutEffect, useMemo, useRef } from 'react'
 import { Provider, createStore, useSetAtom, useStore } from 'jotai'
 import { Group, PATH_TO_ELEMENT_MAP } from '@/core/components/group/hooks/weakmaps'
 import { GroupInstanceAtom, useAssignGroupInstance, useGroupInstance } from '@/core/components/group/hooks/useGroupInstance'
@@ -33,6 +33,7 @@ export type IMetaGroupAvailableContextMenuItems =
   | 'openInNewTab'
   | 'separator'
   | 'recover'
+  | 'open'
 export type IMetaGroupProps = {
   value?: IMetaGroup
   groupId?: number
@@ -60,6 +61,13 @@ export type IMetaGroupProps = {
     hideContextMenuItems?: IMetaGroupAvailableContextMenuItems[]
     contextMenu?: (currentSelected?: number[]) => IMetaGroupAvailableContextMenuItems[]
   }
+  styles?: {
+    bottomPadding?: number
+    pagePaddingLeft?: number
+    actionPaddingTop?: number
+    containerStyle?: CSSProperties
+    containerClassName?: string
+  }
   state?: {
     canHideObjectsInside?: boolean
     canHideGroupsInside?: boolean
@@ -70,10 +78,11 @@ export type IMetaGroupProps = {
     onlyCreateType?: MetaObject['type']
     canDragInside?: boolean
     addAfterCreateMeta?: boolean
+    onlyOpenIn?: IMetaGroup['openIn']
     extraProperties?: MetaGroupProperty[]
   }
 }
-const MetaGroupInner = ({ value, groupId, layout, title, on, state }: IMetaGroupProps) => {
+const MetaGroupInner = ({ value, groupId, layout, title, on, state, styles }: IMetaGroupProps) => {
   const instance = useGroupInstance()
   const containerRef = useRef<HTMLDivElement>(null)
   useAssignGroupInstance(instance)
@@ -83,8 +92,8 @@ const MetaGroupInner = ({ value, groupId, layout, title, on, state }: IMetaGroup
   instance.getGroupState = () => store.get(GroupStateAtom)
 
   useMemo(() => {
-    setGroupState(s => ({ ...s, layout, title, state }))
-  }, [layout, title, state])
+    setGroupState(s => ({ ...s, layout, title, state, styles }))
+  }, [layout, title, state, styles])
 
   useEffect(() => {
     if (instance) {
@@ -155,7 +164,17 @@ const MetaGroupInner = ({ value, groupId, layout, title, on, state }: IMetaGroup
             instance.values.isFocused = true
           }
         }}
-        style={{ overflow: 'auto', overflowAnchor: 'none', scrollMargin: '30px', scrollPadding: '30px' }}
+        className={styles?.containerClassName}
+        style={{
+          overflow: 'auto',
+          overflowAnchor: 'none',
+          scrollMargin: '30px',
+          scrollPadding: '30px',
+          '--page-padding-right': `${styles?.pagePaddingLeft ?? 60}px`,
+          '--page-padding-left': `${styles?.pagePaddingLeft ?? 60}px`,
+          '--bottom-padding': `${styles?.bottomPadding ?? 60}px`,
+          ...styles?.containerStyle
+        }}
         fullHeight
         ref={containerRef}
         fullWidth

@@ -10,7 +10,10 @@ import { CustomEditor, EditorProps } from '~/typings'
 import useReadOnlyEditor from './hooks/useReadOnly'
 import { Colors } from '@/consts'
 import MetaPropDisplayer from '@/core/object/renderer/properties/MetaPropDisplayer'
-import { useSelectSetting } from '@/core'
+import { ReactEditor, useSelectSetting } from '@/core'
+import useEditorInstance from '@/core/components/editor/hooks/useEditorInstance'
+import { Transforms } from 'slate'
+import Id from '@/utils/id'
 
 type EditorTitleProps = EditorProps['title'] & {
   editor: CustomEditor
@@ -54,6 +57,17 @@ const EditorTitle: ForwardRefComponent<HTMLDivElement, EditorTitleProps> = forwa
       },
       { wait: 200 }
     )
+    const instance = useEditorInstance()
+    instance.focusTitle = onlyWhenEmpty => {
+      console.log(titleRef, stringTitle)
+      if (onlyWhenEmpty) {
+        if (!stringTitle || stringTitle === '' || stringTitle === 'Untitled') {
+          titleRef.current?.focus()
+        }
+      } else {
+        titleRef.current?.focus()
+      }
+    }
     const { t } = useTranslation()
     const readOnly = useReadOnlyEditor()
     const titleRef = useRef<HTMLDivElement>(null)
@@ -98,6 +112,17 @@ const EditorTitle: ForwardRefComponent<HTMLDivElement, EditorTitleProps> = forwa
               if (isHotkey(KEY.Enter, e)) {
                 e.preventDefault()
                 e.currentTarget.blur()
+                Transforms.insertNodes(
+                  editor,
+                  {
+                    type: 'paragraph',
+                    id: Id.getId(),
+                    children: [{ text: '' }]
+                  },
+                  { at: [0] }
+                )
+                Transforms.select(editor, [0, 0])
+                ReactEditor.focus(editor)
               }
             }}
             spellCheck="false"

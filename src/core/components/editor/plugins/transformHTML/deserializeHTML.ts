@@ -8,7 +8,9 @@ import deserializeText from './deserialize/deserializeText'
 import { ELEMENT_TAGS } from '@/core/components/editor/plugins/transformHTML/HTMLTags'
 import normalizeText from '@/core/components/editor/plugins/transformHTML/deserialize/normalizeText'
 import deserializeLi from '@/core/components/editor/plugins/transformHTML/deserialize/deserializeLi'
-import { Text } from 'slate'
+import { Descendant, Node as SlateNode, Text } from 'slate'
+import { EditorTypeToElementMap } from '@/core/components/editor/maps'
+import Id from '@/utils/id'
 
 const NoNestedNodeNames = ['A', 'H1', 'H2', 'H3', 'LI', 'H4', 'H5', 'H6', 'PRE', 'SUP', 'FIGCAPTION', 'BLOCKQUOTE']
 
@@ -24,6 +26,8 @@ const deserializeHTML = (root: HTMLElement) => {
     return jsx('fragment', {}, c)
   }
   switch (root.nodeName) {
+    case 'ARTICLE':
+    case 'SECTION':
     case 'DIV':
     case 'P':
       return deserializeParagraph(root)
@@ -31,9 +35,9 @@ const deserializeHTML = (root: HTMLElement) => {
       return deserializeLi(root)
     case 'SPAN':
       return deserializeSpan(root)
-    case 'BR':
-      return jsx('text', {}, '\n')
     // TODO
+    case 'BR':
+      return null
     case 'TABLE':
       return null
     case 'IMG':
@@ -61,7 +65,70 @@ const deserializeHTML = (root: HTMLElement) => {
   // deserialize text elements
   return deserializeText(root)
 }
+export const normalizeResult = (result: Descendant[], url?: string) => {
+  const inlineElementTypeSet = new Set(
+    Array.from(EditorTypeToElementMap.values())
+      .filter(i => i.isInline)
+      .map(i => i.type)
+  )
+  inlineElementTypeSet.add('link')
+  inlineElementTypeSet.add('sup')
 
+  // first walk, remove start whitespace and end whitespace
+  let res = result.map(i => {
+    i.children?.forEach((c, idx, arr) => {
+      if (idx === 0 && Text.isText(c)) {
+        c.text = c.text.trimStart()
+      }
+      if (idx === arr.length - 1 && Text.isText(c)) {
+        c.text = c.text.trimEnd()
+      }
+    })
+    return i
+  })
+  // second walk, remove text block and wrap inline block
+  res = res.map(i => {
+    if (!i.type) {
+      return null
+    }
+    if (inlineElementTypeSet.has(i.type)) {
+      return {
+        type: 'paragraph',
+        id: Id.getId(),
+        children: [i]
+      }
+    }
+    return {
+      ...i,
+      id: Id.getId()
+    }
+  })
+  if (url) {
+    console.log(url, window.location)
+    const origin = new URL(url).origin
+    try {
+      // third walk, replace relative url to absolute url
+      // chrome will always return absolute path to document url
+      // https://github.com/angular/protractor/issues/2735
+      Array.from(SlateNode.elements({ children: res })).forEach(e => {
+        const ele = e[0]
+        console.log(ele)
+        // @ts-ignore
+        if (ele.type === 'link' && ele.url) {
+          if (ele.url.startsWith(window.location.href)) {
+            const replaced = ele.url.replace(window.location.href, '/')
+            const newU = new URL(replaced, origin)
+            console.log(newU)
+            ele.url = newU.toString()
+          }
+        }
+      })
+    } catch (e) {
+      console.error(e)
+    }
+  }
+  return res
+}
 export const deserializeHTMLChildren = (node: HTMLElement) => {
   const res = Array.from(node.childNodes)
     .map(n => deserializeHTML(n))

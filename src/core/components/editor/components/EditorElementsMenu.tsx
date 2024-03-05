@@ -2,7 +2,7 @@ import { useMemo, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Content, Menu } from '@/components'
 import { EditorTypeToElementMap } from '../maps'
-import { RegisteredEditorElement } from '~/typings'
+import { CustomElement, RegisteredEditorElement } from '~/typings'
 import { IMenuLayoutItem } from '@/components/base/menu'
 import { useAtomValue } from 'jotai'
 import { EditorOverlayStateAtom } from '@/core/components/editor/components/overlay/useEditorOverlay'
@@ -10,10 +10,27 @@ import useEditorInstance from '@/core/components/editor/hooks/useEditorInstance'
 
 const EditorElementsMenu = (props: { onAddElement: (blockName: string) => void }) => {
   const { onAddElement } = props
-  const { t } = useTranslation()
   const instance = useEditorInstance()
   const overlayState = useAtomValue(EditorOverlayStateAtom)
   const noResultTime = useRef(0)
+  const levels = Array.from(instance.getSlateEditor?.().levels() || [])
+  const invisibleItems = useMemo(() => {
+    const invisibleItems: Set<CustomElement['type']> = new Set()
+    const conditions = {
+      underTable: levels.some(i => i[0].type === 'table'),
+      underSync: levels.some(i => i[0].type === 'synced')
+    }
+    if (conditions.underTable) {
+      invisibleItems.add('table')
+      invisibleItems.add('synced')
+      invisibleItems.add('highlight-block')
+      invisibleItems.add('code-block')
+    }
+    if (conditions.underSync) {
+      invisibleItems.add('synced')
+    }
+    return invisibleItems
+  }, [levels])
   const menuItems = useMemo(() => {
     const basic: RegisteredEditorElement[] = [],
       inline: RegisteredEditorElement[] = [],
@@ -63,10 +80,10 @@ const EditorElementsMenu = (props: { onAddElement: (blockName: string) => void }
         } as IMenuLayoutItem
       }
     }
-    const basicItems = basic.map(i => transformElementToMenuItem(i)).filter(i => i) as IMenuLayoutItem[]
-    const blockItems = block.map(i => transformElementToMenuItem(i)).filter(i => i) as IMenuLayoutItem[]
-    const inlineItems = inline.map(i => transformElementToMenuItem(i)).filter(i => i) as IMenuLayoutItem[]
-    const mediaItems = media.map(i => transformElementToMenuItem(i)).filter(i => i) as IMenuLayoutItem[]
+    const basicItems = basic.map(i => transformElementToMenuItem(i)).filter(i => i && !invisibleItems.has(i.key)) as IMenuLayoutItem[]
+    const blockItems = block.map(i => transformElementToMenuItem(i)).filter(i => i && !invisibleItems.has(i.key)) as IMenuLayoutItem[]
+    const inlineItems = inline.map(i => transformElementToMenuItem(i)).filter(i => i && !invisibleItems.has(i.key)) as IMenuLayoutItem[]
+    const mediaItems = media.map(i => transformElementToMenuItem(i)).filter(i => i && !invisibleItems.has(i.key)) as IMenuLayoutItem[]
     if (basicItems.length) {
       menuItems = [
         {

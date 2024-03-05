@@ -5,7 +5,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { Queue } from 'async-await-queue'
 import { Rendevoz } from '@/core/rendevoz'
 
-const getRadius = Rendevoz.Utils.Meta.getTypeRadius
+const getRadius = t => Rendevoz.Utils.Meta.getTypeRadius(t)
 function getObjectFitSize(width: number, height: number) {
   const scaledSize = width > height ? height : width
   const x = width / 2 - scaledSize / 2

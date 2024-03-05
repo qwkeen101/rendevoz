@@ -19,17 +19,17 @@ export default function GroupGrouperRenderer() {
   const groupFieldType = useSelectAtomValue(GroupStateAtom, s => s.currentView?.group?.fieldType)
   const scrollMargin = containerRef.current?.closest('[role="renderer-container"]')?.offsetTop ?? 0
   const unHiddenGroupers = currentGroupers?.filter(i => !i.hidden)
+  const paddingBottom = useSelectAtomValue(GroupStateAtom, s => s.styles?.bottomPadding) ?? 100
   const virtualizer = useVirtualizer({
     getScrollElement: () => instance.values.pageContainer,
     estimateSize: () => 500,
     count: unHiddenGroupers?.length ?? 0,
     scrollMargin: scrollMargin,
-    paddingEnd: 200,
+    paddingEnd: paddingBottom,
     overscan: 1
   })
 
   const items = virtualizer.getVirtualItems()
-  console.log(items, scrollMargin)
   const bodyRenderer = () => {
     if (currentViewType === 'kanban') {
       return <KanbanRenderer />
@@ -80,7 +80,7 @@ export default function GroupGrouperRenderer() {
                   ref={virtualizer.measureElement}
                   data-index={i.index}
                   key={group.id}
-                  style={{ padding: '0px 0px 16px', margin: '0px 60px' }}
+                  style={{ padding: '0px 0px 16px', margin: '0px var(--page-padding-right) 0px var(--page-padding-left)' }}
                 >
                   <GrouperHeader
                     style={{
@@ -123,7 +123,7 @@ export default function GroupGrouperRenderer() {
                 <div ref={virtualizer.measureElement} data-index={i.index} key={group.id}>
                   <GrouperHeader
                     style={{
-                      paddingLeft: 60,
+                      paddingLeft: 'var(--page-padding-left)',
                       top: 0,
                       background: Colors.Background.Global,
                       position: 'sticky',

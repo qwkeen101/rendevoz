@@ -10,12 +10,13 @@ import { useGlobalAtomValue, useSelectGlobalAtomValue, useToggle } from '@/hooks
 import { ICollectionItem } from '~/typings/data'
 import { IconNameItem } from '../SidebarCollection'
 import useSidebarItemContextMenu from '../useSidebarItemContextMenu'
-import useSidebarItemDrag from '../useSidebarItemDrag'
+import useSidebarItemDrag, { sidebarDraggingState } from '../useSidebarItemDrag'
 import { ISidebarItem } from './type'
 import SidebarObjectItem from './SidebarObjectItem'
 import { metaObjectsAtom } from '@/api/stores/meta/meta.store'
 import FontSize from '@/consts/font'
 import { Rendevoz } from '@/core/rendevoz'
+import { DraggableElement } from '@/core'
 
 const SidebarCollectionItem: FC<ISidebarItem> = memo(
   ({ id, parentId, parentType, draggable = true, onClick, onlyCollection, selectMode }) => {
@@ -143,47 +144,61 @@ const SidebarCollectionItem: FC<ISidebarItem> = memo(
           containerStyle={{ zIndex: '10000', pointerEvents: 'none' }}
           innerRef={ref}
         >
-          <Content
-            flex
-            onClick={e => {
-              onClick?.(e, {
-                type: 'collection',
-                id
-              })
+          <DraggableElement
+            onDragStart={() => {
+              sidebarDraggingState.current = {
+                draggingItemId: collection.id,
+                draggingItemType: 'collection',
+                itemIsInRoot: parentId === 0,
+                sourceFromId: parentId,
+                sourceFromType: parentType
+              }
             }}
-            alignItems="center"
-            justifyContent="space-between"
-            className={css([ClassName.flatButton(4, '3px 8px 3px 2px'), hovered && ClassName.Drag.droppableItemHovered(droppable)])}
+            draggable={draggable}
+            draggingDetails={{ type: 'collection', collectionId: collection.id }}
           >
-            <Content flex gap={4}>
-              <Icon
-                onClick={e => {
-                  e.stopPropagation()
-                  CollectionStore.updateCollection({ ...collection, toggled: !collection.toggled }, true)
-                }}
-                style={{
-                  transform: !hideChildren ? 'rotate(90deg)' : undefined,
-                  transition: 'all 0.2s ease',
-                  transformOrigin: 'center'
-                }}
-                size={14}
-                theme="filled"
-                name="park-right-one"
-              />
-              {collection && (
-                <IconNameItem
+            <Content
+              flex
+              onClick={e => {
+                onClick?.(e, {
+                  type: 'collection',
+                  id
+                })
+              }}
+              alignItems="center"
+              justifyContent="space-between"
+              className={css([ClassName.flatButton(4, '3px 8px 3px 2px'), hovered && ClassName.Drag.droppableItemHovered(droppable)])}
+            >
+              <Content flex gap={4}>
+                <Icon
                   onClick={e => {
-                    Rendevoz.Actions.Open.Group.openCollectionGroup(collection.id)
+                    e.stopPropagation()
+                    CollectionStore.updateCollection({ ...collection, toggled: !collection.toggled }, true)
                   }}
-                  style={{ fontSize: FontSize['13px'] }}
-                  name={collection.name || 'Unnamed Collection'}
-                  color={collection.color}
-                  icon={collection.icon || 'park-folder-close'}
+                  style={{
+                    transform: !hideChildren ? 'rotate(90deg)' : undefined,
+                    transition: 'all 0.2s ease',
+                    transformOrigin: 'center'
+                  }}
+                  size={14}
+                  theme="filled"
+                  name="park-right-one"
                 />
-              )}
+                {collection && (
+                  <IconNameItem
+                    onClick={e => {
+                      Rendevoz.Actions.Open.Group.openCollectionGroup(collection.id)
+                    }}
+                    style={{ fontSize: FontSize['13px'] }}
+                    name={collection.name || 'Unnamed Collection'}
+                    color={collection.color}
+                    icon={collection.icon || 'park-folder-close'}
+                  />
+                )}
+              </Content>
+              {childrenLength ? <div className={ClassName.description(FontSize['13px'])}>{childrenLength}</div> : undefined}
             </Content>
-            {childrenLength ? <div className={ClassName.description(FontSize['13px'])}>{childrenLength}</div> : undefined}
-          </Content>
+          </DraggableElement>
         </AnimatePopover>
         <AnimatePresence>
           {!hideChildren && (

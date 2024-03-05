@@ -71,7 +71,7 @@ const FeedContentRenderer = () => {
     }
     update()
   })
-  if (currentItem?.feedType === 'youtube') {
+  if (currentItem?.feedType === 'youtube' || currentItem?.feedType === 'bilibili') {
     return (
       <Content
         style={{

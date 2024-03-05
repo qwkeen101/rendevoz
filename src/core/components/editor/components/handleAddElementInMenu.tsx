@@ -1,11 +1,10 @@
 import Id from '@/utils/id'
 import { BaseSelection, Editor, Element, Path, Range, Transforms } from 'slate'
-import { CustomEditor, CustomElement, DefaultAddElementHandler } from '~/typings'
+import { CustomEditor, CustomElement, DefaultAddElementHandler, IEditorInstance } from '~/typings'
 import { ReactEditor } from '../slate-react'
 import { Rendevoz } from '@/core/rendevoz'
-import getCursorPosition from '../utils/getCursorPosition'
 import { waitFor } from '@/utils/functions'
-import { ID_TO_ELEMENT_FUNCTION_MAP } from '../weakMaps'
+import { ID_TO_ELEMENTS_MAP } from '../weakMaps'
 import FileSystem from '@/api/fileSystem'
 import { EditorTypeToElementMap } from '@/core/components/editor/maps'
 
@@ -31,19 +30,10 @@ export const defaultHandler: DefaultAddElementHandler = (type, instance, mode, o
   console.log(isCurrentBlockEmpty, searchFilterValue)
   let addElementPath = selectionBlock[1]
   const isInline = EditorTypeToElementMap.get(type)?.isInline
-  if (isCurrentBlockEmpty) {
+  if (isCurrentBlockEmpty && !isInline) {
     Transforms.removeNodes(editor, {
       at: selectionBlock[1]
     })
-
-    if (isInline) {
-      Transforms.insertNodes(editor, {
-        type: 'paragraph',
-        children: [{ text: '' }],
-        id: Id.getId()
-      })
-      Transforms.select(editor, selectionBlock[1])
-    }
   }
   // remove filter value
   else {
@@ -54,7 +44,7 @@ export const defaultHandler: DefaultAddElementHandler = (type, instance, mode, o
     })
     addElementPath = Path.next(addElementPath)
   }
-
+  let addedElement: undefined | CustomElement = undefined
   switch (type) {
     case 'table':
       // add two columns three rows table
@@ -74,8 +64,9 @@ export const defaultHandler: DefaultAddElementHandler = (type, instance, mode, o
       return
     }
     case 'synced':
+      instance.overlayOps?.close()
       handleAddSyncedBlock(addElementPath, editor)
-      break
+      return
     case 'emoji': {
       instance.overlayOps?.close()
       setTimeout(() => {
@@ -89,8 +80,26 @@ export const defaultHandler: DefaultAddElementHandler = (type, instance, mode, o
       }, 350)
       return
     }
+    case 'iframe': {
+      const id = Id.getId()
+      Transforms.insertNodes(editor, {
+        id,
+        type: 'iframe',
+        children: [{ text: '' }]
+      })
+      waitFor(
+        () => {
+          return !!instance.blockOps?.getBlockFuncs(id)?.openTypeUrlForm
+        },
+        () => {
+          instance.blockOps?.getBlockFuncs(id)?.openTypeUrlForm?.()
+        }
+      )
+      return
+    }
     case 'math': {
       const mathId = Id.getId()
+      console.log(editor.selection)
       Transforms.insertNodes(editor, {
         id: mathId,
         type: 'math',
@@ -98,24 +107,24 @@ export const defaultHandler: DefaultAddElementHandler = (type, instance, mode, o
       })
       waitFor(
         () => {
-          const openMath = ID_TO_ELEMENT_FUNCTION_MAP.get(editor)?.get(mathId)?.openMathForm
+          const openMath = ID_TO_ELEMENTS_MAP.get(editor)?.get(mathId)?.openMathForm
           if (openMath) {
             return true
           }
           return false
         },
         () => {
-          ID_TO_ELEMENT_FUNCTION_MAP.get(editor)?.get(mathId)?.openMathForm?.()
+          ID_TO_ELEMENTS_MAP.get(editor)?.get(mathId)?.openMathForm?.()
         }
       )
       break
     }
     case 'image':
+      ReactEditor.blur(editor)
       Rendevoz.Actions.Utils.uploadFile().then(files => {
         const firstFile = files as File
         if (firstFile && firstFile.type.startsWith('image')) {
           FileSystem.saveImage(firstFile, { compress: false }).then(data => {
-            instance.getOverlayManager?.().close()
             Transforms.insertNodes(
               editor,
               {
@@ -133,27 +142,32 @@ export const defaultHandler: DefaultAddElementHandler = (type, instance, mode, o
       })
       break
     default:
-      Transforms.insertNodes(
-        editor,
-        {
-          id: Id.getId(),
-          type,
-          children: [{ text: '' }]
-        },
-        {
-          at: addElementPath
-        }
-      )
+      addedElement = {
+        id: Id.getId(),
+        type,
+        children: [{ text: '' }]
+      }
+      Transforms.insertNodes(editor, addedElement, {
+        at: addElementPath
+      })
       Transforms.select(editor, addElementPath)
   }
   instance.overlayOps?.close()
   ReactEditor.focus(editor)
+  if (addedElement) {
+    postHandler(addedElement, addElementPath, editor, instance)
+  }
 }
 
 const handleAddSyncedBlock = async (path: Path, editor: CustomEditor) => {
   const normalizedElement = await editor.on({ type: 'addNewElementFromMenu', newElementType: 'sync' })
   if (!normalizedElement) return
+  console.log(normalizedElement, path)
   Transforms.insertNodes(editor, normalizedElement, { at: path })
+  setTimeout(() => {
+    Transforms.select(editor, Editor.start(editor, [...path, 0]))
+    ReactEditor.focus(editor)
+  })
 }
 
 const handleAddTableAtPath = (path: Path, editor: CustomEditor) => {
@@ -176,8 +190,7 @@ const handleAddTableAtPath = (path: Path, editor: CustomEditor) => {
           children: [
             {
               type: 'tableCell',
-              id: Id.getId(),
-              colName: 'col2',
+              colName: 'col1',
               children: [
                 {
                   type: 'paragraph',
@@ -192,7 +205,8 @@ const handleAddTableAtPath = (path: Path, editor: CustomEditor) => {
             },
             {
               type: 'tableCell',
-              colName: 'col1',
+              id: Id.getId(),
+              colName: 'col2',
               children: [
                 {
                   type: 'paragraph',
@@ -283,4 +297,15 @@ const handleAddTableAtPath = (path: Path, editor: CustomEditor) => {
       at: path
     }
   )
+}
+
+const postHandler = (element: CustomElement, path: Path, editor: CustomEditor, instance: IEditorInstance) => {
+  if (element.type === 'math-block') {
+    waitFor(
+      () => !!instance.blockOps?.getBlockFuncs(element.id)?.openMathForm,
+      () => {
+        instance.blockOps?.getBlockFuncs(element.id)?.openMathForm?.()
+      }
+    )
+  }
 }

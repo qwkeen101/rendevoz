@@ -10,6 +10,7 @@ import GalleryItemWrapper from '@/core/components/group/components/gallery/Galle
 import { Colors } from '@/consts'
 import { useTranslation } from 'react-i18next'
 import { MetaStore } from '@/api/stores'
+import { isEqual } from 'lodash'
 const GalleryRenderer = memo(
   ({
     value = [],
@@ -24,14 +25,33 @@ const GalleryRenderer = memo(
   }) => {
     const ref = useRef<HTMLDivElement>(null)
     const instance = useGroupInstance()
-    const visibleProps = useSelectAtomValue(GroupStateAtom, s => s.visibleProperties)
-    const showOriginalText = useSelectAtomValue(GroupStateAtom, s => s.showOriginalText) ?? false
-    const wrapContent = useSelectAtomValue(GroupStateAtom, s => s.currentView?.options.wrapColumns) ?? false
-    const showDeleted = useSelectAtomValue(GroupStateAtom, s => s.layout?.showDeletedMetas) ?? false
-    const showAddMore = useSelectAtomValue(GroupStateAtom, s => s.layout?.showAddNew) ?? true
-    const cardSize = useSelectAtomValue(GroupStateAtom, s => s.currentView?.options.cardSize)
-    const showCover = useSelectAtomValue(GroupStateAtom, s => s.currentView?.options.cardCover) ?? 'cover'
-    const hideCoverIfEmpty = useSelectAtomValue(GroupStateAtom, s => s.currentView?.options.hideCoverIfEmpty) ?? false
+    const {
+      visibleProps,
+      showOriginalText = false,
+      wrapContent = false,
+      showAddMore = true,
+      showDeleted = false,
+      showCover = 'cover',
+      cardSize,
+      bottomPadding,
+      hideCoverIfEmpty = false
+    } = useSelectAtomValue(
+      GroupStateAtom,
+      s => ({
+        visibleProps: s.visibleProperties,
+        showOriginalText: s.showOriginalText,
+        wrapContent: s.currentView?.options.wrapColumns,
+        showDeleted: s.layout?.showDeletedMetas,
+        showAddMore: s.layout?.showAddNew,
+        cardSize: s.currentView?.options.cardSize,
+        showCover: s.currentView?.options.cardCover,
+        bottomPadding: s.styles?.bottomPadding,
+        hideCoverIfEmpty: s.currentView?.options.hideCoverIfEmpty
+      }),
+      {
+        compare: (prev, curr) => isEqual(prev, curr)
+      }
+    )
     let size = 280
     switch (cardSize) {
       case 'small': {
@@ -57,7 +77,6 @@ const GalleryRenderer = memo(
 
       const m = instance.getScrollMargin?.() ?? 0
       const [measureRef, { width }] = useMeasure()
-
       const itemsPerRow = Math.floor(width / size) || 1
       const rows = Math.ceil((value.length + (showAddMore ? 1 : 0)) / itemsPerRow) || 0
       const virtualizer = useVirtualizer({
@@ -66,7 +85,7 @@ const GalleryRenderer = memo(
         estimateSize: () => 300,
         count: rows,
         scrollMargin: m,
-        paddingEnd: 200
+        paddingEnd: bottomPadding ?? 100
       })
 
       instance.virtualizer = virtualizer
@@ -74,7 +93,11 @@ const GalleryRenderer = memo(
 
       const arr = Array.from(Array(itemsPerRow))
       return (
-        <Content flex column style={{ height: 0, flex: 1, padding: '0px 50px 0px', width: '100%' }}>
+        <Content
+          flex
+          column
+          style={{ height: 0, flex: 1, padding: '0px var(--page-padding-right) 0px var(--page-padding-right)', width: '100%' }}
+        >
           <Content ref={measureRef} role={'gallery-wrapper'} style={{ width: '100%', height: 'auto' }}>
             <Content
               flex
@@ -176,7 +199,11 @@ const GalleryRenderer = memo(
       )
     } else {
       return (
-        <Content flex column style={{ height: 'auto', flex: 1, padding: '0px 50px 0px', width: '100%' }}>
+        <Content
+          flex
+          column
+          style={{ height: 'auto', flex: 1, padding: '0px var(--page-padding-right) 0px var(--page-padding-right)', width: '100%' }}
+        >
           <div
             style={{
               display: 'grid',

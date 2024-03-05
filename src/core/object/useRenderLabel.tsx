@@ -43,7 +43,7 @@ const useRenderLabel = (opts: {
   const { ref, isIn } = useIsIn()
   const currentLabelHasName = label && label.name && label.name !== DEFAULT_LABEL_NAME
   const relatedMap = useGlobalAtomValue(relatedMetaObjectsMapAtom)
-  const metaRelated = labelMeta && !labelMeta.hidden ? relatedMap.get(labelMeta.id) : []
+  const metaRelated = labelMeta ? relatedMap.get(labelMeta.id) : []
   const realRelated = new Set(metaRelated)
   if (parentMeta) {
     realRelated.delete(parentMeta.id)
@@ -74,7 +74,7 @@ const useRenderLabel = (opts: {
                 width: 'fit-content',
                 whiteSpace: 'pre-wrap',
                 fontSize: FontSize['13px'],
-                color: labelMeta && !labelMeta.temp && !labelMeta.hidden ? labelMeta.color || Colors.Common.SelectColor : undefined
+                color: labelMeta && !labelMeta.temp ? labelMeta.color || Colors.Common.SelectColor : undefined
               }}
             >
               {realRelated.size > 0 && (

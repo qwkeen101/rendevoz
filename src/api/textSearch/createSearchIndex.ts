@@ -134,7 +134,10 @@ const createSearchStore = () => {
     updateDocuments,
     saveIndex,
     load,
-    deleteDocument
+    deleteDocument,
+    initialize: () => {
+      metaSearch.removeAll()
+    }
   }
 }
 const searchStore = createSearchStore()
@@ -143,6 +146,10 @@ self.onmessage = async e => {
   const evn = e.data as ISearchEvent
 
   switch (evn.event) {
+    case 'initialize': {
+      searchStore.initialize()
+      break
+    }
     case 'insertDocument': {
       searchStore.addDocument(evn.document)
       break

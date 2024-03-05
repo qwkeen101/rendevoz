@@ -37,7 +37,6 @@ import createCache from '@emotion/cache'
 import { BuiltInDraggableElement, BuiltInDropOn, BuiltInMetaObjectTypes, BuiltInObjectTypes, BuiltInTabTypes } from '~/typings'
 import { GlobalBaidudisk } from '@/components/fileImporter/baidudisk/BaidudiskDisplayer'
 import { useSelectGlobalAtomValue } from '@/hooks'
-import registerTabs from '@/api/lifycycle/startup/registerTabs'
 import GlobalCollection from '@/core/global/GlobalCollection'
 import { GlobalObjectDetails } from '@/core/object/details'
 import GlobalPreviewPanel from '@/core/global/GlobalPreviewPanel'
@@ -51,6 +50,7 @@ import './styles/loading.less'
 import GlobalDialog from '@/core/global/GlobalDialog'
 import { ChineseFormats, DateFormat, EnglishFormats } from '@/utils'
 import GlobalMediaPreviewer from '@/core/global/MediaPreviewer'
+import useGlobalShortcutHandler from '@/core/global/ShortcutHandler'
 export function getOS() {
   const userAgent = window.navigator.userAgent.toLowerCase(),
     macosPlatforms = /(macintosh|macintel|macppc|mac68k|macos)/i,
@@ -100,14 +100,13 @@ const App = () => {
   const PdfJs = window['pdfjs-dist/build/pdf']
 
   PdfJs.GlobalWorkerOptions.workerSrc = PdfJsUrl
+  useGlobalShortcutHandler()
   const lang = useSelectGlobalAtomValue(SettingAtom, s => s.general.language)
   const { i18n } = useTranslation()
   const executed = useRef(false)
   if (!executed.current) {
-    registerTabs()
     GlobalPluginManager.registerPlugin(BuiltinEditorPlugin)
     executed.current = true
-    // channelScraper()
   }
   const initialized = useAtomValue(initializedAtom)
   useEffect(() => {

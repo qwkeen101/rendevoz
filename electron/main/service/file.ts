@@ -41,6 +41,9 @@ const transformRendefileToLocalFilePath = (rendefile: string) => {
 
 const deleteFile = async (filePath: string) => {
   const realPath = transformRendefileToLocalFilePath(filePath)
+  if (!fs.existsSync(realPath)) {
+    return
+  }
   await new Promise(res => {
     fs.rm(realPath, () => {
       res(null)

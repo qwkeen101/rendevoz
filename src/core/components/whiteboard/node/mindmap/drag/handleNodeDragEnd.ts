@@ -116,20 +116,34 @@ export default (result: {
       ? dragAttachTarget[link.direction === 'right' ? 'rightCollapse' : 'leftCollapse']
       : dragAttachTarget?.collapseChildren
   // this is reorder, first remove from tree
+  const deletedMindmaps: Record<number, IWhiteboardMindmap> = {}
   if (rightIds.has(dragNode.id) || leftIds.has(dragNode.id)) {
     if (rightIds.has(dragNode.id) && currN.rightChildren) {
-      currN.rightChildren = deleteChildsFromTree(currN.rightChildren, dragNode.id).result
+      const res = deleteChildsFromTree(currN.rightChildren, dragNode.id)
+      currN.rightChildren = res.result
+      res.deletedNodes.forEach(n => {
+        deletedMindmaps[n.root] = n
+      })
     }
     if (leftIds.has(dragNode.id) && currN.leftChildren) {
-      currN.leftChildren = deleteChildsFromTree(currN.leftChildren, dragNode.id).result
+      const res = deleteChildsFromTree(currN.leftChildren, dragNode.id)
+      currN.leftChildren = res.result
+      res.deletedNodes.forEach(n => {
+        deletedMindmaps[n.root] = n
+      })
     }
   }
   const newChildren = produce(currN[link.direction === 'right' ? 'rightChildren' : 'leftChildren'] || [], draft => {
     const idx = findDragIndex(dragNode, { root: currNode.id, children: draft }, link.sourceId, instance)
     if (idx !== undefined && idx >= 0) {
-      addToTree({ root: currNode.id, children: draft }, link.sourceId, idx, { root: dragNode.id, children: childrenNodes })
+      addToTree({ root: currNode.id, children: draft }, link.sourceId, idx, {
+        ...deletedMindmaps[dragNode.id],
+        root: dragNode.id,
+        children: childrenNodes
+      })
     }
   })
+  console.log(currN, newChildren)
   instance.updateWhiteboard?.(w => {
     // update curr mindmap
     w.nodes?.set(currNode.id, {

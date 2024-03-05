@@ -156,16 +156,14 @@ const Label = ({ id, type }: { id: number; type: string }) => {
         {mediaLabel?.imageUrl && (
           <Image
             width={100}
-            preview
             ratio={0.5625}
             containerStyle={{
-              borderRadius: 8
+              borderRadius: 8,
+              cursor: 'pointer'
             }}
-            // onClick={() => {
-            //   if (mediaLabel.clipUrl) {
-            //     GlobalInstance.commonOps?.previewMedia?.(mediaLabel.clipUrl)
-            //   }
-            // }}
+            onClick={() => {
+              instance.actionOps?.jumpTo(mediaLabel.time)
+            }}
             src={mediaLabel.imageUrl}
           ></Image>
         )}

@@ -263,7 +263,6 @@ export class DockLayout extends DockPortalManager implements DockContext {
         layout = Algorithm.addNextToTab(layout, source, target as TabData, direction)
       }
     }
-
     if (layout !== this.getLayout()) {
       layout = Algorithm.fixLayoutData(layout, this.props.groups)
       let currentTabId: string = null
@@ -617,7 +616,7 @@ export class DockLayout extends DockPortalManager implements DockContext {
   /** @ignore
    * change layout
    */
-  changeLayout(layoutData: LayoutData, currentTabId: string, direction: DropDirection, silent = false) {
+  changeLayout(layoutData: LayoutData, currentTabId?: string, direction?: DropDirection, silent = false) {
     const { layout, onLayoutChange } = this.props
     // let savedLayout: LayoutBase
     if (onLayoutChange) {

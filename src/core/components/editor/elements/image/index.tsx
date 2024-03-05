@@ -167,6 +167,7 @@ const Image = ({ element, children }: RenderElementProps) => {
           enable={{ left: !readOnly && true, right: !readOnly && true }}
           minWidth={'50%'}
           maxWidth={'100%'}
+          className={'selectable'}
           onResizeStop={(event, direction, elementRef, delta) => {
             const currentWidth = elementRef.getBoundingClientRect().width
             const path = ReactEditor.findPath(editor, element)

@@ -48,7 +48,6 @@ const FileImporter = ({
   console.log(createHandler)
   const handleAfterCreate = useCallback((one: { meta: MetaObject }) => {
     autoOpen && Rendevoz.Actions.Open.Meta.openMetaObject(one.meta.id)
-    console.log(createHandler, one)
     onCreate?.(one.meta)
     createHandler?.(one.meta)
   }, [])

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { ipcInstance } from '@/plugins'
+import { ipcInstance } from '@/electron'
 
 export default (app = true) => {
   const [isFullscreen, setIsFullscreen] = useState(document.fullscreenElement !== null)

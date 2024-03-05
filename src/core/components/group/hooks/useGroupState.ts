@@ -30,6 +30,7 @@ export type IGroupState = {
   layout?: IMetaGroupProps['layout']
   title?: IMetaGroupProps['title']
   state?: IMetaGroupProps['state']
+  styles?: IMetaGroupProps['styles']
   groups?: IGroupGrouper[]
   sidebarState?:
     | {

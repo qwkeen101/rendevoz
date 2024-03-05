@@ -1,4 +1,4 @@
-import { ipcInstance } from "@/plugins";
+import { ipcInstance } from "@/electron";
 
 export const maximizeWindow = () => {
   ipcInstance.send("maximizeWindow");

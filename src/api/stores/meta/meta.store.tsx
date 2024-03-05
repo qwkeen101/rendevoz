@@ -591,6 +591,7 @@ const createMetaStore = () => {
     getMetaObjectById,
     calculatePropertyOptionCache,
     getPropDetails,
+    getCachedMetaObject: (id: number) => globalStore.get(metaObjectsAtom).get(id) as MetaObject | undefined,
     getNewPropName,
     getVisibleMetaTypes,
     getMetaObjectByObjectId,

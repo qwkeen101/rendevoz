@@ -11,13 +11,14 @@ export default (instance: IGroupInstance, groupValue?: MetaGroup) => {
   assignProperties(instance, {
     openObject: (id, rowId) => {
       const groupState = store.get(GroupStateAtom)
-      if (!groupState.data?.openIn || groupState.data.openIn === 'newTab') {
+      const openIn = groupState.state?.onlyOpenIn || groupState.data?.openIn || 'newTab'
+      if (openIn === 'newTab') {
         Rendevoz.Actions.Open.Meta.openMetaObject(id)
       }
-      if (groupState.data?.openIn === 'center') {
+      if (openIn === 'center') {
         instance.centerOps?.open(id, rowId)
       }
-      if (groupState.data?.openIn === 'sidePeek') {
+      if (openIn === 'sidePeek') {
         instance.sidebarOps?.open({ type: 'preview', metaId: id, rowId })
       }
     },

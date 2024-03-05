@@ -21,7 +21,13 @@ export default async (url: string, feedType: FeedItem['feedType']) => {
     if (url.includes('twitter')) {
       feedType = 'tweet'
     }
-    const initialItems = initialRes.items.map(i => ({ ...i, feedType: feedType }))
+    const initialItems = initialRes.items.map(i => {
+      let feedT = feedType
+      if (i.link.includes('bilibili.com/video')) {
+        feedT = 'bilibili'
+      }
+      return { ...i, feedType: feedT }
+    })
     return {
       ...initialRes,
       items: initialItems

@@ -10,8 +10,13 @@ export default (node: HTMLElement) => {
 }
 
 const trimNode = (node: HTMLElement, text: string) => {
-  if (!node.previousSibling && !node.nextSibling) return text.trim()
-  if (!node.nextSibling) return text.trimEnd()
-  if (!node.previousSibling) return text.trimStart()
-  return text
+  const prev = node.previousSibling
+  const next = node.nextElementSibling
+  let t = text
+  t = t.trim()
+  if ((prev?.nodeName === 'BR' || (prev && prev.nodeType === Node.TEXT_NODE && prev.textContent === '\n')) && t !== '') {
+    t = '\n' + t
+  }
+  console.log(node, t, text, prev)
+  return t
 }

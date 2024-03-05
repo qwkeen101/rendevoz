@@ -1,4 +1,4 @@
-import { ipcInstance } from '@/plugins'
+import { ipcInstance } from '@/electron'
 import { Size, XYPosition } from '~/typings'
 import ColorThief from 'colorthief'
 import FileSystem from '@/api/fileSystem'

@@ -2,46 +2,9 @@ import { enableMapSet, enablePatches } from 'immer'
 import { createRoot } from 'react-dom/client'
 import App from './App'
 import initI18n from './config/i18n'
-import * as PIXI from 'pixi.js'
-import PIXIFontUrl from '@/assets/font.xml?url'
 import { Provider } from 'jotai'
 import { Hooks, Utils } from 'rendevoz'
-function debounce(func, timeout = 600) {
-  let timer
-  return (...args) => {
-    clearTimeout(timer)
-    timer = setTimeout(() => {
-      func.apply(this, args)
-    }, timeout)
-  }
-}
-window.addEventListener(
-  'scroll',
-  e => {
-    if (e.target instanceof Element) {
-      if (!e.target.classList.contains('on-scrollbar')) {
-        e.target.classList.add('on-scrollbar')
-        e.target.classList.remove('hide-scrollbar')
-      }
-    }
-  },
-  true
-)
 
-window.addEventListener(
-  'scroll',
-  debounce(e => {
-    e.target.classList.remove('on-scrollbar')
-    e.target.classList.add('hide-scrollbar')
-    setTimeout(() => {
-      if (!e.target.classList.contains('on-scrollbar')) {
-        e.target.classList.remove('hide-scrollbar')
-      }
-    }, 250)
-  }),
-  true
-)
-PIXI.Assets.load(PIXIFontUrl)
 enableMapSet()
 enablePatches()
 const lang = Utils.Navigator.getDefaultLanguage()

@@ -15,7 +15,7 @@ import { SelectOptionProps } from '../../components/base/select/SelectOption'
 import produce from 'immer'
 import { useGlobalAtomValue } from '@/hooks/jotai'
 import { updateInfoAtom } from '@/Initializer'
-import { ipcInstance } from '@/plugins'
+import { ipcInstance } from '@/electron'
 import semver from 'semver'
 import Colors from '@/consts/colors'
 import BorderInput from '@/components/base/BorderInput'
@@ -27,6 +27,7 @@ import { DateFormat } from '@/utils'
 import { getAppState } from '@/core/rendevoz/appState'
 import FileSystem from '@/api/fileSystem'
 import { getOS } from '@/App'
+import { initializeSearch } from '@/api/textSearch/SearchHelper'
 const arrayRange = (start, stop, step) => Array.from({ length: (stop - start) / step + 1 }, (value, index) => start + index * step)
 
 const languageOptions: SelectOptionProps[] = [
@@ -615,6 +616,20 @@ const GeneralSetting = () => {
               })
             )
           }
+        />
+      )
+    },
+    {
+      title: t('settings.Rebuild search index'),
+      children: (
+        <Button.IconButton
+          text={t('settings.Rebuild')}
+          icon={'park-refresh'}
+          onClick={() => {
+            FileSystem.deleteFile('rendefile:///meta-search-index.json').then(() => {
+              initializeSearch()
+            })
+          }}
         />
       )
     }

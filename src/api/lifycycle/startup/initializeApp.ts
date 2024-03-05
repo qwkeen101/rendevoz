@@ -1,7 +1,7 @@
 import initializeWorkspace from '@/api/lifycycle/startup/initializeWorkspace'
 import { CollectionStore, MetaStore, ObjectStore } from '@/api/stores'
 import KeyvalueStore from '@/api/stores/keyvalue.store'
-import { ipcInstance } from '@/plugins'
+import { ipcInstance } from '@/electron'
 import initializeFolder from '@/api/lifycycle/startup/initializeFolder'
 import { initializeSearch } from '@/api/textSearch/SearchHelper'
 import initializeUnnamedLabel from '@/api/lifycycle/startup/initializeUnnamedLabel'

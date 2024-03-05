@@ -15,6 +15,7 @@ import TypeGroup from '@/core/components/category/type'
 import TagGroup from '@/core/components/category/tag'
 import TweetPage from '@/scenes/TweetPage'
 import CollectionGroup from '@/core/components/category/CollectionGroup'
+import { GlobalInstance } from '@/hooks'
 
 export const RENDEVOZ_DEFAULT_TABS: TabData[ILayoutTab['type']][] = [
   {
@@ -123,7 +124,9 @@ labels.forEach(l => {
   })
 })
 const registerTabs = () => {
-  RENDEVOZ_DEFAULT_TABS.forEach(i => Rendevoz.Actions.Layout.registerTabData(i))
+  RENDEVOZ_DEFAULT_TABS.forEach(i => {
+    GlobalInstance.layoutOps?.registerTabData(i)
+  })
 }
 
 export default registerTabs

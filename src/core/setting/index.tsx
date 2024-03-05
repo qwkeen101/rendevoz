@@ -70,6 +70,9 @@ export const defaultSetting: Setting = {
     questionGenerateType: 'text',
     outputLanguage: 'zh-CN'
   },
+  code: {
+    defaultLanguage: 'typescript'
+  },
   shortcut: {},
   quickAdd: {
     noteMetaType: 'block',
@@ -119,7 +122,8 @@ export const defaultSetting: Setting = {
     onlyEraseFreeDraw: true
   },
   editor: {
-    objectAutoBecomeInline: true
+    objectAutoBecomeInline: true,
+    addSpacingInReaderMode: true
   },
   object: {
     deleteFileWhenDeleteObject: true,

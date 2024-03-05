@@ -35,6 +35,9 @@ export type ISearchEvent =
       event: 'save'
     }
   | {
+      event: 'initialize'
+    }
+  | {
       event: 'load'
       json: string
     }

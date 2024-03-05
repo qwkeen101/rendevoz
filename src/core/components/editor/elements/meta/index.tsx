@@ -1,19 +1,104 @@
 import { FC, memo, useState } from 'react'
 import { RenderElementProps } from 'slate-react'
-import { MetaObjectElement } from '~/typings'
 import NoteCard from '../cards/NoteCard'
 import { useRenderObject } from '@/core'
 import { Content } from '@/components'
 import { Colors } from '@/consts'
 import FontSize from '@/consts/font'
 import LabelDetailsRenderer from '@/core/object/renderer/LabelDetailsRenderer'
+import UncontrolledGroup from '@/core/components/group/UncontrolledGroup'
+import Audio from '@/core/components/media/wrappers/Audio'
+import Video from '@/core/components/media/wrappers/Video'
+import Image from '@/core/components/editor/elements/image'
+import { ObjectStore } from '@/api/stores'
+import { IImage } from '~/typings'
 
 const MetaObject: FC<RenderElementProps> = memo(({ children, element }) => {
-  const metaEle = element as MetaObjectElement
+  const metaEle = element
   const { originId } = metaEle
+
   const { renderWhole, metaObject } = useRenderObject({
     metaObjectId: originId
   })
+  const target = ObjectStore(metaObject?.type).useValue(metaObject?.objectId)
+  const renderExpanded = () => {
+    if (!metaObject) return <div>Deleted content</div>
+    if (metaObject.type === 'image') {
+      return (
+        <img
+          src={(target as IImage)?.url}
+          style={{
+            width: '100%',
+            objectFit: 'cover'
+          }}
+        />
+      )
+    }
+    if (metaObject.type === 'audio') {
+      return (
+        <div className={'border'} style={{ padding: '12px 16px 0px', borderRadius: 8 }}>
+          <Audio
+            mediaState={{
+              layout: {
+                showAudioThumbnail: false
+              },
+              styles: {
+                titleStyle: {
+                  fontSize: 15,
+                  marginBottom: 6
+                },
+                descriptionStyle: {
+                  fontSize: 13
+                },
+                descriptionEllispsis: 0
+              }
+            }}
+            audioId={metaObject.objectId}
+            onlyCore
+          />
+        </div>
+      )
+    }
+    if (metaObject.type === 'video') {
+      return (
+        <div>
+          <Video videoId={metaObject.objectId} onlyCore />
+        </div>
+      )
+    }
+    if (metaObject.type === 'group') {
+      return (
+        <UncontrolledGroup
+          layout={{
+            showTitle: false,
+            showTitleActions: false
+          }}
+          state={{
+            onlyOpenIn: 'center'
+          }}
+          styles={{
+            pagePaddingLeft: 0,
+            bottomPadding: 0,
+            actionPaddingTop: 0,
+            containerClassName: 'selectable',
+            containerStyle: {
+              overflow: 'auto hidden',
+              padding: 'var(--editor-scroll-padding)'
+            }
+          }}
+          groupId={metaObject.objectId}
+        />
+      )
+    }
+  }
+  if (element.cardType === 'embeded') {
+    return (
+      <div contentEditable={'false'} style={{ position: 'relative' }}>
+        {renderExpanded()}
+        {children}
+      </div>
+    )
+  }
   const renderLineMain = () => (
     <Content
       flex
@@ -30,7 +115,7 @@ const MetaObject: FC<RenderElementProps> = memo(({ children, element }) => {
         style={{
           flex: '4 1 180px',
           overflow: 'hidden',
-          padding: '16px',
+          padding: '12px 14px 14px',
           display: 'flex',
           flexDirection: 'column',
           justifyContent: 'center'

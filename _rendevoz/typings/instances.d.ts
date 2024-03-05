@@ -1,6 +1,17 @@
 import { WebpageInnerRef } from '@/core/webpage/WebpageCore'
 import { CustomEditor } from './editor'
-import { BuiltInDraggableElement, ICollection, ILabel, ILayoutTab, IWhiteboardEdge, IWhiteboardNode, MetaObject, PartialWithId } from '..'
+import {
+  BuiltInDraggableElement,
+  BuiltInTabTypes,
+  ICollection,
+  ILabel,
+  ILayoutTab,
+  IWhiteboardEdge,
+  IWhiteboardNode,
+  MetaObject, OpenTabOptions,
+  PartialWithId, TabData
+} from '..'
+import { ITabData } from '~/typings/rendevoz'
 
 export interface WebpageInstance {
   transformToNote: () => Promise<CustomEditor>
@@ -44,6 +55,23 @@ export type IGlobalInstance = Partial<{
   }
   goBackOps: {
     goBackToSyncBlock: (syncBlockMetaId: number, targetMetaId: number) => Promise<void>
+  }
+  layoutOps: {
+    getCurrentFocusedTab: () => string | undefined
+    switchToTab: (direction: 'next' | 'prev') => void
+    registerTabData: (tabData: BuiltInTabTypes) => void
+    closeCurrentFocusedTab: VoidFunction
+    closeCurrentFocusedPanel: VoidFunction
+    closeAllTabs: (keepHome?: boolean) => void
+    makeTabActive: (tabId: string) => void
+    getRegisteredTabData: (type: BuiltInTabTypes['type']) => BuiltInTabTypes | undefined
+    initializeOneTab: (
+      registeredData: TabData[BuiltInTabTypes['type']],
+      options: OpenTabOptions<BuiltInTabTypes['type']>
+    ) => ILayoutTab | undefined
+    // return tab id or undefined
+    hasTargetTab: (tabData: Partial<Omit<BuiltInTabTypes, 'instance'>>) => string | undefined
+    openNewTab: (tabData: OpenTabOptions<BuiltInTabTypes['type']>) => void
   }
   metaOps: {
     canCreateDirectly: (type: MetaObject['type']) => boolean

@@ -13,6 +13,7 @@ import useEraseEdge from '@/core/components/whiteboard/edge/useEraseEdge'
 import { useWhiteboardInstance } from '@/core/components/whiteboard/hooks/useWhiteboardInstance'
 import { EdgeOverlayStateAtom } from '@/core/components/whiteboard/edge/EdgeOverlay'
 import { WhiteboardStateAtom } from '@/core/components/whiteboard/hooks/useWhiteboardState'
+import { createPortal } from 'react-dom'
 
 const keyframe = keyframes({
   '0%': {
@@ -74,6 +75,15 @@ const TreeEdge: FC<{
     const targetBorderType = targetNode?.borderType
     const drawPath = () => {
       try {
+        const sourceNode = instance.getNode?.(sourceId)
+        const targetNode = instance.getNode?.(targetId)
+
+        if (sourceNode?.collapse || targetNode?.collapse || !sourceNode || !targetNode) {
+          underlineRef.current?.removeAttribute('d')
+          edgeRef.current?.removeAttribute('d')
+          labelContainerRef.current?.style.setProperty('display', 'none')
+          return
+        }
         const edgeData = getEdgeData(sourceId, targetId, sourcePosition, targetPosition, instance, isMindmapConnection)
         if (edgeData) {
           if (isMindmapConnection) {
@@ -143,6 +153,7 @@ const TreeEdge: FC<{
             y: labelY
           }
           labelContainerRef.current?.setAttribute('transform', `translate(${labelX} ${labelY})`)
+          labelContainerRef.current?.style.setProperty('display', 'initial')
         }
       } catch (e) {
         console.error(e)
@@ -154,6 +165,9 @@ const TreeEdge: FC<{
       edit: () => toggleIsEditingLabel(true)
     })
     const clickHandler: MouseEventHandler = e => {
+      if (clickEditLabel) {
+        toggleIsEditingLabel(true)
+      }
       if (disablePopover) return
       const pos = instance.coordOps?.transformWindowPositionToPosition({ x: e.clientX, y: e.clientY })
       if (pos) {
@@ -164,6 +178,9 @@ const TreeEdge: FC<{
     useEffect(() => {
       if (labelRef.current) {
         labelRef.current.textContent = edge.label || ''
+        if (edge.label !== innerLink.label) {
+          setInnerLink(s => ({ ...s, label: edge.label }))
+        }
       }
     }, [edge?.label])
 
@@ -235,6 +252,7 @@ const TreeEdge: FC<{
       } else {
         if (innerLink.label !== undefined && innerLink.label !== edge.label) {
           updateEdge({ label: innerLink.label })
+          onLabelChange?.(innerLink.label)
         }
       }
     }, [isEditingLabel])
@@ -242,99 +260,106 @@ const TreeEdge: FC<{
     const updateEdge = (edge: Partial<IWhiteboardEdge>) => {
       instance.updateEdge?.(id, e => ({ ...e, ...edge }))
     }
-
+    const labelLayer = instance.getEdgeLabelLayer?.()
     useEffect(() => {
       drawPath()
     }, [sourceId, sourcePosition, targetPosition, targetId, realLineType, targetBorderType, targetBorderColor])
 
     return (
-      <g
-        onClick={clickHandler}
-        onPointerDown={handlePointerDown}
-        style={{
-          pointerEvents: 'none',
-          cursor: isErasing ? 'crosshair' : 'pointer',
-          opacity: isTouched ? 0.3 : currentHighlight ? (currentHighlight.edgeIds.has(edge.id) ? 1 : 0.2) : 1,
-          display: isReposition && currentEdgeId === edge.id ? 'none' : 'unset'
-        }}
-      >
-        <path
-          className={lineStyle === 'animatedDash' ? animatedEdgeClazz : lineStyle === 'dash' ? dashEdgeClazz : undefined}
-          pointerEvents="none"
-          ref={edgeRef}
-          fill="none"
-          markerEnd={hideArrow ? undefined : `url(#${getMarkerId('end', Colors.getAdaptColor(edge?.color) || MarkerColor.PRIMARY)})`}
-          stroke={Colors.getAdaptColor(edge?.color) || Colors.Font.Primary}
-          strokeWidth={
-            strokeWidth ??
-            (lineStyle === 'animatedDash' || lineStyle === 'dash' ? 4 : lineStyle === 'regular' ? 4 : lineStyle === 'thick' ? 6 : 2)
-          }
-        ></path>
-        {isMindmapConnection && (
+      <>
+        <g
+          onClick={clickHandler}
+          onPointerDown={handlePointerDown}
+          style={{
+            pointerEvents: 'none',
+            cursor: isErasing ? 'crosshair' : 'pointer',
+            opacity: isTouched ? 0.3 : currentHighlight ? (currentHighlight.edgeIds.has(edge.id) ? 1 : 0.2) : 1,
+            display: isReposition && currentEdgeId === edge.id ? 'none' : 'unset'
+          }}
+        >
           <path
-            ref={underlineRef}
-            stroke={targetBorderColor ? Colors.getAdaptColor(targetBorderColor) : Colors.getAdaptColor(edge?.color) || Colors.Font.Primary}
+            className={lineStyle === 'animatedDash' ? animatedEdgeClazz : lineStyle === 'dash' ? dashEdgeClazz : undefined}
+            pointerEvents="none"
+            ref={edgeRef}
+            fill="none"
+            markerEnd={hideArrow ? undefined : `url(#${getMarkerId('end', Colors.getAdaptColor(edge?.color) || MarkerColor.PRIMARY)})`}
+            stroke={Colors.getAdaptColor(edge?.color) || Colors.Font.Primary}
             strokeWidth={
               strokeWidth ??
               (lineStyle === 'animatedDash' || lineStyle === 'dash' ? 4 : lineStyle === 'regular' ? 4 : lineStyle === 'thick' ? 6 : 2)
             }
-          />
-        )}
-        {!disableReposition && !disablePopover && (
-          <path
-            onPointerEnter={e => {
-              handlePointerEvent(e)
-            }}
-            ref={underEdgeRef}
-            pointerEvents="auto"
-            stroke={'transparent'}
-            strokeWidth={'calc(20 * var(--zoom-level)'}
-            fill="none"
-            cursor={isErasing ? 'crosshair' : 'pointer'}
-          />
-        )}
-        {(innerLink?.label || isEditingLabel || edge.label) && (
-          <foreignObject
-            ref={labelContainerRef}
-            width={1}
-            height={1}
-            style={{ overflow: 'visible', pointerEvents: 'auto' }}
-            onPointerDown={e => e.stopPropagation()}
-          >
-            <div
-              onClick={e => e.stopPropagation()}
-              style={{
-                width: 'max-content',
-                height: 'fit-content',
-                pointerEvents: 'none'
+          ></path>
+          {isMindmapConnection && targetBorderType === 'underline' && (
+            <path
+              ref={underlineRef}
+              stroke={
+                targetBorderColor ? Colors.getAdaptColor(targetBorderColor) : Colors.getAdaptColor(edge?.color) || Colors.Font.Primary
+              }
+              strokeWidth={
+                strokeWidth ??
+                (lineStyle === 'animatedDash' || lineStyle === 'dash' ? 4 : lineStyle === 'regular' ? 4 : lineStyle === 'thick' ? 6 : 2)
+              }
+            />
+          )}
+          {((!disableReposition && !disablePopover) || clickEditLabel) && (
+            <path
+              onPointerEnter={e => {
+                handlePointerEvent(e)
               }}
+              ref={underEdgeRef}
+              pointerEvents="auto"
+              stroke={'transparent'}
+              strokeWidth={'calc(20 * var(--zoom-level)'}
+              fill="none"
+              cursor={isErasing ? 'crosshair' : 'pointer'}
+            />
+          )}
+        </g>
+        {(innerLink?.label || isEditingLabel || edge.label) &&
+          labelLayer &&
+          createPortal(
+            <foreignObject
+              ref={labelContainerRef}
+              width={1}
+              height={1}
+              style={{ overflow: 'visible', pointerEvents: 'auto' }}
+              onPointerDown={e => e.stopPropagation()}
             >
               <div
-                ref={labelRef}
-                contentEditable={true}
-                spellCheck="false"
-                className={EdgeClassName}
-                onBlur={() => {
-                  toggleIsEditingLabel(false)
-                }}
-                onClick={() => setTimeout(() => toggleIsEditingLabel(true))}
+                onClick={e => e.stopPropagation()}
                 style={{
-                  maxWidth: '16em',
-                  fontSize: FontSize['14px'],
-                  padding: '6px',
-                  minWidth: 1
+                  width: 'max-content',
+                  height: 'fit-content',
+                  pointerEvents: 'none'
                 }}
-                onInput={e => {
-                  setInnerLink({
-                    ...innerLink,
-                    label: e.currentTarget.innerText || ''
-                  })
-                }}
-              ></div>
-            </div>
-          </foreignObject>
-        )}
-      </g>
+              >
+                <div
+                  ref={labelRef}
+                  contentEditable={true}
+                  spellCheck="false"
+                  className={EdgeClassName}
+                  onBlur={() => {
+                    toggleIsEditingLabel(false)
+                  }}
+                  onClick={() => setTimeout(() => toggleIsEditingLabel(true))}
+                  style={{
+                    maxWidth: '16em',
+                    fontSize: isMindmapConnection ? 12 : FontSize['14px'],
+                    padding: isMindmapConnection ? '3px' : '6px',
+                    minWidth: 1
+                  }}
+                  onInput={e => {
+                    setInnerLink({
+                      ...innerLink,
+                      label: e.currentTarget.innerText || ''
+                    })
+                  }}
+                ></div>
+              </div>
+            </foreignObject>,
+            labelLayer
+          )}
+      </>
     )
   }
 )

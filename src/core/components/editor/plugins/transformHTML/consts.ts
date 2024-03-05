@@ -1,2 +1,2 @@
-export const WrapperNodeNames = ['FIGURE', 'ARTICLE', 'MAIN', 'SECTION', 'BODY', 'UL', 'OL']
+export const WrapperNodeNames = ['FIGURE', 'MAIN', 'BODY', 'UL', 'OL', 'PICTURE']
 export const ElementsAvailableInParagraph = ['SUP', 'A', 'STRONG', 'EM']

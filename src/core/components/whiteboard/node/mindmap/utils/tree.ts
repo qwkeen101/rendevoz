@@ -13,7 +13,7 @@ export const deleteChildsFromTree = (tree: IWhiteboardMindmap[], deleteNodeIds: 
       }
       return true
     })
-    newChildren = newChildren.map(c => ({ root: c.root, children: traverse(c) }))
+    newChildren = newChildren.map(c => ({ ...c, root: c.root, children: traverse(c) }))
     return newChildren
   }
   const root = {
@@ -26,6 +26,26 @@ export const deleteChildsFromTree = (tree: IWhiteboardMindmap[], deleteNodeIds: 
   }
 }
 
+export const updateTree = (tree: IWhiteboardMindmap[], sourceId: number, targetId: number, newMindmap: Partial<IWhiteboardMindmap>) => {
+  const newTree = produce(tree, draft => {
+    const loop = (nodes: IWhiteboardMindmap[]) => {
+      nodes.forEach(n => {
+        if (n.root === targetId) {
+          Object.assign(n, newMindmap)
+        } else if (n.root === sourceId) {
+          const target = n.children.find(i => i.root === targetId)
+          if (target) {
+            Object.assign(target, newMindmap)
+          }
+        } else {
+          loop(n.children)
+        }
+      })
+    }
+    loop(draft)
+  })
+  return newTree
+}
 export const isSubChild = (one: number, maybeParent: number, instance: IWhiteboardInstance): boolean => {
   const sourceNode = instance.getNode?.(one)
   const targetNode = instance.getNode?.(maybeParent)

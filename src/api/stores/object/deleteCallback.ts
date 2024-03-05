@@ -16,6 +16,9 @@ export default async (o: ObjectFamily[keyof ObjectFamily], force: boolean) => {
     if ('url' in o && o.url) {
       FileSystem.deleteFile(o.url)
     }
+    if ('excalidrawUrl' in o && o.excalidrawUrl) {
+      FileSystem.deleteFile(o.excalidrawUrl)
+    }
     if ('labels' in o && o.labels) {
       const labelType = `${o.specType}Label`
       const store = ObjectStore(labelType)

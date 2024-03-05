@@ -17,7 +17,7 @@ import { Rendevoz } from '@/core/rendevoz'
 interface EdgeProps {
   edge: GraphEdge
 }
-const getRadius = Rendevoz.Utils.Meta.getTypeRadius
+const getRadius = t => Rendevoz.Utils.Meta.getTypeRadius(t)
 const PixiEdge: FC<EdgeProps> = memo(({ edge }) => {
   const graph = useGraph()
 

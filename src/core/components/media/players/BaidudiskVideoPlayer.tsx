@@ -96,7 +96,9 @@ const BaidudiskVideoPlayer = () => {
         }
       })
       playerRef.current = player
-      player.addTextTrack()
+      return () => {
+        URL.revokeObjectURL(url)
+      }
     } else {
       setMediaState(s => ({ ...s, loaded: false }))
     }
@@ -108,7 +110,7 @@ const BaidudiskVideoPlayer = () => {
     }
   }, [mediaState.autoPlay, mediaState.loaded])
   useUnmount(() => {
-    player?.dispose()
+    playerRef.current?.dispose()
   })
   useEffect(() => {
     if (mediaState.loaded && mediaState.subtitleUrl && mediaState.showSubtitle) {

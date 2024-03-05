@@ -1,9 +1,9 @@
-import { Descendant } from "slate";
-import { CardElement, CustomText, ElementWithId, EmptyText } from "./baseTypes";
+import { Descendant } from 'slate'
+import { CardElement, CustomText, ElementWithId, EmptyText } from './baseTypes'
 
 export interface HeadingElement extends ElementWithId {
-  children: Descendant[];
-  folded?: boolean;
+  children: Descendant[]
+  folded?: boolean
 }
 
 export interface HeadingOneElement extends HeadingElement {
@@ -76,7 +76,11 @@ export interface CheckListItemElement {
   checked: boolean
   children: Descendant[]
 }
-
+export type MathBlockElement = {
+  type: 'math-block'
+  content?: string
+  children: Descendant[]
+}
 export interface EditableVoidElement {
   type: 'editable-void'
   children: EmptyText[]
@@ -106,8 +110,21 @@ export interface ButtonElement {
   children: Descendant[]
 }
 
+export type IFrameElement = {
+  type: 'iframe'
+  url?: string
+  width?: number
+  height?: number
+  children: Descendant[]
+}
 export interface ListItemElement {
   type: 'list-item'
+  children: Descendant[]
+}
+
+export type EmbededElement = {
+  type: 'embeded'
+  url?: string
   children: Descendant[]
 }
 
@@ -206,6 +223,7 @@ export type CommonElement =
   | ToDoElement
   | ParagraphElement
   | NoteElement
+  | MathBlockElement
   | ColumnElement
   | ColumnListElement
   | DividerElement
@@ -217,3 +235,5 @@ export type CommonElement =
   | MathElement
   | CodeBlockElement
   | HighlightBlockElement
+  | IFrameElement
+  | EmbededElement

@@ -3,7 +3,7 @@ import { css } from '@emotion/css'
 import darkCodeTheme from '@/core/components/code/darkCodeTheme'
 import lightCodeTheme from '@/core/components/code/lightCodeTheme'
 import { langs } from '@uiw/codemirror-extensions-langs'
-import { useSelectAtomValue, useSelectGlobalAtomValue } from '@/hooks'
+import { useSelectGlobalAtomValue } from '@/hooks'
 import { SettingAtom } from '@/core'
 import { CSSProperties } from 'react'
 
@@ -21,6 +21,7 @@ export default ({
   style?: CSSProperties
 }) => {
   const darkMode = useSelectGlobalAtomValue(SettingAtom, s => s.general.darkMode)
+  const defaultLang = useSelectGlobalAtomValue(SettingAtom, s => s.code.defaultLanguage)
   return (
     <CodeMirror
       className={css({
@@ -39,7 +40,7 @@ export default ({
         outline: 'none',
         ...style
       }}
-      extensions={[langs[language ?? 'typescript']()]}
+      extensions={[langs[language ?? defaultLang ?? 'typescript']()]}
       onChange={onChange}
     />
   )

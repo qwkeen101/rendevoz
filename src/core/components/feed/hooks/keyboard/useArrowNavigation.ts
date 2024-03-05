@@ -1,5 +1,5 @@
 import useFeedState from '@/core/components/feed/hooks/useFeedState'
-import { useEffect } from 'react'
+import { RefObject, useEffect } from 'react'
 import isHotkey from 'is-hotkey'
 import { KEY } from '@/consts'
 import useFeedInstance from '@/core/components/feed/hooks/useFeedInstance'
@@ -9,7 +9,7 @@ import { ObjectStore } from '@/api/stores'
 import { FEED_CONTENT_CACHE } from '@/core/components/feed/contentCache'
 import { Rendevoz } from '@/core/rendevoz'
 
-const useArrowNavigation = () => {
+const useArrowNavigation = (containerRef: RefObject<HTMLDivElement>) => {
   const [feedState, setFeedState] = useFeedState()
   const instance = useFeedInstance()
   const prepareContent = async (feedItemId: number) => {
@@ -95,13 +95,13 @@ const useArrowNavigation = () => {
   })
   useEffect(() => {
     const keyboardHandler = (e: KeyboardEvent) => {
-      if (isHotkey(KEY.ArrowRight, e)) {
-        e.preventDefault()
-        instance.navigateOps?.forward()
-      }
-      if (isHotkey(KEY.ArrowLeft, e)) {
-        e.preventDefault()
-        instance.navigateOps?.back()
+      if (containerRef.current?.contains(e.target)) {
+        if (isHotkey(KEY.ArrowRight, e)) {
+          instance.navigateOps?.forward()
+        }
+        if (isHotkey(KEY.ArrowLeft, e)) {
+          instance.navigateOps?.back()
+        }
       }
     }
     document.addEventListener('keydown', keyboardHandler)

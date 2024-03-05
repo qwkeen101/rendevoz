@@ -105,7 +105,7 @@ const IconButton = forwardRef(
               style={{
                 color: iconColor,
                 fontSize: '1.1em',
-                marginRight: 4
+                marginRight: text ? 4 : 0
               }}
               theme={theme}
               spin={spin}

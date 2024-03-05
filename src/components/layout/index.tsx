@@ -1,20 +1,20 @@
-import { memo, useEffect, useMemo, useRef, useState } from 'react'
+import { memo, useEffect, useRef } from 'react'
 import { Helmet } from 'react-helmet'
 import { Container, Icon } from '../base'
 import DockLayout, { LayoutData } from '../base/dock'
-import LayoutManager from './layoutManager'
-import { getSetting, useSetting } from '@/core'
+import { getSetting } from '@/core'
 import { Sidebar } from './sidebar'
 import ClassName from '@/styles/classNames'
 import { ILayoutTab } from '~/typings'
 import { Rendevoz } from '@/core/rendevoz'
 import { getOS } from '@/App'
 import TitleBar from '@/components/titlebar'
-import MacTitlebar from '@/components/titlebar/MacTitlebar'
 import * as Serializer from '../base/dock/Serializer'
 import { GlobalInstance, useGlobalAtom, useGlobalAtomValue } from '@/hooks'
 import { initializedAtom } from '@/Initializer'
-import { atom, useAtom } from 'jotai'
+import { atom } from 'jotai'
+import assignGlobalLayoutOps from '@/components/layout/assignLayoutOps'
+import registerTabs from '@/api/lifycycle/startup/registerTabs'
 
 const initialLayout: LayoutData = {
   global: {
@@ -33,7 +33,6 @@ const initialLayout: LayoutData = {
 
 const firstLayout = localStorage.getItem('layout')
 export const LayoutIdToTabMap = new Map<string, ILayoutTab>()
-export let GlobalLayout: LayoutManager | null = null
 export const defaultLayout = {
   ...initialLayout,
   global: {
@@ -66,22 +65,38 @@ export const defaultLayout = {
     )
   }
 }
+
+const restoreSavedTab = (tab: { type: string; objectId?: number; id: string; metaType?: string }) => {
+  const { type, objectId, id, metaType } = tab
+  const tabData = GlobalInstance.layoutOps?.getRegisteredTabData(type)
+  if (!tabData) return
+  const layoutTab = GlobalInstance.layoutOps?.initializeOneTab(tabData, { type, objectId, metaType })
+  if (layoutTab) {
+    LayoutIdToTabMap.set(id, layoutTab)
+    return {
+      content: layoutTab.tabContent,
+      id,
+      title: 'New Tab',
+      type,
+      objectId,
+      metaType
+    }
+  }
+}
+
 export const GlobalLayoutAtom = atom(defaultLayout)
 const Layout = () => {
   const [layout, setLayout] = useGlobalAtom(GlobalLayoutAtom)
-  const layoutManager = useMemo(() => new LayoutManager(), [])
   const layoutRef = useRef<DockLayout>()
-
+  assignGlobalLayoutOps(layoutRef)
   const loadTab = tab => {
-    const restored = Rendevoz.Actions.Layout.restoreSavedTab(tab)
+    const restored = restoreSavedTab(tab)
     return restored || tab
   }
-  layoutManager.makeTabActive = id => layoutRef.current?.updateTab(id, null, true)
-
-  GlobalLayout = layoutManager
   const initialized = useGlobalAtomValue(initializedAtom)
   useEffect(() => {
     if (initialized) {
+      registerTabs()
       const setting = getSetting()
       if (setting.general.autoSaveLayout) {
         LayoutIdToTabMap.clear()
@@ -93,12 +108,7 @@ const Layout = () => {
               ...defaultLayout,
               ...Serializer.loadLayoutData(parsed, defaultLayout, loadTab)
             }
-
             setLayout(after)
-            layoutManager.onLayoutChange(layout => {
-              setLayout(layout)
-            })
-            layoutManager.registerLayout(after)
             return
           } catch (e) {
             localStorage.removeItem('layout')
@@ -106,17 +116,12 @@ const Layout = () => {
         }
       }
     }
-    layoutManager.registerLayout(defaultLayout)
-    layoutManager.onLayoutChange(layout => {
-      setLayout(layout)
-    })
     setTimeout(() => {
       Rendevoz.Actions.Open.openHome()
     })
   }, [initialized])
   const handleLayoutChange = (layout: LayoutData) => {
     setLayout(layout)
-    layoutManager.registerLayout(layout)
     setTimeout(() => {
       localStorage.setItem('layout', JSON.stringify(layoutRef.current?.saveLayout()))
     })
@@ -124,13 +129,12 @@ const Layout = () => {
 
   const os = getOS()
   return (
-    <Container onClick={() => { console.log(layout)}}auto column style={{ height: '100vh', overflow: 'hidden' }}>
+    <Container auto column style={{ height: '100vh', overflow: 'hidden' }}>
       <Helmet>
         <title>Rendevoz</title>
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
       </Helmet>
       {os === 'windows' && <TitleBar />}
-      {/*{os === 'macos' && <MacTitlebar />}*/}
       <Container role={'body-container'} auto style={{ height: 0 }}>
         <Sidebar direction={'right'} />
         <Container auto>

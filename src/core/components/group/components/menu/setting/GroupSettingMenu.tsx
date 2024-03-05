@@ -147,15 +147,17 @@ export default ({ onClose }: { onClose: VoidFunction }) => {
                   setCurrentView('grouper')
                 }}
               />
-              <ButtonSelect
-                name={t('general.Open object in')}
-                closeOnSelect={true}
-                value={groupState.data?.openIn || 'newTab'}
-                options={openInOptions}
-                onSelect={v => {
-                  instance.updateGroupData?.(s => ({ ...s, openIn: v[0] }))
-                }}
-              />
+              {!groupStateState?.onlyOpenIn && (
+                <ButtonSelect
+                  name={t('general.Open object in')}
+                  closeOnSelect={true}
+                  value={groupState.data?.openIn || 'newTab'}
+                  options={openInOptions}
+                  onSelect={v => {
+                    instance.updateGroupData?.(s => ({ ...s, openIn: v[0] }))
+                  }}
+                />
+              )}
               {groupLayout?.showAddObjectIntoSetting !== false && (
                 <ButtonSelect
                   closeOnSelect={true}

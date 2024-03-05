@@ -16,12 +16,13 @@ import { useSelectAtomValue } from '@/hooks'
 const GoogleNewsViewer = () => {
   const currentVisiblePage = useSelectAtomValue(FeedStateAtom, s => s.currentVisiblePage)
   const { t } = useTranslation()
-  useArrowNavigation()
+
   useFeedCollectionContent()
   const { renderModal } = useFeedFolder()
   const pageContainerRef = useRef<HTMLDivElement>(null)
+  useArrowNavigation(pageContainerRef)
   return (
-    <Content fullWidth fullHeight flex ref={pageContainerRef}>
+    <Content fullWidth tabIndex={0} fullHeight flex ref={pageContainerRef}>
       <FeedSidebar />
       <TabTitle title={t('general.Feeds')} icon={<Icon name={'park-broadcast'} />} />
       {renderModal()}

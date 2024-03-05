@@ -5,7 +5,7 @@ import { CustomEditor, IEditorOverlayContent, LeftTopPosition, XYPosition } from
 import EditorOverlayElements from './components/EditorOverlayElements'
 import { PopoverPosition } from 'react-tiny-popover'
 import EditorEmojiPicker from './components/EditorEmojiPicker'
-import EditorBlockDetails from './components/EditorBlockDetails'
+import EditorBlockMenu from '../blockMenu/EditorBlockMenu'
 import EditorSelectArea from './components/EditorSelectArea'
 import EditorLinkForm from './components/EditorLinkForm'
 import { KEY, Zindexes } from '@/consts'
@@ -81,7 +81,7 @@ const useEditorOverlay = (editor: CustomEditor, scrollElement?: HTMLDivElement |
       case 'blockHandleMenu':
         return <EditorOverlayElements editor={editor} mode="block" />
       case 'blockDetailsMenu':
-        return <EditorBlockDetails editor={editor} manager={overlayManager} />
+        return <EditorBlockMenu editor={editor} manager={overlayManager} />
       case 'slashMenu':
         return <EditorOverlayElements editor={editor} mode="slash" />
       case 'linkForm':

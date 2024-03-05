@@ -2,7 +2,7 @@ import { Button } from '@/components/base/button'
 import { css } from '@emotion/css'
 import Content from './Content'
 import errorImg from '@/assets/error.png'
-import { ipcInstance } from '@/plugins'
+import { ipcInstance } from '@/electron'
 import { useTheme } from '@/hooks'
 
 const ErrorFallback = ({ error }) => {

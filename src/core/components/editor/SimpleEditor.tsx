@@ -27,7 +27,7 @@ const textAreaClassname = css({
     padding: 0
   },
   '.ParagraphBlock': {
-    margin: '1px 0px !important',
+    margin: '1px 0px',
     borderRadius: 0
   }
 })

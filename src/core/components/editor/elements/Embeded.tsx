@@ -11,6 +11,7 @@ import useIsSelecting from '@/core/components/editor/hooks/useIsSelecting'
 import { useIsIn } from '@/hooks'
 import useEditorInstance from '@/core/components/editor/hooks/useEditorInstance'
 import { useTranslation } from 'react-i18next'
+import ResizeWrapper from '@/core/components/editor/elements/ResizeWrapper'
 
 export default memo(({ children, element }: RenderElementProps) => {
   const editor = useSlateStatic()
@@ -38,33 +39,21 @@ export default memo(({ children, element }: RenderElementProps) => {
       } catch (e) {}
     }
     return (
-      <div ref={ref} style={{ width: '100%', display: 'flex', justifyContent: 'center' }} contentEditable={'false'}>
-        <Resizable
+      <div ref={ref} style={{ width: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center' }} contentEditable={'false'}>
+        <ResizeWrapper
+          element={element}
           enable={{
             bottom: true,
             left: true,
             right: true
           }}
-          size={{
-            width: embededEle.width ?? '100%',
-            height: embededEle.height ?? 400
-          }}
-          onResizeStop={(event, direction, elementRef) => {
-            Transforms.setNodes(
-              editor,
-              {
-                width: elementRef.clientWidth,
-                height: elementRef.clientHeight
-              },
-              {
-                at: ReactEditor.findPath(editor, element)
-              }
-            )
+          defaultSize={{
+            width: '100%',
+            height: 400
           }}
           style={{
             background: Colors.Background.Secondary
           }}
-          className={'selectable'}
           maxWidth={'100%'}
         >
           <AnimatePopover
@@ -106,7 +95,7 @@ export default memo(({ children, element }: RenderElementProps) => {
             }}
             src={url}
           />
-        </Resizable>
+        </ResizeWrapper>
         {children}
       </div>
     )

@@ -14,6 +14,7 @@ import { useTranslation } from 'react-i18next'
 
 const MediaChapterController = () => {
   const [mediaState] = useMediaState()
+  console.log(mediaState.sortedChapters)
   return (
     <Content
       flex
@@ -108,10 +109,10 @@ const Chapter = ({ chapter, canDelete }: { chapter: IMediaChapter; canDelete: bo
           <Content
             onClick={e => e.stopPropagation()}
             style={{
-              border: `1px solid ${Colors.Background.Border}`,
               padding: '2px 4px',
               borderRadius: 6
             }}
+            className={'focus-within-input'}
             flex
             alignItems="center"
           >

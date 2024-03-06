@@ -2,10 +2,12 @@ import { CustomEditor } from '~/typings'
 import { SELECT_AREA_MAP } from '@/core'
 import { useLayoutEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
+import useIsSelecting from '@/core/components/editor/hooks/useIsSelecting'
 
 const EditorSelectArea = ({ editor, scrollElement }: { editor: CustomEditor; scrollElement?: HTMLElement | null }) => {
   const [selectArea, setSelectArea] = useState<any>()
   const framerIdRef = useRef(0)
+  const [isSelecting] = useIsSelecting()
   useLayoutEffect(() => {
     const changeSelectArea = () => {
       const selectArea = SELECT_AREA_MAP.get(editor)
@@ -21,11 +23,13 @@ const EditorSelectArea = ({ editor, scrollElement }: { editor: CustomEditor; scr
       }
       framerIdRef.current = requestAnimationFrame(changeSelectArea)
     }
-    changeSelectArea()
+    if (isSelecting) {
+      changeSelectArea()
+    }
     return () => {
       cancelAnimationFrame(framerIdRef.current)
     }
-  }, [editor, scrollElement])
+  }, [editor, scrollElement, isSelecting])
   return createPortal(
     <div
       style={{

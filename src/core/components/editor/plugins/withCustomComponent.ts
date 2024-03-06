@@ -13,8 +13,20 @@ const withCustomComponent = (editor: CustomEditor) => {
   editor.insertSoftBreak = () => {
     editor.insertText('\n')
   }
-  editor.insertFragment = nodes => {
+  editor.insertFragment = (nodes, options) => {
     nodes.forEach(i => (i.id = Id.getId()))
+    const position = options?.at || editor.selection
+    if (!position) return
+    // can not insert fragment to table
+    if (
+      Editor.above(editor, {
+        match: n => n.type === 'table',
+        at: position
+      })
+    ) {
+      Transforms.insertText(editor, Node.string({ children: nodes }), { at: position })
+      return
+    }
     insertFragment(nodes)
   }
   editor.insertNode = node => {

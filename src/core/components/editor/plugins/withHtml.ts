@@ -13,7 +13,6 @@ const withHtml = (editor: CustomEditor) => {
     const slateFragment = data.getData('application/x-rendevoz-slate-fragment')
     const plainText = data.getData('text/plain')
     const url = data.getData('text/uri-list')
-    console.log({ plainText, slateFragment, data, url, html })
     const imageItem = Array.from(data.items).find(i => i.type.startsWith('image'))
     if (imageItem) {
       const blob = imageItem.getAsFile()
@@ -48,7 +47,6 @@ const withHtml = (editor: CustomEditor) => {
     if (html) {
       const parsed = new DOMParser().parseFromString(html, 'text/html')
       const deserialized = deserializeHTML(parsed.body)
-      console.log(deserialized, parsed)
       if (deserialized.length) {
         const normalized = normalize(deserialized)
         Transforms.insertFragment(editor, normalized)

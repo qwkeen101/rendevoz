@@ -23,13 +23,13 @@ export const useAssignMediaInstance = (containerRef: RefObject<HTMLElement>) => 
     getVideoState: () => mediaState,
     insertChapter: async chapter => {
       if (!chapter.startTime) return
-      await mediaInstance.on?.({ type: 'addChapter', currentChapter: [chapter] })
+      await mediaInstance.on?.({ type: 'addChapter', currentChapter: [{ ...chapter, id: chapter.id || Id.getId() }] })
     },
     deleteChapter: async id => {
       await mediaInstance.on?.({ type: 'deleteChapter', id })
     },
     insertChapters: async chapters => {
-      await mediaInstance.on?.({ type: 'addChapter', currentChapter: chapters })
+      await mediaInstance.on?.({ type: 'addChapter', currentChapter: chapters.map(i => ({ ...i, id: i.id || Id.getId() })) })
     },
     updateChapter: async chapter => {
       await mediaInstance.on?.({ type: 'updateChapter', currentChapter: chapter })

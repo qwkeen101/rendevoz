@@ -38,6 +38,9 @@ const deserializeHTML = (root: HTMLElement) => {
     // TODO
     case 'BR':
       return null
+    case 'TBODY':
+    case 'TR':
+    case 'TD':
     case 'TABLE':
       return null
     case 'IMG':

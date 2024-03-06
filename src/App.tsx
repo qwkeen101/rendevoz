@@ -92,9 +92,9 @@ declare module 'rendevoz' {
   }
 }
 const cache = createCache({ key: 'external', speedy: false })
+
 const App = () => {
   const PdfJs = window['pdfjs-dist/build/pdf']
-
   PdfJs.GlobalWorkerOptions.workerSrc = PdfJsUrl
   useGlobalShortcutHandler()
   const lang = useSelectGlobalAtomValue(SettingAtom, s => s.general.language)

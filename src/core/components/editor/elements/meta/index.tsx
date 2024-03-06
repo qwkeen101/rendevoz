@@ -12,6 +12,7 @@ import Video from '@/core/components/media/wrappers/Video'
 import Image from '@/core/components/editor/elements/image'
 import { ObjectStore } from '@/api/stores'
 import { IImage } from '~/typings'
+import ResizeWrapper from '@/core/components/editor/elements/ResizeWrapper'
 
 const MetaObject: FC<RenderElementProps> = memo(({ children, element }) => {
   const metaEle = element
@@ -25,13 +26,15 @@ const MetaObject: FC<RenderElementProps> = memo(({ children, element }) => {
     if (!metaObject) return <div>Deleted content</div>
     if (metaObject.type === 'image') {
       return (
-        <img
-          src={(target as IImage)?.url}
-          style={{
-            width: '100%',
-            objectFit: 'cover'
-          }}
-        />
+        <ResizeWrapper minWidth={'50%'} enable={{ left: true, right: true }} style={{ margin: 'auto' }} element={element}>
+          <img
+            src={(target as IImage)?.url}
+            style={{
+              width: '100%',
+              objectFit: 'cover'
+            }}
+          />
+        </ResizeWrapper>
       )
     }
     if (metaObject.type === 'audio') {

@@ -23,6 +23,7 @@ import GalleryConfig from '@/scenes/home/GalleryConfig'
 import { CollectionStore, MetaStore } from '@/api/stores'
 import RecycleBin from '@/core/components/recycleBin'
 import Workspace from '@/api/common/workspace'
+import { request } from '@/utils/request'
 
 const { Content } = Components
 const HomeSearchAtom = atom<string | undefined>(undefined)

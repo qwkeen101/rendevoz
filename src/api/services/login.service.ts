@@ -105,13 +105,17 @@ const createLoginService = () => {
       if (user) {
         const { refreshToken } = user
         if (refreshToken) {
-          request(remoteInterface + '/refreshToken', {
-            data: { refreshToken },
-            method: 'POST'
+          fetch(remoteInterface + '/refreshToken', {
+            body: JSON.stringify({ refreshToken }),
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            }
           })
+            .then(i => i.json())
             .then(data => {
-              if (data.data) {
-                const { id_token, refresh_token } = data.data
+              if (data) {
+                const { id_token, refresh_token } = data
                 res({
                   idToken: id_token,
                   refreshToken: refresh_token

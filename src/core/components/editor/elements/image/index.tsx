@@ -1,7 +1,6 @@
 import { css } from '@emotion/css'
 import { ReactEditor, RenderElementProps, useSlateStatic } from '../../slate-react'
 import { ImageElement } from '~/typings'
-import { motion } from 'framer-motion'
 import { useEffect, useRef, useState } from 'react'
 import { Icon, Tooltip } from '@/components'
 import { Path, Transforms } from 'slate'
@@ -11,6 +10,7 @@ import Id from '@/utils/id'
 import { Resizable } from 're-resizable'
 import { useIsIn, useSelectAtomValue } from '@/hooks'
 import { EditorStateAtom } from '@/core/components/editor/hooks/useEditorState'
+import ResizableWrapper from '../ResizeWrapper'
 
 const Image = ({ element, children }: RenderElementProps) => {
   const imageEle = element as ImageElement
@@ -133,55 +133,7 @@ const Image = ({ element, children }: RenderElementProps) => {
             </div>
           </>
         )}
-        <Resizable
-          ref={e => {
-            ref.current = e?.resizable
-          }}
-          handleStyles={{
-            left: {
-              height: '30%',
-              border: '1px solid white',
-              top: '50%',
-              transform: 'translateY(-50%)',
-              borderRadius: 99,
-              width: 5,
-              opacity: isIn ? 1 : 0,
-              left: 2,
-              transition: 'opacity 0.3s ease',
-              background: 'black'
-            },
-            right: {
-              height: '30%',
-              top: '50%',
-              transform: 'translateY(-50%)',
-              border: '1px solid white',
-              borderRadius: 99,
-              width: 5,
-              right: 2,
-              transition: 'opacity 0.3s ease',
-              opacity: isIn ? 1 : 0,
-              background: 'black'
-            }
-          }}
-          size={{ height: 'auto', width: imageEle.width || '100%' }}
-          enable={{ left: !readOnly && true, right: !readOnly && true }}
-          minWidth={'50%'}
-          maxWidth={'100%'}
-          className={'selectable'}
-          onResizeStop={(event, direction, elementRef, delta) => {
-            const currentWidth = elementRef.getBoundingClientRect().width
-            const path = ReactEditor.findPath(editor, element)
-            Transforms.setNodes(
-              editor,
-              {
-                width: currentWidth
-              },
-              {
-                at: path
-              }
-            )
-          }}
-        >
+        <ResizableWrapper enable={{ left: !readOnly && true, right: !readOnly && true }} minWidth={'50%'} element={element}>
           <img
             style={{
               width: '100%'
@@ -194,7 +146,7 @@ const Image = ({ element, children }: RenderElementProps) => {
             draggable={true}
             src={imageEle.url}
           />
-        </Resizable>
+        </ResizableWrapper>
       </div>
     </div>
   )

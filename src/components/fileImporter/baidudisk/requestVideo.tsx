@@ -8,7 +8,7 @@ const requestBaiduVideo = async (path: string, quality: 480 | 720 | 1080 = 720) 
     loginBaidudisk()
   }
   if (bda) {
-    const encodedPath = encodeURI(path)
+    const encodedPath = encodeURIComponent(path)
     const url = `https://pan.baidu.com/rest/2.0/xpan/file?method=streaming&access_token=${bda}&path=${encodedPath}&type=M3U8_AUTO_${quality}`
 
     const result = await request(url, {
@@ -49,19 +49,22 @@ const requestBaiduVideo = async (path: string, quality: 480 | 720 | 1080 = 720) 
     if (result.data.adToken) {
       if (result.data.ltime) {
         return new Promise(res => {
-          setTimeout(() => {
-            const newUrl = `https://pan.baidu.com/rest/2.0/xpan/file?method=streaming&access_token=${bda}&path=${encodedPath}&type=M3U8_AUTO_${quality}&adToken=${encodeURIComponent(
-              result.data.adToken
-            )}`
-            request(newUrl, {
-              method: 'get',
-              headers: {
-                'User-Agent': 'pan.baidu.com'
-              }
-            }).then(r => {
-              res(r)
-            })
-          }, result.data.ltime * 1000 + 1000)
+          setTimeout(
+            () => {
+              const newUrl = `https://pan.baidu.com/rest/2.0/xpan/file?method=streaming&access_token=${bda}&path=${encodedPath}&type=M3U8_AUTO_${quality}&adToken=${encodeURIComponent(
+                result.data.adToken
+              )}`
+              request(newUrl, {
+                method: 'get',
+                headers: {
+                  'User-Agent': 'pan.baidu.com'
+                }
+              }).then(r => {
+                res(r)
+              })
+            },
+            result.data.ltime * 1000 + 1000
+          )
         })
       }
     } else if (result.headers['content-type'] === 'application/x-mpegURL') {

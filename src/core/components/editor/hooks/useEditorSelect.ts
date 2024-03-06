@@ -185,7 +185,7 @@ const useEditorSelect = (editor: CustomEditor, scrollElement?: HTMLElement | nul
       document.body.style.cursor = 'auto'
       setTimeout(() => {
         setIsSelecting(false)
-      }, 50)
+      }, 0)
     }
     scrollManager.endScroll()
     SELECT_AREA_MAP.delete(editor)

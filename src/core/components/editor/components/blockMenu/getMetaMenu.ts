@@ -8,7 +8,7 @@ import Id from '@/utils/id'
 import { MetaStore } from '@/api/stores'
 export default (editor: Editor, instance: IEditorInstance): IMenuLayoutItem[] => {
   const selectedElements = instance.getSelectedElements?.()
-  const embedableTypes: MetaObject['type'][] = ['group', 'video', 'audio']
+  const embedableTypes: MetaObject['type'][] = ['group', 'video', 'audio', 'image']
   const updateCardStyle = (s: 'inline' | 'block' | 'embeded') => {
     const selectedCards = selectedElements?.filter(i => i.type === 'metaObject')
     instance.overlayOps?.close()

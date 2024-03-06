@@ -13,19 +13,21 @@ export const handleImportAllAndCreateCollections = async (
     let start = 0
     let dataArr = []
     const listall = async () => {
-      const result = await request(`https://pan.baidu.com/rest/2.0/xpan/multimedia`, {
-        method: 'get',
-        params: {
+      const result = await fetch(
+        `https://pan.baidu.com/rest/2.0/xpan/multimedia?${new URLSearchParams({
           method: 'listall',
           access_token: access,
-          recursion: 1,
+          recursion: '1',
           path: currentFolder === '' ? '/' : currentFolder,
-          start,
-          limit: 2000,
+          start: `${start}`,
+          limit: '2000',
           order: 'time'
+        })}`,
+        {
+          method: 'get'
         }
-      })
-      const data = result.data
+      ).then(i => i.json())
+      const data = result
       dataArr = dataArr.concat(...data.list)
       if (data.has_more) {
         start = data.cursor

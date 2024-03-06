@@ -53,6 +53,8 @@ export type CustomElement = (CommonElement | OuterElement) & {
   cardType?: 'embeded' | 'block'
   collapsed?: boolean
   level?: number
+  width?: number
+  height?: number
   folded?: boolean
 }
 

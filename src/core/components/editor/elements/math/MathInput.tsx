@@ -1,5 +1,5 @@
 import { Content, Icon } from '@/components'
-import AutosizeTextarea from '@/components/custom/input/autosizeTextarea'
+import AutosizeTextarea from '@/components/custom/input/AutoSizeTextArea'
 import { ClassName } from 'rendevoz'
 import { memo, useEffect, useRef } from 'react'
 import isHotkey from 'is-hotkey'
@@ -18,12 +18,18 @@ export default memo(
     isInline: boolean
     onComplete: (v: string) => void
   }) => {
-    const inputRef = useRef<HTMLTextAreaElement>(null)
+    const inputRef = useRef<HTMLDivElement>(null)
     const { t } = useTranslation()
     useEffect(() => {
       setTimeout(() => {
         inputRef.current?.focus()
-        inputRef.current?.select()
+        if (window.getSelection && inputRef.current) {
+          const selection = window.getSelection()!
+          const range = document.createRange()
+          range.selectNodeContents(inputRef.current)
+          selection.removeAllRanges()
+          selection.addRange(range)
+        }
       }, 100)
     }, [])
     return (
@@ -38,14 +44,21 @@ export default memo(
       >
         <AutosizeTextarea
           ref={inputRef}
+          placeholder={
+            isInline
+              ? 'x^n + y^n = z^n'
+              : '\\begin{align*}\n' +
+                '  f(x) &= x^2\\\\\n' +
+                '\\end{align*}'
+          }
           onKeyDown={e => {
             if (isHotkey(KEY.Enter, e)) {
               e.preventDefault()
-              onComplete(e.currentTarget.value)
+              onComplete(e.currentTarget.innerText ?? '')
             }
           }}
           onChange={e => {
-            onChange(e.target.value)
+            onChange(e)
           }}
           style={{
             whiteSpace: 'pre-wrap',
@@ -55,10 +68,10 @@ export default memo(
             flex: '1 1 0%',
             resize: 'none',
             padding: 0,
-            display: 'block'
+            display: 'block',
+            maxHeight: '50vh',
+            minHeight: isInline ? '1lh' : '3lh'
           }}
-          minRows={isInline ? 1 : 3}
-          maxRows={8}
           defaultValue={defaultValue}
         />
         <Content

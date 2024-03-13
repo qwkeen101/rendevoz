@@ -11,6 +11,7 @@ import { Colors } from '@/consts'
 import { useTranslation } from 'react-i18next'
 import { MetaStore } from '@/api/stores'
 import { isEqual } from 'lodash'
+import { assignProperties } from '@/utils'
 const GalleryRenderer = memo(
   ({
     value = [],
@@ -87,7 +88,25 @@ const GalleryRenderer = memo(
         scrollMargin: m,
         paddingEnd: bottomPadding ?? 100
       })
-
+      assignProperties(instance, {
+        bodyOps: {
+          ...instance.bodyOps,
+          scrollToMeta: (metaId, select) => {
+            console.log(value, metaId)
+            const targetIdx = value.findIndex(i => i.id === metaId)
+            if (targetIdx >= 0) {
+              const rowIdx = Math.floor(targetIdx / itemsPerRow)
+              virtualizer.scrollToIndex(rowIdx, {
+                align: 'center'
+              })
+              if (select) {
+                const row = value[targetIdx]
+                instance.selectOps?.selectItem(row.tempRowId || row.rowId)
+              }
+            }
+          }
+        }
+      })
       instance.virtualizer = virtualizer
       const items = virtualizer.getVirtualItems()
 

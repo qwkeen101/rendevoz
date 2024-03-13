@@ -1,11 +1,7 @@
 import { MetaObject, PropertyFilterRule } from '~/typings'
 
 function optionFilter<T extends MetaObject>(rule: PropertyFilterRule, v: (o: T) => number | number[] | undefined): (obj: T) => boolean {
-  const isSelect = rule.propType === 'singleSelect' || rule.propType === 'multiSelect'
-  if (!isSelect) {
-    return () => true
-  }
-  if (rule.propType === 'singleSelect') {
+  if (rule.propType === 'singleSelect' || rule.propType === 'reviewState') {
     const value = rule.value as number | undefined
     const ruleFilter = () => {
       switch (rule.type) {

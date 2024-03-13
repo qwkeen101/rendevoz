@@ -82,11 +82,18 @@ export const defaultHandler: DefaultAddElementHandler = (type, instance, mode, o
     }
     case 'iframe': {
       const id = Id.getId()
-      Transforms.insertNodes(editor, {
-        id,
-        type: 'iframe',
-        children: [{ text: '' }]
-      })
+      ReactEditor.blur(editor)
+      Transforms.insertNodes(
+        editor,
+        {
+          id,
+          type: 'iframe',
+          children: [{ text: '' }]
+        },
+        {
+          at: addElementPath
+        }
+      )
       waitFor(
         () => {
           return !!instance.blockOps?.getBlockFuncs(id)?.openTypeUrlForm

@@ -27,13 +27,15 @@ import { WhiteboardStateAtom } from '@/core/components/whiteboard/hooks/useWhite
 import eventHandlers from '@/core/components/whiteboard/node/hooks/eventHandlers'
 import useNodeResize from '@/core/components/whiteboard/node/hooks/useNodeResize'
 import useNodeDrag from '@/core/components/whiteboard/node/hooks/useNodeDrag'
-import { useSetAtom } from 'jotai'
+import { useAtomValue, useSetAtom } from 'jotai'
 import MindmapNode from '@/core/components/whiteboard/node/mindmap/MindmapNode'
 import AddSubMindmapIndicator from '@/core/components/whiteboard/node/mindmap/AddSubMindmapIndicator'
 import getNodeSize from '@/core/components/whiteboard/node/getNodeSize'
 import getNodeClassname from '@/core/components/whiteboard/node/getNodeClassname'
 import classnames from 'classnames'
 import { Colors } from '@/consts'
+import { isEqual } from 'lodash'
+import { selectAtom } from 'jotai/utils'
 
 export type NodeInnerState = INodeInnerState
 export interface InnerNodeProps {
@@ -45,10 +47,20 @@ export interface InnerNodeProps {
   metaId?: number
 }
 
+const NodeSelectAtom = selectAtom(
+  WhiteboardStateAtom,
+  s => ({
+    pointerMode: s.pointerMode,
+    hasEraseOrDrawTool: s.currentTool,
+    isDraggingNode: s.isDraggingNode,
+    currentHighlight: s.highlightedIds
+  }),
+  (a, b) => isEqual(a, b)
+)
 const lockResizeElements = ['image', 'video']
 
 const WrapperNode = ({ node }: { node: IWhiteboardNode }) => {
-  const { x, y, type, name, id, background, width, height, z } = node
+  const { x, y, type, id, background, width, height } = node
   const eventHandlerRef = useRef<NodeEventHandler>()
   const flow = useFlow()
 
@@ -64,11 +76,8 @@ const WrapperNode = ({ node }: { node: IWhiteboardNode }) => {
     isEditingName: false,
     keepRatioResize: false
   })
-
-  const panPointerMode = useSelectAtomValue(WhiteboardStateAtom, s => s.pointerMode) === 'pan'
-  const hasEraseOrDrawTool = useSelectAtomValue(WhiteboardStateAtom, s => s.currentTool)
-  const isDraggingNode = useSelectAtomValue(WhiteboardStateAtom, s => s.isDraggingNode)
-  const currentHighlight = useSelectAtomValue(WhiteboardStateAtom, s => s.highlightedIds)
+  const { pointerMode, hasEraseOrDrawTool, isDraggingNode, currentHighlight } = useAtomValue(NodeSelectAtom)
+  const panPointerMode = pointerMode === 'pan'
   const setWhiteboardState = useSetAtom(WhiteboardStateAtom)
   const instance = useWhiteboardInstance()
   const updateWhiteboard = instance.updateWhiteboard
@@ -164,6 +173,7 @@ const WrapperNode = ({ node }: { node: IWhiteboardNode }) => {
       instance.values.ID_TO_NODE_MAP.delete(node.id)
     }
   }, [])
+
   const rafUpdateEdge = useRafFn(() => {
     instance.nodeOps?.updateRelatedEdges(node.id)
   })
@@ -340,8 +350,9 @@ const WrapperNode = ({ node }: { node: IWhiteboardNode }) => {
   if (node.type === 'freehand' && !node.background) {
     showCover = false
   }
-  const clazz = getNodeClassname(node)
+  const clazz = !panPointerMode && getNodeClassname(node)
   const { width: nodeWidth, height: nodeHeight, minWidth, maxWidth } = getNodeSize(node)
+  console.log(node, nodeWidth)
   return (
     <Rnd
       ref={node => {
@@ -466,6 +477,7 @@ const WrapperNode = ({ node }: { node: IWhiteboardNode }) => {
         }
       }}
       onMouseDown={e => {
+        if (panPointerMode) return
         if (node.rootId && !nodeState.selected && !nodeState.focused && e.button === 0) {
           instance.mindmapOps?.startDragMindmapChild(node.id, e)
         }

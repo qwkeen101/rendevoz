@@ -3,7 +3,7 @@ import { memo, useEffect, useRef, useState } from 'react'
 import { IPdfLabel } from '~/typings'
 import { ObjectStore } from '@/api/stores'
 import { useRenderLabel } from '@/core/object'
-import { Content, Image, VirtualList } from '@/components'
+import { Content, Icon, Image, Modal, VirtualList } from '@/components'
 import ClassName from '@/styles/classNames'
 import { useTranslation } from 'react-i18next'
 import Colors from '@/consts/colors'
@@ -12,6 +12,9 @@ import { atom, useAtom } from 'jotai'
 import fuzzysort from 'fuzzysort'
 import usePdfBarState from '@/core/components/pdf/hooks/usePdfBarState'
 import { Virtualizer } from '@tanstack/react-virtual'
+import pdfLabelToMindmap from '@/core/components/whiteboard/utils/label/pdfLabelToMindmap'
+import { Whiteboard } from '@/core/components/whiteboard'
+import { getBoxOfBoxes } from '@/core/components/whiteboard/utils'
 
 const PdfLabelSearchAtom = atom<{
   searchInput?: string
@@ -23,6 +26,8 @@ const PdfLabelController = memo(({ labelIds }: { labelIds?: number[] }) => {
   const [sortMode, setSortMode] = useState<'createTime' | 'page'>('page')
   const [labelSearch, setLabelSearch] = useAtom(PdfLabelSearchAtom)
   const [pdfBarState, setPdfBarState] = usePdfBarState()
+  const [mindmapPreviewVisible, setMindmapPreviewVisible] = useState(false)
+  const [mindmapTempId, setMindmapTempId] = useState<number>()
   const [currentHighlightLabel, setCurrentHighlightLabel] = useState<number>()
   const { t } = useTranslation()
   const instance = usePdfInstance()
@@ -38,7 +43,7 @@ const PdfLabelController = memo(({ labelIds }: { labelIds?: number[] }) => {
       setCurrentHighlightLabel(undefined)
     }, 3000)
   }
-  console.log(sortedLabel, labelIds)
+
   useEffect(() => {
     if (labelIds?.length !== undefined) {
       const action = async () => {
@@ -51,7 +56,32 @@ const PdfLabelController = memo(({ labelIds }: { labelIds?: number[] }) => {
         })[]
         if (sortMode === 'page') {
           if (!labelSearch.results?.length) {
-            labels.sort((b, a) => b.page - a.page)
+            labels.sort((b, a) => {
+              const bP = b.page
+              const aP = a.page
+              if (bP !== aP) {
+                return bP - aP
+              } else {
+                let bT = 0,
+                  aT = 0
+                if ('rect' in b) {
+                  bT = b.rect.top
+                }
+                if ('rects' in b && b.rects) {
+                  bT = b.rects[0].percentageTop
+                }
+                if ('rect' in a) {
+                  aT = a.rect.top
+                }
+                if ('rects' in a && a.rects) {
+                  aT = a.rects[0].percentageTop
+                }
+                if (aT && bT) {
+                  return bT - aT
+                }
+                return 0
+              }
+            })
           }
         } else {
           labels.sort((b, a) => b.createdAt - a.createdAt)
@@ -63,6 +93,35 @@ const PdfLabelController = memo(({ labelIds }: { labelIds?: number[] }) => {
       setSortedLabel([])
     }
   }, [labelIds, sortMode, labelSearch.results])
+  const triggerMindmap = () => {
+    const id = instance.getPdfId?.()
+    if (id) {
+      pdfLabelToMindmap(id).then(nodes => {
+        if (nodes) {
+          ObjectStore('whiteboard')
+            .addOne({
+              nodes: new Map(nodes.map(i => [i.id, i])),
+              edges: new Map()
+            })
+            .then(w => {
+              setMindmapPreviewVisible(true)
+              setMindmapTempId(w.id)
+            })
+        }
+      })
+    }
+  }
+  const [mindmapInitialized, setMindmapInitialized] = useState(false)
+  useEffect(() => {
+    return () => {
+      if (mindmapTempId) {
+        setMindmapInitialized(false)
+        setTimeout(() => {
+          ObjectStore('whiteboard').deleteOneById(mindmapTempId)
+        }, 100)
+      }
+    }
+  }, [mindmapTempId])
   useDebounceEffect(
     () => {
       if (labelSearch.searchInput && sortedLabel?.length) {
@@ -80,29 +139,80 @@ const PdfLabelController = memo(({ labelIds }: { labelIds?: number[] }) => {
   )
 
   return (
-    <Content
-      flex
-      column
-      style={{
-        height: '100%'
-      }}
-    >
-      <input
-        className={ClassName.noStyleInput}
-        style={{ padding: '6px 12px', borderRadius: 4, border: Colors.Consts.Border, margin: '12px' }}
-        value={labelSearch.searchInput}
-        onChange={e => setLabelSearch(s => ({ ...s, searchInput: e.target.value }))}
-        placeholder={t('general.search')}
-      ></input>
-      <VirtualList
-        paddingEnd={200}
-        ref={virtualizerRef}
-        style={{ width: '100%', height: '100%' }}
-        estimateSize={200}
-        items={sortedLabel}
-        renderItem={i => <Label id={i.id} key={i.id} highlight={i.id === currentHighlightLabel} />}
-      ></VirtualList>
-    </Content>
+    <>
+      <Modal
+        zIndex={1000}
+        enableClickEvent={true}
+        visible={mindmapPreviewVisible}
+        onClose={() => {
+          setMindmapTempId(undefined)
+          setTimeout(() => {
+            setMindmapPreviewVisible(false)
+          })
+        }}
+        style={{
+          background: 'var(--global-background)'
+        }}
+      >
+        <div style={{ width: '95vw', height: '90vh', opacity: mindmapInitialized ? 1 : 0 }}>
+          {mindmapTempId && mindmapPreviewVisible && (
+            <Whiteboard
+              onInstanceInitialized={i => {
+                setTimeout(() => {
+                  const doms = i.nodeOps?.getDOMBoxOfNodes((i.getAllNode?.() || []).map(i => i.id))
+                  if (doms) {
+                    const box = getBoxOfBoxes(Array.from(Object.values(doms)))
+                    box && i.containerOps?.fitTo(box, { skipAnimation: true })
+                  }
+                  setMindmapInitialized(true)
+                }, 100)
+              }}
+              readOnly
+              whiteboardId={mindmapTempId}
+            />
+          )}
+        </div>
+      </Modal>
+      <Content
+        flex
+        column
+        style={{
+          height: '100%'
+        }}
+      >
+        <Content
+          flex
+          alignItems={'center'}
+          style={{
+            padding: '12px',
+            gap: 12
+          }}
+        >
+          <input
+            className={'focus-input border-box-shadow'}
+            style={{ padding: '3px 8px', borderRadius: 4, flex: 1 }}
+            value={labelSearch.searchInput}
+            onChange={e => setLabelSearch(s => ({ ...s, searchInput: e.target.value }))}
+            placeholder={t('general.search')}
+          ></input>
+          <Icon
+            size={18}
+            tooltip={'View mindmap'}
+            name={'park-mindmap-map'}
+            onClick={() => triggerMindmap()}
+            className={ClassName.flatButton(4, '4px')}
+          />
+        </Content>
+        <VirtualList
+          paddingEnd={200}
+          ref={virtualizerRef}
+          style={{ width: '100%', height: '100%' }}
+          estimateSize={200}
+          items={sortedLabel}
+          renderItem={i => <Label id={i.id} key={i.id} highlight={i.id === currentHighlightLabel} />}
+        ></VirtualList>
+      </Content>
+    </>
   )
 })
 

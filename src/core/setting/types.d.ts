@@ -18,6 +18,7 @@ export type IGeneralSetting = {
     defaultLanguage: string
     autoSaveLayout: boolean
     youtubeApiKey?: string
+    globalCSS?: string
     youtubeMaxItems?: number
     dataBackup: 'whenClose' | 'every day' | 'every week' | 'every month' | 'never'
     defaultSearchEngine:
@@ -87,6 +88,8 @@ export type IAppearanceSetting = {
 }
 export type IShortCutSetting = {
   shortcut: Partial<{
+    openSidebar: ShortCut | null
+    openMediaSidebar: ShortCut | null
     switchToPrevTab: ShortCut | null
     switchToNextTab: ShortCut | null
     closeCurrentTab: ShortCut | null

@@ -5,6 +5,7 @@ import { Transform } from 'panzoom'
 
 type IWhiteboardState = {
   zoom: number
+  readOnly?: boolean
   dragMode: 'select' | 'drag'
   freeDrawing: boolean
   // pan with space button or middle button

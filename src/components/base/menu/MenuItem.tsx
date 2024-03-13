@@ -58,7 +58,8 @@ const ButtonMenuItem: FC<MenuItemWithProps & { type: 'item' }> = ({
   popOver,
   parentRef,
   suffix,
-  onSelect
+  onSelect,
+  ...rest
 }) => {
   const key = innerKey!
   const handlePointerMove = () => {
@@ -130,6 +131,7 @@ const ButtonMenuItem: FC<MenuItemWithProps & { type: 'item' }> = ({
           size={16}
           onClick={() => {
             onClick?.({
+              ...rest,
               type,
               text,
               key,
@@ -164,6 +166,7 @@ const ButtonMenuItem: FC<MenuItemWithProps & { type: 'item' }> = ({
       suffixStr={suffix}
       onClick={() => {
         onClick?.({
+          ...rest,
           type,
           text,
           key,

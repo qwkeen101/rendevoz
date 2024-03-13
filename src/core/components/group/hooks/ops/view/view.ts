@@ -206,11 +206,11 @@ export default function assignViewOps(instance: IGroupInstance) {
           if (invisiblePropIds?.has(i.id)) return false
           if (onlyShowCustom) {
             if (i.name === 'name' || i.name === 'type' || i.type === 'custom' || i.name === 'tags') {
-              return currentView[i.id]?.visible ?? false
+              return currentView[i.id]?.visible ?? i.visible ?? false
             }
             return false
           }
-          return currentView[i.id]?.visible
+          return currentView[i.id]?.visible ?? i.visible
         })
       },
       useViewProperties: () => {
@@ -236,6 +236,7 @@ export default function assignViewOps(instance: IGroupInstance) {
         })
         instance.updateGroupData?.(w => {
           return produce(w, draft => {
+            if (draft.properties?.some(i => i.id === newProp.id)) return
             draft.properties?.push({
               id: newProp.id,
               name: newProp.name,
@@ -245,6 +246,7 @@ export default function assignViewOps(instance: IGroupInstance) {
               icon: newProp.icon,
               propType: newProp.propType
             })
+            console.log(newProp)
             draft.views.forEach(v => {
               v.options.properties = {
                 ...v.options.properties,

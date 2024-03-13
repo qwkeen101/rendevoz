@@ -91,8 +91,9 @@ export const generateVideoThumbnail = (file: File, time?: number): Promise<strin
     const video = document.createElement('video')
 
     // this is important
+    const url = URL.createObjectURL(file)
     video.muted = true
-    video.src = URL.createObjectURL(file)
+    video.src = url
 
     video.onloadeddata = () => {
       video.currentTime = time || randomIntFromInterval(0, video.duration)
@@ -105,6 +106,7 @@ export const generateVideoThumbnail = (file: File, time?: number): Promise<strin
 
       ctx.drawImage(video, 0, 0, video.videoWidth, video.videoHeight)
       video.pause()
+      URL.revokeObjectURL(url)
       return resolve(canvas.toDataURL('image/png'))
     }
   })

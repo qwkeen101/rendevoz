@@ -13,8 +13,6 @@ import useEditorInstance from '@/core/components/editor/hooks/useEditorInstance'
 import isHotkey from 'is-hotkey'
 import { KEY } from '@/consts'
 import useReadOnlyEditor from '@/core/components/editor/hooks/useReadOnly'
-import { useSetAtom } from 'jotai'
-import { EditorStateAtom } from '@/core/components/editor/hooks/useEditorState'
 import { ReactEditor } from '@/core'
 
 const useEditorSelect = (editor: CustomEditor, scrollElement?: HTMLElement | null) => {
@@ -29,8 +27,17 @@ const useEditorSelect = (editor: CustomEditor, scrollElement?: HTMLElement | nul
     const target = e.target as HTMLElement
     // target is title or textbox
 
-    if (target.getAttribute('role') === 'inner-editor') {
-      isPressed.current = true
+    if (!target.closest('[role="editor-title"')) {
+      if (target.getAttribute('role') === 'inner-editor') {
+        isPressed.current = true
+      }
+      // target is self
+      if (target === e.currentTarget) {
+        isPressed.current = true
+      }
+      if (!target.closest('.selectable')) {
+        isPressed.current = true
+      }
     }
     let deselectAll = true
 
@@ -47,14 +54,6 @@ const useEditorSelect = (editor: CustomEditor, scrollElement?: HTMLElement | nul
     }
     if (deselectAll) {
       instance.selectOps?.deselectAll()
-    }
-
-    // target is self
-    if (target === e.currentTarget) {
-      isPressed.current = true
-    }
-    if (!target.closest('.selectable')) {
-      isPressed.current = true
     }
   }
   const keyDownHandler = (e: KeyboardEvent) => {

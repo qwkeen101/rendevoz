@@ -1,10 +1,9 @@
 import { Button, Content, Icon, Modal } from '@/components'
-import AutosizeTextarea from '@/components/custom/input/autosizeTextarea'
+import AutosizeTextarea from '@/components/custom/input/AutoSizeTextArea'
 import { ClassName } from 'rendevoz'
 import EmojiWithPicker from '@/components/EmojiWithPicker'
-import { memo, useEffect, useState } from 'react'
+import { memo, useState } from 'react'
 import { Colors, KEY } from '@/consts'
-import { MetaStore, ObjectStore } from '@/api/stores'
 import { MetaGroup } from '~/typings'
 import { useIsIn, useSelectAtomValue } from '@/hooks'
 import { GroupStateAtom } from '@/core/components/group/hooks/useGroupState'
@@ -117,7 +116,7 @@ const GroupTitleRenderer = memo(
               instance.on?.({
                 type: 'groupMetaChange',
                 value: {
-                  name: e.target.value
+                  name: e.target.innerText
                 }
               })
             }}
@@ -142,12 +141,11 @@ const GroupTitleRenderer = memo(
               color: Colors.Font.Transparent,
               fontSize: 14
             }}
-            minRows={1}
             onBlur={e => {
               instance.on?.({
                 type: 'groupMetaChange',
                 value: {
-                  description: e.target.value
+                  description: e.target.innerText
                 }
               })
             }}

@@ -1,7 +1,7 @@
 import useDb from '@/hooks/stores/useDb'
 import { atom } from 'jotai/vanilla'
 import { toast } from 'react-hot-toast'
-import { IMetaProp, IStore, MetaLink, MetaObject } from '~/typings'
+import { IMetaProp, IStore, MetaLink, MetaObject, ReviewStateType } from '~/typings'
 import BaseStore, { initializeLocalStore } from '../base.store'
 import { findChangedProperties, globalStore, MetaStore, ObjectStore } from '../index'
 import { IStoreDeprecated } from '../types'
@@ -20,9 +20,12 @@ import { intersectionOfMultipleSets } from '@/core'
 import { calculateSortObjects } from '@/core/object/filter/BetterSorter'
 import { Rendevoz } from '@/core/rendevoz'
 import metaObjectChangeHandler from '@/api/stores/meta/metaObjectChangeHandler'
+import { initializeReviewCard, reviewCard } from '@/core/review/fsrs'
+import { AGAIN_OPTION_ID, EASY_OPTION_ID, GOOD_OPTION_ID, HARD_OPTION_ID } from '@/api/stores/object/custom/ReviewCardStore'
 
 export const AI_SUMMARY_PROP_ID = 1001
 export const AI_QUESTION_PROP_ID = 1002
+export const REVIEW_STATE_PROP_ID = 1003
 
 export const deletedMetaObjectsAtom = atom<Set<number>>(new Set())
 
@@ -66,6 +69,7 @@ export const indexedMetaObjectsAtom = atom<
       objectIdToMetaObjectMap: Map<number, number>
       tagToMetaObjectIdsMap: Map<number, Set<number>>
       typeToMetaObjectIdsMap: Map<string, Set<number>>
+      propToMetaObjectIdsMap: Map<number, Set<number>>
       metaAttachmentIdToMetaIdsMap: Map<number, Set<number>>
       oldMetaObjects: Map<number, MetaObject>
     }
@@ -484,19 +488,64 @@ const createMetaStore = () => {
     }
     return all
   }
-  const updateProperty = async (id: number | number[], propId: number | string, newValue: any) => {
+  const updateProperty = async (
+    id: number | number[],
+    propId: number | string,
+    newValue: any | null,
+    keepOriginalIfUndefined?: boolean
+  ) => {
     const idArr = Array.isArray(id) ? id : [id]
     const map = MetaStore.getMetaObjectsMap()
     await Promise.all(
       idArr.map(async id => {
         const meta = map.get(id)
         if (meta) {
+          if (newValue === null) {
+            await MetaStore.updateMetaObject({
+              id,
+              properties: produce(meta.properties || {}, draft => {
+                delete draft[propId]
+              })
+            })
+            return
+          }
           const newProp = produce(meta.properties || {}, draft => {
-            draft[propId] = {
-              ...draft[propId],
-              ...newValue
+            if (keepOriginalIfUndefined && newValue.value === undefined && draft[propId]?.value !== undefined) {
+            } else {
+              draft[propId] = {
+                ...draft[propId],
+                ...newValue
+              }
             }
           })
+          if (propId === REVIEW_STATE_PROP_ID) {
+            let type: ReviewStateType | undefined = undefined
+            if (newValue.value) {
+              switch (newValue.value) {
+                case GOOD_OPTION_ID:
+                  type = 'good'
+                  break
+                case EASY_OPTION_ID:
+                  type = 'easy'
+                  break
+                case HARD_OPTION_ID:
+                  type = 'hard'
+                  break
+                case AGAIN_OPTION_ID:
+                  type = 'again'
+                  break
+              }
+            }
+            if (type) {
+              let card = meta.review && (await ObjectStore('reviewCard').getOneById(meta.review))
+              if (!card || card.last_rate !== type) {
+                card = (card && reviewCard(card, type)) || initializeReviewCard(type)
+                const added = await ObjectStore('reviewCard').addOne({ ...card, metaId: meta.id })
+                await MetaStore.updateMetaObject({ id, properties: newProp, review: added.id })
+                return
+              }
+            }
+          }
           await MetaStore.updateMetaObject({ id, properties: newProp }, { silent: true })
         }
       })

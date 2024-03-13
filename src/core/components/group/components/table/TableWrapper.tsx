@@ -8,6 +8,7 @@ import PlaceholderRow from '@/core/components/group/components/table/Placeholder
 import { useSelectAtomValue } from '@/hooks'
 import { GroupStateAtom } from '@/core/components/group/hooks/useGroupState'
 import { isEqual } from 'lodash'
+import { assignProperties } from '@/utils'
 
 const TableWrapper = memo(
   ({
@@ -61,7 +62,25 @@ const TableWrapper = memo(
         scrollMargin: m,
         paddingEnd: bottomPadding ?? 200
       })
-
+      assignProperties(instance, {
+        bodyOps: {
+          ...instance.bodyOps,
+          scrollToMeta: (metaId, select) => {
+            console.log(value, metaId)
+            const targetIdx = value.findIndex(i => i.id === metaId)
+            if (targetIdx >= 0) {
+              virtualizer.scrollToIndex(targetIdx, {
+                align: 'center'
+              })
+              if (select) {
+                const row = value[targetIdx]
+                console.log(row)
+                instance.selectOps?.selectItem(row.tempRowId || row.rowId)
+              }
+            }
+          }
+        }
+      })
       const items = virtualizer.getVirtualItems()
       // root layer, path is the first index
       return (

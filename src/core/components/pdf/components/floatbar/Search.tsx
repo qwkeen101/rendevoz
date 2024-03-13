@@ -50,45 +50,46 @@ const PdfSearch = () => {
         display: 'flex',
         flexDirection: 'column',
         gap: 6,
-        height: '100%',
-        padding: 12
+        height: '100%'
       }}
     >
-      <input
-        className={ClassName.noStyleInput}
-        onChange={e => {
-          const value = e.target.value
-          if (typeof value !== 'string') return
-          setSearchStr(value)
-          if (value.length) {
-            const r = viewer?.search?.(value)
-            if (r) {
-              r.sort((b, a) => b.pageIndex - a.pageIndex)
-              const result = Object.entries(_.groupBy(r, a => a.pageIndex))
+      <div style={{ padding: '12px 12px 0px', width: '100%' }}>
+        <input
+          className={'focus-input border-box-shadow'}
+          onChange={e => {
+            const value = e.target.value
+            if (typeof value !== 'string') return
+            setSearchStr(value)
+            if (value.length) {
+              const r = viewer?.search?.(value)
+              if (r) {
+                r.sort((b, a) => b.pageIndex - a.pageIndex)
+                const result = Object.entries(_.groupBy(r, a => a.pageIndex))
+                setResult({
+                  total: r.length,
+                  resultList: result.map(i => ({
+                    pageIndex: Number(i[0]),
+                    results: i[1].map(i => i.searchText)
+                  }))
+                })
+              }
+            } else {
               setResult({
-                total: r.length,
-                resultList: result.map(i => ({
-                  pageIndex: Number(i[0]),
-                  results: i[1].map(i => i.searchText)
-                }))
+                total: 0,
+                resultList: []
               })
             }
-          } else {
-            setResult({
-              total: 0,
-              resultList: []
-            })
-          }
-        }}
-        value={searchStr}
-        placeholder={t('general.search')}
-        style={{ padding: '6px 12px', border: Colors.Consts.Border, borderRadius: 4 }}
-      ></input>
-      {searchStr && (
-        <div className={ClassName.description()} style={{ userSelect: 'none' }}>
-          {t('general.find results', { num: result.total })}
-        </div>
-      )}
+          }}
+          value={searchStr}
+          placeholder={t('general.search')}
+          style={{ padding: '3px 8px', borderRadius: 4, width: '100%' }}
+        ></input>
+        {searchStr && (
+          <div className={ClassName.description()} style={{ userSelect: 'none', marginTop: 6 }}>
+            {t('general.find results', { num: result.total })}
+          </div>
+        )}
+      </div>
       <div
         style={{
           overflowY: 'auto',
@@ -104,7 +105,7 @@ const PdfSearch = () => {
         })}
       >
         <VirtualList
-          style={{ width: '100%', height: '100%' }}
+          style={{ width: '100%', height: '100%', padding: '0px 12px 12px' }}
           estimateSize={100}
           childrenContainerClassname={'font-size-14'}
           items={result.resultList || []}
@@ -155,7 +156,7 @@ const ResultPanel = memo(({ pageIndex, results, onClick }: { pageIndex: number; 
         <div
           onClick={onClick}
           className={ClassName.flatButton()}
-          style={{ marginRight: 10, color: Colors.Font.Primary }}
+          style={{ color: Colors.Font.Primary }}
           key={i}
           dangerouslySetInnerHTML={{ __html: i }}
         ></div>

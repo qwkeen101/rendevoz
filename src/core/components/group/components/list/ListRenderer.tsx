@@ -10,6 +10,7 @@ import ListItem from '@/core/components/group/components/list/ListItem'
 import { GroupStateAtom } from '@/core/components/group/hooks/useGroupState'
 import { ClassName } from 'rendevoz'
 import { useTranslation } from 'react-i18next'
+import { assignProperties } from '@/utils'
 export default memo(
   ({
     value = [],
@@ -38,6 +39,23 @@ export default memo(
         count: value.length,
         scrollMargin: enableVirtualizer ? m : 0,
         paddingEnd: enableVirtualizer ? 200 : 0
+      })
+      assignProperties(instance, {
+        bodyOps: {
+          ...instance.bodyOps,
+          scrollToMeta: (metaId, select) => {
+            const targetIdx = value.findIndex(i => i.id === metaId)
+            if (targetIdx >= 0) {
+              virtualizer.scrollToIndex(targetIdx, {
+                align: 'center'
+              })
+              if (select) {
+                const row = value[targetIdx]
+                instance.selectOps?.selectItem(row.tempRowId || row.rowId)
+              }
+            }
+          }
+        }
       })
       const items = virtualizer.getVirtualItems()
       return (

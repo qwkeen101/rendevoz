@@ -12,11 +12,12 @@ const useNodeSize = (container: HTMLElement | undefined, node: IWhiteboardNode, 
         const bounding = container.getBoundingClientRect()
         const transform = instance.getTransform?.()
         if (transform) {
-          const w = Math.max(DEFAULT_NODE_WIDTH, (bounding.width / transform.scale) + DEFAULT_NODE_PADDING)
+          const w = Math.max(DEFAULT_NODE_WIDTH, bounding.width / transform.scale + DEFAULT_NODE_PADDING)
           const width = node.expanded ? 520 : Math.min(w, 500)
 
-          container.style.width = `${width}px`
-
+          if (container.style.width !== 'auto') {
+            container.style.width = `${width}px`
+          }
           setTimeout(() => {
             instance.updateNode?.(node.id, n => ({
               ...n,

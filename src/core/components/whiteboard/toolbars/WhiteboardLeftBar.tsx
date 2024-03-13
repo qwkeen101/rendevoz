@@ -2,7 +2,7 @@ import { Toolbar, WithBorder } from '@/components'
 import { Colors } from '@/consts'
 import { useWhiteboardState } from '@/core/components/whiteboard/hooks/useWhiteboardState'
 
-const WhiteboardNodesBar = () => {
+const WhiteboardLeftBar = () => {
   const [whiteboardState, setWhiteboardState] = useWhiteboardState()
   return (
     <WithBorder
@@ -47,4 +47,4 @@ const WhiteboardNodesBar = () => {
   )
 }
 
-export default WhiteboardNodesBar
+export default WhiteboardLeftBar

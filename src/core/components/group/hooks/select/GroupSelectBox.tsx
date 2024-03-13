@@ -93,7 +93,7 @@ const GroupSelectBox = ({
         if (
           e.target instanceof HTMLElement &&
           !e.target.closest(
-            '[role="table-wrapper"],[role="group-drag-handle"],[role="gallery-item-wrapper"],[role="list-item-wrapper"],[role="reorder-view"],input,textarea'
+            '[role="table-wrapper"],[role="group-drag-handle"],[role="gallery-item-wrapper"],[role="list-item-wrapper"],[role="reorder-view"],input,textarea,[contenteditable="true"]'
           )
         ) {
           window.getSelection()?.empty()

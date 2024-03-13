@@ -84,7 +84,7 @@ const EditorTitle: ForwardRefComponent<HTMLDivElement, EditorTitleProps> = forwa
         className={editorTitleWrapperClassName}
         flex
         column
-        gap={10}
+        role={'editor-title'}
         style={{
           width: 'var(--editor-max-width)',
           padding: '25px 0px 20px',

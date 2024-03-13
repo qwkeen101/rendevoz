@@ -17,6 +17,7 @@ import { useDebounceFn } from '@/hooks'
 import { GroupStateAtom } from '@/core/components/group/hooks/useGroupState'
 import GroupOverlay from '@/core/components/group/components/overlay/GroupOverlay'
 import { IGroupEvent } from '~/typings/components/group/events'
+import ReviewPanel from '@/core/components/group/components/review/ReviewPanel'
 
 export type IMetaGroupAvailableContextMenuItems =
   | 'deleteInGroup'
@@ -79,6 +80,7 @@ export type IMetaGroupProps = {
     canDragInside?: boolean
     addAfterCreateMeta?: boolean
     onlyOpenIn?: IMetaGroup['openIn']
+    mustExistProperties?: number[]
     extraProperties?: MetaGroupProperty[]
   }
 }
@@ -191,6 +193,7 @@ const MetaGroupInner = ({ value, groupId, layout, title, on, state, styles }: IM
       <GroupCenterRenderer />
       <GroupDragHandle bodyRef={containerRef} groupId={groupId} />
       <GroupOverlay />
+      <ReviewPanel />
       <GroupSelectBox scrollContainerRef={containerRef} selectContainerRef={containerRef} />
     </>
   )

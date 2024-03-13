@@ -52,6 +52,7 @@ const MathElement = memo(({ element, children, attributes }: RenderElementProps)
         content={
           <WithBorder style={{ width: 400 }}>
             <MathInput
+              isInline
               onComplete={v => {
                 const p = ReactEditor.findPath(editor, mathEle)
                 Transforms.setNodes(

@@ -6,7 +6,7 @@ import NameEditor from '../../components/base/ContentEditor'
 import { useToggle } from '@/hooks'
 import ClassName from '@/styles/classNames'
 import { useTranslation } from 'react-i18next'
-import AutosizeTextarea from '@/components/custom/input/autosizeTextarea'
+import AutosizeTextarea from '@/components/custom/input/AutoSizeTextArea'
 
 const AttachmentObject = ({
   showHoverObject = true,

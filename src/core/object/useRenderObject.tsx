@@ -108,7 +108,7 @@ const useRenderObject = (options: { metaObjectId: number }) => {
       case 'normal':
         return <Editor type="note" titleStyle={editorTitleStyle} id={uniqueId} noteId={objectId} />
       case 'whiteboard':
-        return <Whiteboard enableMiniMap={false} whiteboardId={objectId} />
+        return <Whiteboard whiteboardId={objectId} />
     }
     return null
   }

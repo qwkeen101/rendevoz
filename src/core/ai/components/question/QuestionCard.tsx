@@ -15,7 +15,7 @@ import QuestionActionMenu from '@/core/ai/components/question/QuestionActionMenu
 import goToQuestionPointer from '@/core/ai/components/question/goToQuestionPointer'
 import { DraggableElement, IconNameRenderer } from '@/core'
 import { Rendevoz } from '@/core/rendevoz'
-import AutosizeTextarea from '@/components/custom/input/autosizeTextarea'
+import AutosizeTextarea from '@/components/custom/input/AutoSizeTextArea'
 import Select from '@/components/base/select'
 import QuestionStore from '@/api/stores/question.store'
 import SimpleEditor from '@/core/components/editor/SimpleEditor'
@@ -58,6 +58,7 @@ export default ({
   const parentMeta = MetaStore.useObjectToMetaValue(question?.parentObjectId)
   const { t } = useTranslation()
   const executed = useRef(false)
+  const titleRef = useRef<HTMLDivElement>(null)
   useEffect(() => {
     if (executed.current) return
     setTimeout(() => {
@@ -79,6 +80,14 @@ export default ({
       }
     }, 1000)
   }, [question?.answerPointers])
+  useEffect(() => {
+    if (isEditing) {
+      console.log(titleRef.current)
+      setTimeout(() => {
+        titleRef.current?.focus()
+      })
+    }
+  }, [isEditing])
   const renderContent = () => {
     if (!question) return null
     switch (question?.questionType) {
@@ -179,7 +188,8 @@ export default ({
             type: 'question',
             objectId: id
           }}
-          draggable={!isEditing}
+          draggable={false}
+          ref={titleRef}
         >
           <AutosizeTextarea
             style={{
@@ -187,10 +197,10 @@ export default ({
               width: '100%',
               fontSize: styles.contentFontSize,
               resize: 'none',
-              userSelect: isEditing ? 'auto' : 'none',
+              userSelect: 'auto',
               display: 'block',
               marginBottom: 12,
-              cursor: isEditing ? 'text' : 'grab'
+              cursor: 'text'
             }}
             disabled={!isEditing}
             className={ClassName.noStyleInput}
@@ -198,9 +208,9 @@ export default ({
             placeholder={'Untitled'}
             onBlur={e => {
               if (questionMeta) {
-                MetaStore.updateMetaObject({ id: questionMeta.id, name: e.target.value })
+                MetaStore.updateMetaObject({ id: questionMeta.id, name: e.target.innerText ?? '' })
               } else {
-                ObjectStore('question').updateOne({ id: question.id, name: e.target.value })
+                ObjectStore('question').updateOne({ id: question.id, name: e.target.innerText ?? '' })
               }
             }}
           />

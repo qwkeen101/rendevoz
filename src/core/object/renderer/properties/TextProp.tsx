@@ -1,4 +1,4 @@
-import AutosizeTextarea from '@/components/custom/input/autosizeTextarea'
+import AutosizeTextarea from '@/components/custom/input/AutoSizeTextArea'
 import { CSSProperties, useRef, useState } from 'react'
 import usePopoverCell from '@/core/components/group/hooks/usePopoverCell'
 import { PopupWrapper } from '@/core/components/group/components'
@@ -68,8 +68,6 @@ export default ({
         <PopupWrapper box={box}>
           <AutosizeTextarea
             autoFocus={true}
-            minRows={1}
-            maxRows={20}
             className={ClassName.noStyleInput}
             spellCheck="false"
             onKeyDown={e => {
@@ -78,7 +76,7 @@ export default ({
                 closePopover()
               }
             }}
-            onChange={e => (valueRef.current = e.target.value)}
+            onChange={e => (valueRef.current = e)}
             style={{
               padding: '6px 6px',
               resize: 'none',

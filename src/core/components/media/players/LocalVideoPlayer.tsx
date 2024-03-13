@@ -8,17 +8,11 @@ import audioBufferToWav from '@/core/components/media/players/audioBufferToWav'
 const LocalVideoPlayer = () => {
   const [mediaState, setMediaState] = useMediaState()
   const ref = useRef<HTMLVideoElement>(null)
-  const offscreenVideoRef = useRef<HTMLVideoElement>()
   const instance = useMediaInstance()
   const { paused, speed, loaded, volume, jumpTime, url } = mediaState
   const v = ref.current
   useEffect(() => {
     setMediaState(s => ({ ...s, url }))
-    if (url) {
-      const video = document.createElement('video')
-      video.src = url
-      offscreenVideoRef.current = video
-    }
   }, [url])
 
   assignProperties(instance, {
@@ -33,16 +27,8 @@ const LocalVideoPlayer = () => {
       return ref.current || undefined
     },
     imageOps: {
-      captureImage: async (time, size) => {
-        const v = offscreenVideoRef.current
-        console.log(v, time)
-        if (v) {
-          const image = await captureVideoFrame(v, time, size || { width: 1600, height: 900 })
-          return image
-        }
-      },
       captureCurrentImage: async () => {
-        return await instance.imageOps?.captureImage(mediaState.currentTime || 0)
+        return ref.current && (await captureVideoFrame(ref.current, mediaState.currentTime || 0, { width: 1600, height: 900 }, true))
       }
     }
   })

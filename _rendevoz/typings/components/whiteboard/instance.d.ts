@@ -163,6 +163,7 @@ export type IWhiteboardInstance = Partial<{
       opts?: {
         changeScale?: boolean
         maxScale?: number
+        skipAnimation?: boolean
       }
     ) => void
     fitToSelected: VoidFunction

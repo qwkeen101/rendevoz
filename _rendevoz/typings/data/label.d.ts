@@ -1,6 +1,5 @@
-import { TextSelectRect } from '@/events/pdfEvent'
 import { IBase } from './base'
-import { Box, XYPosition } from '..'
+import { Box, XYPosition, TextSelectRect } from '..'
 
 export type IPDFLabel = IBase & {
   background?: string

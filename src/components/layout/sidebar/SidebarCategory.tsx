@@ -8,9 +8,11 @@ import { useTranslation } from 'react-i18next'
 export default memo(() => {
   const all = MetaStore.useMetaObjectsMap()
   const deleted = MetaStore.useDeletedObjectsSet()
-  const tagIndex = MetaStore.useIndexedMetaObjects()?.tagToMetaObjectIdsMap
-  const allTags = useGlobalAtomValue(ObjectStore('tag').objectMapAtom)
   const index = MetaStore.useIndexedMetaObjects()
+  const tagIndex = index?.tagToMetaObjectIdsMap
+  const allTags = useGlobalAtomValue(ObjectStore('tag').objectMapAtom)
+  const propIndex = index?.propToMetaObjectIdsMap
+  const allProps = useGlobalAtomValue(ObjectStore('metaProp').objectMapAtom)
   const types = useMemo(() => {
     const index = MetaStore.getIndexedMetaObjects()
     if (!index) return null
@@ -36,6 +38,18 @@ export default memo(() => {
       .sort((a, b) => b.metaNum - a.metaNum)
     return grouped
   }, [tagIndex, allTags])
+  const props = useMemo(() => {
+    const grouped = Array.from(allProps.keys())
+      .map(i => {
+        return {
+          prop: allProps.get(i),
+          propNum: propIndex?.get(i)?.size ?? 0
+        }
+      })
+      .filter(i => i.prop && !i.prop.deleted)
+      .sort((a, b) => b.propNum - a.propNum)
+    return grouped
+  }, [propIndex, allProps])
   const { t } = useTranslation()
   return (
     <Content
@@ -102,6 +116,40 @@ export default memo(() => {
             )
         )}
       </Content>
+      {props.length && (
+        <>
+          <div
+            style={{
+              fontWeight: 600,
+              padding: '12px 12px 0px'
+            }}
+          >
+            {t('general.Properties')}
+          </div>
+          <Content
+            flex
+            column
+            style={{
+              padding: '8px 8px'
+            }}
+          >
+            {props.map(
+              i =>
+                i.prop && (
+                  <Button.IconButton
+                    onClick={() => {
+                      Rendevoz.Actions.Open.Group.openPropGroup(i.prop!.id)
+                    }}
+                    className={'font-size-14'}
+                    text={`# ${i.prop?.name}`}
+                    suffixStr={i.propNum ? `${i.propNum}` : undefined}
+                    key={i.prop?.id}
+                  ></Button.IconButton>
+                )
+            )}
+          </Content>
+        </>
+      )}
     </Content>
   )
 })

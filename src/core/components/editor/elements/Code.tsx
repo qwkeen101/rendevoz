@@ -59,7 +59,7 @@ const Code: FC<RenderElementProps> = ({ element, attributes, children }) => {
                 title: e.target.value
               },
               {
-                at: ReactEditor.findPath(editor, editor)
+                at: ReactEditor.findPath(editor, element)
               }
             )
           }}

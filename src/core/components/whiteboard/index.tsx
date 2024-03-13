@@ -23,19 +23,19 @@ import { getSetting } from '@/core'
 import FreeHandLayer from '@/core/components/whiteboard/freehand/FreeHandLayer'
 import WhiteboardPanzoom from '@/core/components/whiteboard/hooks/WhiteboardPanzoom'
 import WhiteboardControlBar from '@/core/components/whiteboard/toolbars/WhiteboardControlBar'
-import WhiteboardNodesBar from '@/core/components/whiteboard/toolbars/WhiteboardNodesBar'
+import WhiteboardLeftBar from '@/core/components/whiteboard/toolbars/WhiteboardLeftBar'
 import WhiteboardPenToolsBar from '@/core/components/whiteboard/toolbars/WhiteboardPenToolsBar'
 import { css } from '@emotion/css'
 import WhiteboardFloatBar from '@/core/components/whiteboard/toolbars/WhiteboardFloatBar'
 import WhiteboardLint from '@/core/components/whiteboard/WhiteboardLint'
 import WhiteboardHeader from '@/core/components/whiteboard/WhiteboardHeader'
-import { useStore } from 'jotai'
+import { useSetAtom, useStore } from 'jotai'
 import WhiteboardFloatNodesLayer from '@/core/components/whiteboard/WhiteboardFloatNodesLayer'
 import WhiteboardHookContainer from '@/core/components/whiteboard/WhiteboardHookContainer'
 import SnapDragLayer from '@/core/components/whiteboard/snap/SnapDragLayer'
 import FakeMindmapDragLayer from '@/core/components/whiteboard/node/mindmap/FakeMindmapDragLayer'
 
-const WhiteboardInner = memo(({ onInstanceInitialized, layout, id }: IWhiteboardProps) => {
+const WhiteboardInner = memo(({ onInstanceInitialized, layout, id, readOnly }: IWhiteboardProps) => {
   const containerRef = useRef<HTMLDivElement>(null)
   const flow = useFlow()
   const emitter = Rendevoz.Events.Emit.GlobalEventEmitter
@@ -44,9 +44,19 @@ const WhiteboardInner = memo(({ onInstanceInitialized, layout, id }: IWhiteboard
   const nodes = useSelectAtomValue(WhiteboardAtom, s => s?.nodes)
   const instance = useWhiteboardInstance()
   const store = useStore()
+  const setWhiteboardState = useSetAtom(WhiteboardStateAtom)
   const getLatestWhiteboard = () => {
     return store.get(WhiteboardAtom)
   }
+  useEffect(() => {
+    setWhiteboardState(s => ({
+      ...s,
+      readOnly,
+      currentTool: readOnly ? undefined : s.currentTool,
+      pointerMode: readOnly ? 'pan' : s.pointerMode,
+      toolbarPointerMode: readOnly ? 'pan' : s.toolbarPointerMode
+    }))
+  }, [readOnly])
   assignProperties(instance, {
     getContainerNode: () => containerRef.current!,
     getOutestContainerNode: () => containerRef.current?.parentElement,
@@ -127,7 +137,7 @@ const WhiteboardInner = memo(({ onInstanceInitialized, layout, id }: IWhiteboard
   return (
     <>
       <WhiteboardPanzoom />
-      <WhiteboardHookContainer whiteboardId={id}/>
+      <WhiteboardHookContainer whiteboardId={id} />
       <Content
         fullHeight
         fullWidth
@@ -196,17 +206,19 @@ const WhiteboardInner = memo(({ onInstanceInitialized, layout, id }: IWhiteboard
           }}
         >
           <TreeNodeContainer />
-          <WhiteboardSelect containerRef={containerRef} />
-          <SnapDragLayer />
-          <FreeHandLayer />
+          {!readOnly && (
+            <>
+              <WhiteboardSelect containerRef={containerRef} />
+              <SnapDragLayer />
+              <FreeHandLayer />
+            </>
+          )}
         </div>
         <WhiteboardEmptyIndicator />
         <Background />
         <WhiteboardFloatBar />
         <WhiteboardLint />
-        {layout?.showLeftToolbar !== false && <WhiteboardNodesBar />}
-        {/*{layout?.showSetting !== false && <WhiteboardSettings />}*/}
-        {layout?.showPencilToolbar !== false && layout?.showLeftToolbar !== false && <WhiteboardPenToolsBar />}
+        {layout?.showPencilToolbar !== false && !readOnly && layout?.showLeftToolbar !== false && <WhiteboardPenToolsBar />}
         {layout?.showControlBar !== false && <WhiteboardControlBar />}
       </Content>
       <WhiteboardHeader />
@@ -221,7 +233,7 @@ export const Whiteboard = memo(
   ({
     whiteboardId,
     onTabTitleChange,
-    enableMiniMap,
+    readOnly,
     onInstanceInitialized,
     layout
   }: {
@@ -288,7 +300,7 @@ export const Whiteboard = memo(
     return (
       <Provider store={store}>
         {whiteboardId && (
-          <WhiteboardInner onInstanceInitialized={onInstanceInitialized} id={whiteboardId} layout={layout} enableMiniMap={enableMiniMap} />
+          <WhiteboardInner onInstanceInitialized={onInstanceInitialized} id={whiteboardId} layout={layout} readOnly={readOnly} />
         )}
       </Provider>
     )

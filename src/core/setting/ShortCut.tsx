@@ -13,6 +13,7 @@ import SettingGroup from '@/core/setting/SettingGroup'
 
 const shortCutNameToTitle = {
   global: {
+    openSidebar: 'Open sidebar',
     // openObjectPanel: 'open quick object panel',
     // quickCreateObject: 'open create object form',
     openScreenShot: 'open screen shot',
@@ -25,7 +26,8 @@ const shortCutNameToTitle = {
   },
   video: {
     makeVideoLabel: 'make video label',
-    copyVideoTimestamp: 'Copy video timestamp'
+    copyVideoTimestamp: 'Copy video timestamp',
+    openMediaSidebar: 'Open sidebar'
   }
 }
 
@@ -157,6 +159,7 @@ const ShortCutItem = memo(({ shortCutName }: { shortCutName: keyof IShortCutSett
           background: conflictState.isConflicted ? '#F55050' : '#E9E8E8',
           color: conflictState.isConflicted ? 'white' : 'black',
           cursor: 'pointer',
+          textTransform: 'capitalize',
           outline: isSelected ? '1px solid #8590ae' : undefined
         }}
       >

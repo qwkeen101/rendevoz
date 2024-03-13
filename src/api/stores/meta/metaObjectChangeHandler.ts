@@ -17,6 +17,7 @@ export default () => {
   const objectIdToMetaObjectMap: Map<number, number> = new Map(prevIndex?.objectIdToMetaObjectMap)
   const tagToMetaObjectIdsMap: Map<number, Set<number>> = new Map(prevIndex?.tagToMetaObjectIdsMap)
   const typeToMetaObjectIdsMap: Map<string, Set<number>> = new Map(prevIndex?.typeToMetaObjectIdsMap)
+  const propToMetaObjectIdsMap: Map<number, Set<number>> = new Map(prevIndex?.propToMetaObjectIdsMap)
   const idSet = new Set(prevMetaObjects?.keys())
   newMetaObjects.forEach((v, k) => {
     const oldValue = prevMetaObjects?.get(k)
@@ -41,6 +42,14 @@ export default () => {
           tagToMetaObjectIdsMap.get(tag)?.delete(oldValue.id)
         })
       }
+      if (oldValue.properties) {
+        const props = Object.keys(oldValue.properties)
+        if (props.length) {
+          props.forEach(id => {
+            propToMetaObjectIdsMap.get(Number(id))?.delete(oldValue.id)
+          })
+        }
+      }
     }
     if (v.objectId) {
       objectIdToMetaObjectMap.set(v.objectId, v.id)
@@ -55,6 +64,14 @@ export default () => {
       typeToMetaObjectIdsMap.get(v.type)?.add(k)
     } else {
       typeToMetaObjectIdsMap.set(v.type, new Set([k]))
+    }
+    if (v.properties) {
+      Object.keys(v.properties).forEach(id => {
+        const n = Number(id)
+        const set = propToMetaObjectIdsMap.get(n) || new Set()
+        set.add(v.id)
+        propToMetaObjectIdsMap.set(n, set)
+      })
     }
     undeletedMetaObjectsSet.add(v)
     if (v.pinned) {
@@ -85,7 +102,7 @@ export default () => {
   // left is force deleted objects
 
   idSet?.forEach(id => {
-    const v = prevMetaObjects?.get(id)!
+    const v = prevMetaObjects!.get(id)!
     undeletedMetaObjectsSet.delete(v)
     pinnedMetaObjectsSet.delete(v)
     v.objectId && objectIdToMetaObjectMap.delete(v.objectId)
@@ -101,6 +118,14 @@ export default () => {
       .forEach(att => {
         metaAttachmentIdToMetaIdsMap.get(att.id)?.delete(v.id)
       })
+    if (v.properties) {
+      const props = Object.keys(v.properties)
+      if (props.length) {
+        props.forEach(id => {
+          propToMetaObjectIdsMap.get(Number(id))?.delete(v.id)
+        })
+      }
+    }
   })
   const deletedMetas = globalStore.get(deletedMetaObjectsAtom)
   if (deletedMetas.size !== deletedMetaObjectsSet.size) {
@@ -119,6 +144,7 @@ export default () => {
     deletedMetaObjectsSet,
     objectIdToMetaObjectMap: objectIdToMetaObjectMap,
     tagToMetaObjectIdsMap,
+    propToMetaObjectIdsMap,
     oldMetaObjects: newMetaObjects,
     typeToMetaObjectIdsMap,
     metaAttachmentIdToMetaIdsMap

@@ -31,7 +31,13 @@ const GroupActions = memo(({ groupValue }: { groupValue?: MetaGroup }) => {
   const setSearch = (v: string) => {
     instance.updateCurrentView?.(s => ({ ...s, search: v }))
   }
-  const { paddingTop = 8, visibleTypes, visibleProps, showImport, showViews } = useSelectAtomValue(
+  const {
+    paddingTop = 8,
+    visibleTypes,
+    visibleProps,
+    showImport,
+    showViews
+  } = useSelectAtomValue(
     GroupStateAtom,
     s => ({
       paddingTop: s.styles?.actionPaddingTop,
@@ -321,17 +327,29 @@ const GroupActions = memo(({ groupValue }: { groupValue?: MetaGroup }) => {
             </WithBorder>
           )}
         />
+        {groupData.enableReview && (
+          <Button.IconButton
+            text={t('general.Flashcards')}
+            onClick={() => {
+              instance.reviewOps?.open()
+            }}
+            className={ClassName.selectButton()}
+            style={{
+              marginLeft: 8,
+              padding: '2px 8px'
+            }}
+          />
+        )}
         {showImport !== false && (
           <Button.IconButton
             text={t('general.Add')}
             onClick={() => {
               open()
             }}
+            className={ClassName.selectButton()}
             style={{
               marginLeft: 8,
-              padding: '2px 8px',
-              color: 'white',
-              background: Colors.Common.SelectColor
+              padding: '2px 8px'
             }}
           ></Button.IconButton>
         )}

@@ -77,6 +77,8 @@ export type IPdfInstance = Partial<{
       items: any[]
     }[]
   >
+  // return: thumbnail url, created by URL.createObjectURL
+  getThumbnail?: (pageIdx: number) => Promise<string | undefined>
   onLabelRendered?: (labelId: number) => void
   getTextLayerInstance?: (pageIndex: number) => Promise<ITextLayerInstance>
   onDocumentLoaded?: (doc: PDFDocumentProxy) => void

@@ -10,6 +10,7 @@ import { Colors } from '@/consts'
 import { useRef } from 'react'
 import GalleryRenderer from '@/core/components/group/components/gallery/GalleryRenderer'
 import KanbanRenderer from '@/core/components/group/components/kanban/KanbanRenderer'
+import { assignProperties } from '@/utils'
 
 export default function GroupGrouperRenderer() {
   const instance = useGroupInstance()
@@ -28,7 +29,30 @@ export default function GroupGrouperRenderer() {
     paddingEnd: paddingBottom,
     overscan: 1
   })
-
+  instance.virtualizer = virtualizer
+  if (currentViewType !== 'kanban') {
+    assignProperties(instance, {
+      bodyOps: {
+        ...instance.bodyOps,
+        scrollToMeta: (metaId, select) => {
+          if (currentGroupers) {
+            const targetGroupIdx = currentGroupers.findIndex(i => i.values.some(o => o.id === metaId))
+            if (targetGroupIdx >= 0) {
+              virtualizer.scrollToIndex(targetGroupIdx)
+              const targetRow = currentGroupers[targetGroupIdx].values.find(i => i.id === metaId)
+              targetRow &&
+                setTimeout(() => {
+                  instance.values.inViewRowFuncs.get(targetRow.tempRowId || targetRow.rowId)?.scrollIntoView()
+                })
+              if (select && targetRow) {
+                instance.selectOps?.selectItem(targetRow.tempRowId || targetRow.rowId)
+              }
+            }
+          }
+        }
+      }
+    })
+  }
   const items = virtualizer.getVirtualItems()
   const bodyRenderer = () => {
     if (currentViewType === 'kanban') {

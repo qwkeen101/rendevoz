@@ -2,7 +2,7 @@ import { MetaGroupChild } from '~/typings'
 import { Button, Content } from '@/components'
 import GalleryItemWrapper from '@/core/components/group/components/gallery/GalleryItemWrapper'
 import { memo, useRef } from 'react'
-import { useVirtualizer } from '@tanstack/react-virtual'
+import { useVirtualizer, Virtualizer } from '@tanstack/react-virtual'
 import { useGroupInstance } from '@/core/components/group/hooks/useGroupInstance'
 import { useSelectAtomValue } from '@/hooks'
 import { GroupStateAtom } from '@/core/components/group/hooks/useGroupState'
@@ -10,7 +10,17 @@ import { useTranslation } from 'react-i18next'
 import { isEqual } from 'lodash'
 
 export default memo(
-  ({ values, grouperId, showAddMore: outShowAddMore }: { values: MetaGroupChild[]; grouperId?: number; showAddMore?: boolean }) => {
+  ({
+    values,
+    grouperId,
+    onVirtualizerInitialized,
+    showAddMore: outShowAddMore
+  }: {
+    values: MetaGroupChild[]
+    grouperId?: number
+    showAddMore?: boolean
+    onVirtualizerInitialized: (v: Virtualizer<any, any>) => void
+  }) => {
     const containerRef = useRef<HTMLDivElement>(null)
     const instance = useGroupInstance()
     const { t } = useTranslation()
@@ -46,6 +56,7 @@ export default memo(
       scrollMargin: m,
       paddingEnd: bottomPadding ?? 200
     })
+    onVirtualizerInitialized?.(virtualier)
     const items = virtualier.getVirtualItems()
     return (
       <Content

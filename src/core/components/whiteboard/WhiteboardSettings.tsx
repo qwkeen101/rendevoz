@@ -10,13 +10,10 @@ import { useSetAtom } from 'jotai'
 import { ObjectStore } from '@/api/stores'
 import { Colors } from '@/consts'
 import ExportPanel from '@/core/components/whiteboard/toolbars/ExportPanel'
-import { downloadImg } from '@/utils'
 
 const WhiteboardSettings = () => {
   const [setting, setSetting] = useSetting()
   const { t } = useTranslation()
-  const [allNodes] = useWhiteboardNodes()
-  const flow = useFlow()
   const [exportModalVisible, toggleExportModalVisible] = useToggle(false)
   const whiteboardLineType = useSelectAtomValue(WhiteboardAtom, s => s?.lineType)
   const whiteboardBackgroundType = useSelectAtomValue(WhiteboardAtom, s => s?.backgroundType)
@@ -137,24 +134,13 @@ const WhiteboardSettings = () => {
               onClick={() => setBackgroundType('line')}
               text={t('general.Line')}
             />
-            <div style={{ width: '100%', height: '1px', margin: '4px 0px', background: Colors.Background.Border }}></div>
-            <Button.IconButton
-              className={buttonClazz}
-              icon="park-export"
-              onClick={() => {
-                exportWhiteboardAsImage(Array.from(allNodes.values()), flow.containerEle, 'png').then(res => {
-                  downloadImg(res, 'exported-image')
-                })
-              }}
-              text={t('general.export')}
-            />
           </WithBorder>
         }
         positions={['left']}
       >
         <Tooltip content={'Settings'} align={'end'}>
           <Icon
-            className={ClassName.circleButton(5, 4)}
+            className={ClassName.flatButton(4, '4px')}
             size={18}
             name="park-more"
             containerStyle={{

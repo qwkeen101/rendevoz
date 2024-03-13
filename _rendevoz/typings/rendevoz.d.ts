@@ -71,6 +71,7 @@ declare const Open: {
     openTypeGroup: (type: MetaObject['type']) => void
     openTagGroup: (tag: number) => void
     openCollectionGroup: (collection: number) => void
+    openPropGroup: (propId: number) => void
   }
   openSidebarObjectDetails: (metaId: number) => void
   Pdf: {

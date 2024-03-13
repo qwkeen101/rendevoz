@@ -22,55 +22,6 @@ const Loader: FC<LoaderProps> = ({ file, children, onDocumentLoaded }) => {
   const viewer = usePdfViewer()
   const [loadingState, setLoadingState] = useState(LoadingState.Loading)
 
-  const getThumbnail = async (doc: PDFDocumentProxy) => {
-    const map = (viewer && PDF_TO_THUMBNAIL.get(viewer)) || new Map<number, string>()
-    if (viewer) {
-      PDF_TO_THUMBNAIL.set(viewer, map)
-    }
-    const currentPage = {
-      current: 0
-    }
-    const totalPages = doc.numPages
-    const canvas = document.createElement('canvas')
-    const firstPage = await doc.getPage(1)
-    const viewport = firstPage.getViewport({ scale: 1 })
-    const outputScale = window.devicePixelRatio || 1
-
-    const originalWidth = viewport.width
-    const originalHeight = viewport.height
-    const { width: w, height: h } = calculateImageAspectRatio(originalWidth, originalHeight, 400, 400)
-    const transform = [w / originalWidth, 0, 0, h / originalHeight, 0, 0]
-    canvas.width = w
-    canvas.height = h
-    const ctx = canvas.getContext('2d')!
-    const asyncGetThumbnailLoop = () => {
-      const curr = currentPage.current
-      currentPage.current = curr + 1
-      if (curr === totalPages) {
-        return
-      }
-      requestIdleCallback(async () => {
-        try {
-          const page = await doc.getPage(curr + 1)
-          renderPageInDarkMode()
-          await page.render({ canvasContext: ctx, transform, viewport: page.getViewport({ scale: 1 }) }).promise
-          requestIdleCallback(() => {
-            canvas.toBlob(b => {
-              if (b) {
-                const url = URL.createObjectURL(b)
-                map.set(curr, url)
-                asyncGetThumbnailLoop()
-                viewer?.onThumbnailRendered?.()
-              }
-            })
-          })
-        } catch (e) {
-          console.log(e)
-        }
-      })
-    }
-    asyncGetThumbnailLoop()
-  }
   useEffect(() => {
     docRef.current = null
     const params = Object.assign('string' === typeof file ? { url: file } : { data: file })
@@ -81,7 +32,6 @@ const Loader: FC<LoaderProps> = ({ file, children, onDocumentLoaded }) => {
     })
     loadingTask.promise.then(doc => {
       docRef.current = doc
-      getThumbnail(doc)
       onDocumentLoaded?.(doc)
       PDF_TO_DOC.set(viewer, doc)
       viewer?.onDocumentLoaded?.(doc)
@@ -89,13 +39,7 @@ const Loader: FC<LoaderProps> = ({ file, children, onDocumentLoaded }) => {
     })
 
     return () => {
-      console.log('clearing')
       loadingTask.destroy()
-      if (viewer) {
-        PDF_TO_THUMBNAIL.get(viewer)?.forEach(([v, k]) => {
-          URL.revokeObjectURL(v)
-        })
-      }
     }
   }, [file])
   if (loadingState === LoadingState.Complete && docRef.current) {

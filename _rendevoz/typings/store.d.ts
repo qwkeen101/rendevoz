@@ -25,7 +25,8 @@ import {
   IMetaSelectOption,
   IMetaProp,
   IPdfLabel,
-  IPDFLabel
+  IPDFLabel,
+  IReviewCard
 } from '.'
 import { PartialWithId } from './common'
 import { CustomTypes } from './custom'
@@ -43,6 +44,7 @@ export type BuiltInObjectTypes = {
   pdfLabel: IPDFLabel
   tag: ITag & { specType: 'tag' }
   image: IImage
+  reviewCard: IReviewCard & { specType: 'reviewCard' }
   localFile: ILocalFile
   video: IVideo
   videoLabel: IVideoLabel

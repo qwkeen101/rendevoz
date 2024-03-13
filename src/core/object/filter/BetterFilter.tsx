@@ -322,7 +322,8 @@ const FilterItem = ({
     'multiSelect',
     'URL',
     'checkbox',
-    'AI summary'
+    'AI summary',
+    'reviewState'
   ]
   const propSet = new Set(filterableCustomProps)
   availableFilters = availableFilters.filter(i => (i.type === 'custom' ? propSet.has(i.propType) : true))
@@ -341,6 +342,7 @@ const FilterItem = ({
           case 'AI summary':
             return <StringFilter rule={rule} onChange={onChange} />
           case 'singleSelect':
+          case 'reviewState':
             return <SingleOptionFilter rule={rule} onChange={onChange} />
           case 'multiSelect':
             return <MultiOptionFilter rule={rule} onChange={onChange} />
@@ -428,6 +430,7 @@ const FilterItem = ({
                   type = 'contains'
                   break
                 case 'singleSelect':
+                case 'reviewState':
                 case 'date':
                   type = 'is'
                   break

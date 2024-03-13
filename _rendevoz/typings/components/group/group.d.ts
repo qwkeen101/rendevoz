@@ -124,4 +124,5 @@ export interface MetaGroup extends IBase {
   hideGroupsInside?: boolean
   hideObjectsInside?: boolean
   onlyShowCustomProperties?: boolean
+  enableReview?: boolean
 }

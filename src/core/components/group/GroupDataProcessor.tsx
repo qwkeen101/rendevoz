@@ -72,5 +72,11 @@ export default ({ groupValue }: { groupValue?: MetaGroup }) => {
       compares()
     })
   }, [groupValue?.views])
+  useLayoutEffect(() => {
+    const currentView = store.get(GroupStateAtom).currentView
+    if (groupValue?.lastViewId && !currentView) {
+      setGroupState(s => ({ ...s, currentView: groupValue.views.find(i => i.id === groupValue.lastViewId) || groupValue.views[0] }))
+    }
+  }, [groupValue?.lastViewId])
   return null
 }

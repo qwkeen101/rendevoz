@@ -3,12 +3,17 @@ import { useMount } from './hooks'
 import ClassName from './styles/classNames'
 import { useSetting } from './core'
 import { GlobalTheme } from '@/consts'
-
+import { createPortal } from 'react-dom'
+import { getOS } from '@/App'
 
 const ThemeSwitcher = () => {
   const [setting, setSetting] = useSetting()
   useMount(() => {
     document.body.classList.add(ClassName.defaultFont('1rem', 400))
+    const os = getOS()
+    if (os === 'windows') {
+      document.documentElement.setAttribute('custom-scrollbar', 'true')
+    }
   })
   useEffect(() => {
     if (setting.general.followSystemTheme) {
@@ -53,6 +58,9 @@ const ThemeSwitcher = () => {
       document.documentElement.setAttribute('theme', 'dark')
     }
   }, [setting.general.darkMode])
+  if (setting.general.globalCSS) {
+    return createPortal(<style>{setting.general.globalCSS}</style>, document.head)
+  }
   return null
 }
 

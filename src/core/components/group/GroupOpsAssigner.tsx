@@ -15,6 +15,7 @@ import { useGroupInstance } from '@/core/components/group/hooks/useGroupInstance
 import useAssignBodyOps from '@/core/components/group/hooks/ops/useAssignBodyOps'
 import assignViewOps from '@/core/components/group/hooks/ops/view/view'
 import { MetaGroup } from '~/typings'
+import trackMustProperties from '@/core/components/group/hooks/trackMustProperties'
 
 export default memo(({ groupId, bodyRef, groupValue }: { bodyRef: RefObject<HTMLElement>; groupId?: number; groupValue?: MetaGroup }) => {
   const instance = useGroupInstance()
@@ -33,5 +34,6 @@ export default memo(({ groupId, bodyRef, groupValue }: { bodyRef: RefObject<HTML
   useHideObjects(groupId)
   useGroupFilter(groupValue)
   useAssignBodyOps(instance, bodyRef)
+  trackMustProperties(groupValue)
   return null
 })

@@ -16,11 +16,16 @@ import TagGroup from '@/core/components/category/tag'
 import TweetPage from '@/scenes/TweetPage'
 import CollectionGroup from '@/core/components/category/CollectionGroup'
 import { GlobalInstance } from '@/hooks'
+import PropGroup from '@/core/components/category/PropGroup'
 
 export const RENDEVOZ_DEFAULT_TABS: TabData[ILayoutTab['type']][] = [
   {
     type: 'typeGroup',
     content: opts => opts.metaType && <TypeGroup type={opts.metaType} />
+  },
+  {
+    type: 'propGroup',
+    content: opts => opts.objectId && <PropGroup propId={opts.objectId} />
   },
   {
     type: 'tweet',

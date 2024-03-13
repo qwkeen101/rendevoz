@@ -15,7 +15,7 @@ const normalizeMetaToDoc = (meta: MetaObject) => {
     metaId: meta.id,
     metaType: meta.type,
     docType: 'metaObject',
-    name: meta.name,
+    name: meta.name || meta.placeholderName,
     description: meta.description
   }
 }
@@ -27,7 +27,6 @@ export const initializeSearch = async () => {
     cache: 'no-cache'
   })
     .then(res => {
-      console.log(res)
       if (res.ok) {
         res.text().then(t => {
           worker.postMessage({

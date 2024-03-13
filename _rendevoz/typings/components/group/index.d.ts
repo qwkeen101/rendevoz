@@ -36,6 +36,7 @@ type GroupRowFunctions = {
 
 // auto scroll when dragging / selecting
 type GroupBodyOps = {
+  scrollToMeta?: (metaId: number, select?: boolean) => void
   startDetectAutoScroll: VoidFunction
   endDetectAutoScroll: VoidFunction
   scrollBody: (movement: { x?: number; y?: number }) => void
@@ -168,12 +169,16 @@ type GroupOverlayOps = {
   open: (content: GroupOverlayAvaibleContents, position: XYPosition) => void
 }
 
+type GroupReviewOps = {
+  open: VoidFunction
+}
 export type IGroupInstance = Partial<{
   bodyOps: GroupBodyOps
   dragOps: GroupDragOps
   pathOps: GroupPathOps
   valueOps: GroupValueOps
   metaOps: GroupMetaOps
+  reviewOps: GroupReviewOps
   selectOps: GroupSelectOps
   sidebarOps: GroupSidebarOps
   centerOps: GroupCenterOps

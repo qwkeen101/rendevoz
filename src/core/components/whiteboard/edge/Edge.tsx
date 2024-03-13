@@ -14,6 +14,9 @@ import { useWhiteboardInstance } from '@/core/components/whiteboard/hooks/useWhi
 import { EdgeOverlayStateAtom } from '@/core/components/whiteboard/edge/EdgeOverlay'
 import { WhiteboardStateAtom } from '@/core/components/whiteboard/hooks/useWhiteboardState'
 import { createPortal } from 'react-dom'
+import { selectAtom } from 'jotai/utils'
+import { isEqual } from 'lodash'
+import { useAtomValue } from 'jotai'
 
 const keyframe = keyframes({
   '0%': {
@@ -29,13 +32,20 @@ export const dashEdgeClazz = css({
   strokeDasharray: 8
 })
 
+const EdgeSelectAtom = selectAtom(
+  WhiteboardStateAtom,
+  s => ({
+    pointerMode: s.pointerMode,
+    currentHighlight: s.highlightedIds
+  }),
+  (a, b) => isEqual(a, b)
+)
 const TreeEdge: FC<{
   edge: IWhiteboardEdge
   lineType?: IWhiteboardEdge['lineType']
   hideArrow?: boolean
   disablePopover?: boolean
   disableReposition?: boolean
-  disablePointer?: boolean
   clickEditLabel?: boolean
   strokeWidth?: string | number
   onLabelChange?: (value: string) => void
@@ -49,7 +59,6 @@ const TreeEdge: FC<{
     hideArrow = false,
     disablePopover = false,
     strokeWidth,
-    disablePointer,
     disableReposition = false,
     isMindmapConnection
   }) => {
@@ -57,7 +66,7 @@ const TreeEdge: FC<{
     const [innerLink, setInnerLink] = useState<Partial<IWhiteboardEdge>>(edge)
     const [isEditingLabel, toggleIsEditingLabel] = useToggle(false)
     const defaultLineType = outLineType ?? useSelectAtomValue(WhiteboardAtom, s => s?.lineType)
-    const currentHighlight = useSelectAtomValue(WhiteboardStateAtom, s => s.highlightedIds)
+    const { currentHighlight, pointerMode } = useAtomValue(EdgeSelectAtom)
     const realLineType = lineType || defaultLineType
     const labelRef = useRef<HTMLDivElement>(null)
     const labelContainerRef = useRef<SVGGElement>(null)
@@ -174,10 +183,10 @@ const TreeEdge: FC<{
         instance.toolbarOps?.openEdgeToolbar(edge.id, pos)
       }
     }
-
+    const labelLayer = instance.getEdgeLabelLayer?.()
     useEffect(() => {
       if (labelRef.current) {
-        labelRef.current.textContent = edge.label || ''
+        labelRef.current.innerText = edge.label || ''
         if (edge.label !== innerLink.label) {
           setInnerLink(s => ({ ...s, label: edge.label }))
         }
@@ -260,7 +269,7 @@ const TreeEdge: FC<{
     const updateEdge = (edge: Partial<IWhiteboardEdge>) => {
       instance.updateEdge?.(id, e => ({ ...e, ...edge }))
     }
-    const labelLayer = instance.getEdgeLabelLayer?.()
+
     useEffect(() => {
       drawPath()
     }, [sourceId, sourcePosition, targetPosition, targetId, realLineType, targetBorderType, targetBorderColor])
@@ -307,7 +316,7 @@ const TreeEdge: FC<{
                 handlePointerEvent(e)
               }}
               ref={underEdgeRef}
-              pointerEvents="auto"
+              pointerEvents={pointerMode === 'pan' ? 'none' : 'auto'}
               stroke={'transparent'}
               strokeWidth={'calc(20 * var(--zoom-level)'}
               fill="none"
@@ -319,6 +328,7 @@ const TreeEdge: FC<{
           labelLayer &&
           createPortal(
             <foreignObject
+              transform={labelPosRef.current ? `translate(${labelPosRef.current.x},${labelPosRef.current.y})` : undefined}
               ref={labelContainerRef}
               width={1}
               height={1}
@@ -346,7 +356,8 @@ const TreeEdge: FC<{
                     maxWidth: '16em',
                     fontSize: isMindmapConnection ? 12 : FontSize['14px'],
                     padding: isMindmapConnection ? '3px' : '6px',
-                    minWidth: 1
+                    minWidth: 1,
+                    pointerEvents: pointerMode === 'pan' ? 'none' : 'auto'
                   }}
                   onInput={e => {
                     setInnerLink({
@@ -371,7 +382,6 @@ const EdgeClassName = css({
   lineHeight: 1.3,
   background: Colors.Background.Secondary,
   whiteSpace: 'pre-wrap',
-  pointerEvents: 'auto',
   fontWeight: 500,
   cursor: 'text',
   textTransform: 'none'

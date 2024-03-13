@@ -1,8 +1,6 @@
-import { Box } from '../common'
-import { CustomTypes } from '..'
 import { IBase } from './base'
 import { ObjectFamily } from 'rendevoz'
-import { MetaFormLayoutItem } from '~/typings'
+import { MetaFormLayoutItem, ReviewStateType } from '~/typings'
 import { Dispatch, SetStateAction } from 'react'
 
 export type IMetaAttachment =
@@ -50,6 +48,11 @@ export type IMetaProperty = (
   | {
       propType: 'string'
       value?: string
+    }
+  // review object id
+  | {
+      propType: 'reviewState'
+      value?: ReviewStateType
     }
   | {
       propType: 'AI summary'
@@ -126,6 +129,9 @@ export interface MetaObject extends IBase {
   // id to prop
   properties?: Record<number | string, IMetaProperty>
   fromObject?: { metaId: number; type: MetaObject['type'] }
+  // review card obj id
+  // if false, never review this object
+  review?: number | false
 }
 
 export type RegisteredMetaObject<T = MetaObject['type']> = {
@@ -258,7 +264,7 @@ export type PropertyFilterRule = {
       propType: 'checkbox'
     } & CheckboxFilterRule)
   | ({
-      propType: 'singleSelect'
+      propType: 'singleSelect' | 'reviewState'
     } & SingleSelectFilterRule)
   | ({
       propType: 'multiSelect'

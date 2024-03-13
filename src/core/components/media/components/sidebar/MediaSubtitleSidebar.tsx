@@ -1,4 +1,4 @@
-import { useIsIn, useMergedRef } from '@/hooks'
+import { useDebounceEffect, useIsIn, useMergedRef } from '@/hooks'
 import useMediaState, { IMediaState } from '@/core/components/media/hooks/useMediaState'
 import { Button, Content, Icon, IconWithPopover, Tooltip, VirtualList, WithBorder } from '@/components'
 import { useMediaInstance } from '@/core/components/media/hooks/useMediaInstance'
@@ -6,10 +6,8 @@ import { normalizeSecondsToTime } from '@/core/components/media/utils'
 import { ClassName } from 'rendevoz'
 import { memo, useEffect, useRef, useState } from 'react'
 import FontSize from '@/consts/font'
-import Colors from '../../../../../consts/colors'
+import Colors from '@/consts/colors'
 import { useTranslation } from 'react-i18next'
-import { useAtom } from 'jotai'
-import { VideoSidebarStateAtom } from '@/core/components/media/hooks/useMediaSidebarState'
 import { WebVTTParser } from 'webvtt-parser'
 import { Virtualizer } from '@tanstack/react-virtual'
 import useSubtitleSelectAsLabel from '@/core/components/media/hooks/useSubtitleSelectAsLabel'
@@ -17,12 +15,20 @@ import translateSubtitle from '@/core/components/media/components/sidebar/transl
 import produce from 'immer'
 import { IMediaSubtitle } from '~/typings'
 import ButtonSwitch from '@/components/base/ButtonSwitch'
-import scrollIntoView from 'scroll-into-view-if-needed'
+import fuzzysort from 'fuzzysort'
+import isHotkey from 'is-hotkey'
+import { KEY } from '@/consts'
 const SelectButton: typeof Button.IconButton = props => {
   return <Button.IconButton {...props} style={{ padding: '3px 6px', lineHeight: 1.2, fontSize: '0.957rem' }} />
 }
 const MediaSubtitleSidebar = memo(() => {
   const [mediaState, setMediaState] = useMediaState()
+  const [searchState, setSearchState] = useState<{
+    visible: boolean
+    q?: string
+    results?: number[]
+    currIdx?: number
+  }>({ visible: false })
   const {
     currentTime = 0,
     subtitles: currentSubtitles = [],
@@ -35,6 +41,7 @@ const MediaSubtitleSidebar = memo(() => {
   const { ref, isIn } = useIsIn()
   const virtualizerRef = useRef<Virtualizer<any, any>>()
   useEffect(() => {
+    if (searchState.visible) return
     if (currentTime && currentSubtitles) {
       const index = currentSubtitles.findLastIndex(i => i.startTime <= currentTime && i.endTime >= currentTime)
       if (index >= 0) {
@@ -43,7 +50,7 @@ const MediaSubtitleSidebar = memo(() => {
     } else {
       setCurrentSelectedIndex(0)
     }
-  }, [currentTime, currentSubtitles])
+  }, [currentTime, currentSubtitles, searchState.visible])
   useEffect(() => {
     if (subtitles.length) {
       console.log(subtitles, subtitleLang)
@@ -87,7 +94,9 @@ const MediaSubtitleSidebar = memo(() => {
     }
   }, [subtitleLang])
   useEffect(() => {
-    if (isIn || !subtitleFollow) return
+    if (!searchState.visible) {
+      if (isIn || !subtitleFollow) return
+    }
     if (subtitleMode === 'list') {
       const virtualizer = virtualizerRef.current
       if (virtualizer && !isIn && subtitleFollow) {
@@ -108,8 +117,53 @@ const MediaSubtitleSidebar = memo(() => {
   const instance = useMediaInstance()
   const { renderPopover, containerRef, rangeExtractor } = useSubtitleSelectAsLabel(currentSubtitles)
   const mergedRef = useMergedRef(containerRef, ref)
-  const { t } = useTranslation()
+  const searchSubtitle = (q: string) => {
+    const results = Array.from(
+      fuzzysort
+        .go(
+          q,
+          currentSubtitles.map((i, idx) => ({ ...i, idx })),
+          {
+            key: 'text',
+            threshold: -1000
+          }
+        )
+        .values()
+    )
+    results.sort((b, a) => b.obj.idx - a.obj.idx)
+    console.log(results)
+    setSearchState(s => ({ ...s, results: results.map(i => i.obj.idx), currIdx: results[0]?.obj.idx ?? 0 }))
+  }
+  const handleNavigateSearch = (direction: 'up' | 'down') => {
+    const results = searchState.results
+    if (!results) return
+    let next = searchState.currIdx !== undefined ? results.indexOf(searchState.currIdx) : 0
+    if (direction === 'up') {
+      next = next - 1 < 0 ? results.length - 1 : next - 1
+    } else {
+      next = next + 1 >= results.length ? 0 : next + 1
+    }
+    console.log(results[next], next, searchState.currIdx, results)
+    setSearchState(s => ({ ...s, currIdx: results[next] }))
+  }
+  useDebounceEffect(
+    () => {
+      if (searchState.q) {
+        searchSubtitle(searchState.q)
+      } else {
+        setSearchState(s => ({ ...s, results: [], currIdx: undefined }))
+      }
+    },
+    [searchState.q],
+    { wait: 200 }
+  )
   const [showTranslation, setShowTranslation] = useState(true)
+  useEffect(() => {
+    if (searchState.currIdx !== undefined && searchState.currIdx >= 0) {
+      setCurrentSelectedIndex(searchState.currIdx)
+    }
+  }, [searchState.currIdx])
+  const { t } = useTranslation()
   if (!currentSubtitles.length && !subtitles.length)
     return (
       <Content flex centered fullWidth fullHeight style={{ minHeight: 240 }}>
@@ -119,13 +173,16 @@ const MediaSubtitleSidebar = memo(() => {
   return (
     <Content fullWidth fullHeight style={{ minHeight: 240, padding: '0px 12px 12px' }} flex column>
       {renderPopover()}
-      <Content flex gap={12} style={{ margin: '6px 0px', paddingLeft: 8 }}>
+      <Content flex gap={12} fullWidth style={{ margin: '6px 0px', paddingLeft: 8 }}>
         <div style={{ fontWeight: 600 }} className={'ellipsis-font-1'}>
           {subtitleLang || 'Unselected subtitle'}
         </div>
         <IconWithPopover
           className={ClassName.circleButton()}
           name={'park-more'}
+          containerStyle={{
+            marginRight: 'auto'
+          }}
           renderOnParent={false}
           content={
             <WithBorder padding={6} style={{ display: 'flex', flexDirection: 'column', gap: 3, minWidth: 180 }}>
@@ -178,51 +235,104 @@ const MediaSubtitleSidebar = memo(() => {
           }
           placement={['bottom']}
         />
-        {currentSubtitles.some(i => i.translation) ? (
-          <ButtonSwitch
-            style={{
-              gap: 6,
-              marginLeft: 'auto',
-              flexShrink: 0
-            }}
-            className={'font-size-13 transparent-font'}
-            name={'Show translation'}
-            value={showTranslation}
-            onChange={v => setShowTranslation(v)}
-          ></ButtonSwitch>
-        ) : (
-          <Button.IconButton
-            text={t('general.translate')}
-            icon={'park-translate'}
-            className={'font-size-13'}
-            style={{
-              marginLeft: 'auto',
-              flexShrink: 0
-            }}
-            onClick={() => {
-              translateSubtitle(currentSubtitles).then(texts => {
-                setMediaState(s =>
-                  produce(s, draft => {
-                    draft.subtitles?.forEach((s, idx) => {
-                      s.translation = texts[idx]
+        <Content flex gap={4} alignItems={'center'} style={{ flexShrink: 0 }} className={'font-size-14'}>
+          {currentSubtitles.some(i => i.translation) ? (
+            <ButtonSwitch
+              style={{
+                gap: 6,
+                marginLeft: 'auto',
+                flexShrink: 0
+              }}
+              className={'font-size-13 transparent-font'}
+              name={'Show translation'}
+              value={showTranslation}
+              onChange={v => setShowTranslation(v)}
+            ></ButtonSwitch>
+          ) : (
+            <Icon
+              name={'park-translate'}
+              className={ClassName.flatButton(4, '4px')}
+              onClick={() => {
+                translateSubtitle(currentSubtitles).then(texts => {
+                  setMediaState(s =>
+                    produce(s, draft => {
+                      draft.subtitles?.forEach((s, idx) => {
+                        s.translation = texts[idx]
+                      })
                     })
-                  })
-                )
-              })
-            }}
-          ></Button.IconButton>
-        )}
-        {/*<div*/}
-        {/*  onClick={() => {*/}
-        {/* Summarize the subtitles with an overview and summarization with timestamp, return in json format: {overview: string, summarizations: [{startTime: number, endTime: number, summarization: string }]}, time should be represented in seconds.*/}
-        {/*    const tracked = currentSubtitles.map(i => `${normalizeSecondsToTime(i.startTime)} ${i.text}`).join('\n')*/}
-        {/*    console.log(tracked)*/}
-        {/*  }}*/}
-        {/*>*/}
-        {/*  summarize*/}
-        {/*</div>*/}
+                  )
+                })
+              }}
+            ></Icon>
+          )}
+          {currentSubtitles.length ? (
+            <Icon
+              name={'park-search'}
+              className={ClassName.flatButton(4, '4px')}
+              onClick={() => {
+                setSearchState(s => ({ ...s, visible: !s.visible }))
+              }}
+            />
+          ) : null}
+        </Content>
       </Content>
-      <Content fullHeight fullWidth ref={mergedRef} style={{ height: 0, flex: 1 }} role={'subtitle-container'}>
+      {searchState.visible && (
+        <Content
+          className={'font-size-14'}
+          flex
+          alignItems={'center'}
+          style={{
+            margin: '0px 6px 8px'
+          }}
+        >
+          <input
+            placeholder={t('general.Type to search')}
+            onKeyDown={e => {
+              if (isHotkey(KEY.Enter, e)) {
+                e.preventDefault()
+                handleNavigateSearch('down')
+              }
+              if (isHotkey(KEY.Escape, e)) {
+                setSearchState(s => ({ ...s, visible: false }))
+              }
+            }}
+            onChange={e => {
+              setSearchState(s => ({ ...s, q: e.target.value }))
+            }}
+            className={'focus-input border-box-shadow'}
+            style={{ borderRadius: 4, flex: 1, padding: '4px 8px' }}
+          />
+          {(searchState.results?.length ?? 0) > 1 ? (
+            <Content
+              flex
+              gap={4}
+              alignItems={'center'}
+              style={{
+                marginLeft: 8
+              }}
+            >
+              <div
+                className={'font-size-12 transparent-font'}
+                style={{
+                  marginRight: 12
+                }}
+              >
+                {searchState.results?.indexOf(searchState.currIdx) + 1} / {searchState.results?.length}
+              </div>
+              <Icon name={'park-up'} className={ClassName.flatButton(4, '4px')} onClick={() => handleNavigateSearch('up')} />
+              <Icon name={'park-down'} className={ClassName.flatButton(4, '4px')} onClick={() => handleNavigateSearch('down')} />
+            </Content>
+          ) : null}
+        </Content>
+      )}
+      <Content
+        fullHeight
+        fullWidth
+        ref={mergedRef}
+        style={{ height: 0, flex: 1, paddingTop: 6 }}
+        role={'subtitle-container'}
+        className={'border-top'}
+      >
         {subtitleMode === 'list' ? (
           <VirtualList
             rangeExtractor={r => rangeExtractor(r)}

@@ -18,6 +18,7 @@ import WebpageStore from '@/api/stores/webpage.store'
 import deleteCallback from '@/api/stores/object/deleteCallback'
 import addCallback from '@/api/stores/object/addCallback'
 import KeyvalueStore from '@/api/stores/keyvalue.store'
+import createReviewStore from '@/api/stores/object/custom/ReviewCardStore'
 export type ObjectFamily = CustomTypes['Object']
 
 export const ObjectFamilyAtom = atomFamily(() => atom(new Map<number, ObjectFamily[keyof ObjectFamily]>()))
@@ -319,6 +320,8 @@ export const objectStore = <T extends keyof ObjectFamily>(
           return createTagStore()
         case 'metaPropSelectOption':
           return createOptionStore()
+        case 'reviewCard':
+          return createReviewStore()
         case 'whiteboard':
           return createWhiteboardStore()
         case 'feedCollection':

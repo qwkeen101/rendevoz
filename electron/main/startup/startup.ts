@@ -115,6 +115,7 @@ const startElectron = async () => {
   const win = new BrowserWindow({
     width: 1600,
     height: 900,
+    backgroundColor: '#191919',
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true,

@@ -11,8 +11,10 @@ import KeyvalueStore from '@/api/stores/keyvalue.store'
 
 export default memo(() => {
   const recycleGroup = KeyvalueStore.useValue('recycleBinGroup')
-  const deletedIds = MetaStore.useDeletedObjectsSet()
-  const deleted = MetaStore.useMultipleObjects(Array.from(deletedIds.values()))
+  const all = MetaStore.useMetaObjectsMap()
+  const deleted = useMemo(() => {
+    return Array.from(all.values()).filter(i => i.deleted)
+  }, [all])
   const defaultValue = GroupStore.initializeGroup()
   const { t } = useTranslation()
   const [data, setData] = useState(

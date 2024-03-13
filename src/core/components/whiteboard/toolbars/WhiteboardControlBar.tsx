@@ -45,57 +45,73 @@ const WhiteboardControlBar = () => {
         bottom: 20
       }}
     >
-      {(showUndo || transformHistory.redos.length > 0) && (
-        <WithBorder borderBoxShadow padding={6} style={{ background: Colors.Background.Popover, display: 'flex', alignItems: 'center', gap: 8 }}>
-          {showUndo && (
-            <Tooltip content={<TooltipWithCmd cmd={'Shift+E'} name={t('whiteboard.Undo view change')} />}>
+      {!whiteboardState.readOnly && (
+        <>
+          {(showUndo || transformHistory.redos.length > 0) && (
+            <WithBorder
+              borderBoxShadow
+              padding={6}
+              style={{ background: Colors.Background.Popover, display: 'flex', alignItems: 'center', gap: 8 }}
+            >
+              {showUndo && (
+                <Tooltip content={<TooltipWithCmd cmd={'Shift+E'} name={t('whiteboard.Undo view change')} />}>
+                  <Icon
+                    className={ClassName.circleButton(6, 6)}
+                    name={'park-back-one'}
+                    onClick={() => {
+                      instance.containerOps?.undoTransform()
+                    }}
+                  />
+                </Tooltip>
+              )}
+              {transformHistory.redos.length > 0 && (
+                <Tooltip content={<TooltipWithCmd cmd={'Shift+Q'} name={'Redo view change'} />}>
+                  <Icon
+                    className={ClassName.circleButton(6, 6)}
+                    name={'park-go-ahead'}
+                    onClick={() => {
+                      instance.containerOps?.redoTransform()
+                    }}
+                  />
+                </Tooltip>
+              )}
+            </WithBorder>
+          )}
+          <WithBorder
+            borderBoxShadow
+            padding={6}
+            style={{ background: Colors.Background.Popover, display: 'flex', alignItems: 'center', gap: 8 }}
+          >
+            <Tooltip content={<TooltipWithCmd cmd={'Cmd+Z'} name={t('general.Undo')} />}>
               <Icon
                 className={ClassName.circleButton(6, 6)}
-                name={'park-back-one'}
-                onClick={() => {
-                  instance.containerOps?.undoTransform()
+                name={'park-back'}
+                onClick={() => flow.undo?.()}
+                style={{
+                  color: historyState.undo ? undefined : Colors.Background.Border,
+                  cursor: historyState.undo ? undefined : 'not-allowed'
                 }}
               />
             </Tooltip>
-          )}
-          {transformHistory.redos.length > 0 && (
-            <Tooltip content={<TooltipWithCmd cmd={'Shift+Q'} name={'Redo view change'} />}>
+            <Tooltip content={<TooltipWithCmd cmd={'Cmd+Y'} name={t('general.Redo')} />}>
               <Icon
                 className={ClassName.circleButton(6, 6)}
-                name={'park-go-ahead'}
-                onClick={() => {
-                  instance.containerOps?.redoTransform()
+                name={'park-share-two'}
+                onClick={() => flow.redo?.()}
+                style={{
+                  color: historyState.redo ? undefined : Colors.Background.Border,
+                  cursor: historyState.redo ? undefined : 'not-allowed'
                 }}
               />
             </Tooltip>
-          )}
-        </WithBorder>
+          </WithBorder>
+        </>
       )}
-      <WithBorder borderBoxShadow padding={6} style={{ background: Colors.Background.Popover, display: 'flex', alignItems: 'center', gap: 8 }}>
-        <Tooltip content={<TooltipWithCmd cmd={'Cmd+Z'} name={t('general.Undo')} />}>
-          <Icon
-            className={ClassName.circleButton(6, 6)}
-            name={'park-back'}
-            onClick={() => flow.undo?.()}
-            style={{
-              color: historyState.undo ? undefined : Colors.Background.Border,
-              cursor: historyState.undo ? undefined : 'not-allowed'
-            }}
-          />
-        </Tooltip>
-        <Tooltip content={<TooltipWithCmd cmd={'Cmd+Y'} name={t('general.Redo')} />}>
-          <Icon
-            className={ClassName.circleButton(6, 6)}
-            name={'park-share-two'}
-            onClick={() => flow.redo?.()}
-            style={{
-              color: historyState.redo ? undefined : Colors.Background.Border,
-              cursor: historyState.redo ? undefined : 'not-allowed'
-            }}
-          />
-        </Tooltip>
-      </WithBorder>
-      <WithBorder borderBoxShadow padding={6} style={{ background: Colors.Background.Popover, display: 'flex', alignItems: 'center', gap: 8 }}>
+      <WithBorder
+        borderBoxShadow
+        padding={6}
+        style={{ background: Colors.Background.Popover, display: 'flex', alignItems: 'center', gap: 8 }}
+      >
         <Icon
           onClick={() => {
             setWhiteboardState(s => ({
@@ -106,11 +122,15 @@ const WhiteboardControlBar = () => {
             }))
           }}
           style={{
-            background: whiteboardState.currentTool ? undefined : Colors.Background.ButtonActive
+            background: whiteboardState.currentTool ? undefined : Colors.Background.ButtonActive,
+            pointerEvents: whiteboardState.readOnly ? 'none' : 'auto'
           }}
           className={ClassName.circleButton(6, 6)}
           name={
-            whiteboardState.isPanning || whiteboardState.pointerMode === 'pan' || whiteboardState.toolbarPointerMode === 'pan'
+            whiteboardState.readOnly ||
+            whiteboardState.isPanning ||
+            whiteboardState.pointerMode === 'pan' ||
+            whiteboardState.toolbarPointerMode === 'pan'
               ? 'park-fist'
               : 'park-move-one'
           }

@@ -7,6 +7,10 @@ import { useWhiteboardInstance } from '@/core/components/whiteboard/hooks'
 import Id from '@/utils/id'
 import { getFlattenChildrenOfNode } from '@/core/components/whiteboard/node/mindmap/utils/tree'
 import { css } from '@emotion/css'
+import { useSelectAtomValue } from '@/hooks'
+import { WhiteboardStateAtom } from '@/core/components/whiteboard/hooks/useWhiteboardState'
+import { selectAtom } from 'jotai/utils'
+import { useAtomValue } from 'jotai'
 
 type direction = 'right' | 'left'
 const rightClazz = css({
@@ -27,8 +31,10 @@ const leftClazz = css({
   transform: 'translate(calc(-100% - 10px), -50%)',
   transition: 'opacity 0.2s ease'
 })
+const readOnlyAtom = selectAtom(WhiteboardStateAtom, s => s.readOnly)
 export default memo(({ node, isIn }: { node: IWhiteboardNode; isIn?: boolean }) => {
   const instance = useWhiteboardInstance()
+  const readOnly = useAtomValue(readOnlyAtom)
   const getSubNodeLength = (direction: direction) => {
     const all = getFlattenChildrenOfNode(node, instance, direction) || []
     return all.length
@@ -208,6 +214,7 @@ export default memo(({ node, isIn }: { node: IWhiteboardNode; isIn?: boolean }) 
       </div>
     )
   }
+  if (readOnly) return null
   if (node.type === 'mindmap') {
     const rightCollapse = isCollapse('right')
     const leftCollapse = isCollapse('left')

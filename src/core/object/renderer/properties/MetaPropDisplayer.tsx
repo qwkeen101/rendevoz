@@ -43,9 +43,15 @@ export default ({
                 setV(false)
               }}
               onAddProp={async p => {
-                const prop = await MetaStore.addNewProp(p)
-                if (prop) {
-                  MetaStore.updateProperty(metaId, prop.id, { value: undefined })
+                if (p.id) {
+                  if (!properties?.[p.id]) {
+                    MetaStore.updateProperty(metaId, p.id, { value: undefined })
+                  }
+                } else {
+                  const prop = await MetaStore.addNewProp(p)
+                  if (prop) {
+                    MetaStore.updateProperty(metaId, prop.id, { value: undefined })
+                  }
                 }
               }}
             />
@@ -125,7 +131,8 @@ const PropPairDisplayer = ({ k, v, metaId }: { k: number; v: IMetaProperty; meta
       case 'file': {
         return <FileProp value={value} onChange={handleChange} />
       }
-      case 'singleSelect': {
+      case 'singleSelect':
+      case 'reviewState': {
         return (
           <SelectProp
             style={{

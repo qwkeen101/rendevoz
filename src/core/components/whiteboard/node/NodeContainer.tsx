@@ -2,6 +2,7 @@ import { css } from '@emotion/css'
 import { useWhiteboardNodes } from '../StateHooks'
 import WrapperNode from './WrapperNode'
 import TreeEdgeContainer from '@/core/components/whiteboard/edge/EdgeContainer'
+import { useLayoutEffect, useState } from 'react'
 
 const TreeNodeContainer = () => {
   const treeNodes = useWhiteboardNodes()

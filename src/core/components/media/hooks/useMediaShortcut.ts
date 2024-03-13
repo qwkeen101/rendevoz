@@ -5,9 +5,25 @@ import { RefObject, useEffect } from 'react'
 import useMediaState from './useMediaState'
 import { getSetting } from '@/core'
 import { useMediaInstance } from '@/core/components/media/hooks/useMediaInstance'
+import { ShortCut } from '~/typings/setting'
+import useMediaSidebarState from '@/core/components/media/hooks/useMediaSidebarState'
 
+const isShortCut = (e: KeyboardEvent, shortcut?: ShortCut | null) => {
+  if (
+    shortcut &&
+    shortcut.key === e.key &&
+    e.metaKey === shortcut.metaKey &&
+    shortcut.altKey === e.altKey &&
+    shortcut.shiftKey === e.shiftKey &&
+    shortcut.ctrlKey === e.ctrlKey
+  ) {
+    return true
+  }
+  return false
+}
 const useMediaShortcut = (containerRef: RefObject<HTMLElement>) => {
   const [mediaState, setMediaState] = useMediaState()
+  const [sidebarState, setSidebarState] = useMediaSidebarState()
   const instance = useMediaInstance()
   const keydownHandler = useMemoizedFn((e: KeyboardEvent) => {
     if (!containerRef.current?.contains(e.target)) {
@@ -16,17 +32,11 @@ const useMediaShortcut = (containerRef: RefObject<HTMLElement>) => {
     const setting = getSetting()
     const shortcut = setting.shortcut.makeVideoLabel
     const timestampShortcut = setting.shortcut.copyVideoTimestamp
+    const openSidebarShortcut = setting.shortcut.openMediaSidebar
     if (e.target instanceof Element && e.target.closest('input,textarea')) {
       return
     }
-    if (
-      timestampShortcut &&
-      e.key === timestampShortcut.key &&
-      e.shiftKey === timestampShortcut.shiftKey &&
-      e.ctrlKey === timestampShortcut.ctrlKey &&
-      e.altKey === timestampShortcut.altKey &&
-      e.metaKey === timestampShortcut.metaKey
-    ) {
+    if (isShortCut(e, timestampShortcut)) {
       if (mediaState.currentTime) {
         instance.on?.({
           type: 'copyTimestamp',
@@ -34,20 +44,16 @@ const useMediaShortcut = (containerRef: RefObject<HTMLElement>) => {
         })
       }
     }
-    if (
-      shortcut &&
-      e.key === shortcut.key &&
-      e.shiftKey === shortcut.shiftKey &&
-      e.ctrlKey === shortcut.ctrlKey &&
-      e.altKey === shortcut.altKey &&
-      e.metaKey === shortcut.metaKey
-    ) {
+    if (isShortCut(e, shortcut)) {
       const time = instance.getVideoState?.().currentTime
       if (time) {
         instance.insertLabel?.({
           time
         })
       }
+    }
+    if (isShortCut(e, openSidebarShortcut)) {
+      setSidebarState(s => ({ ...s, rightBarVisible: !s.rightBarVisible }))
     }
     if (isHotkey(KEY.Space, e)) {
       if (

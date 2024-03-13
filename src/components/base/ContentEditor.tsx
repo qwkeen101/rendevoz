@@ -4,7 +4,7 @@ import Colors from '@/consts/colors'
 import ClassName from '@/styles/classNames'
 import isHotkey from 'is-hotkey'
 import { CSSProperties, useRef, useState } from 'react'
-import AutosizeTextarea from '@/components/custom/input/autosizeTextarea'
+import AutosizeTextarea from '@/components/custom/input/AutoSizeTextArea'
 import { useTranslation } from 'react-i18next'
 import FontSize from '@/consts/font'
 import NoteEditor from '@/core/components/editor/noteEditor/NoteEditor'
@@ -49,14 +49,13 @@ const NameEditor = ({
           autoFocus
           className={ClassName.noStyleInput}
           ref={inputRef}
-          minRows={2}
-          maxRows={999}
           spellCheck="false"
           style={{
             resize: 'none',
             fontWeight: 400,
             padding: 0,
             width: '100%',
+            minHeight: '2lh',
             fontSize: FontSize['13px']
           }}
           onKeyDown={e => {
@@ -66,12 +65,12 @@ const NameEditor = ({
             }
             if (isHotkey(KEY.Enter, e)) {
               e.preventDefault()
-              onChange(e.target.value)
+              onChange(e.currentTarget.innerText)
             }
           }}
           placeholder={placeholder}
           defaultValue={value}
-          onChange={e => setInnerValue(e.target.value)}
+          onChange={e => setInnerValue(e)}
         ></AutosizeTextarea>
       ) : (
         <SimpleEditor fontSize={14} textareaMode={true} placeholder={placeholder} value={value} onChange={e => setInnerValue(e)} />

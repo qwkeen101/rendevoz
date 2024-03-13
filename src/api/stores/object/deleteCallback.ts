@@ -4,6 +4,7 @@ import { MetaStore, ObjectStore } from '@/api/stores'
 import useDb from '../../../hooks/stores/useDb'
 import { deleteRendefile } from '@/utils'
 import { INote, MetaGroup } from '~/typings'
+import KeyvalueStore from '@/api/stores/keyvalue.store'
 
 export default async (o: ObjectFamily[keyof ObjectFamily], force: boolean) => {
   if ('specType' in o) {
@@ -43,6 +44,15 @@ export default async (o: ObjectFamily[keyof ObjectFamily], force: boolean) => {
       }
       case 'webpage': {
         o.noteId && ObjectStore('note').deleteOneById(o.noteId)
+        break
+      }
+      case 'tag': {
+        const currWorkspace = KeyvalueStore.getOne('currentWorkspace')
+        currWorkspace && KeyvalueStore.deleteOne(`tag_${o.id}_${currWorkspace.id}_group`)
+        break
+      }
+      case 'metaProp': {
+        KeyvalueStore.deleteOne(`prop_${o.id}_group`)
         break
       }
       case 'group': {

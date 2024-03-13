@@ -112,11 +112,15 @@ const assignContainerOps = (instance: IWhiteboardInstance) => {
                   scale: s
                 })
               )
-              flow.panzoom?.setTransform({
-                x: pos.x,
-                y: pos.y,
-                scale: s
-              })
+              flow.panzoom?.setTransform(
+                {
+                  x: pos.x,
+                  y: pos.y,
+                  scale: s
+                },
+                undefined,
+                opts?.skipAnimation
+              )
             }
           }
         }

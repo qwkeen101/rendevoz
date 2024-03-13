@@ -28,6 +28,7 @@ import { getAppState } from '@/core/rendevoz/appState'
 import FileSystem from '@/api/fileSystem'
 import { getOS } from '@/App'
 import { initializeSearch } from '@/api/textSearch/SearchHelper'
+import GlobalCSSEditor from '@/core/setting/GlobalCSSEditor'
 const arrayRange = (start, stop, step) => Array.from({ length: (stop - start) / step + 1 }, (value, index) => start + index * step)
 
 const languageOptions: SelectOptionProps[] = [
@@ -53,7 +54,7 @@ const GeneralSetting = () => {
   const { t } = useTranslation()
   const [setting, setSetting] = useSetting()
   const [validCustomSearchEngine, setValidSearchEngine] = useState(false)
-
+  const [cssVisible, setCssVisible] = useState(false)
   const handleImportData = async (file?: File) => {
     toggleIsImporting(true)
     try {
@@ -240,6 +241,17 @@ const GeneralSetting = () => {
             <div style={{ color: Colors.Font.Transparent, fontSize: 12 }}>System</div>
           </Content>
         </Content>
+      )
+    },
+    {
+      title: t('settings.Global stylesheet'),
+      children: (
+        <Button.IconButton
+          text={t('general.edit')}
+          onClick={() => {
+            setCssVisible(true)
+          }}
+        />
       )
     }
   ]
@@ -637,6 +649,9 @@ const GeneralSetting = () => {
   console.log(lastBackUp)
   return (
     <>
+      <Modal visible={cssVisible} onClose={() => setCssVisible(false)}>
+        <GlobalCSSEditor />
+      </Modal>
       <SettingGroup title={t('settings.Application details')} layout={VersionItems} />
       <SettingGroup title={t('settings.Theme')} layout={ThemeItems} />
       <SettingGroup title={t('settings.language')} layout={LanguageItems} />

@@ -16,7 +16,7 @@ import { Colors } from '@/consts'
 import useItemDrag from '@/core/components/group/hooks/drag/useItemDrag'
 import { useGlobalIsDragging } from '@/core'
 import TextProp from '@/core/object/renderer/properties/TextProp'
-import AutosizeTextarea from '@/components/custom/input/autosizeTextarea'
+import AutosizeTextarea from '@/components/custom/input/AutoSizeTextArea'
 import URLProp from '@/core/object/renderer/properties/URLProp'
 import CheckboxProp from '@/core/object/renderer/properties/CheckboxProp'
 import OriginalTextProp from '@/core/object/renderer/properties/OriginalTextProp'
@@ -77,7 +77,7 @@ export default memo(
       const [gDrag] = useGlobalIsDragging()
       const { isIn, ref } = useIsIn()
       const mergedRef = useMergedRef(outerRef, bodyRef)
-      const { checkIntersect, isSelected, clearSelectState, select,scrollIntoView } = useSelectCheck(ref, rowDetails)
+      const { checkIntersect, isSelected, clearSelectState, select, scrollIntoView } = useSelectCheck(ref, rowDetails)
       useEffect(() => {
         instance.values.inViewRowFuncs.set(rowDetails.tempRowId || rowDetails.rowId, {
           checkIntersected: checkIntersect,
@@ -95,23 +95,21 @@ export default memo(
           instance.values.inViewRowFuncs.delete(rowDetails.tempRowId || rowDetails.rowId)
         }
       })
-      const update = useUpdate()
       useLayoutEffect(() => {
         // update again to trigger height change
         const text = titleTextRef.current
         if (text) {
           if (isEditing) {
             text.focus()
-            text.value = meta?.name || ''
+            text.innerText = meta?.name || ''
           } else {
             if (showOriginalText && meta?.type.includes('Label')) {
-              text.value = meta?.name || ''
+              text.innerText = meta?.name || ''
             } else {
-              text.value = meta?.name || meta?.placeholderName || ''
+              text.innerText = meta?.name || meta?.placeholderName || ''
             }
           }
         }
-        update()
       }, [isEditing, meta?.name, meta?.placeholderName, showOriginalText])
       const { t } = useTranslation()
 
@@ -465,7 +463,7 @@ export default memo(
                   ref={titleTextRef}
                   disabled={!isEditing}
                   onBlur={e => {
-                    instance.metaOps?.updateMeta({ id: meta.id, name: e.target.value })
+                    instance.metaOps?.updateMeta({ id: meta.id, name: e.target.innerText })
                   }}
                   style={{
                     padding: '8px 10px 2px',
@@ -475,12 +473,10 @@ export default memo(
                     fontSize: 14,
                     color: meta.name ? undefined : Colors.Font.Transparent,
                     overflow: 'hidden',
-                    resize: 'none',
                     cursor: isEditing ? 'text' : 'pointer',
                     pointerEvents: isEditing ? 'auto' : 'none'
                   }}
                   placeholder={t('general.Type a name')}
-                  className={ClassName.noStyleInput}
                 ></AutosizeTextarea>
               ) : (
                 <div
@@ -494,6 +490,7 @@ export default memo(
                     resize: 'none',
                     cursor: 'pointer',
                     wordBreak: 'break-word',
+                    whiteSpace: 'pre-wrap',
                     fontSize: 14,
                     pointerEvents: 'none'
                   }}

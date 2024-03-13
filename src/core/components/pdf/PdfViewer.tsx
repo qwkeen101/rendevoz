@@ -19,6 +19,7 @@ import { Colors } from '@/consts'
 import PdfHeader from '@/core/components/pdf/components/PdfHeader'
 import LabelToolbarRenderer from '@/core/components/pdf/components/label/LabelToolbarRenderer'
 import usePdfInstance from '@/core/components/pdf/hooks/usePdfInstance'
+import pdfLabelToMindmap from '@/core/components/whiteboard/utils/label/pdfLabelToMindmap'
 
 export interface PdfViewerProps {
   documentId: number
@@ -122,6 +123,7 @@ export const PdfViewer: FC<PdfViewerProps> = memo(({ documentId, transformScale,
   return (
     <div ref={viewboxRef} className={styles.viewerBox} role="pdf-viewer">
       <PdfHeader documentId={documentId} />
+
       <LabelToolbarRenderer />
       {downloadState && (
         <Content flex column alignItems={'center'} fullWidth justifyContent={'center'} gap={10}>

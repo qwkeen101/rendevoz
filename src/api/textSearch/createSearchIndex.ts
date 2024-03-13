@@ -1,8 +1,6 @@
 import { Segment, useDefault } from 'segmentit'
 import { ISearchableDocument, ISearchEvent, ISearchQuery } from '@/api/textSearch/types'
 import MiniSearch from 'minisearch'
-import pinyin from 'pinyin'
-import splitPinyin from 'pinyin-split'
 const segmentit = useDefault(new Segment())
 const createSearchStore = () => {
   let metaSearch = new MiniSearch({
@@ -10,12 +8,8 @@ const createSearchStore = () => {
     storeFields: ['id', 'name', 'description', 'content', 'docType', 'metaId', 'metaType'],
     tokenize: str => {
       const tokens: string[] = []
-
       segmentit.doSegment(str).forEach(i => {
-        const res = pinyin(i.w, {
-          style: 'normal'
-        })
-        res.forEach(r => tokens.push(r[0]))
+        tokens.push(i.w)
       })
       return tokens
     }
@@ -35,13 +29,9 @@ const createSearchStore = () => {
   }
 
   const searchDocument = (params: ISearchQuery) => {
-    console.log(metaSearch)
     const fields = ['name', 'content', 'description']
-    const splittedPinyin = splitPinyin(params.queryText)
-    const query = splittedPinyin.join('') === params.queryText ? splitPinyin(params.queryText).join(' ') : params.queryText
-    const res = metaSearch.search(query, {
+    const res = metaSearch.search(params.queryText, {
       prefix: true,
-      fuzzy: 0.1,
       boost: {
         name: 5,
         description: 2,
@@ -49,6 +39,7 @@ const createSearchStore = () => {
       },
       combineWith: 'AND'
     })
+
     const regEsc = (str: string) => str.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&')
 
     res.forEach(hit => {
@@ -63,15 +54,9 @@ const createSearchStore = () => {
         const tokens: string[] = []
 
         segmentit.doSegment(value).forEach(seg => {
-          const pin = pinyin(seg.w, {
-            style: 'normal'
-          })
-          pin.forEach(p => {
-            if (allTerms.has(p[0])) {
-              tokens.push(seg.w)
-              return
-            }
-          })
+          if (allTerms.has(seg.w)) {
+            tokens.push(seg.w)
+          }
         })
         const regexp = new RegExp('(\\S.{0,20})?(' + [...terms, ...tokens].map(i => regEsc(i)).join('|') + ')(.{0,20}\\S)?', 'ig')
         const testReg = new RegExp([...terms, ...tokens].join('|'), 'gi')
@@ -91,7 +76,6 @@ const createSearchStore = () => {
       })
       hit.matched = matched
     })
-    console.log(res)
     return res
   }
 
@@ -112,19 +96,14 @@ const createSearchStore = () => {
       storeFields: ['id', 'name', 'description', 'content', 'docType', 'metaId', 'metaType'],
       tokenize: str => {
         const tokens: string[] = []
-
         segmentit.doSegment(str).forEach(i => {
-          const res = pinyin(i.w, {
-            style: 'normal'
-          })
-          res.forEach(r => tokens.push(r[0]))
+          tokens.push(i.w)
         })
         return tokens
       }
     })
   }
   const deleteDocument = (id: number) => {
-    console.log('delete: ' + id)
     metaSearch.discard(id)
   }
   return {

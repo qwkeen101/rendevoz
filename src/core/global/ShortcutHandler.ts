@@ -3,6 +3,8 @@ import { GlobalInstance, useSelectGlobalAtomValue } from '@/hooks'
 import { SettingAtom } from '@/core'
 import { useEffect } from 'react'
 import isHotkey from 'is-hotkey'
+import { setPanelState } from '@/components/layout/sidebar'
+import produce from 'immer'
 
 export default function useGlobalShortcutHandler() {
   const shortcutSettings = useSelectGlobalAtomValue(SettingAtom, s => s.shortcut)
@@ -21,9 +23,14 @@ export default function useGlobalShortcutHandler() {
     return false
   }
   const keydownHandler = (e: KeyboardEvent) => {
-    console.log(e)
     if (isHotkey('mod+w', e) || isHotkey('mod+q', e) || isHotkey('mod+r', e)) {
       e.preventDefault()
+    }
+    if (isShortcut(e, 'openSidebar')) {
+      setPanelState(draft => {
+        draft.leftOpen = !draft.leftOpen
+        draft.visible.size === 0 && draft.visible.add('database')
+      })
     }
     if (isShortcut(e, 'switchToPrevTab')) {
       GlobalInstance.layoutOps?.switchToTab('prev')

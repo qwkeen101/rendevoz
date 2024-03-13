@@ -3,7 +3,7 @@ import { MetaStore, ObjectStore } from '@/api/stores'
 import { Content, Icon, Tooltip } from '@/components'
 import { CSSProperties, memo, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { ILabel } from '~/typings'
-import AutosizeTextarea from '@/components/custom/input/autosizeTextarea'
+import AutosizeTextarea from '@/components/custom/input/AutoSizeTextArea'
 import { ClassName } from 'rendevoz'
 import { Rendevoz } from '@/core/rendevoz'
 import { normalizeSecondsToTime } from '@/core/components/media/utils'
@@ -27,13 +27,13 @@ export default memo(({ metaId, style, showImage }: { metaId: number; style?: CSS
       return normalizeSecondsToTime(label.time)
     }
   }, [label?.time])
-  const inputRef = useRef<HTMLInputElement>(null)
+  const inputRef = useRef<HTMLDivElement>(null)
   const [showToolbar, setShowToolbar] = useState(false)
   useLayoutEffect(() => {
     if (inputRef.current && metaObject) {
-      const v = inputRef.current.value
+      const v = inputRef.current.innerText
       if (v !== metaObject.name) {
-        inputRef.current.value = metaObject.name || ''
+        inputRef.current.innerText = metaObject.name || ''
       }
     }
   }, [metaObject?.name])
@@ -89,11 +89,10 @@ export default memo(({ metaId, style, showImage }: { metaId: number; style?: CSS
       </Content>
       {label?.selectedText && metaObject && (
         <AutosizeTextarea
-          className={ClassName.noStyleInput}
           defaultValue={label.selectedText}
           onBlur={e => {
-            ObjectStore(label.specType).updateOne({ id: label.id, selectedText: e.target.value })
-            MetaStore.updateMetaObject({ id: metaId, placeholderName: e.target.value })
+            ObjectStore(label.specType).updateOne({ id: label.id, selectedText: e.target.innerText })
+            MetaStore.updateMetaObject({ id: metaId, placeholderName: e.target.innerText || '' })
           }}
           style={{
             width: '100%',
@@ -109,7 +108,7 @@ export default memo(({ metaId, style, showImage }: { metaId: number; style?: CSS
       <AutosizeTextarea
         ref={inputRef}
         onBlur={e => {
-          metaObject && MetaStore.updateMetaObject({ id: metaObject.id, name: e.target.value })
+          metaObject && MetaStore.updateMetaObject({ id: metaObject.id, name: e.target.innerText || '' })
         }}
         style={{
           resize: 'none',

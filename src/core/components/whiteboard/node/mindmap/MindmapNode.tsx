@@ -10,6 +10,7 @@ import Id from '@/utils/id'
 import useMindmapDragHandler from '@/core/components/whiteboard/node/mindmap/drag/useMindmapDragHandler'
 import { Colors } from '@/consts'
 import { updateTree } from '@/core/components/whiteboard/node/mindmap/utils/tree'
+import { useUpdate } from 'react-use'
 
 // calculate position based on root
 export default ({
@@ -22,6 +23,7 @@ export default ({
 }) => {
   const instance = useWhiteboardInstance()
   const edgeLayer = instance.getEdgeLayer?.()
+
   const [links, setLinks] = useState<
     {
       sourceId: number
@@ -84,6 +86,7 @@ export default ({
         traverse(n, 'left')
       })
     }
+    console.log(linkz)
     setLinks(linkz)
   })
   const { handleLeftTreeChange, handleRightTreeChange, handleBothTreeChange, layoutCache, allSubNodeIds } = useKeepMindmapLayout(node, {

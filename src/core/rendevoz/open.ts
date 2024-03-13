@@ -263,6 +263,14 @@ const openCollectionGroup = (collection: number) => {
     }
   })
 }
+const openPropGroup = (propId: number) => {
+  Rendevoz.Actions.Layout.openNewTab?.({
+    data: {
+      type: 'propGroup',
+      objectId: propId
+    }
+  })
+}
 const openTagGroup = (tag: number) => {
   Rendevoz.Actions.Layout.openNewTab?.({
     data: {
@@ -514,7 +522,8 @@ const Open: typeof Rendevoz.Actions.Open = {
   Group: {
     openTypeGroup,
     openTagGroup,
-    openCollectionGroup
+    openCollectionGroup,
+    openPropGroup
   },
   openHome,
   openDatabase,

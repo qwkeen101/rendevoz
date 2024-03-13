@@ -1,4 +1,4 @@
-import { Content, VirtualList } from '@/components'
+import { Content, Icon, VirtualList } from '@/components'
 import Colors from '@/consts/colors'
 import { usePdfViewer } from '@/core'
 import { PDF_TO_THUMBNAIL } from '@/core/components/pdf/core/weakMaps'
@@ -10,38 +10,19 @@ import useThrottleFn from '@/hooks/utils/useThrottleFn'
 import usePdfState from '@/core/components/pdf/hooks/usePdfState'
 import { ObjectStore } from '@/api/stores'
 import { Virtualizer } from '@tanstack/react-virtual'
+import { Utils } from 'rendevoz'
+import usePdfInstance from '@/core/components/pdf/hooks/usePdfInstance'
 
 const PdfThumbnail = () => {
   const viewer = usePdfViewer()
-  const [thumbnailUrls, setThumbnailUrls] = useState<[number, string][]>([])
   const showLeftBar = useSelectAtomValue(PdfBarStateAtom, s => s.showLeftBar)
-  const latestShowLeftBar = useLatest(showLeftBar)
-  const throttleUpdate = useThrottleFn(
-    () => {
-      if (latestShowLeftBar.current) {
-        const urls = Array.from(PDF_TO_THUMBNAIL.get(viewer)?.entries() || [])
-        urls.sort((a, b) => a[0] - b[0])
-        setThumbnailUrls(urls)
-      }
-    },
-    { wait: 200 }
-  )
   const documentId = viewer.getPdfId?.()
   const pdf = ObjectStore('pdf').useValue(documentId)
-  useEffect(() => {
-    if (viewer && showLeftBar) {
-      throttleUpdate.run()
-      viewer.onThumbnailRendered = () => {
-        throttleUpdate.run()
-      }
-      return () => {
-        delete viewer.onThumbnailRendered
-      }
-    }
-  }, [showLeftBar])
+  const [pages, setPages] = useState(1)
+
   const virtualizerRef = useRef<Virtualizer<any, any>>()
   useEffect(() => {
-    if (pdf && pdf.lastReadPage !== undefined && thumbnailUrls.length) {
+    if (pdf && pdf.lastReadPage !== undefined) {
       try {
         setTimeout(() => {
           virtualizerRef.current?.scrollToIndex(pdf.lastReadPage)
@@ -50,8 +31,14 @@ const PdfThumbnail = () => {
         console.log(e)
       }
     }
-  }, [pdf?.lastReadPage, showLeftBar, thumbnailUrls])
-
+  }, [pdf?.lastReadPage, showLeftBar])
+  useEffect(() => {
+    viewer.getDocument?.().then(i => {
+      const p = i.numPages
+      console.log(p)
+      setPages(p)
+    })
+  }, [showLeftBar])
   return (
     <Content
       flex
@@ -64,9 +51,9 @@ const PdfThumbnail = () => {
     >
       <VirtualList
         ref={virtualizerRef}
-        items={thumbnailUrls || []}
+        items={Utils.range(0, pages - 1)}
         estimateSize={300}
-        overscan={10}
+        overscan={5}
         renderItem={(item, idx) => (
           <Content
             flex
@@ -80,17 +67,10 @@ const PdfThumbnail = () => {
               width: '100%'
             }}
           >
-            <img
-              src={item[1]}
-              style={{
-                cursor: 'pointer',
-                boxShadow: idx === pdf?.lastReadPage ? `0 0 0 3px ${Colors.Common.SelectColor}` : Colors.Background.BoxShadow,
-                width: 'min(180px, 100%)',
-                borderRadius: 6,
-                marginTop: 2
-              }}
-            />
-            <div style={{ margin: '6px 0px' }}>{idx + 1}</div>
+            <ThumbnailItem lastReadPage={pdf?.lastReadPage} pageIndex={idx} />
+            <div style={{ margin: '6px 0px' }} className={'transparent-font font-size-13'}>
+              {idx + 1}
+            </div>
           </Content>
         )}
         style={{
@@ -104,4 +84,54 @@ const PdfThumbnail = () => {
   )
 }
 
+const ThumbnailItem = ({ pageIndex, lastReadPage }: { pageIndex: number; lastReadPage?: number }) => {
+  const [imgUrl, setImgUrl] = useState<string>()
+  const instance = usePdfInstance()
+  useEffect(() => {
+    const url: {
+      current: string | undefined
+    } = {
+      current: undefined
+    }
+    instance.getThumbnail?.(pageIndex).then(s => {
+      url.current = s
+      setImgUrl(s)
+    })
+    return () => {
+      if (url.current) {
+        URL.revokeObjectURL(url.current)
+      }
+    }
+  }, [])
+  if (imgUrl) {
+    return (
+      <img
+        src={imgUrl}
+        style={{
+          cursor: 'pointer',
+          boxShadow: pageIndex === lastReadPage ? `0 0 0 3px ${Colors.Common.SelectColor}` : Colors.Background.BoxShadow,
+          width: 'min(180px, 100%)',
+          borderRadius: 6,
+          marginTop: 2
+        }}
+      />
+    )
+  }
+  return (
+    <div
+      style={{
+        width: 'min(180px, 100%)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        boxShadow: Colors.Background.BoxShadow,
+        borderRadius: 6,
+        marginTop: 2,
+        paddingBottom: '140%'
+      }}
+    >
+      <Icon name={'park-loading-four'} spin />
+    </div>
+  )
+}
 export default PdfThumbnail

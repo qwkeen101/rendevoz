@@ -107,6 +107,7 @@ const CellWrapper = memo(
           case 'file': {
             return <FileProp value={value} onChange={handleChange} />
           }
+          case 'reviewState':
           case 'singleSelect': {
             return (
               <SelectProp

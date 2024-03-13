@@ -80,12 +80,12 @@ const Consts = {
 }
 
 const DarkColorCache: Record<string, string> = {}
-const getAdaptColor = (c?: string) => {
+const getAdaptColor = (c?: string, darken = 45) => {
   if (!c) return undefined
   if (GlobalTheme.isDark) {
-    if (DarkColorCache[c]) return DarkColorCache[c]
-    const transformed = tinycolor(c).darken(45).desaturate(10).toHexString()
-    DarkColorCache[c] = transformed
+    if (DarkColorCache[`${c}_${darken}`]) return DarkColorCache[`${c}_${darken}`]
+    const transformed = tinycolor(c).darken(darken).desaturate(10).toHexString()
+    DarkColorCache[`${c}_${darken}`] = transformed
     return transformed
   }
   return c

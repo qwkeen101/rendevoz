@@ -49,6 +49,7 @@ import GlobalDialog from '@/core/global/GlobalDialog'
 import { ChineseFormats, DateFormat, EnglishFormats } from '@/utils'
 import GlobalMediaPreviewer from '@/core/global/MediaPreviewer'
 import useGlobalShortcutHandler from '@/core/global/ShortcutHandler'
+
 export function getOS() {
   const userAgent = window.navigator.userAgent.toLowerCase(),
     macosPlatforms = /(macintosh|macintel|macppc|mac68k|macos)/i,
@@ -75,11 +76,7 @@ export const GlobalPluginManager = new PluginManager()
 declare module 'rendevoz' {
   export interface CustomTypes {
     MetaObject: BuiltInMetaObjectTypes
-    Object: BuiltInObjectTypes & {
-      task: {
-        specType: 'task'
-      }
-    }
+    Object: BuiltInObjectTypes
     DropOn: BuiltInDropOn
     DraggableElement: BuiltInDraggableElement
     Tab:

@@ -48,7 +48,7 @@ const MetaObjectNode: FC<InnerNodeProps> = ({ node: n, setNodeState, nodeState }
     metaObject && (
       <Content fullWidth flex column style={{ width: 500, minHeight: '100%', maxHeight: '100%', minWidth: '100%', maxWidth: '100%' }}>
         <img
-          draggable={true}
+          draggable={'false'}
           ref={imageRef}
           src={metaObject?.coverImgSrc}
           style={{

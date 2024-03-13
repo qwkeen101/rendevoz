@@ -1,10 +1,9 @@
-import { Box, IWhiteboardNode } from '~/typings'
-import { getBoxOfNodes } from '@/core/components/whiteboard/utils'
-import { toPng, toSvg } from 'html-to-image'
+import { Box, IWhiteboardInstance, IWhiteboardNode } from '~/typings'
+import { getBoxOfBoxes } from '@/core/components/whiteboard/utils'
+import { toSvg } from 'html-to-image'
 import tinycolor from 'tinycolor2'
-
-const imageWidth = 1920
-const imageHeight = 1080
+import { Options } from 'html-to-image/src/types'
+import { checkCanvasDimensions, createImage, getImageSize, getPixelRatio } from 'html-to-image/es/util'
 
 const getTransformForBounds = (bounds: Box, width: number, height: number, minZoom: number, maxZoom: number, padding = 0.1) => {
   const xZoom = width / (bounds.width * (1 + padding))
@@ -20,21 +19,76 @@ const getTransformForBounds = (bounds: Box, width: number, height: number, minZo
 }
 const clamp = (val: number, min = 0, max = 1): number => Math.min(Math.max(val, min), max)
 
-export const exportWhiteboardAsImage = async (allNodes: IWhiteboardNode[], node: HTMLElement, type: 'svg' | 'png' = 'png') => {
-  const box = getBoxOfNodes(allNodes)
-  const transform = getTransformForBounds(box, imageWidth, imageHeight, 0, 200)
+export const exportWhiteboardAsImage = async (
+  allNodes: IWhiteboardNode[],
+  node: HTMLElement,
+  instance: IWhiteboardInstance,
+  options: {
+    as: 'svg' | 'png'
+    area: 'visible' | 'whole'
+    width: number
+    height: number
+  } = {
+    area: 'visible',
+    as: 'png',
+    width: 1920,
+    height: 1080
+  }
+) => {
+  const imageWidth = options.width,
+    imageHeight = options.height
+  const viewBox = instance.containerOps?.getViewBox()
+  if (!viewBox) return
+  const box = instance.nodeOps?.getDOMBoxOfNodes(allNodes.map(i => i.id))
+  if (!box) return
+  const outer = getBoxOfBoxes(Array.from(Object.values(box)))
+  const transform = getTransformForBounds(options.area === 'visible' ? viewBox : outer, imageWidth, imageHeight, 0, 2000)
   const background = window.getComputedStyle(document.body).getPropertyValue('--global-background')
   const rgb = tinycolor(background).toRgbString()
   const config = {
     width: imageWidth,
     height: imageHeight,
     backgroundColor: rgb,
+    pixelRatio: 1,
+    skipAutoScale: true,
     style: {
       width: imageWidth,
       height: imageHeight,
       transform: `translate(${transform[0]}px, ${transform[1]}px) scale(${transform[2]})`
     }
   }
-  const res = await (type === 'svg' ? toSvg(node, config) : toPng(node, config))
-  return res
+  if (options.as === 'png') {
+    const canvas = await toCanvas(node, config)
+    return canvas.toDataURL()
+  }
+}
+
+async function toCanvas<T extends HTMLElement>(node: T, options: Options = {}): Promise<HTMLCanvasElement> {
+  const { width, height } = getImageSize(node, options)
+  const svg = await toSvg(node, options)
+  const img = await createImage(svg)
+
+  const canvas = document.createElement('canvas')
+  const context = canvas.getContext('2d')!
+  const ratio = options.pixelRatio || getPixelRatio()
+  const canvasWidth = options.canvasWidth || width
+  const canvasHeight = options.canvasHeight || height
+
+  canvas.width = canvasWidth * ratio
+  canvas.height = canvasHeight * ratio
+
+  if (!options.skipAutoScale) {
+    checkCanvasDimensions(canvas)
+  }
+  canvas.style.width = `${canvasWidth}`
+  canvas.style.height = `${canvasHeight}`
+  console.log(canvasWidth, canvasHeight, ratio)
+  if (options.backgroundColor) {
+    context.fillStyle = options.backgroundColor
+    context.fillRect(0, 0, canvas.width, canvas.height)
+  }
+
+  context.drawImage(img, 0, 0, canvas.width, canvas.height)
+
+  return canvas
 }

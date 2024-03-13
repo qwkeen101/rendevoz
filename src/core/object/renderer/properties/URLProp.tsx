@@ -1,4 +1,4 @@
-import AutosizeTextarea from '@/components/custom/input/autosizeTextarea'
+import AutosizeTextarea from '@/components/custom/input/AutoSizeTextArea'
 import { CSSProperties, useRef, useState } from 'react'
 import usePopoverCell from '@/core/components/group/hooks/usePopoverCell'
 import { PopupWrapper } from '@/core/components/group/components'
@@ -7,7 +7,6 @@ import isHotkey from 'is-hotkey'
 import { KEY } from '@/consts'
 
 export default ({ value, onChange, style }: { value: string; onChange?: (v: string) => void; style?: CSSProperties }) => {
-  const [height, setHeight] = useState(0)
   const { openPopover, renderPopover, closePopover } = usePopoverCell({
     onClose: () => {
       if (valueRef.current !== value) {
@@ -34,12 +33,9 @@ export default ({ value, onChange, style }: { value: string; onChange?: (v: stri
         {value}
       </div>
       {renderPopover(box => (
-        <PopupWrapper box={box} style={{ height }}>
+        <PopupWrapper box={box}>
           <AutosizeTextarea
-            onHeightChange={h => setHeight(h)}
             autoFocus={true}
-            minRows={1}
-            maxRows={20}
             className={ClassName.noStyleInput}
             spellCheck="false"
             onKeyDown={e => {
@@ -48,7 +44,7 @@ export default ({ value, onChange, style }: { value: string; onChange?: (v: stri
                 closePopover()
               }
             }}
-            onChange={e => (valueRef.current = e.target.value)}
+            onChange={e => (valueRef.current = e)}
             style={{
               padding: '6px 6px',
               resize: 'none',

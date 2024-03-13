@@ -204,6 +204,16 @@ export default ({ onClose }: { onClose: VoidFunction }) => {
                     value={!!groupState.data?.hideGroupsInside}
                   ></ButtonSwitch>
                 )}
+              <ButtonSwitch
+                onChange={v => {
+                  instance.updateGroupData?.(s => ({
+                    ...s,
+                    enableReview: v
+                  }))
+                }}
+                name={t('general.Enable flashcards')}
+                value={!!groupState.data?.enableReview}
+              ></ButtonSwitch>
             </div>
             <div
               style={{

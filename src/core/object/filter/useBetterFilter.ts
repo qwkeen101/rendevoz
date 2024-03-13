@@ -26,6 +26,7 @@ const transformRules = (rules: MetaFilterRule[]) => {
             return numberFilter(rule, o => o['properties']?.[rule.field]?.value as number | undefined)
           case 'singleSelect':
           case 'multiSelect':
+          case 'reviewState':
             return optionFilter(rule, o => o['properties']?.[rule.field]?.value as number | number[] | undefined)
           case 'date':
             return dateFilter(rule, o => o['properties']?.[rule.field]?.value as number | undefined)

@@ -101,7 +101,11 @@ export default memo(({ value }: { value?: MetaGroupChild[] }) => {
               height: 24,
               color: Colors.Font.Transparent,
               fontSize: 12,
+              borderBottom: '1px solid var(--border-background)',
               fontWeight: 400
+            },
+            '.rbc-month-row + .rbc-month-row': {
+              borderTop: '1px solid var(--border-background)'
             },
             '.rbc-month-view': {
               border: 'none',

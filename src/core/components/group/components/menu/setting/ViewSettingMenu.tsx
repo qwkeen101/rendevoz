@@ -46,6 +46,12 @@ export default () => {
             icon: 'custom-kanban',
             type: 'kanban',
             selected: currentGroupView?.type === 'kanban'
+          },
+          {
+            name: t('general.Calendar'),
+            icon: 'park-calendar-three',
+            type: 'calendar',
+            selected: currentGroupView?.type === 'calendar'
           }
         ].map(i => (
           <Content
@@ -153,7 +159,7 @@ export default () => {
             value={!!currentGroupView?.options.hideCoverIfEmpty}
           ></ButtonSwitch>
         )}
-        {currentGroupView?.type !== 'list' && (
+        {currentGroupView?.type !== 'list' && currentGroupView?.type !== 'calendar' && (
           <ButtonSwitch
             onChange={v => {
               instance.updateCurrentView?.(s => ({
@@ -167,6 +173,35 @@ export default () => {
             name={t('general.Wrap columns')}
             value={!!currentGroupView?.options.wrapColumns}
           ></ButtonSwitch>
+        )}
+        {currentGroupView?.type === 'calendar' && (
+          <ButtonSelect
+            onSelect={v => {
+              instance.updateCurrentView?.(s => ({
+                ...s,
+                options: {
+                  ...s.options,
+                  calendarSize: v[0]
+                }
+              }))
+            }}
+            name={t('general.Calendar size')}
+            options={[
+              {
+                value: 'standard',
+                children: t('general.Standard')
+              },
+              {
+                value: 'large',
+                children: t('general.Large')
+              },
+              {
+                value: 'max',
+                children: t('general.Max size')
+              }
+            ]}
+            value={currentGroupView?.options.calendarSize || 'standard'}
+          ></ButtonSelect>
         )}
       </div>
     </>

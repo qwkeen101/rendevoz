@@ -34,7 +34,8 @@ const SearchResult = ({ result, onClose, enableOpen }: { result: ISearchResult; 
     return (
       <Content
         className={ClassName.flatButton(4, '8px 4px 9px 0px')}
-        onClick={() => {
+        onClick={e => {
+          e.stopPropagation()
           handleOpenResult(hit.metaId)
         }}
         flex
@@ -85,7 +86,7 @@ const SearchResult = ({ result, onClose, enableOpen }: { result: ISearchResult; 
         <>
           <VirtualList
             ref={virtualizerRef}
-            withKeyboardNavigation={true}
+            withKeyboardNavigation={enableOpen}
             onSelect={item => {
               handleOpenResult(item.metaId)
             }}

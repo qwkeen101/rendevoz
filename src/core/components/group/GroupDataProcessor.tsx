@@ -77,6 +77,6 @@ export default ({ groupValue }: { groupValue?: MetaGroup }) => {
     if (groupValue?.lastViewId && !currentView) {
       setGroupState(s => ({ ...s, currentView: groupValue.views.find(i => i.id === groupValue.lastViewId) || groupValue.views[0] }))
     }
-  }, [groupValue?.lastViewId])
+  }, [groupValue])
   return null
 }

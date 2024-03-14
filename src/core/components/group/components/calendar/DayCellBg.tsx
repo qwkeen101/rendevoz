@@ -12,8 +12,6 @@ export default memo((props: DateCellWrapperProps) => {
         flex: '1 1 0%',
         background: weekend ? Colors.Background.Secondary : 'transparent'
       }}
-    >
-      123
-    </div>
+    ></div>
   )
 })

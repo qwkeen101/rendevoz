@@ -74,6 +74,7 @@ const FeedContentRenderer = () => {
   if (currentItem?.feedType === 'youtube' || currentItem?.feedType === 'bilibili') {
     return (
       <Content
+        className={'border-left'}
         style={{
           height: '100%',
           width: '100%'

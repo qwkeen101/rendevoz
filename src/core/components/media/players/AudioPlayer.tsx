@@ -122,7 +122,14 @@ export default () => {
         {!floated && !(columnLayout && sidebarOpen) && (
           <div
             className={mediaState.styles?.descriptionEllispsis ? ClassName.ellipsisFont(mediaState.styles.descriptionEllispsis) : undefined}
-            style={{ fontSize: 14, color: Colors.Font.Transparent, ...mediaState.styles?.descriptionStyle }}
+            style={{
+              fontSize: 14,
+              flex: '1 1 200px',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              color: Colors.Font.Transparent,
+              ...mediaState.styles?.descriptionStyle
+            }}
           >
             {mediaState.description}
           </div>

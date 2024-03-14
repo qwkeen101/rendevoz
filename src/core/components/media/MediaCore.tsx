@@ -85,6 +85,7 @@ const MediaCore = memo(() => {
   if (mediaState.mode === 'audio') {
     return <AudioPlayer />
   }
+  const borderRadius = mediaState.styles?.videoBorderRadius ??  MEDIA_PLAYER_DEFAULT_BORDER_RADIUS
   return (
     <ContextMenu
       ref={contextMenuRef}
@@ -106,8 +107,8 @@ const MediaCore = memo(() => {
           borderRadius: mediaState.fullScreen
             ? 0
             : mediaState.floated
-            ? `0px 0px ${MEDIA_PLAYER_DEFAULT_BORDER_RADIUS}px ${MEDIA_PLAYER_DEFAULT_BORDER_RADIUS}px`
-            : MEDIA_PLAYER_DEFAULT_BORDER_RADIUS,
+            ? `0px 0px ${borderRadius}px ${borderRadius}px`
+            : borderRadius,
           overflow: 'hidden',
           inset: 0
         }}

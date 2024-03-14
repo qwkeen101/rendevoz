@@ -100,6 +100,7 @@ export default memo(() => {
             }}
             placeholder={'Press ↵ to save, Esc to close'}
             onChange={v => {
+              console.log(v)
               currLabel && ObjectStore(labelType).updateOne({ id: currLabel.id, name: v })
               setPopoverState(s => ({ ...s, visible: false }))
             }}

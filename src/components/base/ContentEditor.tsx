@@ -59,6 +59,7 @@ const NameEditor = ({
             fontSize: FontSize['13px']
           }}
           onKeyDown={e => {
+            console.log(e)
             if (isHotkey(KEY.Escape, e)) {
               onChange(value)
               onCancel?.()
@@ -69,7 +70,7 @@ const NameEditor = ({
             }
           }}
           placeholder={placeholder}
-          defaultValue={value}
+          value={value}
           onChange={e => setInnerValue(e)}
         ></AutosizeTextarea>
       ) : (

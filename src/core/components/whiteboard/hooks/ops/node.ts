@@ -160,19 +160,9 @@ const assignNodeOps = (instance: IWhiteboardInstance) => {
         if (!metaObject) {
           return false
         }
-        switch (metaObject.type) {
-          case 'note':
-          case 'pdf':
-          case 'question':
-          case 'video':
-          case 'webpage':
-          case 'audio':
-          case 'tweet':
-          case 'whiteboard':
-          case 'group':
-          case 'syncedBlock':
-          case 'code':
-            return true
+        const registered = GlobalInstance.layoutOps?.getRegisteredTabData(metaObject.type)
+        if (registered) {
+          return true
         }
         return false
       },

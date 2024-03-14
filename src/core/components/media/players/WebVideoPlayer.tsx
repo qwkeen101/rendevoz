@@ -89,7 +89,11 @@ const WebVideoPlayer = () => {
       }
     }
   }, [paused, mediaState.loaded])
-
+  useEffect(() => {
+    if (mediaState.loaded && mediaState.autoPlay && webReady.current) {
+      web.send('videoEvent', { type: 'play' })
+    }
+  }, [mediaState.loaded, mediaState.autoPlay])
   useEffect(() => {
     if (mediaState.jumpTime !== undefined && mediaState.loaded && web) {
       if (Math.abs(mediaState.jumpTime - (mediaState.currentTime || 0)) > 1) {
@@ -126,6 +130,7 @@ const WebVideoPlayer = () => {
   return (
     <webview
       ref={webviewRef}
+      sandbox="allow-top-navigation allow-same-origin allow-forms allow-scripts"
       webpreferences="video"
       src={url}
       httpreferrer={'https://www.youtube.com'}

@@ -18,6 +18,8 @@ import { GroupStateAtom } from '@/core/components/group/hooks/useGroupState'
 import GroupOverlay from '@/core/components/group/components/overlay/GroupOverlay'
 import { IGroupEvent } from '~/typings/components/group/events'
 import ReviewPanel from '@/core/components/group/components/review/ReviewPanel'
+import { useMeasure } from 'react-use'
+import { entries } from 'lodash'
 
 export type IMetaGroupAvailableContextMenuItems =
   | 'deleteInGroup'
@@ -129,6 +131,14 @@ const MetaGroupInner = ({ value, groupId, layout, title, on, state, styles }: IM
     { wait: 200 }
   )
   useEffect(() => {
+    const resizeObserver = new ResizeObserver(entries => {
+      const width = entries[0].borderBoxSize[0].inlineSize
+      containerRef.current?.style.setProperty('--group-width', `${width}px`)
+    })
+    const container = containerRef.current
+    if (container) {
+      resizeObserver.observe(container)
+    }
     const clickHandler = (e: MouseEvent) => {
       const c = containerRef.current
       if (!c) return
@@ -145,9 +155,11 @@ const MetaGroupInner = ({ value, groupId, layout, title, on, state, styles }: IM
     }
     document.addEventListener('click', clickHandler)
     return () => {
+      resizeObserver.disconnect()
       document.removeEventListener('click', clickHandler)
     }
   }, [])
+
   return (
     <>
       <GroupOpsAssigner bodyRef={containerRef} groupId={groupId} groupValue={v} />

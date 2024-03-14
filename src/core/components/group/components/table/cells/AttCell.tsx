@@ -1,6 +1,6 @@
 import { MetaStore } from '@/api/stores'
 import { Content, Icon } from '@/components'
-import { useMemo, useRef } from 'react'
+import { CSSProperties, useMemo, useRef } from 'react'
 import usePopoverCell from '@/core/components/group/hooks/usePopoverCell'
 import { PopupWrapper } from '@/core/components/group/components'
 import { RelatedPanel } from '@/core/object/details/Related'
@@ -8,7 +8,7 @@ import { ClassName } from 'rendevoz'
 import { Colors } from '@/consts'
 import { AttachmentWrapper } from '@/core'
 
-const AttCell = ({ metaId }: { metaId: number }) => {
+const AttCell = ({ metaId, style }: { metaId: number; style?: CSSProperties }) => {
   const meta = MetaStore.useValue(metaId)
   const { openPopover, renderPopover, closePopover } = usePopoverCell()
   const atts = useMemo(() => {
@@ -42,7 +42,7 @@ const AttCell = ({ metaId }: { metaId: number }) => {
         gap={4}
       >
         {atts?.map(i => (
-          <span className={'object-name-item'} key={i}>
+          <span className={'object-name-item'} style={style} key={i}>
             {i}
           </span>
         ))}

@@ -126,6 +126,7 @@ const usePopoverCell = (
         <div
           ref={popoverRef}
           onClick={e => {
+            if (window.getSelection()?.toString() !== '') return
             if (withCover && opts.closeWhenClickoutside !== false) {
               console.log(e.target, e.currentTarget)
               if (e.target === e.currentTarget) {

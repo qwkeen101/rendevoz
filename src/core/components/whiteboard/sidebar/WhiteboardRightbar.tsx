@@ -12,6 +12,7 @@ import { Colors } from '@/consts'
 import WhiteboardContent from '@/core/components/whiteboard/sidebar/WhiteboardContent'
 import { MetaStore } from '@/api/stores'
 import { css } from '@emotion/css'
+import { GlobalInstance } from '@/hooks'
 
 export const WhiteboardSidebarStateAtom = atom<IWhiteboardRightbarState>({ visible: false, width: '480px' })
 
@@ -19,9 +20,9 @@ const WhiteboardRightbar = () => {
   const [rightBarState, setRightBarState] = useAtom(WhiteboardSidebarStateAtom)
   const instance = useWhiteboardInstance()
   const { currentTab } = rightBarState
-  const renderItem = (type: string, objectId?: number) => {
+  const renderItem = (type: string, metaId: number, objectId?: number) => {
     if (!type || !objectId) return
-    const page = Rendevoz.Actions.Layout.getRegisteredTabContent(type)
+    const page = GlobalInstance.layoutOps?.getRegisteredTabData(type)
     if (page) {
       return (
         <div
@@ -31,7 +32,7 @@ const WhiteboardRightbar = () => {
           key={objectId}
           style={{ width: '100%', height: '100%' }}
         >
-          <DockTabPaneContext.Provider value={{ currentTabId: '' }}>{page({ objectId })}</DockTabPaneContext.Provider>
+          <DockTabPaneContext.Provider value={{ currentTabId: '' }}>{page.content({ objectId, type, metaId })}</DockTabPaneContext.Provider>
         </div>
       )
     }
@@ -56,6 +57,7 @@ const WhiteboardRightbar = () => {
               active: 'content',
               visible: true,
               currentTab: {
+                metaId: meta.id,
                 type: meta.type,
                 objectId: meta.objectId
               }
@@ -125,7 +127,7 @@ const WhiteboardRightbar = () => {
       )}
       <Tabs disableTabNav activeKey={active}>
         <TabPane tab={null} key={'content'}>
-          {currentTab && renderItem(currentTab.type, currentTab.objectId)}
+          {currentTab && renderItem(currentTab.type, currentTab.metaId, currentTab.objectId)}
         </TabPane>
         <TabPane tab={null} key={'outline'}>
           <WhiteboardContent />

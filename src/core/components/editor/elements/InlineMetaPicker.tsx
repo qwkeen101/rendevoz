@@ -9,10 +9,12 @@ import { ReactEditor, useSlateStatic } from '@/core'
 import { useMemoizedFn } from '@/hooks'
 import { ClassName } from 'rendevoz'
 import { HistoryEditor } from 'slate-history'
+import useEditorInstance from '@/core/components/editor/hooks/useEditorInstance'
 
 const InlineMetaPicker = ({ element, children, attributes }: RenderElementProps) => {
   const editor = useSlateStatic()
   const [value, setValue] = useState('')
+  const [visible, setVisible] = useState(false)
   const handleTransformPicker = useMemoizedFn((id?: number) => {
     const path = ReactEditor.findPath(editor, element)
     if (id) {
@@ -43,22 +45,35 @@ const InlineMetaPicker = ({ element, children, attributes }: RenderElementProps)
     }
   })
   const ref = useRef<HTMLElement>(null)
+  const instance = useEditorInstance()
   useEffect(() => {
-    setTimeout(() => {
-      ref.current?.focus()
-    })
-    const existHandler = (e: KeyboardEvent) => {
-      if (isHotkey(KEY.Escape, e)) {
-        e.preventDefault()
-        e.stopPropagation()
-        handleTransformPicker()
+    instance.blockOps?.setBlockFuncs(element.id, {
+      openPickMeta: () => {
+        setVisible(true)
       }
-    }
-    document.addEventListener('keydown', existHandler, true)
+    })
     return () => {
-      document.removeEventListener('keydown', existHandler, true)
+      instance.blockOps?.removeBlockFuncs(element.id)
     }
   }, [])
+  useEffect(() => {
+    if (visible) {
+      setTimeout(() => {
+        ref.current?.focus()
+      })
+      const existHandler = (e: KeyboardEvent) => {
+        if (isHotkey(KEY.Escape, e)) {
+          e.preventDefault()
+          e.stopPropagation()
+          handleTransformPicker()
+        }
+      }
+      document.addEventListener('keydown', existHandler, true)
+      return () => {
+        document.removeEventListener('keydown', existHandler, true)
+      }
+    }
+  }, [visible])
   return (
     <span {...attributes} style={{ background: Colors.Background.ButtonActive, padding: '2px 4px', borderRadius: 4, fontSize: '0.9em' }}>
       <AnimatePopover
@@ -80,10 +95,10 @@ const InlineMetaPicker = ({ element, children, attributes }: RenderElementProps)
             />
           </WithBorder>
         }
-        visible={true}
+        visible={visible}
         onClickOutside={() => handleTransformPicker()}
       >
-        <span>
+        <span onClick={() => setVisible(true)}>
           <span contentEditable={false}>
             <Icon name={'park-search'} containerStyle={{ display: 'inline', marginRight: 4, fontSize: '0.9em' }} />
           </span>

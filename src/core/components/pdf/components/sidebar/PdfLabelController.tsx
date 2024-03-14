@@ -15,6 +15,7 @@ import { Virtualizer } from '@tanstack/react-virtual'
 import pdfLabelToMindmap from '@/core/components/whiteboard/utils/label/pdfLabelToMindmap'
 import { Whiteboard } from '@/core/components/whiteboard'
 import { getBoxOfBoxes } from '@/core/components/whiteboard/utils'
+import { toast } from 'react-hot-toast'
 
 const PdfLabelSearchAtom = atom<{
   searchInput?: string
@@ -96,19 +97,23 @@ const PdfLabelController = memo(({ labelIds }: { labelIds?: number[] }) => {
   const triggerMindmap = () => {
     const id = instance.getPdfId?.()
     if (id) {
-      pdfLabelToMindmap(id).then(nodes => {
-        if (nodes) {
-          ObjectStore('whiteboard')
-            .addOne({
-              nodes: new Map(nodes.map(i => [i.id, i])),
-              edges: new Map()
-            })
-            .then(w => {
-              setMindmapPreviewVisible(true)
-              setMindmapTempId(w.id)
-            })
-        }
-      })
+      pdfLabelToMindmap(id)
+        .then(nodes => {
+          if (nodes) {
+            ObjectStore('whiteboard')
+              .addOne({
+                nodes: new Map(nodes.map(i => [i.id, i])),
+                edges: new Map()
+              })
+              .then(w => {
+                setMindmapPreviewVisible(true)
+                setMindmapTempId(w.id)
+              })
+          }
+        })
+        .catch(e => {
+          toast.error('Can not generate mindmap for PDF without outline!')
+        })
     }
   }
   const [mindmapInitialized, setMindmapInitialized] = useState(false)

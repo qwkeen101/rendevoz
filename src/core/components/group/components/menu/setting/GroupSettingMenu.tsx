@@ -139,14 +139,16 @@ export default ({ onClose }: { onClose: VoidFunction }) => {
                   setCurrentView('view')
                 }}
               />
-              <Button.IconButton
-                icon={'park-adjacent-item'}
-                text={t('general.Grouper')}
-                suffixIcon={'park-right'}
-                onClick={() => {
-                  setCurrentView('grouper')
-                }}
-              />
+              {currentGroupView?.type !== 'calendar' && (
+                <Button.IconButton
+                  icon={'park-adjacent-item'}
+                  text={t('general.Grouper')}
+                  suffixIcon={'park-right'}
+                  onClick={() => {
+                    setCurrentView('grouper')
+                  }}
+                />
+              )}
               {!groupStateState?.onlyOpenIn && (
                 <ButtonSelect
                   name={t('general.Open object in')}

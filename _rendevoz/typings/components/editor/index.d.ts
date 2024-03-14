@@ -74,6 +74,7 @@ export interface ElementFunctions {
   getPath: () => Path
   getClientBound: () => DOMRect | undefined
   openMathForm?: VoidFunction
+  openPickMeta?: VoidFunction
   openTypeUrlForm?: VoidFunction
   getIndicatorPosition: (
     direction: 'top' | 'bottom' | 'left' | 'right'

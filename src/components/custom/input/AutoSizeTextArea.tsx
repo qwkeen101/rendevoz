@@ -1,8 +1,8 @@
 import * as React from 'react'
-import { CSSProperties, useEffect, useLayoutEffect, useState } from 'react'
+import { CSSProperties, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import classnames from 'classnames'
 import { css } from '@emotion/css'
-import { useMergedRef } from '@/hooks'
+import { useDebounceFn, useMergedRef } from '@/hooks'
 import { Colors } from '@/consts'
 import { setCaretAtEnd } from '@/core/components/editor/utils/positions/caret'
 
@@ -14,6 +14,7 @@ export interface TextareaAutosizeProps extends Omit<TextareaProps, 'style' | 'on
   onChange?: (v: string) => void
   value?: string
   defaultValue?: string
+  debounceChange?: boolean
 }
 
 const c = css({
@@ -29,7 +30,7 @@ const c = css({
 })
 const noop = () => {}
 const TextareaAutosize: React.ForwardRefRenderFunction<HTMLDivElement, TextareaAutosizeProps> = (
-  { onChange = noop, ...props },
+  { onChange = noop, debounceChange, ...props },
   userRef: React.Ref<HTMLDivElement>
 ) => {
   const libRef = React.useRef<HTMLDivElement | null>(null)
@@ -41,10 +42,15 @@ const TextareaAutosize: React.ForwardRefRenderFunction<HTMLDivElement, TextareaA
       }, 100)
     }
   }, [])
-  const [isEditing, setIsEditing] = useState(false)
-  const handleChange = (v: string) => {
-    onChange(v)
-  }
+  const isEditing = useRef(false)
+  const handleChange = useDebounceFn(
+    (v: string) => {
+      onChange?.(v)
+    },
+    {
+      wait: 200
+    }
+  )
   useLayoutEffect(() => {
     const l = libRef.current
     if (l) {
@@ -53,10 +59,10 @@ const TextareaAutosize: React.ForwardRefRenderFunction<HTMLDivElement, TextareaA
   }, [])
   useLayoutEffect(() => {
     const l = libRef.current
-    if (l && !isEditing) {
+    if (l && !isEditing.current) {
       l.innerText = props.value || ''
     }
-  }, [props.value, isEditing])
+  }, [props.value])
   return (
     <div
       {...props}
@@ -70,13 +76,22 @@ const TextareaAutosize: React.ForwardRefRenderFunction<HTMLDivElement, TextareaA
         document.execCommand('insertText', false, e.clipboardData.getData('text/plain'))
       }}
       onInput={e => {
-        handleChange(e.currentTarget.innerText || '')
+        if (debounceChange) {
+          handleChange.run(e.currentTarget.innerText || '')
+        } else {
+          onChange?.(e.currentTarget.innerText || '')
+        }
       }}
       onFocus={e => {
         setCaretAtEnd(e.currentTarget)
-        setIsEditing(true)
+        isEditing.current = true
       }}
-      onBlur={() => setIsEditing(false)}
+      onBlur={event => {
+        props.onBlur?.(event)
+        setTimeout(() => {
+          isEditing.current = false
+        })
+      }}
       ref={ref}
       contentEditable={props.disabled ? 'false' : 'true'}
       spellCheck={'false'}

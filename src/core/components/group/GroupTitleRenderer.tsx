@@ -22,17 +22,6 @@ const GroupTitleRenderer = memo(
     const instance = useGroupInstance()
     const groupLayoutSetting = useSelectAtomValue(GroupStateAtom, s => s.layout)
     const groupTitleSetting = useSelectAtomValue(GroupStateAtom, s => s.title)
-    const debounceChangeTitle = useDebounceFn(
-      v => {
-        instance.on?.({
-          type: 'groupMetaChange',
-          value: {
-            name: v
-          }
-        })
-      },
-      { wait: 200 }
-    )
     return (
       <Content ref={ref} column flex style={{ padding: `24px ${padding}px 0px`, position: 'sticky', left: 0, marginBottom: 8 }}>
         <Modal
@@ -124,8 +113,14 @@ const GroupTitleRenderer = memo(
             }}
             value={title}
             onChange={v => {
-              debounceChangeTitle.run(v)
+              instance.on?.({
+                type: 'groupMetaChange',
+                value: {
+                  name: v
+                }
+              })
             }}
+            debounceChange
             style={{
               resize: 'none',
               width: '100%',

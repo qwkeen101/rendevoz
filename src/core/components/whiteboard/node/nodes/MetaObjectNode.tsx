@@ -195,7 +195,7 @@ const MetaObjectNode: FC<InnerNodeProps> = ({ node: n, setNodeState, nodeState }
   }
   const instance = useWhiteboardInstance()
   if (metaObject?.type.includes('Label')) {
-    return <LabelDetailsRenderer metaId={metaObjectId} />
+    return <LabelDetailsRenderer autoPlay showVideo={nodeState?.focused} metaId={metaObjectId} />
   }
 
   const titleRenderer = () => {

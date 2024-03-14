@@ -204,7 +204,7 @@ export default memo(({ metaId, onReview }: { metaId?: number; onReview: () => vo
     if (content) {
       return (
         <>
-          <div style={{ width: '100%', flex: 'auto', height: 0, overflowY: 'auto', overflowX: 'hidden' }}>
+          <div style={{ width: '100%', flex: 'auto', position: 'relative', height: 0, overflowY: 'auto', overflowX: 'hidden' }}>
             <DockTabPaneContext.Provider value={{ currentTabId: 0 }} key={m.id}>
               {content({
                 objectId: m.objectId,

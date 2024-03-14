@@ -81,7 +81,9 @@ export const ObjectPanel = memo(
         (filterSort.filter?.rules.length || filterSort.sorter?.sorters.length || filterSort.searchInput)
       ) {
         const afterFilter =
-          (filterSort.filter?.rules.length ? calculateFilterObjects(filterSort.filter) : undeleteObjects) || undeleteObjects
+          (filterSort.filter?.rules.length
+            ? calculateFilterObjects(filterSort.filter, undefined, showHiddenMetasInObjectPanel)
+            : undeleteObjects) || undeleteObjects
         const afterSearch = filterSort.searchInput
           ? Array.from(
               go(filterSort.searchInput, afterFilter, {
@@ -273,6 +275,7 @@ export const ObjectPanel = memo(
               content={
                 <WithBorder padding={8}>
                   <BetterFilter
+                    showHiddenMetas={showHiddenMetasInObjectPanel}
                     onChange={v => {
                       setFilterSort(s => ({ ...s, filter: v }))
                     }}

@@ -6,7 +6,7 @@ import { IMediaEvent } from '~/typings/components/media/event'
 import { CSSProperties } from 'react'
 
 export type IMediaState = {
-  loaded: boolean
+  loaded?: boolean
   jumpTime?: number
   subtitleUrl?: string
   videoId?: number
@@ -37,6 +37,7 @@ export type IMediaExternalState = {
     showAudioThumbnail?: boolean
   }
   styles?: {
+    videoBorderRadius?: number
     titleStyle?: CSSProperties
     descriptionStyle?: CSSProperties
     descriptionEllispsis?: number

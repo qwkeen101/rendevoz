@@ -30,6 +30,9 @@ export default () => {
       pinnedMetaObjectsSet.delete(oldValue)
       deletedMetaObjectsSet.delete(oldValue)
       typeToMetaObjectIdsMap.get(oldValue.type)?.delete(oldValue.id)
+      if (typeToMetaObjectIdsMap.get(oldValue.type)?.size === 0) {
+        typeToMetaObjectIdsMap.delete(oldValue.type)
+      }
       if (oldValue.attachments) {
         oldValue.attachments
           .filter(i => i.type !== 'attachmentText')

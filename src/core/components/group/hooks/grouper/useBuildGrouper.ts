@@ -262,6 +262,12 @@ export default () => {
           })
         }
       }
+      if (viewType === 'calendar') {
+        instance.updateCurrentView?.(w => ({
+          ...w,
+          group: undefined
+        }))
+      }
     })
     return subAtom
   }, [])

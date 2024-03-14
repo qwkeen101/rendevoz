@@ -82,7 +82,7 @@ const AttachmentObject = ({
         <AutosizeTextarea
           placeholder={'Edit text...'}
           onBlur={e => {
-            onChange({ ...attachment, text: e.target.value })
+            onChange({ ...attachment, text: e.target.innerText })
           }}
           onClick={e => e.stopPropagation()}
           defaultValue={attachment.text}

@@ -5,7 +5,7 @@ import { Button, Content } from '@/components'
 import { Rendevoz } from '@/core/rendevoz'
 import FontSize from '@/consts/font'
 
-const RecentlyViewed = () => {
+const RecentlyViewed = ({ onClose }: { onClose: VoidFunction }) => {
   const allMetas = MetaStore.useMetaObjectsMap()
   const recentlyViewed = useMemo(() => {
     const allObjects = Array.from(allMetas.values()).filter(i => i.viewAt)
@@ -20,10 +20,11 @@ const RecentlyViewed = () => {
       {recentlyViewed.map(i => (
         <Button.IconButton
           icon={Rendevoz.Utils.Object.getMetaObjectIcon(i.type)}
-          text={i.name}
+          text={i.name || i.placeholderName}
           key={i.id}
           onClick={() => {
             Rendevoz.Actions.Open.Meta.openMetaObject(i.id)
+            onClose()
           }}
           style={{ fontSize: FontSize['13px'], padding: '4px 6px' }}
         ></Button.IconButton>

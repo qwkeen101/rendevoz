@@ -144,6 +144,7 @@ export default memo(
               return <URLProp value={v} onChange={handleChange} />
             case 'checkbox':
               return <CheckboxProp checkBoxSize={14} value={v} onChange={handleChange} name={realProp.name} />
+            case 'reviewState':
             case 'singleSelect':
               return (
                 <SelectProp
@@ -205,7 +206,18 @@ export default memo(
             case 'type':
               return !isEditing && <TypeCell style={{ fontSize: 12 }} value={value} />
             case 'attachments':
-              return (meta.attachments?.length || isEditing) && <AttCell metaId={meta.id} />
+              return (
+                (meta.attachments?.length || isEditing) && (
+                  <AttCell
+                    style={{
+                      fontSize: 12,
+                      lineHeight: '18px',
+                      height: 18
+                    }}
+                    metaId={meta.id}
+                  />
+                )
+              )
             case 'related':
               return (
                 !isEditing && (

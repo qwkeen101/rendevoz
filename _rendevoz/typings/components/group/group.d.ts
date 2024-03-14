@@ -101,6 +101,14 @@ export interface MetaGroup extends IBase {
           properties?: Record<number, MetaGroupViewProperty>
         }
       }
+    | {
+        type: 'calendar'
+        options: {
+          wrapColumns?: boolean
+          calendarSize?: 'standard' | 'large'
+          properties?: Record<number, MetaGroupViewProperty>
+        }
+      }
   ) & {
     // view id
     id: number

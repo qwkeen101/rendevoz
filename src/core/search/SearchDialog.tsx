@@ -95,7 +95,7 @@ export const SearchDialog = ({ onClose, visible }: { onClose: VoidFunction; visi
               setSearchInput(n)
             }}
           />
-          <RecentlyViewed />
+          <RecentlyViewed onClose={() => onClose()} />
         </>
       )}
       {isLoading && (

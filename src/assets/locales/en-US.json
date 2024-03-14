@@ -2,8 +2,13 @@
   "general": {
     "Again": "Again",
     "Easy": "Easy",
+    "Calendar": "Calendar",
     "Hard": "Hard",
     "Good": "Good",
+    "Calendar size": "Calendar size",
+    "Standard": "Standard",
+    "Large": "Large",
+    "Max size": "Max",
     "Study state": "Study state",
     "Flashcards": "Flashcards",
     "Enable flashcards": "Enable flashcards",

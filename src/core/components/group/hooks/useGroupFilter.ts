@@ -60,7 +60,7 @@ const useGroupFilter = (groupData?: MetaGroup) => {
           })
         }
         return {
-          name: meta.name,
+          name: meta.name || meta.placeholderName,
           searchable: search,
           rowId: i.rowId
         }

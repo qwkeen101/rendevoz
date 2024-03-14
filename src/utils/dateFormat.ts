@@ -39,7 +39,10 @@ export const EnglishFormats = {
   year: 'y'
 }
 export const DateFormat = {
-  format: (date: number | Date, f: string) => format(date, f),
+  format: (date: number | Date, f: string) =>
+    format(date, f, {
+      locale: getLocale()
+    }),
   formatWeekOfMonth: (date: number) => {
     const lang = i18next.language
     const week = getWeekOfMonth(date, { weekStartsOn: 1 })
@@ -57,7 +60,10 @@ export const DateFormat = {
     let prefixes = ['0', '1', '2', '3', '4', '5']
     return parseInt(prefixes[0 | (adjustedDate / 7)]) + 1
   },
-  formatDistanceToNow: (date: number) => formatDistanceToNow(date),
+  formatDistanceToNow: (date: number) =>
+    formatDistanceToNow(date, {
+      locale: getLocale()
+    }),
   formatDistanceToNowStrict: (date: number, suffix = false) => formatDistanceToNowStrict(date, { locale: getLocale(), addSuffix: suffix }),
   Formats: {
     default: 'y/M/d',

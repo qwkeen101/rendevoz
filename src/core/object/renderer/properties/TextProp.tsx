@@ -84,7 +84,7 @@ export default ({
               fontSize: 14,
               display: 'block'
             }}
-            defaultValue={value}
+            value={value}
           />
         </PopupWrapper>
       ))}

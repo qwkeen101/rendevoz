@@ -7,6 +7,7 @@ import { Icon, ResizeAndDrag } from '@/components'
 import { MetaStore } from '@/api/stores'
 import { Colors } from '@/consts'
 import { ClassName } from 'rendevoz'
+import { GlobalInstance } from '@/hooks'
 
 export default memo(() => {
   const instance = useWhiteboardInstance()
@@ -17,6 +18,7 @@ export default memo(() => {
       type: string
       nodeId: number
       objectId: number
+      metaId: number
     }[]
   >([])
   assignProperties(instance, {
@@ -42,6 +44,7 @@ export default memo(() => {
                   y: Math.max(winPos.y - containerBounding.top, 50),
                   nodeId,
                   type: meta.type,
+                  metaId: meta.id,
                   objectId: meta.objectId
                 }
               ])
@@ -51,9 +54,10 @@ export default memo(() => {
       }
     }
   })
-  const renderItem = (type: string, objectId?: number) => {
+  const renderItem = (type: string, metaId: number, objectId?: number) => {
     if (!type || !objectId) return
-    const page = Rendevoz.Actions.Layout.getRegisteredTabContent(type)
+    const page = GlobalInstance.layoutOps?.getRegisteredTabData(type)
+    console.log(page, type)
     if (page) {
       return (
         <div
@@ -62,7 +66,7 @@ export default memo(() => {
           }}
           style={{ width: '100%', height: '100%' }}
         >
-          <DockTabPaneContext.Provider value={{ currentTabId: '' }}>{page({ objectId })}</DockTabPaneContext.Provider>
+          <DockTabPaneContext.Provider value={{ currentTabId: '' }}>{page.content({ objectId, type, metaId })}</DockTabPaneContext.Provider>
         </div>
       )
     }
@@ -146,12 +150,12 @@ export default memo(() => {
                 height: '100%',
                 borderRadius: 8,
                 position: 'relative',
-                overflow: 'hidden',
+                overflow: 'hidden auto',
                 border: '1px solid var(--border-background)',
                 background: 'var(--global-background)'
               }}
             >
-              {renderItem(i.type, i.objectId)}
+              {renderItem(i.type, i.metaId, i.objectId)}
             </div>
           </ResizeAndDrag>
         ))}

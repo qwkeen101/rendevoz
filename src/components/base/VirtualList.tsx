@@ -77,6 +77,7 @@ function VirtualList<T>(
       if (withKeyboardNavigation) {
         const keyboardEvent = (e: KeyboardEvent) => {
           if (isHotkey(KEY.Enter, e) && withKeyboardNavigation) {
+            console.log('prevent here')
             e.stopPropagation()
             onSelect?.(itemzRef.current[currentFocusIndex], currentFocusIndex)
           }

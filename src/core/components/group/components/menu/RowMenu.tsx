@@ -211,7 +211,7 @@ export default memo(
                 ])
           ]
         : []),
-      ...(currentView?.filter?.rules.length || hasSelected || currentView?.sort?.sorters.length || currentView?.search
+      ...(currentView?.filter?.rules.length || currentView?.type === 'calendar' || hasSelected || currentView?.sort?.sorters.length || currentView?.search
         ? []
         : [
             layoutItems['addRowAbove'] && layoutItems['addRowBelow'] && layoutItems['separator'],

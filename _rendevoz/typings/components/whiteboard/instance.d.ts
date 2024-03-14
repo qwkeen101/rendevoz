@@ -68,6 +68,7 @@ export type IWhiteboardRightbarState = {
   width: string
   currentTab?: {
     type: string
+    metaId: number
     objectId: number
   }
 }

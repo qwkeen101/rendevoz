@@ -13,7 +13,9 @@ export default async (pdfId: number) => {
     const document = await usePdfjs().getDocument(pdf.url).promise
     if (document) {
       const outline = await document.getOutline()
-      console.log(outline)
+      if (!outline.length) {
+        throw ''
+      }
       const parseOutline = async (root: typeof outline) => {
         return await Promise.all(
           root.map(async o => {

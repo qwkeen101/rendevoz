@@ -4,6 +4,7 @@ import { request } from '@/utils/request'
 import { atom } from 'jotai'
 import { IUser } from '~/typings/data'
 import FileSystem from '@/api/fileSystem'
+import { decryptData, encryptData } from '@/utils/crypt'
 
 const remoteInterface = 'https://api.rendevoz.com'
 type VerifyUserOptions =
@@ -27,17 +28,11 @@ export const userAtom = atom<IUser | null>(
 )
 
 const cacheUserDetails = async (u: IUser) => {
-  const n: IUser & { signature?: string } = { ...u }
+  const n: IUser & { lastLogin?: number } = { ...u, lastLogin: Date.now() }
   const mId = await FileSystem.fs.getMachineId()
   if (!mId) return
-  const encoded = window.btoa(
-    JSON.stringify({
-      machine: mId,
-      time: Date.now()
-    })
-  )
-  n.signature = encoded
-  localStorage.setItem('userDetails', JSON.stringify(n))
+  const encrypted = await encryptData(JSON.stringify(n), mId)
+  localStorage.setItem('userDetails', encrypted)
 }
 export const useUser = () => useGlobalAtom(userAtom)
 
@@ -105,22 +100,17 @@ const createLoginService = () => {
   const loadUserDetailsFromCache = async (): Promise<IUser> => {
     try {
       if (localStorage.getItem('userDetails')) {
-        const cached = JSON.parse(localStorage.getItem('userDetails')!)
-        if (!cached.signature) {
-          return Promise.reject()
-        }
-        const s = cached.signature
-        const decoded = JSON.parse(window.atob(s))
+        const cached = localStorage.getItem('userDetails')!
         const mId = await FileSystem.fs.getMachineId()
-        if (mId && mId === decoded.machine) {
-          const time = Number(decoded.time)
-          const d = new Date(time)
-          const now = new Date()
-          // minus one week
-          now.setDate(now.getDate() - 7)
-          if (d.getTime() > now.getTime()) {
-            return cached as IUser
-          }
+        if (!mId) return Promise.reject()
+        const decrypted = JSON.parse(await decryptData(cached, mId))
+        const time = Number(decrypted.lastLogin)
+        const d = new Date(time)
+        const now = new Date()
+        // minus one week
+        now.setDate(now.getDate() - 7)
+        if (d.getTime() > now.getTime()) {
+          return decrypted as IUser
         }
       }
     } catch (e) {

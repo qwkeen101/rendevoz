@@ -200,6 +200,14 @@ const GroupActions = memo(({ groupValue }: { groupValue?: MetaGroup }) => {
                   setV(false)
                 }}
               />
+              <Button.IconButton
+                text={t('general.Calendar')}
+                icon={'park-calendar-three'}
+                onClick={() => {
+                  instance.viewOps?.addNewView('calendar')
+                  setV(false)
+                }}
+              />
             </WithBorder>
           )}
           name={'park-plus'}
@@ -254,32 +262,34 @@ const GroupActions = memo(({ groupValue }: { groupValue?: MetaGroup }) => {
             text={t('general.Filter')}
           />
         </AnimatePopover>
-        <AnimatePopover
-          positions={['bottom']}
-          align="end"
-          padding={8}
-          onVisiblityChange={v => {
-            if (v === false) {
-              instance.updateCurrentView?.(s => ({ ...s, sort: innerSort }))
-            }
-          }}
-          withClickCover={true}
-          content={
-            <WithBorder padding={8} width={200}>
-              <BetterSorter root={currentView?.sort} onChange={v => setInnerSort(v)} />
-            </WithBorder>
-          }
-        >
-          <Button.IconButton
-            style={{
-              color: existedSortLength ? Colors.Common.SelectColor : undefined,
-              height: 26,
-              marginRight: 4
+        {currentView?.type !== 'calendar' && (
+          <AnimatePopover
+            positions={['bottom']}
+            align="end"
+            padding={8}
+            onVisiblityChange={v => {
+              if (v === false) {
+                instance.updateCurrentView?.(s => ({ ...s, sort: innerSort }))
+              }
             }}
-            icon="park-sort-one"
-            text={t('general.Sort')}
-          />
-        </AnimatePopover>
+            withClickCover={true}
+            content={
+              <WithBorder padding={8} width={200}>
+                <BetterSorter root={currentView?.sort} onChange={v => setInnerSort(v)} />
+              </WithBorder>
+            }
+          >
+            <Button.IconButton
+              style={{
+                color: existedSortLength ? Colors.Common.SelectColor : undefined,
+                height: 26,
+                marginRight: 4
+              }}
+              icon="park-sort-one"
+              text={t('general.Sort')}
+            />
+          </AnimatePopover>
+        )}
 
         <Icon
           name={'park-search'}

@@ -17,8 +17,15 @@ export const GroupRenderer = memo(() => {
   const currentView = useSelectAtomValue(GroupStateAtom, s => s.currentView?.type)
   const hasGroup = useSelectAtomValue(GroupStateAtom, s => s.groups !== undefined)
   return (
-    <Content role={'renderer-container'} ref={containerRef} flex column fullHeight style={{ minWidth: 'fit-content', width: '100%' }}>
-      {hasGroup ? (
+    <Content
+      role={'renderer-container'}
+      ref={containerRef}
+      flex
+      column
+      fullHeight
+      style={{ minWidth: currentView !== 'calendar' ? 'fit-content' : undefined, width: '100%' }}
+    >
+      {hasGroup && currentView !== 'calendar' ? (
         <GroupGrouperRenderer />
       ) : (
         <>
@@ -26,6 +33,7 @@ export const GroupRenderer = memo(() => {
           {currentView === 'gallery' && <GalleryRenderer value={filterValues || displayValues} />}
           {currentView === 'list' && <ListRenderer value={filterValues || displayValues} />}
           {currentView === 'kanban' && <KanbanRenderer />}
+          {currentView === 'calendar' && <CalendarRenderer value={filterValues || displayValues} />}
         </>
       )}
     </Content>

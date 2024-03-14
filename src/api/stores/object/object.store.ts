@@ -19,6 +19,7 @@ import deleteCallback from '@/api/stores/object/deleteCallback'
 import addCallback from '@/api/stores/object/addCallback'
 import KeyvalueStore from '@/api/stores/keyvalue.store'
 import createReviewStore from '@/api/stores/object/custom/ReviewCardStore'
+import updateCallback from '@/api/stores/object/updateCallback'
 export type ObjectFamily = CustomTypes['Object']
 
 export const ObjectFamilyAtom = atomFamily(() => atom(new Map<number, ObjectFamily[keyof ObjectFamily]>()))
@@ -170,16 +171,7 @@ const createObjectStore = <T extends keyof ObjectFamily, V extends ObjectFamily[
       options?.beforeUpdateProcess?.(n, opts)
       return initializedLocalStore.updateOne(
         (obj, silent) => {
-          // setTimeout(() => {
-          //   const meta = Array.from(globalStore.get(metaObjectsAtom).values()).find(i => i.objectId === obj.id)
-          //
-          //   if (meta && 'name' in obj && meta.name !== obj.name && 'name' in n) {
-          //     MetaStore.updateMetaObject({ id: meta.id, name: obj.name }, true)
-          //   }
-          //   if (meta && 'description' in obj && meta.description !== obj.description && 'description' in n) {
-          //     MetaStore.updateMetaObject({ id: meta.id, description: obj.description }, true)
-          //   }
-          // }, 0)
+          updateCallback(n, obj)
           options?.afterUpdateProcess?.onSuccess?.(obj, silent)
         },
         silent => {

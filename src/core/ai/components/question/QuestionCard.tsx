@@ -204,13 +204,14 @@ export default ({
             }}
             disabled={!isEditing}
             className={ClassName.noStyleInput}
-            defaultValue={question.name}
+            value={question.name}
             placeholder={'Untitled'}
-            onBlur={e => {
+            debounceChange
+            onChange={e => {
               if (questionMeta) {
-                MetaStore.updateMetaObject({ id: questionMeta.id, name: e.target.innerText ?? '' })
+                MetaStore.updateMetaObject({ id: questionMeta.id, name: e ?? '' })
               } else {
-                ObjectStore('question').updateOne({ id: question.id, name: e.target.innerText ?? '' })
+                ObjectStore('question').updateOne({ id: question.id, name: e ?? '' })
               }
             }}
           />

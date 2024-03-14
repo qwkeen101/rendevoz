@@ -290,7 +290,7 @@ const MediaInner = ({ onInstanceInitialized, onlyCore, on, disableTabTitle = tru
             width: '100%',
             height: columnLayout ? 'fit-content' : '100%',
             overflowY: columnLayout ? undefined : 'auto',
-            padding: '24px 16px 12px',
+            padding: '24px 24px 12px',
             display: 'flex'
           }}
         >
@@ -318,15 +318,28 @@ const MediaInner = ({ onInstanceInitialized, onlyCore, on, disableTabTitle = tru
   )
 }
 
-const transformUrl = (url?: string) => {
+const transformUrl = (
+  url?: string,
+  options?: {
+    autoPlay?: boolean
+    startTime?: number
+  }
+) => {
   if (!url) return url
   if (url.startsWith('rendefile') || url.startsWith('file')) return url
-  if (url.includes('bilibili')) return url
+  if (url.includes('bilibili')) {
+    const usful = url.split('bilibili.com/video/')[1]
+    return `https://www.bilibili.com/blackboard/html5mobileplayer.html?hasMuteButton=1&bvid=${usful}&autoplay=${
+      options?.autoPlay ? '1' : '0'
+    }&t=${options?.startTime ? options.startTime : ''}`
+  }
   if (url.includes('youtube')) {
     const U = new URL(url)
     const videoId = U.searchParams.get('v')
     if (!videoId) return url
-    return `https://www.youtube.com/embed/${videoId}`
+    return `https://www.youtube.com/embed/${videoId}?rel=0&autoplay=${options?.autoPlay ? '1' : '0'}&start=${
+      options?.startTime ? parseInt(`${options.startTime}`) : ''
+    }`
   }
   if (url.startsWith('baidudisk')) return url
   return url
@@ -366,10 +379,17 @@ const Media = (props: MediaProps) => {
       collectionName,
       metaId,
       layout,
-      styles
+      styles,
+      autoPlay,
+      currentTime
     } = props.mediaState || {}
     store.set(MediaInstanceAtom, {})
     console.log(subtitleList, subtitleLang, DEFAULT_MEDIA_STATE)
+    const u = transformUrl(url, {
+      autoPlay,
+      startTime: currentTime ?? lastPlayedTime
+    })
+    console.log(u)
     store.set(MediaStateAtom, {
       ..._.merge({}, DEFAULT_MEDIA_STATE, {
         thumbnail,
@@ -379,6 +399,7 @@ const Media = (props: MediaProps) => {
         jumpTime: lastPlayedTime,
         labels,
         subtitleMode,
+        autoPlay,
         volume,
         labelType,
         name,
@@ -389,7 +410,10 @@ const Media = (props: MediaProps) => {
         subtitleFollow,
         layout
       }),
-      url: transformUrl(url),
+      url: transformUrl(url, {
+        autoPlay,
+        startTime: currentTime ?? lastPlayedTime
+      }),
       mode: mode || getMediaMode(url)
     })
     return store
@@ -417,15 +441,20 @@ const Media = (props: MediaProps) => {
       onlyCore,
       layout,
       collectionName,
+      autoPlay,
       styles
     } = props.mediaState
     console.log(props.mediaState, currentState)
     store.set(MediaStateAtom, {
       ...currentState,
-      url: transformUrl(url),
+      url: transformUrl(url, {
+        autoPlay: autoPlay ?? currentState.autoPlay,
+        startTime: props.mediaState.currentTime ?? currentState.currentTime
+      }),
       isPinned,
       metaId,
       subtitleMode,
+      autoPlay,
       styles,
       onlyCore,
       collectionName,

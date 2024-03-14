@@ -328,10 +328,17 @@ const transformUrl = (
   if (!url) return url
   if (url.startsWith('rendefile') || url.startsWith('file')) return url
   if (url.includes('bilibili')) {
-    const usful = url.split('bilibili.com/video/')[1]
-    return `https://www.bilibili.com/blackboard/html5mobileplayer.html?hasMuteButton=1&bvid=${usful}&autoplay=${
-      options?.autoPlay ? '1' : '0'
-    }&t=${options?.startTime ? options.startTime : ''}`
+    try {
+      const u = new URL(url)
+      const params = u.searchParams
+      const bvId = u.pathname.split('/')[2]
+      const p = params.get('p')
+      return `https://www.bilibili.com/blackboard/player.html?hasMuteButton=1&bvid=${bvId}&autoplay=${
+        options?.autoPlay ? '1' : '0'
+      }&t=${options?.startTime ? options.startTime : ''}${p ? `&p=${p}` : ''}`
+    } catch (e) {
+      return e
+    }
   }
   if (url.includes('youtube')) {
     const U = new URL(url)
@@ -447,10 +454,7 @@ const Media = (props: MediaProps) => {
     console.log(props.mediaState, currentState)
     store.set(MediaStateAtom, {
       ...currentState,
-      url: transformUrl(url, {
-        autoPlay: autoPlay ?? currentState.autoPlay,
-        startTime: props.mediaState.currentTime ?? currentState.currentTime
-      }),
+      url: transformUrl(url),
       isPinned,
       metaId,
       subtitleMode,

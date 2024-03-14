@@ -89,9 +89,12 @@ const WebVideoPlayer = () => {
       }
     }
   }, [paused, mediaState.loaded])
+
   useEffect(() => {
-    if (mediaState.loaded && mediaState.autoPlay && webReady.current) {
-      web.send('videoEvent', { type: 'play' })
+    if (mediaState.loaded && webReady.current) {
+      if (mediaState.autoPlay) {
+        web.send('videoEvent', { type: 'play' })
+      }
     }
   }, [mediaState.loaded, mediaState.autoPlay])
   useEffect(() => {

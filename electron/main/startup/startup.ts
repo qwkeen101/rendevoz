@@ -142,16 +142,13 @@ const startElectron = async () => {
     win.webContents.send('download', e)
   })
   win.webContents.on('will-attach-webview', (e, webPreferences, params) => {
-    const prePath = process.env.PUBLIC + '/webpre.js'
     const videoPrePath = process.env.PUBLIC + '/videopre.js'
-    const absolutePath = resolve(prePath)
     const videoAboPath = resolve(videoPrePath)
     if (params.webpreferences.includes('video')) {
       console.log(videoAboPath)
       webPreferences.preload = videoAboPath
       return
     }
-    // webPreferences.preload = absolutePath
   })
   win.webContents.on('did-attach-webview', (_, contents) => {
     contents.setWindowOpenHandler(details => {

@@ -4,6 +4,7 @@ let interval
 let videoLoaded = false
 let videoElement = null
 let wrapperElement = null
+
 ipcRenderer.on('videoEvent', (e, payload) => {
   if (!videoElement) return
   const v = videoElement
@@ -65,22 +66,20 @@ window.addEventListener('DOMContentLoaded', () => {
     const currentUrl = window.location.href
     if (!currentUrl.includes('bilibili') && !currentUrl.includes('youtube')) {
       videoElement = window.document.body.querySelector('video')
-      if(videoElement){
+      if (videoElement) {
         wrapperElement = videoElement.parentElement
         videoLoaded = true
       }
       return
     }
-    let isBili = false
     if (currentUrl.includes('bilibili')) {
-      isBili = true
       const bilibiliVideoWrapper = window.document.body.querySelector('#bilibiliPlayer')
-      if (bilibiliVideoWrapper) {
+      const fullScreenButton = window.document.body.querySelector('.bilibili-player-video-web-fullscreen')
+      if (bilibiliVideoWrapper && fullScreenButton) {
         videoElement = bilibiliVideoWrapper.querySelector('video')
-        videoElement.volume = 0.5
         wrapperElement = bilibiliVideoWrapper
-        bilibiliVideoWrapper.querySelector('.mplayer-toast')?.style.setProperty('display', 'none')
         if (videoElement) {
+          wrapperElement.querySelector('.bilibili-player-video-web-fullscreen')?.click()
           videoLoaded = true
         }
       }

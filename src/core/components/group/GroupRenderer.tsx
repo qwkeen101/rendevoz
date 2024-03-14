@@ -8,6 +8,7 @@ import ListRenderer from '@/core/components/group/components/list/ListRenderer'
 import GroupGrouperRenderer from '@/core/components/group/components/grouper/multipleGroupRenderer'
 import TableRenderer from '@/core/components/group/components/table/TableRenderer'
 import KanbanRenderer from '@/core/components/group/components/kanban/KanbanRenderer'
+import CalendarRenderer from '@/core/components/group/components/calendar/CalendarRenderer'
 
 export const GroupRenderer = memo(() => {
   const displayValues = useSelectAtomValue(GroupStateAtom, s => s.viewValues)

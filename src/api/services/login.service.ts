@@ -3,6 +3,7 @@ import { globalStore } from '@/api/stores'
 import { request } from '@/utils/request'
 import { atom } from 'jotai'
 import { IUser } from '~/typings/data'
+import FileSystem from '@/api/fileSystem'
 
 const remoteInterface = 'https://api.rendevoz.com'
 type VerifyUserOptions =
@@ -25,6 +26,19 @@ export const userAtom = atom<IUser | null>(
       }
 )
 
+const cacheUserDetails = async (u: IUser) => {
+  const n: IUser & { signature?: string } = { ...u }
+  const mId = await FileSystem.fs.getMachineId()
+  if (!mId) return
+  const encoded = window.btoa(
+    JSON.stringify({
+      machine: mId,
+      time: Date.now()
+    })
+  )
+  n.signature = encoded
+  localStorage.setItem('userDetails', JSON.stringify(n))
+}
 export const useUser = () => useGlobalAtom(userAtom)
 
 export const useIsUserPro = (includeLifetime?: boolean) => {
@@ -77,15 +91,46 @@ const createLoginService = () => {
       method: 'post'
     })
   }
-  const getUserDetails = (email: string, token: string) => {
-    return request<IUser>(remoteInterface + '/userDetails', {
+  const getUserDetails = async (email: string, token: string) => {
+    const res = await request<IUser>(remoteInterface + '/userDetails', {
       params: { email },
       headers: { 'x-token': token }
     })
+    if (res.data) {
+      cacheUserDetails(res.data)
+    }
+    return res
   }
 
-  const updateUserDetails = (user: Partial<IUser>) => {
-    return request<IUser>(remoteInterface + '/updateUser', {
+  const loadUserDetailsFromCache = async (): Promise<IUser> => {
+    try {
+      if (localStorage.getItem('userDetails')) {
+        const cached = JSON.parse(localStorage.getItem('userDetails')!)
+        if (!cached.signature) {
+          return Promise.reject()
+        }
+        const s = cached.signature
+        const decoded = JSON.parse(window.atob(s))
+        const mId = await FileSystem.fs.getMachineId()
+        if (mId && mId === decoded.machine) {
+          const time = Number(decoded.time)
+          const d = new Date(time)
+          const now = new Date()
+          // minus one week
+          now.setDate(now.getDate() - 7)
+          if (d.getTime() > now.getTime()) {
+            return cached as IUser
+          }
+        }
+      }
+    } catch (e) {
+      return Promise.reject()
+    }
+    return Promise.reject()
+  }
+
+  const updateUserDetails = async (user: Partial<IUser>) => {
+    const res = await request<IUser>(remoteInterface + '/updateUser', {
       headers: {
         'x-auth-token': getUser()?.idToken || ''
       },
@@ -94,6 +139,10 @@ const createLoginService = () => {
       },
       method: 'POST'
     })
+    if (res.data) {
+      cacheUserDetails(res.data)
+    }
+    return res
   }
 
   const refreshToken = (): Promise<{
@@ -142,7 +191,8 @@ const createLoginService = () => {
     login,
     getUserDetails,
     refreshToken,
-    updateUserDetails
+    updateUserDetails,
+    loadUserDetailsFromCache
   }
 }
 

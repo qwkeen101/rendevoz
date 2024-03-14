@@ -1,5 +1,5 @@
 import * as React from 'react'
-import { CSSProperties, useEffect, useLayoutEffect } from 'react'
+import { CSSProperties, useEffect, useLayoutEffect, useState } from 'react'
 import classnames from 'classnames'
 import { css } from '@emotion/css'
 import { useMergedRef } from '@/hooks'
@@ -41,6 +41,7 @@ const TextareaAutosize: React.ForwardRefRenderFunction<HTMLDivElement, TextareaA
       }, 100)
     }
   }, [])
+  const [isEditing, setIsEditing] = useState(false)
   const handleChange = (v: string) => {
     onChange(v)
   }
@@ -50,7 +51,12 @@ const TextareaAutosize: React.ForwardRefRenderFunction<HTMLDivElement, TextareaA
       l.innerText = props.value || props.defaultValue || ''
     }
   }, [])
-
+  useLayoutEffect(() => {
+    const l = libRef.current
+    if (l && !isEditing) {
+      l.innerText = props.value || ''
+    }
+  }, [props.value, isEditing])
   return (
     <div
       {...props}
@@ -68,7 +74,9 @@ const TextareaAutosize: React.ForwardRefRenderFunction<HTMLDivElement, TextareaA
       }}
       onFocus={e => {
         setCaretAtEnd(e.currentTarget)
+        setIsEditing(true)
       }}
+      onBlur={() => setIsEditing(false)}
       ref={ref}
       contentEditable={props.disabled ? 'false' : 'true'}
       spellCheck={'false'}

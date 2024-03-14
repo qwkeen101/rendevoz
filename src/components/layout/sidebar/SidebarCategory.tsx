@@ -116,7 +116,7 @@ export default memo(() => {
             )
         )}
       </Content>
-      {props.length && (
+      {props.length !== 0 && (
         <>
           <div
             style={{

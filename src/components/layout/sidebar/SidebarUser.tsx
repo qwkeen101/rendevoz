@@ -182,6 +182,7 @@ const UserPopover = ({ onUpgradePlan, onUpdateUser }: { onUpgradePlan: VoidFunct
         onClick={() => {
           setUser(null)
           const loginState = localStorage.getItem('loginState')
+          localStorage.removeItem('userDetails')
           if (loginState) {
             localStorage.setItem(
               'loginState',

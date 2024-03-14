@@ -5,7 +5,7 @@ import EmojiWithPicker from '@/components/EmojiWithPicker'
 import { memo, useState } from 'react'
 import { Colors, KEY } from '@/consts'
 import { MetaGroup } from '~/typings'
-import { useIsIn, useSelectAtomValue } from '@/hooks'
+import { useDebounceFn, useIsIn, useSelectAtomValue } from '@/hooks'
 import { GroupStateAtom } from '@/core/components/group/hooks/useGroupState'
 import InnerFilterer from '@/core/components/group/InnerFilterer'
 import { useGroupInstance } from '@/core/components/group/hooks/useGroupInstance'
@@ -22,6 +22,17 @@ const GroupTitleRenderer = memo(
     const instance = useGroupInstance()
     const groupLayoutSetting = useSelectAtomValue(GroupStateAtom, s => s.layout)
     const groupTitleSetting = useSelectAtomValue(GroupStateAtom, s => s.title)
+    const debounceChangeTitle = useDebounceFn(
+      v => {
+        instance.on?.({
+          type: 'groupMetaChange',
+          value: {
+            name: v
+          }
+        })
+      },
+      { wait: 200 }
+    )
     return (
       <Content ref={ref} column flex style={{ padding: `24px ${padding}px 0px`, position: 'sticky', left: 0, marginBottom: 8 }}>
         <Modal
@@ -111,14 +122,9 @@ const GroupTitleRenderer = memo(
                 e.preventDefault()
               }
             }}
-            defaultValue={title}
-            onBlur={e => {
-              instance.on?.({
-                type: 'groupMetaChange',
-                value: {
-                  name: e.target.innerText
-                }
-              })
+            value={title}
+            onChange={v => {
+              debounceChangeTitle.run(v)
             }}
             style={{
               resize: 'none',

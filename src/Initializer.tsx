@@ -44,6 +44,7 @@ const Initializer = () => {
   useEffect(() => {
     ipcInstance.send('minimizeToTray', setting.general.minimizeToTray)
   }, [setting.general.minimizeToTray])
+
   useEffect(() => {
     ipcInstance.on('openObject', data => {
       if (data.url) {
@@ -52,26 +53,34 @@ const Initializer = () => {
       }
     })
     if (loginState.autoLogin && loginState.password && !autoLogined) {
-      const email = localStorage.getItem('email')
-      if (email) {
-        LoginService.login(email, loginState.password)
-          .then(data => {
-            LoginService.getUserDetails(email, data.data.token)
-              .then(user => {
-                localStorage.setItem('email', user.data.email || '')
-                setUser({ ...user.data, password: loginState.password })
+      LoginService.loadUserDetailsFromCache()
+        .then(i => {
+          if (i) {
+            setUser(i)
+          }
+        })
+        .catch(e => {
+          const email = localStorage.getItem('email')
+          if (email) {
+            LoginService.login(email, loginState.password)
+              .then(data => {
+                LoginService.getUserDetails(email, data.data.token)
+                  .then(user => {
+                    localStorage.setItem('email', user.data.email || '')
+                    setUser({ ...user.data, password: loginState.password })
+                  })
+                  .catch(e => toast.error(`${t('login.failed to get user details')}!`))
+                  .finally(() => {
+                    if (loginState.autoLogin) {
+                      autoLogined = true
+                    }
+                  })
               })
-              .catch(e => toast.error(`${t('login.failed to get user details')}!`))
-              .finally(() => {
-                if (loginState.autoLogin) {
-                  autoLogined = true
-                }
+              .catch(e => {
+                toast.error(`${t('login.failed to login')}!`)
               })
-          })
-          .catch(e => {
-            toast.error(`${t('login.failed to login')}!`)
-          })
-      }
+          }
+        })
     }
 
     initializeApp().then(() => {

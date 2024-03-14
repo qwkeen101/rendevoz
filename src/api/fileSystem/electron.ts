@@ -15,6 +15,9 @@ export default {
   selectDir: async () => {
     return ipcInstance.send('getSelectedFolderPath').then(res => res.data)
   },
+  getMachineId: async () => {
+    return await ipcInstance.send('getMachineId').then(i => i.data)
+  },
   deleteFile: async path => {
     await ipcInstance.send('deleteFile', path)
     return

@@ -171,7 +171,6 @@ export const NavigationMenu: FC<NavigationMenuProps> = ({
       }
       if (isHotkey(KEY.Enter, e) && currentSelect.length) {
         e.stopPropagation()
-        e.preventDefault()
         const currentItem = getCurrentSelectItem()
         if (currentItem) {
           handleSelectItem(currentItem)

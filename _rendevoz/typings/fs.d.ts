@@ -15,6 +15,7 @@ export type IFileSystem = {
    */
   writeFile: (data: string | Blob, path: string, type?: 'base64' | 'utf8' | 'binary') => Promise<string>
   deleteFile: (path: string) => Promise<void>
+  getMachineId: () => Promise<string>
   readdir: (path: string) => Promise<{
     dirState: {
       totalSize: number

@@ -2,10 +2,14 @@ import callback from './callback'
 import { autoUpdater } from 'electron-updater'
 import path from 'path'
 import fs from 'fs'
+import { machineId } from '../utils/getMachineId'
 
 callback('getUpdateDetails', async () => {
   const result = await autoUpdater.checkForUpdates()
   return result.updateInfo
+})
+callback('getMachineId', async () => {
+  return await machineId(false)
 })
 callback('getLatestBackup', async (latestBackup?: string) => {
   let latestNum: undefined | number = undefined

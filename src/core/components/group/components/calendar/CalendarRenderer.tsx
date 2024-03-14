@@ -48,7 +48,7 @@ export default memo(({ value }: { value?: MetaGroupChild[] }) => {
         .filter(i => i) as Event[],
     [value]
   )
-  console.log(events)
+
   const currentView = useSelectAtomValue(GroupStateAtom, s => s.currentView)
   const calendarSize = currentView?.options.calendarSize ?? 'standard'
 

@@ -31,6 +31,7 @@ const withCustomComponent = (editor: CustomEditor) => {
   }
   editor.insertNode = node => {
     node.id = Id.getId()
+    console.log(node)
     // node.children[0].fontSize = fontSize
     let nextPath = null
     if (Positions.isInsideCommonBlock(editor)) {

@@ -86,9 +86,10 @@ const Link = ({ element, attributes, children }: RenderElementProps) => {
       return (
         <WithBorder style={{ fontSize: 13, height: 28 }}>
           <Content flex>
-            <div
+            <a
+              href={linkTarget.url}
+              target={'_blank'}
               onClick={() => {
-                window.open(linkTarget.url)
                 close()
               }}
               className={css([
@@ -106,7 +107,7 @@ const Link = ({ element, attributes, children }: RenderElementProps) => {
               ])}
             >
               {linkTarget.url}
-            </div>
+            </a>
             <Content flex style={{ fontSize: 16, color: Colors.Font.Transparent, justifyContent: 'flex-end' }}>
               <Tooltip content={'Copy'}>
                 <Icon
@@ -161,9 +162,10 @@ const Link = ({ element, attributes, children }: RenderElementProps) => {
         disableDefaultContent={true}
       >
         <a
+          href={element.url}
+          target={'_blank'}
           onClick={e => {
             if (!e.defaultPrevented) {
-              window.open(element.url)
               editor.on({
                 type: 'linkClick',
                 e

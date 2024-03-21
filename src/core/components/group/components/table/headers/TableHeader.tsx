@@ -104,6 +104,7 @@ const GroupTableHeader = memo(({ extraNode, visible, grouperId }: { extraNode?: 
       grouperAllSelected
     }
   }, [currentGrouper, unToggledSelectedRowIds])
+  console.log(innerItems)
   return (
     <Content
       flex

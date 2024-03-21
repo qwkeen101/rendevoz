@@ -26,11 +26,17 @@ export default function useGlobalShortcutHandler() {
     if (isHotkey('mod+w', e) || isHotkey('mod+q', e) || isHotkey('mod+r', e)) {
       e.preventDefault()
     }
+    if (isShortcut(e, 'openObjectPanel')) {
+      GlobalInstance.metaOps?.toggleDetails()
+    }
     if (isShortcut(e, 'openSidebar')) {
       setPanelState(draft => {
         draft.leftOpen = !draft.leftOpen
         draft.visible.size === 0 && draft.visible.add('database')
       })
+    }
+    if (isShortcut(e, 'openGlobalSearch')) {
+      GlobalInstance.searchOps?.openSearchPanel()
     }
     if (isShortcut(e, 'switchToPrevTab')) {
       GlobalInstance.layoutOps?.switchToTab('prev')

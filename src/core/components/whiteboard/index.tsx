@@ -1,6 +1,6 @@
 import { Provider, useAtomValue } from 'jotai/react'
 import { createStore } from 'jotai/vanilla'
-import { memo, useEffect, useMemo, useRef } from 'react'
+import { memo, useEffect, useMemo, useRef, useState } from 'react'
 import { FlowAtom, useFlow, useSetWhiteboardNodes, WhiteboardAtom } from './StateHooks'
 import TreeNodeContainer from './node/NodeContainer'
 import useScopedEventEmitter from '@/events/useEventEmitter'
@@ -23,7 +23,6 @@ import { getSetting } from '@/core'
 import FreeHandLayer from '@/core/components/whiteboard/freehand/FreeHandLayer'
 import WhiteboardPanzoom from '@/core/components/whiteboard/hooks/WhiteboardPanzoom'
 import WhiteboardControlBar from '@/core/components/whiteboard/toolbars/WhiteboardControlBar'
-import WhiteboardLeftBar from '@/core/components/whiteboard/toolbars/WhiteboardLeftBar'
 import WhiteboardPenToolsBar from '@/core/components/whiteboard/toolbars/WhiteboardPenToolsBar'
 import { css } from '@emotion/css'
 import WhiteboardFloatBar from '@/core/components/whiteboard/toolbars/WhiteboardFloatBar'
@@ -34,6 +33,7 @@ import WhiteboardFloatNodesLayer from '@/core/components/whiteboard/WhiteboardFl
 import WhiteboardHookContainer from '@/core/components/whiteboard/WhiteboardHookContainer'
 import SnapDragLayer from '@/core/components/whiteboard/snap/SnapDragLayer'
 import FakeMindmapDragLayer from '@/core/components/whiteboard/node/mindmap/FakeMindmapDragLayer'
+import WhiteboardSearch from '@/core/components/whiteboard/WhiteboardSearch'
 
 const WhiteboardInner = memo(({ onInstanceInitialized, layout, id, readOnly }: IWhiteboardProps) => {
   const containerRef = useRef<HTMLDivElement>(null)
@@ -45,6 +45,7 @@ const WhiteboardInner = memo(({ onInstanceInitialized, layout, id, readOnly }: I
   const instance = useWhiteboardInstance()
   const store = useStore()
   const setWhiteboardState = useSetAtom(WhiteboardStateAtom)
+  const [viewportInitialized, setViewportInitialized] = useState(false)
   const getLatestWhiteboard = () => {
     return store.get(WhiteboardAtom)
   }
@@ -136,8 +137,8 @@ const WhiteboardInner = memo(({ onInstanceInitialized, layout, id, readOnly }: I
   console.log('rerender')
   return (
     <>
-      <WhiteboardPanzoom />
-      <WhiteboardHookContainer whiteboardId={id} />
+      <WhiteboardPanzoom onInitialized={() => setViewportInitialized(true)} />
+      {viewportInitialized && <WhiteboardHookContainer whiteboardId={id} />}
       <Content
         fullHeight
         fullWidth
@@ -184,6 +185,9 @@ const WhiteboardInner = memo(({ onInstanceInitialized, layout, id, readOnly }: I
         onPointerDownCapture={() => {
           flow.focused = true
         }}
+        onFocus={() => {
+          flow.focused = true
+        }}
         style={{
           touchAction: 'none',
           overflow: 'hidden',
@@ -205,7 +209,7 @@ const WhiteboardInner = memo(({ onInstanceInitialized, layout, id, readOnly }: I
             pointerEvents: 'none'
           }}
         >
-          <TreeNodeContainer />
+          {viewportInitialized && <TreeNodeContainer />}
           {!readOnly && (
             <>
               <WhiteboardSelect containerRef={containerRef} />
@@ -224,6 +228,7 @@ const WhiteboardInner = memo(({ onInstanceInitialized, layout, id, readOnly }: I
       <WhiteboardHeader />
       <WhiteboardFloatNodesLayer />
       <WhiteboardRightbar />
+      <WhiteboardSearch />
       <FakeMindmapDragLayer />
     </>
   )

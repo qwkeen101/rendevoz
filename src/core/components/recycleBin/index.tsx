@@ -8,8 +8,9 @@ import { TabTitle } from '@/core/rendevoz/components'
 import { calculateSortObjects } from '@/core/object/filter/BetterSorter'
 import { useTranslation } from 'react-i18next'
 import KeyvalueStore from '@/api/stores/keyvalue.store'
+import { IGroupInstance } from '~/typings'
 
-export default memo(() => {
+export default memo(({ onInstanceInitialized }: { onInstanceInitialized?: (i: IGroupInstance) => void }) => {
   const recycleGroup = KeyvalueStore.useValue('recycleBinGroup')
   const all = MetaStore.useMetaObjectsMap()
   const deleted = useMemo(() => {
@@ -69,6 +70,7 @@ export default memo(() => {
           }),
           []
         )}
+        onInstanceInitialized={onInstanceInitialized}
         layout={useMemo(
           () => ({
             showAddObjectIntoSetting: false,

@@ -4,27 +4,22 @@ import {
   BuiltInDraggableElement,
   BuiltInTabTypes,
   ICollection,
+  IEditorInstance,
+  IGroupInstance,
   ILabel,
   ILayoutTab,
+  IMediaInstance,
+  IPdfInstance,
+  IWebpageInstance,
   IWhiteboardEdge,
+  IWhiteboardInstance,
   IWhiteboardNode,
-  MetaObject, OpenTabOptions,
-  PartialWithId, TabData
+  MetaObject,
+  OpenTabOptions,
+  PartialWithId,
+  TabData
 } from '..'
 import { ITabData } from '~/typings/rendevoz'
-
-export interface WebpageInstance {
-  transformToNote: () => Promise<CustomEditor>
-  editor?: CustomEditor
-  changeUrl: (url: string) => void
-  webview?: WebpageInnerRef
-}
-
-export type IReviewInstance = Partial<{
-  createCard?: (rating: number) => void
-  reviewCard?: () => void
-  deleteCard?: () => void
-}>
 
 export type IBaidudiskInstance = Partial<{
   // choose file, return file path or undefined
@@ -33,6 +28,16 @@ export type IBaidudiskInstance = Partial<{
   onCreateMeta: (m: MetaObject) => void
 }>
 
+export type InstanceRecord = {
+  whiteboard: IWhiteboardInstance
+  editor: IEditorInstance
+  webpage: IWebpageInstance
+  pdf: IPdfInstance
+  group: IGroupInstance
+  video: IMediaInstance
+  audio: IMediaInstance
+}
+
 export type IGlobalInstance = Partial<{
   collectionOps: {
     selectCollection: () => Promise<ICollection>
@@ -40,11 +45,6 @@ export type IGlobalInstance = Partial<{
   }
   objectOps: {
     isLabel: (o?: any) => boolean
-  }
-  aiOps: {
-    // open sidebar ai panel
-    // from: meta id
-    askQuestion: (query: string, from?: number) => void
   }
   dialogOps: {
     confirm: (message: string) => Promise<boolean>
@@ -57,6 +57,7 @@ export type IGlobalInstance = Partial<{
     goBackToSyncBlock: (syncBlockMetaId: number, targetMetaId: number) => Promise<void>
   }
   layoutOps: {
+    openObject: <K extends keyof InstanceRecord>(metaId: number) => Promise<InstanceRecord[K] | undefined>
     getCurrentFocusedTab: () => string | undefined
     switchToTab: (direction: 'next' | 'prev') => void
     registerTabData: (tabData: BuiltInTabTypes) => void
@@ -73,6 +74,11 @@ export type IGlobalInstance = Partial<{
     hasTargetTab: (tabData: Partial<Omit<BuiltInTabTypes, 'instance'>>) => string | undefined
     openNewTab: (tabData: OpenTabOptions<BuiltInTabTypes['type']>) => void
   }
+  searchOps: {
+    openSearchPanel: (query?: string) => void
+    closeSearchPanel: VoidFunction
+    getSearchResults: (query: string) => Promise<string>
+  }
   metaOps: {
     canCreateDirectly: (type: MetaObject['type']) => boolean
     getLink: (nodeId: number) => Promise<{
@@ -85,7 +91,8 @@ export type IGlobalInstance = Partial<{
     closeDetails: VoidFunction
     quickAdd: (metaId: number | number[]) => void
     canPreview: (metaObject: MetaObject) => boolean
-    openDetails: (id: number) => void
+    openDetails: (id?: number) => void
+    toggleDetails: (id?: number, visible?: boolean) => void
     openGraph: (id: number) => void
     preview: (id: number) => void
     // bad api design, alternative for create object

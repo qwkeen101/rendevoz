@@ -55,7 +55,7 @@ const MediaScrubber = memo(() => {
       style={{
         left: 0,
         position: 'absolute',
-        top: -4,
+        top: '50%',
         transition: 'all 0.3s ease',
         width: '100%',
         opacity: mediaState.progressbarHovering || isDragging ? 1 : 0,
@@ -83,6 +83,7 @@ const MediaScrubber = memo(() => {
         }}
         animate={{
           x: isDragging ? undefined : '-50%',
+          y: '-50%',
           left: `${((mediaState.currentTime || 0) / totalTime) * 100}%`
         }}
         transition={{
@@ -101,6 +102,9 @@ const MediaScrubber = memo(() => {
         onDragStart={e => {
           setIsDragging(true)
           setToolbarState(s => ({ ...s, draggingScrubber: true }))
+        }}
+        whileTap={{
+          opacity: 0
         }}
         onDragEnd={() => {
           setIsDragging(false)

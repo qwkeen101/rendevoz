@@ -7,7 +7,7 @@ import classNames from 'classnames'
 import { css } from '@emotion/css'
 
 export interface IconProps extends DetailedHTMLProps<HTMLAttributes<HTMLDivElement>, HTMLDivElement> {
-  name: string
+  name?: string
   theme?: 'outline' | 'filled' | 'two-tone' | 'multi-color'
   strokeWidth?: number
   size?: number
@@ -65,7 +65,7 @@ const Icon = forwardRef<HTMLDivElement, IconProps>(
         return <CustomIcon {...rest} color={color} type={name.slice(7)} theme={theme} fill={fill} size={size} strokeWidth={strokeWidth} />
       }
     }
-    const ele = renderIcon(name)
+    const ele = name && renderIcon(name)
     if (!ele) return null
     if (tooltip) {
       return (

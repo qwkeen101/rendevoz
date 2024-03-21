@@ -104,6 +104,7 @@ const TabPanesList: FC<TabPanesListProps> = memo(({ activeKey, tabPanes, disable
 type TabsProps = {
   children: ReactElement<TabPaneProps> | (ReactElement<TabPaneProps> | null)[] | null
   extra?: ReactNode
+  style?: CSSProperties
   onTabClick?: (key: string, e: MouseEvent) => void
   renderTabNav?: (defaultTabNav: TabNavListProps) => ReactNode
   disableInnerPanes?: boolean
@@ -135,6 +136,7 @@ export const Tabs: FC<TabsProps> = memo(
     disableTabNav,
     disableAnimation,
     tabNavStyle,
+    style,
     tabNavContainerStyle
   }) => {
     let panes: (ReactElement<TabPaneProps> | null)[]
@@ -191,7 +193,7 @@ export const Tabs: FC<TabsProps> = memo(
         />
       )
     return (
-      <Content fullHeight flex column>
+      <Content fullHeight flex column style={style}>
         {!disableTabNav && tabNavListRenderer()}
         {disableInnerPanes ? panes : <TabPanesList disableAnimation={disableAnimation} activeKey={activeKey} tabPanes={tabPanes} />}
       </Content>

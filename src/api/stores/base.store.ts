@@ -185,6 +185,7 @@ const BaseStore = {
 }
 
 type ILocalStore<T> = {
+  fetchOneById: (id: number) => Promise<T | undefined>
   addOne: (onSuccess?: (obj: T, silent: boolean) => void, onFail?: (silent: boolean) => void) => IStore<T>['addOne']
   deleteOneById: (onSuccess?: (silent: boolean) => void, onFail?: (silent: boolean) => void) => IStore<T>['deleteOneById']
   getAll: (filterer?: (obj: T) => boolean, cacheFilter?: (obj: T) => boolean) => IStore<T>['getAll']
@@ -211,6 +212,9 @@ export function initializeLocalStore<T>(atom: PrimitiveAtom<Map<number, T>>, dat
           onFail: () => onFail?.(options?.silent ?? false)
         })
       })
+    },
+    fetchOneById: async id => {
+      return await database.get(id)
     },
     deleteOneById: (onSuccess, onFail) => (id, options) => {
       return new Promise(res => {

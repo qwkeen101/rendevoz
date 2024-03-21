@@ -57,6 +57,13 @@ export default () => {
     }
   }, [loaded])
   useEffect(() => {
+    if (a && loaded) {
+      if (mediaState.autoPlay) {
+        a.play()
+      }
+    }
+  }, [loaded])
+  useEffect(() => {
     if (a) {
       a.volume = volume
     }
@@ -77,7 +84,7 @@ export default () => {
       flex
       alignItems={'center'}
       justifyContent={'center'}
-      style={{ margin: 'auto' }}
+      style={{ margin: 'auto', ...mediaState.styles?.playerStyle }}
       gap={columnMode ? 16 : 40}
       ref={ref}
       column={columnMode}
@@ -119,7 +126,7 @@ export default () => {
         >
           <div className={floated ? 'ellipsis-font-1' : undefined}>{mediaState.name}</div>
         </div>
-        {!floated && !(columnLayout && sidebarOpen) && (
+        {!floated && !(columnLayout && sidebarOpen) && mediaState.layout?.showDescription !== false && (
           <div
             className={mediaState.styles?.descriptionEllispsis ? ClassName.ellipsisFont(mediaState.styles.descriptionEllispsis) : undefined}
             style={{
@@ -134,7 +141,7 @@ export default () => {
             {mediaState.description}
           </div>
         )}
-        <div ref={containerRef} style={{ width: '100%', marginTop: 25 }}>
+        <div ref={containerRef} style={{ width: '100%', marginTop: mediaState.layout?.showProgressPins ? 25 : 16 }}>
           <MediaBottomBar />
         </div>
 

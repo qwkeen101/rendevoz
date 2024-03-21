@@ -11,6 +11,7 @@ import initializeDefaultKeyvalues from '@/api/lifycycle/startup/initializeDefaul
 import FileSystem from '@/api/fileSystem'
 import recoverFromBackup from '@/api/lifycycle/startup/recoverFromBackup'
 import initializeFilePath from './initializeFilePath'
+import getNoteContainsMeta from '@/api/lifycycle/startup/getNoteContainsMeta'
 
 export default async () => {
   await initializeFilePath()
@@ -30,4 +31,5 @@ export default async () => {
   await ObjectStore('tag').getAll()
   await initializeSearch()
   ipcInstance.send('appOk')
+  getNoteContainsMeta()
 }

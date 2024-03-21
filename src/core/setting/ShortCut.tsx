@@ -14,11 +14,11 @@ import SettingGroup from '@/core/setting/SettingGroup'
 const shortCutNameToTitle = {
   global: {
     openSidebar: 'Open sidebar',
-    // openObjectPanel: 'open quick object panel',
+    openObjectPanel: 'Open object details',
     // quickCreateObject: 'open create object form',
     openScreenShot: 'open screen shot',
     openTranslatePanel: 'open translate panel',
-    openSearchPanel: 'open web search panel',
+    // openSearchPanel: 'open web search panel',
     openGlobalSearch: 'open global text search',
     closeCurrentTab: 'Close current focused tab',
     switchToPrevTab: 'Switch to previous tab',

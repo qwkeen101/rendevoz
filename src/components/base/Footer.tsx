@@ -4,6 +4,7 @@ import { CSSProperties, FC } from 'react'
 import { useTranslation } from 'react-i18next'
 import Content from './Content'
 import { ClassName } from 'rendevoz'
+import classnames from 'classnames'
 
 interface FooterProps {
   submitText?: string
@@ -17,13 +18,11 @@ const Footer: FC<FooterProps> = ({ onBack, onSubmit, submitText = 'submit', back
   return (
     <Content flex alignItems="center" justifyContent="space-between">
       <div
-        className={ClassName.flatButton()}
+        className={classnames(ClassName.flatButton(), 'border-box-shadow')}
         style={{
           padding: '3px 12px',
-          boxShadow: 'none',
           marginRight: 30,
           fontWeight: 600,
-          border: '1px solid var(--button-hover-background)',
           ...buttonStyle
         }}
         onClick={onBack}
@@ -33,7 +32,6 @@ const Footer: FC<FooterProps> = ({ onBack, onSubmit, submitText = 'submit', back
       <div
         className={ClassName.selectButton()}
         style={{
-          boxShadow: 'none',
           padding: '3px 12px',
           fontWeight: 600,
           borderRadius: 6,

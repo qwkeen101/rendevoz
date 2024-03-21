@@ -1,6 +1,7 @@
 import { useLayoutEffect } from 'react'
 import { useFlow } from '@/core/components/whiteboard/StateHooks'
 import { IWhiteboardInstance, IWhiteboardNode } from '~/typings'
+import getNodeSize from '@/core/components/whiteboard/node/getNodeSize'
 
 export const DEFAULT_NODE_WIDTH = 280
 export const DEFAULT_NODE_PADDING = 40
@@ -14,8 +15,8 @@ const useNodeSize = (container: HTMLElement | undefined, node: IWhiteboardNode, 
         if (transform) {
           const w = Math.max(DEFAULT_NODE_WIDTH, bounding.width / transform.scale + DEFAULT_NODE_PADDING)
           const width = node.expanded ? 520 : Math.min(w, 500)
-
-          if (container.style.width !== 'auto') {
+          const defaultAutoWidth = getNodeSize(node, false).width === 'auto'
+          if (!defaultAutoWidth) {
             container.style.width = `${width}px`
           }
           setTimeout(() => {

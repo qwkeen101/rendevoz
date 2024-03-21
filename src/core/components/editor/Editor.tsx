@@ -173,7 +173,7 @@ export const EditorV1: FC<EditorProps> = memo(
       return stringTitle
     }
     const handleContainerPointerMove = useMemoizedFn((e: PointerEvent) => {
-      if (!globalIsDragging && !isDraggingDivider) {
+      if (!globalIsDragging && !isDraggingDivider && !readOnly) {
         if (!e.currentTarget) return
         if (!scrollElementRef.current?.contains(e.target)) {
           setBlockHandle(s => ({ ...s, visible: false }))
@@ -184,7 +184,6 @@ export const EditorV1: FC<EditorProps> = memo(
           setBlockHandle(s => ({ ...s, visible: false }))
           return
         }
-        console.log(result)
         const element = result.element
         editor.currentEnterElement = element
         const targetEle =

@@ -1,12 +1,12 @@
 import { IWhiteboardNode } from '~/typings'
 
-export default (node: IWhiteboardNode) => {
+export default (node: IWhiteboardNode, defaultAutoWidth = true) => {
   let height: number | string | undefined = 'auto',
     width: number | string | undefined = node.width,
     minWidth: number | string | undefined = 280,
     maxWidth: number | string | undefined = undefined
 
-  if (!width) {
+  if (!width && defaultAutoWidth) {
     width = 'auto'
   }
   if (node.resized || ['group', 'freehand'].includes(node.type)) {

@@ -276,6 +276,21 @@ const GeneralSetting = () => {
     }
   ]
   const OthersItems: ISettingItem[] = [
+    {
+      title: t('settings.Rebuild search index'),
+      description: t('settings.Rebuild search desc'),
+      children: (
+        <Button.IconButton
+          text={t('settings.Rebuild')}
+          icon={'park-refresh'}
+          onClick={() => {
+            FileSystem.deleteFile('rendefile:///meta-search-index.json').then(() => {
+              initializeSearch()
+            })
+          }}
+        />
+      )
+    },
     os === 'windows'
       ? {
           title: t('settings.Minimize to tray when close'),
@@ -628,20 +643,6 @@ const GeneralSetting = () => {
               })
             )
           }
-        />
-      )
-    },
-    {
-      title: t('settings.Rebuild search index'),
-      children: (
-        <Button.IconButton
-          text={t('settings.Rebuild')}
-          icon={'park-refresh'}
-          onClick={() => {
-            FileSystem.deleteFile('rendefile:///meta-search-index.json').then(() => {
-              initializeSearch()
-            })
-          }}
         />
       )
     }

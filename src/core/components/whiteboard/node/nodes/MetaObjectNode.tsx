@@ -57,7 +57,7 @@ const MetaObjectNode: FC<InnerNodeProps> = ({ node: n, setNodeState, nodeState }
             objectFit: 'cover',
             flex: 1,
             overflow: 'hidden',
-            borderRadius: '8px 8px 0px 0px'
+            borderRadius: 4
           }}
         />
         <div
@@ -195,7 +195,7 @@ const MetaObjectNode: FC<InnerNodeProps> = ({ node: n, setNodeState, nodeState }
   }
   const instance = useWhiteboardInstance()
   if (metaObject?.type.includes('Label')) {
-    return <LabelDetailsRenderer autoPlay showVideo={nodeState?.focused} metaId={metaObjectId} />
+    return <LabelDetailsRenderer autoPlay showAudio showVideo={nodeState?.focused} metaId={metaObjectId} />
   }
 
   const titleRenderer = () => {

@@ -21,6 +21,9 @@ export default () => {
     if (e.defaultPrevented) return
     handleKeyboardPaste(e, instance)
     handleKeyboardNavigation(e, instance)
+    if (isHotkey('mod+p', e)) {
+      instance.searchOps?.toggleSearchPanel()
+    }
     if (isHotkey(KEY.Escape, e)) {
       if (whiteboardState.highlightedIds) {
         setWhiteboardState(s => ({ ...s, highlightedIds: undefined }))

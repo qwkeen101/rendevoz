@@ -9,9 +9,9 @@ import KeyvalueStore from '@/api/stores/keyvalue.store'
 import { useTranslation } from 'react-i18next'
 import { useEffect, useRef } from 'react'
 import { Virtualizer } from '@tanstack/react-virtual'
+import SearchItemRenderer from '@/core/search/SearchItemRenderer'
 
 const SearchResult = ({ result, onClose, enableOpen }: { result: ISearchResult; onClose: VoidFunction; enableOpen: boolean }) => {
-  const map = MetaStore.useMetaObjectsMap()
   const searchHistory = KeyvalueStore.useValue('searchHistory') || []
   const handleOpenResult = (metaId: number) => {
     if (!enableOpen) return
@@ -23,66 +23,14 @@ const SearchResult = ({ result, onClose, enableOpen }: { result: ISearchResult; 
     onClose()
   }
   const { t } = useTranslation()
-  const renderItem = (hit: ISearchResult[0], selected: boolean) => {
-    const name = hit.matched['name'] || hit.name
-    const description = hit.matched['description'] || hit.description
-    const content = hit.matched['content']
-    const meta = map.get(hit.metaId)
-    const collections = CollectionStore.buildMetaCollections(hit.metaId)
 
-    if (!meta) return null
-    return (
-      <Content
-        className={ClassName.flatButton(4, '8px 4px 9px 0px')}
-        onClick={e => {
-          e.stopPropagation()
-          handleOpenResult(hit.metaId)
-        }}
-        flex
-        style={{ width: '100%', background: selected ? Colors.Background.ButtonHover : 'transparent' }}
-        alignItems={'stretch'}
-      >
-        <Content
-          flex
-          alignItems={'flex-start'}
-          style={{
-            marginLeft: 10,
-            marginRight: 10,
-            marginTop: meta.coverImgSrc ? 0 : 3
-          }}
-        >
-          {meta.coverImgSrc ? (
-            <img src={meta.coverImgSrc} width={24} height={24} style={{ objectFit: 'cover', borderRadius: 4 }} />
-          ) : (
-            <Icon
-              size={16}
-              name={Rendevoz.Utils.Object.getMetaObjectIcon(meta.type)}
-              containerStyle={{
-                color: Colors.Font.Description,
-                height: 'fit-content'
-              }}
-            />
-          )}
-        </Content>
-        <Content>
-          <div className={css([ClassName.title('0.95rem'), ClassName.ellipsisFont(1)])} dangerouslySetInnerHTML={{ __html: name }}></div>
-          {(content || description) && (
-            <div className={ClassName.description('0.85rem')} dangerouslySetInnerHTML={{ __html: content || description }}></div>
-          )}
-          {collections.length > 0 && (
-            <div className={ClassName.description('0.8rem')}>{collections[0].map(i => i.name || '').join(' / ')}</div>
-          )}
-        </Content>
-      </Content>
-    )
-  }
   const virtualizerRef = useRef<Virtualizer<any, any>>()
   useEffect(() => {
     virtualizerRef.current?.setFocus(0)
   }, [result])
   return (
-    <Content flex column style={{ flex: 1, height: 0 }}>
-      {result.length ? (
+    <Content flex column fullHeight>
+      {result.length > 0 && (
         <>
           <VirtualList
             ref={virtualizerRef}
@@ -112,26 +60,27 @@ const SearchResult = ({ result, onClose, enableOpen }: { result: ISearchResult; 
             })}
             items={result}
             estimateSize={40}
-            renderItem={(item, idx, selected) => renderItem(item, selected)}
+            renderItem={(item, idx, selected) => (
+              <SearchItemRenderer
+                onClick={() => {
+                  handleOpenResult(item.metaId)
+                }}
+                hit={item}
+                selected={selected}
+              />
+            )}
           ></VirtualList>
           <Content
             flex
             style={{
-              borderTop: `1px solid ${Colors.Background.Border}`,
               padding: '6px 14px',
-              lineHeight: 1,
-              fontSize: '12px',
-              color: Colors.Font.Secondary
+              lineHeight: 1
             }}
+            className={'border-top bg-secondary transparent-font font-size-12'}
           >
-            ↑↓ 键选择, ↵ 键打开
+            {t('general.Keyboard navigation')}
           </Content>
         </>
-      ) : (
-        <Content fullWidth style={{ padding: 16, color: Colors.Font.Transparent, fontWeight: 500 }} flex gap={12}>
-          <Icon name={'park-emotion-unhappy'} />
-          <div>{t('general.Search no result')}</div>
-        </Content>
       )}
     </Content>
   )

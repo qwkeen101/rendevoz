@@ -11,12 +11,12 @@ export default (node: HTMLElement) => {
 
 const trimNode = (node: HTMLElement, text: string) => {
   const prev = node.previousSibling
-  const next = node.nextElementSibling
   let t = text
-  t = t.trim()
+  t = t.replace(/\n/g, '').replace(/ +/g, ' ')
   if ((prev?.nodeName === 'BR' || (prev && prev.nodeType === Node.TEXT_NODE && prev.textContent === '\n')) && t !== '') {
     t = '\n' + t
   }
+  if (t === ' ') return ''
   console.log(node, t, text, prev)
   return t
 }

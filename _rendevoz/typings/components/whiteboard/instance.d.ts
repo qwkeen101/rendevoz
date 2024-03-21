@@ -178,6 +178,12 @@ export type IWhiteboardInstance = Partial<{
   contentOps: {
     transformToOutline: () => IWhiteboardOutline[]
   }
+  moveToMetaNode: (
+    metaId: number,
+    opts?: {
+      select?: boolean
+    }
+  ) => void
   nodeOps: {
     getDOMBoxOfNodes: (ids: number | number[]) => Record<number, Box>
     getMaxZindex: () => number
@@ -231,12 +237,16 @@ export type IWhiteboardInstance = Partial<{
     openEdgeToolbar: (edgeId: number, position: XYPosition) => void
     openContextMenuToolbar: (position: XYPosition) => void
   }
+  searchOps: {
+    toggleSearchPanel: (visible?: boolean) => void
+  }
   groupOps: {
     // fit into view and rename
     renameGroup: (groupNodeId: number) => void
     getParentGroupsOfNode: (nodeId: number) => IWhiteboardNode[]
     getNodesInGroup: (groupNodeId: number, includeSelf?: boolean) => IWhiteboardNode[]
     groupNodes: (nodeId: number | number[]) => void
+    exportGroupImage: (groupId: number) => void
   }
   groupNodes: (nodes: IWhiteboardNode[]) => void
   selectOps: {

@@ -137,7 +137,7 @@ const AttachmentList = ({
             column
             alignItems={'center'}
             style={{
-              padding: '48px',
+              padding: '24px',
               textAlign: 'center',
               margin: 'auto'
             }}

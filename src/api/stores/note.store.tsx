@@ -6,6 +6,7 @@ import SearchHelper from '@/api/textSearch/SearchHelper'
 import { MetaStore, ObjectStore } from '@/api/stores/index'
 import FileSystem from '@/api/fileSystem'
 import { Rendevoz } from '@/core/rendevoz'
+import normalizeChildrenToText from '@/core/components/editor/utils/normalize/normalizeChildrenToText'
 
 const createNoteStore = () => {
   const blobDb = useDb('blobs')
@@ -44,19 +45,19 @@ const createNoteStore = () => {
       }
     }
   }
-  const saveNoteAsSearch = async (value: Descendant[], noteId: number) => {
-    const note = await ObjectStore('note').getOneById(noteId)
-    if (note && note.metaId) {
-      const targetMeta = await MetaStore.getMetaObjectById(note.metaId)
+  const saveNoteAsSearch = async (value: Descendant[], metaId?: number) => {
+    if (metaId) {
+      const targetMeta = await MetaStore.getCachedMetaObject(metaId)
+      console.log(targetMeta, value)
       if (targetMeta) {
         SearchHelper.insertDocument({
           id: targetMeta.id,
           docType: 'metaObject',
           metaId: targetMeta.id,
           metaType: targetMeta.type,
-          name: targetMeta.name,
+          name: targetMeta.name || targetMeta.placeholderName,
           description: targetMeta.description,
-          content: Node.string({ children: value })
+          content: normalizeChildrenToText(value)
         })
       }
     }

@@ -10,6 +10,7 @@ import { useMemoizedFn } from '@/hooks'
 import { ClassName } from 'rendevoz'
 import { HistoryEditor } from 'slate-history'
 import useEditorInstance from '@/core/components/editor/hooks/useEditorInstance'
+import Id from '@/utils/id'
 
 const InlineMetaPicker = ({ element, children, attributes }: RenderElementProps) => {
   const editor = useSlateStatic()
@@ -32,6 +33,8 @@ const InlineMetaPicker = ({ element, children, attributes }: RenderElementProps)
         type: 'linkToMeta',
         targetMetaId: id
       })
+      Transforms.setSelection(editor, Editor.range(editor, Path.next(path)))
+      ReactEditor.focus(editor)
     } else {
       const text = value
       HistoryEditor.withoutSaving(editor, () => {
@@ -40,7 +43,9 @@ const InlineMetaPicker = ({ element, children, attributes }: RenderElementProps)
         })
       })
       const prev = element.isAt ? `@` : `[[`
-      Transforms.insertText(editor, `${prev}${text}`)
+      Transforms.insertText(editor, `${prev}${text}`, {
+        voids: true
+      })
       ReactEditor.focus(editor)
     }
   })
@@ -62,6 +67,9 @@ const InlineMetaPicker = ({ element, children, attributes }: RenderElementProps)
         ref.current?.focus()
       })
       const existHandler = (e: KeyboardEvent) => {
+        if (isHotkey(KEY.Enter, e)) {
+          e.preventDefault()
+        }
         if (isHotkey(KEY.Escape, e)) {
           e.preventDefault()
           e.stopPropagation()
@@ -80,6 +88,7 @@ const InlineMetaPicker = ({ element, children, attributes }: RenderElementProps)
         positions={['top', 'bottom']}
         padding={4}
         reposition
+        withClickCover
         content={
           <WithBorder>
             <MetaFilterer

@@ -11,8 +11,9 @@ const useStoreValue = (options: {
   noteId?: number
   defaultValue?: Descendant[]
   instanceRef: RefObject<IEditorInstance | undefined>
+  metaId?: number
 }) => {
-  const shouldSaveRef = useRef(false)
+  const shouldSaveRef = useRef(options.defaultValue)
   const { noteId, instanceRef, defaultValue, onContentLoaded } = options
   const { saveNoteAsBuffer, getNoteValue, saveNoteAsSearch } = NoteStore
   const note = ObjectStore('note').useValue(noteId)
@@ -30,7 +31,7 @@ const useStoreValue = (options: {
         }
       })
       saveNoteAsBuffer(value, note.contentId)
-      saveNoteAsSearch(value, noteId)
+      saveNoteAsSearch(value, options.metaId)
       ObjectStore('note').updateOne({ id: noteId, lastSavedAt: Date.now() })
     }
   }
@@ -63,6 +64,7 @@ const useStoreValue = (options: {
     if (note?.contentId) {
       const noteValue = await getNoteValue(note.contentId)
       if (noteValue) {
+        saveNoteAsSearch(noteValue, options.metaId)
         setFetchedValue(noteValue)
       }
     }
@@ -86,6 +88,7 @@ const useStoreValue = (options: {
     const instance = instanceRef.current
     if (defaultValue && (noteId ? !note?.contentId : true)) {
       instance?.replaceChildren?.(defaultValue)
+      saveNoteAsSearch(defaultValue, options.metaId)
     }
   }, [defaultValue, note?.contentId])
   useEffect(() => {

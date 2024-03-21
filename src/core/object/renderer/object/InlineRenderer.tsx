@@ -7,7 +7,7 @@ import ClassName from '@/styles/classNames'
 import { MetaObject } from '~/typings'
 import { useTranslation } from 'react-i18next'
 import classnames from 'classnames'
-import { AnimatePopover, WithBorder } from '@/components'
+import { AnimatePopover, IconWithPopover, WithBorder } from '@/components'
 import { ObjectActionPopover } from '@/core'
 
 export type InlineRendererProps = {
@@ -16,6 +16,7 @@ export type InlineRendererProps = {
   showCircle?: boolean
   showUnderline?: boolean
   showHoverObjectDetails?: boolean
+  showMoreOptions?: boolean
   renderAttOnParent?: boolean
   renderObjectDetailsOnParent?: boolean
   reverse?: boolean
@@ -29,6 +30,7 @@ export default (
     showCircle,
     showUnderline,
     showHoverObjectDetails,
+    showMoreOptions,
     renderAttOnParent,
     renderObjectDetailsOnParent,
     onClick,
@@ -142,6 +144,27 @@ export default (
           {`${metaObject.attachments.length} ${t(`general.att`)}`}
         </div>
       ) : null}
+      {showMoreOptions && (
+        <IconWithPopover
+          size={14}
+          name={'park-more'}
+          placement={['right', 'left']}
+          containerStyle={{
+            marginLeft: 'auto'
+          }}
+          onClick={e => e.stopPropagation()}
+          className={ClassName.flatButton(4, '3px')}
+          content={setV => (
+            <WithBorder
+              onClick={e => {
+                e.stopPropagation()
+              }}
+            >
+              <ObjectActionPopover onClose={() => setV(false)} metaObjectId={metaObject.id} />
+            </WithBorder>
+          )}
+        ></IconWithPopover>
+      )}
     </div>
   )
 }

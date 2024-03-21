@@ -1,13 +1,13 @@
 import { IWhiteboardNode } from '~/typings'
 import { Icon } from '@/components'
 import { Colors } from '@/consts'
-import { memo } from 'react'
+import { memo, RefObject } from 'react'
 import { ClassName } from 'rendevoz'
 import { useWhiteboardInstance } from '@/core/components/whiteboard/hooks'
 import Id from '@/utils/id'
 import { getFlattenChildrenOfNode } from '@/core/components/whiteboard/node/mindmap/utils/tree'
 import { css } from '@emotion/css'
-import { useSelectAtomValue } from '@/hooks'
+import { useIsIn, useSelectAtomValue } from '@/hooks'
 import { WhiteboardStateAtom } from '@/core/components/whiteboard/hooks/useWhiteboardState'
 import { selectAtom } from 'jotai/utils'
 import { useAtomValue } from 'jotai'
@@ -32,8 +32,9 @@ const leftClazz = css({
   transition: 'opacity 0.2s ease'
 })
 const readOnlyAtom = selectAtom(WhiteboardStateAtom, s => s.readOnly)
-export default memo(({ node, isIn }: { node: IWhiteboardNode; isIn?: boolean }) => {
+export default memo(({ node, containerRef }: { node: IWhiteboardNode; containerRef?: RefObject<HTMLDivElement> }) => {
   const instance = useWhiteboardInstance()
+  const { isIn } = useIsIn(containerRef)
   const readOnly = useAtomValue(readOnlyAtom)
   const getSubNodeLength = (direction: direction) => {
     const all = getFlattenChildrenOfNode(node, instance, direction) || []

@@ -1,6 +1,8 @@
 import { Box, IWhiteboardInstance, IWhiteboardNode } from '~/typings'
-import { assignProperties, boxContain } from '@/utils'
+import { assignProperties, boxContain, calculateImageAspectRatio, downloadImg } from '@/utils'
 import { getBoxOfNodes } from '@/core/components/whiteboard/utils'
+import { exportWhiteboardAsImage } from '@/core/components/whiteboard/utils/exportAsImage'
+import groupStore from '@/api/stores/group.store'
 
 export const enlargeBox = (currentBox: Box, enlarge: number = 24) => {
   return {
@@ -14,6 +16,28 @@ const near = (a?: number, b?: number) => a !== undefined && b !== undefined && M
 const assignGroupOps = (instance: IWhiteboardInstance) => {
   assignProperties(instance, {
     groupOps: {
+      exportGroupImage: groupId => {
+        const boxes = instance.nodeOps?.getDOMBoxOfNodes(groupId)
+        const groupBox = boxes?.[groupId]
+        const group = instance.getNode?.(groupId)
+        if (groupBox && group) {
+          const allNodes = instance.getAllNode?.()
+          const container = instance.getContainerNode?.()
+          if (allNodes && container) {
+            const { width, height } = calculateImageAspectRatio(groupBox.width, groupBox.height, 8000, 8000)
+            exportWhiteboardAsImage(allNodes, container, instance, {
+              as: 'png',
+              area: 'visible',
+              box: groupBox,
+              width: width,
+              height: height,
+              padding: 0
+            }).then(i => {
+              downloadImg(i, `${group.name || 'group'}.png`)
+            })
+          }
+        }
+      },
       renameGroup: groupNodeId => {
         const node = instance.getNode?.(groupNodeId)
         if (!node) throw 'Failed to find node!'

@@ -74,7 +74,6 @@ const Tag = ({
         lineHeight: square ? '20px' : undefined,
         height: 'fit-content',
         padding: square ? '0px 6px' : small ? '0px 8px 0px' : '3px 6px 3px 10px',
-        fontFamily: 'Muli',
         width: 'fit-content',
         color: Colors.getAdaptFontColor(tagObject.color),
         justifyContent: 'space-between',
@@ -136,10 +135,9 @@ const Tag = ({
                 e.stopPropagation()
                 onDelete?.()
               }}
+              className={'transparent-font'}
               style={{
-                cursor: 'pointer',
-                color: darkMode ? 'rgba(255,255,255,0.8)' : 'rgb(64,44,27)',
-                opacity: darkMode ? undefined : 0.3
+                cursor: 'pointer'
               }}
               name="park-close"
             />

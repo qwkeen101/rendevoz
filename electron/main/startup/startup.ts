@@ -96,7 +96,6 @@ const startElectron = async () => {
     contents.setWindowOpenHandler(({ url }) => {
       if (url.includes('printer.html')) return { action: 'allow' }
       if (url.includes('blank')) return { action: 'allow' }
-      if (url.includes('index.html')) return { action: 'allow' }
       if (url.startsWith('https://rendevoz.firebaseapp.com/')) {
         return { action: 'allow' }
       }
@@ -108,6 +107,7 @@ const startElectron = async () => {
       } else {
         shell.openExternal(url)
       }
+      console.log('deny')
       // win.webContents.send('newPage', url)
       return { action: 'deny' }
     })

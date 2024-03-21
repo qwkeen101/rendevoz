@@ -85,7 +85,7 @@ const MediaCore = memo(() => {
   if (mediaState.mode === 'audio') {
     return <AudioPlayer />
   }
-  const borderRadius = mediaState.styles?.videoBorderRadius ??  MEDIA_PLAYER_DEFAULT_BORDER_RADIUS
+  const borderRadius = mediaState.styles?.videoBorderRadius ?? MEDIA_PLAYER_DEFAULT_BORDER_RADIUS
   return (
     <ContextMenu
       ref={contextMenuRef}
@@ -104,18 +104,14 @@ const MediaCore = memo(() => {
           paddingBottom: '56.25%',
           height: 0,
           position: mediaState.fullScreen ? 'unset' : 'relative',
-          borderRadius: mediaState.fullScreen
-            ? 0
-            : mediaState.floated
-            ? `0px 0px ${borderRadius}px ${borderRadius}px`
-            : borderRadius,
+          borderRadius: mediaState.fullScreen ? 0 : mediaState.floated ? `0px 0px ${borderRadius}px ${borderRadius}px` : borderRadius,
           overflow: 'hidden',
           inset: 0
         }}
       >
         {!mediaState.loaded && (
           <div style={{ position: 'absolute', inset: 0, zIndex: 999 }}>
-            <LoadingAnimation />
+            <LoadingAnimation borderRadius={borderRadius} />
           </div>
         )}
         {mode === 'web' && <WebVideoPlayer />}
@@ -126,7 +122,7 @@ const MediaCore = memo(() => {
   )
 })
 
-const LoadingAnimation = () => {
+const LoadingAnimation = ({ borderRadius }: { borderRadius: number }) => {
   const [dots, setDotsNum] = useState(0)
   const { t } = useTranslation()
   useEffect(() => {
@@ -141,7 +137,12 @@ const LoadingAnimation = () => {
     }
   }, [])
   return (
-    <div className="loading_center">
+    <div
+      className="loading_center"
+      style={{
+        borderRadius
+      }}
+    >
       <Content flex>
         <div className="loading_wave"></div>
         <div className="loading_wave"></div>

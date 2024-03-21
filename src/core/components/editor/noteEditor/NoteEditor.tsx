@@ -36,6 +36,7 @@ const NoteEditor = ({
   const { saveValueToNote, fetchedValue } = useStoreValue({
     noteId,
     instanceRef,
+    metaId,
     onContentLoaded: () => {
       if (instanceRef.current) {
         rest.onInstanceInitialized?.(instanceRef.current)
@@ -46,7 +47,7 @@ const NoteEditor = ({
   const { handleDeleteLable, handleAddLabel } = useLabel(note)
   const emitter = Rendevoz.Events.Emit.GlobalEventEmitter
   const updater = ObjectStore('note').updateOne
-  useCheckInsideMeta(instanceRef, metaId)
+  useCheckInsideMeta(instanceRef, metaId, noteId)
 
   return (
     <Editor

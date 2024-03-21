@@ -18,7 +18,6 @@ import { ClassName } from 'rendevoz'
 import SidebarUser from '@/components/layout/sidebar/SidebarUser'
 import { useUpdate } from 'react-use'
 import { atom } from 'jotai'
-import { panels } from '@uiw/react-codemirror'
 
 const SidebarIconDraggingAtom = atom<{
   isDragging: boolean

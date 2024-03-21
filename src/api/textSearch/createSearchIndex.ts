@@ -40,8 +40,7 @@ const createSearchStore = () => {
       combineWith: 'AND'
     })
 
-    const regEsc = (str: string) => str.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&')
-
+    const regEsc = (str: string) => str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
     res.forEach(hit => {
       const matched: Record<string, string> = {}
       const terms = hit.terms
@@ -58,15 +57,15 @@ const createSearchStore = () => {
             tokens.push(seg.w)
           }
         })
-        const regexp = new RegExp('(\\S.{0,20})?(' + [...terms, ...tokens].map(i => regEsc(i)).join('|') + ')(.{0,20}\\S)?', 'ig')
-        const testReg = new RegExp([...terms, ...tokens].join('|'), 'gi')
+        const regexp = new RegExp('(\\S.{0,30})?(' + [...terms, ...tokens].map(i => regEsc(i)).join('|') + ')(.{0,30}\\S)?', 'ig')
+        const testReg = new RegExp([...terms, ...tokens].map(i => regEsc(i)).join('|'), 'gi')
         if (hit[field] && testReg.test(hit[field] as string)) {
           if (field === 'name') {
             matched[field] = hit[field].replace(testReg, '<mark>$&</mark>')
           } else {
             const results: string[] = []
             ;(hit[field] as string).replace(regexp, function (m, $1, $2, $3) {
-              if (results.length < 5) {
+              if (results.length < 3) {
                 results.push(`${$1 ? '…' + $1 : ''}<mark>${$2}</mark>${$3 ? $3 + '…' : ''}`)
               }
             })

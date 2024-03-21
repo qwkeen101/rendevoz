@@ -1,7 +1,7 @@
-import { memo, useEffect, useRef } from 'react'
+import { memo, useEffect, useRef, useState } from 'react'
 import { Helmet } from 'react-helmet'
 import { Container, Icon } from '../base'
-import DockLayout, { LayoutData } from '../base/dock'
+import DockLayout, { LayoutData, TabData } from '../base/dock'
 import { getSetting } from '@/core'
 import { Sidebar } from './sidebar'
 import ClassName from '@/styles/classNames'
@@ -15,6 +15,7 @@ import { initializedAtom } from '@/Initializer'
 import { atom } from 'jotai'
 import assignGlobalLayoutOps from '@/components/layout/assignLayoutOps'
 import registerTabs from '@/api/lifycycle/startup/registerTabs'
+import { ITabData } from '~/typings/rendevoz'
 
 const initialLayout: LayoutData = {
   global: {
@@ -126,12 +127,27 @@ const Layout = () => {
       localStorage.setItem('layout', JSON.stringify(layoutRef.current?.saveLayout()))
     })
   }
-
+  const [currentActiveName, setCurrentActiveName] = useState('Rendevoz')
+  useEffect(() => {
+    setTimeout(() => {
+      const currentActiveTab = GlobalInstance.layoutOps?.getCurrentFocusedTab()
+      if (currentActiveTab) {
+        const tabInfo = layoutRef.current?.find(currentActiveTab) as TabData | undefined
+        if (tabInfo) {
+          if (typeof tabInfo.title === 'string') {
+            setCurrentActiveName(tabInfo.title || 'Rendevoz')
+            return
+          }
+        }
+      }
+      setCurrentActiveName('Rendevoz')
+    })
+  }, [layout])
   const os = getOS()
   return (
     <Container auto column style={{ height: '100vh', overflow: 'hidden' }}>
       <Helmet>
-        <title>Rendevoz</title>
+        <title>{currentActiveName}</title>
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
       </Helmet>
       {os === 'windows' && <TitleBar />}

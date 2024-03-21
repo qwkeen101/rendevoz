@@ -1,6 +1,11 @@
 {
   "general": {
+    "Export as image": "Export as image",
+    "No selected object": "No selected object",
+    "All": "All",
+    "Appear in": "Appear in",
     "Again": "Again",
+    "Saved filters": "Saved filters",
     "Easy": "Easy",
     "Calendar": "Calendar",
     "Hard": "Hard",
@@ -8,6 +13,7 @@
     "Calendar size": "Calendar size",
     "Standard": "Standard",
     "Large": "Large",
+    "Keyboard navigation": "↑↓ to select, ↵ to open",
     "Max size": "Max",
     "Study state": "Study state",
     "Flashcards": "Flashcards",
@@ -674,6 +680,7 @@
     "code-block": "Code block"
   },
   "settings": {
+    "Rebuild search desc": "Rebuild search index when failed to get correct search results",
     "Global stylesheet": "Global stylesheet",
     "Open sidebar": "Open sidebar",
     "Add paragraph spacing": "Add paragraph spacing",
@@ -773,7 +780,7 @@
     "customize displayed notifications": "Customize displayed notifications",
     "choose which notification should be displayed": "Choose which notification should be displayed",
     "global shortcuts": "Global shortcuts",
-    "open quick object panel": "Open quick object panel",
+    "Open object details": "Open object details",
     "open create object form": "Open create object form",
     "open screen shot": "Open screenshot",
     "latest version": "Latest version",

@@ -26,8 +26,10 @@ export const exportWhiteboardAsImage = async (
   options: {
     as: 'svg' | 'png'
     area: 'visible' | 'whole'
+    box?: Box
     width: number
     height: number
+    padding?: number
   } = {
     area: 'visible',
     as: 'png',
@@ -42,7 +44,14 @@ export const exportWhiteboardAsImage = async (
   const box = instance.nodeOps?.getDOMBoxOfNodes(allNodes.map(i => i.id))
   if (!box) return
   const outer = getBoxOfBoxes(Array.from(Object.values(box)))
-  const transform = getTransformForBounds(options.area === 'visible' ? viewBox : outer, imageWidth, imageHeight, 0, 2000)
+  const transform = getTransformForBounds(
+    options.box || (options.area === 'visible' ? viewBox : outer),
+    imageWidth,
+    imageHeight,
+    0,
+    2000,
+    options.padding
+  )
   const background = window.getComputedStyle(document.body).getPropertyValue('--global-background')
   const rgb = tinycolor(background).toRgbString()
   const config = {

@@ -10,6 +10,7 @@ import { exportWhiteboardAsImage } from '@/core/components/whiteboard/utils/expo
 import { useWhiteboardInstance } from '@/core/components/whiteboard/hooks'
 import { downloadImg } from '@/utils'
 import { useWhiteboardState } from '@/core/components/whiteboard/hooks/useWhiteboardState'
+import TooltipWithCmd from '@/components/TooltipWithCmd'
 export default memo(() => {
   const [whiteboardState, setWhiteboardState] = useWhiteboardState()
   const [rightBarState, setRightBarState] = useAtom(WhiteboardSidebarStateAtom)
@@ -81,6 +82,15 @@ export default memo(() => {
           />
         </Toolbar>
       )}
+      <Icon
+        tooltip={<TooltipWithCmd cmd={'Cmd+P'} name={'Search'}></TooltipWithCmd>}
+        name={'park-search'}
+        className={ClassName.flatButton(4, '5px')}
+        size={16}
+        onClick={() => {
+          instance.searchOps?.toggleSearchPanel(true)
+        }}
+      />
       {rightBarState.currentTab && (
         <Tooltip content={'Side peek'}>
           <Icon

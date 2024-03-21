@@ -108,7 +108,7 @@ export const RENDEVOZ_DEFAULT_TABS: TabData[ILayoutTab['type']][] = [
   },
   {
     type: 'group',
-    content: opts => <MetaGroupPage groupId={opts.objectId} />
+    content: opts => <MetaGroupPage groupId={opts.objectId} onInstanceInitialized={opts.onInstanceInitialized} />
   },
   {
     type: 'synced',

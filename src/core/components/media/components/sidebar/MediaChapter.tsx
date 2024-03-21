@@ -173,8 +173,11 @@ const MediaChapter = memo(({ percent, startTime, endTime, idx, chapter }: MediaC
       <Content
         className={progressList}
         style={{
+          overflow: 'hidden',
+          borderRadius: 16,
           transform: realProgressBarHovering ? 'none' : undefined,
-          backgroundColor: mediaState.mode === 'audio' ? Colors.Background.ButtonHover : undefined
+          backgroundColor: mediaState.mode === 'audio' ? Colors.Background.ButtonHover : undefined,
+          ...mediaState.styles?.progressStyle
         }}
       >
         <div

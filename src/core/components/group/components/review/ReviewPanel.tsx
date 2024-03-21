@@ -13,6 +13,8 @@ import { GlobalInstance, useMemoizedFn } from '@/hooks'
 import NeedReview from '@/core/components/group/components/review/NeedReview'
 import { useTranslation } from 'react-i18next'
 import { upperFirst } from 'lodash'
+import KeyvalueStore from '@/api/stores/keyvalue.store'
+import { Resizable } from 're-resizable'
 
 export default memo(() => {
   const instance = useGroupInstance()
@@ -44,7 +46,7 @@ export default memo(() => {
     learning: [],
     beforeDues: []
   })
-
+  const panelSize = KeyvalueStore.useValue('groupReviewPanelSize')
   const currMeta = MetaStore.useValue(panelState.currentMetaId)
   const currCard = ObjectStore('reviewCard').useValue(currMeta?.review || 0)
   const handleReview = async () => {
@@ -253,7 +255,19 @@ export default memo(() => {
     }
   }
   const renderReview = () => (
-    <Content flex column style={{ width: '60vw', height: '80vh' }}>
+    <Resizable
+      onResizeStop={(el, direction, elementRef) => {
+        KeyvalueStore.updateOne('groupReviewPanelSize', [elementRef.clientWidth, elementRef.clientHeight])
+      }}
+      defaultSize={{
+        width: panelSize?.[0] ?? '60vw',
+        height: panelSize?.[1] ?? '80vh'
+      }}
+      style={{
+        display: 'flex',
+        flexDirection: 'column'
+      }}
+    >
       <Content
         flex
         fullWidth
@@ -348,7 +362,7 @@ export default memo(() => {
       ) : (
         <ReviewCongradulation onBack={() => setPanelState(s => ({ ...s, mode: 'main' }))} />
       )}
-    </Content>
+    </Resizable>
   )
   return (
     <Modal enableClickEvent zIndex={1000} visible={panelState.visible} onClose={() => setPanelState(s => ({ ...s, visible: false }))}>

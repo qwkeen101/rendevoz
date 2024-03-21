@@ -6,12 +6,9 @@ import { defaultBgColor } from '@/components/picker/colorPicker'
 import { GlobalInstance } from '@/hooks'
 import { TFunction } from 'i18next'
 import getContextMenu from '@/core/components/whiteboard/toolbars/contextMenus/getContextMenu'
-import { getBoxOfNodes } from '@/core/components/whiteboard/utils'
 import { Rendevoz } from '@/core/rendevoz'
 import { MetaStore, NoteStore, ObjectStore } from '@/api/stores'
-import Id from '@/utils/id'
 import getVisibleNodeMenuItems from '@/core/components/whiteboard/toolbars/contextMenus/getVisibleNodeMenuItems'
-import { ColorPicker, WithBorder } from '@/components'
 import { WhiteboardNodeMenuItems } from '@/core/components/whiteboard/toolbars/contextMenus/items'
 
 export default (
@@ -32,7 +29,30 @@ export default (
   const menuItems = getVisibleNodeMenuItems(selected)
   const hasWebpageMetas = selected.some(i => i.type === 'metaObject' && i.expanded && metaMap.get(i.metaObjectId)?.type === 'webpage')
   const commonTools: (IMenuLayoutItem | undefined)[] = [
-    ...(ifContextMenuOnSingleGroup && toolbarType !== 'click' ? [...getContextMenu(instance, t), { type: 'separator' }] : []),
+    ...(ifContextMenuOnSingleGroup && toolbarType !== 'click'
+      ? [
+          {
+            type: 'item',
+            key: 'create-on-group',
+            text: t('whiteboard.Create new card'),
+            icon: 'park-plus',
+            subMenu: [...getContextMenu(instance, t)]
+          },
+          {
+            type: 'item',
+            key: 'export-group-image',
+            text: t('general.Export as image'),
+            icon: 'park-download-four',
+            onSelect: () => {
+              instance.selectOps?.deselectAll()
+              setTimeout(() => {
+                instance.groupOps?.exportGroupImage(selected[0].id)
+              }, 10)
+            }
+          },
+          { type: 'separator' }
+        ]
+      : []),
     hasWebpageMetas
       ? {
           type: 'item',

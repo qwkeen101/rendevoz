@@ -7,7 +7,7 @@ export default (selected: IWhiteboardNode[]) => {
     showMindmapConnection: first.type === 'mindmap' && length === 1,
     showBorder: selected.some(i => i.type === 'mindmap' || i.rootId),
     showGroupOptions: length > 1,
-    showAlignPackOptions: length > 1 && !selected.every(i => i.type === 'mindmap' || i.rootId),
+    showAlignPackOptions: length > 1 && !selected.some(i => i.type === 'mindmap' || i.rootId),
     showMetaOptions: length === 1 && first.type === 'metaObject',
     isText: length === 1 && first.type === 'text',
     showBorderType: selected.some(i => i.type === 'mindmap' || i.rootId)

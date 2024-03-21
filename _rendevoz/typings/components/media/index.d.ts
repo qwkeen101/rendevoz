@@ -35,8 +35,14 @@ export type IMediaExternalState = {
   metaId?: number
   layout?: {
     showAudioThumbnail?: boolean
+    showDescription?: boolean
+    showProgressPins?: boolean
   }
   styles?: {
+    progressHeight?: number
+    progressStyle?: CSSProperties
+    controlBarStyle?: CSSProperties
+    playerStyle?: CSSProperties
     videoBorderRadius?: number
     titleStyle?: CSSProperties
     descriptionStyle?: CSSProperties
@@ -45,6 +51,8 @@ export type IMediaExternalState = {
   toolbar?: {
     pin?: boolean
     assignToCollection?: boolean
+    addLabel?: boolean
+    extra?: boolean
   }
 }
 

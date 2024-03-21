@@ -1,14 +1,20 @@
 {
   "general": {
+    "Export as image": "导出为图片",
+    "All": "全部",
+    "Appear in": "出现于",
     "home": "主页",
+    "Saved filters": "已保存的筛选",
     "Done": "完成",
     "Load": "加载",
+    "No selected object": "暂无选中的实体",
     "Loading": "加载中",
     "Again": "重来",
     "Easy": "简单",
     "Calendar": "日历",
     "Calendar size": "日历大小",
     "Standard": "标准",
+    "Keyboard navigation": "↑↓ 键选择, ↵ 键打开",
     "Large": "较大",
     "Hard": "困难",
     "Max size": "最大",
@@ -670,6 +676,7 @@
     "code-block": "代码块"
   },
   "settings": {
+    "Rebuild search desc": "当无法获得正确搜索结果时，重建索引",
     "Global stylesheet": "全局样式",
     "Open sidebar": "打开侧边栏",
     "Add paragraph spacing": "添加段落间距",
@@ -773,7 +780,7 @@
     "customize displayed notifications": "自定义显示的通知",
     "choose which notification should be displayed": "选择你想要显示哪些通知",
     "global shortcuts": "全局快捷键",
-    "open quick object panel": "打开快捷对象面板",
+    "Open object details": "打开实体信息",
     "open create object form": "打开创建对象面板",
     "open screen shot": "打开屏幕截图",
     "latest version": "最新版本",

@@ -13,13 +13,14 @@ import Tag from '@/core/object/ObjectTag'
 import LabelDetailsRenderer from '@/core/object/renderer/LabelDetailsRenderer'
 import MetaPropDisplayer from '@/core/object/renderer/properties/MetaPropDisplayer'
 import ParentItems from '@/core/object/details/ParentItems'
+import Backlinks from '@/core/object/details/Backlinks'
 
 const flatButton = css([
-  ClassName.flatButton(999, '3px 10px '),
+  ClassName.flatButton(4, '3px 10px'),
   {
     // backgroundColor: Colors.Background.ButtonHover,
     // fontWeight: 600,
-    borderRadius: '999px !important',
+    borderRadius: '4px !important',
     fontSize: 13,
     gap: 4,
     alignItems: 'center',
@@ -29,7 +30,7 @@ const flatButton = css([
   }
 ])
 
-const MetaMainDetails = ({ metaId }: { metaId: number }) => {
+const MetaMainDetails = ({ metaId, visible }: { metaId: number; visible?: boolean }) => {
   const object = MetaStore.useValue(metaId)
   const { renderWhole, metaObject } = useRenderObject({ metaObjectId: metaId })
   const { t } = useTranslation()
@@ -54,6 +55,8 @@ const MetaMainDetails = ({ metaId }: { metaId: number }) => {
           {metaObject?.type?.includes('Label') ? (
             <LabelDetailsRenderer
               showImage={false}
+              showVideo={false}
+              showAudio={false}
               metaId={metaId}
               style={{
                 border: '1px solid var(--border-background)',
@@ -78,7 +81,7 @@ const MetaMainDetails = ({ metaId }: { metaId: number }) => {
           )}
         </Content>
       </Content>
-      <Content style={{ paddingTop: 12, flexWrap: 'wrap', marginLeft: -8 }} flex gap={4}>
+      <Content className={'border-box-shadow'} style={{ marginTop: 12, flexWrap: 'wrap', padding: 6, borderRadius: 8 }} flex gap={4}>
         <Button.IconButton
           text={t('general.Open')}
           icon={'park-share'}
@@ -132,6 +135,7 @@ const MetaMainDetails = ({ metaId }: { metaId: number }) => {
           }}
         ></Button.IconButton>
       </Content>
+      <Backlinks metaId={metaId} visible={visible} />
       <Content
         flex
         alignItems={'center'}

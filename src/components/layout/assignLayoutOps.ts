@@ -3,10 +3,21 @@ import { assignProperties } from '@/utils'
 import { DockLayout, TabData as DockTabData } from '@/components/base/dock'
 import { addNewTab, closeTab, getCurrentFocusedTab } from '@/components/layout/utils'
 import { RefObject } from 'react'
-import { BuiltInTabTypes, ILayoutTab, OpenTabOptions, TabData } from '~/typings'
+import {
+  BuiltInTabTypes,
+  IEditorInstance,
+  ILabel,
+  ILayoutTab,
+  IMediaInstance,
+  IPdfInstance,
+  IWebpageInstance,
+  OpenTabOptions,
+  TabData
+} from '~/typings'
 import { defaultLayout, LayoutIdToTabMap } from '@/components/layout/index'
 import Id from '@/utils/id'
 import { Rendevoz } from '@/core/rendevoz'
+import { MetaStore, ObjectStore } from '@/api/stores'
 
 const RegisterTabDataMap = new Map<BuiltInTabTypes['type'], TabData[BuiltInTabTypes['type']]>()
 const initializeOneTab = (registeredData: TabData[BuiltInTabTypes['type']], options: OpenTabOptions<BuiltInTabTypes['type']>) => {
@@ -38,6 +49,63 @@ const initializeOneTab = (registeredData: TabData[BuiltInTabTypes['type']], opti
 export default function assignGlobalLayoutOps(layoutRef: RefObject<DockLayout>) {
   assignProperties(GlobalInstance, {
     layoutOps: {
+      openObject: async metaId => {
+        const m = MetaStore.getCachedMetaObject(metaId)
+        if (m) {
+          const objectId = m.objectId
+          console.log(m)
+          if (m.type.includes('Label')) {
+            const targetObject = (await ObjectStore(m.type).getOneById(objectId)) as ILabel | undefined
+            if (targetObject) {
+              const parentMeta = MetaStore.getMetaObjectByObjectId(targetObject.parentObjectId)
+              console.log(parentMeta, targetObject)
+              if (parentMeta) {
+                const parentInstance = await new Promise(res => {
+                  GlobalInstance.layoutOps?.openNewTab({
+                    objectId: parentMeta.objectId,
+                    type: parentMeta.type,
+                    metaId: parentMeta.id,
+                    metaType: parentMeta.type,
+                    onInstanceInitialized: i => {
+                      res(i)
+                    }
+                  })
+                })
+                console.log(parentInstance, m)
+                switch (m.type) {
+                  case 'pdfLabel':
+                    ;(parentInstance as IPdfInstance).navigateOps?.jumpToLabel(objectId)
+                    break
+                  case 'videoLabel':
+                  case 'audioLabel':
+                    ;(parentInstance as IMediaInstance).actionOps?.jumpTo(targetObject.time)
+                    break
+                  case 'noteLabel':
+                    ;(parentInstance as IEditorInstance).scrollToHighlight?.({ highlightId: objectId })
+                    break
+                  case 'webpageLabel':
+                    ;(parentInstance as IWebpageInstance).editorInstance?.scrollToHighlight?.({ highlightId: objectId })
+                    break
+                }
+              }
+              return
+            }
+          }
+          const res = await new Promise(res => {
+            GlobalInstance.layoutOps?.openNewTab({
+              objectId: objectId,
+              type: m.type,
+              metaId: m.id,
+              metaType: m.type,
+              onInstanceInitialized: i => {
+                res(i)
+              }
+            })
+          })
+          MetaStore.updateMetaObject({ id: m.id, viewAt: Date.now() })
+          return res
+        }
+      },
       getCurrentFocusedTab: () => {
         const layout = layoutRef.current
         if (!layout) return

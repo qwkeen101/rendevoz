@@ -20,6 +20,8 @@ export interface INote extends IBase {
   syncedBlocks?: number[]
   pageWidth?: 'X-Small' | 'Small' | 'Medium' | 'Large' | 'X-Large' | 'Max'
   lastSavedAt?: number
+  // meta id => block id arr
+  insideMetas?: Record<number, number[]>
 }
 
 export interface NoteBlock {

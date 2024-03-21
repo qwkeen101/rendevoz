@@ -94,6 +94,7 @@ const TreeEdge: FC<{
           return
         }
         const edgeData = getEdgeData(sourceId, targetId, sourcePosition, targetPosition, instance, isMindmapConnection)
+        console.log(edgeData, edge)
         if (edgeData) {
           if (isMindmapConnection) {
             const target = instance.getNode?.(targetId)

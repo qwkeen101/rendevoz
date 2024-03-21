@@ -3,8 +3,9 @@ import UncontrolledGroup from '@/core/components/group/UncontrolledGroup'
 import TabTitle from '@/components/layout/TabTitle'
 import { Rendevoz } from '@/core/rendevoz'
 import { MetaStore } from '@/api/stores'
+import { IGroupInstance } from '~/typings'
 
-const MetaGroupPage = ({ groupId }: { groupId?: number }) => {
+const MetaGroupPage = ({ groupId, onInstanceInitialized }: { groupId?: number; onInstanceInitialized?: (i: IGroupInstance) => void }) => {
   const groupMeta = MetaStore.useObjectToMetaValue(groupId)
   return (
     <Content fullHeight fullWidth>
@@ -12,7 +13,7 @@ const MetaGroupPage = ({ groupId }: { groupId?: number }) => {
         title={groupMeta?.name || groupMeta?.placeholderName || 'Unnamed group'}
         icon={<Icon name={Rendevoz.Utils.Object.getMetaObjectIcon('group')} />}
       />
-      <UncontrolledGroup groupId={groupId} />
+      <UncontrolledGroup onInstanceInitialized={onInstanceInitialized} groupId={groupId} />
     </Content>
   )
 }

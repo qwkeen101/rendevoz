@@ -6,19 +6,33 @@ import { KEY } from '@/consts'
 import { useWhiteboardInstance } from '@/core/components/whiteboard/hooks/useWhiteboardInstance'
 import { PanZoom } from 'panzoom'
 import { useDebounceFn, useSelectAtomValue } from '@/hooks'
-import { useSetAtom } from 'jotai'
+import { useSetAtom, useStore } from 'jotai'
 import { WhiteboardTransformAtom } from '@/core/components/whiteboard/hooks/useWhiteboardTransform'
 import { createPanZoom } from '@/core/components/whiteboard/panzoom'
 import { ObjectStore } from '@/api/stores'
 import { assignProperties } from '@/utils'
 import { getSetting } from '@/core'
 
-const WhiteboardPanzoom = memo(() => {
+const WhiteboardPanzoom = memo(({ onInitialized }: { onInitialized?: VoidFunction }) => {
   const flow = useFlow()
   const panzoomRef = useRef<PanZoom>()
-  const lastViewport = useSelectAtomValue(WhiteboardAtom, s => s?.lastViewport)
+  const store = useStore()
   const setWhiteboardTransform = useSetAtom(WhiteboardTransformAtom)
-
+  const instance = useWhiteboardInstance()
+  const debounceUpdateLastViewport = useDebounceFn(
+    () => {
+      const transform = panzoomRef.current?.getTransform()
+      transform &&
+        ObjectStore('whiteboard').updateOne(
+          {
+            id: flow.whiteboardId,
+            lastViewport: transform
+          },
+          { silent: true }
+        )
+    },
+    { wait: 200 }
+  )
   // attach panzoom to container
   useEffect(() => {
     const container = instance.getContainerNode?.()
@@ -98,13 +112,22 @@ const WhiteboardPanzoom = memo(() => {
         },
         disableKeyboardInteraction: true
       })
+      const lastViewport = store.get(WhiteboardAtom)?.lastViewport
       panzoomRef.current = panzoom
+      assignProperties(instance, {
+        getTransform: () => {
+          const t = panzoomRef.current?.getTransform()
+          if (!t) throw 'Failed to get transform!'
+          return t
+        }
+      })
       panzoom.on('pan', e => {
         scopedEmitter.emit('whiteboard', {
           type: 'panChange'
         })
         const t = panzoom.getTransform()
         setWhiteboardTransform([t.x, t.y, t.scale])
+        debounceUpdateLastViewport.run()
       })
       panzoom.on('zoom', e => {
         const { scale, x, y } = panzoom.getTransform()
@@ -120,40 +143,23 @@ const WhiteboardPanzoom = memo(() => {
         })
         setWhiteboardState(s => ({ ...s, zoom: scale }))
         debounceSetZoom.run(zoomMultipler)
+        debounceUpdateLastViewport.run()
       })
       flow.panzoom = panzoom
-      assignProperties(instance, {
-        getTransform: () => {
-          const t = panzoomRef.current?.getTransform()
-          if (!t) throw 'Failed to get transform!'
-          return t
-        }
-      })
+      if (lastViewport) {
+        setWhiteboardTransform([lastViewport.x, lastViewport.y, lastViewport.scale])
+        panzoom?.zoomTo(0, 0, lastViewport.scale)
+        panzoom?.moveTo(lastViewport.x, lastViewport.y)
+      } else {
+        setWhiteboardTransform([0, 0, 1])
+      }
+      onInitialized?.()
       return () => {
-        const transform = panzoom.getTransform()
         flow.dispose()
-        ObjectStore('whiteboard').updateOne(
-          {
-            id: flow.whiteboardId,
-            lastViewport: transform
-          },
-          { silent: true }
-        )
         panzoom.dispose()
       }
     }
   }, [])
-
-  useEffect(() => {
-    if (lastViewport) {
-      const panzoom = panzoomRef.current
-      setWhiteboardTransform([lastViewport.x, lastViewport.y, lastViewport.scale])
-      panzoom?.zoomTo(0, 0, lastViewport.scale)
-      panzoom?.moveTo(lastViewport.x, lastViewport.y)
-    } else {
-      setWhiteboardTransform([0, 0, 1])
-    }
-  }, [lastViewport])
 
   const [whiteboardState, setWhiteboardState] = useWhiteboardState()
 
@@ -173,17 +179,6 @@ const WhiteboardPanzoom = memo(() => {
     instance.getOutestContainerNode?.()?.style.setProperty('cursor', containerCursor)
   }, [containerCursor])
 
-  const instance = useWhiteboardInstance()
-
-  if (panzoomRef.current) {
-    assignProperties(instance, {
-      getTransform: () => {
-        const t = panzoomRef.current?.getTransform()
-        if (!t) throw 'Failed to get transform!'
-        return t
-      }
-    })
-  }
   const debounceSetZoom = useDebounceFn(
     (zoom: number) => {
       const container = instance.getContainerNode?.()

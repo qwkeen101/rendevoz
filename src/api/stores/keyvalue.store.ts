@@ -3,7 +3,7 @@ import { useDb, useSelectGlobalAtomValue } from '@/hooks'
 import { globalStore } from '@/api/stores/index'
 import { useEffect } from 'react'
 import { Setting } from '@/core'
-import { MetaGroup, MetaObject } from '~/typings'
+import { MetaFilterGroup, MetaGroup, MetaObject } from '~/typings'
 
 export type CurrentKeyValues = {
   currentWorkspace: {
@@ -11,8 +11,17 @@ export type CurrentKeyValues = {
     name: string
     createdAt: number
   }
+  savedGlobalSearch?: {
+    id: number
+    filter?: MetaFilterGroup
+    workspace: number
+    search?: string
+    name?: string
+  }[]
   showHiddenMetasInSidebar?: boolean
   searchHistory: string[]
+  // [width,height]
+  groupReviewPanelSize?: string[]
   allWorkspaces: {
     id: number
     name: string

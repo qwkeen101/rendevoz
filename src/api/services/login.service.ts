@@ -27,12 +27,17 @@ export const userAtom = atom<IUser | null>(
       }
 )
 
-const cacheUserDetails = async (u: IUser) => {
-  const n: IUser & { lastLogin?: number } = { ...u, lastLogin: Date.now() }
-  const mId = await FileSystem.fs.getMachineId()
-  if (!mId) return
-  const encrypted = await encryptData(JSON.stringify(n), mId)
-  localStorage.setItem('userDetails', encrypted)
+const cacheUserDetails = () => {
+  setTimeout(async () => {
+    const u = getUser()
+    if (u) {
+      const n: IUser & { lastLogin?: number } = { ...u, lastLogin: Date.now() }
+      const mId = await FileSystem.fs.getMachineId()
+      if (!mId) return
+      const encrypted = await encryptData(JSON.stringify(n), mId)
+      localStorage.setItem('userDetails', encrypted)
+    }
+  }, 200)
 }
 export const useUser = () => useGlobalAtom(userAtom)
 
@@ -110,6 +115,7 @@ const createLoginService = () => {
         // minus one week
         now.setDate(now.getDate() - 7)
         if (d.getTime() > now.getTime()) {
+          console.log(decrypted)
           return decrypted as IUser
         }
       }

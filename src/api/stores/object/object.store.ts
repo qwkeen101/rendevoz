@@ -96,7 +96,7 @@ const createObjectStore = <T extends keyof ObjectFamily, V extends ObjectFamily[
         return undefined
       }
     },
-    fetchOneById: id => localStore.getOneById(id),
+    fetchOneById: id => initializedLocalStore.fetchOneById(id),
     addOne: async (n, opts) => {
       const inited = BaseStore.initBaseObject(n)
       const canFurtherProcess = await options?.beforeAddProcess?.(inited, opts)

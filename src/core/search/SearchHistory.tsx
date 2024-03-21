@@ -4,6 +4,7 @@ import { ClassName } from 'rendevoz'
 import FontSize from '@/consts/font'
 import { useTranslation } from 'react-i18next'
 import { useIsIn } from '@/hooks'
+import classnames from 'classnames'
 
 type SearchHistoryProps = {
   onClick: (name: string) => void
@@ -13,8 +14,10 @@ const SearchHistory = ({ onClick }: SearchHistoryProps) => {
   const searchHistory = KeyvalueStore.useValue('searchHistory') || []
   if (!searchHistory.length) return null
   return (
-    <Content flex column style={{ lineHeight: 1.3, padding: 6 }}>
-      <div style={{ fontSize: 12, paddingLeft: 6, marginBottom: 4 }}>{t('general.Search history')}</div>
+    <Content flex column style={{ padding: 6 }}>
+      <div className={'font-size-12 transparent-font'} style={{ paddingLeft: '0.5em', marginBottom: '0.3em' }}>
+        {t('general.Search history')}
+      </div>
       {searchHistory.map((i, index) => (
         <HistoryItem
           key={i}
@@ -31,7 +34,6 @@ const SearchHistory = ({ onClick }: SearchHistoryProps) => {
 }
 
 const HistoryItem = ({ name, onDelete, onClick }: { name: string; onDelete: VoidFunction; onClick: VoidFunction }) => {
-  const { isIn, ref } = useIsIn()
   return (
     <Content
       flex
@@ -41,19 +43,13 @@ const HistoryItem = ({ name, onDelete, onClick }: { name: string; onDelete: Void
       gap={30}
       alignItems={'center'}
       justifyContent={'space-between'}
-      style={{ fontSize: 13 }}
-      ref={ref}
-      className={ClassName.flatButton(4, '4px 6px')}
+      className={classnames(ClassName.flatButton(4, '4px 6px'), 'font-size-13')}
     >
       <div className={ClassName.ellipsisFont(1)}>{name}</div>
       <Icon
         name={'park-close'}
         size={13}
-        containerStyle={{
-          opacity: isIn ? 1 : 0,
-          transition: 'opacity 0.25s ease'
-        }}
-        className={ClassName.flatButton(4, '4px')}
+        className={classnames(ClassName.flatButton(4, '4px'), 'super-transparent-font')}
         onClick={e => {
           e.stopPropagation()
           onDelete()

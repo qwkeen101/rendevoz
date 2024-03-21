@@ -4,7 +4,6 @@ import { globalStore, MetaStore, ObjectStore } from '../../api/stores'
 import { metaObjectsAtom, objectIdToMetaObjectIdMapAtom, TypeToRegisteredMetaObject } from '../../api/stores/meta/meta.store'
 import { ipcInstance } from '@/electron'
 import { waitFor } from '@/utils/functions'
-import { GlobalTextSearchInstance } from '../global/GlobalTextSearch'
 import { GlobalTranslateInstance } from '../global/translate/GlobalTranslatePanel'
 import { Rendevoz } from '.'
 import { GlobalSearchInstance } from '../global/GlobalSearchPanel'
@@ -427,8 +426,8 @@ const updateViewAt = (objectId: number) => {
   }, 1000)
 }
 
-const openTextSearch = (opts?: Parameters<GlobalInstances.TextSearchInstance['open']>[0]) => {
-  GlobalTextSearchInstance.open?.(opts)
+const openTextSearch = (query?: string) => {
+  GlobalInstance.searchOps?.openSearchPanel(query)
 }
 
 const openWebSearch = (opts: Parameters<GlobalInstances.WebSearchInstance['open']>[0]) => {

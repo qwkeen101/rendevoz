@@ -24,6 +24,18 @@ export const useAssignWhiteboardInstance = () => {
   const instance = useWhiteboardInstance()
   const store = useStore()
   assignProperties(instance, {
+    moveToMetaNode: (metaId, opts) => {
+      const nodes = instance.getAllNode?.()
+      if (nodes) {
+        const target = nodes.find(i => i.type === 'metaObject' && i.metaObjectId === metaId)
+        if (target) {
+          instance.containerOps?.fitToNode(target.id)
+          if (opts?.select) {
+            instance.selectOps?.selectNode(target.id)
+          }
+        }
+      }
+    },
     getNode: id => {
       const n = store.get(WhiteboardAtom)?.nodes?.get(id)
       if (!n) {

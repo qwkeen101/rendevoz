@@ -10,6 +10,7 @@ import { normalizeSecondsToTime } from '@/core/components/media/utils'
 import { Colors } from '@/consts'
 import { useTranslation } from 'react-i18next'
 import Video from '@/core/components/media/wrappers/Video'
+import Audio from '@/core/components/media/wrappers/Audio'
 
 export default memo(
   ({
@@ -17,12 +18,14 @@ export default memo(
     style,
     showImage,
     showVideo,
-    autoPlay
+    autoPlay,
+    showAudio
   }: {
     metaId: number
     style?: CSSProperties
     showImage?: boolean
     showVideo?: boolean
+    showAudio?: boolean
     autoPlay?: boolean
   }) => {
     const metaObject = MetaStore.useValue(metaId)
@@ -41,7 +44,6 @@ export default memo(
         return normalizeSecondsToTime(label.time)
       }
     }, [label?.time])
-    const [parentObj, setParentObj] = useState()
     const inputRef = useRef<HTMLDivElement>(null)
     const [showToolbar, setShowToolbar] = useState(false)
     useLayoutEffect(() => {
@@ -78,13 +80,58 @@ export default memo(
           }
         }
       }
+      if (metaObject?.type === 'audioLabel' && showAudio !== false) {
+        const audioId = label.parentObjectId
+        if (audioId) {
+          const v = await ObjectStore('audio').getOneById(audioId)
+          if (v) {
+            console.log(v)
+            setDisplayer(
+              <Audio
+                onlyCore
+                mediaState={{
+                  toolbar: {
+                    extra: false,
+                    addLabel: false
+                  },
+                  styles: {
+                    progressHeight: 8,
+                    playerStyle: {
+                      padding: '8px 12px',
+                      borderBottom: Colors.Consts.Border
+                    },
+                    controlBarStyle: {
+                      height: 'auto',
+                      marginTop: 8
+                    },
+                    titleStyle: {
+                      fontSize: 15,
+                      marginBottom: 16
+                    }
+                  },
+                  layout: {
+                    showProgressPins: false,
+                    showDescription: false,
+                    showAudioThumbnail: false
+                  },
+                  url: v.url,
+                  currentTime: label.time
+                }}
+              />
+            )
+            return
+          }
+        }
+      }
       if (metaObject?.coverImgSrc) {
         setDisplayer(<img src={metaObject.coverImgSrc} width={'100%'} />)
+        return
       }
+      setDisplayer(undefined)
     }
     useEffect(() => {
       renderImgOrLabel()
-    }, [metaObject, label, showVideo])
+    }, [metaObject, label, showVideo, showAudio])
     return (
       <Content
         contentEditable={false}

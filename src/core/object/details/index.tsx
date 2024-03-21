@@ -19,8 +19,10 @@ const ObjectDetails = ({
   onAuto,
   onBackward,
   onForward,
-  onPeek
+  onPeek,
+  visible
 }: {
+  visible?: boolean
   metaId: number
   onClose?: VoidFunction
   onPeek: VoidFunction
@@ -108,6 +110,7 @@ const ObjectDetails = ({
       >
         {currentDisplay.visible === 'main' && (
           <Main
+            visible={visible}
             onPreview={() => {
               setCurrentDisplay({ visible: 'preview' })
               onPeek()
@@ -147,13 +150,29 @@ export const GlobalObjectDetails = () => {
   assignProperties(GlobalInstance, {
     metaOps: {
       ...GlobalInstance.metaOps,
+      toggleDetails: (id, visible) => {
+        if (id) {
+          const openId = Id.getId()
+          metaHistory.current.push({
+            metaId: id,
+            id: openId
+          })
+          setGState({ visible: visible ?? true, metaId: id, id: openId })
+        } else {
+          setGState(s => ({ ...s, visible: visible ?? !s.visible }))
+        }
+      },
       openDetails: id => {
-        const openId = Id.getId()
-        metaHistory.current.push({
-          metaId: id,
-          id: openId
-        })
-        setGState({ visible: true, metaId: id, id: openId })
+        if (id) {
+          const openId = Id.getId()
+          metaHistory.current.push({
+            metaId: id,
+            id: openId
+          })
+          setGState({ visible: true, metaId: id, id: openId })
+        } else {
+          setGState(s => ({ ...s, visible: true }))
+        }
       },
       closeDetails: () => {
         setGState(s => ({ ...s, visible: false }))
@@ -183,6 +202,7 @@ export const GlobalObjectDetails = () => {
   }, [gState.visible])
   const rndRef = useRef<Rnd>()
   const prev = useRef()
+  const { t } = useTranslation()
   const currentMetaHistoryIndex = gState.metaId ? metaHistory.current.findIndex(i => i.id === gState.id) : -1
   return (
     <ResizeAndDrag
@@ -208,7 +228,7 @@ export const GlobalObjectDetails = () => {
           boxShadow: Colors.Background.PopoverBoxShadow
         }}
       >
-        {gState.metaId && (
+        {gState.metaId ? (
           <ObjectDetails
             canForward={currentMetaHistoryIndex >= 0 && metaHistory.current.length - 1 > currentMetaHistoryIndex}
             canBackward={currentMetaHistoryIndex > 0}
@@ -254,8 +274,33 @@ export const GlobalObjectDetails = () => {
             onClose={() => {
               setGState(s => ({ ...s, visible: false }))
             }}
+            visible={gState.visible}
             metaId={gState.metaId}
           />
+        ) : (
+          <Content
+            className={'bold-font transparent-font d-h-g'}
+            style={{
+              padding: '60px 0px',
+              fontSize: 18
+            }}
+            flex
+            centered
+            fullWidth
+            fullHeight
+          >
+            <Icon
+              onClick={() => setGState(s => ({ ...s, visible: false }))}
+              name={'park-close'}
+              className={ClassName.flatButton(4, '4px')}
+              style={{
+                position: 'absolute',
+                top: 8,
+                right: 8
+              }}
+            />
+            {t('general.No selected object')}
+          </Content>
         )}
       </Content>
     </ResizeAndDrag>

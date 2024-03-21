@@ -1,5 +1,5 @@
 import { globalStore, MetaStore, ObjectStore } from '@/api/stores'
-import { useMemo, useRef } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { MetaGroup, MetaObject } from '~/typings'
 import { calculateFilterObjects } from '@/core/object/filter/useBetterFilter'
 import fuzzysort from 'fuzzysort'
@@ -7,66 +7,88 @@ import { calculateSortObjects } from '@/core/object/filter/BetterSorter'
 import { atom, useAtom, useSetAtom } from 'jotai'
 import { GroupStateAtom } from '@/core/components/group/hooks/useGroupState'
 import { selectAtom } from 'jotai/utils'
+import { useSelectAtomValue } from '@/hooks'
 
 const useGroupFilter = (groupData?: MetaGroup) => {
   const metaMap = MetaStore.useMetaObjectsMap()
   const setGroupState = useSetAtom(GroupStateAtom)
-  const searchable = useMemo(() => {
+  const currentView = useSelectAtomValue(GroupStateAtom, s => s.currentView)
+  const [searchable, setSearchable] = useState<
+    {
+      name: string
+      searchable: string
+      rowId: number
+    }[]
+  >([])
+  const getSearchable = async () => {
     const map = metaMap
     const tagMap = globalStore.get(ObjectStore('tag').objectMapAtom)
     const optionMap = globalStore.get(ObjectStore('metaPropSelectOption').objectMapAtom)
-    return groupData?.values
-      ?.map(i => {
-        const meta = map.get(i.id)
-        if (!meta) return
-        let search = `${meta.name}, ${meta.description}`
-        const tags = meta.tags?.map(i => tagMap.get(i)?.name || '').join(',')
-        search += `,${tags}`
-        if (meta.properties) {
-          Object.entries(meta.properties).forEach(([k, i]) => {
-            const propDetails = MetaStore.getPropDetails(k)
-            if (propDetails) {
-              switch (propDetails.propType) {
-                case 'string':
-                case 'AI summary':
-                  if (i.value) {
-                    search += ',' + i.value
-                  }
-                  break
-                case 'number':
-                  if (i.value !== undefined) {
-                    search += ',' + i.value
-                  }
-                  break
-                case 'URL':
-                  if (i.value !== undefined) {
-                    search += ',' + i.value
-                  }
-                  break
-                case 'singleSelect':
-                  if (i.value) {
-                    search += ',' + optionMap.get(i.value)?.name
-                  }
-                  break
-                case 'multiSelect':
-                  if (i.value?.length) {
-                    i.value.forEach(id => {
-                      search += ',' + optionMap.get(id)?.name
-                    })
-                  }
-                  break
+    const showOriginalText = currentView?.options.properties?.[6].visible === true
+    const result = (
+      await Promise.all(
+        (groupData?.values || []).map(async i => {
+          const meta = map.get(i.id)
+          if (!meta) return
+          let search = `${meta.name}, ${meta.description}`
+          const tags = meta.tags?.map(i => tagMap.get(i)?.name || '').join(',')
+          search += `,${tags}`
+          if (meta.properties) {
+            Object.entries(meta.properties).forEach(([k, i]) => {
+              const propDetails = MetaStore.getPropDetails(k)
+              if (propDetails) {
+                switch (propDetails.propType) {
+                  case 'string':
+                  case 'AI summary':
+                    if (i.value) {
+                      search += ',' + i.value
+                    }
+                    break
+                  case 'number':
+                    if (i.value !== undefined) {
+                      search += ',' + i.value
+                    }
+                    break
+                  case 'URL':
+                    if (i.value !== undefined) {
+                      search += ',' + i.value
+                    }
+                    break
+                  case 'singleSelect':
+                    if (i.value) {
+                      search += ',' + optionMap.get(i.value)?.name
+                    }
+                    break
+                  case 'multiSelect':
+                    if (i.value?.length) {
+                      i.value.forEach(id => {
+                        search += ',' + optionMap.get(id)?.name
+                      })
+                    }
+                    break
+                }
               }
+            })
+          }
+          if (showOriginalText) {
+            const original = await ObjectStore(meta.type).fetchOneById(meta.objectId)
+            if (original && 'selectedText' in original) {
+              search += original.selectedText
             }
-          })
-        }
-        return {
-          name: meta.name || meta.placeholderName,
-          searchable: search,
-          rowId: i.rowId
-        }
-      })
-      .filter(i => i) as any[]
-  }, [groupData?.values, metaMap])
+          }
+          return {
+            name: meta.name || meta.placeholderName,
+            searchable: search,
+            rowId: i.rowId
+          }
+        })
+      )
+    ).filter(i => i)
+    setSearchable(result)
+  }
+  useEffect(() => {
+    getSearchable()
+  }, [groupData?.values, metaMap, currentView?.options.properties])
   const latestSearchable = useRef(searchable)
   latestSearchable.current = searchable
   const subAtom = useMemo(() => {
@@ -78,6 +100,7 @@ const useGroupFilter = (groupData?: MetaGroup) => {
 
     return atom(get => {
       const searchable = latestSearchable.current
+      console.log(searchable)
       const filter = get(filterAtom)
       const search = get(searchAtom)
       const sort = get(sortAtom)

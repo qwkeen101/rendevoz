@@ -380,6 +380,7 @@ const Media = (props: MediaProps) => {
       mode,
       subtitleLang,
       subtitleMode = 'list',
+      toolbar,
       subtitleList,
       volume,
       subtitleFollow,
@@ -407,6 +408,7 @@ const Media = (props: MediaProps) => {
         labels,
         subtitleMode,
         autoPlay,
+        toolbar,
         volume,
         labelType,
         name,
@@ -449,6 +451,7 @@ const Media = (props: MediaProps) => {
       layout,
       collectionName,
       autoPlay,
+      toolbar,
       styles
     } = props.mediaState
     console.log(props.mediaState, currentState)
@@ -461,6 +464,7 @@ const Media = (props: MediaProps) => {
       autoPlay,
       styles,
       onlyCore,
+      toolbar,
       collectionName,
       subtitleLang: subtitleLang || currentState.subtitleLang,
       subtitleList: subtitleList || currentState.subtitleList,

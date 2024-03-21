@@ -5,6 +5,7 @@ import loadAllNotes from '@/api/textSearch/loadAllNotes'
 import { MetaObject } from '~/typings'
 import { Node } from 'slate'
 import FileSystem from '@/api/fileSystem'
+import normalizeChildrenToText from '@/core/components/editor/utils/normalize/normalizeChildrenToText'
 
 const worker = new OramaWorker()
 const metaDb = useDb('metaObjects')
@@ -43,11 +44,12 @@ export const initializeSearch = async () => {
           documents: docs.map(i => normalizeMetaToDoc(i))
         })
         loadAllNotes().then(values => {
+          console.log(values)
           const normalizedDocuments = values
             .filter(i => i)
             .map(i => ({
               ...normalizeMetaToDoc(i.targetMeta),
-              content: Node.string({ children: i.value })
+              content: normalizeChildrenToText(i.value)
             }))
           worker.postMessage({
             event: 'updateDocuments',

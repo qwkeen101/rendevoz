@@ -20,7 +20,7 @@ export default () => {
     }
   })
   const align = () => {
-    if(overlayState.align){
+    if (overlayState.align) {
       return overlayState.align
     }
     return 'center'
@@ -28,9 +28,9 @@ export default () => {
   const positions = () => {
     switch (overlayState.type) {
       case 'itemContextMenu':
-        return ['right', 'left']
+        return ['right', 'left', 'top']
     }
-    return ['right', 'left']
+    return ['right', 'left', 'top']
   }
   const renderContent = () => {
     switch (overlayState.type) {
@@ -44,13 +44,13 @@ export default () => {
     }
     return null
   }
+  console.log(overlayState)
   return (
     <AnimatePopover
       positions={positions()}
       align={align()}
       withClickCover={true}
       onClickOutside={() => setOverlayState(o => ({ ...o, visible: false }))}
-      reposition
       visible={overlayState.visible}
       content={renderContent()}
       position={{ left: overlayState.position?.x ?? 0, top: overlayState.position?.y ?? 0 }}

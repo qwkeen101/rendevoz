@@ -22,10 +22,10 @@ const c = css({
   wordBreak: 'break-all',
   ':empty:before': {
     content: 'attr(placeholder)',
-    position: 'absolute',
     display: 'block',
     color: Colors.Font.SuperTransparent,
-    pointerEvents: 'none'
+    pointerEvents: 'none',
+    minHeight: '1lh'
   }
 })
 const noop = () => {}

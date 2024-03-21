@@ -33,9 +33,9 @@ import AddSubMindmapIndicator from '@/core/components/whiteboard/node/mindmap/Ad
 import getNodeSize from '@/core/components/whiteboard/node/getNodeSize'
 import getNodeClassname from '@/core/components/whiteboard/node/getNodeClassname'
 import classnames from 'classnames'
-import { Colors } from '@/consts'
 import { isEqual } from 'lodash'
 import { selectAtom } from 'jotai/utils'
+import useUpdateIsomorphicLayoutEffect from '@/hooks/utils/useUpdateIsomorphicLayoutEffect'
 
 export type NodeInnerState = INodeInnerState
 export interface InnerNodeProps {
@@ -66,7 +66,8 @@ const WrapperNode = ({ node }: { node: IWhiteboardNode }) => {
 
   const isDraggingRef = useRef(false)
   const isResizingRef = useRef(false)
-  const { isIn, ref: containerRef } = useIsIn()
+
+  console.log('rerender')
   const [nodeState, setNodeState] = useState<NodeInnerState>({
     popoverVisible: false,
     expanded: false,
@@ -76,6 +77,7 @@ const WrapperNode = ({ node }: { node: IWhiteboardNode }) => {
     isEditingName: false,
     keepRatioResize: false
   })
+  const containerRef = useRef<HTMLDivElement>()
   const { pointerMode, hasEraseOrDrawTool, isDraggingNode, currentHighlight } = useAtomValue(NodeSelectAtom)
   const panPointerMode = pointerMode === 'pan'
   const setWhiteboardState = useSetAtom(WhiteboardStateAtom)
@@ -123,8 +125,8 @@ const WrapperNode = ({ node }: { node: IWhiteboardNode }) => {
           return {
             width: trimNum(container.width / scale),
             height: trimNum(container.height / scale),
-            left: trimNum(transformed.x),
-            top: trimNum(transformed.y)
+            left: transformed.x,
+            top: transformed.y
           }
         }
       }
@@ -177,9 +179,11 @@ const WrapperNode = ({ node }: { node: IWhiteboardNode }) => {
   const rafUpdateEdge = useRafFn(() => {
     instance.nodeOps?.updateRelatedEdges(node.id)
   })
-  useLayoutEffect(() => {
-    rafUpdateEdge()
-    rndRef.current?.updateOffsetFromParent()
+  useUpdateIsomorphicLayoutEffect(() => {
+    if (containerRef.current) {
+      rafUpdateEdge()
+      rndRef.current?.updateOffsetFromParent()
+    }
   }, [node.x, node.y, node.width, node.height])
 
   useEffect(() => {
@@ -352,7 +356,7 @@ const WrapperNode = ({ node }: { node: IWhiteboardNode }) => {
   }
   const clazz = !panPointerMode && getNodeClassname(node)
   const { width: nodeWidth, height: nodeHeight, minWidth, maxWidth } = getNodeSize(node)
-  console.log(node, nodeWidth)
+
   return (
     <Rnd
       ref={node => {
@@ -551,7 +555,7 @@ const WrapperNode = ({ node }: { node: IWhiteboardNode }) => {
           style={{
             maxHeight: '100%',
             '--global-background': nodeStyle.background,
-            borderRadius: 6,
+            borderRadius: 'inherit',
             ...containerOverflow
           }}
           onKeyUpCapture={e => {
@@ -571,7 +575,7 @@ const WrapperNode = ({ node }: { node: IWhiteboardNode }) => {
           {renderInnerNode(node.type)}
         </Content>
       )}
-      <AddSubMindmapIndicator node={node} isIn={isIn} />
+      <AddSubMindmapIndicator node={node} containerRef={containerRef} />
     </Rnd>
   )
 }

@@ -1,24 +1,24 @@
 import { Modal } from '@/components'
 import { GlobalSearchInputAtom, SearchDialog } from '../search/SearchDialog'
-import { useGlobalSetAtom, useShortcut, useToggle } from '@/hooks'
-import { useEffect } from 'react'
-import { GlobalInstances } from '~/typings'
+import { GlobalInstance, useGlobalSetAtom, useToggle } from '@/hooks'
+import { memo, useEffect } from 'react'
 import { assignProperties } from '@/utils'
 
-export const GlobalTextSearchInstance: Partial<GlobalInstances.TextSearchInstance> = {}
-const GlobalTextSearch = () => {
+const GlobalTextSearch = memo(() => {
   const [modalVisible, toggleModalVisible] = useToggle(false)
   const setSearchInput = useGlobalSetAtom(GlobalSearchInputAtom)
-  assignProperties(GlobalTextSearchInstance, {
-    open: opts => {
-      if (opts?.searchInput) {
-        setSearchInput(opts.searchInput)
+  assignProperties(GlobalInstance, {
+    searchOps: {
+      openSearchPanel: query => {
+        if (query) {
+          setSearchInput(query)
+        }
+        toggleModalVisible(true)
+      },
+      closeSearchPanel: () => {
+        toggleModalVisible(false)
       }
-      toggleModalVisible(true)
     }
-  })
-  useShortcut('openGlobalSearch', () => {
-    toggleModalVisible()
   })
   useEffect(() => {
     if (modalVisible) {
@@ -30,10 +30,10 @@ const GlobalTextSearch = () => {
     }
   }, [modalVisible])
   return (
-    <Modal disableAnimation notUnmount noStyle visible={modalVisible} onClose={toggleModalVisible}>
+    <Modal enableClickEvent zIndex={1000} disableAnimation notUnmount noStyle visible={modalVisible} onClose={toggleModalVisible}>
       <SearchDialog onClose={toggleModalVisible} visible={modalVisible} />
     </Modal>
   )
-}
+})
 
 export default GlobalTextSearch

@@ -149,16 +149,18 @@ const MediaBottomBar = () => {
       ></AnimatePopover>
       <div
         role="video-process-marker"
+        style={{
+          height: mediaState.styles?.progressHeight ?? 5
+        }}
         className={css({
           transformOrigin: '0 0',
-          height: 5,
           width: '100%',
           zIndex: 20,
           display: 'flex',
           position: 'relative'
         })}
       >
-        {mediaState.labels?.map(i => <MediaProgressLabelPin labelId={i} key={i} />)}
+        {mediaState.layout?.showProgressPins !== false && mediaState.labels?.map(i => <MediaProgressLabelPin labelId={i} key={i} />)}
         <div
           style={{ width: '100%', height: '100%', display: 'flex' }}
           className={css({
@@ -182,13 +184,14 @@ const MediaBottomBar = () => {
             <MediaChapter idx={0} startTime={0} endTime={totalTime} percent={1} />
           )}
         </div>
-        <MediaScrubber />
+        {/*<MediaScrubber />*/}
       </div>
       <Content
         style={{
           height: audioMode ? 55 : 44,
           padding: audioMode ? 0 : '0px 12px',
-          margin: audioMode ? '0px -6px' : undefined
+          margin: audioMode ? '0px -6px' : undefined,
+          ...mediaState.styles?.controlBarStyle
         }}
         flex
         justifyContent="space-between"
@@ -347,23 +350,27 @@ const MediaBottomBar = () => {
               {mediaState.speed}X
             </div>
           </AnimatePopover>
-          <Button.IconButton
-            onClick={() => {
-              instance.insertLabel?.({
-                time: mediaState.currentTime
-              })
-            }}
-            style={{ height: 30, fontWeight: 500 }}
-            text={t('general.add label')}
-          ></Button.IconButton>
-          <IconWithPopover
-            padding={0}
-            renderOnParent={mediaState.fullScreen}
-            content={setState => <MediaActionsMenu onClose={() => setState(false)} />}
-            name="park-more-four"
-            size={20}
-            className={ClassName.flatButton(4, '5px')}
-          ></IconWithPopover>
+          {mediaState.toolbar?.addLabel !== false && (
+            <Button.IconButton
+              onClick={() => {
+                instance.insertLabel?.({
+                  time: mediaState.currentTime
+                })
+              }}
+              style={{ height: 30, fontWeight: 500 }}
+              text={t('general.add label')}
+            ></Button.IconButton>
+          )}
+          {mediaState.toolbar?.extra !== false && (
+            <IconWithPopover
+              padding={0}
+              renderOnParent={mediaState.fullScreen}
+              content={setState => <MediaActionsMenu onClose={() => setState(false)} />}
+              name="park-more-four"
+              size={20}
+              className={ClassName.flatButton(4, '5px')}
+            ></IconWithPopover>
+          )}
           {!audioMode && !mediaState.floated && (
             <Icon
               className={ClassName.flatButton(4, '5px')}

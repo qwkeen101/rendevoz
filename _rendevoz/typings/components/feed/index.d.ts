@@ -35,6 +35,7 @@ export interface IFeedCollection extends IBase {
   unreadCount?: number
   collectionType: FeedItem['feedType']
   workspace?: number
+  relatedGroups?: number[]
 }
 
 export interface IFeedFolder extends IBase {

@@ -10,13 +10,9 @@ import { Rendevoz } from '@/core/rendevoz'
 import { t } from 'i18next'
 import { globalStore } from '@/api/stores'
 import { GlobalScreenshotInstance } from '@/core/global/globalScreenShot'
-import { GlobalTextSearchInstance } from '@/core/global/GlobalTextSearch'
-import SidebarDatabase from '@/components/layout/sidebar/SidebarDatabase'
 import SidebarSetting from '@/components/layout/sidebar/SidebarSetting'
 import produce, { Draft } from 'immer'
-import { Colors } from '@/consts'
-import { ClassName } from 'rendevoz'
-import { useSelectGlobalAtomValue } from '@/hooks'
+import { GlobalInstance, useSelectGlobalAtomValue } from '@/hooks'
 
 export const setPanelState = (updater: (panelState: Draft<SidebarPanelState>) => void) => {
   const panelState = globalStore.get(SidebarPanelStateAtom)
@@ -56,7 +52,7 @@ export const BuiltInSidebarItems: Record<string, RegisteredSidebarItem> = {
     key: 'search',
     icon: 'park-search',
     onClick: () => {
-      GlobalTextSearchInstance.open?.()
+      GlobalInstance.searchOps?.openSearchPanel()
     },
     text: () => t('general.search')
   },

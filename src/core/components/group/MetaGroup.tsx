@@ -71,6 +71,7 @@ export type IMetaGroupProps = {
     containerStyle?: CSSProperties
     containerClassName?: string
   }
+  onInstanceInitialized?: (i: IGroupInstance) => void
   state?: {
     canHideObjectsInside?: boolean
     canHideGroupsInside?: boolean
@@ -86,7 +87,7 @@ export type IMetaGroupProps = {
     extraProperties?: MetaGroupProperty[]
   }
 }
-const MetaGroupInner = ({ value, groupId, layout, title, on, state, styles }: IMetaGroupProps) => {
+const MetaGroupInner = ({ value, groupId, layout, title, on, state, styles, onInstanceInitialized }: IMetaGroupProps) => {
   const instance = useGroupInstance()
   const containerRef = useRef<HTMLDivElement>(null)
   useAssignGroupInstance(instance)
@@ -108,6 +109,7 @@ const MetaGroupInner = ({ value, groupId, layout, title, on, state, styles }: IM
       Group.ID_TO_PATH_MAP.set(instance, new Map())
       Group.ID_TO_VALUE_MAP.set(instance, new Map())
       PATH_TO_ELEMENT_MAP.set(instance, new Map())
+      onInstanceInitialized?.(instance)
     }
   }, [instance])
 

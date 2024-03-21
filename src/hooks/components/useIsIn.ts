@@ -1,8 +1,8 @@
-import { useEffect, useRef, useState } from 'react'
+import { RefObject, useEffect, useRef, useState } from 'react'
 
-const useIsIn = () => {
+const useIsIn = (outerRef?: RefObject<HTMLElement>) => {
   const [isIn, setIsIn] = useState(false)
-  const ref = useRef<HTMLElement>(null)
+  const ref = outerRef || useRef<HTMLElement>(null)
   useEffect(() => {
     const pointerHandler = (e: PointerEvent) => {
       if (e.type === 'pointermove' || e.type === 'pointerenter') {

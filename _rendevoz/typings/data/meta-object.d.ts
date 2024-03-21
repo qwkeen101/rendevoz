@@ -31,6 +31,7 @@ export type BuiltInMetaObjectTypes =
   | 'webpageLabel'
   | 'localFile'
   | 'videoLabel'
+  | 'audioLabel'
   | 'group'
   | 'syncedBlock'
   | 'code'

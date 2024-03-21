@@ -12,6 +12,7 @@ import assignToggle from '@/core/components/editor/hooks/instance/assignToggle'
 import assignValueOps from '@/core/components/editor/hooks/instance/assignValueOps'
 import assignSearchOps from '@/core/components/editor/hooks/instance/assignSearchOps'
 import assignLabelOps from '@/core/components/editor/hooks/instance/assignLabelOps'
+import getInsideMetas from '@/core/components/editor/utils/getInsideMetas'
 
 export const EditorInstanceAtom = atom<IEditorInstance>({})
 export const EditorStoreContext = createContext<ReturnType<typeof createStore> | null>(null)
@@ -67,20 +68,11 @@ export const useAssignEditorInstance = (editor: CustomEditor, scrollElementRef: 
       editor.on({ type: 'save', value: editor.children })
     },
     getInsideMetas: () => {
-      const eles = Node.elements(editor)
-      const ids: Set<number> = new Set()
-      Array.from(eles).forEach(i => {
-        const b = i[0]
-        if (b.type === 'metaObject' || b.type === 'inline-metaObject') {
-          ids.add(b.originId)
-        }
-        if (b.type === 'link') {
-          if (b.url?.startsWith('rendevoz://object/')) {
-            const u = new URL(b.url)
-            const id = parseInt(u.pathname.replace('//object/', ''))
-            ids.add(id)
-          }
-        }
+      const eles = editor.children
+      const metas = getInsideMetas(eles)
+      const ids = new Set<number>()
+      Object.values(metas).forEach(o => {
+        o.forEach(i => ids.add(i))
       })
       return Array.from(ids.values())
     },

@@ -1,8 +1,9 @@
 import useFeedState from '@/core/components/feed/hooks/useFeedState'
-import { globalStore, ObjectStore } from '@/api/stores'
+import { globalStore, GroupStore, MetaStore, ObjectStore } from '@/api/stores'
 import { useEffect } from 'react'
 import KeyvalueStore from '@/api/stores/keyvalue.store'
 import universalFeedFetcher from '@/core/components/feed/utils/universalFeedFetcher'
+import transformItemsIntoMetas from '@/core/components/feed/utils/service/transformItemsIntoMetas'
 
 /**
  * Retrieve and update state
@@ -50,13 +51,25 @@ export default () => {
     let collection = await ObjectStore('feedCollection').getOneById(collectionId)
     if (collection && collection.feedUrl) {
       const res = await universalFeedFetcher(collection.feedUrl, collection.collectionType)
-      if(!res) return
+      if (!res) return
       collection = await ObjectStore('feedCollection').getOneById(collectionId)
       if (collection) {
         const allItemUrls = await Promise.all(collection.items.map(async id => await ObjectStore('feed').getOneById(id)))
         const alreadyUrls = new Set(allItemUrls.map(i => i?.link))
         const filteredItems = res.items.filter(i => !alreadyUrls.has(i.link))
         const newItemIds = await Promise.all(filteredItems.map(async item => ObjectStore('feed').addOne({ ...item })))
+        if (collection.relatedGroups?.length) {
+          const newMetas = await transformItemsIntoMetas(newItemIds.map(i => i.id))
+          collection.relatedGroups.forEach(i => {
+            const m = MetaStore.getCachedMetaObject(i)
+            if (m && !m.deleted) {
+              GroupStore.insertMetaIntoGroup(
+                newMetas.map(i => i.id),
+                m.objectId!
+              )
+            }
+          })
+        }
         ObjectStore('feedCollection').updateOne({
           id: collectionId,
           items: [...newItemIds.map(i => i.id), ...collection.items],

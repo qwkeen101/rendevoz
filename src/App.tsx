@@ -18,7 +18,6 @@ import ThemeSwitcher from './ThemeSwitcher'
 import ImagePreviewer from './core/global/components/ImagePreviewer'
 import classNames from 'classnames'
 import { css } from '@emotion/css'
-import { CacheProvider } from '@emotion/react'
 import GlobalTranslateResult from './core/global/translate/GlobalTranslatePanel'
 import GlobalSearchPanel from './core/global/GlobalSearchPanel'
 import 'highlight.js/styles/atom-one-dark.css'
@@ -29,7 +28,6 @@ import PluginManager from './core/plugin/PluginManager'
 import BuiltinEditorPlugin from './core/plugin/builtin/EditorPlugin'
 import { KeyToRegisteredGlobalElements } from './core/plugin/RegisterMap'
 import GlobalUtils from '@/core/global/GlobalUtils'
-import createCache from '@emotion/cache'
 import { BuiltInDraggableElement, BuiltInDropOn, BuiltInMetaObjectTypes, BuiltInObjectTypes, BuiltInTabTypes } from '~/typings'
 import { GlobalBaidudisk } from '@/components/fileImporter/baidudisk/BaidudiskDisplayer'
 import { useSelectGlobalAtomValue } from '@/hooks'
@@ -85,8 +83,6 @@ declare module 'rendevoz' {
         }
   }
 }
-const cache = createCache({ key: 'external', speedy: false })
-
 const App = () => {
   const PdfJs = window['pdfjs-dist/build/pdf']
   PdfJs.GlobalWorkerOptions.workerSrc = PdfJsUrl
@@ -118,56 +114,54 @@ const App = () => {
   const registeredGlobalElements = Array.from(KeyToRegisteredGlobalElements.entries())
 
   return (
-    <CacheProvider value={cache}>
-      <ErrorBoundary FallbackComponent={ErrorFallback}>
-        {/* for unknown queryselector bug */}
-        <div
-          className={classNames(
-            'excalidraw',
-            css({
-              '--color-selection': '#6965db'
-            })
-          )}
-          style={{ display: 'none' }}
-        ></div>
-        <Initializer />
-        <ThemeSwitcher />
-        <Notification />
-        <>
-          <GlobalDownloadIndicator />
-          <TextSearch />
-          <GlobalScreenShot />
-          <GlobalPreviewPanel />
-          <GlobalQuickAdd />
-          <GlobalBaidudisk />
-          <GlobalSearchPanel />
-          <GlobalDialog />
-          <GlobalCollection />
-          <GlobalObjectCreator />
-          <GlobalObjectDetails />
-          <GlobalCreateObject />
-          <GlobalTranslateResult />
-          {initialized ? <AuthenticatedLayout /> : <Loading />}
-          <GlobalDragOverlay />
-          <ImagePreviewer />
-          <FileImporter />
-          <GlobalUtils />
-          {registeredGlobalElements.map(entry => (
-            <Fragment key={entry[0]}>{entry[1]()}</Fragment>
-          ))}
-          <svg
-            style={{
-              position: 'absolute',
-              width: 0,
-              height: 0,
-              overflow: 'hidden'
-            }}
-          >
-            <SvgMarker />
-          </svg>
-        </>
-      </ErrorBoundary>
-    </CacheProvider>
+    <ErrorBoundary FallbackComponent={ErrorFallback}>
+      {/* for unknown queryselector bug */}
+      <div
+        className={classNames(
+          'excalidraw',
+          css({
+            '--color-selection': '#6965db'
+          })
+        )}
+        style={{ display: 'none' }}
+      ></div>
+      <Initializer />
+      <ThemeSwitcher />
+      <Notification />
+      <>
+        <GlobalDownloadIndicator />
+        <TextSearch />
+        <GlobalScreenShot />
+        <GlobalPreviewPanel />
+        <GlobalQuickAdd />
+        <GlobalBaidudisk />
+        <GlobalSearchPanel />
+        <GlobalDialog />
+        <GlobalCollection />
+        <GlobalObjectCreator />
+        <GlobalObjectDetails />
+        <GlobalCreateObject />
+        <GlobalTranslateResult />
+        {initialized ? <AuthenticatedLayout /> : <Loading />}
+        <GlobalDragOverlay />
+        <ImagePreviewer />
+        <FileImporter />
+        <GlobalUtils />
+        {registeredGlobalElements.map(entry => (
+          <Fragment key={entry[0]}>{entry[1]()}</Fragment>
+        ))}
+        <svg
+          style={{
+            position: 'absolute',
+            width: 0,
+            height: 0,
+            overflow: 'hidden'
+          }}
+        >
+          <SvgMarker />
+        </svg>
+      </>
+    </ErrorBoundary>
   )
 }
 

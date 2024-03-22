@@ -22,7 +22,6 @@ export default () => {
         if (!feedDetails?.isLoading) {
           transformFeedUrl(newFeedUrl).then(url => {
             if (url) {
-              console.log(url)
               setFeedDetails({ isLoading: true, details: undefined })
               fetch(url)
                 .then(res => res.text())
@@ -33,14 +32,9 @@ export default () => {
                     details: { title: res.title, thumbnail: res.image?.url, description: res.description }
                   })
                 })
-                .catch(e => {
-                  toast.error('Failed to get feed!')
-                })
                 .finally(() => {
                   setFeedDetails(s => ({ ...s, isLoading: false }))
                 })
-            } else {
-              toast.error('Invalid feed!')
             }
           })
         }

@@ -4,7 +4,7 @@ import { getSetting, GlobalDragOverlayInstance } from '@/core'
 import { MetaStore, ObjectStore } from '@/api/stores'
 import { pushNumberIntoUnrepeatableArray } from '@/utils'
 import Id from '@/utils/id'
-import { checkDropCanBeMeta } from '@/core/global/globalDragOverlay/useDropObject'
+import { checkDropCanBeMeta } from '@/core/global/dragDrop/useDropObject'
 import useDropInsertMedia from '@/core/components/editor/hooks/drag/useDropInsertMedia'
 
 const useDrop = (noteId?: number, metaId?: number) => {

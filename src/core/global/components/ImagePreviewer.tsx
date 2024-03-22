@@ -2,17 +2,23 @@ import { Modal } from '@/components'
 import { Zindexes } from '@/consts'
 import createPanZoom from 'panzoom'
 import { useEffect, useRef, useState } from 'react'
+import { assignProperties } from '@/utils'
+import { GlobalInstance } from '@/hooks'
 
-export const GlobalImagePreviewerInstance: {
-  open?: (imgSrc: string) => void
-} = {}
-
-const GlobalImagePreviewer = () => {
+export default () => {
   const [previewerState, setPreviewerState] = useState<{
     visible: boolean
     imgSrc?: string
   }>({
     visible: false
+  })
+  assignProperties(GlobalInstance, {
+    commonOps: {
+      ...GlobalInstance.commonOps,
+      previewImage: url => {
+        setPreviewerState({ imgSrc: url, visible: true })
+      }
+    }
   })
   const imgRef = useRef<HTMLImageElement>(null)
   const { visible, imgSrc } = previewerState
@@ -25,7 +31,7 @@ const GlobalImagePreviewer = () => {
       }
     }
   }, [visible])
-  GlobalImagePreviewerInstance.open = src => setPreviewerState({ imgSrc: src, visible: true })
+
   return (
     <Modal
       visible={visible}
@@ -43,5 +49,3 @@ const GlobalImagePreviewer = () => {
     </Modal>
   )
 }
-
-export default GlobalImagePreviewer

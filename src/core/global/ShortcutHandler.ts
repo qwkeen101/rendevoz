@@ -29,6 +29,15 @@ export default function useGlobalShortcutHandler() {
     if (isShortcut(e, 'openObjectPanel')) {
       GlobalInstance.metaOps?.toggleDetails()
     }
+    if (isShortcut(e, 'closeOtherTabs')) {
+      GlobalInstance.layoutOps?.closeTabs('others')
+    }
+    if (isShortcut(e, 'closeRightTabs')) {
+      GlobalInstance.layoutOps?.closeTabs('right')
+    }
+    if (isShortcut(e, 'closeLeftTabs')) {
+      GlobalInstance.layoutOps?.closeTabs('left')
+    }
     if (isShortcut(e, 'openSidebar')) {
       setPanelState(draft => {
         draft.leftOpen = !draft.leftOpen

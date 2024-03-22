@@ -25,7 +25,6 @@ import { EditorStateAtom } from './hooks/useEditorState'
 import SidebarToolbar from '@/scenes/editor/HoverOutline'
 import { EditorBlockHandleAtom } from './hooks/useBlockHandle'
 import useThrottleFn from '@/hooks/utils/useThrottleFn'
-import { GlobalPdfPrinterInstance } from '@/core/global/GlobalPdfPrinter'
 import EditorHeader from '@/core/components/editor/EditorHeader'
 import withNormalize from '@/core/components/editor/plugins/withNormalize'
 import EditorClasses from '@/core/components/editor/consts/classes'
@@ -38,6 +37,7 @@ import { useAtomValue } from 'jotai'
 import EditorPluginHooks from './hooks/EditorPluginHooks'
 import { t } from 'i18next'
 import GetEditorBlockHandle from '@/core/components/editor/hooks/getEditorBlockHandle'
+import { css } from '@emotion/css'
 
 // function, get unique id everytime
 const defaultSlateValue = () => [
@@ -55,6 +55,34 @@ const pageWidthToSize = {
   'X-Large': '1200px',
   Max: '100%'
 }
+
+// @ts-ignore
+const PrintClassname = css({
+  // '@media print': {
+  body: {
+    overflow: 'visible !important'
+  },
+  '*': {
+    visibility: 'hidden !important'
+  },
+  '#root': {
+    display: 'none'
+  },
+  '[role="editor-container"]': {
+    visibility: 'visible !important',
+    display: 'block !important',
+    height: 'fit-content !important',
+    padding: '10mm !important',
+    overflow: 'visible !important'
+  },
+  '[role="editor-container"] *': {
+    visibility: 'visible !important'
+  },
+  '[role="editor-container"] [role="inner-editor"]': {
+    margin: '0 auto'
+    // }
+  }
+})
 /**
  * Editor core, controlled component / uncontrolled
  * Can be independent component outside Rendevoz
@@ -167,7 +195,31 @@ export const EditorV1: FC<EditorProps> = memo(
       })
 
     instance.printToPDF = () => {
-      GlobalPdfPrinterInstance.print?.({ type: 'note', value: editor.children, title: stringTitle })
+      let enV = true
+      setEditorState(s => {
+        enV = s.layout?.virtualizer ?? true
+        return {
+          ...s,
+          layout: {
+            ...s.layout,
+            virtualizer: false
+          }
+        }
+      })
+      setTimeout(() => {
+        const ele = scrollElementRef.current!
+        const p = ele.parentElement!
+        document.body.appendChild(ele)
+        document.documentElement.classList.add(PrintClassname)
+        const afterPrint = () => {
+          document.documentElement.classList.remove(PrintClassname)
+          p.appendChild(ele)
+          setEditorState(s => ({ ...s, layout: { ...s.layout, virtualizer: enV } }))
+          window.removeEventListener('afterprint', afterPrint)
+        }
+        window.addEventListener('afterprint', afterPrint)
+        window.print()
+      })
     }
     instance.getTitle = () => {
       return stringTitle

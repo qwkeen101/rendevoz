@@ -15,29 +15,27 @@ import AuthenticatedLayout from './components/base/authenticatedLayout'
 import '@/assets/pdf.js'
 import PdfJsUrl from '@/assets/pdf.worker.js?url'
 import ThemeSwitcher from './ThemeSwitcher'
-import GlobalImagePreviewer from './core/global/GlobalImagePreviewer'
+import ImagePreviewer from './core/global/components/ImagePreviewer'
 import classNames from 'classnames'
 import { css } from '@emotion/css'
 import { CacheProvider } from '@emotion/react'
 import GlobalTranslateResult from './core/global/translate/GlobalTranslatePanel'
 import GlobalSearchPanel from './core/global/GlobalSearchPanel'
 import 'highlight.js/styles/atom-one-dark.css'
-import GlobalTextSearch from './core/global/GlobalTextSearch'
+import TextSearch from './core/global/components/TextSearch'
 import '@/consts/colors.less'
-import { Rendevoz } from './core/rendevoz'
-import GlobalImporter from './core/global/GlobalImporter'
+import FileImporter from './core/global/components/FileImporter'
 import PluginManager from './core/plugin/PluginManager'
 import BuiltinEditorPlugin from './core/plugin/builtin/EditorPlugin'
 import { KeyToRegisteredGlobalElements } from './core/plugin/RegisterMap'
 import GlobalUtils from '@/core/global/GlobalUtils'
-import GlobalPdfPrinter from '@/core/global/GlobalPdfPrinter'
 import createCache from '@emotion/cache'
 import { BuiltInDraggableElement, BuiltInDropOn, BuiltInMetaObjectTypes, BuiltInObjectTypes, BuiltInTabTypes } from '~/typings'
 import { GlobalBaidudisk } from '@/components/fileImporter/baidudisk/BaidudiskDisplayer'
 import { useSelectGlobalAtomValue } from '@/hooks'
-import GlobalCollection from '@/core/global/GlobalCollection'
+import GlobalCollection from '@/core/global/components/CollectionSelector'
 import { GlobalObjectDetails } from '@/core/object/details'
-import GlobalPreviewPanel from '@/core/global/GlobalPreviewPanel'
+import GlobalPreviewPanel from '@/core/global/components/ObjectPreviewer'
 import GlobalObjectCreator from '@/core/global/GlobalObjectCreator'
 import GlobalQuickAdd from '@/components/form/quickAdd/GlobalQuickAdd'
 import GlobalDownloadIndicator from '@/core/global/DownloadIndicator'
@@ -47,7 +45,6 @@ import Loading from '@/components/Loading'
 import './styles/loading.less'
 import GlobalDialog from '@/core/global/GlobalDialog'
 import { ChineseFormats, DateFormat, EnglishFormats } from '@/utils'
-import GlobalMediaPreviewer from '@/core/global/MediaPreviewer'
 import useGlobalShortcutHandler from '@/core/global/ShortcutHandler'
 
 export function getOS() {
@@ -138,7 +135,7 @@ const App = () => {
         <Notification />
         <>
           <GlobalDownloadIndicator />
-          <GlobalTextSearch />
+          <TextSearch />
           <GlobalScreenShot />
           <GlobalPreviewPanel />
           <GlobalQuickAdd />
@@ -146,16 +143,14 @@ const App = () => {
           <GlobalSearchPanel />
           <GlobalDialog />
           <GlobalCollection />
-          <GlobalMediaPreviewer />
           <GlobalObjectCreator />
           <GlobalObjectDetails />
           <GlobalCreateObject />
           <GlobalTranslateResult />
           {initialized ? <AuthenticatedLayout /> : <Loading />}
           <GlobalDragOverlay />
-          <GlobalImagePreviewer />
-          <GlobalImporter />
-          <GlobalPdfPrinter />
+          <ImagePreviewer />
+          <FileImporter />
           <GlobalUtils />
           {registeredGlobalElements.map(entry => (
             <Fragment key={entry[0]}>{entry[1]()}</Fragment>

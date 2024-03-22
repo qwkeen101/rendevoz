@@ -680,6 +680,9 @@
     "code-block": "Code block"
   },
   "settings": {
+    "Close other tabs": "Close other tabs",
+    "Close left tabs": "Close left tabs",
+    "Close right tabs": "Close right tabs",
     "Rebuild search desc": "Rebuild search index when failed to get correct search results",
     "Global stylesheet": "Global stylesheet",
     "Open sidebar": "Open sidebar",

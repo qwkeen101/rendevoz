@@ -7,9 +7,9 @@ import { useEventHandler } from '@/events'
 import { useToggle } from '@/hooks'
 import { Modal } from '@/components'
 import Id from '@/utils/id'
-import { Rendevoz } from '../rendevoz'
+import { Rendevoz } from '../../rendevoz'
 
-const GlobalCreateObject = () => {
+const ObjectCreator = () => {
   const [innerMeta, setInnerMeta] = useState<Partial<MetaObject>>()
   const [pendingLinks, setPendingLinks] = useState<MetaLink[]>()
   const [modalVisible, toggleModalVisible] = useToggle(false)
@@ -140,4 +140,4 @@ const GlobalCreateObject = () => {
   )
 }
 
-export default GlobalCreateObject
+export default ObjectCreator

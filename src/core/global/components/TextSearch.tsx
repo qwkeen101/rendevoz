@@ -1,10 +1,10 @@
 import { Modal } from '@/components'
-import { GlobalSearchInputAtom, SearchDialog } from '../search/SearchDialog'
+import { GlobalSearchInputAtom, SearchDialog } from '../../search/SearchDialog'
 import { GlobalInstance, useGlobalSetAtom, useToggle } from '@/hooks'
 import { memo, useEffect } from 'react'
 import { assignProperties } from '@/utils'
 
-const GlobalTextSearch = memo(() => {
+const TextSearch = memo(() => {
   const [modalVisible, toggleModalVisible] = useToggle(false)
   const setSearchInput = useGlobalSetAtom(GlobalSearchInputAtom)
   assignProperties(GlobalInstance, {
@@ -36,4 +36,4 @@ const GlobalTextSearch = memo(() => {
   )
 })
 
-export default GlobalTextSearch
+export default TextSearch

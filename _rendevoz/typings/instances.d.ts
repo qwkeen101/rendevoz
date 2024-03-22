@@ -52,6 +52,19 @@ export type IGlobalInstance = Partial<{
   commonOps: {
     addExtraSvgArrows?: (color: string) => void
     previewMedia?: (path: string) => void
+    previewImage?: (url: string) => void
+    importFiles?: (
+      files: File[] | File,
+      opts?: {
+        isDir?: boolean
+        dirName?: string
+        onImport?: (meta: MetaObject) => void
+        // auto import into collection
+        parentCollectionId?: number
+        // if import whole dir, result with a collection
+        onEnd?: (result?: { collectionId?: number }) => void
+      }
+    ) => void
   }
   goBackOps: {
     goBackToSyncBlock: (syncBlockMetaId: number, targetMetaId: number) => Promise<void>
@@ -61,6 +74,7 @@ export type IGlobalInstance = Partial<{
     getCurrentFocusedTab: () => string | undefined
     switchToTab: (direction: 'next' | 'prev') => void
     registerTabData: (tabData: BuiltInTabTypes) => void
+    closeTabs: (type: 'left' | 'right' | 'others') => void
     closeCurrentFocusedTab: VoidFunction
     closeCurrentFocusedPanel: VoidFunction
     closeAllTabs: (keepHome?: boolean) => void

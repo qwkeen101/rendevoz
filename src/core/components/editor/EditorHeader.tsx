@@ -6,8 +6,6 @@ import ClassName from '@/styles/classNames'
 import FontSize from '@/consts/font'
 import { css } from '@emotion/css'
 import { useTranslation } from 'react-i18next'
-import { DateFormat } from '@/utils'
-import { Colors } from '@/consts'
 import { CustomEditor } from '~/typings'
 import EditorSetting from '@/core/components/editor/components/setting/EditorSetting'
 
@@ -45,12 +43,6 @@ const EditorHeader = ({ title, editor, maxTitleWidth }: { editor: CustomEditor; 
         {header?.display?.title !== false && (
           <div style={{ textTransform: 'none', marginLeft: 4 }} className={css([ClassName.title('14px'), ClassName.ellipsisFont(1)])}>
             {title}
-          </div>
-        )}
-
-        {lastSavedAt && editorState.layout?.showLastSave !== false && (
-          <div style={{ fontSize: 12, marginLeft: 8, color: Colors.Font.Transparent, flexShrink: 0 }}>
-            {t('general.Last saved at')}: {DateFormat.format(lastSavedAt, DateFormat.Formats.withSecond)}
           </div>
         )}
       </Content>
@@ -98,7 +90,7 @@ const EditorHeader = ({ title, editor, maxTitleWidth }: { editor: CustomEditor; 
           align={'end'}
           placement={['bottom']}
           content={
-            <WithBorder padding={6} style={{ minWidth: 160, fontSize: FontSize['13px'] }}>
+            <WithBorder style={{ minWidth: 180, fontSize: FontSize['13px'] }}>
               <EditorSetting editor={editor} />
             </WithBorder>
           }

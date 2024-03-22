@@ -11,19 +11,7 @@ interface DockTabPaneProps {
   className?: string
   children?: ReactNode
 }
-const variants = {
-  hidden: {
-    // visibility: 'hidden',
-    // pointerEvents: 'none',
-    // zIndex: -1,
-    // position: 'absolute',
-    // opacity: 0,
-    display: 'none'
-  },
-  visible: {
-    // opacity: 1
-  }
-}
+
 export const DockTabPaneContext = createContext<{
   currentTabId: string
 } | null>(null)

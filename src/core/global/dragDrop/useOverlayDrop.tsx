@@ -13,7 +13,7 @@ import { Rendevoz } from '@/core/rendevoz'
 import { TypeToRegisteredObject } from '@/api/stores/object/object.store'
 import { KeyToRegisteredDropOnProcessor } from '@/core/plugin/RegisterMap'
 import { assignProperties } from '@/utils'
-import normalizeDraggableIntoMeta from '@/core/global/globalDragOverlay/normalizeDraggableIntoMeta'
+import normalizeDraggableIntoMeta from '@/core/global/dragDrop/normalizeDraggableIntoMeta'
 
 const useOverlayDrop = () => {
   const emitter = Rendevoz.Events.Emit.GlobalEventEmitter

@@ -1,6 +1,6 @@
 import { GlobalInstance } from '@/hooks'
 import { assignProperties } from '@/utils'
-import { DockLayout, TabData as DockTabData } from '@/components/base/dock'
+import { DockLayout, PanelData, TabData as DockTabData } from '@/components/base/dock'
 import { addNewTab, closeTab, getCurrentFocusedTab } from '@/components/layout/utils'
 import { RefObject } from 'react'
 import {
@@ -18,6 +18,7 @@ import { defaultLayout, LayoutIdToTabMap } from '@/components/layout/index'
 import Id from '@/utils/id'
 import { Rendevoz } from '@/core/rendevoz'
 import { MetaStore, ObjectStore } from '@/api/stores'
+import { replacePanel } from '@/components/base/dock/Algorithm'
 
 const RegisterTabDataMap = new Map<BuiltInTabTypes['type'], TabData[BuiltInTabTypes['type']]>()
 const initializeOneTab = (registeredData: TabData[BuiltInTabTypes['type']], options: OpenTabOptions<BuiltInTabTypes['type']>) => {
@@ -214,6 +215,50 @@ export default function assignGlobalLayoutOps(layoutRef: RefObject<DockLayout>) 
         }
       },
       closeCurrentFocusedPanel: () => {},
+      closeTabs: type => {
+        const l = layoutRef.current
+        if (l) {
+          const currTab = GlobalInstance.layoutOps?.getCurrentFocusedTab()
+          if (currTab) {
+            let newPanel: PanelData | undefined = undefined
+            const tabData = l.find(currTab) as DockTabData
+            const parentPanel = tabData.parent as PanelData
+            if (type === 'others') {
+              parentPanel.tabs
+                .filter(i => i !== tabData)
+                .map(i => i.id)
+                .forEach(id => id && LayoutIdToTabMap.delete(id))
+              newPanel = { ...parentPanel, tabs: [tabData] } as PanelData
+            }
+            const idx = parentPanel.tabs.findIndex(i => i === tabData)
+            if (type === 'right') {
+              const leftTabs = parentPanel.tabs.slice(0, idx + 1)
+              const rightTabs = parentPanel.tabs.slice(idx - 1)
+              rightTabs.forEach(tab => tab.id && LayoutIdToTabMap.delete(tab.id))
+              newPanel = {
+                ...parentPanel,
+                tabs: [...leftTabs],
+                activeId: tabData.id
+              } as PanelData
+            }
+            if (type === 'left') {
+              const leftTabs = parentPanel.tabs.slice(0, idx)
+              const rightTabs = parentPanel.tabs.slice(idx)
+              leftTabs.forEach(tab => tab.id && LayoutIdToTabMap.delete(tab.id))
+              newPanel = {
+                ...parentPanel,
+                tabs: [...rightTabs],
+                activeId: tabData.id
+              } as PanelData
+            }
+            if (newPanel) {
+              const newLayout = replacePanel(l.getLayout(), parentPanel, newPanel)
+              l.changeLayout(newLayout)
+              l.setLayout(newLayout)
+            }
+          }
+        }
+      },
       closeCurrentFocusedTab: () => {
         const layout = layoutRef.current
         if (!layout) return

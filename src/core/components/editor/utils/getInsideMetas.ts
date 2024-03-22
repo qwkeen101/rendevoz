@@ -10,6 +10,9 @@ export default (children: CustomElement[]) => {
     if (c.type === 'metaObject') {
       push(c.originId, c.id)
     }
+    if (c.type === 'synced') {
+      push(c.originId, c.id)
+    }
     Array.from(Node.elements(c)).forEach(e => {
       const ele = e[0]
       if (ele.type === 'inline-metaObject') {

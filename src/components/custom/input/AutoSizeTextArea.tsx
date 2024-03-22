@@ -51,7 +51,7 @@ const TextareaAutosize: React.ForwardRefRenderFunction<HTMLDivElement, TextareaA
       wait: 200
     }
   )
-  useLayoutEffect(() => {
+  useEffect(() => {
     const l = libRef.current
     if (l) {
       l.innerText = props.value || props.defaultValue || ''

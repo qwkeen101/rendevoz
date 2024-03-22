@@ -21,6 +21,9 @@ const shortCutNameToTitle = {
     // openSearchPanel: 'open web search panel',
     openGlobalSearch: 'open global text search',
     closeCurrentTab: 'Close current focused tab',
+    closeOtherTabs: 'Close other tabs',
+    closeRightTabs: 'Close right tabs',
+    closeLeftTabs: 'Close left tabs',
     switchToPrevTab: 'Switch to previous tab',
     switchToNextTab: 'Switch to next tab'
   },

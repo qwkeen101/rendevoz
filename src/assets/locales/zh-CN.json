@@ -676,6 +676,9 @@
     "code-block": "代码块"
   },
   "settings": {
+    "Close other tabs": "关闭其他标签",
+    "Close left tabs": "关闭左侧标签",
+    "Close right tabs": "关闭右侧标签",
     "Rebuild search desc": "当无法获得正确搜索结果时，重建索引",
     "Global stylesheet": "全局样式",
     "Open sidebar": "打开侧边栏",

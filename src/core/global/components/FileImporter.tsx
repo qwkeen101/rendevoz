@@ -9,12 +9,12 @@ import ClassName from '@/styles/classNames'
 import { Content, Icon, WithBorder } from '@/components'
 import { useTranslation } from 'react-i18next'
 import FontSize from '@/consts/font'
-import { Rendevoz } from '../rendevoz'
+import { Rendevoz } from '../../rendevoz'
 import Colors from '@/consts/colors'
 import { css } from '@emotion/css'
 export const GlobalImporterInstance: GlobalInstances.NoteImporterInstance = {}
 
-const GlobalImporter = () => {
+export default () => {
   const { t } = useTranslation()
   const [notes, setNotes] = useState<
     {
@@ -179,5 +179,3 @@ const GlobalImporter = () => {
     document.body
   )
 }
-
-export default GlobalImporter

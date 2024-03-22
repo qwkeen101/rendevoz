@@ -1,33 +1,17 @@
 import { css } from '@emotion/css'
-import { CSSProperties, FC, ImgHTMLAttributes, ReactNode, useState } from 'react'
+import { CSSProperties, FC, ImgHTMLAttributes } from 'react'
 import Icon from './Icon'
-import ClassName from '@/styles/classNames'
-import { GlobalImagePreviewerInstance } from '@/core/global/GlobalImagePreviewer'
+import { GlobalInstance } from '@/hooks'
 
 const Image: FC<
   ImgHTMLAttributes<HTMLImageElement> & {
-    placeHolderSize?: number
-    placeHolder?: ReactNode
     ratio?: number
     preview?: boolean
     minWidth?: number
     containerStyle?: CSSProperties
     withoutContainer?: boolean
   }
-> = ({
-  placeHolderSize = 20,
-  placeHolder,
-  ratio = 1,
-  width = 100,
-  className,
-  minWidth,
-  preview,
-  onLoad,
-  withoutContainer,
-  containerStyle,
-  ...rest
-}) => {
-  const [loaded, setLoaded] = useState(false)
+> = ({ ratio = 1, width = 100, className, minWidth, preview, onLoad, withoutContainer, containerStyle, ...rest }) => {
   return (
     <>
       <div
@@ -45,16 +29,14 @@ const Image: FC<
               className={css({ objectFit: 'contain', width: '100%' })}
               {...rest}
               onLoad={e => {
-                setLoaded(true)
                 onLoad?.(e)
               }}
-              onError={() => setLoaded(false)}
             />
             {preview && (
               <div
                 onClick={e => {
                   e.preventDefault()
-                  GlobalImagePreviewerInstance.open?.(rest.src)
+                  GlobalInstance.commonOps?.previewImage?.(rest.src)
                 }}
                 className={css({
                   position: 'absolute',
@@ -103,16 +85,14 @@ const Image: FC<
               })}
               {...rest}
               onLoad={e => {
-                setLoaded(true)
                 onLoad?.(e)
               }}
-              onError={() => setLoaded(false)}
             />
             {preview && (
               <div
-                onClick={(e) => {
+                onClick={e => {
                   e.preventDefault()
-                  GlobalImagePreviewerInstance.open?.(rest.src)
+                  GlobalInstance.commonOps?.previewImage?.(rest.src)
                 }}
                 className={css({
                   position: 'absolute',

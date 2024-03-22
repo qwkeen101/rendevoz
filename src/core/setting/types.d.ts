@@ -93,6 +93,9 @@ export type IShortCutSetting = {
     switchToPrevTab: ShortCut | null
     switchToNextTab: ShortCut | null
     closeCurrentTab: ShortCut | null
+    closeOtherTabs: ShortCut | null
+    closeRightTabs: ShortCut | null
+    closeLeftTabs: ShortCut | null
     openObjectPanel: ShortCut | null
     openScreenShot: ShortCut | null
     quickCreateObject: ShortCut | null

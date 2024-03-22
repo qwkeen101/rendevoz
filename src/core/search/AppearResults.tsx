@@ -263,15 +263,12 @@ const NoteParentItem = ({ item }: { item: SearchRelatedResult }) => {
             Rendevoz.Actions.Open.Meta.openMetaObject(item.parent.metaId)
           }}
           style={{
-            padding: '0px',
-            width: 'fit-content'
+            padding: '0px'
           }}
           selected={false}
           hit={item.parent}
+          size={item.children.length}
         />
-        <div style={{ marginLeft: 4 }} className={'transparent-font font-size-12'}>
-          ({item.children.length})
-        </div>
       </Content>
       {!toggled && (
         <Content

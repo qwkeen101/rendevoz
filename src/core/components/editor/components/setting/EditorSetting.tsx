@@ -10,6 +10,7 @@ import { useUpdate } from 'react-use'
 import PageSetting from '@/core/components/editor/components/setting/PageSetting'
 import translateWholePage from '@/core/components/editor/utils/translateWholePage'
 import ClassName from '@/styles/classNames'
+import { DateFormat } from '@/utils'
 
 const EditorSetting = ({ editor }: { editor: CustomEditor }) => {
   const { t } = useTranslation()
@@ -17,69 +18,55 @@ const EditorSetting = ({ editor }: { editor: CustomEditor }) => {
   const [editorState, setEditorState] = useEditorState()
   const parentRef = useRef(null)
   const update = useUpdate()
+  const { lastSavedAt } = editorState.state
   useEffect(() => {
     update()
   }, [])
   return (
-    <Content ref={parentRef} style={{ fontSize: 14 }}>
-      {/*<AnimatePopover*/}
-      {/*  padding={10}*/}
-      {/*  parentElement={parentRef.current}*/}
-      {/*  content={*/}
-      {/*    <WithBorder padding={6}>*/}
-      {/*      <TypefaceSetting editor={editor} />*/}
-      {/*    </WithBorder>*/}
-      {/*  }*/}
-      {/*  align={'start'}*/}
-      {/*  positions={['left', 'right']}*/}
-      {/*>*/}
-      {/*  <Button.IconButton text={t('general.Typeface')} icon={'park-add-text'} />*/}
-      {/*</AnimatePopover>*/}
-      {/*<AnimatePopover*/}
-      {/*  padding={10}*/}
-      {/*  parentElement={parentRef.current}*/}
-      {/*  content={*/}
-      {/*    <WithBorder padding={6}>*/}
-      {/*      <PageSetting editor={editor} />*/}
-      {/*    </WithBorder>*/}
-      {/*  }*/}
-      {/*  align={'start'}*/}
-      {/*  positions={['left', 'right']}*/}
-      {/*>*/}
-      {/*  <Button.IconButton text={t('general.Page style')} icon={'park-format'} />*/}
-      {/*</AnimatePopover>*/}
-      {editorState?.header?.display?.translate !== false && (
+    <Content ref={parentRef}>
+      <Content style={{ padding: 4 }} className={'border-bottom'}>
+        {editorState?.header?.display?.translate !== false && (
+          <Button.IconButton
+            text={t('general.Translate document')}
+            icon={'park-translate'}
+            onClick={() => translateWholePage(editor, instance)}
+          />
+        )}
         <Button.IconButton
-          text={t('general.Translate document')}
-          icon={'park-translate'}
-          onClick={() => translateWholePage(editor, instance)}
+          text={t('general.Export as PDF')}
+          icon="park-file-pdf"
+          onClick={() => {
+            instance.printToPDF?.()
+          }}
         />
-      )}
-      <Button.IconButton
-        text={t('general.Export as PDF')}
-        icon="park-file-pdf"
-        onClick={() => {
-          instance.printToPDF?.()
-        }}
-      />
-      <Button.IconButton
-        text={t('general.Export as Markdown')}
-        icon="custom-markdown"
-        onClick={() => {
-          const editor = instance.getSlateEditor?.()
-          if (editor) {
-            const content = slateToMarkdown(editor.children)
-            if (content) {
-              const blob = new Blob([content])
-              const a = document.createElement('a')
-              const title = instance.getTitle?.()
-              a.download = `${title || 'Untitled'}.md`
-              a.href = URL.createObjectURL(blob)
-              a.click()
+        <Button.IconButton
+          text={t('general.Export as Markdown')}
+          icon="custom-markdown"
+          onClick={() => {
+            const editor = instance.getSlateEditor?.()
+            if (editor) {
+              const content = slateToMarkdown(editor.children)
+              if (content) {
+                const blob = new Blob([content])
+                const a = document.createElement('a')
+                const title = instance.getTitle?.()
+                a.download = `${title || 'Untitled'}.md`
+                a.href = URL.createObjectURL(blob)
+                a.click()
+              }
             }
-          }
+          }}
+        />
+      </Content>
+      <Content
+        className={'font-size-12 transparent-font'}
+        style={{
+          padding: '4px 10px'
         }}
-      />
+      >
+        <div>{t('general.Last saved at')}</div>
+        <div>{DateFormat.format(lastSavedAt, DateFormat.Formats.withSecond)}</div>
+      </Content>
     </Content>
   )
 }

@@ -118,10 +118,6 @@ export const DockTabBar = memo((props: DockTabBarProps) => {
         ref={reorderRef}
         onReorder={r => {
           setInnerTabs(r)
-          // const currIndex = r.findIndex(i => i.key === currentMoveTabId.current)
-          // const prevIndex = navs.findIndex(i => i.key === currentMoveTabId.current)
-          // const direction = currIndex > prevIndex ? 'after-tab' : 'before-tab'
-          // onReorder(currentMoveTabId.current, navs[currIndex].key, direction)
         }}
         className={styles.tabs}
         style={{
@@ -183,16 +179,7 @@ const TabItem = ({ onClick, isSelected, item, onDragStart, isLast, onDragEnd, is
       <div
         className={ClassName.flatButton()}
         onClick={e => {
-          const tabData = dockContext.find(item.key) as TabData
-          const parentPanel = tabData.parent as PanelData
-          parentPanel.tabs
-            .filter(i => i !== tabData)
-            .map(i => i.id)
-            .forEach(id => id && LayoutIdToTabMap.delete(id))
-          const newPanel = { ...parentPanel, tabs: [tabData] } as PanelData
-          const newLayout = replacePanel(dockContext.getLayout(), parentPanel, newPanel)
-          dockContext.setLayout(newLayout)
-          dockContext.onSilentChange()
+          GlobalInstance.layoutOps?.closeTabs('others')
           toggleContextMenuVisible()
         }}
       >
@@ -201,20 +188,7 @@ const TabItem = ({ onClick, isSelected, item, onDragStart, isLast, onDragEnd, is
       <div
         className={ClassName.flatButton()}
         onClick={e => {
-          const tabData = dockContext.find(item.key) as TabData
-          const parentPanel = tabData.parent as PanelData
-          const idx = parentPanel.tabs.findIndex(i => i === tabData)
-          const leftTabs = parentPanel.tabs.slice(0, idx + 1)
-          const rightTabs = parentPanel.tabs.slice(idx + 1, -1)
-          rightTabs.forEach(tab => tab.id && LayoutIdToTabMap.delete(tab.id))
-          const newPanel = {
-            ...parentPanel,
-            tabs: [...leftTabs],
-            activeId: tabData.id
-          } as PanelData
-          const newLayout = replacePanel(dockContext.getLayout(), parentPanel, newPanel)
-          dockContext.setLayout(newLayout)
-          dockContext.onSilentChange()
+          GlobalInstance.layoutOps?.closeTabs('right')
           toggleContextMenuVisible()
         }}
       >

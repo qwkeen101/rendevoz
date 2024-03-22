@@ -43,9 +43,11 @@ export class DockPanel extends React.PureComponent<Props, State> {
   state: State = { dropFromPanel: null, draggingHeader: false }
 
   pointerUpHandler = (e: PointerEvent) => {
-    if (this.state.dropFromPanel) {
-      this.setState({ dropFromPanel: null })
-    }
+    setTimeout(() => {
+      if (this.state.dropFromPanel) {
+        this.setState({ dropFromPanel: null })
+      }
+    })
   }
   onDragOver = (e: DragState) => {
     if (DockPanel._droppingPanel === this) {

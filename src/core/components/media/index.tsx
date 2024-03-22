@@ -44,7 +44,7 @@ const MediaInner = ({ onInstanceInitialized, onlyCore, on, disableTabTitle = tru
   const containerRef = useRef<HTMLDivElement>(null)
   const instance = useMediaInstance()
   instance.on = on
-  const showIcon = mediaState.mode !== 'audio' && playIconVisible && mediaState.loaded
+  const showIcon = mediaState.mode === 'video' && playIconVisible && mediaState.loaded
   const mediaLayout = useAtomValue(MediaLayoutAtom)
   const audioMode = mediaState.mode === 'audio'
   useChangeVideoLayout(outerContainerRef)
@@ -333,9 +333,9 @@ const transformUrl = (
       const params = u.searchParams
       const bvId = u.pathname.split('/')[2]
       const p = params.get('p')
-      return `https://www.bilibili.com/blackboard/player.html?hasMuteButton=1&bvid=${bvId}&autoplay=${
-        options?.autoPlay ? '1' : '0'
-      }&t=${options?.startTime ? options.startTime : ''}${p ? `&p=${p}` : ''}`
+      return `https://www.bilibili.com/blackboard/player.html?hasMuteButton=1&bvid=${bvId}&autoplay=${options?.autoPlay ? '1' : '0'}&t=${
+        options?.startTime ? options.startTime : ''
+      }${p ? `&p=${p}` : ''}`
     } catch (e) {
       return e
     }

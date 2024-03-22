@@ -79,8 +79,8 @@ window.addEventListener('DOMContentLoaded', () => {
         videoElement = bilibiliVideoWrapper.querySelector('video')
         wrapperElement = bilibiliVideoWrapper
         if (videoElement) {
-          wrapperElement.querySelector('.bilibili-player-video-web-fullscreen')?.click()
           videoLoaded = true
+          wrapperElement.querySelector('.bilibili-player-video-web-fullscreen')?.click()
         }
       }
     }

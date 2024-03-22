@@ -13,10 +13,6 @@ import ContextMenu from '@/components/contextMenu'
 import MediaActionsMenu from '@/core/components/media/components/MediaActionsMenu'
 import AudioPlayer from '@/core/components/media/players/AudioPlayer'
 import { useTranslation } from 'react-i18next'
-import clipMedia from '@/core/components/media/utils/clipMedia'
-import FileSystem from '@/api/fileSystem'
-import Id from '@/utils/id'
-import { ObjectStore } from '@/api/stores'
 
 export const MEDIA_PLAYER_DEFAULT_BORDER_RADIUS = 12
 
@@ -59,22 +55,22 @@ const MediaCore = memo(() => {
       fullScreen: () => {
         setMediaState(s => ({ ...s, fullScreen: !s.fullScreen }))
       },
-      clip: async duration => {
-        const mode = mediaState.mode
-        if (mode === 'video') {
-          const file = await fetch(mediaState.url).then(i => i.blob())
-          const result = await clipMedia('input.mp4', file, duration)
-          const path = await FileSystem.fs.writeFile(result, `/files/clip_${Id.getId()}.mp4`, 'binary')
-          if (path) {
-            console.log(path)
-            return path
-          }
-        }
-        if (mode === 'web') {
-          if (mediaState.url.includes('youtube.com')) {
-          }
-        }
-      }
+      // clip: async duration => {
+      //   const mode = mediaState.mode
+      //   if (mode === 'video') {
+      //     const file = await fetch(mediaState.url).then(i => i.blob())
+      //     const result = await clipMedia('input.mp4', file, duration)
+      //     const path = await FileSystem.fs.writeFile(result, `/files/clip_${Id.getId()}.mp4`, 'binary')
+      //     if (path) {
+      //       console.log(path)
+      //       return path
+      //     }
+      //   }
+      //   if (mode === 'web') {
+      //     if (mediaState.url.includes('youtube.com')) {
+      //     }
+      //   }
+      // }
     }
   })
 

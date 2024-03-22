@@ -49,6 +49,7 @@
     "axios": "^0.25.0",
     "babel-plugin-import": "latest",
     "cheerio": "^1.0.0-rc.12",
+    "@pixi-essentials/svg": "latest",
     "classnames": "^2.3.1",
     "colorthief": "^2.4.0",
     "cross-env": "7.0.3",

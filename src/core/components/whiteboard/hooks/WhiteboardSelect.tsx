@@ -509,6 +509,9 @@ const WhiteboardSelect = memo(({ containerRef }: { containerRef: MutableRefObjec
       {renderSelectBox()}
       {renderMultiSelectBox()}
       <AnimatePopover
+        containerStyle={{
+          zIndex: '50'
+        }}
         borderRadius={999}
         positions={['top', 'bottom']}
         visible={!!windowPos && !isDraggingSelectionBox && !whiteboardState.isSelecting}

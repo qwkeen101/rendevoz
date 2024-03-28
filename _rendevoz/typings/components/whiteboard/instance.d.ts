@@ -109,6 +109,18 @@ export type IEdgeInnerFuncs = {
   drawPath: VoidFunction
 }
 
+export type IWhiteboardEvents = {
+  type: 'drop'
+} & (
+  | {
+      itemType: 'file'
+      file: File
+    }
+  | {
+      itemType: 'object'
+      metaId: number | number[]
+    }
+)
 export type IWhiteboardInstance = Partial<{
   openTabInSidebar?: (type: string, objectId?: number) => void
   getNode: (nodeId: number) => IWhiteboardNode | undefined
@@ -121,6 +133,9 @@ export type IWhiteboardInstance = Partial<{
     expandMindmap: (node: IWhiteboardNode & { type: 'mindmap' }) => IWhiteboardNode[]
     startDragMindmapChild: (nodeId: number, e: PointerEvent) => void
   }
+  addEventListener: (listener: (e: IWhiteboardEvents) => void) => void
+  removeEventListener: (listener: (e: IWhiteboardEvents) => void) => void
+  emit: (e: IWhiteboardEvents) => void
   getEdgeLayer: () => SVGGElement | null | undefined
   getEdgeLabelLayer: () => SVGGElement | null | undefined
   deleteNode: (nodeId: number) => void

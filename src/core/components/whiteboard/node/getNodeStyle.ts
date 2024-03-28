@@ -113,9 +113,16 @@ const getNodeStyle = (
   if (!node.border) {
     showBorder = false
   }
+  let opacity = 1
+  if (opts.isErased) {
+    opacity = 0.2
+  }
+  if (node.rootId && node.x === 0 && node.y === 0 && !node.height) {
+    opacity = 0
+  }
   return {
     boxShadow: getNodeBoxShadow(),
-    opacity: opts.isErased ? 0.2 : 1,
+    opacity,
     borderRadius: borderRadius,
     zIndex,
     border: showBorder ? `3px solid ${tinycolor(node.border).darken(30).toHexString()}` : undefined,

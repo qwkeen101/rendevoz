@@ -11,6 +11,32 @@ export type CurrentKeyValues = {
     name: string
     createdAt: number
   }
+  moveToShowInvisible?: boolean
+  // workspace to cache
+  moveToCache?: Record<
+    number,
+    {
+      recently?: {
+        type: 'whiteboard' | 'note' | 'group' | 'collection'
+        id: number
+      }[]
+      whiteboard?: {
+        // object id
+        id: number
+      }
+      note?: {
+        // object id
+        id: number
+      }
+      group?: {
+        // meta id
+        id: number
+      }
+      collection?: {
+        id: number
+      }
+    }
+  >
   savedGlobalSearch?: {
     id: number
     filter?: MetaFilterGroup

@@ -15,6 +15,7 @@ import ViewSettingMenu from '@/core/components/group/components/menu/setting/Vie
 import GroupGrouperMenu from '@/core/components/group/components/grouper/menus'
 import { usePrevious } from '@/hooks'
 import classnames from 'classnames'
+import ConfigMenu from '@/core/components/group/components/menu/setting/ConfigMenu'
 
 export default ({ onClose }: { onClose: VoidFunction }) => {
   const [currentView, setCurrentView] = useState<
@@ -22,6 +23,7 @@ export default ({ onClose }: { onClose: VoidFunction }) => {
     | 'properties'
     | 'view'
     | 'grouper'
+    | 'settings'
     | {
         type: 'subMenu'
         name: string
@@ -33,22 +35,7 @@ export default ({ onClose }: { onClose: VoidFunction }) => {
   const currentGroupView = groupState.currentView
   const instance = useGroupInstance()
   const inputRef = useRef<HTMLInputElement>()
-  const groupStateState = groupState.state
-  const groupLayout = groupState.layout
-  const openInOptions = [
-    {
-      value: 'newTab',
-      children: t('general.New tab')
-    },
-    {
-      value: 'sidePeek',
-      children: t('general.Side peek')
-    },
-    {
-      value: 'center',
-      children: t('general.Center')
-    }
-  ]
+
   useEffect(() => {
     const i = inputRef.current
     if (i && currentGroupView?.name) {
@@ -149,73 +136,14 @@ export default ({ onClose }: { onClose: VoidFunction }) => {
                   }}
                 />
               )}
-              {!groupStateState?.onlyOpenIn && (
-                <ButtonSelect
-                  name={t('general.Open object in')}
-                  closeOnSelect={true}
-                  value={groupState.data?.openIn || 'newTab'}
-                  options={openInOptions}
-                  onSelect={v => {
-                    instance.updateGroupData?.(s => ({ ...s, openIn: v[0] }))
-                  }}
-                />
-              )}
-              {groupLayout?.showAddObjectIntoSetting !== false && (
-                <ButtonSelect
-                  closeOnSelect={true}
-                  name={t('general.Add from outside to')}
-                  onSelect={v => {
-                    instance.updateGroupData?.(s => ({ ...s, autoAddto: v[0] }))
-                  }}
-                  value={groupState.data?.autoAddto || 'first'}
-                  options={[
-                    {
-                      value: 'first',
-                      children: t('general.First')
-                    },
-                    {
-                      value: 'last',
-                      children: t('general.Last')
-                    }
-                  ]}
-                />
-              )}
-              {groupStateState?.canHideObjectsInside !== false && (
-                <ButtonSwitch
-                  onChange={v => {
-                    instance.updateGroupData?.(s => ({
-                      ...s,
-                      hideObjectsInside: v
-                    }))
-                  }}
-                  name={t('general.Hide objects')}
-                  value={!!groupState.data?.hideObjectsInside}
-                ></ButtonSwitch>
-              )}
-              {groupState.data?.hideObjectsInside &&
-                groupStateState?.canHideObjectsInside !== false &&
-                groupStateState?.canHideGroupsInside !== false && (
-                  <ButtonSwitch
-                    onChange={v => {
-                      instance.updateGroupData?.(s => ({
-                        ...s,
-                        hideGroupsInside: v
-                      }))
-                    }}
-                    name={t('general.Hide groups')}
-                    value={!!groupState.data?.hideGroupsInside}
-                  ></ButtonSwitch>
-                )}
-              <ButtonSwitch
-                onChange={v => {
-                  instance.updateGroupData?.(s => ({
-                    ...s,
-                    enableReview: v
-                  }))
+              <Button.IconButton
+                icon={'park-setting'}
+                text={t('general.Settings')}
+                suffixIcon={'park-right'}
+                onClick={() => {
+                  setCurrentView('settings')
                 }}
-                name={t('general.Enable flashcards')}
-                value={!!groupState.data?.enableReview}
-              ></ButtonSwitch>
+              />
             </div>
             <div
               style={{
@@ -246,6 +174,8 @@ export default ({ onClose }: { onClose: VoidFunction }) => {
         return <PropertiesMenu />
       case 'view':
         return <ViewSettingMenu />
+      case 'settings':
+        return <ConfigMenu />
     }
     if (currentView === 'grouper' || currentView.previousView === 'grouper') {
       return (
@@ -277,6 +207,7 @@ export default ({ onClose }: { onClose: VoidFunction }) => {
             {currentView === 'properties' ? t('general.Properties') : undefined}
             {currentView === 'view' ? t('general.View') : undefined}
             {currentView === 'grouper' ? t('general.Grouper') : undefined}
+            {currentView === 'settings' ? t('general.Settings') : undefined}
             {typeof currentView === 'object' && t(`general.${currentView.name}`)}
           </div>
         </Content>

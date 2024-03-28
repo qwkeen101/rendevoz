@@ -79,9 +79,12 @@ const useRenderLabel = (opts: {
             >
               {realRelated.size > 0 && (
                 <AnimatePopover
+                  containerStyle={{
+                    zIndex: '500'
+                  }}
                   content={
-                    <WithBorder style={{ fontSize: '0.85rem', maxWidth: 400 }} padding={6}>
-                      <div className={ClassName.description()}>{t('general.related objects')}</div>
+                    <WithBorder style={{ maxWidth: 400 }} width={180} padding={6}>
+                      <div className={'font-size-12 transparent-font'}>{t('general.related objects')}</div>
                       {Array.from(realRelated.values()).map(i => (
                         <LabelRelatedItem metaId={i} key={i} />
                       ))}
@@ -93,7 +96,13 @@ const useRenderLabel = (opts: {
                       onClick={e => {
                         e.stopPropagation()
                       }}
-                      style={{ padding: '2px 4px', borderRadius: 4, marginRight: 4, background: Colors.Background.Border }}
+                      style={{
+                        padding: '2px 4px',
+                        borderRadius: 4,
+                        marginRight: 4,
+                        background: Colors.Common.SelectColorTransparent,
+                        color: Colors.Common.SelectColor
+                      }}
                     >
                       {realRelated.size}
                     </span>
@@ -154,29 +163,21 @@ const useRenderLabel = (opts: {
           name="park-more"
           size={14}
           className={ClassName.circleButton(3)}
-          closeOnContentClick="[role='button']"
           placement={['left', 'right']}
           renderOnParent={false}
           disableNudge={true}
-          content={
+          content={setV => (
             <LabelActionMenu
+              onClose={() => {
+                setV(false)
+              }}
               on={async event => {
                 on?.(event)
                 switch (event.type) {
-                  case 'addAttachment':
-                    await GlobalInstance.metaOps?.addDraggableAsMeta({ type, labelId: objectId })
-                    setLabelState(s => ({ ...s, addingAttachment: true }))
-                    break
                   case 'editOriginal': {
                     setLabelState(s => ({ ...s, editingOrigin: true }))
                     break
                   }
-                  case 'addDescription':
-                    setLabelState(s => ({
-                      ...s,
-                      addingDescription: !s.addingDescription
-                    }))
-                    break
                   case 'delete':
                     break
                   case 'changeName':
@@ -187,7 +188,7 @@ const useRenderLabel = (opts: {
               objectId={objectId}
               type={type}
             />
-          }
+          )}
         ></IconWithPopover>
       </Content>
     )
@@ -271,6 +272,7 @@ const useRenderLabel = (opts: {
         />
       )
     }
+    if (!options.text) return null
     return (
       <div
         style={{
@@ -324,11 +326,12 @@ const LabelRelatedItem = ({ metaId }: { metaId: number }) => {
   const { renderInline } = useRenderObject({ metaObjectId: metaId })
   return renderInline({
     showCircle: false,
-    showHoverObjectDetails: true,
+    showHoverObjectDetails: false,
     ellipsisLine: 2,
     renderObjectDetailsOnParent: true,
     renderAttOnParent: true,
-    containerStyle: { width: 'fit-content' }
+    showMoreOptions: true,
+    containerStyle: { width: '100%' }
   })
 }
 export default useRenderLabel

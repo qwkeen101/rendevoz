@@ -20,9 +20,20 @@ export default (feedItemId: number) => {
       return
     }
     console.log(urlToTweet, item.link)
-    if (urlToAudio.has(item.link) || urlToTweet.has(item.link) || urlToVideo.has(item.link) || urlToWebpage.has(item.link)) {
+    if (
+      urlToAudio.has(item.enclosure?.url || '') ||
+      urlToAudio.has(item.link) ||
+      urlToTweet.has(item.link) ||
+      urlToVideo.has(item.link) ||
+      urlToWebpage.has(item.link)
+    ) {
       setIsMeta(true)
-      const objectId = urlToWebpage.get(item.link) || urlToTweet.get(item.link) || urlToVideo.get(item.link) || urlToAudio.get(item.link)
+      const objectId =
+        urlToWebpage.get(item.link) ||
+        urlToTweet.get(item.link) ||
+        urlToAudio.get(item.enclosure?.url || '') ||
+        urlToVideo.get(item.link) ||
+        urlToAudio.get(item.link)
       if (objectId) {
         const meta = MetaStore.getMetaObjectByObjectId(objectId)
         if (meta) {

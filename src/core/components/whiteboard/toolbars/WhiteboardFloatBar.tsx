@@ -125,7 +125,7 @@ export default memo(() => {
       content={
         <WithBorder
           blur={true}
-          padding={toolbarState.type === 'edge' ? 0 : '0.25rem 0px'}
+          padding={toolbarState.type === 'edge' ? 0 : '0.4rem 0'}
           width={toolbarState.type === 'edge' ? undefined : 220}
           borderRadius={4}
         >

@@ -49,7 +49,7 @@ export default async (itemId: number) => {
       return (
         await ObjectStore('audio').addOneWithMeta(
           {
-            url: feed.link,
+            url: feed.enclosure?.url,
             thumbnail: feed.image
           },
           {

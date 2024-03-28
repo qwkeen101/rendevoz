@@ -7,6 +7,10 @@ export const WhiteboardDefaultKeyboardShortcut = {
     key: ['d'],
     text: 'D'
   },
+  MoveTo: {
+    text: 'M',
+    key: ['m']
+  },
   Expand: {
     key: ['mod+e'],
     text: 'Cmd+E'

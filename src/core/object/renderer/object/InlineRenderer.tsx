@@ -9,6 +9,7 @@ import { useTranslation } from 'react-i18next'
 import classnames from 'classnames'
 import { AnimatePopover, IconWithPopover, WithBorder } from '@/components'
 import { ObjectActionPopover } from '@/core'
+import { GlobalInstance } from '@/hooks'
 
 export type InlineRendererProps = {
   containerStyle?: CSSProperties
@@ -101,6 +102,10 @@ export default (
               onClick(e)
               e.preventDefault()
               return
+            }
+            if (showHoverObjectDetails === false) {
+              e.preventDefault()
+              GlobalInstance.layoutOps?.openObject(metaObject.id)
             }
           }}
           className={classnames('hover-link', ClassName.ellipsisFont(ellipsisLine || 2))}

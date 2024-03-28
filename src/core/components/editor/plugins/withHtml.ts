@@ -4,7 +4,7 @@ import { CustomEditor } from '~/typings'
 import { deserializeHTML, normalize } from './deserializeHtml'
 import Id from '@/utils/id'
 import FileSystem from '@/api/fileSystem'
-
+const { createMarkdownObjectTable } = import('parse-markdown-table')
 const withHtml = (editor: CustomEditor) => {
   const { insertData } = editor
 
@@ -74,6 +74,12 @@ const withHtml = (editor: CustomEditor) => {
               children: matched.map(i => ({ type: 'link', url: i, children: [{ text: i }] }))
             }
           } else {
+            // try {
+            //   const table = createMarkdownObjectTable(p)
+            //   if (table) {
+            //     console.log(table)
+            //   }
+            // } catch (e) {}
             return {
               type: 'paragraph',
               id: Id.getId(),

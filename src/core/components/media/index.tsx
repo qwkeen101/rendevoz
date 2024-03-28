@@ -345,7 +345,7 @@ const transformUrl = (
     const videoId = U.searchParams.get('v')
     if (!videoId) return url
     return `https://www.youtube.com/embed/${videoId}?rel=0&autoplay=${options?.autoPlay ? '1' : '0'}&start=${
-      options?.startTime ? parseInt(`${options.startTime}`) : ''
+      options?.startTime ? parseInt(`${options.startTime}`) : '0'
     }`
   }
   if (url.startsWith('baidudisk')) return url

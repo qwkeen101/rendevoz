@@ -423,11 +423,11 @@ const Recent = () => {
                     placement={['right', 'left']}
                     align="start"
                     zIndex={Zindexes.PopupMenu}
-                    content={
+                    content={setV => (
                       <WithBorder>
-                        <ObjectActionPopover metaObjectId={i.id} />
+                        <ObjectActionPopover onClose={() => setV(false)} metaObjectId={i.id} />
                       </WithBorder>
-                    }
+                    )}
                     name="park-more"
                     closeOnContentClick
                     disableIntersection

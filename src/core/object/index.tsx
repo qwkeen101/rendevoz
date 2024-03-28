@@ -1,5 +1,5 @@
 export { default as useRenderObject } from './useRenderObject'
-export * from './card/DatabaseCard'
+export * from './menus/ObjectActionMenu'
 export { default as useDropObjectArea } from './useDropObjectArea'
 export { default as AttachmentObject } from './AttachmentObject'
 export { default as AttachmentList } from './AttachmentList'

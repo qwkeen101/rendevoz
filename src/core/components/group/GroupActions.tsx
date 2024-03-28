@@ -16,6 +16,7 @@ import EmojiWithPicker from '@/components/EmojiWithPicker'
 import { useTranslation } from 'react-i18next'
 import { Reorder } from 'framer-motion'
 import { isEqual } from 'lodash'
+import { useMeasure } from 'react-use'
 const GroupActions = memo(({ groupValue }: { groupValue?: MetaGroup }) => {
   const groupData = groupValue
   const currentView = useSelectAtomValue(GroupStateAtom, s => s.currentView)
@@ -74,12 +75,16 @@ const GroupActions = memo(({ groupValue }: { groupValue?: MetaGroup }) => {
       setInnerViews(groupValue.views)
     }
   }, [groupValue?.views])
-
+  const [ref, { width }] = useMeasure()
+  const columnLayout = width > 0 && width < 400
   if (!groupData) return null
 
   return (
     <Content
+      ref={ref}
       flex
+      column={columnLayout}
+      gap={10}
       role={'group-action-container'}
       style={{
         padding: `${paddingTop}px var(--page-padding-right) 8px var(--page-padding-left)`,
@@ -91,135 +96,134 @@ const GroupActions = memo(({ groupValue }: { groupValue?: MetaGroup }) => {
     >
       {renderPanel()}
       {showViews !== false && (
-        <Reorder.Group
-          ref={reorderRef}
-          values={innerViews}
-          onReorder={v => {
-            setInnerViews(v)
-          }}
-          layoutScroll={true}
-          as={'div'}
-          axis={'x'}
-          style={{ overflowX: 'auto', marginRight: 4, display: 'flex', gap: 4 }}
-        >
-          {innerViews.map(i => (
-            <Reorder.Item
-              dragElastic={false}
-              dragConstraints={isReorder ? reorderRef : undefined}
-              role={'reorder-view'}
-              value={i}
-              as={'div'}
-              key={i.id}
-              transition={{
-                duration: isReorder ? 0.15 : 0
-              }}
-              style={{
-                flexShrink: 0
-              }}
-              onDragStart={() => {
-                setIsReorder(true)
-              }}
-              onDragEnd={() => {
-                setIsReorder(false)
-                instance.updateGroupData?.(w => ({ ...w, views: innerViews }))
-              }}
-            >
-              <div
-                className={ClassName.flatButton()}
+        <Content flex>
+          <Reorder.Group
+            ref={reorderRef}
+            values={innerViews}
+            onReorder={v => {
+              setInnerViews(v)
+            }}
+            layoutScroll={true}
+            as={'div'}
+            axis={'x'}
+            style={{ overflowX: 'auto', marginRight: 4, display: 'flex', gap: 4 }}
+          >
+            {innerViews.map(i => (
+              <Reorder.Item
+                dragElastic={false}
+                dragConstraints={isReorder ? reorderRef : undefined}
+                role={'reorder-view'}
+                value={i}
+                as={'div'}
+                key={i.id}
+                transition={{
+                  duration: isReorder ? 0.15 : 0
+                }}
                 style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 8,
-                  color: i.id === currentView?.id ? Colors.Font.Primary : Colors.Font.Transparent,
-                  background: i.id === currentView?.id ? Colors.Background.ButtonHover : undefined,
                   flexShrink: 0
                 }}
-                onClick={() => {
-                  if (isReorder) return
-                  instance.updateGroupData?.(s => ({ ...s, lastViewId: i.id }))
+                onDragStart={() => {
+                  setIsReorder(true)
+                }}
+                onDragEnd={() => {
+                  setIsReorder(false)
+                  instance.updateGroupData?.(w => ({ ...w, views: innerViews }))
                 }}
               >
-                {i.icon ? (
-                  i.icon.startsWith('park') || i.icon.startsWith('custom') ? (
-                    <Icon name={i.icon} />
+                <div
+                  className={ClassName.flatButton()}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 8,
+                    color: i.id === currentView?.id ? Colors.Font.Primary : Colors.Font.Transparent,
+                    background: i.id === currentView?.id ? Colors.Background.ButtonHover : undefined,
+                    flexShrink: 0
+                  }}
+                  onClick={() => {
+                    if (isReorder) return
+                    instance.updateGroupData?.(s => ({ ...s, lastViewId: i.id }))
+                  }}
+                >
+                  {i.icon ? (
+                    i.icon.startsWith('park') || i.icon.startsWith('custom') ? (
+                      <Icon name={i.icon} />
+                    ) : (
+                      <EmojiWithPicker emoji={i.icon} style={{ padding: 0 }} />
+                    )
                   ) : (
-                    <EmojiWithPicker emoji={i.icon} style={{ padding: 0 }} />
-                  )
-                ) : (
-                  <Icon name={'park-table-file'} />
-                )}
-                <div>{i.name || 'Unnamed view'}</div>
-              </div>
-            </Reorder.Item>
-          ))}
-        </Reorder.Group>
+                    <Icon name={'park-table-file'} />
+                  )}
+                  <div>{i.name || 'Unnamed view'}</div>
+                </div>
+              </Reorder.Item>
+            ))}
+          </Reorder.Group>
+          <IconWithPopover
+            placement={['bottom']}
+            padding={4}
+            content={setV => (
+              <WithBorder padding={4} width={180}>
+                <div
+                  className={'transparent-font font-size-13'}
+                  style={{
+                    padding: '4px 8px'
+                  }}
+                >
+                  {t('group.Create new view')}
+                </div>
+                <Button.IconButton
+                  text={t('general.Table')}
+                  icon={'park-table-file'}
+                  onClick={() => {
+                    instance.viewOps?.addNewView('table')
+                    setV(false)
+                  }}
+                />
+                <Button.IconButton
+                  text={t('general.Gallery')}
+                  icon={'park-all-application'}
+                  onClick={() => {
+                    instance.viewOps?.addNewView('gallery')
+                    setV(false)
+                  }}
+                />
+                <Button.IconButton
+                  text={t('general.List')}
+                  icon={'custom-list'}
+                  onClick={() => {
+                    instance.viewOps?.addNewView('list')
+                    setV(false)
+                  }}
+                />
+                <Button.IconButton
+                  text={t('general.Kanban')}
+                  icon={'custom-kanban'}
+                  onClick={() => {
+                    instance.viewOps?.addNewView('kanban')
+                    setV(false)
+                  }}
+                />
+                <Button.IconButton
+                  text={t('general.Calendar')}
+                  icon={'park-calendar-three'}
+                  onClick={() => {
+                    instance.viewOps?.addNewView('calendar')
+                    setV(false)
+                  }}
+                />
+              </WithBorder>
+            )}
+            name={'park-plus'}
+            className={ClassName.flatButton(4, '6px')}
+            style={{
+              color: Colors.Font.Transparent
+            }}
+            size={14}
+          />
+        </Content>
       )}
-      {showViews !== false && (
-        <IconWithPopover
-          placement={['bottom']}
-          padding={4}
-          content={setV => (
-            <WithBorder padding={4} width={180}>
-              <div
-                className={'transparent-font font-size-13'}
-                style={{
-                  padding: '4px 8px'
-                }}
-              >
-                {t('group.Create new view')}
-              </div>
-              <Button.IconButton
-                text={t('general.Table')}
-                icon={'park-table-file'}
-                onClick={() => {
-                  instance.viewOps?.addNewView('table')
-                  setV(false)
-                }}
-              />
-              <Button.IconButton
-                text={t('general.Gallery')}
-                icon={'park-all-application'}
-                onClick={() => {
-                  instance.viewOps?.addNewView('gallery')
-                  setV(false)
-                }}
-              />
-              <Button.IconButton
-                text={t('general.List')}
-                icon={'custom-list'}
-                onClick={() => {
-                  instance.viewOps?.addNewView('list')
-                  setV(false)
-                }}
-              />
-              <Button.IconButton
-                text={t('general.Kanban')}
-                icon={'custom-kanban'}
-                onClick={() => {
-                  instance.viewOps?.addNewView('kanban')
-                  setV(false)
-                }}
-              />
-              <Button.IconButton
-                text={t('general.Calendar')}
-                icon={'park-calendar-three'}
-                onClick={() => {
-                  instance.viewOps?.addNewView('calendar')
-                  setV(false)
-                }}
-              />
-            </WithBorder>
-          )}
-          name={'park-plus'}
-          className={ClassName.flatButton(4, '6px')}
-          style={{
-            color: Colors.Font.Transparent
-          }}
-          size={14}
-          onClick={() => {}}
-        />
-      )}
-      <Content flex alignItems="center" style={{ flexShrink: 0, marginLeft: 'auto', paddingLeft: 10 }}>
+      <Content flex alignItems="center" style={{ flexShrink: 0, marginLeft: columnLayout ? undefined : 'auto' }}>
         <AnimatePopover
           positions={['bottom']}
           align="end"

@@ -406,16 +406,11 @@ export const SimpleObject = memo(
               positions={['right', 'left']}
               align="start"
               padding={0}
-              content={setV => (
-                <WithBorder
-                  onClick={e => {
-                    e.stopPropagation()
-                    setpopoveropen(false)
-                  }}
-                >
-                  <ObjectActionPopover metaObjectId={metaObjectId} />
+              content={
+                <WithBorder onClick={e => e.stopPropagation()}>
+                  <ObjectActionPopover onClose={() => setpopoveropen(false)} metaObjectId={metaObjectId} />
                 </WithBorder>
-              )}
+              }
             >
               <Icon
                 onClick={e => {

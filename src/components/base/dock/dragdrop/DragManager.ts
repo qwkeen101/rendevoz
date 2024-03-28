@@ -102,6 +102,7 @@ export class DragState {
 
   _onMove() {
     if (_data) {
+      dragListeners.forEach(f => f(this))
       const ownerDocument = this.component.ownerDocument
       let searchElement = ownerDocument.elementFromPoint(this.clientX, this.clientY) as HTMLElement
       let droppingHandlers: DragHandlers
@@ -173,10 +174,18 @@ interface DragHandlers {
 
 const _dragListeners: WeakMap<HTMLElement, DragHandlers> = new WeakMap<HTMLElement, DragHandlers>()
 
+const dragListeners = new Set<(s: DragState) => void>()
+
 export function isDragging() {
   return _draggingState != null
 }
 
+export function addDockDragHandler(cb: (s: DragState) => void) {
+  dragListeners.add(cb)
+}
+export function removeDockDragHandler(cb: (s: DragState) => void) {
+  dragListeners.delete(cb)
+}
 export function addHandlers(element: HTMLElement, handlers: DragHandlers) {
   _dragListeners.set(element, handlers)
 }
@@ -190,67 +199,14 @@ export function removeHandlers(element: HTMLElement) {
 }
 
 let _draggingDiv: HTMLDivElement
-let _draggingIcon: HTMLDivElement
-
-function _createDraggingDiv(doc: Document) {
-  _draggingDiv = doc.createElement('div')
-  _draggingIcon = doc.createElement('div')
-  _draggingDiv.className = 'dragging-layer'
-  _draggingDiv.appendChild(document.createElement('div')) // place holder for dragging element
-  _draggingDiv.appendChild(_draggingIcon)
-}
-
 function createDraggingElement(state: DragState, refElement: HTMLElement, draggingHtml?: HTMLElement | string) {
   _draggingState = state
-
-  // if (refElement) {
-  //   refElement.classList.add('dragging')
-  //   _refElement = refElement
-  // }
-  // _createDraggingDiv(state.component.ownerDocument)
-  // state.component.ownerDocument.body.appendChild(_draggingDiv)
-  //
-  // let draggingWidth = 0
-  // let draggingHeight = 0
-  // if (draggingHtml === undefined) {
-  //   draggingHtml = state.component.element
-  // }
-  // if (draggingHtml && 'outerHTML' in (draggingHtml as any)) {
-  //   draggingWidth = (draggingHtml as HTMLElement).offsetWidth
-  //   draggingHeight = (draggingHtml as HTMLElement).offsetHeight
-  //   draggingHtml = (draggingHtml as HTMLElement).outerHTML
-  // }
-  // if (draggingHtml) {
-  //   _draggingDiv.firstElementChild.outerHTML = draggingHtml as string
-  //   if (draggingWidth) {
-  //     if (draggingWidth > 400) draggingWidth = 400
-  //     ;(_draggingDiv.firstElementChild as HTMLElement).style.width = `${draggingWidth}px`
-  //   }
-  //   if (draggingHeight) {
-  //     if (draggingHeight > 300) draggingHeight = 300
-  //     ;(_draggingDiv.firstElementChild as HTMLElement).style.height = `${draggingHeight}px`
-  //   }
-  // }
-
   for (const callback of _dragStateListener) {
     if (_dataScope) {
       callback(_dataScope)
     } else {
       callback(true)
     }
-  }
-}
-
-function moveDraggingElement(state: DragState) {
-  _draggingDiv.style.left = `${state.pageX}px`
-  _draggingDiv.style.top = `${state.pageY}px`
-
-  if (state.rejected) {
-    _draggingIcon.className = 'drag-accept-reject'
-  } else if (state.acceptMessage) {
-    _draggingIcon.className = state.acceptMessage
-  } else {
-    _draggingIcon.className = ''
   }
 }
 

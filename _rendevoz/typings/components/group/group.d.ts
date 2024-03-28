@@ -1,4 +1,4 @@
-import { IBase, IMetaProperty, MetaFilterGroup } from '~/typings'
+import { IBase, IMetaProperty, MetaFilterGroup, MetaObject } from '~/typings'
 import { SorterGroup } from '../../../../src/core/object/filter/BetterSorter'
 import { DateGroupRule, IGroupRule, StringGroupRule } from '~/typings/components/group/property-group'
 
@@ -126,9 +126,12 @@ export interface MetaGroup extends IBase {
   })[]
   rootFilterGroup: MetaFilterGroup
   autoAddto: 'first' | 'last'
+  onlyCreate?: MetaObject['type']
   openIn?: 'center' | 'newTab' | 'sidePeek'
   syncVersion: number
   lastViewId?: number
+  lastUpdated?: number
+  descriptionVisible?: boolean
   hideGroupsInside?: boolean
   hideObjectsInside?: boolean
   onlyShowCustomProperties?: boolean

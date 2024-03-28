@@ -128,7 +128,7 @@ const MetaMainDetails = ({ metaId, visible }: { metaId: number; visible?: boolea
           text={t('general.delete')}
           icon={'park-delete'}
           dangerous={true}
-          style={{ borderRadius: 999, padding: '3px 10px', fontSize: 13 }}
+          style={{ padding: '3px 10px', fontSize: 13 }}
           onClick={() => {
             GlobalInstance.metaOps?.closeDetails()
             MetaStore.deleteMetaObject(metaId)

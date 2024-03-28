@@ -15,6 +15,7 @@ type FormItemConditionalProps = { disable?: boolean } & (
       onUpload?: never
       children?: never
       value?: string
+      onKeyDown?: React.KeyboardEventHandler
       maxRows?: number
       maxLength?: number
       minRows?: number
@@ -84,6 +85,7 @@ const FormItem: FC<FormItemProps> = ({ onChange, onUpload, text, type, children,
             style={{ height: 40, ...rest.style }}
             textarea={false}
             placeholder={text}
+            onKeyDown={rest.onKeyDown}
             disable={disable}
             onChange={e => {
               onChange?.(e)
@@ -98,6 +100,7 @@ const FormItem: FC<FormItemProps> = ({ onChange, onUpload, text, type, children,
           <BorderInput
             value={value}
             defaultValue={value}
+            onKeyDown={rest.onKeyDown}
             textarea={true}
             style={{ height: 40, ...rest.style }}
             placeholder={text}

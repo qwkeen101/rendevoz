@@ -15,14 +15,15 @@ export default ({ onClose, onAddProp }: { onClose?: VoidFunction; onAddProp?: (p
     <WithBorder padding={'0.25rem 0'}>
       <Menu.NavigationMenu
         onSelect={item => {
-          console.log(item)
-          onClose?.()
-          onAddProp?.({
-            propType: item.propType,
-            icon: item.icon,
-            name: item.text,
-            id: item.id
-          })
+          if (!item.subMenu) {
+            onClose?.()
+            onAddProp?.({
+              propType: item.propType,
+              icon: item.icon,
+              name: item.text,
+              id: item.id
+            })
+          }
         }}
         layout={[
           {

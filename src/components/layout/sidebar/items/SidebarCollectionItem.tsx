@@ -187,6 +187,9 @@ const SidebarCollectionItem: FC<ISidebarItem> = memo(
                 {collection && (
                   <IconNameItem
                     onClick={e => {
+                      if (onClick) {
+                        return
+                      }
                       Rendevoz.Actions.Open.Group.openCollectionGroup(collection.id)
                     }}
                     style={{ fontSize: FontSize['13px'] }}

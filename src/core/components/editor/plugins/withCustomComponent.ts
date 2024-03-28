@@ -150,6 +150,23 @@ const withCustomComponent = (editor: CustomEditor) => {
           })
           return
         }
+        if (currentPrevious) {
+          const b = currentPrevious[0] as CustomElement
+          // delete on start and previous is list item
+          if (Editor.isStart(editor, selection.anchor, path) && (b.type === 'list-item' || b.type === 'order-list-item')) {
+            deleteBackward(...args)
+            Transforms.setNodes(
+              editor,
+              {
+                level: b.level
+              },
+              {
+                at: currentPrevious[1]
+              }
+            )
+            return
+          }
+        }
         if (
           !Editor.isEditor(block) &&
           SlateElement.isElement(block) &&
@@ -182,10 +199,10 @@ const withCustomComponent = (editor: CustomEditor) => {
           deleteBackward(...args)
           // 当上方为空的同步块，下方为空的行，在下方删除，会导致blur
           // timeout以后再选择可以避免
-          setTimeout(() => {
-            Transforms.select(editor, end)
-            ReactEditor.focus(editor)
-          }, 0)
+          // setTimeout(() => {
+          //   Transforms.select(editor, end)
+          //   ReactEditor.focus(editor)
+          // }, 0)
           return
         }
       }

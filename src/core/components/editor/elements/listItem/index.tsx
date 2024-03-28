@@ -1,32 +1,18 @@
-import { useEventHandler, useScopedEventEmitter } from '@/events'
-import { useEffect, useMemo } from 'react'
-import { useUpdate } from 'react-use'
 import { Editor, Path } from 'slate'
 import { RenderElementProps } from 'slate-react'
 import { CustomElement } from '~/typings'
-import { ReactEditor, useSlate, useSlateStatic } from '../../slate-react'
-import styles from './index.module.less'
+import { ReactEditor, useSlate } from '@/core'
 import useToggleList from '@/core/components/editor/elements/listItem/useToggleList'
 import { Colors } from '@/consts'
-import { css } from '@emotion/css'
+import classnames from 'classnames'
 
-const indentClazz = css({
-  position: 'absolute',
-  top: -3,
-  bottom: -3,
-  userSelect: 'none',
-  pointerEvents: 'none',
-  width: 1,
-  transform: 'translateX(calc(0.2em))',
-  background: Colors.Background.Border
-})
 const BorderIndent = ({ index }: { index: number }) => {
   // 20: initial margin left, 15: indent
   const offset = 24 * (index + 1)
   return (
     <div
       contentEditable={false}
-      className={indentClazz}
+      className={'li-indent'}
       style={{
         left: -offset
       }}
@@ -39,27 +25,18 @@ export const ListItem = ({ children, element }: RenderElementProps) => {
   return (
     <div style={{ display: 'flex' }} ref={containerRef}>
       {element.level && element.level > 0 ? (
-        <div contentEditable={false}>
+        <>
           {Array.from(Array(element.level)).map((i, index) => (
             <BorderIndent index={index} key={index} />
           ))}
-        </div>
+        </>
       ) : null}
       <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          marginRight: '0.6em',
-          height: '1lh',
-          justifyContent: 'center',
-          paddingTop: '0.1em'
-        }}
         role="list-item-marker"
         data-level={element.level}
         contentEditable={false}
-        data-collapse={canToggle}
-        data-folded={element.folded}
-        className={styles.marker}
+        className={classnames('ul-marker', element.folded && 'folded', canToggle && 'foldable')}
+        // prevent lose selection
         onPointerDown={e => e.preventDefault()}
         onClick={() => {
           if (canToggle) {
@@ -67,9 +44,7 @@ export const ListItem = ({ children, element }: RenderElementProps) => {
           }
         }}
       ></div>
-      <span role="list-item-line-wrapper" style={{ minWidth: 2, flex: 'auto', position: 'relative' }}>
-        {children}
-      </span>
+      {children}
     </div>
   )
 }
@@ -199,7 +174,7 @@ export const OrderListItem = ({ children, element }: RenderElementProps) => {
     }
   }
 
-  const prefix = useMemo(() => {
+  const getPrefix = () => {
     const number = loopGetNumber()
     if (element.level === 0 || element.level === undefined || element.level % 3 === 0) {
       return number
@@ -211,10 +186,16 @@ export const OrderListItem = ({ children, element }: RenderElementProps) => {
       return intToRoman(number)
     }
     return number
-  }, [...path, element.level])
-
+  }
+  const prefix = getPrefix()
   return (
-    <div className={styles.wrapper} ref={containerRef}>
+    <div
+      style={{
+        display: 'flex',
+        position: 'relative'
+      }}
+      ref={containerRef}
+    >
       {element.level && element.level > 0 ? (
         <div contentEditable={false}>
           {Array.from(Array(element.level)).map((i, index) => (
@@ -229,26 +210,18 @@ export const OrderListItem = ({ children, element }: RenderElementProps) => {
             toggle()
           }
         }}
+        onPointerDown={e => {
+          e.preventDefault()
+        }}
         role="list-item-marker"
+        className={'ol-marker'}
         style={{
-          marginRight: 4,
-          userSelect: 'none',
-          cursor: 'pointer',
-          flexShrink: 0,
           color: element.folded ? Colors.Common.SelectColor : undefined
         }}
       >
         {prefix}.{' '}
       </span>
-      <span
-        role="list-item-line-wrapper"
-        style={{
-          flex: 'auto',
-          position: 'relative'
-        }}
-      >
-        {children}
-      </span>
+      {children}
     </div>
   )
 }

@@ -40,7 +40,7 @@ assignProperties(GlobalInstance, {
       const blackFont = '#131722'
       return {
         link: link,
-        htmlLink: `<a href="${link}">${object.name || object.placeholderName || ''}</a>`,
+        htmlLink: `<p><a href="${link}">${object.name || object.placeholderName || ''}</a></p>`,
         markdown: `[${object.name || object.placeholderName || ''}](${link})`,
         name: object.name || object.placeholderName,
         html: renderToStaticMarkup(
@@ -106,7 +106,7 @@ assignProperties(GlobalInstance, {
         case 'url': {
           const content = [
             new ClipboardItem({
-              'text/html': new Blob([ls.map(i => i.htmlLink).join('')], { type: 'text/html' }),
+              'text/html': new Blob([ls.map(i => i.htmlLink).join('<br></br>')], { type: 'text/html' }),
               'text/plain': new Blob([ls.map(i => i.link).join('\n')], { type: 'text/plain' })
             })
           ]

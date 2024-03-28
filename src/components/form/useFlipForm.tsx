@@ -21,6 +21,8 @@ import FormFromDisplayer from './objectEdit/FormFromDisplayer'
 import FormFilePathPicker from './objectEdit/FormFilePathPicker'
 import { FormAttachmentManager } from './objectEdit/FormAttachment'
 import FormNoteImporter from './objectEdit/FormNoteImporter'
+import isHotkey from 'is-hotkey'
+import { KEY } from '@/consts'
 
 type useFlipFormOptions = {
   layout: FlipFormLayoutItem[]
@@ -115,6 +117,12 @@ const useFlipForm = (options: useFlipFormOptions) => {
       case 'nameInput':
         return (
           <Form.Item
+            onKeyDown={e => {
+              if (isHotkey(KEY.Enter, e)) {
+                e.preventDefault()
+                onSubmit?.()
+              }
+            }}
             autoFocus={i.autoFocus}
             text={capitalize(t('general.name'))}
             disable={i.disabled}

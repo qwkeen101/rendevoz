@@ -94,6 +94,7 @@ const startElectron = async () => {
 
   app.on('web-contents-created', (createEvent, contents) => {
     contents.setWindowOpenHandler(({ url }) => {
+      console.log(url)
       if (url.includes('printer.html')) return { action: 'allow' }
       if (url.includes('blank')) return { action: 'allow' }
       if (url.startsWith('https://rendevoz.firebaseapp.com/')) {

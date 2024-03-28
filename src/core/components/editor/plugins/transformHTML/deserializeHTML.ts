@@ -11,6 +11,8 @@ import deserializeLi from '@/core/components/editor/plugins/transformHTML/deseri
 import { Descendant, Node as SlateNode, Text } from 'slate'
 import { EditorTypeToElementMap } from '@/core/components/editor/maps'
 import Id from '@/utils/id'
+import deserializeTable from '@/core/components/editor/plugins/transformHTML/deserialize/deserializeTable'
+import deserializeLink from '@/core/components/editor/plugins/transformHTML/deserialize/deserializeLink'
 
 const NoNestedNodeNames = ['A', 'H1', 'H2', 'H3', 'LI', 'H4', 'H5', 'H6', 'PRE', 'SUP', 'FIGCAPTION', 'BLOCKQUOTE']
 
@@ -42,13 +44,19 @@ const deserializeHTML = (root: HTMLElement) => {
     case 'TR':
     case 'TD':
     case 'TABLE':
-      return null
+      return deserializeTable(root)
     case 'IMG':
     case 'AUDIO':
     case 'IFRAME':
       return deserializeMedia(root)
     default: {
       if (ELEMENT_TAGS[root.nodeName]) {
+        if (root.nodeName === 'A') {
+          const result = deserializeLink(root)
+          if (result) {
+            return result
+          }
+        }
         const attrs = ELEMENT_TAGS[root.nodeName](root)
         let children: any[] = []
         if (NoNestedNodeNames.includes(root.nodeName)) {

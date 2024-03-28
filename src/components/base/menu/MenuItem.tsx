@@ -30,7 +30,8 @@ const MenuItem: FC<MenuItemWithProps> = ({ type, ...rest }) => {
             lineHeight: 1.2,
             userSelect: 'none',
             margin: '5px 0px 4px',
-            color: Colors.Font.Transparent
+            color: Colors.Font.Transparent,
+            ...rest.style
           }}
         >
           {rest.name}
@@ -39,7 +40,42 @@ const MenuItem: FC<MenuItemWithProps> = ({ type, ...rest }) => {
   }
 }
 
-const CustomMenuItem: FC<MenuItemWithProps & { type: 'custom' }> = () => {}
+const CustomMenuItem: FC<MenuItemWithProps & { type: 'custom' }> = ({
+  children,
+  selectedKey,
+  key,
+  innerKey,
+  parentKey,
+  onClick,
+  onSelect,
+  onPointerMove,
+  ...rest
+}) => {
+  if (typeof children === 'function') {
+    const handlePointerMove = () => {
+      if (!innerKey) return
+      const myKeys = [...parentKey, innerKey]
+      if (selectedKey.includes(innerKey)) {
+        if (selectedKey.length > myKeys.length) {
+          return
+        }
+      }
+      onPointerMove(myKeys)
+    }
+    return children({
+      isSelected: innerKey ? selectedKey.includes(innerKey) : false,
+      onPointerMove: handlePointerMove,
+      onClick: () =>
+        onClick?.({
+          ...rest,
+          key,
+          onSelect,
+          children
+        })
+    })
+  }
+  return children
+}
 
 const ButtonMenuItem: FC<MenuItemWithProps & { type: 'item' }> = ({
   subMenu,
@@ -120,13 +156,15 @@ const ButtonMenuItem: FC<MenuItemWithProps & { type: 'item' }> = ({
           dangerous={dangerous}
           data-key={innerKey}
           style={{
+            gap: 10,
             marginLeft: '0.25rem',
             marginRight: '0.25rem',
             height: '2rem',
             padding: '0px 0.5rem',
             fontSize: 14,
             lineHeight: '20px',
-            alignItems: 'center'
+            alignItems: 'center',
+            ...rest.style
           }}
           size={16}
           onClick={() => {
@@ -156,10 +194,12 @@ const ButtonMenuItem: FC<MenuItemWithProps & { type: 'item' }> = ({
         marginLeft: '0.25rem',
         marginRight: '0.25rem',
         height: '2em',
+        gap: 10,
         padding: '0px 0.5rem',
         fontSize: 14,
         lineHeight: '20px',
-        alignItems: 'center'
+        alignItems: 'center',
+        ...rest.style
       }}
       size={16}
       dangerous={dangerous}
@@ -179,14 +219,15 @@ const ButtonMenuItem: FC<MenuItemWithProps & { type: 'item' }> = ({
   )
 }
 
-const SeparatorMenuItem: FC<IMenuLayoutItem & { type: 'separator' }> = () => {
+const SeparatorMenuItem: FC<IMenuLayoutItem & { type: 'separator' }> = ({ style }) => {
   return (
     <div
       style={{
         height: 1,
         width: '100%',
-        margin: '4px 0px',
-        background: Colors.Background.Border
+        margin: '6px 0px',
+        background: Colors.Background.Border,
+        ...style
       }}
     ></div>
   )

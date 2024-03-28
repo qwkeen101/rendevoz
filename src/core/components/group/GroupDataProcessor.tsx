@@ -23,7 +23,7 @@ export default ({ groupValue }: { groupValue?: MetaGroup }) => {
     updateGroupData: async data => {
       console.log('updated')
       if (groupValue) {
-        const nextValue = data(groupValue)
+        const nextValue = { ...data(groupValue), lastUpdated: Date.now() }
         setGroupState(s => ({
           ...s,
           data: nextValue,

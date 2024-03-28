@@ -30,7 +30,18 @@ export default ({ value, onChange, style }: { value: string; onChange?: (v: stri
           openPopover(parent)
         }}
       >
-        {value}
+        <a
+          style={{
+            color: 'inherit'
+          }}
+          onClick={e => {
+            e.stopPropagation()
+          }}
+          target={'_blank'}
+          href={value}
+        >
+          {value}
+        </a>
       </div>
       {renderPopover(box => (
         <PopupWrapper box={box}>

@@ -37,7 +37,7 @@ export default () => {
       case 'itemContextMenu':
         if (!overlayState.details) return null
         return (
-          <WithBorder padding={6}>
+          <WithBorder padding={'0.4rem 0'}>
             <RowMenu details={overlayState.details} onClose={() => setOverlayState(s => ({ ...s, visible: false }))} />
           </WithBorder>
         )

@@ -3,7 +3,7 @@ import { Zindexes } from "@/consts";
 import { useToggle } from "@/hooks";
 import ClassName from "@/styles/classNames";
 import { css } from "@emotion/css";
-import { ObjectActionPopover } from "./card/DatabaseCard";
+import { ObjectActionPopover } from "./menus/ObjectActionMenu";
 import useRenderObject from "./useRenderObject";
 import { memo, useMemo } from "react";
 

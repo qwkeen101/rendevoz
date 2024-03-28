@@ -130,7 +130,11 @@ export default ({
             content={setV => (
               <WithBorder width={280}>
                 <FileUploader
-                  onUpload={(filePath, fileType, fileName) => {
+                  onUpload={async (filePath, fileType, fileName) => {
+                    if (!fileType) {
+                      const res = await fetch(filePath, { method: 'HEAD' }).then(i => i.headers)
+                      fileType = res.get('Content-type') || ''
+                    }
                     onChange?.([
                       ...(currFiles || []),
                       {

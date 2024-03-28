@@ -9,7 +9,6 @@ import { Colors } from '@/consts'
 
 export default (instance: IWhiteboardInstance, t: TFunction<'translation', undefined, 'translation'>) => {
   const copiedElements = instance.values.copiedElements
-  const handleAddMeta = () => {}
   const handleAddMetaObjectAtToolbarPoint = async (
     metaType: string,
     opts?: {

@@ -86,7 +86,7 @@ const MetaObject: FC<RenderElementProps> = memo(({ children, element }) => {
             containerClassName: 'selectable',
             containerStyle: {
               overflow: 'auto hidden',
-              padding: 'var(--editor-scroll-padding)'
+              padding: 0
             }
           }}
           groupId={metaObject.objectId}
@@ -96,7 +96,10 @@ const MetaObject: FC<RenderElementProps> = memo(({ children, element }) => {
   }
   if (element.cardType === 'embeded') {
     return (
-      <div contentEditable={'false'} style={{ position: 'relative' }}>
+      <div
+        contentEditable={'false'}
+        style={{ position: 'relative', padding: metaObject?.type === 'group' ? 'var(--editor-scroll-padding)' : undefined }}
+      >
         {renderExpanded()}
         {children}
       </div>

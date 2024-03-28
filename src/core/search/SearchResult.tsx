@@ -78,7 +78,7 @@ const SearchResult = ({ result, onClose, enableOpen }: { result: ISearchResult; 
             }}
             className={'border-top bg-secondary transparent-font font-size-12'}
           >
-            {t('general.Keyboard navigation')}
+            {t('general.Keyboard navigation and switch tabs')}
           </Content>
         </>
       )}

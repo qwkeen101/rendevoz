@@ -26,7 +26,6 @@ const assignBlockOps = (instance: IEditorInstance, editor: CustomEditor) => {
         const f = ID_TO_ELEMENTS_MAP.get(editor)?.get(blockId) || {}
 
         const finalF = Object.assign({}, f, funcs)
-        console.log(f, funcs, finalF,blockId)
         ID_TO_ELEMENTS_MAP.get(editor)?.set(blockId, finalF)
       },
       removeBlockFuncs: blockId => {

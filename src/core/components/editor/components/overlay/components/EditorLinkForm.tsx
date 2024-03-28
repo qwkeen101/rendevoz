@@ -117,7 +117,7 @@ const EditorLinkForm = ({ editor, manager }: { editor: CustomEditor; manager: Ed
           }}
           onKeyDown={e => {
             if (isHotkey(KEY.Enter, e)) {
-              handlerInsertLink()
+              // handlerInsertLink()
               e.stopPropagation()
               e.preventDefault()
             }
@@ -132,7 +132,7 @@ const EditorLinkForm = ({ editor, manager }: { editor: CustomEditor; manager: Ed
         onInputLink={l => {
           console.log(l)
           if (isValidUrl(l)) {
-            handlerInsertLink(l.startsWith('http://') ? l : 'http://' + l)
+            handlerInsertLink(l.startsWith('http://') || l.startsWith('https://') ? l : 'https://' + l)
             return
           }
           handlerInsertLink()

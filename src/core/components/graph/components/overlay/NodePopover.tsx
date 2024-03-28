@@ -74,7 +74,7 @@ const NodePopover = ({ metaId, nodeId, onClose }: { metaId: number; nodeId: numb
             <WithBorder>
               <ObjectActionPopover
                 metaObjectId={metaId}
-                onEdit={() => onClose()}
+                onClose={onClose}
                 onShowRelated={() => {
                   // after get related nodes, we need to
                   const nodes = getRelatedNodesOfNode(nodeId)

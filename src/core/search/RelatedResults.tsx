@@ -52,7 +52,7 @@ const RelatedItem = ({ item }: { item: ISearchResult[0] }) => {
           padding: 4
         }}
         flex
-        alignItems={'center'}
+        alignItems={'flex-start'}
       >
         <Icon
           size={18}

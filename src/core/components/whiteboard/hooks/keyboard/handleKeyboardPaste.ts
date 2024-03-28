@@ -1,9 +1,11 @@
 import { IWhiteboardInstance } from '~/typings'
 import isHotkey from 'is-hotkey'
 import { mousePos } from '@/hooks/utils/useMousePositionRef'
+import handlePasteImage from '@/core/components/whiteboard/hooks/keyboard/handlePasteImage'
 
 export default (e: KeyboardEvent, instance: IWhiteboardInstance) => {
   if (isHotkey('mod+v', e)) {
+    handlePasteImage(e, instance)
     navigator.clipboard.read().then(i =>
       i.forEach(o => {
         if (o.types.includes('text/plain')) {

@@ -1,63 +1,76 @@
-import { useEffect, useState } from 'react'
-import { MetaObject } from '~/typings'
+import { useEffect, useLayoutEffect, useMemo, useState } from 'react'
+import { IWhiteboardEvents, IWhiteboardInstance, MetaObject } from '~/typings'
 import { MetaStore, ObjectStore } from '@/api/stores'
-import { Button, Content, Icon } from '@/components'
-import { DraggableElement, IconNameRenderer, useSetting, Whiteboard } from '@/core'
+import { Content, Icon, Menu } from '@/components'
+import { DraggableElement, useSetting, Whiteboard } from '@/core'
 import { ClassName } from 'rendevoz'
 import { Rendevoz } from '@/core/rendevoz'
 import { useTranslation } from 'react-i18next'
-import { Colors } from '@/consts'
+import { Colors, KEY } from '@/consts'
 import ButtonSwitch from '@/components/base/ButtonSwitch'
 import produce from 'immer'
 import { useDebounceEffect } from '@/hooks'
 import fuzzysort from 'fuzzysort'
+import KeyvalueStore from '@/api/stores/keyvalue.store'
+import UpdateMovetoCache from '@/components/form/quickAdd/updateMovetoCache'
+import isHotkey from 'is-hotkey'
+import useMoveToCache from '@/components/form/quickAdd/useMoveToCache'
 
 export default ({ onBack, onClose, metaId }: { onBack: VoidFunction; onClose: VoidFunction; metaId: number[] }) => {
-  const [allWhiteboards, setAllWhiteboards] = useState<MetaObject[]>([])
-  const [currentWhiteboard, setCurrentWhiteboard] = useState<{
-    id: number
-    name: string
-  }>()
+  const cache = useMoveToCache()?.whiteboard
+
   const [setting, setSetting] = useSetting()
-  const index = MetaStore.useIndexedMetaObjects()
-  useEffect(() => {
-    const whiteboards = Array.from(MetaStore.getIndexedMetaObjects()?.typeToMetaObjectIdsMap.get('whiteboard')?.values() || [])
-      .map(i => MetaStore.getMetaObjectsMap().get(i))
-      .filter(i => MetaStore.isVisibleMetaObject(i)) as MetaObject[]
+  const index = MetaStore.useMetaObjectsMap()
+  const [whiteboardInstance, setInstance] = useState<IWhiteboardInstance>()
+  const moveToShowInvisible = KeyvalueStore.useValue('moveToShowInvisible')
+  const allWhiteboards = useMemo(() => {
+    const whiteboards = Array.from(index.values()).filter(
+      i => (!moveToShowInvisible ? MetaStore.isVisibleMetaObject(i) : true) && i.type === 'whiteboard'
+    )
     whiteboards.sort((a, b) => b.createdAt - a.createdAt)
-    setAllWhiteboards(whiteboards)
-  }, [index])
-  const [displayWhiteboards, setDisplayWhiteboards] = useState<MetaObject[]>([])
+    return whiteboards
+  }, [index, moveToShowInvisible])
+  const [selectedWhiteboard, setSelectedWhiteboard] = useState<number>(
+    cache?.id ? (allWhiteboards.some(i => i.objectId === cache.id) ? cache.id : undefined) : undefined
+  )
+  const [displayWhiteboards, setDisplayWhiteboards] = useState<MetaObject[]>()
   const [search, setSearch] = useState('')
-  const handler = Rendevoz.Events.Emit.useEventHandler('global')
-  const emitter = Rendevoz.Events.Emit.GlobalEventEmitter
-  handler.on('globalDropNeedFurtherProcess', e => {
-    if (setting.quickAdd.addIntoWhiteboardHideObject) {
-      if (e.dropOn?.dropOn === 'whiteboard' && e.dropOn?.whiteboardId == currentWhiteboard?.id) {
-        metaId.forEach(id => {
-          MetaStore.updateMetaObject({ id, hidden: true })
-        })
+  useEffect(() => {
+    if (whiteboardInstance) {
+      const h = (e: IWhiteboardEvents) => {
+        if (e.type === 'drop' && e.itemType === 'object') {
+          const ids = Array.isArray(e.metaId) ? e.metaId : [e.metaId]
+          UpdateMovetoCache(c => {
+            c.whiteboard = { id: selectedWhiteboard }
+            c.recently = c.recently
+              ? [{ type: 'whiteboard', id: selectedWhiteboard }, ...c.recently.filter(i => i.id !== selectedWhiteboard)]
+              : [{ type: 'whiteboard', id: selectedWhiteboard }]
+          })
+          if (setting.quickAdd.addIntoWhiteboardHideObject) {
+            ids.forEach(id => {
+              MetaStore.updateMetaObject({ id, hidden: true })
+            })
+          }
+        }
+      }
+      whiteboardInstance.addEventListener?.(h)
+      return () => {
+        whiteboardInstance.removeEventListener?.(h)
       }
     }
-  })
+  }, [whiteboardInstance])
   useDebounceEffect(
     () => {
       if (search) {
         const result = Array.from(fuzzysort.go(search, allWhiteboards, { key: 'name' }).values()).map(i => i.obj)
         setDisplayWhiteboards(result)
       } else {
-        setDisplayWhiteboards([])
+        setDisplayWhiteboards(undefined)
       }
     },
     [search],
-    { wait: 300 }
+    { wait: 200 }
   )
-  useEffect(() => {
-    emitter.addListener('global', handler)
-    return () => {
-      emitter.removeListener('global', handler)
-    }
-  })
   const { t } = useTranslation()
 
   return (
@@ -67,9 +80,6 @@ export default ({ onBack, onClose, metaId }: { onBack: VoidFunction; onClose: Vo
           <Icon name={'park-left'} className={ClassName.circleButton()} onClick={onBack} />
           <div>{t('general.Select a whiteboard')}</div>
         </Content>
-        <div style={{ color: Colors.Font.Transparent, fontSize: 13, marginBottom: 4, paddingLeft: 8 }}>
-          {t('general.Drag to add object into whiteboard')}
-        </div>
         <DraggableElement
           draggingDetails={{
             type: 'metaObjects',
@@ -79,19 +89,21 @@ export default ({ onBack, onClose, metaId }: { onBack: VoidFunction; onClose: Vo
           <Content
             flex
             alignItems={'center'}
+            className={'border-box-shadow transparent-font light-hover'}
             style={{
-              background: Colors.Background.ButtonHover,
               cursor: 'grab',
               padding: '4px 8px',
               borderRadius: 4,
+              marginRight: 8,
               fontSize: 14,
               marginBottom: 8,
+              transition: 'all 0.15s ease-in-out',
               marginLeft: 8
             }}
             gap={12}
           >
             <Icon name={'park-drag'} size={16} />
-            <div className={ClassName.ellipsisFont(2)}>Drag {metaId.length} items to whiteboard</div>
+            <div className={'font-size-14'}>{t('general.Drag to add object into whiteboard')}</div>
           </Content>
         </DraggableElement>
         <ButtonSwitch
@@ -105,41 +117,69 @@ export default ({ onBack, onClose, metaId }: { onBack: VoidFunction; onClose: Vo
             )
           }
         />
+        <ButtonSwitch
+          name={t('general.Show hidden objects')}
+          value={!!moveToShowInvisible}
+          onChange={v => KeyvalueStore.updateOne('moveToShowInvisible', v)}
+        />
         <input
-          className={ClassName.noStyleInput}
-          style={{ padding: '3px 8px' }}
+          autoFocus
+          onKeyDownCapture={e => {
+            if (isHotkey(KEY.Escape, e)) {
+              e.preventDefault()
+              e.stopPropagation()
+              e.currentTarget.blur()
+            }
+          }}
+          className={'border-box-shadow focus-input'}
+          style={{ padding: '3px 8px', borderRadius: 4, margin: '6px 8px' }}
           placeholder={t('general.Type to search') + '...'}
           value={search}
           onChange={e => {
             setSearch(e.target.value)
           }}
         />
-        <Content flex column style={{ overflowY: 'auto', borderTop: '1px solid var(--border-background)', marginTop: 4, paddingTop: 4 }}>
-          <Button.IconButton
-            text={t('general.Create new whiteboard')}
-            icon={'park-plus'}
-            onClick={() => {
-              ObjectStore('whiteboard').addOneWithMeta(
-                {},
-                {
-                  currentMeta: {
-                    name: 'Unnamed whiteboard'
+        <Content flex column style={{ overflowY: 'auto', paddingTop: 4 }}>
+          <Menu.NavigationMenu
+            disableEnterPreventDefault
+            reselectOnLayoutChange={search ? true : false}
+            defaultSelected={cache ? [String(cache.id)] : undefined}
+            layout={[
+              search
+                ? undefined
+                : {
+                    type: 'item',
+                    icon: 'park-plus',
+                    text: t('general.Create new whiteboard'),
+                    key: 'create',
+                    onSelect: () => {
+                      ObjectStore('whiteboard').addOneWithMeta(
+                        {},
+                        {
+                          showMetaModal: true
+                        }
+                      )
+                    }
                   },
-                  showMetaModal: true
+              // @ts-ignore
+              ...(displayWhiteboards || allWhiteboards).map(i => ({
+                type: 'item',
+                key: String(i.objectId),
+                style:
+                  selectedWhiteboard === i.objectId
+                    ? {
+                        background: Colors.Common.SelectColorTransparent,
+                        color: Colors.Common.SelectColor
+                      }
+                    : undefined,
+                text: i.name || i.placeholderName || 'Unnamed whiteboard',
+                icon: i.icon || Rendevoz.Utils.Object.getMetaObjectIcon(i.type),
+                onSelect: () => {
+                  setSelectedWhiteboard(i.objectId!)
                 }
-              )
-            }}
+              }))
+            ].filter(i => i)}
           />
-          {(displayWhiteboards.length ? displayWhiteboards : allWhiteboards).map(i => (
-            <IconNameRenderer
-              className={ClassName.flatButton()}
-              onClick={() => setCurrentWhiteboard({ id: i.objectId, name: i.name })}
-              {...i}
-              name={i.name || i.placeholderName}
-              icon={i.icon || Rendevoz.Utils.Object.getMetaObjectIcon(i.type)}
-              key={i.id}
-            />
-          ))}
         </Content>
       </Content>
       <Content flex column fullWidth fullHeight style={{ background: Colors.Background.Global, borderRadius: '0px 8px 8px 0px' }}>
@@ -163,7 +203,9 @@ export default ({ onBack, onClose, metaId }: { onBack: VoidFunction; onClose: Vo
             position: 'relative'
           }}
         >
-          {currentWhiteboard && <Whiteboard key={currentWhiteboard.id} whiteboardId={currentWhiteboard.id} />}
+          {selectedWhiteboard && (
+            <Whiteboard onInstanceInitialized={i => setInstance(i)} key={selectedWhiteboard} whiteboardId={selectedWhiteboard} />
+          )}
         </div>
       </Content>
     </Content>

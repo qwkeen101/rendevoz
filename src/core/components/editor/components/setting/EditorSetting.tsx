@@ -18,7 +18,7 @@ const EditorSetting = ({ editor }: { editor: CustomEditor }) => {
   const [editorState, setEditorState] = useEditorState()
   const parentRef = useRef(null)
   const update = useUpdate()
-  const { lastSavedAt } = editorState.state
+  const { lastSavedAt } = editorState.state || {}
   useEffect(() => {
     update()
   }, [])
@@ -58,15 +58,17 @@ const EditorSetting = ({ editor }: { editor: CustomEditor }) => {
           }}
         />
       </Content>
-      <Content
-        className={'font-size-12 transparent-font'}
-        style={{
-          padding: '4px 10px'
-        }}
-      >
-        <div>{t('general.Last saved at')}</div>
-        <div>{DateFormat.format(lastSavedAt, DateFormat.Formats.withSecond)}</div>
-      </Content>
+      {lastSavedAt ? (
+        <Content
+          className={'font-size-12 transparent-font'}
+          style={{
+            padding: '4px 10px'
+          }}
+        >
+          <div>{t('general.Last saved at')}</div>
+          <div>{DateFormat.format(lastSavedAt, DateFormat.Formats.withSecond)}</div>
+        </Content>
+      ) : null}
     </Content>
   )
 }

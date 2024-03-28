@@ -1,5 +1,5 @@
 import { Content, Icon, Tabs, TabPane } from '@/components'
-import { useDebounceFn, useGlobalAtom } from '@/hooks'
+import { GlobalInstance, useDebounceFn, useGlobalAtom } from '@/hooks'
 import { css } from '@emotion/css'
 import { atom } from 'jotai'
 import { memo, useEffect, useMemo, useRef, useState } from 'react'
@@ -9,7 +9,7 @@ import SearchHistory from '@/core/search/SearchHistory'
 import RecentlyViewed from '@/core/search/RecentlyViewed'
 import { ISearchResult } from '@/api/textSearch/types'
 import SearchResult from '@/core/search/SearchResult'
-import { Colors } from '@/consts'
+import { Colors, KEY } from '@/consts'
 import { useLatest } from 'react-use'
 import AdvanceSearch from '@/core/search/AppearResults'
 import searchGlobalText from '@/core/search/search'
@@ -22,6 +22,7 @@ import { MetaStore, ObjectStore } from '@/api/stores'
 import TagSearch from '@/core/search/TagSearch'
 import useSaveFilterModal from '@/core/search/useSaveFilterModal'
 import PropSearch from '@/core/search/PropSearch'
+import isHotkey from 'is-hotkey'
 
 export const GlobalSearchInputAtom = atom<string>('')
 
@@ -49,6 +50,7 @@ export const SearchDialog = memo(({ onClose, visible }: { onClose: VoidFunction;
   const propIds = useMemo(() => {
     return propMeta ? Array.from(propMeta.keys()) : []
   }, [propMeta])
+  const [tab, setTab] = useState('all')
   const allProps = ObjectStore('metaProp').useMultiple(propIds)
   const [filter, setFilter] = useGlobalAtom(FilterAtom)
   const [filteredObjects, setFilteredObjects] = useState<MetaObject[]>([])
@@ -57,6 +59,32 @@ export const SearchDialog = memo(({ onClose, visible }: { onClose: VoidFunction;
   const [enableFilter, setEnableFilter] = useState(false)
   const { t } = useTranslation()
   const [isComposing, setIsComposing] = useState(false)
+  useEffect(() => {
+    // arrow left, arrow right switch tab
+    if (visible) {
+      const keys = ['all', 'appear in', 'tags', 'props', 'related']
+      const keydownHandler = (e: KeyboardEvent) => {
+        if (isHotkey('mod+arrowright', e)) {
+          e.preventDefault()
+          e.stopPropagation()
+          const idx = keys.indexOf(tab)
+          const next = idx + 1 >= keys.length ? 0 : idx + 1
+          setTab(keys[next])
+        }
+        if (isHotkey('mod+arrowleft', e)) {
+          e.preventDefault()
+          e.stopPropagation()
+          const idx = keys.indexOf(tab)
+          const next = idx - 1 < 0 ? keys.length - 1 : idx - 1
+          setTab(keys[next])
+        }
+      }
+      document.addEventListener('keydown', keydownHandler, true)
+      return () => {
+        document.removeEventListener('keydown', keydownHandler, true)
+      }
+    }
+  }, [visible, tab])
   const [resultNums, setResultNums] = useState<{
     tag: number
     related: number
@@ -167,6 +195,7 @@ export const SearchDialog = memo(({ onClose, visible }: { onClose: VoidFunction;
   useEffect(() => {
     if (visible) {
       inputRef.current?.focus()
+      inputRef.current?.select()
     }
   }, [visible])
   let fixedHeight = false
@@ -214,6 +243,11 @@ export const SearchDialog = memo(({ onClose, visible }: { onClose: VoidFunction;
             ref={inputRef}
             onChange={e => {
               setSearchInput(e.target.value)
+            }}
+            onKeyDown={e => {
+              if (isHotkey(KEY.Escape, e)) {
+                GlobalInstance.searchOps?.closeSearchPanel()
+              }
             }}
             style={{ width: '100%', fontWeight: 'bold', padding: 0 }}
           />
@@ -291,7 +325,8 @@ export const SearchDialog = memo(({ onClose, visible }: { onClose: VoidFunction;
               fontWeight: 600,
               borderBottom: Colors.Consts.Border
             }}
-            defaultActiveKey={'all'}
+            activeKey={tab}
+            onTabClick={k => setTab(k)}
           >
             <TabPane key={'all'} tab={t('general.All') + (resultNums.all ? `(${resultNums.all})` : '')}>
               <SearchResult enableOpen={visible} onClose={onClose} result={searchResults.results} />

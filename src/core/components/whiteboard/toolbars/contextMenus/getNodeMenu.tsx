@@ -29,14 +29,26 @@ export default (
   const menuItems = getVisibleNodeMenuItems(selected)
   const hasWebpageMetas = selected.some(i => i.type === 'metaObject' && i.expanded && metaMap.get(i.metaObjectId)?.type === 'webpage')
   const commonTools: (IMenuLayoutItem | undefined)[] = [
-    ...(ifContextMenuOnSingleGroup && toolbarType !== 'click'
+    ...(ifContextMenuOnSingleGroup
       ? [
+          toolbarType !== 'click'
+            ? {
+                type: 'item',
+                key: 'create-on-group',
+                text: t('whiteboard.Create new card'),
+                icon: 'park-plus',
+                subMenu: [...getContextMenu(instance, t)]
+              }
+            : undefined,
           {
             type: 'item',
-            key: 'create-on-group',
-            text: t('whiteboard.Create new card'),
-            icon: 'park-plus',
-            subMenu: [...getContextMenu(instance, t)]
+            key: 'renameGroup',
+            icon: 'park-edit',
+            text: t('whiteboard.Rename group'),
+            onSelect: () => {
+              instance.groupOps?.renameGroup(selected[0].id)
+              instance.toolbarOps?.closeToolbar()
+            }
           },
           {
             type: 'item',
@@ -104,18 +116,6 @@ export default (
           suffix: WhiteboardDefaultKeyboardShortcut.DrawLine.text,
           onSelect: () => {
             instance.edgeOps?.startDrawEdge(selected[0].id)
-            instance.toolbarOps?.closeToolbar()
-          }
-        }
-      : undefined,
-    ifContextMenuOnSingleGroup
-      ? {
-          type: 'item',
-          key: 'renameGroup',
-          icon: 'park-edit',
-          text: t('whiteboard.Rename group'),
-          onSelect: () => {
-            instance.groupOps?.renameGroup(selected[0].id)
             instance.toolbarOps?.closeToolbar()
           }
         }
@@ -433,6 +433,7 @@ export default (
           {
             type: 'item',
             key: 'move-to',
+            suffix: WhiteboardDefaultKeyboardShortcut.MoveTo.text,
             text: t('general.Move to'),
             icon: 'park-corner-up-right',
             onSelect: () => {
@@ -454,6 +455,22 @@ export default (
           }
         ]
       : []),
+    selected.length > 1 && selected.some(i => i.type === 'metaObject')
+      ? {
+          type: 'item',
+          key: 'move-to',
+          text: t('general.Move to'),
+          icon: 'park-corner-up-right',
+          suffix: WhiteboardDefaultKeyboardShortcut.MoveTo.text,
+          onSelect: () => {
+            const items = selected.filter(i => i.type === 'metaObject')
+            if (items.length) {
+              GlobalInstance.metaOps?.quickAdd(items.map(i => i.metaObjectId))
+            }
+            instance.toolbarOps?.closeToolbar()
+          }
+        }
+      : undefined,
     {
       type: 'item',
       key: 'copy',

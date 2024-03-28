@@ -121,7 +121,10 @@ export interface ListItemElement {
   type: 'list-item'
   children: Descendant[]
 }
-
+export interface OrderListItemElement {
+  type: 'order-list-item'
+  children: Descendant[]
+}
 export type EmbededElement = {
   type: 'embeded'
   url?: string
@@ -237,3 +240,4 @@ export type CommonElement =
   | HighlightBlockElement
   | IFrameElement
   | EmbededElement
+  | OrderListItemElement

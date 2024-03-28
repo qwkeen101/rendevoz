@@ -73,6 +73,7 @@ const useEditorArrowKey = (instance: IEditorInstance) => {
             distance = 2
           }
         }
+        console.log(distance)
         if (distance > 1) {
           e.preventDefault()
           Transforms.move(editor, { unit: 'offset', distance })

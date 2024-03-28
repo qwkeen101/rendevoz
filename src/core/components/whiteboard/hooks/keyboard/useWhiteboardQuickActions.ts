@@ -38,6 +38,16 @@ export default () => {
     if (isHotkey('shift+q', e)) {
       instance.containerOps?.redoTransform()
     }
+    if (includeShortcuts(e, WhiteboardDefaultKeyboardShortcut.MoveTo.key)) {
+      const selected = instance.selectOps?.getSelectedNodes()
+      if (selected?.length) {
+        const metas = selected.filter(i => i.type === 'metaObject').map(i => i.metaObjectId)
+        if (metas.length) {
+          GlobalInstance.metaOps?.quickAdd(metas)
+          instance.toolbarOps?.closeToolbar()
+        }
+      }
+    }
     if (includeShortcuts(e, WhiteboardDefaultKeyboardShortcut.OpenInCenter.key)) {
       const selected = instance.selectOps?.getSelectedNodes()
       if (selected?.length === 1) {

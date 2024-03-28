@@ -2,19 +2,20 @@ import { IGroupInstance, MetaObject, PartialWithId } from '~/typings'
 import { assignProperties } from '@/utils'
 import { MetaStore } from '@/api/stores'
 import { useStore } from 'jotai'
-import { GroupStateAtom } from '@/core/components/group/hooks/useGroupState'
+import { GroupStateAtom, IGroupState } from '@/core/components/group/hooks/useGroupState'
 import { GlobalInstance } from '@/hooks'
 import handleCreateInGrouper from '@/core/components/group/components/grouper/handlers/handleCreateInGrouper'
 import { InnerGroupInstance } from '@/core/components/group/hooks/useGroupInstance'
 
 const useAssignMetaOps = (instance: InnerGroupInstance) => {
-  const store = useStore()
   assignProperties(instance, {
     metaOps: {
       createMeta: async grouperId => {
-        const addAfterCreate = instance.getGroupState?.().state?.addAfterCreateMeta
-        const currentGroupRule = instance.getGroupState?.().currentView?.group
-        let onlyCreate = store.get(GroupStateAtom).state?.onlyCreateType
+        const groupState = instance.getGroupState?.()
+        if (!groupState) return
+        const addAfterCreate = groupState.state?.addAfterCreateMeta
+        const currentGroupRule = groupState.currentView?.group
+        let onlyCreate = groupState.data?.onlyCreate || groupState.state?.onlyCreateType
         if (currentGroupRule?.fieldType === 'metaType' && grouperId) {
           const grouper = instance.getGroupState?.().groups?.find(i => i.id === grouperId)
           if (grouper?.name) {
@@ -23,6 +24,7 @@ const useAssignMetaOps = (instance: InnerGroupInstance) => {
         }
 
         GlobalInstance.metaOps?.createObjects(onlyCreate, meta => {
+          handleFilterAdd(groupState, meta)
           console.log(meta)
           setTimeout(() => {
             MetaStore.triggerObjectIndex()
@@ -47,7 +49,7 @@ const useAssignMetaOps = (instance: InnerGroupInstance) => {
                 }
               }
             }
-          }, 200)
+          }, 20)
         })
       },
       updateMetaProperty: async (field, nextValue, id?: number) => {
@@ -117,4 +119,49 @@ const useAssignMetaOps = (instance: InnerGroupInstance) => {
   })
 }
 
+// if have filter, add filter properties to meta
+const handleFilterAdd = (groupState: IGroupState, meta: MetaObject) => {
+  const f = groupState.currentView?.filter
+  if (f) {
+    const needUpdateProps: Record<string, any> = {}
+    const needUpdateBasic: Record<string, any> = {}
+    f.rules.forEach(rule => {
+      if (rule.filterType === 'rule') {
+        if ('propType' in rule) {
+          if (rule.value) {
+            switch (rule.type) {
+              case 'contains':
+              case 'is':
+                needUpdateProps[rule.field] = rule.value
+                break
+            }
+          }
+          return
+        }
+        switch (rule.field) {
+          case 'name':
+          case 'description':
+            switch (rule.type) {
+              case 'contains':
+              case 'is':
+                needUpdateBasic[rule.field] = rule.value
+            }
+            break
+          case 'tags':
+            switch (rule.type) {
+              case 'is':
+              case 'contains':
+                if (rule.tagIds) {
+                  needUpdateBasic[rule.field] = rule.tagIds
+                }
+            }
+            break
+        }
+      }
+    })
+    const props = Object.fromEntries(Object.entries(needUpdateProps).map(i => [i[0], { value: i[1] }]))
+    console.log(props, needUpdateBasic, f)
+    MetaStore.updateMetaObject({ id: meta.id, properties: props, ...needUpdateBasic })
+  }
+}
 export default useAssignMetaOps

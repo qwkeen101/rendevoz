@@ -4,6 +4,7 @@ import useGroupDeleteKey from '@/core/components/group/hooks/keyboard/useGroupDe
 import useGroupTableControlCell from '@/core/components/group/hooks/keyboard/useGroupTableControlCell'
 import useGroupTableRowControl from '@/core/components/group/hooks/keyboard/useGroupTableRowControl'
 import useGroupEscKey from '@/core/components/group/hooks/keyboard/useGroupEscKey'
+import useGroupCommonActions from '@/core/components/group/hooks/keyboard/useGroupCommonActions'
 
 const useGroupGlobalKey = () => {
   const instance = useGroupInstance()
@@ -11,13 +12,21 @@ const useGroupGlobalKey = () => {
   const handleTableCellControlKey = useGroupTableControlCell(instance)
   const handleTableRowControlKey = useGroupTableRowControl(instance)
   const handleEscKey = useGroupEscKey(instance)
+  const handleCommonKey = useGroupCommonActions(instance)
   useEffect(() => {
     const keyboardHandler = (e: KeyboardEvent) => {
-      handleTableCellControlKey(e)
-      handleTableRowControlKey(e)
-      handleEscKey(e)
-      if (!instance.values.isFocused) return
-      handleDeleteKey(e)
+      // timeout here to ensure high priorty work first
+      setTimeout(() => {
+        if (e.defaultPrevented) {
+          return
+        }
+        handleCommonKey(e)
+        handleTableCellControlKey(e)
+        handleTableRowControlKey(e)
+        handleEscKey(e)
+        if (!instance.values.isFocused) return
+        handleDeleteKey(e)
+      })
     }
     document.addEventListener('keydown', keyboardHandler)
     return () => {

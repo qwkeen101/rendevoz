@@ -1,15 +1,18 @@
 import { MetaGroupChild } from '~/typings'
-import { AnimatePopover, Button, Content, WithBorder } from '@/components'
+import { Content, Menu } from '@/components'
 import { useGroupInstance } from '@/core/components/group/hooks/useGroupInstance'
 import { MetaStore } from '@/api/stores'
-import { memo, ReactElement } from 'react'
-import NewRowMenu from '@/core/components/group/components/menu/NewRowMenu'
-import { Colors } from '@/consts'
-import { Rendevoz } from '@/core/rendevoz'
+import { memo, useEffect } from 'react'
 import { GlobalInstance, useSelectAtomValue } from '@/hooks'
 import { GroupStateAtom } from '@/core/components/group/hooks/useGroupState'
 import { useTranslation } from 'react-i18next'
 import { IMetaGroupAvailableContextMenuItems } from '@/core/components/group/MetaGroup'
+import { IMenuLayoutItem } from '@/components/base/menu'
+import { DateFormat } from '@/utils'
+import isHotkey from 'is-hotkey'
+import { isEqual } from 'lodash'
+import commonActions from '@/core/components/group/actions/commonActions'
+import { actionToShortcut } from '@/core/components/group/hooks/keyboard/useGroupCommonActions'
 
 export default memo(
   ({ details, onClose }: { details: MetaGroupChild; onClose: VoidFunction }) => {
@@ -17,24 +20,31 @@ export default memo(
     const onlyOpenIn = instance.getGroupState?.().state?.onlyOpenIn
     const selected = instance.selectOps?.getSelectedItems()
     const hasSelected = selected?.length && selected.length > 1
-    const currentView = instance.getCurrentView?.()
     const { t } = useTranslation()
     const meta = MetaStore.getMetaObjectsMap().get(details.id)
     const canPreview = details.type === 'metaObject' && meta && GlobalInstance.metaOps?.canPreview(meta)
-    const customLayout = useSelectAtomValue(GroupStateAtom, s => s.layout?.contextMenu)
-    const hidenItems = useSelectAtomValue(GroupStateAtom, s => s.layout?.hideContextMenuItems)
-    const layoutItems: Record<
-      IMetaGroupAvailableContextMenuItems,
-      | { text: string; icon: string; onClick: VoidFunction; subMenu?: ReactElement; type: 'button'; dangerous?: boolean }
-      | { type: 'separator' }
-    > = {
+    const { customLayout, hidenItems, lastUpdated } = useSelectAtomValue(
+      GroupStateAtom,
+      s => ({
+        customLayout: s.layout?.contextMenu,
+        hidenItems: s.layout?.hideContextMenuItems,
+        lastUpdated: s.data?.lastUpdated
+      }),
+      { compare: (prev, curr) => isEqual(prev, curr) }
+    )
+    const actionHandler = (type: Parameters<typeof commonActions>[1]) => {
+      onClose()
+      commonActions(instance, type)
+    }
+
+    const layoutItems: Record<IMetaGroupAvailableContextMenuItems, IMenuLayoutItem> = {
       recover: {
+        key: 'recover',
         text: t('general.Recover'),
         icon: 'park-redo',
-        type: 'button',
-        onClick: () => {
+        type: 'item',
+        onSelect: () => {
           onClose()
-
           instance.metaOps?.updateMeta({
             deleted: false
           })
@@ -42,10 +52,11 @@ export default memo(
         }
       },
       open: {
+        key: 'open',
         text: t('general.Open'),
         icon: 'park-arrow-right-up',
-        type: 'button',
-        onClick: () => {
+        type: 'item',
+        onSelect: () => {
           onClose()
           const first = selected?.[0][0]
           if (first) {
@@ -56,9 +67,9 @@ export default memo(
       deleteCompleted: {
         text: t('general.Delete completed'),
         icon: 'park-delete',
-        type: 'button',
-        dangerous: true,
-        onClick: () => {
+        type: 'item',
+        key: 'delete-complete',
+        onSelect: () => {
           onClose()
           selected?.forEach(s => {
             MetaStore.deleteMetaObject(s[0].id, {
@@ -72,25 +83,21 @@ export default memo(
       copyLinkToAll: {
         text: t('general.Copy links to all'),
         icon: 'park-link',
-        type: 'button',
-        onClick: () => {
-          onClose()
-          GlobalInstance.metaOps?.copyLink(selected?.map(i => i[0].id))
+        type: 'item',
+        key: 'copy-link-to-all',
+        suffix: actionToShortcut['copy-link-to-all'].text,
+        onSelect: () => {
+          actionHandler('copy-link-to-all')
         }
       },
       deleteInGroup: {
         text: t('general.Delete from group'),
-        icon: 'park-delete',
-        type: 'button',
-        dangerous: true,
-        onClick: () => {
-          onClose()
-          const selected = instance.selectOps?.getSelectedItems()
-          if (selected?.length) {
-            instance.valueOps?.deleteItems(selected.map(i => i[0].rowId))
-            return
-          }
-          instance.valueOps?.deleteItems(details.rowId)
+        icon: 'park-delete-two',
+        type: 'item',
+        key: 'delete-in-group',
+        suffix: actionToShortcut['delete-in-group'].text,
+        onSelect: () => {
+          actionHandler('delete-in-group')
         }
       },
       separator: {
@@ -99,93 +106,71 @@ export default memo(
       viewDetails: {
         text: t('general.View details'),
         icon: 'park-info',
-        type: 'button',
-        onClick: () => {
-          onClose()
-          GlobalInstance.metaOps?.openDetails(details.id)
+        type: 'item',
+        key: 'view-details',
+        suffix: 'V',
+        onSelect: () => {
+          actionHandler('view-details')
         }
       },
       edit: {
         text: t('general.edit'),
         icon: 'park-edit',
-        type: 'button',
-        onClick: () => {
-          onClose()
-          Rendevoz.Actions.Open.Meta.openEditMetaDialog(details.id)
+        type: 'item',
+        key: 'edit',
+        onSelect: () => {
+          actionHandler('edit')
         }
       },
       moveTo: {
         text: t('general.Move to'),
         icon: 'park-corner-up-right',
-        type: 'button',
-        onClick: () => {
-          onClose()
-          const allIds = new Set(selected?.map(i => i[0].id))
-          GlobalInstance.metaOps?.quickAdd(Array.from(allIds.values()))
+        type: 'item',
+        key: 'move-to',
+        suffix: actionToShortcut['move-to'].text,
+        onSelect: () => {
+          actionHandler('move-to')
         }
       },
       copyLink: {
         text: t('general.Copy link'),
         icon: 'park-link',
-        type: 'button',
-        onClick: () => {
-          onClose()
-          GlobalInstance.metaOps?.copyLink(details.id)
+        type: 'item',
+        key: 'copy-link',
+        suffix: actionToShortcut['copy-link'].text,
+        onSelect: () => {
+          actionHandler('copy-link')
         }
       },
       openInNewTab: {
         text: t('general.Open in new tab'),
         icon: 'park-efferent-three',
-        type: 'button',
-        onClick: () => {
-          onClose()
-          Rendevoz.Actions.Open.Meta.openMetaObject(details.id)
+        type: 'item',
+        suffix: actionToShortcut['open-in-new-tab'].text,
+        key: 'open-in-new-tab',
+        onSelect: () => {
+          actionHandler('open-in-new-tab')
         }
       },
       openInSidePeek: {
         text: t('general.Open in side peek'),
         icon: 'park-right-bar',
-        type: 'button',
-        onClick: () => {
-          instance.sidebarOps?.open({
-            type: 'preview',
-            metaId: details.id,
-            rowId: details.rowId
-          })
-          onClose()
+        type: 'item',
+        suffix: actionToShortcut['open-in-side-peek'].text,
+        key: 'open-in-side-peek',
+        onSelect: () => {
+          actionHandler('open-in-side-peek')
         }
       },
       deleteObject: {
         text: t('general.delete object'),
         icon: 'park-delete',
-        type: 'button',
-        dangerous: true,
-        onClick: () => {
-          onClose()
-          const selected = instance.selectOps?.getSelectedItems()
-          if (selected?.length) {
-            instance.valueOps?.deleteItems(
-              selected.map(i => i[0].rowId),
-              { deleteMeta: true }
-            )
-            return
-          }
-          instance.valueOps?.deleteItems(details.rowId, { deleteMeta: true })
+        type: 'item',
+        suffix: actionToShortcut['delete-obj'].text,
+        key: 'delete-obj',
+        onSelect: () => {
+          actionHandler('delete-obj')
         }
-      },
-      addRowAbove: {
-        text: t('general.Insert object above'),
-        icon: 'park-up',
-        type: 'button',
-        subMenu: <NewRowMenu onClose={() => onClose()} currentRowId={details.rowId} direction={'above'} />,
-        onClick: () => {}
-      },
-      addRowBelow: {
-        text: t('general.Insert object below'),
-        icon: 'park-down',
-        type: 'button',
-        onClick: () => {},
-        subMenu: <NewRowMenu onClose={() => onClose()} currentRowId={details.rowId} direction={'below'} />
       }
     }
     hidenItems?.forEach(i => {
@@ -193,7 +178,6 @@ export default memo(
     })
     const actions: ((typeof layoutItems)[keyof typeof layoutItems] | undefined)[] = [
       selected?.length && selected.length > 1 ? layoutItems['copyLinkToAll'] : undefined,
-      layoutItems['moveTo'],
       layoutItems['deleteInGroup'],
       layoutItems['deleteObject'],
       ...(details.type === 'metaObject'
@@ -202,6 +186,7 @@ export default memo(
               ? []
               : [
                   layoutItems['separator'],
+                  layoutItems['moveTo'],
                   ...(onlyOpenIn
                     ? [layoutItems['open']]
                     : [layoutItems['openInNewTab'], ...(canPreview ? [layoutItems['openInSidePeek']] : [])]),
@@ -211,36 +196,24 @@ export default memo(
                 ])
           ]
         : []),
-      ...(currentView?.filter?.rules.length || currentView?.type === 'calendar' || hasSelected || currentView?.sort?.sorters.length || currentView?.search
-        ? []
-        : [
-            layoutItems['addRowAbove'] && layoutItems['addRowBelow'] && layoutItems['separator'],
-            layoutItems['addRowAbove'],
-            layoutItems['addRowBelow']
-          ])
+      lastUpdated && layoutItems['separator']
     ].filter(i => i)
+    const options = customLayout ? customLayout(selected?.map(i => i[0].id) || []).map(i => layoutItems[i]) : actions
+
     return (
-      <Content flex column style={{ minWidth: 180 }}>
-        {(customLayout ? customLayout(selected?.map(i => i[0].id) || []).map(i => layoutItems[i]) : actions).map(
-          i =>
-            i &&
-            (i?.type === 'separator' ? (
-              <div
-                style={{
-                  width: '100%',
-                  height: 1,
-                  margin: '4px 0px',
-                  background: Colors.Background.Border
-                }}
-              ></div>
-            ) : i?.subMenu ? (
-              <AnimatePopover padding={10} key={i.text} content={<WithBorder padding={6}>{i.subMenu}</WithBorder>} positions={['right']}>
-                <Button.IconButton dangerous={i.dangerous} text={i.text} onClick={i.onClick} icon={i.icon} />
-              </AnimatePopover>
-            ) : (
-              <Button.IconButton dangerous={i.dangerous} key={i.text} text={i.text} onClick={i.onClick} icon={i.icon} />
-            ))
-        )}
+      <Content flex column style={{ minWidth: 240 }}>
+        <Menu.NavigationMenu layout={options} />
+        {lastUpdated ? (
+          <div
+            style={{
+              padding: '0 0.8rem 0'
+            }}
+            className={'font-size-12 super-transparent-font'}
+          >
+            {t('general.Last updated at')}
+            <div>{DateFormat.format(lastUpdated, DateFormat.Formats.withMinute)}</div>
+          </div>
+        ) : null}
       </Content>
     )
   },

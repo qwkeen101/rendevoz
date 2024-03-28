@@ -9,6 +9,7 @@ import FontSize from '@/consts/font'
 import { css } from '@emotion/css'
 import { Colors } from '@/consts'
 import useEditorInstance from '@/core/components/editor/hooks/useEditorInstance'
+import useReadOnlyEditor from '@/core/components/editor/hooks/useReadOnly'
 const InlineChromiumBugfix = () => (
   <span
     contentEditable={false}
@@ -44,7 +45,7 @@ const Link = ({ element, attributes, children }: RenderElementProps) => {
       })
     }
   }, [element.url])
-
+  const readOnly = useReadOnlyEditor()
   const handleRemoveLink = () => {
     const path = ReactEditor.findPath(editor, element)
     const text = Node.string(element)
@@ -153,8 +154,9 @@ const Link = ({ element, attributes, children }: RenderElementProps) => {
     return <div></div>
   }
   return (
-    <span {...attributes} style={{ margin: '0 0.01em' }}>
+    <span {...attributes} style={{ margin: '0 0.1px' }}>
       <Tooltip
+        disable={readOnly}
         padding={5}
         contentTouchable={true}
         delay={500}
@@ -162,16 +164,14 @@ const Link = ({ element, attributes, children }: RenderElementProps) => {
         disableDefaultContent={true}
       >
         <a
-          href={element.url}
-          target={'_blank'}
           onClick={e => {
-            if (!e.defaultPrevented) {
-              editor.on({
-                type: 'linkClick',
-                e
-              })
+            if (!readOnly) {
+              window.open(element.url)
+              e.preventDefault()
             }
           }}
+          href={element.url}
+          target={'_blank'}
         >
           <InlineChromiumBugfix />
           {children}

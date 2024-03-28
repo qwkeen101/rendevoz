@@ -344,7 +344,11 @@ const useCollectionStore = () => {
     globalStore.set(collectionsAtom, new Map())
     realStore.getAllCollections()
   }
+  const getCachedCollectionById = (id: number) => {
+    return globalStore.get(collectionsAtom).get(id)
+  }
   return {
+    getCachedCollectionById,
     findParentCollections,
     addItemToCollection,
     moveItemBetweenCollections,

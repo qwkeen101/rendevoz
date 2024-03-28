@@ -38,6 +38,7 @@ import EditorPluginHooks from './hooks/EditorPluginHooks'
 import { t } from 'i18next'
 import GetEditorBlockHandle from '@/core/components/editor/hooks/getEditorBlockHandle'
 import { css } from '@emotion/css'
+import './editorStyles.less'
 
 // function, get unique id everytime
 const defaultSlateValue = () => [

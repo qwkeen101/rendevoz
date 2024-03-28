@@ -1,16 +1,21 @@
-import { memo, useLayoutEffect, useState } from 'react'
+import { memo, useEffect, useLayoutEffect, useMemo, useState } from 'react'
 import { MetaObject } from '~/typings'
 import { GroupStore, MetaStore, ObjectStore } from '@/api/stores'
-import { Content, Icon } from '@/components'
+import { Content, Icon, Menu } from '@/components'
 import { IconNameRenderer, useSetting } from '@/core'
 import { Rendevoz } from '@/core/rendevoz'
 import { ClassName } from 'rendevoz'
 import ButtonSwitch from '@/components/base/ButtonSwitch'
 import produce from 'immer'
-import { useDebounceEffect } from '@/hooks'
+import { useDebounceEffect, useMemoizedFn } from '@/hooks'
 import fuzzysort from 'fuzzysort'
-import { Colors } from '@/consts'
+import { Colors, KEY } from '@/consts'
 import { useTranslation } from 'react-i18next'
+import KeyvalueStore from '@/api/stores/keyvalue.store'
+import updateMovetoCache from '@/components/form/quickAdd/updateMovetoCache'
+import isHotkey from 'is-hotkey'
+import quickAdd from '@/components/form/quickAdd/quickAdd'
+import useMoveToCache from '@/components/form/quickAdd/useMoveToCache'
 
 export default memo(
   ({
@@ -24,62 +29,53 @@ export default memo(
     onClose: VoidFunction
     onPickGroup?: (groupMetaId: number) => void
   }) => {
-    const [allGroups, setAllGroups] = useState<MetaObject[]>([])
+    const cache = useMoveToCache()?.group
     const [setting, setSetting] = useSetting()
     const [search, setSearch] = useState('')
-    const [displayGroups, setDisplayGroups] = useState<MetaObject[]>([])
-    const [selectedGroup, setSelectedGroup] = useState<MetaObject>()
-    const index = MetaStore.useIndexedMetaObjects()
+    const [displayGroups, setDisplayGroups] = useState<MetaObject[]>()
+
+    const index = MetaStore.useMetaObjectsMap()
     const { t } = useTranslation()
-    useLayoutEffect(() => {
-      const groups = Array.from(MetaStore.getIndexedMetaObjects()?.typeToMetaObjectIdsMap.get('group')?.values() || [])
+    const moveToShowInvisible = KeyvalueStore.useValue('moveToShowInvisible')
+    const allGroups = useMemo(() => {
+      const groups = Array.from(index.values()).filter(
+        i => (!moveToShowInvisible ? MetaStore.isVisibleMetaObject(i) : true) && i.type === 'group'
+      )
       if (groups.length) {
-        const all = groups.map(i => MetaStore.getMetaObjectsMap().get(i) as MetaObject).filter(i => MetaStore.isVisibleMetaObject(i))
+        const all = groups
         all.sort((a, b) => b.createdAt - a.createdAt)
-        setAllGroups(all)
+        return all
       }
-    }, [index])
+      return []
+    }, [index, moveToShowInvisible])
+    const [selectedGroup, setSelectedGroup] = useState<number>(
+      cache?.id ? (allGroups.some(i => i.objectId === cache.id) ? cache.id : undefined) : undefined
+    )
     useDebounceEffect(
       () => {
         if (search) {
           const result = fuzzysort.go(search, allGroups, { key: 'name' })
           setDisplayGroups(Array.from(result.values()).map(i => i.obj))
         } else {
-          setDisplayGroups([])
+          setDisplayGroups(undefined)
         }
       },
       [search],
       { wait: 200 }
     )
-    const handleInsertMetaIntoGroup = () => {
+    const handleInsertMetaIntoGroup = useMemoizedFn(() => {
       onClose()
       if (selectedGroup) {
-        const groupId = selectedGroup.objectId
-        if (groupId) {
-          onPickGroup?.(selectedGroup.id)
-          if (metaId) {
-            GroupStore.insertMetaIntoGroup(metaId, groupId)
-            const groupMeta = MetaStore.getMetaObjectByObjectId(groupId)
-            if (groupMeta) {
-              if (setting.quickAdd.addIntoGroupAutoOpen) {
-                setTimeout(() => {
-                  Rendevoz.Actions.Open.Meta.openMetaObject(groupMeta.id)
-                }, 100)
-              }
-              metaId.forEach(id => {
-                MetaStore.addMetaLink(
-                  {
-                    sourceId: id,
-                    targetId: groupMeta.id
-                  },
-                  true
-                )
-              })
-            }
+        const groupId = selectedGroup
+        if (groupId && metaId) {
+          const groupMeta = MetaStore.getMetaObjectByObjectId(groupId)
+          if (groupMeta) {
+            onPickGroup?.(groupMeta.id)
           }
+          quickAdd(metaId, 'group', selectedGroup)
         }
       }
-    }
+    })
     return (
       <Content
         flex
@@ -111,56 +107,74 @@ export default memo(
             }}
           />
         )}
+        <ButtonSwitch
+          name={t('general.Show hidden objects')}
+          value={!!moveToShowInvisible}
+          onChange={v => KeyvalueStore.updateOne('moveToShowInvisible', v)}
+        />
         <input
           placeholder={t('general.Type to search') + '...'}
           style={{
             padding: '3px 8px',
-            marginBottom: 4
+            borderRadius: 4,
+            margin: '6px 8px'
           }}
-          className={ClassName.noStyleInput}
+          autoFocus
+          onKeyDownCapture={e => {
+            if (isHotkey(KEY.Escape, e)) {
+              e.preventDefault()
+              e.stopPropagation()
+              e.currentTarget.blur()
+            }
+          }}
+          className={'border-box-shadow focus-input'}
           value={search}
           onChange={v => setSearch(v.target.value)}
         />
-        {selectedGroup && (
-          <>
-            <div style={{ fontSize: 13, color: Colors.Font.Transparent, padding: '0px 8px' }}>{t('general.Selected group')}</div>
-            <Content flex alignItems={'center'} justifyContent={'space-between'} gap={12} style={{ padding: '0px 8px', marginBottom: 8 }}>
-              <div className={ClassName.ellipsisFont(1)}>{selectedGroup.name || selectedGroup.placeholderName}</div>
-              <div className={ClassName.selectButton(4, '1px 12px')} style={{ flexShrink: 0 }} onClick={() => handleInsertMetaIntoGroup()}>
-                {t('general.OK')}
-              </div>
-            </Content>
-          </>
-        )}
-        <Content flex column style={{ overflowY: 'auto', borderTop: `1px solid ${Colors.Background.Border}`, paddingTop: 4 }}>
-          <IconNameRenderer
-            className={ClassName.flatButton()}
-            onClick={() => {
-              ObjectStore('group').addOneWithMeta(
-                {},
-                {
-                  showMetaModal: true
+        <Content flex column style={{ overflowY: 'auto', paddingTop: 4 }}>
+          <Menu.NavigationMenu
+            reselectOnLayoutChange={search ? true : false}
+            defaultSelected={cache?.id ? [String(cache.id)] : undefined}
+            layout={[
+              search
+                ? undefined
+                : {
+                    text: t('general.Create new group'),
+                    icon: 'park-plus',
+                    type: 'item',
+                    key: 'create',
+                    onSelect: () => {
+                      ObjectStore('group').addOneWithMeta(
+                        {},
+                        {
+                          showMetaModal: true
+                        }
+                      )
+                    }
+                  },
+              // @ts-ignore
+              ...(displayGroups || allGroups).map(i => ({
+                text: i.name || i.placeholderName || 'Unnamed group',
+                key: String(i.objectId),
+                icon: i.icon || Rendevoz.Utils.Object.getMetaObjectIcon(i.type),
+                type: 'item',
+                onSelect: () => {
+                  const objId = i.objectId
+                  onClose()
+                  if (!objId) return
+                  setSelectedGroup(objId)
+
+                  setTimeout(() => {
+                    handleInsertMetaIntoGroup()
+                  }, 250)
+                  updateMovetoCache(s => {
+                    s.recently = s.recently ? [{ type: 'group', id: objId }, ...s.recently] : [{ type: 'group', id: objId }]
+                    s.group = { id: objId }
+                  })
                 }
-              )
-            }}
-            icon={'park-plus'}
-            name={t('general.Create new group')}
+              }))
+            ].filter(i => i)}
           />
-          {(displayGroups.length ? displayGroups : allGroups).map(
-            i =>
-              i && (
-                <IconNameRenderer
-                  className={ClassName.flatButton()}
-                  onClick={() => {
-                    setSelectedGroup(i)
-                  }}
-                  color={i.color}
-                  key={i.id}
-                  icon={i.icon || Rendevoz.Utils.Object.getMetaObjectIcon(i.type)}
-                  name={i.name || i.placeholderName}
-                />
-              )
-          )}
         </Content>
       </Content>
     )

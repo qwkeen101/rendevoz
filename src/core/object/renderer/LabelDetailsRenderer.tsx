@@ -105,8 +105,7 @@ export default memo(
                       marginTop: 8
                     },
                     titleStyle: {
-                      fontSize: 15,
-                      marginBottom: 16
+                      fontSize: 15
                     }
                   },
                   layout: {
@@ -124,7 +123,16 @@ export default memo(
         }
       }
       if (metaObject?.coverImgSrc) {
-        setDisplayer(<img src={metaObject.coverImgSrc} width={'100%'} />)
+        setDisplayer(
+          <img
+            style={{
+              aspectRatio: '16 / 9',
+              objectFit: 'cover'
+            }}
+            src={metaObject.coverImgSrc}
+            width={'100%'}
+          />
+        )
         return
       }
       setDisplayer(undefined)

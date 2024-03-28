@@ -8,7 +8,7 @@ import isHotkey from 'is-hotkey'
 import { KEY } from '@/consts/key'
 import Icon from './Icon'
 import { Colors } from '@/consts'
-import { useSelectGlobalAtomValue } from '@/hooks'
+import { useMemoizedFn, useSelectGlobalAtomValue } from '@/hooks'
 import { SettingAtom } from '@/core'
 
 interface ModalProps {
@@ -32,6 +32,12 @@ interface ModalProps {
   enableClickEvent?: boolean
   hideBackground?: boolean
 }
+// late in first execute queue to ensure modal escape key works fine
+const ModalInnerEventHandlerQueue: ((e: KeyboardEvent) => void)[] = []
+
+document.addEventListener('keydown', e => {
+  ModalInnerEventHandlerQueue[0]?.(e)
+})
 const Backdrop = ({ children, onMouseDown, disableAnimation, enableClickEvent }) => {
   const darkMode = useSelectGlobalAtomValue(SettingAtom, s => s.general.darkMode)
   return (
@@ -57,7 +63,7 @@ const Backdrop = ({ children, onMouseDown, disableAnimation, enableClickEvent })
       initial={{ background: 'rgba(15, 15, 15, 0)' }}
       animate={{ background: darkMode ? 'rgba(15, 15, 15, 0.8)' : 'rgba(15, 15, 15, 0.4)' }}
       exit={{ background: 'rgba(15, 15, 15, 0)' }}
-      transition={{ duration: disableAnimation ? 0 : 0.2 }}
+      transition={{ duration: disableAnimation ? 0 : 0.15 }}
       onPointerDown={e => {
         if (e.target === e.currentTarget) {
           onMouseDown?.()
@@ -87,17 +93,26 @@ const Modal: FC<ModalProps> = ({
   enableClickEvent,
   hideBackground
 }) => {
+  const keyDownHandler = useMemoizedFn((e: KeyboardEvent) => {
+    if (isHotkey(KEY.Escape, e) && visible) {
+      if (e.target instanceof HTMLElement && e.target.closest('input,textarea,[contenteditable]')) {
+        return
+      }
+      e.stopImmediatePropagation()
+      onClose?.()
+    }
+  })
   useEffect(() => {
-    const keyDownHandler = (e: KeyboardEvent) => {
-      if (isHotkey(KEY.Escape, e) && visible) {
-        onClose?.()
+    if (visible) {
+      ModalInnerEventHandlerQueue.unshift(keyDownHandler)
+      return () => {
+        const idx = ModalInnerEventHandlerQueue.findIndex(i => i === keyDownHandler)
+        if (idx >= 0) {
+          ModalInnerEventHandlerQueue.splice(idx, 1)
+        }
       }
     }
-    document.addEventListener('keydown', keyDownHandler)
-    return () => {
-      document.removeEventListener('keydown', keyDownHandler)
-    }
-  }, [onClose, visible])
+  }, [visible])
 
   useEffect(() => {
     if (visible) {
@@ -114,14 +129,12 @@ const Modal: FC<ModalProps> = ({
           opacity: visible ? 1 : 0
         }}
         role="modal-container"
-        transition={{ duration: disableAnimation ? 0 : 0.2 }}
+        transition={{ duration: disableAnimation ? 0 : 0.15 }}
         style={{
           position: 'fixed',
           inset: 0,
           zIndex: visible ? zIndex || Zindexes.ModalBackdrop : -1,
-          // opacity: visible ? 1 : 0,
           pointerEvents: visible ? 'auto' : 'none'
-          // transition: 'opacity 0.3s ease'
         }}
       >
         <motion.div
@@ -134,14 +147,14 @@ const Modal: FC<ModalProps> = ({
             inset: 0,
             backdropFilter: 'blur(4px)'
           }}
-          transition={{ duration: disableAnimation ? 0 : 0.2 }}
+          transition={{ duration: disableAnimation ? 0 : 0.15 }}
         ></motion.div>
 
         <Backdrop onMouseDown={onClose} enableClickEvent={enableClickEvent} key={1}>
           <motion.div
-            initial={{ y: 50, opacity: 0 }}
-            animate={{ y: 0, opacity: visible ? 1 : 0 }}
-            exit={{ y: 50, opacity: 0 }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: visible ? 1 : 0 }}
+            exit={{ opacity: 0 }}
             role={enableClickEvent ? undefined : 'modal'}
             style={{
               position: 'relative',
@@ -168,7 +181,7 @@ const Modal: FC<ModalProps> = ({
                 e.stopPropagation()
               }
             }}
-            transition={{ stiffness: 200, damping: 20, duration: disableAnimation ? 0 : 0.2 }}
+            transition={{ stiffness: 200, damping: 20, duration: disableAnimation ? 0 : 0.15 }}
           >
             {showClose && (
               <motion.div
@@ -176,6 +189,7 @@ const Modal: FC<ModalProps> = ({
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
+                transition={{ duration: disableAnimation ? 0 : 0.15 }}
                 style={{
                   position: 'absolute',
                   top: 8,
@@ -213,6 +227,7 @@ const Modal: FC<ModalProps> = ({
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
+              transition={{ duration: 0.15 }}
               style={{
                 position: 'absolute',
                 inset: 0,
@@ -222,9 +237,9 @@ const Modal: FC<ModalProps> = ({
 
             <Backdrop onMouseDown={onClose} key={1} enableClickEvent={enableClickEvent}>
               <motion.div
-                initial={{ y: 50, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                exit={{ y: 50, opacity: 0 }}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
                 role={enableClickEvent ? undefined : 'modal'}
                 style={{
                   position: 'relative',
@@ -251,7 +266,7 @@ const Modal: FC<ModalProps> = ({
                     e.stopPropagation()
                   }
                 }}
-                transition={{ stiffness: 200, damping: 20 }}
+                transition={{ stiffness: 200, damping: 20, duration: 0.15 }}
               >
                 {showClose && (
                   <motion.div

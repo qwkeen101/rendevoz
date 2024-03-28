@@ -1,0 +1,62 @@
+.ul-marker{
+  display: flex;
+  align-items: center;
+  margin-right: 0.6em;
+  height: 1lh;
+  justify-content: center;
+  padding-top: 0.1em;
+  position: relative;
+  &.folded{
+    &::before{
+      color: var(--block-font-color, var(--select-color)) !important;
+    }
+    &::after{
+      opacity: 1;
+      background: var(--select-color-transparent);
+    }
+  }
+  &.foldable{
+    cursor: pointer;
+    &::after {
+      content: "";
+      pointer-events: none;
+      width: 0.8em;
+      position: absolute;
+      height: 0.8em;
+      transition: opacity 0.2s ease;
+      border-radius: 50%;
+      opacity: 0;
+      background: var(--button-hover-background);
+    }
+    &:hover{
+      &::before{
+        color: var(--block-font-color, var(--font-primary));
+      }
+      &::after{
+        opacity: 1;
+      }
+    }
+  }
+  &::before {
+    font-family: Arial;
+    font-size: 1.5em;
+    content: "•";
+    color: var(--block-font-color, var(--font-transparent));
+  }
+}
+.li-indent{
+  position: absolute;
+  top: -3px;
+  bottom: -3px;
+  user-select: none;
+  pointer-events: none;
+  width: 1px;
+  transform: translateX(0.2em);
+  background: var(--border-background);
+}
+.ol-marker{
+  margin-right: 4px;
+  user-select: none;
+  cursor: pointer;
+  flex-shrink: 0
+}

@@ -1,5 +1,5 @@
-import React from 'react'
-import { DockContext, DockContextType, DropDirection, PanelData, TabData } from './DockData'
+import React, { memo, useContext, useEffect, useRef, useState } from 'react'
+import { DockContextType, PanelData, TabData } from './DockData'
 import * as DragManager from './dragdrop/DragManager'
 import { DragDropDiv } from './dragdrop/DragDropDiv'
 import { DockTabBar } from './DockTabBar'
@@ -12,6 +12,7 @@ import { LayoutIdToTabMap } from '@/components/layout'
 import ClassName from '@/styles/classNames'
 import classNames from 'classnames'
 import { css } from '@emotion/css'
+import { addDockDragHandler, addDragStateListener, DragState, removeDockDragHandler, removeDragStateListener } from './dragdrop/DragManager'
 
 function findParentPanel(element: HTMLElement) {
   for (let i = 0; i < 10; ++i) {
@@ -26,218 +27,79 @@ function findParentPanel(element: HTMLElement) {
   return null
 }
 
-export class TabCache {
-  _ref: HTMLDivElement
-  getRef = (r: HTMLDivElement) => {
-    this._ref = r
-  }
+export const TabItem = ({ data }: { data: TabData }) => {
+  const context = useContext(DockContextType)
 
-  _hitAreaRef: HTMLDivElement
-  getHitAreaRef = (r: HTMLDivElement) => {
-    this._hitAreaRef = r
-  }
-
-  data: TabData
-  context: DockContext
-  content: React.ReactElement
-
-  constructor(context: DockContext) {
-    this.context = context
-  }
-
-  setData(data: TabData) {
-    if (data !== this.data) {
-      this.data = data
-      this.content = this.render()
-      return true
-    }
-    return false
-  }
-
-  onCloseClick = (e: React.MouseEvent) => {
-    this.context.dockMove(this.data, null, 'remove')
-    LayoutIdToTabMap.delete(this.data.id)
-    this.context.getGlobal().onTabClose?.(this.data)
+  const _ref = useRef<HTMLDivElement>(null)
+  //
+  const _hitAreaRef = useRef<HTMLDivElement>()
+  //
+  const onCloseClick = (e: React.MouseEvent) => {
+    context.dockMove(data, null, 'remove')
+    LayoutIdToTabMap.delete(data.id!)
+    context.getGlobal().onTabClose?.(data)
     e.stopPropagation()
   }
-
-  onDragStart = (e: DragManager.DragState) => {
-    const panel = this.data.parent
-    const panelElement = findParentPanel(this._ref)
-    const tabGroup = this.context.getGroup(this.data.group)
+  //
+  const onDragStart = (e: DragManager.DragState) => {
+    const panel = data.parent
+    const panelElement = findParentPanel(_ref.current)
+    const tabGroup = context.getGroup(data.group)
     const [panelWidth, panelHeight] = getFloatPanelSize(panelElement, tabGroup)
-    e.setData({ tab: this.data, panelSize: [panelWidth, panelHeight] }, this.context.getDockId())
-    e.startDrag(this._ref.parentElement, this._ref.parentElement)
-  }
-  onDragOver = (e: DragManager.DragState) => {
-    // console.log(e, this)
-    const dockId = this.context.getDockId()
-    const tab: TabData = DragManager.DragState.getData('tab', dockId)
-    let panel: PanelData = DragManager.DragState.getData('panel', dockId)
-    let group: string
-    if (tab) {
-      panel = tab.parent
-      group = tab.group
-    } else {
-      // drag whole panel
-      if (!panel) {
-        return
-      }
-      if (panel?.panelLock) {
-        e.reject()
-        return
-      }
-      group = panel.group
-    }
-    const tabGroup = this.context.getGroup(group)
-
-    if (group !== this.data.group) {
-      e.reject()
-    } else if (tab && tab !== this.data) {
-      // const direction = this.getDropDirection(e)
-      // // only show drop rect in different panels
-      // if (tab.parent !== this.data.parent) {
-      //   this.context.setDropRect(this._hitAreaRef, direction, this)
-      // }
-      e.accept('')
-    } else if (panel && panel !== this.data.parent) {
-      const direction = this.getDropDirection(e)
-      this.context.setDropRect(this._hitAreaRef, direction, this)
-      e.accept('')
-    }
-  }
-  onDragLeave = (e: DragManager.DragState) => {
-    this.context.setDropRect(null, 'remove', this)
-  }
-  onDrop = (e: DragManager.DragState) => {
-    console.log('drag drop')
-    const dockId = this.context.getDockId()
-    let panel: PanelData
-    const tab: TabData = DragManager.DragState.getData('tab', dockId)
-    if (tab) {
-      panel = tab.parent
-    } else {
-      panel = DragManager.DragState.getData('panel', dockId)
-    }
-    if (tab && tab !== this.data) {
-      const direction = this.getDropDirection(e)
-      this.context.dockMove(tab, this.data, direction)
-    } else if (panel && panel !== this.data.parent) {
-      const direction = this.getDropDirection(e)
-      this.context.dockMove(panel, this.data, direction)
-    }
+    e.setData({ tab: data, panelSize: [panelWidth, panelHeight] }, context.getDockId())
+    e.startDrag(_ref.current.parentElement, _ref.current.parentElement)
   }
 
-  getDropDirection(e: DragManager.DragState): DropDirection {
-    const rect = this._hitAreaRef.getBoundingClientRect()
-    const midx = rect.left + rect.width * 0.5
-    return e.clientX > midx ? 'after-tab' : 'before-tab'
+  let { id, title, onTabClick, content, parent, icon } = data
+  if (typeof content === 'function') {
+    content = content(data)
   }
-
-  render(): React.ReactElement {
-    let { id, title, group, onTabClick, content, closable, cached, parent, icon } = this.data
-    const { onDragStart, onDragOver, onDrop, onDragLeave } = this
-
-    if (typeof content === 'function') {
-      content = content(this.data)
-    }
-    if (typeof icon === 'string' && (icon.startsWith('park') || icon.startsWith('custom'))) {
-      icon = <Icon name={icon} />
-    }
-    const tab = (
-      <DragDropDiv
-        disableDrag={!!this.context.getLayout().global.disableDrag}
-        getRef={this.getRef}
-        onDragStartT={onDragStart}
-        role="tab"
-        aria-selected={parent.activeId === id}
-        onDragOverT={onDragOver}
-        onDropT={onDrop}
-        onDragLeaveT={onDragLeave}
-        onClick={onTabClick}
-        key={`${id}_tab`}
-        id={`${id}_tab`}
-        className={css({
-          display: 'flex',
-          gap: 10,
-          alignItems: 'center'
-        })}
-      >
-        {icon && <div style={{ flexShrink: 0 }}>{icon}</div>}
-        <div className={styles.title}>{title}</div>
-        <div className={styles.closeButtonWrapper}>
-          <Icon
-            className={classNames(styles.closeButton, ClassName.circleButton(3))}
-            size={12}
-            onClick={this.onCloseClick}
-            name="park-close"
-          />
-        </div>
-        <div className="dock-tab-hit-area" ref={this.getHitAreaRef} />
-      </DragDropDiv>
-    )
-
-    return (
-      <DockTabPane parent={parent} key={id} cacheId={id} cached={true} tab={tab} forceRender>
-        <DockTabPaneContext.Provider value={{ currentTabId: id }}>{content}</DockTabPaneContext.Provider>
-      </DockTabPane>
-    )
+  if (typeof icon === 'string' && (icon.startsWith('park') || icon.startsWith('custom'))) {
+    icon = <Icon name={icon} />
   }
-
-  destroy() {
-    // place holder
-  }
+  return (
+    <DragDropDiv
+      getRef={n => {
+        _ref.current = n
+      }}
+      onDragStartT={onDragStart}
+      role="tab"
+      aria-selected={parent.activeId === id}
+      onClick={onTabClick}
+      key={`${id}_tab`}
+      id={`${id}_tab`}
+      className={css({
+        display: 'flex',
+        gap: 10,
+        alignItems: 'center'
+      })}
+    >
+      {icon && <div style={{ flexShrink: 0 }}>{icon}</div>}
+      <div className={styles.title}>{title}</div>
+      <div className={styles.closeButtonWrapper}>
+        <Icon className={classNames(styles.closeButton, ClassName.circleButton(3))} size={12} onClick={onCloseClick} name="park-close" />
+      </div>
+      <div className="dock-tab-hit-area" ref={_hitAreaRef} />
+    </DragDropDiv>
+  )
 }
 
 interface Props {
   panelData: PanelData
 }
 
-export class DockTabs extends React.PureComponent<Props, any> {
-  static contextType = DockContextType
-
-  static readonly propKeys = ['group', 'tabs', 'activeId', 'onTabChange']
-
-  context!: DockContext
-  _cache: Map<string, TabCache> = new Map()
-
-  cachedTabs: TabData[]
-
-  updateTabs(tabs: TabData[]) {
-    if (tabs === this.cachedTabs) {
-      return
-    }
-    this.cachedTabs = tabs
-    const newCache = new Map<string, TabCache>()
-    let reused = 0
-    for (const tabData of tabs) {
-      const { id } = tabData
-      if (this._cache.has(id)) {
-        const tab = this._cache.get(id)
-        newCache.set(id, tab)
-        tab.setData(tabData)
-        ++reused
-      } else {
-        const tab = new TabCache(this.context)
-        newCache.set(id, tab)
-        tab.setData(tabData)
-      }
-    }
-    if (reused !== this._cache.size) {
-      for (const [id, tab] of this._cache) {
-        if (!newCache.has(id)) {
-          tab.destroy()
-        }
-      }
-    }
-    this._cache = newCache
-  }
-
-  renderTabBar = (defaultTabNav: TabNavListProps) => {
-    const { panelData } = this.props
+export const DockTabs = memo((props: Props) => {
+  const context = useContext(DockContextType)
+  const tabBarRef = useRef<HTMLDivElement>(null)
+  const [dragIndicator, setDragIndicator] = useState<{
+    id: string
+    dir: 'before' | 'after'
+  }>()
+  const renderTabBar = (defaultTabNav: TabNavListProps) => {
+    const { panelData } = props
     const { group: groupName, panelLock } = panelData
-    const group = this.context.getGroup(groupName)
-    const global = this.context.getGlobal()
+    const group = context.getGroup(groupName)
+    const global = context.getGlobal()
     const { globalPanelExtra } = global
     let { panelExtra } = group
 
@@ -249,49 +111,102 @@ export class DockTabs extends React.PureComponent<Props, any> {
 
     let panelExtraContent: React.ReactElement | undefined = undefined
     if (panelExtra) {
-      panelExtraContent = panelExtra(panelData, this.context)
+      panelExtraContent = panelExtra(panelData, context)
     }
     if (globalPanelExtra) {
-      panelExtraContent = globalPanelExtra(panelData, this.context)
+      panelExtraContent = globalPanelExtra(panelData, context)
     }
+
     return (
       <DockTabBar
+        ref={tabBarRef}
         onReorder={tabs => {
-          console.log(tabs, panelData)
           const sortedTabs = tabs.map(i => panelData.tabs.find(o => o.id === i.key))
-          console.log(sortedTabs)
-          this.context.updatePanel(panelData.id, { ...panelData, tabs: sortedTabs })
+          context.updatePanel(panelData.id, { ...panelData, tabs: sortedTabs })
         }}
+        dragIndicator={dragIndicator}
         TabNavList={defaultTabNav}
         panelData={panelData}
         extraArea={panelExtraContent}
       />
     )
   }
-
-  onTabChange = (activeId: string) => {
-    this.props.panelData.activeId = activeId
-    this.context.onSilentChange(activeId, 'active')
-    this.forceUpdate()
+  const onTabClick = (activeId: string) => {
+    props.panelData.activeId = activeId
   }
-
-  render(): React.ReactNode {
-    const { group, tabs, activeId } = this.props.panelData
-    const tabGroup = this.context.getGroup(group)
-    let { animated } = tabGroup
-    if (animated == null) {
-      animated = true
+  const currDraggingTab = useRef<TabData>()
+  useEffect(() => {
+    const handler = (e: DragState) => {
+      const dockId = context.getDockId()
+      const tab: TabData = DragState.getData('tab', dockId)
+      if (tab && !props.panelData.tabs.some(i => i.id === tab.id)) {
+        const parentTabBar = tabBarRef.current
+        currDraggingTab.current = tab
+        if (parentTabBar && parentTabBar.contains(e.event.target)) {
+          const allItems = parentTabBar.querySelectorAll('[role="tab-reorder-content"]')
+          let idx = 0
+          for (const i of allItems) {
+            const next = allItems[idx + 1]
+            const bounding = i.getBoundingClientRect()
+            const midX = bounding.left + bounding.width / 2
+            if (e.clientX < midX) {
+              setDragIndicator({ id: props.panelData.tabs[idx].id, dir: 'before' })
+              return
+            }
+            if (e.clientX > midX) {
+              if (!next) {
+                setDragIndicator({ id: props.panelData.tabs[idx].id, dir: 'after' })
+                return
+              } else {
+                const nextB = next.getBoundingClientRect()
+                const nextMidX = nextB.left + nextB.width / 2
+                if (e.clientX < nextMidX) {
+                  setDragIndicator({ id: props.panelData.tabs[idx].id, dir: 'after' })
+                  return
+                } else {
+                  idx += 1
+                  continue
+                }
+              }
+            }
+          }
+        }
+      }
+      setDragIndicator(undefined)
     }
-    this.updateTabs(tabs)
-
-    const children: React.ReactNode[] = []
-    for (const [id, tab] of this._cache) {
-      children.push(tab.content)
+    const dragStateHandler = (e: DragState) => {
+      if (e === null) {
+        document.querySelectorAll('.dock-box').forEach(n => n.style.removeProperty('z-index'))
+        document.querySelectorAll('.dock-panel').forEach(n => n.style.removeProperty('z-index'))
+        const draggingTab = currDraggingTab.current
+        currDraggingTab.current = undefined
+        setDragIndicator(s => {
+          if (s && draggingTab) {
+            const targetTab = context.find(s.id) as TabData
+            context.dockMove(draggingTab, targetTab, s.dir === 'before' ? 'before-tab' : 'after-tab')
+          }
+          return undefined
+        })
+      }
     }
-    return (
-      <Tabs activeKey={activeId} onTabClick={key => this.onTabChange(key)} renderTabNav={this.renderTabBar} disableInnerPanes>
-        {children}
-      </Tabs>
-    )
-  }
-}
+    addDockDragHandler(handler)
+    addDragStateListener(dragStateHandler)
+    return () => {
+      removeDockDragHandler(handler)
+      removeDragStateListener(dragStateHandler)
+    }
+  }, [props.panelData])
+  console.log(dragIndicator)
+  const { activeId } = props.panelData
+  return (
+    <Tabs activeKey={activeId} onTabClick={onTabClick} renderTabNav={renderTabBar} disableInnerPanes>
+      {props.panelData.tabs.map(i => (
+        <DockTabPane parent={i.parent} key={i.id} cacheId={i.id} cached={true} tab={<TabItem data={i} />} forceRender>
+          <DockTabPaneContext.Provider value={{ currentTabId: i.id }}>
+            {typeof i.content === 'function' ? i.content(i) : i.content}
+          </DockTabPaneContext.Provider>
+        </DockTabPane>
+      ))}
+    </Tabs>
+  )
+})

@@ -29,7 +29,7 @@ export default (node: IWhiteboardNode, defaultAutoWidth = true) => {
     minWidth = 100
   }
   if (node.rootId && node.type === 'text') {
-    maxWidth = 400
+    maxWidth = 600
   }
   return {
     width,

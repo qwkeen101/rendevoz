@@ -75,7 +75,7 @@ const GroupHeaderItem = ({
       <Resizable
         className={ClassName.flatButton(0, '0px')}
         enable={{ right: true }}
-        minWidth={90}
+        minWidth={32}
         style={{
           transition: 'background 0.2s ease',
           background: isDragging ? Colors.Background.ButtonHover : undefined

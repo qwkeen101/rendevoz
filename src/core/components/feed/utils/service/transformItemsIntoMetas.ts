@@ -6,7 +6,7 @@ import addFeedAsMeta from '@/core/components/feed/utils/service/addFeedAsMeta'
 export default async (items: number[]) => {
   const objStore = useDb('objects')
   const feeds = (await Promise.all(items.map(async i => await ObjectStore('feed').fetchOneById(i)))).filter(i => i)
-  const urlToFeed = new Map<string, FeedItem>(feeds.map(i => [i!.link, i!]))
+  const urlToFeed = new Map<string, FeedItem>(feeds.map(i => [i.feedType === 'podcast' ? i.enclosure?.url || i.link : i.link, i!]))
   const sameUrlObjs = await objStore.filter(i => urlToFeed.has(i.url)).toArray()
   const urlToObjId = new Map<string, number>(sameUrlObjs.map(i => [i.url, i.id]))
   const objIdSet = new Set(sameUrlObjs.map(i => i.id))

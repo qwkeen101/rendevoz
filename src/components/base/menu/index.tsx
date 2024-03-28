@@ -6,6 +6,7 @@ import Content from '../Content'
 import MenuItem from './MenuItem'
 import ClassName from '@/styles/classNames'
 import _ from 'lodash'
+import scrollIntoView from 'scroll-into-view-if-needed'
 
 interface MenuProps {
   title?: string
@@ -36,13 +37,21 @@ const Menu: IMenu = ({ title, children, extra, footer, style, onClick }) => {
 }
 
 export type IMenuLayoutItem =
-  | { type: 'custom'; children: ReactNode; key: string }
+  | {
+      type: 'custom'
+      children:
+        | ReactNode
+        | ((options: { isSelected: boolean; onPointerMove: React.PointerEventHandler; onClick: React.MouseEventHandler }) => ReactNode)
+      key: string
+      onSelect?: VoidFunction
+    }
   | {
       type: 'item'
       icon?: string
       text?: string | (() => string)
       disabled?: boolean
       dangerous?: boolean
+      style?: CSSProperties
       subMenu?: IMenuLayoutItem[]
       popOver?: {
         key: string
@@ -53,10 +62,11 @@ export type IMenuLayoutItem =
       key: string
       onSelect?: VoidFunction
     }
-  | { type: 'separator' }
+  | { type: 'separator'; style?: CSSProperties }
   | {
       type: 'title'
       name: string
+      style?: CSSProperties
     }
 interface NavigationMenuProps {
   layout: IMenuLayoutItem[]
@@ -65,10 +75,12 @@ interface NavigationMenuProps {
   style?: CSSProperties
   className?: string
   defaultSelected?: string[]
+  disableEnterPreventDefault?: boolean
   onSelect?: (item: IMenuLayoutItem) => void
   // select key change
   onSelectChange?: (keys: string[]) => void
   selectedKeys?: string[]
+  reselectOnLayoutChange?: boolean
   defaultSelectFirst?: boolean
 }
 export const NavigationMenu: FC<NavigationMenuProps> = ({
@@ -78,20 +90,22 @@ export const NavigationMenu: FC<NavigationMenuProps> = ({
   className,
   onClick,
   selectedKeys,
+  disableEnterPreventDefault = false,
   onSelect,
   onSelectChange,
   defaultSelected,
+  reselectOnLayoutChange = true,
   defaultSelectFirst = true
 }) => {
   const menuContainerRef = useRef<HTMLDivElement>(null)
   const layoutCount = layout.length
-
-  const [currentSelect, setCurrentSelect] = useState<string[]>(
-    defaultSelected || (defaultSelectFirst ? [layout.find(i => 'key' in i && i.key)?.key] : [])
-  )
-  useEffect(() => {
-    setCurrentSelect(defaultSelected || (defaultSelectFirst ? [layout.find(i => 'key' in i && i.key)?.key] : []))
-  }, [layout.length])
+  const firstKey = defaultSelectFirst ? [layout.find(i => 'key' in i && i.key)?.key] : []
+  const defaultSelectedKeys = defaultSelected
+    ? layout.some(i => 'key' in i && i.key === defaultSelected[0])
+      ? defaultSelected
+      : firstKey
+    : firstKey
+  const [currentSelect, setCurrentSelect] = useState<string[]>(defaultSelectedKeys)
 
   const handleSelectItem = (currentItem: IMenuLayoutItem) => {
     if ('onSelect' in currentItem && currentItem.onSelect) {
@@ -100,7 +114,11 @@ export const NavigationMenu: FC<NavigationMenuProps> = ({
     }
     onSelect?.(currentItem)
   }
-
+  useEffect(() => {
+    if (reselectOnLayoutChange) {
+      setCurrentSelect(defaultSelectedKeys)
+    }
+  }, [layout.length, reselectOnLayoutChange])
   const getCurrentItemList = (): IMenuLayoutItem[] => {
     if (currentSelect.length) {
       let l: IMenuLayoutItem[] = layout
@@ -170,7 +188,9 @@ export const NavigationMenu: FC<NavigationMenuProps> = ({
         })
       }
       if (isHotkey(KEY.Enter, e) && currentSelect.length) {
-        e.stopPropagation()
+        if (!disableEnterPreventDefault) {
+          e.preventDefault()
+        }
         const currentItem = getCurrentSelectItem()
         if (currentItem) {
           handleSelectItem(currentItem)
@@ -180,7 +200,7 @@ export const NavigationMenu: FC<NavigationMenuProps> = ({
         keyNavigatedRef.current = true
         setTimeout(() => {
           keyNavigatedRef.current = false
-        })
+        }, 10)
         setCurrentSelect(s => {
           const currentList = getCurrentItemList()
           if (s.length === 0) {
@@ -227,9 +247,9 @@ export const NavigationMenu: FC<NavigationMenuProps> = ({
       }
     }
     if (keyboardNavigation && !selectedKeys) {
-      document.addEventListener('keydown', keydownHandler, true)
+      document.addEventListener('keydown', keydownHandler)
       return () => {
-        document.removeEventListener('keydown', keydownHandler, true)
+        document.removeEventListener('keydown', keydownHandler)
       }
     }
   }, [layoutCount, keyboardNavigation, layout, currentSelect])
@@ -238,7 +258,8 @@ export const NavigationMenu: FC<NavigationMenuProps> = ({
     if (!keyNavigatedRef.current) return
     const ele = document.querySelector(`[data-key='${currentSelect[currentSelect.length - 1]}']`)
     if (ele) {
-      ele.scrollIntoView({
+      scrollIntoView(ele, {
+        scrollMode: 'if-needed',
         block: 'center'
       })
     }

@@ -55,7 +55,7 @@ const NameEditor = ({
             fontWeight: 400,
             padding: 0,
             width: '100%',
-            minHeight: '2lh',
+            minHeight: '3lh',
             fontSize: FontSize['13px']
           }}
           onKeyDown={e => {

@@ -43,6 +43,7 @@ const WhiteboardInner = memo(({ onInstanceInitialized, layout, id, readOnly }: I
   const scopedEmitter = useScopedEventEmitter()
   const nodes = useSelectAtomValue(WhiteboardAtom, s => s?.nodes)
   const instance = useWhiteboardInstance()
+  const eventListeners = useRef(new Set())
   const store = useStore()
   const setWhiteboardState = useSetAtom(WhiteboardStateAtom)
   const [viewportInitialized, setViewportInitialized] = useState(false)
@@ -81,6 +82,15 @@ const WhiteboardInner = memo(({ onInstanceInitialized, layout, id, readOnly }: I
           nodeToEdgesMap.get(targetId)?.delete(id)
         }
       })
+    },
+    addEventListener: l => {
+      eventListeners.current.add(l)
+    },
+    emit: e => {
+      eventListeners.current.forEach(l => l(e))
+    },
+    removeEventListener: l => {
+      eventListeners.current.delete(l)
     }
   })
   useEffect(() => {

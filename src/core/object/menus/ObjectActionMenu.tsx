@@ -1,9 +1,10 @@
-import { FC, useRef } from 'react'
+import { FC, useEffect, useRef } from 'react'
 import { GlobalInstance } from '@/hooks'
 import { Button, Content } from '@/components'
 import { MetaStore } from '@/api/stores'
 import { useTranslation } from 'react-i18next'
 import { Rendevoz } from '@/core/rendevoz'
+import isHotkey from 'is-hotkey'
 
 export const ObjectActionPopover: FC<
   Partial<{
@@ -23,11 +24,38 @@ export const ObjectActionPopover: FC<
       relatedNum?: number
     }
   }> & { metaObjectId: number }
-> = ({ onClose, onEdit, onPin, onGraph, onDelete, metaObjectId, visibility, onJump, onGraphPin, onShowRelated }) => {
+> = ({ onClose, onEdit, onPin, onDelete, metaObjectId, visibility, onJump, onGraphPin, onShowRelated }) => {
   const { updateMetaObject, deleteMetaObject } = MetaStore
   const { t } = useTranslation()
   const metaObject = MetaStore.useValue(metaObjectId)
   const containerRef = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    if (metaObject) {
+      const keydownHandler = (e: KeyboardEvent) => {
+        if (isHotkey('m', e)) {
+          GlobalInstance.metaOps?.quickAdd(metaObjectId)
+          onClose?.()
+        }
+        if (isHotkey('v', e)) {
+          GlobalInstance.metaOps?.openDetails(metaObjectId)
+          onClose?.()
+        }
+        if (isHotkey('e', e)) {
+          Rendevoz.Actions.Open.Meta.openEditMetaDialog(metaObjectId)
+          onClose?.()
+        }
+        if (isHotkey('mod+c', e)) {
+          e.preventDefault()
+          GlobalInstance.metaOps?.copyLink(metaObjectId)
+          onClose?.()
+        }
+      }
+      document.addEventListener('keydown', keydownHandler)
+      return () => {
+        document.removeEventListener('keydown', keydownHandler)
+      }
+    }
+  }, [metaObject])
   if (!metaObject) return null
   return (
     <Content flex column style={{ padding: 4, width: 180, fontSize: 14, fontWeight: 400 }} ref={containerRef} role="object-popover-panel">
@@ -68,11 +96,12 @@ export const ObjectActionPopover: FC<
         }}
       />
       <Button.IconButton
+        suffixStr={'V'}
         text={t('general.show object info')}
         icon="park-info"
         onClick={() => {
           onClose?.()
-          Rendevoz.Actions.Open.openSidebarObjectDetails(metaObjectId)
+          GlobalInstance.metaOps?.openDetails(metaObjectId)
         }}
       />
       <Button.IconButton
@@ -80,10 +109,12 @@ export const ObjectActionPopover: FC<
           GlobalInstance.metaOps?.quickAdd(metaObjectId)
           onClose?.()
         }}
+        suffixStr={'M'}
         icon="park-corner-up-right"
         text={t('general.Move to')}
       />
       <Button.IconButton
+        suffixStr={'E'}
         text={t('general.edit')}
         icon="park-edit"
         onClick={() => {
@@ -103,8 +134,10 @@ export const ObjectActionPopover: FC<
       />
       <Button.IconButton
         text={t('general.generate link')}
+        suffixStr={'Cmd+C'}
         onClick={() => {
           GlobalInstance.metaOps?.copyLink(metaObjectId)
+          onClose?.()
         }}
         icon="park-link-two"
       />

@@ -1,5 +1,5 @@
 import { CustomElement } from '~/typings'
-import { RefObject, useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Rendevoz } from '@/core/rendevoz'
 import useEditorInstance from '@/core/components/editor/hooks/useEditorInstance'
 import { useDebounceFn } from '@/hooks'

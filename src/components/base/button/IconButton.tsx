@@ -63,13 +63,7 @@ const IconButton = forwardRef(
   ) => {
     const innerRef = useRef<HTMLDivElement>(null)
     const mergedRef = useMergedRef(innerRef, ref)
-    useLayoutEffect(() => {
-      if (selected !== undefined) {
-        if (selected === false) {
-          innerRef.current?.style.setProperty('background', 'none', 'important')
-        }
-      }
-    }, [selected])
+
     return (
       <Tooltip content={tooltip} ref={mergedRef}>
         <Content

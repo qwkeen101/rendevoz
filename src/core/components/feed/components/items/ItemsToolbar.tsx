@@ -83,8 +83,18 @@ const ItemsToolbar = ({ itemId }: { itemId: number }) => {
           onClick={e => e.stopPropagation()}
           className={ClassName.flatButton(4, '3px')}
           content={setV => (
-            <WithBorder onClick={e => e.stopPropagation()} padding={4} width={140}>
+            <WithBorder onClick={e => e.stopPropagation()} padding={4} width={160}>
               {[
+                metaId
+                  ? {
+                      icon: 'park-info',
+                      text: t('general.View details'),
+                      onClick: () => {
+                        setV(false)
+                        GlobalInstance.metaOps?.openDetails(metaId)
+                      }
+                    }
+                  : undefined,
                 {
                   icon: 'park-corner-up-right',
                   text: t('general.Move to'),
@@ -110,15 +120,18 @@ const ItemsToolbar = ({ itemId }: { itemId: number }) => {
                     navigator.clipboard.writeText(item?.link)
                   }
                 }
-              ].map(i => (
-                <Button.IconButton
-                  style={{
-                    padding: '2px 8px'
-                  }}
-                  {...i}
-                  key={i.icon}
-                />
-              ))}
+              ].map(
+                i =>
+                  i && (
+                    <Button.IconButton
+                      style={{
+                        padding: '2px 8px'
+                      }}
+                      {...i}
+                      key={i.icon}
+                    />
+                  )
+              )}
             </WithBorder>
           )}
         ></IconWithPopover>

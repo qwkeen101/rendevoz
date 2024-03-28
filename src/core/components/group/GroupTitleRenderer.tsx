@@ -5,23 +5,30 @@ import EmojiWithPicker from '@/components/EmojiWithPicker'
 import { memo, useState } from 'react'
 import { Colors, KEY } from '@/consts'
 import { MetaGroup } from '~/typings'
-import { useDebounceFn, useIsIn, useSelectAtomValue } from '@/hooks'
+import { useIsIn, useSelectAtomValue } from '@/hooks'
 import { GroupStateAtom } from '@/core/components/group/hooks/useGroupState'
 import InnerFilterer from '@/core/components/group/InnerFilterer'
 import { useGroupInstance } from '@/core/components/group/hooks/useGroupInstance'
 import isHotkey from 'is-hotkey'
 import { useTranslation } from 'react-i18next'
+import { isEqual } from 'lodash'
 
 const GroupTitleRenderer = memo(
   ({ title, description, groupValue, icon }: { title?: string; description?: string; groupValue?: MetaGroup; icon?: string }) => {
     const [ruleVisible, setRuleVisible] = useState(false)
-    const padding = useSelectAtomValue(GroupStateAtom, s => s.pagePadding)
-    const { ref, isIn } = useIsIn()
-    const [showDescription, setShowDescription] = useState(false)
-    const { t } = useTranslation()
     const instance = useGroupInstance()
-    const groupLayoutSetting = useSelectAtomValue(GroupStateAtom, s => s.layout)
-    const groupTitleSetting = useSelectAtomValue(GroupStateAtom, s => s.title)
+    const { showDescription, groupLayoutSetting, groupTitleSetting, padding } = useSelectAtomValue(
+      GroupStateAtom,
+      s => ({
+        showDescription: s.data?.descriptionVisible,
+        groupTitleSetting: s.title,
+        groupLayoutSetting: s.layout,
+        padding: s.pagePadding
+      }),
+      { compare: isEqual }
+    )
+    const { ref, isIn } = useIsIn()
+    const { t } = useTranslation()
     return (
       <Content ref={ref} column flex style={{ padding: `24px ${padding}px 0px`, position: 'sticky', left: 0, marginBottom: 8 }}>
         <Modal
@@ -59,7 +66,12 @@ const GroupTitleRenderer = memo(
               text={showDescription ? t('group.Hide description') : t('group.Add description')}
               icon={'park-info'}
               onClick={() => {
-                setShowDescription(!showDescription)
+                instance.updateGroupData?.(w => {
+                  return {
+                    ...w,
+                    descriptionVisible: !w.descriptionVisible
+                  }
+                })
               }}
             />
             <Button.IconButton

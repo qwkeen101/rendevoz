@@ -25,9 +25,19 @@ const useWhiteboardDrop = (whiteboardId: number) => {
     if (!isPointerOnContainer(event, instance)) return
     event.preventDefault()
     if (draggingElement.type === 'metaObjects') {
+      instance.emit?.({
+        type: 'drop',
+        itemType: 'object',
+        metaId: draggingElement.ids
+      })
       insertMetasAtPointer(event, draggingElement.ids)
     }
     GlobalInstance.metaOps?.addDraggableAsMeta(draggingElement).then(m => {
+      instance.emit?.({
+        type: 'drop',
+        itemType: 'object',
+        metaId: m.id
+      })
       insertMetaObjectAtPointer(event, m.id, false)
       if (whiteboardMeta) {
         MetaStore.addMetaLink({ sourceId: m.id, targetId: whiteboardMeta.id })

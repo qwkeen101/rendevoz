@@ -1,4 +1,4 @@
-import React, { memo, useContext, useEffect, useLayoutEffect, useRef, useState } from 'react'
+import React, { forwardRef, memo, useContext, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { DragDropDiv } from './dragdrop/DragDropDiv'
 import { DockContextType, PanelData, TabData } from './DockData'
 import styles from './index.module.less'
@@ -7,7 +7,7 @@ import { Reorder } from 'framer-motion'
 import { TabNavListProps } from '../tabs'
 import classNames from 'classnames'
 import AnimatePopover from '../AnimatePopover'
-import { GlobalInstance, useGlobalAtom, useGlobalAtomValue, useGlobalSetAtom, useToggle } from '@/hooks'
+import { GlobalInstance, useGlobalAtom, useGlobalAtomValue, useGlobalSetAtom, useMergedRef, useToggle } from '@/hooks'
 import WithBorder from '../WithBorder'
 import ClassName from '@/styles/classNames'
 import { useTranslation } from 'react-i18next'
@@ -22,139 +22,187 @@ import produce from 'immer'
 import { Colors } from '@/consts'
 import useIsFullscreen from '@/hooks/utils/useIsFullscreen'
 import { useUpdate } from 'react-use'
+import { mousePos } from '@/hooks/utils/useMousePositionRef'
 
 interface DockTabBarProps {
   TabNavList: TabNavListProps
   onReorder: (tabs: any[]) => void
   panelData: PanelData
   extraArea: React.ReactNode
+  dragIndicator?: {
+    id: string
+    dir: 'before' | 'after'
+  }
 }
 
-export const DockTabBar = memo((props: DockTabBarProps) => {
-  const { TabNavList, onReorder, ...restProps } = props
+export const DockTabBar = memo(
+  forwardRef((props: DockTabBarProps, outerRef) => {
+    const { TabNavList, onReorder, dragIndicator, ...restProps } = props
 
-  const ref = React.useRef<HTMLDivElement>()
-  const getRef = (div: HTMLDivElement) => {
-    ref.current = div
-  }
-  const layout = useGlobalAtomValue(GlobalLayoutAtom)
-  const selectedTabKey = TabNavList.defaultActiveKey
-  const [isDragging, setIsDragging] = useState(false)
-  const navs = TabNavList.navs
-  const dragInsideRef = useRef(false)
-  const currentMoveTabId = useRef<string>()
-  const [isTopRight, setIsTopRight] = useState(false)
-  const [isTopLeft, setIsTopLeft] = useState(false)
-  const isFullscreen = useIsFullscreen(true)
-  const [panelState, setPanelState] = useGlobalAtom(SidebarPanelStateAtom)
-  const [innerTabs, setInnerTabs] = useState<any[]>(navs)
-  const reorderRef = useRef<HTMLElement>()
-  useLayoutEffect(() => {
-    const bar = ref.current
-    const bounding = bar?.getBoundingClientRect()
-    const layoutContainer = bar?.closest('.dock-layout')
-    const containerBouding = layoutContainer?.getBoundingClientRect()
-    if (bounding && containerBouding) {
-      const { top, left } = bounding
-      if (bounding.right - containerBouding.right < 10 && top - containerBouding.top < 10) {
-        setIsTopRight(true)
-      } else {
-        setIsTopRight(false)
+    const ref = React.useRef<HTMLDivElement>()
+    const mergedRef = useMergedRef(ref, outerRef)
+    const getRef = (div: HTMLDivElement) => {
+      mergedRef(div)
+    }
+    const layout = useGlobalAtomValue(GlobalLayoutAtom)
+    const selectedTabKey = TabNavList.defaultActiveKey
+    const [isDragging, setIsDragging] = useState(false)
+    const navs = TabNavList.navs
+    const dragInsideRef = useRef(false)
+    const currentMoveTabId = useRef<string>()
+    const [isTopRight, setIsTopRight] = useState(false)
+    const [isTopLeft, setIsTopLeft] = useState(false)
+    const isFullscreen = useIsFullscreen(true)
+    const [panelState, setPanelState] = useGlobalAtom(SidebarPanelStateAtom)
+    const [innerTabs, setInnerTabs] = useState<any[]>(navs)
+    const reorderRef = useRef<HTMLElement>()
+    useLayoutEffect(() => {
+      const bar = ref.current
+      const bounding = bar?.getBoundingClientRect()
+      const layoutContainer = bar?.closest('.dock-layout')
+      const containerBouding = layoutContainer?.getBoundingClientRect()
+      if (bounding && containerBouding) {
+        const { top, left } = bounding
+        if (bounding.right - containerBouding.right < 10 && top - containerBouding.top < 10) {
+          setIsTopRight(true)
+        } else {
+          setIsTopRight(false)
+        }
+        if (top - containerBouding.top < 10 && left - containerBouding.left < 10) {
+          setIsTopLeft(true)
+        } else {
+          setIsTopLeft(false)
+        }
       }
-      if (top - containerBouding.top < 10 && left - containerBouding.left < 10) {
-        setIsTopLeft(true)
-      } else {
-        setIsTopLeft(false)
+    }, [layout.dockbox])
+    useLayoutEffect(() => {
+      setInnerTabs(navs)
+    }, [navs])
+    const renderDragIndicator = () => {
+      if (dragIndicator) {
+        const all = reorderRef.current?.querySelectorAll('[role="tab-reorder-content"]')
+        const target = all?.[innerTabs.findIndex(i => i.key === dragIndicator.id)]
+        if (target) {
+          let t = 0
+          const reorderLeft = reorderRef.current!.getBoundingClientRect().left!
+          const targetLeft = target.getBoundingClientRect().left!
+          const delta = targetLeft - reorderLeft
+          if (dragIndicator.dir === 'before') {
+            t = delta
+          } else {
+            t = delta + target.getBoundingClientRect().width
+          }
+          return (
+            <div
+              style={{
+                position: 'absolute',
+                zIndex: 10000,
+                width: 5,
+                transform: `translateX(${t}px)`,
+                background: Colors.Common.SelectColor,
+                borderRadius: 999,
+                top: 6,
+                bottom: 0,
+                left: 0
+              }}
+            ></div>
+          )
+        }
       }
     }
-  }, [layout.dockbox])
-  useLayoutEffect(() => {
-    setInnerTabs(navs)
-  }, [navs])
-  const os = getOS()
-  return (
-    <DragDropDiv
-      role="tablist"
-      className={classNames('dock-bar', isTopRight && os !== 'macos' && 'top-right')}
-      getRef={getRef}
-      tabIndex={-1}
-      style={{
-        paddingLeft: isTopLeft ? (panelState.leftOpen ? 8 : os === 'macos' && !isFullscreen ? 36 : 8) : 8,
-        background: 'var(--tabs-bg)',
-        zIndex: 102,
-        marginLeft: isTopLeft && !panelState.leftOpen && (isFullscreen || os === 'windows') ? -48 : undefined
-      }}
-    >
-      {isTopLeft && !panelState.leftOpen && (
-        <Content
-          flex
-          gap={4}
-          style={{
-            background: 'var(--tabs-bg)',
-            height: 38,
-            paddingTop: 5,
-            paddingRight: 12,
-            fontSize: 18,
-            paddingLeft: 6,
-            color: Colors.Font.Transparent
-          }}
-          alignItems={'center'}
-        >
-          <Icon
-            onClick={() => {
-              setPanelState(s =>
-                produce(s, draft => {
-                  draft.leftOpen = true
-                  draft.visible.size === 0 && draft.visible.add('database')
-                })
-              )
-            }}
-            name={'custom-left-bar'}
-            className={ClassName.flatButton(4, '4px 6px')}
-          />
-        </Content>
-      )}
-      <Reorder.Group
-        ref={reorderRef}
-        onReorder={r => {
-          setInnerTabs(r)
-        }}
-        className={styles.tabs}
+    const os = getOS()
+    const realtimeRef = useRef()
+    return (
+      <DragDropDiv
+        role="tablist"
+        className={classNames('dock-bar', isTopRight && os !== 'macos' && 'top-right')}
+        getRef={getRef}
+        tabIndex={-1}
         style={{
-          background: isDragging ? 'var(--tabs-bg)' : undefined,
-          paddingTop: 6
+          paddingLeft: isTopLeft ? (panelState.leftOpen ? 8 : os === 'macos' && !isFullscreen ? 36 : 8) : 8,
+          background: 'var(--tabs-bg)',
+          zIndex: 102,
+          marginLeft: isTopLeft && !panelState.leftOpen && (isFullscreen || os === 'windows') ? -48 : undefined
         }}
-        axis={'x'}
-        values={innerTabs}
       >
-        {innerTabs.map((i, idx) => (
-          <TabItem
-            item={i}
-            key={i.key}
-            onDragStart={() => {
-              currentMoveTabId.current = i.key
-              setIsDragging(true)
+        {isTopLeft && !panelState.leftOpen && (
+          <Content
+            flex
+            gap={4}
+            style={{
+              background: 'var(--tabs-bg)',
+              height: 38,
+              paddingTop: 5,
+              paddingRight: 12,
+              fontSize: 18,
+              paddingLeft: 6,
+              color: Colors.Font.Transparent
             }}
-            onDragEnd={e => {
-              console.log('end', e.target, e.currentTarget)
-              dragInsideRef.current = false
-              setIsDragging(false)
-              if (reorderRef.current?.contains(e.target)) {
-                onReorder(innerTabs)
-              }
-            }}
-            isDragging={isDragging}
-            isSelected={selectedTabKey === i.key}
-            onClick={e => {
-              TabNavList.onTabClick(i.key, e)
-            }}
-            isLast={idx === navs.length - 1}
-          />
-        ))}
-      </Reorder.Group>
-    </DragDropDiv>
-  )
-})
+            alignItems={'center'}
+          >
+            <Icon
+              onClick={() => {
+                setPanelState(s =>
+                  produce(s, draft => {
+                    draft.leftOpen = true
+                    draft.visible.size === 0 && draft.visible.add('database')
+                  })
+                )
+              }}
+              name={'custom-left-bar'}
+              className={ClassName.flatButton(4, '4px 6px')}
+            />
+          </Content>
+        )}
+        <Reorder.Group
+          ref={reorderRef}
+          onReorder={r => {
+            realtimeRef.current = r
+          }}
+          className={styles.tabs}
+          style={{
+            background: isDragging ? 'var(--tabs-bg)' : undefined,
+            paddingTop: 6,
+            position: 'relative'
+          }}
+          axis={'x'}
+          values={innerTabs}
+        >
+          {renderDragIndicator()}
+          {innerTabs.map((i, idx) => (
+            <TabItem
+              item={i}
+              key={i.key}
+              onDrag={e => {
+                if (realtimeRef.current && innerTabs !== realtimeRef.current && reorderRef.current?.contains(e.target)) {
+                  setInnerTabs(realtimeRef.current)
+                }
+              }}
+              onDragStart={() => {
+                currentMoveTabId.current = i.key
+                setIsDragging(true)
+              }}
+              onDragEnd={e => {
+                console.log('end', e.target, e.currentTarget)
+                dragInsideRef.current = false
+                setIsDragging(false)
+                if (reorderRef.current?.contains(e.target)) {
+                  onReorder(innerTabs)
+                }
+              }}
+              isDragging={isDragging}
+              isSelected={selectedTabKey === i.key}
+              onClick={e => {
+                TabNavList.onTabClick(i.key, e)
+              }}
+              isLast={idx === navs.length - 1}
+            />
+          ))}
+        </Reorder.Group>
+      </DragDropDiv>
+    )
+  })
+)
 
 const TabItem = ({ onClick, isSelected, item, onDragStart, isLast, onDragEnd, isDragging, onDrag }) => {
   const [contextMenuVisible, toggleContextMenuVisible] = useToggle(false)
@@ -240,7 +288,6 @@ const TabItem = ({ onClick, isSelected, item, onDragStart, isLast, onDragEnd, is
       }
     }
   }, [isSelected])
-
   const isLastAndHasGlobalExtra = isLast && dockContext.getLayout().global.globalPanelExtra && !isDragging
   return (
     <AnimatePopover
@@ -266,9 +313,21 @@ const TabItem = ({ onClick, isSelected, item, onDragStart, isLast, onDragEnd, is
           }
         }}
         onDragEnd={event => {
+          const p = tabRef.current?.closest('.dock-panel')
+          const b = tabRef.current?.closest('.dock-box')
+          if (p && b) {
+            ;(p as HTMLDivElement).style.removeProperty('z-index')
+            ;(b as HTMLDivElement).style.removeProperty('z-index')
+          }
           onDragEnd(event)
         }}
         onDragStart={e => {
+          const p = tabRef.current?.closest('.dock-panel')
+          const b = tabRef.current?.closest('.dock-box')
+          if (p && b) {
+            ;(p as HTMLDivElement).style.zIndex = '100001'
+            ;(b as HTMLDivElement).style.zIndex = '99999'
+          }
           onDragStart?.(e)
         }}
         onDrag={onDrag}
@@ -279,13 +338,14 @@ const TabItem = ({ onClick, isSelected, item, onDragStart, isLast, onDragEnd, is
           boxShadow: '0 0 0 2px var(--select-color)',
           borderRadius: 4,
           pointerEvents: 'none',
-          overflow: 'hidden'
+          overflow: 'hidden',
+          opacity: 0.9
         }}
         // exit={{ opacity: 0, transition: { duration: 0.3 } }}
         onClick={onClick}
         value={item}
         drag={true}
-        aria-label="tab-reorder-item"
+        role="tab-reorder-item"
         as="div"
         id={item.key}
         className={classNames(styles.tab, isSelected && styles.active, isLast && styles.isLast)}
@@ -293,7 +353,9 @@ const TabItem = ({ onClick, isSelected, item, onDragStart, isLast, onDragEnd, is
           paddingRight: isLastAndHasGlobalExtra ? 30 : undefined
         }}
       >
-        <div className={classNames(styles.tabContent, isSelected && styles.active)}>{item.tab}</div>
+        <div role={'tab-reorder-content'} className={classNames(styles.tabContent, isSelected && styles.active)}>
+          {item.tab}
+        </div>
         {isLastAndHasGlobalExtra && (
           <div
             style={{

@@ -144,9 +144,6 @@ const Label = ({ id, type }: { id: number; type: string }) => {
     }
   }, [currentFocusLabelId])
   if (!mediaLabel) return null
-  if (!mediaLabel.time && mediaLabel.videoTime) {
-    ObjectStore(type).updateOne({ id, time: mediaLabel.videoTime })
-  }
 
   if (!label) return null
   const chapter = sortedChapters?.findLast(i => i.startTime < mediaLabel.time)
@@ -168,13 +165,12 @@ const Label = ({ id, type }: { id: number; type: string }) => {
           ></Image>
         )}
         <Content flex column gap={2} auto style={{ margin: 'auto' }}>
-          {label.selectedText &&
-            renderOriginalText({
-              text: label.selectedText,
-              style: {
-                marginBottom: 8
-              }
-            })}
+          {renderOriginalText({
+            text: label.selectedText,
+            style: {
+              marginBottom: 8
+            }
+          })}
           <Content>
             {renderName({})}
             {renderPopover({

@@ -67,7 +67,6 @@ const ObjectDetails = ({
           zIndex: 9999
         }}
       >
-        <div style={{ fontWeight: 600 }}>{t('general.Object info')}</div>
         <Content flex gap={4}>
           <Icon
             name={'park-arrow-left'}
@@ -93,14 +92,14 @@ const ObjectDetails = ({
             }}
             className={ClassName.flatButton(4, '4px')}
           />
-          <Icon
-            name={'park-close'}
-            onClick={() => {
-              onClose?.()
-            }}
-            className={ClassName.flatButton(4, '4px')}
-          />
         </Content>
+        <Icon
+          name={'park-close'}
+          onClick={() => {
+            onClose?.()
+          }}
+          className={ClassName.flatButton(4, '4px')}
+        />
       </Content>
       <Content
         fullWidth

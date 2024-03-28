@@ -1,5 +1,5 @@
 import { Editor, useSetting, IconNameRenderer } from '@/core'
-import { Content, Icon } from '@/components'
+import { Content, Icon, Menu } from '@/components'
 import ButtonSelect from '@/components/base/ButtonSelect'
 import { memo, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { IEditorInstance, MetaObject } from '~/typings'
@@ -7,30 +7,38 @@ import { MetaStore, NoteStore, ObjectStore } from '@/api/stores'
 import Id from '@/utils/id'
 import produce from 'immer'
 import { ClassName } from 'rendevoz'
-import { Colors } from '@/consts'
+import { Colors, KEY } from '@/consts'
 import { Rendevoz } from '@/core/rendevoz'
 import fuzzysort from 'fuzzysort'
 import { useDebounceEffect } from '@/hooks'
 import ButtonSwitch from '@/components/base/ButtonSwitch'
 import { useTranslation } from 'react-i18next'
+import KeyvalueStore from '@/api/stores/keyvalue.store'
+import updateMovetoCache from '@/components/form/quickAdd/updateMovetoCache'
+import isHotkey from 'is-hotkey'
+import quickAdd from '@/components/form/quickAdd/quickAdd'
+import useMoveToCache from '@/components/form/quickAdd/useMoveToCache'
 
 export default memo(({ metaId, onBack, onClose }: { metaId: number[]; onBack: VoidFunction; onClose: VoidFunction }) => {
   const [setting, setSetting] = useSetting()
+  const cache = useMoveToCache()?.note
   const notePosition = setting.quickAdd.addIntoNote
   const metaType = setting.quickAdd.noteMetaType
   const hideObject = setting.quickAdd.addIntoNoteHideObject
-  const [allNotes, setAllNotes] = useState<MetaObject[]>([])
-  const [currentSelectId, setCurrentSelectId] = useState<number>()
+  const moveToShowInvisible = KeyvalueStore.useValue('moveToShowInvisible')
+
   const [currentValue, setCurrentValue] = useState<import('slate').Descendant[]>([])
   const [currentTitle, setCurrentTitle] = useState('')
   const id = useMemo(() => Id.getStrId(), [])
   const instanceRef = useRef<IEditorInstance>()
-  const [displayNotes, setDisplayNotes] = useState<MetaObject[]>([])
+  const [displayNotes, setDisplayNotes] = useState<MetaObject[]>()
   const [search, setSearch] = useState('')
   const { t } = useTranslation()
   const [isLoading, setIsLoading] = useState(false)
+  const index = MetaStore.useMetaObjectsMap()
   useLayoutEffect(() => {
     if (currentSelectId) {
+      updateMovetoCache(c => (c.note = { id: currentSelectId }))
       setIsLoading(true)
       const element =
         metaType === 'inline'
@@ -62,12 +70,16 @@ export default memo(({ metaId, onBack, onClose }: { metaId: number[]; onBack: Vo
         })
     }
   }, [currentSelectId, notePosition, metaType])
-  useEffect(() => {
-    const allNotesIds = Array.from(MetaStore.getIndexedMetaObjects()?.typeToMetaObjectIdsMap.get('note')?.values() || [])
-    const all = allNotesIds.map(i => MetaStore.getMetaObjectsMap().get(i)).filter(i => MetaStore.isVisibleMetaObject(i)) as MetaObject[]
+  const allNotes = useMemo(() => {
+    const all = Array.from(index.values()).filter(
+      i => (!moveToShowInvisible ? MetaStore.isVisibleMetaObject(i) : true) && i.type === 'note'
+    )
     all.sort((a, b) => b.createdAt - a.createdAt)
-    setAllNotes(all)
-  }, [])
+    return all
+  }, [index, moveToShowInvisible])
+  const [currentSelectId, setCurrentSelectId] = useState<number>(
+    cache?.id ? (allNotes.some(i => i.objectId === cache.id) ? cache.id : undefined) : undefined
+  )
   useLayoutEffect(() => {
     if (currentValue) {
       instanceRef.current?.replaceChildren?.(currentValue)
@@ -89,9 +101,7 @@ export default memo(({ metaId, onBack, onClose }: { metaId: number[]; onBack: Vo
           setDisplayNotes(Array.from(result.values()).map(i => i.obj))
         }
       } else {
-        if (displayNotes.length) {
-          setDisplayNotes([])
-        }
+        setDisplayNotes(undefined)
       }
     },
     [search],
@@ -100,24 +110,7 @@ export default memo(({ metaId, onBack, onClose }: { metaId: number[]; onBack: Vo
   const handleAddIntoNote = async () => {
     onClose()
     if (currentValue && currentSelectId) {
-      await NoteStore.updateNoteValue(currentValue, currentSelectId)
-      const noteMeta = MetaStore.getMetaObjectByObjectId(currentSelectId)
-      if (noteMeta) {
-        setTimeout(() => {
-          if (setting.quickAdd.addIntoNoteAutoOpen) {
-            Rendevoz.Actions.Open.Meta.openMetaObject(noteMeta.id)
-          }
-        })
-        metaId.forEach(id => {
-          MetaStore.addMetaLink(
-            {
-              sourceId: id,
-              targetId: noteMeta.id
-            },
-            true
-          )
-        })
-      }
+      quickAdd(metaId, 'note', currentSelectId)
     }
   }
 
@@ -178,17 +171,17 @@ export default memo(({ metaId, onBack, onClose }: { metaId: number[]; onBack: Vo
           value={metaType}
           name={t('general.Block type')}
         />
-        <ButtonSwitch
-          name={t('general.Hide object')}
-          value={hideObject}
-          onChange={v =>
-            setSetting(s =>
-              produce(s, draft => {
-                draft.quickAdd.addIntoNoteHideObject = v
-              })
-            )
-          }
-        ></ButtonSwitch>
+        {/*<ButtonSwitch*/}
+        {/*  name={t('general.Hide object')}*/}
+        {/*  value={hideObject}*/}
+        {/*  onChange={v =>*/}
+        {/*    setSetting(s =>*/}
+        {/*      produce(s, draft => {*/}
+        {/*        draft.quickAdd.addIntoNoteHideObject = v*/}
+        {/*      })*/}
+        {/*    )*/}
+        {/*  }*/}
+        {/*></ButtonSwitch>*/}
         <ButtonSwitch
           value={setting.quickAdd.addIntoNoteAutoOpen}
           name={t('general.Auto open')}
@@ -200,31 +193,61 @@ export default memo(({ metaId, onBack, onClose }: { metaId: number[]; onBack: Vo
             )
           }}
         />
-        <input
-          className={ClassName.noStyleInput}
-          value={search}
-          onChange={v => {
-            setSearch(v.target.value)
-          }}
-          style={{
-            padding: '3px 8px',
-            fontSize: 14
-          }}
-          placeholder={t('general.Type to search') + '...'}
+        <ButtonSwitch
+          name={t('general.Show hidden objects')}
+          value={!!moveToShowInvisible}
+          onChange={v => KeyvalueStore.updateOne('moveToShowInvisible', v)}
         />
-        <Content flex column style={{ overflowY: 'auto', borderTop: `1px solid ${Colors.Background.Border}`, marginTop: 4, paddingTop: 4 }}>
-          {(displayNotes.length ? displayNotes : allNotes).map(i => (
-            <IconNameRenderer
-              name={i.name || i.placeholderName}
-              className={ClassName.flatButton()}
-              icon={i.icon || Rendevoz.Utils.Object.getMetaObjectIcon(i.type)}
-              key={i.id}
-              onClick={() => {
-                setCurrentSelectId(i.objectId)
-                setCurrentTitle(i.name)
-              }}
-            ></IconNameRenderer>
-          ))}
+        <input
+          autoFocus
+          onKeyDownCapture={e => {
+            if (isHotkey(KEY.Escape, e)) {
+              e.preventDefault()
+              e.stopPropagation()
+              e.currentTarget.blur()
+            }
+          }}
+          className={'border-box-shadow focus-input'}
+          style={{ padding: '3px 8px', borderRadius: 4, margin: '6px 8px' }}
+          placeholder={t('general.Type to search') + '...'}
+          value={search}
+          onChange={e => {
+            setSearch(e.target.value)
+          }}
+        />
+        <Content flex column style={{ overflowY: 'auto', paddingTop: 4 }}>
+          <Menu.NavigationMenu
+            layout={[
+              search
+                ? undefined
+                : {
+                    text: t('general.Create new document'),
+                    icon: 'park-plus',
+                    type: 'item',
+                    key: 'create',
+                    onSelect: () => {
+                      ObjectStore('note').addOneWithMeta({})
+                    }
+                  },
+              ...(displayNotes || allNotes).map(i => ({
+                text: i.name || i.placeholderName || 'Untitled',
+                icon: Rendevoz.Utils.Object.getMetaObjectIcon('note'),
+                type: 'item',
+                style:
+                  currentSelectId === i.objectId
+                    ? {
+                        background: Colors.Common.SelectColorTransparent,
+                        color: Colors.Common.SelectColor
+                      }
+                    : undefined,
+                key: i.id,
+                onSelect: () => {
+                  setCurrentSelectId(i.objectId)
+                  setCurrentTitle(i.name)
+                }
+              }))
+            ].filter(i => i)}
+          />
         </Content>
       </Content>
       <Content

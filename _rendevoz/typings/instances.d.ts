@@ -74,7 +74,7 @@ export type IGlobalInstance = Partial<{
     getCurrentFocusedTab: () => string | undefined
     switchToTab: (direction: 'next' | 'prev') => void
     registerTabData: (tabData: BuiltInTabTypes) => void
-    closeTabs: (type: 'left' | 'right' | 'others') => void
+    closeTabs: (type: 'left' | 'right' | 'others', currTabId?: string) => void
     closeCurrentFocusedTab: VoidFunction
     closeCurrentFocusedPanel: VoidFunction
     closeAllTabs: (keepHome?: boolean) => void

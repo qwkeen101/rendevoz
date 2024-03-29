@@ -3,12 +3,14 @@ import { IUser, IWebRequest } from '~/typings'
 import toast from 'react-hot-toast'
 import Interface from '@/api/services/interface'
 import { globalStore } from '@/api/stores'
-import { userAtom } from '@/api/services/login.service'
+import LoginService, { cacheUserDetails, userAtom } from '@/api/services/login.service'
 
 const UserService = {
   updateLocalUserDetails: (u: Partial<IUser>) => {
     const c = globalStore.get(userAtom)
-    globalStore.set(userAtom, Object.assign({}, c, u))
+    const newUser = Object.assign({}, c, u)
+    globalStore.set(userAtom, newUser)
+    cacheUserDetails()
   },
   getUserDetails: async () => {
     const res = await request<IWebRequest<IUser>>(Interface.User(), {

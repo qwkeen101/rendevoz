@@ -17,6 +17,7 @@ const WebVideoPlayer = () => {
         const { channel, args } = event
         if (channel === 'event') {
           const e = args[0]
+          console.log(e)
           switch (e.type) {
             case 'loaded':
               setMediaState(s => ({ ...s, loaded: true }))

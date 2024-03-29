@@ -91,6 +91,7 @@ export type MetaFormLayoutItem =
       enableWeb?: boolean
       enableBaidudisk?: boolean
       baidudiskCategory?: number
+      onEnter?: VoidFunction
       onChange: (
         value:
           | {

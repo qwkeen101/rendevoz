@@ -92,6 +92,7 @@ export const ObjectActionPopover: FC<
         icon="park-share"
         onClick={() => {
           onClose?.()
+          GlobalInstance.metaOps?.closeDetails()
           Rendevoz.Actions.Open.Meta.openMetaObject(metaObjectId)
         }}
       />

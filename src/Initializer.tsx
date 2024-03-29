@@ -6,7 +6,7 @@ import { loginStateAtom } from './components/Login'
 import { SettingAtom } from './core'
 import { useGlobalAtom, useGlobalAtomValue, useGlobalSetAtom } from '@/hooks'
 import { ipcInstance } from './electron'
-import LoginService, { userAtom } from './api/services/login.service'
+import LoginService, { cacheUserDetails, userAtom } from './api/services/login.service'
 import { globalStore } from './api/stores'
 import { Rendevoz } from '@/core/rendevoz'
 import '@/api/lifycycle/close/close'
@@ -53,34 +53,41 @@ const Initializer = () => {
       }
     })
     if (loginState.autoLogin && loginState.password && !autoLogined) {
-      LoginService.loadUserDetailsFromCache()
-        .then(i => {
-          if (i) {
-            setUser(i)
-          }
-        })
-        .catch(e => {
-          const email = localStorage.getItem('email')
-          if (email) {
-            LoginService.login(email, loginState.password)
-              .then(data => {
-                LoginService.getUserDetails(email, data.data.token)
-                  .then(user => {
-                    localStorage.setItem('email', user.data.email || '')
-                    setUser({ ...user.data, password: loginState.password })
-                  })
-                  .catch(e => toast.error(`${t('login.failed to get user details')}!`))
-                  .finally(() => {
-                    if (loginState.autoLogin) {
-                      autoLogined = true
-                    }
-                  })
+      const email = localStorage.getItem('email')
+      if (email) {
+        // try login first, otherwise switch to offline mode
+        LoginService.login(email, loginState.password)
+          .then(data => {
+            LoginService.getUserDetails(email, data.data.token)
+              .then(user => {
+                localStorage.setItem('email', user.data.email || '')
+                setUser({ ...user.data, password: loginState.password })
+              })
+              .catch(e => toast.error(`${t('login.failed to get user details')}!`))
+              .finally(() => {
+                if (loginState.autoLogin) {
+                  autoLogined = true
+                }
+              })
+          })
+          .catch(() => {
+            LoginService.loadUserDetailsFromCache()
+              .then(i => {
+                if (i) {
+                  setUser(i)
+                }
               })
               .catch(e => {
                 toast.error(`${t('login.failed to login')}!`)
               })
+          })
+      } else {
+        LoginService.loadUserDetailsFromCache().then(i => {
+          if (i) {
+            setUser(i)
           }
         })
+      }
     }
 
     initializeApp().then(() => {

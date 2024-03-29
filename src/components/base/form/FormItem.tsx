@@ -55,12 +55,10 @@ interface FormItemCommonProps {
 }
 type FormItemProps = FormItemCommonProps & FormItemConditionalProps
 const FormItem: FC<FormItemProps> = ({ onChange, onUpload, text, type, children, required, requireMessage, value, disable, ...rest }) => {
-  const { t } = useTranslation()
   const [innerValue, setInnerValue] = useState<File | string>()
   const [color, setColor] = useState<string>()
   const [colorPickerVisible, setColorPickerVisible] = useState(false)
   const [, setCanSubmit] = useCanSubmit()
-  const fileUploaderRef = useRef<HTMLInputElement>(null)
   const isEmpty = innerValue === '' || innerValue === undefined || innerValue === null
 
   useEffect(() => {

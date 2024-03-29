@@ -1,12 +1,12 @@
 import { useGlobalAtomValue, useMergedRef, useDebounceFn } from '@/hooks'
 import { undeletedMetaObjectsAtom } from '@/api/stores/meta/meta.store'
-import { MetaStore, ObjectStore } from '@/api/stores'
+import { MetaStore } from '@/api/stores'
 import ClassName from '@/styles/classNames'
 import { css } from '@emotion/css'
 import { useAtom } from 'jotai/react'
-import React, { forwardRef, memo, useEffect, useMemo, useRef, useState } from 'react'
+import React, { forwardRef, memo, useEffect, useRef, useState } from 'react'
 import { MetaFilterGroup, MetaObject } from '~/typings/data'
-import { AnimatePopover, Button, Content, Icon, Tooltip, WithBorder, VirtualList, Image, IconWithPopover } from '@/components'
+import { AnimatePopover, Button, Content, Icon, Tooltip, WithBorder, VirtualList, Image } from '@/components'
 import { DraggableElement, ObjectActionPopover, useDropObjectArea, useRenderObject } from '@/core'
 import { atom } from 'jotai'
 import { useTranslation } from 'react-i18next'
@@ -132,7 +132,7 @@ export const ObjectPanel = memo(
       v => {
         setFilterSort(s => ({ ...s, searchInput: v }))
       },
-      { wait: 500 }
+      { wait: 300 }
     )
     const outerContainerRef = useRef<HTMLDivElement>(null)
     const { isDragging, canDropAsMeta } = useDropObjectArea(outerContainerRef, {
@@ -192,21 +192,20 @@ export const ObjectPanel = memo(
           {filterSort.searchVisible && (
             <Content
               flex
+              className={'focus-within-input border-box-shadow'}
               alignItems="center"
               gap={5}
               style={{
                 fontSize: '13px',
                 padding: '2px 6px',
-                border: `1px solid ${Colors.Background.Border}`,
                 borderRadius: 4
               }}
             >
-              <Icon name={'park-search'} />
               <input
                 autoFocus={true}
-                className={ClassName.noStyleInput}
                 style={{
-                  flex: 1
+                  flex: 1,
+                  borderRadius: 4
                 }}
                 onChange={e => {
                   debounceSet.run(e.target.value)
@@ -216,6 +215,9 @@ export const ObjectPanel = memo(
                 onKeyDown={e => {
                   if (isHotkey(KEY.Enter, e)) {
                     setFilterSort(s => ({ ...s, searchInput: e.target.value }))
+                  }
+                  if (isHotkey(KEY.Escape, e)) {
+                    setFilterSort(s => ({ ...s, searchVisible: false }))
                   }
                 }}
                 onBlur={e => {
@@ -227,6 +229,7 @@ export const ObjectPanel = memo(
                 style={{
                   cursor: 'pointer'
                 }}
+                className={'transparent-font'}
                 onClick={() => setFilterSort(s => ({ ...s, searchInput: '', searchVisible: false }))}
               />
             </Content>

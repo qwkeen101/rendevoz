@@ -44,10 +44,9 @@ interface FormInnerState {
   attachmentManagerVisible: boolean
 }
 export const groupClassName = css({
-  boxShadow: `${Colors.Background.ButtonHover} 0px 0px 0px 1px`,
-  borderRadius: 6,
+  boxShadow: `${Colors.Background.Border} 0px 0px 0px 1px`,
+  borderRadius: 4,
   padding: 6,
-  fontWeight: 500,
   fontSize: 14,
   position: 'relative'
 })
@@ -56,8 +55,8 @@ export const hoverLabelClassName = css({
   position: 'absolute',
   top: -10,
   left: 10,
-  fontWeight: 600,
-  fontSize: '0.857rem'
+  color: Colors.Font.Transparent,
+  fontSize: '12px'
 })
 const handleEnterUpdateDelete = ({ animateExitingElements, animateEnteringElements, hideEnteringElements, animateFlippedElements }) => {
   hideEnteringElements()
@@ -155,6 +154,7 @@ const useFlipForm = (options: useFlipFormOptions) => {
             baidudiskCategory={i.baidudiskCategory}
             enableBaidudisk={i.enableBaidudisk}
             accept={i.accept}
+            onEnter={i.onEnter}
             maxWidth={enlarged ? '100%' : 400}
             filePath={i.filePath}
             onChange={i.onChange}

@@ -11,6 +11,7 @@ export type CurrentKeyValues = {
     name: string
     createdAt: number
   }
+  filePickerType: 'local' | 'web' | 'baidudisk'
   moveToShowInvisible?: boolean
   // workspace to cache
   moveToCache?: Record<

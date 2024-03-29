@@ -51,12 +51,7 @@ const InnerForm: FC<FormProps> = ({ children, title, description, onBack, onSubm
       style={style}
     >
       <Content flex column gap={16}>
-        <Content
-          flex
-          alignItems="center"
-          justifyContent="space-between"
-          style={{ borderBottom: '1px solid rgba(31,34,37,0.06)', paddingBottom: 8 }}
-        >
+        <Content flex alignItems="center" justifyContent="space-between">
           <div className={ClassName.title('14px')}>{title}</div>
           {extra}
         </Content>

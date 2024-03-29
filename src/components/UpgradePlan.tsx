@@ -174,6 +174,7 @@ const UpgradePlan = () => {
               text="年付"
             />
             <Button.IconButton
+              style={{ fontWeight: 600 }}
               onClick={() => setUpgradeDetails(s => ({ ...s, method: 'monthly' }))}
               selected={upgradeDetails?.method === 'monthly' || undefined}
               text="月付"

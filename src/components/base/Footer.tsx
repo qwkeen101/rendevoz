@@ -22,7 +22,7 @@ const Footer: FC<FooterProps> = ({ onBack, onSubmit, submitText = 'submit', back
         style={{
           padding: '3px 12px',
           marginRight: 30,
-          fontWeight: 600,
+          fontWeight: 500,
           ...buttonStyle
         }}
         onClick={onBack}
@@ -33,7 +33,6 @@ const Footer: FC<FooterProps> = ({ onBack, onSubmit, submitText = 'submit', back
         className={ClassName.selectButton()}
         style={{
           padding: '3px 12px',
-          fontWeight: 600,
           borderRadius: 6,
           ...buttonStyle
         }}

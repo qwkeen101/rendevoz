@@ -9,7 +9,6 @@ import { useGlobalAtomValue } from '@/hooks'
 import OcrService from '@/api/services/ocr.service'
 import ClassName from '@/styles/classNames'
 import { Button } from '../base'
-import { transformTextContentToNameAndDescription } from '@/core/global/dragDrop/utils'
 import { toast } from 'react-hot-toast'
 import { TypeToRegisteredMetaObject } from '@/api/stores/meta/meta.store'
 import { IFile, MetaFormLayoutItem, MetaObject } from '~/typings'
@@ -119,6 +118,12 @@ const ObjectForm: FC<
       ? {
           type: 'filePathPicker',
           accept: fileAccept,
+          onEnter: () => {
+            onSubmit?.(object)
+            if (originObject) {
+              ObjectStore(object.type).updateOne({ id: originObject.id, ...originObject })
+            }
+          },
           filePath: (originObject as IFile)?.url,
           enableWeb: ['video', 'audio'].includes(object.type),
           enableBaidudisk: ['video'].includes(object.type),
@@ -144,6 +149,9 @@ const ObjectForm: FC<
               }
             }
             if (details.type === 'web') {
+              if (originObject) {
+                setOriginObject(o => ({ ...o, url: details.url }))
+              }
               const result = await Rendevoz.Utils.Meta.normalizeWebFileToMeta(details.url, object.type)
               console.log(result)
               setObject(o => ({ ...o, ...result.meta }))

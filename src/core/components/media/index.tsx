@@ -364,6 +364,9 @@ const Media = (props: MediaProps) => {
     if (url.includes('youtube.com') || url.includes('bilibili.com')) {
       return 'web'
     }
+    if (url.startsWith('http://') || url.startsWith('https://')) {
+      return 'web'
+    }
     return 'video'
   }
   const store = useMemo(() => {

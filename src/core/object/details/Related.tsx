@@ -141,7 +141,7 @@ export const RelatedPanel = memo(({ metaId, style }: { metaId: number; style?: C
               value={groupType}
               closeOnSelect={true}
               onSelect={v => setGroupType(v[0])}
-              style={{ fontSize: '0.9rem', padding: '0px 6px', width: 160, height: 24 }}
+              style={{ fontSize: '0.9rem', padding: '0px 6px', width: 120, height: 24 }}
               menuStyle={{
                 fontSize: '13px',
                 overflowY: 'auto',
@@ -174,7 +174,7 @@ export const RelatedPanel = memo(({ metaId, style }: { metaId: number; style?: C
             </Content>
           }
         >
-          <RelatedGroup groupType={groupType} rootMetaId={metaId} linkIds={allLinkIds} />
+          <RelatedGroup linkType={'all'} groupType={groupType} rootMetaId={metaId} linkIds={allLinkIds} />
         </TabPane>
         <TabPane
           tab={
@@ -185,7 +185,7 @@ export const RelatedPanel = memo(({ metaId, style }: { metaId: number; style?: C
           }
           key={'in'}
         >
-          <RelatedGroup groupType={groupType} rootMetaId={metaId} linkIds={inboundLinkIds} />
+          <RelatedGroup linkType={'in'} groupType={groupType} rootMetaId={metaId} linkIds={inboundLinkIds} />
         </TabPane>
         <TabPane
           tab={
@@ -196,13 +196,23 @@ export const RelatedPanel = memo(({ metaId, style }: { metaId: number; style?: C
           }
           key={'out'}
         >
-          <RelatedGroup groupType={groupType} rootMetaId={metaId} linkIds={outboundLinkIds} />
+          <RelatedGroup linkType={'out'} groupType={groupType} rootMetaId={metaId} linkIds={outboundLinkIds} />
         </TabPane>
       </Tabs>
     </Content>
   )
 })
-const RelatedGroup = ({ linkIds, rootMetaId, groupType }: { linkIds: number[]; rootMetaId: number; groupType: string }) => {
+const RelatedGroup = ({
+  linkIds,
+  rootMetaId,
+  groupType,
+  linkType
+}: {
+  linkIds: number[]
+  rootMetaId: number
+  groupType: string
+  linkType: 'in' | 'out' | 'all'
+}) => {
   const ref = useRef(null)
   const allLinkWithMetas = useMemo(() => {
     const map = MetaStore.getMetaLinksMap()
@@ -231,6 +241,32 @@ const RelatedGroup = ({ linkIds, rootMetaId, groupType }: { linkIds: number[]; r
     return allLinkWithMetas.filter(i => i.targetType === groupType)
   }, [groupType, allLinkWithMetas])
   const parentRef = useRef(null)
+  const createAndAddLink = () => {
+    GlobalInstance.metaOps?.createObject().then(m => {
+      if (linkType === 'all') {
+        MetaStore.addMetaLink({
+          sourceId: m.id,
+          targetId: rootMetaId
+        })
+        MetaStore.addMetaLink({
+          sourceId: rootMetaId,
+          targetId: m.id
+        })
+      }
+      if (linkType === 'in') {
+        MetaStore.addMetaLink({
+          sourceId: m.id,
+          targetId: rootMetaId
+        })
+      }
+      if (linkType === 'out') {
+        MetaStore.addMetaLink({
+          sourceId: rootMetaId,
+          targetId: m.id
+        })
+      }
+    })
+  }
   return (
     <Content fullWidth ref={parentRef} fullHeight style={{ display: 'flex', flexDirection: 'column' }}>
       <Content
@@ -247,19 +283,38 @@ const RelatedGroup = ({ linkIds, rootMetaId, groupType }: { linkIds: number[]; r
           minHeight: '100px'
         }}
       >
-        {groupedMetas.map(i => (
-          <RelatedItem metaId={i.targetMetaId} linkId={i.linkId} key={i.linkId} />
-        ))}
-        {groupedMetas.length === 0 && (
-          <div
+        {groupedMetas.length > 0 ? (
+          <>
+            {groupedMetas.map(i => (
+              <RelatedItem metaId={i.targetMetaId} linkId={i.linkId} key={i.linkId} />
+            ))}
+            <Button.IconButton
+              className={'font-size-12 transparent-font'}
+              text={t('general.New')}
+              style={{
+                padding: '3px 6px',
+                width: 'fit-content',
+                minWidth: 140,
+                maxWidth: '100%'
+              }}
+              icon={'park-plus'}
+              onClick={createAndAddLink}
+            />
+          </>
+        ) : (
+          <Content
+            flex
+            column
+            centered
+            gap={4}
+            className={'font-size-13 transparent-font'}
             style={{
-              margin: 'auto',
-              fontSize: 13,
-              color: Colors.Font.Transparent
+              margin: 'auto'
             }}
           >
             {t('general.Drop object here to add link')}
-          </div>
+            <Button.IconButton text={t('general.New')} icon={'park-plus'} onClick={createAndAddLink} />
+          </Content>
         )}
       </Content>
     </Content>

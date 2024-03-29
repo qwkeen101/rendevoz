@@ -7,22 +7,19 @@ import { Reorder } from 'framer-motion'
 import { TabNavListProps } from '../tabs'
 import classNames from 'classnames'
 import AnimatePopover from '../AnimatePopover'
-import { GlobalInstance, useGlobalAtom, useGlobalAtomValue, useGlobalSetAtom, useMergedRef, useToggle } from '@/hooks'
+import { GlobalInstance, useGlobalAtom, useGlobalAtomValue, useMergedRef, useToggle } from '@/hooks'
 import WithBorder from '../WithBorder'
 import ClassName from '@/styles/classNames'
 import { useTranslation } from 'react-i18next'
-import { replacePanel } from './Algorithm'
 import { GlobalLayoutAtom, LayoutIdToTabMap } from '@/components/layout'
 import { getOS } from '@/App'
 import { Rendevoz } from '@/core/rendevoz'
 import { MetaStore } from '@/api/stores'
-import { Content, Icon } from '@/components'
+import { Content, Icon, Menu } from '@/components'
 import { SidebarPanelStateAtom } from '@/components/layout/sidebar'
 import produce from 'immer'
 import { Colors } from '@/consts'
 import useIsFullscreen from '@/hooks/utils/useIsFullscreen'
-import { useUpdate } from 'react-use'
-import { mousePos } from '@/hooks/utils/useMousePositionRef'
 
 interface DockTabBarProps {
   TabNavList: TabNavListProps
@@ -211,71 +208,71 @@ const TabItem = ({ onClick, isSelected, item, onDragStart, isLast, onDragEnd, is
   const tabRef = useRef<HTMLDivElement>(null)
   const [currentTabMetaId, setCurrentTabMetaId] = useState<number>()
   const renderTabContextMenu = () => (
-    <WithBorder width={170} style={{ padding: 4, display: 'flex', flexDirection: 'column', gap: 4 }}>
-      <div
-        className={ClassName.flatButton()}
-        onClick={e => {
-          const tabData = dockContext.find(item.key) as TabData
-          dockContext.dockMove(tabData, null, 'remove')
-          LayoutIdToTabMap.delete(tabData.id)
-          dockContext.getGlobal().onTabClose?.(tabData)
-          toggleContextMenuVisible()
-        }}
-      >
-        {t('dock.close')}
-      </div>
-      <div
-        className={ClassName.flatButton()}
-        onClick={e => {
-          GlobalInstance.layoutOps?.closeTabs('others')
-          toggleContextMenuVisible()
-        }}
-      >
-        {t('dock.close other tabs')}
-      </div>
-      <div
-        className={ClassName.flatButton()}
-        onClick={e => {
-          GlobalInstance.layoutOps?.closeTabs('right')
-          toggleContextMenuVisible()
-        }}
-      >
-        {t('dock.close right side tabs')}
-      </div>
-      {currentTabMetaId && (
-        <div
-          className={ClassName.flatButton()}
-          onClick={e => {
+    <Menu.NavigationMenu
+      layout={[
+        {
+          type: 'item',
+          key: 'close',
+          text: t('dock.close'),
+          onSelect: () => {
+            const tabData = dockContext.find(item.key) as TabData
+            dockContext.dockMove(tabData, null, 'remove')
+            LayoutIdToTabMap.delete(tabData.id)
+            dockContext.getGlobal().onTabClose?.(tabData)
             toggleContextMenuVisible()
-            GlobalInstance.metaOps?.openDetails(currentTabMetaId)
-          }}
-        >
-          {t('general.View details')}
-        </div>
-      )}
-      {currentTabMetaId && (
-        <div
-          className={ClassName.flatButton()}
-          onClick={e => {
+          }
+        },
+        {
+          type: 'item',
+          key: 'close-others',
+          text: t('dock.close other tabs'),
+          onSelect: () => {
+            GlobalInstance.layoutOps?.closeTabs('others', item.key)
             toggleContextMenuVisible()
-            Rendevoz.Actions.Open.Meta.openEditMetaDialog(currentTabMetaId)
-          }}
-        >
-          {t('general.edit')}
-        </div>
-      )}
-      {currentTabMetaId && (
-        <div
-          className={ClassName.flatButton()}
-          onClick={e => {
+          }
+        },
+        {
+          type: 'item',
+          key: 'close-right',
+          text: t('dock.close right side tabs'),
+          onSelect: () => {
+            GlobalInstance.layoutOps?.closeTabs('right', item.key)
             toggleContextMenuVisible()
-            GlobalInstance.metaOps?.quickAdd(currentTabMetaId)
-          }}
-        >
-          {t('general.Move to')}
-        </div>
-      )}
-    </WithBorder>
+          }
+        },
+        ...(currentTabMetaId
+          ? [
+              {
+                type: 'item',
+                key: 'view-details',
+                text: t('general.View details'),
+                onSelect: () => {
+                  toggleContextMenuVisible()
+                  GlobalInstance.metaOps?.openDetails(currentTabMetaId)
+                }
+              },
+              {
+                type: 'item',
+                key: 'edit',
+                text: t('general.edit'),
+                onSelect: () => {
+                  toggleContextMenuVisible()
+                  Rendevoz.Actions.Open.Meta.openEditMetaDialog(currentTabMetaId)
+                }
+              },
+              {
+                type: 'item',
+                key: 'move-to',
+                text: t('general.Move to'),
+                onSelect: () => {
+                  toggleContextMenuVisible()
+                  GlobalInstance.metaOps?.quickAdd(currentTabMetaId)
+                }
+              }
+            ]
+          : [])
+      ]}
+    />
   )
   useEffect(() => {
     if (isSelected) {
@@ -292,7 +289,7 @@ const TabItem = ({ onClick, isSelected, item, onDragStart, isLast, onDragEnd, is
   return (
     <AnimatePopover
       positions={['bottom']}
-      content={renderTabContextMenu()}
+      content={<WithBorder padding={'0.4rem 0'}>{renderTabContextMenu()}</WithBorder>}
       onClickOutside={toggleContextMenuVisible}
       padding={10}
       innerRef={tabRef}

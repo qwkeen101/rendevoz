@@ -215,10 +215,10 @@ export default function assignGlobalLayoutOps(layoutRef: RefObject<DockLayout>) 
         }
       },
       closeCurrentFocusedPanel: () => {},
-      closeTabs: type => {
+      closeTabs: (type, currTabId) => {
         const l = layoutRef.current
         if (l) {
-          const currTab = GlobalInstance.layoutOps?.getCurrentFocusedTab()
+          const currTab = currTabId || GlobalInstance.layoutOps?.getCurrentFocusedTab()
           if (currTab) {
             let newPanel: PanelData | undefined = undefined
             const tabData = l.find(currTab) as DockTabData

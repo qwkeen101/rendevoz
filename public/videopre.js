@@ -53,10 +53,7 @@ const captureVideoFrame = (
   })
 }
 
-const showAll = () => {
-  window.document.body.style.display = 'block'
-}
-let replaced = false
+
 window.addEventListener('DOMContentLoaded', () => {
   interval = setInterval(() => {
     if (videoLoaded) {
@@ -65,12 +62,10 @@ window.addEventListener('DOMContentLoaded', () => {
     }
     const currentUrl = window.location.href
     if (!currentUrl.includes('bilibili') && !currentUrl.includes('youtube')) {
-      videoElement = window.document.body.querySelector('video')
+      videoElement = Array.from(window.document.body.querySelectorAll('video') || []).find(i => i.hasAttribute('src'))
       if (videoElement) {
-        wrapperElement = videoElement.parentElement
         videoLoaded = true
       }
-      return
     }
     if (currentUrl.includes('bilibili')) {
       const bilibiliVideoWrapper = window.document.body.querySelector('#bilibiliPlayer')
@@ -96,10 +91,6 @@ window.addEventListener('DOMContentLoaded', () => {
     }
 
     if (videoLoaded) {
-      if (replaced) return
-      replaced = true
-      showAll()
-      window.document.body.replaceChildren(wrapperElement)
       clearInterval(interval)
       prepareVideo()
       ipcRenderer.sendToHost('event', {
@@ -110,23 +101,8 @@ window.addEventListener('DOMContentLoaded', () => {
     }
   }, 100)
 })
-
-setInterval(() => {
-  if (wrapperElement) {
-    const pbp = wrapperElement.querySelector('.bpx-player-pbp')
-    if (pbp) {
-      pbp.style.display = 'none'
-    }
-  }
-}, 1000)
 const prepareVideo = () => {
   if (videoElement) {
-    wrapperElement.style.position = 'absolute'
-    wrapperElement.style.left = '0px'
-    wrapperElement.style.top = '0px'
-    wrapperElement.style.width = '100%'
-    wrapperElement.style.height = '100%'
-    wrapperElement.parentElement.style.overflow = 'hidden'
     const d = videoElement.duration
     if (d) {
       ipcRenderer.sendToHost('event', {

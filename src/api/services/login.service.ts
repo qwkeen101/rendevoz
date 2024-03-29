@@ -27,7 +27,7 @@ export const userAtom = atom<IUser | null>(
       }
 )
 
-const cacheUserDetails = () => {
+export const cacheUserDetails = () => {
   setTimeout(async () => {
     const u = getUser()
     if (u) {

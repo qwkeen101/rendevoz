@@ -49,7 +49,6 @@ export default (instance: InnerGroupInstance) => {
         const selected = instance.selectOps?.getSelectedItems()
         if (!selected?.length) return
         const only = selected.length === 1
-        const first = selected[0][0]
         const customContext = instance.getGroupState?.().layout?.contextMenu?.(selected.map(i => i[0].id))
         switch (i[0] as GroupCommonActions) {
           case 'copy-link': {
@@ -58,25 +57,30 @@ export default (instance: InnerGroupInstance) => {
             } else {
               commonActions(instance, 'copy-link-to-all')
             }
+            instance.overlayOps?.close()
             break
           }
           case 'delete-in-group': {
             if (customContext) {
               if (customContext.some(i => i === 'deleteInGroup')) {
                 commonActions(instance, 'delete-in-group')
+                instance.overlayOps?.close()
               }
               break
             }
             commonActions(instance, 'delete-in-group')
+            instance.overlayOps?.close()
             break
           }
           case 'delete-obj': {
             if (customContext) {
               if (customContext.some(i => i === 'deleteObject')) {
                 commonActions(instance, 'delete-obj')
+                instance.overlayOps?.close()
               }
               break
             }
+            instance.overlayOps?.close()
             commonActions(instance, 'delete-obj')
             break
           }
@@ -85,17 +89,27 @@ export default (instance: InnerGroupInstance) => {
           }
           case 'move-to': {
             commonActions(instance, 'move-to')
+            instance.overlayOps?.close()
             break
           }
           case 'open-in-new-tab': {
             if (only) {
               commonActions(instance, 'open-in-new-tab')
+              instance.overlayOps?.close()
+            }
+            break
+          }
+          case 'view-details': {
+            if (only) {
+              commonActions(instance, 'view-details')
+              instance.overlayOps?.close()
             }
             break
           }
           case 'open-in-side-peek': {
             if (only) {
               commonActions(instance, 'open-in-side-peek')
+              instance.overlayOps?.close()
             }
             break
           }

@@ -3,7 +3,7 @@ import { assignProperties } from '@/utils'
 import { memo, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { useSelectAtomValue } from '@/hooks'
 import { MediaStateAtom } from '@/core/components/media/hooks/useMediaState'
-import { ObjectStore } from '@/api/stores'
+import { MetaStore, ObjectStore } from '@/api/stores'
 import { IMediaLabel, XYPosition } from '~/typings'
 import { createPortal } from 'react-dom'
 import { Colors } from '@/consts'
@@ -51,7 +51,7 @@ export default memo(() => {
       isPlayRef.current = !store.get(MediaStateAtom).paused
       instance.actionOps?.pause()
       return () => {
-        if(isPlayRef.current){
+        if (isPlayRef.current) {
           instance.actionOps?.play()
         }
       }
@@ -100,8 +100,14 @@ export default memo(() => {
             }}
             placeholder={'Press ↵ to save, Esc to close'}
             onChange={v => {
-              console.log(v)
-              currLabel && ObjectStore(labelType).updateOne({ id: currLabel.id, name: v })
+              if (currLabel) {
+                const labelMeta = MetaStore.getMetaObjectByObjectId(currLabel.id)
+                if (labelMeta) {
+                  MetaStore.updateMetaObject({ id: labelMeta.id, name: v })
+                } else {
+                  ObjectStore(labelType).updateOne({ id: currLabel.id, name: v })
+                }
+              }
               setPopoverState(s => ({ ...s, visible: false }))
             }}
             showDelete={true}

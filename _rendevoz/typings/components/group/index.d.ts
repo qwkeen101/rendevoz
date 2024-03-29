@@ -166,6 +166,7 @@ export type GroupOverlayAvaibleContents = {
 }
 
 type GroupOverlayOps = {
+  close: VoidFunction
   open: (content: GroupOverlayAvaibleContents, position: XYPosition) => void
 }
 

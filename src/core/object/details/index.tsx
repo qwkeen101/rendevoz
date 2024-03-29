@@ -4,12 +4,13 @@ import { GlobalInstance } from '@/hooks'
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { Content, Icon, ResizeAndDrag } from '@/components'
 import Main from '@/core/object/details/Main'
-import { Colors } from '@/consts'
+import { Colors, KEY } from '@/consts'
 import { ClassName } from 'rendevoz'
 import { RelatedPanel } from './Related'
 import { Rnd } from 'react-rnd'
 import { useTranslation } from 'react-i18next'
 import Id from '@/utils/id'
+import isHotkey from 'is-hotkey'
 
 const ObjectDetails = ({
   metaId,
@@ -197,6 +198,17 @@ export const GlobalObjectDetails = () => {
           })
         })
       }
+    }
+  }, [gState.visible])
+  useEffect(() => {
+    const h = (e: KeyboardEvent) => {
+      if (isHotkey(KEY.Escape, e)) {
+        setGState(s => ({ ...s, visible: false }))
+      }
+    }
+    document.addEventListener('keydown', h)
+    return () => {
+      document.removeEventListener('keydown', h)
     }
   }, [gState.visible])
   const rndRef = useRef<Rnd>()

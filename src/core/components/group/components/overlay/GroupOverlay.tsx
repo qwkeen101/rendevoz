@@ -16,6 +16,7 @@ export default () => {
   const instance = useGroupInstance()
   assignProperties(instance, {
     overlayOps: {
+      close: () => setOverlayState(s => ({ ...s, visible: false })),
       open: (content, position) => setOverlayState({ visible: true, position, ...content })
     }
   })

@@ -70,7 +70,8 @@ export const Common = {
   Red: '--red',
   Pink: '--pink',
   SelectColorTransparent: '--select-color-transparent',
-  SelectColor: '--select-color'
+  SelectColor: '--select-color',
+  SelectColorTransparentLight: '--select-color-transparent-light'
 }
 
 const Consts = {

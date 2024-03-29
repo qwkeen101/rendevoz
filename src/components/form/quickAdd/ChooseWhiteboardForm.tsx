@@ -74,7 +74,7 @@ export default ({ onBack, onClose, metaId }: { onBack: VoidFunction; onClose: Vo
   const { t } = useTranslation()
 
   return (
-    <Content flex style={{ width: '90vw', height: '90vh', minWidth: 800, fontSize: 14 }}>
+    <Content flex style={{ width: '95vw', height: '90vh', minWidth: 800, fontSize: 14 }}>
       <Content flex column style={{ padding: '12px 12px 12px 6px', width: 400, boxShadow: Colors.Consts.BoxShadowBorderRight }}>
         <Content flex gap={12} className={ClassName.title()} style={{ marginBottom: 8 }}>
           <Icon name={'park-left'} className={ClassName.circleButton()} onClick={onBack} />
@@ -168,7 +168,7 @@ export default ({ onBack, onClose, metaId }: { onBack: VoidFunction; onClose: Vo
                 style:
                   selectedWhiteboard === i.objectId
                     ? {
-                        background: Colors.Common.SelectColorTransparent,
+                        background: Colors.Common.SelectColorTransparentLight,
                         color: Colors.Common.SelectColor
                       }
                     : undefined,

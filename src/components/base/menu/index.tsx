@@ -68,6 +68,7 @@ export type IMenuLayoutItem =
       name: string
       style?: CSSProperties
     }
+  | undefined
 interface NavigationMenuProps {
   layout: IMenuLayoutItem[]
   onClick?: (name: string) => void
@@ -97,6 +98,7 @@ export const NavigationMenu: FC<NavigationMenuProps> = ({
   reselectOnLayoutChange = true,
   defaultSelectFirst = true
 }) => {
+  layout = layout.filter(i => i)
   const menuContainerRef = useRef<HTMLDivElement>(null)
   const layoutCount = layout.length
   const firstKey = defaultSelectFirst ? [layout.find(i => 'key' in i && i.key)?.key] : []

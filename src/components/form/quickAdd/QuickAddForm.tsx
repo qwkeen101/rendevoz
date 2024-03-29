@@ -29,9 +29,7 @@ export default ({ currentMetaId, onClose }: { currentMetaId: number[]; onClose: 
   const recently = KeyvalueStore.useValue('moveToCache')?.[currWorkspace?.id || 0]?.recently
   useEffect(() => {
     const keydownHandler = (e: KeyboardEvent) => {
-      if (e.target instanceof HTMLElement && e.target.closest('input,textarea,[contenteditable]')) {
-        return
-      }
+      if (e.defaultPrevented) return
       if (visible === 'main') {
         const keys = ['1', '2', '3', '4', '5']
         const matched = keys.find(i => isHotkey(i, e))
@@ -51,9 +49,9 @@ export default ({ currentMetaId, onClose }: { currentMetaId: number[]; onClose: 
         }
       }
     }
-    document.addEventListener('keydown', keydownHandler, true)
+    document.addEventListener('keydown', keydownHandler)
     return () => {
-      document.removeEventListener('keydown', keydownHandler, true)
+      document.removeEventListener('keydown', keydownHandler)
     }
   })
   const options = [
@@ -93,119 +91,119 @@ export default ({ currentMetaId, onClose }: { currentMetaId: number[]; onClose: 
     switch (visible) {
       case 'main':
         return (
-          <Content flex column style={{ padding: 16, width: 'min(420px, 90vw)' }}>
-            {recently ? (
-              <Content flex column>
-                <Menu.NavigationMenu
-                  layout={[
-                    {
-                      type: 'title',
-                      style: {
+          <Content style={{ padding: 16, width: 'min(420px, 90vw)' }}>
+            <Menu.NavigationMenu
+              layout={[
+                ...(recently?.length
+                  ? [
+                      {
+                        type: 'title',
+                        style: {
+                          fontSize: 14,
+                          margin: '4px 0px 12px',
+                          color: Colors.Font.Primary
+                        },
+                        name: t('general.Recently used')
+                      },
+                      ...recently
+                        .map(i => {
+                          let text = '',
+                            icon = ''
+                          switch (i.type) {
+                            case 'collection': {
+                              const c = CollectionStore.getCachedCollectionById(i.id)
+                              if (c) {
+                                text = c.name || 'Unnamed collection'
+                                icon = 'park-folder-close'
+                                break
+                              } else {
+                                return
+                              }
+                            }
+                            case 'whiteboard':
+                            case 'note':
+                            case 'group': {
+                              const m = MetaStore.getMetaObjectByObjectId(i.id)
+                              if (m && !m.deleted) {
+                                text = m.name || m.placeholderName || 'Unnamed object'
+                                icon = Rendevoz.Utils.Object.getMetaObjectIcon(i.type)
+                                break
+                              } else {
+                                return
+                              }
+                            }
+                          }
+                          return {
+                            type: 'item',
+                            key: i.id,
+                            text: text,
+                            icon: icon,
+                            onSelect: () => {
+                              if (i.type === 'whiteboard') {
+                                updateMovetoCache(s => {
+                                  s.whiteboard = { id: i.id }
+                                })
+                                setTimeout(() => {
+                                  setVisible('whiteboard')
+                                })
+                              } else {
+                                setTimeout(() => {
+                                  quickAdd(currentMetaId, i.type, i.id)
+                                }, 200)
+                                onClose()
+                              }
+                            }
+                          }
+                        })
+                        .filter(i => i)
+                        .slice(0, 10)
+                    ]
+                  : []),
+                {
+                  type: 'title',
+                  style: {
+                    fontSize: 14,
+                    margin: recently?.length ? '12px 0px' : '0px 0px 12px',
+                    color: Colors.Font.Primary
+                  },
+                  name: t('general.Quick add')
+                },
+                ...options.map((i, idx) => ({
+                  key: i.key,
+                  type: 'custom',
+                  onSelect: () => {
+                    setVisible(i.key)
+                  },
+                  children: opts => (
+                    <Content
+                      key={i.key}
+                      onClick={opts.onClick}
+                      onPointerMove={opts.onPointerMove}
+                      className={ClassName.flatButton()}
+                      flex
+                      alignItems={'center'}
+                      gap={12}
+                      style={{
+                        fontWeight: 500,
                         fontSize: 14,
-                        margin: '4px 0px 12px',
-                        color: Colors.Font.Primary
-                      },
-                      name: t('general.Recently used')
-                    },
-                    ...recently
-                      .map(i => {
-                        let text = '',
-                          icon = ''
-                        switch (i.type) {
-                          case 'collection': {
-                            const c = CollectionStore.getCachedCollectionById(i.id)
-                            if (c) {
-                              text = c.name || 'Unnamed collection'
-                              icon = 'park-folder-close'
-                              break
-                            } else {
-                              return
-                            }
-                          }
-                          case 'whiteboard':
-                          case 'note':
-                          case 'group': {
-                            const m = MetaStore.getMetaObjectByObjectId(i.id)
-                            if (m && !m.deleted) {
-                              text = m.name || m.placeholderName || 'Unnamed object'
-                              icon = Rendevoz.Utils.Object.getMetaObjectIcon(i.type)
-                              break
-                            } else {
-                              return
-                            }
-                          }
-                        }
-                        return {
-                          type: 'item',
-                          key: i.id,
-                          text: text,
-                          icon: icon,
-                          onSelect: () => {
-                            if (i.type === 'whiteboard') {
-                              updateMovetoCache(s => {
-                                s.whiteboard = { id: i.id }
-                              })
-                              setTimeout(() => {
-                                setVisible('whiteboard')
-                              })
-                            } else {
-                              setTimeout(() => {
-                                quickAdd(currentMetaId, i.type, i.id)
-                              }, 200)
-                              onClose()
-                            }
-                          }
-                        }
-                      })
-                      .filter(i => i)
-                      .slice(0, 10),
-                    {
-                      type: 'title',
-                      style: {
-                        fontSize: 14,
-                        margin: '12px 0px',
-                        color: Colors.Font.Primary
-                      },
-                      name: t('general.Quick add')
-                    },
-                    ...options.map((i, idx) => ({
-                      key: i.key,
-                      type: 'custom',
-                      onSelect: () => {
-                        setVisible(i.key)
-                      },
-                      children: opts => (
-                        <Content
-                          key={i.key}
-                          onClick={opts.onClick}
-                          onPointerMove={opts.onPointerMove}
-                          className={ClassName.flatButton()}
-                          flex
-                          alignItems={'center'}
-                          gap={12}
-                          style={{
-                            fontWeight: 500,
-                            fontSize: 14,
-                            background: opts.isSelected ? Colors.Background.ButtonHover : 'transparent'
-                          }}
-                        >
-                          <img src={i.image} width={24} height={24} />
-                          {i.name}
-                          <div
-                            className={'font-size-12 transparent-font'}
-                            style={{
-                              marginLeft: 'auto'
-                            }}
-                          >
-                            {idx + 1}
-                          </div>
-                        </Content>
-                      )
-                    }))
-                  ].filter(i => i)}
-                />
-              </Content>
-            ) : null}
+                        background: opts.isSelected ? Colors.Background.ButtonHover : 'transparent'
+                      }}
+                    >
+                      <img src={i.image} width={24} height={24} />
+                      {i.name}
+                      <div
+                        className={'font-size-12 transparent-font'}
+                        style={{
+                          marginLeft: 'auto'
+                        }}
+                      >
+                        {idx + 1}
+                      </div>
+                    </Content>
+                  )
+                }))
+              ].filter(i => i)}
+            />
           </Content>
         )
       case 'groups':

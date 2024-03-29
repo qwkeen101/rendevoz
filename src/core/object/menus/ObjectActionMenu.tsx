@@ -1,6 +1,6 @@
 import { FC, useEffect, useRef } from 'react'
 import { GlobalInstance } from '@/hooks'
-import { Button, Content } from '@/components'
+import { Button, Content, Menu } from '@/components'
 import { MetaStore } from '@/api/stores'
 import { useTranslation } from 'react-i18next'
 import { Rendevoz } from '@/core/rendevoz'
@@ -49,6 +49,11 @@ export const ObjectActionPopover: FC<
           GlobalInstance.metaOps?.copyLink(metaObjectId)
           onClose?.()
         }
+        if (isHotkey('shift+enter', e)) {
+          onClose?.()
+          GlobalInstance.metaOps?.closeDetails()
+          Rendevoz.Actions.Open.Meta.openMetaObject(metaObjectId)
+        }
       }
       document.addEventListener('keydown', keydownHandler)
       return () => {
@@ -58,99 +63,142 @@ export const ObjectActionPopover: FC<
   }, [metaObject])
   if (!metaObject) return null
   return (
-    <Content flex column style={{ padding: 4, width: 180, fontSize: 14, fontWeight: 400 }} ref={containerRef} role="object-popover-panel">
-      {visibility?.jumpToVisible && <Button.IconButton onClick={onJump} text="Focus" icon="park-share-two" />}
-      {visibility?.graphPinVisible && (
-        <Button.IconButton
-          icon="park-pin"
-          text={visibility.graphPinned ? t('graph.unpin') : t('graph.pin on graph')}
-          style={{ color: visibility.graphPinned ? 'color' : undefined }}
-          onClick={onGraphPin}
-        />
-      )}
-      {visibility?.showRelatedVisible && (
-        <Button.IconButton
-          onClick={onShowRelated}
-          text={t(`graph.show more related nodes`, {
-            num: visibility.relatedNum
-          })}
-          icon="park-circle-four"
-        />
-      )}
-      {GlobalInstance.metaOps?.canPreview(metaObject) && (
-        <Button.IconButton
-          text={t('general.Preview')}
-          icon="park-preview-open"
-          onClick={() => {
-            onClose?.()
-            GlobalInstance.metaOps?.preview(metaObjectId)
-          }}
-        />
-      )}
-      <Button.IconButton
-        text={t('general.Open')}
-        icon="park-share"
-        onClick={() => {
-          onClose?.()
-          GlobalInstance.metaOps?.closeDetails()
-          Rendevoz.Actions.Open.Meta.openMetaObject(metaObjectId)
-        }}
-      />
-      <Button.IconButton
-        suffixStr={'V'}
-        text={t('general.show object info')}
-        icon="park-info"
-        onClick={() => {
-          onClose?.()
-          GlobalInstance.metaOps?.openDetails(metaObjectId)
-        }}
-      />
-      <Button.IconButton
-        onClick={() => {
-          GlobalInstance.metaOps?.quickAdd(metaObjectId)
-          onClose?.()
-        }}
-        suffixStr={'M'}
-        icon="park-corner-up-right"
-        text={t('general.Move to')}
-      />
-      <Button.IconButton
-        suffixStr={'E'}
-        text={t('general.edit')}
-        icon="park-edit"
-        onClick={() => {
-          onClose?.()
-          onEdit?.()
-          Rendevoz.Actions.Open.Meta.openEditMetaDialog(metaObjectId)
-        }}
-      />
-      <Button.IconButton
-        onClick={() => {
-          updateMetaObject({ id: metaObject.id, pinned: !metaObject.pinned })
-          onPin?.()
-          onClose?.()
-        }}
-        icon="park-like"
-        text={metaObject.pinned ? t('general.unpin') : t('general.pin')}
-      />
-      <Button.IconButton
-        text={t('general.generate link')}
-        suffixStr={'Cmd+C'}
-        onClick={() => {
-          GlobalInstance.metaOps?.copyLink(metaObjectId)
-          onClose?.()
-        }}
-        icon="park-link-two"
-      />
-      <Button.IconButton
-        text={t('general.delete')}
-        dangerous
-        onClick={() => {
-          deleteMetaObject(metaObject.id)
-          onDelete?.()
-          onClose?.()
-        }}
-        icon="park-delete"
+    <Content style={{ padding: '0.4rem 0', minWidth: 180, fontSize: 14 }} ref={containerRef} role="object-popover-panel">
+      <Menu.NavigationMenu
+        layout={[
+          visibility?.jumpToVisible
+            ? {
+                type: 'item',
+                key: 'jump',
+                onSelect: () => {
+                  onJump?.()
+                  onClose?.()
+                },
+                text: 'Focus',
+                icon: 'park-share-two'
+              }
+            : undefined,
+          visibility?.graphPinVisible
+            ? {
+                icon: 'park-pin',
+                text: visibility.graphPinned ? t('graph.unpin') : t('graph.pin on graph'),
+                onSelect: () => {
+                  onGraphPin?.()
+                  onClose?.()
+                },
+                key: 'graph-pin',
+                type: 'item'
+              }
+            : undefined,
+          visibility?.showRelatedVisible
+            ? {
+                icon: 'park-circle-four',
+                text: t(`graph.show more related nodes`, {
+                  num: visibility.relatedNum
+                }),
+                onSelect: () => {
+                  onGraphPin?.()
+                  onClose?.()
+                },
+                key: 'graph-show-related',
+                type: 'item'
+              }
+            : undefined,
+          {
+            type: 'item',
+            text: t('general.Open'),
+            icon: 'park-share',
+            suffix: 'Shift+↵',
+            onSelect: () => {
+              onClose?.()
+              GlobalInstance.metaOps?.closeDetails()
+              Rendevoz.Actions.Open.Meta.openMetaObject(metaObjectId)
+            },
+            key: 'open'
+          },
+          {
+            type: 'item',
+            text: t('general.View details'),
+            icon: 'park-info',
+            suffix: 'V',
+            onSelect: () => {
+              onClose?.()
+              GlobalInstance.metaOps?.openDetails(metaObjectId)
+            },
+            key: 'view-details'
+          },
+          {
+            type: 'item',
+            text: t('general.Move to'),
+            icon: 'park-corner-up-right',
+            suffix: 'M',
+            onSelect: () => {
+              GlobalInstance.metaOps?.quickAdd(metaObjectId)
+              onClose?.()
+            },
+            key: 'move-to'
+          },
+          {
+            type: 'item',
+            text: t('general.edit'),
+            icon: 'park-edit',
+            suffix: 'E',
+            onSelect: () => {
+              onClose?.()
+              onEdit?.()
+              Rendevoz.Actions.Open.Meta.openEditMetaDialog(metaObjectId)
+            },
+            key: 'edit'
+          },
+          GlobalInstance.metaOps?.canPreview(metaObject)
+            ? {
+                icon: 'park-preview-open',
+                text: t('general.Preview'),
+                onSelect: () => {
+                  onClose?.()
+                  GlobalInstance.metaOps?.preview(metaObjectId)
+                },
+                key: 'preview',
+                type: 'item'
+              }
+            : undefined,
+          {
+            type: 'separator'
+          },
+          {
+            type: 'item',
+            text: metaObject.pinned ? t('general.unpin') : t('general.pin'),
+            icon: 'park-pin',
+            onSelect: () => {
+              updateMetaObject({ id: metaObject.id, pinned: !metaObject.pinned })
+              onPin?.()
+              onClose?.()
+            },
+            key: 'pin'
+          },
+          {
+            type: 'item',
+            text: t('general.generate link'),
+            icon: 'park-link-two',
+            suffix: 'Cmd+C',
+            onSelect: () => {
+              GlobalInstance.metaOps?.copyLink(metaObjectId)
+              onClose?.()
+            },
+            key: 'copy-link'
+          },
+          {
+            type: 'item',
+            text: t('general.delete'),
+            icon: 'park-delete',
+            onSelect: () => {
+              deleteMetaObject(metaObject.id)
+              onDelete?.()
+              onClose?.()
+            },
+            key: 'delete'
+          }
+        ]}
       />
     </Content>
   )

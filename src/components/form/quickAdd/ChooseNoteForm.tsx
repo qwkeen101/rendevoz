@@ -36,6 +36,16 @@ export default memo(({ metaId, onBack, onClose }: { metaId: number[]; onBack: Vo
   const { t } = useTranslation()
   const [isLoading, setIsLoading] = useState(false)
   const index = MetaStore.useMetaObjectsMap()
+  const allNotes = useMemo(() => {
+    const all = Array.from(index.values()).filter(
+      i => (!moveToShowInvisible ? MetaStore.isVisibleMetaObject(i) : true) && i.type === 'note'
+    )
+    all.sort((a, b) => b.createdAt - a.createdAt)
+    return all
+  }, [index, moveToShowInvisible])
+  const [currentSelectId, setCurrentSelectId] = useState<number>(
+    cache?.id ? (allNotes.some(i => i.objectId === cache.id) ? cache.id : undefined) : undefined
+  )
   useLayoutEffect(() => {
     if (currentSelectId) {
       updateMovetoCache(c => (c.note = { id: currentSelectId }))
@@ -70,16 +80,7 @@ export default memo(({ metaId, onBack, onClose }: { metaId: number[]; onBack: Vo
         })
     }
   }, [currentSelectId, notePosition, metaType])
-  const allNotes = useMemo(() => {
-    const all = Array.from(index.values()).filter(
-      i => (!moveToShowInvisible ? MetaStore.isVisibleMetaObject(i) : true) && i.type === 'note'
-    )
-    all.sort((a, b) => b.createdAt - a.createdAt)
-    return all
-  }, [index, moveToShowInvisible])
-  const [currentSelectId, setCurrentSelectId] = useState<number>(
-    cache?.id ? (allNotes.some(i => i.objectId === cache.id) ? cache.id : undefined) : undefined
-  )
+
   useLayoutEffect(() => {
     if (currentValue) {
       instanceRef.current?.replaceChildren?.(currentValue)
@@ -115,7 +116,7 @@ export default memo(({ metaId, onBack, onClose }: { metaId: number[]; onBack: Vo
   }
 
   return (
-    <Content flex alignItems={'stretch'} style={{ width: 'min(1100px, 90vw)', minWidth: '550px', height: 'min(80vh, 800px)' }}>
+    <Content flex alignItems={'stretch'} style={{ width: 'min(1400px, 95vw)', minWidth: '550px', height: 'min(90vh, 1000px)' }}>
       <Content
         flex
         column
@@ -236,7 +237,7 @@ export default memo(({ metaId, onBack, onClose }: { metaId: number[]; onBack: Vo
                 style:
                   currentSelectId === i.objectId
                     ? {
-                        background: Colors.Common.SelectColorTransparent,
+                        background: Colors.Common.SelectColorTransparentLight,
                         color: Colors.Common.SelectColor
                       }
                     : undefined,

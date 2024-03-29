@@ -63,7 +63,7 @@ export const ObjectActionPopover: FC<
   }, [metaObject])
   if (!metaObject) return null
   return (
-    <Content style={{ padding: '0.4rem 0', minWidth: 180, fontSize: 14 }} ref={containerRef} role="object-popover-panel">
+    <Content style={{ padding: '0.4rem 0', minWidth: 200, fontSize: 14 }} ref={containerRef} role="object-popover-panel">
       <Menu.NavigationMenu
         layout={[
           visibility?.jumpToVisible

@@ -2,7 +2,7 @@
   "name": "rendevoz-app",
   "productName": "Rendevoz",
   "private": true,
-  "version": "0.9.14",
+  "version": "0.9.15",
   "author": {
     "name": "Rendevoz Team",
     "email": "rendevoz@rendevoz.com"
@@ -172,7 +172,7 @@
     "@typescript-eslint/typescript-estree": "latest",
     "@vitejs/plugin-react": "latest",
     "electron": "^29.1.5",
-    "electron-builder": "^24.13.3",
+    "electron-builder": "^25.0.0-alpha.5",
     "electron-builder-notarize": "^1.5.1",
     "eslint": "latest",
     "eslint-config-prettier": "latest",

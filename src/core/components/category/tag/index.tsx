@@ -12,13 +12,12 @@ import { useDebounceFn } from '@/hooks'
 function TagGroup({ id }: { id: number }) {
   const workspace = KeyvalueStore.useValue('currentWorkspace')
   const tagGroup = KeyvalueStore.useValue(`tag_${id}_${workspace?.id}_group`)
-  const defaultValue = GroupStore.initializeGroup()
   const tagMetaIds = MetaStore.useIndexedMetaObjects()?.tagToMetaObjectIdsMap.get(id)
   const tagMetas = MetaStore.useMultipleObjects(Array.from(tagMetaIds || []))
   const tag = ObjectStore('tag').useValue(id)
   const [data, setData] = useState(
     tagGroup ?? {
-      ...defaultValue,
+      ...GroupStore.initializeGroup(),
       hideObjectsInside: false,
       hideGroupsInside: false,
       autoAddto: 'last'

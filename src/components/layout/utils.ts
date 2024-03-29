@@ -1,5 +1,6 @@
 import { DockLayout, PanelData, TabData } from '@/components/base/dock'
 import * as Algorithm from '@/components/base/dock/Algorithm'
+import { LayoutIdToTabMap } from '@/components/layout/index'
 
 export function getCurrentFocusedTab(layout: DockLayout) {
   const layoutData = layout.getLayout()
@@ -18,6 +19,7 @@ export function closeTab(tabId: string, layout: DockLayout) {
   const targetTab = layout.find(tabId)
   if (targetTab) {
     layout.dockMove(targetTab, null, 'remove')
+    LayoutIdToTabMap.delete(tabId)
   }
 }
 

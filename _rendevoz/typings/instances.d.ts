@@ -70,6 +70,7 @@ export type IGlobalInstance = Partial<{
     goBackToSyncBlock: (syncBlockMetaId: number, targetMetaId: number) => Promise<void>
   }
   layoutOps: {
+    closeObjectTab: (metaId: number) => void
     openObject: <K extends keyof InstanceRecord>(metaId: number) => Promise<InstanceRecord[K] | undefined>
     getCurrentFocusedTab: () => string | undefined
     switchToTab: (direction: 'next' | 'prev') => void

@@ -20,15 +20,8 @@ export const ELEMENT_TAGS: Record<string, (el: HTMLElement) => any> = {
     url: el.getAttribute('src'),
     id: Id.getId()
   }),
-  LI: () => ({ type: 'list-item', id: Id.getId() }),
-  OI: () => ({ type: 'order-list-item', id: Id.getId() }),
-  OL: () => ({ type: 'numbered-list', id: Id.getId() }),
   P: () => ({ type: 'paragraph', id: Id.getId() }),
   PRE: () => ({ type: 'pre', id: Id.getId() }),
-  TABLE: () => ({ type: 'table', id: Id.getId(), columns: [] }),
-  TD: () => ({ type: 'tableCell', id: Id.getId() }),
-  TR: () => ({ type: 'tableRow' }),
-  TH: () => ({ type: 'tableCell', id: Id.getId() }),
   SUP: () => ({ type: 'sup', id: Id.getId() }),
   FIGCAPTION: () => ({ type: 'figcaption', id: Id.getId() })
 }

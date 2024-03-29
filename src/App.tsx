@@ -39,7 +39,6 @@ import GlobalQuickAdd from '@/components/form/quickAdd/GlobalQuickAdd'
 import GlobalDownloadIndicator from '@/core/global/DownloadIndicator'
 import { useAtomValue } from 'jotai'
 import './styles/util.less'
-import Loading from '@/components/Loading'
 import './styles/loading.less'
 import GlobalDialog from '@/core/global/GlobalDialog'
 import { ChineseFormats, DateFormat, EnglishFormats } from '@/utils'
@@ -114,54 +113,56 @@ const App = () => {
   const registeredGlobalElements = Array.from(KeyToRegisteredGlobalElements.entries())
 
   return (
-    <ErrorBoundary FallbackComponent={ErrorFallback}>
-      {/* for unknown queryselector bug */}
-      <div
-        className={classNames(
-          'excalidraw',
-          css({
-            '--color-selection': '#6965db'
-          })
-        )}
-        style={{ display: 'none' }}
-      ></div>
-      <Initializer />
-      <ThemeSwitcher />
-      <Notification />
-      <>
-        <GlobalDownloadIndicator />
-        <TextSearch />
-        <GlobalScreenShot />
-        <GlobalPreviewPanel />
-        <GlobalQuickAdd />
-        <GlobalBaidudisk />
-        <GlobalSearchPanel />
-        <GlobalDialog />
-        <GlobalCollection />
-        <GlobalObjectCreator />
-        <GlobalObjectDetails />
-        <GlobalCreateObject />
-        <GlobalTranslateResult />
-        {initialized ? <AuthenticatedLayout /> : <Loading />}
-        <GlobalDragOverlay />
-        <ImagePreviewer />
-        <FileImporter />
-        <GlobalUtils />
-        {registeredGlobalElements.map(entry => (
-          <Fragment key={entry[0]}>{entry[1]()}</Fragment>
-        ))}
-        <svg
-          style={{
-            position: 'absolute',
-            width: 0,
-            height: 0,
-            overflow: 'hidden'
-          }}
-        >
-          <SvgMarker />
-        </svg>
-      </>
-    </ErrorBoundary>
+    <>
+      <ErrorBoundary FallbackComponent={ErrorFallback}>
+        {/* for unknown queryselector bug */}
+        <div
+          className={classNames(
+            'excalidraw',
+            css({
+              '--color-selection': '#6965db'
+            })
+          )}
+          style={{ display: 'none' }}
+        ></div>
+        <Initializer />
+        <ThemeSwitcher />
+        <Notification />
+        <>
+          <GlobalDownloadIndicator />
+          <TextSearch />
+          <GlobalScreenShot />
+          <GlobalPreviewPanel />
+          <GlobalQuickAdd />
+          <GlobalBaidudisk />
+          <GlobalSearchPanel />
+          <GlobalDialog />
+          <GlobalCollection />
+          <GlobalObjectCreator />
+          <GlobalObjectDetails />
+          <GlobalCreateObject />
+          <GlobalTranslateResult />
+          {initialized && <AuthenticatedLayout />}
+          <GlobalDragOverlay />
+          <ImagePreviewer />
+          <FileImporter />
+          <GlobalUtils />
+          {registeredGlobalElements.map(entry => (
+            <Fragment key={entry[0]}>{entry[1]()}</Fragment>
+          ))}
+          <svg
+            style={{
+              position: 'absolute',
+              width: 0,
+              height: 0,
+              overflow: 'hidden'
+            }}
+          >
+            <SvgMarker />
+          </svg>
+        </>
+      </ErrorBoundary>
+    </>
   )
 }
 

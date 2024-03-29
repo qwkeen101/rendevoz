@@ -11,11 +11,10 @@ import { calculateSortObjects } from '@/core/object/filter/BetterSorter'
 export default ({ propId }: { propId: number }) => {
   const prop = ObjectStore('metaProp').useValue(propId)
   const propGroup = KeyvalueStore.useValue(`prop_${propId}_group`)
-  const defaultValue = GroupStore.initializeGroup()
   const propIdToMetaIds = MetaStore.useIndexedMetaObjects()?.propToMetaObjectIdsMap
   const [data, setData] = useState(
     propGroup ?? {
-      ...defaultValue,
+      ...GroupStore.initializeGroup(),
       hideObjectsInside: false,
       hideGroupsInside: false,
       autoAddto: 'last'

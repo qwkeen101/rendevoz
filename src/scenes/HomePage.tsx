@@ -21,7 +21,7 @@ import HomeGallery from '@/scenes/home/HomeGallery'
 import KeyvalueStore from '@/api/stores/keyvalue.store'
 import GalleryConfig from '@/scenes/home/GalleryConfig'
 import { CollectionStore, MetaStore } from '@/api/stores'
-import RecycleBin from '@/core/components/recycleBin'
+import RecycleBin from '@/core/components/category/TrashBin'
 import Workspace from '@/api/common/workspace'
 import { request } from '@/utils/request'
 

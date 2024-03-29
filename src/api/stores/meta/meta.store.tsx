@@ -10,7 +10,7 @@ import produce from 'immer'
 import { debounce } from 'lodash'
 import { useMemo } from 'react'
 import { selectAtom } from 'jotai/utils'
-import { useGlobalAtomValue, usePrevious, useSelectGlobalAtomValue } from '@/hooks'
+import { GlobalInstance, useGlobalAtomValue, usePrevious, useSelectGlobalAtomValue } from '@/hooks'
 import { getUser } from '@/api/services/login.service'
 import { RegisteredMetaObject } from 'rendevoz'
 import SearchHelper from '@/api/textSearch/SearchHelper'
@@ -33,7 +33,7 @@ export const metaObjectsAtom = atom<Map<number, MetaObject>>(new Map())
 
 export const metaLinksAtom = atom<Map<number, MetaLink>>(new Map())
 
-const { orderedData, orderedArray } = BaseStore
+const { orderedArray } = BaseStore
 
 let lastWarned = Date.now()
 
@@ -127,26 +127,6 @@ const createMetaStore = () => {
             )
           }
         }
-        if (obj.deleted === false) {
-          if (globalStore.get(deletedMetaObjectsAtom).has(obj.id)) {
-            globalStore.set(
-              deletedMetaObjectsAtom,
-              produce(globalStore.get(deletedMetaObjectsAtom), d => {
-                d.delete(obj.id)
-              })
-            )
-          }
-        }
-        if (obj.deleted === true) {
-          if (!globalStore.get(deletedMetaObjectsAtom).has(obj.id)) {
-            globalStore.set(
-              deletedMetaObjectsAtom,
-              produce(globalStore.get(deletedMetaObjectsAtom), d => {
-                d.add(obj.id)
-              })
-            )
-          }
-        }
         SearchHelper.insertDocument({
           docType: 'metaObject',
           name: obj.name || obj.placeholderName,
@@ -163,7 +143,8 @@ const createMetaStore = () => {
       if (!one.type) return Promise.reject()
       const user = getUser()
       const setting = getSetting()
-      const allMetaNum = globalStore.get(undeletedMetaObjectsAtom).length
+
+      const allMetaNum = await metaObjectDb.count()
       if ((!user || !user.premiumEndDate || user.premiumEndDate < Date.now()) && !user?.lifetimePro && allMetaNum > MAX_META_NUMBER) {
         if (Date.now() - lastWarned > 1000) {
           toast.error(t('general.Over max objects limit'))
@@ -223,6 +204,7 @@ const createMetaStore = () => {
       })(initedMetaObject, options)
     },
     deleteOneById: (id, options) => {
+      GlobalInstance.layoutOps?.closeObjectTab(id)
       if (options?.force) {
         const allMetaLinks = globalStore.get(undeletedMetaLinksAtom)
         const one = globalStore.get(metaObjectsAtom).get(id)
@@ -258,13 +240,6 @@ const createMetaStore = () => {
         })
       } else {
         return initializeObjectStore.deleteOneById(() => {
-          globalStore.set(
-            deletedMetaObjectsAtom,
-            produce(globalStore.get(deletedMetaObjectsAtom), draft => {
-              draft.add(id)
-            })
-          )
-
           handleMetaObjectDelete(id)
         })(id, options)
       }

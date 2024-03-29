@@ -13,10 +13,9 @@ import { calculateSortObjects } from '@/core/object/filter/BetterSorter'
 export default ({ id }: { id: number }) => {
   const collection = useSelectGlobalAtomValue(collectionsAtom, s => s.get(id))
   const collectionGroup = KeyvalueStore.useValue(`collection_${id}_group`)
-  const defaultValue = GroupStore.initializeGroup()
   const [data, setData] = useState(
     collectionGroup ?? {
-      ...defaultValue,
+      ...GroupStore.initializeGroup(),
       hideObjectsInside: false,
       hideGroupsInside: false,
       autoAddto: 'last'

@@ -15,7 +15,6 @@ import '../controller/baidu'
 import '../controller/plugin'
 import '../controller/pdf'
 import restoreWindowSize from './restoreWindowSize'
-import shortcuts from './shortcuts'
 import replaceFilePosition from './replaceFilePosition'
 import { DefaultRendevozDataPath } from '../service/file'
 process.env.ELECTRON_DISABLE_SECURITY_WARNINGS = 'true'
@@ -86,7 +85,6 @@ const startElectron = async () => {
   await app.whenReady()
 
   protocol.registerFileProtocol('rendefile', (req, callback) => {
-    console.log(process.env.FILE_PATH)
     const FILE_PATH = process.env.FILE_PATH || DefaultRendevozDataPath
     const filePath = fileURLToPath('file://' + FILE_PATH + req.url.replace(FILE_PATH, '').slice(slicedLength))
     callback(filePath)
@@ -94,7 +92,6 @@ const startElectron = async () => {
 
   app.on('web-contents-created', (createEvent, contents) => {
     contents.setWindowOpenHandler(({ url }) => {
-      console.log(url)
       if (url.includes('printer.html')) return { action: 'allow' }
       if (url.includes('blank')) return { action: 'allow' }
       if (url.startsWith('https://rendevoz.firebaseapp.com/')) {

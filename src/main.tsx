@@ -1,10 +1,10 @@
 import { enableMapSet, enablePatches } from 'immer'
 import { createRoot } from 'react-dom/client'
-import App from './App'
 import initI18n from './config/i18n'
 import { Provider } from 'jotai'
-import { Hooks, Utils } from 'rendevoz'
-
+import { Utils, Hooks } from 'rendevoz'
+import LoadingPage from '@/components/loadingPage'
+import App from './App'
 enableMapSet()
 enablePatches()
 const lang = Utils.Navigator.getDefaultLanguage()
@@ -45,6 +45,7 @@ const root = createRoot(document.getElementById('root')!)
 
 root.render(
   <Provider store={Hooks.globalStore}>
+    <LoadingPage />
     <App />
   </Provider>
 )

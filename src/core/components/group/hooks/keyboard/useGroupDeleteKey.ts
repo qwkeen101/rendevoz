@@ -8,7 +8,6 @@ const useGroupDeleteKey = (instance: IGroupInstance) => {
     if (e.target instanceof HTMLElement && !e.target.closest("input,textarea,[contenteditable='true']"))
       if (isHotkey(KEY.Delete, e) || isHotkey(KEY.Backspace, e)) {
         const selected = instance.values.selectedRowIdSet
-        console.log(selected)
         if (selected.size) {
           instance.valueOps?.deleteItems(Array.from(selected.values()))
         }

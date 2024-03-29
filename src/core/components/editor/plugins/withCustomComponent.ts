@@ -9,11 +9,17 @@ import EditorSettings from '@/core/components/editor/consts/settings'
 const softBlockTypes: CustomElement['type'][] = []
 
 const withCustomComponent = (editor: CustomEditor) => {
-  const { deleteBackward, insertText, insertBreak, insertNodes, deleteForward, insertNode, insertFragment, apply, instance } = editor
+  const { deleteBackward, insertText, splitNodes, insertBreak, insertNodes, deleteForward, insertNode, insertFragment, apply, instance } =
+    editor
   editor.insertSoftBreak = () => {
     editor.insertText('\n')
   }
+  editor.splitNodes = opts => {
+    console.log(opts)
+    splitNodes(opts)
+  }
   editor.insertFragment = (nodes, options) => {
+    console.log(nodes)
     nodes.forEach(i => (i.id = Id.getId()))
     const position = options?.at || editor.selection
     if (!position) return
@@ -26,6 +32,53 @@ const withCustomComponent = (editor: CustomEditor) => {
     ) {
       Transforms.insertText(editor, Node.string({ children: nodes }), { at: position })
       return
+    }
+    // insert at list-item/heading,.etc, and only text
+    // do not remove it, and only insert text
+    if (Range.isCollapsed(position)) {
+      const above = Editor.above(editor, {
+        at: position,
+        match: n => Editor.isBlock(editor, n)
+      })
+      const p = Editor.point(editor, position)
+      if (above && nodes.length === 1 && Editor.isStart(editor, p, above[1]) && Editor.isEnd(editor, p, above[1])) {
+        if (nodes[0].type === 'paragraph') {
+          Transforms.insertNodes(editor, ...nodes[0].children, {
+            at: [...above[1], 0]
+          })
+        } else {
+          if (Editor.isInline(editor, nodes[0])) {
+            insertFragment(nodes)
+            return
+          }
+          if (above[0].type === 'paragraph') {
+            Transforms.removeNodes(editor, { at: above[1] })
+            Transforms.insertNodes(editor, nodes, {
+              at: above[1]
+            })
+          } else {
+            Transforms.insertNodes(editor, nodes, {
+              at: Path.next(above[1])
+            })
+          }
+        }
+        return
+      }
+      if (above && nodes.length > 1) {
+        if (above[0].type === 'paragraph' && Editor.isStart(editor, p, above[1]) && Editor.isEnd(editor, p, above[1])) {
+          Transforms.removeNodes(editor, {
+            at: above[1]
+          })
+          Transforms.insertNodes(editor, nodes, {
+            at: above[1]
+          })
+          return
+        }
+        Transforms.insertNodes(editor, nodes, {
+          at: Path.next(above[1])
+        })
+        return
+      }
     }
     insertFragment(nodes)
   }
@@ -74,6 +127,7 @@ const withCustomComponent = (editor: CustomEditor) => {
     }
   }
   editor.insertNodes = (nodes, options) => {
+    console.log(nodes)
     const path = options?.at || editor.selection
     const isAllNodesBlock = (Array.isArray(nodes) ? nodes : [nodes]).every(i => Editor.isBlock(editor, i))
     if (isAllNodesBlock && path && Editor.hasPath(editor, Editor.path(editor, path))) {
@@ -150,23 +204,6 @@ const withCustomComponent = (editor: CustomEditor) => {
           })
           return
         }
-        if (currentPrevious) {
-          const b = currentPrevious[0] as CustomElement
-          // delete on start and previous is list item
-          if (Editor.isStart(editor, selection.anchor, path) && (b.type === 'list-item' || b.type === 'order-list-item')) {
-            deleteBackward(...args)
-            Transforms.setNodes(
-              editor,
-              {
-                level: b.level
-              },
-              {
-                at: currentPrevious[1]
-              }
-            )
-            return
-          }
-        }
         if (
           !Editor.isEditor(block) &&
           SlateElement.isElement(block) &&
@@ -179,6 +216,27 @@ const withCustomComponent = (editor: CustomEditor) => {
           Transforms.setNodes(editor, newProperties)
           return
         }
+        if (currentPrevious) {
+          const b = currentPrevious[0] as CustomElement
+          // delete on start and previous is list item
+          if (Editor.isStart(editor, selection.anchor, path) && (b.type === 'list-item' || b.type === 'order-list-item')) {
+            deleteBackward(...args)
+            Transforms.setNodes(
+              editor,
+              {
+                align: undefined,
+                color: undefined,
+                background: undefined,
+                ...b
+              },
+              {
+                at: currentPrevious[1]
+              }
+            )
+            return
+          }
+        }
+
         let selectPrevious = false
         if (currentPrevious && Point.equals(selection.anchor, start)) {
           const [block] = currentPrevious
@@ -199,10 +257,10 @@ const withCustomComponent = (editor: CustomEditor) => {
           deleteBackward(...args)
           // 当上方为空的同步块，下方为空的行，在下方删除，会导致blur
           // timeout以后再选择可以避免
-          // setTimeout(() => {
-          //   Transforms.select(editor, end)
-          //   ReactEditor.focus(editor)
-          // }, 0)
+          setTimeout(() => {
+            Transforms.select(editor, end)
+            ReactEditor.focus(editor)
+          }, 0)
           return
         }
       }

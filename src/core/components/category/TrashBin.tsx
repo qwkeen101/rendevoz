@@ -1,7 +1,6 @@
 import { MetaStore } from '@/api/stores'
-import { memo, useEffect, useMemo, useState } from 'react'
+import { memo, useLayoutEffect, useMemo, useState } from 'react'
 import GroupStore from '../../../api/stores/group.store'
-import Id from '@/utils/id'
 import { Content, Icon } from '@/components'
 import MetaGroup from '@/core/components/group/MetaGroup'
 import { TabTitle } from '@/core/rendevoz/components'
@@ -16,17 +15,17 @@ export default memo(({ onInstanceInitialized }: { onInstanceInitialized?: (i: IG
   const deleted = useMemo(() => {
     return Array.from(all.values()).filter(i => i.deleted)
   }, [all])
-  const defaultValue = GroupStore.initializeGroup()
+
   const { t } = useTranslation()
   const [data, setData] = useState(
     recycleGroup ?? {
-      ...defaultValue,
+      ...GroupStore.initializeGroup(),
       hideObjectsInside: false,
       hideGroupsInside: false
     }
   )
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     const sorted = calculateSortObjects(deleted, {
       sorters: [
         {
@@ -79,25 +78,17 @@ export default memo(({ onInstanceInitialized }: { onInstanceInitialized?: (i: IG
             showTitleActions: false,
             showAddNew: false,
             showImport: false,
-            contextMenu: selected => [
-              'deleteCompleted',
-              'recover',
-              ...(selected?.length === 1 ? ['separator', 'viewDetails', 'openInNewTab'] : [])
-            ]
+            contextMenu: () => ['deleteCompleted', 'recover', 'separator']
           }),
           []
         )}
         value={data}
         on={v => {
+          if (v.type === 'deleteRow') {
+            const id = v.metaId
+            MetaStore.deleteMetaObject(id, { force: true, silent: true })
+          }
           if (v.type === 'groupDataChange') {
-            console.log(v)
-            if (v.value.values?.length !== undefined && v.value.values.length < data.values.length) {
-              const currIds = new Set(v.value.values?.map(i => i.id))
-              const deletedIds = new Set(data.values.filter(i => !currIds.has(i.id)).map(i => i.id))
-              deletedIds.forEach(i => {
-                MetaStore.deleteMetaObject(i, { force: true })
-              })
-            }
             setData(v.value)
             KeyvalueStore.updateOne('recycleBinGroup', v.value)
           }

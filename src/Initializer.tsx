@@ -92,9 +92,8 @@ const Initializer = () => {
 
     initializeApp().then(() => {
       setTimeout(() => {
-        postMessage({ payload: 'removeLoading' }, '*')
         setIntialized(true)
-      }, 500)
+      }, 1000)
     })
 
     ipcInstance.send('getUpdateDetails').then(res => {

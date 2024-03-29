@@ -44,7 +44,7 @@ import { RestoreDOM } from './restore-dom/restore-dom'
 import { useAndroidInputManager } from '../hooks/android-input-manager/use-android-input-manager'
 import { useTrackUserInput } from '../hooks/use-track-user-input'
 import { CustomText } from '~/typings/editor/baseTypes'
-import VirtualChildren from './virtual-children'
+import VirtualChildren from './VirtualChildren'
 import { atom, useAtom, useAtomValue } from 'jotai'
 
 type DeferredOperation = () => void

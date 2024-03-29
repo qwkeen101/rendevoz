@@ -9,7 +9,6 @@ const withNormalize = (e: CustomEditor) => {
   e.normalizeNode = entry => {
     const [node, path] = entry
     if ('type' in node) {
-      console.log(node)
       if (node.type === 'synced') {
         normalizeSynced(node, path, e)
         return

@@ -13,11 +13,10 @@ import { Rendevoz } from '@/core/rendevoz'
 function TypeGroup({ type }: { type: MetaObject['type'] }) {
   const workspace = KeyvalueStore.useValue('currentWorkspace')
   const typeGroup = KeyvalueStore.useValue(`${type}_${workspace?.id}_group`)
-  const defaultValue = GroupStore.initializeGroup()
   const allMetas = MetaStore.useIndexedMetaObjects()?.typeToMetaObjectIdsMap.get(type)
   const [data, setData] = useState(
     typeGroup ?? {
-      ...defaultValue,
+      ...GroupStore.initializeGroup(),
       hideObjectsInside: false,
       hideGroupsInside: false,
       autoAddto: 'last'

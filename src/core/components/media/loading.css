@@ -12,10 +12,10 @@
 }
 .loading_wave {
   width: 5px;
-  height: 80px;
-  background: linear-gradient(60deg, #D67BFF, #fff);
+  height: 72px;
+  background: linear-gradient(60deg, var(--select-color), var(--select-color-transparent));
   margin: 10px;
-  animation: wave 1s linear infinite;
+  animation: wave 1.5s linear infinite;
   border-radius: 20px;
 }
 .loading_wave:nth-child(2) {

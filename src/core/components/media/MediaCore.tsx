@@ -54,7 +54,7 @@ const MediaCore = memo(() => {
       jumpTo: t => setMediaState(s => ({ ...s, jumpTime: t })),
       fullScreen: () => {
         setMediaState(s => ({ ...s, fullScreen: !s.fullScreen }))
-      },
+      }
       // clip: async duration => {
       //   const mode = mediaState.mode
       //   if (mode === 'video') {
@@ -119,19 +119,7 @@ const MediaCore = memo(() => {
 })
 
 const LoadingAnimation = ({ borderRadius }: { borderRadius: number }) => {
-  const [dots, setDotsNum] = useState(0)
   const { t } = useTranslation()
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setDotsNum(s => {
-        const next = s + 1
-        return next > 3 ? 0 : next
-      })
-    }, 300)
-    return () => {
-      clearInterval(interval)
-    }
-  }, [])
   return (
     <div
       className="loading_center"
@@ -151,9 +139,7 @@ const LoadingAnimation = ({ borderRadius }: { borderRadius: number }) => {
         <div className="loading_wave"></div>
         <div className="loading_wave"></div>
       </Content>
-      <div style={{ fontSize: 18, color: Colors.Font.Description, marginTop: 20 }}>
-        {t('general.Loading')} {Array.from(Array(dots).keys()).map(i => `.`)}
-      </div>
+      <div style={{ fontSize: 16, color: Colors.Font.Transparent, marginTop: 32 }}>{t('general.Loading')}</div>
     </div>
   )
 }

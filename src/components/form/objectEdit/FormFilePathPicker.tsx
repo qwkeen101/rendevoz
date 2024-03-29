@@ -133,7 +133,7 @@ const FormFilePathPicker = ({
                   background: 'transparent'
                 }}
                 onKeyDown={e => {
-                  if (isHotkey(KEY.Enter, e)) {
+                  if (e.currentTarget.value && isHotkey(KEY.Enter, e)) {
                     onEnter?.()
                   }
                 }}

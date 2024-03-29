@@ -9,10 +9,6 @@ import isHotkey from 'is-hotkey'
 export const ObjectActionPopover: FC<
   Partial<{
     onClose: VoidFunction
-    onEdit: VoidFunction
-    onPin: VoidFunction
-    onGraph: VoidFunction
-    onDelete: VoidFunction
     onJump: VoidFunction
     onGraphPin: VoidFunction
     onShowRelated: VoidFunction
@@ -24,7 +20,7 @@ export const ObjectActionPopover: FC<
       relatedNum?: number
     }
   }> & { metaObjectId: number }
-> = ({ onClose, onEdit, onPin, onDelete, metaObjectId, visibility, onJump, onGraphPin, onShowRelated }) => {
+> = ({ onClose, metaObjectId, visibility, onJump, onGraphPin }) => {
   const { updateMetaObject, deleteMetaObject } = MetaStore
   const { t } = useTranslation()
   const metaObject = MetaStore.useValue(metaObjectId)
@@ -145,7 +141,6 @@ export const ObjectActionPopover: FC<
             suffix: 'E',
             onSelect: () => {
               onClose?.()
-              onEdit?.()
               Rendevoz.Actions.Open.Meta.openEditMetaDialog(metaObjectId)
             },
             key: 'edit'
@@ -171,7 +166,6 @@ export const ObjectActionPopover: FC<
             icon: 'park-pin',
             onSelect: () => {
               updateMetaObject({ id: metaObject.id, pinned: !metaObject.pinned })
-              onPin?.()
               onClose?.()
             },
             key: 'pin'
@@ -193,7 +187,6 @@ export const ObjectActionPopover: FC<
             icon: 'park-delete',
             onSelect: () => {
               deleteMetaObject(metaObject.id)
-              onDelete?.()
               onClose?.()
             },
             key: 'delete'

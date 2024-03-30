@@ -1,7 +1,5 @@
 import { CustomEditor, CustomElement } from '~/typings'
 import { Transforms } from 'slate'
-import normalizeTable from '@/core/components/editor/plugins/normalize/normalizeTable'
-import normalizeTableCell from '@/core/components/editor/plugins/normalize/normalizeTableCell'
 import normalizeSynced from '@/core/components/editor/plugins/normalize/normalizeSynced'
 
 const withNormalize = (e: CustomEditor) => {

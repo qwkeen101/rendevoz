@@ -33,5 +33,6 @@ export const TEXT_TAGS: Record<string, () => any> = {
   I: () => ({ italic: true }),
   S: () => ({ strikethrough: true }),
   STRONG: () => ({ bold: true }),
-  U: () => ({ underline: true })
+  U: () => ({ underline: true }),
+  B: () => ({ bold: true })
 }

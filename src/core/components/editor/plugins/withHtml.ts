@@ -43,9 +43,14 @@ const withHtml = (editor: CustomEditor) => {
       })
       return
     }
-
+    console.log(html, plainText)
     if (html) {
       const parsed = new DOMParser().parseFromString(html, 'text/html')
+      const wrapper = document.createElement('div')
+      Array.from(parsed.body.children).forEach(c => {
+        wrapper.appendChild(c)
+      })
+      parsed.body.appendChild(wrapper)
       const deserialized = deserializeHTML(parsed.body)
       if (deserialized.length) {
         const normalized = normalize(deserialized)
@@ -67,7 +72,6 @@ const withHtml = (editor: CustomEditor) => {
         .map(p => {
           const matched = p.match(linkPattern)
           if (matched?.length) {
-            console.log(matched)
             return {
               type: 'paragraph',
               id: Id.getId(),

@@ -3,7 +3,6 @@ import { Editor, Element as SlateElement, Node, Path, Point, Range, Transforms }
 import { ReactEditor } from 'slate-react'
 import { CustomEditor, CustomElement } from '~/typings'
 import { Positions } from '../utils/positions'
-import { MetaStore, ObjectStore } from '@/api/stores'
 import EditorSettings from '@/core/components/editor/consts/settings'
 
 const softBlockTypes: CustomElement['type'][] = []
@@ -19,7 +18,6 @@ const withCustomComponent = (editor: CustomEditor) => {
     splitNodes(opts)
   }
   editor.insertFragment = (nodes, options) => {
-    console.log(nodes)
     nodes.forEach(i => (i.id = Id.getId()))
     const position = options?.at || editor.selection
     if (!position) return
@@ -41,42 +39,9 @@ const withCustomComponent = (editor: CustomEditor) => {
         match: n => Editor.isBlock(editor, n)
       })
       const p = Editor.point(editor, position)
-      if (above && nodes.length === 1 && Editor.isStart(editor, p, above[1]) && Editor.isEnd(editor, p, above[1])) {
-        if (nodes[0].type === 'paragraph') {
-          Transforms.insertNodes(editor, ...nodes[0].children, {
-            at: [...above[1], 0]
-          })
-        } else {
-          if (Editor.isInline(editor, nodes[0])) {
-            insertFragment(nodes)
-            return
-          }
-          if (above[0].type === 'paragraph') {
-            Transforms.removeNodes(editor, { at: above[1] })
-            Transforms.insertNodes(editor, nodes, {
-              at: above[1]
-            })
-          } else {
-            Transforms.insertNodes(editor, nodes, {
-              at: Path.next(above[1])
-            })
-          }
-        }
-        return
-      }
-      if (above && nodes.length > 1) {
-        if (above[0].type === 'paragraph' && Editor.isStart(editor, p, above[1]) && Editor.isEnd(editor, p, above[1])) {
-          Transforms.removeNodes(editor, {
-            at: above[1]
-          })
-          Transforms.insertNodes(editor, nodes, {
-            at: above[1]
-          })
-          return
-        }
-        Transforms.insertNodes(editor, nodes, {
-          at: Path.next(above[1])
-        })
+      if (above && Editor.isStart(editor, p, above[1]) && Editor.isEnd(editor, p, above[1])) {
+        insertFragment(nodes)
+        Transforms.setNodes(editor, { ...above[0] }, { at: above[1] })
         return
       }
     }

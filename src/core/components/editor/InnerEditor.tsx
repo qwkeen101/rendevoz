@@ -114,6 +114,10 @@ const InnerEditor: FC<InnerEditorProps> = memo(
     })
 
     const handleChange = useMemoizedFn((value: Descendant[]) => {
+      if (value.length === 0) {
+        Transforms.insertNodes(editor, { type: 'paragraph', id: Id.getId(), children: [{ text: '' }] }, { at: [0] })
+        return
+      }
       let shouldChange = false
       // already triggered
       if (EDITOR_TO_CHANGED.get(editor) === true) return
@@ -470,7 +474,7 @@ export const Leaf = (props: RenderLeafProps) => {
     textDecoration: leaf.underline ? 'underline' : undefined,
     fontSize: leaf.fontSize || leaf.code ? '0.85em' : '1em',
     '--block-font-color': leaf.fontColor,
-    background:
+    backgroundColor:
       leaf.cloze && !disableCloze ? 'var(--emphasis)' : leaf.code ? 'rgba(135,131,120,0.15)' : Colors.getAdaptColor(leaf.backgroundColor),
     cursor: leaf.cloze ? 'pointer' : undefined,
     boxShadow: leaf.cloze && disableCloze ? '0 0 0 1px var(--emphasis)' : undefined

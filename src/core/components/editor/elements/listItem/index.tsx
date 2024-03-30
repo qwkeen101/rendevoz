@@ -23,7 +23,7 @@ const BorderIndent = ({ index }: { index: number }) => {
 export const ListItem = ({ children, element }: RenderElementProps) => {
   const { containerRef, canToggle, toggle } = useToggleList(element)
   return (
-    <div style={{ display: 'flex' }} ref={containerRef}>
+    <div ref={containerRef} style={{ display: 'flex' }}>
       {element.level && element.level > 0 ? (
         <>
           {Array.from(Array(element.level)).map((i, index) => (
@@ -44,7 +44,7 @@ export const ListItem = ({ children, element }: RenderElementProps) => {
           }
         }}
       ></div>
-      {children}
+      <div style={{ flex: 1 }}>{children}</div>
     </div>
   )
 }
@@ -191,7 +191,6 @@ export const OrderListItem = ({ children, element }: RenderElementProps) => {
   return (
     <div
       style={{
-        display: 'flex',
         position: 'relative'
       }}
       ref={containerRef}

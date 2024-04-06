@@ -242,6 +242,9 @@ const TabItem = ({ onClick, isSelected, item, onDragStart, isLast, onDragEnd, is
         ...(currentTabMetaId
           ? [
               {
+                type: 'separator'
+              },
+              {
                 type: 'item',
                 key: 'view-details',
                 text: t('general.View details'),
@@ -300,7 +303,7 @@ const TabItem = ({ onClick, isSelected, item, onDragStart, isLast, onDragEnd, is
   return (
     <AnimatePopover
       positions={['bottom']}
-      content={<WithBorder padding={'0.4rem 0'}>{renderTabContextMenu()}</WithBorder>}
+      content={<WithBorder padding={'0.4rem 0'} width={200}>{renderTabContextMenu()}</WithBorder>}
       onClickOutside={toggleContextMenuVisible}
       padding={10}
       innerRef={tabRef}

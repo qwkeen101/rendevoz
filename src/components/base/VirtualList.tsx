@@ -72,6 +72,7 @@ function VirtualList<T>(
     const itemz = virtualizer.getVirtualItems()
     const length = items.length
     const keydownHandler = useMemoizedFn((e: KeyboardEvent) => {
+      console.log(e)
       if (e.defaultPrevented) return
       if (isHotkey(KEY.Enter, e) && withKeyboardNavigation) {
         e.preventDefault()

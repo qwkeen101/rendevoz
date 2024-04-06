@@ -177,7 +177,7 @@ const MetaFilterer = ({
 
   return (
     <Content flex>
-      <Content style={{ width: 440, height: 200, display: 'flex', flexDirection: 'column', ...style }}>
+      <Content style={{ width: 440, height: 260, display: 'flex', flexDirection: 'column', ...style }}>
         {withInput && mode === 'type' && filtererState.currentTypeItems && (
           <input
             style={{
@@ -215,7 +215,6 @@ const MetaFilterer = ({
             renderItem={(item, idx, selected) => (
               <ButtonItem
                 onPointerEnter={() => {
-                  console.log(item)
                   if ('createdAt' in item) {
                     setPreviewMetaId(item.id)
                   }
@@ -237,7 +236,6 @@ const MetaFilterer = ({
             renderItem={(item, idx, selected) => (
               <Button.IconButton
                 style={{
-                  lineHeight: 1.3,
                   fontSize: '14px',
                   margin: '0px 4px'
                 }}
@@ -296,7 +294,7 @@ const ButtonItem = ({
       onPointerEnter={onPointerEnter}
       style={{
         fontSize: '14px',
-        padding: '2px 6px',
+        padding: '3px 6px',
         margin: '0px 4px'
       }}
       onClick={onClick}

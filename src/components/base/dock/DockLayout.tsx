@@ -346,7 +346,9 @@ export class DockLayout extends DockPortalManager implements DockContext {
         }
 
         layout = Algorithm.fixLayoutData(layout, this.props.groups)
+        console.log(layout, id)
         this.changeLayout(layout, newTab?.id ?? id, 'update')
+        this.setLayout(layout)
         return true
       }
     }
@@ -554,7 +556,7 @@ export class DockLayout extends DockPortalManager implements DockContext {
     }
 
     return (
-      <div ref={this.getRef} className="dock-layout" style={style}>
+      <div onClick={() => console.log(layout)} ref={this.getRef} className="dock-layout" style={style}>
         <DockContextProvider value={this}>
           <DockBox size={1} boxData={layout.dockbox} />
           {portals}

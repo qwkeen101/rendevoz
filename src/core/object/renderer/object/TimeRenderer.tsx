@@ -2,10 +2,7 @@ import { ILabel, MetaObject } from '~/typings'
 import { useMemo } from 'react'
 import { normalizeSecondsToTime } from '@/core/components/media/utils'
 import { Content, Icon } from '@/components'
-import { MetaStore } from '@/api/stores'
-import { ClassName } from 'rendevoz'
 import { Colors } from '@/consts'
-import { Rendevoz } from '@/core/rendevoz'
 
 export type TimeRendererProps = {
   showFrom?: boolean

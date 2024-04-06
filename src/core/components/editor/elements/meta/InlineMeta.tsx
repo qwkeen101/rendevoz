@@ -10,13 +10,15 @@ import { ObjectActionPopover } from '@/core'
 import classnames from 'classnames'
 import { Editor, Transforms } from 'slate'
 import { HistoryEditor } from 'slate-history'
+import ContextMenu from '@/components/contextMenu'
+import { GlobalInstance } from '@/hooks'
 
 const clazzName = classnames(
   css({
     cursor: 'pointer',
     transition: 'color 0.2s ease',
     ':hover': {
-      color: Colors.Common.SelectColor
+      color: `var(--block-font-color, var(--select-color)) !important`
     }
   }),
   'border-bottom'
@@ -58,17 +60,10 @@ const InlineMetaElement: FC<RenderElementProps> = ({ element, children, attribut
     }
   }, [metaObject?.name, metaObject?.placeholderName, childrenText])
   return (
-    <span
-      {...attributes}
-      contentEditable={'false'}
-      data-meta-id={element.id}
-      style={{ marginRight: 6, position: 'relative' }}
-    >
+    <span {...attributes} contentEditable={'false'} data-meta-id={element.id} style={{ marginRight: 6, position: 'relative' }}>
       <span>
         <>
-          <AnimatePopover
-            positions={['top', 'bottom']}
-            reposition
+          <ContextMenu
             content={setV =>
               metaObject && (
                 <WithBorder>
@@ -78,6 +73,7 @@ const InlineMetaElement: FC<RenderElementProps> = ({ element, children, attribut
             }
           >
             <span
+              onClick={() => metaObject && GlobalInstance.layoutOps?.openObject(metaObject.id)}
               className={clazzName}
               data-meta
               style={{
@@ -86,8 +82,7 @@ const InlineMetaElement: FC<RenderElementProps> = ({ element, children, attribut
             >
               {children}
             </span>
-          </AnimatePopover>
-
+          </ContextMenu>
           {metaObject && (
             <span
               style={{

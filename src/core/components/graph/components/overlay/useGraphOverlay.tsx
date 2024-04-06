@@ -93,6 +93,7 @@ const useGraphOverlay = () => {
           }}
           positions={positions()}
           visible={!!overlayState.visible}
+          onVisiblityChange={v => setOverlayState(s => ({ ...s, visible: v }))}
           content={<WithBorder style={{ maxWidth: 400 }}>{renderContent()}</WithBorder>}
           onClickOutside={e => {
             if (graph?.currentClickNodeId) return

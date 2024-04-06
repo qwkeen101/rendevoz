@@ -115,13 +115,6 @@ const EditorLinkForm = ({ editor, manager }: { editor: CustomEditor; manager: Ed
             padding: '2px 8px',
             background: 'transparent'
           }}
-          onKeyDown={e => {
-            if (isHotkey(KEY.Enter, e)) {
-              // handlerInsertLink()
-              e.stopPropagation()
-              e.preventDefault()
-            }
-          }}
           value={link}
           placeholder="Paste link or search objects"
         ></input>
@@ -130,7 +123,6 @@ const EditorLinkForm = ({ editor, manager }: { editor: CustomEditor; manager: Ed
         withInput={false}
         mode={'recentlyCreate'}
         onInputLink={l => {
-          console.log(l)
           if (isValidUrl(l)) {
             handlerInsertLink(l.startsWith('http://') || l.startsWith('https://') ? l : 'https://' + l)
             return

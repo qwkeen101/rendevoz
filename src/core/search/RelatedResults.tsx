@@ -49,7 +49,7 @@ const RelatedItem = ({ item }: { item: ISearchResult[0] }) => {
       <Content
         className={ClassName.flatButton()}
         style={{
-          padding: 4
+          padding: '6px 4px'
         }}
         flex
         alignItems={'flex-start'}
@@ -116,7 +116,7 @@ const ChildItem = ({ metaId }: { metaId: number }) => {
         gap={6}
         flex
         alignItems={'center'}
-        className={ClassName.flatButton()}
+        className={ClassName.flatButton(4, '4px 8px')}
       >
         {m.coverImgSrc ? (
           <img src={m.coverImgSrc} width={16} height={16} style={{ objectFit: 'cover', borderRadius: 4 }} />

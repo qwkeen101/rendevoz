@@ -126,7 +126,6 @@ const ButtonMenuItem: FC<MenuItemWithProps & { type: 'item' }> = ({
       <AnimatePopover
         parentElement={parentRef.current}
         visible={(popOver && selectedKey.includes(popOver?.key)) || subMenu?.some(i => 'key' in i && selectedKey.includes(i.key))}
-        hoverOpen={hoverOpenSubMenu}
         duration={0.15}
         content={
           popOver?.node ||
@@ -136,6 +135,7 @@ const ButtonMenuItem: FC<MenuItemWithProps & { type: 'item' }> = ({
                 onSelect={item => {
                   onClick?.(item)
                 }}
+                defaultSelectFirst={true}
                 onSelectChange={keys => {
                   const myKeys = [...parentKey, key, ...keys]
                   onPointerMove?.(myKeys)

@@ -67,9 +67,6 @@ const InlineMetaPicker = ({ element, children, attributes }: RenderElementProps)
         ref.current?.focus()
       })
       const existHandler = (e: KeyboardEvent) => {
-        if (isHotkey(KEY.Enter, e)) {
-          e.preventDefault()
-        }
         if (isHotkey(KEY.Escape, e)) {
           e.preventDefault()
           e.stopPropagation()

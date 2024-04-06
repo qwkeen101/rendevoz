@@ -54,7 +54,7 @@ const ParentChildItem = ({ item, type }: { item: SearchRelatedResult; type: 'gro
       <Content
         className={ClassName.flatButton()}
         style={{
-          padding: 4
+          padding: '6px 4px'
         }}
         flex
         alignItems={'center'}
@@ -75,6 +75,9 @@ const ParentChildItem = ({ item, type }: { item: SearchRelatedResult; type: 'gro
             Rendevoz.Actions.Open.Meta.openMetaObject(item.parent.metaId)
           }}
           selected={false}
+          style={{
+            padding: 0
+          }}
           hit={item.parent}
           size={item.children.length}
         />
@@ -251,7 +254,7 @@ const NoteParentItem = ({ item }: { item: SearchRelatedResult }) => {
       <Content
         className={ClassName.flatButton()}
         style={{
-          padding: 4
+          padding: '6px 4px'
         }}
         flex
         alignItems={'center'}
@@ -261,10 +264,10 @@ const NoteParentItem = ({ item }: { item: SearchRelatedResult }) => {
           onClick={() => setToggled(!toggled)}
           style={{
             transition: 'all 0.16s ease',
-            transform: toggled ? undefined : 'rotate(90deg)'
+            transform: toggled ? undefined : 'rotate(90deg)',
+            padding: 3
           }}
           name={'park-right'}
-          className={ClassName.flatButton(4, '3px')}
         />
         <SearchItemRenderer
           onClick={() => {

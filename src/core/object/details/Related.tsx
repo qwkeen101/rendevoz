@@ -13,8 +13,6 @@ import Select from '@/components/base/select'
 import { Rendevoz } from '@/core/rendevoz'
 import { ObjectActionPopover, useDropObjectArea, useRenderObject } from '@/core'
 import { MetaLink } from '~/typings'
-import MetaFilterer from '@/core/object/filter/MetaFilterer'
-import HoverObjectDetails from '@/core/object/HoverObjectDetails'
 
 export const RelatedPanel = memo(({ metaId, style }: { metaId: number; style?: CSSProperties }) => {
   const indexed = useGlobalAtomValue(indexedMetaLinksAtom)

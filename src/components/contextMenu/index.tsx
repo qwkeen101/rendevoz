@@ -10,7 +10,7 @@ export type Placement = 'top' | 'left' | 'right' | 'bottom'
 
 interface ContextMenuProps {
   position?: Placement[]
-  content: React.ReactNode
+  content: React.ReactNode | ((setV: (v: boolean) => void) => React.ReactNode)
   children: React.ReactNode
   onContextMenu?: (elementX: number, elementY: number, relativeX: number, relativeY: number) => void
   onClose?: Noop
@@ -98,26 +98,5 @@ const ContextMenu = forwardRef<ContextMenuRef, ContextMenuProps>(
     )
   }
 )
-interface PosHelperProps {
-  top?: number
-  left?: number
-  children?: ReactNode
-}
-export const PosHelper = forwardRef<HTMLDivElement, PosHelperProps>(({ top, left, children }, ref) => {
-  return createPortal(
-    <div
-      ref={ref}
-      style={{
-        position: 'absolute',
-        top: top,
-        left: left,
-        width: 1,
-        height: 1
-      }}
-    >
-      {children}
-    </div>,
-    document.body
-  )
-})
+
 export default memo(ContextMenu)

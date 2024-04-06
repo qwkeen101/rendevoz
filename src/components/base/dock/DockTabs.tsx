@@ -13,6 +13,7 @@ import ClassName from '@/styles/classNames'
 import classNames from 'classnames'
 import { css } from '@emotion/css'
 import { addDockDragHandler, addDragStateListener, DragState, removeDockDragHandler, removeDragStateListener } from './dragdrop/DragManager'
+import { GlobalInstance } from '@/hooks'
 
 function findParentPanel(element: HTMLElement) {
   for (let i = 0; i < 10; ++i) {
@@ -132,7 +133,7 @@ export const DockTabs = memo((props: Props) => {
     )
   }
   const onTabClick = (activeId: string) => {
-    props.panelData.activeId = activeId
+    GlobalInstance.layoutOps?.makeTabActive(activeId)
   }
   const currDraggingTab = useRef<TabData>()
   useEffect(() => {
@@ -198,6 +199,7 @@ export const DockTabs = memo((props: Props) => {
   }, [props.panelData])
   console.log(dragIndicator)
   const { activeId } = props.panelData
+  console.log(activeId, props.panelData.tabs)
   return (
     <Tabs activeKey={activeId} onTabClick={onTabClick} renderTabNav={renderTabBar} disableInnerPanes>
       {props.panelData.tabs.map(i => (

@@ -154,6 +154,7 @@ export const Tabs: FC<TabsProps> = memo(
       }
     })
     const [activeKey, setActiveKey] = useState(defaultActiveKey || outActiveKey || tabNavs[0]?.key)
+
     const onInternalTabClick = (key: string, e: MouseEvent) => {
       onTabClick?.(key, e)
       setActiveKey(key)

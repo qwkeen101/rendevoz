@@ -106,7 +106,7 @@ export const NavigationMenu: FC<NavigationMenuProps> = ({
   onSelectChange,
   defaultSelected,
   reselectOnLayoutChange = true,
-  defaultSelectFirst = true
+  defaultSelectFirst = false
 }) => {
   layout = layout.filter(i => i)
   let normalizedLayout: IMenuLayoutItem[] = []
@@ -126,8 +126,7 @@ export const NavigationMenu: FC<NavigationMenuProps> = ({
       ? defaultSelected
       : firstKey
     : firstKey
-  const [currentSelect, setCurrentSelect] = useState<string[]>([])
-
+  const [currentSelect, setCurrentSelect] = useState<string[]>(defaultSelectFirst ? defaultSelectedKeys : [])
   const handleSelectItem = (currentItem: IMenuLayoutItem) => {
     if ('onSelect' in currentItem && currentItem.onSelect) {
       currentItem.onSelect?.()
@@ -136,8 +135,8 @@ export const NavigationMenu: FC<NavigationMenuProps> = ({
     onSelect?.(currentItem)
   }
   useEffect(() => {
-    if (reselectOnLayoutChange) {
-      setCurrentSelect([])
+    if (reselectOnLayoutChange && !selectedKeys) {
+      setCurrentSelect(defaultSelectFirst ? defaultSelectedKeys : [])
     }
   }, [normalizedLayout.length, reselectOnLayoutChange])
   const getCurrentItemList = (): IMenuLayoutItem[] => {
@@ -294,7 +293,6 @@ export const NavigationMenu: FC<NavigationMenuProps> = ({
       })
     }
   }, [currentSelect])
-
   return (
     <div
       ref={menuContainerRef}
